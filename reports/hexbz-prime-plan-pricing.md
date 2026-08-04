@@ -15,9 +15,9 @@ candidate alike, and nothing about the corpus, the instance, or its family enter
 it.
 
 On the corpus the rule changes one decision, and that decision is the one the
-issue names: `cyclo_phi64_x_phi105`'s prime walk drops from 37.699 ms to
-10.676 ms and its total from 45.493 ms to 18.662 ms, against a paired load
-control spanning 0.990x to 1.023x. Everything else -- including the mandatory
+issue names: `cyclo_phi64_x_phi105`'s prime walk drops from 38.110 ms to
+10.759 ms and its total from 45.068 ms to 18.762 ms, against a paired load
+control spanning 0.993x to 1.038x. Everything else -- including the mandatory
 `xpow105_minus1` control, whose scouting is worth an order of magnitude --
 selects the same prime and performs the same splits and scouts as before.
 
@@ -263,42 +263,49 @@ The other 23 rows are the load control.
 
 | instance | prime before | prime after | full splits | prime walk before | prime walk after | walk saved | total before | total after | ratio |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
-| `sd5` | 29 | 29 | 2 -> 2 | 6.585 ms | 6.524 ms | 61.271 us | 68.444 ms | 68.323 ms | 0.998x |
-| `sd5_shift1` | 29 | 29 | 2 -> 2 | 7.082 ms | 7.041 ms | 40.160 us | 62.990 ms | 62.840 ms | 0.998x |
-| `sd5_shift2` | 29 | 29 | 2 -> 2 | 8.600 ms | 8.685 ms | -84.465 us | 66.605 ms | 66.326 ms | 0.996x |
-| `sd4_x_sd4shift1` | 29 | 29 | 2 -> 2 | 6.835 ms | 6.929 ms | -94.610 us | 17.638 ms | 17.719 ms | 1.005x |
-| `sd5_x_phi11` | 29 | 29 | 2 -> 2 | 16.085 ms | 16.178 ms | -93.658 us | 138.565 ms | 138.458 ms | 0.999x |
-| `xpow48_minus1` | 11 | 11 | 2 -> 2 | 3.924 ms | 3.949 ms | -25.408 us | 10.335 ms | 10.418 ms | 1.008x |
-| `xpow105_minus1` | 17 | 17 | 2 -> 2 | 29.396 ms | 29.713 ms | -317.000 us | 44.604 ms | 44.844 ms | 1.005x |
-| `xpow120_minus1` | 7 | 7 | 1 -> 1 | 18.498 ms | 18.714 ms | -215.970 us | 146.833 ms | 146.285 ms | 0.996x |
-| `cyclo_phi179` | 3 | 3 | 1 -> 1 | 6.455 ms | 6.618 ms | -162.852 us | 34.646 ms | 34.962 ms | 1.009x |
-| `cyclo_phi64_x_phi105` | 11 | 11 | 1 -> 1 | 37.699 ms | 10.676 ms | 27.022 ms | 45.493 ms | 18.662 ms | 0.410x |
-| `cyclo_phi128_x_phi165` | 7 | 7 | 1 -> 1 | 35.093 ms | 35.317 ms | -224.474 us | 74.979 ms | 75.208 ms | 1.003x |
-| `cyclo_phi385` | 3 | 3 | 1 -> 1 | 59.002 ms | 59.096 ms | -94.390 us | 145.657 ms | 144.588 ms | 0.993x |
-| `wilkinson_40` | 47 | 47 | 2 -> 2 | 4.133 ms | 4.240 ms | -106.999 us | 12.490 ms | 12.485 ms | 1.000x |
-| `wilkinson_48` | 61 | 61 | 2 -> 2 | 6.576 ms | 6.680 ms | -104.665 us | 21.668 ms | 21.452 ms | 0.990x |
-| `wilkinson_56` | 67 | 67 | 2 -> 2 | 9.642 ms | 9.785 ms | -143.504 us | 29.045 ms | 29.013 ms | 0.999x |
-| `chebyshev_T24` | 5 | 5 | 1 -> 1 | 212.986 us | 221.388 us | -8.402 us | 437.309 us | 442.966 us | 1.013x |
-| `chebyshev_U24` | 3 | 3 | 1 -> 1 | 201.209 us | 208.189 us | -6.980 us | 598.958 us | 598.657 us | 0.999x |
-| `legendre_P30` | 67 | 67 | 2 -> 2 | 7.053 ms | 6.984 ms | 68.681 us | 8.368 ms | 8.411 ms | 1.005x |
-| `legendre_P38` | 79 | 79 | 1 -> 1 | 2.953 ms | 3.021 ms | -67.410 us | 3.792 ms | 3.856 ms | 1.017x |
-| `cyclo_phi17` | 3 | 3 | 1 -> 1 | 56.744 us | 60.449 us | -3.705 us | 105.527 us | 104.665 us | 0.992x |
-| `cyclo_phi41` | 3 | 3 | 1 -> 1 | 469.126 us | 481.123 us | -11.997 us | 1.983 ms | 1.992 ms | 1.005x |
-| `xpow24_minus1` | 11 | 11 | 2 -> 2 | 1.077 ms | 1.091 ms | -14.001 us | 2.272 ms | 2.296 ms | 1.011x |
-| `randprod_10` | 7 | 7 | 1 -> 1 | 355.997 us | 357.841 us | -1.844 us | 621.681 us | 630.555 us | 1.014x |
-| `randprod_21` | 17 | 17 | 1 -> 1 | 939.793 us | 953.674 us | -13.881 us | 1.404 ms | 1.437 ms | 1.023x |
-| **aggregate** | | | | | | 25.396 ms | 939.574 ms | 911.352 ms | **0.9700x** |
+| `sd5` | 29 | 29 | 2 -> 2 | 6.551 ms | 6.699 ms | -147.458 us | 67.942 ms | 67.985 ms | 1.001x |
+| `sd5_shift1` | 29 | 29 | 2 -> 2 | 7.158 ms | 7.164 ms | -5.188 us | 63.118 ms | 62.972 ms | 0.998x |
+| `sd5_shift2` | 29 | 29 | 2 -> 2 | 8.563 ms | 8.711 ms | -147.589 us | 66.655 ms | 66.431 ms | 0.997x |
+| `sd4_x_sd4shift1` | 29 | 29 | 2 -> 2 | 6.743 ms | 6.928 ms | -184.874 us | 17.695 ms | 17.750 ms | 1.003x |
+| `sd5_x_phi11` | 29 | 29 | 2 -> 2 | 16.195 ms | 16.412 ms | -217.042 us | 139.999 ms | 138.988 ms | 0.993x |
+| `xpow48_minus1` | 11 | 11 | 2 -> 2 | 3.922 ms | 3.990 ms | -67.951 us | 10.377 ms | 10.364 ms | 0.999x |
+| `xpow105_minus1` | 17 | 17 | 2 -> 2 | 29.041 ms | 29.621 ms | -580.179 us | 44.313 ms | 44.539 ms | 1.005x |
+| `xpow120_minus1` | 7 | 7 | 1 -> 1 | 18.436 ms | 18.639 ms | -203.723 us | 145.844 ms | 145.933 ms | 1.001x |
+| `cyclo_phi179` | 3 | 3 | 1 -> 1 | 6.482 ms | 6.717 ms | -235.118 us | 34.775 ms | 34.991 ms | 1.006x |
+| `cyclo_phi64_x_phi105` | 11 | 11 | 1 -> 1 | 38.110 ms | 10.759 ms | 27.351 ms | 45.068 ms | 18.762 ms | 0.416x |
+| `cyclo_phi128_x_phi165` | 7 | 7 | 1 -> 1 | 35.000 ms | 35.295 ms | -295.157 us | 75.101 ms | 75.002 ms | 0.999x |
+| `cyclo_phi385` | 3 | 3 | 1 -> 1 | 58.839 ms | 59.612 ms | -773.447 us | 143.366 ms | 144.368 ms | 1.007x |
+| `wilkinson_40` | 47 | 47 | 2 -> 2 | 4.134 ms | 4.417 ms | -282.669 us | 12.367 ms | 12.497 ms | 1.010x |
+| `wilkinson_48` | 61 | 61 | 2 -> 2 | 6.535 ms | 6.887 ms | -352.603 us | 21.199 ms | 21.384 ms | 1.009x |
+| `wilkinson_56` | 67 | 67 | 2 -> 2 | 9.636 ms | 10.024 ms | -388.046 us | 28.320 ms | 28.945 ms | 1.022x |
+| `chebyshev_T24` | 5 | 5 | 1 -> 1 | 213.176 us | 222.199 us | -9.023 us | 435.947 us | 444.499 us | 1.020x |
+| `chebyshev_U24` | 3 | 3 | 1 -> 1 | 203.001 us | 214.738 us | -11.737 us | 593.950 us | 609.203 us | 1.026x |
+| `legendre_P30` | 67 | 67 | 2 -> 2 | 7.103 ms | 7.193 ms | -89.863 us | 8.385 ms | 8.385 ms | 1.000x |
+| `legendre_P38` | 79 | 79 | 1 -> 1 | 2.985 ms | 3.035 ms | -50.615 us | 3.801 ms | 3.845 ms | 1.012x |
+| `cyclo_phi17` | 3 | 3 | 1 -> 1 | 56.964 us | 60.900 us | -3.936 us | 105.166 us | 109.212 us | 1.038x |
+| `cyclo_phi41` | 3 | 3 | 1 -> 1 | 471.218 us | 490.718 us | -19.500 us | 1.992 ms | 2.006 ms | 1.007x |
+| `xpow24_minus1` | 11 | 11 | 2 -> 2 | 1.095 ms | 1.121 ms | -25.387 us | 2.296 ms | 2.323 ms | 1.012x |
+| `randprod_10` | 7 | 7 | 1 -> 1 | 355.417 us | 365.882 us | -10.465 us | 619.288 us | 638.166 us | 1.030x |
+| `randprod_21` | 17 | 17 | 1 -> 1 | 950.869 us | 952.983 us | -2.114 us | 1.400 ms | 1.430 ms | 1.021x |
+| **aggregate** | | | | | | 23.247 ms | 935.767 ms | 910.701 ms | **0.9732x** |
 
-Load control (23 instances whose plan does not change): 0.990x to 1.023x.
+Load control (23 instances whose plan does not change): 0.993x to 1.038x.
 
-`cyclo_phi64_x_phi105` loses 71.7% of its prime walk and 59.0% of its total. No
-other row leaves the control band in either direction; the aggregate 0.9700x is
+`cyclo_phi64_x_phi105` loses 71.8% of its prime walk and 58.4% of its total. No
+other row leaves the control band in either direction; the aggregate 0.9732x is
 that one row.
+
+The control band is one-sided: its median ratio is 1.007x and every unchanged row
+shows a slightly slower walk in the second arm. The driver runs the before arm
+first in each round, so whatever drift a round accumulates is charged to the
+after arm. That biases against the change, which makes the one row's 0.416x a
+conservative reading rather than a flattering one.
 
 ## Negative controls
 
 **`xpow105_minus1`, the order-of-magnitude scout.** Unchanged: prime 17 at
-width 14, two splits, 29.713 ms of walk against 29.396 ms before. Its first good
+width 14, two splits, 29.621 ms of walk against 29.041 ms before -- inside the
+control band. Its first good
 prime is 30 factors wide with 1.429 s of recombination behind it, against a
 2.580-unit observation cost, so the rule accepts the observation by a factor of
 4·10^5 in model units and 78x in measured time. The `first` column prices what
@@ -344,9 +351,9 @@ and `liftWords` of the Legendre input at 3 is two machine words.
 ## Acceptance criteria
 
 **Reduces prime-walk time by at least 20% and total time by at least 10% on
-`cyclo_phi64_x_phi105`.** Prime walk 37.699 ms to 10.676 ms, **-71.7%**. Total
-45.493 ms to 18.662 ms, **-59.0%**. Paired, three alternating rounds, against a
-load control of 0.990x to 1.023x.
+`cyclo_phi64_x_phi105`.** Prime walk 38.110 ms to 10.759 ms, **-71.8%**. Total
+45.068 ms to 18.762 ms, **-58.4%**. Paired, three alternating rounds, against a
+load control of 0.993x to 1.038x whose bias runs against the change.
 
 **Preserves the order-of-magnitude scouting benefit on `xpow105_minus1`.** It
 selects prime 17 at width 14 with two splits, exactly as before, and the rule
