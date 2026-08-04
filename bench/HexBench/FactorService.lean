@@ -1136,14 +1136,25 @@ where
         finishPhaseProfile f sink repeatAt core m0 "lattice" phases extras factors
     | none => runTrialTail f sink repeatAt core m0 phases extras
 
-/-- Good primes the counterfactual compares.
+/-- Width threshold of the fixed comparison set the counterfactual prices.
 
-This is deliberately *not* the set the production plan retains: the plan splits
-only what its scout accepts, so following it would shrink the comparison set
-exactly where the policy is being evaluated.  The comparison set is fixed
-instead at the first good prime, plus -- when that first image is wide -- the
-next two good primes.  That is the set the pre-scout fixed policy retained, so
-the table stays row-for-row comparable with the recorded baseline. -/
+The comparison set is deliberately *not* the set the production plan retains:
+the plan splits only what its own policy accepts, so following it would shrink
+the comparison set exactly where that policy is being evaluated.  The set is
+fixed instead at the first good prime, plus -- when that first image is wide --
+the next two good primes.  That is the set the pre-scout fixed policy retained,
+so the table stays row-for-row comparable with the recorded baseline.
+
+It is pinned here rather than read off the planner, so that changing the
+production policy cannot move it: this threshold and `fixedComparisonFuel` are
+the pre-scout rule's, and stay at their historical values however the planner
+evolves. -/
+private def fixedComparisonWidth : Nat := 8
+
+/-- The pre-scout fixed rule's scouting allowance; see `fixedComparisonWidth`. -/
+private def fixedComparisonFuel : Nat := 2
+
+/-- Good primes the counterfactual compares; see `fixedComparisonWidth`. -/
 private def counterfactualCandidates (core : SquareFreeInput) :
     Nat → List SmallPrimeCandidate → Array (DirectPrimeProbe core) →
       Array (DirectPrimeProbe core)
@@ -1155,7 +1166,7 @@ private def counterfactualCandidates (core : SquareFreeInput) :
       | some data =>
           let probe := DirectPrimeProbe.ofData core candidate data
           let probes := probes.push probe
-          if probes.size == 1 && data.factorsModP.size ≤ scoutWidth then
+          if probes.size == 1 && data.factorsModP.size ≤ fixedComparisonWidth then
             probes
           else
             counterfactualCandidates core fuel candidates probes
@@ -1173,7 +1184,7 @@ private def primeCounterfactual (f : ZPoly) : IO Json := do
   | some modular =>
       let coreBound := ZPoly.defaultFactorCoeffBound core.poly
       let candidates :=
-        counterfactualCandidates core (scoutFuel + 1) hotPathCandidates #[]
+        counterfactualCandidates core (fixedComparisonFuel + 1) hotPathCandidates #[]
       let mut rows : Array Json := #[]
       for probe in candidates do
         let plan := DirectPrimePlan.ofSelection probe #[]
@@ -1268,18 +1279,18 @@ target production uses until a scouted candidate wins and tightens it, so these
 are scout prices at a fixed target rather than a replay of the production
 walk.  The complete pattern prices what a scout with no target would cost, and
 is what the split is checked against. -/
-private def scoutRow (sink : IO.Ref Nat) (core : ZPoly) (target : Nat)
+private def scoutRow (sink : IO.Ref Nat) (core : SquareFreeInput) (target : Nat)
     (c : SmallPrimeCandidate) : IO (Option Json) :=
   letI := c.bounds
   letI : ZMod64.PrimeModulus c.p := ZMod64.primeModulusOfPrime c.prime
   do
   let m0 ← mark
-  let good := isGoodPrime core c.p
+  let good := isGoodPrime core.poly c.p
   observeNat sink (if good then 1 else 0)
   let m1 ← mark
   if !good then
     return none
-  let fModP := ZPoly.modP c.p core
+  let fModP := ZPoly.modP c.p core.poly
   if hzero : fModP.isZero = false then
     let n := fModP.degree?.getD 0
     let monic := monicModularImage fModP
@@ -1310,6 +1321,13 @@ private def scoutRow (sink : IO.Ref Nat) (core : ZPoly) (target : Nat)
         ("modularDegree", natJson n),
         ("kernelDimension", natJson kernel.size),
         ("scoutTarget", natJson target),
+        -- The two shape quantities `Hex.scoutPays` prices a plan at this prime
+        -- by: the machine words of its Hensel modulus, and the recombination
+        -- candidates a complete head-forced search over its factors visits.
+        ("liftWords", natJson (liftWords core c.p)),
+        ("recombUnits",
+          natJson (directSubsetCost splitDegrees.size * liftWords core c.p)),
+        ("splitMaxDegree", natJson (splitDegrees.foldl max 0)),
         ("boundedScout", spanJson boundedStart boundedStop),
         ("boundedSeparated", natArrayJson bounded.separated),
         ("boundedResidual", natJson bounded.residual),
@@ -1358,7 +1376,7 @@ private def primeScout (f : ZPoly) : IO Json := do
   let mut seen := 0
   for c in hotPathCandidates do
     if seen < scoutHorizon then
-      match ← scoutRow sink core.poly target c with
+      match ← scoutRow sink core target c with
       | none => pure ()
       | some row =>
           seen := seen + 1

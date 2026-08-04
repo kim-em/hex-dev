@@ -30,6 +30,14 @@ by factor degree and brackets the factor count from both sides, stopping as
 soon as its bounds settle whether the count is small enough to matter.  So the
 walk splits the first good prime, and afterwards splits only those candidates
 a scout says can materially narrow it.
+
+How many candidates it scouts is a price comparison, not a threshold.  A scout
+is worth running only when the plan it might replace has enough recombination
+work left to repay the scout and the split that acting on it would cost, and
+both of those are estimated from the shape already observed -- the input degree,
+the primes involved, and the degree patterns of the plans in hand.  `scoutPays`
+is that comparison, and it is the walk's only stopping decision: it governs the
+first good prime and every scouted candidate alike.
 -/
 
 namespace Hex
@@ -173,22 +181,106 @@ def scoreBetter (a b : Nat × Nat × Nat × Nat) : Bool :=
       (b.2.1 = a.2.1 && (b.2.2.1 < a.2.2.1 ||
         (b.2.2.1 = a.2.2.1 && b.2.2.2 < a.2.2.2))))))
 
-/-- Modular width at which a complete direct recombination is already cheaper
-than any further modular work, so the first good prime is used unexamined.
+/-- Hard bound on the good primes a plan scouts, so the walk terminates in a
+fixed number of modular observations however cheap the next one looks.  A scout
+costs one Frobenius power and one gcd per separated factor degree, and is
+abandoned as soon as the factors it has separated show the candidate cannot win,
+so the walk's whole modular budget is one full split, at most `scoutFuel`
+bounded scouts, and one further full split for the scouted winner.  Bad primes
+do not spend the allowance: they never reach a scout.
 
-The head-forced subset search over `w` local factors visits at most `2^(w-1)`
-subsets, which at `w = 8` is 128 -- below the cost of a single Frobenius power
-of a scout on any input this planner sees.  Below this width there is nothing
-to shop for. -/
-def scoutWidth : Nat := 8
-
-/-- Hard bound on the good primes a plan scouts.  A scout costs one Frobenius
-power and one gcd per separated factor degree, and is abandoned as soon as the
-factors it has separated show the candidate cannot win, so the walk's whole
-modular budget is one full split, at most `scoutFuel` bounded scouts, and one
-further full split for the scouted winner.  Bad primes do not spend the
-allowance: they never reach a scout. -/
+Which of those scouts are actually performed is decided by `scoutPays`, not by
+this bound. -/
 def scoutFuel : Nat := 2
+
+/-! ## Pricing one more modular observation
+
+A scout is only worth running when the plan it might replace still has enough
+downstream work left to pay for it.  Both sides of that comparison are
+functions of the shape already observed, so the walk can price its own next
+step.
+
+Write `n` for the degree of the modular image, `q` for the prime about to be
+scouted, `w` and `d` for the width and largest modular factor degree of the
+plan currently held, and `W` for the machine words of that plan's Hensel
+modulus.
+
+* **What is still on the table.**  A recombination candidate multiplies a
+  subset of the lifted factors and trial-divides the result, `n^2` coefficient
+  operations on `W`-word integers.  A complete head-forced search visits
+  `directSubsetCost w` candidates, so the plan's remaining recombination is
+  about `directSubsetCost w * n^2 * W` word operations.  That is an upper bound:
+  it is what an irreducible input actually pays, and a reducible one stops
+  earlier.  No plan can save more than all of it.
+* **What another observation costs.**  A bounded scout runs about `d` rounds --
+  the loop stops at the largest factor degree -- and each round is one Frobenius
+  power, `bitLen q` squarings of the degree-`n` image, so `d * bitLen q * n^2`
+  word operations.  Acting on what it learns costs a further Berlekamp split,
+  whose matrix and row reduction are about `bitLen q * n^3`.  A walk with `fuel`
+  observations left is committing to at most `fuel` scouts and one split.
+
+The two estimates share the factor `n^2`, which cancels, leaving one
+inequality on the shape.  The remaining constants say how a modular word
+operation compares with a recombination one; they are ratios measured on the
+recorded per-candidate prices, and any common rescaling of them leaves every
+decision unchanged.
+-/
+
+/-- Machine words in the Hensel lift modulus a plan at `p` needs.  A
+recombination candidate's product and trial division run over integers of this
+width, so this is the part of a candidate's cost that the prime, rather than the
+input, decides. -/
+@[expose]
+def liftWords (core : SquareFreeInput) (p : Nat) : Nat :=
+  max 1
+    ((precisionForCoeffBound (ZPoly.defaultFactorCoeffBound core.poly) p *
+      ZPoly.bitLen p + 63) / 64)
+
+/-- Cost of one bounded-scout word operation, in recombination word operations.
+
+A scout round works modulo a word-sized prime with a polynomial division in its
+inner loop; a recombination candidate multiplies and divides multiword integers
+in a tighter loop.  On the recorded per-candidate prices the scout's word
+operation is about a dozen times the recombination one. -/
+def scoutRoundCost : Nat := 12
+
+/-- Cost of one Berlekamp-split word operation, in recombination word
+operations.  The fixed-space matrix and its row reduction are the tightest
+modular loop the planner runs, about a quarter of a scout round's. -/
+def splitColumnCost : Nat := 3
+
+/-- The plan a scouting walk is trying to beat: its prime, the degrees of its
+modular factors, and its downstream score.  Width and largest factor degree are
+read off the degrees, so this carries everything both the comparison and the
+pricing need and nothing else. -/
+structure ScoutIncumbent where
+  /-- The prime the incumbent plan uses. -/
+  prime : Nat
+  /-- Degrees of the incumbent plan's modular factors. -/
+  degrees : Array Nat
+  /-- The incumbent plan's lexicographic downstream score. -/
+  score : Nat × Nat × Nat × Nat
+
+/-- Largest modular factor degree of the incumbent plan.  A bounded scout stops
+at the largest factor degree, so this is the round count a scout of a
+comparable image runs. -/
+@[expose]
+def ScoutIncumbent.maxDegree (inc : ScoutIncumbent) : Nat :=
+  inc.degrees.foldl max 0
+
+/-- Whether one more modular observation can still pay for itself: the
+recombination work the incumbent plan has left, against the scouts and split
+that replacing it would cost.
+
+This is the walk's only stopping decision.  It governs the first good prime and
+every scouted candidate alike, and it depends on nothing but the degree of the
+input, the primes involved, and the degree patterns already observed. -/
+def scoutPays (core : SquareFreeInput) (inc : ScoutIncumbent) (q fuel : Nat) :
+    Bool :=
+  decide (ZPoly.bitLen q *
+      (scoutRoundCost * fuel * inc.maxDegree +
+        splitColumnCost * core.poly.degree?.getD 0) <
+    directSubsetCost inc.degrees.size * liftWords core inc.prime)
 
 /-- A candidate prime together with the modular degree pattern a scout
 established for it.  This carries no factorization: the degrees are a
@@ -218,38 +310,41 @@ def probeDegreePattern? (f : ZPoly) (c : SmallPrimeCandidate) (target : Nat) :
   else
     none
 
-/-- Scout further good primes for a cheaper plan than the current best score.
+/-- Scout further good primes for a cheaper plan than the incumbent's.
 
-Nothing is split here.  A candidate is discarded as soon as its separated
-factors reach the current width, since a wider image can only score worse; and
-a candidate whose pattern completes is scored exactly as the factorization it
-predicts would be.  So the walk ends holding the plan a policy that split every
-candidate would have selected -- except that a scouted image narrow enough to
-pass `scoutWidth` ends the walk, the same gate that governs the first good
-prime.
+Nothing is split here.  The walk stops as soon as `scoutPays` says the
+incumbent has too little recombination work left to repay another observation.
+Otherwise a candidate is discarded as soon as its separated factors reach the
+incumbent's width, since a wider image can only score worse; and a candidate
+whose pattern completes is scored exactly as the factorization it predicts would
+be, and becomes the incumbent if it wins -- which both tightens the target width
+and reprices the next observation against the plan now held.
 
-Returns the best scouted pattern strictly cheaper than `score`, if any. -/
+Returns the best scouted pattern strictly cheaper than the incumbent's score,
+if any. -/
 def scoutBetterPattern (core : SquareFreeInput) :
-    Nat → List SmallPrimeCandidate → Nat → Nat × Nat × Nat × Nat →
+    Nat → List SmallPrimeCandidate → ScoutIncumbent →
       Option PrimeDegreePattern → Option PrimeDegreePattern
-  | 0, _, _, _, best => best
-  | _, [], _, _, best => best
-  | fuel + 1, candidate :: candidates, width, score, best =>
-      match probeDegreePattern? core.poly candidate width with
-      | none => scoutBetterPattern core (fuel + 1) candidates width score best
-      | some pattern =>
-          if pattern.complete then
-            let candidateScore := directDegreeScore core candidate.p pattern.separated
-            if scoreBetter score candidateScore then
-              if pattern.separated.size ≤ scoutWidth then
-                some ⟨candidate, pattern.separated⟩
+  | 0, _, _, best => best
+  | _, [], _, best => best
+  | fuel + 1, candidate :: candidates, inc, best =>
+      if scoutPays core inc candidate.p (fuel + 1) then
+        match probeDegreePattern? core.poly candidate inc.degrees.size with
+        | none => scoutBetterPattern core (fuel + 1) candidates inc best
+        | some pattern =>
+            if pattern.complete then
+              let candidateScore :=
+                directDegreeScore core candidate.p pattern.separated
+              if scoreBetter inc.score candidateScore then
+                scoutBetterPattern core fuel candidates
+                  ⟨candidate.p, pattern.separated, candidateScore⟩
+                  (some ⟨candidate, pattern.separated⟩)
               else
-                scoutBetterPattern core fuel candidates pattern.separated.size
-                  candidateScore (some ⟨candidate, pattern.separated⟩)
+                scoutBetterPattern core fuel candidates inc best
             else
-              scoutBetterPattern core fuel candidates width score best
-          else
-            scoutBetterPattern core fuel candidates width score best
+              scoutBetterPattern core fuel candidates inc best
+      else
+        best
 
 /-- Split the scouted winner and keep the plan it improves on.
 
@@ -266,7 +361,8 @@ def planOfScout (core : SquareFreeInput) (first : DirectPrimeProbe core) :
           DirectPrimePlan.ofSelection
             (DirectPrimeProbe.ofData core scouted.candidate data) #[first]
 
-/-- Select the first good prime and optionally improve a wide modular factorization. -/
+/-- Select the first good prime, then let the walk price further observations
+against the recombination work that plan has left. -/
 def firstDirectPlan?
     (core : SquareFreeInput) :
     List SmallPrimeCandidate → Option (DirectPrimePlan core)
@@ -276,12 +372,10 @@ def firstDirectPlan?
       | none => firstDirectPlan? core candidates
       | some data =>
           let first := DirectPrimeProbe.ofData core candidate data
-          if data.factorsModP.size ≤ scoutWidth then
-            some (DirectPrimePlan.ofSelection first #[])
-          else
-            some (planOfScout core first
-              (scoutBetterPattern core scoutFuel candidates
-                data.factorsModP.size (directProbeScore core first) none))
+          some (planOfScout core first
+            (scoutBetterPattern core scoutFuel candidates
+              ⟨candidate.p, first.factorDegrees, directProbeScore core first⟩
+              none))
 
 /-- Plan and cache a good direct-coordinate modular factorization. -/
 @[expose]
@@ -322,15 +416,10 @@ private theorem firstDirectPlan?_selected_spec
           simp only [hprobe] at h
           exact ih plan h
       | some data =>
-          simp only [hprobe] at h
-          by_cases hsmall : data.factorsModP.size ≤ scoutWidth
-          · simp only [hsmall, if_true, Option.some.injEq] at h
-            subst plan
-            exact hprobe
-          · simp only [hsmall, if_false, Option.some.injEq] at h
-            subst plan
-            exact planOfScout_selected_spec core
-              (DirectPrimeProbe.ofData core candidate data) _ hprobe
+          simp only [hprobe, Option.some.injEq] at h
+          subst plan
+          exact planOfScout_selected_spec core
+            (DirectPrimeProbe.ofData core candidate data) _ hprobe
 
 /-- The selected cached value is exactly the result of its retained explicit
 prime trial. -/
@@ -345,46 +434,44 @@ theorem directPrimePlan?_selected_spec
 
 private theorem scoutBetterPattern_mem
     (core : SquareFreeInput) :
-    ∀ fuel candidates width score best scouted,
-      scoutBetterPattern core fuel candidates width score best = some scouted →
+    ∀ fuel candidates inc best scouted,
+      scoutBetterPattern core fuel candidates inc best = some scouted →
       (∃ b, best = some b ∧ scouted.candidate = b.candidate) ∨
         scouted.candidate ∈ candidates := by
   intro fuel candidates
   induction candidates generalizing fuel with
   | nil =>
-      intro width score best scouted h
+      intro inc best scouted h
       cases fuel <;>
         exact Or.inl ⟨scouted, by simpa [scoutBetterPattern] using h, rfl⟩
   | cons candidate candidates ih =>
-      intro width score best scouted h
+      intro inc best scouted h
       cases fuel with
       | zero =>
           exact Or.inl ⟨scouted, by simpa [scoutBetterPattern] using h, rfl⟩
       | succ fuel =>
           simp only [scoutBetterPattern] at h
-          cases hpat : probeDegreePattern? core.poly candidate width with
-          | none =>
-              rw [hpat] at h
-              rcases ih (fuel + 1) width score best scouted h with hb | hm
-              · exact Or.inl hb
-              · exact Or.inr (List.mem_cons_of_mem candidate hm)
-          | some pattern =>
-              rw [hpat] at h
-              simp only at h
-              by_cases hcomplete : pattern.complete = true
-              · rw [if_pos hcomplete] at h
-                by_cases hbetter :
-                    scoreBetter score
-                      (directDegreeScore core candidate.p pattern.separated) = true
-                · rw [if_pos hbetter] at h
-                  by_cases hnarrow : pattern.separated.size ≤ scoutWidth
-                  · rw [if_pos hnarrow] at h
-                    exact Or.inr (by
-                      cases h
-                      exact List.mem_cons_self)
-                  · rw [if_neg hnarrow] at h
-                    rcases ih fuel pattern.separated.size
-                        (directDegreeScore core candidate.p pattern.separated)
+          by_cases hpays : scoutPays core inc candidate.p (fuel + 1) = true
+          · rw [if_pos hpays] at h
+            cases hpat :
+                probeDegreePattern? core.poly candidate inc.degrees.size with
+            | none =>
+                rw [hpat] at h
+                rcases ih (fuel + 1) inc best scouted h with hb | hm
+                · exact Or.inl hb
+                · exact Or.inr (List.mem_cons_of_mem candidate hm)
+            | some pattern =>
+                rw [hpat] at h
+                simp only at h
+                by_cases hcomplete : pattern.complete = true
+                · rw [if_pos hcomplete] at h
+                  by_cases hbetter :
+                      scoreBetter inc.score
+                        (directDegreeScore core candidate.p pattern.separated) = true
+                  · rw [if_pos hbetter] at h
+                    rcases ih fuel
+                        ⟨candidate.p, pattern.separated,
+                          directDegreeScore core candidate.p pattern.separated⟩
                         (some ⟨candidate, pattern.separated⟩) scouted h with
                       ⟨b, hb, hc⟩ | hm
                     · exact Or.inr (by
@@ -392,14 +479,16 @@ private theorem scoutBetterPattern_mem
                         rw [hc]
                         exact List.mem_cons_self)
                     · exact Or.inr (List.mem_cons_of_mem candidate hm)
-                · rw [if_neg hbetter] at h
-                  rcases ih fuel width score best scouted h with hb | hm
+                  · rw [if_neg hbetter] at h
+                    rcases ih fuel inc best scouted h with hb | hm
+                    · exact Or.inl hb
+                    · exact Or.inr (List.mem_cons_of_mem candidate hm)
+                · rw [if_neg hcomplete] at h
+                  rcases ih fuel inc best scouted h with hb | hm
                   · exact Or.inl hb
                   · exact Or.inr (List.mem_cons_of_mem candidate hm)
-              · rw [if_neg hcomplete] at h
-                rcases ih fuel width score best scouted h with hb | hm
-                · exact Or.inl hb
-                · exact Or.inr (List.mem_cons_of_mem candidate hm)
+          · rw [if_neg hpays] at h
+            exact Or.inl ⟨scouted, h, rfl⟩
 
 private theorem planOfScout_selected_mem
     (core : SquareFreeInput) (first : DirectPrimeProbe core)
@@ -434,28 +523,25 @@ private theorem firstDirectPlan?_selected_mem
           simp only [hprobe] at h
           exact List.mem_cons_of_mem candidate (ih plan h)
       | some data =>
-          simp only [hprobe] at h
-          by_cases hsmall : data.factorsModP.size ≤ scoutWidth
-          · simp only [hsmall, if_true, Option.some.injEq] at h
-            subst plan
-            simp [DirectPrimePlan.ofSelection, DirectPrimeProbe.ofData]
-          · simp only [hsmall, if_false, Option.some.injEq] at h
-            subst plan
-            rcases planOfScout_selected_mem core
-                (DirectPrimeProbe.ofData core candidate data)
-                (scoutBetterPattern core scoutFuel candidates
-                  data.factorsModP.size
-                  (directProbeScore core (DirectPrimeProbe.ofData core candidate data))
-                  none) with hfirst | ⟨s, hs, hsel⟩
-            · rw [hfirst]
-              exact List.mem_cons_self
-            · rcases scoutBetterPattern_mem core scoutFuel candidates
-                  data.factorsModP.size
-                  (directProbeScore core (DirectPrimeProbe.ofData core candidate data))
-                  none s hs with ⟨b, hb, _⟩ | hm
-              · exact absurd hb (by simp)
-              · rw [hsel]
-                exact List.mem_cons_of_mem candidate hm
+          simp only [hprobe, Option.some.injEq] at h
+          subst plan
+          rcases planOfScout_selected_mem core
+              (DirectPrimeProbe.ofData core candidate data)
+              (scoutBetterPattern core scoutFuel candidates
+                ⟨candidate.p,
+                  (DirectPrimeProbe.ofData core candidate data).factorDegrees,
+                  directProbeScore core (DirectPrimeProbe.ofData core candidate data)⟩
+                none) with hfirst | ⟨s, hs, hsel⟩
+          · rw [hfirst]
+            exact List.mem_cons_self
+          · rcases scoutBetterPattern_mem core scoutFuel candidates
+                ⟨candidate.p,
+                  (DirectPrimeProbe.ofData core candidate data).factorDegrees,
+                  directProbeScore core (DirectPrimeProbe.ofData core candidate data)⟩
+                none s hs with ⟨b, hb, _⟩ | hm
+            · exact absurd hb (by simp)
+            · rw [hsel]
+              exact List.mem_cons_of_mem candidate hm
 
 /-- The direct planner selects only from the fixed `[3, 500]` hot-path
 candidate list. -/
