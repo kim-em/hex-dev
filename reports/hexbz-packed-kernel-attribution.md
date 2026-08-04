@@ -768,3 +768,10 @@ The driver exits non-zero if the counted packed mirror disagrees with
 `Hex.Matrix.nullspace`, if any deterministic count or rank disagrees across
 repeats, if the counted Gauss-Jordan mirror disagrees with the production row
 reduction, or if the recombination mirror disagrees with the production trace.
+
+## Follow-up
+
+https://github.com/kim-em/hex-dev/issues/9166 "Berlekamp packed kernel: hoist
+the pivot-row read out of the row addition" carries the one change this
+attribution justifies, with the two secondary findings recorded there as out of
+its scope.
