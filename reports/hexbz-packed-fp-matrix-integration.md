@@ -197,10 +197,16 @@ polynomials, which is the same work.
 | `wilkinson_40` | 41.622 us | 43.234 us | 0.96x | 72.457 us | 65.687 us | 0.91x |
 | `legendre_P38` | 1.785 ms | 999.733 us | 1.79x | 164.624 us | 360.634 us | 2.19x |
 
-The three causes below were named by inspection. They are now measured:
+The three causes below were named by inspection.
 [reports/hexbz-packed-kernel-attribution.md](hexbz-packed-kernel-attribution.md)
-finds the first one is 70% of the reduction, the second is not a cost at all,
-and the third is a cost only on rows dominated by already-zero columns.
+now measures them one factor at a time, together with the two further candidates
+issue #9160 named (`Matrix.modifyEntries` and the `List.finRange` column scan).
+Cause 1 is **71%** of the reduction on `cyclo_phi385`. Cause 2, the boxed pivot
+list, is **0.2%**. Cause 3, the readback, is under 1% of the whole span on the
+rows where the reduction dominates and a fifth to a third of it on high-nullity
+rows. Of the two further candidates, `Matrix.modifyEntries` turns out to be
+2.5% *faster* than a flat write, and the `List.finRange` scan is 1% where
+arithmetic dominates and 15% to 24% where already-zero columns do.
 
 Three causes, in the order they are worth fixing:
 
