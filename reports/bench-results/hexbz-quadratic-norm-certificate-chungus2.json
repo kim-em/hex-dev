@@ -1,26 +1,28 @@
 {
  "config": {
-  "cutoff_seconds": 10.0,
+  "paired_sweep": "hexbz-factor-sweep-1d9e59a1-hex-chungus2.json",
   "repeats": 5,
-  "statistic": "median over repeats, span by span"
+  "statistic": "median over repeats, span by span; `paired_speedup` is the median of the per-observation ratios"
  },
  "env": {
   "arch": "x86_64",
   "corpus_sha256": "619913904240834c912489e6cc23ba136e8cc5ebf0ea95f83397e0682387284d",
-  "git_commit": "37b9062ba7c1b33ceeb9098ab9c32d1a3ea4b43c",
+  "git_commit": "24784ebc69afdbbafaa15d9fb398cbb709186d2e",
   "git_dirty": false,
   "hostname": "chungus2",
-  "service_sha256": "fa48043a97c80a9e8aa95cdc967ebec33af4df4403b5929b7f669d30216f88a0"
+  "service_sha256": "41babbcfdcab113a3e093bcaa9ec0ac2a5457965d016c8230bcf54db1bd754b8"
  },
  "hits": [
   {
-   "certificate_nanos": 3325,
+   "certificate_nanos": 3266,
    "certified": true,
    "degree": 2,
    "family": "conway",
    "name": "conway_p13_n2",
+   "paired_certificate_nanos": 3325,
+   "paired_speedup": 7.6974704890387855,
    "production": {
-    "nanos": 24437,
+    "nanos": 24796,
     "smallAllocs": 1202
    },
    "production_paired": true,
@@ -29,32 +31,34 @@
    ],
    "spans": {
     "construction": {
-     "nanos": 180,
+     "nanos": 160,
      "smallAllocs": 7
     },
     "equality": {
-     "nanos": 70,
+     "nanos": 61,
      "smallAllocs": 3
     },
     "independence": {
-     "nanos": 231,
+     "nanos": 220,
      "smallAllocs": 4
     },
     "recovery": {
-     "nanos": 2844,
+     "nanos": 2825,
      "smallAllocs": 39
     }
    },
    "translation": -6
   },
   {
-   "certificate_nanos": 3235,
+   "certificate_nanos": 3115,
    "certified": true,
    "degree": 2,
    "family": "conway",
    "name": "conway_p3_n2",
+   "paired_certificate_nanos": 3234,
+   "paired_speedup": 5.202535559678417,
    "production": {
-    "nanos": 21051,
+    "nanos": 16825,
     "smallAllocs": 798
    },
    "production_paired": true,
@@ -63,7 +67,7 @@
    ],
    "spans": {
     "construction": {
-     "nanos": 201,
+     "nanos": 181,
      "smallAllocs": 7
     },
     "equality": {
@@ -71,24 +75,26 @@
      "smallAllocs": 3
     },
     "independence": {
-     "nanos": 200,
+     "nanos": 160,
      "smallAllocs": 4
     },
     "recovery": {
-     "nanos": 2784,
+     "nanos": 2724,
      "smallAllocs": 39
     }
    },
    "translation": -1
   },
   {
-   "certificate_nanos": 3095,
+   "certificate_nanos": 3164,
    "certified": true,
    "degree": 2,
    "family": "conway",
    "name": "conway_p5_n2",
+   "paired_certificate_nanos": 4076,
+   "paired_speedup": 5.154808635917567,
    "production": {
-    "nanos": 17336,
+    "nanos": 17716,
     "smallAllocs": 799
    },
    "production_paired": true,
@@ -97,32 +103,34 @@
    ],
    "spans": {
     "construction": {
-     "nanos": 170,
+     "nanos": 180,
      "smallAllocs": 7
     },
     "equality": {
-     "nanos": 41,
+     "nanos": 60,
      "smallAllocs": 3
     },
     "independence": {
-     "nanos": 220,
+     "nanos": 230,
      "smallAllocs": 4
     },
     "recovery": {
-     "nanos": 2664,
+     "nanos": 2694,
      "smallAllocs": 39
     }
    },
    "translation": -2
   },
   {
-   "certificate_nanos": 4587,
+   "certificate_nanos": 3555,
    "certified": true,
    "degree": 2,
    "family": "conway",
    "name": "conway_p65537_n2",
+   "paired_certificate_nanos": 3396,
+   "paired_speedup": 8.270551181102363,
    "production": {
-    "nanos": 28863,
+    "nanos": 28792,
     "smallAllocs": 1455
    },
    "production_paired": true,
@@ -131,32 +139,34 @@
    ],
    "spans": {
     "construction": {
-     "nanos": 220,
+     "nanos": 191,
      "smallAllocs": 7
     },
     "equality": {
-     "nanos": 51,
+     "nanos": 49,
      "smallAllocs": 3
     },
     "independence": {
-     "nanos": 240,
+     "nanos": 221,
      "smallAllocs": 4
     },
     "recovery": {
-     "nanos": 4076,
+     "nanos": 3094,
      "smallAllocs": 39
     }
    },
    "translation": -32768
   },
   {
-   "certificate_nanos": 3336,
+   "certificate_nanos": 3345,
    "certified": true,
    "degree": 2,
    "family": "conway",
    "name": "conway_p7_n2",
+   "paired_certificate_nanos": 3145,
+   "paired_speedup": 7.981636060100167,
    "production": {
-    "nanos": 26309,
+    "nanos": 26089,
     "smallAllocs": 1288
    },
    "production_paired": true,
@@ -165,32 +175,34 @@
    ],
    "spans": {
     "construction": {
-     "nanos": 210,
+     "nanos": 181,
      "smallAllocs": 7
     },
     "equality": {
-     "nanos": 50,
+     "nanos": 60,
      "smallAllocs": 3
     },
     "independence": {
-     "nanos": 221,
+     "nanos": 230,
      "smallAllocs": 4
     },
     "recovery": {
-     "nanos": 2855,
+     "nanos": 2874,
      "smallAllocs": 39
     }
    },
    "translation": -3
   },
   {
-   "certificate_nanos": 3314,
+   "certificate_nanos": 3236,
    "certified": true,
    "degree": 2,
    "family": "conway",
    "name": "conway_p97_n2",
+   "paired_certificate_nanos": 3194,
+   "paired_speedup": 7.900490998363339,
    "production": {
-    "nanos": 26870,
+    "nanos": 26519,
     "smallAllocs": 1349
    },
    "production_paired": true,
@@ -199,7 +211,7 @@
    ],
    "spans": {
     "construction": {
-     "nanos": 190,
+     "nanos": 171,
      "smallAllocs": 7
     },
     "equality": {
@@ -207,24 +219,26 @@
      "smallAllocs": 3
     },
     "independence": {
-     "nanos": 250,
+     "nanos": 221,
      "smallAllocs": 4
     },
     "recovery": {
-     "nanos": 2814,
+     "nanos": 2784,
      "smallAllocs": 39
     }
    },
    "translation": -48
   },
   {
-   "certificate_nanos": 7082,
+   "certificate_nanos": 7031,
    "certified": true,
    "degree": 4,
    "family": "swinnerton-dyer",
    "name": "sd2",
+   "paired_certificate_nanos": 6970,
+   "paired_speedup": 4.76712641057791,
    "production": {
-    "nanos": 38297,
+    "nanos": 33900,
     "smallAllocs": 1827
    },
    "production_paired": true,
@@ -234,11 +248,11 @@
    ],
    "spans": {
     "construction": {
-     "nanos": 321,
+     "nanos": 290,
      "smallAllocs": 12
     },
     "equality": {
-     "nanos": 51,
+     "nanos": 61,
      "smallAllocs": 3
     },
     "independence": {
@@ -246,20 +260,22 @@
      "smallAllocs": 6
     },
     "recovery": {
-     "nanos": 6199,
+     "nanos": 6169,
      "smallAllocs": 74
     }
    },
    "translation": 0
   },
   {
-   "certificate_nanos": 7162,
+   "certificate_nanos": 7101,
    "certified": true,
    "degree": 4,
    "family": "swinnerton-dyer",
    "name": "sd2_shift1",
+   "paired_certificate_nanos": 7170,
+   "paired_speedup": 5.222822012295697,
    "production": {
-    "nanos": 38587,
+    "nanos": 37816,
     "smallAllocs": 2048
    },
    "production_paired": true,
@@ -273,29 +289,107 @@
      "smallAllocs": 12
     },
     "equality": {
-     "nanos": 71,
+     "nanos": 50,
      "smallAllocs": 3
     },
     "independence": {
-     "nanos": 541,
+     "nanos": 491,
      "smallAllocs": 6
     },
     "recovery": {
-     "nanos": 6179,
+     "nanos": 6189,
      "smallAllocs": 74
     }
    },
    "translation": -1
   },
   {
-   "certificate_nanos": 12980,
+   "certificate_nanos": 12919,
    "certified": true,
    "degree": 8,
    "family": "swinnerton-dyer",
    "name": "sd3",
+   "paired_certificate_nanos": 13159,
+   "paired_speedup": 11.418268865415305,
    "production": {
-    "nanos": 165325,
+    "nanos": 150253,
     "smallAllocs": 9771
+   },
+   "production_paired": true,
+   "radicands": [
+    2,
+    3,
+    5
+   ],
+   "spans": {
+    "construction": {
+     "nanos": 581,
+     "smallAllocs": 19
+    },
+    "equality": {
+     "nanos": 60,
+     "smallAllocs": 3
+    },
+    "independence": {
+     "nanos": 1392,
+     "smallAllocs": 10
+    },
+    "recovery": {
+     "nanos": 10886,
+     "smallAllocs": 119
+    }
+   },
+   "translation": 0
+  },
+  {
+   "certificate_nanos": 12809,
+   "certified": true,
+   "degree": 8,
+   "family": "swinnerton-dyer",
+   "name": "sd3_shift1",
+   "paired_certificate_nanos": 13580,
+   "paired_speedup": 11.483487969806573,
+   "production": {
+    "nanos": 160728,
+    "smallAllocs": 9900
+   },
+   "production_paired": true,
+   "radicands": [
+    2,
+    3,
+    5
+   ],
+   "spans": {
+    "construction": {
+     "nanos": 601,
+     "smallAllocs": 19
+    },
+    "equality": {
+     "nanos": 70,
+     "smallAllocs": 3
+    },
+    "independence": {
+     "nanos": 1402,
+     "smallAllocs": 10
+    },
+    "recovery": {
+     "nanos": 10736,
+     "smallAllocs": 119
+    }
+   },
+   "translation": -1
+  },
+  {
+   "certificate_nanos": 13059,
+   "certified": true,
+   "degree": 8,
+   "family": "swinnerton-dyer",
+   "name": "sd3_shift2",
+   "paired_certificate_nanos": 13219,
+   "paired_speedup": 11.314925486042817,
+   "production": {
+    "nanos": 149572,
+    "smallAllocs": 9767
    },
    "production_paired": true,
    "radicands": [
@@ -309,43 +403,7 @@
      "smallAllocs": 19
     },
     "equality": {
-     "nanos": 60,
-     "smallAllocs": 3
-    },
-    "independence": {
-     "nanos": 1422,
-     "smallAllocs": 10
-    },
-    "recovery": {
-     "nanos": 10887,
-     "smallAllocs": 119
-    }
-   },
-   "translation": 0
-  },
-  {
-   "certificate_nanos": 13108,
-   "certified": true,
-   "degree": 8,
-   "family": "swinnerton-dyer",
-   "name": "sd3_shift1",
-   "production": {
-    "nanos": 163903,
-    "smallAllocs": 9900
-   },
-   "production_paired": true,
-   "radicands": [
-    2,
-    3,
-    5
-   ],
-   "spans": {
-    "construction": {
-     "nanos": 620,
-     "smallAllocs": 19
-    },
-    "equality": {
-     "nanos": 90,
+     "nanos": 70,
      "smallAllocs": 3
     },
     "independence": {
@@ -353,56 +411,22 @@
      "smallAllocs": 10
     },
     "recovery": {
-     "nanos": 10996,
-     "smallAllocs": 119
-    }
-   },
-   "translation": -1
-  },
-  {
-   "certificate_nanos": 12941,
-   "certified": true,
-   "degree": 8,
-   "family": "swinnerton-dyer",
-   "name": "sd3_shift2",
-   "production": {
-    "nanos": 159006,
-    "smallAllocs": 9767
-   },
-   "production_paired": true,
-   "radicands": [
-    2,
-    3,
-    5
-   ],
-   "spans": {
-    "construction": {
-     "nanos": 621,
-     "smallAllocs": 19
-    },
-    "equality": {
-     "nanos": 61,
-     "smallAllocs": 3
-    },
-    "independence": {
-     "nanos": 1432,
-     "smallAllocs": 10
-    },
-    "recovery": {
-     "nanos": 10827,
+     "nanos": 10976,
      "smallAllocs": 119
     }
    },
    "translation": -2
   },
   {
-   "certificate_nanos": 23626,
+   "certificate_nanos": 23264,
    "certified": true,
    "degree": 16,
    "family": "swinnerton-dyer",
    "name": "sd4",
+   "paired_certificate_nanos": 25127,
+   "paired_speedup": 33.54077287380109,
    "production": {
-    "nanos": 841588,
+    "nanos": 842779,
     "smallAllocs": 54158
    },
    "production_paired": true,
@@ -414,32 +438,34 @@
    ],
    "spans": {
     "construction": {
-     "nanos": 1422,
+     "nanos": 1392,
      "smallAllocs": 30
     },
     "equality": {
-     "nanos": 61,
+     "nanos": 70,
      "smallAllocs": 3
     },
     "independence": {
-     "nanos": 4186,
+     "nanos": 4296,
      "smallAllocs": 18
     },
     "recovery": {
-     "nanos": 17957,
+     "nanos": 17506,
      "smallAllocs": 176
     }
    },
    "translation": 0
   },
   {
-   "certificate_nanos": 23225,
+   "certificate_nanos": 23476,
    "certified": true,
    "degree": 16,
    "family": "swinnerton-dyer",
    "name": "sd4_shift1",
+   "paired_certificate_nanos": 24556,
+   "paired_speedup": 31.840649942987458,
    "production": {
-    "nanos": 789691,
+    "nanos": 781879,
     "smallAllocs": 52229
    },
    "production_paired": true,
@@ -451,7 +477,7 @@
    ],
    "spans": {
     "construction": {
-     "nanos": 1482,
+     "nanos": 1413,
      "smallAllocs": 30
     },
     "equality": {
@@ -459,24 +485,26 @@
      "smallAllocs": 3
     },
     "independence": {
-     "nanos": 4107,
+     "nanos": 4447,
      "smallAllocs": 18
     },
     "recovery": {
-     "nanos": 17566,
+     "nanos": 17546,
      "smallAllocs": 176
     }
    },
    "translation": -1
   },
   {
-   "certificate_nanos": 27310,
+   "certificate_nanos": 27190,
    "certified": true,
    "degree": 16,
    "family": "swinnerton-dyer",
    "name": "sd4_shift3",
+   "paired_certificate_nanos": 30403,
+   "paired_speedup": 30.0025495948589,
    "production": {
-    "nanos": 864853,
+    "nanos": 883360,
     "smallAllocs": 57363
    },
    "production_paired": true,
@@ -488,32 +516,34 @@
    ],
    "spans": {
     "construction": {
-     "nanos": 5247,
+     "nanos": 5308,
      "smallAllocs": 101
     },
     "equality": {
-     "nanos": 60,
+     "nanos": 80,
      "smallAllocs": 3
     },
     "independence": {
-     "nanos": 4447,
+     "nanos": 4266,
      "smallAllocs": 18
     },
     "recovery": {
-     "nanos": 17556,
+     "nanos": 17536,
      "smallAllocs": 176
     }
    },
    "translation": -3
   },
   {
-   "certificate_nanos": 72557,
+   "certificate_nanos": 69182,
    "certified": true,
    "degree": 32,
    "family": "swinnerton-dyer",
    "name": "sd5",
+   "paired_certificate_nanos": 83714,
+   "paired_speedup": 826.0461452086868,
    "production": {
-    "nanos": 69650821,
+    "nanos": 68853104,
     "smallAllocs": 3266905
    },
    "production_paired": true,
@@ -526,32 +556,34 @@
    ],
    "spans": {
     "construction": {
-     "nanos": 21572,
+     "nanos": 21832,
      "smallAllocs": 439
     },
     "equality": {
-     "nanos": 271,
+     "nanos": 270,
      "smallAllocs": 3
     },
     "independence": {
-     "nanos": 10445,
+     "nanos": 10746,
      "smallAllocs": 34
     },
     "recovery": {
-     "nanos": 40269,
+     "nanos": 36334,
      "smallAllocs": 417
     }
    },
    "translation": 0
   },
   {
-   "certificate_nanos": 124343,
+   "certificate_nanos": 115872,
    "certified": true,
    "degree": 32,
    "family": "swinnerton-dyer",
    "name": "sd5_shift1",
+   "paired_certificate_nanos": 129081,
+   "paired_speedup": 495.2931182745718,
    "production": {
-    "nanos": 64458412,
+    "nanos": 63915604,
     "smallAllocs": 3102327
    },
    "production_paired": true,
@@ -564,32 +596,34 @@
    ],
    "spans": {
     "construction": {
-     "nanos": 57254,
+     "nanos": 54271,
      "smallAllocs": 1213
     },
     "equality": {
-     "nanos": 400,
+     "nanos": 401,
      "smallAllocs": 3
     },
     "independence": {
-     "nanos": 10886,
+     "nanos": 10445,
      "smallAllocs": 34
     },
     "recovery": {
-     "nanos": 55803,
+     "nanos": 50755,
      "smallAllocs": 819
     }
    },
    "translation": -1
   },
   {
-   "certificate_nanos": 124645,
+   "certificate_nanos": 124685,
    "certified": true,
    "degree": 32,
    "family": "swinnerton-dyer",
    "name": "sd5_shift2",
+   "paired_certificate_nanos": 138738,
+   "paired_speedup": 488.79813749657626,
    "production": {
-    "nanos": 67392522,
+    "nanos": 67856607,
     "smallAllocs": 3262635
    },
    "production_paired": true,
@@ -602,32 +636,34 @@
    ],
    "spans": {
     "construction": {
-     "nanos": 61271,
+     "nanos": 60770,
      "smallAllocs": 1300
     },
     "equality": {
-     "nanos": 400,
+     "nanos": 401,
      "smallAllocs": 3
     },
     "independence": {
-     "nanos": 10506,
+     "nanos": 10606,
      "smallAllocs": 34
     },
     "recovery": {
-     "nanos": 52468,
+     "nanos": 52908,
      "smallAllocs": 828
     }
    },
    "translation": -2
   },
   {
-   "certificate_nanos": 288798,
+   "certificate_nanos": 279826,
    "certified": true,
    "degree": 64,
    "family": "swinnerton-dyer",
    "name": "sd6",
+   "paired_certificate_nanos": 333786,
+   "paired_speedup": 23815.94945264331,
    "production": {
-    "nanos": 8058451393,
+    "nanos": 7949430504,
     "smallAllocs": 20015863
    },
    "production_paired": true,
@@ -641,32 +677,34 @@
    ],
    "spans": {
     "construction": {
-     "nanos": 155570,
+     "nanos": 153949,
      "smallAllocs": 2763
     },
     "equality": {
-     "nanos": 491,
+     "nanos": 501,
      "smallAllocs": 3
     },
     "independence": {
-     "nanos": 27120,
+     "nanos": 25337,
      "smallAllocs": 66
     },
     "recovery": {
-     "nanos": 105617,
+     "nanos": 100039,
      "smallAllocs": 1291
     }
    },
    "translation": 0
   },
   {
-   "certificate_nanos": 588413,
+   "certificate_nanos": 586040,
    "certified": true,
    "degree": 64,
    "family": "swinnerton-dyer",
    "name": "sd6_shift1",
+   "paired_certificate_nanos": 644526,
+   "paired_speedup": 34297.11718068783,
    "production": {
-    "nanos": 22332111179,
+    "nanos": 22105383748,
     "smallAllocs": 54934202
    },
    "production_paired": true,
@@ -680,26 +718,26 @@
    ],
    "spans": {
     "construction": {
-     "nanos": 364341,
+     "nanos": 366514,
      "smallAllocs": 7384
     },
     "equality": {
-     "nanos": 841,
+     "nanos": 872,
      "smallAllocs": 3
     },
     "independence": {
-     "nanos": 26820,
+     "nanos": 25678,
      "smallAllocs": 66
     },
     "recovery": {
-     "nanos": 196411,
+     "nanos": 192976,
      "smallAllocs": 3747
     }
    },
    "translation": -1
   },
   {
-   "certificate_nanos": 681290,
+   "certificate_nanos": 667279,
    "certified": true,
    "degree": 64,
    "family": "swinnerton-dyer",
@@ -716,26 +754,26 @@
    ],
    "spans": {
     "construction": {
-     "nanos": 447804,
+     "nanos": 437840,
      "smallAllocs": 8048
     },
     "equality": {
-     "nanos": 871,
+     "nanos": 901,
      "smallAllocs": 3
     },
     "independence": {
-     "nanos": 26409,
+     "nanos": 25427,
      "smallAllocs": 66
     },
     "recovery": {
-     "nanos": 206206,
+     "nanos": 203111,
      "smallAllocs": 3887
     }
    },
    "translation": -5
   },
   {
-   "certificate_nanos": 1272797,
+   "certificate_nanos": 1292996,
    "certified": true,
    "degree": 128,
    "family": "hoeij-zimmermann",
@@ -753,26 +791,26 @@
    ],
    "spans": {
     "construction": {
-     "nanos": 845734,
+     "nanos": 861047,
      "smallAllocs": 12723
     },
     "equality": {
-     "nanos": 1071,
+     "nanos": 991,
      "smallAllocs": 3
     },
     "independence": {
-     "nanos": 61872,
+     "nanos": 61040,
      "smallAllocs": 130
     },
     "recovery": {
-     "nanos": 364120,
+     "nanos": 369918,
      "smallAllocs": 4518
     }
    },
    "translation": 0
   },
   {
-   "certificate_nanos": 1296692,
+   "certificate_nanos": 1290913,
    "certified": true,
    "degree": 128,
    "family": "swinnerton-dyer",
@@ -790,26 +828,26 @@
    ],
    "spans": {
     "construction": {
-     "nanos": 864952,
+     "nanos": 858152,
      "smallAllocs": 12723
     },
     "equality": {
-     "nanos": 1002,
+     "nanos": 1021,
      "smallAllocs": 3
     },
     "independence": {
-     "nanos": 61781,
+     "nanos": 61321,
      "smallAllocs": 130
     },
     "recovery": {
-     "nanos": 368957,
+     "nanos": 370419,
      "smallAllocs": 4518
     }
    },
    "translation": 0
   },
   {
-   "certificate_nanos": 5307720,
+   "certificate_nanos": 5306367,
    "certified": true,
    "degree": 256,
    "family": "hoeij-zimmermann",
@@ -828,26 +866,26 @@
    ],
    "spans": {
     "construction": {
-     "nanos": 3793124,
+     "nanos": 3771190,
      "smallAllocs": 53382
     },
     "equality": {
-     "nanos": 2183,
+     "nanos": 2154,
      "smallAllocs": 3
     },
     "independence": {
-     "nanos": 143984,
+     "nanos": 142972,
      "smallAllocs": 258
     },
     "recovery": {
-     "nanos": 1368429,
+     "nanos": 1390051,
      "smallAllocs": 16941
     }
    },
    "translation": 0
   },
   {
-   "certificate_nanos": 23692791,
+   "certificate_nanos": 24068361,
    "certified": true,
    "degree": 512,
    "family": "hoeij-zimmermann",
@@ -867,19 +905,19 @@
    ],
    "spans": {
     "construction": {
-     "nanos": 17607318,
+     "nanos": 17733600,
      "smallAllocs": 216892
     },
     "equality": {
-     "nanos": 6409,
+     "nanos": 6299,
      "smallAllocs": 3
     },
     "independence": {
-     "nanos": 324711,
+     "nanos": 327155,
      "smallAllocs": 514
     },
     "recovery": {
-     "nanos": 5754353,
+     "nanos": 6001307,
      "smallAllocs": 66081
     }
    },
@@ -922,7 +960,7 @@
    "translation": null
   },
   {
-   "certificate_nanos": 40,
+   "certificate_nanos": 50,
    "certified": false,
    "degree": 1,
    "family": "conway",
@@ -932,14 +970,14 @@
    "radicands": null,
    "spans": {
     "recovery": {
-     "nanos": 40,
+     "nanos": 50,
      "smallAllocs": 3
     }
    },
    "translation": null
   },
   {
-   "certificate_nanos": 70,
+   "certificate_nanos": 40,
    "certified": false,
    "degree": 1,
    "family": "conway",
@@ -949,7 +987,7 @@
    "radicands": null,
    "spans": {
     "recovery": {
-     "nanos": 70,
+     "nanos": 40,
      "smallAllocs": 3
     }
    },
@@ -990,7 +1028,7 @@
    "translation": null
   },
   {
-   "certificate_nanos": 40,
+   "certificate_nanos": 41,
    "certified": false,
    "degree": 1,
    "family": "conway",
@@ -1000,7 +1038,7 @@
    "radicands": null,
    "spans": {
     "recovery": {
-     "nanos": 40,
+     "nanos": 41,
      "smallAllocs": 3
     }
    },
@@ -1024,7 +1062,7 @@
    "translation": null
   },
   {
-   "certificate_nanos": 50,
+   "certificate_nanos": 41,
    "certified": false,
    "degree": 1,
    "family": "conway",
@@ -1034,14 +1072,14 @@
    "radicands": null,
    "spans": {
     "recovery": {
-     "nanos": 50,
+     "nanos": 41,
      "smallAllocs": 3
     }
    },
    "translation": null
   },
   {
-   "certificate_nanos": 140,
+   "certificate_nanos": 120,
    "certified": false,
    "degree": 2,
    "family": "conway",
@@ -1051,7 +1089,7 @@
    "radicands": null,
    "spans": {
     "recovery": {
-     "nanos": 140,
+     "nanos": 120,
      "smallAllocs": 3
     }
    },
@@ -1075,7 +1113,7 @@
    "translation": null
   },
   {
-   "certificate_nanos": 120,
+   "certificate_nanos": 130,
    "certified": false,
    "degree": 2,
    "family": "conway",
@@ -1085,7 +1123,7 @@
    "radicands": null,
    "spans": {
     "recovery": {
-     "nanos": 120,
+     "nanos": 130,
      "smallAllocs": 3
     }
    },
@@ -1109,7 +1147,7 @@
    "translation": null
   },
   {
-   "certificate_nanos": 70,
+   "certificate_nanos": 40,
    "certified": false,
    "degree": 3,
    "family": "chebyshev",
@@ -1119,24 +1157,7 @@
    "radicands": null,
    "spans": {
     "recovery": {
-     "nanos": 70,
-     "smallAllocs": 3
-    }
-   },
-   "translation": null
-  },
-  {
-   "certificate_nanos": 110,
-   "certified": false,
-   "degree": 3,
-   "family": "conway",
-   "name": "conway_p11_n3",
-   "production": null,
-   "production_paired": false,
-   "radicands": null,
-   "spans": {
-    "recovery": {
-     "nanos": 110,
+     "nanos": 40,
      "smallAllocs": 3
     }
    },
@@ -1147,13 +1168,30 @@
    "certified": false,
    "degree": 3,
    "family": "conway",
-   "name": "conway_p13_n3",
+   "name": "conway_p11_n3",
    "production": null,
    "production_paired": false,
    "radicands": null,
    "spans": {
     "recovery": {
      "nanos": 120,
+     "smallAllocs": 3
+    }
+   },
+   "translation": null
+  },
+  {
+   "certificate_nanos": 110,
+   "certified": false,
+   "degree": 3,
+   "family": "conway",
+   "name": "conway_p13_n3",
+   "production": null,
+   "production_paired": false,
+   "radicands": null,
+   "spans": {
+    "recovery": {
+     "nanos": 110,
      "smallAllocs": 3
     }
    },
@@ -1177,7 +1215,7 @@
    "translation": null
   },
   {
-   "certificate_nanos": 160,
+   "certificate_nanos": 111,
    "certified": false,
    "degree": 3,
    "family": "conway",
@@ -1187,14 +1225,14 @@
    "radicands": null,
    "spans": {
     "recovery": {
-     "nanos": 160,
+     "nanos": 111,
      "smallAllocs": 3
     }
    },
    "translation": null
   },
   {
-   "certificate_nanos": 120,
+   "certificate_nanos": 160,
    "certified": false,
    "degree": 3,
    "family": "conway",
@@ -1204,7 +1242,7 @@
    "radicands": null,
    "spans": {
     "recovery": {
-     "nanos": 120,
+     "nanos": 160,
      "smallAllocs": 3
     }
    },
@@ -1245,7 +1283,7 @@
    "translation": null
   },
   {
-   "certificate_nanos": 120,
+   "certificate_nanos": 111,
    "certified": false,
    "degree": 3,
    "family": "conway",
@@ -1255,14 +1293,14 @@
    "radicands": null,
    "spans": {
     "recovery": {
-     "nanos": 120,
+     "nanos": 111,
      "smallAllocs": 3
     }
    },
    "translation": null
   },
   {
-   "certificate_nanos": 120,
+   "certificate_nanos": 100,
    "certified": false,
    "degree": 3,
    "family": "conway",
@@ -1272,14 +1310,14 @@
    "radicands": null,
    "spans": {
     "recovery": {
-     "nanos": 120,
+     "nanos": 100,
      "smallAllocs": 3
     }
    },
    "translation": null
   },
   {
-   "certificate_nanos": 40,
+   "certificate_nanos": 160,
    "certified": false,
    "degree": 3,
    "family": "laguerre",
@@ -1289,14 +1327,14 @@
    "radicands": null,
    "spans": {
     "recovery": {
-     "nanos": 40,
+     "nanos": 160,
      "smallAllocs": 3
     }
    },
    "translation": null
   },
   {
-   "certificate_nanos": 70,
+   "certificate_nanos": 40,
    "certified": false,
    "degree": 3,
    "family": "legendre",
@@ -1306,7 +1344,7 @@
    "radicands": null,
    "spans": {
     "recovery": {
-     "nanos": 70,
+     "nanos": 40,
      "smallAllocs": 3
     }
    },
@@ -1347,7 +1385,7 @@
    "translation": null
   },
   {
-   "certificate_nanos": 5578,
+   "certificate_nanos": 5569,
    "certified": false,
    "degree": 4,
    "family": "conway",
@@ -1357,14 +1395,14 @@
    "radicands": null,
    "spans": {
     "recovery": {
-     "nanos": 5578,
+     "nanos": 5569,
      "smallAllocs": 60
     }
    },
    "translation": null
   },
   {
-   "certificate_nanos": 5698,
+   "certificate_nanos": 5488,
    "certified": false,
    "degree": 4,
    "family": "conway",
@@ -1374,7 +1412,7 @@
    "radicands": null,
    "spans": {
     "recovery": {
-     "nanos": 5698,
+     "nanos": 5488,
      "smallAllocs": 60
     }
    },
@@ -1415,7 +1453,7 @@
    "translation": null
   },
   {
-   "certificate_nanos": 5358,
+   "certificate_nanos": 5408,
    "certified": false,
    "degree": 4,
    "family": "conway",
@@ -1425,14 +1463,14 @@
    "radicands": null,
    "spans": {
     "recovery": {
-     "nanos": 5358,
+     "nanos": 5408,
      "smallAllocs": 60
     }
    },
    "translation": null
   },
   {
-   "certificate_nanos": 5418,
+   "certificate_nanos": 5448,
    "certified": false,
    "degree": 4,
    "family": "conway",
@@ -1442,14 +1480,14 @@
    "radicands": null,
    "spans": {
     "recovery": {
-     "nanos": 5418,
+     "nanos": 5448,
      "smallAllocs": 60
     }
    },
    "translation": null
   },
   {
-   "certificate_nanos": 5728,
+   "certificate_nanos": 5539,
    "certified": false,
    "degree": 4,
    "family": "conway",
@@ -1459,14 +1497,14 @@
    "radicands": null,
    "spans": {
     "recovery": {
-     "nanos": 5728,
+     "nanos": 5539,
      "smallAllocs": 60
     }
    },
    "translation": null
   },
   {
-   "certificate_nanos": 5609,
+   "certificate_nanos": 5538,
    "certified": false,
    "degree": 4,
    "family": "conway",
@@ -1476,14 +1514,14 @@
    "radicands": null,
    "spans": {
     "recovery": {
-     "nanos": 5609,
+     "nanos": 5538,
      "smallAllocs": 60
     }
    },
    "translation": null
   },
   {
-   "certificate_nanos": 6119,
+   "certificate_nanos": 6059,
    "certified": false,
    "degree": 4,
    "family": "conway",
@@ -1493,7 +1531,7 @@
    "radicands": null,
    "spans": {
     "recovery": {
-     "nanos": 6119,
+     "nanos": 6059,
      "smallAllocs": 69
     }
    },
@@ -1517,7 +1555,7 @@
    "translation": null
   },
   {
-   "certificate_nanos": 6490,
+   "certificate_nanos": 6209,
    "certified": false,
    "degree": 4,
    "family": "laguerre",
@@ -1527,14 +1565,14 @@
    "radicands": null,
    "spans": {
     "recovery": {
-     "nanos": 6490,
+     "nanos": 6209,
      "smallAllocs": 77
     }
    },
    "translation": null
   },
   {
-   "certificate_nanos": 51,
+   "certificate_nanos": 40,
    "certified": false,
    "degree": 4,
    "family": "legendre",
@@ -1544,14 +1582,14 @@
    "radicands": null,
    "spans": {
     "recovery": {
-     "nanos": 51,
+     "nanos": 40,
      "smallAllocs": 3
     }
    },
    "translation": null
   },
   {
-   "certificate_nanos": 6160,
+   "certificate_nanos": 5829,
    "certified": false,
    "degree": 4,
    "family": "certificate-boundary",
@@ -1561,7 +1599,7 @@
    "radicands": null,
    "spans": {
     "recovery": {
-     "nanos": 6160,
+     "nanos": 5829,
      "smallAllocs": 69
     }
    },
@@ -1619,28 +1657,11 @@
    "translation": null
   },
   {
-   "certificate_nanos": 140,
-   "certified": false,
-   "degree": 5,
-   "family": "conway",
-   "name": "conway_p11_n5",
-   "production": null,
-   "production_paired": false,
-   "radicands": null,
-   "spans": {
-    "recovery": {
-     "nanos": 140,
-     "smallAllocs": 3
-    }
-   },
-   "translation": null
-  },
-  {
    "certificate_nanos": 110,
    "certified": false,
    "degree": 5,
    "family": "conway",
-   "name": "conway_p13_n5",
+   "name": "conway_p11_n5",
    "production": null,
    "production_paired": false,
    "radicands": null,
@@ -1653,28 +1674,11 @@
    "translation": null
   },
   {
-   "certificate_nanos": 111,
-   "certified": false,
-   "degree": 5,
-   "family": "conway",
-   "name": "conway_p2_n5",
-   "production": null,
-   "production_paired": false,
-   "radicands": null,
-   "spans": {
-    "recovery": {
-     "nanos": 111,
-     "smallAllocs": 3
-    }
-   },
-   "translation": null
-  },
-  {
    "certificate_nanos": 121,
    "certified": false,
    "degree": 5,
    "family": "conway",
-   "name": "conway_p3_n5",
+   "name": "conway_p13_n5",
    "production": null,
    "production_paired": false,
    "radicands": null,
@@ -1687,7 +1691,41 @@
    "translation": null
   },
   {
-   "certificate_nanos": 110,
+   "certificate_nanos": 120,
+   "certified": false,
+   "degree": 5,
+   "family": "conway",
+   "name": "conway_p2_n5",
+   "production": null,
+   "production_paired": false,
+   "radicands": null,
+   "spans": {
+    "recovery": {
+     "nanos": 120,
+     "smallAllocs": 3
+    }
+   },
+   "translation": null
+  },
+  {
+   "certificate_nanos": 111,
+   "certified": false,
+   "degree": 5,
+   "family": "conway",
+   "name": "conway_p3_n5",
+   "production": null,
+   "production_paired": false,
+   "radicands": null,
+   "spans": {
+    "recovery": {
+     "nanos": 111,
+     "smallAllocs": 3
+    }
+   },
+   "translation": null
+  },
+  {
+   "certificate_nanos": 140,
    "certified": false,
    "degree": 5,
    "family": "conway",
@@ -1697,14 +1735,14 @@
    "radicands": null,
    "spans": {
     "recovery": {
-     "nanos": 110,
+     "nanos": 140,
      "smallAllocs": 3
     }
    },
    "translation": null
   },
   {
-   "certificate_nanos": 100,
+   "certificate_nanos": 111,
    "certified": false,
    "degree": 5,
    "family": "conway",
@@ -1714,7 +1752,7 @@
    "radicands": null,
    "spans": {
     "recovery": {
-     "nanos": 100,
+     "nanos": 111,
      "smallAllocs": 3
     }
    },
@@ -1738,7 +1776,7 @@
    "translation": null
   },
   {
-   "certificate_nanos": 130,
+   "certificate_nanos": 141,
    "certified": false,
    "degree": 5,
    "family": "conway",
@@ -1748,7 +1786,41 @@
    "radicands": null,
    "spans": {
     "recovery": {
-     "nanos": 130,
+     "nanos": 141,
+     "smallAllocs": 3
+    }
+   },
+   "translation": null
+  },
+  {
+   "certificate_nanos": 150,
+   "certified": false,
+   "degree": 5,
+   "family": "laguerre",
+   "name": "laguerre_L5",
+   "production": null,
+   "production_paired": false,
+   "radicands": null,
+   "spans": {
+    "recovery": {
+     "nanos": 150,
+     "smallAllocs": 3
+    }
+   },
+   "translation": null
+  },
+  {
+   "certificate_nanos": 70,
+   "certified": false,
+   "degree": 5,
+   "family": "legendre",
+   "name": "legendre_P5",
+   "production": null,
+   "production_paired": false,
+   "radicands": null,
+   "spans": {
+    "recovery": {
+     "nanos": 70,
      "smallAllocs": 3
     }
    },
@@ -1757,9 +1829,9 @@
   {
    "certificate_nanos": 50,
    "certified": false,
-   "degree": 5,
-   "family": "laguerre",
-   "name": "laguerre_L5",
+   "degree": 6,
+   "family": "chebyshev",
+   "name": "chebyshev_T6",
    "production": null,
    "production_paired": false,
    "radicands": null,
@@ -1772,41 +1844,7 @@
    "translation": null
   },
   {
-   "certificate_nanos": 40,
-   "certified": false,
-   "degree": 5,
-   "family": "legendre",
-   "name": "legendre_P5",
-   "production": null,
-   "production_paired": false,
-   "radicands": null,
-   "spans": {
-    "recovery": {
-     "nanos": 40,
-     "smallAllocs": 3
-    }
-   },
-   "translation": null
-  },
-  {
-   "certificate_nanos": 40,
-   "certified": false,
-   "degree": 6,
-   "family": "chebyshev",
-   "name": "chebyshev_T6",
-   "production": null,
-   "production_paired": false,
-   "radicands": null,
-   "spans": {
-    "recovery": {
-     "nanos": 40,
-     "smallAllocs": 3
-    }
-   },
-   "translation": null
-  },
-  {
-   "certificate_nanos": 40,
+   "certificate_nanos": 41,
    "certified": false,
    "degree": 6,
    "family": "chebyshev",
@@ -1816,7 +1854,24 @@
    "radicands": null,
    "spans": {
     "recovery": {
-     "nanos": 40,
+     "nanos": 41,
+     "smallAllocs": 3
+    }
+   },
+   "translation": null
+  },
+  {
+   "certificate_nanos": 160,
+   "certified": false,
+   "degree": 6,
+   "family": "conway",
+   "name": "conway_p11_n6",
+   "production": null,
+   "production_paired": false,
+   "radicands": null,
+   "spans": {
+    "recovery": {
+     "nanos": 160,
      "smallAllocs": 3
     }
    },
@@ -1827,7 +1882,7 @@
    "certified": false,
    "degree": 6,
    "family": "conway",
-   "name": "conway_p11_n6",
+   "name": "conway_p13_n6",
    "production": null,
    "production_paired": false,
    "radicands": null,
@@ -1840,24 +1895,7 @@
    "translation": null
   },
   {
-   "certificate_nanos": 131,
-   "certified": false,
-   "degree": 6,
-   "family": "conway",
-   "name": "conway_p13_n6",
-   "production": null,
-   "production_paired": false,
-   "radicands": null,
-   "spans": {
-    "recovery": {
-     "nanos": 131,
-     "smallAllocs": 3
-    }
-   },
-   "translation": null
-  },
-  {
-   "certificate_nanos": 110,
+   "certificate_nanos": 120,
    "certified": false,
    "degree": 6,
    "family": "conway",
@@ -1867,14 +1905,14 @@
    "radicands": null,
    "spans": {
     "recovery": {
-     "nanos": 110,
+     "nanos": 120,
      "smallAllocs": 3
     }
    },
    "translation": null
   },
   {
-   "certificate_nanos": 110,
+   "certificate_nanos": 120,
    "certified": false,
    "degree": 6,
    "family": "conway",
@@ -1884,7 +1922,7 @@
    "radicands": null,
    "spans": {
     "recovery": {
-     "nanos": 110,
+     "nanos": 120,
      "smallAllocs": 3
     }
    },
@@ -1908,7 +1946,7 @@
    "translation": null
   },
   {
-   "certificate_nanos": 110,
+   "certificate_nanos": 140,
    "certified": false,
    "degree": 6,
    "family": "conway",
@@ -1918,14 +1956,14 @@
    "radicands": null,
    "spans": {
     "recovery": {
-     "nanos": 110,
+     "nanos": 140,
      "smallAllocs": 3
     }
    },
    "translation": null
   },
   {
-   "certificate_nanos": 100,
+   "certificate_nanos": 140,
    "certified": false,
    "degree": 6,
    "family": "conway",
@@ -1935,7 +1973,7 @@
    "radicands": null,
    "spans": {
     "recovery": {
-     "nanos": 100,
+     "nanos": 140,
      "smallAllocs": 3
     }
    },
@@ -1959,28 +1997,11 @@
    "translation": null
   },
   {
-   "certificate_nanos": 120,
+   "certificate_nanos": 110,
    "certified": false,
    "degree": 6,
    "family": "cyclotomic",
    "name": "cyclo_phi7",
-   "production": null,
-   "production_paired": false,
-   "radicands": null,
-   "spans": {
-    "recovery": {
-     "nanos": 120,
-     "smallAllocs": 3
-    }
-   },
-   "translation": null
-  },
-  {
-   "certificate_nanos": 110,
-   "certified": false,
-   "degree": 6,
-   "family": "laguerre",
-   "name": "laguerre_L6",
    "production": null,
    "production_paired": false,
    "radicands": null,
@@ -1993,7 +2014,24 @@
    "translation": null
   },
   {
-   "certificate_nanos": 31,
+   "certificate_nanos": 120,
+   "certified": false,
+   "degree": 6,
+   "family": "laguerre",
+   "name": "laguerre_L6",
+   "production": null,
+   "production_paired": false,
+   "radicands": null,
+   "spans": {
+    "recovery": {
+     "nanos": 120,
+     "smallAllocs": 3
+    }
+   },
+   "translation": null
+  },
+  {
+   "certificate_nanos": 41,
    "certified": false,
    "degree": 6,
    "family": "legendre",
@@ -2003,14 +2041,14 @@
    "radicands": null,
    "spans": {
     "recovery": {
-     "nanos": 31,
+     "nanos": 41,
      "smallAllocs": 3
     }
    },
    "translation": null
   },
   {
-   "certificate_nanos": 69,
+   "certificate_nanos": 60,
    "certified": false,
    "degree": 6,
    "family": "random-products",
@@ -2020,7 +2058,7 @@
    "radicands": null,
    "spans": {
     "recovery": {
-     "nanos": 69,
+     "nanos": 60,
      "smallAllocs": 3
     }
    },
@@ -2044,7 +2082,7 @@
    "translation": null
   },
   {
-   "certificate_nanos": 100,
+   "certificate_nanos": 130,
    "certified": false,
    "degree": 6,
    "family": "cyclotomic-products",
@@ -2054,7 +2092,7 @@
    "radicands": null,
    "spans": {
     "recovery": {
-     "nanos": 100,
+     "nanos": 130,
      "smallAllocs": 3
     }
    },
@@ -2078,7 +2116,7 @@
    "translation": null
   },
   {
-   "certificate_nanos": 40,
+   "certificate_nanos": 41,
    "certified": false,
    "degree": 7,
    "family": "chebyshev",
@@ -2088,7 +2126,7 @@
    "radicands": null,
    "spans": {
     "recovery": {
-     "nanos": 40,
+     "nanos": 41,
      "smallAllocs": 3
     }
    },
@@ -2112,7 +2150,7 @@
    "translation": null
   },
   {
-   "certificate_nanos": 110,
+   "certificate_nanos": 130,
    "certified": false,
    "degree": 7,
    "family": "conway",
@@ -2122,14 +2160,14 @@
    "radicands": null,
    "spans": {
     "recovery": {
-     "nanos": 110,
+     "nanos": 130,
      "smallAllocs": 3
     }
    },
    "translation": null
   },
   {
-   "certificate_nanos": 120,
+   "certificate_nanos": 140,
    "certified": false,
    "degree": 7,
    "family": "conway",
@@ -2139,7 +2177,7 @@
    "radicands": null,
    "spans": {
     "recovery": {
-     "nanos": 120,
+     "nanos": 140,
      "smallAllocs": 3
     }
    },
@@ -2163,28 +2201,11 @@
    "translation": null
   },
   {
-   "certificate_nanos": 100,
-   "certified": false,
-   "degree": 7,
-   "family": "conway",
-   "name": "conway_p521_n7",
-   "production": null,
-   "production_paired": false,
-   "radicands": null,
-   "spans": {
-    "recovery": {
-     "nanos": 100,
-     "smallAllocs": 3
-    }
-   },
-   "translation": null
-  },
-  {
    "certificate_nanos": 120,
    "certified": false,
    "degree": 7,
    "family": "conway",
-   "name": "conway_p5_n7",
+   "name": "conway_p521_n7",
    "production": null,
    "production_paired": false,
    "radicands": null,
@@ -2197,7 +2218,24 @@
    "translation": null
   },
   {
-   "certificate_nanos": 101,
+   "certificate_nanos": 110,
+   "certified": false,
+   "degree": 7,
+   "family": "conway",
+   "name": "conway_p5_n7",
+   "production": null,
+   "production_paired": false,
+   "radicands": null,
+   "spans": {
+    "recovery": {
+     "nanos": 110,
+     "smallAllocs": 3
+    }
+   },
+   "translation": null
+  },
+  {
+   "certificate_nanos": 121,
    "certified": false,
    "degree": 7,
    "family": "conway",
@@ -2207,14 +2245,14 @@
    "radicands": null,
    "spans": {
     "recovery": {
-     "nanos": 101,
+     "nanos": 121,
      "smallAllocs": 3
     }
    },
    "translation": null
   },
   {
-   "certificate_nanos": 140,
+   "certificate_nanos": 131,
    "certified": false,
    "degree": 7,
    "family": "conway",
@@ -2224,14 +2262,14 @@
    "radicands": null,
    "spans": {
     "recovery": {
-     "nanos": 140,
+     "nanos": 131,
      "smallAllocs": 3
     }
    },
    "translation": null
   },
   {
-   "certificate_nanos": 40,
+   "certificate_nanos": 160,
    "certified": false,
    "degree": 7,
    "family": "laguerre",
@@ -2241,7 +2279,7 @@
    "radicands": null,
    "spans": {
     "recovery": {
-     "nanos": 40,
+     "nanos": 160,
      "smallAllocs": 3
     }
    },
@@ -2282,7 +2320,7 @@
    "translation": null
   },
   {
-   "certificate_nanos": 41,
+   "certificate_nanos": 40,
    "certified": false,
    "degree": 8,
    "family": "chebyshev",
@@ -2292,14 +2330,14 @@
    "radicands": null,
    "spans": {
     "recovery": {
-     "nanos": 41,
+     "nanos": 40,
      "smallAllocs": 3
     }
    },
    "translation": null
   },
   {
-   "certificate_nanos": 9965,
+   "certificate_nanos": 9594,
    "certified": false,
    "degree": 8,
    "family": "conway",
@@ -2309,14 +2347,14 @@
    "radicands": null,
    "spans": {
     "recovery": {
-     "nanos": 9965,
+     "nanos": 9594,
      "smallAllocs": 97
     }
    },
    "translation": null
   },
   {
-   "certificate_nanos": 9524,
+   "certificate_nanos": 9454,
    "certified": false,
    "degree": 8,
    "family": "conway",
@@ -2326,14 +2364,14 @@
    "radicands": null,
    "spans": {
     "recovery": {
-     "nanos": 9524,
+     "nanos": 9454,
      "smallAllocs": 97
     }
    },
    "translation": null
   },
   {
-   "certificate_nanos": 9484,
+   "certificate_nanos": 9404,
    "certified": false,
    "degree": 8,
    "family": "conway",
@@ -2343,14 +2381,14 @@
    "radicands": null,
    "spans": {
     "recovery": {
-     "nanos": 9484,
+     "nanos": 9404,
      "smallAllocs": 97
     }
    },
    "translation": null
   },
   {
-   "certificate_nanos": 11027,
+   "certificate_nanos": 9454,
    "certified": false,
    "degree": 8,
    "family": "conway",
@@ -2360,14 +2398,14 @@
    "radicands": null,
    "spans": {
     "recovery": {
-     "nanos": 11027,
+     "nanos": 9454,
      "smallAllocs": 98
     }
    },
    "translation": null
   },
   {
-   "certificate_nanos": 9694,
+   "certificate_nanos": 9574,
    "certified": false,
    "degree": 8,
    "family": "conway",
@@ -2377,14 +2415,14 @@
    "radicands": null,
    "spans": {
     "recovery": {
-     "nanos": 9694,
+     "nanos": 9574,
      "smallAllocs": 97
     }
    },
    "translation": null
   },
   {
-   "certificate_nanos": 9534,
+   "certificate_nanos": 9384,
    "certified": false,
    "degree": 8,
    "family": "conway",
@@ -2394,14 +2432,14 @@
    "radicands": null,
    "spans": {
     "recovery": {
-     "nanos": 9534,
+     "nanos": 9384,
      "smallAllocs": 97
     }
    },
    "translation": null
   },
   {
-   "certificate_nanos": 9294,
+   "certificate_nanos": 9244,
    "certified": false,
    "degree": 8,
    "family": "conway",
@@ -2411,14 +2449,14 @@
    "radicands": null,
    "spans": {
     "recovery": {
-     "nanos": 9294,
+     "nanos": 9244,
      "smallAllocs": 97
     }
    },
    "translation": null
   },
   {
-   "certificate_nanos": 9424,
+   "certificate_nanos": 9354,
    "certified": false,
    "degree": 8,
    "family": "conway",
@@ -2428,75 +2466,7 @@
    "radicands": null,
    "spans": {
     "recovery": {
-     "nanos": 9424,
-     "smallAllocs": 97
-    }
-   },
-   "translation": null
-  },
-  {
-   "certificate_nanos": 150,
-   "certified": false,
-   "degree": 8,
-   "family": "cyclotomic",
-   "name": "cyclo_phi15",
-   "production": null,
-   "production_paired": false,
-   "radicands": null,
-   "spans": {
-    "recovery": {
-     "nanos": 150,
-     "smallAllocs": 3
-    }
-   },
-   "translation": null
-  },
-  {
-   "certificate_nanos": 12669,
-   "certified": false,
-   "degree": 8,
-   "family": "laguerre",
-   "name": "laguerre_L8",
-   "production": null,
-   "production_paired": false,
-   "radicands": null,
-   "spans": {
-    "recovery": {
-     "nanos": 12669,
-     "smallAllocs": 117
-    }
-   },
-   "translation": null
-  },
-  {
-   "certificate_nanos": 70,
-   "certified": false,
-   "degree": 8,
-   "family": "legendre",
-   "name": "legendre_P8",
-   "production": null,
-   "production_paired": false,
-   "radicands": null,
-   "spans": {
-    "recovery": {
-     "nanos": 70,
-     "smallAllocs": 3
-    }
-   },
-   "translation": null
-  },
-  {
-   "certificate_nanos": 10315,
-   "certified": false,
-   "degree": 8,
-   "family": "sd-products",
-   "name": "sd2_x_phi12",
-   "production": null,
-   "production_paired": false,
-   "radicands": null,
-   "spans": {
-    "recovery": {
-     "nanos": 10315,
+     "nanos": 9354,
      "smallAllocs": 97
     }
    },
@@ -2506,6 +2476,74 @@
    "certificate_nanos": 140,
    "certified": false,
    "degree": 8,
+   "family": "cyclotomic",
+   "name": "cyclo_phi15",
+   "production": null,
+   "production_paired": false,
+   "radicands": null,
+   "spans": {
+    "recovery": {
+     "nanos": 140,
+     "smallAllocs": 3
+    }
+   },
+   "translation": null
+  },
+  {
+   "certificate_nanos": 10996,
+   "certified": false,
+   "degree": 8,
+   "family": "laguerre",
+   "name": "laguerre_L8",
+   "production": null,
+   "production_paired": false,
+   "radicands": null,
+   "spans": {
+    "recovery": {
+     "nanos": 10996,
+     "smallAllocs": 117
+    }
+   },
+   "translation": null
+  },
+  {
+   "certificate_nanos": 40,
+   "certified": false,
+   "degree": 8,
+   "family": "legendre",
+   "name": "legendre_P8",
+   "production": null,
+   "production_paired": false,
+   "radicands": null,
+   "spans": {
+    "recovery": {
+     "nanos": 40,
+     "smallAllocs": 3
+    }
+   },
+   "translation": null
+  },
+  {
+   "certificate_nanos": 10406,
+   "certified": false,
+   "degree": 8,
+   "family": "sd-products",
+   "name": "sd2_x_phi12",
+   "production": null,
+   "production_paired": false,
+   "radicands": null,
+   "spans": {
+    "recovery": {
+     "nanos": 10406,
+     "smallAllocs": 97
+    }
+   },
+   "translation": null
+  },
+  {
+   "certificate_nanos": 141,
+   "certified": false,
+   "degree": 8,
    "family": "sd-products",
    "name": "sd2_x_sd2shift1",
    "production": null,
@@ -2513,7 +2551,7 @@
    "radicands": null,
    "spans": {
     "recovery": {
-     "nanos": 140,
+     "nanos": 141,
      "smallAllocs": 3
     }
    },
@@ -2537,28 +2575,11 @@
    "translation": null
   },
   {
-   "certificate_nanos": 60,
-   "certified": false,
-   "degree": 9,
-   "family": "chebyshev",
-   "name": "chebyshev_T9",
-   "production": null,
-   "production_paired": false,
-   "radicands": null,
-   "spans": {
-    "recovery": {
-     "nanos": 60,
-     "smallAllocs": 3
-    }
-   },
-   "translation": null
-  },
-  {
    "certificate_nanos": 80,
    "certified": false,
    "degree": 9,
    "family": "chebyshev",
-   "name": "chebyshev_U9",
+   "name": "chebyshev_T9",
    "production": null,
    "production_paired": false,
    "radicands": null,
@@ -2571,7 +2592,24 @@
    "translation": null
   },
   {
-   "certificate_nanos": 181,
+   "certificate_nanos": 70,
+   "certified": false,
+   "degree": 9,
+   "family": "chebyshev",
+   "name": "chebyshev_U9",
+   "production": null,
+   "production_paired": false,
+   "radicands": null,
+   "spans": {
+    "recovery": {
+     "nanos": 70,
+     "smallAllocs": 3
+    }
+   },
+   "translation": null
+  },
+  {
+   "certificate_nanos": 160,
    "certified": false,
    "degree": 9,
    "family": "conway",
@@ -2581,14 +2619,14 @@
    "radicands": null,
    "spans": {
     "recovery": {
-     "nanos": 181,
+     "nanos": 160,
      "smallAllocs": 3
     }
    },
    "translation": null
   },
   {
-   "certificate_nanos": 150,
+   "certificate_nanos": 181,
    "certified": false,
    "degree": 9,
    "family": "conway",
@@ -2598,7 +2636,7 @@
    "radicands": null,
    "spans": {
     "recovery": {
-     "nanos": 150,
+     "nanos": 181,
      "smallAllocs": 3
     }
    },
@@ -2622,7 +2660,7 @@
    "translation": null
   },
   {
-   "certificate_nanos": 160,
+   "certificate_nanos": 170,
    "certified": false,
    "degree": 9,
    "family": "conway",
@@ -2632,14 +2670,14 @@
    "radicands": null,
    "spans": {
     "recovery": {
-     "nanos": 160,
+     "nanos": 170,
      "smallAllocs": 3
     }
    },
    "translation": null
   },
   {
-   "certificate_nanos": 80,
+   "certificate_nanos": 231,
    "certified": false,
    "degree": 9,
    "family": "laguerre",
@@ -2649,14 +2687,14 @@
    "radicands": null,
    "spans": {
     "recovery": {
-     "nanos": 80,
+     "nanos": 231,
      "smallAllocs": 3
     }
    },
    "translation": null
   },
   {
-   "certificate_nanos": 80,
+   "certificate_nanos": 70,
    "certified": false,
    "degree": 9,
    "family": "legendre",
@@ -2666,7 +2704,7 @@
    "radicands": null,
    "spans": {
     "recovery": {
-     "nanos": 80,
+     "nanos": 70,
      "smallAllocs": 3
     }
    },
@@ -2690,7 +2728,7 @@
    "translation": null
   },
   {
-   "certificate_nanos": 70,
+   "certificate_nanos": 80,
    "certified": false,
    "degree": 9,
    "family": "random-products",
@@ -2700,14 +2738,14 @@
    "radicands": null,
    "spans": {
     "recovery": {
-     "nanos": 70,
+     "nanos": 80,
      "smallAllocs": 3
     }
    },
    "translation": null
   },
   {
-   "certificate_nanos": 100,
+   "certificate_nanos": 81,
    "certified": false,
    "degree": 9,
    "family": "random-products",
@@ -2717,14 +2755,14 @@
    "radicands": null,
    "spans": {
     "recovery": {
-     "nanos": 100,
+     "nanos": 81,
      "smallAllocs": 3
     }
    },
    "translation": null
   },
   {
-   "certificate_nanos": 40,
+   "certificate_nanos": 41,
    "certified": false,
    "degree": 10,
    "family": "chebyshev",
@@ -2734,7 +2772,7 @@
    "radicands": null,
    "spans": {
     "recovery": {
-     "nanos": 40,
+     "nanos": 41,
      "smallAllocs": 3
     }
    },
@@ -2758,7 +2796,7 @@
    "translation": null
   },
   {
-   "certificate_nanos": 150,
+   "certificate_nanos": 140,
    "certified": false,
    "degree": 10,
    "family": "conway",
@@ -2768,14 +2806,14 @@
    "radicands": null,
    "spans": {
     "recovery": {
-     "nanos": 150,
+     "nanos": 140,
      "smallAllocs": 3
     }
    },
    "translation": null
   },
   {
-   "certificate_nanos": 130,
+   "certificate_nanos": 160,
    "certified": false,
    "degree": 10,
    "family": "conway",
@@ -2785,14 +2823,14 @@
    "radicands": null,
    "spans": {
     "recovery": {
-     "nanos": 130,
+     "nanos": 160,
      "smallAllocs": 3
     }
    },
    "translation": null
   },
   {
-   "certificate_nanos": 131,
+   "certificate_nanos": 161,
    "certified": false,
    "degree": 10,
    "family": "conway",
@@ -2802,7 +2840,7 @@
    "radicands": null,
    "spans": {
     "recovery": {
-     "nanos": 131,
+     "nanos": 161,
      "smallAllocs": 3
     }
    },
@@ -2826,7 +2864,7 @@
    "translation": null
   },
   {
-   "certificate_nanos": 131,
+   "certificate_nanos": 140,
    "certified": false,
    "degree": 10,
    "family": "cyclotomic",
@@ -2836,14 +2874,14 @@
    "radicands": null,
    "spans": {
     "recovery": {
-     "nanos": 131,
+     "nanos": 140,
      "smallAllocs": 3
     }
    },
    "translation": null
   },
   {
-   "certificate_nanos": 150,
+   "certificate_nanos": 141,
    "certified": false,
    "degree": 10,
    "family": "laguerre",
@@ -2853,14 +2891,14 @@
    "radicands": null,
    "spans": {
     "recovery": {
-     "nanos": 150,
+     "nanos": 141,
      "smallAllocs": 3
     }
    },
    "translation": null
   },
   {
-   "certificate_nanos": 50,
+   "certificate_nanos": 80,
    "certified": false,
    "degree": 10,
    "family": "legendre",
@@ -2870,14 +2908,14 @@
    "radicands": null,
    "spans": {
     "recovery": {
-     "nanos": 50,
+     "nanos": 80,
      "smallAllocs": 3
     }
    },
    "translation": null
   },
   {
-   "certificate_nanos": 70,
+   "certificate_nanos": 40,
    "certified": false,
    "degree": 10,
    "family": "random-products",
@@ -2887,7 +2925,7 @@
    "radicands": null,
    "spans": {
     "recovery": {
-     "nanos": 70,
+     "nanos": 40,
      "smallAllocs": 3
     }
    },
@@ -2928,7 +2966,7 @@
    "translation": null
   },
   {
-   "certificate_nanos": 160,
+   "certificate_nanos": 140,
    "certified": false,
    "degree": 11,
    "family": "conway",
@@ -2938,14 +2976,14 @@
    "radicands": null,
    "spans": {
     "recovery": {
-     "nanos": 160,
+     "nanos": 140,
      "smallAllocs": 3
     }
    },
    "translation": null
   },
   {
-   "certificate_nanos": 161,
+   "certificate_nanos": 140,
    "certified": false,
    "degree": 11,
    "family": "conway",
@@ -2955,14 +2993,14 @@
    "radicands": null,
    "spans": {
     "recovery": {
-     "nanos": 161,
+     "nanos": 140,
      "smallAllocs": 3
     }
    },
    "translation": null
   },
   {
-   "certificate_nanos": 130,
+   "certificate_nanos": 170,
    "certified": false,
    "degree": 11,
    "family": "conway",
@@ -2972,14 +3010,14 @@
    "radicands": null,
    "spans": {
     "recovery": {
-     "nanos": 130,
+     "nanos": 170,
      "smallAllocs": 3
     }
    },
    "translation": null
   },
   {
-   "certificate_nanos": 40,
+   "certificate_nanos": 181,
    "certified": false,
    "degree": 11,
    "family": "laguerre",
@@ -2989,14 +3027,14 @@
    "radicands": null,
    "spans": {
     "recovery": {
-     "nanos": 40,
+     "nanos": 181,
      "smallAllocs": 3
     }
    },
    "translation": null
   },
   {
-   "certificate_nanos": 60,
+   "certificate_nanos": 100,
    "certified": false,
    "degree": 11,
    "family": "random-products",
@@ -3006,14 +3044,14 @@
    "radicands": null,
    "spans": {
     "recovery": {
-     "nanos": 60,
+     "nanos": 100,
      "smallAllocs": 3
     }
    },
    "translation": null
   },
   {
-   "certificate_nanos": 60,
+   "certificate_nanos": 41,
    "certified": false,
    "degree": 12,
    "family": "chebyshev",
@@ -3023,7 +3061,7 @@
    "radicands": null,
    "spans": {
     "recovery": {
-     "nanos": 60,
+     "nanos": 41,
      "smallAllocs": 3
     }
    },
@@ -3047,7 +3085,7 @@
    "translation": null
   },
   {
-   "certificate_nanos": 140,
+   "certificate_nanos": 141,
    "certified": false,
    "degree": 12,
    "family": "conway",
@@ -3057,14 +3095,14 @@
    "radicands": null,
    "spans": {
     "recovery": {
-     "nanos": 140,
+     "nanos": 141,
      "smallAllocs": 3
     }
    },
    "translation": null
   },
   {
-   "certificate_nanos": 131,
+   "certificate_nanos": 161,
    "certified": false,
    "degree": 12,
    "family": "conway",
@@ -3074,7 +3112,7 @@
    "radicands": null,
    "spans": {
     "recovery": {
-     "nanos": 131,
+     "nanos": 161,
      "smallAllocs": 3
     }
    },
@@ -3098,7 +3136,7 @@
    "translation": null
   },
   {
-   "certificate_nanos": 130,
+   "certificate_nanos": 131,
    "certified": false,
    "degree": 12,
    "family": "conway",
@@ -3108,14 +3146,14 @@
    "radicands": null,
    "spans": {
     "recovery": {
-     "nanos": 130,
+     "nanos": 131,
      "smallAllocs": 3
     }
    },
    "translation": null
   },
   {
-   "certificate_nanos": 140,
+   "certificate_nanos": 151,
    "certified": false,
    "degree": 12,
    "family": "cyclotomic",
@@ -3125,14 +3163,14 @@
    "radicands": null,
    "spans": {
     "recovery": {
-     "nanos": 140,
+     "nanos": 151,
      "smallAllocs": 3
     }
    },
    "translation": null
   },
   {
-   "certificate_nanos": 270,
+   "certificate_nanos": 260,
    "certified": false,
    "degree": 12,
    "family": "laguerre",
@@ -3142,24 +3180,7 @@
    "radicands": null,
    "spans": {
     "recovery": {
-     "nanos": 270,
-     "smallAllocs": 3
-    }
-   },
-   "translation": null
-  },
-  {
-   "certificate_nanos": 80,
-   "certified": false,
-   "degree": 12,
-   "family": "legendre",
-   "name": "legendre_P12",
-   "production": null,
-   "production_paired": false,
-   "radicands": null,
-   "spans": {
-    "recovery": {
-     "nanos": 80,
+     "nanos": 260,
      "smallAllocs": 3
     }
    },
@@ -3169,8 +3190,8 @@
    "certificate_nanos": 70,
    "certified": false,
    "degree": 12,
-   "family": "random-products",
-   "name": "randprod_09",
+   "family": "legendre",
+   "name": "legendre_P12",
    "production": null,
    "production_paired": false,
    "radicands": null,
@@ -3187,7 +3208,7 @@
    "certified": false,
    "degree": 12,
    "family": "random-products",
-   "name": "randprod_14",
+   "name": "randprod_09",
    "production": null,
    "production_paired": false,
    "radicands": null,
@@ -3200,7 +3221,24 @@
    "translation": null
   },
   {
-   "certificate_nanos": 161,
+   "certificate_nanos": 100,
+   "certified": false,
+   "degree": 12,
+   "family": "random-products",
+   "name": "randprod_14",
+   "production": null,
+   "production_paired": false,
+   "radicands": null,
+   "spans": {
+    "recovery": {
+     "nanos": 100,
+     "smallAllocs": 3
+    }
+   },
+   "translation": null
+  },
+  {
+   "certificate_nanos": 170,
    "certified": false,
    "degree": 12,
    "family": "wilkinson",
@@ -3210,24 +3248,7 @@
    "radicands": null,
    "spans": {
     "recovery": {
-     "nanos": 161,
-     "smallAllocs": 3
-    }
-   },
-   "translation": null
-  },
-  {
-   "certificate_nanos": 130,
-   "certified": false,
-   "degree": 12,
-   "family": "cyclotomic-products",
-   "name": "xpow12_minus1",
-   "production": null,
-   "production_paired": false,
-   "radicands": null,
-   "spans": {
-    "recovery": {
-     "nanos": 130,
+     "nanos": 170,
      "smallAllocs": 3
     }
    },
@@ -3236,9 +3257,9 @@
   {
    "certificate_nanos": 150,
    "certified": false,
-   "degree": 13,
-   "family": "conway",
-   "name": "conway_p2_n13",
+   "degree": 12,
+   "family": "cyclotomic-products",
+   "name": "xpow12_minus1",
    "production": null,
    "production_paired": false,
    "radicands": null,
@@ -3251,11 +3272,45 @@
    "translation": null
   },
   {
-   "certificate_nanos": 131,
+   "certificate_nanos": 140,
+   "certified": false,
+   "degree": 13,
+   "family": "conway",
+   "name": "conway_p2_n13",
+   "production": null,
+   "production_paired": false,
+   "radicands": null,
+   "spans": {
+    "recovery": {
+     "nanos": 140,
+     "smallAllocs": 3
+    }
+   },
+   "translation": null
+  },
+  {
+   "certificate_nanos": 130,
    "certified": false,
    "degree": 13,
    "family": "conway",
    "name": "conway_p3_n13",
+   "production": null,
+   "production_paired": false,
+   "radicands": null,
+   "spans": {
+    "recovery": {
+     "nanos": 130,
+     "smallAllocs": 3
+    }
+   },
+   "translation": null
+  },
+  {
+   "certificate_nanos": 131,
+   "certified": false,
+   "degree": 13,
+   "family": "conway",
+   "name": "conway_p5_n13",
    "production": null,
    "production_paired": false,
    "radicands": null,
@@ -3272,7 +3327,7 @@
    "certified": false,
    "degree": 13,
    "family": "conway",
-   "name": "conway_p5_n13",
+   "name": "conway_p7_n13",
    "production": null,
    "production_paired": false,
    "radicands": null,
@@ -3285,24 +3340,7 @@
    "translation": null
   },
   {
-   "certificate_nanos": 171,
-   "certified": false,
-   "degree": 13,
-   "family": "conway",
-   "name": "conway_p7_n13",
-   "production": null,
-   "production_paired": false,
-   "radicands": null,
-   "spans": {
-    "recovery": {
-     "nanos": 171,
-     "smallAllocs": 3
-    }
-   },
-   "translation": null
-  },
-  {
-   "certificate_nanos": 40,
+   "certificate_nanos": 611,
    "certified": false,
    "degree": 13,
    "family": "laguerre",
@@ -3312,8 +3350,8 @@
    "radicands": null,
    "spans": {
     "recovery": {
-     "nanos": 40,
-     "smallAllocs": 3
+     "nanos": 611,
+     "smallAllocs": 10
     }
    },
    "translation": null
@@ -3336,7 +3374,7 @@
    "translation": null
   },
   {
-   "certificate_nanos": 80,
+   "certificate_nanos": 40,
    "certified": false,
    "degree": 13,
    "family": "random-products",
@@ -3346,14 +3384,14 @@
    "radicands": null,
    "spans": {
     "recovery": {
-     "nanos": 80,
+     "nanos": 40,
      "smallAllocs": 3
     }
    },
    "translation": null
   },
   {
-   "certificate_nanos": 40,
+   "certificate_nanos": 110,
    "certified": false,
    "degree": 13,
    "family": "random-products",
@@ -3363,14 +3401,14 @@
    "radicands": null,
    "spans": {
     "recovery": {
-     "nanos": 40,
+     "nanos": 110,
      "smallAllocs": 3
     }
    },
    "translation": null
   },
   {
-   "certificate_nanos": 40,
+   "certificate_nanos": 171,
    "certified": false,
    "degree": 13,
    "family": "random-products",
@@ -3380,24 +3418,7 @@
    "radicands": null,
    "spans": {
     "recovery": {
-     "nanos": 40,
-     "smallAllocs": 3
-    }
-   },
-   "translation": null
-  },
-  {
-   "certificate_nanos": 50,
-   "certified": false,
-   "degree": 13,
-   "family": "random-products",
-   "name": "randprod_28",
-   "production": null,
-   "production_paired": false,
-   "radicands": null,
-   "spans": {
-    "recovery": {
-     "nanos": 50,
+     "nanos": 171,
      "smallAllocs": 3
     }
    },
@@ -3408,13 +3429,30 @@
    "certified": false,
    "degree": 13,
    "family": "random-products",
-   "name": "randprod_29",
+   "name": "randprod_28",
    "production": null,
    "production_paired": false,
    "radicands": null,
    "spans": {
     "recovery": {
      "nanos": 40,
+     "smallAllocs": 3
+    }
+   },
+   "translation": null
+  },
+  {
+   "certificate_nanos": 110,
+   "certified": false,
+   "degree": 13,
+   "family": "random-products",
+   "name": "randprod_29",
+   "production": null,
+   "production_paired": false,
+   "radicands": null,
+   "spans": {
+    "recovery": {
+     "nanos": 110,
      "smallAllocs": 3
     }
    },
@@ -3438,7 +3476,7 @@
    "translation": null
   },
   {
-   "certificate_nanos": 131,
+   "certificate_nanos": 130,
    "certified": false,
    "degree": 14,
    "family": "conway",
@@ -3448,7 +3486,7 @@
    "radicands": null,
    "spans": {
     "recovery": {
-     "nanos": 131,
+     "nanos": 130,
      "smallAllocs": 3
     }
    },
@@ -3472,7 +3510,7 @@
    "translation": null
   },
   {
-   "certificate_nanos": 141,
+   "certificate_nanos": 130,
    "certified": false,
    "degree": 14,
    "family": "conway",
@@ -3482,14 +3520,14 @@
    "radicands": null,
    "spans": {
     "recovery": {
-     "nanos": 141,
+     "nanos": 130,
      "smallAllocs": 3
     }
    },
    "translation": null
   },
   {
-   "certificate_nanos": 161,
+   "certificate_nanos": 140,
    "certified": false,
    "degree": 14,
    "family": "laguerre",
@@ -3499,14 +3537,14 @@
    "radicands": null,
    "spans": {
     "recovery": {
-     "nanos": 161,
+     "nanos": 140,
      "smallAllocs": 3
     }
    },
    "translation": null
   },
   {
-   "certificate_nanos": 40,
+   "certificate_nanos": 70,
    "certified": false,
    "degree": 14,
    "family": "legendre",
@@ -3516,7 +3554,7 @@
    "radicands": null,
    "spans": {
     "recovery": {
-     "nanos": 40,
+     "nanos": 70,
      "smallAllocs": 3
     }
    },
@@ -3540,7 +3578,7 @@
    "translation": null
   },
   {
-   "certificate_nanos": 70,
+   "certificate_nanos": 40,
    "certified": false,
    "degree": 14,
    "family": "random-products",
@@ -3550,14 +3588,14 @@
    "radicands": null,
    "spans": {
     "recovery": {
-     "nanos": 70,
+     "nanos": 40,
      "smallAllocs": 3
     }
    },
    "translation": null
   },
   {
-   "certificate_nanos": 131,
+   "certificate_nanos": 140,
    "certified": false,
    "degree": 14,
    "family": "wilkinson",
@@ -3567,14 +3605,14 @@
    "radicands": null,
    "spans": {
     "recovery": {
-     "nanos": 131,
+     "nanos": 140,
      "smallAllocs": 3
     }
    },
    "translation": null
   },
   {
-   "certificate_nanos": 70,
+   "certificate_nanos": 40,
    "certified": false,
    "degree": 15,
    "family": "chebyshev",
@@ -3584,7 +3622,7 @@
    "radicands": null,
    "spans": {
     "recovery": {
-     "nanos": 70,
+     "nanos": 40,
      "smallAllocs": 3
     }
    },
@@ -3608,45 +3646,11 @@
    "translation": null
   },
   {
-   "certificate_nanos": 130,
-   "certified": false,
-   "degree": 15,
-   "family": "conway",
-   "name": "conway_p2_n15",
-   "production": null,
-   "production_paired": false,
-   "radicands": null,
-   "spans": {
-    "recovery": {
-     "nanos": 130,
-     "smallAllocs": 3
-    }
-   },
-   "translation": null
-  },
-  {
-   "certificate_nanos": 130,
-   "certified": false,
-   "degree": 15,
-   "family": "conway",
-   "name": "conway_p3_n15",
-   "production": null,
-   "production_paired": false,
-   "radicands": null,
-   "spans": {
-    "recovery": {
-     "nanos": 130,
-     "smallAllocs": 3
-    }
-   },
-   "translation": null
-  },
-  {
    "certificate_nanos": 140,
    "certified": false,
    "degree": 15,
    "family": "conway",
-   "name": "conway_p5_n15",
+   "name": "conway_p2_n15",
    "production": null,
    "production_paired": false,
    "radicands": null,
@@ -3659,7 +3663,41 @@
    "translation": null
   },
   {
-   "certificate_nanos": 130,
+   "certificate_nanos": 140,
+   "certified": false,
+   "degree": 15,
+   "family": "conway",
+   "name": "conway_p3_n15",
+   "production": null,
+   "production_paired": false,
+   "radicands": null,
+   "spans": {
+    "recovery": {
+     "nanos": 140,
+     "smallAllocs": 3
+    }
+   },
+   "translation": null
+  },
+  {
+   "certificate_nanos": 161,
+   "certified": false,
+   "degree": 15,
+   "family": "conway",
+   "name": "conway_p5_n15",
+   "production": null,
+   "production_paired": false,
+   "radicands": null,
+   "spans": {
+    "recovery": {
+     "nanos": 161,
+     "smallAllocs": 3
+    }
+   },
+   "translation": null
+  },
+  {
+   "certificate_nanos": 140,
    "certified": false,
    "degree": 15,
    "family": "conway",
@@ -3669,14 +3707,14 @@
    "radicands": null,
    "spans": {
     "recovery": {
-     "nanos": 130,
+     "nanos": 140,
      "smallAllocs": 3
     }
    },
    "translation": null
   },
   {
-   "certificate_nanos": 40,
+   "certificate_nanos": 681,
    "certified": false,
    "degree": 15,
    "family": "laguerre",
@@ -3686,14 +3724,14 @@
    "radicands": null,
    "spans": {
     "recovery": {
-     "nanos": 40,
-     "smallAllocs": 3
+     "nanos": 681,
+     "smallAllocs": 13
     }
    },
    "translation": null
   },
   {
-   "certificate_nanos": 90,
+   "certificate_nanos": 41,
    "certified": false,
    "degree": 15,
    "family": "random-products",
@@ -3703,7 +3741,7 @@
    "radicands": null,
    "spans": {
     "recovery": {
-     "nanos": 90,
+     "nanos": 41,
      "smallAllocs": 3
     }
    },
@@ -3727,7 +3765,7 @@
    "translation": null
   },
   {
-   "certificate_nanos": 50,
+   "certificate_nanos": 71,
    "certified": false,
    "degree": 15,
    "family": "random-products",
@@ -3737,14 +3775,14 @@
    "radicands": null,
    "spans": {
     "recovery": {
-     "nanos": 50,
+     "nanos": 71,
      "smallAllocs": 3
     }
    },
    "translation": null
   },
   {
-   "certificate_nanos": 130,
+   "certificate_nanos": 151,
    "certified": false,
    "degree": 15,
    "family": "cyclotomic-products",
@@ -3754,24 +3792,7 @@
    "radicands": null,
    "spans": {
     "recovery": {
-     "nanos": 130,
-     "smallAllocs": 3
-    }
-   },
-   "translation": null
-  },
-  {
-   "certificate_nanos": 50,
-   "certified": false,
-   "degree": 16,
-   "family": "chebyshev",
-   "name": "chebyshev_T16",
-   "production": null,
-   "production_paired": false,
-   "radicands": null,
-   "spans": {
-    "recovery": {
-     "nanos": 50,
+     "nanos": 151,
      "smallAllocs": 3
     }
    },
@@ -3782,7 +3803,7 @@
    "certified": false,
    "degree": 16,
    "family": "chebyshev",
-   "name": "chebyshev_U16",
+   "name": "chebyshev_T16",
    "production": null,
    "production_paired": false,
    "radicands": null,
@@ -3795,7 +3816,24 @@
    "translation": null
   },
   {
-   "certificate_nanos": 17126,
+   "certificate_nanos": 70,
+   "certified": false,
+   "degree": 16,
+   "family": "chebyshev",
+   "name": "chebyshev_U16",
+   "production": null,
+   "production_paired": false,
+   "radicands": null,
+   "spans": {
+    "recovery": {
+     "nanos": 70,
+     "smallAllocs": 3
+    }
+   },
+   "translation": null
+  },
+  {
+   "certificate_nanos": 16975,
    "certified": false,
    "degree": 16,
    "family": "conway",
@@ -3810,26 +3848,26 @@
    ],
    "spans": {
     "construction": {
-     "nanos": 1011,
+     "nanos": 1002,
      "smallAllocs": 30
     },
     "equality": {
-     "nanos": 70,
+     "nanos": 90,
      "smallAllocs": 3
     },
     "independence": {
-     "nanos": 441,
+     "nanos": 390,
      "smallAllocs": 4
     },
     "recovery": {
-     "nanos": 15604,
+     "nanos": 15493,
      "smallAllocs": 155
     }
    },
    "translation": 0
   },
   {
-   "certificate_nanos": 17124,
+   "certificate_nanos": 17086,
    "certified": false,
    "degree": 16,
    "family": "conway",
@@ -3844,7 +3882,7 @@
    ],
    "spans": {
     "construction": {
-     "nanos": 991,
+     "nanos": 941,
      "smallAllocs": 30
     },
     "equality": {
@@ -3852,18 +3890,18 @@
      "smallAllocs": 3
     },
     "independence": {
-     "nanos": 410,
+     "nanos": 431,
      "smallAllocs": 4
     },
     "recovery": {
-     "nanos": 15653,
+     "nanos": 15644,
      "smallAllocs": 155
     }
    },
    "translation": 0
   },
   {
-   "certificate_nanos": 14702,
+   "certificate_nanos": 14542,
    "certified": false,
    "degree": 16,
    "family": "conway",
@@ -3873,14 +3911,14 @@
    "radicands": null,
    "spans": {
     "recovery": {
-     "nanos": 14702,
+     "nanos": 14542,
      "smallAllocs": 146
     }
    },
    "translation": null
   },
   {
-   "certificate_nanos": 14872,
+   "certificate_nanos": 14552,
    "certified": false,
    "degree": 16,
    "family": "conway",
@@ -3890,8 +3928,110 @@
    "radicands": null,
    "spans": {
     "recovery": {
-     "nanos": 14872,
+     "nanos": 14552,
      "smallAllocs": 146
+    }
+   },
+   "translation": null
+  },
+  {
+   "certificate_nanos": 150,
+   "certified": false,
+   "degree": 16,
+   "family": "cyclotomic-products",
+   "name": "cyclo_phi12_x_phi13",
+   "production": null,
+   "production_paired": false,
+   "radicands": null,
+   "spans": {
+    "recovery": {
+     "nanos": 150,
+     "smallAllocs": 3
+    }
+   },
+   "translation": null
+  },
+  {
+   "certificate_nanos": 170,
+   "certified": false,
+   "degree": 16,
+   "family": "cyclotomic",
+   "name": "cyclo_phi17",
+   "production": null,
+   "production_paired": false,
+   "radicands": null,
+   "spans": {
+    "recovery": {
+     "nanos": 170,
+     "smallAllocs": 3
+    }
+   },
+   "translation": null
+  },
+  {
+   "certificate_nanos": 150,
+   "certified": false,
+   "degree": 16,
+   "family": "cyclotomic-products",
+   "name": "cyclo_phi7_x_phi11",
+   "production": null,
+   "production_paired": false,
+   "radicands": null,
+   "spans": {
+    "recovery": {
+     "nanos": 150,
+     "smallAllocs": 3
+    }
+   },
+   "translation": null
+  },
+  {
+   "certificate_nanos": 23825,
+   "certified": false,
+   "degree": 16,
+   "family": "laguerre",
+   "name": "laguerre_L16",
+   "production": null,
+   "production_paired": false,
+   "radicands": null,
+   "spans": {
+    "recovery": {
+     "nanos": 23825,
+     "smallAllocs": 295
+    }
+   },
+   "translation": null
+  },
+  {
+   "certificate_nanos": 60,
+   "certified": false,
+   "degree": 16,
+   "family": "legendre",
+   "name": "legendre_P16",
+   "production": null,
+   "production_paired": false,
+   "radicands": null,
+   "spans": {
+    "recovery": {
+     "nanos": 60,
+     "smallAllocs": 3
+    }
+   },
+   "translation": null
+  },
+  {
+   "certificate_nanos": 71,
+   "certified": false,
+   "degree": 16,
+   "family": "random-products",
+   "name": "randprod_27",
+   "production": null,
+   "production_paired": false,
+   "radicands": null,
+   "spans": {
+    "recovery": {
+     "nanos": 71,
+     "smallAllocs": 3
     }
    },
    "translation": null
@@ -3900,8 +4040,8 @@
    "certificate_nanos": 140,
    "certified": false,
    "degree": 16,
-   "family": "cyclotomic-products",
-   "name": "cyclo_phi12_x_phi13",
+   "family": "sd-products",
+   "name": "sd3_x_phi15",
    "production": null,
    "production_paired": false,
    "radicands": null,
@@ -3914,109 +4054,7 @@
    "translation": null
   },
   {
-   "certificate_nanos": 130,
-   "certified": false,
-   "degree": 16,
-   "family": "cyclotomic",
-   "name": "cyclo_phi17",
-   "production": null,
-   "production_paired": false,
-   "radicands": null,
-   "spans": {
-    "recovery": {
-     "nanos": 130,
-     "smallAllocs": 3
-    }
-   },
-   "translation": null
-  },
-  {
-   "certificate_nanos": 141,
-   "certified": false,
-   "degree": 16,
-   "family": "cyclotomic-products",
-   "name": "cyclo_phi7_x_phi11",
-   "production": null,
-   "production_paired": false,
-   "radicands": null,
-   "spans": {
-    "recovery": {
-     "nanos": 141,
-     "smallAllocs": 3
-    }
-   },
-   "translation": null
-  },
-  {
-   "certificate_nanos": 23835,
-   "certified": false,
-   "degree": 16,
-   "family": "laguerre",
-   "name": "laguerre_L16",
-   "production": null,
-   "production_paired": false,
-   "radicands": null,
-   "spans": {
-    "recovery": {
-     "nanos": 23835,
-     "smallAllocs": 295
-    }
-   },
-   "translation": null
-  },
-  {
-   "certificate_nanos": 40,
-   "certified": false,
-   "degree": 16,
-   "family": "legendre",
-   "name": "legendre_P16",
-   "production": null,
-   "production_paired": false,
-   "radicands": null,
-   "spans": {
-    "recovery": {
-     "nanos": 40,
-     "smallAllocs": 3
-    }
-   },
-   "translation": null
-  },
-  {
-   "certificate_nanos": 50,
-   "certified": false,
-   "degree": 16,
-   "family": "random-products",
-   "name": "randprod_27",
-   "production": null,
-   "production_paired": false,
-   "radicands": null,
-   "spans": {
-    "recovery": {
-     "nanos": 50,
-     "smallAllocs": 3
-    }
-   },
-   "translation": null
-  },
-  {
-   "certificate_nanos": 131,
-   "certified": false,
-   "degree": 16,
-   "family": "sd-products",
-   "name": "sd3_x_phi15",
-   "production": null,
-   "production_paired": false,
-   "radicands": null,
-   "spans": {
-    "recovery": {
-     "nanos": 131,
-     "smallAllocs": 3
-    }
-   },
-   "translation": null
-  },
-  {
-   "certificate_nanos": 16545,
+   "certificate_nanos": 16565,
    "certified": false,
    "degree": 16,
    "family": "sd-products",
@@ -4026,14 +4064,14 @@
    "radicands": null,
    "spans": {
     "recovery": {
-     "nanos": 16545,
+     "nanos": 16565,
      "smallAllocs": 146
     }
    },
    "translation": null
   },
   {
-   "certificate_nanos": 151,
+   "certificate_nanos": 140,
    "certified": false,
    "degree": 16,
    "family": "sd-products",
@@ -4043,14 +4081,14 @@
    "radicands": null,
    "spans": {
     "recovery": {
-     "nanos": 151,
+     "nanos": 140,
      "smallAllocs": 3
     }
    },
    "translation": null
   },
   {
-   "certificate_nanos": 160,
+   "certificate_nanos": 170,
    "certified": false,
    "degree": 16,
    "family": "wilkinson",
@@ -4060,7 +4098,7 @@
    "radicands": null,
    "spans": {
     "recovery": {
-     "nanos": 160,
+     "nanos": 170,
      "smallAllocs": 3
     }
    },
@@ -4101,7 +4139,7 @@
    "translation": null
   },
   {
-   "certificate_nanos": 150,
+   "certificate_nanos": 140,
    "certified": false,
    "degree": 17,
    "family": "conway",
@@ -4111,7 +4149,7 @@
    "radicands": null,
    "spans": {
     "recovery": {
-     "nanos": 150,
+     "nanos": 140,
      "smallAllocs": 3
     }
    },
@@ -4135,215 +4173,11 @@
    "translation": null
   },
   {
-   "certificate_nanos": 50,
+   "certificate_nanos": 40,
    "certified": false,
    "degree": 17,
    "family": "random-products",
    "name": "randprod_11",
-   "production": null,
-   "production_paired": false,
-   "radicands": null,
-   "spans": {
-    "recovery": {
-     "nanos": 50,
-     "smallAllocs": 3
-    }
-   },
-   "translation": null
-  },
-  {
-   "certificate_nanos": 50,
-   "certified": false,
-   "degree": 18,
-   "family": "chebyshev",
-   "name": "chebyshev_T18",
-   "production": null,
-   "production_paired": false,
-   "radicands": null,
-   "spans": {
-    "recovery": {
-     "nanos": 50,
-     "smallAllocs": 3
-    }
-   },
-   "translation": null
-  },
-  {
-   "certificate_nanos": 50,
-   "certified": false,
-   "degree": 18,
-   "family": "chebyshev",
-   "name": "chebyshev_U18",
-   "production": null,
-   "production_paired": false,
-   "radicands": null,
-   "spans": {
-    "recovery": {
-     "nanos": 50,
-     "smallAllocs": 3
-    }
-   },
-   "translation": null
-  },
-  {
-   "certificate_nanos": 131,
-   "certified": false,
-   "degree": 18,
-   "family": "conway",
-   "name": "conway_p2_n18",
-   "production": null,
-   "production_paired": false,
-   "radicands": null,
-   "spans": {
-    "recovery": {
-     "nanos": 131,
-     "smallAllocs": 3
-    }
-   },
-   "translation": null
-  },
-  {
-   "certificate_nanos": 130,
-   "certified": false,
-   "degree": 18,
-   "family": "conway",
-   "name": "conway_p3_n18",
-   "production": null,
-   "production_paired": false,
-   "radicands": null,
-   "spans": {
-    "recovery": {
-     "nanos": 130,
-     "smallAllocs": 3
-    }
-   },
-   "translation": null
-  },
-  {
-   "certificate_nanos": 141,
-   "certified": false,
-   "degree": 18,
-   "family": "conway",
-   "name": "conway_p5_n18",
-   "production": null,
-   "production_paired": false,
-   "radicands": null,
-   "spans": {
-    "recovery": {
-     "nanos": 141,
-     "smallAllocs": 3
-    }
-   },
-   "translation": null
-  },
-  {
-   "certificate_nanos": 160,
-   "certified": false,
-   "degree": 18,
-   "family": "conway",
-   "name": "conway_p7_n18",
-   "production": null,
-   "production_paired": false,
-   "radicands": null,
-   "spans": {
-    "recovery": {
-     "nanos": 160,
-     "smallAllocs": 3
-    }
-   },
-   "translation": null
-  },
-  {
-   "certificate_nanos": 141,
-   "certified": false,
-   "degree": 18,
-   "family": "cyclotomic",
-   "name": "cyclo_phi19",
-   "production": null,
-   "production_paired": false,
-   "radicands": null,
-   "spans": {
-    "recovery": {
-     "nanos": 141,
-     "smallAllocs": 3
-    }
-   },
-   "translation": null
-  },
-  {
-   "certificate_nanos": 181,
-   "certified": false,
-   "degree": 18,
-   "family": "laguerre",
-   "name": "laguerre_L18",
-   "production": null,
-   "production_paired": false,
-   "radicands": null,
-   "spans": {
-    "recovery": {
-     "nanos": 181,
-     "smallAllocs": 3
-    }
-   },
-   "translation": null
-  },
-  {
-   "certificate_nanos": 50,
-   "certified": false,
-   "degree": 18,
-   "family": "legendre",
-   "name": "legendre_P18",
-   "production": null,
-   "production_paired": false,
-   "radicands": null,
-   "spans": {
-    "recovery": {
-     "nanos": 50,
-     "smallAllocs": 3
-    }
-   },
-   "translation": null
-  },
-  {
-   "certificate_nanos": 80,
-   "certified": false,
-   "degree": 18,
-   "family": "random-products",
-   "name": "randprod_00",
-   "production": null,
-   "production_paired": false,
-   "radicands": null,
-   "spans": {
-    "recovery": {
-     "nanos": 80,
-     "smallAllocs": 3
-    }
-   },
-   "translation": null
-  },
-  {
-   "certificate_nanos": 50,
-   "certified": false,
-   "degree": 18,
-   "family": "random-products",
-   "name": "randprod_03",
-   "production": null,
-   "production_paired": false,
-   "radicands": null,
-   "spans": {
-    "recovery": {
-     "nanos": 50,
-     "smallAllocs": 3
-    }
-   },
-   "translation": null
-  },
-  {
-   "certificate_nanos": 40,
-   "certified": false,
-   "degree": 18,
-   "family": "random-products",
-   "name": "randprod_12",
    "production": null,
    "production_paired": false,
    "radicands": null,
@@ -4356,7 +4190,211 @@
    "translation": null
   },
   {
-   "certificate_nanos": 70,
+   "certificate_nanos": 40,
+   "certified": false,
+   "degree": 18,
+   "family": "chebyshev",
+   "name": "chebyshev_T18",
+   "production": null,
+   "production_paired": false,
+   "radicands": null,
+   "spans": {
+    "recovery": {
+     "nanos": 40,
+     "smallAllocs": 3
+    }
+   },
+   "translation": null
+  },
+  {
+   "certificate_nanos": 60,
+   "certified": false,
+   "degree": 18,
+   "family": "chebyshev",
+   "name": "chebyshev_U18",
+   "production": null,
+   "production_paired": false,
+   "radicands": null,
+   "spans": {
+    "recovery": {
+     "nanos": 60,
+     "smallAllocs": 3
+    }
+   },
+   "translation": null
+  },
+  {
+   "certificate_nanos": 141,
+   "certified": false,
+   "degree": 18,
+   "family": "conway",
+   "name": "conway_p2_n18",
+   "production": null,
+   "production_paired": false,
+   "radicands": null,
+   "spans": {
+    "recovery": {
+     "nanos": 141,
+     "smallAllocs": 3
+    }
+   },
+   "translation": null
+  },
+  {
+   "certificate_nanos": 140,
+   "certified": false,
+   "degree": 18,
+   "family": "conway",
+   "name": "conway_p3_n18",
+   "production": null,
+   "production_paired": false,
+   "radicands": null,
+   "spans": {
+    "recovery": {
+     "nanos": 140,
+     "smallAllocs": 3
+    }
+   },
+   "translation": null
+  },
+  {
+   "certificate_nanos": 160,
+   "certified": false,
+   "degree": 18,
+   "family": "conway",
+   "name": "conway_p5_n18",
+   "production": null,
+   "production_paired": false,
+   "radicands": null,
+   "spans": {
+    "recovery": {
+     "nanos": 160,
+     "smallAllocs": 3
+    }
+   },
+   "translation": null
+  },
+  {
+   "certificate_nanos": 140,
+   "certified": false,
+   "degree": 18,
+   "family": "conway",
+   "name": "conway_p7_n18",
+   "production": null,
+   "production_paired": false,
+   "radicands": null,
+   "spans": {
+    "recovery": {
+     "nanos": 140,
+     "smallAllocs": 3
+    }
+   },
+   "translation": null
+  },
+  {
+   "certificate_nanos": 140,
+   "certified": false,
+   "degree": 18,
+   "family": "cyclotomic",
+   "name": "cyclo_phi19",
+   "production": null,
+   "production_paired": false,
+   "radicands": null,
+   "spans": {
+    "recovery": {
+     "nanos": 140,
+     "smallAllocs": 3
+    }
+   },
+   "translation": null
+  },
+  {
+   "certificate_nanos": 130,
+   "certified": false,
+   "degree": 18,
+   "family": "laguerre",
+   "name": "laguerre_L18",
+   "production": null,
+   "production_paired": false,
+   "radicands": null,
+   "spans": {
+    "recovery": {
+     "nanos": 130,
+     "smallAllocs": 3
+    }
+   },
+   "translation": null
+  },
+  {
+   "certificate_nanos": 60,
+   "certified": false,
+   "degree": 18,
+   "family": "legendre",
+   "name": "legendre_P18",
+   "production": null,
+   "production_paired": false,
+   "radicands": null,
+   "spans": {
+    "recovery": {
+     "nanos": 60,
+     "smallAllocs": 3
+    }
+   },
+   "translation": null
+  },
+  {
+   "certificate_nanos": 140,
+   "certified": false,
+   "degree": 18,
+   "family": "random-products",
+   "name": "randprod_00",
+   "production": null,
+   "production_paired": false,
+   "radicands": null,
+   "spans": {
+    "recovery": {
+     "nanos": 140,
+     "smallAllocs": 3
+    }
+   },
+   "translation": null
+  },
+  {
+   "certificate_nanos": 71,
+   "certified": false,
+   "degree": 18,
+   "family": "random-products",
+   "name": "randprod_03",
+   "production": null,
+   "production_paired": false,
+   "radicands": null,
+   "spans": {
+    "recovery": {
+     "nanos": 71,
+     "smallAllocs": 3
+    }
+   },
+   "translation": null
+  },
+  {
+   "certificate_nanos": 110,
+   "certified": false,
+   "degree": 18,
+   "family": "random-products",
+   "name": "randprod_12",
+   "production": null,
+   "production_paired": false,
+   "radicands": null,
+   "spans": {
+    "recovery": {
+     "nanos": 110,
+     "smallAllocs": 3
+    }
+   },
+   "translation": null
+  },
+  {
+   "certificate_nanos": 170,
    "certified": false,
    "degree": 18,
    "family": "random-products",
@@ -4366,7 +4404,7 @@
    "radicands": null,
    "spans": {
     "recovery": {
-     "nanos": 70,
+     "nanos": 170,
      "smallAllocs": 3
     }
    },
@@ -4390,7 +4428,7 @@
    "translation": null
   },
   {
-   "certificate_nanos": 140,
+   "certificate_nanos": 130,
    "certified": false,
    "degree": 19,
    "family": "conway",
@@ -4400,41 +4438,7 @@
    "radicands": null,
    "spans": {
     "recovery": {
-     "nanos": 140,
-     "smallAllocs": 3
-    }
-   },
-   "translation": null
-  },
-  {
-   "certificate_nanos": 161,
-   "certified": false,
-   "degree": 19,
-   "family": "conway",
-   "name": "conway_p3_n19",
-   "production": null,
-   "production_paired": false,
-   "radicands": null,
-   "spans": {
-    "recovery": {
-     "nanos": 161,
-     "smallAllocs": 3
-    }
-   },
-   "translation": null
-  },
-  {
-   "certificate_nanos": 170,
-   "certified": false,
-   "degree": 19,
-   "family": "conway",
-   "name": "conway_p5_n19",
-   "production": null,
-   "production_paired": false,
-   "radicands": null,
-   "spans": {
-    "recovery": {
-     "nanos": 170,
+     "nanos": 130,
      "smallAllocs": 3
     }
    },
@@ -4445,7 +4449,7 @@
    "certified": false,
    "degree": 19,
    "family": "conway",
-   "name": "conway_p7_n19",
+   "name": "conway_p3_n19",
    "production": null,
    "production_paired": false,
    "radicands": null,
@@ -4458,7 +4462,41 @@
    "translation": null
   },
   {
-   "certificate_nanos": 41,
+   "certificate_nanos": 130,
+   "certified": false,
+   "degree": 19,
+   "family": "conway",
+   "name": "conway_p5_n19",
+   "production": null,
+   "production_paired": false,
+   "radicands": null,
+   "spans": {
+    "recovery": {
+     "nanos": 130,
+     "smallAllocs": 3
+    }
+   },
+   "translation": null
+  },
+  {
+   "certificate_nanos": 130,
+   "certified": false,
+   "degree": 19,
+   "family": "conway",
+   "name": "conway_p7_n19",
+   "production": null,
+   "production_paired": false,
+   "radicands": null,
+   "spans": {
+    "recovery": {
+     "nanos": 130,
+     "smallAllocs": 3
+    }
+   },
+   "translation": null
+  },
+  {
+   "certificate_nanos": 120,
    "certified": false,
    "degree": 19,
    "family": "random-products",
@@ -4468,24 +4506,7 @@
    "radicands": null,
    "spans": {
     "recovery": {
-     "nanos": 41,
-     "smallAllocs": 3
-    }
-   },
-   "translation": null
-  },
-  {
-   "certificate_nanos": 31,
-   "certified": false,
-   "degree": 20,
-   "family": "chebyshev",
-   "name": "chebyshev_T20",
-   "production": null,
-   "production_paired": false,
-   "radicands": null,
-   "spans": {
-    "recovery": {
-     "nanos": 31,
+     "nanos": 120,
      "smallAllocs": 3
     }
    },
@@ -4496,13 +4517,30 @@
    "certified": false,
    "degree": 20,
    "family": "chebyshev",
-   "name": "chebyshev_U20",
+   "name": "chebyshev_T20",
    "production": null,
    "production_paired": false,
    "radicands": null,
    "spans": {
     "recovery": {
      "nanos": 50,
+     "smallAllocs": 3
+    }
+   },
+   "translation": null
+  },
+  {
+   "certificate_nanos": 40,
+   "certified": false,
+   "degree": 20,
+   "family": "chebyshev",
+   "name": "chebyshev_U20",
+   "production": null,
+   "production_paired": false,
+   "radicands": null,
+   "spans": {
+    "recovery": {
+     "nanos": 40,
      "smallAllocs": 3
     }
    },
@@ -4526,7 +4564,7 @@
    "translation": null
   },
   {
-   "certificate_nanos": 130,
+   "certificate_nanos": 141,
    "certified": false,
    "degree": 20,
    "family": "conway",
@@ -4536,7 +4574,7 @@
    "radicands": null,
    "spans": {
     "recovery": {
-     "nanos": 130,
+     "nanos": 141,
      "smallAllocs": 3
     }
    },
@@ -4577,7 +4615,7 @@
    "translation": null
   },
   {
-   "certificate_nanos": 140,
+   "certificate_nanos": 150,
    "certified": false,
    "degree": 20,
    "family": "cyclotomic",
@@ -4587,7 +4625,7 @@
    "radicands": null,
    "spans": {
     "recovery": {
-     "nanos": 140,
+     "nanos": 150,
      "smallAllocs": 3
     }
    },
@@ -4611,7 +4649,7 @@
    "translation": null
   },
   {
-   "certificate_nanos": 70,
+   "certificate_nanos": 81,
    "certified": false,
    "degree": 20,
    "family": "legendre",
@@ -4621,7 +4659,7 @@
    "radicands": null,
    "spans": {
     "recovery": {
-     "nanos": 70,
+     "nanos": 81,
      "smallAllocs": 3
     }
    },
@@ -4645,7 +4683,7 @@
    "translation": null
   },
   {
-   "certificate_nanos": 130,
+   "certificate_nanos": 140,
    "certified": false,
    "degree": 20,
    "family": "wilkinson",
@@ -4655,75 +4693,7 @@
    "radicands": null,
    "spans": {
     "recovery": {
-     "nanos": 130,
-     "smallAllocs": 3
-    }
-   },
-   "translation": null
-  },
-  {
-   "certificate_nanos": 140,
-   "certified": false,
-   "degree": 20,
-   "family": "cyclotomic-products",
-   "name": "xpow20_minus1",
-   "production": null,
-   "production_paired": false,
-   "radicands": null,
-   "spans": {
-    "recovery": {
      "nanos": 140,
-     "smallAllocs": 3
-    }
-   },
-   "translation": null
-  },
-  {
-   "certificate_nanos": 140,
-   "certified": false,
-   "degree": 21,
-   "family": "conway",
-   "name": "conway_p2_n21",
-   "production": null,
-   "production_paired": false,
-   "radicands": null,
-   "spans": {
-    "recovery": {
-     "nanos": 140,
-     "smallAllocs": 3
-    }
-   },
-   "translation": null
-  },
-  {
-   "certificate_nanos": 151,
-   "certified": false,
-   "degree": 21,
-   "family": "conway",
-   "name": "conway_p3_n21",
-   "production": null,
-   "production_paired": false,
-   "radicands": null,
-   "spans": {
-    "recovery": {
-     "nanos": 151,
-     "smallAllocs": 3
-    }
-   },
-   "translation": null
-  },
-  {
-   "certificate_nanos": 160,
-   "certified": false,
-   "degree": 21,
-   "family": "conway",
-   "name": "conway_p5_n21",
-   "production": null,
-   "production_paired": false,
-   "radicands": null,
-   "spans": {
-    "recovery": {
-     "nanos": 160,
      "smallAllocs": 3
     }
    },
@@ -4732,9 +4702,9 @@
   {
    "certificate_nanos": 131,
    "certified": false,
-   "degree": 21,
-   "family": "conway",
-   "name": "conway_p7_n21",
+   "degree": 20,
+   "family": "cyclotomic-products",
+   "name": "xpow20_minus1",
    "production": null,
    "production_paired": false,
    "radicands": null,
@@ -4747,28 +4717,11 @@
    "translation": null
   },
   {
-   "certificate_nanos": 40,
-   "certified": false,
-   "degree": 21,
-   "family": "random-products",
-   "name": "randprod_15",
-   "production": null,
-   "production_paired": false,
-   "radicands": null,
-   "spans": {
-    "recovery": {
-     "nanos": 40,
-     "smallAllocs": 3
-    }
-   },
-   "translation": null
-  },
-  {
    "certificate_nanos": 130,
    "certified": false,
-   "degree": 22,
+   "degree": 21,
    "family": "conway",
-   "name": "conway_p2_n22",
+   "name": "conway_p2_n21",
    "production": null,
    "production_paired": false,
    "radicands": null,
@@ -4781,11 +4734,62 @@
    "translation": null
   },
   {
+   "certificate_nanos": 130,
+   "certified": false,
+   "degree": 21,
+   "family": "conway",
+   "name": "conway_p3_n21",
+   "production": null,
+   "production_paired": false,
+   "radicands": null,
+   "spans": {
+    "recovery": {
+     "nanos": 130,
+     "smallAllocs": 3
+    }
+   },
+   "translation": null
+  },
+  {
+   "certificate_nanos": 161,
+   "certified": false,
+   "degree": 21,
+   "family": "conway",
+   "name": "conway_p5_n21",
+   "production": null,
+   "production_paired": false,
+   "radicands": null,
+   "spans": {
+    "recovery": {
+     "nanos": 161,
+     "smallAllocs": 3
+    }
+   },
+   "translation": null
+  },
+  {
+   "certificate_nanos": 150,
+   "certified": false,
+   "degree": 21,
+   "family": "conway",
+   "name": "conway_p7_n21",
+   "production": null,
+   "production_paired": false,
+   "radicands": null,
+   "spans": {
+    "recovery": {
+     "nanos": 150,
+     "smallAllocs": 3
+    }
+   },
+   "translation": null
+  },
+  {
    "certificate_nanos": 170,
    "certified": false,
-   "degree": 22,
-   "family": "conway",
-   "name": "conway_p3_n22",
+   "degree": 21,
+   "family": "random-products",
+   "name": "randprod_15",
    "production": null,
    "production_paired": false,
    "radicands": null,
@@ -4798,7 +4802,41 @@
    "translation": null
   },
   {
-   "certificate_nanos": 140,
+   "certificate_nanos": 150,
+   "certified": false,
+   "degree": 22,
+   "family": "conway",
+   "name": "conway_p2_n22",
+   "production": null,
+   "production_paired": false,
+   "radicands": null,
+   "spans": {
+    "recovery": {
+     "nanos": 150,
+     "smallAllocs": 3
+    }
+   },
+   "translation": null
+  },
+  {
+   "certificate_nanos": 151,
+   "certified": false,
+   "degree": 22,
+   "family": "conway",
+   "name": "conway_p3_n22",
+   "production": null,
+   "production_paired": false,
+   "radicands": null,
+   "spans": {
+    "recovery": {
+     "nanos": 151,
+     "smallAllocs": 3
+    }
+   },
+   "translation": null
+  },
+  {
+   "certificate_nanos": 130,
    "certified": false,
    "degree": 22,
    "family": "conway",
@@ -4808,7 +4846,7 @@
    "radicands": null,
    "spans": {
     "recovery": {
-     "nanos": 140,
+     "nanos": 130,
      "smallAllocs": 3
     }
    },
@@ -4832,7 +4870,7 @@
    "translation": null
   },
   {
-   "certificate_nanos": 140,
+   "certificate_nanos": 141,
    "certified": false,
    "degree": 22,
    "family": "cyclotomic",
@@ -4842,7 +4880,7 @@
    "radicands": null,
    "spans": {
     "recovery": {
-     "nanos": 140,
+     "nanos": 141,
      "smallAllocs": 3
     }
    },
@@ -4866,28 +4904,11 @@
    "translation": null
   },
   {
-   "certificate_nanos": 41,
+   "certificate_nanos": 50,
    "certified": false,
    "degree": 22,
    "family": "legendre",
    "name": "legendre_P22",
-   "production": null,
-   "production_paired": false,
-   "radicands": null,
-   "spans": {
-    "recovery": {
-     "nanos": 41,
-     "smallAllocs": 3
-    }
-   },
-   "translation": null
-  },
-  {
-   "certificate_nanos": 50,
-   "certified": false,
-   "degree": 22,
-   "family": "random-products",
-   "name": "randprod_18",
    "production": null,
    "production_paired": false,
    "radicands": null,
@@ -4900,102 +4921,17 @@
    "translation": null
   },
   {
-   "certificate_nanos": 161,
+   "certificate_nanos": 151,
    "certified": false,
-   "degree": 23,
-   "family": "conway",
-   "name": "conway_p2_n23",
+   "degree": 22,
+   "family": "random-products",
+   "name": "randprod_18",
    "production": null,
    "production_paired": false,
    "radicands": null,
    "spans": {
     "recovery": {
-     "nanos": 161,
-     "smallAllocs": 3
-    }
-   },
-   "translation": null
-  },
-  {
-   "certificate_nanos": 130,
-   "certified": false,
-   "degree": 23,
-   "family": "conway",
-   "name": "conway_p3_n23",
-   "production": null,
-   "production_paired": false,
-   "radicands": null,
-   "spans": {
-    "recovery": {
-     "nanos": 130,
-     "smallAllocs": 3
-    }
-   },
-   "translation": null
-  },
-  {
-   "certificate_nanos": 130,
-   "certified": false,
-   "degree": 23,
-   "family": "conway",
-   "name": "conway_p5_n23",
-   "production": null,
-   "production_paired": false,
-   "radicands": null,
-   "spans": {
-    "recovery": {
-     "nanos": 130,
-     "smallAllocs": 3
-    }
-   },
-   "translation": null
-  },
-  {
-   "certificate_nanos": 130,
-   "certified": false,
-   "degree": 23,
-   "family": "conway",
-   "name": "conway_p7_n23",
-   "production": null,
-   "production_paired": false,
-   "radicands": null,
-   "spans": {
-    "recovery": {
-     "nanos": 130,
-     "smallAllocs": 3
-    }
-   },
-   "translation": null
-  },
-  {
-   "certificate_nanos": 40,
-   "certified": false,
-   "degree": 24,
-   "family": "chebyshev",
-   "name": "chebyshev_T24",
-   "production": null,
-   "production_paired": false,
-   "radicands": null,
-   "spans": {
-    "recovery": {
-     "nanos": 40,
-     "smallAllocs": 3
-    }
-   },
-   "translation": null
-  },
-  {
-   "certificate_nanos": 40,
-   "certified": false,
-   "degree": 24,
-   "family": "chebyshev",
-   "name": "chebyshev_U24",
-   "production": null,
-   "production_paired": false,
-   "radicands": null,
-   "spans": {
-    "recovery": {
-     "nanos": 40,
+     "nanos": 151,
      "smallAllocs": 3
     }
    },
@@ -5004,9 +4940,9 @@
   {
    "certificate_nanos": 140,
    "certified": false,
-   "degree": 24,
+   "degree": 23,
    "family": "conway",
-   "name": "conway_p2_n24",
+   "name": "conway_p2_n23",
    "production": null,
    "production_paired": false,
    "radicands": null,
@@ -5019,11 +4955,96 @@
    "translation": null
   },
   {
+   "certificate_nanos": 160,
+   "certified": false,
+   "degree": 23,
+   "family": "conway",
+   "name": "conway_p3_n23",
+   "production": null,
+   "production_paired": false,
+   "radicands": null,
+   "spans": {
+    "recovery": {
+     "nanos": 160,
+     "smallAllocs": 3
+    }
+   },
+   "translation": null
+  },
+  {
+   "certificate_nanos": 131,
+   "certified": false,
+   "degree": 23,
+   "family": "conway",
+   "name": "conway_p5_n23",
+   "production": null,
+   "production_paired": false,
+   "radicands": null,
+   "spans": {
+    "recovery": {
+     "nanos": 131,
+     "smallAllocs": 3
+    }
+   },
+   "translation": null
+  },
+  {
+   "certificate_nanos": 180,
+   "certified": false,
+   "degree": 23,
+   "family": "conway",
+   "name": "conway_p7_n23",
+   "production": null,
+   "production_paired": false,
+   "radicands": null,
+   "spans": {
+    "recovery": {
+     "nanos": 180,
+     "smallAllocs": 3
+    }
+   },
+   "translation": null
+  },
+  {
+   "certificate_nanos": 71,
+   "certified": false,
+   "degree": 24,
+   "family": "chebyshev",
+   "name": "chebyshev_T24",
+   "production": null,
+   "production_paired": false,
+   "radicands": null,
+   "spans": {
+    "recovery": {
+     "nanos": 71,
+     "smallAllocs": 3
+    }
+   },
+   "translation": null
+  },
+  {
+   "certificate_nanos": 50,
+   "certified": false,
+   "degree": 24,
+   "family": "chebyshev",
+   "name": "chebyshev_U24",
+   "production": null,
+   "production_paired": false,
+   "radicands": null,
+   "spans": {
+    "recovery": {
+     "nanos": 50,
+     "smallAllocs": 3
+    }
+   },
+   "translation": null
+  },
+  {
    "certificate_nanos": 150,
    "certified": false,
    "degree": 24,
    "family": "conway",
-   "name": "conway_p3_n24",
+   "name": "conway_p2_n24",
    "production": null,
    "production_paired": false,
    "radicands": null,
@@ -5036,34 +5057,17 @@
    "translation": null
   },
   {
-   "certificate_nanos": 140,
+   "certificate_nanos": 130,
    "certified": false,
    "degree": 24,
    "family": "conway",
-   "name": "conway_p5_n24",
+   "name": "conway_p3_n24",
    "production": null,
    "production_paired": false,
    "radicands": null,
    "spans": {
     "recovery": {
-     "nanos": 140,
-     "smallAllocs": 3
-    }
-   },
-   "translation": null
-  },
-  {
-   "certificate_nanos": 140,
-   "certified": false,
-   "degree": 24,
-   "family": "conway",
-   "name": "conway_p7_n24",
-   "production": null,
-   "production_paired": false,
-   "radicands": null,
-   "spans": {
-    "recovery": {
-     "nanos": 140,
+     "nanos": 130,
      "smallAllocs": 3
     }
    },
@@ -5073,6 +5077,40 @@
    "certificate_nanos": 130,
    "certified": false,
    "degree": 24,
+   "family": "conway",
+   "name": "conway_p5_n24",
+   "production": null,
+   "production_paired": false,
+   "radicands": null,
+   "spans": {
+    "recovery": {
+     "nanos": 130,
+     "smallAllocs": 3
+    }
+   },
+   "translation": null
+  },
+  {
+   "certificate_nanos": 150,
+   "certified": false,
+   "degree": 24,
+   "family": "conway",
+   "name": "conway_p7_n24",
+   "production": null,
+   "production_paired": false,
+   "radicands": null,
+   "spans": {
+    "recovery": {
+     "nanos": 150,
+     "smallAllocs": 3
+    }
+   },
+   "translation": null
+  },
+  {
+   "certificate_nanos": 160,
+   "certified": false,
+   "degree": 24,
    "family": "cyclotomic-products",
    "name": "cyclo_phi15_x_phi17",
    "production": null,
@@ -5080,7 +5118,7 @@
    "radicands": null,
    "spans": {
     "recovery": {
-     "nanos": 130,
+     "nanos": 160,
      "smallAllocs": 3
     }
    },
@@ -5104,7 +5142,7 @@
    "translation": null
   },
   {
-   "certificate_nanos": 181,
+   "certificate_nanos": 160,
    "certified": false,
    "degree": 24,
    "family": "laguerre",
@@ -5114,7 +5152,7 @@
    "radicands": null,
    "spans": {
     "recovery": {
-     "nanos": 181,
+     "nanos": 160,
      "smallAllocs": 3
     }
    },
@@ -5138,7 +5176,7 @@
    "translation": null
   },
   {
-   "certificate_nanos": 40,
+   "certificate_nanos": 70,
    "certified": false,
    "degree": 24,
    "family": "random-products",
@@ -5148,41 +5186,7 @@
    "radicands": null,
    "spans": {
     "recovery": {
-     "nanos": 40,
-     "smallAllocs": 3
-    }
-   },
-   "translation": null
-  },
-  {
-   "certificate_nanos": 150,
-   "certified": false,
-   "degree": 24,
-   "family": "wilkinson",
-   "name": "wilkinson_24",
-   "production": null,
-   "production_paired": false,
-   "radicands": null,
-   "spans": {
-    "recovery": {
-     "nanos": 150,
-     "smallAllocs": 3
-    }
-   },
-   "translation": null
-  },
-  {
-   "certificate_nanos": 150,
-   "certified": false,
-   "degree": 24,
-   "family": "cyclotomic-products",
-   "name": "xpow24_minus1",
-   "production": null,
-   "production_paired": false,
-   "radicands": null,
-   "spans": {
-    "recovery": {
-     "nanos": 150,
+     "nanos": 70,
      "smallAllocs": 3
     }
    },
@@ -5191,9 +5195,9 @@
   {
    "certificate_nanos": 161,
    "certified": false,
-   "degree": 25,
-   "family": "conway",
-   "name": "conway_p2_n25",
+   "degree": 24,
+   "family": "wilkinson",
+   "name": "wilkinson_24",
    "production": null,
    "production_paired": false,
    "radicands": null,
@@ -5206,7 +5210,41 @@
    "translation": null
   },
   {
-   "certificate_nanos": 150,
+   "certificate_nanos": 171,
+   "certified": false,
+   "degree": 24,
+   "family": "cyclotomic-products",
+   "name": "xpow24_minus1",
+   "production": null,
+   "production_paired": false,
+   "radicands": null,
+   "spans": {
+    "recovery": {
+     "nanos": 171,
+     "smallAllocs": 3
+    }
+   },
+   "translation": null
+  },
+  {
+   "certificate_nanos": 160,
+   "certified": false,
+   "degree": 25,
+   "family": "conway",
+   "name": "conway_p2_n25",
+   "production": null,
+   "production_paired": false,
+   "radicands": null,
+   "spans": {
+    "recovery": {
+     "nanos": 160,
+     "smallAllocs": 3
+    }
+   },
+   "translation": null
+  },
+  {
+   "certificate_nanos": 140,
    "certified": false,
    "degree": 25,
    "family": "conway",
@@ -5216,14 +5254,14 @@
    "radicands": null,
    "spans": {
     "recovery": {
-     "nanos": 150,
+     "nanos": 140,
      "smallAllocs": 3
     }
    },
    "translation": null
   },
   {
-   "certificate_nanos": 180,
+   "certificate_nanos": 141,
    "certified": false,
    "degree": 25,
    "family": "conway",
@@ -5233,7 +5271,7 @@
    "radicands": null,
    "spans": {
     "recovery": {
-     "nanos": 180,
+     "nanos": 141,
      "smallAllocs": 3
     }
    },
@@ -5274,11 +5312,28 @@
    "translation": null
   },
   {
-   "certificate_nanos": 131,
+   "certificate_nanos": 160,
    "certified": false,
    "degree": 26,
    "family": "conway",
    "name": "conway_p3_n26",
+   "production": null,
+   "production_paired": false,
+   "radicands": null,
+   "spans": {
+    "recovery": {
+     "nanos": 160,
+     "smallAllocs": 3
+    }
+   },
+   "translation": null
+  },
+  {
+   "certificate_nanos": 131,
+   "certified": false,
+   "degree": 26,
+   "family": "conway",
+   "name": "conway_p5_n26",
    "production": null,
    "production_paired": false,
    "radicands": null,
@@ -5291,24 +5346,7 @@
    "translation": null
   },
   {
-   "certificate_nanos": 140,
-   "certified": false,
-   "degree": 26,
-   "family": "conway",
-   "name": "conway_p5_n26",
-   "production": null,
-   "production_paired": false,
-   "radicands": null,
-   "spans": {
-    "recovery": {
-     "nanos": 140,
-     "smallAllocs": 3
-    }
-   },
-   "translation": null
-  },
-  {
-   "certificate_nanos": 141,
+   "certificate_nanos": 150,
    "certified": false,
    "degree": 26,
    "family": "conway",
@@ -5318,14 +5356,14 @@
    "radicands": null,
    "spans": {
     "recovery": {
-     "nanos": 141,
+     "nanos": 150,
      "smallAllocs": 3
     }
    },
    "translation": null
   },
   {
-   "certificate_nanos": 41,
+   "certificate_nanos": 80,
    "certified": false,
    "degree": 26,
    "family": "legendre",
@@ -5335,14 +5373,14 @@
    "radicands": null,
    "spans": {
     "recovery": {
-     "nanos": 41,
+     "nanos": 80,
      "smallAllocs": 3
     }
    },
    "translation": null
   },
   {
-   "certificate_nanos": 170,
+   "certificate_nanos": 130,
    "certified": false,
    "degree": 27,
    "family": "conway",
@@ -5352,14 +5390,14 @@
    "radicands": null,
    "spans": {
     "recovery": {
-     "nanos": 170,
+     "nanos": 130,
      "smallAllocs": 3
     }
    },
    "translation": null
   },
   {
-   "certificate_nanos": 140,
+   "certificate_nanos": 141,
    "certified": false,
    "degree": 27,
    "family": "conway",
@@ -5369,14 +5407,14 @@
    "radicands": null,
    "spans": {
     "recovery": {
-     "nanos": 140,
+     "nanos": 141,
      "smallAllocs": 3
     }
    },
    "translation": null
   },
   {
-   "certificate_nanos": 140,
+   "certificate_nanos": 151,
    "certified": false,
    "degree": 27,
    "family": "conway",
@@ -5386,14 +5424,14 @@
    "radicands": null,
    "spans": {
     "recovery": {
-     "nanos": 140,
+     "nanos": 151,
      "smallAllocs": 3
     }
    },
    "translation": null
   },
   {
-   "certificate_nanos": 140,
+   "certificate_nanos": 160,
    "certified": false,
    "degree": 27,
    "family": "conway",
@@ -5403,6 +5441,74 @@
    "radicands": null,
    "spans": {
     "recovery": {
+     "nanos": 160,
+     "smallAllocs": 3
+    }
+   },
+   "translation": null
+  },
+  {
+   "certificate_nanos": 160,
+   "certified": false,
+   "degree": 28,
+   "family": "conway",
+   "name": "conway_p2_n28",
+   "production": null,
+   "production_paired": false,
+   "radicands": null,
+   "spans": {
+    "recovery": {
+     "nanos": 160,
+     "smallAllocs": 3
+    }
+   },
+   "translation": null
+  },
+  {
+   "certificate_nanos": 160,
+   "certified": false,
+   "degree": 28,
+   "family": "conway",
+   "name": "conway_p3_n28",
+   "production": null,
+   "production_paired": false,
+   "radicands": null,
+   "spans": {
+    "recovery": {
+     "nanos": 160,
+     "smallAllocs": 3
+    }
+   },
+   "translation": null
+  },
+  {
+   "certificate_nanos": 151,
+   "certified": false,
+   "degree": 28,
+   "family": "conway",
+   "name": "conway_p5_n28",
+   "production": null,
+   "production_paired": false,
+   "radicands": null,
+   "spans": {
+    "recovery": {
+     "nanos": 151,
+     "smallAllocs": 3
+    }
+   },
+   "translation": null
+  },
+  {
+   "certificate_nanos": 140,
+   "certified": false,
+   "degree": 28,
+   "family": "conway",
+   "name": "conway_p7_n28",
+   "production": null,
+   "production_paired": false,
+   "radicands": null,
+   "spans": {
+    "recovery": {
      "nanos": 140,
      "smallAllocs": 3
     }
@@ -5413,74 +5519,6 @@
    "certificate_nanos": 130,
    "certified": false,
    "degree": 28,
-   "family": "conway",
-   "name": "conway_p2_n28",
-   "production": null,
-   "production_paired": false,
-   "radicands": null,
-   "spans": {
-    "recovery": {
-     "nanos": 130,
-     "smallAllocs": 3
-    }
-   },
-   "translation": null
-  },
-  {
-   "certificate_nanos": 141,
-   "certified": false,
-   "degree": 28,
-   "family": "conway",
-   "name": "conway_p3_n28",
-   "production": null,
-   "production_paired": false,
-   "radicands": null,
-   "spans": {
-    "recovery": {
-     "nanos": 141,
-     "smallAllocs": 3
-    }
-   },
-   "translation": null
-  },
-  {
-   "certificate_nanos": 130,
-   "certified": false,
-   "degree": 28,
-   "family": "conway",
-   "name": "conway_p5_n28",
-   "production": null,
-   "production_paired": false,
-   "radicands": null,
-   "spans": {
-    "recovery": {
-     "nanos": 130,
-     "smallAllocs": 3
-    }
-   },
-   "translation": null
-  },
-  {
-   "certificate_nanos": 130,
-   "certified": false,
-   "degree": 28,
-   "family": "conway",
-   "name": "conway_p7_n28",
-   "production": null,
-   "production_paired": false,
-   "radicands": null,
-   "spans": {
-    "recovery": {
-     "nanos": 130,
-     "smallAllocs": 3
-    }
-   },
-   "translation": null
-  },
-  {
-   "certificate_nanos": 170,
-   "certified": false,
-   "degree": 28,
    "family": "cyclotomic",
    "name": "cyclo_phi29",
    "production": null,
@@ -5488,41 +5526,7 @@
    "radicands": null,
    "spans": {
     "recovery": {
-     "nanos": 170,
-     "smallAllocs": 3
-    }
-   },
-   "translation": null
-  },
-  {
-   "certificate_nanos": 141,
-   "certified": false,
-   "degree": 28,
-   "family": "laguerre",
-   "name": "laguerre_L28",
-   "production": null,
-   "production_paired": false,
-   "radicands": null,
-   "spans": {
-    "recovery": {
-     "nanos": 141,
-     "smallAllocs": 3
-    }
-   },
-   "translation": null
-  },
-  {
-   "certificate_nanos": 40,
-   "certified": false,
-   "degree": 28,
-   "family": "legendre",
-   "name": "legendre_P28",
-   "production": null,
-   "production_paired": false,
-   "radicands": null,
-   "spans": {
-    "recovery": {
-     "nanos": 40,
+     "nanos": 130,
      "smallAllocs": 3
     }
    },
@@ -5532,8 +5536,8 @@
    "certificate_nanos": 161,
    "certified": false,
    "degree": 28,
-   "family": "wilkinson",
-   "name": "wilkinson_28",
+   "family": "laguerre",
+   "name": "laguerre_L28",
    "production": null,
    "production_paired": false,
    "radicands": null,
@@ -5546,17 +5550,34 @@
    "translation": null
   },
   {
-   "certificate_nanos": 140,
+   "certificate_nanos": 50,
    "certified": false,
-   "degree": 29,
-   "family": "conway",
-   "name": "conway_p2_n29",
+   "degree": 28,
+   "family": "legendre",
+   "name": "legendre_P28",
    "production": null,
    "production_paired": false,
    "radicands": null,
    "spans": {
     "recovery": {
-     "nanos": 140,
+     "nanos": 50,
+     "smallAllocs": 3
+    }
+   },
+   "translation": null
+  },
+  {
+   "certificate_nanos": 150,
+   "certified": false,
+   "degree": 28,
+   "family": "wilkinson",
+   "name": "wilkinson_28",
+   "production": null,
+   "production_paired": false,
+   "radicands": null,
+   "spans": {
+    "recovery": {
+     "nanos": 150,
      "smallAllocs": 3
     }
    },
@@ -5567,7 +5588,7 @@
    "certified": false,
    "degree": 29,
    "family": "conway",
-   "name": "conway_p3_n29",
+   "name": "conway_p2_n29",
    "production": null,
    "production_paired": false,
    "radicands": null,
@@ -5580,7 +5601,24 @@
    "translation": null
   },
   {
-   "certificate_nanos": 190,
+   "certificate_nanos": 160,
+   "certified": false,
+   "degree": 29,
+   "family": "conway",
+   "name": "conway_p3_n29",
+   "production": null,
+   "production_paired": false,
+   "radicands": null,
+   "spans": {
+    "recovery": {
+     "nanos": 160,
+     "smallAllocs": 3
+    }
+   },
+   "translation": null
+  },
+  {
+   "certificate_nanos": 150,
    "certified": false,
    "degree": 29,
    "family": "conway",
@@ -5590,7 +5628,7 @@
    "radicands": null,
    "spans": {
     "recovery": {
-     "nanos": 190,
+     "nanos": 150,
      "smallAllocs": 3
     }
    },
@@ -5614,7 +5652,7 @@
    "translation": null
   },
   {
-   "certificate_nanos": 160,
+   "certificate_nanos": 170,
    "certified": false,
    "degree": 30,
    "family": "conway",
@@ -5624,14 +5662,14 @@
    "radicands": null,
    "spans": {
     "recovery": {
-     "nanos": 160,
+     "nanos": 170,
      "smallAllocs": 3
     }
    },
    "translation": null
   },
   {
-   "certificate_nanos": 180,
+   "certificate_nanos": 140,
    "certified": false,
    "degree": 30,
    "family": "conway",
@@ -5641,14 +5679,14 @@
    "radicands": null,
    "spans": {
     "recovery": {
-     "nanos": 180,
+     "nanos": 140,
      "smallAllocs": 3
     }
    },
    "translation": null
   },
   {
-   "certificate_nanos": 131,
+   "certificate_nanos": 161,
    "certified": false,
    "degree": 30,
    "family": "conway",
@@ -5658,14 +5696,14 @@
    "radicands": null,
    "spans": {
     "recovery": {
-     "nanos": 131,
+     "nanos": 161,
      "smallAllocs": 3
     }
    },
    "translation": null
   },
   {
-   "certificate_nanos": 191,
+   "certificate_nanos": 150,
    "certified": false,
    "degree": 30,
    "family": "conway",
@@ -5675,14 +5713,14 @@
    "radicands": null,
    "spans": {
     "recovery": {
-     "nanos": 191,
+     "nanos": 150,
      "smallAllocs": 3
     }
    },
    "translation": null
   },
   {
-   "certificate_nanos": 50,
+   "certificate_nanos": 80,
    "certified": false,
    "degree": 30,
    "family": "legendre",
@@ -5692,7 +5730,7 @@
    "radicands": null,
    "spans": {
     "recovery": {
-     "nanos": 50,
+     "nanos": 80,
      "smallAllocs": 3
     }
    },
@@ -5716,11 +5754,28 @@
    "translation": null
   },
   {
-   "certificate_nanos": 160,
+   "certificate_nanos": 130,
    "certified": false,
    "degree": 31,
    "family": "conway",
    "name": "conway_p2_n31",
+   "production": null,
+   "production_paired": false,
+   "radicands": null,
+   "spans": {
+    "recovery": {
+     "nanos": 130,
+     "smallAllocs": 3
+    }
+   },
+   "translation": null
+  },
+  {
+   "certificate_nanos": 160,
+   "certified": false,
+   "degree": 31,
+   "family": "conway",
+   "name": "conway_p3_n31",
    "production": null,
    "production_paired": false,
    "radicands": null,
@@ -5733,45 +5788,11 @@
    "translation": null
   },
   {
-   "certificate_nanos": 140,
-   "certified": false,
-   "degree": 31,
-   "family": "conway",
-   "name": "conway_p3_n31",
-   "production": null,
-   "production_paired": false,
-   "radicands": null,
-   "spans": {
-    "recovery": {
-     "nanos": 140,
-     "smallAllocs": 3
-    }
-   },
-   "translation": null
-  },
-  {
-   "certificate_nanos": 140,
-   "certified": false,
-   "degree": 31,
-   "family": "conway",
-   "name": "conway_p5_n31",
-   "production": null,
-   "production_paired": false,
-   "radicands": null,
-   "spans": {
-    "recovery": {
-     "nanos": 140,
-     "smallAllocs": 3
-    }
-   },
-   "translation": null
-  },
-  {
    "certificate_nanos": 150,
    "certified": false,
    "degree": 31,
    "family": "conway",
-   "name": "conway_p7_n31",
+   "name": "conway_p5_n31",
    "production": null,
    "production_paired": false,
    "radicands": null,
@@ -5784,7 +5805,24 @@
    "translation": null
   },
   {
-   "certificate_nanos": 27892,
+   "certificate_nanos": 151,
+   "certified": false,
+   "degree": 31,
+   "family": "conway",
+   "name": "conway_p7_n31",
+   "production": null,
+   "production_paired": false,
+   "radicands": null,
+   "spans": {
+    "recovery": {
+     "nanos": 151,
+     "smallAllocs": 3
+    }
+   },
+   "translation": null
+  },
+  {
+   "certificate_nanos": 25889,
    "certified": false,
    "degree": 32,
    "family": "conway",
@@ -5800,26 +5838,26 @@
    ],
    "spans": {
     "construction": {
-     "nanos": 2434,
+     "nanos": 2504,
      "smallAllocs": 49
     },
     "equality": {
-     "nanos": 80,
+     "nanos": 90,
      "smallAllocs": 3
     },
     "independence": {
-     "nanos": 501,
+     "nanos": 571,
      "smallAllocs": 4
     },
     "recovery": {
-     "nanos": 24877,
+     "nanos": 22724,
      "smallAllocs": 221
     }
    },
    "translation": 0
   },
   {
-   "certificate_nanos": 26048,
+   "certificate_nanos": 25927,
    "certified": false,
    "degree": 32,
    "family": "conway",
@@ -5835,7 +5873,7 @@
    ],
    "spans": {
     "construction": {
-     "nanos": 2433,
+     "nanos": 2483,
      "smallAllocs": 49
     },
     "equality": {
@@ -5843,18 +5881,18 @@
      "smallAllocs": 3
     },
     "independence": {
-     "nanos": 491,
+     "nanos": 541,
      "smallAllocs": 4
     },
     "recovery": {
-     "nanos": 23044,
+     "nanos": 22823,
      "smallAllocs": 221
     }
    },
    "translation": 0
   },
   {
-   "certificate_nanos": 180,
+   "certificate_nanos": 150,
    "certified": false,
    "degree": 32,
    "family": "cyclotomic-products",
@@ -5864,14 +5902,14 @@
    "radicands": null,
    "spans": {
     "recovery": {
-     "nanos": 180,
+     "nanos": 150,
      "smallAllocs": 3
     }
    },
    "translation": null
   },
   {
-   "certificate_nanos": 26119,
+   "certificate_nanos": 25967,
    "certified": false,
    "degree": 32,
    "family": "cyclotomic",
@@ -5887,26 +5925,26 @@
    ],
    "spans": {
     "construction": {
-     "nanos": 2474,
+     "nanos": 2413,
      "smallAllocs": 49
     },
     "equality": {
-     "nanos": 130,
+     "nanos": 120,
      "smallAllocs": 3
     },
     "independence": {
-     "nanos": 511,
+     "nanos": 530,
      "smallAllocs": 4
     },
     "recovery": {
-     "nanos": 23004,
+     "nanos": 22904,
      "smallAllocs": 221
     }
    },
    "translation": 0
   },
   {
-   "certificate_nanos": 73459,
+   "certificate_nanos": 72648,
    "certified": false,
    "degree": 32,
    "family": "laguerre",
@@ -5916,14 +5954,14 @@
    "radicands": null,
    "spans": {
     "recovery": {
-     "nanos": 73459,
+     "nanos": 72648,
      "smallAllocs": 1242
     }
    },
    "translation": null
   },
   {
-   "certificate_nanos": 130,
+   "certificate_nanos": 140,
    "certified": false,
    "degree": 32,
    "family": "sd-products",
@@ -5933,14 +5971,14 @@
    "radicands": null,
    "spans": {
     "recovery": {
-     "nanos": 130,
+     "nanos": 140,
      "smallAllocs": 3
     }
    },
    "translation": null
   },
   {
-   "certificate_nanos": 160,
+   "certificate_nanos": 170,
    "certified": false,
    "degree": 32,
    "family": "sd-products",
@@ -5950,7 +5988,7 @@
    "radicands": null,
    "spans": {
     "recovery": {
-     "nanos": 160,
+     "nanos": 170,
      "smallAllocs": 3
     }
    },
@@ -5974,7 +6012,7 @@
    "translation": null
   },
   {
-   "certificate_nanos": 140,
+   "certificate_nanos": 150,
    "certified": false,
    "degree": 33,
    "family": "conway",
@@ -5984,14 +6022,14 @@
    "radicands": null,
    "spans": {
     "recovery": {
-     "nanos": 140,
+     "nanos": 150,
      "smallAllocs": 3
     }
    },
    "translation": null
   },
   {
-   "certificate_nanos": 160,
+   "certificate_nanos": 140,
    "certified": false,
    "degree": 33,
    "family": "conway",
@@ -6001,7 +6039,7 @@
    "radicands": null,
    "spans": {
     "recovery": {
-     "nanos": 160,
+     "nanos": 140,
      "smallAllocs": 3
     }
    },
@@ -6025,7 +6063,7 @@
    "translation": null
   },
   {
-   "certificate_nanos": 170,
+   "certificate_nanos": 140,
    "certified": false,
    "degree": 34,
    "family": "conway",
@@ -6035,14 +6073,14 @@
    "radicands": null,
    "spans": {
     "recovery": {
-     "nanos": 170,
+     "nanos": 140,
      "smallAllocs": 3
     }
    },
    "translation": null
   },
   {
-   "certificate_nanos": 150,
+   "certificate_nanos": 140,
    "certified": false,
    "degree": 34,
    "family": "conway",
@@ -6052,14 +6090,14 @@
    "radicands": null,
    "spans": {
     "recovery": {
-     "nanos": 150,
+     "nanos": 140,
      "smallAllocs": 3
     }
    },
    "translation": null
   },
   {
-   "certificate_nanos": 40,
+   "certificate_nanos": 50,
    "certified": false,
    "degree": 34,
    "family": "legendre",
@@ -6069,14 +6107,14 @@
    "radicands": null,
    "spans": {
     "recovery": {
-     "nanos": 40,
+     "nanos": 50,
      "smallAllocs": 3
     }
    },
    "translation": null
   },
   {
-   "certificate_nanos": 150,
+   "certificate_nanos": 151,
    "certified": false,
    "degree": 35,
    "family": "conway",
@@ -6086,14 +6124,14 @@
    "radicands": null,
    "spans": {
     "recovery": {
-     "nanos": 150,
+     "nanos": 151,
      "smallAllocs": 3
     }
    },
    "translation": null
   },
   {
-   "certificate_nanos": 180,
+   "certificate_nanos": 181,
    "certified": false,
    "degree": 35,
    "family": "conway",
@@ -6103,14 +6141,14 @@
    "radicands": null,
    "spans": {
     "recovery": {
-     "nanos": 180,
+     "nanos": 181,
      "smallAllocs": 3
     }
    },
    "translation": null
   },
   {
-   "certificate_nanos": 131,
+   "certificate_nanos": 130,
    "certified": false,
    "degree": 35,
    "family": "conway",
@@ -6120,14 +6158,14 @@
    "radicands": null,
    "spans": {
     "recovery": {
-     "nanos": 131,
+     "nanos": 130,
      "smallAllocs": 3
     }
    },
    "translation": null
   },
   {
-   "certificate_nanos": 150,
+   "certificate_nanos": 130,
    "certified": false,
    "degree": 35,
    "family": "conway",
@@ -6137,14 +6175,14 @@
    "radicands": null,
    "spans": {
     "recovery": {
-     "nanos": 150,
+     "nanos": 130,
      "smallAllocs": 3
     }
    },
    "translation": null
   },
   {
-   "certificate_nanos": 150,
+   "certificate_nanos": 161,
    "certified": false,
    "degree": 36,
    "family": "conway",
@@ -6154,14 +6192,14 @@
    "radicands": null,
    "spans": {
     "recovery": {
-     "nanos": 150,
+     "nanos": 161,
      "smallAllocs": 3
     }
    },
    "translation": null
   },
   {
-   "certificate_nanos": 141,
+   "certificate_nanos": 130,
    "certified": false,
    "degree": 36,
    "family": "conway",
@@ -6171,14 +6209,14 @@
    "radicands": null,
    "spans": {
     "recovery": {
-     "nanos": 141,
+     "nanos": 130,
      "smallAllocs": 3
     }
    },
    "translation": null
   },
   {
-   "certificate_nanos": 190,
+   "certificate_nanos": 140,
    "certified": false,
    "degree": 36,
    "family": "conway",
@@ -6188,14 +6226,14 @@
    "radicands": null,
    "spans": {
     "recovery": {
-     "nanos": 190,
+     "nanos": 140,
      "smallAllocs": 3
     }
    },
    "translation": null
   },
   {
-   "certificate_nanos": 150,
+   "certificate_nanos": 191,
    "certified": false,
    "degree": 36,
    "family": "conway",
@@ -6205,7 +6243,7 @@
    "radicands": null,
    "spans": {
     "recovery": {
-     "nanos": 150,
+     "nanos": 191,
      "smallAllocs": 3
     }
    },
@@ -6246,7 +6284,7 @@
    "translation": null
   },
   {
-   "certificate_nanos": 130,
+   "certificate_nanos": 150,
    "certified": false,
    "degree": 37,
    "family": "conway",
@@ -6256,14 +6294,14 @@
    "radicands": null,
    "spans": {
     "recovery": {
-     "nanos": 130,
+     "nanos": 150,
      "smallAllocs": 3
     }
    },
    "translation": null
   },
   {
-   "certificate_nanos": 140,
+   "certificate_nanos": 150,
    "certified": false,
    "degree": 37,
    "family": "conway",
@@ -6273,7 +6311,7 @@
    "radicands": null,
    "spans": {
     "recovery": {
-     "nanos": 140,
+     "nanos": 150,
      "smallAllocs": 3
     }
    },
@@ -6297,7 +6335,7 @@
    "translation": null
   },
   {
-   "certificate_nanos": 181,
+   "certificate_nanos": 180,
    "certified": false,
    "degree": 37,
    "family": "conway",
@@ -6307,14 +6345,14 @@
    "radicands": null,
    "spans": {
     "recovery": {
-     "nanos": 181,
+     "nanos": 180,
      "smallAllocs": 3
     }
    },
    "translation": null
   },
   {
-   "certificate_nanos": 150,
+   "certificate_nanos": 160,
    "certified": false,
    "degree": 38,
    "family": "conway",
@@ -6324,14 +6362,14 @@
    "radicands": null,
    "spans": {
     "recovery": {
-     "nanos": 150,
+     "nanos": 160,
      "smallAllocs": 3
     }
    },
    "translation": null
   },
   {
-   "certificate_nanos": 150,
+   "certificate_nanos": 160,
    "certified": false,
    "degree": 38,
    "family": "conway",
@@ -6341,14 +6379,14 @@
    "radicands": null,
    "spans": {
     "recovery": {
-     "nanos": 150,
+     "nanos": 160,
      "smallAllocs": 3
     }
    },
    "translation": null
   },
   {
-   "certificate_nanos": 60,
+   "certificate_nanos": 50,
    "certified": false,
    "degree": 38,
    "family": "legendre",
@@ -6358,14 +6396,14 @@
    "radicands": null,
    "spans": {
     "recovery": {
-     "nanos": 60,
+     "nanos": 50,
      "smallAllocs": 3
     }
    },
    "translation": null
   },
   {
-   "certificate_nanos": 130,
+   "certificate_nanos": 160,
    "certified": false,
    "degree": 39,
    "family": "conway",
@@ -6375,7 +6413,41 @@
    "radicands": null,
    "spans": {
     "recovery": {
-     "nanos": 130,
+     "nanos": 160,
+     "smallAllocs": 3
+    }
+   },
+   "translation": null
+  },
+  {
+   "certificate_nanos": 171,
+   "certified": false,
+   "degree": 39,
+   "family": "conway",
+   "name": "conway_p3_n39",
+   "production": null,
+   "production_paired": false,
+   "radicands": null,
+   "spans": {
+    "recovery": {
+     "nanos": 171,
+     "smallAllocs": 3
+    }
+   },
+   "translation": null
+  },
+  {
+   "certificate_nanos": 160,
+   "certified": false,
+   "degree": 39,
+   "family": "conway",
+   "name": "conway_p5_n39",
+   "production": null,
+   "production_paired": false,
+   "radicands": null,
+   "spans": {
+    "recovery": {
+     "nanos": 160,
      "smallAllocs": 3
     }
    },
@@ -6384,9 +6456,9 @@
   {
    "certificate_nanos": 150,
    "certified": false,
-   "degree": 39,
+   "degree": 40,
    "family": "conway",
-   "name": "conway_p3_n39",
+   "name": "conway_p2_n40",
    "production": null,
    "production_paired": false,
    "radicands": null,
@@ -6399,41 +6471,7 @@
    "translation": null
   },
   {
-   "certificate_nanos": 140,
-   "certified": false,
-   "degree": 39,
-   "family": "conway",
-   "name": "conway_p5_n39",
-   "production": null,
-   "production_paired": false,
-   "radicands": null,
-   "spans": {
-    "recovery": {
-     "nanos": 140,
-     "smallAllocs": 3
-    }
-   },
-   "translation": null
-  },
-  {
-   "certificate_nanos": 170,
-   "certified": false,
-   "degree": 40,
-   "family": "conway",
-   "name": "conway_p2_n40",
-   "production": null,
-   "production_paired": false,
-   "radicands": null,
-   "spans": {
-    "recovery": {
-     "nanos": 170,
-     "smallAllocs": 3
-    }
-   },
-   "translation": null
-  },
-  {
-   "certificate_nanos": 151,
+   "certificate_nanos": 120,
    "certified": false,
    "degree": 40,
    "family": "conway",
@@ -6443,14 +6481,14 @@
    "radicands": null,
    "spans": {
     "recovery": {
-     "nanos": 151,
+     "nanos": 120,
      "smallAllocs": 3
     }
    },
    "translation": null
   },
   {
-   "certificate_nanos": 151,
+   "certificate_nanos": 161,
    "certified": false,
    "degree": 40,
    "family": "cyclotomic-products",
@@ -6460,7 +6498,7 @@
    "radicands": null,
    "spans": {
     "recovery": {
-     "nanos": 151,
+     "nanos": 161,
      "smallAllocs": 3
     }
    },
@@ -6484,11 +6522,79 @@
    "translation": null
   },
   {
-   "certificate_nanos": 150,
+   "certificate_nanos": 160,
    "certified": false,
    "degree": 40,
    "family": "sd-products",
    "name": "sd4_x_phi35",
+   "production": null,
+   "production_paired": false,
+   "radicands": null,
+   "spans": {
+    "recovery": {
+     "nanos": 160,
+     "smallAllocs": 3
+    }
+   },
+   "translation": null
+  },
+  {
+   "certificate_nanos": 170,
+   "certified": false,
+   "degree": 40,
+   "family": "wilkinson",
+   "name": "wilkinson_40",
+   "production": null,
+   "production_paired": false,
+   "radicands": null,
+   "spans": {
+    "recovery": {
+     "nanos": 170,
+     "smallAllocs": 3
+    }
+   },
+   "translation": null
+  },
+  {
+   "certificate_nanos": 170,
+   "certified": false,
+   "degree": 42,
+   "family": "cyclotomic",
+   "name": "cyclo_phi49",
+   "production": null,
+   "production_paired": false,
+   "radicands": null,
+   "spans": {
+    "recovery": {
+     "nanos": 170,
+     "smallAllocs": 3
+    }
+   },
+   "translation": null
+  },
+  {
+   "certificate_nanos": 190,
+   "certified": false,
+   "degree": 42,
+   "family": "sd-products",
+   "name": "sd5_x_phi11",
+   "production": null,
+   "production_paired": false,
+   "radicands": null,
+   "spans": {
+    "recovery": {
+     "nanos": 190,
+     "smallAllocs": 3
+    }
+   },
+   "translation": null
+  },
+  {
+   "certificate_nanos": 150,
+   "certified": false,
+   "degree": 48,
+   "family": "cyclotomic",
+   "name": "cyclo_phi105",
    "production": null,
    "production_paired": false,
    "radicands": null,
@@ -6501,75 +6607,7 @@
    "translation": null
   },
   {
-   "certificate_nanos": 160,
-   "certified": false,
-   "degree": 40,
-   "family": "wilkinson",
-   "name": "wilkinson_40",
-   "production": null,
-   "production_paired": false,
-   "radicands": null,
-   "spans": {
-    "recovery": {
-     "nanos": 160,
-     "smallAllocs": 3
-    }
-   },
-   "translation": null
-  },
-  {
-   "certificate_nanos": 171,
-   "certified": false,
-   "degree": 42,
-   "family": "cyclotomic",
-   "name": "cyclo_phi49",
-   "production": null,
-   "production_paired": false,
-   "radicands": null,
-   "spans": {
-    "recovery": {
-     "nanos": 171,
-     "smallAllocs": 3
-    }
-   },
-   "translation": null
-  },
-  {
-   "certificate_nanos": 160,
-   "certified": false,
-   "degree": 42,
-   "family": "sd-products",
-   "name": "sd5_x_phi11",
-   "production": null,
-   "production_paired": false,
-   "radicands": null,
-   "spans": {
-    "recovery": {
-     "nanos": 160,
-     "smallAllocs": 3
-    }
-   },
-   "translation": null
-  },
-  {
-   "certificate_nanos": 131,
-   "certified": false,
-   "degree": 48,
-   "family": "cyclotomic",
-   "name": "cyclo_phi105",
-   "production": null,
-   "production_paired": false,
-   "radicands": null,
-   "spans": {
-    "recovery": {
-     "nanos": 131,
-     "smallAllocs": 3
-    }
-   },
-   "translation": null
-  },
-  {
-   "certificate_nanos": 181,
+   "certificate_nanos": 220,
    "certified": false,
    "degree": 48,
    "family": "wilkinson",
@@ -6579,14 +6617,14 @@
    "radicands": null,
    "spans": {
     "recovery": {
-     "nanos": 181,
+     "nanos": 220,
      "smallAllocs": 3
     }
    },
    "translation": null
   },
   {
-   "certificate_nanos": 180,
+   "certificate_nanos": 160,
    "certified": false,
    "degree": 48,
    "family": "cyclotomic-products",
@@ -6596,14 +6634,14 @@
    "radicands": null,
    "spans": {
     "recovery": {
-     "nanos": 180,
+     "nanos": 160,
      "smallAllocs": 3
     }
    },
    "translation": null
   },
   {
-   "certificate_nanos": 130,
+   "certificate_nanos": 150,
    "certified": false,
    "degree": 52,
    "family": "cyclotomic",
@@ -6613,14 +6651,14 @@
    "radicands": null,
    "spans": {
     "recovery": {
-     "nanos": 130,
+     "nanos": 150,
      "smallAllocs": 3
     }
    },
    "translation": null
   },
   {
-   "certificate_nanos": 140,
+   "certificate_nanos": 150,
    "certified": false,
    "degree": 54,
    "family": "cyclotomic",
@@ -6630,14 +6668,14 @@
    "radicands": null,
    "spans": {
     "recovery": {
-     "nanos": 140,
+     "nanos": 150,
      "smallAllocs": 3
     }
    },
    "translation": null
   },
   {
-   "certificate_nanos": 190,
+   "certificate_nanos": 230,
    "certified": false,
    "degree": 56,
    "family": "sd-products",
@@ -6647,7 +6685,7 @@
    "radicands": null,
    "spans": {
     "recovery": {
-     "nanos": 190,
+     "nanos": 230,
      "smallAllocs": 3
     }
    },
@@ -6671,7 +6709,7 @@
    "translation": null
   },
   {
-   "certificate_nanos": 150,
+   "certificate_nanos": 161,
    "certified": false,
    "degree": 60,
    "family": "cyclotomic",
@@ -6681,14 +6719,14 @@
    "radicands": null,
    "spans": {
     "recovery": {
-     "nanos": 150,
+     "nanos": 161,
      "smallAllocs": 3
     }
    },
    "translation": null
   },
   {
-   "certificate_nanos": 150,
+   "certificate_nanos": 170,
    "certified": false,
    "degree": 60,
    "family": "cyclotomic-products",
@@ -6698,14 +6736,14 @@
    "radicands": null,
    "spans": {
     "recovery": {
-     "nanos": 150,
+     "nanos": 170,
      "smallAllocs": 3
     }
    },
    "translation": null
   },
   {
-   "certificate_nanos": 45037,
+   "certificate_nanos": 42342,
    "certified": false,
    "degree": 64,
    "family": "cyclotomic",
@@ -6722,26 +6760,26 @@
    ],
    "spans": {
     "construction": {
-     "nanos": 5879,
+     "nanos": 5748,
      "smallAllocs": 84
     },
     "equality": {
-     "nanos": 140,
+     "nanos": 150,
      "smallAllocs": 3
     },
     "independence": {
-     "nanos": 571,
+     "nanos": 591,
      "smallAllocs": 4
     },
     "recovery": {
-     "nanos": 38447,
+     "nanos": 35853,
      "smallAllocs": 313
     }
    },
    "translation": 0
   },
   {
-   "certificate_nanos": 310,
+   "certificate_nanos": 220,
    "certified": false,
    "degree": 64,
    "family": "sd-products",
@@ -6751,14 +6789,14 @@
    "radicands": null,
    "spans": {
     "recovery": {
-     "nanos": 310,
+     "nanos": 220,
      "smallAllocs": 3
     }
    },
    "translation": null
   },
   {
-   "certificate_nanos": 161,
+   "certificate_nanos": 170,
    "certified": false,
    "degree": 76,
    "family": "sd-products",
@@ -6768,7 +6806,7 @@
    "radicands": null,
    "spans": {
     "recovery": {
-     "nanos": 161,
+     "nanos": 170,
      "smallAllocs": 3
     }
    },
@@ -6792,7 +6830,7 @@
    "translation": null
   },
   {
-   "certificate_nanos": 131,
+   "certificate_nanos": 150,
    "certified": false,
    "degree": 80,
    "family": "cyclotomic-products",
@@ -6802,14 +6840,14 @@
    "radicands": null,
    "spans": {
     "recovery": {
-     "nanos": 131,
+     "nanos": 150,
      "smallAllocs": 3
     }
    },
    "translation": null
   },
   {
-   "certificate_nanos": 170,
+   "certificate_nanos": 150,
    "certified": false,
    "degree": 88,
    "family": "cyclotomic",
@@ -6819,14 +6857,14 @@
    "radicands": null,
    "spans": {
     "recovery": {
-     "nanos": 170,
+     "nanos": 150,
      "smallAllocs": 3
     }
    },
    "translation": null
   },
   {
-   "certificate_nanos": 171,
+   "certificate_nanos": 161,
    "certified": false,
    "degree": 105,
    "family": "cyclotomic-products",
@@ -6836,41 +6874,7 @@
    "radicands": null,
    "spans": {
     "recovery": {
-     "nanos": 171,
-     "smallAllocs": 3
-    }
-   },
-   "translation": null
-  },
-  {
-   "certificate_nanos": 180,
-   "certified": false,
-   "degree": 110,
-   "family": "cyclotomic",
-   "name": "cyclo_phi121",
-   "production": null,
-   "production_paired": false,
-   "radicands": null,
-   "spans": {
-    "recovery": {
-     "nanos": 180,
-     "smallAllocs": 3
-    }
-   },
-   "translation": null
-  },
-  {
-   "certificate_nanos": 151,
-   "certified": false,
-   "degree": 112,
-   "family": "cyclotomic-products",
-   "name": "cyclo_phi105_x_phi128",
-   "production": null,
-   "production_paired": false,
-   "radicands": null,
-   "spans": {
-    "recovery": {
-     "nanos": 151,
+     "nanos": 161,
      "smallAllocs": 3
     }
    },
@@ -6879,9 +6883,9 @@
   {
    "certificate_nanos": 160,
    "certified": false,
-   "degree": 112,
-   "family": "sd-products",
-   "name": "sd6_x_phi105",
+   "degree": 110,
+   "family": "cyclotomic",
+   "name": "cyclo_phi121",
    "production": null,
    "production_paired": false,
    "radicands": null,
@@ -6896,9 +6900,9 @@
   {
    "certificate_nanos": 150,
    "certified": false,
-   "degree": 120,
+   "degree": 112,
    "family": "cyclotomic-products",
-   "name": "xpow120_minus1",
+   "name": "cyclo_phi105_x_phi128",
    "production": null,
    "production_paired": false,
    "radicands": null,
@@ -6911,7 +6915,41 @@
    "translation": null
   },
   {
-   "certificate_nanos": 87120,
+   "certificate_nanos": 170,
+   "certified": false,
+   "degree": 112,
+   "family": "sd-products",
+   "name": "sd6_x_phi105",
+   "production": null,
+   "production_paired": false,
+   "radicands": null,
+   "spans": {
+    "recovery": {
+     "nanos": 170,
+     "smallAllocs": 3
+    }
+   },
+   "translation": null
+  },
+  {
+   "certificate_nanos": 160,
+   "certified": false,
+   "degree": 120,
+   "family": "cyclotomic-products",
+   "name": "xpow120_minus1",
+   "production": null,
+   "production_paired": false,
+   "radicands": null,
+   "spans": {
+    "recovery": {
+     "nanos": 160,
+     "smallAllocs": 3
+    }
+   },
+   "translation": null
+  },
+  {
+   "certificate_nanos": 86709,
    "certified": false,
    "degree": 128,
    "family": "cyclotomic",
@@ -6929,26 +6967,26 @@
    ],
    "spans": {
     "construction": {
-     "nanos": 18448,
+     "nanos": 18297,
      "smallAllocs": 151
     },
     "equality": {
-     "nanos": 170,
+     "nanos": 171,
      "smallAllocs": 3
     },
     "independence": {
-     "nanos": 661,
+     "nanos": 701,
      "smallAllocs": 4
     },
     "recovery": {
-     "nanos": 67841,
+     "nanos": 67540,
      "smallAllocs": 448
     }
    },
    "translation": 0
   },
   {
-   "certificate_nanos": 140,
+   "certificate_nanos": 170,
    "certified": false,
    "degree": 128,
    "family": "sd-products",
@@ -6958,14 +6996,14 @@
    "radicands": null,
    "spans": {
     "recovery": {
-     "nanos": 140,
+     "nanos": 170,
      "smallAllocs": 3
     }
    },
    "translation": null
   },
   {
-   "certificate_nanos": 110,
+   "certificate_nanos": 60,
    "certified": false,
    "degree": 132,
    "family": "hoeij-zimmermann",
@@ -6975,14 +7013,14 @@
    "radicands": null,
    "spans": {
     "recovery": {
-     "nanos": 110,
+     "nanos": 60,
      "smallAllocs": 3
     }
    },
    "translation": null
   },
   {
-   "certificate_nanos": 161,
+   "certificate_nanos": 141,
    "certified": false,
    "degree": 144,
    "family": "cyclotomic-products",
@@ -6992,14 +7030,14 @@
    "radicands": null,
    "spans": {
     "recovery": {
-     "nanos": 161,
+     "nanos": 141,
      "smallAllocs": 3
     }
    },
    "translation": null
   },
   {
-   "certificate_nanos": 140,
+   "certificate_nanos": 150,
    "certified": false,
    "degree": 150,
    "family": "cyclotomic",
@@ -7009,14 +7047,14 @@
    "radicands": null,
    "spans": {
     "recovery": {
-     "nanos": 140,
+     "nanos": 150,
      "smallAllocs": 3
     }
    },
    "translation": null
   },
   {
-   "certificate_nanos": 160,
+   "certificate_nanos": 131,
    "certified": false,
    "degree": 162,
    "family": "cyclotomic",
@@ -7026,14 +7064,14 @@
    "radicands": null,
    "spans": {
     "recovery": {
-     "nanos": 160,
+     "nanos": 131,
      "smallAllocs": 3
     }
    },
    "translation": null
   },
   {
-   "certificate_nanos": 140,
+   "certificate_nanos": 150,
    "certified": false,
    "degree": 178,
    "family": "cyclotomic",
@@ -7043,143 +7081,7 @@
    "radicands": null,
    "spans": {
     "recovery": {
-     "nanos": 140,
-     "smallAllocs": 3
-    }
-   },
-   "translation": null
-  },
-  {
-   "certificate_nanos": 160,
-   "certified": false,
-   "degree": 190,
-   "family": "hoeij-zimmermann",
-   "name": "hoeij_F190",
-   "production": null,
-   "production_paired": false,
-   "radicands": null,
-   "spans": {
-    "recovery": {
-     "nanos": 160,
-     "smallAllocs": 3
-    }
-   },
-   "translation": null
-  },
-  {
-   "certificate_nanos": 161,
-   "certified": false,
-   "degree": 192,
-   "family": "hoeij-zimmermann",
-   "name": "hoeij_F192",
-   "production": null,
-   "production_paired": false,
-   "radicands": null,
-   "spans": {
-    "recovery": {
-     "nanos": 161,
-     "smallAllocs": 3
-    }
-   },
-   "translation": null
-  },
-  {
-   "certificate_nanos": 180,
-   "certified": false,
-   "degree": 200,
-   "family": "cyclotomic",
-   "name": "cyclo_phi275",
-   "production": null,
-   "production_paired": false,
-   "radicands": null,
-   "spans": {
-    "recovery": {
-     "nanos": 180,
-     "smallAllocs": 3
-    }
-   },
-   "translation": null
-  },
-  {
-   "certificate_nanos": 130,
-   "certified": false,
-   "degree": 240,
-   "family": "cyclotomic",
-   "name": "cyclo_phi385",
-   "production": null,
-   "production_paired": false,
-   "radicands": null,
-   "spans": {
-    "recovery": {
-     "nanos": 130,
-     "smallAllocs": 3
-    }
-   },
-   "translation": null
-  },
-  {
-   "certificate_nanos": 160,
-   "certified": false,
-   "degree": 256,
-   "family": "cyclotomic",
-   "name": "cyclo_phi257",
-   "production": null,
-   "production_paired": false,
-   "radicands": null,
-   "spans": {
-    "recovery": {
-     "nanos": 160,
-     "smallAllocs": 3
-    }
-   },
-   "translation": null
-  },
-  {
-   "certificate_nanos": 191,
-   "certified": false,
-   "degree": 256,
-   "family": "hoeij-zimmermann",
-   "name": "hoeij_F256",
-   "production": null,
-   "production_paired": false,
-   "radicands": null,
-   "spans": {
-    "recovery": {
-     "nanos": 191,
-     "smallAllocs": 3
-    }
-   },
-   "translation": null
-  },
-  {
-   "certificate_nanos": 171,
-   "certified": false,
-   "degree": 330,
-   "family": "cyclotomic",
-   "name": "cyclo_phi331",
-   "production": null,
-   "production_paired": false,
-   "radicands": null,
-   "spans": {
-    "recovery": {
-     "nanos": 171,
-     "smallAllocs": 3
-    }
-   },
-   "translation": null
-  },
-  {
-   "certificate_nanos": 331,
-   "certified": false,
-   "degree": 351,
-   "family": "hoeij-zimmermann",
-   "name": "hoeij_F351",
-   "production": null,
-   "production_paired": false,
-   "radicands": null,
-   "spans": {
-    "recovery": {
-     "nanos": 331,
+     "nanos": 150,
      "smallAllocs": 3
     }
    },
@@ -7188,9 +7090,9 @@
   {
    "certificate_nanos": 190,
    "certified": false,
-   "degree": 384,
+   "degree": 190,
    "family": "hoeij-zimmermann",
-   "name": "hoeij_P7",
+   "name": "hoeij_F190",
    "production": null,
    "production_paired": false,
    "radicands": null,
@@ -7205,9 +7107,9 @@
   {
    "certificate_nanos": 180,
    "certified": false,
-   "degree": 500,
-   "family": "cyclotomic",
-   "name": "cyclo_phi625",
+   "degree": 192,
+   "family": "hoeij-zimmermann",
+   "name": "hoeij_F192",
    "production": null,
    "production_paired": false,
    "radicands": null,
@@ -7220,7 +7122,143 @@
    "translation": null
   },
   {
+   "certificate_nanos": 170,
+   "certified": false,
+   "degree": 200,
+   "family": "cyclotomic",
+   "name": "cyclo_phi275",
+   "production": null,
+   "production_paired": false,
+   "radicands": null,
+   "spans": {
+    "recovery": {
+     "nanos": 170,
+     "smallAllocs": 3
+    }
+   },
+   "translation": null
+  },
+  {
    "certificate_nanos": 160,
+   "certified": false,
+   "degree": 240,
+   "family": "cyclotomic",
+   "name": "cyclo_phi385",
+   "production": null,
+   "production_paired": false,
+   "radicands": null,
+   "spans": {
+    "recovery": {
+     "nanos": 160,
+     "smallAllocs": 3
+    }
+   },
+   "translation": null
+  },
+  {
+   "certificate_nanos": 180,
+   "certified": false,
+   "degree": 256,
+   "family": "cyclotomic",
+   "name": "cyclo_phi257",
+   "production": null,
+   "production_paired": false,
+   "radicands": null,
+   "spans": {
+    "recovery": {
+     "nanos": 180,
+     "smallAllocs": 3
+    }
+   },
+   "translation": null
+  },
+  {
+   "certificate_nanos": 170,
+   "certified": false,
+   "degree": 256,
+   "family": "hoeij-zimmermann",
+   "name": "hoeij_F256",
+   "production": null,
+   "production_paired": false,
+   "radicands": null,
+   "spans": {
+    "recovery": {
+     "nanos": 170,
+     "smallAllocs": 3
+    }
+   },
+   "translation": null
+  },
+  {
+   "certificate_nanos": 170,
+   "certified": false,
+   "degree": 330,
+   "family": "cyclotomic",
+   "name": "cyclo_phi331",
+   "production": null,
+   "production_paired": false,
+   "radicands": null,
+   "spans": {
+    "recovery": {
+     "nanos": 170,
+     "smallAllocs": 3
+    }
+   },
+   "translation": null
+  },
+  {
+   "certificate_nanos": 321,
+   "certified": false,
+   "degree": 351,
+   "family": "hoeij-zimmermann",
+   "name": "hoeij_F351",
+   "production": null,
+   "production_paired": false,
+   "radicands": null,
+   "spans": {
+    "recovery": {
+     "nanos": 321,
+     "smallAllocs": 3
+    }
+   },
+   "translation": null
+  },
+  {
+   "certificate_nanos": 150,
+   "certified": false,
+   "degree": 384,
+   "family": "hoeij-zimmermann",
+   "name": "hoeij_P7",
+   "production": null,
+   "production_paired": false,
+   "radicands": null,
+   "spans": {
+    "recovery": {
+     "nanos": 150,
+     "smallAllocs": 3
+    }
+   },
+   "translation": null
+  },
+  {
+   "certificate_nanos": 161,
+   "certified": false,
+   "degree": 500,
+   "family": "cyclotomic",
+   "name": "cyclo_phi625",
+   "production": null,
+   "production_paired": false,
+   "radicands": null,
+   "spans": {
+    "recovery": {
+     "nanos": 161,
+     "smallAllocs": 3
+    }
+   },
+   "translation": null
+  },
+  {
+   "certificate_nanos": 170,
    "certified": false,
    "degree": 508,
    "family": "cyclotomic",
@@ -7230,14 +7268,14 @@
    "radicands": null,
    "spans": {
     "recovery": {
-     "nanos": 160,
+     "nanos": 170,
      "smallAllocs": 3
     }
    },
    "translation": null
   },
   {
-   "certificate_nanos": 601,
+   "certificate_nanos": 621,
    "certified": false,
    "degree": 630,
    "family": "hoeij-zimmermann",
@@ -7247,14 +7285,14 @@
    "radicands": null,
    "spans": {
     "recovery": {
-     "nanos": 601,
+     "nanos": 621,
      "smallAllocs": 3
     }
    },
    "translation": null
   },
   {
-   "certificate_nanos": 160,
+   "certificate_nanos": 191,
    "certified": false,
    "degree": 1030,
    "family": "cyclotomic",
@@ -7264,7 +7302,7 @@
    "radicands": null,
    "spans": {
     "recovery": {
-     "nanos": 160,
+     "nanos": 191,
      "smallAllocs": 3
     }
    },

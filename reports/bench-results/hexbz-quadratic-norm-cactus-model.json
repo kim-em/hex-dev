@@ -1,0 +1,292 @@
+{
+ "config": {
+  "certificate_record": "hexbz-quadratic-norm-certificate-chungus2.json",
+  "corpus_sha256": "619913904240834c912489e6cc23ba136e8cc5ebf0ea95f83397e0682387284d",
+  "hex_sweep": "hexbz-factor-sweep-1d9e59a1-hex-chungus2.json",
+  "isabelle_sweep": "hexbz-factor-sweep-aa68c920-chungus2.json",
+  "only": null,
+  "placement": "post-prime",
+  "repeats": 5,
+  "retained_phases": [
+   "normalization",
+   "primeWalk"
+  ]
+ },
+ "env": {
+  "arch": "x86_64",
+  "git_commit": "24784ebc69afdbbafaa15d9fb398cbb709186d2e",
+  "git_dirty": false,
+  "hostname": "chungus2",
+  "service_sha256": "41babbcfdcab113a3e093bcaa9ec0ac2a5457965d016c8230bcf54db1bd754b8"
+ },
+ "ranks": [
+  {
+   "isabelle": 0.19868059,
+   "modelled": 0.138709804,
+   "modelled_ratio": 0.6981547820046236,
+   "now": 0.15796573300000002,
+   "now_ratio": 0.7950738066562014,
+   "rank": 125
+  },
+  {
+   "isabelle": 0.213396215,
+   "modelled": 0.149286906,
+   "modelled_ratio": 0.6995761663345341,
+   "now": 0.17593500400000003,
+   "now_ratio": 0.8244523174883868,
+   "rank": 126
+  },
+  {
+   "isabelle": 0.228211048,
+   "modelled": 0.161955658,
+   "modelled_ratio": 0.7096749233630442,
+   "now": 0.19759635900000003,
+   "now_ratio": 0.8658492247930084,
+   "rank": 127
+  },
+  {
+   "isabelle": 0.24316698,
+   "modelled": 0.17972470200000001,
+   "modelled_ratio": 0.7390999468760109,
+   "now": 0.22682214900000003,
+   "now_ratio": 0.9327835095044567,
+   "rank": 128
+  },
+  {
+   "isabelle": 0.265147105,
+   "modelled": 0.19769397300000002,
+   "modelled_ratio": 0.7456010994349722,
+   "now": 0.257985532,
+   "now_ratio": 0.97299018972883,
+   "rank": 129
+  },
+  {
+   "isabelle": 0.287757274,
+   "modelled": 0.21935532800000002,
+   "modelled_ratio": 0.762292903845065,
+   "now": 0.29298012500000004,
+   "now_ratio": 1.0181501962657598,
+   "rank": 130
+  },
+  {
+   "isabelle": 0.31394728,
+   "modelled": 0.24762330600000002,
+   "modelled_ratio": 0.7887416829984959,
+   "now": 0.338337541,
+   "now_ratio": 1.0776890342862662,
+   "rank": 131
+  },
+  {
+   "isabelle": 0.341492184,
+   "modelled": 0.276849096,
+   "modelled_ratio": 0.8107040482074402,
+   "now": 0.384341666,
+   "now_ratio": 1.125477196866093,
+   "rank": 132
+  },
+  {
+   "isabelle": 0.37948256399999997,
+   "modelled": 0.308012479,
+   "modelled_ratio": 0.8116643772861196,
+   "now": 0.445593748,
+   "now_ratio": 1.1742140226500632,
+   "rank": 133
+  },
+  {
+   "isabelle": 0.43150068899999994,
+   "modelled": 0.343007072,
+   "modelled_ratio": 0.7949166264251321,
+   "now": 0.5108474120000001,
+   "now_ratio": 1.1838855070750538,
+   "rank": 134
+  },
+  {
+   "isabelle": 0.48742297199999995,
+   "modelled": 0.388364488,
+   "modelled_ratio": 0.7967709983106829,
+   "now": 0.5790552760000001,
+   "now_ratio": 1.1879934046276344,
+   "rank": 135
+  },
+  {
+   "isabelle": 0.6562337089999999,
+   "modelled": 0.434368613,
+   "modelled_ratio": 0.6619114608755949,
+   "now": 0.6490989920000001,
+   "now_ratio": 0.9891277803895931,
+   "rank": 136
+  },
+  {
+   "isabelle": 0.8274510039999998,
+   "modelled": 0.495620695,
+   "modelled_ratio": 0.5989728607544237,
+   "now": 0.7245910560000001,
+   "now_ratio": 0.875690587717264,
+   "rank": 137
+  },
+  {
+   "isabelle": 1.0000512289999999,
+   "modelled": 0.571112759,
+   "modelled_ratio": 0.5710835029632267,
+   "now": 0.8641575850000001,
+   "now_ratio": 0.8641133173388662,
+   "rank": 138
+  },
+  {
+   "isabelle": 1.355358213,
+   "modelled": 0.710679288,
+   "modelled_ratio": 0.5243479407757129,
+   "now": 1.007242872,
+   "now_ratio": 0.7431562094352395,
+   "rank": 139
+  },
+  {
+   "isabelle": 1.884073599,
+   "modelled": 0.853764575,
+   "modelled_ratio": 0.4531482079326138,
+   "now": 1.154170065,
+   "now_ratio": 0.6125928762085477,
+   "rank": 140
+  }
+ ],
+ "replacements": [
+  {
+   "name": "hoeij_S7",
+   "now_seconds": null,
+   "priced": false
+  },
+  {
+   "name": "hoeij_S8",
+   "now_seconds": null,
+   "priced": false
+  },
+  {
+   "name": "hoeij_S9",
+   "now_seconds": null,
+   "priced": false
+  },
+  {
+   "certificate_nanos": 7031,
+   "modelled_seconds": 2.1603e-05,
+   "name": "sd2",
+   "now_seconds": 5.0685e-05,
+   "priced": true,
+   "retained_nanos": 14572
+  },
+  {
+   "certificate_nanos": 7101,
+   "modelled_seconds": 2.4638e-05,
+   "name": "sd2_shift1",
+   "now_seconds": 5.0895e-05,
+   "priced": true,
+   "retained_nanos": 17537
+  },
+  {
+   "certificate_nanos": 12919,
+   "modelled_seconds": 8.8401e-05,
+   "name": "sd3",
+   "now_seconds": 0.0001683,
+   "priced": true,
+   "retained_nanos": 75482
+  },
+  {
+   "certificate_nanos": 12809,
+   "modelled_seconds": 9.1345e-05,
+   "name": "sd3_shift1",
+   "now_seconds": 0.000166707,
+   "priced": true,
+   "retained_nanos": 78536
+  },
+  {
+   "certificate_nanos": 13059,
+   "modelled_seconds": 9.1595e-05,
+   "name": "sd3_shift2",
+   "now_seconds": 0.000163352,
+   "priced": true,
+   "retained_nanos": 78536
+  },
+  {
+   "certificate_nanos": 23264,
+   "modelled_seconds": 0.0004324,
+   "name": "sd4",
+   "now_seconds": 0.000862579,
+   "priced": true,
+   "retained_nanos": 409136
+  },
+  {
+   "certificate_nanos": 23476,
+   "modelled_seconds": 0.000453163,
+   "name": "sd4_shift1",
+   "now_seconds": 0.000801028,
+   "priced": true,
+   "retained_nanos": 429687
+  },
+  {
+   "certificate_nanos": 27190,
+   "modelled_seconds": 0.000531157,
+   "name": "sd4_shift3",
+   "now_seconds": 0.000876139,
+   "priced": true,
+   "retained_nanos": 503967
+  },
+  {
+   "certificate_nanos": 69182,
+   "modelled_seconds": 0.006839179,
+   "name": "sd5",
+   "now_seconds": 0.070043716,
+   "priced": true,
+   "retained_nanos": 6769997
+  },
+  {
+   "certificate_nanos": 115872,
+   "modelled_seconds": 0.007375906,
+   "name": "sd5_shift1",
+   "now_seconds": 0.065253664,
+   "priced": true,
+   "retained_nanos": 7260034
+  },
+  {
+   "certificate_nanos": 124685,
+   "modelled_seconds": 0.008949267,
+   "name": "sd5_shift2",
+   "now_seconds": 0.068207864,
+   "priced": true,
+   "retained_nanos": 8824582
+  },
+  {
+   "certificate_nanos": 279826,
+   "modelled_seconds": 0.028267978,
+   "name": "sd6",
+   "now_seconds": 8.042227452,
+   "priced": true,
+   "retained_nanos": 27988152
+  },
+  {
+   "name": "sd6_shift1",
+   "now_seconds": null,
+   "priced": false
+  },
+  {
+   "name": "sd6_shift5",
+   "now_seconds": null,
+   "priced": false
+  },
+  {
+   "name": "sd7",
+   "now_seconds": null,
+   "priced": false
+  }
+ ],
+ "schema": "hexbz-quadratic-norm-cactus-model/1",
+ "solved": {
+  "isabelle": 141,
+  "modelled": 145,
+  "now": 145
+ },
+ "worst_ratio": {
+  "hi": 140,
+  "lo": 125,
+  "modelled": 0.8116643772861196,
+  "now": 1.1879934046276344
+ }
+}

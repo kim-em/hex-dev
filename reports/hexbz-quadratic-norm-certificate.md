@@ -13,8 +13,8 @@ The verdict is **go**, on both the mathematics and the numbers. The theorem
 holds for every iterated quadratic norm with multiplicatively independent
 radicands -- an infinite class of which the corpus contains only Swinnerton-Dyer
 instances and quadratics -- the certificate is two decidable checks, and on the
-committed corpus the certificate is 827x faster than the production cascade on
-`sd5` and 24,783x on `sd6`, at a median miss overhead of 0.14 us.
+committed corpus the certificate is 826x faster than the production cascade on
+`sd5` and 23,816x on `sd6`, at a median miss overhead of 0.14 us.
 
 The gate that matters most is not either of those. Simulated onto the combined
 cactus, the certificate alone takes the worst Hex/Isabelle cumulative ratio over
@@ -300,15 +300,14 @@ implementation against them, writing
 
 | Record | SHA-256 |
 |---|---|
-| `reports/bench-results/hexbz-quadratic-norm-certificate-chungus2.json` | `b743a1d51510a003f2fbc4a2a4ac041a8472ebf89152d49ee814749b944385ff` |
-| `reports/bench-results/hexbz-quadratic-norm-witnesses.json` | `93d32b778a2d18088c426b7208ae4b5413c469c6532dfb91f1980995ed47520b` |
-| `reports/bench-results/hexbz-quadratic-norm-cactus-model.json` | `f9bd5e3f1e9c78fb0c195235116ec6a25e4789ad90215f2daccc5fbb2f9e19a1` |
+| `reports/bench-results/hexbz-quadratic-norm-certificate-chungus2.json` | `2efeffac97f8a7ebf877fc087a73be4fa1bb775b93b3de90eb656f152e0a843f` |
+| `reports/bench-results/hexbz-quadratic-norm-witnesses.json` | `dad4ba27d0e08c0a97cf6e7e7ab448eb3554996e3994e4838f579154d01ba595` |
+| `reports/bench-results/hexbz-quadratic-norm-cactus-model.json` | `1d5a098d909bc7fc97e0858c1238e5e0903ceed933c6dc389a0d7178a6e93922` |
 
-The certificate and witness records were measured on a tree clean in its tracked
-files; each carries its own `env.git_commit` and the SHA-256 of the service
-binary it measured, which pins the code more tightly than the commit does. The
-cactus model additionally records the two sweeps and the certificate record it
-read.
+All three were measured at revision `24784ebc` with no modified source, and each
+carries the SHA-256 of the service binary it measured, which pins the code more
+tightly than the commit does. The cactus model additionally records the two
+sweeps and the certificate record it read.
 
 ## Measured effect
 
@@ -320,22 +319,22 @@ two medians, so both sides describe one execution.
 
 | row | degree | recovery | independence | construction | equality | certificate | paired | production | ratio |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
-| `conway_p3_n2` | 2 | 2.8 | 0.2 | 0.2 | 0.1 | 3.1 | 3.1 | 0.018 ms | 5x |
-| `conway_p65537_n2` | 2 | 3.0 | 0.2 | 0.2 | 0.1 | 3.4 | 3.4 | 0.029 ms | 8x |
-| `sd2` | 4 | 6.2 | 0.5 | 0.3 | 0.1 | 7.0 | 6.9 | 0.034 ms | 5x |
-| `sd3` | 8 | 10.9 | 1.4 | 0.6 | 0.1 | 13.0 | 13.1 | 0.151 ms | 11x |
-| `sd4` | 16 | 17.4 | 4.4 | 1.4 | 0.1 | 23.2 | 27.9 | 0.838 ms | 32x |
-| `sd4_shift3` | 16 | 17.5 | 4.4 | 5.2 | 0.1 | 27.2 | 29.3 | 0.870 ms | 30x |
-| `sd5` | 32 | 36.5 | 10.4 | 21.4 | 0.3 | 68.6 | 82.9 | 68.589 ms | **827x** |
-| `sd5_shift1` | 32 | 54.7 | 10.5 | 55.7 | 0.4 | 121.3 | 129.3 | 64.427 ms | 499x |
-| `sd5_shift2` | 32 | 52.6 | 10.5 | 60.8 | 0.4 | 124.3 | 133.9 | 66.747 ms | 498x |
-| `sd6` | 64 | 99.7 | 25.3 | 156.5 | 0.5 | 282.0 | 322.2 | 7.986 s | **24783x** |
-| `sd6_shift1` | 64 | 198.1 | 26.3 | 361.7 | 1.0 | 587.0 | 650.4 | 22.101 s | 33981x |
-| `sd6_shift5` | 64 | 206.3 | 25.9 | 438.8 | 0.9 | 671.9 | -- | timeout | -- |
-| `hoeij_S7` | 128 | 362.0 | 60.5 | 848.9 | 1.0 | 1272.3 | -- | timeout | -- |
-| `sd7` | 128 | 369.1 | 61.0 | 867.9 | 1.0 | 1299.0 | -- | timeout | -- |
-| `hoeij_S8` | 256 | 1392.3 | 144.9 | 3787.3 | 2.2 | 5326.7 | -- | timeout | -- |
-| `hoeij_S9` | 512 | 5998.6 | 321.7 | 17609.3 | 6.3 | 23936.0 | -- | timeout | -- |
+| `conway_p3_n2` | 2 | 2.7 | 0.2 | 0.2 | 0.1 | 3.1 | 3.2 | 0.017 ms | 5x |
+| `conway_p65537_n2` | 2 | 3.1 | 0.2 | 0.2 | 0.0 | 3.6 | 3.4 | 0.029 ms | 8x |
+| `sd2` | 4 | 6.2 | 0.5 | 0.3 | 0.1 | 7.0 | 7.0 | 0.034 ms | 5x |
+| `sd3` | 8 | 10.9 | 1.4 | 0.6 | 0.1 | 12.9 | 13.2 | 0.150 ms | 11x |
+| `sd4` | 16 | 17.5 | 4.3 | 1.4 | 0.1 | 23.3 | 25.1 | 0.843 ms | 34x |
+| `sd4_shift3` | 16 | 17.5 | 4.3 | 5.3 | 0.1 | 27.2 | 30.4 | 0.883 ms | 30x |
+| `sd5` | 32 | 36.3 | 10.7 | 21.8 | 0.3 | 69.2 | 83.7 | 68.853 ms | **826x** |
+| `sd5_shift1` | 32 | 50.8 | 10.4 | 54.3 | 0.4 | 115.9 | 129.1 | 63.916 ms | 495x |
+| `sd5_shift2` | 32 | 52.9 | 10.6 | 60.8 | 0.4 | 124.7 | 138.7 | 67.857 ms | 489x |
+| `sd6` | 64 | 100.0 | 25.3 | 153.9 | 0.5 | 279.8 | 333.8 | 7.949 s | **23816x** |
+| `sd6_shift1` | 64 | 193.0 | 25.7 | 366.5 | 0.9 | 586.0 | 644.5 | 22.105 s | 34297x |
+| `sd6_shift5` | 64 | 203.1 | 25.4 | 437.8 | 0.9 | 667.3 | -- | timeout | -- |
+| `hoeij_S7` | 128 | 369.9 | 61.0 | 861.0 | 1.0 | 1293.0 | -- | timeout | -- |
+| `sd7` | 128 | 370.4 | 61.3 | 858.2 | 1.0 | 1290.9 | -- | timeout | -- |
+| `hoeij_S8` | 256 | 1390.1 | 143.0 | 3771.2 | 2.2 | 5306.4 | -- | timeout | -- |
+| `hoeij_S9` | 512 | 6001.3 | 327.2 | 17733.6 | 6.3 | 24068.4 | -- | timeout | -- |
 
 The four stage columns come from a certificate-only process, which is what
 classifies every row and what the whole-corpus miss sweep uses. `paired` is the
@@ -347,7 +346,8 @@ execution rather than two runs subtracted.
 Twenty-four of the corpus's 392 rows certify: eighteen Swinnerton-Dyer rows and
 translates, and six degree-two Conway polynomials, which are the `n = 1` case of
 the theorem. The gate asks for at least 5x on `sd5` and a material reduction on
-`sd6`; the measurements are 827x and 24,783x. Four rows the production cascade cannot finish inside the cutoff --
+`sd6`; the measurements are 826x and 23,816x. Four rows the production cascade
+cannot finish inside the cutoff --
 `sd6_shift5`, `sd7`/`hoeij_S7`, `hoeij_S8`, `hoeij_S9` -- certify in under 24 ms,
 `hoeij_S9` at degree 512.
 
@@ -355,13 +355,13 @@ Cost splits as expected: recovery is `O(n²)` rational operations on the top
 `2n+1` coefficients and dominates at small degree; the iterated-norm
 construction is `O(N²)` big-integer multiplications and dominates from degree 32
 up; the independence test is `2ⁿ - 1` square tests on integers below 510,510 and
-never exceeds 325 us, all of it at degree 512; the equality test is under seven
+never exceeds 328 us, all of it at degree 512; the equality test is under seven
 microseconds everywhere,
 because by the time it runs both sides are already built.
 
 ### Miss overhead
 
-Over the 368 declining rows: **median 0.14 us, maximum 86.9 us.** The median is
+Over the 368 declining rows: **median 0.14 us, maximum 86.7 us.** The median is
 the degree test -- most of the corpus does not have power-of-two degree, and
 those rows are refused in a few hundred nanoseconds. The rows that pay anything
 are those with power-of-two degree *and* `2ⁿ | a_{N-1}`, which then run the
@@ -369,17 +369,17 @@ rational recovery to a contradiction:
 
 | declining row | degree | cost |
 |---|---:|---:|
-| `cyclo_phi256` | 128 | 86.9 us |
-| `laguerre_L32` | 32 | 72.7 us |
-| `cyclo_phi128` | 64 | 42.6 us |
-| `conway_p2_n32` | 32 | 26.1 us |
+| `cyclo_phi256` | 128 | 86.7 us |
+| `laguerre_L32` | 32 | 72.6 us |
+| `cyclo_phi128` | 64 | 42.3 us |
+| `conway_p3_n32` | 32 | 25.9 us |
 | `wilkinson_32` | 32 | 0.2 us |
 
 `wilkinson_32` is the shape of the common case: degree 32 is a power of two, but
 its roots sum to 528 and `32 ∤ 528`, so it is refused before any series
 arithmetic. This is why the median is what it is, and it is why the recogniser
 should still be budget-gated rather than unconditional: `cyclo_phi128` factors in
-about a millisecond, so 43 us on it is 4%, well above the 1% the gate asks for
+about a millisecond, so 42 us on it is 4%, well above the 1% the gate asks for
 even though the corpus median is far below it.
 
 ### Breadth: the class is not the benchmark
@@ -463,11 +463,11 @@ declines.
 
 | row | now | modelled | retained | certificate |
 |---|---:|---:|---:|---:|
-| `sd4` | 0.863 ms | 0.433 ms | 0.409 ms | 23.6 us |
-| `sd5` | 70.044 ms | 6.956 ms | 6.884 ms | 72.6 us |
-| `sd5_shift1` | 65.254 ms | 7.300 ms | 7.176 ms | 124.3 us |
-| `sd5_shift2` | 68.208 ms | 9.033 ms | 8.908 ms | 124.6 us |
-| `sd6` | 8.042 s | 28.203 ms | 27.914 ms | 288.8 us |
+| `sd4` | 0.863 ms | 0.434 ms | 0.411 ms | 23.3 us |
+| `sd5` | 70.044 ms | 6.949 ms | 6.880 ms | 69.2 us |
+| `sd5_shift1` | 65.254 ms | 7.286 ms | 7.170 ms | 115.9 us |
+| `sd5_shift2` | 68.208 ms | 9.023 ms | 8.898 ms | 124.7 us |
+| `sd6` | 8.042 s | 28.144 ms | 27.864 ms | 279.8 us |
 
 The retained column is the whole cost in every row: the certificate is two to
 four orders of magnitude below the prime walk it follows. Cumulative
@@ -508,9 +508,9 @@ implementation PR owes is what settles it.
 |---|---|
 | theorem applies to a natural class broader than the benchmark rows | **yes** -- all independent radicands and translations; 8 off-corpus witnesses including negative, composite, and degree-1024 cases |
 | covers SD5 and SD6 from their mathematical input data without case tables | **yes** -- radicands recovered from the top `2n+1` coefficients; `sd7`, `hoeij_S8`, `hoeij_S9` too |
-| certificate generation plus checking at least 5x faster than SD5, materially reduces SD6 | **yes** -- 827x and 24,783x, both sides read off the same paired in-process observations |
+| certificate generation plus checking at least 5x faster than SD5, materially reduces SD6 | **yes** -- 826x and 23,816x, both sides read off the same paired in-process observations |
 | small, reviewable trust surface | **executable side yes** (see below); the Mathlib proof is the open cost |
-| unsuccessful detection under 1% median overhead, preferably opt-in | **yes** on the median -- 0.14 us against a maximum of 86.9 us -- but see the placement discussion: the post-prime placement's predicate has to admit `sd5`, so it is not simply the existing recombination budget, and whatever predicate is chosen decides which rows pay the 87 us tail |
+| unsuccessful detection under 1% median overhead, preferably opt-in | **yes** on the median -- 0.14 us against a maximum of 86.7 us -- but see the placement discussion: the post-prime placement's predicate has to admit `sd5`, so it is not simply the existing recombination budget, and whatever predicate is chosen decides which rows pay the 87 us tail |
 
 The executable trust surface is `quadNorm`, `iteratedNorm`,
 `isPerfectSquare`, `independentSquareClasses`, and one array comparison: about
