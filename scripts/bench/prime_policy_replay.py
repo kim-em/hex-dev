@@ -317,6 +317,7 @@ def policy_voi(inst):
     truncated = False
     trace = []
     scouted = 0
+    examined = 0
     for q in hot_path_primes():
         if fuel == 0 or q <= head["prime"]:
             continue
@@ -333,6 +334,9 @@ def policy_voi(inst):
                 + SPLIT_COLUMN_COST * n),
             "scouted_so_far": scouted,
             "from_index": index.get(inc["prime"], 0),
+            # Candidates already examined cannot be reached again, and their
+            # scouts are already paid, so alternatives start after this.
+            "examined_index": examined,
         })
         if not pays:
             break
@@ -348,6 +352,7 @@ def policy_voi(inst):
         w.scout(cand)
         fuel -= 1
         scouted += 1
+        examined = index[q]
         if score(bound, n, cand["prime"], cand["degrees"]) < \
                 score(bound, n, inc["prime"], inc["degrees"]):
             inc, best = cand, cand
@@ -497,7 +502,7 @@ def print_margins(record: dict) -> int:
             # every scout from here up to it, plus its own split.
             best_net, best_alt = None, None
             cost = 0
-            for cand in cands[t["from_index"] + 1:][:t["fuel"]]:
+            for cand in cands[t["examined_index"] + 1:][:t["fuel"]]:
                 cost += cand["bounded_scout"]
                 if (cand["downstream"] is None or inc["downstream"] is None):
                     continue
