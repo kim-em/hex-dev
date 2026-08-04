@@ -348,6 +348,73 @@ pin the branch boundaries -- both signs of the window, the two endpoints
 #guard ZPoly.intModNat (-(5 ^ 40)) (5 ^ 40) == 0
 
 /-
+Boundary conformance for the `Int`-valued canonical representative.
+
+`ZPoly.intEmodImpl` returns an already-canonical value as itself, covers
+`[-m, 0)` with one addition, and falls back to `Int.emod` elsewhere; at
+`m = 0` the specification degenerates to `Int.ofNat (Int.toNat z)`. The
+`@[csimp]` rule means `#guard` evaluates the windowed form, so these cases
+pin every branch boundary of the implementation against the reference
+`Int.ofNat (ZPoly.intModNat z m)`.
+-/
+#guard ZPoly.intEmod 0 7 == 0
+#guard ZPoly.intEmod 6 7 == 6
+#guard ZPoly.intEmod 7 7 == 0
+#guard ZPoly.intEmod 8 7 == 1
+#guard ZPoly.intEmod 100 7 == 2
+#guard ZPoly.intEmod (-1) 7 == 6
+#guard ZPoly.intEmod (-7) 7 == 0
+#guard ZPoly.intEmod (-8) 7 == 6
+#guard ZPoly.intEmod (-100) 7 == 5
+#guard ZPoly.intEmod (-(5 ^ 40) - 1) (5 ^ 40) == 5 ^ 40 - 1
+#guard ZPoly.intEmod 5 0 == 5
+#guard ZPoly.intEmod (-5) 0 == 0
+#guard ZPoly.intEmod 0 0 == 0
+
+/-
+Differential conformance for the windowed monic modular division.
+
+`ZPoly.divModMonicModSquare` is `@[csimp]`-swapped to the windowed
+`divModMonicModSquareImpl`, while `ZPoly.divModMonicModSquareAux` carries no
+such rule, so evaluating the two forms compares the compiled windowed loop
+against the specification recursion on the same inputs. The cases pin the
+guard's two sides -- monic divisors at a positive modulus take the windowed
+path, a zero divisor, a non-monic divisor and `m = 0` take the fall-back --
+together with a constant divisor, a remainder whose degree drops by more than
+one in a single elimination, and an exact division that leaves no remainder.
+-/
+private def divSpec (p q : ZPoly) (m : Nat) : ZPoly × ZPoly :=
+  let reduced := QuadraticLiftResult.reduceModSquare p m
+  ZPoly.divModMonicModSquareAux m q reduced.size 0 reduced
+
+private def divAgrees (p q : ZPoly) (m : Nat) : Bool :=
+  ZPoly.divModMonicModSquare p q m == divSpec p q m
+
+/-- `x^3 + 2x^2 + 3x + 4`. -/
+private def divCubic : ZPoly := DensePoly.ofCoeffs #[4, 3, 2, 1]
+/-- `x^5 - x + 7`, whose elimination against `x^2 + 1` drops several degrees. -/
+private def divQuintic : ZPoly := DensePoly.ofCoeffs #[7, -1, 0, 0, 0, 1]
+/-- The monic quadratic `x^2 + 1`. -/
+private def divMonicQuad : ZPoly := DensePoly.ofCoeffs #[1, 0, 1]
+/-- The monic linear `x - 3`. -/
+private def divMonicLin : ZPoly := DensePoly.ofCoeffs #[-3, 1]
+/-- A non-monic divisor, which must take the fall-back path. -/
+private def divNonMonic : ZPoly := DensePoly.ofCoeffs #[1, 0, 2]
+
+#guard divAgrees divCubic divMonicQuad 5
+#guard divAgrees divCubic divMonicLin 5
+#guard divAgrees divCubic 1 5
+#guard divAgrees divQuintic divMonicQuad 5
+#guard divAgrees divQuintic divMonicLin 97
+#guard divAgrees divQuintic divMonicQuad (5 ^ 20)
+#guard divAgrees (divMonicQuad * divMonicLin) divMonicQuad 11
+#guard divAgrees divCubic 0 5
+#guard divAgrees divCubic divNonMonic 5
+#guard divAgrees divCubic divMonicQuad 0
+#guard divAgrees 0 divMonicQuad 5
+#guard divAgrees divMonicLin divMonicQuad 5
+
+/-
 Asymptotic-gap commentary (observation only; no timing assertion).
 
 `multifactorLift` lifts to precision `p^k` via `k - 1` linear steps per

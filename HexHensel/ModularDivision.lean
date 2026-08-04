@@ -237,7 +237,7 @@ representative (`Hex.ZPoly.intEmod_sub_intEmod`). -/
 and reduces only the `q.size` slots the subtraction reaches. The remainder's
 coefficient array is threaded linearly through the division loop, so each write
 lands in place. -/
-def elimStep (m : Nat) (rem q : ZPoly) (k : Nat) (coeff : Int) : ZPoly :=
+private def elimStep (m : Nat) (rem q : ZPoly) (k : Nat) (coeff : Int) : ZPoly :=
   DensePoly.ofCoeffs <|
     (List.range q.size).foldl
       (fun acc j =>
@@ -248,7 +248,7 @@ def elimStep (m : Nat) (rem q : ZPoly) (k : Nat) (coeff : Int) : ZPoly :=
 /-- Write `coeff` into slot `k` of the running quotient. The division loop fills
 the quotient from its top slot downwards, so only the first write of a division
 grows the array; every later one lands in place. -/
-def quotStep (quot : ZPoly) (k : Nat) (coeff : Int) : ZPoly :=
+private def quotStep (quot : ZPoly) (k : Nat) (coeff : Int) : ZPoly :=
   DensePoly.ofCoeffs <|
     if k < quot.size then quot.toArray.setIfInBounds k coeff
     else Array.ofFn (n := k + 1) fun i => if i.val = k then coeff else quot.coeff i.val
@@ -320,7 +320,7 @@ private theorem elimFold_getD (M : Nat) (q : ZPoly) (k : Nat) (c : Int) :
         · rw [if_neg (by omega : ¬ (k ≤ n ∧ n - k < len)),
             if_neg (by omega : ¬ (k ≤ n ∧ n - k < len + 1))]
 
-theorem coeff_elimStep (m : Nat) (rem q : ZPoly) (k : Nat) (coeff : Int)
+private theorem coeff_elimStep (m : Nat) (rem q : ZPoly) (k : Nat) (coeff : Int)
     (hwindow : k + q.size ≤ rem.size) (i : Nat) :
     (elimStep m rem q k coeff).coeff i =
       if k ≤ i ∧ i - k < q.size then
@@ -365,7 +365,7 @@ private theorem intArray_ofFn_getD {n : Nat} (f : Fin n → Int) (i : Nat) :
   · rw [dif_neg h, dif_neg h]
     rfl
 
-theorem coeff_quotStep (quot : ZPoly) (k : Nat) (coeff : Int) (i : Nat) :
+private theorem coeff_quotStep (quot : ZPoly) (k : Nat) (coeff : Int) (i : Nat) :
     (quotStep quot k coeff).coeff i = if i = k then coeff else quot.coeff i := by
   unfold quotStep
   rw [DensePoly.coeff_ofCoeffs]
