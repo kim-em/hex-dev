@@ -170,7 +170,11 @@ def main(argv: list[str]) -> int:
         "schema": "hexbz-quadratic-norm-certificate/1",
         "env": {
             "git_commit": git("rev-parse", "HEAD"),
-            "git_dirty": bool(git("status", "--porcelain")),
+            # Tracked files only: the record being written is untracked until
+            # it is committed, and `service_sha256` already pins the measured
+            # binary exactly.
+            "git_dirty": bool(git("status", "--porcelain",
+                                  "--untracked-files=no")),
             "hostname": socket.gethostname(),
             "arch": platform.machine(),
             "corpus_sha256": hashlib.sha256(CORPUS.read_bytes()).hexdigest(),

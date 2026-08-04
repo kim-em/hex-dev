@@ -272,11 +272,15 @@ def recover? (f : Array Int) : Option Certificate := Id.run do
     let v := (if (n - j) % 2 == 0 then 1 else -1) * e[n-j]!
     if v.den != 1 then return none
     coeffs := coeffs.push v.num
-  -- `∑ dᵢ²` bounds every `|dᵢ|`.
-  if pd[2]!.den != 1 || pd[2]!.num < 0 then return none
-  let bound := pd[2]!.num.toNat.sqrt
-  -- With one radicand the search never runs, so the cap does not apply.
-  if 1 < n && bound > radicandBound then return none
+  -- `∑ dᵢ²` bounds every `|dᵢ|`. With a single radicand the search never runs
+  -- -- the degree-one factor names its root -- so neither the bound nor its cap
+  -- is consulted, and `pd` has no second entry to consult them with.
+  let mut bound := 0
+  if 1 < n then
+    let squares := pd[2]!
+    if squares.den != 1 || squares.num < 0 then return none
+    bound := squares.num.toNat.sqrt
+    if bound > radicandBound then return none
   match integerRoots coeffs bound with
   | none => return none
   | some ds =>
