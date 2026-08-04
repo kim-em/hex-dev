@@ -7,8 +7,8 @@ a `@[csimp]`-proved equality at the `fixedSpaceKernelVectors` boundary.
 
 The headline is the same span the prototype page priced, measured the same way
 by the same driver on the same host: `fixedSpaceKernelVectors` on
-`cyclo_phi385` goes from **327.823 ms to 53.886 ms, 6.08x**, and the whole
-factorization from 434.641 ms to 167.124 ms, **2.60x**. No row of the
+`cyclo_phi385` goes from **327.823 ms to 54.057 ms, 6.06x**, and the whole
+factorization from 434.641 ms to 165.854 ms, **2.62x**. No row of the
 representative set regresses, on either span, at any margin -- including the
 Wilkinson rows, whose fixed-space matrix is zero and which the prototype
 *slowed down* by 1.4x.
@@ -20,15 +20,15 @@ and is not a measurement artefact; [Where the remaining
 
 ## Revision and protocol
 
-- Source revision `2c4c6e4fa0378ee34cf6399a91c720b4e63cf84d` (clean worktree),
+- Source revision `a5e0ebe49399708a8286b8acb1c6a0877e9dc4c3` (clean worktree),
   Lean toolchain `leanprover/lean4:v4.33.0-rc1`.
 - Host `chungus2`, AMD EPYC 9455, Linux x86-64, 96 cores, measured 2026-08-03.
   The host was shared with other work throughout.
 - The driver pins itself to one idle logical CPU before spawning any service.
 - Baseline: `reports/bench-results/hexbz-phase-profile-0e1601a0-chungus2.json`,
   the record the prototype page reads, measured on the same host.
-- After: `reports/bench-results/hexbz-phase-profile-2c4c6e4f-chungus2.json`,
-  SHA-256 `1f595bed0ef0e5a67cc2b8246af8eb4f91d5769cc92bad4e0665185f1433ac59`.
+- After: `reports/bench-results/hexbz-phase-profile-a5e0ebe4-chungus2.json`,
+  SHA-256 `3618317b3bc7d8f34717d9826689eecfe372ce9cdb3902006ab48cfeefd68992`.
   `hexbz_factor_service` SHA-256
   `c22f80f3683e4e9c7b7c7432e6af80543e920aa9402b8cd37ea4686d3d6360c4`; corpus
   `bench/corpus/hexbz-factor-corpus.jsonl`, SHA-256
@@ -133,34 +133,36 @@ cascade.
 
 | instance | matrix | prime | kernel before | kernel after | gain | total before | total after | gain |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|
-| `sd5` | 32x32 | 29 | 1.821 ms | 1.339 ms | 1.36x | 75.594 ms | 69.402 ms | 1.09x |
-| `sd5_shift1` | 32x32 | 29 | 2.739 ms | 1.750 ms | 1.57x | 64.235 ms | 64.425 ms | 1.00x |
-| `sd5_shift2` | 32x32 | 29 | 2.739 ms | 1.762 ms | 1.55x | 68.231 ms | 67.697 ms | 1.01x |
-| `sd4_x_sd4shift1` | 32x32 | 29 | 2.706 ms | 1.771 ms | 1.53x | 19.094 ms | 18.172 ms | 1.05x |
-| `sd5_x_phi11` | 42x42 | 29 | 5.692 ms | 3.307 ms | 1.72x | 161.131 ms | 140.318 ms | 1.15x |
-| `xpow48_minus1` | 48x48 | 11 | 894.566 us | 618.196 us | 1.45x | 19.639 ms | 10.400 ms | 1.89x |
-| `xpow105_minus1` | 105x105 | 17 | 6.015 ms | 3.969 ms | 1.52x | 74.986 ms | 46.124 ms | 1.63x |
-| `xpow120_minus1` | 120x120 | 7 | 5.009 ms | 3.003 ms | 1.67x | 478.515 ms | 148.233 ms | 3.23x |
-| `cyclo_phi179` | 178x178 | 3 | 20.539 ms | 5.811 ms | 3.53x | 74.909 ms | 42.336 ms | 1.77x |
-| `cyclo_phi64_x_phi105` | 80x80 | 11 | 27.932 ms | 7.506 ms | 3.72x | 61.349 ms | 45.865 ms | 1.34x |
-| `cyclo_phi128_x_phi165` | 144x144 | 7 | 139.775 ms | 28.100 ms | 4.97x | 198.351 ms | 84.694 ms | 2.34x |
-| `cyclo_phi385` | 240x240 | 3 | 327.823 ms | 53.886 ms | 6.08x | 434.641 ms | 167.124 ms | 2.60x |
-| `wilkinson_40` | 40x40 | 47 | 297.862 us | 224.763 us | 1.33x | 13.451 ms | 13.518 ms | 1.00x |
-| `wilkinson_48` | 48x48 | 61 | 427.624 us | 318.171 us | 1.34x | 25.192 ms | 24.389 ms | 1.03x |
-| `wilkinson_56` | 56x56 | 67 | 661.561 us | 501.855 us | 1.32x | 34.180 ms | 32.686 ms | 1.05x |
-| `chebyshev_T24` (control) | 24x24 | 5 | 401.566 us | 170.353 us | 2.36x | 558.258 us | 441.454 us | 1.26x |
-| `chebyshev_U24` (control) | 24x24 | 3 | 334.365 us | 128.962 us | 2.59x | 711.415 us | 589.554 us | 1.21x |
-| `legendre_P30` (control) | 30x30 | 67 | 2.032 ms | 1.363 ms | 1.49x | 9.080 ms | 8.560 ms | 1.06x |
-| `legendre_P38` (control) | 38x38 | 79 | 4.244 ms | 2.712 ms | 1.57x | 4.792 ms | 3.820 ms | 1.25x |
-| `cyclo_phi17` (control) | 16x16 | 3 | 129.993 us | 50.605 us | 2.57x | 155.711 us | 104.535 us | 1.49x |
-| `cyclo_phi41` (control) | 40x40 | 3 | 643.014 us | 254.197 us | 2.53x | 2.825 ms | 1.979 ms | 1.43x |
-| `xpow24_minus1` (control) | 24x24 | 11 | 227.337 us | 165.265 us | 1.38x | 3.223 ms | 2.293 ms | 1.41x |
-| `randprod_10` (control) | 20x20 | 7 | 573.701 us | 232.915 us | 2.46x | 824.853 us | 640.029 us | 1.29x |
-| `randprod_21` (control) | 24x24 | 17 | 1.251 ms | 681.290 us | 1.84x | 1.748 ms | 1.402 ms | 1.25x |
+| `sd5` | 32x32 | 29 | 1.821 ms | 1.359 ms | 1.34x | 75.594 ms | 69.449 ms | 1.09x |
+| `sd5_shift1` | 32x32 | 29 | 2.739 ms | 1.788 ms | 1.53x | 64.235 ms | 64.594 ms | 0.99x |
+| `sd5_shift2` | 32x32 | 29 | 2.739 ms | 1.787 ms | 1.53x | 68.231 ms | 68.063 ms | 1.00x |
+| `sd4_x_sd4shift1` | 32x32 | 29 | 2.706 ms | 1.797 ms | 1.51x | 19.094 ms | 18.349 ms | 1.04x |
+| `sd5_x_phi11` | 42x42 | 29 | 5.692 ms | 3.298 ms | 1.73x | 161.131 ms | 142.532 ms | 1.13x |
+| `xpow48_minus1` | 48x48 | 11 | 894.566 us | 623.765 us | 1.43x | 19.639 ms | 10.494 ms | 1.87x |
+| `xpow105_minus1` | 105x105 | 17 | 6.015 ms | 4.072 ms | 1.48x | 74.986 ms | 46.066 ms | 1.63x |
+| `xpow120_minus1` | 120x120 | 7 | 5.009 ms | 3.048 ms | 1.64x | 478.515 ms | 147.886 ms | 3.24x |
+| `cyclo_phi179` | 178x178 | 3 | 20.539 ms | 5.771 ms | 3.56x | 74.909 ms | 42.780 ms | 1.75x |
+| `cyclo_phi64_x_phi105` | 80x80 | 11 | 27.932 ms | 7.670 ms | 3.64x | 61.349 ms | 46.616 ms | 1.32x |
+| `cyclo_phi128_x_phi165` | 144x144 | 7 | 139.775 ms | 28.512 ms | 4.90x | 198.351 ms | 84.919 ms | 2.34x |
+| `cyclo_phi385` | 240x240 | 3 | 327.823 ms | 54.057 ms | 6.06x | 434.641 ms | 165.854 ms | 2.62x |
+| `wilkinson_40` | 40x40 | 47 | 297.862 us | 224.202 us | 1.33x | 13.451 ms | 13.977 ms | 0.96x |
+| `wilkinson_48` | 48x48 | 61 | 427.624 us | 320.114 us | 1.34x | 25.192 ms | 25.217 ms | 1.00x |
+| `wilkinson_56` | 56x56 | 67 | 661.561 us | 507.522 us | 1.30x | 34.180 ms | 34.145 ms | 1.00x |
+| `chebyshev_T24` (control) | 24x24 | 5 | 401.566 us | 170.012 us | 2.36x | 558.258 us | 452.211 us | 1.23x |
+| `chebyshev_U24` (control) | 24x24 | 3 | 334.365 us | 129.172 us | 2.59x | 711.415 us | 588.492 us | 1.21x |
+| `legendre_P30` (control) | 30x30 | 67 | 2.032 ms | 1.356 ms | 1.50x | 9.080 ms | 8.592 ms | 1.06x |
+| `legendre_P38` (control) | 38x38 | 79 | 4.244 ms | 2.748 ms | 1.54x | 4.792 ms | 3.810 ms | 1.26x |
+| `cyclo_phi17` (control) | 16x16 | 3 | 129.993 us | 50.474 us | 2.58x | 155.711 us | 106.398 us | 1.46x |
+| `cyclo_phi41` (control) | 40x40 | 3 | 643.014 us | 253.887 us | 2.53x | 2.825 ms | 1.998 ms | 1.41x |
+| `xpow24_minus1` (control) | 24x24 | 11 | 227.337 us | 167.358 us | 1.36x | 3.223 ms | 2.340 ms | 1.38x |
+| `randprod_10` (control) | 20x20 | 7 | 573.701 us | 238.593 us | 2.40x | 824.853 us | 638.907 us | 1.29x |
+| `randprod_21` (control) | 24x24 | 17 | 1.251 ms | 687.299 us | 1.82x | 1.748 ms | 1.427 ms | 1.22x |
 
 **No regression above 5% on any row, on either span.** The largest end-to-end
-move against the implementation is `sd5_shift1` at 1.00x (64.235 ms to
-64.425 ms, 0.3%), well inside the run-to-run variance stated above.
+move against the implementation is `wilkinson_40` at 0.96x (13.451 ms to
+13.977 ms, 3.9%) -- a row whose *kernel* improves 1.33x, on 224 us of a 14 ms
+factorization, so the move is elsewhere and inside the run-to-run variance
+stated above.
 
 `xpow120_minus1`'s 3.23x is the one number here that its kernel gain (1.67x on
 5 ms of a 478 ms factorization) cannot explain. That row's cost is
@@ -172,10 +174,10 @@ Allocation, on the same span:
 
 | instance | small allocs before | after | factor |
 |---|---:|---:|---:|
-| `cyclo_phi385` | 18,309,485 | 661,844 | 28x |
-| `cyclo_phi128_x_phi165` | 8,451,415 | 723,728 | 12x |
-| `cyclo_phi64_x_phi105` | 1,761,785 | 347,380 | 5x |
 | `cyclo_phi179` | 1,290,156 | 275,077 | 5x |
+| `cyclo_phi64_x_phi105` | 1,761,785 | 347,380 | 5x |
+| `cyclo_phi128_x_phi165` | 8,451,415 | 723,728 | 12x |
+| `cyclo_phi385` | 18,309,485 | 661,844 | 28x |
 
 ## Where the remaining 2.6x is
 
@@ -188,12 +190,12 @@ polynomials, which is the same work.
 
 | instance | transform mirror | echelon-only mirror | transform factor | prototype | integrated | overhead |
 |---|---:|---:|---:|---:|---:|---:|
-| `cyclo_phi385` | 301.969 ms | 155.084 ms | 1.95x | 18.164 ms | 47.683 ms | 2.63x |
-| `cyclo_phi128_x_phi165` | 132.537 ms | 67.510 ms | 1.96x | 7.688 ms | 20.750 ms | 2.70x |
-| `cyclo_phi64_x_phi105` | 23.282 ms | 12.232 ms | 1.90x | 1.535 ms | 3.926 ms | 2.56x |
-| `cyclo_phi179` | 16.922 ms | 9.692 ms | 1.75x | 2.527 ms | 3.389 ms | 1.34x |
-| `wilkinson_40` | 40.730 us | 42.794 us | 0.95x | 71.976 us | 66.949 us | 0.93x |
-| `legendre_P38` | 1.786 ms | 997.048 us | 1.79x | 166.207 us | 376.599 us | 2.27x |
+| `cyclo_phi179` | 16.473 ms | 9.563 ms | 1.72x | 2.556 ms | 3.350 ms | 1.31x |
+| `cyclo_phi64_x_phi105` | 23.800 ms | 12.426 ms | 1.92x | 1.551 ms | 4.077 ms | 2.63x |
+| `cyclo_phi128_x_phi165` | 129.938 ms | 65.946 ms | 1.97x | 7.724 ms | 21.039 ms | 2.72x |
+| `cyclo_phi385` | 302.485 ms | 154.348 ms | 1.96x | 18.232 ms | 47.752 ms | 2.62x |
+| `wilkinson_40` | 41.622 us | 43.234 us | 0.96x | 72.457 us | 65.687 us | 0.91x |
+| `legendre_P38` | 1.785 ms | 999.733 us | 1.79x | 164.624 us | 360.634 us | 2.19x |
 
 Three causes, in the order they are worth fixing:
 
@@ -255,12 +257,16 @@ page put it (1.98x).
   `scripts/bench/check_factor_sweep_freshness.py` passes.
 
   The sweep solves **377 of 392** instances under the 10 s cutoff, unchanged
-  from the newest committed baseline (`17bd12950088`), in **19.519 s** of
-  solved-instance time against that baseline's 20.684 s. The corpus is
-  dominated by instances whose cost is not the modular kernel, so a 5.6%
-  total is the shape to expect from a change that moves four rows by 1.8x to
-  2.6x; the sweep is here as an anti-regression check across all 392, not as
-  the headline.
+  from the newest committed baseline (`17bd12950088`). Its solved-instance
+  total is **20.847 s** against that baseline's 20.684 s -- indistinguishable,
+  and *not* evidence of a gain: two sweeps of this same code, committed as
+  `hexbz-factor-sweep-433dba23-hex-chungus2.json` (19.519 s) and
+  `hexbz-factor-sweep-a5e0ebe4-hex-chungus2.json` (20.847 s), differ by 6.4%
+  between themselves. The corpus is dominated by instances whose cost is not
+  the modular kernel, and the sweep does not resolve a change of this size. It
+  is here as an anti-regression check across all 392 instances and as the
+  freshness record the published figures are drawn from, not as a
+  measurement of the gain; the gain is the paired kernel span above.
 
 ## Regeneration
 
@@ -269,11 +275,11 @@ lake build hexbz_factor_service
 
 taskset -c 0 python3 scripts/bench/factor_sweep.py \
   --systems hex-factor --cutoff 10 --no-early-terminate \
-  --output reports/bench-results/hexbz-factor-sweep-433dba23-hex-chungus2.json
+  --output reports/bench-results/hexbz-factor-sweep-a5e0ebe4-hex-chungus2.json
 
 python3 scripts/bench/factor_phase_profile.py \
   --no-counterfactual --no-scout \
-  --output reports/bench-results/hexbz-phase-profile-2c4c6e4f-chungus2.json
+  --output reports/bench-results/hexbz-phase-profile-a5e0ebe4-chungus2.json
 
 python3 scripts/plots/hexbz-cactus.py
 ```
