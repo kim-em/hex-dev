@@ -34,7 +34,11 @@ that the repeats agree on all of it before replacing the durations.
   contiguous representations against it. Each packed result is checked entry
   for entry against `Hex.Matrix.nullspace` before its time is reported, and the
   counted Gauss-Jordan mirror is checked against the production `rowReduce`.
-  Like the scout prices, none of this is work the production cascade does.
+  It also splits the *integrated* packed reduction into its own stages and
+  walks a ladder of scaffolding variants of it (issue #9160), so the gap
+  between the shipped packed loop and the prototype is attributed rather than
+  named. Like the scout prices, none of this is work the production cascade
+  does.
 * **Validation.** Cross-checks run alongside, on a wider sample than the
   representative set: the counted recombination mirror must agree with the
   production `factorTrace` on leaf count, selected prime, completed subset
@@ -119,6 +123,22 @@ KERNEL_SPAN_KEYS = (
 KERNEL_COUNTED_KEYS = ("countedWithTransform", "countedEchelonOnly")
 KERNEL_PACKED_KEYS = ("packedWord", "packedHalfWord",
                       "packedHalfWordDivision", "packedHalfWordSkipZero")
+# Stage split of the integrated packed reduction (issue #9160), and the rungs of
+# the scaffolding ladder that attributes its gap against the prototype. Both
+# groups are merged by median exactly like the counted and packed groups above.
+KERNEL_PACKED_STAGE_SPANS = ("build", "pivotSearch", "rowSwapScale",
+                             "eliminate", "columnCount", "readback", "wall")
+# Medianed across repeats; `stagedNanos` is the only duration here.
+KERNEL_PACKED_STAGE_NANOS = ("stagedNanos",)
+# Deterministic; asserted to agree across repeats rather than medianed.
+KERNEL_PACKED_STAGE_COUNTS = ("rowAdds", "rowAddsSkipped", "pivots",
+                              "freeColumns", "innerMultiplies",
+                              "scaleMultiplies")
+KERNEL_LADDER_RUNGS = ("integrated", "mirrored", "hoistedPivotRow",
+                       "arrayPivots", "hoistedSaltedMin",
+                       "hoistedDoubledMultiply", "flatRowWrite",
+                       "flatBothLoops", "saltedMultiply", "saltedMinMultiply",
+                       "doubledMultiply", "flatBuffer")
 # Per-candidate costs merged by median across `--plan-repeats` calls.
 PLAN_NANO_KEYS = ("goodPrimeTest", "boundedScout", "scout", "berlekampMatrix",
                   "rowReduction", "fullSplit", "henselLift", "recombination")
@@ -306,14 +326,77 @@ def merge_kernels(kernels):
                 k[outer][span]["smallAllocs"] for k in kernels))
         base[outer]["stagedNanos"] = int(statistics.median(
             k[outer]["stagedNanos"] for k in kernels))
+        for field in ("rowAdds", "rowAddsSkipped", "pivots", "freeColumns"):
+            values = {k[outer][field] for k in kernels}
+            if len(values) > 1:
+                raise SystemExit(
+                    f"kernel repeats disagree on {outer}.{field}: {values}")
     for outer in KERNEL_PACKED_KEYS:
+        # Raw per-repeat reductions kept for the same reason the ladder keeps
+        # them: the entry-width and reciprocal comparisons below are differences
+        # between two of these variants, and a 1% difference between two medians
+        # of different executions is not a result.
+        samples = [k[outer]["reduceNanos"] for k in kernels]
         for field in ("packNanos", "reduceNanos", "nullspaceNanos",
                       "totalNanos", "smallAllocs"):
             base[outer][field] = int(statistics.median(
                 k[outer][field] for k in kernels))
+        base[outer]["reduceNanosSamples"] = samples
+        for field in ("rowAdds", "rank"):
+            values = {k[outer][field] for k in kernels}
+            if len(values) > 1:
+                raise SystemExit(
+                    f"kernel repeats disagree on {outer}.{field}: {values}")
         if not all(k[outer]["agreesWithNullspace"] for k in kernels):
             raise SystemExit(
                 f"packed variant {outer} disagreed with Hex.Matrix.nullspace")
+    if "packedStages" in base:
+        for span in KERNEL_PACKED_STAGE_SPANS:
+            base["packedStages"][span]["nanos"] = int(statistics.median(
+                k["packedStages"][span]["nanos"] for k in kernels))
+            base["packedStages"][span]["smallAllocs"] = int(statistics.median(
+                k["packedStages"][span]["smallAllocs"] for k in kernels))
+        for field in KERNEL_PACKED_STAGE_NANOS:
+            base["packedStages"][field] = int(statistics.median(
+                k["packedStages"][field] for k in kernels))
+        for field in KERNEL_PACKED_STAGE_COUNTS:
+            values = {k["packedStages"][field] for k in kernels}
+            if len(values) > 1:
+                raise SystemExit(
+                    f"kernel repeats disagree on packed stage count {field}: "
+                    f"{values}")
+        if not all(k["packedStages"]["agreesWithPackedReduce"]
+                   and k["packedStages"]["agreesWithNullspace"]
+                   for k in kernels):
+            raise SystemExit(
+                "the counted packed mirror disagreed with Packed.reduce or "
+                "with Hex.Matrix.nullspace")
+    if "packedLadder" in base:
+        # Every rung's reduction is measured once per repeat, so keep the raw
+        # per-repeat values alongside the median. A difference between two rungs
+        # is a difference of two medians of *different* executions unless the
+        # samples survive, and the ladder's small effects (the multiply, the
+        # row-write mechanism) need paired within-call differences to mean
+        # anything.
+        for rung in KERNEL_LADDER_RUNGS:
+            samples = [k["packedLadder"][rung]["reduceNanos"] for k in kernels]
+            for field in ("buildNanos", "reduceNanos", "readbackNanos",
+                          "totalNanos", "smallAllocs"):
+                base["packedLadder"][rung][field] = int(statistics.median(
+                    k["packedLadder"][rung][field] for k in kernels))
+            base["packedLadder"][rung]["reduceNanosSamples"] = samples
+            ranks = {k["packedLadder"][rung]["rank"] for k in kernels}
+            if len(ranks) > 1:
+                raise SystemExit(
+                    f"kernel repeats disagree on ladder rung {rung} rank: "
+                    f"{ranks}")
+            if not all(k["packedLadder"][rung]["agreesWithNullspace"]
+                       for k in kernels):
+                raise SystemExit(
+                    f"packed ladder rung {rung} disagreed with "
+                    "Hex.Matrix.nullspace")
+        base["packedLadder"]["ladderForward"] = [
+            k["packedLadder"]["ladderForward"] for k in kernels]
     return base
 
 
@@ -573,6 +656,14 @@ def main() -> int:
             "echelonOnlyAgrees")
         packed_ok = all(k[key]["agreesWithNullspace"]
                         for key in KERNEL_PACKED_KEYS if key in k)
+        stages = k.get("packedStages") or {}
+        ladder = k.get("packedLadder") or {}
+        packed_ok = packed_ok and stages.get(
+            "agreesWithPackedReduce", True) and stages.get(
+            "agreesWithNullspace", True)
+        packed_ok = packed_ok and all(
+            ladder[rung]["agreesWithNullspace"]
+            for rung in KERNEL_LADDER_RUNGS if rung in ladder)
         kernel_mirror_agree += 1 if mirror_ok else 0
         kernel_packed_agree += 1 if packed_ok else 0
         if not (mirror_ok and packed_ok):
