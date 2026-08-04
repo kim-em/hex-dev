@@ -47,6 +47,32 @@ Every packed variant recomputes the rank and the nullspace basis and is checked
 entry for entry against the production `Hex.Matrix.nullspace`, so a variant that
 is fast because it is wrong cannot be reported as fast.
 
+**Attribution of the integrated packed kernel** (issue #9160). The landed
+`Hex.Berlekamp.Packed` loop is slower than the prototype above, and the gap is
+scaffolding rather than arithmetic. Two measurements separate it.
+
+* `countedPackedReduce` mirrors `Packed.reduceLoop` column for column and marks
+  the clock once per pivot column, splitting the reduction into pivot search,
+  row swap and scale, and column elimination. It is checked against the
+  production `Packed.reduce` on every call.
+* `ladderLoop` is that same loop with its column elimination passed in, so a
+  rung can drop exactly one scaffolding choice: `Packed.eliminateColumn`
+  verbatim, then the same with the pivot row read once per column instead of
+  once per row addition, then the same again writing the flat backing buffer
+  directly instead of through `Matrix.modifyEntries`, and finally the prototype
+  loop above run on the packed buffer, which additionally drops the
+  `List.finRange`/`List.concat` scaffolding. Successive differences attribute
+  the gap; the last rung's difference from the prototype's own column is the
+  residual.
+
+The inner modular multiply is priced by `eliminateFlatDoubleMul`, which performs
+a second, salted modular multiply per inner-loop entry and combines the two
+results by `min`. The salt is an `IO.Ref` holding zero, so the second product
+equals the first and the reduction stays correct entry for entry, while the
+compiler cannot fold the two together. Its excess over `eliminateFlatSalted`,
+which performs the salted multiply alone, is the marginal in-situ cost of one
+modular multiply across the whole reduction.
+
 This module is a diagnostic; nothing here is reachable from
 `Hex.ZPoly.factorize`.
 -/
@@ -631,6 +657,385 @@ def packedJson (label : String) (c : PackedCounters) (ok : Bool) : String × Jso
       ("rank", natJson c.rank),
       ("agreesWithNullspace", Json.bool ok) ])
 
+/-! ## The integrated packed kernel
+
+`HexBerlekamp/PackedKernel.lean` is what compiled code runs at the
+`fixedSpaceKernelVectors` boundary, selected by a `@[csimp]` equality. The
+prototype above is faster than it on the rows where the reduction dominates, on
+the same matrix and the same row-addition count, so the gap is scaffolding. The
+definitions below attribute it.
+
+All of them are exercised on their own freshly built `Packed.fixedSpace` buffer.
+The packed elementary operations update the flat buffer in place only while it
+is uniquely referenced, so a buffer shared between two rungs would cost the
+second one a full copy per row operation and the ladder would read as noise.
+-/
+
+/-- One entry of a packed matrix, as a `Nat`, for forcing it past the compiler's
+code motion. `salt` carries a runtime value, for the reason `probeEntry`
+documents. -/
+private def probePacked {n m : Nat} (salt : Nat) (A : Matrix UInt32 n m) : Nat :=
+  salt % 2 +
+    (if h : 0 < n then
+      if hm : 0 < m then A[((⟨0, h⟩ : Fin n), (⟨0, hm⟩ : Fin m))].toNat else 0
+    else 0)
+
+/-! ### Stage attribution of the production loop -/
+
+/-- Running attribution of one counted packed reduction, in the stages
+`Hex.Berlekamp.Packed.reduceLoop` has. -/
+structure PackedStages where
+  /-- Nanoseconds in pivot search. -/
+  pivotNanos : Nat := 0
+  /-- Small allocations in pivot search. -/
+  pivotAllocs : Nat := 0
+  /-- Nanoseconds in row swap, row scale, and the `O(n)` column pass that counts
+  the eliminations the next stage will perform. -/
+  swapScaleNanos : Nat := 0
+  /-- Small allocations in row swap, row scale, and the column count. -/
+  swapScaleAllocs : Nat := 0
+  /-- Nanoseconds in column elimination. -/
+  eliminateNanos : Nat := 0
+  /-- Small allocations in column elimination. -/
+  eliminateAllocs : Nat := 0
+  /-- Row additions actually performed. -/
+  rowAdds : Nat := 0
+  /-- Eliminations skipped because the entry was already zero. -/
+  rowAddsSkipped : Nat := 0
+  /-- Pivot columns found. -/
+  pivots : Nat := 0
+  /-- Columns inspected and found pivot-free. -/
+  freeColumns : Nat := 0
+
+/-- Result of a counted packed reduction: the data `Packed.reduce` returns, plus
+the attribution. -/
+structure PackedStageResult (n m : Nat) where
+  /-- The reduced packed buffer. -/
+  echelon : Matrix UInt32 n m
+  /-- Pivot columns in increasing order. -/
+  pivots : List (Fin m)
+  /-- Per-stage attribution. -/
+  stages : PackedStages
+
+/-- Row additions a packed column elimination will perform, and the ones it will
+skip. Counted in a separate `O(n)` pass for the reason `countColumn` gives:
+threading counters through the elimination fold would hold a second reference to
+the buffer and defeat the in-place update. -/
+private def countPackedColumn {n m : Nat} (A : Matrix UInt32 n m) (pivotRow : Fin n)
+    (col : Fin m) : Nat × Nat :=
+  (List.finRange n).foldl
+    (fun (acc : Nat × Nat) j =>
+      if j = pivotRow then acc
+      else if A[(j, col)] == 0 then (acc.1, acc.2 + 1) else (acc.1 + 1, acc.2))
+    (0, 0)
+
+/-- Packed Gauss-Jordan mirroring `Hex.Berlekamp.Packed.reduceLoop`, marking the
+clock once per column rather than once per row operation. Every elementary
+operation is the production one, so the arithmetic being timed is the production
+arithmetic; only the loop scaffolding is duplicated.
+
+The eliminated buffer is pushed into `sink` before the clock is read again. Its
+consumer is the tail call, so without that push the compiler's let-floating pass
+moves the whole elimination past the mark and the stage reads as free: the first
+run of this loop charged 236 columns of elimination 11 us against a 46 ms wall.
+The push is one `IO.Ref` update per pivot column, which is the granularity the
+rest of the marking already uses. -/
+private partial def packedStageLoop (p : Nat) [ZMod64.Bounds p] {n m : Nat}
+    (sink : IO.Ref Nat) (q : UInt32) (col row : Nat) (echelon : Matrix UInt32 n m)
+    (pivots : List (Fin m)) (c : PackedStages) : IO (PackedStageResult n m) := do
+  if hRow : row < n then
+    if hCol : col < m then
+      let colFin : Fin m := ⟨col, hCol⟩
+      let t0 ← mark
+      let found := Berlekamp.Packed.findPivot? echelon colFin row
+      let t1 ← mark
+      let (pn, pa) := t1.since t0
+      let c := { c with pivotNanos := c.pivotNanos + pn,
+                        pivotAllocs := c.pivotAllocs + pa }
+      match found with
+      | none =>
+          packedStageLoop p sink q (col + 1) row echelon pivots
+            { c with freeColumns := c.freeColumns + 1 }
+      | some pivot =>
+          let target : Fin n := ⟨row, hRow⟩
+          let swapped := Matrix.rowSwap echelon target pivot
+          let pivotVal := swapped[(target, colFin)]
+          let scaled :=
+            Berlekamp.Packed.rowScale q swapped target (Berlekamp.Packed.invMod p pivotVal)
+          let (adds, skipped) := countPackedColumn scaled target colFin
+          let t2 ← mark
+          let (sn, sa) := t2.since t1
+          let e := Berlekamp.Packed.eliminateColumn q scaled target colFin
+          observe sink (probePacked col e)
+          let t3 ← mark
+          let (en, ea) := t3.since t2
+          packedStageLoop p sink q (col + 1) (row + 1) e (pivots.concat colFin)
+            { c with
+                swapScaleNanos := c.swapScaleNanos + sn
+                swapScaleAllocs := c.swapScaleAllocs + sa
+                eliminateNanos := c.eliminateNanos + en
+                eliminateAllocs := c.eliminateAllocs + ea
+                rowAdds := c.rowAdds + adds
+                rowAddsSkipped := c.rowAddsSkipped + skipped
+                pivots := c.pivots + 1 }
+    else
+      return { echelon, pivots, stages := c }
+  else
+    return { echelon, pivots, stages := c }
+
+/-- Counted packed Gauss-Jordan of `A`. Mirrors
+`Hex.Berlekamp.Packed.reduce`. -/
+def countedPackedReduce (p : Nat) [ZMod64.Bounds p] {n m : Nat} (sink : IO.Ref Nat)
+    (q : UInt32) (A : Matrix UInt32 n m) : IO (PackedStageResult n m) :=
+  packedStageLoop p sink q 0 0 A [] {}
+
+/-! ### The scaffolding ladder
+
+`ladderLoop` is `Packed.reduceLoop` with its column elimination and its modular
+inversion passed in. Both are called once per pivot column, never in the inner
+loop, so a rung differs from production only in the elimination it names.
+-/
+
+/-- The packed reduction loop with its column elimination as a parameter. -/
+private def ladderLoop {n m : Nat}
+    (elim : Matrix UInt32 n m → Fin n → Fin m → Matrix UInt32 n m)
+    (inv : UInt32 → UInt32) (q : UInt32) (col fuel row : Nat)
+    (A : Matrix UInt32 n m) (pivots : List (Fin m)) :
+    Matrix UInt32 n m × List (Fin m) :=
+  match fuel with
+  | 0 => (A, pivots)
+  | fuel + 1 =>
+      if hRow : row < n then
+        if hCol : col < m then
+          let colFin : Fin m := ⟨col, hCol⟩
+          match Berlekamp.Packed.findPivot? A colFin row with
+          | none => ladderLoop elim inv q (col + 1) fuel row A pivots
+          | some pivot =>
+              let target : Fin n := ⟨row, hRow⟩
+              let swapped := Matrix.rowSwap A target pivot
+              let pivotVal := swapped[(target, colFin)]
+              let scaled := Berlekamp.Packed.rowScale q swapped target (inv pivotVal)
+              let eliminated := elim scaled target colFin
+              ladderLoop elim inv q (col + 1) fuel (row + 1) eliminated
+                (pivots.concat colFin)
+        else
+          (A, pivots)
+      else
+        (A, pivots)
+
+/-- `Hex.Berlekamp.Packed.rowAdd` with the source row supplied by the caller
+rather than read out of the matrix per row addition. -/
+@[inline] private def rowAddFrom {n m : Nat} (q : UInt32) (A : Matrix UInt32 n m)
+    (rsrc : Vector UInt32 m) (dst : Fin n) (c : UInt32) : Matrix UInt32 n m :=
+  A.modifyEntries dst.val fun k x =>
+    Berlekamp.Packed.addMod q x (Berlekamp.Packed.mulMod q c rsrc[k])
+
+/-- `Hex.Berlekamp.Packed.eliminateColumn` with the pivot row read once per
+column. The pivot row is invariant across the column's elimination, so this is
+the same arithmetic with `n - 1` of every `n` row copies removed. -/
+private def eliminateHoisted {n m : Nat} (q : UInt32) (A : Matrix UInt32 n m)
+    (pivotRow : Fin n) (col : Fin m) : Matrix UInt32 n m :=
+  let rsrc := Matrix.getRow A pivotRow
+  (List.finRange n).foldl
+    (fun A j =>
+      if j = pivotRow then
+        A
+      else
+        let c := Berlekamp.Packed.negMod q A[(j, col)]
+        if c == 0 then A else rowAddFrom q A rsrc j c)
+    A
+
+/-- `eliminateHoisted` writing the destination row straight into the flat
+backing buffer instead of through `Hex.Matrix.modifyEntries`, whose `Fin.foldl`
+invokes a closure per entry. The buffer stays a `Vector` so the length index
+never has to be re-proved. -/
+private def eliminateFlat {n m : Nat} (q : UInt32) (A : Matrix UInt32 n m)
+    (pivotRow : Fin n) (col : Fin m) : Matrix UInt32 n m :=
+  let rsrc := (Matrix.getRow A pivotRow).toArray
+  match A with
+  | ⟨d0⟩ => Id.run do
+      let mut d := d0
+      for j in [0:n] do
+        if j != pivotRow.val then
+          let c := Berlekamp.Packed.negMod q (d.toArray[j * m + col.val]!)
+          if c != 0 then
+            let base := j * m
+            for k in [0:m] do
+              d := d.set! (base + k)
+                (Berlekamp.Packed.addMod q d.toArray[base + k]!
+                  (Berlekamp.Packed.mulMod q c rsrc[k]!))
+      return ⟨d⟩
+
+/-- `eliminateFlat` with the inner modular multiply salted by a runtime zero.
+The control for `eliminateFlatDoubleMul`: it threads the salt without performing
+a second multiply, so the difference between the two rungs is one modular
+multiply per inner-loop entry and nothing else. -/
+private def eliminateFlatSalted {n m : Nat} (q z : UInt32) (A : Matrix UInt32 n m)
+    (pivotRow : Fin n) (col : Fin m) : Matrix UInt32 n m :=
+  let rsrc := (Matrix.getRow A pivotRow).toArray
+  match A with
+  | ⟨d0⟩ => Id.run do
+      let mut d := d0
+      for j in [0:n] do
+        if j != pivotRow.val then
+          let c := Berlekamp.Packed.negMod q (d.toArray[j * m + col.val]!)
+          if c != 0 then
+            let base := j * m
+            let cz := c + z
+            for k in [0:m] do
+              d := d.set! (base + k)
+                (Berlekamp.Packed.addMod q d.toArray[base + k]!
+                  (Berlekamp.Packed.mulMod q cz rsrc[k]!))
+      return ⟨d⟩
+
+/-- `eliminateFlatSalted` performing the unsalted multiply as well and combining
+the two by `min`.
+
+`z` is read from an `IO.Ref` holding zero, so `c + z = c` at runtime and the two
+products agree, which is why the reduction stays correct and is checked entry
+for entry against `Hex.Matrix.nullspace` like every other rung. The compiler
+cannot see that they agree, so both divisions are executed and neither is
+eliminated as a common subexpression. -/
+private def eliminateFlatDoubleMul {n m : Nat} (q z : UInt32) (A : Matrix UInt32 n m)
+    (pivotRow : Fin n) (col : Fin m) : Matrix UInt32 n m :=
+  let rsrc := (Matrix.getRow A pivotRow).toArray
+  match A with
+  | ⟨d0⟩ => Id.run do
+      let mut d := d0
+      for j in [0:n] do
+        if j != pivotRow.val then
+          let c := Berlekamp.Packed.negMod q (d.toArray[j * m + col.val]!)
+          if c != 0 then
+            let base := j * m
+            let cz := c + z
+            for k in [0:m] do
+              let s := rsrc[k]!
+              let u := Berlekamp.Packed.mulMod q c s
+              let v := Berlekamp.Packed.mulMod q cz s
+              d := d.set! (base + k)
+                (Berlekamp.Packed.addMod q d.toArray[base + k]!
+                  (if u ≤ v then u else v))
+      return ⟨d⟩
+
+/-! ### Ladder drivers -/
+
+/-- One rung of the ladder: build, reduce, read the basis back. -/
+structure LadderRung where
+  /-- Nanoseconds building the packed fixed-space buffer. -/
+  buildNanos : Nat := 0
+  /-- Nanoseconds in the reduction. This is the quantity the ladder compares. -/
+  reduceNanos : Nat := 0
+  /-- Nanoseconds reading the nullspace basis off the reduced buffer. -/
+  readbackNanos : Nat := 0
+  /-- Small allocations across build, reduce and readback. -/
+  allocs : Nat := 0
+  /-- Rank found. -/
+  rank : Nat := 0
+  /-- Whether the basis agrees with `Hex.Matrix.nullspace` entry for entry. -/
+  agrees : Bool := true
+
+/-- JSON for one ladder rung. -/
+def rungJson (label : String) (r : LadderRung) : String × Json :=
+  (label, Json.mkObj
+    [ ("buildNanos", natJson r.buildNanos),
+      ("reduceNanos", natJson r.reduceNanos),
+      ("readbackNanos", natJson r.readbackNanos),
+      ("totalNanos", natJson (r.buildNanos + r.reduceNanos + r.readbackNanos)),
+      ("smallAllocs", natJson r.allocs),
+      ("rank", natJson r.rank),
+      ("agreesWithNullspace", Json.bool r.agrees) ])
+
+/-- A packed nullspace basis as `Nat` residues, for comparing rungs. -/
+private def packedBasisNats {p : Nat} [ZMod64.Bounds p] {m : Nat}
+    (basis : Array (Vector (ZMod64 p) m)) : Array (Array Nat) :=
+  basis.map fun v => v.toArray.map ZMod64.toNat
+
+/-- Time one ladder rung on its own freshly built packed buffer, and check its
+basis against `expected`, the production `Hex.Matrix.nullspace` basis. -/
+private def runRung {p : Nat} [ZMod64.Bounds p] [ZMod64.PrimeModulus p]
+    (sink : IO.Ref Nat) (f : FpPoly p) (hmonic : DensePoly.Monic f)
+    (expected : Array (Array Nat))
+    (elim : Matrix UInt32 (Berlekamp.basisSize f) (Berlekamp.basisSize f) →
+      Fin (Berlekamp.basisSize f) → Fin (Berlekamp.basisSize f) →
+      Matrix UInt32 (Berlekamp.basisSize f) (Berlekamp.basisSize f)) :
+    IO LadderRung := do
+  let n := Berlekamp.basisSize f
+  let q := Berlekamp.Packed.modWord p
+  let salt ← sink.get
+  let t0 ← mark
+  let A := Berlekamp.Packed.fixedSpace p f hmonic
+  observe sink (probePacked salt A)
+  let t1 ← mark
+  let (echelon, pivots) :=
+    ladderLoop elim (Berlekamp.Packed.invMod p) q 0 n 0 A []
+  observe sink (probePacked salt echelon + pivots.length)
+  let t2 ← mark
+  let basis := packedBasisNats (Berlekamp.Packed.nullspaceArray (p := p) q echelon pivots)
+  observe sink basis.size
+  let t3 ← mark
+  return { buildNanos := (t1.since t0).1
+           reduceNanos := (t2.since t1).1
+           readbackNanos := (t3.since t2).1
+           allocs := (t3.since t0).2
+           rank := pivots.length
+           agrees := basis == expected }
+
+/-- The production packed reduction, timed on the same three stages as a ladder
+rung. This is the rung the ladder measures against: no mirror, no parameter,
+`Hex.Berlekamp.Packed.reduce` itself. -/
+private def runIntegrated {p : Nat} [ZMod64.Bounds p] [ZMod64.PrimeModulus p]
+    (sink : IO.Ref Nat) (f : FpPoly p) (hmonic : DensePoly.Monic f)
+    (expected : Array (Array Nat)) : IO LadderRung := do
+  let q := Berlekamp.Packed.modWord p
+  let salt ← sink.get
+  let t0 ← mark
+  let A := Berlekamp.Packed.fixedSpace p f hmonic
+  observe sink (probePacked salt A)
+  let t1 ← mark
+  let s := Berlekamp.Packed.reduce p q A
+  observe sink (probePacked salt s.echelon + s.pivots.length)
+  let t2 ← mark
+  let basis := packedBasisNats (Berlekamp.Packed.nullspaceArray (p := p) q s.echelon s.pivots)
+  observe sink basis.size
+  let t3 ← mark
+  return { buildNanos := (t1.since t0).1
+           reduceNanos := (t2.since t1).1
+           readbackNanos := (t3.since t2).1
+           allocs := (t3.since t0).2
+           rank := s.pivots.length
+           agrees := basis == expected }
+
+/-- The prototype loop `reduce32` run on the packed fixed-space buffer, with the
+hardware remainder the production path also uses. This is the bottom rung: on
+top of the flat row write it drops the `List.finRange` elimination fold and the
+`List.concat` pivot accumulation, and it never copies the pivot row at all.
+
+The buffer is taken straight off the packed matrix rather than repacked, so the
+rung shares the build with every other rung and its `reduceNanos` is comparable
+to theirs. -/
+private def runPrototypeRung {p : Nat} [ZMod64.Bounds p]
+    (sink : IO.Ref Nat) (f : FpPoly p) (hmonic : DensePoly.Monic f)
+    (expected : Array (Array Nat)) : IO LadderRung := do
+  let n := Berlekamp.basisSize f
+  let pw := UInt32.ofNat p
+  let salt ← sink.get
+  let t0 ← mark
+  let A := Berlekamp.Packed.fixedSpace p f hmonic
+  observe sink (probePacked salt A)
+  let t1 ← mark
+  let (reduced, pivotCols, _) := reduce32 false false pw n n A.data.toArray
+  observe sink (reduced.size + pivotCols.size)
+  let t2 ← mark
+  let basis := basisOfBuffer32 pw n reduced pivotCols
+  observe sink basis.size
+  let t3 ← mark
+  return { buildNanos := (t1.since t0).1
+           reduceNanos := (t2.since t1).1
+           readbackNanos := (t3.since t2).1
+           allocs := (t3.since t0).2
+           rank := pivotCols.size
+           agrees := basis == expected }
+
 /-! ## Full fixed-space kernel attribution -/
 
 /-- JSON for one counted Gauss-Jordan run. -/
@@ -738,6 +1143,39 @@ def kernelPhases {p : Nat} [ZMod64.Bounds p] [ZMod64.PrimeModulus p]
   let (pHalfDiv, okHalfDiv) ← packedReduce sink .halfWordDiv fixedD expected
   let (fixedS, _, _) ← freshFixedSpace sink f hmonic
   let (pSkip, okSkip) ← packedReduce sink .halfWordSkipZero fixedS expected
+  -- Attribution of the integrated packed kernel (issue #9160). The stage split
+  -- first, on its own buffer, then the scaffolding ladder, each rung on its own
+  -- buffer: the packed operations update in place only while the buffer is
+  -- uniquely referenced.
+  let q := Berlekamp.Packed.modWord p
+  let saltP ← sink.get
+  let tk0 ← mark
+  let packedA := Berlekamp.Packed.fixedSpace p f hmonic
+  observe sink (probePacked saltP packedA)
+  let tk1 ← mark
+  let staged ← countedPackedReduce p sink q packedA
+  observe sink (probePacked saltP staged.echelon + staged.pivots.length)
+  let tk2 ← mark
+  let stagedBasis :=
+    packedBasisNats (Berlekamp.Packed.nullspaceArray (p := p) q staged.echelon staged.pivots)
+  observe sink stagedBasis.size
+  let tk3 ← mark
+  -- The stage mirror against the production packed reduction, on its own
+  -- buffer, so a divergent mirror cannot report attribution for a loop
+  -- production does not run.
+  let checkA := Berlekamp.Packed.fixedSpace p f hmonic
+  let checked := Berlekamp.Packed.reduce p q checkA
+  let packedMirrorOk :=
+    checked.echelon == staged.echelon && checked.pivots == staged.pivots
+  let zeroRef ← IO.mkRef (0 : UInt32)
+  let z ← zeroRef.get
+  let rIntegrated ← runIntegrated sink f hmonic expected
+  let rMirrored ← runRung sink f hmonic expected (Berlekamp.Packed.eliminateColumn q)
+  let rHoisted ← runRung sink f hmonic expected (eliminateHoisted q)
+  let rFlat ← runRung sink f hmonic expected (eliminateFlat q)
+  let rSalted ← runRung sink f hmonic expected (eliminateFlatSalted q z)
+  let rDoubled ← runRung sink f hmonic expected (eliminateFlatDoubleMul q z)
+  let rPrototype ← runPrototypeRung sink f hmonic expected
   let peak ← residentBytes true
   -- Validation: the counted mirror against the production row reduction, and
   -- the transform-free run against the mirror that keeps the transform.
@@ -796,6 +1234,35 @@ def kernelPhases {p : Nat} [ZMod64.Bounds p] [ZMod64.PrimeModulus p]
       packedJson "packedWord" pWord okWord,
       packedJson "packedHalfWord" pHalf okHalf,
       packedJson "packedHalfWordDivision" pHalfDiv okHalfDiv,
-      packedJson "packedHalfWordSkipZero" pSkip okSkip ]
+      packedJson "packedHalfWordSkipZero" pSkip okSkip,
+      ("packedStages", Json.mkObj
+        [ ("build", spanJson (tk1.since tk0).1 (tk1.since tk0).2),
+          ("pivotSearch",
+            spanJson staged.stages.pivotNanos staged.stages.pivotAllocs),
+          ("rowSwapScale",
+            spanJson staged.stages.swapScaleNanos staged.stages.swapScaleAllocs),
+          ("eliminate",
+            spanJson staged.stages.eliminateNanos staged.stages.eliminateAllocs),
+          ("readback", spanJson (tk3.since tk2).1 (tk3.since tk2).2),
+          ("stagedNanos",
+            natJson (staged.stages.pivotNanos + staged.stages.swapScaleNanos
+              + staged.stages.eliminateNanos)),
+          ("wall", spanJson (tk2.since tk1).1 (tk2.since tk1).2),
+          ("rowAdds", natJson staged.stages.rowAdds),
+          ("rowAddsSkipped", natJson staged.stages.rowAddsSkipped),
+          ("pivots", natJson staged.stages.pivots),
+          ("freeColumns", natJson staged.stages.freeColumns),
+          ("innerMultiplies", natJson (staged.stages.rowAdds * n)),
+          ("scaleMultiplies", natJson (staged.stages.pivots * n)),
+          ("agreesWithPackedReduce", Json.bool packedMirrorOk),
+          ("agreesWithNullspace", Json.bool (stagedBasis == expected)) ]),
+      ("packedLadder", Json.mkObj
+        [ rungJson "integrated" rIntegrated,
+          rungJson "mirrored" rMirrored,
+          rungJson "hoistedPivotRow" rHoisted,
+          rungJson "flatRowWrite" rFlat,
+          rungJson "saltedMultiply" rSalted,
+          rungJson "doubledMultiply" rDoubled,
+          rungJson "flatBuffer" rPrototype ]) ]
 
 end HexBench.BerlekampKernel
