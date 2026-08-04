@@ -608,6 +608,8 @@ comparisons below are paired.
 | `randprod_10` (control) | 41.621 us | 23.309 us | 23.239 us | 1.79x | 1.00x |
 | `randprod_21` (control) | 72.297 us | 38.472 us | 38.407 us | 1.88x | 1.00x |
 
+Paired within each repeat, which is what the conclusions below rest on:
+
 | instance | `%` - Barrett (median [min, max]) | as % of Barrett | `%`-Barrett sign consistent? | UInt64 - UInt32 (median [min, max]) | as % of UInt32 | UInt64 sign consistent? |
 |---|---:|---:|---|---:|---:|---|
 | `sd5` | -536 ns [-3.766 us, 652 ns] | -1.53% | no | 25.368 us [22.003 us, 27.191 us] | +72.2% | yes |
@@ -636,10 +638,11 @@ comparisons below are paired.
 | `randprod_21` (control) | -136 ns [-912 ns, 5.018 us] | -0.35% | no | 33.840 us [24.727 us, 38.607 us] | +88.0% | yes |
 
 **`UInt32` versus `UInt64` entries: settled, in the shipped direction, on every
-row that does arithmetic.** The paired difference is +38% to +98% of the
-`UInt32` time and the same sign on all eight repeats of every arithmetic row.
-It is not one-directional on the three rank-0 Wilkinson rows, which perform no
-row additions and where the paired range straddles zero at +3.6% to +7.1%. The
+row that does any real arithmetic.** The paired difference is +38% to +98% of
+the `UInt32` time, and the same sign on all eight repeats of 20 of the 24 rows.
+The four where it is not are the three rank-0 Wilkinson rows, which perform no
+row additions and whose paired range straddles zero at +3.6% to +7.1%, and
+`xpow24_minus1`, whose whole reduction is 6 us on 11 row additions. The
 prototype's 2.42x re-measures a little lower here, on a different day and a
 busier host, but in the same direction and for the same reason, which is boxing:
 `lean_box_uint32` is a tagged immediate on a 64-bit runtime and
