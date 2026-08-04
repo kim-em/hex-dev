@@ -326,11 +326,27 @@ def merge_kernels(kernels):
                 k[outer][span]["smallAllocs"] for k in kernels))
         base[outer]["stagedNanos"] = int(statistics.median(
             k[outer]["stagedNanos"] for k in kernels))
+        for field in ("rowAdds", "rowAddsSkipped", "pivots", "freeColumns"):
+            values = {k[outer][field] for k in kernels}
+            if len(values) > 1:
+                raise SystemExit(
+                    f"kernel repeats disagree on {outer}.{field}: {values}")
     for outer in KERNEL_PACKED_KEYS:
+        # Raw per-repeat reductions kept for the same reason the ladder keeps
+        # them: the entry-width and reciprocal comparisons below are differences
+        # between two of these variants, and a 1% difference between two medians
+        # of different executions is not a result.
+        samples = [k[outer]["reduceNanos"] for k in kernels]
         for field in ("packNanos", "reduceNanos", "nullspaceNanos",
                       "totalNanos", "smallAllocs"):
             base[outer][field] = int(statistics.median(
                 k[outer][field] for k in kernels))
+        base[outer]["reduceNanosSamples"] = samples
+        for field in ("rowAdds", "rank"):
+            values = {k[outer][field] for k in kernels}
+            if len(values) > 1:
+                raise SystemExit(
+                    f"kernel repeats disagree on {outer}.{field}: {values}")
         if not all(k[outer]["agreesWithNullspace"] for k in kernels):
             raise SystemExit(
                 f"packed variant {outer} disagreed with Hex.Matrix.nullspace")

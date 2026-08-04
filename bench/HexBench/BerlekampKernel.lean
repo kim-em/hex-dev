@@ -56,22 +56,30 @@ scaffolding rather than arithmetic. Two measurements separate it.
   row swap and scale, and column elimination. It is checked against the
   production `Packed.reduce` on every call.
 * `ladderLoop` is that same loop with its column elimination passed in, so a
-  rung can drop exactly one scaffolding choice: `Packed.eliminateColumn`
-  verbatim, then the same with the pivot row read once per column instead of
-  once per row addition, then the same again writing the flat backing buffer
-  directly instead of through `Matrix.modifyEntries`, and finally the prototype
-  loop above run on the packed buffer, which additionally drops the
-  `List.finRange`/`List.concat` scaffolding. Successive differences attribute
-  the gap; the last rung's difference from the prototype's own column is the
-  residual.
+  rung can change one scaffolding choice against a named baseline:
+  `Packed.eliminateColumn` verbatim, then the pivot row read once per column
+  instead of once per row addition, then (against that) an `Array` rather than a
+  `List` for the pivot columns, then (also against that) the flat backing buffer
+  written by a `Nat`-indexed loop rather than by `Matrix.modifyEntries`'s
+  `Fin.foldl`, then the outer column scan as a `Nat` range rather than
+  `List.finRange`, and finally the prototype loop above run on the packed
+  buffer. **These form a comparison graph, not a chain**: each rung names its
+  own baseline, and only `mirrored - hoistedPivotRow` decomposes the whole gap.
+  The prototype rung changes six things at once and is a residual comparison
+  rather than an attribution.
 
-The inner modular multiply is priced by `eliminateFlatDoubleMul`, which performs
-a second, salted modular multiply per inner-loop entry and combines the two
-results by `min`. The salt is an `IO.Ref` holding zero, so the second product
-equals the first and the reduction stays correct entry for entry, while the
-compiler cannot fold the two together. Its excess over `eliminateFlatSalted`,
-which performs the salted multiply alone, is the marginal in-situ cost of one
-modular multiply across the whole reduction.
+The inner modular multiply is priced by `eliminateFlatDoubleMul` and
+`rowAddFromDoubled`, which perform a second, salted modular multiply per
+inner-loop entry and select between the two products. Their control,
+`eliminateFlatSaltedMin`/`rowAddFromSalted`, performs the same select on a
+salted *increment* of the single product rather than on a second product, so the
+difference is one modular multiply against one `UInt32` addition and not, as an
+earlier version of this module measured, a multiply plus the select -- which on
+`cyclo_phi385` costs about as much as the multiply itself. The salt is an
+`IO.Ref` holding zero, so every product equals its unsalted counterpart and the
+reduction stays correct entry for entry, while the compiler cannot fold them
+together. The difference is an incremental two-divide throughput measurement,
+not a causal share: the two divides are independent and the core overlaps them.
 
 This module is a diagnostic; nothing here is reachable from
 `Hex.ZPoly.factorize`.
@@ -1125,8 +1133,9 @@ private def runRung {p : Nat} [ZMod64.Bounds p] [ZMod64.PrimeModulus p]
   let t1 ← mark
   let (echelon, pivots) :=
     ladderLoop elim (Berlekamp.Packed.invMod p) q 0 n 0 A []
-  observe sink (probePacked salt echelon + pivots.length)
+  observe sink (probePacked salt echelon)
   let t2 ← mark
+  observe sink pivots.length
   let basis := packedBasisNats (Berlekamp.Packed.nullspaceArray (p := p) q echelon pivots)
   observe sink basis.size
   let t3 ← mark
@@ -1155,8 +1164,9 @@ private def runArrayPivotRung {p : Nat} [ZMod64.Bounds p] [ZMod64.PrimeModulus p
   let t1 ← mark
   let (echelon, pivots) :=
     ladderLoopArray elim (Berlekamp.Packed.invMod p) q 0 n 0 A #[]
-  observe sink (probePacked salt echelon + pivots.size)
+  observe sink (probePacked salt echelon)
   let t2 ← mark
+  observe sink pivots.size
   let basis :=
     packedBasisNats (Berlekamp.Packed.nullspaceArray (p := p) q echelon pivots.toList)
   observe sink basis.size
@@ -1181,8 +1191,9 @@ private def runIntegrated {p : Nat} [ZMod64.Bounds p] [ZMod64.PrimeModulus p]
   observe sink (probePacked salt A)
   let t1 ← mark
   let s := Berlekamp.Packed.reduce p q A
-  observe sink (probePacked salt s.echelon + s.pivots.length)
+  observe sink (probePacked salt s.echelon)
   let t2 ← mark
+  observe sink s.pivots.length
   let basis := packedBasisNats (Berlekamp.Packed.nullspaceArray (p := p) q s.echelon s.pivots)
   observe sink basis.size
   let t3 ← mark
@@ -1323,14 +1334,24 @@ def kernelPhases {p : Nat} [ZMod64.Bounds p] [ZMod64.PrimeModulus p]
   let rss1 ← residentBytes false
   let expected := basisArray.map fun v => v.toArray.map ZMod64.toNat
   -- Packed pricing, each against its own fresh matrix.
-  let (fixedW, _, _) ← freshFixedSpace sink f hmonic
-  let (pWord, okWord) ← packedReduce sink .word fixedW expected
-  let (fixedH, _, _) ← freshFixedSpace sink f hmonic
-  let (pHalf, okHalf) ← packedReduce sink .halfWord fixedH expected
-  let (fixedD, _, _) ← freshFixedSpace sink f hmonic
-  let (pHalfDiv, okHalfDiv) ← packedReduce sink .halfWordDiv fixedD expected
-  let (fixedS, _, _) ← freshFixedSpace sink f hmonic
-  let (pSkip, okSkip) ← packedReduce sink .halfWordSkipZero fixedS expected
+  -- The prototype variants and the ladder rungs both run in one direction on
+  -- one call and the reverse on the next, so that a systematic order effect
+  -- cancels across the driver's repeats instead of biasing one end. Use an even
+  -- number of repeats, or the median picks the majority direction.
+  let forward ← ladderForward.get
+  ladderForward.set (!forward)
+  let variants : Array (String × PackedKind) :=
+    #[ ("packedWord", .word),
+       ("packedHalfWord", .halfWord),
+       ("packedHalfWordDivision", .halfWordDiv),
+       ("packedHalfWordSkipZero", .halfWordSkipZero) ]
+  let mut packedRuns : Array (String × PackedCounters × Bool) := #[]
+  for (lbl, kind) in (if forward then variants else variants.reverse) do
+    let (fixedV, _, _) ← freshFixedSpace sink f hmonic
+    let (c, ok) ← packedReduce sink kind fixedV expected
+    packedRuns := packedRuns.push (lbl, c, ok)
+  let packedOf (lbl : String) : PackedCounters × Bool :=
+    ((packedRuns.find? fun t => t.1 == lbl).map fun t => (t.2.1, t.2.2)).getD ({}, false)
   -- Attribution of the integrated packed kernel (issue #9160). The stage split
   -- first, on its own buffer, then the scaffolding ladder, each rung on its own
   -- buffer: the packed operations update in place only while the buffer is
@@ -1342,7 +1363,7 @@ def kernelPhases {p : Nat} [ZMod64.Bounds p] [ZMod64.PrimeModulus p]
   observe sink (probePacked saltP packedA)
   let tk1 ← mark
   let staged ← countedPackedReduce p sink q packedA
-  observe sink (probePacked saltP staged.echelon + staged.pivots.length)
+  observe sink (probePacked saltP staged.echelon)
   let tk2 ← mark
   let stagedBasis :=
     packedBasisNats (Berlekamp.Packed.nullspaceArray (p := p) q staged.echelon staged.pivots)
@@ -1357,12 +1378,6 @@ def kernelPhases {p : Nat} [ZMod64.Bounds p] [ZMod64.PrimeModulus p]
     checked.echelon == staged.echelon && checked.pivots == staged.pivots
   let zeroRef ← IO.mkRef (0 : UInt32)
   let z ← zeroRef.get
-  -- The rungs are run in one order on one call and the reverse on the next, so
-  -- that a systematic order effect (allocator or cache state accumulated by the
-  -- earlier rungs) cancels across the driver's repeats rather than biasing one
-  -- end of the ladder.
-  let forward ← ladderForward.get
-  ladderForward.set (!forward)
   let rungs : Array (String × IO LadderRung) :=
     #[ ("integrated", runIntegrated sink f hmonic expected),
        ("mirrored", runRung sink f hmonic expected (Berlekamp.Packed.eliminateColumn q)),
@@ -1439,10 +1454,13 @@ def kernelPhases {p : Nat} [ZMod64.Bounds p] [ZMod64.PrimeModulus p]
       ("peakResidentBytes", natJson peak),
       ("mirrorAgreesWithRowReduce", Json.bool mirrorOk),
       ("echelonOnlyAgrees", Json.bool echelonOk),
-      packedJson "packedWord" pWord okWord,
-      packedJson "packedHalfWord" pHalf okHalf,
-      packedJson "packedHalfWordDivision" pHalfDiv okHalfDiv,
-      packedJson "packedHalfWordSkipZero" pSkip okSkip,
+      packedJson "packedWord" (packedOf "packedWord").1 (packedOf "packedWord").2,
+      packedJson "packedHalfWord" (packedOf "packedHalfWord").1
+        (packedOf "packedHalfWord").2,
+      packedJson "packedHalfWordDivision" (packedOf "packedHalfWordDivision").1
+        (packedOf "packedHalfWordDivision").2,
+      packedJson "packedHalfWordSkipZero" (packedOf "packedHalfWordSkipZero").1
+        (packedOf "packedHalfWordSkipZero").2,
       ("packedStages", Json.mkObj
         [ ("build", spanJson (tk1.since tk0).1 (tk1.since tk0).2),
           ("pivotSearch",

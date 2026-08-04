@@ -309,6 +309,16 @@ Each column is the **median of the seven within-repeat differences**, with the
 full range of those seven differences in brackets. A range that crosses zero
 means the protocol does not resolve that effect on that row.
 
+**These comparisons form a tree, not a chain, and their shares do not sum.**
+`arrayPivots` and `flatRowWrite` are each a one-factor change from
+`hoistedPivotRow`, in different directions; `flatBothLoops` is a one-factor
+change from `flatRowWrite`. So `mirrored - hoistedPivotRow` and
+`hoistedPivotRow - arrayPivots` are both differences against the same rung, and
+adding them would double-count nothing but would also mean nothing. Each row of
+the summary below is an independent answer to "what does this one choice cost
+against the loop it sits in", and the only quantity that decomposes the whole
+gap is the first one.
+
 | instance | source-row copy | List.concat pivots | modifyEntries closure | List.finRange outer scan | residual vs prototype |
 |---|---|---|---|---|---|
 | `sd5` | 53.389 us [52.979 us, 62.943 us] | -1.121 us [-1.883 us, 822 ns] | -2.675 us [-3.606 us, -1.852 us] | 3.545 us [3.084 us, 4.277 us] | -430 ns [-1.482 us, -10 ns] |
@@ -563,6 +573,15 @@ the reduction on every row.
 unre-measured against the integrated implementation. This run prices both, in
 the same process on the same matrices, on the prototype's two storage widths and
 two multiply routines.
+
+**These four variants are not part of the counterbalanced ladder.** They run in
+a fixed order at the end of each call and the driver merges them by per-field
+median across the seven repeats, without keeping the raw samples, so a
+difference between two of them is a difference of two medians of different
+executions rather than a paired difference. That is adequate for the entry
+width, whose effect is 40% to 106%, and it is *not* adequate to resolve a 1%
+difference: it is a second reason, on top of the aggregations disagreeing, to
+read the reciprocal comparison as a tie rather than as a result.
 
 | instance | UInt64 + Barrett | UInt32 + Barrett | UInt32 + hardware `%` | UInt64/UInt32 | `%`/Barrett |
 |---|---:|---:|---:|---:|---:|
