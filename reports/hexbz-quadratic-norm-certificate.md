@@ -4,7 +4,7 @@ Swinnerton-Dyer polynomials factor into quadratics modulo every prime, so
 Berlekamp-Zassenhaus recombination has to search `2^(w-1)` supports at modular
 width `w`. `sd5` has `w = 16` and visits 32,768 support nodes to find one
 divisor; `sd6` has `w = 32`, exceeds the recombination budget outright, and is
-answered by the CLD lattice tier in 7.94 s of its 7.99 s. This page is issue #9133's record:
+answered by the CLD lattice tier, which is where nearly all of its 7.95 s goes. This page is issue #9133's record:
 what the class of polynomials in question actually is, the theorem and finite
 certificate that decide irreducibility for it directly, a prototype outside
 production, and the go/no-go measurement.
@@ -13,13 +13,13 @@ The verdict is **go**, on both the mathematics and the numbers. The theorem
 holds for every iterated quadratic norm with multiplicatively independent
 radicands -- an infinite class of which the corpus contains only Swinnerton-Dyer
 instances and quadratics -- the certificate is two decidable checks, and on the
-committed corpus the certificate is 826x faster than the production cascade on
-`sd5` and 23,816x on `sd6`, at a median miss overhead of 0.14 us.
+committed corpus the certificate is 861x faster than the production cascade on
+`sd5` and 24,990x on `sd6`, at a median miss overhead of 0.14 us.
 
 The gate that matters most is not either of those. Simulated onto the combined
 cactus, the certificate alone takes the worst Hex/Isabelle cumulative ratio over
-ranks 125 through 140 from 1.189x to 0.805x, which is #9126's success criterion.
-Restricting the model to the three `sd5` rows still gives 0.834x, so the
+ranks 125 through 140 from 1.178x to 0.802x, which is #9126's success criterion.
+Restricting the model to the three `sd5` rows still gives 0.829x, so the
 conclusion does not rest on the whole certified set.
 
 What is *not* delivered here is the Mathlib correspondence. The certificate is
@@ -32,8 +32,8 @@ The issue asks for these numbers before any implementation, and for the issue to
 be closed as a no-go if the general reconstruction already meets #9126's target
 and `sd6` is no longer a material tail. Neither holds.
 
-Source records: `reports/bench-results/hexbz-factor-sweep-540bb847-hex-chungus2.json`
-(Hex, measured at this branch's revision `540bb847`, which changes no production
+Source records: `reports/bench-results/hexbz-factor-sweep-596e9ce8-hex-chungus2.json`
+(Hex, measured at this branch's revision `596e9ce8`, which changes no production
 code -- the prototype is bench-only -- so it is also the post-#9129/#9130 state
 the issue asks about) and
 `reports/bench-results/hexbz-factor-sweep-aa68c920-chungus2.json` (every other
@@ -45,19 +45,19 @@ phase profiles taken for this page.
 
 | row | degree | Hex | Isabelle | Isabelle / Hex |
 |---|---:|---:|---:|---:|
-| `sd4` | 16 | 0.858 ms | 1.196 ms | 1.39x |
-| `sd4_shift1` | 16 | 0.792 ms | 1.233 ms | 1.56x |
-| `sd4_shift3` | 16 | 0.881 ms | 1.211 ms | 1.37x |
-| `sd4_x_phi17` | 32 | 6.673 ms | 4.567 ms | 0.68x |
-| `sd4_x_phi35` | 40 | 17.701 ms | 26.190 ms | 1.48x |
-| `sd4_x_sd4shift1` | 32 | 17.868 ms | 10.803 ms | 0.60x |
-| `sd5` | 32 | 70.879 ms | 22.610 ms | **0.32x** |
-| `sd5_shift1` | 32 | 66.227 ms | 14.815 ms | **0.22x** |
-| `sd5_shift2` | 32 | 68.952 ms | 14.716 ms | **0.21x** |
-| `sd5_x_phi11` | 42 | 140.227 ms | 27.545 ms | **0.20x** |
-| `sd5_x_phi45` | 56 | 322.242 ms | timeout | -- |
+| `sd4` | 16 | 0.868 ms | 1.196 ms | 1.38x |
+| `sd4_shift1` | 16 | 0.804 ms | 1.233 ms | 1.53x |
+| `sd4_shift3` | 16 | 0.874 ms | 1.211 ms | 1.39x |
+| `sd4_x_phi17` | 32 | 6.669 ms | 4.567 ms | 0.68x |
+| `sd4_x_phi35` | 40 | 17.677 ms | 26.190 ms | 1.48x |
+| `sd4_x_sd4shift1` | 32 | 17.873 ms | 10.803 ms | 0.60x |
+| `sd5` | 32 | 71.237 ms | 22.610 ms | **0.32x** |
+| `sd5_shift1` | 32 | 66.235 ms | 14.815 ms | **0.22x** |
+| `sd5_shift2` | 32 | 68.767 ms | 14.716 ms | **0.21x** |
+| `sd5_x_phi11` | 42 | 140.592 ms | 27.545 ms | **0.20x** |
+| `sd5_x_phi45` | 56 | 322.643 ms | timeout | -- |
 | `sd5_x_sd5shift1` | 64 | timeout | timeout | -- |
-| `sd6` | 64 | 8.031 s | timeout | -- |
+| `sd6` | 64 | 7.953 s | timeout | -- |
 | `sd6_shift1`, `sd6_shift5` | 64 | timeout | timeout | -- |
 | `sd6_x_phi13`, `sd6_x_phi105`, `sd6_x_sd6shift1` | 76--128 | timeout | timeout | -- |
 | `sd7`, `hoeij_S7` | 128 | timeout | timeout | -- |
@@ -96,11 +96,11 @@ Cumulative Hex/Isabelle over the combined mixture, from
 
 | rank | 125 | 128 | 130 | 133 | 135 | 138 | 140 |
 |---|---:|---:|---:|---:|---:|---:|---:|
-| Hex / Isabelle | 0.78x | 0.92x | 1.01x | 1.17x | 1.19x | 0.87x | 0.62x |
+| Hex / Isabelle | 0.78x | 0.92x | 1.01x | 1.16x | 1.18x | 0.86x | 0.61x |
 
 The criterion is at most 0.85x at every rank from 125 through 140. The worst
-point is 1.189x at rank 135, and ranks 128--138 all fail. Swinnerton-Dyer rows
-occupy Hex ranks 134, 135, 136, and 138 and contribute 346 ms of the 867 ms
+point is 1.178x at rank 135, and ranks 130--138 all fail. Swinnerton-Dyer rows
+occupy Hex ranks 134, 135, 136, and 138 and contribute 347 ms of the 862 ms
 cumulative at rank 138 against Isabelle's 79.7 ms for the same four inputs.
 
 So the no-go branch in the issue body does not apply, and neither does treating
@@ -300,13 +300,12 @@ implementation against them, writing
 
 | Record | SHA-256 |
 |---|---|
-| `reports/bench-results/hexbz-quadratic-norm-certificate-chungus2.json` | `2efeffac97f8a7ebf877fc087a73be4fa1bb775b93b3de90eb656f152e0a843f` |
-| `reports/bench-results/hexbz-quadratic-norm-witnesses.json` | `dad4ba27d0e08c0a97cf6e7e7ab448eb3554996e3994e4838f579154d01ba595` |
-| `reports/bench-results/hexbz-quadratic-norm-cactus-model.json` | `25312b134a4bfff7266c3781d2d5a891ab80a56f41222faa71f67f9bba5bd8f6` |
+| `reports/bench-results/hexbz-quadratic-norm-certificate-chungus2.json` | `5b5db6c69fbaf229b27a22479af794d64d182caa51f150ef6fbcacd3ac9a1990` |
+| `reports/bench-results/hexbz-quadratic-norm-witnesses.json` | `64723966d0122d231d56304fd2567befb15e3c6bb4232517c624ea6117d8b44e` |
+| `reports/bench-results/hexbz-quadratic-norm-cactus-model.json` | `8f390e1ed9f204257c751c5aada829a11b001fd7042477bdaf3d0d21413ae26e` |
 
-The certificate and witness records were measured at revision `24784ebc`, the
-cactus model at `540bb847` against the sweep committed here. None had modified
-source, and each carries the SHA-256 of the service binary it measured, which
+All three were measured at revision `d1b39951`, against the sweep committed
+here, with no modified source. Each carries the SHA-256 of the service binary it measured, which
 pins the code more tightly than the commit does. The cactus model additionally
 records the two sweeps and the certificate record it read.
 
@@ -320,22 +319,22 @@ two medians, so both sides describe one execution.
 
 | row | degree | recovery | independence | construction | equality | certificate | paired | production | ratio |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
-| `conway_p3_n2` | 2 | 2.7 | 0.2 | 0.2 | 0.1 | 3.1 | 3.2 | 0.017 ms | 5x |
-| `conway_p65537_n2` | 2 | 3.1 | 0.2 | 0.2 | 0.0 | 3.6 | 3.4 | 0.029 ms | 8x |
-| `sd2` | 4 | 6.2 | 0.5 | 0.3 | 0.1 | 7.0 | 7.0 | 0.034 ms | 5x |
-| `sd3` | 8 | 10.9 | 1.4 | 0.6 | 0.1 | 12.9 | 13.2 | 0.150 ms | 11x |
-| `sd4` | 16 | 17.5 | 4.3 | 1.4 | 0.1 | 23.3 | 25.1 | 0.843 ms | 34x |
-| `sd4_shift3` | 16 | 17.5 | 4.3 | 5.3 | 0.1 | 27.2 | 30.4 | 0.883 ms | 30x |
-| `sd5` | 32 | 36.3 | 10.7 | 21.8 | 0.3 | 69.2 | 83.7 | 68.853 ms | **826x** |
-| `sd5_shift1` | 32 | 50.8 | 10.4 | 54.3 | 0.4 | 115.9 | 129.1 | 63.916 ms | 495x |
-| `sd5_shift2` | 32 | 52.9 | 10.6 | 60.8 | 0.4 | 124.7 | 138.7 | 67.857 ms | 489x |
-| `sd6` | 64 | 100.0 | 25.3 | 153.9 | 0.5 | 279.8 | 333.8 | 7.949 s | **23816x** |
-| `sd6_shift1` | 64 | 193.0 | 25.7 | 366.5 | 0.9 | 586.0 | 644.5 | 22.105 s | 34297x |
-| `sd6_shift5` | 64 | 203.1 | 25.4 | 437.8 | 0.9 | 667.3 | -- | timeout | -- |
-| `hoeij_S7` | 128 | 369.9 | 61.0 | 861.0 | 1.0 | 1293.0 | -- | timeout | -- |
-| `sd7` | 128 | 370.4 | 61.3 | 858.2 | 1.0 | 1290.9 | -- | timeout | -- |
-| `hoeij_S8` | 256 | 1390.1 | 143.0 | 3771.2 | 2.2 | 5306.4 | -- | timeout | -- |
-| `hoeij_S9` | 512 | 6001.3 | 327.2 | 17733.6 | 6.3 | 24068.4 | -- | timeout | -- |
+| `conway_p3_n2` | 2 | 2.8 | 0.2 | 0.2 | 0.1 | 3.3 | 3.1 | 0.017 ms | 5x |
+| `conway_p65537_n2` | 2 | 2.9 | 0.2 | 0.2 | 0.1 | 3.4 | 3.4 | 0.029 ms | 8x |
+| `sd2` | 4 | 7.7 | 0.5 | 0.3 | 0.1 | 8.6 | 7.2 | 0.037 ms | 5x |
+| `sd3` | 8 | 10.7 | 1.4 | 0.6 | 0.1 | 12.8 | 13.1 | 0.152 ms | 11x |
+| `sd4` | 16 | 17.4 | 4.3 | 1.4 | 0.1 | 23.2 | 25.1 | 0.846 ms | 34x |
+| `sd4_shift3` | 16 | 17.5 | 4.3 | 5.2 | 0.1 | 27.2 | 29.5 | 0.877 ms | 30x |
+| `sd5` | 32 | 36.2 | 11.3 | 22.1 | 0.3 | 69.8 | 80.1 | 68.755 ms | **861x** |
+| `sd5_shift1` | 32 | 52.9 | 10.8 | 58.1 | 0.4 | 122.2 | 130.6 | 64.104 ms | 493x |
+| `sd5_shift2` | 32 | 52.9 | 10.6 | 61.2 | 0.4 | 125.1 | 141.6 | 66.949 ms | 474x |
+| `sd6` | 64 | 100.7 | 25.4 | 157.1 | 0.5 | 283.6 | 323.1 | 8.075 s | **24990x** |
+| `sd6_shift1` | 64 | 194.1 | 25.5 | 363.2 | 0.9 | 583.7 | 651.6 | 22.088 s | 33898x |
+| `sd6_shift5` | 64 | 204.7 | 25.6 | 442.0 | 0.9 | 673.2 | -- | timeout | -- |
+| `hoeij_S7` | 128 | 366.6 | 61.3 | 855.9 | 1.0 | 1284.7 | -- | timeout | -- |
+| `sd7` | 128 | 367.9 | 61.5 | 859.9 | 1.0 | 1290.4 | -- | timeout | -- |
+| `hoeij_S8` | 256 | 1379.5 | 142.6 | 3801.0 | 2.1 | 5325.1 | -- | timeout | -- |
+| `hoeij_S9` | 512 | 5985.3 | 330.6 | 17619.2 | 6.4 | 23941.5 | -- | timeout | -- |
 
 The four stage columns come from a certificate-only process, which is what
 classifies every row and what the whole-corpus miss sweep uses. `paired` is the
@@ -347,7 +346,7 @@ execution rather than two runs subtracted.
 Twenty-four of the corpus's 392 rows certify: eighteen Swinnerton-Dyer rows and
 translates, and six degree-two Conway polynomials, which are the `n = 1` case of
 the theorem. The gate asks for at least 5x on `sd5` and a material reduction on
-`sd6`; the measurements are 826x and 23,816x. Four rows the production cascade
+`sd6`; the measurements are 861x and 24,990x. Four rows the production cascade
 cannot finish inside the cutoff --
 `sd6_shift5`, `sd7`/`hoeij_S7`, `hoeij_S8`, `hoeij_S9` -- certify in under 24 ms,
 `hoeij_S9` at degree 512.
@@ -356,13 +355,13 @@ Cost splits as expected: recovery is `O(n²)` rational operations on the top
 `2n+1` coefficients and dominates at small degree; the iterated-norm
 construction is `O(N²)` big-integer multiplications and dominates from degree 32
 up; the independence test is `2ⁿ - 1` square tests on integers below 510,510 and
-never exceeds 328 us, all of it at degree 512; the equality test is under seven
+never exceeds 331 us, all of it at degree 512; the equality test is under seven
 microseconds everywhere,
 because by the time it runs both sides are already built.
 
 ### Miss overhead
 
-Over the 368 declining rows: **median 0.14 us, maximum 86.7 us.** The median is
+Over the 368 declining rows: **median 0.14 us, maximum 85.9 us.** The median is
 the degree test -- most of the corpus does not have power-of-two degree, and
 those rows are refused in a few hundred nanoseconds. The rows that pay anything
 are those with power-of-two degree *and* `2ⁿ | a_{N-1}`, which then run the
@@ -370,10 +369,10 @@ rational recovery to a contradiction:
 
 | declining row | degree | cost |
 |---|---:|---:|
-| `cyclo_phi256` | 128 | 86.7 us |
-| `laguerre_L32` | 32 | 72.6 us |
-| `cyclo_phi128` | 64 | 42.3 us |
-| `conway_p3_n32` | 32 | 25.9 us |
+| `cyclo_phi256` | 128 | 85.9 us |
+| `laguerre_L32` | 32 | 72.4 us |
+| `cyclo_phi128` | 64 | 42.1 us |
+| `conway_p2_n32` | 32 | 26.4 us |
 | `wilkinson_32` | 32 | 0.2 us |
 
 `wilkinson_32` is the shape of the common case: degree 32 is a power of two, but
@@ -464,11 +463,11 @@ declines.
 
 | row | now | modelled | retained | certificate |
 |---|---:|---:|---:|---:|
-| `sd4` | 0.858 ms | 0.432 ms | 0.409 ms | 23.3 us |
-| `sd5` | 70.879 ms | 6.783 ms | 6.714 ms | 69.2 us |
-| `sd5_shift1` | 66.227 ms | 7.327 ms | 7.211 ms | 115.9 us |
-| `sd5_shift2` | 68.952 ms | 8.969 ms | 8.845 ms | 124.7 us |
-| `sd6` | 8.031 s | 28.144 ms | 27.864 ms | 279.8 us |
+| `sd4` | 0.868 ms | 0.426 ms | 0.402 ms | 23.2 us |
+| `sd5` | 71.237 ms | 6.777 ms | 6.707 ms | 69.8 us |
+| `sd5_shift1` | 66.235 ms | 7.330 ms | 7.207 ms | 122.2 us |
+| `sd5_shift2` | 68.767 ms | 9.110 ms | 8.985 ms | 125.1 us |
+| `sd6` | 7.953 s | 27.845 ms | 27.561 ms | 283.6 us |
 
 The retained column is the whole cost in every row: the certificate is two to
 four orders of magnitude below the prime walk it follows. Cumulative
@@ -476,22 +475,22 @@ Hex/Isabelle over ranks 125--140:
 
 | rank | 125 | 128 | 130 | 133 | 135 | 138 | 140 |
 |---|---:|---:|---:|---:|---:|---:|---:|
-| now | 0.78x | 0.92x | 1.01x | 1.17x | 1.19x | 0.87x | 0.62x |
-| modelled | 0.69x | 0.73x | 0.75x | 0.80x | 0.79x | 0.57x | 0.45x |
+| now | 0.78x | 0.92x | 1.01x | 1.16x | 1.18x | 0.86x | 0.61x |
+| modelled | 0.69x | 0.73x | 0.75x | 0.80x | 0.79x | 0.56x | 0.45x |
 
-Worst ratio over ranks 125--140: **1.189x now, 0.805x modelled**, against
+Worst ratio over ranks 125--140: **1.178x now, 0.802x modelled**, against
 #9126's 0.85x criterion. The certificate alone clears it, with the rows #9126
 named as also needing parity -- `x^n - 1`, `cyclo_phi179`,
 `cyclo_phi64_x_phi105` -- untouched.
 
 That conclusion does not rest on the whole certified set. Restricting the
 replacement to the three `sd5` rows with `--only sd5,sd5_shift1,sd5_shift2`
-gives a worst ratio of **0.834x**, still under the target. The `sd4` and `sd6`
+gives a worst ratio of **0.829x**, still under the target. The `sd4` and `sd6`
 rows widen the margin; they do not create it.
 
 **Post-normalization**, the permissive placement: the certificate is attempted
 after normalization, behind the free structural pre-gate, so a certified row
-skips the prime walk too. Worst ratio 0.685x on the same priced rows.
+skips the prime walk too. Worst ratio 0.682x on the same priced rows.
 
 Two things this model deliberately does not claim. It does not credit the six
 rows the cascade cannot finish -- `sd6_shift1`, `sd6_shift5`, `sd7`,
@@ -509,9 +508,9 @@ implementation PR owes is what settles it.
 |---|---|
 | theorem applies to a natural class broader than the benchmark rows | **yes** -- all independent radicands and translations; 8 off-corpus witnesses including negative, composite, and degree-1024 cases |
 | covers SD5 and SD6 from their mathematical input data without case tables | **yes** -- radicands recovered from the top `2n+1` coefficients; `sd7`, `hoeij_S8`, `hoeij_S9` too |
-| certificate generation plus checking at least 5x faster than SD5, materially reduces SD6 | **yes** -- 826x and 23,816x, both sides read off the same paired in-process observations |
+| certificate generation plus checking at least 5x faster than SD5, materially reduces SD6 | **yes** -- 861x and 24,990x, both sides read off the same paired in-process observations |
 | small, reviewable trust surface | **executable side yes** (see below); the Mathlib proof is the open cost |
-| unsuccessful detection under 1% median overhead, preferably opt-in | **yes** on the median -- 0.14 us against a maximum of 86.7 us -- but see the placement discussion: the post-prime placement's predicate has to admit `sd5`, so it is not simply the existing recombination budget, and whatever predicate is chosen decides which rows pay the 87 us tail |
+| unsuccessful detection under 1% median overhead, preferably opt-in | **yes** on the median -- 0.14 us against a maximum of 85.9 us -- but see the placement discussion: the post-prime placement's predicate has to admit `sd5`, so it is not simply the existing recombination budget, and whatever predicate is chosen decides which rows pay the 87 us tail |
 
 The executable trust surface is `quadNorm`, `iteratedNorm`,
 `isPerfectSquare`, `independentSquareClasses`, and one array comparison: about
@@ -570,7 +569,7 @@ taskset -c 0 python3 scripts/bench/quadratic_norm_witnesses.py \
 # invalidates. `--check` fails until the SVGs are regenerated.
 taskset -c 0 python3 scripts/bench/factor_sweep.py --systems hex-factor \
     --cutoff 10 \
-    --output reports/bench-results/hexbz-factor-sweep-540bb847-hex-chungus2.json
+    --output reports/bench-results/hexbz-factor-sweep-596e9ce8-hex-chungus2.json
 python3 scripts/plots/hexbz-cactus.py
 python3 scripts/plots/hexbz-cactus.py --check
 
