@@ -180,6 +180,13 @@ def ceilLogP (p target : Nat) : Nat :=
 def bhksCoeffCutThreshold (p : Nat) (f : ZPoly) (j : Nat) : Nat :=
   ceilLogP p (2 * bhksCoeffBound f j + 1)
 
+/-- Global cap on direct classical recombination candidates.
+
+Shared between the engine that spends it and the prime planner that prices it:
+`Hex.scoutPays` bounds a plan's remaining recombination by this, because beyond
+it the direct search declines rather than continuing. -/
+def defaultSubsetBudget : Nat := 262144
+
 /--
 Hensel precision exponent for a Mignotte coefficient bound.
 

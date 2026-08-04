@@ -1,5 +1,12 @@
 # Scouting modular degree patterns before splitting (issue #9128)
 
+> The `scoutWidth = 8` gate this report measures was replaced by issue #9156:
+> how many candidates the walk scouts is now a price comparison,
+> `Hex.scoutPays`, rather than a width threshold. See
+> [hexbz-prime-plan-pricing.md](hexbz-prime-plan-pricing.md). Everything below
+> is the record as measured at revision `a79917a1`, and the scout mechanism it
+> describes is unchanged.
+
 The direct prime planner used to run a full Berlekamp factorization at the
 first good prime and, whenever that image had more than eight local factors, at
 exactly two more good primes. At most one of those three factorizations is ever

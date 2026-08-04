@@ -97,10 +97,9 @@ There is no dilation-coordinate factorization method.
 - a bitset of subset-reachable degrees.
 
 `DirectPrimePlan` stores the chosen factorization and the other
-successful factorization examined, if any. If the first admissible
-prime has few modular factors, it is used immediately. Otherwise a
-bounded number of further admissible primes are *scouted*, and plans
-are compared by:
+successful factorization examined, if any. The first admissible prime is
+split. Further admissible primes are *scouted* while `scoutPays` says
+the walk can still afford another observation; plans are compared by:
 
 1. predicted complete subset-search work;
 2. number of reachable proper factor degrees;
@@ -114,39 +113,60 @@ the factorization it predicts would. Only the winner is split.
 Inadmissible primes do not spend the allowance of scouts. The walk
 therefore ends holding the plan a policy that split every candidate
 would have selected, having split the first admissible prime and at
-most the winner — except that a scouted image narrow enough to pass
-the width gate ends the walk, the same gate that governs the first
-admissible prime.
+most the winner — except where `scoutPays` ends the walk, which it may
+do at the first admissible prime and after any scouted candidate wins.
 
 The reachability bitset is computed by dynamic programming in
 `O(number of factors × degree)`.
 
-### Scouting a candidate's degree pattern
+### Pricing one more observation
 
-A candidate's whole score follows from its modular factor degrees, and
-those can be obtained without splitting anything. The bounded
-distinct-degree scout separates the modular image one factor degree at
-a time. After degree `d` is separated, every irreducible factor left in
-a residual of degree `m` has degree at least `d`, so the factor count
-lies between `separated + 1` and `separated + m / d`.
+`scoutPays` is the walk's only stopping decision. It compares the
+recombination work the plan in hand may still have to do against the
+scouts and split the rest of the walk may spend. Both sides are
+estimates over shape already observed — the input degree, the primes
+involved, and the degree patterns of the plans in hand — so the walk
+prices its own next step and nothing about the corpus or the instance's
+provenance enters.
 
-A candidate wider than the current best can only score worse, so the
-scout abandons it as soon as the factors it has separated reach the
-current width — however much of the polynomial is left. Otherwise the
-pattern completes and the candidate is scored exactly. The loop also
-stops when the residual is a unit, and when the residual is too small
-to be a product of two factors of degree at least `d` and is therefore
-irreducible, so it never runs past the largest factor degree.
+Writing `n` for the modular degree, `q` for the prime about to be
+scouted, `w` and `d` for the width and largest modular factor degree of
+the plan held, and `W` for the machine words of that plan's Hensel
+modulus:
 
-The scout is a performance heuristic, not a correctness oracle. Every
-factorization, certificate, and degree obstruction is built from the
-Berlekamp split at the selected prime. Prime choice may change
-performance; it cannot change the factorization theorem.
+- a recombination candidate costs about `n²` coefficient operations on
+  `W`-word integers, averaged over the cheap degree and
+  trailing-coefficient rejections and the subsets that reach a product.
+  A complete head-forced search visits `directSubsetCost w` of them, but
+  the direct engine abandons the search at `defaultSubsetBudget`, so the
+  work still ahead is at most
+  `min (directSubsetCost w) defaultSubsetBudget · n² · W`;
+- a bounded scout runs one Frobenius power and one gcd per separated
+  degree, about `bitLen q` squarings of the degree-`n` image apiece, and
+  stops at the largest factor degree of the image it separates. That
+  degree is unknown before scouting, so `d` stands in for it — a proxy,
+  not a bound: a narrower candidate tends to have larger factor degrees;
+- acting on what a scout learns costs one further Berlekamp split, whose
+  matrix and row reduction are about `bitLen q · n³`;
+- so a walk with `fuel` observations left may spend at most `fuel`
+  scouts and one split.
 
-The walk therefore performs one full Berlekamp split at the first
-admissible prime, at most `scoutFuel` bounded scouts, and one further
-full split for the scouted winner — at most two splits where the fixed
-policy it replaces performed three.
+Both estimates carry a factor `n²`, which cancels. What remains decides
+**affordability, not expected value**: the left side is the most any
+prime could save and the right side the most the remaining walk could
+spend, so passing means the walk *could* pay for itself, not that it
+will. That is weaker than a value-of-information rule and is the reason
+the walk can still buy an observation that turns out worthless.
+
+The two constants scale a modular word operation against a recombination
+candidate, which the inequality counts as one. They are measured ratios,
+they are not precise, and changing them changes decisions;
+`scripts/bench/prime_policy_replay.py --sensitivity` reports over what
+range the whole replayed walk is unchanged and what the exceptions cost.
+
+`scoutFuel` remains, as a bound that makes the walk terminate in a fixed
+number of observations however cheap the next one looks; which of those
+observations happen is `scoutPays`'s decision, not the bound's.
 
 ## Direct Hensel lift
 

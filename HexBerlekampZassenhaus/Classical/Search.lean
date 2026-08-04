@@ -23,9 +23,6 @@ tier; proved classical replay remains its acceptance boundary.
 
 namespace Hex
 
-/-- Global cap on direct classical recombination candidates. -/
-def defaultSubsetBudget : Nat := 262144
-
 /-- Why the bounded direct classical engine declined. -/
 inductive DeclineReason where
   /-- No admissible modular factorization was found. -/
