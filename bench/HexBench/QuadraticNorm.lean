@@ -134,13 +134,23 @@ def independentSquareClasses (ds : Array Int) : Bool := Id.run do
     if isPerfectSquare prod then return false
   return true
 
+/-- Divide out the unit, so that a negated iterated norm is still recognized.
+
+Every `F(c; d)` is monic, and `-1` is a unit of `ℤ[X]`, so `f` and `-f` are
+irreducible together. This is the whole normalization the identification needs:
+no scaling and no content division, since a primitive integer polynomial with
+leading coefficient outside `{1, -1}` is never `± F(c; d)`. -/
+def unitNormalize (f : Array Int) : Array Int :=
+  let f := trim f
+  if f[f.size - 1]! < 0 then f.map (- ·) else f
+
 /-- Does the certificate prove `f` irreducible?
 
-A `true` result asserts both halves: the radicands are independent, and `f` is
-exactly the iterated quadratic norm they describe. -/
+A `true` result asserts both halves: the radicands are independent, and `f` is,
+up to the unit `-1`, exactly the iterated quadratic norm they describe. -/
 def Certificate.check (cert : Certificate) (f : Array Int) : Bool :=
   independentSquareClasses cert.radicands &&
-    trim (iteratedNorm cert.translation cert.radicands) == trim f
+    trim (iteratedNorm cert.translation cert.radicands) == unitNormalize f
 
 /-! # Recovery
 
@@ -237,7 +247,7 @@ def radicandBound : Nat := 1 <<< 20
 Returns `none` as soon as any structural requirement fails, so a polynomial
 outside the class is rejected after a few coefficient operations. -/
 def recover? (f : Array Int) : Option Certificate := Id.run do
-  let f := trim f
+  let f := unitNormalize f
   let deg := f.size - 1
   if deg < 2 then return none
   if f[deg]! != 1 then return none

@@ -1700,7 +1700,7 @@ private def quadraticNormProbe (paired : Bool) (f : ZPoly) : IO Json := do
       witness.modify (· + built.size)
       let constructionStop ← mark
       let equalityStart ← mark
-      let equal := built == QuadraticNorm.trim coeffs
+      let equal := built == QuadraticNorm.unitNormalize coeffs
       witness.modify (· + if equal then 1 else 0)
       let equalityStop ← mark
       return Json.mkObj <|

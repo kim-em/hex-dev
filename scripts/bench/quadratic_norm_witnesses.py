@@ -34,8 +34,11 @@ Run::
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
+import platform
 import random
+import socket
 import subprocess
 import sys
 from math import isqrt
@@ -115,6 +118,23 @@ RADICAND_POOL = (-7, -6, -5, -3, -2, -1, 2, 3, 5, 6, 7, 10, 11, 12, 13, 14, 15,
                  20, 21, 22, 30, 45)
 
 
+def git(*args: str) -> str:
+    return subprocess.run(["git", *args], cwd=ROOT, text=True,
+                          capture_output=True, check=True).stdout.strip()
+
+
+def replies(entry: str, payload: str, expected: int) -> list[dict]:
+    """One reply per request, or a hard failure: a truncated response would
+    otherwise silently drop cases from the comparison."""
+    completed = subprocess.run([str(SERVICE), "--entry", entry], input=payload,
+                               text=True, capture_output=True, check=True)
+    out = [json.loads(line)["result"]
+           for line in completed.stdout.splitlines() if line.strip()]
+    if len(out) != expected:
+        raise SystemExit(f"{entry}: expected {expected} replies, got {len(out)}")
+    return out
+
+
 def random_pass(count: int, seed: int) -> "tuple[list, list[str]]":
     """Independence, certificate, and production factorization must agree."""
     rng = random.Random(seed)
@@ -123,12 +143,8 @@ def random_pass(count: int, seed: int) -> "tuple[list, list[str]]":
              for _ in range(count)]
     payload = "".join(json.dumps({"coeffs": iterated_norm(c, ds)}) + "\n"
                       for c, ds in cases)
-    certified = [json.loads(line)["result"] for line in subprocess.run(
-        [str(SERVICE), "--entry", "quadraticNormCertificate"], input=payload,
-        text=True, capture_output=True, check=True).stdout.splitlines() if line.strip()]
-    factored = [json.loads(line)["result"] for line in subprocess.run(
-        [str(SERVICE), "--entry", "factor"], input=payload,
-        text=True, capture_output=True, check=True).stdout.splitlines() if line.strip()]
+    certified = replies("quadraticNormCertificate", payload, len(cases))
+    factored = replies("factor", payload, len(cases))
 
     failures, agreed = [], 0
     for (c, ds), cert, fact in zip(cases, certified, factored):
@@ -181,14 +197,10 @@ def main(argv: list[str]) -> int:
     })
 
     payload = "".join(json.dumps({"coeffs": c["coeffs"]}) + "\n" for c in cases)
-    completed = subprocess.run(
-        [str(SERVICE), "--entry", "quadraticNormCertificate"], input=payload,
-        text=True, capture_output=True, check=True)
-    replies = [json.loads(line)["result"]
-               for line in completed.stdout.splitlines() if line.strip()]
+    answers = replies("quadraticNormCertificate", payload, len(cases))
 
     rows, failures = [], []
-    for case, reply in zip(cases, replies):
+    for case, reply in zip(cases, answers):
         got = bool(reply.get("certified"))
         nanos = sum(reply[s]["nanos"] for s in
                     ("recovery", "independence", "construction", "equality")
@@ -225,8 +237,20 @@ def main(argv: list[str]) -> int:
               f"{summary['certified']} certified, {summary['agreed']} agreeing "
               f"with the production factorizer", file=sys.stderr)
 
-    record = {"schema": "hexbz-quadratic-norm-witnesses/2", "cases": rows,
-              "random": random_summary, "failures": failures}
+    record = {
+        "schema": "hexbz-quadratic-norm-witnesses/2",
+        "env": {
+            "git_commit": git("rev-parse", "HEAD"),
+            "git_dirty": bool(git("status", "--porcelain",
+                                  "--untracked-files=no")),
+            "hostname": socket.gethostname(),
+            "arch": platform.machine(),
+            "service_sha256": hashlib.sha256(SERVICE.read_bytes()).hexdigest(),
+        },
+        "cases": rows,
+        "random": random_summary,
+        "failures": failures,
+    }
     if args.output:
         Path(args.output).write_text(
             json.dumps(record, indent=1, sort_keys=True) + "\n")
