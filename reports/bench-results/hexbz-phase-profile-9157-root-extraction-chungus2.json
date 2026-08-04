@@ -1,0 +1,6106 @@
+{
+  "config": {
+    "controls": [
+      "chebyshev_T24",
+      "chebyshev_U24",
+      "legendre_P30",
+      "legendre_P38",
+      "cyclo_phi17",
+      "cyclo_phi41",
+      "xpow24_minus1",
+      "randprod_10",
+      "randprod_21"
+    ],
+    "corpus": "bench/corpus/hexbz-factor-corpus.jsonl",
+    "corpus_sha256": "619913904240834c912489e6cc23ba136e8cc5ebf0ea95f83397e0682387284d",
+    "cpu": 1,
+    "cutoff_seconds": 120.0,
+    "hex_exe_sha256": "77499ec0224664654e5286f2cfea893d9a980c314b908c49159ffa37d12f25e4",
+    "kernel_repeats": 3,
+    "names": [
+      "sd5",
+      "sd5_shift1",
+      "sd5_shift2",
+      "sd4_x_sd4shift1",
+      "sd5_x_phi11",
+      "xpow48_minus1",
+      "xpow105_minus1",
+      "xpow120_minus1",
+      "cyclo_phi179",
+      "cyclo_phi64_x_phi105",
+      "cyclo_phi128_x_phi165",
+      "cyclo_phi385",
+      "wilkinson_40",
+      "wilkinson_48",
+      "wilkinson_56",
+      "chebyshev_T24",
+      "chebyshev_U24",
+      "legendre_P30",
+      "legendre_P38",
+      "cyclo_phi17",
+      "cyclo_phi41",
+      "xpow24_minus1",
+      "randprod_10",
+      "randprod_21"
+    ],
+    "plan_repeats": 3,
+    "repeat_ceiling_nanos": 1000000000,
+    "repeats": 5,
+    "representative": [
+      "sd5",
+      "sd5_shift1",
+      "sd5_shift2",
+      "sd4_x_sd4shift1",
+      "sd5_x_phi11",
+      "xpow48_minus1",
+      "xpow105_minus1",
+      "xpow120_minus1",
+      "cyclo_phi179",
+      "cyclo_phi64_x_phi105",
+      "cyclo_phi128_x_phi165",
+      "cyclo_phi385",
+      "wilkinson_40",
+      "wilkinson_48",
+      "wilkinson_56"
+    ],
+    "sampling_profiles": [
+      "sd5",
+      "sd5_x_phi11",
+      "xpow120_minus1",
+      "cyclo_phi179",
+      "cyclo_phi64_x_phi105",
+      "cyclo_phi385",
+      "wilkinson_56"
+    ],
+    "validate_cutoff_seconds": 2.0,
+    "warmup": 1
+  },
+  "counterfactuals": [],
+  "env": {
+    "arch": "x86_64",
+    "cpu_cores": 96,
+    "cpu_model": null,
+    "exe_name": "hexbz_factor_service",
+    "git_commit": "762e1d2d1aeb6dd56f0d5627b6947ec6df1aa7e0",
+    "git_dirty": false,
+    "hostname": "chungus2",
+    "lean_bench_version": null,
+    "lean_toolchain": "leanprover/lean4:v4.33.0-rc1",
+    "lean_version": null,
+    "os": "linux",
+    "platform_target": null,
+    "timestamp_iso": "2026-08-04T07:08:42Z",
+    "timestamp_unix_ms": 1785827322825
+  },
+  "kernels": [],
+  "results": [
+    {
+      "degree": 32,
+      "end_to_end": {
+        "max_nanos": 68117733,
+        "median_nanos": 67413159,
+        "min_nanos": 67373780,
+        "runs": 5,
+        "status": "ok"
+      },
+      "expected_factor_degrees": [
+        32
+      ],
+      "family": "swinnerton-dyer",
+      "instrumentation_ratio": 1.0310534920934353,
+      "name": "sd5",
+      "phase_profile": {
+        "profile": {
+          "degree": 32,
+          "factorDegrees": [
+            32
+          ],
+          "hensel": {
+            "liftedFactorCount": 16,
+            "liftedFactorDegrees": [
+              2,
+              2,
+              2,
+              2,
+              2,
+              2,
+              2,
+              2,
+              2,
+              2,
+              2,
+              2,
+              2,
+              2,
+              2,
+              2
+            ],
+            "liftedMaxCoeffBits": 93,
+            "modulusBits": 93,
+            "precision": 19,
+            "prime": 29,
+            "treeInternalLifts": 15,
+            "treeLeaves": 16,
+            "treeShape": "count-balanced binary product tree with a guarded dominant-degree split"
+          },
+          "method": "classical",
+          "modular": {
+            "berlekampFactorTotal": {
+              "nanos": 3225252,
+              "smallAllocs": 279386
+            },
+            "berlekampMatrix": {
+              "nanos": 1753,
+              "smallAllocs": 108
+            },
+            "distinctDegree": "not-applicable",
+            "goodPrimeTest": {
+              "nanos": 19259,
+              "smallAllocs": 1600
+            },
+            "kernelDimension": 16,
+            "measurement": "repeat-at-selected-prime",
+            "modularDegree": 32,
+            "modularImage": {
+              "nanos": 1662,
+              "smallAllocs": 78
+            },
+            "prime": 29,
+            "rootExtraction": false,
+            "rowReduction": {
+              "nanos": 1584268,
+              "smallAllocs": 152147
+            },
+            "splittingNanos": 1639231
+          },
+          "multiplicities": [
+            1
+          ],
+          "phases": {
+            "assembly": {
+              "nanos": 8132,
+              "smallAllocs": 332
+            },
+            "henselLift": {
+              "nanos": 1617107,
+              "smallAllocs": 57192
+            },
+            "normalization": {
+              "nanos": 33480,
+              "smallAllocs": 1647
+            },
+            "primeWalk": {
+              "nanos": 6619204,
+              "smallAllocs": 569263
+            },
+            "quadratic": {
+              "nanos": 771,
+              "smallAllocs": 17
+            },
+            "recombination": {
+              "nanos": 61190183,
+              "smallAllocs": 2749638
+            },
+            "total": {
+              "nanos": 69506573,
+              "smallAllocs": 3379032
+            },
+            "validation": {
+              "nanos": 6359,
+              "smallAllocs": 201
+            }
+          },
+          "primeWalk": {
+            "candidates": [
+              {
+                "factorDegrees": [
+                  2,
+                  2,
+                  2,
+                  2,
+                  2,
+                  2,
+                  2,
+                  2,
+                  2,
+                  2,
+                  2,
+                  2,
+                  2,
+                  2,
+                  2,
+                  2
+                ],
+                "forcedSubsetCost": 32768,
+                "henselPrecision": 19,
+                "modularFactorCount": 16,
+                "prime": 29,
+                "reachableProperDegrees": 15,
+                "selected": true
+              },
+              {
+                "factorDegrees": [
+                  2,
+                  2,
+                  2,
+                  2,
+                  2,
+                  2,
+                  2,
+                  2,
+                  2,
+                  2,
+                  2,
+                  2,
+                  2,
+                  2,
+                  2,
+                  2
+                ],
+                "forcedSubsetCost": 32768,
+                "henselPrecision": 21,
+                "modularFactorCount": 16,
+                "prime": 19,
+                "reachableProperDegrees": 15,
+                "selected": false
+              }
+            ],
+            "coeffBound": 221306743312056565676926650,
+            "coeffBoundBits": 88,
+            "goodPrimeFound": true,
+            "retainedGoodPrimes": 2,
+            "selectedPrime": 29
+          },
+          "recombination": {
+            "budget": 262144,
+            "completedLevels": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5,
+              6,
+              7,
+              8,
+              9,
+              10,
+              11,
+              12,
+              13,
+              14
+            ],
+            "decline": null,
+            "stages": {
+              "cheapFilterRejections": 32639,
+              "degreeSurvivors": 32768,
+              "exactDivisionsAttempted": 1,
+              "nodes": 32768,
+              "productsMaterialized": 129,
+              "recordable": 129,
+              "trailingSurvivors": 129
+            },
+            "successfulDivisors": 1
+          },
+          "reconstructs": true
+        },
+        "runs": 5,
+        "status": "ok",
+        "total_nanos_max": 69885194,
+        "total_nanos_median": 69506573,
+        "total_nanos_min": 69343060
+      },
+      "representative": true,
+      "sampling_profile_captured": true,
+      "validation": {
+        "applicable": true,
+        "factors_agree": true,
+        "levels_agree": true,
+        "mirror_completed_levels": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14
+        ],
+        "mirror_factor_degrees": [
+          32
+        ],
+        "mirror_nodes": 32768,
+        "mirror_prime": 29,
+        "nodes_agree": true,
+        "prime_agrees": true,
+        "production_candidates_tried": 32768,
+        "production_completed_levels": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14
+        ],
+        "production_factor_degrees": [
+          32
+        ],
+        "production_prime": 29
+      }
+    },
+    {
+      "degree": 32,
+      "end_to_end": {
+        "max_nanos": 63220963,
+        "median_nanos": 63047445,
+        "min_nanos": 62281891,
+        "runs": 5,
+        "status": "ok"
+      },
+      "expected_factor_degrees": [
+        32
+      ],
+      "family": "swinnerton-dyer",
+      "instrumentation_ratio": 1.0270945634672428,
+      "name": "sd5_shift1",
+      "phase_profile": {
+        "profile": {
+          "degree": 32,
+          "factorDegrees": [
+            32
+          ],
+          "hensel": {
+            "liftedFactorCount": 16,
+            "liftedFactorDegrees": [
+              2,
+              2,
+              2,
+              2,
+              2,
+              2,
+              2,
+              2,
+              2,
+              2,
+              2,
+              2,
+              2,
+              2,
+              2,
+              2
+            ],
+            "liftedMaxCoeffBits": 93,
+            "modulusBits": 93,
+            "precision": 19,
+            "prime": 29,
+            "treeInternalLifts": 15,
+            "treeLeaves": 16,
+            "treeShape": "count-balanced binary product tree with a guarded dominant-degree split"
+          },
+          "method": "classical",
+          "modular": {
+            "berlekampFactorTotal": {
+              "nanos": 3064033,
+              "smallAllocs": 258979
+            },
+            "berlekampMatrix": {
+              "nanos": 2003,
+              "smallAllocs": 108
+            },
+            "distinctDegree": "not-applicable",
+            "goodPrimeTest": {
+              "nanos": 33159,
+              "smallAllocs": 2696
+            },
+            "kernelDimension": 16,
+            "measurement": "repeat-at-selected-prime",
+            "modularDegree": 32,
+            "modularImage": {
+              "nanos": 2474,
+              "smallAllocs": 84
+            },
+            "prime": 29,
+            "rootExtraction": false,
+            "rowReduction": {
+              "nanos": 2251639,
+              "smallAllocs": 211116
+            },
+            "splittingNanos": 810391
+          },
+          "multiplicities": [
+            1
+          ],
+          "phases": {
+            "assembly": {
+              "nanos": 11036,
+              "smallAllocs": 382
+            },
+            "henselLift": {
+              "nanos": 1640543,
+              "smallAllocs": 58655
+            },
+            "normalization": {
+              "nanos": 49954,
+              "smallAllocs": 2827
+            },
+            "primeWalk": {
+              "nanos": 7011416,
+              "smallAllocs": 588320
+            },
+            "quadratic": {
+              "nanos": 540,
+              "smallAllocs": 17
+            },
+            "recombination": {
+              "nanos": 56004083,
+              "smallAllocs": 2560916
+            },
+            "total": {
+              "nanos": 64755688,
+              "smallAllocs": 3212107
+            },
+            "validation": {
+              "nanos": 8081,
+              "smallAllocs": 229
+            }
+          },
+          "primeWalk": {
+            "candidates": [
+              {
+                "factorDegrees": [
+                  2,
+                  2,
+                  2,
+                  2,
+                  2,
+                  2,
+                  2,
+                  2,
+                  2,
+                  2,
+                  2,
+                  2,
+                  2,
+                  2,
+                  2,
+                  2
+                ],
+                "forcedSubsetCost": 32768,
+                "henselPrecision": 19,
+                "modularFactorCount": 16,
+                "prime": 29,
+                "reachableProperDegrees": 15,
+                "selected": true
+              },
+              {
+                "factorDegrees": [
+                  2,
+                  2,
+                  2,
+                  2,
+                  2,
+                  2,
+                  2,
+                  2,
+                  2,
+                  2,
+                  2,
+                  2,
+                  2,
+                  2,
+                  2,
+                  2
+                ],
+                "forcedSubsetCost": 32768,
+                "henselPrecision": 21,
+                "modularFactorCount": 16,
+                "prime": 19,
+                "reachableProperDegrees": 15,
+                "selected": false
+              }
+            ],
+            "coeffBound": 343800744604764214921668900,
+            "coeffBoundBits": 89,
+            "goodPrimeFound": true,
+            "retainedGoodPrimes": 2,
+            "selectedPrime": 29
+          },
+          "recombination": {
+            "budget": 262144,
+            "completedLevels": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5,
+              6,
+              7,
+              8,
+              9,
+              10,
+              11,
+              12,
+              13,
+              14
+            ],
+            "decline": null,
+            "stages": {
+              "cheapFilterRejections": 32767,
+              "degreeSurvivors": 32768,
+              "exactDivisionsAttempted": 1,
+              "nodes": 32768,
+              "productsMaterialized": 1,
+              "recordable": 1,
+              "trailingSurvivors": 1
+            },
+            "successfulDivisors": 1
+          },
+          "reconstructs": true
+        },
+        "runs": 5,
+        "status": "ok",
+        "total_nanos_max": 65075863,
+        "total_nanos_median": 64755688,
+        "total_nanos_min": 64522302
+      },
+      "representative": true,
+      "sampling_profile_captured": false,
+      "validation": {
+        "applicable": true,
+        "factors_agree": true,
+        "levels_agree": true,
+        "mirror_completed_levels": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14
+        ],
+        "mirror_factor_degrees": [
+          32
+        ],
+        "mirror_nodes": 32768,
+        "mirror_prime": 29,
+        "nodes_agree": true,
+        "prime_agrees": true,
+        "production_candidates_tried": 32768,
+        "production_completed_levels": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14
+        ],
+        "production_factor_degrees": [
+          32
+        ],
+        "production_prime": 29
+      }
+    },
+    {
+      "degree": 32,
+      "end_to_end": {
+        "max_nanos": 66235372,
+        "median_nanos": 66062816,
+        "min_nanos": 65907345,
+        "runs": 5,
+        "status": "ok"
+      },
+      "expected_factor_degrees": [
+        32
+      ],
+      "family": "swinnerton-dyer",
+      "instrumentation_ratio": 1.0299965717477135,
+      "name": "sd5_shift2",
+      "phase_profile": {
+        "profile": {
+          "degree": 32,
+          "factorDegrees": [
+            32
+          ],
+          "hensel": {
+            "liftedFactorCount": 16,
+            "liftedFactorDegrees": [
+              2,
+              2,
+              2,
+              2,
+              2,
+              2,
+              2,
+              2,
+              2,
+              2,
+              2,
+              2,
+              2,
+              2,
+              2,
+              2
+            ],
+            "liftedMaxCoeffBits": 93,
+            "modulusBits": 93,
+            "precision": 19,
+            "prime": 29,
+            "treeInternalLifts": 15,
+            "treeLeaves": 16,
+            "treeShape": "count-balanced binary product tree with a guarded dominant-degree split"
+          },
+          "method": "classical",
+          "modular": {
+            "berlekampFactorTotal": {
+              "nanos": 4652588,
+              "smallAllocs": 381697
+            },
+            "berlekampMatrix": {
+              "nanos": 1783,
+              "smallAllocs": 108
+            },
+            "distinctDegree": "not-applicable",
+            "goodPrimeTest": {
+              "nanos": 33570,
+              "smallAllocs": 2673
+            },
+            "kernelDimension": 16,
+            "measurement": "repeat-at-selected-prime",
+            "modularDegree": 32,
+            "modularImage": {
+              "nanos": 2483,
+              "smallAllocs": 85
+            },
+            "prime": 29,
+            "rootExtraction": false,
+            "rowReduction": {
+              "nanos": 2310846,
+              "smallAllocs": 211421
+            },
+            "splittingNanos": 2339959
+          },
+          "multiplicities": [
+            1
+          ],
+          "phases": {
+            "assembly": {
+              "nanos": 11277,
+              "smallAllocs": 391
+            },
+            "henselLift": {
+              "nanos": 1647623,
+              "smallAllocs": 58442
+            },
+            "normalization": {
+              "nanos": 52077,
+              "smallAllocs": 2834
+            },
+            "primeWalk": {
+              "nanos": 8686359,
+              "smallAllocs": 715621
+            },
+            "quadratic": {
+              "nanos": 581,
+              "smallAllocs": 17
+            },
+            "recombination": {
+              "nanos": 57607891,
+              "smallAllocs": 2594103
+            },
+            "total": {
+              "nanos": 68044474,
+              "smallAllocs": 3372415
+            },
+            "validation": {
+              "nanos": 8403,
+              "smallAllocs": 234
+            }
+          },
+          "primeWalk": {
+            "candidates": [
+              {
+                "factorDegrees": [
+                  2,
+                  2,
+                  2,
+                  2,
+                  2,
+                  2,
+                  2,
+                  2,
+                  2,
+                  2,
+                  2,
+                  2,
+                  2,
+                  2,
+                  2,
+                  2
+                ],
+                "forcedSubsetCost": 32768,
+                "henselPrecision": 19,
+                "modularFactorCount": 16,
+                "prime": 29,
+                "reachableProperDegrees": 15,
+                "selected": true
+              },
+              {
+                "factorDegrees": [
+                  2,
+                  2,
+                  2,
+                  2,
+                  2,
+                  2,
+                  2,
+                  2,
+                  2,
+                  2,
+                  2,
+                  2,
+                  2,
+                  2,
+                  2,
+                  2
+                ],
+                "forcedSubsetCost": 32768,
+                "henselPrecision": 22,
+                "modularFactorCount": 16,
+                "prime": 19,
+                "reachableProperDegrees": 15,
+                "selected": false
+              }
+            ],
+            "coeffBound": 1319504980517760399369866460,
+            "coeffBoundBits": 91,
+            "goodPrimeFound": true,
+            "retainedGoodPrimes": 2,
+            "selectedPrime": 29
+          },
+          "recombination": {
+            "budget": 262144,
+            "completedLevels": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5,
+              6,
+              7,
+              8,
+              9,
+              10,
+              11,
+              12,
+              13,
+              14
+            ],
+            "decline": null,
+            "stages": {
+              "cheapFilterRejections": 32767,
+              "degreeSurvivors": 32768,
+              "exactDivisionsAttempted": 1,
+              "nodes": 32768,
+              "productsMaterialized": 1,
+              "recordable": 1,
+              "trailingSurvivors": 1
+            },
+            "successfulDivisors": 1
+          },
+          "reconstructs": true
+        },
+        "runs": 5,
+        "status": "ok",
+        "total_nanos_max": 68093607,
+        "total_nanos_median": 68044474,
+        "total_nanos_min": 67741034
+      },
+      "representative": true,
+      "sampling_profile_captured": false,
+      "validation": {
+        "applicable": true,
+        "factors_agree": true,
+        "levels_agree": true,
+        "mirror_completed_levels": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14
+        ],
+        "mirror_factor_degrees": [
+          32
+        ],
+        "mirror_nodes": 32768,
+        "mirror_prime": 29,
+        "nodes_agree": true,
+        "prime_agrees": true,
+        "production_candidates_tried": 32768,
+        "production_completed_levels": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14
+        ],
+        "production_factor_degrees": [
+          32
+        ],
+        "production_prime": 29
+      }
+    },
+    {
+      "degree": 32,
+      "end_to_end": {
+        "max_nanos": 17383503,
+        "median_nanos": 17358186,
+        "min_nanos": 17319318,
+        "runs": 5,
+        "status": "ok"
+      },
+      "expected_factor_degrees": [
+        16,
+        16
+      ],
+      "family": "sd-products",
+      "instrumentation_ratio": 1.0055115782259736,
+      "name": "sd4_x_sd4shift1",
+      "phase_profile": {
+        "profile": {
+          "degree": 32,
+          "factorDegrees": [
+            16,
+            16
+          ],
+          "hensel": {
+            "liftedFactorCount": 16,
+            "liftedFactorDegrees": [
+              2,
+              2,
+              2,
+              2,
+              2,
+              2,
+              2,
+              2,
+              2,
+              2,
+              2,
+              2,
+              2,
+              2,
+              2,
+              2
+            ],
+            "liftedMaxCoeffBits": 83,
+            "modulusBits": 83,
+            "precision": 17,
+            "prime": 29,
+            "treeInternalLifts": 15,
+            "treeLeaves": 16,
+            "treeShape": "count-balanced binary product tree with a guarded dominant-degree split"
+          },
+          "method": "classical",
+          "modular": {
+            "berlekampFactorTotal": {
+              "nanos": 3873033,
+              "smallAllocs": 320808
+            },
+            "berlekampMatrix": {
+              "nanos": 1582,
+              "smallAllocs": 108
+            },
+            "distinctDegree": "not-applicable",
+            "goodPrimeTest": {
+              "nanos": 33579,
+              "smallAllocs": 2770
+            },
+            "kernelDimension": 16,
+            "measurement": "repeat-at-selected-prime",
+            "modularDegree": 32,
+            "modularImage": {
+              "nanos": 2304,
+              "smallAllocs": 82
+            },
+            "prime": 29,
+            "rootExtraction": false,
+            "rowReduction": {
+              "nanos": 2273290,
+              "smallAllocs": 210624
+            },
+            "splittingNanos": 1598161
+          },
+          "multiplicities": [
+            1,
+            1
+          ],
+          "phases": {
+            "assembly": {
+              "nanos": 22133,
+              "smallAllocs": 901
+            },
+            "henselLift": {
+              "nanos": 1573232,
+              "smallAllocs": 55974
+            },
+            "normalization": {
+              "nanos": 50314,
+              "smallAllocs": 2814
+            },
+            "primeWalk": {
+              "nanos": 6737990,
+              "smallAllocs": 562027
+            },
+            "quadratic": {
+              "nanos": 591,
+              "smallAllocs": 17
+            },
+            "recombination": {
+              "nanos": 9023679,
+              "smallAllocs": 528057
+            },
+            "total": {
+              "nanos": 17453857,
+              "smallAllocs": 1151258
+            },
+            "validation": {
+              "nanos": 20741,
+              "smallAllocs": 745
+            }
+          },
+          "primeWalk": {
+            "candidates": [
+              {
+                "factorDegrees": [
+                  2,
+                  2,
+                  2,
+                  2,
+                  2,
+                  2,
+                  2,
+                  2,
+                  2,
+                  2,
+                  2,
+                  2,
+                  2,
+                  2,
+                  2,
+                  2
+                ],
+                "forcedSubsetCost": 32768,
+                "henselPrecision": 17,
+                "modularFactorCount": 16,
+                "prime": 29,
+                "reachableProperDegrees": 15,
+                "selected": true
+              },
+              {
+                "factorDegrees": [
+                  2,
+                  2,
+                  2,
+                  2,
+                  2,
+                  2,
+                  2,
+                  2,
+                  2,
+                  2,
+                  2,
+                  2,
+                  2,
+                  2,
+                  2,
+                  2
+                ],
+                "forcedSubsetCost": 32768,
+                "henselPrecision": 22,
+                "modularFactorCount": 16,
+                "prime": 13,
+                "reachableProperDegrees": 15,
+                "selected": false
+              }
+            ],
+            "coeffBound": 489391641089022941499420,
+            "coeffBoundBits": 79,
+            "goodPrimeFound": true,
+            "retainedGoodPrimes": 2,
+            "selectedPrime": 29
+          },
+          "recombination": {
+            "budget": 262144,
+            "completedLevels": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5,
+              6,
+              0,
+              1,
+              2,
+              3,
+              4,
+              5,
+              6
+            ],
+            "decline": null,
+            "stages": {
+              "cheapFilterRejections": 10530,
+              "degreeSurvivors": 10540,
+              "exactDivisionsAttempted": 2,
+              "nodes": 10540,
+              "productsMaterialized": 10,
+              "recordable": 10,
+              "trailingSurvivors": 10
+            },
+            "successfulDivisors": 2
+          },
+          "reconstructs": true
+        },
+        "runs": 5,
+        "status": "ok",
+        "total_nanos_max": 17559363,
+        "total_nanos_median": 17453857,
+        "total_nanos_min": 17418024
+      },
+      "representative": true,
+      "sampling_profile_captured": false,
+      "validation": {
+        "applicable": true,
+        "factors_agree": true,
+        "levels_agree": true,
+        "mirror_completed_levels": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6
+        ],
+        "mirror_factor_degrees": [
+          16,
+          16
+        ],
+        "mirror_nodes": 10540,
+        "mirror_prime": 29,
+        "nodes_agree": true,
+        "prime_agrees": true,
+        "production_candidates_tried": 10540,
+        "production_completed_levels": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6
+        ],
+        "production_factor_degrees": [
+          16,
+          16
+        ],
+        "production_prime": 29
+      }
+    },
+    {
+      "degree": 42,
+      "end_to_end": {
+        "max_nanos": 141551578,
+        "median_nanos": 140031644,
+        "min_nanos": 137660108,
+        "runs": 5,
+        "status": "ok"
+      },
+      "expected_factor_degrees": [
+        10,
+        32
+      ],
+      "family": "sd-products",
+      "instrumentation_ratio": 1.0265431504896136,
+      "name": "sd5_x_phi11",
+      "phase_profile": {
+        "profile": {
+          "degree": 42,
+          "factorDegrees": [
+            10,
+            32
+          ],
+          "hensel": {
+            "liftedFactorCount": 17,
+            "liftedFactorDegrees": [
+              2,
+              2,
+              2,
+              2,
+              2,
+              2,
+              2,
+              2,
+              2,
+              2,
+              2,
+              2,
+              2,
+              2,
+              2,
+              10,
+              2
+            ],
+            "liftedMaxCoeffBits": 102,
+            "modulusBits": 103,
+            "precision": 21,
+            "prime": 29,
+            "treeInternalLifts": 16,
+            "treeLeaves": 17,
+            "treeShape": "count-balanced binary product tree with a guarded dominant-degree split"
+          },
+          "method": "classical",
+          "modular": {
+            "berlekampFactorTotal": {
+              "nanos": 7688058,
+              "smallAllocs": 625572
+            },
+            "berlekampMatrix": {
+              "nanos": 2423,
+              "smallAllocs": 138
+            },
+            "distinctDegree": "not-applicable",
+            "goodPrimeTest": {
+              "nanos": 56875,
+              "smallAllocs": 4248
+            },
+            "kernelDimension": 17,
+            "measurement": "repeat-at-selected-prime",
+            "modularDegree": 42,
+            "modularImage": {
+              "nanos": 3314,
+              "smallAllocs": 108
+            },
+            "prime": 29,
+            "rootExtraction": false,
+            "rowReduction": {
+              "nanos": 4629865,
+              "smallAllocs": 428628
+            },
+            "splittingNanos": 3055770
+          },
+          "multiplicities": [
+            1,
+            1
+          ],
+          "phases": {
+            "assembly": {
+              "nanos": 29794,
+              "smallAllocs": 1170
+            },
+            "henselLift": {
+              "nanos": 2505915,
+              "smallAllocs": 80497
+            },
+            "normalization": {
+              "nanos": 78497,
+              "smallAllocs": 4551
+            },
+            "primeWalk": {
+              "nanos": 16416720,
+              "smallAllocs": 1372794
+            },
+            "quadratic": {
+              "nanos": 661,
+              "smallAllocs": 17
+            },
+            "recombination": {
+              "nanos": 124651942,
+              "smallAllocs": 6175336
+            },
+            "total": {
+              "nanos": 143748525,
+              "smallAllocs": 7636305
+            },
+            "validation": {
+              "nanos": 31557,
+              "smallAllocs": 1070
+            }
+          },
+          "primeWalk": {
+            "candidates": [
+              {
+                "factorDegrees": [
+                  2,
+                  2,
+                  2,
+                  2,
+                  2,
+                  2,
+                  2,
+                  2,
+                  2,
+                  2,
+                  2,
+                  2,
+                  2,
+                  2,
+                  2,
+                  10,
+                  2
+                ],
+                "forcedSubsetCost": 65536,
+                "henselPrecision": 21,
+                "modularFactorCount": 17,
+                "prime": 29,
+                "reachableProperDegrees": 20,
+                "selected": true
+              },
+              {
+                "factorDegrees": [
+                  2,
+                  10,
+                  2,
+                  2,
+                  2,
+                  2,
+                  2,
+                  2,
+                  2,
+                  2,
+                  2,
+                  2,
+                  2,
+                  2,
+                  2,
+                  2,
+                  2
+                ],
+                "forcedSubsetCost": 65536,
+                "henselPrecision": 24,
+                "modularFactorCount": 17,
+                "prime": 19,
+                "reachableProperDegrees": 20,
+                "selected": false
+              }
+            ],
+            "coeffBound": 210602981274948990483361217040,
+            "coeffBoundBits": 98,
+            "goodPrimeFound": true,
+            "retainedGoodPrimes": 2,
+            "selectedPrime": 29
+          },
+          "recombination": {
+            "budget": 262144,
+            "completedLevels": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5,
+              6,
+              7,
+              8,
+              9,
+              10,
+              11,
+              12,
+              13,
+              14
+            ],
+            "decline": null,
+            "stages": {
+              "cheapFilterRejections": 65264,
+              "degreeSurvivors": 65522,
+              "exactDivisionsAttempted": 2,
+              "nodes": 65522,
+              "productsMaterialized": 258,
+              "recordable": 258,
+              "trailingSurvivors": 258
+            },
+            "successfulDivisors": 2
+          },
+          "reconstructs": true
+        },
+        "runs": 5,
+        "status": "ok",
+        "total_nanos_max": 144988072,
+        "total_nanos_median": 143748525,
+        "total_nanos_min": 143486326
+      },
+      "representative": true,
+      "sampling_profile_captured": true,
+      "validation": {
+        "applicable": true,
+        "factors_agree": true,
+        "levels_agree": true,
+        "mirror_completed_levels": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14
+        ],
+        "mirror_factor_degrees": [
+          10,
+          32
+        ],
+        "mirror_nodes": 65522,
+        "mirror_prime": 29,
+        "nodes_agree": true,
+        "prime_agrees": true,
+        "production_candidates_tried": 65522,
+        "production_completed_levels": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14
+        ],
+        "production_factor_degrees": [
+          10,
+          32
+        ],
+        "production_prime": 29
+      }
+    },
+    {
+      "degree": 48,
+      "end_to_end": {
+        "max_nanos": 10402643,
+        "median_nanos": 10351538,
+        "min_nanos": 10342774,
+        "runs": 5,
+        "status": "ok"
+      },
+      "expected_factor_degrees": [
+        1,
+        1,
+        2,
+        2,
+        2,
+        4,
+        4,
+        8,
+        8,
+        16
+      ],
+      "family": "cyclotomic-products",
+      "instrumentation_ratio": 0.9948307198408585,
+      "name": "xpow48_minus1",
+      "phase_profile": {
+        "profile": {
+          "degree": 48,
+          "factorDegrees": [
+            2,
+            2,
+            2,
+            8,
+            8,
+            16,
+            1,
+            1,
+            4,
+            4
+          ],
+          "hensel": {
+            "liftedFactorCount": 19,
+            "liftedFactorDegrees": [
+              2,
+              2,
+              2,
+              2,
+              1,
+              1,
+              4,
+              4,
+              2,
+              2,
+              4,
+              2,
+              2,
+              4,
+              4,
+              4,
+              2,
+              2,
+              2
+            ],
+            "liftedMaxCoeffBits": 49,
+            "modulusBits": 49,
+            "precision": 14,
+            "prime": 11,
+            "treeInternalLifts": 18,
+            "treeLeaves": 19,
+            "treeShape": "count-balanced binary product tree with a guarded dominant-degree split"
+          },
+          "method": "classical",
+          "modular": {
+            "berlekampFactorTotal": {
+              "nanos": 1915540,
+              "smallAllocs": 163103
+            },
+            "berlekampMatrix": {
+              "nanos": 2344,
+              "smallAllocs": 156
+            },
+            "distinctDegree": "not-applicable",
+            "goodPrimeTest": {
+              "nanos": 5899,
+              "smallAllocs": 510
+            },
+            "kernelDimension": 19,
+            "measurement": "repeat-at-selected-prime",
+            "modularDegree": 48,
+            "modularImage": {
+              "nanos": 1252,
+              "smallAllocs": 104
+            },
+            "prime": 11,
+            "rootExtraction": false,
+            "rowReduction": {
+              "nanos": 737733,
+              "smallAllocs": 67517
+            },
+            "splittingNanos": 1175463
+          },
+          "multiplicities": [
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1
+          ],
+          "phases": {
+            "assembly": {
+              "nanos": 23996,
+              "smallAllocs": 2409
+            },
+            "henselLift": {
+              "nanos": 1090938,
+              "smallAllocs": 57566
+            },
+            "normalization": {
+              "nanos": 14632,
+              "smallAllocs": 563
+            },
+            "primeWalk": {
+              "nanos": 3935845,
+              "smallAllocs": 339781
+            },
+            "quadratic": {
+              "nanos": 521,
+              "smallAllocs": 17
+            },
+            "recombination": {
+              "nanos": 5199699,
+              "smallAllocs": 270316
+            },
+            "total": {
+              "nanos": 10298028,
+              "smallAllocs": 673041
+            },
+            "validation": {
+              "nanos": 18597,
+              "smallAllocs": 1688
+            }
+          },
+          "primeWalk": {
+            "candidates": [
+              {
+                "factorDegrees": [
+                  2,
+                  2,
+                  2,
+                  2,
+                  1,
+                  1,
+                  4,
+                  4,
+                  2,
+                  2,
+                  4,
+                  2,
+                  2,
+                  4,
+                  4,
+                  4,
+                  2,
+                  2,
+                  2
+                ],
+                "forcedSubsetCost": 262144,
+                "henselPrecision": 14,
+                "modularFactorCount": 19,
+                "prime": 11,
+                "reachableProperDegrees": 47,
+                "selected": true
+              },
+              {
+                "factorDegrees": [
+                  4,
+                  4,
+                  2,
+                  2,
+                  4,
+                  2,
+                  1,
+                  1,
+                  4,
+                  2,
+                  2,
+                  1,
+                  1,
+                  4,
+                  2,
+                  2,
+                  2,
+                  2,
+                  4,
+                  2
+                ],
+                "forcedSubsetCost": 524288,
+                "henselPrecision": 21,
+                "modularFactorCount": 20,
+                "prime": 5,
+                "reachableProperDegrees": 47,
+                "selected": false
+              }
+            ],
+            "coeffBound": 64495207366200,
+            "coeffBoundBits": 46,
+            "goodPrimeFound": true,
+            "retainedGoodPrimes": 2,
+            "selectedPrime": 11
+          },
+          "recombination": {
+            "budget": 262144,
+            "completedLevels": [
+              0,
+              0,
+              0,
+              1,
+              2,
+              0,
+              0,
+              1,
+              2
+            ],
+            "decline": null,
+            "stages": {
+              "cheapFilterRejections": 0,
+              "degreeSurvivors": 268,
+              "exactDivisionsAttempted": 10,
+              "nodes": 268,
+              "productsMaterialized": 268,
+              "recordable": 268,
+              "trailingSurvivors": 268
+            },
+            "successfulDivisors": 10
+          },
+          "reconstructs": true
+        },
+        "runs": 5,
+        "status": "ok",
+        "total_nanos_max": 10323556,
+        "total_nanos_median": 10298028,
+        "total_nanos_min": 10285890
+      },
+      "representative": true,
+      "sampling_profile_captured": false,
+      "validation": {
+        "applicable": true,
+        "factors_agree": true,
+        "levels_agree": true,
+        "mirror_completed_levels": [
+          0,
+          0,
+          0,
+          1,
+          2,
+          0,
+          0,
+          1,
+          2
+        ],
+        "mirror_factor_degrees": [
+          1,
+          1,
+          2,
+          2,
+          2,
+          4,
+          4,
+          8,
+          8,
+          16
+        ],
+        "mirror_nodes": 268,
+        "mirror_prime": 11,
+        "nodes_agree": true,
+        "prime_agrees": true,
+        "production_candidates_tried": 268,
+        "production_completed_levels": [
+          0,
+          0,
+          0,
+          1,
+          2,
+          0,
+          0,
+          1,
+          2
+        ],
+        "production_factor_degrees": [
+          1,
+          1,
+          2,
+          2,
+          2,
+          4,
+          4,
+          8,
+          8,
+          16
+        ],
+        "production_prime": 11
+      }
+    },
+    {
+      "degree": 105,
+      "end_to_end": {
+        "max_nanos": 45480781,
+        "median_nanos": 44955122,
+        "min_nanos": 44837137,
+        "runs": 5,
+        "status": "ok"
+      },
+      "expected_factor_degrees": [
+        1,
+        2,
+        4,
+        6,
+        8,
+        12,
+        24,
+        48
+      ],
+      "family": "cyclotomic-products",
+      "instrumentation_ratio": 0.9892593773852955,
+      "name": "xpow105_minus1",
+      "phase_profile": {
+        "profile": {
+          "degree": 105,
+          "factorDegrees": [
+            4,
+            24,
+            2,
+            12,
+            48,
+            8,
+            6,
+            1
+          ],
+          "hensel": {
+            "liftedFactorCount": 14,
+            "liftedFactorDegrees": [
+              1,
+              6,
+              4,
+              12,
+              12,
+              4,
+              12,
+              12,
+              6,
+              2,
+              6,
+              12,
+              12,
+              4
+            ],
+            "liftedMaxCoeffBits": 107,
+            "modulusBits": 107,
+            "precision": 26,
+            "prime": 17,
+            "treeInternalLifts": 13,
+            "treeLeaves": 14,
+            "treeShape": "count-balanced binary product tree with a guarded dominant-degree split"
+          },
+          "method": "classical",
+          "modular": {
+            "berlekampFactorTotal": {
+              "nanos": 8778975,
+              "smallAllocs": 750003
+            },
+            "berlekampMatrix": {
+              "nanos": 4888,
+              "smallAllocs": 327
+            },
+            "distinctDegree": "not-applicable",
+            "goodPrimeTest": {
+              "nanos": 12068,
+              "smallAllocs": 1080
+            },
+            "kernelDimension": 14,
+            "measurement": "repeat-at-selected-prime",
+            "modularDegree": 105,
+            "modularImage": {
+              "nanos": 2313,
+              "smallAllocs": 218
+            },
+            "prime": 17,
+            "rootExtraction": false,
+            "rowReduction": {
+              "nanos": 4918312,
+              "smallAllocs": 462407
+            },
+            "splittingNanos": 3855775
+          },
+          "multiplicities": [
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1
+          ],
+          "phases": {
+            "assembly": {
+              "nanos": 58637,
+              "smallAllocs": 6483
+            },
+            "henselLift": {
+              "nanos": 10254474,
+              "smallAllocs": 304935
+            },
+            "normalization": {
+              "nanos": 27711,
+              "smallAllocs": 1190
+            },
+            "primeWalk": {
+              "nanos": 29107315,
+              "smallAllocs": 2624521
+            },
+            "quadratic": {
+              "nanos": 531,
+              "smallAllocs": 17
+            },
+            "recombination": {
+              "nanos": 4938692,
+              "smallAllocs": 266987
+            },
+            "total": {
+              "nanos": 44472276,
+              "smallAllocs": 3210546
+            },
+            "validation": {
+              "nanos": 52588,
+              "smallAllocs": 5196
+            }
+          },
+          "primeWalk": {
+            "candidates": [
+              {
+                "factorDegrees": [
+                  1,
+                  6,
+                  4,
+                  12,
+                  12,
+                  4,
+                  12,
+                  12,
+                  6,
+                  2,
+                  6,
+                  12,
+                  12,
+                  4
+                ],
+                "forcedSubsetCost": 8192,
+                "henselPrecision": 26,
+                "modularFactorCount": 14,
+                "prime": 17,
+                "reachableProperDegrees": 104,
+                "selected": true
+              },
+              {
+                "factorDegrees": [
+                  1,
+                  2,
+                  3,
+                  6,
+                  3,
+                  6,
+                  2,
+                  1,
+                  6,
+                  3,
+                  6,
+                  3,
+                  3,
+                  6,
+                  1,
+                  2,
+                  3,
+                  6,
+                  2,
+                  1,
+                  6,
+                  3,
+                  6,
+                  3,
+                  6,
+                  3,
+                  6,
+                  3,
+                  2,
+                  1
+                ],
+                "forcedSubsetCost": 536870912,
+                "henselPrecision": 30,
+                "modularFactorCount": 30,
+                "prime": 11,
+                "reachableProperDegrees": 104,
+                "selected": false
+              }
+            ],
+            "coeffBound": 6272525058612251449529907677520,
+            "coeffBoundBits": 103,
+            "goodPrimeFound": true,
+            "retainedGoodPrimes": 2,
+            "selectedPrime": 17
+          },
+          "recombination": {
+            "budget": 262144,
+            "completedLevels": [
+              0,
+              0,
+              1,
+              2,
+              0,
+              0
+            ],
+            "decline": null,
+            "stages": {
+              "cheapFilterRejections": 0,
+              "degreeSurvivors": 60,
+              "exactDivisionsAttempted": 8,
+              "nodes": 60,
+              "productsMaterialized": 60,
+              "recordable": 60,
+              "trailingSurvivors": 60
+            },
+            "successfulDivisors": 8
+          },
+          "reconstructs": true
+        },
+        "runs": 5,
+        "status": "ok",
+        "total_nanos_max": 44641827,
+        "total_nanos_median": 44472276,
+        "total_nanos_min": 44373539
+      },
+      "representative": true,
+      "sampling_profile_captured": false,
+      "validation": {
+        "applicable": true,
+        "factors_agree": true,
+        "levels_agree": true,
+        "mirror_completed_levels": [
+          0,
+          0,
+          1,
+          2,
+          0,
+          0
+        ],
+        "mirror_factor_degrees": [
+          1,
+          2,
+          4,
+          6,
+          8,
+          12,
+          24,
+          48
+        ],
+        "mirror_nodes": 60,
+        "mirror_prime": 17,
+        "nodes_agree": true,
+        "prime_agrees": true,
+        "production_candidates_tried": 60,
+        "production_completed_levels": [
+          0,
+          0,
+          1,
+          2,
+          0,
+          0
+        ],
+        "production_factor_degrees": [
+          1,
+          2,
+          4,
+          6,
+          8,
+          12,
+          24,
+          48
+        ],
+        "production_prime": 17
+      }
+    },
+    {
+      "degree": 120,
+      "end_to_end": {
+        "max_nanos": 148003544,
+        "median_nanos": 147308963,
+        "min_nanos": 146927359,
+        "runs": 5,
+        "status": "ok"
+      },
+      "expected_factor_degrees": [
+        1,
+        1,
+        2,
+        2,
+        2,
+        4,
+        4,
+        4,
+        4,
+        8,
+        8,
+        8,
+        8,
+        16,
+        16,
+        32
+      ],
+      "family": "cyclotomic-products",
+      "instrumentation_ratio": 1.0016719009826984,
+      "name": "xpow120_minus1",
+      "phase_profile": {
+        "profile": {
+          "degree": 120,
+          "factorDegrees": [
+            16,
+            4,
+            32,
+            8,
+            8,
+            2,
+            8,
+            2,
+            4,
+            16,
+            4,
+            1,
+            4,
+            1,
+            2,
+            8
+          ],
+          "hensel": {
+            "liftedFactorCount": 39,
+            "liftedFactorDegrees": [
+              4,
+              4,
+              2,
+              1,
+              4,
+              1,
+              4,
+              4,
+              4,
+              2,
+              1,
+              4,
+              1,
+              4,
+              2,
+              4,
+              4,
+              2,
+              4,
+              4,
+              4,
+              4,
+              2,
+              1,
+              4,
+              1,
+              4,
+              2,
+              4,
+              4,
+              2,
+              4,
+              4,
+              2,
+              4,
+              4,
+              2,
+              4,
+              4
+            ],
+            "liftedMaxCoeffBits": 121,
+            "modulusBits": 121,
+            "precision": 43,
+            "prime": 7,
+            "treeInternalLifts": 38,
+            "treeLeaves": 39,
+            "treeShape": "count-balanced binary product tree with a guarded dominant-degree split"
+          },
+          "method": "classical",
+          "modular": {
+            "berlekampFactorTotal": {
+              "nanos": 16473224,
+              "smallAllocs": 1312571
+            },
+            "berlekampMatrix": {
+              "nanos": 6159,
+              "smallAllocs": 372
+            },
+            "distinctDegree": "not-applicable",
+            "goodPrimeTest": {
+              "nanos": 13580,
+              "smallAllocs": 1230
+            },
+            "kernelDimension": 39,
+            "measurement": "repeat-at-selected-prime",
+            "modularDegree": 120,
+            "modularImage": {
+              "nanos": 2584,
+              "smallAllocs": 248
+            },
+            "prime": 7,
+            "rootExtraction": false,
+            "rowReduction": {
+              "nanos": 3783900,
+              "smallAllocs": 329059
+            },
+            "splittingNanos": 12683165
+          },
+          "multiplicities": [
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1
+          ],
+          "phases": {
+            "assembly": {
+              "nanos": 102171,
+              "smallAllocs": 11833
+            },
+            "henselLift": {
+              "nanos": 14281704,
+              "smallAllocs": 453833
+            },
+            "normalization": {
+              "nanos": 41772,
+              "smallAllocs": 1355
+            },
+            "primeWalk": {
+              "nanos": 18745383,
+              "smallAllocs": 1584783
+            },
+            "quadratic": {
+              "nanos": 671,
+              "smallAllocs": 17
+            },
+            "recombination": {
+              "nanos": 114271642,
+              "smallAllocs": 5264950
+            },
+            "total": {
+              "nanos": 147555249,
+              "smallAllocs": 7326133
+            },
+            "validation": {
+              "nanos": 79428,
+              "smallAllocs": 8230
+            }
+          },
+          "primeWalk": {
+            "candidates": [
+              {
+                "factorDegrees": [
+                  4,
+                  4,
+                  2,
+                  1,
+                  4,
+                  1,
+                  4,
+                  4,
+                  4,
+                  2,
+                  1,
+                  4,
+                  1,
+                  4,
+                  2,
+                  4,
+                  4,
+                  2,
+                  4,
+                  4,
+                  4,
+                  4,
+                  2,
+                  1,
+                  4,
+                  1,
+                  4,
+                  2,
+                  4,
+                  4,
+                  2,
+                  4,
+                  4,
+                  2,
+                  4,
+                  4,
+                  2,
+                  4,
+                  4
+                ],
+                "forcedSubsetCost": 274877906944,
+                "henselPrecision": 43,
+                "modularFactorCount": 39,
+                "prime": 7,
+                "reachableProperDegrees": 119,
+                "selected": true
+              }
+            ],
+            "coeffBound": 193229817680726645207786279042745312,
+            "coeffBoundBits": 118,
+            "goodPrimeFound": true,
+            "retainedGoodPrimes": 1,
+            "selectedPrime": 7
+          },
+          "recombination": {
+            "budget": 262144,
+            "completedLevels": [
+              0,
+              0,
+              1,
+              2,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              1,
+              2,
+              0,
+              1,
+              2,
+              3,
+              4,
+              5,
+              6,
+              0,
+              0,
+              1,
+              2
+            ],
+            "decline": null,
+            "stages": {
+              "cheapFilterRejections": 3538,
+              "degreeSurvivors": 5339,
+              "exactDivisionsAttempted": 16,
+              "nodes": 5339,
+              "productsMaterialized": 1801,
+              "recordable": 1801,
+              "trailingSurvivors": 1801
+            },
+            "successfulDivisors": 16
+          },
+          "reconstructs": true
+        },
+        "runs": 5,
+        "status": "ok",
+        "total_nanos_max": 147782016,
+        "total_nanos_median": 147555249,
+        "total_nanos_min": 146067854
+      },
+      "representative": true,
+      "sampling_profile_captured": true,
+      "validation": {
+        "applicable": true,
+        "factors_agree": true,
+        "levels_agree": true,
+        "mirror_completed_levels": [
+          0,
+          0,
+          1,
+          2,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          1,
+          2,
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          0,
+          0,
+          1,
+          2
+        ],
+        "mirror_factor_degrees": [
+          1,
+          1,
+          2,
+          2,
+          2,
+          4,
+          4,
+          4,
+          4,
+          8,
+          8,
+          8,
+          8,
+          16,
+          16,
+          32
+        ],
+        "mirror_nodes": 5339,
+        "mirror_prime": 7,
+        "nodes_agree": true,
+        "prime_agrees": true,
+        "production_candidates_tried": 5339,
+        "production_completed_levels": [
+          0,
+          0,
+          1,
+          2,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          1,
+          2,
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          0,
+          0,
+          1,
+          2
+        ],
+        "production_factor_degrees": [
+          1,
+          1,
+          2,
+          2,
+          2,
+          4,
+          4,
+          4,
+          4,
+          8,
+          8,
+          8,
+          8,
+          16,
+          16,
+          32
+        ],
+        "production_prime": 7
+      }
+    },
+    {
+      "degree": 178,
+      "end_to_end": {
+        "max_nanos": 34567400,
+        "median_nanos": 34406031,
+        "min_nanos": 34367104,
+        "runs": 5,
+        "status": "ok"
+      },
+      "expected_factor_degrees": [
+        178
+      ],
+      "family": "cyclotomic",
+      "instrumentation_ratio": 1.0029608471840301,
+      "name": "cyclo_phi179",
+      "phase_profile": {
+        "profile": {
+          "degree": 178,
+          "factorDegrees": [
+            178
+          ],
+          "hensel": {
+            "liftedFactorCount": 2,
+            "liftedFactorDegrees": [
+              89,
+              89
+            ],
+            "liftedMaxCoeffBits": 180,
+            "modulusBits": 180,
+            "precision": 113,
+            "prime": 3,
+            "treeInternalLifts": 1,
+            "treeLeaves": 2,
+            "treeShape": "count-balanced binary product tree with a guarded dominant-degree split"
+          },
+          "method": "classical",
+          "modular": {
+            "berlekampFactorTotal": {
+              "nanos": 6401121,
+              "smallAllocs": 339370
+            },
+            "berlekampMatrix": {
+              "nanos": 8433,
+              "smallAllocs": 546
+            },
+            "distinctDegree": "not-applicable",
+            "goodPrimeTest": {
+              "nanos": 33950,
+              "smallAllocs": 3356
+            },
+            "kernelDimension": 2,
+            "measurement": "repeat-at-selected-prime",
+            "modularDegree": 178,
+            "modularImage": {
+              "nanos": 3355,
+              "smallAllocs": 364
+            },
+            "prime": 3,
+            "rootExtraction": false,
+            "rowReduction": {
+              "nanos": 13495879,
+              "smallAllocs": 1226531
+            },
+            "splittingNanos": 0
+          },
+          "multiplicities": [
+            1
+          ],
+          "phases": {
+            "assembly": {
+              "nanos": 23586,
+              "smallAllocs": 1446
+            },
+            "henselLift": {
+              "nanos": 26825172,
+              "smallAllocs": 567324
+            },
+            "normalization": {
+              "nanos": 64956,
+              "smallAllocs": 3772
+            },
+            "primeWalk": {
+              "nanos": 6386699,
+              "smallAllocs": 344914
+            },
+            "quadratic": {
+              "nanos": 591,
+              "smallAllocs": 17
+            },
+            "recombination": {
+              "nanos": 1132729,
+              "smallAllocs": 46831
+            },
+            "total": {
+              "nanos": 34507902,
+              "smallAllocs": 966544
+            },
+            "validation": {
+              "nanos": 17806,
+              "smallAllocs": 901
+            }
+          },
+          "primeWalk": {
+            "candidates": [
+              {
+                "factorDegrees": [
+                  89,
+                  89
+                ],
+                "forcedSubsetCost": 2,
+                "henselPrecision": 113,
+                "modularFactorCount": 2,
+                "prime": 3,
+                "reachableProperDegrees": 1,
+                "selected": true
+              }
+            ],
+            "coeffBound": 320322439463041003620181335381340475329049688753516000,
+            "coeffBoundBits": 178,
+            "goodPrimeFound": true,
+            "retainedGoodPrimes": 1,
+            "selectedPrime": 3
+          },
+          "recombination": {
+            "budget": 262144,
+            "completedLevels": [
+              0
+            ],
+            "decline": null,
+            "stages": {
+              "cheapFilterRejections": 0,
+              "degreeSurvivors": 2,
+              "exactDivisionsAttempted": 1,
+              "nodes": 2,
+              "productsMaterialized": 2,
+              "recordable": 2,
+              "trailingSurvivors": 2
+            },
+            "successfulDivisors": 1
+          },
+          "reconstructs": true
+        },
+        "runs": 5,
+        "status": "ok",
+        "total_nanos_max": 34614500,
+        "total_nanos_median": 34507902,
+        "total_nanos_min": 34461373
+      },
+      "representative": true,
+      "sampling_profile_captured": true,
+      "validation": {
+        "applicable": true,
+        "factors_agree": true,
+        "levels_agree": true,
+        "mirror_completed_levels": [
+          0
+        ],
+        "mirror_factor_degrees": [
+          178
+        ],
+        "mirror_nodes": 2,
+        "mirror_prime": 3,
+        "nodes_agree": true,
+        "prime_agrees": true,
+        "production_candidates_tried": 2,
+        "production_completed_levels": [
+          0
+        ],
+        "production_factor_degrees": [
+          178
+        ],
+        "production_prime": 3
+      }
+    },
+    {
+      "degree": 80,
+      "end_to_end": {
+        "max_nanos": 45705895,
+        "median_nanos": 45580899,
+        "min_nanos": 45191723,
+        "runs": 5,
+        "status": "ok"
+      },
+      "expected_factor_degrees": [
+        32,
+        48
+      ],
+      "family": "cyclotomic-products",
+      "instrumentation_ratio": 1.0166085359571342,
+      "name": "cyclo_phi64_x_phi105",
+      "phase_profile": {
+        "profile": {
+          "degree": 80,
+          "factorDegrees": [
+            48,
+            32
+          ],
+          "hensel": {
+            "liftedFactorCount": 10,
+            "liftedFactorDegrees": [
+              16,
+              16,
+              6,
+              6,
+              6,
+              6,
+              6,
+              6,
+              6,
+              6
+            ],
+            "liftedMaxCoeffBits": 84,
+            "modulusBits": 84,
+            "precision": 24,
+            "prime": 11,
+            "treeInternalLifts": 9,
+            "treeLeaves": 10,
+            "treeShape": "count-balanced binary product tree with a guarded dominant-degree split"
+          },
+          "method": "classical",
+          "modular": {
+            "berlekampFactorTotal": {
+              "nanos": 10613586,
+              "smallAllocs": 586770
+            },
+            "berlekampMatrix": {
+              "nanos": 3895,
+              "smallAllocs": 252
+            },
+            "distinctDegree": "not-applicable",
+            "goodPrimeTest": {
+              "nanos": 162852,
+              "smallAllocs": 13406
+            },
+            "kernelDimension": 10,
+            "measurement": "repeat-at-selected-prime",
+            "modularDegree": 80,
+            "modularImage": {
+              "nanos": 1883,
+              "smallAllocs": 168
+            },
+            "prime": 11,
+            "rootExtraction": false,
+            "rowReduction": {
+              "nanos": 18903067,
+              "smallAllocs": 1749247
+            },
+            "splittingNanos": 0
+          },
+          "multiplicities": [
+            1,
+            1
+          ],
+          "phases": {
+            "assembly": {
+              "nanos": 24857,
+              "smallAllocs": 2390
+            },
+            "henselLift": {
+              "nanos": 5171548,
+              "smallAllocs": 178057
+            },
+            "normalization": {
+              "nanos": 190542,
+              "smallAllocs": 14419
+            },
+            "primeWalk": {
+              "nanos": 38519680,
+              "smallAllocs": 3197479
+            },
+            "quadratic": {
+              "nanos": 631,
+              "smallAllocs": 17
+            },
+            "recombination": {
+              "nanos": 2389082,
+              "smallAllocs": 89872
+            },
+            "total": {
+              "nanos": 46337931,
+              "smallAllocs": 3484917
+            },
+            "validation": {
+              "nanos": 21752,
+              "smallAllocs": 2017
+            }
+          },
+          "primeWalk": {
+            "candidates": [
+              {
+                "factorDegrees": [
+                  16,
+                  16,
+                  6,
+                  6,
+                  6,
+                  6,
+                  6,
+                  6,
+                  6,
+                  6
+                ],
+                "forcedSubsetCost": 512,
+                "henselPrecision": 24,
+                "modularFactorCount": 10,
+                "prime": 11,
+                "reachableProperDegrees": 25,
+                "selected": true
+              }
+            ],
+            "coeffBound": 1075072087333361764616200,
+            "coeffBoundBits": 80,
+            "goodPrimeFound": true,
+            "retainedGoodPrimes": 1,
+            "selectedPrime": 11
+          },
+          "recombination": {
+            "budget": 262144,
+            "completedLevels": [
+              0,
+              0,
+              1,
+              2,
+              3,
+              4,
+              5,
+              6
+            ],
+            "decline": null,
+            "stages": {
+              "cheapFilterRejections": 102,
+              "degreeSurvivors": 130,
+              "exactDivisionsAttempted": 2,
+              "nodes": 130,
+              "productsMaterialized": 28,
+              "recordable": 28,
+              "trailingSurvivors": 28
+            },
+            "successfulDivisors": 2
+          },
+          "reconstructs": true
+        },
+        "runs": 5,
+        "status": "ok",
+        "total_nanos_max": 46560381,
+        "total_nanos_median": 46337931,
+        "total_nanos_min": 45374243
+      },
+      "representative": true,
+      "sampling_profile_captured": true,
+      "validation": {
+        "applicable": true,
+        "factors_agree": true,
+        "levels_agree": true,
+        "mirror_completed_levels": [
+          0,
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6
+        ],
+        "mirror_factor_degrees": [
+          32,
+          48
+        ],
+        "mirror_nodes": 130,
+        "mirror_prime": 11,
+        "nodes_agree": true,
+        "prime_agrees": true,
+        "production_candidates_tried": 130,
+        "production_completed_levels": [
+          0,
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6
+        ],
+        "production_factor_degrees": [
+          32,
+          48
+        ],
+        "production_prime": 11
+      }
+    },
+    {
+      "degree": 144,
+      "end_to_end": {
+        "max_nanos": 75018083,
+        "median_nanos": 74892518,
+        "min_nanos": 73858244,
+        "runs": 5,
+        "status": "ok"
+      },
+      "expected_factor_degrees": [
+        64,
+        80
+      ],
+      "family": "cyclotomic-products",
+      "instrumentation_ratio": 0.9952522894209539,
+      "name": "cyclo_phi128_x_phi165",
+      "phase_profile": {
+        "profile": {
+          "degree": 144,
+          "factorDegrees": [
+            64,
+            80
+          ],
+          "hensel": {
+            "liftedFactorCount": 8,
+            "liftedFactorDegrees": [
+              20,
+              16,
+              20,
+              20,
+              16,
+              20,
+              16,
+              16
+            ],
+            "liftedMaxCoeffBits": 146,
+            "modulusBits": 146,
+            "precision": 52,
+            "prime": 7,
+            "treeInternalLifts": 7,
+            "treeLeaves": 8,
+            "treeShape": "count-balanced binary product tree with a guarded dominant-degree split"
+          },
+          "method": "classical",
+          "modular": {
+            "berlekampFactorTotal": {
+              "nanos": 33533137,
+              "smallAllocs": 1239327
+            },
+            "berlekampMatrix": {
+              "nanos": 6880,
+              "smallAllocs": 444
+            },
+            "distinctDegree": "not-applicable",
+            "goodPrimeTest": {
+              "nanos": 454534,
+              "smallAllocs": 39896
+            },
+            "kernelDimension": 8,
+            "measurement": "repeat-at-selected-prime",
+            "modularDegree": 144,
+            "modularImage": {
+              "nanos": 3235,
+              "smallAllocs": 296
+            },
+            "prime": 7,
+            "rootExtraction": false,
+            "rowReduction": {
+              "nanos": 89383923,
+              "smallAllocs": 8409957
+            },
+            "splittingNanos": 0
+          },
+          "multiplicities": [
+            1,
+            1
+          ],
+          "phases": {
+            "assembly": {
+              "nanos": 60069,
+              "smallAllocs": 6582
+            },
+            "henselLift": {
+              "nanos": 33414701,
+              "smallAllocs": 761706
+            },
+            "normalization": {
+              "nanos": 546300,
+              "smallAllocs": 44226
+            },
+            "primeWalk": {
+              "nanos": 34553630,
+              "smallAllocs": 1326123
+            },
+            "quadratic": {
+              "nanos": 611,
+              "smallAllocs": 17
+            },
+            "recombination": {
+              "nanos": 5866077,
+              "smallAllocs": 275130
+            },
+            "total": {
+              "nanos": 74536950,
+              "smallAllocs": 2420876
+            },
+            "validation": {
+              "nanos": 55773,
+              "smallAllocs": 6017
+            }
+          },
+          "primeWalk": {
+            "candidates": [
+              {
+                "factorDegrees": [
+                  20,
+                  16,
+                  20,
+                  20,
+                  16,
+                  20,
+                  16,
+                  16
+                ],
+                "forcedSubsetCost": 128,
+                "henselPrecision": 52,
+                "modularFactorCount": 8,
+                "prime": 7,
+                "reachableProperDegrees": 23,
+                "selected": true
+              }
+            ],
+            "coeffBound": 20722981978283006659913436536756243128265400,
+            "coeffBoundBits": 144,
+            "goodPrimeFound": true,
+            "retainedGoodPrimes": 1,
+            "selectedPrime": 7
+          },
+          "recombination": {
+            "budget": 262144,
+            "completedLevels": [
+              0,
+              1,
+              2,
+              0,
+              1,
+              2
+            ],
+            "decline": null,
+            "stages": {
+              "cheapFilterRejections": 29,
+              "degreeSurvivors": 54,
+              "exactDivisionsAttempted": 2,
+              "nodes": 54,
+              "productsMaterialized": 25,
+              "recordable": 25,
+              "trailingSurvivors": 25
+            },
+            "successfulDivisors": 2
+          },
+          "reconstructs": true
+        },
+        "runs": 5,
+        "status": "ok",
+        "total_nanos_max": 74572663,
+        "total_nanos_median": 74536950,
+        "total_nanos_min": 73738697
+      },
+      "representative": true,
+      "sampling_profile_captured": false,
+      "validation": {
+        "applicable": true,
+        "factors_agree": true,
+        "levels_agree": true,
+        "mirror_completed_levels": [
+          0,
+          1,
+          2,
+          0,
+          1,
+          2
+        ],
+        "mirror_factor_degrees": [
+          64,
+          80
+        ],
+        "mirror_nodes": 54,
+        "mirror_prime": 7,
+        "nodes_agree": true,
+        "prime_agrees": true,
+        "production_candidates_tried": 54,
+        "production_completed_levels": [
+          0,
+          1,
+          2,
+          0,
+          1,
+          2
+        ],
+        "production_factor_degrees": [
+          64,
+          80
+        ],
+        "production_prime": 7
+      }
+    },
+    {
+      "degree": 240,
+      "end_to_end": {
+        "max_nanos": 143576500,
+        "median_nanos": 143140133,
+        "min_nanos": 140314403,
+        "runs": 5,
+        "status": "ok"
+      },
+      "expected_factor_degrees": [
+        240
+      ],
+      "family": "cyclotomic",
+      "instrumentation_ratio": 1.0018554824173596,
+      "name": "cyclo_phi385",
+      "phase_profile": {
+        "profile": {
+          "degree": 240,
+          "factorDegrees": [
+            240
+          ],
+          "hensel": {
+            "liftedFactorCount": 4,
+            "liftedFactorDegrees": [
+              60,
+              60,
+              60,
+              60
+            ],
+            "liftedMaxCoeffBits": 241,
+            "modulusBits": 241,
+            "precision": 152,
+            "prime": 3,
+            "treeInternalLifts": 3,
+            "treeLeaves": 4,
+            "treeShape": "count-balanced binary product tree with a guarded dominant-degree split"
+          },
+          "method": "classical",
+          "modular": {
+            "berlekampFactorTotal": {
+              "nanos": 57037996,
+              "smallAllocs": 1030964
+            },
+            "berlekampMatrix": {
+              "nanos": 15964,
+              "smallAllocs": 732
+            },
+            "distinctDegree": "not-applicable",
+            "goodPrimeTest": {
+              "nanos": 728761,
+              "smallAllocs": 68654
+            },
+            "kernelDimension": 4,
+            "measurement": "repeat-at-selected-prime",
+            "modularDegree": 240,
+            "modularImage": {
+              "nanos": 5117,
+              "smallAllocs": 488
+            },
+            "prime": 3,
+            "rootExtraction": false,
+            "rowReduction": {
+              "nanos": 198536394,
+              "smallAllocs": 18194276
+            },
+            "splittingNanos": 0
+          },
+          "multiplicities": [
+            1
+          ],
+          "phases": {
+            "assembly": {
+              "nanos": 28553,
+              "smallAllocs": 1942
+            },
+            "henselLift": {
+              "nanos": 74390854,
+              "smallAllocs": 1636426
+            },
+            "normalization": {
+              "nanos": 1174962,
+              "smallAllocs": 101209
+            },
+            "primeWalk": {
+              "nanos": 57690994,
+              "smallAllocs": 1103050
+            },
+            "quadratic": {
+              "nanos": 832,
+              "smallAllocs": 17
+            },
+            "recombination": {
+              "nanos": 10023020,
+              "smallAllocs": 401834
+            },
+            "total": {
+              "nanos": 143405727,
+              "smallAllocs": 3247457
+            },
+            "validation": {
+              "nanos": 25688,
+              "smallAllocs": 1211
+            }
+          },
+          "primeWalk": {
+            "candidates": [
+              {
+                "factorDegrees": [
+                  60,
+                  60,
+                  60,
+                  60
+                ],
+                "forcedSubsetCost": 8,
+                "henselPrecision": 152,
+                "modularFactorCount": 4,
+                "prime": 3,
+                "reachableProperDegrees": 3,
+                "selected": true
+              }
+            ],
+            "coeffBound": 1636264530784946322237683636362414673514576776816417689604042467199320800,
+            "coeffBoundBits": 240,
+            "goodPrimeFound": true,
+            "retainedGoodPrimes": 1,
+            "selectedPrime": 3
+          },
+          "recombination": {
+            "budget": 262144,
+            "completedLevels": [
+              0,
+              1,
+              2
+            ],
+            "decline": null,
+            "stages": {
+              "cheapFilterRejections": 0,
+              "degreeSurvivors": 8,
+              "exactDivisionsAttempted": 1,
+              "nodes": 8,
+              "productsMaterialized": 8,
+              "recordable": 8,
+              "trailingSurvivors": 8
+            },
+            "successfulDivisors": 1
+          },
+          "reconstructs": true
+        },
+        "runs": 5,
+        "status": "ok",
+        "total_nanos_max": 144329085,
+        "total_nanos_median": 143405727,
+        "total_nanos_min": 142647552
+      },
+      "representative": true,
+      "sampling_profile_captured": true,
+      "validation": {
+        "applicable": true,
+        "factors_agree": true,
+        "levels_agree": true,
+        "mirror_completed_levels": [
+          0,
+          1,
+          2
+        ],
+        "mirror_factor_degrees": [
+          240
+        ],
+        "mirror_nodes": 8,
+        "mirror_prime": 3,
+        "nodes_agree": true,
+        "prime_agrees": true,
+        "production_candidates_tried": 8,
+        "production_completed_levels": [
+          0,
+          1,
+          2
+        ],
+        "production_factor_degrees": [
+          240
+        ],
+        "production_prime": 3
+      }
+    },
+    {
+      "degree": 40,
+      "end_to_end": {
+        "max_nanos": 9195904,
+        "median_nanos": 9120673,
+        "min_nanos": 9104188,
+        "runs": 5,
+        "status": "ok"
+      },
+      "expected_factor_degrees": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "family": "wilkinson",
+      "instrumentation_ratio": 0.9904908332970604,
+      "name": "wilkinson_40",
+      "phase_profile": {
+        "profile": {
+          "degree": 40,
+          "factorDegrees": [
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1
+          ],
+          "method": "replay",
+          "modular": {
+            "berlekampFactorTotal": {
+              "nanos": 107860,
+              "smallAllocs": 8341
+            },
+            "berlekampMatrix": {
+              "nanos": 1902,
+              "smallAllocs": 132
+            },
+            "distinctDegree": "not-applicable",
+            "goodPrimeTest": {
+              "nanos": 21832,
+              "smallAllocs": 1610
+            },
+            "kernelDimension": 40,
+            "measurement": "repeat-at-selected-prime",
+            "modularDegree": 40,
+            "modularImage": {
+              "nanos": 3775,
+              "smallAllocs": 106
+            },
+            "prime": 47,
+            "rootExtraction": true,
+            "rowReduction": {
+              "nanos": 253947,
+              "smallAllocs": 20522
+            },
+            "splittingNanos": "not-applicable"
+          },
+          "multiplicities": [
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1
+          ],
+          "phases": {
+            "assembly": {
+              "nanos": 198865,
+              "smallAllocs": 9051
+            },
+            "normalization": {
+              "nanos": 75311,
+              "smallAllocs": 4275
+            },
+            "primeWalk": {
+              "nanos": 930640,
+              "smallAllocs": 67518
+            },
+            "proposal": {
+              "nanos": 7770300,
+              "smallAllocs": 237187
+            },
+            "quadratic": {
+              "nanos": 551,
+              "smallAllocs": 17
+            },
+            "total": {
+              "nanos": 9033943,
+              "smallAllocs": 319361
+            }
+          },
+          "primeWalk": {
+            "candidates": [
+              {
+                "factorDegrees": [
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1
+                ],
+                "forcedSubsetCost": 549755813888,
+                "henselPrecision": 37,
+                "modularFactorCount": 40,
+                "prime": 47,
+                "reachableProperDegrees": 39,
+                "selected": true
+              },
+              {
+                "factorDegrees": [
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1
+                ],
+                "forcedSubsetCost": 549755813888,
+                "henselPrecision": 38,
+                "modularFactorCount": 40,
+                "prime": 41,
+                "reachableProperDegrees": 39,
+                "selected": false
+              }
+            ],
+            "coeffBound": 1921680168406855965121530973574373218685937570507447116882060,
+            "coeffBoundBits": 201,
+            "goodPrimeFound": true,
+            "retainedGoodPrimes": 2,
+            "selectedPrime": 47
+          },
+          "reconstructs": true
+        },
+        "runs": 5,
+        "status": "ok",
+        "total_nanos_max": 9064820,
+        "total_nanos_median": 9033943,
+        "total_nanos_min": 9029007
+      },
+      "representative": true,
+      "sampling_profile_captured": false,
+      "validation": {
+        "applicable": false,
+        "reason": "profiled run did not answer from the direct classical tier"
+      }
+    },
+    {
+      "degree": 48,
+      "end_to_end": {
+        "max_nanos": 16141953,
+        "median_nanos": 16085329,
+        "min_nanos": 16049004,
+        "runs": 5,
+        "status": "ok"
+      },
+      "expected_factor_degrees": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "family": "wilkinson",
+      "instrumentation_ratio": 1.0020707689597148,
+      "name": "wilkinson_48",
+      "phase_profile": {
+        "profile": {
+          "degree": 48,
+          "factorDegrees": [
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1
+          ],
+          "method": "replay",
+          "modular": {
+            "berlekampFactorTotal": {
+              "nanos": 177403,
+              "smallAllocs": 12733
+            },
+            "berlekampMatrix": {
+              "nanos": 2253,
+              "smallAllocs": 156
+            },
+            "distinctDegree": "not-applicable",
+            "goodPrimeTest": {
+              "nanos": 37585,
+              "smallAllocs": 2906
+            },
+            "kernelDimension": 48,
+            "measurement": "repeat-at-selected-prime",
+            "modularDegree": 48,
+            "modularImage": {
+              "nanos": 4687,
+              "smallAllocs": 126
+            },
+            "prime": 61,
+            "rootExtraction": true,
+            "rowReduction": {
+              "nanos": 377510,
+              "smallAllocs": 29406
+            },
+            "splittingNanos": "not-applicable"
+          },
+          "multiplicities": [
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1
+          ],
+          "phases": {
+            "assembly": {
+              "nanos": 311321,
+              "smallAllocs": 13013
+            },
+            "normalization": {
+              "nanos": 101651,
+              "smallAllocs": 5905
+            },
+            "primeWalk": {
+              "nanos": 1457011,
+              "smallAllocs": 106776
+            },
+            "proposal": {
+              "nanos": 14172362,
+              "smallAllocs": 349510
+            },
+            "quadratic": {
+              "nanos": 550,
+              "smallAllocs": 17
+            },
+            "total": {
+              "nanos": 16118638,
+              "smallAllocs": 476815
+            }
+          },
+          "primeWalk": {
+            "candidates": [
+              {
+                "factorDegrees": [
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1
+                ],
+                "forcedSubsetCost": 140737488355328,
+                "henselPrecision": 43,
+                "modularFactorCount": 48,
+                "prime": 61,
+                "reachableProperDegrees": 47,
+                "selected": true
+              },
+              {
+                "factorDegrees": [
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1
+                ],
+                "forcedSubsetCost": 140737488355328,
+                "henselPrecision": 45,
+                "modularFactorCount": 48,
+                "prime": 53,
+                "reachableProperDegrees": 47,
+                "selected": false
+              }
+            ],
+            "coeffBound": 8049068376844036118970558829637315745156559359405185594804704581012213098100,
+            "coeffBoundBits": 253,
+            "goodPrimeFound": true,
+            "retainedGoodPrimes": 2,
+            "selectedPrime": 61
+          },
+          "reconstructs": true
+        },
+        "runs": 5,
+        "status": "ok",
+        "total_nanos_max": 16140790,
+        "total_nanos_median": 16118638,
+        "total_nanos_min": 16084267
+      },
+      "representative": true,
+      "sampling_profile_captured": false,
+      "validation": {
+        "applicable": false,
+        "reason": "profiled run did not answer from the direct classical tier"
+      }
+    },
+    {
+      "degree": 56,
+      "end_to_end": {
+        "max_nanos": 20826999,
+        "median_nanos": 20730736,
+        "min_nanos": 20656887,
+        "runs": 5,
+        "status": "ok"
+      },
+      "expected_factor_degrees": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "family": "wilkinson",
+      "instrumentation_ratio": 1.0005081826327826,
+      "name": "wilkinson_56",
+      "phase_profile": {
+        "profile": {
+          "degree": 56,
+          "factorDegrees": [
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1
+          ],
+          "method": "replay",
+          "modular": {
+            "berlekampFactorTotal": {
+              "nanos": 226145,
+              "smallAllocs": 16165
+            },
+            "berlekampMatrix": {
+              "nanos": 2654,
+              "smallAllocs": 180
+            },
+            "distinctDegree": "not-applicable",
+            "goodPrimeTest": {
+              "nanos": 38887,
+              "smallAllocs": 3046
+            },
+            "kernelDimension": 56,
+            "measurement": "repeat-at-selected-prime",
+            "modularDegree": 56,
+            "modularImage": {
+              "nanos": 5579,
+              "smallAllocs": 146
+            },
+            "prime": 67,
+            "rootExtraction": true,
+            "rowReduction": {
+              "nanos": 560070,
+              "smallAllocs": 46891
+            },
+            "splittingNanos": "not-applicable"
+          },
+          "multiplicities": [
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1
+          ],
+          "phases": {
+            "assembly": {
+              "nanos": 423508,
+              "smallAllocs": 17680
+            },
+            "normalization": {
+              "nanos": 127429,
+              "smallAllocs": 7789
+            },
+            "primeWalk": {
+              "nanos": 1852357,
+              "smallAllocs": 141452
+            },
+            "proposal": {
+              "nanos": 18246363,
+              "smallAllocs": 457541
+            },
+            "quadratic": {
+              "nanos": 510,
+              "smallAllocs": 17
+            },
+            "total": {
+              "nanos": 20741271,
+              "smallAllocs": 626363
+            }
+          },
+          "primeWalk": {
+            "candidates": [
+              {
+                "factorDegrees": [
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1
+                ],
+                "forcedSubsetCost": 36028797018963968,
+                "henselPrecision": 51,
+                "modularFactorCount": 56,
+                "prime": 67,
+                "reachableProperDegrees": 55,
+                "selected": true
+              },
+              {
+                "factorDegrees": [
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1
+                ],
+                "forcedSubsetCost": 36028797018963968,
+                "henselPrecision": 53,
+                "modularFactorCount": 56,
+                "prime": 59,
+                "reachableProperDegrees": 55,
+                "selected": false
+              }
+            ],
+            "coeffBound": 125617627049250877181363592865834692949611771037125750170085410352200700179789256897773224080,
+            "coeffBoundBits": 306,
+            "goodPrimeFound": true,
+            "retainedGoodPrimes": 2,
+            "selectedPrime": 67
+          },
+          "reconstructs": true
+        },
+        "runs": 5,
+        "status": "ok",
+        "total_nanos_max": 20789964,
+        "total_nanos_median": 20741271,
+        "total_nanos_min": 20650417
+      },
+      "representative": true,
+      "sampling_profile_captured": true,
+      "validation": {
+        "applicable": false,
+        "reason": "profiled run did not answer from the direct classical tier"
+      }
+    },
+    {
+      "degree": 24,
+      "end_to_end": {
+        "max_nanos": 456536,
+        "median_nanos": 436126,
+        "min_nanos": 429177,
+        "runs": 5,
+        "status": "ok"
+      },
+      "expected_factor_degrees": [
+        8,
+        16
+      ],
+      "family": "chebyshev",
+      "instrumentation_ratio": 0.9084232538303151,
+      "name": "chebyshev_T24",
+      "phase_profile": {
+        "profile": {
+          "degree": 24,
+          "factorDegrees": [
+            16,
+            8
+          ],
+          "hensel": {
+            "liftedFactorCount": 3,
+            "liftedFactorDegrees": [
+              8,
+              8,
+              8
+            ],
+            "liftedMaxCoeffBits": 52,
+            "modulusBits": 52,
+            "precision": 22,
+            "prime": 5,
+            "treeInternalLifts": 2,
+            "treeLeaves": 3,
+            "treeShape": "count-balanced binary product tree with a guarded dominant-degree split"
+          },
+          "method": "classical",
+          "modular": {
+            "berlekampFactorTotal": {
+              "nanos": 198374,
+              "smallAllocs": 13395
+            },
+            "berlekampMatrix": {
+              "nanos": 1111,
+              "smallAllocs": 84
+            },
+            "distinctDegree": "not-applicable",
+            "goodPrimeTest": {
+              "nanos": 11808,
+              "smallAllocs": 1040
+            },
+            "kernelDimension": 3,
+            "measurement": "repeat-at-selected-prime",
+            "modularDegree": 24,
+            "modularImage": {
+              "nanos": 651,
+              "smallAllocs": 56
+            },
+            "prime": 5,
+            "rootExtraction": false,
+            "rowReduction": {
+              "nanos": 285413,
+              "smallAllocs": 24421
+            },
+            "splittingNanos": 0
+          },
+          "multiplicities": [
+            1,
+            1
+          ],
+          "phases": {
+            "assembly": {
+              "nanos": 5008,
+              "smallAllocs": 414
+            },
+            "henselLift": {
+              "nanos": 119347,
+              "smallAllocs": 7189
+            },
+            "normalization": {
+              "nanos": 17445,
+              "smallAllocs": 1007
+            },
+            "primeWalk": {
+              "nanos": 216010,
+              "smallAllocs": 14959
+            },
+            "quadratic": {
+              "nanos": 291,
+              "smallAllocs": 17
+            },
+            "recombination": {
+              "nanos": 27570,
+              "smallAllocs": 1407
+            },
+            "total": {
+              "nanos": 396187,
+              "smallAllocs": 25585
+            },
+            "validation": {
+              "nanos": 4236,
+              "smallAllocs": 281
+            }
+          },
+          "primeWalk": {
+            "candidates": [
+              {
+                "factorDegrees": [
+                  8,
+                  8,
+                  8
+                ],
+                "forcedSubsetCost": 4,
+                "henselPrecision": 22,
+                "modularFactorCount": 3,
+                "prime": 5,
+                "reachableProperDegrees": 2,
+                "selected": true
+              }
+            ],
+            "coeffBound": 910214580246244,
+            "coeffBoundBits": 50,
+            "goodPrimeFound": true,
+            "retainedGoodPrimes": 1,
+            "selectedPrime": 5
+          },
+          "recombination": {
+            "budget": 262144,
+            "completedLevels": [
+              0
+            ],
+            "decline": null,
+            "stages": {
+              "cheapFilterRejections": 1,
+              "degreeSurvivors": 3,
+              "exactDivisionsAttempted": 2,
+              "nodes": 3,
+              "productsMaterialized": 2,
+              "recordable": 2,
+              "trailingSurvivors": 2
+            },
+            "successfulDivisors": 2
+          },
+          "reconstructs": true
+        },
+        "runs": 5,
+        "status": "ok",
+        "total_nanos_max": 420674,
+        "total_nanos_median": 396187,
+        "total_nanos_min": 384540
+      },
+      "representative": false,
+      "sampling_profile_captured": false,
+      "validation": {
+        "applicable": true,
+        "factors_agree": true,
+        "levels_agree": true,
+        "mirror_completed_levels": [
+          0
+        ],
+        "mirror_factor_degrees": [
+          8,
+          16
+        ],
+        "mirror_nodes": 3,
+        "mirror_prime": 5,
+        "nodes_agree": true,
+        "prime_agrees": true,
+        "production_candidates_tried": 3,
+        "production_completed_levels": [
+          0
+        ],
+        "production_factor_degrees": [
+          8,
+          16
+        ],
+        "production_prime": 5
+      }
+    },
+    {
+      "degree": 24,
+      "end_to_end": {
+        "max_nanos": 630685,
+        "median_nanos": 595754,
+        "min_nanos": 562173,
+        "runs": 5,
+        "status": "ok"
+      },
+      "expected_factor_degrees": [
+        2,
+        2,
+        10,
+        10
+      ],
+      "family": "chebyshev",
+      "instrumentation_ratio": 0.9323193801468391,
+      "name": "chebyshev_U24",
+      "phase_profile": {
+        "profile": {
+          "degree": 24,
+          "factorDegrees": [
+            10,
+            2,
+            10,
+            2
+          ],
+          "hensel": {
+            "liftedFactorCount": 4,
+            "liftedFactorDegrees": [
+              2,
+              10,
+              2,
+              10
+            ],
+            "liftedMaxCoeffBits": 53,
+            "modulusBits": 53,
+            "precision": 33,
+            "prime": 3,
+            "treeInternalLifts": 3,
+            "treeLeaves": 4,
+            "treeShape": "count-balanced binary product tree with a guarded dominant-degree split"
+          },
+          "method": "classical",
+          "modular": {
+            "berlekampFactorTotal": {
+              "nanos": 187899,
+              "smallAllocs": 12764
+            },
+            "berlekampMatrix": {
+              "nanos": 1062,
+              "smallAllocs": 84
+            },
+            "distinctDegree": "not-applicable",
+            "goodPrimeTest": {
+              "nanos": 6240,
+              "smallAllocs": 510
+            },
+            "kernelDimension": 4,
+            "measurement": "repeat-at-selected-prime",
+            "modularDegree": 24,
+            "modularImage": {
+              "nanos": 710,
+              "smallAllocs": 56
+            },
+            "prime": 3,
+            "rootExtraction": false,
+            "rowReduction": {
+              "nanos": 231112,
+              "smallAllocs": 19531
+            },
+            "splittingNanos": 0
+          },
+          "multiplicities": [
+            1,
+            1,
+            1,
+            1
+          ],
+          "phases": {
+            "assembly": {
+              "nanos": 6790,
+              "smallAllocs": 612
+            },
+            "henselLift": {
+              "nanos": 273465,
+              "smallAllocs": 14113
+            },
+            "normalization": {
+              "nanos": 17656,
+              "smallAllocs": 1009
+            },
+            "primeWalk": {
+              "nanos": 206016,
+              "smallAllocs": 13682
+            },
+            "quadratic": {
+              "nanos": 280,
+              "smallAllocs": 17
+            },
+            "recombination": {
+              "nanos": 37987,
+              "smallAllocs": 2144
+            },
+            "total": {
+              "nanos": 555433,
+              "smallAllocs": 32293
+            },
+            "validation": {
+              "nanos": 5758,
+              "smallAllocs": 389
+            }
+          },
+          "primeWalk": {
+            "candidates": [
+              {
+                "factorDegrees": [
+                  2,
+                  10,
+                  2,
+                  10
+                ],
+                "forcedSubsetCost": 8,
+                "henselPrecision": 33,
+                "modularFactorCount": 4,
+                "prime": 3,
+                "reachableProperDegrees": 7,
+                "selected": true
+              }
+            ],
+            "coeffBound": 1560748913788064,
+            "coeffBoundBits": 51,
+            "goodPrimeFound": true,
+            "retainedGoodPrimes": 1,
+            "selectedPrime": 3
+          },
+          "recombination": {
+            "budget": 262144,
+            "completedLevels": [],
+            "decline": null,
+            "stages": {
+              "cheapFilterRejections": 0,
+              "degreeSurvivors": 4,
+              "exactDivisionsAttempted": 4,
+              "nodes": 4,
+              "productsMaterialized": 4,
+              "recordable": 4,
+              "trailingSurvivors": 4
+            },
+            "successfulDivisors": 4
+          },
+          "reconstructs": true
+        },
+        "runs": 5,
+        "status": "ok",
+        "total_nanos_max": 578988,
+        "total_nanos_median": 555433,
+        "total_nanos_min": 541273
+      },
+      "representative": false,
+      "sampling_profile_captured": false,
+      "validation": {
+        "applicable": true,
+        "factors_agree": true,
+        "levels_agree": true,
+        "mirror_completed_levels": [],
+        "mirror_factor_degrees": [
+          2,
+          2,
+          10,
+          10
+        ],
+        "mirror_nodes": 4,
+        "mirror_prime": 3,
+        "nodes_agree": true,
+        "prime_agrees": true,
+        "production_candidates_tried": 4,
+        "production_completed_levels": [],
+        "production_factor_degrees": [
+          2,
+          2,
+          10,
+          10
+        ],
+        "production_prime": 3
+      }
+    },
+    {
+      "degree": 30,
+      "end_to_end": {
+        "max_nanos": 8454836,
+        "median_nanos": 8364252,
+        "min_nanos": 8349840,
+        "runs": 5,
+        "status": "ok"
+      },
+      "expected_factor_degrees": [
+        30
+      ],
+      "family": "legendre",
+      "instrumentation_ratio": 1.000578294389026,
+      "name": "legendre_P30",
+      "phase_profile": {
+        "profile": {
+          "degree": 30,
+          "factorDegrees": [
+            30
+          ],
+          "hensel": {
+            "liftedFactorCount": 7,
+            "liftedFactorDegrees": [
+              2,
+              2,
+              2,
+              2,
+              6,
+              14,
+              2
+            ],
+            "liftedMaxCoeffBits": 91,
+            "modulusBits": 91,
+            "precision": 15,
+            "prime": 67,
+            "treeInternalLifts": 6,
+            "treeLeaves": 7,
+            "treeShape": "count-balanced binary product tree with a guarded dominant-degree split"
+          },
+          "method": "classical",
+          "modular": {
+            "berlekampFactorTotal": {
+              "nanos": 1937753,
+              "smallAllocs": 167769
+            },
+            "berlekampMatrix": {
+              "nanos": 1473,
+              "smallAllocs": 102
+            },
+            "distinctDegree": "not-applicable",
+            "goodPrimeTest": {
+              "nanos": 18267,
+              "smallAllocs": 1485
+            },
+            "kernelDimension": 7,
+            "measurement": "repeat-at-selected-prime",
+            "modularDegree": 30,
+            "modularImage": {
+              "nanos": 1722,
+              "smallAllocs": 75
+            },
+            "prime": 67,
+            "rootExtraction": false,
+            "rowReduction": {
+              "nanos": 1678468,
+              "smallAllocs": 158865
+            },
+            "splittingNanos": 257812
+          },
+          "multiplicities": [
+            1
+          ],
+          "phases": {
+            "assembly": {
+              "nanos": 8192,
+              "smallAllocs": 329
+            },
+            "henselLift": {
+              "nanos": 1027394,
+              "smallAllocs": 30936
+            },
+            "normalization": {
+              "nanos": 30155,
+              "smallAllocs": 1502
+            },
+            "primeWalk": {
+              "nanos": 7089441,
+              "smallAllocs": 627656
+            },
+            "quadratic": {
+              "nanos": 561,
+              "smallAllocs": 17
+            },
+            "recombination": {
+              "nanos": 181129,
+              "smallAllocs": 6057
+            },
+            "total": {
+              "nanos": 8369089,
+              "smallAllocs": 667376
+            },
+            "validation": {
+              "nanos": 6129,
+              "smallAllocs": 198
+            }
+          },
+          "primeWalk": {
+            "candidates": [
+              {
+                "factorDegrees": [
+                  2,
+                  2,
+                  2,
+                  2,
+                  6,
+                  14,
+                  2
+                ],
+                "forcedSubsetCost": 64,
+                "henselPrecision": 15,
+                "modularFactorCount": 7,
+                "prime": 67,
+                "reachableProperDegrees": 14,
+                "selected": true
+              },
+              {
+                "factorDegrees": [
+                  2,
+                  2,
+                  2,
+                  2,
+                  2,
+                  2,
+                  2,
+                  2,
+                  2,
+                  2,
+                  2,
+                  2,
+                  2,
+                  2,
+                  2
+                ],
+                "forcedSubsetCost": 16384,
+                "henselPrecision": 15,
+                "modularFactorCount": 15,
+                "prime": 61,
+                "reachableProperDegrees": 14,
+                "selected": false
+              }
+            ],
+            "coeffBound": 124543935812132452094555520,
+            "coeffBoundBits": 87,
+            "goodPrimeFound": true,
+            "retainedGoodPrimes": 2,
+            "selectedPrime": 67
+          },
+          "recombination": {
+            "budget": 262144,
+            "completedLevels": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5
+            ],
+            "decline": null,
+            "stages": {
+              "cheapFilterRejections": 63,
+              "degreeSurvivors": 64,
+              "exactDivisionsAttempted": 1,
+              "nodes": 64,
+              "productsMaterialized": 1,
+              "recordable": 1,
+              "trailingSurvivors": 1
+            },
+            "successfulDivisors": 1
+          },
+          "reconstructs": true
+        },
+        "runs": 5,
+        "status": "ok",
+        "total_nanos_max": 8432983,
+        "total_nanos_median": 8369089,
+        "total_nanos_min": 8349669
+      },
+      "representative": false,
+      "sampling_profile_captured": false,
+      "validation": {
+        "applicable": true,
+        "factors_agree": true,
+        "levels_agree": true,
+        "mirror_completed_levels": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5
+        ],
+        "mirror_factor_degrees": [
+          30
+        ],
+        "mirror_nodes": 64,
+        "mirror_prime": 67,
+        "nodes_agree": true,
+        "prime_agrees": true,
+        "production_candidates_tried": 64,
+        "production_completed_levels": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5
+        ],
+        "production_factor_degrees": [
+          30
+        ],
+        "production_prime": 67
+      }
+    },
+    {
+      "degree": 38,
+      "end_to_end": {
+        "max_nanos": 3830259,
+        "median_nanos": 3774857,
+        "min_nanos": 3745123,
+        "runs": 5,
+        "status": "ok"
+      },
+      "expected_factor_degrees": [
+        38
+      ],
+      "family": "legendre",
+      "instrumentation_ratio": 0.9936858535303457,
+      "name": "legendre_P38",
+      "phase_profile": {
+        "profile": {
+          "degree": 38,
+          "factorDegrees": [
+            38
+          ],
+          "hensel": {
+            "liftedFactorCount": 3,
+            "liftedFactorDegrees": [
+              36,
+              1,
+              1
+            ],
+            "liftedMaxCoeffBits": 120,
+            "modulusBits": 120,
+            "precision": 19,
+            "prime": 79,
+            "treeInternalLifts": 2,
+            "treeLeaves": 3,
+            "treeShape": "count-balanced binary product tree with a guarded dominant-degree split"
+          },
+          "method": "classical",
+          "modular": {
+            "berlekampFactorTotal": {
+              "nanos": 2917706,
+              "smallAllocs": 251152
+            },
+            "berlekampMatrix": {
+              "nanos": 1803,
+              "smallAllocs": 126
+            },
+            "distinctDegree": "not-applicable",
+            "goodPrimeTest": {
+              "nanos": 27501,
+              "smallAllocs": 2184
+            },
+            "kernelDimension": 3,
+            "measurement": "repeat-at-selected-prime",
+            "modularDegree": 38,
+            "modularImage": {
+              "nanos": 2253,
+              "smallAllocs": 94
+            },
+            "prime": 79,
+            "rootExtraction": false,
+            "rowReduction": {
+              "nanos": 3573478,
+              "smallAllocs": 334731
+            },
+            "splittingNanos": 0
+          },
+          "multiplicities": [
+            1
+          ],
+          "phases": {
+            "assembly": {
+              "nanos": 10045,
+              "smallAllocs": 431
+            },
+            "henselLift": {
+              "nanos": 559189,
+              "smallAllocs": 18781
+            },
+            "normalization": {
+              "nanos": 41181,
+              "smallAllocs": 2237
+            },
+            "primeWalk": {
+              "nanos": 3039406,
+              "smallAllocs": 259247
+            },
+            "quadratic": {
+              "nanos": 471,
+              "smallAllocs": 17
+            },
+            "recombination": {
+              "nanos": 61110,
+              "smallAllocs": 1980
+            },
+            "total": {
+              "nanos": 3751022,
+              "smallAllocs": 283634
+            },
+            "validation": {
+              "nanos": 7772,
+              "smallAllocs": 265
+            }
+          },
+          "primeWalk": {
+            "candidates": [
+              {
+                "factorDegrees": [
+                  36,
+                  1,
+                  1
+                ],
+                "forcedSubsetCost": 4,
+                "henselPrecision": 19,
+                "modularFactorCount": 3,
+                "prime": 79,
+                "reachableProperDegrees": 4,
+                "selected": true
+              }
+            ],
+            "coeffBound": 14065077854436543582494269671679200,
+            "coeffBoundBits": 114,
+            "goodPrimeFound": true,
+            "retainedGoodPrimes": 1,
+            "selectedPrime": 79
+          },
+          "recombination": {
+            "budget": 262144,
+            "completedLevels": [
+              0,
+              1
+            ],
+            "decline": null,
+            "stages": {
+              "cheapFilterRejections": 3,
+              "degreeSurvivors": 4,
+              "exactDivisionsAttempted": 1,
+              "nodes": 4,
+              "productsMaterialized": 1,
+              "recordable": 1,
+              "trailingSurvivors": 1
+            },
+            "successfulDivisors": 1
+          },
+          "reconstructs": true
+        },
+        "runs": 5,
+        "status": "ok",
+        "total_nanos_max": 3764431,
+        "total_nanos_median": 3751022,
+        "total_nanos_min": 3744171
+      },
+      "representative": false,
+      "sampling_profile_captured": false,
+      "validation": {
+        "applicable": true,
+        "factors_agree": true,
+        "levels_agree": true,
+        "mirror_completed_levels": [
+          0,
+          1
+        ],
+        "mirror_factor_degrees": [
+          38
+        ],
+        "mirror_nodes": 4,
+        "mirror_prime": 79,
+        "nodes_agree": true,
+        "prime_agrees": true,
+        "production_candidates_tried": 4,
+        "production_completed_levels": [
+          0,
+          1
+        ],
+        "production_factor_degrees": [
+          38
+        ],
+        "production_prime": 79
+      }
+    },
+    {
+      "degree": 16,
+      "end_to_end": {
+        "max_nanos": 113258,
+        "median_nanos": 104274,
+        "min_nanos": 101561,
+        "runs": 5,
+        "status": "ok"
+      },
+      "expected_factor_degrees": [
+        16
+      ],
+      "family": "cyclotomic",
+      "instrumentation_ratio": 0.7840976657651956,
+      "name": "cyclo_phi17",
+      "phase_profile": {
+        "profile": {
+          "degree": 16,
+          "factorDegrees": [
+            16
+          ],
+          "hensel": {
+            "liftedFactorCount": 1,
+            "liftedFactorDegrees": [
+              16
+            ],
+            "liftedMaxCoeffBits": 1,
+            "modulusBits": 18,
+            "precision": 11,
+            "prime": 3,
+            "treeInternalLifts": 0,
+            "treeLeaves": 1,
+            "treeShape": "count-balanced binary product tree with a guarded dominant-degree split"
+          },
+          "method": "classical",
+          "modular": {
+            "berlekampFactorTotal": {
+              "nanos": 49093,
+              "smallAllocs": 2865
+            },
+            "berlekampMatrix": {
+              "nanos": 690,
+              "smallAllocs": 60
+            },
+            "distinctDegree": "not-applicable",
+            "goodPrimeTest": {
+              "nanos": 3805,
+              "smallAllocs": 332
+            },
+            "kernelDimension": 1,
+            "measurement": "repeat-at-selected-prime",
+            "modularDegree": 16,
+            "modularImage": {
+              "nanos": 421,
+              "smallAllocs": 40
+            },
+            "prime": 3,
+            "rootExtraction": false,
+            "rowReduction": {
+              "nanos": 92197,
+              "smallAllocs": 7303
+            },
+            "splittingNanos": 0
+          },
+          "multiplicities": [
+            1
+          ],
+          "phases": {
+            "assembly": {
+              "nanos": 2244,
+              "smallAllocs": 150
+            },
+            "henselLift": {
+              "nanos": 2123,
+              "smallAllocs": 72
+            },
+            "normalization": {
+              "nanos": 7331,
+              "smallAllocs": 370
+            },
+            "primeWalk": {
+              "nanos": 57035,
+              "smallAllocs": 3415
+            },
+            "quadratic": {
+              "nanos": 270,
+              "smallAllocs": 17
+            },
+            "recombination": {
+              "nanos": 6640,
+              "smallAllocs": 424
+            },
+            "total": {
+              "nanos": 81761,
+              "smallAllocs": 4799
+            },
+            "validation": {
+              "nanos": 1882,
+              "smallAllocs": 91
+            }
+          },
+          "primeWalk": {
+            "candidates": [
+              {
+                "factorDegrees": [
+                  16
+                ],
+                "forcedSubsetCost": 1,
+                "henselPrecision": 11,
+                "modularFactorCount": 1,
+                "prime": 3,
+                "reachableProperDegrees": 0,
+                "selected": true
+              }
+            ],
+            "coeffBound": 64350,
+            "coeffBoundBits": 16,
+            "goodPrimeFound": true,
+            "retainedGoodPrimes": 1,
+            "selectedPrime": 3
+          },
+          "recombination": {
+            "budget": 262144,
+            "completedLevels": [],
+            "decline": null,
+            "stages": {
+              "cheapFilterRejections": 0,
+              "degreeSurvivors": 1,
+              "exactDivisionsAttempted": 1,
+              "nodes": 1,
+              "productsMaterialized": 1,
+              "recordable": 1,
+              "trailingSurvivors": 1
+            },
+            "successfulDivisors": 1
+          },
+          "reconstructs": true
+        },
+        "runs": 5,
+        "status": "ok",
+        "total_nanos_max": 90063,
+        "total_nanos_median": 81761,
+        "total_nanos_min": 80328
+      },
+      "representative": false,
+      "sampling_profile_captured": false,
+      "validation": {
+        "applicable": true,
+        "factors_agree": true,
+        "levels_agree": true,
+        "mirror_completed_levels": [],
+        "mirror_factor_degrees": [
+          16
+        ],
+        "mirror_nodes": 1,
+        "mirror_prime": 3,
+        "nodes_agree": true,
+        "prime_agrees": true,
+        "production_candidates_tried": 1,
+        "production_completed_levels": [],
+        "production_factor_degrees": [
+          16
+        ],
+        "production_prime": 3
+      }
+    },
+    {
+      "degree": 40,
+      "end_to_end": {
+        "max_nanos": 2014887,
+        "median_nanos": 1996751,
+        "min_nanos": 1983190,
+        "runs": 5,
+        "status": "ok"
+      },
+      "expected_factor_degrees": [
+        40
+      ],
+      "family": "cyclotomic",
+      "instrumentation_ratio": 0.9746958934789566,
+      "name": "cyclo_phi41",
+      "phase_profile": {
+        "profile": {
+          "degree": 40,
+          "factorDegrees": [
+            40
+          ],
+          "hensel": {
+            "liftedFactorCount": 5,
+            "liftedFactorDegrees": [
+              8,
+              8,
+              8,
+              8,
+              8
+            ],
+            "liftedMaxCoeffBits": 42,
+            "modulusBits": 42,
+            "precision": 26,
+            "prime": 3,
+            "treeInternalLifts": 4,
+            "treeLeaves": 5,
+            "treeShape": "count-balanced binary product tree with a guarded dominant-degree split"
+          },
+          "method": "classical",
+          "modular": {
+            "berlekampFactorTotal": {
+              "nanos": 455956,
+              "smallAllocs": 32512
+            },
+            "berlekampMatrix": {
+              "nanos": 1782,
+              "smallAllocs": 132
+            },
+            "distinctDegree": "not-applicable",
+            "goodPrimeTest": {
+              "nanos": 8783,
+              "smallAllocs": 780
+            },
+            "kernelDimension": 5,
+            "measurement": "repeat-at-selected-prime",
+            "modularDegree": 40,
+            "modularImage": {
+              "nanos": 962,
+              "smallAllocs": 88
+            },
+            "prime": 3,
+            "rootExtraction": false,
+            "rowReduction": {
+              "nanos": 453533,
+              "smallAllocs": 38465
+            },
+            "splittingNanos": 641
+          },
+          "multiplicities": [
+            1
+          ],
+          "phases": {
+            "assembly": {
+              "nanos": 5158,
+              "smallAllocs": 342
+            },
+            "henselLift": {
+              "nanos": 657705,
+              "smallAllocs": 30651
+            },
+            "normalization": {
+              "nanos": 17235,
+              "smallAllocs": 874
+            },
+            "primeWalk": {
+              "nanos": 467433,
+              "smallAllocs": 33974
+            },
+            "quadratic": {
+              "nanos": 441,
+              "smallAllocs": 17
+            },
+            "recombination": {
+              "nanos": 784733,
+              "smallAllocs": 32169
+            },
+            "total": {
+              "nanos": 1946225,
+              "smallAllocs": 98623
+            },
+            "validation": {
+              "nanos": 4297,
+              "smallAllocs": 211
+            }
+          },
+          "primeWalk": {
+            "candidates": [
+              {
+                "factorDegrees": [
+                  8,
+                  8,
+                  8,
+                  8,
+                  8
+                ],
+                "forcedSubsetCost": 16,
+                "henselPrecision": 26,
+                "modularFactorCount": 5,
+                "prime": 3,
+                "reachableProperDegrees": 4,
+                "selected": true
+              }
+            ],
+            "coeffBound": 964925701740,
+            "coeffBoundBits": 40,
+            "goodPrimeFound": true,
+            "retainedGoodPrimes": 1,
+            "selectedPrime": 3
+          },
+          "recombination": {
+            "budget": 262144,
+            "completedLevels": [
+              0,
+              1,
+              2,
+              3
+            ],
+            "decline": null,
+            "stages": {
+              "cheapFilterRejections": 0,
+              "degreeSurvivors": 16,
+              "exactDivisionsAttempted": 1,
+              "nodes": 16,
+              "productsMaterialized": 16,
+              "recordable": 16,
+              "trailingSurvivors": 16
+            },
+            "successfulDivisors": 1
+          },
+          "reconstructs": true
+        },
+        "runs": 5,
+        "status": "ok",
+        "total_nanos_max": 1965704,
+        "total_nanos_median": 1946225,
+        "total_nanos_min": 1940928
+      },
+      "representative": false,
+      "sampling_profile_captured": false,
+      "validation": {
+        "applicable": true,
+        "factors_agree": true,
+        "levels_agree": true,
+        "mirror_completed_levels": [
+          0,
+          1,
+          2,
+          3
+        ],
+        "mirror_factor_degrees": [
+          40
+        ],
+        "mirror_nodes": 16,
+        "mirror_prime": 3,
+        "nodes_agree": true,
+        "prime_agrees": true,
+        "production_candidates_tried": 16,
+        "production_completed_levels": [
+          0,
+          1,
+          2,
+          3
+        ],
+        "production_factor_degrees": [
+          40
+        ],
+        "production_prime": 3
+      }
+    },
+    {
+      "degree": 24,
+      "end_to_end": {
+        "max_nanos": 2328523,
+        "median_nanos": 2302884,
+        "min_nanos": 2284206,
+        "runs": 5,
+        "status": "ok"
+      },
+      "expected_factor_degrees": [
+        1,
+        1,
+        2,
+        2,
+        2,
+        4,
+        4,
+        8
+      ],
+      "family": "cyclotomic-products",
+      "instrumentation_ratio": 0.9948594892317633,
+      "name": "xpow24_minus1",
+      "phase_profile": {
+        "profile": {
+          "degree": 24,
+          "factorDegrees": [
+            2,
+            1,
+            4,
+            4,
+            8,
+            1,
+            2,
+            2
+          ],
+          "hensel": {
+            "liftedFactorCount": 13,
+            "liftedFactorDegrees": [
+              2,
+              2,
+              1,
+              2,
+              2,
+              2,
+              2,
+              2,
+              2,
+              2,
+              2,
+              1,
+              2
+            ],
+            "liftedMaxCoeffBits": 25,
+            "modulusBits": 25,
+            "precision": 7,
+            "prime": 11,
+            "treeInternalLifts": 12,
+            "treeLeaves": 13,
+            "treeShape": "count-balanced binary product tree with a guarded dominant-degree split"
+          },
+          "method": "classical",
+          "modular": {
+            "berlekampFactorTotal": {
+              "nanos": 577807,
+              "smallAllocs": 46939
+            },
+            "berlekampMatrix": {
+              "nanos": 1172,
+              "smallAllocs": 84
+            },
+            "distinctDegree": "not-applicable",
+            "goodPrimeTest": {
+              "nanos": 3204,
+              "smallAllocs": 270
+            },
+            "kernelDimension": 13,
+            "measurement": "repeat-at-selected-prime",
+            "modularDegree": 24,
+            "modularImage": {
+              "nanos": 732,
+              "smallAllocs": 56
+            },
+            "prime": 11,
+            "rootExtraction": false,
+            "rowReduction": {
+              "nanos": 194248,
+              "smallAllocs": 17216
+            },
+            "splittingNanos": 382387
+          },
+          "multiplicities": [
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1
+          ],
+          "phases": {
+            "assembly": {
+              "nanos": 10636,
+              "smallAllocs": 937
+            },
+            "henselLift": {
+              "nanos": 296990,
+              "smallAllocs": 17594
+            },
+            "normalization": {
+              "nanos": 7781,
+              "smallAllocs": 299
+            },
+            "primeWalk": {
+              "nanos": 1103666,
+              "smallAllocs": 89442
+            },
+            "quadratic": {
+              "nanos": 381,
+              "smallAllocs": 17
+            },
+            "recombination": {
+              "nanos": 854677,
+              "smallAllocs": 48267
+            },
+            "total": {
+              "nanos": 2291046,
+              "smallAllocs": 157626
+            },
+            "validation": {
+              "nanos": 8032,
+              "smallAllocs": 574
+            }
+          },
+          "primeWalk": {
+            "candidates": [
+              {
+                "factorDegrees": [
+                  2,
+                  2,
+                  1,
+                  2,
+                  2,
+                  2,
+                  2,
+                  2,
+                  2,
+                  2,
+                  2,
+                  1,
+                  2
+                ],
+                "forcedSubsetCost": 4096,
+                "henselPrecision": 7,
+                "modularFactorCount": 13,
+                "prime": 11,
+                "reachableProperDegrees": 23,
+                "selected": true
+              },
+              {
+                "factorDegrees": [
+                  2,
+                  2,
+                  2,
+                  2,
+                  1,
+                  1,
+                  2,
+                  2,
+                  1,
+                  2,
+                  2,
+                  2,
+                  2,
+                  1
+                ],
+                "forcedSubsetCost": 8192,
+                "henselPrecision": 11,
+                "modularFactorCount": 14,
+                "prime": 5,
+                "reachableProperDegrees": 23,
+                "selected": false
+              }
+            ],
+            "coeffBound": 5408312,
+            "coeffBoundBits": 23,
+            "goodPrimeFound": true,
+            "retainedGoodPrimes": 2,
+            "selectedPrime": 11
+          },
+          "recombination": {
+            "budget": 262144,
+            "completedLevels": [
+              0,
+              1,
+              2,
+              0,
+              0
+            ],
+            "decline": null,
+            "stages": {
+              "cheapFilterRejections": 0,
+              "degreeSurvivors": 113,
+              "exactDivisionsAttempted": 8,
+              "nodes": 113,
+              "productsMaterialized": 113,
+              "recordable": 113,
+              "trailingSurvivors": 113
+            },
+            "successfulDivisors": 8
+          },
+          "reconstructs": true
+        },
+        "runs": 5,
+        "status": "ok",
+        "total_nanos_max": 2304838,
+        "total_nanos_median": 2291046,
+        "total_nanos_min": 2284737
+      },
+      "representative": false,
+      "sampling_profile_captured": false,
+      "validation": {
+        "applicable": true,
+        "factors_agree": true,
+        "levels_agree": true,
+        "mirror_completed_levels": [
+          0,
+          1,
+          2,
+          0,
+          0
+        ],
+        "mirror_factor_degrees": [
+          1,
+          1,
+          2,
+          2,
+          2,
+          4,
+          4,
+          8
+        ],
+        "mirror_nodes": 113,
+        "mirror_prime": 11,
+        "nodes_agree": true,
+        "prime_agrees": true,
+        "production_candidates_tried": 113,
+        "production_completed_levels": [
+          0,
+          1,
+          2,
+          0,
+          0
+        ],
+        "production_factor_degrees": [
+          1,
+          1,
+          2,
+          2,
+          2,
+          4,
+          4,
+          8
+        ],
+        "production_prime": 11
+      }
+    },
+    {
+      "degree": 20,
+      "end_to_end": {
+        "max_nanos": 654480,
+        "median_nanos": 620701,
+        "min_nanos": 607250,
+        "runs": 5,
+        "status": "ok"
+      },
+      "expected_factor_degrees": [
+        10,
+        10
+      ],
+      "family": "random-products",
+      "instrumentation_ratio": 0.9439134140270437,
+      "name": "randprod_10",
+      "phase_profile": {
+        "profile": {
+          "degree": 20,
+          "factorDegrees": [
+            10,
+            10
+          ],
+          "hensel": {
+            "liftedFactorCount": 4,
+            "liftedFactorDegrees": [
+              3,
+              4,
+              7,
+              6
+            ],
+            "liftedMaxCoeffBits": 31,
+            "modulusBits": 31,
+            "precision": 11,
+            "prime": 7,
+            "treeInternalLifts": 3,
+            "treeLeaves": 4,
+            "treeShape": "count-balanced binary product tree with a guarded dominant-degree split"
+          },
+          "method": "classical",
+          "modular": {
+            "berlekampFactorTotal": {
+              "nanos": 335678,
+              "smallAllocs": 23484
+            },
+            "berlekampMatrix": {
+              "nanos": 901,
+              "smallAllocs": 72
+            },
+            "distinctDegree": "not-applicable",
+            "goodPrimeTest": {
+              "nanos": 12559,
+              "smallAllocs": 1018
+            },
+            "kernelDimension": 4,
+            "measurement": "repeat-at-selected-prime",
+            "modularDegree": 20,
+            "modularImage": {
+              "nanos": 591,
+              "smallAllocs": 48
+            },
+            "prime": 7,
+            "rootExtraction": false,
+            "rowReduction": {
+              "nanos": 420904,
+              "smallAllocs": 35832
+            },
+            "splittingNanos": 0
+          },
+          "multiplicities": [
+            1,
+            1
+          ],
+          "phases": {
+            "assembly": {
+              "nanos": 4497,
+              "smallAllocs": 338
+            },
+            "henselLift": {
+              "nanos": 165124,
+              "smallAllocs": 9769
+            },
+            "normalization": {
+              "nanos": 20770,
+              "smallAllocs": 1219
+            },
+            "primeWalk": {
+              "nanos": 358701,
+              "smallAllocs": 24950
+            },
+            "quadratic": {
+              "nanos": 261,
+              "smallAllocs": 17
+            },
+            "recombination": {
+              "nanos": 26670,
+              "smallAllocs": 1357
+            },
+            "total": {
+              "nanos": 585888,
+              "smallAllocs": 38183
+            },
+            "validation": {
+              "nanos": 3735,
+              "smallAllocs": 237
+            }
+          },
+          "primeWalk": {
+            "candidates": [
+              {
+                "factorDegrees": [
+                  3,
+                  4,
+                  7,
+                  6
+                ],
+                "forcedSubsetCost": 8,
+                "henselPrecision": 11,
+                "modularFactorCount": 4,
+                "prime": 7,
+                "reachableProperDegrees": 11,
+                "selected": true
+              }
+            ],
+            "coeffBound": 161291988,
+            "coeffBoundBits": 28,
+            "goodPrimeFound": true,
+            "retainedGoodPrimes": 1,
+            "selectedPrime": 7
+          },
+          "recombination": {
+            "budget": 262144,
+            "completedLevels": [
+              0,
+              0
+            ],
+            "decline": null,
+            "stages": {
+              "cheapFilterRejections": 3,
+              "degreeSurvivors": 5,
+              "exactDivisionsAttempted": 2,
+              "nodes": 5,
+              "productsMaterialized": 2,
+              "recordable": 2,
+              "trailingSurvivors": 2
+            },
+            "successfulDivisors": 2
+          },
+          "reconstructs": true
+        },
+        "runs": 5,
+        "status": "ok",
+        "total_nanos_max": 612518,
+        "total_nanos_median": 585888,
+        "total_nanos_min": 577125
+      },
+      "representative": false,
+      "sampling_profile_captured": false,
+      "validation": {
+        "applicable": true,
+        "factors_agree": true,
+        "levels_agree": true,
+        "mirror_completed_levels": [
+          0,
+          0
+        ],
+        "mirror_factor_degrees": [
+          10,
+          10
+        ],
+        "mirror_nodes": 5,
+        "mirror_prime": 7,
+        "nodes_agree": true,
+        "prime_agrees": true,
+        "production_candidates_tried": 5,
+        "production_completed_levels": [
+          0,
+          0
+        ],
+        "production_factor_degrees": [
+          10,
+          10
+        ],
+        "production_prime": 7
+      }
+    },
+    {
+      "degree": 24,
+      "end_to_end": {
+        "max_nanos": 1442830,
+        "median_nanos": 1431362,
+        "min_nanos": 1415198,
+        "runs": 5,
+        "status": "ok"
+      },
+      "expected_factor_degrees": [
+        7,
+        8,
+        9
+      ],
+      "family": "random-products",
+      "instrumentation_ratio": 0.9522545659309105,
+      "name": "randprod_21",
+      "phase_profile": {
+        "profile": {
+          "degree": 24,
+          "factorDegrees": [
+            7,
+            8,
+            9
+          ],
+          "hensel": {
+            "liftedFactorCount": 7,
+            "liftedFactorDegrees": [
+              9,
+              7,
+              1,
+              1,
+              1,
+              4,
+              1
+            ],
+            "liftedMaxCoeffBits": 37,
+            "modulusBits": 37,
+            "precision": 9,
+            "prime": 17,
+            "treeInternalLifts": 6,
+            "treeLeaves": 7,
+            "treeShape": "count-balanced binary product tree with a guarded dominant-degree split"
+          },
+          "method": "classical",
+          "modular": {
+            "berlekampFactorTotal": {
+              "nanos": 865223,
+              "smallAllocs": 68180
+            },
+            "berlekampMatrix": {
+              "nanos": 1032,
+              "smallAllocs": 84
+            },
+            "distinctDegree": "not-applicable",
+            "goodPrimeTest": {
+              "nanos": 19239,
+              "smallAllocs": 1592
+            },
+            "kernelDimension": 7,
+            "measurement": "repeat-at-selected-prime",
+            "modularDegree": 24,
+            "modularImage": {
+              "nanos": 791,
+              "smallAllocs": 56
+            },
+            "prime": 17,
+            "rootExtraction": false,
+            "rowReduction": {
+              "nanos": 999562,
+              "smallAllocs": 89421
+            },
+            "splittingNanos": 0
+          },
+          "multiplicities": [
+            1,
+            1,
+            1
+          ],
+          "phases": {
+            "assembly": {
+              "nanos": 6790,
+              "smallAllocs": 531
+            },
+            "henselLift": {
+              "nanos": 314095,
+              "smallAllocs": 17758
+            },
+            "normalization": {
+              "nanos": 26840,
+              "smallAllocs": 1651
+            },
+            "primeWalk": {
+              "nanos": 946793,
+              "smallAllocs": 74367
+            },
+            "quadratic": {
+              "nanos": 331,
+              "smallAllocs": 17
+            },
+            "recombination": {
+              "nanos": 54341,
+              "smallAllocs": 2297
+            },
+            "total": {
+              "nanos": 1363021,
+              "smallAllocs": 97340
+            },
+            "validation": {
+              "nanos": 5798,
+              "smallAllocs": 386
+            }
+          },
+          "primeWalk": {
+            "candidates": [
+              {
+                "factorDegrees": [
+                  9,
+                  7,
+                  1,
+                  1,
+                  1,
+                  4,
+                  1
+                ],
+                "forcedSubsetCost": 64,
+                "henselPrecision": 9,
+                "modularFactorCount": 7,
+                "prime": 17,
+                "reachableProperDegrees": 23,
+                "selected": true
+              }
+            ],
+            "coeffBound": 41749464484,
+            "coeffBoundBits": 36,
+            "goodPrimeFound": true,
+            "retainedGoodPrimes": 1,
+            "selectedPrime": 17
+          },
+          "recombination": {
+            "budget": 262144,
+            "completedLevels": [
+              0,
+              0,
+              1,
+              2
+            ],
+            "decline": null,
+            "stages": {
+              "cheapFilterRejections": 10,
+              "degreeSurvivors": 13,
+              "exactDivisionsAttempted": 3,
+              "nodes": 13,
+              "productsMaterialized": 3,
+              "recordable": 3,
+              "trailingSurvivors": 3
+            },
+            "successfulDivisors": 3
+          },
+          "reconstructs": true
+        },
+        "runs": 5,
+        "status": "ok",
+        "total_nanos_max": 1369840,
+        "total_nanos_median": 1363021,
+        "total_nanos_min": 1354979
+      },
+      "representative": false,
+      "sampling_profile_captured": false,
+      "validation": {
+        "applicable": true,
+        "factors_agree": true,
+        "levels_agree": true,
+        "mirror_completed_levels": [
+          0,
+          0,
+          1,
+          2
+        ],
+        "mirror_factor_degrees": [
+          7,
+          8,
+          9
+        ],
+        "mirror_nodes": 13,
+        "mirror_prime": 17,
+        "nodes_agree": true,
+        "prime_agrees": true,
+        "production_candidates_tried": 13,
+        "production_completed_levels": [
+          0,
+          0,
+          1,
+          2
+        ],
+        "production_factor_degrees": [
+          7,
+          8,
+          9
+        ],
+        "production_prime": 17
+      }
+    }
+  ],
+  "schema": "hexbz-phase-profile/3",
+  "scouts": [],
+  "validation": {
+    "disagreements": [],
+    "factors_agree": 368,
+    "instrumentation_ratio_max": 1.0310534920934353,
+    "instrumentation_ratio_median": 0.9978802360268683,
+    "kernel_disagreements": [],
+    "kernel_mirror_agree": 0,
+    "kernel_packed_agree": 0,
+    "kernel_rows": 0,
+    "levels_agree": 368,
+    "nodes_agree": 368,
+    "prime_agree": 368,
+    "sample_size": 368,
+    "scout_disagreements": [],
+    "scout_patterns_agree": 0,
+    "scout_rows": 0
+  }
+}

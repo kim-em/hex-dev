@@ -95,6 +95,33 @@ On the committed corpus the two tests together admit a scan on the Wilkinson
 rows and on nothing else, so the measured end-to-end overhead outside the
 selected region is zero.
 
+## End-to-end result of the production change
+
+Paired phase profiles, baseline `f87a0c7d` against the change, both measured on
+`chungus2` in this session
+(`reports/bench-results/hexbz-phase-profile-f87a0c7d-chungus2.json` and
+`reports/bench-results/hexbz-phase-profile-9157-root-extraction-chungus2.json`):
+
+| row | total before | total after | delta | `berlekampFactor` before | after | delta |
+| --- | --- | --- | --- | --- | --- | --- |
+| `wilkinson_40` | 12.78 ms | 9.03 ms | −29.3% | 1.952 ms | 0.108 ms | −94.5% |
+| `wilkinson_48` | 21.95 ms | 16.12 ms | −26.6% | 3.100 ms | 0.177 ms | −94.3% |
+| `wilkinson_56` | 29.75 ms | 20.74 ms | −30.3% | 4.800 ms | 0.226 ms | −95.3% |
+
+Every other profiled row reports `rootExtraction: false` — no scan runs — and
+its total moves between −2.5% and +2.3%, which is the run-to-run band of this
+driver on those inputs. The profile's own validation checked 368 instances for
+factor-degree, leaf-count, selected-prime, and subset-cardinality agreement
+with the counted mirror, with no disagreements.
+
+The corpus sweep (`hexbz-factor-sweep-f87a0c7d-hex-chungus2.json` against
+`hexbz-factor-sweep-9157-root-extraction-hex-chungus2.json`, same corpus hash,
+10 s cutoff) solves the same 377 of 392 instances before and after, for 2.0%
+less total time. The Wilkinson rows that the budget admits improve by 24.2% to
+27.2%, and the improvement extends to `wilkinson_28` (−10.2%) and
+`wilkinson_32` (−11.6%). No instance regresses outside the sub-millisecond
+noise band.
+
 ## Verdict
 
 The gate passes. Root extraction removes about 95% of the finite-field
