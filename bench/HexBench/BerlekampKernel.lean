@@ -269,8 +269,11 @@ def mirrorAgrees [BEq R] (M : Matrix R n m) (r : ReduceResult R n m) : Bool :=
 /-! ## Packed prototype
 
 A contiguous row-major buffer of machine words with the modulus's Barrett
-reciprocal alongside it. This is the representation issue #9132 proposes,
-prototyped here to price it before any production specialization is written.
+reciprocal alongside it. This is the representation issue #9132 proposed and
+`Hex.Berlekamp.Packed` now implements, priced here before that implementation
+was written and kept afterwards for two jobs: these variants remain the
+entry-for-entry oracle the production kernel is checked against, and they are
+the floor the implementation's own cost is read against.
 -/
 
 /-- Which packed element storage and modular multiply to price. -/
