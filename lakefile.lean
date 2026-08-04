@@ -234,6 +234,10 @@ lean_lib HexBerlekampKernelProbe where
   srcDir := "bench"
   globs := #[`HexBench.BerlekampKernel]
 
+lean_lib HexQuadraticNormProbe where
+  srcDir := "bench"
+  globs := #[`HexBench.QuadraticNorm]
+
 lean_lib HexMvPolyBenchSupport where
   srcDir := "bench"
   globs := #[`HexMvPolyCorpus]
