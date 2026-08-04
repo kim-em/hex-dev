@@ -127,13 +127,18 @@ KERNEL_PACKED_KEYS = ("packedWord", "packedHalfWord",
 # the scaffolding ladder that attributes its gap against the prototype. Both
 # groups are merged by median exactly like the counted and packed groups above.
 KERNEL_PACKED_STAGE_SPANS = ("build", "pivotSearch", "rowSwapScale",
-                             "eliminate", "readback", "wall")
-KERNEL_PACKED_STAGE_COUNTS = ("stagedNanos", "rowAdds", "rowAddsSkipped",
-                              "pivots", "freeColumns", "innerMultiplies",
+                             "eliminate", "columnCount", "readback", "wall")
+# Medianed across repeats; `stagedNanos` is the only duration here.
+KERNEL_PACKED_STAGE_NANOS = ("stagedNanos",)
+# Deterministic; asserted to agree across repeats rather than medianed.
+KERNEL_PACKED_STAGE_COUNTS = ("rowAdds", "rowAddsSkipped", "pivots",
+                              "freeColumns", "innerMultiplies",
                               "scaleMultiplies")
 KERNEL_LADDER_RUNGS = ("integrated", "mirrored", "hoistedPivotRow",
-                       "flatRowWrite", "saltedMultiply", "doubledMultiply",
-                       "flatBuffer")
+                       "arrayPivots", "hoistedSaltedMin",
+                       "hoistedDoubledMultiply", "flatRowWrite",
+                       "flatBothLoops", "saltedMultiply", "saltedMinMultiply",
+                       "doubledMultiply", "flatBuffer")
 # Per-candidate costs merged by median across `--plan-repeats` calls.
 PLAN_NANO_KEYS = ("goodPrimeTest", "boundedScout", "scout", "berlekampMatrix",
                   "rowReduction", "fullSplit", "henselLift", "recombination")
@@ -335,9 +340,15 @@ def merge_kernels(kernels):
                 k["packedStages"][span]["nanos"] for k in kernels))
             base["packedStages"][span]["smallAllocs"] = int(statistics.median(
                 k["packedStages"][span]["smallAllocs"] for k in kernels))
-        for field in KERNEL_PACKED_STAGE_COUNTS:
+        for field in KERNEL_PACKED_STAGE_NANOS:
             base["packedStages"][field] = int(statistics.median(
                 k["packedStages"][field] for k in kernels))
+        for field in KERNEL_PACKED_STAGE_COUNTS:
+            values = {k["packedStages"][field] for k in kernels}
+            if len(values) > 1:
+                raise SystemExit(
+                    f"kernel repeats disagree on packed stage count {field}: "
+                    f"{values}")
         if not all(k["packedStages"]["agreesWithPackedReduce"]
                    and k["packedStages"]["agreesWithNullspace"]
                    for k in kernels):
@@ -345,16 +356,31 @@ def merge_kernels(kernels):
                 "the counted packed mirror disagreed with Packed.reduce or "
                 "with Hex.Matrix.nullspace")
     if "packedLadder" in base:
+        # Every rung's reduction is measured once per repeat, so keep the raw
+        # per-repeat values alongside the median. A difference between two rungs
+        # is a difference of two medians of *different* executions unless the
+        # samples survive, and the ladder's small effects (the multiply, the
+        # row-write mechanism) need paired within-call differences to mean
+        # anything.
         for rung in KERNEL_LADDER_RUNGS:
+            samples = [k["packedLadder"][rung]["reduceNanos"] for k in kernels]
             for field in ("buildNanos", "reduceNanos", "readbackNanos",
                           "totalNanos", "smallAllocs"):
                 base["packedLadder"][rung][field] = int(statistics.median(
                     k["packedLadder"][rung][field] for k in kernels))
+            base["packedLadder"][rung]["reduceNanosSamples"] = samples
+            ranks = {k["packedLadder"][rung]["rank"] for k in kernels}
+            if len(ranks) > 1:
+                raise SystemExit(
+                    f"kernel repeats disagree on ladder rung {rung} rank: "
+                    f"{ranks}")
             if not all(k["packedLadder"][rung]["agreesWithNullspace"]
                        for k in kernels):
                 raise SystemExit(
                     f"packed ladder rung {rung} disagreed with "
                     "Hex.Matrix.nullspace")
+        base["packedLadder"]["ladderForward"] = [
+            k["packedLadder"]["ladderForward"] for k in kernels]
     return base
 
 
