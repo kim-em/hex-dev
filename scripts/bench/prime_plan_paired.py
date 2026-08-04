@@ -11,6 +11,12 @@ The instances whose plan does not change are the load control: their prime walk
 does identical work in both arms, so whatever spread they show is the day's
 noise floor and bounds what can be read into the rows that did change.
 
+Blocks are counterbalanced: odd blocks run before then after, even blocks after
+then before, so arm and position are not confounded and a drift that favours
+whichever arm runs first cancels. Each instance's ratio is the median of the
+*within-block* after/before ratios, not a ratio of independently pooled medians,
+so a block's own load affects both arms of that ratio equally.
+
 Build the two binaries first, for example::
 
     git stash                      # or check out the before revision
@@ -98,8 +104,9 @@ def collect(record: dict) -> dict:
 
 
 def summarize(record: dict, changed=()) -> list:
-    """Per-instance medians of both arms, in the record's instance order."""
+    """Per-instance summary: absolute medians per arm, ratios paired by block."""
     out = []
+    blocks = list(zip(record["rounds"]["before"], record["rounds"]["after"]))
     for name in record["config"]["names"]:
         arms = {}
         for arm in ("before", "after"):
@@ -116,12 +123,22 @@ def summarize(record: dict, changed=()) -> list:
         if len(arms) != 2:
             continue
         b, a = arms["before"], arms["after"]
+        # Paired within-block quantities: each block contributes one ratio, so a
+        # block's own load cancels instead of biasing one pooled median.
+        pairs = [(bb[name], aa[name]) for bb, aa in blocks
+                 if name in bb and name in aa]
+        ratios = [pa["total_nanos"] / pb["total_nanos"] for pb, pa in pairs]
+        saved = [pb["walk_nanos"] - pa["walk_nanos"] for pb, pa in pairs]
         out.append({
             "name": name,
             "before": b,
             "after": a,
-            "walk_saved_nanos": b["walk_nanos"] - a["walk_nanos"],
-            "total_ratio": a["total_nanos"] / b["total_nanos"],
+            "blocks": len(pairs),
+            "walk_saved_nanos": statistics.median(saved) if saved else 0,
+            "total_ratio": (statistics.median(ratios) if ratios
+                            else a["total_nanos"] / b["total_nanos"]),
+            "total_ratio_min": min(ratios) if ratios else None,
+            "total_ratio_max": max(ratios) if ratios else None,
             # A walk can change without changing the prime it selects or the
             # number of splits it performs -- dropping a scout does exactly
             # that -- so the caller may name the rows it changed.
@@ -134,7 +151,11 @@ def summarize(record: dict, changed=()) -> list:
 def print_table(record: dict, changed=()) -> None:
     rows = summarize(record, changed)
     rounds = len(record["rounds"]["before"])
-    print(f"### Paired before/after, median of {rounds} alternating rounds\n")
+    orders = record["config"].get("block_orders")
+    how = (f"median of {rounds} counterbalanced blocks "
+           f"({'/'.join(orders)})" if orders
+           else f"median of {rounds} alternating rounds")
+    print(f"### Paired before/after, {how}\n")
     print("| instance | prime before | prime after | full splits | "
           "prime walk before | prime walk after | walk saved | total before | "
           "total after | ratio |")
@@ -195,18 +216,24 @@ def main() -> int:
              if args.names else REPRESENTATIVE + CONTROLS)
     tmp = args.output.with_suffix(".round.json")
     rounds = {"before": [], "after": []}
+    orders = []
     for i in range(args.rounds):
-        for arm, binary in (("before", args.before), ("after", args.after)):
-            print(f"round {i + 1} arm {arm}", file=sys.stderr)
+        # Counterbalanced: alternate which arm runs first in each block.
+        order = (("before", args.before), ("after", args.after)) if i % 2 == 0 \
+            else (("after", args.after), ("before", args.before))
+        orders.append("AB" if i % 2 == 0 else "BA")
+        for arm, binary in order:
+            print(f"block {i + 1} ({orders[-1]}) arm {arm}", file=sys.stderr)
             rounds[arm].append(collect(run_arm(binary, names, args.cpu, tmp)))
     tmp.unlink(missing_ok=True)
     shutil.copy2(args.after, HEX_SERVICE)
 
     record = {
-        "schema": "hexbz-prime-plan-paired/1",
+        "schema": "hexbz-prime-plan-paired/2",
         "env": env_block("hexbz_factor_service"),
         "config": {
             "rounds": args.rounds,
+            "block_orders": orders,
             "cpu": args.cpu,
             "names": names,
             "before_sha256": subprocess.run(

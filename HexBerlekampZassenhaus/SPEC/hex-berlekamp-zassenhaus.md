@@ -99,8 +99,7 @@ There is no dilation-coordinate factorization method.
 `DirectPrimePlan` stores the chosen factorization and the other
 successful factorization examined, if any. The first admissible prime is
 split. Further admissible primes are *scouted* while `scoutPays` says
-the plan in hand still has enough recombination work left to repay
-another observation; plans are compared by:
+the walk can still afford another observation; plans are compared by:
 
 1. predicted complete subset-search work;
 2. number of reachable proper factor degrees;
@@ -123,65 +122,51 @@ The reachability bitset is computed by dynamic programming in
 ### Pricing one more observation
 
 `scoutPays` is the walk's only stopping decision. It compares the
-recombination work the plan in hand still has to do against the scouts
-and split that replacing it would cost. Both sides are estimates over
-shape already observed — the input degree, the primes involved, and the
-degree patterns of the plans in hand — so the walk prices its own next
-step and nothing about the corpus or the instance's provenance enters.
+recombination work the plan in hand may still have to do against the
+scouts and split the rest of the walk may spend. Both sides are
+estimates over shape already observed — the input degree, the primes
+involved, and the degree patterns of the plans in hand — so the walk
+prices its own next step and nothing about the corpus or the instance's
+provenance enters.
 
 Writing `n` for the modular degree, `q` for the prime about to be
 scouted, `w` and `d` for the width and largest modular factor degree of
 the plan held, and `W` for the machine words of that plan's Hensel
 modulus:
 
-- a recombination candidate is a product and a trial division of the
-  degree-`n` lift, about `n²` coefficient operations on `W`-word
-  integers, and a complete head-forced search visits
-  `directSubsetCost w` of them. That product is an upper bound on what
-  the plan has left: it is what an irreducible input pays exactly, and a
-  reducible one stops earlier;
-- a bounded scout runs about `d` rounds, since the loop stops at the
-  largest factor degree, and each is one Frobenius power, about
-  `bitLen q` squarings of the degree-`n` image;
+- a recombination candidate costs about `n²` coefficient operations on
+  `W`-word integers, averaged over the cheap degree and
+  trailing-coefficient rejections and the subsets that reach a product.
+  A complete head-forced search visits `directSubsetCost w` of them, but
+  the direct engine abandons the search at `defaultSubsetBudget`, so the
+  work still ahead is at most
+  `min (directSubsetCost w) defaultSubsetBudget · n² · W`;
+- a bounded scout runs one Frobenius power and one gcd per separated
+  degree, about `bitLen q` squarings of the degree-`n` image apiece, and
+  stops at the largest factor degree of the image it separates. That
+  degree is unknown before scouting, so `d` stands in for it — a proxy,
+  not a bound: a narrower candidate tends to have larger factor degrees;
 - acting on what a scout learns costs one further Berlekamp split, whose
   matrix and row reduction are about `bitLen q · n³`;
-- so a walk with `fuel` observations left is committing to at most
-  `fuel` scouts and one split.
+- so a walk with `fuel` observations left may spend at most `fuel`
+  scouts and one split.
 
-Both estimates carry a factor `n²`, which cancels. The constants that
-remain state how a modular word operation compares with a recombination
-one; they are ratios measured on the recorded per-candidate prices, and
-rescaling them all together changes no decision. `scoutFuel` remains, as
-a bound that makes the walk terminate in a fixed number of observations
-however cheap the next one looks; which of those observations happen is
-`scoutPays`'s decision, not the bound's.
+Both estimates carry a factor `n²`, which cancels. What remains decides
+**affordability, not expected value**: the left side is the most any
+prime could save and the right side the most the remaining walk could
+spend, so passing means the walk *could* pay for itself, not that it
+will. That is weaker than a value-of-information rule and is the reason
+the walk can still buy an observation that turns out worthless.
 
-### Scouting a candidate's degree pattern
+The two constants scale a modular word operation against a recombination
+candidate, which the inequality counts as one. They are measured ratios,
+they are not precise, and changing them changes decisions;
+`scripts/bench/prime_policy_replay.py --sensitivity` reports over what
+range the whole replayed walk is unchanged and what the exceptions cost.
 
-A candidate's whole score follows from its modular factor degrees, and
-those can be obtained without splitting anything. The bounded
-distinct-degree scout separates the modular image one factor degree at
-a time. After degree `d` is separated, every irreducible factor left in
-a residual of degree `m` has degree at least `d`, so the factor count
-lies between `separated + 1` and `separated + m / d`.
-
-A candidate wider than the current best can only score worse, so the
-scout abandons it as soon as the factors it has separated reach the
-current width — however much of the polynomial is left. Otherwise the
-pattern completes and the candidate is scored exactly. The loop also
-stops when the residual is a unit, and when the residual is too small
-to be a product of two factors of degree at least `d` and is therefore
-irreducible, so it never runs past the largest factor degree.
-
-The scout is a performance heuristic, not a correctness oracle. Every
-factorization, certificate, and degree obstruction is built from the
-Berlekamp split at the selected prime. Prime choice may change
-performance; it cannot change the factorization theorem.
-
-The walk therefore performs one full Berlekamp split at the first
-admissible prime, at most `scoutFuel` bounded scouts, and one further
-full split for the scouted winner — at most two splits where the fixed
-policy it replaces performed three.
+`scoutFuel` remains, as a bound that makes the walk terminate in a fixed
+number of observations however cheap the next one looks; which of those
+observations happen is `scoutPays`'s decision, not the bound's.
 
 ## Direct Hensel lift
 

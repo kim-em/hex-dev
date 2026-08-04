@@ -1174,7 +1174,13 @@ private def counterfactualCandidates (core : SquareFreeInput) :
 /-- Downstream cost of stopping the bounded prime walk at one good prime.  The
 production selection is one of the rows; the others are counterfactual, and are
 the only place this service does work the production cascade would not have
-done. -/
+done.
+
+`downstreamNanos` is the *direct* route only: the Hensel lift plus the counted
+subset search.  A plan whose search declines falls through to proposal replay,
+the lattice tier or trial division in production, and none of that is priced
+here, so these rows compare primes that answer directly and say nothing about
+one that would not. -/
 private def primeCounterfactual (f : ZPoly) : IO Json := do
   let sink ← IO.mkRef 0
   let normalized := normalizeForFactor f

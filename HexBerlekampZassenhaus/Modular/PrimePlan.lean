@@ -11,6 +11,7 @@ public import HexBerlekampZassenhaus.ChoosePrimeData
 public import HexBerlekampZassenhaus.SquareFreeInput
 public import HexBerlekampZassenhaus.Recombination
 
+
 public section
 set_option backward.proofsInPublic true
 
@@ -205,36 +206,47 @@ scouted, `w` and `d` for the width and largest modular factor degree of the
 plan currently held, and `W` for the machine words of that plan's Hensel
 modulus.
 
-* **What is still on the table.**  A recombination candidate multiplies a
-  subset of the lifted factors and trial-divides the result, `n^2` coefficient
-  operations on `W`-word integers.  A complete head-forced search visits
-  `directSubsetCost w` candidates, so the plan's remaining recombination is
-  about `directSubsetCost w * n^2 * W` word operations.  That is an upper bound:
-  it is what an irreducible input actually pays, and a reducible one stops
-  earlier.  No plan can save more than all of it.
-* **What another observation costs.**  A bounded scout runs about `d` rounds --
-  the loop stops at the largest factor degree -- and each round is one Frobenius
-  power, `bitLen q` squarings of the degree-`n` image, so `d * bitLen q * n^2`
-  word operations.  Acting on what it learns costs a further Berlekamp split,
-  whose matrix and row reduction are about `bitLen q * n^3`.  A walk with `fuel`
-  observations left is committing to at most `fuel` scouts and one split.
+* **What is still on the table.**  A recombination candidate costs about `n^2`
+  coefficient operations on `W`-word integers, averaged over the cheap degree
+  and trailing-coefficient rejections and the subsets that reach a product.  A
+  complete head-forced search visits `directSubsetCost w` candidates, but the
+  direct engine abandons the search at `defaultSubsetBudget`, so the work still
+  ahead is at most `min (directSubsetCost w) defaultSubsetBudget * n^2 * W`.
+  That is a worst case rather than a prediction: an irreducible input inside the
+  budget does run the search to exhaustion, and everything else stops earlier.
+* **What another observation costs.**  A bounded scout runs one Frobenius power
+  and one gcd per separated degree, `bitLen q` squarings of the degree-`n` image
+  apiece, and the loop stops at the largest factor degree of the image it is
+  separating.  That degree is not known before scouting, so `d` -- the largest
+  factor degree of the plan in hand -- stands in for it.  It is a *proxy*, not a
+  bound: the next candidate's largest degree can exceed it several times over.
+  Acting on what a scout learns costs a further Berlekamp split, whose matrix
+  and row reduction are about `bitLen q * n^3`.  A walk with `fuel` observations
+  left may spend at most `fuel` scouts and one split.
 
-The two estimates share the factor `n^2`, which cancels, leaving one
-inequality on the shape.  The remaining constants say how a modular word
-operation compares with a recombination one; they are ratios measured on the
-recorded per-candidate prices, and any common rescaling of them leaves every
-decision unchanged.
+The two estimates share the factor `n^2`, which cancels, leaving one inequality
+on the shape.  What this decides is affordability, not expected value: the left
+side is the most any prime could save and the right side the most the remaining
+walk could spend, so passing it means the walk *can* pay for itself, not that it
+will.  The constants scale the modular side against a recombination candidate,
+which the inequality counts as one; changing them changes decisions, and
+`scripts/bench/prime_policy_replay.py --sensitivity` reports where.
 -/
 
 /-- Machine words in the Hensel lift modulus a plan at `p` needs.  A
 recombination candidate's product and trial division run over integers of this
 width, so this is the part of a candidate's cost that the prime, rather than the
-input, decides. -/
+input, decides.
+
+The modulus is formed rather than estimated from `precision * bitLen p`, which
+overshoots by up to one bit per power and so crosses word boundaries the real
+modulus does not. -/
 @[expose]
 def liftWords (core : SquareFreeInput) (p : Nat) : Nat :=
   max 1
-    ((precisionForCoeffBound (ZPoly.defaultFactorCoeffBound core.poly) p *
-      ZPoly.bitLen p + 63) / 64)
+    ((ZPoly.bitLen
+      (p ^ precisionForCoeffBound (ZPoly.defaultFactorCoeffBound core.poly) p)
+        + 63) / 64)
 
 /-- Cost of one bounded-scout word operation, in recombination word operations.
 
@@ -262,25 +274,37 @@ structure ScoutIncumbent where
   score : Nat × Nat × Nat × Nat
 
 /-- Largest modular factor degree of the incumbent plan.  A bounded scout stops
-at the largest factor degree, so this is the round count a scout of a
-comparable image runs. -/
+at the largest factor degree of the image it separates, so this stands in for
+the round count a scout of the *next* candidate would run.  A proxy, not a
+bound: a narrower candidate tends to have larger factor degrees, and the walk
+has not seen them. -/
 @[expose]
 def ScoutIncumbent.maxDegree (inc : ScoutIncumbent) : Nat :=
   inc.degrees.foldl max 0
 
-/-- Whether one more modular observation can still pay for itself: the
-recombination work the incumbent plan has left, against the scouts and split
-that replacing it would cost.
+/-- Recombination candidates the incumbent plan may still have to visit: the
+complete head-forced count, capped where the direct engine abandons the
+search. -/
+@[expose]
+def ScoutIncumbent.candidatesLeft (inc : ScoutIncumbent) : Nat :=
+  min (directSubsetCost inc.degrees.size) defaultSubsetBudget
+
+/-- Whether the walk can still afford one more modular observation: the
+recombination work the incumbent plan may have left, against the scouts and
+split the rest of the walk may spend.
 
 This is the walk's only stopping decision.  It governs the first good prime and
 every scouted candidate alike, and it depends on nothing but the degree of the
-input, the primes involved, and the degree patterns already observed. -/
+input, the primes involved, and the degree patterns already observed.
+
+Both sides are worst cases, so passing means the remaining walk *could* pay for
+itself, not that it will. -/
 def scoutPays (core : SquareFreeInput) (inc : ScoutIncumbent) (q fuel : Nat) :
     Bool :=
   decide (ZPoly.bitLen q *
       (scoutRoundCost * fuel * inc.maxDegree +
         splitColumnCost * core.poly.degree?.getD 0) <
-    directSubsetCost inc.degrees.size * liftWords core inc.prime)
+    inc.candidatesLeft * liftWords core inc.prime)
 
 /-- A candidate prime together with the modular degree pattern a scout
 established for it.  This carries no factorization: the degrees are a

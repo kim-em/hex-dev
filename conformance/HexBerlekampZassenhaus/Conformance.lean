@@ -434,9 +434,16 @@ private def incumbentAt (core : SquareFreeInput) (p : Nat) (degrees : Array Nat)
     ScoutIncumbent :=
   ⟨p, degrees, directDegreeScore core p degrees⟩
 
--- `legendreP20`'s coefficient bound needs 27 powers of three, so its Hensel
--- modulus occupies two machine words.
-#guard liftWords ⟨legendreP20⟩ 3 = 2
+-- `legendreP20`'s coefficient bound needs 27 powers of three, and `3 ^ 27` is a
+-- 43-bit number, so its Hensel modulus occupies one machine word. Estimating the
+-- width as `27 * bitLen 3` would have said two.
+#guard liftWords ⟨legendreP20⟩ 3 = 1
+
+-- The subset count is the complete head-forced one until it passes the budget
+-- where the direct engine abandons the search, and is that budget after.
+#guard (incumbentAt ⟨legendreP20⟩ 3 (Array.replicate 10 2)).candidatesLeft = 512
+#guard (incumbentAt ⟨legendreP20⟩ 3 (Array.replicate 20 1)).candidatesLeft
+  = defaultSubsetBudget
 
 -- One modular factor leaves no subset search at all, so nothing an observation
 -- could find can repay it.
@@ -446,10 +453,10 @@ private def incumbentAt (core : SquareFreeInput) (p : Nat) (degrees : Array Nat)
 -- a scout that would run sixteen Frobenius rounds. Still nothing to shop for.
 #guard !scoutPays ⟨legendreP20⟩ (incumbentAt ⟨legendreP20⟩ 3 #[2, 2, 2, 16]) 5 2
 
--- Ten quadratic factors leave 2^9 candidates, and a scout of a comparable image
--- stops after two rounds. That pays.
+-- Sixteen factors of degree at most two leave 2^15 candidates, and a scout of a
+-- comparable image stops after two rounds. That pays.
 #guard scoutPays ⟨legendreP20⟩
-  (incumbentAt ⟨legendreP20⟩ 3 (Array.replicate 10 2)) 5 2
+  (incumbentAt ⟨legendreP20⟩ 3 (Array.replicate 12 1 ++ Array.replicate 4 2)) 5 2
 
 /-! # Extended prime search
 

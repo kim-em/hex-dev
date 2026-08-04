@@ -72,6 +72,9 @@ FUEL = 2
 SCOUT_ROUND_COST = 10
 SPLIT_COLUMN_COST = 5
 
+# `Hex.defaultSubsetBudget`: where the direct engine abandons the subset search.
+SUBSET_BUDGET = 262144
+
 # `Hex.hotPathCandidates` is every prime from 3 through 499.
 CANDIDATE_HI = 499
 
@@ -126,7 +129,12 @@ def precision(bound: int, p: int) -> int:
 
 def lift_words(bound: int, p: int) -> int:
     """`Hex.liftWords`: machine words in the Hensel modulus at `p`."""
-    return max(1, (precision(bound, p) * p.bit_length() + 63) // 64)
+    return max(1, ((p ** precision(bound, p)).bit_length() + 63) // 64)
+
+
+def candidates_left(width: int) -> int:
+    """`Hex.ScoutIncumbent.candidatesLeft`: subsets, capped at the engine's budget."""
+    return min(subset_cost(width), SUBSET_BUDGET)
 
 
 def score(bound: int, n: int, p: int, degrees) -> tuple:
@@ -142,7 +150,7 @@ def scout_pays(bound: int, n: int, inc: dict, q: int, fuel: int) -> bool:
     return (q.bit_length() *
             (SCOUT_ROUND_COST * fuel * max(inc["degrees"], default=0) +
              SPLIT_COLUMN_COST * n)
-            < subset_cost(len(inc["degrees"])) * lift_words(bound, inc["prime"]))
+            < candidates_left(len(inc["degrees"])) * lift_words(bound, inc["prime"]))
 
 
 def instances(record: dict) -> list:
@@ -289,10 +297,16 @@ def policy_scout(inst):
 
 
 def policy_voi(inst):
-    """This PR's rule: scout while `scoutPays` allows another observation."""
+    """This PR's rule: scout while `scoutPays` allows another observation.
+
+    Records every decision point in `trace`, not just the first: the walk
+    reprices after each winning scout, and on some instances it is that later
+    call, not the opening one, that the rule changed.
+    """
     bound, n = inst["coeff_bound"], inst["degree"]
     cands = inst["candidates"]
     good = {c["prime"]: c for c in cands}
+    index = {c["prime"]: i for i, c in enumerate(cands)}
     horizon = cands[-1]["prime"]
     w = Walk(inst)
     head = cands[0]
@@ -301,10 +315,26 @@ def policy_voi(inst):
     inc, best = head, None
     fuel = FUEL
     truncated = False
+    trace = []
+    scouted = 0
     for q in hot_path_primes():
         if fuel == 0 or q <= head["prime"]:
             continue
-        if not scout_pays(bound, n, inc, q, fuel):
+        pays = scout_pays(bound, n, inc, q, fuel)
+        trace.append({
+            "next": q, "fuel": fuel, "pays": pays,
+            "incumbent": inc["prime"],
+            "width": len(inc["degrees"]),
+            "max_degree": max(inc["degrees"], default=0),
+            "left": candidates_left(len(inc["degrees"]))
+                    * lift_words(bound, inc["prime"]),
+            "obs": q.bit_length() * (
+                SCOUT_ROUND_COST * fuel * max(inc["degrees"], default=0)
+                + SPLIT_COLUMN_COST * n),
+            "scouted_so_far": scouted,
+            "from_index": index.get(inc["prime"], 0),
+        })
+        if not pays:
             break
         if q > horizon:
             # The record prices a bounded prefix of the candidate list; a walk
@@ -317,6 +347,7 @@ def policy_voi(inst):
         w.examine(cand)
         w.scout(cand)
         fuel -= 1
+        scouted += 1
         if score(bound, n, cand["prime"], cand["degrees"]) < \
                 score(bound, n, inc["prime"], inc["degrees"]):
             inc, best = cand, cand
@@ -326,6 +357,7 @@ def policy_voi(inst):
     else:
         out = w.finish(head)
     out["truncated"] = truncated
+    out["trace"] = trace
     return out
 
 
@@ -433,104 +465,126 @@ def print_table(result: dict) -> None:
 
 
 def print_margins(record: dict) -> int:
-    """The arithmetic of the first `scoutPays` call, against what it was worth.
+    """Every `scoutPays` decision the walk makes, against what it was worth.
 
-    This is the decision the change turns on, so print both sides of the
-    estimate beside the measurement that settles it. The rule claims that
-    another observation cannot pay, or can; what settles that is the
-    *attainable saving* -- the incumbent's measured downstream less the
-    cheapest measured downstream any other priced candidate offers -- against
-    what the observation measurably costs. A decision is confirmed when the
-    sign of `saving - cost` agrees with it.
+    Not just the opening call: on some instances the walk reprices after a
+    winning scout and it is that later decision the rule changed.
+
+    What settles a decision is the best *attainable* net gain from the point it
+    is taken. For each alternative candidate still reachable within the
+    remaining fuel, the gain is the incumbent's measured downstream less that
+    alternative's, and the cost is every bounded scout the walk must run to
+    reach it plus its full split. A decision is confirmed when the sign of the
+    best `gain - cost` over reachable alternatives agrees with it.
 
     Returns the number of decisions the measurement does not confirm.
     """
-    print("\n### First `scoutPays` decision, against what it was worth\n")
-    print("| instance | n | p | w | max deg | W | left | next obs | scout? | "
-          "own downstream | best other | attainable saving | observation cost "
-          "| confirmed |")
-    print("|---|---:|---:|---:|---:|---:|---:|---:|:--:|---:|---:|---:|---:|:--:|")
+    print("\n### Every `scoutPays` decision, against what it was worth\n")
+    print("| instance | step | incumbent | w | max deg | fuel | next | left | "
+          "next obs | scout? | own downstream | best attainable net | confirmed |")
+    print("|---|---:|---:|---:|---:|---:|---:|---:|---:|:--:|---:|---:|:--:|")
     loose = 0
+    unpriced = 0
     for inst in instances(record):
         bound, n = inst["coeff_bound"], inst["degree"]
         if bound is None:
             continue
-        head = inst["candidates"][0]
-        inc = {"prime": head["prime"], "degrees": head["degrees"]}
-        nxt = next((q for q in hot_path_primes() if q > head["prime"]), None)
-        if nxt is None:
-            continue
-        left = subset_cost(len(head["degrees"])) * lift_words(bound, head["prime"])
-        obs = nxt.bit_length() * (
-            SCOUT_ROUND_COST * FUEL * max(head["degrees"], default=0) +
-            SPLIT_COLUMN_COST * n)
-        pays = scout_pays(bound, n, inc, nxt, FUEL)
-        others = [c for c in inst["candidates"][1:] if c["downstream"] is not None]
-        following = next((c for c in inst["candidates"][1:]), None)
-        best = min((c["downstream"] for c in others), default=None)
-        saving = (None if best is None or head["downstream"] is None
-                  else head["downstream"] - best)
-        cost = (None if following is None
-                else following["bounded_scout"] + following["full_split"])
-        verdict = "--"
-        if saving is not None and cost is not None:
-            worth = saving > cost
-            verdict = "yes" if worth == pays else "**no**"
-            loose += 0 if worth == pays else 1
-        print(f"| `{inst['name']}` | {n} | {head['prime']} | "
-              f"{len(head['degrees'])} | {max(head['degrees'], default=0)} | "
-              f"{lift_words(bound, head['prime'])} | {left} | {obs} | "
-              f"{'yes' if pays else 'no'} | {fmt(head['downstream'])} | "
-              f"{fmt(best)} | "
-              f"{'--' if saving is None else ('none' if saving <= 0 else fmt(saving))} | "
-              f"{fmt(cost)} | {verdict} |")
-    print(f"\nThe measurement confirms every decision above except {loose}."
-          if loose else
-          "\nThe measurement confirms every decision above.")
+        cands = inst["candidates"]
+        out = policy_voi(inst)
+        for step, t in enumerate(out["trace"], start=1):
+            inc = cands[t["from_index"]]
+            # Alternatives the walk can still reach, and what reaching each costs:
+            # every scout from here up to it, plus its own split.
+            best_net, best_alt = None, None
+            cost = 0
+            for cand in cands[t["from_index"] + 1:][:t["fuel"]]:
+                cost += cand["bounded_scout"]
+                if (cand["downstream"] is None or inc["downstream"] is None):
+                    continue
+                net = (inc["downstream"] - cand["downstream"]) - (
+                    cost + cand["full_split"])
+                if best_net is None or net > best_net:
+                    best_net, best_alt = net, cand["prime"]
+            verdict = "--"
+            if best_net is None:
+                unpriced += 1
+            else:
+                worth = best_net > 0
+                verdict = "yes" if worth == t["pays"] else "**no**"
+                loose += 0 if worth == t["pays"] else 1
+            net_text = ("--" if best_net is None
+                        else ("none" if best_net <= 0
+                              else f"{fmt(best_net)} at {best_alt}"))
+            print(f"| `{inst['name']}` | {step} | {t['incumbent']} | "
+                  f"{t['width']} | {t['max_degree']} | {t['fuel']} | "
+                  f"{t['next']} | {t['left']} | {t['obs']} | "
+                  f"{'yes' if t['pays'] else 'no'} | "
+                  f"{fmt(inc['downstream'])} | {net_text} | {verdict} |")
+    total = "every decision" if not loose else f"all but {loose}"
+    print(f"\nThe measurement confirms {total} above; {unpriced} decision(s) "
+          f"have no priced alternative to compare against.")
     return loose
 
 
-def print_sensitivity(record: dict, lo: int, hi: int, plo: int, phi: int) -> None:
-    """How far the two cost ratios can move before a decision does.
+def _voi_outcome(records):
+    """Full `voi` outcome per instance across every supplied record."""
+    out = {}
+    for record in records:
+        for inst in instances(record):
+            if inst["coeff_bound"] is None:
+                continue
+            r = policy_voi(inst)
+            out[inst["name"]] = (r["prime"], r["splits"], r["scouts"],
+                                 r["total_nanos"])
+    return out
+
+
+def print_sensitivity(records, lo: int, hi: int, plo: int, phi: int) -> None:
+    """How far the two cost ratios can move before the policy does.
 
     The ratios are medians of noisy per-candidate prices, and two records of the
     same source disagree about them by tens of percent. What matters is not their
-    exact value but whether the decisions they produce are stable over that
-    spread, so sweep both and report where the first decision flips.
+    exact value but whether the *policy* they produce is stable over that
+    spread, so sweep both and compare the whole replayed walk -- selected prime,
+    splits and scouts -- against the shipped pair, over every instance in every
+    supplied record.
+
+    This is in-sample robustness. The instances are the ones the rule was
+    designed against, so it says the decisions are not balanced on a knife edge;
+    it does not say they generalize.
     """
-    print("\n### Sensitivity of the decision to the two cost ratios\n")
-    base = None
-    stable = []
+    saved = (SCOUT_ROUND_COST, SPLIT_COLUMN_COST)
+    base = _voi_outcome(records)
+    print("\n### Sensitivity of the policy to the two cost ratios\n")
+    stable = 0
+    total = 0
+    differing = []
     for scout in range(lo, hi + 1):
         for split in range(plo, phi + 1):
-            saved = (SCOUT_ROUND_COST, SPLIT_COLUMN_COST)
+            total += 1
             globals()["SCOUT_ROUND_COST"] = scout
             globals()["SPLIT_COLUMN_COST"] = split
-            vector = []
-            for inst in instances(record):
-                bound, n = inst["coeff_bound"], inst["degree"]
-                if bound is None:
-                    continue
-                head = inst["candidates"][0]
-                nxt = next(q for q in hot_path_primes() if q > head["prime"])
-                vector.append(scout_pays(
-                    bound, n,
-                    {"prime": head["prime"], "degrees": head["degrees"]},
-                    nxt, FUEL))
+            here = _voi_outcome(records)
             globals()["SCOUT_ROUND_COST"], globals()["SPLIT_COLUMN_COST"] = saved
-            if base is None:
-                base = vector
-            if vector == base:
-                stable.append((scout, split))
+            moved = {name for name in base
+                     if base[name][:3] != here.get(name, base[name])[:3]}
+            if not moved:
+                stable += 1
             else:
-                differing = sum(1 for a, b in zip(vector, base) if a != b)
-                print(f"* `scoutRoundCost = {scout}`, `splitColumnCost = "
-                      f"{split}`: {differing} decision(s) differ from the "
-                      f"shipped pair")
-    total = (hi - lo + 1) * (phi - plo + 1)
-    print(f"\n{len(stable)} of {total} ratio pairs over "
-          f"`scoutRoundCost` {lo}--{hi} and `splitColumnCost` {plo}--{phi} give "
-          f"the identical decision on every instance.")
+                regret = sum((here[n][3] or 0) - (base[n][3] or 0) for n in moved)
+                differing.append((scout, split, sorted(moved), regret))
+    print(f"{stable} of {total} ratio pairs over `scoutRoundCost` {lo}--{hi} and "
+          f"`splitColumnCost` {plo}--{phi} reproduce the shipped pair's walk on "
+          f"every one of the {len(base)} recorded instances.")
+    if differing:
+        print("\nThe pairs that do not, the rows that move, and what the move "
+              "costs against the shipped pair:\n")
+        print("| scoutRoundCost | splitColumnCost | rows that move | regret |")
+        print("|---:|---:|---|---:|")
+        for scout, split, moved, regret in differing:
+            names = ", ".join(f"`{n}`" for n in moved)
+            sign = "+" if regret > 0 else "-"
+            print(f"| {scout} | {split} | {names} | {sign}{fmt(abs(regret))} |")
 
 
 def print_agreement(record: dict, result: dict, policy: str) -> int:
@@ -554,6 +608,9 @@ def main() -> int:
     p.add_argument("record", type=Path,
                    help="a hexbz-phase-profile record with scout and "
                         "counterfactual sections")
+    p.add_argument("--also", type=Path, action="append", default=[],
+                   help="further records to include in the sensitivity sweep; "
+                        "may be repeated")
     p.add_argument("--agrees-with", default=None,
                    help="policy whose replayed selection must match the prime "
                         "the recorded binary selected (exit 1 if it does not)")
@@ -568,6 +625,7 @@ def main() -> int:
     args = p.parse_args()
 
     record = json.loads(args.record.read_text())
+    extra = [json.loads(path.read_text()) for path in args.also]
     result = replay(record)
     if not result["rows"]:
         raise SystemExit("no instance in this record carries both a scout and a "
@@ -576,7 +634,7 @@ def main() -> int:
     if args.margins:
         print_margins(record)
     if args.sensitivity:
-        print_sensitivity(record, 6, 20, 2, 9)
+        print_sensitivity([record] + extra, 6, 20, 2, 9)
     bad = 0
     if args.agrees_with is not None:
         bad = print_agreement(record, result, args.agrees_with)
