@@ -26,13 +26,13 @@ Running both binaries over the whole corpus in counterbalanced blocks finds
 
 | instance | prime | full splits | prime walk saved | before | after | ratio | block spread |
 |---|---|---:|---:|---:|---:|---:|---|
-| `cyclo_phi105_x_phi128` | 11 -> 11 | 1 -> 1 | 49.734 ms | 86.499 ms | 35.725 ms | 0.413x | 0.411x to 0.415x |
-| `cyclo_phi64_x_phi105` | 11 -> 11 | 1 -> 1 | 26.618 ms | 45.369 ms | 18.818 ms | 0.415x | 0.414x to 0.416x |
-| `sd4_x_phi17` | 11 -> 11 | 1 -> 1 | 3.806 ms | 6.764 ms | 2.918 ms | 0.431x | 0.427x to 0.436x |
-| `legendre_P18` | 41 -> 37 | 2 -> 1 | 1.294 ms | 2.176 ms | 1.313 ms | 0.604x | 0.598x to 0.610x |
-| `legendre_P20` | 43 -> 41 | 2 -> 1 | 1.847 ms | 2.809 ms | 1.900 ms | 0.677x | 0.667x to 0.686x |
-| `cyclo_phi24_x_phi35` | 17 -> 13 | 2 -> 2 | 3.534 ms | 9.010 ms | 6.750 ms | 0.749x | 0.742x to 0.756x |
-| `cyclo_phi275` | 13 -> 3 | 2 -> 1 | 163.958 ms | 812.736 ms | 646.342 ms | 0.795x | 0.793x to 0.797x |
+| `cyclo_phi105_x_phi128` | 11 -> 11 | 1 -> 1 | 50.200 ms | 86.481 ms | 35.409 ms | 0.409x | 0.408x to 0.410x |
+| `cyclo_phi64_x_phi105` | 11 -> 11 | 1 -> 1 | 27.119 ms | 45.381 ms | 18.805 ms | 0.414x | 0.410x to 0.418x |
+| `sd4_x_phi17` | 11 -> 11 | 1 -> 1 | 3.764 ms | 6.648 ms | 2.930 ms | 0.441x | 0.440x to 0.442x |
+| `legendre_P18` | 41 -> 37 | 2 -> 1 | 1.294 ms | 2.217 ms | 1.325 ms | 0.598x | 0.595x to 0.600x |
+| `legendre_P20` | 43 -> 41 | 2 -> 1 | 1.880 ms | 2.854 ms | 1.904 ms | 0.667x | 0.662x to 0.673x |
+| `cyclo_phi24_x_phi35` | 17 -> 13 | 2 -> 2 | 3.438 ms | 8.935 ms | 6.730 ms | 0.753x | 0.740x to 0.767x |
+| `cyclo_phi275` | 13 -> 3 | 2 -> 1 | 164.496 ms | 816.464 ms | 646.373 ms | 0.792x | 0.788x to 0.795x |
 
 Solved coverage is identical instance for instance -- the same 377 of 392 in
 every block of both arms -- no instance above 1.10x costs more than 2 ms, and the
@@ -40,7 +40,8 @@ combined-cactus cumulative curve improves at every rank in the elbow band. The
 mandatory `xpow105_minus1` control keeps its plan exactly, and with it an order
 of magnitude.
 
-**And on all seven changed rows the decision is confirmed by measurement.** For
+**And every one of the eight decisions the walk takes on those seven rows is
+confirmed by measurement.** For
 each, the best *attainable* net gain -- the incumbent's measured downstream less
 the cheapest downstream any candidate still reachable within the remaining fuel
 offers, less every scout and split needed to reach it -- is negative. The rule
@@ -49,7 +50,7 @@ could.
 
 ## Revision and protocol
 
-Source revision `803ffa18`, toolchain `leanprover/lean4:v4.33.0-rc1`,
+Source revision `6f446862`, rebased onto `747d36ed`, toolchain `leanprover/lean4:v4.33.0-rc1`,
 host `chungus2` (96 cores, x86_64, linux), clean worktree. Corpus
 `bench/corpus/hexbz-factor-corpus.jsonl` (392 instances), sha256
 `619913904240`.
@@ -57,9 +58,19 @@ host `chungus2` (96 cores, x86_64, linux), clean worktree. Corpus
 The host was shared with other measurement work throughout, and that is not a
 detail: a first attempt at the corpus comparison used one sweep pass per arm and
 reported the long Swinnerton-Dyer rows at 1.25x to 1.31x, which the paired driver
-put inside its control band at the same revision. Three of my own warm services
-and another session's were sharing the chosen core. Every timing below is
-therefore paired and counterbalanced.
+put inside its control band at the same revision. Every timing below is therefore
+paired and counterbalanced.
+
+The branch was also rebased onto `747d36ed`, which speeds up completely split
+finite-field inputs, part-way through. Every number here is measured after that
+rebase, with the before arm built from `747d36ed` itself, so the comparison
+isolates this change. Its effect is visible in the controls -- `wilkinson_40`'s
+prime walk is 0.92 ms where it was 4.1 ms before the rebase, in both arms.
+
+The durable sweep record is from a clean tree, which the freshness check
+requires. The diagnostic phase-profile records were written while report text was
+being edited; that touches no measured code, but their `git_dirty` flag is true
+and is not claimed otherwise.
 
 **Paired and counterbalanced.** Two service binaries built from this worktree,
 differing only in `HexBerlekampZassenhaus/Modular/PrimePlan.lean` and the
@@ -80,12 +91,12 @@ on 24 of 24 rows.
 
 ### Artifacts
 
-- `reports/bench-results/hexbz-factor-sweep-803ffa18-hex-chungus2.json`
-- `reports/bench-results/hexbz-prime-plan-corpus-paired-803ffa18-chungus2.json`
-- `reports/bench-results/hexbz-phase-profile-803ffa18-chungus2.json`
-- `reports/bench-results/hexbz-phase-profile-changed-rows-803ffa18-chungus2.json`
-- `reports/bench-results/hexbz-prime-plan-pricing-paired-803ffa18-chungus2.json`
-- `reports/bench-results/hexbz-prime-plan-pricing-paired-changed-803ffa18-chungus2.json`
+- `reports/bench-results/hexbz-factor-sweep-6f446862-hex-chungus2.json`
+- `reports/bench-results/hexbz-prime-plan-corpus-paired-6f446862-chungus2.json`
+- `reports/bench-results/hexbz-phase-profile-6f446862-chungus2.json`
+- `reports/bench-results/hexbz-phase-profile-changed-rows-6f446862-chungus2.json`
+- `reports/bench-results/hexbz-prime-plan-pricing-paired-6f446862-chungus2.json`
+- `reports/bench-results/hexbz-prime-plan-pricing-paired-changed-6f446862-chungus2.json`
 
 ## The rule
 
@@ -140,31 +151,37 @@ the committed per-candidate profile:
 
 | word operation | model units | median | range | samples |
 |---|---|---:|---|---:|
-| bounded scout | `d · bitLen p · n^2` | 20.57 ns | 1.37 to 78.10 | 144 |
-| Berlekamp split | `bitLen p · n^3` | 6.79 ns | 0.43 to 28.56 | 144 |
-| recombination candidate | `n^2 · W` per visited node | 1.59 ns | 0.24 to 31.57 | 52 |
+| bounded scout | `d · bitLen p · n^2` | 20.80 ns | 1.37 to 79.25 | 144 |
+| Berlekamp split | `bitLen p · n^3` | 6.87 ns | 0.17 to 28.68 | 144 |
+| recombination candidate | `n^2 · W` per visited node | 1.56 ns | 0.25 to 31.76 | 52 |
 
-That puts the ratios at 12.9 and 4.3. Three records of the same source taken the
-same day under different load put them at 10.2 and 5.2, 12.9 and 4.3, and 13.4
-and 4.4. These are medians of noisy, heterogeneous per-candidate prices, so the
+That puts the ratios at 13.3 and 4.4. Four records of the same source taken the
+same day under different load, and across a rebase onto a finite-field
+performance change, put them at 10.2 and 5.2, 12.9 and 4.3, 13.4 and 4.4, and
+13.3 and 4.4. These are medians of noisy, heterogeneous per-candidate prices, so the
 shipped `scoutRoundCost = 10` and `splitColumnCost = 5` are not precise and are
 not claimed to be.
 
 What is claimed instead is that the policy does not balance on them:
 
-> 116 of 120 ratio pairs over `scoutRoundCost` 6 to 20 and `splitColumnCost` 2 to
+> 113 of 120 ratio pairs over `scoutRoundCost` 6 to 20 and `splitColumnCost` 2 to
 > 9 reproduce the shipped pair's whole replayed walk -- selected prime, splits
-> and scouts -- on every one of the 29 recorded instances.
+> and scouts -- on every one of the 30 recorded instances.
 
 | scoutRoundCost | splitColumnCost | rows that move | regret |
 |---:|---:|---|---:|
-| 6 | 2 | `cyclo_phi24_x_phi35`, `cyclo_phi275` | +126.536 ms |
-| 7 | 2 | `cyclo_phi24_x_phi35`, `cyclo_phi275` | +126.536 ms |
-| 8 | 2 | `cyclo_phi24_x_phi35` | +2.273 ms |
-| 9 | 2 | `cyclo_phi24_x_phi35` | +2.273 ms |
+| 6 | 2 | `cyclo_phi24_x_phi35`, `cyclo_phi275`, `legendre_P20` | +127.470 ms |
+| 6 | 3 | `legendre_P20` | +903.267 us |
+| 7 | 2 | `cyclo_phi24_x_phi35`, `cyclo_phi275`, `legendre_P20` | +127.470 ms |
+| 8 | 2 | `cyclo_phi24_x_phi35`, `legendre_P20` | +3.215 ms |
+| 9 | 2 | `cyclo_phi24_x_phi35`, `legendre_P20` | +3.215 ms |
+| 10 | 2 | `legendre_P20` | +903.267 us |
+| 11 | 2 | `legendre_P20` | +903.267 us |
 
-All four exceptions sit at `splitColumnCost = 2`, less than half the smallest
-measured value, and all four are *worse* than the shipped pair. This is in-sample
+Every exception sits at `splitColumnCost` 2 or 3, at or below the smallest
+measured value of 4.3, and every one is *worse* than the shipped pair.
+`legendre_P20` is the tightest row in the corpus, 512 against 840. This is
+in-sample
 robustness: the instances are the ones the rule was designed against, so it says
 the decisions are not on a knife edge, not that they generalize.
 
@@ -192,13 +209,14 @@ the walk keeps scouting when scouting pays and stops when it stops paying.
 
 | instance | step | incumbent | w | max deg | fuel | next | left | next obs | scout? | own downstream | best attainable net | confirmed |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|:--:|---:|---:|:--:|
-| `cyclo_phi105_x_phi128` | 1 | 11 | 10 | 32 | 2 | 13 | 1024 | 4800 | no | 12.390ms | none | yes |
-| `sd4_x_phi17` | 1 | 11 | 9 | 16 | 2 | 13 | 256 | 1920 | no | 1.241ms | none | yes |
-| `legendre_P18` | 1 | 37 | 9 | 2 | 2 | 41 | 256 | 780 | no | 570.826us | none | yes |
-| `cyclo_phi24_x_phi35` | 1 | 11 | 12 | 3 | 2 | 13 | 2048 | 880 | yes | 15.356ms | 10.823ms at 13 | yes |
-| `cyclo_phi24_x_phi35` | 2 | 13 | 10 | 4 | 1 | 17 | 512 | 1000 | no | 1.935ms | none | yes |
-| `cyclo_phi275` | 1 | 3 | 10 | 20 | 2 | 5 | 2048 | 4200 | no | 610.721ms | none | yes |
-| `cyclo_phi64_x_phi105` | 1 | 11 | 10 | 16 | 2 | 13 | 1024 | 2880 | no | 7.508ms | none | yes |
+| `cyclo_phi105_x_phi128` | 1 | 11 | 10 | 32 | 2 | 13 | 1024 | 4800 | no | 12.359ms | none | yes |
+| `sd4_x_phi17` | 1 | 11 | 9 | 16 | 2 | 13 | 256 | 1920 | no | 1.268ms | none | yes |
+| `legendre_P18` | 1 | 37 | 9 | 2 | 2 | 41 | 256 | 780 | no | 579.979us | none | yes |
+| `legendre_P20` | 1 | 41 | 10 | 2 | 2 | 43 | 512 | 840 | no | 1.029ms | none | yes |
+| `cyclo_phi24_x_phi35` | 1 | 11 | 12 | 3 | 2 | 13 | 2048 | 880 | yes | 15.622ms | 10.994ms at 13 | yes |
+| `cyclo_phi24_x_phi35` | 2 | 13 | 10 | 4 | 1 | 17 | 512 | 1000 | no | 1.963ms | none | yes |
+| `cyclo_phi275` | 1 | 3 | 10 | 20 | 2 | 5 | 2048 | 4200 | no | 613.523ms | none | yes |
+| `cyclo_phi64_x_phi105` | 1 | 11 | 10 | 16 | 2 | 13 | 1024 | 2880 | no | 7.567ms | none | yes |
 
 The measurement confirms every decision above; 0 decision(s) have no priced alternative to compare against.
 
@@ -215,45 +233,45 @@ Now the same table over the issue #9127 representative set and its controls.
 
 | instance | step | incumbent | w | max deg | fuel | next | left | next obs | scout? | own downstream | best attainable net | confirmed |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|:--:|---:|---:|:--:|
-| `sd5` | 1 | 19 | 16 | 2 | 2 | 23 | 65536 | 1000 | yes | 64.451ms | none | **no** |
-| `sd5` | 2 | 23 | 16 | 2 | 1 | 29 | 65536 | 900 | yes | 63.446ms | none | **no** |
-| `sd5_shift1` | 1 | 19 | 16 | 2 | 2 | 23 | 65536 | 1000 | yes | 58.440ms | none | **no** |
-| `sd5_shift1` | 2 | 23 | 16 | 2 | 1 | 29 | 65536 | 900 | yes | 58.343ms | none | **no** |
-| `sd5_shift2` | 1 | 19 | 16 | 2 | 2 | 23 | 65536 | 1000 | yes | 59.269ms | none | **no** |
-| `sd5_shift2` | 2 | 23 | 16 | 2 | 1 | 29 | 65536 | 900 | yes | 59.210ms | none | **no** |
-| `sd4_x_sd4shift1` | 1 | 13 | 16 | 2 | 2 | 17 | 65536 | 1000 | yes | 10.466ms | none | **no** |
-| `sd4_x_sd4shift1` | 2 | 17 | 16 | 2 | 1 | 19 | 65536 | 900 | yes | 10.491ms | none | **no** |
-| `sd4_x_sd4shift1` | 3 | 17 | 16 | 2 | 1 | 23 | 65536 | 900 | yes | 10.491ms | none | **no** |
-| `sd4_x_sd4shift1` | 4 | 17 | 16 | 2 | 1 | 29 | 65536 | 900 | yes | 10.491ms | none | **no** |
-| `sd5_x_phi11` | 1 | 19 | 17 | 10 | 2 | 23 | 131072 | 2050 | yes | 137.301ms | none | **no** |
-| `sd5_x_phi11` | 2 | 19 | 17 | 10 | 1 | 29 | 131072 | 1550 | yes | 137.301ms | none | **no** |
-| `xpow48_minus1` | 1 | 5 | 20 | 4 | 2 | 7 | 262144 | 960 | yes | 5.253ms | none | **no** |
-| `xpow48_minus1` | 2 | 5 | 20 | 4 | 1 | 11 | 262144 | 1120 | yes | 5.253ms | none | **no** |
-| `xpow105_minus1` | 1 | 11 | 30 | 6 | 2 | 13 | 524288 | 2580 | yes | 411.915ms | 379.097ms at 17 | yes |
-| `xpow105_minus1` | 2 | 11 | 30 | 6 | 1 | 17 | 524288 | 2925 | yes | 411.915ms | 381.507ms at 17 | yes |
-| `xpow120_minus1` | 1 | 7 | 39 | 4 | 2 | 11 | 524288 | 2720 | yes | 127.407ms | none | **no** |
-| `xpow120_minus1` | 2 | 7 | 39 | 4 | 1 | 13 | 524288 | 2560 | yes | 127.407ms | none | **no** |
-| `cyclo_phi179` | 1 | 3 | 2 | 89 | 2 | 5 | 6 | 8010 | no | 28.131ms | -- | -- |
-| `cyclo_phi64_x_phi105` | 1 | 11 | 10 | 16 | 2 | 13 | 1024 | 2880 | no | 7.494ms | none | yes |
-| `cyclo_phi128_x_phi165` | 1 | 7 | 8 | 20 | 2 | 11 | 384 | 4480 | no | 39.508ms | -- | -- |
-| `cyclo_phi385` | 1 | 3 | 4 | 60 | 2 | 5 | 32 | 7200 | no | 85.379ms | -- | -- |
-| `wilkinson_40` | 1 | 41 | 40 | 1 | 2 | 43 | 1048576 | 1320 | yes | 7.131ms | none | **no** |
-| `wilkinson_40` | 2 | 41 | 40 | 1 | 1 | 47 | 1048576 | 1260 | yes | 7.131ms | none | **no** |
-| `wilkinson_48` | 1 | 53 | 48 | 1 | 2 | 59 | 1310720 | 1560 | yes | 13.095ms | none | **no** |
-| `wilkinson_48` | 2 | 59 | 48 | 1 | 1 | 61 | 1310720 | 1500 | yes | 13.168ms | none | **no** |
-| `wilkinson_56` | 1 | 59 | 56 | 1 | 2 | 61 | 1310720 | 1800 | yes | 16.908ms | none | **no** |
-| `wilkinson_56` | 2 | 61 | 56 | 1 | 1 | 67 | 1310720 | 2030 | yes | 16.838ms | none | **no** |
-| `chebyshev_T24` | 1 | 5 | 3 | 8 | 2 | 7 | 4 | 840 | no | 147.549us | -- | -- |
-| `chebyshev_U24` | 1 | 3 | 4 | 10 | 2 | 5 | 8 | 960 | no | 312.393us | -- | -- |
-| `legendre_P30` | 1 | 61 | 15 | 2 | 2 | 67 | 32768 | 1330 | yes | 29.020ms | 23.756ms at 67 | yes |
-| `legendre_P30` | 2 | 67 | 7 | 14 | 1 | 71 | 128 | 2030 | no | 1.209ms | none | yes |
-| `legendre_P38` | 1 | 79 | 3 | 36 | 2 | 83 | 8 | 6370 | no | 636.333us | -- | -- |
-| `cyclo_phi17` | 1 | 3 | 1 | 16 | 2 | 5 | 1 | 1200 | no | 8.704us | -- | -- |
-| `cyclo_phi41` | 1 | 3 | 5 | 8 | 2 | 5 | 16 | 1080 | no | 1.479ms | -- | -- |
-| `xpow24_minus1` | 1 | 5 | 14 | 2 | 2 | 7 | 8192 | 480 | yes | 943.479us | 76.294us at 7 | yes |
-| `xpow24_minus1` | 2 | 5 | 14 | 2 | 1 | 11 | 8192 | 560 | yes | 943.479us | none | **no** |
-| `randprod_10` | 1 | 7 | 4 | 7 | 2 | 11 | 8 | 960 | no | 194.469us | -- | -- |
-| `randprod_21` | 1 | 17 | 7 | 9 | 2 | 19 | 64 | 1500 | no | 366.263us | -- | -- |
+| `sd5` | 1 | 19 | 16 | 2 | 2 | 23 | 65536 | 1000 | yes | 64.665ms | none | **no** |
+| `sd5` | 2 | 23 | 16 | 2 | 1 | 29 | 65536 | 900 | yes | 64.305ms | none | **no** |
+| `sd5_shift1` | 1 | 19 | 16 | 2 | 2 | 23 | 65536 | 1000 | yes | 59.048ms | none | **no** |
+| `sd5_shift1` | 2 | 23 | 16 | 2 | 1 | 29 | 65536 | 900 | yes | 58.800ms | none | **no** |
+| `sd5_shift2` | 1 | 19 | 16 | 2 | 2 | 23 | 65536 | 1000 | yes | 60.066ms | none | **no** |
+| `sd5_shift2` | 2 | 23 | 16 | 2 | 1 | 29 | 65536 | 900 | yes | 60.495ms | none | **no** |
+| `sd4_x_sd4shift1` | 1 | 13 | 16 | 2 | 2 | 17 | 65536 | 1000 | yes | 10.811ms | none | **no** |
+| `sd4_x_sd4shift1` | 2 | 17 | 16 | 2 | 1 | 19 | 65536 | 900 | yes | 10.867ms | none | **no** |
+| `sd4_x_sd4shift1` | 3 | 17 | 16 | 2 | 1 | 23 | 65536 | 900 | yes | 10.867ms | none | **no** |
+| `sd4_x_sd4shift1` | 4 | 17 | 16 | 2 | 1 | 29 | 65536 | 900 | yes | 10.867ms | none | **no** |
+| `sd5_x_phi11` | 1 | 19 | 17 | 10 | 2 | 23 | 131072 | 2050 | yes | 138.538ms | none | **no** |
+| `sd5_x_phi11` | 2 | 19 | 17 | 10 | 1 | 29 | 131072 | 1550 | yes | 138.538ms | none | **no** |
+| `xpow48_minus1` | 1 | 5 | 20 | 4 | 2 | 7 | 262144 | 960 | yes | 5.247ms | none | **no** |
+| `xpow48_minus1` | 2 | 5 | 20 | 4 | 1 | 11 | 262144 | 1120 | yes | 5.247ms | none | **no** |
+| `xpow105_minus1` | 1 | 11 | 30 | 6 | 2 | 13 | 524288 | 2580 | yes | 409.051ms | 376.136ms at 17 | yes |
+| `xpow105_minus1` | 2 | 11 | 30 | 6 | 1 | 17 | 524288 | 2925 | yes | 409.051ms | 378.553ms at 17 | yes |
+| `xpow120_minus1` | 1 | 7 | 39 | 4 | 2 | 11 | 524288 | 2720 | yes | 128.680ms | none | **no** |
+| `xpow120_minus1` | 2 | 7 | 39 | 4 | 1 | 13 | 524288 | 2560 | yes | 128.680ms | none | **no** |
+| `cyclo_phi179` | 1 | 3 | 2 | 89 | 2 | 5 | 6 | 8010 | no | 28.511ms | -- | -- |
+| `cyclo_phi64_x_phi105` | 1 | 11 | 10 | 16 | 2 | 13 | 1024 | 2880 | no | 7.704ms | none | yes |
+| `cyclo_phi128_x_phi165` | 1 | 7 | 8 | 20 | 2 | 11 | 384 | 4480 | no | 39.786ms | -- | -- |
+| `cyclo_phi385` | 1 | 3 | 4 | 60 | 2 | 5 | 32 | 7200 | no | 85.512ms | -- | -- |
+| `wilkinson_40` | 1 | 41 | 40 | 1 | 2 | 43 | 1048576 | 1320 | yes | 7.146ms | none | **no** |
+| `wilkinson_40` | 2 | 41 | 40 | 1 | 1 | 47 | 1048576 | 1260 | yes | 7.146ms | none | **no** |
+| `wilkinson_48` | 1 | 53 | 48 | 1 | 2 | 59 | 1310720 | 1560 | yes | 13.122ms | none | **no** |
+| `wilkinson_48` | 2 | 59 | 48 | 1 | 1 | 61 | 1310720 | 1500 | yes | 13.146ms | none | **no** |
+| `wilkinson_56` | 1 | 59 | 56 | 1 | 2 | 61 | 1310720 | 1800 | yes | 16.717ms | none | **no** |
+| `wilkinson_56` | 2 | 61 | 56 | 1 | 1 | 67 | 1310720 | 2030 | yes | 16.685ms | none | **no** |
+| `chebyshev_T24` | 1 | 5 | 3 | 8 | 2 | 7 | 4 | 840 | no | 146.618us | -- | -- |
+| `chebyshev_U24` | 1 | 3 | 4 | 10 | 2 | 5 | 8 | 960 | no | 310.470us | -- | -- |
+| `legendre_P30` | 1 | 61 | 15 | 2 | 2 | 67 | 32768 | 1330 | yes | 29.881ms | 24.489ms at 67 | yes |
+| `legendre_P30` | 2 | 67 | 7 | 14 | 1 | 71 | 128 | 2030 | no | 1.211ms | none | yes |
+| `legendre_P38` | 1 | 79 | 3 | 36 | 2 | 83 | 8 | 6370 | no | 630.935us | -- | -- |
+| `cyclo_phi17` | 1 | 3 | 1 | 16 | 2 | 5 | 1 | 1200 | no | 8.744us | -- | -- |
+| `cyclo_phi41` | 1 | 3 | 5 | 8 | 2 | 5 | 16 | 1080 | no | 1.473ms | -- | -- |
+| `xpow24_minus1` | 1 | 5 | 14 | 2 | 2 | 7 | 8192 | 480 | yes | 941.556us | 69.574us at 7 | yes |
+| `xpow24_minus1` | 2 | 5 | 14 | 2 | 1 | 11 | 8192 | 560 | yes | 941.556us | none | **no** |
+| `randprod_10` | 1 | 7 | 4 | 7 | 2 | 11 | 8 | 960 | no | 201.738us | -- | -- |
+| `randprod_21` | 1 | 17 | 7 | 9 | 2 | 19 | 64 | 1500 | no | 370.790us | -- | -- |
 
 The measurement confirms all but 23 above; 10 decision(s) have no priced alternative to compare against.
 
@@ -307,52 +325,51 @@ Every policy replayed over the same measured per-candidate costs.
 
 | instance | first | fixed | minwidth | maxfield | scout | voi | reachable | oracle | primes (first/fixed/scout/voi/oracle) |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|---|
-| `sd5` | 66.907ms | 72.496ms | 72.848ms | 72.496ms | 70.563ms | 70.563ms | 68.556ms | 66.119ms | 19/29/29/29/23 |
-| `sd5_shift1` | 61.180ms | 67.097ms | 67.093ms | 67.097ms | 65.309ms | 65.309ms | 63.832ms | 61.125ms | 19/29/29/29/23 |
-| `sd5_shift2` | 62.040ms | 70.183ms | 70.195ms | 70.183ms | 67.666ms | 67.666ms | 65.457ms | 62.720ms | 19/29/29/29/23 |
-| `sd4_x_sd4shift1` | 12.295ms | 18.777ms | 18.480ms | 18.777ms | 17.332ms | 17.332ms | 12.295ms | 12.295ms | 13/29/29/29/13 |
-| `sd5_x_phi11` | 141.861ms | 144.997ms | 155.128ms | 144.997ms | 143.223ms | 143.223ms | 139.509ms | 135.001ms | 19/29/29/29/29 |
-| `xpow48_minus1` | 6.626ms | 11.973ms | 11.973ms | 11.973ms | 10.293ms | 10.293ms | 6.626ms | 6.626ms | 5/11/11/11/5 |
-| `xpow105_minus1` | 423.618ms | 50.554ms | 50.554ms | 50.554ms | 44.544ms | 44.544ms | 35.851ms | 24.160ms | 11/17/17/17/17 |
-| `xpow120_minus1` | 143.469ms | 189.134ms | 189.134ms | 693.051ms | 145.898ms | 145.898ms | 143.469ms | 143.469ms | 7/7/7/7/7 |
-| `cyclo_phi179` | 34.777ms | 34.777ms | 34.777ms | 34.777ms | 34.777ms | 34.777ms | 34.777ms | 34.777ms | 3/3/3/3/3 |
-| `cyclo_phi64_x_phi105` | 18.126ms | 48.325ms | 48.325ms | 75.978ms | 44.982ms | 18.126ms | 18.126ms | 18.126ms | 11/11/11/11/11 |
-| `cyclo_phi128_x_phi165` | 73.655ms | 73.655ms | 73.655ms | 73.655ms | 73.655ms | 73.655ms | 73.655ms | 73.655ms | 7/7/7/7/7 |
-| `cyclo_phi385` | 143.973ms | 143.973ms | 143.973ms | 143.973ms | 143.973ms | 143.973ms | 143.973ms | 143.973ms | 3/3/3/3/3 |
-| `wilkinson_40` | 8.874ms | 12.463ms | 12.403ms | 12.463ms | 10.886ms | 10.886ms | 10.591ms | 8.855ms | 41/47/47/47/43 |
-| `wilkinson_48` | 15.898ms | 21.626ms | 21.603ms | 21.626ms | 19.057ms | 19.057ms | 15.898ms | 15.898ms | 53/61/61/61/53 |
-| `wilkinson_56` | 21.006ms | 29.578ms | 29.408ms | 29.578ms | 25.840ms | 25.840ms | 25.057ms | 20.978ms | 59/67/67/67/61 |
-| `chebyshev_T24` | 358.382us | 358.382us | 358.382us | 358.382us | 358.382us | 358.382us | 358.382us | 358.382us | 5/5/5/5/5 |
-| `chebyshev_U24` | 510.678us | 510.678us | 510.678us | 510.678us | 510.678us | 510.678us | 510.678us | 510.678us | 3/3/3/3/3 |
-| `legendre_P30` | 31.875ms | 6.980ms | 6.980ms | 6.980ms | 8.137ms | 8.137ms | 5.050ms | 2.213ms | 61/71/67/67/71 |
-| `legendre_P38` | 3.545ms | 3.545ms | 3.545ms | 3.545ms | 3.545ms | 3.545ms | 3.545ms | 3.545ms | 79/79/79/79/79 |
-| `cyclo_phi17` | 63.915us | 63.915us | 63.915us | 63.915us | 63.915us | 63.915us | 63.915us | 63.915us | 3/3/3/3/3 |
-| `cyclo_phi41` | 1.951ms | 1.951ms | 1.951ms | 1.951ms | 1.951ms | 1.951ms | 1.951ms | 1.951ms | 3/3/3/3/3 |
-| `xpow24_minus1` | 1.301ms | 2.445ms | 2.445ms | 2.445ms | 2.199ms | 2.199ms | 1.196ms | 841.556us | 5/11/11/11/7 |
-| `randprod_10` | 546.230us | 546.230us | 546.230us | 546.230us | 546.230us | 546.230us | 546.230us | 546.230us | 7/7/7/7/7 |
-| `randprod_21` | 1.257ms | 1.257ms | 1.257ms | 1.257ms | 1.257ms | 1.257ms | 1.257ms | 1.257ms | 17/17/17/17/17 |
-| **aggregate** | **1.276s** | **1.007s** | **1.017s** | **1.539s** | **936.565ms** | **909.709ms** | **872.149ms** | **839.064ms** | |
-
+| `sd5` | 67.150ms | 73.200ms | 73.177ms | 73.200ms | 71.234ms | 71.234ms | 69.494ms | 67.027ms | 19/29/29/29/23 |
+| `sd5_shift1` | 61.775ms | 67.777ms | 67.732ms | 67.777ms | 65.982ms | 65.982ms | 64.296ms | 61.602ms | 19/29/29/29/23 |
+| `sd5_shift2` | 62.841ms | 71.609ms | 71.053ms | 71.609ms | 69.081ms | 69.081ms | 62.841ms | 62.841ms | 19/29/29/29/19 |
+| `sd4_x_sd4shift1` | 12.635ms | 19.067ms | 18.824ms | 19.067ms | 17.638ms | 17.638ms | 12.635ms | 12.635ms | 13/29/29/29/13 |
+| `sd5_x_phi11` | 143.094ms | 147.301ms | 156.463ms | 147.301ms | 145.548ms | 145.548ms | 141.754ms | 137.249ms | 19/29/29/29/29 |
+| `xpow48_minus1` | 6.656ms | 12.102ms | 12.102ms | 12.102ms | 10.385ms | 10.385ms | 6.656ms | 6.656ms | 5/11/11/11/5 |
+| `xpow105_minus1` | 421.003ms | 51.282ms | 51.282ms | 51.282ms | 44.890ms | 44.890ms | 36.173ms | 24.232ms | 11/17/17/17/17 |
+| `xpow120_minus1` | 144.903ms | 191.009ms | 191.009ms | 701.531ms | 147.298ms | 147.298ms | 144.903ms | 144.903ms | 7/7/7/7/7 |
+| `cyclo_phi179` | 35.108ms | 35.108ms | 35.108ms | 35.108ms | 35.108ms | 35.108ms | 35.108ms | 35.108ms | 3/3/3/3/3 |
+| `cyclo_phi64_x_phi105` | 18.315ms | 48.327ms | 48.327ms | 76.623ms | 45.318ms | 18.315ms | 18.315ms | 18.315ms | 11/11/11/11/11 |
+| `cyclo_phi128_x_phi165` | 74.864ms | 74.864ms | 74.864ms | 74.864ms | 74.864ms | 74.864ms | 74.864ms | 74.864ms | 7/7/7/7/7 |
+| `cyclo_phi385` | 144.427ms | 144.427ms | 144.427ms | 144.427ms | 144.427ms | 144.427ms | 144.427ms | 144.427ms | 3/3/3/3/3 |
+| `wilkinson_40` | 7.245ms | 7.521ms | 7.479ms | 7.521ms | 7.584ms | 7.584ms | 7.346ms | 7.254ms | 41/47/47/47/43 |
+| `wilkinson_48` | 13.284ms | 13.530ms | 13.673ms | 13.530ms | 13.616ms | 13.616ms | 13.374ms | 13.233ms | 53/61/61/61/61 |
+| `wilkinson_56` | 16.925ms | 17.573ms | 17.396ms | 17.573ms | 17.733ms | 17.733ms | 17.111ms | 16.923ms | 59/67/67/67/61 |
+| `chebyshev_T24` | 358.302us | 358.302us | 358.302us | 358.302us | 358.302us | 358.302us | 358.302us | 358.302us | 5/5/5/5/5 |
+| `chebyshev_U24` | 514.662us | 514.662us | 514.662us | 514.662us | 514.662us | 514.662us | 514.662us | 514.662us | 3/3/3/3/3 |
+| `legendre_P30` | 32.890ms | 7.262ms | 7.262ms | 7.262ms | 8.421ms | 8.421ms | 5.256ms | 2.265ms | 61/71/67/67/71 |
+| `legendre_P38` | 3.556ms | 3.556ms | 3.556ms | 3.556ms | 3.556ms | 3.556ms | 3.556ms | 3.556ms | 79/79/79/79/79 |
+| `cyclo_phi17` | 62.885us | 62.885us | 62.885us | 62.885us | 62.885us | 62.885us | 62.885us | 62.885us | 3/3/3/3/3 |
+| `cyclo_phi41` | 1.939ms | 1.939ms | 1.939ms | 1.939ms | 1.939ms | 1.939ms | 1.939ms | 1.939ms | 3/3/3/3/3 |
+| `xpow24_minus1` | 1.302ms | 2.474ms | 2.474ms | 2.474ms | 2.219ms | 2.219ms | 1.204ms | 846.836us | 5/11/11/11/7 |
+| `randprod_10` | 553.549us | 553.549us | 553.549us | 553.549us | 553.549us | 553.549us | 553.549us | 553.549us | 7/7/7/7/7 |
+| `randprod_21` | 1.261ms | 1.261ms | 1.261ms | 1.261ms | 1.261ms | 1.261ms | 1.261ms | 1.261ms | 17/17/17/17/17 |
+| **aggregate** | **1.273s** | **992.678ms** | **1.001s** | **1.531s** | **929.590ms** | **902.587ms** | **864.000ms** | **838.625ms** | |
 
 The four policies the issue asks to be controlled against all fail, each in its
 own way:
 
-* **first** -- stopping at the first acceptable prime is unusable at 1.276 s.
-  `xpow105_minus1` alone is 416.045 ms of that against 44.231 ms, and
-  `legendre_P30` is 32.228 ms against 8.104 ms. This is why a scout-nothing rule
+* **first** -- stopping at the first acceptable prime is unusable at 1.273 s.
+  `xpow105_minus1` alone is 415.564 ms of that against 43.949 ms, and
+  `legendre_P30` is 31.867 ms against 8.045 ms. This is why a scout-nothing rule
   is not on the table, and why `xpow105_minus1` is a mandatory control.
 * **minwidth** -- a degree cost model on its own is worse than the score at
-  1.017 s. `sd5_x_phi11` is where it shows: prime 23 is widest, and prime 29 wins
+  1.001 s. `sd5_x_phi11` is where it shows: prime 23 is widest, and prime 29 wins
   only on the tie breaks the score already carries.
 * **maxfield** -- a field-size cost model on its own is the worst of all at
-  1.539 s. It picks the largest prime for its smaller Hensel precision and pays
+  1.531 s. It picks the largest prime for its smaller Hensel precision and pays
   in recombination: `xpow120_minus1` goes from 146 ms to 697 ms.
-* **fixed** -- the pre-scout rule, 1.007 s. The scout replaced it in #9128.
+* **fixed** -- the pre-scout rule, 992.678 ms. The scout replaced it in #9128.
 
-On this 24-instance set `voi` saves 26.856 ms of 936.565 ms and closes 41.7% of
-the distance from `scout` to the `reachable` floor. Over the six changed rows the
-separate record covers, it saves 254.692 ms of 954.146 ms and closes 99.9% of that
-distance -- there is essentially nothing left on those rows for a discovering
+On this 24-instance set `voi` saves 27.003 ms of 929.590 ms and closes 41.2% of
+the distance from `scout` to the `reachable` floor. Over the seven changed rows
+the separate record covers, it saves 255.350 ms of 960.779 ms and closes 99.7% of
+that distance -- there is essentially nothing left on those rows for a discovering
 policy to take. The `reachable` and `oracle` floors are unreachable by
 construction: neither ever scouts, and the oracle names the winner without paying
 to discover it.
@@ -369,23 +386,24 @@ see it.
 
 | instance | prime before | prime after | full splits | prime walk before | prime walk after | walk saved | total before | total after | ratio |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
-| `cyclo_phi105_x_phi128` | 11 | 11 | 1 -> 1 | 71.735 ms | 22.001 ms | 49.734 ms | 85.521 ms | 35.266 ms | 0.413x |
-| `cyclo_phi64_x_phi105` | 11 | 11 | 1 -> 1 | 37.321 ms | 10.649 ms | 26.618 ms | 45.262 ms | 18.781 ms | 0.416x |
-| `sd4_x_phi17` | 11 | 11 | 1 -> 1 | 5.317 ms | 1.511 ms | 3.806 ms | 6.628 ms | 2.905 ms | 0.438x |
-| `legendre_P18` | 41 | 37 | 2 -> 1 | 1.992 ms | 692.436 us | 1.294 ms | 2.181 ms | 1.308 ms | 0.596x |
-| `cyclo_phi24_x_phi35` | 17 | 13 | 2 -> 2 | 8.107 ms | 4.627 ms | 3.534 ms | 8.884 ms | 6.717 ms | 0.754x |
-| `cyclo_phi275` | 13 | 3 | 2 -> 1 | 190.390 ms | 26.406 ms | 163.958 ms | 803.086 ms | 636.467 ms | 0.796x |
-| `sd4_x_sd4shift1` | 29 | 29 | 2 -> 2 | 6.865 ms | 6.855 ms | 47.075 us | 17.617 ms | 17.761 ms | 1.012x |
-| `xpow105_minus1` | 17 | 17 | 2 -> 2 | 29.299 ms | 29.271 ms | -26.400 us | 44.538 ms | 44.678 ms | 1.004x |
-| `cyclo_phi179` | 3 | 3 | 1 -> 1 | 6.466 ms | 6.554 ms | -88.201 us | 34.899 ms | 35.148 ms | 1.010x |
-| `legendre_P30` | 67 | 67 | 2 -> 2 | 7.101 ms | 7.046 ms | 55.722 us | 8.502 ms | 8.485 ms | 1.000x |
-| `wilkinson_40` | 47 | 47 | 2 -> 2 | 4.122 ms | 4.251 ms | -128.450 us | 12.318 ms | 12.626 ms | 1.028x |
-| `randprod_21` | 17 | 17 | 1 -> 1 | 939.843 us | 952.968 us | -8.448 us | 1.393 ms | 1.429 ms | 1.025x |
-| **aggregate** | | | | | | 248.795 ms | 1.071 s | 821.570 ms | **0.7672x** |
+| `cyclo_phi105_x_phi128` | 11 | 11 | 1 -> 1 | 72.107 ms | 21.834 ms | 50.200 ms | 86.294 ms | 35.342 ms | 0.409x |
+| `cyclo_phi64_x_phi105` | 11 | 11 | 1 -> 1 | 37.811 ms | 10.674 ms | 27.119 ms | 45.424 ms | 18.611 ms | 0.409x |
+| `sd4_x_phi17` | 11 | 11 | 1 -> 1 | 5.296 ms | 1.512 ms | 3.764 ms | 6.638 ms | 2.898 ms | 0.438x |
+| `legendre_P18` | 41 | 37 | 2 -> 1 | 1.995 ms | 696.153 us | 1.294 ms | 2.185 ms | 1.311 ms | 0.601x |
+| `legendre_P20` | 43 | 41 | 2 -> 1 | 2.726 ms | 836.080 us | 1.880 ms | 2.815 ms | 1.892 ms | 0.668x |
+| `cyclo_phi24_x_phi35` | 17 | 13 | 2 -> 2 | 8.076 ms | 4.608 ms | 3.438 ms | 9.001 ms | 6.684 ms | 0.747x |
+| `cyclo_phi275` | 13 | 3 | 2 -> 1 | 190.950 ms | 26.564 ms | 164.496 ms | 814.394 ms | 639.391 ms | 0.783x |
+| `sd4_x_sd4shift1` | 29 | 29 | 2 -> 2 | 6.872 ms | 6.945 ms | -92.912 us | 17.812 ms | 17.737 ms | 1.000x |
+| `xpow105_minus1` | 17 | 17 | 2 -> 2 | 29.372 ms | 29.403 ms | -38.657 us | 44.958 ms | 44.834 ms | 0.997x |
+| `cyclo_phi179` | 3 | 3 | 1 -> 1 | 6.441 ms | 6.621 ms | -196.962 us | 35.266 ms | 34.860 ms | 0.986x |
+| `legendre_P30` | 67 | 67 | 2 -> 2 | 7.090 ms | 7.097 ms | -35.623 us | 8.572 ms | 8.431 ms | 0.985x |
+| `wilkinson_40` | 47 | 47 | 2 -> 2 | 922.778 us | 1.007 ms | -86.028 us | 9.135 ms | 9.164 ms | 1.002x |
+| `randprod_21` | 17 | 17 | 1 -> 1 | 938.496 us | 950.354 us | -8.332 us | 1.403 ms | 1.406 ms | 1.003x |
+| **aggregate** | | | | | | 251.733 ms | 1.084 s | 822.560 ms | **0.7589x** |
 
-Load control (6 instances whose plan does not change, named by --changed): 1.000x to 1.028x.
+Load control (6 instances whose plan does not change, named by --changed): 0.985x to 1.003x.
 
-`cyclo_phi275` is the largest absolute win: 163.958 ms of prime walk, because the
+`cyclo_phi275` is the largest absolute win: 164.496 ms of prime walk, because the
 fixed rule scouted two further primes at 65 ms and 45 ms apiece and then split one
 of them, all to select a prime whose downstream is 2 ms *worse* than the one it
 started with.
@@ -399,38 +417,39 @@ changed row. This is the table the acceptance threshold is read from.
 
 | instance | prime before | prime after | full splits | prime walk before | prime walk after | walk saved | total before | total after | ratio |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
-| `sd5` | 29 | 29 | 2 -> 2 | 6.622 ms | 6.729 ms | -49.729 us | 68.294 ms | 68.337 ms | 1.001x |
-| `sd5_shift1` | 29 | 29 | 2 -> 2 | 7.065 ms | 7.149 ms | -72.878 us | 63.171 ms | 63.567 ms | 1.006x |
-| `sd5_shift2` | 29 | 29 | 2 -> 2 | 8.642 ms | 8.703 ms | -70.500 us | 66.944 ms | 67.055 ms | 1.003x |
-| `sd4_x_sd4shift1` | 29 | 29 | 2 -> 2 | 6.817 ms | 6.859 ms | -17.320 us | 17.628 ms | 17.909 ms | 1.013x |
-| `sd5_x_phi11` | 29 | 29 | 2 -> 2 | 16.261 ms | 16.489 ms | -329.634 us | 139.756 ms | 138.559 ms | 0.991x |
-| `xpow48_minus1` | 11 | 11 | 2 -> 2 | 3.917 ms | 3.965 ms | -48.171 us | 10.450 ms | 10.452 ms | 1.012x |
-| `xpow105_minus1` | 17 | 17 | 2 -> 2 | 29.249 ms | 29.386 ms | -166.242 us | 44.119 ms | 44.883 ms | 1.017x |
-| `xpow120_minus1` | 7 | 7 | 1 -> 1 | 18.635 ms | 18.767 ms | -132.411 us | 146.400 ms | 148.638 ms | 1.016x |
-| `cyclo_phi179` | 3 | 3 | 1 -> 1 | 6.554 ms | 6.639 ms | -85.502 us | 35.022 ms | 34.932 ms | 0.999x |
-| `cyclo_phi64_x_phi105` | 11 | 11 | 1 -> 1 | 37.520 ms | 10.773 ms | 26.777 ms | 45.066 ms | 18.825 ms | 0.418x |
-| `cyclo_phi128_x_phi165` | 7 | 7 | 1 -> 1 | 34.887 ms | 35.093 ms | -206.120 us | 74.987 ms | 75.717 ms | 1.012x |
-| `cyclo_phi385` | 3 | 3 | 1 -> 1 | 58.878 ms | 59.003 ms | -347.190 us | 144.229 ms | 144.712 ms | 1.007x |
-| `wilkinson_40` | 47 | 47 | 2 -> 2 | 4.125 ms | 4.339 ms | -193.547 us | 12.427 ms | 12.756 ms | 1.028x |
-| `wilkinson_48` | 61 | 61 | 2 -> 2 | 6.559 ms | 6.829 ms | -285.443 us | 21.400 ms | 22.012 ms | 1.029x |
-| `wilkinson_56` | 67 | 67 | 2 -> 2 | 9.649 ms | 9.977 ms | -315.297 us | 28.735 ms | 29.702 ms | 1.034x |
-| `chebyshev_T24` | 5 | 5 | 1 -> 1 | 218.539 us | 219.480 us | -3.209 us | 436.122 us | 449.306 us | 1.032x |
-| `chebyshev_U24` | 3 | 3 | 1 -> 1 | 201.594 us | 208.124 us | -6.500 us | 600.790 us | 597.000 us | 0.999x |
-| `legendre_P30` | 67 | 67 | 2 -> 2 | 7.128 ms | 7.109 ms | 61.952 us | 8.408 ms | 8.506 ms | 1.010x |
-| `legendre_P38` | 79 | 79 | 1 -> 1 | 2.949 ms | 3.055 ms | -105.436 us | 3.789 ms | 3.811 ms | 1.001x |
-| `cyclo_phi17` | 3 | 3 | 1 -> 1 | 57.360 us | 60.656 us | -3.245 us | 105.222 us | 108.681 us | 1.022x |
-| `cyclo_phi41` | 3 | 3 | 1 -> 1 | 473.041 us | 482.640 us | -11.076 us | 1.984 ms | 2.035 ms | 1.028x |
-| `xpow24_minus1` | 11 | 11 | 2 -> 2 | 1.088 ms | 1.106 ms | -15.573 us | 2.316 ms | 2.323 ms | 1.004x |
-| `randprod_10` | 7 | 7 | 1 -> 1 | 353.880 us | 361.656 us | -7.737 us | 631.626 us | 636.168 us | 1.018x |
-| `randprod_21` | 17 | 17 | 1 -> 1 | 938.041 us | 946.688 us | -15.352 us | 1.408 ms | 1.431 ms | 1.021x |
-| **aggregate** | | | | | | 24.351 ms | 938.307 ms | 917.954 ms | **0.9783x** |
+| `sd5` | 29 | 29 | 2 -> 2 | 6.574 ms | 6.701 ms | -128.836 us | 68.709 ms | 68.262 ms | 0.993x |
+| `sd5_shift1` | 29 | 29 | 2 -> 2 | 7.062 ms | 7.097 ms | -55.246 us | 63.289 ms | 63.129 ms | 0.997x |
+| `sd5_shift2` | 29 | 29 | 2 -> 2 | 8.621 ms | 8.730 ms | -102.543 us | 66.706 ms | 66.742 ms | 0.999x |
+| `sd4_x_sd4shift1` | 29 | 29 | 2 -> 2 | 6.810 ms | 6.897 ms | -84.355 us | 17.666 ms | 17.813 ms | 1.007x |
+| `sd5_x_phi11` | 29 | 29 | 2 -> 2 | 16.279 ms | 16.412 ms | -72.817 us | 138.434 ms | 139.078 ms | 1.004x |
+| `xpow48_minus1` | 11 | 11 | 2 -> 2 | 3.972 ms | 3.952 ms | 7.436 us | 10.390 ms | 10.440 ms | 1.005x |
+| `xpow105_minus1` | 17 | 17 | 2 -> 2 | 29.549 ms | 29.433 ms | 121.611 us | 44.458 ms | 45.066 ms | 1.014x |
+| `xpow120_minus1` | 7 | 7 | 1 -> 1 | 18.688 ms | 18.656 ms | 37.406 us | 145.838 ms | 147.145 ms | 1.008x |
+| `cyclo_phi179` | 3 | 3 | 1 -> 1 | 6.469 ms | 6.574 ms | -104.049 us | 34.640 ms | 34.972 ms | 1.011x |
+| `cyclo_phi64_x_phi105` | 11 | 11 | 1 -> 1 | 37.475 ms | 10.647 ms | 26.827 ms | 45.177 ms | 18.841 ms | 0.416x |
+| `cyclo_phi128_x_phi165` | 7 | 7 | 1 -> 1 | 34.400 ms | 34.857 ms | -456.532 us | 75.179 ms | 75.499 ms | 1.007x |
+| `cyclo_phi385` | 3 | 3 | 1 -> 1 | 58.601 ms | 58.880 ms | -364.070 us | 142.849 ms | 143.775 ms | 1.008x |
+| `wilkinson_40` | 47 | 47 | 2 -> 2 | 921.191 us | 1.009 ms | -90.430 us | 9.080 ms | 9.176 ms | 1.012x |
+| `wilkinson_48` | 61 | 61 | 2 -> 2 | 1.428 ms | 1.546 ms | -116.573 us | 15.883 ms | 16.243 ms | 1.019x |
+| `wilkinson_56` | 67 | 67 | 2 -> 2 | 1.870 ms | 2.003 ms | -133.848 us | 20.660 ms | 21.045 ms | 1.019x |
+| `chebyshev_T24` | 5 | 5 | 1 -> 1 | 213.000 us | 218.799 us | -5.098 us | 431.775 us | 444.800 us | 1.029x |
+| `chebyshev_U24` | 3 | 3 | 1 -> 1 | 201.508 us | 207.608 us | -7.016 us | 584.091 us | 595.273 us | 1.017x |
+| `legendre_P30` | 67 | 67 | 2 -> 2 | 6.975 ms | 7.115 ms | -150.768 us | 8.378 ms | 8.612 ms | 1.024x |
+| `legendre_P38` | 79 | 79 | 1 -> 1 | 3.009 ms | 3.030 ms | -21.832 us | 3.789 ms | 3.875 ms | 1.024x |
+| `cyclo_phi17` | 3 | 3 | 1 -> 1 | 57.154 us | 60.275 us | -3.120 us | 102.472 us | 107.325 us | 1.054x |
+| `cyclo_phi41` | 3 | 3 | 1 -> 1 | 471.870 us | 479.881 us | -5.734 us | 1.984 ms | 2.003 ms | 1.012x |
+| `xpow24_minus1` | 11 | 11 | 2 -> 2 | 1.090 ms | 1.111 ms | -20.660 us | 2.288 ms | 2.325 ms | 1.013x |
+| `randprod_10` | 7 | 7 | 1 -> 1 | 354.611 us | 362.182 us | -7.121 us | 625.212 us | 632.763 us | 1.012x |
+| `randprod_21` | 17 | 17 | 1 -> 1 | 939.543 us | 956.298 us | -14.101 us | 1.401 ms | 1.417 ms | 1.019x |
+| **aggregate** | | | | | | 25.049 ms | 918.539 ms | 897.239 ms | **0.9768x** |
 
-Load control (23 instances whose plan does not change, named by --changed): 0.991x to 1.034x.
+Load control (23 instances whose plan does not change, named by --changed): 0.993x to 1.054x.
 
-Both control bands sit slightly above 1.0 (1.000x to 1.028x and 0.991x to
-1.034x, medians near 1.01x). Counterbalancing removes ordering as the
-explanation, so a small real cost on rows the change does not help cannot be
-ruled out; it is at most a few percent and every changed row is 0.41x to 0.80x.
+The changed-row control band straddles 1.0 (0.985x to 1.003x); the
+representative one sits slightly above (0.993x to 1.054x). Counterbalancing
+removes ordering as the explanation, so a small real cost on rows the change
+does not help cannot be ruled out from these numbers; it is at most a few
+percent, and every changed row is 0.41x to 0.79x.
 
 ## Full corpus
 
@@ -444,16 +463,14 @@ cutoff, early termination disabled, per-instance medians of within-block ratios.
 | instances lost | none |
 | instances gained | none |
 | instances priced in every block | 377 |
-| median per-row ratio | 1.0349x |
-| summed medians | 17.852 s to 17.389 s (0.9741x) |
+| median per-row ratio | 1.0202x |
+| summed medians | 17.789 s to 17.502 s (0.9839x) |
 | instances above 1.10x costing over 2 ms | none |
 
 Coverage is a set difference, not a count: it is the same 377 instances in both
-arms. The median row is 3.5% slower while the aggregate improves, and the rows
-carrying that median are all under 2 ms, where a row's time is dominated by
-protocol and startup rather than by planning. The one instance above 1.05x costing
-more than 1 ms is `laguerre_L22`, 0.968 ms to 1.017 ms, 1.050x with a block spread
-of 1.030x to 1.071x.
+arms. The median row is 2.0% slower while the aggregate improves, and the rows carrying
+that median are all under 2 ms, where a row's time is dominated by protocol and
+startup rather than by planning.
 
 ### Combined-cactus elbow
 
@@ -463,18 +480,19 @@ in every block.
 
 | rank | cumulative before | cumulative after | ratio |
 |---:|---:|---:|---:|
-| 118 | 84.4 ms | 80.9 ms | 0.9582x |
-| 122 | 114.7 ms | 108.4 ms | 0.9447x |
-| 126 | 173.6 ms | 167.2 ms | 0.9634x |
-| 130 | 290.8 ms | 268.0 ms | 0.9217x |
-| 134 | 504.2 ms | 473.0 ms | 0.9381x |
-| 138 | 857.4 ms | 827.1 ms | 0.9646x |
-| 140 | 1150.7 ms | 1119.0 ms | 0.9724x |
-| 142 | 2478.5 ms | 2427.5 ms | 0.9794x |
-| 144 | 8553.4 ms | 8422.8 ms | 0.9847x |
-| 145 | 16710.7 ms | 16461.2 ms | 0.9851x |
+| 118 | 83.9 ms | 80.8 ms | 0.9626x |
+| 122 | 113.2 ms | 106.8 ms | 0.9442x |
+| 126 | 166.8 ms | 160.9 ms | 0.9646x |
+| 130 | 272.1 ms | 250.1 ms | 0.9190x |
+| 134 | 486.9 ms | 455.1 ms | 0.9348x |
+| 138 | 840.4 ms | 811.0 ms | 0.9650x |
+| 140 | 1133.3 ms | 1102.2 ms | 0.9725x |
+| 142 | 2450.3 ms | 2408.3 ms | 0.9829x |
+| 144 | 8434.1 ms | 8373.1 ms | 0.9928x |
+| 145 | 16642.5 ms | 16574.6 ms | 0.9959x |
 
-The elbow improves at every rank, by 0.922x to 0.985x, with coverage unchanged.
+The elbow improves at every rank, by 0.919x to 0.996x, with coverage unchanged
+at 145 of 160 in every block of both arms.
 
 ## Proof surface
 
@@ -508,22 +526,21 @@ subset count is the complete head-forced one at width 10 and the budget at width
 ## Acceptance criteria
 
 **Reduces prime-walk time by at least 20% and total time by at least 10% on
-`cyclo_phi64_x_phi105`.** Prime walk 37.321 ms to 10.649 ms, **-71.5%**. Total
-45.262 ms to 18.781 ms, **-58.5%**. Paired, four counterbalanced blocks, against
-a load control of 1.000x to 1.028x.
+`cyclo_phi64_x_phi105`.** Prime walk 37.811 ms to 10.674 ms, **-71.8%**. Total
+45.424 ms to 18.611 ms, **-59.0%**. Paired, four counterbalanced blocks, against
+a load control of 0.985x to 1.003x.
 
 **Preserves the order-of-magnitude scouting benefit on `xpow105_minus1`.** It
-selects prime 17 at width 14 with two splits, exactly as before, at 1.004x paired.
-Its first prime is worth 389 ms of attainable saving for a 17 ms observation, and
-the `first` control prices what losing the scout would cost: 416.045 ms against
-44.231 ms, 9.4x.
+selects prime 17 at width 14 with two splits, exactly as before, at 0.997x paired.
+The `first` control prices what losing the scout would cost: 415.564 ms against
+43.949 ms, 9.5x.
 
 **Does not materially regress the full corpus or reduce solved coverage.** The
 same 377 of 392 instances in both arms of every block, none lost or gained; no
-instance above 1.10x costs more than 2 ms; summed medians 0.9741x.
+instance above 1.10x costs more than 2 ms; summed medians 0.9839x.
 
 **Improves, or at least does not regress, the combined-cactus elbow.** The
-cumulative curve improves at every rank from 118 to 145, by 0.922x to 0.985x,
+cumulative curve improves at every rank from 118 to 145, by 0.919x to 0.996x,
 with coverage unchanged at 145 of 160.
 
 **Passes a fresh all-systems performance sweep and regenerates every cactus plot
@@ -590,12 +607,12 @@ CPU="$(python3 scripts/bench/idle_core.py)"
 python3 scripts/bench/prime_plan_paired.py \
   --before /tmp/svc.before --after /tmp/svc.after --rounds 4 --cpu "$CPU" \
   --changed cyclo_phi64_x_phi105 \
-  --output reports/bench-results/hexbz-prime-plan-pricing-paired-803ffa18-chungus2.json
+  --output reports/bench-results/hexbz-prime-plan-pricing-paired-6f446862-chungus2.json
 python3 scripts/bench/prime_plan_paired.py \
   --before /tmp/svc.before --after /tmp/svc.after --rounds 4 --cpu "$CPU" \
   --names cyclo_phi105_x_phi128,cyclo_phi64_x_phi105,sd4_x_phi17,legendre_P18,cyclo_phi24_x_phi35,cyclo_phi275,sd4_x_sd4shift1,xpow105_minus1,cyclo_phi179,legendre_P30,wilkinson_40,randprod_21 \
   --changed cyclo_phi105_x_phi128,cyclo_phi64_x_phi105,sd4_x_phi17,legendre_P18,cyclo_phi24_x_phi35,cyclo_phi275 \
-  --output reports/bench-results/hexbz-prime-plan-pricing-paired-changed-803ffa18-chungus2.json
+  --output reports/bench-results/hexbz-prime-plan-pricing-paired-changed-6f446862-chungus2.json
 
 # The durable cross-system record needs a clean tree: the freshness check
 # rejects a record whose `git_dirty` is true. Write outside the repo, install
@@ -606,7 +623,7 @@ taskset -c "$CPU" python3 scripts/bench/factor_sweep.py \
 # The corpus before/after comparison, counterbalanced.
 python3 scripts/bench/factor_sweep_paired.py \
   --before /tmp/svc.before --after /tmp/svc.after --blocks 2 --cpu "$CPU" \
-  --output reports/bench-results/hexbz-prime-plan-corpus-paired-803ffa18-chungus2.json
+  --output reports/bench-results/hexbz-prime-plan-corpus-paired-6f446862-chungus2.json
 
 # Per-candidate scout prices, counterfactual downstream, kernel attribution.
 python3 scripts/bench/factor_phase_profile.py --cpu "$CPU" --output /tmp/profile.json
@@ -618,8 +635,8 @@ python3 scripts/bench/factor_phase_profile.py --cpu "$CPU" --no-kernel \
 # Offline policy replay, per-decision margins, ratio sensitivity over both
 # records, and the replay's own check against the measured binary.
 python3 scripts/bench/prime_policy_replay.py \
-  reports/bench-results/hexbz-phase-profile-803ffa18-chungus2.json \
-  --also reports/bench-results/hexbz-phase-profile-changed-rows-803ffa18-chungus2.json \
+  reports/bench-results/hexbz-phase-profile-6f446862-chungus2.json \
+  --also reports/bench-results/hexbz-phase-profile-changed-rows-6f446862-chungus2.json \
   --margins --sensitivity --agrees-with voi
 
 # Rank tables and figures, and the byte-for-byte check CI runs.

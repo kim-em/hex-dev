@@ -1,14 +1,14 @@
 {
   "config": {
-    "after_sha256": "47df8256143afeeff49b9a621b5e65655174a255c26d612ce07a7987c93e7e30",
-    "before_sha256": "b7845bfd9af6cb961444532cffedfb73d22ea241ed05844008346d83ee20474e",
+    "after_sha256": "d38ed802ce7a0692690c1b1b5f25939ee32598af5e071eb804428563c194bec4",
+    "before_sha256": "4d96e6f0ef2d47dc903c8ec3ac578478317c73b28286c0f70d5a04b7356c7e73",
     "block_orders": [
       "AB",
       "BA",
       "AB",
       "BA"
     ],
-    "cpu": 5,
+    "cpu": 1,
     "names": [
       "sd5",
       "sd5_shift1",
@@ -42,16 +42,16 @@
     "cpu_cores": 96,
     "cpu_model": null,
     "exe_name": "hexbz_factor_service",
-    "git_commit": "1525a4d2a07c699ea035979c18680e9ebedd6ab7",
-    "git_dirty": false,
+    "git_commit": "6f446862c728dba605742a9ad0721a59b618213e",
+    "git_dirty": true,
     "hostname": "chungus2",
     "lean_bench_version": null,
     "lean_toolchain": "leanprover/lean4:v4.33.0-rc1",
     "lean_version": null,
     "os": "linux",
     "platform_target": null,
-    "timestamp_iso": "2026-08-04T07:30:41Z",
-    "timestamp_unix_ms": 1785828641403
+    "timestamp_iso": "2026-08-04T08:57:24Z",
+    "timestamp_unix_ms": 1785833844198
   },
   "rounds": {
     "after": [
@@ -60,169 +60,169 @@
           "method": "classical",
           "prime": 5,
           "splits": 1,
-          "total_nanos": 449396,
-          "walk_nanos": 217182
+          "total_nanos": 444039,
+          "walk_nanos": 219746
         },
         "chebyshev_U24": {
           "method": "classical",
           "prime": 3,
           "splits": 1,
-          "total_nanos": 596064,
-          "walk_nanos": 208649
+          "total_nanos": 587030,
+          "walk_nanos": 208089
         },
         "cyclo_phi128_x_phi165": {
           "method": "classical",
           "prime": 7,
           "splits": 1,
-          "total_nanos": 75314465,
-          "walk_nanos": 34554894
+          "total_nanos": 75672144,
+          "walk_nanos": 35015671
         },
         "cyclo_phi17": {
           "method": "classical",
           "prime": 3,
           "splits": 1,
-          "total_nanos": 105766,
-          "walk_nanos": 60510
+          "total_nanos": 108892,
+          "walk_nanos": 60920
         },
         "cyclo_phi179": {
           "method": "classical",
           "prime": 3,
           "splits": 1,
-          "total_nanos": 34813317,
-          "walk_nanos": 6628356
+          "total_nanos": 34567096,
+          "walk_nanos": 6398546
         },
         "cyclo_phi385": {
           "method": "classical",
           "prime": 3,
           "splits": 1,
-          "total_nanos": 144478584,
-          "walk_nanos": 58241557
+          "total_nanos": 143911519,
+          "walk_nanos": 58840572
         },
         "cyclo_phi41": {
           "method": "classical",
           "prime": 3,
           "splits": 1,
-          "total_nanos": 1999724,
-          "walk_nanos": 479081
+          "total_nanos": 2001788,
+          "walk_nanos": 479801
         },
         "cyclo_phi64_x_phi105": {
           "method": "classical",
           "prime": 11,
           "splits": 1,
-          "total_nanos": 18791827,
-          "walk_nanos": 10797136
+          "total_nanos": 18706052,
+          "walk_nanos": 10635176
         },
         "legendre_P30": {
           "method": "classical",
           "prime": 67,
           "splits": 2,
-          "total_nanos": 8563875,
-          "walk_nanos": 7003723
+          "total_nanos": 8639047,
+          "walk_nanos": 7072315
         },
         "legendre_P38": {
           "method": "classical",
           "prime": 79,
           "splits": 1,
-          "total_nanos": 3832722,
-          "walk_nanos": 3039747
+          "total_nanos": 3853633,
+          "walk_nanos": 3034378
         },
         "randprod_10": {
           "method": "classical",
           "prime": 7,
           "splits": 1,
-          "total_nanos": 636603,
-          "walk_nanos": 360945
+          "total_nanos": 628362,
+          "walk_nanos": 362828
         },
         "randprod_21": {
           "method": "classical",
           "prime": 17,
           "splits": 1,
-          "total_nanos": 1431773,
-          "walk_nanos": 940604
+          "total_nanos": 1410731,
+          "walk_nanos": 957680
         },
         "sd4_x_sd4shift1": {
           "method": "classical",
           "prime": 29,
           "splits": 2,
-          "total_nanos": 17921867,
-          "walk_nanos": 6850185
+          "total_nanos": 17910223,
+          "walk_nanos": 6868052
         },
         "sd5": {
           "method": "classical",
           "prime": 29,
           "splits": 2,
-          "total_nanos": 68332245,
-          "walk_nanos": 6702315
+          "total_nanos": 68528634,
+          "walk_nanos": 6713032
         },
         "sd5_shift1": {
           "method": "classical",
           "prime": 29,
           "splits": 2,
-          "total_nanos": 63693149,
-          "walk_nanos": 7124671
+          "total_nanos": 62879249,
+          "walk_nanos": 7023082
         },
         "sd5_shift2": {
           "method": "classical",
           "prime": 29,
           "splits": 2,
-          "total_nanos": 67041852,
-          "walk_nanos": 8686968
+          "total_nanos": 66887331,
+          "walk_nanos": 8653669
         },
         "sd5_x_phi11": {
           "method": "classical",
           "prime": 29,
           "splits": 2,
-          "total_nanos": 138747498,
-          "walk_nanos": 16326633
+          "total_nanos": 138832569,
+          "walk_nanos": 16269079
         },
         "wilkinson_40": {
           "method": "replay",
           "prime": 47,
           "splits": 2,
-          "total_nanos": 12990897,
-          "walk_nanos": 4284361
+          "total_nanos": 9201030,
+          "walk_nanos": 1021885
         },
         "wilkinson_48": {
           "method": "replay",
           "prime": 61,
           "splits": 2,
-          "total_nanos": 22426055,
-          "walk_nanos": 6768283
+          "total_nanos": 16103354,
+          "walk_nanos": 1553753
         },
         "wilkinson_56": {
           "method": "replay",
           "prime": 67,
           "splits": 2,
-          "total_nanos": 30392694,
-          "walk_nanos": 9936620
+          "total_nanos": 20911101,
+          "walk_nanos": 1997881
         },
         "xpow105_minus1": {
           "method": "classical",
           "prime": 17,
           "splits": 2,
-          "total_nanos": 44553786,
-          "walk_nanos": 29347034
+          "total_nanos": 44941335,
+          "walk_nanos": 29513964
         },
         "xpow120_minus1": {
           "method": "classical",
           "prime": 7,
           "splits": 1,
-          "total_nanos": 147172918,
-          "walk_nanos": 18774902
+          "total_nanos": 146191289,
+          "walk_nanos": 18715776
         },
         "xpow24_minus1": {
           "method": "classical",
           "prime": 11,
           "splits": 2,
-          "total_nanos": 2323464,
-          "walk_nanos": 1101382
+          "total_nanos": 2335002,
+          "walk_nanos": 1113621
         },
         "xpow48_minus1": {
           "method": "classical",
           "prime": 11,
           "splits": 2,
-          "total_nanos": 10500647,
-          "walk_nanos": 3930166
+          "total_nanos": 10445335,
+          "walk_nanos": 3940912
         }
       },
       {
@@ -230,169 +230,169 @@
           "method": "classical",
           "prime": 5,
           "splits": 1,
-          "total_nanos": 442126,
-          "walk_nanos": 221778
+          "total_nanos": 448304,
+          "walk_nanos": 219144
         },
         "chebyshev_U24": {
           "method": "classical",
           "prime": 3,
           "splits": 1,
-          "total_nanos": 586089,
-          "walk_nanos": 207598
+          "total_nanos": 631787,
+          "walk_nanos": 207128
         },
         "cyclo_phi128_x_phi165": {
           "method": "classical",
           "prime": 7,
           "splits": 1,
-          "total_nanos": 75425160,
-          "walk_nanos": 35699561
+          "total_nanos": 78074315,
+          "walk_nanos": 34804057
         },
         "cyclo_phi17": {
           "method": "classical",
           "prime": 3,
           "splits": 1,
-          "total_nanos": 108451,
-          "walk_nanos": 60801
+          "total_nanos": 103703,
+          "walk_nanos": 60119
         },
         "cyclo_phi179": {
           "method": "classical",
           "prime": 3,
           "splits": 1,
-          "total_nanos": 34848470,
-          "walk_nanos": 6641565
+          "total_nanos": 36600711,
+          "walk_nanos": 6571633
         },
         "cyclo_phi385": {
           "method": "classical",
           "prime": 3,
           "splits": 1,
-          "total_nanos": 143188312,
-          "walk_nanos": 60372486
+          "total_nanos": 150293480,
+          "walk_nanos": 59089591
         },
         "cyclo_phi41": {
           "method": "classical",
           "prime": 3,
           "splits": 1,
-          "total_nanos": 1977672,
-          "walk_nanos": 488013
+          "total_nanos": 2132391,
+          "walk_nanos": 479961
         },
         "cyclo_phi64_x_phi105": {
           "method": "classical",
           "prime": 11,
           "splits": 1,
-          "total_nanos": 18648374,
-          "walk_nanos": 10748864
+          "total_nanos": 19444247,
+          "walk_nanos": 10659042
         },
         "legendre_P30": {
           "method": "classical",
           "prime": 67,
           "splits": 2,
-          "total_nanos": 8448093,
-          "walk_nanos": 7094536
+          "total_nanos": 8547893,
+          "walk_nanos": 7216708
         },
         "legendre_P38": {
           "method": "classical",
           "prime": 79,
           "splits": 1,
-          "total_nanos": 3790239,
-          "walk_nanos": 3058013
+          "total_nanos": 3913842,
+          "walk_nanos": 3039135
         },
         "randprod_10": {
           "method": "classical",
           "prime": 7,
           "splits": 1,
-          "total_nanos": 627290,
-          "walk_nanos": 366964
+          "total_nanos": 661411,
+          "walk_nanos": 363108
         },
         "randprod_21": {
           "method": "classical",
           "prime": 17,
           "splits": 1,
-          "total_nanos": 1417872,
-          "walk_nanos": 950749
+          "total_nanos": 1468277,
+          "walk_nanos": 942057
         },
         "sd4_x_sd4shift1": {
           "method": "classical",
           "prime": 29,
           "splits": 2,
-          "total_nanos": 17896860,
-          "walk_nanos": 6868421
+          "total_nanos": 17944913,
+          "walk_nanos": 6941170
         },
         "sd5": {
           "method": "classical",
           "prime": 29,
           "splits": 2,
-          "total_nanos": 68278005,
-          "walk_nanos": 6754954
+          "total_nanos": 68289920,
+          "walk_nanos": 6689658
         },
         "sd5_shift1": {
           "method": "classical",
           "prime": 29,
           "splits": 2,
-          "total_nanos": 63143063,
-          "walk_nanos": 7079885
+          "total_nanos": 63536192,
+          "walk_nanos": 7168948
         },
         "sd5_shift2": {
           "method": "classical",
           "prime": 29,
           "splits": 2,
-          "total_nanos": 67068442,
-          "walk_nanos": 8718585
+          "total_nanos": 66623991,
+          "walk_nanos": 8665296
         },
         "sd5_x_phi11": {
           "method": "classical",
           "prime": 29,
           "splits": 2,
-          "total_nanos": 138046209,
-          "walk_nanos": 16429224
+          "total_nanos": 140019509,
+          "walk_nanos": 16391040
         },
         "wilkinson_40": {
           "method": "replay",
           "prime": 47,
           "splits": 2,
-          "total_nanos": 12521181,
-          "walk_nanos": 4327175
+          "total_nanos": 9313868,
+          "walk_nanos": 1010488
         },
         "wilkinson_48": {
           "method": "replay",
           "prime": 61,
           "splits": 2,
-          "total_nanos": 21598798,
-          "walk_nanos": 6877666
+          "total_nanos": 16342989,
+          "walk_nanos": 1542387
         },
         "wilkinson_56": {
           "method": "replay",
           "prime": 67,
           "splits": 2,
-          "total_nanos": 29011056,
-          "walk_nanos": 9970801
+          "total_nanos": 21338605,
+          "walk_nanos": 2010050
         },
         "xpow105_minus1": {
           "method": "classical",
           "prime": 17,
           "splits": 2,
-          "total_nanos": 44607246,
-          "walk_nanos": 29424790
+          "total_nanos": 46110889,
+          "walk_nanos": 29299987
         },
         "xpow120_minus1": {
           "method": "classical",
           "prime": 7,
           "splits": 1,
-          "total_nanos": 145860323,
-          "walk_nanos": 18759939
+          "total_nanos": 148026630,
+          "walk_nanos": 18654775
         },
         "xpow24_minus1": {
           "method": "classical",
           "prime": 11,
           "splits": 2,
-          "total_nanos": 2322253,
-          "walk_nanos": 1109926
+          "total_nanos": 2341972,
+          "walk_nanos": 1110957
         },
         "xpow48_minus1": {
           "method": "classical",
           "prime": 11,
           "splits": 2,
-          "total_nanos": 10372907,
-          "walk_nanos": 3990365
+          "total_nanos": 10639924,
+          "walk_nanos": 4047100
         }
       },
       {
@@ -400,169 +400,169 @@
           "method": "classical",
           "prime": 5,
           "splits": 1,
-          "total_nanos": 449216,
-          "walk_nanos": 216561
+          "total_nanos": 439882,
+          "walk_nanos": 218454
         },
         "chebyshev_U24": {
           "method": "classical",
           "prime": 3,
           "splits": 1,
-          "total_nanos": 597936,
-          "walk_nanos": 207177
+          "total_nanos": 598758,
+          "walk_nanos": 206035
         },
         "cyclo_phi128_x_phi165": {
           "method": "classical",
           "prime": 7,
           "splits": 1,
-          "total_nanos": 76008195,
-          "walk_nanos": 35133312
+          "total_nanos": 75205182,
+          "walk_nanos": 34842825
         },
         "cyclo_phi17": {
           "method": "classical",
           "prime": 3,
           "splits": 1,
-          "total_nanos": 108912,
-          "walk_nanos": 61411
+          "total_nanos": 109372,
+          "walk_nanos": 59448
         },
         "cyclo_phi179": {
           "method": "classical",
           "prime": 3,
           "splits": 1,
-          "total_nanos": 35016389,
-          "walk_nanos": 6640063
+          "total_nanos": 34678041,
+          "walk_nanos": 6607756
         },
         "cyclo_phi385": {
           "method": "classical",
           "prime": 3,
           "splits": 1,
-          "total_nanos": 144946110,
-          "walk_nanos": 59288801
+          "total_nanos": 143638725,
+          "walk_nanos": 58858117
         },
         "cyclo_phi41": {
           "method": "classical",
           "prime": 3,
           "splits": 1,
-          "total_nanos": 2070389,
-          "walk_nanos": 479160
+          "total_nanos": 2003480,
+          "walk_nanos": 475405
         },
         "cyclo_phi64_x_phi105": {
           "method": "classical",
           "prime": 11,
           "splits": 1,
-          "total_nanos": 18857715,
-          "walk_nanos": 10737417
+          "total_nanos": 18799120,
+          "walk_nanos": 10536000
         },
         "legendre_P30": {
           "method": "classical",
           "prime": 67,
           "splits": 2,
-          "total_nanos": 8387974,
-          "walk_nanos": 7124401
+          "total_nanos": 8617255,
+          "walk_nanos": 7048099
         },
         "legendre_P38": {
           "method": "classical",
           "prime": 79,
           "splits": 1,
-          "total_nanos": 3780304,
-          "walk_nanos": 3051303
+          "total_nanos": 3841795,
+          "walk_nanos": 3025936
         },
         "randprod_10": {
           "method": "classical",
           "prime": 7,
           "splits": 1,
-          "total_nanos": 635732,
-          "walk_nanos": 360995
+          "total_nanos": 635983,
+          "walk_nanos": 360765
         },
         "randprod_21": {
           "method": "classical",
           "prime": 17,
           "splits": 1,
-          "total_nanos": 1429559,
-          "walk_nanos": 942627
+          "total_nanos": 1415418,
+          "walk_nanos": 954915
         },
         "sd4_x_sd4shift1": {
           "method": "classical",
           "prime": 29,
           "splits": 2,
-          "total_nanos": 17692768,
-          "walk_nanos": 6800992
+          "total_nanos": 17715433,
+          "walk_nanos": 6888712
         },
         "sd5": {
           "method": "classical",
           "prime": 29,
           "splits": 2,
-          "total_nanos": 68342582,
-          "walk_nanos": 6588857
+          "total_nanos": 68234588,
+          "walk_nanos": 6626284
         },
         "sd5_shift1": {
           "method": "classical",
           "prime": 29,
           "splits": 2,
-          "total_nanos": 63440404,
-          "walk_nanos": 7215256
+          "total_nanos": 63232001,
+          "walk_nanos": 7118734
         },
         "sd5_shift2": {
           "method": "classical",
           "prime": 29,
           "splits": 2,
-          "total_nanos": 66809930,
-          "walk_nanos": 8646127
+          "total_nanos": 66859910,
+          "walk_nanos": 8880686
         },
         "sd5_x_phi11": {
           "method": "classical",
           "prime": 29,
           "splits": 2,
-          "total_nanos": 138370121,
-          "walk_nanos": 16665465
+          "total_nanos": 138666133,
+          "walk_nanos": 16432170
         },
         "wilkinson_40": {
           "method": "replay",
           "prime": 47,
           "splits": 2,
-          "total_nanos": 12478679,
-          "walk_nanos": 4350238
+          "total_nanos": 9151567,
+          "walk_nanos": 1008035
         },
         "wilkinson_48": {
           "method": "replay",
           "prime": 61,
           "splits": 2,
-          "total_nanos": 21343921,
-          "walk_nanos": 6780521
+          "total_nanos": 16255699,
+          "walk_nanos": 1548836
         },
         "wilkinson_56": {
           "method": "replay",
           "prime": 67,
           "splits": 2,
-          "total_nanos": 28930697,
-          "walk_nanos": 9995798
+          "total_nanos": 21055795,
+          "walk_nanos": 2008788
         },
         "xpow105_minus1": {
           "method": "classical",
           "prime": 17,
           "splits": 2,
-          "total_nanos": 45158654,
-          "walk_nanos": 29027670
+          "total_nanos": 45190585,
+          "walk_nanos": 29554995
         },
         "xpow120_minus1": {
           "method": "classical",
           "prime": 7,
           "splits": 1,
-          "total_nanos": 150102783,
-          "walk_nanos": 18407177
+          "total_nanos": 147511286,
+          "walk_nanos": 18656238
         },
         "xpow24_minus1": {
           "method": "classical",
           "prime": 11,
           "splits": 2,
-          "total_nanos": 2318588,
-          "walk_nanos": 1097157
+          "total_nanos": 2314942,
+          "walk_nanos": 1110396
         },
         "xpow48_minus1": {
           "method": "classical",
           "prime": 11,
           "splits": 2,
-          "total_nanos": 10403642,
-          "walk_nanos": 3939059
+          "total_nanos": 10417534,
+          "walk_nanos": 3949896
         }
       },
       {
@@ -570,169 +570,169 @@
           "method": "classical",
           "prime": 5,
           "splits": 1,
-          "total_nanos": 480352,
-          "walk_nanos": 223441
+          "total_nanos": 445560,
+          "walk_nanos": 217362
         },
         "chebyshev_U24": {
           "method": "classical",
           "prime": 3,
           "splits": 1,
-          "total_nanos": 647600,
-          "walk_nanos": 210702
+          "total_nanos": 591788,
+          "walk_nanos": 211724
         },
         "cyclo_phi128_x_phi165": {
           "method": "classical",
           "prime": 7,
           "splits": 1,
-          "total_nanos": 90903677,
-          "walk_nanos": 35052001
+          "total_nanos": 75325330,
+          "walk_nanos": 34870926
         },
         "cyclo_phi17": {
           "method": "classical",
           "prime": 3,
           "splits": 1,
-          "total_nanos": 121771,
-          "walk_nanos": 60039
+          "total_nanos": 105757,
+          "walk_nanos": 60430
         },
         "cyclo_phi179": {
           "method": "classical",
           "prime": 3,
           "splits": 1,
-          "total_nanos": 45331981,
-          "walk_nanos": 6638311
+          "total_nanos": 35265912,
+          "walk_nanos": 6576450
         },
         "cyclo_phi385": {
           "method": "classical",
           "prime": 3,
           "splits": 1,
-          "total_nanos": 178059368,
-          "walk_nanos": 58718034
+          "total_nanos": 143441492,
+          "walk_nanos": 58902283
         },
         "cyclo_phi41": {
           "method": "classical",
           "prime": 3,
           "splits": 1,
-          "total_nanos": 2455160,
-          "walk_nanos": 486121
+          "total_nanos": 2001978,
+          "walk_nanos": 483427
         },
         "cyclo_phi64_x_phi105": {
           "method": "classical",
           "prime": 11,
           "splits": 1,
-          "total_nanos": 21639528,
-          "walk_nanos": 10816654
+          "total_nanos": 18882353,
+          "walk_nanos": 10686213
         },
         "legendre_P30": {
           "method": "classical",
           "prime": 67,
           "splits": 2,
-          "total_nanos": 8884260,
-          "walk_nanos": 7220253
+          "total_nanos": 8606479,
+          "walk_nanos": 7157621
         },
         "legendre_P38": {
           "method": "classical",
           "prime": 79,
           "splits": 1,
-          "total_nanos": 4200808,
-          "walk_nanos": 3109410
+          "total_nanos": 3896567,
+          "walk_nanos": 3004163
         },
         "randprod_10": {
           "method": "classical",
           "prime": 7,
           "splits": 1,
-          "total_nanos": 665266,
-          "walk_nanos": 362317
+          "total_nanos": 629543,
+          "walk_nanos": 361536
         },
         "randprod_21": {
           "method": "classical",
           "prime": 17,
           "splits": 1,
-          "total_nanos": 1480424,
-          "walk_nanos": 971380
+          "total_nanos": 1419335,
+          "walk_nanos": 957779
         },
         "sd4_x_sd4shift1": {
           "method": "classical",
           "prime": 29,
           "splits": 2,
-          "total_nanos": 22055455,
-          "walk_nanos": 6993216
+          "total_nanos": 17628575,
+          "walk_nanos": 6904997
         },
         "sd5": {
           "method": "classical",
           "prime": 29,
           "splits": 2,
-          "total_nanos": 91022793,
-          "walk_nanos": 6808303
+          "total_nanos": 68104395,
+          "walk_nanos": 6770006
         },
         "sd5_shift1": {
           "method": "classical",
           "prime": 29,
           "splits": 2,
-          "total_nanos": 84281500,
-          "walk_nanos": 7173394
+          "total_nanos": 63026186,
+          "walk_nanos": 7076190
         },
         "sd5_shift2": {
           "method": "classical",
           "prime": 29,
           "splits": 2,
-          "total_nanos": 89939778,
-          "walk_nanos": 8744352
+          "total_nanos": 66462370,
+          "walk_nanos": 8794158
         },
         "sd5_x_phi11": {
           "method": "classical",
           "prime": 29,
           "splits": 2,
-          "total_nanos": 185067756,
-          "walk_nanos": 16548822
+          "total_nanos": 139324378,
+          "walk_nanos": 16456817
         },
         "wilkinson_40": {
           "method": "replay",
           "prime": 47,
           "splits": 2,
-          "total_nanos": 15632624,
-          "walk_nanos": 4451299
+          "total_nanos": 9143015,
+          "walk_nanos": 1003348
         },
         "wilkinson_48": {
           "method": "replay",
           "prime": 61,
           "splits": 2,
-          "total_nanos": 26745037,
-          "walk_nanos": 6907440
+          "total_nanos": 16230402,
+          "walk_nanos": 1534244
         },
         "wilkinson_56": {
           "method": "replay",
           "prime": 67,
           "splits": 2,
-          "total_nanos": 36200864,
-          "walk_nanos": 9982728
+          "total_nanos": 21034314,
+          "walk_nanos": 1987357
         },
         "xpow105_minus1": {
           "method": "classical",
           "prime": 17,
           "splits": 2,
-          "total_nanos": 49296127,
-          "walk_nanos": 29670984
+          "total_nanos": 44938030,
+          "walk_nanos": 29352095
         },
         "xpow120_minus1": {
           "method": "classical",
           "prime": 7,
           "splits": 1,
-          "total_nanos": 189914392,
-          "walk_nanos": 19114826
+          "total_nanos": 146777999,
+          "walk_nanos": 18646874
         },
         "xpow24_minus1": {
           "method": "classical",
           "prime": 11,
           "splits": 2,
-          "total_nanos": 2585272,
-          "walk_nanos": 1110296
+          "total_nanos": 2315412,
+          "walk_nanos": 1108663
         },
         "xpow48_minus1": {
           "method": "classical",
           "prime": 11,
           "splits": 2,
-          "total_nanos": 12097474,
-          "walk_nanos": 3998607
+          "total_nanos": 10435180,
+          "walk_nanos": 3953501
         }
       }
     ],
@@ -742,169 +742,169 @@
           "method": "classical",
           "prime": 5,
           "splits": 1,
-          "total_nanos": 431200,
-          "walk_nanos": 223572
+          "total_nanos": 431810,
+          "walk_nanos": 215540
         },
         "chebyshev_U24": {
           "method": "classical",
           "prime": 3,
           "splits": 1,
-          "total_nanos": 602463,
-          "walk_nanos": 202380
+          "total_nanos": 583174,
+          "walk_nanos": 199856
         },
         "cyclo_phi128_x_phi165": {
           "method": "classical",
           "prime": 7,
           "splits": 1,
-          "total_nanos": 75444588,
-          "walk_nanos": 35548507
+          "total_nanos": 74789715,
+          "walk_nanos": 34317726
         },
         "cyclo_phi17": {
           "method": "classical",
           "prime": 3,
           "splits": 1,
-          "total_nanos": 105417,
-          "walk_nanos": 57756
+          "total_nanos": 101901,
+          "walk_nanos": 56153
         },
         "cyclo_phi179": {
           "method": "classical",
           "prime": 3,
           "splits": 1,
-          "total_nanos": 35194222,
-          "walk_nanos": 6587886
+          "total_nanos": 34445196,
+          "walk_nanos": 6470071
         },
         "cyclo_phi385": {
           "method": "classical",
           "prime": 3,
           "splits": 1,
-          "total_nanos": 145359449,
-          "walk_nanos": 59936019
+          "total_nanos": 141776724,
+          "walk_nanos": 58596570
         },
         "cyclo_phi41": {
           "method": "classical",
           "prime": 3,
           "splits": 1,
-          "total_nanos": 1990882,
-          "walk_nanos": 478789
+          "total_nanos": 1977040,
+          "walk_nanos": 472360
         },
         "cyclo_phi64_x_phi105": {
           "method": "classical",
           "prime": 11,
           "splits": 1,
-          "total_nanos": 45184211,
-          "walk_nanos": 38342809
+          "total_nanos": 45222772,
+          "walk_nanos": 37387808
         },
         "legendre_P30": {
           "method": "classical",
           "prime": 67,
           "splits": 2,
-          "total_nanos": 8450357,
-          "walk_nanos": 7109649
+          "total_nanos": 8497898,
+          "walk_nanos": 6992917
         },
         "legendre_P38": {
           "method": "classical",
           "prime": 79,
           "splits": 1,
-          "total_nanos": 3835816,
-          "walk_nanos": 3029110
+          "total_nanos": 3859372,
+          "walk_nanos": 3032826
         },
         "randprod_10": {
           "method": "classical",
           "prime": 7,
           "splits": 1,
-          "total_nanos": 634691,
-          "walk_nanos": 356348
+          "total_nanos": 627380,
+          "walk_nanos": 357240
         },
         "randprod_21": {
           "method": "classical",
           "prime": 17,
           "splits": 1,
-          "total_nanos": 1414637,
-          "walk_nanos": 941606
+          "total_nanos": 1409099,
+          "walk_nanos": 946273
         },
         "sd4_x_sd4shift1": {
           "method": "classical",
           "prime": 29,
           "splits": 2,
-          "total_nanos": 17699878,
-          "walk_nanos": 6913589
+          "total_nanos": 17584949,
+          "walk_nanos": 6798438
         },
         "sd5": {
           "method": "classical",
           "prime": 29,
           "splits": 2,
-          "total_nanos": 68721502,
-          "walk_nanos": 6917825
+          "total_nanos": 68038418,
+          "walk_nanos": 6503862
         },
         "sd5_shift1": {
           "method": "classical",
           "prime": 29,
           "splits": 2,
-          "total_nanos": 63500302,
-          "walk_nanos": 7118723
+          "total_nanos": 63031925,
+          "walk_nanos": 6953078
         },
         "sd5_shift2": {
           "method": "classical",
           "prime": 29,
           "splits": 2,
-          "total_nanos": 66925149,
-          "walk_nanos": 8698264
+          "total_nanos": 66470813,
+          "walk_nanos": 8616934
         },
         "sd5_x_phi11": {
           "method": "classical",
           "prime": 29,
           "splits": 2,
-          "total_nanos": 139939995,
-          "walk_nanos": 16476174
+          "total_nanos": 137965283,
+          "walk_nanos": 16237733
         },
         "wilkinson_40": {
           "method": "replay",
           "prime": 47,
           "splits": 2,
-          "total_nanos": 12449836,
-          "walk_nanos": 4109982
+          "total_nanos": 9060131,
+          "walk_nanos": 919853
         },
         "wilkinson_48": {
           "method": "replay",
           "prime": 61,
           "splits": 2,
-          "total_nanos": 21514623,
-          "walk_nanos": 6599763
+          "total_nanos": 15903688,
+          "walk_nanos": 1426875
         },
         "wilkinson_56": {
           "method": "replay",
           "prime": 67,
           "splits": 2,
-          "total_nanos": 28878560,
-          "walk_nanos": 9616486
+          "total_nanos": 20703894,
+          "walk_nanos": 1872797
         },
         "xpow105_minus1": {
           "method": "classical",
           "prime": 17,
           "splits": 2,
-          "total_nanos": 44181584,
-          "walk_nanos": 29536956
+          "total_nanos": 44372822,
+          "walk_nanos": 29190966
         },
         "xpow120_minus1": {
           "method": "classical",
           "prime": 7,
           "splits": 1,
-          "total_nanos": 147699548,
-          "walk_nanos": 18731467
+          "total_nanos": 145463901,
+          "walk_nanos": 18603620
         },
         "xpow24_minus1": {
           "method": "classical",
           "prime": 11,
           "splits": 2,
-          "total_nanos": 2340299,
-          "walk_nanos": 1113009
+          "total_nanos": 2308272,
+          "walk_nanos": 1086210
         },
         "xpow48_minus1": {
           "method": "classical",
           "prime": 11,
           "splits": 2,
-          "total_nanos": 10410923,
-          "walk_nanos": 3940982
+          "total_nanos": 10370705,
+          "walk_nanos": 3969815
         }
       },
       {
@@ -912,169 +912,169 @@
           "method": "classical",
           "prime": 5,
           "splits": 1,
-          "total_nanos": 432832,
-          "walk_nanos": 216581
+          "total_nanos": 435585,
+          "walk_nanos": 212525
         },
         "chebyshev_U24": {
           "method": "classical",
           "prime": 3,
           "splits": 1,
-          "total_nanos": 609523,
-          "walk_nanos": 200808
+          "total_nanos": 583936,
+          "walk_nanos": 201328
         },
         "cyclo_phi128_x_phi165": {
           "method": "classical",
           "prime": 7,
           "splits": 1,
-          "total_nanos": 74700926,
-          "walk_nanos": 34492272
+          "total_nanos": 75134978,
+          "walk_nanos": 34526275
         },
         "cyclo_phi17": {
           "method": "classical",
           "prime": 3,
           "splits": 1,
-          "total_nanos": 107800,
-          "walk_nanos": 57065
+          "total_nanos": 106768,
+          "walk_nanos": 57164
         },
         "cyclo_phi179": {
           "method": "classical",
           "prime": 3,
           "splits": 1,
-          "total_nanos": 35232218,
-          "walk_nanos": 6560295
+          "total_nanos": 34834642,
+          "walk_nanos": 6468210
         },
         "cyclo_phi385": {
           "method": "classical",
           "prime": 3,
           "splits": 1,
-          "total_nanos": 144614127,
-          "walk_nanos": 58727248
+          "total_nanos": 142457574,
+          "walk_nanos": 58605453
         },
         "cyclo_phi41": {
           "method": "classical",
           "prime": 3,
           "splits": 1,
-          "total_nanos": 1989710,
-          "walk_nanos": 475024
+          "total_nanos": 2005384,
+          "walk_nanos": 468444
         },
         "cyclo_phi64_x_phi105": {
           "method": "classical",
           "prime": 11,
           "splits": 1,
-          "total_nanos": 45345951,
-          "walk_nanos": 36889605
+          "total_nanos": 45130286,
+          "walk_nanos": 37561335
         },
         "legendre_P30": {
           "method": "classical",
           "prime": 67,
           "splits": 2,
-          "total_nanos": 8516465,
-          "walk_nanos": 7146774
+          "total_nanos": 8376599,
+          "walk_nanos": 7005896
         },
         "legendre_P38": {
           "method": "classical",
           "prime": 79,
           "splits": 1,
-          "total_nanos": 3798141,
-          "walk_nanos": 2934820
+          "total_nanos": 3800725,
+          "walk_nanos": 2984174
         },
         "randprod_10": {
           "method": "classical",
           "prime": 7,
           "splits": 1,
-          "total_nanos": 628562,
-          "walk_nanos": 350730
+          "total_nanos": 623043,
+          "walk_nanos": 354396
         },
         "randprod_21": {
           "method": "classical",
           "prime": 17,
           "splits": 1,
-          "total_nanos": 1400996,
-          "walk_nanos": 928196
+          "total_nanos": 1406715,
+          "walk_nanos": 938101
         },
         "sd4_x_sd4shift1": {
           "method": "classical",
           "prime": 29,
           "splits": 2,
-          "total_nanos": 17652739,
-          "walk_nanos": 6872098
+          "total_nanos": 17781551,
+          "walk_nanos": 6844056
         },
         "sd5": {
           "method": "classical",
           "prime": 29,
           "splits": 2,
-          "total_nanos": 68218577,
-          "walk_nanos": 6630519
+          "total_nanos": 68957740,
+          "walk_nanos": 6604071
         },
         "sd5_shift1": {
           "method": "classical",
           "prime": 29,
           "splits": 2,
-          "total_nanos": 62758293,
-          "walk_nanos": 7036511
+          "total_nanos": 63330608,
+          "walk_nanos": 7087788
         },
         "sd5_shift2": {
           "method": "classical",
           "prime": 29,
           "splits": 2,
-          "total_nanos": 66963718,
-          "walk_nanos": 8566289
+          "total_nanos": 66822004,
+          "walk_nanos": 8624796
         },
         "sd5_x_phi11": {
           "method": "classical",
           "prime": 29,
           "splits": 2,
-          "total_nanos": 139268612,
-          "walk_nanos": 16017294
+          "total_nanos": 138502391,
+          "walk_nanos": 16557446
         },
         "wilkinson_40": {
           "method": "replay",
           "prime": 47,
           "splits": 2,
-          "total_nanos": 12766885,
-          "walk_nanos": 4117504
+          "total_nanos": 9173379,
+          "walk_nanos": 922528
         },
         "wilkinson_48": {
           "method": "replay",
           "prime": 61,
           "splits": 2,
-          "total_nanos": 21779086,
-          "walk_nanos": 6494317
+          "total_nanos": 16108361,
+          "walk_nanos": 1445463
         },
         "wilkinson_56": {
           "method": "replay",
           "prime": 67,
           "splits": 2,
-          "total_nanos": 29755730,
-          "walk_nanos": 9546792
+          "total_nanos": 20980714,
+          "walk_nanos": 1867438
         },
         "xpow105_minus1": {
           "method": "classical",
           "prime": 17,
           "splits": 2,
-          "total_nanos": 44297897,
-          "walk_nanos": 28902385
+          "total_nanos": 44544157,
+          "walk_nanos": 29667322
         },
         "xpow120_minus1": {
           "method": "classical",
           "prime": 7,
           "splits": 1,
-          "total_nanos": 146104565,
-          "walk_nanos": 18538551
+          "total_nanos": 146741905,
+          "walk_nanos": 18707484
         },
         "xpow24_minus1": {
           "method": "classical",
           "prime": 11,
           "splits": 2,
-          "total_nanos": 2317616,
-          "walk_nanos": 1083376
+          "total_nanos": 2284547,
+          "walk_nanos": 1079591
         },
         "xpow48_minus1": {
           "method": "classical",
           "prime": 11,
           "splits": 2,
-          "total_nanos": 10508117,
-          "walk_nanos": 3911849
+          "total_nanos": 10381010,
+          "walk_nanos": 3974923
         }
       },
       {
@@ -1082,339 +1082,339 @@
           "method": "classical",
           "prime": 5,
           "splits": 1,
-          "total_nanos": 440823,
-          "walk_nanos": 213086
+          "total_nanos": 429136,
+          "walk_nanos": 212465
         },
         "chebyshev_U24": {
           "method": "classical",
           "prime": 3,
           "splits": 1,
-          "total_nanos": 592519,
-          "walk_nanos": 200447
+          "total_nanos": 584246,
+          "walk_nanos": 206997
         },
         "cyclo_phi128_x_phi165": {
           "method": "classical",
           "prime": 7,
           "splits": 1,
-          "total_nanos": 74966981,
-          "walk_nanos": 34937291
+          "total_nanos": 75714227,
+          "walk_nanos": 34454609
         },
         "cyclo_phi17": {
           "method": "classical",
           "prime": 3,
           "splits": 1,
-          "total_nanos": 105026,
-          "walk_nanos": 57315
+          "total_nanos": 103043,
+          "walk_nanos": 57986
         },
         "cyclo_phi179": {
           "method": "classical",
           "prime": 3,
           "splits": 1,
-          "total_nanos": 34704706,
-          "walk_nanos": 6513415
+          "total_nanos": 34677770,
+          "walk_nanos": 6503081
         },
         "cyclo_phi385": {
           "method": "classical",
           "prime": 3,
           "splits": 1,
-          "total_nanos": 141964539,
-          "walk_nanos": 58284311
+          "total_nanos": 144561924,
+          "walk_nanos": 58870395
         },
         "cyclo_phi41": {
           "method": "classical",
           "prime": 3,
           "splits": 1,
-          "total_nanos": 1968699,
-          "walk_nanos": 469997
+          "total_nanos": 1987907,
+          "walk_nanos": 471379
         },
         "cyclo_phi64_x_phi105": {
           "method": "classical",
           "prime": 11,
           "splits": 1,
-          "total_nanos": 44947260,
-          "walk_nanos": 38151135
+          "total_nanos": 45496389,
+          "walk_nanos": 37890713
         },
         "legendre_P30": {
           "method": "classical",
           "prime": 67,
           "splits": 2,
-          "total_nanos": 8329107,
-          "walk_nanos": 7196067
+          "total_nanos": 8351211,
+          "walk_nanos": 6957375
         },
         "legendre_P38": {
           "method": "classical",
           "prime": 79,
           "splits": 1,
-          "total_nanos": 3770750,
-          "walk_nanos": 2963623
+          "total_nanos": 3776408,
+          "walk_nanos": 3048960
         },
         "randprod_10": {
           "method": "classical",
           "prime": 7,
           "splits": 1,
-          "total_nanos": 615423,
-          "walk_nanos": 351411
+          "total_nanos": 621682,
+          "walk_nanos": 354826
+        },
+        "randprod_21": {
+          "method": "classical",
+          "prime": 17,
+          "splits": 1,
+          "total_nanos": 1394937,
+          "walk_nanos": 931682
+        },
+        "sd4_x_sd4shift1": {
+          "method": "classical",
+          "prime": 29,
+          "splits": 2,
+          "total_nanos": 17746900,
+          "walk_nanos": 6817116
+        },
+        "sd5": {
+          "method": "classical",
+          "prime": 29,
+          "splits": 2,
+          "total_nanos": 69303813,
+          "walk_nanos": 6550231
+        },
+        "sd5_shift1": {
+          "method": "classical",
+          "prime": 29,
+          "splits": 2,
+          "total_nanos": 63589371,
+          "walk_nanos": 7132704
+        },
+        "sd5_shift2": {
+          "method": "classical",
+          "prime": 29,
+          "splits": 2,
+          "total_nanos": 66929123,
+          "walk_nanos": 8562414
+        },
+        "sd5_x_phi11": {
+          "method": "classical",
+          "prime": 29,
+          "splits": 2,
+          "total_nanos": 138364656,
+          "walk_nanos": 16317881
+        },
+        "wilkinson_40": {
+          "method": "replay",
+          "prime": 47,
+          "splits": 2,
+          "total_nanos": 9069586,
+          "walk_nanos": 915136
+        },
+        "wilkinson_48": {
+          "method": "replay",
+          "prime": 61,
+          "splits": 2,
+          "total_nanos": 15862676,
+          "walk_nanos": 1430110
+        },
+        "wilkinson_56": {
+          "method": "replay",
+          "prime": 67,
+          "splits": 2,
+          "total_nanos": 20580932,
+          "walk_nanos": 1861990
+        },
+        "xpow105_minus1": {
+          "method": "classical",
+          "prime": 17,
+          "splits": 2,
+          "total_nanos": 44626909,
+          "walk_nanos": 29430881
+        },
+        "xpow120_minus1": {
+          "method": "classical",
+          "prime": 7,
+          "splits": 1,
+          "total_nanos": 145909461,
+          "walk_nanos": 18957024
+        },
+        "xpow24_minus1": {
+          "method": "classical",
+          "prime": 11,
+          "splits": 2,
+          "total_nanos": 2291277,
+          "walk_nanos": 1108083
+        },
+        "xpow48_minus1": {
+          "method": "classical",
+          "prime": 11,
+          "splits": 2,
+          "total_nanos": 10398415,
+          "walk_nanos": 3983566
+        }
+      },
+      {
+        "chebyshev_T24": {
+          "method": "classical",
+          "prime": 5,
+          "splits": 1,
+          "total_nanos": 431740,
+          "walk_nanos": 213476
+        },
+        "chebyshev_U24": {
+          "method": "classical",
+          "prime": 3,
+          "splits": 1,
+          "total_nanos": 586189,
+          "walk_nanos": 201689
+        },
+        "cyclo_phi128_x_phi165": {
+          "method": "classical",
+          "prime": 7,
+          "splits": 1,
+          "total_nanos": 75222628,
+          "walk_nanos": 34346078
+        },
+        "cyclo_phi17": {
+          "method": "classical",
+          "prime": 3,
+          "splits": 1,
+          "total_nanos": 101130,
+          "walk_nanos": 57145
+        },
+        "cyclo_phi179": {
+          "method": "classical",
+          "prime": 3,
+          "splits": 1,
+          "total_nanos": 34601657,
+          "walk_nanos": 6454279
+        },
+        "cyclo_phi385": {
+          "method": "classical",
+          "prime": 3,
+          "splits": 1,
+          "total_nanos": 143239763,
+          "walk_nanos": 56706187
+        },
+        "cyclo_phi41": {
+          "method": "classical",
+          "prime": 3,
+          "splits": 1,
+          "total_nanos": 1980536,
+          "walk_nanos": 485039
+        },
+        "cyclo_phi64_x_phi105": {
+          "method": "classical",
+          "prime": 11,
+          "splits": 1,
+          "total_nanos": 45081333,
+          "walk_nanos": 36945041
+        },
+        "legendre_P30": {
+          "method": "classical",
+          "prime": 67,
+          "splits": 2,
+          "total_nanos": 8379142,
+          "walk_nanos": 6943794
+        },
+        "legendre_P38": {
+          "method": "classical",
+          "prime": 79,
+          "splits": 1,
+          "total_nanos": 3776258,
+          "walk_nanos": 2962051
+        },
+        "randprod_10": {
+          "method": "classical",
+          "prime": 7,
+          "splits": 1,
+          "total_nanos": 634781,
+          "walk_nanos": 353233
         },
         "randprod_21": {
           "method": "classical",
           "prime": 17,
           "splits": 1,
           "total_nanos": 1387227,
-          "walk_nanos": 934476
+          "walk_nanos": 940985
         },
         "sd4_x_sd4shift1": {
           "method": "classical",
           "prime": 29,
           "splits": 2,
-          "total_nanos": 17548274,
-          "walk_nanos": 6762675
+          "total_nanos": 17540904,
+          "walk_nanos": 6801974
         },
         "sd5": {
           "method": "classical",
           "prime": 29,
           "splits": 2,
-          "total_nanos": 68262412,
-          "walk_nanos": 6613834
+          "total_nanos": 68461124,
+          "walk_nanos": 6597921
         },
         "sd5_shift1": {
           "method": "classical",
           "prime": 29,
           "splits": 2,
-          "total_nanos": 63127370,
-          "walk_nanos": 7059334
+          "total_nanos": 63248306,
+          "walk_nanos": 7035701
         },
         "sd5_shift2": {
           "method": "classical",
           "prime": 29,
           "splits": 2,
-          "total_nanos": 66464427,
-          "walk_nanos": 8706216
+          "total_nanos": 66589249,
+          "walk_nanos": 8629573
         },
         "sd5_x_phi11": {
           "method": "classical",
           "prime": 29,
           "splits": 2,
-          "total_nanos": 139572222,
-          "walk_nanos": 16418128
+          "total_nanos": 140284202,
+          "walk_nanos": 16239716
         },
         "wilkinson_40": {
           "method": "replay",
           "prime": 47,
           "splits": 2,
-          "total_nanos": 12319623,
-          "walk_nanos": 4172816
+          "total_nanos": 9089465,
+          "walk_nanos": 930539
         },
         "wilkinson_48": {
           "method": "replay",
           "prime": 61,
           "splits": 2,
-          "total_nanos": 21032208,
-          "walk_nanos": 6528378
+          "total_nanos": 15857028,
+          "walk_nanos": 1419825
         },
         "wilkinson_56": {
           "method": "replay",
           "prime": 67,
           "splits": 2,
-          "total_nanos": 28490645,
-          "walk_nanos": 9685338
+          "total_nanos": 20615913,
+          "walk_nanos": 1910132
         },
         "xpow105_minus1": {
           "method": "classical",
           "prime": 17,
           "splits": 2,
-          "total_nanos": 44057111,
-          "walk_nanos": 29458840
+          "total_nanos": 44298202,
+          "walk_nanos": 29797655
         },
         "xpow120_minus1": {
           "method": "classical",
           "prime": 7,
           "splits": 1,
-          "total_nanos": 145308516,
-          "walk_nanos": 18761862
+          "total_nanos": 145765628,
+          "walk_nanos": 18668977
         },
         "xpow24_minus1": {
           "method": "classical",
           "prime": 11,
           "splits": 2,
-          "total_nanos": 2305417,
-          "walk_nanos": 1091037
+          "total_nanos": 2283285,
+          "walk_nanos": 1094753
         },
         "xpow48_minus1": {
           "method": "classical",
           "prime": 11,
           "splits": 2,
-          "total_nanos": 10254261,
-          "walk_nanos": 3921233
-        }
-      },
-      {
-        "chebyshev_T24": {
-          "method": "classical",
-          "prime": 5,
-          "splits": 1,
-          "total_nanos": 439412,
-          "walk_nanos": 220497
-        },
-        "chebyshev_U24": {
-          "method": "classical",
-          "prime": 3,
-          "splits": 1,
-          "total_nanos": 599118,
-          "walk_nanos": 208490
-        },
-        "cyclo_phi128_x_phi165": {
-          "method": "classical",
-          "prime": 7,
-          "splits": 1,
-          "total_nanos": 75006171,
-          "walk_nanos": 34835781
-        },
-        "cyclo_phi17": {
-          "method": "classical",
-          "prime": 3,
-          "splits": 1,
-          "total_nanos": 102452,
-          "walk_nanos": 57405
-        },
-        "cyclo_phi179": {
-          "method": "classical",
-          "prime": 3,
-          "splits": 1,
-          "total_nanos": 34849241,
-          "walk_nanos": 6548577
-        },
-        "cyclo_phi385": {
-          "method": "classical",
-          "prime": 3,
-          "splits": 1,
-          "total_nanos": 143843046,
-          "walk_nanos": 59028145
-        },
-        "cyclo_phi41": {
-          "method": "classical",
-          "prime": 3,
-          "splits": 1,
-          "total_nanos": 1978713,
-          "walk_nanos": 471058
-        },
-        "cyclo_phi64_x_phi105": {
-          "method": "classical",
-          "prime": 11,
-          "splits": 1,
-          "total_nanos": 44775096,
-          "walk_nanos": 36737080
-        },
-        "legendre_P30": {
-          "method": "classical",
-          "prime": 67,
-          "splits": 2,
-          "total_nanos": 8365401,
-          "walk_nanos": 7097542
-        },
-        "legendre_P38": {
-          "method": "classical",
-          "prime": 79,
-          "splits": 1,
-          "total_nanos": 3780274,
-          "walk_nanos": 2913879
-        },
-        "randprod_10": {
-          "method": "classical",
-          "prime": 7,
-          "splits": 1,
-          "total_nanos": 638587,
-          "walk_nanos": 356428
-        },
-        "randprod_21": {
-          "method": "classical",
-          "prime": 17,
-          "splits": 1,
-          "total_nanos": 1433985,
-          "walk_nanos": 946343
-        },
-        "sd4_x_sd4shift1": {
-          "method": "classical",
-          "prime": 29,
-          "splits": 2,
-          "total_nanos": 17603235,
-          "walk_nanos": 6728845
-        },
-        "sd5": {
-          "method": "classical",
-          "prime": 29,
-          "splits": 2,
-          "total_nanos": 68326458,
-          "walk_nanos": 6552834
-        },
-        "sd5_shift1": {
-          "method": "classical",
-          "prime": 29,
-          "splits": 2,
-          "total_nanos": 63214300,
-          "walk_nanos": 7071012
-        },
-        "sd5_shift2": {
-          "method": "classical",
-          "prime": 29,
-          "splits": 2,
-          "total_nanos": 67569917,
-          "walk_nanos": 8584776
-        },
-        "sd5_x_phi11": {
-          "method": "classical",
-          "prime": 29,
-          "splits": 2,
-          "total_nanos": 140519238,
-          "walk_nanos": 16104073
-        },
-        "wilkinson_40": {
-          "method": "replay",
-          "prime": 47,
-          "splits": 2,
-          "total_nanos": 12403998,
-          "walk_nanos": 4131795
-        },
-        "wilkinson_48": {
-          "method": "replay",
-          "prime": 61,
-          "splits": 2,
-          "total_nanos": 21285374,
-          "walk_nanos": 6588697
-        },
-        "wilkinson_56": {
-          "method": "replay",
-          "prime": 67,
-          "splits": 2,
-          "total_nanos": 28591875,
-          "walk_nanos": 9680991
-        },
-        "xpow105_minus1": {
-          "method": "classical",
-          "prime": 17,
-          "splits": 2,
-          "total_nanos": 44021879,
-          "walk_nanos": 29038617
-        },
-        "xpow120_minus1": {
-          "method": "classical",
-          "prime": 7,
-          "splits": 1,
-          "total_nanos": 146694883,
-          "walk_nanos": 18272388
-        },
-        "xpow24_minus1": {
-          "method": "classical",
-          "prime": 11,
-          "splits": 2,
-          "total_nanos": 2314621,
-          "walk_nanos": 1085269
-        },
-        "xpow48_minus1": {
-          "method": "classical",
-          "prime": 11,
-          "splits": 2,
-          "total_nanos": 10489630,
-          "walk_nanos": 3883457
+          "total_nanos": 10400970,
+          "walk_nanos": 3939471
         }
       }
     ]
@@ -1426,552 +1426,552 @@
         "method": "classical",
         "prime": 29,
         "splits": 2,
-        "total_nanos": 68337413.5,
-        "walk_nanos": 6728634.5
+        "total_nanos": 68262254.0,
+        "walk_nanos": 6701345.0
       },
       "before": {
         "method": "classical",
         "prime": 29,
         "splits": 2,
-        "total_nanos": 68294435.0,
-        "walk_nanos": 6622176.5
+        "total_nanos": 68709432.0,
+        "walk_nanos": 6574076.0
       },
       "blocks": 4,
       "name": "sd5",
       "plan_changed": false,
-      "total_ratio": 1.001022789719664,
-      "total_ratio_max": 1.3321749094618662,
-      "total_ratio_min": 0.9943357320682543,
-      "walk_saved_nanos": -49729.0
+      "total_ratio": 0.9925524190106201,
+      "total_ratio_max": 1.0072049882170981,
+      "total_ratio_min": 0.9845719166995905,
+      "walk_saved_nanos": -128836.0
     },
     {
       "after": {
         "method": "classical",
         "prime": 29,
         "splits": 2,
-        "total_nanos": 63566776.5,
-        "walk_nanos": 7149032.5
+        "total_nanos": 63129093.5,
+        "walk_nanos": 7097462.0
       },
       "before": {
         "method": "classical",
         "prime": 29,
         "splits": 2,
-        "total_nanos": 63170835.0,
-        "walk_nanos": 7065173.0
+        "total_nanos": 63289457.0,
+        "walk_nanos": 7061744.5
       },
       "blocks": 4,
       "name": "sd5_shift1",
       "plan_changed": false,
-      "total_ratio": 1.005544875421319,
-      "total_ratio_max": 1.3332663653635333,
-      "total_ratio_min": 1.003036946186492,
-      "walk_saved_nanos": -72878.0
+      "total_ratio": 0.9970329630780717,
+      "total_ratio_max": 1.0032462028471287,
+      "total_ratio_min": 0.9943800356194749,
+      "walk_saved_nanos": -55246.5
     },
     {
       "after": {
         "method": "classical",
         "prime": 29,
         "splits": 2,
-        "total_nanos": 67055147.0,
-        "walk_nanos": 8702776.5
+        "total_nanos": 66741950.5,
+        "walk_nanos": 8729727.0
       },
       "before": {
         "method": "classical",
         "prime": 29,
         "splits": 2,
-        "total_nanos": 66944433.5,
-        "walk_nanos": 8641520.0
+        "total_nanos": 66705626.5,
+        "walk_nanos": 8620865.0
       },
       "blocks": 4,
       "name": "sd5_shift2",
       "plan_changed": false,
-      "total_ratio": 1.0034710492604988,
-      "total_ratio_max": 1.3310624312295662,
-      "total_ratio_min": 1.001563891658465,
-      "walk_saved_nanos": -70500.0
+      "total_ratio": 0.9985302392567713,
+      "total_ratio_max": 1.006266178811443,
+      "total_ratio_min": 0.9970367096443261,
+      "walk_saved_nanos": -102542.5
     },
     {
       "after": {
         "method": "classical",
         "prime": 29,
         "splits": 2,
-        "total_nanos": 17909363.5,
-        "walk_nanos": 6859303.0
+        "total_nanos": 17812828.0,
+        "walk_nanos": 6896854.5
       },
       "before": {
         "method": "classical",
         "prime": 29,
         "splits": 2,
-        "total_nanos": 17627987.0,
-        "walk_nanos": 6817386.5
+        "total_nanos": 17665924.5,
+        "walk_nanos": 6809545.0
       },
       "blocks": 4,
       "name": "sd4_x_sd4shift1",
       "plan_changed": false,
-      "total_ratio": 1.0131854549683528,
-      "total_ratio_max": 1.252920556931723,
-      "total_ratio_min": 1.0082340861557098,
-      "walk_saved_nanos": -17320.0
+      "total_ratio": 1.0070926258101092,
+      "total_ratio_max": 1.0184972956134248,
+      "total_ratio_min": 0.998226901599716,
+      "walk_saved_nanos": -84355.0
     },
     {
       "after": {
         "method": "classical",
         "prime": 29,
         "splits": 2,
-        "total_nanos": 138558809.5,
-        "walk_nanos": 16489023.0
+        "total_nanos": 139078473.5,
+        "walk_nanos": 16411605.0
       },
       "before": {
         "method": "classical",
         "prime": 29,
         "splits": 2,
-        "total_nanos": 139756108.5,
-        "walk_nanos": 16261100.5
+        "total_nanos": 138433523.5,
+        "walk_nanos": 16278798.5
       },
       "blocks": 4,
       "name": "sd5_x_phi11",
       "plan_changed": false,
-      "total_ratio": 0.9914328797217167,
-      "total_ratio_max": 1.3170278933621886,
-      "total_ratio_min": 0.9912226956063869,
-      "walk_saved_nanos": -329633.5
+      "total_ratio": 1.0042325605303328,
+      "total_ratio_max": 1.0109537314774588,
+      "total_ratio_min": 0.9931580036360759,
+      "walk_saved_nanos": -72817.5
     },
     {
       "after": {
         "method": "classical",
         "prime": 11,
         "splits": 2,
-        "total_nanos": 10452144.5,
-        "walk_nanos": 3964712.0
+        "total_nanos": 10440257.5,
+        "walk_nanos": 3951698.5
       },
       "before": {
         "method": "classical",
         "prime": 11,
         "splits": 2,
-        "total_nanos": 10450276.5,
-        "walk_nanos": 3916541.0
+        "total_nanos": 10389712.5,
+        "walk_nanos": 3972369.0
       },
       "blocks": 4,
       "name": "xpow48_minus1",
       "plan_changed": false,
-      "total_ratio": 1.0115929781177144,
-      "total_ratio_max": 1.1532793816369118,
-      "total_ratio_min": 0.987132804098013,
-      "walk_saved_nanos": -48171.0
+      "total_ratio": 1.0052426741911504,
+      "total_ratio_max": 1.0249411184460857,
+      "total_ratio_min": 1.0018386456012767,
+      "walk_saved_nanos": 7436.5
     },
     {
       "after": {
         "method": "classical",
         "prime": 17,
         "splits": 2,
-        "total_nanos": 44882950.0,
-        "walk_nanos": 29385912.0
+        "total_nanos": 45065960.0,
+        "walk_nanos": 29433029.5
       },
       "before": {
         "method": "classical",
         "prime": 17,
         "splits": 2,
-        "total_nanos": 44119347.5,
-        "walk_nanos": 29248728.5
+        "total_nanos": 44458489.5,
+        "walk_nanos": 29549101.5
       },
       "blocks": 4,
       "name": "xpow105_minus1",
       "plan_changed": false,
-      "total_ratio": 1.0167134925554175,
-      "total_ratio_max": 1.119809697355263,
-      "total_ratio_min": 1.0069833789175138,
-      "walk_saved_nanos": -166241.5
+      "total_ratio": 1.0136279228040275,
+      "total_ratio_max": 1.0351725592202812,
+      "total_ratio_min": 1.0126308546262974,
+      "walk_saved_nanos": 121610.5
     },
     {
       "after": {
         "method": "classical",
         "prime": 7,
         "splits": 1,
-        "total_nanos": 148637850.5,
-        "walk_nanos": 18767420.5
+        "total_nanos": 147144642.5,
+        "walk_nanos": 18655506.5
       },
       "before": {
         "method": "classical",
         "prime": 7,
         "splits": 1,
-        "total_nanos": 146399724.0,
-        "walk_nanos": 18635009.0
+        "total_nanos": 145837544.5,
+        "walk_nanos": 18688230.5
       },
       "blocks": 4,
       "name": "xpow120_minus1",
       "plan_changed": false,
-      "total_ratio": 1.0156610082978814,
-      "total_ratio_max": 1.2946217899093317,
-      "total_ratio_min": 0.9964344508352863,
-      "walk_saved_nanos": -132411.5
+      "total_ratio": 1.0078500972032365,
+      "total_ratio_max": 1.0109782120297188,
+      "total_ratio_min": 1.0050004708728388,
+      "walk_saved_nanos": 37406.0
     },
     {
       "after": {
         "method": "classical",
         "prime": 3,
         "splits": 1,
-        "total_nanos": 34932429.5,
-        "walk_nanos": 6639187.0
+        "total_nanos": 34971976.5,
+        "walk_nanos": 6574041.5
       },
       "before": {
         "method": "classical",
         "prime": 3,
         "splits": 1,
-        "total_nanos": 35021731.5,
-        "walk_nanos": 6554436.0
+        "total_nanos": 34639713.5,
+        "walk_nanos": 6469140.5
       },
       "blocks": 4,
       "name": "cyclo_phi179",
       "plan_changed": false,
-      "total_ratio": 0.9990790298432441,
-      "total_ratio_max": 1.3008025339777127,
-      "total_ratio_min": 0.9891080374218847,
-      "walk_saved_nanos": -85502.0
+      "total_ratio": 1.0113680785351489,
+      "total_ratio_max": 1.050698640738148,
+      "total_ratio_min": 1.0000078148047005,
+      "walk_saved_nanos": -104049.0
     },
     {
       "after": {
         "method": "classical",
         "prime": 11,
         "splits": 1,
-        "total_nanos": 18824771.0,
-        "walk_nanos": 10773000.0
+        "total_nanos": 18840736.5,
+        "walk_nanos": 10647109.0
       },
       "before": {
         "method": "classical",
         "prime": 11,
         "splits": 1,
-        "total_nanos": 45065735.5,
-        "walk_nanos": 37520370.0
+        "total_nanos": 45176529.0,
+        "walk_nanos": 37474571.5
       },
       "blocks": 4,
       "name": "cyclo_phi64_x_phi105",
       "plan_changed": true,
-      "total_ratio": 0.4177228554174022,
-      "total_ratio_max": 0.4832938381639651,
-      "total_ratio_min": 0.41124672851165917,
-      "walk_saved_nanos": 26777229.5
+      "total_ratio": 0.416246563127625,
+      "total_ratio_max": 0.4308469704800896,
+      "total_ratio_min": 0.41320026519027697,
+      "walk_saved_nanos": 26827462.5
     },
     {
       "after": {
         "method": "classical",
         "prime": 7,
         "splits": 1,
-        "total_nanos": 75716677.5,
-        "walk_nanos": 35092656.5
+        "total_nanos": 75498737.0,
+        "walk_nanos": 34856875.5
       },
       "before": {
         "method": "classical",
         "prime": 7,
         "splits": 1,
-        "total_nanos": 74986576.0,
-        "walk_nanos": 34886536.0
+        "total_nanos": 75178803.0,
+        "walk_nanos": 34400343.5
       },
       "blocks": 4,
       "name": "cyclo_phi128_x_phi165",
       "plan_changed": false,
-      "total_ratio": 1.0117920410425658,
-      "total_ratio_max": 1.2119493074776475,
-      "total_ratio_min": 0.9982752507045303,
-      "walk_saved_nanos": -206120.5
+      "total_ratio": 1.0065820543689656,
+      "total_ratio_max": 1.0391207541180087,
+      "total_ratio_min": 0.9932767589372602,
+      "walk_saved_nanos": -456532.0
     },
     {
       "after": {
         "method": "classical",
         "prime": 3,
         "splits": 1,
-        "total_nanos": 144712347.0,
-        "walk_nanos": 59003417.5
+        "total_nanos": 143775122.0,
+        "walk_nanos": 58880200.0
       },
       "before": {
         "method": "classical",
         "prime": 3,
         "splits": 1,
-        "total_nanos": 144228586.5,
-        "walk_nanos": 58877696.5
+        "total_nanos": 142848668.5,
+        "walk_nanos": 58601011.5
       },
       "blocks": 4,
       "name": "cyclo_phi385",
       "plan_changed": false,
-      "total_ratio": 1.0074711574447726,
-      "total_ratio_max": 1.23787261846499,
-      "total_ratio_min": 0.9901405552169878,
-      "walk_saved_nanos": -347189.5
+      "total_ratio": 1.0082328872150004,
+      "total_ratio_max": 1.0550051905278128,
+      "total_ratio_min": 0.993613816318604,
+      "walk_saved_nanos": -364070.0
     },
     {
       "after": {
         "method": "replay",
         "prime": 47,
         "splits": 2,
-        "total_nanos": 12756039.0,
-        "walk_nanos": 4338706.5
+        "total_nanos": 9176298.5,
+        "walk_nanos": 1009261.5
       },
       "before": {
         "method": "replay",
         "prime": 47,
         "splits": 2,
-        "total_nanos": 12426917.0,
-        "walk_nanos": 4124649.5
+        "total_nanos": 9079525.5,
+        "walk_nanos": 921190.5
       },
       "blocks": 4,
       "name": "wilkinson_40",
       "plan_changed": false,
-      "total_ratio": 1.0281850360119877,
-      "total_ratio_max": 1.2602891422588105,
-      "total_ratio_min": 0.9807545850064444,
-      "walk_saved_nanos": -193546.5
+      "total_ratio": 1.0121769849752242,
+      "total_ratio_max": 1.0155515411421756,
+      "total_ratio_min": 1.0058914358545854,
+      "walk_saved_nanos": -90429.5
     },
     {
       "after": {
         "method": "replay",
         "prime": 61,
         "splits": 2,
-        "total_nanos": 22012426.5,
-        "walk_nanos": 6829093.5
+        "total_nanos": 16243050.5,
+        "walk_nanos": 1545611.5
       },
       "before": {
         "method": "replay",
         "prime": 61,
         "splits": 2,
-        "total_nanos": 21399998.5,
-        "walk_nanos": 6558537.5
+        "total_nanos": 15883182.0,
+        "walk_nanos": 1428492.5
       },
       "blocks": 4,
       "name": "wilkinson_48",
       "plan_changed": false,
-      "total_ratio": 1.028592059221602,
-      "total_ratio_max": 1.256498335429765,
-      "total_ratio_min": 0.9917219666610435,
-      "walk_saved_nanos": -285443.0
+      "total_ratio": 1.0190559410996047,
+      "total_ratio_max": 1.024776588767242,
+      "total_ratio_min": 1.012554698004639,
+      "walk_saved_nanos": -116572.5
     },
     {
       "after": {
         "method": "replay",
         "prime": 67,
         "splits": 2,
-        "total_nanos": 29701875.0,
-        "walk_nanos": 9976764.5
+        "total_nanos": 21045054.5,
+        "walk_nanos": 2003334.5
       },
       "before": {
         "method": "replay",
         "prime": 67,
         "splits": 2,
-        "total_nanos": 28735217.5,
-        "walk_nanos": 9648738.5
+        "total_nanos": 20659903.5,
+        "walk_nanos": 1870117.5
       },
       "blocks": 4,
       "name": "wilkinson_56",
       "plan_changed": false,
-      "total_ratio": 1.0339382839315496,
-      "total_ratio_max": 1.2661241698909218,
-      "total_ratio_min": 0.974973761356216,
-      "walk_saved_nanos": -315297.0
+      "total_ratio": 1.0186765725608329,
+      "total_ratio_max": 1.023072958989418,
+      "total_ratio_min": 1.0100081173135835,
+      "walk_saved_nanos": -133848.0
     },
     {
       "after": {
         "method": "classical",
         "prime": 5,
         "splits": 1,
-        "total_nanos": 449306.0,
-        "walk_nanos": 219480.0
+        "total_nanos": 444799.5,
+        "walk_nanos": 218799.0
       },
       "before": {
         "method": "classical",
         "prime": 5,
         "splits": 1,
-        "total_nanos": 436122.0,
-        "walk_nanos": 218539.0
+        "total_nanos": 431775.0,
+        "walk_nanos": 213000.5
       },
       "blocks": 4,
       "name": "chebyshev_T24",
       "plan_changed": false,
-      "total_ratio": 1.0318355250740894,
-      "total_ratio_max": 1.0931699634966727,
-      "total_ratio_min": 1.019039387690751,
-      "walk_saved_nanos": -3209.5
+      "total_ratio": 1.0287600689083782,
+      "total_ratio_max": 1.0320100060221429,
+      "total_ratio_min": 1.0250410126393497,
+      "walk_saved_nanos": -5097.5
     },
     {
       "after": {
         "method": "classical",
         "prime": 3,
         "splits": 1,
-        "total_nanos": 597000.0,
-        "walk_nanos": 208123.5
+        "total_nanos": 595273.0,
+        "walk_nanos": 207608.5
       },
       "before": {
         "method": "classical",
         "prime": 3,
         "splits": 1,
-        "total_nanos": 600790.5,
-        "walk_nanos": 201594.0
+        "total_nanos": 584091.0,
+        "walk_nanos": 201508.5
       },
       "blocks": 4,
       "name": "chebyshev_U24",
       "plan_changed": false,
-      "total_ratio": 0.9992604618528789,
-      "total_ratio_max": 1.080922289098308,
-      "total_ratio_min": 0.9615535426882988,
-      "walk_saved_nanos": -6499.5
+      "total_ratio": 1.0171951895119862,
+      "total_ratio_max": 1.0819456241779921,
+      "total_ratio_min": 1.0066120917599206,
+      "walk_saved_nanos": -7016.5
     },
     {
       "after": {
         "method": "classical",
         "prime": 67,
         "splits": 2,
-        "total_nanos": 8505984.0,
-        "walk_nanos": 7109468.5
+        "total_nanos": 8611867.0,
+        "walk_nanos": 7114968.0
       },
       "before": {
         "method": "classical",
         "prime": 67,
         "splits": 2,
-        "total_nanos": 8407879.0,
-        "walk_nanos": 7128211.5
+        "total_nanos": 8377870.5,
+        "walk_nanos": 6975146.0
       },
       "blocks": 4,
       "name": "legendre_P30",
       "plan_changed": false,
-      "total_ratio": 1.0102505698552433,
-      "total_ratio_max": 1.0620244026556527,
-      "total_ratio_min": 0.9919717864160775,
-      "walk_saved_nanos": 61952.0
+      "total_ratio": 1.0237902044200013,
+      "total_ratio_max": 1.0318569366766088,
+      "total_ratio_min": 1.0166098722295795,
+      "walk_saved_nanos": -150768.0
     },
     {
       "after": {
         "method": "classical",
         "prime": 79,
         "splits": 1,
-        "total_nanos": 3811480.5,
-        "walk_nanos": 3054658.0
+        "total_nanos": 3875100.0,
+        "walk_nanos": 3030157.0
       },
       "before": {
         "method": "classical",
         "prime": 79,
         "splits": 1,
-        "total_nanos": 3789207.5,
-        "walk_nanos": 2949221.5
+        "total_nanos": 3788566.5,
+        "walk_nanos": 3008500.0
       },
       "blocks": 4,
       "name": "legendre_P38",
       "plan_changed": false,
-      "total_ratio": 1.0008635527094474,
-      "total_ratio_max": 1.1112443172108688,
-      "total_ratio_min": 0.9979195085174563,
-      "walk_saved_nanos": -105436.5
+      "total_ratio": 1.023538277455895,
+      "total_ratio_max": 1.0318593168157473,
+      "total_ratio_min": 0.9985129705040094,
+      "walk_saved_nanos": -21832.0
     },
     {
       "after": {
         "method": "classical",
         "prime": 3,
         "splits": 1,
-        "total_nanos": 108681.5,
-        "walk_nanos": 60655.5
+        "total_nanos": 107324.5,
+        "walk_nanos": 60274.5
       },
       "before": {
         "method": "classical",
         "prime": 3,
         "splits": 1,
-        "total_nanos": 105221.5,
-        "walk_nanos": 57360.0
+        "total_nanos": 102472.0,
+        "walk_nanos": 57154.5
       },
       "blocks": 4,
       "name": "cyclo_phi17",
       "plan_changed": false,
-      "total_ratio": 1.0215196614270652,
-      "total_ratio_max": 1.188566353023855,
-      "total_ratio_min": 1.003310661468264,
-      "walk_saved_nanos": -3245.0
+      "total_ratio": 1.0535869756905591,
+      "total_ratio_max": 1.0686058036721917,
+      "total_ratio_min": 0.9712928967480893,
+      "walk_saved_nanos": -3120.0
     },
     {
       "after": {
         "method": "classical",
         "prime": 3,
         "splits": 1,
-        "total_nanos": 2035056.5,
-        "walk_nanos": 482640.5
+        "total_nanos": 2002729.0,
+        "walk_nanos": 479881.0
       },
       "before": {
         "method": "classical",
         "prime": 3,
         "splits": 1,
-        "total_nanos": 1984211.5,
-        "walk_nanos": 473041.0
+        "total_nanos": 1984221.5,
+        "walk_nanos": 471869.5
       },
       "blocks": 4,
       "name": "cyclo_phi41",
       "plan_changed": false,
-      "total_ratio": 1.02804732460458,
-      "total_ratio_max": 1.2407863090807005,
-      "total_ratio_min": 0.9939498720919129,
-      "walk_saved_nanos": -11076.0
+      "total_ratio": 1.0116720326948117,
+      "total_ratio_max": 1.0633330075436924,
+      "total_ratio_min": 1.007833867479716,
+      "walk_saved_nanos": -5733.5
     },
     {
       "after": {
         "method": "classical",
         "prime": 11,
         "splits": 2,
-        "total_nanos": 2322858.5,
-        "walk_nanos": 1105654.0
+        "total_nanos": 2325207.0,
+        "walk_nanos": 1110676.5
       },
       "before": {
         "method": "classical",
         "prime": 11,
         "splits": 2,
-        "total_nanos": 2316118.5,
-        "walk_nanos": 1088153.0
+        "total_nanos": 2287912.0,
+        "walk_nanos": 1090481.5
       },
       "blocks": 4,
       "name": "xpow24_minus1",
       "plan_changed": false,
-      "total_ratio": 1.0038569145395297,
-      "total_ratio_max": 1.1169310224006435,
-      "total_ratio_min": 0.9928064747282291,
-      "walk_saved_nanos": -15573.5
+      "total_ratio": 1.0128253039511397,
+      "total_ratio_max": 1.025136274281072,
+      "total_ratio_min": 1.010328301641399,
+      "walk_saved_nanos": -20660.5
     },
     {
       "after": {
         "method": "classical",
         "prime": 7,
         "splits": 1,
-        "total_nanos": 636167.5,
-        "walk_nanos": 361656.0
+        "total_nanos": 632763.0,
+        "walk_nanos": 362182.0
       },
       "before": {
         "method": "classical",
         "prime": 7,
         "splits": 1,
-        "total_nanos": 631626.5,
-        "walk_nanos": 353879.5
+        "total_nanos": 625211.5,
+        "walk_nanos": 354611.0
       },
       "blocks": 4,
       "name": "randprod_10",
       "plan_changed": false,
-      "total_ratio": 1.0180062780814998,
-      "total_ratio_max": 1.0417781758789326,
-      "total_ratio_min": 0.9979763332813628,
-      "walk_saved_nanos": -7736.5
+      "total_ratio": 1.0122844808639653,
+      "total_ratio_max": 1.0615816243822658,
+      "total_ratio_min": 0.9917483352526304,
+      "walk_saved_nanos": -7121.0
     },
     {
       "after": {
         "method": "classical",
         "prime": 17,
         "splits": 1,
-        "total_nanos": 1430666.0,
-        "walk_nanos": 946688.0
+        "total_nanos": 1417376.5,
+        "walk_nanos": 956297.5
       },
       "before": {
         "method": "classical",
         "prime": 17,
         "splits": 1,
-        "total_nanos": 1407816.5,
-        "walk_nanos": 938041.0
+        "total_nanos": 1400826.0,
+        "walk_nanos": 939543.0
       },
       "blocks": 4,
       "name": "randprod_21",
       "plan_changed": false,
-      "total_ratio": 1.0213144542828543,
-      "total_ratio_max": 1.0323845786392465,
-      "total_ratio_min": 1.012045716047726,
-      "walk_saved_nanos": -15352.0
+      "total_ratio": 1.0189139192155188,
+      "total_ratio_max": 1.0437629512730013,
+      "total_ratio_min": 1.0011581868981527,
+      "walk_saved_nanos": -14100.5
     }
   ]
 }
