@@ -6,6 +6,7 @@ Authors: Kim Morrison
 
 import HexBerlekampZassenhaus
 import HexBench.BerlekampKernel
+import HexBench.QuadraticNorm
 import Hex.BenchOracle.Flint
 import Lean.Data.Json
 
@@ -44,6 +45,11 @@ The `--entry` flag selects which library entry answers each request:
   bounded scout against the first good prime's width, the complete degree
   pattern, the Berlekamp matrix plus its kernel, and a full Berlekamp split.
   The scouted pattern is checked against the split.
+* `quadraticNormProbe` — paired pricing of the iterated-quadratic-norm
+  irreducibility certificate (issue #9133) against the production cascade on
+  the same input: radicand recovery, the square-class independence test, the
+  iterated-norm coefficient construction, and the equality test, each timed
+  separately, alongside one production factorization.
 * `kernelProfile` — stage-by-stage attribution of the Berlekamp fixed-space
   kernel at the production-selected prime, together with the price of a packed
   contiguous finite-field representation (issue #9132). Like `primeScout`, none
@@ -72,6 +78,8 @@ inductive Entry where
   | primeScout
   | kernelProfile
   | henselTreeProfile
+  | quadraticNormProbe
+  | quadraticNormCertificate
 deriving Repr, DecidableEq
 
 def Entry.ofString? : String → Option Entry
@@ -86,6 +94,8 @@ def Entry.ofString? : String → Option Entry
   | "primeScout" => some .primeScout
   | "kernelProfile" => some .kernelProfile
   | "henselTreeProfile" => some .henselTreeProfile
+  | "quadraticNormProbe" => some .quadraticNormProbe
+  | "quadraticNormCertificate" => some .quadraticNormCertificate
   | _ => none
 
 /-- Entries answered by an `IO`-timed profiler rather than by `handleLine`. -/
@@ -97,6 +107,8 @@ def Entry.timed : Entry → Bool
   | .primeScout => true
   | .kernelProfile => true
   | .henselTreeProfile => true
+  | .quadraticNormProbe => true
+  | .quadraticNormCertificate => true
   | _ => false
 
 /-- Dispatch to the selected entry. `none` means the entry declined; the
@@ -115,6 +127,8 @@ def Entry.run : Entry → ZPoly → Option Factorization
   | .primeScout, _ => none
   | .kernelProfile, _ => none
   | .henselTreeProfile, _ => none
+  | .quadraticNormProbe, _ => none
+  | .quadraticNormCertificate, _ => none
 
 /-- Parse a request line into its ascending coefficient list. -/
 def parseCoeffs (line : String) : Except String (List Int) := do
@@ -1635,6 +1649,74 @@ private def henselTreeProfile (f : ZPoly) : IO Json := do
         @liftedModularFactors p modular.data.bounds modular.data.factorsModP
       @henselTreeAt p modular.data.bounds k target factors
 
+/-- Price the iterated-quadratic-norm irreducibility certificate on one input
+(issue #9133's go/no-go gate).
+
+The certificate side is reported in four spans, because the gate asks for
+construction and checking separately: radicand recovery, the independence test
+on the recovered square classes, the iterated-norm coefficient construction, and
+the equality test against the input. A declining input reports only the recovery
+span, which is the miss overhead a budget-gated production attempt would pay.
+
+Every stage's result is folded into `witness` before its closing mark. Without
+that the compiler sinks each pure `let` to its only use -- the reply object --
+and the whole certificate cost lands in whichever span happens to be last.
+`witness` is reported so the fold cannot itself be eliminated.
+
+`paired` additionally runs one production factorization in the same process on
+the same input, so the reported ratio is paired rather than assembled from two
+sweeps. It must be off for an input the production cascade does not finish. -/
+private def quadraticNormProbe (paired : Bool) (f : ZPoly) : IO Json := do
+  let coeffs := f.toArray
+  let witness ← IO.mkRef (0 : Nat)
+  let productionStart ← mark
+  if paired then
+    let φ := Hex.ZPoly.factorize f
+    witness.modify (· + φ.factors.size)
+  let productionStop ← mark
+  let recoveryStart ← mark
+  let recovered := QuadraticNorm.recover? coeffs
+  witness.modify (· + (recovered.map fun c => c.radicands.size).getD 0)
+  let recoveryStop ← mark
+  let productionSpans : List (String × Json) :=
+    if paired then [("production", spanJson productionStart productionStop)]
+    else []
+  match recovered with
+  | none =>
+      return Json.mkObj <|
+        [ ("degree", natJson (f.degree?.getD 0)),
+          ("certified", Json.bool false) ] ++ productionSpans ++
+        [ ("recovery", spanJson recoveryStart recoveryStop),
+          ("witness", natJson (← witness.get)) ]
+  | some cert =>
+      let independenceStart ← mark
+      let independent := QuadraticNorm.independentSquareClasses cert.radicands
+      witness.modify (· + if independent then 1 else 0)
+      let independenceStop ← mark
+      let constructionStart ← mark
+      let built :=
+        QuadraticNorm.trim
+          (QuadraticNorm.iteratedNorm cert.translation cert.radicands)
+      witness.modify (· + built.size)
+      let constructionStop ← mark
+      let equalityStart ← mark
+      let equal := built == QuadraticNorm.unitNormalize coeffs
+      witness.modify (· + if equal then 1 else 0)
+      let equalityStop ← mark
+      return Json.mkObj <|
+        [ ("degree", natJson (f.degree?.getD 0)),
+          ("certified", Json.bool (independent && equal)) ] ++ productionSpans ++
+        [ ("recovery", spanJson recoveryStart recoveryStop),
+          ("independence", spanJson independenceStart independenceStop),
+          ("construction", spanJson constructionStart constructionStop),
+          ("equality", spanJson equalityStart equalityStop),
+          ("translation", Json.num (JsonNumber.fromInt cert.translation)),
+          ("radicands", intsToJson cert.radicands.toList),
+          ("constructedSize", natJson built.size),
+          ("independent", Json.bool independent),
+          ("equal", Json.bool equal),
+          ("witness", natJson (← witness.get)) ]
+
 def replyOk (result : Json) : Json :=
   Json.mkObj [("ok", Json.bool true), ("result", result)]
 
@@ -1691,6 +1773,10 @@ private def handleProfileLine (entry : Entry) (line : String) : IO Json :=
         return replyOk (← kernelProfile f)
       else if entry == .henselTreeProfile then
         return replyOk (← henselTreeProfile f)
+      else if entry == .quadraticNormProbe then
+        return replyOk (← quadraticNormProbe (paired := true) f)
+      else if entry == .quadraticNormCertificate then
+        return replyOk (← quadraticNormProbe (paired := false) f)
       else
         return replyOk (← proposalProfile f)
 
@@ -1733,7 +1819,7 @@ def main (args : List String) : IO Unit := do
         s!"unknown --entry {entryName}; expected \
           factor|factorLattice|factorTrace|proposalTrace|proposalProfile\
           |factorPhaseProfile|primeCounterfactual|primeScout|kernelProfile\
-          |henselTreeProfile"
+          |henselTreeProfile|quadraticNormProbe|quadraticNormCertificate"
   | some entry => runLoop entry
 
 end HexBench.FactorService
