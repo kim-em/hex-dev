@@ -60,6 +60,18 @@ def git(*args: str) -> str:
                           capture_output=True, check=True).stdout.strip()
 
 
+def source_dirty() -> bool:
+    """Are any tracked files outside `reports/bench-results` modified?
+
+    That directory is excluded on purpose: regenerating a set of records in
+    sequence would otherwise have each one report the others as dirt, which
+    says nothing about whether the measured source moved. `service_sha256`
+    pins the measured binary exactly in any case.
+    """
+    return bool(git("status", "--porcelain", "--untracked-files=no", "--",
+                    ".", ":(exclude)reports/bench-results"))
+
+
 def load_corpus() -> dict:
     corpus = {}
     for line in CORPUS.read_text().splitlines():
@@ -204,11 +216,7 @@ def main(argv: list[str]) -> int:
         "schema": "hexbz-quadratic-norm-certificate/1",
         "env": {
             "git_commit": git("rev-parse", "HEAD"),
-            # Tracked files only: the record being written is untracked until
-            # it is committed, and `service_sha256` already pins the measured
-            # binary exactly.
-            "git_dirty": bool(git("status", "--porcelain",
-                                  "--untracked-files=no")),
+            "git_dirty": source_dirty(),
             "hostname": socket.gethostname(),
             "arch": platform.machine(),
             "corpus_sha256": hashlib.sha256(CORPUS.read_bytes()).hexdigest(),
