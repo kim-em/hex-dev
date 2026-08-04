@@ -432,18 +432,25 @@ def print_table(result: dict) -> None:
               f"{fmt(s['total_nanos'])} -> {fmt(v['total_nanos'])}")
 
 
-def print_margins(record: dict) -> None:
-    """The arithmetic of the first `scoutPays` call on every instance.
+def print_margins(record: dict) -> int:
+    """The arithmetic of the first `scoutPays` call, against what it was worth.
 
-    This is the decision the change turns on, so print both sides of it beside
-    what the candidates it is deciding about actually cost. The measured columns
-    are the incumbent's recombination and the scout plus split at the next good
-    prime -- the quantities the two estimates stand for.
+    This is the decision the change turns on, so print both sides of the
+    estimate beside the measurement that settles it. The rule claims that
+    another observation cannot pay, or can; what settles that is the
+    *attainable saving* -- the incumbent's measured downstream less the
+    cheapest measured downstream any other priced candidate offers -- against
+    what the observation measurably costs. A decision is confirmed when the
+    sign of `saving - cost` agrees with it.
+
+    Returns the number of decisions the measurement does not confirm.
     """
-    print("\n### First `scoutPays` decision\n")
+    print("\n### First `scoutPays` decision, against what it was worth\n")
     print("| instance | n | p | w | max deg | W | left | next obs | scout? | "
-          "measured recombination | measured scout + split |")
-    print("|---|---:|---:|---:|---:|---:|---:|---:|:--:|---:|---:|")
+          "own downstream | best other | attainable saving | observation cost "
+          "| confirmed |")
+    print("|---|---:|---:|---:|---:|---:|---:|---:|:--:|---:|---:|---:|---:|:--:|")
+    loose = 0
     for inst in instances(record):
         bound, n = inst["coeff_bound"], inst["degree"]
         if bound is None:
@@ -457,13 +464,73 @@ def print_margins(record: dict) -> None:
         obs = nxt.bit_length() * (
             SCOUT_ROUND_COST * FUEL * max(head["degrees"], default=0) +
             SPLIT_COLUMN_COST * n)
+        pays = scout_pays(bound, n, inc, nxt, FUEL)
+        others = [c for c in inst["candidates"][1:] if c["downstream"] is not None]
         following = next((c for c in inst["candidates"][1:]), None)
+        best = min((c["downstream"] for c in others), default=None)
+        saving = (None if best is None or head["downstream"] is None
+                  else head["downstream"] - best)
+        cost = (None if following is None
+                else following["bounded_scout"] + following["full_split"])
+        verdict = "--"
+        if saving is not None and cost is not None:
+            worth = saving > cost
+            verdict = "yes" if worth == pays else "**no**"
+            loose += 0 if worth == pays else 1
         print(f"| `{inst['name']}` | {n} | {head['prime']} | "
               f"{len(head['degrees'])} | {max(head['degrees'], default=0)} | "
               f"{lift_words(bound, head['prime'])} | {left} | {obs} | "
-              f"{'yes' if scout_pays(bound, n, inc, nxt, FUEL) else 'no'} | "
-              f"{fmt(head['recombination'])} | "
-              f"{'--' if following is None else fmt(following['bounded_scout'] + following['full_split'])} |")
+              f"{'yes' if pays else 'no'} | {fmt(head['downstream'])} | "
+              f"{fmt(best)} | "
+              f"{'--' if saving is None else ('none' if saving <= 0 else fmt(saving))} | "
+              f"{fmt(cost)} | {verdict} |")
+    print(f"\nThe measurement confirms every decision above except {loose}."
+          if loose else
+          "\nThe measurement confirms every decision above.")
+    return loose
+
+
+def print_sensitivity(record: dict, lo: int, hi: int, plo: int, phi: int) -> None:
+    """How far the two cost ratios can move before a decision does.
+
+    The ratios are medians of noisy per-candidate prices, and two records of the
+    same source disagree about them by tens of percent. What matters is not their
+    exact value but whether the decisions they produce are stable over that
+    spread, so sweep both and report where the first decision flips.
+    """
+    print("\n### Sensitivity of the decision to the two cost ratios\n")
+    base = None
+    stable = []
+    for scout in range(lo, hi + 1):
+        for split in range(plo, phi + 1):
+            saved = (SCOUT_ROUND_COST, SPLIT_COLUMN_COST)
+            globals()["SCOUT_ROUND_COST"] = scout
+            globals()["SPLIT_COLUMN_COST"] = split
+            vector = []
+            for inst in instances(record):
+                bound, n = inst["coeff_bound"], inst["degree"]
+                if bound is None:
+                    continue
+                head = inst["candidates"][0]
+                nxt = next(q for q in hot_path_primes() if q > head["prime"])
+                vector.append(scout_pays(
+                    bound, n,
+                    {"prime": head["prime"], "degrees": head["degrees"]},
+                    nxt, FUEL))
+            globals()["SCOUT_ROUND_COST"], globals()["SPLIT_COLUMN_COST"] = saved
+            if base is None:
+                base = vector
+            if vector == base:
+                stable.append((scout, split))
+            else:
+                differing = sum(1 for a, b in zip(vector, base) if a != b)
+                print(f"* `scoutRoundCost = {scout}`, `splitColumnCost = "
+                      f"{split}`: {differing} decision(s) differ from the "
+                      f"shipped pair")
+    total = (hi - lo + 1) * (phi - plo + 1)
+    print(f"\n{len(stable)} of {total} ratio pairs over "
+          f"`scoutRoundCost` {lo}--{hi} and `splitColumnCost` {plo}--{phi} give "
+          f"the identical decision on every instance.")
 
 
 def print_agreement(record: dict, result: dict, policy: str) -> int:
@@ -490,6 +557,9 @@ def main() -> int:
     p.add_argument("--agrees-with", default=None,
                    help="policy whose replayed selection must match the prime "
                         "the recorded binary selected (exit 1 if it does not)")
+    p.add_argument("--sensitivity", action="store_true",
+                   help="also sweep the two cost ratios and report where the "
+                        "first decision flips")
     p.add_argument("--margins", action="store_true",
                    help="also print the arithmetic of the first `scoutPays` "
                         "decision on every instance")
@@ -505,6 +575,8 @@ def main() -> int:
     print_table(result)
     if args.margins:
         print_margins(record)
+    if args.sensitivity:
+        print_sensitivity(record, 6, 20, 2, 9)
     bad = 0
     if args.agrees_with is not None:
         bad = print_agreement(record, result, args.agrees_with)
