@@ -7,6 +7,7 @@ Authors: Kim Morrison
 module
 
 public import HexHensel.ModularPolynomial
+public import HexHensel.ModularDivision
 public import HexHensel.Linear
 public import HexHensel.Multifactor
 public import HexHensel.WordMul

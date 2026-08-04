@@ -6,9 +6,8 @@ Authors: Kim Morrison
 
 module
 
-public import HexHensel.ModularPolynomial
+public import HexHensel.ModularDivision
 public import HexHensel.WordMul
-public import HexPoly.Euclid.MonicUnique
 
 public section
 
@@ -18,180 +17,13 @@ Executable quadratic Hensel lifting.
 This module implements the doubling step that lifts a factorization and its
 Bezout witnesses from congruence modulo `m` to congruence modulo `m * m`,
 together with the initial theorem surface describing the updated invariants.
+The coefficient arithmetic and the monic modular division the step runs on
+live in `HexHensel/ModularDivision.lean`.
 -/
 namespace Hex
 
-/-- Output of one quadratic Hensel doubling step. The four fields package the
-updated leading factor `g` (monic, the input `g` corrected modulo `m^2`), the
-updated complementary factor `h`, and the updated Bezout witnesses `s`, `t`
-satisfying `s * g + t * h ≡ 1 (mod m^2)`. -/
-structure QuadraticLiftResult where
-  /-- The updated monic factor. -/
-  g : ZPoly
-  /-- The updated complementary factor. -/
-  h : ZPoly
-  /-- The updated Bezout coefficient multiplying `g`. -/
-  s : ZPoly
-  /-- The updated Bezout coefficient multiplying `h`. -/
-  t : ZPoly
-
-namespace QuadraticLiftResult
-
-/-- Canonical coefficient reduction modulo `m^2`. -/
-def reduceModSquare (f : ZPoly) (m : Nat) : ZPoly :=
-  ZPoly.reduceModPow f m 2
-
-/-- Residue `f - g * h` corrected by the factor update of the quadratic Hensel
-step: starting from `g * h ≡ f (mod m)`, this quantity is divisible by `m` and
-its lift drives the first-order correction that achieves `g' * h' ≡ f (mod
-m^2)`. -/
-def factorError (f g h : ZPoly) : ZPoly :=
-  f - g * h
-
-/-- Runtime implementation of {name}`factorError`: the same residual with the
-product taken by Kronecker substitution (`Hex.ZPoly.mulKronecker`, value-equal
-to the schoolbook product by `Hex.ZPoly.mulKronecker_eq`). The bignum Hensel
-step is the only caller, and its `g * h` is the widest product in the lift. -/
-def factorErrorImpl (f g h : ZPoly) : ZPoly :=
-  f - ZPoly.mulKronecker g h
-
-/-- Register the Kronecker product as the compiled implementation of
-{name}`factorError`. -/
-@[csimp]
-theorem factorError_eq_impl : @factorError = @factorErrorImpl := by
-  funext f g h
-  unfold factorError factorErrorImpl
-  rw [ZPoly.mulKronecker_eq]
-
-end QuadraticLiftResult
-
 namespace ZPoly
 
-/-- The working modulus `m * m = m²` of one quadratic Hensel doubling step. -/
-private def quadraticModulus (m : Nat) : Nat :=
-  m * m
-
-/-- Canonical nonnegative residue of `z` in the range `[0, modulus)`. -/
-private def canonicalMod (z : Int) (modulus : Nat) : Int :=
-  Int.ofNat <| Int.toNat (z % Int.ofNat modulus)
-
-/-- Reduce a single coefficient to its canonical residue modulo `m²`. -/
-private def reduceCoeffModSquare (z : Int) (m : Nat) : Int :=
-  canonicalMod z (quadraticModulus m)
-
-/-- Polynomial sum `f + g` with every coefficient reduced modulo `m²`. -/
-private def addModSquare (f g : ZPoly) (m : Nat) : ZPoly :=
-  QuadraticLiftResult.reduceModSquare (f + g) m
-
-/-- Polynomial difference `f - g` with every coefficient reduced modulo `m²`. -/
-private def subModSquare (f g : ZPoly) (m : Nat) : ZPoly :=
-  QuadraticLiftResult.reduceModSquare (f - g) m
-
-/-- Polynomial product `f * g` with every coefficient reduced modulo `m²`.
-
-Public, unlike its sibling reductions, because its compiled implementation is
-swapped by a `@[csimp]` theorem, and `csimp` lemmas must be public. -/
-def mulModSquare (f g : ZPoly) (m : Nat) : ZPoly :=
-  QuadraticLiftResult.reduceModSquare (f * g) m
-
-/-- Runtime implementation of {name}`mulModSquare`: the same reduced product
-with the multiplication taken by Kronecker substitution. Eight of the nine
-polynomial products in the bignum quadratic step go through this definition. -/
-def mulModSquareImpl (f g : ZPoly) (m : Nat) : ZPoly :=
-  QuadraticLiftResult.reduceModSquare (ZPoly.mulKronecker f g) m
-
-/-- Register the Kronecker product as the compiled implementation of
-{name}`mulModSquare`. -/
-@[csimp]
-theorem mulModSquare_eq_impl : @mulModSquare = @mulModSquareImpl := by
-  funext f g m
-  unfold mulModSquare mulModSquareImpl
-  rw [ZPoly.mulKronecker_eq]
-
-/-- Modular multiplication by a single monomial. Kept as a separate
-specification so compiled division can avoid sending the monomial's leading
-zero coefficients through the generic schoolbook multiplier. -/
-def mulMonomialModSquare
-    (k : Nat) (coeff : Int) (q : ZPoly) (m : Nat) : ZPoly :=
-  mulModSquare (DensePoly.monomial k coeff) q m
-
-/-- Multiplication by `coeff * X^k` is a scaled coefficient shift. -/
-private theorem monomial_mul_eq_shift_scale
-    (k : Nat) (coeff : Int) (q : ZPoly) :
-    DensePoly.monomial k coeff * q =
-      DensePoly.shift k (DensePoly.scale coeff q) := by
-  have hmono : DensePoly.monomial k coeff =
-      DensePoly.scale coeff (DensePoly.monomial k 1) := by
-    apply DensePoly.ext_coeff
-    intro n
-    rw [DensePoly.coeff_monomial, DensePoly.coeff_scale_semiring,
-      DensePoly.coeff_monomial]
-    by_cases hnk : n = k
-    · simp [hnk]
-    · simp only [hnk, ↓reduceIte]
-      exact (Lean.Grind.Semiring.mul_zero coeff).symm
-  rw [hmono, ← DensePoly.scale_mul,
-    DensePoly.monomial_one_mul_poly_eq_shift]
-  apply DensePoly.ext_coeff
-  intro n
-  rw [DensePoly.coeff_scale_semiring,
-    DensePoly.coeff_shift_scale_semiring, DensePoly.coeff_shift]
-  by_cases hnk : n < k
-  · simp only [hnk, ↓reduceIte]
-    exact Lean.Grind.Semiring.mul_zero coeff
-  · simp [hnk]
-
-/-- Linear-time implementation of modular monomial multiplication. -/
-def mulMonomialModSquareImpl
-    (k : Nat) (coeff : Int) (q : ZPoly) (m : Nat) : ZPoly :=
-  QuadraticLiftResult.reduceModSquare
-    (DensePoly.shift k (DensePoly.scale coeff q)) m
-
-/-- The shift-and-scale monomial kernel is exactly the generic modular
-product. -/
-theorem mulMonomialModSquare_eq
-    (k : Nat) (coeff : Int) (q : ZPoly) (m : Nat) :
-    mulMonomialModSquare k coeff q m =
-      mulMonomialModSquareImpl k coeff q m := by
-  unfold mulMonomialModSquare mulMonomialModSquareImpl mulModSquare
-  rw [monomial_mul_eq_shift_scale]
-
-/-- Proof-backed compiled implementation of modular monomial multiplication. -/
-@[csimp]
-theorem mulMonomialModSquare_eq_impl :
-    @mulMonomialModSquare = @mulMonomialModSquareImpl := by
-  funext k coeff q m
-  exact mulMonomialModSquare_eq k coeff q m
-
-/-- Fuel-driven long-division kernel returning the quotient/remainder of the
-running `rem` by the monic divisor `q`, with all arithmetic reduced modulo `m²`.
-The Hensel theorem surface supplies monic divisors, so this exploits that
-invariant to avoid coefficient division in the modular hot path. -/
-private def divModMonicModSquareAux
-    (m : Nat) (q : ZPoly) : Nat → ZPoly → ZPoly → ZPoly × ZPoly
-  | 0, quot, rem => (quot, rem)
-  | fuel + 1, quot, rem =>
-      if q.isZero then
-        (0, QuadraticLiftResult.reduceModSquare rem m)
-      else
-        match rem.degree?, q.degree? with
-        | some rd, some qd =>
-            if rd < qd then
-              (quot, rem)
-            else
-              let k := rd - qd
-              let coeff := reduceCoeffModSquare rem.leadingCoeff m
-              let term := DensePoly.monomial k coeff
-              let quot := addModSquare quot term m
-              let rem := subModSquare rem (mulMonomialModSquare k coeff q m) m
-              divModMonicModSquareAux m q fuel quot rem
-        | _, _ => (quot, rem)
-
-/-- Quotient and remainder of `p` divided by the monic divisor `q`, working
-modulo `m²`, with the dividend size supplying the recursion fuel. -/
-private def divModMonicModSquare (p q : ZPoly) (m : Nat) : ZPoly × ZPoly :=
-  let p := QuadraticLiftResult.reduceModSquare p m
-  divModMonicModSquareAux m q p.size 0 p
 
 /-- `reduceModSquare f m` is congruent to `f` modulo `m²`. -/
 private theorem reduceModSquare_congr
@@ -1990,6 +1822,119 @@ def quadraticHenselStepBignum
   let s' := subModSquare (subModSquare s (mulModSquare s b m) m) (mulModSquare qBezout h' m) m
   { g := g', h := h', s := s', t := t' }
 
+/-! Narrowing the step's target.
+
+The exact-exponent recursion hands *the same* `f` to every doubling step, and
+that `f` carries the finally requested precision `p^k`. A step running at
+modulus `m = p^half` therefore forms its residual `f - g·h` at up to `k/half`
+times the width its own modulus needs -- measured at 310 bits against an 86-bit
+`m²` on the first bignum step of a Wilkinson 56 lift -- and every product that
+consumes the residual pays for the excess.
+
+The residual reaches the rest of the step only through `mulModSquare`, which
+reduces modulo `m²`, so reducing the target first cannot move the step's value.
+`quadraticHenselStepBignumImpl` and `quadraticHenselFactorsBignumImpl` do that
+reduction; `mulModSquare_factorError_reduce` is the fact that licenses it. -/
+
+/-- Reducing a bignum step's target modulo `m²` does not change any product the
+residual feeds. -/
+private theorem mulModSquare_factorError_reduce
+    (m : Nat) (hm : 0 < m) (a f g h : ZPoly) :
+    mulModSquare a
+        (QuadraticLiftResult.factorError (QuadraticLiftResult.reduceModSquare f m) g h) m
+      = mulModSquare a (QuadraticLiftResult.factorError f g h) m := by
+  have hpow : 0 < m ^ 2 := Nat.pow_pos hm
+  have hf : ZPoly.congr (ZPoly.reduceModPow f m 2) f (m ^ 2) :=
+    congr_reduceModPow f m 2 hpow
+  have herr : ZPoly.congr
+      (QuadraticLiftResult.factorError (QuadraticLiftResult.reduceModSquare f m) g h)
+      (QuadraticLiftResult.factorError f g h) (m ^ 2) :=
+    congr_sub _ _ _ _ (m ^ 2) hf (congr_refl (g * h) (m ^ 2))
+  show ZPoly.reduceModPow _ m 2 = ZPoly.reduceModPow _ m 2
+  exact reduceModPow_eq_of_congr _ _ m 2
+    (congr_mul _ _ _ _ (m ^ 2) (congr_refl a (m ^ 2)) herr)
+
+/-- Two nested modular additions need only one canonicalisation. -/
+private theorem addModSquare_addModSquare (m : Nat) (hm : 0 < m) (a b c : ZPoly) :
+    addModSquare a (addModSquare b c m) m
+      = QuadraticLiftResult.reduceModSquare (a + (b + c)) m := by
+  show ZPoly.reduceModPow _ m 2 = ZPoly.reduceModPow _ m 2
+  exact reduceModPow_eq_of_congr _ _ m 2
+    (congr_add _ _ _ _ (m ^ 2) (congr_refl a (m ^ 2))
+      (congr_reduceModPow (b + c) m 2 (Nat.pow_pos hm)))
+
+/-- A modular addition followed by a modular subtraction needs only one
+canonicalisation. -/
+private theorem subModSquare_addModSquare (m : Nat) (hm : 0 < m) (a b c : ZPoly) :
+    subModSquare (addModSquare a b m) c m
+      = QuadraticLiftResult.reduceModSquare (a + b - c) m := by
+  show ZPoly.reduceModPow _ m 2 = ZPoly.reduceModPow _ m 2
+  exact reduceModPow_eq_of_congr _ _ m 2
+    (congr_sub _ _ _ _ (m ^ 2)
+      (congr_reduceModPow (a + b) m 2 (Nat.pow_pos hm)) (congr_refl c (m ^ 2)))
+
+/-- Two nested modular subtractions need only one canonicalisation. -/
+private theorem subModSquare_subModSquare (m : Nat) (hm : 0 < m) (a b c : ZPoly) :
+    subModSquare (subModSquare a b m) c m
+      = QuadraticLiftResult.reduceModSquare (a - b - c) m := by
+  show ZPoly.reduceModPow _ m 2 = ZPoly.reduceModPow _ m 2
+  exact reduceModPow_eq_of_congr _ _ m 2
+    (congr_sub _ _ _ _ (m ^ 2)
+      (congr_reduceModPow (a - b) m 2 (Nat.pow_pos hm)) (congr_refl c (m ^ 2)))
+
+/-- Runtime shape of the bignum quadratic step: the target is narrowed to the
+step's own modulus before the residual is formed. -/
+def quadraticHenselStepBignumImpl
+    (m : Nat) (f g h s t : ZPoly) : QuadraticLiftResult :=
+  if 0 < m then
+    let f := QuadraticLiftResult.reduceModSquare f m
+    let e := QuadraticLiftResult.factorError f g h
+    let te := mulModSquare t e m
+    let factorQR := divModMonicModSquare te g m
+    let qFactor := factorQR.1
+    let rFactor := factorQR.2
+    let g' := addModSquare g rFactor m
+    let h' := QuadraticLiftResult.reduceModSquare
+      (h + (mulModSquare s e m + mulModSquare qFactor h m)) m
+    let b := QuadraticLiftResult.reduceModSquare
+      (mulModSquare s g' m + mulModSquare t h' m - 1) m
+    let tb := mulModSquare t b m
+    let bezoutQR := divModMonicModSquare tb g' m
+    let qBezout := bezoutQR.1
+    let rBezout := bezoutQR.2
+    let t' := subModSquare t rBezout m
+    let s' := QuadraticLiftResult.reduceModSquare
+      (s - mulModSquare s b m - mulModSquare qBezout h' m) m
+    { g := g', h := h', s := s', t := t' }
+  else
+    let e := QuadraticLiftResult.factorError f g h
+    let te := mulModSquare t e m
+    let factorQR := divModMonicModSquare te g m
+    let qFactor := factorQR.1
+    let rFactor := factorQR.2
+    let g' := addModSquare g rFactor m
+    let hCorrection := addModSquare (mulModSquare s e m) (mulModSquare qFactor h m) m
+    let h' := addModSquare h hCorrection m
+    let b := subModSquare (addModSquare (mulModSquare s g' m) (mulModSquare t h' m) m) 1 m
+    let tb := mulModSquare t b m
+    let bezoutQR := divModMonicModSquare tb g' m
+    let qBezout := bezoutQR.1
+    let rBezout := bezoutQR.2
+    let t' := subModSquare t rBezout m
+    let s' := subModSquare (subModSquare s (mulModSquare s b m) m) (mulModSquare qBezout h' m) m
+    { g := g', h := h', s := s', t := t' }
+
+/-- Proof-backed compiled implementation of the bignum quadratic step. -/
+@[csimp] theorem quadraticHenselStepBignum_eq_impl :
+    @quadraticHenselStepBignum = @quadraticHenselStepBignumImpl := by
+  funext m f g h s t
+  unfold quadraticHenselStepBignum quadraticHenselStepBignumImpl
+  by_cases hm : 0 < m
+  · simp only [if_pos hm, mulModSquare_factorError_reduce m hm,
+      addModSquare_addModSquare m hm, subModSquare_addModSquare m hm,
+      subModSquare_subModSquare m hm]
+  · simp only [if_neg hm]
+
 /-- Guarded selection: the word-sized step when its guard holds, else the bignum step. -/
 def quadraticHenselStep
     (m : Nat) (f g h s t : ZPoly) : QuadraticLiftResult :=
@@ -2024,8 +1969,11 @@ private def quadraticHenselFactorsWord?
     else none
   else none
 
-/-- Bignum factor-only quadratic step, omitting the final Bezout correction. -/
-private def quadraticHenselFactorsBignum
+/-- Bignum factor-only quadratic step, omitting the final Bezout correction.
+
+Public, unlike its word-sized sibling, because its compiled implementation is
+swapped by a `@[csimp]` theorem, and `csimp` lemmas must be public. -/
+def quadraticHenselFactorsBignum
     (m : Nat) (f g h s t : ZPoly) : ZPoly × ZPoly :=
   let e := QuadraticLiftResult.factorError f g h
   let te := mulModSquare t e m
@@ -2034,6 +1982,38 @@ private def quadraticHenselFactorsBignum
   let h' := addModSquare h
     (addModSquare (mulModSquare s e m) (mulModSquare factorQR.1 h m) m) m
   (g', h')
+
+/-- Runtime shape of the bignum factor-only step, narrowing the target to the
+step's own modulus before the residual is formed. -/
+def quadraticHenselFactorsBignumImpl
+    (m : Nat) (f g h s t : ZPoly) : ZPoly × ZPoly :=
+  if 0 < m then
+    let f := QuadraticLiftResult.reduceModSquare f m
+    let e := QuadraticLiftResult.factorError f g h
+    let te := mulModSquare t e m
+    let factorQR := divModMonicModSquare te g m
+    let g' := addModSquare g factorQR.2 m
+    let h' := QuadraticLiftResult.reduceModSquare
+      (h + (mulModSquare s e m + mulModSquare factorQR.1 h m)) m
+    (g', h')
+  else
+    let e := QuadraticLiftResult.factorError f g h
+    let te := mulModSquare t e m
+    let factorQR := divModMonicModSquare te g m
+    let g' := addModSquare g factorQR.2 m
+    let h' := addModSquare h
+      (addModSquare (mulModSquare s e m) (mulModSquare factorQR.1 h m) m) m
+    (g', h')
+
+/-- Proof-backed compiled implementation of the bignum factor-only step. -/
+@[csimp] theorem quadraticHenselFactorsBignum_eq_impl :
+    @quadraticHenselFactorsBignum = @quadraticHenselFactorsBignumImpl := by
+  funext m f g h s t
+  unfold quadraticHenselFactorsBignum quadraticHenselFactorsBignumImpl
+  by_cases hm : 0 < m
+  · simp only [if_pos hm, mulModSquare_factorError_reduce m hm,
+      addModSquare_addModSquare m hm]
+  · simp only [if_neg hm]
 
 /-- Update only the two factors in one quadratic Hensel step. The result is
 byte-identical to the `g` and `h` fields of `quadraticHenselStep`, while the

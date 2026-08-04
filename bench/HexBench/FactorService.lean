@@ -71,6 +71,7 @@ inductive Entry where
   | primeCounterfactual
   | primeScout
   | kernelProfile
+  | henselTreeProfile
 deriving Repr, DecidableEq
 
 def Entry.ofString? : String → Option Entry
@@ -84,6 +85,7 @@ def Entry.ofString? : String → Option Entry
   | "primeCounterfactual" => some .primeCounterfactual
   | "primeScout" => some .primeScout
   | "kernelProfile" => some .kernelProfile
+  | "henselTreeProfile" => some .henselTreeProfile
   | _ => none
 
 /-- Entries answered by an `IO`-timed profiler rather than by `handleLine`. -/
@@ -94,6 +96,7 @@ def Entry.timed : Entry → Bool
   | .primeCounterfactual => true
   | .primeScout => true
   | .kernelProfile => true
+  | .henselTreeProfile => true
   | _ => false
 
 /-- Dispatch to the selected entry. `none` means the entry declined; the
@@ -111,6 +114,7 @@ def Entry.run : Entry → ZPoly → Option Factorization
   | .primeCounterfactual, _ => none
   | .primeScout, _ => none
   | .kernelProfile, _ => none
+  | .henselTreeProfile, _ => none
 
 /-- Parse a request line into its ascending coefficient list. -/
 def parseCoeffs (line : String) : Except String (List Int) := do
@@ -1356,6 +1360,245 @@ private def primeScout (f : ZPoly) : IO Json := do
         natJson ((directPrimePlan? core).map (·.prime) |>.getD 0)),
       ("candidates", Json.arr rows) ]
 
+/-! ## Node-level profile of the multifactor Hensel product tree
+
+`henselTreeProfile` re-walks the production tree
+`Hex.ZPoly.multifactorLiftQuadraticListImpl` in `IO`, timing every node's two
+sub-products, its normalised XGCD, and every quadratic doubling step of that
+node's exact-exponent lift. Bignum steps are additionally replayed piece by
+piece, so the factor error, the `t · e` product, the monic modular division and
+the residual coefficient reductions are priced separately.
+
+The mirror runs the production functions themselves, in production order, and
+its returned array is checked against `Hex.ZPoly.multifactorLiftQuadratic`
+before any time is reported. The per-step replay is diagnostic overhead and is
+reported under `replay`; the step's own `nanos` is the untimed production
+call. -/
+
+private def polyShapeJson (name : String) (f : ZPoly) : String × Json :=
+  (name, Json.mkObj
+    [ ("degree", natJson (f.degree?.getD 0)),
+      ("size", natJson f.size),
+      ("coeffBits", natJson (ZPoly.bitLen (ZPoly.maxAbs f))) ])
+
+/-- Replay one bignum quadratic step's pieces, in the order
+`quadraticHenselStepBignum` executes them, timing each. `factorOnly` stops
+after the factor update, mirroring `quadraticHenselFactorsBignum`. -/
+private def replayBignumStep (sink : IO.Ref Nat) (factorOnly : Bool)
+    (m : Nat) (f g h s t : ZPoly) : IO Json := do
+  let a0 ← mark
+  let e := QuadraticLiftResult.factorError f g h
+  observeNat sink e.size
+  let a1 ← mark
+  let te := ZPoly.mulModSquare t e m
+  observeNat sink te.size
+  let a2 ← mark
+  let factorQR := ZPoly.divModMonicModSquare te g m
+  observeNat sink (factorQR.1.size + factorQR.2.size)
+  let a3 ← mark
+  let g' := QuadraticLiftResult.reduceModSquare (g + factorQR.2) m
+  let hCorrection := QuadraticLiftResult.reduceModSquare
+    (ZPoly.mulModSquare s e m + ZPoly.mulModSquare factorQR.1 h m) m
+  let h' := QuadraticLiftResult.reduceModSquare (h + hCorrection) m
+  observeNat sink (g'.size + h'.size)
+  let a4 ← mark
+  let bezout ←
+    if factorOnly then
+      pure []
+    else do
+      let b0 ← mark
+      let b := QuadraticLiftResult.reduceModSquare
+        (QuadraticLiftResult.reduceModSquare
+          (ZPoly.mulModSquare s g' m + ZPoly.mulModSquare t h' m) m - 1) m
+      let tb := ZPoly.mulModSquare t b m
+      observeNat sink tb.size
+      let b1 ← mark
+      let bezoutQR := ZPoly.divModMonicModSquare tb g' m
+      observeNat sink (bezoutQR.1.size + bezoutQR.2.size)
+      let b2 ← mark
+      let t' := QuadraticLiftResult.reduceModSquare (t - bezoutQR.2) m
+      let s' := QuadraticLiftResult.reduceModSquare
+        (QuadraticLiftResult.reduceModSquare (s - ZPoly.mulModSquare s b m) m
+          - ZPoly.mulModSquare bezoutQR.1 h' m) m
+      observeNat sink (s'.size + t'.size)
+      let b3 ← mark
+      pure [ ("bezoutError", spanJson b0 b1), ("bezoutDivision", spanJson b1 b2),
+             ("bezoutUpdate", spanJson b2 b3) ]
+  return Json.mkObj <|
+    [ ("factorError", spanJson a0 a1), ("errorProduct", spanJson a1 a2),
+      ("factorDivision", spanJson a2 a3), ("factorUpdate", spanJson a3 a4),
+      ("replayTotal", spanJson a0 a4),
+      polyShapeJson "errorShape" e, polyShapeJson "errorProductShape" te,
+      polyShapeJson "quotientShape" factorQR.1 ] ++ bezout
+
+/-- Record one doubling step: its exponents, its modulus width, whether the
+word-sized guard admits it, its production time, and its replay attribution. -/
+private def stepJson (sink : IO.Ref Nat) (steps : IO.Ref (Array Json))
+    (kind : String) (p exponent target : Nat) (start stop : Mark)
+    (f g h s t : ZPoly) : IO Unit := do
+  let m := p ^ exponent
+  let word := decide (m * m < UInt64.word)
+  let replay ←
+    if word then pure Json.null
+    else replayBignumStep sink (kind == "factors") m f g h s t
+  steps.modify (·.push (Json.mkObj
+    [ ("kind", Json.str kind),
+      ("exponent", natJson exponent),
+      ("target", natJson target),
+      ("modulusBits", natJson (ZPoly.bitLen m)),
+      ("wordPath", Json.bool word),
+      ("span", spanJson start stop),
+      ("replay", replay) ]))
+
+/-- Mirror of `Hex.ZPoly.liftExactImpl`, timing every doubling step. -/
+private partial def profileLiftExact (sink : IO.Ref Nat)
+    (steps : IO.Ref (Array Json)) (p : Nat) [ZMod64.Bounds p]
+    (f : ZPoly) (k : Nat) (acc : QuadraticLiftResult) : IO QuadraticLiftResult := do
+  if k ≤ 1 then
+    let start ← mark
+    let reduced := ZPoly.reduceLift p k acc
+    observeNat sink (reduced.g.size + reduced.h.size + reduced.s.size + reduced.t.size)
+    let stop ← mark
+    stepJson sink steps "reduce" p k k start stop f acc.g acc.h acc.s acc.t
+    return reduced
+  else
+    let half := (k + 1) / 2
+    let prior ← profileLiftExact sink steps p f half acc
+    let start ← mark
+    let stepped := ZPoly.quadraticHenselStep (p ^ half) f prior.g prior.h prior.s prior.t
+    observeNat sink (stepped.g.size + stepped.h.size + stepped.s.size + stepped.t.size)
+    let stop ← mark
+    stepJson sink steps "step" p half k start stop f prior.g prior.h prior.s prior.t
+    if 2 * half = k then
+      return stepped
+    else
+      let rstart ← mark
+      let reduced := ZPoly.reduceLift p k stepped
+      observeNat sink (reduced.g.size + reduced.h.size)
+      let rstop ← mark
+      stepJson sink steps "descend" p k k rstart rstop f stepped.g stepped.h
+        stepped.s stepped.t
+      return reduced
+
+/-- Mirror of `Hex.ZPoly.henselLiftFactorsImpl`, timing its closing
+factor-only step. -/
+private def profileLiftFactors (sink : IO.Ref Nat) (steps : IO.Ref (Array Json))
+    (p k : Nat) [ZMod64.Bounds p] (f g h s t : ZPoly) : IO (ZPoly × ZPoly) := do
+  if k ≤ 1 then
+    let start ← mark
+    let pair := (ZPoly.reduceModPow g p k, ZPoly.reduceModPow h p k)
+    observeNat sink (pair.1.size + pair.2.size)
+    let stop ← mark
+    stepJson sink steps "reduce" p k k start stop f g h s t
+    return pair
+  else
+    let half := (k + 1) / 2
+    let prior ← profileLiftExact sink steps p f half { g, h, s, t }
+    let start ← mark
+    let factors := ZPoly.quadraticHenselFactors (p ^ half) f prior.g prior.h prior.s prior.t
+    observeNat sink (factors.1.size + factors.2.size)
+    let stop ← mark
+    stepJson sink steps "factors" p half k start stop f prior.g prior.h prior.s prior.t
+    if 2 * half = k then
+      return factors
+    else
+      let rstart ← mark
+      let pair := (ZPoly.reduceModPow factors.1 p k, ZPoly.reduceModPow factors.2 p k)
+      observeNat sink (pair.1.size + pair.2.size)
+      let rstop ← mark
+      stepJson sink steps "descend" p k k rstart rstop f factors.1 factors.2 prior.s prior.t
+      return pair
+
+/-- Mirror of `Hex.ZPoly.multifactorLiftQuadraticListImpl`, timing each node's
+sub-products, XGCD and lift. -/
+private partial def profileTreeNode (sink : IO.Ref Nat)
+    (nodes : IO.Ref (Array Json)) (p k : Nat) [ZMod64.Bounds p]
+    (depth : Nat) (f : ZPoly) : List ZPoly → IO (Array ZPoly)
+  | [] => pure #[]
+  | [_g] => pure #[f]
+  | g₀ :: g₁ :: rest => do
+      let gs := g₀ :: g₁ :: rest
+      let start ← mark
+      let split := ZPoly.balancedSplitIndex gs
+      observeNat sink split
+      let L := gs.take split
+      let R := gs.drop split
+      let splitStop ← mark
+      let g := Array.polyProduct L.toArray
+      let h := Array.polyProduct R.toArray
+      observeNat sink (g.size + h.size)
+      let productStop ← mark
+      let xgcd := ZPoly.normalizedXGCD p g h
+      let s := FpPoly.liftToZ xgcd.left
+      let t := FpPoly.liftToZ xgcd.right
+      observeNat sink (s.size + t.size)
+      let xgcdStop ← mark
+      let steps ← IO.mkRef (#[] : Array Json)
+      let lifted ← profileLiftFactors sink steps p k f g h s t
+      let liftStop ← mark
+      let stepRows ← steps.get
+      nodes.modify (·.push (Json.mkObj
+        [ ("depth", natJson depth),
+          ("factorCount", natJson gs.length),
+          ("splitIndex", natJson split),
+          ("targetDegree", natJson (f.degree?.getD 0)),
+          ("split", spanJson start splitStop),
+          ("subProducts", spanJson splitStop productStop),
+          ("xgcd", spanJson productStop xgcdStop),
+          ("lift", spanJson xgcdStop liftStop),
+          ("node", spanJson start liftStop),
+          polyShapeJson "left" g, polyShapeJson "right" h,
+          polyShapeJson "bezoutLeft" s, polyShapeJson "bezoutRight" t,
+          ("steps", Json.arr stepRows) ]))
+      let left ← profileTreeNode sink nodes p k (depth + 1) lifted.1 L
+      let right ← profileTreeNode sink nodes p k (depth + 1) lifted.2 R
+      return left ++ right
+
+/-- Integer lifts of one plan's modular factors, at the plan's own prime. -/
+private def liftedModularFactors (p : Nat) [ZMod64.Bounds p]
+    (factorsModP : Array (FpPoly p)) : Array ZPoly :=
+  factorsModP.map (fun factor => FpPoly.liftToZ factor)
+
+/-- Node-by-node attribution at a fixed prime, precision and monic target. -/
+private def henselTreeAt (p : Nat) [ZMod64.Bounds p] (k : Nat)
+    (target : ZPoly) (factors : Array ZPoly) : IO Json := do
+  let sink ← IO.mkRef 0
+  -- Production call, untimed decomposition, for the mirror check and the
+  -- whole-lift reference time.
+  let refStart ← mark
+  let reference := ZPoly.multifactorLiftQuadratic p k target factors
+  observeNat sink reference.size
+  let refStop ← mark
+  let nodes ← IO.mkRef (#[] : Array Json)
+  let walkStart ← mark
+  let mirrored ← profileTreeNode sink nodes p k 0 target factors.toList
+  let walkStop ← mark
+  let rows ← nodes.get
+  return Json.mkObj
+    [ ("accepted", Json.bool (mirrored == reference)),
+      ("prime", natJson p),
+      ("precision", natJson k),
+      ("modularFactorCount", natJson factors.size),
+      ("targetDegree", natJson (target.degree?.getD 0)),
+      ("reference", spanJson refStart refStop),
+      ("mirror", spanJson walkStart walkStop),
+      ("nodes", Json.arr rows) ]
+
+/-- Node-by-node attribution of the production multifactor Hensel lift. -/
+private def henselTreeProfile (f : ZPoly) : IO Json := do
+  let normalized := normalizeForFactor f
+  let core := SquareFreeInput.ofNormalized normalized
+  match directPrimePlan? core with
+  | none => return Json.mkObj [("accepted", Json.bool false),
+      ("reason", Json.str "noGoodPrime")]
+  | some modular =>
+      let p := modular.data.p
+      let k := precisionForCoeffBound (ZPoly.defaultFactorCoeffBound core.poly) p
+      let target := ZPoly.monicTarget core.poly p k
+      let factors :=
+        @liftedModularFactors p modular.data.bounds modular.data.factorsModP
+      @henselTreeAt p modular.data.bounds k target factors
+
 def replyOk (result : Json) : Json :=
   Json.mkObj [("ok", Json.bool true), ("result", result)]
 
@@ -1410,6 +1653,8 @@ private def handleProfileLine (entry : Entry) (line : String) : IO Json :=
         return replyOk (← primeScout f)
       else if entry == .kernelProfile then
         return replyOk (← kernelProfile f)
+      else if entry == .henselTreeProfile then
+        return replyOk (← henselTreeProfile f)
       else
         return replyOk (← proposalProfile f)
 
@@ -1451,7 +1696,8 @@ def main (args : List String) : IO Unit := do
       throw <| IO.userError
         s!"unknown --entry {entryName}; expected \
           factor|factorLattice|factorTrace|proposalTrace|proposalProfile\
-          |factorPhaseProfile|primeCounterfactual|primeScout|kernelProfile"
+          |factorPhaseProfile|primeCounterfactual|primeScout|kernelProfile\
+          |henselTreeProfile"
   | some entry => runLoop entry
 
 end HexBench.FactorService
