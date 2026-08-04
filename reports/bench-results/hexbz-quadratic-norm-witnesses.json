@@ -1,7 +1,7 @@
 {
  "cases": [
   {
-   "certificate_nanos": 29112,
+   "certificate_nanos": 28272,
    "certified": true,
    "declared_radicands": [
     -1,
@@ -19,7 +19,7 @@
    "recovered_translation": 0
   },
   {
-   "certificate_nanos": 9514,
+   "certificate_nanos": 9465,
    "certified": true,
    "declared_radicands": [
     -2,
@@ -37,7 +37,7 @@
    "recovered_translation": 3
   },
   {
-   "certificate_nanos": 15782,
+   "certificate_nanos": 15803,
    "certified": true,
    "declared_radicands": [
     6,
@@ -57,7 +57,7 @@
    "recovered_translation": 7
   },
   {
-   "certificate_nanos": 305532,
+   "certificate_nanos": 303981,
    "certified": true,
    "declared_radicands": [
     13,
@@ -83,7 +83,7 @@
    "recovered_translation": 0
   },
   {
-   "certificate_nanos": 44605,
+   "certificate_nanos": 44186,
    "certified": true,
    "declared_radicands": [
     -1,
@@ -105,7 +105,7 @@
    "recovered_translation": -11
   },
   {
-   "certificate_nanos": 26099,
+   "certificate_nanos": 26100,
    "certified": true,
    "declared_radicands": [
     2,
@@ -125,7 +125,7 @@
    "recovered_translation": 1000003
   },
   {
-   "certificate_nanos": 59809,
+   "certificate_nanos": 58898,
    "certified": true,
    "declared_radicands": [
     3,
@@ -147,7 +147,7 @@
    "recovered_translation": -2
   },
   {
-   "certificate_nanos": 14902,
+   "certificate_nanos": 14853,
    "certified": false,
    "declared_radicands": [
     12,
@@ -167,7 +167,7 @@
    "recovered_translation": 0
   },
   {
-   "certificate_nanos": 320487306,
+   "certificate_nanos": 319608785,
    "certified": true,
    "declared_radicands": [
     2,
@@ -201,7 +201,7 @@
    "recovered_translation": 3
   },
   {
-   "certificate_nanos": 20179,
+   "certificate_nanos": 22295,
    "certified": false,
    "declared_radicands": [
     2,
@@ -221,7 +221,7 @@
    "recovered_translation": 0
   },
   {
-   "certificate_nanos": 8353,
+   "certificate_nanos": 9304,
    "certified": false,
    "declared_radicands": [
     7,
@@ -239,7 +239,7 @@
    "recovered_translation": 5
   },
   {
-   "certificate_nanos": 29785,
+   "certificate_nanos": 30196,
    "certified": false,
    "declared_radicands": [
     2,
@@ -261,7 +261,7 @@
    "recovered_translation": 0
   },
   {
-   "certificate_nanos": 13132,
+   "certificate_nanos": 13770,
    "certified": false,
    "declared_radicands": [
     2,
@@ -281,7 +281,7 @@
    "recovered_translation": 0
   },
   {
-   "certificate_nanos": 7241,
+   "certificate_nanos": 7301,
    "certified": false,
    "declared_radicands": [
     2,
@@ -299,7 +299,7 @@
    "recovered_translation": 0
   },
   {
-   "certificate_nanos": 297241,
+   "certificate_nanos": 301758,
    "certified": false,
    "declared_radicands": null,
    "declared_translation": null,
@@ -319,5 +319,13 @@
   }
  ],
  "failures": [],
- "schema": "hexbz-quadratic-norm-witnesses/1"
+ "random": [
+  {
+   "agreed": 250,
+   "cases": 250,
+   "certified": 199,
+   "seed": 20260804
+  }
+ ],
+ "schema": "hexbz-quadratic-norm-witnesses/2"
 }

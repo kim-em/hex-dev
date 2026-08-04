@@ -15,6 +15,15 @@ independent Python implementation of the iterated norm, and fed to
 differential check of the Lean implementation against this one; the `expect`
 field is what the mathematics says the answer must be.
 
+A second, randomized pass puts the *theorem* to the production factorizer:
+for each random translation and radicand tuple it compares three verdicts --
+the arithmetic independence test, the certificate, and whether
+``Hex.ZPoly.factorize`` returns a single factor of full degree. All three must
+agree, in both directions. A certified-but-reducible case would refute the
+theorem; an independent-but-reducible case would refute it too; and a
+dependent-but-irreducible case would show the independence hypothesis is
+stronger than it needs to be. The seed is fixed so the run is reproducible.
+
 Run::
 
     lake build hexbz_factor_service
@@ -26,6 +35,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import random
 import subprocess
 import sys
 from math import isqrt
@@ -99,9 +109,52 @@ CASES = [
 ]
 
 
+# Radicands the random pass draws from: negative, prime, composite, and
+# square-full, so dependent tuples arise often rather than by accident.
+RADICAND_POOL = (-7, -6, -5, -3, -2, -1, 2, 3, 5, 6, 7, 10, 11, 12, 13, 14, 15,
+                 20, 21, 22, 30, 45)
+
+
+def random_pass(count: int, seed: int) -> "tuple[list, list[str]]":
+    """Independence, certificate, and production factorization must agree."""
+    rng = random.Random(seed)
+    cases = [(rng.randint(-4, 4),
+              [rng.choice(RADICAND_POOL) for _ in range(rng.randint(1, 4))])
+             for _ in range(count)]
+    payload = "".join(json.dumps({"coeffs": iterated_norm(c, ds)}) + "\n"
+                      for c, ds in cases)
+    certified = [json.loads(line)["result"] for line in subprocess.run(
+        [str(SERVICE), "--entry", "quadraticNormCertificate"], input=payload,
+        text=True, capture_output=True, check=True).stdout.splitlines() if line.strip()]
+    factored = [json.loads(line)["result"] for line in subprocess.run(
+        [str(SERVICE), "--entry", "factor"], input=payload,
+        text=True, capture_output=True, check=True).stdout.splitlines() if line.strip()]
+
+    failures, agreed = [], 0
+    for (c, ds), cert, fact in zip(cases, certified, factored):
+        got = bool(cert.get("certified"))
+        degrees = sorted(len(f["coeffs"]) - 1 for f in fact["factors"])
+        irreducible = degrees == [2 ** len(ds)]
+        indep = independent(ds)
+        if got != indep:
+            failures.append(f"certificate {got} but independence {indep} "
+                            f"for c={c}, ds={ds}")
+        if indep != irreducible:
+            failures.append(f"independence {indep} but production factor "
+                            f"degrees {degrees} for c={c}, ds={ds}")
+        if got == indep == irreducible:
+            agreed += 1
+    return [{"cases": len(cases), "seed": seed, "agreed": agreed,
+             "certified": sum(1 for c in certified if c.get("certified"))}], failures
+
+
 def main(argv: list[str]) -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--output")
+    parser.add_argument("--random", type=int, default=250,
+                        help="randomized independence/certificate/factorization "
+                             "agreement cases (0 disables)")
+    parser.add_argument("--seed", type=int, default=20260804)
     args = parser.parse_args(argv[1:])
 
     if not SERVICE.exists():
@@ -163,8 +216,17 @@ def main(argv: list[str]) -> int:
               f"expect={str(case['expect']):5s} got={str(got):5s} "
               f"{nanos / 1e3:9.1f} us", file=sys.stderr)
 
-    record = {"schema": "hexbz-quadratic-norm-witnesses/1", "cases": rows,
-              "failures": failures}
+    random_summary = []
+    if args.random:
+        random_summary, random_failures = random_pass(args.random, args.seed)
+        failures.extend(random_failures)
+        summary = random_summary[0]
+        print(f"  {'randomized agreement':24s} {summary['cases']} cases, "
+              f"{summary['certified']} certified, {summary['agreed']} agreeing "
+              f"with the production factorizer", file=sys.stderr)
+
+    record = {"schema": "hexbz-quadratic-norm-witnesses/2", "cases": rows,
+              "random": random_summary, "failures": failures}
     if args.output:
         Path(args.output).write_text(
             json.dumps(record, indent=1, sort_keys=True) + "\n")

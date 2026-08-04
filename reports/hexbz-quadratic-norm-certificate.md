@@ -300,7 +300,7 @@ implementation against them, writing
 | Record | SHA-256 |
 |---|---|
 | `reports/bench-results/hexbz-quadratic-norm-certificate-chungus2.json` | `64373b914e528c7e0a43b762906a2ef79fb589ec08f881485bb8c4fd76a13faf` |
-| `reports/bench-results/hexbz-quadratic-norm-witnesses.json` | `f52f00679f0bc96079c67990b38235095aca05143e8ac69b0fa9f769a75e317a` |
+| `reports/bench-results/hexbz-quadratic-norm-witnesses.json` | `45caa3229b1a8421862b61ddf3780d7ccce28715b0b4f09f8599c0ca68adba90` |
 
 Both were measured at revision `37b9062b` on a tree clean in its tracked files.
 
@@ -403,6 +403,25 @@ descending tower order, a translation of a million, and degree 1024 all
 certify; every dependent set is refused, and so is a certified polynomial with a
 single coefficient perturbed. Each certified case also recovers the same square
 classes it was built from. The recogniser reads the coefficients, not the name.
+
+### The theorem against the production factorizer
+
+The same driver's randomized pass is the sharper check, because it puts the
+theorem itself to an independent decision procedure. For 250 random
+(translation, radicand-tuple) pairs drawn from a pool of negative, prime,
+composite, and square-full radicands, it compares three verdicts: the
+arithmetic independence test, the certificate, and whether
+`Hex.ZPoly.factorize` returns a single factor of full degree.
+
+**All 250 agree, in both directions**, 199 of them certified. A
+certified-but-reducible case would refute the theorem outright. An
+independent-but-reducible case would refute it too. And a
+dependent-but-irreducible case would show the independence hypothesis is
+strictly stronger than irreducibility needs -- there is none, so on this sample
+the hypothesis is exactly right rather than merely sufficient.
+
+The seed is fixed, so the run reproduces; `--random 0` disables it and
+`--seed` changes the sample.
 
 ### Simulated effect on the combined cactus
 
