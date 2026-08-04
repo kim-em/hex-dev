@@ -18,8 +18,8 @@ committed corpus the certificate is 826x faster than the production cascade on
 
 The gate that matters most is not either of those. Simulated onto the combined
 cactus, the certificate alone takes the worst Hex/Isabelle cumulative ratio over
-ranks 125 through 140 from 1.188x to 0.812x, which is #9126's success criterion.
-Restricting the model to the three `sd5` rows still gives 0.838x, so the
+ranks 125 through 140 from 1.189x to 0.805x, which is #9126's success criterion.
+Restricting the model to the three `sd5` rows still gives 0.834x, so the
 conclusion does not rest on the whole certified set.
 
 What is *not* delivered here is the Mathlib correspondence. The certificate is
@@ -32,8 +32,8 @@ The issue asks for these numbers before any implementation, and for the issue to
 be closed as a no-go if the general reconstruction already meets #9126's target
 and `sd6` is no longer a material tail. Neither holds.
 
-Source records: `reports/bench-results/hexbz-factor-sweep-1d9e59a1-hex-chungus2.json`
-(Hex, measured at this branch's revision `1d9e59a1`, which changes no production
+Source records: `reports/bench-results/hexbz-factor-sweep-540bb847-hex-chungus2.json`
+(Hex, measured at this branch's revision `540bb847`, which changes no production
 code -- the prototype is bench-only -- so it is also the post-#9129/#9130 state
 the issue asks about) and
 `reports/bench-results/hexbz-factor-sweep-aa68c920-chungus2.json` (every other
@@ -45,19 +45,19 @@ phase profiles taken for this page.
 
 | row | degree | Hex | Isabelle | Isabelle / Hex |
 |---|---:|---:|---:|---:|
-| `sd4` | 16 | 0.863 ms | 1.196 ms | 1.39x |
-| `sd4_shift1` | 16 | 0.801 ms | 1.233 ms | 1.54x |
-| `sd4_shift3` | 16 | 0.876 ms | 1.211 ms | 1.38x |
-| `sd4_x_phi17` | 32 | 6.743 ms | 4.567 ms | 0.68x |
-| `sd4_x_phi35` | 40 | 17.769 ms | 26.190 ms | 1.47x |
-| `sd4_x_sd4shift1` | 32 | 17.969 ms | 10.803 ms | 0.60x |
-| `sd5` | 32 | 70.044 ms | 22.610 ms | **0.32x** |
-| `sd5_shift1` | 32 | 65.254 ms | 14.815 ms | **0.23x** |
-| `sd5_shift2` | 32 | 68.208 ms | 14.716 ms | **0.22x** |
-| `sd5_x_phi11` | 42 | 139.567 ms | 27.545 ms | **0.20x** |
-| `sd5_x_phi45` | 56 | 323.941 ms | timeout | -- |
+| `sd4` | 16 | 0.858 ms | 1.196 ms | 1.39x |
+| `sd4_shift1` | 16 | 0.792 ms | 1.233 ms | 1.56x |
+| `sd4_shift3` | 16 | 0.881 ms | 1.211 ms | 1.37x |
+| `sd4_x_phi17` | 32 | 6.673 ms | 4.567 ms | 0.68x |
+| `sd4_x_phi35` | 40 | 17.701 ms | 26.190 ms | 1.48x |
+| `sd4_x_sd4shift1` | 32 | 17.868 ms | 10.803 ms | 0.60x |
+| `sd5` | 32 | 70.879 ms | 22.610 ms | **0.32x** |
+| `sd5_shift1` | 32 | 66.227 ms | 14.815 ms | **0.22x** |
+| `sd5_shift2` | 32 | 68.952 ms | 14.716 ms | **0.21x** |
+| `sd5_x_phi11` | 42 | 140.227 ms | 27.545 ms | **0.20x** |
+| `sd5_x_phi45` | 56 | 322.242 ms | timeout | -- |
 | `sd5_x_sd5shift1` | 64 | timeout | timeout | -- |
-| `sd6` | 64 | 8.042 s | timeout | -- |
+| `sd6` | 64 | 8.031 s | timeout | -- |
 | `sd6_shift1`, `sd6_shift5` | 64 | timeout | timeout | -- |
 | `sd6_x_phi13`, `sd6_x_phi105`, `sd6_x_sd6shift1` | 76--128 | timeout | timeout | -- |
 | `sd7`, `hoeij_S7` | 128 | timeout | timeout | -- |
@@ -96,11 +96,11 @@ Cumulative Hex/Isabelle over the combined mixture, from
 
 | rank | 125 | 128 | 130 | 133 | 135 | 138 | 140 |
 |---|---:|---:|---:|---:|---:|---:|---:|
-| Hex / Isabelle | 0.80x | 0.93x | 1.02x | 1.17x | 1.19x | 0.86x | 0.61x |
+| Hex / Isabelle | 0.78x | 0.92x | 1.01x | 1.17x | 1.19x | 0.87x | 0.62x |
 
 The criterion is at most 0.85x at every rank from 125 through 140. The worst
-point is 1.188x at rank 135, and ranks 127--138 all fail. Swinnerton-Dyer rows
-occupy Hex ranks 134, 135, 136, and 138 and contribute 343 ms of the 864 ms
+point is 1.189x at rank 135, and ranks 128--138 all fail. Swinnerton-Dyer rows
+occupy Hex ranks 134, 135, 136, and 138 and contribute 346 ms of the 867 ms
 cumulative at rank 138 against Isabelle's 79.7 ms for the same four inputs.
 
 So the no-go branch in the issue body does not apply, and neither does treating
@@ -302,12 +302,13 @@ implementation against them, writing
 |---|---|
 | `reports/bench-results/hexbz-quadratic-norm-certificate-chungus2.json` | `2efeffac97f8a7ebf877fc087a73be4fa1bb775b93b3de90eb656f152e0a843f` |
 | `reports/bench-results/hexbz-quadratic-norm-witnesses.json` | `dad4ba27d0e08c0a97cf6e7e7ab448eb3554996e3994e4838f579154d01ba595` |
-| `reports/bench-results/hexbz-quadratic-norm-cactus-model.json` | `1d5a098d909bc7fc97e0858c1238e5e0903ceed933c6dc389a0d7178a6e93922` |
+| `reports/bench-results/hexbz-quadratic-norm-cactus-model.json` | `25312b134a4bfff7266c3781d2d5a891ab80a56f41222faa71f67f9bba5bd8f6` |
 
-All three were measured at revision `24784ebc` with no modified source, and each
-carries the SHA-256 of the service binary it measured, which pins the code more
-tightly than the commit does. The cactus model additionally records the two
-sweeps and the certificate record it read.
+The certificate and witness records were measured at revision `24784ebc`, the
+cactus model at `540bb847` against the sweep committed here. None had modified
+source, and each carries the SHA-256 of the service binary it measured, which
+pins the code more tightly than the commit does. The cactus model additionally
+records the two sweeps and the certificate record it read.
 
 ## Measured effect
 
@@ -463,11 +464,11 @@ declines.
 
 | row | now | modelled | retained | certificate |
 |---|---:|---:|---:|---:|
-| `sd4` | 0.863 ms | 0.434 ms | 0.411 ms | 23.3 us |
-| `sd5` | 70.044 ms | 6.949 ms | 6.880 ms | 69.2 us |
-| `sd5_shift1` | 65.254 ms | 7.286 ms | 7.170 ms | 115.9 us |
-| `sd5_shift2` | 68.208 ms | 9.023 ms | 8.898 ms | 124.7 us |
-| `sd6` | 8.042 s | 28.144 ms | 27.864 ms | 279.8 us |
+| `sd4` | 0.858 ms | 0.432 ms | 0.409 ms | 23.3 us |
+| `sd5` | 70.879 ms | 6.783 ms | 6.714 ms | 69.2 us |
+| `sd5_shift1` | 66.227 ms | 7.327 ms | 7.211 ms | 115.9 us |
+| `sd5_shift2` | 68.952 ms | 8.969 ms | 8.845 ms | 124.7 us |
+| `sd6` | 8.031 s | 28.144 ms | 27.864 ms | 279.8 us |
 
 The retained column is the whole cost in every row: the certificate is two to
 four orders of magnitude below the prime walk it follows. Cumulative
@@ -475,22 +476,22 @@ Hex/Isabelle over ranks 125--140:
 
 | rank | 125 | 128 | 130 | 133 | 135 | 138 | 140 |
 |---|---:|---:|---:|---:|---:|---:|---:|
-| now | 0.80x | 0.93x | 1.02x | 1.17x | 1.19x | 0.86x | 0.61x |
-| modelled | 0.70x | 0.74x | 0.76x | 0.81x | 0.80x | 0.57x | 0.45x |
+| now | 0.78x | 0.92x | 1.01x | 1.17x | 1.19x | 0.87x | 0.62x |
+| modelled | 0.69x | 0.73x | 0.75x | 0.80x | 0.79x | 0.57x | 0.45x |
 
-Worst ratio over ranks 125--140: **1.188x now, 0.812x modelled**, against
+Worst ratio over ranks 125--140: **1.189x now, 0.805x modelled**, against
 #9126's 0.85x criterion. The certificate alone clears it, with the rows #9126
 named as also needing parity -- `x^n - 1`, `cyclo_phi179`,
 `cyclo_phi64_x_phi105` -- untouched.
 
 That conclusion does not rest on the whole certified set. Restricting the
 replacement to the three `sd5` rows with `--only sd5,sd5_shift1,sd5_shift2`
-gives a worst ratio of **0.838x**, still under the target. The `sd4` and `sd6`
+gives a worst ratio of **0.834x**, still under the target. The `sd4` and `sd6`
 rows widen the margin; they do not create it.
 
 **Post-normalization**, the permissive placement: the certificate is attempted
 after normalization, behind the free structural pre-gate, so a certified row
-skips the prime walk too. Worst ratio 0.690x on the same priced rows.
+skips the prime walk too. Worst ratio 0.685x on the same priced rows.
 
 Two things this model deliberately does not claim. It does not credit the six
 rows the cascade cannot finish -- `sd6_shift1`, `sd6_shift5`, `sd7`,
@@ -569,7 +570,7 @@ taskset -c 0 python3 scripts/bench/quadratic_norm_witnesses.py \
 # invalidates. `--check` fails until the SVGs are regenerated.
 taskset -c 0 python3 scripts/bench/factor_sweep.py --systems hex-factor \
     --cutoff 10 \
-    --output reports/bench-results/hexbz-factor-sweep-1d9e59a1-hex-chungus2.json
+    --output reports/bench-results/hexbz-factor-sweep-540bb847-hex-chungus2.json
 python3 scripts/plots/hexbz-cactus.py
 python3 scripts/plots/hexbz-cactus.py --check
 
