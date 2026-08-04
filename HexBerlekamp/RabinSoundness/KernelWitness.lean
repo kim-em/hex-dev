@@ -342,6 +342,28 @@ interface; it follows from `f ∣ FpPoly.linearPow w p - w` via the
 prime-field product identity. -/
 
 omit [ZMod64.PrimeModulus p] in
+private theorem dvd_trans_local {a b c : FpPoly p}
+    (hab : a ∣ b) (hbc : b ∣ c) : a ∣ c := by
+  rcases hab with ⟨r, hr⟩
+  rcases hbc with ⟨s, hs⟩
+  refine ⟨r * s, ?_⟩
+  rw [hs, hr, FpPoly.mul_assoc]
+
+/-- `DensePoly.C` of a nonzero residue divides `1` (it is a unit polynomial). -/
+private theorem C_ne_zero_dvd_one {a : ZMod64 p} (ha : a ≠ 0) :
+    (DensePoly.C a : FpPoly p) ∣ (1 : FpPoly p) := by
+  refine ⟨DensePoly.C (ZMod64.inv a), ?_⟩
+  show (1 : FpPoly p) = (DensePoly.C a : FpPoly p) * DensePoly.C (ZMod64.inv a)
+  have hmul : (DensePoly.C a : FpPoly p) * DensePoly.C (ZMod64.inv a)
+      = DensePoly.C (a * ZMod64.inv a) := by
+    rw [FpPoly.C_mul_eq_scale]
+    rw [show (DensePoly.C (ZMod64.inv a) : FpPoly p)
+          = DensePoly.scale (ZMod64.inv a) (1 : FpPoly p) from
+        (FpPoly.scale_one_poly (ZMod64.inv a)).symm]
+    rw [FpPoly.scale_scale, FpPoly.scale_one_poly]
+  rw [hmul, ZMod64.mul_inv_eq_one_of_ne_zero ha]
+  rfl
+
 /-- The difference of two distinct witness linear factors collapses to
 the constant `C (d - c)`. -/
 private theorem witnessLinearFactor_sub_eq
