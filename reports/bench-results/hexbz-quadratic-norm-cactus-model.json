@@ -2,7 +2,7 @@
  "config": {
   "certificate_record": "hexbz-quadratic-norm-certificate-chungus2.json",
   "corpus_sha256": "619913904240834c912489e6cc23ba136e8cc5ebf0ea95f83397e0682387284d",
-  "hex_sweep": "hexbz-factor-sweep-596e9ce8-hex-chungus2.json",
+  "hex_sweep": "hexbz-factor-sweep-48bdfb8e-hex-chungus2.json",
   "isabelle_sweep": "hexbz-factor-sweep-aa68c920-chungus2.json",
   "only": null,
   "placement": "post-prime",
@@ -14,138 +14,138 @@
  },
  "env": {
   "arch": "x86_64",
-  "git_commit": "d1b39951d64fb9ed2c9d1f2e43aee95ebe2ef0c5",
+  "git_commit": "6a86bc37937315ac1c7c9fe2a800c3f25cb867e8",
   "git_dirty": false,
   "hostname": "chungus2",
-  "service_sha256": "41babbcfdcab113a3e093bcaa9ec0ac2a5457965d016c8230bcf54db1bd754b8"
+  "service_sha256": "f2865db27f012eaad5f03488e6d796a35de3f16dddba834dcb4321247165edda"
  },
  "ranks": [
   {
    "isabelle": 0.19868059,
-   "modelled": 0.136414712,
-   "modelled_ratio": 0.6866031150803408,
-   "now": 0.15542485100000003,
-   "now_ratio": 0.7822850284469159,
+   "modelled": 0.128552326,
+   "modelled_ratio": 0.6470301200534989,
+   "now": 0.142875083,
+   "now_ratio": 0.7191194821799151,
    "rank": 125
   },
   {
    "isabelle": 0.213396215,
-   "modelled": 0.147000212,
-   "modelled_ratio": 0.6888604467515976,
-   "now": 0.17329748200000003,
-   "now_ratio": 0.812092576243679,
+   "modelled": 0.137814526,
+   "modelled_ratio": 0.645815231540072,
+   "now": 0.160625496,
+   "now_ratio": 0.7527101453041236,
    "rank": 126
   },
   {
    "isabelle": 0.228211048,
-   "modelled": 0.1595335,
-   "modelled_ratio": 0.6990612479024241,
-   "now": 0.19476587300000003,
-   "now_ratio": 0.8534462932749866,
+   "modelled": 0.148454007,
+   "modelled_ratio": 0.6505119200013489,
+   "now": 0.17861341,
+   "now_ratio": 0.7826676734774033,
    "rank": 127
   },
   {
    "isabelle": 0.24316698,
-   "modelled": 0.177210562,
-   "modelled_ratio": 0.7287607963877332,
-   "now": 0.22374436600000003,
-   "now_ratio": 0.9201264332846508,
+   "modelled": 0.164597568,
+   "modelled_ratio": 0.6768911140813608,
+   "now": 0.197543171,
+   "now_ratio": 0.8123766269581503,
    "rank": 128
   },
   {
    "isabelle": 0.265147105,
-   "modelled": 0.195083193,
-   "modelled_ratio": 0.7357545653760768,
-   "now": 0.25488541400000003,
-   "now_ratio": 0.9612981216596728,
+   "modelled": 0.182347981,
+   "modelled_ratio": 0.6877238241013418,
+   "now": 0.218622498,
+   "now_ratio": 0.8245328494157989,
    "rank": 129
   },
   {
    "isabelle": 0.287757274,
-   "modelled": 0.216551584,
-   "modelled_ratio": 0.7525494698702212,
-   "now": 0.28988786600000005,
-   "now_ratio": 1.007404129078593,
+   "modelled": 0.20033589499999999,
+   "modelled_ratio": 0.6961975008145233,
+   "now": 0.249841706,
+   "now_ratio": 0.8682376731161277,
    "rank": 130
   },
   {
    "isabelle": 0.31394728,
-   "modelled": 0.244396609,
-   "modelled_ratio": 0.7784638522748151,
-   "now": 0.33463575300000004,
-   "now_ratio": 1.0658979208228847,
+   "modelled": 0.21926565599999998,
+   "modelled_ratio": 0.6984155301488836,
+   "now": 0.284617056,
+   "now_ratio": 0.9065759575938992,
    "rank": 131
   },
   {
    "isabelle": 0.341492184,
-   "modelled": 0.273375102,
-   "modelled_ratio": 0.8005310657417565,
-   "now": 0.37985682100000007,
-   "now_ratio": 1.1123441144409913,
+   "modelled": 0.24034498299999998,
+   "modelled_ratio": 0.7038081521654973,
+   "now": 0.330109012,
+   "now_ratio": 0.9666663761768557,
    "rank": 132
   },
   {
    "isabelle": 0.37948256399999997,
-   "modelled": 0.30451615,
-   "modelled_ratio": 0.8024509658367335,
-   "now": 0.43914621200000004,
-   "now_ratio": 1.1572236873576096,
+   "modelled": 0.26864710399999997,
+   "modelled_ratio": 0.7079300328538941,
+   "now": 0.390218756,
+   "now_ratio": 1.0282916608521704,
    "rank": 133
   },
   {
    "isabelle": 0.43150068899999994,
-   "modelled": 0.339518602,
-   "modelled_ratio": 0.7868321202147607,
-   "now": 0.505381639,
-   "now_ratio": 1.171218614207126,
+   "modelled": 0.29986631199999997,
+   "modelled_ratio": 0.6949381997394679,
+   "now": 0.45662316199999997,
+   "now_ratio": 1.0582211654359608,
    "rank": 134
   },
   {
    "isabelle": 0.48742297199999995,
-   "modelled": 0.384266489,
-   "modelled_ratio": 0.7883635180821966,
-   "now": 0.574148648,
-   "now_ratio": 1.1779269361149438,
+   "modelled": 0.33464166199999995,
+   "modelled_ratio": 0.6865529144572201,
+   "now": 0.525779286,
+   "now_ratio": 1.0786920522900592,
    "rank": 135
   },
   {
    "isabelle": 0.6562337089999999,
-   "modelled": 0.42948755699999996,
-   "modelled_ratio": 0.6544734766131924,
-   "now": 0.645385268,
-   "now_ratio": 0.9834686319047351,
+   "modelled": 0.38013361799999995,
+   "modelled_ratio": 0.5792656073386806,
+   "now": 0.598091248,
+   "now_ratio": 0.9113997647444839,
    "rank": 136
   },
   {
    "isabelle": 0.8274510039999998,
-   "modelled": 0.48877694799999993,
-   "modelled_ratio": 0.5907019819145691,
-   "now": 0.7212329129999999,
-   "now_ratio": 0.871632168567651,
+   "modelled": 0.44024336199999997,
+   "modelled_ratio": 0.5320476497965553,
+   "now": 0.674269021,
+   "now_ratio": 0.814874859950016,
    "rank": 137
   },
   {
    "isabelle": 1.0000512289999999,
-   "modelled": 0.5646245929999999,
-   "modelled_ratio": 0.564595669328456,
-   "now": 0.8618245549999999,
-   "now_ratio": 0.8617804068515373,
+   "modelled": 0.516421135,
+   "modelled_ratio": 0.5163946806169067,
+   "now": 0.8150184119999999,
+   "now_ratio": 0.8149766615606049,
    "rank": 138
   },
   {
    "isabelle": 1.355358213,
-   "modelled": 0.7052162349999999,
-   "modelled_ratio": 0.5203172329173763,
-   "now": 1.0049773109999998,
-   "now_ratio": 0.7414846505969414,
+   "modelled": 0.657170526,
+   "modelled_ratio": 0.484868516453222,
+   "now": 0.9574271829999998,
+   "now_ratio": 0.7064015799046919,
    "rank": 139
   },
   {
    "isabelle": 1.884073599,
-   "modelled": 0.8483689909999999,
-   "modelled_ratio": 0.45028442171807104,
-   "now": 1.1519164789999998,
-   "now_ratio": 0.6113967520225306,
+   "modelled": 0.799579297,
+   "modelled_ratio": 0.4243885681665454,
+   "now": 1.1060943609999998,
+   "now_ratio": 0.5870759834366746,
    "rank": 140
   }
  ],
@@ -166,100 +166,100 @@
    "priced": false
   },
   {
-   "certificate_nanos": 8563,
-   "modelled_seconds": 2.3183e-05,
+   "certificate_nanos": 7131,
+   "modelled_seconds": 2.3444e-05,
    "name": "sd2",
-   "now_seconds": 5.0525e-05,
+   "now_seconds": 5.2538e-05,
    "priced": true,
-   "retained_nanos": 14620
+   "retained_nanos": 16313
   },
   {
-   "certificate_nanos": 7010,
-   "modelled_seconds": 2.3925e-05,
+   "certificate_nanos": 7361,
+   "modelled_seconds": 2.5988e-05,
    "name": "sd2_shift1",
-   "now_seconds": 5.1526e-05,
+   "now_seconds": 5.2318e-05,
    "priced": true,
-   "retained_nanos": 16915
+   "retained_nanos": 18627
   },
   {
-   "certificate_nanos": 12759,
-   "modelled_seconds": 8.8721e-05,
+   "certificate_nanos": 12869,
+   "modelled_seconds": 9.0153e-05,
    "name": "sd3",
-   "now_seconds": 0.000167559,
+   "now_seconds": 0.000169851,
    "priced": true,
-   "retained_nanos": 75962
+   "retained_nanos": 77284
   },
   {
-   "certificate_nanos": 12749,
-   "modelled_seconds": 9.1597e-05,
+   "certificate_nanos": 12879,
+   "modelled_seconds": 9.3599e-05,
    "name": "sd3_shift1",
-   "now_seconds": 0.000166918,
+   "now_seconds": 0.000170422,
    "priced": true,
-   "retained_nanos": 78848
+   "retained_nanos": 80720
   },
   {
-   "certificate_nanos": 12819,
-   "modelled_seconds": 8.9863e-05,
+   "certificate_nanos": 12879,
+   "modelled_seconds": 9.3398e-05,
    "name": "sd3_shift2",
-   "now_seconds": 0.00016147,
+   "now_seconds": 0.000165656,
    "priced": true,
-   "retained_nanos": 77044
+   "retained_nanos": 80519
   },
   {
-   "certificate_nanos": 23213,
-   "modelled_seconds": 0.00042553,
+   "certificate_nanos": 23666,
+   "modelled_seconds": 0.000433093,
    "name": "sd4",
-   "now_seconds": 0.000868367,
+   "now_seconds": 0.000880455,
    "priced": true,
-   "retained_nanos": 402317
+   "retained_nanos": 409427
   },
   {
-   "certificate_nanos": 23195,
-   "modelled_seconds": 0.000447603,
+   "certificate_nanos": 23365,
+   "modelled_seconds": 0.000460472,
    "name": "sd4_shift1",
-   "now_seconds": 0.000803881,
+   "now_seconds": 0.000813165,
    "priced": true,
-   "retained_nanos": 424408
+   "retained_nanos": 437107
   },
   {
-   "certificate_nanos": 27170,
-   "modelled_seconds": 0.000523156,
+   "certificate_nanos": 27419,
+   "modelled_seconds": 0.00052723,
    "name": "sd4_shift3",
-   "now_seconds": 0.000874015,
+   "now_seconds": 0.000895918,
    "priced": true,
-   "retained_nanos": 495986
+   "retained_nanos": 499811
   },
   {
-   "certificate_nanos": 69843,
-   "modelled_seconds": 0.006777046,
+   "certificate_nanos": 68941,
+   "modelled_seconds": 0.006816803,
    "name": "sd5",
-   "now_seconds": 0.07123662,
+   "now_seconds": 0.072311962,
    "priced": true,
-   "retained_nanos": 6707203
+   "retained_nanos": 6747862
   },
   {
-   "certificate_nanos": 122231,
-   "modelled_seconds": 0.007329545,
+   "certificate_nanos": 119077,
+   "modelled_seconds": 0.007336596,
    "name": "sd5_shift1",
-   "now_seconds": 0.066235427,
+   "now_seconds": 0.066404406,
    "priced": true,
-   "retained_nanos": 7207314
+   "retained_nanos": 7217519
   },
   {
-   "certificate_nanos": 125056,
-   "modelled_seconds": 0.009109803,
+   "certificate_nanos": 128620,
+   "modelled_seconds": 0.009022032,
    "name": "sd5_shift2",
-   "now_seconds": 0.068767009,
+   "now_seconds": 0.069156124,
    "priced": true,
-   "retained_nanos": 8984747
+   "retained_nanos": 8893412
   },
   {
-   "certificate_nanos": 283640,
-   "modelled_seconds": 0.027845025,
+   "certificate_nanos": 284342,
+   "modelled_seconds": 0.028302121,
    "name": "sd6",
-   "now_seconds": 7.952810966,
+   "now_seconds": 7.952850239,
    "priced": true,
-   "retained_nanos": 27561385
+   "retained_nanos": 28017779
   },
   {
    "name": "sd6_shift1",
@@ -286,7 +286,7 @@
  "worst_ratio": {
   "hi": 140,
   "lo": 125,
-  "modelled": 0.8024509658367335,
-  "now": 1.1779269361149438
+  "modelled": 0.7079300328538941,
+  "now": 1.0786920522900592
  }
 }
