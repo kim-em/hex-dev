@@ -507,13 +507,6 @@ private theorem prime_seventy_one : Nat.Prime 71 := by
     | 71 => exact Or.inr rfl
     | _ + 72 => omega
 
-/-- Thin adapter promoting a `Nat.Prime p` witness to the shared
-`ZMod64.PrimeModulus p` instance the Berlekamp kernel is parameterised by. -/
-@[reducible]
-private def primeModulusOfNatPrime {p : Nat} [ZMod64.Bounds p] (hp : Nat.Prime p) :
-    ZMod64.PrimeModulus p :=
-  ZMod64.primeModulusOfPrime hp
-
 /--
 A small-prime candidate for the Berlekamp-Zassenhaus prime-selection hot path.
 
@@ -976,7 +969,7 @@ theorem factorProduct_map_monicModularImage_eq_monicModularImage_factorProduct
 private def berlekampFactorsModP (f : ZPoly) (c : SmallPrimeCandidate) :
     Array (@FpPoly c.p c.bounds) :=
   letI := c.bounds
-  letI := primeModulusOfNatPrime c.prime
+  letI := ZMod64.primeModulusOfPrime c.prime
   let fModP := ZPoly.modP c.p f
   if hzero : fModP.isZero = false then
     ((Berlekamp.berlekampFactor
@@ -999,7 +992,7 @@ the normalisation step to this call site without touching
 private theorem berlekampFactorsModP_eq_of_isZero_false
     (f : ZPoly) (c : SmallPrimeCandidate) :
     letI := c.bounds
-    letI := primeModulusOfNatPrime c.prime
+    letI := ZMod64.primeModulusOfPrime c.prime
     ∀ (hzero : (ZPoly.modP c.p f).isZero = false),
       berlekampFactorsModP f c =
         ((Berlekamp.berlekampFactor
@@ -1007,7 +1000,7 @@ private theorem berlekampFactorsModP_eq_of_isZero_false
           (monicModularImage_monic c.prime (ZPoly.modP c.p f) hzero)).factors.map
             monicModularImage).toArray := by
   letI := c.bounds
-  letI := primeModulusOfNatPrime c.prime
+  letI := ZMod64.primeModulusOfPrime c.prime
   intro hzero
   unfold berlekampFactorsModP
   rw [dif_pos hzero]

@@ -68,7 +68,7 @@ Berlekamp's executable rank criterion: a nonconstant monic `f` passes when
 `rank(Q_f - I) = deg(f) - 1`.
 -/
 def berlekampRankTest (f : FpPoly p) (hmonic : DensePoly.Monic f)
-    [ZMod64.PrimeModulus p] : Bool :=
+    [Lean.Grind.Field (ZMod64 p)] : Bool :=
   let n := basisSize f
   decide (0 < n ∧ Matrix.rowReduce_rank (fixedSpaceMatrix f hmonic) = n - 1)
 
@@ -308,7 +308,7 @@ def buildIrreducibilityCertificate? (f : FpPoly p) (hmonic : DensePoly.Monic f) 
 /-- `berlekampRankTest` succeeds exactly when the fixed-space matrix has rank
 `deg(f) - 1`, the Berlekamp rank criterion. -/
 theorem berlekampRankTest_spec (f : FpPoly p) (hmonic : DensePoly.Monic f)
-    [ZMod64.PrimeModulus p] :
+    [Lean.Grind.Field (ZMod64 p)] :
     berlekampRankTest f hmonic = true ↔
       0 < basisSize f ∧
       Matrix.rowReduce_rank (fixedSpaceMatrix f hmonic) = basisSize f - 1 := by
