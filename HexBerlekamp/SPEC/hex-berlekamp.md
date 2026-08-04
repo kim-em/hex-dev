@@ -28,9 +28,34 @@ library.
 
 ## Factorization
 
-`Berlekamp.berlekampFactor` computes the fixed space once and applies
-its basis vectors to the current factor list. A split replaces one
-factor by exact complementary factors, preserving the product.
+`Berlekamp.berlekampFactor` has one selection point and two branches.
+
+The default branch computes the fixed space once and applies its basis
+vectors to the current factor list. A split replaces one factor by exact
+complementary factors, preserving the product.
+
+The other branch extracts a completely split input by its roots. A
+square-free polynomial over `F_p` is a product of distinct monic linear
+factors exactly when it has `deg f` roots in `F_p`, so enumerating the
+roots and emitting `X - r` for each is a complete factorization. The
+scan over the canonical residue list is its own certificate: the result
+is used only when the scan finds `deg f` roots, and that length test is
+what proves the reconstruction `∏ (X - r_i) = f`. No separate
+complete-splitting predicate is computed and no Boolean is trusted
+without a check.
+
+The branch is selected from the polynomial alone, never from a
+recognized input family. It is admitted only when the scan is
+affordable: the scan costs `p · deg f` modular multiplications while the
+fixed-space matrix it would replace costs about `(deg f)^3`, so
+`Berlekamp.rootScanBudget` admits it when `25 · p ≤ (deg f)^2`. Only the
+field size and the degree enter that decision. An input that pays for a
+scan and then falls back to the kernel branch loses a small fraction of
+the work it was going to do anyway.
+
+The linear factors, their pairwise coprimality, and the reconstruction
+theorem live in `LinearFactors.lean`, shared with the `X^p - X` product
+identity behind Rabin's test.
 
 The result records:
 
