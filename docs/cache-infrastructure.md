@@ -14,8 +14,7 @@ Where the build cache lives, who owns it, and which knob feeds which workflow.
 The account ID is not a secret: it is the subdomain of the S3 endpoint below. If the dashboard
 link 404s, the login you used is not a member of that account.
 
-This is the **same Cloudflare account** used by `TauCetiProject/TauCeti`, which has its own bucket,
-`tauceti-cache`. The two share nothing but the account.
+The account holds other buckets unrelated to this project. Only `hex-cache` is ours.
 
 ## Endpoints
 
@@ -32,31 +31,29 @@ to sign them, so the read host must be public; only uploads use a key.
 
 Lake service names: `hex-public` for reads, `hex-r2` for uploads.
 
-## Known exposure: the read host is rate-limited
+## The read host, and why it is `r2.dev`
 
-The read path is still on `pub-*.r2.dev`, which Cloudflare documents as rate-limited and "should
-only be used for development purposes". `lake cache get` continues past failed downloads, so a
-throttled fetch leaves the local cache holding input-to-output mappings whose artifact blobs never
-arrived, and `ci.yml` discards its exit status:
+Reads go through `pub-*.r2.dev`, Cloudflare's public bucket URL. This is a deliberate choice: it
+needs no domain name, and this repository's CI volume is low enough that its rate limit is not a
+practical concern.
+
+The limit is real, so it is worth knowing the shape of it. `lake cache get` continues past failed
+downloads, so a throttled fetch can leave the local cache holding input-to-output mappings whose
+artifact blobs never arrived, and `ci.yml` discards its exit status:
 
 ```
 lake cache get --service hex-public --repo kim-em/hex-dev \
   || echo "::warning::lake cache miss for this revision; building from source"
 ```
 
-For this repository the consequence is mild. `ci.yml` builds with plain `lake build`, so an
-unresolvable cache entry makes Lake log a warning and rebuild the module from source, and the build
-stays green. The cost is redundant rebuilds, not red CI.
+The consequence here is mild. `ci.yml` builds with plain `lake build`, so an unresolvable cache
+entry makes Lake log a warning and rebuild the module from source, and the build stays green. The
+cost is a redundant rebuild, not red CI.
 
-That is only true because no `--fail-level` is raised. Adding `--iofail` or `--wfail` would turn
-each of those warnings into a build failure, via
-https://github.com/leanprover/lean4/issues/14670. TauCeti hit exactly that: 28 of 40 consecutive
-build failures had no Lean error at all.
-
-If CI volume grows, or a stricter fail level is ever wanted, the fix is the one TauCeti took: put an
-R2 custom domain in front of `hex-cache` and repoint the two `*_PUBLIC` variables. That requires a
-zone in this same Cloudflare account. `taucetiproject.org` already sits there, though a name of its
-own would read better for this project.
+That holds only because no `--fail-level` is raised. Adding `--iofail` or `--wfail` would turn each
+such warning into a build failure, via https://github.com/leanprover/lean4/issues/14670. Raising the
+fail level and staying on `r2.dev` do not combine well; wanting both means putting an R2 custom
+domain in front of `hex-cache` first, which needs a zone in this same Cloudflare account.
 
 ## Cost
 
