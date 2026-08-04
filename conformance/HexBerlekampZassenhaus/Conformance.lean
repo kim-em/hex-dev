@@ -15,6 +15,8 @@ Lean-only property and committed-fixture checks.
 Mode: `if_available`
 Covered operations:
 - `isGoodPrime`, `choosePrime`, and `choosePrimeData?`
+- `directPrimePlan?`, and the prime walk's stopping decision `scoutPays` with
+  the modulus width `liftWords` it reads
 - `normalizeForFactor`, `normalizationPrefixFactors`, and
   `reassembleNormalizedFactors`
 - `henselLiftData`
@@ -31,6 +33,8 @@ Covered properties:
   committed lifted factors
 - adversarial modular split cases exercise non-trivial subset-product
   recombination buckets
+- the prime walk declines another modular observation exactly when the plan it
+  holds has too little recombination work left to repay one
 - signed scalar and `(factor, multiplicity)` buckets match independently
   committed expectations on the public `Factorization` edge-case table
 - bounded and default factor entry points multiply their returned factors back
@@ -416,6 +420,36 @@ private def hotPathNoPrimeCubic : ZPoly :=
   | some first, some plan =>
       first.factorsModP.size = 10 && plan.width = 1
   | _, _ => false
+
+/-! ## Pricing one more modular observation
+
+`scoutPays` is the prime walk's only stopping decision, so pin both of its
+directions and the modulus width it reads. Every quantity below is a function of
+the input degree, the primes, and a degree multiset; the incumbent plans here
+are hypothetical shapes, not plans the walk builds. -/
+
+/-- A hypothetical incumbent plan at `p` with the given modular factor degrees.
+`scoutPays` reads only the prime and the degrees; the score follows from both. -/
+private def incumbentAt (core : SquareFreeInput) (p : Nat) (degrees : Array Nat) :
+    ScoutIncumbent :=
+  ⟨p, degrees, directDegreeScore core p degrees⟩
+
+-- `legendreP20`'s coefficient bound needs 27 powers of three, so its Hensel
+-- modulus occupies two machine words.
+#guard liftWords ⟨legendreP20⟩ 3 = 2
+
+-- One modular factor leaves no subset search at all, so nothing an observation
+-- could find can repay it.
+#guard !scoutPays ⟨legendreP20⟩ (incumbentAt ⟨legendreP20⟩ 3 #[20]) 5 2
+
+-- Four factors reaching degree 16 leave eight recombination candidates, against
+-- a scout that would run sixteen Frobenius rounds. Still nothing to shop for.
+#guard !scoutPays ⟨legendreP20⟩ (incumbentAt ⟨legendreP20⟩ 3 #[2, 2, 2, 16]) 5 2
+
+-- Ten quadratic factors leave 2^9 candidates, and a scout of a comparable image
+-- stops after two rounds. That pays.
+#guard scoutPays ⟨legendreP20⟩
+  (incumbentAt ⟨legendreP20⟩ 3 (Array.replicate 10 2)) 5 2
 
 /-! # Extended prime search
 

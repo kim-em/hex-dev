@@ -61,11 +61,16 @@ def fmt(nanos):
 
 
 def run_arm(binary: Path, names, cpu: int, out: Path) -> dict:
-    """One `factorPhaseProfile` pass with `binary` installed as the service."""
+    """One `factorPhaseProfile` pass with `binary` installed as the service.
+
+    The core is named to the child explicitly, not just through `taskset`: the
+    child's `--cpu auto` would pick its own and reset the inherited affinity,
+    and two arms measured on two different cores are not a paired comparison.
+    """
     shutil.copy2(binary, HEX_SERVICE)
     cmd = ["taskset", "-c", str(cpu), sys.executable,
            str(ROOT / "scripts" / "bench" / "factor_phase_profile.py"),
-           "--no-counterfactual", "--no-scout",
+           "--no-counterfactual", "--no-scout", "--no-kernel", "--cpu", str(cpu),
            "--validate-names", "cyclo_phi17",
            "--names", ",".join(names), "--output", str(out)]
     subprocess.run(cmd, cwd=ROOT, check=True,
@@ -92,7 +97,7 @@ def collect(record: dict) -> dict:
     return rows
 
 
-def summarize(record: dict) -> list:
+def summarize(record: dict, changed=()) -> list:
     """Per-instance medians of both arms, in the record's instance order."""
     out = []
     for name in record["config"]["names"]:
@@ -117,13 +122,17 @@ def summarize(record: dict) -> list:
             "after": a,
             "walk_saved_nanos": b["walk_nanos"] - a["walk_nanos"],
             "total_ratio": a["total_nanos"] / b["total_nanos"],
-            "plan_changed": (b["prime"], b["splits"]) != (a["prime"], a["splits"]),
+            # A walk can change without changing the prime it selects or the
+            # number of splits it performs -- dropping a scout does exactly
+            # that -- so the caller may name the rows it changed.
+            "plan_changed": (name in changed if changed else
+                             (b["prime"], b["splits"]) != (a["prime"], a["splits"])),
         })
     return out
 
 
-def print_table(record: dict) -> None:
-    rows = summarize(record)
+def print_table(record: dict, changed=()) -> None:
+    rows = summarize(record, changed)
     rounds = len(record["rounds"]["before"])
     print(f"### Paired before/after, median of {rounds} alternating rounds\n")
     print("| instance | prime before | prime after | full splits | "
@@ -147,8 +156,10 @@ def print_table(record: dict) -> None:
     if controls:
         lo = min(r["total_ratio"] for r in controls)
         hi = max(r["total_ratio"] for r in controls)
+        how = ("named by --changed" if changed
+               else "detected from the selected prime and split count")
         print(f"\nLoad control ({len(controls)} instances whose plan does not "
-              f"change): {lo:.3f}x to {hi:.3f}x.")
+              f"change, {how}): {lo:.3f}x to {hi:.3f}x.")
 
 
 def main() -> int:
@@ -165,10 +176,17 @@ def main() -> int:
     p.add_argument("--output", type=Path, default=None)
     p.add_argument("--report", type=Path, default=None,
                    help="print the table for a finished record and exit")
+    p.add_argument("--changed", default=None,
+                   help="comma-separated instances whose walk the change alters, "
+                        "for the load-control split; by default a row counts as "
+                        "changed when its selected prime or split count moved, "
+                        "which does not see a dropped scout")
     args = p.parse_args()
 
+    changed = frozenset(n.strip() for n in (args.changed or "").split(",")
+                        if n.strip())
     if args.report is not None:
-        print_table(json.loads(args.report.read_text()))
+        print_table(json.loads(args.report.read_text()), changed)
         return 0
     if args.before is None or args.after is None or args.output is None:
         p.error("--before, --after and --output are required unless --report")
@@ -200,10 +218,10 @@ def main() -> int:
         },
         "rounds": rounds,
     }
-    record["summary"] = summarize(record)
+    record["summary"] = summarize(record, changed)
     args.output.write_text(json.dumps(record, indent=2, sort_keys=True) + "\n")
     print(f"wrote {args.output}", file=sys.stderr)
-    print_table(record)
+    print_table(record, changed)
     return 0
 
 

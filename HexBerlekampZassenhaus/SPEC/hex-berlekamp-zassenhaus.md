@@ -97,10 +97,10 @@ There is no dilation-coordinate factorization method.
 - a bitset of subset-reachable degrees.
 
 `DirectPrimePlan` stores the chosen factorization and the other
-successful factorization examined, if any. If the first admissible
-prime has few modular factors, it is used immediately. Otherwise a
-bounded number of further admissible primes are *scouted*, and plans
-are compared by:
+successful factorization examined, if any. The first admissible prime is
+split. Further admissible primes are *scouted* while `scoutPays` says
+the plan in hand still has enough recombination work left to repay
+another observation; plans are compared by:
 
 1. predicted complete subset-search work;
 2. number of reachable proper factor degrees;
@@ -114,12 +114,47 @@ the factorization it predicts would. Only the winner is split.
 Inadmissible primes do not spend the allowance of scouts. The walk
 therefore ends holding the plan a policy that split every candidate
 would have selected, having split the first admissible prime and at
-most the winner — except that a scouted image narrow enough to pass
-the width gate ends the walk, the same gate that governs the first
-admissible prime.
+most the winner — except where `scoutPays` ends the walk, which it may
+do at the first admissible prime and after any scouted candidate wins.
 
 The reachability bitset is computed by dynamic programming in
 `O(number of factors × degree)`.
+
+### Pricing one more observation
+
+`scoutPays` is the walk's only stopping decision. It compares the
+recombination work the plan in hand still has to do against the scouts
+and split that replacing it would cost. Both sides are estimates over
+shape already observed — the input degree, the primes involved, and the
+degree patterns of the plans in hand — so the walk prices its own next
+step and nothing about the corpus or the instance's provenance enters.
+
+Writing `n` for the modular degree, `q` for the prime about to be
+scouted, `w` and `d` for the width and largest modular factor degree of
+the plan held, and `W` for the machine words of that plan's Hensel
+modulus:
+
+- a recombination candidate is a product and a trial division of the
+  degree-`n` lift, about `n²` coefficient operations on `W`-word
+  integers, and a complete head-forced search visits
+  `directSubsetCost w` of them. That product is an upper bound on what
+  the plan has left: it is what an irreducible input pays exactly, and a
+  reducible one stops earlier;
+- a bounded scout runs about `d` rounds, since the loop stops at the
+  largest factor degree, and each is one Frobenius power, about
+  `bitLen q` squarings of the degree-`n` image;
+- acting on what a scout learns costs one further Berlekamp split, whose
+  matrix and row reduction are about `bitLen q · n³`;
+- so a walk with `fuel` observations left is committing to at most
+  `fuel` scouts and one split.
+
+Both estimates carry a factor `n²`, which cancels. The constants that
+remain state how a modular word operation compares with a recombination
+one; they are ratios measured on the recorded per-candidate prices, and
+rescaling them all together changes no decision. `scoutFuel` remains, as
+a bound that makes the walk terminate in a fixed number of observations
+however cheap the next one looks; which of those observations happen is
+`scoutPays`'s decision, not the bound's.
 
 ### Scouting a candidate's degree pattern
 
