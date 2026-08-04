@@ -7,6 +7,7 @@ Authors: Kim Morrison
 module
 
 public import HexBasic
+public import HexBerlekamp.LinearFactors
 public import HexBerlekamp.PackedKernel
 
 public section
@@ -370,15 +371,188 @@ private def fullySplit (witnesses : List (FpPoly p)) :
             fullySplit witnesses fuel split.factor ++ fullySplit witnesses fuel split.cofactor
 
 /--
-Compute the Berlekamp factorization of a monic polynomial over `F_p` by
-building the fixed-space kernel of `Q_f - I` and fully splitting the input
-with the resulting kernel representatives.
+Budget for the residue scan of the root-extraction path. Two tests, both read
+off the degree and the field size alone, so the decision is deterministic and
+reads nothing about the coefficients of `f`.
+
+`deg f ≤ p` is *necessary*: `F_p` has `p` elements, so a polynomial with
+`deg f` distinct roots in `F_p` cannot have degree above `p`. A scan of a
+higher-degree input can never succeed, so it is never started.
+
+`25 * p ≤ (deg f)^2` keeps the scan cheap against the work it would replace.
+The scan is one Horner evaluation per residue, `p * deg f` modular
+multiplications; the fixed-space matrix multiplies `deg f` polynomials modulo
+`f`, each product quadratic in the degree, so about `(deg f)^3`. The test
+therefore admits the scan only when it costs about a twenty-fifth of the matrix
+build alone. Measured on the diagnostic grid of issue #9157, an
+admitted-but-rejected scan costs between 0.8% and 2.3% of `berlekampFactor`,
+falling as the degree grows.
+
+Together the two tests select `5 √p ≤ deg f ≤ p`: a completely split image is a
+plausible thing to meet only when the degree is comparable to the field size.
+-/
+@[expose]
+def rootScanBudget (f : FpPoly p) : Bool :=
+  2 ≤ f.size && f.size ≤ p + 1 && 25 * p ≤ (f.size - 1) * (f.size - 1)
+
+/-- The length test of the root-extraction path: a list of roots accounts for
+all of `f` exactly when there are `deg f` of them, and then the monic linear
+factors it names are the complete factorization. -/
+@[expose]
+def rootFactorsOf (f : FpPoly p) (roots : List (ZMod64 p)) : Option (List (FpPoly p)) :=
+  if roots.length + 1 = f.size then
+    some (roots.map primeFieldLinearFactor)
+  else
+    none
+
+/--
+The root-extraction path: enumerate the roots of `f` in `F_p` and, when there
+are `deg f` of them, return the corresponding monic linear factors.
+
+A squarefree `f` splits into distinct linear factors exactly when it has
+`deg f` roots in `F_p`, and the scan is its own certificate: the length test is
+what makes the result sound, so no separate complete-splitting test is computed
+and no Boolean is trusted unchecked. `Hex.Berlekamp.eq_foldl_rootsIn_of_length`
+turns the length test into the reconstruction `∏ (X - rᵢ) = f`.
+
+Returning `none` costs the scan; `rootScanBudget` bounds that cost.
+-/
+@[expose]
+def rootFactors? (f : FpPoly p) : Option (List (FpPoly p)) :=
+  if rootScanBudget f then rootFactorsOf f (rootsIn f) else none
+
+/--
+Compute the Berlekamp factorization of a monic polynomial over `F_p`.
+
+There is one selection point. When the residue scan is affordable and finds
+`deg f` roots, `f` is the product of the corresponding monic linear factors and
+those are returned directly. Otherwise the fixed-space kernel of `Q_f - I` is
+built and the input is fully split with the resulting kernel representatives.
+Both branches return factors whose product is `f`; the theorems below are
+proved for the two branches separately and stated only about
+`berlekampFactor`. The root-extraction branch emits monic linear factors; the
+kernel branch emits raw gcd leaves, monic only up to a unit, whose
+irreducibility comes from `berlekampFactor_factors_irreducible` on a
+square-free input.
 -/
 def berlekampFactor (f : FpPoly p) (hmonic : DensePoly.Monic f)
     [ZMod64.PrimeModulus p] : Factorization p :=
-  let witnesses := (fixedSpaceKernel f hmonic).toList
-  { input := f
-    factors := fullySplit witnesses (f.size + 1) f }
+  match rootFactors? f with
+  | some factors => { input := f, factors }
+  | none =>
+      let witnesses := (fixedSpaceKernel f hmonic).toList
+      { input := f
+        factors := fullySplit witnesses (f.size + 1) f }
+
+/-- The kernel branch of `berlekampFactor`, selected when root extraction does
+not apply. -/
+private theorem berlekampFactor_factors_of_rootFactors_none
+    [ZMod64.PrimeModulus p]
+    (f : FpPoly p) (hmonic : DensePoly.Monic f) (h : rootFactors? f = none) :
+    (berlekampFactor f hmonic).factors
+      = fullySplit ((fixedSpaceKernel f hmonic).toList) (f.size + 1) f := by
+  unfold berlekampFactor
+  rw [h]
+
+/-- The root-extraction branch of `berlekampFactor`. -/
+theorem berlekampFactor_factors_of_rootFactors_some
+    [ZMod64.PrimeModulus p]
+    (f : FpPoly p) (hmonic : DensePoly.Monic f) {fs : List (FpPoly p)}
+    (h : rootFactors? f = some fs) :
+    (berlekampFactor f hmonic).factors = fs := by
+  unfold berlekampFactor
+  rw [h]
+
+/-- What a successful root extraction records: the input has positive degree,
+the scan found `deg f` roots, and the returned factors are their monic linear
+factors. -/
+theorem rootFactors?_some_spec {f : FpPoly p} {fs : List (FpPoly p)}
+    (h : rootFactors? f = some fs) :
+    2 ≤ f.size ∧ (rootsIn f).length + 1 = f.size ∧
+      fs = (rootsIn f).map primeFieldLinearFactor := by
+  unfold rootFactors? at h
+  split at h
+  · rename_i hbudget
+    unfold rootFactorsOf at h
+    split at h
+    · rename_i hlen
+      have hsize : 2 ≤ f.size := by
+        unfold rootScanBudget at hbudget
+        simp only [Bool.and_eq_true, decide_eq_true_eq] at hbudget
+        exact hbudget.1.1
+      exact ⟨hsize, hlen, (Option.some.inj h).symm⟩
+    · exact absurd h (by simp)
+  · exact absurd h (by simp)
+
+/-- Root extraction never fires on a constant: the budget requires positive
+degree. -/
+theorem rootFactors?_eq_none_of_size_le_one {f : FpPoly p} (hsize : f.size ≤ 1) :
+    rootFactors? f = none := by
+  unfold rootFactors? rootScanBudget
+  have : ¬ (2 ≤ f.size) := by omega
+  simp [this]
+
+/-! # Structure of the root-extraction branch
+
+Everything the public theorems need about the root-extraction result: its
+product is the input, it is nonempty, its entries are monic linear, and they
+are pairwise distinct. Each follows from the one length test `rootFactors?`
+performs, so no property of the branch is assumed rather than checked. -/
+
+/-- **Reconstruction.** The monic linear factors of the enumerated roots
+multiply back to `f`. -/
+theorem factorProduct_rootFactors
+    [ZMod64.PrimeModulus p] {f : FpPoly p} {fs : List (FpPoly p)}
+    (hmonic : DensePoly.Monic f) (h : rootFactors? f = some fs) :
+    factorProduct fs = f := by
+  obtain ⟨_, hlen, hfs⟩ := rootFactors?_some_spec h
+  subst hfs
+  rw [factorProduct, List.foldl_map]
+  exact eq_foldl_rootsIn_of_length f hmonic hlen
+
+/-- The root-extraction branch emits one factor per root, and the budget forces
+`f` to have positive degree, so the result is never empty. -/
+theorem rootFactors_ne_nil {f : FpPoly p} {fs : List (FpPoly p)}
+    (h : rootFactors? f = some fs) : fs ≠ [] := by
+  obtain ⟨hsize, hlen, hfs⟩ := rootFactors?_some_spec h
+  intro hnil
+  have hlen0 : fs.length = 0 := by rw [hnil]; rfl
+  rw [hfs, List.length_map] at hlen0
+  omega
+
+/-- Every factor of the root-extraction branch is genuinely linear. -/
+theorem mem_rootFactors_size
+    [ZMod64.PrimeModulus p] {f : FpPoly p} {fs : List (FpPoly p)}
+    (h : rootFactors? f = some fs) :
+    ∀ g ∈ fs, g.size = 2 := by
+  obtain ⟨_, _, hfs⟩ := rootFactors?_some_spec h
+  subst hfs
+  intro g hg
+  rcases List.mem_map.mp hg with ⟨c, _, hgc⟩
+  rw [← hgc]
+  exact primeFieldLinearFactor_size c
+
+/-- Every factor of the root-extraction branch has degree one, hence positive
+degree. -/
+theorem mem_rootFactors_pos_degree
+    [ZMod64.PrimeModulus p] {f : FpPoly p} {fs : List (FpPoly p)}
+    (h : rootFactors? f = some fs) :
+    ∀ g ∈ fs, 0 < g.degree?.getD 0 := by
+  obtain ⟨_, _, hfs⟩ := rootFactors?_some_spec h
+  subst hfs
+  intro g hg
+  rcases List.mem_map.mp hg with ⟨c, _, hgc⟩
+  rw [← hgc, primeFieldLinearFactor_degree c]
+  omega
+
+/-- The root-extraction branch returns distinct factors: distinct roots give
+distinct linear factors, and the residue scan lists each root once. -/
+theorem rootFactors_nodup
+    {f : FpPoly p} {fs : List (FpPoly p)}
+    (h : rootFactors? f = some fs) : fs.Nodup := by
+  obtain ⟨_, _, hfs⟩ := rootFactors?_some_spec h
+  subst hfs
+  exact nodup_map_primeFieldLinearFactor (rootsIn_nodup f)
 
 /-- Definitional unfolding of `splitFactorAt` to its underlying `gcd` candidate. -/
 theorem splitFactorAt_spec (f witness : FpPoly p) (c : ZMod64 p) :
@@ -966,8 +1140,14 @@ product equality holds for every monic input. -/
 theorem factorProduct_berlekampFactor
     [ZMod64.PrimeModulus p]
     (f : FpPoly p) (hmonic : DensePoly.Monic f) :
-    factorProduct (berlekampFactor f hmonic).factors = f :=
-  factorProduct_fullySplit ((fixedSpaceKernel f hmonic).toList) (f.size + 1) f
+    factorProduct (berlekampFactor f hmonic).factors = f := by
+  cases hr : rootFactors? f with
+  | some fs =>
+      rw [berlekampFactor_factors_of_rootFactors_some f hmonic hr]
+      exact factorProduct_rootFactors hmonic hr
+  | none =>
+      rw [berlekampFactor_factors_of_rootFactors_none f hmonic hr]
+      exact factorProduct_fullySplit ((fixedSpaceKernel f hmonic).toList) (f.size + 1) f
 
 /--
 The executable Berlekamp factorization preserves the input polynomial as the
@@ -1024,8 +1204,14 @@ private theorem fullySplit_succ_eq_self_of_none
 theorem berlekampFactor_factors_ne_nil
     (f : FpPoly p) (hmonic : DensePoly.Monic f)
     [ZMod64.PrimeModulus p] :
-    (berlekampFactor f hmonic).factors ≠ [] :=
-  fullySplit_ne_nil ((fixedSpaceKernel f hmonic).toList) (f.size + 1) f
+    (berlekampFactor f hmonic).factors ≠ [] := by
+  cases hr : rootFactors? f with
+  | some fs =>
+      rw [berlekampFactor_factors_of_rootFactors_some f hmonic hr]
+      exact rootFactors_ne_nil hr
+  | none =>
+      rw [berlekampFactor_factors_of_rootFactors_none f hmonic hr]
+      exact fullySplit_ne_nil ((fixedSpaceKernel f hmonic).toList) (f.size + 1) f
 
 private theorem splitWithWitnesses?_none_iff_forall
     (f : FpPoly p) (witnesses : List (FpPoly p)) :
@@ -1265,14 +1451,24 @@ theorem kernelWitnessSplit?_none_of_berlekampFactor_factors_length_le_one
       splitWithWitnesses? f ((fixedSpaceKernel f hmonic).toList) = none := by
     by_cases hsize : f.size ≤ 2
     · exact splitWithWitnesses?_none_linear f _ hsize
-    · cases hsp : splitWithWitnesses? f ((fixedSpaceKernel f hmonic).toList) with
+    · cases hr : rootFactors? f with
+      | some fs =>
+          -- Root extraction found `deg f ≥ 2` linear factors, contradicting the
+          -- length bound, so this branch cannot have produced the short list.
+          exfalso
+          obtain ⟨_, hlen, hfs⟩ := rootFactors?_some_spec hr
+          rw [berlekampFactor_factors_of_rootFactors_some f hmonic hr, hfs,
+            List.length_map] at hsmall
+          omega
+      | none =>
+      cases hsp : splitWithWitnesses? f ((fixedSpaceKernel f hmonic).toList) with
       | none => rfl
       | some split =>
           exfalso
           have hfac_eq : (berlekampFactor f hmonic).factors
               = fullySplit ((fixedSpaceKernel f hmonic).toList) f.size split.factor
                 ++ fullySplit ((fixedSpaceKernel f hmonic).toList) f.size split.cofactor := by
-            show fullySplit ((fixedSpaceKernel f hmonic).toList) (f.size + 1) f = _
+            rw [berlekampFactor_factors_of_rootFactors_none f hmonic hr]
             rw [fullySplit, if_neg hsize, hsp]
           rw [hfac_eq, List.length_append] at hsmall
           have h1 :
@@ -1498,6 +1694,12 @@ theorem berlekampFactor_factors_nodup_of_no_squared
     (h_no_squared : ∀ g : FpPoly p,
         g * g ∣ f → ¬ (0 < g.degree?.getD 0)) :
     (berlekampFactor f hmonic).factors.Nodup := by
+  cases hr : rootFactors? f with
+  | some fs =>
+      rw [berlekampFactor_factors_of_rootFactors_some f hmonic hr]
+      exact rootFactors_nodup hr
+  | none =>
+  rw [berlekampFactor_factors_of_rootFactors_none f hmonic hr]
   by_cases h_f_pos : 0 < f.degree?.getD 0
   · exact (fullySplit_nodup_pos ((fixedSpaceKernel f hmonic).toList) (f.size + 1) f
       h_f_pos h_no_squared).1
@@ -1526,7 +1728,6 @@ theorem berlekampFactor_factors_nodup_of_no_squared
           have hfac_pos := kernelWitnessSplit_factor_pos_degree f w r hopt
           have hfac_size_ge_two : 2 ≤ r.factor.size := size_ge_two_of_pos_degree hfac_pos
           omega
-    show (fullySplit ((fixedSpaceKernel f hmonic).toList) (f.size + 1) f).Nodup
     rw [fullySplit_succ_eq_self_of_none _ _ _ h_no_split]
     exact List.nodup_cons.mpr ⟨List.not_mem_nil, List.nodup_nil⟩
 
@@ -1645,8 +1846,14 @@ theorem berlekampFactor_factors_pos_degree
     [ZMod64.PrimeModulus p]
     (f : FpPoly p) (hmonic : DensePoly.Monic f)
     (hf_pos : 0 < f.degree?.getD 0) :
-    ∀ g ∈ (berlekampFactor f hmonic).factors, 0 < g.degree?.getD 0 :=
-  fullySplit_pos ((fixedSpaceKernel f hmonic).toList) (f.size + 1) f hf_pos
+    ∀ g ∈ (berlekampFactor f hmonic).factors, 0 < g.degree?.getD 0 := by
+  cases hr : rootFactors? f with
+  | some fs =>
+      rw [berlekampFactor_factors_of_rootFactors_some f hmonic hr]
+      exact mem_rootFactors_pos_degree hr
+  | none =>
+      rw [berlekampFactor_factors_of_rootFactors_none f hmonic hr]
+      exact fullySplit_pos ((fixedSpaceKernel f hmonic).toList) (f.size + 1) f hf_pos
 
 /-- For a monic input of size ≤ 1, the executable Berlekamp factor list is
 exactly the singleton `[f]`.  A polynomial of size ≤ 1 has no positive-degree
@@ -1673,7 +1880,8 @@ theorem berlekampFactor_factors_eq_singleton_of_size_le_one
           simpa [DensePoly.size, Array.isEmpty_iff_size_eq_zero] using hfac_size_zero
         rw [hfac_iszero] at hnt
         simp at hnt
-  show fullySplit ((fixedSpaceKernel f hmonic).toList) (f.size + 1) f = [f]
+  rw [berlekampFactor_factors_of_rootFactors_none f hmonic
+    (rootFactors?_eq_none_of_size_le_one hsize)]
   exact fullySplit_succ_eq_self_of_none _ _ _ h_no_split
 
 /-- Every factor in the Berlekamp factor list is nonzero.  Splits the positive-
@@ -1778,11 +1986,22 @@ theorem kernelWitnessSplit?_none_of_berlekampFactor_factors
     rw [h, hlead_zero] at hmonic
     exact ZMod64.one_ne_zero_of_prime (ZMod64.PrimeModulus.prime (p := p)) hmonic.symm
   intro g hg w hw
-  have hg_none : splitWithWitnesses? g ((fixedSpaceKernel f hmonic).toList) = none :=
-    fullySplit_unsplittable ((fixedSpaceKernel f hmonic).toList) (f.size + 1) f hf_ne
-      (by omega) g hg
-  rw [splitWithWitnesses?_none_iff_forall] at hg_none
-  exact hg_none w hw
+  cases hr : rootFactors? f with
+  | some fs =>
+      -- Every root-extraction factor is linear, and a linear polynomial admits
+      -- no proper nonconstant factor, so no witness splits it.
+      rw [berlekampFactor_factors_of_rootFactors_some f hmonic hr] at hg
+      have hg_none := splitWithWitnesses?_none_linear g [w]
+        (by rw [mem_rootFactors_size hr g hg]; omega)
+      rw [splitWithWitnesses?_none_iff_forall] at hg_none
+      exact hg_none w (by simp)
+  | none =>
+      rw [berlekampFactor_factors_of_rootFactors_none f hmonic hr] at hg
+      have hg_none : splitWithWitnesses? g ((fixedSpaceKernel f hmonic).toList) = none :=
+        fullySplit_unsplittable ((fixedSpaceKernel f hmonic).toList) (f.size + 1) f hf_ne
+          (by omega) g hg
+      rw [splitWithWitnesses?_none_iff_forall] at hg_none
+      exact hg_none w hw
 
 /-- Every factor returned by the executable Berlekamp factorization divides the
 input.  Immediate from `factorProduct_berlekampFactor`. -/

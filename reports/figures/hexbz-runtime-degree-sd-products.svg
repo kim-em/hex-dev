@@ -1264,16 +1264,16 @@ z
     </g>
    </g>
    <g id="line2d_91">
-    <path d="M 86.724055 266.50446
-L 86.724055 257.057676
-L 113.446338 229.88965
-L 113.446338 226.273974
-L 113.446338 214.241073
-L 166.890902 156.852818
-L 166.890902 128.901341
-L 193.613184 129.295775
-L 200.293755 70.561004
-L 247.057749 47.292226
+    <path d="M 86.724055 267.411878
+L 86.724055 256.919283
+L 113.446338 229.211181
+L 113.446338 225.628431
+L 113.446338 214.079404
+L 166.890902 155.63224
+L 166.890902 128.325063
+L 193.613184 128.54495
+L 200.293755 70.310254
+L 247.057749 47.070081
 " clip-path="url(#pbb46c35cd8)" style="fill: none; stroke: #1f77b4; stroke-linecap: square"/>
     <defs>
      <path id="md73ba6276e" d="M 0 2
@@ -1289,16 +1289,16 @@ z
 " style="stroke: #1f77b4"/>
     </defs>
     <g clip-path="url(#pbb46c35cd8)">
-     <use xlink:href="#md73ba6276e" x="86.724055" y="266.50446" style="fill: #1f77b4; stroke: #1f77b4"/>
-     <use xlink:href="#md73ba6276e" x="86.724055" y="257.057676" style="fill: #1f77b4; stroke: #1f77b4"/>
-     <use xlink:href="#md73ba6276e" x="113.446338" y="229.88965" style="fill: #1f77b4; stroke: #1f77b4"/>
-     <use xlink:href="#md73ba6276e" x="113.446338" y="226.273974" style="fill: #1f77b4; stroke: #1f77b4"/>
-     <use xlink:href="#md73ba6276e" x="113.446338" y="214.241073" style="fill: #1f77b4; stroke: #1f77b4"/>
-     <use xlink:href="#md73ba6276e" x="166.890902" y="156.852818" style="fill: #1f77b4; stroke: #1f77b4"/>
-     <use xlink:href="#md73ba6276e" x="166.890902" y="128.901341" style="fill: #1f77b4; stroke: #1f77b4"/>
-     <use xlink:href="#md73ba6276e" x="193.613184" y="129.295775" style="fill: #1f77b4; stroke: #1f77b4"/>
-     <use xlink:href="#md73ba6276e" x="200.293755" y="70.561004" style="fill: #1f77b4; stroke: #1f77b4"/>
-     <use xlink:href="#md73ba6276e" x="247.057749" y="47.292226" style="fill: #1f77b4; stroke: #1f77b4"/>
+     <use xlink:href="#md73ba6276e" x="86.724055" y="267.411878" style="fill: #1f77b4; stroke: #1f77b4"/>
+     <use xlink:href="#md73ba6276e" x="86.724055" y="256.919283" style="fill: #1f77b4; stroke: #1f77b4"/>
+     <use xlink:href="#md73ba6276e" x="113.446338" y="229.211181" style="fill: #1f77b4; stroke: #1f77b4"/>
+     <use xlink:href="#md73ba6276e" x="113.446338" y="225.628431" style="fill: #1f77b4; stroke: #1f77b4"/>
+     <use xlink:href="#md73ba6276e" x="113.446338" y="214.079404" style="fill: #1f77b4; stroke: #1f77b4"/>
+     <use xlink:href="#md73ba6276e" x="166.890902" y="155.63224" style="fill: #1f77b4; stroke: #1f77b4"/>
+     <use xlink:href="#md73ba6276e" x="166.890902" y="128.325063" style="fill: #1f77b4; stroke: #1f77b4"/>
+     <use xlink:href="#md73ba6276e" x="193.613184" y="128.54495" style="fill: #1f77b4; stroke: #1f77b4"/>
+     <use xlink:href="#md73ba6276e" x="200.293755" y="70.310254" style="fill: #1f77b4; stroke: #1f77b4"/>
+     <use xlink:href="#md73ba6276e" x="247.057749" y="47.070081" style="fill: #1f77b4; stroke: #1f77b4"/>
     </g>
    </g>
    <g id="line2d_92">
@@ -2088,7 +2088,7 @@ L 89.882344 96.641875
    </g>
   </g>
   <g id="text_20">
-   <!-- cutoff 10.0s; source newest-per-system across 40 records; declines and timeouts count as unsolved -->
+   <!-- cutoff 10.0s; source newest-per-system across 42 records; declines and timeouts count as unsolved -->
    <g style="fill: #555555" transform="translate(84.008047 343.872) scale(0.07 -0.07)">
     <defs>
      <path id="DejaVuSans-13ae" d="M 4531 4863
@@ -2195,7 +2195,7 @@ z
     <use xlink:href="#DejaVuSans-56" transform="translate(2276.65625 0)"/>
     <use xlink:href="#DejaVuSans-3" transform="translate(2328.75 0)"/>
     <use xlink:href="#DejaVuSans-17" transform="translate(2360.53125 0)"/>
-    <use xlink:href="#DejaVuSans-13" transform="translate(2424.15625 0)"/>
+    <use xlink:href="#DejaVuSans-15" transform="translate(2424.15625 0)"/>
     <use xlink:href="#DejaVuSans-3" transform="translate(2487.78125 0)"/>
     <use xlink:href="#DejaVuSans-55" transform="translate(2519.5625 0)"/>
     <use xlink:href="#DejaVuSans-48" transform="translate(2558.46875 0)"/>

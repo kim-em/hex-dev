@@ -28,9 +28,41 @@ library.
 
 ## Factorization
 
-`Berlekamp.berlekampFactor` computes the fixed space once and applies
-its basis vectors to the current factor list. A split replaces one
-factor by exact complementary factors, preserving the product.
+`Berlekamp.berlekampFactor` has one selection point and two branches.
+
+The default branch computes the fixed space once and applies its basis
+vectors to the current factor list. A split replaces one factor by exact
+complementary factors, preserving the product.
+
+The other branch extracts a completely split input by its roots. A
+square-free polynomial over `F_p` is a product of distinct monic linear
+factors exactly when it has `deg f` roots in `F_p`, so enumerating the
+roots and emitting `X - r` for each is a complete factorization. The
+scan over the canonical residue list is its own certificate: the result
+is used only when the scan finds `deg f` roots, and that length test is
+what proves the reconstruction `∏ (X - r_i) = f`. No separate
+complete-splitting predicate is computed and no Boolean is trusted
+without a check.
+
+The branch is selected from the polynomial alone, never from a
+recognized input family. `Berlekamp.rootScanBudget` admits the scan on
+two tests, both read off the degree and the field size alone.
+
+`deg f ≤ p` is necessary: `F_p` has `p` elements, so a scan of a
+higher-degree input can never find `deg f` distinct roots and is never
+started.
+
+`25 · p ≤ (deg f)^2` keeps the scan cheap against the work it would
+replace: the scan costs `p · deg f` modular multiplications while the
+fixed-space matrix costs about `(deg f)^3`. An input that passes both
+tests, pays for a scan, and then falls back to the kernel branch loses a
+small fraction of the work it was going to do anyway.
+
+Together the two tests select `5 √p ≤ deg f ≤ p`.
+
+The linear factors, their pairwise coprimality, and the reconstruction
+theorem live in `LinearFactors.lean`, shared with the `X^p - X` product
+identity behind Rabin's test.
 
 The result records:
 

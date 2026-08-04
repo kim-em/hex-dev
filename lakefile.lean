@@ -545,6 +545,10 @@ lean_exe hexbz_factor_service where
   srcDir := "bench"
   root := `HexBench.FactorService
 
+lean_exe hexbz_root_split_probe where
+  srcDir := "bench"
+  root := `HexBench.RootSplitProbe
+
 lean_exe hexarith_bench where
   srcDir := "bench"
   root := `HexArith.Bench
