@@ -1,7 +1,10 @@
 # Root extraction versus Berlekamp splitting for completely split modular images
 
 Measurement gate for issue #9157. Driver:
-`bench/HexBench/RootSplitProbe.lean` (`lake exe hexbz_root_split_probe`).
+`bench/HexBench/RootSplitProbe.lean` (`lake exe hexbz_root_split_probe`). The
+probe's scan filters `ZMod64.values p`; production later replaced that with the
+equivalent tail-recursive `rootsBelow` loop, which allocates only the roots it
+keeps, so the probe's scan figures are an upper bound on the production cost.
 Record: `reports/bench-results/hexbz-root-split-probe-f87a0c7d.json`
 (measured on `chungus2`, median of 3, baseline commit `f87a0c7d`).
 
@@ -104,23 +107,23 @@ Paired phase profiles, baseline `f87a0c7d` against the change, both measured on
 
 | row | total before | total after | delta | `berlekampFactor` before | after | delta |
 | --- | --- | --- | --- | --- | --- | --- |
-| `wilkinson_40` | 12.78 ms | 9.03 ms | −29.3% | 1.952 ms | 0.108 ms | −94.5% |
-| `wilkinson_48` | 21.95 ms | 16.12 ms | −26.6% | 3.100 ms | 0.177 ms | −94.3% |
-| `wilkinson_56` | 29.75 ms | 20.74 ms | −30.3% | 4.800 ms | 0.226 ms | −95.3% |
+| `wilkinson_40` | 12.78 ms | 9.03 ms | −29.3% | 1.952 ms | 0.103 ms | −94.7% |
+| `wilkinson_48` | 21.95 ms | 16.07 ms | −26.8% | 3.100 ms | 0.163 ms | −94.7% |
+| `wilkinson_56` | 29.75 ms | 20.87 ms | −29.9% | 4.800 ms | 0.215 ms | −95.5% |
 
-Every other profiled row reports `rootExtraction: false` — no scan runs — and
-its total moves between −2.5% and +2.3%, which is the run-to-run band of this
-driver on those inputs. The profile's own validation checked 368 instances for
-factor-degree, leaf-count, selected-prime, and subset-cardinality agreement
-with the counted mirror, with no disagreements.
+Every other profiled row reports `rootExtraction: false`, so no scan runs on
+it. Those rows move between −2.4% and +2.6%, which is this driver's own noise:
+two runs of *identical* code differ by up to 3.1% on the same rows, so the
+spread against the baseline carries no signal. The profile's validation checked
+368 instances for factor-degree, leaf-count, selected-prime, and
+subset-cardinality agreement with the counted mirror, with no disagreements.
 
 The corpus sweep (`hexbz-factor-sweep-f87a0c7d-hex-chungus2.json` against
 `hexbz-factor-sweep-9157-root-extraction-hex-chungus2.json`, same corpus hash,
-10 s cutoff) solves the same 377 of 392 instances before and after, for 2.0%
-less total time. The Wilkinson rows that the budget admits improve by 24.2% to
-27.2%, and the improvement extends to `wilkinson_28` (−10.2%) and
-`wilkinson_32` (−11.6%). No instance regresses outside the sub-millisecond
-noise band.
+10 s cutoff) solves the same 377 of 392 instances before and after, for 1.2%
+less total time. The Wilkinson rows that the budget admits improve by 23.7% to
+27.0%, and the improvement extends to `wilkinson_28` (−9.1%) and `wilkinson_32`
+(−11.5%). No instance regresses outside the sub-millisecond noise band.
 
 ## Verdict
 
