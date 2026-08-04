@@ -163,7 +163,7 @@ both excluded by it, as they must be.
 `F`, and `K = F(√a)`. If `b ∈ F` is a square in `K`, then `b` or `a·b` is a
 square in `F`.
 
-*Proof.* Write `b = (x + y√a)²= (x² + a y²) + 2xy√a` with `x, y ∈ F`. As
+*Proof.* Write `b = (x + y√a)² = (x² + a y²) + 2xy√a` with `x, y ∈ F`. As
 `{1, √a}` is an `F`-basis of `K` and `char F ≠ 2`, `xy = 0`. If `y = 0` then
 `b = x²`; if `x = 0` then `b = a y²`, so `a·b = (a y)²`. ∎
 
