@@ -7,7 +7,7 @@ Authors: Kim Morrison
 module
 
 public import HexBasic
-public import HexBerlekamp.BerlekampMatrix
+public import HexBerlekamp.PackedKernel
 
 public section
 
@@ -375,7 +375,7 @@ building the fixed-space kernel of `Q_f - I` and fully splitting the input
 with the resulting kernel representatives.
 -/
 def berlekampFactor (f : FpPoly p) (hmonic : DensePoly.Monic f)
-    [Lean.Grind.Field (ZMod64 p)] : Factorization p :=
+    [ZMod64.PrimeModulus p] : Factorization p :=
   let witnesses := (fixedSpaceKernel f hmonic).toList
   { input := f
     factors := fullySplit witnesses (f.size + 1) f }
@@ -964,7 +964,6 @@ private theorem factorProduct_fullySplit
 splitting preserves `factorProduct` without using square-freeness, so the
 product equality holds for every monic input. -/
 theorem factorProduct_berlekampFactor
-    [Lean.Grind.Field (ZMod64 p)]
     [ZMod64.PrimeModulus p]
     (f : FpPoly p) (hmonic : DensePoly.Monic f) :
     factorProduct (berlekampFactor f hmonic).factors = f :=
@@ -976,7 +975,6 @@ product of the returned factors for any monic input.
 -/
 theorem prod_berlekampFactor
     (f : FpPoly p) (hmonic : DensePoly.Monic f)
-    [Lean.Grind.Field (ZMod64 p)]
     [ZMod64.PrimeModulus p] :
     (berlekampFactor f hmonic).product = f := by
   simp only [Factorization.product_def]
@@ -1025,7 +1023,7 @@ private theorem fullySplit_succ_eq_self_of_none
 /-- Executable Berlekamp factorization always retains at least one factor. -/
 theorem berlekampFactor_factors_ne_nil
     (f : FpPoly p) (hmonic : DensePoly.Monic f)
-    [Lean.Grind.Field (ZMod64 p)] :
+    [ZMod64.PrimeModulus p] :
     (berlekampFactor f hmonic).factors ≠ [] :=
   fullySplit_ne_nil ((fixedSpaceKernel f hmonic).toList) (f.size + 1) f
 
@@ -1260,7 +1258,6 @@ Mathlib-free finite-field module.
 theorem kernelWitnessSplit?_none_of_berlekampFactor_factors_length_le_one
     (f : FpPoly p) (hmonic : DensePoly.Monic f)
     [ZMod64.PrimeModulus p]
-    [Lean.Grind.Field (ZMod64 p)]
     (hsmall : (berlekampFactor f hmonic).factors.length ≤ 1) :
     ∀ w ∈ (fixedSpaceKernel f hmonic).toList,
       kernelWitnessSplit? f w = none := by
@@ -1497,7 +1494,6 @@ discharges this hypothesis from `gcd f f' = 1`; see
 `HexBerlekamp/RabinSoundness.lean`. -/
 theorem berlekampFactor_factors_nodup_of_no_squared
     (f : FpPoly p) (hmonic : DensePoly.Monic f)
-    [Lean.Grind.Field (ZMod64 p)]
     [ZMod64.PrimeModulus p]
     (h_no_squared : ∀ g : FpPoly p,
         g * g ∣ f → ¬ (0 < g.degree?.getD 0)) :
@@ -1584,7 +1580,6 @@ irreducibility chain discharges the no-squared hypothesis from
 `gcd f f' = 1`; see callers that pair this with
 `isUnitPolynomial_of_squareFree_of_squared_dvd`. -/
 theorem berlekampFactor_factors_pairwise_coprime
-    [Lean.Grind.Field (ZMod64 p)]
     [ZMod64.PrimeModulus p]
     (f : FpPoly p) (hmonic : DensePoly.Monic f)
     (h_no_squared : ∀ g : FpPoly p,
@@ -1647,7 +1642,6 @@ Berlekamp factor list has positive degree.  The squareness-free hypothesis
 needed by `berlekampFactor_factors_nodup_of_no_squared` is not needed here:
 positivity is preserved by every split regardless of square-freeness. -/
 theorem berlekampFactor_factors_pos_degree
-    [Lean.Grind.Field (ZMod64 p)]
     [ZMod64.PrimeModulus p]
     (f : FpPoly p) (hmonic : DensePoly.Monic f)
     (hf_pos : 0 < f.degree?.getD 0) :
@@ -1659,7 +1653,6 @@ exactly the singleton `[f]`.  A polynomial of size ≤ 1 has no positive-degree
 divisors, so it admits no kernel-witness split and `fullySplit` emits it as a
 leaf. -/
 theorem berlekampFactor_factors_eq_singleton_of_size_le_one
-    [Lean.Grind.Field (ZMod64 p)]
     [ZMod64.PrimeModulus p]
     (f : FpPoly p) (hmonic : DensePoly.Monic f)
     (hsize : f.size ≤ 1) :
@@ -1688,7 +1681,6 @@ degree case (where every factor has positive degree via
 `berlekampFactor_factors_pos_degree`) from the size-≤-1 case (where the factor
 list is the singleton `[f]` and `f` is monic, hence nonzero). -/
 theorem berlekampFactor_factors_ne_zero
-    [Lean.Grind.Field (ZMod64 p)]
     [ZMod64.PrimeModulus p]
     (f : FpPoly p) (hmonic : DensePoly.Monic f) :
     ∀ g ∈ (berlekampFactor f hmonic).factors, g ≠ 0 := by
@@ -1775,7 +1767,7 @@ private theorem fullySplit_unsplittable
 factorization of a monic input resists every fixed-space kernel-witness split.
 The `f.size + 1` fuel always suffices to reach the witness-irreducible leaves. -/
 theorem kernelWitnessSplit?_none_of_berlekampFactor_factors
-    [Lean.Grind.Field (ZMod64 p)] [ZMod64.PrimeModulus p]
+    [ZMod64.PrimeModulus p]
     (f : FpPoly p) (hmonic : DensePoly.Monic f) :
     ∀ g ∈ (berlekampFactor f hmonic).factors,
       ∀ w ∈ (fixedSpaceKernel f hmonic).toList, kernelWitnessSplit? g w = none := by
@@ -1795,7 +1787,7 @@ theorem kernelWitnessSplit?_none_of_berlekampFactor_factors
 /-- Every factor returned by the executable Berlekamp factorization divides the
 input.  Immediate from `factorProduct_berlekampFactor`. -/
 theorem berlekampFactor_factors_dvd
-    [Lean.Grind.Field (ZMod64 p)] [ZMod64.PrimeModulus p]
+    [ZMod64.PrimeModulus p]
     (f : FpPoly p) (hmonic : DensePoly.Monic f) :
     ∀ g ∈ (berlekampFactor f hmonic).factors, g ∣ f := by
   intro g hg

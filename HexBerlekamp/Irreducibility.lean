@@ -6,7 +6,7 @@ Authors: Kim Morrison
 
 module
 
-public import HexBerlekamp.BerlekampMatrix
+public import HexBerlekamp.PackedKernel
 
 public section
 

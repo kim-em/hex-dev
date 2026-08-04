@@ -1045,8 +1045,7 @@ def factorsModPBerlekampForm
       ((@Berlekamp.berlekampFactor data.p data.bounds
         (monicModularImage (ZPoly.modP data.p f))
         (monicModularImage_monic hprime (ZPoly.modP data.p f) hzero)
-        (@zmod64FieldOfPrime data.p data.bounds
-          (ZMod64.primeModulusOfPrime hprime))).factors.map monicModularImage).toArray
+        (ZMod64.primeModulusOfPrime hprime)).factors.map monicModularImage).toArray
 
 private theorem primeChoiceDataScore_factorsModPBerlekampForm
     (f : ZPoly) (c : SmallPrimeCandidate) (score : PrimeChoiceDataScore)
@@ -1188,9 +1187,7 @@ theorem choosePrimeDataAdaptive?_form
           (monicModularImage_monic
             (choosePrimeDataAdaptive?_prime f extra data hdata)
             (ZPoly.modP data.p f) hzero)
-          (@zmod64FieldOfPrime data.p data.bounds
-            (ZMod64.primeModulusOfPrime
-              (choosePrimeDataAdaptive?_prime f extra data hdata)))).factors.map
+          (ZMod64.primeModulusOfPrime (choosePrimeDataAdaptive?_prime f extra data hdata))).factors.map
                 monicModularImage).toArray := by
   obtain ⟨score, rfl, hform⟩ := choosePrimeDataAdaptive?_property f extra data
     (fun score => factorsModPBerlekampForm f score.data)
@@ -1217,9 +1214,7 @@ theorem choosePrimeData?_factorsModP_berlekamp_form
           (monicModularImage_monic
             (choosePrimeData?_prime f data hdata)
             (ZPoly.modP data.p f) hzero)
-          (@zmod64FieldOfPrime data.p data.bounds
-            (ZMod64.primeModulusOfPrime
-              (choosePrimeData?_prime f data hdata)))).factors.map
+          (ZMod64.primeModulusOfPrime (choosePrimeData?_prime f data hdata))).factors.map
                 monicModularImage).toArray := by
   unfold choosePrimeData? at hdata
   cases hscore :
@@ -1270,9 +1265,7 @@ theorem choosePrimeData?_berlekampFactor_factors_length_le_one_of_small
         (monicModularImage_monic
           (choosePrimeData?_prime f data hdata)
           (@ZPoly.modP data.p data.bounds f) hzero)
-        (@zmod64FieldOfPrime data.p data.bounds
-          (ZMod64.primeModulusOfPrime
-            (choosePrimeData?_prime f data hdata)))).factors.length ≤ 1 := by
+        (ZMod64.primeModulusOfPrime (choosePrimeData?_prime f data hdata))).factors.length ≤ 1 := by
   letI := data.bounds
   obtain ⟨hzero, hform⟩ :=
     choosePrimeData?_factorsModP_berlekamp_form f data hdata
@@ -1284,9 +1277,7 @@ theorem choosePrimeData?_berlekampFactor_factors_length_le_one_of_small
         (monicModularImage_monic
           (choosePrimeData?_prime f data hdata)
           (@ZPoly.modP data.p data.bounds f) hzero)
-        (@zmod64FieldOfPrime data.p data.bounds
-          (ZMod64.primeModulusOfPrime
-            (choosePrimeData?_prime f data hdata)))).factors.length ≤ 1 := by
+        (ZMod64.primeModulusOfPrime (choosePrimeData?_prime f data hdata))).factors.length ≤ 1 := by
     simpa [hform] using hsmall
   exact hlen
 

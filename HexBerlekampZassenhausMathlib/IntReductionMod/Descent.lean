@@ -540,8 +540,8 @@ theorem irreducible_of_smallMod_form
   letI : Hex.ZMod64.PrimeModulus primeData.p := Hex.ZMod64.primeModulusOfPrime hprime_hex
   have hformCopy := hform
   obtain ⟨_, hzero, hfactors_eq⟩ := hformCopy
-  let hfield := @Hex.zmod64FieldOfPrime primeData.p primeData.bounds
-    (Hex.ZMod64.primeModulusOfPrime hprime_hex)
+  let hfield : Hex.ZMod64.PrimeModulus primeData.p :=
+    Hex.ZMod64.primeModulusOfPrime hprime_hex
   letI := hfield
   -- Translate factorsModP.size ≤ 1 into bfact.factors.length ≤ 1.
   have hfactors_len_le :
