@@ -197,6 +197,11 @@ polynomials, which is the same work.
 | `wilkinson_40` | 41.622 us | 43.234 us | 0.96x | 72.457 us | 65.687 us | 0.91x |
 | `legendre_P38` | 1.785 ms | 999.733 us | 1.79x | 164.624 us | 360.634 us | 2.19x |
 
+The three causes below were named by inspection. They are now measured:
+[reports/hexbz-packed-kernel-attribution.md](hexbz-packed-kernel-attribution.md)
+finds the first one is 70% of the reduction, the second is not a cost at all,
+and the third is a cost only on rows dominated by already-zero columns.
+
 Three causes, in the order they are worth fixing:
 
 1. **`Matrix.rowAdd` copies the source row.** `HexMatrix`'s row addition reads
@@ -228,7 +233,9 @@ page put it (1.98x).
   against *this* implementation needs a second and third compiled variant of
   the packed loop that nothing would ship. The prototype's 2.42x for `UInt32`
   and 1.01x for Barrett are still the only evidence for those two choices, and
-  they were measured on a prototype.
+  they were measured on a prototype. **Both are now settled without building
+  either variant**; see
+  [reports/hexbz-packed-kernel-attribution.md](hexbz-packed-kernel-attribution.md).
 - **The before and after records are separate runs.** See
   [Revision and protocol](#revision-and-protocol).
 - **The corpus moduli are small**, 3 to 79, far from the `2^31` bound the
