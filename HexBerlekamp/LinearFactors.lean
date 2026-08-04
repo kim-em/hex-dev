@@ -370,6 +370,23 @@ theorem foldl_size_and_monic [ZMod64.PrimeModulus p]
 /-! # Root enumeration -/
 
 /--
+The roots of `f` among the residues `ofNat p k` for `k < n`, listed in
+increasing `k` and consed onto `acc`.
+
+Counting down and consing keeps the loop tail-recursive and allocates only the
+roots it keeps, so the scan holds `deg f` residues rather than the whole of
+`F_p`. Filtering `ZMod64.values p` instead would allocate `p` residues, and the
+budget in `Hex.Berlekamp.rootScanBudget` only bounds the scan against the
+kernel computation it replaces, not in the absolute.
+-/
+@[expose]
+def rootsBelow (f : FpPoly p) : Nat → List (ZMod64 p) → List (ZMod64 p)
+  | 0, acc => acc
+  | n + 1, acc =>
+      let c := ZMod64.ofNat p n
+      rootsBelow f n (if DensePoly.evalImpl f c = 0 then c :: acc else acc)
+
+/--
 The roots of `f` in `F_p`, listed in canonical residue order.
 
 One Horner evaluation per residue, so `p * f.size` modular multiplications.
@@ -378,19 +395,43 @@ Callers gate the scan on the field size; see
 -/
 @[expose]
 def rootsIn (f : FpPoly p) : List (ZMod64 p) :=
-  (ZMod64.values p).filter fun c => decide (DensePoly.evalImpl f c = 0)
+  rootsBelow f p []
+
+/-- The accumulating scan collects exactly the residues below its bound at which
+`f` vanishes, in increasing order. -/
+private theorem rootsBelow_eq (f : FpPoly p) (n : Nat) (acc : List (ZMod64 p)) :
+    rootsBelow f n acc =
+      (((List.range n).map fun k => ZMod64.ofNat p k).filter
+        fun c => decide (DensePoly.evalImpl f c = 0)) ++ acc := by
+  induction n generalizing acc with
+  | zero => simp [rootsBelow]
+  | succ n ih =>
+      rw [rootsBelow, ih, List.range_succ, List.map_append, List.filter_append]
+      simp only [List.map_cons, List.map_nil, List.filter_cons, List.filter_nil]
+      by_cases h : DensePoly.evalImpl f (ZMod64.ofNat p n) = 0
+      · simp [h]
+      · simp [h]
+
+/-- The scan enumerates exactly the vanishing residues of the canonical residue
+list: the loop is the filter, without materializing the list. -/
+theorem rootsIn_eq_filter (f : FpPoly p) :
+    rootsIn f =
+      (ZMod64.values p).filter fun c => decide (DensePoly.evalImpl f c = 0) := by
+  unfold rootsIn ZMod64.values
+  rw [rootsBelow_eq]
+  simp
 
 /-- Membership in `rootsIn` is exactly vanishing of the evaluation. -/
 @[grind =] theorem mem_rootsIn_iff (f : FpPoly p) (c : ZMod64 p) :
     c ∈ rootsIn f ↔ DensePoly.eval f c = 0 := by
-  unfold rootsIn
-  rw [List.mem_filter]
-  rw [DensePoly.eval_eq_evalImpl]
+  rw [rootsIn_eq_filter, List.mem_filter, DensePoly.eval_eq_evalImpl]
   simp [ZMod64.mem_values c]
 
-/-- The root list has no duplicates: it filters the duplicate-free residue list. -/
-theorem rootsIn_nodup (f : FpPoly p) : (rootsIn f).Nodup :=
-  ZMod64.values_nodup.filter _
+/-- The root list has no duplicates: it enumerates the duplicate-free residue
+list. -/
+theorem rootsIn_nodup (f : FpPoly p) : (rootsIn f).Nodup := by
+  rw [rootsIn_eq_filter]
+  exact ZMod64.values_nodup.filter _
 
 private theorem nodup_map_of_injective {α β : Type _} {xs : List α} {g : α → β}
     (hxs : xs.Nodup) (hinj : ∀ a b, g a = g b → a = b) :

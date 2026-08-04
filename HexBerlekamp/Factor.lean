@@ -428,9 +428,12 @@ There is one selection point. When the residue scan is affordable and finds
 `deg f` roots, `f` is the product of the corresponding monic linear factors and
 those are returned directly. Otherwise the fixed-space kernel of `Q_f - I` is
 built and the input is fully split with the resulting kernel representatives.
-Both branches return irreducible monic factors whose product is `f`; the
-theorems below are proved for the two branches separately and stated only about
-`berlekampFactor`.
+Both branches return factors whose product is `f`; the theorems below are
+proved for the two branches separately and stated only about
+`berlekampFactor`. The root-extraction branch emits monic linear factors; the
+kernel branch emits raw gcd leaves, monic only up to a unit, whose
+irreducibility comes from `berlekampFactor_factors_irreducible` on a
+square-free input.
 -/
 def berlekampFactor (f : FpPoly p) (hmonic : DensePoly.Monic f)
     [ZMod64.PrimeModulus p] : Factorization p :=

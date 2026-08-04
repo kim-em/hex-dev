@@ -809,6 +809,10 @@ private def modularSubPhases (sink : IO.Ref Nat) (core : ZPoly)
     -- nullspace, so that subtraction would not describe anything: the total is
     -- the scan and the linear-factor construction, and there is no splitting
     -- stage to attribute.
+    -- Re-runs the selection point outside the measured span. It repeats the
+    -- residue scan, which the span above already paid for, but the branch tag
+    -- is not otherwise recoverable from the factor list and this repeat cannot
+    -- perturb a mark that has already been taken.
     let rootExtraction := (Berlekamp.rootFactors? monic).isSome
     let matrixNanos := m4.nanos - m3.nanos
     let reduceNanos := m5.nanos - m4.nanos
