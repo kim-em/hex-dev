@@ -240,14 +240,14 @@ def liftWords (core : SquareFreeInput) (p : Nat) : Nat :=
 
 A scout round works modulo a word-sized prime with a polynomial division in its
 inner loop; a recombination candidate multiplies and divides multiword integers
-in a tighter loop.  On the recorded per-candidate prices the scout's word
-operation is about a dozen times the recombination one. -/
-def scoutRoundCost : Nat := 12
+in a tighter loop.  Over the recorded per-candidate prices the scout's word
+operation runs about ten times the recombination one. -/
+def scoutRoundCost : Nat := 10
 
 /-- Cost of one Berlekamp-split word operation, in recombination word
 operations.  The fixed-space matrix and its row reduction are the tightest
-modular loop the planner runs, about a quarter of a scout round's. -/
-def splitColumnCost : Nat := 3
+modular loop the planner runs, about half a scout round's. -/
+def splitColumnCost : Nat := 5
 
 /-- The plan a scouting walk is trying to beat: its prime, the degrees of its
 modular factors, and its downstream score.  Width and largest factor degree are

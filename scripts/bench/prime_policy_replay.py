@@ -69,8 +69,8 @@ FUEL = 2
 
 # `Hex.scoutRoundCost` and `Hex.splitColumnCost`: the cost of one bounded-scout
 # and one Berlekamp-split word operation, in recombination word operations.
-SCOUT_ROUND_COST = 12
-SPLIT_COLUMN_COST = 3
+SCOUT_ROUND_COST = 10
+SPLIT_COLUMN_COST = 5
 
 # `Hex.hotPathCandidates` is every prime from 3 through 499.
 CANDIDATE_HI = 499
