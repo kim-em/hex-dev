@@ -432,6 +432,40 @@ def print_table(result: dict) -> None:
               f"{fmt(s['total_nanos'])} -> {fmt(v['total_nanos'])}")
 
 
+def print_margins(record: dict) -> None:
+    """The arithmetic of the first `scoutPays` call on every instance.
+
+    This is the decision the change turns on, so print both sides of it beside
+    what the candidates it is deciding about actually cost. The measured columns
+    are the incumbent's recombination and the scout plus split at the next good
+    prime -- the quantities the two estimates stand for.
+    """
+    print("\n### First `scoutPays` decision\n")
+    print("| instance | n | p | w | max deg | W | left | next obs | scout? | "
+          "measured recombination | measured scout + split |")
+    print("|---|---:|---:|---:|---:|---:|---:|---:|:--:|---:|---:|")
+    for inst in instances(record):
+        bound, n = inst["coeff_bound"], inst["degree"]
+        if bound is None:
+            continue
+        head = inst["candidates"][0]
+        inc = {"prime": head["prime"], "degrees": head["degrees"]}
+        nxt = next((q for q in hot_path_primes() if q > head["prime"]), None)
+        if nxt is None:
+            continue
+        left = subset_cost(len(head["degrees"])) * lift_words(bound, head["prime"])
+        obs = nxt.bit_length() * (
+            SCOUT_ROUND_COST * FUEL * max(head["degrees"], default=0) +
+            SPLIT_COLUMN_COST * n)
+        following = next((c for c in inst["candidates"][1:]), None)
+        print(f"| `{inst['name']}` | {n} | {head['prime']} | "
+              f"{len(head['degrees'])} | {max(head['degrees'], default=0)} | "
+              f"{lift_words(bound, head['prime'])} | {left} | {obs} | "
+              f"{'yes' if scout_pays(bound, n, inc, nxt, FUEL) else 'no'} | "
+              f"{fmt(head['recombination'])} | "
+              f"{'--' if following is None else fmt(following['bounded_scout'] + following['full_split'])} |")
+
+
 def print_agreement(record: dict, result: dict, policy: str) -> int:
     """Check a replayed policy against the prime the recorded binary selected."""
     bad = [r for r in result["rows"]
@@ -456,6 +490,9 @@ def main() -> int:
     p.add_argument("--agrees-with", default=None,
                    help="policy whose replayed selection must match the prime "
                         "the recorded binary selected (exit 1 if it does not)")
+    p.add_argument("--margins", action="store_true",
+                   help="also print the arithmetic of the first `scoutPays` "
+                        "decision on every instance")
     p.add_argument("--output", type=Path, default=None,
                    help="also write the replay as JSON")
     args = p.parse_args()
@@ -466,6 +503,8 @@ def main() -> int:
         raise SystemExit("no instance in this record carries both a scout and a "
                          "counterfactual section")
     print_table(result)
+    if args.margins:
+        print_margins(record)
     bad = 0
     if args.agrees_with is not None:
         bad = print_agreement(record, result, args.agrees_with)
