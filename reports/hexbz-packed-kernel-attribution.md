@@ -89,7 +89,7 @@ Each rung differs from the one above it in exactly one place:
 | `mirrored` | running `Packed.eliminateColumn` through `ladderLoop` instead of `Packed.reduceLoop`. The control for the ladder's own scaffolding |
 | `hoistedPivotRow` | reading the pivot row once per column instead of once per row addition |
 | `arrayPivots` | accumulating the pivot columns in an `Array` with `push` rather than a `List` with `concat` |
-| `flatRowWrite` | writing the destination row into the flat buffer directly instead of through `Matrix.modifyEntries`. **The outer scan is still `(List.finRange n).foldl`** |
+| `flatRowWrite` | writing the destination row into the flat buffer with a `Nat`-indexed loop instead of through `Matrix.modifyEntries`'s `Fin.foldl`. **The outer scan is still `(List.finRange n).foldl`** |
 | `flatBothLoops` | scanning the column with a `Nat` range instead of `List.finRange n` |
 | `flatBuffer` | the prototype's `reduce32` on the packed buffer: pivot search, swap, scale, inversion, pivot storage and pivot-row access all change at once. **A residual comparison, not an attribution rung** |
 
@@ -342,7 +342,7 @@ On `cyclo_phi385`, against a 46.121 ms `integrated` reduction:
 |---|---:|---:|---|
 | source-row copy (`mirrored - hoistedPivotRow`) | 32.893 ms | **71.3%** | 7/7 repeats same sign |
 | `List.concat` pivot accumulation (`hoistedPivotRow - arrayPivots`) | 88.091 us | 0.19% | 7/7 same sign |
-| `Matrix.modifyEntries` (`hoistedPivotRow - flatRowWrite`) | **-1.172 ms** | **-2.5%** | 7/7 same sign |
+| row-write mechanism: `Matrix.modifyEntries` against a flat `Nat`-indexed loop (`hoistedPivotRow - flatRowWrite`) | **-1.172 ms** | **-2.5%** | 7/7 same sign |
 | `List.finRange` column scan (`flatRowWrite - flatBothLoops`) | 474.804 us | 1.03% | 7/7 same sign |
 | residual against the prototype (`flatBothLoops - flatBuffer`) | -2.081 ms | -4.5% | 7/7 same sign |
 
@@ -392,9 +392,16 @@ including on columns where every elimination is skipped.
 backing buffer directly, with the outer scan held fixed, is slower on every row
 that does arithmetic: 1.172 ms on `cyclo_phi385` (2.5% of the reduction, 8.9% of
 the hoisted one), 566 us on `cyclo_phi128_x_phi165`, and the sign is the same on
-all seven repeats of both. `Fin.foldl` with a closure over a `Vector` beats a
-`Nat`-indexed `Vector.set!` loop here, presumably because the closure body's
-index is a `Fin` and needs no bounds test.
+all seven repeats of both.
+
+What the rung swaps is the whole row-write mechanism, and that is more than the
+closure: `modifyEntries` runs a `Fin.foldl` whose index carries its bound as an
+erased proof, so each read and write is unchecked, while the flat loop is
+`Nat`-indexed and every `Vector.set!` and `Array.getElem!` tests its bound and
+carries a panic branch. The two cannot be separated -- a flat write with `Fin`
+indices *is* `modifyEntries` -- so the honest statement is that the mechanism as
+a whole is 2.5% cheaper in the production form, not that the closure is free.
+The direction is what matters here: this candidate is not part of the 2.6x gap.
 
 **The `List (Fin m)` pivot accumulation is 0.19%.** `List.concat` is `O(length)`
 per pivot, so it is `O(rank^2)` cons cells across a reduction, 28,000 on
