@@ -4,7 +4,7 @@ Swinnerton-Dyer polynomials factor into quadratics modulo every prime, so
 Berlekamp-Zassenhaus recombination has to search `2^(w-1)` supports at modular
 width `w`. `sd5` has `w = 16` and visits 32,768 support nodes to find one
 divisor; `sd6` has `w = 32`, exceeds the recombination budget outright, and is
-answered by the CLD lattice tier in 7.94 s. This page is issue #9133's record:
+answered by the CLD lattice tier in 7.94 s of its 7.99 s. This page is issue #9133's record:
 what the class of polynomials in question actually is, the theorem and finite
 certificate that decide irreducibility for it directly, a prototype outside
 production, and the go/no-go measurement.
@@ -18,7 +18,7 @@ committed corpus the certificate is 960x faster than the production cascade on
 
 The gate that matters most is not either of those. Simulated onto the combined
 cactus, the certificate alone takes the worst Hex/Isabelle cumulative ratio over
-ranks 125 through 140 from 1.178x to 0.797x, which is #9126's success criterion,
+ranks 125 through 140 from 1.188x to 0.811x, which is #9126's success criterion,
 and raises Hex's solved count on the 160-row combined mixture from 145 to 151.
 
 What is *not* delivered here is the Mathlib correspondence. The certificate is
@@ -31,8 +31,10 @@ The issue asks for these numbers before any implementation, and for the issue to
 be closed as a no-go if the general reconstruction already meets #9126's target
 and `sd6` is no longer a material tail. Neither holds.
 
-Source records: `reports/bench-results/hexbz-factor-sweep-b5045066-hex-chungus2.json`
-(Hex, revision `b5045066`, 2026-08-04) and
+Source records: `reports/bench-results/hexbz-factor-sweep-1d9e59a1-hex-chungus2.json`
+(Hex, measured at this branch's revision `1d9e59a1`, which changes no production
+code -- the prototype is bench-only -- so it is also the post-#9129/#9130 state
+the issue asks about) and
 `reports/bench-results/hexbz-factor-sweep-aa68c920-chungus2.json` (every other
 system, reused unchanged), plus
 `reports/bench-results/hexbz-phase-profile-a5e0ebe4-chungus2.json` and the
@@ -42,19 +44,19 @@ phase profiles taken for this page.
 
 | row | degree | Hex | Isabelle | Isabelle / Hex |
 |---|---:|---:|---:|---:|
-| `sd4` | 16 | 0.849 ms | -- | -- |
-| `sd4_shift1` | 16 | 0.784 ms | -- | -- |
-| `sd4_shift3` | 16 | 0.863 ms | -- | -- |
-| `sd4_x_phi17` | 32 | 6.500 ms | 4.567 ms | 0.70x |
-| `sd4_x_phi35` | 40 | 17.296 ms | 26.190 ms | 1.51x |
-| `sd4_x_sd4shift1` | 32 | 17.540 ms | 10.803 ms | 0.62x |
-| `sd5` | 32 | 70.170 ms | 22.610 ms | **0.32x** |
-| `sd5_shift1` | 32 | 65.205 ms | 14.815 ms | **0.23x** |
-| `sd5_shift2` | 32 | 69.429 ms | 14.716 ms | **0.21x** |
-| `sd5_x_phi11` | 42 | 139.262 ms | 27.545 ms | **0.20x** |
-| `sd5_x_phi45` | 56 | 318.212 ms | timeout | -- |
+| `sd4` | 16 | 0.863 ms | 1.196 ms | 1.39x |
+| `sd4_shift1` | 16 | 0.801 ms | 1.233 ms | 1.54x |
+| `sd4_shift3` | 16 | 0.876 ms | 1.211 ms | 1.38x |
+| `sd4_x_phi17` | 32 | 6.743 ms | 4.567 ms | 0.68x |
+| `sd4_x_phi35` | 40 | 17.769 ms | 26.190 ms | 1.47x |
+| `sd4_x_sd4shift1` | 32 | 17.969 ms | 10.803 ms | 0.60x |
+| `sd5` | 32 | 70.044 ms | 22.610 ms | **0.32x** |
+| `sd5_shift1` | 32 | 65.254 ms | 14.815 ms | **0.23x** |
+| `sd5_shift2` | 32 | 68.208 ms | 14.716 ms | **0.22x** |
+| `sd5_x_phi11` | 42 | 139.567 ms | 27.545 ms | **0.20x** |
+| `sd5_x_phi45` | 56 | 323.941 ms | timeout | -- |
 | `sd5_x_sd5shift1` | 64 | timeout | timeout | -- |
-| `sd6` | 64 | 8.166 s | timeout | -- |
+| `sd6` | 64 | 8.042 s | timeout | -- |
 | `sd6_shift1`, `sd6_shift5` | 64 | timeout | timeout | -- |
 | `sd6_x_phi13`, `sd6_x_phi105`, `sd6_x_sd6shift1` | 76--128 | timeout | timeout | -- |
 | `sd7`, `hoeij_S7` | 128 | timeout | timeout | -- |
@@ -62,7 +64,7 @@ phase profiles taken for this page.
 
 A ratio below 1 is a row where Isabelle is faster. The four bolded rows are the
 worst paired deficits anywhere in the elbow: nothing else in ranks 125--140 is
-below 0.43x. `sd6_shift1` does terminate, at 22.11 s, well past the 10 s sweep
+below 0.43x. `sd6_shift1` does terminate, at 22.33 s, well past the 10 s sweep
 cutoff.
 
 ### Modular width, support nodes, rejections, and exact divisions
@@ -93,11 +95,11 @@ Cumulative Hex/Isabelle over the combined mixture, from
 
 | rank | 125 | 128 | 130 | 133 | 135 | 138 | 140 |
 |---|---:|---:|---:|---:|---:|---:|---:|
-| Hex / Isabelle | 0.77x | 0.91x | 1.00x | 1.16x | 1.18x | 0.86x | 0.61x |
+| Hex / Isabelle | 0.80x | 0.93x | 1.02x | 1.17x | 1.19x | 0.86x | 0.61x |
 
 The criterion is at most 0.85x at every rank from 125 through 140. The worst
-point is 1.178x at rank 135, and ranks 128--138 all fail. Swinnerton-Dyer rows
-occupy Hex ranks 134, 135, 136, and 138 and contribute 344 ms of the 858 ms
+point is 1.188x at rank 135, and ranks 127--138 all fail. Swinnerton-Dyer rows
+occupy Hex ranks 134, 135, 136, and 138 and contribute 343 ms of the 864 ms
 cumulative at rank 138 against Isabelle's 79.7 ms for the same four inputs.
 
 So the no-go branch in the issue body does not apply, and neither does treating
@@ -416,27 +418,27 @@ two orders of magnitude.
 
 | row | now | budget-gated model |
 |---|---:|---:|
-| `sd5` | 70.170 ms | 7.003 ms |
-| `sd5_shift1` | 65.205 ms | 7.370 ms |
-| `sd5_shift2` | 69.429 ms | 8.981 ms |
-| `sd6` | 8.166 s | 27.809 ms |
-| `sd4` | 0.849 ms | 0.438 ms |
+| `sd5` | 70.044 ms | 7.003 ms |
+| `sd5_shift1` | 65.254 ms | 7.370 ms |
+| `sd5_shift2` | 68.208 ms | 8.981 ms |
+| `sd6` | 8.042 s | 27.809 ms |
+| `sd4` | 0.863 ms | 0.438 ms |
 
 Cumulative Hex/Isabelle over ranks 125--140 under that model:
 
 | rank | 125 | 128 | 130 | 133 | 135 | 138 | 140 |
 |---|---:|---:|---:|---:|---:|---:|---:|
-| now | 0.77x | 0.91x | 1.00x | 1.16x | 1.18x | 0.86x | 0.61x |
-| with certificate | 0.68x | 0.72x | 0.75x | 0.80x | 0.78x | 0.56x | 0.45x |
+| now | 0.80x | 0.93x | 1.02x | 1.17x | 1.19x | 0.86x | 0.61x |
+| with certificate | 0.70x | 0.74x | 0.76x | 0.81x | 0.80x | 0.57x | 0.45x |
 
-Worst ratio over ranks 125--140: **1.178x now, 0.797x with the certificate**,
+Worst ratio over ranks 125--140: **1.188x now, 0.811x with the certificate**,
 against #9126's 0.85x criterion. On this simulation the certificate alone closes
 #9126, with the four rows #9126 named as needing parity (`x^n - 1`,
 `cyclo_phi179`, `cyclo_phi64_x_phi105`) untouched.
 
 **Pre-modular** (attempted after normalization, behind the cheap structural
 gate): certified rows skip the prime walk too. The worst ratio over ranks
-125--140 falls to 0.407x and the solved count on the combined mixture rises from
+125--140 falls to 0.417x and the solved count on the combined mixture rises from
 145 to 151, since `sd6_shift1`, `sd6_shift5`, `sd7`, `hoeij_S7`, `hoeij_S8`, and
 `hoeij_S9` all certify. The cost is the miss overhead above, unconditional on
 every power-of-two-degree row.
@@ -508,6 +510,14 @@ taskset -c 0 python3 scripts/bench/quadratic_norm_probe.py \
 # Off-corpus witnesses, checked against an independent implementation.
 taskset -c 0 python3 scripts/bench/quadratic_norm_witnesses.py \
     --output reports/bench-results/hexbz-quadratic-norm-witnesses.json
+
+# The fresh Hex sweep this page's before-numbers read, and the figures it
+# invalidates. `--check` fails until the SVGs are regenerated.
+taskset -c 0 python3 scripts/bench/factor_sweep.py --systems hex-factor \
+    --cutoff 10 \
+    --output reports/bench-results/hexbz-factor-sweep-1d9e59a1-hex-chungus2.json
+python3 scripts/plots/hexbz-cactus.py
+python3 scripts/plots/hexbz-cactus.py --check
 
 # The elbow the simulation is against.
 python3 scripts/bench/cactus_rank_table.py --lo 118 --hi 145
