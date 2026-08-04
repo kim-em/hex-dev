@@ -371,24 +371,39 @@ private def fullySplit (witnesses : List (FpPoly p)) :
             fullySplit witnesses fuel split.factor ++ fullySplit witnesses fuel split.cofactor
 
 /--
-Budget for the residue scan of the root-extraction path.
+Budget for the residue scan of the root-extraction path. Two tests, both read
+off the degree and the field size alone, so the decision is deterministic and
+reads nothing about the coefficients of `f`.
 
-The scan is one Horner evaluation per residue: `p * deg f` modular
-multiplications. The fixed-space matrix it would replace multiplies `deg f`
-polynomials modulo `f`, each product quadratic in the degree, so about
-`(deg f)^3`. Admitting the scan only when `25 * p ≤ (deg f)^2` therefore keeps
-it under a twenty-fifth of the matrix build alone, so an input that pays for a
-scan and then falls back to the kernel path loses a small fraction of work it
-was going to do anyway. Measured on the diagnostic grid of issue #9157, an
-admitted-but-rejected scan costs between 0.8% and 2.4% of `berlekampFactor`,
+`deg f ≤ p` is *necessary*: `F_p` has `p` elements, so a polynomial with
+`deg f` distinct roots in `F_p` cannot have degree above `p`. A scan of a
+higher-degree input can never succeed, so it is never started.
+
+`25 * p ≤ (deg f)^2` keeps the scan cheap against the work it would replace.
+The scan is one Horner evaluation per residue, `p * deg f` modular
+multiplications; the fixed-space matrix multiplies `deg f` polynomials modulo
+`f`, each product quadratic in the degree, so about `(deg f)^3`. The test
+therefore admits the scan only when it costs about a twenty-fifth of the matrix
+build alone. Measured on the diagnostic grid of issue #9157, an
+admitted-but-rejected scan costs between 0.8% and 2.3% of `berlekampFactor`,
 falling as the degree grows.
 
-Only the field size and the degree enter, so the decision is deterministic and
-reads nothing about the coefficients of `f`.
+Together the two tests select `5 √p ≤ deg f ≤ p`: a completely split image is a
+plausible thing to meet only when the degree is comparable to the field size.
 -/
 @[expose]
 def rootScanBudget (f : FpPoly p) : Bool :=
-  2 ≤ f.size && 25 * p ≤ (f.size - 1) * (f.size - 1)
+  2 ≤ f.size && f.size ≤ p + 1 && 25 * p ≤ (f.size - 1) * (f.size - 1)
+
+/-- The length test of the root-extraction path: a list of roots accounts for
+all of `f` exactly when there are `deg f` of them, and then the monic linear
+factors it names are the complete factorization. -/
+@[expose]
+def rootFactorsOf (f : FpPoly p) (roots : List (ZMod64 p)) : Option (List (FpPoly p)) :=
+  if roots.length + 1 = f.size then
+    some (roots.map primeFieldLinearFactor)
+  else
+    none
 
 /--
 The root-extraction path: enumerate the roots of `f` in `F_p` and, when there
@@ -402,13 +417,6 @@ turns the length test into the reconstruction `∏ (X - rᵢ) = f`.
 
 Returning `none` costs the scan; `rootScanBudget` bounds that cost.
 -/
-@[expose]
-def rootFactorsOf (f : FpPoly p) (roots : List (ZMod64 p)) : Option (List (FpPoly p)) :=
-  if roots.length + 1 = f.size then
-    some (roots.map primeFieldLinearFactor)
-  else
-    none
-
 @[expose]
 def rootFactors? (f : FpPoly p) : Option (List (FpPoly p)) :=
   if rootScanBudget f then rootFactorsOf f (rootsIn f) else none
@@ -468,7 +476,7 @@ theorem rootFactors?_some_spec {f : FpPoly p} {fs : List (FpPoly p)}
       have hsize : 2 ≤ f.size := by
         unfold rootScanBudget at hbudget
         simp only [Bool.and_eq_true, decide_eq_true_eq] at hbudget
-        exact hbudget.1
+        exact hbudget.1.1
       exact ⟨hsize, hlen, (Option.some.inj h).symm⟩
     · exact absurd h (by simp)
   · exact absurd h (by simp)

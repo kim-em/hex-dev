@@ -802,9 +802,14 @@ private def modularSubPhases (sink : IO.Ref Nat) (core : ZPoly)
     let factors := (Berlekamp.berlekampFactor monic hmonic).factors
     observeNat sink factors.length
     let m6 ← mark
-    -- `berlekampFactor` recomputes the fixed-space kernel internally, so the
-    -- equal-degree splitting cost is what remains once the separately measured
-    -- matrix construction and row reduction are removed from its total.
+    -- On the kernel branch `berlekampFactor` recomputes the fixed-space kernel
+    -- internally, so the equal-degree splitting cost is what remains once the
+    -- separately measured matrix construction and row reduction are removed
+    -- from its total. On the root-extraction branch it builds no matrix and no
+    -- nullspace, so that subtraction would not describe anything: the total is
+    -- the scan and the linear-factor construction, and there is no splitting
+    -- stage to attribute.
+    let rootExtraction := (Berlekamp.rootFactors? monic).isSome
     let matrixNanos := m4.nanos - m3.nanos
     let reduceNanos := m5.nanos - m4.nanos
     let factorNanos := m6.nanos - m5.nanos
@@ -814,12 +819,15 @@ private def modularSubPhases (sink : IO.Ref Nat) (core : ZPoly)
         ("modularDegree", natJson (fModP.degree?.getD 0)),
         ("kernelDimension", natJson kernel.size),
         ("distinctDegree", Json.str "not-applicable"),
+        ("rootExtraction", Json.bool rootExtraction),
         ("modularImage", spanJson m0 m1),
         ("goodPrimeTest", spanJson m1 m2),
         ("berlekampMatrix", spanJson m3 m4),
         ("rowReduction", spanJson m4 m5),
         ("berlekampFactorTotal", spanJson m5 m6),
-        ("splittingNanos", natJson (factorNanos - matrixNanos - reduceNanos)) ]
+        ("splittingNanos",
+          if rootExtraction then Json.str "not-applicable"
+          else natJson (factorNanos - matrixNanos - reduceNanos)) ]
   else
     return Json.mkObj
       [ ("measurement", Json.str "repeat-at-selected-prime"),

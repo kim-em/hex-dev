@@ -45,13 +45,20 @@ complete-splitting predicate is computed and no Boolean is trusted
 without a check.
 
 The branch is selected from the polynomial alone, never from a
-recognized input family. It is admitted only when the scan is
-affordable: the scan costs `p · deg f` modular multiplications while the
-fixed-space matrix it would replace costs about `(deg f)^3`, so
-`Berlekamp.rootScanBudget` admits it when `25 · p ≤ (deg f)^2`. Only the
-field size and the degree enter that decision. An input that pays for a
-scan and then falls back to the kernel branch loses a small fraction of
-the work it was going to do anyway.
+recognized input family. `Berlekamp.rootScanBudget` admits the scan on
+two tests, both read off the degree and the field size alone.
+
+`deg f ≤ p` is necessary: `F_p` has `p` elements, so a scan of a
+higher-degree input can never find `deg f` distinct roots and is never
+started.
+
+`25 · p ≤ (deg f)^2` keeps the scan cheap against the work it would
+replace: the scan costs `p · deg f` modular multiplications while the
+fixed-space matrix costs about `(deg f)^3`. An input that passes both
+tests, pays for a scan, and then falls back to the kernel branch loses a
+small fraction of the work it was going to do anyway.
+
+Together the two tests select `5 √p ≤ deg f ≤ p`.
 
 The linear factors, their pairwise coprimality, and the reconstruction
 theorem live in `LinearFactors.lean`, shared with the `X^p - X` product
