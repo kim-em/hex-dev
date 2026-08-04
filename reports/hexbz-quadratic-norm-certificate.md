@@ -99,7 +99,7 @@ Cumulative Hex/Isabelle over the combined mixture, from
 | Hex / Isabelle | 0.78x | 0.92x | 1.01x | 1.16x | 1.18x | 0.86x | 0.61x |
 
 The criterion is at most 0.85x at every rank from 125 through 140. The worst
-point is 1.178x at rank 135, and ranks 130--138 all fail. Swinnerton-Dyer rows
+point is 1.178x at rank 135, and ranks 127--138 all fail. Swinnerton-Dyer rows
 occupy Hex ranks 134, 135, 136, and 138 and contribute 347 ms of the 862 ms
 cumulative at rank 138 against Isabelle's 79.7 ms for the same four inputs.
 
@@ -495,7 +495,7 @@ skips the prime walk too. Worst ratio 0.682x on the same priced rows.
 Two things this model deliberately does not claim. It does not credit the six
 rows the cascade cannot finish -- `sd6_shift1`, `sd6_shift5`, `sd7`,
 `hoeij_S7`, `hoeij_S8`, `hoeij_S9` -- with becoming solved, even though each
-certifies in between 0.6 and 23.7 ms, because their retained phases cannot be
+certifies in between 0.7 and 23.9 ms, because their retained phases cannot be
 measured through an entry that runs the cascade to completion. A
 post-normalization integration would very likely solve all six and take the
 solved count from 145 to 151, but that is a projection, not a modelled result.
