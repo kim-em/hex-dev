@@ -199,14 +199,15 @@ polynomials, which is the same work.
 
 The three causes below were named by inspection.
 [reports/hexbz-packed-kernel-attribution.md](hexbz-packed-kernel-attribution.md)
-now measures them one factor at a time, together with the two further candidates
-issue #9160 named (`Matrix.modifyEntries` and the `List.finRange` column scan).
-Cause 1 is **71%** of the reduction on `cyclo_phi385`. Cause 2, the boxed pivot
-list, is **0.2%**. Cause 3, the readback, is under 1% of the whole span on the
-rows where the reduction dominates and a fifth to a third of it on high-nullity
-rows. Of the two further candidates, `Matrix.modifyEntries` turns out to be
-2.5% *faster* than a flat write, and the `List.finRange` scan is 1% where
-arithmetic dominates and 15% to 24% where already-zero columns do.
+now measures them one at a time against a named baseline, together with the two
+further candidates issue #9160 named (`Matrix.modifyEntries` and the
+`List.finRange` column scan). Cause 1 is **70.4%** of the reduction on
+`cyclo_phi385`. Cause 2, the boxed pivot list, is **0.21%**. Cause 3, the
+readback, is under 1% of the whole span on the rows where the reduction
+dominates and a fifth to a third of it on high-nullity rows. Of the two further
+candidates, `Matrix.modifyEntries` turns out to be 2.5% *faster* than a flat
+`Nat`-indexed write, and the `List.finRange` scan is 1.0% where arithmetic
+dominates and 16% to 24% where already-zero columns do.
 
 Three causes, in the order they are worth fixing:
 
@@ -239,8 +240,11 @@ page put it (1.98x).
   against *this* implementation needs a second and third compiled variant of
   the packed loop that nothing would ship. The prototype's 2.42x for `UInt32`
   and 1.01x for Barrett are still the only evidence for those two choices, and
-  they were measured on a prototype. **Both are now settled without building
-  either variant**; see
+  they were measured on a prototype. **Both are now priced, paired, in one run**:
+  the entry width is one-directional at +38% to +98% on every arithmetic row and
+  needs no variant, and the reciprocal resolves on two of 24 rows at 1.4% to
+  2.2% in Barrett's favour, which is real but far behind the source-row copy.
+  See
   [reports/hexbz-packed-kernel-attribution.md](hexbz-packed-kernel-attribution.md).
 - **The before and after records are separate runs.** See
   [Revision and protocol](#revision-and-protocol).
