@@ -353,7 +353,7 @@ On `cyclo_phi385`, against a 44.596 ms `integrated` reduction:
 
 ### The source-row copy is the gap
 
-| instance | integrated | mirrored - hoisted (paired median) | share of integrated | ops per column scan |
+| instance | `integrated` | `mirrored - hoistedPivotRow` (paired median) | fraction of `integrated` | ops per column scan |
 |---|---:|---:|---:|---:|
 | `sd5` | 87.549 us | 53.114 us | 60.7% | 13.9 |
 | `sd5_shift1` | 171.819 us | 115.065 us | 67.0% | 29.0 |
@@ -490,7 +490,7 @@ inner-loop entry, over the same entries, in the same loop, with the same control
 flow and the same row additions. It is measured in both loop shapes, so that
 transferring it between shapes is a measurement rather than an assumption.
 
-| instance | inner multiplies | modifyEntries shape | flat shape | ns/multiply (modifyEntries) | ns/multiply (flat) | share of integrated | share of hoisted |
+| instance | inner multiplies | modifyEntries shape | flat shape | ns/multiply (modifyEntries) | ns/multiply (flat) | increment / `integrated` | increment / `hoistedPivotRow` |
 |---|---:|---:|---:|---:|---:|---:|---:|
 | `sd5` | 6,880 | 3.646 us [230 ns, 4.236 us] | 3.085 us [2.094 us, 8.482 us] | 0.53 ns | 0.45 ns | 4.2% | 10.4% |
 | `sd5_shift1` | 14,368 | 8.113 us [7.551 us, 13.490 us] | 5.278 us [2.274 us, 6.850 us] | 0.56 ns | 0.37 ns | 4.7% | 14.3% |
@@ -521,7 +521,8 @@ Per multiply the two shapes do not agree: **0.51 ns in the `modifyEntries` shape
 and 0.35 ns in the flat shape** on `cyclo_phi385`, and a 1.3x to 1.5x spread on
 every heavy row. The last two columns divide the larger of the two by
 the reduction: **4.9% of the integrated reduction on `cyclo_phi385` and 16.6% of
-the copy-free one**, 4.9% and 17.1% on `cyclo_phi128_x_phi165`.
+the copy-free one**, 4.9% and 17.1% on `cyclo_phi128_x_phi165`. They are
+labelled `increment / reduction`, not `share`, for the reason below.
 
 **Those percentages are an incremental two-divide throughput measurement divided
 by a reduction time. They are not a causal share, and taking the larger of the
