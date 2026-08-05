@@ -215,9 +215,9 @@ column and their difference should collapse to nothing. It does.
 | `randprod_10` (control) | 38.077 us | 36.384 us to 39.389 us | 136 ns | -80 ns to 240 ns |
 | `randprod_21` (control) | 68.286 us | 66.538 us to 73.389 us | 176 ns | -1.933 us to 331 ns |
 
-Both columns are within-run paired medians. The before column reproduces
-#9160's attribution, taken on the same host four commits earlier, but it is not
-the same number row for row: the heaviest rows agree closely (31.606 ms against
+Both columns are within-run paired medians. The before column reproduces the
+attribution #9160 made, taken on the same host four commits earlier, but it is
+not the same number row for row: the heaviest rows agree closely (31.606 ms against
 31.378 ms on `cyclo_phi385`, 68.286 us against 67.320 us on `randprod_21`, both
 within 1.5%), and the sparse rows do not (2.679 us against 3.791 us on
 `xpow48_minus1`, 62.508 us against 70.325 us on `xpow105_minus1`). Those four
@@ -354,8 +354,8 @@ and after says nothing either way.
 
 ## The multiply's share moved, as predicted
 
-#9160 priced the inner modular multiply by a doubled-multiply rung against a
-salted-select control and measured it at about 5% of the integrated reduction.
+Issue #9160 priced the inner modular multiply by a doubled-multiply rung against
+a salted-select control and measured it at about 5% of the integrated reduction.
 Removing two thirds of the reduction does not remove any multiplies, so its
 share rises.
 
