@@ -64,9 +64,15 @@ scaffolding rather than arithmetic. Two measurements separate it.
   `Fin.foldl`, then the outer column scan as a `Nat` range rather than
   `List.finRange`, and finally the prototype loop above run on the packed
   buffer. **These form a comparison graph, not a chain**: each rung names its
-  own baseline, and only `mirrored - hoistedPivotRow` decomposes the whole gap.
-  The prototype rung changes six things at once and is a residual comparison
-  rather than an attribution.
+  own baseline. The prototype rung changes six things at once and is a residual
+  comparison rather than an attribution.
+
+  Since issue #9166 landed the hoist in `Packed.eliminateColumn` itself,
+  `mirrored - hoistedPivotRow` no longer decomposes the gap it was built to
+  measure: both rungs now read the pivot row once per column, and their
+  difference is a null control on the ladder's own scaffolding. The rung is kept
+  because a regression that reintroduces the per-row-addition read would show up
+  as that difference going positive again.
 
 The inner modular multiply is priced by `eliminateFlatDoubleMul` and
 `rowAddFromDoubled`, which perform a second, salted modular multiply per

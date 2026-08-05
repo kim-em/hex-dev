@@ -285,14 +285,25 @@ def rowScale (q : UInt32) (A : Matrix UInt32 n m) (i : Fin n) (c : UInt32) :
     Matrix UInt32 n m :=
   A.modifyEntries i.val fun _ x => mulMod q c x
 
+/-- Replace row `dst` of a packed matrix by `row dst + c * rsrc`, with the source
+row supplied by the caller instead of read out of the matrix.
+
+`rsrc` must be a freshly materialized row, as {name}`Hex.Matrix.getRow` produces.
+A borrow of `A`'s own backing buffer would leave that buffer multiply
+referenced, and the {name}`Hex.Matrix.modifyEntries` below would copy the whole
+matrix per row addition instead of writing in place. -/
+@[inline, expose]
+def rowAddFrom (q : UInt32) (A : Matrix UInt32 n m) (rsrc : Vector UInt32 m)
+    (dst : Fin n) (c : UInt32) : Matrix UInt32 n m :=
+  A.modifyEntries dst.val fun k x => addMod q x (mulMod q c rsrc[k])
+
 /-- Replace row `dst` of a packed matrix by `row dst + c * row src`. Mirrors
 {name}`Hex.Matrix.rowAdd`: the source row is read once, then the destination
 row's entries are updated in place. -/
 @[expose]
 def rowAdd (q : UInt32) (A : Matrix UInt32 n m) (src dst : Fin n) (c : UInt32) :
     Matrix UInt32 n m :=
-  let rsrc := Matrix.getRow A src
-  A.modifyEntries dst.val fun k x => addMod q x (mulMod q c rsrc[k])
+  rowAddFrom q A (Matrix.getRow A src) dst c
 
 theorem getElem_rowScale (q : UInt32) (A : Matrix UInt32 n m) (i r : Fin n)
     (c : UInt32) (k : Fin m) :
@@ -302,15 +313,21 @@ theorem getElem_rowScale (q : UInt32) (A : Matrix UInt32 n m) (i r : Fin n)
   · rw [if_pos (congrArg Fin.val h), if_pos h, h]
   · rw [if_neg (fun hv => h (Fin.ext hv)), if_neg h]
 
+theorem getElem_rowAddFrom (q : UInt32) (A : Matrix UInt32 n m)
+    (rsrc : Vector UInt32 m) (dst r : Fin n) (c : UInt32) (k : Fin m) :
+    (rowAddFrom q A rsrc dst c)[r][k] =
+      if r = dst then addMod q A[dst][k] (mulMod q c rsrc[k]) else A[r][k] := by
+  rw [rowAddFrom, Matrix.getElem_modifyEntries]
+  by_cases h : r = dst
+  · rw [if_pos (congrArg Fin.val h), if_pos h, h]
+  · rw [if_neg (fun hv => h (Fin.ext hv)), if_neg h]
+
 theorem getElem_rowAdd (q : UInt32) (A : Matrix UInt32 n m) (src dst r : Fin n)
     (c : UInt32) (k : Fin m) :
     (rowAdd q A src dst c)[r][k] =
       if r = dst then addMod q A[dst][k] (mulMod q c A[src][k]) else A[r][k] := by
-  rw [rowAdd, Matrix.getElem_modifyEntries]
-  by_cases h : r = dst
-  · rw [if_pos (congrArg Fin.val h), if_pos h, h]
-    rw [show (Matrix.getRow A src)[k] = A[src][k] from rfl]
-  · rw [if_neg (fun hv => h (Fin.ext hv)), if_neg h]
+  rw [rowAdd]
+  exact getElem_rowAddFrom q A (Matrix.getRow A src) dst r c k
 
 /-! ## The packed elementary operations interpret to the generic ones -/
 
@@ -337,19 +354,29 @@ theorem Rep.rowScale {q : UInt32} (hq : q.toNat = p)
     rw [ZMod64.toNat_mul, hc, h i k]
   · rw [if_neg hri, if_neg hri]; exact h r k
 
-theorem Rep.rowAdd {q : UInt32} (hq : q.toNat = p)
+/-- A caller-supplied source row that agrees entrywise with row `src` of the
+packed matrix interprets the reference row addition, just as reading the row out
+of the matrix does. -/
+theorem Rep.rowAddFrom {q : UInt32} (hq : q.toNat = p)
     {A : Matrix UInt32 n m} {E : Matrix (ZMod64 p) n m} (h : Rep A E)
-    (src dst : Fin n) {c : UInt32} {γ : ZMod64 p} (hc : c.toNat = γ.toNat) :
-    Rep (rowAdd q A src dst c) (Matrix.rowAdd E src dst γ) := by
-  have hγ : γ.toNat < p := γ.isLt
+    {rsrc : Vector UInt32 m} (src dst : Fin n)
+    (hsrc : ∀ k : Fin m, rsrc[k] = A[src][k])
+    {c : UInt32} {γ : ZMod64 p} (hc : c.toNat = γ.toNat) :
+    Rep (rowAddFrom q A rsrc dst c) (Matrix.rowAdd E src dst γ) := by
   intro r k
-  rw [getElem_rowAdd, Matrix.getElem_rowAdd]
+  rw [getElem_rowAddFrom, Matrix.getElem_rowAdd]
   by_cases hrd : r = dst
-  · rw [if_pos hrd, if_pos hrd]
+  · rw [if_pos hrd, if_pos hrd, hsrc k]
     rw [toNat_addMod hq (h.lt dst k) (mulMod_lt hq), toNat_mulMod hq]
     show _ = (ZMod64.add E[dst][k] (ZMod64.mul γ E[src][k])).toNat
     rw [ZMod64.toNat_add, ZMod64.toNat_mul, h dst k, hc, h src k]
   · rw [if_neg hrd, if_neg hrd]; exact h r k
+
+theorem Rep.rowAdd {q : UInt32} (hq : q.toNat = p)
+    {A : Matrix UInt32 n m} {E : Matrix (ZMod64 p) n m} (h : Rep A E)
+    (src dst : Fin n) {c : UInt32} {γ : ZMod64 p} (hc : c.toNat = γ.toNat) :
+    Rep (rowAdd q A src dst c) (Matrix.rowAdd E src dst γ) :=
+  h.rowAddFrom hq src dst (fun _ => rfl) hc
 
 /-! # Packed Gauss-Jordan
 
@@ -384,16 +411,22 @@ def findPivot? (A : Matrix UInt32 n m) (col : Fin m) (start : Nat) : Option (Fin
   findPivotAux A col start (n - start)
 
 /-- Eliminate every non-pivot entry of a packed pivot column. Mirrors
-`Hex.Matrix.eliminateColumn` with the transform component dropped. -/
+`Hex.Matrix.eliminateColumn` with the transform component dropped.
+
+The pivot row is read once for the whole column rather than once per row
+addition: the fold skips `j = pivotRow`, so nothing it writes can change what
+the next row addition reads. That removes `n - 1` of every `n` source-row
+copies. -/
 def eliminateColumn (q : UInt32) (A : Matrix UInt32 n m) (pivotRow : Fin n)
     (col : Fin m) : Matrix UInt32 n m :=
+  let rsrc := Matrix.getRow A pivotRow
   (List.finRange n).foldl
     (fun A j =>
       if j = pivotRow then
         A
       else
         let c := negMod q A[(j, col)]
-        if c == 0 then A else rowAdd q A pivotRow j c)
+        if c == 0 then A else rowAddFrom q A rsrc j c)
     A
 
 /-- Running state of the packed Gauss-Jordan loop. Mirrors
@@ -481,12 +514,13 @@ omit [ZMod64.PrimeModulus p] in
 the reference fold. -/
 private theorem rep_elim_step {q : UInt32} (hq : q.toNat = p)
     {A : Matrix UInt32 n m} {st : Matrix (ZMod64 p) n m × Matrix (ZMod64 p) n n}
-    (h : Rep A st.1) (pivotRow : Fin n) (col : Fin m) (j : Fin n) :
+    (h : Rep A st.1) (pivotRow : Fin n) (col : Fin m) (j : Fin n)
+    {rsrc : Vector UInt32 m} (hsrc : ∀ k : Fin m, rsrc[k] = A[pivotRow][k]) :
     Rep
       (if j = pivotRow then A
         else
           let c := negMod q A[(j, col)]
-          if c == 0 then A else rowAdd q A pivotRow j c)
+          if c == 0 then A else rowAddFrom q A rsrc j c)
       (if _hj : j = pivotRow then st
         else
           have coeff := -st.1[(j, col)]
@@ -515,22 +549,44 @@ private theorem rep_elim_step {q : UInt32} (hq : q.toNat = p)
       exact h
     · rw [if_neg (fun hb => hA (beq_iff_eq.mp hb)),
         if_neg (fun hE => hA (hiff.mpr hE))]
-      exact h.rowAdd hq pivotRow j hcoeff
+      exact h.rowAddFrom hq pivotRow j hsrc hcoeff
+
+/-- One elimination step leaves the pivot row alone: the step either does
+nothing or adds into a row `j ≠ pivotRow`. This is what makes the hoisted source
+row still the accumulated buffer's pivot row at the next step. -/
+private theorem elim_step_pivotRow {q : UInt32} (A : Matrix UInt32 n m)
+    (pivotRow : Fin n) (col : Fin m) (j : Fin n) (rsrc : Vector UInt32 m)
+    (k : Fin m) :
+    (if j = pivotRow then A
+      else
+        let c := negMod q A[(j, col)]
+        if c == 0 then A else rowAddFrom q A rsrc j c)[pivotRow][k]
+      = A[pivotRow][k] := by
+  by_cases hj : j = pivotRow
+  · rw [if_pos hj]
+  · rw [if_neg hj]
+    by_cases hA : negMod q A[(j, col)] = 0
+    · rw [if_pos (beq_iff_eq.mpr hA)]
+    · rw [if_neg (fun hb => hA (beq_iff_eq.mp hb)), getElem_rowAddFrom,
+        if_neg (fun hp => hj hp.symm)]
 
 omit [ZMod64.PrimeModulus p] in
-/-- The packed column elimination represents the reference column elimination. -/
+/-- The packed column elimination represents the reference column elimination.
+The source row `rsrc` is hoisted out of the fold, so the fold carries the
+invariant that it still agrees with the accumulated buffer's pivot row. -/
 theorem rep_eliminateColumn_foldl {q : UInt32} (hq : q.toNat = p) (pivotRow : Fin n)
-    (col : Fin m) :
+    (col : Fin m) (rsrc : Vector UInt32 m) :
     ∀ (xs : List (Fin n)) (A : Matrix UInt32 n m)
       (st : Matrix (ZMod64 p) n m × Matrix (ZMod64 p) n n),
       Rep A st.1 →
+      (∀ k : Fin m, rsrc[k] = A[pivotRow][k]) →
       Rep
         (xs.foldl
           (fun A j =>
             if j = pivotRow then A
             else
               let c := negMod q A[(j, col)]
-              if c == 0 then A else rowAdd q A pivotRow j c) A)
+              if c == 0 then A else rowAddFrom q A rsrc j c) A)
         (xs.foldl
           (fun st j =>
             if _hj : j = pivotRow then st
@@ -541,11 +597,12 @@ theorem rep_eliminateColumn_foldl {q : UInt32} (hq : q.toNat = p) (pivotRow : Fi
           st).1 := by
   intro xs
   induction xs with
-  | nil => intro A st h; exact h
+  | nil => intro A st h _; exact h
   | cons x xs ih =>
-      intro A st h
+      intro A st h hsrc
       simp only [List.foldl_cons]
-      exact ih _ _ (rep_elim_step hq h pivotRow col x)
+      exact ih _ _ (rep_elim_step hq h pivotRow col x hsrc)
+        (fun k => (hsrc k).trans (elim_step_pivotRow A pivotRow col x rsrc k).symm)
 
 /-- The packed column elimination represents the reference column elimination. -/
 private theorem rep_eliminateColumn {q : UInt32} (hq : q.toNat = p)
@@ -554,7 +611,8 @@ private theorem rep_eliminateColumn {q : UInt32} (hq : q.toNat = p)
     Rep (eliminateColumn q A pivotRow col)
       (Hex.Matrix.eliminateColumn E T pivotRow col).1 := by
   unfold eliminateColumn Hex.Matrix.eliminateColumn
-  exact rep_eliminateColumn_foldl hq pivotRow col (List.finRange n) A (E, T) h
+  exact rep_eliminateColumn_foldl hq pivotRow col (Matrix.getRow A pivotRow)
+    (List.finRange n) A (E, T) h (fun _ => rfl)
 
 
 omit [ZMod64.PrimeModulus p] in
