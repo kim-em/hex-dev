@@ -32,9 +32,10 @@ generates `K`, and the product of `X - β` over the `2ⁿ` sign patterns
 * `Hex.SquareClass.isGalois_adjoinSqrt`: `K / ℚ` is Galois. Normality is a
   compositum of the quadratic splitting fields of the `X² - dᵢ`, and
   separability is characteristic zero.
-* `Hex.SquareClass.signOf_bijective`: `Gal(K/ℚ) ≅ (ℤ/2)ⁿ`, concretely that
-  reading `σ` off as the sign pattern by which it acts on the chosen roots is a
-  bijection onto `Fin n → Bool`.
+* `Hex.SquareClass.signOf_bijective` and `Hex.SquareClass.signOf_mul`:
+  `Gal(K/ℚ) ≅ (ℤ/2)ⁿ`, concretely that reading `σ` off as the sign pattern by
+  which it acts on the chosen roots is a bijection onto `Fin n → Bool`, and that
+  it carries composition to pointwise `==`.
 * `Hex.SquareClass.eq_one_of_gen_fixed`: the stabilizer of `α` is trivial.
 * `Hex.SquareClass.adjoin_signSum_eq`: `ℚ(α) = K`.
 * `Hex.SquareClass.minpoly_map_eq_signPoly`: the minimal polynomial of `α` is
@@ -269,6 +270,24 @@ noncomputable def signOf (hr : ∀ i, r i ^ 2 = ((ds[i] : ℤ) : ℂ))
     (σ : adjoinSqrt ds ≃ₐ[ℚ] adjoinSqrt ds) (i : Fin ds.length) : Bool :=
   decide (σ (root hr i) = root hr i)
 
+/-- A radicand of independent square classes is nonzero: `0` is a square. -/
+theorem getElem_ne_zero (h : Independent ds) (i : Fin ds.length) : ds[i] ≠ 0 := by
+  intro h0
+  refine independent_iff_sublists.1 h [ds[i]]
+    (List.mem_sublists.2 (List.singleton_sublist.2 (List.getElem_mem i.2))) (by simp) ?_
+  rw [List.prod_singleton, h0]
+  exact ⟨0, by simp⟩
+
+/-- A chosen root of an independent radicand is not its own negative. -/
+theorem root_ne_neg_self (h : Independent ds) (hr : ∀ i, r i ^ 2 = ((ds[i] : ℤ) : ℂ))
+    (i : Fin ds.length) : root hr i ≠ -root hr i := by
+  intro heq
+  have hc : r i = -r i := by simpa using congrArg (fun x : adjoinSqrt ds => (x : ℂ)) heq
+  have h0 : r i = 0 := by linear_combination hc / 2
+  refine getElem_ne_zero h i ?_
+  have hd : ((ds[i] : ℤ) : ℂ) = 0 := by rw [← hr i, h0]; ring
+  exact_mod_cast hd
+
 /-- Every automorphism of the tower acts on the chosen roots by its sign pattern. -/
 theorem apply_root (hr : ∀ i, r i ^ 2 = ((ds[i] : ℤ) : ℂ))
     (σ : adjoinSqrt ds ≃ₐ[ℚ] adjoinSqrt ds) (i : Fin ds.length) :
@@ -278,6 +297,15 @@ theorem apply_root (hr : ∀ i, r i ^ 2 = ((ds[i] : ℤ) : ℂ))
   · rcases eq_or_neg_of_sq σ (root_sq hr i) with h | h
     · exact absurd h hi
     · simp [signOf, h]
+
+/-- Reading a sign off an action recovers the sign pattern, the roots being nonzero. -/
+theorem signOf_eq_of_apply (h : Independent ds) (hr : ∀ i, r i ^ 2 = ((ds[i] : ℤ) : ℂ))
+    {σ : adjoinSqrt ds ≃ₐ[ℚ] adjoinSqrt ds} {i : Fin ds.length} {b : Bool}
+    (hb : σ (root hr i) = if b then root hr i else -root hr i) : signOf hr σ i = b := by
+  have hne := root_ne_neg_self h hr i
+  have heq := apply_root hr σ i
+  rw [hb] at heq
+  cases b <;> cases hs : signOf hr σ i <;> simp_all
 
 /-- `α = c + ∑ᵢ √dᵢ`, as an element of the tower. -/
 def gen (hr : ∀ i, r i ^ 2 = ((ds[i] : ℤ) : ℂ)) (c : ℤ) : adjoinSqrt ds :=
@@ -381,10 +409,32 @@ theorem signOf_injective (hr : ∀ i, r i ^ 2 = ((ds[i] : ℤ) : ℂ)) :
     rw [apply_root hr σ i, apply_root hr τ i, hστ]
   rw [AlgEquiv.mul_apply, AlgEquiv.aut_inv, hroot, AlgEquiv.symm_apply_apply]
 
+/-- The identity acts by the all-plus pattern. -/
+@[simp]
+theorem signOf_one (hr : ∀ i, r i ^ 2 = ((ds[i] : ℤ) : ℂ)) :
+    signOf hr 1 = fun _ => true := by
+  funext i
+  simp [signOf]
+
+/--
+Composing automorphisms multiplies sign patterns pointwise. `Bool` under `==`
+with `true` as identity is `ℤ/2`, so this is the homomorphism law that turns
+`signOf_bijective` into the isomorphism `Gal(K/ℚ) ≅ (ℤ/2)ⁿ`.
+-/
+theorem signOf_mul (h : Independent ds) (hr : ∀ i, r i ^ 2 = ((ds[i] : ℤ) : ℂ))
+    (σ τ : adjoinSqrt ds ≃ₐ[ℚ] adjoinSqrt ds) :
+    signOf hr (σ * τ) = fun i => signOf hr σ i == signOf hr τ i := by
+  funext i
+  refine signOf_eq_of_apply h hr ?_
+  rw [AlgEquiv.mul_apply, apply_root hr τ i]
+  cases ht : signOf hr τ i <;> cases hs : signOf hr σ i <;>
+    simp [map_neg, apply_root hr σ i, hs]
+
 /--
 **The Galois group is `(ℤ/2)ⁿ`.** Reading `σ` off as the sign pattern by which it
 acts on the chosen roots is a bijection onto the `2ⁿ` sign patterns: injective
-because the roots generate the tower, surjective by the degree theorem.
+because the roots generate the tower, surjective by the degree theorem. It is a
+group homomorphism by `signOf_mul`.
 -/
 theorem signOf_bijective (h : Independent ds) (hr : ∀ i, r i ^ 2 = ((ds[i] : ℤ) : ℂ)) :
     Function.Bijective (signOf hr) := by
