@@ -50,6 +50,7 @@ public import HexBerlekampZassenhausMathlib.Classical.SearchCompleteness
 public import HexBerlekampZassenhausMathlib.Classical.Factorization
 public import HexBerlekampZassenhausMathlib.FactorIrreducibility
 public import HexBerlekampZassenhausMathlib.SquareClass
+public import HexBerlekampZassenhausMathlib.QuadraticNorm
 
 public section
 
