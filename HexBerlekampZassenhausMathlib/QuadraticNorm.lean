@@ -227,14 +227,9 @@ theorem quadShift_spec (d : ℤ) {r : K} (hr : r ^ 2 = (d : K)) (l : List ℤ) :
   have hrr : (C r : Polynomial K) * C r = C ((d : K)) := by
     rw [← Polynomial.C_mul, ← sq, hr]
   induction l with
-  | nil => simp [Hex.quadShift]
+  | nil => simp [Hex.quadShift_nil]
   | cons a as ih =>
-      have h1 : (Hex.quadShift d (a :: as)).1
-          = Hex.DensePoly.shift 1 (Hex.quadShift d as).1
-            - Hex.DensePoly.scale d (Hex.quadShift d as).2 + Hex.DensePoly.C a := rfl
-      have h2 : (Hex.quadShift d (a :: as)).2
-          = Hex.DensePoly.shift 1 (Hex.quadShift d as).2 - (Hex.quadShift d as).1 := rfl
-      rw [h1, h2, toPolynomial_ofList_cons]
+      rw [Hex.quadShift_cons, Hex.quadStep, toPolynomial_ofList_cons]
       simp only [toPolynomial_add, toPolynomial_sub, toPolynomial_C,
         toPolynomial_shift_one, toPolynomial_scale, Polynomial.map_add,
         Polynomial.map_sub, Polynomial.map_mul, Polynomial.map_C, Polynomial.map_X,
@@ -257,12 +252,7 @@ theorem map_quadNorm (g : Hex.ZPoly) (d : ℤ) (r : K) (hr : r ^ 2 = (d : K)) :
   have hminus := quadShift_spec d hneg g.toArray.toList
   rw [hlist] at hplus hminus
   rw [map_neg, neg_mul, ← sub_eq_add_neg, sub_neg_eq_add] at hminus
-  have hqn : Hex.quadNorm d g
-      = (Hex.quadShift d g.toArray.toList).1 * (Hex.quadShift d g.toArray.toList).1
-        - Hex.DensePoly.scale d
-            ((Hex.quadShift d g.toArray.toList).2
-              * (Hex.quadShift d g.toArray.toList).2) := rfl
-  rw [hqn, ← hplus, ← hminus]
+  rw [Hex.quadNorm_eq, ← hplus, ← hminus]
   simp only [toPolynomial_sub, toPolynomial_mul, toPolynomial_scale,
     Polynomial.map_sub, Polynomial.map_mul, Polynomial.map_C, algebraMap_int]
   linear_combination

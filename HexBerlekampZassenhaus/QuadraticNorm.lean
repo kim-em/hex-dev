@@ -29,9 +29,11 @@ coefficientwise up to the unit `-1`.
 
 Together those imply the input is irreducible: independence forces
 `[ℚ(√d₁, …, √dₙ) : ℚ] = 2ⁿ`, the element `c + ∑ᵢ √dᵢ` generates that field, and
-`F(c; d)` is its minimal polynomial. That implication is the Mathlib side, in
-`HexBerlekampZassenhausMathlib.QuadraticNorm` and its companions; the paper proof
-is in `reports/hexbz-quadratic-norm-certificate.md`.
+`F(c; d)` is its minimal polynomial. The paper proof of that implication is in
+`reports/hexbz-quadratic-norm-certificate.md`. Its two halves are separate
+developments: `HexBerlekampZassenhausMathlib.QuadraticNorm` identifies what these
+definitions compute with `F(c; d)` as a `Polynomial`, and the multiquadratic
+tower theorem, which is not yet in Lean, supplies the field theory.
 
 The independence check needs no factorization of the radicands: an integer is a
 rational square exactly when it is a perfect square, so `2ⁿ - 1` integer square
@@ -72,6 +74,21 @@ is ever materialized. -/
 def quadNorm (d : Int) (g : ZPoly) : ZPoly :=
   let h := quadShift d g.toArray.toList
   h.1 * h.1 - DensePoly.scale d (h.2 * h.2)
+
+/-- The empty coefficient list is the zero polynomial. -/
+theorem quadShift_nil (d : Int) : quadShift d [] = (0, 0) := rfl
+
+/-- Reading one more coefficient off the front is one {name}`Hex.quadStep`. -/
+theorem quadShift_cons (d a : Int) (as : List Int) :
+    quadShift d (a :: as) = quadStep d a (quadShift d as) := rfl
+
+/-- The norm in terms of the shifted pair, with the `t` component already
+cancelled. -/
+theorem quadNorm_eq (d : Int) (g : ZPoly) :
+    quadNorm d g
+      = (quadShift d g.toArray.toList).1 * (quadShift d g.toArray.toList).1
+        - DensePoly.scale d
+            ((quadShift d g.toArray.toList).2 * (quadShift d g.toArray.toList).2) := rfl
 
 /-- `F(c; ds) = N_{dₖ}(⋯ N_{d₁}(X - c) ⋯)`, the iterated quadratic norm of the
 translation `c` along the radicands `ds`. -/

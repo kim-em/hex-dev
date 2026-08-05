@@ -32,7 +32,7 @@
   {
     "path": "HexBerlekampZassenhaus/QuadraticNorm.lean",
     "baseline_blob": null,
-    "current_blob": "b1a1bcdc734736a673f23e90fcc8b8991b4979ec",
+    "current_blob": "1e390cb2985f73ee45c4892dac543dcebbb8f178",
     "reason": "Adds the iterated quadratic norm and its certificate as a new module; nothing on the ZPoly.factorize path imports it, so the compiled factorization call graph is unchanged."
   },
   {
