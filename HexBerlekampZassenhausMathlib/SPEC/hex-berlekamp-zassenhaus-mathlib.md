@@ -145,7 +145,7 @@ theorem is about.
 
 `Hex.SquareClass.Independent` says no nonempty sublist of the radicands
 has a square product in `ℚ`, and
-`independentSquareClasses_eq_true_iff` shows the executable check
+`independentSquareClasses_iff` shows the executable check
 decides it. `associated_toPolynomial_of_check` carries a successful
 certificate check to an `Associated` in `Polynomial ℤ`, so the input and
 the iterated norm are irreducible together.

@@ -32,10 +32,12 @@ polynomial statement over any commutative ring carrying a square root `r` of `d`
   {name}`Hex.QuadraticNormCertificate.check` pins the input to that product up to
   the unit `-1`.
 
-The independence half of the check is in
-`HexBerlekampZassenhausMathlib.SquareClass`; the field theory that turns the two
-halves into irreducibility is the multiquadratic tower theorem, whose paper proof
-is in `reports/hexbz-quadratic-norm-certificate.md`.
+The independence half of the check is decided here too, against the
+`Hex.SquareClass.Independent` of `HexBerlekampZassenhausMathlib.SquareClass`,
+which also carries the multiquadratic tower degree. What turns the two halves
+into irreducibility is the rest of that tower theorem: that `c + ∑ᵢ √dᵢ`
+generates the tower and `F(c; d)` is its minimal polynomial. The paper proof is
+in `reports/hexbz-quadratic-norm-certificate.md`.
 -/
 
 /-! ## The executable independence test
