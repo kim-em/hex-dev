@@ -311,6 +311,40 @@ driver's `--repeats` end-to-end calls. The 1.03x on
 and whose end-to-end time did not; on those rows the kernel is a small share of
 `factor` and the difference is between-run drift on a 45 to 148 ms wall.
 
+### The full corpus sweep
+
+Touching executable factorization code invalidates the committed cross-system
+sweep, so a fresh `hex-factor` sweep was recorded at `8ed3c378` on a clean tree,
+against the committed `48bdfb8e` baseline, and the figures under
+`reports/figures/` were regenerated from it.
+
+`hexbz-factor-sweep-8ed3c378-hex-chungus2.json`, SHA-256
+`30d8ebad55a52b953cc3af05788ec33cf1177334adb8bd285d5efb2cbd22ddbb`: **377 of
+392 instances solved at the 10 s cutoff, the same 377 as the baseline**, with
+the cross-system factor-degree check clean. 64 instances improve by more than
+10%, led by `conway_p11_n1` at 0.61x, `cyclo_phi625` 60.110 ms to 41.545 ms
+(0.69x), `cyclo_phi509` 48.989 ms to 38.894 ms (0.79x), `cyclo_phi385`
+142.409 ms to 114.089 ms (0.80x) and `cyclo_phi331` 20.935 ms to 16.809 ms
+(0.80x), plus most of the `conway_p*_n3*` family at 0.76x to 0.81x.
+
+Eight instances regress by more than 5%, and **every one of them is
+sub-millisecond**, where the absolute change is single-digit microseconds:
+
+| instance | before | after | ratio |
+|---|---:|---:|---:|
+| `sd2` | 53 us | 61 us | 1.17x |
+| `chebyshev_T3` | 34 us | 39 us | 1.16x |
+| `conway_p11_n2` | 29 us | 33 us | 1.13x |
+| `xpow12_minus1` | 238 us | 255 us | 1.07x |
+| `quartic_a4` | 52 us | 56 us | 1.07x |
+| `conway_p5_n6` | 53 us | 56 us | 1.06x |
+| `conway_p5_n2` | 25 us | 26 us | 1.05x |
+| `conway_p2_n1` | 22 us | 24 us | 1.05x |
+
+These are single sweep observations at the scale where the sweep's own
+per-call protocol overhead is 18.7 us, so they are reported rather than
+explained. Nothing above 300 us regresses at all.
+
 **Allocations do not resolve this change and are not reported as if they did.**
 The driver's `smallAllocs` counter reports 663,779 for `cyclo_phi385` on the
 `integrated`, `mirrored` *and* `hoistedPivotRow` rungs, in the before run, where
@@ -373,6 +407,13 @@ multiply was 5% of the reduction, and it is now about 17%.
   reproduce `conformance-fixtures/HexBerlekamp/berlekamp.jsonl` and
   `conformance-fixtures/HexBerlekampZassenhaus/bz.jsonl` byte for byte.
 - No `axiom`, `sorry`, `native_decide` or unchecked oracle added.
+- A fresh `hex-factor` corpus sweep at `8ed3c378` on a clean tree solves the
+  same 377 of 392 instances as the `48bdfb8e` baseline with a clean
+  cross-system factor-degree check, and the 25 figures under `reports/figures/`
+  are regenerated from it.
+  `python3 scripts/bench/check_factor_sweep_freshness.py` and
+  `uv run --with matplotlib==3.11.1 python3 scripts/plots/hexbz-cactus.py
+  --check` both pass.
 - All three profile runs: 24 of 24 kernel rows agree with
   `Hex.Matrix.nullspace` on every ladder rung and every packed variant, the
   counted mirror agrees with `Packed.reduce` and with the production
@@ -413,6 +454,14 @@ python3 scripts/bench/packed_ladder_diff.py \
 python3 scripts/bench/packed_ladder_diff.py --rung integrated \
   reports/bench-results/hexbz-phase-profile-a5a55cbf-chungus2.json \
   reports/bench-results/hexbz-phase-profile-dcecc57e-chungus2.json
+```
+
+The corpus sweep and the figures, on a clean tree:
+
+```sh
+python3 scripts/bench/factor_sweep.py --systems hex-factor \
+  --output reports/bench-results/hexbz-factor-sweep-8ed3c378-hex-chungus2.json
+uv run --with matplotlib==3.11.1 python3 scripts/plots/hexbz-cactus.py
 ```
 
 ## Follow-up
