@@ -868,4 +868,8 @@ reduction, or if the recombination mirror disagrees with the production trace.
 https://github.com/kim-em/hex-dev/issues/9166 "Berlekamp packed kernel: hoist
 the pivot-row read out of the row addition" carries the one change this
 attribution justifies, with the two secondary findings recorded there as out of
-its scope.
+its scope. It landed, and
+[reports/hexbz-hoisted-pivot-row.md](hexbz-hoisted-pivot-row.md) is its before
+and after: the packed reduction on `cyclo_phi385` goes to 0.29x, `mirrored -
+hoistedPivotRow` collapses to 0.1% of the rung, and the multiply's incremental
+share rises from about 5% to about 17%, which re-opens the Barrett reciprocal.
