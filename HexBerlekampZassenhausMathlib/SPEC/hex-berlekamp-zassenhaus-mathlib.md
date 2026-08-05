@@ -125,6 +125,31 @@ The headline product, irreducibility, normalization, uniqueness, and
 lattice-totality theorems use only the accepted Lean and Mathlib
 foundations reported by the trust-surface check.
 
+## Quadratic norm correspondence
+
+For a commutative ring `K` and `r : K` with `r² = d`, `map_quadNorm`
+identifies the executable quadratic norm with the honest polynomial
+statement:
+
+```lean
+theorem map_quadNorm (g : Hex.ZPoly) (d : ℤ) (r : K) (hr : r ^ 2 = (d : K)) :
+  (toPolynomial (Hex.quadNorm d g)).map (algebraMap ℤ K)
+    = ((toPolynomial g).map (algebraMap ℤ K)).comp (X - C r)
+      * ((toPolynomial g).map (algebraMap ℤ K)).comp (X + C r)
+```
+
+`map_iteratedNorm` iterates it: given square roots of every radicand,
+the executable `iteratedNorm` maps to `∏_ε (X - c - ∑ᵢ εᵢ rᵢ)` over the
+`2ⁿ` sign patterns, which is the polynomial the multiquadratic tower
+theorem is about.
+
+`Hex.SquareClass.Independent` says no nonempty sublist of the radicands
+has a square product in `ℚ`, and
+`independentSquareClasses_iff` shows the executable check
+decides it. `associated_toPolynomial_of_check` carries a successful
+certificate check to an `Associated` in `Polynomial ℤ`, so the input and
+the iterated norm are irreducible together.
+
 ## Factor tactics
 
 The `Polynomial ℤ` tactic support parses a closed polynomial

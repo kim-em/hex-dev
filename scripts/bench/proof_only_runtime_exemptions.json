@@ -28,5 +28,23 @@
     "baseline_blob": "e43de53cbeced2ebe811ff1a6a6fa6ceaf843c14",
     "current_blob": "ba568b38f9482f906439858ac72b823d2b933be7",
     "reason": "Adds an unused rational-reflection helper and supporting theorems for NumberField certificate transport; existing factorization definitions and their call graph are unchanged."
+  },
+  {
+    "path": "HexBerlekampZassenhaus/QuadraticNorm.lean",
+    "baseline_blob": null,
+    "current_blob": "1e390cb2985f73ee45c4892dac543dcebbb8f178",
+    "reason": "Adds the iterated quadratic norm and its certificate as a new module; nothing on the ZPoly.factorize path imports it, so the compiled factorization call graph is unchanged."
+  },
+  {
+    "path": "HexBerlekampZassenhaus/All.lean",
+    "baseline_blob": "a0c52128e63d3dcbb6e7b9cf522cd36304508e1a",
+    "current_blob": "6d80de18acfc61947485068478df1f28c1be044d",
+    "reason": "Adds one import of the new quadratic-norm module to the development umbrella; the released umbrella the factorization service imports is unchanged."
+  },
+  {
+    "path": "bench/HexBench/FactorService.lean",
+    "baseline_blob": "13d9e7609cc4e528012ea23e7dce7a05ad0a35f5",
+    "current_blob": "f203ec23f03eced0a8e22fe1eee53983fcacd6eb",
+    "reason": "Repoints the quadraticNormCertificate entry's three checked spans at the production definitions and adds its import; the factor entry the sweep measures is unchanged."
   }
 ]

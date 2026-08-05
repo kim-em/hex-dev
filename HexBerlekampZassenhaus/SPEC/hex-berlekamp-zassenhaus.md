@@ -324,6 +324,29 @@ coefficient bound and tests exact division. It does not require a
 suitable modular prime and is therefore the unconditional final
 method.
 
+## Iterated quadratic norms
+
+`quadNorm d g` is the norm of `g(X - t)` along `ℤ[t]/(t² - d) → ℤ`, that
+is `g(X - √d) · g(X + √d)`. It carries the coefficient pair of
+`g(X - t)` through one synthetic Taylor shift with shift constant `-t`,
+then materializes only the rational part `p² - d q²` of the product with
+the conjugate, whose `t` component cancels coefficientwise.
+`iteratedNorm c ds` folds those norms over the radicands from `X - c`,
+giving `F(c; d₁, …, dₙ) = ∏_ε (X - c - ∑ᵢ εᵢ √dᵢ)` over the `2ⁿ` sign
+patterns.
+
+A `QuadraticNormCertificate` is a translation and a list of radicands.
+Its `check` verifies two decidable conditions: that no nonempty
+subproduct of the radicands is a perfect square, which is
+`independentSquareClasses` and is exactly multiplicative independence in
+`ℚ*/(ℚ*)²`; and that the input equals `F(c; d)` coefficientwise up to
+the unit `-1`. Both are integer arithmetic, with no factorization of the
+radicands and no number field constructed.
+
+The certificate is not yet reachable from `ZPoly.factorize`. The field
+theory that turns a successful check into irreducibility is the
+multiquadratic tower theorem.
+
 ## Correctness
 
 The Mathlib-free library proves executable product reconstruction,
@@ -341,7 +364,12 @@ unfiltered leaf returned.
 - completeness of classical recombination;
 - both inclusions in the lattice support-span equality;
 - irreducibility and normalization of every recorded factor;
-- uniqueness of the final factorization.
+- uniqueness of the final factorization;
+- the quadratic-norm correspondence: `quadNorm` maps to
+  `g(X - r) · g(X + r)` over any commutative ring with `r² = d`, the
+  iterate maps to the sign-pattern product, and
+  `independentSquareClasses` decides independence of the square
+  classes.
 
 The ordinary umbrella exposes the supported factorization and tactic
 surface. `HexBerlekampZassenhaus.All` and
