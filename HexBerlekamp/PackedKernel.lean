@@ -415,8 +415,8 @@ def findPivot? (A : Matrix UInt32 n m) (col : Fin m) (start : Nat) : Option (Fin
 
 The pivot row is read once for the whole column rather than once per row
 addition: the fold skips `j = pivotRow`, so nothing it writes can change what
-the next row addition reads. That removes `n - 1` of every `n` source-row
-copies. -/
+the next row addition reads. A dense column's `n - 1` source-row copies become
+one. -/
 def eliminateColumn (q : UInt32) (A : Matrix UInt32 n m) (pivotRow : Fin n)
     (col : Fin m) : Matrix UInt32 n m :=
   let rsrc := Matrix.getRow A pivotRow

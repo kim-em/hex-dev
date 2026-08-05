@@ -55,7 +55,26 @@ def samples(ladder: dict, rung: str) -> list[int]:
     block = ladder.get(rung)
     if block is None:
         raise SystemExit(f"no rung {rung!r}; have {sorted(ladder)}")
-    return block["reduceNanosSamples"]
+    values = block["reduceNanosSamples"]
+    if not values:
+        raise SystemExit(f"rung {rung!r} has no reduction samples")
+    return values
+
+
+def pairable(name: str, a: list[int], b: list[int]) -> None:
+    """Refuse to call a difference paired when the repeats do not line up.
+
+    `zip` would silently truncate to the shorter list and the result would still
+    be printed as a paired median, which is exactly the claim it would not
+    support.
+    """
+    if len(a) != len(b):
+        raise SystemExit(
+            f"{name}: {len(a)} samples against {len(b)}; not pairable")
+    if len(a) % 2:
+        raise SystemExit(
+            f"{name}: {len(a)} samples is odd, so the alternating call "
+            "directions are unbalanced under a median")
 
 
 def paired(record: dict, left: str, right: str) -> None:
@@ -64,6 +83,7 @@ def paired(record: dict, left: str, right: str) -> None:
     print("|---|---:|---:|---:|---:|---:|")
     for name, ladder in ladders(record).items():
         a, b = samples(ladder, left), samples(ladder, right)
+        pairable(name, a, b)
         diffs = [x - y for x, y in zip(a, b)]
         med = statistics.median(diffs)
         base = statistics.median(a)

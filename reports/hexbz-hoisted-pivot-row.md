@@ -168,11 +168,12 @@ and one of them proves that the residual is not the change.**
 The three Wilkinson rows find **no pivot column at all**: `pivots` is 0, so
 `eliminateColumn` is never called on them and the hoisted read never executes.
 Their 1.02x is therefore an artifact of comparing two different binaries in two
-different processes, not of the change, and it bounds this report's cross-run
-noise floor at about 2% on a 3 to 7 us span. `xpow24_minus1` has 11 pivots and
-11 row additions, so the hoist replaces 11 reads with 11 reads and saves
-exactly nothing; it measures 1.04x in one after run and 1.01x in the other,
-inside the same floor.
+different processes, not of the change. Three no-work rows on a 3 to 7 us span
+show about 2% of cross-run drift; that is a demonstration on those rows, not a
+bound on the drift a longer measurement carries. `xpow24_minus1` has 11 pivots
+and 11 row additions, so the hoist replaces 11 reads with 11 reads and saves
+exactly nothing; it measures 1.04x in one after run and 1.01x in the other, the
+same size of effect.
 
 `xpow48_minus1` (9 reads saved of 38) and `xpow120_minus1` (35 of 116) are the
 genuinely small savings, at 0.95x and 0.92x, and both reproduce in the second
@@ -215,13 +216,19 @@ column and their difference should collapse to nothing. It does.
 | `randprod_21` (control) | 68.286 us | 66.538 us to 73.389 us | 176 ns | -1.933 us to 331 ns |
 
 Both columns are within-run paired medians. The before column reproduces
-#9160's, taken on the same host four commits earlier, within about 1%
-on every arithmetic row: 31.606 ms against 31.378 ms on `cyclo_phi385`,
-68.286 us against 67.320 us on `randprod_21`.
+#9160's attribution, taken on the same host four commits earlier, but it is not
+the same number row for row: the heaviest rows agree closely (31.606 ms against
+31.378 ms on `cyclo_phi385`, 68.286 us against 67.320 us on `randprod_21`, both
+within 1.5%), and the sparse rows do not (2.679 us against 3.791 us on
+`xpow48_minus1`, 62.508 us against 70.325 us on `xpow105_minus1`). Those four
+intervening commits include two that change the factorization path itself
+(#9171, #9172), and the sparse rows are the ones whose reduction is small
+enough for that to matter.
 
 On `cyclo_phi385` the difference goes from 31.606 ms to 16.841 us, 0.1% of the
-rung, and its paired range now straddles zero on 12 of 24 rows. Every remaining
-positive median is under 1% and is the ladder's own scaffolding.
+rung, and its paired range now straddles zero on **22 of 24** rows. Only
+`sd5_shift2` (341 ns) and `xpow105_minus1` (2.168 us) stay wholly positive, at
+0.6% and 0.8% of their rungs, which is the ladder's own scaffolding.
 
 The other direction of the same check: `integrated` after (13.260 ms and
 13.282 ms on `cyclo_phi385`) lands on `hoistedPivotRow` before (13.225 ms in the
@@ -296,9 +303,10 @@ effect is bounded by that stage's share.
 | `randprod_10` (control) | 635.442 us | 604.046 us | 0.95x | 235.985 us | 199.240 us | 0.84x |
 | `randprod_21` (control) | 1.438 ms | 1.358 ms | 0.94x | 687.129 us | 623.859 us | 0.91x |
 
-`fixedSpaceKernelVectors` is one call each, not a median of eight, so its column
-carries the ordinary spread of a single observation. The end-to-end column is a
-median over the driver's `--repeats` end-to-end calls. The 1.03x on
+`fixedSpaceKernelVectors` is the median of eight one-call observations, one per
+kernel repeat, and unlike the ladder rungs its raw samples are not retained, so
+no range is available for it. The end-to-end column is a median over the
+driver's `--repeats` end-to-end calls. The 1.03x on
 `xpow105_minus1` and 1.01x on `xpow120_minus1` are rows whose reduction improved
 and whose end-to-end time did not; on those rows the kernel is a small share of
 `factor` and the difference is between-run drift on a 45 to 148 ms wall.
@@ -341,8 +349,9 @@ multiply was 5% of the reduction, and it is now about 17%.
 - **The before and after are not paired.** They are separate processes with
   separate binaries, so no difference in the cross-run tables has a paired
   range. What is paired is the within-run collapse of
-  `mirrored - hoistedPivotRow`, and the Wilkinson rows bound the cross-run floor
-  at about 2%.
+  `mirrored - hoistedPivotRow`. The Wilkinson rows show that cross-run drift on
+  a no-work row is about 2%, which is a demonstration on three 3 to 7 us rows,
+  not a bound that transfers to the millisecond rows.
 - **This is one host on one day.** `chungus2` was shared with other work
   throughout, which is why the before run is bracketed by two after runs rather
   than run once beside one.
