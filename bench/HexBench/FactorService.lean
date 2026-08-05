@@ -7,6 +7,7 @@ Authors: Kim Morrison
 import HexBerlekampZassenhaus
 import HexBench.BerlekampKernel
 import HexBench.QuadraticNorm
+import HexBerlekampZassenhaus.QuadraticNorm
 import Hex.BenchOracle.Flint
 import Lean.Data.Json
 
@@ -1665,7 +1666,12 @@ and the whole certificate cost lands in whichever span happens to be last.
 
 `paired` additionally runs one production factorization in the same process on
 the same input, so the reported ratio is paired rather than assembled from two
-sweeps. It must be off for an input the production cascade does not finish. -/
+sweeps. It must be off for an input the production cascade does not finish.
+
+Recovery is still the prototype's dense-array search, which carries no proof
+obligation: a wrong guess dies in the check. The three checked spans run the
+production `Hex` definitions, whose Mathlib correspondence is in
+`HexBerlekampZassenhausMathlib.QuadraticNorm`. -/
 private def quadraticNormProbe (paired : Bool) (f : ZPoly) : IO Json := do
   let coeffs := f.toArray
   let witness ← IO.mkRef (0 : Nat)
@@ -1690,17 +1696,15 @@ private def quadraticNormProbe (paired : Bool) (f : ZPoly) : IO Json := do
           ("witness", natJson (← witness.get)) ]
   | some cert =>
       let independenceStart ← mark
-      let independent := QuadraticNorm.independentSquareClasses cert.radicands
+      let independent := Hex.independentSquareClasses cert.radicands
       witness.modify (· + if independent then 1 else 0)
       let independenceStop ← mark
       let constructionStart ← mark
-      let built :=
-        QuadraticNorm.trim
-          (QuadraticNorm.iteratedNorm cert.translation cert.radicands)
+      let built := Hex.iteratedNorm cert.translation cert.radicands
       witness.modify (· + built.size)
       let constructionStop ← mark
       let equalityStart ← mark
-      let equal := built == QuadraticNorm.unitNormalize coeffs
+      let equal := built == ZPoly.normalizePrimitiveSign f
       witness.modify (· + if equal then 1 else 0)
       let equalityStop ← mark
       return Json.mkObj <|

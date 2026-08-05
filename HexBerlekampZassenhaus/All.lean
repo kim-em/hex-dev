@@ -29,6 +29,7 @@ public import HexBerlekampZassenhaus.PrimitiveFactors
 public import HexBerlekampZassenhaus.FactorProduct
 public import HexBerlekampZassenhaus.SmallModSingleton
 public import HexBerlekampZassenhaus.WordCld
+public import HexBerlekampZassenhaus.QuadraticNorm
 
 public section
 
