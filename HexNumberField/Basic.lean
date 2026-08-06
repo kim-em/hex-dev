@@ -180,6 +180,9 @@ def zero : AlgebraicNumber :=
 
 instance : Zero AlgebraicNumber := ⟨zero⟩
 
+/-- The named canonical zero agrees with the `Zero` instance. -/
+theorem zero_eq_zero : AlgebraicNumber.zero = (0 : AlgebraicNumber) := rfl
+
 /-- The canonical zero retains `X` as its normalized polynomial. -/
 @[simp] theorem zero_p : (0 : AlgebraicNumber).p = ZPoly.X := by
   rfl

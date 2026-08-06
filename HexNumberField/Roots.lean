@@ -355,6 +355,35 @@ def shift? (theta alpha : AlgebraicNumber) (c : Int) : Option AlgebraicNumber :=
 def degree (a : AlgebraicNumber) : Nat :=
   a.p.degree?.getD 0
 
+/-- A primitive-search candidate together with the signed shift that produced
+it. -/
+structure ShiftCandidate where
+  shift : Int
+  value : AlgebraicNumber
+
+/-- One maximum-degree update that retains the producing signed shift. -/
+@[expose]
+def extendShiftStep (theta alpha : AlgebraicNumber) :
+    Option ShiftCandidate → Nat → Option (Option ShiftCandidate) :=
+  fun best k => do
+    let shift := signedShift k
+    let candidate ← shift? theta alpha shift
+    let shifted := ShiftCandidate.mk shift candidate
+    some <| match best with
+    | none => some shifted
+    | some current =>
+        if degree current.value < degree candidate then some shifted
+        else some current
+
+/-- Maximum-degree primitive candidate together with its producing shift. -/
+@[expose]
+def extendShift? (theta alpha : AlgebraicNumber) : Option ShiftCandidate := do
+  let upper := degree theta * degree alpha
+  let count := Nat.choose upper 2 + 1
+  let best ← (List.range count).foldlM
+    (extendShiftStep theta alpha) none
+  best
+
 /-- Extend a primitive presentation by one algebraic number. Testing
 `choose(deg(theta) * deg(alpha), 2) + 1` shifts is a conservative bounded
 primitive-element search. The maximum-degree candidate generates the

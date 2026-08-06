@@ -15,8 +15,8 @@ Each case emits its absolute generator polynomials under
 `case/input`, and one result. The companion oracle independently builds the
 requested relative-degree compositum with PARI, compares the actual monic
 factor coefficients and multiplicities, uses `nfsplitting` for rational-input
-splitting-field degrees, and checks bounded primitive-element search including
-linear coordinate recovery.
+splitting-field degrees, and checks the direct bounded primitive-element search
+and linear coordinate-recovery fast path used by these fixtures.
 
 The JSONL profile intentionally represents only integer-coefficient inputs.
 Genuinely relative inputs such as `X² - sqrt(2)` remain in the core profile

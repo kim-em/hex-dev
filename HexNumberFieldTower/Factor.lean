@@ -58,6 +58,7 @@ structure Factorization (T : NumberTower) (f : Poly T) where
   checked : checkFactorization f scalar factors = true
 
 /-- Complete irreducible factorization with multiplicity. -/
+@[expose]
 def factor? (T : NumberTower) (f : Poly T) : Option (Factorization T f) := do
   let raw ← Factor.factorRaw? T.levels.toList (f.toArray.map coeffs)
   let scalar := ofCoeffs T raw.scalar
