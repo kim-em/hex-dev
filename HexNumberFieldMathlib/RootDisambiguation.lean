@@ -296,7 +296,8 @@ private theorem hi_le_two_norm_add_three_halves_radius
     _ ≤ 2 * ‖z‖ + (3 / 2 : ℝ) * b.realRadius := by
       nlinarith [norm_nonneg z]
 
-private theorem realRadius_horner_le
+/-- One Horner step preserves the executable error-majorant recurrence. -/
+theorem realRadius_horner_le
     {z value coefficient : ℂ}
     (zBall valueBall coefficientBall : DyadicComplexBall)
     (B V E δ : ℝ)

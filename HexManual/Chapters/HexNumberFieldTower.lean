@@ -138,10 +138,13 @@ tag := "hex-number-field-tower-flatten"
 
 {name}`Hex.NumberTower.flatten?` replaces a tower by one canonical
 {name}`Hex.QAdjoin` presentation. It combines the fixed generators in deterministic
-signed-shift order, retries both degree and coordinate-recovery collisions,
-recovers old generators by exact gcd, and checks direct-evaluation coordinate
-maps, a tower-basis round trip, and the primitive polynomial relation before
-returning maps.
+signed-shift order. A direct full-degree search and validated linear-gcd
+recovery form the fast path. The total fallback retains a bounded
+maximum-degree primitive candidate and recovers the old generators by exact
+trace pairing. It then checks direct-evaluation coordinate maps, a tower-basis
+round trip, and the primitive polynomial relation before returning maps. The
+Mathlib companion proves that this checked operation returns `some` for every
+valid tower.
 
 {docstring Hex.NumberTower.flatten?}
 

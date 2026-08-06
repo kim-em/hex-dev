@@ -407,6 +407,128 @@ theorem extend?_isSome (theta alpha : AlgebraicNumber) :
   rw [hfold]
   simp
 
+private theorem extendShiftFold_value (theta alpha : AlgebraicNumber)
+    (indices : List Nat) (best : Option ShiftCandidate) :
+    (indices.foldlM (extendShiftStep theta alpha) best).map
+        (Option.map ShiftCandidate.value) =
+      indices.foldlM (extendStep theta alpha)
+        (best.map ShiftCandidate.value) := by
+  induction indices generalizing best with
+  | nil => simp
+  | cons k indices ih =>
+      rw [List.foldlM_cons, List.foldlM_cons]
+      cases hshift : shift? theta alpha (signedShift k) with
+      | none => simp [extendShiftStep, extendStep, hshift]
+      | some candidate =>
+          cases best with
+          | none =>
+              simpa [extendShiftStep, extendStep, hshift] using
+                ih (some ⟨signedShift k, candidate⟩)
+          | some current =>
+              by_cases hdegree : degree current.value < degree candidate
+              · simpa [extendShiftStep, extendStep, hshift, hdegree] using
+                  ih (some ⟨signedShift k, candidate⟩)
+              · simpa [extendShiftStep, extendStep, hshift, hdegree] using
+                  ih (some current)
+
+/-- Retaining the producing shift does not change the selected primitive
+element. -/
+theorem extendShift?_value (theta alpha : AlgebraicNumber) :
+    (extendShift? theta alpha).map ShiftCandidate.value =
+      extend? theta alpha := by
+  let upper := degree theta * degree alpha
+  let count := Nat.choose upper 2 + 1
+  have hfold := extendShiftFold_value theta alpha
+    (List.range count) none
+  unfold extendShift? extend?
+  change (((List.range count).foldlM
+      (extendShiftStep theta alpha) none >>= fun best => best).map
+        ShiftCandidate.value) =
+    ((List.range count).foldlM (extendStep theta alpha) none >>=
+      fun best => best)
+  cases htracked : (List.range count).foldlM
+      (extendShiftStep theta alpha) none with
+  | none =>
+      rw [htracked] at hfold
+      simp only [Option.map_none] at hfold
+      have hplain : (List.range count).foldlM
+          (extendStep theta alpha) none = none := by
+        simpa using hfold.symm
+      simp [htracked, hplain]
+  | some tracked =>
+      rw [htracked] at hfold
+      simp only [Option.map_some] at hfold
+      have hplain : (List.range count).foldlM
+          (extendStep theta alpha) none =
+            some (tracked.map ShiftCandidate.value) := by
+        simpa using hfold.symm
+      simp [htracked, hplain]
+
+/-- The shift-retaining primitive search is total. -/
+theorem extendShift?_isSome (theta alpha : AlgebraicNumber) :
+    (extendShift? theta alpha).isSome := by
+  rw [← Option.isSome_map, extendShift?_value]
+  exact extend?_isSome theta alpha
+
+private theorem extendShiftFold_source (theta alpha : AlgebraicNumber)
+    (indices : List Nat) (best : Option ShiftCandidate)
+    (out : ShiftCandidate)
+    (hbest : ∀ current, best = some current →
+      shift? theta alpha current.shift = some current.value)
+    (hfold : indices.foldlM (extendShiftStep theta alpha) best =
+      some (some out)) :
+    shift? theta alpha out.shift = some out.value := by
+  induction indices generalizing best with
+  | nil =>
+      have heq := Option.some.inj hfold
+      exact hbest out heq
+  | cons k indices ih =>
+      rw [List.foldlM_cons] at hfold
+      cases hshift : shift? theta alpha (signedShift k) with
+      | none => simp [extendShiftStep, hshift] at hfold
+      | some candidate =>
+          cases best with
+          | none =>
+              simp only [extendShiftStep, hshift, Option.bind_some] at hfold
+              apply ih (some ⟨signedShift k, candidate⟩)
+              · intro current hcurrent
+                have heq := Option.some.inj hcurrent
+                subst current
+                exact hshift
+              · exact hfold
+          | some current =>
+              by_cases hdegree : degree current.value < degree candidate
+              · simp [extendShiftStep, hshift, hdegree] at hfold
+                apply ih (some ⟨signedShift k, candidate⟩)
+                · intro next hnext
+                  have heq := Option.some.inj hnext
+                  subst next
+                  exact hshift
+                · exact hfold
+              · simp [extendShiftStep, hshift, hdegree] at hfold
+                apply ih (some current)
+                · intro next hnext
+                  have heq := Option.some.inj hnext
+                  subst next
+                  exact hbest current rfl
+                · exact hfold
+
+/-- The retained shift exactly produces the selected primitive candidate. -/
+theorem extendShift?_source (theta alpha : AlgebraicNumber)
+    (shifted : ShiftCandidate)
+    (h : extendShift? theta alpha = some shifted) :
+    shift? theta alpha shifted.shift = some shifted.value := by
+  let upper := degree theta * degree alpha
+  let count := Nat.choose upper 2 + 1
+  unfold extendShift? at h
+  change ((List.range count).foldlM
+      (extendShiftStep theta alpha) none >>= fun best => best) =
+    some shifted at h
+  obtain ⟨best, hfold, hbest⟩ := Option.bind_eq_some_iff.mp h
+  subst best
+  exact extendShiftFold_source theta alpha (List.range count) none
+    shifted (by simp) hfold
+
 private theorem list_foldlM_isSome {A B : Type*} {step : B → A → Option B}
     (items : List A) (init : B)
     (hstep : ∀ state item, item ∈ items → (step state item).isSome) :

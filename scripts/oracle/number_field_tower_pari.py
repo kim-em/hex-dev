@@ -11,8 +11,8 @@ the oracle independently:
   multiplicities after interpreting Lean's exact mixed-radix coordinates;
 * computes splitting fields with ``nfsplitting`` and compares their degrees;
 * enumerates the specified signed shifts, computes primitive-element
-  resultants, requires linear coordinate recovery, and compares the first
-  accepted irreducible polynomial.
+  resultants, exercises the linear coordinate-recovery fast path used by the
+  fixture profile, and compares the first accepted irreducible polynomial.
 
 The oracle never refactors or canonicalizes a Lean factor as a substitute for
 factoring the original input.

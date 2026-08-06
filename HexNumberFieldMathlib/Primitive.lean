@@ -422,6 +422,17 @@ theorem extend?_field (theta alpha gamma : AlgebraicNumber)
     ← degree_eq_minpoly]
   exact extend?_degree theta alpha gamma hgamma
 
+/-- The shift-retaining maximum-degree candidate generates the same
+compositum as the two inputs. -/
+theorem extendShift?_field (theta alpha : AlgebraicNumber)
+    (shifted : ShiftCandidate)
+    (hshifted : extendShift? theta alpha = some shifted) :
+    Rat⟮shifted.value.toComplex⟯ =
+      Rat⟮theta.toComplex, alpha.toComplex⟯ := by
+  have hvalue := extendShift?_value theta alpha
+  rw [hshifted] at hvalue
+  exact extend?_field theta alpha shifted.value hvalue.symm
+
 private theorem primitiveFold_contains (items : List AlgebraicNumber)
     (initial out : AlgebraicNumber)
     (hfold : items.foldlM extend? initial = some out) :

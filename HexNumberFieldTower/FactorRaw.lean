@@ -30,40 +30,39 @@ open Arithmetic
 polynomial. -/
 @[expose]
 def rawPoly (levels : List Level) (f : Array (Array Rat)) :
-    DensePoly (RawElem levels) :=
-  DensePoly.ofCoeffs (f.map (raw levels))
+    DensePoly (Coeff levels) :=
+  DensePoly.ofCoeffs (f.map (Coeff.ofData levels))
 
 /-- Extract flattened coefficient arrays from a runtime-indexed tower
 polynomial. -/
 @[expose]
-def polyCoords {levels : List Level} (f : DensePoly (RawElem levels)) :
+def polyCoords {levels : List Level} (f : DensePoly (Coeff levels)) :
     Array (Array Rat) :=
-  f.toArray.map RawElem.data
+  f.toArray.map Coeff.data
 
-/-- Fuel-bounded Yun loop. Here `b` is the product of the factors whose
-multiplicity is still at least the current index, while `d` is Yun's
-derivative correction. Each emitted gcd is the squarefree component of exactly
-that multiplicity. -/
+/-- Fuel-bounded Yun loop. Here `w` is the product of the factors whose
+multiplicity is still at least the current index, while `repeated` contains
+their remaining copies. Dividing `w` by their gcd emits the squarefree
+component of exactly that multiplicity. -/
 @[expose]
 def yunAux (levels : List Level)
-    (b d : DensePoly (RawElem levels)) (multiplicity fuel : Nat)
+    (w repeated : DensePoly (Coeff levels)) (multiplicity fuel : Nat)
     (out : Array (Array (Array Rat) × Nat)) :
     Array (Array (Array Rat) × Nat) :=
   match fuel with
   | 0 => out
   | fuel + 1 =>
-      if b = 1 then
+      if w = 1 then
         out
       else
-        let component := Norm.monic (DensePoly.gcd b d)
+        let shared := Norm.monic (DensePoly.gcd w repeated)
+        let component := Norm.monic (w / shared)
         let out := if 0 < component.degree?.getD 0 then
           out.push (polyCoords component, multiplicity)
         else
           out
-        let nextB := Norm.monic (b / component)
-        let nextC := d / component
-        let nextD := nextC - Norm.derivative levels nextB
-        yunAux levels nextB nextD (multiplicity + 1) fuel out
+        let nextRepeated := Norm.monic (repeated / shared)
+        yunAux levels shared nextRepeated (multiplicity + 1) fuel out
 
 /-- Yun squarefree decomposition over raw tower coordinates. Zero and
 constants have no positive-degree components. -/
@@ -77,16 +76,14 @@ def yunRaw (levels : List Level) (f : Array (Array Rat)) :
     let normalized := Norm.monic p
     let repeated := Norm.monic
       (DensePoly.gcd normalized (Norm.derivative levels normalized))
-    let b := Norm.monic (normalized / repeated)
-    let c := Norm.derivative levels normalized / repeated
-    let d := c - Norm.derivative levels b
-    yunAux levels b d 1 (p.size + 1) #[]
+    let distinct := Norm.monic (normalized / repeated)
+    yunAux levels distinct repeated 1 (p.size + 1) #[]
 
 /-- Polynomial power used by reconstruction checks, computed by repeated
 squaring so high multiplicities do not induce a linear multiplication chain. -/
 @[expose]
-def polyPow {levels : List Level} (f : DensePoly (RawElem levels)) (n : Nat) :
-    DensePoly (RawElem levels) :=
+def polyPow {levels : List Level} (f : DensePoly (Coeff levels)) (n : Nat) :
+    DensePoly (Coeff levels) :=
   if n = 0 then
     1
   else
@@ -110,28 +107,24 @@ def yunProduct (levels : List Level)
 @[expose]
 def yunMultiplicitiesIncrease
     (components : Array (Array (Array Rat) × Nat)) : Bool :=
-  (List.range (components.size - 1)).all fun i =>
-    (components.getD i (#[], 0)).2 <
-      (components.getD (i + 1) (#[], 0)).2
+  decide <| components.toList.Pairwise fun a b => a.2 < b.2
 
 /-- Check that distinct Yun components are pairwise coprime. -/
 @[expose]
 def yunPairwiseCoprime (levels : List Level)
     (components : Array (Array (Array Rat) × Nat)) : Bool :=
-  (List.range components.size).all fun i =>
-    (List.range i).all fun j =>
-      (DensePoly.gcd (rawPoly levels (components.getD i (#[], 0)).1)
-        (rawPoly levels (components.getD j (#[], 0)).1)).size ≤ 1
+  decide <| components.toList.Pairwise fun a b =>
+    (DensePoly.gcd (rawPoly levels a.1) (rawPoly levels b.1)).size ≤ 1
 
 /-- Self-check a Yun decomposition: multiplicities are positive and strictly
 increasing, the monic squarefree components are pairwise coprime, and their
-powered product reconstructs the monic input. Zero has the unique empty
-decomposition. -/
+powered product reconstructs the monic input. Polynomials of degree zero have
+the unique empty decomposition. -/
 @[expose]
 def checkYun (levels : List Level) (f : Array (Array Rat))
     (components : Array (Array (Array Rat) × Nat)) : Bool :=
   let p := rawPoly levels f
-  if p.isZero then
+  if p.degree?.getD 0 = 0 then
     components.isEmpty
   else
     yunMultiplicitiesIncrease components &&
@@ -155,8 +148,11 @@ def ofRatPoly (f : DensePoly Rat) : Array (Array Rat) :=
   f.toArray.map fun coefficient => #[coefficient]
 
 /-- Complete factorization of a monic squarefree rational polynomial. The
-Berlekamp–Zassenhaus result is accepted only when all multiplicities are one
-and the normalized factors reconstruct the input exactly. -/
+Berlekamp–Zassenhaus entries are expanded by multiplicity before their monic
+normalizations are checked against the input.  The recursive caller admits
+only squarefree inputs, so the companion proves that this expansion contains
+one copy of each irreducible factor; expanding here also makes reconstruction
+independent of that semantic fact. -/
 @[expose]
 def factorRat? (input : DensePoly Rat) :
     Option (Array (Array (Array Rat))) :=
@@ -164,39 +160,40 @@ def factorRat? (input : DensePoly Rat) :
     DensePoly.scale input.leadingCoeff⁻¹ input
   if p.isZero then
     some #[]
-  else
+  else if (DensePoly.gcd p (DensePoly.derivative p)).size ≤ 1 then
     let integer := ZPoly.ratPolyPrimitivePart p
     let factorization := ZPoly.factorize integer
-    if factorization.factors.all (fun entry => entry.2 = 1) then
-      let factors := factorization.factors.map fun entry =>
-        let q := ZPoly.toRatPoly entry.1
-        let q := if q.isZero then 0 else DensePoly.scale q.leadingCoeff⁻¹ q
+    let factors := (factorization.factors.flatMap fun entry =>
+      Array.replicate entry.2 entry.1).map fun factor =>
+        let q := ZPoly.toRatPoly factor
+        let q := DensePoly.scale q.leadingCoeff⁻¹ q
         ofRatPoly q
-      let product := factors.foldl
-        (fun product factor => product * toRatPoly factor)
-        1
-      if product = p then some factors else none
-    else
-      none
+    let product := factors.foldl
+      (fun product factor => product * toRatPoly factor)
+      1
+    if product = p then some factors else none
+  else
+    none
 
 /-- The newest generator as a runtime-indexed element. A linear level already
 lies in the lower field, so its generator is the negative constant term of its
 monic relation. -/
 @[expose]
 def topGenerator (level : Level) (lower : List Level) :
-    RawElem (level :: lower) :=
+    Coeff (level :: lower) :=
   if level.degree = 1 then
-    -raw (level :: lower) (level.defining.getD 0 #[])
+    -Coeff.ofData (level :: lower) (level.defining.getD 0 #[])
   else
-    raw (level :: lower) ((Array.replicate (levelsDim lower) 0).push 1)
+    Coeff.ofData (level :: lower)
+      ((Array.replicate (levelsDim lower) 0).push 1)
 
 /-- Substitute `X - c*alpha` in a current-level polynomial. -/
 @[expose]
 def shiftTop (level : Level) (lower : List Level)
     (f : Array (Array Rat)) (c : Int) : Array (Array Rat) :=
   let levels := level :: lower
-  let delta := raw levels #[(c : Rat)] * topGenerator level lower
-  let substitution : DensePoly (RawElem levels) :=
+  let delta := Coeff.ofData levels #[(c : Rat)] * topGenerator level lower
+  let substitution : DensePoly (Coeff levels) :=
     DensePoly.ofCoeffs #[-delta, 1]
   polyCoords (DensePoly.compose (rawPoly levels f) substitution)
 
@@ -207,7 +204,7 @@ def embedLower (level : Level) (lower : List Level)
     (f : Array (Array Rat)) : Array (Array Rat) :=
   let levels := level :: lower
   polyCoords <| DensePoly.ofCoeffs <| f.map fun coefficient =>
-    raw levels coefficient
+    Coeff.ofData levels coefficient
 
 /-- Recover current-level factors from irreducible lower factors of a
 squarefree Trager norm, then undo the selected generator shift. -/
@@ -267,24 +264,47 @@ def ratListLess : List Rat → List Rat → Bool
   | a :: as, b :: bs =>
       if a < b then true else if b < a then false else ratListLess as bs
 
-/-- Flatten polynomial coefficient coordinates for canonical sorting. -/
+/-- Flatten polynomial coefficient coordinates for canonical sorting.  Each
+coefficient carries its length, so the key remains injective even for malformed
+raw inputs whose coordinate blocks do not have the tower width. -/
 @[expose]
 def flattenPoly (f : Array (Array Rat)) : List Rat :=
-  f.toList.flatMap Array.toList
+  f.toList.flatMap fun coefficient =>
+    (coefficient.size : Rat) :: coefficient.toList
 
 /-- Canonical lexicographic factor order. -/
 @[expose]
 def factorLess (a b : Array (Array Rat)) : Bool :=
   ratListLess (flattenPoly a) (flattenPoly b)
 
-/-- Check that adjacent factors are in strict canonical order. Strictness
+/-- Insert one factor into a canonically ordered factor list. Equal coordinate
+keys are combined by adding multiplicities. -/
+@[expose]
+def insertFactor (factor : Array (Array Rat) × Nat) :
+    List (Array (Array Rat) × Nat) → List (Array (Array Rat) × Nat)
+  | [] => [factor]
+  | head :: tail =>
+      if factorLess factor.1 head.1 then
+        factor :: head :: tail
+      else if factorLess head.1 factor.1 then
+        head :: insertFactor factor tail
+      else
+        (head.1, head.2 + factor.2) :: tail
+
+/-- Sort factors canonically and combine duplicate coordinate keys. -/
+@[expose]
+def canonicalFactors
+    (factors : Array (Array (Array Rat) × Nat)) :
+    Array (Array (Array Rat) × Nat) :=
+  (factors.toList.foldl (fun out factor => insertFactor factor out) []).toArray
+
+/-- Check that every pair of factors is in strict canonical order. Strictness
 ensures each irreducible occurs once, with its multiplicity stored in the
 paired natural number. -/
 @[expose]
 def factorsSorted (factors : Array (Array (Array Rat) × Nat)) : Bool :=
-  (List.range (factors.size - 1)).all fun i =>
-    factorLess (factors.getD i (#[], 0)).1
-      (factors.getD (i + 1) (#[], 0)).1
+  decide <| factors.toList.Pairwise fun a b =>
+    factorLess a.1 b.1 = true
 
 /-- Multiply a scalar and powered raw factor list. -/
 @[expose]
@@ -293,7 +313,7 @@ def factorProduct (levels : List Level) (scalar : Array Rat)
   polyCoords <| factors.foldl
     (fun product factor =>
       product * polyPow (rawPoly levels factor.1) factor.2)
-    (DensePoly.C (raw levels scalar))
+    (DensePoly.C (Coeff.ofData levels scalar))
 
 /-- Executable recursive irreducibility checker for a monic squarefree raw
 tower polynomial. The rational base delegates to the integer-polynomial checker
@@ -310,6 +330,17 @@ def isIrreducible (levels : List Level) (f : Array (Array Rat)) : Bool :=
         match factorSquarefree? levels f with
         | some factors => factors = #[polyCoords p]
         | none => false
+
+/-- Append all irreducible factors of one Yun component, carrying the Yun
+multiplicity into the accumulated factor list. -/
+@[expose]
+def appendComponent? (levels : List Level)
+    (out : Array (Array (Array Rat) × Nat))
+    (component : Array (Array Rat) × Nat) :
+    Option (Array (Array (Array Rat) × Nat)) := do
+  let irreducibles ← factorSquarefree? levels component.1
+  pure <| irreducibles.foldl
+    (fun out factor => out.push (factor, component.2)) out
 
 /-- Full executable raw factorization certificate check. At proper tower
 levels, “irreducible” means a piece the recursive Trager checker cannot split;
@@ -334,13 +365,8 @@ def factorRaw? (levels : List Level) (f : Array (Array Rat)) :
   let scalar := p.leadingCoeff.data
   let components := yunRaw levels f
   if checkYun levels f components then
-    let factors ← components.foldlM (fun out component => do
-      let irreducibles ← factorSquarefree? levels component.1
-      pure <| irreducibles.foldl
-        (fun out factor => out.push (factor, component.2)) out) #[]
-    let keyed := factors.map fun factor => (flattenPoly factor.1, factor)
-    let factors :=
-      (keyed.qsort fun a b => ratListLess a.1 b.1).map fun entry => entry.2
+    let factors ← components.foldlM (appendComponent? levels) #[]
+    let factors := canonicalFactors factors
     some ⟨scalar, factors⟩
   else
     none
@@ -358,10 +384,10 @@ private def factorSqrtThreeLevel : Level where
   root := AlgebraicNumber.zero.toRoot
 
 #guard
-    let xSubOne : DensePoly (RawElem []) :=
-      DensePoly.ofCoeffs #[raw [] #[-1], raw [] #[1]]
-    let xAddTwo : DensePoly (RawElem []) :=
-      DensePoly.ofCoeffs #[raw [] #[2], raw [] #[1]]
+    let xSubOne : DensePoly (Coeff []) :=
+      DensePoly.ofCoeffs #[Coeff.ofData [] #[-1], Coeff.ofData [] #[1]]
+    let xAddTwo : DensePoly (Coeff []) :=
+      DensePoly.ofCoeffs #[Coeff.ofData [] #[2], Coeff.ofData [] #[1]]
     let f := polyPow xSubOne 3 * polyPow xAddTwo 2
     let components := yunRaw [] (polyCoords f)
     components =
@@ -370,10 +396,12 @@ private def factorSqrtThreeLevel : Level where
 
 #guard
     let levels := [yunSqrtTwoLevel]
-    let xSubSqrtTwo : DensePoly (RawElem levels) :=
-      DensePoly.ofCoeffs #[raw levels #[0, -1], raw levels #[1, 0]]
-    let xAddSqrtTwo : DensePoly (RawElem levels) :=
-      DensePoly.ofCoeffs #[raw levels #[0, 1], raw levels #[1, 0]]
+    let xSubSqrtTwo : DensePoly (Coeff levels) :=
+      DensePoly.ofCoeffs
+        #[Coeff.ofData levels #[0, -1], Coeff.ofData levels #[1, 0]]
+    let xAddSqrtTwo : DensePoly (Coeff levels) :=
+      DensePoly.ofCoeffs
+        #[Coeff.ofData levels #[0, 1], Coeff.ofData levels #[1, 0]]
     let f := polyPow xSubSqrtTwo 2 * xAddSqrtTwo
     let components := yunRaw levels (polyCoords f)
     components =
@@ -385,8 +413,8 @@ private def factorSqrtThreeLevel : Level where
 -- Reconstruction alone is insufficient: splitting one irreducible factor
 -- across two multiplicity entries must be rejected as non-coprime.
 #guard
-    let xSubOne : DensePoly (RawElem []) :=
-      DensePoly.ofCoeffs #[raw [] #[-1], raw [] #[1]]
+    let xSubOne : DensePoly (Coeff []) :=
+      DensePoly.ofCoeffs #[Coeff.ofData [] #[-1], Coeff.ofData [] #[1]]
     let f := polyPow xSubOne 3
     !checkYun [] (polyCoords f)
       #[(polyCoords xSubOne, 1), (polyCoords xSubOne, 2)]
@@ -394,7 +422,7 @@ private def factorSqrtThreeLevel : Level where
 -- Positive multiplicity is not enough: Yun components must have positive
 -- polynomial degree, so the constant unit is never a component.
 #guard
-    let one : DensePoly (RawElem []) := 1
+    let one : DensePoly (Coeff []) := 1
     !checkYun [] (polyCoords one) #[(polyCoords one, 1)]
 
 #guard
@@ -455,15 +483,15 @@ private def factorSqrtThreeLevel : Level where
 -- the full collision-bound search on resultants.
 #guard
     let levels := [yunSqrtTwoLevel]
-    let xSubOne : DensePoly (RawElem levels) :=
+    let xSubOne : DensePoly (Coeff levels) :=
       rawPoly levels #[#[-1, 0], #[1, 0]]
     (factorSquarefree? levels (polyCoords (polyPow xSubOne 2))).isNone
 
 #guard
     let levels := [yunSqrtTwoLevel]
-    let xSqSubTwo : DensePoly (RawElem levels) :=
+    let xSqSubTwo : DensePoly (Coeff levels) :=
       rawPoly levels #[#[-2, 0], #[0, 0], #[1, 0]]
-    let xSubOne : DensePoly (RawElem levels) :=
+    let xSubOne : DensePoly (Coeff levels) :=
       rawPoly levels #[#[-1, 0], #[1, 0]]
     let f := polyPow xSqSubTwo 2 * polyPow xSubOne 3
     match factorRaw? levels (polyCoords f) with

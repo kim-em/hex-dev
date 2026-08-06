@@ -569,12 +569,24 @@ private def polyCoords {T : NumberTower} (f : Poly T) : Array (Array Rat) :=
         match Flatten.candidateAt? theta alpha 6 1 with
         | some (shift, gamma) =>
             shift = 1 &&
-              (Flatten.recoverPair? theta alpha gamma shift).isNone &&
+              (Flatten.recoverPairFast? theta alpha gamma shift).isNone &&
               match Flatten.searchRecoveredAux theta alpha 6 1 2 with
               | some recovered => recovered.shift = -1
               | none => false
         | none => false
     | _, _ => false
+
+-- The zero-shift overlapping-field case exercises the total trace fallback at
+-- a small degree.
+#guard
+    match retryTheta? with
+    | some theta =>
+        match Flatten.recoverPair? theta theta theta 0 with
+        | some coordinates =>
+            coordinates.1 == theta.toQAdjoin &&
+              coordinates.2 == theta.toQAdjoin
+        | none => false
+    | none => false
 
 -- Edge: the rational tower uses the canonical algebraic zero presentation.
 #guard
