@@ -183,9 +183,12 @@ available.
 ```text
 HexNumberFieldTowerMathlib/
   Basic.lean         : semantic tower and embeddings
-  ArithmeticCore.lean: generic coordinate arithmetic correspondence
-  NormCore.lean      : generic resultant and norm correspondence
-  FactorGeneric.lean : generic factor-checker semantics
+  ArithmeticCore/    : generic coordinate and field correspondence
+  ArithmeticCore.lean: aggregate for the arithmetic proof modules
+  NormCore/          : generic resultant, norm, and Trager correspondence
+  NormCore.lean      : aggregate for the norm proof modules
+  FactorGeneric/     : Trager, product, Yun, and completion semantics
+  FactorGeneric.lean : aggregate for the factor proof modules
   Arithmetic.lean    : certified field structure and correspondence
   Norm.lean          : certified tower-polynomial and norm API
   Factor.lean        : Trager correctness and completeness
