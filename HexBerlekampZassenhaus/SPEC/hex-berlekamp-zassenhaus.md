@@ -343,9 +343,32 @@ subproduct of the radicands is a perfect square, which is
 the unit `-1`. Both are integer arithmetic, with no factorization of the
 radicands and no number field constructed.
 
-The certificate is not yet reachable from `ZPoly.factorize`. The field
-theory that turns a successful check into irreducibility is the
-multiquadratic tower theorem.
+`QuadraticNormCertificate.recover?` proposes the pair from the top
+`2n + 1` coefficients by exact rational arithmetic, and `certify?` is
+recovery followed by the check. Recovery is untrusted: a wrong proposal
+is refused by `check`, so the trust surface stays `quadNorm`,
+`iteratedNorm`, `isPerfectSquare`, `independentSquareClasses`, and one
+array comparison.
+
+`quadraticNormCertified core width` is the production gate. `width` is
+the number of modular factors, so it is known exactly when
+`classicalInput` has its prime plan and before any Hensel lift. Below
+`QuadraticNormCertificate.widthFloor` the gate is `false` with nothing
+constructed; at or above it, recombination would walk up to `2^(w-1)`
+supports, which is the cost the certificate is worth attempting to
+replace. A success returns the square-free core as a single factor
+through the same `reassemblePolynomialFactors` as the constant and
+quadratic cases, so it is the ordinary singleton-irreducibility answer
+and not a second entry point; the trace records `FactorMethod`
+`quadraticNorm`. A failure falls through to `planned` carrying no state.
+
+Every `F(c; d)` is monic, so the certificate applies exactly when the
+primitive part has leading coefficient `±1`; `normalizePrimitiveSign`
+inside the check is the whole normalization. There is no scaling and no
+content division.
+
+The field theory that turns a successful check into irreducibility is
+the multiquadratic tower theorem, in `hex-berlekamp-zassenhaus-mathlib`.
 
 ## Correctness
 
@@ -369,7 +392,10 @@ unfiltered leaf returned.
   `g(X - r) · g(X + r)` over any commutative ring with `r² = d`, the
   iterate maps to the sign-pattern product, and
   `independentSquareClasses` decides independence of the square
-  classes.
+  classes;
+- soundness of the certificate: a successful `check` makes its input
+  irreducible in `Polynomial ℤ`, and so does a `true` from
+  `quadraticNormCertified`.
 
 The ordinary umbrella exposes the supported factorization and tactic
 surface. `HexBerlekampZassenhaus.All` and

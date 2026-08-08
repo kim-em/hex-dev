@@ -6,8 +6,7 @@ Authors: Kim Morrison
 
 import HexBerlekampZassenhaus
 import HexBench.BerlekampKernel
-import HexBench.QuadraticNorm
-import HexBerlekampZassenhaus.QuadraticNorm
+import HexBerlekampZassenhaus.QuadraticNormRecover
 import Hex.BenchOracle.Flint
 import Lean.Data.Json
 
@@ -1668,12 +1667,17 @@ and the whole certificate cost lands in whichever span happens to be last.
 the same input, so the reported ratio is paired rather than assembled from two
 sweeps. It must be off for an input the production cascade does not finish.
 
-Recovery is still the prototype's dense-array search, which carries no proof
-obligation: a wrong guess dies in the check. The three checked spans run the
-production `Hex` definitions, whose Mathlib correspondence is in
-`HexBerlekampZassenhausMathlib.QuadraticNorm`. -/
+Every span runs the production definitions, the same ones
+{name}`Hex.ZPoly.factorize` reaches through {name}`Hex.quadraticNormCertified`,
+so the reported ratios describe production rather than a prototype. Recovery
+carries no proof obligation -- a wrong guess dies in the check -- but the three
+checked spans are exactly what the cascade runs, and their Mathlib
+correspondence is in `HexBerlekampZassenhausMathlib.QuadraticNormIrreducible`.
+
+The probe is unconditional: it prices the certificate on every input, including
+the ones production's width floor never offers it. That is what makes the miss
+table a property of the certificate rather than of the gate. -/
 private def quadraticNormProbe (paired : Bool) (f : ZPoly) : IO Json := do
-  let coeffs := f.toArray
   let witness ← IO.mkRef (0 : Nat)
   let productionStart ← mark
   if paired then
@@ -1681,7 +1685,7 @@ private def quadraticNormProbe (paired : Bool) (f : ZPoly) : IO Json := do
     witness.modify (· + φ.factors.size)
   let productionStop ← mark
   let recoveryStart ← mark
-  let recovered := QuadraticNorm.recover? coeffs
+  let recovered := Hex.QuadraticNormCertificate.recover? f
   witness.modify (· + (recovered.map fun c => c.radicands.size).getD 0)
   let recoveryStop ← mark
   let productionSpans : List (String × Json) :=
