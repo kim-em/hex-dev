@@ -112,9 +112,10 @@ def entry? (arena : Arena) (payload : PayloadId) (expected : Role) : Option Entr
   let entry ← arena.rawEntry? payload
   if entry.role == expected then some entry else none
 
-/-- Check the cached aggregate used by the body-cell resource bound.  Callers
-must enforce this condition while the standalone experiment exposes `Arena`; a
-later session abstraction will own the invariant by construction. -/
+/-- Check the cached aggregate used by the body-cell resource bound.  Direct
+standalone callers must enforce this condition while the proof-producing FIFO
+and policy sessions own it through their checked start and private state
+transitions. -/
 def wellFormed (arena : Arena) : Bool :=
   arena.bodyCells ==
     arena.entries.foldl (fun total entry => total + entry.body.length) 0
@@ -133,7 +134,9 @@ structure Limits where
   maxDraftCells : Nat
   maxAtom : Nat
   maxSchema : Nat
-  /-- Payload-bearing proposal positions traversed in one reply. -/
+  /-- Total proposal constructors traversed in one reply: every candidate,
+  every suggestion (including retry and split), and every equality nested
+  under an instantiation.  Repeated payload references still count as work. -/
   maxUses : Nat
   deriving DecidableEq, Repr
 

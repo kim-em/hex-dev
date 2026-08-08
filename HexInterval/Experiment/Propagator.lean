@@ -65,20 +65,20 @@ structure Operation where
   key : OpKey
   inputs : List DomainId
   output : DomainId
-  deriving Repr
+  deriving DecidableEq, Repr
 
 /-- One instruction in a typed single-assignment expression DAG. -/
 structure Node where
   domain : DomainId
   op : OpId
   args : List NodeId
-  deriving Repr
+  deriving DecidableEq, Repr
 
 /-- Immutable base expression program. -/
 structure Program where
   operations : Array Operation
   nodes : Array Node
-  deriving Repr
+  deriving DecidableEq, Repr
 
 namespace Program
 
@@ -668,7 +668,7 @@ structure Action where
   structuralInputs : List StructuralInput := []
   /-- Frozen matcher epoch which produced `structuralInputs`. -/
   matcherEpoch : Option Nat := none
-  deriving Repr
+  deriving DecidableEq, Repr
 
 /-- Immutable fact view supplied with an action. -/
 structure Snapshot (Fact : Type) where
