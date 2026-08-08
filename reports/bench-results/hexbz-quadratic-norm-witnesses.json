@@ -1,7 +1,7 @@
 {
  "cases": [
   {
-   "certificate_nanos": 28882,
+   "certificate_nanos": 33979,
    "certified": true,
    "declared_radicands": [
     -1,
@@ -19,7 +19,7 @@
    "recovered_translation": 0
   },
   {
-   "certificate_nanos": 9554,
+   "certificate_nanos": 11538,
    "certified": true,
    "declared_radicands": [
     -2,
@@ -37,7 +37,7 @@
    "recovered_translation": 3
   },
   {
-   "certificate_nanos": 15903,
+   "certificate_nanos": 19419,
    "certified": true,
    "declared_radicands": [
     6,
@@ -57,7 +57,7 @@
    "recovered_translation": 7
   },
   {
-   "certificate_nanos": 303721,
+   "certificate_nanos": 361497,
    "certified": true,
    "declared_radicands": [
     13,
@@ -83,7 +83,7 @@
    "recovered_translation": 0
   },
   {
-   "certificate_nanos": 43976,
+   "certificate_nanos": 48271,
    "certified": true,
    "declared_radicands": [
     -1,
@@ -105,7 +105,7 @@
    "recovered_translation": -11
   },
   {
-   "certificate_nanos": 25818,
+   "certificate_nanos": 30026,
    "certified": true,
    "declared_radicands": [
     2,
@@ -125,7 +125,7 @@
    "recovered_translation": 1000003
   },
   {
-   "certificate_nanos": 54911,
+   "certificate_nanos": 60891,
    "certified": true,
    "declared_radicands": [
     3,
@@ -147,7 +147,7 @@
    "recovered_translation": -2
   },
   {
-   "certificate_nanos": 14772,
+   "certificate_nanos": 16854,
    "certified": false,
    "declared_radicands": [
     12,
@@ -167,7 +167,7 @@
    "recovered_translation": 0
   },
   {
-   "certificate_nanos": 317824899,
+   "certificate_nanos": 311046980,
    "certified": true,
    "declared_radicands": [
     2,
@@ -201,7 +201,7 @@
    "recovered_translation": 3
   },
   {
-   "certificate_nanos": 19567,
+   "certificate_nanos": 38256,
    "certified": false,
    "declared_radicands": [
     2,
@@ -221,7 +221,7 @@
    "recovered_translation": 0
   },
   {
-   "certificate_nanos": 8763,
+   "certificate_nanos": 10125,
    "certified": false,
    "declared_radicands": [
     7,
@@ -239,7 +239,7 @@
    "recovered_translation": 5
   },
   {
-   "certificate_nanos": 29745,
+   "certificate_nanos": 35413,
    "certified": false,
    "declared_radicands": [
     2,
@@ -261,7 +261,7 @@
    "recovered_translation": 0
   },
   {
-   "certificate_nanos": 22854,
+   "certificate_nanos": 15684,
    "certified": false,
    "declared_radicands": [
     2,
@@ -281,7 +281,7 @@
    "recovered_translation": 0
   },
   {
-   "certificate_nanos": 7081,
+   "certificate_nanos": 8332,
    "certified": false,
    "declared_radicands": [
     2,
@@ -299,7 +299,7 @@
    "recovered_translation": 0
   },
   {
-   "certificate_nanos": 296660,
+   "certificate_nanos": 346764,
    "certified": false,
    "declared_radicands": null,
    "declared_translation": null,
@@ -320,10 +320,10 @@
  ],
  "env": {
   "arch": "x86_64",
-  "git_commit": "6a86bc37937315ac1c7c9fe2a800c3f25cb867e8",
+  "git_commit": "55e47e1e3a136d19204ef7e645c9e9276a6e5a77",
   "git_dirty": false,
   "hostname": "chungus2",
-  "service_sha256": "f2865db27f012eaad5f03488e6d796a35de3f16dddba834dcb4321247165edda"
+  "service_sha256": "4b09ffe68bb239aad449ae74d79571fc27a7de7bfb3769a2e93485aed7966487"
  },
  "failures": [],
  "random": [
