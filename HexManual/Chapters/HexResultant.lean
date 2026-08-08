@@ -310,9 +310,9 @@ convention:
 
 {docstring Hex.DensePoly.eval_resultant}
 
-Independently, Mathlib's resultant has the following proved root-product
-formula. It is the algebraic identity the later executable correspondence will
-carry into one-level field norms and Trager collision bounds:
+Mathlib's resultant has the following proved root-product formula. Together
+with the executable correspondence, this identity underlies one-level field
+norms and the Trager collision bound:
 
 {docstring Hex.DensePoly.resultant_eq_leadingCoeff_mul_prod_roots}
 
