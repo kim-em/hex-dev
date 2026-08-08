@@ -74,6 +74,41 @@ important weakness of a distinguished-first-factor search: a small
 integer factor need not contain the arbitrarily distinguished modular
 factor.
 
+# Iterated quadratic norms
+
+Some irreducible polynomials factor into quadratics modulo every
+prime, so recombination has to search the whole support lattice to
+learn that no proper subset divides. The Swinnerton-Dyer polynomials
+are the standard example: at modular width {lean}`16` the walk is
+{lean}`32768` nodes to answer *irreducible*, and the width doubles with
+each new radicand.
+
+For that class the answer is available directly. The quadratic norm
+{name}`Hex.quadNorm` of {lean}`g` at {lean}`d` is the norm of `g(X - t)`
+along `ℤ[t]/(t² - d) → ℤ`, and {name}`Hex.iteratedNorm` folds it over a
+list of radicands from `X - c`, producing the product of `X - c - ∑ᵢ εᵢ √dᵢ`
+over all sign patterns. When no nonempty subproduct of the radicands is
+a perfect square, that polynomial is the minimal polynomial of
+`c + ∑ᵢ √dᵢ` over a field of degree `2ⁿ`, hence irreducible.
+
+{docstring Hex.QuadraticNormCertificate}
+
+{docstring Hex.QuadraticNormCertificate.check}
+
+Both halves of the check are integer arithmetic: no number field is
+constructed, the radicands are never factored, and no floating point is
+used. Finding the certificate is a separate, untrusted step
+({name}`Hex.QuadraticNormCertificate.recover?`), because a wrong
+proposal is refused by the check.
+
+{docstring Hex.quadraticNormCertified}
+
+The gate is consulted once, where the modular factorization is already
+in hand and before any Hensel lift. A success answers the whole
+square-free core as one irreducible factor, reassembled by the same
+code path as every other singleton proof; a failure falls through to
+ordinary recombination carrying no state.
+
 # Logarithmic derivatives and lattice recombination
 
 For larger modular factorizations, Hex uses the recombination method
