@@ -16,8 +16,9 @@ Write `pℚ` for `(toPolynomial p).map (algebraMap ℤ ℚ)`.
 - Full resultant correspondence and specialization from
   `hex-resultant-mathlib`.
 - Root interpretation, refinement preservation, and `sameRoot` semantics from
-  `hex-roots-mathlib`; this companion additionally proves local refinement
-  completeness for the fixed finite budget used by `refineTo?`.
+  `hex-roots-mathlib`, including mixed-strategy completeness for the raw local
+  refinement budget. This companion lifts that result through the refined
+  wrapper and uses it to prove the requested approximation radius.
 - Integer factorization soundness from
   `hex-berlekamp-zassenhaus-mathlib`.
 
@@ -37,6 +38,12 @@ theorem AlgebraicNumber.p_eq_minpoly (a : AlgebraicNumber) :
     (a.p.leadingCoeff : ℚ)⁻¹ •
       (toPolynomial a.p).map (algebraMap ℤ ℚ) =
         minpoly ℚ a.toComplex
+
+theorem AlgebraicNumber.toComplex_injective :
+    Function.Injective AlgebraicNumber.toComplex
+
+instance : LawfulBEq AlgebraicNumber
+instance : DecidableEq AlgebraicNumber
 ```
 
 `QAdjoin.toComplex` evaluates reduced coordinates at an explicit refined
@@ -67,7 +74,7 @@ theorem AlgebraicNumber.isZero_iff (a : AlgebraicNumber) :
     a.isZero ↔ a.toComplex = 0
 
 theorem RefinedIsolation.refineTo?_isSome (rep) (target) :
-    (rep.refineTo? target).isSome
+    (rep.refineTo? target .nkThenPellet).isSome
 
 theorem QAdjoin.approx_sound (...) :
     QAdjoin.toComplex a rep h ∈ (a.approx rep h prec).2.set
@@ -75,6 +82,11 @@ theorem QAdjoin.approx_sound (...) :
 theorem QAdjoin.approx_radius (...) :
     (a.approx rep h prec).2.realRadius ≤ 2 ^ (-prec)
 ```
+
+The totality theorem is deliberately for the default mixed strategy: its NK
+prefix is complete around the represented locally simple root even when the
+ambient polynomial has repeated roots elsewhere. No pure-Pellet totality
+claim is needed for `QAdjoin.approx`.
 
 `AlgebraicRoot` deliberately exposes no Boolean or structural equality:
 comparison first exactifies to canonical `AlgebraicNumber`. No structural
@@ -105,12 +117,30 @@ theorem AlgebraicRoot.exact_toComplex (a : AlgebraicRoot) :
 theorem QAdjoin.toAlgebraicNumber?_sound
     [ZPoly.CheckedIrreducible p] (...) {b} (h : ... = some b) :
     b.toComplex = QAdjoin.toComplex a rep hrep
+
+theorem QAdjoin.toAlgebraicNumber?_isSome
+    [ZPoly.CheckedIrreducible p] (...) :
+    (a.toAlgebraicNumber? rep hrep).isSome
+
+theorem QAdjoin.toAlgebraicNumber_toComplex
+    [ZPoly.CheckedIrreducible p] (...) :
+    (a.toAlgebraicNumber rep hrep).toComplex =
+      QAdjoin.toComplex a rep hrep
 ```
 
 Exactification completeness follows because the squarefree enclosing polynomial
 factors into distinct irreducibles and exactly one factor contains the selected
 root. Factor soundness supplies the product identity; resultant common-root facts
 and disjoint refined isolations supply uniqueness.
+
+Fixed-presentation completeness instead uses the first Krylov dependence of the
+represented element. Finite dimensionality supplies a dependence at the Mathlib
+minimal-polynomial degree, first-success minimality proves that the executable
+relation has exactly that degree, and Gauss normalization supplies its primitive,
+positive-leading, irreducible, and simple-root certificates. Isolation completeness
+finds its represented complex root; the guarded approximation ball and the
+candidate disc share that root, so the executable intersection test succeeds and
+canonical normalization is total.
 
 ## Lazy arithmetic
 
@@ -137,8 +167,29 @@ Operation soundness uses the Stage 1 specialization-vanishing theorem from
 `hex-resultant-mathlib`. `_isSome` uses squarefree normalization,
 root-isolation completeness, and HexRoots separation at
 `resultIsolationPrec`; it does not require the Stage 2 resultant value theorem.
+Addition's fixed four-bit refinement bound follows directly from ball addition.
+Multiplication uses root-size bounds for both operands, while inversion uses the
+reciprocal Cauchy lower bound for a nonzero root and a doubled coefficient-height
+guard for reciprocal distortion. The resulting ball is two bits smaller than
+`resultIsolationPrec` for addition and four bits smaller for multiplication and
+inversion; each bound is sufficient for singleton selection. The checked
+multiplication and inversion zero branches are handled before eliminant
+construction and agree with `0⁻¹ = 0`.
 Canonical `AlgebraicNumber` arithmetic follows by `toRoot`, the lazy headline,
 and `exact_toComplex`.
+
+The total rational constructor satisfies
+
+```lean
+theorem AlgebraicNumber.ofRat_toComplex (q : Rat) :
+    (AlgebraicNumber.ofRat q).toComplex = (q : ℂ)
+```
+
+Together with `toComplex_injective` and the arithmetic correspondence
+theorems, this transports the field laws from `ℂ` onto the existing executable
+zero, one, casts, scalar actions, powers, and arithmetic operations. The
+installed `Field AlgebraicNumber` therefore changes no computational data
+field; it only supplies the law-bearing dictionary.
 
 ## Algebraic coefficient polynomials
 

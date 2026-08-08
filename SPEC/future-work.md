@@ -87,9 +87,9 @@ about, namely whether they divide at all:
   recombining, using the modular techniques below with a coefficient
   bound from the matrix norm.
 
-Isolating the roots of `χ_A` with hex-real-roots and hex-roots gives
-certified eigenvalue enclosures, and exact eigenvalues once
-hex-number-field can name them.
+Isolating the roots of `χ_A` with hex-real-roots and hex-roots would give
+certified eigenvalue enclosures; hex-number-field can name the resulting exact
+eigenvalues.
 
 **Minimal polynomial.** A separate computation from the characteristic
 polynomial. The Krylov sequence `v, Av, A²v, …` yields the minimal
@@ -247,6 +247,30 @@ matrix-vector product.
 representation via typeclasses, allowing sparse and hash-backed
 representations alongside `DensePoly`. For now, all libraries use
 `DensePoly` directly.
+
+The same abstraction problem is now concrete for multivariate polynomials.
+The release-quality HexMvPoly kernel sweep at clean commit
+`91adf91b04cd9aa676e7bb08fed176f2038fd0a2` did not meet its predeclared
+gate. After round-matched import and construction subtraction, the
+canonical sorted-list proxy's terminal point ratios were 5.216× for addition,
+2.379× for cancellation, 2.890× for SOS, and 1.586× for structural
+collisions. The first three conservative intervals began at 1.287×, 1.265×,
+and 1.477× respectively; addition and structural collisions were
+noise-limited. Collision-heavy multiplication had a 0.930× point estimate
+with an unresolved [0.359×, 2.329×] interval. No family had a lower bound
+above 2×, let alone two families. The exact record is
+`reports/bench-results/hex-mv-poly-kernel-91adf91b-chungus2.json`.
+
+The current evidence therefore does not demonstrate the gate.
+`Hex.MvPoly` remains the single `ExtTreeMap` representation by default. The
+proof-probe sorted adapter is comparison evidence only and must not be exposed
+as production API. All five terminal comparisons are unresolved, and the
+measured rungs finish well below the per-module budget rather than
+establishing the largest budget-fitting cases required for a positive
+decision. A future decision needs a preregistered larger ladder, more samples,
+and preferably a quiescent host. In particular, the SOS-scale null has a
+1.199 s conservative envelope, a 3.252% IQR/build ratio, and yields a 2.890×
+SOS point estimate with only a 1.477× conservative lower bound.
 
 Typeclass interface:
 ```lean
@@ -579,11 +603,11 @@ certified order: `g^x = h` witnesses a solution and settles neither
 uniqueness nor minimality nor, on failure, nonexistence, and the unit
 group mod a composite need not be cyclic.
 
-**Ring of integers.** hex-number-field and hex-number-field-tower are
-specified to construct towers, factor by Trager, and build splitting
-fields; both are registered with no phases complete. The maximal order
-`O_K` is the next object: the Round 2 (Pohst-Zassenhaus) algorithm gives
-an integral basis and the field discriminant.
+**Ring of integers.** hex-number-field and hex-number-field-tower implement
+towers, Trager factorization, and splitting fields; their computational and
+Mathlib libraries remain registered with no phases complete. The maximal order
+`O_K` is the next object: the Round 2 (Pohst-Zassenhaus) algorithm gives an
+integral basis and the field discriminant.
 
 The dependency is the integer factorization item, for the squarefree
 part of the polynomial discriminant, and it is where such computations
@@ -658,16 +682,14 @@ cell decomposition of `ℝ` by the roots of a single polynomial does the
 work; CAD lifts that to several variables, and
 [hex-rcf](Libraries/hex-rcf.md) puts it out of scope.
 
-Part of the base layer is in place. hex-real-roots isolates the real
-roots of a squarefree `p ∈ ℤ[x]` with exact Sturm-count witnesses, and
-hex-roots does the complex case with Newton-Kantorovich and Pellet
-witnesses on dyadic squares. hex-resultant holds univariate
-subresultants, and hex-number-field and hex-number-field-tower are
-specified to supply exact arithmetic on algebraic numbers with
-certified isolations maintained throughout, which is the sample-point
-arithmetic a CAD needs. hex-resultant is one phase in and the two
-number-field libraries are at zero, so all three are prerequisites here
-rather than foundations.
+The implemented base layer is in place. hex-real-roots isolates the real roots
+of a squarefree `p ∈ ℤ[x]` with exact Sturm-count witnesses, and hex-roots
+does the complex case with Newton-Kantorovich and Pellet witnesses on dyadic
+squares. hex-resultant holds univariate subresultants, while hex-number-field
+and hex-number-field-tower implement exact arithmetic on algebraic numbers with
+certified isolations maintained throughout. Their phase attestations remain
+pending. Together these provide the exact sample-point arithmetic a CAD builds
+on; sign determination at those points is part of the lifting work below.
 
 The lifting structure on top is entirely to come: multivariate
 polynomials, a projection operator (Collins, with the McCallum and Hong

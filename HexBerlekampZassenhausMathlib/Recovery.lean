@@ -17,7 +17,7 @@ Executable class-count semantics for the BHKS equivalence-class indicators.
 
 The executable `bhksEquivalenceClassIndicators` array has size
 equal to the RREF signature partition (`bhksEquivalenceClassIndicators_size_eq`),
-and — given the cut inclusion `W ⊆ L'` (`CutProjectionHypotheses`) — at least
+and, given the cut inclusion `W ⊆ L'` (`CutProjectionHypotheses`), at least
 one class per true-support-equivalence class
 (`supportPartitionByMinColumn_length_le_bhksEquivalenceClassIndicators_size`).
 No reverse `L' = W` separation is consumed.
@@ -47,8 +47,8 @@ private theorem sigRep_min (sig : Nat → Array Rat) {j k : Nat}
 
 /-- Forward refinement of the support partition by the signature partition.
 
-If equal column signatures force support-equivalence — the *forward* direction,
-available from the inclusion `W ⊆ L'` alone (no reverse `L' = W` separation) —
+If equal column signatures force support-equivalence; the *forward* direction,
+available from the inclusion `W ⊆ L'` alone (no reverse `L' = W` separation);
 then every signature class is contained in one support-equivalence class, so the
 signature partition refines the support partition and therefore has at least as
 many classes.  The map sending each support representative `q` to its signature
@@ -305,7 +305,7 @@ theorem bhksEquivalenceClassIndicators_eq_supportPartition
 For a genuine partition, the support-equivalence class represented by `rep`
 is the unique true support containing `rep`.
 
-This is the set-level half of the executable recovery bridge: after
+This is the set-level half of the executable recovery correspondence: after
 `L' = W`, an RREF class is not merely support-equivalent to a true support;
 its ascending member list enumerates that support exactly.
 -/
@@ -426,11 +426,11 @@ theorem bhksEquivalenceClassIndicators_size_eq (L : Hex.BhksProjectedRows) :
 /-- Forward count bound: the executable equivalence-class partition emits at
 least one class per true-support-equivalence class.
 
-This is the forward-only `count_ge` core: from the cut inclusion `W ⊆ L'`
+This is the forward-only `count_ge` argument: from the cut inclusion `W ⊆ L'`
 (`CutProjectionHypotheses`, certified by the closed cut-survival argument) the
 emitted partition refines the true-support partition, so the emitted class count
 is at least the support-partition length.  It needs no reverse `L' = W`
-separation — and hence no bad-vector resultant valuation — establishing the
+separation; and hence no bad-vector resultant valuation; establishing the
 lower count bound from the forward inclusion alone. -/
 theorem supportPartitionByMinColumn_length_le_bhksEquivalenceClassIndicators_size
     (L : Hex.BhksProjectedRows)

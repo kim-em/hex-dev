@@ -160,8 +160,8 @@ equality with `b ≠ 0`.
 `Int` supplies the law via `Int.mul_ediv_cancel`. There is a recursive
 instance for `DensePoly R` whenever `R` has the law, so `ZPoly = DensePoly
 Int` supports bivariate elimination, including nonunit constant and nonmonic
-polynomial divisors. A future `NumberTower.Elem T` uses its existing `/`; its
-Mathlib adjunct supplies the law once it installs the field laws. The tower's
+polynomial divisors. `NumberTower.Elem T` uses its existing `/`; its Mathlib
+adjunct supplies the law through its scoped field instance. The tower's
 computational core therefore remains law-free.
 
 ## Exact-division totality
@@ -450,9 +450,12 @@ quotient is exact over every stated exact-division domain.
 - `HexResultant/Subresultant.lean`: the integral recursive subresultant
   invariant, `BrownLaw`, the Brown worker, `subresultantChain`, `resultant`,
   chain termination, and degree bounds.
-- `HexResultant/Discriminant.lean`: `disc` and the algebraic
-  identities we need downstream (for example
-  `disc (f * g) = disc f · disc g · (resultant f g)²`).
+- `HexResultant/Discriminant.lean`: the Mathlib-free executable `disc`.
+- `HexResultantMathlib/Discriminant.lean`: discriminant correspondence and
+  the algebraic identities needed downstream. In characteristic zero, for
+  positive-degree `f` and `g`, this includes
+  `disc (f * g) = disc f · disc g · (resultant f g)²`; the degree
+  hypotheses are essential under the total constant convention.
 - `conformance/HexResultant/Conformance.lean` and
   `conformance/HexResultant/EmitFixtures.lean`: conformance driver and
   fixture emission, in the shared `conformance/` sub-project.
@@ -462,9 +465,17 @@ quotient is exact over every stated exact-division domain.
   They are Mathlib-free, per
   [SPEC/benchmarking.md](../../SPEC/benchmarking.md). Mathlib's
   `Polynomial.resultant` is noncomputable, so it is not an in-process
-  comparator. FLINT does provide a separately timed comparable
-  resultant/discriminant surface for the Phase-4 report; exact value
-  cross-checking against FLINT and PARI remains in the conformance oracle.
+  comparator. The informational external comparator is
+  [FLINT](https://flintlib.org/) `fmpz_poly.resultant` and
+  `fmpz_poly.discriminant`, called through python-flint's persistent-process
+  interface on every rung of the equal-degree bounded-dense input ladder. It
+  covers `runResultant` and `runDisc`. The `runChain` and `runPseudoDiv`
+  targets declare **no-comparable-surface-in-named-comparator**: python-flint
+  exposes neither a subresultant chain nor pseudo-division on `fmpz_poly`.
+  FLINT's modular and asymptotically fast kernels differ structurally from
+  Hex's integral Brown recurrence, so its ratios orient the Phase-4 report but
+  do not gate it. Exact value cross-checking against both FLINT and PARI
+  remains independently covered by the conformance oracle.
 
 ## Conformance fixtures
 

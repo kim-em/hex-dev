@@ -26,7 +26,7 @@ tag := "hex-poly-z-intro"
 
 `HexPolyZ` specializes {ref "hex-poly"}[HexPoly] to integer
 coefficients and adds the integer-specific theory the factorization
-pipeline needs. It contributes three things: the *content* and
+algorithm needs. It contributes three things: the *content* and
 *primitive part* (Gauss's-lemma factorization of an integer polynomial
 into a scalar times a primitive polynomial), a *coefficientwise
 congruence* predicate used by Hensel lifting, and a conservative
@@ -42,7 +42,7 @@ quantities really do bound the coefficients of a factor, is proved in
 
 # Integer polynomial type
 %%%
-tag := "hex-poly-z-core-type"
+tag := "hex-poly-z-type"
 %%%
 
 There is no new structure: an integer polynomial is just a normalized

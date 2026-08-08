@@ -12,7 +12,7 @@ public import HexLLL.Reduced
 public import HexLLL.Interval
 public import HexLLL.Checker
 public import HexLLL.Native
-public import HexLLL.Provider
-public import HexLLL.Dispatch
+public import HexLLL.ExternalReducer
+public import HexLLL.Reduction
 
 public section

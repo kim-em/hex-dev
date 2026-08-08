@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
+import HexBerlekamp.DegreePattern
 import HexBerlekamp.DistinctDegree
 import HexBerlekamp.DelayedKernel
 
@@ -23,6 +24,7 @@ Covered operations:
   `checkRabinBezoutWitnesses`, and `checkIrreducibilityCertificate`
 - `splitFactorAt` and `kernelWitnessSplit?`
 - `distinctDegreeCandidate`, `distinctDegreeStep`, and `distinctDegreeFactor`
+- `degreePattern?`, `scoutDegreePattern`, and the `DegreePattern` bounds
 - `squareFreeDecomposition`
 - periodic-reduction `strassenBarrett` matrix multiplication
 Covered properties:
@@ -32,6 +34,8 @@ Covered properties:
   witnesses, while malformed certificates are rejected
 - successful split witnesses multiply back to the split input
 - distinct-degree factorization products reconstruct the committed input
+- a complete degree pattern lists the same factor degrees the distinct-degree
+  buckets record, and a bounded scout's bounds bracket the true factor count
 - square-free decomposition products reconstruct the committed input
 - periodic and default Strassen configs agree
 Covered edge cases:
@@ -383,6 +387,25 @@ example : Berlekamp.rabinTest irreducibleQuad irreducibleQuad_monic = true :=
   ([(2, [2, 0, 1])], [1])
 #guard ddfSummary (Berlekamp.distinctDegreeFactor unitPoly unitPoly_monic) =
   ([], [1])
+
+-- The degree pattern lists the same degrees the distinct-degree buckets record,
+-- without splitting any equal-degree product.
+#guard Berlekamp.degreePattern? bigPoly bigPoly_monic == some #[1, 2, 5]
+#guard Berlekamp.degreePattern? irreducibleQuad irreducibleQuad_monic == some #[2]
+#guard Berlekamp.degreePattern? unitPoly unitPoly_monic == some #[]
+
+-- A scout with a target the input meets runs to a complete pattern, and both
+-- bounds then agree with the true factor count.
+#guard
+  let pattern := Berlekamp.scoutDegreePattern bigPoly bigPoly_monic 3
+  pattern.complete && pattern.lowerBound == 3 && pattern.upperBound == 3
+
+-- A scout with a target the input misses abandons the pattern as soon as the
+-- factors already separated reach it, leaving an incomplete pattern whose
+-- lower bound witnesses that the count exceeds the target.
+#guard
+  let pattern := Berlekamp.scoutDegreePattern bigPoly bigPoly_monic 1
+  !pattern.complete && pattern.lowerBound == 2 && pattern.upperBound == 4
 
 /-!
 Periodic-reduction Strassen-base conformance. The near-upper-bound residues make

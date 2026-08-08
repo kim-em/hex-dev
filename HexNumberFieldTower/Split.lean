@@ -107,6 +107,7 @@ def mapPoly {T U : NumberTower} (embed : Elem T → Elem U)
   DensePoly.ofCoeffs (f.toArray.map embed)
 
 /-- The identity extension, used when no generator needs to be adjoined. -/
+@[expose]
 def Extension.identity (T : NumberTower) : Extension T :=
   { tower := T
     embed := id
@@ -115,6 +116,7 @@ def Extension.identity (T : NumberTower) : Extension T :=
 
 /-- Compose dependent tower extensions while retaining the most recently
 adjoined generator. -/
+@[expose]
 def Extension.trans {T : NumberTower} (outer : Extension T)
     (inner : Extension outer.tower) : Extension T :=
   { tower := inner.tower
@@ -122,11 +124,46 @@ def Extension.trans {T : NumberTower} (outer : Extension T)
     gen := inner.gen
     root := inner.root }
 
+/-- The carrier of a composed extension is the carrier of its inner step. -/
+theorem Extension.trans_tower {T : NumberTower} (outer : Extension T)
+    (inner : Extension outer.tower) :
+    (outer.trans inner).tower = inner.tower := rfl
+
+/-- A composed extension embeds by applying the outer and then inner map. -/
+theorem Extension.trans_embed {T : NumberTower} (outer : Extension T)
+    (inner : Extension outer.tower) (a : Elem T) :
+    (outer.trans inner).embed a = inner.embed (outer.embed a) := rfl
+
+/-- Record-level normal form for a composed extension. -/
+theorem Extension.trans_eq {T : NumberTower} (outer : Extension T)
+    (inner : Extension outer.tower) :
+    outer.trans inner =
+      { tower := inner.tower
+        embed := fun a => inner.embed (outer.embed a)
+        gen := inner.gen
+        root := inner.root } := rfl
+
+/-- Whole-record normal form for pulling an inner splitting back through an
+extension.  Stating the equality at this level keeps the dependent root
+carrier aligned while clients reason about the explicit composite. -/
+theorem Splitting.trans_eq {T : NumberTower} {f : Poly T}
+    (outer : Extension T)
+    (inner : Splitting outer.tower (mapPoly outer.embed f)) :
+    ({ extension := outer.trans inner.extension
+       roots := inner.roots } : Splitting T f) =
+      { extension :=
+          { tower := inner.extension.tower
+            embed := fun a => inner.extension.embed (outer.embed a)
+            gen := inner.extension.gen
+            root := inner.extension.root }
+        roots := inner.roots } := rfl
+
 /-- Adjoin the specified absolute algebraic root. A selected linear factor
 produces the identity extension; a nonlinear factor is admitted only through
 {name}`Hex.NumberTower.Internal.extend?`, which reruns structural,
 relative-irreducibility, and fixed-
 embedding checks before constructing the new carrier index. -/
+@[expose]
 def adjoin? (T : NumberTower) (candidate : AlgebraicRoot) :
     Option (Extension T) := do
   let input := liftZPoly T candidate.p
@@ -158,6 +195,17 @@ def factorEliminant (T : NumberTower) (f : Poly T) : ZPoly :=
   ZPoly.squareFreeCore <|
     ZPoly.ratPolyPrimitivePart (Factor.toRatPoly absolute)
 
+/-- Retain exactly the absolute candidates at which the relative factor
+vanishes, preserving isolation order. -/
+@[expose]
+def retainRoots? (T : NumberTower) (f : Poly T) :
+    List AlgebraicRoot → Option (List AlgebraicRoot)
+  | [] => some []
+  | candidate :: candidates => do
+      let keep ← Evaluation.vanishesAt? T f candidate
+      let retained ← retainRoots? T f candidates
+      if keep then some (candidate :: retained) else some retained
+
 /-- Isolate the absolute eliminant and retain the first root that zeros the
 relative factor under the current fixed embedding. -/
 @[expose]
@@ -178,8 +226,7 @@ def factorRoot? (T : NumberTower) (f : Poly T) : Option AlgebraicRoot := do
                x := SimpleRoot.mk rep
                rep
                rep_mk := rfl } : AlgebraicRoot)
-          let retained ← candidates.filterM fun candidate =>
-            Evaluation.vanishesAt? T f candidate
+          let retained ← retainRoots? T f candidates
           retained.head?
         else
           none
@@ -200,16 +247,18 @@ def linearRoots? {T : NumberTower} (factors : Array (Poly T × Nat)) :
     else
       none
 
-/-- Fuel-bounded split/refactor loop. Every successful nonlinear iteration
-consumes one fuel unit and must strictly increase the tower dimension. The
-initial polynomial degree bounds the theoretical degree-reducing sequence. -/
-def splitAux {T : NumberTower} (original : Poly T)
-    (extension : Extension T) (current : Poly extension.tower) (fuel : Nat) :
-    Option (Splitting T original) := do
-  let factorization ← factor? extension.tower current
+/-- Fuel-bounded split/refactor loop. Each recursive call works over the local
+tower and composes its checked extension on return, retaining the intermediate
+embedding needed by proof-facing consumers. Every successful nonlinear
+iteration consumes one fuel unit and must strictly increase the tower
+dimension. -/
+@[expose]
+def splitAux (T : NumberTower) (f : Poly T) (fuel : Nat) :
+    Option (Splitting T f) := do
+  let factorization ← factor? T f
   match linearRoots? factorization.factors with
   | some roots =>
-      some { extension
+      some { extension := Extension.identity T
              roots := .finite roots }
   | none =>
       match fuel with
@@ -217,27 +266,28 @@ def splitAux {T : NumberTower} (original : Poly T)
       | fuel + 1 => do
           let nonlinear ← factorization.factors.toList.find? fun entry =>
             decide (1 < entry.1.degree?.getD 0)
-          let candidate ← factorRoot? extension.tower nonlinear.1
-          let step ← adjoin? extension.tower candidate
-          if step.tower.dim ≤ extension.tower.dim then
+          let candidate ← factorRoot? T nonlinear.1
+          let step ← adjoin? T candidate
+          if step.tower.dim ≤ T.dim then
             none
           else
-            let nextExtension := extension.trans step
-            let nextPolynomial := mapPoly step.embed current
-            splitAux original nextExtension nextPolynomial fuel
+            let inner ← splitAux step.tower (mapPoly step.embed f) fuel
+            some
+              { extension := step.trans inner.extension
+                roots := inner.roots }
 
 /-- Construct an extension in which the input polynomial splits into linear
 factors, retaining multiplicities from checked factorization. -/
+@[expose]
 def split? (T : NumberTower) (f : Poly T) : Option (Splitting T f) :=
-  let identity := Extension.identity T
   if f.isZero then
-    some { extension := identity
+    some { extension := Extension.identity T
            roots := .all }
   else if f.degree?.getD 0 = 0 then
-    some { extension := identity
+    some { extension := Extension.identity T
            roots := .finite #[] }
   else
-    splitAux f identity f (f.degree?.getD 0)
+    splitAux T f (f.degree?.getD 0)
 
 /-! Compiled fixed-embedding selection regression. -/
 
@@ -247,7 +297,7 @@ private def selectSqrtTwoSquare : DyadicSquare :=
   ⟨Dyadic.ofIntWithPrec 181 7, 0, 8⟩
 
 private def selectSqrtTwoRep : RefinedIsolation selectSqrtTwoPoly :=
-  ⟨⟨selectSqrtTwoSquare, by decide⟩, by decide⟩
+  ⟨⟨selectSqrtTwoSquare, .ofWitness (by decide)⟩, by decide⟩
 
 private def selectSqrtTwoRoot : SimpleRoot selectSqrtTwoPoly :=
   SimpleRoot.mk selectSqrtTwoRep
@@ -308,7 +358,7 @@ private def selectSqrtThreeSquare : DyadicSquare :=
   ⟨Dyadic.ofIntWithPrec 222 7, 0, 8⟩
 
 private def selectSqrtThreeRep : RefinedIsolation selectSqrtThreePoly :=
-  ⟨⟨selectSqrtThreeSquare, by decide⟩, by decide⟩
+  ⟨⟨selectSqrtThreeSquare, .ofWitness (by decide)⟩, by decide⟩
 
 private def selectFourthRootTwoPoly : ZPoly :=
   DensePoly.ofList [-2, 0, 0, 0, 1]
@@ -318,7 +368,7 @@ private def selectFourthRootTwoSquare : DyadicSquare :=
 
 private def selectFourthRootTwoRep :
     RefinedIsolation selectFourthRootTwoPoly :=
-  ⟨⟨selectFourthRootTwoSquare, by decide⟩, by decide⟩
+  ⟨⟨selectFourthRootTwoSquare, .ofWitness (by decide)⟩, by decide⟩
 
 -- A genuinely new root is admitted through the checked relative-level
 -- constructor. The old generator occupies the first lower block and the new

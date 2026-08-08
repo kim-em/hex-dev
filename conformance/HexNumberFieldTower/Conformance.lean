@@ -58,7 +58,7 @@ private def sqrtTwoSquare : DyadicSquare :=
   ⟨Dyadic.ofIntWithPrec 181 7, 0, 8⟩
 
 private def sqrtTwoRep : RefinedIsolation sqrtTwoPoly :=
-  ⟨⟨sqrtTwoSquare, by decide⟩, by decide⟩
+  ⟨⟨sqrtTwoSquare, .ofWitness (by decide)⟩, by decide⟩
 
 private def sqrtTwoRoot : SimpleRoot sqrtTwoPoly :=
   SimpleRoot.mk sqrtTwoRep
@@ -77,7 +77,7 @@ private def sqrtTwo? : Option (Extension rat) :=
 private def negSqrtTwoPoly : ZPoly := DensePoly.ofList [2, 0, -1]
 
 private def negSqrtTwoRep : RefinedIsolation negSqrtTwoPoly :=
-  ⟨⟨sqrtTwoSquare, by decide⟩, by decide⟩
+  ⟨⟨sqrtTwoSquare, .ofWitness (by decide)⟩, by decide⟩
 
 private def negSqrtTwo? : Option (Extension rat) :=
   if hirred : ZPoly.isIrreducible negSqrtTwoPoly = true then
@@ -95,7 +95,7 @@ private def negativeSqrtTwoSquare : DyadicSquare :=
   ⟨Dyadic.ofIntWithPrec (-181) 7, 0, 8⟩
 
 private def negativeSqrtTwoRep : RefinedIsolation sqrtTwoPoly :=
-  ⟨⟨negativeSqrtTwoSquare, by decide⟩, by decide⟩
+  ⟨⟨negativeSqrtTwoSquare, .ofWitness (by decide)⟩, by decide⟩
 
 private def negativeSqrtTwo? : Option (Extension rat) :=
   if hirred : ZPoly.isIrreducible sqrtTwoPoly = true then
@@ -116,7 +116,7 @@ private def sqrtThreeHalvesSquare : DyadicSquare :=
   ⟨Dyadic.ofIntWithPrec 157 7, 0, 9⟩
 
 private def sqrtThreeHalvesRep : RefinedIsolation sqrtThreeHalvesPoly :=
-  ⟨⟨sqrtThreeHalvesSquare, by decide⟩, by decide⟩
+  ⟨⟨sqrtThreeHalvesSquare, .ofWitness (by decide)⟩, by decide⟩
 
 private def sqrtThreeHalves? : Option (Extension rat) :=
   if hirred : ZPoly.isIrreducible sqrtThreeHalvesPoly = true then
@@ -136,7 +136,7 @@ private def threeHalvesSquare : DyadicSquare :=
   ⟨Dyadic.ofIntWithPrec 3 1, 0, 8⟩
 
 private def threeHalvesRep : RefinedIsolation threeHalvesPoly :=
-  ⟨⟨threeHalvesSquare, by decide⟩, by decide⟩
+  ⟨⟨threeHalvesSquare, .ofWitness (by decide)⟩, by decide⟩
 
 private def threeHalves? : Option (Extension rat) :=
   if hirred : ZPoly.isIrreducible threeHalvesPoly = true then
@@ -156,7 +156,7 @@ private def sqrtThreeSquare : DyadicSquare :=
   ⟨Dyadic.ofIntWithPrec 222 7, 0, 8⟩
 
 private def sqrtThreeRep : RefinedIsolation sqrtThreePoly :=
-  ⟨⟨sqrtThreeSquare, by decide⟩, by decide⟩
+  ⟨⟨sqrtThreeSquare, .ofWitness (by decide)⟩, by decide⟩
 
 private def sqrtThree? : Option AlgebraicRoot :=
   if hsimple : HasOnlySimpleRoots sqrtThreePoly then
@@ -179,7 +179,7 @@ private def fourthRootTwoSquare : DyadicSquare :=
   ⟨Dyadic.ofIntWithPrec 77936 16, 0, 17⟩
 
 private def fourthRootTwoRep : RefinedIsolation fourthRootTwoPoly :=
-  ⟨⟨fourthRootTwoSquare, by decide⟩, by decide⟩
+  ⟨⟨fourthRootTwoSquare, .ofWitness (by decide)⟩, by decide⟩
 
 private def fourthRootTwo? : Option AlgebraicRoot :=
   if hsimple : HasOnlySimpleRoots fourthRootTwoPoly then
@@ -207,7 +207,7 @@ private def retryThetaSquare : DyadicSquare :=
   ⟨Dyadic.ofIntWithPrec 1371068573887 40, 0, 16⟩
 
 private def retryThetaRep : RefinedIsolation retryThetaPoly :=
-  ⟨⟨retryThetaSquare, by decide⟩, by decide⟩
+  ⟨⟨retryThetaSquare, .ofWitness (by decide)⟩, by decide⟩
 
 private def retryTheta? : Option AlgebraicNumber :=
   if hsimple : HasOnlySimpleRoots retryThetaPoly then
@@ -234,7 +234,7 @@ private def retryAlphaSquare : DyadicSquare :=
 set_option maxRecDepth 100000 in
 set_option exponentiation.threshold 1000 in
 private def retryAlphaRep : RefinedIsolation retryAlphaPoly :=
-  ⟨⟨retryAlphaSquare, by decide⟩, by decide⟩
+  ⟨⟨retryAlphaSquare, .ofWitness (by decide)⟩, by decide⟩
 
 private def retryAlpha? : Option AlgebraicNumber :=
   if hsimple : HasOnlySimpleRoots retryAlphaPoly then
@@ -569,12 +569,24 @@ private def polyCoords {T : NumberTower} (f : Poly T) : Array (Array Rat) :=
         match Flatten.candidateAt? theta alpha 6 1 with
         | some (shift, gamma) =>
             shift = 1 &&
-              (Flatten.recoverPair? theta alpha gamma shift).isNone &&
+              (Flatten.recoverPairFast? theta alpha gamma shift).isNone &&
               match Flatten.searchRecoveredAux theta alpha 6 1 2 with
               | some recovered => recovered.shift = -1
               | none => false
         | none => false
     | _, _ => false
+
+-- The zero-shift overlapping-field case exercises the total trace fallback at
+-- a small degree.
+#guard
+    match retryTheta? with
+    | some theta =>
+        match Flatten.recoverPair? theta theta theta 0 with
+        | some coordinates =>
+            coordinates.1 == theta.toQAdjoin &&
+              coordinates.2 == theta.toQAdjoin
+        | none => false
+    | none => false
 
 -- Edge: the rational tower uses the canonical algebraic zero presentation.
 #guard

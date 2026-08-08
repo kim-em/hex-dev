@@ -1,0 +1,4 @@
+Reviewed in issue #9102.
+The identified instance-coherence, semantic-correspondence, and downstream
+verification gaps are addressed in the same implementation PR that commits
+this token.

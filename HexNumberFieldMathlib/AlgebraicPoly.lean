@@ -50,7 +50,9 @@ theorem coeff_toPolynomial (f : AlgebraicPoly) (n : Nat) :
   rw [toPolynomial, ← Array.foldr_toList, coeff_horner, array_toList_getD]
   rfl
 
-private theorem last_isZero_false (f : AlgebraicPoly) (h : !f.isZero) :
+/-- The stored leading coefficient of a nonzero normalized algebraic
+polynomial is canonically nonzero. -/
+theorem last_isZero_false (f : AlgebraicPoly) (h : !f.isZero) :
     (f.coeff (f.size - 1)).isZero = false := by
   have hsize : 0 < f.coeffs.size := by
     apply Nat.pos_of_ne_zero

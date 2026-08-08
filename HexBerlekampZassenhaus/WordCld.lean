@@ -7,19 +7,19 @@ Authors: Kim Morrison
 module
 
 public import HexModArith
-public import HexHensel.Basic
+public import HexHensel.ModularPolynomial
 public import HexPoly
 
 public section
 
 /-!
 Word-sized (Montgomery) computation of the CLD quotient for the
-Berlekamp--Zassenhaus lattice tier.
+Berlekamp--Zassenhaus lattice method.
 
 `cldQuotientModWord?` mirrors `Hex.cldQuotientMod` but runs all mod-`p^a`
 polynomial arithmetic over `Hex.WordMod` (residue arrays with single-reduction
 Montgomery multiplication) instead of `Int`/bignum whenever `p^a` fits an odd
-machine word. The Mathlib bridge proves it byte-identical to the bignum path on
+machine word. The Mathlib correspondence proves it byte-identical to the bignum path on
 a positive-degree monic divisor; the production lattice path uses the word
 result when available and retains the bignum computation as its exact fallback.
 -/

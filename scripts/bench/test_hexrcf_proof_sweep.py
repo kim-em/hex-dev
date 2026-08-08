@@ -79,7 +79,11 @@ class ManifestTests(unittest.TestCase):
         self.assertEqual(rcf.SPEC.required_samples, 6)
 
     def test_schema_tracks_contract_change(self) -> None:
-        self.assertEqual(rcf.SPEC.schema, "hexrcf-proof-probes-v6")
+        self.assertEqual(rcf.SPEC.schema, "hexrcf-proof-probes-v7")
+        self.assertEqual(
+            rcf.SPEC.measurement,
+            "paired-fresh-module-olean-wall-robust-null-v2",
+        )
 
     def test_shared_host_recipe_requests_retry_headroom(self) -> None:
         source = (sweep.ROOT / "SPEC/Libraries/hex-rcf.md").read_text(

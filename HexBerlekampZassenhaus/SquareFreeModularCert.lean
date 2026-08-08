@@ -8,7 +8,7 @@ module
 
 public import HexBerlekampZassenhaus.PrimeSelection
 public import HexPolyZ.Decomposition
-import all HexPolyZ.Core
+import all HexPolyZ.IntegerPolynomial
 import all HexPolyZ.Rational
 import all HexPolyZ.Decomposition
 import all HexBerlekampZassenhaus.PrimeSelection
@@ -18,7 +18,7 @@ public section
 /-!
 Soundness of a modular square-freeness certificate.
 
-The classical Berlekamp-Zassenhaus square-free-core extraction runs an exact
+The classical Berlekamp-Zassenhaus primitive square-free part extraction runs an exact
 `gcd(f, f')` over `ℚ`, whose rational coefficient blow-up dominates
 `normalizeForFactor`.  For the common (square-free) input the whole computation
 collapses to a trivial decomposition; a cheap machine-word modular test decides
@@ -58,12 +58,12 @@ theorem modP_dvd_of_dvd {p : Nat} [ZMod64.Bounds p] {a b : ZPoly} (h : a ∣ b) 
 private theorem size_modP_le (p : Nat) [ZMod64.Bounds p] (f : ZPoly) :
     (ZPoly.modP p f).size ≤ f.size := by
   show (ZPoly.modP p f).coeffs.size ≤ f.size
-  unfold ZPoly.modP FpPoly.ofCoeffs
-  have h := DensePoly.size_ofCoeffs_le (R := ZMod64 p)
+  unfold ZPoly.modP
+  have h := DensePoly.size_ofList_le (R := ZMod64 p)
     ((List.range f.size).map
-      (fun i => ZMod64.ofNat p (ZPoly.intModNat (f.coeff i) p))).toArray
+      (fun i => ZMod64.ofNat p (ZPoly.intModNat (f.coeff i) p)))
   have hlen : ((List.range f.size).map
-      (fun i => ZMod64.ofNat p (ZPoly.intModNat (f.coeff i) p))).toArray.size = f.size := by simp
+      (fun i => ZMod64.ofNat p (ZPoly.intModNat (f.coeff i) p))).length = f.size := by simp
   simpa [DensePoly.size, hlen] using h
 
 /-- Divisibility of rational polynomials is transitive. -/

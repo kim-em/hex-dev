@@ -32,12 +32,48 @@ theorem refineTo_root {p : Hex.ZPoly} (iso : Hex.DyadicRootIsolation p)
     (hrun : iso.refineTo? target strategy = some iso') :
     root iso' = root iso := by
   rw [Hex.DyadicRootIsolation.refineTo?] at hrun
-  have hzregion : root iso ∈ Certified.region (.atom iso) :=
-    openRegion_subset_region iso (root_spec iso).2.1
-  have hzout : root iso ∈ Certified.region (.atom iso') :=
-    refineAtom_preserves (certifier_preserves p strategy) hrun
-      (isRoot iso) hzregion
-  exact ((root_spec iso').2.2.2 (root iso) (isRoot iso) hzout).symm
+  split at hrun
+  · have hiso : iso = iso' := Option.some.inj hrun
+    subst iso'
+    rfl
+  · cases hfast : Hex.refineFastAtom? iso target strategy with
+    | some tau =>
+        have htau : tau = iso' := by
+          simpa only [hfast, Option.some.injEq] using hrun
+        subst tau
+        have hzregion : root iso ∈ Certified.region (.atom iso) :=
+          openRegion_subset_region iso (root_spec iso).2.1
+        have hzout : root iso ∈ Certified.region (.atom iso') :=
+          refineFastAtom_preserves (certifier_preserves p strategy) hfast
+            (isRoot iso) hzregion
+        exact ((root_spec iso').2.2.2 (root iso) (isRoot iso) hzout).symm
+    | none =>
+        have hzregion : root iso ∈ Certified.region (.atom iso) :=
+          openRegion_subset_region iso (root_spec iso).2.1
+        have hzout : root iso ∈ Certified.region (.atom iso') :=
+          refineAtom_preserves (certifier_preserves p strategy)
+            (by simpa only [hfast] using hrun) (isRoot iso) hzregion
+        exact ((root_spec iso').2.2.2 (root iso) (isRoot iso) hzout).symm
+
+/-- Every successful raw refinement result reaches its requested precision. -/
+theorem refineTo_ready {p : Hex.ZPoly} {iso iso' : Hex.DyadicRootIsolation p}
+    {target : Int} {strategy : Hex.AtomStrategy}
+    (hrun : iso.refineTo? target strategy = some iso') :
+    target ≤ iso'.square.prec := by
+  rw [Hex.DyadicRootIsolation.refineTo?] at hrun
+  split at hrun
+  · rename_i hready
+    have hiso : iso = iso' := Option.some.inj hrun
+    subst iso'
+    exact hready
+  · cases hfast : Hex.refineFastAtom? iso target strategy with
+    | some tau =>
+        have htau : tau = iso' := by
+          simpa only [hfast, Option.some.injEq] using hrun
+        subst tau
+        exact refineFastAtom_ready hfast
+    | none =>
+        exact refineAtom_ready (by simpa only [hfast] using hrun)
 
 end DyadicRootIsolation
 

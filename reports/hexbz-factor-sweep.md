@@ -1,21 +1,14 @@
 # HexBZ Cross-System Factorization Sweep
 
-The current public-factor measurement is revision
-`567b5aea0c22d13fcf43541b5371717823870999`; the current lattice and
-no-decline classical measurements are revision
-`aaabcf1520121b4acaa793811c8567dddcf39f1f`. Both clean exports were measured
-2026-07-29 on `chungus2` (AMD EPYC 9455, Linux x86-64), pinned to CPU 0. The
-FLINT, PARI/GP, NTL, and Isabelle measurements are the already-current
-2026-07-28 exports from the same host, corpus, CPU placement, and timing
-protocol. They were not rerun because this change only modifies Hex.
+This page records the current reproducible measurement, not a history of old
+algorithm variants.
 
 ## Systems
 
-- `hex-factor`: public production dispatcher
-- `hex-lattice`: lattice factorization entry point
-- `hex-classical-nodecline`: classical entry point without decline
+- `hex-factor`: public Hex production factorization at clean revision
+  `bf5973a3`
 - `flint`: python-flint 0.9.0
-- `pari`: PARI/GP 2.17.3 through cypari2 2.2.4
+- `pari`: PARI/GP 2.17.2 through cypari2 2.2.4
 - `ntl`: NTL 11.6.0 `ZZXFactoring`
 - `isabelle-bz`: Isabelle2025-2 extraction from AFP
   `Berlekamp_Zassenhaus`, AFP 2026-05-29
@@ -23,156 +16,86 @@ protocol. They were not rerun because this change only modifies Hex.
   `LLL_Factorization`, AFP 2026-05-29
 
 The external toolchains came from transient nixpkgs environments. Isabelle
-session and Haskell-export builds completed before the timed sweeps.
+session and Haskell-export builds completed before timed calls.
 
-## Methodology
+## Method
 
-- Corpus: `bench/corpus/hexbz-factor-corpus.jsonl`
-- Instances: 392
+- Host: `chungus2`, AMD EPYC 9455, Linux x86-64
+- CPU placement: harness and each service pinned to one core -- CPU 0 for the
+  external record, CPU 70 for the current Hex record (see
+  [hexbz-support-traversal.md](hexbz-support-traversal.md) for why, and for
+  the check that the two are interchangeable). Other work shares this host, so
+  five complete Hex sweeps are committed at this revision; the table below is
+  the newest, and the comparisons in
+  [hexbz-modular-obstruction.md](hexbz-modular-obstruction.md) use their
+  median.
+- Corpus: `bench/corpus/hexbz-factor-corpus.jsonl`, 392 rows
 - Corpus SHA-256:
   `619913904240834c912489e6cc23ba136e8cc5ebf0ea95f83397e0682387284d`
 - Per-call cutoff: 10 seconds
-- Repeats: median of five if the first call is below one second; otherwise one
-  call
-- Early termination: disabled
-- Warm line-protocol services; per-system protocol overhead recorded in JSON
-- Cross-check: committed `expectedFactorDegrees` for 385 oracle-backed rows;
-  pairwise factor counts for the seven no-oracle Hoeij rows
+- Repeats: median of five when the first call is below one second; one call
+  otherwise
+- Early termination: disabled; every row was attempted by every system
+- Cross-check: committed expected factor degrees where available, pairwise
+  agreement otherwise
 
-## Recorded Sweep
-
-| System | OK | Timeout | p50 solved | p90 solved | Slowest solved | Protocol overhead |
-|---|---:|---:|---:|---:|---:|---:|
-| Hex public factor | 373 | 19 | 443.618 µs | 8.408 ms | 9.161 s | 13.650 µs |
-| Hex lattice | 369 | 23 | 1.957 ms | 91.186 ms | 10.000 s | 19.118 µs |
-| Hex classical, no decline | 372 | 20 | 423.939 µs | 9.029 ms | 3.845 s | 18.527 µs |
-| FLINT | 391 | 1 | 66.850 µs | 1.184 ms | 1.228 s | 19.219 µs |
-| PARI/GP | 391 | 1 | 99.958 µs | 1.254 ms | 823.201 ms | 23.755 µs |
-| NTL | 391 | 1 | 135.631 µs | 2.714 ms | 1.919 s | 11.487 µs |
-| Verified Isabelle BZ | 371 | 21 | 441.134 µs | 5.128 ms | 8.363 s | 17.777 µs |
-| Verified Isabelle LLL | 314 | 78 | 6.109 ms | 1.219 s | 9.528 s | 17.136 µs |
-
-These are service wall-clock values; protocol overhead is not subtracted.
-Consequently, ratios near the overhead floor require a signal filter.
-
-Every returned factor-degree multiset with a committed corpus oracle matched
-it. Hex times out on every Hoeij-Zimmermann row, so it contributes no new
-factor-count result on the seven rows without a committed degree oracle;
-FLINT, PARI/GP, and NTL factor counts agree on all seven.
-
-Relative to the pre-hot-path Hex record, the public median fell from 1.244 ms
-to 443.618 µs and retained two additional solves, `sd5_x_phi45` and `sd6`.
-The current no-decline classical entry now also solves `sd5_x_phi45`, leaving
-`sd6` as the public dispatcher's one additional frontier success.
-
-On 240 common rows for which both current Hex measurements are at least 10×
-their own protocol overhead, public/classical has median 1.015× and
-p10–p90 0.77×–1.10×. Public is faster on 69 and classical on 171. Thus the
-production dispatcher still pays a small ordinary-row cost—about 1.5% at the
-paired median—while its bounded classical tier and fallbacks substantially
-improve the hard tail and add the `sd6` solve.
-
-The improvement is broad but not universal. Family medians below compare the
-fresh public service with the preceding Hex public record; values below 1 are
-faster.
-
-| Family | Common rows | Median new/old | Rows slower |
-|---|---:|---:|---:|
-| Certificate boundary | 1 | 0.379× | 0 |
-| Chebyshev | 28 | 0.334× | 2 |
-| Conway | 186 | 0.298× | 0 |
-| Cyclotomic | 32 | 0.627× | 0 |
-| Cyclotomic products | 19 | 0.633× | 0 |
-| Laguerre | 20 | 0.366× | 0 |
-| Legendre | 20 | 0.307× | 0 |
-| Random products | 30 | 0.363× | 0 |
-| Signed-digit products | 9 | 0.477× | 0 |
-| Swinnerton-Dyer | 11 | 0.240× | 0 |
-| Wilkinson | 15 | 1.149× | 9 |
-
-Wilkinson remains the one family slower than the pre-hot-path record, by a
-1.149× median. The latest bounded prime policy improves that family to a
-0.935× median relative to the immediately preceding Hex export, although
-`wilkinson_56` alone regresses by 1.30×.
-
-## Charts
-
-The six most useful presentation figures are:
-
-- [Combined cactus plot](figures/hexbz-cactus-combined.svg)
-- [Cyclotomic-products cactus plot](figures/hexbz-cactus-cyclotomic-products.svg)
-- [Random-products runtime by degree](figures/hexbz-runtime-degree-random-products.svg)
-- [Swinnerton-Dyer cactus plot](figures/hexbz-cactus-swinnerton-dyer.svg)
-- [Swinnerton-Dyer runtime by degree](figures/hexbz-runtime-degree-swinnerton-dyer.svg)
-- [Hoeij-Zimmermann cactus plot](figures/hexbz-cactus-hoeij-zimmermann.svg)
-
-All 25 current family charts are under `reports/figures/hexbz-*`. Regenerate
-them with:
-
-```sh
-uv run --with matplotlib python3 scripts/plots/hexbz-cactus.py
-```
+The per-system protocol overheads were 22.333 us for Hex, 15.493 us for FLINT,
+11.027 us for NTL, 18.006 us for PARI, 18.628 us for Isabelle BZ, and 18.848 us
+for Isabelle LLL. Reported service times do not subtract them.
 
 ## Artifacts
 
-Fresh Hex exports:
+The plotting tool selects the newest valid record for each system:
 
-- `reports/bench-results/hexbz-factor-sweep-hex-567b5aea-chungus2.json`
-  (public factor; SHA-256
-  `f3bf572df064788203da76fcb5ede2a20e376bb2fa2ff448c4bc2d244157bd63`)
-- `reports/bench-results/hexbz-factor-sweep-hex-aaabcf15-chungus2.json`
-  (lattice and no-decline classical; SHA-256
-  `30e56da9aa3c6f4f50faca4ef19e5c4d4f6523362542f2d8967ca7665f62f747`)
+- `reports/bench-results/hexbz-factor-sweep-bf5973a3-hex-chungus2-run5.json`
+  supplies Hex.
+- `reports/bench-results/hexbz-factor-sweep-aa68c920-chungus2.json`
+  supplies FLINT, NTL, PARI, Isabelle BZ, and Isabelle LLL; SHA-256
+  `4de27e389d738abc1e878f0be273485c3723216211a101c3eba55860e7b8a242`.
 
-Unchanged current external exports:
+Both records use a clean worktree, the current corpus hash, the same host and
+protocol, and no early termination. All answering systems agree.
 
-- `hexbz-factor-sweep-flint-5c371a5a-chungus2.json` (SHA-256
-  `f656372a18c85fe5fd35dd415033842de95348f718e89031213bb310fdc88da5`)
-- `hexbz-factor-sweep-pari-5c371a5a-chungus2.json` (SHA-256
-  `fdd253e8944a90f7cdf112a7e36f9d28ec9a481f4c142122ddda47cbd3216ed9`)
-- `hexbz-factor-sweep-ntl-5c371a5a-chungus2.json` (SHA-256
-  `65db4a80bac19ac390e0e495c56bfa7d0a899a240fe71d61a4de60b2796442ed`)
-- `hexbz-factor-sweep-isabelle-bz-5c371a5a-chungus2.json` (SHA-256
-  `da44a233d02f8a321ad50878180366df9f5cacb91e9f657ed8138046f7a21e3f`)
-- `hexbz-factor-sweep-isabelle-lll-5c371a5a-chungus2.json` (SHA-256
-  `512d59e13be1737a71c2f06a93bcdfab4729f0afdfea3452d89f1393dfda2789`)
+## Current summary
 
-The latter paths are relative to `reports/bench-results/`. They retain revision
-`5c371a5a` in their names because that is the code revision at which those
-external services were measured; the corpus and protocol are identical to the
-fresh Hex sweep.
+| System | OK | Timeout | p50 solved | p90 solved | Slowest solved |
+|---|---:|---:|---:|---:|---:|
+| Hex public factor | 377 | 15 | 379.833 us | 7.204 ms | 8.210 s |
+| FLINT | 391 | 1 | 60.089 us | 1.139 ms | 1.241 s |
+| PARI/GP | 391 | 1 | 65.687 us | 1.008 ms | 960.815 ms |
+| NTL | 391 | 1 | 88.160 us | 2.365 ms | 1.305 s |
+| Verified Isabelle BZ | 371 | 21 | 439.591 us | 5.072 ms | 8.179 s |
+| Verified Isabelle LLL | 314 | 78 | 6.036 ms | 1.210 s | 9.474 s |
 
-## Reproducing Hex
+## Regeneration
+
+Build the Hex service, stage the desired external services, then run:
 
 ```sh
 lake build hexbz_factor_service
 taskset -c 0 python3 scripts/bench/factor_sweep.py \
-  --systems hex-factor,hex-lattice,hex-classical-nodecline \
-  --cutoff 10 --no-early-terminate \
-  --output /tmp/hexbz-factor-sweep-hex.json
+  --systems hex-factor,flint,ntl,pari,isabelle-bz,isabelle-lll \
+  --cutoff 10 --no-early-terminate --output /tmp/hexbz-factor-sweep.json
 ```
 
-The unchanged external services can be regenerated with the same command and
-their respective Nix environments:
+Regenerate and verify every plot with:
 
 ```sh
-taskset -c 0 uv run --with python-flint python3 scripts/bench/factor_sweep.py \
-  --systems flint --cutoff 10 --no-early-terminate --output /tmp/flint.json
-taskset -c 0 nix-shell \
-  -p 'python3.withPackages (ps: [ ps.cypari2 ps.cysignals ])' \
-  --run 'python3 scripts/bench/factor_sweep.py --systems pari --cutoff 10 \
-    --no-early-terminate --output /tmp/pari.json'
-taskset -c 0 nix-shell -p ntl gmp pkg-config gcc \
-  --run 'python3 scripts/bench/factor_sweep.py --systems ntl --cutoff 10 \
-    --no-early-terminate --output /tmp/ntl.json'
-nix-shell -p isabelle ghc curl coreutils gnutar gzip \
-  --run 'bash scripts/oracle/setup_bz_isabelle.sh && \
-    bash scripts/oracle/setup_bz_lll_isabelle.sh'
-taskset -c 0 nix-shell -p isabelle ghc curl coreutils gnutar gzip \
-  --run 'python3 scripts/bench/factor_sweep.py \
-    --systems isabelle-bz,isabelle-lll --cutoff 10 \
-    --no-early-terminate --output /tmp/isabelle.json'
+uv run --with matplotlib==3.11.1 python3 scripts/plots/hexbz-cactus.py
+uv run --with matplotlib==3.11.1 python3 scripts/plots/hexbz-cactus.py --check
 ```
 
-Commit-named older exports remain historical records and are not merged into
-this current-corpus summary.
+CI runs `scripts/bench/check_factor_sweep_freshness.py` and the plot `--check`.
+Relevant factorization, corpus, harness, or comparator changes therefore make a
+PR fail until its data and all 25 SVGs are refreshed.
+
+Exact solved ranks around the Hex / verified Isabelle BZ crossover, in both the
+independently sorted cumulative form the charts plot and the paired-testcase
+form, come from the same records:
+
+```sh
+python3 scripts/bench/cactus_rank_table.py --lo 118 --hi 144
+```
+
+The phase-by-phase attribution of that crossover is
+[reports/hexbz-cactus-elbow.md](hexbz-cactus-elbow.md).

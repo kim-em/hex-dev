@@ -306,7 +306,7 @@ polynomial factors.
 
 If two nonzero integer scalars multiply products of monic irreducible factors
 to the same polynomial, the scalars agree and the flattened products have the
-same normalized-factor multiset. This is the Mathlib/UFD core needed by the
+same normalized-factor multiset. This is the Mathlib/UFD result needed by the
 factorization uniqueness theorem after executable factor entries have been
 expanded by multiplicity. The theorem stays public as the clean monic
 specialization; current BZ factorization uniqueness uses the normalize-fixed
@@ -609,7 +609,7 @@ caller instantiates `α := Polynomial (ZMod p)` and transports the
 resulting sub-multiset through an executable factor-list indexing.
 -/
 theorem existsUnique_subset_product_eq_of_dvd_of_squarefree_prod
-    {α : Type*} [CommMonoidWithZero α] [NormalizationMonoid α]
+    {α : Type*} [CommMonoidWithZero α] [StrongNormalizationMonoid α]
     [UniqueFactorizationMonoid α]
     {factors : Multiset α}
     (hirr : ∀ q ∈ factors, Irreducible q)

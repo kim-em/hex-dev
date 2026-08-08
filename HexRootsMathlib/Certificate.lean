@@ -24,11 +24,103 @@ namespace HexRootsMathlib
 
 noncomputable section
 
+namespace ZPoly
+
+/-- Reflection changes the complex polynomial only by composition with
+`-X` and a nonzero sign used to restore a positive leading coefficient. -/
+theorem toPolyℂ_negRoots {p : Hex.ZPoly} (hprim : Hex.ZPoly.Primitive p) :
+    ∃ u : ℂ, u ≠ 0 ∧
+      toPolyℂ p.negRoots = Polynomial.C u * (toPolyℂ p).comp (-Polynomial.X) := by
+  rw [Hex.ZPoly.negRoots_eq_reflect hprim]
+  unfold Hex.ZPoly.normalizePrimitiveSign
+  split
+  · refine ⟨-1, by norm_num, ?_⟩
+    simp [toPolyℂ, HexPolyMathlib.toPolynomial_scale,
+      HexPolyZMathlib.toPolynomial_dilate, Polynomial.map_comp]
+  · refine ⟨1, by norm_num, ?_⟩
+    simp [toPolyℂ, HexPolyZMathlib.toPolynomial_dilate,
+      Polynomial.map_comp]
+
+/-- A root reflects to a root of the normalized reflected polynomial. -/
+theorem isRoot_negRoots {p : Hex.ZPoly} {z : ℂ}
+    (hprim : Hex.ZPoly.Primitive p) (hz : (toPolyℂ p).IsRoot z) :
+    (toPolyℂ p.negRoots).IsRoot (-z) := by
+  obtain ⟨u, hu, hpoly⟩ := toPolyℂ_negRoots hprim
+  change (toPolyℂ p.negRoots).eval (-z) = 0
+  rw [hpoly, Polynomial.eval_mul, Polynomial.eval_C, Polynomial.eval_comp]
+  simp only [Polynomial.eval_neg, Polynomial.eval_X, neg_neg]
+  exact mul_eq_zero.mpr (Or.inr hz)
+
+/-- Leading-sign normalization changes the complex polynomial only by a
+nonzero scalar. -/
+theorem toPolyℂ_normalizePrimitiveSign (p : Hex.ZPoly) :
+    ∃ u : ℂ, u ≠ 0 ∧
+      toPolyℂ (Hex.ZPoly.normalizePrimitiveSign p) =
+        Polynomial.C u * toPolyℂ p := by
+  unfold Hex.ZPoly.normalizePrimitiveSign
+  split
+  · refine ⟨-1, by norm_num, ?_⟩
+    simp [toPolyℂ, HexPolyMathlib.toPolynomial_scale]
+  · refine ⟨1, by norm_num, ?_⟩
+    simp
+
+end ZPoly
+
+namespace DyadicSquare
+
+@[simp] theorem center_neg (s : Hex.DyadicSquare) :
+    center s.neg = -center s := by
+  apply Complex.ext <;>
+    simp [Hex.DyadicSquare.neg, center, Hex.DyadicSquare.center,
+      GaussDyadic.toComplex]
+
+@[simp] theorem radius_neg (s : Hex.DyadicSquare) :
+    radius s.neg = radius s := by
+  simp [radius_eq, Hex.DyadicSquare.neg]
+
+@[simp] theorem openSquare_neg {s : Hex.DyadicSquare} {z : ℂ} :
+    -z ∈ openSquare s.neg ↔ z ∈ openSquare s := by
+  change supDist (-z) (center s.neg) < halfWidth s.neg ↔
+    supDist z (center s) < halfWidth s
+  rw [center_neg]
+  have hwidth : halfWidth s.neg = halfWidth s := by
+    simp [halfWidth_eq, Hex.DyadicSquare.neg]
+  rw [hwidth]
+  unfold supDist
+  rw [show -z - -center s = -(z - center s) by ring]
+  simp [supNorm, abs_sub_comm]
+
+@[simp] theorem closedSquare_neg {s : Hex.DyadicSquare} {z : ℂ} :
+    -z ∈ closedSquare s.neg ↔ z ∈ closedSquare s := by
+  change supDist (-z) (center s.neg) ≤ halfWidth s.neg ↔
+    supDist z (center s) ≤ halfWidth s
+  rw [center_neg]
+  have hwidth : halfWidth s.neg = halfWidth s := by
+    simp [halfWidth_eq, Hex.DyadicSquare.neg]
+  rw [hwidth]
+  unfold supDist
+  rw [show -z - -center s = -(z - center s) by ring]
+  simp [supNorm, abs_sub_comm]
+
+@[simp] theorem disc_neg {s : Hex.DyadicSquare} {z : ℂ} :
+    -z ∈ disc s.neg ↔ z ∈ disc s := by
+  change dist (-z) (center s.neg) < radius s.neg ↔
+    dist z (center s) < radius s
+  rw [center_neg, radius_neg, dist_neg_neg]
+
+@[simp] theorem closedDisc_neg {s : Hex.DyadicSquare} {z : ℂ} :
+    -z ∈ closedDisc s.neg ↔ z ∈ closedDisc s := by
+  change dist (-z) (center s.neg) ≤ radius s.neg ↔
+    dist z (center s) ≤ radius s
+  rw [center_neg, radius_neg, dist_neg_neg]
+
+end DyadicSquare
+
 namespace DyadicRootIsolation
 
 /-- The open counterpart of an atom's selected certified region. -/
 @[expose] def openRegion {p : Hex.ZPoly} (iso : Hex.DyadicRootIsolation p) : Set ℂ :=
-  if Hex.nkWitness p iso.square then
+  if iso.witness.isNK then
     DyadicSquare.openSquare iso.square
   else
     DyadicSquare.disc iso.square
@@ -50,12 +142,83 @@ theorem sound {p : Hex.ZPoly} (iso : Hex.DyadicRootIsolation p) :
     ∃ z, (toPolyℂ p).eval z = 0 ∧ z ∈ openRegion iso ∧
       (toPolyℂ p).derivative.eval z ≠ 0 ∧
       ∀ w, (toPolyℂ p).eval w = 0 → w ∈ region iso → w = z := by
-  rw [openRegion, region]
-  split <;> rename_i hnk
-  · exact NKData.sound hnk
-  · rcases iso.witness with h | h
-    · exact (hnk h).elim
-    · exact PelletWitness.sound h
+  rcases iso with ⟨s, certificate⟩
+  induction certificate with
+  | nk h =>
+      simpa [openRegion, region, Hex.AtomCertificate.isNK] using NKData.sound h
+  | pellet h =>
+      simpa [openRegion, region, Hex.AtomCertificate.isNK] using
+        PelletWitness.sound h
+  | @neg p s hprim certificate ih =>
+      obtain ⟨z, hzroot, hzopen, hzderiv, hzunique⟩ := ih
+      obtain ⟨u, hu, hpoly⟩ := ZPoly.toPolyℂ_negRoots hprim
+      have heval (w : ℂ) :
+          (toPolyℂ p.negRoots).eval w = u * (toPolyℂ p).eval (-w) := by
+        rw [hpoly]
+        simp
+      have hderiv (w : ℂ) :
+          (toPolyℂ p.negRoots).derivative.eval w =
+            -u * (toPolyℂ p).derivative.eval (-w) := by
+        rw [hpoly]
+        simp [Polynomial.derivative_comp]
+      refine ⟨-z, ?_, ?_, ?_, ?_⟩
+      · rw [heval]
+        simp [hzroot]
+      · simp only [openRegion, Hex.AtomCertificate.isNK]
+        rw [openRegion] at hzopen
+        by_cases hkind : certificate.isNK = true
+        · simp only [hkind, if_true] at hzopen ⊢
+          exact DyadicSquare.openSquare_neg.mpr hzopen
+        · simp only [hkind] at hzopen ⊢
+          exact DyadicSquare.disc_neg.mpr hzopen
+      · rw [hderiv, neg_neg]
+        exact mul_ne_zero (neg_ne_zero.mpr hu) hzderiv
+      · intro w hwroot hwregion
+        have hsourceRoot : (toPolyℂ p).eval (-w) = 0 := by
+          rw [heval] at hwroot
+          exact (mul_eq_zero.mp hwroot).resolve_left hu
+        have hsourceRegion : -w ∈
+            DyadicRootIsolation.region ⟨s, certificate⟩ := by
+          simp only [region, Hex.AtomCertificate.isNK] at hwregion ⊢
+          by_cases hkind : certificate.isNK = true
+          · simp only [hkind, if_true] at hwregion ⊢
+            have hiff := DyadicSquare.closedSquare_neg (s := s) (z := -w)
+            simp only [neg_neg] at hiff
+            exact hiff.mp hwregion
+          · simp [hkind] at hwregion ⊢
+            have hiff := DyadicSquare.closedDisc_neg (s := s) (z := -w)
+            simp only [neg_neg] at hiff
+            exact hiff.mp hwregion
+        have hneg : -w = z := hzunique (-w) hsourceRoot hsourceRegion
+        exact neg_eq_iff_eq_neg.mp hneg
+  | @normalize p s certificate ih =>
+      obtain ⟨z, hzroot, hzopen, hzderiv, hzunique⟩ := ih
+      obtain ⟨u, hu, hpoly⟩ := ZPoly.toPolyℂ_normalizePrimitiveSign p
+      have heval (w : ℂ) :
+          (toPolyℂ (Hex.ZPoly.normalizePrimitiveSign p)).eval w =
+            u * (toPolyℂ p).eval w := by
+        rw [hpoly]
+        simp
+      have hderiv (w : ℂ) :
+          (toPolyℂ (Hex.ZPoly.normalizePrimitiveSign p)).derivative.eval w =
+            u * (toPolyℂ p).derivative.eval w := by
+        rw [hpoly]
+        simp
+      refine ⟨z, ?_, ?_, ?_, ?_⟩
+      · rw [heval]
+        exact mul_eq_zero.mpr (Or.inr hzroot)
+      · simpa [openRegion, Hex.AtomCertificate.isNK] using hzopen
+      · rw [hderiv]
+        exact mul_ne_zero hu hzderiv
+      · intro w hwroot hwregion
+        have hsourceRoot : (toPolyℂ p).eval w = 0 := by
+          rw [heval] at hwroot
+          exact (mul_eq_zero.mp hwroot).resolve_left hu
+        apply hzunique w hsourceRoot
+        convert hwregion using 1
+        ext q
+        by_cases hkind : certificate.isNK = true <;>
+          simp [region, Hex.AtomCertificate.isNK, hkind]
 
 end DyadicRootIsolation
 
@@ -246,24 +409,15 @@ theorem root_mem_nestedPellet {p : Hex.ZPoly} {inner outer : Hex.DyadicSquare}
 region even when the same square also happens to carry an NK witness (in
 which case `DyadicRootIsolation.region` selects the closed square). -/
 theorem pelletAtom_mem_region {p : Hex.ZPoly} {s : Hex.DyadicSquare}
-    (h : Hex.witness p s 1) {z : ℂ} (hzroot : (toPolyℂ p).eval z = 0)
+    (h : Hex.witness p s 1) {z : ℂ}
     (hzdisc : z ∈ DyadicSquare.closedDisc s) :
-    z ∈ Certified.region (.atom ⟨s, Or.inr h⟩) := by
-  rw [Certified.region, DyadicRootIsolation.region]
-  split <;> rename_i hnk
-  · obtain ⟨w, hw, -⟩ := NKData.existsUnique_root hnk
-    obtain ⟨a, haRoot, -, -, haUnique⟩ := PelletWitness.sound h
-    have hza : z = a := haUnique z hzroot hzdisc
-    have hwdisc : w ∈ DyadicSquare.closedDisc s :=
-      DyadicSquare.closedSquare_subset_closedDisc s hw.2
-    have hwa : w = a := haUnique w hw.1 hwdisc
-    rw [hza, ← hwa]
-    exact hw.2
-  · exact hzdisc
+    z ∈ Certified.region (.atom ⟨s, .pellet h⟩) := by
+  simpa [Certified.region, DyadicRootIsolation.region,
+    Hex.AtomCertificate.isNK] using hzdisc
 
 private theorem basePellet_mem {p : Hex.ZPoly} {c : Hex.Component} {k : Nat}
     (hk : 0 < k) (hw : Hex.witness p (Hex.encSquare c.squares) k)
-    {z : ℂ} (hzroot : (toPolyℂ p).eval z = 0)
+    {z : ℂ}
     (hzsquare : z ∈ DyadicSquare.closedSquare (Hex.encSquare c.squares)) :
     let cl : Hex.DyadicRootCluster p := ⟨c.squares, k, hk, hw⟩
     z ∈ Certified.region
@@ -271,7 +425,7 @@ private theorem basePellet_mem {p : Hex.ZPoly} {c : Hex.Component} {k : Nat}
   dsimp only
   split <;> rename_i hk1
   · subst k
-    exact pelletAtom_mem_region hw hzroot
+    exact pelletAtom_mem_region hw
       (DyadicSquare.closedSquare_subset_closedDisc _ hzsquare)
   · exact DyadicSquare.closedSquare_subset_closedDisc _ hzsquare
 
@@ -292,7 +446,7 @@ private theorem candidatePellet_mem {p : Hex.ZPoly} {c : Hex.Component} {k : Nat
       (DyadicSquare.closedDisc_subset_of_discInside hins) hzroot hzbase
   split <;> rename_i hk1
   · subst k
-    exact pelletAtom_mem_region hw' hzroot hzcand
+    exact pelletAtom_mem_region hw' hzcand
   · exact hzcand
 
 /-- Each cached-shift Pellet attempt preserves every polynomial root covered
@@ -335,10 +489,10 @@ theorem certifyPelletAtShift_preserves {p : Hex.ZPoly} {c : Hex.Component}
               candidatePellet_mem hk hw₀ hins hw₀' hzroot hzbase
         · have hr : r = base := (Option.some.inj hcert).symm
           subst r
-          exact basePellet_mem hk hw₀ hzroot hzsquare
+          exact basePellet_mem hk hw₀ hzsquare
       · have hr : r = base := (Option.some.inj hcert).symm
         subst r
-        exact basePellet_mem hk hw₀ hzroot hzsquare
+        exact basePellet_mem hk hw₀ hzsquare
     · simp at hcert
   · simp at hcert
 
@@ -383,10 +537,10 @@ theorem certifyPelletExactAt_preserves {p : Hex.ZPoly} {c : Hex.Component}
               candidatePellet_mem hk hw₀ hins hw₀' hzroot hzbase
         · have hr : r = base := (Option.some.inj hcert).symm
           subst r
-          exact basePellet_mem hk hw₀ hzroot hzsquare
+          exact basePellet_mem hk hw₀ hzsquare
       · have hr : r = base := (Option.some.inj hcert).symm
         subst r
-        exact basePellet_mem hk hw₀ hzroot hzsquare
+        exact basePellet_mem hk hw₀ hzsquare
     · simp at hcert
   · simp at hcert
 
@@ -396,7 +550,7 @@ theorem certifyPelletSoft_preserves {p : Hex.ZPoly} {c : Hex.Component}
     {shift : Hex.TaylorShift p (Hex.encSquare c.squares).center}
     {ks : List Nat} {r : Hex.Certified p}
     (hcert : Hex.Component.certifyPelletSoft? p c shift ks = some r)
-    {z : ℂ} (hzroot : (toPolyℂ p).eval z = 0)
+    {z : ℂ}
     (hz : z ∈ Component.region c) : z ∈ Certified.region r := by
   let enc := Hex.encSquare c.squares
   have hzsquare : z ∈ DyadicSquare.closedSquare enc :=
@@ -427,12 +581,12 @@ theorem certifyPelletSoft_preserves {p : Hex.ZPoly} {c : Hex.Component}
         have hr : r = .atom (cl.atomize hk1) := (Option.some.inj hcert).symm
         subst r
         simpa only [dif_pos hk1] using
-          basePellet_mem hs.1 hw hzroot hzsquare
+          basePellet_mem hs.1 hw hzsquare
       · rw [dif_neg hk1] at hcert
         have hr : r = .cluster cl := (Option.some.inj hcert).symm
         subst r
         simpa only [dif_neg hk1] using
-          basePellet_mem hs.1 hw hzroot hzsquare
+          basePellet_mem hs.1 hw hzsquare
   · simp at hcert
 
 /-- The public one-count wrapper has the cached attempt's preservation
@@ -546,9 +700,9 @@ theorem certify_nkThenPellet_cases {p : Hex.ZPoly} {c : Hex.Component}
     let cand := (Hex.newtonSquare p base 1).doubled
     (∃ (_hbase : Hex.nkWitness p base) (_hinside : cand.squareInside base = true)
         (hcand : Hex.nkWitness p cand),
-        r = .atom ⟨cand, Or.inl hcand⟩) ∨
+        r = .atom ⟨cand, .nk hcand⟩) ∨
       (∃ hbase : Hex.nkWitness p base,
-        r = .atom ⟨base, Or.inl hbase⟩) ∨
+        r = .atom ⟨base, .nk hbase⟩) ∨
       ∃ shift,
         Hex.Component.certifyPelletShift? p
           ⟨#[(Hex.encSquare c.squares).doubled.doubled], c.candidateK⟩ shift = some r := by

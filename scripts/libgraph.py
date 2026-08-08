@@ -15,6 +15,10 @@ KNOWN_EXCEPTIONS = {"Hex", "HexManual"}
 BUILD_ONLY_LIBS = {
     "HexLLLBenchSupport",
     "HexGF2BenchSupport",
+    "HexBerlekampKernelProbe",
+    "HexQuadraticNormProbe",
+    "HexMvPolyBenchSupport",
+    "HexMvPolyMathlibProofProbe",
     "HexIntervalExperiment",
     "HexIntervalMathlibExperiment",
     "HexIntervalReplayProbe",
@@ -24,6 +28,7 @@ BUILD_ONLY_LIBS = {
     "HexRCFProofProbe",
     "HexRCFProofProbeScientific",
     "HexConformance",
+    "HexFactorizationModules",
     "HexReleaseTests",
     "HexRCFTests",
     "HexReleaseExamples",

@@ -12,7 +12,7 @@ public import HexPolyZMathlib.PolyParse
 public meta import HexRealRoots.Isolate
 public meta import HexRealRoots.Refine
 public meta import HexRealRoots.Cert
-public meta import HexPolyZ.Core
+public meta import HexPolyZ.IntegerPolynomial
 public meta import HexPolyZMathlib.PolyParse
 public import Lean
 
@@ -257,9 +257,9 @@ meta def emitOfCert (d : IsoData) : MetaM (TSyntax `term) := do
   let chainStxs ← d.chain.mapM zpolyStx
   let chainStx ← `((#[$chainStxs,*] : Array Hex.ZPoly))
   let nLit := natStx d.endpoints.size
-  let isoStxs ← d.endpoints.mapM fun (lo, hi) => do
-    let loStx ← dyadicStx lo
-    let hiStx ← dyadicStx hi
+  let isoStxs ← d.endpoints.mapM fun (lower, upper) => do
+    let loStx ← dyadicStx lower
+    let hiStx ← dyadicStx upper
     `(term| (⟨⟨$loStx, $hiStx, by decide⟩,
         HexRealRootsMathlib.RealRootIsolation.count_one_of_cert (chain := $chainStx)
           (by decide) _ (by decide)⟩ : Hex.RealRootIsolation $fStx))
@@ -285,13 +285,13 @@ meta def emitOfCert (d : IsoData) : MetaM (TSyntax `term) := do
         push_cast
         norm_num :
       (($qStx : ℝ) = HexRealRootsMathlib.Dyadic.toReal $dStx)))
-  let pairStxs ← d.endpoints.mapM fun (lo, hi) => do
-    let loQ ← ratStx lo
-    let hiQ ← ratStx hi
+  let pairStxs ← d.endpoints.mapM fun (lower, upper) => do
+    let loQ ← ratStx lower
+    let hiQ ← ratStx upper
     `(term| ($loQ, $hiQ))
-  let pairPfs ← d.endpoints.mapM fun (lo, hi) => do
-    let loPf ← endpointPf lo
-    let hiPf ← endpointPf hi
+  let pairPfs ← d.endpoints.mapM fun (lower, upper) => do
+    let loPf ← endpointPf lower
+    let hiPf ← endpointPf upper
     `(term| ⟨$loPf, $hiPf⟩)
   `(Hex.IsolatedRealRoots.ofCertPretty (chain := $chainStx)
       (iso := (⟨#[$isoStxs,*], rfl⟩ : Vector (Hex.RealRootIsolation $fStx) $nLit))

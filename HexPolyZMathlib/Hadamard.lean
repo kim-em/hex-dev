@@ -26,7 +26,7 @@ This is genuinely sharper than the entrywise bound {name}`Matrix.det_le`
 (which gives the crude `n! · xⁿ` estimate). Equality holds exactly when the columns are
 pairwise orthogonal.
 
-The proof is the standard QR / Gram-Schmidt route. Writing the columns as vectors of
+The proof is the standard QR / Gram-Schmidt method. Writing the columns as vectors of
 `EuclideanSpace 𝕜 n`, the Gram-Schmidt orthonormal basis `e` makes the change-of-basis
 matrix upper triangular, so
 `e.toBasis.det (columns) = ∏ i, ⟪e i, columns i⟫` (`gramSchmidtOrthonormalBasis_det`).

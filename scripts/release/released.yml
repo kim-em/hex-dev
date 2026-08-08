@@ -3,10 +3,11 @@
 # `hex-dev` is the source of truth. The sync (scripts/release/sync_released.py,
 # driven by .github/workflows/sync-released.yml) regenerates each released repo
 # from this monorepo: it overwrites the repo's *managed* paths from here, leaves
-# everything else (CI, toolchains, LICENSE, manifests) untouched, enables
-# native Verso docstrings in each managed-source repo's root + sidecar
-# lakefiles, rewrites cross-repo Hex pins to the commits just synced, and
-# commits to the released repo's `main`.
+# everything else except the release-wide toolchain and dependency locks
+# untouched, enables native Verso docstrings in each managed-source repo's root
+# + sidecar lakefiles, copies the monorepo's Lean toolchain, synchronizes exact
+# external dependency locks, rewrites cross-repo Hex pins to the commits just
+# synced, and commits to the released repo's `main`.
 #
 # Order is topological (upstream first) so each repo's freshly-pushed SHA is
 # known before its downstream consumers are processed.
@@ -23,6 +24,10 @@
 # `test_modules` lists verification-only modules copied with the source but
 # intentionally absent from the public umbrella; released CI builds them via a
 # non-public `lean_lib` target.
+# `build_modules` lists complete development umbrellas that the released Lake
+# skeleton must build separately from the curated public umbrella.
+# `executables` maps an unmanaged released executable name to its mathematical
+# root module. The sync refuses to publish when the skeleton is stale.
 # `pins` lists the upstream repos whose git rev is rewritten in this repo's root
 # lakefile (matched by their github URL); `lakefile` is that file's format.
 #
@@ -67,7 +72,7 @@ repos:
     fixtures: []
     oracles: []
     pins: []
-    lakefile: toml
+    lakefile: lean
 
   - repo: leanprover/hex-poly
     lib: HexPoly
@@ -80,6 +85,20 @@ repos:
     pins: []
     lakefile: toml
 
+  - repo: leanprover/hex-mv-poly
+    lib: HexMvPoly
+    test_modules: [HexMvPoly.KernelTests]
+    umbrella: true
+    spec: hex-mv-poly
+    bench: true
+    bench_files: [HexMvPolyCorpus.lean]
+    conformance: true
+    conformance_files: [HexMvPolyFixtures.lean]
+    fixtures: [HexMvPoly]
+    oracles: [mvpoly_sympy.py, common.py]
+    pins: [hex-basic, hex-poly]
+    lakefile: toml
+
   - repo: leanprover/hex-mod-arith
     lib: HexModArith
     umbrella: true
@@ -89,7 +108,7 @@ repos:
     fixtures: []
     oracles: []
     pins: [hex-arith]
-    lakefile: toml
+    lakefile: lean
 
   - repo: leanprover/hex-poly-mathlib
     lib: HexPolyMathlib
@@ -100,6 +119,17 @@ repos:
     fixtures: []
     oracles: []
     pins: [hex-poly]
+    lakefile: toml
+
+  - repo: leanprover/hex-mv-poly-mathlib
+    lib: HexMvPolyMathlib
+    umbrella: true
+    spec: hex-mv-poly-mathlib
+    bench: false
+    conformance: true
+    fixtures: []
+    oracles: []
+    pins: [hex-basic, hex-poly, hex-mv-poly, hex-poly-mathlib]
     lakefile: toml
 
   - repo: leanprover/hex-poly-fp
@@ -148,6 +178,7 @@ repos:
 
   - repo: leanprover/hex-hensel
     lib: HexHensel
+    precompile_modules: true
     umbrella: true
     spec: hex-hensel
     bench: true
@@ -362,6 +393,7 @@ repos:
 
   - repo: leanprover/hex-lll
     lib: HexLLL
+    executables: {hexlll_external_reduction: HexLLL.ExternalReduction}
     umbrella: true
     spec: hex-lll
     bench: true
@@ -385,6 +417,7 @@ repos:
   - repo: leanprover/hex-berlekamp-zassenhaus
     lib: HexBerlekampZassenhaus
     test_modules: [HexBerlekampZassenhaus.FactorTacticTests]
+    build_modules: [HexBerlekampZassenhaus.All]
     umbrella: true
     spec: hex-berlekamp-zassenhaus
     bench: true
@@ -407,7 +440,10 @@ repos:
 
   - repo: leanprover/hex-berlekamp-zassenhaus-mathlib
     lib: HexBerlekampZassenhausMathlib
-    test_modules: [HexBerlekampZassenhausMathlib.FactorPolyTests]
+    test_modules:
+      - HexBerlekampZassenhausMathlib.FactorPolyTests
+      - HexBerlekampZassenhausMathlib.IrreducibilityTests
+    build_modules: [HexBerlekampZassenhausMathlib.All]
     umbrella: true
     spec: hex-berlekamp-zassenhaus-mathlib
     bench: false
@@ -422,5 +458,5 @@ repos:
   # repo). Listed last so every pin resolves to a commit synced this run.
   - repo: leanprover/hex
     pins_only: true
-    pins: [hex-basic, hex-arith, hex-poly, hex-mod-arith, hex-poly-mathlib, hex-poly-fp, hex-poly-z, hex-mod-arith-mathlib, hex-gfq-ring, hex-hensel, hex-poly-z-mathlib, hex-hensel-mathlib, hex-roots, hex-real-roots, hex-roots-mathlib, hex-real-roots-mathlib, hex-matrix, hex-row-reduce, hex-berlekamp, hex-determinant, hex-bareiss, hex-matrix-mathlib, hex-row-reduce-mathlib, hex-determinant-mathlib, hex-bareiss-mathlib, hex-berlekamp-mathlib, hex-gram-schmidt, hex-gram-schmidt-mathlib, hex-lll, hex-berlekamp-zassenhaus, hex-lll-mathlib, hex-berlekamp-zassenhaus-mathlib]
+    pins: [hex-basic, hex-arith, hex-poly, hex-mv-poly, hex-mod-arith, hex-poly-mathlib, hex-mv-poly-mathlib, hex-poly-fp, hex-poly-z, hex-mod-arith-mathlib, hex-gfq-ring, hex-hensel, hex-poly-z-mathlib, hex-hensel-mathlib, hex-roots, hex-real-roots, hex-roots-mathlib, hex-real-roots-mathlib, hex-matrix, hex-row-reduce, hex-berlekamp, hex-determinant, hex-bareiss, hex-matrix-mathlib, hex-row-reduce-mathlib, hex-determinant-mathlib, hex-bareiss-mathlib, hex-berlekamp-mathlib, hex-gram-schmidt, hex-gram-schmidt-mathlib, hex-lll, hex-berlekamp-zassenhaus, hex-lll-mathlib, hex-berlekamp-zassenhaus-mathlib]
     lakefile: toml

@@ -3,7 +3,7 @@
 Proves correctness of Hensel lifting algorithms and the uniqueness
 theorem for coprime polynomial factorization lifting.
 
-**Key lemma — coprimality lifts through p^k:**
+**Key lemma: coprimality lifts through p^k.**
 ```lean
 theorem coprime_mod_p_lifts (g h : Polynomial ℤ) (p : ℕ) (k : ℕ)
     [Fact (Nat.Prime p)] (hk : 0 < k) :
@@ -69,12 +69,12 @@ lifting Bezout coefficients.
 **Mathlib infrastructure used:**
 - `Polynomial.map` + `map_mul`, `map_sub` (congruences as equalities)
 - `IsCoprime.map` (coprimality through ring homs)
-- `EuclideanDomain` for `Polynomial (ZMod p)` (GCD, Bezout — ZMod p only)
+- `EuclideanDomain` for `Polynomial (ZMod p)` (GCD and Bezout over `ZMod p` only)
 - `C_dvd_iff_dvd_coeff` (coefficient-wise divisibility)
 - `Monic.map`, `Monic.natDegree_mul` (degree control)
 - `map_divByMonic`, `map_modByMonic` (division commutes with ring homs)
 
-Do NOT use `EuclideanDomain` over `ZMod (p^k)` for `k > 1` — it is
+Do NOT use `EuclideanDomain` over `ZMod (p^k)` for `k > 1`; it is
 not a field. Use monic division there.
 
 **Glue lemmas to prove locally:**

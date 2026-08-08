@@ -11,56 +11,14 @@ public import Std
 public section
 
 /-!
-Lemmas reproduced from Batteries.
+Mathlib-free list helpers used by the Hex libraries.
 
-These are the `Batteries` lemmas the Mathlib-free `hex` libraries (`HexMatrix`,
-`HexRowReduce`, `HexDeterminant`, `HexGramSchmidt`, `HexBerlekamp`) relied on but
-which are not (yet) in the Lean core library. They are reproduced here, with
-names and signatures identical to the Batteries originals, so the Mathlib-free
-libraries do not need to depend on Batteries.
-
-Keeping the signatures identical to Batteries is deliberate: the `*Mathlib`
-bridge libraries pull Batteries in via Mathlib, so both copies coexist there.
-Lean accepts duplicate declarations from different modules when their signatures
-match (the proofs may differ), so there is no clash. If you change a signature
-here it will collide with Batteries in the bridge libraries.
+The compatibility declarations this module previously reproduced from Batteries
+(`pairwise_lt_finRange`, `nodup_finRange`, `perm_ext_iff_of_nodup`, and the
+`idxOf` lemmas) entered Lean core in v4.33 and no longer belong here.
 -/
 
 namespace List
-
-/-- The `Batteries.Data.List.Lemmas` strict-order property for `List.finRange`. -/
-theorem pairwise_lt_finRange (n : Nat) : Pairwise (· < ·) (finRange n) := by
-  rw [pairwise_iff_getElem]
-  intro i j hi hj hlt
-  simp only [getElem_finRange]
-  exact hlt
-
-/-- `List.finRange` contains no duplicate indices. -/
-theorem nodup_finRange (n : Nat) : (finRange n).Nodup :=
-  (pairwise_lt_finRange n).imp Fin.ne_of_lt
-
-/-- Two duplicate-free lists are permutations exactly when they have the same elements.
-The Batteries original has no `[DecidableEq α]`; we match that signature and use
-`classical` in the proof, since core lacks the `Subperm` API Batteries uses. -/
-theorem perm_ext_iff_of_nodup {α} {l₁ l₂ : List α}
-    (d₁ : l₁.Nodup) (d₂ : l₂.Nodup) : l₁ ~ l₂ ↔ ∀ a, a ∈ l₁ ↔ a ∈ l₂ := by
-  classical
-  rw [perm_iff_count]
-  refine ⟨fun h a => by rw [← count_pos_iff, ← count_pos_iff, h], fun h a => ?_⟩
-  rw [d₁.count, d₂.count]
-  simp only [h a]
-
-/-- Indexing a list at the position returned by {name}`idxOf` recovers the element. -/
-@[simp, grind =]
-theorem getElem_idxOf [BEq α] [LawfulBEq α] {x : α} {xs : List α}
-    (h : idxOf x xs < xs.length) : xs[xs.idxOf x] = x := by
-  induction xs <;> grind
-
-/-- In a duplicate-free list, {name}`idxOf` recovers the index of an element. -/
-@[simp, grind =]
-theorem Nodup.idxOf_getElem [BEq α] [LawfulBEq α] {xs : List α} (H : Nodup xs)
-    (i : Nat) (h : i < xs.length) : idxOf xs[i] xs = i := by
-  induction xs generalizing i <;> grind
 
 /-- A `Nodup` list contained in another list is no longer than it. Replaces uses
 of `Batteries`' `Subperm` API (`subperm_of_subset`/`Subperm.length_le`), which

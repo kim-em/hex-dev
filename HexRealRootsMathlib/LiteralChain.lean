@@ -313,9 +313,16 @@ theorem literalCount_eq_card_roots (p : Hex.ZPoly) (chain : Array Hex.ZPoly)
     (I : Hex.DyadicInterval) :
     (Hex.sturmVarAt chain I.lower : Int) - Hex.sturmVarAt chain I.upper =
       (Literal.rootsIn (toPolyℝ p) I).card := by
+  classical
   rw [sturmVarAt_eq, sturmVarAt_eq]
-  simpa only [Literal.rootsIn, Literal.InInterval] using
-    Sturm.sturm_half_open hp hsf hchain (toReal_lt_toReal I.lt)
+  rw [Literal.rootsIn]
+  have h := Sturm.sturm_half_open hp hsf hchain (toReal_lt_toReal I.lt)
+  rw [h]
+  norm_cast
+  apply congrArg Multiset.card
+  apply Multiset.filter_congr
+  intro x _hx
+  rfl
 
 /-- A literal chain's variation drop at infinity is the exact total number of
 real roots. -/

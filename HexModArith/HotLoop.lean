@@ -8,7 +8,7 @@ module
 
 public import HexArith.Barrett.Context
 public import HexArith.Montgomery.Context
-public import HexModArith.Basic
+public import HexModArith.Residue
 public import HexModArith.Ring
 
 public section

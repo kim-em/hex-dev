@@ -15,14 +15,14 @@ public section
 The `irreducibility` term elaborator and tactic.
 
 `irreducibility f` elaborates to a proof of `Hex.FpPoly.Irreducible f`
-(further input types via providers): the compiled Rabin certificate generator
+(further input types via extensions): the compiled Rabin certificate generator
 runs at elaboration time, and the emitted proof applies
 `Berlekamp.irreducible_of_checkMonicCert_scale` to reified literal data, so
 the kernel replays only the certificate check.
 
 Tactic forms: `irreducibility f` adds `this : … .Irreducible f`,
 `irreducibility h : f` names it `h`, and bare `irreducibility` closes a goal
-of the form `FpPoly.Irreducible e` (providers extend the goal shapes).
+of the form `FpPoly.Irreducible e` (extensions extend the goal shapes).
 -/
 
 namespace Hex.FactorTactic
@@ -37,8 +37,8 @@ meta def proveFpIrreducible (tactic : String) (p : Nat)
     (pE boundsE fE : Expr) : MetaM Expr := do
       let hp : Hex.Nat.Prime p := Hex.Nat.isPrimeTrial_isPrime hpt
       let f ← evalFpPoly tactic p pE boundsE fE
-      let fLit := Hex.CertReify.reifyFpPolyOfNats pE boundsE
-        (Hex.CertReify.fpCoeffNats f)
+      let fLit := Hex.CertificateSyntax.reifyFpPolyOfNats pE boundsE
+        (Hex.CertificateSyntax.fpCoeffNats f)
       unless ← isDefEq fLit fE do
         throwError "{tactic}: the polynomial{indentExpr fE}\
             \nevaluates to{indentExpr fLit}\
@@ -60,10 +60,10 @@ meta def proveFpIrreducible (tactic : String) (p : Nat)
                 \nis not irreducible over F_{p}: factor_poly finds \
                 {factors.length} irreducible factors (with multiplicity)"
         | some cert =>
-            let mE := Hex.CertReify.reifyFpPolyOfNats pE boundsE
-              (Hex.CertReify.fpCoeffNats m)
-            let cE := Hex.CertReify.reifyZMod64 pE boundsE unit.toNat
-            let certE := Hex.CertReify.reifyRabinCert cert
+            let mE := Hex.CertificateSyntax.reifyFpPolyOfNats pE boundsE
+              (Hex.CertificateSyntax.fpCoeffNats m)
+            let cE := Hex.CertificateSyntax.reifyZMod64 pE boundsE unit.toNat
+            let certE := Hex.CertificateSyntax.reifyRabinCert cert
             -- Untrusted-search self-checks before emitting anything.
             unless decide (unit = 0) = false &&
                 Hex.DensePoly.beqCoeffs (Hex.DensePoly.scale unit m) f &&
@@ -73,13 +73,13 @@ meta def proveFpIrreducible (tactic : String) (p : Nat)
             return mkApp10
               (mkConst ``Hex.Berlekamp.irreducible_of_checkMonicCert_scale)
               pE boundsE fE mE cE certE
-              Hex.CertReify.reflTrue Hex.CertReify.reflFalse
-              Hex.CertReify.reflTrue Hex.CertReify.reflTrue
+              Hex.CertificateSyntax.reflTrue Hex.CertificateSyntax.reflFalse
+              Hex.CertificateSyntax.reflTrue Hex.CertificateSyntax.reflTrue
       else
         throwError "{tactic}: internal error: non-monic normalization; \
             please report this"
 
-/-- Dispatch the `irreducibility` elaboration for `f : FpPoly p`. -/
+/-- Elaborate `irreducibility f` for `f : FpPoly p`. -/
 meta def elabIrreducibilityFp (tactic : String) (p : Nat)
     (pE boundsE fE : Expr) : MetaM Expr := do
   if hpt : Hex.Nat.isPrimeTrial p = true then
@@ -96,8 +96,8 @@ meta def elabIrreducibilityFp (tactic : String) (p : Nat)
     throwError "{tactic}: the modulus {p} is not prime; irreducibility over \
         Z/{p} needs a prime field"
 
-/-- Elaborate an `irreducibility` argument and produce the proof, dispatching
-to providers for non-`FpPoly` input types. -/
+/-- Elaborate an `irreducibility` argument and produce the proof, selecting
+to extensions for non-`FpPoly` input types. -/
 meta def elabIrreducibilityArgument (stx : Syntax) (t : Syntax)
     (expectedType? : Option Expr) : Term.TermElabM Expr := do
   let pE ← Term.elabTerm t none
@@ -109,12 +109,12 @@ meta def elabIrreducibilityArgument (stx : Syntax) (t : Syntax)
   | .fp p pE' boundsE _ _ _ =>
       elabIrreducibilityFp "irreducibility" p pE' boundsE pE
   | _ =>
-      dispatch (fun prov => prov.irreducibility? stx pE ty expectedType?)
+      applyExtensions (fun prov => prov.irreducibility? stx pE ty expectedType?)
         (fun declines =>
           throwError (unsupportedMessage "irreducibility" ty declines))
 
 /-- `irreducibility f` elaborates to a proof that `f` is irreducible
-(`Hex.FpPoly.Irreducible f` for `f : FpPoly p`; providers add further input
+(`Hex.FpPoly.Irreducible f` for `f : FpPoly p`; extensions add further input
 types). -/
 syntax (name := irreducibilityTerm) "irreducibility" term:max : term
 
@@ -162,9 +162,9 @@ syntax (name := irreducibilityTac)
         let goal ← Tactic.getMainGoal
         if ← goalIrredFp goal then
           return
-        -- Providers get the goal next; collect decline diagnostics.
+        -- Extensions get the goal next; collect decline diagnostics.
         let mut declines : Array MessageData := #[]
-        for prov in (← providers) do
+        for prov in (← extensions) do
           match ← prov.goalIrred? goal with
           | .success e =>
               goal.assign e

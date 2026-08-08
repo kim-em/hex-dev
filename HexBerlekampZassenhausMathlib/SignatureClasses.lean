@@ -25,7 +25,7 @@ filter-based partition: the classes are the equivalence classes of
 `j ~ k iff sig j = sig k`, emitted in order of first occurrence by
 ascending column index, with each class's member list ascending.
 
-The class-count lower bound for the lattice-tier adequacy consumes
+The class-count lower bound for the lattice-method adequacy consumes
 this fact to match the executable indicator output against the canonical
 signature partition, together with the RREF column-agreement equivalence
 (`rowReduce_columnAgreement_iff_forall_mem_span_coord_eq`): two echelon columns
@@ -163,6 +163,7 @@ theorem representativeColumns_succ_of_match
     simp [List.filter, hisEmpty]
   rw [hsuffix, List.append_nil]
 
+/-- A representative column is the least index with its row-reduced signature. -/
 theorem mem_representativeColumns_iff
     (m : Nat) (sig : Nat → Array Rat) (rep : Nat) :
     rep ∈ representativeColumns m sig ↔
@@ -507,7 +508,7 @@ theorem bhksInsertSignatureClass_fold_eq_partitionByMinColumn
 
 
 /-!
-# RREF column agreement (BHKS Lemma 3.3 linear-algebra core)
+# RREF column agreement (BHKS Lemma 3.3 linear-algebra statement)
 
 Two columns of the computed RREF echelon matrix agree exactly when every
 vector in the original row span has equal coordinates at those columns.

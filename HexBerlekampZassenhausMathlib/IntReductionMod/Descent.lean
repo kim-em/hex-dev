@@ -6,8 +6,8 @@ Authors: Kim Morrison
 
 module
 
-public import HexBerlekampZassenhausMathlib.ToMonicUniqueness
-public import HexBerlekampMathlib.Basic
+public import HexBerlekampZassenhausMathlib.ModPFactorization
+public import HexBerlekampMathlib.Irreducibility
 public import Mathlib.Data.ZMod.Basic
 public import Mathlib.RingTheory.Polynomial.Content
 public import Mathlib.Algebra.Polynomial.Degree.Lemmas
@@ -17,6 +17,9 @@ public import Mathlib.FieldTheory.Separable
 public import Mathlib.FieldTheory.Perfect
 public import Mathlib.RingTheory.Polynomial.Radical
 public import Mathlib.RingTheory.Polynomial.GaussLemma
+import all HexBerlekampZassenhausMathlib.ModularPolynomial
+import all HexBerlekampZassenhausMathlib.ModPFactor
+import all HexBerlekampZassenhausMathlib.SubsetCoprimality
 
 public section
 set_option backward.proofsInPublic true
@@ -34,25 +37,6 @@ namespace IntReductionMod
 open Polynomial
 
 variable {p : ℕ}
-
-private theorem precision_of_le
-    {B L p : Nat} (hp : 2 ≤ p) (hBL : B ≤ L) :
-    2 * B < p ^ Hex.precisionForCoeffBound L p := by
-  have hspec : 2 * L < p ^ Hex.precisionForCoeffBound L p :=
-    Hex.precisionForCoeffBound_spec hp L
-  omega
-
-theorem exhaustiveLiftBound_precision
-    (core : Hex.ZPoly) (B p : Nat) (hp : 2 ≤ p) :
-    2 * B <
-      p ^ Hex.precisionForCoeffBound (Hex.ZPoly.exhaustiveLiftBound core B) p :=
-  precision_of_le hp (Hex.ZPoly.le_exhaustiveLiftBound core B)
-
-theorem exhaustiveLiftBound_monic_precision
-    (core : Hex.ZPoly) (B p : Nat) (hp : 2 ≤ p) :
-    2 * Hex.ZPoly.defaultFactorCoeffBound (Hex.ZPoly.toMonic core).monic <
-      p ^ Hex.precisionForCoeffBound (Hex.ZPoly.exhaustiveLiftBound core B) p :=
-  precision_of_le hp (Hex.ZPoly.monicBound_le_exhaustiveLiftBound core B)
 
 /--
 The executable coefficientwise reduction `Hex.ZPoly.modP` agrees with
@@ -217,9 +201,9 @@ theorem irreducible_of_isPrimitive_of_irreducible_map_intCast_zmod
 /--
 `Hex.ZPoly`-level transfer of `irreducible_of_isPrimitive_of_irreducible_map_intCast_zmod`.
 
-Given a `Hex.ZPoly` core whose Mathlib image is primitive, with a prime `p`
+Given a `Hex.ZPoly` square-free part whose Mathlib image is primitive, with a prime `p`
 whose action via `Int.castRingHom (ZMod p)` does not kill the leading
-coefficient, and with the reduction Mathlib-irreducible, the original core is
+coefficient, and with the reduction Mathlib-irreducible, the original polynomial is
 `Hex.ZPoly.Irreducible` via the existing equivalence.
 -/
 theorem Hex_ZPoly_Irreducible_of_irreducible_map_intCast_zmod
@@ -233,12 +217,12 @@ theorem Hex_ZPoly_Irreducible_of_irreducible_map_intCast_zmod
       Irreducible
         ((HexPolyZMathlib.toPolynomial core).map (Int.castRingHom (ZMod p)))) :
     Hex.ZPoly.Irreducible core :=
-  (HexBerlekampZassenhausMathlib.Hex.ZPoly.polynomialIrreducible_iff_irreducible core).mp
+  (Hex.ZPoly.polynomialIrreducible_iff_irreducible core).mp
     (irreducible_of_isPrimitive_of_irreducible_map_intCast_zmod
       hprim hlc_map_ne hirr)
 
 /--
-Small-mod singleton branch core irreducibility, stated at the executable
+Small-mod singleton branch primitive-square-free-part irreducibility, stated at the executable
 `Hex.ZPoly` level.
 
 The branch-specific executable facts identify the relevant modular image as
@@ -291,10 +275,10 @@ theorem Hex_ZPoly_Irreducible_of_primeChoice_fModP
 
 /--
 Small-mod singleton branch irreducibility package for the selected
-square-free core.
+primitive square-free part.
 
 The branch hypotheses mirror the executable shape: the fast path
-reassembles from the singleton square-free core when the selected modular
+reassembles from the singleton primitive square-free part when the selected modular
 factor list has size at most one.  The mathematical irreducibility payload is
 kept as an explicit `PrimeChoiceData.fModP` irreducibility hypothesis, so the
 eventual Berlekamp singleton theorem can replace it directly.
@@ -323,8 +307,7 @@ theorem squareFreeCore_irreducible_of_small_mod_singleton
     (core := core)
     hfModP_eq hprim hlc_map_ne hirr_fModP
 
-set_option maxHeartbeats 4000000 in
-/-- A bridged executable polynomial that transports to a unit has executable
+/-- A transported executable polynomial that transports to a unit has executable
 size one, hence passes the `gcdIsUnit` size check when used as a gcd. -/
 private theorem size_eq_one_of_toMathlibPolynomial_isUnit
     {p : Nat} [Hex.ZMod64.Bounds p] [Fact (Nat.Prime p)]
@@ -377,7 +360,6 @@ private theorem isUnitPolynomial_of_gcdIsUnit
   rw [Hex.DensePoly.degree?_eq_some_of_pos_size g hpos, hsize]
   rfl
 
-set_option maxHeartbeats 4000000 in
 /--
 The executable square-free check records that the raw Euclidean gcd is a
 nonzero constant.  After transport to Mathlib this is enough to give
@@ -508,7 +490,6 @@ private theorem gcd_monicModularImage_derivative_isUnit
   change (g.size == 1) = true
   exact beq_iff_eq.mpr hg_size
 
-set_option maxHeartbeats 4000000
 
 /--
 Small-mod singleton irreducibility composed without the explicit
@@ -524,9 +505,8 @@ Mathlib irreducibility of `fModP` and finally to integer-level
 irreducibility of `core`.
 
 The square-free precondition on the monic modular image is supplied
-explicitly. Use
-`squareFreeCore_irreducible_of_small_mod_singleton_of_choosePrimeData_squareFreeModP`
-when the selected prime's executable `squareFreeModP` check should provide it.
+explicitly. `irreducible_of_smallMod` derives it from the selected good-prime
+record.
 -/
 theorem irreducible_of_smallMod_form
     (core : Hex.ZPoly) (primeData : Hex.PrimeChoiceData)
@@ -560,8 +540,8 @@ theorem irreducible_of_smallMod_form
   letI : Hex.ZMod64.PrimeModulus primeData.p := Hex.ZMod64.primeModulusOfPrime hprime_hex
   have hformCopy := hform
   obtain ⟨_, hzero, hfactors_eq⟩ := hformCopy
-  let hfield := @Hex.zmod64FieldOfPrime primeData.p primeData.bounds
-    (Hex.ZMod64.primeModulusOfPrime hprime_hex)
+  let hfield : Hex.ZMod64.PrimeModulus primeData.p :=
+    Hex.ZMod64.primeModulusOfPrime hprime_hex
   letI := hfield
   -- Translate factorsModP.size ≤ 1 into bfact.factors.length ≤ 1.
   have hfactors_len_le :
@@ -666,33 +646,6 @@ theorem irreducible_of_smallMod_form
     (p := primeData.p) (core := core)
     hprim hlc_map_ne hirr_fModP
 
-/-- Compatibility wrapper for the ordinary first-good selector. -/
-theorem squareFreeCore_irreducible_of_small_mod_singleton_of_choosePrimeData
-    (core : Hex.ZPoly) (primeData : Hex.PrimeChoiceData)
-    (hselected : Hex.choosePrimeData? core = some primeData)
-    (hcore_pos : 0 < core.degree?.getD 0)
-    (hsmall : primeData.factorsModP.size ≤ 1)
-    (hprim : (HexPolyZMathlib.toPolynomial core).IsPrimitive)
-    (hlc_map_ne :
-      (Int.castRingHom (ZMod primeData.p))
-        (HexPolyZMathlib.toPolynomial core).leadingCoeff ≠ 0)
-    (hsquareFree_monic :
-      Hex.gcdIsUnit
-        (Hex.DensePoly.gcd
-          (@Hex.monicModularImage primeData.p primeData.bounds
-            (@Hex.ZPoly.modP primeData.p primeData.bounds core))
-          (Hex.DensePoly.derivative
-            (@Hex.monicModularImage primeData.p primeData.bounds
-              (@Hex.ZPoly.modP primeData.p primeData.bounds core)))) = true) :
-    Hex.ZPoly.Irreducible core := by
-  have hprime := Hex.choosePrimeData?_prime core primeData hselected
-  have hgood := Hex.choosePrimeData?_isGoodPrime core primeData hselected
-  obtain ⟨hzero, heq⟩ :=
-    Hex.choosePrimeData?_factorsModP_berlekamp_form core primeData hselected
-  exact irreducible_of_smallMod_form core primeData hprime hgood
-    ⟨hprime, hzero, heq⟩ hcore_pos hsmall hprim hlc_map_ne hsquareFree_monic
-
-set_option maxHeartbeats 4000000
 
 /--
 Small-mod singleton irreducibility for a selected good-prime record, deriving
@@ -741,26 +694,6 @@ theorem irreducible_of_smallMod
       (p := primeData.p) (Hex.ZPoly.modP primeData.p core) hzero hsquareFree_modP
   exact irreducible_of_smallMod_form core primeData hprime_hex hgood hform
     hcore_pos hsmall hprim hlc_map_ne hsquareFree_monic
-
-/-- Compatibility wrapper for the ordinary first-good selector. -/
-theorem squareFreeCore_irreducible_of_small_mod_singleton_of_choosePrimeData_squareFreeModP
-    (core : Hex.ZPoly) (primeData : Hex.PrimeChoiceData)
-    (hselected : Hex.choosePrimeData? core = some primeData)
-    (hcore_pos : 0 < core.degree?.getD 0)
-    (hsmall : primeData.factorsModP.size ≤ 1)
-    (hprim :
-      (HexPolyZMathlib.toPolynomial core).IsPrimitive)
-    (hlc_map_ne :
-      (Int.castRingHom (ZMod primeData.p))
-        (HexPolyZMathlib.toPolynomial core).leadingCoeff ≠ 0) :
-    Hex.ZPoly.Irreducible core := by
-  have hprime := Hex.choosePrimeData?_prime core primeData hselected
-  have hgood : @Hex.isGoodPrime core primeData.p primeData.bounds = true :=
-    Hex.choosePrimeData?_isGoodPrime core primeData hselected
-  obtain ⟨hzero, heq⟩ :=
-    Hex.choosePrimeData?_factorsModP_berlekamp_form core primeData hselected
-  exact irreducible_of_smallMod core primeData hprime hgood
-    ⟨hprime, hzero, heq⟩ hcore_pos hsmall hprim hlc_map_ne
 
 /-- The Mathlib image over `ZMod p` of the monic modular reduction selected by a
 successful `choosePrimeData?` run is squarefree.
@@ -827,41 +760,6 @@ theorem squarefree_toMathlibPolynomial_monicModPImage_of_goodPrime
     Polynomial.Separable.squarefree hsep
   rwa [monicModPImage_eq_monicModularImage]
 
-/-- **modP pairwise-disjointness from a `choosePrimeData?` witness.**
-
-Specialisation of `modPFactorSubset_disjoint_of_not_associated` to the executable
-`choosePrimeData?` boundary: the selected prime is `isGoodPrime`, which supplies
-both the nonzero mod-`p` core (`isGoodPrime_modP_isZero_false`) and the modular
-squarefreeness (`squarefree_toMathlibPolynomial_monicModPImage_of_choosePrimeData`)
-that the bare `ModPSubsetPartitionHypotheses … True True` package fills with
-`trivial`. -/
-theorem modPFactorSubset_disjoint_of_modPFactorization
-    {core : Hex.ZPoly} {primeData : Hex.PrimeChoiceData}
-    (hval : ModPFactorization core primeData)
-    (hcore_pos : 0 < core.degree?.getD 0)
-    {f g : Hex.ZPoly} {S T : ModPFactorSubset primeData}
-    (hf_irr : Irreducible (HexPolyZMathlib.toPolynomial f)) (hf_dvd : f ∣ core)
-    (hg_irr : Irreducible (HexPolyZMathlib.toPolynomial g)) (hg_dvd : g ∣ core)
-    (hS : RepresentsIntegerFactorModP primeData f S)
-    (hT : RepresentsIntegerFactorModP primeData g T)
-    (hnotassoc :
-      ¬ Associated (HexPolyZMathlib.toPolynomial f)
-        (HexPolyZMathlib.toPolynomial g)) :
-    Disjoint S T := by
-  letI := primeData.bounds
-  have hprime_hex : Hex.Nat.Prime primeData.p := hval.prime
-  have hgood : @Hex.isGoodPrime core primeData.p primeData.bounds = true :=
-    hval.good
-  have hcore_modP_nz :
-      (@Hex.ZPoly.modP primeData.p primeData.bounds core).isZero = false :=
-    Hex.isGoodPrime_modP_isZero_false core primeData.p hgood
-  exact modPFactorSubset_disjoint_of_not_associated hprime_hex
-    (modPSubsetPartitionHypotheses_of_modPFactorization core primeData hcore_pos hval)
-    hcore_modP_nz
-    (squarefree_toMathlibPolynomial_monicModPImage_of_goodPrime core primeData
-      hval.prime hval.good)
-    hf_irr hf_dvd hg_irr hg_dvd hS hT hnotassoc
-
 /-! # Base discharges for the small-mod singleton branch
 
 The two lemmas below feed `squareFreeCore_irreducible_of_small_mod_singleton`
@@ -912,10 +810,10 @@ theorem normalizeForFactor_squareFreeCore_mul_repeatedPart_primitive_of_ne_zero
       _ hcore_ne
 
 /--
-The square-free core extracted by `normalizeForFactor` is primitive
+The primitive square-free part extracted by `normalizeForFactor` is primitive
 over `Polynomial ℤ` whenever the input integer polynomial is nonzero.
 
-The proof routes through the executable `Hex.ZPoly.Primitive` predicate
+The proof uses the executable `Hex.ZPoly.Primitive` predicate
 on `squareFreeCore * repeatedPart` (from
 `primitiveSquareFreeDecomposition_squareFreeCore_repeatedPart_primitive`),
 transports it to `Polynomial ℤ` via
@@ -994,24 +892,24 @@ private theorem isPrimitive_pow {p : Polynomial ℤ} (hp : p.IsPrimitive) (N : N
   | succ N ih =>
       simpa [pow_succ] using ih.mul hp
 
-/-! # Squarefree transport for the square-free core
+/-! # Squarefree transport for the primitive square-free part
 
 The lemmas below identify the executable `Hex.ZPoly.SquareFreeRat` invariant
 (from `Hex.ZPoly.primitiveSquareFreeDecomposition_squareFreeCore`) to
 Mathlib's `Squarefree` over `Polynomial ℤ` via the rational image.  The
 chain is:
 
-1. `toPolynomial_derivative` — `HexPolyMathlib.toPolynomial` intertwines
+1. `toPolynomial_derivative`; `HexPolyMathlib.toPolynomial` intertwines
    the executable `Hex.DensePoly.derivative` with `Polynomial.derivative`.
-2. `toPolynomial_toRatPoly_eq_map_intCast` — `HexPolyMathlib.toPolynomial`
+2. `toPolynomial_toRatPoly_eq_map_intCast`; `HexPolyMathlib.toPolynomial`
    applied to the rational view of an integer polynomial agrees with the
    integer-side `toPolynomial` composed with `Polynomial.map`
    `(Int.castRingHom ℚ)`.
-3. `isCoprime_toPolynomial_map_intCast_derivative_of_squareFreeRat` — the
+3. `isCoprime_toPolynomial_map_intCast_derivative_of_squareFreeRat`; the
    executable square-free invariant transports to coprimeness with the
    formal derivative over `Polynomial ℚ`, using
    `HexPolyMathlib.toPolynomial_gcd_associated` over the field `ℚ`.
-4. `squarefree_of_isPrimitive_of_squarefree_map_intCast` — the Gauss-style
+4. `squarefree_of_isPrimitive_of_squarefree_map_intCast`; the Gauss-style
    descent: a primitive integer polynomial is squarefree whenever its
    rational image is.
 
@@ -1181,7 +1079,7 @@ theorem squarefree_of_isPrimitive_of_squarefree_map_intCast
   rw [hn]
   exact Polynomial.isUnit_C.mpr hn_unit
 
-/-- The rational image of the square-free core extracted by
+/-- The rational image of the primitive square-free part extracted by
 `normalizeForFactor` is separable whenever the input polynomial is nonzero. -/
 theorem normalizeForFactor_squareFreeCore_toPolynomial_separable
     (f : Hex.ZPoly) (hf : f ≠ 0) :
@@ -1196,7 +1094,7 @@ theorem normalizeForFactor_squareFreeCore_toPolynomial_separable
     (Hex.squareFreeCore_squareFreeRat_of_ne_zero f hf)
 
 /--
-The square-free core extracted by `normalizeForFactor` is squarefree over
+The primitive square-free part extracted by `normalizeForFactor` is squarefree over
 `Polynomial ℤ` whenever the input integer polynomial is nonzero.
 
 The proof composes the rational-side squarefreeness obtained from the
@@ -1320,7 +1218,7 @@ theorem zpoly_primitive_of_toPolynomial_isPrimitive
   · rw [hneg] at hcontent_nonneg; omega
 
 /--
-The square-free core extracted by `normalizeForFactor` is executably
+The primitive square-free part extracted by `normalizeForFactor` is executably
 primitive whenever the input integer polynomial is nonzero.
 
 The proof transports

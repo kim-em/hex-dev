@@ -6,7 +6,7 @@ Authors: Kim Morrison
 
 module
 
-public import HexLLL.Basic
+public import HexLLL
 public import HexGramSchmidtMathlib.Int
 public import HexRowReduceMathlib.RankSpanNullspace
 public import Mathlib.Analysis.InnerProductSpace.GramSchmidtOrtho
@@ -60,7 +60,7 @@ theorem lllState_ν_eq_coeffs
 
 /-- Integer Lovász check ↔ rational Lovász condition at pair `(k - 1, k)`.
 
-`Hex.Internal.lllLoop` dispatches on the integer comparison
+`Hex.Internal.lllLoop` selects on the integer comparison
 
 ```
 δ.den * (d[k+1] * d[k-1] + ν[k][k-1]²) ≥ δ.num * d[k]²
@@ -75,7 +75,7 @@ while `Hex.isLLLReduced` quantifies the rational Lovász condition
 over every adjacent pair `(i, i+1)`. Under `s.Valid` and `s.b.independent`,
 the two formulations agree at pair `(k - 1, k)`: the integer scaled
 Gram-Schmidt data carried by `s` faithfully encodes the rational Lovász
-predicate at that position. This bridges the loop's executable check to the
+predicate at that position. This relates the loop's executable check to the
 specification side of `isLLLReduced` so the loop-invariant proof can read off
 "the loop advances ⇒ Lovász holds at this pair." -/
 theorem lovasz_check_iff_isLLLReduced_pair

@@ -208,6 +208,213 @@ higher precision, after both paths canonicalise factors modulo `p^k`.
         (ZPoly.multifactorLiftQuadratic 5 6 qmAdversarialF qmAdversarialFactors) 5 6
 
 /-
+Canonical-coefficient conformance for the quadratic lift (issue #9131).
+
+The quadratic recursion reaches `p^k` from `p^ceil(k/2)`, so for even `k`
+the doubling step lands on `p^k` exactly and its output is already
+canonical there; only an odd `k`, whose step overshoots to `p^(k+1)`,
+needs the descent. The compiled shapes drop the reductions the even case
+makes redundant, and the leaf reduction below the root of the product
+tree, so these checks exercise both parities on both sides of the
+word-to-bignum boundary. `#guard` runs the compiled code, so it sees the
+`@[csimp]` implementations rather than the specifications.
+
+At `p = 5` the word-sized step guard is `m * m < 2^64` for the step's own
+modulus `m = 5^ceil(k/2)`, so `5^13` is the last half-exponent that fits.
+Targets `k = 26` (even, top step at `5^13`, word path) and `k = 27` (odd,
+top step at `5^14`, bignum path) therefore bracket that boundary; `k = 40`
+is the high-precision large-coefficient case, whose coefficients run to
+`5^40 > 9 * 10^27`.
+-/
+
+private def qmParityFactors : Array ZPoly :=
+  #[DensePoly.ofCoeffs #[2, 1, 1],
+    DensePoly.ofCoeffs #[3, 1],
+    DensePoly.ofCoeffs #[4, 1],
+    DensePoly.ofCoeffs #[1, 2, 1]]
+
+private def qmParityF : ZPoly := Array.polyProduct qmParityFactors
+
+-- Even target exponent, both steps inside the word path.
+#guard congrOn
+  (Array.polyProduct (ZPoly.multifactorLiftQuadratic 5 8 qmParityF qmParityFactors))
+  qmParityF (5 ^ 8) 8
+#guard reduceArrModPow (ZPoly.multifactorLift 5 8 qmParityF qmParityFactors) 5 8
+     = reduceArrModPow (ZPoly.multifactorLiftQuadratic 5 8 qmParityF qmParityFactors) 5 8
+
+-- Odd target exponent, where the descent from `p^(k+1)` is genuinely needed.
+#guard congrOn
+  (Array.polyProduct (ZPoly.multifactorLiftQuadratic 5 9 qmParityF qmParityFactors))
+  qmParityF (5 ^ 9) 8
+#guard reduceArrModPow (ZPoly.multifactorLift 5 9 qmParityF qmParityFactors) 5 9
+     = reduceArrModPow (ZPoly.multifactorLiftQuadratic 5 9 qmParityF qmParityFactors) 5 9
+
+-- Even target exponent whose top step is the last one the word path takes.
+#guard congrOn
+  (Array.polyProduct (ZPoly.multifactorLiftQuadratic 5 26 qmParityF qmParityFactors))
+  qmParityF (5 ^ 26) 8
+#guard reduceArrModPow (ZPoly.multifactorLift 5 26 qmParityF qmParityFactors) 5 26
+     = reduceArrModPow (ZPoly.multifactorLiftQuadratic 5 26 qmParityF qmParityFactors) 5 26
+
+-- Odd target exponent whose top step has crossed into the bignum path.
+#guard congrOn
+  (Array.polyProduct (ZPoly.multifactorLiftQuadratic 5 27 qmParityF qmParityFactors))
+  qmParityF (5 ^ 27) 8
+#guard reduceArrModPow (ZPoly.multifactorLift 5 27 qmParityF qmParityFactors) 5 27
+     = reduceArrModPow (ZPoly.multifactorLiftQuadratic 5 27 qmParityF qmParityFactors) 5 27
+
+-- High-precision large-coefficient case, whose top steps take the bignum path
+-- while the lower recursive steps are still inside the word guard.
+#guard congrOn
+  (Array.polyProduct (ZPoly.multifactorLiftQuadratic 5 40 qmParityF qmParityFactors))
+  qmParityF (5 ^ 40) 8
+#guard reduceArrModPow (ZPoly.multifactorLift 5 40 qmParityF qmParityFactors) 5 40
+     = reduceArrModPow (ZPoly.multifactorLiftQuadratic 5 40 qmParityF qmParityFactors) 5 40
+
+-- Every lifted factor is canonical in `[0, p^k)`, which is what the dropped
+-- reductions used to establish and the invariant now establishes instead.
+private def arrCanonical (a : Array ZPoly) (p k : Nat) : Bool :=
+  a.all (fun g => g.toArray.all (fun c => 0 ≤ c ∧ c < ((p ^ k : Nat) : Int)))
+
+#guard arrCanonical (ZPoly.multifactorLiftQuadratic 5 8 qmParityF qmParityFactors) 5 8
+#guard arrCanonical (ZPoly.multifactorLiftQuadratic 5 9 qmParityF qmParityFactors) 5 9
+#guard arrCanonical (ZPoly.multifactorLiftQuadratic 5 26 qmParityF qmParityFactors) 5 26
+#guard arrCanonical (ZPoly.multifactorLiftQuadratic 5 27 qmParityF qmParityFactors) 5 27
+#guard arrCanonical (ZPoly.multifactorLiftQuadratic 5 40 qmParityF qmParityFactors) 5 40
+
+-- The factor-only last step still agrees with the projection of the full
+-- lift, at both parities and on both sides of the word-to-bignum boundary.
+private def qmSplitG : ZPoly := DensePoly.ofCoeffs #[2, 1, 1]
+private def qmSplitH : ZPoly := DensePoly.ofCoeffs #[3, 1]
+private def qmSplitF : ZPoly := qmSplitG * qmSplitH
+
+private def qmSplitS : ZPoly :=
+  FpPoly.liftToZ (ZPoly.normalizedXGCD 5 qmSplitG qmSplitH).left
+private def qmSplitT : ZPoly :=
+  FpPoly.liftToZ (ZPoly.normalizedXGCD 5 qmSplitG qmSplitH).right
+
+private def factorsMatchFullLift (k : Nat) : Bool :=
+  let factors := ZPoly.henselLiftFactors 5 k qmSplitF qmSplitG qmSplitH qmSplitS qmSplitT
+  let full := ZPoly.henselLiftQuadratic 5 k qmSplitF qmSplitG qmSplitH qmSplitS qmSplitT
+  factors.1 == full.g && factors.2 == full.h
+
+#guard factorsMatchFullLift 0
+#guard factorsMatchFullLift 1
+#guard factorsMatchFullLift 8
+#guard factorsMatchFullLift 9
+#guard factorsMatchFullLift 26
+#guard factorsMatchFullLift 27
+#guard factorsMatchFullLift 40
+
+-- The two degenerate precisions the compiled tree walk short-circuits: at
+-- `k = 0` the modulus is `1`, so every lifted factor is zero, and at `k = 1`
+-- the lift is the input factors taken modulo `p`. Both are cases where the
+-- leaf flag is set from a `henselLiftFactors` output, so both are checked
+-- against the linear lift and for canonicity.
+#guard reduceArrModPow (ZPoly.multifactorLift 5 0 qmParityF qmParityFactors) 5 0
+     = reduceArrModPow (ZPoly.multifactorLiftQuadratic 5 0 qmParityF qmParityFactors) 5 0
+#guard reduceArrModPow (ZPoly.multifactorLift 5 1 qmParityF qmParityFactors) 5 1
+     = reduceArrModPow (ZPoly.multifactorLiftQuadratic 5 1 qmParityF qmParityFactors) 5 1
+#guard arrCanonical (ZPoly.multifactorLiftQuadratic 5 1 qmParityF qmParityFactors) 5 1
+#guard (ZPoly.multifactorLiftQuadratic 5 0 qmParityF qmParityFactors).all (· == 0)
+#guard congrOn
+  (Array.polyProduct (ZPoly.multifactorLiftQuadratic 5 1 qmParityF qmParityFactors))
+  qmParityF (5 ^ 1) 8
+
+/-
+Boundary conformance for the windowed canonical representative.
+
+`ZPoly.intModNatImpl` returns a value already in `[0, m)` untouched, covers
+`[-m, 0)` with one addition, and falls back to `Int.emod` elsewhere. The
+`@[csimp]` rule means `#guard` evaluates the windowed form, so these cases
+pin the branch boundaries -- both signs of the window, the two endpoints
+`z = m` and `z = -m`, values outside it, and the degenerate `m = 0`, where
+`Int.emod z 0 = z` and the specification returns `Int.toNat z`.
+-/
+#guard ZPoly.intModNat 0 7 == 0
+#guard ZPoly.intModNat 6 7 == 6
+#guard ZPoly.intModNat 7 7 == 0
+#guard ZPoly.intModNat 8 7 == 1
+#guard ZPoly.intModNat 100 7 == 2
+#guard ZPoly.intModNat (-1) 7 == 6
+#guard ZPoly.intModNat (-7) 7 == 0
+#guard ZPoly.intModNat (-8) 7 == 6
+#guard ZPoly.intModNat (-100) 7 == 5
+#guard ZPoly.intModNat 5 0 == 5
+#guard ZPoly.intModNat (-5) 0 == 0
+#guard ZPoly.intModNat 0 0 == 0
+#guard ZPoly.intModNat (5 ^ 40) (5 ^ 40) == 0
+#guard ZPoly.intModNat (5 ^ 40 - 1) (5 ^ 40) == 5 ^ 40 - 1
+#guard ZPoly.intModNat (-(5 ^ 40)) (5 ^ 40) == 0
+
+/-
+Boundary conformance for the `Int`-valued canonical representative.
+
+`ZPoly.intEmodImpl` returns an already-canonical value as itself, covers
+`[-m, 0)` with one addition, and falls back to `Int.emod` elsewhere; at
+`m = 0` the specification degenerates to `Int.ofNat (Int.toNat z)`. The
+`@[csimp]` rule means `#guard` evaluates the windowed form, so these cases
+pin every branch boundary of the implementation against the reference
+`Int.ofNat (ZPoly.intModNat z m)`.
+-/
+#guard ZPoly.intEmod 0 7 == 0
+#guard ZPoly.intEmod 6 7 == 6
+#guard ZPoly.intEmod 7 7 == 0
+#guard ZPoly.intEmod 8 7 == 1
+#guard ZPoly.intEmod 100 7 == 2
+#guard ZPoly.intEmod (-1) 7 == 6
+#guard ZPoly.intEmod (-7) 7 == 0
+#guard ZPoly.intEmod (-8) 7 == 6
+#guard ZPoly.intEmod (-100) 7 == 5
+#guard ZPoly.intEmod (-(5 ^ 40) - 1) (5 ^ 40) == 5 ^ 40 - 1
+#guard ZPoly.intEmod 5 0 == 5
+#guard ZPoly.intEmod (-5) 0 == 0
+#guard ZPoly.intEmod 0 0 == 0
+
+/-
+Differential conformance for the windowed monic modular division.
+
+`ZPoly.divModMonicModSquare` is `@[csimp]`-swapped to the windowed
+`divModMonicModSquareImpl`, while `ZPoly.divModMonicModSquareAux` carries no
+such rule, so evaluating the two forms compares the compiled windowed loop
+against the specification recursion on the same inputs. The cases pin the
+guard's two sides -- monic divisors at a positive modulus take the windowed
+path, a zero divisor, a non-monic divisor and `m = 0` take the fall-back --
+together with a constant divisor, a remainder whose degree drops by more than
+one in a single elimination, and an exact division that leaves no remainder.
+-/
+private def divSpec (p q : ZPoly) (m : Nat) : ZPoly × ZPoly :=
+  let reduced := QuadraticLiftResult.reduceModSquare p m
+  ZPoly.divModMonicModSquareAux m q reduced.size 0 reduced
+
+private def divAgrees (p q : ZPoly) (m : Nat) : Bool :=
+  ZPoly.divModMonicModSquare p q m == divSpec p q m
+
+/-- `x^3 + 2x^2 + 3x + 4`. -/
+private def divCubic : ZPoly := DensePoly.ofCoeffs #[4, 3, 2, 1]
+/-- `x^5 - x + 7`, whose elimination against `x^2 + 1` drops several degrees. -/
+private def divQuintic : ZPoly := DensePoly.ofCoeffs #[7, -1, 0, 0, 0, 1]
+/-- The monic quadratic `x^2 + 1`. -/
+private def divMonicQuad : ZPoly := DensePoly.ofCoeffs #[1, 0, 1]
+/-- The monic linear `x - 3`. -/
+private def divMonicLin : ZPoly := DensePoly.ofCoeffs #[-3, 1]
+/-- A non-monic divisor, which must take the fall-back path. -/
+private def divNonMonic : ZPoly := DensePoly.ofCoeffs #[1, 0, 2]
+
+#guard divAgrees divCubic divMonicQuad 5
+#guard divAgrees divCubic divMonicLin 5
+#guard divAgrees divCubic 1 5
+#guard divAgrees divQuintic divMonicQuad 5
+#guard divAgrees divQuintic divMonicLin 97
+#guard divAgrees divQuintic divMonicQuad (5 ^ 20)
+#guard divAgrees (divMonicQuad * divMonicLin) divMonicQuad 11
+#guard divAgrees divCubic 0 5
+#guard divAgrees divCubic divNonMonic 5
+#guard divAgrees divCubic divMonicQuad 0
+#guard divAgrees 0 divMonicQuad 5
+#guard divAgrees divMonicLin divMonicQuad 5
+
+/-
 Asymptotic-gap commentary (observation only; no timing assertion).
 
 `multifactorLift` lifts to precision `p^k` via `k - 1` linear steps per

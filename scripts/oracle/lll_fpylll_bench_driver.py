@@ -34,7 +34,7 @@ basis, matching `Hex.LLLBench.intVectorChecksum`. This pairs with
 persistent shape.
 
 Certified-path requests prefix the same matrix syntax with `CERT\t`. The reply
-is the flat integer payload expected by `Hex.LLLProvider.certifyFlat`:
+is the flat integer payload expected by `Hex.ExternalReducer.certifyFlat`:
 `status rows cols hasInverse reduced... transform... inverse...`. This measures
 the fpLLL candidate-production path together with Lean's verified checker.
 

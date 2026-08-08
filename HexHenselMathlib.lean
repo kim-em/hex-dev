@@ -6,8 +6,8 @@ Authors: Kim Morrison
 
 module
 
-public import HexHenselMathlib.Basic
-public import HexHenselMathlib.Correctness
+public import HexHenselMathlib.CoprimeLift
+public import HexHenselMathlib.HenselLemmas
 
 public section
 

@@ -86,6 +86,15 @@ theorem coeffs_upper (b : Matrix Rat n m)
     exact (Nat.ne_of_lt hij) (congrArg Fin.val h)
   simp [coeffs, GramSchmidt.coeffMatrix, GramSchmidt.entry_ofFn, hnot_lt, hne]
 
+/-- Strictly lower-triangular entries store the projection coefficient onto the
+earlier generated basis row. -/
+theorem coeffs_lower (b : Matrix Rat n m) {i j : Fin n}
+    (hji : j.val < i.val) :
+    GramSchmidt.entry (coeffs b) i j =
+      GramSchmidt.projectionCoeff (b.row i) ((basis b).row j) := by
+  simp [coeffs, GramSchmidt.coeffMatrix, GramSchmidt.entry_ofFn,
+    Matrix.row, hji]
+
 /-- Strictly lower-triangular coefficient entries are the rational projection
 coefficient of the input row onto the earlier generated basis row. -/
 theorem coeffs_lower_projection (b : Matrix Rat n m) {i j : Fin n}
@@ -95,8 +104,8 @@ theorem coeffs_lower_projection (b : Matrix Rat n m) {i j : Fin n}
        else
         (b.row i).dotProduct ((basis b).row j) /
           ((basis b).row j).dotProduct ((basis b).row j)) := by
-  simp [coeffs, GramSchmidt.coeffMatrix, GramSchmidt.entry_ofFn,
-    GramSchmidt.projectionCoeff, Matrix.row, hji]
+  rw [coeffs_lower (b := b) hji]
+  rfl
 
 /-- Lower coefficient entries, with the dot product oriented to match
 Mathlib's projection coefficient numerator. -/
@@ -149,8 +158,7 @@ theorem basis_rowSwap_adjacent_prev (b : Matrix Rat n m) (km1 k : Fin n)
   have hcoeff :
       GramSchmidt.projectionCoeff (b.row k) ((GramSchmidt.basisMatrix b).row km1) =
         GramSchmidt.entry (coeffs b) k km1 := by
-    simp [coeffs, basis, GramSchmidt.coeffMatrix, GramSchmidt.entry_ofFn,
-      GramSchmidt.projectionCoeff, Matrix.row, hlt]
+    simpa [basis] using (coeffs_lower (b := b) hlt).symm
   simpa [basis, hcoeff] using hraw
 
 private theorem projectionCoeff_row_later_basis_eq_zero
@@ -306,8 +314,7 @@ theorem basis_rowSwap_adjacent_curr (b : Matrix Rat n m) (km1 k : Fin n)
   have hlt : km1.val < k.val := by omega
   have hmu :
       GramSchmidt.projectionCoeff (b.row k) ((basis b).row km1) = mu := by
-    simp [mu, coeffs, basis, GramSchmidt.coeffMatrix, GramSchmidt.entry_ofFn,
-      GramSchmidt.projectionCoeff, Matrix.row, hlt]
+    simpa [mu] using (coeffs_lower (b := b) hlt).symm
   have hmu_raw :
       GramSchmidt.projectionCoeff (b.row k) ((GramSchmidt.basisMatrix b).row km1) = mu := by
     simpa [basis] using hmu

@@ -77,6 +77,18 @@ private def jsonIntMatrix (rows : List (List Int)) : String := Id.run do
     out := out ++ jsonIntList row
   out.push ']'
 
+private def jsonMvPolyTerms (terms : List (List Nat × Int)) : String := Id.run do
+  let mut out := "["
+  let mut first := true
+  for (exponents, coeff) in terms do
+    if first then
+      first := false
+    else
+      out := out.push ','
+    out := out ++ "[" ++
+      jsonIntList (exponents.map Int.ofNat) ++ "," ++ jsonInt coeff ++ "]"
+  out.push ']'
+
 private def jsonOptionalInt : Option Int → String
   | none   => "null"
   | some n => jsonInt n
@@ -140,6 +152,19 @@ def emitMatrixFixture (lib case : String) (rows : List (List Int)) : IO Unit := 
     ("lib",  jsonString lib),
     ("case", jsonString case),
     ("rows", jsonIntMatrix rows)
+  ]
+
+/-- Emit a canonical or pre-normalization `mvpoly` fixture. Each term is an
+exponent vector paired with its integer coefficient. -/
+def emitMvPolyFixture (lib case : String) (arity : Nat) (order : String)
+    (terms : List (List Nat × Int)) : IO Unit := do
+  emitLine <| jsonObject [
+    ("kind",  jsonString "mvpoly"),
+    ("lib",   jsonString lib),
+    ("case",  jsonString case),
+    ("arity", toString arity),
+    ("order", jsonString order),
+    ("terms", jsonMvPolyTerms terms)
   ]
 
 /-- Emit a `lattice` fixture record (basis as row vectors). -/
@@ -359,6 +384,10 @@ def intListValue (xs : List Int) : String := jsonIntList xs
 
 /-- Integer-matrix result value (rows of integers). -/
 def intMatrixValue (rows : List (List Int)) : String := jsonIntMatrix rows
+
+/-- Multivariate-polynomial result value: exponent/coefficient term pairs. -/
+def mvPolyValue (terms : List (List Nat × Int)) : String :=
+  jsonMvPolyTerms terms
 
 /-- `divmod`-shaped result value: a `[quotient, remainder]` coefficient pair. -/
 def divModValue (quot rem : List Int) : String :=

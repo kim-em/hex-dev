@@ -8,7 +8,7 @@ module
 
 public import HexRCF.SturmCheck
 public import HexRealRoots.Chain
-public import HexPolyZ.Core
+public import HexPolyZ.IntegerPolynomial
 
 public section
 

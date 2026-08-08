@@ -9,12 +9,14 @@ module
 public import HexBerlekampZassenhaus
 public import HexBerlekampZassenhausMathlib.Lattice
 public import HexBerlekampZassenhausMathlib.WordCld
-public import HexHenselMathlib.Correctness
+public import HexHenselMathlib.HenselLemmas
 public import HexPolyZMathlib.Mignotte
 public import HexPolyZMathlib.RobinsonForm
 public import Mathlib.Algebra.Polynomial.FieldDivision
 public import Mathlib.Algebra.BigOperators.Ring.Multiset
 public import Mathlib.Data.Nat.Choose.Bounds
+import all HexBerlekampZassenhausMathlib.FactorBound
+import all HexBerlekampZassenhausMathlib.M1Recovery
 
 public section
 set_option backward.proofsInPublic true
@@ -159,7 +161,7 @@ root `α` of `g.map ℂ`. Under the monic factorisation `f = g * h`, each such
 summand has degree at most `f.natDegree - 1`.
 -/
 private theorem natDegree_h_mul_rootDeletionDerivativeSummand_le
-    (f g h : Polynomial ℤ) (hg_monic : g.Monic) (hfac : f = g * h) (α : ℂ)
+    (f g h : Polynomial ℤ) (hfac : f = g * h) (α : ℂ)
     (hα : α ∈ (g.map (Int.castRingHom ℂ)).roots) :
     ((h.map (Int.castRingHom ℂ)) *
         Polynomial.rootDeletionDerivativeSummand
@@ -183,7 +185,12 @@ private theorem natDegree_h_mul_rootDeletionDerivativeSummand_le
     omega
   by_cases hh : h = 0
   · simp [hh]
-  have hgh : (g * h).natDegree = g.natDegree + h.natDegree := hg_monic.natDegree_mul' hh
+  have hg : g ≠ 0 := by
+    intro hg
+    rw [hg] at hgd_pos
+    simp at hgd_pos
+  have hgh : (g * h).natDegree = g.natDegree + h.natDegree :=
+    Polynomial.natDegree_mul hg hh
   have hf_deg : f.natDegree = g.natDegree + h.natDegree := by rw [hfac, hgh]
   have hh_map_deg : (h.map (Int.castRingHom ℂ)).natDegree ≤ h.natDegree :=
     Polynomial.natDegree_map_le
@@ -282,8 +289,11 @@ theorem abs_phi_coeff_le_of_monic_factor
                 (g.map (Int.castRingHom ℂ)) α).coeff j)).sum from ?_]
   pick_goal 2
   · rw [← Polynomial.lcoeff_apply (R := ℂ) j,
-      map_multiset_sum (Polynomial.lcoeff ℂ j)]
-    simp [Multiset.map_map, Polynomial.lcoeff_apply]
+      map_multiset_sum (Polynomial.lcoeff ℂ j), Multiset.map_map]
+    apply congrArg Multiset.sum
+    apply Multiset.map_congr rfl
+    intro p _hp
+    rfl
   -- Step 3: norm of multiset sum ≤ multiset sum of norms.
   refine (norm_multiset_sum_le _).trans ?_
   -- Now the goal is over `(roots.map (fun α => ‖...‖))` after `map_map` simplification.
@@ -308,7 +318,7 @@ theorem abs_phi_coeff_le_of_monic_factor
     have hM_le := mahlerMeasure_h_mul_rootDeletionDerivativeSummand_le
       f g h hfac α
     have hdeg_le := natDegree_h_mul_rootDeletionDerivativeSummand_le
-      f g h hg_monic hfac α hα
+      f g h hfac α hα
     have hM_nonneg :
         0 ≤ ((h.map (Int.castRingHom ℂ)) *
               Polynomial.rootDeletionDerivativeSummand
@@ -382,9 +392,151 @@ theorem abs_phi_coeff_le_of_monic_factor
           (f.natDegree : ℝ) * HexPolyZMathlib.l2norm f := by
         rw [hB_def]; ring
 
+/-- The exact integer CLD column for an arbitrary factorization `f = g * h`.
+
+Unlike `phi`, this definition does not divide by `g` and therefore does not
+need `g` to be monic.  It is the logarithmic-derivative numerator
+`h * g' = f * g' / g`, expressed using the actual integer cofactor. -/
+def factorColumn (g h : Polynomial ℤ) : Polynomial ℤ :=
+  h * g.derivative
+
+/-- The direct-coordinate CLD column has the same BHKS coefficient bound for
+an arbitrary nonzero integer factorization.  Monicity of the integer factor is
+irrelevant: the root-deletion proof bounds `h * g'` directly. -/
+theorem abs_factorColumn_coeff_le
+    (f g h : Polynomial ℤ) (hg : g ≠ 0) (hh : h ≠ 0)
+    (hfac : f = g * h) (j : Nat) :
+    (Int.natAbs ((factorColumn g h).coeff j) : ℝ) ≤
+      (Nat.choose (f.natDegree - 1) j : ℝ) *
+        (f.natDegree : ℝ) * HexPolyZMathlib.l2norm f := by
+  classical
+  rw [(HexPolyZMathlib.norm_coeff_map_intCast
+    (f := factorColumn g h) (n := j)).symm]
+  have hmap :
+      (factorColumn g h).map (Int.castRingHom ℂ) =
+        ((g.map (Int.castRingHom ℂ)).roots.map fun α =>
+          (h.map (Int.castRingHom ℂ)) *
+            Polynomial.rootDeletionDerivativeSummand
+              (g.map (Int.castRingHom ℂ)) α).sum := by
+    unfold factorColumn
+    rw [Polynomial.map_mul, ← Polynomial.derivative_map,
+      Polynomial.derivative_eq_sum_rootDeletionDerivativeSummand]
+    exact (Multiset.sum_map_mul_left
+      (s := (g.map (Int.castRingHom ℂ)).roots)
+      (a := h.map (Int.castRingHom ℂ))
+      (f := fun α => Polynomial.rootDeletionDerivativeSummand
+        (g.map (Int.castRingHom ℂ)) α)).symm
+  rw [hmap]
+  rw [show (((g.map (Int.castRingHom ℂ)).roots.map fun α =>
+            (h.map (Int.castRingHom ℂ)) *
+              Polynomial.rootDeletionDerivativeSummand
+                (g.map (Int.castRingHom ℂ)) α).sum).coeff j =
+          (((g.map (Int.castRingHom ℂ)).roots.map fun α =>
+            ((h.map (Int.castRingHom ℂ)) *
+              Polynomial.rootDeletionDerivativeSummand
+                (g.map (Int.castRingHom ℂ)) α).coeff j)).sum from ?_]
+  pick_goal 2
+  · rw [← Polynomial.lcoeff_apply (R := ℂ) j,
+      map_multiset_sum (Polynomial.lcoeff ℂ j), Multiset.map_map]
+    apply congrArg Multiset.sum
+    apply Multiset.map_congr rfl
+    intro p _hp
+    rfl
+  refine (norm_multiset_sum_le _).trans ?_
+  rw [Multiset.map_map]
+  set B : ℝ :=
+    (Nat.choose (f.natDegree - 1) j : ℝ) * HexPolyZMathlib.l2norm f with hB_def
+  have hB_nonneg : 0 ≤ B := by
+    refine mul_nonneg (Nat.cast_nonneg _) (Real.sqrt_nonneg _)
+  have hsummand_bound : ∀ α ∈ (g.map (Int.castRingHom ℂ)).roots,
+      ((fun x : ℂ[X] => ‖x.coeff j‖) ∘ fun α =>
+          (h.map (Int.castRingHom ℂ)) *
+            Polynomial.rootDeletionDerivativeSummand
+              (g.map (Int.castRingHom ℂ)) α) α ≤ B := by
+    intro α hα
+    simp only [Function.comp_apply]
+    have hcoeff_le := Polynomial.norm_coeff_le_choose_mul_mahlerMeasure
+      (n := j)
+      (p := (h.map (Int.castRingHom ℂ)) *
+        Polynomial.rootDeletionDerivativeSummand
+          (g.map (Int.castRingHom ℂ)) α)
+    have hM_le :=
+      mahlerMeasure_h_mul_rootDeletionDerivativeSummand_le f g h hfac α
+    have hdeg_le :=
+      natDegree_h_mul_rootDeletionDerivativeSummand_le f g h hfac α hα
+    have hM_nonneg :
+        0 ≤ ((h.map (Int.castRingHom ℂ)) *
+              Polynomial.rootDeletionDerivativeSummand
+                (g.map (Int.castRingHom ℂ)) α).mahlerMeasure :=
+      Polynomial.mahlerMeasure_nonneg _
+    have hchoose_le :
+        (Nat.choose
+            ((h.map (Int.castRingHom ℂ)) *
+              Polynomial.rootDeletionDerivativeSummand
+                (g.map (Int.castRingHom ℂ)) α).natDegree j : ℝ) ≤
+          (Nat.choose (f.natDegree - 1) j : ℝ) := by
+      exact_mod_cast Nat.choose_le_choose j hdeg_le
+    have hchoose_nonneg : (0 : ℝ) ≤ Nat.choose (f.natDegree - 1) j :=
+      Nat.cast_nonneg _
+    have hmf_le_l2 :
+        (f.map (Int.castRingHom ℂ)).mahlerMeasure ≤ HexPolyZMathlib.l2norm f :=
+      HexPolyZMathlib.mahlerMeasure_le_l2norm f
+    calc
+      ‖((h.map (Int.castRingHom ℂ)) *
+          Polynomial.rootDeletionDerivativeSummand
+            (g.map (Int.castRingHom ℂ)) α).coeff j‖
+          ≤ (Nat.choose
+              ((h.map (Int.castRingHom ℂ)) *
+                Polynomial.rootDeletionDerivativeSummand
+                  (g.map (Int.castRingHom ℂ)) α).natDegree j : ℝ) *
+              ((h.map (Int.castRingHom ℂ)) *
+                Polynomial.rootDeletionDerivativeSummand
+                  (g.map (Int.castRingHom ℂ)) α).mahlerMeasure := hcoeff_le
+      _ ≤ (Nat.choose (f.natDegree - 1) j : ℝ) *
+            (f.map (Int.castRingHom ℂ)).mahlerMeasure := by
+          exact mul_le_mul hchoose_le hM_le hM_nonneg hchoose_nonneg
+      _ ≤ B := by
+          rw [hB_def]
+          gcongr
+  have hsum_le_card_nsmul := Multiset.sum_le_card_nsmul
+    ((g.map (Int.castRingHom ℂ)).roots.map
+      ((fun x : ℂ[X] => ‖x.coeff j‖) ∘ fun α =>
+        (h.map (Int.castRingHom ℂ)) *
+          Polynomial.rootDeletionDerivativeSummand
+            (g.map (Int.castRingHom ℂ)) α))
+    B (by
+      intro x hx
+      rw [Multiset.mem_map] at hx
+      obtain ⟨α, hα, rfl⟩ := hx
+      exact hsummand_bound α hα)
+  refine hsum_le_card_nsmul.trans ?_
+  rw [Multiset.card_map, nsmul_eq_mul]
+  have hcardroots :
+      Multiset.card (g.map (Int.castRingHom ℂ)).roots ≤ g.natDegree := by
+    have hroot :=
+      Polynomial.card_roots' (g.map (Int.castRingHom ℂ))
+    rwa [HexPolyZMathlib.natDegree_map_intCast] at hroot
+  have hf_deg : f.natDegree = g.natDegree + h.natDegree := by
+    rw [hfac, Polynomial.natDegree_mul hg hh]
+  have hcardroots_f :
+      Multiset.card (g.map (Int.castRingHom ℂ)).roots ≤ f.natDegree := by
+    omega
+  have hcardroots_real :
+      ((Multiset.card (g.map (Int.castRingHom ℂ)).roots : ℕ) : ℝ) ≤
+        (f.natDegree : ℝ) :=
+    Nat.cast_le.mpr hcardroots_f
+  calc
+    ((Multiset.card (g.map (Int.castRingHom ℂ)).roots : ℕ) : ℝ) * B
+        ≤ (f.natDegree : ℝ) * B :=
+          mul_le_mul_of_nonneg_right hcardroots_real hB_nonneg
+    _ = (Nat.choose (f.natDegree - 1) j : ℝ) *
+          (f.natDegree : ℝ) * HexPolyZMathlib.l2norm f := by
+        rw [hB_def]
+        ring
+
 end BHKS
 
-/-- CLD quotient congruence (BHKS logarithmic-derivative bridge).
+/-- CLD quotient congruence (BHKS logarithmic-derivative correspondence).
 
 When a monic positive-degree lifted factor `g` divides `input` modulo `p ^ k`
 (witnessed by `input ≡ g * h`), multiplying the executable CLD quotient
@@ -628,9 +780,9 @@ per-element ambient residues pinned to a small integer (forcing per-factor
 smallness), this version bounds the cut-sum *modulo the period* `q = p^(a−b)` and
 needs only the *aggregate* residue `centeredResiduePow p a (Σ w_i)` to be small.
 
-This is the analytic core of the recombination case: for split irreducible
-factors the per-local CLD residues are not individually small — only their
-aggregate `Φ(factor)` is — and the lattice's period rows `diag(p^(a−l_j))` absorb
+This is the main estimate of the recombination case: for split irreducible
+factors the per-local CLD residues are not individually small; only their
+aggregate `Φ(factor)` is; and the lattice's period rows `diag(p^(a−l_j))` absorb
 the large per-local parts.  The raw-sum bound is *false* here (no per-factor
 hypothesis is available); the `∃ t` period reduction by an integer multiple of `q`
 is exactly what makes the aggregate-only bound true.
@@ -782,11 +934,73 @@ theorem abs_phi_coeff_le_bhksCoeffBound (f g : Hex.ZPoly) (j : Nat)
     exact mul_le_mul_of_nonneg_left hl2 hnn
   exact_mod_cast hkey
 
-/-- **Generic CLD residue bridge.**  For a monic divisor `g` of `f` whose
+/-- Executable-bound form of `abs_factorColumn_coeff_le`. -/
+theorem abs_factorColumn_coeff_le_bhksCoeffBound
+    (f g h : Hex.ZPoly) (j : Nat)
+    (hg : g ≠ 0) (hh : h ≠ 0) (hfac : f = g * h) :
+    ((factorColumn (HexPolyMathlib.toPolynomial g)
+      (HexPolyMathlib.toPolynomial h)).coeff j).natAbs
+      ≤ Hex.bhksCoeffBound f j := by
+  have hreal := abs_factorColumn_coeff_le
+    (HexPolyMathlib.toPolynomial f)
+    (HexPolyMathlib.toPolynomial g)
+    (HexPolyMathlib.toPolynomial h)
+    (by
+      intro hzero
+      apply hg
+      apply HexPolyZMathlib.equiv.injective
+      simpa using hzero)
+    (by
+      intro hzero
+      apply hh
+      apply HexPolyZMathlib.equiv.injective
+      simpa using hzero)
+    (by simpa [HexPolyMathlib.toPolynomial_mul] using
+      congrArg HexPolyMathlib.toPolynomial hfac)
+    j
+  have hnd :
+      (HexPolyMathlib.toPolynomial f).natDegree = f.degree?.getD 0 :=
+    HexPolyMathlib.natDegree_toPolynomial f
+  have hZeq :
+      HexPolyZMathlib.toPolynomial f = HexPolyMathlib.toPolynomial f := rfl
+  have hl2 :
+      HexPolyZMathlib.l2norm (HexPolyMathlib.toPolynomial f)
+        ≤ (Hex.ZPoly.coeffL2NormBound f : ℝ) := by
+    rw [← hZeq]
+    exact l2norm_toPolynomial_le_coeffL2NormBound f
+  have hbb_nat :
+      Hex.bhksCoeffBound f j =
+        Nat.choose (f.degree?.getD 0 - 1) j * f.degree?.getD 0 *
+          Hex.ZPoly.coeffL2NormBound f := by
+    simp only [Hex.bhksCoeffBound, hex_choose_eq]
+  have hbb :
+      (Hex.bhksCoeffBound f j : ℝ) =
+        (Nat.choose (f.degree?.getD 0 - 1) j : ℝ) *
+          (f.degree?.getD 0 : ℝ) *
+            (Hex.ZPoly.coeffL2NormBound f : ℝ) := by
+    rw [hbb_nat]
+    push_cast
+    ring
+  have hkey :
+      (((factorColumn
+        (HexPolyMathlib.toPolynomial g)
+        (HexPolyMathlib.toPolynomial h)).coeff j).natAbs : ℝ)
+        ≤ (Hex.bhksCoeffBound f j : ℝ) := by
+    refine hreal.trans ?_
+    rw [hnd, hbb]
+    have hnonneg :
+        (0 : ℝ) ≤
+          (Nat.choose (f.degree?.getD 0 - 1) j : ℝ) *
+            (f.degree?.getD 0 : ℝ) := by
+      positivity
+    exact mul_le_mul_of_nonneg_left hl2 hnonneg
+  exact_mod_cast hkey
+
+/-- **Generic CLD residue correspondence.**  For a monic divisor `g` of `f` whose
 precision `p^a` separates the Mignotte column bound, the centred ambient residue
 of *any* polynomial `q` whose product `g * q` is congruent to the
 logarithmic-derivative numerator `f * g'` modulo `p^a` is exactly the integer
-`Phi`-column coefficient.  The per-factor bridge below is the special case
+`Phi`-column coefficient.  The per-factor correspondence below is the special case
 `q := cldQuotientMod f g p a`; the aggregate residue work instantiates it with
 `q := supportCldSum`, which satisfies the same congruence against the whole
 recovered factor without being a single `cldQuotientMod`. -/
@@ -891,6 +1105,59 @@ theorem congr_derivative (a b : Hex.ZPoly) (m : Nat)
   rw [hfac]
   exact Int.emod_eq_zero_of_dvd (hd.mul_left _)
 
+/-- Constant scaling commutes with multiplication on the left. -/
+theorem scale_mul (c : Int) (f g : Hex.ZPoly) :
+    Hex.DensePoly.scale c (f * g) = Hex.DensePoly.scale c f * g := by
+  rw [← Hex.ZPoly.C_mul_eq_scale, ← Hex.ZPoly.C_mul_eq_scale,
+    Hex.DensePoly.mul_assoc_poly]
+
+/-- Constant scaling commutes with multiplication on the right. -/
+theorem mul_scale (c : Int) (f g : Hex.ZPoly) :
+    Hex.DensePoly.scale c (f * g) = f * Hex.DensePoly.scale c g := by
+  rw [Hex.DensePoly.mul_comm_poly f g, scale_mul,
+    Hex.DensePoly.mul_comm_poly (Hex.DensePoly.scale c g) f]
+
+/-- Constant scaling commutes with the formal derivative. -/
+theorem derivative_scale (c : Int) (f : Hex.ZPoly) :
+    Hex.DensePoly.derivative (Hex.DensePoly.scale c f) =
+      Hex.DensePoly.scale c (Hex.DensePoly.derivative f) := by
+  apply Hex.DensePoly.ext_coeff
+  intro n
+  rw [Hex.DensePoly.coeff_derivative _ n (mul_zero _),
+    Hex.DensePoly.coeff_scale c f (n + 1) (mul_zero _),
+    Hex.DensePoly.coeff_scale c (Hex.DensePoly.derivative f) n (mul_zero _),
+    Hex.DensePoly.coeff_derivative f n (mul_zero _)]
+  ring
+
+/-- A scalar coprime to the modulus can be cancelled from a polynomial
+congruence. -/
+theorem congr_of_scale_congr
+    (c : Int) (f g : Hex.ZPoly) (m : Nat) (hm : 0 < m)
+    (hc : Int.gcd c (Int.ofNat m) = 1)
+    (h : Hex.ZPoly.congr
+      (Hex.DensePoly.scale c f) (Hex.DensePoly.scale c g) m) :
+    Hex.ZPoly.congr f g m := by
+  intro i
+  have hmod :
+      c * f.coeff i ≡ c * g.coeff i [ZMOD (m : Int)] := by
+    rw [Int.modEq_iff_dvd]
+    have hdvd : (m : Int) ∣
+        c * f.coeff i - c * g.coeff i :=
+      Int.dvd_of_emod_eq_zero (by
+        simpa [Hex.DensePoly.coeff_scale] using h i)
+    simpa only [neg_sub] using (dvd_neg.mpr hdvd)
+  have hcancel :=
+    Int.ModEq.cancel_left_div_gcd (show (0 : Int) < m by exact_mod_cast hm) hmod
+  have hgcd : Int.gcd (m : Int) c = 1 := by
+    rw [Int.gcd_comm]
+    simpa using hc
+  have hcancel' : f.coeff i ≡ g.coeff i [ZMOD (m : Int)] := by
+    simpa [hgcd] using hcancel
+  exact Int.emod_eq_zero_of_dvd
+    (by
+      have hdvd := Int.modEq_iff_dvd.mp hcancel'
+      simpa only [neg_sub] using (dvd_neg.mpr hdvd))
+
 /-- Aggregate CLD congruence for a recovered support, parametrised directly by
 the per-selected-factor monic / positive-degree / modular-cofactor data instead
 of a semantic package.  Mirrors `TrueFactorLiftSemantics.supportProduct_cldSum_congr`
@@ -931,23 +1198,20 @@ theorem supportProduct_cldSum_congr_of_factors
 
 open Classical in
 
-/-- **Aggregate CLD residue from a `RecoveredLift` in monic coordinates.**
-In the monic regime (`leadingCoeff f = 1`, so the `dilate` in
-`recovered_eq` is the identity) the aggregate centred residue of the per-factor
-CLD coefficients equals the integer `Phi`-column coefficient of the *whole*
-recovered factor, and that coefficient is Mignotte-bounded.  This is exactly the
-`hagg` / `hy` input shape consumed by `two_mul_natAbs_sum_psiCut_period_le`,
-with `y = phi(...).coeff j` and `B = bhksCoeffBound f j`.
+/-- Aggregate CLD residue from a direct-coordinate recovered lift.
 
-The per-selected-factor `hfac` (monic, positive degree, modular cofactor) is the
-Hensel-factorisation datum `∏ gᵢ ≡ f (mod pᵃ)`; the recovered factor itself only
-needs `factor ∣ f` over ℤ (from `factor_mul`), routed through the *whole-factor*
-`phi (toPolynomial f) (toPolynomial factor)`, never per-`gᵢ` integer columns. -/
+The selected support product is monic, while the recovered integer factor need
+not be.  The direct recovery congruence says
+
+`lc(f) · supportProduct ≡ factorScale · factor`.
+
+Differentiating this relation and combining it with the aggregate local CLD
+congruence shows that `supportCldSum` is congruent to the exact integer column
+`cofactor * factor'`.  Cancellation is sound because the support product is
+monic and `lc(f)` is a unit modulo the Hensel modulus. -/
 theorem recoveredLift_aggregate_residue
     {L : Hex.BhksLatticeBasis} {S : LiftedFactorSupport L}
     (D : RecoveredLift L S)
-    (hf_lc : Hex.DensePoly.leadingCoeff D.f = 1)
-    (hfactor_monic : (HexPolyMathlib.toPolynomial D.factor).Monic)
     (hk : 1 < D.p ^ D.a)
     (hsep : ∀ j, 2 * Hex.bhksCoeffBound D.f j < D.p ^ D.a)
     (hfac : ∀ i : Fin L.factorCount, i ∈ S →
@@ -960,84 +1224,195 @@ theorem recoveredLift_aggregate_residue
         (∑ i ∈ Finset.univ.filter (fun i => i ∈ S),
           Hex.centeredResiduePow D.p D.a
             ((Hex.cldQuotientMod D.f (L.liftedFactors.getD i.val 1) D.p D.a).coeff j))
-      = (phi (HexPolyMathlib.toPolynomial D.f)
-          (HexPolyMathlib.toPolynomial D.factor)).coeff j
-    ∧ ((phi (HexPolyMathlib.toPolynomial D.f)
-          (HexPolyMathlib.toPolynomial D.factor)).coeff j).natAbs
+      = (factorColumn
+          (HexPolyMathlib.toPolynomial D.factor)
+          (HexPolyMathlib.toPolynomial D.cofactor)).coeff j
+    ∧ ((BHKS.factorColumn
+          (HexPolyMathlib.toPolynomial D.factor)
+          (HexPolyMathlib.toPolynomial D.cofactor)).coeff j).natAbs
         ≤ Hex.bhksCoeffBound D.f j := by
   classical
-  -- Divisibility of the recovered factor over ℤ, from the factor/cofactor split.
-  have hfac_dvd : HexPolyMathlib.toPolynomial D.factor ∣ HexPolyMathlib.toPolynomial D.f :=
-    ⟨HexPolyMathlib.toPolynomial D.cofactor, by
-      rw [← HexPolyMathlib.toPolynomial_mul, D.factor_mul]⟩
-  -- (a) Aggregate CLD congruence against the support product.
+  let P := supportProduct L S
+  let Q := supportCldSum L S D.f D.p D.a
+  let C := Hex.DensePoly.derivative D.factor
+  let column := D.cofactor * C
+  have hf_ne : D.f ≠ 0 := by
+    intro hzero
+    have hpow_eq : D.p ^ D.a = 1 := by
+      simpa [hzero] using D.inputScale_coprime
+    omega
+  have hfactor_ne : D.factor ≠ 0 := by
+    intro hzero
+    apply hf_ne
+    rw [← D.factor_mul, hzero, Hex.DensePoly.zero_mul]
+  have hcofactor_ne : D.cofactor ≠ 0 := by
+    intro hzero
+    apply hf_ne
+    rw [← D.factor_mul, hzero, Hex.DensePoly.mul_comm_poly,
+      Hex.DensePoly.zero_mul]
+  -- Aggregate CLD congruence against the monic support product.
   have hagg := supportProduct_cldSum_congr_of_factors (L := L) (S := S)
     D.f D.p D.a hk hfac
-  -- supportProduct ≡ factor (mod p^a), from recovered_eq with the trivial dilate.
-  have hcl : Hex.centeredLiftPoly (supportProduct L S) (D.p ^ D.a) = D.factor := by
-    have h := D.recovered_eq
-    rw [hf_lc, Hex.ZPoly.dilate_one] at h
-    exact h
-  have hsp_eq : Hex.ZPoly.congr (supportProduct L S) D.factor (D.p ^ D.a) := by
-    intro i
-    rw [← hcl, Hex.coeff_centeredLiftPoly]
-    exact Int.emod_eq_zero_of_dvd (Hex.self_sub_centeredModNat_dvd _ _)
-  have hsp_deriv : Hex.ZPoly.congr
-      (Hex.DensePoly.derivative (supportProduct L S))
-      (Hex.DensePoly.derivative D.factor) (D.p ^ D.a) :=
-    congr_derivative _ _ _ hsp_eq
-  -- Transport (a) to the recovered factor's CLD congruence.
-  have hcong_factor : Hex.ZPoly.congr
-      (D.factor * supportCldSum L S D.f D.p D.a)
-      (D.f * Hex.DensePoly.derivative D.factor) (D.p ^ D.a) := by
-    have step1 : Hex.ZPoly.congr
-        (D.factor * supportCldSum L S D.f D.p D.a)
-        (supportProduct L S * supportCldSum L S D.f D.p D.a) (D.p ^ D.a) :=
-      Hex.ZPoly.congr_mul _ _ _ _ _
-        (Hex.ZPoly.congr_symm _ _ _ hsp_eq) (Hex.ZPoly.congr_refl _ _)
-    have step3 : Hex.ZPoly.congr
-        (D.f * Hex.DensePoly.derivative (supportProduct L S))
-        (D.f * Hex.DensePoly.derivative D.factor) (D.p ^ D.a) :=
-      Hex.ZPoly.congr_mul _ _ _ _ _ (Hex.ZPoly.congr_refl _ _) hsp_deriv
-    exact Hex.ZPoly.congr_trans _ _ _ _
-      (Hex.ZPoly.congr_trans _ _ _ _ step1 hagg) step3
-  -- (b) The aggregate residue of supportCldSum is the factor's Phi column.
+  have hprop := D.scaledProduct_congr
+  have hprop_deriv :
+      Hex.ZPoly.congr
+        (Hex.DensePoly.scale (Hex.DensePoly.leadingCoeff D.f)
+          (Hex.DensePoly.derivative P))
+        (Hex.DensePoly.scale D.factorScale C)
+        (D.p ^ D.a) := by
+    simpa only [P, C, derivative_scale] using
+      congr_derivative _ _ _ hprop
+  have hscaled_agg :
+      Hex.ZPoly.congr
+        (Hex.DensePoly.scale (Hex.DensePoly.leadingCoeff D.f) (P * Q))
+        (Hex.DensePoly.scale (Hex.DensePoly.leadingCoeff D.f)
+          (D.f * Hex.DensePoly.derivative P))
+        (D.p ^ D.a) := by
+    simpa only [P, Q] using
+      scale_congr_of_congr (Hex.DensePoly.leadingCoeff D.f) _ _ _ hagg
+  have hscaled_deriv :
+      Hex.ZPoly.congr
+        (Hex.DensePoly.scale (Hex.DensePoly.leadingCoeff D.f)
+          (D.f * Hex.DensePoly.derivative P))
+        (Hex.DensePoly.scale D.factorScale
+          (D.f * C))
+        (D.p ^ D.a) := by
+    rw [mul_scale, mul_scale]
+    exact Hex.ZPoly.congr_mul _ _ _ _ _
+      (Hex.ZPoly.congr_refl _ _) hprop_deriv
+  have hprop_column :
+      Hex.ZPoly.congr
+        (Hex.DensePoly.scale (Hex.DensePoly.leadingCoeff D.f) (P * column))
+        (Hex.DensePoly.scale D.factorScale (D.f * C))
+        (D.p ^ D.a) := by
+    rw [scale_mul, scale_mul]
+    have hmul := Hex.ZPoly.congr_mul _ _ _ _ _
+      hprop (Hex.ZPoly.congr_refl column (D.p ^ D.a))
+    have hfactor_column :
+        D.factor * column = D.f * C := by
+      dsimp only [column]
+      rw [← Hex.DensePoly.mul_assoc_poly, D.factor_mul]
+    have heq :
+        Hex.DensePoly.scale D.factorScale D.factor * column =
+          Hex.DensePoly.scale D.factorScale D.f * C := by
+      rw [← scale_mul, ← scale_mul, hfactor_column]
+    rw [heq] at hmul
+    exact hmul
+  have hscaled :
+      Hex.ZPoly.congr
+        (Hex.DensePoly.scale (Hex.DensePoly.leadingCoeff D.f) (P * Q))
+        (Hex.DensePoly.scale (Hex.DensePoly.leadingCoeff D.f) (P * column))
+        (D.p ^ D.a) :=
+    Hex.ZPoly.congr_trans _ _ _ _
+      (Hex.ZPoly.congr_trans _ _ _ _ hscaled_agg hscaled_deriv)
+      (Hex.ZPoly.congr_symm _ _ _ hprop_column)
+  have hPQ :
+      Hex.ZPoly.congr (P * Q) (P * column) (D.p ^ D.a) :=
+    congr_of_scale_congr _ _ _ _ (by omega) D.inputScale_coprime hscaled
+  have hP_monic : Hex.DensePoly.Monic P := by
+    unfold P supportProduct
+    apply Hex.ZPoly.monic_polyProduct_toArray
+    intro g hg
+    rw [List.mem_map] at hg
+    obtain ⟨i, hi, rfl⟩ := hg
+    exact (hfac i (of_decide_eq_true (List.mem_filter.mp hi).2)).choose_spec.1
+  have hQ : Hex.ZPoly.congr Q column (D.p ^ D.a) := by
+    have hmap := HexHenselMathlib.zpoly_congr_toPolynomial_map_eq
+      (P * Q) (P * column) (D.p ^ D.a) hPQ
+    rw [HexPolyMathlib.toPolynomial_mul,
+      HexPolyMathlib.toPolynomial_mul] at hmap
+    have hmap' :
+        (HexPolyMathlib.toPolynomial P).map
+            (Int.castRingHom (ZMod (D.p ^ D.a))) *
+          (HexPolyMathlib.toPolynomial Q).map
+            (Int.castRingHom (ZMod (D.p ^ D.a))) =
+        (HexPolyMathlib.toPolynomial P).map
+            (Int.castRingHom (ZMod (D.p ^ D.a))) *
+          (HexPolyMathlib.toPolynomial column).map
+            (Int.castRingHom (ZMod (D.p ^ D.a))) := by
+      simpa only [Polynomial.map_mul] using hmap
+    have hPmap :
+        ((HexPolyMathlib.toPolynomial P).map
+          (Int.castRingHom (ZMod (D.p ^ D.a)))).Monic :=
+      (HexHenselMathlib.toPolynomial_monic_of_dense_monic P hP_monic).map _
+    apply HexHenselMathlib.zpoly_congr_of_toPolynomial_map_eq
+    exact hPmap.isRegular.left hmap'
+  have hcolumn_poly :
+      HexPolyMathlib.toPolynomial column =
+        factorColumn
+          (HexPolyMathlib.toPolynomial D.factor)
+          (HexPolyMathlib.toPolynomial D.cofactor) := by
+    dsimp only [column, C, factorColumn]
+    rw [HexPolyMathlib.toPolynomial_mul,
+      HexPolyMathlib.toPolynomial_derivative]
+  have hresQ : Hex.centeredResiduePow D.p D.a (Q.coeff j) =
+      (factorColumn
+        (HexPolyMathlib.toPolynomial D.factor)
+        (HexPolyMathlib.toPolynomial D.cofactor)).coeff j := by
+    apply Hex.centeredResiduePow_eq_of_natAbs_le
+      D.p D.a _ _ (Hex.bhksCoeffBound D.f j)
+    · exact abs_factorColumn_coeff_le_bhksCoeffBound
+        D.f D.factor D.cofactor j hfactor_ne hcofactor_ne D.factor_mul.symm
+    · exact hsep j
+    · have hcoeff := hQ j
+      have hcolumn_coeff :
+          column.coeff j =
+            (factorColumn
+              (HexPolyMathlib.toPolynomial D.factor)
+              (HexPolyMathlib.toPolynomial D.cofactor)).coeff j := by
+        have h := congrArg (fun p : Polynomial ℤ => p.coeff j) hcolumn_poly
+        simpa only [HexPolyMathlib.coeff_toPolynomial] using h
+      rw [← hcolumn_coeff]
+      have hmod :
+          Q.coeff j ≡ column.coeff j [ZMOD (D.p ^ D.a : Nat)] := by
+        rw [Int.modEq_iff_dvd]
+        simpa only [neg_sub] using
+          (dvd_neg.mpr (Int.dvd_of_emod_eq_zero hcoeff))
+      exact hmod.symm
+  -- The direct integer column is Mignotte-bounded.
   have hres : Hex.centeredResiduePow D.p D.a
-      ((supportCldSum L S D.f D.p D.a).coeff j)
-      = (phi (HexPolyMathlib.toPolynomial D.f)
-          (HexPolyMathlib.toPolynomial D.factor)).coeff j :=
-    residue_eq_phi_coeff_of_congr D.f D.factor (supportCldSum L S D.f D.p D.a)
-      D.p D.a j hfactor_monic hfac_dvd (hsep j) hcong_factor
-  refine ⟨?_, abs_phi_coeff_le_bhksCoeffBound D.f D.factor j hfactor_monic hfac_dvd⟩
-  -- (c) Bridge the goal's per-factor residue sum to supportCldSum's coefficient.
-  rw [← hres]
-  refine centeredResiduePow_emod_eq D.p D.a _ _ ?_
-  have hA : (∑ i ∈ Finset.univ.filter (fun i => i ∈ S),
-        Hex.centeredResiduePow D.p D.a
-          ((Hex.cldQuotientMod D.f (L.liftedFactors.getD i.val 1) D.p D.a).coeff j))
-      = (((List.finRange L.factorCount).filter (fun i => decide (i ∈ S))).map
-          (fun i => Hex.centeredResiduePow D.p D.a
-            ((Hex.cldQuotientMod D.f (L.liftedFactors.getD i.val 1) D.p D.a).coeff j))).sum :=
-    sum_filter_univ_eq_listSum (fun i => i ∈ S) _
-  have hB : (supportCldSum L S D.f D.p D.a).coeff j
-      = (((List.finRange L.factorCount).filter (fun i => decide (i ∈ S))).map
-          (fun i => (Hex.cldQuotientMod D.f (L.liftedFactors.getD i.val 1)
-            D.p D.a).coeff j)).sum := by
-    show (((List.finRange L.factorCount).filter (fun i => decide (i ∈ S))).map
-          (fun i => Hex.cldQuotientMod D.f (L.liftedFactors.getD i.val 1)
-            D.p D.a)).sum.coeff j = _
-    rw [coeff_listSum, List.map_map]
-    rfl
-  rw [hA, hB]
-  exact listSum_emod_eq _ _ _ _
-    (fun i _ => centeredResiduePow_emod_self D.p D.a _)
+      ((supportCldSum L S D.f D.p D.a).coeff j) =
+      (factorColumn
+        (HexPolyMathlib.toPolynomial D.factor)
+        (HexPolyMathlib.toPolynomial D.cofactor)).coeff j := by
+    simpa only [Q] using hresQ
+  refine ⟨?_, ?_⟩
+  · -- Bridge the per-factor residue sum to supportCldSum's coefficient.
+    rw [← hres]
+    refine centeredResiduePow_emod_eq D.p D.a _ _ ?_
+    have hA : (∑ i ∈ Finset.univ.filter (fun i => i ∈ S),
+          Hex.centeredResiduePow D.p D.a
+            ((Hex.cldQuotientMod D.f
+              (L.liftedFactors.getD i.val 1) D.p D.a).coeff j))
+        = (((List.finRange L.factorCount).filter
+            (fun i => decide (i ∈ S))).map
+            (fun i => Hex.centeredResiduePow D.p D.a
+              ((Hex.cldQuotientMod D.f
+                (L.liftedFactors.getD i.val 1) D.p D.a).coeff j))).sum :=
+      sum_filter_univ_eq_listSum (fun i => i ∈ S) _
+    have hB : (supportCldSum L S D.f D.p D.a).coeff j
+        = (((List.finRange L.factorCount).filter
+            (fun i => decide (i ∈ S))).map
+            (fun i => (Hex.cldQuotientMod D.f
+              (L.liftedFactors.getD i.val 1) D.p D.a).coeff j)).sum := by
+      show (((List.finRange L.factorCount).filter
+            (fun i => decide (i ∈ S))).map
+            (fun i => Hex.cldQuotientMod D.f
+              (L.liftedFactors.getD i.val 1) D.p D.a)).sum.coeff j = _
+      rw [coeff_listSum, List.map_map]
+      rfl
+    rw [hA, hB]
+    exact listSum_emod_eq _ _ _ _
+      (fun i _ => centeredResiduePow_emod_self D.p D.a _)
+  · exact abs_factorColumn_coeff_le_bhksCoeffBound
+      D.f D.factor D.cofactor j hfactor_ne hcofactor_ne D.factor_mul.symm
 
 /-! # Period-adjusted true-factor short vector from a `RecoveredLift`
 
 The per-factor tight column (`tightColumnBound_of_lift`) bounds the *zero-period*
-tail `∑_{i∈S} psiCut(zᵢ)` and routes through per-factor integer divisibility,
+tail `∑_{i∈S} psiCut(zᵢ)` and uses per-factor integer divisibility,
 which a `RecoveredLift` cannot supply. The
-sound route uses the BHKS lattice's own period rows `diag(p^(a−ℓⱼ))`: the
+sound method uses the BHKS lattice's own period rows `diag(p^(a−ℓⱼ))`: the
 *period-adjusted* tail `∑_{i∈S} psiCut(zᵢ) − tⱼ·p^(a−ℓⱼ)` is still bounded by
 `factorCount/2` (`two_mul_natAbs_sum_psiCut_period_le`) from only the aggregate
 residue (`recoveredLift_aggregate_residue`), and the adjusted vector is still a
@@ -1307,7 +1682,7 @@ theorem four_mul_sq_norm_le_of_colBound
   ring
 
 /-- **Period-adjusted true-factor short vector from a `RecoveredLift`.**
-In the monic regime, the aggregate residue bridge
+The direct-coordinate aggregate residue correspondence
 (`recoveredLift_aggregate_residue`) and the period-aware carry lemma
 (`two_mul_natAbs_sum_psiCut_period_le`) bound each tail column of the
 period-adjusted vector by `factorCount/2`.  Together with the structural project
@@ -1317,8 +1692,6 @@ recovered support, feeding the fast-disjunct consumer through
 def supportShortVectorData_of_recoveredLift
     {L : Hex.BhksLatticeBasis} {S : LiftedFactorSupport L}
     (D : RecoveredLift L S)
-    (hf_lc : Hex.DensePoly.leadingCoeff D.f = 1)
-    (hfactor_monic : (HexPolyMathlib.toPolynomial D.factor).Monic)
     (hp : 2 ≤ D.p)
     (hk : 1 < D.p ^ D.a)
     (hsep : ∀ j, 2 * Hex.bhksCoeffBound D.f j < D.p ^ D.a)
@@ -1347,13 +1720,14 @@ def supportShortVectorData_of_recoveredLift
         ≤ (Finset.univ.filter (fun i => i ∈ S)).card := by
     intro j
     obtain ⟨hres, hbnd⟩ :=
-      recoveredLift_aggregate_residue D hf_lc hfactor_monic hk hsep hfac j.val
+      recoveredLift_aggregate_residue D hk hsep hfac j.val
     exact two_mul_natAbs_sum_psiCut_period_le
       (Finset.univ.filter (fun i => i ∈ S)) D.p D.a
       (Hex.bhksCoeffCutThreshold D.p D.f j.val) (hthr j.val) (by omega)
       (fun i => (Hex.cldQuotientMod D.f (L.liftedFactors.getD i.val 1) D.p D.a).coeff j.val)
-      ((phi (HexPolyMathlib.toPolynomial D.f)
-        (HexPolyMathlib.toPolynomial D.factor)).coeff j.val)
+      ((factorColumn
+        (HexPolyMathlib.toPolynomial D.factor)
+        (HexPolyMathlib.toPolynomial D.cofactor)).coeff j.val)
       (Hex.bhksCoeffBound D.f j.val) hres hbnd (hsep_b j)
   set t : Fin L.coeffWidth → ℤ := fun j => Classical.choose (hperiod j) with ht_def
   have ht : ∀ j : Fin L.coeffWidth,

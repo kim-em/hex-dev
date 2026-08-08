@@ -353,7 +353,7 @@ The Hex certified path is now registered as fixed process-call targets:
 and
 `runCertifiedFirstShortVectorHarshCubic{15,20,25,30,35,40,45,50,55,60,65}Checksum`.
 Each target sends a `CERT\t` request to the persistent fpylll driver, receives a
-flat `(B', U, V)` payload, and runs `LLLProvider.certifyFlat`, so the measured
+flat `(B', U, V)` payload, and runs `ExternalReducer.certifyFlat`, so the measured
 path is fpLLL candidate production plus the Lean checker. Paired
 `runCertifiedChecker*` targets cache the same candidate and re-run only
 `certCheck` after warmup, giving the checker's share of certified-path cost.

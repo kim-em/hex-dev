@@ -7,7 +7,7 @@ Authors: Kim Morrison
 module
 
 public import HexRoots
-public import HexPolyZMathlib.Basic
+public import HexPolyZMathlib.PolynomialEquivalence
 public import Mathlib.Analysis.Complex.Basic
 
 public section

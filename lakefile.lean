@@ -12,13 +12,13 @@ package Hex where
   leanOptions := #[⟨`doc.verso, true⟩, ⟨`doc.verso.suggestions, false⟩]
 
 require verso from git
-  "https://github.com/leanprover/verso.git" @ "v4.32.0-rc1"
+  "https://github.com/leanprover/verso.git" @ "v4.33.0-rc1"
 
 require «lean-bench» from git
   "https://github.com/kim-em/lean-bench.git" @ "master"
 
 require mathlib from git
-  "https://github.com/leanprover-community/mathlib4.git" @ "v4.32.0-rc1-patch1"
+  "https://github.com/leanprover-community/mathlib4.git" @ "v4.33.0-rc1"
 
 private def clmulOTarget (pkg : Package) : FetchM (Job FilePath) := do
   let oFile := pkg.dir / defaultBuildDir / "HexGF2" / "ffi" / "clmul.o"
@@ -85,6 +85,8 @@ lean_lib HexArith where
 
 lean_lib HexPoly where
 
+lean_lib HexMvPoly where
+
 lean_lib HexModArith where
   precompileModules := true
   -- See `HexArith`: the `hexmodarithffi` extern_lib links in automatically, so
@@ -129,6 +131,9 @@ lean_lib HexInterval where
 
 @[default_target]
 lean_lib HexPolyMathlib where
+
+@[default_target]
+lean_lib HexMvPolyMathlib where
 
 @[default_target]
 lean_lib HexModArithMathlib where
@@ -210,8 +215,8 @@ lean_lib HexRealRootsMathlib where
 @[default_target]
 lean_lib HexRCF where
 
-lean_exe hexlll_provider_probe where
-  root := `HexLLL.ProviderProbe
+lean_exe hexlll_external_reduction where
+  root := `HexLLL.ExternalReduction
 
 -- Multi-file bench drivers: their modules live under `bench/` and are owned by
 -- a precompiled lean_lib (mirroring the released bench sub-project), so the bench
@@ -224,6 +229,73 @@ lean_lib HexLLLBenchSupport where
 lean_lib HexGF2BenchSupport where
   srcDir := "bench"
   globs := #[`HexGF2.Bench]
+
+lean_lib HexBerlekampKernelProbe where
+  srcDir := "bench"
+  globs := #[`HexBench.BerlekampKernel]
+
+lean_lib HexQuadraticNormProbe where
+  srcDir := "bench"
+  globs := #[`HexBench.QuadraticNorm]
+
+lean_lib HexMvPolyBenchSupport where
+  srcDir := "bench"
+  globs := #[`HexMvPolyCorpus]
+
+lean_lib HexMvPolyMathlibProofProbe where
+  srcDir := "bench"
+  globs := #[`HexMvPolyMathlib.ProofProbe.Support,
+    `HexMvPolyMathlib.ProofProbe.Baseline,
+    `HexMvPolyMathlib.ProofProbe.HexAdditionInputs32,
+    `HexMvPolyMathlib.ProofProbe.SortedAdditionInputs32,
+    `HexMvPolyMathlib.ProofProbe.HexAddition32,
+    `HexMvPolyMathlib.ProofProbe.SortedAddition32,
+    `HexMvPolyMathlib.ProofProbe.HexAdditionInputs64,
+    `HexMvPolyMathlib.ProofProbe.SortedAdditionInputs64,
+    `HexMvPolyMathlib.ProofProbe.HexAddition64,
+    `HexMvPolyMathlib.ProofProbe.SortedAddition64,
+    `HexMvPolyMathlib.ProofProbe.HexMulSparse6,
+    `HexMvPolyMathlib.ProofProbe.SortedMulSparse6,
+    `HexMvPolyMathlib.ProofProbe.HexMulCollideInputs8,
+    `HexMvPolyMathlib.ProofProbe.SortedMulCollideInputs8,
+    `HexMvPolyMathlib.ProofProbe.HexMulCollide8,
+    `HexMvPolyMathlib.ProofProbe.SortedMulCollide8,
+    `HexMvPolyMathlib.ProofProbe.HexMulCollideInputs12,
+    `HexMvPolyMathlib.ProofProbe.SortedMulCollideInputs12,
+    `HexMvPolyMathlib.ProofProbe.HexMulCollide12,
+    `HexMvPolyMathlib.ProofProbe.SortedMulCollide12,
+    `HexMvPolyMathlib.ProofProbe.HexCancellation4,
+    `HexMvPolyMathlib.ProofProbe.SortedCancellation4,
+    `HexMvPolyMathlib.ProofProbe.HexCancellation6,
+    `HexMvPolyMathlib.ProofProbe.SortedCancellation6,
+    `HexMvPolyMathlib.ProofProbe.HexCancellationInputs8,
+    `HexMvPolyMathlib.ProofProbe.SortedCancellationInputs8,
+    `HexMvPolyMathlib.ProofProbe.HexCancellation8,
+    `HexMvPolyMathlib.ProofProbe.SortedCancellation8,
+    `HexMvPolyMathlib.ProofProbe.HexCancellationInputs10,
+    `HexMvPolyMathlib.ProofProbe.SortedCancellationInputs10,
+    `HexMvPolyMathlib.ProofProbe.HexCancellation10,
+    `HexMvPolyMathlib.ProofProbe.SortedCancellation10,
+    `HexMvPolyMathlib.ProofProbe.HexSos3,
+    `HexMvPolyMathlib.ProofProbe.SortedSos3,
+    `HexMvPolyMathlib.ProofProbe.HexSos4,
+    `HexMvPolyMathlib.ProofProbe.SortedSos4,
+    `HexMvPolyMathlib.ProofProbe.HexSosInputs6,
+    `HexMvPolyMathlib.ProofProbe.SortedSosInputs6,
+    `HexMvPolyMathlib.ProofProbe.HexSos6,
+    `HexMvPolyMathlib.ProofProbe.SortedSos6,
+    `HexMvPolyMathlib.ProofProbe.HexSosInputs8,
+    `HexMvPolyMathlib.ProofProbe.SortedSosInputs8,
+    `HexMvPolyMathlib.ProofProbe.HexSos8,
+    `HexMvPolyMathlib.ProofProbe.SortedSos8,
+    `HexMvPolyMathlib.ProofProbe.HexStructuralInputs8,
+    `HexMvPolyMathlib.ProofProbe.SortedStructuralInputs8,
+    `HexMvPolyMathlib.ProofProbe.HexStructural8,
+    `HexMvPolyMathlib.ProofProbe.SortedStructural8,
+    `HexMvPolyMathlib.ProofProbe.HexStructuralInputs32,
+    `HexMvPolyMathlib.ProofProbe.SortedStructuralInputs32,
+    `HexMvPolyMathlib.ProofProbe.HexStructural32,
+    `HexMvPolyMathlib.ProofProbe.SortedStructural32].map Glob.one
 
 lean_lib HexIntervalExperiment where
   globs := #[`HexInterval.Experiment.Representation,
@@ -306,7 +378,7 @@ lean_lib HexRCFProofProbeScientific where
 -- `*_emit_fixtures` exes below, carrying `srcDir := "conformance"`.
 lean_lib HexConformance where
   srcDir := "conformance"
-  globs := #[`HexArith.Conformance, `HexArith.CrossCheck, `HexBerlekamp.Conformance, `HexBerlekampZassenhaus.Conformance, `HexBerlekampZassenhaus.CrossCheck, `HexConway.Conformance, `HexGF2.Conformance, `HexGF2.CrossCheck, `HexGF2.FastCheck, `HexGFq.Conformance, `HexGFq.CrossCheck, `HexGFqField.Conformance, `HexGFqRing.Conformance, `HexGramSchmidt.Conformance, `HexHensel.Conformance, `HexHensel.CrossCheck, `HexInterval.Conformance, `HexInterval.CenterConformance, `HexInterval.ScaleConformance, `HexInterval.PropagatorConformance, `HexInterval.ScopeConformance, `HexInterval.StructuralMatcherConformance, `HexInterval.MatcherSchedulerConformance, `HexInterval.StructureViewConformance, `HexInterval.PolicyConformance, `HexInterval.PolicyFrontierConformance, `HexInterval.PolicyDriverConformance, `HexInterval.PackageRegistryConformance, `HexInterval.DyadicIntervalConformance, `HexInterval.DyadicRulesConformance, `HexInterval.PayloadArenaConformance, `HexInterval.PayloadSessionConformance, `HexInterval.PolicySessionConformance, `HexInterval.PolicyFunctionConformance, `HexInterval.SemanticReplayConformance, `HexInterval.ChronologicalReplayConformance, `HexLLL.Conformance, `HexMatrix.Conformance, `HexRowReduce.Conformance, `HexDeterminant.Conformance, `HexBareiss.Conformance, `HexModArith.Conformance, `HexModArith.FastCheck, `HexNumberField.Conformance, `HexNumberFieldTower.Conformance, `HexPoly.Conformance, `HexPolyFp.Conformance, `HexPolyZ.Conformance, `HexRCF.Conformance, `HexRealRoots.Conformance, `HexRealRootsMathlib.Conformance, `HexResultant.Conformance, `HexRoots.Conformance].map Glob.one
+  globs := #[`HexArith.Conformance, `HexArith.CrossCheck, `HexBerlekamp.Conformance, `HexBerlekampZassenhaus.Conformance, `HexBerlekampZassenhaus.CrossCheck, `HexConway.Conformance, `HexGF2.Conformance, `HexGF2.CrossCheck, `HexGF2.FastCheck, `HexGFq.Conformance, `HexGFq.CrossCheck, `HexGFqField.Conformance, `HexGFqRing.Conformance, `HexGramSchmidt.Conformance, `HexHensel.Conformance, `HexHensel.CrossCheck, `HexInterval.Conformance, `HexInterval.CenterConformance, `HexInterval.ScaleConformance, `HexInterval.PropagatorConformance, `HexInterval.ScopeConformance, `HexInterval.StructuralMatcherConformance, `HexInterval.MatcherSchedulerConformance, `HexInterval.StructureViewConformance, `HexInterval.PolicyConformance, `HexInterval.PolicyFrontierConformance, `HexInterval.PolicyDriverConformance, `HexInterval.PackageRegistryConformance, `HexInterval.DyadicIntervalConformance, `HexInterval.DyadicRulesConformance, `HexInterval.PayloadArenaConformance, `HexInterval.PayloadSessionConformance, `HexInterval.PolicySessionConformance, `HexInterval.PolicyFunctionConformance, `HexInterval.SemanticReplayConformance, `HexInterval.ChronologicalReplayConformance, `HexLLL.Conformance, `HexMatrix.Conformance, `HexMvPolyFixtures, `HexMvPoly.Conformance, `HexMvPolyMathlib.Conformance, `HexRowReduce.Conformance, `HexDeterminant.Conformance, `HexBareiss.Conformance, `HexModArith.Conformance, `HexModArith.FastCheck, `HexNumberField.Conformance, `HexNumberFieldTower.Conformance, `HexPoly.Conformance, `HexPolyFp.Conformance, `HexPolyZ.Conformance, `HexRCF.Conformance, `HexRealRoots.Conformance, `HexRealRootsMathlib.Conformance, `HexResultant.Conformance, `HexRoots.Conformance].map Glob.one
 
 -- Public umbrellas intentionally contain only the supported API. Executable
 -- examples and regression tests are compiled through this separate target so
@@ -316,10 +388,18 @@ lean_lib HexReleaseTests where
     `HexBerlekampMathlib.FactorPolyTests,
     `HexBerlekampZassenhaus.FactorTacticTests,
     `HexBerlekampZassenhausMathlib.FactorPolyTests,
+    `HexBerlekampZassenhausMathlib.IrreducibilityTests,
     `HexRealRoots.ReplayTest,
     `HexRealRootsMathlib.IsolateRootsTests,
     `HexRealRootsMathlib.IsolateRootsElabTests,
-    `HexRootsMathlib.Examples]
+    `HexRootsMathlib.Examples,
+    `HexMvPoly.KernelTests]
+
+-- Complete development imports for the two factorization packages. Their
+-- ordinary umbrellas deliberately expose only the supported release API.
+lean_lib HexFactorizationModules where
+  globs := #[`HexBerlekampZassenhaus.All,
+    `HexBerlekampZassenhausMathlib.All]
 
 -- HexRCF is not yet a published split repository, so its verification-only
 -- modules stay separate from the release-manifest-backed target above.
@@ -388,6 +468,10 @@ lean_exe hexresultant_emit_fixtures where
   srcDir := "conformance"
   root := `HexResultant.EmitFixtures
 
+lean_exe hexmvpoly_emit_fixtures where
+  srcDir := "conformance"
+  root := `HexMvPoly.EmitFixtures
+
 lean_exe hexroots_bench where
   srcDir := "bench"
   root := `HexRoots.Bench
@@ -445,22 +529,6 @@ lean_exe hex_arith_floor where
   srcDir := "bench"
   root := `HexBench.ArithFloor
 
-lean_exe hex_classical_spike where
-  srcDir := "bench"
-  root := `HexBench.ClassicalSpike
-
-lean_exe hex_lattice_spike where
-  srcDir := "bench"
-  root := `HexBench.LatticeSpike
-
-lean_exe hex_recursive_relift_spike where
-  srcDir := "bench"
-  root := `HexBench.RecursiveReliftSpike
-
-lean_exe hex_prime_policy_spike where
-  srcDir := "bench"
-  root := `HexBench.PrimePolicySpike
-
 lean_exe hex_interval_representation_spike where
   srcDir := "bench"
   root := `HexBench.IntervalRepresentationSpike
@@ -485,6 +553,10 @@ lean_exe hexbz_factor_service where
   srcDir := "bench"
   root := `HexBench.FactorService
 
+lean_exe hexbz_root_split_probe where
+  srcDir := "bench"
+  root := `HexBench.RootSplitProbe
+
 lean_exe hexarith_bench where
   srcDir := "bench"
   root := `HexArith.Bench
@@ -492,6 +564,10 @@ lean_exe hexarith_bench where
 lean_exe hexpoly_bench where
   srcDir := "bench"
   root := `HexPoly.Bench
+
+lean_exe hexmvpoly_bench where
+  srcDir := "bench"
+  root := `HexMvPoly.Bench
 
 lean_exe hexpoly_emit_fixtures where
   srcDir := "conformance"
@@ -540,6 +616,10 @@ lean_exe hexgfqfield_emit_fixtures where
 lean_exe hexpolyz_bench where
   srcDir := "bench"
   root := `HexPolyZ.Bench
+
+lean_exe hexpolyz_kronecker_crossover where
+  srcDir := "bench"
+  root := `HexPolyZ.KroneckerCrossover
 
 lean_exe hexpolyz_emit_fixtures where
   srcDir := "conformance"

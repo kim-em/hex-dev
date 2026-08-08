@@ -46,7 +46,7 @@ theorem coeff_remotePoly (s : Multiset ℂ) (k : ℕ) :
       cases k with
       | zero => simp [remotePoly, Multiset.esymm]
       | succ k =>
-          simp [remotePoly, Multiset.esymm]
+          simp [remotePoly, Multiset.esymm, Multiset.powersetCard_zero_right]
           rw [coeff_one]
           simp
   | @cons a s ih =>

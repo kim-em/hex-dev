@@ -36,10 +36,11 @@ associate of the stored absolute root's checked integer polynomial. -/
 @[expose]
 def Level.RationalRelation (level : Level) (lower : List Level) : Prop :=
   lower = [] ∧
-    ∃ _checked : ZPoly.CheckedIrreducible level.root.p,
-      Factor.toRatPoly (level.polynomial lower) =
-        DensePoly.scale ((level.root.p.leadingCoeff : Rat)⁻¹)
-          (ZPoly.toRatPoly level.root.p)
+    ∃ original : ZPoly, ∃ _checked : ZPoly.CheckedIrreducible original,
+      level.root.p = ZPoly.normalizePrimitiveSign original ∧
+        Factor.toRatPoly (level.polynomial lower) =
+          DensePoly.scale ((level.root.p.leadingCoeff : Rat)⁻¹)
+            (ZPoly.toRatPoly level.root.p)
 
 /-- Meaningful construction evidence for one level. The base constructor ties
 the relation directly to a checked irreducible integer presentation and its
@@ -113,6 +114,41 @@ def Internal.extend? (T : NumberTower) (level : Level) : Option NumberTower :=
       none
   else
     none
+
+/-- The internal extension constructor succeeds once all of its explicit
+checks have been discharged. -/
+theorem Internal.extend?_isSome (T : NumberTower) (level : Level)
+    (hdegree : 1 < level.degree)
+    (hstruct : level.structuralCheck T.dim = true)
+    (hirred : Factor.isIrreducible T.levels.toList
+      (level.polynomial T.levels.toList) = true)
+    (hembed : RawEvaluation.vanishesAt? T.levels.toList
+      (level.polynomial T.levels.toList) level.root = some true) :
+    (Internal.extend? T level).isSome := by
+  unfold Internal.extend?
+  simp [hdegree, hstruct, hirred, hembed]
+
+/-- A successful checked extension prepends exactly the admitted level. -/
+theorem Internal.extend?_levels (T : NumberTower) (level : Level)
+    {U : NumberTower} (h : Internal.extend? T level = some U) :
+    U.levels.toList = level :: T.levels.toList := by
+  unfold Internal.extend? at h
+  split at h <;> try contradiction
+  split at h <;> try contradiction
+  split at h <;> try contradiction
+  split at h <;> try contradiction
+  simp only [Option.some.injEq] at h
+  subst U
+  simp
+
+/-- A successful checked extension multiplies the lower tower dimension by
+the admitted relative degree. -/
+theorem Internal.extend?_dim (T : NumberTower) (level : Level)
+    {U : NumberTower} (h : Internal.extend? T level = some U) :
+    U.dim = level.degree * T.dim := by
+  unfold dim
+  rw [Internal.extend?_levels T level h]
+  rfl
 
 /-- Number of proper algebraic extension levels. -/
 @[expose]
@@ -206,48 +242,63 @@ def positiveAssociate (p : ZPoly) : ZPoly :=
 theorem positiveAssociate_primitive (p : ZPoly)
     (checked : ZPoly.CheckedIrreducible p) :
     ZPoly.Primitive (positiveAssociate p) := by
-  sorry
+  apply ZPoly.primitive_normalizePrimitiveSign
+  have hpne : p ≠ 0 := by
+    intro hp
+    subst p
+    have hpos := checked.pos_degree
+    simp at hpos
+  have hdegree : p.degree?.getD 0 ≠ 0 := Nat.ne_of_gt checked.pos_degree
+  have hirred := checked.is_true
+  rw [ZPoly.isIrreducible, if_neg hpne, if_neg hdegree] at hirred
+  simp only [Bool.and_eq_true, decide_eq_true_eq] at hirred
+  have hscalar : (ZPoly.factorize p).scalar.natAbs = 1 := by
+    exact hirred.1.1
+  rw [factorize_scalar, if_neg hpne] at hscalar
+  have hcontentAbs : (ZPoly.content p).natAbs = 1 := by
+    by_cases hlead : p.leadingCoeff < 0
+    · simpa [hlead] using hscalar
+    · simpa [hlead] using hscalar
+  have hcontent : 0 ≤ ZPoly.content p := by
+    show 0 ≤ DensePoly.content p
+    rw [DensePoly.content]
+    exact Int.natCast_nonneg _
+  have hcast := congrArg Int.ofNat hcontentAbs
+  simpa [ZPoly.Primitive, Int.natAbs_of_nonneg hcontent] using hcast
 
 /-- A checked positive-degree polynomial's positive associate has positive
 leading coefficient. -/
 theorem positiveAssociate_lc_pos (p : ZPoly)
     (checked : ZPoly.CheckedIrreducible p) :
     0 < (positiveAssociate p).leadingCoeff := by
-  sorry
+  apply ZPoly.leadingCoeff_normalizePrimitiveSign_pos_of_ne_zero
+  intro hp
+  subst p
+  have hpos := checked.pos_degree
+  simp at hpos
 
 /-- Sign association preserves positive degree. -/
 theorem positiveAssociate_degree_pos (p : ZPoly)
     (checked : ZPoly.CheckedIrreducible p) :
     0 < (positiveAssociate p).degree?.getD 0 := by
-  sorry
-
-/-- Global sign normalization preserves the executable integer
-irreducibility check. -/
-theorem positiveAssociate_irreducible (p : ZPoly)
-    (checked : ZPoly.CheckedIrreducible p) :
-    ZPoly.isIrreducible (positiveAssociate p) = true := by
-  sorry
+  simpa [positiveAssociate] using checked.pos_degree
 
 /-- Sign association preserves the executable simple-root certificate. -/
 theorem positiveAssociate_simple (p : ZPoly) (hsf : HasOnlySimpleRoots p) :
     HasOnlySimpleRoots (positiveAssociate p) := by
-  sorry
-
-/-- A root atom is unchanged by multiplication of its polynomial by `-1`. -/
-theorem atomWitness_positiveAssociate {p : ZPoly} {square : DyadicSquare}
-    (h : atomWitness p square) :
-    atomWitness (positiveAssociate p) square := by
-  sorry
+  exact ZPoly.squareFreeRat_normalizePrimitiveSign p hsf
 
 /-- Global sign normalization preserves the Mahler refinement precision. -/
 theorem mahlerPrec_positiveAssociate (p : ZPoly) :
     mahlerPrec (positiveAssociate p) = mahlerPrec p := by
-  sorry
+  unfold mahlerPrec positiveAssociate
+  rw [ZPoly.degree?_normalizePrimitiveSign,
+    ZPoly.coeffAbsMax_normalizePrimitiveSign]
 
 /-- Transport a refined isolation across global sign normalization. -/
 def RefinedIsolation.positiveAssociate {p : ZPoly}
     (rep : RefinedIsolation p) : RefinedIsolation (positiveAssociate p) :=
-  ⟨⟨rep.1.square, atomWitness_positiveAssociate rep.1.witness⟩, by
+  ⟨⟨rep.1.square, .normalize rep.1.witness⟩, by
     rw [mahlerPrec_positiveAssociate]
     exact rep.2⟩
 
@@ -283,16 +334,68 @@ def ofQAdjoin {p : ZPoly} {x : SimpleRoot p}
     let tower : NumberTower := .mk #[level] (by
       change level.Structural 1 ∧ level.Certificate [] ∧ True
       refine ⟨?_, ?_, trivial⟩
-      · refine ⟨root.pos_degree, by simp [level, defining], ?_⟩
+      · refine ⟨?_, by simp [level, defining], ?_⟩
+        · have hpositive := root.pos_degree
+          have hdpositive : 0 < d := by
+            simpa [d, root] using hpositive
+          change 1 < d
+          omega
         intro i hi
         simp [level, defining]
       · apply Level.Certificate.rational
         refine ⟨rfl, ?_⟩
-        let qchecked : ZPoly.CheckedIrreducible q :=
-          ⟨positiveAssociate_irreducible p checked,
-            positiveAssociate_degree_pos p checked⟩
-        refine ⟨qchecked, ?_⟩
-        sorry)
+        refine ⟨p, checked, rfl, ?_⟩
+        apply DensePoly.ext_coeff
+        intro i
+        rw [DensePoly.coeff_scale (R := Rat) _ _ i (Rat.mul_zero _)]
+        by_cases hi : i < d
+        · have hi' : i < d + 1 := by omega
+          simp [Level.polynomial, level, defining, Factor.toRatPoly,
+            ZPoly.coeff_toRatPoly, q, root, d, leading, Array.getD,
+            hi, hi', Rat.div_def, Rat.mul_comm]
+        · have hqdegree := positiveAssociate_degree_pos p checked
+          change 0 < q.degree?.getD 0 at hqdegree
+          have hqne : q ≠ 0 := by
+            intro hq
+            rw [hq, DensePoly.degree?_zero_getD] at hqdegree
+            omega
+          have hqsizePos : 0 < q.size := ZPoly.size_pos_of_ne_zero q hqne
+          have hdEq : d = q.size - 1 := by
+            simp [d, DensePoly.degree?, hqne]
+          have hqsize : q.size = d + 1 := by omega
+          by_cases hid : i = d
+          · subst i
+            have hleading : leading ≠ 0 := by
+              change (q.leadingCoeff : Rat) ≠ 0
+              intro h
+              have hint : q.leadingCoeff = 0 := Rat.intCast_eq_zero_iff.mp h
+              have hpos : 0 < q.leadingCoeff := by
+                change 0 < (positiveAssociate p).leadingCoeff
+                exact positiveAssociate_lc_pos p checked
+              omega
+            have hlc : q.coeff d = q.leadingCoeff := by
+              rw [DensePoly.leadingCoeff_eq_coeff_last q hqsizePos, hqsize]
+              simp
+            have hleft :
+                (Factor.toRatPoly (level.polynomial [])).coeff d = 1 := by
+              simp [Level.polynomial, level, defining, Factor.toRatPoly,
+                Arithmetic.fixedCoeffs, levelsDim, d, Array.getD]
+            rw [hleft, ZPoly.coeff_toRatPoly, hlc]
+            change (1 : Rat) = leading⁻¹ * leading
+            exact (Rat.inv_mul_cancel leading hleading).symm
+          · have hdi : d < i := by omega
+            have hsize :
+                (Factor.toRatPoly (level.polynomial [])).size ≤ i := by
+              apply Nat.le_trans (DensePoly.size_ofCoeffs_le _)
+              simp [Level.polynomial, level, defining, d]
+              omega
+            rw [DensePoly.coeff_eq_zero_of_size_le _ hsize]
+            have hqzero : q.coeff i = 0 :=
+              DensePoly.coeff_eq_zero_of_size_le q (by omega)
+            rw [ZPoly.coeff_toRatPoly]
+            change 0 = leading⁻¹ * (q.coeff i : Rat)
+            rw [hqzero]
+            exact (Rat.mul_zero _).symm)
     { tower
       embed := fun a => ofRat tower ((coeffs a).getD 0 0)
       gen := ofCoeffs tower #[0, 1]

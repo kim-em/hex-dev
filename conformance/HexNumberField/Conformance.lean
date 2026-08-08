@@ -19,6 +19,7 @@ Covered operations:
 - lazy `AlgebraicRoot` negation, addition, subtraction, multiplication,
   inversion, division, and exactification in both checked and total forms;
 - canonical `AlgebraicNumber` arithmetic through its public instances;
+- canonical rational construction, casts, scalar action, and powers;
 - semantic equality of lazy values represented by different polynomials;
 - checked and total fixed-field and algebraic-coefficient root APIs.
 
@@ -45,7 +46,7 @@ private def sqrtTwoSquare : DyadicSquare :=
   ⟨Dyadic.ofIntWithPrec 181 7, 0, 8⟩
 
 private def sqrtTwoRep : RefinedIsolation sqrtTwoPoly :=
-  ⟨⟨sqrtTwoSquare, by decide⟩, by decide⟩
+  ⟨⟨sqrtTwoSquare, .ofWitness (by decide)⟩, by decide⟩
 
 private def sqrtTwoRoot : SimpleRoot sqrtTwoPoly :=
   SimpleRoot.mk sqrtTwoRep
@@ -68,7 +69,7 @@ private def negSqrtTwoSquare : DyadicSquare :=
   ⟨Dyadic.ofIntWithPrec (-181) 7, 0, 8⟩
 
 private def negSqrtTwoRep : RefinedIsolation sqrtTwoPoly :=
-  ⟨⟨negSqrtTwoSquare, by decide⟩, by decide⟩
+  ⟨⟨negSqrtTwoSquare, .ofWitness (by decide)⟩, by decide⟩
 
 private def negSqrtTwo? : Option AlgebraicRoot :=
   if hsimple : HasOnlySimpleRoots sqrtTwoPoly then
@@ -90,7 +91,7 @@ private def sqrtThreeSquare : DyadicSquare :=
   ⟨Dyadic.ofIntWithPrec 222 7, 0, 8⟩
 
 private def sqrtThreeRep : RefinedIsolation sqrtThreePoly :=
-  ⟨⟨sqrtThreeSquare, by decide⟩, by decide⟩
+  ⟨⟨sqrtThreeSquare, .ofWitness (by decide)⟩, by decide⟩
 
 private def sqrtThree? : Option AlgebraicRoot :=
   if hsimple : HasOnlySimpleRoots sqrtThreePoly then
@@ -112,7 +113,7 @@ private def tinySquare : DyadicSquare :=
   ⟨Dyadic.ofIntWithPrec 1 10, 0, 16⟩
 
 private def tinyRep : RefinedIsolation tinyPoly :=
-  ⟨⟨tinySquare, by decide⟩, by decide⟩
+  ⟨⟨tinySquare, .ofWitness (by decide)⟩, by decide⟩
 
 private def tiny? : Option AlgebraicRoot :=
   if hsimple : HasOnlySimpleRoots tinyPoly then
@@ -134,7 +135,7 @@ private def twoWithZeroSquare : DyadicSquare :=
   ⟨Dyadic.ofIntWithPrec 2 0, 0, 8⟩
 
 private def twoWithZeroRep : RefinedIsolation twoWithZeroPoly :=
-  ⟨⟨twoWithZeroSquare, by decide⟩, by decide⟩
+  ⟨⟨twoWithZeroSquare, .ofWitness (by decide)⟩, by decide⟩
 
 private def twoWithZero? : Option AlgebraicRoot :=
   if hsimple : HasOnlySimpleRoots twoWithZeroPoly then
@@ -157,7 +158,7 @@ private def enclosingSquare : DyadicSquare :=
   ⟨Dyadic.ofIntWithPrec 6074001000 32, 0, 32⟩
 
 private def enclosingRep : RefinedIsolation enclosingPoly :=
-  ⟨⟨enclosingSquare, by decide⟩, by decide⟩
+  ⟨⟨enclosingSquare, .ofWitness (by decide)⟩, by decide⟩
 
 private def enclosingRoot? : Option AlgebraicRoot :=
   if hsimple : HasOnlySimpleRoots enclosingPoly then
@@ -316,6 +317,28 @@ private def sqrtThreeExact? : Option AlgebraicNumber :=
         (a - a).isZero && (a * 0).isZero &&
         ((0 : AlgebraicNumber)⁻¹).isZero && (a / 0).isZero
   | _, _ => false
+
+-- Canonical rational construction supplies the ordinary executable field
+-- surface used by the companion's law-bearing instance.
+#guard
+  let one : AlgebraicNumber := 1
+  let two : AlgebraicNumber := 2
+  let negTwo : AlgebraicNumber := AlgebraicNumber.ofRat (-2)
+  AlgebraicNumber.ofRat 0 == 0 &&
+    one == AlgebraicNumber.ofRat 1 &&
+    two == one + one && negTwo == -two &&
+    ((5 : Nat) : AlgebraicNumber) == AlgebraicNumber.ofRat 5 &&
+    ((-5 : Int) : AlgebraicNumber) == AlgebraicNumber.ofRat (-5) &&
+    ((3 : Rat) • one) == AlgebraicNumber.ofRat 3 &&
+    ((3 : Nat) • one) == AlgebraicNumber.ofRat 3 &&
+    ((-3 : Int) • two) == AlgebraicNumber.ofRat (-6) &&
+    one ^ (7 : Nat) == one && two ^ (0 : Int) == one &&
+    two ^ (-1 : Int) == AlgebraicNumber.ofRat (1 / 2)
+
+#guard
+  match sqrtTwoExact? with
+  | some a => a ^ (2 : Nat) == AlgebraicNumber.ofRat 2
+  | none => false
 
 -- Same selected value through different enclosing polynomials; opposite
 -- conjugates of the same polynomial must not be confused.

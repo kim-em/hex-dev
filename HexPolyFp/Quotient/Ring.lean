@@ -225,7 +225,7 @@ def elements : List (Quotient g hmonic hg_pos) :=
   (Enumeration.polysBelowDegree p (g.degree?.getD 0)).map
     (reduce (g := g) (hmonic := hmonic) (hg_pos := hg_pos))
 
-/-- {name}`elements` enumerates exactly `p ^ deg g` canonical representatives —
+/-- {name}`elements` enumerates exactly `p ^ deg g` canonical representatives;
 the order of the quotient ring `FpPoly p / g`. -/
 @[simp, grind =] theorem elements_length :
     (elements (g := g) (hmonic := hmonic) (hg_pos := hg_pos)).length =
