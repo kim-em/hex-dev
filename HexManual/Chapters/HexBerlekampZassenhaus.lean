@@ -84,7 +84,7 @@ are the standard example: at modular width {lean}`16` the walk is
 each new radicand.
 
 For that class the answer is available directly. The quadratic norm
-{name}`Hex.quadNorm` of {lean}`g` at {lean}`d` is the norm of `g(X - t)`
+{name}`Hex.quadNorm` of `g` at `d` is the norm of `g(X - t)`
 along `ℤ[t]/(t² - d) → ℤ`, and {name}`Hex.iteratedNorm` folds it over a
 list of radicands from `X - c`, producing the product of `X - c - ∑ᵢ εᵢ √dᵢ`
 over all sign patterns. When no nonempty subproduct of the radicands is

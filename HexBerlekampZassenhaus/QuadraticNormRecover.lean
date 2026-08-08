@@ -7,6 +7,10 @@ Authors: Kim Morrison
 module
 
 public import HexBerlekampZassenhaus.QuadraticNorm
+-- The `#guard` sanity checks below are interpreted, so the definitions they run
+-- must be available at compile time too.
+public meta import HexBerlekampZassenhaus.QuadraticNorm
+public meta import HexPolyZ.IntegerPolynomial
 
 public section
 
@@ -255,6 +259,32 @@ theorem check_of_certify? {f : ZPoly} {cert : QuadraticNormCertificate}
         exact hcheck
       · simp only [Bool.not_eq_true] at hcheck
         simp [hcheck] at h
+
+/-! ## Sanity checks
+
+Interpreted, which is how the search is reached in practice: the `factor_poly`
+and `irreducibility` tactics call `Hex.ZPoly.factorize` from a `meta def` at
+elaboration time and emit a certificate check, so nothing here is ever asked to
+reduce in the kernel. Rational recovery would not: `Rat` division goes through
+`Nat.gcd`, which the kernel does not unfold. -/
+
+-- `X⁴ - 10X² + 1` is `F(0; 2, 3)`, the minimal polynomial of `√2 + √3`.
+#guard (recover? (DensePoly.ofCoeffs #[1, 0, -10, 0, 1])).isSome
+#guard (certify? (DensePoly.ofCoeffs #[1, 0, -10, 0, 1])).isSome
+
+-- Degree three is not a power of two, so the search stops before any series
+-- arithmetic. This is the shape of most of a factorization corpus.
+#guard (recover? (DensePoly.ofCoeffs #[-2, 0, 0, 1])).isNone
+
+-- `F(0; 2, 3, 6)` is recovered, and refused: `2 · 3 · 6 = 36` is a square, so
+-- the radicands are not independent and the polynomial is in fact reducible.
+#guard (recover? (DensePoly.ofCoeffs #[529, 0, -1292, 0, 438, 0, -44, 0, 1])).isSome
+#guard (certify? (DensePoly.ofCoeffs #[529, 0, -1292, 0, 438, 0, -44, 0, 1])).isNone
+
+-- Moving one coefficient of a certified polynomial refuses it: the
+-- identification is literal coefficient equality.
+#guard (certify? (DensePoly.ofCoeffs #[2, 0, -10, 0, 1])).isNone
+
 
 end QuadraticNormCertificate
 

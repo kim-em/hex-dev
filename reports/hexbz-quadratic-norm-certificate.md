@@ -26,7 +26,11 @@ What is *not* delivered here is the Mathlib correspondence. The certificate is
 checkable today and its meaning is proved below on paper; `Irreducible` is not
 yet a Lean theorem about it. The final section says exactly what remains.
 
-## Before starting: where Swinnerton-Dyer stands after #9129 and #9130
+## Before integration: where Swinnerton-Dyer stood after #9129 and #9130
+
+This section is the pre-integration record #9133 asked for, kept as measured.
+Everything after "In production" is the state after #9170.
+
 
 The issue asks for these numbers before any implementation, and for the issue to
 be closed as a no-go if the general reconstruction already meets #9126's target
@@ -267,20 +271,75 @@ it meets -- degree not a power of two, `2ⁿ ∤ a_{N-1}`, a non-integral
 intermediate, or too few integer roots -- and the measured cost of that failure
 is in the miss table below.
 
-## The prototype
+## In production
 
-`bench/HexBench/QuadraticNorm.lean`, reachable only from the benchmark service.
-It is not imported by `HexBerlekampZassenhaus` and `Hex.ZPoly.factorize` is
-unchanged; issue #9133 asks for the gate to be decided outside production, and
-it was.
+The certificate is on the production path. `Hex.QuadraticNormCertificate.check`
+and the definitions it runs on live in `HexBerlekampZassenhaus/QuadraticNorm.lean`;
+the untrusted search that proposes a certificate is
+`HexBerlekampZassenhaus/QuadraticNormRecover.lean`, whose `recover?` is the
+closed form of the previous section and whose `certify?` is recovery followed by
+the check. The prototype that decided the gate is gone: `bench/HexBench/QuadraticNorm.lean`
+and its `HexQuadraticNormProbe` library are deleted, and the bench probe now
+times the same definitions `Hex.ZPoly.factorize` reaches.
+
+**Where it is consulted.** `Hex.classicalInput` selects the modular prime and
+factorization, and at that point the support width `w` is known and no Hensel
+lift has been paid for yet. `Hex.quadraticNormCertified core w` is consulted
+once, there. A success returns the whole square-free core as one irreducible
+factor through the same `reassemblePolynomialFactors` as the constant and
+quadratic cases, so it produces the same `Factorization` any other singleton
+proof would; the trace records `FactorMethod.quadraticNorm`. A failure falls
+through to `planned` carrying no state, and the row runs exactly the cascade it
+ran before.
+
+**The budget.** Recombination at width `w` walks up to `2^(w-1)` supports, so
+the gate is a width: `QuadraticNormCertificate.widthFloor = 16`. At the floor the
+walk is `2^15 = 32768` nodes, an eighth of the 262,144-node
+`defaultSubsetBudget` the recombination already carries, and it is the cost of
+that walk the certificate is worth attempting to replace. Below the floor
+nothing is constructed, so a row that recombines cheaply pays exactly nothing.
+The floor is deliberately not `defaultSubsetBudget` itself: `sd5`'s
+32,768-node walk sits far under that budget and would never trip it, yet it is
+precisely the walk worth replacing.
+
+**Normalization.** Every `F(c; d)` is monic, so the certificate applies to the
+primitive square-free part exactly when its leading coefficient is `1` or `-1`,
+and the only normalization is negation. `ZPoly.normalizePrimitiveSign`, inside
+the check, is that negation and nothing else: no scaling, no content division,
+no reordering.
+
+**Soundness.** `HexBerlekampZassenhausMathlib.irreducible_of_check` says a
+successful check makes its input irreducible in `Polynomial ℤ`, with no
+hypothesis on the input, and `irreducible_of_quadraticNormCertified` says the
+same of the gate. It is what discharges the certificate arm of
+`factorClassicalFactors_factor_irreducible`, so a certified singleton is proved
+irreducible on the same footing as every other returned factor. The composition
+the two halves needed is `signPatternPoly_ofFn`: `map_iteratedNorm` writes the
+sign-pattern product as a `List.prod` over a fold-built list of signed sums and
+the tower theorem writes it as a `Finset.prod` over `Fin n → Bool`, and those are
+the same polynomial. Neither side can adopt the other's encoding -- the fold is
+what the iterated norm computes, and the `Fin n → Bool` indexing is what lets an
+automorphism act by a reindexing equivalence -- so it is a real lemma, proved by
+induction on the radicand count, splitting the last sign off with `Fin.snocEquiv`
+on one side and the last fold step on the other.
+
+## The measurement driver
 
 `hexbz_factor_service --entry quadraticNormProbe` times one production
 factorization and the four certificate stages on the same input in the same
 process. `--entry quadraticNormCertificate` runs the certificate stages alone,
-for the rows the production cascade does not finish and for the corpus-wide miss
-sweep. Each stage folds its result into a reported witness before its closing
-mark; without that the compiler sinks each pure `let` to its only use and the
-whole certificate cost lands in whichever span is last.
+for the corpus-wide miss sweep and for any row the cascade does not finish. Each
+stage folds its result into a reported witness before its closing mark; without
+that the compiler sinks each pure `let` to its only use and the whole
+certificate cost lands in whichever span is last.
+
+The probe is deliberately *unconditional*: it prices the certificate on every
+row, including the ones production's width floor never offers it to. That is
+what makes the miss table a property of the certificate rather than of the gate.
+It also means the paired ratio is no longer a speedup, because a certified row's
+production call now runs the certificate too; it says what share of the
+integrated row the certificate is. The before/after speedup is in the factor
+sweep below.
 
 `scripts/bench/quadratic_norm_probe.py` drives both and writes
 `reports/bench-results/hexbz-quadratic-norm-certificate-chungus2.json`.
@@ -530,32 +589,44 @@ input is that a multiquadratic field is the splitting field of a separable
 polynomial. What it does need from Mathlib is the Galois correspondence for
 `ℚ(α) = Fix(Stab α)` and `minpoly` as the orbit product.
 
-## What an implementation still owes
+## What was owed, and what is delivered
 
-The certificate is checkable and its meaning is proved on paper. Turning that
-into `Irreducible` inside Lean is the remaining work, and it is not small:
+The go/no-go named five pieces. All five are in.
 
-1. **The tower theorem** -- Lemma A, the `Claim(m)` induction, and `[K:ℚ] = 2ⁿ`
-   (#9167); then the trivial-stabilizer argument, `ℚ(α) = K`, and
-   `minpoly α = F(c; d)` (#9169). Mathlib-facing, and the largest piece.
-2. **The norm correspondence** -- that the executable `quadNorm` over
-   `ℤ[t]/(t² - d)` maps to `g(X - √d)·g(X + √d)` in `K[X]`, and that the iterate
-   is the product over sign patterns (#9168). This is where the dense-array
-   representation meets `Polynomial`, the boundary
-   `.claude/skills/hex-lean-mathlib-boundary` is about.
-3. **The decidable checks** -- `independentSquareClasses ds = true` implies no
-   nonempty subproduct is a rational square, and coefficient equality implies
-   polynomial equality. Both are small, and both ride along with #9168.
-4. **Production integration** -- a `Certificate` in the Mathlib-free layer, the
-   checker on the singleton-irreducibility path so a success returns the same
-   `Factorization` as every other proof, and the budget gate (#9170). Failure
-   must fall through to the one existing path.
-5. **A fresh sweep and regenerated plots** at the integrated revision, with all
-   regressions above 5% reported; also #9170, and what #9126's acceptance run
-   will read.
+1. **The tower theorem** -- Lemma A, the `Claim(m)` induction and `[K:ℚ] = 2ⁿ`
+   (#9167); the trivial-stabilizer argument, `ℚ(α) = K`, and
+   `minpoly α = F(c; d)` (#9169). In
+   `HexBerlekampZassenhausMathlib/{SquareClass,Multiquadratic}.lean`.
+2. **The norm correspondence** -- `map_quadNorm` and `map_iteratedNorm` (#9168),
+   in `HexBerlekampZassenhausMathlib/QuadraticNorm.lean`.
+3. **The decidable checks** -- `independentSquareClasses_iff` and
+   `toPolynomial_inj`, same file.
+4. **Production integration** -- `QuadraticNormCertificate.recover?`,
+   `certify?`, and the `quadraticNormCertified` gate, reached once from
+   `classicalInput`; `irreducible_of_check` and
+   `irreducible_of_quadraticNormCertified` make it sound; `signPatternPoly_ofFn`
+   is the composition the two developments needed (#9170).
+5. **A fresh sweep and regenerated plots** at the integrated revision -- below.
 
-Nothing above needs `axiom`, `sorry`, or `native_decide`; the check is a `Bool`
-and the theorem is about it being `true`.
+Nothing above uses `axiom`, `sorry`, or `native_decide`: the check is a `Bool`
+and the theorem is about it being `true`. `python3
+scripts/release/check_trust_surface.py` reports 421 clean files at this
+revision.
+
+### What is *not* delivered
+
+* **Width below the floor.** `sd4`, `sd4_shift1` and `sd4_shift3` certify but
+  are never offered the certificate: their modular width is 8, and at width 8
+  the walk is 128 nodes. See the floor discussion below for what that costs and
+  why the floor stays at 16.
+* **A certificate witness for the tactics.** `irreducibility` still searches
+  small-prime and Eisenstein witnesses only. Nothing in this work depends on
+  that, but a `QuadraticNormCertificate` arm of `ZPoly.IrredWitness` would let
+  the tactic answer a Swinnerton-Dyer input directly.
+* **The one row still unsolved.** `hoeij_S9`, degree 512, certifies in about 24
+  ms of certificate time but does not finish inside the 10 s cutoff, because the
+  prime walk and modular factorization it still runs first do not. That is a
+  Berlekamp cost, not a recombination one, and it is out of this scope.
 
 ## Regeneration
 
