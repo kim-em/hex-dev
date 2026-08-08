@@ -601,10 +601,9 @@ runs on each side.
 | `hoeij_S9` | 512 | timeout | timeout | -- |
 
 `sd2` through `sd4_shift3` are the certified rows the gate does *not* fire on:
-their modular width is 4, 8 or 16 -- and at width 16 the recognizer is offered
-`sd4` and takes it, which is why `sd4` is flat rather than halved. `sd4`'s
-recombination visits 128 nodes, not 32,768, so there is nothing there to
-replace; the certificate costs 29.6 us and saves about as much.
+their modular widths are 2, 4 and 8, all below the floor, so they run exactly
+the cascade they ran before and their times move by less than the run-to-run
+spread. `sd5` at width 16 is the first row the floor admits.
 
 Over the whole corpus, best of two runs a side:
 
@@ -714,21 +713,28 @@ revision.
 
 ### Where the floor sits, and what a lower one would buy
 
-At `widthFloor = 16` the certified rows split cleanly. `sd5` and up are
-certified and cost a tenth to a three-hundredth of what they did; `sd4`,
-`sd4_shift1` and `sd4_shift3` are offered it at width 16 and take it, but their
-recombination visits 128 nodes rather than 32,768, so there is nothing there to
-replace and their times are flat to within 1.5%. `sd2` and `sd3`, at widths 4
-and 8, are below the floor and never see it.
+At `widthFloor = 16` the certified rows split at exactly one place. The
+Swinnerton-Dyer widths are `sd2` 2, `sd3` 4, `sd4` 8, `sd5` 16, `sd6` 32,
+`sd7` 64, so the floor admits `sd5` and everything above it and admits nothing
+below. That is why the eight certified rows at `sd4` and under are flat to
+within 5% in the sweep: they are never offered the certificate, and the sweep
+confirms they do not pay for it either.
 
-Lowering the floor to 8 would offer the certificate to `sd3` and its translates
--- a 16.9 us certificate on a 167 us row, so at best a 10% gain on three rows
-that are already among the fastest in the corpus -- and would offer it to every
-width-8 declining row as well. The corpus says the miss would be cheap there
-too, but the gain is not worth widening a gate for, and the floor's whole
-justification is that the walk it replaces is expensive. Raising it to 32 would
-give up `sd5`, `sd5_shift1` and `sd5_shift2`, which is most of the elbow. 16 is
-where the walk first costs tens of milliseconds, and that is why it is 16.
+Lowering the floor to 8 would newly offer it to `sd4`, `sd4_shift1` and
+`sd4_shift3`, whose certificates cost 29.6, 30.7 and 35.0 us against rows of
+0.85, 0.78 and 0.86 ms. The go/no-go's model put `sd4` at 0.433 ms if certified,
+so the gain would be real but small, on three rows that are already an order of
+magnitude off the elbow. The cost is that 24 declining corpus rows would be
+offered it as well; the measured miss on those is 0.2 us for all but one, and
+`sd3_x_phi24` -- degree 32, width 8, a Swinnerton-Dyer product whose trace
+happens to divide -- would pay 17.6 us on a 0.591 ms row, **3.0%**. That single
+row is above the 1% the gate was asked for, and it is the reason the floor is
+not lowered on this evidence: at 16 the worst offered miss is 0.014%, and the
+margin is three orders of magnitude rather than a factor of three.
+
+Raising the floor to 32 would give up `sd5`, `sd5_shift1` and `sd5_shift2`,
+which is where the elbow actually is. 16 is where the walk first costs tens of
+milliseconds, and that is why it is 16.
 
 ### What is *not* delivered
 
