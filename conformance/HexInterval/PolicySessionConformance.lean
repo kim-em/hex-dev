@@ -6,6 +6,7 @@ Authors: Kim Morrison
 
 import HexInterval.Experiment.DyadicRules
 import HexInterval.Experiment.PolicySession
+import HexInterval.PayloadSessionConformance
 
 /-!
 End-to-end conformance for the proof-producing policy session.  A scripted
@@ -740,6 +741,83 @@ def incompleteView (session : PolicySession.Session Fact) : Bool :=
                           stopped.arena.entries.size == 1 &&
                           stopped.arena.bodyCells == 1 &&
                           stopped.state.engine.history.size == 1
+                    | _ => false
+          | _ => false
+
+/-! ## Cumulative payload exhaustion for structural matchers -/
+
+def matcherSessionLimits : PolicySession.Limits :=
+  { engine := PayloadSessionConformance.oneMatcherUseLimits
+    policy :=
+      { maxDecisions := 4
+        maxTraversal := 32
+        maxLiveOffers := 8 }
+    arena := PayloadSessionConformance.oneMatcherEntryArena }
+
+def matcherStart? : Option (PolicySession.Session Nat) :=
+  match PolicySession.Session.start PayloadSessionConformance.factDomain
+      PayloadSessionConformance.program
+      #[PayloadSessionConformance.smallMatcherPackage] #[3, 0, 0]
+      matcherSessionLimits with
+  | .ok session => some session
+  | .error _ => none
+
+def matcherSelection? (session : PolicySession.Session Nat) :
+    Option (Propagator.Policy.Selection × PolicySession.Session Nat) :=
+  match session.view with
+  | .ready view viewed =>
+      match view.offers.toList.find? fun offer =>
+          match offer.key with
+          | .invoke invocation =>
+              invocation.rule == PayloadSessionConformance.matcherKey
+          | _ => false with
+      | none => none
+      | some offer =>
+          some
+            ({ scope := view.scope
+               serial := view.serial
+               programVersion := view.programVersion
+               id := offer.id
+               expected := offer.key },
+             viewed)
+  | .resource _ _ | .contradiction _ | .invalidSession _ => none
+
+-- The first matcher batch and its payload commit together. When the second
+-- batch has no remaining arena entry, the fatal session clears only its reply
+-- latch: the first arena, suggestion, cursor position, and visit count remain
+-- exact, while the second policy decision and package invocation stay charged.
+#guard
+  match matcherStart? with
+  | none => false
+  | some session =>
+      match matcherSelection? session with
+      | none => false
+      | some (selection, viewed) =>
+          match viewed.choose (.select selection) with
+          | .rule _ _ first =>
+              first.arena.entries.size == 1 &&
+                first.state.engine.suggestions.size == 1 &&
+                first.state.engine.metrics.matcherVisits == 2 &&
+                match matcherSelection? first with
+                | none => false
+                | some (nextSelection, nextViewed) =>
+                    match nextViewed.choose (.select nextSelection) with
+                    | .payloadResource .entries stopped =>
+                        !stopped.live && !stopped.complete &&
+                          stopped.state.incomplete && !stopped.droppedWork &&
+                          stopped.arena.entries.size == 1 &&
+                          stopped.state.engine.suggestions.size == 1 &&
+                          stopped.state.engine.history.isEmpty &&
+                          stopped.state.engine.metrics.matcherVisits == 2 &&
+                          stopped.state.engine.metrics.ruleFailures == 0 &&
+                          stopped.state.metrics.decisions == 2 &&
+                          stopped.state.metrics.selectedInvocations == 2 &&
+                          stopped.state.engine.pending.isNone &&
+                          stopped.state.engine.pendingMatcher.isNone &&
+                          match stopped.state.engine.matcherCursors[0]? with
+                          | some (some cursor) =>
+                              cursor.offset == 2 && !cursor.exhausted
+                          | _ => false
                     | _ => false
           | _ => false
 
