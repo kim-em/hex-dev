@@ -44,7 +44,6 @@ namespace ZPoly
 `DensePoly.beqCoeffs` at `R = Int`. Kept as an `abbrev` so the Sturm-chain
 checkers below read at the `ZPoly` level; see `DensePoly.beqCoeffs` for why
 this is used instead of the structural `DecidableEq`. -/
-@[expose]
 abbrev beqCoeffs (a b : ZPoly) : Bool :=
   DensePoly.beqCoeffs a b
 

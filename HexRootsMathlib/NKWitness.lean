@@ -30,7 +30,12 @@ namespace NKData
 /-- Exact Taylor coefficients used by the executable witness. -/
 @[expose] def coeffs (p : Hex.ZPoly) (s : Hex.DyadicSquare) :
     Array Hex.GaussDyadic :=
-  Hex.taylor p s.center
+  (Hex.TaylorShift.compute p s.center).coeffs
+
+/-- The cached coefficient array is the exact Taylor expansion. -/
+@[simp] theorem coeffs_eq_taylor (p : Hex.ZPoly) (s : Hex.DyadicSquare) :
+    coeffs p s = Hex.taylor p s.center :=
+  (Hex.TaylorShift.compute p s.center).valid
 
 /-- The exact first Taylor coefficient. -/
 @[expose] def c1 (p : Hex.ZPoly) (s : Hex.DyadicSquare) : Hex.GaussDyadic :=
@@ -95,16 +100,18 @@ theorem witness_iff (p : Hex.ZPoly) (s : Hex.DyadicSquare) :
       y p s + z1 p s * radius s + z2 p s * halfRadiusSq s < radius s ∧
       z1 p s + z2 p s * radius s < 1 := by
   simp only [Hex.nkWitness, Hex.nkWitnessCheck, Hex.TaylorShift.nkWitnessCheck,
-    Hex.TaylorShift.compute, coeffs, c1, normSq, invPrec, inverse, residual, y,
+    coeffs, c1, normSq, invPrec, inverse, residual, y,
     z1, z2Sum, z2, radius, halfRadiusSq]
-  split <;> rename_i hsize
-  · simp only [Bool.and_eq_true, decide_eq_true_eq]
+  by_cases hsize : 2 ≤ (Hex.TaylorShift.compute p s.center).coeffs.size
+  · rw [if_pos hsize]
+    simp only [Bool.and_eq_true, decide_eq_true_eq]
     constructor
     · rintro ⟨⟨h0, h1⟩, h2⟩
       exact ⟨hsize, h0, h1, h2⟩
     · rintro ⟨_, h0, h1, h2⟩
       exact ⟨⟨h0, h1⟩, h2⟩
-  · simp [hsize]
+  · rw [if_neg hsize]
+    simp [hsize]
 
 /-- Casting the fold accumulator gives its mathematical partial sum and the
 next real power of the radial bound. -/
@@ -140,13 +147,13 @@ theorem toReal_z2Sum (p : Hex.ZPoly) (s : Hex.DyadicSquare) :
 
 @[simp] theorem coeffs_size (p : Hex.ZPoly) (s : Hex.DyadicSquare) :
     (coeffs p s).size = p.size := by
-  simp [coeffs, Hex.taylor_size]
+  rw [coeffs_eq_taylor, Hex.taylor_size]
 
 /-- The zeroth executable Taylor coefficient is evaluation at the centre. -/
 theorem coeff_zero (p : Hex.ZPoly) (s : Hex.DyadicSquare) :
     GaussDyadic.toComplex ((coeffs p s).getD 0 (0, 0)) =
       (toPolyℂ p).eval (DyadicSquare.center s) := by
-  rw [coeffs, taylor_coeff, ← Polynomial.taylor_apply,
+  rw [coeffs_eq_taylor, taylor_coeff, ← Polynomial.taylor_apply,
     Polynomial.taylor_coeff_zero]
   rfl
 
@@ -155,7 +162,7 @@ centre. -/
 theorem coeff_one (p : Hex.ZPoly) (s : Hex.DyadicSquare) :
     GaussDyadic.toComplex (c1 p s) =
       (toPolyℂ p).derivative.eval (DyadicSquare.center s) := by
-  rw [c1, coeffs, taylor_coeff, ← Polynomial.taylor_apply,
+  rw [c1, coeffs_eq_taylor, taylor_coeff, ← Polynomial.taylor_apply,
     Polynomial.taylor_coeff_one]
   rfl
 
@@ -166,7 +173,7 @@ theorem toComplex_residual (p : Hex.ZPoly) (s : Hex.DyadicSquare) (k : Nat) :
       GaussDyadic.toComplex (inverse p s) *
         ((toPolyℂ p).comp (Polynomial.X +
           Polynomial.C (DyadicSquare.center s))).coeff k := by
-  rw [residual, GaussDyadic.toComplex_mul, coeffs, taylor_coeff,
+  rw [residual, GaussDyadic.toComplex_mul, coeffs_eq_taylor, taylor_coeff,
     DyadicSquare.center_eq]
 
 @[simp] theorem toReal_radius (s : Hex.DyadicSquare) :

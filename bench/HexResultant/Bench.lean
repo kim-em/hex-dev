@@ -5,6 +5,8 @@ Authors: Kim Morrison
 -/
 
 import HexResultant
+import Hex.BenchOracle.Flint
+import Lean.Data.Json
 import LeanBench
 
 /-!
@@ -20,10 +22,11 @@ by the library SPEC:
 * `runDisc` computes the discriminant of the left member of the same family.
 
 Inputs use the same seed-`0xC0FFEE` bounded-coefficient LCG family as the
-external fixtures, with every leading coefficient forced nonzero. There is no
-in-process comparator in this executable: Mathlib's resultant is
-noncomputable, while exact FLINT/PARI value checking belongs to conformance.
-FLINT's separately timed comparable surface belongs in the Phase-4 report.
+external fixtures, with every leading coefficient forced nonzero. Mathlib's
+resultant is noncomputable, so it is not an in-process comparator. The
+resultant and discriminant families are paired with FLINT's `fmpz_poly`
+operations through the shared persistent-subprocess driver. Exact FLINT/PARI
+value checking remains independently covered by conformance.
 -/
 
 namespace Hex.ResultantBench
@@ -38,6 +41,9 @@ structure Input where
   left : DensePoly Int
   right : DensePoly Int
   deriving Hashable
+
+instance : Inhabited Input :=
+  ⟨{ left := 0, right := 0 }⟩
 
 private def initialSeed : UInt64 :=
   0xC0FFEE
@@ -113,6 +119,100 @@ def runResultant (input : Input) : Int :=
 def runDisc (input : Input) : Int :=
   disc input.left
 
+private def densePolyToFlintJson (p : DensePoly Int) : Lean.Json :=
+  Hex.BenchOracle.Flint.intsToJson p.toArray.toList
+
+/-- FLINT comparator: `fmpz_poly.resultant` on the same prepared pair. -/
+def runFlintResultant (input : Input) : IO Int := do
+  let result ← Hex.BenchOracle.Flint.runOp "fmpz_poly" "resultant"
+    #[("a", densePolyToFlintJson input.left),
+      ("b", densePolyToFlintJson input.right)]
+  match result.getInt? with
+  | Except.ok n => return n
+  | Except.error msg =>
+      throw <| IO.userError s!"FLINT fmpz_poly.resultant result not integer: {msg}"
+
+/-- FLINT comparator: `fmpz_poly.discriminant` on the same prepared input. -/
+def runFlintDisc (input : Input) : IO Int := do
+  let result ← Hex.BenchOracle.Flint.runOp "fmpz_poly" "discriminant"
+    #[("a", densePolyToFlintJson input.left)]
+  match result.getInt? with
+  | Except.ok n => return n
+  | Except.error msg =>
+      throw <| IO.userError s!"FLINT fmpz_poly.discriminant result not integer: {msg}"
+
+/-- Persistent-driver JSON framing and dispatch calibration with no polynomial
+work. This measures the constant per-call framing floor; polynomial marshalling
+is deliberately not part of this auxiliary probe. -/
+def runFlintOverhead (_ : Unit) : IO Int := do
+  let result ← Hex.BenchOracle.Flint.runOp "fmpz_poly" "overhead" #[]
+  match result.getInt? with
+  | Except.ok n => return n
+  | Except.error msg =>
+      throw <| IO.userError s!"FLINT persistent-driver overhead result not integer: {msg}"
+
+private def runResultantFixed (input : Input) : Unit → IO Int := fun _ =>
+  return runResultant input
+private def runFlintResultantFixed (input : Input) : Unit → IO Int := fun _ =>
+  runFlintResultant input
+private def runDiscFixed (input : Input) : Unit → IO Int := fun _ =>
+  return runDisc input
+private def runFlintDiscFixed (input : Input) : Unit → IO Int := fun _ =>
+  runFlintDisc input
+
+/-! Concrete fixed-rung bindings for the full scientific parameter ladder.
+Each Hex/FLINT pair consumes the identical deterministic input. Module
+initialization prepares the inputs before the child-process timed region, just
+as `with prep := prepInput` does for the parametric registrations. -/
+
+initialize equalInput4 : Input ← pure (prepInput 4)
+initialize equalInput6 : Input ← pure (prepInput 6)
+initialize equalInput8 : Input ← pure (prepInput 8)
+initialize equalInput10 : Input ← pure (prepInput 10)
+initialize equalInput12 : Input ← pure (prepInput 12)
+initialize equalInput16 : Input ← pure (prepInput 16)
+initialize equalInput20 : Input ← pure (prepInput 20)
+initialize equalInput24 : Input ← pure (prepInput 24)
+initialize equalInput32 : Input ← pure (prepInput 32)
+
+def runResultant4 : Unit → IO Int := runResultantFixed equalInput4
+def runFlintResultant4 : Unit → IO Int := runFlintResultantFixed equalInput4
+def runResultant6 : Unit → IO Int := runResultantFixed equalInput6
+def runFlintResultant6 : Unit → IO Int := runFlintResultantFixed equalInput6
+def runResultant8 : Unit → IO Int := runResultantFixed equalInput8
+def runFlintResultant8 : Unit → IO Int := runFlintResultantFixed equalInput8
+def runResultant10 : Unit → IO Int := runResultantFixed equalInput10
+def runFlintResultant10 : Unit → IO Int := runFlintResultantFixed equalInput10
+def runResultant12 : Unit → IO Int := runResultantFixed equalInput12
+def runFlintResultant12 : Unit → IO Int := runFlintResultantFixed equalInput12
+def runResultant16 : Unit → IO Int := runResultantFixed equalInput16
+def runFlintResultant16 : Unit → IO Int := runFlintResultantFixed equalInput16
+def runResultant20 : Unit → IO Int := runResultantFixed equalInput20
+def runFlintResultant20 : Unit → IO Int := runFlintResultantFixed equalInput20
+def runResultant24 : Unit → IO Int := runResultantFixed equalInput24
+def runFlintResultant24 : Unit → IO Int := runFlintResultantFixed equalInput24
+def runResultant32 : Unit → IO Int := runResultantFixed equalInput32
+def runFlintResultant32 : Unit → IO Int := runFlintResultantFixed equalInput32
+
+def runDisc4 : Unit → IO Int := runDiscFixed equalInput4
+def runFlintDisc4 : Unit → IO Int := runFlintDiscFixed equalInput4
+def runDisc6 : Unit → IO Int := runDiscFixed equalInput6
+def runFlintDisc6 : Unit → IO Int := runFlintDiscFixed equalInput6
+def runDisc8 : Unit → IO Int := runDiscFixed equalInput8
+def runFlintDisc8 : Unit → IO Int := runFlintDiscFixed equalInput8
+def runDisc10 : Unit → IO Int := runDiscFixed equalInput10
+def runFlintDisc10 : Unit → IO Int := runFlintDiscFixed equalInput10
+def runDisc12 : Unit → IO Int := runDiscFixed equalInput12
+def runFlintDisc12 : Unit → IO Int := runFlintDiscFixed equalInput12
+def runDisc16 : Unit → IO Int := runDiscFixed equalInput16
+def runFlintDisc16 : Unit → IO Int := runFlintDiscFixed equalInput16
+def runDisc20 : Unit → IO Int := runDiscFixed equalInput20
+def runFlintDisc20 : Unit → IO Int := runFlintDiscFixed equalInput20
+def runDisc24 : Unit → IO Int := runDiscFixed equalInput24
+def runFlintDisc24 : Unit → IO Int := runFlintDiscFixed equalInput24
+def runDisc32 : Unit → IO Int := runDiscFixed equalInput32
+def runFlintDisc32 : Unit → IO Int := runFlintDiscFixed equalInput32
+
 /- A degree-`n` pseudo-division by degree `n/2` performs `O(n^2)` integer
 coefficient operations. The fixture ladder crosses Lean's immediate-integer
 boundary, so `wallCostModel` adds a logarithmic limb-growth proxy instead of
@@ -178,6 +278,56 @@ setup_benchmark runDisc n => wallCostModel n
     targetInnerNanos := 100000000
     signalFloorMultiplier := 1.0
   }
+
+/-! The fixed pairs use the same inner-repeat floor. FLINT receives one
+discarded warm-up call so process startup and module import are outside the
+timed region; subsequent calls reuse the persistent driver. -/
+def leanCompareConfig : LeanBench.FixedBenchmarkConfig :=
+  { repeats := 5, maxSecondsPerCall := 6.0, minTotalSeconds := 0.2 }
+
+def flintCompareConfig : LeanBench.FixedBenchmarkConfig :=
+  { repeats := 5, maxSecondsPerCall := 6.0, warmupFirstIter := true,
+    minTotalSeconds := 0.2 }
+
+setup_fixed_benchmark runFlintOverhead where flintCompareConfig
+
+setup_fixed_benchmark runResultant4 where leanCompareConfig
+setup_fixed_benchmark runFlintResultant4 where flintCompareConfig
+setup_fixed_benchmark runResultant6 where leanCompareConfig
+setup_fixed_benchmark runFlintResultant6 where flintCompareConfig
+setup_fixed_benchmark runResultant8 where leanCompareConfig
+setup_fixed_benchmark runFlintResultant8 where flintCompareConfig
+setup_fixed_benchmark runResultant10 where leanCompareConfig
+setup_fixed_benchmark runFlintResultant10 where flintCompareConfig
+setup_fixed_benchmark runResultant12 where leanCompareConfig
+setup_fixed_benchmark runFlintResultant12 where flintCompareConfig
+setup_fixed_benchmark runResultant16 where leanCompareConfig
+setup_fixed_benchmark runFlintResultant16 where flintCompareConfig
+setup_fixed_benchmark runResultant20 where leanCompareConfig
+setup_fixed_benchmark runFlintResultant20 where flintCompareConfig
+setup_fixed_benchmark runResultant24 where leanCompareConfig
+setup_fixed_benchmark runFlintResultant24 where flintCompareConfig
+setup_fixed_benchmark runResultant32 where leanCompareConfig
+setup_fixed_benchmark runFlintResultant32 where flintCompareConfig
+
+setup_fixed_benchmark runDisc4 where leanCompareConfig
+setup_fixed_benchmark runFlintDisc4 where flintCompareConfig
+setup_fixed_benchmark runDisc6 where leanCompareConfig
+setup_fixed_benchmark runFlintDisc6 where flintCompareConfig
+setup_fixed_benchmark runDisc8 where leanCompareConfig
+setup_fixed_benchmark runFlintDisc8 where flintCompareConfig
+setup_fixed_benchmark runDisc10 where leanCompareConfig
+setup_fixed_benchmark runFlintDisc10 where flintCompareConfig
+setup_fixed_benchmark runDisc12 where leanCompareConfig
+setup_fixed_benchmark runFlintDisc12 where flintCompareConfig
+setup_fixed_benchmark runDisc16 where leanCompareConfig
+setup_fixed_benchmark runFlintDisc16 where flintCompareConfig
+setup_fixed_benchmark runDisc20 where leanCompareConfig
+setup_fixed_benchmark runFlintDisc20 where flintCompareConfig
+setup_fixed_benchmark runDisc24 where leanCompareConfig
+setup_fixed_benchmark runFlintDisc24 where flintCompareConfig
+setup_fixed_benchmark runDisc32 where leanCompareConfig
+setup_fixed_benchmark runFlintDisc32 where flintCompareConfig
 
 end Hex.ResultantBench
 

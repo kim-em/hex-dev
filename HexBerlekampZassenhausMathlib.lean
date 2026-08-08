@@ -6,47 +6,20 @@ Authors: Kim Morrison
 
 module
 
-public import HexBerlekampZassenhausMathlib.PublicSurface
-public import HexBerlekampZassenhausMathlib.ModPFactor
-public import HexBerlekampZassenhausMathlib.LiftedFactor
-public import HexBerlekampZassenhausMathlib.M1Recovery
-public import HexBerlekampZassenhausMathlib.RecombinationSplit
-public import HexBerlekampZassenhausMathlib.RecombinationCandidate
-public import HexBerlekampZassenhausMathlib.HenselFactorProps
-public import HexBerlekampZassenhausMathlib.ModPFactorization
-public import HexBerlekampZassenhausMathlib.Relift
-public import HexBerlekampZassenhausMathlib.SubsetCoprimality
-public import HexBerlekampZassenhausMathlib.ForwardHenselTransport
-public import HexBerlekampZassenhausMathlib.RecombinationMonic
-public import HexBerlekampZassenhausMathlib.PrimitivityDegreeCover
-public import HexBerlekampZassenhausMathlib.ScaledSearchCoverage
-public import HexBerlekampZassenhausMathlib.SmartSearchCoverage
-public import HexBerlekampZassenhausMathlib.SearchAssembly
-public import HexBerlekampZassenhausMathlib.MonicCorrespondent
-public import HexBerlekampZassenhausMathlib.ToMonicUniqueness
-public import HexBerlekampZassenhausMathlib.FactorTransport
-public import HexBerlekampZassenhausMathlib.FactorProvider
-public import HexBerlekampZassenhausMathlib.BangElab
-public import HexBerlekampZassenhausMathlib.SignatureClasses
-public import HexBerlekampZassenhausMathlib.Lattice
-public import HexBerlekampZassenhausMathlib.CLDColumnBound
-public import HexBerlekampZassenhausMathlib.BadVector
-public import HexBerlekampZassenhausMathlib.Recovery
-public import HexBerlekampZassenhausMathlib.PartitionRefinement
-public import HexBerlekampZassenhausMathlib.UFDPartition
-public import HexBerlekampZassenhausMathlib.IntReductionMod
+public import HexBerlekampZassenhausMathlib.Factorization
 public import HexBerlekampZassenhausMathlib.FactorSoundness
-public import HexBerlekampZassenhausMathlib.LatticeTier
-public import HexBerlekampZassenhausMathlib.LatticeTotality
-public import HexBerlekampZassenhausMathlib.WordCld
-public import HexBerlekampZassenhausMathlib.Resultant
-public import HexBerlekampZassenhausMathlib.Termination
-public import HexBerlekampZassenhausMathlib.HotPathAdmissibility
-public import HexBerlekampZassenhausMathlib.HybridDispatch
+public meta import HexBerlekampZassenhausMathlib.FactorTactic
+public import HexBerlekampZassenhausMathlib.FactorTactic
+public meta import HexBerlekampZassenhausMathlib.KernelFactorTactic
+public import HexBerlekampZassenhausMathlib.KernelFactorTactic
 
 public section
 
 /-!
-Root module for the Mathlib-side correspondence of the integer
-Berlekamp-Zassenhaus factorization pipeline.
+Stable Mathlib API for integer Berlekamp-Zassenhaus factorization.
+
+This umbrella contains the factorization specification and the tactics for
+`Hex.ZPoly` and `Polynomial ℤ`. Import
+`HexBerlekampZassenhausMathlib.All` only when developing the correspondence
+proofs themselves.
 -/

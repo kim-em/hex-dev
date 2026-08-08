@@ -112,12 +112,13 @@ theorem bareissNoPivotInvariant_initial (M : Hex.Matrix Int n n) :
     decide
   trailing_eq := by
     intro h i j _hi _hj
+    have h0 : 0 < n := by omega
     -- For `state.step = 0`, the bordered minor is the `1 × 1` block with the
     -- single entry `M[i][j]`.
-    show M[i][j] = Hex.Matrix.det (Hex.Matrix.borderedMinor M 0 h i j)
+    show M[i][j] = Hex.Matrix.det (Hex.Matrix.borderedMinor M 0 h0 i j)
     rw [Hex.Matrix.det_one_by_one]
     show M[i][j] =
-        (Hex.Matrix.borderedMinor M 0 h i j)[(Fin.last 0)][(Fin.last 0)]
+        (Hex.Matrix.borderedMinor M 0 h0 i j)[(Fin.last 0)][(Fin.last 0)]
     rw [Hex.Matrix.borderedMinor_entry_last_last]
 
 /-- One regular no-pivot Bareiss step preserves the bordered-minor invariant.

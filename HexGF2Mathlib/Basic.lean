@@ -111,10 +111,10 @@ private def coeffOfFp (a : Hex.ZMod64 2) : UInt64 :=
 def toFpPoly (p : Hex.GF2Poly) : Hex.FpPoly 2 :=
   let coeffs :=
     if p.isZero then
-      #[]
+      []
     else
-      ((List.range (p.degree + 1)).map fun i => coeffToFp (p.coeff i)).toArray
-  Hex.FpPoly.ofCoeffs coeffs
+      (List.range (p.degree + 1)).map fun i => coeffToFp (p.coeff i)
+  Hex.DensePoly.ofList coeffs
 
 /-- Pack the coefficients of a single 64-term `FpPoly 2` segment into one
 machine word. -/
@@ -140,16 +140,16 @@ theorem coeff_toFpPoly (p : Hex.GF2Poly) (i : Nat) :
   have hcoeffToFp : ∀ b : Bool, coeffToFp b = if b then (1 : Hex.ZMod64 2) else 0 := by
     intro b; cases b <;> rfl
   by_cases hz : p.isZero = true
-  · have hbody : toFpPoly p = Hex.FpPoly.ofCoeffs (#[] : Array (Hex.ZMod64 2)) := by
+  · have hbody : toFpPoly p = Hex.DensePoly.ofList ([] : List (Hex.ZMod64 2)) := by
       unfold toFpPoly; rw [if_pos hz]
-    rw [hbody, Hex.FpPoly.ofCoeffs, Hex.DensePoly.coeff_ofCoeffs,
+    rw [hbody, Hex.DensePoly.coeff_ofList,
       Hex.GF2Poly.eq_zero_of_isZero hz, Hex.GF2Poly.coeff_zero]
     rfl
   · have hbody : toFpPoly p =
-        Hex.FpPoly.ofCoeffs
-          ((List.range (p.degree + 1)).map (fun j => coeffToFp (p.coeff j))).toArray := by
+        Hex.DensePoly.ofList
+          ((List.range (p.degree + 1)).map (fun j => coeffToFp (p.coeff j))) := by
       unfold toFpPoly; rw [if_neg hz]
-    rw [hbody, Hex.FpPoly.ofCoeffs, Hex.DensePoly.coeff_ofCoeffs_list]
+    rw [hbody, Hex.DensePoly.coeff_ofList]
     have hrange :
         ((List.range (p.degree + 1)).map (fun j => coeffToFp (p.coeff j))).getD i
           (Zero.zero : Hex.ZMod64 2) =

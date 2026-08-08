@@ -34,8 +34,9 @@ target.
 
 # Verification
 
-Exact conformance against python-flint is release-gating. FLINT timings are
-informational optimization evidence; the release gates are the absolute Rabin
+Exact conformance against python-flint is a required release check. FLINT
+timings are informational optimization evidence. The required performance
+checks are the absolute Rabin
 and distinct-degree budgets stated in the [SPEC](SPEC/hex-berlekamp.md).
 
 For statements over Mathlib's `Polynomial (ZMod p)`, use

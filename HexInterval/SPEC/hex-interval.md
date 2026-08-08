@@ -1398,7 +1398,11 @@ engine-resource exhaustion: the selected reply is otherwise valid, but its
 required proof data cannot be retained. Proof soundness could also permit a
 recoverable session which permanently records dropped work and remains
 incomplete, but that would broaden scheduling behavior; the eager prototype
-does not do so. Malformed package evidence and
+does not do so. The fatal policy-session path clears the pending latch without
+submitting a synthetic rule outcome, so a prepared matcher cursor and its visit
+charge remain at the last committed batch. The already selected policy
+decision and non-semantic package invocation telemetry remain charged.
+Malformed package evidence and
 package-local payload-use, draft-count, draft-cell, atom, or schema excess are
 different: the prospective arena is discarded, but the session submits a
 bounded synthetic `failed` outcome through the ordinary engine reply path.

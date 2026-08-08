@@ -1,5 +1,5 @@
 {
-  "_comment": "Per-repo `main` HEAD that this monorepo's content corresponds to. The publish sync (sync_released.py) refuses to overwrite a released repo whose main has moved off this baseline (an uncoordinated commit). After a real sync the workflow uploads the advanced baseline as an artifact; commit it via a normal PR (main is a protected branch).",
+  "_comment": "Bootstrap per-repo `main` HEADs used only until the dedicated `release-sync-baseline` branch exists. The publish sync refuses to overwrite a released repo whose main has moved off the live baseline, and every real workflow run advances that branch even when a later mirror fails.",
   "hex-test-kit": "610207eec0ca214928eec42a6dd2084d859bf94d",
   "hex-matrix": "42c865718206dc1c2e63e3fc0ebb94db8174bd12",
   "hex-matrix-mathlib": "a0ae2639613d29f73a5fe5abccd7749af8f9a67c",

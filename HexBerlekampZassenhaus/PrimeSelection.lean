@@ -9,18 +9,18 @@ module
 public meta import HexArith.Nat.Prime
 public meta import HexBerlekamp.Factor
 public meta import HexBerlekamp.Irreducibility
-public meta import HexHensel.Basic
+public meta import HexHensel.ModularPolynomial
 public meta import HexHensel.Multifactor
 public meta import HexHensel.QuadraticMultifactor
 public meta import HexMatrix.Basic
 public meta import HexPolyZ.Mignotte
-public meta import HexLLL.Basic
+public meta import HexLLL
 public import HexArith.Nat.Prime
 public import HexBerlekamp.Factor
 public import HexBerlekamp.Irreducibility
 public import HexHensel.Multifactor
 public import HexHensel.QuadraticMultifactor
-public import HexLLL.Basic
+public import HexLLL
 -- Kernel-reducible `Array`/`Vector` equality; see `HexBasic.ArrayDecEq`.
 -- Drop once leanprover/lean4#14270 lands and the toolchain is bumped past it.
 public import HexBasic.ArrayDecEq
@@ -55,7 +55,9 @@ private def splitInitialZeros : List Int → Nat × List Int
 
 /-- Data from extracting the largest visible power of `X` from a dense integer polynomial. -/
 structure XPowerData where
+  /-- The largest exponent of `X` dividing the input. -/
   power : Nat
+  /-- The quotient after removing that power of `X`. -/
   core : ZPoly
 
 /--
@@ -66,7 +68,7 @@ run is exactly the executable power of `X` dividing the polynomial.
 -/
 def extractXPower (f : ZPoly) : XPowerData :=
   let split := splitInitialZeros f.toArray.toList
-  { power := split.1, core := DensePoly.ofCoeffs split.2.toArray }
+  { power := split.1, core := DensePoly.ofList split.2 }
 
 /-- The integer leading coefficient reduced to the candidate prime field. -/
 @[expose]
@@ -99,7 +101,7 @@ def squareFreeModP (f : ZPoly) (p : Nat) [ZMod64.Bounds p] : Prop :=
   gcdIsUnit (DensePoly.gcd fModP (DensePoly.derivative fModP)) = true
 
 /--
-Executable good-prime predicate for the Berlekamp-Zassenhaus pipeline.
+Executable good-prime predicate for the Berlekamp-Zassenhaus computation.
 
 It checks that the modulus is at least `3`, that the integer leading coefficient
 survives reduction modulo `p`, and that the modular image is square-free.
@@ -109,6 +111,21 @@ def isGoodPrime (f : ZPoly) (p : Nat) [ZMod64.Bounds p] : Bool :=
   3 <= p &&
     ZPoly.leadingCoeffModP f p != 0 &&
     gcdIsUnit (DensePoly.gcd fModP (DensePoly.derivative fModP))
+
+/-- Compiled good-prime predicate using the inverse-cached finite-field GCD. -/
+def isGoodPrimeImpl (f : ZPoly) (p : Nat) [ZMod64.Bounds p] : Bool :=
+  let fModP := ZPoly.modP p f
+  3 <= p &&
+    ZPoly.leadingCoeffModP f p != 0 &&
+    gcdIsUnit (FpPoly.gcdCached fModP (DensePoly.derivative fModP))
+
+/-- Proof-backed compiled implementation of good-prime testing that computes
+one leading-coefficient inverse per polynomial remainder pass. -/
+@[csimp]
+theorem isGoodPrime_eq_impl : @isGoodPrime = @isGoodPrimeImpl := by
+  funext f p bounds
+  unfold isGoodPrime isGoodPrimeImpl
+  simp only [FpPoly.gcdCached_eq]
 
 /-- Assemble the executable good-prime result from its three mathematical
 components. -/
@@ -490,27 +507,20 @@ private theorem prime_seventy_one : Nat.Prime 71 := by
     | 71 => exact Or.inr rfl
     | _ + 72 => omega
 
-/-- Thin adapter promoting a `Nat.Prime p` witness to the shared
-`Lean.Grind.Field (ZMod64 p)` instance via `ZMod64.primeModulusOfPrime`. -/
-@[reducible]
-private def fieldOfNatPrime {p : Nat} [ZMod64.Bounds p] (hp : Nat.Prime p) :
-    Lean.Grind.Field (ZMod64 p) :=
-  letI : ZMod64.PrimeModulus p := ZMod64.primeModulusOfPrime hp
-  inferInstance
-
 /--
 A small-prime candidate for the Berlekamp-Zassenhaus prime-selection hot path.
 
 Bundles a candidate prime `p` together with the `ZMod64.Bounds p` instance and
 the propositional primality witness needed to drive the modular Berlekamp
-factorisation. Exposed alongside `hotPathCandidates` so that
-`HexBerlekampZassenhausMathlib.choosePrimeData?_none_implies_huge` can pull a
-specific candidate out of the fixed hot-path list and bridge to the Mathlib
-per-prime discriminant lemma.
+factorisation. Exposed alongside `hotPathCandidates` so direct prime planning
+can retain the exact candidate and its primality evidence beside the cached
+factorization.
 -/
 structure SmallPrimeCandidate where
+  /-- The candidate prime modulus. -/
   p : Nat
   [bounds : ZMod64.Bounds p]
+  /-- A proof that `p` is prime. -/
   prime : Nat.Prime p
 
 /-- Build a `SmallPrimeCandidate` from a trial-division primality witness and the
@@ -630,11 +640,10 @@ def extendedSmallPrimeCandidates : List SmallPrimeCandidate :=
     smallPrimeCandidateOfTrial 499 (by decide) (by decide) ]
 
 /--
-The hot-path prime candidate list: the deterministic small-prime prefix followed
-by every prime up to `499`. Exposed so that the composition theorem can pull a
-specific candidate out and bridge to the Mathlib per-prime
-discriminant lemma.
+The direct planner's prime candidate list: the deterministic small-prime prefix
+followed by every prime up to `499`.
 -/
+@[expose]
 def hotPathCandidates : List SmallPrimeCandidate :=
   smallPrimeCandidates ++ extendedSmallPrimeCandidates
 
@@ -674,8 +683,7 @@ set_option maxRecDepth 4096 in
 /--
 Coverage of the hot-path prime candidate list: every prime `p` with
 `3 ≤ p ≤ 500` appears as the `.p` field of some candidate in
-`hotPathCandidates`. Used by `choosePrimeData?_none_implies_huge` to walk the executable's
-candidate fold over any prime in the admissible range.
+`hotPathCandidates`.
 -/
 theorem exists_mem_hotPathCandidates_of_prime
     {p : Nat} (hprime : Hex.Nat.Prime p) (hge : 3 ≤ p) (hle : p ≤ 500) :
@@ -705,6 +713,7 @@ def monicModularImage {p : Nat} [ZMod64.Bounds p] (f : FpPoly p) : FpPoly p :=
   else
     DensePoly.scale (DensePoly.leadingCoeff f)⁻¹ f
 
+/-- Normalizing a nonzero polynomial over a prime field produces a monic polynomial. -/
 theorem monicModularImage_monic
     {p : Nat} [ZMod64.Bounds p] (hp : Nat.Prime p) (f : FpPoly p)
     (hgood : f.isZero = false) :
@@ -960,7 +969,7 @@ theorem factorProduct_map_monicModularImage_eq_monicModularImage_factorProduct
 private def berlekampFactorsModP (f : ZPoly) (c : SmallPrimeCandidate) :
     Array (@FpPoly c.p c.bounds) :=
   letI := c.bounds
-  letI := fieldOfNatPrime c.prime
+  letI := ZMod64.primeModulusOfPrime c.prime
   let fModP := ZPoly.modP c.p f
   if hzero : fModP.isZero = false then
     ((Berlekamp.berlekampFactor
@@ -983,7 +992,7 @@ the normalisation step to this call site without touching
 private theorem berlekampFactorsModP_eq_of_isZero_false
     (f : ZPoly) (c : SmallPrimeCandidate) :
     letI := c.bounds
-    letI := fieldOfNatPrime c.prime
+    letI := ZMod64.primeModulusOfPrime c.prime
     ∀ (hzero : (ZPoly.modP c.p f).isZero = false),
       berlekampFactorsModP f c =
         ((Berlekamp.berlekampFactor
@@ -991,7 +1000,7 @@ private theorem berlekampFactorsModP_eq_of_isZero_false
           (monicModularImage_monic c.prime (ZPoly.modP c.p f) hzero)).factors.map
             monicModularImage).toArray := by
   letI := c.bounds
-  letI := fieldOfNatPrime c.prime
+  letI := ZMod64.primeModulusOfPrime c.prime
   intro hzero
   unfold berlekampFactorsModP
   rw [dif_pos hzero]
@@ -1021,7 +1030,7 @@ Return the sorted degrees of the Berlekamp factors of `f mod p` at an
 explicit small prime supported by the executable prime-selection list.
 
 This testing-facing surface deliberately reuses the production small-prime
-pipeline. For complete linear splits, it records the explicit root-degree
+computation. For complete linear splits, it records the explicit root-degree
 evidence directly so pinned conformance checks are not sensitive to the current
 Berlekamp witness splitting surface. It returns `none` if `p` is unsupported or
 the leading coefficient vanishes modulo `p`; the Berlekamp branch also requires
@@ -1165,7 +1174,7 @@ private theorem choosePrimeScore?_fold_isGoodPrime
         hscore
 
 /--
-Choose a small admissible prime for the Berlekamp-Zassenhaus pipeline.
+Choose a small admissible prime for the Berlekamp-Zassenhaus computation.
 
 The search is bounded to a fixed ascending list of small primes. Candidate
 scores use the currently available executable modular factor surface; strict
@@ -1329,13 +1338,13 @@ theorem size_modP_eq_of_leadingCoeffAdmissible
     · exact hge
   have hle : (ZPoly.modP p f).size ≤ f.size := by
     show (ZPoly.modP p f).coeffs.size ≤ f.size
-    unfold ZPoly.modP FpPoly.ofCoeffs
-    have h := DensePoly.size_ofCoeffs_le
+    unfold ZPoly.modP
+    have h := DensePoly.size_ofList_le
       (R := ZMod64 p)
       ((List.range f.size).map
-        (fun i => ZMod64.ofNat p (ZPoly.intModNat (f.coeff i) p))).toArray
+        (fun i => ZMod64.ofNat p (ZPoly.intModNat (f.coeff i) p)))
     have hlen : ((List.range f.size).map
-        (fun i => ZMod64.ofNat p (ZPoly.intModNat (f.coeff i) p))).toArray.size =
+        (fun i => ZMod64.ofNat p (ZPoly.intModNat (f.coeff i) p))).length =
           f.size := by simp
     simpa [DensePoly.size, hlen] using h
   omega

@@ -16,7 +16,6 @@ Systems (``--systems`` selects a comma-separated subset; default: all):
 
     hex-factor               hexbz_factor_service --entry factor
     hex-lattice              hexbz_factor_service --entry factorLattice
-    hex-classical-nodecline  hexbz_factor_service --entry factorClassicalNoDecline
     flint                    bz_flint_service.py
     pari                     bz_pari_service.py
     ntl                      bz_ntl_service (built on demand)
@@ -181,8 +180,6 @@ def _pari_version() -> str:
 SYSTEMS = {
     "hex-factor": SystemSpec("hex-factor", _hex_service_argv("factor"), _lean_toolchain),
     "hex-lattice": SystemSpec("hex-lattice", _hex_service_argv("factorLattice"), _lean_toolchain),
-    "hex-classical-nodecline": SystemSpec(
-        "hex-classical-nodecline", _hex_service_argv("factorClassicalNoDecline"), _lean_toolchain),
     "flint": SystemSpec("flint", _python_service_argv("bz_flint_service.py", "flint"), _flint_version),
     "pari": SystemSpec("pari", _python_service_argv("bz_pari_service.py", "cypari2"), _pari_version),
     "ntl": SystemSpec("ntl", _setup_script_argv("setup_bz_ntl_driver.sh"), lambda: "NTL ZZXFactoring"),

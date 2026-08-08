@@ -99,6 +99,24 @@ Concretely:
   needed (e.g. a macOS dyld cross-check — not currently present), state
   the reason in a workflow-level comment.
 
+### Polynomial-factorization performance artifacts
+
+Every pull request runs two deterministic checks for the published integer
+polynomial factorization comparison:
+
+- `scripts/bench/check_factor_sweep_freshness.py` requires a complete,
+  cross-checked current-corpus measurement for Hex, FLINT, NTL, PARI, Isabelle
+  BZ, and Isabelle LLL. A relevant implementation, adapter, harness, corpus,
+  toolchain, or dependency change after a system's recorded clean commit makes
+  that system stale and the PR must refresh its measurement.
+- `scripts/plots/hexbz-cactus.py --check` regenerates all current cactus and
+  runtime-by-degree figures with the pinned Matplotlib version and compares the
+  SVG bytes with the committed files.
+
+A performance-affecting PR updates the measurements, all generated figures,
+and the current reports together. The checks extend the existing Ubuntu job;
+they never justify another workflow, job, or matrix entry.
+
 **Do not introduce matrices.** GitHub-hosted Actions on a personal
 account is concurrency-capped at ~20 parallel ubuntu runners across
 *all* repositories owned by the account. A 10-entry matrix on one

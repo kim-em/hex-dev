@@ -10,7 +10,6 @@ public meta import Std.Tactic.BVDecide
 public import HexArith.Montgomery.RedcNat
 
 public section
-set_option maxHeartbeats 1000000
 
 /-!
 Montgomery inverses for `HexArith`.
@@ -32,7 +31,9 @@ private theorem montPosInvStep_mod_3_to_6 (p x : UInt64)
   unfold montPosInvStep
   bv_decide (config := { timeout := 120 })
 
-/-- The executable wrapping Newton step lifts a 6-bit inverse to 12 bits. -/
+set_option maxHeartbeats 1000000 in
+/-- The executable wrapping Newton step lifts a 6-bit inverse to 12 bits.
+The bit-vector decision procedure needs this theorem-local elaboration budget. -/
 private theorem montPosInvStep_mod_6_to_12 (p x : UInt64)
     (hx : p * x % 64 = 1) :
     p * montPosInvStep p x % 4096 = 1 := by

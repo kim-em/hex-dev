@@ -22,6 +22,7 @@ public import HexRootsMathlib.Completeness.PelletConverse
 public import HexRootsMathlib.Completeness.PelletDyadic
 public import HexRootsMathlib.Completeness.PelletTail
 public import HexRootsMathlib.Completeness.RootFreeConverse
+public import HexRootsMathlib.Completeness.RefinementCompleteness
 public import HexRootsMathlib.Completeness.SurvivorComponent
 public import HexRootsMathlib.Component
 public import HexRootsMathlib.Driver
@@ -55,5 +56,7 @@ It connects exact dyadic witnesses to Mathlib's real and complex geometry and
 proves soundness and completeness of the atom-path isolation driver. Its
 correspondence modules connect the exact executable witnesses to unique roots,
 root counts, coverage, separation, and refinement semantics. The completeness
-layer proves that every atom strategy succeeds on nonzero squarefree input.
+layer proves that every atom strategy succeeds on nonzero squarefree input and
+that one-atom refinement succeeds under the default mixed strategy from local
+simplicity alone.
 -/

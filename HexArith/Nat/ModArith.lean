@@ -11,10 +11,10 @@ public section
 /-!
 Shared `Nat`-level modular-arithmetic lemmas used by `HexArith` proofs.
 
-Lean core already exposes the basic divisibility, mod, and gcd API; this file
-collects the small lemmas that core lacks but the Barrett and
+Lean's standard library already exposes the basic divisibility, mod, and gcd
+API; this file collects the small lemmas that it lacks but the Barrett and
 Montgomery proof layers need. Today that is the single coprimality fact
-that an odd modulus is coprime to every power of two — the shape required by
+that an odd modulus is coprime to every power of two; the shape required by
 Montgomery inversion over `R = 2^k`.
 -/
 namespace Nat

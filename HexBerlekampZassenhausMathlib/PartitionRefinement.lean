@@ -7,7 +7,6 @@ Authors: Kim Morrison
 module
 
 public import HexBerlekampZassenhausMathlib.Recovery
-public import HexBerlekampZassenhausMathlib.ToMonicUniqueness
 
 public section
 set_option backward.proofsInPublic true
@@ -15,11 +14,8 @@ set_option backward.proofsInPublic true
 /-!
 Support-partition counting for the BHKS class-count lower bound.
 
-When the true supports genuinely partition the lifted-factor indices (cover,
-uniqueness, nonemptiness — supplied by `LiftedFactorSubsetPartition`), the
-support-equivalence partition has exactly one class per support, so its
-length is `(liftedTrueSupports core d).ncard`, which the machinery
-identifies with `(normalizedFactors (toPolynomial core)).card`.
+When a family of nonempty supports genuinely partitions the factor indices,
+the support-equivalence partition has exactly one class per support.
 -/
 
 namespace HexBerlekampZassenhausMathlib
@@ -30,10 +26,10 @@ namespace BHKS
 
 /-! # Support-partition length from a genuine partition
 
-The B8 partition-refinement hypothesis `hpartition` consumed by the fast-core
+The B8 partition-refinement hypothesis `hpartition` consumed by the fast recovery
 irreducibility wrappers is an equality
 `(supportPartitionByMinColumn trueSupports).length = normalizedFactors.card`.
-The lemma below supplies the provider-agnostic combinatorial half of that
+The lemma below supplies the extension-agnostic combinatorial half of that
 discharge: when `trueSupports` is a genuine partition of `Fin r` into nonempty
 parts (each column lies in exactly one part), the support-equivalence partition
 has exactly one class per part, so its length is the number of parts.  A
@@ -179,58 +175,6 @@ theorem supportPartitionByMinColumn_length_eq_ncard_of_partition {r : Nat}
     rw [← hbij.image_eq, Set.InjOn.ncard_image hbij.injOn,
       Set.ncard_coe_finset, List.toFinset_card_of_nodup hLnodup]
   rw [hncard]
-
-/--
-Concrete lifted-support partition count for the true supports represented by a
-`LiftedFactorSubsetPartition core d Finset.univ core`.
-
-This composes the lifted-index cover/disjoint/nonempty facts with the generic
-support-equivalence partition spine above. The remaining arithmetic count
-identifying this `ncard` with `normalizedFactors (toPolynomial core).card` is
-kept separate.
--/
-theorem supportPartitionByMinColumn_length_eq_liftedTrueSupports_ncard
-    {core : Hex.ZPoly} {d : Hex.LiftData}
-    (hpartition :
-      LiftedFactorSubsetPartition core d Finset.univ core)
-    (hcore_ne : core ≠ 0)
-    (hcore_primitive : Hex.ZPoly.Primitive core)
-    (hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff core)
-    (hprecision : 2 * Hex.ZPoly.defaultFactorCoeffBound core < d.p ^ d.k) :
-    (supportPartitionByMinColumn (liftedTrueSupports core d)).length =
-      (liftedTrueSupports core d).ncard :=
-  supportPartitionByMinColumn_length_eq_ncard_of_partition
-    (liftedTrueSupports core d)
-    (liftedTrueSupports.cover_of_partition hpartition)
-    (liftedTrueSupports.eq_of_mem_inter_of_partition hpartition)
-    (liftedTrueSupports.nonempty_of_partition
-      hpartition hcore_ne hcore_primitive hcore_lc_pos hprecision)
-
-/--
-B8 partition-refinement equality for the lifted true-support family: the
-support-equivalence partition length matches the number of normalized
-irreducible factors of `core`.
-
-This composes the lifted-support partition count
-(`supportPartitionByMinColumn_length_eq_liftedTrueSupports_ncard`) with the
-support-to-factor bijection (`liftedTrueSupports.ncard_eq_normalizedFactors_card`),
-exposing exactly the `hpartition` hypothesis consumed by
-`bhksRecoveryCoreWithBound_some_factor_zpolyIrreducible`.
--/
-theorem supportPartitionByMinColumn_length_eq_normalizedFactors_card
-    {core : Hex.ZPoly} {d : Hex.LiftData}
-    (hpartition :
-      LiftedFactorSubsetPartition core d Finset.univ core)
-    (hcore_ne : core ≠ 0)
-    (hcore_primitive : Hex.ZPoly.Primitive core)
-    (hcore_lc_pos : 0 < Hex.DensePoly.leadingCoeff core)
-    (hprecision : 2 * Hex.ZPoly.defaultFactorCoeffBound core < d.p ^ d.k) :
-    (supportPartitionByMinColumn (liftedTrueSupports core d)).length =
-      (UniqueFactorizationMonoid.normalizedFactors
-        (HexPolyZMathlib.toPolynomial core)).card := by
-  rw [supportPartitionByMinColumn_length_eq_liftedTrueSupports_ncard
-      hpartition hcore_ne hcore_primitive hcore_lc_pos hprecision,
-    liftedTrueSupports.ncard_eq_normalizedFactors_card hpartition hcore_ne]
 
 end BHKS
 

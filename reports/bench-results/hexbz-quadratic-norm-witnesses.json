@@ -1,0 +1,338 @@
+{
+ "cases": [
+  {
+   "certificate_nanos": 28882,
+   "certified": true,
+   "declared_radicands": [
+    -1,
+    2
+   ],
+   "declared_translation": 0,
+   "degree": 4,
+   "expect": true,
+   "name": "gaussian_sqrt2",
+   "note": "a negative radicand: roots +-i +- sqrt 2",
+   "recovered_radicands": [
+    -1,
+    2
+   ],
+   "recovered_translation": 0
+  },
+  {
+   "certificate_nanos": 9554,
+   "certified": true,
+   "declared_radicands": [
+    -2,
+    -5
+   ],
+   "declared_translation": 3,
+   "degree": 4,
+   "expect": true,
+   "name": "negative_pair",
+   "note": "both radicands negative, translated",
+   "recovered_radicands": [
+    -2,
+    -5
+   ],
+   "recovered_translation": 3
+  },
+  {
+   "certificate_nanos": 15903,
+   "certified": true,
+   "declared_radicands": [
+    6,
+    10,
+    21
+   ],
+   "declared_translation": 7,
+   "degree": 8,
+   "expect": true,
+   "name": "composite_coprime",
+   "note": "composite radicands with shared prime support, still independent",
+   "recovered_radicands": [
+    6,
+    10,
+    21
+   ],
+   "recovered_translation": 7
+  },
+  {
+   "certificate_nanos": 303721,
+   "certified": true,
+   "declared_radicands": [
+    13,
+    11,
+    7,
+    5,
+    3,
+    2
+   ],
+   "declared_translation": 0,
+   "degree": 64,
+   "expect": true,
+   "name": "descending_primes",
+   "note": "SD_6's radicands in the opposite order: same field, other tower",
+   "recovered_radicands": [
+    2,
+    3,
+    5,
+    7,
+    11,
+    13
+   ],
+   "recovered_translation": 0
+  },
+  {
+   "certificate_nanos": 43976,
+   "certified": true,
+   "declared_radicands": [
+    -1,
+    6,
+    35,
+    22
+   ],
+   "declared_translation": -11,
+   "degree": 16,
+   "expect": true,
+   "name": "mixed_signs",
+   "note": "mixed signs and composites, large negative translation",
+   "recovered_radicands": [
+    -1,
+    6,
+    22,
+    35
+   ],
+   "recovered_translation": -11
+  },
+  {
+   "certificate_nanos": 25818,
+   "certified": true,
+   "declared_radicands": [
+    2,
+    3,
+    5
+   ],
+   "declared_translation": 1000003,
+   "degree": 8,
+   "expect": true,
+   "name": "large_translation",
+   "note": "translation far outside the corpus range",
+   "recovered_radicands": [
+    2,
+    3,
+    5
+   ],
+   "recovered_translation": 1000003
+  },
+  {
+   "certificate_nanos": 54911,
+   "certified": true,
+   "declared_radicands": [
+    3,
+    17,
+    101,
+    1009
+   ],
+   "declared_translation": -2,
+   "degree": 16,
+   "expect": true,
+   "name": "nonconsecutive_primes",
+   "note": "sparse primes, degree 16",
+   "recovered_radicands": [
+    3,
+    17,
+    101,
+    1009
+   ],
+   "recovered_translation": -2
+  },
+  {
+   "certificate_nanos": 14772,
+   "certified": false,
+   "declared_radicands": [
+    12,
+    20,
+    45
+   ],
+   "declared_translation": 0,
+   "degree": 8,
+   "expect": false,
+   "name": "squarefull_radicands",
+   "note": "radicands with square factors: 12 = 4*3, 20 = 4*5, 45 = 9*5",
+   "recovered_radicands": [
+    12,
+    20,
+    45
+   ],
+   "recovered_translation": 0
+  },
+  {
+   "certificate_nanos": 317824899,
+   "certified": true,
+   "declared_radicands": [
+    2,
+    3,
+    5,
+    7,
+    11,
+    13,
+    17,
+    19,
+    23,
+    29
+   ],
+   "declared_translation": 3,
+   "degree": 1024,
+   "expect": true,
+   "name": "deg1024",
+   "note": "degree 1024, an order of magnitude past the corpus",
+   "recovered_radicands": [
+    2,
+    3,
+    5,
+    7,
+    11,
+    13,
+    17,
+    19,
+    23,
+    29
+   ],
+   "recovered_translation": 3
+  },
+  {
+   "certificate_nanos": 19567,
+   "certified": false,
+   "declared_radicands": [
+    2,
+    3,
+    6
+   ],
+   "declared_translation": 0,
+   "degree": 8,
+   "expect": false,
+   "name": "dependent_product",
+   "note": "2 * 3 * 6 = 36: dependent, must be refused",
+   "recovered_radicands": [
+    2,
+    3,
+    6
+   ],
+   "recovered_translation": 0
+  },
+  {
+   "certificate_nanos": 8763,
+   "certified": false,
+   "declared_radicands": [
+    7,
+    28
+   ],
+   "declared_translation": 5,
+   "degree": 4,
+   "expect": false,
+   "name": "dependent_pair",
+   "note": "7 * 28 = 196: dependent, must be refused",
+   "recovered_radicands": [
+    7,
+    28
+   ],
+   "recovered_translation": 5
+  },
+  {
+   "certificate_nanos": 29745,
+   "certified": false,
+   "declared_radicands": [
+    2,
+    3,
+    5,
+    30
+   ],
+   "declared_translation": 0,
+   "degree": 16,
+   "expect": false,
+   "name": "dependent_squarefull",
+   "note": "2 * 3 * 5 * 30 = 900: dependent, must be refused",
+   "recovered_radicands": [
+    2,
+    3,
+    5,
+    30
+   ],
+   "recovered_translation": 0
+  },
+  {
+   "certificate_nanos": 22854,
+   "certified": false,
+   "declared_radicands": [
+    2,
+    3,
+    2
+   ],
+   "declared_translation": 0,
+   "degree": 8,
+   "expect": false,
+   "name": "repeated_radicand",
+   "note": "a repeated radicand is dependent",
+   "recovered_radicands": [
+    2,
+    2,
+    3
+   ],
+   "recovered_translation": 0
+  },
+  {
+   "certificate_nanos": 7081,
+   "certified": false,
+   "declared_radicands": [
+    2,
+    0
+   ],
+   "declared_translation": 0,
+   "degree": 4,
+   "expect": false,
+   "name": "zero_radicand",
+   "note": "a zero radicand is dependent",
+   "recovered_radicands": [
+    0,
+    2
+   ],
+   "recovered_translation": 0
+  },
+  {
+   "certificate_nanos": 296660,
+   "certified": false,
+   "declared_radicands": null,
+   "declared_translation": null,
+   "degree": 64,
+   "expect": false,
+   "name": "perturbed_sd6",
+   "note": "SD_6 with one middle coefficient moved by 1, must be refused",
+   "recovered_radicands": [
+    2,
+    3,
+    5,
+    7,
+    11,
+    13
+   ],
+   "recovered_translation": 0
+  }
+ ],
+ "env": {
+  "arch": "x86_64",
+  "git_commit": "6a86bc37937315ac1c7c9fe2a800c3f25cb867e8",
+  "git_dirty": false,
+  "hostname": "chungus2",
+  "service_sha256": "f2865db27f012eaad5f03488e6d796a35de3f16dddba834dcb4321247165edda"
+ },
+ "failures": [],
+ "random": [
+  {
+   "agreed": 250,
+   "cases": 250,
+   "certified": 199,
+   "seed": 20260804
+  }
+ ],
+ "schema": "hexbz-quadratic-norm-witnesses/2"
+}

@@ -32,18 +32,18 @@ generator, with coefficients that are constant polynomials in `X` over the
 lower tower. -/
 @[expose]
 def liftCoefficient (level : Level) (lower : List Level)
-    (a : Array Rat) : DensePoly (DensePoly (RawElem lower)) :=
+    (a : Array Rat) : DensePoly (DensePoly (Coeff lower)) :=
   let lowerDim := levelsDim lower
   DensePoly.ofCoeffs <| ((List.range level.degree).map fun j =>
-    DensePoly.C (raw lower (block a j lowerDim))).toArray
+    DensePoly.C (Coeff.ofData lower (block a j lowerDim))).toArray
 
 /-- The newest level's monic defining polynomial in the elimination variable,
 with coefficients regarded as constant polynomials in `X`. -/
 @[expose]
 def definingOuter (level : Level) (lower : List Level) :
-    DensePoly (DensePoly (RawElem lower)) :=
+    DensePoly (DensePoly (Coeff lower)) :=
   DensePoly.ofCoeffs <| (((List.range level.degree).map fun i =>
-    DensePoly.C (raw lower (level.defining.getD i #[]))).toArray).push
+    DensePoly.C (Coeff.ofData lower (level.defining.getD i #[]))).toArray).push
       (DensePoly.C 1)
 
 /-- Substitute `X - cY` into a polynomial over the current tower, presenting
@@ -51,13 +51,13 @@ the result as a polynomial in `Y` over `lower[X]`. -/
 @[expose]
 def shiftedOuter (level : Level) (lower : List Level)
     (f : Array (Array Rat)) (c : Int) :
-    DensePoly (DensePoly (RawElem lower)) :=
-  let x : DensePoly (RawElem lower) := DensePoly.monomial 1 1
-  let negShift : RawElem lower := raw lower #[(-(c : Rat))]
-  let xSubCY : DensePoly (DensePoly (RawElem lower)) :=
+    DensePoly (DensePoly (Coeff lower)) :=
+  let x : DensePoly (Coeff lower) := DensePoly.monomial 1 1
+  let negShift : Coeff lower := Coeff.ofData lower #[(-(c : Rat))]
+  let xSubCY : DensePoly (DensePoly (Coeff lower)) :=
     DensePoly.ofCoeffs #[x, DensePoly.C negShift]
-  let start : DensePoly (DensePoly (RawElem lower)) ×
-      DensePoly (DensePoly (RawElem lower)) := (0, 1)
+  let start : DensePoly (DensePoly (Coeff lower)) ×
+      DensePoly (DensePoly (Coeff lower)) := (0, 1)
   (f.foldl (fun state coefficient =>
     (state.1 + liftCoefficient level lower coefficient * state.2,
       state.2 * xSubCY)) start).1
@@ -68,7 +68,7 @@ def shiftedOuter (level : Level) (lower : List Level)
 def oneLevel (level : Level) (lower : List Level)
     (f : Array (Array Rat)) (c : Int) : Array (Array Rat) :=
   (DensePoly.resultant (definingOuter level lower)
-    (shiftedOuter level lower f c)).toArray.map RawElem.data
+    (shiftedOuter level lower f c)).toArray.map Coeff.data
 
 /-- Eliminate every tower generator without shifting. This absolute norm is
 used to obtain root candidates for splitting; recursive Trager factorization
@@ -80,22 +80,22 @@ def iterated : (levels : List Level) → Array (Array Rat) → Array (Array Rat)
 
 /-- Formal derivative over a runtime-indexed lower tower. -/
 @[expose]
-def derivative (lower : List Level) (f : DensePoly (RawElem lower)) :
-    DensePoly (RawElem lower) :=
+def derivative (lower : List Level) (f : DensePoly (Coeff lower)) :
+    DensePoly (Coeff lower) :=
   DensePoly.ofCoeffs <| ((List.range (f.size - 1)).map fun i =>
-    raw lower <| (f.coeff (i + 1)).data.map fun q =>
+    Coeff.ofData lower <| (f.coeff (i + 1)).data.map fun q =>
       ((i + 1 : Nat) : Rat) * q).toArray
 
 /-- Monic normalization over the runtime-indexed lower tower. -/
 @[expose]
-def monic (f : DensePoly (RawElem lower)) : DensePoly (RawElem lower) :=
+def monic (f : DensePoly (Coeff lower)) : DensePoly (Coeff lower) :=
   if f.isZero then 0 else DensePoly.scale f.leadingCoeff⁻¹ f
 
 /-- Executable squarefreeness test over a checked lower tower. -/
 @[expose]
 def isSquarefree (lower : List Level) (f : Array (Array Rat)) : Bool :=
-  let p : DensePoly (RawElem lower) :=
-    DensePoly.ofCoeffs (f.map (raw lower))
+  let p : DensePoly (Coeff lower) :=
+    DensePoly.ofCoeffs (f.map (Coeff.ofData lower))
   !p.isZero && (DensePoly.gcd p (derivative lower p)).size ≤ 1
 
 /-- Number of deterministic Trager shifts required for a top degree `d` and
@@ -107,12 +107,7 @@ def tragerShiftCount (d m : Nat) : Nat :=
 /-- Deterministic signed enumeration `0, 1, -1, 2, -2, ...`. -/
 @[expose]
 def signedShift (i : Nat) : Int :=
-  if i = 0 then
-    0
-  else if i % 2 = 1 then
-    Int.ofNat ((i + 1) / 2)
-  else
-    -Int.ofNat (i / 2)
+  AlgebraicPoly.Common.signedShift i
 
 /-- Search successive signed shifts without materializing the remaining range. -/
 @[expose]

@@ -108,7 +108,7 @@ private def sqrtTwoSquare : DyadicSquare :=
   ⟨Dyadic.ofIntWithPrec 181 7, 0, 8⟩
 
 private def sqrtTwoRep : RefinedIsolation sqrtTwoPoly :=
-  ⟨⟨sqrtTwoSquare, by decide⟩, by decide⟩
+  ⟨⟨sqrtTwoSquare, .ofWitness (by decide)⟩, by decide⟩
 
 private def sqrtTwo? (_ : Unit) : Option (Extension rat) :=
   if hirred : ZPoly.isIrreducible sqrtTwoPoly = true then
@@ -128,7 +128,7 @@ private def sqrtThreeSquare : DyadicSquare :=
   ⟨Dyadic.ofIntWithPrec 222 7, 0, 8⟩
 
 private def sqrtThreeRep : RefinedIsolation sqrtThreePoly :=
-  ⟨⟨sqrtThreeSquare, by decide⟩, by decide⟩
+  ⟨⟨sqrtThreeSquare, .ofWitness (by decide)⟩, by decide⟩
 
 private def sqrtThree? (_ : Unit) : Option AlgebraicRoot :=
   if hsimple : HasOnlySimpleRoots sqrtThreePoly then
@@ -146,7 +146,7 @@ private def fourthRootTwoSquare : DyadicSquare :=
   ⟨Dyadic.ofIntWithPrec 77936 16, 0, 17⟩
 
 private def fourthRootTwoRep : RefinedIsolation fourthRootTwoPoly :=
-  ⟨⟨fourthRootTwoSquare, by decide⟩, by decide⟩
+  ⟨⟨fourthRootTwoSquare, .ofWitness (by decide)⟩, by decide⟩
 
 private def fourthRootTwo? (_ : Unit) : Option AlgebraicRoot :=
   if hsimple : HasOnlySimpleRoots fourthRootTwoPoly then
@@ -167,7 +167,7 @@ private def retryThetaSquare : DyadicSquare :=
   ⟨Dyadic.ofIntWithPrec 1371068573887 40, 0, 16⟩
 
 private def retryThetaRep : RefinedIsolation retryThetaPoly :=
-  ⟨⟨retryThetaSquare, by decide⟩, by decide⟩
+  ⟨⟨retryThetaSquare, .ofWitness (by decide)⟩, by decide⟩
 
 private def retryTheta? (_ : Unit) : Option AlgebraicNumber :=
   if hsimple : HasOnlySimpleRoots retryThetaPoly then
@@ -189,7 +189,7 @@ private def retryAlphaSquare : DyadicSquare :=
 set_option maxRecDepth 100000 in
 set_option exponentiation.threshold 1000 in
 private def retryAlphaRep : RefinedIsolation retryAlphaPoly :=
-  ⟨⟨retryAlphaSquare, by decide⟩, by decide⟩
+  ⟨⟨retryAlphaSquare, .ofWitness (by decide)⟩, by decide⟩
 
 private def retryAlpha? (_ : Unit) : Option AlgebraicNumber :=
   if hsimple : HasOnlySimpleRoots retryAlphaPoly then
@@ -585,7 +585,7 @@ def runCoordinateMaps : Unit → IO UInt64 := fun _ => do
 
 def runRecoverPair : Unit → IO UInt64 := fun _ => do
   let input ← getRecoveryInput
-  match Flatten.recoverPair?
+  match Flatten.recoverPairFast?
       input.theta input.alpha input.gamma input.shift with
   | none => return mixHash (hash input.shift) (hash true)
   | some coordinates =>
@@ -607,7 +607,7 @@ setup_fixed_benchmark runSplit where {
 
 /- The shift-`+1` full-degree candidate performs the exact Euclidean gcd over
 its degree-six primitive field and rejects the resulting nonlinear recovery.
-This isolates the phase expected by the SPEC to dominate flattening. -/
+This isolates the fast flattening scan without invoking trace recovery. -/
 setup_fixed_benchmark runRecoverPair where {
   repeats := 2, maxSecondsPerCall := 20.0,
   expectedHash := some 0x190011a8e6411c8e
@@ -643,8 +643,8 @@ setup_fixed_benchmark runCoordinateMaps where {
 
 /- Flattening the dimension-four two-level tower searches signed primitive
 shifts, constructs a degree-four eliminant, performs exact linear recovery,
-and verifies both coordinate maps. This is the SPEC's expected dominant
-primitive-element path at the merge-facing size bound. -/
+and verifies both coordinate maps. This covers the complete primitive-element
+path at the CI size bound. -/
 setup_fixed_benchmark runFlatten where {
   repeats := 2, maxSecondsPerCall := 20.0,
   expectedHash := some 0xcc1b7720bfe3fc24

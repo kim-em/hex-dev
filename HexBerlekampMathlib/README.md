@@ -8,8 +8,8 @@ Mathlib correspondence and proof-facing tactics for
 [`hex-berlekamp`](https://github.com/leanprover/hex-berlekamp).
 
 The package relates `Hex.FpPoly p` to `Polynomial (ZMod p)`, proves the
-soundness of executable Rabin and factorization certificates, and supplies the
-Mathlib-facing factorization provider used by the integer-polynomial stack.
+soundness of executable Rabin and factorization certificates, and supplies
+factorization tactics for Mathlib polynomials.
 
 # Quickstart
 
@@ -26,8 +26,8 @@ import HexBerlekampMathlib
 
 # Functionality
 
-The bridge provides finite-field polynomial conversion, Rabin-certificate
-soundness, factorization transport, and the Mathlib `factor_poly` provider.
+The package provides finite-field polynomial conversion, Rabin-certificate
+soundness, factorization transport, and the Mathlib `factor_poly` extension.
 
 # Verification
 

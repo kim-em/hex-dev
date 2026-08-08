@@ -656,7 +656,7 @@ with `a` and `b` both monic in `FpPoly p`, the quotient `q` is also monic.
 
 This supplies the Yun derivative-active monic-residual invariant: each
 Yun-loop transition produces an exact-quotient residual
-`w / gcd c w` whose monicity is dispatched by combining this lemma with the
+`w / gcd c w` whose monicity is selected by combining this lemma with the
 reconstruction identity `(w / gcd c w) * gcd c w = w`. The lemma also handles
 the initial split residual `f / gcd f f'` symmetrically. -/
 private theorem monic_of_mul_eq_monic_of_monic

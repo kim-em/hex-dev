@@ -8,7 +8,7 @@ module
 
 public import Mathlib
 public import HexRealRoots.Prec
-public import HexPolyZMathlib.Basic
+public import HexPolyZMathlib.PolynomialEquivalence
 public import HexPolyZMathlib.Discriminant
 public import HexPolyZMathlib.Mignotte
 public import HexPolyZMathlib.MahlerSeparation
@@ -437,7 +437,7 @@ theorem sepPrec_separates (p : Hex.ZPoly)
   have hbig : (1 : ℝ) ≤ Real.sqrt ℓ.length ^ (ℓ.length + 2)
       * (Hex.ZPoly.coeffL2NormBound p : ℝ) ^ (ℓ.length - 1) * ‖z₁ - z₂‖ := by
     have hshared := HexPolyZMathlib.one_le_mahlerDist
-      p' hsep (by simpa only [hfmap] using hr1)
+      p' hp'0 (by simpa only [hfmap] using hr1)
         (by simpa only [hfmap] using hr2) hne
     rw [hnatp', hnatf] at hshared
     calc (1 : ℝ) ≤ Real.sqrt ℓ.length ^ (ℓ.length + 2) *

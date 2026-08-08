@@ -19,7 +19,7 @@ public section
 Resultant correspondence lemmas for the Berlekamp-Zassenhaus Mathlib layer.
 
 This module packages the upstream resultant API in the integer-polynomial
-forms needed by the BHKS bad-vector proof route.
+forms needed by the BHKS bad-vector proof method.
 -/
 
 namespace HexBerlekampZassenhausMathlib
@@ -225,7 +225,7 @@ Abstract Sylvester-column valuation criterion for integer resultants.
 
 If a determinant-preserving Sylvester column transformation produces `d`
 distinct columns whose entries are all divisible by `m`, then `m ^ d` divides
-the resultant.  This is the determinant-only core needed by the CLD/logarithmic
+the resultant.  This is the determinant argument needed by the CLD/logarithmic
 derivative argument: downstream code supplies the transformed matrix and column
 divisibility witnesses directly, without assuming that the selected local
 factor divides the auxiliary polynomial modulo `m`.
@@ -272,8 +272,8 @@ theorem pow_dvd_resultant_of_sylvester_cols
   simpa [hcast]
 
 /--
-Replacing a column of a square matrix by `A.mulVec w` — the linear combination
-of all columns with coefficients `w` — multiplies the determinant by the
+Replacing a column of a square matrix by `A.mulVec w`; the linear combination
+of all columns with coefficients `w`; multiplies the determinant by the
 coefficient `w p` of the replaced column.
 
 This is the determinant-preserving column-operation mechanism: when the
@@ -500,7 +500,7 @@ theorem int_resultant_eq_zero_iff_not_coprime_over_rat
     exact_mod_cast hcast
 
 /--
-Contrapositive form useful when the BHKS route proves coprimality after
+Contrapositive form useful when the BHKS method proves coprimality after
 transporting an integer-polynomial pair to `ℚ`.
 -/
 theorem int_resultant_ne_zero_of_coprime_over_rat
@@ -556,7 +556,7 @@ theorem int_resultant_ne_zero_of_no_monic_irreducible_common_factor
         hq_monic.isPrimitive).mpr (by simpa [φ, hq_map'] using hqQ_irr)
   have hq_f : q ∣ f := by
     apply (Polynomial.IsPrimitive.Int.dvd_iff_map_cast_dvd_map_cast
-      q f hq_monic.isPrimitive hf_monic.isPrimitive).mpr
+      q f hq_monic.isPrimitive).mpr
     simpa [φ, hq_map'] using hqQ_f
   have hq_g : q ∣ g := by
     have hremQ : (g %ₘ q).map φ = 0 := by
@@ -568,6 +568,134 @@ theorem int_resultant_ne_zero_of_no_monic_irreducible_common_factor
       simpa using hremQ
     exact (Polynomial.modByMonic_eq_zero_iff_dvd hq_monic).mp hrem
   exact hcommon q hq_monic hq_irr hq_f hq_g
+
+/-- An integer resultant against a nonzero polynomial is nonzero
+when no irreducible integer factor of the first polynomial divides the second.
+
+This is the direct-coordinate form of
+`int_resultant_ne_zero_of_no_monic_irreducible_common_factor`: a primitive
+nonmonic input has no reason to admit monic integer factors.  A hypothetical
+rational common factor is cleared of denominators, replaced by its primitive
+part, and descended through Gauss's lemma. -/
+theorem int_resultant_ne_zero_of_no_irreducible_common_factor
+    (f g : Polynomial ℤ) (hf_ne : f ≠ 0)
+    (hcommon : ∀ q : Polynomial ℤ,
+      Irreducible q → q ∣ f → ¬ q ∣ g) :
+    Polynomial.resultant f g ≠ 0 := by
+  classical
+  intro hres
+  let φ := algebraMap ℤ ℚ
+  let fQ := f.map φ
+  let gQ := g.map φ
+  have hfQ_ne : fQ ≠ 0 := by
+    intro hzero
+    apply hf_ne
+    apply Polynomial.map_injective φ
+      (FaithfulSMul.algebraMap_injective ℤ ℚ)
+    simpa only [fQ, Polynomial.map_zero] using hzero
+  have hnotcop :
+      ¬ IsCoprime fQ gQ :=
+    ((int_resultant_eq_zero_iff_not_coprime_over_rat f g).mp hres).2
+  have hgcd_nonunit : ¬ IsUnit (GCDMonoid.gcd fQ gQ) := by
+    intro hu
+    exact hnotcop ((gcd_isUnit_iff fQ gQ).mp hu)
+  obtain ⟨qQ, hqQ_monic, hqQ_irr, hqQ_gcd⟩ :=
+    Polynomial.exists_monic_irreducible_factor
+      (GCDMonoid.gcd fQ gQ) hgcd_nonunit
+  have hqQ_f : qQ ∣ fQ :=
+    hqQ_gcd.trans (GCDMonoid.gcd_dvd_left _ _)
+  have hqQ_g : qQ ∣ gQ :=
+    hqQ_gcd.trans (GCDMonoid.gcd_dvd_right _ _)
+  let q0 : Polynomial ℤ :=
+    IsLocalization.integerNormalization (nonZeroDivisors ℤ) qQ
+  let q : Polynomial ℤ := q0.primPart
+  obtain ⟨c, hc_mem, hc_map⟩ :=
+    IsLocalization.integerNormalization_spec (nonZeroDivisors ℤ) qQ
+  have hc_ne : (c : ℤ) ≠ 0 := by
+    simpa [mem_nonZeroDivisors_iff_ne_zero] using hc_mem
+  have hq0_map :
+      q0.map φ = Polynomial.C (φ (c : ℤ)) * qQ := by
+    simpa only [q0, φ, Algebra.smul_def, Polynomial.algebraMap_apply,
+      RingHom.coe_coe] using hc_map
+  have hq0_ne : q0 ≠ 0 := by
+    intro hzero
+    have hzero_map : q0.map φ = 0 := by rw [hzero, Polynomial.map_zero]
+    rw [hq0_map] at hzero_map
+    exact (mul_ne_zero
+      (Polynomial.C_ne_zero.mpr
+        ((FaithfulSMul.algebraMap_injective ℤ ℚ).ne hc_ne))
+      hqQ_monic.ne_zero) hzero_map
+  have hcontent_ne : q0.content ≠ 0 := by
+    intro hzero
+    exact hq0_ne (Polynomial.content_eq_zero_iff.mp hzero)
+  have hq0_decomp :
+      q0.map φ =
+        Polynomial.C (φ q0.content) * q.map φ := by
+    have h := congrArg (Polynomial.map φ)
+      q0.eq_C_content_mul_primPart
+    rw [Polynomial.map_mul, Polynomial.map_C] at h
+    simpa only [q] using h
+  have hcontent_unit :
+      IsUnit (Polynomial.C (φ q0.content)) :=
+    Polynomial.isUnit_C.mpr
+      (isUnit_iff_ne_zero.mpr
+        ((FaithfulSMul.algebraMap_injective ℤ ℚ).ne hcontent_ne))
+  have hq_q0 : Associated (q.map φ) (q0.map φ) := by
+    rw [hq0_decomp]
+    simpa only [one_mul] using
+      ((associated_one_iff_isUnit.mpr hcontent_unit).mul_right
+        (q.map φ)).symm
+  have hc_unit :
+      IsUnit (Polynomial.C (φ (c : ℤ))) :=
+    Polynomial.isUnit_C.mpr
+      (isUnit_iff_ne_zero.mpr
+        ((FaithfulSMul.algebraMap_injective ℤ ℚ).ne hc_ne))
+  have hq0_qQ : Associated (q0.map φ) qQ := by
+    rw [hq0_map]
+    simpa only [one_mul] using
+      (associated_one_iff_isUnit.mpr hc_unit).mul_right qQ
+  have hq_qQ : Associated (q.map φ) qQ :=
+    hq_q0.trans hq0_qQ
+  have hq_primitive : q.IsPrimitive := q0.isPrimitive_primPart
+  have hq_irr : Irreducible q :=
+    hq_primitive.irreducible_iff_irreducible_map_fraction_map.mpr
+      (hq_qQ.symm.irreducible hqQ_irr)
+  have hq_f_map : q.map φ ∣ f.map φ := by
+    simpa only [fQ, φ] using hq_qQ.dvd.trans hqQ_f
+  have hq_f : q ∣ f :=
+    (hq_primitive.dvd_iff_fraction_map_dvd_fraction_map ℚ).mpr hq_f_map
+  have hq_g_map : q.map φ ∣ g.map φ := by
+    simpa only [gQ, φ] using hq_qQ.dvd.trans hqQ_g
+  have hq_g : q ∣ g := by
+    by_cases hg_ne : g = 0
+    · subst g
+      exact dvd_zero q
+    have hg_content_ne : g.content ≠ 0 := by
+      intro hzero
+      exact hg_ne (Polynomial.content_eq_zero_iff.mp hzero)
+    have hg_decomp :
+        g.map φ =
+          Polynomial.C (φ g.content) * g.primPart.map φ := by
+      have h := congrArg (Polynomial.map φ)
+        g.eq_C_content_mul_primPart
+      simpa only [Polynomial.map_mul, Polynomial.map_C] using h
+    have hg_content_unit :
+        IsUnit (Polynomial.C (φ g.content)) :=
+      Polynomial.isUnit_C.mpr
+        (isUnit_iff_ne_zero.mpr
+          ((FaithfulSMul.algebraMap_injective ℤ ℚ).ne hg_content_ne))
+    have hg_assoc :
+        Associated (g.map φ) (g.primPart.map φ) := by
+      rw [hg_decomp]
+      simpa only [one_mul] using
+        (associated_one_iff_isUnit.mpr hg_content_unit).mul_right
+          (g.primPart.map φ)
+    have hq_gprim_map : q.map φ ∣ g.primPart.map φ :=
+      hq_g_map.trans hg_assoc.dvd
+    have hq_gprim : q ∣ g.primPart :=
+      (hq_primitive.dvd_iff_fraction_map_dvd_fraction_map ℚ).mpr hq_gprim_map
+    exact hq_gprim.trans (Polynomial.primPart_dvd g)
+  exact hcommon q hq_irr hq_f hq_g
 
 /--
 Integer witnesses from a `ZMod n` divisibility of mapped integer polynomials.
@@ -654,12 +782,12 @@ theorem sylvesterMap_commonFactor_syzygy
 Scalar-shifted common-factor syzygy for the Sylvester map.
 
 When `f` and `g` share the factor `q` only after reducing modulo a scalar `c`
-— recorded by the explicit witnesses `f = q * a + C c * r` and
-`g = q * b + C c * s` — the shifted pair `(-a * X^t, b * X^t)` is no longer
+; recorded by the explicit witnesses `f = q * a + C c * r` and
+`g = q * b + C c * s`; the shifted pair `(-a * X^t, b * X^t)` is no longer
 killed by the Sylvester map, but its image is the *scalar multiple*
 `C c * ((r * b - s * a) * X^t)`.
 
-This is the bridge from the exact syzygy `sylvesterMap_commonFactor_syzygy`
+This is the correspondence from the exact syzygy `sylvesterMap_commonFactor_syzygy`
 (the `c = 0` case) to the divisibility used by the column-reduction proof: the
 linear combination of Sylvester columns selected by `(-a * X^t, b * X^t)` is
 entrywise divisible by `c`. Taking `t < q.natDegree` shifts gives `d`
@@ -753,7 +881,7 @@ General Sylvester column-image identity.
 The Sylvester matrix applied (`mulVec`) to the coordinate vector of a direction
 `(u, w)` in the product basis reads off, entry by entry, the coefficients of the
 image polynomial `f * w + g * u` under the Sylvester map.  This is the
-direction-agnostic core behind the common-factor specialisation
+direction-independent argument behind the common-factor specialisation
 `sylvester_mulVec_commonFactor_smul`: divisibility of a selected column
 combination reduces to divisibility of the coefficients of `f * w + g * u`.
 -/
@@ -774,12 +902,12 @@ Each entry of the Sylvester column combination selected by the CLD syzygy
 direction `(q * X^t, -q' * X^t)` is divisible by the scalar `c`.
 
 The CLD syzygy hypothesis records that the monic selected factor `q` of `f`
-satisfies `g * q - f * q' = C c * z` — for the BHKS application `c = p ^ k`, `f`
+satisfies `g * q - f * q' = C c * z`; for the BHKS application `c = p ^ k`, `f`
 the input polynomial, `g` the auxiliary polynomial, and the congruence supplied
 by `cldQuotientMod_congr_mul_derivative` (rearranged so the divisor `q` does not
 have to divide the auxiliary polynomial `g`).  The selected column combination is
 the coordinate image of `(q * X^t, -q' * X^t)`, whose Sylvester image is
-`(g * q - f * q') * X^t = C c * (z * X^t)` — visibly a `c`-multiple entrywise.
+`(g * q - f * q') * X^t = C c * (z * X^t)`; visibly a `c`-multiple entrywise.
 This is the per-entry input the determinant column-reduction needs once the
 `d = q.natDegree` shifts `t < d` are assembled into the `d` selected columns.
 -/
@@ -858,7 +986,7 @@ In the natural `Fin (m + n)` Sylvester column layout, columns `m + (n - d) ..
 m + n - 1` (the top `d` columns of the `f`-shift block) are the *pivot* columns.
 This matrix is the identity except on those `d` pivot columns, where column
 `m + (n - d) + t` carries the coordinate vector of the shifted common-factor
-direction `(-a * X^t, b * X^t)` — its left `m` entries are the coefficients of
+direction `(-a * X^t, b * X^t)`; its left `m` entries are the coefficients of
 `-a * X^t`, its right `n` entries those of `b * X^t`.
 
 Multiplying the Sylvester matrix `S` on the right by this matrix replaces each
@@ -956,7 +1084,6 @@ theorem colReduceTransform_pivot_col {R : Type*} [CommRing R] (a b : Polynomial 
   | left k₁ => rw [Fin.addCases_left, basisProd_repr_castAdd]
   | right k₂ => rw [Fin.addCases_right, basisProd_repr_natAdd]
 
-set_option maxHeartbeats 400000 in
 /--
 Assembled common-factor column reduction for the Sylvester matrix.
 
@@ -965,7 +1092,7 @@ two polynomials sharing the factor `q` modulo the scalar `c` (recorded by the
 explicit witnesses `f = q*a + C c*r`, `g = q*b + C c*s`). Right-multiplying `S` by
 `colReduceTransform a b m n d` produces a matrix `A'` whose
 
-- determinant is `(b.coeff (n - d)) ^ d * S.det` — the cofactor leading
+- determinant is `(b.coeff (n - d)) ^ d * S.det`; the cofactor leading
   coefficient raised to the `d = q.natDegree` shifts; under a *monic* cofactor
   `b` (so `b.coeff (n - d) = 1`) this is exactly `S.det`, and
 
@@ -1029,8 +1156,9 @@ Explicit-witness common-factor divisibility for integer resultants.
 
 If `f` and `g` share a monic degree-`d` factor `q` modulo `m`, recorded by
 integer witnesses `f = q*a + C m*r` and `g = q*b + C m*s`, and the cofactor
-`b` supplies the monic pivot used by the Sylvester column reduction, then
-`m ^ d` divides the integer resultant of `f` and `g`.
+pivot is coprime to `m`, then `m ^ d` divides the integer resultant.  The
+column transform contributes `pivot ^ d`; coprimality cancels that harmless
+factor from the determinant divisibility.
 -/
 theorem commonFactor_dvd_resultant
     (f g q a b r s : Polynomial ℤ) (m : ℤ) {d : Nat}
@@ -1041,7 +1169,7 @@ theorem commonFactor_dvd_resultant
     (hd : d ≤ g.natDegree)
     (ha : a.natDegree + d ≤ f.natDegree)
     (hb : b.natDegree + d ≤ g.natDegree)
-    (hb_pivot : b.coeff (g.natDegree - d) = 1) :
+    (hb_pivot : IsCoprime m (b.coeff (g.natDegree - d))) :
     m ^ d ∣ Polynomial.resultant f g := by
   classical
   have hq_monic_used : q.Monic := hq_monic
@@ -1060,11 +1188,11 @@ theorem commonFactor_dvd_resultant
   have hred :=
     sylvester_commonFactor_colReduce q a b r s m hd ha hb hf_bound hg_bound
   have hdetA :
-      A.det = (Polynomial.sylvester f0 g0 f0.natDegree g0.natDegree).det := by
+      A.det =
+        (b.coeff (g0.natDegree - d)) ^ d *
+          (Polynomial.sylvester f0 g0 f0.natDegree g0.natDegree).det := by
     dsimp [A, S, T]
-    have hdet := hred.1
-    rw [hb_pivot, one_pow, one_mul] at hdet
-    exact hdet
+    exact hred.1
   have hpiv_inj :
       Function.Injective
         (fun t : Fin d =>
@@ -1097,7 +1225,15 @@ theorem commonFactor_dvd_resultant
           Fin (f0.natDegree + g0.natDegree)))
       hpiv_inj hcols
   rw [hdetA] at hA
-  simpa [Polynomial.resultant, f0, g0] using hA
+  have hcop :
+      IsCoprime (m ^ d) ((b.coeff (g0.natDegree - d)) ^ d) := by
+    apply IsCoprime.pow
+    simpa only [g0] using hb_pivot
+  have hres :
+      m ^ d ∣
+        (Polynomial.sylvester f0 g0 f0.natDegree g0.natDegree).det :=
+    hcop.dvd_of_dvd_mul_left hA
+  simpa [Polynomial.resultant, f0, g0] using hres
 
 /--
 Monic-cofactor form of `commonFactor_dvd_resultant`: if the right cofactor `b`
@@ -1120,8 +1256,10 @@ theorem commonFactor_dvd_resultant_of_monic_cofactor
     have hsub : g.natDegree - d = b.natDegree := by omega
     rw [hsub]
     exact hb_monic.leadingCoeff
-  exact commonFactor_dvd_resultant f g q a b r s m hf_wit hg_wit hq_monic hq_deg
-    hd ha hb hb_pivot
+  apply commonFactor_dvd_resultant f g q a b r s m hf_wit hg_wit hq_monic hq_deg
+    hd ha hb
+  rw [hb_pivot]
+  exact isCoprime_one_right
 
 /--
 Degree-controlled witness from a `ZMod n` divisibility by a *monic* `q`.
@@ -1163,21 +1301,24 @@ BHKS Lemma 3.2 modular-resultant divisibility, in the form downstream
 Hensel/CLD code consumes.
 
 If a monic degree-`d` polynomial `q` divides both `f` and `g` after reduction
-modulo `p ^ k`, with `f` monic and `d` not exceeding either degree, then
+modulo `p ^ k`, with the leading coefficient of nonzero `f` a unit modulo
+`p ^ k` and `d` not exceeding either degree, then
 `p ^ (k * d)` divides the integer resultant of `f` and `g`.
 
 The exponent is `k * d`, not merely `k`: the monic common factor `q` contributes
 `d` independent Sylvester column directions, each carrying one factor of the
 modulus `p ^ k`, so the column reduction (`commonFactor_dvd_resultant`) turns
 those `d` directions into `(p ^ k) ^ d = p ^ (k * d)` dividing the resultant.
-Monicity of `f` supplies the unit pivot the reduction needs; the result is read
-off the swapped pair via `Polynomial.resultant_comm`.
+The leading coefficient of `f` supplies the coprime pivot the reduction needs;
+the result is read off the swapped pair via `Polynomial.resultant_comm`.
 -/
 theorem pow_dvd_resultant_of_map_dvd
     {p k : ℕ} {f g q : Polynomial ℤ} {d : ℕ}
     (hq_monic : q.Monic)
     (hq_deg : q.natDegree = d)
-    (hf_monic : f.Monic)
+    (hf_ne : f ≠ 0)
+    (hf_lc_coprime :
+      IsCoprime ((p ^ k : Nat) : Int) f.leadingCoeff)
     (hdf : d ≤ f.natDegree)
     (hdg : d ≤ g.natDegree)
     (hf_dvd : q.map (Int.castRingHom (ZMod (p ^ k))) ∣
@@ -1191,20 +1332,24 @@ theorem pow_dvd_resultant_of_map_dvd
   -- `q.degree ≤ f.degree`, needed for the leading-coefficient transfer.
   have hdeg_le : q.degree ≤ f.degree := by
     rw [Polynomial.degree_eq_natDegree hq_monic.ne_zero,
-        Polynomial.degree_eq_natDegree hf_monic.ne_zero, hq_deg]
+        Polynomial.degree_eq_natDegree hf_ne, hq_deg]
     exact_mod_cast hdf
-  -- The pivot cofactor `f /ₘ q` is monic because `f` is.
-  have hb_monic : (f /ₘ q).Monic := by
-    have := Polynomial.leadingCoeff_divByMonic_of_monic hq_monic hdeg_le
-    exact this.trans hf_monic
-  -- Apply the column-reduction lemma to the swapped pair `(g, f)`, so the monic
-  -- cofactor `f /ₘ q` of `f` plays the pivot role.
+  have hb_lc :
+      (f /ₘ q).leadingCoeff = f.leadingCoeff :=
+    Polynomial.leadingCoeff_divByMonic_of_monic hq_monic hdeg_le
+  -- Apply the column-reduction lemma to the swapped pair `(g, f)`, so the
+  -- cofactor `f /ₘ q` supplies the coprime leading-coefficient pivot.
   have key : ((p ^ k : ℕ) : ℤ) ^ d ∣ Polynomial.resultant g f := by
-    apply commonFactor_dvd_resultant_of_monic_cofactor g f q (g /ₘ q) (f /ₘ q)
+    apply commonFactor_dvd_resultant g f q (g /ₘ q) (f /ₘ q)
       r s ((p ^ k : ℕ) : ℤ) (d := d) hr hs hq_monic hq_deg hdf
     · rw [Polynomial.natDegree_divByMonic g hq_monic, hq_deg]; omega
     · rw [Polynomial.natDegree_divByMonic f hq_monic, hq_deg]; omega
-    · exact hb_monic
+    · have hpivot :
+          (f /ₘ q).coeff (f.natDegree - d) = f.leadingCoeff := by
+        rw [← hq_deg, ← Polynomial.natDegree_divByMonic f hq_monic,
+          Polynomial.coeff_natDegree, hb_lc]
+      rw [hpivot]
+      exact hf_lc_coprime
   -- Convert `(p ^ k) ^ d` to `p ^ (k * d)` and read off `resultant f g` via comm.
   have hcast : ((p ^ (k * d) : ℕ) : ℤ) = ((p ^ k : ℕ) : ℤ) ^ d := by
     rw [pow_mul, Nat.cast_pow]
@@ -1220,12 +1365,14 @@ factor forces the entire auxiliary to vanish modulo `p^k`; hence it is a scalar
 multiple of `p^k`, and resultant homogeneity supplies at least `d` copies of
 that scalar because `d ≤ f.natDegree`.
 -/
-theorem pow_dvd_resultant_of_map_dvd_left_monic
+theorem pow_dvd_resultant_of_map_dvd_left_coprime
     {p k : ℕ} {f g q : Polynomial ℤ} {d : ℕ}
     (hmod : 1 < p ^ k)
     (hq_monic : q.Monic)
     (hq_deg : q.natDegree = d)
-    (hf_monic : f.Monic)
+    (hf_ne : f ≠ 0)
+    (hf_lc_coprime :
+      IsCoprime ((p ^ k : Nat) : Int) f.leadingCoeff)
     (hdf : d ≤ f.natDegree)
     (hf_dvd : q.map (Int.castRingHom (ZMod (p ^ k))) ∣
               f.map (Int.castRingHom (ZMod (p ^ k))))
@@ -1233,7 +1380,7 @@ theorem pow_dvd_resultant_of_map_dvd_left_monic
               g.map (Int.castRingHom (ZMod (p ^ k)))) :
     ((p ^ (k * d) : ℕ) : ℤ) ∣ Polynomial.resultant f g := by
   by_cases hdg : d ≤ g.natDegree
-  · exact pow_dvd_resultant_of_map_dvd hq_monic hq_deg hf_monic hdf hdg
+  · exact pow_dvd_resultant_of_map_dvd hq_monic hq_deg hf_ne hf_lc_coprime hdf hdg
       hf_dvd hg_dvd
   · letI : Fact (1 < p ^ k) := ⟨hmod⟩
     let φ := Int.castRingHom (ZMod (p ^ k))
@@ -1308,8 +1455,8 @@ identity column.
 Right-multiplying `sylvester f g m n` by this matrix replaces each pivot column
 with the syzygy combination `S.mulVec (direction)` (entrywise divisible by the
 syzygy scalar, via `sylvester_mulVec_cld_syzygy`) while leaving the others
-fixed. The matrix is block-lower-triangular for the left/right partition — its
-top-right block vanishes because the right columns stay identity — and its left
+fixed. The matrix is block-lower-triangular for the left/right partition; its
+top-right block vanishes because the right columns stay identity; and its left
 diagonal block is upper triangular with the monic leading `1` of `q * X^t` on
 the diagonal, so `det = 1`. Unlike `colReduceTransform`, the monic pivot here is
 the *left* component `q`, so the matrix is not triangular under the natural
@@ -1327,7 +1474,6 @@ def cldColReduceTransform {R : Type*} [CommRing R] (q : Polynomial R) (m n d : N
         else if i = j then 1 else 0)
       (fun _j₂ => if i = j then 1 else 0)
 
-set_option maxHeartbeats 400000 in
 /-- The determinant of `cldColReduceTransform` is `1`: the left diagonal block is
 upper triangular with the monic leading coefficient of `q` on its diagonal, and
 the top-right block vanishes (the right columns are identity). -/
@@ -1429,7 +1575,7 @@ theorem cldColReduceTransform_pivot_col {R : Type*} [CommRing R] (q : Polynomial
   | right k₂ => rw [Fin.addCases_right, basisProd_repr_natAdd]
 
 /--
-CLD-syzygy resultant divisibility (BHKS Lemma 3.2 core, scalar form).
+CLD-syzygy resultant divisibility (BHKS Lemma 3.2, scalar form).
 
 If a monic degree-`d` polynomial `q` and a witness `z` record the CLD syzygy
 `g * q - f * q' = C c * z`, then `c ^ d` divides the integer resultant of `f`
@@ -1438,7 +1584,7 @@ assumed: the syzygy provides `d` Sylvester column directions
 `(q * X^t, -q' * X^t)` whose images are `c`-multiples, and the monic leading `1`
 of each `q * X^t` makes the column-reduction transform determinant-preserving.
 
-The degree bounds are intrinsic to the syzygy route: the `d` shifts of `q * X^t`
+The degree bounds are intrinsic to the syzygy method: the `d` shifts of `q * X^t`
 must lie in `degreeLT f.natDegree` (forcing `2 * d ≤ f.natDegree`), and the `d`
 shifts of `-q' * X^t` must lie in `degreeLT g.natDegree` (forcing
 `2 * d ≤ g.natDegree + 1`). The first is the `deg input ≥ 2d` constraint flagged

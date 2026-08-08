@@ -82,6 +82,7 @@ theorem toWP_congr {x y : ZPoly} (h : ZPoly.congr x y m.toNat) : toWP ctx x = to
     rw [DensePoly.coeff_zero]; simp [ZPoly.intModNat]
   rw [this, DensePoly.coeff_zero]; rfl
 
+/-- Conversion to Montgomery-word polynomials preserves addition. -/
 theorem toWP_add (x y : ZPoly) : toWP ctx (x + y) = toWP ctx x + toWP ctx y := by
   apply DensePoly.ext_coeff
   intro j
@@ -93,6 +94,7 @@ theorem toWP_add (x y : ZPoly) : toWP ctx (x + y) = toWP ctx x + toWP ctx y := b
     Nat.mod_eq_of_lt (ZPoly.intModNat_lt' (x.coeff j) ctx.p_pos),
     Nat.mod_eq_of_lt (ZPoly.intModNat_lt' (y.coeff j) ctx.p_pos), Nat.mod_mod]
 
+/-- Conversion to Montgomery-word polynomials preserves subtraction. -/
 theorem toWP_sub (x y : ZPoly) : toWP ctx (x - y) = toWP ctx x - toWP ctx y := by
   apply DensePoly.ext_coeff
   intro j
@@ -104,6 +106,7 @@ theorem toWP_sub (x y : ZPoly) : toWP ctx (x - y) = toWP ctx x - toWP ctx y := b
     Nat.mod_eq_of_lt (ZPoly.intModNat_lt' (x.coeff j) ctx.p_pos),
     Nat.mod_eq_of_lt (ZPoly.intModNat_lt' (y.coeff j) ctx.p_pos), Nat.mod_mod]
 
+/-- Reducing one as an integer agrees with the natural-number remainder. -/
 theorem intModNat_one {M : Nat} (hM : 0 < M) : ZPoly.intModNat 1 M = 1 % M := by
   have h : ((ZPoly.intModNat 1 M : Nat) : Int) = ((1 % M : Nat) : Int) := by
     rw [ZPoly.intModNat_cast 1 hM]; exact_mod_cast rfl
@@ -304,6 +307,7 @@ private theorem Res_mulCoeffSum (x y : ZPoly) (j : Nat) :
       DensePoly.mulCoeffSum_norm x y j x.size y.size (Nat.le_refl _) (Nat.le_refl _)]
   exact Res_outer_fold ctx x y j y.size (List.range x.size) 0 0 (Res_zero ctx)
 
+/-- Conversion to Montgomery-word polynomials preserves multiplication. -/
 theorem toWP_mul (x y : ZPoly) : toWP ctx (x * y) = toWP ctx x * toWP ctx y := by
   apply DensePoly.ext_coeff
   intro j
@@ -349,6 +353,7 @@ theorem toWP_size_eq_of_monic {z : ZPoly} (hz : DensePoly.Monic z) (hzpos : 0 < 
     exact one_ne_zero_wordMod ctx h1 hcz
   · exact hge
 
+/-- Reduction to a nontrivial Montgomery modulus preserves monicity. -/
 theorem toWP_monic {z : ZPoly} (hz : DensePoly.Monic z) (hzpos : 0 < z.size) (h1 : 1 < m.toNat) :
     DensePoly.Monic (toWP ctx z) := by
   show (toWP ctx z).leadingCoeff = 1
@@ -358,12 +363,14 @@ theorem toWP_monic {z : ZPoly} (hz : DensePoly.Monic z) (hzpos : 0 < z.size) (h1
       rw [← DensePoly.leadingCoeff_eq_coeff_last z hzpos]; exact hz,
     toWP_ofNat_one ctx h1]
 
+/-- A monic polynomial keeps its degree after reduction to a nontrivial Montgomery modulus. -/
 theorem toWP_degree_eq_of_monic {z : ZPoly} (hz : DensePoly.Monic z) (hzpos : 0 < z.size)
     (h1 : 1 < m.toNat) : (toWP ctx z).degree?.getD 0 = z.degree?.getD 0 := by
   have hs := toWP_size_eq_of_monic ctx hz hzpos h1
   rw [DensePoly.degree?_eq_some_of_pos_size _ (by rw [hs]; exact hzpos),
     DensePoly.degree?_eq_some_of_pos_size z hzpos, Option.getD_some, Option.getD_some, hs]
 
+/-- Modular conversion cannot increase polynomial degree. -/
 theorem toWP_degree_le (z : ZPoly) : (toWP ctx z).degree?.getD 0 ≤ z.degree?.getD 0 := by
   have hs := size_toWP_le ctx z
   rcases Nat.eq_zero_or_pos (toWP ctx z).size with h0 | h0

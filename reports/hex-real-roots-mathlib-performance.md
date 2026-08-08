@@ -56,6 +56,12 @@ The artifact below is the byte-for-byte committed copy of that `/tmp` output.
 | maximum core-interference allowance | 0.070840472 s |
 | maximum preflight wait | 16.007267453 s |
 
+This artifact predates the shared runner's
+`paired-fresh-module-olean-wall-robust-null-v2` contract and remains a
+historical v4/v1 record; it has not been retrospectively reclassified. Future
+HexRealRootsMathlib captures use schema v5 and floor each robust null envelope
+by the maximum observed absolute null delta.
+
 Every sample cell is `reference / candidate / signed candidate−reference`; wall times are exact nanosecond values rendered as seconds. `R→C` and `C→R` record build orientation, and `aN` records the admitted complete-pair attempt.
 
 Null controls are descriptive only: their medians are not subtracted, their ranges do not widen a budget, and they are neither significance tests nor scientific evidence.

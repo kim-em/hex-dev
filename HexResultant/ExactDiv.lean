@@ -239,7 +239,7 @@ runs the `Array.map` pass `divScalarImpl` via `divScalar_eq_impl`. -/
 noncomputable def divScalar [Zero R] [DecidableEq R] [Div R]
     (p : DensePoly R) (b : R) : DensePoly R :=
   if b = 0 then 0 else
-    ofCoeffs (p.toList.map (fun a => a / b)).toArray
+    ofList (p.toList.map (fun a => a / b))
 
 /-- Runtime array implementation of coefficientwise exact scalar division. -/
 @[expose]
@@ -251,7 +251,7 @@ def divScalarImpl [Zero R] [DecidableEq R] [Div R]
 /-- The list specification and array implementation of scalar division agree. -/
 theorem divScalar_eq_divScalarImpl [Zero R] [DecidableEq R] [Div R]
     (p : DensePoly R) (b : R) : divScalar p b = divScalarImpl p b := by
-  unfold divScalar divScalarImpl
+  unfold divScalar divScalarImpl ofList
   by_cases hb : b = 0
   · rw [if_pos hb, if_pos hb]
   · rw [if_neg hb, if_neg hb]
@@ -293,7 +293,7 @@ theorem coeff_divScalar [Lean.Grind.CommRing R] [DecidableEq R] [Div R]
     [ExactDivLaws R] (p : DensePoly R) {b : R} (hb : b ≠ 0) (n : Nat) :
     (divScalar p b).coeff n = p.coeff n / b := by
   unfold divScalar
-  rw [if_neg hb, coeff_ofCoeffs_list]
+  rw [if_neg hb, coeff_ofList]
   have hzero : (0 : R) / b = 0 := by
     simpa [Lean.Grind.Semiring.zero_mul] using
       (ExactDivLaws.mul_div_cancel_right (0 : R) b hb)

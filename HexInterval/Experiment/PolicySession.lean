@@ -266,23 +266,16 @@ private def rejectPayload (session : Session Fact)
   | .malformedState next =>
       .invalidSession (halt session next registry)
 
-/-- A whole-run arena limit is fatal. Clear the selected request through the
-ordinary policy reply boundary, retain no prospective arena state, and return
-a non-live session which cannot later claim saturation. -/
+/-- A whole-run arena limit is fatal. Clear the selected request without
+committing its prepared matcher cursor, retain no prospective arena state, and
+return a non-live session which cannot later claim saturation. -/
 private def exhaustPayload (session : Session Fact)
     (state : Propagator.Policy.State Fact) (registry : Registry Fact)
-    (action : Action) (resource : PayloadArena.Resource) : Step Fact :=
-  match state.submit (action.reply (.failed PayloadFailureCode.rejected)) with
-  | .accepted _ next =>
+    (resource : PayloadArena.Resource) : Step Fact :=
+  match state.abortPending with
+  | some next =>
       .payloadResource resource (halt session next registry)
-  | .invalid replyError next =>
-      .invalidReply replyError (halt session next registry)
-  | .engineResource engineResource next =>
-      .engineResource engineResource (halt session next registry)
-  | .factResource budget next =>
-      .factResource budget (halt session next registry)
-  | .malformedState next =>
-      .invalidSession (halt session next registry)
+  | none => .invalidSession (halt session state registry)
 
 private def rejectedSession (session : Session Fact)
     (state : Propagator.Policy.State Fact)
@@ -335,7 +328,7 @@ private def submitInvocation (session : Session Fact)
         | .uses | .drafts | .draftCells | .atom | .schema =>
             rejectPayload session state registry request.action resource
         | .entries | .bodyCells =>
-            exhaustPayload session state registry request.action resource
+            exhaustPayload session state registry resource
     | .ready arena outcome =>
         match state.submit (request.action.reply outcome) with
         | .accepted observation next =>

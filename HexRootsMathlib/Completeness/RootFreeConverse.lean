@@ -390,39 +390,42 @@ theorem exists_root_ne_of_depth {p : Hex.ZPoly} {s : Hex.DyadicSquare}
   have hradius := NKData.radiusHi_mul_degree_le hprec
   nlinarith
 
-/-- At separation depth the remote-root tail is already negligible, so a
-square retained by T-zero is within `65/32` executable radii of one root. The
-`1/384` tail at the implemented depth leaves enough room for enclosing a
-whole component with a loss of at most two precision levels. -/
-theorem exists_root_le_radius_of_not_rootFree {p : Hex.ZPoly}
+/-- Once a locally simple root has been identified on the coarse Mahler scale,
+failure of `T₀` places it within the sharp degree-independent survivor
+radius.  Other roots of the polynomial may have multiplicity. -/
+theorem root_near_of_simple {p : Hex.ZPoly}
     {s : Hex.DyadicSquare} (hp : toPolyℂ p ≠ 0) (hsize : 1 < p.size)
-    (hsep : (HexPolyZMathlib.toPolyℚ p).Separable)
+    {z : ℂ} (hzroot : (toPolyℂ p).IsRoot z)
+    (hsimple : (toPolyℂ p).derivative.eval z ≠ 0)
     (hprec : (Hex.separationDepth p : Int) ≤ s.prec)
-    (hkeep : Hex.rootFree p s ≠ true) :
-    ∃ z ∈ (toPolyℂ p).roots,
-      ‖z - DyadicSquare.center s‖ ≤ (65 / 32 : ℝ) * Dyadic.toReal s.radiusHi := by
+    (hkeep : Hex.rootFree p s ≠ true)
+    (hzc : ‖z - DyadicSquare.center s‖ <
+      ((2 : ℝ) ^ (-(Hex.mahlerPrec p : ℤ)) * (1449 / 1024 : ℝ)) / 32) :
+    ‖z - DyadicSquare.center s‖ ≤
+      (65 / 32 : ℝ) * Dyadic.toReal s.radiusHi := by
   let f := toPolyℂ p
   let c := DyadicSquare.center s
   let R := Dyadic.toReal s.radiusHi
   let N := Nat.max 2 (p.degree?.getD 0)
   let M := (2 : ℝ) ^ (-(Hex.mahlerPrec p : ℤ)) * (1449 / 1024 : ℝ)
   let d := 3 * M
-  obtain ⟨z, hz, hzc⟩ := exists_root_ne_of_depth hp (by omega) hprec hkeep
+  have hz : z ∈ f.roots := (mem_roots hp).2 (by simpa [f] using hzroot)
   obtain ⟨roots, hroots⟩ := Multiset.exists_cons_of_mem hz
   have hrootsEq : f.roots = z ::ₘ roots := by simpa [f] using hroots
-  have hsepC : f.Separable := by
-    have hcomp : (algebraMap ℚ ℂ).comp (Int.castRingHom ℚ) =
-        Int.castRingHom ℂ := RingHom.ext_int _ _
-    rw [show f = (HexPolyZMathlib.toPolyℚ p).map (algebraMap ℚ ℂ) by
-      dsimp [f, HexPolyZMathlib.toPolyℚ]
-      rw [Polynomial.map_map, hcomp]]
-    exact hsep.map
-  have hnodup : f.roots.Nodup := nodup_roots hsepC
+  have hcountOne : f.roots.count z = 1 := by
+    rw [count_roots]
+    have hpos : 0 < f.rootMultiplicity z :=
+      rootMultiplicity_pos'.mpr ⟨hp, by simpa [f] using hzroot⟩
+    have hnot : ¬1 < f.rootMultiplicity z := by
+      rw [one_lt_rootMultiplicity_iff_isRoot hp]
+      exact fun h => hsimple h.2
+    omega
   have hne : ∀ w ∈ roots, w ≠ z := by
     intro w hw heq
     subst w
-    rw [hrootsEq] at hnodup
-    exact (Multiset.nodup_cons.mp hnodup).1 hw
+    have hcountPos : 0 < roots.count z := Multiset.count_pos.mpr hw
+    rw [hrootsEq, Multiset.count_cons_self] at hcountOne
+    omega
   have hM : 0 < M := by dsimp [M]; positivity
   have hd : 0 < d := by dsimp [d]; positivity
   have hR : 0 < R := by
@@ -436,8 +439,12 @@ theorem exists_root_le_radius_of_not_rootFree {p : Hex.ZPoly}
     have hwroot : f.IsRoot w := (mem_roots hp).1 (by
       rw [hrootsEq]
       exact Multiset.mem_cons_of_mem hw)
-    have hzroot : f.IsRoot z := (mem_roots hp).1 (by simpa [f] using hz)
-    have hsepzw := mahlerPrec_separates p hsep z w hzroot hwroot (hne w hw).symm
+    have hpZ : p ≠ 0 := by
+      intro hzero
+      subst p
+      exact hp (by simp [toPolyℂ, HexPolyZMathlib.toPolynomial])
+    have hsepzw := mahlerPrec_separates p hpZ
+      z w hzroot hwroot (hne w hw).symm
     have htri : ‖z - w‖ ≤ ‖z - c‖ + ‖w - c‖ := by
       calc
         ‖z - w‖ = ‖(z - c) - (w - c)‖ := by ring_nf
@@ -471,10 +478,7 @@ theorem exists_root_le_radius_of_not_rootFree {p : Hex.ZPoly}
     nlinarith
   by_contra hnone
   have hfar : (65 / 32 : ℝ) * R < ‖z - c‖ := by
-    apply lt_of_not_ge
-    intro hle
-    apply hnone
-    exact ⟨z, by simpa [f] using hz, by simpa [R, c] using hle⟩
+    exact lt_of_not_ge (by simpa [R, c] using hnone)
   apply hkeep
   apply rootFree_one_root_of_margin hp hsize hrootsEq hd hremote
   dsimp [R, d, c] at hE hfar ⊢
@@ -486,6 +490,32 @@ theorem exists_root_le_radius_of_not_rootFree {p : Hex.ZPoly}
     linarith
   nlinarith [mul_le_mul_of_nonneg_left hE
     (add_nonneg hR.le (norm_nonneg (z - DyadicSquare.center s)))]
+
+/-- At separation depth the remote-root tail is already negligible, so a
+square retained by T-zero is within `65/32` executable radii of one root. The
+`1/384` tail at the implemented depth leaves enough room for enclosing a
+whole component with a loss of at most two precision levels. -/
+theorem exists_root_le_radius_of_not_rootFree {p : Hex.ZPoly}
+    {s : Hex.DyadicSquare} (hp : toPolyℂ p ≠ 0) (hsize : 1 < p.size)
+    (hsep : (HexPolyZMathlib.toPolyℚ p).Separable)
+    (hprec : (Hex.separationDepth p : Int) ≤ s.prec)
+    (hkeep : Hex.rootFree p s ≠ true) :
+    ∃ z ∈ (toPolyℂ p).roots,
+      ‖z - DyadicSquare.center s‖ ≤ (65 / 32 : ℝ) * Dyadic.toReal s.radiusHi := by
+  obtain ⟨z, hz, hzc⟩ := exists_root_ne_of_depth hp (by omega) hprec hkeep
+  have hzroot : (toPolyℂ p).IsRoot z := (mem_roots hp).1 hz
+  have hcomp : (algebraMap ℚ ℂ).comp (Int.castRingHom ℚ) =
+      Int.castRingHom ℂ := RingHom.ext_int _ _
+  have hsepC : (toPolyℂ p).Separable := by
+    rw [show toPolyℂ p =
+        (HexPolyZMathlib.toPolyℚ p).map (algebraMap ℚ ℂ) by
+      dsimp [toPolyℂ, HexPolyZMathlib.toPolyℚ]
+      rw [Polynomial.map_map, hcomp]]
+    exact hsep.map
+  have hsimple : (toPolyℂ p).derivative.eval z ≠ 0 :=
+    hsepC.eval₂_derivative_ne_zero (RingHom.id ℂ) hzroot
+  exact ⟨z, hz, root_near_of_simple hp hsize hzroot
+    hsimple hprec hkeep hzc⟩
 
 /-- Convenient looser strict form of the sharp `65/32` survivor bound. -/
 theorem exists_root_lt_three_radius_of_not_rootFree {p : Hex.ZPoly}
@@ -650,7 +680,7 @@ theorem exists_common_nearRoot_of_adjacent {p : Hex.ZPoly}
     nlinarith
   have hzw : z = w := by
     by_contra hne
-    have hsepzw := mahlerPrec_separates p hsep z w
+    have hsepzw := mahlerPrec_separates p (ne_zero_of_separable hsep) z w
       ((mem_roots hp).1 hz) ((mem_roots hp).1 hw) hne
     change M < ‖z - w‖ / 4 at hsepzw
     have hM : 0 < M := by dsimp [M]; positivity
@@ -706,7 +736,7 @@ theorem nearRoot_unique {p : Hex.ZPoly} {s : Hex.DyadicSquare}
           mul_le_mul_of_nonneg_left htwo hRnonneg
         _ ≤ M / 256 := by simpa [M] using hradius
     nlinarith
-  have hsepzw := mahlerPrec_separates p hsep z w
+  have hsepzw := mahlerPrec_separates p (ne_zero_of_separable hsep) z w
     ((mem_roots hp).1 hz.1) ((mem_roots hp).1 hw.1) hne
   change M < ‖z - w‖ / 4 at hsepzw
   have hM : 0 < M := by dsimp [M]; positivity

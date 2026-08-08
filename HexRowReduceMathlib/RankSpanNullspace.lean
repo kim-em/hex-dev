@@ -72,6 +72,9 @@ private theorem vectorEquiv_nullspaceMatrix_mulVec [Field R]
   intro k _
   unfold Hex.Matrix.IsRowReduced.nullspace Hex.Matrix.col
   simp [mul_comm, Vector.get, Vector.toArray_ofFn]
+  left
+  change (E.nullspaceMatrix.getRow j)[k.val] = (E.nullspaceMatrix.getRow j)[k.val]
+  rfl
 
 /-- Soundness of the executable `spanCoeffs`: when echelon-form data certifies
 `v` as a row combination with coefficients `c`, the Mathlib image of `v` is the

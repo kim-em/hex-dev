@@ -13,6 +13,8 @@ public import HexPoly.Euclid.Content
 import all HexPoly.Euclid.DivGcd
 import all HexPoly.Euclid.MulRing
 import all HexPoly.Euclid.Reconstruction
+import all HexPoly.Euclid.EvalMul
+public import HexPoly.Euclid.EvalMul
 public import HexPoly.Euclid.MonicUnique
 import all HexPoly.Euclid.Content
 
@@ -65,7 +67,7 @@ private theorem mod_sub_self_eq_mul_neg_div {S : Type _}
     mul_sub_zero_comm m (p / m), coeff_sub 0 ((p / m) * m) n hzero_sub, coeff_zero]
   grind
 
-/-- Packages {name}`mod_sub_self_eq_mul_neg_div` as the divisibility `m ∣ (p % m - p)`, the core
+/-- Packages {name}`mod_sub_self_eq_mul_neg_div` as the divisibility `m ∣ (p % m - p)`, the
 fact behind the public `congr_mod`. -/
 private theorem dvd_mod_sub {S : Type _}
     [Lean.Grind.CommRing S] [DecidableEq S] [Div S] [DivModLaws S]
@@ -380,6 +382,7 @@ private theorem exists_natPrime_dvd_of_one_lt :
   induction n using Nat.strongRecOn with
   | ind n ih =>
       intro hn
+      classical
       by_cases hprime : NatPrime n
       · exact ⟨n, hprime, Nat.dvd_refl n⟩
       · -- `n` is composite: extract a proper divisor manually (no `push_neg`).

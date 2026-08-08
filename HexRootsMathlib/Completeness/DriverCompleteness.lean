@@ -153,10 +153,10 @@ private theorem certifyNK_one {p : Hex.ZPoly} {c : Hex.Component}
   split <;> rename_i hbase'
   · split <;> rename_i hins
     · split <;> rename_i hcand
-      · refine ⟨⟨_, Or.inl hcand⟩, rfl, ?_⟩
+      · refine ⟨⟨_, .nk hcand⟩, rfl, ?_⟩
         exact newtonCandidate_prec hsize
-      · exact ⟨⟨_, Or.inl hbase'⟩, rfl, le_rfl⟩
-    · exact ⟨⟨_, Or.inl hbase'⟩, rfl, le_rfl⟩
+      · exact ⟨⟨_, .nk hbase'⟩, rfl, le_rfl⟩
+    · exact ⟨⟨_, .nk hbase'⟩, rfl, le_rfl⟩
   · exact (hbase' hbase).elim
 
 /-- The mixed strategy has the identical successful NK prefix. -/
@@ -170,10 +170,10 @@ private theorem certifyMixed_one {p : Hex.ZPoly} {c : Hex.Component}
   split <;> rename_i hbase'
   · split <;> rename_i hins
     · split <;> rename_i hcand
-      · refine ⟨⟨_, Or.inl hcand⟩, rfl, ?_⟩
+      · refine ⟨⟨_, .nk hcand⟩, rfl, ?_⟩
         exact newtonCandidate_prec hsize
-      · exact ⟨⟨_, Or.inl hbase'⟩, rfl, le_rfl⟩
-    · exact ⟨⟨_, Or.inl hbase'⟩, rfl, le_rfl⟩
+      · exact ⟨⟨_, .nk hbase'⟩, rfl, le_rfl⟩
+    · exact ⟨⟨_, .nk hbase'⟩, rfl, le_rfl⟩
   · exact (hbase' hbase).elim
 
 /-- A member of a globally normalized round is one level finer than every
@@ -421,7 +421,8 @@ theorem witness_quadrupled_of_glueCovered {p : Hex.ZPoly}
     have hwroot : f.IsRoot w := (Polynomial.mem_roots hp).1 (by
       rw [hrootsEq]
       exact Multiset.mem_cons_of_mem hw)
-    have hsepzw := mahlerPrec_separates p hsep z w hzroot hwroot (hne w hw).symm
+    have hsepzw := mahlerPrec_separates p (ne_zero_of_separable hsep)
+      z w hzroot hwroot (hne w hw).symm
     have htri : ‖z - w‖ ≤ ‖z - DyadicSquare.center wide‖ +
         ‖w - DyadicSquare.center wide‖ := by
       calc
@@ -877,7 +878,8 @@ theorem refineAll_certificates_disjoint {p : Hex.ZPoly}
             gcongr
             exact norm_add_le _ _
           _ ≤ _ := by nlinarith
-      have hsepzw := mahlerPrec_separates p hsep z w hzroot hwroot hzw
+      have hsepzw := mahlerPrec_separates p (ne_zero_of_separable hsep)
+        z w hzroot hwroot hzw
       change (2 : ℝ) ^ (-(Hex.mahlerPrec p : ℤ)) * (1449 / 1024 : ℝ) <
           ‖z - w‖ / 4 at hsepzw
       have hMpos : 0 < (2 : ℝ) ^ (-(Hex.mahlerPrec p : ℤ)) *
@@ -1004,7 +1006,8 @@ theorem refineAll_allReady {p : Hex.ZPoly}
     refineAll_component_certifies hp hsize hsep hdepth htarget hprec hcover
       strategy (Array.mem_toList_iff.mpr hc)
   simp only [hcert]
-  simpa only [Hex.Certified.square, decide_eq_true_eq] using hiso
+  exact decide_eq_true (show target ≤ (Hex.Certified.square (.atom iso)).prec by
+    simpa only [Hex.Certified.square] using hiso)
 
 /-- Successful attempts on the final normalized worklist pass the exact
 pairwise disc-disjointness check. -/

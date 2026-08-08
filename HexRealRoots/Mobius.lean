@@ -107,15 +107,15 @@ def mobiusTransform (p : ZPoly) (I : DyadicInterval) : ZPoly :=
   let n := p.size - 1
   let (α, β, s) := mobiusEndpoints I
   -- (b) `x ↦ x·2^{-s}`: `aᵢ ↦ aᵢ·2^{s·(n−i)}`, i.e. `2^{s·n}·p(x·2^{-s})`.
-  let cleared := DensePoly.ofCoeffs
-    ((List.range p.size).map (fun i => p.coeff i * (2 : Int) ^ (s * (n - i)))).toArray
+  let cleared := DensePoly.ofList
+    ((List.range p.size).map (fun i => p.coeff i * (2 : Int) ^ (s * (n - i))))
   -- (c) Taylor shift `q(x + β)` (`compose` with the degree-one `x + β`).
   let shifted := DensePoly.compose cleared (DensePoly.ofCoeffs #[β, (1 : Int)])
   -- (d) rescale `(α, β) ∋ y ↦ (β−y)/(β−α) ∈ (0, 1)` by evaluating at `(α−β)·x`.
   let scaled := ZPoly.dilate (α - β) shifted
   -- (e) reverse at the ORIGINAL degree `n`: entry `i` is `coeff (n−i)`.
-  let reversed := DensePoly.ofCoeffs
-    ((List.range (n + 1)).map (fun i => scaled.coeff (n - i))).toArray
+  let reversed := DensePoly.ofList
+    ((List.range (n + 1)).map (fun i => scaled.coeff (n - i)))
   -- (f) shift back `r(x + 1)`, mapping `(1, ∞) ↦ (0, ∞)`.
   DensePoly.compose reversed (DensePoly.ofCoeffs #[(1 : Int), 1])
 

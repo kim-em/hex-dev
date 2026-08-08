@@ -104,7 +104,7 @@ private theorem sqrtStep_upper_succ
   exact Nat.le_trans hn_le
     (by simpa [sqrtStep, q] using mul_succ_le_midpoint_succ_sq x q)
 
-/-- Inductive core: the iterate `sqrtAux n fuel x` stays in the upper envelope
+/-- Induction step: the iterate `sqrtAux n fuel x` stays in the upper envelope
 `n ≤ (sqrtAux n fuel x + 1) ^ 2` for any starting `x` already in it. -/
 private theorem sqrtAux_upper_succ_from_bound
     (n fuel x : Nat) (h : n ≤ (x + 1) ^ 2) :
@@ -779,8 +779,8 @@ The specification maxes `binom k j * coeffL2NormBound f` over the whole
 `j ≤ k ≤ degree f` rectangle, recomputing the loop-invariant bignum norm
 `coeffL2NormBound f` inside every one of the `O(deg^2)` terms. Because
 `binom k j` peaks at the central binomial `binom n (n / 2)` (`n = degree f`),
-the entire double max collapses to `binom n (n / 2) * coeffL2NormBound f` — one
-norm, one binomial. The bridge to the Mathlib-free Pascal `Hex.Nat.choose`
+the entire double max collapses to `binom n (n / 2) * coeffL2NormBound f`; one
+norm, one binomial. The correspondence to the Mathlib-free Pascal `Hex.Nat.choose`
 supplies the monotonicity needed to prove the collapse; the compiled runtime
 then runs the closed form via a `@[csimp]` swap.
 -/

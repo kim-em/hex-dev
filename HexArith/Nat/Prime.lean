@@ -14,7 +14,7 @@ public section
 Mathlib-free combinatorial and prime-number lemmas for `HexArith`.
 
 This module owns the local `Hex.Nat.choose` and `Hex.Nat.Prime` surfaces that the
-computational core needs for binomial divisibility and Fermat-style congruence
+computational library needs for binomial divisibility and Fermat-style congruence
 statements, without importing Mathlib into the root arithmetic layer.
 -/
 
@@ -350,7 +350,7 @@ theorem centralChoose_mono {k n : Nat} (h : k ≤ n) :
       · have : k = m + 1 := Nat.le_antisymm h hge
         subst this; exact Nat.le_refl _
 
-/-- Euclid-step bridge turning the multiplicative Pascal identity into `p ∣ choose p k`. -/
+/-- Euclid-step correspondence turning the multiplicative Pascal identity into `p ∣ choose p k`. -/
 private theorem choose_prime_dvd_from_mul_identity {p k : Nat} (hp : Prime p)
     (hk : 0 < k) (hk' : k < p) : p ∣ choose p k := by
   cases k with

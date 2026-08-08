@@ -10,9 +10,9 @@ module
 -- elaboration-time evaluation): the emitted kernel checks must reduce through
 -- the exposed closure alone.
 public meta import HexBerlekamp.IrreducibilityElab
-public meta import HexBerlekampMathlib.FactorProvider
+public meta import HexBerlekampMathlib.FactorTactic
 public import HexBerlekamp.IrreducibilityElab
-public import HexBerlekampMathlib.FactorProvider
+public import HexBerlekampMathlib.FactorTactic
 
 public section
 
@@ -33,8 +33,8 @@ example : True := by
     factor_poly ((X + 1) * (X + 1) * (X ^ 2 + 2) * 3 : Polynomial (ZMod 5))
   trivial
 
--- Tactic form: Mathlib providers expose the same four local names as the
--- executable providers.
+-- Tactic form: Mathlib extensions expose the same four local names as the
+-- executable extensions.
 example : True := by
   factor_poly ((X + 1) * (X + 1) * (X ^ 2 + 2) * 3 : Polynomial (ZMod 5))
   have : factors.length = 3 := rfl
@@ -104,12 +104,12 @@ is a nonzero constant, hence a unit over F_67108879, not irreducible
 #guard_msgs in
 example := irreducibility (3 : Polynomial (ZMod 67108879))
 
-/-! # Composite modulus: the provider declines, the driver reports -/
+/-! # Composite modulus: the extension declines, the driver reports -/
 
 /--
 info: factor_poly: unsupported polynomial type
   (ZMod 6)[X]
-Supported without further imports: Hex.FpPoly p (prime p). Importing HexBerlekampZassenhaus adds Hex.ZPoly; the Mathlib bridge libraries add Polynomial (ZMod q) and Polynomial ℤ.
+Supported without further imports: Hex.FpPoly p (prime p). Importing HexBerlekampZassenhaus adds Hex.ZPoly; the Mathlib integration libraries add Polynomial (ZMod q) and Polynomial ℤ.
 
 factor_poly: Polynomial (ZMod q) inputs need a prime modulus, but 6 is not prime
 -/
@@ -119,7 +119,7 @@ factor_poly: Polynomial (ZMod q) inputs need a prime modulus, but 6 is not prime
 /--
 info: irreducibility: unsupported polynomial type
   (ZMod 6)[X]
-Supported without further imports: Hex.FpPoly p (prime p). Importing HexBerlekampZassenhaus adds Hex.ZPoly; the Mathlib bridge libraries add Polynomial (ZMod q) and Polynomial ℤ.
+Supported without further imports: Hex.FpPoly p (prime p). Importing HexBerlekampZassenhaus adds Hex.ZPoly; the Mathlib integration libraries add Polynomial (ZMod q) and Polynomial ℤ.
 
 irreducibility: Polynomial (ZMod q) inputs need a prime modulus, but 6 is not prime
 -/

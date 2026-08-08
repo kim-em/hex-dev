@@ -9,7 +9,7 @@ Dense integer polynomials for Lean 4, implemented without Mathlib.
 `Hex.ZPoly` is the integer specialization of `Hex.DensePoly`. The package
 provides content and primitive-part decomposition, rational normalization,
 coefficientwise congruence, square-free decomposition support, and executable
-Mignotte bounds used by the factorization and root-isolation stacks.
+Mignotte bounds used by factorization and root isolation.
 
 # Quickstart
 

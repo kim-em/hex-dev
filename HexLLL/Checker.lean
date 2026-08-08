@@ -13,7 +13,7 @@ public section
 
 /-!
 Executable reducedness checkers: the exact integer `lllReduced`, the
-fixed-precision `lllReducedInterval`, their cost-predicted dispatch
+fixed-precision `lllReducedInterval`, their cost-predicted selection
 `lllReducedCheck`, and the bundled external-candidate checker `certCheck`.
 -/
 
@@ -24,7 +24,7 @@ open Hex.Internal
 namespace Internal
 
 /-- Working precision (bits) of the interval reducedness checker. The
-inequalities being certified carry slack by design: the dispatch requests a
+inequalities being certified carry slack by design: the selection requests a
 `(requestedDelta δ, requestedEta)`-reduced basis but certifies it against the
 weaker `(δ, 11/20)`, so size reduction clears `11/20` by `11/20 − requestedEta`
 and Lovász clears `δ` by `(requestedDelta δ − δ)·d[i+1]²`. A fixed precision
@@ -44,7 +44,7 @@ only when every independence, size-reduction, and Lovász inequality is
 decided with the enclosure strictly on the correct side. `false` means
 "not reduced or indecisive at this precision": callers must fall back to
 the exact `Hex.lllReduced` checker, which keeps completeness structural.
-The bridge theorem `HexLLLMathlib.lllReducedInterval_sound` proves that
+The correspondence theorem `HexLLLMathlib.lllReducedInterval_sound` proves that
 acceptance entails independence and LLL reducedness at the exact rational
 parameters. -/
 @[expose]
@@ -64,13 +64,13 @@ Verifies, over integer arithmetic only:
 
 * **independence**: every `d[k+1]` is positive (`k < n`);
 * **size-reduced at `η`**: `η.den · |ν[i][j]| ≤ η.num · d[j+1]` for all `j < i`
-  — the integer form of `|μ| ≤ η`;
+; the integer form of `|μ| ≤ η`;
 * **integer Lovász at `δ`**: `δ.den · (d[i+2] · d[i] + ν[i+1][i]²) ≥
   δ.num · d[i+1]²` for all `i + 1 < n`.
 
 No validity hypothesis on `η` is required: a malformed `η` (e.g. negative) is
 incompatible with a positive `d[j+1]` and the size-reduced bound, so the
-checker simply returns `false`. The bridge theorem
+checker simply returns `false`. The correspondence theorem
 `HexLLLMathlib.lllReduced_sound` relates this checker to rational LLL
 reducedness using
 `Hex.GramSchmidt.Int.scaledCoeffs_eq`,
@@ -113,37 +113,43 @@ def lllReduced (b : Matrix Int n m) (δ : Rat := 3/4) (η : Rat := 1/2) : Bool :
 
 namespace Internal
 
-/-- Outcome of one certified-dispatch reducedness decision: decided by the
+/-- Outcome of one certified-selection reducedness decision: decided by the
 interval checker, decided by the exact checker because the size predictor
 chose it (`exactPrimary`), or referred to the exact checker after an
 indecisive interval pass (`exactFallback`). -/
 inductive CheckerOutcome where
+  /-- The interval calculation certified reducedness. -/
   | interval
+  /-- The predictor selected exact arithmetic immediately. -/
   | exactPrimary
+  /-- Exact arithmetic followed an inconclusive interval calculation. -/
   | exactFallback
 deriving Repr, BEq
 
 /-- Tally of reducedness decisions, distinguishing enclosure-accepted from
-the two exact-checker modes. Mirrors `LLLProvider.Diagnostics` for the
-dispatch outcomes; this tally is the observability hook that lets
-measurements verify the dispatch predictor and confirm the interval path
+the two exact-checker modes. Mirrors `ExternalReducer.Diagnostics` for the
+selection outcomes; this tally is the observability hook that lets
+measurements verify the selection predictor and confirm the interval path
 never reached indecision (`exactFallback = 0`). -/
 structure CheckerTally where
+  /-- Decisions completed by interval arithmetic. -/
   interval : Nat := 0
+  /-- Decisions sent directly to the exact checker. -/
   exactPrimary : Nat := 0
+  /-- Decisions sent to the exact checker after an inconclusive interval check. -/
   exactFallback : Nat := 0
 deriving Repr, BEq, Inhabited
 
 initialize checkerTallyRef : IO.Ref CheckerTally ← IO.mkRef {}
 
-/-- Reset the certified-dispatch reducedness tally to zero. Bench and
+/-- Reset the certified-selection reducedness tally to zero. Bench and
 conformance harnesses call this before a measured run so the subsequent
-`checkerTally` snapshot describes only that run's interval/exact routing. -/
+`checkerTally` snapshot describes only that run's interval/exact handling. -/
 @[expose]
 def resetCheckerTally : IO Unit :=
   checkerTallyRef.set {}
 
-/-- Read the certified-dispatch reducedness tally accumulated since the last
+/-- Read the certified-selection reducedness tally accumulated since the last
 `resetCheckerTally`. The counts expose whether calls were accepted by the
 interval checker, sent directly to the exact checker, or needed an exact
 fallback after interval indecision. -/
@@ -160,7 +166,7 @@ private def bumpChecker (t : CheckerTally) : CheckerOutcome → CheckerTally
 continuation `k`, with an `@[implemented_by]` side effect in compiled code.
 The continuation value is returned *through* `unsafeBaseIO`, so the compiler
 cannot eliminate the effect as an unused pure binding (the
-`match unsafeBaseIO … with | () => k` shape of `LLLProvider.withRecordOutcome`
+`match unsafeBaseIO … with | () => k` shape of `ExternalReducer.withRecordOutcome`
 is erasable and its tally is known not to fire eagerly; see the workaround
 comment on `runDispatchedFirstShortVectorChecksum`). -/
 unsafe def withRecordCheckerOutcomeImpl {α : Type} (o : CheckerOutcome) (k : α) : α :=
@@ -168,13 +174,13 @@ unsafe def withRecordCheckerOutcomeImpl {α : Type} (o : CheckerOutcome) (k : α
     checkerTallyRef.modify (fun t => bumpChecker t o)
     pure k
 
-/-- Pure-facing wrapper that records one reducedness-dispatch outcome in
+/-- Pure-facing wrapper that records one reducedness-selection outcome in
 compiled code and otherwise returns `k`. This keeps the checker API usable from
-pure code while still giving benchmark harnesses routing diagnostics. -/
+pure code while still giving benchmark harnesses handling diagnostics. -/
 @[expose, implemented_by withRecordCheckerOutcomeImpl]
 def withRecordCheckerOutcome {α : Type} (_o : CheckerOutcome) (k : α) : α := k
 
-/-- Dispatch threshold of the size predictor `intervalWins`, as a multiple
+/-- Selection threshold of the size predictor `intervalWins`, as a multiple
 of the working precision. Derived from the per-operation cost ratio of the
 two checkers: the exact `d`/`ν` checker performs ~`n³/3` multiplications on
 operands averaging ~`n·maxDiagBits/4` bits, while the interval pass
@@ -194,16 +200,16 @@ def dispatchFactor : Nat := 16
 
 /-- `Nat.log2` (floor of the base-2 log) of the largest squared row norm. The
 Gram diagonal dominates all Gram entries by Cauchy-Schwarz, so this single scalar
-bounds the operand size of every checker and reducer pass. `O(n·m)` work —
+bounds the operand size of every checker and reducer pass. `O(n·m)` work;
 negligible against either. A deterministic function of the input alone, so the
-dispatches that read it keep per-input timing deterministic. -/
+selects that read it keep per-input timing deterministic. -/
 @[expose]
 def maxDiagBits (b : Matrix Int n m) : Nat :=
   Fin.foldl n
     (fun acc i => max acc ((b.row i).normSq).natAbs.log2)
     0
 
-/-- Size predictor for the reducedness dispatch: `true` when the
+/-- Size predictor for the reducedness selection: `true` when the
 fixed-precision interval pass is predicted to beat the exact integer
 checker on this input. Reads only `maxDiagBits`, so the predictor is a
 function of the input alone, never of checker indecision, keeping per-input
@@ -215,7 +221,7 @@ def intervalWins (b : Matrix Int n m) : Bool :=
 
 end Internal
 
-/-- Reducedness clause of the certified dispatch. On the same integer
+/-- Reducedness clause of the certified selection. On the same integer
 `d`/`ν` data, two checkers can decide reducedness: the exact integer
 checker {name}`Hex.lllReduced`, always complete, and the fixed-precision
 {name}`Hex.lllReducedInterval`. The size predictor
@@ -233,16 +239,16 @@ def lllReducedCheck (b : Matrix Int n m) (δ : Rat := 3/4) (η : Rat := 1/2) : B
   else
     withRecordCheckerOutcome .exactPrimary (lllReduced b δ η)
 
-/-- Executable certified-dispatch checker: verifies that `(B', U, V)` is a valid
+/-- Executable certified-selection checker: verifies that `(B', U, V)` is a valid
 external candidate for reducing `B`, i.e. `B` and `B'` generate the same integer
 row lattice (witnessed by `U`, `V`) and `B'` is `(δ, η)`-reduced.
 
 Composes the Mathlib-free Boolean checkers
 {name}`Hex.Matrix.sameLatticeCert` and {name}`Hex.lllReducedCheck`, whose
-interval decision has an exact {name}`Hex.lllReduced` fallback. The bridge
+interval decision has an exact {name}`Hex.lllReduced` fallback. The correspondence
 theorem `HexLLLMathlib.certCheck_sound` entails the property triple
 `(same lattice, B' independent, isLLLReduced B' δ η)` and makes this check the
-trust boundary for certified external dispatch. -/
+trust boundary for certified external selection. -/
 @[expose]
 def certCheck (B B' : Matrix Int n m) (U V : Matrix Int n n) (δ η : Rat) : Bool :=
   Matrix.sameLatticeCert B B' U V && lllReducedCheck B' δ η

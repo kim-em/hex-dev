@@ -31,8 +31,8 @@ polynomial parsing, and the discriminant, Hadamard, Mahler, and Mignotte bounds.
 
 # Verification
 
-The computational representation remains in the Mathlib-free package; this
-bridge owns theorem statements over `Polynomial ℤ`, `Polynomial ℚ`, and
+The computational representation remains in the Mathlib-free package. This
+package owns theorem statements over `Polynomial ℤ`, `Polynomial ℚ`, and
 `Polynomial ℂ`. See the [SPEC](SPEC/hex-poly-z-mathlib.md) for the theorem map.
 
 # Contributing

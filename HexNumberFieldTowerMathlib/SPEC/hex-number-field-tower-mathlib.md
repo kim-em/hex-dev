@@ -153,12 +153,17 @@ theorem NumberTower.flatten_toComplex (T) {F}
       T.toComplex a
 ```
 
-The accepted full-degree eliminant proves the computed `γ` is primitive. Exact
-row-reduction correspondence proves the recovered coordinate maps. The checked
-tower-basis round trip extends to all elements by linearity; the primitive
-polynomial relation, irreducibility, and equal dimensions yield the opposite
-round trip and multiplicativity. `AlgebraicRoot.exact_toComplex` identifies the
-canonical primitive root stored in the result.
+The direct full-degree search scans with validated linear-gcd recovery only.
+Its total fallback retains the shift of the bounded maximum-degree candidate
+from `AlgebraicPoly.Common.extendShift?`; primitive-element theory proves that
+this candidate generates the two-input compositum. The fallback first tries
+the same validated gcd and otherwise uses exact trace pairing in that
+proved-equal field. Row-reduction correspondence proves the recovered
+coordinates. The checked tower-basis round trip extends to all elements by
+linearity; the primitive polynomial relation, irreducibility, and equal
+dimensions yield the opposite round trip and multiplicativity.
+`AlgebraicRoot.exact_toComplex` identifies the canonical primitive root stored
+in the result.
 
 ## Required developments
 
@@ -177,13 +182,19 @@ available.
 
 ```text
 HexNumberFieldTowerMathlib/
-  Basic.lean       : semantic tower and embeddings
-  Arithmetic.lean  : coordinate correspondence
-  Norm.lean        : resultant and field norm
-  Factor.lean      : Trager correctness and completeness
-  Adjoin.lean      : extension invariant
-  Split.lean       : splitting-field theorems
-  Flatten.lean     : primitive-element equivalence
+  Basic.lean         : semantic tower and embeddings
+  ArithmeticCore/    : generic coordinate and field correspondence
+  ArithmeticCore.lean: aggregate for the arithmetic proof modules
+  NormCore/          : generic resultant, norm, and Trager correspondence
+  NormCore.lean      : aggregate for the norm proof modules
+  FactorGeneric/     : Trager, product, Yun, and completion semantics
+  FactorGeneric.lean : aggregate for the factor proof modules
+  Arithmetic.lean    : certified field structure and correspondence
+  Norm.lean          : certified tower-polynomial and norm API
+  Factor.lean        : Trager correctness and completeness
+  Adjoin.lean        : extension invariant
+  Split.lean         : splitting-field theorems
+  Flatten.lean       : primitive-element equivalence
 ```
 
 The library is verified by building it. Executable conformance belongs to

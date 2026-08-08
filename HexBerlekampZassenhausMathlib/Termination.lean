@@ -8,6 +8,7 @@ module
 
 public import HexBerlekampZassenhausMathlib.BadVector
 public import HexBerlekampZassenhausMathlib.Resultant
+import all HexBerlekampZassenhausMathlib.FactorBound
 
 public section
 set_option backward.proofsInPublic true
@@ -192,7 +193,9 @@ theorem no_badVector
     (f : Hex.ZPoly) (p a : Nat) (liftedFactors : Array Hex.ZPoly)
     (trueSupports : Set (Set (Fin liftedFactors.size)))
     (hf : f ≠ 0) (hfdeg : 0 < f.degree?.getD 0)
-    (hfmonic : Hex.DensePoly.Monic f)
+    (hf_lc_coprime :
+      IsCoprime ((p ^ a : Nat) : Int)
+        (HexPolyZMathlib.toPolynomial f).leadingCoeff)
     (hp2 : 2 ≤ p) (hp500 : p ≤ 500)
     (hr : liftedFactors.size ≤ f.degree?.getD 0)
     (hk : 1 < p ^ a)
@@ -227,7 +230,7 @@ theorem no_badVector
               (Int.castRingHom (ZMod (p ^ a)))))
     (hsupport :
       ∀ q : Polynomial ℤ,
-        q.Monic → Irreducible q → q ∣ HexPolyZMathlib.toPolynomial f →
+        Irreducible q → q ∣ HexPolyZMathlib.toPolynomial f →
         ∃ S ∈ trueSupports, ∀ i ∈ S,
           (HexPolyZMathlib.toPolynomial
             (liftedFactors.getD i.val 1)).map
@@ -253,6 +256,11 @@ theorem no_badVector
   let H := cldFullAux f p a liftedFactors v
   let res := Polynomial.resultant
     (HexPolyZMathlib.toPolynomial f) (HexPolyZMathlib.toPolynomial H)
+  have hf_poly_ne : HexPolyZMathlib.toPolynomial f ≠ 0 := by
+    intro hzero
+    apply hf
+    apply HexPolyZMathlib.equiv.injective
+    simpa using hzero
   have hcoord_lt (i : Fin liftedFactors.size) :
       v[Fin.castAdd (f.degree?.getD 0) i].natAbs < p ^ a := by
     let n := f.degree?.getD 0
@@ -267,11 +275,11 @@ theorem no_badVector
         hvBound (Fin.castAdd (f.degree?.getD 0) i)
     exact hvE.trans_lt (hE.trans (by omega))
   have hres_ne : res ≠ 0 := by
-    apply int_resultant_ne_zero_of_no_monic_irreducible_common_factor
+    apply int_resultant_ne_zero_of_no_irreducible_common_factor
       (HexPolyZMathlib.toPolynomial f) (HexPolyZMathlib.toPolynomial H)
-      (HexHenselMathlib.toPolynomial_monic_of_dense_monic f hfmonic)
-    intro q hqmonic hqirr hqf hqH
-    obtain ⟨S, hS, hSdiv⟩ := hsupport q hqmonic hqirr hqf
+      hf_poly_ne
+    intro q hqirr hqf hqH
+    obtain ⟨S, hS, hSdiv⟩ := hsupport q hqirr hqf
     obtain ⟨i, hiS, hi_ne⟩ := hnonzero S hS
     have hqHmap :
         q.map (Int.castRingHom (ZMod (p ^ a))) ∣
@@ -324,8 +332,8 @@ theorem no_badVector
       hfdeg hk (by omega) hcut hfac (hcop i₀) hv hi₀zero
   have hres_dvd :
       ((p ^ (a * q.natDegree) : Nat) : ℤ) ∣ res := by
-    exact pow_dvd_resultant_of_map_dvd_left_monic hk hqmonic rfl
-      (HexHenselMathlib.toPolynomial_monic_of_dense_monic f hfmonic)
+    exact pow_dvd_resultant_of_map_dvd_left_coprime hk hqmonic rfl
+      hf_poly_ne hf_lc_coprime
       (hdeg_le i₀) hqf hqH
   have ha_le : a ≤ a * q.natDegree := by
     rw [hqdeg]

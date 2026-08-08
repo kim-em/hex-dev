@@ -14,8 +14,11 @@ uses its verified Pellet-bearing all-atoms local finisher, directly emits an
 already-ready NK-only atom array, or reaches a normalized depth where every
 retained component certifies as one atom, so
 `isolate` never returns `none` on nonzero squarefree input under any atom
-strategy. The soundness theorems remain independently useful: they are stated
-conditionally on a `some` result and do not depend on completeness.
+strategy. One-atom refinement is additionally total under the default mixed
+strategy whenever the selected atom has reached `mahlerPrec`; this local result
+allows repeated roots elsewhere in the ambient polynomial. The soundness
+theorems remain independently useful: they are stated conditionally on a
+`some` result and do not depend on completeness.
 
 **Scope warning.** This companion is the heaviest of the `-mathlib`
 libraries. The two theorems everything rests on, **Pellet's
@@ -160,7 +163,7 @@ The smaller of the two new developments, and the one needed first:
    ```
    ∀ i ≠ j, |αᵢ − αⱼ| ≥ √3 · n^{−(n+2)/2} · |disc p|^{1/2} · M(p)^{−(n−1)}
    ```
-   for squarefree `p ∈ ℤ[x]` of degree `n ≥ 2`. The proof bounds the
+   first for squarefree `p ∈ ℤ[x]` of degree `n ≥ 2`. The proof bounds the
    Vandermonde determinant of the roots two ways: its square is
    `disc p / lc(p)^{2n−2}` by item 2, and Hadamard's inequality bounds
    it above column-by-column, with one column rescaled to expose the
@@ -171,24 +174,26 @@ The smaller of the two new developments, and the one needed first:
    Hadamard is essential.) The Hex-independent column estimates and
    discriminant/Vandermonde identity live in
    `HexPolyZMathlib/MahlerSeparation.lean`; companion-specific executable
-   exponent arithmetic stays with the relevant roots library.
+   exponent arithmetic stays with the relevant roots library. The public
+   `one_le_mahlerDist` theorem applies this result to the integral radical of
+   an arbitrary nonzero polynomial. The radical has the same distinct roots,
+   no larger degree, and no larger Mahler measure, so repeated factors do not
+   weaken the executable bound.
 
 4. **`mahlerPrec` correctness:** the computational
    `Hex.mahlerPrec p : Nat` (defined in `HexRoots/MahlerPrec.lean`)
    satisfies the companion theorem
    ```
    mahlerPrec_separates
-       (hsep : ((toPolynomial p).map (Int.castRingHom ℚ)).Separable)
+       (hp : p ≠ 0)
        (hr₁ : (toPolyℂ p).IsRoot z₁)
        (hr₂ : (toPolyℂ p).IsRoot z₂)
        (hne : z₁ ≠ z₂) :
      2^{−mahlerPrec p} · 1449/1024 < ‖z₁ - z₂‖ / 4
    ```
    Thus it gives the advertised `sep(p) / 4` bound uniformly over distinct
-   roots. The rational separability hypothesis is the squarefreeness notion
-   used here; integral-polynomial `Squarefree` would incorrectly reject
-   nonprimitive polynomials with simple rational roots. The left side bounds the
-   circumscribed-disc radius at that precision from above. Combines
+   roots of every nonzero polynomial. The left side bounds the circumscribed-
+   disc radius at that precision from above. Combines
    item 3 with Landau's
    `mahlerMeasure_le_sqrt_natDegree_add_one_mul_supNorm` to remove
    `M(p)` in favour of the integer `‖p‖∞`. Lives in
@@ -300,16 +305,14 @@ developments above.
   def RefinedIsolation.root (i : RefinedIsolation p) : ℂ
 
   theorem intersects_iff_root_eq
-      (hsep : (HexPolyZMathlib.toPolyℚ p).Separable)
       (i₁ i₂ : RefinedIsolation p) :
       Intersects i₁ i₂ ↔ i₁.root = i₂.root
   ```
-  A local atom witness makes its selected root simple but does not imply
-  global separability, so the separation premise is necessary. Successful
-  nonzero `isolate` input obtains it from `HasOnlySimpleRoots`; the companion
-  also exposes `intersects_iff_root_eq_of_simple` with those hypotheses.
-  Under the same premise, `Intersects` restricted to `RefinedIsolation p` is
-  an equivalence relation; `Hex.rootOf` is well-defined by `Quot.lift`; and
+  Each refined isolation supplies local simplicity and proves the ambient
+  polynomial nonzero; the radical-based Mahler theorem separates its selected
+  root from every distinct root even when other roots are repeated. Therefore
+  `Intersects` restricted to `RefinedIsolation p` is unconditionally an
+  equivalence relation; `Hex.rootOf` is well-defined by `Quot.lift`; and
   `sameRoot i₁ i₂ = true ↔ SimpleRoot.mk i₁ = SimpleRoot.mk i₂`, so the
   Boolean test used by the Mathlib-free layer decides equality in the
   quotient. The `< sep/4` radius bound from item 4 makes the conditional
@@ -427,10 +430,11 @@ and it is the analytically hardest part:
     root-product estimate: if all other roots are at distance `d` and
     `(1 + 4R/d)^m - 1 ≤ 1/32`, the exact executable witness succeeds.
     `Completeness/NKDepth.lean` proves that the implemented
-    `separationDepth` makes this tail small for a separable polynomial, and
-    connects the resulting witness to the actual `.nk` and `.nkThenPellet`
-    component certifiers. `Completeness/RootFreeConverse.lean` associates
-    every retained square at separation depth with a unique nearby root;
+    `separationDepth` makes this tail small around any locally simple root of a
+    nonzero polynomial, and connects the resulting witness to the actual `.nk`
+    and `.nkThenPellet` component certifiers. The separable-driver theorem is a
+    wrapper around this local result. `Completeness/RootFreeConverse.lean`
+    associates every retained square at separation depth with a nearby root;
     glue connectivity propagates that association through a component.
     `Completeness/SurvivorComponent.lean` consequently bounds the enclosing
     square's precision loss by two levels. A root-bearing component at leaf
@@ -465,6 +469,21 @@ and it is the analytically hardest part:
     inputs use the Cauchy component and the full normalized driver. Thus the
     `none` branch is impossible for every nonzero squarefree input and every
     atom strategy.
+12. **One-atom refinement completeness:**
+    `Completeness/RefinementCompleteness.lean` confines every subdivision to
+    the starting refined atom's doubled square. Mahler separation identifies
+    every sufficiently fine retained square with the represented locally
+    simple root. Global reglue then makes the last normalized round exactly one
+    component, whose NK witness succeeds; the mixed certifier returns one
+    target-ready atom. The fixed `fuelFor` budget reaches that round, proving
+    `DyadicRootIsolation.refineTo?_isSome_mixed`. Rewrapping at `mahlerPrec`
+    and the unconditional intersection theorem discharge the public refined
+    API. A separately proved bounded speculative pass may return sooner; its
+    exhaustion or rejection restarts from the original atom at this complete
+    fallback, so it does not enter the termination argument. This is
+    intentionally a `.nkThenPellet` theorem: pure Pellet
+    completeness for a locally simple root in a non-squarefree ambient
+    polynomial is not claimed.
 
 ## File organisation
 

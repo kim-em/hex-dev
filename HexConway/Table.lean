@@ -5,7 +5,7 @@ Authors: Kim Morrison
 -/
 
 import HexBerlekamp.RabinSoundness
-import HexGFqRing.Basic
+import HexGFqRing.PolynomialQuotient
 
 /-!
 Tier 1 Conway-polynomial table and dispatcher: the imported coefficient

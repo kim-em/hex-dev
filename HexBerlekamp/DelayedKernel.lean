@@ -76,7 +76,7 @@ private theorem toNat_prodWord (a b : ZMod64 p) :
   simpa [UInt64.toNat_mul, UInt64.size, UInt64.word, ZMod64.toUInt64_eq_val,
     ZMod64.toNat_eq_val] using Nat.mod_eq_of_lt hlt
 
-/-- Bridge lemma: the `ZMod64` dot-product fold, read through `toNat`, is the
+/-- Correspondence lemma: the `ZMod64` dot-product fold, read through `toNat`, is the
 residue modulo `p` of the running accumulator plus the `Nat` sum of the remaining
 one-word products (`wordsSum` of the mapped list). Proved by list induction with a
 generalized accumulator. -/
@@ -174,7 +174,7 @@ def delayedDotRun (ctx : Hex.BarrettCtx p) (u v : Vector (ZMod64 p) m) :
   termination_by i => m - i
   decreasing_by all_goals omega
 
-/-- Allocation-free implementation of `delayedDot`: dispatch once per dot product
+/-- Allocation-free implementation of `delayedDot`: selection once per dot product
 on whether the length fits in a single window, then run a scalar loop that never
 materializes the `List.finRange m` product-word list nor a boxed accumulator
 tuple (`delayedDotRun` without the window counter when `m < barrettWindow`, the
@@ -189,7 +189,7 @@ def delayedDotImpl (ctx : Hex.BarrettCtx p) (u v : Vector (ZMod64 p) m) : ZMod64
     ZMod64.ofNat p (delayedDotLoop ctx u v 0 0 0 0).toNat
 
 /-- The windowed scalar loop computes the `accStep` fold of the remaining
-product words, flushed through `accReduce`: the loop-to-fold bridge behind the
+product words, flushed through `accReduce`: the loop-to-fold correspondence behind the
 `@[csimp]`. Stated from an arbitrary start state so the induction goes through;
 list-level rewrites are combined under `congrArg` of the `accReduce` wrapper, so
 the Barrett machinery is never rewritten into (mirroring the previous fold
@@ -302,7 +302,7 @@ theorem delayedDot_eq_dotProduct (ctx : Hex.BarrettCtx p) (u v : Vector (ZMod64 
   rw [delayedDot, ZMod64.toNat_ofNat, BarrettCtx.toNat_foldReduce, ctx.modulus_eq,
     Nat.mod_mod, toNat_dotProduct]
 
-/-- **Delayed-reduction base kernel**, dispatching on the runtime inner dimension:
+/-- **Delayed-reduction base kernel**, selecting on the runtime inner dimension:
 the delayed dot product is the fast path once the dot-product length is nontrivial
 (`2 ≤ m`), and it falls back to the naive `mulImpl` on the trivial residual shapes.
 Mirroring `mulImpl`, the fast path transposes `N` once, materializes the

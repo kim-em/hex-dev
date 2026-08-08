@@ -20,7 +20,7 @@ namespace Hex.Internal
 
 /-! # Fixed-precision dyadic interval kernel
 
-The certified-dispatch reducedness clause is decided first by a sound
+The certified-selection reducedness clause is decided first by a sound
 enclosure pass at fixed working precision; only on indecision does it fall
 back to the exact integer checker. The kernel below is the Mathlib-free
 executable surface: closed dyadic intervals whose endpoints are `Int`
@@ -33,7 +33,9 @@ mantissas at a shared power-of-two scale `S = 2 ^ prec`. The scale is not
 stored; every operation that rounds takes `S` explicitly, so the working
 precision stays a parameter of the checker. -/
 structure Ival where
+  /-- Lower endpoint numerator at the shared dyadic scale. -/
   lo : Int
+  /-- Upper endpoint numerator at the shared dyadic scale. -/
   hi : Int
 deriving Repr, BEq, Inhabited
 

@@ -26,12 +26,12 @@ import HexPolyMathlib
 
 # Functionality
 
-The bridge exposes the dense-polynomial conversions, their inverse laws, and
+The package exposes the dense-polynomial conversions, their inverse laws, and
 the ring and Euclidean-operation correspondence used by downstream proofs.
 
 # Verification
 
-Runtime-only clients should depend on `hex-poly`; this bridge is for theorem
+Runtime-only clients should depend on `hex-poly`. This package is for theorem
 statements and interoperability involving Mathlib. See the
 [SPEC](SPEC/hex-poly-mathlib.md) for the conversion laws and theorem map.
 

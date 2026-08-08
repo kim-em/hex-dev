@@ -6,7 +6,7 @@ Authors: Kim Morrison
 
 module
 
-public import HexModArith.Basic
+public import HexModArith.Residue
 public import HexModArith.HotLoop
 public import HexModArith.Prime
 public import HexModArith.Ring

@@ -338,37 +338,46 @@ above the preregistered band also invalidates release quality. Global load and
 unrelated Lake/Lean presence are context rather than automatic failures in this
 mode.
 
-The artifact selects a magnitude-comparable control for every substantive
-pair and records `resolved`, `unresolved`, or `no-comparable-control`. It
-retains both the null range and the zero-centred envelope given by the largest
-observed absolute signed null delta. A fixed tactic budget is release-quality
-only when its median passes and remains below the budget after that comparable
-null envelope is applied as a conservative resolution check. When the selected
-control is cheaper, its range and envelope are first scaled by the build-time
-magnitude ratio; they are never scaled down. The accepted worst-case
-core-interference allowance across both arms must also be smaller than the
-budget. The reported timing itself is never corrected. Artifact
-`release_quality` is derived from pristine provenance, complete scheduler
-accounting, the scoped interference ceiling, and every required budget
-conclusion. A diagnostic `--allow-busy` run remains non-release evidence and
-is not this protocol.
-
 A proof-track sweep may precede its substantive pairs with one or more marked
 same-module null controls at representative build magnitudes. Each control uses
 the exact same module and axiom policy in both roles, independently rebuilds it
 under the ordinary alternating orientation, and requires an even preregistered
 sample count so each role is built first equally often. Its raw signed deltas
-describe fresh-build noise under that run's host conditions. The report follows
-the manifest's `config.order`, records each control's absolute and relative
-range and median before interpreting a magnitude-comparable proof delta, but
-does not, within that run, subtract a null median, widen its preregistered
-budget by a null range, assign significance, or use a control as scientific
-evidence. A later contract revision may use a complete archived run to
-preregister a future budget only when it records the source evidence and
-derivation rule; this never changes the producing run. With the small
-preregistered sample counts used here, a substantive delta inside a comparable
-zero-centred null envelope is described only as noise-sized or unresolved; a
-cheap control does not resolve noise for a much more expensive build.
+describe fresh-build noise under that run's host conditions. The control
+records its median, MAD, IQR, Tukey fences, range, maximum absolute signed
+delta, and outlier count. Its conservative zero-centred envelope is the larger
+of the Tukey-fence magnitude and the largest observed absolute signed delta,
+so an isolated outlier can widen but never shrink the admission envelope.
+A control whose IQR exceeds 10% of its build magnitude invalidates release
+quality.
+
+The artifact interpolates control IQRs and conservative envelopes between
+representative build magnitudes. Outside the measured range it may scale a
+cheaper control upward by the build-time magnitude ratio, but never scales an
+envelope down. A control farther away than the preregistered magnitude factor
+is not comparable. Every substantive pair records `resolved`, `unresolved`, or
+`no-comparable-control` from the resulting envelope. A cheap control does not
+resolve noise for a much more expensive build.
+
+When a suite names an import-only baseline, its same-round wall time is
+subtracted from both arms before a workload ratio is formed. When the two arms
+also construct materially different inputs, a matched construction-only pair
+is subtracted round by round as well. If the attributed reference and
+candidate workloads are `r` and `c` and the comparable envelope is `e`, a
+threshold interval is `(r - e) / (c + e)` through
+`(r + e) / (c - e)`. A threshold passes only when the arm delta is resolved
+and the conservative lower bound exceeds the preregistered threshold.
+Baseline-limited or noise-limited point estimates do not pass.
+
+A fixed tactic budget is release-quality only when its median passes and
+remains below the budget after the comparable null envelope is applied as a
+conservative resolution check. The accepted worst-case core-interference
+allowance across both arms must also be smaller than the budget. The reported
+raw timing itself is never corrected. Artifact `release_quality` is derived
+from pristine provenance, complete scheduler accounting, magnitude-comparable
+controls, the scoped interference ceiling, and every required budget
+conclusion. A diagnostic `--allow-busy` run remains non-release evidence and
+is not this protocol.
 
 Phase attribution uses matched module variants, not clocks embedded in the
 probe. A tactic library may use a baseline; a reify-only module; an input module
@@ -523,6 +532,39 @@ the motivating case) MUST obey:
   so none dominates). Charts regenerate deterministically from the
   committed record, and every number in the sweep report traces to a
   SHA-256-pinned artifact per [§Artefact traceability](#artefact-traceability).
+
+#### Core pinning when measurements can overlap
+
+A comparator sweep and the factorization diagnostic drivers pin the measured
+process to one core so the scheduler cannot perturb their timings. Pinning to a
+*fixed* core is only correct while one measurement runs at a time. Several
+concurrent measurements pinned to the same core each measure the others, and
+the usual health signal does not show it: on a 96-core host, three measurement
+processes sharing core 0 left the load average at 2 to 5 while inflating about
+a quarter of a sweep's rows by roughly 1.9x, with the affected rows differing
+run to run. `ps -eo pid,psr` reveals it at once; load average never does.
+
+So: **pin to a verified-idle core, not to a fixed one.** `python3
+scripts/bench/idle_core.py` prints a logical CPU that is idle on itself and on
+every SMT sibling, sampled from `/proc/stat`.
+
+- `scripts/bench/factor_phase_profile.py` and
+  `scripts/profile/factor_sampling_profile.py` take `--cpu auto` and do this
+  themselves by default; the chosen CPU is recorded in the run's `config`.
+- `scripts/bench/factor_sweep.py` is deliberately *not* changed, because
+  `scripts/bench/check_factor_sweep_freshness.py` treats it as a shared source
+  path: editing it marks every system's committed record stale, including the
+  external comparator records that cannot be cheaply re-measured. Invoke it
+  through the helper instead:
+
+  ```sh
+  taskset -c "$(python3 scripts/bench/idle_core.py)" \
+    python3 scripts/bench/factor_sweep.py --systems hex-factor
+  ```
+
+A release-quality verdict under the designated-shared-host protocol above still
+preregisters and records an explicit CPU; this clause is about not colliding,
+not about relaxing that.
 
 ### Comparator classification: `gating` vs `informational`
 
@@ -1036,6 +1078,15 @@ exact bench/probe case name, command line, seed or parameter, JSONL row or raw
 fresh-build sample path/hash, applicable profile artefact location, source
 hash, host/toolchain/commit, and comparator source. A narrative without
 traceable artefacts does not satisfy this requirement.
+
+For the published integer polynomial factorization comparison, the current
+snapshot additionally covers the complete committed corpus for Hex, FLINT,
+NTL, PARI, Isabelle BZ, and Isabelle LLL. The sweep records the clean source
+commit and corpus hash, performs factor-degree cross-checking, and retains
+timeouts as explicit rows. Relevant source changes require fresh measurements
+for the affected systems. All cactus and runtime-by-degree figures are then
+regenerated from the newest current-corpus measurement of each system; CI
+checks both freshness and byte-for-byte figure regeneration on every PR.
 
 The `reports/<lib>-performance.md` file is overwrite-on-rerun:
 when the report is regenerated against a newer build, the previous

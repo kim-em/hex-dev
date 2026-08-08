@@ -7,6 +7,7 @@ Authors: Kim Morrison
 module
 
 public import HexBerlekampZassenhausMathlib.FactorSoundness
+public import HexBerlekampZassenhausMathlib.IrreducibilityCertificate
 public import HexBerlekampZassenhaus.IrreducibleDecide
 public import HexBerlekampZassenhaus.Factored
 public import HexBerlekampMathlib.FactorPoly
@@ -15,7 +16,7 @@ public section
 
 /-!
 Kernel-decidable assemblers for the `Polynomial ℤ` / strong `Hex.ZPoly`
-provider of `factor_poly`/`irreducibility`.
+extension of `factor_poly`/`irreducibility`.
 
 Per-factor irreducibility is certified by one of two witness kinds: a
 free-layer `Hex.ZPoly.IrredWitness` (prime constant / primitive linear /
@@ -23,9 +24,9 @@ single-prime modular certificate) or a multi-prime degree-obstruction
 certificate `Hex.ZPolyIrreducibilityCertificate` for balanced factors with no
 single-prime witness. `checkMultiPrimeCover` is the bulk Boolean check
 covering a factor list by both kinds at once; `Hex.FactoredPoly.ofZ` and
-`irreducible_ofZ` are the assemblers the provider emits, taking only Boolean
+`irreducible_ofZ` are the assemblers the extension emits, taking only Boolean
 checks on reified literals (discharged by `Eq.refl true` in emitted terms)
-plus one parser-built bridge equation `toPolynomial f = P`. The factorizer
+plus one parser-built translation equality `toPolynomial f = P`. The factorizer
 and certificate generators never appear in emitted terms.
 -/
 
@@ -71,7 +72,7 @@ theorem zpolyIrreducible_of_checkIrreducibleCertLinear
 /-- Kernel-decidable check that a multi-prime certificate witnesses
 irreducibility of `f`: primality of the recorded block primes, content one,
 positive executable degree, and the incremental pow-chain replay
-`checkIrreducibleCertLinear` — the four hypothesis slots of
+`checkIrreducibleCertLinear`; the four hypothesis slots of
 `zpolyIrreducible_of_checkIrreducibleCertLinear` as one Boolean. -/
 @[expose]
 def checkMultiPrimeCert (f : Hex.ZPoly)
@@ -148,16 +149,16 @@ theorem _root_.Hex.ZPoly.forall_irreducible_of_decide (l : List Hex.ZPoly)
 
 /-- Decide-slot endpoint for the `irreducibility!` kernel fallback on
 `Polynomial ℤ`: the free-layer kernel replay transported through the
-unconditional iff and the parser-built bridge equation. -/
+unconditional iff and the parser-built translation equality. -/
 theorem irreducible_ofZ_decide (P : Polynomial ℤ) (f : Hex.ZPoly)
     (h : decide (Hex.ZPoly.Irreducible f) = true)
     (hP : HexPolyZMathlib.toPolynomial f = P) : Irreducible P := by
   rw [← hP]
   exact (Hex.ZPoly.Irreducible_iff_polynomialIrreducible f).mp (of_decide_eq_true h)
 
-/-- Single-polynomial endpoint for the `irreducibility` provider on
+/-- Single-polynomial endpoint for the `irreducibility` extension on
 `Polynomial ℤ`: the cover check on the singleton factor list accepts either
-witness kind, and `hP` is the parser-built bridge equation. -/
+witness kind, and `hP` is the parser-built translation equality. -/
 theorem irreducible_ofZ (P : Polynomial ℤ) (f : Hex.ZPoly)
     (certified : List (Hex.ZPoly × Hex.ZPoly.IrredWitness))
     (multiPrime : List (Hex.ZPoly × Hex.ZPolyIrreducibilityCertificate))
@@ -174,9 +175,9 @@ namespace Hex
 
 open HexBerlekampZassenhausMathlib
 
-/-- One-shot assembler for the `factor_poly` provider on `Polynomial ℤ`:
+/-- One-shot assembler for the `factor_poly` extension on `Polynomial ℤ`:
 every certification slot is a Boolean check on reified literal data (filled by
-`Eq.refl true` in emitted terms), and `hP` is the parser-built bridge equation
+`Eq.refl true` in emitted terms), and `hP` is the parser-built translation equality
 tying the reified executable polynomial to the user's Mathlib polynomial. -/
 @[expose]
 noncomputable def FactoredPoly.ofZ (P : Polynomial ℤ) (f : Hex.ZPoly) (s : Int)

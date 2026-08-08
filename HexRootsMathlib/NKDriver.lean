@@ -81,7 +81,8 @@ theorem isolateLoop_nk_atoms {p : Hex.ZPoly} {target : Int} {fuel : Nat}
     {work : Array Hex.Component} {rs : Array (Hex.Certified p)}
     (hloop : Hex.isolateLoop p target .nk fuel work = some rs) :
     ∀ r ∈ rs.toList, ∃ iso : Hex.DyadicRootIsolation p,
-      r = .atom iso ∧ Hex.nkWitness p iso.square := by
+      r = .atom iso ∧ Hex.nkWitness p iso.square ∧
+        iso.witness.isNK = true := by
   induction fuel generalizing work rs with
   | zero => simp [Hex.isolateLoop] at hloop
   | succ fuel ih =>
@@ -114,8 +115,8 @@ theorem isolateLoop_nk_atoms {p : Hex.ZPoly} {target : Int} {fuel : Nat}
               obtain ⟨d, hd, hdc⟩ := Array.mem_map.mp ht
               have hcert : Hex.Component.certify? p .nk d = some r := by
                 exact congrArg Prod.snd hdc
-              obtain ⟨iso, hir, hnk, -⟩ := certify_nk_unique hcert
-              exact ⟨iso, hir, hnk⟩
+              obtain ⟨iso, hir, hnk, hkind, -⟩ := certify_nk_unique hcert
+              exact ⟨iso, hir, hnk, hkind⟩
         · exact ih hloop
 
 /-- `isolateAll?` is the shared loop with its executable fuel calculation. -/
@@ -143,7 +144,8 @@ theorem isolateAll_nk_atoms {p : Hex.ZPoly} {target : Int}
     {work : Array Hex.Component} {rs : Array (Hex.Certified p)}
     (hrun : Hex.isolateAll? p target work .nk = some rs) :
     ∀ r ∈ rs.toList, ∃ iso : Hex.DyadicRootIsolation p,
-      r = .atom iso ∧ Hex.nkWitness p iso.square := by
+      r = .atom iso ∧ Hex.nkWitness p iso.square ∧
+        iso.witness.isNK = true := by
   obtain ⟨fuel, hloop⟩ := isolateAll_nk_loop hrun
   exact isolateLoop_nk_atoms hloop
 
@@ -184,7 +186,7 @@ theorem isolateAll_nk_simple {p : Hex.ZPoly} {target : Int}
         (toPolyℂ p).derivative.eval z ≠ 0 ∧
         ∀ w, (toPolyℂ p).eval w = 0 →
           w ∈ DyadicSquare.closedSquare iso.square → w = z := by
-  obtain ⟨iso, hiso, hnk⟩ := isolateAll_nk_atoms hrun rs[i]
+  obtain ⟨iso, hiso, hnk, -⟩ := isolateAll_nk_atoms hrun rs[i]
     (Array.getElem_mem_toList hi)
   exact ⟨iso, hiso, NKData.sound hnk⟩
 
@@ -200,7 +202,8 @@ theorem isolate_nk_run (p : Hex.ZPoly) (h : Hex.HasOnlySimpleRoots p)
         #[Hex.Component.cauchy p hdegree] .nk = some rs ∧
       rs.size = atoms.size ∧
       ∀ (i : Nat) (hi : i < rs.size) (hj : i < atoms.size),
-        rs[i] = .atom atoms[i] ∧ Hex.nkWitness p atoms[i].square := by
+        rs[i] = .atom atoms[i] ∧ Hex.nkWitness p atoms[i].square ∧
+          atoms[i].witness.isNK = true := by
   have hrun' := hrun
   rw [Hex.isolate, dif_pos hdegree] at hrun'
   let target := max atomPrec (Hex.separationDepth p : Int)
@@ -221,12 +224,12 @@ theorem isolate_nk_run (p : Hex.ZPoly) (h : Hex.HasOnlySimpleRoots p)
             rw [hri] at hm
             have hiso : iso = atoms[i] := by
               exact Option.some.inj hm
-            obtain ⟨iso', heq, hnk⟩ := isolateAll_nk_atoms hall rs[i]
+            obtain ⟨iso', heq, hnk, hkind⟩ := isolateAll_nk_atoms hall rs[i]
               (Array.getElem_mem_toList hi)
             have heq' : iso = iso' := by simpa only [hri, Hex.Certified.atom.injEq] using heq
             cases heq'
             cases hiso
-            exact ⟨rfl, hnk⟩
+            exact ⟨rfl, hnk, hkind⟩
         | cluster cl =>
             rw [hri] at hm
             simp [Hex.Certified.asAtom?] at hm
@@ -248,7 +251,7 @@ theorem isolate_nk_simple (p : Hex.ZPoly) (h : Hex.HasOnlySimpleRoots p)
   obtain ⟨rs, hall, hsize, hrel⟩ :=
     isolate_nk_run p h atomPrec hdegree hrun
   have hi' : i < rs.size := by simpa [hsize] using hi
-  obtain ⟨hri, hnk⟩ := hrel i hi' hi
+  obtain ⟨hri, hnk, -⟩ := hrel i hi' hi
   have hready := (isolateAll_nk_ready_disjoint hall).1 rs[i]
     (Array.getElem_mem_toList hi')
   rw [hri] at hready
@@ -268,8 +271,8 @@ theorem isolate_nk_disjoint (p : Hex.ZPoly) (h : Hex.HasOnlySimpleRoots p)
     isolate_nk_run p h atomPrec hdegree hrun
   have hi' : i < rs.size := by simpa [hsize] using hi
   have hj' : j < rs.size := by simpa [hsize] using hj
-  obtain ⟨hri, -⟩ := hrel i hi' hi
-  obtain ⟨hrj, -⟩ := hrel j hj' hj
+  obtain ⟨hri, -, -⟩ := hrel i hi' hi
+  obtain ⟨hrj, -, -⟩ := hrel j hj' hj
   have hdisj := (isolateAll_nk_ready_disjoint hall).2 hi' hj' hij
   simpa only [hri, hrj, Hex.Certified.square] using hdisj
 
@@ -292,11 +295,11 @@ theorem isolate_nk_covers_once_of_pos (p : Hex.ZPoly)
   have hir' : rs[i] = r := by
     rw [← hir]
     exact (Array.getElem_toList hi).symm
-  obtain ⟨hri, hnk⟩ := hrel i hi (by simpa [← hsize] using hi)
+  obtain ⟨hri, hnk, hkind⟩ := hrel i hi (by simpa [← hsize] using hi)
   have hzri : z ∈ Certified.region rs[i] := by simpa only [hir'] using hzr
   have hzsq : z ∈ DyadicSquare.closedSquare atoms[i].square := by
     rw [hri] at hzri
-    simpa only [Certified.region, DyadicRootIsolation.region, if_pos hnk]
+    simpa only [Certified.region, DyadicRootIsolation.region, if_pos hkind]
       using hzri
   let fi : Fin atoms.size := ⟨i, by simpa [← hsize] using hi⟩
   refine ⟨fi, hzsq, ?_⟩

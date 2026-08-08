@@ -27,6 +27,7 @@ if [ "${HEX_REQUIRE_ORACLES:-0}" = "1" ]; then
 import flint
 import cypari2
 import conway_polynomials
+import sympy
 PY
   then
     echo "FAIL: required oracle dependencies are unavailable" >&2
@@ -53,6 +54,8 @@ ORACLES=(
   "HexRealRoots|hexrealroots_emit_fixtures|scripts/oracle/realroots_flint.py|conformance-fixtures/HexRealRoots/realroots.jsonl"
   "HexRCF|hexrcf_emit_fixtures|scripts/oracle/rcf_flint.py|conformance-fixtures/HexRCF/rcf.jsonl"
   "HexRoots|hexroots_emit_fixtures|scripts/oracle/roots_flint.py|conformance-fixtures/HexRoots/roots.jsonl"
+  # SymPy backed
+  "HexMvPoly|hexmvpoly_emit_fixtures|scripts/oracle/mvpoly_sympy.py|conformance-fixtures/HexMvPoly/mvpoly.jsonl"
   # python-flint + PARI backed
   "HexResultant|hexresultant_emit_fixtures|scripts/oracle/resultant_flint_pari.py|conformance-fixtures/HexResultant/resultant.jsonl"
   # PARI backed

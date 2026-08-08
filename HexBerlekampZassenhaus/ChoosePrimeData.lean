@@ -9,18 +9,18 @@ module
 public meta import HexArith.Nat.Prime
 public meta import HexBerlekamp.Factor
 public meta import HexBerlekamp.Irreducibility
-public meta import HexHensel.Basic
+public meta import HexHensel.ModularPolynomial
 public meta import HexHensel.Multifactor
 public meta import HexHensel.QuadraticMultifactor
 public meta import HexMatrix.Basic
 public meta import HexPolyZ.Mignotte
-public meta import HexLLL.Basic
+public meta import HexLLL
 public import HexArith.Nat.Prime
 public import HexBerlekamp.Factor
 public import HexBerlekamp.Irreducibility
 public import HexHensel.Multifactor
 public import HexHensel.QuadraticMultifactor
-public import HexLLL.Basic
+public import HexLLL
 -- Kernel-reducible `Array`/`Vector` equality; see `HexBasic.ArrayDecEq`.
 -- Drop once leanprover/lean4#14270 lands and the toolchain is bumped past it.
 public import HexBasic.ArrayDecEq
@@ -28,7 +28,7 @@ public import HexBasic.ArrayDecEq
 public import HexBerlekampZassenhaus.Certificate
 public meta import HexBerlekampZassenhaus.Certificate
 import all HexBerlekampZassenhaus.PrimeSelection
-import all HexBerlekampZassenhaus.Records
+import all HexBerlekampZassenhaus.FactorizationData
 import all HexBerlekampZassenhaus.Certificate
 
 open scoped Hex   -- kernel-reducible Array/Vector equality; see HexBasic.ArrayDecEq
@@ -41,8 +41,8 @@ This module collects `choosePrimeData?`/`Walk?`/`Score` with their correctness l
 -/
 namespace Hex
 
-/--
-Compiled certificate generator for irreducibility of `f` over `ℤ` — the *prep*
+/-
+Compiled certificate generator for irreducibility of `f` over `ℤ`; the *prep*
 half of the certifying-irreducibility pattern for integer polynomials.
 
 It selects admissible small primes, factors `f` modulo each with Berlekamp,
@@ -58,8 +58,10 @@ downstream `checkIrreducibleCert_sound`. Expensive Berlekamp/Rabin work runs
 here in compiled code; the kernel only replays the cheap `checkIrreducibleCert`
 reduction on the finished data.
 
-The generator declines non-primitive and constant inputs up front, mirroring
-the `IsPrimitive` / `0 < natDegree` side conditions of
+The search stops as soon as the accumulated prime blocks obstruct every
+possible proper factor degree; it never computes Rabin evidence for later,
+unused primes. The generator declines non-primitive and constant inputs up
+front, mirroring the `IsPrimitive` / `0 < natDegree` side conditions of
 `checkIrreducibleCert_sound`. Without this guard the checker accepts vacuous
 certificates for inputs those side conditions exclude (e.g. an empty
 certificate for a constant, or a full certificate for the non-primitive
@@ -67,15 +69,14 @@ certificate for a constant, or a full certificate for the non-primitive
 `certifyIrreducible? f = some _` an honest irreducibility signal: every side
 condition a consumer must discharge is already executable-checked.
 -/
-def certifyIrreducible? (f : ZPoly) : Option ZPolyIrreducibilityCertificate :=
-  if ZPoly.content f != 1 || f.degree?.getD 0 == 0 then none else
-  let blocks := (smallPrimeCandidates.filterMap fun c => buildPrimeFactorData? f c).toArray
+/-- Assemble the smallest subcertificate referenced by a complete collection
+of degree obstructions. -/
+private def certificateOfBlocks?
+    (f : ZPoly) (blocks : Array PrimeFactorData) :
+    Option ZPolyIrreducibilityCertificate :=
   match buildDegreeObstructions f blocks with
   | none => none
   | some obstructions =>
-    -- Keep only the prime blocks an obstruction actually references (in
-    -- first-seen order) and reindex the obstructions against them, so the
-    -- certificate the kernel later checks carries no unused Rabin data.
     let used : Array Nat :=
       obstructions.foldl
         (fun acc o => if acc.contains o.primeIndex then acc else acc.push o.primeIndex)
@@ -85,10 +86,59 @@ def certifyIrreducible? (f : ZPoly) : Option ZPolyIrreducibilityCertificate :=
       { o with primeIndex := (used.findIdx? (· == o.primeIndex)).getD 0 }
     let cert : ZPolyIrreducibilityCertificate :=
       { perPrime := perPrime, degreeObstructions := obstructions' }
-    if checkIrreducibleCert f cert then some cert else none
+    some cert
 
+/-- Continue adding admissible prime blocks after confirming that the current
+blocks do not yet obstruct every possible proper factor degree. Failed prime
+candidates leave the blocks unchanged, so they do not repeat that check. -/
+private def continueCertificate?
+    (f : ZPoly) : List SmallPrimeCandidate → Array PrimeFactorData →
+      Option ZPolyIrreducibilityCertificate
+  | [], _ => none
+  | candidate :: candidates, blocks =>
+      match buildPrimeFactorData? f candidate with
+      | none => continueCertificate? f candidates blocks
+      | some block =>
+          let blocks := blocks.push block
+          match certificateOfBlocks? f blocks with
+          | some cert => some cert
+          | none => continueCertificate? f candidates blocks
+
+/-- Add admissible prime blocks only until all possible proper factor degrees
+are obstructed. The initial check preserves the valid empty certificate for
+primitive linear polynomials. -/
+private def firstCertificate?
+    (f : ZPoly) (candidates : List SmallPrimeCandidate)
+    (blocks : Array PrimeFactorData) : Option ZPolyIrreducibilityCertificate :=
+  match certificateOfBlocks? f blocks with
+  | some cert => some cert
+  | none => continueCertificate? f candidates blocks
+
+/-- Build a checked multi-prime degree-obstruction certificate for a primitive,
+positive-degree integer polynomial.  Prime blocks are added only until every
+possible proper factor degree is obstructed. -/
+def certifyIrreducible? (f : ZPoly) : Option ZPolyIrreducibilityCertificate :=
+  if ZPoly.content f != 1 || f.degree?.getD 0 == 0 then none else
+  match firstCertificate? f smallPrimeCandidates #[] with
+  | none => none
+  | some cert => if cert.certifies f then some cert else none
+
+/-- A certificate returned by the generator passes the complete executable
+irreducibility check, including primality, primitivity, and positive degree. -/
+theorem certifies_of_certifyIrreducible?_eq_some
+    {f : ZPoly} {cert : ZPolyIrreducibilityCertificate}
+    (h : certifyIrreducible? f = some cert) : cert.certifies f = true := by
+  unfold certifyIrreducible? at h
+  split at h <;> simp_all
+  split at h <;> simp_all
+  rcases h with ⟨hcertifies, rfl⟩
+  exact hcertifies
+
+/-- A successful modular factorization paired with its number of factors. -/
 structure PrimeChoiceDataScore where
+  /-- The modular factorization data. -/
   data : PrimeChoiceData
+  /-- The number of factors in `data.factorsModP`. -/
   factorCount : Nat
 
 private def primeChoiceDataScore (f : ZPoly) (c : SmallPrimeCandidate) :
@@ -103,7 +153,21 @@ private def primeChoiceDataScore (f : ZPoly) (c : SmallPrimeCandidate) :
   else
     none
 
-/-- Whether a probed prime removes at least one quarter of the current modular
+/--
+Factor `f` at one explicit small-prime candidate, returning the same
+`PrimeChoiceData` payload used by the production selector when the candidate
+is good.
+
+This is a diagnostic surface for attributing adaptive-prime work and inspecting
+the modular degree information already computed by a trial.  It deliberately
+shares `primeChoiceDataScore` with the selector so benchmark instrumentation
+cannot drift to a different modular computation.
+-/
+def probePrimeData? (f : ZPoly) (c : SmallPrimeCandidate) :
+    Option PrimeChoiceData :=
+  (primeChoiceDataScore f c).map (·.data)
+
+/-- Whether a checked prime removes at least one quarter of the current modular
 factors. -/
 private def isMaterialFactorReduction (oldCount newCount : Nat) : Bool :=
   decide (4 * newCount ≤ 3 * oldCount)
@@ -111,7 +175,7 @@ private def isMaterialFactorReduction (oldCount newCount : Nat) : Bool :=
 #guard isMaterialFactorReduction 12 9 = true
 #guard isMaterialFactorReduction 12 10 = false
 
-/-- Prefer a probed prime only after a material modular-width reduction. Tiny
+/-- Prefer a checked prime only after a material modular-width reduction. Tiny
 `r` reductions do not reliably predict cheaper recombination and are not worth
 abandoning the deterministic first choice. -/
 private def betterPrimeChoiceDataScore
@@ -121,12 +185,13 @@ private def betterPrimeChoiceDataScore
   else
     old
 
+/-- Keep the prime factorization with the lower recombination score. -/
 def choosePrimeDataScoreStep
     (f : ZPoly) (best : Option PrimeChoiceDataScore) (c : SmallPrimeCandidate) :
     Option PrimeChoiceDataScore :=
   -- First-suitable selection (matching the verified Isabelle/AFP
   -- `Berlekamp_Zassenhaus` `find_prime`): once a suitable prime has been found,
-  -- keep it and stop — crucially, do **not** evaluate `primeChoiceDataScore f c`
+  -- keep it and stop; crucially, do **not** evaluate `primeChoiceDataScore f c`
   -- (which factors `f mod c.p`) for any later candidate. The old "fewest modular
   -- factors" rule factored at every good prime, costing ~95 modular
   -- factorizations per call; van Hoeij's recombination is polynomial in the
@@ -391,7 +456,7 @@ def choosePrimeData? (f : ZPoly) : Option PrimeChoiceData :=
       (extendedSmallPrimeCandidates.foldl (choosePrimeDataScoreStep f) none)
       |>.map (fun score => score.data)
 
-/-- Do not stop a prime probe on a halving improvement below this factor count;
+/-- Do not stop a prime trial on a halving improvement below this factor count;
 at small width, continuing toward a modular irreducibility certificate is cheap
 and disproportionately valuable. -/
 private def probeEarlyFactorFloor : Nat := 8
@@ -414,16 +479,16 @@ private def improvePrimeData? (f : ZPoly) (first : PrimeChoiceDataScore) :
           else improvePrimeData? f (betterPrimeChoiceDataScore first score) extra candidates
       | none => improvePrimeData? f first (extra + 1) candidates
 
-/-- Minimum modular width that justifies probing a high-degree transform. -/
+/-- Minimum modular width that justifies checking a high-degree transform. -/
 private def probeMinFactors : Nat := 24
 
-/-- Minimum modular width that justifies probing a coefficient-swollen transform. -/
+/-- Minimum modular width that justifies checking a coefficient-swollen transform. -/
 private def probeSwollenFactors : Nat := 9
 
-/-- Degree above which a very wide modular image justifies a bounded probe. -/
+/-- Degree above which a very wide modular image justifies a bounded trial. -/
 private def probeMinDegree : Nat := 50
 
-/-- Degree above which a prime cyclotomic's uniform coefficients justify a probe. -/
+/-- Degree above which a prime cyclotomic's uniform coefficients justify a trial. -/
 private def probeCyclotomicDegree : Nat := 50
 
 /-- Minimum coefficient `log2` that marks a swollen monic transform. -/
@@ -661,6 +726,7 @@ private theorem choosePrimeDataAdaptive?_property
       simp [hscore] at hdata
       exact ⟨score, hdata, chooseAdaptiveFrom?_property f extra P hcandidate _ _ hscore⟩
 
+/-- Adaptive prime selection returns only prime moduli. -/
 theorem choosePrimeDataAdaptive?_prime
     (f : ZPoly) (extra : Nat) (data : PrimeChoiceData)
     (hdata : choosePrimeDataAdaptive? f extra = some data) :
@@ -684,6 +750,7 @@ theorem choosePrimeDataAdaptive?_p_le_500
       exact chooseAdaptiveFrom?_p_le f extra _ score
         (fun c hc => (mem_hotPathCandidates_prime hc).2.2) hscore
 
+/-- Adaptive prime selection caches the reduction of its input polynomial. -/
 theorem choosePrimeDataAdaptive?_fModP_eq
     (f : ZPoly) (extra : Nat) (data : PrimeChoiceData)
     (hdata : choosePrimeDataAdaptive? f extra = some data) :
@@ -694,6 +761,7 @@ theorem choosePrimeDataAdaptive?_fModP_eq
     (fun c score hscore => primeChoiceDataScore_fModP_eq f c score hscore) hdata
   exact heq
 
+/-- Adaptive prime selection returns a prime satisfying the admissibility test. -/
 theorem choosePrimeDataAdaptive?_isGoodPrime
     (f : ZPoly) (extra : Nat) (data : PrimeChoiceData)
     (hdata : choosePrimeDataAdaptive? f extra = some data) :
@@ -703,28 +771,7 @@ theorem choosePrimeDataAdaptive?_isGoodPrime
     (fun c score hscore => primeChoiceDataScore_isGoodPrime f c score hscore) hdata
   exact hgood
 
-/--
-Choose an admissible small prime and package the modular image together with
-its Berlekamp irreducible factor data for the rest of the pipeline.
-
-The returned record stores the selected prime's `ZMod64.Bounds` instance, so
-callers can consume `fModP` and `factorsModP` directly without re-running the
-prime search or reconstructing typeclass evidence.
-
-This total wrapper is retained for compatibility with existing total slow-path
-statements. It fails through `Option.get!` when no admissible prime is selected;
-new call sites that require an actual selected prime should use
-`choosePrimeData?` directly and carry the local `some` witness.
--/
-def choosePrimeData (f : ZPoly) : PrimeChoiceData :=
-  (choosePrimeData? f).get!
-
-theorem choosePrimeData_eq_of_choosePrimeData?_some
-    {f : ZPoly} {data : PrimeChoiceData}
-    (hdata : choosePrimeData? f = some data) :
-    choosePrimeData f = data := by
-  simp [choosePrimeData, hdata]
-
+/-- Ordinary prime selection returns only prime moduli. -/
 theorem choosePrimeData?_prime
     (f : ZPoly) (data : PrimeChoiceData)
     (hdata : choosePrimeData? f = some data) :
@@ -786,6 +833,7 @@ theorem choosePrimeData?_p_le_500
             (by intro old hnone; cases hnone)
             hext
 
+/-- Ordinary prime selection caches the reduction of its input polynomial. -/
 theorem choosePrimeData?_fModP_eq
     (f : ZPoly) (data : PrimeChoiceData)
     (hdata : choosePrimeData? f = some data) :
@@ -899,10 +947,8 @@ private theorem choosePrimeDataScore_fold_none_forall_isGoodPrime_false
 When `choosePrimeData? f` returns `none`, every candidate in the hot-path
 prime list fails the executable good-prime predicate `Hex.isGoodPrime f`.
 
-This feeds `choosePrimeData?_none_implies_huge`: the executable's failure to
-find any good prime over the fixed list means every prime in the admissible
-range was tried and rejected, and rejection (`isGoodPrime ... = false`) feeds
-the Mathlib-side per-prime divisibility bridge.
+This records that failure of the fixed candidate fold means every retained
+candidate was tried and rejected.
 -/
 theorem mem_hotPathCandidates_isGoodPrime_false_of_choosePrimeData?_none
     {f : ZPoly} (hf : choosePrimeData? f = none)
@@ -999,10 +1045,8 @@ def factorsModPBerlekampForm
       ((@Berlekamp.berlekampFactor data.p data.bounds
         (monicModularImage (ZPoly.modP data.p f))
         (monicModularImage_monic hprime (ZPoly.modP data.p f) hzero)
-        (@zmod64FieldOfPrime data.p data.bounds
-          (ZMod64.primeModulusOfPrime hprime))).factors.map monicModularImage).toArray
+        (ZMod64.primeModulusOfPrime hprime)).factors.map monicModularImage).toArray
 
-set_option maxHeartbeats 800000 in
 private theorem primeChoiceDataScore_factorsModPBerlekampForm
     (f : ZPoly) (c : SmallPrimeCandidate) (score : PrimeChoiceDataScore)
     (hscore : primeChoiceDataScore f c = some score) :
@@ -1019,7 +1063,6 @@ private theorem primeChoiceDataScore_factorsModPBerlekampForm
     exact berlekampFactorsModP_eq_of_isZero_false f c hzero
   · simp [hgood] at hscore
 
-set_option maxHeartbeats 800000 in
 private theorem betterPrimeChoiceDataScore_factorsModPBerlekampForm
     (f : ZPoly) (old new score : PrimeChoiceDataScore)
     (hold : factorsModPBerlekampForm f old.data)
@@ -1066,6 +1109,73 @@ private theorem choosePrimeDataScore_fold_factorsModPBerlekampForm
           choosePrimeDataScoreStep_factorsModPBerlekampForm f best c old hbest hold)
         hscore
 
+/-- Primality provenance for one explicit diagnostic/degree-obstruction trial. -/
+theorem probePrimeData?_prime
+    (f : ZPoly) (c : SmallPrimeCandidate) (data : PrimeChoiceData)
+    (hdata : probePrimeData? f c = some data) :
+    Nat.Prime data.p := by
+  unfold probePrimeData? at hdata
+  cases hscore : primeChoiceDataScore f c with
+  | none => simp [hscore] at hdata
+  | some score =>
+      simp [hscore] at hdata
+      subst data
+      exact primeChoiceDataScore_prime f c score hscore
+
+/-- An explicit trial inherits any proved upper bound on its candidate prime. -/
+theorem probePrimeData?_p_le
+    (f : ZPoly) (c : SmallPrimeCandidate) (data : PrimeChoiceData)
+    (hc : c.p ≤ 500)
+    (hdata : probePrimeData? f c = some data) :
+    data.p ≤ 500 := by
+  unfold probePrimeData? at hdata
+  cases hscore : primeChoiceDataScore f c with
+  | none => simp [hscore] at hdata
+  | some score =>
+      simp [hscore] at hdata
+      subst data
+      exact primeChoiceDataScore_p_le f c score hc hscore
+
+/-- Good-prime provenance for one explicit diagnostic/degree-obstruction trial. -/
+theorem probePrimeData?_isGoodPrime
+    (f : ZPoly) (c : SmallPrimeCandidate) (data : PrimeChoiceData)
+    (hdata : probePrimeData? f c = some data) :
+    @isGoodPrime f data.p data.bounds = true := by
+  unfold probePrimeData? at hdata
+  cases hscore : primeChoiceDataScore f c with
+  | none => simp [hscore] at hdata
+  | some score =>
+      simp [hscore] at hdata
+      subst data
+      exact primeChoiceDataScore_isGoodPrime f c score hscore
+
+/-- Modular-image provenance for one explicit trial. -/
+theorem probePrimeData?_fModP_eq
+    (f : ZPoly) (c : SmallPrimeCandidate) (data : PrimeChoiceData)
+    (hdata : probePrimeData? f c = some data) :
+    data.fModP = @ZPoly.modP data.p data.bounds f := by
+  unfold probePrimeData? at hdata
+  cases hscore : primeChoiceDataScore f c with
+  | none => simp [hscore] at hdata
+  | some score =>
+      simp [hscore] at hdata
+      subst data
+      exact primeChoiceDataScore_fModP_eq f c score hscore
+
+/-- Berlekamp-factor provenance for one explicit trial. -/
+theorem probePrimeData?_form
+    (f : ZPoly) (c : SmallPrimeCandidate) (data : PrimeChoiceData)
+    (hdata : probePrimeData? f c = some data) :
+    factorsModPBerlekampForm f data := by
+  unfold probePrimeData? at hdata
+  cases hscore : primeChoiceDataScore f c with
+  | none => simp [hscore] at hdata
+  | some score =>
+      simp [hscore] at hdata
+      subst data
+      exact primeChoiceDataScore_factorsModPBerlekampForm f c score hscore
+
+/-- Adaptive selection returns the certified Berlekamp factorization of the modular image. -/
 theorem choosePrimeDataAdaptive?_form
     (f : ZPoly) (extra : Nat) (data : PrimeChoiceData)
     (hdata : choosePrimeDataAdaptive? f extra = some data) :
@@ -1077,9 +1187,7 @@ theorem choosePrimeDataAdaptive?_form
           (monicModularImage_monic
             (choosePrimeDataAdaptive?_prime f extra data hdata)
             (ZPoly.modP data.p f) hzero)
-          (@zmod64FieldOfPrime data.p data.bounds
-            (ZMod64.primeModulusOfPrime
-              (choosePrimeDataAdaptive?_prime f extra data hdata)))).factors.map
+          (ZMod64.primeModulusOfPrime (choosePrimeDataAdaptive?_prime f extra data hdata))).factors.map
                 monicModularImage).toArray := by
   obtain ⟨score, rfl, hform⟩ := choosePrimeDataAdaptive?_property f extra data
     (fun score => factorsModPBerlekampForm f score.data)
@@ -1106,9 +1214,7 @@ theorem choosePrimeData?_factorsModP_berlekamp_form
           (monicModularImage_monic
             (choosePrimeData?_prime f data hdata)
             (ZPoly.modP data.p f) hzero)
-          (@zmod64FieldOfPrime data.p data.bounds
-            (ZMod64.primeModulusOfPrime
-              (choosePrimeData?_prime f data hdata)))).factors.map
+          (ZMod64.primeModulusOfPrime (choosePrimeData?_prime f data hdata))).factors.map
                 monicModularImage).toArray := by
   unfold choosePrimeData? at hdata
   cases hscore :
@@ -1159,9 +1265,7 @@ theorem choosePrimeData?_berlekampFactor_factors_length_le_one_of_small
         (monicModularImage_monic
           (choosePrimeData?_prime f data hdata)
           (@ZPoly.modP data.p data.bounds f) hzero)
-        (@zmod64FieldOfPrime data.p data.bounds
-          (ZMod64.primeModulusOfPrime
-            (choosePrimeData?_prime f data hdata)))).factors.length ≤ 1 := by
+        (ZMod64.primeModulusOfPrime (choosePrimeData?_prime f data hdata))).factors.length ≤ 1 := by
   letI := data.bounds
   obtain ⟨hzero, hform⟩ :=
     choosePrimeData?_factorsModP_berlekamp_form f data hdata
@@ -1173,9 +1277,7 @@ theorem choosePrimeData?_berlekampFactor_factors_length_le_one_of_small
         (monicModularImage_monic
           (choosePrimeData?_prime f data hdata)
           (@ZPoly.modP data.p data.bounds f) hzero)
-        (@zmod64FieldOfPrime data.p data.bounds
-          (ZMod64.primeModulusOfPrime
-            (choosePrimeData?_prime f data hdata)))).factors.length ≤ 1 := by
+        (ZMod64.primeModulusOfPrime (choosePrimeData?_prime f data hdata))).factors.length ≤ 1 := by
     simpa [hform] using hsmall
   exact hlen
 
