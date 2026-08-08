@@ -160,8 +160,8 @@ equality with `b ≠ 0`.
 `Int` supplies the law via `Int.mul_ediv_cancel`. There is a recursive
 instance for `DensePoly R` whenever `R` has the law, so `ZPoly = DensePoly
 Int` supports bivariate elimination, including nonunit constant and nonmonic
-polynomial divisors. A future `NumberTower.Elem T` uses its existing `/`; its
-Mathlib adjunct supplies the law once it installs the field laws. The tower's
+polynomial divisors. `NumberTower.Elem T` uses its existing `/`; its Mathlib
+adjunct supplies the law through its scoped field instance. The tower's
 computational core therefore remains law-free.
 
 ## Exact-division totality
