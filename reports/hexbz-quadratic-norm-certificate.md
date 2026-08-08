@@ -26,7 +26,7 @@ Measured on the corpus, before and after, at one revision:
 | `sd7`, `hoeij_S7`, `hoeij_S8`, `sd6_shift1`, `sd6_shift5` | timeout | 31 ms -- 3.98 s |
 | rows solved, of 392 | 377 | 383 |
 | total over rows both solve | 17.225 s | 8.965 s |
-| worst Hex/Isabelle cumulative, ranks 125--140 | 1.012x | **0.704x** |
+| worst Hex/Isabelle cumulative, ranks 125--140 | 1.012x | **0.707x** |
 
 That last line is #9126's success criterion, which is at most 0.85x at every
 rank from 125 through 140. The go/no-go modelled 0.708x; the measurement lands
@@ -374,7 +374,7 @@ implementation against them, writing
 |---|---|
 | `hexbz-quadratic-norm-certificate-chungus2.json` | `b5cc0418072f04faf9c893138ab6dc88e0bb311877f503083893e2f0d1565612` |
 | `hexbz-quadratic-norm-witnesses.json` | `e3008007ebf3e114da025455e1a6d49a8def461524a4a29c441429bd434f4f10` |
-| `hexbz-factor-sweep-eae6d06f-hex-chungus2.json` | `c0d47c5f7e40bb93634194c8f81f26d98ba847a914c55d44e083d87e9bdfc8d3` |
+| `hexbz-factor-sweep-d27e0bf2-hex-chungus2.json` | `d9a5b33aa9d18ff35e9fc4390a365520b5c702a649507636dfb19cecdf43b0de` |
 | `hexbz-factor-sweep-5dabd026-hex-chungus2.json` | `1e06a903574a230da312bda3e9f916fc8bc1d637347414ca37d90429bd5ef2f6` |
 | `hexbz-factor-sweep-5dabd026-hex-chungus2-run2.json` | `ababa5b2b439ca3d8af1f20edd892f17d8fbc951d9d4a0166a509abe6758a674` |
 | `hexbz-factor-sweep-5dabd026-hex-gate-closed-chungus2.json` | `73c010724edbf580b81af3a3291107b201e29753e7b6df6153f8c921f916678d` |
@@ -388,9 +388,10 @@ The four `5dabd026` sweeps are the before/after pair, two runs each. The
 `gate-closed` two were measured from a tree whose only edit was
 `QuadraticNormCertificate.widthFloor` raised past every reachable width, so they
 record the same revision with the certificate switched off; they are marked
-dirty for that reason. `hexbz-factor-sweep-eae6d06f-hex-chungus2.json` is the
-published sweep: clean tree, integrated, and what the committed figures and the
-rank table read.
+dirty for that reason. `hexbz-factor-sweep-d27e0bf2-hex-chungus2.json` is the
+published sweep: clean tree, integrated, taken after `main` was merged in, and
+what the committed figures and the rank table read. Its `sd5` reads 6.766 ms and
+its `sd6` 27.646 ms, within the run-to-run spread of the pair.
 
 Measuring the two sides of one revision, rather than this branch against `main`,
 is deliberate. Several unrelated performance changes landed on `main` between
@@ -635,7 +636,7 @@ declines and returns nothing, and with the gate open it returns factor degrees
 
 ### Measured effect on the combined cactus
 
-`hexbz-factor-sweep-eae6d06f-hex-chungus2.json` is the published sweep and what
+`hexbz-factor-sweep-d27e0bf2-hex-chungus2.json` is the published sweep and what
 the 25 committed figures and `scripts/bench/cactus_rank_table.py` read; the
 external comparator curves are carried over unchanged from
 `hexbz-factor-sweep-aa68c920-chungus2.json`.
@@ -646,11 +647,12 @@ On the 160-row combined mixture, Hex solves **145 → 151**, against Isabelle's
 | rank | 125 | 128 | 130 | 133 | 135 | 138 | 140 |
 |---|---:|---:|---:|---:|---:|---:|---:|
 | gate closed | 0.70x | 0.79x | 0.85x | 0.96x | 1.01x | 0.75x | 0.55x |
-| integrated | 0.66x | 0.69x | 0.70x | 0.70x | 0.67x | 0.43x | 0.29x |
+| integrated | 0.66x | 0.69x | 0.70x | 0.71x | 0.68x | 0.44x | 0.29x |
 
-Worst ratio over ranks 125--140: **1.012x with the gate closed, 0.704x
+Worst ratio over ranks 125--140: **1.012x with the gate closed, 0.707x
 integrated**, against #9126's 0.85x criterion. The go/no-go modelled 0.708x from
-the pre-#9171/#9172 elbow; the measurement lands within half a percent of it.
+the pre-#9171/#9172 elbow; the measurement lands within a fifth of a percent of
+it.
 
 The rows #9126 named as also needing parity are untouched: `xpow105_minus1`,
 `cyclo_phi179` and `cyclo_phi64_x_phi105` all decline the certificate at a cost
@@ -758,7 +760,7 @@ taskset -c 0 python3 scripts/bench/quadratic_norm_witnesses.py \
 # `--check` fails until the SVGs are regenerated.
 taskset -c 0 python3 scripts/bench/factor_sweep.py --systems hex-factor \
     --cutoff 10 \
-    --output reports/bench-results/hexbz-factor-sweep-eae6d06f-hex-chungus2.json
+    --output reports/bench-results/hexbz-factor-sweep-d27e0bf2-hex-chungus2.json
 python3 scripts/plots/hexbz-cactus.py
 python3 scripts/plots/hexbz-cactus.py --check
 python3 scripts/bench/check_factor_sweep_freshness.py
