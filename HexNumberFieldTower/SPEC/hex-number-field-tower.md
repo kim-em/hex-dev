@@ -268,24 +268,31 @@ gcd require a conjugate pair satisfying
 of at most `n * (M - 1)` bad shifts. A proper relative level has degree at
 least two, so `n ≤ d / 2`; the absolute field `ℚ(α)` is a subfield of the
 combined field, so `M ≤ d`. Hence the shared bad set has size at most
-`choose(d, 2)`.
+`choose(d, 2)`. The zero shift is included among the possible bad values, so
+the count does not require a separate nonzero case.
 
-Set `flattenShiftCount(d) = choose(d, 2) + 1` and test exactly that many
-nonzero values in signed order, continuing past failed canonicalization and
-past candidates whose recovery gcd is not linear. The Mathlib companion's
-totality proof discharges the checked canonicalization failures on valid
-algebraic inputs; they are not a second algebraic collision class. Candidate factor selection uses
-`evalDisambiguationPrec`, so both the shift search and the root selection have
-input-computable finite bounds.
+Set `flattenShiftCount(d) = choose(d, 2) + 1` and test that many values in
+signed order beginning with zero. The direct scan accepts only full-degree
+candidates whose validated linear-gcd coordinates succeed, and otherwise
+continues without invoking trace recovery. If it is exhausted,
+`AlgebraicPoly.Common.extendShift?` retains the maximum-degree candidate from
+the same bounded primitive-element search; the companion theorem proves that
+this candidate generates the compositum. The Mathlib companion proves both
+searches and checked canonicalization total on valid algebraic inputs.
+Candidate factor selection uses `evalDisambiguationPrec`, so both shift
+searches and root selection have input-computable finite bounds.
 
-For an accepted `γ = θ + cα`, lift the minimal polynomials of `θ` and `α` into
-`ℚ(γ)[Y]` and take the gcd of `mα(Y)` with `mθ(γ - cY)`. Accept the shift only
-when this gcd is linear, recovering `α`; then recover `θ = γ - cα` and
-substitute the prior generator coordinates through `θ`. These coordinate
-expressions define `toPrimitive`; evaluation at the corresponding tower
-element defines `fromPrimitive`. Verify their composite on a rational basis of
-the tower and verify that the tower element representing `γ` zeros its claimed
-minimal polynomial before returning. The accepted `γ` is already the canonical
+For an accepted `γ = θ + cα`, first lift the minimal polynomials of `θ` and `α`
+into `ℚ(γ)[Y]` and take the gcd of `mα(Y)` with `mθ(γ - cY)`. A linear gcd gives
+coordinates for `α` and `θ = γ - cα`, which are validated against their
+canonical algebraic values. Direct scanning accepts only this fast path. For
+the maximum-degree fallback, failed fast recovery is followed by exact trace
+pairing in the proved-equal generated field. Substitute the prior generator
+coordinates through the recovered `θ`. These coordinate expressions define
+`toPrimitive`; evaluation at the corresponding tower element defines
+`fromPrimitive`. Verify their composite on a rational basis of the tower and
+verify that the tower element representing `γ` zeros its claimed minimal
+polynomial before returning. The accepted `γ` is already the canonical
 `AlgebraicNumber` stored by `Flattening`.
 
 ## Conformance
@@ -319,11 +326,9 @@ Let `D = T.dim`, `n = deg f`, and let `H` bound coefficient height.
   one rational factorization. This recurrence, rather than one absolute-norm
   factorization cost, is the implementation budget.
 - `split?` repeats factorization after genuine degree-reducing extensions.
-- `flatten?` computes primitive-element eliminants of degree at most `D`, then
-  performs linear-factor gcd recovery over each full-degree candidate. The
-  exact Euclidean gcd over `ℚ(γ)` includes repeated quotient-field inversions
-  and is expected to dominate before the bounded shift enumeration does on
-  taller towers.
+- `flatten?` computes primitive-element eliminants of degree at most `D`, uses
+  validated linear-gcd recovery while scanning full-degree candidates, and
+  applies exact trace pairing once if the maximum-degree fallback is needed.
 
 No standalone wall-clock ceiling is pinned before the first complete compiled
 implementation. Phase 4 records component timings, then sets each ceiling from

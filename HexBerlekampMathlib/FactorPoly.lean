@@ -6,22 +6,22 @@ Authors: Kim Morrison
 
 module
 
-public import HexBerlekampMathlib.Basic
+public import HexBerlekampMathlib.Irreducibility
 public import HexBerlekamp.IrreducibleDecide
 
 public section
 
 /-!
 The Mathlib-side result type of `factor_poly` for `Polynomial R` inputs, and
-the kernel-decidable assemblers the `Polynomial (ZMod q)` provider emits.
+the kernel-decidable assemblers the `Polynomial (ZMod q)` extension emits.
 
 `FactoredPoly P` is the `Polynomial`-level counterpart of
 `Hex.FpPoly.Factored` / `Hex.ZPoly.Factored`. The assemblers `FactoredPoly.ofFp`
 and `irreducible_ofFp` take only Boolean checks on reified executable literals
-(discharged by `Eq.refl true`/`Eq.refl false` in emitted terms) plus one bridge
-equation `toMathlibPolynomial f = P` built by the provider's parser, so the
+(discharged by `Eq.refl true`/`Eq.refl false` in emitted terms) plus one correspondence
+equation `toMathlibPolynomial f = P` built by the extension's parser, so the
 kernel verifies emitted factorizations by reduction plus the named transport
-lemmas alone — the factorizer and certificate generator never appear in
+lemmas alone; the factorizer and certificate generator never appear in
 emitted terms.
 -/
 
@@ -29,7 +29,7 @@ namespace Hex
 
 /-- A certified irreducible factorization of `P : Polynomial R`; Mathlib-side
 counterpart of `FpPoly.Factored` and `ZPoly.Factored`.
-Produced by the `factor_poly` elaborator via the Mathlib bridge providers. -/
+Produced by the `factor_poly` elaborator via the Mathlib translation extensions. -/
 structure FactoredPoly {R : Type*} [CommRing R] (P : Polynomial R) where
   /-- The scalar factored out of `P`: over a finite field the leading unit of
   nonzero `P`; over `ℤ` the signed content. -/
@@ -87,9 +87,9 @@ namespace Hex
 
 open HexBerlekampMathlib
 
-/-- One-shot assembler for the `factor_poly` provider on `Polynomial (ZMod p)`:
+/-- One-shot assembler for the `factor_poly` extension on `Polynomial (ZMod p)`:
 every certification slot is a Boolean check on reified literal data (filled by
-`Eq.refl true` in emitted terms), and `hP` is the parser-built bridge equation
+`Eq.refl true` in emitted terms), and `hP` is the parser-built translation equality
 tying the reified executable polynomial to the user's Mathlib polynomial. -/
 @[expose]
 noncomputable def FactoredPoly.ofFp {p : Nat} [inst : Hex.ZMod64.Bounds p]
@@ -126,11 +126,11 @@ end Hex
 
 namespace HexBerlekampMathlib
 
-/-- Kernel-decidable irreducibility endpoint for the `irreducibility` provider
+/-- Kernel-decidable irreducibility endpoint for the `irreducibility` extension
 on `Polynomial (ZMod p)`: the executable side is
 `Berlekamp.irreducible_of_checkMonicCert_scale` on reified literals, the
 positive degree transports the statement out of the vacuous-constant regime,
-and `hP` is the parser-built bridge equation. -/
+and `hP` is the parser-built translation equality. -/
 theorem irreducible_ofFp {p : Nat} [Hex.ZMod64.Bounds p]
     (P : Polynomial (ZMod p)) (f m : Hex.FpPoly p) (c : Hex.ZMod64 p)
     (cert : Hex.Berlekamp.IrreducibilityCertificate)

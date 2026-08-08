@@ -6,7 +6,7 @@ Authors: Kim Morrison
 
 module
 
-public import HexPolyMathlib.Basic
+public import HexPolyMathlib.PolynomialEquivalence
 public import Mathlib.Algebra.Polynomial.FieldDivision
 
 public section

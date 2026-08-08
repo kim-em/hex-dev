@@ -19,7 +19,7 @@ cases also carry optional pinned modular-factor metadata so the oracle
 checks that the committed input has the intended split over a named
 prime.
 
-Fixtures are integer polynomials at degrees 4, 6, 8, 10, 16, and 20,
+Fixtures are integer polynomials at degrees 4, 6, 8, 10, 16, 18, 20, and 28,
 covering the supported factorization shapes:
 
 * scalar/sign edge cases from the public `Factorization` convention,
@@ -31,6 +31,8 @@ covering the supported factorization shapes:
 * the degree-20 `Φ_11 · Φ_22` reducible product,
 * adversarial cases where mod-p factors split more finely than the integer
   factorisation; see "Adversarial modular-split coverage" below.
+* original-coordinate M1 acceptance on a reducible Chebyshev input and on an
+  irreducible Legendre input requiring the two-prime degree certificate.
 
 # Adversarial modular-split coverage
 
@@ -51,9 +53,9 @@ verifies the named modular split:
 * `adv/phi15` — Φ₁₅, irreducible over ℤ, splits completely as eight
   linear factors over F₃₁ (heavy split, small admissible prime).
 
-# Lattice-tier dispatch coverage
+# Lattice-method coverage
 
-Two corpus cases can be answered **only by the lattice tier**, one for each
+Two corpus cases can be answered **only by the lattice method**, one for each
 lattice result:
 
 * `adv/swinnerton_dyer_sd5_pair` — `SD₅(x)·SD₅(x+1)` (degree 64, the
@@ -64,29 +66,38 @@ lattice result:
   √2+√3+√5+√7+√11+√13, irreducible over ℤ) exercises the
   **irreducibility-certification** arm: recovery converges to the
   single all-ones class and the certificate-backed early stop
-  answers `some #[core]` without grinding to the `bhksBound` cap.
+  returns the original polynomial without grinding to the `bhksBound` cap.
 
 Swinnerton-Dyer blocks split into factors of degree ≤ 2 modulo every
 admissible (squarefree-image) prime, so the lifted-factor count is
 `r ≥ 32` no matter which prime the selector picks (at the selected
 primes, 29 and 19, all blocks are quadratic and `r = 32`), and the
 size-ordered classical search would need ΣC(31,≤15) ≈ 2³⁰ subset
-candidates to reach its half-size frontier — for `sd5_pair` that is
+candidates to reach its half-size frontier. For `sd5_pair` that is
 where the two 16-block factors live, and for `sd6` that is what
-exhausting all nontrivial subset products takes — far past its
-level-aware budget (`levelAwareSubsetBudget 32 defaultSubsetBudget =
-206368`), so it provably declines and the hybrid falls through to the
-van Hoeij CLD lattice arm. Both cases emit the
+exhausting all nontrivial subset products takes. This is far past the direct
+classical candidate budget, so it declines before starting an incomplete
+cardinality level and the hybrid falls through to the van Hoeij CLD lattice
+arm. Both cases emit the
 *hybrid* trace (`factorTraced`) rather than the classical one. The emit helper
-rejects a run unless the lattice tier answered, while the committed trace records
-`tier = "lattice"`, `declined = true`, the prime, and `r = 32`. Since each
+rejects a run unless the lattice method answered, while the committed trace records
+`method = "lattice"`, `declined = true`, the prime, and `r = 32`. Since each
 remainder is lifted independently, the classical trace reports
 `subsetCandidates = 0`; the separate wall-clock benchmark detects excessive
-recombination work. The `bz_trace_gate.py` baseline also checks the tier,
+recombination work. The `bz_trace_gate.py` baseline also checks the method,
 decline status, and candidate-count bound.
 There is deliberately no `#guard` twin in `Conformance.lean` —
 elaboration-time interpretation of the lattice run would cost minutes
 of build time; the compiled emit executable covers it in seconds.
+
+# Checked-proposal replay coverage
+
+`regression/split_roots_1_24` has 24 lifted linear factors. The total selector
+routes it through unforced exact peeling and then replays the proved classical
+factorizer on every exact piece. Its helper requires `method = "replay"` and a
+`largeSupport` routing decline. The separately emitted classical result is
+deliberately skipped for this sentinel; nearby split-root cases continue to
+cover the unrestricted public classical entry point.
 
 # Cross-checked operation
 
@@ -145,19 +156,28 @@ private def factorValue (φ : Factorization) : String :=
 private def expectedFactorValue (scalar : Int) (factors : List (List Int × Nat)) : String :=
   "[" ++ toString scalar ++ "," ++ factorEntriesValue factors ++ "]"
 
-/-- Serialise a `FactorTrace` to JSON for the performance gate. Deterministic
+/-- Serialise a `DirectFactorTrace` to JSON for the performance gate. Deterministic
 (no wall-clock), so it lives in the committed fixtures and is pinned by the gate
 baseline. -/
-private def traceValue (t : FactorTrace) : String :=
-  "{\"tier\":\"" ++ t.tier ++ "\",\"prime\":" ++ toString t.prime ++
-    ",\"r\":" ++ toString t.liftedFactorCount ++
-    ",\"subsetCandidates\":" ++ toString t.subsetCandidates ++
-    ",\"declined\":" ++ (if t.declined then "true" else "false") ++ "}"
+private def traceValue (t : DirectFactorTrace) : String :=
+  "{\"method\":\"" ++ t.method.name ++ "\"" ++
+    ",\"decline\":" ++
+      (match t.classicalDecline with
+      | none => "null"
+      | some reason => "\"" ++ reason.name ++ "\"") ++
+    ",\"prime\":" ++ toString t.classical.prime ++
+    ",\"primeProbes\":" ++ toString t.classical.primeProbes ++
+    ",\"r\":" ++ toString t.classical.liftedFactorCount ++
+    ",\"henselLifts\":" ++ toString t.classical.henselLifts ++
+    ",\"candidatesTried\":" ++ toString t.classical.candidatesTried ++
+    ",\"completedLevels\":[" ++
+      String.intercalate ","
+        (t.classical.completedLevels.toList.map toString) ++ "]}"
 
-/-- Emit the size-ordered classical tier's result (`factorClassical`) for cross
-checking against FLINT, plus its diagnostic `trace` (tier, prime, `r`, subset
+/-- Emit the size-ordered classical method's result (`factorClassical`) for cross
+checking against FLINT, plus its diagnostic `trace` (method, prime, `r`, subset
 candidate count, declined) for the performance gate. The `classicalFactor` value
-is `null` when the tier declines (no admissible prime or subset budget exceeded),
+is `null` when the method declines (no admissible prime or subset budget exceeded),
 which the oracle treats as a skip. -/
 private def emitClassicalResult (case : String) (f : ZPoly) : IO Unit := do
   let (result, trace) := factorClassicalTraced f
@@ -356,10 +376,16 @@ than emitted through `factor` so the oracle catches any reducible Hex output. -/
 
 private def cases_good_prime_regression : List ExpectedCase :=
   [ mkExpected "regression/split_roots_1_11" (splitProductCoeffs 11)
-      1 (splitProductExpectedFactors 11)
-  , mkExpected "regression/split_roots_1_24" (splitProductCoeffs 24)
-      1 (splitProductExpectedFactors 24)
-  , mkExpected "regression/split_roots_1_72" (splitProductCoeffs 72)
+      1 (splitProductExpectedFactors 11) ]
+
+/-- A large-support exact-peeling case accepted through proved classical
+replay. It is separated so the emitter can require the `.replay` method. -/
+private def cases_replay : List ExpectedCase :=
+  [ mkExpected "regression/split_roots_1_24" (splitProductCoeffs 24)
+      1 (splitProductExpectedFactors 24) ]
+
+private def cases_good_prime_regression_large : List ExpectedCase :=
+  [ mkExpected "regression/split_roots_1_72" (splitProductCoeffs 72)
       1 (splitProductExpectedFactors 72) ]
 
 /-- Adversarial conformance corpus (per-PR; the heavy high-`r` cases SD4-SD6 and
@@ -387,11 +413,25 @@ private def cases_adversarial : List Case :=
   , mk "adv/large_plus_distractors" #[-6, 5, -1, 0, 0, 6, -5, 1]
   , mk "adv/mignotte_swell" #[1, 0, -10000, 0, 2, 0, 0, 0, 1] ]          -- (x⁴-100x+1)(x⁴+100x+1)
 
-/-! # Lattice-tier dispatch coverage
+/-! # Direct classical performance controls -/
 
-See the module docstring section "Lattice-tier dispatch coverage". The cases are
+private def cases_direct : List Case :=
+  [ mk "direct/chebyshev_u18"
+      #[-1, 0, 180, 0, -5280, 0, 59136, 0, -329472, 0, 1025024, 0,
+        -1863680, 0, 1966080, 0, -1114112, 0, 262144]
+  , mk "direct/legendre_p28"
+      #[40116600, 0, -16287339600, 0, 1093966309800, 0, -28880710578720,
+        0, 397109770457400, 0, -3265124779316400, 0, 17364527235455400,
+        0, -62588625639883200, 0, 156993135980040360, 0,
+        -277046710553012400, 0, 342663036736620600, 0,
+        -290744394806829600, 0, 161173523208133800, 0,
+        -52567364492499024, 0, 7648690600760440] ]
+
+/-! # Lattice-method coverage
+
+See the module docstring section "Lattice-method coverage". The cases are
 emitted through the public `factorize` path (`factorTraced`, whose `.1`
-is `factorize`) so the pinned trace catches dispatch regressions, not just
+is `factorize`) so the pinned trace catches method regressions, not just
 lattice ones. -/
 
 /-- The two lattice-only cases, one per lattice answer arm:
@@ -402,8 +442,7 @@ lattice ones. -/
   √2+√3+√5+√7+√11) with its shift by one.  Degree 64, content 1, exactly
   two integer factors (the two 32-blocks).
 * `adv/swinnerton_dyer_sd6` (certification arm) — Swinnerton-Dyer SD₆
-  (the committed bench `sd6` polynomial from
-  `bench/HexBench/LatticeSpike.lean`, minimal polynomial of
+  (the committed corpus `sd6` polynomial, minimal polynomial of
   √2+√3+√5+√7+√11+√13).  Degree 64, content 1, irreducible over ℤ. -/
 private def cases_lattice : List PinnedCase :=
   [ mkPinned "adv/swinnerton_dyer_sd5_pair"
@@ -501,34 +540,53 @@ private def emitExpectedCase (c : ExpectedCase) : IO Unit := do
   emitResult lib c.id "factor" (expectedFactorValue c.scalar c.factors)
   emitClassicalResult c.id (DensePoly.ofCoeffs c.coeffs)
 
+/-- Emit a checked-proposal sentinel and reject any method change. The public
+factor result is independently pinned; the classical operation is skipped here
+because this case exists to exercise the total selector's replay branch. -/
+private def emitReplayExpectedCase (c : ExpectedCase) : IO Unit := do
+  let f := DensePoly.ofCoeffs c.coeffs
+  let (phi, trace) := factorTraced f
+  unless trace.method == .replay && trace.classicalDecline == some .largeSupport do
+    throw <| IO.userError
+      s!"emitReplayExpectedCase {c.id}: expected checked proposal replay, got \
+        method={trace.method.name}, decline={trace.classicalDecline.map (·.name)}"
+  unless Factorization.product phi == f do
+    throw <| IO.userError
+      s!"emitReplayExpectedCase {c.id}: replay result does not reconstruct input"
+  emitPolyFixture lib c.id c.coeffs.toList none
+  emitResult lib c.id "factor" (expectedFactorValue c.scalar c.factors)
+  emitResult lib c.id "classicalFactor" "null"
+  emitResult lib c.id "trace" (traceValue trace)
+
 private def emitPinnedCase (c : PinnedCase) : IO Unit := do
   let f := DensePoly.ofCoeffs c.coeffs
   emitPolyFixtureWithModFactorDegrees lib c.id (liftCoeffs f) c.p c.degrees
   emitResult lib c.id "factor" (factorValue (ZPoly.factorize f))
   emitClassicalResult c.id f
 
-/-- Emit one lattice-only fixture through the traced public dispatch path.
+/-- Emit one lattice-only fixture through the traced public factorization path.
 
 single `factorTraced` run supplies the `factorize` result (its `.1` is the
-public `factorize`) **and** the trace, so the committed trace pins the tier
+public `factorize`) **and** the trace, so the committed trace pins the method
 `factorize` actually used.  The helper is sentinel-only: it errors out unless the
-classical tier declined and the lattice tier answered, which is the case's
-purpose — a case that stops routing to the lattice arm must not emit
-quietly. A tier change also breaks the committed-fixture byte comparison and
+classical method declined and the lattice method answered, which is the case's
+purpose: a case that stops using the lattice method must not emit
+quietly. A method change also breaks the committed-fixture byte comparison and
 the `bz_trace_gate.py` baseline. Since the
-lattice tier answered, the classical tier returned `none`, so
+lattice method answered, the classical method returned `none`, so
 `classicalFactor` is `null` (an oracle skip) without paying the classical
 decline burn a second time.  The exact `prime` / `r` / `subsetCandidates`
 values are pinned by the committed-fixture byte-diff in
 `scripts/ci/run_oracles.sh`; the trace-gate baseline additionally pins
-tier/decline and upper-bounds `subsetCandidates`. -/
+method/decline and upper-bounds `subsetCandidates`. -/
 private def emitHybridTracedCase (c : PinnedCase) : IO Unit := do
   let f := DensePoly.ofCoeffs c.coeffs
   let (φ, trace) := factorTraced f
-  unless trace.tier == "lattice" && trace.declined do
+  unless trace.method == .lattice && trace.classicalDecline.isSome do
     throw <| IO.userError
-      s!"emitHybridTracedCase {c.id}: expected the classical tier to decline and \
-        the lattice tier to answer, got tier={trace.tier}, declined={trace.declined}"
+      s!"emitHybridTracedCase {c.id}: expected the classical method to decline and \
+        the lattice method to answer, got method={trace.method.name}, \
+        decline={trace.classicalDecline.map (·.name)}"
   emitPolyFixtureWithModFactorDegrees lib c.id (liftCoeffs f) c.p c.degrees
   emitResult lib c.id "factor" (factorValue φ)
   emitResult lib c.id "classicalFactor" "null"
@@ -551,5 +609,9 @@ def main : IO Unit := do
   for c in Hex.BZEmit.cases_pinned_expected do Hex.BZEmit.emitPinnedExpectedCase c
   for c in Hex.BZEmit.cases_content do Hex.BZEmit.emitExpectedCase c
   for c in Hex.BZEmit.cases_good_prime_regression do Hex.BZEmit.emitExpectedCase c
+  for c in Hex.BZEmit.cases_replay do Hex.BZEmit.emitReplayExpectedCase c
+  for c in Hex.BZEmit.cases_good_prime_regression_large do
+    Hex.BZEmit.emitExpectedCase c
   for c in Hex.BZEmit.cases_adversarial do Hex.BZEmit.emitCase c
+  for c in Hex.BZEmit.cases_direct do Hex.BZEmit.emitCase c
   for c in Hex.BZEmit.cases_lattice do Hex.BZEmit.emitHybridTracedCase c

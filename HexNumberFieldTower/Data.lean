@@ -38,7 +38,7 @@ def levelsDim : List Level → Nat
 `lowerDim`. -/
 @[expose]
 def Level.Structural (level : Level) (lowerDim : Nat) : Prop :=
-  0 < level.degree ∧
+  1 < level.degree ∧
     level.defining.size = level.degree ∧
     ∀ i, ∀ h : i < level.defining.size,
       (level.defining[i]'h).size = lowerDim
@@ -46,7 +46,7 @@ def Level.Structural (level : Level) (lowerDim : Nat) : Prop :=
 /-- Executable structural check for one raw level. -/
 @[expose]
 def Level.structuralCheck (level : Level) (lowerDim : Nat) : Bool :=
-  0 < level.degree && level.defining.size = level.degree &&
+  1 < level.degree && level.defining.size = level.degree &&
     level.defining.all fun coefficient => coefficient.size = lowerDim
 
 /-- The executable structural check exposes the erased width invariant used by

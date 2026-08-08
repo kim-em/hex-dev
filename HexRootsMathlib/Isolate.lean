@@ -93,7 +93,7 @@ private theorem list_mapM_some_get {α β : Type*} {f : α → Option β}
 
 /-- An option-valued array map that succeeds preserves size and corresponding
 entries. -/
-private theorem array_mapM_some_get {α β : Type*} {f : α → Option β}
+theorem array_mapM_some_get {α β : Type*} {f : α → Option β}
     {xs : Array α} {ys : Array β} (hmap : xs.mapM f = some ys) :
     xs.size = ys.size ∧
       ∀ (i : Nat) (hi : i < xs.size) (hj : i < ys.size),
@@ -108,6 +108,37 @@ private theorem array_mapM_some_get {α β : Type*} {f : α → Option β}
   intro i hi hj
   simpa only [← Array.getElem_toList] using hget i (by simpa using hi)
     (by simpa using hj)
+
+private theorem list_mapM_isSome {α β : Type*} {f : α → Option β}
+    {xs : List α} (h : ∀ x ∈ xs, (f x).isSome) :
+    (xs.mapM f).isSome := by
+  rw [Option.isSome_iff_exists]
+  induction xs with
+  | nil => exact ⟨[], rfl⟩
+  | cons x xs ih =>
+      have hx := h x (List.mem_cons_self)
+      have hxs : ∀ y ∈ xs, (f y).isSome := fun y hy =>
+        h y (List.mem_cons_of_mem x hy)
+      rw [Option.isSome_iff_exists] at hx
+      obtain ⟨y, hy⟩ := hx
+      obtain ⟨ys, hys⟩ := ih hxs
+      exact ⟨y :: ys, by simp [hy, hys]⟩
+
+/-- An option-valued array map succeeds when its function succeeds on every
+input entry. -/
+theorem array_mapM_isSome {α β : Type*} {f : α → Option β}
+    {xs : Array α} (h : ∀ x ∈ xs.toList, (f x).isSome) :
+    (xs.mapM f).isSome := by
+  have hlist := list_mapM_isSome h
+  cases hmap : xs.mapM f with
+  | none =>
+      have hnone : xs.toList.mapM f = none := by
+        calc
+          xs.toList.mapM f = Array.toList <$> xs.mapM f := Array.toList_mapM.symm
+          _ = none := by rw [hmap]; rfl
+      rw [hnone] at hlist
+      simp at hlist
+  | some ys => simp
 
 /-- In the positive-degree branch, successful isolation is a successful
 Cauchy-started general driver run whose results correspond indexwise to the

@@ -71,10 +71,13 @@ theorem toMatrix_toBlocks₁₁ [OfNat R 0] {h w : Nat} (A : Submatrix R (h + h)
     (Submatrix.toBlocks₁₁ A).toMatrix = toBlocks₁₁ A.toMatrix := by
   apply ext_getElem
   intro i j
-  rw [Submatrix.getElem_toMatrix, getElem_toBlocks₁₁, Submatrix.getElem_toMatrix,
-    Submatrix.entry, Submatrix.entry]
-  simp only [Submatrix.toBlocks₁₁, Fin.val_castAdd]
-  all_goals (have hi := i.isLt; have hj := j.isLt; split <;> split <;> (first | rfl | (exfalso; omega)))
+  rw [Submatrix.getElem_toMatrix, getElem_toBlocks₁₁, Submatrix.getElem_toMatrix]
+  unfold Submatrix.toBlocks₁₁
+  unfold Submatrix.entry
+  simp only [Fin.val_castAdd]
+  have hi : A.r0 + i.val < A.r0 + h := by omega
+  have hj : A.c0 + j.val < A.c0 + w := by omega
+  simp only [Nat.lt_min, hi, hj, and_true]
 
 /-- Materializing the top-right quadrant view is `Matrix.toBlocks₁₂` of the parent. -/
 theorem toMatrix_toBlocks₁₂ [OfNat R 0] {h w : Nat} (A : Submatrix R (h + h) (w + w)) :

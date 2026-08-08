@@ -9,7 +9,7 @@ module
 public import HexBerlekampZassenhaus.WordCld
 public import HexBerlekampZassenhaus.Lattice
 public import HexModArithMathlib.WordMod
-public import HexPolyMathlib.Basic
+public import HexPolyMathlib.PolynomialEquivalence
 public import Mathlib.Algebra.Polynomial.Div
 
 public section
@@ -122,7 +122,7 @@ theorem map_divMod_monic {S : Type*} [CommRing S] [DecidableEq S] [Div S]
     hgmonic ⟨hrec3, hrdeg⟩
   exact huniq.1.symm
 
-/-! # Coefficient bridges -/
+/-! # Coefficient correspondences -/
 
 theorem intCast_intModNat (c : Int) (M : Nat) (hM : 0 < M) :
     ((ZPoly.intModNat c M : Nat) : ZMod M) = (c : ZMod M) := by
@@ -242,6 +242,7 @@ theorem toPoly_degree_lt {S : Type*} [CommRing S] [DecidableEq S] {r g : Hex.Den
       natDegree_toPolynomial, natDegree_toPolynomial]
     exact_mod_cast hlt
 
+/-- The natural representative of an integer residue is below a positive modulus. -/
 theorem intModNat_lt (y : Int) (M : Nat) (hM : 0 < M) : ZPoly.intModNat y M < M := by
   have hM0 : (M : Int) ≠ 0 := by exact_mod_cast hM.ne'
   have h1 : y % (M : Int) < M := Int.emod_lt_of_pos y (by exact_mod_cast hM)
@@ -251,6 +252,7 @@ theorem intModNat_lt (y : Int) (M : Nat) (hM : 0 < M) : ZPoly.intModNat y M < M 
 /-! # Main equality -/
 
 open HexPolyMathlib in
+/-- Word-sized and arbitrary-precision logarithmic-derivative quotients agree when the modulus fits. -/
 theorem cldQuotientModWord?_eq (f g : Hex.ZPoly) (p a : Nat)
     (hg : Hex.DensePoly.Monic g) (hgdeg : 0 < g.degree?.getD 0)
     {mval : Nat} (hpow : Hex.powLtWord? p a = some mval)
@@ -404,7 +406,7 @@ theorem cldQuotientModWord?_eq (f g : Hex.ZPoly) (p a : Nat)
       rfl
     rw [hWO, hqWeq, hnum, hgdiv, hCM]
 
-/-- The word-sized dispatch in `cldQuotientMod` agrees with the bignum reference
+/-- The word-sized selection in `cldQuotientMod` agrees with the bignum reference
 `cldQuotientModBignum` for every input: the guard exactly matches the hypotheses
 of `cldQuotientModWord?_eq`, so on the fast path the word quotient is byte-identical
 and `Option.getD` returns it; off the fast path the bignum branch is taken. -/

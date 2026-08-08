@@ -6,8 +6,8 @@ Authors: Kim Morrison
 
 module
 
-public meta import HexPolyZ.Core
-public import HexPolyZMathlib.Basic
+public meta import HexPolyZ.IntegerPolynomial
+public import HexPolyZMathlib.PolynomialEquivalence
 public import Lean
 
 public section
@@ -16,7 +16,7 @@ public section
 Elaboration-time interpretation of closed `Polynomial R` expressions as
 executable `Hex.ZPoly` values, shared by the `isolate_roots` elaborator
 (`HexRealRootsMathlib`) and the `factor_poly`/`irreducibility` `Polynomial ℤ`
-provider (`HexBerlekampZassenhausMathlib`).
+extension (`HexBerlekampZassenhausMathlib`).
 
 The interpreter matches the structural heads `X / C / numerals / + / - / * /
 neg / ^ (Nat literal)` on the *raw* term (a `whnf` would unfold

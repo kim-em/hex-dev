@@ -261,7 +261,7 @@ theorem montgomeryReduce_sub_spec (ctx : MontCtx p) (Thi Tlo : UInt64)
                   montgomeryReduceNat_quotient_lt_two_p hp_pos hp_lt hpp' hT
               simp [montgomeryReduceNat, hTmod]
               simp only [UInt64.word] at hu ⊢
-              rw [← hu]
+              simp only [← hu]
               cases c2
               · simp only [Bool.toNat_false, Nat.zero_mul, Nat.add_zero]
                 by_cases hge : p ≤ addHi

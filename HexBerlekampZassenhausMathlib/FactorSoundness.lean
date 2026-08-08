@@ -6,9 +6,9 @@ Authors: Kim Morrison
 
 module
 
-public import HexBerlekampZassenhaus.ProductProofs
+public import HexBerlekampZassenhaus.FactorProduct
 public import HexBerlekampZassenhausMathlib.IntReductionMod
-public import HexBerlekampZassenhausMathlib.LatticeTier
+public import HexBerlekampZassenhausMathlib.FactorIrreducibility
 
 public section
 
@@ -121,7 +121,7 @@ The nonconstant side condition for the default executable factorization: every
 recorded polynomial factor has positive degree. This is the `hψ_nonconst` clause
 uniqueness/checker callers would otherwise reconstruct.
 
-Positive degree is *not* derivable from `shouldRecordPolynomialFactor` alone — a
+Positive degree is *not* derivable from `shouldRecordPolynomialFactor` alone; a
 constant like `Hex.DensePoly.C 2` passes the recording filter, has positive
 leading coefficient, and is sign-normalized. The constant case is excluded by
 *primitivity* (content `1` forces a constant to be `±1`), so this carries the
@@ -181,7 +181,6 @@ theorem factorize_unique_of_product_default
     (factorize_entries_normalizeFactorSign f) hφ_nonconst
     (factorize_entries_degree_pos f hf_ne) hirr
 
-set_option maxHeartbeats 1000000 in
 /--
 The executable irreducibility checker `Hex.ZPoly.isIrreducible` agrees with the
 `Hex.ZPoly.Irreducible` class.
@@ -195,7 +194,7 @@ positive-degree arm composes `factorize_irreducible_of_nonUnit` (forward) with
 `factorize_unique_of_product_default` (backward, which pins the factor count to the
 `normalizedFactors` cardinality).
 -/
-theorem Hex.ZPoly.isIrreducible_iff (f : Hex.ZPoly) :
+theorem _root_.Hex.ZPoly.isIrreducible_iff (f : Hex.ZPoly) :
     Hex.ZPoly.isIrreducible f = true ↔ Hex.ZPoly.Irreducible f := by
   rw [Hex.ZPoly.isIrreducible]
   by_cases hf0 : f = 0
@@ -367,7 +366,7 @@ theorem Hex.ZPoly.isIrreducible_iff (f : Hex.ZPoly) :
         simp only [hentry_list, Bool.and_eq_true, decide_eq_true_eq, beq_iff_eq]
         exact ⟨⟨hscalar1, hsize1⟩, by simpa using hmult1⟩
 
-instance Hex.ZPoly.instDecidableIrreducible (f : Hex.ZPoly) :
+instance _root_.Hex.ZPoly.instDecidableIrreducible (f : Hex.ZPoly) :
     Decidable (Hex.ZPoly.Irreducible f) :=
   decidable_of_iff _ (Hex.ZPoly.isIrreducible_iff f)
 

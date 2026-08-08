@@ -44,7 +44,7 @@ arithmetic. See {ref "hex-poly-fp-cross-references"}[Cross-references].
 
 # The prime-field polynomial type
 %%%
-tag := "hex-poly-fp-core-type"
+tag := "hex-poly-fp-type"
 %%%
 
 A prime-field polynomial is a dense polynomial whose coefficients are

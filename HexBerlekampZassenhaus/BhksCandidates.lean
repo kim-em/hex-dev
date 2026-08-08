@@ -9,18 +9,18 @@ module
 public meta import HexArith.Nat.Prime
 public meta import HexBerlekamp.Factor
 public meta import HexBerlekamp.Irreducibility
-public meta import HexHensel.Basic
+public meta import HexHensel.ModularPolynomial
 public meta import HexHensel.Multifactor
 public meta import HexHensel.QuadraticMultifactor
 public meta import HexMatrix.Basic
 public meta import HexPolyZ.Mignotte
-public meta import HexLLL.Basic
+public meta import HexLLL
 public import HexArith.Nat.Prime
 public import HexBerlekamp.Factor
 public import HexBerlekamp.Irreducibility
 public import HexHensel.Multifactor
 public import HexHensel.QuadraticMultifactor
-public import HexLLL.Basic
+public import HexLLL
 -- Kernel-reducible `Array`/`Vector` equality; see `HexBasic.ArrayDecEq`.
 -- Drop once leanprover/lean4#14270 lands and the toolchain is bumped past it.
 public import HexBasic.ArrayDecEq
@@ -28,10 +28,10 @@ public import HexBasic.ArrayDecEq
 public import HexBerlekampZassenhaus.Lattice
 public meta import HexBerlekampZassenhaus.Lattice
 import all HexBerlekampZassenhaus.PrimeSelection
-import all HexBerlekampZassenhaus.Records
+import all HexBerlekampZassenhaus.FactorizationData
 import all HexBerlekampZassenhaus.Certificate
 import all HexBerlekampZassenhaus.ChoosePrimeData
-import all HexBerlekampZassenhaus.ReassemblyProofs
+import all HexBerlekampZassenhaus.FactorizationResult
 import all HexBerlekampZassenhaus.Lattice
 
 open scoped Hex   -- kernel-reducible Array/Vector equality; see HexBasic.ArrayDecEq
@@ -153,11 +153,13 @@ def bhksProjectedRowsAsRatMatrix
   Matrix.ofFn fun i j =>
     ((rows.getD i.val #[]).getD j.val (0 : Int) : Rat)
 
+/-- The entries in column `j` of a row-reduced projected matrix. -/
 @[expose]
 def bhksColumnSignature
     (echelonRows : Array (Array Rat)) (j : Nat) : Array Rat :=
   echelonRows.map (·.getD j 0)
 
+/-- Add a column index to the class with the same signature, or start a new class. -/
 @[expose]
 def bhksInsertSignatureClass
     (sig : Array Rat) (j : Nat) :
@@ -167,6 +169,7 @@ def bhksInsertSignatureClass
       if s = sig then (s, members ++ [j]) :: rest
       else (s, members) :: bhksInsertSignatureClass sig j rest
 
+/-- The zero-one indicator vector of a class of column indices. -/
 @[expose]
 def bhksClassIndicator (r : Nat) (members : List Nat) : Array Int :=
   ((List.range r).map (fun i => if i ∈ members then (1 : Int) else 0)).toArray
@@ -227,10 +230,12 @@ private def bhksNoProgressProjectedRows : BhksProjectedRows :=
 #guard bhksEquivalenceClassIndicators bhksNoProgressProjectedRows =
   #[#[1, 0, 0], #[0, 1, 0], #[0, 0, 1]]
 
+/-- The prime-power modulus of a Hensel lift. -/
 @[expose]
 def liftModulus (d : LiftData) : Nat :=
   d.p ^ d.k
 
+/-- Replace every coefficient by its centred representative modulo `m`. -/
 @[expose]
 def centeredLiftPoly (f : ZPoly) (m : Nat) : ZPoly :=
   DensePoly.ofCoeffs <| f.toArray.map fun coeff => centeredModNat coeff m
@@ -248,6 +253,7 @@ theorem coeff_centeredLiftPoly (f : ZPoly) (m i : Nat) :
     change (0 : Int) = centeredModNat 0 m
     exact hzero.symm
 
+/-- A sufficiently large modulus makes centred coefficient recovery exact. -/
 theorem centeredLiftPoly_reduceModPow_eq_of_coeff_natAbs_le
     (g : ZPoly) (p k B : Nat)
     (hbound : ∀ i, (g.coeff i).natAbs ≤ B)
@@ -260,6 +266,7 @@ theorem centeredLiftPoly_reduceModPow_eq_of_coeff_natAbs_le
   rw [ZPoly.coeff_reduceModPow_eq_emod_of_pos _ _ _ _ hpk]
   exact centeredModNat_emod_eq_of_natAbs_le (g.coeff i) (p ^ k) B (hbound i) hsep
 
+/-- Equal sufficiently precise residues recover the same coefficient-bounded polynomial. -/
 theorem centeredLiftPoly_eq_of_reduceModPow_eq
     (g h : ZPoly) (p k B : Nat)
     (hbound : ∀ i, (g.coeff i).natAbs ≤ B)
@@ -298,6 +305,7 @@ theorem normalizeCandidateFactor_eq_of_primitive_nonneg_leading
   have hnot_neg : ¬ DensePoly.leadingCoeff g < 0 := Int.not_lt.mpr hsign
   rw [if_neg hnot_neg]
 
+/-- Select the lifted factors marked by a nonempty zero-one indicator. -/
 def bhksIndicatorSelectedFactors
     (liftedFactors : Array ZPoly) (indicator : Array Int) : Option (Array ZPoly) :=
   if indicator.size != liftedFactors.size then
@@ -411,9 +419,10 @@ Reconstruct and verify one BHKS equivalence-class indicator.
 
 The indicator row is supplied by the later RREF recovery stage. This helper
 only checks that the row is a nonempty `0/1` vector over the lifted factors,
-forms the selected lifted-factor product, applies the centred integer lift,
-dilates back from the monic-transform coordinate, normalizes content and sign,
-and accepts the candidate only when exact division of `f` succeeds.
+forms the selected lifted-factor product, scales it by `f`'s leading
+coefficient in the same coordinate, applies the centred integer lift,
+normalizes content and sign, and accepts the candidate only when exact
+division of `f` succeeds.
 -/
 def bhksIndicatorCandidate?
     (f : ZPoly) (d : LiftData) (indicator : Array Int) : Option (ZPoly × ZPoly) :=
@@ -422,8 +431,9 @@ def bhksIndicatorCandidate?
   | some selected =>
       let modulus := liftModulus d
       let candidate := normalizeFactorSign <| normalizeCandidateFactor <|
-        ZPoly.dilate (DensePoly.leadingCoeff f) <|
-          centeredLiftPoly (Array.polyProduct selected) modulus
+        centeredLiftPoly
+          (DensePoly.scale (DensePoly.leadingCoeff f)
+            (Array.polyProduct selected)) modulus
       if shouldRecordPolynomialFactor candidate then
         match exactQuotient? f candidate with
         | some quotient => some (candidate, quotient)
@@ -431,7 +441,6 @@ def bhksIndicatorCandidate?
       else
         none
 
-set_option maxHeartbeats 800000
 private theorem bhksIndicatorCandidate?_normalizeFactorSign
     {f : ZPoly} {d : LiftData} {indicator : Array Int}
     {candidate quotient : ZPoly}
@@ -446,8 +455,9 @@ private theorem bhksIndicatorCandidate?_normalizeFactorSign
       let modulus := liftModulus d
       let candidate0 :=
         normalizeCandidateFactor
-          (ZPoly.dilate (DensePoly.leadingCoeff f)
-            (centeredLiftPoly (Array.polyProduct selected) modulus))
+          (centeredLiftPoly
+            (DensePoly.scale (DensePoly.leadingCoeff f)
+              (Array.polyProduct selected)) modulus)
       let candidate' := normalizeFactorSign candidate0
       change
         (if shouldRecordPolynomialFactor candidate' then
@@ -483,8 +493,9 @@ private theorem bhksIndicatorCandidate?_shouldRecord
       let modulus := liftModulus d
       let candidate0 :=
         normalizeCandidateFactor
-          (ZPoly.dilate (DensePoly.leadingCoeff f)
-            (centeredLiftPoly (Array.polyProduct selected) modulus))
+          (centeredLiftPoly
+            (DensePoly.scale (DensePoly.leadingCoeff f)
+              (Array.polyProduct selected)) modulus)
       let candidate' := normalizeFactorSign candidate0
       change
         (if shouldRecordPolynomialFactor candidate' then
@@ -526,8 +537,9 @@ theorem bhksIndicatorCandidate?_dvd
       let modulus := liftModulus d
       let candidate0 :=
         normalizeCandidateFactor
-          (ZPoly.dilate (DensePoly.leadingCoeff f)
-            (centeredLiftPoly (Array.polyProduct selected) modulus))
+          (centeredLiftPoly
+            (DensePoly.scale (DensePoly.leadingCoeff f)
+              (Array.polyProduct selected)) modulus)
       let candidate' := normalizeFactorSign candidate0
       change
         (if shouldRecordPolynomialFactor candidate' then
@@ -627,8 +639,9 @@ theorem bhksIndicatorCandidate?_primitive
       let modulus := liftModulus d
       let candidate0 :=
         normalizeCandidateFactor
-          (ZPoly.dilate (DensePoly.leadingCoeff f)
-            (centeredLiftPoly (Array.polyProduct selected) modulus))
+          (centeredLiftPoly
+            (DensePoly.scale (DensePoly.leadingCoeff f)
+              (Array.polyProduct selected)) modulus)
       let candidate' := normalizeFactorSign candidate0
       change
         (if shouldRecordPolynomialFactor candidate' then
@@ -764,27 +777,27 @@ private theorem bhksIndicatorCandidate?_positive_degree
 
 /--
 The candidate returned by a successful `bhksIndicatorCandidate?` call is
-exactly the canonical normalization of the centred lift after dilation from the
-monic-transform coordinate. This is a Mathlib-free surface lemma that
-downstream Mathlib-side proofs use to identify the candidate against the
-dilated centred lift, avoiding the need to reference the private `liftModulus`
-definition from outside this file.
+exactly the canonical normalization of the direct-coordinate scaled centred
+lift. This is a Mathlib-free surface lemma that avoids exposing the private
+`liftModulus` definition.
 -/
-theorem bhksIndicatorCandidate?_eq_normalized_dilatedCenteredLift
+theorem bhksIndicatorCandidate?_eq_normalized_directLift
     {f : ZPoly} {d : LiftData} {indicator : Array Int}
     {candidate quotient : ZPoly} {selected : Array ZPoly}
     (h : bhksIndicatorCandidate? f d indicator = some (candidate, quotient))
     (hselected : bhksIndicatorSelectedFactors d.liftedFactors indicator = some selected) :
     candidate = normalizeFactorSign (normalizeCandidateFactor
-      (ZPoly.dilate (DensePoly.leadingCoeff f)
-        (centeredLiftPoly (Array.polyProduct selected) (d.p ^ d.k)))) := by
+      (centeredLiftPoly
+        (DensePoly.scale (DensePoly.leadingCoeff f)
+          (Array.polyProduct selected)) (d.p ^ d.k))) := by
   unfold bhksIndicatorCandidate? at h
   rw [hselected] at h
   let modulus := liftModulus d
   let candidate0 :=
     normalizeCandidateFactor
-      (ZPoly.dilate (DensePoly.leadingCoeff f)
-        (centeredLiftPoly (Array.polyProduct selected) modulus))
+      (centeredLiftPoly
+        (DensePoly.scale (DensePoly.leadingCoeff f)
+          (Array.polyProduct selected)) modulus)
   let candidate' := normalizeFactorSign candidate0
   change
     (if shouldRecordPolynomialFactor candidate' then
@@ -806,14 +819,9 @@ theorem bhksIndicatorCandidate?_eq_normalized_dilatedCenteredLift
     simp at h
 
 /--
-A2 reconstruction surface for a single BHKS indicator, stated at the
-Mathlib-free executable layer. If the indicator selects `selected`, the
-dilation of the selected product's centred lift is the expected factor, the
-expected factor is already canonical under primitive/sign normalization, and it
-divides `f` as a positive-leading-coefficient positive-degree factor, then
-`bhksIndicatorCandidate?` returns that expected factor with some quotient.
+A2 reconstruction surface for a single direct-coordinate BHKS indicator.
 -/
-theorem bhksIndicatorCandidate?_eq_some_of_dilatedCenteredLift
+theorem bhksIndicatorCandidate?_eq_some_of_directLift
     (f : ZPoly) (d : LiftData) (indicator : Array Int)
     (selected : Array ZPoly) (expectedFactor : ZPoly)
     (hselected :
@@ -823,24 +831,27 @@ theorem bhksIndicatorCandidate?_eq_some_of_dilatedCenteredLift
     (hexpected_sign : 0 ≤ DensePoly.leadingCoeff expectedFactor)
     (hexpected_pos_lc : 0 < DensePoly.leadingCoeff expectedFactor)
     (hexpected_degree : 0 < expectedFactor.degree?.getD 0)
-    (hdilated :
-      ZPoly.dilate (DensePoly.leadingCoeff f)
-          (centeredLiftPoly (Array.polyProduct selected) (d.p ^ d.k)) =
+    (hrecovered :
+      centeredLiftPoly
+          (DensePoly.scale (DensePoly.leadingCoeff f)
+            (Array.polyProduct selected)) (d.p ^ d.k) =
         expectedFactor) :
     ∃ quotient,
       bhksIndicatorCandidate? f d indicator = some (expectedFactor, quotient) := by
   have hnormalizeCandidate :
       normalizeCandidateFactor
-          (ZPoly.dilate (DensePoly.leadingCoeff f)
-            (centeredLiftPoly (Array.polyProduct selected) (d.p ^ d.k))) =
+          (centeredLiftPoly
+            (DensePoly.scale (DensePoly.leadingCoeff f)
+              (Array.polyProduct selected)) (d.p ^ d.k)) =
         expectedFactor := by
-    rw [hdilated]
+    rw [hrecovered]
     exact normalizeCandidateFactor_eq_of_primitive_nonneg_leading
       expectedFactor hexpected_prim hexpected_sign
   have hnormalize :
       normalizeFactorSign (normalizeCandidateFactor
-          (ZPoly.dilate (DensePoly.leadingCoeff f)
-            (centeredLiftPoly (Array.polyProduct selected) (d.p ^ d.k)))) =
+          (centeredLiftPoly
+            (DensePoly.scale (DensePoly.leadingCoeff f)
+              (Array.polyProduct selected)) (d.p ^ d.k))) =
         expectedFactor := by
     rw [hnormalizeCandidate]
     exact normalizeFactorSign_eq_self_of_leadingCoeff_nonneg expectedFactor hexpected_sign
@@ -877,8 +888,9 @@ theorem bhksIndicatorCandidate?_eq_some_of_dilatedCenteredLift
     (let modulus := liftModulus d
      let candidate :=
        normalizeFactorSign <| normalizeCandidateFactor
-         (ZPoly.dilate (DensePoly.leadingCoeff f)
-           (centeredLiftPoly (Array.polyProduct selected) modulus))
+         (centeredLiftPoly
+           (DensePoly.scale (DensePoly.leadingCoeff f)
+             (Array.polyProduct selected)) modulus)
      if shouldRecordPolynomialFactor candidate then
        match exactQuotient? f candidate with
        | some quotient => some (candidate, quotient)
@@ -887,47 +899,113 @@ theorem bhksIndicatorCandidate?_eq_some_of_dilatedCenteredLift
        none) = some (expectedFactor, quotient)
   simp [liftModulus, hnormalize, hrecord, hquotient]
 
-/--
-Reconstruct one monic-transform BHKS indicator from the honest primitive-part
-identity carried by a recovered monic factor.
-
-Unlike `bhksIndicatorCandidate?_eq_some_of_dilatedCenteredLift`, this surface
-does not require the raw dilation to be primitive.  This is the shape needed
-for nonmonic inputs: the selected monic factor may acquire content after
-dilation, and the executable candidate deliberately removes that content.
--/
-theorem bhksIndicatorCandidate?_eq_some_of_monicLift
+/-- Reconstruct one direct-coordinate BHKS indicator when the canonical
+scaled recombination candidate is already known exactly. -/
+theorem bhksIndicatorCandidate?_eq_some_of_scaledCandidate
     (f : ZPoly) (d : LiftData) (indicator : Array Int)
-    (selected : Array ZPoly) (monicFactor expectedFactor : ZPoly)
+    (selected : Array ZPoly) (expectedFactor : ZPoly)
+    (selectedProduct : ZPoly)
+    (hselected :
+      bhksIndicatorSelectedFactors d.liftedFactors indicator = some selected)
+    (hproduct : Array.polyProduct selected = selectedProduct)
+    (hdvd : expectedFactor ∣ f)
+    (hexpected_pos_lc : 0 < DensePoly.leadingCoeff expectedFactor)
+    (hexpected_degree : 0 < expectedFactor.degree?.getD 0)
+    (hrecovered :
+      normalizeFactorSign
+          (ZPoly.primitivePart
+            (centeredLiftPoly
+              (DensePoly.scale (DensePoly.leadingCoeff f)
+                selectedProduct)
+              (d.p ^ d.k))) =
+        expectedFactor) :
+    ∃ quotient,
+      bhksIndicatorCandidate? f d indicator =
+        some (expectedFactor, quotient) := by
+  have hnormalize :
+      normalizeFactorSign
+          (normalizeCandidateFactor
+            (centeredLiftPoly
+              (DensePoly.scale (DensePoly.leadingCoeff f)
+                (Array.polyProduct selected)) (d.p ^ d.k))) =
+        expectedFactor := by
+    rw [hproduct]
+    change normalizeFactorSign
+        (normalizeFactorSign
+          (ZPoly.primitivePart
+            (centeredLiftPoly
+              (DensePoly.scale (DensePoly.leadingCoeff f)
+                selectedProduct)
+              (d.p ^ d.k)))) =
+      expectedFactor
+    rw [normalizeFactorSign_idem]
+    exact hrecovered
+  have hrecord :
+      shouldRecordPolynomialFactor expectedFactor = true := by
+    apply shouldRecordPolynomialFactor_eq_true_of_ne
+    · intro hzero
+      rw [hzero] at hexpected_degree
+      simp [DensePoly.degree?] at hexpected_degree
+    · intro hone
+      rw [hone] at hexpected_degree
+      have hdeg0 : (DensePoly.degree? (1 : ZPoly)).getD 0 = 0 := rfl
+      rw [hdeg0] at hexpected_degree
+      omega
+    · intro hneg
+      rw [hneg] at hexpected_degree
+      have hdeg0 :
+          (DensePoly.degree? (DensePoly.C (-1 : Int))).getD 0 = 0 := by
+        simp
+      rw [hdeg0] at hexpected_degree
+      omega
+  rcases hdvd with ⟨quotient, hquotient_mul⟩
+  have hmul : quotient * expectedFactor = f := by
+    rw [DensePoly.mul_comm_poly (S := Int)]
+    exact hquotient_mul.symm
+  have hquotient :
+      exactQuotient? f expectedFactor = some quotient :=
+    exactQuotient?_eq_some_of_pos_lc_pos_degree_mul_eq
+      hexpected_pos_lc hexpected_degree hmul
+  refine ⟨quotient, ?_⟩
+  unfold bhksIndicatorCandidate?
+  rw [hselected]
+  simp [liftModulus, hnormalize, hrecord, hquotient]
+
+/-- Reconstruct one direct-coordinate BHKS indicator from its primitive-part
+recovery identity. -/
+theorem bhksIndicatorCandidate?_eq_some_of_directRecovery
+    (f : ZPoly) (d : LiftData) (indicator : Array Int)
+    (selected : Array ZPoly) (expectedFactor : ZPoly)
     (hselected :
       bhksIndicatorSelectedFactors d.liftedFactors indicator = some selected)
     (hdvd : expectedFactor ∣ f)
     (hexpected_sign : 0 ≤ DensePoly.leadingCoeff expectedFactor)
     (hexpected_pos_lc : 0 < DensePoly.leadingCoeff expectedFactor)
     (hexpected_degree : 0 < expectedFactor.degree?.getD 0)
-    (hcenter :
-      centeredLiftPoly (Array.polyProduct selected) (d.p ^ d.k) = monicFactor)
     (hrecovered :
       ZPoly.primitivePart
-          (ZPoly.dilate (DensePoly.leadingCoeff f) monicFactor) =
+          (centeredLiftPoly
+            (DensePoly.scale (DensePoly.leadingCoeff f)
+              (Array.polyProduct selected)) (d.p ^ d.k)) =
         expectedFactor) :
     ∃ quotient,
       bhksIndicatorCandidate? f d indicator =
         some (expectedFactor, quotient) := by
   have hnormalizeCandidate :
       normalizeCandidateFactor
-          (ZPoly.dilate (DensePoly.leadingCoeff f)
-            (centeredLiftPoly (Array.polyProduct selected) (d.p ^ d.k))) =
+          (centeredLiftPoly
+            (DensePoly.scale (DensePoly.leadingCoeff f)
+              (Array.polyProduct selected)) (d.p ^ d.k)) =
         expectedFactor := by
-    rw [hcenter]
     unfold normalizeCandidateFactor
     rw [hrecovered]
     simp [Int.not_lt.mpr hexpected_sign]
   have hnormalize :
       normalizeFactorSign
           (normalizeCandidateFactor
-            (ZPoly.dilate (DensePoly.leadingCoeff f)
-              (centeredLiftPoly (Array.polyProduct selected) (d.p ^ d.k)))) =
+            (centeredLiftPoly
+              (DensePoly.scale (DensePoly.leadingCoeff f)
+                (Array.polyProduct selected)) (d.p ^ d.k))) =
         expectedFactor := by
     rw [hnormalizeCandidate]
     exact normalizeFactorSign_eq_self_of_leadingCoeff_nonneg
@@ -964,8 +1042,9 @@ theorem bhksIndicatorCandidate?_eq_some_of_monicLift
     (let modulus := liftModulus d
      let candidate :=
        normalizeFactorSign <| normalizeCandidateFactor
-         (ZPoly.dilate (DensePoly.leadingCoeff f)
-           (centeredLiftPoly (Array.polyProduct selected) modulus))
+         (centeredLiftPoly
+           (DensePoly.scale (DensePoly.leadingCoeff f)
+             (Array.polyProduct selected)) modulus)
      if shouldRecordPolynomialFactor candidate then
        match exactQuotient? f candidate with
        | some quotient => some (candidate, quotient)
@@ -974,11 +1053,13 @@ theorem bhksIndicatorCandidate?_eq_some_of_monicLift
        none) = some (expectedFactor, quotient)
   simp [liftModulus, hnormalize, hrecord, hquotient]
 
+/-- Count the entries equal to one among the first `r` indicator entries. -/
 def bhksIndicatorOneCount (r : Nat) (indicator : Array Int) : Nat :=
   (List.range r).foldl
     (fun count i => if indicator.getD i 0 == 1 then count + 1 else count)
     0
 
+/-- Test whether an indicator has width `r` and consists entirely of ones. -/
 def bhksIndicatorAllOnes (r : Nat) (indicator : Array Int) : Bool :=
   indicator.size == r && bhksIndicatorOneCount r indicator == r
 
@@ -1525,7 +1606,7 @@ end ZPoly.ToMonicData
 namespace ZPoly
 
 /-- Public face of the inverse-recovery keystone, stated on the `toMonic` monic
-field rather than the private `transformedCore`. For a core of degree `≥ 1`,
+field rather than the private `transformedCore`. For a square-free part of degree `≥ 1`,
 dilating `(toMonic core).monic` by the leading coefficient recovers `core`
 scaled by `leadingCoeff core ^ (degree - 1)`. Holds in both the already-monic
 and the genuine transform branch. -/
@@ -1577,8 +1658,8 @@ theorem toMonic_monic_degree_getD (core : ZPoly) :
         simp [toMonic, hmonic]]
     exact ToMonicData.transformedCore_degree_getD core (core.degree?.getD 0)
 
-/-- Stored size of the monic transform of a positive-degree core: one more than
-the core degree, in both the already-monic and genuine-transform branches. -/
+/-- Stored size of the monic transform of a positive-degree square-free part: one more than
+the square-free part degree, in both the already-monic and genuine-transform branches. -/
 theorem toMonic_monic_size_of_pos_degree (core : ZPoly)
     (hdeg : 0 < core.degree?.getD 0) :
     (toMonic core).monic.size = core.degree?.getD 0 + 1 := by

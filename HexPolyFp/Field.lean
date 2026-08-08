@@ -585,7 +585,8 @@ private theorem mod_eq_mod_of_congr_not_pos_degree
         (fun a => zmod_div_mul_cancel_of_ne a m.leadingCoeff hlead_ne)
     rw [hfmod, hgmod]
 
-/-- {name}`mod_eq_mod_of_congr` combines the positive-degree and non-positive-degree branches into the core equality of congruent remainders. -/
+/-- {name}`mod_eq_mod_of_congr` combines the positive-degree and non-positive-degree
+branches into the equality of congruent remainders. -/
 private theorem mod_eq_mod_of_congr
     [PrimeModulus p] (f g m : DensePoly (ZMod64 p))
     (hcongr : DensePoly.Congr f g m) :
@@ -602,7 +603,8 @@ private theorem sub_zero_poly (f : DensePoly (ZMod64 p)) :
   rw [DensePoly.coeff_sub_ring, DensePoly.coeff_zero]
   grind
 
-/-- {name}`mod_eq_zero_of_dvd` converts divisibility by the modulus into a zero remainder using the core remainder-congruence theorem. -/
+/-- {name}`mod_eq_zero_of_dvd` converts divisibility by the modulus into a zero
+remainder using the remainder-congruence theorem. -/
 private theorem mod_eq_zero_of_dvd
     [PrimeModulus p] (f g : DensePoly (ZMod64 p)) (hdiv : g ∣ f) :
     f % g = 0 := by
@@ -844,5 +846,67 @@ end ZMod64
 
 /-- Executable dense polynomials over the prime-field candidate `ZMod64 p`. -/
 abbrev FpPoly (p : Nat) [ZMod64.Bounds p] := DensePoly (ZMod64 p)
+
+namespace FpPoly
+
+variable {p : Nat} [ZMod64.Bounds p]
+
+/-- Finite-field remainder with the divisor's coefficient inverse computed
+once for the whole long-division pass. -/
+def modCached (f g : FpPoly p) : FpPoly p :=
+  if f.degree?.getD 0 < g.degree?.getD 0 then
+    f
+  else
+    let invLead := ZMod64.inv g.leadingCoeff
+    DensePoly.modArray f g (fun coeff => coeff * invLead)
+
+/-- Caching the divisor-leading inverse leaves the executable remainder
+unchanged. This equality is definitional for the `ZMod64` division instance and
+does not require primality of the modulus. -/
+theorem modCached_eq (f g : FpPoly p) :
+    modCached f g = DensePoly.mod f g := by
+  unfold modCached DensePoly.mod DensePoly.divMod
+  by_cases hlt : f.degree?.getD 0 < g.degree?.getD 0
+  · simp [hlt]
+  · simp only [hlt, ↓reduceIte]
+    rw [DensePoly.modArray_eq_divModArray_snd]
+    rfl
+
+/-- Euclidean GCD with one coefficient inverse per division rather than one
+per eliminated coefficient. -/
+def gcdAuxCached (r₀ r₁ : FpPoly p) (fuel : Nat) : FpPoly p :=
+  match fuel with
+  | 0 => r₀
+  | fuel + 1 =>
+      if r₁.isZero then
+        r₀
+      else
+        gcdAuxCached r₁ (modCached r₀ r₁) fuel
+
+/-- The inverse-cached loop computes the reference Euclidean remainder
+sequence exactly, including its unnormalised representative. -/
+theorem gcdAuxCached_eq (r₀ r₁ : FpPoly p) (fuel : Nat) :
+    gcdAuxCached r₀ r₁ fuel = DensePoly.gcdAux r₀ r₁ fuel := by
+  induction fuel generalizing r₀ r₁ with
+  | zero => rfl
+  | succ fuel ih =>
+      unfold gcdAuxCached DensePoly.gcdAux
+      by_cases hzero : r₁.isZero
+      · simp [hzero]
+      · simp only [hzero]
+        rw [modCached_eq]
+        exact ih _ _
+
+/-- Inverse-cached finite-field polynomial GCD. -/
+def gcdCached (f g : FpPoly p) : FpPoly p :=
+  gcdAuxCached f g (f.size + g.size + 1)
+
+/-- The inverse-cached finite-field GCD returns the exact reference
+representative. -/
+theorem gcdCached_eq (f g : FpPoly p) :
+    gcdCached f g = DensePoly.gcd f g := by
+  exact gcdAuxCached_eq f g _
+
+end FpPoly
 
 end Hex

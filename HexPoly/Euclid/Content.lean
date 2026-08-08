@@ -73,7 +73,7 @@ noncomputable def primitivePart (p : DensePoly Int) : DensePoly Int :=
     0
   else
     let c := Int.ofNat cNat
-    ofCoeffs (p.toList.map (fun coeff => coeff / c)).toArray
+    ofList (p.toList.map (fun coeff => coeff / c))
 
 /-- Runtime implementation of `primitivePart`: one `Array.map` pass over the
 stored coefficients (value-equal to `primitivePart` by
@@ -90,7 +90,7 @@ def primitivePartImpl (p : DensePoly Int) : DensePoly Int :=
 /-- The reference `primitivePart` and the `Array.map` runtime pass agree. -/
 theorem primitivePart_eq_primitivePartImpl (p : DensePoly Int) :
     primitivePart p = primitivePartImpl p := by
-  simp only [primitivePart, primitivePartImpl, ← contentNat_eq_contentNatImpl]
+  simp only [primitivePart, primitivePartImpl, ofList, ← contentNat_eq_contentNatImpl]
   by_cases h : contentNat p = 0
   · rw [if_pos h, if_pos h]
   · rw [if_neg h, if_neg h]
@@ -137,14 +137,16 @@ private theorem contentNat_dvd_coeff (p : DensePoly Int) (n : Nat) :
   by_cases hn : n < p.size
   · rw [Int.ofNat_dvd_left]
     unfold contentNat coeff toList toArray
-    have hmem : p.coeffs[n].natAbs ∈ p.coeffs.toList.map Int.natAbs := by
+    have hn' : n < p.coeffs.size := by simpa [size] using hn
+    have hmem : (p.coeffs[n]'hn').natAbs ∈ p.coeffs.toList.map Int.natAbs := by
       apply List.mem_map.mpr
-      refine ⟨p.coeffs[n], ?_, rfl⟩
+      refine ⟨p.coeffs[n]'hn', ?_, rfl⟩
       rw [List.mem_iff_getElem]
-      exact ⟨n, by simpa [size] using hn, by simp [Array.getElem_toList]; rfl⟩
+      exact ⟨n, by simpa [size] using hn, by simp [Array.getElem_toList]⟩
     have hfold := foldl_gcd_dvd_of_mem (acc := 0) hmem
-    have hcoeff : (p.coeffs.getD n (Zero.zero : Int)).natAbs = p.coeffs[n].natAbs := by
-      change (p.coeffs.getD n (0 : Int)).natAbs = p.coeffs[n].natAbs
+    have hcoeff : (p.coeffs.getD n (Zero.zero : Int)).natAbs =
+        (p.coeffs[n]'hn').natAbs := by
+      change (p.coeffs.getD n (0 : Int)).natAbs = (p.coeffs[n]'hn').natAbs
       rw [Array.getElem_eq_getD (0 : Int)]
     rw [hcoeff]
     simpa only [List.foldl_map] using hfold
@@ -357,7 +359,7 @@ private def finiteCoeffConvolution (pCoeff qCoeff : Nat → Int) (n : Nat) : Int
   (List.range (n + 1)).foldl (fun acc r => acc + pCoeff r * qCoeff (n - r)) 0
 
 private def finiteCoeffFamilyPoly (coeff : Nat → Int) (bound : Nat) : DensePoly Int :=
-  ofCoeffs ((List.range (bound + 1)).map coeff).toArray
+  ofList ((List.range (bound + 1)).map coeff)
 
 /-- `finiteCoeffFamilyPoly coeff bound` reads back its defining coefficient
 `coeff i` at every index `i ≤ bound`. -/
@@ -365,7 +367,7 @@ private theorem finiteCoeffFamilyPoly_coeff_of_le
     (coeff : Nat → Int) (bound i : Nat) (hi : i ≤ bound) :
     (finiteCoeffFamilyPoly coeff bound).coeff i = coeff i := by
   unfold finiteCoeffFamilyPoly
-  rw [coeff_ofCoeffs_list]
+  rw [coeff_ofList]
   simp [hi, Nat.lt_succ_iff]
 
 /-- `finiteCoeffFamilyPoly coeff bound` has coefficient `0` at every index `i`
@@ -374,7 +376,7 @@ private theorem finiteCoeffFamilyPoly_coeff_of_lt
     (coeff : Nat → Int) (bound i : Nat) (hi : bound < i) :
     (finiteCoeffFamilyPoly coeff bound).coeff i = 0 := by
   unfold finiteCoeffFamilyPoly
-  rw [coeff_ofCoeffs_list]
+  rw [coeff_ofList]
   simp [hi, Nat.lt_succ_iff]
   rfl
 
@@ -497,7 +499,7 @@ private theorem dvd_diagonalMulCoeffTerm_of_dvd_mul_coeff_of_dvd_other_diagonal_
     simp
 
 /-- `dvd_coeff_mul_of_dvd_mul_coeff_of_dvd_other_diagonal_products`: the
-`DensePoly Int` analogue — if `d` divides `(p * q).coeff (i + j)` and every
+`DensePoly Int` analogue; if `d` divides `(p * q).coeff (i + j)` and every
 product `p.coeff r * q.coeff s` with `r + s = i + j` and `r ≠ i`, then it divides
 `p.coeff i * q.coeff j`. -/
 private theorem dvd_coeff_mul_of_dvd_mul_coeff_of_dvd_other_diagonal_products
@@ -542,7 +544,7 @@ private theorem dvd_coeff_mul_last_of_dvd_mul_coeff_of_dvd_larger_left_products
         simpa [hs] using hlarger r hir)
 
 /-- `mcCoy_grid_band_descent`: the strong-induction descent over the `(i, j)`
-grid — if predicate `D` holds whenever the left index exceeds `bound` and is
+grid; if predicate `D` holds whenever the left index exceeds `bound` and is
 preserved by the step from all larger-left cells, then `D i j` holds for every
 `i` and every `j ≤ k`. -/
 private theorem mcCoy_grid_band_descent
@@ -570,7 +572,7 @@ private theorem mcCoy_grid_band_descent
     exact hRight i j (Nat.lt_of_not_ge hi)
 
 /-- `mcCoy_top_row_descent`: the top-row corollary of `mcCoy_grid_band_descent`
-— under the same boundary and step hypotheses, `D i k` holds for every `i`. -/
+; under the same boundary and step hypotheses, `D i k` holds for every `i`. -/
 private theorem mcCoy_top_row_descent
     (D : Nat → Nat → Prop) (bound k : Nat)
     (hRight : ∀ r s, bound < r → D r s)
@@ -827,7 +829,7 @@ theorem content_mul_primitivePart (p : DensePoly Int) :
       · have hpart :
             (primitivePart p).coeff n = p.coeff n / content p := by
           unfold primitivePart content
-          rw [if_neg hc, coeff_ofCoeffs_list, list_getD_map_ediv_zero]
+          rw [if_neg hc, coeff_ofList, list_getD_map_ediv_zero]
           unfold coeff toList toArray Array.getD
           by_cases hn : n < p.coeffs.size
           · simp [hn]
@@ -953,7 +955,7 @@ theorem content_scale_int (c : Int) (p : DensePoly Int) :
   have hscale_coeffs :
       (scale c p).toList =
         trimTrailingZerosList (p.toArray.toList.map (fun x => c * x)) := by
-    unfold scale ofCoeffs toList toArray trimTrailingZeros
+    unfold scale ofList ofCoeffs toList toArray trimTrailingZeros
     simp
   rw [hscale_coeffs, foldl_gcd_natAbs_trim_eq, List.foldl_map]
   have h := foldl_gcd_natAbs_mul_const_int c p.toArray.toList 0

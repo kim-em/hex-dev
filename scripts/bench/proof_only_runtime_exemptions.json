@@ -1,0 +1,50 @@
+[
+  {
+    "path": "HexPoly/Euclid.lean",
+    "baseline_blob": "893e5013cacbf1f00dc5a3f88c99f43ee97d5958",
+    "current_blob": "6a967b30b4778ae1f5d9fed74e62452d35bac004",
+    "reason": "Adds local classical decidability to a theorem proof; compiled factorization code is unchanged."
+  },
+  {
+    "path": "HexPolyZ/Decomposition.lean",
+    "baseline_blob": "9137a73618359488c9c2f8de6a0674f7918c7bd7",
+    "current_blob": "275022ccb5ce74a3bac17daa81a2ede16fe7e963",
+    "reason": "Adds square-free-core theorem proofs and docstring changes only; executable factorization definitions are unchanged."
+  },
+  {
+    "path": "HexBerlekampZassenhaus/Classical/Candidate.lean",
+    "baseline_blob": "eb455d18622fadc04de194c129936ee771df248c",
+    "current_blob": "4efda541aabadce1a70ffe45c339274894a17d68",
+    "reason": "Rewords one docstring to drop em-dashes; no declaration, definition, or attribute changes."
+  },
+  {
+    "path": "HexPolyZ/IntegerPolynomial.lean",
+    "baseline_blob": "5e4be17de30b87f6e2545d91932c977884181fad",
+    "current_blob": "2a98177eb8b631f974050c535d88e96cd0ccdcd6",
+    "reason": "Adds reflection invariant theorems only; the executable factorization call graph is unchanged."
+  },
+  {
+    "path": "HexPolyZ/Rational.lean",
+    "baseline_blob": "e43de53cbeced2ebe811ff1a6a6fa6ceaf843c14",
+    "current_blob": "ba568b38f9482f906439858ac72b823d2b933be7",
+    "reason": "Adds an unused rational-reflection helper and supporting theorems for NumberField certificate transport; existing factorization definitions and their call graph are unchanged."
+  },
+  {
+    "path": "HexBerlekampZassenhaus/QuadraticNorm.lean",
+    "baseline_blob": null,
+    "current_blob": "1e390cb2985f73ee45c4892dac543dcebbb8f178",
+    "reason": "Adds the iterated quadratic norm and its certificate as a new module; nothing on the ZPoly.factorize path imports it, so the compiled factorization call graph is unchanged."
+  },
+  {
+    "path": "HexBerlekampZassenhaus/All.lean",
+    "baseline_blob": "a0c52128e63d3dcbb6e7b9cf522cd36304508e1a",
+    "current_blob": "6d80de18acfc61947485068478df1f28c1be044d",
+    "reason": "Adds one import of the new quadratic-norm module to the development umbrella; the released umbrella the factorization service imports is unchanged."
+  },
+  {
+    "path": "bench/HexBench/FactorService.lean",
+    "baseline_blob": "13d9e7609cc4e528012ea23e7dce7a05ad0a35f5",
+    "current_blob": "f203ec23f03eced0a8e22fe1eee53983fcacd6eb",
+    "reason": "Repoints the quadraticNormCertificate entry's three checked spans at the production definitions and adds its import; the factor entry the sweep measures is unchanged."
+  }
+]

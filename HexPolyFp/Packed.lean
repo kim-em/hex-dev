@@ -200,7 +200,7 @@ def divModArrayAuxPacked (p : Nat) [ZMod64.Bounds p]
 
 /-- Packed monic division remainder, sharing the signature of {name}`FpPoly.modByMonic`
 (so a `@[csimp]` swap would be well-typed, though it is intentionally not
-registered — see the module docstring). Packs both operand arrays, runs the
+registered; see the module docstring). Packs both operand arrays, runs the
 packed loop with `scaleLead = id` (the divisor is monic), and reconstructs the
 remainder. -/
 @[expose]

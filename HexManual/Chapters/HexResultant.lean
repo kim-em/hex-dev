@@ -35,6 +35,14 @@ correspondence between the final executable value and
 {name}`Polynomial.resultant`, including specialization and discriminant
 conventions.
 
+Exact division is governed by the algebraic law `ExactDivLaws`, which the
+correctness proofs discharge rather than assuming laws for the total `/`
+operation. The executable carries no runtime divisibility check; the algorithm
+only invokes division at factors whose divisibility the Brown recurrence has
+established:
+
+{docstring Hex.ExactDivLaws}
+
 # The executable API
 %%%
 tag := "hex-resultant-api"
@@ -281,15 +289,30 @@ determinant-defined resultant:
 
 {docstring Hex.DensePoly.toPolynomial_resultant}
 
+The executable discriminant has the same total zero/constant convention as
+Mathlib's determinant-defined discriminant:
+
+{docstring Hex.DensePoly.toPolynomial_disc}
+
+For positive-degree polynomials in characteristic zero, discriminants multiply
+with the square of the cross-resultant. The degree hypotheses exclude the
+nonunit-constant counterexample created by the total constant convention. Over
+a characteristic-zero field, nonvanishing is therefore the expected
+separability criterion:
+
+{docstring Hex.DensePoly.disc_mul}
+
+{docstring Hex.DensePoly.disc_ne_zero_iff_separable}
+
 The specialization contract retains the original formal degrees, so degree
 drops after substituting a parameter do not silently change the resultant
 convention:
 
 {docstring Hex.DensePoly.eval_resultant}
 
-Independently, Mathlib's resultant has the following proved root-product
-formula. It is the algebraic identity the later executable correspondence will
-carry into one-level field norms and Trager collision bounds:
+Mathlib's resultant has the following proved root-product formula. Together
+with the executable correspondence, this identity underlies one-level field
+norms and the Trager collision bound:
 
 {docstring Hex.DensePoly.resultant_eq_leadingCoeff_mul_prod_roots}
 
@@ -298,8 +321,8 @@ carry into one-level field norms and Trager collision bounds:
 tag := "hex-resultant-cross-references"
 %%%
 
-* {ref "hex-poly"}[HexPoly] supplies the normalized dense representation and
-  pseudo-division primitives.
+* {ref "hex-poly"}[HexPoly] supplies the normalized dense representation;
+  `HexResultant` supplies the exact pseudo-division and Brown recurrence.
 * {ref "hex-number-field"}[HexNumberField] uses bivariate specialization
   vanishing to justify factorization-lazy arithmetic.
 * {ref "hex-number-field-tower"}[HexNumberFieldTower] uses the full value and

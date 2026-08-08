@@ -134,7 +134,7 @@ In the `g :: h :: tail` arm, the four conjuncts are exactly the inputs
 complementary product `Array.polyProduct (h :: tail).toArray`, followed by the
 recursive precondition for the lifted complement:
 
-1. `LinearLiftLoopInvariant` at `n = 1` — initial state for the linear loop;
+1. `LinearLiftLoopInvariant` at `n = 1`; initial state for the linear loop;
 2. the step-degree invariant at every iteration `n ≥ 1`;
 3. the step-Bezout congruence at every iteration `n ≥ 1`;
 4. `MultifactorLiftInvariant` for the recursive tail with `lifted.h` as the
@@ -152,7 +152,7 @@ provided: the four-conjunct shape mentions per-iteration `LinearLiftLoopInvarian
 and `LinearLiftStepDegreeInvariant` quantifications that would require
 substrate lemmas (an `of_product_bezout_monic` constructor for
 `LinearLiftLoopInvariant`, plus `henselLift_h_congr_mod_base` and
-`henselLift_h_monic` analogues of the quadratic recursive bridge) that
+`henselLift_h_monic` analogues of the quadratic recursive correspondence) that
 `HexHensel/Linear.lean` does not currently expose.
 
 Callers wanting a consumer-facing Hensel-lift correctness surface should use
@@ -160,7 +160,7 @@ the quadratic flavour `QuadraticMultifactorLiftInvariant`, constructed from
 natural mod-`p` factorisation facts by
 `quadraticMultifactorLiftInvariant_of_factorsModP` (with the
 `QuadraticMultifactorLiftInvariant_of_choosePrimeData` wrapper at the
-Berlekamp-Zassenhaus boundary). The executable Berlekamp-Zassenhaus pipeline
+Berlekamp-Zassenhaus boundary). The executable Berlekamp-Zassenhaus computation
 already uses the quadratic invariant exclusively
 (`HexBerlekampZassenhaus/Basic.lean`). A Mathlib-side downstream caller that
 needs the linear-path lifted factors modulo `p^k` should obtain them via

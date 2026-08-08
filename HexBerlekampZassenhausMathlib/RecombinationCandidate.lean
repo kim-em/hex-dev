@@ -7,17 +7,17 @@ Authors: Kim Morrison
 module
 
 public import HexBerlekampZassenhaus
-public import HexBerlekampMathlib.Basic
+public import HexBerlekampMathlib.Irreducibility
 public import HexBerlekampZassenhausMathlib.UFDPartition
-public import HexHenselMathlib.Correctness
-public import HexPolyZMathlib.Basic
+public import HexHenselMathlib.HenselLemmas
+public import HexPolyZMathlib.PolynomialEquivalence
 public import HexPolyZMathlib.Mignotte
 public import Mathlib.RingTheory.Coprime.Lemmas
 public import Mathlib.RingTheory.Polynomial.UniqueFactorization
 public import Mathlib.RingTheory.PrincipalIdealDomain
 
 public import HexBerlekampZassenhausMathlib.RecombinationSplit
-import all HexBerlekampZassenhausMathlib.PublicSurface
+import all HexBerlekampZassenhausMathlib.ModularPolynomial
 import all HexBerlekampZassenhausMathlib.ModPFactor
 import all HexBerlekampZassenhausMathlib.LiftedFactor
 import all HexBerlekampZassenhausMathlib.M1Recovery
@@ -59,7 +59,7 @@ theorem recombinationCandidate_eq_liftedFactorProductCandidate
 
 namespace liftedRecoveryCandidate
 
-/-- On monic cores, the recovered non-monic candidate is the executable
+/-- On monic square-free parts, the recovered non-monic candidate is the executable
 unscaled recombination candidate. -/
 theorem eq_recombinationCandidate_of_lc_one
     {core : Hex.ZPoly} {d : Hex.LiftData} {S : LiftedFactorSubset d}
@@ -77,7 +77,7 @@ theorem subsetSplits_nil_left_mem (xs : List Hex.ZPoly) :
   | nil => exact Hex.subsetSplits_nil_mem
   | cons x xs ih => exact Hex.subsetSplits_cons_right_mem ih
 
-/-- Membership bridge between the two recombination enumerators: every
+/-- Membership correspondence between the two recombination enumerators: every
 `(selected, rest)` partition the size-ordered enumerator
 `subsetsOfSizeWithComplement` produces is also an (order-preserving) member of
 the full `subsetSplits` enumeration.  Both enumerators range over exactly the
@@ -145,11 +145,11 @@ selected component and partitions the remaining tail by
 the `(selected, rejected)` list partition of a lifted-factor subset `S`: its
 selected sublist is `liftedSubsetSelectedList d S`, hence its product is the
 proof-side `liftedFactorProduct d S`, and the executable scaled candidate built
-from the selected product (the candidate `scaledRecombinationSmartCandLoop`
-forms, with `coreLc = leadingCoeff core` and `modulus = d.p ^ d.k`) is exactly
-the proof-side `liftedRecoveryCandidate core d S`.
+from the selected product (with `coreLc = leadingCoeff core` and
+`modulus = d.p ^ d.k`) is exactly the proof-side
+`liftedRecoveryCandidate core d S`.
 
-Existence of the identifying subset needs no distinctness hypothesis — the
+Existence of the identifying subset needs no distinctness hypothesis; the
 subset is recovered from the mask over the matched *index* list, which is
 intrinsically `Nodup`.  Distinctness of the lifted factors is what pins the
 subset *uniquely*; that is supplied separately by
@@ -191,10 +191,8 @@ theorem subsetsOfSizeWithComplement_liftedFactors_exists_subset
 
 /-- The selected-list map of a lifted-factor subset determines the subset when
 the lifted factors are distinct: `liftedSubsetSelectedList d` is injective in
-`S` whenever `liftedFactor d` is injective.  This is the distinctness step the
-`RecoveredScaledSearch.covers` completeness argument relies on, discharged for
-`toMonicLiftData core B primeData` (squarefree `core`) by the existing
-mod-`p`-nodup lifted-factor injectivity lemmas. -/
+`S` whenever `liftedFactor d` is injective. This is the support-uniqueness step
+used by direct recombination completeness. -/
 theorem liftedSubsetSelectedList_injective
     {d : Hex.LiftData} (hinj : Function.Injective (liftedFactor d))
     {S S' : LiftedFactorSubset d}
@@ -215,7 +213,7 @@ single proof-side `liftedRecoveryCandidate core d S`.
 
 This packages `subsetsOfSizeWithComplement_liftedFactors_exists_subset` with the
 distinctness-driven uniqueness, taking `Function.Injective (liftedFactor d)` as
-an explicit hypothesis (the same one `RecoveredScaledSearch.covers` carries). -/
+an explicit hypothesis. -/
 theorem subsetsOfSizeWithComplement_liftedFactors_exists_unique_subset
     (core : Hex.ZPoly) (d : Hex.LiftData)
     (hinj : Function.Injective (liftedFactor d))
@@ -245,13 +243,12 @@ size-ordered coverage walk: at an intermediate state whose running local-factor
 list matches a sub-universe `J` (`LiftedFactorListMatches d J localFactors`), a
 head-forced size-ordered split of the tail is the `(selected, rejected)` list
 partition of a subset `T ⊆ J` containing `J.min'`.  The rejected component is the
-selected list of `J \ T` (the natural form for the descent into `scaledRecombinationSmartAux`
-on the rest list), and the product / candidate identities specialise as before.
+selected list of `J \ T` (the natural form for recursion on the rest list),
+and the product / candidate identities specialise as before.
 
 This is the shape consumed by the recursive coverage proof while walking
-`scaledRecombinationSmartAux`/`SizeLoop`/`CandLoop`, where the running
-`localFactors` is the matched list of the remaining indices `J`, not the full
-universe. -/
+the head-forced subset search, where the running `localFactors` is the matched
+list of the remaining indices `J`, not the full universe. -/
 theorem subsetsOfSizeWithComplement_liftedFactors_exists_subset_of_matches
     (core : Hex.ZPoly) (d : Hex.LiftData)
     {J : LiftedFactorSubset d} {localFactors : List Hex.ZPoly}
@@ -283,12 +280,12 @@ theorem subsetsOfSizeWithComplement_liftedFactors_exists_subset_of_matches
     rw [hsel_eq, polyProduct_liftedSubsetSelectedList_eq_liftedFactorProduct]
 
 /--
-On a monic core, the partition's lifted-recovery equality upgrades to the
+On a monic polynomial, the partition's lifted-recovery equality upgrades to the
 executable recombination-candidate equality consumed by the search recursion.
 
 The partition's `liftedRecoveryCandidate_eq` field soundly pins the recovered
 candidate `liftedRecoveryCandidate core d S` to the represented factor `f`; on a
-monic core, `liftedRecoveryCandidate.eq_recombinationCandidate_of_lc_one`
+monic polynomial, `liftedRecoveryCandidate.eq_recombinationCandidate_of_lc_one`
 rewrites that into the unscaled executable `recombinationCandidate d S`. This is
 the sound replacement for passing `RepresentsIntegerFactorAtLift` to the old
 scaled-product modular recovery lemmas.
@@ -339,7 +336,7 @@ theorem representingSubset_subset_of_dvd_recombinationCandidate
 /-- Abstract-bound variant of
 `representingSubset_subset_of_dvd_recombinationCandidate`: takes
 `_B' : Nat`, `_hvalid : ∀ i, (f.coeff i).natAbs ≤ _B'`, and
-`_hprecision : 2 * _B' < d.p ^ d.k` in place of the core-shape
+`_hprecision : 2 * _B' < d.p ^ d.k` in place of the input-shape
 `defaultFactorCoeffBound core` precision constraint.  Both the
 abstract bound and the precision hypothesis are vestigial here (the
 proof body delegates to the structural support field of
@@ -375,7 +372,7 @@ candidate under a lifted-factor subset partition.
 
 This is the recovered-coordinate sibling of
 `representingSubset_subset_of_dvd_recombinationCandidate`: it projects the
-partition's sound recovered support field directly, without routing through the
+partition's sound recovered support field directly, without handling through the
 unscaled product-candidate surface. -/
 theorem representingSubset_subset_of_dvd_liftedRecoveryCandidate
     {core target f : Hex.ZPoly} {d : Hex.LiftData}
@@ -397,7 +394,7 @@ theorem representingSubset_subset_of_dvd_liftedRecoveryCandidate
 /-- Abstract-bound variant of
 `representingSubset_subset_of_dvd_liftedRecoveryCandidate`: takes
 `_B' : Nat`, `_hvalid : ∀ i, (f.coeff i).natAbs ≤ _B'`, and
-`_hprecision : 2 * _B' < d.p ^ d.k` in place of the core-shape
+`_hprecision : 2 * _B' < d.p ^ d.k` in place of the input-shape
 `defaultFactorCoeffBound core` precision constraint.  The proof body delegates
 directly to the recovered support field of `LiftedFactorSubsetPartition`. -/
 theorem representingSubset_subset_of_dvd_liftedRecoveryCandidate_of_bound
@@ -419,13 +416,13 @@ theorem representingSubset_subset_of_dvd_liftedRecoveryCandidate_of_bound
   exact hpartition.support_subset_of_dvd_liftedRecoveryCandidate
     hirr hfactor_dvd_target hTJ hfactor_dvd_candidate hSJ hrep
 
-/-- Primitive + positive-leading-core variant of
+/-- Primitive + positive-leading-coefficient polynomial variant of
 `representingSubset_subset_of_dvd_recombinationCandidate`.
 
 The original `hcore_monic` parameter is vestigial in the monic version (the
 proof body never uses it), so the primitive variant has identical body and
 threads `hcore_primitive` and `hcore_lc_pos` purely for API uniformity with
-the rest of the primitive-core chain. -/
+the rest of the primitive-polynomial chain. -/
 theorem representingSubset_subset_of_dvd_recombinationCandidate_of_primitive_pos_lc_core
     {core target f : Hex.ZPoly} {d : Hex.LiftData}
     {J T S : LiftedFactorSubset d}
@@ -453,7 +450,7 @@ theorem representingSubset_subset_of_dvd_recombinationCandidate_of_primitive_pos
 /-- Abstract-bound variant of
 `representingSubset_subset_of_dvd_recombinationCandidate_of_primitive_pos_lc_core`:
 takes `_B' : Nat`, `_hvalid : ∀ i, (f.coeff i).natAbs ≤ _B'`, and
-`_hprecision : 2 * _B' < d.p ^ d.k` in place of the core-shape
+`_hprecision : 2 * _B' < d.p ^ d.k` in place of the input-shape
 `defaultFactorCoeffBound core` precision constraint.  Both the
 abstract bound and the precision hypothesis are vestigial here; they
 are threaded purely for API parity with the broader `_of_bound`
@@ -484,7 +481,7 @@ theorem representingSubset_subset_of_dvd_recombinationCandidate_of_primitive_pos
   · exact hSJ
   · exact hrep
 
-/-- Primitive + positive-leading-core support containment for recovered
+/-- Primitive + positive-leading-coefficient polynomial support containment for recovered
 recombination candidates.
 
 The support conclusion is supplied by the recovered support field of
@@ -541,7 +538,7 @@ theorem representingSubset_subset_of_dvd_liftedRecoveryCandidate_of_primitive_po
 /-- Abstract-bound variant of
 `centeredLiftPoly_scaledLiftedFactorProduct_eq_factor_of_recovery`:
 takes `B' : Nat`, `hvalid : ∀ i, (factor.coeff i).natAbs ≤ B'`, and
-`hprecision : 2 * B' < d.p ^ d.k` in place of the core-shape
+`hprecision : 2 * B' < d.p ^ d.k` in place of the input-shape
 `defaultFactorCoeffBound core` precision constraint. -/
 theorem centeredLiftPoly_scaledLiftedFactorProduct_eq_factor_of_recovery_of_bound
     {core factor : Hex.ZPoly} {d : Hex.LiftData} {S : LiftedFactorSubset d}
@@ -584,9 +581,75 @@ theorem centeredLiftPoly_scaledLiftedFactorProduct_eq_factor_of_recovery
     (defaultFactorCoeffBound_valid core hcore_ne factor hdvd)
     hscaled hprecision
 
+/--
+Direct-coordinate proportional recovery.
+
+The selected monic Hensel product is scaled by `leadingCoeff core`; for a
+proper factor this is congruent to `c • factor`, where `c` is the cofactor's
+positive leading coefficient.  Once that proportional polynomial lies in the
+centred recovery window, `primitivePart` removes `c` and the executable direct
+candidate is exactly `factor`.
+-/
+theorem scaledRecombinationCandidate_eq_of_proportional
+    {core factor : Hex.ZPoly} {d : Hex.LiftData} {S : LiftedFactorSubset d}
+    (c : Int) (hc_pos : 0 < c)
+    (hhonest :
+      Hex.ZPoly.congr
+        (scaledLiftedFactorProduct core d S)
+        (Hex.DensePoly.scale c factor)
+        (d.p ^ d.k))
+    (hfactor_prim : Hex.ZPoly.primitivePart factor = factor)
+    (hfactor_norm : Hex.normalizeFactorSign factor = factor)
+    (B' : Nat)
+    (hvalid : ∀ i, ((Hex.DensePoly.scale c factor).coeff i).natAbs ≤ B')
+    (hprecision : 2 * B' < d.p ^ d.k) :
+    scaledRecombinationCandidate core d S = factor := by
+  have hscale_eq :
+      Hex.ZPoly.reduceModPow (scaledLiftedFactorProduct core d S) d.p d.k =
+        Hex.ZPoly.reduceModPow (Hex.DensePoly.scale c factor) d.p d.k :=
+    Hex.ZPoly.reduceModPow_eq_of_congr _ _ d.p d.k hhonest
+  have hcl :
+      Hex.centeredLiftPoly (scaledLiftedFactorProduct core d S) (d.p ^ d.k) =
+        Hex.DensePoly.scale c factor := by
+    rw [← centeredLiftPoly_reduceModPow_eq
+      (scaledLiftedFactorProduct core d S) d.p d.k d.p_pos]
+    exact Hex.centeredLiftPoly_eq_of_reduceModPow_eq
+      (Hex.DensePoly.scale c factor)
+      (scaledLiftedFactorProduct core d S)
+      d.p d.k B' hvalid hprecision hscale_eq
+  unfold scaledRecombinationCandidate
+  rw [hcl, primitivePart_scale_of_pos hc_pos factor, hfactor_prim,
+    hfactor_norm]
+
+/--
+Default-bound wrapper for direct proportional recovery from an explicit
+factor/cofactor product.
+-/
+theorem scaledRecombinationCandidate_eq_of_factorization
+    {core factor cofactor : Hex.ZPoly} {d : Hex.LiftData}
+    {S : LiftedFactorSubset d}
+    (hcore_ne : core ≠ 0)
+    (hproduct : factor * cofactor = core)
+    (hcofactor_lc_pos : 0 < Hex.DensePoly.leadingCoeff cofactor)
+    (hhonest :
+      Hex.ZPoly.congr
+        (scaledLiftedFactorProduct core d S)
+        (Hex.DensePoly.scale (Hex.DensePoly.leadingCoeff cofactor) factor)
+        (d.p ^ d.k))
+    (hfactor_prim : Hex.ZPoly.primitivePart factor = factor)
+    (hfactor_norm : Hex.normalizeFactorSign factor = factor)
+    (hprecision :
+      2 * Hex.ZPoly.defaultFactorCoeffBound core < d.p ^ d.k) :
+    scaledRecombinationCandidate core d S = factor :=
+  scaledRecombinationCandidate_eq_of_proportional
+    (Hex.DensePoly.leadingCoeff cofactor) hcofactor_lc_pos hhonest
+    hfactor_prim hfactor_norm (Hex.ZPoly.defaultFactorCoeffBound core)
+    (cofactorCoeff_le_defaultBound core factor cofactor hcore_ne hproduct)
+    hprecision
+
 /-- **M1 recovery-witness constructor (primitivePart-aware).**
 
-Build a `RecoveredAtLiftM1 core d factor S` from genuine core-coordinate recovery
+Build a `RecoveredAtLiftM1 core d factor S` from genuine original-coordinate recovery
 data, in the *honest* scale coordinate.  The recovery input is the proportional
 congruence
 
@@ -607,7 +670,7 @@ cofactor leading coefficient (the scale carries the spurious constant `c`).  The
 `primitivePart` in `RecoveredAtLiftM1.recovered_eq` is exactly what strips that
 constant, so the honest proportional congruence above is the satisfiable premise.
 
-This is the core-coordinate (`scale`/`monicTarget`) analogue of
+This is the original-coordinate (`scale`/`monicTarget`) analogue of
 `recoveredLiftOfRepresents`.  `recovered_eq` is discharged by
 `centeredLiftPoly_eq_of_reduceModPow_eq` on the target `c · factor` (its centred
 lift is `scale c factor` exactly), followed by `primitivePart (scale c factor) =
@@ -747,11 +810,11 @@ private theorem densePoly_scale_one_int (f : Hex.ZPoly) :
 /-- Abstract-bound variant of
 `recombinationCandidate_eq_factor_of_recovery_of_monic_core`: takes
 `B' : Nat`, `hvalid : ∀ i, (factor.coeff i).natAbs ≤ B'`, and
-`hprecision : 2 * B' < d.p ^ d.k` in place of the core-shape
+`hprecision : 2 * B' < d.p ^ d.k` in place of the input-shape
 `defaultFactorCoeffBound core` precision constraint.  The proof mirrors
-the core-shape original but invokes
+the input-shape original but invokes
 `centeredLiftPoly_scaledLiftedFactorProduct_eq_factor_of_recovery_of_bound`
-in place of the core-shape recovery theorem. -/
+in place of the input-shape recovery theorem. -/
 theorem recombinationCandidate_eq_factor_of_recovery_of_monic_core_of_bound
     {core factor : Hex.ZPoly} {d : Hex.LiftData} {S : LiftedFactorSubset d}
     (B' : Nat)
@@ -789,9 +852,9 @@ theorem recombinationCandidate_eq_factor_of_recovery_of_monic_core_of_bound
   exact hfactor_norm
 
 /--
-Under a monic core hypothesis, the scaled recovery theorem identifies the
+Under a monic polynomial hypothesis, the scaled recovery theorem identifies the
 unscaled executable recombination candidate with the represented integer
-factor.  This is the core recovery statement; the older
+factor.  This is the original-coordinate recovery statement; the older
 `recombinationCandidate_eq_factor_of_recovery` wrapper also accepts the
 executable record-filter hypothesis needed by some callers.
 
@@ -821,7 +884,7 @@ theorem recombinationCandidate_eq_factor_of_recovery_of_monic_core
 /-- Abstract-bound variant of
 `recombinationCandidate_eq_factor_of_recovery`: takes `B' : Nat`,
 `hvalid : ∀ i, (factor.coeff i).natAbs ≤ B'`, and
-`hprecision : 2 * B' < d.p ^ d.k` in place of the core-shape
+`hprecision : 2 * B' < d.p ^ d.k` in place of the input-shape
 `defaultFactorCoeffBound core` precision constraint.  Delegates to
 `recombinationCandidate_eq_factor_of_recovery_of_monic_core_of_bound`. -/
 theorem recombinationCandidate_eq_factor_of_recovery_of_bound
@@ -843,7 +906,7 @@ theorem recombinationCandidate_eq_factor_of_recovery_of_bound
     B' hvalid hcore_ne hcore_monic hfactor_prim hfactor_norm _hirr hscaled hprecision
 
 /--
-Under a monic core hypothesis, the scaled recovery theorem identifies the
+Under a monic polynomial hypothesis, the scaled recovery theorem identifies the
 unscaled executable recombination candidate with the represented integer
 factor.
 
@@ -874,7 +937,7 @@ theorem recombinationCandidate_eq_factor_of_recovery
 /-- Abstract-bound variant of
 `recombinationCandidate_eq_factor_of_henselSubsetCorrespondence`: takes
 `B' : Nat`, `hvalid : ∀ i, (factor.coeff i).natAbs ≤ B'`, and
-`hprecision : 2 * B' < d.p ^ d.k` in place of the core-shape
+`hprecision : 2 * B' < d.p ^ d.k` in place of the input-shape
 `defaultFactorCoeffBound core` precision constraint.  Delegates to
 `recombinationCandidate_eq_factor_of_recovery_of_bound`. -/
 theorem recombinationCandidate_eq_factor_of_henselSubsetCorrespondence_of_bound
@@ -902,7 +965,7 @@ theorem recombinationCandidate_eq_factor_of_henselSubsetCorrespondence_of_bound
     hscaled hprecision
 
 /--
-Hensel-correspondence wrapper for the monic-core recovery theorem.
+Hensel-correspondence wrapper for the monic polynomial recovery theorem.
 
 Once a proof-side subset is known to represent an irreducible integer divisor
 at the Hensel lift, the executable recombination candidate is exactly that
@@ -942,10 +1005,10 @@ theorem recombinationCandidate_eq_factor_of_henselSubsetCorrespondence
 /-- Abstract-bound variant of
 `scaledRecombinationCandidate_eq_factor_of_recovery`: takes `B' : Nat`,
 `hvalid : ∀ i, (factor.coeff i).natAbs ≤ B'`, and
-`hprecision : 2 * B' < d.p ^ d.k` in place of the core-shape
+`hprecision : 2 * B' < d.p ^ d.k` in place of the input-shape
 `defaultFactorCoeffBound core` precision constraint.  The body mirrors
 the original but invokes the `_of_bound` centered-lift recovery theorem
-instead of the core-shape one.  The original core-shape theorem is a
+instead of the input-shape one.  The original input-shape theorem is a
 wrapper around this variant. -/
 theorem scaledRecombinationCandidate_eq_factor_of_recovery_of_bound
     {core factor : Hex.ZPoly} {d : Hex.LiftData} {S : LiftedFactorSubset d}
@@ -974,14 +1037,14 @@ hypotheses on `factor` plus the standard Mignotte-precision and representation
 hypotheses.
 
 Unlike `recombinationCandidate_eq_factor_of_recovery_of_monic_core`, this
-theorem does *not* require `Monic core` and does *not* route through the
+theorem does *not* require `Monic core` and does *not* use the
 leading-coefficient collapse `scaledLiftedFactorProduct = liftedFactorProduct`.
 The inner equality is supplied directly by
 `centeredLiftPoly_scaledLiftedFactorProduct_eq_factor_of_recovery`;
 `primitivePart_eq_self_of_primitive` and the supplied `normalizeFactorSign`
-fixed-point discharge the outer normalisation pipeline.
+fixed-point discharge the outer normalisation computation.
 
-Callers use this in place of the monic-core recovery when the core hypotheses are
+Callers use this in place of the monic polynomial recovery when the input hypotheses are
 `core ≠ 0 ∧ Primitive core ∧ 0 < leadingCoeff core`; the primitive/sign
 hypotheses on `factor` are supplied by their primitive-factor packaging step.
 
@@ -1009,7 +1072,7 @@ theorem scaledRecombinationCandidate_eq_factor_of_recovery
 /-- Abstract-bound variant of
 `scaledRecombinationCandidate_eq_factor_of_henselSubsetCorrespondence`:
 takes `B' : Nat`, `hvalid : ∀ i, (factor.coeff i).natAbs ≤ B'`, and
-`hprecision : 2 * B' < d.p ^ d.k` in place of the core-shape
+`hprecision : 2 * B' < d.p ^ d.k` in place of the input-shape
 `defaultFactorCoeffBound core` precision constraint.  Body is a
 one-line delegation to
 `scaledRecombinationCandidate_eq_factor_of_recovery_of_bound`. -/
@@ -1034,9 +1097,9 @@ theorem scaledRecombinationCandidate_eq_factor_of_henselSubsetCorrespondence_of_
     B' hvalid hcore_ne hfactor_prim hfactor_norm hscaled hprecision
 
 /--
-Hensel-correspondence wrapper for the primitive-core scaled recovery theorem.
+Hensel-correspondence wrapper for the primitive-polynomial scaled recovery theorem.
 
-Primitive-core analogue of
+Primitive-polynomial analogue of
 `recombinationCandidate_eq_factor_of_henselSubsetCorrespondence`: once a
 proof-side subset is known to represent an irreducible integer divisor at the
 Hensel lift, the *scaled* recombination candidate is exactly that factor under

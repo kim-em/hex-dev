@@ -6,17 +6,19 @@ Authors: Kim Morrison
 
 module
 
-public import HexBerlekamp.Basic
-public import HexBerlekamp.CertReify
+public import HexBerlekamp.PackedKernel
+public import HexBerlekamp.CertificateSyntax
 public import HexBerlekamp.Factored
-public import HexBerlekamp.TacticCore
+public import HexBerlekamp.PolynomialTactic
 public import HexBerlekamp.FactorPolyElab
 public import HexBerlekamp.IrreducibilityElab
+public import HexBerlekamp.DegreePattern
 public import HexBerlekamp.DelayedKernel
 public import HexBerlekamp.DistinctDegree
 public import HexBerlekamp.Factor
 public import HexBerlekamp.Irreducibility
 public import HexBerlekamp.IrreducibleDecide
+public import HexBerlekamp.LinearFactors
 public import HexBerlekamp.RabinSoundness
 
 public section

@@ -93,7 +93,7 @@ private theorem montgomeryReduceNat_exact_dvd (p p' T : Nat)
           exact montgomeryReduceNat_cancel_pred_word (T % UInt64.word)
             (Nat.mod_lt T hword_pos)
 
-/-- Core quotient bound before threading the inverse and modulus-size hypotheses. -/
+/-- Quotient bound before threading the inverse and modulus-size hypotheses. -/
 private theorem montgomeryReduceNat_quotient_lt_two_p_of_bound (hp_pos : 0 < p)
     (hT : T < p * UInt64.word) :
     (T + ((T % UInt64.word) * p' % UInt64.word) * p) / UInt64.word < 2 * p := by

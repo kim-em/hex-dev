@@ -12,7 +12,7 @@ public import HexRealRootsMathlib.Separation
 public import HexRealRootsMathlib.ChainCorrespond
 public import HexRealRootsMathlib.SquareFreeCore
 public import HexRealRoots.Cert
-public import HexPolyZMathlib.Basic
+public import HexPolyZMathlib.PolynomialEquivalence
 
 public section
 set_option backward.proofsInPublic true

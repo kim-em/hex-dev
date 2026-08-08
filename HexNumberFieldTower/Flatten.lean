@@ -15,10 +15,12 @@ public section
 # Primitive-element flattening for number-field towers
 
 The fixed absolute generators are combined in deterministic signed-shift order.
-A candidate is admitted only when its canonical minimal-polynomial degree is the
-full accumulated tower dimension. Exact polynomial gcds then recover every old
-generator in the primitive power basis. A tower-basis coordinate round trip and
-the primitive polynomial relation are checked before the maps are returned.
+The fast path admits a candidate whose canonical minimal-polynomial degree is
+the full accumulated tower dimension; a maximum-degree primitive search is the
+total fallback. Exact polynomial gcds recover old generators when possible,
+with trace pairing as the general coordinate-recovery path. A tower-basis
+coordinate round trip and the primitive polynomial relation are checked before
+the maps are returned.
 -/
 namespace Hex.NumberTower
 
@@ -52,20 +54,28 @@ structure Candidate (T : NumberTower) where
   coordinates : Array (QAdjoin root.p root.x)
 
 /-- Standard coordinate vector of length `dimension`. -/
+@[expose]
 def unitCoords (dimension index : Nat) : Array Rat :=
   (Array.replicate dimension 0).set! index 1
+
+/-- Exactify a top-first level suffix from the oldest level upward, returning
+the accumulated generators and its mixed-radix dimension. -/
+@[expose]
+def generatorsAux? (T : NumberTower) :
+    List Level → Option (Array (Generator T) × Nat)
+  | [] => some (#[], 1)
+  | level :: lower => do
+      let state ← generatorsAux? T lower
+      let root ← level.root.exact?
+      let value := ofCoeffs T (unitCoords T.dim state.2)
+      some (state.1.push ⟨level.degree, root, value⟩,
+        state.2 * level.degree)
 
 /-- Exactify the stored roots from the oldest level upward and pair them with
 their canonical mixed-radix generator coordinates in the final tower. -/
 @[expose]
 def generators? (T : NumberTower) : Option (Array (Generator T)) := do
-  let state ← T.levels.toList.reverse.foldlM
-    (fun state level => do
-      let root ← level.root.exact?
-      let value := ofCoeffs T (unitCoords T.dim state.2)
-      some (state.1.push ⟨level.degree, root, value⟩,
-        state.2 * level.degree))
-    (#[], 1)
+  let state ← generatorsAux? T T.levels.toList
   if state.2 = T.dim then some state.1 else none
 
 /-- Try one deterministic signed shift for a candidate of the full required
@@ -99,33 +109,71 @@ def evalRatPoly {p : ZPoly} {x : SimpleRoot p}
       value * a + coefficient • (1 : QAdjoin p x))
     0
 
+/-- Recover both inputs through the proved-total trace-pairing coordinates of
+a primitive candidate. -/
+@[expose]
+def tracePair? (theta alpha gamma : AlgebraicNumber) :
+    Option (QAdjoin gamma.p gamma.x × QAdjoin gamma.p gamma.x) := do
+  let powers ← AlgebraicPoly.Common.powers? gamma
+    (2 * AlgebraicPoly.Common.degree gamma - 2)
+  let thetaCoordinate ←
+    AlgebraicPoly.Common.coordinates? gamma theta powers
+  let alphaCoordinate ←
+    AlgebraicPoly.Common.coordinates? gamma alpha powers
+  some (thetaCoordinate, alphaCoordinate)
+
+/-- Validate a recovered primitive coordinate against its canonical algebraic
+target. -/
+@[expose]
+def checkCoordinate? (target gamma : AlgebraicNumber)
+    (coordinate : QAdjoin gamma.p gamma.x) :
+    Option (QAdjoin gamma.p gamma.x) := do
+  let recovered ← @QAdjoin.toAlgebraicNumber? gamma.p gamma.x gamma.checked
+    coordinate gamma.rep gamma.rep_mk
+  if recovered == target then some coordinate else none
+
+/-- Validate both fast gcd coordinates before exposing them. -/
+@[expose]
+def checkPair? (theta alpha gamma : AlgebraicNumber)
+    (coordinates : QAdjoin gamma.p gamma.x × QAdjoin gamma.p gamma.x) :
+    Option (QAdjoin gamma.p gamma.x × QAdjoin gamma.p gamma.x) := do
+  let thetaCoordinate ← checkCoordinate? theta gamma coordinates.1
+  let alphaCoordinate ← checkCoordinate? alpha gamma coordinates.2
+  some (thetaCoordinate, alphaCoordinate)
+
 /-- Recover `theta` and `alpha` in a candidate presentation
-`gamma = theta + shift * alpha`. A full-degree candidate can still have a
-non-linear gcd because incompatible conjugate pairs need not be field
-embeddings, so failure here is a reason to try another shift. -/
+`gamma = theta + shift * alpha` using the validated linear-gcd path only. -/
+@[expose]
+def recoverPairFast? (theta alpha gamma : AlgebraicNumber) (shift : Int) :
+    Option (QAdjoin gamma.p gamma.x × QAdjoin gamma.p gamma.x) := do
+  if shift = 0 then none else
+  letI : ZPoly.CheckedIrreducible gamma.p := gamma.checked
+  let gammaCoordinate := gamma.toQAdjoin
+  let affine : DensePoly (QAdjoin gamma.p gamma.x) :=
+    DensePoly.ofList
+      [gammaCoordinate, (-(shift : Rat)) • (1 : QAdjoin gamma.p gamma.x)]
+  let thetaRelation :=
+    DensePoly.composeImpl (liftZPoly theta.p) affine
+  let alphaRelation : DensePoly (QAdjoin gamma.p gamma.x) :=
+    liftZPoly alpha.p
+  let common := DensePoly.gcd thetaRelation alphaRelation
+  if common.degree?.getD 0 = 1 && common.leadingCoeff != 0 then
+    let alphaCoordinate := -(common.coeff 0) / common.leadingCoeff
+    let thetaCoordinate :=
+      gammaCoordinate - (shift : Rat) • alphaCoordinate
+    checkPair? theta alpha gamma (thetaCoordinate, alphaCoordinate)
+  else
+    none
+
+/-- Recover `theta` and `alpha` in a primitive candidate presentation. The
+bounded scan uses only `recoverPairFast?`; this total fallback adds trace
+pairing for the maximum-degree candidate and for a zero shift. -/
 @[expose]
 def recoverPair? (theta alpha gamma : AlgebraicNumber) (shift : Int) :
-    Option (QAdjoin gamma.p gamma.x × QAdjoin gamma.p gamma.x) := do
-  if shift = 0 then
-    none
-  else
-    letI : ZPoly.CheckedIrreducible gamma.p := gamma.checked
-    let gammaCoordinate := gamma.toQAdjoin
-    let affine : DensePoly (QAdjoin gamma.p gamma.x) :=
-      DensePoly.ofList
-        [gammaCoordinate, (-(shift : Rat)) • (1 : QAdjoin gamma.p gamma.x)]
-    let thetaRelation :=
-      DensePoly.composeImpl (liftZPoly theta.p) affine
-    let alphaRelation : DensePoly (QAdjoin gamma.p gamma.x) :=
-      liftZPoly alpha.p
-    let common := DensePoly.gcd thetaRelation alphaRelation
-    if common.degree?.getD 0 = 1 && common.leadingCoeff != 0 then
-      let alphaCoordinate := -(common.coeff 0) / common.leadingCoeff
-      let thetaCoordinate :=
-        gammaCoordinate - (shift : Rat) • alphaCoordinate
-      some (thetaCoordinate, alphaCoordinate)
-    else
-      none
+    Option (QAdjoin gamma.p gamma.x × QAdjoin gamma.p gamma.x) :=
+  match recoverPairFast? theta alpha gamma shift with
+  | some coordinates => some coordinates
+  | none => tracePair? theta alpha gamma
 
 /-- A full-degree primitive candidate together with its recovered old and new
 generator coordinates. -/
@@ -135,8 +183,8 @@ structure Recovered where
   thetaCoordinate : QAdjoin root.p root.x
   alphaCoordinate : QAdjoin root.p root.x
 
-/-- Search a prescribed shift suffix, rejecting both degree collisions and
-full-degree candidates whose exact recovery gcd is not linear. -/
+/-- Search a prescribed shift suffix, rejecting degree collisions and any
+candidate for which validated linear-gcd recovery fails. -/
 @[expose]
 def searchRecoveredAux (theta alpha : AlgebraicNumber)
     (target start : Nat) : Nat → Option Recovered
@@ -146,18 +194,28 @@ def searchRecoveredAux (theta alpha : AlgebraicNumber)
       | none =>
           searchRecoveredAux theta alpha target (start + 1) fuel
       | some (shift, root) =>
-          match recoverPair? theta alpha root shift with
+          match recoverPairFast? theta alpha root shift with
           | some (thetaCoordinate, alphaCoordinate) =>
               some ⟨shift, root, thetaCoordinate, alphaCoordinate⟩
           | none =>
               searchRecoveredAux theta alpha target (start + 1) fuel
 
-/-- Search the combined finite bound for a primitive candidate with exact
-linear coordinate recovery. -/
+/-- Try the direct full-degree search first. If it is exhausted, select a
+maximum-degree primitive candidate and recover both input coordinates through
+the generated field. -/
 @[expose]
 def searchRecovered? (theta alpha : AlgebraicNumber) (target : Nat) :
     Option Recovered :=
-  searchRecoveredAux theta alpha target 1 (flattenShiftCount target)
+  match searchRecoveredAux theta alpha target 0 (flattenShiftCount target) with
+  | some recovered => some recovered
+  | none => do
+      let shifted ← AlgebraicPoly.Common.extendShift? theta alpha
+      let coordinates ← recoverPair? theta alpha shifted.value shifted.shift
+      some
+        { shift := shifted.shift
+          root := shifted.value
+          thetaCoordinate := coordinates.1
+          alphaCoordinate := coordinates.2 }
 
 /-- Combine the fixed generators one level at a time, retaining a tower
 coordinate for each accepted canonical primitive element. -/
@@ -168,21 +226,18 @@ def candidate? (T : NumberTower) (generators : Array (Generator T)) :
   | none =>
       some ⟨1, AlgebraicNumber.zero, 0, #[]⟩
   | some first => do
-      if AlgebraicPoly.Common.degree first.root = first.degree then
-        generators.toList.drop 1 |>.foldlM
-          (fun current generator => do
-            let target := current.dimension * generator.degree
-            let recovered ←
-              searchRecovered? current.root generator.root target
-            let value := current.value +
-              (recovered.shift : Rat) • generator.value
-            let coordinates := current.coordinates.map fun coordinate =>
-              evalRatPoly coordinate.coeffs recovered.thetaCoordinate
-            some ⟨target, recovered.root, value,
-              coordinates.push recovered.alphaCoordinate⟩)
-          ⟨first.degree, first.root, first.value, #[first.root.toQAdjoin]⟩
-      else
-        none
+      generators.toList.drop 1 |>.foldlM
+        (fun current generator => do
+          let target := current.dimension * generator.degree
+          let recovered ←
+            searchRecovered? current.root generator.root target
+          let value := current.value +
+            (recovered.shift : Rat) • generator.value
+          let coordinates := current.coordinates.map fun coordinate =>
+            evalRatPoly coordinate.coeffs recovered.thetaCoordinate
+          some ⟨target, recovered.root, value,
+            coordinates.push recovered.alphaCoordinate⟩)
+        ⟨first.degree, first.root, first.value, #[first.root.toQAdjoin]⟩
 
 /-- Extend lower mixed-radix basis images by powers of one newly recovered
 generator. The lower basis remains the fastest-varying coordinate block. -/
@@ -211,15 +266,15 @@ def basisImages {T : NumberTower} {p : ZPoly} {x : SimpleRoot p}
 @[expose]
 def toPrimitiveWith {T : NumberTower} {p : ZPoly} {x : SimpleRoot p}
     (images : Array (QAdjoin p x)) (a : Elem T) : QAdjoin p x :=
-  (images.zip (coeffs a)).foldl
-    (fun value entry => value + entry.2 • entry.1) 0
+  (List.range T.dim).map
+    (fun i => (coeffs a).getD i 0 • images.getD i 0) |>.sum
 
 /-- Evaluate a reduced primitive coordinate polynomial at its tower element. -/
 @[expose]
 def fromPrimitiveWith {T : NumberTower} {p : ZPoly} {x : SimpleRoot p}
     (generator : Elem T) (a : QAdjoin p x) : Elem T :=
-  a.coeffs.toArray.reverse.foldl
-    (fun value coefficient => value * generator + ofRat T coefficient) 0
+  a.coeffs.toArray.foldr
+    (fun coefficient value => value * generator + ofRat T coefficient) 0
 
 /-- Evaluate an integer polynomial at a tower element. -/
 @[expose]
@@ -233,7 +288,9 @@ candidate tower element satisfies its claimed primitive minimal polynomial.
 The first condition makes the rational-linear coordinate maps inverse; the
 root relation and irreducibility make evaluation through the primitive
 quotient an injective ring map. The resulting dimension squeeze makes the
-linear inverse multiplicative as well. -/
+linear inverse multiplicative as well. The size, dimension, and root checks
+remain independent executable defenses even where the semantic proof can
+derive them from the successful construction. -/
 @[expose]
 def certifies {T : NumberTower} (candidate : Candidate T)
     (images : Array (QAdjoin candidate.root.p candidate.root.x)) : Bool :=
@@ -250,6 +307,7 @@ end Flatten
 /-- Replace a checked tower by one canonical primitive-element presentation.
 The result is returned only after exact generator recovery, a tower-basis
 round trip, and the primitive polynomial relation succeed. -/
+@[expose]
 def flatten? (T : NumberTower) : Option (Flattening T) := do
   let generators ← Flatten.generators? T
   let candidate ← Flatten.candidate? T generators
@@ -279,7 +337,7 @@ private def flattenSqrtTwoSquare : DyadicSquare :=
   ⟨Dyadic.ofIntWithPrec 181 7, 0, 8⟩
 
 private def flattenSqrtTwoRep : RefinedIsolation flattenSqrtTwoPoly :=
-  ⟨⟨flattenSqrtTwoSquare, by decide⟩, by decide⟩
+  ⟨⟨flattenSqrtTwoSquare, .ofWitness (by decide)⟩, by decide⟩
 
 private def flattenSqrtTwoRoot : SimpleRoot flattenSqrtTwoPoly :=
   SimpleRoot.mk flattenSqrtTwoRep
@@ -310,7 +368,7 @@ private def flattenSqrtThreeSquare : DyadicSquare :=
   ⟨Dyadic.ofIntWithPrec 222 7, 0, 8⟩
 
 private def flattenSqrtThreeRep : RefinedIsolation flattenSqrtThreePoly :=
-  ⟨⟨flattenSqrtThreeSquare, by decide⟩, by decide⟩
+  ⟨⟨flattenSqrtThreeSquare, .ofWitness (by decide)⟩, by decide⟩
 
 private def flattenSumPoly : ZPoly :=
   DensePoly.ofList [1, 0, -10, 0, 1]
@@ -323,7 +381,7 @@ private def flattenFourthRootTwoSquare : DyadicSquare :=
 
 private def flattenFourthRootTwoRep :
     RefinedIsolation flattenFourthRootTwoPoly :=
-  ⟨⟨flattenFourthRootTwoSquare, by decide⟩, by decide⟩
+  ⟨⟨flattenFourthRootTwoSquare, .ofWitness (by decide)⟩, by decide⟩
 
 #guard
     if hirred : ZPoly.isIrreducible flattenSqrtTwoPoly = true then

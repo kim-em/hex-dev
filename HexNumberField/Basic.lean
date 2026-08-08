@@ -49,6 +49,58 @@ structure AlgebraicRoot where
   rep : RefinedIsolation p
   rep_mk : SimpleRoot.mk rep = x
 
+namespace AlgebraicNumber
+
+private def zeroSquare : DyadicSquare :=
+  ⟨0, 0, (separationDepth ZPoly.X : Int)⟩
+
+/-- The fixed explicit representative of the root of `X`. -/
+def zeroRep : RefinedIsolation ZPoly.X :=
+  ⟨⟨zeroSquare, by
+      exact .ofWitness (by
+        left
+        decide)⟩,
+    by
+      simp only [zeroSquare, separationDepth]
+      omega⟩
+
+/-- Evidence that a representative is the deterministic representative stored
+by the canonical algebraic-number constructor. -/
+@[expose]
+def IsCanonical (p : ZPoly) (squarefree : HasOnlySimpleRoots p)
+    (rep : RefinedIsolation p) : Prop :=
+  (p = ZPoly.X ∧ HEq rep zeroRep) ∨
+    (p ≠ ZPoly.X ∧
+      ∃ (isolations : Array (DyadicRootIsolation p))
+        (refined : Array (RefinedIsolation p)),
+        isolate p squarefree (separationDepth p : Int) = some isolations ∧
+          isolations.mapM DyadicRootIsolation.toRefined? = some refined ∧
+          rep ∈ refined.toList)
+
+/-- Run the deterministic representative-selection pipeline and retain its
+provenance together with the match against the supplied root. -/
+@[expose]
+def canonicalRep? (p : ZPoly) (squarefree : HasOnlySimpleRoots p)
+    (rep : RefinedIsolation p) (hzero : p ≠ ZPoly.X) :
+    Option {r : RefinedIsolation p //
+      IsCanonical p squarefree r ∧ r.sameRoot rep = true} :=
+  match hisolate : isolate p squarefree (separationDepth p : Int) with
+  | none => none
+  | some isolations =>
+      match hrefine : isolations.mapM DyadicRootIsolation.toRefined? with
+      | none => none
+      | some refined =>
+          match hfind : refined.toList.find? fun r => r.sameRoot rep with
+          | none => none
+          | some canonical => some ⟨canonical, Or.inr
+              ⟨hzero, isolations, refined, hisolate, hrefine,
+                List.mem_of_find?_eq_some hfind⟩,
+              by
+                exact List.find?_some
+                  (p := fun r : RefinedIsolation p => r.sameRoot rep) hfind⟩
+
+end AlgebraicNumber
+
 /-- A canonical algebraic number. Construction is sealed so each normalized
 polynomial/root pair receives one fixed representative. -/
 structure AlgebraicNumber where
@@ -59,23 +111,18 @@ structure AlgebraicNumber where
   pos_degree : 0 < p.degree?.getD 0
   checked : ZPoly.CheckedIrreducible p
   squarefree : HasOnlySimpleRoots p
-  x : SimpleRoot p
   rep : RefinedIsolation p
-  rep_mk : SimpleRoot.mk rep = x
+  canonical : AlgebraicNumber.IsCanonical p squarefree rep
 
 namespace AlgebraicNumber
 
-private def zeroSquare : DyadicSquare :=
-  ⟨0, 0, (separationDepth ZPoly.X : Int)⟩
+/-- The selected simple root is determined by the canonical representative. -/
+@[expose]
+def x (a : AlgebraicNumber) : SimpleRoot a.p :=
+  SimpleRoot.mk a.rep
 
-/-- The fixed explicit representative of the root of `X`. -/
-private def zeroRep : RefinedIsolation ZPoly.X :=
-  ⟨⟨zeroSquare, by
-      left
-      decide⟩,
-    by
-      simp only [zeroSquare, separationDepth]
-      omega⟩
+@[simp] theorem rep_mk (a : AlgebraicNumber) :
+    SimpleRoot.mk a.rep = a.x := rfl
 
 private theorem zero_isIrreducible : ZPoly.isIrreducible ZPoly.X = true := by
   exact ZPoly.isIrreducible_X
@@ -117,8 +164,8 @@ private theorem zero_squarefree : HasOnlySimpleRoots ZPoly.X := by
 
 private def zeroRaw : AlgebraicNumber :=
   .mk ZPoly.X (by rfl) (by decide) (by decide)
-    ⟨zero_isIrreducible, by decide⟩ zero_squarefree (SimpleRoot.mk zeroRep)
-    zeroRep rfl
+    ⟨zero_isIrreducible, by decide⟩ zero_squarefree zeroRep
+    (Or.inl ⟨rfl, HEq.rfl⟩)
 
 -- Keep executable evidence that the ordinary isolator also meets its stated
 -- completeness bound on `X`; the explicit zero path makes totality independent
@@ -132,6 +179,9 @@ def zero : AlgebraicNumber :=
   zeroRaw
 
 instance : Zero AlgebraicNumber := ⟨zero⟩
+
+/-- The named canonical zero agrees with the `Zero` instance. -/
+theorem zero_eq_zero : AlgebraicNumber.zero = (0 : AlgebraicNumber) := rfl
 
 /-- The canonical zero retains `X` as its normalized polynomial. -/
 @[simp] theorem zero_p : (0 : AlgebraicNumber).p = ZPoly.X := by
@@ -153,11 +203,28 @@ def ofNormalized?
   if _hzero : p = ZPoly.X then
     some zeroRaw
   else do
-    let isolations ← isolate p squarefree (separationDepth p : Int)
-    let refined ← isolations.mapM DyadicRootIsolation.toRefined?
-    let canonical ← refined.toList.find? fun r => r.sameRoot rep
-    some (.mk p prim pos_lc pos_degree checked squarefree (SimpleRoot.mk canonical)
-      canonical rfl)
+    let canonical ← canonicalRep? p squarefree rep _hzero
+    some (.mk p prim pos_lc pos_degree checked squarefree canonical.1
+      canonical.2.1)
+
+/-- The success bit of canonicalization is exactly the success bit of its
+isolation, refinement, and representative-selection pipeline. This exposes
+the checked boundary needed by the Mathlib totality proof without exposing the
+sealed `AlgebraicNumber` constructor. -/
+theorem ofNormalized?_isSome_eq
+    (p : ZPoly) (prim : ZPoly.Primitive p) (pos_lc : 0 < p.leadingCoeff)
+    (pos_degree : 0 < p.degree?.getD 0)
+    (checked : ZPoly.CheckedIrreducible p) (squarefree : HasOnlySimpleRoots p)
+    (rep : RefinedIsolation p) :
+    (ofNormalized? p prim pos_lc pos_degree checked squarefree rep).isSome =
+      if _hzero : p = ZPoly.X then true else
+        (canonicalRep? p squarefree rep _hzero).isSome := by
+  unfold ofNormalized?
+  split
+  · simp
+  · cases hcanonical : canonicalRep? p squarefree rep _ with
+    | none => simp
+    | some canonical => simp
 
 /-- Successful canonicalization retains the supplied normalized polynomial. -/
 theorem ofNormalized?_p
@@ -172,9 +239,7 @@ theorem ofNormalized?_p
   · next hp =>
     cases h
     simp [zeroRaw, hp]
-  · obtain ⟨isolations, _, h⟩ := Option.bind_eq_some_iff.mp h
-    obtain ⟨refined, _, h⟩ := Option.bind_eq_some_iff.mp h
-    obtain ⟨canonical, _, h⟩ := Option.bind_eq_some_iff.mp h
+  · obtain ⟨canonical, _, h⟩ := Option.bind_eq_some_iff.mp h
     cases h
     rfl
 
@@ -197,16 +262,22 @@ theorem ofNormalized?_spec
     cases h
     rfl
   · right
-    obtain ⟨isolations, _, h⟩ := Option.bind_eq_some_iff.mp h
-    obtain ⟨refined, _, h⟩ := Option.bind_eq_some_iff.mp h
-    obtain ⟨canonical, hcanonical, h⟩ := Option.bind_eq_some_iff.mp h
-    have hsame : canonical.sameRoot rep = true :=
-      List.find?_some (p := fun r : RefinedIsolation p => r.sameRoot rep)
-        hcanonical
+    obtain ⟨canonical, _, h⟩ := Option.bind_eq_some_iff.mp h
     cases h
-    exact ⟨rfl, hsame⟩
+    exact ⟨rfl, canonical.2.2⟩
 
 instance : Inhabited AlgebraicNumber := ⟨zero⟩
+
+/-- Two canonical values are equal once their dependent polynomials and stored
+representatives agree. The remaining fields are propositions, and the selected
+`SimpleRoot` is forced by `rep_mk`. -/
+theorem ext (a b : AlgebraicNumber) (hp : a.p = b.p)
+    (hrep : HEq a.rep b.rep) : a = b := by
+  cases a
+  cases b
+  cases hp
+  cases eq_of_heq hrep
+  rfl
 
 end AlgebraicNumber
 

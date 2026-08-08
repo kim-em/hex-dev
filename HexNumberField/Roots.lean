@@ -211,33 +211,30 @@ def sameValue? (a b : AlgebraicRoot) : Option Bool :=
     let b' ← b.exact?
     some (a' == b')
 
-/-- Merge one root into a duplicate-free multiplicity array. -/
+/-- Merge one root into a list, retaining the first representative of an
+existing semantic value and the incoming certified multiplicity. -/
 @[expose]
-def mergeRootAux (candidate : RootCount) (index : Nat) :
-    Nat → Array RootCount → Option (Array RootCount)
-  | 0, roots => some (roots.push candidate)
-  | fuel + 1, roots =>
-      if hi : index < roots.size then do
-        let current := roots[index]
-        let same ← sameValue? current.root candidate.root
-        if same then
-          let merged : RootCount :=
-            { root := current.root
-              multiplicity := current.multiplicity + candidate.multiplicity
-              multiplicity_pos := by
-                have hc : 0 < current.multiplicity := current.multiplicity_pos
-                omega }
-          some ((roots.eraseIdx index).push merged)
-        else
-          mergeRootAux candidate (index + 1) fuel roots
+def mergeRootList (candidate : RootCount) :
+    List RootCount → Option (List RootCount)
+  | [] => some [candidate]
+  | current :: rest => do
+      let same ← sameValue? current.root candidate.root
+      if same then
+        let merged : RootCount :=
+          { root := current.root
+            multiplicity := candidate.multiplicity
+            multiplicity_pos := candidate.multiplicity_pos }
+        some (merged :: rest)
       else
-        some (roots.push candidate)
+        let tail ← mergeRootList candidate rest
+        some (current :: tail)
 
 /-- Merge one root using a complete scan of the current array. -/
 @[expose]
 def mergeRoot (roots : Array RootCount) (candidate : RootCount) :
-    Option (Array RootCount) :=
-  mergeRootAux candidate 0 (roots.size + 1) roots
+    Option (Array RootCount) := do
+  let merged ← mergeRootList candidate roots.toList
+  some merged.toArray
 
 /-- Lexicographic non-strict order on integer coefficient lists. -/
 @[expose]
@@ -260,7 +257,7 @@ def rootLe (a b : RootCount) : Bool :=
   else if a.root.rep.1.square.im != b.root.rep.1.square.im then
     decide (a.root.rep.1.square.im < b.root.rep.1.square.im)
   else
-    decide (a.root.rep.1.square.prec < b.root.rep.1.square.prec)
+    decide (a.root.rep.1.square.prec ≤ b.root.rep.1.square.prec)
 
 end Hex.QAdjoin.Roots
 
@@ -287,7 +284,7 @@ def roots? [ZPoly.CheckedIrreducible p]
         else
           none)
       #[]
-    some (.finite (roots.qsort Roots.rootLe))
+    some (.finite (roots.mergeSort Roots.rootLe))
 
 /-- Total fixed-field root API. The loud `.all` fallback is unreachable once
 the companion discharges `roots?_isSome`. -/
@@ -357,6 +354,35 @@ def shift? (theta alpha : AlgebraicNumber) (c : Int) : Option AlgebraicNumber :=
 @[expose]
 def degree (a : AlgebraicNumber) : Nat :=
   a.p.degree?.getD 0
+
+/-- A primitive-search candidate together with the signed shift that produced
+it. -/
+structure ShiftCandidate where
+  shift : Int
+  value : AlgebraicNumber
+
+/-- One maximum-degree update that retains the producing signed shift. -/
+@[expose]
+def extendShiftStep (theta alpha : AlgebraicNumber) :
+    Option ShiftCandidate → Nat → Option (Option ShiftCandidate) :=
+  fun best k => do
+    let shift := signedShift k
+    let candidate ← shift? theta alpha shift
+    let shifted := ShiftCandidate.mk shift candidate
+    some <| match best with
+    | none => some shifted
+    | some current =>
+        if degree current.value < degree candidate then some shifted
+        else some current
+
+/-- Maximum-degree primitive candidate together with its producing shift. -/
+@[expose]
+def extendShift? (theta alpha : AlgebraicNumber) : Option ShiftCandidate := do
+  let upper := degree theta * degree alpha
+  let count := Nat.choose upper 2 + 1
+  let best ← (List.range count).foldlM
+    (extendShiftStep theta alpha) none
+  best
 
 /-- Extend a primitive presentation by one algebraic number. Testing
 `choose(deg(theta) * deg(alpha), 2) + 1` shifts is a conservative bounded
@@ -447,6 +473,60 @@ def presentation? (coefficients : Array AlgebraicNumber) :
 
 end Hex.AlgebraicPoly.Common
 
+namespace Hex.AlgebraicNumber
+
+/-- Total executable embedding of a rational number into canonical algebraic
+numbers. The companion proves that the checked constructor cannot fail. -/
+@[expose]
+def ofRat (q : Rat) : AlgebraicNumber :=
+  (AlgebraicPoly.Common.rational? q).getD
+    (Hex.panicWith 0 "AlgebraicNumber.ofRat: certification failed")
+
+instance : One AlgebraicNumber := ⟨ofRat 1⟩
+instance : NatCast AlgebraicNumber := ⟨fun n => ofRat (n : Rat)⟩
+instance : IntCast AlgebraicNumber := ⟨fun n => ofRat (n : Rat)⟩
+-- Mathlib's generic `OfNat` from `NatCast` has priority 100. Keep this
+-- Mathlib-free fallback below it so importing the companion yields one normal
+-- form for numerals while the executable library still supports literals.
+instance (priority := 90) (n : Nat) : OfNat AlgebraicNumber (n + 2) :=
+  ⟨ofRat (n + 2 : Nat)⟩
+
+/-- Executable scalar multiplication through the canonical rational
+embedding. -/
+@[expose]
+def smul (q : Rat) (a : AlgebraicNumber) : AlgebraicNumber :=
+  ofRat q * a
+
+instance : SMul Rat AlgebraicNumber := ⟨smul⟩
+instance : SMul Nat AlgebraicNumber :=
+  ⟨fun n a => smul (n : Rat) a⟩
+instance : SMul Int AlgebraicNumber :=
+  ⟨fun n a => smul (n : Rat) a⟩
+
+/-- Natural powers by repeated squaring using executable canonical
+multiplication. -/
+@[expose]
+def natPow (a : AlgebraicNumber) : Nat → AlgebraicNumber
+  | 0 => 1
+  | n + 1 =>
+      let q := natPow a ((n + 1) / 2)
+      let q2 := q * q
+      if (n + 1) % 2 = 0 then q2 else q2 * a
+termination_by n => n
+decreasing_by omega
+
+instance : Pow AlgebraicNumber Nat := ⟨natPow⟩
+
+/-- Integer powers assembled from executable multiplication and inversion. -/
+@[expose]
+def intPow (a : AlgebraicNumber) : Int → AlgebraicNumber
+  | .ofNat n => natPow a n
+  | .negSucc n => (natPow a (n + 1))⁻¹
+
+instance : Pow AlgebraicNumber Int := ⟨intPow⟩
+
+end Hex.AlgebraicNumber
+
 namespace Hex.AlgebraicPoly
 
 /-- Checked roots of a polynomial with canonical algebraic coefficients. All
@@ -480,7 +560,7 @@ private def rootsSqrtTwoSquare : DyadicSquare :=
   ⟨Dyadic.ofIntWithPrec 181 7, 0, 8⟩
 
 private def rootsSqrtTwoRep : RefinedIsolation rootsSqrtTwoPoly :=
-  ⟨⟨rootsSqrtTwoSquare, by decide⟩, by decide⟩
+  ⟨⟨rootsSqrtTwoSquare, .ofWitness (by decide)⟩, by decide⟩
 
 private def rootsSqrtTwoRoot : SimpleRoot rootsSqrtTwoPoly :=
   SimpleRoot.mk rootsSqrtTwoRep

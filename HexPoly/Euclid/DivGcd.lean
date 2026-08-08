@@ -534,8 +534,8 @@ remainder degree instead of rescanning from the top each step. The reference loo
 per step and `O(n²)` overall; here `ceil` is the scan ceiling, which in the well-formed
 case (`q.size = qDegree + 1`) only ever decreases, so the total scanning cost is `O(n)`.
 After eliminating at degree `rd`, the only coefficients that can be nonzero are those at
-or below `max (rd + 1) (shift + q.size)` — the elimination window tops out at
-`shift + q.size - 1` and everything above `rd` was already zero — so seeding the next scan
+or below `max (rd + 1) (shift + q.size)`; the elimination window tops out at
+`shift + q.size - 1` and everything above `rd` was already zero; so seeding the next scan
 at that ceiling returns the same index as the reference's `arrayDegree? rem`.
 `divModArrayAux_eq_impl` proves the two loops agree on every input. -/
 private def divModArrayAuxImplGo [Sub R] [Mul R]
@@ -563,6 +563,33 @@ def divModArrayAuxImpl [Sub R] [Mul R]
     (q : Array R) (qDegree : Nat) (scaleLead : R → R)
     (fuel : Nat) (quot rem : Array R) : Array R × Array R :=
   divModArrayAuxImplGo q qDegree scaleLead fuel rem.size quot rem
+
+/-- Remainder-only runtime loop for polynomial long division. It follows the
+same ceiling-tracking elimination sequence as `divModArrayAuxImplGo`, but does
+not allocate or update the quotient array. This is the hot implementation used
+by the plain Euclidean GCD, whose quotient is discarded at every step. -/
+private def modArrayAuxImplGo [Sub R] [Mul R]
+    (q : Array R) (qDegree : Nat) (scaleLead : R → R) :
+    Nat → Nat → Array R → Array R
+  | 0, _, rem => rem
+  | fuel + 1, ceil, rem =>
+      match arrayDegreeAux rem ceil with
+      | none => rem
+      | some rd =>
+          if rd < qDegree then
+            rem
+          else
+            let shift := rd - qDegree
+            let coeff := scaleLead (rem.getD rd (Zero.zero : R))
+            let rem := subtractScaledShiftImpl q shift coeff 0 q.size rem
+            modArrayAuxImplGo q qDegree scaleLead fuel
+              (Nat.max (rd + 1) (shift + q.size)) rem
+
+/-- Remainder-only array division, seeded at the dividend array's size. -/
+private def modArrayAuxImpl [Sub R] [Mul R]
+    (q : Array R) (qDegree : Nat) (scaleLead : R → R)
+    (fuel : Nat) (rem : Array R) : Array R :=
+  modArrayAuxImplGo q qDegree scaleLead fuel rem.size rem
 
 /-- The fuel-bounded long-division loop: while the remainder's degree `rd` is at least
 the divisor degree `qDegree`, pick the quotient coefficient `scaleLead (rem[rd])`, record
@@ -695,6 +722,39 @@ private theorem divModArrayAuxImpl_eq [Sub R] [Mul R]
   unfold Array.getD
   exact dif_neg (by omega)
 
+/-- The remainder-only loop follows exactly the remainder component of the
+quotient-producing implementation, independently of the quotient accumulator. -/
+private theorem modArrayAuxImplGo_eq_divModArrayAuxImplGo_snd
+    [Sub R] [Mul R]
+    (q : Array R) (qDegree : Nat) (scaleLead : R → R) (fuel : Nat) :
+    ∀ (ceil : Nat) (quot rem : Array R),
+      modArrayAuxImplGo q qDegree scaleLead fuel ceil rem =
+        (divModArrayAuxImplGo q qDegree scaleLead fuel ceil quot rem).2 := by
+  induction fuel with
+  | zero => intro ceil quot rem; rfl
+  | succ fuel ih =>
+      intro ceil quot rem
+      unfold modArrayAuxImplGo divModArrayAuxImplGo
+      cases hdeg : arrayDegreeAux rem ceil with
+      | none => rfl
+      | some rd =>
+          by_cases hlt : rd < qDegree
+          · simp [hlt]
+          · simp only [hlt, ↓reduceIte]
+            exact ih _ _ _
+
+/-- The remainder-only wrapper is the second component of array long
+division. The quotient seed is arbitrary because it does not affect the
+elimination sequence. -/
+private theorem modArrayAuxImpl_eq_divModArrayAuxImpl_snd
+    [Sub R] [Mul R]
+    (q : Array R) (qDegree : Nat) (scaleLead : R → R)
+    (fuel : Nat) (quot rem : Array R) :
+    modArrayAuxImpl q qDegree scaleLead fuel rem =
+      (divModArrayAuxImpl q qDegree scaleLead fuel quot rem).2 := by
+  exact modArrayAuxImplGo_eq_divModArrayAuxImplGo_snd
+    q qDegree scaleLead fuel rem.size quot rem
+
 /-- Register the value-equal {name}`divModArrayAuxImpl` as the compiled implementation of
 {name}`divModArrayAux`. Unlike `@[implemented_by]`, the `@[csimp]` swap is backed by the proof
 {name}`divModArrayAuxImpl_eq`, so the runtime loop is verified equal to the specification. -/
@@ -729,7 +789,7 @@ private theorem divModArrayAux_scaleLead_congr [Sub R] [Mul R]
 
 /-- Under a `scaleLead` that cancels each leading term (`a - scaleLead a * q[qDegree] = 0`),
 {name}`divModArrayAux` drives every remainder coefficient at index `≥ qDegree` to zero, i.e. the
-final remainder has degree `< qDegree`; the core invariant establishing the division
+final remainder has degree `< qDegree`; the invariant establishing the division
 remainder-degree bound. -/
 private theorem divModArrayAux_remainder_zero_ge [Sub R] [Mul R]
     (q : Array R) (qDegree : Nat) (scaleLead : R → R)
@@ -811,6 +871,32 @@ def divModArray [Sub R] [Mul R]
     let quot := Array.replicate quotientSize (Zero.zero : R)
     let qr := divModArrayAux q.toArray qDegree scaleLead p.size quot p.toArray
     (ofCoeffs qr.1, ofCoeffs qr.2)
+
+/-- Remainder-only array-backed long division. This mirrors `divModArray` but
+does not allocate the quotient array or update it during elimination. -/
+def modArray [Sub R] [Mul R]
+    (p q : DensePoly R) (scaleLead : R → R) : DensePoly R :=
+  if q.isZero then
+    p
+  else
+    let qDegree := q.size - 1
+    let rem := modArrayAuxImpl q.toArray qDegree scaleLead p.size p.toArray
+    ofCoeffs rem
+
+/-- The remainder-only array implementation equals the remainder component of
+the verified quotient/remainder implementation. -/
+theorem modArray_eq_divModArray_snd [Sub R] [Mul R]
+    (p q : DensePoly R) (scaleLead : R → R) :
+    modArray p q scaleLead = (divModArray p q scaleLead).2 := by
+  unfold modArray divModArray
+  by_cases hq : q.isZero
+  · simp [hq]
+  · simp only [hq]
+    rw [modArrayAuxImpl_eq_divModArrayAuxImpl_snd
+      q.toArray (q.size - 1) scaleLead p.size
+      (Array.replicate (p.size - (q.size - 1)) (Zero.zero : R)) p.toArray]
+    rw [divModArrayAuxImpl_eq]
+    simp
 
 /-- The array-backed long division result depends only on the pointwise values of the
 leading-coefficient scaling function. -/
@@ -1068,17 +1154,38 @@ def mod [One R] [Add R] [Sub R] [Mul R] [Div R]
     (p q : DensePoly R) : DensePoly R :=
   (divMod p q).2
 
+/-- Compiled remainder implementation that skips construction of the unused
+quotient. The public specification remains `mod`; the plain GCD's `@[csimp]`
+implementation uses this value-equal worker. -/
+def modImpl [One R] [Add R] [Sub R] [Mul R] [Div R]
+    (p q : DensePoly R) : DensePoly R :=
+  if p.degree?.getD 0 < q.degree?.getD 0 then
+    p
+  else
+    let qLead := q.leadingCoeff
+    modArray p q (fun coeff => coeff / qLead)
+
+/-- The remainder-only implementation agrees with public polynomial modulus. -/
+private theorem modImpl_eq_mod [One R] [Add R] [Sub R] [Mul R] [Div R]
+    (p q : DensePoly R) : modImpl p q = mod p q := by
+  unfold modImpl mod divMod
+  by_cases hlt : p.degree?.getD 0 < q.degree?.getD 0
+  · simp [hlt]
+  · simp only [hlt, ↓reduceIte]
+    exact modArray_eq_divModArray_snd p q
+      (fun coeff => coeff / q.leadingCoeff)
+
 /-- Remainder from long division by a monic polynomial over a commutative ring. -/
 @[expose]
 def modByMonic [One R] [Add R] [Sub R] [Mul R]
     (p q : DensePoly R) (hmonic : Monic q) : DensePoly R :=
   (divModMonic p q hmonic).2
 
-/-- The `/` notation on dense polynomials dispatches to {name}`DensePoly.div`. -/
+/-- The `/` notation on dense polynomials selects to {name}`DensePoly.div`. -/
 instance [One R] [Add R] [Sub R] [Mul R] [Div R] : Div (DensePoly R) where
   div := div
 
-/-- The `%` notation on dense polynomials dispatches to {name}`DensePoly.mod`. -/
+/-- The `%` notation on dense polynomials selects to {name}`DensePoly.mod`. -/
 instance [One R] [Add R] [Sub R] [Mul R] [Div R] : Mod (DensePoly R) where
   mod := mod
 
@@ -1185,7 +1292,7 @@ theorem xgcdLeft_left_eq_xgcd [One R] [Add R] [Sub R] [Mul R] [Div R]
 /-- Tail-recursive Euclidean gcd tracking only the remainder sequence, **without**
 the Bezout coefficients. {name}`xgcd`/{name}`xgcdAux` carry the Bezout accumulators `s`, `t`
 and update them with a polynomial multiplication (`q * s₁`, `q * t₁`) at every
-step on polynomials whose degree grows through the run — that is `O(deg³)` work
+step on polynomials whose degree grows through the run; that is `O(deg³)` work
 and pure waste when only the gcd value is wanted (the common case: the square-free
 / separability test `gcd(f, f') = 1`). {name}`gcdAux` keeps only the remainders and is
 `O(deg²)`. -/
@@ -1199,6 +1306,40 @@ def gcdAux [One R] [Add R] [Sub R] [Mul R] [Div R]
         r₀
       else
         gcdAux r₁ (divMod r₀ r₁).2 fuel
+
+/-- Runtime GCD loop using remainder-only long division. Its public
+specification remains `gcdAux`; the equality below supplies a proof-backed
+compiler replacement. -/
+def gcdAuxImpl [One R] [Add R] [Sub R] [Mul R] [Div R]
+    (r₀ r₁ : DensePoly R) (fuel : Nat) : DensePoly R :=
+  match fuel with
+  | 0 => r₀
+  | fuel + 1 =>
+      if r₁.isZero then
+        r₀
+      else
+        gcdAuxImpl r₁ (modImpl r₀ r₁) fuel
+
+/-- The remainder-only Euclidean loop computes the reference GCD loop. -/
+private theorem gcdAuxImpl_eq_gcdAux [One R] [Add R] [Sub R] [Mul R] [Div R]
+    (r₀ r₁ : DensePoly R) (fuel : Nat) :
+    gcdAuxImpl r₀ r₁ fuel = gcdAux r₀ r₁ fuel := by
+  induction fuel generalizing r₀ r₁ with
+  | zero => rfl
+  | succ fuel ih =>
+      unfold gcdAuxImpl gcdAux
+      by_cases hzero : r₁.isZero
+      · simp [hzero]
+      · simp only [hzero]
+        rw [modImpl_eq_mod]
+        exact ih _ _
+
+/-- Proof-backed compiled implementation of plain polynomial GCD that never
+constructs the discarded Euclidean quotient arrays. -/
+@[csimp]
+theorem gcdAux_eq_impl : @gcdAux = @gcdAuxImpl := by
+  funext R _ _ _ _ _ _ _ r₀ r₁ fuel
+  exact (gcdAuxImpl_eq_gcdAux r₀ r₁ fuel).symm
 
 /-- The plain remainder gcd agrees with the `gcd` component of the extended
 algorithm: {name}`XGCDResult.gcd` never depends on the Bezout accumulators. -/
@@ -1497,7 +1638,7 @@ theorem divModMonic_eq_divMod_of_monic_of_scale [One R] [Add R] [Sub R] [Mul R] 
   rw [if_neg hnot_lt]
   exact (divModArray_scaleLead_congr p q (fun a => hscale a)).symm
 
-/-- Core division invariant: for positive-degree divisors, {name}`divMod` returns a remainder whose
+/-- Division invariant: for positive-degree divisors, {name}`divMod` returns a remainder whose
 degree is strictly smaller than the divisor degree. -/
 @[grind =>]
 theorem divMod_remainder_degree_lt_of_pos_degree [One R] [Add R] [Sub R] [Mul R] [Div R]

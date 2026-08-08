@@ -3,13 +3,16 @@
 Certified isolation of complex roots of integer-coefficient
 polynomials. A root isolation is a square in the complex plane with
 Gaussian-dyadic centre and power-of-two half-width, together with a
-witness, dischargeable by `decide`, that a certified region around
+structural certificate that a certified region around
 the square contains exactly one simple root (an *atom*) or exactly
 `k` roots counted with multiplicity (a *cluster*). Atoms carry one
 of two certificate forms, tried in a configurable order: a
 Newton-Kantorovich contraction witness, whose certified region is
 the square itself, or a Pellet witness, whose certified region is
-the square's circumscribed disc. Clusters carry Pellet witnesses on
+the square's circumscribed disc. Checker-produced certificates remain
+dischargeable by `decide`; exact polynomial and square transformations retain
+their source certificate as explicit provenance instead of rerunning a
+checker. Clusters carry Pellet witnesses on
 the circumscribed disc. Refinement combines speculative Newton
 iteration (using `Dyadic.invAtPrec` from the Lean standard library)
 with subdivision and component gluing as the fallback, following the
@@ -237,8 +240,10 @@ square is that doubled square. All downstream geometry
 nothing else changes; reaching a given stored precision costs one
 extra subdivision level, absorbed by `stopSlack`.
 
-The two atom forms are packaged as a disjunction, so consumers of
-isolations never care which route fired:
+The two checker forms remain packaged as the decidable `atomWitness`
+proposition. Stored atoms use an indexed structural certificate so exact root
+reflection and primitive-sign normalization can transport existing evidence
+without assuming that either checker fires again:
 
 ```lean
 /-- An atom certificate: either certificate form for "exactly one
@@ -246,6 +251,17 @@ isolations never care which route fired:
 def atomWitness (p : ZPoly) (s : DyadicSquare) : Prop :=
   nkWitness p s ∨ witness p s 1
 instance : Decidable (atomWitness p s) := …
+
+inductive AtomCertificate : (p : ZPoly) → (s : DyadicSquare) → Type
+  | nk (h : nkWitness p s) : AtomCertificate p s
+  | pellet (h : witness p s 1) : AtomCertificate p s
+  | neg (hprim : ZPoly.Primitive p) (h : AtomCertificate p s) :
+      AtomCertificate p.negRoots s.neg
+  | normalize (h : AtomCertificate p s) :
+      AtomCertificate (ZPoly.normalizePrimitiveSign p) s
+
+def AtomCertificate.ofWitness : atomWitness p s → AtomCertificate p s
+def AtomCertificate.isNK : AtomCertificate p s → Bool
 
 /-- Which atom certificates `certify?` attempts, and in which order.
     `nkThenPellet` is the default; the singleton strategies exist for
@@ -277,7 +293,7 @@ structure DyadicSquare where
     Pellet disjunct) contains exactly one simple root. -/
 structure DyadicRootIsolation (p : ZPoly) where
   square  : DyadicSquare
-  witness : atomWitness p square
+  witness : AtomCertificate p square
 
 /-- A certified cluster: an edge-or-corner-connected set of grid squares at a
     common `prec`, whose enclosing disc contains exactly `k` roots
@@ -374,17 +390,17 @@ def cauchy (p : ZPoly) (h : 0 < p.degree?.getD 0) : Component
 end Component
 
 /-- Repackage a certified `k = 1` cluster as an atom (the Pellet
-    disjunct of `atomWitness`). Total: the cluster's witness already
+    constructor of `AtomCertificate`). Total: the cluster's witness already
     lives on the enclosing square's disc, which is the atom's
     square. -/
 def DyadicRootCluster.atomize (c : DyadicRootCluster p) (h : c.k = 1) :
     DyadicRootIsolation p
 
-/-- Refine to `target` precision: speculative Newton steps, falling
-    back to subdivision of the atom's square as a one-square
-    component. This local loop does not pay the full driver's global
-    halo-normalization prefix. `none` only if certification has not
-    reappeared by `stopDepth p target` (see below). -/
+/-- Refine to `target` precision. First try a bounded lineage-local
+    speculative pass; if it does not produce exactly one target-ready
+    atom, restart from the input under the globally reglued complete
+    loop. `none` only if the fallback has not emitted by
+    `stopDepth p target` (see below). -/
 def DyadicRootIsolation.refineTo? (iso : DyadicRootIsolation p)
     (target : Int) (strategy : AtomStrategy := .nkThenPellet) :
     Option (DyadicRootIsolation p)
@@ -528,12 +544,17 @@ emission condition was not reached within the fixed fuel bound; it does
 not mean that no individual certificate appeared. Soundness remains
 conditional on a `some` result for arbitrary inputs.
 
-The one-atom `DyadicRootIsolation.refineTo?` wrapper uses the same local
-hold/adopt/subdivide transition and fuel bound, but deliberately skips this
-global prefix. Its input already denotes one isolated root, so there are no
-sibling survivor lineages or rootless halo components to normalize and reglue.
-This keeps refinement proportional to the requested precision instead of
-forcing every call through the whole-polynomial separation depth.
+The one-atom `DyadicRootIsolation.refineTo?` wrapper first spends a fixed small
+budget on the lineage-local transition, preserving the logarithmic precision
+doubling of successful speculative Newton steps. That result is accepted only
+when it is exactly one target-ready atom. If the pass exhausts its budget or
+splits into an unsuitable worklist, refinement restarts from the original atom
+under the globally reglued loop. Even a one-square start can subdivide into
+sibling survivor lineages, including rootless halos, so this global fallback
+is the completeness boundary. The Mathlib companion proves that the default
+mixed strategy reaches the emission condition for every already refined
+isolation, using local simplicity of the represented root; repeated roots
+elsewhere in the ambient polynomial are permitted.
 
 **Separation of the output.** Certification alone does not prevent
 double-counting. A component whose squares contain no root (its
@@ -591,17 +612,18 @@ multiple root), so it appears in the output as a cluster with its
 def mahlerPrec (p : ZPoly) : Nat
 ```
 
-For squarefree `p ∈ ℤ[x]` of degree `n`, the Mahler separation bound
-gives
+For the squarefree part of a nonzero `p ∈ ℤ[x]` of degree `n`, the Mahler
+separation bound gives
 
 ```
 sep(p) := min_{i ≠ j} |αᵢ − αⱼ| ≥ √3 · n^{−(n+2)/2} · |disc p|^{1/2} · M(p)^{−(n−1)}
 ```
 
-Combined with `|disc p| ≥ 1` (the discriminant of a squarefree integer
-polynomial is a nonzero integer) and Landau's
-`M(p) ≤ √(n+1) · ‖p‖∞`, this bounds `sep(p)` from below in terms of
-`n` and `‖p‖∞` alone. `mahlerPrec p` is a `Nat` such that the
+The integral radical has nonzero integer discriminant, hence absolute value at
+least one; its Mahler measure is at most that of `p`. Combined with Landau's
+`M(p) ≤ √(n+1) · ‖p‖∞`, this bounds the distance between distinct roots of
+`p` from below in terms of `n` and `‖p‖∞` alone. `mahlerPrec p` is a `Nat`
+such that the
 circumscribed-disc radius at that precision is strictly below
 `sep(p)/4`:
 
@@ -612,11 +634,11 @@ circumscribed-disc radius at that precision is strictly below
 The `/4` margin is what the `SimpleRoot` intersection test below
 needs. The computation is pure integer arithmetic on the closed-form
 bound (logarithms by repeated squaring). No discriminant is computed
-at runtime; only the constant lower bound `|disc p| ≥ 1` is used. The
-Mahler bound concerns *distinct* roots, so `mahlerPrec` is meaningful
-even for non-squarefree `p`: if `p_sf` is the squarefree part then
-`M(p_sf) ≤ M(p)` and `|disc p_sf| ≥ 1`, so the same closed form
-applies. The Mathlib companion proves correctness; see
+at runtime; only the constant lower bound for the radical's discriminant is
+used. Thus `mahlerPrec` is meaningful for every nonzero polynomial, including
+a polynomial with repeated roots: multiplicities disappear in the integral
+radical while its distinct roots are unchanged. The Mathlib companion proves
+correctness; see
 [hex-roots-mathlib.md](../../HexRootsMathlib/SPEC/hex-roots-mathlib.md).
 
 ```lean
@@ -737,7 +759,9 @@ callers can substitute the refined representative wherever the
 original was used. Structures that contain
 a representative (such as `AlgebraicNumber` in `hex-number-field`)
 should store the refined value on return, so downstream consumers
-inherit the precision.
+inherit the precision. For the default `.nkThenPellet` strategy the companion
+also proves that this option is always `some`; no corresponding totality claim
+is made here for pure Pellet refinement of a non-squarefree ambient polynomial.
 
 ## Differences from BSSY
 
@@ -791,8 +815,9 @@ inherit the precision.
   (hex-number-field's disambiguation loops) use instead of re-deriving
   the `√2` radius bookkeeping.
 - `HexRoots/Kantorovich.lean`: `nkWitness` with its `Decidable`
-  instance, `atomWitness`, `AtomStrategy`, the
-  `atomWitness`-dependent `DyadicRootIsolation`, `Certified`, and
+  instance, the decidable `atomWitness` checker proposition,
+  `AtomCertificate` and its exact transport constructors, `AtomStrategy`, the
+  certificate-indexed `DyadicRootIsolation`, `Certified`, and
   `atomize`, and `certifyAtom?` (certify an arbitrary candidate
   square, deciding both disjuncts fresh; the documented constructor
   for re-certification after a square transform).

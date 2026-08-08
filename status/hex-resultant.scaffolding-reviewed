@@ -1,0 +1,4 @@
+Independently reviewed against HexResultant/SPEC/hex-resultant.md in PR #9145.
+The review identified the missing product-discriminant contract, its
+separability corollary, and Phase-4 evidence; all were resolved in the same
+milestone, leaving no follow-up scaffolding gap.

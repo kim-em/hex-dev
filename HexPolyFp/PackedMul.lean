@@ -77,7 +77,7 @@ matching semantic contract.
 
 `private`, and only reached through the type-safe `mulPacked`: the C extern's
 `__uint128_t` accumulation and `% modulus` match this `Nat`-summing fallback only
-under the precondition the callers establish — words reduced below `m` and
+under the precondition the callers establish; words reduced below `m` and
 `0 < m < 2^31` (so products stay below `2^62` and the accumulator never
 truncates). This mirrors `lean_hex_zmod64_mul`, whose contract likewise assumes
 reduced small residues. -/

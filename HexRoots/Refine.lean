@@ -29,6 +29,12 @@ structurally on a `Nat`, so the recursion needs no termination proof;
 quantity here is exact: the emission test is a pairwise
 `DyadicSquare.discsMeet` comparison of stored squares, and the precision
 comparisons are on the exact `Int` precs.
+
+The public one-atom wrapper first tries a bounded lineage-local speculative
+pass, preserving Newton's logarithmic precision growth. If that pass cannot
+emit exactly one target-ready atom, `refineLoop` restarts from the original
+atom and uses the same globally reglued prefix as the full driver; subdivision
+can split even a single starting square into sibling survivor lineages.
 -/
 namespace Hex
 
@@ -185,20 +191,59 @@ all squares refine and reglue globally; afterwards this is `nextLocal`. -/
 
 end IsolationLoop
 
-/-- Local refinement loop for one already-isolated atom. Unlike the
-Cauchy-started full driver, it does not pay the global halo-normalization
-prefix: there are no sibling lineages to reglue. -/
+/-- Refinement loop for one already-isolated atom.  Subdivision can split even
+one starting component into several survivor lineages, so before the fixed
+completeness depth this uses the same globally reglued transition as the full
+driver.  A result is emitted only when it is the single target-ready atom
+required by `refineAtom?`. -/
 @[expose] def refineLoop (p : ZPoly) (target : Int) (strategy : AtomStrategy) :
     Nat → Array Component → Option (Array (Certified p))
   | 0, _ => none
   | fuel + 1, work =>
     if work.isEmpty then some #[] else
     let tried := IsolationLoop.attempts p strategy work
-    if IsolationLoop.allReady target tried && IsolationLoop.disjoint tried then
+    if IsolationLoop.allReady target tried && IsolationLoop.disjoint tried &&
+        IsolationLoop.allAtoms tried && (IsolationLoop.outputs tried).size == 1 then
       some (IsolationLoop.outputs tried)
     else
       refineLoop p target strategy fuel <|
+        IsolationLoop.next p target tried
+
+/-- Small speculative budget used before the globally normalized completeness
+fallback. Successful Newton adoption normally needs only logarithmically many
+rounds, while failure simply restarts from the original atom on `refineLoop`. -/
+@[expose] def fastRefineFuel : Nat := 64
+
+/-- Opportunistic lineage-local refinement. This loop is only a fast path: its
+result is accepted under the same singleton-atom guard as `refineLoop`, and any
+failure falls back to the globally reglued complete loop. -/
+@[expose] def refineFastLoop (p : ZPoly) (target : Int)
+    (strategy : AtomStrategy) :
+    Nat → Array Component → Option (Array (Certified p))
+  | 0, _ => none
+  | fuel + 1, work =>
+    if work.isEmpty then some #[] else
+    let tried := IsolationLoop.attempts p strategy work
+    if IsolationLoop.allReady target tried && IsolationLoop.disjoint tried &&
+        IsolationLoop.allAtoms tried && (IsolationLoop.outputs tried).size == 1 then
+      some (IsolationLoop.outputs tried)
+    else
+      refineFastLoop p target strategy fuel <|
         IsolationLoop.nextLocal p target tried
+
+/-- Bounded speculative refinement of one atom. A rejected or exhausted run
+returns `none`, so callers can fall back without trusting this optimization. -/
+@[expose] def refineFastAtom? {p : ZPoly} (iso : DyadicRootIsolation p)
+    (target : Int) (strategy : AtomStrategy) : Option (DyadicRootIsolation p) :=
+  match refineFastLoop p target strategy fastRefineFuel
+      #[⟨#[iso.square.doubled], 1⟩] with
+  | some rs =>
+    if rs.size = 1 then
+      match rs[0]? with
+      | some (Certified.atom iso') => some iso'
+      | _ => none
+    else none
+  | none => none
 
 /-- Internal atom refiner shared by the public one-atom API and the
 all-atoms fast path in the full isolation driver. -/
@@ -303,12 +348,16 @@ end IsolationLoop
         isolateLoop p target strategy fuel <|
           IsolationLoop.next p target tried
 
-/-- Refine to `target` precision: speculative Newton steps, falling back to
-    local subdivision of the atom's square as a one-square component. This
-    path does not use the global completeness prefix. `none` only if the full
-    ready/disjoint emission condition has not appeared within its fuel bound. -/
+/-- Refine to `target` precision. A bounded lineage-local pass preserves the
+usual logarithmic speculative-Newton path. If it does not produce exactly one
+target-ready atom, refinement restarts from the input under the globally
+reglued complete loop. -/
 @[expose] def DyadicRootIsolation.refineTo? {p : ZPoly} (iso : DyadicRootIsolation p)
     (target : Int) (strategy : AtomStrategy := .nkThenPellet) :
-    Option (DyadicRootIsolation p) := refineAtom? iso target strategy
+    Option (DyadicRootIsolation p) :=
+  if target ≤ iso.square.prec then some iso else
+  match refineFastAtom? iso target strategy with
+  | some iso' => some iso'
+  | none => refineAtom? iso target strategy
 
 end Hex

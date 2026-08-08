@@ -30,9 +30,9 @@ theorem certify_nk_cases {p : Hex.ZPoly} {c : Hex.Component}
     let cand := (Hex.newtonSquare p base 1).doubled
     (∃ (_hbase : Hex.nkWitness p base) (_hinside : cand.squareInside base = true)
         (hcand : Hex.nkWitness p cand),
-        r = .atom ⟨cand, Or.inl hcand⟩) ∨
+        r = .atom ⟨cand, .nk hcand⟩) ∨
       ∃ hbase : Hex.nkWitness p base,
-        r = .atom ⟨base, Or.inl hbase⟩ := by
+        r = .atom ⟨base, .nk hbase⟩ := by
   simp only [Hex.Component.certify?, Hex.nkWitness,
     Hex.TaylorShift.nkWitnessCheck_eq, Hex.TaylorShift.newtonSquare_eq] at hcert ⊢
   split at hcert <;> rename_i hbase
@@ -50,8 +50,8 @@ theorem certify_nk_cases {p : Hex.ZPoly} {c : Hex.Component}
 square. -/
 @[simp] theorem nkAtom_region {p : Hex.ZPoly} {s : Hex.DyadicSquare}
     (h : Hex.nkWitness p s) :
-    Certified.region (.atom ⟨s, Or.inl h⟩) = DyadicSquare.closedSquare s := by
-  simp [Certified.region, DyadicRootIsolation.region, h]
+    Certified.region (.atom ⟨s, .nk h⟩) = DyadicSquare.closedSquare s := by
+  simp [Certified.region, DyadicRootIsolation.region, Hex.AtomCertificate.isNK]
 
 /-- A root in an outer unique-root square belongs to a nested inner square
 that also has a unique root. -/
@@ -75,13 +75,14 @@ theorem certify_nk_unique {p : Hex.ZPoly} {c : Hex.Component}
     {r : Hex.Certified p} (hcert : Hex.Component.certify? p .nk c = some r) :
     ∃ (iso : Hex.DyadicRootIsolation p), r = .atom iso ∧
       Hex.nkWitness p iso.square ∧
+      iso.witness.isNK = true ∧
       ∃! z, (toPolyℂ p).eval z = 0 ∧
         z ∈ DyadicSquare.closedSquare iso.square := by
   rcases certify_nk_cases hcert with h | h
   · obtain ⟨hbase, hinside, hcand, rfl⟩ := h
-    exact ⟨_, rfl, hcand, NKData.existsUnique_root hcand⟩
+    exact ⟨_, rfl, hcand, rfl, NKData.existsUnique_root hcand⟩
   · obtain ⟨hbase, rfl⟩ := h
-    exact ⟨_, rfl, hbase, NKData.existsUnique_root hbase⟩
+    exact ⟨_, rfl, hbase, rfl, NKData.existsUnique_root hbase⟩
 
 /-- Every NK-only certification result contains a unique interior simple root
 in its stored square. -/

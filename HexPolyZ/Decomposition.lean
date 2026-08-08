@@ -8,7 +8,7 @@ module
 
 public import HexPoly
 public import HexPolyZ.Rational
-import all HexPolyZ.Core
+import all HexPolyZ.IntegerPolynomial
 import all HexPolyZ.Rational
 
 public section
@@ -132,7 +132,7 @@ private theorem squareFreeRat_one :
   exact DensePoly.size_C_le_one (1 : Rat)
 
 /-- The primitive field reassembles over `Rat[x]` as a rational scalar multiple
-of the product of the square-free core and repeated part. -/
+of the product of the square-free part and repeated part. -/
 theorem primitiveSquareFreeDecomposition_reassembly_over_rat (f : ZPoly) :
     let d := primitiveSquareFreeDecomposition f
     ∃ unit : Rat,
@@ -188,7 +188,7 @@ theorem primitiveSquareFreeDecomposition_reassembly_over_rat (f : ZPoly) :
             rw [rat_scale_mul_scale]
       simpa [ratPrimitive, derivative, repeatedRat, quotientRat] using htarget
 
-/-- A nonzero square-free core from the primitive square-free decomposition is
+/-- A nonzero square-free part from the primitive square-free decomposition is
 square-free over `Rat[x]`. -/
 theorem primitiveSquareFreeDecomposition_squareFreeCore
     (f : ZPoly)
@@ -322,7 +322,7 @@ private theorem ratPolyPrimitivePart_div_gcd_mul_primitive
   exact primitive_mul (ratPolyPrimitivePart quotientRat) (ratPolyPrimitivePart repeatedRat)
     hcore_primitive hrepeated_primitive
 
-/-- For nonzero input, the product of the square-free core and repeated part is
+/-- For nonzero input, the product of the square-free part and repeated part is
 primitive. -/
 theorem primitiveSquareFreeDecomposition_squareFreeCore_repeatedPart_primitive
     (f : ZPoly) (hf : f ≠ 0) :
@@ -363,7 +363,7 @@ theorem primitiveSquareFreeDecomposition_squareFreeCore_repeatedPart_primitive
     simpa [p, ratPrimitive, derivative] using
       ratPolyPrimitivePart_div_gcd_mul_primitive p hp_ne
 
-/-- A nonzero degree-zero square-free core from the primitive square-free
+/-- A nonzero degree-zero square-free part from the primitive square-free
 decomposition is `1`. -/
 theorem primitiveSquareFreeDecomposition_squareFreeCore_eq_one_of_degree_zero
     (f : ZPoly)
@@ -418,7 +418,7 @@ theorem primitiveSquareFreeDecomposition_squareFreeCore_eq_one_of_degree_zero
       simpa [core] using hnormalized
 
 /-- Companion to `primitiveSquareFreeDecomposition_squareFreeCore_eq_one_of_degree_zero`:
-when the recorded square-free core has degree zero (and is nonzero), the recorded
+when the recorded square-free part has degree zero (and is nonzero), the recorded
 `repeatedPart` collapses to `1`. The derivative-zero branch settles the goal by the
 literal `repeatedPart := 1` field, while the derivative-nonzero branch is ruled out
 via the gcd-derivative degree arithmetic (`derivative.size ≤ ratPrimitive.size - 1`
@@ -517,7 +517,7 @@ theorem primitiveSquareFreeDecomposition_repeatedPart_eq_one_of_squareFreeCore_d
           rat_derivative_size_le_pred ratPrimitive
         omega
 
-/-- The square-free core produced by primitive square-free decomposition has
+/-- The square-free part produced by primitive square-free decomposition has
 nonnegative leading coefficient. -/
 theorem leadingCoeff_squareFreeCore_nonneg (f : ZPoly) :
     0 ≤ DensePoly.leadingCoeff (primitiveSquareFreeDecomposition f).squareFreeCore := by
@@ -546,7 +546,7 @@ theorem leadingCoeff_repeatedPart_nonneg (f : ZPoly) :
     · simp [hderiv]
       exact leadingCoeff_ratPolyPrimitivePart_nonneg _
 
-/-- For nonzero input, the product of the square-free core and repeated part has
+/-- For nonzero input, the product of the square-free part and repeated part has
 positive leading coefficient. -/
 theorem primitiveSquareFreeDecomposition_squareFreeCore_repeatedPart_leadingCoeff_pos
     (f : ZPoly) (hf : f ≠ 0) :
@@ -626,7 +626,7 @@ theorem primitiveSquareFreeDecomposition_squareFreeCore_repeatedPart_leadingCoef
       exact Int.mul_pos hcore_pos hrepeated_pos
     simpa [p, ratPrimitive, derivative, repeatedRat, quotientRat] using hprod_pos
 
-/-- For nonzero input, the product of the square-free core and repeated part
+/-- For nonzero input, the product of the square-free part and repeated part
 reassembles the primitive part up to sign. -/
 theorem primitiveSquareFreeDecomposition_reassembly_signed
     (f : ZPoly) (hf : f ≠ 0) :
@@ -674,12 +674,12 @@ theorem primitiveSquareFreeDecomposition_reassembly_signed
     rw [← hdprimitive]
     exact htarget.symm
 
-/-- The `squareFreeCore` projection is the decomposition's square-free core.
-A definitional bridge for consumers that cannot unfold the unexposed `def`. -/
+/-- The `squareFreeCore` projection is the decomposition's square-free part.
+A definitional correspondence for consumers that cannot unfold the unexposed `def`. -/
 theorem squareFreeCore_eq (f : ZPoly) :
     squareFreeCore f = (primitiveSquareFreeDecomposition f).squareFreeCore := rfl
 
-/-- The square-free core of a nonzero polynomial is nonzero: in the signed
+/-- The square-free part of a nonzero polynomial is nonzero: in the signed
 reassembly it is a factor of the (nonzero) primitive part. -/
 theorem squareFreeCore_ne_zero (f : ZPoly) (hf : f ≠ 0) :
     squareFreeCore f ≠ 0 := by
@@ -692,6 +692,38 @@ theorem squareFreeCore_ne_zero (f : ZPoly) (hf : f ≠ 0) :
   rw [← hre,
     show (primitiveSquareFreeDecomposition f).squareFreeCore = 0 from hcore,
     DensePoly.zero_mul, DensePoly.scale_zero_right]
+
+/-- The square-free core of a nonzero polynomial is primitive. -/
+theorem squareFreeCore_primitive (f : ZPoly) (hf : f ≠ 0) :
+    Primitive (squareFreeCore f) := by
+  let d := primitiveSquareFreeDecomposition f
+  have hproduct : Primitive (d.squareFreeCore * d.repeatedPart) := by
+    simpa [d] using
+      primitiveSquareFreeDecomposition_squareFreeCore_repeatedPart_primitive f hf
+  have hmul : content d.squareFreeCore * content d.repeatedPart = 1 := by
+    rw [← content_mul]
+    exact hproduct
+  have hmulNat :
+      DensePoly.contentNat d.squareFreeCore *
+          DensePoly.contentNat d.repeatedPart = 1 := by
+    simp only [content, DensePoly.content] at hmul
+    have habs := congrArg Int.natAbs hmul
+    simpa only [Int.natAbs_mul, Int.natAbs_ofNat', Int.natAbs_one]
+      using habs
+  have hcoreNat : DensePoly.contentNat d.squareFreeCore = 1 := by
+    exact Nat.dvd_one.mp ⟨DensePoly.contentNat d.repeatedPart, hmulNat.symm⟩
+  simp [Primitive, squareFreeCore_eq, d, content,
+    DensePoly.content, hcoreNat]
+
+/-- The square-free core of a nonzero polynomial has positive leading
+coefficient. -/
+theorem leadingCoeff_squareFreeCore_pos (f : ZPoly) (hf : f ≠ 0) :
+    0 < (squareFreeCore f).leadingCoeff := by
+  have hnonneg : 0 ≤ (squareFreeCore f).leadingCoeff := by
+    simpa [squareFreeCore_eq] using leadingCoeff_squareFreeCore_nonneg f
+  have hne : (squareFreeCore f).leadingCoeff ≠ 0 :=
+    leadingCoeff_ne_zero_of_ne_zero _ (squareFreeCore_ne_zero f hf)
+  omega
 
 /-- The square-free core of a nonzero polynomial is square-free over `Rat[x]`:
 combine the executable core square-freeness with core nonzeroness. -/
@@ -731,7 +763,7 @@ private theorem ratPolyPrimitivePart_gcd_dvd_derivative (rp : DensePoly Rat) :
 /-- The rational cast of the repeated part divides the derivative of the
 rational cast of the primitive part. The repeated part is a rational associate
 of `gcd(primitive, primitive')`, which divides `primitive'`; this is the
-divisibility the square-free-core root transfer consumes. -/
+divisibility the square-free-part root transfer consumes. -/
 theorem toRatPoly_repeatedPart_dvd_derivative (f : ZPoly) :
     toRatPoly (primitiveSquareFreeDecomposition f).repeatedPart ∣
       DensePoly.derivative (toRatPoly (primitivePart f)) := by
@@ -938,7 +970,7 @@ theorem primitiveSquareFreeDecomposition_repeatedPart_eq_one_of_squareFreeRat
     · exact hsq
 
 /-- On a nonzero input whose primitive part is square-free over `ℚ`, the
-square-free core of the primitive square-free decomposition is exactly the
+square-free part of the primitive square-free decomposition is exactly the
 sign-normalized primitive part.  Together with
 `primitiveSquareFreeDecomposition_repeatedPart_eq_one_of_squareFreeRat`, this is
 the trivial decomposition that the modular square-free fast path returns. -/

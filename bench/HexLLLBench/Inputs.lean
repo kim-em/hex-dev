@@ -851,12 +851,12 @@ library named by `HEX_FPLLL_FFI_LIB`, if that variable is set and non-empty.
 Idempotent: once a provider is active this is a cheap no-op, so the provider
 targets can call it lazily. This is the bench's opt-in replacement for the old
 implicit env read — the public `Hex.lll` surface no longer consults the
-environment; the bench does so explicitly here via `Hex.lll.loadProvider`. -/
+environment; the bench does so explicitly here via `Hex.lll.loadExternalReducer`. -/
 def ensureProviderLoaded : IO Unit := do
-  if ← lll.providerActive then
+  if ← lll.externalReducerActive then
     return
   match ← IO.getEnv "HEX_FPLLL_FFI_LIB" with
-  | some path => if path != "" then discard <| lll.loadProvider path
+  | some path => if path != "" then discard <| lll.loadExternalReducer path
   | none => pure ()
 
 /-- Benchmark target: run the public dispatched LLL path and checksum the
@@ -864,7 +864,7 @@ first row. If a real external provider is loaded, this target fails unless the
 certified dispatch accepts at least one candidate. -/
 def runDispatchedFirstShortVectorChecksum (input : FirstShortVectorInput) : IO Int := do
   ensureProviderLoaded
-  LLLProvider.resetDiagnostics
+  ExternalReducer.resetDiagnostics
   have hrows : 1 ≤ input.rows := input.hn
   let f0 : Fin input.rows := ⟨0, by omega⟩
   -- Drive the dispatch via the IO-based `tryReduce` so the provider call
@@ -874,12 +874,12 @@ def runDispatchedFirstShortVectorChecksum (input : FirstShortVectorInput) : IO I
   -- requestedEta)` the public dispatch asks of the reducer; certification
   -- stays against `(δ, 11/20)`, exactly the path `dispatch` exposes to `lll`.
   let δ : Rat := 3 / 4
-  let δFloat : Float := Float.ofInt (LLLProvider.requestedDelta δ).num
-    / Float.ofNat (LLLProvider.requestedDelta δ).den
-  let ηFloat : Float := Float.ofInt LLLProvider.requestedEta.num
-    / Float.ofNat LLLProvider.requestedEta.den
-  let entries := LLLProvider.matrixToEntries input.basis
-  let candidate? ← LLLProvider.tryReduce
+  let δFloat : Float := Float.ofInt (ExternalReducer.requestedDelta δ).num
+    / Float.ofNat (ExternalReducer.requestedDelta δ).den
+  let ηFloat : Float := Float.ofInt ExternalReducer.requestedEta.num
+    / Float.ofNat ExternalReducer.requestedEta.den
+  let entries := ExternalReducer.matrixToEntries input.basis
+  let candidate? ← ExternalReducer.tryReduce
     (USize.ofNat input.rows) (USize.ofNat input.cols) entries
     δFloat ηFloat 0 true
   -- Track whether `certCheck` itself accepted, not merely whether the payload
@@ -890,11 +890,11 @@ def runDispatchedFirstShortVectorChecksum (input : FirstShortVectorInput) : IO I
     | some cand =>
         let flat := #[0, Int.ofNat input.rows, Int.ofNat input.cols, 1]
           ++ cand.reduced ++ cand.transform ++ (cand.inverse?.getD #[])
-        match LLLProvider.certifyFlat input.basis δ flat with
+        match ExternalReducer.certifyFlat input.basis δ flat with
         | some triple => pure (triple.1, true)
         | none => pure (lllNative input.basis δ lllDeltaLower lllDeltaUpper input.hn, false)
     | none => pure (lllNative input.basis δ lllDeltaLower lllDeltaUpper input.hn, false)
-  if LLLProvider.providerAvailable () && !certified then
+  if ExternalReducer.externalReducerAvailable () && !certified then
     throw <| IO.userError
       "fplll provider loaded but the certified path rejected its candidate"
   return intVectorChecksum (Matrix.row reduced f0)
@@ -1090,7 +1090,7 @@ def runIsabelleCertifiedShortVectorNormSq (_tag : String) (input : FirstShortVec
 
 /-- Approximate `Rat → Float` for forwarding `δ` to the FFI provider. Precision
 is not part of correctness: the certified path checks the resulting candidate
-against the exact `δ` via integer arithmetic. Mirrors `LLLProvider.ratToFloat`
+against the exact `δ` via integer arithmetic. Mirrors `ExternalReducer.ratToFloat`
 (which is private). -/
 private def ratToFloat (r : Rat) : Float :=
   Float.ofInt r.num / Float.ofNat r.den
@@ -1098,23 +1098,23 @@ private def ratToFloat (r : Rat) : Float :=
 /-- Invoke fplll-ffi in-process via the dlopened provider and return the flat
 `(status, rows, cols, has_inverse, reduced, U, V?)` payload. The same payload
 shape powers both the raw fpLLL comparator (first-row checksum) and the
-certified path (`LLLProvider.certifyFlat`), so one FFI call covers both.
+certified path (`ExternalReducer.certifyFlat`), so one FFI call covers both.
 
 Raises `IO.userError` if the provider is absent (no `HEX_FPLLL_FFI_LIB` /
 unresolved `lean_fplll_lll_reduce`) or returns an error from `libfplll`. -/
 def requestFpLLLFlat (input : FirstShortVectorInput) : IO (Array Int) := do
   ensureProviderLoaded
-  if !LLLProvider.providerAvailable () then
+  if !ExternalReducer.externalReducerAvailable () then
     throw <| IO.userError
       "fplll-ffi provider absent — set HEX_FPLLL_FFI_LIB to libfplllffi"
   let δ : Rat := 3 / 4
-  let entries := LLLProvider.matrixToEntries input.basis
+  let entries := ExternalReducer.matrixToEntries input.basis
   -- Request the same stronger `(requestedDelta δ, requestedEta)` the public
   -- dispatch asks of the reducer, so the certified curve measures the exact
   -- reducer call production makes; certification stays against `(δ, 11/20)`.
-  match LLLProvider.providerReduce
+  match ExternalReducer.externalReduce
       (USize.ofNat input.rows) (USize.ofNat input.cols) entries
-      (ratToFloat (LLLProvider.requestedDelta δ)) (ratToFloat LLLProvider.requestedEta) 0 true with
+      (ratToFloat (ExternalReducer.requestedDelta δ)) (ratToFloat ExternalReducer.requestedEta) 0 true with
   | .error e => throw <| IO.userError s!"fplll-ffi: {e}"
   | .ok flat => return flat
 
@@ -1133,7 +1133,7 @@ def runFpLLLFirstShortVectorChecksum (input : FirstShortVectorInput) : IO Int :=
     0
 
 def certifyPayloadChecksum (input : FirstShortVectorInput) (payload : Array Int) : IO Int := do
-  match LLLProvider.certifyFlat input.basis (3 / 4 : Rat) payload with
+  match ExternalReducer.certifyFlat input.basis (3 / 4 : Rat) payload with
   | some triple =>
       have hrows : 1 ≤ input.rows := input.hn
       let f0 : Fin input.rows := ⟨0, by omega⟩
@@ -1143,7 +1143,7 @@ def certifyPayloadChecksum (input : FirstShortVectorInput) (payload : Array Int)
 
 /-- Benchmark target: fpLLL candidate production via fplll-ffi plus Lean's
 executable certificate checker. The same in-process payload that drives
-`runFpLLLFirstShortVectorChecksum` feeds `LLLProvider.certifyFlat`, so the
+`runFpLLLFirstShortVectorChecksum` feeds `ExternalReducer.certifyFlat`, so the
 certified curve and the raw fpLLL curve measure the identical C++ reducer. -/
 def runCertifiedFirstShortVectorChecksum (input : FirstShortVectorInput) : IO Int := do
   certifyPayloadChecksum input (← requestFpLLLFlat input)

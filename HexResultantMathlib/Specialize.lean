@@ -254,7 +254,7 @@ private theorem natDegree_specialize_le [CommRing R] [DecidableEq R]
 /-- Over a domain, a common root makes the default-degree resultant vanish as
 soon as at least one polynomial is nonzero. The proof maps injectively to the
 fraction field and uses Mathlib's field criterion. -/
-private theorem resultant_default_eq_zero_of_common_eval
+theorem resultant_eq_zero_of_common_eval
     [CommRing R] [IsDomain R]
     (F G : Polynomial R) (b : R)
     (hF : F.eval b = 0) (hG : G.eval b = 0)
@@ -349,7 +349,7 @@ theorem eval_resultant_eq_zero_of_common_root
         exact hboth ⟨hFzero, hGzero⟩
       · exact Or.inl hFzero
     have hdefault :=
-      resultant_default_eq_zero_of_common_eval F G b hFroot hGroot hne
+      resultant_eq_zero_of_common_eval F G b hFroot hGroot hne
     have hmEq : m = F.natDegree + (m - F.natDegree) := by omega
     have hnEq : n = G.natDegree + (n - G.natDegree) := by omega
     rw [hmEq, Polynomial.resultant_add_left_deg F G F.natDegree n

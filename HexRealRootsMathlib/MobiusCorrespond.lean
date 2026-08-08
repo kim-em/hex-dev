@@ -8,7 +8,7 @@ module
 
 public import Mathlib
 public import HexPolyZ
-public import HexPolyMathlib.Basic
+public import HexPolyMathlib.PolynomialEquivalence
 public import HexRealRoots.Mobius
 public import HexRealRootsMathlib.Separation
 public import HexRealRootsMathlib.ChainCorrespond
@@ -753,12 +753,12 @@ computation, parameterized by the integer data `(α, β, s)`. -/
 noncomputable def mobiusSteps (p : Hex.ZPoly) (α β : Int) (s : Nat) : Hex.ZPoly :=
   if p.size ≤ 1 then p else
   let n := p.size - 1
-  let cleared := Hex.DensePoly.ofCoeffs
-    ((List.range p.size).map (fun i => p.coeff i * (2 : Int) ^ (s * (n - i)))).toArray
+  let cleared := Hex.DensePoly.ofList
+    ((List.range p.size).map (fun i => p.coeff i * (2 : Int) ^ (s * (n - i))))
   let shifted := Hex.DensePoly.compose cleared (Hex.DensePoly.ofCoeffs #[β, (1 : Int)])
   let scaled := Hex.ZPoly.dilate (α - β) shifted
-  let reversed := Hex.DensePoly.ofCoeffs
-    ((List.range (n + 1)).map (fun i => scaled.coeff (n - i))).toArray
+  let reversed := Hex.DensePoly.ofList
+    ((List.range (n + 1)).map (fun i => scaled.coeff (n - i)))
   Hex.DensePoly.compose reversed (Hex.DensePoly.ofCoeffs #[(1 : Int), 1])
 
 /-- The executable transform is the mirrored pipeline at the mirrored endpoint
@@ -852,13 +852,13 @@ private theorem toPolyℝ_linear (u : Int) :
 /-- The clearing step: coefficient scaling `aᵢ ↦ aᵢ·2^{s·(n-i)}` is
 `2^{s·n} · p(x·2^{-s})` over `ℝ`. -/
 private theorem toPolyℝ_cleared (p : Hex.ZPoly) (s : Nat) :
-    toPolyℝ (Hex.DensePoly.ofCoeffs
+    toPolyℝ (Hex.DensePoly.ofList
         ((List.range p.size).map
-          (fun i => p.coeff i * (2 : Int) ^ (s * (p.size - 1 - i)))).toArray)
+          (fun i => p.coeff i * (2 : Int) ^ (s * (p.size - 1 - i)))))
       = C ((2 : ℝ) ^ (s * (p.size - 1)))
         * (toPolyℝ p).comp (C ((2 : ℝ) ^ (-(s : ℤ))) * X) := by
   ext j
-  rw [coeff_toPolyℝ, Hex.DensePoly.coeff_ofCoeffs_list,
+  rw [coeff_toPolyℝ, Hex.DensePoly.coeff_ofList,
     HexPolyMathlib.list_getD_map_range_zero, coeff_C_mul, comp_C_mul_X_coeff, coeff_toPolyℝ]
   by_cases hj : j < p.size
   · rw [if_pos hj]
@@ -879,11 +879,11 @@ is `Polynomial.reflect n` over `ℝ`, provided the degree stayed within the
 window. -/
 private theorem toPolyℝ_reversed (q : Hex.ZPoly) (n : Nat)
     (hq : (toPolyℝ q).natDegree ≤ n) :
-    toPolyℝ (Hex.DensePoly.ofCoeffs
-        ((List.range (n + 1)).map (fun i => q.coeff (n - i))).toArray)
+    toPolyℝ (Hex.DensePoly.ofList
+        ((List.range (n + 1)).map (fun i => q.coeff (n - i))))
       = Polynomial.reflect n (toPolyℝ q) := by
   ext j
-  rw [coeff_toPolyℝ, Hex.DensePoly.coeff_ofCoeffs_list,
+  rw [coeff_toPolyℝ, Hex.DensePoly.coeff_ofList,
     HexPolyMathlib.list_getD_map_range_zero, coeff_reflect]
   by_cases hj : j < n + 1
   · rw [if_pos hj, revAt_le (by omega), coeff_toPolyℝ]
@@ -915,9 +915,9 @@ private theorem inner_stages {K : Type*} [CommRing K] (P : Polynomial K)
 private theorem toPolyℝ_scaled_stage (p : Hex.ZPoly) (α β : Int) (s : Nat) :
     toPolyℝ (Hex.ZPoly.dilate (α - β)
         (Hex.DensePoly.compose
-          (Hex.DensePoly.ofCoeffs
+          (Hex.DensePoly.ofList
             ((List.range p.size).map
-              (fun i => p.coeff i * (2 : Int) ^ (s * (p.size - 1 - i)))).toArray)
+              (fun i => p.coeff i * (2 : Int) ^ (s * (p.size - 1 - i)))))
           (Hex.DensePoly.ofCoeffs #[β, (1 : Int)])))
       = C ((2 : ℝ) ^ (s * (p.size - 1)))
         * mobiusInner ((α : ℝ) * (2 : ℝ) ^ (-(s : ℤ))) ((β : ℝ) * (2 : ℝ) ^ (-(s : ℤ)))
@@ -938,23 +938,23 @@ private theorem toPolyℝ_mobiusSteps (p : Hex.ZPoly) (α β : Int) (s : Nat)
             (toPolyℝ p) := by
   have hunf : mobiusSteps p α β s
       = Hex.DensePoly.compose
-          (Hex.DensePoly.ofCoeffs
+          (Hex.DensePoly.ofList
             ((List.range (p.size - 1 + 1)).map (fun i =>
               (Hex.ZPoly.dilate (α - β)
                 (Hex.DensePoly.compose
-                  (Hex.DensePoly.ofCoeffs
+                  (Hex.DensePoly.ofList
                     ((List.range p.size).map
-                      (fun i => p.coeff i * (2 : Int) ^ (s * (p.size - 1 - i)))).toArray)
+                      (fun i => p.coeff i * (2 : Int) ^ (s * (p.size - 1 - i)))))
                   (Hex.DensePoly.ofCoeffs #[β, (1 : Int)]))).coeff
-                (p.size - 1 - i))).toArray)
+                (p.size - 1 - i))))
           (Hex.DensePoly.ofCoeffs #[(1 : Int), 1]) := by
     unfold mobiusSteps
     rw [if_neg (by omega)]
   have hdeg' : (toPolyℝ (Hex.ZPoly.dilate (α - β)
       (Hex.DensePoly.compose
-        (Hex.DensePoly.ofCoeffs
+        (Hex.DensePoly.ofList
           ((List.range p.size).map
-            (fun i => p.coeff i * (2 : Int) ^ (s * (p.size - 1 - i)))).toArray)
+            (fun i => p.coeff i * (2 : Int) ^ (s * (p.size - 1 - i)))))
         (Hex.DensePoly.ofCoeffs #[β, (1 : Int)])))).natDegree ≤ p.size - 1 := by
     rw [toPolyℝ_scaled_stage]
     refine le_trans (natDegree_C_mul_le _ _)

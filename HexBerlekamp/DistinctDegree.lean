@@ -29,7 +29,9 @@ variable {p : Nat} [ZMod64.Bounds p]
 
 /-- One distinct-degree bucket: the product of factors of the recorded degree. -/
 structure DegreeBucket (p : Nat) [ZMod64.Bounds p] where
+  /-- The common degree of the irreducible factors in this bucket. -/
   degree : Nat
+  /-- The product of all irreducible factors of the recorded degree. -/
   factor : FpPoly p
 
 /--
@@ -38,8 +40,11 @@ explicit so downstream callers can inspect any part not separated by the
 bounded executable pass.
 -/
 structure DistinctDegreeFactorization (p : Nat) [ZMod64.Bounds p] where
+  /-- The monic square-free polynomial supplied to the algorithm. -/
   input : FpPoly p
+  /-- Products grouped by irreducible-factor degree. -/
   buckets : List (DegreeBucket p)
+  /-- The part not separated by the bounded pass. -/
   residual : FpPoly p
 
 /-- Extract the polynomial factors recorded in distinct-degree buckets. -/
@@ -596,7 +601,7 @@ invariant on `(residual, acc)` whose construction (the square-free /
 multiplicity content) is delegated to the caller.
 
 `finishDegreePower_bucket_dvd_diff` covers all three exit cases of
-`finishDegreePower` — including the scalar-unit residual case where the
+`finishDegreePower`; including the scalar-unit residual case where the
 emitted factor is `acc * residual`.
 
 `distinctDegreePowerLoop_bucket_dvd_diff` threads an abstract

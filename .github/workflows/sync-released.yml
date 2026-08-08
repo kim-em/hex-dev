@@ -17,6 +17,11 @@ on:
         description: "Dry run (print planned changes; do not push)"
         type: boolean
         default: true
+      only:
+        description: "Optional repository short name (for staged first publishes)"
+        type: string
+        required: false
+        default: ""
 
 concurrency:
   group: sync-released
@@ -55,14 +60,22 @@ jobs:
         env:
           RELEASED_SYNC_PAT: ${{ secrets.RELEASED_SYNC_PAT }}
         run: |
-          extra=""
-          [ "${{ inputs.dry_run }}" = "false" ] || extra="--dry-run"
-          python3 scripts/release/sync_released.py --baseline /tmp/baseline.json $extra
+          args=()
+          [ "${{ inputs.dry_run }}" = "false" ] || args+=(--dry-run)
+          [ -z "${{ inputs.only }}" ] || args+=(--only "${{ inputs.only }}")
+          python3 scripts/release/sync_released.py \
+            --baseline /tmp/baseline.json "${args[@]}"
       - name: Publish advanced baseline
-        if: ${{ inputs.dry_run == false }}
+        # A later mirror can fail after earlier mirrors were pushed. Preserve
+        # those exact heads even when the sync step reports that failure.
+        if: ${{ always() && inputs.dry_run == false }}
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          if [ ! -f /tmp/baseline.json ]; then
+            echo "::warning::No baseline file was produced; nothing to publish."
+            exit 0
+          fi
           work=$(mktemp -d); cd "$work"
           git init -q -b "$BASELINE_BRANCH"
           cp /tmp/baseline.json synced.json

@@ -12,7 +12,7 @@ Benchmark registrations for `HexNumberField`.
 
 The fixed cases separate the costs requested by the library SPEC:
 
-* degree-10 fixed-presentation multiplication and inversion;
+* degree-10 fixed-presentation multiplication, inversion, and minimal relation;
 * lazy addition eliminant construction;
 * isolation and operation-ball disambiguation for a precomputed eliminant;
 * the complete lazy addition driver;
@@ -63,10 +63,10 @@ private def degreeTenSquare : DyadicSquare :=
   ⟨Dyadic.ofIntWithPrec 19770730768400532067 64, 0, 60⟩
 
 private def degreeTenRep : RefinedIsolation degreeTenPoly :=
-  ⟨⟨degreeTenSquare, by
+  ⟨⟨degreeTenSquare, .ofWitness (by
       set_option maxRecDepth 100000 in
       set_option exponentiation.threshold 2000 in
-        decide⟩,
+        decide)⟩,
     by
       set_option maxRecDepth 100000 in
       set_option exponentiation.threshold 2000 in
@@ -97,6 +97,16 @@ def runFixedInv : Unit → IO UInt64 :=
   else
     fun _ => throw <| IO.userError "fixed/inv: irreducibility check failed"
 
+def runFixedMinpoly : Unit → IO UInt64 :=
+  if hirred : ZPoly.isIrreducible degreeTenPoly = true then
+    letI : ZPoly.CheckedIrreducible degreeTenPoly :=
+      ⟨hirred, by decide⟩
+    fun _ => do
+      let a ← requireSome "fixed/minpoly" (← fixedFieldRef.get)
+      return polyChecksum (← requireSome "fixed/minpoly" a.minpoly?)
+  else
+    fun _ => throw <| IO.userError "fixed/minpoly: irreducibility check failed"
+
 /- Degree-`n` dense multiplication followed by reduction modulo a degree-`n`
 relation performs `O(n²)` rational coefficient operations. This canonical
 `n = 10` case is fixed because the SPEC supplies an absolute 100 ms budget,
@@ -114,6 +124,14 @@ setup_fixed_benchmark runFixedInv where {
   expectedHash := some 0x1525969728101d06
 }
 
+/- One iterative Krylov orbit is shared across the degree-10 first-dependence
+search. This fixed registration catches accidental recomputation of powers in
+each span matrix entry before that cost reaches exactification callers. -/
+setup_fixed_benchmark runFixedMinpoly where {
+  repeats := 3, maxSecondsPerCall := 5.0,
+  expectedHash := some 0xb1ed00ebc8d039e9
+}
+
 /-! # Lazy arithmetic fixtures -/
 
 private def sqrtTwoPoly : ZPoly := DensePoly.ofList [-2, 0, 1]
@@ -122,7 +140,7 @@ private def sqrtTwoSquare : DyadicSquare :=
   ⟨Dyadic.ofIntWithPrec 181 7, 0, 8⟩
 
 private def sqrtTwoRep : RefinedIsolation sqrtTwoPoly :=
-  ⟨⟨sqrtTwoSquare, by decide⟩, by decide⟩
+  ⟨⟨sqrtTwoSquare, .ofWitness (by decide)⟩, by decide⟩
 
 private def sqrtTwo? : Option AlgebraicRoot :=
   if hsimple : HasOnlySimpleRoots sqrtTwoPoly then
@@ -138,7 +156,7 @@ private def sqrtThreeSquare : DyadicSquare :=
   ⟨Dyadic.ofIntWithPrec 222 7, 0, 8⟩
 
 private def sqrtThreeRep : RefinedIsolation sqrtThreePoly :=
-  ⟨⟨sqrtThreeSquare, by decide⟩, by decide⟩
+  ⟨⟨sqrtThreeSquare, .ofWitness (by decide)⟩, by decide⟩
 
 private def sqrtThree? : Option AlgebraicRoot :=
   if hsimple : HasOnlySimpleRoots sqrtThreePoly then
@@ -247,7 +265,7 @@ private def enclosingSquare : DyadicSquare :=
   ⟨Dyadic.ofIntWithPrec 6074001000 32, 0, 32⟩
 
 private def enclosingRep : RefinedIsolation enclosingPoly :=
-  ⟨⟨enclosingSquare, by decide⟩, by decide⟩
+  ⟨⟨enclosingSquare, .ofWitness (by decide)⟩, by decide⟩
 
 private def enclosingRoot? : Option AlgebraicRoot :=
   if hsimple : HasOnlySimpleRoots enclosingPoly then
@@ -312,7 +330,7 @@ separation, one norm eliminant, candidate isolation, zero retention, and final
 deduplication. This fixed end-to-end root case has one root of multiplicity 2. -/
 setup_fixed_benchmark runRoots where {
   repeats := 3, maxSecondsPerCall := 5.0,
-  expectedHash := some 0x235b18400d87a46c
+  expectedHash := some 0x0927e3f02f6eee94
 }
 
 end Hex.NumberFieldBench
