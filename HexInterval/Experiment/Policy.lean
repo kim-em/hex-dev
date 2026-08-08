@@ -922,6 +922,16 @@ private def afterReplyFailure (state : State Fact) (engine : Engine Fact) :
   let next := advanceState state engine
   if engine.pending.isNone then { next with incomplete := true } else next
 
+/-- Abandon one pending reply without committing its prepared matcher cursor.
+This is the fatal-session counterpart of `State.submit`: the reply latch and
+prepared cursor are cleared, the registry reply is charged, and incompleteness
+is recorded, but no rule outcome or matcher batch is admitted. -/
+opaque State.abortPending (state : State Fact) : Option (State Fact) :=
+  match state.engine.pending with
+  | none => none
+  | some _ =>
+      some (afterReplyFailure state state.engine.finishReply)
+
 /-- Admit a reply through the underlying engine, then expose actual admitted
 fact deltas and newly engine-indexed suggestions.  Claimed candidate strength
 is never used as an observation.  A rejected or resource-limited reply which
