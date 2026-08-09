@@ -17,7 +17,14 @@ quadratics -- the certificate is two decidable checks, and it is now on the
 ordinary singleton-irreducibility path of `Hex.ZPoly.factorize`, behind a
 modular-width floor, with `irreducible_of_check` proving it sound.
 
-Measured on the corpus, before and after, at one revision:
+Measured on the corpus. The first five rows are the controlled A/B: two sweeps
+at one revision, `5dabd026`, differing only in whether the width floor admits
+anything. The last row is the published state, and its two numbers come from two
+different records -- the gate-closed side from that same A/B, the integrated side
+from the clean `d27e0bf2` sweep taken after `main` was merged in, which is what
+the committed figures read. The Isabelle curve both are measured against is
+carried over unchanged, so the comparison is still like for like, but it is not
+the same-revision experiment the rows above it are.
 
 | | gate closed | integrated |
 |---|---:|---:|
@@ -291,13 +298,19 @@ times the same definitions `Hex.ZPoly.factorize` reaches.
 
 **Where it is consulted.** `Hex.classicalInput` selects the modular prime and
 factorization, and at that point the support width `w` is known and no Hensel
-lift has been paid for yet. `Hex.quadraticNormCertified core w` is consulted
-once, there. A success returns the whole square-free core as one irreducible
-factor through the same `reassemblePolynomialFactors` as the constant and
-quadratic cases, so it produces the same `Factorization` any other singleton
-proof would; the trace records `FactorMethod.quadraticNorm`. A failure falls
-through to `planned` carrying no state, and the row runs exactly the cascade it
-ran before.
+lift has been paid for yet. `Hex.quadraticNormCertified core w` has exactly one
+call site, there, and it is consulted once per `classicalInput` invocation. That
+is not once per `Hex.ZPoly.factorize`: the proposal tier replays the classical
+factorizer on each piece it peels, which re-enters `classicalInput`, so a
+reducible input can fail the gate whole and have a piece certify later. That is
+how `sd6_x_phi13` becomes solvable, and it is the behaviour that makes one call
+site enough rather than an argument for a second one. A success returns the whole
+square-free core as one irreducible factor through the same
+`reassemblePolynomialFactors` as the constant and quadratic cases, so it produces
+the same `Factorization` any other singleton proof would; the trace records
+`FactorMethod.quadraticNorm`. A failure falls through to `planned` carrying no
+certificate state -- the modular plan it forwards is the one it already selected
+before the gate ran -- and the row runs exactly the cascade it ran before.
 
 **The budget.** Recombination at width `w` walks up to `2^(w-1)` supports, so
 the gate is a width: `QuadraticNormCertificate.widthFloor = 16`. At the floor the
@@ -384,11 +397,24 @@ All are in `reports/bench-results/`. The probe and witness records were measured
 at `55e47e1e` from a clean tree; each carries the SHA-256 of the service binary
 it measured, which pins the code more tightly than the commit does.
 
-The four `5dabd026` sweeps are the before/after pair, two runs each. The
-`gate-closed` two were measured from a tree whose only edit was
-`QuadraticNormCertificate.widthFloor` raised past every reachable width, so they
-record the same revision with the certificate switched off; they are marked
-dirty for that reason. `hexbz-factor-sweep-d27e0bf2-hex-chungus2.json` is the
+The four `5dabd026` sweeps are the before/after pair, two runs each. All four
+record `git_dirty: true`, for two different reasons, and neither reason is a
+production edit. All four ran with the report drafts and the earlier bench
+records untracked in the tree, and `factor_sweep.py` reads `git status
+--porcelain`, which counts untracked files. On top of that, the `gate-closed`
+two were measured from a tree carrying exactly one further edit, and nothing
+else: the literal in
+
+```
+@[expose] def widthFloor : Nat := 16
+```
+
+raised past every width the corpus reaches -- the widest row of any kind is
+`hoeij_F256` at 128, so any value above that closes the gate on every row
+identically -- so those two record the same revision with the certificate
+switched off. The records carry no binary hash and the exact literal used was
+not recorded, so they do not establish that on their own; they should be read
+against that one-line edit, and anyone retaking them should record the value. `hexbz-factor-sweep-d27e0bf2-hex-chungus2.json` is the
 published sweep: clean tree, integrated, taken after `main` was merged in, and
 what the committed figures and the rank table read. Its `sd5` reads 6.766 ms and
 its `sd6` 27.646 ms, within the run-to-run spread of the pair.
@@ -490,25 +516,51 @@ degree and survives the trace test, and those are cyclotomic and Conway rows,
 whose modular images barely split at all -- `cyclo_phi256` has width 2, so its
 recombination is a two-node walk and the floor of 16 keeps it free.
 
-Here is every declining row the gate *does* offer the certificate to, with what
-the attempt costs as a share of the row:
+Twenty-five declining rows sit at width 16 or above, so the gate offers the
+certificate to all twenty-five. Here are the seventeen the sweep solves, with
+what the attempt costs as a share of the row -- miss costs from the certificate
+probe record, row times from the published `d27e0bf2` sweep:
 
 | declining row | width | miss | row | share |
 |---|---:|---:|---:|---:|
-| `wilkinson_16` | 16 | 0.2 us | 1.158 ms | 0.014% |
-| `wilkinson_18` | 18 | 0.2 us | 1.718 ms | 0.011% |
-| `wilkinson_20` | 20 | 0.1 us | 2.274 ms | 0.007% |
-| `wilkinson_32` | 32 | 0.4 us | 6.819 ms | 0.005% |
-| `sd4_x_sd4shift1` | 16 | 0.2 us | 17.998 ms | 0.001% |
-| `sd5_x_phi11` | 17 | 0.2 us | 142.972 ms | 0.000% |
-| `sd5_x_phi45` | 18 | 0.2 us | 328.742 ms | 0.000% |
-| `sd6_x_phi13` | 33 | 0.2 us | 2.915 s | 0.000% |
+| `sd4_x_sd4shift1` | 16 | 0.2 us | 18.401 ms | 0.001% |
+| `wilkinson_16` | 16 | 0.2 us | 1.179 ms | 0.014% |
+| `sd5_x_phi11` | 17 | 0.2 us | 145.056 ms | 0.000% |
+| `sd5_x_phi45` | 18 | 0.2 us | 330.971 ms | 0.000% |
+| `wilkinson_18` | 18 | 0.2 us | 1.688 ms | 0.011% |
+| `xpow48_minus1` | 19 | 0.2 us | 10.490 ms | 0.002% |
+| `wilkinson_20` | 20 | 0.1 us | 2.256 ms | 0.007% |
+| `xpow60_minus1` | 21 | 0.2 us | 5.594 ms | 0.003% |
+| `wilkinson_24` | 24 | 0.2 us | 3.508 ms | 0.004% |
+| `wilkinson_28` | 28 | 0.2 us | 5.390 ms | 0.003% |
+| `wilkinson_32` | 32 | 0.4 us | 6.743 ms | 0.005% |
+| `sd6_x_phi13` | 33 | 0.2 us | 2.956 s | 0.000% |
+| `hoeij_F190` | 38 | 0.3 us | 3.280 s | 0.000% |
+| `xpow120_minus1` | 39 | 0.2 us | 147.497 ms | 0.000% |
+| `wilkinson_40` | 40 | 0.2 us | 9.427 ms | 0.002% |
+| `wilkinson_48` | 48 | 0.2 us | 16.572 ms | 0.001% |
+| `wilkinson_56` | 56 | 0.2 us | 21.523 ms | 0.001% |
 
-Nineteen corpus rows decline at width 16 or above; the worst of them pays
-**0.014%** of its factorization, against the 1% the gate was asked for. Every
-one is refused at the trace test: a Swinnerton-Dyer *product* has roots summing
-to a multiple of the degree only by accident, and a Wilkinson polynomial's roots
-sum to `N(N+1)/2`, which `N` divides only when `N` is odd.
+The worst of them pays **0.014%** of its factorization, against the 1% the gate
+was asked for, and the largest miss any of the twenty-five pays is 0.4 us.
+
+The other eight -- `sd5_x_sd5shift1` (32), `sd6_x_phi105` (36), `hoeij_F351`
+(61), `sd6_x_sd6shift1` (64), `hoeij_P7` (88), `hoeij_F192` (96), `hoeij_F630`
+(108) and `hoeij_F256` (128) -- reach the 10 s cutoff, so there is no row time to
+take a share of. Their misses are the same order: 0.2 to 2.2 us, the largest
+being `hoeij_F630` at 2.2 us against a row that runs for at least ten seconds.
+
+Nineteen of the twenty-five are refused at the degree test: a Swinnerton-Dyer
+polynomial times a cyclotomic, a Wilkinson polynomial of non-power-of-two
+degree, `Xᴺ - 1` for `N` = 48, 60, 120. That costs a couple of hundred
+nanoseconds at these degrees, and `hoeij_F630`'s 2.2 us and `hoeij_F351`'s
+1.5 us are the same test on 630 and 351 coefficients: the sign normalization
+and array conversion that run ahead of it are linear in the degree, and nothing
+after the degree test runs at all. The remaining six -- `wilkinson_16`, `wilkinson_32`, the three
+`sd_n × sd_n_shift1` cross-shifts and `hoeij_F256` -- have power-of-two degree
+and are refused one test later, at the trace: a Wilkinson polynomial's roots sum
+to `N(N+1)/2`, which `N` divides only when `N` is odd, and `SD_n · SD_n(X-1)`
+has trace `2ⁿ` against degree `2ⁿ⁺¹`, so the quotient is exactly one half.
 
 `sd5_x_phi11`, `sd5_x_phi45`, `sd4_x_sd4shift1`, `sd5_x_sd5shift1`,
 `sd6_x_phi13`, `sd6_x_phi105` and `sd6_x_sd6shift1` are the rows the issue named:
@@ -672,7 +724,7 @@ rows have moved down the curve into the part where Hex was already ahead.
 | covers SD5 and SD6 from their mathematical input data without case tables | **yes** -- radicands recovered from the top `2n+1` coefficients; `sd7`, `hoeij_S8`, `hoeij_S9` too |
 | certificate generation plus checking at least 5x faster than SD5, materially reduces SD6 | **yes**, and measured end to end after integration rather than as a prototype ratio: `sd5` 71.007 → 6.820 ms, `sd6` 8.148 s → 27.055 ms |
 | small, reviewable trust surface | **yes** -- see below; the Mathlib proof is in, and the search stayed outside the trust surface |
-| unsuccessful detection under 1% median overhead, preferably opt-in | **yes**, and by three orders of magnitude -- of the nineteen declining rows the width floor actually offers the certificate to, the worst pays 0.014% of its factorization. The 540 us tail exists but is entirely on narrow rows the floor never offers it to |
+| unsuccessful detection under 1% median overhead, preferably opt-in | **yes**, and by three orders of magnitude -- of the twenty-five declining rows the width floor actually offers the certificate to, the worst of the seventeen the sweep solves pays 0.014% of its factorization and none pays more than 0.4 us. The 540 us tail exists but is entirely on narrow rows the floor never offers it to |
 
 The executable trust surface is `quadNorm`, `iteratedNorm`,
 `isPerfectSquare`, `independentSquareClasses`, and one array comparison: about
