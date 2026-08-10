@@ -639,7 +639,7 @@ private def countedScanCombinations
           let filtered := { degreePassed with trailingSurvivors := 1 }
           let selected := head :: selectedRev.reverse
           let selectedFactors := directSelectedFactors basis selected
-          let candidate := directCandidate coreLc metadata.modulus selectedFactors
+          let candidate := directCandidate coreLc metadata.modulus.nat selectedFactors
           let constructed := { filtered with constructed := 1 }
           if shouldRecordPolynomialFactor candidate then
             let recorded := { constructed with recordable := 1 }
@@ -666,7 +666,7 @@ private def countedScanCombinations
           head xs choose
           (x :: selectedRev) rejectedRev
           (selectedDegree + metadata.degree x)
-          (selectedTrail * metadata.trail x % metadata.modulusInt) with
+          (selectedTrail * metadata.trail x % metadata.modulus.int) with
       | .found split stats => .found split stats
       | .exhausted leftStats =>
           match countedScanCombinations obstruct coreLc target basis
@@ -699,7 +699,7 @@ private def countedFindHead
         let metadata := supportMeta basis target
         match countedScanCombinations obstruct coreLc target basis metadata
             head tail level
-            [] [] (metadata.degree head) (metadata.trail head % metadata.modulusInt) with
+            [] [] (metadata.degree head) (metadata.trail head % metadata.modulus.int) with
         | .found split levelStats =>
             .found split (budget - levelStats.leaves) (stats.add levelStats)
               completed
