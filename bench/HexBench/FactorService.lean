@@ -620,13 +620,14 @@ stood before the obstruction existed.  Running the same traversal both ways is
 what makes the filter's effect a measurement rather than an inference. -/
 private def countedScanCombinations
     (obstruct : Bool) (coreLc : Int) (target : ZPoly) (basis : LiftData)
-    (metadata : SupportMeta basis target) (head : DirectLiftedIndex basis) :
+    (lift : LiftSupport basis) (image : TargetImage target)
+    (head : DirectLiftedIndex basis) :
     (xs : List (DirectLiftedIndex basis)) → (choose : Nat) →
       (selectedRev rejectedRev : List (DirectLiftedIndex basis)) →
       (selectedDegree : Nat) → (selectedTrail : Int) →
       DirectSubsetLevelResult basis
   | xs, 0, selectedRev, rejectedRev, selectedDegree, selectedTrail =>
-      -- `directLeaf` runs the metadata-only filters (short-circuited, degree
+      -- `directLeaf` runs the recorded-data filters (short-circuited, degree
       -- first) exactly once, and only then reverses the selected indices, maps
       -- them to lifted factors, builds the candidate, and -- on success --
       -- concatenates the complementary support. Splitting the prefilter into
@@ -635,15 +636,15 @@ private def countedScanCombinations
       let visited : DirectCandidateStats := { leaves := 1 }
       if directDegreePrefilter coreLc target selectedDegree then
         let degreePassed := { visited with degreeSurvivors := 1 }
-        if directTrailingPrefilter coreLc target metadata.modulus selectedTrail then
+        if directTrailingPrefilter coreLc target lift.modulus selectedTrail then
           let filtered := { degreePassed with trailingSurvivors := 1 }
           let selected := head :: selectedRev.reverse
           let selectedFactors := directSelectedFactors basis selected
-          let candidate := directCandidate coreLc metadata.modulus.nat selectedFactors
+          let candidate := directCandidate coreLc lift.modulus.nat selectedFactors
           let constructed := { filtered with constructed := 1 }
           if shouldRecordPolynomialFactor candidate then
             let recorded := { constructed with recordable := 1 }
-            if obstruct && Hex.obstructs metadata.image candidate then
+            if obstruct && Hex.obstructs image candidate then
               .exhausted recorded
             else
             let divided := { recorded with exactDivisions := 1 }
@@ -662,15 +663,15 @@ private def countedScanCombinations
   | [], _ + 1, _, _, _, _ => .exhausted {}
   | x :: xs, choose + 1, selectedRev, rejectedRev,
       selectedDegree, selectedTrail =>
-      match countedScanCombinations obstruct coreLc target basis metadata
+      match countedScanCombinations obstruct coreLc target basis lift image
           head xs choose
           (x :: selectedRev) rejectedRev
-          (selectedDegree + metadata.degree x)
-          (selectedTrail * metadata.trail x % metadata.modulus.int) with
+          (selectedDegree + lift.degree x)
+          (selectedTrail * lift.trail x % lift.modulus.int) with
       | .found split stats => .found split stats
       | .exhausted leftStats =>
           match countedScanCombinations obstruct coreLc target basis
-              metadata head xs
+              lift image head xs
               (choose + 1) selectedRev (x :: rejectedRev) selectedDegree
               selectedTrail with
           | .found split rightStats => .found split (leftStats.add rightStats)
@@ -696,10 +697,10 @@ private def countedFindHead
       if levelCost > budget then
         .declined .subsetBudget budget stats completed
       else
-        let metadata := supportMeta basis target
-        match countedScanCombinations obstruct coreLc target basis metadata
-            head tail level
-            [] [] (metadata.degree head) (metadata.trail head % metadata.modulus.int) with
+        let lift := liftSupport basis
+        match countedScanCombinations obstruct coreLc target basis lift
+            (targetImage target) head tail level
+            [] [] (lift.degree head) (lift.trail head % lift.modulus.int) with
         | .found split levelStats =>
             .found split (budget - levelStats.leaves) (stats.add levelStats)
               completed
