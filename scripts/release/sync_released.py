@@ -36,6 +36,8 @@ import subprocess
 import sys
 import tempfile
 import tomllib
+import urllib.error
+import urllib.request
 from pathlib import Path
 
 import yaml
@@ -50,6 +52,20 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 MANIFEST = REPO_ROOT / "scripts" / "release" / "released.yml"
 BASELINE = REPO_ROOT / "scripts" / "release" / "synced.json"
 TOOLCHAIN = REPO_ROOT / "lean-toolchain"
+# The `RELEASED_SYNC_PAT` secret holds the `hex-publishing` fine-grained token.
+# It is deliberately scoped to the hex repositories rather than to every
+# repository, which means publishing a *new* library is a two-part change: add
+# it to released.yml here, and add it to the token's selected repositories
+# there. The second part needs an organization owner's approval, so start it
+# before the release rather than discovering it mid-publish.
+TOKEN_HELP = (
+    "Add the repositories above to the `hex-publishing` token's selected\n"
+    "repositories at https://github.com/settings/personal-access-tokens/16433897\n"
+    "(Contents: Read and write). The token is scoped to the hex repositories on\n"
+    "purpose, so each newly published library has to be added by hand. An\n"
+    "organization owner then approves the request at\n"
+    "https://github.com/organizations/leanprover/settings/personal-access-token-requests"
+)
 LAKE_MANIFEST = REPO_ROOT / "lake-manifest.json"
 
 
@@ -163,6 +179,50 @@ def apply_paths(entry: dict, clone: Path) -> list[str]:
             copy_file(src, dest)
         notes.append(f"  {src.relative_to(REPO_ROOT)} -> {dest_rel}")
     return notes
+
+
+def writable_check(repo: str, token: str) -> str | None:
+    """None if the token can push to `repo`, else why not.
+
+    A fine-grained token cannot see a repository outside its selected set at
+    all, so an unlisted repo answers 404 rather than reporting `push: false`.
+    """
+    request = urllib.request.Request(
+        f"https://api.github.com/repos/{repo}",
+        headers={
+            "Authorization": f"Bearer {token}",
+            "Accept": "application/vnd.github+json",
+            "X-GitHub-Api-Version": "2022-11-28",
+            "User-Agent": "hex-dev-release-sync",
+        },
+    )
+    try:
+        with urllib.request.urlopen(request, timeout=30) as response:
+            payload = json.load(response)
+    except urllib.error.HTTPError as exc:
+        detail = "not in the token's selected repositories" if exc.code == 404 else exc.reason
+        return f"HTTP {exc.code} ({detail})"
+    except urllib.error.URLError as exc:
+        return f"unreachable ({exc.reason})"
+    if not payload.get("permissions", {}).get("push"):
+        return "visible but not writable (needs Contents: Read and write)"
+    return None
+
+
+def preflight_token(entries: list[dict], token: str) -> list[str]:
+    """Report every repo this run would push to that the token cannot write.
+
+    Checked up front, before the first push: the publishing token is scoped to
+    an explicit list of repositories, so a library released here but not added
+    to that list would otherwise fail partway through, after earlier repos were
+    already published.
+    """
+    blocked: list[str] = []
+    for entry in entries:
+        reason = writable_check(entry["repo"], token)
+        if reason:
+            blocked.append(f"{entry['repo']}: {reason}")
+    return blocked
 
 
 def _lake_files(clone: Path, name_globs: list[str]) -> list[Path]:
@@ -691,6 +751,21 @@ def main() -> int:
     # downstream sync silently retains stale pins because skipped entries never
     # populate `synced`.
     synced: dict[str, str] = dict(baseline) if args.only else {}
+
+    targets = [entry for entry in manifest["repos"]
+               if not args.only or entry["repo"].split("/")[-1] == args.only]
+    if not args.dry_run:
+        blocked = preflight_token(targets, args.token)
+        if blocked:
+            print(f"\nrelease sync: the publishing token cannot write to "
+                  f"{len(blocked)} of {len(targets)} target repositories:",
+                  file=sys.stderr)
+            for line in blocked:
+                print(f"  {line}", file=sys.stderr)
+            print(f"\n{TOKEN_HELP}", file=sys.stderr)
+            return 1
+        print(f"token preflight: writable in all {len(targets)} target repositories")
+
     failed_repo: str | None = None
     current_repo = "<manifest>"
     try:

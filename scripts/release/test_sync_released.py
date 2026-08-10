@@ -196,6 +196,7 @@ class SyncReleasedTests(unittest.TestCase):
             patch.object(sync_released, "MANIFEST", manifest),
             patch.object(sync_released, "external_pins", return_value={}),
             patch.object(sync_released, "run", return_value="source-sha"),
+            patch.object(sync_released, "writable_check", return_value=None),
             patch.object(sync_released, "sync_repo", side_effect=publish),
             patch("sys.argv", argv),
         ):
@@ -240,6 +241,7 @@ class SyncReleasedTests(unittest.TestCase):
             patch.object(sync_released, "MANIFEST", manifest),
             patch.object(sync_released, "external_pins", return_value={}),
             patch.object(sync_released, "run", return_value="source-sha"),
+            patch.object(sync_released, "writable_check", return_value=None),
             patch.object(sync_released, "sync_repo", side_effect=publish),
             patch("sys.argv", argv),
         ):
@@ -248,6 +250,51 @@ class SyncReleasedTests(unittest.TestCase):
         advanced = json.loads(baseline.read_text(encoding="utf-8"))
         self.assertEqual(advanced["upstream"], "new-upstream")
         self.assertEqual(advanced["downstream"], "new-downstream")
+
+
+class TokenPreflightTests(unittest.TestCase):
+    """A library published here but missing from the token's selected
+    repositories must stop the run before anything is pushed."""
+
+    ENTRIES = [{"repo": "leanprover/hex-basic"}, {"repo": "leanprover/hex-arith"}]
+
+    def test_writable_repos_pass(self) -> None:
+        with patch.object(sync_released, "writable_check", return_value=None):
+            self.assertEqual(sync_released.preflight_token(self.ENTRIES, "t"), [])
+
+    def test_unlisted_repo_is_reported_with_its_reason(self) -> None:
+        def check(repo: str, _token: str) -> str | None:
+            return None if repo.endswith("hex-basic") else "HTTP 404 (not in the token's selected repositories)"
+
+        with patch.object(sync_released, "writable_check", side_effect=check):
+            blocked = sync_released.preflight_token(self.ENTRIES, "t")
+        self.assertEqual(len(blocked), 1)
+        self.assertIn("leanprover/hex-arith", blocked[0])
+        self.assertIn("404", blocked[0])
+
+    def test_main_refuses_to_push_when_a_target_is_unwritable(self) -> None:
+        manifest = self.repo / "released.yml"
+        manifest.write_text(
+            "repos:\n  - repo: leanprover/hex-basic\n  - repo: leanprover/hex-arith\n",
+            encoding="utf-8",
+        )
+        argv = ["sync_released.py", "--token", "secret-token",
+                "--baseline", str(self.repo / "baseline.json")]
+        with (
+            patch.object(sync_released, "MANIFEST", manifest),
+            patch.object(sync_released, "external_pins", return_value={}),
+            patch.object(sync_released, "run", return_value="source-sha"),
+            patch.object(sync_released, "writable_check", return_value="HTTP 404"),
+            patch.object(sync_released, "sync_repo") as publish,
+            patch("sys.argv", argv),
+        ):
+            self.assertEqual(sync_released.main(), 1)
+        publish.assert_not_called()
+
+    def setUp(self) -> None:
+        self.temporary = tempfile.TemporaryDirectory()
+        self.repo = Path(self.temporary.name)
+        self.addCleanup(self.temporary.cleanup)
 
 
 class AggregateReadmeTests(unittest.TestCase):
