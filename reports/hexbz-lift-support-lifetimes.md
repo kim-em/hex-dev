@@ -282,7 +282,7 @@ described above. That is a separate change with its own proof surface.
 * `reports/bench-results/hexbz-lift-support-samearm-before-cb1ecd2d-chungus2.json`
   and `...-samearm-after-f29828f0-chungus2.json`, the two same-binary noise-floor
   sweeps, same protocol.
-* `reports/bench-results/hexbz-factor-sweep-hex-SWEEPSHA-chungus2.json`, the
+* `reports/bench-results/hexbz-factor-sweep-hex-99fd605e-chungus2.json`, the
   published hex-factor sweep this branch's figures are drawn from. The
   comparator record (FLINT, NTL, PARI, both Isabelle extractions) is reused
   unchanged.
