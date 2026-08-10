@@ -6,9 +6,10 @@ objects are, which corpus rows can possibly notice, how many of each the peel
 run builds before and after, and what the change is worth in time.
 
 The short version: the counts move exactly as predicted, every recorded trace
-is identical on both arms, and the time difference is inside the noise floor on
-every row. Issue #9152 anticipated that outcome and named it an acceptable
-measured result; this page reports it as one.
+and every returned factorization is identical on both arms, and no timing
+difference is detectable above the measured noise floor. Issue #9152 anticipated
+that outcome and named it an acceptable measured result; this page reports it as
+one.
 
 ## The two objects
 
@@ -43,6 +44,14 @@ search, and `Hex.findDirectSubset` reuses that reduction across every
 cardinality level in the residual's schedule. After an exact split the lift
 support is retained and a fresh image is built for the quotient.
 
+Both are prepared slightly eagerly, and the counts below are counts of that
+eager form. The lift support is built by `peelDirect` even when the input is
+already `1` and no sweep runs, and a residual's image is built before
+`findDirectSubset` sees whether the schedule is empty or the first level fits
+the budget. Both objects are cheap next to the search they precede, and the
+alternative is a start/worker split for the sake of a case that peels nothing;
+the point of the change is the per-level rebuilding, not these.
+
 Before, `Hex.scanDirectSubsetLevel` built the whole `SupportMeta` per level, so
 the lift-wide data was rebuilt after every split *and* whenever a residual
 exhausted one cardinality and proceeded to the next.
@@ -52,11 +61,14 @@ engine) now takes the same two objects rather than the mixed one, but
 `Hex.scanDirectLevel` still prepares both per level. That is where the mixed
 object left them and this change does not move them: hoisting them would add
 parameters to `Hex.findDirectHead` and `Hex.searchDirectAux`, which the
-classical completeness and correctness proofs quantify over, and the cost it
-would remove is one modulus preparation and one reduction per level, amortized
-over the `C(n, k)` leaves of that level. #9152 scopes the lifetime split to the
-proposal traversal; the head-forced one is a candidate for its own issue, not a
-silent rider on this one.
+classical completeness and correctness proofs quantify over. The cost left
+behind is a whole lift-support preparation -- the modulus, the degree array and
+the trail array, all three over the full basis -- plus one target reduction, at
+every cardinality a head search enters, amortized over that level's `C(n, k)`
+leaves and so worst at the small cardinalities. It is the cost the code already
+paid, not a new one. #9152 scopes the lifetime split to the proposal traversal;
+the head-forced one is a candidate for its own issue, not a silent rider on
+this one.
 
 ## Which rows can notice
 
@@ -134,13 +146,26 @@ Every expectation the issue set is met, including the negative ones:
 `hoeij_S9` is the row where the counts are already minimal: its first level does
 not fit the remaining budget after one attempt, so both arms build one of each.
 
-### The traces agree
+### The traces and the answers agree
 
 `scripts/bench/proposal_construction_counts.py` was run over the whole 392-row
-corpus against both binaries. Every recorded field is identical on both arms:
-peels, completed cardinalities, decline reasons, leaves, recordable candidates,
-obstruction rejections and exact divisions. The refactor moves where the
-prepared objects are built and changes nothing the traversal decides.
+corpus against both binaries and the two records diff clean. Every recorded
+field is identical on both arms: peels, completed cardinalities, decline
+reasons, leaves, recordable candidates, obstruction rejections and exact
+divisions.
+
+Each record also carries a SHA-256 of the returned factorization, so the
+comparison covers the answer and not only the route to it: equal counters,
+support sizes and factor degrees could in principle hide a different factor of
+the same degree, and equal coefficient-level digests cannot. Eight rows return a
+proposal factorization -- the six Wilkinsons, `sd6_x_phi13` and `hoeij_F190` --
+and their digests match; the other 384 agree in returning none.
+
+The production factorizer's own output is covered separately and more widely:
+`lake exe hexbz_emit_fixtures` reproduces `bz.jsonl` byte for byte, 220 cases
+with full factor coefficients, and the committed trace baseline passes against
+it unchanged. The refactor moves where the prepared objects are built and
+changes neither what the traversal decides nor what it returns.
 
 ## Timing
 
@@ -187,10 +212,13 @@ controls: none enters proposal search, so nothing in this change can reach them.
 control, which sets the scale: this pair of binaries differs by about two per
 cent on rows the change cannot touch, and no target row moves further than that.
 
-The target rows land between 0.978x and 1.014x with spreads that straddle 1.0.
-That is the expected result. The largest saving available on any of these rows
-is two modulus preparations and two reductions against runtimes of tens or
-thousands of milliseconds.
+The target rows land between 0.978x and 1.014x. Every spread but one straddles
+1.0; `hoeij_S8`'s is 1.008x to 1.020x over nine repeats, which is inside the
+whole-arm offset the controls and the same-arm sweeps below show independently,
+and is not a scale at which two removed preparations and two removed reductions
+can act. That is the expected result: the largest saving available on any of
+these rows is two of each, against runtimes of tens or thousands of
+milliseconds.
 
 ### Whole corpus, paired blocks
 
@@ -221,9 +249,10 @@ rows and the rest, because only the former build the objects this change moves.
 That gap is **+0.33%** in the after/before comparison, **+0.48%**
 before-against-before and **+0.28%** after-against-after: the real comparison
 sits between its two controls.
-There is no effect here to report, which is what the counts predict. Two
-preparations and two reductions removed from runs costing between three
-milliseconds and four seconds cannot show up, and they do not.
+There is no effect detectable at whole-factorization scale, which is what the
+counts predict. Two preparations and two reductions removed from runs costing
+between three milliseconds and four seconds cannot show up in this instrument,
+and they do not.
 
 Six rows sit above 1.05x, against three in the same-arm control. None costs more
 than 0.3 ms and none is a proposal-search row:

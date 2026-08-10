@@ -36,6 +36,10 @@ binary states what the other arm would have built on the same trace.  Usage::
     python3 scripts/bench/proposal_construction_counts.py \\
         .lake/build/bin/hexbz_factor_service --rows sd5_x_phi11,xpow105_minus1
 
+Each record also carries `factorizationSha256`, a digest of the factorization
+the proposal returned. Running the script against two binaries and diffing the
+records therefore compares both what the traversal decided and what it answered.
+
 With no `--rows`, every corpus row is measured and rows whose peel run attempts
 more levels than it searches residuals are reported first.
 """
@@ -43,6 +47,7 @@ more levels than it searches residuals are reported first.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import subprocess
 import sys
@@ -66,13 +71,25 @@ class Service:
             argv, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
             text=True, bufsize=1)
 
-    def trace(self, coeffs: list[int]) -> dict | None:
+    def ask(self, coeffs: list[int]) -> tuple[dict | None, str]:
+        """Return the proposal trace and a digest of the proposed factors.
+
+        The digest covers the returned factorization coefficient by
+        coefficient, so comparing two arms compares what they answered and not
+        only how they got there: two runs can agree on every counter, support
+        size and factor degree and still have chosen different factors of the
+        same degree.
+        """
         line = json.dumps({"coeffs": coeffs}, separators=(",", ":")) + "\n"
         self.process.stdin.write(line)
         self.process.stdin.flush()
         reply = json.loads(self.process.stdout.readline())
         result = reply.get("result")
-        return None if result is None else result["trace"]
+        if result is None:
+            return None, hashlib.sha256(b"declined").hexdigest()
+        canonical = json.dumps(
+            result.get("factorization"), sort_keys=True, separators=(",", ":"))
+        return result["trace"], hashlib.sha256(canonical.encode()).hexdigest()
 
     def kill(self) -> None:
         self.process.kill()
@@ -136,8 +153,11 @@ def main() -> int:
     records = {}
     try:
         for name in names:
-            trace = service.trace(corpus[name]["coeffs"])
-            records[name] = None if trace is None else counts(trace)
+            trace, digest = service.ask(corpus[name]["coeffs"])
+            record = None if trace is None else counts(trace)
+            if record is not None:
+                record["factorizationSha256"] = digest
+            records[name] = record
     finally:
         service.kill()
 

@@ -227,9 +227,11 @@ first sweep; after every split, the smaller `repeatLevels` schedule is restarted
 on the exact quotient and complementary support.
 
 `lift` is the traversal data of the basis, which every sweep shares.  The
-residual's image in `F_q[X]` is rebuilt here, once per residual: an exact split
-replaces the residual, so the previous reduction describes a polynomial the
-search has left behind. -/
+residual's image in `F_q[X]` is rebuilt here, once per nonunit residual reaching
+`findDirectSubset`: an exact split replaces the residual, so the previous
+reduction describes a polynomial the search has left behind.  The reduction is
+built before that call rather than inside it, so a residual whose schedule is
+empty or whose first level does not fit the budget still pays for one. -/
 @[expose]
 def peelDirectAux
     (coreLc : Int) (basis : LiftData) (lift : LiftSupport basis)

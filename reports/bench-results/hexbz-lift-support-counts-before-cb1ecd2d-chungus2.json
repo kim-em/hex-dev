@@ -14,7 +14,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "cyclo_phi7": {
     "peelRuns": 0,
@@ -31,7 +32,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "cyclo_phi11": {
     "peelRuns": 0,
@@ -48,7 +50,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "cyclo_phi15": {
     "peelRuns": 0,
@@ -65,7 +68,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "cyclo_phi13": {
     "peelRuns": 0,
@@ -82,7 +86,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "cyclo_phi17": {
     "peelRuns": 0,
@@ -99,7 +104,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "cyclo_phi19": {
     "peelRuns": 0,
@@ -116,7 +122,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "cyclo_phi23": {
     "peelRuns": 0,
@@ -133,7 +140,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "cyclo_phi35": {
     "peelRuns": 0,
@@ -150,7 +158,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "cyclo_phi29": {
     "peelRuns": 0,
@@ -167,7 +176,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "cyclo_phi37": {
     "peelRuns": 0,
@@ -184,7 +194,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "cyclo_phi41": {
     "peelRuns": 0,
@@ -201,7 +212,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "cyclo_phi53": {
     "peelRuns": 0,
@@ -218,7 +230,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "cyclo_phi64": {
     "peelRuns": 0,
@@ -235,7 +248,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "cyclo_phi61": {
     "peelRuns": 0,
@@ -252,7 +266,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "cyclo_phi105": {
     "peelRuns": 0,
@@ -269,7 +284,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "cyclo_phi89": {
     "peelRuns": 0,
@@ -286,7 +302,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "cyclo_phi128": {
     "peelRuns": 0,
@@ -303,7 +320,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "cyclo_phi121": {
     "peelRuns": 0,
@@ -320,7 +338,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "cyclo_phi165": {
     "peelRuns": 0,
@@ -337,7 +356,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "cyclo_phi151": {
     "peelRuns": 0,
@@ -354,7 +374,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "cyclo_phi179": {
     "peelRuns": 0,
@@ -371,7 +392,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "cyclo_phi256": {
     "peelRuns": 0,
@@ -388,7 +410,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "cyclo_phi257": {
     "peelRuns": 0,
@@ -405,7 +428,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "cyclo_phi385": {
     "peelRuns": 0,
@@ -422,7 +446,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "cyclo_phi331": {
     "peelRuns": 0,
@@ -439,7 +464,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "cyclo_phi509": {
     "peelRuns": 0,
@@ -456,7 +482,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "cyclo_phi1031": {
     "peelRuns": 0,
@@ -473,7 +500,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "cyclo_phi25": {
     "peelRuns": 0,
@@ -490,7 +518,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "cyclo_phi49": {
     "peelRuns": 0,
@@ -507,7 +536,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "cyclo_phi81": {
     "peelRuns": 0,
@@ -524,7 +554,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "cyclo_phi243": {
     "peelRuns": 0,
@@ -541,7 +572,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "cyclo_phi275": {
     "peelRuns": 0,
@@ -558,7 +590,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "cyclo_phi625": {
     "peelRuns": 0,
@@ -575,7 +608,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "xpow6_minus1": {
     "peelRuns": 0,
@@ -592,7 +626,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "xpow12_minus1": {
     "peelRuns": 0,
@@ -609,7 +644,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "xpow15_minus1": {
     "peelRuns": 0,
@@ -626,7 +662,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "xpow20_minus1": {
     "peelRuns": 0,
@@ -643,7 +680,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "xpow24_minus1": {
     "peelRuns": 0,
@@ -660,7 +698,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "xpow30_minus1": {
     "peelRuns": 0,
@@ -677,7 +716,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "xpow36_minus1": {
     "peelRuns": 0,
@@ -694,7 +734,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "xpow48_minus1": {
     "peelRuns": 0,
@@ -711,7 +752,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "xpow60_minus1": {
     "peelRuns": 0,
@@ -728,7 +770,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "xpow105_minus1": {
     "peelRuns": 0,
@@ -745,7 +788,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "xpow120_minus1": {
     "peelRuns": 0,
@@ -762,7 +806,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "cyclo_phi7_x_phi11": {
     "peelRuns": 0,
@@ -779,7 +824,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "cyclo_phi12_x_phi13": {
     "peelRuns": 0,
@@ -796,7 +842,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "cyclo_phi15_x_phi17": {
     "peelRuns": 0,
@@ -813,7 +860,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "cyclo_phi24_x_phi35": {
     "peelRuns": 0,
@@ -830,7 +878,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "cyclo_phi32_x_phi45": {
     "peelRuns": 0,
@@ -847,7 +896,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "cyclo_phi64_x_phi105": {
     "peelRuns": 0,
@@ -864,7 +914,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "cyclo_phi105_x_phi128": {
     "peelRuns": 0,
@@ -881,7 +932,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "cyclo_phi128_x_phi165": {
     "peelRuns": 0,
@@ -898,7 +950,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "sd2": {
     "peelRuns": 0,
@@ -915,7 +968,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "sd3": {
     "peelRuns": 0,
@@ -932,7 +986,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "sd4": {
     "peelRuns": 0,
@@ -949,7 +1004,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "sd5": {
     "peelRuns": 0,
@@ -966,7 +1022,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "sd6": {
     "peelRuns": 1,
@@ -987,7 +1044,8 @@
     "beforeLiftPreparations": 3,
     "beforeTargetReductions": 3,
     "afterLiftPreparations": 1,
-    "afterTargetReductions": 1
+    "afterTargetReductions": 1,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "sd7": {
     "peelRuns": 1,
@@ -1007,7 +1065,8 @@
     "beforeLiftPreparations": 2,
     "beforeTargetReductions": 2,
     "afterLiftPreparations": 1,
-    "afterTargetReductions": 1
+    "afterTargetReductions": 1,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "sd2_shift1": {
     "peelRuns": 0,
@@ -1024,7 +1083,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "sd3_shift1": {
     "peelRuns": 0,
@@ -1041,7 +1101,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "sd3_shift2": {
     "peelRuns": 0,
@@ -1058,7 +1119,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "sd4_shift1": {
     "peelRuns": 0,
@@ -1075,7 +1137,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "sd4_shift3": {
     "peelRuns": 0,
@@ -1092,7 +1155,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "sd5_shift1": {
     "peelRuns": 0,
@@ -1109,7 +1173,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "sd5_shift2": {
     "peelRuns": 0,
@@ -1126,7 +1191,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "sd6_shift1": {
     "peelRuns": 1,
@@ -1147,7 +1213,8 @@
     "beforeLiftPreparations": 3,
     "beforeTargetReductions": 3,
     "afterLiftPreparations": 1,
-    "afterTargetReductions": 1
+    "afterTargetReductions": 1,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "sd6_shift5": {
     "peelRuns": 1,
@@ -1168,7 +1235,8 @@
     "beforeLiftPreparations": 3,
     "beforeTargetReductions": 3,
     "afterLiftPreparations": 1,
-    "afterTargetReductions": 1
+    "afterTargetReductions": 1,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "sd2_x_sd2shift1": {
     "peelRuns": 0,
@@ -1185,7 +1253,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "sd3_x_sd3shift1": {
     "peelRuns": 0,
@@ -1202,7 +1271,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "sd4_x_sd4shift1": {
     "peelRuns": 0,
@@ -1219,7 +1289,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "sd5_x_sd5shift1": {
     "peelRuns": 1,
@@ -1240,7 +1311,8 @@
     "beforeLiftPreparations": 3,
     "beforeTargetReductions": 3,
     "afterLiftPreparations": 1,
-    "afterTargetReductions": 1
+    "afterTargetReductions": 1,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "sd6_x_sd6shift1": {
     "peelRuns": 1,
@@ -1260,7 +1332,8 @@
     "beforeLiftPreparations": 2,
     "beforeTargetReductions": 2,
     "afterLiftPreparations": 1,
-    "afterTargetReductions": 1
+    "afterTargetReductions": 1,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "sd2_x_phi12": {
     "peelRuns": 0,
@@ -1277,7 +1350,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "sd3_x_phi15": {
     "peelRuns": 0,
@@ -1294,7 +1368,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "sd3_x_phi24": {
     "peelRuns": 0,
@@ -1311,7 +1386,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "sd4_x_phi17": {
     "peelRuns": 0,
@@ -1328,7 +1404,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "sd4_x_phi35": {
     "peelRuns": 0,
@@ -1345,7 +1422,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "sd5_x_phi11": {
     "peelRuns": 0,
@@ -1362,7 +1440,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "sd5_x_phi45": {
     "peelRuns": 0,
@@ -1379,7 +1458,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "sd6_x_phi13": {
     "peelRuns": 1,
@@ -1399,7 +1479,8 @@
     "beforeLiftPreparations": 3,
     "beforeTargetReductions": 3,
     "afterLiftPreparations": 1,
-    "afterTargetReductions": 2
+    "afterTargetReductions": 2,
+    "factorizationSha256": "cb12d41cb4e1bca9f63905bffcbe66071f8dd4708db31d29352e66df7e597810"
   },
   "sd6_x_phi105": {
     "peelRuns": 1,
@@ -1420,7 +1501,8 @@
     "beforeLiftPreparations": 3,
     "beforeTargetReductions": 3,
     "afterLiftPreparations": 1,
-    "afterTargetReductions": 1
+    "afterTargetReductions": 1,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "chebyshev_T3": {
     "peelRuns": 0,
@@ -1437,7 +1519,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "chebyshev_U3": {
     "peelRuns": 0,
@@ -1454,7 +1537,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "chebyshev_T4": {
     "peelRuns": 0,
@@ -1471,7 +1555,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "chebyshev_U4": {
     "peelRuns": 0,
@@ -1488,7 +1573,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "chebyshev_T5": {
     "peelRuns": 0,
@@ -1505,7 +1591,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "chebyshev_U5": {
     "peelRuns": 0,
@@ -1522,7 +1609,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "chebyshev_T6": {
     "peelRuns": 0,
@@ -1539,7 +1627,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "chebyshev_U6": {
     "peelRuns": 0,
@@ -1556,7 +1645,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "chebyshev_T7": {
     "peelRuns": 0,
@@ -1573,7 +1663,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "chebyshev_U7": {
     "peelRuns": 0,
@@ -1590,7 +1681,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "chebyshev_T8": {
     "peelRuns": 0,
@@ -1607,7 +1699,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "chebyshev_U8": {
     "peelRuns": 0,
@@ -1624,7 +1717,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "chebyshev_T9": {
     "peelRuns": 0,
@@ -1641,7 +1735,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "chebyshev_U9": {
     "peelRuns": 0,
@@ -1658,7 +1753,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "chebyshev_T10": {
     "peelRuns": 0,
@@ -1675,7 +1771,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "chebyshev_U10": {
     "peelRuns": 0,
@@ -1692,7 +1789,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "chebyshev_T12": {
     "peelRuns": 0,
@@ -1709,7 +1807,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "chebyshev_U12": {
     "peelRuns": 0,
@@ -1726,7 +1825,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "chebyshev_T15": {
     "peelRuns": 0,
@@ -1743,7 +1843,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "chebyshev_U15": {
     "peelRuns": 0,
@@ -1760,7 +1861,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "chebyshev_T16": {
     "peelRuns": 0,
@@ -1777,7 +1879,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "chebyshev_U16": {
     "peelRuns": 0,
@@ -1794,7 +1897,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "chebyshev_T18": {
     "peelRuns": 0,
@@ -1811,7 +1915,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "chebyshev_U18": {
     "peelRuns": 0,
@@ -1828,7 +1933,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "chebyshev_T20": {
     "peelRuns": 0,
@@ -1845,7 +1951,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "chebyshev_U20": {
     "peelRuns": 0,
@@ -1862,7 +1969,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "chebyshev_T24": {
     "peelRuns": 0,
@@ -1879,7 +1987,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "chebyshev_U24": {
     "peelRuns": 0,
@@ -1896,7 +2005,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "legendre_P3": {
     "peelRuns": 0,
@@ -1913,7 +2023,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "legendre_P4": {
     "peelRuns": 0,
@@ -1930,7 +2041,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "legendre_P5": {
     "peelRuns": 0,
@@ -1947,7 +2059,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "legendre_P6": {
     "peelRuns": 0,
@@ -1964,7 +2077,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "legendre_P7": {
     "peelRuns": 0,
@@ -1981,7 +2095,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "legendre_P8": {
     "peelRuns": 0,
@@ -1998,7 +2113,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "legendre_P9": {
     "peelRuns": 0,
@@ -2015,7 +2131,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "legendre_P10": {
     "peelRuns": 0,
@@ -2032,7 +2149,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "legendre_P12": {
     "peelRuns": 0,
@@ -2049,7 +2167,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "legendre_P14": {
     "peelRuns": 0,
@@ -2066,7 +2185,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "legendre_P16": {
     "peelRuns": 0,
@@ -2083,7 +2203,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "legendre_P18": {
     "peelRuns": 0,
@@ -2100,7 +2221,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "legendre_P20": {
     "peelRuns": 0,
@@ -2117,7 +2239,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "legendre_P22": {
     "peelRuns": 0,
@@ -2134,7 +2257,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "legendre_P24": {
     "peelRuns": 0,
@@ -2151,7 +2275,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "legendre_P26": {
     "peelRuns": 0,
@@ -2168,7 +2293,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "legendre_P28": {
     "peelRuns": 0,
@@ -2185,7 +2311,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "legendre_P30": {
     "peelRuns": 0,
@@ -2202,7 +2329,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "legendre_P34": {
     "peelRuns": 0,
@@ -2219,7 +2347,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "legendre_P38": {
     "peelRuns": 0,
@@ -2236,7 +2365,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "laguerre_L3": {
     "peelRuns": 0,
@@ -2253,7 +2383,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "laguerre_L4": {
     "peelRuns": 0,
@@ -2270,7 +2401,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "laguerre_L5": {
     "peelRuns": 0,
@@ -2287,7 +2419,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "laguerre_L6": {
     "peelRuns": 0,
@@ -2304,7 +2437,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "laguerre_L7": {
     "peelRuns": 0,
@@ -2321,7 +2455,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "laguerre_L8": {
     "peelRuns": 0,
@@ -2338,7 +2473,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "laguerre_L9": {
     "peelRuns": 0,
@@ -2355,7 +2491,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "laguerre_L10": {
     "peelRuns": 0,
@@ -2372,7 +2509,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "laguerre_L11": {
     "peelRuns": 0,
@@ -2389,7 +2527,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "laguerre_L12": {
     "peelRuns": 0,
@@ -2406,7 +2545,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "laguerre_L13": {
     "peelRuns": 0,
@@ -2423,7 +2563,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "laguerre_L14": {
     "peelRuns": 0,
@@ -2440,7 +2581,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "laguerre_L15": {
     "peelRuns": 0,
@@ -2457,7 +2599,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "laguerre_L16": {
     "peelRuns": 0,
@@ -2474,7 +2617,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "laguerre_L18": {
     "peelRuns": 0,
@@ -2491,7 +2635,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "laguerre_L20": {
     "peelRuns": 0,
@@ -2508,7 +2653,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "laguerre_L22": {
     "peelRuns": 0,
@@ -2525,7 +2671,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "laguerre_L24": {
     "peelRuns": 0,
@@ -2542,7 +2689,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "laguerre_L28": {
     "peelRuns": 0,
@@ -2559,7 +2707,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "laguerre_L32": {
     "peelRuns": 0,
@@ -2576,7 +2725,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "wilkinson_4": {
     "peelRuns": 0,
@@ -2593,7 +2743,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "wilkinson_6": {
     "peelRuns": 0,
@@ -2610,7 +2761,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "wilkinson_8": {
     "peelRuns": 0,
@@ -2627,7 +2779,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "wilkinson_10": {
     "peelRuns": 0,
@@ -2644,7 +2797,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "wilkinson_12": {
     "peelRuns": 0,
@@ -2661,7 +2815,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "wilkinson_14": {
     "peelRuns": 0,
@@ -2678,7 +2833,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "wilkinson_16": {
     "peelRuns": 0,
@@ -2695,7 +2851,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "wilkinson_18": {
     "peelRuns": 0,
@@ -2712,7 +2869,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "wilkinson_20": {
     "peelRuns": 0,
@@ -2729,7 +2887,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "wilkinson_24": {
     "peelRuns": 1,
@@ -2746,7 +2905,8 @@
     "beforeLiftPreparations": 24,
     "beforeTargetReductions": 24,
     "afterLiftPreparations": 1,
-    "afterTargetReductions": 24
+    "afterTargetReductions": 24,
+    "factorizationSha256": "de29f05a00ac701a7e4a06923d8e4cd575d4d15297133f4b8425c8fe7ee08c6b"
   },
   "wilkinson_28": {
     "peelRuns": 1,
@@ -2763,7 +2923,8 @@
     "beforeLiftPreparations": 28,
     "beforeTargetReductions": 28,
     "afterLiftPreparations": 1,
-    "afterTargetReductions": 28
+    "afterTargetReductions": 28,
+    "factorizationSha256": "7b4bdb1cc192247a3e2cf28aa1ea738eb374935e3118a935bcfb60f1a30bdeab"
   },
   "wilkinson_32": {
     "peelRuns": 1,
@@ -2780,7 +2941,8 @@
     "beforeLiftPreparations": 32,
     "beforeTargetReductions": 32,
     "afterLiftPreparations": 1,
-    "afterTargetReductions": 32
+    "afterTargetReductions": 32,
+    "factorizationSha256": "dbae44c2d75c1f5bc52d99ac93cd915a6256616fc8a4bd6acf0bf09035e14774"
   },
   "wilkinson_40": {
     "peelRuns": 1,
@@ -2797,7 +2959,8 @@
     "beforeLiftPreparations": 40,
     "beforeTargetReductions": 40,
     "afterLiftPreparations": 1,
-    "afterTargetReductions": 40
+    "afterTargetReductions": 40,
+    "factorizationSha256": "cedeac391222636365dfc1c05adb182f135b72efa4bb2f407979e513bbf5e352"
   },
   "wilkinson_48": {
     "peelRuns": 1,
@@ -2814,7 +2977,8 @@
     "beforeLiftPreparations": 48,
     "beforeTargetReductions": 48,
     "afterLiftPreparations": 1,
-    "afterTargetReductions": 48
+    "afterTargetReductions": 48,
+    "factorizationSha256": "eedd88da6588a291e86345db01ab07bf1515bf678d76177e5c7344c3b4d3cfb5"
   },
   "wilkinson_56": {
     "peelRuns": 1,
@@ -2831,7 +2995,8 @@
     "beforeLiftPreparations": 56,
     "beforeTargetReductions": 56,
     "afterLiftPreparations": 1,
-    "afterTargetReductions": 56
+    "afterTargetReductions": 56,
+    "factorizationSha256": "9c8c3ef6724e5c8727d8c908170a04af7c55bd9d724c2fddb647438d604b66c6"
   },
   "randprod_00": {
     "peelRuns": 0,
@@ -2848,7 +3013,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "randprod_01": {
     "peelRuns": 0,
@@ -2865,7 +3031,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "randprod_02": {
     "peelRuns": 0,
@@ -2882,7 +3049,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "randprod_03": {
     "peelRuns": 0,
@@ -2899,7 +3067,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "randprod_04": {
     "peelRuns": 0,
@@ -2916,7 +3085,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "randprod_05": {
     "peelRuns": 0,
@@ -2933,7 +3103,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "randprod_06": {
     "peelRuns": 0,
@@ -2950,7 +3121,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "randprod_07": {
     "peelRuns": 0,
@@ -2967,7 +3139,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "randprod_08": {
     "peelRuns": 0,
@@ -2984,7 +3157,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "randprod_09": {
     "peelRuns": 0,
@@ -3001,7 +3175,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "randprod_10": {
     "peelRuns": 0,
@@ -3018,7 +3193,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "randprod_11": {
     "peelRuns": 0,
@@ -3035,7 +3211,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "randprod_12": {
     "peelRuns": 0,
@@ -3052,7 +3229,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "randprod_13": {
     "peelRuns": 0,
@@ -3069,7 +3247,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "randprod_14": {
     "peelRuns": 0,
@@ -3086,7 +3265,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "randprod_15": {
     "peelRuns": 0,
@@ -3103,7 +3283,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "randprod_16": {
     "peelRuns": 0,
@@ -3120,7 +3301,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "randprod_17": {
     "peelRuns": 0,
@@ -3137,7 +3319,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "randprod_18": {
     "peelRuns": 0,
@@ -3154,7 +3337,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "randprod_19": {
     "peelRuns": 0,
@@ -3171,7 +3355,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "randprod_20": {
     "peelRuns": 0,
@@ -3188,7 +3373,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "randprod_21": {
     "peelRuns": 0,
@@ -3205,7 +3391,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "randprod_22": {
     "peelRuns": 0,
@@ -3222,7 +3409,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "randprod_23": {
     "peelRuns": 0,
@@ -3239,7 +3427,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "randprod_24": {
     "peelRuns": 0,
@@ -3256,7 +3445,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "randprod_25": {
     "peelRuns": 0,
@@ -3273,7 +3463,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "randprod_26": {
     "peelRuns": 0,
@@ -3290,7 +3481,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "randprod_27": {
     "peelRuns": 0,
@@ -3307,7 +3499,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "randprod_28": {
     "peelRuns": 0,
@@ -3324,7 +3517,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "randprod_29": {
     "peelRuns": 0,
@@ -3341,7 +3535,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "hoeij_P7": {
     "peelRuns": 1,
@@ -3361,7 +3556,8 @@
     "beforeLiftPreparations": 2,
     "beforeTargetReductions": 2,
     "afterLiftPreparations": 1,
-    "afterTargetReductions": 1
+    "afterTargetReductions": 1,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "hoeij_M12_f132": {
     "peelRuns": 0,
@@ -3378,7 +3574,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "hoeij_F190": {
     "peelRuns": 1,
@@ -3399,7 +3596,8 @@
     "beforeLiftPreparations": 4,
     "beforeTargetReductions": 4,
     "afterLiftPreparations": 1,
-    "afterTargetReductions": 2
+    "afterTargetReductions": 2,
+    "factorizationSha256": "3124439f986ddf537ba103fa1b087b12e2934ec44db7e99d88e14755de32977d"
   },
   "hoeij_F192": {
     "peelRuns": 1,
@@ -3419,7 +3617,8 @@
     "beforeLiftPreparations": 2,
     "beforeTargetReductions": 2,
     "afterLiftPreparations": 1,
-    "afterTargetReductions": 1
+    "afterTargetReductions": 1,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "hoeij_F256": {
     "peelRuns": 1,
@@ -3439,7 +3638,8 @@
     "beforeLiftPreparations": 2,
     "beforeTargetReductions": 2,
     "afterLiftPreparations": 1,
-    "afterTargetReductions": 1
+    "afterTargetReductions": 1,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "hoeij_F351": {
     "peelRuns": 1,
@@ -3459,7 +3659,8 @@
     "beforeLiftPreparations": 2,
     "beforeTargetReductions": 2,
     "afterLiftPreparations": 1,
-    "afterTargetReductions": 1
+    "afterTargetReductions": 1,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "hoeij_F630": {
     "peelRuns": 1,
@@ -3479,7 +3680,8 @@
     "beforeLiftPreparations": 2,
     "beforeTargetReductions": 2,
     "afterLiftPreparations": 1,
-    "afterTargetReductions": 1
+    "afterTargetReductions": 1,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "hoeij_S7": {
     "peelRuns": 1,
@@ -3499,7 +3701,8 @@
     "beforeLiftPreparations": 2,
     "beforeTargetReductions": 2,
     "afterLiftPreparations": 1,
-    "afterTargetReductions": 1
+    "afterTargetReductions": 1,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "hoeij_S8": {
     "peelRuns": 1,
@@ -3519,7 +3722,8 @@
     "beforeLiftPreparations": 2,
     "beforeTargetReductions": 2,
     "afterLiftPreparations": 1,
-    "afterTargetReductions": 1
+    "afterTargetReductions": 1,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "hoeij_S9": {
     "peelRuns": 1,
@@ -3538,7 +3742,8 @@
     "beforeLiftPreparations": 1,
     "beforeTargetReductions": 1,
     "afterLiftPreparations": 1,
-    "afterTargetReductions": 1
+    "afterTargetReductions": 1,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "conway_p2_n1": {
     "peelRuns": 0,
@@ -3555,7 +3760,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "conway_p2_n2": {
     "peelRuns": 0,
@@ -3572,7 +3778,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "conway_p2_n3": {
     "peelRuns": 0,
@@ -3589,7 +3796,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "conway_p2_n4": {
     "peelRuns": 0,
@@ -3606,7 +3814,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "conway_p2_n5": {
     "peelRuns": 0,
@@ -3623,7 +3832,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "conway_p2_n6": {
     "peelRuns": 0,
@@ -3640,7 +3850,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "conway_p2_n7": {
     "peelRuns": 0,
@@ -3657,7 +3868,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "conway_p2_n8": {
     "peelRuns": 0,
@@ -3674,7 +3886,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "conway_p2_n9": {
     "peelRuns": 0,
@@ -3691,7 +3904,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "conway_p2_n10": {
     "peelRuns": 0,
@@ -3708,7 +3922,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "conway_p2_n11": {
     "peelRuns": 0,
@@ -3725,7 +3940,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "conway_p2_n12": {
     "peelRuns": 0,
@@ -3742,7 +3958,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "conway_p2_n13": {
     "peelRuns": 0,
@@ -3759,7 +3976,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "conway_p2_n14": {
     "peelRuns": 0,
@@ -3776,7 +3994,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "conway_p2_n15": {
     "peelRuns": 0,
@@ -3793,7 +4012,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "conway_p2_n16": {
     "peelRuns": 0,
@@ -3810,7 +4030,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "conway_p2_n17": {
     "peelRuns": 0,
@@ -3827,7 +4048,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "conway_p2_n18": {
     "peelRuns": 0,
@@ -3844,7 +4066,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "conway_p2_n19": {
     "peelRuns": 0,
@@ -3861,7 +4084,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "conway_p2_n20": {
     "peelRuns": 0,
@@ -3878,7 +4102,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "conway_p2_n21": {
     "peelRuns": 0,
@@ -3895,7 +4120,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "conway_p2_n22": {
     "peelRuns": 0,
@@ -3912,7 +4138,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "conway_p2_n23": {
     "peelRuns": 0,
@@ -3929,7 +4156,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "conway_p2_n24": {
     "peelRuns": 0,
@@ -3946,7 +4174,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "conway_p2_n25": {
     "peelRuns": 0,
@@ -3963,7 +4192,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "conway_p2_n26": {
     "peelRuns": 0,
@@ -3980,7 +4210,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "conway_p2_n27": {
     "peelRuns": 0,
@@ -3997,7 +4228,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "conway_p2_n28": {
     "peelRuns": 0,
@@ -4014,7 +4246,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "conway_p2_n29": {
     "peelRuns": 0,
@@ -4031,7 +4264,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "conway_p2_n30": {
     "peelRuns": 0,
@@ -4048,7 +4282,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "conway_p2_n31": {
     "peelRuns": 0,
@@ -4065,7 +4300,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "conway_p2_n32": {
     "peelRuns": 0,
@@ -4082,7 +4318,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "conway_p2_n33": {
     "peelRuns": 0,
@@ -4099,7 +4336,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "conway_p2_n34": {
     "peelRuns": 0,
@@ -4116,7 +4354,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "conway_p2_n35": {
     "peelRuns": 0,
@@ -4133,7 +4372,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "conway_p2_n36": {
     "peelRuns": 0,
@@ -4150,7 +4390,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "conway_p2_n37": {
     "peelRuns": 0,
@@ -4167,7 +4408,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "conway_p2_n38": {
     "peelRuns": 0,
@@ -4184,7 +4426,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "conway_p2_n39": {
     "peelRuns": 0,
@@ -4201,7 +4444,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "conway_p2_n40": {
     "peelRuns": 0,
@@ -4218,7 +4462,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "conway_p3_n1": {
     "peelRuns": 0,
@@ -4235,7 +4480,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "conway_p3_n2": {
     "peelRuns": 0,
@@ -4252,7 +4498,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "conway_p3_n3": {
     "peelRuns": 0,
@@ -4269,7 +4516,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "conway_p3_n4": {
     "peelRuns": 0,
@@ -4286,7 +4534,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "conway_p3_n5": {
     "peelRuns": 0,
@@ -4303,7 +4552,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "conway_p3_n6": {
     "peelRuns": 0,
@@ -4320,7 +4570,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "conway_p3_n7": {
     "peelRuns": 0,
@@ -4337,7 +4588,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "conway_p3_n8": {
     "peelRuns": 0,
@@ -4354,7 +4606,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "conway_p3_n9": {
     "peelRuns": 0,
@@ -4371,7 +4624,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "conway_p3_n10": {
     "peelRuns": 0,
@@ -4388,7 +4642,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "conway_p3_n11": {
     "peelRuns": 0,
@@ -4405,7 +4660,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "conway_p3_n12": {
     "peelRuns": 0,
@@ -4422,7 +4678,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "conway_p3_n13": {
     "peelRuns": 0,
@@ -4439,7 +4696,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "conway_p3_n14": {
     "peelRuns": 0,
@@ -4456,7 +4714,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "conway_p3_n15": {
     "peelRuns": 0,
@@ -4473,7 +4732,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "conway_p3_n16": {
     "peelRuns": 0,
@@ -4490,7 +4750,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "conway_p3_n17": {
     "peelRuns": 0,
@@ -4507,7 +4768,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "conway_p3_n18": {
     "peelRuns": 0,
@@ -4524,7 +4786,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "conway_p3_n19": {
     "peelRuns": 0,
@@ -4541,7 +4804,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "conway_p3_n20": {
     "peelRuns": 0,
@@ -4558,7 +4822,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "conway_p3_n21": {
     "peelRuns": 0,
@@ -4575,7 +4840,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "conway_p3_n22": {
     "peelRuns": 0,
@@ -4592,7 +4858,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "conway_p3_n23": {
     "peelRuns": 0,
@@ -4609,7 +4876,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "conway_p3_n24": {
     "peelRuns": 0,
@@ -4626,7 +4894,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "conway_p3_n25": {
     "peelRuns": 0,
@@ -4643,7 +4912,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "conway_p3_n26": {
     "peelRuns": 0,
@@ -4660,7 +4930,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "conway_p3_n27": {
     "peelRuns": 0,
@@ -4677,7 +4948,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "conway_p3_n28": {
     "peelRuns": 0,
@@ -4694,7 +4966,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "conway_p3_n29": {
     "peelRuns": 0,
@@ -4711,7 +4984,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "conway_p3_n30": {
     "peelRuns": 0,
@@ -4728,7 +5002,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "conway_p3_n31": {
     "peelRuns": 0,
@@ -4745,7 +5020,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "conway_p3_n32": {
     "peelRuns": 0,
@@ -4762,7 +5038,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "conway_p3_n33": {
     "peelRuns": 0,
@@ -4779,7 +5056,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "conway_p3_n34": {
     "peelRuns": 0,
@@ -4796,7 +5074,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "conway_p3_n35": {
     "peelRuns": 0,
@@ -4813,7 +5092,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "conway_p3_n36": {
     "peelRuns": 0,
@@ -4830,7 +5110,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "conway_p3_n37": {
     "peelRuns": 0,
@@ -4847,7 +5128,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "conway_p3_n38": {
     "peelRuns": 0,
@@ -4864,7 +5146,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "conway_p3_n39": {
     "peelRuns": 0,
@@ -4881,7 +5164,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "conway_p3_n40": {
     "peelRuns": 0,
@@ -4898,7 +5182,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "conway_p5_n1": {
     "peelRuns": 0,
@@ -4915,7 +5200,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "conway_p5_n2": {
     "peelRuns": 0,
@@ -4932,7 +5218,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "conway_p5_n3": {
     "peelRuns": 0,
@@ -4949,7 +5236,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "conway_p5_n4": {
     "peelRuns": 0,
@@ -4966,7 +5254,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "conway_p5_n5": {
     "peelRuns": 0,
@@ -4983,7 +5272,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "conway_p5_n6": {
     "peelRuns": 0,
@@ -5000,7 +5290,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "conway_p5_n7": {
     "peelRuns": 0,
@@ -5017,7 +5308,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "conway_p5_n8": {
     "peelRuns": 0,
@@ -5034,7 +5326,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "conway_p5_n9": {
     "peelRuns": 0,
@@ -5051,7 +5344,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "conway_p5_n10": {
     "peelRuns": 0,
@@ -5068,7 +5362,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "conway_p5_n11": {
     "peelRuns": 0,
@@ -5085,7 +5380,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "conway_p5_n12": {
     "peelRuns": 0,
@@ -5102,7 +5398,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "conway_p5_n13": {
     "peelRuns": 0,
@@ -5119,7 +5416,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "conway_p5_n14": {
     "peelRuns": 0,
@@ -5136,7 +5434,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "conway_p5_n15": {
     "peelRuns": 0,
@@ -5153,7 +5452,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "conway_p5_n16": {
     "peelRuns": 0,
@@ -5170,7 +5470,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "conway_p5_n17": {
     "peelRuns": 0,
@@ -5187,7 +5488,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "conway_p5_n18": {
     "peelRuns": 0,
@@ -5204,7 +5506,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "conway_p5_n19": {
     "peelRuns": 0,
@@ -5221,7 +5524,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "conway_p5_n20": {
     "peelRuns": 0,
@@ -5238,7 +5542,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "conway_p5_n21": {
     "peelRuns": 0,
@@ -5255,7 +5560,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "conway_p5_n22": {
     "peelRuns": 0,
@@ -5272,7 +5578,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "conway_p5_n23": {
     "peelRuns": 0,
@@ -5289,7 +5596,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "conway_p5_n24": {
     "peelRuns": 0,
@@ -5306,7 +5614,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "conway_p5_n25": {
     "peelRuns": 0,
@@ -5323,7 +5632,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "conway_p5_n26": {
     "peelRuns": 0,
@@ -5340,7 +5650,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "conway_p5_n27": {
     "peelRuns": 0,
@@ -5357,7 +5668,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "conway_p5_n28": {
     "peelRuns": 0,
@@ -5374,7 +5686,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "conway_p5_n29": {
     "peelRuns": 0,
@@ -5391,7 +5704,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "conway_p5_n30": {
     "peelRuns": 0,
@@ -5408,7 +5722,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "conway_p5_n31": {
     "peelRuns": 0,
@@ -5425,7 +5740,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "conway_p5_n33": {
     "peelRuns": 0,
@@ -5442,7 +5758,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "conway_p5_n35": {
     "peelRuns": 0,
@@ -5459,7 +5776,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "conway_p5_n36": {
     "peelRuns": 0,
@@ -5476,7 +5794,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "conway_p5_n37": {
     "peelRuns": 0,
@@ -5493,7 +5812,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "conway_p5_n39": {
     "peelRuns": 0,
@@ -5510,7 +5830,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "conway_p7_n1": {
     "peelRuns": 0,
@@ -5527,7 +5848,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "conway_p7_n2": {
     "peelRuns": 0,
@@ -5544,7 +5866,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "conway_p7_n3": {
     "peelRuns": 0,
@@ -5561,7 +5884,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "conway_p7_n4": {
     "peelRuns": 0,
@@ -5578,7 +5902,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "conway_p7_n5": {
     "peelRuns": 0,
@@ -5595,7 +5920,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "conway_p7_n6": {
     "peelRuns": 0,
@@ -5612,7 +5938,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "conway_p7_n7": {
     "peelRuns": 0,
@@ -5629,7 +5956,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "conway_p7_n8": {
     "peelRuns": 0,
@@ -5646,7 +5974,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "conway_p7_n9": {
     "peelRuns": 0,
@@ -5663,7 +5992,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "conway_p7_n10": {
     "peelRuns": 0,
@@ -5680,7 +6010,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "conway_p7_n11": {
     "peelRuns": 0,
@@ -5697,7 +6028,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "conway_p7_n12": {
     "peelRuns": 0,
@@ -5714,7 +6046,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "conway_p7_n13": {
     "peelRuns": 0,
@@ -5731,7 +6064,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "conway_p7_n14": {
     "peelRuns": 0,
@@ -5748,7 +6082,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "conway_p7_n15": {
     "peelRuns": 0,
@@ -5765,7 +6100,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "conway_p7_n16": {
     "peelRuns": 0,
@@ -5782,7 +6118,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "conway_p7_n17": {
     "peelRuns": 0,
@@ -5799,7 +6136,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "conway_p7_n18": {
     "peelRuns": 0,
@@ -5816,7 +6154,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "conway_p7_n19": {
     "peelRuns": 0,
@@ -5833,7 +6172,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "conway_p7_n20": {
     "peelRuns": 0,
@@ -5850,7 +6190,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "conway_p7_n21": {
     "peelRuns": 0,
@@ -5867,7 +6208,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "conway_p7_n22": {
     "peelRuns": 0,
@@ -5884,7 +6226,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "conway_p7_n23": {
     "peelRuns": 0,
@@ -5901,7 +6244,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "conway_p7_n24": {
     "peelRuns": 0,
@@ -5918,7 +6262,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "conway_p7_n25": {
     "peelRuns": 0,
@@ -5935,7 +6280,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "conway_p7_n26": {
     "peelRuns": 0,
@@ -5952,7 +6298,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "conway_p7_n27": {
     "peelRuns": 0,
@@ -5969,7 +6316,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "conway_p7_n28": {
     "peelRuns": 0,
@@ -5986,7 +6334,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "conway_p7_n29": {
     "peelRuns": 0,
@@ -6003,7 +6352,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "conway_p7_n30": {
     "peelRuns": 0,
@@ -6020,7 +6370,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "conway_p7_n31": {
     "peelRuns": 0,
@@ -6037,7 +6388,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "conway_p7_n35": {
     "peelRuns": 0,
@@ -6054,7 +6406,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "conway_p7_n36": {
     "peelRuns": 0,
@@ -6071,7 +6424,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "conway_p7_n37": {
     "peelRuns": 0,
@@ -6088,7 +6442,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "conway_p11_n1": {
     "peelRuns": 0,
@@ -6105,7 +6460,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "conway_p11_n2": {
     "peelRuns": 0,
@@ -6122,7 +6478,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "conway_p11_n3": {
     "peelRuns": 0,
@@ -6139,7 +6496,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "conway_p11_n4": {
     "peelRuns": 0,
@@ -6156,7 +6514,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "conway_p11_n5": {
     "peelRuns": 0,
@@ -6173,7 +6532,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "conway_p11_n6": {
     "peelRuns": 0,
@@ -6190,7 +6550,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "conway_p11_n7": {
     "peelRuns": 0,
@@ -6207,7 +6568,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "conway_p11_n8": {
     "peelRuns": 0,
@@ -6224,7 +6586,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "conway_p13_n1": {
     "peelRuns": 0,
@@ -6241,7 +6604,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "conway_p13_n2": {
     "peelRuns": 0,
@@ -6258,7 +6622,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "conway_p13_n3": {
     "peelRuns": 0,
@@ -6275,7 +6640,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "conway_p13_n4": {
     "peelRuns": 0,
@@ -6292,7 +6658,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "conway_p13_n5": {
     "peelRuns": 0,
@@ -6309,7 +6676,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "conway_p13_n6": {
     "peelRuns": 0,
@@ -6326,7 +6694,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "conway_p13_n7": {
     "peelRuns": 0,
@@ -6343,7 +6712,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "conway_p13_n8": {
     "peelRuns": 0,
@@ -6360,7 +6730,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "conway_p97_n1": {
     "peelRuns": 0,
@@ -6377,7 +6748,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "conway_p97_n2": {
     "peelRuns": 0,
@@ -6394,7 +6766,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "conway_p97_n3": {
     "peelRuns": 0,
@@ -6411,7 +6784,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "conway_p97_n4": {
     "peelRuns": 0,
@@ -6428,7 +6802,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "conway_p97_n5": {
     "peelRuns": 0,
@@ -6445,7 +6820,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "conway_p97_n6": {
     "peelRuns": 0,
@@ -6462,7 +6838,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "conway_p97_n7": {
     "peelRuns": 0,
@@ -6479,7 +6856,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "conway_p97_n8": {
     "peelRuns": 0,
@@ -6496,7 +6874,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "conway_p521_n1": {
     "peelRuns": 0,
@@ -6513,7 +6892,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "conway_p521_n2": {
     "peelRuns": 0,
@@ -6530,7 +6910,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "conway_p521_n3": {
     "peelRuns": 0,
@@ -6547,7 +6928,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "conway_p521_n4": {
     "peelRuns": 0,
@@ -6564,7 +6946,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "conway_p521_n5": {
     "peelRuns": 0,
@@ -6581,7 +6964,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "conway_p521_n6": {
     "peelRuns": 0,
@@ -6598,7 +6982,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "conway_p521_n7": {
     "peelRuns": 0,
@@ -6615,7 +7000,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "conway_p521_n8": {
     "peelRuns": 0,
@@ -6632,7 +7018,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "conway_p65537_n1": {
     "peelRuns": 0,
@@ -6649,7 +7036,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "conway_p65537_n2": {
     "peelRuns": 0,
@@ -6666,7 +7054,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "conway_p65537_n3": {
     "peelRuns": 0,
@@ -6683,7 +7072,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "conway_p65537_n4": {
     "peelRuns": 0,
@@ -6700,7 +7090,8 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   },
   "quartic_a4": {
     "peelRuns": 0,
@@ -6717,6 +7108,7 @@
     "beforeLiftPreparations": 0,
     "beforeTargetReductions": 0,
     "afterLiftPreparations": 0,
-    "afterTargetReductions": 0
+    "afterTargetReductions": 0,
+    "factorizationSha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
   }
 }

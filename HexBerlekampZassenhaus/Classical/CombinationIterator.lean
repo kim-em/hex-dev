@@ -127,11 +127,13 @@ def tryDirectSplit
     (directSelectedDegree basis selected)
     (directSelectedTrail basis selected)
 
-/-- The traversal data of one lifted basis, computed once per lift.
+/-- The traversal data of one lifted basis.
 
 Nothing here mentions a target: the lift modulus and the lifted factors are what
-a Hensel lift produced, so this object outlives every residual polynomial the
-peel run searches against.
+a Hensel lift produced, so one of these is reusable for as long as the basis is,
+across every residual polynomial searched against it.  The proposal traversal
+takes that reuse (`peelDirect` prepares one per peel run); the head-forced
+traversal still prepares one per cardinality level.
 
 The lift modulus is `basis.p ^ basis.k`, which at recovery precision is wide
 enough to need several limbs, and rebuilding it at every traversal step is the
@@ -313,7 +315,15 @@ def scanDirectCombinations
           | .found split triedRight => .found split (triedLeft + triedRight)
           | .exhausted triedRight => .exhausted (triedLeft + triedRight)
 
-/-- Stream one head-forced level. -/
+/-- Stream one head-forced level.
+
+Both prepared objects are built here, so a head search that runs several
+cardinalities rebuilds the whole lift support -- modulus, degree array and trail
+array -- and reduces the target again at each one.  That is where the mixed
+object left them; giving them the lifetimes their dependencies describe, as the
+proposal traversal now has, means threading them through `findDirectHead` and
+`searchDirectAux`, which the classical completeness and correctness proofs
+quantify over. -/
 @[expose]
 def scanDirectLevel
     (coreLc : Int) (target : ZPoly) (basis : LiftData)
