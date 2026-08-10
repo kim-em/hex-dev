@@ -201,19 +201,25 @@ the old revision.
 
 The sync authenticates with `RELEASED_SYNC_PAT`, a fine-grained token named
 `hex-publishing` owned by @kim-em. It is scoped to an explicit list of
-repositories, deliberately not to every repository, so **publishing a new
-library is a two-part change**:
+repositories, deliberately not to every repository, so publishing a new
+library takes three steps in this order:
 
-1. add its entry to `released.yml` here, and
-2. add its repository to the token's selected repositories at
+1. create the repository under `leanprover` and give it the un-managed Lake
+   and CI skeleton (`scripts/release/BOOTSTRAP.md`); the sync clones but never
+   creates;
+2. add that repository to the token's selected repositories at
    https://github.com/settings/personal-access-tokens/16433897 with
-   `Contents: Read and write`.
+   `Contents: Read and write`, and have an organization owner approve the
+   request at
+   https://github.com/organizations/leanprover/settings/personal-access-token-requests;
+   then
+3. add its entry to `released.yml` here and run the sync.
 
-Step 2 needs an organization owner to approve the request at
-https://github.com/organizations/leanprover/settings/personal-access-token-requests,
-so start it before the release rather than during it.
+The repository has to exist before step 2 can name it, which is why step 1
+comes first; nothing in this order is circular. Step 2 is the one with a
+human in the loop, so start it early.
 
-Skipping step 2 used to fail halfway through a publish, after earlier
+Skipping step 2 used to fail partway through a publish, after earlier
 repositories had already been pushed: the token simply cannot see a repository
 outside its list, so the clone succeeds from public https and only the push
 returns `403 Permission to leanprover/<repo>.git denied`. `sync_released.py`

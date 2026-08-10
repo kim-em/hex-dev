@@ -181,30 +181,48 @@ def apply_paths(entry: dict, clone: Path) -> list[str]:
     return notes
 
 
+def _api_repo(repo: str, token: str | None) -> dict | int:
+    """The repos API payload, or the HTTP status if the request was refused."""
+    headers = {
+        "Accept": "application/vnd.github+json",
+        "X-GitHub-Api-Version": "2022-11-28",
+        "User-Agent": "hex-dev-release-sync",
+    }
+    if token:
+        headers["Authorization"] = f"Bearer {token}"
+    request = urllib.request.Request(f"https://api.github.com/repos/{repo}", headers=headers)
+    try:
+        with urllib.request.urlopen(request, timeout=30) as response:
+            return json.load(response)
+    except urllib.error.HTTPError as exc:
+        return exc.code
+
+
 def writable_check(repo: str, token: str) -> str | None:
     """None if the token can push to `repo`, else why not.
 
     A fine-grained token cannot see a repository outside its selected set at
     all, so an unlisted repo answers 404 rather than reporting `push: false`.
+    That is the same status a repository that does not exist yet returns, so
+    distinguish the two with an unauthenticated probe: released repositories
+    are public and are created by hand before they enter the manifest (see
+    scripts/release/BOOTSTRAP.md).
     """
-    request = urllib.request.Request(
-        f"https://api.github.com/repos/{repo}",
-        headers={
-            "Authorization": f"Bearer {token}",
-            "Accept": "application/vnd.github+json",
-            "X-GitHub-Api-Version": "2022-11-28",
-            "User-Agent": "hex-dev-release-sync",
-        },
-    )
     try:
-        with urllib.request.urlopen(request, timeout=30) as response:
-            payload = json.load(response)
-    except urllib.error.HTTPError as exc:
-        detail = "not in the token's selected repositories" if exc.code == 404 else exc.reason
-        return f"HTTP {exc.code} ({detail})"
+        result = _api_repo(repo, token)
     except urllib.error.URLError as exc:
         return f"unreachable ({exc.reason})"
-    if not payload.get("permissions", {}).get("push"):
+    if isinstance(result, int):
+        if result != 404:
+            return f"HTTP {result}"
+        try:
+            exists = not isinstance(_api_repo(repo, None), int)
+        except urllib.error.URLError as exc:
+            return f"HTTP 404, and unreachable anonymously ({exc.reason})"
+        return ("HTTP 404: not in the token's selected repositories"
+                if exists else
+                "HTTP 404: no such repository (create it before publishing)")
+    if not result.get("permissions", {}).get("push"):
         return "visible but not writable (needs Contents: Read and write)"
     return None
 
