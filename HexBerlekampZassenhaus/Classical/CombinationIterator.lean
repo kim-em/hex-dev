@@ -28,12 +28,11 @@ fresh `p ^ k` and a fresh reduction.  The two objects have different lifetimes:
 the first depends only on the lifted basis and is constant for a whole peel run,
 the second depends on the residual polynomial being searched and is rebuilt
 whenever an exact split replaces it.  Every leaf runs its recorded-data filters
-before it reverses the
-selected indices, maps them to lifted polynomials, or concatenates the
-complementary support -- the last of which is built only once an exact divisor
-is in hand.  And a leaf that does build a candidate puts it to the finite-field
-divisibility obstruction, which rejects in machine-word arithmetic what would
-otherwise cost a multi-limb integer long division.
+before it reverses the selected indices, maps them to lifted polynomials, or
+concatenates the complementary support -- the last of which is built only once
+an exact divisor is in hand.  And a leaf that does build a candidate puts it to
+the finite-field divisibility obstruction, which rejects in machine-word
+arithmetic what would otherwise cost a multi-limb integer long division.
 
 A rejected leaf still pays for the recorded-data filters themselves, which are
 modular arithmetic on the lift modulus; what it no longer pays for is the
