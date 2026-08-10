@@ -36,6 +36,8 @@ import subprocess
 import sys
 import tempfile
 import tomllib
+import urllib.error
+import urllib.request
 from pathlib import Path
 
 import yaml
@@ -50,6 +52,23 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 MANIFEST = REPO_ROOT / "scripts" / "release" / "released.yml"
 BASELINE = REPO_ROOT / "scripts" / "release" / "synced.json"
 TOOLCHAIN = REPO_ROOT / "lean-toolchain"
+# The `RELEASED_SYNC_PAT` secret holds the `hex-publishing` fine-grained token.
+# It is deliberately scoped to the hex repositories rather than to every
+# repository, which means publishing a *new* library is a two-part change: add
+# it to released.yml here, and add it to the token's selected repositories
+# there. The second part needs an organization owner's approval, so start it
+# before the release rather than discovering it mid-publish.
+TOKEN_HELP = (
+    "Add the repositories above to the selected repositories of the token behind\n"
+    "the RELEASED_SYNC_PAT secret (Contents: Read and write). That is currently\n"
+    "the `hex-publishing` fine-grained token, at the time of writing\n"
+    "https://github.com/settings/personal-access-tokens/16433897 ; if it has been\n"
+    "rotated since, find the current one under\n"
+    "https://github.com/settings/personal-access-tokens . The token is scoped to\n"
+    "the hex repositories on purpose, so each newly published library has to be\n"
+    "added by hand. An organization owner then approves the request at\n"
+    "https://github.com/organizations/leanprover/settings/personal-access-token-requests"
+)
 LAKE_MANIFEST = REPO_ROOT / "lake-manifest.json"
 
 
@@ -163,6 +182,79 @@ def apply_paths(entry: dict, clone: Path) -> list[str]:
             copy_file(src, dest)
         notes.append(f"  {src.relative_to(REPO_ROOT)} -> {dest_rel}")
     return notes
+
+
+def _api_repo(repo: str, token: str | None) -> dict | int:
+    """The repos API payload, or the HTTP status if the request was refused."""
+    headers = {
+        "Accept": "application/vnd.github+json",
+        "X-GitHub-Api-Version": "2022-11-28",
+        "User-Agent": "hex-dev-release-sync",
+    }
+    if token:
+        headers["Authorization"] = f"Bearer {token}"
+    request = urllib.request.Request(f"https://api.github.com/repos/{repo}", headers=headers)
+    try:
+        with urllib.request.urlopen(request, timeout=30) as response:
+            return json.load(response)
+    except urllib.error.HTTPError as exc:
+        return exc.code
+
+
+def selection_check(repo: str, token: str) -> str | None:
+    """None if `repo` is in the token's selected repositories, else why not.
+
+    This is a *selection* check, not an authorization check. `GET /repos` needs
+    only `Metadata: read`, and the `permissions` it reports describe the
+    authenticated user's role on the repository, not the grants of this
+    particular token, so a token holding only `Contents: read` on a selected
+    repository still reports `push: true`. What it does catch, and what has
+    actually bitten a release, is a repository missing from the token's
+    selection: a fine-grained token cannot see one at all, so it answers 404.
+
+    A repository that does not exist answers 404 too, so an anonymous probe
+    separates the two; released repositories are public and are created by hand
+    before they enter the manifest (see scripts/release/BOOTSTRAP.md). Any other
+    status is reported as indeterminate rather than guessed at, so a rate limit
+    or an outage never reads as a missing repository.
+    """
+    try:
+        result = _api_repo(repo, token)
+    except (urllib.error.URLError, OSError, ValueError) as exc:
+        return f"could not be checked ({exc})"
+    if not isinstance(result, int):
+        return None
+    if result in (403, 429):
+        return f"could not be checked (HTTP {result}; rate limited or forbidden)"
+    if result != 404:
+        return f"could not be checked (HTTP {result})"
+    try:
+        anonymous = _api_repo(repo, None)
+    except (urllib.error.URLError, OSError, ValueError) as exc:
+        return f"HTTP 404, and could not be checked anonymously ({exc})"
+    if not isinstance(anonymous, int):
+        return "not in the token's selected repositories"
+    if anonymous == 404:
+        return "no such repository (create it before publishing)"
+    return (f"HTTP 404, and anonymously HTTP {anonymous}, so whether it is "
+            "missing or unselected is undetermined")
+
+
+def preflight_token(entries: list[dict], token: str) -> list[str]:
+    """Report every repo this run would push to that the token cannot reach.
+
+    Checked up front, before the first push: the publishing token is scoped to
+    an explicit list of repositories, so a library released here but not added
+    to that list would otherwise fail partway through, after earlier repos were
+    already published. This proves selection, not write access; see
+    `selection_check`.
+    """
+    blocked: list[str] = []
+    for entry in entries:
+        reason = selection_check(entry["repo"], token)
+        if reason:
+            blocked.append(f"{entry['repo']}: {reason}")
+    return blocked
 
 
 def _lake_files(clone: Path, name_globs: list[str]) -> list[Path]:
@@ -691,6 +783,29 @@ def main() -> int:
     # downstream sync silently retains stale pins because skipped entries never
     # populate `synced`.
     synced: dict[str, str] = dict(baseline) if args.only else {}
+
+    targets = [entry for entry in manifest["repos"]
+               if not args.only or entry["repo"].split("/")[-1] == args.only]
+    # A misspelled --only would otherwise select nothing, preflight vacuously,
+    # publish nothing, and still exit 0 reporting the seeded baseline count.
+    if args.only and len(targets) != 1:
+        print(f"release sync: --only {args.only} matches {len(targets)} manifest "
+              "entries; expected exactly one", file=sys.stderr)
+        return 1
+    if not args.dry_run:
+        blocked = preflight_token(targets, args.token)
+        if blocked:
+            print(f"\nrelease sync: the publishing token cannot reach "
+                  f"{len(blocked)} of {len(targets)} target repositories:",
+                  file=sys.stderr)
+            for line in blocked:
+                print(f"  {line}", file=sys.stderr)
+            print(f"\n{TOKEN_HELP}", file=sys.stderr)
+            return 1
+        print(f"token preflight: all {len(targets)} target repositories are in "
+              "the token's selection (this does not prove write access; see "
+              "selection_check)")
+
     failed_repo: str | None = None
     current_repo = "<manifest>"
     try:
