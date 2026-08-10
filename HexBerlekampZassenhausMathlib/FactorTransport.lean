@@ -179,7 +179,7 @@ open HexBerlekampZassenhausMathlib
 every certification slot is a Boolean check on reified literal data (filled by
 `Eq.refl true` in emitted terms), and `hP` is the parser-built translation equality
 tying the reified executable polynomial to the user's Mathlib polynomial. -/
-@[expose, simp]
+@[expose]
 noncomputable def FactoredPoly.ofZ (P : Polynomial ℤ) (f : Hex.ZPoly) (s : Int)
     (factors : List Hex.ZPoly)
     (certified : List (Hex.ZPoly × Hex.ZPoly.IrredWitness))
