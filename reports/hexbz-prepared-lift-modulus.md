@@ -120,38 +120,55 @@ leaves survive the filter and the phase is dominated by candidate construction
 and exact division rather than by the filter. The Chebyshev and Legendre
 controls, whose traversals are a handful of leaves, are unchanged.
 
-## End to end, forty-one interleaved repeats per row
+## End to end, forty-one counterbalanced repeats per row
 
-Same host, one idle core, arms alternating within each repeat, median per arm.
-The three `sd5` rows and the three Wilkinson rows are the in-run control: their
-production cascades visit no recombination leaf at all, so nothing this change
-touches can move them.
+Same host, one idle core. Each repeat runs both arms once and the arm that goes
+first alternates, so arm and position within the repeat are not confounded. The
+ratio is the median of the within-repeat after/before ratios, and the spread is
+their tenth to ninetieth percentile. `agree` records that both arms returned the
+same factor-degree multiset on every repeat.
 
-| row | before | after | ratio |
-|---|---:|---:|---:|
-| `sd5` | 6.751 ms | 6.747 ms | 0.9994x |
-| `sd5_shift1` | 7.141 ms | 7.096 ms | 0.9937x |
-| `sd5_shift2` | 8.729 ms | 8.670 ms | 0.9933x |
-| `sd4_x_sd4shift1` | 17.618 ms | 16.225 ms | 0.9209x |
-| `sd5_x_phi11` | 138.628 ms | 130.225 ms | 0.9394x |
-| `sd5_x_phi45` | 320.069 ms | 301.898 ms | 0.9432x |
-| `xpow48_minus1` | 10.402 ms | 10.348 ms | 0.9948x |
-| `xpow105_minus1` | 44.353 ms | 44.305 ms | 0.9989x |
-| `xpow120_minus1` | 144.656 ms | 145.016 ms | 1.0025x |
-| `wilkinson_40` | 9.257 ms | 9.226 ms | 0.9967x |
-| `wilkinson_48` | 16.315 ms | 16.230 ms | 0.9948x |
-| `wilkinson_56` | 21.085 ms | 21.120 ms | 1.0016x |
-| `chebyshev_T8` | 0.050 ms | 0.051 ms | 1.0141x |
-| `chebyshev_U8` | 0.136 ms | 0.135 ms | 0.9913x |
-| `legendre_P16` | 0.548 ms | 0.547 ms | 0.9975x |
-| `legendre_P18` | 1.336 ms | 1.309 ms | 0.9798x |
+`sd7` and `hoeij_S7` are the duration-matched controls: both answer through
+`method=quadraticNorm` with `candidatesTried = 0`, and both cost about 196 ms,
+the scale of the target rows. The three `sd5` rows also visit no leaf, and the
+three Wilkinson rows visit one leaf per lifted factor.
 
-The control rows span 0.993x to 1.002x, so the run's floor is under a percent.
-Only the three rows whose cascades run a large traversal move past it, and all
-three improve: 7.9% on `sd4_x_sd4shift1`, 6.1% on `sd5_x_phi11`, 5.7% on
-`sd5_x_phi45`. `xpow120_minus1` and `xpow105_minus1` recombine but spend the
-traversal on candidate construction rather than on the filter, and they are
-flat.
+| row | before | after | ratio | repeat spread | agree |
+|---|---:|---:|---:|---|---|
+| `sd5` | 6.923 ms | 6.724 ms | 0.971x | 0.963x to 0.986x | same |
+| `sd5_shift1` | 7.302 ms | 7.037 ms | 0.965x | 0.957x to 0.977x | same |
+| `sd5_shift2` | 8.839 ms | 8.707 ms | 0.984x | 0.972x to 1.004x | same |
+| `sd7` | 196.250 ms | 196.012 ms | 0.999x | 0.985x to 1.021x | same |
+| `hoeij_S7` | 195.847 ms | 195.540 ms | 0.997x | 0.982x to 1.022x | same |
+| `sd4_x_sd4shift1` | 17.689 ms | 16.197 ms | 0.915x | 0.907x to 0.921x | same |
+| `sd5_x_phi11` | 139.809 ms | 130.412 ms | 0.933x | 0.922x to 0.943x | same |
+| `sd5_x_phi45` | 322.632 ms | 302.449 ms | 0.939x | 0.927x to 0.948x | same |
+| `xpow48_minus1` | 10.566 ms | 10.386 ms | 0.984x | 0.973x to 0.998x | same |
+| `xpow105_minus1` | 44.712 ms | 44.400 ms | 0.994x | 0.982x to 1.009x | same |
+| `xpow120_minus1` | 146.630 ms | 145.402 ms | 0.991x | 0.982x to 1.004x | same |
+| `wilkinson_40` | 9.299 ms | 9.229 ms | 0.993x | 0.981x to 1.005x | same |
+| `wilkinson_48` | 16.368 ms | 16.260 ms | 0.994x | 0.978x to 1.007x | same |
+| `wilkinson_56` | 21.061 ms | 21.067 ms | 0.996x | 0.990x to 1.008x | same |
+| `chebyshev_T8` | 0.054 ms | 0.053 ms | 0.970x | 0.926x to 1.025x | same |
+| `chebyshev_U8` | 0.141 ms | 0.136 ms | 0.997x | 0.889x to 1.065x | same |
+| `legendre_P16` | 0.550 ms | 0.538 ms | 0.980x | 0.921x to 1.029x | same |
+| `legendre_P18` | 1.337 ms | 1.292 ms | 0.959x | 0.925x to 1.008x | same |
+
+The duration-matched controls sit at 0.999x and 0.997x, and the Wilkinson rows
+at 0.993x to 0.996x. The three target rows are far outside that band: 0.915x on
+`sd4_x_sd4shift1`, 0.933x on `sd5_x_phi11` and 0.939x on `sd5_x_phi45`, with
+tenth-to-ninetieth spreads of about a percent that nowhere approach 1.0.
+
+The three short `sd5` rows sit at 0.965x to 0.984x with equally tight spreads.
+Nothing in this change can reach them: they visit no recombination leaf, so this
+is a stable incidental difference between two separately linked binaries, not an
+effect of the prepared modulus. It is reported rather than explained away, and
+it is why the duration-matched pair is the control the target rows should be
+read against.
+
+`xpow120_minus1`, `xpow105_minus1` and `xpow48_minus1` do recombine but spend
+their traversals on candidate construction and exact division rather than on
+the filter, and land inside the control band at 0.991x, 0.994x and 0.984x.
 
 ## Whole-corpus paired sweep
 
@@ -211,3 +228,18 @@ when a surviving leaf builds its candidate, and that path pays the same
 doubling allocation this change removed from the filter. It is the natural
 successor and it is not in this change's scope: `Hex.directCandidate` takes a
 `Nat` modulus that the Mathlib recovery proofs consume directly.
+
+## Records
+
+* `reports/bench-results/hexbz-factor-sweep-hex-446dc2e9-chungus2.json`, the
+  published hex-factor sweep this branch's figures are drawn from.
+* `reports/bench-results/hexbz-prepared-modulus-paired-446dc2e9-chungus2.json`,
+  the four-block paired sweep, every block retained.
+* `reports/bench-results/hexbz-prepared-modulus-sampling-before-c2b34944-chungus2.json`
+  and `...-after-446dc2e9-chungus2.json`, the symbolized sampling profiles at
+  both revisions.
+
+The per-row driver is `scripts/bench/factor_row_paired.py`. Its first form ran
+both arms in a fixed order every repeat, which confounded arm with position;
+the numbers above are from the counterbalanced form, and the fixed-order run is
+not reported. A second opinion from Codex found that defect.
