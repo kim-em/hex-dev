@@ -326,10 +326,12 @@ theorem centeredModNat_emod_eq_of_natAbs_le
 
 `centeredModNat` states what the centred representative *is*: reduce, then
 subtract the modulus when the residue is past halfway.  Evaluating that
-statement literally rebuilds two derived values of the modulus at every call --
-its integer form, and the halfway threshold `2 * r.natAbs ≤ m` compares against
--- and at recovery precision both are multi-limb.  A traversal that reduces
-against one fixed modulus millions of times wants them once.
+statement literally derives two values at every call -- the modulus in integer
+form, and the doubled residue the halfway test `2 * r.natAbs ≤ m` compares
+against.  At recovery precision the second is a fresh multi-limb natural,
+allocated and freed once per leaf.  A traversal that reduces against one fixed
+modulus millions of times wants neither: comparing the residue against a
+recorded `m / 2` decides the same test and builds nothing.
 
 The proof fields pin both derived values to the natural one, so a reduction
 reading this object is interchangeable with one reading the modulus directly;
