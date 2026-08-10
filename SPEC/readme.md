@@ -53,6 +53,23 @@ Use these five level-1 headings, in this order.
    the `SPEC/` directory: describe the behaviour you want and leave the
    implementation to the maintainer.
 
+## The aggregate README
+
+`leanprover/hex` publishes no library source, so its README has no
+`<Lib>/README.md` to come from. It is generated instead: the prose lives in
+`scripts/release/hex-README.md` and the library table is rendered from
+`released.yml` by `scripts/release/aggregate_readme.py` during the sync.
+
+Releasing a library therefore adds it to the aggregate README with no hand
+edit, provided its manifest entry carries a `component:` label naming the row
+(for example `component: LLL lattice reduction`). A missing label is a
+`check_released_manifest.py` failure, so the table cannot fall behind the
+manifest. `*-mathlib` companions take no label; they appear in the row of the
+computational library they bridge.
+
+The five required headings above do not apply to the aggregate: it documents
+the collection, not a library.
+
 ## Style
 
 Follow the project's writing conventions. In particular: no

@@ -30,14 +30,21 @@
 # root module. The sync refuses to publish when the skeleton is stale.
 # `pins` lists the upstream repos whose git rev is rewritten in this repo's root
 # lakefile (matched by their github URL); `lakefile` is that file's format.
+# `component` is the human label this library gets in the aggregate README's
+# table (see `readme_template` below). Required on every aggregated
+# computational library, so releasing one cannot silently skip the table; the
+# `*-mathlib` companions need none, they occupy the table's third column.
 #
-# A `pins_only: true` entry (the leanprover/hex aggregate) manages no source
-# from the monorepo — its umbrella lakefile, umbrella .lean and README live only
-# in the released repo. The sync just re-pins it to the SHAs published this run.
-# Such an entry is listed last so every upstream it pins is already synced.
+# A `pins_only: true` entry (the leanprover/hex aggregate) manages no library
+# source from the monorepo: its umbrella lakefile and umbrella .lean live only
+# in the released repo, and the sync re-pins it to the SHAs published this run.
+# Its `readme_template` is rendered by scripts/release/aggregate_readme.py and
+# published as the repo's README.md. Such an entry is listed last so every
+# upstream it pins is already synced.
 
 repos:
   - repo: leanprover/hex-basic
+    component: Foundations
     lib: HexBasic
     umbrella: true
     readme: false        # README is authored in the released repo, not managed
@@ -64,6 +71,7 @@ repos:
     lakefile: toml
 
   - repo: leanprover/hex-arith
+    component: Exact word arithmetic
     lib: HexArith
     umbrella: true
     spec: hex-arith
@@ -75,6 +83,7 @@ repos:
     lakefile: lean
 
   - repo: leanprover/hex-poly
+    component: Dense univariate polynomials
     lib: HexPoly
     umbrella: true
     spec: hex-poly
@@ -86,6 +95,7 @@ repos:
     lakefile: toml
 
   - repo: leanprover/hex-mv-poly
+    component: Sparse multivariate polynomials
     lib: HexMvPoly
     test_modules: [HexMvPoly.KernelTests]
     umbrella: true
@@ -100,6 +110,7 @@ repos:
     lakefile: toml
 
   - repo: leanprover/hex-mod-arith
+    component: Modular arithmetic
     lib: HexModArith
     umbrella: true
     spec: hex-mod-arith
@@ -133,6 +144,7 @@ repos:
     lakefile: toml
 
   - repo: leanprover/hex-poly-fp
+    component: Polynomials over a prime field
     lib: HexPolyFp
     umbrella: true
     spec: hex-poly-fp
@@ -144,6 +156,7 @@ repos:
     lakefile: toml
 
   - repo: leanprover/hex-poly-z
+    component: Integer polynomials
     lib: HexPolyZ
     umbrella: true
     spec: hex-poly-z
@@ -166,6 +179,7 @@ repos:
     lakefile: toml
 
   - repo: leanprover/hex-gfq-ring
+    component: Quotient rings `F_p[x]/(f)`
     lib: HexGFqRing
     umbrella: true
     spec: hex-gfq-ring
@@ -177,6 +191,7 @@ repos:
     lakefile: toml
 
   - repo: leanprover/hex-hensel
+    component: Hensel lifting
     lib: HexHensel
     precompile_modules: true
     umbrella: true
@@ -211,6 +226,7 @@ repos:
     lakefile: toml
 
   - repo: leanprover/hex-roots
+    component: Complex root isolation
     lib: HexRoots
     umbrella: true
     spec: hex-roots
@@ -222,6 +238,7 @@ repos:
     lakefile: toml
 
   - repo: leanprover/hex-real-roots
+    component: Real root isolation
     lib: HexRealRoots
     test_modules: [HexRealRoots.ReplayTest]
     umbrella: true
@@ -258,6 +275,7 @@ repos:
     lakefile: toml
 
   - repo: leanprover/hex-matrix
+    component: Matrices
     lib: HexMatrix
     umbrella: true
     spec: hex-matrix
@@ -269,6 +287,7 @@ repos:
     lakefile: toml
 
   - repo: leanprover/hex-row-reduce
+    component: Row reduction
     lib: HexRowReduce
     umbrella: true
     spec: hex-row-reduce
@@ -280,6 +299,7 @@ repos:
     lakefile: toml
 
   - repo: leanprover/hex-berlekamp
+    component: Finite-field factorization
     lib: HexBerlekamp
     test_modules: [HexBerlekamp.FactorTacticTests]
     umbrella: true
@@ -292,6 +312,7 @@ repos:
     lakefile: toml
 
   - repo: leanprover/hex-determinant
+    component: Determinants
     lib: HexDeterminant
     umbrella: true
     spec: hex-determinant
@@ -303,6 +324,7 @@ repos:
     lakefile: toml
 
   - repo: leanprover/hex-bareiss
+    component: Bareiss determinant
     lib: HexBareiss
     umbrella: true
     spec: hex-bareiss
@@ -370,6 +392,7 @@ repos:
     lakefile: toml
 
   - repo: leanprover/hex-gram-schmidt
+    component: Gram-Schmidt
     lib: HexGramSchmidt
     umbrella: true
     spec: hex-gram-schmidt
@@ -392,6 +415,7 @@ repos:
     lakefile: toml
 
   - repo: leanprover/hex-lll
+    component: LLL lattice reduction
     lib: HexLLL
     executables: {hexlll_external_reduction: HexLLL.ExternalReduction}
     umbrella: true
@@ -415,6 +439,7 @@ repos:
       - hex-lll-comparator-knapsack.svg
 
   - repo: leanprover/hex-berlekamp-zassenhaus
+    component: Integer polynomial factorization
     lib: HexBerlekampZassenhaus
     test_modules: [HexBerlekampZassenhaus.FactorTacticTests]
     build_modules: [HexBerlekampZassenhaus.All]
@@ -454,9 +479,13 @@ repos:
     lakefile: lean
 
   # Aggregate: re-pinned only, never regenerated from managed source (its
-  # umbrella lakefile.toml, HexAll.lean and README live only in the released
-  # repo). Listed last so every pin resolves to a commit synced this run.
+  # umbrella lakefile.toml and HexAll.lean live only in the released repo).
+  # Its README is the one managed artifact: rendered from `readme_template`
+  # with the library table generated from the `component:` labels above, so
+  # releasing a new library updates it without a hand edit. Listed last so
+  # every pin resolves to a commit synced this run.
   - repo: leanprover/hex
     pins_only: true
+    readme_template: scripts/release/hex-README.md
     pins: [hex-basic, hex-arith, hex-poly, hex-mv-poly, hex-mod-arith, hex-poly-mathlib, hex-mv-poly-mathlib, hex-poly-fp, hex-poly-z, hex-mod-arith-mathlib, hex-gfq-ring, hex-hensel, hex-poly-z-mathlib, hex-hensel-mathlib, hex-roots, hex-real-roots, hex-roots-mathlib, hex-real-roots-mathlib, hex-matrix, hex-row-reduce, hex-berlekamp, hex-determinant, hex-bareiss, hex-matrix-mathlib, hex-row-reduce-mathlib, hex-determinant-mathlib, hex-bareiss-mathlib, hex-berlekamp-mathlib, hex-gram-schmidt, hex-gram-schmidt-mathlib, hex-lll, hex-berlekamp-zassenhaus, hex-lll-mathlib, hex-berlekamp-zassenhaus-mathlib]
     lakefile: toml
