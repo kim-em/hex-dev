@@ -249,7 +249,8 @@ theorem directCandidatePrefilter_trueSupport
     (hproduct : quotient * factor = target) :
     Hex.directCandidatePrefilter
         (Hex.DensePoly.leadingCoeff core) target
-        (Hex.liftModulus (Hex.ZPoly.directLiftData core B data))
+        (Hex.LiftModulus.ofNat
+          (Hex.liftModulus (Hex.ZPoly.directLiftData core B data)))
         (Hex.directSelectedDegree (Hex.ZPoly.directLiftData core B data) selected)
         (Hex.directSelectedTrail (Hex.ZPoly.directLiftData core B data) selected) =
       true := by
@@ -428,9 +429,9 @@ theorem directCandidatePrefilter_trueSupport
     rw [htrail, hraw_coeff, ha, htarget_coeff, hb]
     ring
   unfold Hex.directCandidatePrefilter Hex.directDegreePrefilter
-    Hex.directTrailingPrefilter
-  simp only [Bool.and_eq_true, Bool.or_eq_true, beq_iff_eq,
-    decide_eq_true_eq]
+  rw [Hex.directTrailingPrefilter_eq]
+  simp only [Hex.LiftModulus.nat_ofNat, Bool.and_eq_true, Bool.or_eq_true,
+    beq_iff_eq, decide_eq_true_eq]
   refine ⟨?_, ?_⟩
   · simpa [ne_of_gt hcore_lc_pos, htarget_ne] using hdegree
   · simpa [Hex.intDivides_eq] using
@@ -517,9 +518,14 @@ theorem tryDirectSplit_trueSupport
       hfactor_lc_pos hfactor_degree_pos hproduct
   unfold Hex.tryDirectSplit Hex.tryDirectCandidate
     Hex.directCandidateAfterPrefilter
+  have hcand_prepared :
+      Hex.directCandidate (Hex.DensePoly.leadingCoeff core)
+          (Hex.LiftModulus.ofNat (Hex.liftModulus d)).nat
+          (Hex.directSelectedFactors d selected) =
+        factor := hcand
   rw [hpre]
   simp only [if_true]
-  rw [hcand, hrecord, hquot]
+  rw [hcand_prepared, hrecord, hquot]
   rfl
 
 /-- Any successful indexed split containing the distinguished modular index

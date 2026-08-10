@@ -194,7 +194,8 @@ private theorem tryDirectCandidate_eq_tryDirectSplit
       selectedDegree = Hex.directSelectedDegree basis selected)
     (htrail :
       selectedTrail = Hex.directSelectedTrail basis selected) :
-    Hex.tryDirectCandidate coreLc target (Hex.liftModulus basis)
+    Hex.tryDirectCandidate coreLc target
+        (Hex.LiftModulus.ofNat (Hex.liftModulus basis))
         (Hex.directSelectedFactors basis selected) selectedDegree selectedTrail =
       Hex.tryDirectSplit coreLc target basis selected := by
   rw [hdegree, htrail]

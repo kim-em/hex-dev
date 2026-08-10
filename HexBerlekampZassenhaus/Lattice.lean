@@ -322,6 +322,83 @@ theorem centeredModNat_emod_eq_of_natAbs_le
       simp [hnotneg]
       omega
 
+/-- A modulus prepared for repeated centred reduction.
+
+`centeredModNat` states what the centred representative *is*: reduce, then
+subtract the modulus when the residue is past halfway.  Evaluating that
+statement literally rebuilds two derived values of the modulus at every call --
+its integer form, and the halfway threshold `2 * r.natAbs ≤ m` compares against
+-- and at recovery precision both are multi-limb.  A traversal that reduces
+against one fixed modulus millions of times wants them once.
+
+The proof fields pin both derived values to the natural one, so a reduction
+reading this object is interchangeable with one reading the modulus directly;
+`centered_eq` is that statement. -/
+structure LiftModulus where
+  /-- The modulus. -/
+  nat : Nat
+  /-- The modulus as an integer. -/
+  int : Int
+  /-- The largest residue that is its own centred representative, `nat / 2`. -/
+  half : Int
+  /-- The recorded integer modulus is the modulus. -/
+  int_eq : int = (nat : Int)
+  /-- The recorded threshold is half the modulus, rounded down. -/
+  half_eq : half = ((nat / 2 : Nat) : Int)
+
+/-- Prepare a natural number for repeated centred reduction. -/
+@[expose]
+def LiftModulus.ofNat (m : Nat) : LiftModulus where
+  nat := m
+  int := (m : Int)
+  half := ((m / 2 : Nat) : Int)
+  int_eq := rfl
+  half_eq := rfl
+
+@[simp]
+theorem LiftModulus.nat_ofNat (m : Nat) : (LiftModulus.ofNat m).nat = m := rfl
+
+@[simp]
+theorem LiftModulus.int_ofNat (m : Nat) : (LiftModulus.ofNat m).int = (m : Int) := rfl
+
+@[simp]
+theorem LiftModulus.half_ofNat (m : Nat) :
+    (LiftModulus.ofNat m).half = ((m / 2 : Nat) : Int) := rfl
+
+/-- A prepared modulus carries no freedom beyond the modulus it records. -/
+theorem LiftModulus.eq_ofNat : ∀ m : LiftModulus, m = LiftModulus.ofNat m.nat
+  | ⟨_, _, _, rfl, rfl⟩ => rfl
+
+/-- The centred representative of `z` against a prepared modulus.
+
+`z % modulus` is already the least nonnegative residue, so the centred
+representative is that residue, less the modulus once it is past the recorded
+halfway threshold.  No representation of the modulus is built here: both the
+reduction and the comparison read values the modulus arrived with. -/
+@[expose]
+def LiftModulus.centered (m : LiftModulus) (z : Int) : Int :=
+  if m.nat = 0 then
+    z
+  else
+    let r := z % m.int
+    if r ≤ m.half then r else r - m.int
+
+/-- Reducing against a prepared modulus computes the centred representative. -/
+theorem LiftModulus.centered_eq (m : LiftModulus) (z : Int) :
+    m.centered z = centeredModNat z m.nat := by
+  unfold LiftModulus.centered centeredModNat
+  by_cases hm : m.nat = 0
+  · simp [hm]
+  · simp only [hm, if_false, m.int_eq, m.half_eq, Int.ofNat_eq_natCast]
+    have hne : ((m.nat : Nat) : Int) ≠ 0 := by omega
+    have hnonneg : 0 ≤ z % ((m.nat : Nat) : Int) := Int.emod_nonneg z hne
+    by_cases hhalf : 2 * (z % ((m.nat : Nat) : Int)).natAbs ≤ m.nat
+    · have hle : z % ((m.nat : Nat) : Int) ≤ ((m.nat / 2 : Nat) : Int) := by omega
+      rw [if_pos hle, if_pos hhalf]
+    · have hnle : ¬ z % ((m.nat : Nat) : Int) ≤ ((m.nat / 2 : Nat) : Int) := by omega
+      have hnotneg : ¬ z % ((m.nat : Nat) : Int) < 0 := by omega
+      rw [if_neg hnle, if_neg hhalf, if_neg hnotneg]
+
 /-- Centred residue modulo `p^b`, the `mod^±` operation in the BHKS cut. -/
 @[expose]
 def centeredResiduePow (p b : Nat) (x : Int) : Int :=
