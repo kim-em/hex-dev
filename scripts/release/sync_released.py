@@ -11,9 +11,11 @@ For each repo in scripts/release/released.yml (topological order), this:
      (unless --dry-run, which prints the planned changes and pin rewrites).
 
 A `pins_only` entry (the `leanprover/hex` aggregate) skips steps 2-3 entirely: it
-manages no source from the monorepo, so the sync only re-pins it (steps 4-5) to
-the SHAs published this run. Listed last, after its upstreams, so its pins
-resolve to the freshly-pushed commits.
+manages no library source from the monorepo, so the sync only re-pins it (steps
+4-5) to the SHAs published this run. Listed last, after its upstreams, so its
+pins resolve to the freshly-pushed commits. Its one managed artifact is the
+README, rendered by `aggregate_readme.py` from a template plus the manifest's
+`component:` labels so the published library table cannot fall behind.
 
 Auth (non-dry-run): a token from --token or $RELEASED_SYNC_PAT is used as an
 `x-access-token` basic-auth credential for clone and push. Dry-run clones over
@@ -37,6 +39,12 @@ import tomllib
 from pathlib import Path
 
 import yaml
+
+# Importable both as a script and as scripts.release.sync_released, so the
+# sibling module is reached through the directory rather than the package.
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+
+import aggregate_readme  # noqa: E402
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 MANIFEST = REPO_ROOT / "scripts" / "release" / "released.yml"
@@ -132,6 +140,12 @@ def managed_paths(entry: dict) -> list[tuple[Path, Path, bool]]:
 
 def apply_paths(entry: dict, clone: Path) -> list[str]:
     notes: list[str] = []
+    template = entry.get("readme_template")
+    if template:
+        manifest = yaml.safe_load(MANIFEST.read_text(encoding="utf-8"))
+        rendered = aggregate_readme.render(manifest, REPO_ROOT / template)
+        (clone / "README.md").write_text(rendered, encoding="utf-8")
+        notes.append(f"  {template} + released.yml -> README.md (generated)")
     if entry.get("pins_only"):
         return notes
     lib = entry["lib"]

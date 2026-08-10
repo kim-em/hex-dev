@@ -9,7 +9,7 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-from scripts.release import sync_released
+from scripts.release import aggregate_readme, sync_released
 
 
 class SyncReleasedTests(unittest.TestCase):
@@ -248,6 +248,69 @@ class SyncReleasedTests(unittest.TestCase):
         advanced = json.loads(baseline.read_text(encoding="utf-8"))
         self.assertEqual(advanced["upstream"], "new-upstream")
         self.assertEqual(advanced["downstream"], "new-downstream")
+
+
+class AggregateReadmeTests(unittest.TestCase):
+    """The aggregate README's table is generated, never hand-maintained."""
+
+    MANIFEST = {
+        "repos": [
+            {"repo": "leanprover/hex-matrix", "lib": "HexMatrix",
+             "component": "Matrices"},
+            {"repo": "leanprover/hex-matrix-mathlib", "lib": "HexMatrixMathlib"},
+            {"repo": "leanprover/hex-lll", "lib": "HexLLL",
+             "component": "LLL lattice reduction"},
+            {"repo": "leanprover/hex-test-kit", "lib": "Hex", "aggregate": False},
+            {"repo": "leanprover/hex", "pins_only": True},
+        ],
+    }
+
+    def setUp(self) -> None:
+        self.temporary = tempfile.TemporaryDirectory()
+        self.template = Path(self.temporary.name) / "hex-README.md"
+        self.template.write_text(
+            "# hex\n\n"
+            "<!-- LIBRARIES:BEGIN (generated) -->\n"
+            "| Component | stale | rows |\n"
+            "<!-- LIBRARIES:END -->\n\n"
+            "trailer\n",
+            encoding="utf-8",
+        )
+        self.addCleanup(self.temporary.cleanup)
+
+    def test_rows_cover_computational_libraries_only(self) -> None:
+        rows = [entry["repo"] for entry in aggregate_readme.table_entries(self.MANIFEST)]
+        # the Mathlib companion occupies a column, the test kit is not aggregated,
+        # and the aggregate does not list itself
+        self.assertEqual(rows, ["leanprover/hex-matrix", "leanprover/hex-lll"])
+
+    def test_render_replaces_the_marked_region(self) -> None:
+        text = aggregate_readme.render(self.MANIFEST, self.template)
+        self.assertNotIn("stale", text)
+        self.assertTrue(text.startswith("# hex\n"))
+        self.assertTrue(text.endswith("trailer\n"))
+        self.assertIn(
+            "| Matrices | [HexMatrix](https://github.com/leanprover/hex-matrix) | "
+            "[HexMatrixMathlib](https://github.com/leanprover/hex-matrix-mathlib) |",
+            text,
+        )
+        # a computational library with no Mathlib companion still gets a row
+        self.assertIn(
+            "| LLL lattice reduction | [HexLLL](https://github.com/leanprover/hex-lll) "
+            f"| {aggregate_readme.NO_LAYER} |",
+            text,
+        )
+
+    def test_missing_component_label_is_an_error(self) -> None:
+        manifest = {"repos": [{"repo": "leanprover/hex-matrix", "lib": "HexMatrix"}]}
+        with self.assertRaises(ValueError):
+            aggregate_readme.render(manifest, self.template)
+
+    def test_template_without_markers_is_an_error(self) -> None:
+        bare = Path(self.temporary.name) / "bare.md"
+        bare.write_text("# hex\n", encoding="utf-8")
+        with self.assertRaises(ValueError):
+            aggregate_readme.render(self.MANIFEST, bare)
 
 
 if __name__ == "__main__":
