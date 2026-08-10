@@ -196,7 +196,7 @@ class SyncReleasedTests(unittest.TestCase):
             patch.object(sync_released, "MANIFEST", manifest),
             patch.object(sync_released, "external_pins", return_value={}),
             patch.object(sync_released, "run", return_value="source-sha"),
-            patch.object(sync_released, "writable_check", return_value=None),
+            patch.object(sync_released, "selection_check", return_value=None),
             patch.object(sync_released, "sync_repo", side_effect=publish),
             patch("sys.argv", argv),
         ):
@@ -241,7 +241,7 @@ class SyncReleasedTests(unittest.TestCase):
             patch.object(sync_released, "MANIFEST", manifest),
             patch.object(sync_released, "external_pins", return_value={}),
             patch.object(sync_released, "run", return_value="source-sha"),
-            patch.object(sync_released, "writable_check", return_value=None),
+            patch.object(sync_released, "selection_check", return_value=None),
             patch.object(sync_released, "sync_repo", side_effect=publish),
             patch("sys.argv", argv),
         ):
@@ -259,18 +259,78 @@ class TokenPreflightTests(unittest.TestCase):
     ENTRIES = [{"repo": "leanprover/hex-basic"}, {"repo": "leanprover/hex-arith"}]
 
     def test_writable_repos_pass(self) -> None:
-        with patch.object(sync_released, "writable_check", return_value=None):
+        with patch.object(sync_released, "selection_check", return_value=None):
             self.assertEqual(sync_released.preflight_token(self.ENTRIES, "t"), [])
 
     def test_unlisted_repo_is_reported_with_its_reason(self) -> None:
         def check(repo: str, _token: str) -> str | None:
-            return None if repo.endswith("hex-basic") else "HTTP 404 (not in the token's selected repositories)"
+            return None if repo.endswith("hex-basic") else "not in the token's selected repositories"
 
-        with patch.object(sync_released, "writable_check", side_effect=check):
+        with patch.object(sync_released, "selection_check", side_effect=check):
             blocked = sync_released.preflight_token(self.ENTRIES, "t")
         self.assertEqual(len(blocked), 1)
         self.assertIn("leanprover/hex-arith", blocked[0])
-        self.assertIn("404", blocked[0])
+        self.assertIn("selected repositories", blocked[0])
+
+    def _check(self, responses: list) -> str | None:
+        """Run selection_check with `_api_repo` answering from `responses`,
+        in call order: authenticated first, then the anonymous probe."""
+        with patch.object(sync_released, "_api_repo", side_effect=responses):
+            return sync_released.selection_check("leanprover/hex-arith", "t")
+
+    def test_visible_repo_passes(self) -> None:
+        self.assertIsNone(self._check([{"permissions": {"push": True}}]))
+
+    def test_visible_but_read_only_role_still_passes(self) -> None:
+        # `permissions` reports the *user's* role, not the token's grants, so it
+        # is deliberately not treated as evidence either way.
+        self.assertIsNone(self._check([{"permissions": {"push": False}}]))
+
+    def test_unselected_repo_is_named_as_such(self) -> None:
+        reason = self._check([404, {"name": "hex-arith"}])
+        self.assertIn("not in the token's selected repositories", reason)
+
+    def test_absent_repo_says_create_it(self) -> None:
+        reason = self._check([404, 404])
+        self.assertIn("no such repository", reason)
+
+    def test_rate_limit_is_indeterminate_not_a_missing_repo(self) -> None:
+        for status in (403, 429):
+            with self.subTest(status=status):
+                reason = self._check([status])
+                self.assertIn("could not be checked", reason)
+                self.assertNotIn("no such repository", reason)
+
+    def test_server_error_is_indeterminate(self) -> None:
+        reason = self._check([503])
+        self.assertIn("could not be checked", reason)
+
+    def test_anonymous_probe_failure_does_not_claim_the_repo_is_missing(self) -> None:
+        reason = self._check([404, 429])
+        self.assertIn("undetermined", reason)
+        self.assertNotIn("no such repository", reason)
+
+    def test_network_failure_is_indeterminate(self) -> None:
+        import urllib.error
+        reason = self._check([urllib.error.URLError("dns")])
+        self.assertIn("could not be checked", reason)
+
+    def test_misspelled_only_fails_instead_of_publishing_nothing(self) -> None:
+        manifest = self.repo / "released.yml"
+        manifest.write_text("repos:\n  - repo: leanprover/hex-basic\n", encoding="utf-8")
+        baseline = self.repo / "baseline.json"
+        baseline.write_text(json.dumps({"hex-basic": "old"}), encoding="utf-8")
+        argv = ["sync_released.py", "--token", "secret-token",
+                "--baseline", str(baseline), "--only", "hex-baisc"]
+        with (
+            patch.object(sync_released, "MANIFEST", manifest),
+            patch.object(sync_released, "external_pins", return_value={}),
+            patch.object(sync_released, "run", return_value="source-sha"),
+            patch.object(sync_released, "sync_repo") as publish,
+            patch("sys.argv", argv),
+        ):
+            self.assertEqual(sync_released.main(), 1)
+        publish.assert_not_called()
 
     def test_main_refuses_to_push_when_a_target_is_unwritable(self) -> None:
         manifest = self.repo / "released.yml"
@@ -284,7 +344,7 @@ class TokenPreflightTests(unittest.TestCase):
             patch.object(sync_released, "MANIFEST", manifest),
             patch.object(sync_released, "external_pins", return_value={}),
             patch.object(sync_released, "run", return_value="source-sha"),
-            patch.object(sync_released, "writable_check", return_value="HTTP 404"),
+            patch.object(sync_released, "selection_check", return_value="HTTP 404"),
             patch.object(sync_released, "sync_repo") as publish,
             patch("sys.argv", argv),
         ):
