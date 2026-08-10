@@ -21,7 +21,7 @@ Measured on the corpus. The first five rows are the controlled A/B: two sweeps
 at one revision, `5dabd026`, differing only in whether the width floor admits
 anything. The last row is the published state, and its two numbers come from two
 different records -- the gate-closed side from that same A/B, the integrated side
-from the clean `d27e0bf2` sweep taken after `main` was merged in, which is what
+from the clean `58c873ca` sweep, which is what
 the committed figures read. The Isabelle curve both are measured against is
 carried over unchanged, so the comparison is still like for like, but it is not
 the same-revision experiment the rows above it are.
@@ -33,11 +33,11 @@ the same-revision experiment the rows above it are.
 | `sd7`, `hoeij_S7`, `hoeij_S8`, `sd6_shift1`, `sd6_shift5` | timeout | 31 ms -- 3.98 s |
 | rows solved, of 392 | 377 | 383 |
 | total over rows both solve | 17.225 s | 8.965 s |
-| worst Hex/Isabelle cumulative, ranks 125--140 | 1.012x | **0.707x** |
+| worst Hex/Isabelle cumulative, ranks 125--140 | 1.012x | **0.689x** |
 
 That last line is #9126's success criterion, which is at most 0.85x at every
 rank from 125 through 140. The go/no-go modelled 0.708x; the measurement lands
-within half a percent of it. No row regresses by more than the run-to-run spread
+within 3% of it. No row regresses by more than the run-to-run spread
 on the host, and the worst miss any row is actually offered is 0.014% of its
 factorization.
 
@@ -372,8 +372,11 @@ implementation against them, writing
 
 * Source revision as recorded in each record's `env.git_commit`, Lean toolchain
   `leanprover/lean4:v4.33.0-rc1`.
-* Host `chungus2`, AMD EPYC 9455, Linux x86-64, 96 cores; harness and service
-  pinned to CPU 0 with `taskset -c 0`.
+* Host `chungus2`, AMD EPYC 9455, Linux x86-64, 96 cores. The probe, witnesses,
+  and controlled A/B used CPU 0; the current published sweep used verified-idle
+  CPU 1. The regeneration commands below select one verified-idle core, because
+  the shared host may carry concurrent measurements; record that selected core
+  alongside any new artifacts.
 * Corpus `bench/corpus/hexbz-factor-corpus.jsonl`, 392 rows, SHA-256
   `619913904240834c912489e6cc23ba136e8cc5ebf0ea95f83397e0682387284d`; the
   combined mixture the cactus plots is its 160 `combined` rows.
@@ -387,7 +390,7 @@ implementation against them, writing
 |---|---|
 | `hexbz-quadratic-norm-certificate-chungus2.json` | `b5cc0418072f04faf9c893138ab6dc88e0bb311877f503083893e2f0d1565612` |
 | `hexbz-quadratic-norm-witnesses.json` | `e3008007ebf3e114da025455e1a6d49a8def461524a4a29c441429bd434f4f10` |
-| `hexbz-factor-sweep-d27e0bf2-hex-chungus2.json` | `d9a5b33aa9d18ff35e9fc4390a365520b5c702a649507636dfb19cecdf43b0de` |
+| `hexbz-factor-sweep-58c873ca-hex-chungus2-cpu1.json` | `3c96905dae847e634de7e20934a9074e582ce7d545294471adebf945b6c1efe9` |
 | `hexbz-factor-sweep-5dabd026-hex-chungus2.json` | `1e06a903574a230da312bda3e9f916fc8bc1d637347414ca37d90429bd5ef2f6` |
 | `hexbz-factor-sweep-5dabd026-hex-chungus2-run2.json` | `ababa5b2b439ca3d8af1f20edd892f17d8fbc951d9d4a0166a509abe6758a674` |
 | `hexbz-factor-sweep-5dabd026-hex-gate-closed-chungus2.json` | `73c010724edbf580b81af3a3291107b201e29753e7b6df6153f8c921f916678d` |
@@ -414,10 +417,11 @@ raised past every width the corpus reaches -- the widest row of any kind is
 identically -- so those two record the same revision with the certificate
 switched off. The records carry no binary hash and the exact literal used was
 not recorded, so they do not establish that on their own; they should be read
-against that one-line edit, and anyone retaking them should record the value. `hexbz-factor-sweep-d27e0bf2-hex-chungus2.json` is the
-published sweep: clean tree, integrated, taken after `main` was merged in, and
-what the committed figures and the rank table read. Its `sd5` reads 6.766 ms and
-its `sd6` 27.646 ms, within the run-to-run spread of the pair.
+against that one-line edit, and anyone retaking them should record the value.
+`hexbz-factor-sweep-58c873ca-hex-chungus2-cpu1.json` is the published sweep:
+clean tree, integrated, and measured on verified-idle CPU 1. It is what the
+committed figures and the rank table read. Its `sd5` reads 6.732 ms and its
+`sd6` 27.044 ms, within the run-to-run spread of the pair.
 
 Measuring the two sides of one revision, rather than this branch against `main`,
 is deliberate. Several unrelated performance changes landed on `main` between
@@ -519,27 +523,27 @@ recombination is a two-node walk and the floor of 16 keeps it free.
 Twenty-five declining rows sit at width 16 or above, so the gate offers the
 certificate to all twenty-five. Here are the seventeen the sweep solves, with
 what the attempt costs as a share of the row -- miss costs from the certificate
-probe record, row times from the published `d27e0bf2` sweep:
+probe record, row times from the published `58c873ca` sweep:
 
 | declining row | width | miss | row | share |
 |---|---:|---:|---:|---:|
-| `sd4_x_sd4shift1` | 16 | 0.2 us | 18.401 ms | 0.001% |
-| `wilkinson_16` | 16 | 0.2 us | 1.179 ms | 0.014% |
-| `sd5_x_phi11` | 17 | 0.2 us | 145.056 ms | 0.000% |
-| `sd5_x_phi45` | 18 | 0.2 us | 330.971 ms | 0.000% |
-| `wilkinson_18` | 18 | 0.2 us | 1.688 ms | 0.011% |
-| `xpow48_minus1` | 19 | 0.2 us | 10.490 ms | 0.002% |
-| `wilkinson_20` | 20 | 0.1 us | 2.256 ms | 0.007% |
-| `xpow60_minus1` | 21 | 0.2 us | 5.594 ms | 0.003% |
-| `wilkinson_24` | 24 | 0.2 us | 3.508 ms | 0.004% |
-| `wilkinson_28` | 28 | 0.2 us | 5.390 ms | 0.003% |
-| `wilkinson_32` | 32 | 0.4 us | 6.743 ms | 0.005% |
-| `sd6_x_phi13` | 33 | 0.2 us | 2.956 s | 0.000% |
-| `hoeij_F190` | 38 | 0.3 us | 3.280 s | 0.000% |
-| `xpow120_minus1` | 39 | 0.2 us | 147.497 ms | 0.000% |
-| `wilkinson_40` | 40 | 0.2 us | 9.427 ms | 0.002% |
-| `wilkinson_48` | 48 | 0.2 us | 16.572 ms | 0.001% |
-| `wilkinson_56` | 56 | 0.2 us | 21.523 ms | 0.001% |
+| `sd4_x_sd4shift1` | 16 | 0.2 us | 18.010 ms | 0.001% |
+| `wilkinson_16` | 16 | 0.2 us | 1.150 ms | 0.014% |
+| `sd5_x_phi11` | 17 | 0.2 us | 144.012 ms | 0.000% |
+| `sd5_x_phi45` | 18 | 0.2 us | 328.718 ms | 0.000% |
+| `wilkinson_18` | 18 | 0.2 us | 1.671 ms | 0.011% |
+| `xpow48_minus1` | 19 | 0.2 us | 10.406 ms | 0.002% |
+| `wilkinson_20` | 20 | 0.1 us | 2.217 ms | 0.007% |
+| `xpow60_minus1` | 21 | 0.2 us | 5.550 ms | 0.003% |
+| `wilkinson_24` | 24 | 0.2 us | 3.480 ms | 0.004% |
+| `wilkinson_28` | 28 | 0.2 us | 5.332 ms | 0.003% |
+| `wilkinson_32` | 32 | 0.4 us | 6.693 ms | 0.005% |
+| `sd6_x_phi13` | 33 | 0.2 us | 2.932 s | 0.000% |
+| `hoeij_F190` | 38 | 0.3 us | 3.287 s | 0.000% |
+| `xpow120_minus1` | 39 | 0.2 us | 147.832 ms | 0.000% |
+| `wilkinson_40` | 40 | 0.2 us | 9.431 ms | 0.002% |
+| `wilkinson_48` | 48 | 0.2 us | 16.356 ms | 0.001% |
+| `wilkinson_56` | 56 | 0.2 us | 21.266 ms | 0.001% |
 
 The worst of them pays **0.014%** of its factorization, against the 1% the gate
 was asked for, and the largest miss any of the twenty-five pays is 0.4 us.
@@ -687,7 +691,7 @@ declines and returns nothing, and with the gate open it returns factor degrees
 
 ### Measured effect on the combined cactus
 
-`hexbz-factor-sweep-d27e0bf2-hex-chungus2.json` is the published sweep and what
+`hexbz-factor-sweep-58c873ca-hex-chungus2-cpu1.json` is the published sweep and what
 the 25 committed figures and `scripts/bench/cactus_rank_table.py` read; the
 external comparator curves are carried over unchanged from
 `hexbz-factor-sweep-aa68c920-chungus2.json`.
@@ -698,11 +702,11 @@ On the 160-row combined mixture, Hex solves **145 → 151**, against Isabelle's
 | rank | 125 | 128 | 130 | 133 | 135 | 138 | 140 |
 |---|---:|---:|---:|---:|---:|---:|---:|
 | gate closed | 0.70x | 0.79x | 0.85x | 0.96x | 1.01x | 0.75x | 0.55x |
-| integrated | 0.66x | 0.69x | 0.70x | 0.71x | 0.68x | 0.44x | 0.29x |
+| integrated | 0.63x | 0.66x | 0.68x | 0.69x | 0.66x | 0.43x | 0.28x |
 
-Worst ratio over ranks 125--140: **1.012x with the gate closed, 0.707x
+Worst ratio over ranks 125--140: **1.012x with the gate closed, 0.689x
 integrated**, against #9126's 0.85x criterion. The go/no-go modelled 0.708x from
-the pre-#9171/#9172 elbow; the measurement lands within a fifth of a percent of
+the pre-#9171/#9172 elbow; the measurement lands within 3% of
 it.
 
 The rows #9126 named as also needing parity are untouched: `xpow105_minus1`,
@@ -803,22 +807,26 @@ milliseconds, and that is why it is 16.
 
 ```
 lake build hexbz_factor_service
+BENCH_CORE="$(python3 scripts/bench/idle_core.py)"
 
 # Certificate spans for every corpus row, paired against production where the
 # cascade finishes. Pin to an idle core; other work shares this host.
-taskset -c 0 python3 scripts/bench/quadratic_norm_probe.py \
+taskset -c "$BENCH_CORE" \
+  python3 scripts/bench/quadratic_norm_probe.py \
     --output reports/bench-results/hexbz-quadratic-norm-certificate-chungus2.json
 
 # Off-corpus witnesses, checked against an independent implementation, plus the
 # randomized pass against the production factorizer.
-taskset -c 0 python3 scripts/bench/quadratic_norm_witnesses.py \
+taskset -c "$BENCH_CORE" \
+  python3 scripts/bench/quadratic_norm_witnesses.py \
     --output reports/bench-results/hexbz-quadratic-norm-witnesses.json
 
 # The published sweep, from a clean tree, and the figures it invalidates.
 # `--check` fails until the SVGs are regenerated.
-taskset -c 0 python3 scripts/bench/factor_sweep.py --systems hex-factor \
+taskset -c "$BENCH_CORE" \
+  python3 scripts/bench/factor_sweep.py --systems hex-factor \
     --cutoff 10 \
-    --output reports/bench-results/hexbz-factor-sweep-d27e0bf2-hex-chungus2.json
+    --output reports/bench-results/hexbz-factor-sweep-58c873ca-hex-chungus2-cpu1.json
 python3 scripts/plots/hexbz-cactus.py
 python3 scripts/plots/hexbz-cactus.py --check
 python3 scripts/bench/check_factor_sweep_freshness.py
