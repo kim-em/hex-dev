@@ -561,4 +561,10 @@ error: irreducibility!: the kernel factorizer replay is capped at dense size 13 
 example := irreducibility!
   (Hex.DensePoly.ofCoeffs #[-1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1] : Hex.ZPoly)
 
+noncomputable def cyclo57 :=
+  factor_poly (X^10+2*X^9+3*X^8+4*X^7+5*X^6+5*X^5+5*X^4+4*X^3+3*X^2+2*X+1 : Polynomial ℤ)
+
+example : cyclo57.factors = [1+X+X^2+X^3+X^4, 1+X+X^2+X^3+X^4+X^5+X^6] := by
+  simp [cyclo57, Finset.sum_range_succ]
+
 end HexBerlekampZassenhausMathlib.FactorPolyTests
