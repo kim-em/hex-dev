@@ -175,9 +175,10 @@ shared with other agents throughout, which is why every figure below is a
 within-repeat or within-block paired ratio rather than a difference of pooled
 medians.
 
-The measured "after" binary is `822e8128...`, and rebuilding it after the
-documentation-only follow-up commit reproduced that hash byte for byte, so every
-figure below prices the code as merged.
+The measured "after" binary is `822e8128...`. The follow-up commits on this
+branch change only documentation, and rebuilding the service after each one
+reproduced that hash byte for byte, so every figure below prices the code as
+merged.
 
 ### Per row, counterbalanced
 
