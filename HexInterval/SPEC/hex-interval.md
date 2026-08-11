@@ -1474,6 +1474,111 @@ the fixed source/exponential pair. Key-resolved semantic model selection must
 land before operation packages may be reordered; array position is not a
 permanent package identity.
 
+### Solver-split proof boundary
+
+A prepared `SplitPlan` is not a case split theorem. It proves only that an
+engine-owned offer was selected against the exact scope, program version,
+node version, current fact, and resource envelope. Three independently checked
+objects must remain distinct:
+
+1. the untrusted policy plan, which chooses where and when to split;
+2. a domain-owned coverage theorem for the exact parent fact, cut, and child
+   facts;
+3. one kernel proof of the requested target under each child assumption.
+
+The proof-side interface is polymorphic in both `Fact` and `Cut`. Its essential
+field has the following shape:
+
+```lean
+proveCover :
+  (program : Program) -> (node : NodeId) -> (parent : Fact) -> Cut ->
+    (left right : Fact) ->
+    Option (Evidence (
+      forall valuation, semantics.models program valuation ->
+        semantics.holds program valuation { node, fact := parent } ->
+          semantics.holds program valuation { node, fact := left } \/
+          semantics.holds program valuation { node, fact := right }))
+```
+
+Thus executable child construction is checked a second time by the semantic
+domain package. The current transparent `ProofEmitter.replaySplit` implements
+the generic join. Given a proof of `parent` from the caller's `base`, a proof
+of the target from `{node,left} :: base`, and a proof of the target from
+`{node,right} :: base`, it applies `proveCover` and returns a proof of the
+target from `base`. No policy callback, compiled session, branch score, or
+runtime comparison enters that proof. A Mathlib-free Boolean canary consumes
+both distinct child assumptions and obtains an ordinary theorem through this
+join; swapping the quoted children is rejected.
+
+Coverage is the logical requirement. Disjointness, nonempty children, and a
+strictly interior cut are search-progress requirements: omitting them cannot
+prove a false theorem, but can duplicate work or cause a split loop. The real
+interval adapter should enforce the stronger v1 convention that a dyadic cut
+produces `parent ∩ (-∞,m]` and `parent ∩ (m,+∞)`, preserving a closed boundary
+on exactly one side. Open/closed and unbounded endpoint information therefore
+lives in `Fact`; the generic join does not erase strictness or assume a closed
+interval representation. A future non-real domain may use another `Cut` type
+without changing function packages or the join theorem.
+
+Branch execution needs a provenance-aware root rather than a fresh list of
+unconditional assumptions. At a split point, facts already proved in the
+parent remain parent proofs. Exactly one new child fact is conditional on the
+corresponding case. If a child engine is restarted from the parent's complete
+fact array with the split node narrowed, its version-zero proof table must
+classify every entry as either:
+
+- an inherited parent `FactProof`, lifted into the child context; or
+- the single left or right split assumption.
+
+It must not feed all inherited derived facts to `ProofEmitter.assumed`: that
+would silently promote consequences of the caller's context into new caller
+hypotheses. The existing caller `InitialContext` is consequently not the
+branch-root API. A `BranchSeed` experiment should bind the exact child
+`initialFacts` array to this mixed proof table before chronological replay.
+
+Branches may instantiate different auxiliary expressions. Each child replay
+therefore closes its target back to the program snapshot at the split before
+the two results are joined. The package-owned `Extends` theorem and semantic
+stability law already provide the required direction: extend a split-snapshot
+model into the child program, use the child theorem there, and transport the
+old target back. Nodes, equality edges, payloads, and positive fact versions
+created below one child are scoped to that child and cannot be resolved by its
+sibling. Parent program nodes and proof terms may be shared structurally.
+
+A runtime contradiction flag is also not a closed child. The proof layer needs
+a domain-owned refutation schema which turns an exact established bottom or
+inconsistent-bound fact into `False`; generic elimination can then produce the
+branch target. Until that schema exists, a contradictory child is useful for
+search diagnostics but cannot participate in a completed join. An unexplored,
+fuel-limited, resource-limited, incomplete, or merely saturated child likewise
+does not close the parent target.
+
+The first branch manager should retain a tree whose internal node records the
+validated plan and checked child facts, and whose leaves retain either a target
+proof, a checked contradiction, or an explicit unfinished result. It may emit
+a theorem only when every coverage child is closed. For best-bound mode,
+unfinished leaves contribute their inherited parent fact to the global hull;
+they never inherit a tighter sibling fact. Split depth, total created scopes,
+live leaves, and total branch decisions receive separate limits in addition to
+the per-session engine and payload limits.
+
+Several operational choices deliberately remain experimental:
+
+- restart a child session from a checked snapshot, or add a sealed session-fork
+  operation which preserves reusable work and immutable payload sharing;
+- depth-first execution for small proof memory, best-first execution for early
+  target closure, or a bounded hybrid frontier;
+- store branch-local program suffixes directly, or hash-cons identical
+  instantiations above the scope layer;
+- retain `Dyadic` in real-domain executable plans while keeping the proof
+  schema generic, or replace it with a registry-resolved opaque landmark.
+
+These choices may change performance and certificate size, but not the
+coverage-and-two-proofs contract. Acceptance tests for the branch layer must
+include a useful two-sided closure, one contradiction leaf plus one target
+leaf, a nested split, a child-local instantiation, a sibling-reference attack,
+a non-interior repeated split, and fuel exhaustion with no theorem emitted.
+
 The fixed canary also requires a live session with an exact proof history of one
 instance, one equality, three fact events, and the expected interleaving before
 it reads historical values through `Engine.factAt?`. Those values are quoted
