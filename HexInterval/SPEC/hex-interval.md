@@ -1593,10 +1593,12 @@ Several operational choices deliberately remain experimental:
 
 These choices may change performance and certificate size, but not the
 coverage-and-two-proofs contract. The real exponential canary supplies the
-first two-sided live closure. Remaining acceptance tests include one
-contradiction leaf plus one target leaf, a nested split, a child-local
-instantiation, a sibling-reference attack, a non-interior repeated split, and
-fuel exhaustion with no theorem emitted.
+first two-sided live execution and proof join, but exponential nonnegativity
+is unconditional: neither child target proof currently needs its split
+assumption. Remaining acceptance tests include a useful branch-dependent
+two-sided closure, one contradiction leaf plus one target leaf, a nested split,
+a child-local instantiation, a sibling-reference attack, a non-interior
+repeated split, and fuel exhaustion with no theorem emitted.
 
 ### Generic proof frontend
 
