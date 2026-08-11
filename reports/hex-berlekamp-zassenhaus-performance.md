@@ -7,24 +7,29 @@ diagnostics, not alternative public implementations.
 ## Current measurement
 
 The current Hex record measures clean source revision
-`bf5973a3` with
+`58c873ca` with
 `leanprover/lean4:v4.33.0-rc1`.
 
-Hex was measured on 2026-08-03 and the external systems on 2026-08-01 on
+Hex was measured on 2026-08-10 and the external systems on 2026-08-01 on
 `chungus2`, an AMD EPYC 9455 Linux x86-64 host. The harness and service were
-pinned to CPU 70 for the Hex record and to CPU 0 for the external one; the two
-are checked interchangeable in
-[hexbz-support-traversal.md](hexbz-support-traversal.md). The committed
+pinned to verified-idle CPU 1 for Hex and CPU 0 for the external record. New
+measurements must use `scripts/bench/idle_core.py`, because other work shares
+the host, and must record the selected core alongside the artifact. The CPU
+0/70 control in [hexbz-support-traversal.md](hexbz-support-traversal.md) checks
+that an idle core is interchangeable with CPU 0 on this host. The committed
 392-row corpus has SHA-256
 `619913904240834c912489e6cc23ba136e8cc5ebf0ea95f83397e0682387284d`.
 Services were persistent and warmed. Each call had a ten-second cutoff; rows
 below one second used the median of five calls, and slower rows used one call.
-Early termination was disabled.
+The external record attempted every row. The Hex record stops a monotonic
+family after three consecutive timeouts; this skipped only `hoeij_F630`, whose
+recorded timeout is unchanged by the shortcut.
 
 The current artifacts are:
 
-- `reports/bench-results/hexbz-factor-sweep-bf5973a3-hex-chungus2-run5.json`
-  for Hex, the newest of five committed repeats at that revision;
+- `reports/bench-results/hexbz-factor-sweep-58c873ca-hex-chungus2-cpu1.json`
+  for Hex, SHA-256
+  `3c96905dae847e634de7e20934a9074e582ce7d545294471adebf945b6c1efe9`;
 - `reports/bench-results/hexbz-factor-sweep-aa68c920-chungus2.json`
   for FLINT, NTL, PARI, and both Isabelle implementations, SHA-256
   `4de27e389d738abc1e878f0be273485c3723216211a101c3eba55860e7b8a242`.
@@ -41,7 +46,7 @@ ratios and curves use the fresh same-protocol 2.17.2 measurement above.
 
 | System | Answered | Timed out | Median | p90 | Slowest answer |
 |---|---:|---:|---:|---:|---:|
-| Hex public factorization | 377 | 15 | 379.833 us | 7.204 ms | 8.210 s |
+| Hex public factorization | 383 | 9 | 273.175 us | 6.693 ms | 3.972 s |
 | FLINT 0.9.0 | 391 | 1 | 60.089 us | 1.139 ms | 1.241 s |
 | PARI/GP 2.17.2 | 391 | 1 | 65.687 us | 1.008 ms | 960.815 ms |
 | NTL 11.6.0 | 391 | 1 | 88.160 us | 2.365 ms | 1.305 s |
@@ -52,14 +57,14 @@ Every answering system agreed with the committed factor-degree oracle or with
 the other systems on rows without one.
 
 For paired comparisons, both measurements must exceed ten times their own
-protocol overhead. On 218 eligible common rows, Hex divided by verified
-Isabelle BZ has median `0.732x`, p10-p90 `0.476x-2.552x`, and a 146-72 win
-split. Hex therefore has a useful aggregate lead over verified Isabelle BZ,
-but not a uniform one.
+protocol overhead. On 189 eligible common rows, Hex divided by verified
+Isabelle BZ has median `0.506x`, p10-p90 `0.316x-1.525x`, and a 153-36 win
+split. Hex therefore has a substantial aggregate lead over verified Isabelle
+BZ, though individual rows still go both ways.
 
 The optimized unverified libraries remain substantially faster. Median Hex
-ratios are `10.517x` against FLINT, `10.778x` against PARI, and `5.511x`
-against NTL on 75, 80, and 141 eligible pairs respectively.
+ratios are `6.493x` against FLINT, `6.316x` against PARI, and `3.020x`
+against NTL on 80, 86, and 142 eligible pairs respectively.
 
 ## Effect of the divisibility obstruction
 
@@ -90,8 +95,10 @@ The head-forced recombination leaf now runs its metadata-only filters before
 it materializes anything, and the lift modulus and per-factor degree and
 trailing coefficient are precomputed once per subset-cardinality level. The
 Swinnerton-Dyer family moves from 0.684x to 0.850x against the preceding
-record, and its median against verified Isabelle BZ improves from `2.799x` to
-`2.116x`. No other family moves more than 3%.
+record, and at that revision its median against verified Isabelle BZ improved
+from `2.799x` to `2.116x`. The quadratic-norm certificate has since taken the
+current median to `0.611x`, as tabulated below. No other family moved more than
+3% in the support-traversal comparison.
 [hexbz-support-traversal.md](hexbz-support-traversal.md) is the measurement
 record.
 
@@ -109,71 +116,60 @@ These rules contain no family or benchmark names. They retain repeated cheap
 progress on Wilkinson inputs and avoid speculative lattice work on inputs such
 as `sd6` where the cheap search found nothing.
 
-Against the preceding clean public record, 99 common rows above one
-millisecond have median new/old `1.017x` and p10-p90
-`0.992x-1.043x`; 19 are faster and 80 slower. Every family median lies between
-`0.991x` and `1.035x`. This final comparison includes the intervening Lean 4.33
-toolchain and core-library update; it shows a small broad slowdown rather than
-an optimization-only effect, while coverage improves by one.
+The current record solves `hoeij_F190` in 3.287 seconds after peeling a
+degree-10 factor and partitioning the degree-180 residual into two degree-90
+pieces. It solves `sd6` in 27.044 milliseconds after the no-progress proposal
+skips its futile selected-coordinate lattice. Under the declared repetition
+policy F190 uses one timed call, while `sd6` is the median of five.
 
-Two hard rows make the benefit concrete:
-
-- `hoeij_F190` is newly solved in 6.862 seconds after peeling a degree-10
-  factor and partitioning the degree-180 residual into two degree-90 pieces;
-- `sd6` answers in 8.367 seconds because a no-progress proposal now skips its
-  futile selected-coordinate lattice. It had sat at or beyond the cutoff
-  during the intermediate design.
-
-Representative Wilkinson timings remain smooth: 4.098 ms at degree 24,
-15.679 ms at degree 40, and 39.740 ms at degree 56. They are within about seven
-percent of the preceding clean record, so the data supports absence of a new
-threshold regression, not a Wilkinson speedup claim.
-
-Both hard-row successes exceed one second and therefore use one timed call under
-the declared repetition policy. F190 consumed 69% and `sd6` 84% of the ten-second
-cutoff. They establish current coverage, but should be rechecked after future
-factorization changes rather than treated as low-variance timing estimates.
+Current representative Wilkinson timings are 3.480 ms at degree 24, 9.431 ms
+at degree 40, and 21.266 ms at degree 56. These values and the hard-row values
+are coverage snapshots, not a new optimization A/B.
 
 ## Relative to verified Isabelle BZ
 
 | Family | Eligible pairs | Median Hex / Isabelle | Hex wins |
 |---|---:|---:|---:|
-| Chebyshev | 9 | 0.467x | 9 |
-| Conway | 87 | 0.707x | 50 |
-| Cyclotomic | 24 | 1.085x | 11 |
-| Cyclotomic products | 18 | 1.044x | 9 |
-| Laguerre | 13 | 0.773x | 13 |
-| Legendre | 13 | 0.575x | 12 |
-| Random products | 25 | 0.584x | 24 |
-| Swinnerton-Dyer products | 7 | 0.766x | 4 |
-| Swinnerton-Dyer | 6 | 2.116x | 3 |
-| Wilkinson | 12 | 1.403x | 0 |
+| Chebyshev | 7 | 0.388x | 7 |
+| Conway | 70 | 0.453x | 51 |
+| Cyclotomic | 23 | 0.462x | 19 |
+| Cyclotomic products | 18 | 0.601x | 16 |
+| Laguerre | 11 | 0.601x | 11 |
+| Legendre | 12 | 0.503x | 11 |
+| Random products | 23 | 0.452x | 22 |
+| Swinnerton-Dyer products | 7 | 0.651x | 5 |
+| Swinnerton-Dyer | 6 | 0.611x | 6 |
+| Wilkinson | 12 | 1.106x | 5 |
 
 There is no common answered Hoeij-Zimmermann row with verified Isabelle BZ.
-Hex is strong on Chebyshev, Legendre, random products, and Laguerre. Plain
-Swinnerton-Dyer and Wilkinson remain the clearest verified-comparator gaps.
+The certificate turns Swinnerton-Dyer from the largest family-level gap into a
+lead on all six eligible pairs. Wilkinson is now the only family in this table
+whose median remains slower than verified Isabelle BZ.
 
 ## Remaining long tail
 
-The 16 Hex timeouts are `cyclo_phi1031`; `sd7`, `sd6_shift1`, and
-`sd6_shift5`; `sd5_x_sd5shift1`, `sd6_x_sd6shift1`, `sd6_x_phi13`, and
-`sd6_x_phi105`; and eight Hoeij-Zimmermann rows: `hoeij_P7`, `hoeij_F192`,
-`hoeij_F256`, `hoeij_F351`, `hoeij_F630`, `hoeij_S7`, `hoeij_S8`, and
-`hoeij_S9`.
+The nine Hex timeouts are three Swinnerton-Dyer products:
+`sd5_x_sd5shift1`, `sd6_x_phi105`, and `sd6_x_sd6shift1` -- and six
+Hoeij-Zimmermann rows: `hoeij_F192`, `hoeij_F256`, `hoeij_F351`,
+`hoeij_F630`, `hoeij_P7`, and `hoeij_S9`.
 
-The most promising next general optimization is to reuse all cached
-other-prime degree-reachability bitsets inside classical recombination. The
-planner already computes them, but the candidate iterator currently filters
-only by the selected prime and target degree. Before implementation, record
-per-level leaves, cross-prime degree survivors, constructed candidates, exact
-divisions, and wall time; after implementation, require lower survivors and
-candidate construction without a coverage loss or a material median
-regression on the full corpus.
+The remaining open recombination work is deliberately measurement-gated.
+Issues #9151 and #9152 propose reusing the lift modulus, support data, and target
+image at their mathematical lifetimes; #9153 then asks whether the retained
+other-prime degree-reachability bitsets reject enough leaves to pay for a
+production filter. Their motivating profiles predate the quadratic-norm
+certificate, so the current rows that actually reach recombination must be
+remeasured before any of the three changes production.
 
 ## Where the mid-tail time goes
 
-[`hexbz-cactus-elbow.md`](hexbz-cactus-elbow.md) is the phase-attributed
-record for the solved-rank 125-140 region where verified Isabelle BZ overtakes
-Hex on the combined cactus. It carries the per-phase table, the counterfactual
-prime plans, exact ranks 118-144 in both the cumulative and paired readings,
-and the symbolized sampling profiles.
+[`hexbz-cactus-elbow.md`](hexbz-cactus-elbow.md) preserves the phase-attributed
+record of the former solved-rank 125-140 crossover. The quadratic-norm
+certificate removes it: on the current 160-row combined mixture Hex solves 151
+rows against Isabelle BZ's 141, and the worst cumulative Hex/Isabelle ratio
+over ranks 125-140 is `0.689x` at rank 133, below the `0.85x` acceptance bound
+at every rank in that window. The cumulative times from which that ratio is
+computed are reproduced by `python3 scripts/bench/cactus_rank_table.py --lo
+125 --hi 140`; full
+before/after attribution is in
+[`hexbz-quadratic-norm-certificate.md`](hexbz-quadratic-norm-certificate.md).

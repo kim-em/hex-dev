@@ -59,7 +59,7 @@ theorem nodeAt {before after : Program}
   rw [Program.node?, step.nodeAt node.index within]
   exact found
 
-/-- Node-local meanings admit one uniform append-only stability law. -/
+/-- Node-local meanings satisfy one uniform append-only stability law. -/
 def stableLaw (models : Array (Model Value))
     (Contains : Fact → Value → Prop) :
     StableLaw (semantics models Contains) :=
@@ -76,6 +76,6 @@ def stableLaw (models : Array (Model Value))
       · intro oldValue newValue fact within _ _ agreement
         change Contains fact.fact (oldValue fact.node) ↔
           Contains fact.fact (newValue fact.node)
-        rw [agreement] }
+        rw [agreement fact.node within] }
 
 end Hex.Interval.Experiment.OperationSemantics

@@ -1225,8 +1225,10 @@ scheduler structure without appending a node.
 Chronological replay also needs the opposite, prefix-facing semantic
 direction. For each append-only program step, the semantics adapter supplies
 that a model of the enlarged program is a model of the old prefix and that a
-fact on an old node has the same meaning in old and new models whenever those
-models assign that node the same value. This is separate from, and
+fact on an old node has the same meaning in old and new models whenever their
+valuations agree on the complete old program. Whole-prefix agreement is
+required because `Semantics.holds` may inspect values at old nodes other than
+the node carrying the fact. This is separate from, and
 complementary to, the package theorem that every old model can be extended.
 The checker uses these laws to lift all previously proved fact versions into
 the enlarged program. It then seeds every genuinely new node at version zero
@@ -1405,14 +1407,16 @@ multi-domain adapter must choose and validate a tagged universal value or a
 domain-indexed valuation rather than pretending heterogeneous values have one
 untyped representation.
 
-The fixed canary also requires a live session with an exact proof history of one
-instance, one equality, three fact events, and the expected interleaving before
-it reads historical values through `Engine.factAt?`. Those values are quoted
-as data, while their proofs come from caller assumptions, top soundness, or an
-earlier emitted replay result. A future arbitrary-trace emitter must likewise
-obtain evidence from its chronological proof table; a successful full-history
-lookup is never evidence that the dependency was available at the required
-earlier step.
+The fixed canary also requires a live session with no dropped work and an exact
+proof history of one instance, one equality, three fact events, and the
+expected interleaving before it reads historical values through
+`Engine.factAt?`. This exact trace-shape gate is not a claim that
+`Session.complete` holds. The values are quoted as data, while their proofs
+come from caller assumptions, top soundness, or an earlier emitted replay
+result. A future arbitrary-trace emitter must likewise obtain evidence from
+its chronological proof table; a successful full-history lookup is never
+evidence that the dependency was available at the required earlier step.
+
 The quotation walker consumes arbitrary `HistoryEvent` lists, requires
 sequential role-local indices, and rejects omitted or duplicated fact or
 instance records through final exhaustion. Proof emission then folds the
