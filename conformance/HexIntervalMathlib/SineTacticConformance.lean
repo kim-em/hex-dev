@@ -72,6 +72,13 @@ private def liveQuotes? : Option LiveQuotes :=
   | none => none
   | some session => do
       let engine := session.state.engine
+      if !session.live || session.droppedWork ||
+          engine.instanceHistory.size != 1 || engine.equalities.size != 1 ||
+          engine.history.size != 3 ||
+          engine.chronology != #[.instance 0, .fact 0, .fact 1, .fact 2] then
+        none
+      else
+        pure ()
       let instanceEvent <- engine.instanceHistory[0]?
       let instanceEntry <- session.arena.entry? instanceEvent.payload .instance
       let sineEvent <- engine.history[0]?
@@ -277,11 +284,23 @@ private meta def checkQuote (label : String) (actual expected : Expr) : MetaM Un
   unless <- isDefEq actual expected do
     throwError "interval_sine: reified {label} does not match its checked proof step"
 
-/-- Reify the planner's returned data and bind it to the proof-side literals.
-This comparison is a liveness/fidelity gate, not evidence for the theorem. -/
-private meta def checkLiveQuote : MetaM Unit := do
-  let some quote := liveQuotes?
-    | throwError "interval_sine: compiled interval search failed"
+private meta def checkSchema (table : SchemaTable) (label : String)
+    (entry : Entry) (expected : Name) : MetaM Unit := do
+  let some declaration := table.find? entry.replayKey
+    | throwError "interval_sine: no proof schema for {label}"
+  unless declaration == expected do
+    throwError "interval_sine: wrong proof schema selected for {label}"
+  discard <| getConstInfo declaration
+
+private meta def checkQuoteData (quote : LiveQuotes) : MetaM Unit := do
+  let some table := emitTable?
+    | throwError "interval_sine: duplicate proof-schema address"
+  checkSchema table "instantiation" quote.instantiation.entry
+    ``oddnessInstanceSchema
+  checkSchema table "sine rule" quote.sine.entry ``sineFactSchema
+  checkSchema table "negation rule" quote.negation.entry ``negationFactSchema
+  checkSchema table "equality transport" quote.transport.entry
+    ``oddnessEqualitySchema
   checkQuote "instantiation" (← instanceQuoteExpr quote.instantiation)
     (mkConst ``instanceQuote)
   checkQuote "sine rule" (← ruleStepExpr quote.sine) (mkConst ``sineStep)
@@ -290,10 +309,16 @@ private meta def checkLiveQuote : MetaM Unit := do
   checkQuote "equality transport" (← transportStepExpr quote.transport)
     (mkConst ``transportStep)
 
+/-- Reify the planner's returned data and bind it to the proof-side literals.
+This comparison is a liveness/fidelity gate, not evidence for the theorem. -/
+private meta def checkLiveQuote : MetaM Unit := do
+  let some quote := liveQuotes?
+    | throwError "interval_sine: compiled interval search failed"
+  checkQuoteData quote
+
 /-- Find two local hypotheses accepted by the emitted sine theorem and build
 an application whose inferred target is definitionally the caller's goal. -/
 private meta def proveSine (target : Expr) : MetaM Expr := do
-  checkLiveQuote
   let context <- getLCtx
   for first in context do
     unless first.isImplementationDetail do
@@ -304,6 +329,7 @@ private meta def proveSine (target : Expr) : MetaM Expr := do
             let proof <- mkAppM ``emittedSineTheorem
               #[mkFVar first.fvarId, mkFVar second.fvarId]
             if <- isDefEq (← inferType proof) target then
+              checkLiveQuote
               return (← instantiateMVars proof)
             saved.restore
           catch _ => saved.restore
@@ -329,6 +355,17 @@ example {x : ℝ} (upper : x ≤ 1) (lower : 0 ≤ x) : Real.sin (-x) ≤ 0 := b
 
 example {x : ℝ} (_upper : x ≤ 1) (_lower : 0 ≤ x) : True := by
   fail_if_success interval_sine
+  trivial
+
+set_option linter.unusedTactic false in
+example : True := by
+  run_tac
+    let some quote := liveQuotes?
+      | throwError "interval_sine test: compiled search failed"
+    let malformed : LiveQuotes :=
+      { quote with sine := { quote.sine with payload := { index := 99 } } }
+    if (← observing? (checkQuoteData malformed)).isSome then
+      throwError "interval_sine test: malformed quote was accepted"
   trivial
 
 end Hex.IntervalMathlib.SineTacticConformance
