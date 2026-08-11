@@ -95,16 +95,22 @@ def previousSound :
       intro _ _ _
       exact Or.inl rfl }
 
+def baseEvidence :
+    Evidence
+      (functionSemantics.Entails extendedProgram base
+        { node := node 0, fact := 0 }) :=
+  ProofEmitter.assumed (by simp [base])
+
+def inputEvidence :
+    ProofEmitter.EntailsList functionSemantics extendedProgram base
+      quotedStep.assumptions :=
+  .cons baseEvidence .nil
+
 def assumptionsSound :
     Evidence
       (InputsSound functionSemantics extendedProgram base
         quotedStep.assumptions) :=
-  { proof := by
-      intro input member
-      simp only [quotedStep, base, List.mem_singleton] at member
-      subst input
-      intro _ _ baseHolds
-      exact baseHolds _ (by simp [base]) }
+  inputEvidence.sound
 
 def rankFacts : FactDomainSchema functionSemantics :=
   { top := fun _ => 0
@@ -133,13 +139,20 @@ def rankFacts : FactDomainSchema functionSemantics :=
       else
         none }
 
+def generatedTop :
+    Evidence
+      (functionSemantics.Entails extendedProgram base
+        { node := node 3, fact := 0 }) :=
+  ProofEmitter.topFact rankFacts extendedProgram base (node 3) sinInstruction
+    (by rfl)
+
 def replayed :
     Option
       (Evidence
         (functionSemantics.Entails extendedProgram base
           { node := quotedStep.event.node, fact := quotedStep.event.fact })) :=
   ProofEmitter.replayRule factSchema rankFacts checkerInput extendedProgram
-    functionPrefix base quotedStep previousSound assumptionsSound
+    functionPrefix base quotedStep generatedTop assumptionsSound
 
 /-- A malicious emitter cannot make an unauthorized write acceptable by
 changing both copies of the frozen action.  This isolates the generic write
