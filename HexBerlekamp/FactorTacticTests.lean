@@ -20,7 +20,6 @@ open Hex
 namespace HexBerlekamp.FactorTacticTests
 
 local instance boundsFive : ZMod64.Bounds 5 := ⟨by decide, by decide⟩
-local instance boundsTwo : ZMod64.Bounds 2 := ⟨by decide, by decide⟩
 
 def z (n : Nat) : ZMod64 5 := ZMod64.ofNat 5 n
 

@@ -139,7 +139,7 @@ open Hex Hex.GFqField
 
 namespace HexGFqFieldChapterExample
 
-private instance : ZMod64.Bounds 5 :=
+local instance boundsFive : ZMod64.Bounds 5 :=
   ⟨by decide, by decide⟩
 
 private theorem prime_five : Hex.Nat.Prime 5 := by

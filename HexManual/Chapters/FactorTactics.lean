@@ -128,6 +128,8 @@ Over a prime field, the result has the analogous
 ```lean
 open Hex
 
+local instance boundsFive : ZMod64.Bounds 5 := ⟨by decide, by decide⟩
+
 def fp : FpPoly 5 := #p[4, 0, 1]
 
 def fpFactors : FpPoly.Factored fp :=

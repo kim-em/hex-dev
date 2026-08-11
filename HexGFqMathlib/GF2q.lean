@@ -19,7 +19,6 @@ namespace GF2q
 
 variable {n : Nat} [h : Conway.PackedGF2Entry n]
 
-instance boundsTwo : ZMod64.Bounds 2 := ⟨by decide, by decide⟩
 
 private theorem cast_symm_cast {α β : Type u} (h : α = β) (x : α) :
     cast h.symm (cast h x) = x := by

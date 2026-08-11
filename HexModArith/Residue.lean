@@ -44,6 +44,26 @@ residue fit in a `UInt64`. Derived from the `p < 2^31` bound. -/
 theorem Bounds.pLtWord (p : Nat) [Bounds p] : p < UInt64.word :=
   Nat.lt_trans (Bounds.pLtR (p := p)) (by decide)
 
+/-- The canonical `Bounds 2`, for the whole project.
+
+`Bounds` has no general instance: the two conditions are decidable for a
+literal, but instance search cannot run `decide` on the goal, so every modulus
+needs its own witness. `p = 2` is wanted almost everywhere (`GF(2)`, the
+`FpPoly 2` pow-chain checkers, the Conway table), and it used to be re-declared
+in each place: six public copies across five files, in `HexBerlekamp`,
+`HexConway`, `HexGF2Mathlib` (three) and `HexGFqMathlib`. Any module importing
+several saw that many equal-priority candidates, and further copies in test and
+guard modules were captured into emitted proof terms, producing errors naming
+constants nobody had written.
+
+Declaring it here, alongside the class, gives every consumer one candidate
+reachable by the import they already have. A module needing some other modulus
+should use `local instance`, or a `private theorem` plus
+`attribute [local instance]` to keep the name unexported too. Never
+`private instance`: that leaves the instance visible to search in importing
+modules while making its name unreferenceable there. -/
+instance boundsTwo : Bounds 2 := ⟨by decide, by decide⟩
+
 end ZMod64
 
 /-- Residues mod `p` stored in a single machine word, with a proof of reduction. -/
