@@ -1713,9 +1713,17 @@ coverage-and-two-proofs contract. The real exponential canary supplies the
 first two-sided live execution and proof join, but exponential nonnegativity
 is unconditional: neither child target proof currently needs its split
 assumption. The mixed target/refutation join does consume the two incompatible
-output assumptions, but useful non-contradictory branch-dependent reasoning
-remains a separate acceptance test. Remaining acceptance tests include that
-useful two-sided closure, a nested split, a child-local instantiation, a
+output assumptions. A separate conformance-local max-zero/ReLU package now
+supplies the first useful non-contradictory branch-dependent vertical. Its
+nonnegative rule proves `max x 0 = x` only from the left split fact; its strict
+negative rule proves `max x 0 = 0` only from the right split fact. Both child
+sessions retain one ordinary rule event with the exact side fact as an input,
+the unchanged generic frontend replays them, and `replaySplit` produces the
+ordinary theorem `0 ≤ max x 0`. Each rule rejects the unsplit top fact, and
+mutating either quote to use its sibling's assumption makes emission fail.
+The package remains a compact conformance fixture while we decide which parts
+belong in the Mathlib-free runtime and Mathlib semantic companion. Remaining
+acceptance tests include a nested split, a child-local instantiation, a
 sibling-reference attack, a non-interior repeated split, and fuel exhaustion
 with no theorem emitted.
 
