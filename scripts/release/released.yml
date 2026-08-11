@@ -431,6 +431,7 @@ repos:
     announcements:
       blog: https://kim-em.github.io/blog/2026-7-7-lattice-basis-reduction-using-the-hex-lean-library/
       zulip: https://leanprover.zulipchat.com/#narrow/channel/579630-Project-announcements/topic/Hex%3A.20a.20computational.20algebra.20library/near/608173688
+      linkedin: https://www.linkedin.com/posts/kim-morrison-219962b_lattice-basis-reduction-using-the-hex-lean-share-7480672935360266241-WF7o/
     lib: HexLLL
     executables: {hexlll_external_reduction: HexLLL.ExternalReduction}
     umbrella: true
@@ -458,6 +459,7 @@ repos:
     announcements:
       blog: https://kim-em.github.io/blog/2026-8-10-certified-integer-polynomial-factorization-in-lean/
       zulip: https://leanprover.zulipchat.com/#narrow/channel/579630-Project-announcements/topic/Hex%3A.20integer.20polynomial.20factorization/near/615747356
+      linkedin: https://www.linkedin.com/feed/update/urn:li:activity:7492744920349192193
     lib: HexBerlekampZassenhaus
     test_modules: [HexBerlekampZassenhaus.FactorTacticTests]
     build_modules: [HexBerlekampZassenhaus.All]

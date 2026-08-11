@@ -27,8 +27,7 @@ README.md` and nothing else.
 
 ## Next step
 
-LinkedIn URLs for both libraries are not recorded yet; the field is
-optional, so they drop in as a one-line manifest edit each.
+Nothing outstanding. All three venues are recorded for both libraries.
 
 ## Blockers
 
