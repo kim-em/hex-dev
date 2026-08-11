@@ -237,9 +237,8 @@ def transportPrevious :
     Evidence
       (semantics.Entails extendedProgram baseFacts
         { node := node 2, fact := transportStep.previous }) := by
-  simpa [transportStep, rangeSchema] using
-    (ProofEmitter.topFact rangeSchema extendedProgram baseFacts (node 2)
-      sineNegatedSourceInstruction (by rfl))
+  apply ProofEmitter.assumed
+  simp [transportStep, baseFacts]
 
 def transportReplay :=
   ProofEmitter.replayTransport oddnessEqualitySchema rangeSchema laws checkerInput
