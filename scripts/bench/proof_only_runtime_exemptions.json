@@ -58,5 +58,11 @@
     "baseline_blob": "4063e15934a89c671ac72d201fa60c2ef6feaf59",
     "current_blob": "ac61dae5d09d966186661b1b85943b9fe0d91128",
     "reason": "Names the four ZMod64.Bounds test fixtures and marks them private, so instance search cannot capture them into terms emitted in other modules. Test-module fixtures only; no factorizer definition and nothing in the benchmarked executable graph changes."
+  },
+  {
+    "path": "HexBerlekamp/Irreducibility.lean",
+    "baseline_blob": "ebc42b9f71233e1c470ac885c43fd012bd9116db",
+    "current_blob": "d3abc2673a4968020241b5891630a42086637bd3",
+    "reason": "Renames the public ZMod64.Bounds 2 proof instance without changing its body, priority, scope or declaration position. Elaboration may now refer to the new declaration name, but Bounds is a Prop and its instance arguments are erased, so generated factorization code and runtime behaviour are unchanged."
   }
 ]
