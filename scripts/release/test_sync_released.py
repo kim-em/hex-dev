@@ -380,6 +380,9 @@ class AggregateReadmeTests(unittest.TestCase):
             "<!-- LIBRARIES:BEGIN (generated) -->\n"
             "| Component | stale | rows |\n"
             "<!-- LIBRARIES:END -->\n\n"
+            "<!-- ANNOUNCEMENTS:BEGIN (generated) -->\n"
+            "- stale announcement\n"
+            "<!-- ANNOUNCEMENTS:END -->\n\n"
             "trailer\n",
             encoding="utf-8",
         )
@@ -407,6 +410,38 @@ class AggregateReadmeTests(unittest.TestCase):
             f"| {aggregate_readme.NO_LAYER} |",
             text,
         )
+
+    def test_announcements_render_per_library(self) -> None:
+        manifest = {"repos": [
+            {"repo": "leanprover/hex-lll", "lib": "HexLLL",
+             "component": "LLL lattice reduction",
+             "announcements": {"zulip": "https://z.example/t",
+                               "blog": "https://b.example/p"}},
+            {"repo": "leanprover/hex-matrix", "lib": "HexMatrix",
+             "component": "Matrices"},
+            {"repo": "leanprover/hex", "pins_only": True},
+        ]}
+        rendered = aggregate_readme.render_announcements(manifest)
+        # venue order is fixed by VENUES, not by the manifest's key order
+        self.assertEqual(
+            rendered,
+            "- LLL lattice reduction ([HexLLL](https://github.com/leanprover/hex-lll)): "
+            "[blog post](https://b.example/p), [Zulip](https://z.example/t)")
+        # a library with no announcements contributes no line
+        self.assertNotIn("Matrices", rendered)
+
+    def test_announcement_region_is_replaced(self) -> None:
+        text = aggregate_readme.render(self.MANIFEST, self.template)
+        self.assertNotIn("stale announcement", text)
+        self.assertTrue(text.endswith("trailer\n"))
+
+    def test_template_without_announcement_markers_is_an_error(self) -> None:
+        partial = Path(self.temporary.name) / "partial.md"
+        partial.write_text(
+            "# hex\n<!-- LIBRARIES:BEGIN -->\n<!-- LIBRARIES:END -->\n",
+            encoding="utf-8")
+        with self.assertRaises(ValueError):
+            aggregate_readme.render(self.MANIFEST, partial)
 
     def test_missing_component_label_is_an_error(self) -> None:
         manifest = {"repos": [{"repo": "leanprover/hex-matrix", "lib": "HexMatrix"}]}

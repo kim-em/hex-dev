@@ -20,6 +20,10 @@ HERE = Path(__file__).resolve().parent
 TEMPLATE = HERE / "hex-README.md"
 BEGIN = "<!-- LIBRARIES:BEGIN"
 END = "<!-- LIBRARIES:END -->"
+ANNOUNCE_BEGIN = "<!-- ANNOUNCEMENTS:BEGIN"
+ANNOUNCE_END = "<!-- ANNOUNCEMENTS:END -->"
+# Rendered in this order, whichever of them a library has.
+VENUES = (("blog", "blog post"), ("zulip", "Zulip"), ("linkedin", "LinkedIn"))
 NO_LAYER = "n/a"
 # Replaces the template's own editor note in the published file: the released
 # repo's reader needs to know the file is generated and where to edit it, not
@@ -81,17 +85,42 @@ def render_table(manifest: dict) -> str:
     return "\n".join(rows)
 
 
+def render_announcements(manifest: dict) -> str:
+    """Where each library was announced, one line per library that has any.
+
+    Kept out of the table: only a couple of libraries are ever announced, and a
+    column would be empty for almost every row.
+    """
+    lines = []
+    for entry in table_entries(manifest):
+        announcements = entry.get("announcements") or {}
+        links = [f"[{label}]({announcements[key]})"
+                 for key, label in VENUES if announcements.get(key)]
+        if links:
+            lines.append(f"- {entry['component']} ({_link(entry)}): "
+                         + ", ".join(links))
+    return "\n".join(lines)
+
+
+def _splice(text: str, begin: str, end: str, body: str, what: str) -> str:
+    """Replace the region between two markers, keeping the marker lines."""
+    start, stop = text.find(begin), text.find(end)
+    if start < 0 or stop < 0 or stop < start:
+        raise ValueError(f"template is missing its {what} markers")
+    return text[:text.index("\n", start) + 1] + body + "\n" + text[stop:]
+
+
 def render(manifest: dict, template: Path = TEMPLATE) -> str:
     """The full README text for the aggregate."""
     text = template.read_text(encoding="utf-8")
     if text.startswith("<!--"):
         text = NOTICE + text[text.index("-->\n") + len("-->\n"):]
-    start = text.find(BEGIN)
-    end = text.find(END)
-    if start < 0 or end < 0 or end < start:
-        raise ValueError(f"{template} is missing its LIBRARIES markers")
-    head = text[:text.index("\n", start) + 1]
-    return head + render_table(manifest) + "\n" + text[end:]
+    try:
+        text = _splice(text, BEGIN, END, render_table(manifest), "LIBRARIES")
+        return _splice(text, ANNOUNCE_BEGIN, ANNOUNCE_END,
+                       render_announcements(manifest), "ANNOUNCEMENTS")
+    except ValueError as exc:
+        raise ValueError(f"{template}: {exc}") from None
 
 
 if __name__ == "__main__":

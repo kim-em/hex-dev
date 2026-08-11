@@ -67,6 +67,12 @@ edit, provided its manifest entry carries a `component:` label naming the row
 manifest. `*-mathlib` companions take no label; they appear in the row of the
 computational library they bridge.
 
+A library that has been announced somewhere carries an `announcements:` map
+from venue (`blog`, `zulip`, `linkedin`) to https URL, and those render as an
+Announcements section below the table, one line per library. That keeps the
+table clean: only a couple of libraries are ever announced, so a fourth column
+would be empty for almost every row.
+
 The five required headings above do not apply to the aggregate: it documents
 the collection, not a library.
 
