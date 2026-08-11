@@ -2958,8 +2958,10 @@ inductive OfferKey
       (reason : SplitReason)
 
 structure PolicyFeature where
-  key   : Nat
-  value : Int
+  providerFamily  : Nat
+  providerVersion : Nat
+  key             : Nat
+  value           : Int
 
 structure ObservationSummary where
   outcome      : Nat
@@ -3410,6 +3412,40 @@ distance, mathematical function, or package key. It tests the upgradeable
 feedback seam before domain-specific potential features are admitted through an
 equally bounded interface.
 
+The first executable package-feature experiment supplies that interface
+without adding fact or function cases to the scheduler. Independently
+registered companion providers have a numeric family and compatibility
+version. A stateless provider receives one exact immutable policy snapshot and
+one engine-owned offer, and returns provider-local signed integer features; an
+empty result means that provider contributes nothing for the offer. The
+decorator attaches the provider identity to every local key. Package order,
+offer order, and local
+feature order determine one stable output order, while duplicate provider
+identities and duplicate local keys are rejected.
+
+The complete provider/offer cross product is preflight-counted before callbacks
+run.
+Independent limits bound provider count, provider checks, features from one
+provider for one offer, features attached to one offer, total features, local
+keys, and absolute feature values. Decoration is transactional: an oversized
+or duplicate result yields no partially featured view. The resulting object
+retains each complete original `OfferView`; a policy can only return that base
+offer through the existing selection path. Thus an inaccurate or stale feature
+can change scheduling and therefore which trace is generated, but it cannot
+authorize a transition, enter proof evidence, bypass replay, or weaken replay
+validation.
+
+This is deliberately a companion registry rather than a field added to every
+runtime package. It lets experiments compare interval-width, goal-distance,
+and split-potential vocabularies before fixing their keys or formulas. A
+production consolidation should assemble the feature companions alongside the
+runtime packages and expose the program structure needed for dependency-slice
+features. The callback is pure and accepted decorated output is bounded, but
+the current experiment cannot preempt excessive computation or candidate-array
+allocation inside a callback. Production providers therefore need either a
+restricted bounded builder or an auditable
+declared-work protocol in addition to these output bounds.
+
 A live Mathlib-free arbitrary-function canary presents two exponential
 forward contractors and one source split rule in the same frontier. The policy
 selects both fact improvements, then invokes the split probe, then returns its
@@ -3417,7 +3453,8 @@ split plan; it contains no reference to any of those rule keys. This establishes
 the replaceable staging seam. It does not yet claim that fixed stage order is
 the best policy, nor does it implement width- or goal-sensitive scoring.
 
-The prototype computes a goal-directed potential rather than summing raw widths.
+The planned scoring experiment computes a goal-directed potential rather than
+summing raw widths.
 Nodes on the backwards dependency slice from the desired comparison or current
 contradiction receive greater weight. A node's uncertainty records:
 
