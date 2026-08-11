@@ -2955,6 +2955,20 @@ runs, actual fact-version changes, no-change and inapplicable outcomes,
 extensions, failures, dismissals, and rejected selections. These counters are
 diagnostic inputs for later scoring, not evidence.
 
+The first feedback-guided variant keeps the same function- and
+representation-independent stages but records observations per complete
+engine invocation or equality key. Its bounded integer score rewards actual
+installed fact-version changes relative to deterministic arithmetic, traversal,
+proof-node, or equality-narrowing work. Untried work receives an optimism bonus,
+and repeated `noChange` observations subtract a configurable penalty. Because
+the complete input versions remain part of an invocation key, newly woken work
+is sampled afresh instead of inheriting a stale fixed-point result. An explicit
+age tier eventually selects continuously eligible work independently of its
+learned score; stable offer order remains the last tie-break. This policy still
+does not interpret interval width, target distance, mathematical function, or
+package key. It tests the upgradeable feedback seam before domain-specific
+potential features are admitted through an equally bounded interface.
+
 A live Mathlib-free arbitrary-function canary presents two exponential
 forward contractors and one source split rule in the same frontier. The policy
 selects both fact improvements, then invokes the split probe, then returns its
