@@ -1313,25 +1313,32 @@ if the quote or schema is wrong, elaboration fails. The assigned term consumes
 the actual returned quote and reified final program. Its checked literal event
 chain is a separate field-for-field regression and cheap goal-shape probe.
 
-This is a complete direct proof assembler for the fixed real-sine graph, not
-yet the general tactic. Its elaborator walks the arbitrary quoted event list
-and maintains an exact `(node, version)` evidence table. Rule and transport
-steps obtain their previous facts and ordered dependencies from this table,
-select their package schemas solely by replay address, and insert their proved
-result versions. The same fold accepts instantiation events at arbitrary
-chronology positions. It reconstructs each intermediate graph as the exact
-prefix of the reified final program, carries the independently established
-program version, transports the complete evidence table across stability, and
-then seeds the new-node suffix. A second zero-node instance can therefore
-advance the version after the sine and negation rules while preserving the
-negation evidence needed by a later equality transport. Reordering negation
-before the sine result it consumes, or claiming the wrong program version,
-fails before replay. This event fold contains no sine, negation, or other
-function case. It seeds caller facts by checked position in the exact
-base-assumption list; named sine-specific previous-fact proofs are absent from
-the tactic term. The next frontend experiment must derive the base program,
-semantic bridge, and final target for an arbitrary caller expression instead
-of naming this canary's fixed contexts.
+`Frontend` now performs function-independent quotation of any engine history
+into instance, rule, and transport records, with exact role-local ordering and
+history exhaustion. `ProofFrontend` is the reusable direct proof assembler.
+It walks an arbitrary quoted event list and maintains an exact
+`(node, version)` evidence table. Rule and transport steps obtain their
+previous facts and ordered dependencies from this table, select their package
+schemas solely by replay address, and insert their proved result versions.
+The same fold accepts instantiation events at arbitrary chronology positions.
+It reconstructs each intermediate graph as the exact prefix of the reified
+final program, carries the independently established program version,
+transports the complete evidence table across stability, and then seeds the
+new-node suffix. A second zero-node instance can therefore advance the version
+after the sine and negation rules while preserving the negation evidence needed
+by a later equality transport. Reordering negation before the sine result it
+consumes, or claiming a wrong rule or transport program version, fails before
+replay.
+
+The fold is polymorphic in the fact type and contains no sine, negation, or
+other function case. Its `Context` receives the semantics/domain laws,
+prefix-stability theorem, caller program and facts, and a plain-data encoder;
+packages remain responsible for their replay schemas. The real-sine tactic is
+now a client of this module rather than the owner of the fold. It still names
+the canary's fixed base graph, semantic bridge, and final target. The next
+frontend experiment must derive those three pieces from an arbitrary caller
+expression and validate the same API with a second mathematical function
+package.
 The fixed canary also requires a live session with an exact proof history of one
 instance, one equality, three fact events, and the expected interleaving before
 it reads historical values through `Engine.factAt?`. Those values are quoted
