@@ -165,6 +165,16 @@ def instanceReplay :=
     extendedProgram (ProgramPrefix.refl baseProgram) programPrefix (by rfl)
     instanceQuote (extendRefl semantics baseProgram)
 
+def malformedInstance : InstanceQuote :=
+  { instanceQuote with payload := payload 99 }
+
+def rejectedInstance :=
+  ProofEmitter.replayInstance oddnessInstanceSchema checkerInput 0 baseProgram
+    extendedProgram (ProgramPrefix.refl baseProgram) programPrefix (by rfl)
+    malformedInstance (extendRefl semantics baseProgram)
+
+#guard rejectedInstance.isNone
+
 def emittedExtension : Evidence (semantics.Extends baseProgram extendedProgram) :=
   instanceReplay.get (by rfl)
 
@@ -213,6 +223,18 @@ def transportReplay :=
     1 extendedProgram programPrefix baseFacts transportStep
     (previousAll (node 2)) emittedNegation noInputs
 
+def malformedTransport : TransportStep Range :=
+  { transportStep with payload := payload 99 }
+
+def rejectedTransport :=
+  ProofEmitter.replayTransport oddnessEqualitySchema rangeSchema laws checkerInput
+    1 extendedProgram programPrefix baseFacts malformedTransport
+    (by simpa [malformedTransport, transportStep] using previousAll (node 2))
+    (by simpa [malformedTransport, transportStep] using emittedNegation)
+    (by simpa [malformedTransport, transportStep] using noInputs)
+
+#guard rejectedTransport.isNone
+
 def emittedTransport :
     Evidence
       (semantics.Entails extendedProgram baseFacts
@@ -246,11 +268,16 @@ def quotesMatchSearch : Bool :=
       | some actualInstance, some actualEdge, some actualSine,
           some actualNegation, some actualTransport, some actualInstanceEntry,
           some actualEqualityEntry, some actualSineEntry, some actualNegationEntry =>
-          actualInstance.origin == instanceEvent.origin &&
+          actualInstance.programVersion == instanceEvent.programVersion &&
+            actualInstance.origin == instanceEvent.origin &&
             actualInstance.family == instanceEvent.family &&
             actualInstance.substitution == instanceEvent.substitution &&
             actualInstance.products == instanceEvent.products &&
             actualInstance.newNodes == instanceEvent.newNodes &&
+            actualInstance.bindings == instanceEvent.bindings &&
+            actualInstance.newBindings == instanceEvent.newBindings &&
+            actualInstance.applications == instanceEvent.applications &&
+            actualInstance.newApplications == instanceEvent.newApplications &&
             actualInstance.generation == instanceEvent.generation &&
             actualInstance.equalities == instanceEvent.equalities &&
             actualInstance.newEqualities == instanceEvent.newEqualities &&

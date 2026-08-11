@@ -1289,9 +1289,11 @@ equality transport, and caller-target closure. Runtime `#guard`s remain useful
 mutation tests, but never satisfy the theorem-production gate by themselves.
 The transparent `ProofEmitter` implements the direct-emission route for
 quoted instance, rule-fact, and equality-transport events. It checks each full
-replay address, frozen origin and payload link, the relevant program/version
-links, ordered inputs, and write authority, then composes package theorems
-with the generic extension, meet, transport, and closure lemmas. The real-sine
+replay address plus its frozen origin and payload link. Instance replay checks
+the version step and exact appended-node suffix; rule replay checks ordered
+fact inputs and write authority; transport checks ordered equality assumptions
+and endpoint orientation. The transitions then compose package theorems with
+the generic extension, meet, transport, and closure lemmas. The real-sine
 conformance quotes all four live events and proves each successful replay by
 ordinary `rfl`; the resulting dependent proof chain yields the caller's
 ordinary `Real.sin` theorem. The opaque engine is used only in a separate
