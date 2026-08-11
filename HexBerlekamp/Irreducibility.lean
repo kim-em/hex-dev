@@ -22,13 +22,6 @@ namespace Hex
 
 namespace Berlekamp
 
-/-- `Bounds 2` for the `FpPoly 2`-specialized pow-chain witness checkers below.
-Previously this was supplied implicitly by a private instance in
-`HexPolyFp.SquareFree` that leaked through typeclass resolution under the
-pre-module import semantics; the module system hides private instances, so the
-`p = 2` checkers declare it in this module. -/
-instance boundsTwo : ZMod64.Bounds 2 := ⟨by decide, by decide⟩
-
 variable {p : Nat} [ZMod64.Bounds p]
 
 /-- `X^(p^k) - X` reduced modulo `f`. -/

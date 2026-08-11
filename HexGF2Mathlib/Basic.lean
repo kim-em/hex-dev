@@ -89,7 +89,6 @@ end RingEquiv
 
 namespace GF2Poly
 
-instance boundsTwo : Hex.ZMod64.Bounds 2 := ⟨by decide, by decide⟩
 
 private theorem bit_eq_one_eq_testBit (x i : Nat) :
     (x >>> i % 2 == 1) = x.testBit i := by

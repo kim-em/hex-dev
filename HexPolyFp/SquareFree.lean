@@ -247,7 +247,8 @@ theorem squareFreeDecomposition_pairwise_coprime (hp : Hex.Nat.Prime p) (f : FpP
       (fun a b => (normalizeMonic (DensePoly.gcd a.factor b.factor)).2 = 1) :=
   squareFree_pairwise_coprime hp f
 
-private instance squareFreeGuardBoundsFive : ZMod64.Bounds 5 := ⟨by decide, by decide⟩
+private theorem squareFreeGuardBoundsFive : ZMod64.Bounds 5 := ⟨by decide, by decide⟩
+attribute [local instance] squareFreeGuardBoundsFive
 
 private theorem prime_five_squareFree_guard : Hex.Nat.Prime 5 := by
   constructor
@@ -286,8 +287,6 @@ private def coeffNatsSquareFreeGuard (f : FpPoly 5) : List Nat :=
   let d := squareFreeDecomposition prime_five_squareFree_guard f
   coeffNatsSquareFreeGuard (weightedProduct d.factors) ==
     coeffNatsSquareFreeGuard f
-
-private instance squareFreeGuardBoundsTwo : ZMod64.Bounds 2 := ⟨by decide, by decide⟩
 
 private theorem prime_two_squareFree_guard : Hex.Nat.Prime 2 := by
   constructor

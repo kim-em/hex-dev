@@ -1245,6 +1245,37 @@ restructure around the reported line first; it is usually a cheap `omega` or
   `omega` and defeq checks whnf that term — avoid binding the matrix; write it
   out or `clear_value` only when the value is genuinely unneeded downstream.
 
+## `private instance` does not hide an instance; `local instance` does
+
+Instance search in an importing module still finds a `private instance` from
+an imported module, but the emitted term cannot legally name it. When the
+`factor_poly` / `irreducibility` elaborators pick one up, the result is
+
+```
+Unknown constant `_private.HexPolyFp.SquareFree.0.Hex.FpPoly.squareFreeGuardBoundsTwo`
+Note: A private declaration ... exists but would need to be public to access here.
+```
+
+in whatever module invoked the tactic, which is nowhere near the declaration.
+This has bitten twice: once from a test module's anonymous instances, and once
+from `HexPolyFp.SquareFree`'s `private` guards, the latter masked for a while
+because a public duplicate happened to be declared later and win.
+
+So, for a `ZMod64.Bounds` witness at a concrete modulus:
+
+- `local instance` if only this file needs it. This is the default. Note it
+  scopes the *attribute*, not the name: the declaration stays referenceable.
+  To hide both, write `private theorem foo : ...` followed by
+  `attribute [local instance] foo`.
+- a plain public `instance` if downstream modules genuinely need it, and only
+  where no other module already provides one. `Hex.ZMod64.boundsTwo` in
+  `HexModArith/Residue.lean` is the canonical `Bounds 2`; do not re-declare it.
+- never `private instance`: it keeps the hazard and only hides the name.
+
+`Bounds p` is a `Prop`, so duplicate witnesses are never a coherence problem;
+they are an ambiguity and diagnosability problem, which is why one canonical
+public witness plus `local` everywhere else is the shape to aim for.
+
 ## Verifying executable-layer changes: build the module, not the target
 
 `lake build HexBerlekampZassenhaus` (the whole target) drags in

@@ -124,5 +124,29 @@
     "baseline_blob": "80f9ea2b180066079f41d912b8f9137074a8676a",
     "current_blob": "23dc012088d8513f1d8c1748c5367c9a33f4120c",
     "reason": "Adds the DirectPrimeProbe.Trial proposition and the retained-probe theorems, and rederives directPrimePlan?_selected_p_le_500 from the all-probes version. Trial is Prop-valued and nothing on the ZPoly.factorize path mentions it; no executable definition changes."
+  },
+  {
+    "path": "HexBerlekamp/FactorTacticTests.lean",
+    "baseline_blob": "4063e15934a89c671ac72d201fa60c2ef6feaf59",
+    "current_blob": "84ee69d7ff6520879b20dbf8644b0e27b8c4b3e5",
+    "reason": "Removes a test module's now-redundant local Bounds 2 fixture. Test module only; nothing in the benchmarked executable graph changes."
+  },
+  {
+    "path": "HexBerlekamp/Irreducibility.lean",
+    "baseline_blob": "ebc42b9f71233e1c470ac885c43fd012bd9116db",
+    "current_blob": "377a37b6fdfb7c94f3a18a455edfbb5f50829b6a",
+    "reason": "Removes the duplicate ZMod64.Bounds 2 instance, now supplied canonically by HexModArith. Bounds proofs are erased before code generation and the elaborators do not branch on the witness expression, so the benchmarked executable is unchanged."
+  },
+  {
+    "path": "HexModArith/Residue.lean",
+    "baseline_blob": "c1e80e762e66f1ff6000217dd09ac9b746ecccd9",
+    "current_blob": "91a08cda3853a3dd24432e2124fc24e48a189484",
+    "reason": "Adds the canonical ZMod64.Bounds 2 instance beside the class. Bounds proofs are erased before code generation, and the factorization and irreducibility elaborators transport the witness through types and constructor applications without branching on its identity, so which witness is selected cannot reach the benchmarked executable."
+  },
+  {
+    "path": "HexPolyFp/SquareFree.lean",
+    "baseline_blob": "9bf2c14fba5223b110dbe95f1b8834fd15294c3c",
+    "current_blob": "f2fc2e74288a630fc49490e9bea3602e8e165ebb",
+    "reason": "Scopes the square-free guard witnesses so importing modules stop selecting an instance they cannot legally name: the Bounds 2 guard is dropped in favour of the canonical instance, and the Bounds 5 guard becomes a private theorem with a local instance attribute. Definitions, their bodies and their declaration positions are unchanged, Bounds proofs are erased before code generation, and the elaborators do not branch on the witness expression."
   }
 ]
