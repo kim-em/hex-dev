@@ -278,4 +278,51 @@ def swappedSplit :=
 
 #guard swappedSplit.isNone
 
+def branchInitial : Array SplitFact := #[.yes, .all, .all]
+
+def inheritedSplitFact (observed : NodeId) (different : observed ≠ splitNode)
+    (fact : SplitFact) (found : branchInitial[observed.index]? = some fact) :
+    Evidence
+      (splitSemantics.Entails program [] { node := observed, fact }) :=
+  { proof := by
+      intro _ _ _
+      cases observed with
+      | mk index =>
+          cases index with
+          | zero => simp [splitNode, node] at different
+          | succ index =>
+              cases index with
+              | zero =>
+                  simp [branchInitial] at found
+                  subst fact
+                  trivial
+              | succ index =>
+                  cases index with
+                  | zero =>
+                      simp [branchInitial] at found
+                      subst fact
+                      trivial
+                  | succ index => simp [branchInitial] at found }
+
+def branchSeed :
+    ProofEmitter.BranchSeed splitSemantics program []
+      { node := splitNode, fact := .yes } branchInitial :=
+  ProofEmitter.BranchSeed.make { node := splitNode, fact := .yes } branchInitial
+    (by rfl) (by rfl) inheritedSplitFact
+
+/-- The split node is proved from the new child assumption. -/
+example :
+    splitSemantics.Entails program
+      [{ node := splitNode, fact := .yes }]
+      { node := splitNode, fact := .yes } :=
+  (branchSeed.sound splitNode .yes (by rfl)).proof
+
+/-- An unchanged version-zero fact is inherited as a parent consequence under
+the larger child context. -/
+example :
+    splitSemantics.Entails program
+      [{ node := splitNode, fact := .yes }]
+      { node := node 1, fact := .all } :=
+  (branchSeed.sound (node 1) .all (by rfl)).proof
+
 end Hex.Interval.ProofEmitterConformance
