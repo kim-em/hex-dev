@@ -1298,10 +1298,8 @@ and endpoint orientation. The transitions then compose package theorems with
 the generic extension, meet, transport, and closure lemmas. The real-sine
 conformance quotes all four live events and proves each successful replay by
 ordinary `rfl`; the resulting dependent proof chain yields the caller's
-ordinary `Real.sin` theorem. The opaque engine is used only in a separate
-field-for-field quotation regression. A transparent generic fold over an
-arbitrary quoted chronology remains an alternative to measure, not a
-prerequisite for this tactic-emitted-application architecture.
+ordinary `Real.sin` theorem. The opaque engine supplies plain event data to
+the elaborator but is absent from the emitted theorem.
 The first elaborator canary runs the opaque real-sine planner, searches the
 returned state for the instance, two rule facts, equality edge, payload
 entries, and versioned input facts, and reifies all four proof steps as
@@ -1315,29 +1313,39 @@ field-for-field correspondence regression, a cheap goal-shape probe, and the
 source of the canary's fixed typed premise helpers.
 
 This is a complete direct proof assembler for the fixed real-sine graph, not
-yet the general tactic: the next frontend experiment must derive the base
-program, semantic bridge, event sequence, and versioned evidence map for an
-arbitrary caller expression instead of naming this canary's four contexts.
+yet the general tactic. Its elaborator walks the arbitrary quoted event list
+and maintains an exact `(node, version)` evidence table. Rule and transport
+steps obtain their previous facts and ordered dependencies from this table,
+select their package schemas solely by replay address, and insert their proved
+result versions. The fold carries the program version established by the
+instance event rather than trusting each later fact event's claimed version.
+Reordering negation before the sine result it consumes, or mutating a
+transport to a different program version, fails before replay. This event fold
+contains no sine, negation, or other function case. The next frontend
+experiment must derive the base program, semantic bridge, initial evidence
+table, and final target for an arbitrary caller expression instead of naming
+this canary's fixed contexts.
 The fixed canary also requires a live session with no dropped work and an exact
 proof history of one instance, one equality, three fact events, and the
 expected interleaving before it reads historical values through
-`Engine.factAt?`. This exact trace-shape
-gate is not a claim that `Session.complete` holds. The values are quoted as
+`Engine.factAt?`. This exact trace-shape gate is not a claim that
+`Session.complete` holds. The values are quoted as
 data, while their proofs come from caller assumptions, top soundness, or an
 earlier emitted replay result. A future arbitrary-trace emitter must likewise
 obtain evidence from its chronological proof table; a successful full-history
 lookup is never evidence that the dependency was available at the required
 earlier step.
-The quotation walker itself consumes arbitrary `HistoryEvent` lists, requires
+The quotation walker consumes arbitrary `HistoryEvent` lists, requires
 sequential role-local indices, and rejects omitted or duplicated fact or
-instance records through final exhaustion. The sine assembler then pattern
-matches the resulting four event shapes. General proof emission should loop
-over this list while updating program and evidence state, rather than adding
-more fixed patterns.
+instance records through final exhaustion. Proof emission then folds the
+resulting fact events through its evidence state. The present fold permits one
+leading instance event; supporting later or repeated instantiations requires
+updating the checked program and seeding each new node at the corresponding
+chronology position.
 
 A general direct emitter maintains a table from each already-established fact
-version to its `Evidence` term; the fixed sine assembler realizes the same
-discipline with four local evidence terms. Caller assumptions seed that table
+version to its `Evidence` term; the real-sine assembler now exercises this
+table directly. Caller assumptions seed that table
 through the generic `ProofEmitter.assumed` lemma; generated nodes at version
 zero use `ProofEmitter.topFact`, tied to an exact checked node lookup and the
 fact-domain schema's top theorem. For a rule or conditional equality,
