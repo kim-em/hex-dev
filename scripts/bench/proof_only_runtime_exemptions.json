@@ -106,5 +106,11 @@
     "baseline_blob": "3e184b73696f5afa8fd6fa440e81a3aab420f90e",
     "current_blob": "309a5897c91c93d01c60fb99e7c03b14fe828b2a",
     "reason": "Additionally registers the generic interval goal-closure proof bridge only; the factorization service target and executable dependency graph are unchanged."
+  },
+  {
+    "path": "lakefile.lean",
+    "baseline_blob": "3e184b73696f5afa8fd6fa440e81a3aab420f90e",
+    "current_blob": "295130f832508241ebef51a4eff0acd0317f6dc0",
+    "reason": "Additionally registers the Mathlib-free interval target-run driver only; the factorization service target and executable dependency graph are unchanged."
   }
 ]
