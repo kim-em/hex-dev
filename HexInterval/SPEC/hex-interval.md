@@ -1191,6 +1191,23 @@ transition cannot inspect a future event or the engine's final mutable fact
 slots. The arbitrary-function contractor event exercises this composition
 against the actual policy-session history.
 
+The exact interval companion now exercises this boundary with an operation
+whose real meaning is supplied entirely by its package:
+`f(x) = 1/4 - (x - 1/2)^2`. The runtime registry sees only opaque operation and
+rule keys. From the exact closed input interval `[0,1]`, the package's forward
+contractor proposes `[0,1/4]`; a package-owned transparent schema proves that
+proposal from the exact singleton input list, and the generic rule replayer
+intersects it with the previous whole-line fact. No arithmetic rule or
+function case is added to the engine or proof frontend. The live session's
+one retained fact event is compared with the quoted action and arena entry,
+and quoted replay produces the ordinary real theorem
+`0 ≤ x → x ≤ 1 → 0 ≤ f(x) ∧ f(x) ≤ 1/4`. Replacing the quoted `[0,1]`
+assumption by the whole line is rejected, so the function theorem's premise is
+load-bearing rather than decorative. This is the minimal arbitrary-function
+vertical against the exact interval domain; richer packages may add backward
+contractors, retries, instantiators, and split suggestions without changing
+the generic transition.
+
 The prefix resolver returns an exact fact together with its theorem for a
 requested `(node, version)`, and builds the rule's ordered input list by
 traversing the immutable `Action.inputs`. The rule transition consumes this
