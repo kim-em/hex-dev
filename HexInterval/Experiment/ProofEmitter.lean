@@ -152,6 +152,44 @@ def assumedAt {Fact : Type} {semantics : Semantics Fact} (program : Program)
     Evidence (semantics.Entails program base fact) :=
   assumed (memOfGet? base index fact found)
 
+/-- The node of a caller fact selected by `assumedAt` is within the current
+program whenever the complete base list is. -/
+theorem factWithinAt {Fact : Type} (program : Program)
+    (base : List (NodeFact Fact)) (within : FactsWithin program base)
+    (index : Nat) (fact : NodeFact Fact) (found : base[index]? = some fact) :
+    fact.node.index < program.nodes.size :=
+  within fact (memOfGet? base index fact found)
+
+/-- A successful exact node lookup proves the corresponding size bound. -/
+theorem nodeWithin (program : Program) (node : NodeId) (instruction : Node)
+    (found : program.node? node = some instruction) :
+    node.index < program.nodes.size := by
+  by_cases within : node.index < program.nodes.size
+  · exact within
+  · simp [Program.node?, within] at found
+
+/-- Old node membership remains valid across an append-only prefix. -/
+theorem liftNode {before after : Program} (step : ProgramPrefix before after)
+    {node : NodeId} (within : node.index < before.nodes.size) :
+    node.index < after.nodes.size :=
+  Nat.lt_of_lt_of_le within step.nodeSize
+
+/-- A complete base context remains within every append-only program. -/
+theorem liftFacts {Fact : Type} {before after : Program}
+    (step : ProgramPrefix before after) {facts : List (NodeFact Fact)}
+    (within : FactsWithin before facts) : FactsWithin after facts :=
+  fun fact member => liftNode step (within fact member)
+
+/-- Transport one table entry to an enlarged program. -/
+def liftFact {Fact : Type} {semantics : Semantics Fact}
+    {before after : Program} {base : List (NodeFact Fact)}
+    {fact : NodeFact Fact} (step : StableStep semantics before after)
+    (baseWithin : FactsWithin before base)
+    (sound : Evidence (semantics.Entails before base fact))
+    (factWithin : fact.node.index < before.nodes.size) :
+    Evidence (semantics.Entails after base fact) :=
+  liftEntails step baseWithin factWithin sound
+
 /-- Prove the domain's top fact for any exactly checked node.  The chronology
 emitter uses this theorem to seed generated nodes at version zero; that
 generated/version condition belongs to its evidence-table discipline, not to

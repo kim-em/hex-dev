@@ -1248,9 +1248,13 @@ central case split over function keys. The transparent
 the exact prefix of the retained final node array selected by
 `event.newNodes`, keeps the operation table fixed, and obtains stability from
 one semantics-wide prefix-locality law. It covers both ordinary node appends and
-zero-node version-only instances. Integrating this arm into `TraceReplay` and
-comparing it with package-dispatched reconstruction remains experimental.
-Neither arm may introduce a central enumeration of functions.
+zero-node version-only instances. The direct proof emitter now uses this arm
+at every quoted instantiation event: it replays the owning package's
+conservative-extension theorem, lifts every retained fact proof through the
+semantics-wide stability law, and seeds exactly the event's fresh nodes with
+top. Integrating the same arm into runtime `TraceReplay` and comparing it with
+package-dispatched reconstruction remains experimental. Neither arm may
+introduce a central enumeration of functions.
 
 The private chronological cursor is indexed by its exact program version and
 program value. Its instance transition requires the originating action to
@@ -1316,28 +1320,32 @@ yet the general tactic. Its elaborator walks the arbitrary quoted event list
 and maintains an exact `(node, version)` evidence table. Rule and transport
 steps obtain their previous facts and ordered dependencies from this table,
 select their package schemas solely by replay address, and insert their proved
-result versions. The fold carries the program version established by the
-instance event rather than trusting each later fact event's claimed version.
-Reordering negation before the sine result it consumes, or mutating a
-transport to a different program version, fails before replay. This event fold
-contains no sine, negation, or other function case. It seeds caller facts by
-checked position in the emitter's declared base-assumption list; the caller
-hypotheses supplied to final closure discharge that same list. This direct
-emitter does not yet construct the `InitialContext` witness that relates the
-declared list position-for-position to `CheckerInput.initialFacts`. The
-complete `TraceReplay` checker already constructs its `initialBase`
-position-for-position from `CheckerInput.initialFacts`; separately,
+result versions. The same fold accepts instantiation events at arbitrary
+chronology positions. It reconstructs each intermediate graph as the exact
+prefix of the reified final program, carries the independently established
+program version, transports the complete evidence table across stability, and
+then seeds the new-node suffix. A second zero-node instance can therefore
+advance the version after the sine and negation rules while preserving the
+negation evidence needed by a later equality transport. Reordering negation
+before the sine result it consumes, or claiming the wrong program version,
+fails before replay. This event fold contains no sine, negation, or other
+function case. It seeds caller facts by checked position in the emitter's
+declared base-assumption list; the caller hypotheses supplied to final closure
+discharge that same list. This direct emitter does not yet construct the
+`InitialContext` witness that relates the declared list position-for-position
+to `CheckerInput.initialFacts`. The complete `TraceReplay` checker already
+constructs its `initialBase` position-for-position from
+`CheckerInput.initialFacts`; separately,
 `ChronologicalReplay.Cursor.startInput` consumes `InitialContext` for cursor
 replay. The later generic frontend must carry the corresponding binding into
 direct emission. The current replay applications and final closure remain
 indexed by the exact `CheckerInput.baseProgram` and target. The emitter also
-seeds the instance event's fresh nodes with domain top after checking their
+seeds each instance event's fresh nodes with domain top after checking their
 lookup in the reified final program; named sine-specific previous-fact proofs
 are absent from the tactic term. The next frontend experiment must derive the
 base program, declared base-assumption list and its caller-input binding,
-semantic bridge, and final target for an arbitrary caller expression, and
-reconstruct intermediate programs for later or repeated instantiations,
-instead of naming this canary's fixed contexts.
+semantic bridge, and final target for an arbitrary caller expression instead
+of naming this canary's fixed contexts.
 
 The fixed canary also requires a live session with no dropped work and an exact
 proof history of one instance, one equality, three fact events, and the
@@ -1345,16 +1353,17 @@ expected interleaving before it reads historical values through
 `Engine.factAt?`. This exact trace-shape gate is not a claim that
 `Session.complete` holds. The values are quoted as data, while their proofs
 come from caller assumptions, top soundness, or an earlier emitted replay
-result. A future arbitrary-trace emitter must likewise
-obtain evidence from its chronological proof table; a successful full-history
+result. A future arbitrary-trace emitter must likewise obtain evidence from
+its chronological proof table; a successful full-history
 lookup is never evidence that the dependency was available at the required
 earlier step.
+
 The quotation walker consumes arbitrary `HistoryEvent` lists, requires
 sequential role-local indices, and rejects omitted or duplicated fact or
 instance records through final exhaustion. Proof emission then folds the
-resulting fact events through its evidence state. The present fold permits one
-leading instance event; supporting later or repeated instantiations requires
-updating the checked program and seeding each new node at the corresponding
+resulting fact and instance events through its dependent program/evidence
+state. Repeated and zero-node instantiations update the checked program,
+version, prefix, extension theorem, fact bounds, and fact proofs at the exact
 chronology position.
 
 A general direct emitter maintains a table from each already-established fact
