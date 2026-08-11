@@ -290,6 +290,29 @@ def sameEntry (left right : Entry) : Bool :=
   left.origin == right.origin && left.role == right.role &&
     left.schema == right.schema && left.body == right.body
 
+def sameFactCause {Fact : Type} [BEq Fact]
+    (left right : FactCause Fact) : Bool :=
+  match left, right with
+  | .rule leftAction leftProposed leftPayload,
+      .rule rightAction rightProposed rightPayload =>
+      leftAction == rightAction && leftProposed == rightProposed &&
+        leftPayload == rightPayload
+  | .transport leftEquality leftSource, .transport rightEquality rightSource =>
+      leftEquality == rightEquality && leftSource == rightSource
+  | _, _ => false
+
+def sameFactEvent {Fact : Type} [BEq Fact]
+    (left right : FactEvent Fact) : Bool :=
+  left.programVersion == right.programVersion && left.node == right.node &&
+    left.previous == right.previous && left.fact == right.fact &&
+    left.version == right.version && sameFactCause left.cause right.cause
+
+def mutatedTransportEvent : FactEvent Range :=
+  { transportStep.event with
+    cause := .transport { index := 0 } { node := node 3, version := 1 } }
+
+#guard !sameFactEvent transportStep.event mutatedTransportEvent
+
 /-- The literals agree field-for-field with the actual opaque search result.
 This checks quotation fidelity only; `emittedTarget` does not depend on it. -/
 def quotesMatchSearch : Bool :=
@@ -329,32 +352,9 @@ def quotesMatchSearch : Bool :=
             sameEntry actualEqualityEntry equalityEntry &&
             sameEntry actualSineEntry sineEntry &&
             sameEntry actualNegationEntry negationEntry &&
-            match actualSine.cause, actualNegation.cause, actualTransport.cause with
-            | .rule action proposed payloadId,
-                .rule negation proposedNegation negationPayload,
-                .transport equality source =>
-                actualSine.programVersion == sineStep.event.programVersion &&
-                  actualSine.node == sineStep.event.node &&
-                  actualSine.previous == sineStep.event.previous &&
-                  actualSine.fact == sineStep.event.fact &&
-                  actualSine.version == sineStep.event.version &&
-                  action == sineAction && proposed == .nonnegative &&
-                  payloadId == payload 2 &&
-                  actualNegation.programVersion == negationStep.event.programVersion &&
-                  actualNegation.node == negationStep.event.node &&
-                  actualNegation.previous == negationStep.event.previous &&
-                  actualNegation.fact == negationStep.event.fact &&
-                  actualNegation.version == negationStep.event.version &&
-                  negation == negationAction && proposedNegation == .nonpositive &&
-                  negationPayload == payload 3 &&
-                  actualTransport.programVersion == transportStep.event.programVersion &&
-                  actualTransport.node == transportStep.event.node &&
-                  actualTransport.previous == transportStep.event.previous &&
-                  actualTransport.fact == transportStep.event.fact &&
-                  actualTransport.version == transportStep.event.version &&
-                  equality == transportStep.equality &&
-                  source == ({ node := node 4, version := 1 } : SeenVersion)
-            | _, _, _ => false
+            sameFactEvent actualSine sineStep.event &&
+            sameFactEvent actualNegation negationStep.event &&
+            sameFactEvent actualTransport transportStep.event
       | _, _, _, _, _, _, _, _, _ => false
 
 #guard quotesMatchSearch

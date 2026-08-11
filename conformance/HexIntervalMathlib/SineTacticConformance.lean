@@ -319,21 +319,22 @@ private meta def checkLiveQuote : MetaM Unit := do
 /-- Find two local hypotheses accepted by the emitted sine theorem and build
 an application whose inferred target is definitionally the caller's goal. -/
 private meta def proveSine (target : Expr) : MetaM Expr := do
+  unless quotesMatchSearch do
+    throwError "interval_sine: compiled interval search did not match the checked proof quote"
+  checkLiveQuote
   let context <- getLCtx
   for first in context do
     unless first.isImplementationDetail do
       for second in context do
         unless second.isImplementationDetail do
-          match ← observing? do
-              let proof <- mkAppM ``emittedSineTheorem
-                #[mkFVar first.fvarId, mkFVar second.fvarId]
-              unless ← isDefEq (← inferType proof) target do
-                throwError "candidate does not match the target"
-              pure (← instantiateMVars proof) with
-          | some proof =>
-              checkLiveQuote
-              return proof
-          | none => pure ()
+          let saved <- saveState
+          try
+            let proof <- mkAppM ``emittedSineTheorem
+              #[mkFVar first.fvarId, mkFVar second.fvarId]
+            if <- isDefEq (← inferType proof) target then
+              return (← instantiateMVars proof)
+            saved.restore
+          catch _ => saved.restore
   throwError
     "interval_sine: expected hypotheses matching `0 ≤ x` and `x ≤ 1` and goal `Real.sin (-x) ≤ 0`"
 

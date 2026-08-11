@@ -9,23 +9,25 @@ implementations.
 
 | System | Answered / 392 | Median solved time | p90 solved time |
 |---|---:|---:|---:|
-| Hex factorization | 376 | 378.276 us | 7.507 ms |
+| Hex factorization | 383 | 273.175 us | 6.693 ms |
 | FLINT | 391 | 60.089 us | 1.139 ms |
 | PARI/GP | 391 | 65.687 us | 1.008 ms |
 | NTL | 391 | 88.160 us | 2.365 ms |
 | Verified Isabelle BZ | 371 | 439.591 us | 5.072 ms |
 | Verified Isabelle LLL | 314 | 6.036 ms | 1.210 s |
 
-Hex is faster than verified Isabelle BZ in aggregate, while FLINT, PARI, and
-NTL remain substantially faster and cover almost the whole corpus. Hex has a
+Hex is faster than verified Isabelle BZ in aggregate and solves ten more rows
+on the balanced combined mixture, while FLINT, PARI, and NTL remain
+substantially faster and cover almost the whole corpus. Hex has a
 sub-millisecond median but a pronounced multi-second tail.
 
 Every pair of answering systems agreed on factor degrees. Timings come from
-fresh 2026-08-01/02 measurements on the same host, corpus, CPU placement,
-cutoff, and repetition policy. See
+fresh 2026-08-01/10 measurements on the same host and corpus, with each service
+pinned to one core, the same cutoff, and the same repetition policy. See
 [`hexbz-factor-sweep.md`](hexbz-factor-sweep.md) for exact provenance, and
-[`hexbz-cactus-elbow.md`](hexbz-cactus-elbow.md) for the phase-by-phase
-attribution of the mid-tail crossover with verified Isabelle BZ.
+[`hexbz-quadratic-norm-certificate.md`](hexbz-quadratic-norm-certificate.md)
+for the phase-by-phase account of how the former mid-tail crossover with
+verified Isabelle BZ was removed.
 
 ## Paired comparisons
 
@@ -34,11 +36,11 @@ protocol overhead. A ratio below one favors Hex.
 
 | Hex / comparator | Eligible pairs | Median | p10-p90 | Hex wins |
 |---|---:|---:|---:|---:|
-| FLINT | 74 | 11.056x | 4.413x-100.350x | 0 |
-| PARI/GP | 79 | 12.029x | 2.699x-107.045x | 0 |
-| NTL | 140 | 5.923x | 1.189x-36.847x | 8 |
-| Verified Isabelle BZ | 216 | 0.754x | 0.467x-2.713x | 134 |
-| Verified Isabelle LLL | 166 | 0.00806x | 0.000281x-0.226x | 165 |
+| FLINT | 80 | 6.493x | 2.474x-22.967x | 1 |
+| PARI/GP | 86 | 6.316x | 2.049x-48.730x | 0 |
+| NTL | 142 | 3.020x | 1.039x-11.787x | 14 |
+| Verified Isabelle BZ | 189 | 0.506x | 0.316x-1.525x | 153 |
+| Verified Isabelle LLL | 137 | 0.00527x | 0.000169x-0.166x | 137 |
 
 The broad percentile bands matter: performance depends strongly on the
 polynomial family, so none of these medians is a uniform ordering.
@@ -51,21 +53,20 @@ has produced an exact factor; otherwise it goes directly to the exact full-CLD
 fallback. Every proposed piece is reconstructed exactly and refactored by the
 proved classical engine.
 
-This gives a general rather than family-specific result. On 99 common rows
-above one millisecond versus the preceding clean record, median new/old is
-`1.017x`, with p10-p90 `0.992x-1.043x`; every family median is within about 4%
-of parity. This comparison includes the Lean 4.33 toolchain and core-library
-update, so it describes the final shipped state rather than isolating the
-optimization. Coverage increases by one with no lost row:
+The path also carries a proved iterated-quadratic-norm certificate for the
+multiquadratic irreducible class. It removes the exponential recombination tail
+on plain Swinnerton-Dyer inputs without a benchmark-name or family dispatch.
+On the balanced 160-row mixture Hex now solves 151 rows against verified
+Isabelle BZ's 141; its worst cumulative Hex/Isabelle ratio over ranks 125-140 is
+`0.689x` at rank 133.
 
-- `hoeij_F190`: 7.238 s, newly solved;
-- `sd6`: 8.115 s, retained at 81% of the cutoff;
-- Wilkinson degrees 24, 40, and 56: 4.083 ms, 15.912 ms, and 40.396 ms.
+Current representative rows are:
 
-F190 and `sd6` each use one timed call because they exceed one second. These are
-coverage observations, not low-variance speed estimates. The Wilkinson points
-are within about seven percent of the preceding clean record; they show that the
-general change did not introduce a new threshold regression, not a speedup.
+- `hoeij_F190`: 3.287 s, one timed call;
+- `sd6`: 27.044 ms, the median of five calls;
+- Wilkinson degrees 24, 40, and 56: 3.480 ms, 9.431 ms, and 21.266 ms.
+
+These are current coverage observations, not an optimization-only A/B.
 
 The remaining gap is still large. For example, NTL takes 35.224 ms on
 `hoeij_F190`, and FLINT, PARI, and NTL all solve 391 rows.
