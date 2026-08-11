@@ -310,6 +310,7 @@ lean_lib HexIntervalExperiment where
     `HexInterval.Experiment.StagedPolicy,
     `HexInterval.Experiment.AdaptivePolicy,
     `HexInterval.Experiment.PolicyFeature,
+    `HexInterval.Experiment.FeaturePolicy,
     `HexInterval.Experiment.BranchStart,
     `HexInterval.Experiment.BranchTree,
     `HexInterval.Experiment.BranchProof,
@@ -506,6 +507,7 @@ lean_lib HexConformance where
       `HexIntervalMathlib.MinMaxConformance].map Glob.one
 
     ++ #[`HexInterval.PolicyFeatureConformance,
+      `HexInterval.FeaturePolicyConformance,
       `HexIntervalMathlib.ExactBranchConformance].map Glob.one
 
 -- The expensive complete-family Mathlib proofs are owned only by this
