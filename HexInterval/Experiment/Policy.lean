@@ -704,6 +704,7 @@ private def prepareApplication (state : State Fact) (applicationId : Application
                 effort := effort.getD application.effort
                 generation := application.generation
                 inputs
+                writes := application.writes
                 structuralInputs
                 matcherEpoch }
             let queued :=

@@ -473,7 +473,9 @@ def replayRule {Fact : Type} {semantics : Semantics Fact}
     Option (Evidence
       (semantics.Entails program assumptions { node, fact := proposed })) := do
   let entry ← arena.entry? payload .fact
-  if _origin : action = entry.origin then
+  if !action.writes.contains node then
+    none
+  else if _origin : action = entry.origin then
     registry.dispatchFact input entry
       { program
         basePrefix
@@ -565,41 +567,16 @@ def eventFactAt? (trace : Trace Fact) (cursor : Nat)
   if seen.version == 0 then none
   else findVersionPrefix? trace.events seen cursor 0
 
-/-- Resolve a fact exactly as replay will: base version zero comes from the
-caller's immutable initial facts, generated version zero is semantic top, and
-positive versions can inspect only the already-checked event prefix. -/
-def factAt? {Fact : Type} {semantics : Semantics Fact}
-    (domain : FactDomainSchema semantics)
-    (input : CheckerInput Fact) (trace : Trace Fact)
-    (cursor : Nat) (seen : SeenVersion) : Option Fact :=
-  if seen.version == 0 then
-    if seen.node.index < input.baseProgram.nodes.size then
-      input.initialFacts[seen.node.index]?
-    else do
-      let instruction ← trace.program.node? seen.node
-      pure (domain.top instruction.domain)
-  else
-    trace.eventFactAt? cursor seen
-
 end Trace
 
-/-! ## Deliberate boundary of this canary
+/-! ## Boundary of this layer
 
-A complete checker still has to validate, in one forward pass:
-
-* exact base-prefix preservation and initial-fact length;
-* chronological versions, `previous` links, and action-input resolution using
-  only the already-checked event prefix;
-* structural reconstruction of every retained instance and equality context
-  before dispatch to the now-covered package-owned semantic schemas;
-* composition of the rule entailment and fact-domain meet evidence into an
-  installed-fact theorem; and
-* final closure of `CheckerInput.target`.
-
-Those obligations are intentionally not represented by a Boolean labelled
-“checked” here.  The next Mathlib vertical should instantiate this protocol
-with the existing fixed centered example, while leaving its `Center.Prim` and
-`EqRecipe` local rather than promoting either to a central function language.
+This module owns package-schema assembly and exact semantic dispatch only. It
+does not label a Boolean as a complete trace proof. `ChronologicalReplay`
+composes dispatched theorems with prior facts and meets, `TraceReplay` validates
+the authoritative cross-history order and final target closure, and
+`ProofEmitter` provides the transparent quoted-data boundary needed for an
+ordinary downstream theorem.
 -/
 
 end Hex.Interval.Experiment.SemanticReplay

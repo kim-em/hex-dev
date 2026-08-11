@@ -622,11 +622,4 @@ example (arena : Arena) :
       some (.exact 5) := by
   rfl
 
-/-- Version zero for a base node comes from the caller-owned initial facts,
-not from the untrusted trace. -/
-example (arena : Arena) :
-    (trace arena).factAt? factDomain checkerInput 0
-      { node := node 0, version := 0 } = some (.exact 3) := by
-  rfl
-
 end Hex.Interval.SemanticReplayConformance
