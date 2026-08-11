@@ -1346,14 +1346,17 @@ Mathlib-free table is polymorphic in the handle type. `SchemaTable.build`
 concatenates those contributions and rejects every duplicate full address,
 including duplicates which happen to carry the same handle. The tactic selects
 by the payload entry's `(rule, role, schema)`; it never dispatches on an
-expression's mathematical function. The fixed canary checks each selection
-against its known declaration before comparing with its preassembled proof.
-A general assembler must additionally make a missing name, wrong type, or
-schema whose own replay key does not match the entry fail during application
-construction. Only the resulting well-typed theorem application enters the
-kernel. This first table enforces exact-address uniqueness, but does not yet
-derive package ownership or coverage from the semantic registry; that link is
-required before selected handles replace the fixed proof assembly.
+expression's mathematical function. The direct assembler resolves these
+handles and uses the selected declarations in its emitted proof term. A
+missing name, wrong type, or schema whose replay key does not match the entry
+makes application construction or transparent replay fail. Current safety
+comes from constant lookup, ordinary Lean typechecking, and the replay
+transition's exact key check; only the resulting well-typed theorem
+application enters the kernel. This first table enforces exact-address
+uniqueness, but does not yet derive package ownership or coverage from the
+semantic registry. Joint construction remains a completeness and package
+governance requirement rather than a prerequisite for sound use of selected
+handles.
 
 A Mathlib companion must instantiate those abstract schemas, decode each
 frozen entry independently of package cache state, and recheck the

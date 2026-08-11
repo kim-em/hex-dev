@@ -452,6 +452,12 @@ theorem tacticSine {x : ℝ} (upper : x ≤ 1) (lower : 0 ≤ x) :
     Real.sin (-x) ≤ 0 := by
   interval_sine
 
+/--
+info: 'Hex.IntervalMathlib.SineTacticConformance.tacticSine' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms tacticSine
+
 example {x : ℝ} (_upper : x ≤ 1) (_lower : 0 ≤ x) : True := by
   fail_if_success interval_sine
   trivial
