@@ -142,6 +142,24 @@ def replayResult (result : Expr) : MetaM Expr := do
   let success ← mkAppM ``Eq.refl #[mkConst ``Bool.true]
   mkAppM ``replayGet #[result, success]
 
+/-- Emit a kernel-checked subsumption step from one exact retained fact version
+to the caller's requested fact. -/
+def closeTarget [BEq Fact] (context : Context Fact Handle)
+    (state : State Fact) (seen : SeenVersion) (actual : Fact)
+    (target : NodeFact Fact) : MetaM Expr := do
+  unless seen.node == target.node do
+    throwError "interval frontend: retained result is for the wrong target node"
+  let some established := findFact? state.known seen actual
+    | throwError "interval frontend: retained target version has not been proved"
+  let nodeTerm ← context.encoder.nodeId target.node
+  let actualTerm ← context.encoder.fact actual
+  let requestedTerm ← context.encoder.fact target.fact
+  let result ←
+    mkAppM ``ProofEmitter.closeFact
+      #[context.domain, state.program, context.baseFactsTerm, nodeTerm,
+        actualTerm, requestedTerm, established.proof]
+  replayResult result
+
 /-- Seed caller-owned version-zero facts by exact positions in the base list. -/
 def seedBase (context : Context Fact Handle) (program : Expr) (basePrefix : Expr) :
     MetaM (List (FactProof Fact)) := do

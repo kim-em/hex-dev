@@ -1455,19 +1455,21 @@ packages and function names do not occur in the driver.
 Target subsumption is a runtime stopping test: narrowing the current fact by
 the requested fact must report no change. The result records the exact current
 fact and version, but neither that test nor the controller is proof evidence.
-Proof emission must still resolve the retained version and replay an independent
-fact-domain subsumption theorem. The exponential conformance policy simply
-selects the first offer. On `exp (exp x)` it therefore improves the inner and
-outer nodes in two separate steps, stops at the requested outer bound, and
-feeds both chronological events to the unchanged generic proof frontend.
+`ProofFrontend.closeTarget` resolves that exact retained proof and applies the
+transparent `ProofEmitter.closeFact` combinator. The combinator independently
+asks `FactDomainSchema.proveMeet` to prove that intersecting the established
+fact with the requested fact leaves the established fact unchanged; only that
+kernel theorem supplies the requested conclusion. A conformance theorem closes
+`.all` from a strictly stronger `.nonnegative` fact through this path.
 
-The current conformance closes only when the retained target fact is exactly
-the requested fact. Closing from a strictly stronger retained fact is the next
-proof-frontend connection. The driver returns split plans but does not yet
-create or join proof branches. The operation registry also remains the fixed
-source/exponential pair. Key-resolved semantic model selection must land before
-operation packages may be reordered; array position is not a permanent package
-identity.
+The exponential conformance policy simply selects the first offer. On
+`exp (exp x)` it therefore improves the inner and outer nodes in two separate
+steps, stops at the requested outer bound, and feeds both chronological events
+to the unchanged generic proof frontend. The driver returns split plans but
+does not yet create or join proof branches. The operation registry also remains
+the fixed source/exponential pair. Key-resolved semantic model selection must
+land before operation packages may be reordered; array position is not a
+permanent package identity.
 
 The fixed canary also requires a live session with an exact proof history of one
 instance, one equality, three fact events, and the expected interleaving before

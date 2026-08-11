@@ -412,6 +412,26 @@ def replayTransport {Fact : Type} {semantics : Semantics Fact}
       else
         none
 
+/-- Close a requested fact from a stronger established fact at the same node.
+The independent fact-domain theorem must prove that intersecting `actual` with
+`requested` leaves `actual` unchanged.  Runtime target detection is not used
+as evidence. -/
+def closeFact {Fact : Type} {semantics : Semantics Fact}
+    (domain : FactDomainSchema semantics) (program : Program)
+    (base : List (NodeFact Fact)) (node : NodeId) (actual requested : Fact)
+    (actualSound :
+      Evidence
+        (semantics.Entails program base { node, fact := actual })) :
+    Option
+      (Evidence
+        (semantics.Entails program base { node, fact := requested })) := do
+  let meet <- domain.proveMeet program node actual requested actual
+  pure
+    { proof := by
+        intro valuation model baseHolds
+        have established := actualSound.proof valuation model baseHolds
+        exact ((meet.proof valuation model).mp established).2 }
+
 /-- Project a proposition from any successfully replayed proof object. -/
 theorem evidenceOfReplay {P : Prop} (result : Option (Evidence P))
     (success : result.isSome) : P :=
