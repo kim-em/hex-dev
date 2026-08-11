@@ -39,7 +39,7 @@ have been performed anyway, and small enough that its trial-division primality
 proof is cheap to check in the kernel. -/
 def obstructionPrime : Nat := 67108859
 
-instance : ZMod64.Bounds obstructionPrime where
+instance boundsObstructionPrime : ZMod64.Bounds obstructionPrime where
   pPos := by decide
   pLtR := by decide
 

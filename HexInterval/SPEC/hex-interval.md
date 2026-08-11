@@ -1225,8 +1225,10 @@ scheduler structure without appending a node.
 Chronological replay also needs the opposite, prefix-facing semantic
 direction. For each append-only program step, the semantics adapter supplies
 that a model of the enlarged program is a model of the old prefix and that a
-fact on an old node has the same meaning in old and new models whenever those
-models assign that node the same value. This is separate from, and
+fact on an old node has the same meaning in old and new models whenever their
+valuations agree on the complete old program. Whole-prefix agreement is
+required because `Semantics.holds` may inspect values at old nodes other than
+the node carrying the fact. This is separate from, and
 complementary to, the package theorem that every old model can be extended.
 The checker uses these laws to lift all previously proved fact versions into
 the enlarged program. It then seeds every genuinely new node at version zero
