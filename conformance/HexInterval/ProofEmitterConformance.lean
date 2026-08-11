@@ -194,4 +194,88 @@ theorem quotedTraceProvesContract :
   simpa [quotedStep] using
     (ProofEmitter.proofOfReplay replayed (by rfl))
 
+/-! # Generic split joining -/
+
+inductive SplitFact where
+  | all
+  | yes
+  | no
+  | decided
+  deriving DecidableEq
+
+def SplitHolds : SplitFact -> Bool -> Prop
+  | .all, _ => True
+  | .yes, value => value = true
+  | .no, value => value = false
+  | .decided, value => value = true \/ value = false
+
+def splitSemantics : SemanticReplay.Semantics SplitFact :=
+  { Value := Bool
+    models := fun _ _ => True
+    holds := fun _ valuation fact => SplitHolds fact.fact (valuation fact.node) }
+
+def splitNode : NodeId := node 0
+
+def splitTarget : NodeFact SplitFact :=
+  { node := splitNode, fact := .decided }
+
+def splitSchema : ProofEmitter.SplitSchema splitSemantics Unit where
+  proveCover := fun _ node parent _ left right =>
+    if shape : parent = .all /\ left = .yes /\ right = .no then
+      some
+        { proof := by
+            rcases shape with ⟨rfl, rfl, rfl⟩
+            intro valuation _ _
+            cases value : valuation node with
+            | false => exact Or.inr value
+            | true => exact Or.inl value }
+    else
+      none
+
+def splitParent :
+    Evidence
+      (splitSemantics.Entails program []
+        { node := splitNode, fact := .all }) :=
+  { proof := by
+      intro _ _ _
+      trivial }
+
+def splitLeft :
+    Evidence
+      (splitSemantics.Entails program
+        [{ node := splitNode, fact := .yes }] splitTarget) :=
+  { proof := by
+      intro valuation _ assumptions
+      have yes :=
+        assumptions { node := splitNode, fact := .yes } (by simp)
+      exact Or.inl yes }
+
+def splitRight :
+    Evidence
+      (splitSemantics.Entails program
+        [{ node := splitNode, fact := .no }] splitTarget) :=
+  { proof := by
+      intro valuation _ assumptions
+      have no :=
+        assumptions { node := splitNode, fact := .no } (by simp)
+      exact Or.inr no }
+
+def splitReplay :=
+  ProofEmitter.replaySplit splitSchema program [] splitNode .all () .yes .no
+    splitTarget splitParent splitLeft splitRight
+
+/-- Both branch assumptions are joined into an ordinary theorem; the runtime
+policy and its split suggestion do not occur in the proof term. -/
+theorem splitProvesDecision :
+    splitSemantics.Entails program [] splitTarget :=
+  ProofEmitter.proofOfReplay splitReplay (by rfl)
+
+/-- Swapping the quoted child facts is rejected before either child theorem
+can be used. -/
+def swappedSplit :=
+  ProofEmitter.replaySplit splitSchema program [] splitNode .all () .no .yes
+    splitTarget splitParent splitRight splitLeft
+
+#guard swappedSplit.isNone
+
 end Hex.Interval.ProofEmitterConformance
