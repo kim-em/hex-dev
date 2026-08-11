@@ -485,8 +485,11 @@ private meta def seedProofs (programValue : Program) (program : Expr)
         proof }
   pure known
 
-private meta def emitRule (program : Expr) (table : SchemaTable Name)
-    (known : List FactProof) (step : RuleStep Range) : MetaM (List FactProof) := do
+private meta def emitRule (program : Expr) (version : Nat)
+    (table : SchemaTable Name) (known : List FactProof) (step : RuleStep Range) :
+    MetaM (List FactProof) := do
+  unless step.event.programVersion == version do
+    throwError "interval_sine: rule event has the wrong program version"
   let .rule action _ _ := step.event.cause
     | throwError "interval_sine: rule quote has a transport cause"
   let some previous := findProof? known step.event.previous step.previous
@@ -510,9 +513,12 @@ private meta def emitRule (program : Expr) (table : SchemaTable Name)
       fact := step.event.fact
       proof }
 
-private meta def emitTransport (program : Expr) (table : SchemaTable Name)
-    (known : List FactProof) (step : TransportStep Range) :
+private meta def emitTransport (program : Expr) (version : Nat)
+    (table : SchemaTable Name) (known : List FactProof)
+    (step : TransportStep Range) :
     MetaM (List FactProof) := do
+  unless step.event.programVersion == version do
+    throwError "interval_sine: transport event has the wrong program version"
   let .transport _ source := step.event.cause
     | throwError "interval_sine: transport quote has a rule cause"
   let some previous := findProof? known step.event.previous step.previous
@@ -527,7 +533,7 @@ private meta def emitTransport (program : Expr) (table : SchemaTable Name)
         mkConst ``rangeSchema,
         mkConst ``laws,
         mkConst ``checkerInput,
-        mkNatLit step.event.programVersion,
+        mkNatLit version,
         program,
         mkConst ``programPrefix,
         mkConst ``baseFacts,
@@ -541,13 +547,16 @@ private meta def emitTransport (program : Expr) (table : SchemaTable Name)
       fact := step.event.fact
       proof }
 
-private meta def emitFacts (program : Expr) (table : SchemaTable Name) :
+private meta def emitFacts (program : Expr) (version : Nat)
+    (table : SchemaTable Name) :
     List LiveEvent -> List FactProof -> MetaM (List FactProof)
   | [], known => pure known
   | .rule step :: rest, known => do
-      emitFacts program table rest (← emitRule program table known step)
+      emitFacts program version table rest
+        (← emitRule program version table known step)
   | .transport step :: rest, known => do
-      emitFacts program table rest (← emitTransport program table known step)
+      emitFacts program version table rest
+        (← emitTransport program version table known step)
   | .instantiation _ :: _, _ =>
       throwError "interval_sine: multiple instantiations are not supported yet"
 
@@ -562,7 +571,7 @@ private meta def emitTrace (programValue : Program) (events : List LiveEvent)
   let program <- programExpr programValue
   let extension <- emitInstance program quote table
   let initial <- seedProofs programValue program quote.event.newNodes
-  let known <- emitFacts program table rest initial
+  let known <- emitFacts program quote.event.programVersion table rest initial
   let target := { node := node 2, version := 1 : SeenVersion }
   let some final := findProof? known target .nonpositive
     | throwError "interval_sine: trace did not prove the requested target"
@@ -651,6 +660,13 @@ example : True := by
         [ .instantiation quote.instantiation, .rule quote.sine,
           .rule quote.negation, .transport quote.transport ] table)).isSome then
       throwError "interval_sine test: absent generated nodes were accepted"
+    let wrongVersion : TransportStep Range :=
+      { quote.transport with
+        event := { quote.transport.event with programVersion := 2 } }
+    if (← observing? (emitTrace extendedProgram
+        [ .instantiation quote.instantiation, .rule quote.sine,
+          .rule quote.negation, .transport wrongVersion ] table)).isSome then
+      throwError "interval_sine test: stale transport program version was accepted"
     if (← observing? (emitQuote malformed table)).isSome then
       throwError "interval_sine test: malformed proof emission was accepted"
     let some missingTable := SchemaTable.build [negationEmit]
