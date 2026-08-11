@@ -1384,10 +1384,17 @@ and a relation from its ordered input values to its result value. The assembled
 model requires the program's operation array to equal the aligned package
 array and requires a successful meaning lookup for every node; an absent or
 mismatched package therefore cannot make an expression unconstrained. This
+makes full package alignment a proof-production obligation, not merely a
+registry convenience: until the frontend supplies that equality and a meaning
+proof for every node, `Models` may be uninhabited and an `Entails` theorem by
+itself may be vacuous. Appending or reordering syntax packages therefore also
+requires assembling the correspondingly aligned meaning array. This
 node-local semantics supplies one generic append-only stability law. The
 exponential companion now assembles independent source and exponential
 meanings, and its positivity schema checks an arbitrary proposed node's
-instruction, operation slot, and unary argument before proving the result. A
+instruction, the exponential package's current operation slot, and unary
+argument before proving the result. Key-resolved lookup replaces that
+canary-specific numeric slot before packages may be reordered. A
 three-node `exp (exp x)` canary obtains an ordinary theorem through that schema,
 while applying it to the source node fails closed. The remaining frontend gap
 is a kernel-checked link from each syntax recognizer to its operation relation,
