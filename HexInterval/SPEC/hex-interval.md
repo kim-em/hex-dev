@@ -1359,17 +1359,24 @@ state. It recursively reifies arguments in signature order, performs exact
 expression/domain CSE, validates the resulting SSA program, and enforces
 package, node, and depth limits. A separate fact parser maps propositions to a
 term, domain, and fact, so interval endpoint and open/closed semantics do not
-enter graph construction. The target is reified first. All hypotheses
+enter graph construction. Parser calls likewise retain no elaborator-state
+changes. The target is reified first and is strict: an unsupported or
+over-budget target fails. A parsed hypothesis is optional information; if its
+term or a recursive dependency has no package or exceeds the remaining graph
+budget, that whole immutable attempt is discarded. Malformed arity and
+ambiguous package matches remain hard registry errors. All accepted hypotheses
 narrowing the same version-zero node remain in an ordered seed recipe; later
 hypotheses cannot overwrite an earlier proof dependency, while facts about
 other recognized expressions may append a suffix after the target graph. The
-exponential tactic currently requires only the target-reachable prefix and
-target fact to match its fixed semantic/proof fixture. Extra relevant,
-duplicate, unrelated-real, and non-real hypotheses therefore do not disable an
-otherwise applicable proof. Removing that last target-prefix comparison
-requires package-compositional construction of the program semantics and
-generic proof emission for the recorded top/assumption seed recipes; it
-remains the next frontend experiment rather than an assumed capability.
+exponential tactic currently requires only the target-reachable operation and
+node prefixes, and the target fact, to match its fixed semantic/proof fixture.
+Extra supported, duplicate, unsupported-real, and non-real hypotheses therefore
+do not disable an otherwise applicable proof; later operation packages may
+also extend the registry after the target prefix. Removing that last prefix
+comparison requires package-compositional construction of the program
+semantics and generic proof emission for the recorded top/assumption seed
+recipes; it remains the next frontend experiment rather than an assumed
+capability.
 
 The fixed canary also requires a live session with an exact proof history of one
 instance, one equality, three fact events, and the expected interleaving before

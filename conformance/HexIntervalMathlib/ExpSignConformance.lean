@@ -95,10 +95,20 @@ private meta def reifyGoal (target : Expr) : MetaM (GoalFrontend.Result Bound) :
 caller facts may append nodes or narrow version-zero facts without changing
 the independent exponential proof. -/
 private def sameTargetGraph (input : CheckerInput Bound) : Bool :=
-  input.baseProgram.operations == checkerInput.baseProgram.operations &&
+  input.baseProgram.operations.toList.take
+      checkerInput.baseProgram.operations.size ==
+    checkerInput.baseProgram.operations.toList &&
     input.baseProgram.nodes.toList.take checkerInput.baseProgram.nodes.size ==
       checkerInput.baseProgram.nodes.toList &&
     input.target == checkerInput.target
+
+private def spareOperation : Operation :=
+  { key := { name := "exp-sign.spare" }, inputs := [], output := real }
+
+#guard
+  sameTargetGraph
+    { checkerInput with
+      baseProgram := { program with operations := operations.push spareOperation } }
 
 def offer? (session : PolicySession.Session Bound)
     (accepts : Propagator.Policy.OfferView → Bool) :
@@ -270,13 +280,17 @@ theorem tacticExpNat (x : ℝ) (n : Nat) (_hn : 0 ≤ n) :
     0 ≤ Real.exp x := by
   interval_exp
 
+theorem tacticExpUnsupported (x y z : ℝ) (_h : 0 ≤ y * z) :
+    0 ≤ Real.exp x := by
+  interval_exp
+
 example (_x : ℝ) : True := by
   fail_if_success interval_exp
   trivial
 
 set_option linter.unusedTactic false in
 set_option linter.unusedVariables false in
-example (x : ℝ) (h : 0 ≤ Real.exp x) : True := by
+example (x : ℝ) (h₁ h₂ : 0 ≤ Real.exp x) : True := by
   run_tac
     let context ← getLCtx
     let mut target? := none
@@ -289,7 +303,7 @@ example (x : ℝ) (h : 0 ≤ Real.exp x) : True := by
     let some seed := result.seeds[1]?
       | throwError "interval_exp goal test: target seed is missing"
     unless result.input.baseProgram.nodes.size == 2 &&
-        result.terms.size == 2 && seed.assumptions.length == 1 &&
+        result.terms.size == 2 && seed.assumptions.length == 2 &&
         result.input.initialFacts[1]? == some .nonnegative do
       throwError "interval_exp goal test: CSE or assumption seeding failed"
     let aliasPackage : GoalFrontend.Package :=

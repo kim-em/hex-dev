@@ -125,9 +125,11 @@ def State.find? (state : State) (expression : Expr) (domain : DomainId) :
     term.domain == domain && term.expression == expression
   pure found.node
 
-/-- Select exactly one package for an expression and expected output domain. -/
-def select (registry : Registry) (expression : Expr) (domain : DomainId) :
-    MetaM (Nat × Package × List Expr) := do
+/-- Select exactly one package for an expression and expected output domain.
+No matching package is ordinary absence; malformed or ambiguous matches remain
+hard errors. -/
+def select? (registry : Registry) (expression : Expr) (domain : DomainId) :
+    MetaM (Option (Nat × Package × List Expr)) := do
   let mut selected : Option (Nat × Package × List Expr) := none
   for index in [0:registry.packages.size] do
     let some package := registry.packages[index]?
@@ -143,35 +145,37 @@ def select (registry : Registry) (expression : Expr) (domain : DomainId) :
           if selected.isSome then
             throwError "interval goal frontend: ambiguous expression package"
           selected := some (index, package, arguments)
-  let some result := selected
-    | throwError "interval goal frontend: no package recognized expression"
-  pure result
+  pure selected
 
-/-- Recursively append one expression and its dependencies to the SSA graph. -/
-partial def reifyTerm (registry : Registry) (expression : Expr)
+/-- Recursively append one expression and its dependencies to the SSA graph.
+Absence means that the expression is unsupported or exceeds the graph budget;
+the input state is immutable, so a caller may discard the whole attempt. -/
+partial def reifyTerm? (registry : Registry) (expression : Expr)
     (domain : DomainId) (depth : Nat) (state : State) :
-    MetaM (NodeId × State) := do
+    MetaM (Option (NodeId × State)) := do
   if registry.limits.maxDepth < depth then
-    throwError "interval goal frontend: expression depth limit exceeded"
+    return none
   if let some node := state.find? expression domain then
-    return (node, state)
-  let (operationIndex, package, arguments) ←
-    select registry expression domain
+    return some (node, state)
+  let some (operationIndex, package, arguments) ←
+      select? registry expression domain
+    | return none
   let mut state := state
   let mut nodes := []
   for (argument, argumentDomain) in arguments.zip package.operation.inputs do
-    let (node, next) ←
-      reifyTerm registry argument argumentDomain (depth + 1) state
+    let some (node, next) ←
+        reifyTerm? registry argument argumentDomain (depth + 1) state
+      | return none
     state := next
     nodes := nodes.concat node
   if registry.limits.maxNodes ≤ state.nodes.size then
-    throwError "interval goal frontend: expression node limit exceeded"
+    return none
   let node : NodeId := { index := state.nodes.size }
   let instruction : Node :=
     { domain
       op := { index := operationIndex }
       args := nodes }
-  pure
+  pure <| some
     (node,
       { nodes := state.nodes.push instruction
         terms := state.terms.push { expression, domain, node } })
@@ -192,21 +196,23 @@ may append additional expressions needed only by their facts. -/
 opaque reify (registry : Registry) (factDomain : FactDomain Fact)
     (parser : Parser Fact) (hypotheses : List (Expr × Expr)) (target : Expr) :
     MetaM (Result Fact) := do
-  let some targetClaim ← parser.parse target
+  let some targetClaim ← withoutModifyingState <| parser.parse target
     | throwError "interval goal frontend: target is not an interval claim"
-  let (targetNode, initial) ←
-    reifyTerm registry targetClaim.expression targetClaim.domain 0 {}
+  let some (targetNode, initial) ←
+      reifyTerm? registry targetClaim.expression targetClaim.domain 0 {}
+    | throwError "interval goal frontend: target expression is unsupported or exceeds its resource bound"
   let mut state := initial
   let mut assumed : List (NodeFact Fact × Expr) := []
   for (proposition, proof) in hypotheses do
-    let parsed ← parser.parse proposition
+    let parsed ← withoutModifyingState <| parser.parse proposition
     match parsed with
     | none => pure ()
     | some claim =>
-        let (node, next) ←
-          reifyTerm registry claim.expression claim.domain 0 state
-        state := next
-        assumed := assumed.concat ({ node, fact := claim.fact }, proof)
+        match ← reifyTerm? registry claim.expression claim.domain 0 state with
+        | none => pure ()
+        | some (node, next) =>
+            state := next
+            assumed := assumed.concat ({ node, fact := claim.fact }, proof)
   let program : Program :=
     { operations := registry.operations
       nodes := state.nodes }
