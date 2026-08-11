@@ -39,8 +39,13 @@ structure Package (semantics : Semantics Fact) (Handle : Type) where
 
 /-- A semantic registry and emitter table assembled from the same packages. -/
 structure Registry (semantics : Semantics Fact) (Handle : Type) where
+  private mk ::
   semantic : SemanticReplay.Registry semantics
   emit : SchemaTable Handle
+
+private def make (semantic : SemanticReplay.Registry semantics)
+    (emit : SchemaTable Handle) : Registry semantics Handle :=
+  { semantic, emit }
 
 /-- Failures specific to joint proof-package assembly.
 
@@ -106,7 +111,7 @@ coverage.  This layer additionally checks exact package-local correspondence
 between semantic schemas and emitter handles, plus global emitter uniqueness.
 The resulting table is selection data only: emitted theorem applications are
 still checked by Lean and by the transparent replay transitions. -/
-def build (executable : Propagator.Registry Fact)
+opaque build (executable : Propagator.Registry Fact)
     (packages : Array (Package semantics Handle)) :
     Except BuildError (Registry semantics Handle) := do
   let semanticPackages := packages.map (fun package => package.semantic)
@@ -123,6 +128,6 @@ def build (executable : Propagator.Registry Fact)
   | .ok _ =>
       match SchemaTable.build emitPackages with
       | none => throw BuildError.invalidEmit
-      | some emit => pure { semantic, emit }
+      | some emit => pure (make semantic emit)
 
 end Hex.Interval.Experiment.ProofRegistry
