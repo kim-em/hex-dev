@@ -1460,7 +1460,10 @@ transparent `ProofEmitter.closeFact` combinator. The combinator independently
 asks `FactDomainSchema.proveMeet` to prove that intersecting the established
 fact with the requested fact leaves the established fact unchanged; only that
 kernel theorem supplies the requested conclusion. A conformance theorem closes
-`.all` from a strictly stronger `.nonnegative` fact through this path.
+`.all` from a strictly stronger `.nonnegative` fact through the transparent
+`closeFact` combinator. The live frontend canaries exercise `closeTarget` with
+an exact retained target fact; an end-to-end strict-subsumption frontend
+canary remains useful coverage rather than a delivered claim.
 
 The exponential conformance policy simply selects the first offer. On
 `exp (exp x)` it therefore improves the inner and outer nodes in two separate
