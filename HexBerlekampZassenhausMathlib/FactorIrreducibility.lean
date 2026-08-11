@@ -8,6 +8,7 @@ module
 
 public import HexBerlekampZassenhausMathlib.Classical.Factorization
 public import HexBerlekampZassenhausMathlib.LatticeFactorization
+public import HexBerlekampZassenhausMathlib.QuadraticNormIrreducible
 
 public section
 set_option backward.proofsInPublic true
@@ -83,49 +84,78 @@ theorem factorClassicalFactors_factor_irreducible
         split at hcf
         · simp [Hex.ClassicalInput.run] at hcf
         · rename_i modular hplan
-          simp only [Hex.ClassicalInput.run, Hex.runClassicalPlan] at hcf
-          generalize hrun :
-              Hex.factorDirectCoreOfPlan
-                (Hex.SquareFreeInput.ofNormalized (Hex.normalizeForFactor f))
-                modular = outcome at hcf
-          cases outcome with
-          | declined reason stats => simp at hcf
-          | factored coreFactors stats =>
-              simp only at hcf
-              cases hcf
-              have hcore_degree :
-                  0 <
-                    (Hex.normalizeForFactor f).squareFreeCore.degree?.getD 0 :=
-                Nat.pos_of_ne_zero hdeg
-              have hcore_squarefree :
-                  Squarefree
-                    (HexPolyZMathlib.toPolynomial
-                      (Hex.normalizeForFactor f).squareFreeCore) :=
-                IntReductionMod.normalizeForFactor_squareFreeCore_toPolynomial_squarefree
-                    f hf
-              have hspec :
-                  DirectFactorListSpec
-                      (Hex.normalizeForFactor f).squareFreeCore
-                      coreFactors.toList :=
-                factorDirectCoreOfPlan_factored
+          split at hcf
+          -- The budget-gated iterated-quadratic-norm certificate answered the
+          -- whole square-free core as one irreducible factor.
+          · rename_i hcert
+            simp only [Hex.ClassicalInput.run] at hcf
+            obtain rfl := Option.some.inj hcf
+            have hcore_irr :
+                Hex.ZPoly.Irreducible (Hex.normalizeForFactor f).squareFreeCore :=
+              (Hex.ZPoly.Irreducible_iff_polynomialIrreducible _).mpr
+                (irreducible_of_quadraticNormCertified hcert)
+            have hsingle :
+                ∀ q ∈ (#[(Hex.normalizeForFactor f).squareFreeCore] : Array Hex.ZPoly).toList,
+                  q = (Hex.normalizeForFactor f).squareFreeCore := by
+              intro q hq
+              simpa using hq
+            refine
+              Hex.reassemblePolynomialFactors_factor_irreducible_of_complete_and_core_irreducible
+                _ _ ?_ (fun q hq => (hsingle q hq) ▸ hcore_irr) hmem
+            refine
+              IntReductionMod.reassemblyExpansionComplete_of_irreducible_squarefree_cover_of_norm
+                f hf _ (fun q hq => (hsingle q hq) ▸ hcore_irr) ?_ ?_ ?_
+            · simp [Hex.ZPoly.polyProduct_singleton]
+            · intro q hq
+              rw [hsingle q hq]
+              exact Hex.normalizeFactorSign_eq_self_of_leadingCoeff_nonneg _
+                (le_of_lt hcore_pos)
+            · intro q hq
+              rw [hsingle q hq]
+              exact Nat.pos_of_ne_zero hdeg
+          · simp only [Hex.ClassicalInput.run, Hex.runClassicalPlan] at hcf
+            generalize hrun :
+                Hex.factorDirectCoreOfPlan
                   (Hex.SquareFreeInput.ofNormalized (Hex.normalizeForFactor f))
-                  modular hplan hcore_prim hcore_pos hcore_degree
-                  hcore_squarefree hrun
-              have hcomplete :=
-                IntReductionMod.reassemblyExpansionComplete_of_irreducible_squarefree_cover_of_norm
-                    f hf coreFactors
+                  modular = outcome at hcf
+            cases outcome with
+            | declined reason stats => simp at hcf
+            | factored coreFactors stats =>
+                simp only at hcf
+                cases hcf
+                have hcore_degree :
+                    0 <
+                      (Hex.normalizeForFactor f).squareFreeCore.degree?.getD 0 :=
+                  Nat.pos_of_ne_zero hdeg
+                have hcore_squarefree :
+                    Squarefree
+                      (HexPolyZMathlib.toPolynomial
+                        (Hex.normalizeForFactor f).squareFreeCore) :=
+                  IntReductionMod.normalizeForFactor_squareFreeCore_toPolynomial_squarefree
+                      f hf
+                have hspec :
+                    DirectFactorListSpec
+                        (Hex.normalizeForFactor f).squareFreeCore
+                        coreFactors.toList :=
+                  factorDirectCoreOfPlan_factored
+                    (Hex.SquareFreeInput.ofNormalized (Hex.normalizeForFactor f))
+                    modular hplan hcore_prim hcore_pos hcore_degree
+                    hcore_squarefree hrun
+                have hcomplete :=
+                  IntReductionMod.reassemblyExpansionComplete_of_irreducible_squarefree_cover_of_norm
+                      f hf coreFactors
+                      (fun g hg =>
+                        (Hex.ZPoly.Irreducible_iff_polynomialIrreducible g).mpr
+                          (hspec.irreducible g hg))
+                      (by simpa using hspec.product)
+                      hspec.normalized hspec.degreePos
+                exact
+                  Hex.reassemblePolynomialFactors_factor_irreducible_of_complete_and_core_irreducible
+                    _ _ hcomplete
                     (fun g hg =>
                       (Hex.ZPoly.Irreducible_iff_polynomialIrreducible g).mpr
                         (hspec.irreducible g hg))
-                    (by simpa using hspec.product)
-                    hspec.normalized hspec.degreePos
-              exact
-                Hex.reassemblePolynomialFactors_factor_irreducible_of_complete_and_core_irreducible
-                  _ _ hcomplete
-                  (fun g hg =>
-                    (Hex.ZPoly.Irreducible_iff_polynomialIrreducible g).mpr
-                      (hspec.irreducible g hg))
-                  hmem
+                    hmem
 
 /-- A member of an array product that is nonzero is itself nonzero. -/
 private theorem mem_ne_zero_of_polyProduct_ne_zero
