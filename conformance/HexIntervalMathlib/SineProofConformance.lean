@@ -222,12 +222,6 @@ def sineBase :
         { node := node 0, fact := .unit }) :=
   ProofEmitter.assumed (by simp [baseFacts])
 
-def negatedBase :
-    Evidence
-      (semantics.Entails extendedProgram baseFacts
-        { node := node 1, fact := .all }) :=
-  ProofEmitter.assumed (by simp [baseFacts])
-
 def sinePrevious :
     Evidence
       (semantics.Entails extendedProgram baseFacts

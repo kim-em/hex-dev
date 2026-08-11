@@ -1306,10 +1306,8 @@ the package-contributed schema declaration, then emits the instance, sine,
 negation, equality-transport, and caller-closure applications in dependency
 order. Every accepted `Option` result carries an ordinary `rfl` success proof;
 if the quote or schema is wrong, elaboration fails. The assigned term consumes
-the actual returned quote. Fixed proof constants for caller assumptions and
-generated-node top facts still constrain this canary's program, while its
-checked literal event chain is a separate field-for-field regression and
-cheap goal-shape probe.
+the actual returned quote and reified final program. Its checked literal event
+chain is a separate field-for-field regression and cheap goal-shape probe.
 
 This is a complete direct proof assembler for the fixed real-sine graph, not
 yet the general tactic. Its elaborator walks the arbitrary quoted event list
@@ -1318,9 +1316,13 @@ steps obtain their previous facts and ordered dependencies from this table,
 select their package schemas solely by replay address, and insert their proved
 result versions. Reordering negation before the sine result it consumes fails
 before replay. This event fold contains no sine, negation, or other function
-case. The next frontend experiment must derive the base program, semantic
-bridge, initial evidence table, and final target for an arbitrary caller
-expression instead of naming this canary's fixed contexts.
+case. It seeds caller facts by checked position in the exact base-assumption
+list and seeds the instance event's fresh nodes with domain top after checking
+their lookup in the reified final program; named sine-specific previous-fact
+proofs are absent from the tactic term. The next frontend experiment must
+derive the base program, semantic bridge, and final target for an arbitrary
+caller expression, and reconstruct intermediate programs for later or
+repeated instantiations, instead of naming this canary's fixed contexts.
 The fixed canary also requires a live session with an exact proof history of one
 instance, one equality, three fact events, and the expected interleaving before
 it reads historical values through `Engine.factAt?`. Those values are quoted
@@ -1339,10 +1341,10 @@ chronology position.
 
 A general direct emitter maintains a table from each already-established fact
 version to its `Evidence` term; the real-sine assembler now exercises this
-table directly. Caller assumptions seed that table
-through the generic `ProofEmitter.assumed` lemma; generated nodes at version
-zero use `ProofEmitter.topFact`, tied to an exact checked node lookup and the
-fact-domain schema's top theorem. For a rule or conditional equality,
+table directly. Caller assumptions seed that table through the generic
+`ProofEmitter.assumedAt` lemma and an exact list lookup; generated nodes at
+version zero use `ProofEmitter.topFact`, tied to an exact checked node lookup
+and the fact-domain schema's top theorem. For a rule or conditional equality,
 `ProofEmitter.EntailsList` is constructed in the action's declared input order
 and combines the selected terms into `InputsSound`; replay separately checks
 that its node list matches the action order, while `InputsSound` itself is a
