@@ -126,130 +126,6 @@ private def liveQuotes? : Option LiveQuotes := do
       (Frontend.quote? engine session.arena
         [.instance 0, .fact 0, .fact 1] 0 0).isNone
 
-private def listExpr (type : Expr) (items : List Expr) : Expr :=
-  items.foldr
-    (fun item tail =>
-      mkApp3 (mkConst ``List.cons [Level.zero]) type item tail)
-    (mkApp (mkConst ``List.nil [Level.zero]) type)
-
-private def natOptionExpr : Option Nat -> Expr
-  | none => mkApp (mkConst ``Option.none [Level.zero]) (mkConst ``Nat)
-  | some value =>
-      mkApp2 (mkConst ``Option.some [Level.zero]) (mkConst ``Nat) (mkNatLit value)
-
-private meta def nodeExpr (node : NodeId) : MetaM Expr :=
-  do mkAppM ``NodeId.mk #[mkNatLit node.index]
-
-private meta def domainExpr (domain : DomainId) : MetaM Expr :=
-  do mkAppM ``DomainId.mk #[mkNatLit domain.index]
-
-private meta def opExpr (operation : OpId) : MetaM Expr :=
-  do mkAppM ``OpId.mk #[mkNatLit operation.index]
-
-private meta def opKeyExpr (key : OpKey) : MetaM Expr :=
-  do mkAppM ``OpKey.mk #[toExpr key.name, mkNatLit key.version]
-
-private meta def operationExpr (operation : Operation) : MetaM Expr := do
-  mkAppM ``Operation.mk
-    #[← opKeyExpr operation.key,
-      listExpr (mkConst ``DomainId) (← operation.inputs.mapM domainExpr),
-      ← domainExpr operation.output]
-
-private meta def instructionExpr (instruction : Node) : MetaM Expr := do
-  mkAppM ``Node.mk
-    #[← domainExpr instruction.domain,
-      ← opExpr instruction.op,
-      listExpr (mkConst ``NodeId) (← instruction.args.mapM nodeExpr)]
-
-private meta def arrayExpr (type : Expr) (items : List Expr) : MetaM Expr :=
-  mkAppM ``Array.mk #[listExpr type items]
-
-private meta def programExpr (program : Program) : MetaM Expr := do
-  mkAppM ``Program.mk
-    #[← arrayExpr (mkConst ``Operation)
-        (← program.operations.toList.mapM operationExpr),
-      ← arrayExpr (mkConst ``Node)
-        (← program.nodes.toList.mapM instructionExpr)]
-
-private meta def ruleKeyExpr (key : RuleKey) : MetaM Expr :=
-  do mkAppM ``RuleKey.mk #[toExpr key.name, mkNatLit key.schema]
-
-private meta def ruleExpr (rule : RuleId) : MetaM Expr :=
-  do mkAppM ``RuleId.mk #[mkNatLit rule.index]
-
-private meta def applicationExpr (application : ApplicationId) : MetaM Expr :=
-  do mkAppM ``ApplicationId.mk #[mkNatLit application.index]
-
-private meta def equalityExpr (equality : EqualityId) : MetaM Expr :=
-  do mkAppM ``EqualityId.mk #[mkNatLit equality.index]
-
-private meta def payloadExpr (payload : PayloadId) : MetaM Expr :=
-  do mkAppM ``PayloadId.mk #[mkNatLit payload.index]
-
-private def actionKindExpr : ActionKind -> Expr
-  | .forward => mkConst ``ActionKind.forward
-  | .backward => mkConst ``ActionKind.backward
-  | .improve => mkConst ``ActionKind.improve
-  | .shave => mkConst ``ActionKind.shave
-  | .instantiate => mkConst ``ActionKind.instantiate
-  | .rewrite => mkConst ``ActionKind.rewrite
-  | .regularize => mkConst ``ActionKind.regularize
-  | .split => mkConst ``ActionKind.split
-
-private meta def seenExpr (seen : SeenVersion) : MetaM Expr :=
-  do mkAppM ``SeenVersion.mk #[← nodeExpr seen.node, mkNatLit seen.version]
-
-private meta def structuralKeyExpr : StructuralKey -> MetaM Expr
-  | .node node => do mkAppM ``StructuralKey.node #[← nodeExpr node]
-  | .equality equality =>
-      do mkAppM ``StructuralKey.equality #[← equalityExpr equality]
-  | .application application =>
-      do mkAppM ``StructuralKey.application #[← applicationExpr application]
-
-private meta def structuralInputExpr (input : StructuralInput) : MetaM Expr :=
-  do
-    mkAppM ``StructuralInput.mk
-      #[← structuralKeyExpr input.key, mkNatLit input.generation]
-
-private meta def scopeExpr (binding : ScopeBinding) : MetaM Expr :=
-  do
-    mkAppM ``ScopeBinding.mk
-      #[← ruleKeyExpr binding.rule,
-      ← nodeExpr binding.anchor,
-      listExpr (mkConst ``NodeId) (← binding.watches.mapM nodeExpr),
-      listExpr (mkConst ``NodeId) (← binding.writes.mapM nodeExpr)]
-
-private meta def actionExpr (action : Action) : MetaM Expr :=
-  do
-    mkAppM ``Action.mk
-      #[mkNatLit action.serial,
-      mkNatLit action.programVersion,
-      ← applicationExpr action.application,
-      ← ruleExpr action.rule,
-      ← ruleKeyExpr action.key,
-      ← nodeExpr action.node,
-      actionKindExpr action.kind,
-      mkNatLit action.effort,
-      mkNatLit action.generation,
-      listExpr (mkConst ``SeenVersion) (← action.inputs.mapM seenExpr),
-      listExpr (mkConst ``NodeId) (← action.writes.mapM nodeExpr),
-      listExpr (mkConst ``StructuralInput)
-        (← action.structuralInputs.mapM structuralInputExpr),
-      natOptionExpr action.matcherEpoch]
-
-private def roleExpr : Role -> Expr
-  | .fact => mkConst ``Role.fact
-  | .instance => mkConst ``Role.instance
-  | .equality => mkConst ``Role.equality
-
-private meta def entryExpr (entry : Entry) : MetaM Expr :=
-  do
-    mkAppM ``Entry.mk
-      #[← actionExpr entry.origin,
-      roleExpr entry.role,
-      mkNatLit entry.schema,
-      listExpr (mkConst ``Nat) (entry.body.map mkNatLit)]
-
 private def rangeExpr : Range -> Expr
   | .all => mkConst ``Range.all
   | .unit => mkConst ``Range.unit
@@ -258,88 +134,10 @@ private def rangeExpr : Range -> Expr
   | .zero => mkConst ``Range.zero
   | .empty => mkConst ``Range.empty
 
-private meta def factCauseExpr : FactCause Range -> MetaM Expr
-  | .rule action proposed payload =>
-      do
-        mkAppM ``FactCause.rule
-          #[← actionExpr action, rangeExpr proposed, ← payloadExpr payload]
-  | .transport equality source =>
-      do
-        let equalityTerm <- equalityExpr equality
-        let sourceTerm <- seenExpr source
-        pure <|
-          mkApp3 (mkConst ``FactCause.transport) (mkConst ``Range)
-            equalityTerm sourceTerm
-
-private meta def factEventExpr (event : FactEvent Range) : MetaM Expr :=
-  do
-    mkAppM ``FactEvent.mk
-      #[mkNatLit event.programVersion,
-      ← nodeExpr event.node,
-      ← seenExpr event.previous,
-      rangeExpr event.fact,
-      mkNatLit event.version,
-      ← factCauseExpr event.cause]
-
-private meta def nodeFactExpr (fact : NodeFact Range) : MetaM Expr :=
-  do mkAppM ``NodeFact.mk #[← nodeExpr fact.node, rangeExpr fact.fact]
-
-private meta def edgeExpr (edge : EqualityEdge) : MetaM Expr :=
-  do
-    mkAppM ``EqualityEdge.mk
-      #[← nodeExpr edge.left,
-      ← nodeExpr edge.right,
-      mkNatLit edge.generation,
-      ← actionExpr edge.origin,
-      ← payloadExpr edge.payload]
-
-private meta def instanceEventExpr (event : InstanceEvent) : MetaM Expr :=
-  do
-    mkAppM ``InstanceEvent.mk
-      #[mkNatLit event.programVersion,
-      ← actionExpr event.origin,
-      mkNatLit event.family,
-      listExpr (mkConst ``NodeId) (← event.substitution.mapM nodeExpr),
-      listExpr (mkConst ``NodeId) (← event.products.mapM nodeExpr),
-      listExpr (mkConst ``NodeId) (← event.newNodes.mapM nodeExpr),
-      listExpr (mkConst ``ScopeBinding) (← event.bindings.mapM scopeExpr),
-      listExpr (mkConst ``ScopeBinding) (← event.newBindings.mapM scopeExpr),
-      listExpr (mkConst ``ApplicationId) (← event.applications.mapM applicationExpr),
-      listExpr (mkConst ``ApplicationId) (← event.newApplications.mapM applicationExpr),
-      mkNatLit event.generation,
-      listExpr (mkConst ``EqualityId) (← event.equalities.mapM equalityExpr),
-      listExpr (mkConst ``EqualityId) (← event.newEqualities.mapM equalityExpr),
-      ← payloadExpr event.payload]
-
-private meta def instanceQuoteExpr (quote : InstanceQuote) : MetaM Expr :=
-  do
-    mkAppM ``InstanceQuote.mk
-      #[← instanceEventExpr quote.event,
-      ← payloadExpr quote.payload,
-      ← entryExpr quote.entry]
-
-private meta def ruleStepExpr (step : RuleStep Range) : MetaM Expr :=
-  do
-    let factType <- mkAppM ``NodeFact #[mkConst ``Range]
-    mkAppM ``RuleStep.mk
-      #[← factEventExpr step.event,
-      ← payloadExpr step.payload,
-      ← entryExpr step.entry,
-      listExpr factType (← step.assumptions.mapM nodeFactExpr),
-      rangeExpr step.previous]
-
-private meta def transportStepExpr (step : TransportStep Range) : MetaM Expr :=
-  do
-    let factType <- mkAppM ``NodeFact #[mkConst ``Range]
-    mkAppM ``TransportStep.mk
-      #[← factEventExpr step.event,
-      ← equalityExpr step.equality,
-      ← edgeExpr step.edge,
-      ← payloadExpr step.payload,
-      ← entryExpr step.entry,
-      listExpr factType (← step.assumptions.mapM nodeFactExpr),
-      rangeExpr step.previous,
-      rangeExpr step.sourceFact]
+/-- The one structural encoder used by both quotation regression and proof
+emission. -/
+private def frontendEncoder : FrontendEncoder.Encoder Range :=
+  FrontendEncoder.make (mkConst ``Range) (fun fact => pure (rangeExpr fact))
 
 private meta def checkQuote (label : String) (actual expected : Expr) : MetaM Unit := do
   unless <- isDefEq actual expected do
@@ -367,12 +165,15 @@ private meta def checkQuoteData (quote : LiveQuotes) : MetaM Unit := do
   checkSchema table "negation rule" quote.negation.entry ``negationFactSchema
   checkSchema table "equality transport" quote.transport.entry
     ``oddnessEqualitySchema
-  checkQuote "instantiation" (← instanceQuoteExpr quote.instantiation)
+  checkQuote "instantiation"
+    (← frontendEncoder.instanceQuote quote.instantiation)
     (mkConst ``instanceQuote)
-  checkQuote "sine rule" (← ruleStepExpr quote.sine) (mkConst ``sineStep)
-  checkQuote "negation rule" (← ruleStepExpr quote.negation)
+  checkQuote "sine rule" (← frontendEncoder.ruleStep quote.sine)
+    (mkConst ``sineStep)
+  checkQuote "negation rule" (← frontendEncoder.ruleStep quote.negation)
     (mkConst ``negationStep)
-  checkQuote "equality transport" (← transportStepExpr quote.transport)
+  checkQuote "equality transport"
+    (← frontendEncoder.transportStep quote.transport)
     (mkConst ``transportStep)
 
 /-- Specialize generic caller-assumption seeding to this semantics adapter;
@@ -384,8 +185,7 @@ private def seedAssumed (program : Program) (base : List (NodeFact Range))
 
 /-- The real-sine adapter for the function-independent proof-event fold. -/
 private def frontendContext : ProofFrontend.Context Range Name :=
-  { encoder := FrontendEncoder.make (mkConst ``Range)
-      (fun fact => pure (rangeExpr fact))
+  { encoder := frontendEncoder
     resolveSchema := pure
     semantics := mkConst ``semantics
     domain := mkConst ``rangeSchema

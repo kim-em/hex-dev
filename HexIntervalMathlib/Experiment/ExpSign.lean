@@ -7,8 +7,9 @@ Authors: Kim Morrison
 module
 
 public import Mathlib.Analysis.SpecialFunctions.Exp
-public import HexInterval.Experiment.ProofFrontend
 public import HexInterval.Experiment.ExpSign
+public import HexInterval.Experiment.ProofRegistry
+public import HexInterval.Experiment.GenericInstanceReconstruction
 
 @[expose] public section
 
