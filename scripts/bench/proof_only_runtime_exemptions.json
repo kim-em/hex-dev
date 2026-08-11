@@ -174,6 +174,12 @@
     "reason": "Additionally registers the proof-only centered-function real-semantics companion and its conformance module; the factorization service target and executable dependency graph are unchanged."
   },
   {
+    "path": "lakefile.lean",
+    "baseline_blob": "6dd80771ae2212333b2a9b925b52056e0037ff56",
+    "current_blob": "ef7549faa4a5b64cdef340e3734f40e10ae3ebb1",
+    "reason": "Additionally registers the isolated Mathlib-free HexInterval staged-policy experiment and its conformance module; the factorization service target and executable dependency graph are unchanged."
+  },
+  {
     "path": "HexBerlekamp/FactorTacticTests.lean",
     "baseline_blob": "4063e15934a89c671ac72d201fa60c2ef6feaf59",
     "current_blob": "ac61dae5d09d966186661b1b85943b9fe0d91128",
