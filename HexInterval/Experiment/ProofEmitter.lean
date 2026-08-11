@@ -102,6 +102,13 @@ def sound {Fact : Type} {semantics : Semantics Fact} {program : Program}
             exact head.proof
           · exact tail.sound.proof input member }
 
+/-- The common one-input case, convenient for direct tactic emission. -/
+def singleton {Fact : Type} {semantics : Semantics Fact} {program : Program}
+    {base : List (NodeFact Fact)} {input : NodeFact Fact}
+    (head : Evidence (semantics.Entails program base input)) :
+    Evidence (InputsSound semantics program base [input]) :=
+  (EntailsList.cons head EntailsList.nil).sound
+
 end EntailsList
 
 /-- A caller-owned base fact entails itself in every program.  The tactic uses
