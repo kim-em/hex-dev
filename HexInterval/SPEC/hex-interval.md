@@ -1303,10 +1303,15 @@ field-for-field quotation regression. A transparent generic fold over an
 arbitrary quoted chronology remains an alternative to measure, not a
 prerequisite for this tactic-emitted-application architecture.
 The first elaborator canary runs the opaque real-sine planner, searches the
-local context for the two hypotheses consumed by the emitted chain, and
-assigns that ordinary proof to the goal. It deliberately reuses the checked
-literal quote rather than reifying an arbitrary returned trace; general trace
-quotation and schema selection remain the next frontend experiment.
+returned state for the instance, two rule facts, equality edge, payload
+entries, and versioned input facts, and reifies all four proof steps as
+ordinary Lean expressions. It requires those expressions to be definitionally
+equal to the checked literal chain, then searches the local context for the
+two hypotheses consumed by that chain and assigns its ordinary proof to the
+goal. This is an executable quotation-fidelity boundary, but not yet a general
+proof assembler: registry-driven schema selection and construction of replay
+applications from an arbitrary returned trace remain the next frontend
+experiment.
 
 A Mathlib companion must instantiate those abstract schemas, decode each
 frozen entry independently of package cache state, and recheck the
@@ -1435,11 +1440,13 @@ semantic bodies of that fold. The private prefix resolver supplies their exact
 historical inputs and lifts them across checked program extensions.
 `TraceReplay` now consumes the authoritative cross-history order, validates
 equality availability, and requires exact fact, instance, equality, program,
-and version exhaustion. The remaining proof-frontend work is to quote that
-accepted plain data into a transparent complete fold or emit the corresponding
-lemma applications directly. The `ProofEmitter` sine vertical now establishes
-the complete second route for one multi-package trace; frontend automation and
-a generic first-route fold remain unfinished.
+and version exhaustion. The tactic frontend now extracts and reifies the
+accepted plain data for the complete sine trace, while `ProofEmitter`
+establishes the direct-application route for that multi-package example. The
+remaining work is to select schemas from the registry and assemble those lemma
+applications directly from an arbitrary returned trace, or alternatively to
+feed the quote to a transparent generic fold. Neither general route is
+complete yet.
 
 Because `Semantics.holds` may inspect the complete program as well as the
 valuation, conservative model extension alone cannot transport old facts or
