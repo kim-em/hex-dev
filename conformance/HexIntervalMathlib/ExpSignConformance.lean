@@ -8,6 +8,7 @@ import HexIntervalMathlib.Experiment.ExpSign
 import HexInterval.Experiment.GoalFrontend
 import HexInterval.Experiment.GoalClosure
 import HexInterval.Experiment.ProofFrontend
+import HexInterval.Experiment.TargetRun
 import Mathlib.Lean.Elab.Tactic.Meta
 
 /-!
@@ -212,6 +213,37 @@ def fixtureInput? (input : CheckerInput Bound) : Option Fixture := do
   | .ok registry => some { session, registry }
   | .error _ => none
 
+private def firstOffer : TargetRun.Controller Bound Unit :=
+  { update := fun state _ => state
+    choose := fun state view =>
+      match view.offers[0]? with
+      | some offer => .select offer state
+      | none => .stop state }
+
+private def stopPolicy : TargetRun.Controller Bound Unit :=
+  { update := fun state _ => state
+    choose := fun state _ => .stop state }
+
+structure RunFixture extends Fixture where
+  reached : TargetRun.Reached Bound
+  events : Array (TargetRun.Event Bound)
+
+def runRaw? (input : CheckerInput Bound) (controller : TargetRun.Controller Bound Unit)
+    (fuel : Nat) : Option (TargetRun.Result Bound Unit) := do
+  let .ok session := PolicySession.Session.start factDomain
+      input.baseProgram packages input.initialFacts limits
+    | none
+  some (TargetRun.drive factDomain input.target.node input.target.fact controller
+    fuel session ())
+
+def runInput? (input : CheckerInput Bound) : Option RunFixture := do
+  let result <- runRaw? input firstOffer limits.policy.maxDecisions
+  let .target reached := result.stop | none
+  match ProofRegistry.build result.session.registry proofPackages with
+  | .ok registry =>
+      some { session := result.session, registry, reached, events := result.events }
+  | .error _ => none
+
 #guard
   fixture?.any fun fixture =>
     fixture.registry.emit.find? expFactSchema.key == some ``expFactSchema
@@ -244,6 +276,46 @@ private def nestedInput : CheckerInput Bound :=
   { baseProgram := nestedProgram
     initialFacts := #[.all, .all, .all]
     target := { node := node 2, fact := .nonnegative } }
+
+#guard
+  runInput? nestedInput |>.any fun fixture =>
+    fixture.reached.seen == ({ node := node 2, version := 1 } : SeenVersion) &&
+      fixture.reached.fact == .nonnegative && fixture.events.size == 2 &&
+      fixture.session.state.engine.facts ==
+        #[.all, .nonnegative, .nonnegative] &&
+      fixture.session.state.engine.chronology == #[.fact 0, .fact 1]
+
+#guard
+  runRaw? nestedInput firstOffer 0 |>.any fun result =>
+    match result.stop with
+    | .fuel => result.events.isEmpty
+    | _ => false
+
+#guard
+  runRaw? nestedInput stopPolicy limits.policy.maxDecisions |>.any fun result =>
+    match result.stop with
+    | .policyStop live => live == 2 && result.events.isEmpty
+    | _ => false
+
+private def initiallyReached : CheckerInput Bound :=
+  { nestedInput with target := { node := node 0, fact := .all } }
+
+#guard
+  runRaw? initiallyReached firstOffer 0 |>.any fun result =>
+    match result.stop with
+    | .target reached =>
+        reached.seen == ({ node := node 0, version := 0 } : SeenVersion) &&
+          reached.fact == .all && result.events.isEmpty
+    | _ => false
+
+private def unreachableTarget : CheckerInput Bound :=
+  { nestedInput with target := { node := node 2, fact := .empty } }
+
+#guard
+  runRaw? unreachableTarget firstOffer limits.policy.maxDecisions |>.any fun result =>
+    match result.stop with
+    | .saturated => result.events.size == 2 && result.session.complete
+    | _ => false
 
 private def nestedAction : Action :=
   { serial := 0
@@ -392,7 +464,7 @@ private def inputContext (result : GoalFrontend.Result Bound)
 
 private meta def emitInput (result : GoalFrontend.Result Bound)
     (base : GoalClosure.BaseProof) : MetaM Expr := do
-  let some fixture := fixtureInput? result.input
+  let some fixture := runInput? result.input
     | throwError "interval_exp: dynamic search or proof registry failed"
   let some trace := Frontend.trace? fixture.session.state.engine fixture.session.arena
     | throwError "interval_exp: dynamic chronology quotation failed"
@@ -400,10 +472,8 @@ private meta def emitInput (result : GoalFrontend.Result Bound)
     throwError "interval_exp: exponential rule unexpectedly changed the graph"
   let state ← ProofFrontend.emitTrace (inputContext result base)
     trace.program trace.events fixture.registry.emit
-  let target : SeenVersion :=
-    { node := result.input.target.node, version := 1 }
   let some proof :=
-      ProofFrontend.findProof? state.known target result.input.target.fact
+      ProofFrontend.findProof? state.known fixture.reached.seen result.input.target.fact
     | throwError "interval_exp: dynamic target fact was not emitted"
   pure proof
 
