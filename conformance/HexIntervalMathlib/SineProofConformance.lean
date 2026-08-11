@@ -39,6 +39,19 @@ def emitTable? : Option (SchemaTable Lean.Name) :=
     (table.find? negationFactSchema.key).isSome &&
       (table.find? sineFactSchema.key).isNone
 
+def wrongSineEmit : EmitPackage Lean.Name :=
+  { schemas :=
+      [{ key := sineFactSchema.key
+         handle := ``negationFactSchema },
+       { key := oddnessInstanceSchema.key
+         handle := ``oddnessInstanceSchema },
+       { key := oddnessEqualitySchema.key
+         handle := ``oddnessEqualitySchema }] }
+
+#guard
+  (SchemaTable.build [negationEmit, wrongSineEmit]).any fun table =>
+    table.find? sineFactSchema.key == some ``negationFactSchema
+
 def oddnessAction : Action :=
   { serial := 0
     programVersion := 0

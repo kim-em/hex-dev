@@ -121,9 +121,11 @@ def assumed {Fact : Type} {semantics : Semantics Fact} {program : Program}
       intro _ _ assumptions
       exact assumptions fact member }
 
-/-- The domain's top fact is available for a generated node at version zero.
-The node lookup is explicit, so an emitter cannot attach top soundness to a
-nonexistent node or to a fact for a different domain. -/
+/-- Prove the domain's top fact for any exactly checked node.  The chronology
+emitter uses this theorem to seed generated nodes at version zero; that
+generated/version condition belongs to its evidence-table discipline, not to
+this semantic lemma.  The explicit lookup prevents attaching top soundness to
+a nonexistent node or to a fact for a different domain. -/
 def topFact {Fact : Type} {semantics : Semantics Fact}
     (domain : FactDomainSchema semantics) (program : Program)
     (base : List (NodeFact Fact)) (node : NodeId) (instruction : Node)
@@ -135,7 +137,7 @@ def topFact {Fact : Type} {semantics : Semantics Fact}
       intro valuation model _
       exact domain.topSound program valuation node instruction nodeAt model }
 
-/-! ## Package-contributed tactic schema names -/
+/-! ## Package-contributed tactic schema handles -/
 
 /-- Tactic-side address of one package-owned replay schema. `handle` is owned
 by the frontend; it is never dynamically invoked by the trusted checker. The
