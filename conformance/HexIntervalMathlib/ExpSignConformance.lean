@@ -6,6 +6,7 @@ Authors: Kim Morrison
 
 import HexIntervalMathlib.Experiment.ExpSign
 import HexInterval.Experiment.GoalFrontend
+import HexInterval.Experiment.GoalClosure
 import HexInterval.Experiment.ProofFrontend
 import Mathlib.Lean.Elab.Tactic.Meta
 
@@ -25,6 +26,7 @@ open Lean Elab Tactic Meta
 open Hex.Interval.Experiment
 open Propagator PolicySession SemanticReplay ChronologicalReplay ProofEmitter
 open Frontend FrontendEncoder ProofFrontend ProofRegistry GoalFrontend ExpSign
+open GoalClosure
 
 /-! ## Extensible goal reification -/
 
@@ -76,6 +78,35 @@ private def claimParser : GoalFrontend.Parser Bound :=
           pure none
       else
         pure none }
+
+private theorem sourceAligned : sourceModel.operation = sourceOperation := rfl
+
+private theorem expAligned : expModel.operation = expOperation := rfl
+
+private def sourceMeaning : GoalClosure.Package :=
+  { operation := sourceOperation
+    model := mkConst ``sourceModel
+    aligned := mkConst ``sourceAligned
+    prove := fun arguments _ => do
+      unless arguments.isEmpty do
+        throwError "interval_exp: source meaning received arguments"
+      let empty := FrontendEncoder.listExpr (mkConst ``Real) []
+      mkAppM ``Eq.refl #[empty] }
+
+private def expMeaning : GoalClosure.Package :=
+  { operation := expOperation
+    model := mkConst ``expModel
+    aligned := mkConst ``expAligned
+    prove := fun arguments output => do
+      let [input] := arguments
+        | throwError "interval_exp: exponential meaning is not unary"
+      let expected ← mkAppM ``Real.exp #[input]
+      unless ← isDefEq output expected do
+        throwError "interval_exp: recognizer did not preserve exponential meaning"
+      mkAppM ``Eq.refl #[output] }
+
+private def meanings : Array GoalClosure.Package :=
+  #[sourceMeaning, expMeaning]
 
 private meta def reifyGoal (target : Expr) : MetaM (GoalFrontend.Result Bound) := do
   let registry ←
@@ -269,14 +300,28 @@ private def boundExpr : Bound → Expr
   | .nonnegative => mkConst ``Bound.nonnegative
   | .empty => mkConst ``Bound.empty
 
+private def boundEncoder : FrontendEncoder.Encoder Bound :=
+  FrontendEncoder.make (mkConst ``Bound) (fun fact => pure (boundExpr fact))
+
+private def factBridge : GoalClosure.FactBridge Bound :=
+  { runtime := factDomain
+    schema := mkConst ``boundSchema
+    proveAssumption := fun program valuation node fact _ proof => do
+      let nodeFact ← boundEncoder.nodeFact { node, fact }
+      let expected ←
+        mkAppM ``SemanticReplay.Semantics.holds
+          #[mkConst ``semantics, program, valuation, nodeFact]
+      unless ← isDefEq (← inferType proof) expected do
+        throwError "interval_exp: hypothesis does not prove its parsed fact"
+      pure proof }
+
 private def seedAssumed (graph : Program) (base : List (NodeFact Bound))
     (index : Nat) (fact : NodeFact Bound) (found : base[index]? = some fact) :
     Evidence (semantics.Entails graph base fact) :=
   ProofEmitter.assumedAt graph base index fact found
 
 private def frontendContext : ProofFrontend.Context Bound Name :=
-  { encoder := FrontendEncoder.make (mkConst ``Bound)
-      (fun fact => pure (boundExpr fact))
+  { encoder := boundEncoder
     resolveSchema := pure
     semantics := mkConst ``semantics
     domain := mkConst ``boundSchema
@@ -309,6 +354,76 @@ private meta def emitEvidence : MetaM Expr := do
 
 private def expTarget (x : ℝ) : Prop :=
   0 ≤ Real.exp x
+
+private meta def proveModeledExp (target : Expr) : MetaM Expr := do
+  let result ← reifyGoal target
+  unless result.input.baseProgram == ExpSign.program do
+    throwError "interval_exp model test: expected the exact target graph"
+  let some fallback := GoalClosure.termAt? result.terms { index := 0 }
+    | throwError "interval_exp model test: missing source expression"
+  if (← observing? <| GoalClosure.proveModel (mkConst ``Real) fallback
+      #[sourceMeaning] boundEncoder result).isSome then
+    throwError "interval_exp model test: missing meaning package was accepted"
+  let falseExp : GoalClosure.Package :=
+    { expMeaning with prove := fun _ _ => pure (mkConst ``True.intro) }
+  if (← observing? <| GoalClosure.proveModel (mkConst ``Real) fallback
+      #[sourceMeaning, falseExp] boundEncoder result).isSome then
+    throwError "interval_exp model test: false node link was accepted"
+  let model ← GoalClosure.proveModel (mkConst ``Real) fallback meanings
+    boundEncoder result
+  let base ← GoalClosure.proveBase (mkConst ``Bound) (mkConst ``semantics)
+    boundEncoder result.input
+  let facts ← GoalClosure.proveFacts factBridge boundEncoder result base model
+  let matching := result.baseFacts.zipIdx.find? fun item =>
+    item.1 == result.input.target
+  let evidence ←
+    match matching with
+    | some (fact, index) => do
+        let factTerm ← boundEncoder.nodeFact fact
+        let someFact ← mkAppM ``Option.some #[factTerm]
+        let found ← mkAppM ``Eq.refl #[someFact]
+        mkAppM ``seedAssumed
+          #[base.program, base.facts, mkNatLit index, factTerm, found]
+    | none =>
+        if result.baseFacts == ExpSign.baseFacts then
+          emitEvidence
+        else
+          throwError "interval_exp model test: fixed trace has different base facts"
+  let proof ←
+    mkAppM ``Evidence.proof #[evidence, model.valuation, model.proof, facts]
+  unless ← isDefEq (← inferType proof) target do
+    throwError "interval_exp model test: modeled replay has the wrong target"
+  pure (← instantiateMVars proof)
+
+syntax (name := intervalExpModelTac) "interval_exp_model" : tactic
+
+@[tactic intervalExpModelTac] meta def evalIntervalExpModel : Tactic := fun stx => do
+  match stx with
+  | `(tactic| interval_exp_model) =>
+      let goal ← getMainGoal
+      goal.withContext do
+        goal.assign (← proveModeledExp (← instantiateMVars (← goal.getType)))
+      replaceMainGoal []
+  | _ => throwUnsupportedSyntax
+
+theorem tacticExpModeled (x : ℝ) : 0 ≤ Real.exp x := by
+  interval_exp_model
+
+/--
+info: 'Hex.IntervalMathlib.ExpSignConformance.tacticExpModeled' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms tacticExpModeled
+
+theorem tacticExpModeledSeed (x : ℝ) (_h : 0 ≤ Real.exp x) :
+    0 ≤ Real.exp x := by
+  interval_exp_model
+
+/--
+info: 'Hex.IntervalMathlib.ExpSignConformance.tacticExpModeledSeed' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms tacticExpModeledSeed
 
 private meta def proveExp (target : Expr) : MetaM Expr := do
   let reified ← reifyGoal target
