@@ -127,6 +127,31 @@ def assumed {Fact : Type} {semantics : Semantics Fact} {program : Program}
       intro _ _ assumptions
       exact assumptions fact member }
 
+theorem memOfGet? {Item : Type} (items : List Item) (index : Nat)
+    (item : Item) (found : items[index]? = some item) : item ∈ items := by
+  induction items generalizing index with
+  | nil => simp at found
+  | cons head tail ih =>
+      cases index with
+      | zero =>
+          simp at found
+          subst head
+          simp
+      | succ index =>
+          simp at found
+          exact List.mem_cons_of_mem head (ih index found)
+
+/-- Seed one caller-owned fact by its checked position in the base list.
+
+This form is convenient for a tactic: it can quote the fact and numeric index,
+then close `found` by reduction.  The resulting theorem still depends only on
+ordinary membership in the caller's exact assumption list. -/
+def assumedAt {Fact : Type} {semantics : Semantics Fact} (program : Program)
+    (base : List (NodeFact Fact)) (index : Nat) (fact : NodeFact Fact)
+    (found : base[index]? = some fact) :
+    Evidence (semantics.Entails program base fact) :=
+  assumed (memOfGet? base index fact found)
+
 /-- Prove the domain's top fact for any exactly checked node.  The chronology
 emitter uses this theorem to seed generated nodes at version zero; that
 generated/version condition belongs to its evidence-table discipline, not to

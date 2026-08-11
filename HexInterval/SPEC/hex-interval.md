@@ -1308,9 +1308,8 @@ the package-contributed schema declaration, then emits the instance, sine,
 negation, equality-transport, and caller-closure applications in dependency
 order. Every accepted `Option` result carries an ordinary `rfl` success proof;
 if the quote or schema is wrong, elaboration fails. The assigned term consumes
-the actual returned quote. Its earlier checked literal chain remains a
-field-for-field correspondence regression, a cheap goal-shape probe, and the
-source of the canary's fixed typed premise helpers.
+the actual returned quote and reified final program. Its checked literal event
+chain is a separate field-for-field regression and cheap goal-shape probe.
 
 This is a complete direct proof assembler for the fixed real-sine graph, not
 yet the general tactic. Its elaborator walks the arbitrary quoted event list
@@ -1321,17 +1320,32 @@ result versions. The fold carries the program version established by the
 instance event rather than trusting each later fact event's claimed version.
 Reordering negation before the sine result it consumes, or mutating a
 transport to a different program version, fails before replay. This event fold
-contains no sine, negation, or other function case. The next frontend
-experiment must derive the base program, semantic bridge, initial evidence
-table, and final target for an arbitrary caller expression instead of naming
-this canary's fixed contexts.
+contains no sine, negation, or other function case. It seeds caller facts by
+checked position in the emitter's declared base-assumption list; the caller
+hypotheses supplied to final closure discharge that same list. This direct
+emitter does not yet construct the `InitialContext` witness that relates the
+declared list position-for-position to `CheckerInput.initialFacts`. The
+complete `TraceReplay` checker already constructs its `initialBase`
+position-for-position from `CheckerInput.initialFacts`; separately,
+`ChronologicalReplay.Cursor.startInput` consumes `InitialContext` for cursor
+replay. The later generic frontend must carry the corresponding binding into
+direct emission. The current replay applications and final closure remain
+indexed by the exact `CheckerInput.baseProgram` and target. The emitter also
+seeds the instance event's fresh nodes with domain top after checking their
+lookup in the reified final program; named sine-specific previous-fact proofs
+are absent from the tactic term. The next frontend experiment must derive the
+base program, declared base-assumption list and its caller-input binding,
+semantic bridge, and final target for an arbitrary caller expression, and
+reconstruct intermediate programs for later or repeated instantiations,
+instead of naming this canary's fixed contexts.
+
 The fixed canary also requires a live session with no dropped work and an exact
 proof history of one instance, one equality, three fact events, and the
 expected interleaving before it reads historical values through
 `Engine.factAt?`. This exact trace-shape gate is not a claim that
-`Session.complete` holds. The values are quoted as
-data, while their proofs come from caller assumptions, top soundness, or an
-earlier emitted replay result. A future arbitrary-trace emitter must likewise
+`Session.complete` holds. The values are quoted as data, while their proofs
+come from caller assumptions, top soundness, or an earlier emitted replay
+result. A future arbitrary-trace emitter must likewise
 obtain evidence from its chronological proof table; a successful full-history
 lookup is never evidence that the dependency was available at the required
 earlier step.
@@ -1345,10 +1359,10 @@ chronology position.
 
 A general direct emitter maintains a table from each already-established fact
 version to its `Evidence` term; the real-sine assembler now exercises this
-table directly. Caller assumptions seed that table
-through the generic `ProofEmitter.assumed` lemma; generated nodes at version
-zero use `ProofEmitter.topFact`, tied to an exact checked node lookup and the
-fact-domain schema's top theorem. For a rule or conditional equality,
+table directly. Caller assumptions seed that table through the generic
+`ProofEmitter.assumedAt` lemma and an exact list lookup; generated nodes at
+version zero use `ProofEmitter.topFact`, tied to an exact checked node lookup
+and the fact-domain schema's top theorem. For a rule or conditional equality,
 `ProofEmitter.EntailsList` is constructed in the action's declared input order
 and combines the selected terms into `InputsSound`; replay separately checks
 that its node list matches the action order, while `InputsSound` itself is a
