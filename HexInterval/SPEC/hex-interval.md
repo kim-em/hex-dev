@@ -1800,6 +1800,39 @@ later mixed-function acceptance case should use the existing instantiation
 protocol to introduce an auxiliary expression whose package then participates
 in the same dependent chain.
 
+That acceptance case is now executable for
+`Real.exp (Real.sin (-x)) ≤ 3`. The caller graph contains only `x`, `-x`,
+`sin (-x)`, and the outer exponential. The sine forward rule deliberately
+declines an input whose instruction is negation, so direct propagation cannot
+close the target. A sine-owned network matcher recognizes the oddness shape
+and adds `sin x`, `-(sin x)`, and an equality between the latter expression
+and `sin (-x)`. The resulting successful chronology is fixed by a live guard:
+the instance event comes first; independent sine and negation packages derive
+the unit-range fact on the two new nodes; generic equality transport installs
+that exact fact, with its retained version, on the original `sin (-x)` node;
+and only then does the independent exponential package derive the target.
+Removing or reordering any of those dependencies makes replay fail closed.
+
+The goal reifier, target driver, policy session, chronology quotation,
+`ProofFrontend`, and final semantic closure have no sine, negation, or
+exponential branch. Each operation supplies its own syntax recognition,
+planning, mathematical relation, and replay schema. They cooperate through
+one shared fact domain and value semantics, as required by the package
+boundary above. The final theorem is an ordinary kernel theorem, and its
+guarded axiom report contains only Lean's standard propositional extensionality,
+choice, and quotient axioms. This vertical adds no rational backend and uses
+neither `native_decide` nor an unchecked proof shortcut.
+
+This is a deliberately exact canary, not yet the production abstraction. Its
+replay schemas validate the particular base and extended programs, and its
+semantic model array still couples each operation to a numeric position.
+Consequently it demonstrates that dynamic expression instantiation composes
+with arbitrary downstream function propagation, but not yet that packages can
+be reordered or instantiated under arbitrary surrounding graphs. The next
+generalization should resolve operation meanings and replay obligations by
+stable package keys, construct the extension proof for the actual appended
+graph, and preserve this same guarded chronology as a regression test.
+
 The first goal-reification experiment now derives the exponential canary's
 base program, version-zero fact array, and target fact from the actual Lean
 goal before running its compiled fixture. Expression packages contribute an
