@@ -25,13 +25,20 @@
 `reports/bench-results/hexbz-retained-prime-probe.json`; analysis in
 `reports/hexbz-retained-prime-degrees.md`.
 
-**Verdict: documented no-go.** The rejection half of the gate is met
-(`hoeij_M12_f132` loses 77.9% of post-degree-check leaves, `legendre_P26`
-48.0%), but only 2 of 392 rows have any degree the selected prime can form and
-a retained prime cannot, the removed leaves are exactly the ones the trailing
-filter already rejects (candidate constructions and exact divisions are
-unchanged corpus-wide), and consulting costs up to 9.5% on the
-Swinnerton-Dyer rows. Nothing was installed in production.
+**Verdict: documented no-go**, but not for the reason the first draft gave.
+Both halves of the issue's gate are met: `hoeij_M12_f132` loses 77.9% of its
+post-degree-check leaves (`legendre_P26` 48.0%), and a predicate-only arm --
+a short-circuiting scan that allocates nothing -- has a worst per-row
+regression of 0.96% across the corpus, inside the measured floor. What fails is
+the acceptance criterion behind those thresholds: every leaf the filter rejects
+is one the trailing filter already rejects, so candidate constructions and
+exact divisions are unchanged corpus-wide, and the entire saving is 77.5 µs on
+a row that takes 960.9 ms end to end (0.008%) and 3.4 µs on one that takes
+6.9 ms (0.049%). No sweep could show that. Nothing is installed in production.
+
+An earlier draft of the report blamed an unfavourable cost; that was an
+artifact of the counted arm's per-leaf allocation, and the predicate-only arm
+was added to price the filter properly.
 
 ## Current frontier
 
