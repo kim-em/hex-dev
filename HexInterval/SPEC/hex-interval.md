@@ -1375,8 +1375,9 @@ do not disable an otherwise applicable proof; later operation packages may
 also extend the registry after the target prefix. Removing that last prefix
 comparison requires package-compositional construction of the program
 semantics and generic proof emission for the recorded top/assumption seed
-recipes; it remains the next frontend experiment rather than an assumed
-capability.
+recipes. `GoalClosure` now supplies those two proof bridges; running compiled
+search on the resulting dynamic checker input remains the next frontend
+experiment rather than an assumed capability.
 
 The first package-composed semantics experiment removes a second fixed-graph
 assumption. An operation-meaning package supplies an opaque operation signature
@@ -1396,14 +1397,49 @@ instruction, the exponential package's current operation slot, and unary
 argument before proving the result. Key-resolved lookup replaces that
 canary-specific numeric slot before packages may be reordered. A
 three-node `exp (exp x)` canary obtains an ordinary theorem through that schema,
-while applying it to the source node fails closed. The remaining frontend gap
-is a kernel-checked link from each syntax recognizer to its operation relation,
-followed by generic discharge of the reifier's top and ordered-assumption seed
-recipes. A recognizer match alone is never treated as semantic evidence.
+while applying it to the source node fails closed. The `GoalClosure` experiment
+below supplies the kernel-checked link from syntax packages to their operation
+relations and generically discharges the reifier's top and ordered-assumption
+seed recipes. A recognizer match alone is never treated as semantic evidence.
 This first adapter uses one semantic value type for all domains. A later
 multi-domain adapter must choose and validate a tagged universal value or a
 domain-indexed valuation rather than pretending heterogeneous values have one
 untyped representation.
+
+The first kernel link from the goal graph to this semantics is also generic in
+the mathematical operations. Each goal-closure package carries its opaque
+operation, the corresponding semantic model term, a kernel proof that the two
+operations agree, and a callback which constructs the model's relation proof
+for concrete argument and result expressions. The assembler first requires
+the complete package operation array to equal the reified program's array. It
+then checks that the term table covers every node in exact SSA order, builds a
+total valuation from those terms, and emits one package-owned relation theorem
+per instruction. A recursive `Meanings` proof turns those node theorems and
+the package-by-package alignment proofs into `semantics.models` for the exact
+reified graph. Missing packages and a callback returning an unrelated proof
+both fail during elaboration. Recognizer success is not used as evidence.
+
+The same bridge constructs the caller-fact premise without arithmetic or
+function cases. Canonical version-zero facts begin at the domain schema's top
+theorem. Each recorded hypothesis must typecheck as its parsed semantic fact;
+the bridge reruns the runtime narrowing operation and the independent
+`proveMeet` schema in the recorded order until it reaches the exact installed
+base fact. It then supplies all base facts to the emitted replay theorem. The
+exponential canary now has an ordinary `interval_exp_model` theorem whose
+value assignment, complete operation model, and caller facts come from the
+actual reified goal. One variant closes from the live exponential replay; a
+second consumes a caller hypothesis through the ordered seed path. Neither
+uses `native_decide`.
+
+This experiment still uses the exponential canary's fixed compiled search
+trace when the target is not already a caller fact, so it presently requires
+the reified graph to be exactly that two-node target graph. The next step is to
+start the generic session from the reifier's `CheckerInput`, select the target
+node in that session, and feed its dynamically quoted trace to
+`ProofFrontend`. That removes the last exact-graph check and lets supported
+hypotheses append unrelated nodes without changing proof production. Key-
+resolved semantic model selection must land before operation packages may be
+reordered; array position is not a permanent package identity.
 
 The fixed canary also requires a live session with an exact proof history of one
 instance, one equality, three fact events, and the expected interleaving before
