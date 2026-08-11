@@ -5,6 +5,7 @@ Authors: Kim Morrison
 -/
 
 import HexInterval.Experiment.PolicySession
+import HexInterval.Experiment.SemanticReplay
 
 /-!
 # Arbitrary-function package conformance through the policy session
@@ -25,7 +26,7 @@ and matcher cursor together.
 
 namespace Hex.Interval.PolicyFunctionConformance
 
-open Experiment Propagator PayloadArena PolicySession
+open Experiment Propagator PayloadArena PolicySession SemanticReplay
 
 abbrev Rank := Nat
 
@@ -428,6 +429,341 @@ def contracted? : Option (PolicySession.Session Rank) := do
                       action.key == contractKey && proof == payload 2
                   | .transport _ _ => false
             | _, _ => false
+
+/-! ## Package-owned semantic replay of the live function session -/
+
+/-- The compact semantic canary interprets the package's sine-shaped operation
+as the constant-zero function and its negation-shaped operation as integer
+negation.  The generic replay registry never sees either interpretation. -/
+def sinNegInstruction : Node :=
+  { domain := real, op := { index := 2 }, args := [node 1] }
+
+def sinInstruction : Node :=
+  { domain := real, op := { index := 2 }, args := [node 0] }
+
+def negSinInstruction : Node :=
+  { domain := real, op := { index := 1 }, args := [node 3] }
+
+def extendedProgram : Program :=
+  { operations
+    nodes := program.nodes ++ #[sinInstruction, negSinInstruction] }
+
+def FunctionModels (actualProgram : Program) (valuation : NodeId -> Int) : Prop :=
+  (actualProgram.node? (node 2) = some sinNegInstruction ->
+    valuation (node 2) = 0) ∧
+  (actualProgram.node? (node 3) = some sinInstruction ->
+    valuation (node 3) = 0) ∧
+  (actualProgram.node? (node 4) = some negSinInstruction ->
+    valuation (node 4) = -valuation (node 3))
+
+def RankAllows (rank : Rank) (value : Int) : Prop :=
+  rank = 0 ∨ value = 0
+
+def functionSemantics : SemanticReplay.Semantics Rank :=
+  { Value := Int
+    models := FunctionModels
+    holds := fun _ valuation fact => RankAllows fact.fact (valuation fact.node) }
+
+theorem functionPrefix : ProgramPrefix program extendedProgram := by
+  refine
+    { operationSize := ?_
+      nodeSize := ?_
+      operationAt := ?_
+      nodeAt := ?_ }
+  · simp [program, extendedProgram]
+  · simp [program, extendedProgram]
+  · intro index within
+    simp [program, extendedProgram]
+  · intro index within
+    cases index with
+    | zero => rfl
+    | succ index =>
+        cases index with
+        | zero => rfl
+        | succ index =>
+            cases index with
+            | zero => rfl
+            | succ index =>
+                have lower : 3 ≤ index + 1 + 1 + 1 := by
+                  exact Nat.le_add_left 3 index
+                exact False.elim (Nat.not_lt_of_ge lower within)
+
+/-- Adding the package-generated `sin x` and `-(sin x)` nodes is a
+conservative semantic extension: every old valuation extends without changing
+an old node. -/
+theorem functionExtension :
+    functionSemantics.Extends program extendedProgram := by
+  intro valuation model
+  let extended : NodeId -> Int :=
+    fun observed => if observed.index < 3 then valuation observed else 0
+  refine ⟨extended, ?_, ?_⟩
+  · refine ⟨?_, ?_, ?_⟩
+    · intro _
+      have old := model.1 (by rfl)
+      simpa [extended, node] using old
+    · intro _
+      simp [extended, node]
+    · intro _
+      simp [extended, node]
+  · intro observed within
+    have oldIndex : observed.index < 3 := by
+      simpa [program] using within
+    simp [extended, oldIndex]
+
+theorem oddnessEntails :
+    functionSemantics.EntailsEq extendedProgram []
+      (node 2) (node 4) := by
+  change ∀ valuation : NodeId -> Int, FunctionModels extendedProgram valuation ->
+    (∀ assumption, assumption ∈ ([] : List (NodeFact Rank)) ->
+      RankAllows assumption.fact (valuation assumption.node)) ->
+    valuation (node 2) = valuation (node 4)
+  intro valuation model _
+  have sinNeg := model.1 (by rfl)
+  have sinX := model.2.1 (by rfl)
+  have negSinX := model.2.2 (by rfl)
+  calc
+    valuation (node 2) = (0 : Int) := sinNeg
+    _ = -valuation (node 3) := by rw [sinX]; simp
+    _ = valuation (node 4) := negSinX.symm
+
+theorem contractEntails (assumptions : List (NodeFact Rank)) :
+    functionSemantics.Entails extendedProgram assumptions
+      { node := node 3, fact := 1 } := by
+  intro valuation model _
+  exact Or.inr (model.2.1 (by rfl))
+
+inductive InstanceCertificate where
+  | oddness (batchSize : Nat)
+
+inductive EqualityCertificate where
+  | oddness
+
+inductive FactCertificate where
+  | range
+
+def decodeInstance : List Nat -> Option InstanceCertificate
+  | [batchSize, 47] => some (.oddness batchSize)
+  | _ => none
+
+def decodeEquality : List Nat -> Option EqualityCertificate
+  | [43] => some .oddness
+  | _ => none
+
+def decodeFact : List Nat -> Option FactCertificate
+  | [1, 73] => some .range
+  | _ => none
+
+def contractBinding : ScopeBinding :=
+  { rule := contractKey
+    anchor := node 3
+    watches := [node 0]
+    writes := [node 3] }
+
+def instanceSchema : PackedInstanceSchema functionSemantics :=
+  { rule := matcherKey
+    schema := 4
+    Certificate := InstanceCertificate
+    decode := decodeInstance
+    replay := fun _ _ context certificate =>
+      if beforeProof : context.before = program then
+        if afterProof : context.after = extendedProgram then
+          if shapeProof :
+              context.event.programVersion = 1 ∧
+                context.event.family = 41 ∧
+                context.event.substitution = [node 2] ∧
+                context.event.products = [node 3, node 4] ∧
+                context.event.newNodes = [node 3, node 4] ∧
+                context.event.bindings = [contractBinding] ∧
+                context.event.newBindings = [contractBinding] ∧
+                context.event.applications = [{ index := 1 }] ∧
+                context.event.newApplications = [{ index := 1 }] ∧
+                context.event.generation = 1 ∧
+                context.event.equalities = [{ index := 0 }] ∧
+                context.event.payload = payload 0 then
+            match certificate with
+            | .oddness batchSize =>
+                if batchProof :
+                    batchSize = context.event.origin.structuralInputs.length then
+                  some
+                    { proof := by
+                        simpa [beforeProof, afterProof] using functionExtension }
+                else none
+          else none
+        else none
+      else none }
+
+def equalitySchema : PackedEqualitySchema functionSemantics :=
+  { rule := matcherKey
+    schema := 3
+    Certificate := EqualityCertificate
+    decode := decodeEquality
+    replay := fun _ _ context _ =>
+      if programProof : context.program = extendedProgram then
+        if shapeProof :
+            context.assumptions = [] ∧
+              context.equality = { index := 0 } ∧
+              context.edge.left = node 2 ∧
+              context.edge.right = node 4 ∧
+              context.edge.generation = 1 ∧
+              context.edge.payload = payload 1 then
+          let assumptionsProof := shapeProof.1
+          let leftProof := shapeProof.2.2.1
+          let rightProof := shapeProof.2.2.2.1
+          some
+            { proof := by
+                simpa [programProof, assumptionsProof, leftProof, rightProof]
+                  using oddnessEntails }
+        else none
+      else none }
+
+def factSchema : PackedFactSchema functionSemantics :=
+  { rule := contractKey
+    schema := 5
+    Certificate := FactCertificate
+    decode := decodeFact
+    replay := fun _ action context _ =>
+      if programProof : context.program = extendedProgram then
+        if shapeProof :
+            action.key = contractKey ∧
+              context.proposed = { node := node 3, fact := 1 } then
+          let proposedProof := shapeProof.2
+          some
+            { proof := by
+                simpa [programProof, proposedProof] using
+                  contractEntails context.assumptions }
+        else none
+      else none }
+
+def functionProofs : SemanticReplay.Package functionSemantics :=
+  { factSchemas := #[factSchema]
+    instanceSchemas := #[instanceSchema]
+    equalitySchemas := #[equalitySchema] }
+
+def checkerInput : CheckerInput Rank :=
+  { baseProgram := program
+    initialFacts := #[0, 0, 0]
+    target := { node := node 3, fact := 1 } }
+
+structure SemanticFixture where
+  session : PolicySession.Session Rank
+  registry : SemanticReplay.Registry functionSemantics
+
+def semanticFixture? : Option SemanticFixture := do
+  let session ← contracted?
+  let registry ←
+    match SemanticReplay.Registry.build session.registry #[functionProofs] with
+    | .ok registry => some registry
+    | .error _ => none
+  pure { session, registry }
+
+def replaysFunctionSession : Bool :=
+  match semanticFixture? with
+  | none => false
+  | some fixture =>
+      let finalProgram := fixture.session.state.engine.program
+      if finalProof : finalProgram = extendedProgram then
+        let basePrefix : ProgramPrefix checkerInput.baseProgram finalProgram := by
+          simpa [checkerInput, finalProof] using functionPrefix
+        let stepPrefix : ProgramPrefix program finalProgram := by
+          simpa [finalProof] using functionPrefix
+        let sameOperations : program.operations = finalProgram.operations := by
+          simp [finalProof, extendedProgram, program]
+        match fixture.session.state.engine.instanceHistory[0]?,
+            fixture.session.state.engine.equalities[0]?,
+            fixture.session.state.engine.history[0]? with
+        | some event, some edge, some factEvent =>
+            let instanceProof :=
+              fixture.registry.replayInstance checkerInput fixture.session.arena
+                event program finalProgram (ProgramPrefix.refl program)
+                stepPrefix sameOperations
+            let equalityProof :=
+              fixture.registry.replayEquality checkerInput fixture.session.arena
+                { index := 0 } edge finalProgram basePrefix []
+            let factReplayed :=
+              match factEvent.cause with
+              | .rule action proposed proof =>
+                  (fixture.registry.replayRule checkerInput fixture.session.arena
+                    action proposed proof finalProgram basePrefix
+                    [{ node := node 0, fact := 0 }] factEvent.node).isSome
+              | .transport _ _ => false
+            instanceProof.isSome && equalityProof.isSome && factReplayed
+        | _, _, _ => false
+      else
+        false
+
+-- The actual matcher event, equality edge, and contractor fact event all
+-- replay through package-owned theorem schemas.  No central function tag or
+-- rational-arithmetic backend participates in this proof path.
+#guard replaysFunctionSession
+
+def replaysInstanceEvent (fixture : SemanticFixture)
+    (arena : Arena) (event : InstanceEvent) : Bool :=
+  let finalProgram := fixture.session.state.engine.program
+  if finalProof : finalProgram = extendedProgram then
+    let stepPrefix : ProgramPrefix program finalProgram := by
+      simpa [finalProof] using functionPrefix
+    let sameOperations : program.operations = finalProgram.operations := by
+      simp [finalProof, extendedProgram, program]
+    (fixture.registry.replayInstance checkerInput arena event program finalProgram
+      (ProgramPrefix.refl program) stepPrefix sameOperations).isSome
+  else
+    false
+
+def replaysEqualityEdge (fixture : SemanticFixture)
+    (arena : Arena) (edge : EqualityEdge) : Bool :=
+  let finalProgram := fixture.session.state.engine.program
+  if finalProof : finalProgram = extendedProgram then
+    let basePrefix : ProgramPrefix checkerInput.baseProgram finalProgram := by
+      simpa [checkerInput, finalProof] using functionPrefix
+    (fixture.registry.replayEquality checkerInput arena { index := 0 } edge
+      finalProgram basePrefix []).isSome
+  else
+    false
+
+-- Package replay rejects mutations of the actual retained theorem instance,
+-- including its products, dynamic scope, origin, and recipe body.
+#guard
+  match semanticFixture? with
+  | none => false
+  | some fixture =>
+      match fixture.session.state.engine.instanceHistory[0]?,
+          fixture.session.arena.entries[0]? with
+      | some event, some entry =>
+          let wrongProducts := { event with products := [node 4, node 3] }
+          let wrongScope :=
+            { event with
+              bindings :=
+                [{ contractBinding with watches := [node 1] }]
+              newBindings :=
+                [{ contractBinding with watches := [node 1] }] }
+          let wrongOrigin :=
+            { event with origin := { event.origin with serial := event.origin.serial + 1 } }
+          let wrongEntry := { entry with body := [0, 47] }
+          let wrongArena :=
+            { fixture.session.arena with
+              entries := fixture.session.arena.entries.set! 0 wrongEntry }
+          replaysInstanceEvent fixture fixture.session.arena event &&
+            !replaysInstanceEvent fixture fixture.session.arena wrongProducts &&
+            !replaysInstanceEvent fixture fixture.session.arena wrongScope &&
+            !replaysInstanceEvent fixture fixture.session.arena wrongOrigin &&
+            !replaysInstanceEvent fixture wrongArena event
+      | _, _ => false
+
+-- The equality theorem is tied to the actual endpoints and complete action,
+-- not merely to a body which decodes under the right numeric schema.
+#guard
+  match semanticFixture? with
+  | none => false
+  | some fixture =>
+      match fixture.session.state.engine.equalities[0]? with
+      | some edge =>
+          let wrongEndpoint := { edge with left := node 1 }
+          let wrongOrigin :=
+            { edge with origin := { edge.origin with effort := edge.origin.effort + 1 } }
+          replaysEqualityEdge fixture fixture.session.arena edge &&
+            !replaysEqualityEdge fixture fixture.session.arena wrongEndpoint &&
+            !replaysEqualityEdge fixture fixture.session.arena wrongOrigin
+      | none => false
 
 def rejected? : Option (PolicySession.Session Rank) := do
   let .ok session := start rejectedPackage | none

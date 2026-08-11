@@ -13,7 +13,7 @@ import HexInterval.Experiment.Policy
 These canaries exercise a package-owned contractor whose declared reads and
 writes are not slots of one head operation.  The fact domain is a tiny `Nat`
 order so the tests isolate binding, scheduling, and atomicity from interval
-endpoint arithmetic.  None of these checks use `native_decide`.
+endpoint arithmetic.  The checks use ordinary executable guards.
 -/
 
 namespace Hex.Interval.ScopeConformance

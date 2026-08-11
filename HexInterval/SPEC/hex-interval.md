@@ -1139,19 +1139,47 @@ role/schema pair or malformed body without committing the prospective arena or
 engine outcome.
 Package caches may record the failed attempt because they remain non-semantic.
 
-This first format API validates representation shape only. It does not attest
+The format API validates representation shape only; it does not itself attest
 that a body proves the proposed interval fact, instance, or equality. The
-Mathlib companion must dispatch on the same immutable key, decode the frozen
-entry independently of package cache state, and recheck the corresponding
-rule theorem during semantic replay. Until that companion layer exists, it is
-an explicit compatibility obligation—not a property enforced by this format
-API—that a different callback implementation under an existing versioned rule
-schema leave every retained payload semantically replayable. Whether production
+cache-free semantic replay protocol separately assembles theorem schemas
+package-for-package against one sealed executable registry. Its constructor is
+private, and its checked builder requires exact bidirectional coverage between
+package-owned theorem schemas and executable formats for all three roles on
+the complete `(RuleKey, role, schema)` key. Thus a checker from another
+package cannot be selected merely because two rules reuse a numeric schema,
+and a registry with an unchecked fact, instance, or equality format cannot be
+used for proof replay.
+
+The three semantic claims are deliberately different. A fact schema proves
+its proposed fact from the exact already-checked input facts. An instance
+schema proves that every model of the program before the extension has a model
+of the extended program which agrees on every old node; this conservativity
+obligation prevents a partial or inconsistent package-defined operation from
+manufacturing a proof by adding an uninhabited expression. An equality schema
+proves the exact retained endpoints equal, optionally under an exact list of
+already-checked facts for conditional identities. Instance replay additionally
+requires an unchanged operation table: search-time instantiation may append
+nodes but may not redefine a registered function.
+
+Public replay follows the `PayloadId` retained by a rule cause, instance
+event, or equality edge into the immutable arena, checks its semantic role,
+and compares the complete originating `Action` before typed dispatch. Matching
+only a serial, rule key, or body schema is insufficient. The chronological
+checker remains responsible for reconstructing the exact program step,
+fact-prefix assumptions, instance event, and equality edge before invoking
+these package-owned theorem builders.
+
+A Mathlib companion must instantiate those abstract schemas, decode each
+frozen entry independently of package cache state, and recheck the
+corresponding rule theorem. It remains an explicit compatibility
+obligation—not a property enforced by the representation validator—that a
+different callback implementation under an existing versioned rule schema
+leave every retained payload semantically replayable. Whether production
 retains these existential snapshots, compiles a dispatch table, adds typed
 decoders, supports hot replacement, or uses another lookup structure remains
-experimental. The older direct registry and engine interfaces remain available
-for search experiments, but proof-producing execution goes through the
-session.
+experimental. The older direct registry and engine interfaces remain
+available for search experiments, but proof-producing execution goes through
+the session.
 
 `PolicySession.Session` is the corresponding proof-producing policy canary.
 Its checked start stores one bundle containing the engine, policy, and arena
@@ -1255,6 +1283,17 @@ Certificate replay must instead fold events in chronological order and
 resolve every positive-version dependency only from the already-validated
 prefix. This rejects future references and cyclic provenance even if a forged
 final history contains an entry with the requested `(node, version)`.
+
+Because `Semantics.holds` may inspect the complete program as well as the
+valuation, conservative model extension alone does not yet transport old
+facts or the caller's target across a program extension. The complete checker
+must either require a prefix-locality law for `holds` on old nodes under
+agreeing valuations, or use a fact interpretation which does not depend on
+the surrounding program. Conditional equality assumptions also require an
+unambiguous position in the fact-event chronology; before completing forward
+replay we must either unify structural and fact events or retain an exact fact
+cursor on each instance and equality event. These are proof obligations, not
+policy choices.
 
 Whether freezing is an explicit second request after the solver identifies
 the improving subset, or eager allocation before the `Outcome`, remains an
@@ -1469,8 +1508,14 @@ session freezes the instance, equality, and fact recipes under their
 respective handlers. A companion proposal changes the contractor's semantic
 watch while remaining generically well-formed; package veto must roll back its
 prospective arena, retained proposal, and matcher cursor together. This canary
-establishes no sine theorem by itself. Semantic replay in the Mathlib companion
-remains the proof-producing completion gate described above.
+is also passed through the generic semantic registry: package-local schemas
+prove conservative addition of the two expressions, equality of the retained
+endpoints, and the contractor's proposed fact from the actual session history
+and arena. The compact canary gives the sine-shaped operation a private integer
+model solely to test that generic route; it is not a theorem about `Real.sin`
+and does not close the non-polynomial completion gate. A Mathlib companion
+proof for the caller's real target, followed by complete chronological replay,
+remains required.
 
 ### Action kinds
 
@@ -1845,10 +1890,11 @@ Changed facts insert or invalidate only affected offers; stale entries are
 discarded lazily when popped. Policies intended for diagnostics may use a
 simpler complete scan, but their complexity is reported honestly. An empty
 frontier means saturation only when no narrowing-capable work was dismissed,
-dropped from the engine's bounded retained prefix, or tombstoned by a failed
+dropped by the engine's bounded retention plan, or tombstoned by a failed
 freshness guard. `Suggestion.affectsClosure` is the single classification used
-for all three paths, while `Engine.keptSuggestions` and
-`Engine.droppedSuggestions` define the exact shared retention boundary.
+for all three paths, while `Engine.suggestionPlan` and its
+`SuggestionPlan.kept` and `SuggestionPlan.dropped` results define the exact
+shared retention boundary.
 Declining an invocation, equality contractor, retry, or instantiation makes
 the run incomplete; declining a split does not, because it changes proof
 search rather than the propagation closure of the current scope. An empty
