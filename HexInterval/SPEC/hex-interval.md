@@ -1321,10 +1321,20 @@ instance event rather than trusting each later fact event's claimed version.
 Reordering negation before the sine result it consumes, or mutating a
 transport to a different program version, fails before replay. This event fold
 contains no sine, negation, or other function case. It seeds caller facts by
-checked position in the exact base-assumption list and seeds the instance
-event's fresh nodes with domain top after checking their lookup in the reified
-final program; named sine-specific previous-fact proofs are absent from the
-tactic term. The next frontend experiment must derive the base program,
+checked position in the emitter's declared base-assumption list; the caller
+hypotheses supplied to final closure discharge that same list. This direct
+emitter does not yet construct the `InitialContext` witness that relates the
+declared list position-for-position to `CheckerInput.initialFacts`. The
+complete `TraceReplay` checker already constructs its `initialBase`
+position-for-position from `CheckerInput.initialFacts`; separately,
+`ChronologicalReplay.Cursor.startInput` consumes `InitialContext` for cursor
+replay. The later generic frontend must carry the corresponding binding into
+direct emission. The current replay applications and final closure remain
+indexed by the exact `CheckerInput.baseProgram` and target. The emitter also
+seeds the instance event's fresh nodes with domain top after checking their
+lookup in the reified final program; named sine-specific previous-fact proofs
+are absent from the tactic term. The next frontend experiment must derive the
+base program, declared base-assumption list and its caller-input binding,
 semantic bridge, and final target for an arbitrary caller expression, and
 reconstruct intermediate programs for later or repeated instantiations,
 instead of naming this canary's fixed contexts.
