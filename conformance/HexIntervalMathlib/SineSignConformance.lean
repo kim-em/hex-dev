@@ -19,6 +19,7 @@ namespace Hex.IntervalMathlib.SineSignConformance
 
 open Hex.Interval.Experiment
 open Propagator PolicySession SemanticReplay ChronologicalReplay TraceReplay
+  ProofRegistry
 open SineSign
 
 def offer? (session : PolicySession.Session Range)
@@ -164,11 +165,11 @@ def transported? : Option (PolicySession.Session Range) := do
 
 structure Fixture where
   session : PolicySession.Session Range
-  registry : SemanticReplay.Registry semantics
+  registry : ProofRegistry.Registry semantics Lean.Name
 
 def fixture? : Option Fixture := do
   let session <- transported?
-  match SemanticReplay.Registry.build session.registry semanticPackages with
+  match ProofRegistry.build session.registry proofPackages with
   | .ok registry => some { session, registry }
   | .error _ => none
 
@@ -204,7 +205,7 @@ def replayed? :
       let trace :=
         TraceReplay.Trace.ofEngine fixture.session.state.engine
           fixture.session.arena
-      TraceReplay.replayInput checkerInput fixture.registry rangeSchema laws
+      TraceReplay.replayInput checkerInput fixture.registry.semantic rangeSchema laws
         buildInstance trace baseStable
         (by simp [checkerInput, baseProgram, node])
         { node := node 2, version := 1 }

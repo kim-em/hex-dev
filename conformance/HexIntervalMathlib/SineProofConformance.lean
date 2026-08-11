@@ -24,7 +24,7 @@ open Propagator PayloadArena SemanticReplay ChronologicalReplay ProofEmitter
 open SineSign SineSignConformance
 
 def emitTable? : Option (SchemaTable Lean.Name) :=
-  SchemaTable.build [negationEmit, sineEmit]
+  fixture?.map (fun fixture => fixture.registry.emit)
 
 #guard
   emitTable?.any fun table =>

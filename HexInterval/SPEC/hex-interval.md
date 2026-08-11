@@ -1374,13 +1374,17 @@ name is elaboration data, not trusted evidence: a missing name, wrong type, or
 schema whose own replay key does not match the entry makes emitted application
 construction fail. Only the resulting well-typed theorem application enters
 the kernel.
-The current table invariant proves exact-address uniqueness only; it does not
-yet prove that an emitter fragment and an executable/semantic package fragment
-came from one owner. The canary colocates those declarations, and a missing or
-wrong handle fails during direct emission. Production should either construct
-both registries from one package descriptor or perform an explicit coverage
-cross-check. This governance relation is not part of theorem soundness because
-every selected schema must still produce the required kernel-checked claim.
+`ProofRegistry.Package` now joins each package's semantic schemas and emitter
+fragment. Joint assembly first uses the semantic registry check to establish
+exact package-for-package ownership and bidirectional coverage against the
+executable formats. It then requires package-local equality of semantic and
+emitter replay-key sets and global emitter uniqueness. Consequently a handle
+cannot be omitted, added under an undeclared key, or borrowed from another
+package even if the final flattened key set would happen to match. The live
+real-sine semantic replay and direct-emission table are both projections of
+this one checked registry. This governance relation is still defense in depth
+rather than part of theorem soundness: every selected schema must produce the
+required kernel-checked claim.
 
 A Mathlib companion must instantiate those abstract schemas, decode each
 frozen entry independently of package cache state, and recheck the
