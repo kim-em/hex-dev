@@ -6,6 +6,7 @@ Authors: Kim Morrison
 
 import HexIntervalMathlib.Experiment.ExpSign
 import HexInterval.Experiment.GoalFrontend
+import HexInterval.Experiment.ProofFrontend
 import Mathlib.Lean.Elab.Tactic.Meta
 
 /-!
@@ -197,7 +198,7 @@ private def frontendContext : ProofFrontend.Context Bound Name :=
     initialExtension := mkConst ``initialExtension
     finalPrefix := mkConst ``basePrefix
     sameOperations := mkConst ``sameOperations
-    top := fun _ => .all }
+    top := boundSchema.top }
 
 private meta def emitEvidence : MetaM Expr := do
   let some fixture := fixture?
@@ -211,6 +212,9 @@ private meta def emitEvidence : MetaM Expr := do
     | throwError "interval_exp: target fact was not emitted"
   pure proof
 
+private def expTarget (x : ℝ) : Prop :=
+  0 ≤ Real.exp x
+
 private meta def proveExp (target : Expr) : MetaM Expr := do
   let reified ← reifyGoal target
   unless sameInput reified.input do
@@ -219,13 +223,17 @@ private meta def proveExp (target : Expr) : MetaM Expr := do
   for declaration in context do
     unless declaration.isImplementationDetail do
       let saved ← saveState
-      let candidate? ← observing? do
-        let evidence ← emitEvidence
-        mkAppM ``closeExp #[mkFVar declaration.fvarId, evidence]
+      let candidate? ← observing? <|
+        mkAppM ``expTarget #[mkFVar declaration.fvarId]
       match candidate? with
       | some candidate =>
-          if ← isDefEq (← inferType candidate) target then
-            return (← instantiateMVars candidate)
+          if ← isDefEq candidate target then
+            let evidence ← emitEvidence
+            let proof ←
+              mkAppM ``closeExp #[mkFVar declaration.fvarId, evidence]
+            unless ← isDefEq (← inferType proof) target do
+              throwError "interval_exp: emitted replay has the wrong target"
+            return (← instantiateMVars proof)
           saved.restore
       | none => saved.restore
   throwError "interval_exp: expected a goal definitionally equal to `0 ≤ Real.exp x`"
