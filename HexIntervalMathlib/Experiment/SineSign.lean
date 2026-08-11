@@ -412,7 +412,7 @@ def oddnessEdge : EqualityEdge :=
     right := node 4
     generation := 1
     origin := oddnessAction
-    payload := payload 0 }
+    payload := payload 1 }
 
 def oddnessDomain : SameDomain extendedProgram (node 2) (node 4) :=
   { leftNode := sineNegatedSourceInstruction
