@@ -61,5 +61,10 @@ library.
 <!-- LIBRARIES:BEGIN (generated from released.yml; do not edit by hand) -->
 <!-- LIBRARIES:END -->
 
+# Announcements
+
+<!-- ANNOUNCEMENTS:BEGIN (generated from released.yml; do not edit by hand) -->
+<!-- ANNOUNCEMENTS:END -->
+
 Development of the full project (including unreleased libraries) happens in the
 [`hex-dev`](https://github.com/kim-em/hex-dev) monorepo.

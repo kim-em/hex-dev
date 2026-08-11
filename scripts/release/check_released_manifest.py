@@ -234,6 +234,23 @@ def main() -> int:
                 fail(f"{repo}: aggregated library must declare a component label")
         elif component is not None:
             fail(f"{repo}: component labels belong only on aggregated libraries")
+    venues = {key for key, _label in aggregate_readme.VENUES}
+    for entry in entries:
+        announcements = entry.get("announcements")
+        if announcements is None:
+            continue
+        repo = entry["repo"]
+        if repo not in labelled:
+            fail(f"{repo}: announcements belong only on aggregated libraries")
+        if not isinstance(announcements, dict) or not announcements:
+            fail(f"{repo}: announcements must be a non-empty venue map")
+        unknown = sorted(set(announcements) - venues)
+        if unknown:
+            fail(f"{repo}: unknown announcement venues {unknown}; "
+                 f"known are {sorted(venues)}")
+        for venue, url in announcements.items():
+            if not isinstance(url, str) or not url.startswith("https://"):
+                fail(f"{repo}: {venue} announcement must be an https URL")
     try:
         aggregate_readme.render(document, REPO_ROOT / template)
     except ValueError as exc:

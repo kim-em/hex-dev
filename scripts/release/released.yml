@@ -37,6 +37,11 @@
 # root module. The sync refuses to publish when the skeleton is stale.
 # `pins` lists the upstream repos whose git rev is rewritten in this repo's root
 # lakefile (matched by their github URL); `lakefile` is that file's format.
+# `announcements` maps a venue (`blog`, `zulip`, `linkedin`) to the https URL
+# where this library was announced; it renders as one line per library in the
+# aggregate README's Announcements section. Deliberately not a table column:
+# only a couple of libraries are ever announced, so a column would be empty for
+# almost every row.
 # `component` is the human label this library gets in the aggregate README's
 # table (see `readme_template` below). Required on every aggregated
 # computational library, so releasing one cannot silently skip the table; the
@@ -423,6 +428,9 @@ repos:
 
   - repo: leanprover/hex-lll
     component: LLL lattice reduction
+    announcements:
+      blog: https://kim-em.github.io/blog/2026-7-7-lattice-basis-reduction-using-the-hex-lean-library/
+      zulip: https://leanprover.zulipchat.com/#narrow/channel/579630-Project-announcements/topic/Hex%3A.20a.20computational.20algebra.20library/near/608173688
     lib: HexLLL
     executables: {hexlll_external_reduction: HexLLL.ExternalReduction}
     umbrella: true
@@ -447,6 +455,9 @@ repos:
 
   - repo: leanprover/hex-berlekamp-zassenhaus
     component: Integer polynomial factorization
+    announcements:
+      blog: https://kim-em.github.io/blog/2026-8-10-certified-integer-polynomial-factorization-in-lean/
+      zulip: https://leanprover.zulipchat.com/#narrow/channel/579630-Project-announcements/topic/Hex%3A.20integer.20polynomial.20factorization/near/615747356
     lib: HexBerlekampZassenhaus
     test_modules: [HexBerlekampZassenhaus.FactorTacticTests]
     build_modules: [HexBerlekampZassenhaus.All]
