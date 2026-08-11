@@ -1550,9 +1550,18 @@ and quoted replay produces the ordinary real theorem
 `0 ≤ x → x ≤ 1 → 0 ≤ f(x) ∧ f(x) ≤ 1/4`. Replacing the quoted `[0,1]`
 assumption by the whole line is rejected, so the function theorem's premise is
 load-bearing rather than decorative. This is the minimal arbitrary-function
-vertical against the exact interval domain; richer packages may add backward
-contractors, retries, instantiators, and split suggestions without changing
-the generic transition.
+vertical against the exact interval domain.
+
+A second, independently assembled package attaches a backward registration to
+that same opaque operation without redefining it. From the exact output band
+`f(x) ∈ [3/16,1/4]`, its runtime contractor narrows a whole-line input to
+`[1/4,3/4]`; its own schema derives that inverse image from the centered
+operation model. The live registry therefore contains two packages which own
+different directions for one function, while both proof steps use the same
+generic rule transition. The backward quote is rejected if its precise output
+band is weakened to `[0,1/4]`, and its ordinary theorem confirms that the
+watched output premise is load-bearing. Richer packages may add retries,
+instantiators, and split suggestions without changing this interface.
 
 The prefix resolver returns an exact fact together with its theorem for a
 requested `(node, version)`, and builds the rule's ordered input list by
