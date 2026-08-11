@@ -94,5 +94,11 @@
     "baseline_blob": "3e184b73696f5afa8fd6fa440e81a3aab420f90e",
     "current_blob": "156aab2ef734ca6502fba3a8f743a468b596e598",
     "reason": "Additionally registers the generic interval goal-reification experiment only; the factorization service target and executable dependency graph are unchanged."
+  },
+  {
+    "path": "lakefile.lean",
+    "baseline_blob": "3e184b73696f5afa8fd6fa440e81a3aab420f90e",
+    "current_blob": "aa98231ac120eb38f6f2cc5e7b53ff0af8498eb2",
+    "reason": "Additionally registers package-composed interval operation semantics only; the factorization service target and executable dependency graph are unchanged."
   }
 ]

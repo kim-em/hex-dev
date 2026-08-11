@@ -1371,6 +1371,26 @@ requires package-compositional construction of the program semantics and
 generic proof emission for the recorded top/assumption seed recipes; it
 remains the next frontend experiment rather than an assumed capability.
 
+The first package-composed semantics experiment removes a second fixed-graph
+assumption. An operation-meaning package supplies an opaque operation signature
+and a relation from its ordered input values to its result value. The assembled
+model requires the program's operation array to equal the aligned package
+array and requires a successful meaning lookup for every node; an absent or
+mismatched package therefore cannot make an expression unconstrained. This
+node-local semantics supplies one generic append-only stability law. The
+exponential companion now assembles independent source and exponential
+meanings, and its positivity schema checks an arbitrary proposed node's
+instruction, operation slot, and unary argument before proving the result. A
+three-node `exp (exp x)` canary obtains an ordinary theorem through that schema,
+while applying it to the source node fails closed. The remaining frontend gap
+is a kernel-checked link from each syntax recognizer to its operation relation,
+followed by generic discharge of the reifier's top and ordered-assumption seed
+recipes. A recognizer match alone is never treated as semantic evidence.
+This first adapter uses one semantic value type for all domains. A later
+multi-domain adapter must choose and validate a tagged universal value or a
+domain-indexed valuation rather than pretending heterogeneous values have one
+untyped representation.
+
 The fixed canary also requires a live session with an exact proof history of one
 instance, one equality, three fact events, and the expected interleaving before
 it reads historical values through `Engine.factAt?`. Those values are quoted
