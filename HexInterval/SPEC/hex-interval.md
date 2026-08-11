@@ -1310,13 +1310,14 @@ goal. This is an executable quotation-fidelity boundary, but not yet a general
 proof assembler: registry-driven schema selection and construction of replay
 applications from an arbitrary returned trace remain the next frontend
 experiment.
-The fixed canary also requires a live, complete session with exactly one
-instance, one equality, three fact events, and the expected interleaving before
-it reads historical values through `Engine.factAt?`. Those values are used only
-for definitional comparison with checked literals. A future arbitrary-trace
-emitter must instead obtain evidence from its chronological proof table; a
-successful full-history lookup is never evidence that the dependency was
-available at the required earlier step.
+The fixed canary also requires a live session with no dropped work and exactly
+one instance, one equality, three fact events, and the expected interleaving
+before it reads historical values through `Engine.factAt?`. This is an exact
+quotation-shape gate, not a claim that `Session.complete` holds. Those values
+are used only for definitional comparison with checked literals. A future
+arbitrary-trace emitter must instead obtain evidence from its chronological
+proof table; a successful full-history lookup is never evidence that the
+dependency was available at the required earlier step.
 
 Direct emission maintains a table from each already-established fact version
 to its `Evidence` term. Caller assumptions seed that table through the generic
@@ -1329,16 +1330,21 @@ function cases: adding a propagator contributes schemas, not a new dependency
 assembler. Merely resolving the same fact values from compiled search history
 is a quotation check and cannot substitute for these proof terms.
 
-Each package also contributes an `EmitPackage`: a finite map from its exact
-replay addresses to the Lean declaration names of its theorem schemas.
-`SchemaTable.build` concatenates those contributions and rejects every
-duplicate full address, including duplicates which happen to name the same
-declaration. The tactic selects by the payload entry's `(rule, role, schema)`;
-it never dispatches on an expression's mathematical function. A declaration
-name is elaboration data, not trusted evidence: a missing name, wrong type, or
-schema whose own replay key does not match the entry makes emitted application
-construction fail. Only the resulting well-typed theorem application enters
-the kernel.
+Each package companion also contributes an `EmitPackage`: a finite map from
+its exact replay addresses to opaque frontend handles for its theorem schemas.
+The Mathlib tactic companion uses `Lean.Name` as that handle, while the
+Mathlib-free table is polymorphic in the handle type. `SchemaTable.build`
+concatenates those contributions and rejects every duplicate full address,
+including duplicates which happen to carry the same handle. The tactic selects
+by the payload entry's `(rule, role, schema)`; it never dispatches on an
+expression's mathematical function. The fixed canary checks each selection
+against its known declaration before comparing with its preassembled proof.
+A general assembler must additionally make a missing name, wrong type, or
+schema whose own replay key does not match the entry fail during application
+construction. Only the resulting well-typed theorem application enters the
+kernel. This first table enforces exact-address uniqueness, but does not yet
+derive package ownership or coverage from the semantic registry; that link is
+required before selected handles replace the fixed proof assembly.
 
 A Mathlib companion must instantiate those abstract schemas, decode each
 frozen entry independently of package cache state, and recheck the

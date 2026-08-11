@@ -23,7 +23,7 @@ open Hex.Interval.Experiment
 open Propagator PayloadArena SemanticReplay ChronologicalReplay ProofEmitter
 open SineSign SineSignConformance
 
-def emitTable? : Option SchemaTable :=
+def emitTable? : Option (SchemaTable Lean.Name) :=
   SchemaTable.build [negationEmit, sineEmit]
 
 #guard
