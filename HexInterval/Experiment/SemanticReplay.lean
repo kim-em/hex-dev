@@ -123,9 +123,10 @@ theorem refl (program : Program) : ProgramPrefix program program :=
 
 end ProgramPrefix
 
-/-- Exact rule context supplied after structural trace validation.  The action
-is a type parameter so `dispatchFact` can bind it definitionally to the
-payload entry's immutable origin. -/
+/-- Exact rule context supplied after structural trace validation. The action
+index records the action passed separately to the package schema; the public
+`replayRule` entry point checks that action against the payload origin before
+constructing this context. -/
 structure RuleFactContext (input : CheckerInput Fact) (action : Action) where
   program : Program
   basePrefix : ProgramPrefix input.baseProgram program
@@ -414,8 +415,9 @@ def findEquality? (registry : Registry semantics) (key : ReplayKey) :
 schema.  Equality and instantiation roles cannot accidentally reach a fact
 schema because lookup compares the full replay key.
 
-The context's action is definitionally the entry origin, preventing a caller
-from pairing a proof body with a different invocation. -/
+`dispatchFact` passes the entry origin to the selected schema. Callers which
+start from an event must use `replayRule`, whose full-action equality check
+prevents pairing a proof body with a different invocation. -/
 def dispatchFact {Fact : Type} {semantics : Semantics Fact}
     (registry : Registry semantics) (input : CheckerInput Fact)
     (entry : Entry) (context : RuleFactContext input entry.origin) :

@@ -11,21 +11,83 @@ public import HexBerlekampZassenhaus
 public section
 
 /-!
-# Release 4: the lattice-backed factorization seam
+# Release 4: the lattice-backed and certificate-backed factorization seams
 
-Swinnerton--Dyer SD₆ has degree 64 and splits into 32 modular factors at the
-selected prime. Classical subset recombination therefore declines at its
-bounded complete level; the production dispatcher answers through the CLD/LLL
-lattice tier. The single check below pins the dispatch tier, exact product, and
-singleton factor shape without invoking the trial backstop.
+Both inputs below have degree 64 and generate the same multiquadratic field, so
+both split into 32 modular factors at the selected prime and classical subset
+recombination declines at its bounded complete level. They part company after
+that, and the two checks pin the two tiers that catch them.
+
+`latticeInput` is the minimal polynomial of √2+√3+√5+√7+√11+√13+√6. Its last
+sign is determined by the first two, so it is *not* an iterated quadratic norm,
+the recognizer refuses it, and the production dispatcher answers through the
+CLD/LLL lattice tier.
+
+`normInput` is Swinnerton--Dyer SD₆, the minimal polynomial of
+√2+√3+√5+√7+√11+√13. At 32 lifted factors the width floor opens the gate,
+recovery reads the radicands off the top coefficients, and the check confirms
+the coefficientwise identity, so the square-free core is returned as one
+irreducible factor with no Hensel lift and no lattice.
+
+Each check pins the dispatch tier, exact product, and singleton factor shape
+without invoking the trial backstop.
 -/
 
 namespace Examples.Release4
 
 open Hex
 
-/-- Swinnerton--Dyer SD₆, the first committed production lattice rung. -/
-def input : ZPoly := DensePoly.ofCoeffs
+/-- The minimal polynomial of √2+√3+√5+√7+√11+√13+√6: the same degree-64
+multiquadratic field as SD₆, but not an iterated quadratic norm. -/
+def latticeInput : ZPoly := DensePoly.ofCoeffs
+  #[163982603328605578670736365403530625,
+    -86959594253853575496760446828545760000,
+    -1298897017660841547045707551087396812000,
+    -3326772778152505773521065270831190592000,
+    5213946132035189693334485431550541183600,
+    29217432446276212152131937249988076025600,
+    21801280851488556396174830894143071585120,
+    -47795348778766259945283776772530508026880,
+    -76299477429482460846366554378531282500616,
+    15695732468265994283157206660051930697984,
+    88595989827498886761592971270455843225504,
+    24272599200856908764534655154465260655104,
+    -53142834497950043011505168728881351850416,
+    -29819269354516191340276352104239366941952,
+    18515200611768511024361000830851741349344,
+    16350437042064944717907533275046228981760,
+    -3661633729451114814804997721004448633188,
+    -5635804691293911367291892932720451129088,
+    237727343268205401671816016653718726816,
+    1362352173646846874354801285967122425344,
+    85407505946182659716457781061726027632,
+    -244353376352580633447861087097055728896,
+    -32147103735480890753734866080053365280,
+    33681483320422417422408341041672590336,
+    6086146531421791704502800466807211208,
+    -3654263280901659963021977208368923392,
+    -795712147076387105436899026455919328,
+    317414465907171238594994222036144640,
+    78314833092705393793624500108067280,
+    -22344180097244858792170297768687872,
+    -6031793428250322113661329719974816,
+    1285666025680213804313961852211200,
+    371445567949950394665727794703046,
+    -60809049829416498788587315577088,
+    -18530552413956808758433979631776,
+    2371774753732484711322208399872, 755090746852536656681762998992,
+    -76367068274747742898233625344, -25255849058458839569065572320,
+    2028069524122737419915891712, 695037934128888499959185864,
+    -44299942009965594581163264, -15740808535498464807845664,
+    792171962648666530776576, 292829904636304825188464,
+    -11516838065323468576512, -4457105458945325284448,
+    134830844106917345280, 55155654037385437596, -1254620459298821376,
+    -549836371216732960, 9113339713122816, 4358844214238032,
+    -50370678249216, -26985384532320, 203907935232, 127120725240,
+    -568340736, -438246816, 972288, 1038192, -768, -1504, 0, 1]
+
+/-- Swinnerton--Dyer SD₆, the first committed production certificate rung. -/
+def normInput : ZPoly := DensePoly.ofCoeffs
   #[198828783273803025550632280753863681, 0,
     -8316202966928528723117528333532208416, 0,
     100392008259975194458539996111340080624, 0,
@@ -60,12 +122,21 @@ def input : ZPoly := DensePoly.ofCoeffs
     -1312, 0, 1]
 
 /-- Force the full result and reject a classical or trial answer. -/
-def check : Bool :=
-  let result := factorTraced input
+def latticeCheck : Bool :=
+  let result := factorTraced latticeInput
   result.2.method == .lattice && result.2.classicalDecline.isSome &&
-    DensePoly.beqCoeffs (Factorization.product result.1) input &&
+    DensePoly.beqCoeffs (Factorization.product result.1) latticeInput &&
     result.1.factors.size == 1
 
-#guard check
+#guard latticeCheck
+
+/-- Force the full result and require the certificate, not a later tier. -/
+def normCheck : Bool :=
+  let result := factorTraced normInput
+  result.2.method == .quadraticNorm && result.2.classicalDecline.isNone &&
+    DensePoly.beqCoeffs (Factorization.product result.1) normInput &&
+    result.1.factors.size == 1
+
+#guard normCheck
 
 end Examples.Release4
