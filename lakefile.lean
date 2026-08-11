@@ -369,7 +369,8 @@ lean_lib HexIntervalExperiment where
     `HexInterval.Experiment.PntBKLNWExp,
     `HexInterval.Experiment.PntBKLNWPow,
     `HexInterval.Experiment.SinTen,
-    `HexInterval.Experiment.SinTenInterval].map Glob.one
+    `HexInterval.Experiment.SinTenInterval,
+    `HexInterval.Experiment.MixedFunctions].map Glob.one
 
 lean_lib HexIntervalMathlibExperiment where
   globs := #[`HexIntervalMathlib.Experiment.Arithmetic,
@@ -407,7 +408,8 @@ lean_lib HexIntervalMathlibExperiment where
     `HexIntervalAlgebraic.Experiment.PolynomialDispatch,
     `HexIntervalAlgebraic.Experiment.PolynomialDispatchProof,
     `HexIntervalMathlib.Experiment.SinTen,
-    `HexIntervalMathlib.Experiment.SinTenInterval].map Glob.one
+    `HexIntervalMathlib.Experiment.SinTenInterval,
+    `HexIntervalMathlib.Experiment.MixedFunctions].map Glob.one
 
 @[default_target]
 lean_lib HexIntervalMathlib where
@@ -508,6 +510,7 @@ lean_lib HexConformance where
 
     ++ #[`HexInterval.PolicyFeatureConformance,
       `HexInterval.FeaturePolicyConformance,
+      `HexIntervalMathlib.MixedFunctionsConformance,
       `HexIntervalMathlib.ExactBranchConformance].map Glob.one
 
 -- The expensive complete-family Mathlib proofs are owned only by this

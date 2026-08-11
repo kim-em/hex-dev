@@ -1765,6 +1765,38 @@ reified facts, checks every seeded lookup definitionally, proves the recorded
 hypothesis recipes, and supplies the resulting premise to closure. A reusable
 `InitialContext`-style constructor remains future API work.
 
+A mixed-function vertical tests the stronger requirement that independently
+registered function packages cooperate in one search, rather than merely use
+the same generic API in separate examples. The existing sine and exponential
+canaries cannot soundly be concatenated: they instantiate different fact
+types and hence different `Semantics`, fact-domain laws, and proof registries.
+The mixed canary supplies the smallest shared range lattice needed to expose
+that alignment requirement. A sine package unconditionally proves
+`sin x ∈ [-1,1]`; a distinct exponential package is inapplicable until it sees
+that exact input fact, then proves `exp (sin x) ≤ 3`. Its package theorem uses
+the sine bound together with monotonicity of `Real.exp` and
+`Real.exp_one_lt_three`. Thus the retained exponential event has the sine
+event as an actual proof dependency, not merely an unrelated earlier
+improvement. The structural goal reifier selects source, sine, and exponential
+packages recursively from `Real.exp (Real.sin x)`, and the generic scheduler,
+chronology quotation, and proof frontend remain free of function cases. The
+result is the ordinary theorem `Real.exp (Real.sin x) ≤ 3`, without
+`native_decide`. Runtime planning and the Mathlib-free packages perform no
+rational normalization; the Mathlib companion may use `norm_num` for closed
+side conditions such as `1 ≤ 3`.
+
+This experiment also identifies the intended package boundary: independently
+upgradeable operations may contribute their own syntax recognizer, executable
+propagators, mathematical relation, and replay schemas, but packages taking
+part in one run must agree on a fact representation and semantic value model.
+Future domain adapters may embed a package's private facts into a richer shared
+domain; merely joining registries with incompatible `Fact` parameters is not
+meaningful. The mixed target already exercises recursive structural discovery
+of both functions. It does not add a new expression during propagation; a
+later mixed-function acceptance case should use the existing instantiation
+protocol to introduce an auxiliary expression whose package then participates
+in the same dependent chain.
+
 The first goal-reification experiment now derives the exponential canary's
 base program, version-zero fact array, and target fact from the actual Lean
 goal before running its compiled fixture. Expression packages contribute an
