@@ -33,12 +33,14 @@ private meta def proveSine (target : Expr) : MetaM Expr := do
     unless first.isImplementationDetail do
       for second in context do
         unless second.isImplementationDetail do
+          let saved <- saveState
           try
             let proof <- mkAppM ``emittedSineTheorem
               #[mkFVar first.fvarId, mkFVar second.fvarId]
             if <- isDefEq (← inferType proof) target then
-              return proof
-          catch _ => pure ()
+              return (← instantiateMVars proof)
+            saved.restore
+          catch _ => saved.restore
   throwError
     "interval_sine: expected hypotheses matching `0 ≤ x` and `x ≤ 1` and goal `Real.sin (-x) ≤ 0`"
 
