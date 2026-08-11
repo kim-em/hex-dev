@@ -1316,9 +1316,12 @@ yet the general tactic. Its elaborator walks the arbitrary quoted event list
 and maintains an exact `(node, version)` evidence table. Rule and transport
 steps obtain their previous facts and ordered dependencies from this table,
 select their package schemas solely by replay address, and insert their proved
-result versions. Reordering negation before the sine result it consumes fails
-before replay. This event fold contains no sine, negation, or other function
-case. The next frontend experiment must derive the base program, semantic
+result versions. The fold carries the program version established by the
+instance event rather than trusting each later fact event's claimed version.
+Reordering negation before the sine result it consumes, or mutating a
+transport to a different program version, fails before replay. This event fold
+contains no sine, negation, or other function case. The next frontend
+experiment must derive the base program, semantic
 bridge, initial evidence table, and final target for an arbitrary caller
 expression instead of naming this canary's fixed contexts.
 The fixed canary also requires a live session with an exact proof history of one
