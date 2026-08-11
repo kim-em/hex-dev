@@ -1334,11 +1334,23 @@ replay.
 
 The fold is polymorphic in the fact type and contains no sine, negation, or
 other function case. Its `Context` receives the semantics/domain laws,
-prefix-stability theorem, caller program and facts, and a plain-data encoder;
-packages remain responsible for their replay schemas. The real-sine tactic is
-now a client of this module rather than the owner of the fold. Its semantic
-bridge and final proof closure still name the canary's fixed base graph and
-target; the goal reifier below begins removing that specialization.
+prefix-stability theorem, caller program, a declared base-assumption list, and
+a plain-data encoder; packages remain responsible for their replay schemas.
+It seeds caller facts by checked position in that declared list, and the caller
+hypotheses supplied to final closure discharge the same list. The reusable
+frontend does not yet construct the `InitialContext` witness that relates the
+declared list position-for-position to `CheckerInput.initialFacts`. The
+complete `TraceReplay` checker already constructs its `initialBase`
+position-for-position from `CheckerInput.initialFacts`; separately,
+`ChronologicalReplay.Cursor.startInput` consumes `InitialContext` for cursor
+replay. The later generic frontend must carry the corresponding binding into
+direct emission. The current replay applications and final closure remain
+indexed by the exact `CheckerInput.baseProgram` and target. The emitter also
+seeds each instance event's fresh nodes with domain top after checking their
+lookup in the reified final program. The real-sine tactic is now a client of
+this module rather than the owner of the fold. Its semantic bridge and final
+proof closure still name the canary's fixed base graph, declared base list,
+and target; the goal reifier below begins removing that specialization.
 
 A second live vertical validates this separation with `Real.exp`. Its
 Mathlib-free package uses a distinct three-element fact lattice, contributes
@@ -1348,7 +1360,10 @@ one replay schema. The same policy session, joint package registry,
 fact-polymorphic quotation, shared structural encoder, and generic evidence
 fold produce the ordinary theorem `0 ≤ Real.exp x`. Thus both a multi-package
 graph-growing sine proof and a single-rule exponential proof pass through the
-same frontend API without a function switch.
+same frontend API without a function switch. The goal reifier below derives
+candidate context pieces from an arbitrary caller expression, but generic
+proof emission has not yet bound its recorded seed recipe to the frontend's
+declared base list.
 
 The first goal-reification experiment now derives the exponential canary's
 base program, version-zero fact array, and target fact from the actual Lean
