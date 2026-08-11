@@ -645,7 +645,8 @@ private meta def emitInstantiation (finalValue : Program) (finalProgram : Expr)
       baseWithin
       extension
       known }
-private meta def emitRule (program : Expr) (version : Nat)
+
+private meta def emitRule (program basePrefix : Expr) (version : Nat)
     (table : SchemaTable Name) (known : List FactProof) (step : RuleStep Range) :
     MetaM (List FactProof) := do
   unless step.event.programVersion == version do
@@ -662,7 +663,7 @@ private meta def emitRule (program : Expr) (version : Nat)
         mkConst ``rangeSchema,
         mkConst ``checkerInput,
         program,
-        mkConst ``programPrefix,
+        basePrefix,
         mkConst ``baseFacts,
         ← ruleStepExpr step,
         previous.proof,
@@ -674,7 +675,7 @@ private meta def emitRule (program : Expr) (version : Nat)
       within := previous.within
       proof }
 
-private meta def emitTransport (program : Expr) (version : Nat)
+private meta def emitTransport (program basePrefix : Expr) (version : Nat)
     (table : SchemaTable Name) (known : List FactProof)
     (step : TransportStep Range) :
     MetaM (List FactProof) := do
@@ -696,7 +697,7 @@ private meta def emitTransport (program : Expr) (version : Nat)
         mkConst ``checkerInput,
         mkNatLit version,
         program,
-        mkConst ``programPrefix,
+        basePrefix,
         mkConst ``baseFacts,
         ← transportStepExpr step,
         previous.proof,
@@ -719,11 +720,11 @@ private meta def emitEvents (finalValue : Program) (finalProgram : Expr)
       emitEvents finalValue finalProgram table rest state
   | .rule step :: rest, state => do
       let known <-
-        emitRule state.program state.version table state.known step
+        emitRule state.program state.basePrefix state.version table state.known step
       emitEvents finalValue finalProgram table rest { state with known }
   | .transport step :: rest, state => do
       let known <-
-        emitTransport state.program state.version table state.known step
+        emitTransport state.program state.basePrefix state.version table state.known step
       emitEvents finalValue finalProgram table rest { state with known }
 
 /-- Emit a proof by folding arbitrary fact events through an exact
@@ -880,14 +881,10 @@ example : True := by
     if (← observing? (emitTrace baseProgram
         [ .instantiation quote.instantiation, .rule quote.sine,
           .rule quote.negation, .transport quote.transport ] table)).isSome then
-      throwError "interval_sine test: absent generated nodes were accepted"
-    let wrongVersion : TransportStep Range :=
-      { quote.transport with
-        event := { quote.transport.event with programVersion := 2 } }
-    if (← observing? (emitTrace extendedProgram
-        [ .instantiation quote.instantiation, .rule quote.sine,
-          .rule quote.negation, .transport wrongVersion ] table)).isSome then
-      throwError "interval_sine test: stale transport program version was accepted"
+      throwError "interval_sine test: emission against the wrong final program was accepted"
+    if (← observing?
+        (seedNew baseProgram (mkConst ``baseProgram) [node 3] [])).isSome then
+      throwError "interval_sine test: absent generated node received a top proof"
     if (← observing? (checkQuoteData malformed)).isSome then
       throwError "interval_sine test: malformed quote was accepted"
     if (← observing? (emitQuote malformed table)).isSome then
