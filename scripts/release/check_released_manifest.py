@@ -14,6 +14,7 @@ sys.path.insert(0, str(REPO_ROOT / "scripts"))
 
 from libgraph import load_libraries, reachable_dependencies  # noqa: E402
 from release.sync_released import MANIFEST, managed_paths  # noqa: E402
+from release import aggregate_readme  # noqa: E402
 
 
 def fail(message: str) -> None:
@@ -217,6 +218,43 @@ def main() -> int:
             f"missing={sorted(split_repos - aggregate_pins)}, "
             f"extra={sorted(aggregate_pins - split_repos)}"
         )
+
+    # The aggregate's README is generated, so a released library reaches it
+    # without a hand edit. That only holds if every row's label is present and
+    # no entry off the table carries one.
+    template = aggregate.get("readme_template")
+    if not isinstance(template, str) or not (REPO_ROOT / template).is_file():
+        fail("leanprover/hex must declare a readme_template that exists")
+    labelled = {entry["repo"] for entry in aggregate_readme.table_entries(document)}
+    for entry in entries:
+        repo = entry["repo"]
+        component = entry.get("component")
+        if repo in labelled:
+            if not isinstance(component, str) or not component.strip():
+                fail(f"{repo}: aggregated library must declare a component label")
+        elif component is not None:
+            fail(f"{repo}: component labels belong only on aggregated libraries")
+    venues = {key for key, _label in aggregate_readme.VENUES}
+    for entry in entries:
+        announcements = entry.get("announcements")
+        if announcements is None:
+            continue
+        repo = entry["repo"]
+        if repo not in labelled:
+            fail(f"{repo}: announcements belong only on aggregated libraries")
+        if not isinstance(announcements, dict) or not announcements:
+            fail(f"{repo}: announcements must be a non-empty venue map")
+        unknown = sorted(set(announcements) - venues)
+        if unknown:
+            fail(f"{repo}: unknown announcement venues {unknown}; "
+                 f"known are {sorted(venues)}")
+        for venue, url in announcements.items():
+            if not isinstance(url, str) or not url.startswith("https://"):
+                fail(f"{repo}: {venue} announcement must be an https URL")
+    try:
+        aggregate_readme.render(document, REPO_ROOT / template)
+    except ValueError as exc:
+        fail(f"leanprover/hex README does not render: {exc}")
 
     manifest_tests = {
         module
