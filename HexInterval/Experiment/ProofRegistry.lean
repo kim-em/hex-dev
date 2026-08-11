@@ -74,7 +74,7 @@ def emitKeys (package : Package semantics Handle) : List ReplayKey :=
 end Package
 
 def firstDuplicate (seen : List ReplayKey) :
-    List (SchemaRef Handle) -> Option ReplayKey
+    List (SchemaName Handle) -> Option ReplayKey
   | [] => none
   | schema :: rest =>
       if seen.contains schema.key then some schema.key
