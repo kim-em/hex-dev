@@ -8,7 +8,7 @@ module
 
 public import Mathlib.Analysis.SpecialFunctions.Trigonometric.Basic
 public import Mathlib.Tactic.Linarith
-public import HexInterval.Experiment.ProofEmitter
+public import HexInterval.Experiment.ProofRegistry
 public import HexInterval.Experiment.GenericInstanceReconstruction
 public import HexInterval.Experiment.SineSign
 
@@ -25,7 +25,7 @@ negation propagator, and generic equality transport.
 
 namespace Hex.Interval.Experiment.SineSign
 
-open Propagator SemanticReplay ChronologicalReplay ProofEmitter
+open Propagator SemanticReplay ChronologicalReplay ProofEmitter ProofRegistry
 open GenericInstanceReconstruction
 
 /-! ## Real interpretation -/
@@ -341,14 +341,11 @@ def oddnessEqualitySchema : PackedEqualitySchema semantics where
       else none
     else none
 
-def semanticPackages : Array (SemanticReplay.Package semantics) :=
-  #[{ factSchemas := #[] },
-    { factSchemas := #[negationFactSchema] },
-    { factSchemas := #[sineFactSchema]
-      instanceSchemas := #[oddnessInstanceSchema]
-      equalitySchemas := #[oddnessEqualitySchema] }]
-
 /-! ## Tactic-side schema contributions -/
+
+/-- The source package has no proof-producing replay formats. -/
+def sourceEmit : EmitPackage Lean.Name :=
+  { schemas := [] }
 
 /-- The negation package exposes only its own fact theorem to proof emitters. -/
 def negationEmit : EmitPackage Lean.Name :=
@@ -367,6 +364,36 @@ def sineEmit : EmitPackage Lean.Name :=
          handle := ``oddnessInstanceSchema },
        { key := oddnessEqualitySchema.key
          handle := ``oddnessEqualitySchema }] }
+
+/-! ## Joint package registry -/
+
+/-- Joint proof declaration for the source-expression package. -/
+def sourceProof : ProofRegistry.Package semantics Lean.Name :=
+  { semantic := { factSchemas := #[] }
+    emit := sourceEmit }
+
+/-- Joint proof declaration for the independent negation package. -/
+def negationProof : ProofRegistry.Package semantics Lean.Name :=
+  { semantic := { factSchemas := #[negationFactSchema] }
+    emit := negationEmit }
+
+/-- Joint proof declaration for sine propagation and oddness instantiation. -/
+def sineProof : ProofRegistry.Package semantics Lean.Name :=
+  { semantic :=
+      { factSchemas := #[sineFactSchema]
+        instanceSchemas := #[oddnessInstanceSchema]
+        equalitySchemas := #[oddnessEqualitySchema] }
+    emit := sineEmit }
+
+/-- One descriptor per executable package, in executable registry order.
+This is the source of both semantic replay registration and tactic schema
+selection; neither frontend keeps a separate function enumeration. -/
+def proofPackages : Array (ProofRegistry.Package semantics Lean.Name) :=
+  #[sourceProof, negationProof, sineProof]
+
+/-- Compatibility projection for runtime-only semantic replay clients. -/
+def semanticPackages : Array (SemanticReplay.Package semantics) :=
+  proofPackages.map (fun package => package.semantic)
 
 /-! ## Ordinary emitted proof chain -/
 
