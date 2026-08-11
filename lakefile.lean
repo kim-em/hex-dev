@@ -474,6 +474,8 @@ lean_lib HexConformance where
       `HexIntervalMathlib.PntTable10A2Conformance,
       `HexIntervalMathlib.PntTable10ExactConformance].map Glob.one
 
+    ++ #[`HexInterval.StagedPolicyConformance].map Glob.one
+
     ++ #[`HexInterval.MinMaxConformance,
       `HexIntervalMathlib.MinMaxConformance].map Glob.one
 
