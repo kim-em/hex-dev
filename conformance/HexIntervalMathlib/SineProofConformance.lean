@@ -23,6 +23,22 @@ open Hex.Interval.Experiment
 open Propagator PayloadArena SemanticReplay ChronologicalReplay ProofEmitter
 open SineSign SineSignConformance
 
+def emitTable? : Option (SchemaTable Lean.Name) :=
+  SchemaTable.build [negationEmit, sineEmit]
+
+#guard
+  emitTable?.any fun table =>
+    table.find? sineFactSchema.key == some ``sineFactSchema &&
+      table.find? negationFactSchema.key == some ``negationFactSchema &&
+      table.find? oddnessInstanceSchema.key == some ``oddnessInstanceSchema &&
+      table.find? oddnessEqualitySchema.key == some ``oddnessEqualitySchema
+
+#guard (SchemaTable.build [sineEmit, sineEmit]).isNone
+#guard
+  (SchemaTable.build [negationEmit]).any fun table =>
+    (table.find? negationFactSchema.key).isSome &&
+      (table.find? sineFactSchema.key).isNone
+
 def oddnessAction : Action :=
   { serial := 0
     programVersion := 0

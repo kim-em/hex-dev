@@ -8,7 +8,7 @@ module
 
 public import Mathlib.Analysis.SpecialFunctions.Trigonometric.Basic
 public import Mathlib.Tactic.Linarith
-public import HexInterval.Experiment.ChronologicalReplay
+public import HexInterval.Experiment.ProofEmitter
 public import HexInterval.Experiment.SineSign
 
 @[expose] public section
@@ -24,7 +24,7 @@ negation propagator, and generic equality transport.
 
 namespace Hex.Interval.Experiment.SineSign
 
-open Propagator SemanticReplay ChronologicalReplay
+open Propagator SemanticReplay ChronologicalReplay ProofEmitter
 
 /-! ## Real interpretation -/
 
@@ -310,6 +310,26 @@ def semanticPackages : Array (SemanticReplay.Package semantics) :=
     { factSchemas := #[sineFactSchema]
       instanceSchemas := #[oddnessInstanceSchema]
       equalitySchemas := #[oddnessEqualitySchema] }]
+
+/-! ## Tactic-side schema contributions -/
+
+/-- The negation package exposes only its own fact theorem to proof emitters. -/
+def negationEmit : EmitPackage Lean.Name :=
+  { schemas :=
+      [{ key := negationFactSchema.key
+         handle := ``negationFactSchema }] }
+
+/-- The sine/oddness package exposes its fact, instantiation, and equality
+schemas.  Their full replay addresses remain distinct even though all three
+use numeric payload schema `1`. -/
+def sineEmit : EmitPackage Lean.Name :=
+  { schemas :=
+      [{ key := sineFactSchema.key
+         handle := ``sineFactSchema },
+       { key := oddnessInstanceSchema.key
+         handle := ``oddnessInstanceSchema },
+       { key := oddnessEqualitySchema.key
+         handle := ``oddnessEqualitySchema }] }
 
 /-! ## Ordinary emitted proof chain -/
 
