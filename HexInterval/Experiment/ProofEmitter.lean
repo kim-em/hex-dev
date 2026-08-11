@@ -19,17 +19,16 @@ opaque search, and a proof recovered from the evaluator would put that
 evaluator in the trusted base.
 
 The tactic boundary instead quotes the search output as plain data.  This
-module is a small canary for one such quoted rule step.  `replayRule` is
-transparent, selects a package-owned theorem schema supplied by the caller,
-checks the schema's complete replay address and the step's structural links,
-and composes the resulting theorem with the fact-domain meet theorem.  A
-tactic can emit a term containing the literal `RuleStep` and discharge the
-successful `Option` reduction by kernel computation.
+module provides transparent replay for the three proof-producing event shapes
+a tactic must quote: expression instantiation, a rule fact, and equality
+transport.  Each transition selects a package-owned theorem schema supplied
+by the caller, checks its replay address and the event's structural links, and
+composes the resulting theorem with generic semantic lemmas.
 
-The schema remains abstract: neither this trace format nor the replay
-function enumerates operations or supported mathematical functions.  A full
-emitter will fold the same idea over instance, equality, and fact events in
-chronological order.
+The schemas remain abstract: neither these quote types nor their replay
+functions enumerate operations or supported mathematical functions.  A
+tactic may emit these applications directly in dependency order or quote a
+complete trace for a transparent fold over the same transitions.
 -/
 
 namespace Hex.Interval.Experiment.ProofEmitter
@@ -47,6 +46,57 @@ structure RuleStep (Fact : Type) where
   entry : Entry
   assumptions : List (NodeFact Fact)
   previous : Fact
+
+/-- Plain data quoted for one expression-instantiation event. -/
+structure InstanceQuote where
+  event : InstanceEvent
+  payload : PayloadId
+  entry : Entry
+
+/-- Plain data quoted for one equality-caused fact improvement. -/
+structure TransportStep (Fact : Type) where
+  event : FactEvent Fact
+  equality : EqualityId
+  edge : EqualityEdge
+  payload : PayloadId
+  entry : Entry
+  assumptions : List (NodeFact Fact)
+  previous : Fact
+  sourceFact : Fact
+
+/-- Transparently replay one quoted expression instantiation and compose its
+package-owned conservative-extension theorem with the extension accumulated
+for the preceding program prefix. -/
+def replayInstance {Fact : Type} {semantics : Semantics Fact}
+    (schema : PackedInstanceSchema semantics) (input : CheckerInput Fact)
+    (version : Nat) (before after : Program)
+    (basePrefix : ProgramPrefix input.baseProgram before)
+    (stepPrefix : ProgramPrefix before after)
+    (sameOperations : before.operations = after.operations)
+    (step : InstanceQuote)
+    (previous : Evidence (semantics.Extends input.baseProgram before)) :
+    Option (Evidence (semantics.Extends input.baseProgram after)) := do
+  if step.event.payload != step.payload ||
+      step.event.origin.programVersion != version ||
+      step.event.programVersion != version + 1 ||
+      step.event.newNodes !=
+        Propagator.newNodeIds before.nodes.size after.nodes.size ||
+      schema.key != step.entry.replayKey then
+    none
+  else if originProof : step.event.origin = step.entry.origin then
+    let context : InstanceContext input step.entry.origin :=
+      { before
+        after
+        basePrefix
+        stepPrefix
+        sameOperations
+        event := step.event
+        origin := originProof }
+    let certificate <- schema.decode step.entry.body
+    let extension <- schema.replay input step.entry.origin context certificate
+    pure (extendTrans basePrefix previous extension)
+  else
+    none
 
 /-- Transparently replay one quoted rule step.
 
@@ -104,6 +154,81 @@ def replayRule {Fact : Type} {semantics : Semantics Fact}
       else
         none
 
+/-- Transparently replay one equality transport.  The preceding proof terms
+must supply the target's previous fact, the exact source fact, and every
+conditional equality assumption; an emitted application therefore cannot use
+a fact before its proof has appeared in the dependency chain. -/
+def replayTransport {Fact : Type} {semantics : Semantics Fact}
+    (schema : PackedEqualitySchema semantics)
+    (domain : FactDomainSchema semantics) (laws : Laws semantics)
+    (input : CheckerInput Fact) (version : Nat) (program : Program)
+    (basePrefix : ProgramPrefix input.baseProgram program)
+    (base : List (NodeFact Fact)) (step : TransportStep Fact)
+    (previousSound :
+      Evidence
+        (semantics.Entails program base
+          { node := step.event.node, fact := step.previous }))
+    (sourceSound :
+      Evidence
+        (semantics.Entails program base
+          { node :=
+              match step.event.cause with
+              | .transport _ source => source.node
+              | .rule _ _ _ => step.event.node
+            fact := step.sourceFact }))
+    (assumptionsSound :
+      Evidence (InputsSound semantics program base step.assumptions)) :
+    Option
+      (Evidence
+        (semantics.Entails program base
+          { node := step.event.node, fact := step.event.fact })) :=
+  match causeProof : step.event.cause with
+  | .rule _ _ _ => none
+  | .transport equality source => do
+      if step.event.programVersion != version ||
+          step.event.version != step.event.previous.version + 1 ||
+          step.event.previous.node != step.event.node ||
+          equality != step.equality ||
+          step.edge.payload != step.payload ||
+          !inputNodesMatch step.edge.origin step.assumptions ||
+          schema.key != step.entry.replayKey then
+        none
+      else if originProof : step.edge.origin = step.entry.origin then
+        let context : EqualityContext input step.entry.origin :=
+          { program
+            basePrefix
+            assumptions := step.assumptions
+            equality := step.equality
+            edge := step.edge
+            origin := originProof }
+        let certificate <- schema.decode step.entry.body
+        let equalityProof <-
+          schema.replay input step.entry.origin context certificate
+        let compatible <- sameDomain? program step.edge.left step.edge.right
+        if orientation :
+            (step.event.node = step.edge.left ∧ source.node = step.edge.right) ∨
+              (step.event.node = step.edge.right ∧ source.node = step.edge.left) then
+          let meet <-
+            domain.proveMeet program step.event.node step.previous
+              step.sourceFact step.event.fact
+          let exactSource :
+              Evidence
+                (semantics.Entails program base
+                  { node := source.node, fact := step.sourceFact }) := by
+            simpa [causeProof] using sourceSound
+          pure
+            (installTransport laws step.edge compatible orientation equalityProof
+              meet previousSound exactSource assumptionsSound)
+        else
+          none
+      else
+        none
+
+/-- Project a proposition from any successfully replayed proof object. -/
+theorem evidenceOfReplay {P : Prop} (result : Option (Evidence P))
+    (success : result.isSome) : P :=
+  (result.get success).proof
+
 /-- A successful transparent replay is an ordinary kernel theorem.  This
 eliminator is intentionally tiny: the substantial trust argument lives in
 `replayRule`; `Option` only represents rejection of malformed quoted data. -/
@@ -113,6 +238,6 @@ theorem proofOfReplay {Fact : Type} {semantics : Semantics Fact}
     (result : Option (Evidence (semantics.Entails program base conclusion)))
     (success : result.isSome) :
     semantics.Entails program base conclusion :=
-  (result.get success).proof
+  evidenceOfReplay result success
 
 end Hex.Interval.Experiment.ProofEmitter
