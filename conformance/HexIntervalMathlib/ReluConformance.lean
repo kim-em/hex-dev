@@ -4,8 +4,15 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexIntervalMathlib.ExpSignConformance
+import HexIntervalMathlib.Experiment.ExpSign
+import HexInterval.Experiment.GoalFrontend
+import HexInterval.Experiment.GoalClosure
+import HexInterval.Experiment.ProofFrontend
+import HexInterval.Experiment.TargetRun
+import HexInterval.Experiment.BranchStart
+import HexInterval.Experiment.BranchTree
 import HexInterval.Experiment.BranchProof
+import Mathlib.Lean.Elab.Tactic.Meta
 
 /-!
 # Branch-dependent function propagation conformance
@@ -21,7 +28,6 @@ open Hex.Interval.Experiment
 open Propagator PolicySession SemanticReplay ChronologicalReplay ProofEmitter
 open Frontend FrontendEncoder ProofFrontend ProofRegistry GoalFrontend ExpSign
 open GoalClosure BranchStart
-open Hex.IntervalMathlib.ExpSignConformance
 
 private def splitOffer? (view : Propagator.Policy.View Bound) :
     Option Propagator.Policy.OfferView :=

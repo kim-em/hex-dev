@@ -1655,14 +1655,20 @@ and that zero split or one-leaf budgets retain an explicitly blocked root.
 
 This runtime tree contains no proof evidence. The separate generic
 `BranchProof` frontend now folds a settled retained tree bottom-up. It first
-binds every leaf and split result back to its exact scope, base program,
-initial fact array, and target; checks that each child is the exact child input
-stored by its parent; rejects pending, blocked, failed, dangling, shared,
-cyclic, or unreachable nodes; then asks client callbacks to replay each closed
-leaf and apply each package-owned split join. The final emitted expression must
-have the requested Lean type. A callback can therefore cause rejection or
-choose a different kernel-checkable proof, but tree data itself cannot become
-evidence.
+binds every leaf and split result back to its exact scope, base program, and
+initial fact array. Each child is checked against the exact child input stored
+by its parent, including that input's target. Pending, blocked, failed,
+dangling, shared, cyclic, and unreachable nodes are rejected. Client callbacks
+then replay each closed leaf and apply each package-owned split join; the final
+emitted expression must have the requested Lean target type. A callback can
+therefore cause rejection or choose a different kernel-checkable proof, but
+tree data itself cannot become evidence.
+
+Every child admitted by a split's coverage theorem must eventually close by
+replaying a proof of its target or by deriving a package-checked refutation.
+A retained runtime result is not by itself a proof of closure: the leaf
+callback must turn it into the corresponding kernel-checked evidence before
+the bottom-up join can accept it.
 
 The useful ReLU canary now runs through this generic path. Its retained root
 has two exact live target children; the leaf callback invokes the unchanged
