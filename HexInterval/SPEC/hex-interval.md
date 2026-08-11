@@ -1312,6 +1312,16 @@ goal. This is an executable quotation-fidelity boundary, but not yet a general
 proof assembler: registry-driven schema selection and construction of replay
 applications from an arbitrary returned trace remain the next frontend
 experiment.
+Direct emission maintains a table from each already-established fact version
+to its `Evidence` term. Caller assumptions seed that table through the generic
+`ProofEmitter.assumed` lemma; generated nodes at version zero use
+`ProofEmitter.topFact`, tied to an exact checked node lookup and the fact-domain
+schema's top theorem. For a rule or conditional equality,
+`ProofEmitter.EntailsList` combines the selected evidence terms in the action's
+declared input order into `InputsSound`. These helpers contain no operation or
+function cases: adding a propagator contributes schemas, not a new dependency
+assembler. Merely resolving the same fact values from compiled search history
+is a quotation check and cannot substitute for these proof terms.
 
 A Mathlib companion must instantiate those abstract schemas, decode each
 frozen entry independently of package cache state, and recheck the

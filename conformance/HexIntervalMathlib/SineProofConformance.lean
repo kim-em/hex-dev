@@ -178,19 +178,26 @@ def rejectedInstance :=
 def emittedExtension : Evidence (semantics.Extends baseProgram extendedProgram) :=
   instanceReplay.get (by rfl)
 
+def sinePrevious :
+    Evidence
+      (semantics.Entails extendedProgram baseFacts
+        { node := node 3, fact := sineStep.previous }) := by
+  simpa [sineStep, rangeSchema] using
+    (ProofEmitter.topFact rangeSchema extendedProgram baseFacts (node 3)
+      sineSourceInstruction (by rfl))
+
+def sinePremises :
+    EntailsList semantics extendedProgram baseFacts sineStep.assumptions :=
+  .cons (ProofEmitter.assumed (by simp [baseFacts])) .nil
+
 def sineInputs :
     Evidence
       (InputsSound semantics extendedProgram baseFacts sineStep.assumptions) :=
-  { proof := by
-      intro input member
-      simp only [sineStep, List.mem_singleton] at member
-      subst input
-      intro _ _ assumptions
-      exact assumptions _ (by simp [baseFacts]) }
+  sinePremises.sound
 
 def sineReplay :=
   ProofEmitter.replayRule sineFactSchema rangeSchema checkerInput extendedProgram
-    programPrefix baseFacts sineStep (previousAll (node 3)) sineInputs
+    programPrefix baseFacts sineStep sinePrevious sineInputs
 
 def emittedSine :
     Evidence
@@ -198,19 +205,27 @@ def emittedSine :
         { node := node 3, fact := .nonnegative }) :=
   sineReplay.get (by rfl)
 
+def negationPrevious :
+    Evidence
+      (semantics.Entails extendedProgram baseFacts
+        { node := node 4, fact := negationStep.previous }) := by
+  simpa [negationStep, rangeSchema] using
+    (ProofEmitter.topFact rangeSchema extendedProgram baseFacts (node 4)
+      negatedSineInstruction (by rfl))
+
+def negationPremises :
+    EntailsList semantics extendedProgram baseFacts negationStep.assumptions :=
+  .cons emittedSine .nil
+
 def negationInputs :
     Evidence
       (InputsSound semantics extendedProgram baseFacts negationStep.assumptions) :=
-  { proof := by
-      intro input member
-      simp only [negationStep, List.mem_singleton] at member
-      subst input
-      exact emittedSine.proof }
+  negationPremises.sound
 
 def negationReplay :=
   ProofEmitter.replayRule negationFactSchema rangeSchema checkerInput
     extendedProgram programPrefix baseFacts negationStep
-    (previousAll (node 4)) negationInputs
+    negationPrevious negationInputs
 
 def emittedNegation :
     Evidence
@@ -218,10 +233,17 @@ def emittedNegation :
         { node := node 4, fact := .nonpositive }) :=
   negationReplay.get (by rfl)
 
+def transportPrevious :
+    Evidence
+      (semantics.Entails extendedProgram baseFacts
+        { node := node 2, fact := transportStep.previous }) := by
+  apply ProofEmitter.assumed
+  simp [transportStep, baseFacts]
+
 def transportReplay :=
   ProofEmitter.replayTransport oddnessEqualitySchema rangeSchema laws checkerInput
     1 extendedProgram programPrefix baseFacts transportStep
-    (previousAll (node 2)) emittedNegation noInputs
+    transportPrevious emittedNegation EntailsList.nil.sound
 
 def malformedTransport : TransportStep Range :=
   { transportStep with payload := payload 99 }
@@ -229,7 +251,7 @@ def malformedTransport : TransportStep Range :=
 def rejectedTransport :=
   ProofEmitter.replayTransport oddnessEqualitySchema rangeSchema laws checkerInput
     1 extendedProgram programPrefix baseFacts malformedTransport
-    (by simpa [malformedTransport, transportStep] using previousAll (node 2))
+    (by simpa [malformedTransport, transportStep] using transportPrevious)
     (by simpa [malformedTransport, transportStep] using emittedNegation)
     (by simpa [malformedTransport, transportStep] using noInputs)
 

@@ -64,6 +64,70 @@ structure TransportStep (Fact : Type) where
   previous : Fact
   sourceFact : Fact
 
+/-! ## Generic dependency assembly -/
+
+/-- Evidence for each fact in an exact ordered input list.  A tactic builds
+this value from the versioned facts it has already replayed; `sound` below
+turns the list into the single premise expected by rule and equality replay.
+
+This type is independent of operations and theorem packages.  In particular,
+adding a new function propagator does not add a constructor here. -/
+inductive EntailsList {Fact : Type} (semantics : Semantics Fact)
+    (program : Program) (base : List (NodeFact Fact)) :
+    List (NodeFact Fact) -> Type where
+  | nil : EntailsList semantics program base []
+  | cons {input inputs} :
+      Evidence (semantics.Entails program base input) ->
+      EntailsList semantics program base inputs ->
+      EntailsList semantics program base (input :: inputs)
+
+namespace EntailsList
+
+/-- Combine separately replayed dependencies into the exact ordered
+`InputsSound` proposition consumed by a proof-emitter transition. -/
+def sound {Fact : Type} {semantics : Semantics Fact} {program : Program}
+    {base : List (NodeFact Fact)} :
+    {inputs : List (NodeFact Fact)} ->
+      EntailsList semantics program base inputs ->
+      Evidence (InputsSound semantics program base inputs)
+  | [], .nil =>
+      { proof := by
+          intro _ member
+          simp at member }
+  | _ :: _, .cons head tail =>
+      { proof := by
+          intro input member
+          rcases List.mem_cons.mp member with equal | member
+          · subst input
+            exact head.proof
+          · exact tail.sound.proof input member }
+
+end EntailsList
+
+/-- A caller-owned base fact entails itself in every program.  The tactic uses
+this to seed its versioned evidence table from the exact base-assumption list. -/
+def assumed {Fact : Type} {semantics : Semantics Fact} {program : Program}
+    {base : List (NodeFact Fact)} {fact : NodeFact Fact}
+    (member : fact ∈ base) :
+    Evidence (semantics.Entails program base fact) :=
+  { proof := by
+      intro _ _ assumptions
+      exact assumptions fact member }
+
+/-- The domain's top fact is available for a generated node at version zero.
+The node lookup is explicit, so an emitter cannot attach top soundness to a
+nonexistent node or to a fact for a different domain. -/
+def topFact {Fact : Type} {semantics : Semantics Fact}
+    (domain : FactDomainSchema semantics) (program : Program)
+    (base : List (NodeFact Fact)) (node : NodeId) (instruction : Node)
+    (nodeAt : program.node? node = some instruction) :
+    Evidence
+      (semantics.Entails program base
+        { node, fact := domain.top instruction.domain }) :=
+  { proof := by
+      intro valuation model _
+      exact domain.topSound program valuation node instruction nodeAt model }
+
 /-- Transparently replay one quoted expression instantiation and compose its
 package-owned conservative-extension theorem with the extension accumulated
 for the preceding program prefix. -/
