@@ -16,12 +16,12 @@ per-entry polynomial literals with their monic/degree/table-hit lemmas.
 namespace Hex
 
 namespace Conway
-instance : ZMod64.Bounds 2 := ⟨by decide, by decide⟩
-instance : ZMod64.Bounds 3 := ⟨by decide, by decide⟩
-instance : ZMod64.Bounds 5 := ⟨by decide, by decide⟩
-instance : ZMod64.Bounds 7 := ⟨by decide, by decide⟩
-instance : ZMod64.Bounds 11 := ⟨by decide, by decide⟩
-instance : ZMod64.Bounds 13 := ⟨by decide, by decide⟩
+instance boundsTwo : ZMod64.Bounds 2 := ⟨by decide, by decide⟩
+instance boundsThree : ZMod64.Bounds 3 := ⟨by decide, by decide⟩
+instance boundsFive : ZMod64.Bounds 5 := ⟨by decide, by decide⟩
+instance boundsSeven : ZMod64.Bounds 7 := ⟨by decide, by decide⟩
+instance boundsEleven : ZMod64.Bounds 11 := ⟨by decide, by decide⟩
+instance boundsThirteen : ZMod64.Bounds 13 := ⟨by decide, by decide⟩
 
 /-- Committed Lübeck Conway-table coefficients, stored ascending by degree. -/
 def luebeckConwayCoeffs? : Nat → Nat → Option (List Nat)
