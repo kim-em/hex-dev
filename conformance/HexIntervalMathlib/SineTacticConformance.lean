@@ -293,6 +293,8 @@ private meta def checkLiveQuote : MetaM Unit := do
 /-- Find two local hypotheses accepted by the emitted sine theorem and build
 an application whose inferred target is definitionally the caller's goal. -/
 private meta def proveSine (target : Expr) : MetaM Expr := do
+  unless quotesMatchSearch do
+    throwError "interval_sine: compiled interval search did not match the checked proof quote"
   checkLiveQuote
   let context <- getLCtx
   for first in context do
