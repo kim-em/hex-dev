@@ -592,9 +592,19 @@ private meta def emitLiveEvidence : MetaM Expr := do
     | throwError "interval_sine: duplicate proof-schema address"
   emitTrace trace.program trace.events table
 
+/-- Reify the planner's returned data and bind it to the proof-side literals.
+This comparison is a liveness/fidelity gate, not evidence for the theorem. -/
+private meta def checkLiveQuote : MetaM Unit := do
+  let some quote := liveQuotes?
+    | throwError "interval_sine: compiled interval search failed"
+  checkQuoteData quote
+
 /-- Find two local hypotheses accepted by the emitted sine theorem and build
 an application whose inferred target is definitionally the caller's goal. -/
 private meta def proveSine (target : Expr) : MetaM Expr := do
+  unless quotesMatchSearch do
+    throwError "interval_sine: compiled interval search did not match the checked proof quote"
+  checkLiveQuote
   let context <- getLCtx
   for first in context do
     unless first.isImplementationDetail do
@@ -667,6 +677,8 @@ example : True := by
         [ .instantiation quote.instantiation, .rule quote.sine,
           .rule quote.negation, .transport wrongVersion ] table)).isSome then
       throwError "interval_sine test: stale transport program version was accepted"
+    if (← observing? (checkQuoteData malformed)).isSome then
+      throwError "interval_sine test: malformed quote was accepted"
     if (← observing? (emitQuote malformed table)).isSome then
       throwError "interval_sine test: malformed proof emission was accepted"
     let some missingTable := SchemaTable.build [negationEmit]
@@ -677,6 +689,14 @@ example : True := by
       | throwError "interval_sine test: wrong-schema fixture did not build"
     if (← observing? (emitQuote quote wrongTable)).isSome then
       throwError "interval_sine test: wrong proof schema was accepted"
+    let missing := { quote.sine.entry with schema := 99 }
+    if (← observing?
+        (checkSchema table "missing-schema test" missing ``sineFactSchema)).isSome then
+      throwError "interval_sine test: missing schema was accepted"
+    if (← observing?
+        (checkSchema table "wrong-schema test" quote.negation.entry
+          ``sineFactSchema)).isSome then
+      throwError "interval_sine test: wrong schema was accepted"
   trivial
 
 end Hex.IntervalMathlib.SineTacticConformance

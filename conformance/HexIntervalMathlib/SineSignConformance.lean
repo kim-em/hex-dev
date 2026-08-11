@@ -176,10 +176,10 @@ def baseStable : StableStep semantics baseProgram baseProgram :=
   { programPrefix := ProgramPrefix.refl baseProgram
     modelsBefore := fun _ model => model
     holdsOld := by
-      intro oldValue newValue fact _ _ _ agreement
+      intro oldValue newValue fact within _ _ agreement
       change Contains fact.fact (oldValue fact.node) ↔
         Contains fact.fact (newValue fact.node)
-      rw [agreement] }
+      rw [agreement fact.node within] }
 
 def buildInstance (before : Program) (_event : InstanceEvent) :
     Option (InstanceStep semantics before) :=
