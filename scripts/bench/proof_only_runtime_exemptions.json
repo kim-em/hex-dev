@@ -82,5 +82,11 @@
     "baseline_blob": "3e184b73696f5afa8fd6fa440e81a3aab420f90e",
     "current_blob": "801dee0859e8a8f97d9b702e7b6c279ecc9e9ce9",
     "reason": "Additionally registers the Mathlib-free generic interval chronology quotation and proof-frontend modules only; the factorization service target and executable dependency graph are unchanged."
+  },
+  {
+    "path": "lakefile.lean",
+    "baseline_blob": "3e184b73696f5afa8fd6fa440e81a3aab420f90e",
+    "current_blob": "bc8a8e32a4743854aa43b9926807bbe0172f8cfd",
+    "reason": "Additionally registers the shared interval frontend encoder and independent exponential-sign experiment/conformance only; the factorization service target and executable dependency graph are unchanged."
   }
 ]

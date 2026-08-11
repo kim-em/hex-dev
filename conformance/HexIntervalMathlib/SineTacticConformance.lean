@@ -388,15 +388,8 @@ private def seedAssumed (program : Program) (base : List (NodeFact Range))
 
 /-- The real-sine adapter for the function-independent proof-event fold. -/
 private def frontendContext : ProofFrontend.Context Range :=
-  { encoder :=
-      { program := programExpr
-        nodeId := nodeExpr
-        node := instructionExpr
-        fact := fun fact => pure (rangeExpr fact)
-        nodeFact := nodeFactExpr
-        instanceQuote := instanceQuoteExpr
-        ruleStep := ruleStepExpr
-        transportStep := transportStepExpr }
+  { encoder := FrontendEncoder.make (mkConst ``Range)
+      (fun fact => pure (rangeExpr fact))
     semantics := mkConst ``semantics
     domain := mkConst ``rangeSchema
     laws := mkConst ``laws

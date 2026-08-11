@@ -1337,8 +1337,17 @@ packages remain responsible for their replay schemas. The real-sine tactic is
 now a client of this module rather than the owner of the fold. It still names
 the canary's fixed base graph, semantic bridge, and final target. The next
 frontend experiment must derive those three pieces from an arbitrary caller
-expression and validate the same API with a second mathematical function
-package.
+expression.
+
+A second live vertical validates this separation with `Real.exp`. Its
+Mathlib-free package uses a distinct three-element fact lattice, contributes
+one unconditional nonnegativity propagator, and has neither instantiation nor
+equality transport. Its Mathlib companion contributes only real semantics and
+one replay schema. The same policy session, joint package registry,
+fact-polymorphic quotation, shared structural encoder, and generic evidence
+fold produce the ordinary theorem `0 ≤ Real.exp x`. Thus both a multi-package
+graph-growing sine proof and a single-rule exponential proof pass through the
+same frontend API without a function switch.
 The fixed canary also requires a live session with an exact proof history of one
 instance, one equality, three fact events, and the expected interleaving before
 it reads historical values through `Engine.factAt?`. Those values are quoted
