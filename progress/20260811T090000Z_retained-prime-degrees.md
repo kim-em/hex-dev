@@ -20,7 +20,7 @@
   genuine integer divisor of the input as reachable.
 
 **Measurement gate**: new `hexbz_factor_service --entry retainedPrimeProbe`
-(a three-arm counted mirror of the proposal peel run) plus
+(a four-arm counted mirror of the proposal peel run) plus
 `scripts/bench/retained_prime_probe.py`. Full-corpus record committed at
 `reports/bench-results/hexbz-retained-prime-probe.json`; analysis in
 `reports/hexbz-retained-prime-degrees.md`.
@@ -43,8 +43,8 @@ was added to price the filter properly.
 ## Current frontier
 
 The issue closes with the counterfactual report, which is the outcome its own
-acceptance criteria name when the gate is not met. The proof bridge stands
-independently and is what a future attempt would build on.
+acceptance criteria name. The proof bridge stands independently and is what a
+future attempt would build on.
 
 ## Next step
 
