@@ -1468,11 +1468,12 @@ canary remains useful coverage rather than a delivered claim.
 The exponential conformance policy simply selects the first offer. On
 `exp (exp x)` it therefore improves the inner and outer nodes in two separate
 steps, stops at the requested outer bound, and feeds both chronological events
-to the unchanged generic proof frontend. The driver returns split plans but
-does not yet create or join proof branches. The operation registry also remains
-the fixed source/exponential pair. Key-resolved semantic model selection must
-land before operation packages may be reordered; array position is not a
-permanent package identity.
+to the unchanged generic proof frontend. The target driver returns split plans
+without itself owning a search tree; the separate checked branch-start layer
+now creates exact child inputs. The operation table remains the fixed
+source/exponential pair. Key-resolved semantic model selection must land before
+operation packages may be reordered; array position is not a permanent package
+identity.
 
 ### Solver-split proof boundary
 
@@ -1550,9 +1551,19 @@ with a `BranchSeed`, starts an actual policy session, runs the exponential
 propagator, and retains one ordinary fact event. `emitBranch` replays both
 nonempty traces, `closeTarget` closes the same exponential target in each
 child context, and `replaySplit` joins them into the caller theorem. The
-assigned tactic term is built from those two live child results. This canary
-does not yet claim that an executable `SplitPlan` constructed the child inputs;
-connecting policy selection to branch creation remains branch-manager work.
+assigned tactic term is built from those two live child results.
+
+The corresponding executable source package now contributes a zero-landmark
+split rule. The generic `BranchStart.prepare` transition consumes the selected
+`SplitPlan` only after checking its exact scope, origin, program version, node
+fact, and fact version against the retained session. A domain-supplied
+`Splitter` interprets the dyadic cut; the manager independently requires both
+returned facts to be distinct, exact `.improved` results of `FactDomain.narrow`.
+It replaces only the selected slot in the parent's complete current fact
+array, preserves the target and current program, assigns two fresh child scope
+identities, and charges separate tree depth and total-scope limits. The live
+canary checks that these prepared inputs are exactly the two proof-side inputs
+above, then starts both child sessions under the allocated scopes.
 
 Branches may instantiate different auxiliary expressions. Each child replay
 therefore closes its target back to the program snapshot at the split before
@@ -1571,14 +1582,21 @@ search diagnostics but cannot participate in a completed join. An unexplored,
 fuel-limited, resource-limited, incomplete, or merely saturated child likewise
 does not close the parent target.
 
-The first branch manager should retain a tree whose internal node records the
-validated plan and checked child facts, and whose leaves retain either a target
-proof, a checked contradiction, or an explicit unfinished result. It may emit
-a theorem only when every coverage child is closed. For best-bound mode,
-unfinished leaves contribute their inherited parent fact to the global hull;
-they never inherit a tighter sibling fact. Split depth, total created scopes,
-live leaves, and total branch decisions receive separate limits in addition to
-the per-session engine and payload limits.
+The first branch-start layer also rebinds each completed child result to the
+exact prepared base program and initial fact array, then rechecks the retained
+target fact and version. Its ordinary two-target closure gate rejects a stopped,
+saturated, fuel-limited, malformed, or wrong-input child. It classifies a
+runtime contradiction separately but deliberately refuses to treat that flag
+as proof closure; the refutation schema described above must land first.
+
+The remaining tree manager should retain internal nodes recording validated
+plans and checked child facts, and leaves retaining either a target proof, a
+checked contradiction, or an explicit unfinished result. It may emit a theorem
+only when every coverage child is closed. For best-bound mode, unfinished
+leaves contribute their inherited parent fact to the global hull; they never
+inherit a tighter sibling fact. Live-leaf and total branch-decision limits
+remain to be added beside the delivered split-depth and total-created-scope
+limits and the per-session engine and payload limits.
 
 Several operational choices deliberately remain experimental:
 
@@ -1593,10 +1611,12 @@ Several operational choices deliberately remain experimental:
 
 These choices may change performance and certificate size, but not the
 coverage-and-two-proofs contract. The real exponential canary supplies the
-first two-sided live closure. Remaining acceptance tests include one
-contradiction leaf plus one target leaf, a nested split, a child-local
-instantiation, a sibling-reference attack, a non-interior repeated split, and
-fuel exhaustion with no theorem emitted.
+first two-sided live execution and proof join, but exponential nonnegativity
+is unconditional: neither child target proof currently needs its split
+assumption. Remaining acceptance tests include a useful branch-dependent
+two-sided closure, one contradiction leaf plus one target leaf, a nested split,
+a child-local instantiation, a sibling-reference attack, a non-interior
+repeated split, and fuel exhaustion with no theorem emitted.
 
 ### Generic proof frontend
 
