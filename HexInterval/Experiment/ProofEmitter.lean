@@ -83,6 +83,12 @@ inductive EntailsList {Fact : Type} (semantics : Semantics Fact)
 
 namespace EntailsList
 
+/-- Empty dependency evidence with explicit semantic parameters, convenient
+for an elaborator which will extend the list from right to left. -/
+def empty {Fact : Type} (semantics : Semantics Fact) (program : Program)
+    (base : List (NodeFact Fact)) : EntailsList semantics program base [] :=
+  .nil
+
 /-- Combine separately replayed dependencies into the exact ordered
 `InputsSound` proposition consumed by a proof-emitter transition. -/
 def sound {Fact : Type} {semantics : Semantics Fact} {program : Program}
