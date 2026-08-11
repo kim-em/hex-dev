@@ -46,13 +46,14 @@ GROUPS = (
     ("cyclotomic products", {"family": "cyclotomic-products"}),
     ("Hoeij-Zimmermann", {"family": "hoeij-zimmermann"}),
     ("Wilkinson", {"family": "wilkinson"}),
+    ("Legendre", {"family": "legendre"}),
     ("easy controls", {"family": None}),
 )
 
 # Groups small enough to list row by row rather than only in aggregate.
 PER_ROW_GROUPS = (
-    "sd5 and shifts", "SD products", "xpow48/105/120",
-    "Hoeij-Zimmermann", "Wilkinson",
+    "Hoeij-Zimmermann", "sd5 and shifts", "SD products", "xpow48/105/120",
+    "Wilkinson", "Legendre",
 )
 
 
@@ -125,6 +126,8 @@ def median(values: list[int]) -> float:
 def emit_tables(rows: list[dict]) -> None:
     """Print the grouped markdown tables the report quotes."""
     searched = [r for r in rows if r.get("summary")]
+    for row in searched:
+        row["group"] = group_of(row)
     print("| group | rows | retaining a prime | with a rejectable degree |"
           " leaves | passing the degree check | passing every retained prime |"
           " median predicate/plain | worst predicate/plain |")

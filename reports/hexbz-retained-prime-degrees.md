@@ -184,7 +184,8 @@ for the named families follow. `--from-record` regenerates all of them.
 | cyclotomic products | 16 | 4 | 0 | 722 | 722 | 722 | 1.000 | 1.008 |
 | Hoeij-Zimmermann | 10 | 10 | 1 | 36760 | 36760 | 36528 | 1.000 | 1.010 |
 | Wilkinson | 15 | 12 | 0 | 336 | 336 | 336 | 0.999 | 1.002 |
-| easy controls | 319 | 3 | 1 | 2770 | 2770 | 2758 | 1.002 | 1.053 |
+| Legendre | 20 | 2 | 1 | 602 | 602 | 590 | 1.000 | 1.014 |
+| easy controls | 299 | 1 | 0 | 2168 | 2168 | 2168 | 1.002 | 1.053 |
 
 Every Hoeij--Zimmermann row reaches a plan and every one retains a second
 prime, which is the best case the corpus offers; nine of the ten still have
@@ -248,9 +249,9 @@ nothing to reject.
 
 | row | degree | retained primes | leaves | passing the degree check | passing every retained prime | rejectable degrees | plain | predicate |
 |---|---|---|---|---|---|---|---|---|
-| `xpow48_minus1` | 48 | 1 | 145 | 145 | 145 | 0 | 1092.6 µs | 1094.4 µs |
 | `xpow105_minus1` | 105 | 1 | 96 | 96 | 96 | 0 | 4361.3 µs | 4358.8 µs |
 | `xpow120_minus1` | 120 | 0 | 965 | 965 | 965 | 0 | 9090.2 µs | 9092.8 µs |
+| `xpow48_minus1` | 48 | 1 | 145 | 145 | 145 | 0 | 1092.6 µs | 1094.4 µs |
 
 #### Wilkinson
 
@@ -259,9 +260,6 @@ visits one leaf per lifted factor and the filter has nothing to work with.
 
 | row | degree | retained primes | leaves | passing the degree check | passing every retained prime | rejectable degrees | plain | predicate |
 |---|---|---|---|---|---|---|---|---|
-| `wilkinson_4` | 4 | 0 | 4 | 4 | 4 | 0 | 10.3 µs | 10.2 µs |
-| `wilkinson_6` | 6 | 0 | 6 | 6 | 6 | 0 | 17.1 µs | 17.1 µs |
-| `wilkinson_8` | 8 | 0 | 8 | 8 | 8 | 0 | 25.1 µs | 25.0 µs |
 | `wilkinson_10` | 10 | 1 | 10 | 10 | 10 | 0 | 40.8 µs | 40.7 µs |
 | `wilkinson_12` | 12 | 1 | 12 | 12 | 12 | 0 | 52.5 µs | 52.5 µs |
 | `wilkinson_14` | 14 | 1 | 14 | 14 | 14 | 0 | 77.5 µs | 77.5 µs |
@@ -271,9 +269,37 @@ visits one leaf per lifted factor and the filter has nothing to work with.
 | `wilkinson_24` | 24 | 1 | 24 | 24 | 24 | 0 | 245.7 µs | 241.7 µs |
 | `wilkinson_28` | 28 | 1 | 28 | 28 | 28 | 0 | 339.7 µs | 340.4 µs |
 | `wilkinson_32` | 32 | 1 | 32 | 32 | 32 | 0 | 444.2 µs | 442.6 µs |
+| `wilkinson_4` | 4 | 0 | 4 | 4 | 4 | 0 | 10.3 µs | 10.2 µs |
 | `wilkinson_40` | 40 | 1 | 40 | 40 | 40 | 0 | 720.0 µs | 719.4 µs |
 | `wilkinson_48` | 48 | 1 | 48 | 48 | 48 | 0 | 1056.9 µs | 1057.4 µs |
 | `wilkinson_56` | 56 | 1 | 56 | 56 | 56 | 0 | 1438.6 µs | 1438.2 µs |
+| `wilkinson_6` | 6 | 0 | 6 | 6 | 6 | 0 | 17.1 µs | 17.1 µs |
+| `wilkinson_8` | 8 | 0 | 8 | 8 | 8 | 0 | 25.1 µs | 25.0 µs |
+
+#### Legendre
+
+| row | degree | retained primes | leaves | passing the degree check | passing every retained prime | rejectable degrees | plain | predicate |
+|---|---|---|---|---|---|---|---|---|
+| `legendre_P10` | 10 | 0 | 14 | 14 | 14 | 0 | 6.6 µs | 6.6 µs |
+| `legendre_P12` | 12 | 0 | 3 | 3 | 3 | 0 | 11.5 µs | 11.6 µs |
+| `legendre_P14` | 14 | 0 | 63 | 63 | 63 | 0 | 38.6 µs | 38.8 µs |
+| `legendre_P16` | 16 | 0 | 14 | 14 | 14 | 0 | 11.0 µs | 11.0 µs |
+| `legendre_P18` | 18 | 0 | 129 | 129 | 129 | 0 | 77.4 µs | 77.5 µs |
+| `legendre_P20` | 20 | 0 | 175 | 175 | 175 | 0 | 103.0 µs | 103.3 µs |
+| `legendre_P22` | 22 | 0 | 7 | 7 | 7 | 0 | 38.1 µs | 38.0 µs |
+| `legendre_P24` | 24 | 0 | 14 | 14 | 14 | 0 | 14.2 µs | 14.2 µs |
+| `legendre_P26` | 26 | 1 | 25 | 25 | 13 | 8 | 24.4 µs | 21.0 µs |
+| `legendre_P28` | 28 | 0 | 14 | 14 | 14 | 0 | 15.1 µs | 15.1 µs |
+| `legendre_P3` | 3 | 0 | 3 | 3 | 3 | 0 | 3.0 µs | 3.0 µs |
+| `legendre_P30` | 30 | 1 | 63 | 63 | 63 | 0 | 57.1 µs | 57.1 µs |
+| `legendre_P34` | 34 | 0 | 14 | 14 | 14 | 0 | 16.2 µs | 16.3 µs |
+| `legendre_P38` | 38 | 0 | 7 | 7 | 7 | 0 | 53.6 µs | 53.5 µs |
+| `legendre_P4` | 4 | 0 | 1 | 1 | 1 | 0 | 3.2 µs | 3.2 µs |
+| `legendre_P5` | 5 | 0 | 7 | 7 | 7 | 0 | 4.9 µs | 4.9 µs |
+| `legendre_P6` | 6 | 0 | 7 | 7 | 7 | 0 | 6.3 µs | 6.4 µs |
+| `legendre_P7` | 7 | 0 | 3 | 3 | 3 | 0 | 5.1 µs | 5.1 µs |
+| `legendre_P8` | 8 | 0 | 14 | 14 | 14 | 0 | 6.3 µs | 6.3 µs |
+| `legendre_P9` | 9 | 0 | 25 | 25 | 25 | 0 | 10.0 µs | 10.1 µs |
 
 ## Verdict: no-go
 
