@@ -218,6 +218,79 @@ fixed-point history. -/
   (AdaptivePolicy.choose? learned #[quietOffer, freshOffer]).map
       (fun selected => selected.key) == some freshOffer.key
 
+/- The shipped coefficients reward one unit-cost improvement over an untried
+peer.  This guard deliberately constructs `Config := {}` so later fixture
+tuning cannot silently replace coverage of the public defaults. -/
+private def defaultLearned : AdaptivePolicy.State :=
+  AdaptivePolicy.update (AdaptivePolicy.State.initial {}) <|
+    .rule (observation productiveKey .success #[change 0]
+      { arithmeticWork := 1 })
+
+#guard
+  (AdaptivePolicy.choose? defaultLearned #[freshOffer, { productiveOffer with age := 0 }]).map
+      (fun selected => selected.key) == some productiveOffer.key
+
+/- A repeated fixed point on one exact snapshot decays below an untried peer. -/
+private def defaultStagnant : AdaptivePolicy.State :=
+  AdaptivePolicy.update defaultLearned <|
+    .rule (observation productiveKey .noChange #[] { arithmeticWork := 1 })
+
+#guard
+  (AdaptivePolicy.choose? defaultStagnant
+      #[{ productiveOffer with age := 0 }, freshOffer]).map
+      (fun selected => selected.key) == some freshOffer.key
+
+/- A changed input version keeps stable-site gain history but resets the
+exact-snapshot fixed-point penalty. -/
+private def rewokenProductiveKey : Policy.InvocationKey :=
+  { productiveKey with inputs := [{ node := node 0, version := 1 }] }
+
+private def rewokenProductiveOffer : Policy.OfferView :=
+  offer 0 0 (.invoke rewokenProductiveKey)
+
+#guard
+  (AdaptivePolicy.choose? defaultStagnant #[freshOffer, rewokenProductiveOffer]).map
+      (fun selected => selected.key) == some rewokenProductiveOffer.key
+
+/- A changed snapshot with no accumulated gain receives the optimism floor;
+without the `Nat.max` branch this score would be zero. -/
+private def noGain : AdaptivePolicy.State :=
+  AdaptivePolicy.update (AdaptivePolicy.State.initial {}) <|
+    .rule (observation productiveKey .noChange #[] { arithmeticWork := 1 })
+
+#guard
+  (AdaptivePolicy.find? noGain.records
+      (AdaptivePolicy.ruleKey rewokenProductiveKey)).isSome &&
+    (AdaptivePolicy.rankOffer noGain rewokenProductiveOffer).score ==
+      ({} : AdaptivePolicy.Config).optimism
+
+private def accumulated : AdaptivePolicy.State :=
+  AdaptivePolicy.update defaultStagnant <|
+    .rule (observation rewokenProductiveKey .success #[change 0]
+      { arithmeticWork := 1 })
+
+#guard
+  accumulated.records.length == 1 &&
+    (AdaptivePolicy.find? accumulated.records
+      (AdaptivePolicy.ruleKey rewokenProductiveKey)).any fun record =>
+        record.runs == 3 && record.improvements == 2 &&
+          record.noChanges == 1 && record.stagnant == 0
+
+/- The feedback table has an explicit deterministic capacity. -/
+private def bounded : AdaptivePolicy.State :=
+  let state := AdaptivePolicy.State.initial { maxRecords := 2 }
+  let state := AdaptivePolicy.update state <|
+    .rule (observation productiveKey .success #[change 0])
+  let state := AdaptivePolicy.update state <|
+    .rule (observation quietKey .success #[change 1])
+  AdaptivePolicy.update state <|
+    .rule (observation freshKey .success #[change 2])
+
+#guard
+  bounded.records.length == 2 &&
+    (AdaptivePolicy.find? bounded.records
+      (AdaptivePolicy.ruleKey productiveKey)).isNone
+
 /- Fairness is a separate tier and eventually samples an old eligible action
 even when its learned score is poor. -/
 private def fairQuiet := { quietOffer with age := 20 }
