@@ -391,7 +391,7 @@ def emitEvents [BEq Fact] (context : Context Fact Handle) (finalValue : Program)
 
 /-- Emit a complete generic state from an already authenticated version-zero
 proof table. -/
-private def emitFrom [BEq Fact] (context : Context Fact Handle)
+def emitFrom [BEq Fact] (context : Context Fact Handle)
     (programValue : Program)
     (events : List (Frontend.Event Fact)) (table : SchemaTable Handle)
     (known : List (FactProof Fact)) : MetaM (State Fact) := do
