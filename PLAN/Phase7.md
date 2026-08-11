@@ -36,6 +36,17 @@ Per-library chapter content lives at
 `HexManual/Chapters/HexArith.lean`). The top-level `HexManual.lean`
 imports all chapters.
 
+`HexManual.lean` splits those chapters in two: released libraries are
+included at the top level, and the rest sit under "Draft sections for
+unreleased libraries". Which side a chapter belongs on is decided by
+`scripts/release/released.yml`, not by hand, and
+`scripts/release/check_manual_split.py` fails CI when a chapter is on the
+wrong side, is included twice, or is never included at all. Releasing a
+library is therefore also a manual edit: move its chapter up and change its
+include level from 2 to 0. A chapter that documents something other than a
+same-named library (`FactorTactics`) names its libraries in that script's
+`CHAPTER_LIBRARIES` table.
+
 ## Authoring style (Verso manual tricks)
 
 A chapter is narrative prose walking the reader through the library,

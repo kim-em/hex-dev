@@ -210,10 +210,10 @@ def stable : StableStep semantics baseProgram extendedProgram :=
       · intro impossible
         simp [baseProgram, Program.node?, node] at impossible
     holdsOld := by
-      intro oldValue newValue fact _ _ _ agreement
+      intro oldValue newValue fact within _ _ agreement
       change Contains fact.fact (oldValue fact.node) ↔
         Contains fact.fact (newValue fact.node)
-      rw [agreement] }
+      rw [agreement fact.node within] }
 
 theorem nodeAtPrefix {before after : Program}
     (stepPrefix : ProgramPrefix before after) (target : NodeId)
@@ -245,10 +245,10 @@ def stableLaw : StableLaw semantics :=
            fun found => model.2.1 (nodeAtPrefix stepPrefix _ _ found),
            fun found => model.2.2.1 (nodeAtPrefix stepPrefix _ _ found),
            fun found => model.2.2.2 (nodeAtPrefix stepPrefix _ _ found)⟩
-      · intro oldValue newValue fact _ _ _ agreement
+      · intro oldValue newValue fact within _ _ agreement
         change Contains fact.fact (oldValue fact.node) ↔
           Contains fact.fact (newValue fact.node)
-        rw [agreement] }
+        rw [agreement fact.node within] }
 
 theorem oddnessEntails :
     semantics.EntailsEq extendedProgram [] (node 2) (node 4) := by
