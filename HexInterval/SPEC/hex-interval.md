@@ -1349,10 +1349,19 @@ indexed by the exact `CheckerInput.baseProgram` and target. The emitter also
 seeds each instance event's fresh nodes with domain top after checking their
 lookup in the reified final program. The real-sine tactic is now a client of
 this module rather than the owner of the fold, but it still names the canary's
-fixed base graph, base list, semantic bridge, and final target. The next
-frontend experiment must derive those pieces and the caller-input binding from
-an arbitrary caller expression and validate the same API with a second
-mathematical function package.
+fixed base graph, base list, semantic bridge, and final target.
+
+A second live vertical validates this separation with `Real.exp`. Its
+Mathlib-free package uses a distinct three-element fact lattice, contributes
+one unconditional nonnegativity propagator, and has neither instantiation nor
+equality transport. Its Mathlib companion contributes only real semantics and
+one replay schema. The same policy session, joint package registry,
+fact-polymorphic quotation, shared structural encoder, and generic evidence
+fold produce the ordinary theorem `0 ≤ Real.exp x`. Thus both a multi-package
+graph-growing sine proof and a single-rule exponential proof pass through the
+same frontend API without a function switch. The next frontend experiment
+must derive the fixed context pieces and the caller-input binding from an
+arbitrary caller expression.
 
 The fixed canary also requires a live session with no dropped work and an exact
 proof history of one instance, one equality, three fact events, and the

@@ -6,8 +6,7 @@ Authors: Kim Morrison
 
 module
 
-public import Lean
-public import HexInterval.Experiment.Frontend
+public import HexInterval.Experiment.FrontendEncoder
 public import HexInterval.Experiment.GenericInstanceReconstruction
 
 @[expose] public section
@@ -32,19 +31,7 @@ namespace Hex.Interval.Experiment.ProofFrontend
 open Lean Meta
 open Propagator PayloadArena SemanticReplay ChronologicalReplay ProofEmitter
 open GenericInstanceReconstruction ProofRegistry Frontend
-
-/-- Reification boundary for a frontend's concrete fact representation.
-Structural trace data may use a shared encoder; only fact-bearing values vary
-between interval domains. -/
-structure Encoder (Fact : Type) where
-  program : Program → MetaM Expr
-  nodeId : NodeId → MetaM Expr
-  node : Node → MetaM Expr
-  fact : Fact → MetaM Expr
-  nodeFact : NodeFact Fact → MetaM Expr
-  instanceQuote : InstanceQuote → MetaM Expr
-  ruleStep : RuleStep Fact → MetaM Expr
-  transportStep : TransportStep Fact → MetaM Expr
+open FrontendEncoder
 
 /-- Kernel constants and runtime values needed by the generic fold.
 
