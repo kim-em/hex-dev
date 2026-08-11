@@ -4,8 +4,8 @@ Classical recombination filters a selected support by its degree at the
 selected prime and by the target degree. A genuine integer factor also reduces,
 at every *other* good prime the planner retained, to a subproduct of that
 prime's modular irreducible factors, so its degree must be a subset sum of that
-prime's factor degrees too. This page records what the extra test would reject,
-what consulting it costs, and why it does not earn a place in production.
+prime's factor degrees too. This page records what the extra test rejects, what
+it costs, and why it does not earn a place in production.
 
 It is issue #9153's record and continues
 [reports/hexbz-modular-obstruction.md](hexbz-modular-obstruction.md), whose
@@ -38,10 +38,11 @@ is the mathematics: at a good prime, an integer divisor of the input reduces to
 a divisor of the modular image, its leading coefficient survives reduction so
 its degree is preserved, and the modular image is the product of the recorded
 irreducible factors, so its degree is a subset sum of the recorded degrees.
-`reachableDegrees_of_dvd` composes that with the bitset specification into the
-no-false-rejection statement: **a probe that is its own trial marks the degree
-of every genuine integer divisor of the input as reachable**, so a traversal
-that discards a support whose degree is not marked discards no genuine factor.
+`reachableDegrees_of_dvd` composes that with the bitset specification, and
+`directPrimePlan_probes_reachableDegrees` states the result over a whole plan:
+**the degree of a genuine integer divisor of the input is marked reachable at
+every trial the planner retained**, so a traversal that discards a support
+whose degree is not marked discards no genuine factor.
 
 No `axiom`, `sorry`, `native_decide` or unchecked oracle. The theorems are in
 `HexBerlekampZassenhausMathlib/Modular/PrimePlan.lean`, which `ci.yml` builds.
@@ -50,20 +51,24 @@ No `axiom`, `sorry`, `native_decide` or unchecked oracle. The theorems are in
 
 `hexbz_factor_service --entry retainedPrimeProbe` mirrors the production
 proposal peel run leaf for leaf -- same cardinality schedule, same budget, same
-filters in the same order, same accepting step -- in three arms:
+filters in the same order, same accepting step -- in four arms:
 
 - **plain**: the production traversal.
 - **counting**: at every leaf that passes the production selected-support
   degree check, each retained probe's bitset is read at that degree; the answer
   is recorded and discarded, so this arm visits exactly the leaves production
   visits and its counters are the counterfactual.
-- **acting**: the same, except a leaf no retained probe admits returns
-  immediately, before the multi-limb trailing-residue test, the candidate
-  product and exact division. This is the prototype.
+- **predicate**: a leaf no retained probe admits returns immediately, before
+  the multi-limb trailing-residue test, the candidate product and exact
+  division. The test is a short-circuiting scan that allocates nothing and
+  records nothing, so this arm prices what production would run.
+- **counting and acting**: both, used only for the equivalence check.
 
-The acting arm's peeled factor degrees, residual degree and decline reason are
-compared against the plain arm's on every row; they agree everywhere, which is
-the executable check on the no-false-rejection theorem.
+Both acting arms are compared against the plain arm on the peeled polynomials
+themselves, the residual polynomial, the complementary support, the unconsumed
+budget and the decline reason -- not on degree summaries, which two arms could
+match while peeling different factors. They agree on all 392 rows, which is the
+executable check on the no-false-rejection theorem.
 
 `rejectableDegrees` answers the same question without reference to any
 traversal: the degrees the selected prime's own factorization can form that
@@ -71,31 +76,36 @@ some retained prime cannot. When it is empty, no traversal over that lift can
 be helped by this filter, whatever order it visits supports in.
 
 `scripts/bench/retained_prime_probe.py` drives all 392 corpus rows and writes
-one durable record.
+one durable record; `--from-record ... ` regenerates the tables below.
 
 ### Protocol
 
-- Source revision `4d23c458` plus this branch's bench driver, Lean toolchain
+- Source revision `1e00c8ee` plus this branch's bench driver, Lean toolchain
   `leanprover/lean4:v4.33.0-rc1`.
 - Host `chungus2`, AMD EPYC 9455, Linux x86-64, 96 cores, service pinned to
   CPU 70.
 - Corpus `bench/corpus/hexbz-factor-corpus.jsonl`, 392 rows, SHA-256
   `619913904240834c912489e6cc23ba136e8cc5ebf0ea95f83397e0682387284d`.
-- Six rounds per row, the three arms run in order on even rounds and in reverse
+- Six rounds per row, the four arms run in order on even rounds and in reverse
   order on odd rounds, so the round's cache warm-up does not land preferentially
   on one arm. Every span is in the record; the numbers below are medians of six.
 - Record: `reports/bench-results/hexbz-retained-prime-probe.json`, SHA-256
-  `1dee4dbff4c830ac5f5ea58b037c88b3e268f37a9e74a7f8031e08970af9e00d`.
+  `955be2a23e03526d2a9c86b5e69f902a8f26d9e5d38cd2e11013eea9de991b42`.
+- End-to-end times are quoted from the current published curve,
+  `hexbz-factor-sweep-hex-d4b93a54-chungus2.json`.
 
-### Noise floor
+### Noise floor, and why the counting arm is not the price
 
-On the 347 rows with no retained probe the three arms do the same work. Their
-per-row medians give counting/plain `1.0105` and acting/plain `1.0099`, with a
-p10--p90 spread of about `0.998`--`1.049`. So a per-row difference under about
-1% is not resolved here, and the residual 1% is itself the prototype's own
-overhead: `retainedTests` allocates two small arrays per leaf even when there
-is nothing to consult. Every cost below is therefore an upper bound on what a
-production implementation would pay.
+On the 347 rows with no retained probe every arm does the same work. Their
+per-row medians give predicate/plain `1.0018`, p10--p90 `0.995`--`1.014`. So a
+per-row difference under about 1.5% is not resolved here.
+
+The counting arm is *not* a price for the filter and must not be read as one:
+it allocates two arrays per tested leaf and sums a per-probe counter array up
+the recursion. On the 43 rows that retain a prime and reject nothing it runs
+`1.024` median and `1.091` worst against plain, while the predicate arm on the
+same rows runs `1.0006` median and `1.0096` worst. Consulting the bitsets, done
+the way production would, is free within the floor.
 
 ## What the retained primes reject
 
@@ -137,7 +147,7 @@ gate is met on a material row.
 ### The removed leaves are ones the trailing filter already rejects
 
 They are not, however, leaves that cost anything downstream. On both rows the
-acting arm and the plain arm construct the same number of candidates and
+acting arms and the plain arm construct the same number of candidates and
 perform the same number of exact divisions:
 
 | row | trailing survivors | candidates constructed | obstruction rejections | exact divisions |
@@ -161,62 +171,148 @@ all 36 candidates is the even one, which the retained prime admits in full.
 **Candidate and exact-division reductions across the whole corpus are zero.**
 The most this filter can buy is the trailing test on leaves that build nothing.
 
-## What it costs
+## The reporting groups
 
-| row | plain | acting | ratio |
-|---|---|---|---|
-| `sd5_shift1` | 494.2 µs | 541.0 µs | 1.095 |
-| `sd5` | 516.5 µs | 562.2 µs | 1.088 |
-| `sd4_x_sd4shift1` | 497.4 µs | 539.9 µs | 1.085 |
-| `sd6_shift5` | 5371.7 µs | 5784.1 µs | 1.077 |
-| `sd5_x_sd5shift1` | 5072.3 µs | 5455.2 µs | 1.075 |
-| `legendre_P30` | 56.0 µs | 60.9 µs | 1.086 |
-| `wilkinson_56` | 1434.7 µs | 1437.9 µs | 1.002 |
-| `xpow105_minus1` | 4365.8 µs | 4373.2 µs | 1.002 |
-| **`hoeij_M12_f132`** | **4561.5 µs** | **4497.8 µs** | **0.986** |
-| **`legendre_P26`** | **24.1 µs** | **22.4 µs** | **0.931** |
+Aggregates over each group the issue asked to report separately; per-row tables
+for the named families follow. `--from-record` regenerates all of them.
 
-The cost tracks leaves per unit of leaf work. The Swinnerton-Dyer rows visit
-hundreds or thousands of cheap leaves and pay 7.5--9.5%; `xpow105_minus1` and
-Wilkinson visit few expensive leaves and pay 0.2%. The median over the 43 rows
-that retain a prime and reject nothing is 1.026 against the 1.010 floor.
+| group | rows | retaining a prime | with a rejectable degree | leaves | passing the degree check | passing every retained prime | median predicate/plain | worst predicate/plain |
+|---|---|---|---|---|---|---|---|---|
+| sd5 and shifts | 15 | 7 | 0 | 20956 | 20956 | 20956 | 1.001 | 1.017 |
+| SD products | 14 | 7 | 0 | 17288 | 17288 | 17288 | 1.001 | 1.006 |
+| xpow48/105/120 | 3 | 2 | 0 | 1206 | 1206 | 1206 | 1.000 | 1.002 |
+| cyclotomic products | 16 | 4 | 0 | 722 | 722 | 722 | 1.000 | 1.008 |
+| Hoeij-Zimmermann | 10 | 10 | 1 | 36760 | 36760 | 36528 | 1.000 | 1.010 |
+| Wilkinson | 15 | 12 | 0 | 336 | 336 | 336 | 0.999 | 1.002 |
+| easy controls | 319 | 3 | 1 | 2770 | 2770 | 2758 | 1.002 | 1.053 |
 
-The two rows that gain, gain 1.4% and 6.9%, the first of which is the same
-order as the floor bias, though its six spans (4.494--4.527 ms acting against
-4.547--4.594 ms plain) do not overlap.
+Every Hoeij--Zimmermann row reaches a plan and every one retains a second
+prime, which is the best case the corpus offers; nine of the ten still have
+nothing to reject.
 
-Rows with no retained probe are unaffected: `xpow120_minus1` 8988.2 µs →
-9017.3 µs, `cyclo_phi128_x_phi165` 6953.3 µs → 6952.2 µs.
+#### Hoeij-Zimmermann
+
+| row | degree | retained primes | leaves | passing the degree check | passing every retained prime | rejectable degrees | plain | predicate |
+|---|---|---|---|---|---|---|---|---|
+| `hoeij_F190` | 190 | 1 | 1265 | 1265 | 1265 | 0 | 2879.5 µs | 2880.7 µs |
+| `hoeij_F192` | 192 | 1 | 4656 | 4656 | 4656 | 0 | 8499.6 µs | 8511.8 µs |
+| `hoeij_F256` | 256 | 1 | 8256 | 8256 | 8256 | 0 | 18287.9 µs | 18252.2 µs |
+| `hoeij_F351` | 351 | 1 | 1891 | 1891 | 1891 | 0 | 7255.1 µs | 7253.0 µs |
+| `hoeij_F630` | 630 | 1 | 5886 | 5886 | 5886 | 0 | 37511.1 µs | 37375.5 µs |
+| `hoeij_M12_f132` | 132 | 1 | 298 | 298 | 66 | 6 | 4625.2 µs | 4547.7 µs |
+| `hoeij_P7` | 384 | 1 | 3916 | 3916 | 3916 | 0 | 60372.7 µs | 60951.5 µs |
+| `hoeij_S7` | 128 | 1 | 2080 | 2080 | 2080 | 0 | 3029.4 µs | 3052.1 µs |
+| `hoeij_S8` | 256 | 1 | 8256 | 8256 | 8256 | 0 | 20121.7 µs | 20094.4 µs |
+| `hoeij_S9` | 512 | 1 | 256 | 256 | 256 | 0 | 1080.7 µs | 1083.8 µs |
+
+#### sd5 and shifts
+
+| row | degree | retained primes | leaves | passing the degree check | passing every retained prime | rejectable degrees | plain | predicate |
+|---|---|---|---|---|---|---|---|---|
+| `sd2` | 4 | 0 | 3 | 3 | 3 | 0 | 4.3 µs | 4.3 µs |
+| `sd2_shift1` | 4 | 0 | 3 | 3 | 3 | 0 | 3.8 µs | 3.8 µs |
+| `sd3` | 8 | 0 | 14 | 14 | 14 | 0 | 17.0 µs | 16.9 µs |
+| `sd3_shift1` | 8 | 0 | 14 | 14 | 14 | 0 | 5.3 µs | 5.4 µs |
+| `sd3_shift2` | 8 | 0 | 14 | 14 | 14 | 0 | 5.4 µs | 5.4 µs |
+| `sd4` | 16 | 0 | 92 | 92 | 92 | 0 | 48.6 µs | 48.4 µs |
+| `sd4_shift1` | 16 | 0 | 92 | 92 | 92 | 0 | 46.3 µs | 46.3 µs |
+| `sd4_shift3` | 16 | 0 | 92 | 92 | 92 | 0 | 46.8 µs | 46.8 µs |
+| `sd5` | 32 | 1 | 696 | 696 | 696 | 0 | 540.8 µs | 541.7 µs |
+| `sd5_shift1` | 32 | 1 | 696 | 696 | 696 | 0 | 511.6 µs | 512.3 µs |
+| `sd5_shift2` | 32 | 1 | 696 | 696 | 696 | 0 | 531.9 µs | 532.6 µs |
+| `sd6` | 64 | 1 | 5488 | 5488 | 5488 | 0 | 5497.1 µs | 5514.8 µs |
+| `sd6_shift1` | 64 | 1 | 5488 | 5488 | 5488 | 0 | 5600.1 µs | 5595.5 µs |
+| `sd6_shift5` | 64 | 1 | 5488 | 5488 | 5488 | 0 | 5344.3 µs | 5348.6 µs |
+| `sd7` | 128 | 1 | 2080 | 2080 | 2080 | 0 | 3004.4 µs | 3022.6 µs |
+
+#### SD products
+
+| row | degree | retained primes | leaves | passing the degree check | passing every retained prime | rejectable degrees | plain | predicate |
+|---|---|---|---|---|---|---|---|---|
+| `sd2_x_phi12` | 8 | 0 | 8 | 8 | 8 | 0 | 15.0 µs | 15.1 µs |
+| `sd2_x_sd2shift1` | 8 | 0 | 8 | 8 | 8 | 0 | 9.8 µs | 9.7 µs |
+| `sd3_x_phi15` | 16 | 0 | 17 | 17 | 17 | 0 | 25.9 µs | 25.9 µs |
+| `sd3_x_phi24` | 16 | 0 | 92 | 92 | 92 | 0 | 64.8 µs | 64.3 µs |
+| `sd3_x_sd3shift1` | 16 | 0 | 92 | 92 | 92 | 0 | 69.9 µs | 70.1 µs |
+| `sd4_x_phi17` | 32 | 0 | 42 | 42 | 42 | 0 | 39.7 µs | 39.9 µs |
+| `sd4_x_phi35` | 40 | 1 | 62 | 62 | 62 | 0 | 126.7 µs | 126.9 µs |
+| `sd4_x_sd4shift1` | 32 | 1 | 696 | 696 | 696 | 0 | 501.1 µs | 500.6 µs |
+| `sd5_x_phi11` | 42 | 1 | 152 | 152 | 152 | 0 | 167.9 µs | 168.8 µs |
+| `sd5_x_phi45` | 56 | 1 | 196 | 196 | 196 | 0 | 299.6 µs | 298.2 µs |
+| `sd5_x_sd5shift1` | 64 | 1 | 5488 | 5488 | 5488 | 0 | 5234.1 µs | 5224.8 µs |
+| `sd6_x_phi105` | 112 | 1 | 7806 | 7806 | 7806 | 0 | 10854.9 µs | 10861.5 µs |
+| `sd6_x_phi13` | 76 | 0 | 549 | 549 | 549 | 0 | 682.1 µs | 680.7 µs |
+| `sd6_x_sd6shift1` | 128 | 1 | 2080 | 2080 | 2080 | 0 | 2875.8 µs | 2884.4 µs |
+
+#### xpow48/105/120
+
+| row | degree | retained primes | leaves | passing the degree check | passing every retained prime | rejectable degrees | plain | predicate |
+|---|---|---|---|---|---|---|---|---|
+| `xpow48_minus1` | 48 | 1 | 145 | 145 | 145 | 0 | 1092.6 µs | 1094.4 µs |
+| `xpow105_minus1` | 105 | 1 | 96 | 96 | 96 | 0 | 4361.3 µs | 4358.8 µs |
+| `xpow120_minus1` | 120 | 0 | 965 | 965 | 965 | 0 | 9090.2 µs | 9092.8 µs |
+
+#### Wilkinson
+
+Every Wilkinson residual succeeds at cardinality one, so the whole family
+visits one leaf per lifted factor and the filter has nothing to work with.
+
+| row | degree | retained primes | leaves | passing the degree check | passing every retained prime | rejectable degrees | plain | predicate |
+|---|---|---|---|---|---|---|---|---|
+| `wilkinson_4` | 4 | 0 | 4 | 4 | 4 | 0 | 10.3 µs | 10.2 µs |
+| `wilkinson_6` | 6 | 0 | 6 | 6 | 6 | 0 | 17.1 µs | 17.1 µs |
+| `wilkinson_8` | 8 | 0 | 8 | 8 | 8 | 0 | 25.1 µs | 25.0 µs |
+| `wilkinson_10` | 10 | 1 | 10 | 10 | 10 | 0 | 40.8 µs | 40.7 µs |
+| `wilkinson_12` | 12 | 1 | 12 | 12 | 12 | 0 | 52.5 µs | 52.5 µs |
+| `wilkinson_14` | 14 | 1 | 14 | 14 | 14 | 0 | 77.5 µs | 77.5 µs |
+| `wilkinson_16` | 16 | 1 | 16 | 16 | 16 | 0 | 103.1 µs | 103.0 µs |
+| `wilkinson_18` | 18 | 1 | 18 | 18 | 18 | 0 | 132.9 µs | 132.9 µs |
+| `wilkinson_20` | 20 | 1 | 20 | 20 | 20 | 0 | 165.4 µs | 165.0 µs |
+| `wilkinson_24` | 24 | 1 | 24 | 24 | 24 | 0 | 245.7 µs | 241.7 µs |
+| `wilkinson_28` | 28 | 1 | 28 | 28 | 28 | 0 | 339.7 µs | 340.4 µs |
+| `wilkinson_32` | 32 | 1 | 32 | 32 | 32 | 0 | 444.2 µs | 442.6 µs |
+| `wilkinson_40` | 40 | 1 | 40 | 40 | 40 | 0 | 720.0 µs | 719.4 µs |
+| `wilkinson_48` | 48 | 1 | 48 | 48 | 48 | 0 | 1056.9 µs | 1057.4 µs |
+| `wilkinson_56` | 56 | 1 | 56 | 56 | 56 | 0 | 1438.6 µs | 1438.2 µs |
 
 ## Verdict: no-go
 
-The issue's gate is a conjunction -- at least 20% of the post-degree-check
-leaves removed on a material row **and** a favourable measured net cost. The
-first half is met on `hoeij_M12_f132`. The second is not, and not marginally:
+Both halves of the issue's gate are met on their own terms. The intersection
+removes 77.9% of the post-degree-check leaves on `hoeij_M12_f132`, well above
+the 20% bar and on one of the families the issue names. And the prototyped cost
+is favourable: the predicate arm's worst per-row regression anywhere in the
+corpus is 0.96%, inside the 1.5% floor, and it is faster on the two rows that
+have something to reject -- `hoeij_M12_f132` 4625.2 µs → 4547.7 µs (−1.7%) and
+`legendre_P26` 24.4 µs → 21.0 µs (−14.0%), both with cleanly separated spans.
 
-- The filter removes no candidate construction and no exact division anywhere
-  in the corpus, because every leaf it rejects is a leaf the existing trailing
-  filter already rejects. Its whole possible benefit is one multi-limb trailing
-  test per rejected leaf, measured at −1.4% on one 4.6 ms row and −6.9% on one
-  24 µs row.
-- Against that, every post-degree-check leaf on the other 43 rows that retain a
-  prime pays a lookup, costing up to 9.5% on the Swinnerton-Dyer rows -- above
-  the issue's own 5% per-row regression tolerance.
+What fails is the acceptance criterion those two thresholds exist to serve:
+"candidate/leaves reductions translate into a material improvement on the rows
+that justified the change". There are no candidate or leaf reductions to
+translate -- every leaf the filter rejects is a leaf the existing trailing
+filter already rejects, so nothing downstream of the leaf changes anywhere in
+the corpus. And the peel run is a small part of the rows in question:
 
-A leaner production implementation would narrow the cost side: the prototype
-allocates per leaf where production would short-circuit, and the whole test can
-be skipped when no probe is retained, which is 347 of 392 rows. It cannot widen
-the benefit side, which is bounded above by the trailing tests on 232 leaves of
-one row and 12 leaves of another. So the conclusion does not depend on tuning
-the prototype.
+| row | end-to-end | proposal peel | peel saving | as a share of end-to-end |
+|---|---|---|---|---|
+| `hoeij_M12_f132` | 960.894 ms | 4.625 ms (0.48%) | 77.5 µs | **0.008%** |
+| `legendre_P26` | 6.913 ms | 0.024 ms (0.35%) | 3.4 µs | **0.049%** |
 
-Nothing is installed in production. The proof bridge is landed, and the
-counterfactual is committed, so the gate can be re-run in one command.
+Neither figure is measurable in the sweep protocol the issue requires a
+production PR to run: the published curve's own repeat-to-repeat floor is
+around 1%, two orders of magnitude above the effect. A production change here
+would be a real code and proof change -- the predicate belongs in the traversal
+data, and the head-forced tier's completeness proofs quantify over it -- bought
+with a fresh full Hex sweep and a regeneration of every cactus and
+runtime-by-degree figure, in exchange for an improvement no sweep could show.
+
+So: nothing is installed in production. The proof bridge is landed, and the
+counterfactual is committed, so the gate can be re-run in one command against
+any future planner.
 
 ## What would change the answer
 
 The filter is vacuous because of what the planner retains, not because the
-mathematics is weak. Two observations for whoever revisits this:
+mathematics is weak. Three observations for whoever revisits this:
 
 - The planner keeps at most one other trial, and keeps it for having *lost* a
   lexicographic score whose first key is the subset cost. Nothing in that score
@@ -224,11 +320,15 @@ mathematics is weak. Two observations for whoever revisits this:
   planner that deliberately retained a prime with a coarse pattern -- all
   degrees even, say -- would make this filter bite on far more than two rows.
   `rejectableDegrees` in the record is the cheap way to measure such a change:
-  it is a property of the two degree multisets alone.
+  it is a property of the two degree multisets alone, and needs no traversal.
 - Even then the filter would have to reject leaves the trailing test lets
   through, not leaves it already stops. On `hoeij_M12_f132` the two filters
   reject the same set, and the cheaper one runs first only by accident of the
-  candidate-degree arithmetic.
+  candidate-degree arithmetic. A version worth installing would have to remove
+  candidate constructions or exact divisions, which this one never does.
+- The proposal peel is well under 1% of the end-to-end time on both rows that
+  the filter touches. Anything aimed at those rows should be aimed at where
+  their time actually goes.
 
 ## Reproducing
 
@@ -236,7 +336,11 @@ mathematics is weak. Two observations for whoever revisits this:
 lake build hexbz_factor_service
 taskset -c 70 python3 scripts/bench/retained_prime_probe.py \
     --output reports/bench-results/hexbz-retained-prime-probe.json
+# regenerate the tables above from the committed record
+python3 scripts/bench/retained_prime_probe.py --output /dev/null \
+    --from-record reports/bench-results/hexbz-retained-prime-probe.json
 ```
 
-The driver exits non-zero if any row's acting arm disagrees with its plain arm
-on the peeled factors, the residual degree or the decline reason.
+The driver exits non-zero if any row's acting arms disagree with its plain arm
+on the peeled polynomials, the residual, the complementary support, the
+unconsumed budget or the decline reason.

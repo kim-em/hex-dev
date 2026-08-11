@@ -352,6 +352,26 @@ theorem directPrimePlan_probes_facts
           (Hex.directPrimePlan?_probes_trial core plan hplan probe hmem).1
       p_le := Hex.directPrimePlan?_probes_p_le_500 core plan hplan probe hmem }
 
+/-- The statement a degree filter over a whole plan consumes: the degree of a
+genuine integer divisor of the input is marked reachable at *every* trial the
+planner retained, so intersecting the retained bitsets rejects no genuine
+factor. -/
+theorem directPrimePlan_probes_reachableDegrees
+    (core : Hex.SquareFreeInput) (plan : Hex.DirectPrimePlan core)
+    (hplan : Hex.directPrimePlan? core = some plan)
+    (hprim : Hex.ZPoly.Primitive core.poly)
+    (hlc_pos : 0 < Hex.DensePoly.leadingCoeff core.poly)
+    (hpos : 0 < core.poly.degree?.getD 0)
+    {c : Hex.ZPoly} (hdvd : c ∣ core.poly) :
+    ∀ probe ∈ plan.probes,
+      probe.reachableDegrees[c.degree?.getD 0]?.getD false = true := by
+  intro probe hmem
+  exact reachableDegrees_of_dvd
+    (Hex.directPrimePlan?_probes_trial core plan hplan probe hmem).2
+    (directPrimePlan_probes_modPFactorization core plan hplan hprim hlc_pos hpos
+      probe hmem)
+    hdvd
+
 /-- A selected direct plan describes the normalized modular image of its own
 indexed polynomial. -/
 theorem directPrimePlan_modPFactorization

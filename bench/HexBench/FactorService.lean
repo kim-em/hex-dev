@@ -1356,7 +1356,16 @@ private def retainedScanSubsets
               intersectionSurvivors := intersection
               lookups := lookups }
           else degreePassed
-        if act && intersection == 0 then
+        -- With `consult` off this is the production shape of the predicate: a
+        -- short-circuiting scan of the retained bitsets, allocating nothing and
+        -- recording nothing.  With `consult` on it reuses the counters already
+        -- computed, so the counted and acting arms stay one traversal.
+        let rejected :=
+          if act then
+            if consult then intersection == 0
+            else !(bits.all fun reachable => reachable[selectedDegree]?.getD false)
+          else false
+        if rejected then
           .exhausted degreePassed
         else if directTrailingPrefilter coreLc target lift.modulus selectedTrail then
           let filtered := { degreePassed with trailingSurvivors := 1 }
@@ -1436,12 +1445,26 @@ private structure RetainedPeelResult where
   records : Array (Nat × Nat × RetainedStats) := #[]
   /-- Counters summed over every level. -/
   totals : RetainedStats := {}
-  /-- Degrees of the exact factors peeled, in peel order. -/
-  peeledDegrees : Array Nat := #[]
-  /-- Degree of the residual the peel run stopped on. -/
-  residualDegree : Nat := 0
+  /-- The exact factors peeled, in peel order.  Retained as polynomials, not
+  as degrees: two arms could peel same-degree but different factors, and a
+  degree comparison would not notice. -/
+  peeled : Array ZPoly := #[]
+  /-- The residual the peel run stopped on. -/
+  residual : ZPoly := 1
+  /-- Indices of the complementary lifted support for that residual. -/
+  remaining : Array Nat := #[]
+  /-- Candidate budget left unconsumed. -/
+  budget : Nat := 0
   /-- Why the run stopped, when it did. -/
   decline : Option DeclineReason := none
+
+/-- Do two arms agree on everything a caller of the peel run consumes?  The
+counter fields are excluded because only the counted arms fill them in. -/
+private def RetainedPeelResult.sameOutcome
+    (left right : RetainedPeelResult) : Bool :=
+  left.peeled == right.peeled && left.residual == right.residual &&
+    left.remaining == right.remaining && left.budget == right.budget &&
+    left.decline.map (·.name) == right.decline.map (·.name)
 
 /-- Counted mirror of `peelDirectAux`, tagging each level record with the
 index of the residual it was attempted against. -/
@@ -1451,22 +1474,23 @@ private def retainedPeelAux
     (repeatLevels : List Nat) :
     Nat → ZPoly → List (DirectLiftedIndex basis) → Nat → Nat →
       RetainedPeelResult → List Nat → RetainedPeelResult
-  | 0, target, _, _, _, acc, _ =>
-      { acc with residualDegree := target.degree?.getD 0
-                 decline := some .liftFailure }
+  | 0, target, support, _, budget, acc, _ =>
+      { acc with residual := target, remaining := (support.map (·.1)).toArray
+                 budget, decline := some .liftFailure }
   | fuel + 1, target, support, residual, budget, acc, levels =>
       if target = 1 then
-        { acc with residualDegree := target.degree?.getD 0 }
+        { acc with residual := target, remaining := #[], budget }
       else
         match retainedFindSubset consult act bits coreLc target basis lift
             (targetImage target) support levels budget #[] {} with
         | .stopped reason budget' levelRecords sweepTotals =>
-            let _ := budget'
             { acc with
               records := acc.records ++
                 levelRecords.map (fun r => (residual, r.1, r.2))
               totals := acc.totals.add sweepTotals
-              residualDegree := target.degree?.getD 0
+              residual := target
+              remaining := (support.map (·.1)).toArray
+              budget := budget'
               decline := some reason }
         | .found split budget' levelRecords sweepTotals =>
             retainedPeelAux consult act bits coreLc basis lift repeatLevels fuel
@@ -1475,8 +1499,7 @@ private def retainedPeelAux
                 records := acc.records ++
                   levelRecords.map (fun r => (residual, r.1, r.2))
                 totals := acc.totals.add sweepTotals
-                peeledDegrees :=
-                  acc.peeledDegrees.push (split.candidate.degree?.getD 0) }
+                peeled := acc.peeled.push split.candidate }
               repeatLevels
 
 /-- Counted mirror of `peelDirect` at the production operational point. -/
@@ -1543,30 +1566,44 @@ private def retainedPrimeProbe (f : ZPoly) : IO Json := do
         return (spanJson start stop, run)
       let mut plainSpans : Array Json := #[]
       let mut countSpans : Array Json := #[]
+      let mut predicateSpans : Array Json := #[]
       let mut actSpans : Array Json := #[]
       let mut counted : RetainedPeelResult := {}
       let mut acted : RetainedPeelResult := {}
+      let mut predicate : RetainedPeelResult := {}
       let mut plain : RetainedPeelResult := {}
-      -- Six rounds with the arm order reversed on alternate rounds.  Running
+      -- Four arms, six rounds, the order reversed on alternate rounds.  Running
       -- the arms in a fixed order costs the first one the round's cache
       -- warm-up, which on the short rows is larger than anything being
       -- measured; reversing half the rounds cancels it.
+      --
+      -- `plain` against `predicate` is the timing comparison: the predicate arm
+      -- carries no counters and allocates nothing per leaf, so it prices what
+      -- production would run.  The counted arms carry the counterfactual and
+      -- pay for it in allocation, so their spans price the diagnostic, not the
+      -- filter.
+      let arms := [(false, false), (true, false), (false, true), (true, true)]
       for round in [0:6] do
-        let order := if round % 2 == 0 then
-            [(false, false), (true, false), (true, true)]
-          else
-            [(true, true), (true, false), (false, false)]
+        let order := if round % 2 == 0 then arms else arms.reverse
         for (consult, act) in order do
           let (span, run) ← runArm consult act
-          if act then
+          if consult && act then
             actSpans := actSpans.push span
             acted := run
+          else if act then
+            predicateSpans := predicateSpans.push span
+            predicate := run
           else if consult then
             countSpans := countSpans.push span
             counted := run
           else
             plainSpans := plainSpans.push span
             plain := run
+      -- Both acting arms must return exactly what the plain arm returns: the
+      -- same peeled polynomials in the same order, the same residual, the same
+      -- complementary support, the same unconsumed budget, the same decline.
+      let sameOutcome :=
+        plain.sameOutcome predicate && plain.sameOutcome acted
       let levelJson := counted.records.map fun (residual, cardinality, stats) =>
         Json.mkObj
           [ ("residual", natJson residual),
@@ -1592,13 +1629,15 @@ private def retainedPrimeProbe (f : ZPoly) : IO Json := do
           ("totals", retainedStatsJson counted.totals),
           ("actedTotals", retainedStatsJson acted.totals),
           ("decline", counted.decline.map (Json.str ·.name) |>.getD Json.null),
-          ("peeledFactorDegrees", natArrayJson plain.peeledDegrees),
-          ("actedPeeledFactorDegrees", natArrayJson acted.peeledDegrees),
-          ("residualDegree", natJson plain.residualDegree),
-          ("actedResidualDegree", natJson acted.residualDegree),
-          ("actedDecline", acted.decline.map (Json.str ·.name) |>.getD Json.null),
+          ("peeledFactorDegrees",
+            natArrayJson (plain.peeled.map (fun q => q.degree?.getD 0))),
+          ("residualDegree", natJson (plain.residual.degree?.getD 0)),
+          ("remainingSupport", natArrayJson plain.remaining),
+          ("remainingBudget", natJson plain.budget),
+          ("sameOutcome", Json.bool sameOutcome),
           ("plainSpans", Json.arr plainSpans),
           ("countSpans", Json.arr countSpans),
+          ("predicateSpans", Json.arr predicateSpans),
           ("actSpans", Json.arr actSpans) ]
 
 /-- How many good primes the scouting measurement examines.  Wider than any

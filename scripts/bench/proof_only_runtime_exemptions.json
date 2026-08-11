@@ -44,7 +44,7 @@
   {
     "path": "bench/HexBench/FactorService.lean",
     "baseline_blob": "afef6b3f1ad1acb89f2a8048faf695247c7ef48c",
-    "current_blob": "3b3a4b71d5c286c2462aa26f840cbb2c59363f8a",
+    "current_blob": "1063ee045056aabe060a319d7dbe48460e6fdd75",
     "reason": "Adds the retainedPrimeProbe diagnostic entry and its counted mirror of the proposal peel run, plus one constructor and its dispatch cases. The factor entry the sweep measures is unchanged, and the new mirror is reachable only from --entry retainedPrimeProbe."
   },
   {

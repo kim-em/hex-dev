@@ -35,30 +35,34 @@ ROOT = Path(__file__).resolve().parents[2]
 CORPUS = ROOT / "bench" / "corpus" / "hexbz-factor-corpus.jsonl"
 SERVICE = ROOT / ".lake" / "build" / "bin" / "hexbz_factor_service"
 
-# Rows the report tabulates separately, per the issue's reporting request.
-REPORTED = {
-    "sd5": "sd5 and shifts",
-    "sd5_shift1": "sd5 and shifts",
-    "sd5_shift2": "sd5 and shifts",
-    "sd4": "sd5 and shifts",
-    "sd6": "sd5 and shifts",
-    "sd5_x_phi11": "SD products",
-    "sd5_x_phi45": "SD products",
-    "sd4_x_sd4shift1": "SD products",
-    "xpow48_minus1": "xpow48/105/120",
-    "xpow105_minus1": "xpow48/105/120",
-    "xpow120_minus1": "xpow48/105/120",
-    "cyclo_phi64_x_phi105": "cyclotomic products",
-    "cyclo_phi105_x_phi128": "cyclotomic products",
-    "cyclo_phi128_x_phi165": "cyclotomic products",
-    "wilkinson_40": "Wilkinson",
-    "wilkinson_48": "Wilkinson",
-    "wilkinson_56": "Wilkinson",
-    "cyclo_phi17": "easy controls",
-    "cyclo_phi41": "easy controls",
-    "legendre_P30": "easy controls",
-    "chebyshev_T24": "easy controls",
-}
+# The groups the issue asks to report separately. A row belongs to the first
+# group that claims it, so the three named `x^n - 1` rows are reported apart
+# from the rest of the cyclotomic products they live among in the corpus.
+GROUPS = (
+    ("sd5 and shifts", {"family": "swinnerton-dyer"}),
+    ("SD products", {"family": "sd-products"}),
+    ("xpow48/105/120",
+     {"names": ("xpow48_minus1", "xpow105_minus1", "xpow120_minus1")}),
+    ("cyclotomic products", {"family": "cyclotomic-products"}),
+    ("Hoeij-Zimmermann", {"family": "hoeij-zimmermann"}),
+    ("Wilkinson", {"family": "wilkinson"}),
+    ("easy controls", {"family": None}),
+)
+
+# Groups small enough to list row by row rather than only in aggregate.
+PER_ROW_GROUPS = (
+    "sd5 and shifts", "SD products", "xpow48/105/120",
+    "Hoeij-Zimmermann", "Wilkinson",
+)
+
+
+def group_of(row: dict) -> str:
+    for name, rule in GROUPS:
+        if rule.get("names") and row["name"] in rule["names"]:
+            return name
+        if rule.get("family") and row["family"] == rule["family"]:
+            return name
+    return "easy controls"
 
 
 def git(*args: str) -> str:
@@ -118,12 +122,61 @@ def median(values: list[int]) -> float:
     return (ordered[mid - 1] + ordered[mid]) / 2
 
 
+def emit_tables(rows: list[dict]) -> None:
+    """Print the grouped markdown tables the report quotes."""
+    searched = [r for r in rows if r.get("summary")]
+    print("| group | rows | retaining a prime | with a rejectable degree |"
+          " leaves | passing the degree check | passing every retained prime |"
+          " median predicate/plain | worst predicate/plain |")
+    print("|---|---|---|---|---|---|---|---|---|")
+    for name, _ in GROUPS:
+        members = [r for r in searched if r["group"] == name]
+        if not members:
+            continue
+        ratios = [median(r["predicateNanos"]) / median(r["plainNanos"])
+                  for r in members if median(r["plainNanos"])]
+        print(f"| {name} | {len(members)} |"
+              f" {sum(1 for r in members if r['summary']['retainedProbeCount'])} |"
+              f" {sum(1 for r in members if r['rejectableDegrees'])} |"
+              f" {sum(r['totals']['leaves'] for r in members)} |"
+              f" {sum(r['totals']['degreeSurvivors'] for r in members)} |"
+              f" {sum(r['totals']['intersectionSurvivors'] for r in members)} |"
+              f" {median(ratios):.3f} | {max(ratios):.3f} |")
+    for name in PER_ROW_GROUPS:
+        members = [r for r in searched if r["group"] == name]
+        if not members:
+            continue
+        print()
+        print(f"#### {name}")
+        print()
+        print("| row | degree | retained primes | leaves |"
+              " passing the degree check | passing every retained prime |"
+              " rejectable degrees | plain | predicate |")
+        print("|---|---|---|---|---|---|---|---|---|")
+        for r in sorted(members, key=lambda r: r["name"]):
+            t = r["totals"]
+            print(f"| `{r['name']}` | {r['degree']} |"
+                  f" {r['summary']['retainedProbeCount']} | {t['leaves']} |"
+                  f" {t['degreeSurvivors']} | {t['intersectionSurvivors']} |"
+                  f" {len(r['rejectableDegrees'])} |"
+                  f" {median(r['plainNanos']) / 1000:.1f} µs |"
+                  f" {median(r['predicateNanos']) / 1000:.1f} µs |")
+
+
 def main(argv: list[str]) -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--names", help="comma-separated corpus instances")
     parser.add_argument("--output", required=True)
     parser.add_argument("--service", default=str(SERVICE))
+    parser.add_argument("--tables", action="store_true",
+                        help="print the report's grouped markdown tables")
+    parser.add_argument("--from-record",
+                        help="tabulate an existing record instead of measuring")
     args = parser.parse_args(argv[1:])
+
+    if args.from_record:
+        emit_tables(json.loads(Path(args.from_record).read_text())["rows"])
+        return 0
 
     corpus = load_corpus()
     names = tuple(args.names.split(",")) if args.names else tuple(corpus)
@@ -148,7 +201,7 @@ def main(argv: list[str]) -> int:
             "name": name,
             "family": corpus[name]["family"],
             "degree": corpus[name]["degree"],
-            "reported": REPORTED.get(name),
+            "group": group_of({"name": name, "family": corpus[name]["family"]}),
             "goodPrimeFound": result.get("goodPrimeFound", False),
         }
         if result.get("goodPrimeFound"):
@@ -163,17 +216,13 @@ def main(argv: list[str]) -> int:
                 "actedTotals": result["actedTotals"],
                 "rejectableDegrees": result["rejectableDegrees"],
                 "peeledFactorDegrees": result["peeledFactorDegrees"],
-                "actedPeeledFactorDegrees": result["actedPeeledFactorDegrees"],
                 "residualDegree": result["residualDegree"],
-                "actedResidualDegree": result["actedResidualDegree"],
-                "actedDecline": result["actedDecline"],
-                "sameOutcome": (
-                    result["peeledFactorDegrees"]
-                    == result["actedPeeledFactorDegrees"]
-                    and result["residualDegree"] == result["actedResidualDegree"]
-                    and result["decline"] == result["actedDecline"]),
+                "remainingSupport": result["remainingSupport"],
+                "remainingBudget": result["remainingBudget"],
+                "sameOutcome": result["sameOutcome"],
                 "plainNanos": [s["nanos"] for s in result["plainSpans"]],
                 "countNanos": [s["nanos"] for s in result["countSpans"]],
+                "predicateNanos": [s["nanos"] for s in result["predicateSpans"]],
                 "actNanos": [s["nanos"] for s in result["actSpans"]],
             })
         rows.append(row)
@@ -189,12 +238,14 @@ def main(argv: list[str]) -> int:
     }
     Path(args.output).write_text(json.dumps(record, indent=1, sort_keys=True) + "\n")
 
+    if args.tables:
+        emit_tables(rows)
     searched = [r for r in rows if r.get("summary")]
     with_probe = [r for r in searched if r["summary"]["retainedProbeCount"]]
     removing = [r for r in with_probe if r["summary"]["removed"]]
     plain = median([n for r in searched for n in r["plainNanos"]])
     count = median([n for r in searched for n in r["countNanos"]])
-    act = median([n for r in searched for n in r["actNanos"]])
+    act = median([n for r in searched for n in r["predicateNanos"]])
     disagree = [r["name"] for r in searched if not r["sameOutcome"]]
     rejectable = [r for r in with_probe if r["rejectableDegrees"]]
     print(f"wrote {args.output}")
@@ -215,9 +266,9 @@ def main(argv: list[str]) -> int:
               f" exact divisions {row['totals']['exactDivisions']}"
               f" -> {acted['exactDivisions']};"
               f" peel {median(row['plainNanos']):.0f} ns"
-              f" -> {median(row['actNanos']):.0f} ns")
+              f" -> {median(row['predicateNanos']):.0f} ns")
     print(f"median peel span: plain {plain:.0f} ns, counting {count:.0f} ns, "
-          f"acting {act:.0f} ns")
+          f"predicate {act:.0f} ns")
     print(f"arms disagree on: {disagree if disagree else 'no row'}")
     return 0 if not disagree else 1
 
