@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexInterval.Experiment.ProofEmitter
+import HexInterval.Experiment.ProofFrontend
 import HexInterval.PolicyFunctionConformance
 
 /-!
@@ -18,6 +18,7 @@ namespace Hex.Interval.ProofEmitterConformance
 
 open Experiment Propagator PayloadArena SemanticReplay ChronologicalReplay
 open PolicyFunctionConformance
+open Lean Meta
 
 def base : List (NodeFact Rank) :=
   [{ node := node 0, fact := 0 }]
@@ -281,6 +282,9 @@ def swappedSplit :=
 def branchBase : List (NodeFact SplitFact) :=
   [{ node := node 1, fact := .yes }]
 
+def branchFacts : List (NodeFact SplitFact) :=
+  { node := splitNode, fact := .yes } :: branchBase
+
 def branchInitial : Array SplitFact := #[.yes, .yes, .all]
 
 def branchInput : CheckerInput SplitFact :=
@@ -319,18 +323,69 @@ def branchSeed :
     (by rfl) (by rfl) inheritedSplitFact
 
 /-- The split node is proved from the new child assumption. -/
+def branchSide : Evidence
+    (splitSemantics.Entails program branchFacts
+      { node := splitNode, fact := .yes }) :=
+  branchSeed.sound splitNode .yes (by rfl)
+
 example :
     splitSemantics.Entails program
       ({ node := splitNode, fact := .yes } :: branchBase)
       { node := splitNode, fact := .yes } :=
-  (branchSeed.sound splitNode .yes (by rfl)).proof
+  branchSide.proof
 
 /-- An unchanged version-zero fact is inherited as a parent consequence under
 the larger child context. -/
+def branchInherited : Evidence
+    (splitSemantics.Entails program branchFacts
+      { node := node 1, fact := .yes }) :=
+  branchSeed.sound (node 1) .yes (by rfl)
+
 example :
     splitSemantics.Entails program
       ({ node := splitNode, fact := .yes } :: branchBase)
       { node := node 1, fact := .yes } :=
-  (branchSeed.sound (node 1) .yes (by rfl)).proof
+  branchInherited.proof
+
+private def splitFactExpr : SplitFact → Expr
+  | .all => mkConst ``SplitFact.all
+  | .yes => mkConst ``SplitFact.yes
+  | .no => mkConst ``SplitFact.no
+  | .decided => mkConst ``SplitFact.decided
+
+private def splitEncoder : FrontendEncoder.Encoder SplitFact :=
+  FrontendEncoder.make (mkConst ``SplitFact)
+    (fun fact => pure (splitFactExpr fact))
+
+/-- The Meta frontend obtains both the branch assumption and a nontrivial
+inherited parent fact from the exact child-input-indexed proof table. -/
+example : True := by
+  run_tac
+    let known ←
+      ProofFrontend.seedBranch splitEncoder (mkConst ``splitSemantics)
+        (mkConst ``branchInput) (mkConst ``branchFacts) branchInput
+        (mkConst ``branchSeed)
+    let some side :=
+        ProofFrontend.findFact? known { node := splitNode, version := 0 } .yes
+      | throwError "branch seed test: split assumption is missing"
+    let some inherited :=
+        ProofFrontend.findFact? known { node := node 1, version := 0 } .yes
+      | throwError "branch seed test: inherited parent fact is missing"
+    unless ← isDefEq (← inferType side.proof) (← inferType (mkConst ``branchSide)) do
+      throwError "branch seed test: split proof has the wrong proposition"
+    unless ← isDefEq (← inferType inherited.proof)
+        (← inferType (mkConst ``branchInherited)) do
+      throwError "branch seed test: inherited proof has the wrong proposition"
+    let wrongInput : CheckerInput SplitFact :=
+      { branchInput with target := { node := node 1, fact := .yes } }
+    if (← observing? <| ProofFrontend.seedBranch splitEncoder
+        (mkConst ``splitSemantics) (mkConst ``branchInput)
+        (mkConst ``branchFacts) wrongInput (mkConst ``branchSeed)).isSome then
+      throwError "branch seed test: mismatched checker input was accepted"
+    if (← observing? <| ProofFrontend.seedBranch splitEncoder
+        (mkConst ``splitSemantics) (mkConst ``branchInput)
+        (mkConst ``branchBase) branchInput (mkConst ``branchSeed)).isSome then
+      throwError "branch seed test: mismatched child assumptions were accepted"
+  trivial
 
 end Hex.Interval.ProofEmitterConformance

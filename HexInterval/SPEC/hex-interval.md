@@ -1500,8 +1500,8 @@ proveCover :
           semantics.holds program valuation { node, fact := right }))
 ```
 
-Thus executable child construction is checked a second time by the semantic
-domain package. The current transparent `ProofEmitter.replaySplit` implements
+Thus executable child construction is checked by the semantic domain package
+during replay. The current transparent `ProofEmitter.replaySplit` implements
 the generic join. Given a proof of `parent` from the caller's `base`, a proof
 of the target from `{node,left} :: base`, and a proof of the target from
 `{node,right} :: base`, it applies `proveCover` and returns a proof of the
@@ -1537,9 +1537,12 @@ branch-root API. The transparent `ProofEmitter.BranchSeed` now binds the exact
 child `initialFacts` array and its length to this mixed proof table. Its checked
 builder obtains the split-node entry only from the new child assumption and
 requires an inherited parent theorem for every other array entry; the
-Mathlib-free canary checks both routes. The Meta frontend still needs to turn
-such a `BranchSeed` into version-zero `FactProof` records before chronological
-child replay.
+Mathlib-free canary checks both routes. The generic Meta frontend now quotes
+the complete child `CheckerInput`, rejects any mismatch in its program, fact
+array, or target, pins the full child assumption list, and turns the seed into
+exact version-zero `FactProof` records. Its branch entry point then uses the
+unchanged function-independent chronology fold. A live child session and a
+nonempty child event trace remain the next end-to-end branch experiment.
 
 Branches may instantiate different auxiliary expressions. Each child replay
 therefore closes its target back to the program snapshot at the split before
@@ -1583,6 +1586,8 @@ coverage-and-two-proofs contract. Acceptance tests for the branch layer must
 include a useful two-sided closure, one contradiction leaf plus one target
 leaf, a nested split, a child-local instantiation, a sibling-reference attack,
 a non-interior repeated split, and fuel exhaustion with no theorem emitted.
+
+### Generic proof frontend
 
 The fixed canary also requires a live session with an exact proof history of one
 instance, one equality, three fact events, and the expected interleaving before
@@ -2785,14 +2790,14 @@ format. Its rule instead proposes a nearby dyadic guard backed by a certified
 enclosure, or handles a symbolic partition entirely inside its local proof
 payload.
 
-The concrete `Dyadic` split point and `EndpointLimit` in the current generic
+The concrete `Dyadic` split point and `EndpointLimit` in the executable policy
 experiment are a deliberate real-domain-v1 seam, not a claim that every future
-domain or branch policy must use dyadic cuts. Keeping that seam concrete lets
-the arbitrary real-function vertical proceed without prematurely choosing
-between a cut-type parameter, a domain-owned split interface, and an opaque
-landmark decoded by the branch layer. That choice remains open and must be
-revisited before stabilizing a multi-domain API; it does not require changing
-the function-package, instantiation, or replay protocols now.
+domain or branch policy must use dyadic cuts. The proof-side `SplitSchema` is
+already generic in `Cut`. What remains open is how an executable package
+registers, quotes, and decodes its domain-specific cut representation, and
+whether opaque registry-resolved landmarks replace a concrete policy field.
+That decision does not require changing the function-package, instantiation,
+or generic split-join protocols now.
 
 A split on term `t` adds `t ≤ m` to the left child and `m < t` to the right
 child. This complementary form preserves strictness, avoids a duplicate

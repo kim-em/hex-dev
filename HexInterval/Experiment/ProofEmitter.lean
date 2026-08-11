@@ -535,6 +535,18 @@ structure BranchSeed {Fact : Type} (semantics : Semantics Fact)
 
 namespace BranchSeed
 
+/-- Select one child-root fact while explicitly pinning the exact checker
+input and complete child assumption list used by the frontend. -/
+def get {Fact : Type} (semantics : Semantics Fact) (input : CheckerInput Fact)
+    (childBase : List (NodeFact Fact)) {base : List (NodeFact Fact)}
+    {side : NodeFact Fact} (seed : BranchSeed semantics input base side)
+    (same : childBase = side :: base) (node : NodeId) (fact : Fact)
+    (found : input.initialFacts[node.index]? = some fact) :
+    Evidence
+      (semantics.Entails input.baseProgram childBase { node, fact }) := by
+  subst childBase
+  exact seed.sound node fact found
+
 /-- Assemble a branch root from the one new case assumption and exact proofs
 of all unchanged parent facts. -/
 def make {Fact : Type} {semantics : Semantics Fact}

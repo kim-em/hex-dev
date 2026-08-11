@@ -28,6 +28,7 @@ open Propagator PayloadArena SemanticReplay ProofEmitter
 /-- Reification boundary for a frontend's concrete fact representation. -/
 structure Encoder (Fact : Type) where
   program : Program → MetaM Expr
+  input : CheckerInput Fact → MetaM Expr
   nodeId : NodeId → MetaM Expr
   node : Node → MetaM Expr
   fact : Fact → MetaM Expr
@@ -181,6 +182,13 @@ def nodeFactExpr (factExpr : Fact → MetaM Expr) (fact : NodeFact Fact) :
     MetaM Expr :=
   do mkAppM ``NodeFact.mk #[← nodeIdExpr fact.node, ← factExpr fact.fact]
 
+def checkerInputExpr (factType : Expr) (factExpr : Fact → MetaM Expr)
+    (input : CheckerInput Fact) : MetaM Expr := do
+  mkAppM ``CheckerInput.mk
+    #[← programExpr input.baseProgram,
+      ← arrayExpr factType (← input.initialFacts.toList.mapM factExpr),
+      ← nodeFactExpr factExpr input.target]
+
 def edgeExpr (edge : EqualityEdge) : MetaM Expr := do
   mkAppM ``EqualityEdge.mk
     #[← nodeIdExpr edge.left,
@@ -242,6 +250,7 @@ def transportStepExpr (factType : Expr) (factExpr : Fact → MetaM Expr)
 /-- Build the complete generic encoder from one fact-value encoder. -/
 def make (factType : Expr) (factExpr : Fact → MetaM Expr) : Encoder Fact :=
   { program := programExpr
+    input := checkerInputExpr factType factExpr
     nodeId := nodeIdExpr
     node := nodeExpr
     fact := factExpr
