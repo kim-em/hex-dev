@@ -75,7 +75,8 @@ not inferred from an operation key or from a package's executable behavior.
 The package-owned instance theorem proves the converse existence statement
 `Semantics.Extends`: every old model can be extended.  `StableStep` supplies
 the restriction and fact-transport statements needed to keep already-proved
-facts usable after the step. -/
+facts usable after the step.  Fact stability assumes agreement on the complete
+old program because `Semantics.holds` may inspect more than the fact's node. -/
 structure StableStep (semantics : Semantics Fact) (before after : Program) :
     Type where
   programPrefix : ProgramPrefix before after
@@ -88,7 +89,7 @@ structure StableStep (semantics : Semantics Fact) (before after : Program) :
       fact.node.index < before.nodes.size ->
       semantics.models before oldValue ->
       semantics.models after newValue ->
-      oldValue fact.node = newValue fact.node ->
+      semantics.AgreeOn before oldValue newValue ->
       (semantics.holds before oldValue fact ↔
         semantics.holds after newValue fact)
 
@@ -214,15 +215,22 @@ def liftEntails {Fact : Type} {semantics : Semantics Fact}
           ∀ assumption, assumption ∈ assumptions ->
             semantics.holds before valuation assumption := by
         intro assumption member
+        have agreement : semantics.AgreeOn before valuation valuation := by
+          intro _ _
+          rfl
         exact
           (step.holdsOld valuation valuation assumption
-            (assumptionsWithin assumption member) beforeModel afterModel rfl).mpr
+            (assumptionsWithin assumption member) beforeModel afterModel
+            agreement).mpr
             (afterAssumptions assumption member)
       have beforeConclusion :=
         sound.proof valuation beforeModel beforeAssumptions
+      have agreement : semantics.AgreeOn before valuation valuation := by
+        intro _ _
+        rfl
       exact
         (step.holdsOld valuation valuation conclusion conclusionWithin
-          beforeModel afterModel rfl).mp
+          beforeModel afterModel agreement).mp
           beforeConclusion }
 
 /-- Compose a package rule theorem and a checked meet theorem into soundness of

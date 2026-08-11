@@ -1188,11 +1188,13 @@ resolver directly. A request for a positive version absent from the checked
 prefix therefore fails before recipe dispatch; the conformance test mutates
 the previous pointer to the event's own version and observes this rejection.
 The fixed-program prefix has a private constructor. Its checked start exposes
-the seed resolver only at version zero, and a successful rule event appends
-exactly its proved positive version. Replaying the same `(node, version)` is
-rejected as a duplicate. The stable-step transition described below lifts this
-prefix across an instance transition. Driving the complete interleaved event
-histories remains the next fold-state step.
+the seed resolver only at version zero, but the current experiment does not yet
+bind that resolver to `CheckerInput.initialFacts` or validate the initial array
+length. A successful rule event appends exactly its proved positive version,
+and replaying the same `(node, version)` is rejected as a duplicate. The
+stable-step transition described below lifts this prefix across an instance
+transition. Exact initial binding and the complete interleaved event driver
+remain open checker work.
 
 The corresponding equality-transport transition checks that the retained
 source is the opposite endpoint of the exact edge, replays the package-owned
@@ -1202,7 +1204,12 @@ same fact, and validates the target meet before returning the installed-fact
 theorem. Before using that law, replay checks that both endpoints exist in the
 current program and have the same domain. A canary drives this route with the
 equality produced by the arbitrary-function matcher; the generic engine still
-has no sine case.
+has no sine case. This is currently a stand-alone transition whose source,
+previous, equality edge, and equality-assumption proofs are supplied
+explicitly. It has not yet been connected to the private chronological cursor,
+so the canary does not establish equality-ID lookup, prefix-only source and
+assumption resolution, source-version chronology, or event ordering for
+equality transport.
 
 The instance transition checks that the retained event advances exactly one
 program version from its originating action, replays the package-owned
@@ -1214,18 +1221,22 @@ scheduler structure without appending a node.
 Chronological replay also needs the opposite, prefix-facing semantic
 direction. For each append-only program step, the semantics adapter supplies
 that a model of the enlarged program is a model of the old prefix and that a
-fact on an old node has the same meaning in old and new models whenever those
-models assign that node the same value. This is separate from, and
+fact on an old node has the same meaning in old and new models whenever their
+valuations agree on the complete old program. Whole-prefix agreement is
+required because `Semantics.holds` may inspect values at old nodes other than
+the node carrying the fact. This is separate from, and
 complementary to, the package theorem that every old model can be extended.
 The checker uses these laws to lift all previously proved fact versions into
 the enlarged program. It then seeds every genuinely new node at version zero
 with the fact-domain top theorem. The old resolver is consulted first, so an
-initial fact supplied by the caller is never silently replaced with top. A
-conformance fold starts from the original graph, replays the actual
-arbitrary-function instantiator, lifts the fact prefix, seeds its two new
-expressions, and only then replays the dynamically installed propagator. This
-path depends on no rational representation and contains no generic function
-case.
+old version-zero proof is not replaced with top during lifting. Binding those
+old proofs to the caller's exact initial-fact array is still the responsibility
+of the unfinished driver. A conformance fold starts from the original graph,
+replays the actual arbitrary-function instantiator, lifts the fact prefix,
+seeds its two new expressions, and only then replays the dynamically installed
+propagator. It does not yet replay the retained equality-transport events or
+close the caller's target. This path depends on no rational representation and
+contains no generic function case.
 
 The private chronological cursor is indexed by its exact program version and
 program value. Its instance transition requires the originating action to
@@ -1234,12 +1245,13 @@ name the cursor's current version, the event to advance it by exactly one, and
 self-consistent list supplied by the event. It then composes the structural
 prefix, package-owned conservative-extension theorem, and stable fact prefix
 into the next cursor. Its rule transition similarly requires the event's
-program version to equal the cursor's. The arbitrary-function canary verifies
-that a future generated node has no version-zero fact before instantiation,
-that it receives top afterwards, that an old base fact remains available, and
-that the dynamically installed contractor's positive fact version appears
-only after its rule event. Mutually consistent but cursor-stale versions and a
-mutated `newNodes` list fail closed.
+program version to equal the cursor's. There is not yet a cursor transition for
+equality transport. The arbitrary-function canary verifies that a future
+generated node has no version-zero fact before instantiation, that it receives
+top afterwards, that an old supplied proof remains available, and that the
+dynamically installed contractor's positive fact version appears only after
+its rule event. Mutually consistent but cursor-stale versions and a mutated
+`newNodes` list fail closed.
 
 A Mathlib companion must instantiate those abstract schemas, decode each
 frozen entry independently of package cache state, and recheck the
@@ -1355,11 +1367,16 @@ Certificate replay must instead fold events in chronological order and
 resolve every positive-version dependency only from the already-validated
 prefix. This rejects future references and cyclic provenance even if a forged
 final history contains an entry with the requested `(node, version)`.
-The checked rule, equality-transport, and instance transitions above are the
-semantic bodies of that fold. The private prefix resolver now supplies their
-exact historical inputs and lifts them across one checked program extension;
-the remaining implementation work is the driver which validates and
-interleaves the complete retained event arrays.
+The checked rule and instance cursor transitions, together with the
+stand-alone equality-transport transition, are pieces of that fold. The
+private prefix resolver supplies exact historical inputs to the rule path and
+lifts them across one checked program extension. The remaining implementation
+work includes binding version-zero base nodes to the exact initial-fact array,
+adding a cursor wrapper which looks up the retained equality edge, resolves
+its assumptions and transport source from the checked prefix, and checks the
+transport event's program version and successor version, validating and
+interleaving the complete retained event arrays, and finally deriving
+`CheckerInput.target` while rejecting incomplete traces.
 
 Because `Semantics.holds` may inspect the complete program as well as the
 valuation, conservative model extension alone cannot transport old facts or

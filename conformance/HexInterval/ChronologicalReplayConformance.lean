@@ -256,11 +256,61 @@ def functionStep :
       · intro impossible
         simp [Program.node?, program, node] at impossible
     holdsOld := by
-      intro oldValue newValue fact _ _ _ valueProof
+      intro oldValue newValue fact within _ _ agreement
       change
         RankAllows fact.fact (oldValue fact.node) ↔
           RankAllows fact.fact (newValue fact.node)
-      rw [valueProof] }
+      rw [agreement fact.node within] }
+
+/-! A stability premise must cover the complete old valuation, not only the
+node carrying the fact: a semantics may interpret that fact using other old
+nodes.  This small adapter is a regression test for that distinction. -/
+
+def contextualProgram : Program :=
+  { operations := #[]
+    nodes :=
+      #[{ domain := real, op := { index := 0 }, args := [] },
+        { domain := real, op := { index := 0 }, args := [] }] }
+
+def contextualSemantics : Semantics Unit :=
+  { Value := Nat
+    models := fun _ _ => True
+    holds := fun _ valuation _ => valuation (node 1) = 0 }
+
+def contextualBase : List (NodeFact Unit) :=
+  [{ node := node 0, fact := () }]
+
+theorem contextualWithin : FactsWithin contextualProgram contextualBase := by
+  intro fact member
+  simp only [contextualBase, List.mem_singleton] at member
+  subst fact
+  simp [contextualProgram, node]
+
+def contextualStep :
+    StableStep contextualSemantics contextualProgram contextualProgram :=
+  { programPrefix := ProgramPrefix.refl contextualProgram
+    modelsBefore := by
+      intro _ model
+      exact model
+    holdsOld := by
+      intro oldValue newValue _ _ _ _ agreement
+      change oldValue (node 1) = Nat.zero ↔ newValue (node 1) = Nat.zero
+      rw [agreement (node 1) (by simp [contextualProgram, node])] }
+
+def contextualSound :
+    Evidence
+      (contextualSemantics.Entails contextualProgram contextualBase
+        { node := node 0, fact := () }) :=
+  { proof := by
+      intro _ _ assumptions
+      exact assumptions _ (by simp [contextualBase]) }
+
+example :
+    Evidence
+      (contextualSemantics.Entails contextualProgram contextualBase
+        { node := node 0, fact := () }) :=
+  liftEntails contextualStep contextualWithin
+    (by simp [contextualProgram, node]) contextualSound
 
 def initialSound (target : NodeId) :
     Evidence
