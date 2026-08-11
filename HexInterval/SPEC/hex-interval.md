@@ -1334,13 +1334,25 @@ replay.
 
 The fold is polymorphic in the fact type and contains no sine, negation, or
 other function case. Its `Context` receives the semantics/domain laws,
-prefix-stability theorem, caller program and facts, and a plain-data encoder;
-packages remain responsible for their replay schemas. The real-sine tactic is
-now a client of this module rather than the owner of the fold. It still names
-the canary's fixed base graph, semantic bridge, and final target. The next
-frontend experiment must derive those three pieces from an arbitrary caller
-expression and validate the same API with a second mathematical function
-package.
+prefix-stability theorem, caller program, a declared base-assumption list, and
+a plain-data encoder; packages remain responsible for their replay schemas.
+It seeds caller facts by checked position in that declared list, and the caller
+hypotheses supplied to final closure discharge the same list. The reusable
+frontend does not yet construct the `InitialContext` witness that relates the
+declared list position-for-position to `CheckerInput.initialFacts`. The
+complete `TraceReplay` checker already constructs its `initialBase`
+position-for-position from `CheckerInput.initialFacts`; separately,
+`ChronologicalReplay.Cursor.startInput` consumes `InitialContext` for cursor
+replay. The later generic frontend must carry the corresponding binding into
+direct emission. The current replay applications and final closure remain
+indexed by the exact `CheckerInput.baseProgram` and target. The emitter also
+seeds each instance event's fresh nodes with domain top after checking their
+lookup in the reified final program. The real-sine tactic is now a client of
+this module rather than the owner of the fold, but it still names the canary's
+fixed base graph, base list, semantic bridge, and final target. The next
+frontend experiment must derive those pieces and the caller-input binding from
+an arbitrary caller expression and validate the same API with a second
+mathematical function package.
 
 The fixed canary also requires a live session with no dropped work and an exact
 proof history of one instance, one equality, three fact events, and the
