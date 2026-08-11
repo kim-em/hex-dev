@@ -12,6 +12,12 @@ not two runs subtracted. Rows the production cascade does not finish are
 measured with ``--entry quadraticNormCertificate``, which runs the certificate
 stages alone; their production side is recorded as ``null``.
 
+Since the certificate is now *on* the production path, the paired ratio
+``paired_production_over_certificate`` is no longer a speedup: for a certified
+row the production call runs the certificate too, so the ratio says what share
+of the integrated row the certificate is. The before/after speedup lives in the
+factor sweep, not here.
+
 *Misses.* The certificate-only entry is then swept across the whole corpus. A
 row that declines pays only the recovery span, and that span is the overhead a
 budget-gated production attempt would add. Recording it for every row -- not
@@ -49,9 +55,11 @@ SERVICE = ROOT / ".lake" / "build" / "bin" / "hexbz_factor_service"
 
 STAGES = ("recovery", "independence", "construction", "equality")
 
-# Rows whose production factorization the paired probe runs. Everything the
-# production cascade does not finish inside the sweep cutoff is measured
-# certificate-only instead, and says so in the record.
+# Extra rows to pair even when the sweep record does not list them as solved.
+# Everything the production cascade does not finish inside the sweep cutoff is
+# measured certificate-only instead, and says so in the record. Since the
+# certificate went onto the production path this set is normally redundant: the
+# rows it named are now solved and the sweep lists them.
 PAIRED_UNSOLVED = ("sd6_shift1",)
 
 
@@ -203,7 +211,7 @@ def main(argv: list[str]) -> int:
                 }
                 record["paired_certificate_nanos"] = int(statistics.median(
                     certificate_nanos(o) for o in observations))
-                record["paired_speedup"] = statistics.median(ratios)
+                record["paired_production_over_certificate"] = statistics.median(ratios)
                 record["production_paired"] = True
             hits.append(record)
         else:
@@ -225,8 +233,9 @@ def main(argv: list[str]) -> int:
         "config": {
             "repeats": args.repeats,
             "paired_sweep": sweep.name,
-            "statistic": "median over repeats, span by span; `paired_speedup` "
-                         "is the median of the per-observation ratios",
+            "statistic": "median over repeats, span by span; "
+                         "`paired_production_over_certificate` is the median "
+                         "of the per-observation ratios",
         },
         "hits": sorted(hits, key=lambda r: (r["degree"], r["name"])),
         "misses": sorted(misses, key=lambda r: (r["degree"], r["name"])),
@@ -243,7 +252,8 @@ def main(argv: list[str]) -> int:
         if r["production"]:
             print(f"  {r['name']:16s} {r['production']['nanos'] / 1e6:10.3f} ms "
                   f"-> {r['paired_certificate_nanos'] / 1e3:8.1f} us  "
-                  f"({r['paired_speedup']:.0f}x paired)")
+                  f"(certificate is 1/{r['paired_production_over_certificate']:.0f} "
+                  f"of the paired row)")
     return 0
 
 
