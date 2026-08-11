@@ -175,6 +175,16 @@ public namespace is itself revisitable before release if qualification proves
 awkward. Unless a block explicitly says otherwise, unqualified API sketches
 below are declarations inside `Hex.Interval`.
 
+The bundled candidate now has a Mathlib companion interpreting every canonical
+fact as a subset of `ℝ`. It proves that a successful executable `intersect`
+denotes logical conjunction for the complete cut language: strict and closed
+ends, tied endpoints, empty results, and either end unbounded. That theorem is
+installed as the generic `FactDomainSchema.proveMeet` boundary, and the
+transparent proof frontend uses it to close a weaker requested interval from a
+stronger established one. This validates the semantic interface without
+settling the representation comparison or adding a function case to the
+frontend.
+
 The comments describe cuts as viewed from outside the interval. In semantic
 notation, a finite lower cut `(a, false)` means `a ≤ x`, and `(a, true)` means
 `a < x`. A finite upper cut `(b, false)` means `x ≤ b`, and `(b, true)` means
@@ -1360,10 +1370,12 @@ one replay schema. The same policy session, joint package registry,
 fact-polymorphic quotation, shared structural encoder, and generic evidence
 fold produce the ordinary theorem `0 ≤ Real.exp x`. Thus both a multi-package
 graph-growing sine proof and a single-rule exponential proof pass through the
-same frontend API without a function switch. The goal reifier below derives
-candidate context pieces from an arbitrary caller expression, but generic
-proof emission has not yet bound its recorded seed recipe to the frontend's
-declared base list.
+same frontend API without a function switch. The reusable proof-emission
+module does not construct the seed-to-input binding by itself. The exponential
+client now sets the runtime and proof-side declared base lists to the same
+reified facts, checks every seeded lookup definitionally, proves the recorded
+hypothesis recipes, and supplies the resulting premise to closure. A reusable
+`InitialContext`-style constructor remains future API work.
 
 The first goal-reification experiment now derives the exponential canary's
 base program, version-zero fact array, and target fact from the actual Lean
