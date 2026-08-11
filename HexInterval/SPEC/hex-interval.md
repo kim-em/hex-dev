@@ -1334,12 +1334,22 @@ replay.
 
 The fold is polymorphic in the fact type and contains no sine, negation, or
 other function case. Its `Context` receives the semantics/domain laws,
-prefix-stability theorem, caller program and facts, and a plain-data encoder;
-packages remain responsible for their replay schemas. The real-sine tactic is
-now a client of this module rather than the owner of the fold. It still names
-the canary's fixed base graph, semantic bridge, and final target. The next
-frontend experiment must derive those three pieces from an arbitrary caller
-expression.
+prefix-stability theorem, caller program, a declared base-assumption list, and
+a plain-data encoder; packages remain responsible for their replay schemas.
+It seeds caller facts by checked position in that declared list, and the caller
+hypotheses supplied to final closure discharge the same list. The reusable
+frontend does not yet construct the `InitialContext` witness that relates the
+declared list position-for-position to `CheckerInput.initialFacts`. The
+complete `TraceReplay` checker already constructs its `initialBase`
+position-for-position from `CheckerInput.initialFacts`; separately,
+`ChronologicalReplay.Cursor.startInput` consumes `InitialContext` for cursor
+replay. The later generic frontend must carry the corresponding binding into
+direct emission. The current replay applications and final closure remain
+indexed by the exact `CheckerInput.baseProgram` and target. The emitter also
+seeds each instance event's fresh nodes with domain top after checking their
+lookup in the reified final program. The real-sine tactic is now a client of
+this module rather than the owner of the fold, but it still names the canary's
+fixed base graph, base list, semantic bridge, and final target.
 
 A second live vertical validates this separation with `Real.exp`. Its
 Mathlib-free package uses a distinct three-element fact lattice, contributes
@@ -1349,7 +1359,9 @@ one replay schema. The same policy session, joint package registry,
 fact-polymorphic quotation, shared structural encoder, and generic evidence
 fold produce the ordinary theorem `0 ≤ Real.exp x`. Thus both a multi-package
 graph-growing sine proof and a single-rule exponential proof pass through the
-same frontend API without a function switch.
+same frontend API without a function switch. The next frontend experiment
+must derive the fixed context pieces and the caller-input binding from an
+arbitrary caller expression.
 
 The fixed canary also requires a live session with no dropped work and an exact
 proof history of one instance, one equality, three fact events, and the
