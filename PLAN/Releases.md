@@ -143,8 +143,8 @@ hand-edit one; change it here and let the sync publish.
 
 ### The published set
 
-The authoritative dependency order is `scripts/release/released.yml`. Its
-current 33-library set contains:
+The authoritative dependency order is `scripts/release/released.yml`; read it
+rather than any count restated here. Broadly it contains:
 
 - the shared `hex-basic` and `hex-test-kit` foundations;
 - the arithmetic/polynomial stack from `hex-arith` through `hex-gfq-ring`,
@@ -196,6 +196,49 @@ Rewriting the cross-repo revisions touches **every** lakefile and
 `conformance/` sub-projects — updating both `rev` and `inputRev`. Lake
 trusts the manifest, so a stale lockfile would otherwise rebuild against
 the old revision.
+
+### Publishing a new library: widen the token first
+
+The sync authenticates with the `RELEASED_SYNC_PAT` secret, currently a
+fine-grained token named `hex-publishing` owned by @kim-em. It is scoped to an
+explicit list of repositories, deliberately not to every repository, so
+publishing a new library takes three steps in this order:
+
+1. create the repository under `leanprover` and give it the un-managed Lake
+   and CI skeleton (`scripts/release/BOOTSTRAP.md`); the sync clones but never
+   creates;
+2. add that repository to the selected repositories of the token behind
+   `RELEASED_SYNC_PAT` with `Contents: Read and write`, and have an
+   organization owner approve the request at
+   https://github.com/organizations/leanprover/settings/personal-access-token-requests;
+   the current token is at
+   https://github.com/settings/personal-access-tokens/16433897, but find it
+   under https://github.com/settings/personal-access-tokens if it has since
+   been rotated; then
+3. add its entry to `released.yml` here and run the sync.
+
+The repository has to exist before step 2 can name it, which is why step 1
+comes first; nothing in this order is circular. Step 2 is the one with a
+human in the loop, so start it early. Rotating the token means redoing step 2
+for every published repository at once, so keep the secret and the token
+identified by name rather than by that numeric URL.
+
+Skipping step 2 used to fail partway through a publish, after earlier
+repositories had already been pushed: the token simply cannot see a repository
+outside its list, so the clone succeeds from public https and only the push
+returns `403 Permission to leanprover/<repo>.git denied`. `sync_released.py`
+now preflights every target repository before the first push and refuses to
+start, naming the repositories to add and both URLs above. A dry run does not
+preflight, having no token and pushing nothing.
+
+**What the preflight does not prove.** It checks that each repository is in
+the token's selection, and nothing stronger. `GET /repos` needs only
+`Metadata: read`, and the `permissions` it returns describe the authenticated
+user's role rather than this token's grants, so a token holding only
+`Contents: read` on a selected repository still looks fine to it. Nor does it
+know whether branch protection or a ruleset on a mirror's `main` would reject
+the push. Those failures still surface only at push time; the invariant the
+mirrors rely on is that `main` takes direct pushes from the release actor.
 
 ### Baseline and the uncoordinated-commit guard
 

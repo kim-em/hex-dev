@@ -208,23 +208,24 @@ def topFact {Fact : Type} {semantics : Semantics Fact}
 
 /-! ## Package-contributed tactic schema handles -/
 
-/-- Tactic-side address of one package-owned replay schema.  The core leaves
-`Handle` abstract: a Lean elaborator may use declaration names, while another
-frontend may use typed closures or indices.  A handle is never dynamically
-invoked by the trusted checker.  The emitted application must still typecheck
-and the replay transition rechecks `key` against the payload entry. -/
-structure SchemaRef (Handle : Type) where
+/-- Tactic-side address of one package-owned replay schema. `handle` is owned
+by the frontend; it is never dynamically invoked by the trusted checker. The
+emitted application must still typecheck and the corresponding replay
+transition rechecks `key` against the payload entry. -/
+structure SchemaName (Handle : Type) where
   key : ReplayKey
   handle : Handle
+  deriving DecidableEq, Repr
 
 /-- The theorem schemas one function package exposes to a tactic frontend.
 Packages contribute these fragments independently; the frontend does not
 enumerate mathematical functions. -/
 structure EmitPackage (Handle : Type) where
-  schemas : List (SchemaRef Handle)
+  schemas : List (SchemaName Handle)
+  deriving Repr
 
 /-- Check that no two tactic schema declarations claim one replay address. -/
-def uniqueSchemas {Handle : Type} : List (SchemaRef Handle) -> Bool
+def uniqueSchemas {Handle : Type} : List (SchemaName Handle) -> Bool
   | [] => true
   | schema :: rest =>
       !(rest.any fun other => other.key == schema.key) && uniqueSchemas rest
@@ -232,7 +233,7 @@ def uniqueSchemas {Handle : Type} : List (SchemaRef Handle) -> Bool
 /-- Exact schema-name lookup table with a proof that replay addresses are
 unambiguous. -/
 structure SchemaTable (Handle : Type) where
-  entries : List (SchemaRef Handle)
+  entries : List (SchemaName Handle)
   unique : uniqueSchemas entries = true
 
 namespace SchemaTable
@@ -246,7 +247,8 @@ def build {Handle : Type} (packages : List (EmitPackage Handle)) :
   if unique : uniqueSchemas entries then some ⟨entries, unique⟩ else none
 
 /-- Resolve one exact `(rule, role, schema)` address with no fallback. -/
-def find? (table : SchemaTable Handle) (key : ReplayKey) : Option Handle :=
+def find? {Handle : Type} (table : SchemaTable Handle) (key : ReplayKey) :
+    Option Handle :=
   (table.entries.find? fun schema => schema.key == key).map
     (fun schema => schema.handle)
 
