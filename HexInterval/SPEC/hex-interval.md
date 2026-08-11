@@ -3306,6 +3306,29 @@ bytes plus a certified mask or classification table; a small checker validates
 that the bytes encode that table. Kernel replay proves the coverage/disjointness
 theorem from shared interval derivations, not from the PNG decoder.
 
+The bounded prototype fixes this proof boundary concretely. `VerifiedRaster`
+defines a finite row-major mask of exact dyadic rectangles and `Correct` as the
+three obligations of viewport containment, marked coverage, and blank
+disjointness. Its 2-by-2 conformance
+fixture runs the opaque centered-function package on `[0,1]`, replays the live
+`[0,1/4]` range event through the generic proof emitter, and certifies the mask
+over `[0,1] × [0,1/2]`. Internal cuts are assigned exactly: the left column
+and upper row are open at their shared boundary, while the right column and
+lower row are closed there. The two lower pixels are marked and the two upper
+pixels are proved blank. This prototype deliberately stops at the finite mask;
+adaptive column refinement and validation that external raster bytes encode
+that mask remain renderer work rather than assumptions of the Lean theorem.
+The current `shape` field checks the flat cell count, not a uniform geometric
+indexing formula, so byte validation must also authenticate each cell rectangle
+until a checked grid layout supplies that correspondence.
+
+The fixture separately proves that its horizontal viewport contains a real
+point; the general `Correct` contract permits an empty viewport, which is useful
+for clipped domains but otherwise makes coverage vacuous. Both columns in this
+first 2-by-2 example share one global range enclosure, so it validates raster
+assembly and blank exclusion but not yet column-specific propagation. A later
+adaptive fixture must derive distinct column bounds before subdividing pixels.
+
 The ordinary framework supplies all required search mechanisms: arbitrary
 function propagators bound the range; instantiation introduces centered forms,
 range reductions, derivatives, or continuity witnesses when useful; local
