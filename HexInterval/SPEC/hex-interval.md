@@ -1354,18 +1354,22 @@ goal before running its compiled fixture. Expression packages contribute an
 opaque operation signature and a Lean-expression recognizer; the reifier has
 no switch for exponential, sine, or any other mathematical function. It tries
 all packages with the required output domain, requires a unique match and
-exact arity, recursively reifies arguments in signature order, performs exact
+exact arity, and runs each recognizer without retaining changes to elaborator
+state. It recursively reifies arguments in signature order, performs exact
 expression/domain CSE, validates the resulting SSA program, and enforces
 package, node, and depth limits. A separate fact parser maps propositions to a
 term, domain, and fact, so interval endpoint and open/closed semantics do not
-enter graph construction. All hypotheses narrowing the same version-zero node
-remain in an ordered seed recipe; later hypotheses cannot overwrite an earlier
-proof dependency. The exponential tactic currently requires this derived
-input to equal its fixed semantic/proof fixture before emission. Removing that
-last fixture equality requires package-compositional construction of the
-program semantics and generic proof emission for the recorded top/assumption
-seed recipes; it remains the next frontend experiment rather than an assumed
-capability.
+enter graph construction. The target is reified first. All hypotheses
+narrowing the same version-zero node remain in an ordered seed recipe; later
+hypotheses cannot overwrite an earlier proof dependency, while facts about
+other recognized expressions may append a suffix after the target graph. The
+exponential tactic currently requires only the target-reachable prefix and
+target fact to match its fixed semantic/proof fixture. Extra relevant,
+duplicate, unrelated-real, and non-real hypotheses therefore do not disable an
+otherwise applicable proof. Removing that last target-prefix comparison
+requires package-compositional construction of the program semantics and
+generic proof emission for the recorded top/assumption seed recipes; it
+remains the next frontend experiment rather than an assumed capability.
 
 The fixed canary also requires a live session with an exact proof history of one
 instance, one equality, three fact events, and the expected interleaving before

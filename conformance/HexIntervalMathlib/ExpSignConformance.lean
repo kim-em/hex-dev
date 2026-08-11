@@ -60,13 +60,14 @@ private def isZero (expression : Expr) : Bool :=
       | _ => false
 
 private def claimParser : GoalFrontend.Parser Bound :=
-  { parse := fun proposition =>
+  { parse := fun proposition => do
       let arguments := proposition.getAppArgs
       if proposition.getAppFn.constName? == some ``LE.le &&
           arguments.size ≥ 2 then
         let left := arguments[arguments.size - 2]!
         let right := arguments[arguments.size - 1]!
-        if isZero left then
+        let rightType ← inferType right
+        if isZero left && rightType == mkConst ``Real then
           pure <| some
             { expression := right
               domain := real
@@ -90,9 +91,13 @@ private meta def reifyGoal (target : Expr) : MetaM (GoalFrontend.Result Bound) :
         (← instantiateMVars declaration.type, mkFVar declaration.fvarId)
   GoalFrontend.reify registry factDomain claimParser hypotheses target
 
-private def sameInput (input : CheckerInput Bound) : Bool :=
-  input.baseProgram == checkerInput.baseProgram &&
-    input.initialFacts == checkerInput.initialFacts &&
+/-- The live proof fixture covers the target-reachable prefix. Additional
+caller facts may append nodes or narrow version-zero facts without changing
+the independent exponential proof. -/
+private def sameTargetGraph (input : CheckerInput Bound) : Bool :=
+  input.baseProgram.operations == checkerInput.baseProgram.operations &&
+    input.baseProgram.nodes.toList.take checkerInput.baseProgram.nodes.size ==
+      checkerInput.baseProgram.nodes.toList &&
     input.target == checkerInput.target
 
 def offer? (session : PolicySession.Session Bound)
@@ -217,8 +222,8 @@ private def expTarget (x : ℝ) : Prop :=
 
 private meta def proveExp (target : Expr) : MetaM Expr := do
   let reified ← reifyGoal target
-  unless sameInput reified.input do
-    throwError "interval_exp: goal reification produced an unexpected checker input"
+  unless sameTargetGraph reified.input do
+    throwError "interval_exp: goal reification produced an unexpected target graph"
   let context ← getLCtx
   for declaration in context do
     unless declaration.isImplementationDetail do
@@ -251,6 +256,18 @@ syntax (name := intervalExpTac) "interval_exp" : tactic
   | _ => throwUnsupportedSyntax
 
 theorem tacticExp (x : ℝ) : 0 ≤ Real.exp x := by
+  interval_exp
+
+theorem tacticExpExtra (x y : ℝ) (_hy : 0 ≤ Real.exp y) :
+    0 ≤ Real.exp x := by
+  interval_exp
+
+theorem tacticExpDuplicate (x : ℝ) (_h₁ _h₂ : 0 ≤ Real.exp x) :
+    0 ≤ Real.exp x := by
+  interval_exp
+
+theorem tacticExpNat (x : ℝ) (n : Nat) (_hn : 0 ≤ n) :
+    0 ≤ Real.exp x := by
   interval_exp
 
 example (_x : ℝ) : True := by

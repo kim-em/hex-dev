@@ -133,7 +133,7 @@ def select (registry : Registry) (expression : Expr) (domain : DomainId) :
     let some package := registry.packages[index]?
       | throwError "interval goal frontend: package index escaped its registry"
     if package.operation.output == domain then
-      let match? ← package.recognize expression
+      let match? ← withoutModifyingState <| package.recognize expression
       match match? with
       | none => pure ()
       | some arguments =>
