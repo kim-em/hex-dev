@@ -1541,8 +1541,18 @@ Mathlib-free canary checks both routes. The generic Meta frontend now quotes
 the complete child `CheckerInput`, rejects any mismatch in its program, fact
 array, or target, pins the full child assumption list, and turns the seed into
 exact version-zero `FactProof` records. Its branch entry point then uses the
-unchanged function-independent chronology fold. A live child session and a
-nonempty child event trace remain the next end-to-end branch experiment.
+unchanged function-independent chronology fold.
+
+The first live branch canary uses the independent real exponential package.
+It partitions the source fact `.all` into `.nonnegative` and strict
+`.negative`, justified by `0 ≤ x ∨ x < 0`. Each exact child input is paired
+with a `BranchSeed`, starts an actual policy session, runs the exponential
+propagator, and retains one ordinary fact event. `emitBranch` replays both
+nonempty traces, `closeTarget` closes the same exponential target in each
+child context, and `replaySplit` joins them into the caller theorem. The
+assigned tactic term is built from those two live child results. This canary
+does not yet claim that an executable `SplitPlan` constructed the child inputs;
+connecting policy selection to branch creation remains branch-manager work.
 
 Branches may instantiate different auxiliary expressions. Each child replay
 therefore closes its target back to the program snapshot at the split before
@@ -1582,10 +1592,11 @@ Several operational choices deliberately remain experimental:
   schema generic, or replace it with a registry-resolved opaque landmark.
 
 These choices may change performance and certificate size, but not the
-coverage-and-two-proofs contract. Acceptance tests for the branch layer must
-include a useful two-sided closure, one contradiction leaf plus one target
-leaf, a nested split, a child-local instantiation, a sibling-reference attack,
-a non-interior repeated split, and fuel exhaustion with no theorem emitted.
+coverage-and-two-proofs contract. The real exponential canary supplies the
+first two-sided live closure. Remaining acceptance tests include one
+contradiction leaf plus one target leaf, a nested split, a child-local
+instantiation, a sibling-reference attack, a non-interior repeated split, and
+fuel exhaustion with no theorem emitted.
 
 ### Generic proof frontend
 
