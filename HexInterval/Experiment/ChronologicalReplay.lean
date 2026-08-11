@@ -75,7 +75,8 @@ not inferred from an operation key or from a package's executable behavior.
 The package-owned instance theorem proves the converse existence statement
 `Semantics.Extends`: every old model can be extended.  `StableStep` supplies
 the restriction and fact-transport statements needed to keep already-proved
-facts usable after the step. -/
+facts usable after the step.  Fact stability assumes agreement on the complete
+old program because `Semantics.holds` may inspect more than the fact's node. -/
 structure StableStep (semantics : Semantics Fact) (before after : Program) :
     Type where
   programPrefix : ProgramPrefix before after
@@ -88,7 +89,7 @@ structure StableStep (semantics : Semantics Fact) (before after : Program) :
       fact.node.index < before.nodes.size ->
       semantics.models before oldValue ->
       semantics.models after newValue ->
-      oldValue fact.node = newValue fact.node ->
+      semantics.AgreeOn before oldValue newValue ->
       (semantics.holds before oldValue fact ↔
         semantics.holds after newValue fact)
 
@@ -225,8 +226,12 @@ def trans {Fact : Type} {semantics : Semantics Fact}
         left.holdsOld oldValue newValue fact within oldModel middleModel agreement
       have withinMiddle :=
         Nat.lt_of_lt_of_le within left.programPrefix.nodeSize
+      have reflexive : semantics.AgreeOn middle newValue newValue := by
+        intro _ _
+        rfl
       have middleLast :=
-        right.holdsOld newValue newValue fact withinMiddle middleModel newModel rfl
+        right.holdsOld newValue newValue fact withinMiddle middleModel newModel
+          reflexive
       exact oldMiddle.trans middleLast }
 
 end StableStep
@@ -248,15 +253,22 @@ def liftEntails {Fact : Type} {semantics : Semantics Fact}
           ∀ assumption, assumption ∈ assumptions ->
             semantics.holds before valuation assumption := by
         intro assumption member
+        have agreement : semantics.AgreeOn before valuation valuation := by
+          intro _ _
+          rfl
         exact
           (step.holdsOld valuation valuation assumption
-            (assumptionsWithin assumption member) beforeModel afterModel rfl).mpr
+            (assumptionsWithin assumption member) beforeModel afterModel
+            agreement).mpr
             (afterAssumptions assumption member)
       have beforeConclusion :=
         sound.proof valuation beforeModel beforeAssumptions
+      have agreement : semantics.AgreeOn before valuation valuation := by
+        intro _ _
+        rfl
       exact
         (step.holdsOld valuation valuation conclusion conclusionWithin
-          beforeModel afterModel rfl).mp
+          beforeModel afterModel agreement).mp
           beforeConclusion }
 
 /-- Compose a package rule theorem and a checked meet theorem into soundness of
@@ -845,13 +857,12 @@ def closeBase {Fact : Type} {semantics : Semantics Fact}
         intro fact member
         exact
           (stable.holdsOld oldValue newValue fact
-            (baseWithin fact member) oldModel newModel
-            (agreement fact.node (baseWithin fact member))).mp
+            (baseWithin fact member) oldModel newModel agreement).mp
             (oldBase fact member)
       have newTarget := final.proof newValue newModel newBase
       exact
         (stable.holdsOld oldValue newValue input.target targetWithin oldModel
-          newModel (agreement input.target.node targetWithin)).mpr newTarget }
+          newModel agreement).mpr newTarget }
 
 namespace Cursor
 

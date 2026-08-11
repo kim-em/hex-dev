@@ -150,6 +150,26 @@ decides it. `associated_toPolynomial_of_check` carries a successful
 certificate check to an `Associated` in `Polynomial ℤ`, so the input and
 the iterated norm are irreducible together.
 
+The tower theorem is `Hex.SquareClass.irreducible_int_of_map_eq_signPoly`:
+a monic integer polynomial whose complex image is the sign-pattern
+product of independent square classes is irreducible, because it is the
+minimal polynomial of `c + ∑ᵢ √dᵢ`. It writes the product as a
+`Finset.prod` over `Fin n → Bool`, which is what lets an automorphism act
+by a reindexing equivalence; `map_iteratedNorm` writes it as a
+`List.prod` over a fold-built list, which is what the iterated norm
+computes. `signPatternPoly_ofFn` proves the two encodings are the same
+polynomial, by induction on the number of radicands, splitting the last
+sign off with `Fin.snocEquiv` on one side and the last fold step on the
+other.
+
+Composing those gives `irreducible_of_check`: a successful
+`QuadraticNormCertificate.check` makes its input irreducible in
+`Polynomial ℤ`, with no hypothesis on the input, and
+`irreducible_of_quadraticNormCertified` says the same of the production
+gate. That is what discharges the certificate arm of
+`factorClassicalFactors_factor_irreducible`, so a certified singleton is
+proved irreducible on the same footing as every other returned factor.
+
 ## Factor tactics
 
 The `Polynomial ℤ` tactic support parses a closed polynomial
