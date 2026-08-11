@@ -373,6 +373,33 @@ theorem toPolynomial_one [Semiring R] [DecidableEq R] :
   show toPolynomial (Hex.DensePoly.C 1) = 1
   rw [toPolynomial_C, Polynomial.C_1]
 
+/-- {name}`toPolynomial` reads a raw coefficient array off as the obvious sum,
+ascending. This is what makes a concrete `#p[...]` literal readable on the
+Mathlib side: with `Finset.sum_range_succ` to expand the range,
+`toPolynomial #p[1, 1, 1]` becomes `C 1 * X ^ 0 + C 1 * X ^ 1 + C 1 * X ^ 2`.
+
+Stated with `C _ * X ^ i` rather than `monomial i _` because that is the form a
+reader writes a polynomial in, so a use site needs no `C_mul_X_pow_eq_monomial`
+rewrite of its own. -/
+@[simp, grind =]
+theorem toPolynomial_ofCoeffs [Semiring R] [DecidableEq R] (cs : Array R) :
+    toPolynomial (Hex.DensePoly.ofCoeffs cs) =
+      ∑ i ∈ Finset.range cs.size,
+        Polynomial.C (cs.getD i (Zero.zero : R)) * Polynomial.X ^ i := by
+  ext n
+  simp only [Polynomial.C_mul_X_pow_eq_monomial]
+  rw [coeff_toPolynomial, Hex.DensePoly.coeff_ofCoeffs, Polynomial.finsetSum_coeff]
+  by_cases hn : n < cs.size
+  · simp [Polynomial.coeff_monomial, hn]
+  · rw [Finset.sum_eq_zero]
+    · simp [Array.getD, hn]
+      rfl
+    · intro i hi
+      have hne : i ≠ n := by
+        have := Finset.mem_range.mp hi
+        omega
+      simp [Polynomial.coeff_monomial, hne]
+
 /-- `toPolynomial` sends executable coefficient scaling to multiplication by
 the corresponding constant polynomial. -/
 @[simp, grind =]
