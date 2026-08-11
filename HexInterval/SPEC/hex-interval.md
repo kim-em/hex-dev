@@ -1298,6 +1298,11 @@ ordinary `Real.sin` theorem. The opaque engine is used only in a separate
 field-for-field quotation regression. A transparent generic fold over an
 arbitrary quoted chronology remains an alternative to measure, not a
 prerequisite for this tactic-emitted-application architecture.
+The first elaborator canary runs the opaque real-sine planner, searches the
+local context for the two hypotheses consumed by the emitted chain, and
+assigns that ordinary proof to the goal. It deliberately reuses the checked
+literal quote rather than reifying an arbitrary returned trace; general trace
+quotation and schema selection remain the next frontend experiment.
 
 A Mathlib companion must instantiate those abstract schemas, decode each
 frozen entry independently of package cache state, and recheck the
