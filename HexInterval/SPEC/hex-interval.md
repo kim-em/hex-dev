@@ -1630,21 +1630,44 @@ runtime contradiction separately but deliberately refuses to treat that flag
 as proof closure; the frontend must first resolve an established bottom fact
 and apply the refutation schema described above.
 
-The remaining tree manager should retain internal nodes recording validated
-plans and checked child facts, and leaves retaining either a target proof, a
-checked contradiction, or an explicit unfinished result. It may emit a theorem
-only when every coverage child is closed. For best-bound mode, unfinished
-leaves contribute their inherited parent fact to the global hull; they never
-inherit a tighter sibling fact. Live-leaf and total branch-decision limits
-remain to be added beside the delivered split-depth and total-created-scope
-limits and the per-session engine and payload limits.
+The first generic runtime tree manager now retains internal nodes recording
+validated plans and exact child inputs, and leaves recording target,
+contradiction, saturation, resource failure, split refusal, session-start
+failure, or any other precise `TargetRun` result. It stores the append-only
+node array and a separate pending frontier, so a global step limit returns an
+honest partial tree rather than relabelling unexplored leaves as closed.
+Independent limits bound processed leaves, accepted splits, current leaf
+count, split depth, total created scopes, and each leaf run's policy fuel in
+addition to the per-session engine and payload limits. Split- and leaf-limit
+exhaustion is retained at the exact parent leaf. A child session which cannot
+start is likewise retained beside its sibling instead of silently deleting
+the branch.
+
+The manager is function- and representation-independent. Its configuration
+supplies the fact domain, runtime packages, controller, splitter, child-policy
+fork, and pending order. The initial orders are depth-first and breadth-first;
+their frontier transformation is separately tested so later best-first or
+hybrid queues do not affect branch validation. The exponential conformance
+tree selects the authenticated root split, starts both exact scoped children,
+runs the arbitrary exponential propagator in each, and retains two target
+leaves. Separate guards show that one global step leaves both children pending,
+and that zero split or one-leaf budgets retain an explicitly blocked root.
+
+This runtime tree contains no proof evidence. The existing two-child proof
+canary separately demonstrates how exact retained child runs can be replayed
+and joined, but the manager does not yet emit that term. The proof-tree layer
+must emit a theorem only when every coverage child is closed by replay or a
+checked refutation. For best-bound mode, unfinished leaves must contribute
+their inherited parent fact to the global hull; they never inherit a tighter
+sibling fact.
 
 Several operational choices deliberately remain experimental:
 
 - restart a child session from a checked snapshot, or add a sealed session-fork
   operation which preserves reusable work and immutable payload sharing;
-- depth-first execution for small proof memory, best-first execution for early
-  target closure, or a bounded hybrid frontier;
+- use the delivered depth-first or breadth-first list frontier, or replace it
+  with best-first execution or a bounded hybrid without changing retained
+  nodes;
 - store branch-local program suffixes directly, or hash-cons identical
   instantiations above the scope layer;
 - retain `Dyadic` in real-domain executable plans while keeping the proof
@@ -1670,7 +1693,7 @@ makes emission fail. The package remains a compact conformance fixture while
 we decide which parts belong in the Mathlib-free runtime and Mathlib semantic
 companion. Remaining acceptance tests include a nested split, a child-local
 instantiation, a sibling-reference attack, a non-interior repeated split, and
-fuel exhaustion with no theorem emitted.
+proof emission refusing the delivered step-limited partial tree.
 
 ### Generic proof frontend
 

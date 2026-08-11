@@ -10,6 +10,7 @@ import HexInterval.Experiment.GoalClosure
 import HexInterval.Experiment.ProofFrontend
 import HexInterval.Experiment.TargetRun
 import HexInterval.Experiment.BranchStart
+import HexInterval.Experiment.BranchTree
 import Mathlib.Lean.Elab.Tactic.Meta
 
 /-!
@@ -507,6 +508,116 @@ private def closedChildren? : Option
           | _ => false
       | _ => false
   | none => false
+
+/-! ## Retained resource-bounded branch trees -/
+
+/-- Split only at the root; in each exact child, select the exponential
+propagator.  This deliberately keeps scheduling policy outside the generic
+tree manager. -/
+private def treePolicy : TargetRun.Controller Bound Unit :=
+  { update := fun state _ => state
+    choose := fun state view =>
+      let selected :=
+        if view.scope.index == 0 then splitOffer? view
+        else view.offers.toList.find? (invokesExpAt (node 1))
+      match selected with
+      | some offer => .select offer state
+      | none => .stop state }
+
+private def treeLimits (maxSteps := 3) (maxSplits := 1)
+    (maxLeaves := 2) : BranchTree.Limits :=
+  { branch := branchLimits
+    maxSteps
+    maxSplits
+    maxLeaves
+    leafFuel := limits.policy.maxDecisions }
+
+private def treeConfig (resources : BranchTree.Limits) :
+    BranchTree.Config Bound Unit :=
+  { factDomain
+    packages := splitPackages
+    sessionLimits := limits
+    controller := treePolicy
+    splitter := signSplitter
+    forkPolicy := fun state _ => state
+    order := .depthFirst
+    limits := resources }
+
+private def runTree? (resources : BranchTree.Limits) :
+    Option (BranchTree.State Bound Unit) := do
+  let .ok state := BranchTree.start (treeConfig resources) { index := 0 }
+      checkerInput () | none
+  let .ok state := BranchTree.run (treeConfig resources) state | none
+  some state
+
+private def targetLeaf (expectedScope : Nat) (expectedSource : Bound)
+    (treeNode : BranchTree.Node Bound Unit) : Bool :=
+  match treeNode with
+  | .leaf source (.result result) =>
+      source.scope.index == expectedScope && source.depth == 1 &&
+        source.input.initialFacts == #[expectedSource, .all] &&
+        match result.stop with
+        | .target reached =>
+            reached.seen == ({ node := node 1, version := 1 } : SeenVersion) &&
+              reached.fact == .nonnegative &&
+              result.session.state.engine.facts == #[expectedSource, .nonnegative]
+        | _ => false
+  | _ => false
+
+#guard
+  runTree? (treeLimits) |>.any fun state =>
+    state.nodes.size == 3 && state.frontier.isEmpty && state.settled &&
+      state.steps == 3 && state.splits == 1 && state.leaves == 2 &&
+      match state.nodes[0]?, state.nodes[1]?, state.nodes[2]? with
+      | some (BranchTree.Node.split source _ children left right),
+          some leftNode, some rightNode =>
+          source.scope.index == 0 && source.depth == 0 &&
+            source.input.baseProgram == checkerInput.baseProgram &&
+            source.input.initialFacts == checkerInput.initialFacts &&
+            source.input.target == checkerInput.target &&
+            children.leftScope.index == 1 &&
+            children.rightScope.index == 2 && left.index == 1 && right.index == 2 &&
+            targetLeaf 1 .nonnegative leftNode && targetLeaf 2 .negative rightNode
+      | _, _, _ => false
+
+/- One global step retains the exact split and both runnable children; it does
+not claim that either child or the tree is complete. -/
+#guard
+  runTree? (treeLimits (maxSteps := 1)) |>.any fun state =>
+    state.nodes.size == 3 && state.steps == 1 && state.splits == 1 &&
+      state.leaves == 2 && state.frontier == [{ index := 1 }, { index := 2 }] &&
+      state.stepLimited (treeLimits (maxSteps := 1)) &&
+      match state.nodes[1]?, state.nodes[2]? with
+      | some (BranchTree.Node.pending _), some (BranchTree.Node.pending _) => true
+      | _, _ => false
+
+#guard
+  runTree? (treeLimits (maxSplits := 0)) |>.any fun state =>
+    state.nodes.size == 1 && state.frontier.isEmpty && state.splits == 0 &&
+      state.leaves == 1 &&
+      match state.nodes[0]? with
+      | some (BranchTree.Node.leaf _
+          (BranchTree.LeafEnd.blocked _ BranchTree.Blocked.splitLimit)) => true
+      | _ => false
+
+#guard
+  runTree? (treeLimits (maxLeaves := 1)) |>.any fun state =>
+    state.nodes.size == 1 && state.frontier.isEmpty && state.splits == 0 &&
+      state.leaves == 1 &&
+      match state.nodes[0]? with
+      | some (BranchTree.Node.leaf _
+          (BranchTree.LeafEnd.blocked _ BranchTree.Blocked.leafLimit)) => true
+      | _ => false
+
+#guard
+  BranchTree.schedule .depthFirst [{ index := 9 }]
+      [{ index := 1 }, { index := 2 }] ==
+    [{ index := 1 }, { index := 2 }, { index := 9 }]
+
+#guard
+  BranchTree.schedule .breadthFirst [{ index := 9 }]
+      [{ index := 1 }, { index := 2 }] ==
+    [{ index := 9 }, { index := 1 }, { index := 2 }]
 
 /-! ## Operation-composed semantics at an arbitrary graph node -/
 
