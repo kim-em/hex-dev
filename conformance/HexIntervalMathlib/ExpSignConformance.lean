@@ -1853,4 +1853,3 @@ example : True := by
   trivial
 
 end Hex.IntervalMathlib.ExpSignConformance
-
