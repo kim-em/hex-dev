@@ -60,13 +60,27 @@ def directDegreePrefilter
   coreLc == 0 || decide (target = 0) ||
     decide (degreeSum ≤ target.degree?.getD 0)
 
-/-- Cached trailing-coefficient prefilter for a direct candidate. -/
+/-- Cached trailing-coefficient prefilter for a direct candidate.
+
+The modulus arrives prepared, so the leaf reduces against the integer value the
+traversal already holds rather than rebuilding it. -/
 @[expose]
 def directTrailingPrefilter
-    (coreLc : Int) (target : ZPoly) (modulus : Nat)
+    (coreLc : Int) (target : ZPoly) (modulus : LiftModulus)
     (trailingResidue : Int) : Bool :=
-  let rawTrail := centeredModNat (coreLc * trailingResidue) modulus
+  let rawTrail := modulus.centered (coreLc * trailingResidue)
   intDivides (coreLc * target.coeff 0) rawTrail
+
+/-- The prepared prefilter tests divisibility by the centred representative. -/
+@[simp]
+theorem directTrailingPrefilter_eq
+    (coreLc : Int) (target : ZPoly) (modulus : LiftModulus)
+    (trailingResidue : Int) :
+    directTrailingPrefilter coreLc target modulus trailingResidue =
+      intDivides (coreLc * target.coeff 0)
+        (centeredModNat (coreLc * trailingResidue) modulus.nat) := by
+  unfold directTrailingPrefilter
+  rw [LiftModulus.centered_eq]
 
 /-- Cached degree/trailing-coefficient prefilter for a direct candidate.
 
@@ -78,7 +92,7 @@ polynomial product is formed.  Conservative zero cases are retained for the
 standalone executable surface. -/
 @[expose]
 def directCandidatePrefilter
-    (coreLc : Int) (target : ZPoly) (modulus : Nat)
+    (coreLc : Int) (target : ZPoly) (modulus : LiftModulus)
     (degreeSum : Nat) (trailingResidue : Int) : Bool :=
   directDegreePrefilter coreLc target degreeSum &&
     directTrailingPrefilter coreLc target modulus trailingResidue
@@ -127,11 +141,11 @@ theorem directCandidateAfterObstruction_eq
 /-- Evaluate the candidate computation after the cached prefilters. -/
 @[expose]
 def tryDirectCandidate
-    (coreLc : Int) (target : ZPoly) (modulus : Nat)
+    (coreLc : Int) (target : ZPoly) (modulus : LiftModulus)
     (selected : List ZPoly) (degreeSum : Nat) (trailingResidue : Int) :
     Option (ZPoly × ZPoly) :=
   if directCandidatePrefilter coreLc target modulus degreeSum trailingResidue then
-    directCandidateAfterPrefilter coreLc target modulus selected
+    directCandidateAfterPrefilter coreLc target modulus.nat selected
   else
     none
 

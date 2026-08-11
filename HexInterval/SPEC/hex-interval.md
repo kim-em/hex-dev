@@ -1225,8 +1225,10 @@ scheduler structure without appending a node.
 Chronological replay also needs the opposite, prefix-facing semantic
 direction. For each append-only program step, the semantics adapter supplies
 that a model of the enlarged program is a model of the old prefix and that a
-fact on an old node has the same meaning in old and new models whenever those
-models assign that node the same value. This is separate from, and
+fact on an old node has the same meaning in old and new models whenever their
+valuations agree on the complete old program. Whole-prefix agreement is
+required because `Semantics.holds` may inspect values at old nodes other than
+the node carrying the fact. This is separate from, and
 complementary to, the package theorem that every old model can be extended.
 The checker uses these laws to lift all previously proved fact versions into
 the enlarged program. It then seeds every genuinely new node at version zero
@@ -1308,17 +1310,19 @@ the package-contributed schema declaration, then emits the instance, sine,
 negation, equality-transport, and caller-closure applications in dependency
 order. Every accepted `Option` result carries an ordinary `rfl` success proof;
 if the quote or schema is wrong, elaboration fails. The assigned term consumes
-the actual returned quote. Its earlier checked literal chain remains only a
-separate field-for-field regression and a cheap goal-shape probe.
+the actual returned quote. Its earlier checked literal chain remains a
+field-for-field correspondence regression, a cheap goal-shape probe, and the
+source of the canary's fixed typed premise helpers.
 
 This is a complete direct proof assembler for the fixed real-sine graph, not
 yet the general tactic: the next frontend experiment must derive the base
 program, semantic bridge, event sequence, and versioned evidence map for an
 arbitrary caller expression instead of naming this canary's four contexts.
-The fixed canary also requires a live, complete session with exactly one
+The fixed canary also requires a live session with no dropped work, exactly one
 instance, one equality, three fact events, and the expected interleaving before
-it reads historical values through `Engine.factAt?`. Those values are quoted
-as data, while their proofs come from caller assumptions, top soundness, or an
+it reads historical values through `Engine.factAt?`. This exact trace-shape
+gate is not a claim that `Session.complete` holds. The values are quoted as
+data, while their proofs come from caller assumptions, top soundness, or an
 earlier emitted replay result. A future arbitrary-trace emitter must likewise
 obtain evidence from its chronological proof table; a successful full-history
 lookup is never evidence that the dependency was available at the required
@@ -1335,16 +1339,21 @@ function cases: adding a propagator contributes schemas, not a new dependency
 assembler. Merely resolving the same fact values from compiled search history
 is a quotation check and cannot substitute for these proof terms.
 
-Each package also contributes an `EmitPackage`: a finite map from its exact
-replay addresses to the Lean declaration names of its theorem schemas.
-`SchemaTable.build` concatenates those contributions and rejects every
-duplicate full address, including duplicates which happen to name the same
-declaration. The tactic selects by the payload entry's `(rule, role, schema)`;
-it never dispatches on an expression's mathematical function. A declaration
-name is elaboration data, not trusted evidence: a missing name, wrong type, or
-schema whose own replay key does not match the entry makes emitted application
-construction fail. Only the resulting well-typed theorem application enters
-the kernel.
+Each package companion also contributes an `EmitPackage`: a finite map from
+its exact replay addresses to opaque frontend handles for its theorem schemas.
+The Mathlib tactic companion uses `Lean.Name` as that handle, while the
+Mathlib-free table is polymorphic in the handle type. `SchemaTable.build`
+concatenates those contributions and rejects every duplicate full address,
+including duplicates which happen to carry the same handle. The tactic selects
+by the payload entry's `(rule, role, schema)`; it never dispatches on an
+expression's mathematical function. The fixed canary checks each selection
+against its known declaration before comparing with its preassembled proof.
+A general assembler must additionally make a missing name, wrong type, or
+schema whose own replay key does not match the entry fail during application
+construction. Only the resulting well-typed theorem application enters the
+kernel. This first table enforces exact-address uniqueness, but does not yet
+derive package ownership or coverage from the semantic registry; that link is
+required before selected handles replace the fixed proof assembly.
 
 A Mathlib companion must instantiate those abstract schemas, decode each
 frozen entry independently of package cache state, and recheck the

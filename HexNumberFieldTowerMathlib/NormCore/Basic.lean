@@ -1101,10 +1101,7 @@ theorem eval_shiftBase (lower : List Level)
     · simp [base, Array.getD]
     · rcases n with _ | n
       · simp [base, Array.getD]
-      · simp [base, Array.getD, show n + 2 ≠ 0 by omega,
-          show n + 2 ≠ 1 by omega]
-        change (0 : DensePoly (Arithmetic.Coeff lower)).coeff _ = 0
-        simp
+      · simp [base, Array.getD]
   have hone : LevelSemantics.denote lower
       (1 : Arithmetic.Coeff lower).data = 1 :=
     LevelSemantics.coeffDenote_one lower hvalid

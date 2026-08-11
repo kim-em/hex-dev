@@ -137,32 +137,32 @@ def topFact {Fact : Type} {semantics : Semantics Fact}
 
 /-! ## Package-contributed tactic schema names -/
 
-/-- Tactic-side address of one package-owned replay-schema declaration.
-`declaration` is only a name to elaborate; it is never dynamically invoked by
-the trusted checker.  The emitted application must still typecheck and the
-corresponding replay transition rechecks `key` against the payload entry. -/
-structure SchemaName where
+/-- Tactic-side address of one package-owned replay schema. `handle` is owned
+by the frontend; it is never dynamically invoked by the trusted checker. The
+emitted application must still typecheck and the corresponding replay
+transition rechecks `key` against the payload entry. -/
+structure SchemaName (Handle : Type) where
   key : ReplayKey
-  declaration : Lean.Name
+  handle : Handle
   deriving DecidableEq, Repr
 
 /-- The theorem schemas one function package exposes to a tactic frontend.
 Packages contribute these fragments independently; the frontend does not
 enumerate mathematical functions. -/
-structure EmitPackage where
-  schemas : List SchemaName
+structure EmitPackage (Handle : Type) where
+  schemas : List (SchemaName Handle)
   deriving Repr
 
 /-- Check that no two tactic schema declarations claim one replay address. -/
-def uniqueSchemas : List SchemaName -> Bool
+def uniqueSchemas {Handle : Type} : List (SchemaName Handle) -> Bool
   | [] => true
   | schema :: rest =>
       !(rest.any fun other => other.key == schema.key) && uniqueSchemas rest
 
 /-- Exact schema-name lookup table with a proof that replay addresses are
 unambiguous. -/
-structure SchemaTable where
-  entries : List SchemaName
+structure SchemaTable (Handle : Type) where
+  entries : List (SchemaName Handle)
   unique : uniqueSchemas entries = true
 
 namespace SchemaTable
@@ -170,14 +170,16 @@ namespace SchemaTable
 /-- Assemble independently contributed emitter packages.  A duplicate full
 replay address is ambiguous and fails closed, even when both entries name the
 same declaration. -/
-def build (packages : List EmitPackage) : Option SchemaTable :=
+def build {Handle : Type} (packages : List (EmitPackage Handle)) :
+    Option (SchemaTable Handle) :=
   let entries := packages.flatMap (fun package => package.schemas)
   if unique : uniqueSchemas entries then some ⟨entries, unique⟩ else none
 
 /-- Resolve one exact `(rule, role, schema)` address with no fallback. -/
-def find? (table : SchemaTable) (key : ReplayKey) : Option Lean.Name :=
+def find? {Handle : Type} (table : SchemaTable Handle) (key : ReplayKey) :
+    Option Handle :=
   (table.entries.find? fun schema => schema.key == key).map
-    (fun schema => schema.declaration)
+    (fun schema => schema.handle)
 
 end SchemaTable
 

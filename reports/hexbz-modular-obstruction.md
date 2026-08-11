@@ -108,14 +108,15 @@ are reported as bounded, not as point estimates.
 
 ### Artifacts
 
-All under `reports/bench-results/`.  Every repeat is committed, so the medians
-are reproducible rather than asserted.  The plotting and freshness tools select
-the newest record, which is `…-bf5973a3-…-run5.json`.
+All under `reports/bench-results/`. Every repeat is committed, so the medians
+are reproducible rather than asserted. These are the historical A/B records for
+this filter; the current published curve is named in
+[hexbz-factor-sweep.md](hexbz-factor-sweep.md).
 
 | Record | SHA-256 |
 |---|---|
 | `hexbz-factor-sweep-bf5973a3-hex-chungus2-run4.json` | `cec04a36e4cffbd9ba0259c1b8c499f4716aae30e95ef3f0c597f9b3276e3797` |
-| `hexbz-factor-sweep-bf5973a3-hex-chungus2-run{1..3,5}.json` | the other repeats at this revision; `run5` is the published curve, swept last on a clean tree |
+| `hexbz-factor-sweep-bf5973a3-hex-chungus2-run{1..3,5}.json` | the other repeats at this revision; `run5` was the contemporaneous curve, swept last on a clean tree |
 | `hexbz-factor-sweep-a5b827bd-hex-chungus2-run1.json` | `24dfc7c175949e9d08db3449132c8a38a0fe9a3a6a5273f481c55d95431ce4e1` |
 | `hexbz-factor-sweep-a5b827bd-hex-chungus2-run{2..4}.json` | the other three repeats at the baseline |
 | `hexbz-phase-profile-bf5973a3-chungus2.json` | `e9e1cd98d818e3f934375f95af14003945f6a0ee3b67e377346860e92896d81f` |
