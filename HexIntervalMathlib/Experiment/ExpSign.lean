@@ -175,7 +175,10 @@ def expEmit : EmitPackage Lean.Name :=
 
 def sourceProof : ProofRegistry.Package semantics Lean.Name :=
   { semantic := { factSchemas := #[] }
-    emit := sourceEmit }
+    emit := sourceEmit
+    refute :=
+      [{ accepts := fun fact => fact == .empty
+         handle := ``emptyRefute }] }
 
 def expProof : ProofRegistry.Package semantics Lean.Name :=
   { semantic := { factSchemas := #[expFactSchema] }

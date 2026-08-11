@@ -121,4 +121,22 @@ private def wrongRolePackages :
     | .error (.missingEmit 2 key) => key == sineFactSchema.key
     | _ => false
 
+private def oneRefute : RefuteTable Nat Nat :=
+  { entries := [{ accepts := fun fact => fact == 7, handle := 11 }] }
+
+private def ambiguousRefute : RefuteTable Nat Nat :=
+  { entries :=
+      [{ accepts := fun fact => fact == 7, handle := 11 },
+       { accepts := fun fact => fact == 7, handle := 12 }] }
+
+#guard oneRefute.find? 7 == some 11 && oneRefute.find? 8 == none
+
+#guard ambiguousRefute.find? 7 == none
+
+#guard
+  oneRefute.current? #[3, 7] #[4, 9] ==
+    some ({ node := { index := 1 }, version := 9 }, 7, 11)
+
+#guard (oneRefute.current? #[7] #[3, 4]).isNone
+
 end Hex.IntervalMathlib.ProofRegistryConformance

@@ -160,6 +160,40 @@ def closeTarget [BEq Fact] (context : Context Fact Handle)
         actualTerm, requestedTerm, established.proof]
   replayResult result
 
+/-- Emit a package-owned refutation of one exact established fact version.
+
+The recognizer table only selects a declaration.  The emitted
+`ProofEmitter.replayRefute` application rechecks that declaration against the
+exact fact and can produce the target only when the fact's proof is already in
+the chronology evidence table. -/
+def refuteFact [BEq Fact] (context : Context Fact Handle)
+    (state : State Fact) (table : RefuteTable Fact Handle)
+    (seen : SeenVersion) (fact : Fact) (target : NodeFact Fact) : MetaM Expr := do
+  let some established := findFact? state.known seen fact
+    | throwError "interval frontend: refuted fact version has not been proved"
+  let some handle := table.find? fact
+    | throwError "interval frontend: no unique refutation schema accepts the fact"
+  let declaration ← context.resolveSchema handle
+  discard <| getConstInfo declaration
+  let exactFact ← context.encoder.nodeFact { node := seen.node, fact }
+  let targetTerm ← context.encoder.nodeFact target
+  let result ←
+    mkAppM ``ProofEmitter.replayRefute
+      #[mkConst declaration, state.program, context.baseFactsTerm,
+        exactFact, targetTerm, established.proof]
+  replayResult result
+
+/-- Find a currently retained refutable fact, require its exact version in the
+proof table, and emit arbitrary target closure from its semantic impossibility.
+Runtime contradiction state is intentionally not an argument. -/
+def refuteCurrent [BEq Fact] (context : Context Fact Handle)
+    (state : State Fact) (table : RefuteTable Fact Handle)
+    (facts : Array Fact) (versions : Array Nat) (target : NodeFact Fact) :
+    MetaM Expr := do
+  let some (seen, fact, _) := table.current? facts versions
+    | throwError "interval frontend: no current fact has a unique refutation schema"
+  refuteFact context state table seen fact target
+
 /-- Seed caller-owned version-zero facts by exact positions in the base list. -/
 def seedBase (context : Context Fact Handle) (program : Expr) (basePrefix : Expr) :
     MetaM (List (FactProof Fact)) := do
