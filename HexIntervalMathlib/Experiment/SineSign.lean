@@ -314,22 +314,22 @@ def semanticPackages : Array (SemanticReplay.Package semantics) :=
 /-! ## Tactic-side schema contributions -/
 
 /-- The negation package exposes only its own fact theorem to proof emitters. -/
-def negationEmit : EmitPackage :=
+def negationEmit : EmitPackage Lean.Name :=
   { schemas :=
       [{ key := negationFactSchema.key
-         declaration := ``negationFactSchema }] }
+         handle := ``negationFactSchema }] }
 
 /-- The sine/oddness package exposes its fact, instantiation, and equality
 schemas.  Their full replay addresses remain distinct even though all three
 use numeric payload schema `1`. -/
-def sineEmit : EmitPackage :=
+def sineEmit : EmitPackage Lean.Name :=
   { schemas :=
       [{ key := sineFactSchema.key
-         declaration := ``sineFactSchema },
+         handle := ``sineFactSchema },
        { key := oddnessInstanceSchema.key
-         declaration := ``oddnessInstanceSchema },
+         handle := ``oddnessInstanceSchema },
        { key := oddnessEqualitySchema.key
-         declaration := ``oddnessEqualitySchema }] }
+         handle := ``oddnessEqualitySchema }] }
 
 /-! ## Ordinary emitted proof chain -/
 

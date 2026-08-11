@@ -121,9 +121,11 @@ def assumed {Fact : Type} {semantics : Semantics Fact} {program : Program}
       intro _ _ assumptions
       exact assumptions fact member }
 
-/-- The domain's top fact is available for a generated node at version zero.
-The node lookup is explicit, so an emitter cannot attach top soundness to a
-nonexistent node or to a fact for a different domain. -/
+/-- Prove the domain's top fact for any exactly checked node.  The chronology
+emitter uses this theorem to seed generated nodes at version zero; that
+generated/version condition belongs to its evidence-table discipline, not to
+this semantic lemma.  The explicit lookup prevents attaching top soundness to
+a nonexistent node or to a fact for a different domain. -/
 def topFact {Fact : Type} {semantics : Semantics Fact}
     (domain : FactDomainSchema semantics) (program : Program)
     (base : List (NodeFact Fact)) (node : NodeId) (instruction : Node)
@@ -135,34 +137,33 @@ def topFact {Fact : Type} {semantics : Semantics Fact}
       intro valuation model _
       exact domain.topSound program valuation node instruction nodeAt model }
 
-/-! ## Package-contributed tactic schema names -/
+/-! ## Package-contributed tactic schema handles -/
 
-/-- Tactic-side address of one package-owned replay-schema declaration.
-`declaration` is only a name to elaborate; it is never dynamically invoked by
-the trusted checker.  The emitted application must still typecheck and the
-corresponding replay transition rechecks `key` against the payload entry. -/
-structure SchemaName where
+/-- Tactic-side address of one package-owned replay schema.  The core leaves
+`Handle` abstract: a Lean elaborator may use declaration names, while another
+frontend may use typed closures or indices.  A handle is never dynamically
+invoked by the trusted checker.  The emitted application must still typecheck
+and the replay transition rechecks `key` against the payload entry. -/
+structure SchemaRef (Handle : Type) where
   key : ReplayKey
-  declaration : Lean.Name
-  deriving DecidableEq, Repr
+  handle : Handle
 
 /-- The theorem schemas one function package exposes to a tactic frontend.
 Packages contribute these fragments independently; the frontend does not
 enumerate mathematical functions. -/
-structure EmitPackage where
-  schemas : List SchemaName
-  deriving Repr
+structure EmitPackage (Handle : Type) where
+  schemas : List (SchemaRef Handle)
 
 /-- Check that no two tactic schema declarations claim one replay address. -/
-def uniqueSchemas : List SchemaName -> Bool
+def uniqueSchemas {Handle : Type} : List (SchemaRef Handle) -> Bool
   | [] => true
   | schema :: rest =>
       !(rest.any fun other => other.key == schema.key) && uniqueSchemas rest
 
 /-- Exact schema-name lookup table with a proof that replay addresses are
 unambiguous. -/
-structure SchemaTable where
-  entries : List SchemaName
+structure SchemaTable (Handle : Type) where
+  entries : List (SchemaRef Handle)
   unique : uniqueSchemas entries = true
 
 namespace SchemaTable
@@ -170,14 +171,15 @@ namespace SchemaTable
 /-- Assemble independently contributed emitter packages.  A duplicate full
 replay address is ambiguous and fails closed, even when both entries name the
 same declaration. -/
-def build (packages : List EmitPackage) : Option SchemaTable :=
+def build {Handle : Type} (packages : List (EmitPackage Handle)) :
+    Option (SchemaTable Handle) :=
   let entries := packages.flatMap (fun package => package.schemas)
   if unique : uniqueSchemas entries then some ⟨entries, unique⟩ else none
 
 /-- Resolve one exact `(rule, role, schema)` address with no fallback. -/
-def find? (table : SchemaTable) (key : ReplayKey) : Option Lean.Name :=
+def find? (table : SchemaTable Handle) (key : ReplayKey) : Option Handle :=
   (table.entries.find? fun schema => schema.key == key).map
-    (fun schema => schema.declaration)
+    (fun schema => schema.handle)
 
 end SchemaTable
 

@@ -106,6 +106,16 @@ def inputEvidence :
       quotedStep.assumptions :=
   .cons baseEvidence .nil
 
+def repeatedEvidence :
+    ProofEmitter.EntailsList functionSemantics extendedProgram base
+      [{ node := node 0, fact := 0 }, { node := node 0, fact := 0 }] :=
+  .cons baseEvidence (.cons baseEvidence .nil)
+
+example :
+    InputsSound functionSemantics extendedProgram base
+      [{ node := node 0, fact := 0 }, { node := node 0, fact := 0 }] :=
+  repeatedEvidence.sound.proof
+
 def assumptionsSound :
     Evidence
       (InputsSound functionSemantics extendedProgram base

@@ -35,6 +35,12 @@ private structure LiveQuotes where
   negation : RuleStep Range
   transport : TransportStep Range
 
+/-- Proof-producing event shapes extracted from arbitrary engine chronology. -/
+private inductive LiveEvent where
+  | instantiation (quote : InstanceQuote)
+  | rule (step : RuleStep Range)
+  | transport (step : TransportStep Range)
+
 private def resolveFacts? (engine : Engine Range) (inputs : List SeenVersion) :
     Option (List (NodeFact Range)) :=
   inputs.mapM fun input => do
@@ -67,35 +73,60 @@ private def transportStep? (engine : Engine Range) (arena : Arena)
       previous
       sourceFact }
 
+/-- Walk the engine's cross-history chronology once, requiring exact
+sequential indices and complete fact/instance exhaustion. -/
+private def quoteChronology? (engine : Engine Range) (arena : Arena) :
+    List HistoryEvent -> Nat -> Nat -> Option (List LiveEvent)
+  | [], nextFact, nextInstance =>
+      if nextFact == engine.history.size &&
+          nextInstance == engine.instanceHistory.size then
+        some []
+      else
+        none
+  | .instance index :: rest, nextFact, nextInstance => do
+      if index != nextInstance then none else pure ()
+      let event <- engine.instanceHistory[index]?
+      let entry <- arena.entry? event.payload .instance
+      let tail <- quoteChronology? engine arena rest nextFact (nextInstance + 1)
+      pure
+        (.instantiation
+          { event
+            payload := event.payload
+            entry } :: tail)
+  | .fact index :: rest, nextFact, nextInstance => do
+      if index != nextFact then none else pure ()
+      let event <- engine.history[index]?
+      let head <-
+        match event.cause with
+        | .rule _ _ _ => (ruleStep? engine arena event).map .rule
+        | .transport _ _ => (transportStep? engine arena event).map .transport
+      let tail <- quoteChronology? engine arena rest (nextFact + 1) nextInstance
+      pure (head :: tail)
+
 /-- Extract the proof-side quote from the actual returned search state. -/
 private def liveQuotes? : Option LiveQuotes :=
   match transported? with
   | none => none
   | some session => do
       let engine := session.state.engine
-      if !session.live || session.droppedWork ||
-          engine.instanceHistory.size != 1 || engine.equalities.size != 1 ||
-          engine.history.size != 3 ||
-          engine.chronology != #[.instance 0, .fact 0, .fact 1, .fact 2] then
+      if !session.live || session.droppedWork || engine.equalities.size != 1 then
         none
       else
         pure ()
-      let instanceEvent <- engine.instanceHistory[0]?
-      let instanceEntry <- session.arena.entry? instanceEvent.payload .instance
-      let sineEvent <- engine.history[0]?
-      let negationEvent <- engine.history[1]?
-      let transportEvent <- engine.history[2]?
-      let sine <- ruleStep? engine session.arena sineEvent
-      let negation <- ruleStep? engine session.arena negationEvent
-      let transport <- transportStep? engine session.arena transportEvent
-      pure
-        { instantiation :=
-            { event := instanceEvent
-              payload := instanceEvent.payload
-              entry := instanceEntry }
-          sine
-          negation
-          transport }
+      let events <-
+        quoteChronology? engine session.arena engine.chronology.toList 0 0
+      let [.instantiation instantiation, .rule sine, .rule negation,
+          .transport transport] := events | none
+      pure { instantiation, sine, negation, transport }
+
+#guard
+  transported?.any fun session =>
+    let engine := session.state.engine
+    (quoteChronology? engine session.arena engine.chronology.toList 0 0).isSome &&
+      (quoteChronology? engine session.arena
+        [.instance 0, .fact 0, .fact 0, .fact 2] 0 0).isNone &&
+      (quoteChronology? engine session.arena
+        [.instance 0, .fact 0, .fact 1] 0 0).isNone
 
 private def listExpr (type : Expr) (items : List Expr) : Expr :=
   items.foldr
@@ -285,14 +316,14 @@ private meta def checkQuote (label : String) (actual expected : Expr) : MetaM Un
   unless <- isDefEq actual expected do
     throwError "interval_sine: reified {label} does not match its checked proof step"
 
-private meta def schemaName (table : SchemaTable) (label : String)
+private meta def schemaName (table : SchemaTable Name) (label : String)
     (entry : Entry) : MetaM Name := do
   let some declaration := table.find? entry.replayKey
     | throwError "interval_sine: no proof schema for {label}"
   discard <| getConstInfo declaration
   pure declaration
 
-private meta def checkSchema (table : SchemaTable) (label : String)
+private meta def checkSchema (table : SchemaTable Name) (label : String)
     (entry : Entry) (expected : Name) : MetaM Unit := do
   let declaration <- schemaName table label entry
   unless declaration == expected do
@@ -321,7 +352,7 @@ private meta def getReplay (result : Expr) : MetaM Expr := do
 
 /-- Emit the complete evidence chain from the actual quoted steps and the
 schema declarations selected from their payload entries. -/
-private meta def emitQuote (quote : LiveQuotes) (table : SchemaTable) :
+private meta def emitQuote (quote : LiveQuotes) (table : SchemaTable Name) :
     MetaM Expr := do
   let instanceSchema <- schemaName table "instantiation" quote.instantiation.entry
   let sineSchema <- schemaName table "sine rule" quote.sine.entry
@@ -458,6 +489,14 @@ example : True := by
       | throwError "interval_sine test: duplicate proof-schema address"
     if (← observing? (emitQuote malformed table)).isSome then
       throwError "interval_sine test: malformed proof emission was accepted"
+    let some missingTable := SchemaTable.build [negationEmit]
+      | throwError "interval_sine test: missing-schema fixture did not build"
+    if (← observing? (emitQuote quote missingTable)).isSome then
+      throwError "interval_sine test: missing proof schema was accepted"
+    let some wrongTable := SchemaTable.build [negationEmit, wrongSineEmit]
+      | throwError "interval_sine test: wrong-schema fixture did not build"
+    if (← observing? (emitQuote quote wrongTable)).isSome then
+      throwError "interval_sine test: wrong proof schema was accepted"
   trivial
 
 end Hex.IntervalMathlib.SineTacticConformance

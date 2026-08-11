@@ -1315,7 +1315,7 @@ This is a complete direct proof assembler for the fixed real-sine graph, not
 yet the general tactic: the next frontend experiment must derive the base
 program, semantic bridge, event sequence, and versioned evidence map for an
 arbitrary caller expression instead of naming this canary's four contexts.
-The fixed canary also requires a live, complete session with exactly one
+The fixed canary also requires a live session with an exact proof history of one
 instance, one equality, three fact events, and the expected interleaving before
 it reads historical values through `Engine.factAt?`. Those values are quoted
 as data, while their proofs come from caller assumptions, top soundness, or an
@@ -1323,20 +1323,31 @@ earlier emitted replay result. A future arbitrary-trace emitter must likewise
 obtain evidence from its chronological proof table; a successful full-history
 lookup is never evidence that the dependency was available at the required
 earlier step.
+The quotation walker itself consumes arbitrary `HistoryEvent` lists, requires
+sequential role-local indices, and rejects omitted or duplicated fact or
+instance records through final exhaustion. The sine assembler then pattern
+matches the resulting four event shapes. General proof emission should loop
+over this list while updating program and evidence state, rather than adding
+more fixed patterns.
 
-Direct emission maintains a table from each already-established fact version
-to its `Evidence` term. Caller assumptions seed that table through the generic
-`ProofEmitter.assumed` lemma; generated nodes at version zero use
-`ProofEmitter.topFact`, tied to an exact checked node lookup and the fact-domain
-schema's top theorem. For a rule or conditional equality,
-`ProofEmitter.EntailsList` combines the selected evidence terms in the action's
-declared input order into `InputsSound`. These helpers contain no operation or
-function cases: adding a propagator contributes schemas, not a new dependency
-assembler. Merely resolving the same fact values from compiled search history
-is a quotation check and cannot substitute for these proof terms.
+A general direct emitter maintains a table from each already-established fact
+version to its `Evidence` term; the fixed sine assembler realizes the same
+discipline with four local evidence terms. Caller assumptions seed that table
+through the generic `ProofEmitter.assumed` lemma; generated nodes at version
+zero use `ProofEmitter.topFact`, tied to an exact checked node lookup and the
+fact-domain schema's top theorem. For a rule or conditional equality,
+`ProofEmitter.EntailsList` is constructed in the action's declared input order
+and combines the selected terms into `InputsSound`; replay separately checks
+that its node list matches the action order, while `InputsSound` itself is a
+membership proposition. These helpers contain no operation or function cases:
+adding a propagator contributes schemas, not a new dependency assembler.
+Merely resolving the same fact values from compiled search history is a
+quotation check and cannot substitute for these proof terms.
 
-Each package also contributes an `EmitPackage`: a finite map from its exact
-replay addresses to the Lean declaration names of its theorem schemas.
+Each package also contributes an `EmitPackage Handle`: a finite map from its
+exact replay addresses to frontend-defined schema handles. The Mathlib tactic
+instantiates `Handle` with Lean declaration names, while the Mathlib-free core
+does not depend on that representation.
 `SchemaTable.build` concatenates those contributions and rejects every
 duplicate full address, including duplicates which happen to name the same
 declaration. The tactic selects by the payload entry's `(rule, role, schema)`;
@@ -1345,6 +1356,13 @@ name is elaboration data, not trusted evidence: a missing name, wrong type, or
 schema whose own replay key does not match the entry makes emitted application
 construction fail. Only the resulting well-typed theorem application enters
 the kernel.
+The current table invariant proves exact-address uniqueness only; it does not
+yet prove that an emitter fragment and an executable/semantic package fragment
+came from one owner. The canary colocates those declarations, and a missing or
+wrong handle fails during direct emission. Production should either construct
+both registries from one package descriptor or perform an explicit coverage
+cross-check. This governance relation is not part of theorem soundness because
+every selected schema must still produce the required kernel-checked claim.
 
 A Mathlib companion must instantiate those abstract schemas, decode each
 frozen entry independently of package cache state, and recheck the
