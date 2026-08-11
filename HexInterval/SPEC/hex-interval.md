@@ -1376,17 +1376,21 @@ does not depend on that representation.
 duplicate full address, including duplicates which happen to name the same
 declaration. The tactic selects by the payload entry's `(rule, role, schema)`;
 it never dispatches on an expression's mathematical function. A declaration
-name is elaboration data, not trusted evidence: a missing name, wrong type, or
-schema whose own replay key does not match the entry makes emitted application
-construction fail. Only the resulting well-typed theorem application enters
-the kernel.
+name is elaboration data, not trusted evidence. The direct assembler resolves
+the selected handle and uses that declaration in its emitted proof term. A
+missing name, wrong type, or schema whose own replay key does not match the
+entry makes application construction or transparent replay fail. Current
+safety comes from constant lookup, ordinary Lean typechecking, and the replay
+transition's exact key check; only the resulting well-typed theorem
+application enters the kernel.
 The current table invariant proves exact-address uniqueness only; it does not
 yet prove that an emitter fragment and an executable/semantic package fragment
 came from one owner. The canary colocates those declarations, and a missing or
 wrong handle fails during direct emission. Production should either construct
 both registries from one package descriptor or perform an explicit coverage
-cross-check. This governance relation is not part of theorem soundness because
-every selected schema must still produce the required kernel-checked claim.
+cross-check. This ownership relation is a completeness and package-governance
+requirement, not a prerequisite for sound use of selected handles: every
+selected schema must still produce the required kernel-checked claim.
 
 A Mathlib companion must instantiate those abstract schemas, decode each
 frozen entry independently of package cache state, and recheck the
