@@ -29,11 +29,11 @@ def functionBaseStable :
   { programPrefix := ProgramPrefix.refl program
     modelsBefore := fun _ model => model
     holdsOld := by
-      intro oldValue newValue fact _ _ _ valueProof
+      intro oldValue newValue fact within _ _ valueProof
       change
         RankAllows fact.fact (oldValue fact.node) ↔
           RankAllows fact.fact (newValue fact.node)
-      rw [valueProof] }
+      rw [valueProof fact.node within] }
 
 /-- Reconstruct the one concrete package-generated program snapshot. -/
 def buildFunctionStep (before : Program) (_event : InstanceEvent) :

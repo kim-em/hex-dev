@@ -1225,8 +1225,10 @@ scheduler structure without appending a node.
 Chronological replay also needs the opposite, prefix-facing semantic
 direction. For each append-only program step, the semantics adapter supplies
 that a model of the enlarged program is a model of the old prefix and that a
-fact on an old node has the same meaning in old and new models whenever those
-models assign that node the same value. This is separate from, and
+fact on an old node has the same meaning in old and new models whenever their
+valuations agree on the complete old program. Whole-prefix agreement is
+required because `Semantics.holds` may inspect values at old nodes other than
+the node carrying the fact. This is separate from, and
 complementary to, the package theorem that every old model can be extended.
 The checker uses these laws to lift all previously proved fact versions into
 the enlarged program. It then seeds every genuinely new node at version zero
@@ -1306,10 +1308,9 @@ the package-contributed schema declaration, then emits the instance, sine,
 negation, equality-transport, and caller-closure applications in dependency
 order. Every accepted `Option` result carries an ordinary `rfl` success proof;
 if the quote or schema is wrong, elaboration fails. The assigned term consumes
-the actual returned quote. Fixed proof constants for caller assumptions and
-generated-node top facts still constrain this canary's program, while its
-checked literal event chain is a separate field-for-field regression and
-cheap goal-shape probe.
+the actual returned quote. Its earlier checked literal chain remains a
+field-for-field correspondence regression, a cheap goal-shape probe, and the
+source of the canary's fixed typed premise helpers.
 
 This is a complete direct proof assembler for the fixed real-sine graph, not
 yet the general tactic. Its elaborator walks the arbitrary quoted event list
@@ -1321,13 +1322,15 @@ instance event rather than trusting each later fact event's claimed version.
 Reordering negation before the sine result it consumes, or mutating a
 transport to a different program version, fails before replay. This event fold
 contains no sine, negation, or other function case. The next frontend
-experiment must derive the base program, semantic
-bridge, initial evidence table, and final target for an arbitrary caller
-expression instead of naming this canary's fixed contexts.
-The fixed canary also requires a live session with an exact proof history of one
-instance, one equality, three fact events, and the expected interleaving before
-it reads historical values through `Engine.factAt?`. Those values are quoted
-as data, while their proofs come from caller assumptions, top soundness, or an
+experiment must derive the base program, semantic bridge, initial evidence
+table, and final target for an arbitrary caller expression instead of naming
+this canary's fixed contexts.
+The fixed canary also requires a live session with no dropped work and an exact
+proof history of one instance, one equality, three fact events, and the
+expected interleaving before it reads historical values through
+`Engine.factAt?`. This exact trace-shape gate is not a claim that
+`Session.complete` holds. The values are quoted as
+data, while their proofs come from caller assumptions, top soundness, or an
 earlier emitted replay result. A future arbitrary-trace emitter must likewise
 obtain evidence from its chronological proof table; a successful full-history
 lookup is never evidence that the dependency was available at the required

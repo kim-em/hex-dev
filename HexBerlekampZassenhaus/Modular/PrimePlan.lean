@@ -406,6 +406,28 @@ def firstDirectPlan?
 def directPrimePlan? (core : SquareFreeInput) : Option (DirectPrimePlan core) :=
   firstDirectPlan? core (smallPrimeCandidates ++ extendedSmallPrimeCandidates)
 
+/-- A probe *is* its own good-prime trial: the recorded factorization is what
+the explicit trial at its candidate returned, and every derived field --
+the factor degrees and the subset-degree bitset -- was computed from that
+factorization by `DirectPrimeProbe.ofData`.
+
+The planner retains probes it did not select, and a consumer that reads their
+degree data needs both halves: without the first it does not know the
+factorization is a factorization of this input at all, and without the second
+the cached Booleans are unrelated to the recorded degrees. -/
+@[expose]
+def DirectPrimeProbe.Trial {core : SquareFreeInput}
+    (probe : DirectPrimeProbe core) : Prop :=
+  probePrimeData? core.poly probe.candidate = some probe.data ∧
+    probe = DirectPrimeProbe.ofData core probe.candidate probe.data
+
+/-- A trial built by `ofData` from a successful explicit trial is one. -/
+theorem DirectPrimeProbe.trial_ofData {core : SquareFreeInput}
+    {candidate : SmallPrimeCandidate} {data : PrimeChoiceData}
+    (h : probePrimeData? core.poly candidate = some data) :
+    (DirectPrimeProbe.ofData core candidate data).Trial :=
+  ⟨h, rfl⟩
+
 private theorem planOfScout_selected_spec
     (core : SquareFreeInput) (first : DirectPrimeProbe core)
     (scouted : Option PrimeDegreePattern)
@@ -455,6 +477,73 @@ theorem directPrimePlan?_selected_spec
   exact firstDirectPlan?_selected_spec core
     (smallPrimeCandidates ++ extendedSmallPrimeCandidates) plan
       (by simpa [directPrimePlan?] using h)
+
+private theorem planOfScout_probes_trial
+    (core : SquareFreeInput) (first : DirectPrimeProbe core)
+    (scouted : Option PrimeDegreePattern) (hfirst : first.Trial) :
+    ∀ probe ∈ (planOfScout core first scouted).probes, probe.Trial := by
+  cases scouted with
+  | none =>
+      intro probe hprobe
+      simp only [planOfScout, DirectPrimePlan.ofSelection, DirectPrimePlan.probes] at hprobe
+      simp only [Array.mem_append, Array.mem_singleton] at hprobe
+      rcases hprobe with rfl | hprobe
+      · exact hfirst
+      · simp at hprobe
+  | some scouted =>
+      intro probe hprobe
+      simp only [planOfScout] at hprobe
+      cases hdata : probePrimeData? core.poly scouted.candidate with
+      | none =>
+          rw [hdata] at hprobe
+          simp only [DirectPrimePlan.ofSelection, DirectPrimePlan.probes,
+            Array.mem_append, Array.mem_singleton] at hprobe
+          rcases hprobe with rfl | hprobe
+          · exact hfirst
+          · simp at hprobe
+      | some data =>
+          rw [hdata] at hprobe
+          simp only [DirectPrimePlan.ofSelection, DirectPrimePlan.probes,
+            Array.mem_append, Array.mem_singleton] at hprobe
+          rcases hprobe with rfl | hprobe
+          · exact DirectPrimeProbe.trial_ofData hdata
+          · subst hprobe
+            exact hfirst
+
+private theorem firstDirectPlan?_probes_trial
+    (core : SquareFreeInput) :
+    ∀ candidates plan,
+      firstDirectPlan? core candidates = some plan →
+      ∀ probe ∈ plan.probes, probe.Trial := by
+  intro candidates
+  induction candidates with
+  | nil =>
+      intro plan h
+      simp [firstDirectPlan?] at h
+  | cons candidate candidates ih =>
+      intro plan h
+      simp only [firstDirectPlan?] at h
+      cases hprobe : probePrimeData? core.poly candidate with
+      | none =>
+          simp only [hprobe] at h
+          exact ih plan h
+      | some data =>
+          simp only [hprobe, Option.some.injEq] at h
+          subst plan
+          exact planOfScout_probes_trial core
+            (DirectPrimeProbe.ofData core candidate data) _
+            (DirectPrimeProbe.trial_ofData hprobe)
+
+/-- Every retained cached trial -- the selected one and each other successful
+trial the planner kept -- is exactly the result of its own explicit
+good-prime trial, with its degree data computed from that result. -/
+theorem directPrimePlan?_probes_trial
+    (core : SquareFreeInput) (plan : DirectPrimePlan core)
+    (h : directPrimePlan? core = some plan) :
+    ∀ probe ∈ plan.probes, probe.Trial :=
+  firstDirectPlan?_probes_trial core
+    (smallPrimeCandidates ++ extendedSmallPrimeCandidates) plan
+    (by simpa [directPrimePlan?] using h)
 
 private theorem scoutBetterPattern_mem
     (core : SquareFreeInput) :
@@ -514,48 +603,67 @@ private theorem scoutBetterPattern_mem
           · rw [if_neg hpays] at h
             exact Or.inl ⟨scouted, h, rfl⟩
 
-private theorem planOfScout_selected_mem
+private theorem planOfScout_probes_mem
     (core : SquareFreeInput) (first : DirectPrimeProbe core)
     (scouted : Option PrimeDegreePattern) :
-    (planOfScout core first scouted).selected.candidate = first.candidate ∨
-      ∃ s, scouted = some s ∧
-        (planOfScout core first scouted).selected.candidate = s.candidate := by
+    ∀ probe ∈ (planOfScout core first scouted).probes,
+      probe.candidate = first.candidate ∨
+        ∃ s, scouted = some s ∧ probe.candidate = s.candidate := by
   cases scouted with
-  | none => exact Or.inl rfl
+  | none =>
+      intro probe hprobe
+      simp only [planOfScout, DirectPrimePlan.ofSelection, DirectPrimePlan.probes,
+        Array.mem_append, Array.mem_singleton] at hprobe
+      rcases hprobe with rfl | hprobe
+      · exact Or.inl rfl
+      · simp at hprobe
   | some scouted =>
-      simp only [planOfScout]
-      cases hprobe : probePrimeData? core.poly scouted.candidate with
-      | none => exact Or.inl rfl
+      intro probe hprobe
+      simp only [planOfScout] at hprobe
+      cases hdata : probePrimeData? core.poly scouted.candidate with
+      | none =>
+          rw [hdata] at hprobe
+          simp only [DirectPrimePlan.ofSelection, DirectPrimePlan.probes,
+            Array.mem_append, Array.mem_singleton] at hprobe
+          rcases hprobe with rfl | hprobe
+          · exact Or.inl rfl
+          · simp at hprobe
       | some data =>
-          exact Or.inr ⟨scouted, rfl, rfl⟩
+          rw [hdata] at hprobe
+          simp only [DirectPrimePlan.ofSelection, DirectPrimePlan.probes,
+            Array.mem_append, Array.mem_singleton] at hprobe
+          rcases hprobe with rfl | hprobe
+          · exact Or.inr ⟨scouted, rfl, rfl⟩
+          · subst hprobe
+            exact Or.inl rfl
 
-private theorem firstDirectPlan?_selected_mem
+private theorem firstDirectPlan?_probes_mem
     (core : SquareFreeInput) :
     ∀ candidates plan,
       firstDirectPlan? core candidates = some plan →
-      plan.selected.candidate ∈ candidates := by
+      ∀ probe ∈ plan.probes, probe.candidate ∈ candidates := by
   intro candidates
   induction candidates with
   | nil =>
       intro plan h
       simp [firstDirectPlan?] at h
   | cons candidate candidates ih =>
-      intro plan h
+      intro plan h probe hmem
       simp only [firstDirectPlan?] at h
       cases hprobe : probePrimeData? core.poly candidate with
       | none =>
           simp only [hprobe] at h
-          exact List.mem_cons_of_mem candidate (ih plan h)
+          exact List.mem_cons_of_mem candidate (ih plan h probe hmem)
       | some data =>
           simp only [hprobe, Option.some.injEq] at h
           subst plan
-          rcases planOfScout_selected_mem core
+          rcases planOfScout_probes_mem core
               (DirectPrimeProbe.ofData core candidate data)
               (scoutBetterPattern core scoutFuel candidates
                 ⟨candidate.p,
                   (DirectPrimeProbe.ofData core candidate data).factorDegrees,
                   directProbeScore core (DirectPrimeProbe.ofData core candidate data)⟩
-                none) with hfirst | ⟨s, hs, hsel⟩
+                none) probe hmem with hfirst | ⟨s, hs, hsel⟩
           · rw [hfirst]
             exact List.mem_cons_self
           · rcases scoutBetterPattern_mem core scoutFuel candidates
@@ -567,22 +675,36 @@ private theorem firstDirectPlan?_selected_mem
             · rw [hsel]
               exact List.mem_cons_of_mem candidate hm
 
+/-- The selected trial is one of the retained trials. -/
+theorem DirectPrimePlan.selected_mem_probes {core : SquareFreeInput}
+    (plan : DirectPrimePlan core) : plan.selected ∈ plan.probes := by
+  simp [DirectPrimePlan.probes]
+
+/-- Every retained cached trial uses a prime from the fixed `[3, 500]`
+hot-path candidate list. -/
+theorem directPrimePlan?_probes_p_le_500
+    (core : SquareFreeInput) (plan : DirectPrimePlan core)
+    (h : directPrimePlan? core = some plan) :
+    ∀ probe ∈ plan.probes, probe.data.p ≤ 500 := by
+  intro probe hmem
+  have hmem' : probe.candidate ∈
+      smallPrimeCandidates ++ extendedSmallPrimeCandidates :=
+    firstDirectPlan?_probes_mem core
+      (smallPrimeCandidates ++ extendedSmallPrimeCandidates) plan
+      (by simpa [directPrimePlan?] using h) probe hmem
+  have hhot : probe.candidate ∈ hotPathCandidates := by
+    simpa only [hotPathCandidates] using hmem'
+  have hc : probe.candidate.p ≤ 500 := (mem_hotPathCandidates_prime hhot).2.2
+  exact probePrimeData?_p_le core.poly probe.candidate probe.data hc
+    ((directPrimePlan?_probes_trial core plan h probe hmem).1)
+
 /-- The direct planner selects only from the fixed `[3, 500]` hot-path
 candidate list. -/
 theorem directPrimePlan?_selected_p_le_500
     (core : SquareFreeInput) (plan : DirectPrimePlan core)
     (h : directPrimePlan? core = some plan) :
-    plan.prime ≤ 500 := by
-  have hmem : plan.selected.candidate ∈
-      smallPrimeCandidates ++ extendedSmallPrimeCandidates :=
-    firstDirectPlan?_selected_mem core
-      (smallPrimeCandidates ++ extendedSmallPrimeCandidates) plan
-      (by simpa [directPrimePlan?] using h)
-  have hhot : plan.selected.candidate ∈ hotPathCandidates := by
-    simpa only [hotPathCandidates] using hmem
-  have hc : plan.selected.candidate.p ≤ 500 :=
-    (mem_hotPathCandidates_prime hhot).2.2
-  exact probePrimeData?_p_le core.poly plan.selected.candidate
-    plan.selected.data hc (directPrimePlan?_selected_spec core plan h)
+    plan.prime ≤ 500 :=
+  directPrimePlan?_probes_p_le_500 core plan h plan.selected
+    plan.selected_mem_probes
 
 end Hex
