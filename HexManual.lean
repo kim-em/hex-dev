@@ -7,32 +7,32 @@ Authors: Kim Morrison
 import VersoManual
 
 -- Released libraries (dependency order).
+import HexManual.Chapters.HexArith
+import HexManual.Chapters.HexPoly
+import HexManual.Chapters.HexMvPoly
+import HexManual.Chapters.HexModArith
+import HexManual.Chapters.HexPolyFp
+import HexManual.Chapters.HexPolyZ
+import HexManual.Chapters.HexGFqRing
+import HexManual.Chapters.HexHensel
+import HexManual.Chapters.HexRoots
+import HexManual.Chapters.HexRealRoots
 import HexManual.Chapters.HexMatrix
 import HexManual.Chapters.HexRowReduce
+import HexManual.Chapters.HexBerlekamp
 import HexManual.Chapters.HexDeterminant
 import HexManual.Chapters.HexBareiss
 import HexManual.Chapters.HexGramSchmidt
 import HexManual.Chapters.HexLLL
--- Unreleased libraries (dependency order).
-import HexManual.Chapters.HexArith
-import HexManual.Chapters.HexModArith
-import HexManual.Chapters.HexPoly
-import HexManual.Chapters.HexMvPoly
-import HexManual.Chapters.HexPolyZ
-import HexManual.Chapters.HexResultant
-import HexManual.Chapters.HexPolyFp
-import HexManual.Chapters.HexBerlekamp
-import HexManual.Chapters.HexGF2
-import HexManual.Chapters.HexHensel
 import HexManual.Chapters.HexBerlekampZassenhaus
-import HexManual.Chapters.HexGFqRing
+import HexManual.Chapters.FactorTactics
+-- Unreleased libraries (dependency order).
+import HexManual.Chapters.HexResultant
+import HexManual.Chapters.HexGF2
 import HexManual.Chapters.HexGFqField
 import HexManual.Chapters.HexConway
 import HexManual.Chapters.HexGFq
-import HexManual.Chapters.HexRealRoots
 import HexManual.Chapters.HexRCF
-import HexManual.Chapters.FactorTactics
-import HexManual.Chapters.HexRoots
 import HexManual.Chapters.HexNumberField
 import HexManual.Chapters.HexNumberFieldTower
 -- Tutorials (application-first capstone pages, see SPEC/tutorials.md).
@@ -48,6 +48,10 @@ The `HexManual` Verso aggregator. Each per-library reference chapter
 lives at `HexManual/Chapters/<LibraryName>.lean` and is included
 below. Chapters are ordered as a topological sort of the library
 dependency DAG, released libraries first.
+
+Which chapters count as released is not a judgement call: it follows
+`scripts/release/released.yml`, and `scripts/release/check_manual_split.py`
+fails CI when a chapter sits on the wrong side of the split.
 -/
 
 #doc (Manual) "Hex" =>
@@ -61,9 +65,31 @@ polynomial factorization, root isolation, and lattice reduction. The
 computational core is Mathlib-free; Mathlib companions state correspondence
 contracts and, for mature libraries, supply their proofs.
 
+{include 0 HexManual.Chapters.HexArith}
+
+{include 0 HexManual.Chapters.HexPoly}
+
+{include 0 HexManual.Chapters.HexMvPoly}
+
+{include 0 HexManual.Chapters.HexModArith}
+
+{include 0 HexManual.Chapters.HexPolyFp}
+
+{include 0 HexManual.Chapters.HexPolyZ}
+
+{include 0 HexManual.Chapters.HexGFqRing}
+
+{include 0 HexManual.Chapters.HexHensel}
+
+{include 0 HexManual.Chapters.HexRoots}
+
+{include 0 HexManual.Chapters.HexRealRoots}
+
 {include 0 HexManual.Chapters.HexMatrix}
 
 {include 0 HexManual.Chapters.HexRowReduce}
+
+{include 0 HexManual.Chapters.HexBerlekamp}
 
 {include 0 HexManual.Chapters.HexDeterminant}
 
@@ -72,6 +98,10 @@ contracts and, for mature libraries, supply their proofs.
 {include 0 HexManual.Chapters.HexGramSchmidt}
 
 {include 0 HexManual.Chapters.HexLLL}
+
+{include 0 HexManual.Chapters.HexBerlekampZassenhaus}
+
+{include 0 HexManual.Chapters.FactorTactics}
 
 # Tutorials
 %%%
@@ -96,29 +126,9 @@ These libraries are still incubating in the
 split out for release yet, so their APIs may still change. They are grouped
 here to keep the reference chapters above focused on the released libraries.
 
-{include 2 HexManual.Chapters.HexArith}
-
-{include 2 HexManual.Chapters.HexModArith}
-
-{include 2 HexManual.Chapters.HexPoly}
-
-{include 2 HexManual.Chapters.HexMvPoly}
-
-{include 2 HexManual.Chapters.HexPolyZ}
-
 {include 2 HexManual.Chapters.HexResultant}
 
-{include 2 HexManual.Chapters.HexPolyFp}
-
-{include 2 HexManual.Chapters.HexBerlekamp}
-
 {include 2 HexManual.Chapters.HexGF2}
-
-{include 2 HexManual.Chapters.HexHensel}
-
-{include 2 HexManual.Chapters.HexBerlekampZassenhaus}
-
-{include 2 HexManual.Chapters.HexGFqRing}
 
 {include 2 HexManual.Chapters.HexGFqField}
 
@@ -126,13 +136,7 @@ here to keep the reference chapters above focused on the released libraries.
 
 {include 2 HexManual.Chapters.HexGFq}
 
-{include 2 HexManual.Chapters.HexRealRoots}
-
 {include 2 HexManual.Chapters.HexRCF}
-
-{include 2 HexManual.Chapters.FactorTactics}
-
-{include 2 HexManual.Chapters.HexRoots}
 
 {include 2 HexManual.Chapters.HexNumberField}
 

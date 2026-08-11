@@ -4,29 +4,47 @@ Swinnerton-Dyer polynomials factor into quadratics modulo every prime, so
 Berlekamp-Zassenhaus recombination has to search `2^(w-1)` supports at modular
 width `w`. `sd5` has `w = 16` and visits 32,768 support nodes to find one
 divisor; `sd6` has `w = 32`, exceeds the recombination budget outright, and is
-answered by the CLD lattice tier, which is where nearly all of its 7.95 s goes. This page is issue #9133's record:
-what the class of polynomials in question actually is, the theorem and finite
-certificate that decide irreducibility for it directly, a prototype outside
-production, and the go/no-go measurement.
+answered by the CLD lattice tier, which is where nearly all of its 7.95 s
+goes. This page is the record for issues #9133 and #9170: what the class of
+polynomials in question actually is, the theorem and finite certificate that
+decide irreducibility for it directly, the go/no-go measurement that was taken
+against a prototype, and the measured effect of putting it into production.
 
-The verdict is **go**, on both the mathematics and the numbers. The theorem
-holds for every iterated quadratic norm with multiplicatively independent
-radicands -- an infinite class of which the corpus contains only Swinnerton-Dyer
-instances and quadratics -- the certificate is two decidable checks, and on the
-committed corpus the certificate is 869x faster than the production cascade on
-`sd5` and 24,376x on `sd6`, at a median miss overhead of 0.14 us.
+The verdict was **go**, and #9170 shipped it. The theorem holds for every
+iterated quadratic norm with multiplicatively independent radicands -- an
+infinite class of which the corpus contains only Swinnerton-Dyer instances and
+quadratics -- the certificate is two decidable checks, and it is now on the
+ordinary singleton-irreducibility path of `Hex.ZPoly.factorize`, behind a
+modular-width floor, with `irreducible_of_check` proving it sound.
 
-The gate that matters most is not either of those. Simulated onto the combined
-cactus, the certificate alone takes the worst Hex/Isabelle cumulative ratio over
-ranks 125 through 140 from 1.079x to 0.708x, which is #9126's success criterion.
-Restricting the model to the three `sd5` rows still gives 0.725x, so the
-conclusion does not rest on the whole certified set.
+Measured on the corpus. The first five rows are the controlled A/B: two sweeps
+at one revision, `5dabd026`, differing only in whether the width floor admits
+anything. The last row is the published state, and its two numbers come from two
+different records -- the gate-closed side from that same A/B, the integrated side
+from the clean `58c873ca` sweep, which is what
+the committed figures read. The Isabelle curve both are measured against is
+carried over unchanged, so the comparison is still like for like, but it is not
+the same-revision experiment the rows above it are.
 
-What is *not* delivered here is the Mathlib correspondence. The certificate is
-checkable today and its meaning is proved below on paper; `Irreducible` is not
-yet a Lean theorem about it. The final section says exactly what remains.
+| | gate closed | integrated |
+|---|---:|---:|
+| `sd5` | 71.007 ms | 6.820 ms |
+| `sd6` | 8.148 s | 27.055 ms |
+| `sd7`, `hoeij_S7`, `hoeij_S8`, `sd6_shift1`, `sd6_shift5` | timeout | 31 ms -- 3.98 s |
+| rows solved, of 392 | 377 | 383 |
+| total over rows both solve | 17.225 s | 8.965 s |
+| worst Hex/Isabelle cumulative, ranks 125--140 | 1.012x | **0.689x** |
 
-## Before starting: where Swinnerton-Dyer stands after #9129 and #9130
+That last line is #9126's success criterion, which is at most 0.85x at every
+rank from 125 through 140. The go/no-go modelled 0.708x; the measurement lands
+within 3% of it. No row regresses by more than the run-to-run spread
+on the host, and the worst miss any row is actually offered is 0.014% of its
+factorization.
+
+## Before integration: where Swinnerton-Dyer stood after #9129 and #9130
+
+This section is the pre-integration record #9133 asked for, kept as measured.
+Everything from "In production" on is the state after #9170.
 
 The issue asks for these numbers before any implementation, and for the issue to
 be closed as a no-go if the general reconstruction already meets #9126's target
@@ -267,20 +285,81 @@ it meets -- degree not a power of two, `2ⁿ ∤ a_{N-1}`, a non-integral
 intermediate, or too few integer roots -- and the measured cost of that failure
 is in the miss table below.
 
-## The prototype
+## In production
 
-`bench/HexBench/QuadraticNorm.lean`, reachable only from the benchmark service.
-It is not imported by `HexBerlekampZassenhaus` and `Hex.ZPoly.factorize` is
-unchanged; issue #9133 asks for the gate to be decided outside production, and
-it was.
+The certificate is on the production path. `Hex.QuadraticNormCertificate.check`
+and the definitions it runs on live in `HexBerlekampZassenhaus/QuadraticNorm.lean`;
+the untrusted search that proposes a certificate is
+`HexBerlekampZassenhaus/QuadraticNormRecover.lean`, whose `recover?` is the
+closed form of the previous section and whose `certify?` is recovery followed by
+the check. The prototype that decided the gate is gone: `bench/HexBench/QuadraticNorm.lean`
+and its `HexQuadraticNormProbe` library are deleted, and the bench probe now
+times the same definitions `Hex.ZPoly.factorize` reaches.
+
+**Where it is consulted.** `Hex.classicalInput` selects the modular prime and
+factorization, and at that point the support width `w` is known and no Hensel
+lift has been paid for yet. `Hex.quadraticNormCertified core w` has exactly one
+call site, there, and it is consulted once per `classicalInput` invocation. That
+is not once per `Hex.ZPoly.factorize`: the proposal tier replays the classical
+factorizer on each piece it peels, which re-enters `classicalInput`, so a
+reducible input can fail the gate whole and have a piece certify later. That is
+how `sd6_x_phi13` becomes solvable, and it is the behaviour that makes one call
+site enough rather than an argument for a second one. A success returns the whole
+square-free core as one irreducible factor through the same
+`reassemblePolynomialFactors` as the constant and quadratic cases, so it produces
+the same `Factorization` any other singleton proof would; the trace records
+`FactorMethod.quadraticNorm`. A failure falls through to `planned` carrying no
+certificate state -- the modular plan it forwards is the one it already selected
+before the gate ran -- and the row runs exactly the cascade it ran before.
+
+**The budget.** Recombination at width `w` walks up to `2^(w-1)` supports, so
+the gate is a width: `QuadraticNormCertificate.widthFloor = 16`. At the floor the
+walk is `2^15 = 32768` nodes, an eighth of the 262,144-node
+`defaultSubsetBudget` the recombination already carries, and it is the cost of
+that walk the certificate is worth attempting to replace. Below the floor
+nothing is constructed, so a row that recombines cheaply pays exactly nothing.
+The floor is deliberately not `defaultSubsetBudget` itself: `sd5`'s
+32,768-node walk sits far under that budget and would never trip it, yet it is
+precisely the walk worth replacing.
+
+**Normalization.** Every `F(c; d)` is monic, so the certificate applies to the
+primitive square-free part exactly when its leading coefficient is `1` or `-1`,
+and the only normalization is negation. `ZPoly.normalizePrimitiveSign`, inside
+the check, is that negation and nothing else: no scaling, no content division,
+no reordering.
+
+**Soundness.** `HexBerlekampZassenhausMathlib.irreducible_of_check` says a
+successful check makes its input irreducible in `Polynomial ℤ`, with no
+hypothesis on the input, and `irreducible_of_quadraticNormCertified` says the
+same of the gate. It is what discharges the certificate arm of
+`factorClassicalFactors_factor_irreducible`, so a certified singleton is proved
+irreducible on the same footing as every other returned factor. The composition
+the two halves needed is `signPatternPoly_ofFn`: `map_iteratedNorm` writes the
+sign-pattern product as a `List.prod` over a fold-built list of signed sums and
+the tower theorem writes it as a `Finset.prod` over `Fin n → Bool`, and those are
+the same polynomial. Neither side can adopt the other's encoding -- the fold is
+what the iterated norm computes, and the `Fin n → Bool` indexing is what lets an
+automorphism act by a reindexing equivalence -- so it is a real lemma, proved by
+induction on the radicand count, splitting the last sign off with `Fin.snocEquiv`
+on one side and the last fold step on the other.
+
+## The measurement driver
 
 `hexbz_factor_service --entry quadraticNormProbe` times one production
 factorization and the four certificate stages on the same input in the same
 process. `--entry quadraticNormCertificate` runs the certificate stages alone,
-for the rows the production cascade does not finish and for the corpus-wide miss
-sweep. Each stage folds its result into a reported witness before its closing
-mark; without that the compiler sinks each pure `let` to its only use and the
-whole certificate cost lands in whichever span is last.
+for the corpus-wide miss sweep and for any row the cascade does not finish. Each
+stage folds its result into a reported witness before its closing mark; without
+that the compiler sinks each pure `let` to its only use and the whole
+certificate cost lands in whichever span is last.
+
+The probe is deliberately *unconditional*: it prices the certificate on every
+row, including the ones production's width floor never offers it to. That is
+what makes the miss table a property of the certificate rather than of the gate.
+It also means the paired ratio is no longer a speedup, because a certified row's
+production call now runs the certificate too; it says what share of the
+integrated row the certificate is. The before/after speedup is in the factor
+sweep below.
 
 `scripts/bench/quadratic_norm_probe.py` drives both and writes
 `reports/bench-results/hexbz-quadratic-norm-certificate-chungus2.json`.
@@ -293,8 +372,11 @@ implementation against them, writing
 
 * Source revision as recorded in each record's `env.git_commit`, Lean toolchain
   `leanprover/lean4:v4.33.0-rc1`.
-* Host `chungus2`, AMD EPYC 9455, Linux x86-64, 96 cores; harness and service
-  pinned to CPU 0 with `taskset -c 0`.
+* Host `chungus2`, AMD EPYC 9455, Linux x86-64, 96 cores. The probe, witnesses,
+  and controlled A/B used CPU 0; the current published sweep used verified-idle
+  CPU 1. The regeneration commands below select one verified-idle core, because
+  the shared host may carry concurrent measurements; record that selected core
+  alongside any new artifacts.
 * Corpus `bench/corpus/hexbz-factor-corpus.jsonl`, 392 rows, SHA-256
   `619913904240834c912489e6cc23ba136e8cc5ebf0ea95f83397e0682387284d`; the
   combined mixture the cactus plots is its 160 `combined` rows.
@@ -306,87 +388,189 @@ implementation against them, writing
 
 | Record | SHA-256 |
 |---|---|
-| `reports/bench-results/hexbz-quadratic-norm-certificate-chungus2.json` | `19720214bd152e584c2bdd217a8df9f0536997f5c26f6939d91eab5b80b09957` |
-| `reports/bench-results/hexbz-quadratic-norm-witnesses.json` | `e779d4a1e5d1c0ea239d98871c603a5ac0222c19a91889a180ca70de9b46b720` |
-| `reports/bench-results/hexbz-quadratic-norm-cactus-model.json` | `30156cc1356eb7a64f18baf8c9138dab7efff455ccd58decbc20a4534d19deff` |
+| `hexbz-quadratic-norm-certificate-chungus2.json` | `b5cc0418072f04faf9c893138ab6dc88e0bb311877f503083893e2f0d1565612` |
+| `hexbz-quadratic-norm-witnesses.json` | `e3008007ebf3e114da025455e1a6d49a8def461524a4a29c441429bd434f4f10` |
+| `hexbz-factor-sweep-58c873ca-hex-chungus2-cpu1.json` | `3c96905dae847e634de7e20934a9074e582ce7d545294471adebf945b6c1efe9` |
+| `hexbz-factor-sweep-5dabd026-hex-chungus2.json` | `1e06a903574a230da312bda3e9f916fc8bc1d637347414ca37d90429bd5ef2f6` |
+| `hexbz-factor-sweep-5dabd026-hex-chungus2-run2.json` | `ababa5b2b439ca3d8af1f20edd892f17d8fbc951d9d4a0166a509abe6758a674` |
+| `hexbz-factor-sweep-5dabd026-hex-gate-closed-chungus2.json` | `73c010724edbf580b81af3a3291107b201e29753e7b6df6153f8c921f916678d` |
+| `hexbz-factor-sweep-5dabd026-hex-gate-closed-chungus2-run2.json` | `1468554703005586fa887262b38ad0522ec639c6ff68cd0a9a6a2206ec6de9bf` |
 
-All three were measured at revision `6a86bc37`, against the sweep committed
-here, with no modified source. Each carries the SHA-256 of the service binary it measured, which
-pins the code more tightly than the commit does. The cactus model additionally
-records the two sweeps and the certificate record it read.
+All are in `reports/bench-results/`. The probe and witness records were measured
+at `55e47e1e` from a clean tree; each carries the SHA-256 of the service binary
+it measured, which pins the code more tightly than the commit does.
+
+The four `5dabd026` sweeps are the before/after pair, two runs each. All four
+record `git_dirty: true`, for two different reasons, and neither reason is a
+production edit. All four ran with the report drafts and the earlier bench
+records untracked in the tree, and `factor_sweep.py` reads `git status
+--porcelain`, which counts untracked files. On top of that, the `gate-closed`
+two were measured from a tree carrying exactly one further edit, and nothing
+else: the literal in
+
+```
+@[expose] def widthFloor : Nat := 16
+```
+
+raised past every width the corpus reaches -- the widest row of any kind is
+`hoeij_F256` at 128, so any value above that closes the gate on every row
+identically -- so those two record the same revision with the certificate
+switched off. The records carry no binary hash and the exact literal used was
+not recorded, so they do not establish that on their own; they should be read
+against that one-line edit, and anyone retaking them should record the value.
+`hexbz-factor-sweep-58c873ca-hex-chungus2-cpu1.json` is the published sweep:
+clean tree, integrated, and measured on verified-idle CPU 1. It is what the
+committed figures and the rank table read. Its `sd5` reads 6.732 ms and its
+`sd6` 27.044 ms, within the run-to-run spread of the pair.
+
+Measuring the two sides of one revision, rather than this branch against `main`,
+is deliberate. Several unrelated performance changes landed on `main` between
+the go/no-go and this integration, and a `main`-versus-branch comparison would
+credit this change with theirs.
+
+The go/no-go's cactus model,
+`reports/bench-results/hexbz-quadratic-norm-cactus-model.json` and
+`scripts/bench/quadratic_norm_cactus_model.py`, is superseded by those sweeps
+and is kept only as the prediction the measurement is checked against. Do not
+re-run it against an integrated sweep: its replacement rule would count the
+certificate twice.
 
 ## Measured effect
 
 ### Certified rows, construction and checking separately
 
-All times in microseconds; `production` is the paired in-process factorization,
-and the ratio is the median of the per-observation ratios rather than a ratio of
-two medians, so both sides describe one execution.
+All times in microseconds unless marked; `production` is the paired in-process
+factorization, which for a certified row now *contains* the certificate. The
+final column is the go/no-go's prototype total, for comparison.
 
-| row | degree | recovery | independence | construction | equality | certificate | paired | production | ratio |
-|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
-| `conway_p3_n2` | 2 | 2.8 | 0.2 | 0.2 | 0.1 | 3.2 | 3.1 | 0.018 ms | 5x |
-| `conway_p65537_n2` | 2 | 3.0 | 0.2 | 0.2 | 0.1 | 3.4 | 3.5 | 0.035 ms | 9x |
-| `sd2` | 4 | 6.2 | 0.5 | 0.3 | 0.1 | 7.1 | 7.4 | 0.036 ms | 5x |
-| `sd3` | 8 | 10.8 | 1.4 | 0.6 | 0.1 | 12.9 | 13.3 | 0.153 ms | 11x |
-| `sd4` | 16 | 17.8 | 4.4 | 1.4 | 0.1 | 23.7 | 25.0 | 0.841 ms | 34x |
-| `sd4_shift3` | 16 | 17.7 | 4.5 | 5.2 | 0.1 | 27.4 | 29.1 | 0.881 ms | 30x |
-| `sd5` | 32 | 36.3 | 10.6 | 21.8 | 0.3 | 68.9 | 80.3 | 69.741 ms | **869x** |
-| `sd5_shift1` | 32 | 51.7 | 10.6 | 56.4 | 0.4 | 119.1 | 131.6 | 63.629 ms | 484x |
-| `sd5_shift2` | 32 | 56.3 | 10.6 | 61.3 | 0.4 | 128.6 | 134.9 | 66.799 ms | 495x |
-| `sd6` | 64 | 101.6 | 26.7 | 155.5 | 0.5 | 284.3 | 330.6 | 8.058 s | **24376x** |
-| `sd6_shift1` | 64 | 193.4 | 25.7 | 376.5 | 0.8 | 596.4 | 646.9 | 22.122 s | 34194x |
-| `sd6_shift5` | 64 | 205.3 | 26.1 | 441.7 | 0.9 | 674.0 | -- | timeout | -- |
-| `hoeij_S7` | 128 | 376.5 | 60.9 | 862.2 | 1.0 | 1300.6 | -- | timeout | -- |
-| `sd7` | 128 | 369.8 | 61.1 | 856.6 | 1.1 | 1288.5 | -- | timeout | -- |
-| `hoeij_S8` | 256 | 1374.2 | 142.9 | 3808.0 | 2.2 | 5327.3 | -- | timeout | -- |
-| `hoeij_S9` | 512 | 5767.6 | 324.6 | 17540.2 | 6.4 | 23638.7 | -- | timeout | -- |
+| row | degree | recovery | independence | construction | equality | certificate | paired | production | certificate share | prototype |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| `conway_p13_n2` | 2 | 2.8 | 0.1 | 0.9 | 0.2 | 3.9 | 3.9 | 0.026 ms | 1/7 | -- |
+| `conway_p3_n2` | 2 | 3.0 | 0.1 | 0.9 | 0.2 | 4.2 | 5.3 | 0.020 ms | 1/5 | 3.2 |
+| `conway_p5_n2` | 2 | 2.7 | 0.1 | 0.9 | 0.1 | 3.9 | 3.9 | 0.019 ms | 1/5 | -- |
+| `conway_p7_n2` | 2 | 2.9 | 0.1 | 0.8 | 0.1 | 4.0 | 5.0 | 0.033 ms | 1/7 | -- |
+| `conway_p97_n2` | 2 | 2.8 | 0.1 | 0.9 | 0.1 | 4.0 | 3.9 | 0.029 ms | 1/7 | -- |
+| `conway_p65537_n2` | 2 | 2.9 | 0.1 | 0.9 | 0.1 | 4.1 | 4.0 | 0.030 ms | 1/7 | 3.4 |
+| `sd2` | 4 | 7.2 | 0.3 | 2.4 | 0.2 | 10.0 | 8.9 | 0.038 ms | 1/4 | 7.1 |
+| `sd2_shift1` | 4 | 6.3 | 0.3 | 1.9 | 0.2 | 8.6 | 8.6 | 0.039 ms | 1/5 | -- |
+| `sd3` | 8 | 11.6 | 1.0 | 4.1 | 0.2 | 16.9 | 16.9 | 0.163 ms | 1/10 | 12.9 |
+| `sd3_shift1` | 8 | 11.3 | 0.7 | 3.7 | 0.2 | 15.9 | 16.8 | 0.160 ms | 1/10 | -- |
+| `sd3_shift2` | 8 | 11.3 | 0.6 | 3.9 | 0.2 | 16.0 | 16.3 | 0.161 ms | 1/10 | -- |
+| `sd4` | 16 | 18.5 | 1.3 | 9.4 | 0.4 | 29.6 | 61.1 | 1.503 ms | 1/25 | 23.7 |
+| `sd4_shift1` | 16 | 19.2 | 1.3 | 9.9 | 0.4 | 30.7 | 34.4 | 0.807 ms | 1/26 | -- |
+| `sd4_shift3` | 16 | 19.5 | 1.2 | 13.9 | 0.4 | 35.0 | 36.1 | 0.897 ms | 1/25 | 27.4 |
+| `sd5` | 32 | 62.5 | 4.5 | 72.1 | 1.5 | 140.6 | 147.0 | 12.061 ms | 1/83 | 68.9 |
+| `sd5_shift1` | 32 | 56.5 | 2.6 | 71.0 | 0.9 | 131.0 | 133.8 | 7.411 ms | 1/55 | 119.1 |
+| `sd5_shift2` | 32 | 53.3 | 2.6 | 73.0 | 0.9 | 129.7 | 135.5 | 9.147 ms | 1/67 | 128.6 |
+| `sd6` | 64 | 162.4 | 7.0 | 311.0 | 4.1 | 484.5 | 366.9 | 30.575 ms | 1/83 | 284.3 |
+| `sd6_shift1` | 64 | 204.4 | 5.3 | 431.5 | 2.0 | 643.2 | 647.2 | 33.810 ms | 1/52 | 596.4 |
+| `sd6_shift5` | 64 | 222.3 | 5.5 | 499.4 | 2.0 | 729.2 | 745.9 | 31.922 ms | 1/43 | 674.0 |
+| `hoeij_S7` | 128 | 404.8 | 11.2 | 1161.4 | 3.4 | 1580.9 | 1533.8 | 215.697 ms | 1/139 | 1300.6 |
+| `sd7` | 128 | 489.1 | 17.1 | 1661.6 | 5.7 | 2173.4 | 1626.4 | 233.546 ms | 1/142 | 1288.5 |
+| `hoeij_S8` | 256 | 2344.5 | 35.4 | 7585.7 | 12.4 | 9978.0 | 6374.7 | 4315.192 ms | 1/677 | 5327.3 |
+| `hoeij_S9` | 512 | 6417.6 | 50.0 | 23695.1 | 25.2 | 30187.9 | -- | timeout | -- | 23638.7 |
 
 The four stage columns come from a certificate-only process, which is what
 classifies every row and what the whole-corpus miss sweep uses. `paired` is the
-same total measured inside the *paired* process, alongside the production
-factorization it is being divided into; it reads a little slower there, and it
-is the column the ratio uses, so both sides of every ratio describe one
-execution rather than two runs subtracted.
+same total measured inside the paired process, alongside the production
+factorization it is part of.
 
-Twenty-four of the corpus's 392 rows certify: eighteen Swinnerton-Dyer rows and
-translates, and six degree-two Conway polynomials, which are the `n = 1` case of
-the theorem. The gate asks for at least 5x on `sd5` and a material reduction on
-`sd6`; the measurements are 869x and 24,376x. Four rows the production cascade
-cannot finish inside the cutoff --
-`sd6_shift5`, `sd7`/`hoeij_S7`, `hoeij_S8`, `hoeij_S9` -- certify in under 24 ms,
-`hoeij_S9` at degree 512.
+Twenty-four of the corpus's 392 rows certify, the same twenty-four as before:
+eighteen Swinnerton-Dyer rows and translates, and six degree-two Conway
+polynomials, which are the `n = 1` case of the theorem. Every one of them is
+certified by the recognizer reading coefficients; none is named anywhere in the
+source.
 
 Cost splits as expected: recovery is `O(n²)` rational operations on the top
 `2n+1` coefficients and dominates at small degree; the iterated-norm
 construction is `O(N²)` big-integer multiplications and dominates from degree 32
 up; the independence test is `2ⁿ - 1` square tests on integers below 510,510 and
-never exceeds 325 us, all of it at degree 512; the equality test is under seven
-microseconds everywhere,
+never exceeds 50 us; the equality test is under 26 microseconds everywhere,
 because by the time it runs both sides are already built.
+
+Against the prototype, the production definitions are **1.3x to 1.7x slower**
+from degree 32 up -- `sd5` 68.9 to 140.6 us, `sd6` 284.3 to 484.5 us, `sd7`
+1288.5 to 2173.4 us -- because `Hex.quadNorm` carries `ZPoly` values through
+`DensePoly` operations rather than indexing one flat `Array Int` in place. That
+is the price of the representation the correspondence theorem is stated about,
+and it is not a price worth paying attention to: on every certified row the
+certificate is between a quarter and a six-hundredth of the row it answers.
 
 ### Miss overhead
 
-Over the 368 declining rows: **median 0.14 us, maximum 86.7 us.** The median is
+Over the 368 declining rows: **median 0.17 us, maximum 539.9 us.** The median is
 the degree test -- most of the corpus does not have power-of-two degree, and
 those rows are refused in a few hundred nanoseconds. The rows that pay anything
 are those with power-of-two degree *and* `2ⁿ | a_{N-1}`, which then run the
 rational recovery to a contradiction:
 
-| declining row | degree | cost |
-|---|---:|---:|
-| `cyclo_phi256` | 128 | 86.7 us |
-| `laguerre_L32` | 32 | 73.1 us |
-| `cyclo_phi128` | 64 | 44.1 us |
-| `cyclo_phi64` | 32 | 26.2 us |
-| `wilkinson_32` | 32 | 0.2 us |
+| declining row | degree | modular width | cost | offered the certificate? |
+|---|---:|---:|---:|---|
+| `cyclo_phi256` | 128 | 2 | 539.9 us | no |
+| `cyclo_phi128` | 64 | 2 | 196.3 us | no |
+| `conway_p2_n32` | 32 | 2 | 87.7 us | no |
+| `cyclo_phi64` | 32 | 2 | 87.5 us | no |
+| `laguerre_L32` | 32 | 5 | 77.3 us | no |
+| `wilkinson_32` | 32 | 32 | 0.4 us | yes |
 
-`wilkinson_32` is the shape of the common case: degree 32 is a power of two, but
-its roots sum to 528 and `32 ∤ 528`, so it is refused before any series
-arithmetic. This is why the median is what it is, and it is why the recogniser
-should still be budget-gated rather than unconditional: `cyclo_phi128` factors in
-about a millisecond, so 42 us on it is 4%, well above the 1% the gate asks for
-even though the corpus median is far below it.
+That last column is the whole point of the gate, and it is what the corpus says
+about it: **every expensive miss is on a row the width floor never offers the
+certificate to.** A row is expensive to refuse exactly when it has power-of-two
+degree and survives the trace test, and those are cyclotomic and Conway rows,
+whose modular images barely split at all -- `cyclo_phi256` has width 2, so its
+recombination is a two-node walk and the floor of 16 keeps it free.
+
+Twenty-five declining rows sit at width 16 or above, so the gate offers the
+certificate to all twenty-five. Here are the seventeen the sweep solves, with
+what the attempt costs as a share of the row -- miss costs from the certificate
+probe record, row times from the published `58c873ca` sweep:
+
+| declining row | width | miss | row | share |
+|---|---:|---:|---:|---:|
+| `sd4_x_sd4shift1` | 16 | 0.2 us | 18.010 ms | 0.001% |
+| `wilkinson_16` | 16 | 0.2 us | 1.150 ms | 0.014% |
+| `sd5_x_phi11` | 17 | 0.2 us | 144.012 ms | 0.000% |
+| `sd5_x_phi45` | 18 | 0.2 us | 328.718 ms | 0.000% |
+| `wilkinson_18` | 18 | 0.2 us | 1.671 ms | 0.011% |
+| `xpow48_minus1` | 19 | 0.2 us | 10.406 ms | 0.002% |
+| `wilkinson_20` | 20 | 0.1 us | 2.217 ms | 0.007% |
+| `xpow60_minus1` | 21 | 0.2 us | 5.550 ms | 0.003% |
+| `wilkinson_24` | 24 | 0.2 us | 3.480 ms | 0.004% |
+| `wilkinson_28` | 28 | 0.2 us | 5.332 ms | 0.003% |
+| `wilkinson_32` | 32 | 0.4 us | 6.693 ms | 0.005% |
+| `sd6_x_phi13` | 33 | 0.2 us | 2.932 s | 0.000% |
+| `hoeij_F190` | 38 | 0.3 us | 3.287 s | 0.000% |
+| `xpow120_minus1` | 39 | 0.2 us | 147.832 ms | 0.000% |
+| `wilkinson_40` | 40 | 0.2 us | 9.431 ms | 0.002% |
+| `wilkinson_48` | 48 | 0.2 us | 16.356 ms | 0.001% |
+| `wilkinson_56` | 56 | 0.2 us | 21.266 ms | 0.001% |
+
+The worst of them pays **0.014%** of its factorization, against the 1% the gate
+was asked for, and the largest miss any of the twenty-five pays is 0.4 us.
+
+The other eight -- `sd5_x_sd5shift1` (32), `sd6_x_phi105` (36), `hoeij_F351`
+(61), `sd6_x_sd6shift1` (64), `hoeij_P7` (88), `hoeij_F192` (96), `hoeij_F630`
+(108) and `hoeij_F256` (128) -- reach the 10 s cutoff, so there is no row time to
+take a share of. Their misses are the same order: 0.2 to 2.2 us, the largest
+being `hoeij_F630` at 2.2 us against a row that runs for at least ten seconds.
+
+Nineteen of the twenty-five are refused at the degree test: a Swinnerton-Dyer
+polynomial times a cyclotomic, a Wilkinson polynomial of non-power-of-two
+degree, `Xᴺ - 1` for `N` = 48, 60, 120. That costs a couple of hundred
+nanoseconds at these degrees, and `hoeij_F630`'s 2.2 us and `hoeij_F351`'s
+1.5 us are the same test on 630 and 351 coefficients: the sign normalization
+and array conversion that run ahead of it are linear in the degree, and nothing
+after the degree test runs at all. The remaining six -- `wilkinson_16`, `wilkinson_32`, the three
+`sd_n × sd_n_shift1` cross-shifts and `hoeij_F256` -- have power-of-two degree
+and are refused one test later, at the trace: a Wilkinson polynomial's roots sum
+to `N(N+1)/2`, which `N` divides only when `N` is odd, and `SD_n · SD_n(X-1)`
+has trace `2ⁿ` against degree `2ⁿ⁺¹`, so the quotient is exactly one half.
+
+`sd5_x_phi11`, `sd5_x_phi45`, `sd4_x_sd4shift1`, `sd5_x_sd5shift1`,
+`sd6_x_phi13`, `sd6_x_phi105` and `sd6_x_sd6shift1` are the rows the issue named:
+Swinnerton-Dyer products and cross-shifts. They are reducible, so no certificate
+can apply to them, and they stay on the general path -- at a measured cost of two
+tenths of a microsecond each.
 
 ### Breadth: the class is not the benchmark
 
@@ -424,6 +608,11 @@ certify; every dependent set is refused, and so is a certified polynomial with a
 single coefficient perturbed. Each certified case also recovers the same square
 classes it was built from. The recogniser reads the coefficients, not the name.
 
+These are re-run against the production definitions, not the prototype:
+`deg1024` now costs 311 ms rather than the prototype's 24 ms, which is the same
+1.3x-to-13x `DensePoly`-versus-flat-array gap the certified-row table shows,
+widening with degree. Nothing in the corpus is anywhere near degree 1024.
+
 ### The theorem against the production factorizer
 
 The same driver's randomized pass is the sharper check, because it puts the
@@ -443,70 +632,93 @@ the hypothesis is exactly right rather than merely sufficient.
 The seed is fixed, so the run reproduces; `--random 0` disables it and
 `--seed` changes the sample.
 
-### Modelled effect on the combined cactus
+### Measured effect on the whole corpus
 
-The certificate is not on the production path, so its effect on the cactus is a
-model. `scripts/bench/quadratic_norm_cactus_model.py` *is* that model: it reads
-the pinned sweeps and the certificate record, states its replacement rule in
-code, measures the retained phases per row, and prints the tables below, so
-nothing here is a hand-carried number.
+Two sweeps at the same revision, `5dabd026`, differing only in whether the width
+floor is reachable, and two runs of each. The tables use the better of the two
+runs on each side.
 
-The replacement rule is: a certified row keeps the phases the placement names,
-measured by `--entry factorPhaseProfile`, and the certificate replaces the
-Hensel lift, recombination, proposal replay, and the CLD lattice. A row the
-sweep does not solve is left exactly as measured, because `factorPhaseProfile`
-runs the whole cascade and cannot be taken on it -- so the model never credits
-an improvement it has not priced.
-
-**Post-prime**, the conservative placement: the row runs normalization and the
-bounded good-prime walk exactly as today, and the certificate is attempted once
-the modular factorization is in hand. Say plainly what this is *not*: it is not
-gated on the existing 262,144-node recombination budget, which `sd5`'s
-32,768-node walk sits under and would never trip. Whatever predicate a
-production integration uses has to admit `sd5`, and the price of admitting it
-is the miss overhead above, paid by every row that reaches the same point and
-declines.
-
-| row | now | modelled | retained | certificate |
+| row | degree | gate closed | integrated | ratio |
 |---|---:|---:|---:|---:|
-| `sd4` | 0.880 ms | 0.433 ms | 0.409 ms | 23.7 us |
-| `sd5` | 72.312 ms | 6.817 ms | 6.748 ms | 68.9 us |
-| `sd5_shift1` | 66.404 ms | 7.337 ms | 7.218 ms | 119.1 us |
-| `sd5_shift2` | 69.156 ms | 9.022 ms | 8.893 ms | 128.6 us |
-| `sd6` | 7.953 s | 28.302 ms | 28.018 ms | 284.3 us |
+| `sd2` | 4 | 0.055 ms | 0.052 ms | 0.948x |
+| `sd3` | 8 | 0.172 ms | 0.167 ms | 0.973x |
+| `sd4` | 16 | 0.849 ms | 0.852 ms | 1.004x |
+| `sd4_shift1` | 16 | 0.775 ms | 0.782 ms | 1.009x |
+| `sd4_shift3` | 16 | 0.845 ms | 0.858 ms | 1.015x |
+| `sd5` | 32 | 71.007 ms | 6.820 ms | **0.096x** |
+| `sd5_shift1` | 32 | 66.479 ms | 7.174 ms | 0.108x |
+| `sd5_shift2` | 32 | 68.817 ms | 8.807 ms | 0.128x |
+| `sd6` | 64 | 8.148 s | 27.055 ms | **0.003x** |
+| `sd6_shift1` | 64 | timeout | 31.290 ms | -- |
+| `sd6_shift5` | 64 | timeout | 30.241 ms | -- |
+| `sd7` | 128 | timeout | 194.470 ms | -- |
+| `hoeij_S7` | 128 | timeout | 192.643 ms | -- |
+| `hoeij_S8` | 256 | timeout | 3.977 s | -- |
+| `hoeij_S9` | 512 | timeout | timeout | -- |
 
-The retained column is the whole cost in every row: the certificate is two to
-four orders of magnitude below the prime walk it follows. Cumulative
-Hex/Isabelle over ranks 125--140:
+`sd2` through `sd4_shift3` are the certified rows the gate does *not* fire on:
+their modular widths are 2, 4 and 8, all below the floor, so they run exactly
+the cascade they ran before and their times move by less than the run-to-run
+spread. `sd5` at width 16 is the first row the floor admits.
+
+Over the whole corpus, best of two runs a side:
+
+* solved **377 → 383** of 392. `sd6_shift1`, `sd6_shift5`, `sd7`, `hoeij_S7`,
+  `hoeij_S8` and `sd6_x_phi13` join; nothing is lost.
+* total over the rows both sides solve: **17.225 s → 8.965 s, 0.52x**.
+* **no regression above 5%.** The only rows outside `±5%` on the best-of-two
+  comparison are sub-100-microsecond ones -- `conway_p5_n10` at 68 → 72 us,
+  `chebyshev_U6` at 66 → 70 us, `conway_p13_n2` at 37 → 40 us -- where
+  run-to-run spread on this host is that size, and the direction is not
+  consistent between runs.
+
+One artifact is worth recording rather than hiding. Run 1 of the integrated
+sweep shows a 1.53x band across `wilkinson_14` through `wilkinson_24` and
+`wilkinson_40`; run 2 does not, and a paired A/B between the two binaries --
+interleaved, `taskset -c 0`, median of five, best of two passes -- puts every
+wilkinson row at 1.017x or below, most within 1%. The certificate is not even
+attempted on `wilkinson_14`, whose width is 14. It is a host transient. Both
+runs are committed rather than the better one.
+
+`sd6_x_phi13` is the one newly solved row that does *not* certify: it is
+`SD₆ · Φ₁₃`, reducible, so no certificate can apply to it. It becomes solvable
+through the proposal tier, which peels pieces and replays the proved classical
+factorizer on each -- and that replay is the same `classicalInput` the
+certificate sits on, so the degree-64 `SD₆` piece is certified there.
+`--entry proposalTrace` shows it directly: with the gate closed the proposal
+declines and returns nothing, and with the gate open it returns factor degrees
+`[12, 64]`.
+
+### Measured effect on the combined cactus
+
+`hexbz-factor-sweep-58c873ca-hex-chungus2-cpu1.json` is the published sweep and what
+the 25 committed figures and `scripts/bench/cactus_rank_table.py` read; the
+external comparator curves are carried over unchanged from
+`hexbz-factor-sweep-aa68c920-chungus2.json`.
+
+On the 160-row combined mixture, Hex solves **145 → 151**, against Isabelle's
+141. Cumulative Hex/Isabelle:
 
 | rank | 125 | 128 | 130 | 133 | 135 | 138 | 140 |
 |---|---:|---:|---:|---:|---:|---:|---:|
-| now | 0.72x | 0.81x | 0.87x | 1.03x | 1.08x | 0.81x | 0.59x |
-| modelled | 0.65x | 0.68x | 0.70x | 0.71x | 0.69x | 0.52x | 0.42x |
+| gate closed | 0.70x | 0.79x | 0.85x | 0.96x | 1.01x | 0.75x | 0.55x |
+| integrated | 0.63x | 0.66x | 0.68x | 0.69x | 0.66x | 0.43x | 0.28x |
 
-Worst ratio over ranks 125--140: **1.079x now, 0.708x modelled**, against
-#9126's 0.85x criterion. The certificate alone clears it, with the rows #9126
-named as also needing parity -- `x^n - 1`, `cyclo_phi179`,
-`cyclo_phi64_x_phi105` -- untouched.
+Worst ratio over ranks 125--140: **1.012x with the gate closed, 0.689x
+integrated**, against #9126's 0.85x criterion. The go/no-go modelled 0.708x from
+the pre-#9171/#9172 elbow; the measurement lands within 3% of
+it.
 
-That conclusion does not rest on the whole certified set. Restricting the
-replacement to the three `sd5` rows with `--only sd5,sd5_shift1,sd5_shift2`
-gives a worst ratio of **0.725x**, still under the target. The `sd4` and `sd6`
-rows widen the margin; they do not create it.
+The rows #9126 named as also needing parity are untouched: `xpow105_minus1`,
+`cyclo_phi179` and `cyclo_phi64_x_phi105` all decline the certificate at a cost
+of two tenths of a microsecond, and their times move by less than the run-to-run
+spread.
 
-**Post-normalization**, the permissive placement: the certificate is attempted
-after normalization, behind the free structural pre-gate, so a certified row
-skips the prime walk too. Worst ratio 0.579x on the same priced rows.
-
-Two things this model deliberately does not claim. It does not credit the six
-rows the cascade cannot finish -- `sd6_shift1`, `sd6_shift5`, `sd7`,
-`hoeij_S7`, `hoeij_S8`, `hoeij_S9` -- with becoming solved, even though each
-certifies in between 0.7 and 23.6 ms, because their retained phases cannot be
-measured through an entry that runs the cascade to completion. A
-post-normalization integration would very likely solve all six and take the
-solved count from 145 to 151, but that is a projection, not a modelled result.
-And it is a model over measured times, not a measurement: the fresh sweep an
-implementation PR owes is what settles it.
+The elbow does not just clear the target, it stops being an elbow. With the gate
+closed the ratio still rises monotonically from rank 125 to a peak at 135, which
+is exactly where `sd5_shift2`, `sd5` and the Swinnerton-Dyer rows sit; integrated,
+it is flat at about 0.70x through rank 133 and then falls away, because those
+rows have moved down the curve into the part where Hex was already ahead.
 
 ## Go/no-go
 
@@ -514,9 +726,9 @@ implementation PR owes is what settles it.
 |---|---|
 | theorem applies to a natural class broader than the benchmark rows | **yes** -- all independent radicands and translations; 8 off-corpus witnesses including negative, composite, and degree-1024 cases |
 | covers SD5 and SD6 from their mathematical input data without case tables | **yes** -- radicands recovered from the top `2n+1` coefficients; `sd7`, `hoeij_S8`, `hoeij_S9` too |
-| certificate generation plus checking at least 5x faster than SD5, materially reduces SD6 | **yes** -- 869x and 24,376x, both sides read off the same paired in-process observations |
-| small, reviewable trust surface | **executable side yes** (see below); the Mathlib proof is the open cost |
-| unsuccessful detection under 1% median overhead, preferably opt-in | **yes** on the median -- 0.14 us against a maximum of 86.7 us -- but see the placement discussion: the post-prime placement's predicate has to admit `sd5`, so it is not simply the existing recombination budget, and whatever predicate is chosen decides which rows pay the 87 us tail |
+| certificate generation plus checking at least 5x faster than SD5, materially reduces SD6 | **yes**, and measured end to end after integration rather than as a prototype ratio: `sd5` 71.007 → 6.820 ms, `sd6` 8.148 s → 27.055 ms |
+| small, reviewable trust surface | **yes** -- see below; the Mathlib proof is in, and the search stayed outside the trust surface |
+| unsuccessful detection under 1% median overhead, preferably opt-in | **yes**, and by three orders of magnitude -- of the twenty-five declining rows the width floor actually offers the certificate to, the worst of the seventeen the sweep solves pays 0.014% of its factorization and none pays more than 0.4 us. The 540 us tail exists but is entirely on narrow rows the floor never offers it to |
 
 The executable trust surface is `quadNorm`, `iteratedNorm`,
 `isPerfectSquare`, `independentSquareClasses`, and one array comparison: about
@@ -527,66 +739,105 @@ wrong answer is refused by the check.
 The mathematical surface is the theorem above. Lemma A is three lines, the
 `Claim(m)` induction is elementary and needs no Kummer theory, and the Galois
 input is that a multiquadratic field is the splitting field of a separable
-polynomial. What it does need from Mathlib is the Galois correspondence for
-`ℚ(α) = Fix(Stab α)` and `minpoly` as the orbit product.
+polynomial. What it needed from Mathlib was the Galois correspondence for
+`ℚ(α) = Fix(Stab α)` and `minpoly` as the orbit product, and it is now a Lean
+theorem: `HexBerlekampZassenhausMathlib.irreducible_of_check`.
 
-## What an implementation still owes
+## What was owed, and what is delivered
 
-The certificate is checkable and its meaning is proved on paper. Turning that
-into `Irreducible` inside Lean is the remaining work, and it is not small:
+The go/no-go named five pieces. All five are in.
 
-1. **The tower theorem** -- Lemma A, the `Claim(m)` induction, and `[K:ℚ] = 2ⁿ`
-   (#9167); then the trivial-stabilizer argument, `ℚ(α) = K`, and
-   `minpoly α = F(c; d)` (#9169). Mathlib-facing, and the largest piece.
-2. **The norm correspondence** -- that the executable `quadNorm` over
-   `ℤ[t]/(t² - d)` maps to `g(X - √d)·g(X + √d)` in `K[X]`, and that the iterate
-   is the product over sign patterns (#9168). This is where the dense-array
-   representation meets `Polynomial`, the boundary
-   `.claude/skills/hex-lean-mathlib-boundary` is about.
-3. **The decidable checks** -- `independentSquareClasses ds = true` implies no
-   nonempty subproduct is a rational square, and coefficient equality implies
-   polynomial equality. Both are small, and both ride along with #9168.
-4. **Production integration** -- a `Certificate` in the Mathlib-free layer, the
-   checker on the singleton-irreducibility path so a success returns the same
-   `Factorization` as every other proof, and the budget gate (#9170). Failure
-   must fall through to the one existing path.
-5. **A fresh sweep and regenerated plots** at the integrated revision, with all
-   regressions above 5% reported; also #9170, and what #9126's acceptance run
-   will read.
+1. **The tower theorem** -- Lemma A, the `Claim(m)` induction and `[K:ℚ] = 2ⁿ`
+   (#9167); the trivial-stabilizer argument, `ℚ(α) = K`, and
+   `minpoly α = F(c; d)` (#9169). In
+   `HexBerlekampZassenhausMathlib/{SquareClass,Multiquadratic}.lean`.
+2. **The norm correspondence** -- `map_quadNorm` and `map_iteratedNorm` (#9168),
+   in `HexBerlekampZassenhausMathlib/QuadraticNorm.lean`.
+3. **The decidable checks** -- `independentSquareClasses_iff` and
+   `toPolynomial_inj`, same file.
+4. **Production integration** -- `QuadraticNormCertificate.recover?`,
+   `certify?`, and the `quadraticNormCertified` gate, reached once from
+   `classicalInput`; `irreducible_of_check` and
+   `irreducible_of_quadraticNormCertified` make it sound; `signPatternPoly_ofFn`
+   is the composition the two developments needed (#9170).
+5. **A fresh sweep and regenerated plots** at the integrated revision -- below.
 
-Nothing above needs `axiom`, `sorry`, or `native_decide`; the check is a `Bool`
-and the theorem is about it being `true`.
+Nothing above uses `axiom`, `sorry`, or `native_decide`: the check is a `Bool`
+and the theorem is about it being `true`. `python3
+scripts/release/check_trust_surface.py` reports 421 clean files at this
+revision.
+
+### Where the floor sits, and what a lower one would buy
+
+At `widthFloor = 16` the certified rows split at exactly one place. The
+Swinnerton-Dyer widths are `sd2` 2, `sd3` 4, `sd4` 8, `sd5` 16, `sd6` 32,
+`sd7` 64, so the floor admits `sd5` and everything above it and admits nothing
+below. That is why the eight certified rows at `sd4` and under are flat to
+within 5% in the sweep: they are never offered the certificate, and the sweep
+confirms they do not pay for it either.
+
+Lowering the floor to 8 would newly offer it to `sd4`, `sd4_shift1` and
+`sd4_shift3`, whose certificates cost 29.6, 30.7 and 35.0 us against rows of
+0.85, 0.78 and 0.86 ms. The go/no-go's model put `sd4` at 0.433 ms if certified,
+so the gain would be real but small, on three rows that are already an order of
+magnitude off the elbow. The cost is that 24 declining corpus rows would be
+offered it as well; the measured miss on those is 0.2 us for all but one, and
+`sd3_x_phi24` -- degree 32, width 8, a Swinnerton-Dyer product whose trace
+happens to divide -- would pay 17.6 us on a 0.591 ms row, **3.0%**. That single
+row is above the 1% the gate was asked for, and it is the reason the floor is
+not lowered on this evidence: at 16 the worst offered miss is 0.014%, and the
+margin is three orders of magnitude rather than a factor of three.
+
+Raising the floor to 32 would give up `sd5`, `sd5_shift1` and `sd5_shift2`,
+which is where the elbow actually is. 16 is where the walk first costs tens of
+milliseconds, and that is why it is 16.
+
+### What is *not* delivered
+
+* **A certificate witness for the tactics.** `irreducibility` still searches
+  small-prime and Eisenstein witnesses only. Nothing in this work depends on
+  that, but a `QuadraticNormCertificate` arm of `ZPoly.IrredWitness` would let
+  the tactic answer a Swinnerton-Dyer input directly.
+* **The one row still unsolved.** `hoeij_S9`, degree 512, certifies in about 24
+  ms of certificate time but does not finish inside the 10 s cutoff, because the
+  prime walk and modular factorization it still runs first do not. That is a
+  Berlekamp cost, not a recombination one, and it is out of this scope.
 
 ## Regeneration
 
 ```
 lake build hexbz_factor_service
+BENCH_CORE="$(python3 scripts/bench/idle_core.py)"
 
 # Certificate spans for every corpus row, paired against production where the
 # cascade finishes. Pin to an idle core; other work shares this host.
-taskset -c 0 python3 scripts/bench/quadratic_norm_probe.py \
+taskset -c "$BENCH_CORE" \
+  python3 scripts/bench/quadratic_norm_probe.py \
     --output reports/bench-results/hexbz-quadratic-norm-certificate-chungus2.json
 
-# Off-corpus witnesses, checked against an independent implementation.
-taskset -c 0 python3 scripts/bench/quadratic_norm_witnesses.py \
+# Off-corpus witnesses, checked against an independent implementation, plus the
+# randomized pass against the production factorizer.
+taskset -c "$BENCH_CORE" \
+  python3 scripts/bench/quadratic_norm_witnesses.py \
     --output reports/bench-results/hexbz-quadratic-norm-witnesses.json
 
-# The fresh Hex sweep this page's before-numbers read, and the figures it
-# invalidates. `--check` fails until the SVGs are regenerated.
-taskset -c 0 python3 scripts/bench/factor_sweep.py --systems hex-factor \
+# The published sweep, from a clean tree, and the figures it invalidates.
+# `--check` fails until the SVGs are regenerated.
+taskset -c "$BENCH_CORE" \
+  python3 scripts/bench/factor_sweep.py --systems hex-factor \
     --cutoff 10 \
-    --output reports/bench-results/hexbz-factor-sweep-48bdfb8e-hex-chungus2.json
+    --output reports/bench-results/hexbz-factor-sweep-58c873ca-hex-chungus2-cpu1.json
 python3 scripts/plots/hexbz-cactus.py
 python3 scripts/plots/hexbz-cactus.py --check
+python3 scripts/bench/check_factor_sweep_freshness.py
 
-# The elbow the model is against, and the model itself. `--only` and
-# `--placement` reproduce the restricted and permissive variants.
+# The elbow. `--sweep` pins the record, so the same command reproduces the
+# gate-closed column by naming the gate-closed record instead.
 python3 scripts/bench/cactus_rank_table.py --lo 118 --hi 145
-taskset -c 0 python3 scripts/bench/quadratic_norm_cactus_model.py \
-    --output reports/bench-results/hexbz-quadratic-norm-cactus-model.json
-taskset -c 0 python3 scripts/bench/quadratic_norm_cactus_model.py \
-    --only sd5,sd5_shift1,sd5_shift2
-taskset -c 0 python3 scripts/bench/quadratic_norm_cactus_model.py \
-    --placement post-normalization
-
 ```
+
+The gate-closed side is not reproducible from a clean tree, by construction. To
+retake it, raise `Hex.QuadraticNormCertificate.widthFloor` past every reachable
+width, rebuild `hexbz_factor_service`, sweep to a `-gate-closed-` filename, and
+restore. The record will say `git_dirty: true`, which is correct and is why the
+published sweep is a separate, clean run.
