@@ -184,6 +184,47 @@ def seedBase (context : Context Fact Handle) (program : Expr) (basePrefix : Expr
         proof }
   pure known
 
+/-- Seed every version-zero fact of a restarted child from its exact branch
+proof table.  The runtime input only selects concrete array entries; applying
+`BranchSeed.get` forces the supplied Lean expression to describe that same
+input and child context. -/
+def seedBranch (encoder : Encoder Fact) (semantics input childBase : Expr)
+    (inputValue : CheckerInput Fact) (seed : Expr) :
+    MetaM (List (FactProof Fact)) := do
+  unless inputValue.initialFacts.size == inputValue.baseProgram.nodes.size do
+    throwError "interval frontend: branch facts do not cover the child graph"
+  unless ← isDefEq (← encoder.input inputValue) input do
+    throwError "interval frontend: branch proof uses a different checker input"
+  let program ← encoder.program inputValue.baseProgram
+  let mut known := []
+  for index in [0:inputValue.initialFacts.size] do
+    let node : NodeId := { index }
+    let some fact := inputValue.initialFacts[index]?
+      | throwError "interval frontend: branch fact index escaped its table"
+    let some instruction := inputValue.baseProgram.nodes[index]?
+      | throwError "interval frontend: branch node index escaped its program"
+    let nodeTerm ← encoder.nodeId node
+    let factTerm ← encoder.fact fact
+    let someFact ← mkAppM ``Option.some #[factTerm]
+    let factFound ← mkAppM ``Eq.refl #[someFact]
+    let sameBase ← mkAppM ``Eq.refl #[childBase]
+    let proof ←
+      mkAppM ``ProofEmitter.BranchSeed.get
+        #[semantics, input, childBase, seed, sameBase,
+          nodeTerm, factTerm, factFound]
+    let instructionTerm ← encoder.node instruction
+    let someInstruction ← mkAppM ``Option.some #[instructionTerm]
+    let nodeFound ← mkAppM ``Eq.refl #[someInstruction]
+    let within ←
+      mkAppM ``ProofEmitter.nodeWithin
+        #[program, nodeTerm, instructionTerm, nodeFound]
+    known ← insertProof known
+      { seen := { node, version := 0 }
+        fact
+        within
+        proof }
+  pure known
+
 /-- Seed domain-top evidence for exactly one instance's fresh-node suffix. -/
 def seedNew [BEq Fact] (context : Context Fact Handle) (programValue : Program)
     (program : Expr) (newNodes : List NodeId) (known : List (FactProof Fact)) :
@@ -348,15 +389,16 @@ def emitEvents [BEq Fact] (context : Context Fact Handle) (finalValue : Program)
       let state ← emitTransport context state table step
       emitEvents context finalValue finalProgram table rest state
 
-/-- Emit the complete generic state for one final program and chronology. -/
-def emitTrace [BEq Fact] (context : Context Fact Handle) (programValue : Program)
-    (events : List (Frontend.Event Fact)) (table : SchemaTable Handle) :
-    MetaM (State Fact) := do
+/-- Emit a complete generic state from an already authenticated version-zero
+proof table. -/
+private def emitSeeded [BEq Fact] (context : Context Fact Handle)
+    (programValue : Program)
+    (events : List (Frontend.Event Fact)) (table : SchemaTable Handle)
+    (known : List (FactProof Fact)) : MetaM (State Fact) := do
   unless programValue.check do
     throwError "interval frontend: final expression program is not checked"
   let finalProgram ← context.encoder.program programValue
   let snapshot ← initialSnapshot context finalProgram
-  let known ← seedBase context context.baseProgramTerm context.basePrefix
   let initial : State Fact :=
     { version := 0
       programValue := context.baseProgram
@@ -370,5 +412,25 @@ def emitTrace [BEq Fact] (context : Context Fact Handle) (programValue : Program
   unless state.programValue == programValue do
     throwError "interval frontend: trace did not consume the complete final program"
   pure state
+
+/-- Emit the complete generic state for one caller-rooted chronology. -/
+def emitTrace [BEq Fact] (context : Context Fact Handle) (programValue : Program)
+    (events : List (Frontend.Event Fact)) (table : SchemaTable Handle) :
+    MetaM (State Fact) := do
+  let known ← seedBase context context.baseProgramTerm context.basePrefix
+  emitSeeded context programValue events table known
+
+/-- Emit a restarted child chronology without reclassifying inherited parent
+consequences as caller assumptions. -/
+def emitBranch [BEq Fact] (context : Context Fact Handle)
+    (inputValue : CheckerInput Fact) (seed : Expr) (programValue : Program)
+    (events : List (Frontend.Event Fact)) (table : SchemaTable Handle) :
+    MetaM (State Fact) := do
+  unless inputValue.baseProgram == context.baseProgram do
+    throwError "interval frontend: branch seed uses a different base program"
+  let known ←
+    seedBranch context.encoder context.semantics context.input
+      context.baseFactsTerm inputValue seed
+  emitSeeded context programValue events table known
 
 end Hex.Interval.Experiment.ProofFrontend

@@ -1577,9 +1577,13 @@ child `initialFacts` array and its length to this mixed proof table. Its checked
 builder obtains the split-node entry only from the new child assumption and
 requires an inherited parent theorem for every other array entry; the
 Mathlib-free canary checks both routes, including an inherited derived fact
-which is not a literal parent base member and an unrelated top entry. The Meta
-frontend still needs to turn such a `BranchSeed` into version-zero `FactProof`
-records before chronological child replay.
+which is not a literal parent base member and an unrelated top entry. The
+generic Meta frontend now quotes
+the complete child `CheckerInput`, rejects any mismatch in its program, fact
+array, or target, pins the full child assumption list, and turns the seed into
+exact version-zero `FactProof` records. Its branch entry point then uses the
+unchanged function-independent chronology fold. A live child session and a
+nonempty child event trace remain the next end-to-end branch experiment.
 
 Branches may instantiate different auxiliary expressions. Each child replay
 therefore closes its target back to the program snapshot at the split before
