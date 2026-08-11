@@ -2109,9 +2109,14 @@ subdivision benchmark.
 
 This runtime tree contains no proof evidence. The separate generic
 `BranchProof` frontend now folds a settled retained tree bottom-up. It first
-binds every leaf and split result back to its exact scope, base program, and
-initial fact array. Each child is checked against the exact child input stored
-by its parent, including that input's target. Pending, blocked, failed,
+binds every leaf and split run back to its exact starting scope, base program,
+and initial fact array. A split's parent snapshot is instead checked against
+the completed run's current program and fact array, while retaining the
+starting request's target. This distinction permits narrowing and expression
+instantiation before subdivision without mistaking the post-run facts for
+caller assumptions. Each child is checked against the exact child input
+stored by its parent, including that input's target, and the stored split plan
+must equal the plan which stopped the run. Pending, blocked, failed,
 dangling, shared, cyclic, and unreachable nodes are rejected. Client callbacks
 then replay each closed leaf and apply each package-owned split join; the final
 emitted expression must have the requested Lean target type. A callback can
@@ -2124,9 +2129,17 @@ A retained runtime result is not by itself a proof of closure: the leaf
 callback must turn it into the corresponding kernel-checked evidence before
 the bottom-up join can accept it.
 
-The distinct-assumption ReLU canary now runs through this generic path. Its
-retained root has two exact live target children; the leaf callback invokes the
-unchanged generic chronology emitter with the side-specific proof registry, and the
+ A Mathlib-free live canary first propagates an unrelated exponential node,
+ then splits a source, and finally closes both children on a second exponential
+ target. Its split parent contains the propagated fact and therefore differs
+ from the starting input; the generic fold accepts the exact post-run snapshot,
+ but rejects replacing it with the stale start snapshot or changing the stored
+ split point. The package callback remains responsible for replaying any
+ pre-split improvements needed by the eventual parent theorem.
+
+ The distinct-assumption ReLU canary now runs through this generic path. Its
+ retained root has two exact live target children; the leaf callback invokes the
+ unchanged generic chronology emitter with the side-specific proof registry, and the
 split callback applies `replaySplit`. The resulting expression is assigned to
 an ordinary declaration and its axiom report is compile-checked. Separate
 negative tests reject the delivered step-limited partial tree, a fork whose
