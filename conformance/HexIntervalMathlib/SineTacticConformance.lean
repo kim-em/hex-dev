@@ -11,10 +11,11 @@ import Mathlib.Lean.Elab.Tactic.Meta
 # Tactic-frontend canary for arbitrary-function interval search
 
 `interval_sine` runs the opaque live planner at elaboration time, extracts its
-proof-producing events, and reifies them as ordinary Lean terms.  This first
-frontend canary checks those terms against the transparent proof chain before
-applying its end-user theorem.  It is deliberately narrow: schema selection
-and assembly of an arbitrary reified trace are the next experiment.
+proof-producing events, and reifies them as ordinary Lean terms.  It selects
+package-owned schemas from the events' full replay addresses and constructs
+the instance, two rule, equality-transport, and caller-closure applications in
+dependency order.  The literal comparison below is a separate quotation
+regression; the tactic's proof path consumes the actual returned data.
 
 The compiled planner remains outside the trusted proof.  A planner or quoting
 bug can make the tactic reject; it cannot create a theorem, because the term
@@ -25,7 +26,7 @@ namespace Hex.IntervalMathlib.SineTacticConformance
 
 open Lean Elab Tactic Meta
 open Hex.Interval.Experiment
-open Propagator PayloadArena SemanticReplay ProofEmitter
+open Propagator PayloadArena SemanticReplay ChronologicalReplay ProofEmitter
 open SineSign SineSignConformance SineProofConformance
 
 private structure LiveQuotes where
@@ -284,13 +285,18 @@ private meta def checkQuote (label : String) (actual expected : Expr) : MetaM Un
   unless <- isDefEq actual expected do
     throwError "interval_sine: reified {label} does not match its checked proof step"
 
-private meta def checkSchema (table : SchemaTable Name) (label : String)
-    (entry : Entry) (expected : Name) : MetaM Unit := do
+private meta def schemaName (table : SchemaTable Name) (label : String)
+    (entry : Entry) : MetaM Name := do
   let some declaration := table.find? entry.replayKey
     | throwError "interval_sine: no proof schema for {label}"
+  discard <| getConstInfo declaration
+  pure declaration
+
+private meta def checkSchema (table : SchemaTable Name) (label : String)
+    (entry : Entry) (expected : Name) : MetaM Unit := do
+  let declaration <- schemaName table label entry
   unless declaration == expected do
     throwError "interval_sine: wrong proof schema selected for {label}"
-  discard <| getConstInfo declaration
 
 private meta def checkQuoteData (quote : LiveQuotes) : MetaM Unit := do
   let some table := emitTable?
@@ -308,6 +314,88 @@ private meta def checkQuoteData (quote : LiveQuotes) : MetaM Unit := do
     (mkConst ``negationStep)
   checkQuote "equality transport" (← transportStepExpr quote.transport)
     (mkConst ``transportStep)
+
+private meta def getReplay (result : Expr) : MetaM Expr := do
+  let success <- mkAppM ``Eq.refl #[mkConst ``Bool.true]
+  mkAppM ``Option.get #[result, success]
+
+/-- Emit the complete evidence chain from the actual quoted steps and the
+schema declarations selected from their payload entries. -/
+private meta def emitQuote (quote : LiveQuotes) (table : SchemaTable Name) :
+    MetaM Expr := do
+  let instanceSchema <- schemaName table "instantiation" quote.instantiation.entry
+  let sineSchema <- schemaName table "sine rule" quote.sine.entry
+  let negationSchema <- schemaName table "negation rule" quote.negation.entry
+  let equalitySchema <- schemaName table "equality transport" quote.transport.entry
+
+  let instanceResult <-
+    mkAppM ``ProofEmitter.replayInstance
+      #[mkConst instanceSchema,
+        mkConst ``checkerInput,
+        mkNatLit 0,
+        mkConst ``baseProgram,
+        mkConst ``extendedProgram,
+        mkConst ``basePrefix,
+        mkConst ``programPrefix,
+        mkConst ``sameOperations,
+        ← instanceQuoteExpr quote.instantiation,
+        mkConst ``initialExtension]
+  let extension <- getReplay instanceResult
+
+  let sineInputs <- mkAppM ``EntailsList.singleton #[mkConst ``sineBase]
+  let sineResult <-
+    mkAppM ``ProofEmitter.replayRule
+      #[mkConst sineSchema,
+        mkConst ``rangeSchema,
+        mkConst ``checkerInput,
+        mkConst ``extendedProgram,
+        mkConst ``programPrefix,
+        mkConst ``baseFacts,
+        ← ruleStepExpr quote.sine,
+        mkConst ``sinePrevious,
+        sineInputs]
+  let sineEvidence <- getReplay sineResult
+
+  let negationInputs <- mkAppM ``EntailsList.singleton #[sineEvidence]
+  let negationResult <-
+    mkAppM ``ProofEmitter.replayRule
+      #[mkConst negationSchema,
+        mkConst ``rangeSchema,
+        mkConst ``checkerInput,
+        mkConst ``extendedProgram,
+        mkConst ``programPrefix,
+        mkConst ``baseFacts,
+        ← ruleStepExpr quote.negation,
+        mkConst ``negationPrevious,
+        negationInputs]
+  let negationEvidence <- getReplay negationResult
+
+  let transportResult <-
+    mkAppM ``ProofEmitter.replayTransport
+      #[mkConst equalitySchema,
+        mkConst ``rangeSchema,
+        mkConst ``laws,
+        mkConst ``checkerInput,
+        mkNatLit 1,
+        mkConst ``extendedProgram,
+        mkConst ``programPrefix,
+        mkConst ``baseFacts,
+        ← transportStepExpr quote.transport,
+        mkConst ``transportPrevious,
+        negationEvidence,
+        mkConst ``noInputs]
+  let transportEvidence <- getReplay transportResult
+
+  mkAppM ``closeEvidence #[extension, transportEvidence]
+
+/-- Reify the planner's returned data, validate the quote, and emit its proof
+chain.  Every replay success witness in the returned term is ordinary `rfl`. -/
+private meta def emitLiveEvidence : MetaM Expr := do
+  let some quote := liveQuotes?
+    | throwError "interval_sine: compiled interval search failed"
+  let some table := emitTable?
+    | throwError "interval_sine: duplicate proof-schema address"
+  emitQuote quote table
 
 /-- Reify the planner's returned data and bind it to the proof-side literals.
 This comparison is a liveness/fidelity gate, not evidence for the theorem. -/
@@ -328,13 +416,20 @@ private meta def proveSine (target : Expr) : MetaM Expr := do
       for second in context do
         unless second.isImplementationDetail do
           let saved <- saveState
-          try
-            let proof <- mkAppM ``emittedSineTheorem
+          let probe? <- observing? <|
+            mkAppM ``emittedSineTheorem
               #[mkFVar first.fvarId, mkFVar second.fvarId]
-            if <- isDefEq (← inferType proof) target then
+          match probe? with
+          | some probe =>
+            if <- isDefEq (← inferType probe) target then
+              let evidence <- emitLiveEvidence
+              let proof <- mkAppM ``closeSine
+                #[evidence, mkFVar first.fvarId, mkFVar second.fvarId]
+              unless <- isDefEq (← inferType proof) target do
+                throwError "interval_sine: emitted replay has the wrong target"
               return (← instantiateMVars proof)
             saved.restore
-          catch _ => saved.restore
+          | none => saved.restore
   throwError
     "interval_sine: expected hypotheses matching `0 ≤ x` and `x ≤ 1` and goal `Real.sin (-x) ≤ 0`"
 
@@ -352,8 +447,16 @@ syntax (name := intervalSineTac) "interval_sine" : tactic
       replaceMainGoal []
   | _ => throwUnsupportedSyntax
 
-example {x : ℝ} (upper : x ≤ 1) (lower : 0 ≤ x) : Real.sin (-x) ≤ 0 := by
+/-- Named trust-surface regression for the planner-backed direct emitter. -/
+theorem tacticSine {x : ℝ} (upper : x ≤ 1) (lower : 0 ≤ x) :
+    Real.sin (-x) ≤ 0 := by
   interval_sine
+
+/--
+info: 'Hex.IntervalMathlib.SineTacticConformance.tacticSine' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms tacticSine
 
 example {x : ℝ} (_upper : x ≤ 1) (_lower : 0 ≤ x) : True := by
   fail_if_success interval_sine
@@ -366,10 +469,13 @@ example : True := by
       | throwError "interval_sine test: compiled search failed"
     let malformed : LiveQuotes :=
       { quote with sine := { quote.sine with payload := { index := 99 } } }
+    checkQuoteData quote
+    let some table := emitTable?
+      | throwError "interval_sine test: duplicate proof-schema address"
     if (← observing? (checkQuoteData malformed)).isSome then
       throwError "interval_sine test: malformed quote was accepted"
-    let some table := emitTable?
-      | throwError "interval_sine test: duplicate schema address"
+    if (← observing? (emitQuote malformed table)).isSome then
+      throwError "interval_sine test: malformed proof emission was accepted"
     let missing := { quote.sine.entry with schema := 99 }
     if (← observing?
         (checkSchema table "missing-schema test" missing ``sineFactSchema)).isSome then

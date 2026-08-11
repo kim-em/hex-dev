@@ -1305,21 +1305,28 @@ prerequisite for this tactic-emitted-application architecture.
 The first elaborator canary runs the opaque real-sine planner, searches the
 returned state for the instance, two rule facts, equality edge, payload
 entries, and versioned input facts, and reifies all four proof steps as
-ordinary Lean expressions. It requires those expressions to be definitionally
-equal to the checked literal chain, then searches the local context for the
-two hypotheses consumed by that chain and assigns its ordinary proof to the
-goal. This is an executable quotation-fidelity boundary, but not yet a general
-proof assembler: registry-driven schema selection and construction of replay
-applications from an arbitrary returned trace remain the next frontend
-experiment.
-The fixed canary also requires a live session with no dropped work and exactly
-one instance, one equality, three fact events, and the expected interleaving
-before it reads historical values through `Engine.factAt?`. This is an exact
-quotation-shape gate, not a claim that `Session.complete` holds. Those values
-are used only for definitional comparison with checked literals. A future
-arbitrary-trace emitter must instead obtain evidence from its chronological
-proof table; a successful full-history lookup is never evidence that the
-dependency was available at the required earlier step.
+ordinary Lean expressions. From each payload's full replay address it selects
+the package-contributed schema declaration, then emits the instance, sine,
+negation, equality-transport, and caller-closure applications in dependency
+order. Every accepted `Option` result carries an ordinary `rfl` success proof;
+if the quote or schema is wrong, elaboration fails. The assigned term consumes
+the actual returned quote. Its earlier checked literal chain remains a
+field-for-field correspondence regression, a cheap goal-shape probe, and the
+source of the canary's fixed typed premise helpers.
+
+This is a complete direct proof assembler for the fixed real-sine graph, not
+yet the general tactic: the next frontend experiment must derive the base
+program, semantic bridge, event sequence, and versioned evidence map for an
+arbitrary caller expression instead of naming this canary's four contexts.
+The fixed canary also requires a live session with no dropped work, exactly one
+instance, one equality, three fact events, and the expected interleaving before
+it reads historical values through `Engine.factAt?`. This exact trace-shape
+gate is not a claim that `Session.complete` holds. The values are quoted as
+data, while their proofs come from caller assumptions, top soundness, or an
+earlier emitted replay result. A future arbitrary-trace emitter must likewise
+obtain evidence from its chronological proof table; a successful full-history
+lookup is never evidence that the dependency was available at the required
+earlier step.
 
 Direct emission maintains a table from each already-established fact version
 to its `Evidence` term. Caller assumptions seed that table through the generic
@@ -1339,14 +1346,17 @@ Mathlib-free table is polymorphic in the handle type. `SchemaTable.build`
 concatenates those contributions and rejects every duplicate full address,
 including duplicates which happen to carry the same handle. The tactic selects
 by the payload entry's `(rule, role, schema)`; it never dispatches on an
-expression's mathematical function. The fixed canary checks each selection
-against its known declaration before comparing with its preassembled proof.
-A general assembler must additionally make a missing name, wrong type, or
-schema whose own replay key does not match the entry fail during application
-construction. Only the resulting well-typed theorem application enters the
-kernel. This first table enforces exact-address uniqueness, but does not yet
-derive package ownership or coverage from the semantic registry; that link is
-required before selected handles replace the fixed proof assembly.
+expression's mathematical function. The direct assembler resolves these
+handles and uses the selected declarations in its emitted proof term. A
+missing name, wrong type, or schema whose replay key does not match the entry
+makes application construction or transparent replay fail. Current safety
+comes from constant lookup, ordinary Lean typechecking, and the replay
+transition's exact key check; only the resulting well-typed theorem
+application enters the kernel. This first table enforces exact-address
+uniqueness, but does not yet derive package ownership or coverage from the
+semantic registry. Joint construction remains a completeness and package
+governance requirement rather than a prerequisite for sound use of selected
+handles.
 
 A Mathlib companion must instantiate those abstract schemas, decode each
 frozen entry independently of package cache state, and recheck the
@@ -1476,12 +1486,12 @@ historical inputs and lifts them across checked program extensions.
 `TraceReplay` now consumes the authoritative cross-history order, validates
 equality availability, and requires exact fact, instance, equality, program,
 and version exhaustion. The tactic frontend now extracts and reifies the
-accepted plain data for the complete sine trace, while `ProofEmitter`
-establishes the direct-application route for that multi-package example. The
-remaining work is to select schemas from the registry and assemble those lemma
-applications directly from an arbitrary returned trace, or alternatively to
-feed the quote to a transparent generic fold. Neither general route is
-complete yet.
+accepted plain data for the complete sine trace, selects package schemas, and
+emits the direct replay applications through final closure. Generalization now
+concerns arbitrary trace length, program reconstruction, and construction of
+the complete version-to-evidence table rather than the soundness of an
+individual emitted transition. A transparent generic fold remains an
+alternative architecture to measure, but is not required by direct emission.
 
 Because `Semantics.holds` may inspect the complete program as well as the
 valuation, conservative model extension alone cannot transport old facts or
@@ -1729,13 +1739,13 @@ endpoint backend is optimized.
 That vertical is now executable. The live policy session performs matcher,
 instantiation, sine propagation, independent negation propagation, and
 equality transport in that order; complete chronological replay reaches the
-original `sin (-x)` target. Separately, the proof emitter quotes the exact
-instance, two fact events, equality edge, and payload entries as plain data.
-Transparent package-schema replay and generic closure yield the ordinary
-theorem above without `native_decide` or rational normalization. This is the
-acceptance shape for further arbitrary functions: executable search and
-quotation may fail, but only kernel-checked package lemmas and generic
-composition enter the proof.
+original `sin (-x)` target. The tactic quotes the actual instance, two fact
+events, equality edge, and payload entries as plain data, selects schemas from
+the contributing packages, and constructs the transparent replay and generic
+closure term. It yields the ordinary theorem above without `native_decide` or
+rational normalization. This is the acceptance shape for further arbitrary
+functions: executable search and quotation may fail, but only kernel-checked
+package lemmas and generic composition enter the proof.
 
 ### Action kinds
 

@@ -194,6 +194,21 @@ def rejectedInstance :=
 def emittedExtension : Evidence (semantics.Extends baseProgram extendedProgram) :=
   instanceReplay.get (by rfl)
 
+theorem basePrefix : ProgramPrefix baseProgram baseProgram :=
+  ProgramPrefix.refl baseProgram
+
+theorem sameOperations : baseProgram.operations = extendedProgram.operations := by
+  rfl
+
+def initialExtension : Evidence (semantics.Extends baseProgram baseProgram) :=
+  extendRefl semantics baseProgram
+
+def sineBase :
+    Evidence
+      (semantics.Entails extendedProgram baseFacts
+        { node := node 0, fact := .unit }) :=
+  ProofEmitter.assumed (by simp [baseFacts])
+
 def sinePrevious :
     Evidence
       (semantics.Entails extendedProgram baseFacts
@@ -204,7 +219,7 @@ def sinePrevious :
 
 def sinePremises :
     EntailsList semantics extendedProgram baseFacts sineStep.assumptions :=
-  .cons (ProofEmitter.assumed (by simp [baseFacts])) .nil
+  .cons sineBase .nil
 
 def sineInputs :
     Evidence
@@ -286,6 +301,19 @@ def emittedTarget :
   closeBase (input := checkerInput) stable baseWithin
     (by simp [checkerInput, baseProgram, node]) emittedExtension emittedTransport
 
+theorem targetWithin : checkerInput.target.node.index < baseProgram.nodes.size := by
+  simp [checkerInput, baseProgram, node]
+
+/-- Close any dynamically assembled final evidence through the fixed
+caller-program semantics bridge. -/
+def closeEvidence
+    (extension : Evidence (semantics.Extends baseProgram extendedProgram))
+    (final :
+      Evidence
+        (semantics.Entails extendedProgram baseFacts checkerInput.target)) :
+    Evidence (semantics.Entails baseProgram baseFacts checkerInput.target) :=
+  closeBase (input := checkerInput) stable baseWithin targetWithin extension final
+
 def sameEntry (left right : Entry) : Bool :=
   left.origin == right.origin && left.role == right.role &&
     left.schema == right.schema && left.body == right.body
@@ -359,18 +387,27 @@ def quotesMatchSearch : Bool :=
 
 #guard quotesMatchSearch
 
-/-- End-user theorem obtained from the literal complete engine trace through
-transparent replay.  Every `Option.get` above is justified by `rfl`; no
-evaluator or Boolean guard participates in this proof. -/
-theorem emittedSineTheorem {x : ℝ} (nonnegative : 0 ≤ x)
+/-- Interpret any checked target evidence as the end-user sine theorem.  This
+is the stable semantics bridge used after a tactic assembles replay evidence;
+it does not depend on a particular event trace. -/
+theorem closeSine
+    (result : Evidence (semantics.Entails baseProgram baseFacts checkerInput.target))
+    {x : ℝ} (nonnegative : 0 ≤ x)
     (atMostOne : x ≤ 1) : Real.sin (-x) ≤ 0 := by
-  have result := emittedTarget.proof (baseValuation x) (baseModels x) (by
+  have target := result.proof (baseValuation x) (baseModels x) (by
     intro assumption member
     simp only [baseFacts, List.mem_cons, List.not_mem_nil, or_false] at member
     rcases member with rfl | rfl | rfl
     · exact ⟨nonnegative, atMostOne⟩
     · trivial
     · trivial)
-  exact result
+  exact target
+
+/-- End-user theorem obtained from the literal complete engine trace through
+transparent replay.  Every `Option.get` above is justified by `rfl`; no
+evaluator or Boolean guard participates in this proof. -/
+theorem emittedSineTheorem {x : ℝ} (nonnegative : 0 ≤ x)
+    (atMostOne : x ≤ 1) : Real.sin (-x) ≤ 0 :=
+  closeSine emittedTarget nonnegative atMostOne
 
 end Hex.IntervalMathlib.SineProofConformance
