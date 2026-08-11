@@ -23,9 +23,9 @@ abbrev tinyPrime : Nat := 5
 abbrev smallPrime : Nat := 65537
 abbrev upperPrime : Nat := 2147483647
 
-instance : ZMod64.Bounds tinyPrime := ⟨by decide, by decide⟩
-instance : ZMod64.Bounds smallPrime := ⟨by decide, by decide⟩
-instance : ZMod64.Bounds upperPrime := ⟨by decide, by decide⟩
+instance boundsTiny : ZMod64.Bounds tinyPrime := ⟨by decide, by decide⟩
+instance boundsSmall : ZMod64.Bounds smallPrime := ⟨by decide, by decide⟩
+instance boundsUpper : ZMod64.Bounds upperPrime := ⟨by decide, by decide⟩
 
 def tinyCtx : Hex.BarrettCtx tinyPrime := Hex.BarrettCtx.ofModulus (by decide) (by decide)
 def smallCtx : Hex.BarrettCtx smallPrime := Hex.BarrettCtx.ofModulus (by decide) (by decide)
