@@ -26,8 +26,8 @@ open SineSignConformance SineProofConformance
 /-- Find two local hypotheses accepted by the emitted sine theorem and build
 an application whose inferred target is definitionally the caller's goal. -/
 private meta def proveSine (target : Expr) : MetaM Expr := do
-  unless transported?.isSome do
-    throwError "interval_sine: compiled interval search failed"
+  unless quotesMatchSearch do
+    throwError "interval_sine: compiled interval search did not match the checked proof quote"
   let context <- getLCtx
   for first in context do
     unless first.isImplementationDetail do
