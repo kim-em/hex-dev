@@ -1442,13 +1442,32 @@ and it proves `0 ≤ exp (exp x)` from a three-node target graph. Neither case
 adds a nested-exponential or extra-hypothesis branch to goal closure, semantic
 model construction, dependency assembly, or proof replay.
 
-This vertical deliberately selects one target rule whose first improvement is
-version one. General search must instead let the policy run until target
-subsumption, contradiction, or a resource limit and then select the resolved
-target version from the retained proof table. The current operation registry
-also remains the fixed source/exponential pair. Key-resolved semantic model
-selection must land before operation packages may be reordered; array position
-is not a permanent package identity.
+The target-run experiment removes that one-rule scheduling restriction.
+`TargetRun.Controller` is polymorphic in the fact type and in arbitrary
+policy-private state. It sees only bounded engine-owned views, chooses or
+dismisses checked offers, and receives every recoverable observation in order.
+The driver retains the single proof-producing `PolicySession` and stops
+distinctly on target subsumption, saturation, contradiction, explicit policy
+stop, a prepared split, incompleteness, fuel, malformed state, or each resource
+class. It derives selections from the chosen offer and the exact view identity;
+packages and function names do not occur in the driver.
+
+Target subsumption is a runtime stopping test: narrowing the current fact by
+the requested fact must report no change. The result records the exact current
+fact and version, but neither that test nor the controller is proof evidence.
+Proof emission must still resolve the retained version and replay an independent
+fact-domain subsumption theorem. The exponential conformance policy simply
+selects the first offer. On `exp (exp x)` it therefore improves the inner and
+outer nodes in two separate steps, stops at the requested outer bound, and
+feeds both chronological events to the unchanged generic proof frontend.
+
+The current conformance closes only when the retained target fact is exactly
+the requested fact. Closing from a strictly stronger retained fact is the next
+proof-frontend connection. The driver returns split plans but does not yet
+create or join proof branches. The operation registry also remains the fixed
+source/exponential pair. Key-resolved semantic model selection must land before
+operation packages may be reordered; array position is not a permanent package
+identity.
 
 The fixed canary also requires a live session with an exact proof history of one
 instance, one equality, three fact events, and the expected interleaving before

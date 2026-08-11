@@ -310,6 +310,7 @@ lean_lib HexIntervalExperiment where
     `HexInterval.Experiment.PayloadArena,
     `HexInterval.Experiment.PayloadSession,
     `HexInterval.Experiment.PolicySession,
+    `HexInterval.Experiment.TargetRun,
     `HexInterval.Experiment.SemanticReplay,
     `HexInterval.Experiment.ChronologicalReplay,
     `HexInterval.Experiment.GenericInstanceReconstruction,
