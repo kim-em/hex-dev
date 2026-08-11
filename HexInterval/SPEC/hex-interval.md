@@ -1329,9 +1329,21 @@ advance the version after the sine and negation rules while preserving the
 negation evidence needed by a later equality transport. Reordering negation
 before the sine result it consumes, or claiming the wrong program version,
 fails before replay. This event fold contains no sine, negation, or other
-function case. It seeds caller facts by checked position in the exact
-base-assumption list; named sine-specific previous-fact proofs are absent from
-the tactic term. The next frontend experiment must derive the base program,
+function case. It seeds caller facts by checked position in the emitter's
+declared base-assumption list; the caller hypotheses supplied to final closure
+discharge that same list. This direct emitter does not yet construct the
+`InitialContext` witness that relates the declared list position-for-position
+to `CheckerInput.initialFacts`. The complete `TraceReplay` checker already
+constructs its `initialBase` position-for-position from
+`CheckerInput.initialFacts`; separately,
+`ChronologicalReplay.Cursor.startInput` consumes `InitialContext` for cursor
+replay. The later generic frontend must carry the corresponding binding into
+direct emission. The current replay applications and final closure remain
+indexed by the exact `CheckerInput.baseProgram` and target. The emitter also
+seeds each instance event's fresh nodes with domain top after checking their
+lookup in the reified final program; named sine-specific previous-fact proofs
+are absent from the tactic term. The next frontend experiment must derive the
+base program, declared base-assumption list and its caller-input binding,
 semantic bridge, and final target for an arbitrary caller expression instead
 of naming this canary's fixed contexts.
 
