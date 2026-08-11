@@ -80,8 +80,11 @@ one durable record; `--from-record ... ` regenerates the tables below.
 
 ### Protocol
 
-- Source revision `1e00c8ee` plus this branch's bench driver, Lean toolchain
-  `leanprover/lean4:v4.33.0-rc1`.
+- Recorded at `1e00c8ee` with the four-arm driver still uncommitted, so the
+  record carries `git_dirty: true`; that driver is commit `402b5081` of this
+  branch and nothing else in the tree differed. Lean toolchain
+  `leanprover/lean4:v4.33.0-rc1`. This is a diagnostic record, not a published
+  curve, so it is not subject to the sweep freshness checker's clean-tree rule.
 - Host `chungus2`, AMD EPYC 9455, Linux x86-64, 96 cores, service pinned to
   CPU 70.
 - Corpus `bench/corpus/hexbz-factor-corpus.jsonl`, 392 rows, SHA-256
