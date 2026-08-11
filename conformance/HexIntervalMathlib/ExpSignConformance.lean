@@ -9,6 +9,7 @@ import HexInterval.Experiment.GoalFrontend
 import HexInterval.Experiment.GoalClosure
 import HexInterval.Experiment.ProofFrontend
 import HexInterval.Experiment.TargetRun
+import HexInterval.Experiment.BranchStart
 import Mathlib.Lean.Elab.Tactic.Meta
 
 /-!
@@ -27,7 +28,7 @@ open Lean Elab Tactic Meta
 open Hex.Interval.Experiment
 open Propagator PolicySession SemanticReplay ChronologicalReplay ProofEmitter
 open Frontend FrontendEncoder ProofFrontend ProofRegistry GoalFrontend ExpSign
-open GoalClosure
+open GoalClosure BranchStart
 
 /-! ## Extensible goal reification -/
 
@@ -228,16 +229,24 @@ structure RunFixture extends Fixture where
   reached : TargetRun.Reached Bound
   events : Array (TargetRun.Event Bound)
 
-def runRaw? (input : CheckerInput Bound) (controller : TargetRun.Controller Bound Unit)
-    (fuel : Nat) : Option (TargetRun.Result Bound Unit) := do
+def runWith? (runtimePackages : Array (Package Bound))
+    (input : CheckerInput Bound) (controller : TargetRun.Controller Bound Unit)
+    (fuel : Nat) (scope : Propagator.Policy.ScopeId := { index := 0 }) :
+    Option (TargetRun.Result Bound Unit) := do
   let .ok session := PolicySession.Session.start factDomain
-      input.baseProgram packages input.initialFacts limits
+      input.baseProgram runtimePackages input.initialFacts limits scope
     | none
   some (TargetRun.drive factDomain input.target.node input.target.fact controller
     fuel session ())
 
-def runInput? (input : CheckerInput Bound) : Option RunFixture := do
-  let result <- runRaw? input firstOffer limits.policy.maxDecisions
+def runRaw? (input : CheckerInput Bound) (controller : TargetRun.Controller Bound Unit)
+    (fuel : Nat) (scope : Propagator.Policy.ScopeId := { index := 0 }) :
+    Option (TargetRun.Result Bound Unit) :=
+  runWith? packages input controller fuel scope
+
+def runInput? (input : CheckerInput Bound)
+    (scope : Propagator.Policy.ScopeId := { index := 0 }) : Option RunFixture := do
+  let result <- runRaw? input firstOffer limits.policy.maxDecisions scope
   let .target reached := result.stop | none
   match ProofRegistry.build result.session.registry proofPackages with
   | .ok registry =>
@@ -265,6 +274,60 @@ def trace? : Option (Frontend.Trace Bound) := do
       | _ => false
 
 /-! ## Live zero-split child sessions -/
+
+private def splitOffer? (view : Propagator.Policy.View Bound) :
+    Option Propagator.Policy.OfferView :=
+  view.offers.toList.find? fun offer =>
+    match offer.key with
+    | .invoke invocation => invocation.rule == splitRuleKey
+    | .split _ _ _ _ => true
+    | _ => false
+
+private def splitPolicy : TargetRun.Controller Bound Unit :=
+  { update := fun state _ => state
+    choose := fun state view =>
+      match splitOffer? view with
+      | some offer => .select offer state
+      | none => .stop state }
+
+private def signSplitter : BranchStart.Splitter Bound :=
+  { split := fun graph target instruction parent point =>
+      if graph.node? target == some instruction && instruction.domain == real &&
+          parent == .all && point == 0 then
+        some (.nonnegative, .negative)
+      else
+        none }
+
+private def branchLimits : BranchStart.Limits :=
+  { maxDepth := 4, maxScopes := 8 }
+
+private def prepared? : Option (ULift.{1, 0} (BranchStart.Children Bound)) :=
+  match runWith? splitPackages checkerInput splitPolicy limits.policy.maxDecisions with
+  | none => none
+  | some result =>
+      match result.stop with
+      | .split plan =>
+          match BranchStart.prepare branchLimits
+              (BranchStart.State.start { index := 0 }) 0 result.session plan
+              checkerInput.target signSplitter with
+          | .ok (_, children) => some (ULift.up children)
+          | .error _ => none
+      | _ => none
+
+private def splitRun? : Option (TargetRun.Result Bound Unit) :=
+  runWith? splitPackages checkerInput splitPolicy limits.policy.maxDecisions
+
+#guard
+  splitRun?.any fun result =>
+    match ProofRegistry.build result.session.registry splitProofPackages with
+    | .ok _ => true
+    | .error _ => false
+
+#guard
+  splitRun?.any fun result =>
+    match ProofRegistry.build result.session.registry proofPackages with
+    | .error (.semantic (.packageCount 3 2)) => true
+    | _ => false
 
 private def branchFact (side : Bound) : NodeFact Bound :=
   { node := node 0, fact := side }
@@ -300,6 +363,8 @@ private def inheritBranch (side : Bound) (observed : NodeId)
 
 private def leftInput : CheckerInput Bound := branchInput .nonnegative
 private def rightInput : CheckerInput Bound := branchInput .negative
+private def leftScope : Propagator.Policy.ScopeId := { index := 1 }
+private def rightScope : Propagator.Policy.ScopeId := { index := 2 }
 private def leftFacts : List (NodeFact Bound) := branchFacts .nonnegative
 private def rightFacts : List (NodeFact Bound) := branchFacts .negative
 
@@ -316,16 +381,132 @@ private def rightSeed :
     (by rfl) (by rfl) (inheritBranch .negative)
 
 #guard
-  runInput? leftInput |>.any fun fixture =>
+  prepared?.any fun lifted =>
+    let children := lifted.down
+    children.depth == 1 &&
+      children.parent.baseProgram == checkerInput.baseProgram &&
+      children.parent.initialFacts == checkerInput.initialFacts &&
+      children.parent.target == checkerInput.target &&
+      children.leftScope == leftScope &&
+      children.left.baseProgram == leftInput.baseProgram &&
+      children.left.initialFacts == leftInput.initialFacts &&
+      children.left.target == leftInput.target &&
+      children.rightScope == rightScope &&
+      children.right.baseProgram == rightInput.baseProgram &&
+      children.right.initialFacts == rightInput.initialFacts &&
+      children.right.target == rightInput.target &&
+      children.plan.point == 0 && children.plan.fact == .all
+
+#guard
+  runInput? leftInput leftScope |>.any fun fixture =>
     fixture.reached.seen == ({ node := node 1, version := 1 } : SeenVersion) &&
       fixture.reached.fact == .nonnegative && fixture.events.size == 1 &&
       fixture.session.state.engine.facts == #[.nonnegative, .nonnegative]
 
 #guard
-  runInput? rightInput |>.any fun fixture =>
+  runInput? rightInput rightScope |>.any fun fixture =>
     fixture.reached.seen == ({ node := node 1, version := 1 } : SeenVersion) &&
       fixture.reached.fact == .nonnegative && fixture.events.size == 1 &&
       fixture.session.state.engine.facts == #[.negative, .nonnegative]
+
+private def closedChildren? : Option
+    (ULift.{1, 0} (TargetRun.Reached Bound × TargetRun.Reached Bound)) :=
+  match prepared? with
+  | none => none
+  | some lifted =>
+      let children := lifted.down
+      match runRaw? children.left firstOffer limits.policy.maxDecisions
+          children.leftScope,
+        runRaw? children.right firstOffer limits.policy.maxDecisions
+          children.rightScope with
+      | some left, some right =>
+          (BranchStart.closedTargets? factDomain children left right).map ULift.up
+      | _, _ => none
+
+#guard closedChildren?.isSome
+
+#guard
+  prepared?.any fun lifted =>
+    let children := lifted.down
+    match runRaw? children.left stopPolicy limits.policy.maxDecisions
+        children.leftScope,
+      runRaw? children.right firstOffer limits.policy.maxDecisions
+        children.rightScope with
+    | some left, some right =>
+        (BranchStart.closedTargets? factDomain children left right).isNone
+    | _, _ => false
+
+#guard
+  prepared?.any fun lifted =>
+    let children := lifted.down
+    match runRaw? children.left firstOffer limits.policy.maxDecisions { index := 99 },
+      runRaw? children.right firstOffer limits.policy.maxDecisions children.rightScope with
+    | some left, some right =>
+        (BranchStart.closedTargets? factDomain children left right).isNone
+    | _, _ => false
+
+#guard
+  match runWith? splitPackages checkerInput splitPolicy limits.policy.maxDecisions with
+  | some result =>
+      match result.stop with
+      | .split plan =>
+          match BranchStart.prepare
+              { branchLimits with maxDepth := 0 }
+              (BranchStart.State.start { index := 0 }) 0 result.session plan
+              checkerInput.target signSplitter with
+          | .error .depthLimit => true
+          | _ => false
+      | _ => false
+  | none => false
+
+#guard
+  match splitRun? with
+  | some result =>
+      match result.stop with
+      | .split plan =>
+          let staleOrigin :=
+            { plan.origin with
+              application := { index := result.session.state.engine.applications.size } }
+          let stalePlan :=
+            { plan with
+              origin := staleOrigin
+              source := Propagator.Policy.invocationOfAction plan.scope staleOrigin }
+          match BranchStart.prepare branchLimits
+              (BranchStart.State.start { index := 0 }) 0 result.session stalePlan
+              checkerInput.target signSplitter with
+          | .error .staleOrigin => true
+          | _ => false
+      | _ => false
+  | none => false
+
+#guard
+  match runWith? splitPackages checkerInput splitPolicy limits.policy.maxDecisions with
+  | some result =>
+      match result.stop with
+      | .split plan =>
+          match BranchStart.prepare branchLimits
+              (BranchStart.State.start { index := 0 }) 0 result.session
+              { plan with version := plan.version + 1 }
+              checkerInput.target signSplitter with
+          | .error .staleVersion => true
+          | _ => false
+      | _ => false
+  | none => false
+
+#guard
+  match runWith? splitPackages checkerInput splitPolicy limits.policy.maxDecisions with
+  | some result =>
+      match result.stop with
+      | .split plan =>
+          let duplicate : BranchStart.Splitter Bound :=
+            { split := fun _ _ _ _ _ => some (.nonnegative, .nonnegative) }
+          match BranchStart.prepare branchLimits
+              (BranchStart.State.start { index := 0 }) 0 result.session plan
+              checkerInput.target duplicate with
+          | .error .duplicateChild => true
+          | _ => false
+      | _ => false
+  | none => false
 
 /-! ## Operation-composed semantics at an arbitrary graph node -/
 
@@ -601,8 +782,9 @@ private def splitParent : Evidence
   ProofEmitter.assumed (by simp [baseFacts, branchFact, node])
 
 private meta def emitChild (context : ProofFrontend.Context Bound Name)
-    (input : CheckerInput Bound) (seed : Expr) (side : Bound) : MetaM Expr := do
-  let some fixture := runInput? input
+    (input : CheckerInput Bound) (scope : Propagator.Policy.ScopeId)
+    (seed : Expr) (side : Bound) : MetaM Expr := do
+  let some fixture := runInput? input scope
     | throwError "interval_exp_split: child search failed"
   let some trace := Frontend.trace? fixture.session.state.engine fixture.session.arena
     | throwError "interval_exp_split: child chronology quotation failed"
@@ -625,8 +807,10 @@ private meta def emitChild (context : ProofFrontend.Context Bound Name)
     fixture.reached.fact input.target
 
 private meta def emitSplit : MetaM Expr := do
-  let left ← emitChild leftContext leftInput (mkConst ``leftSeed) .nonnegative
-  let right ← emitChild rightContext rightInput (mkConst ``rightSeed) .negative
+  let left ← emitChild leftContext leftInput leftScope
+    (mkConst ``leftSeed) .nonnegative
+  let right ← emitChild rightContext rightInput rightScope
+    (mkConst ``rightSeed) .negative
   let result ←
     mkAppM ``ProofEmitter.replaySplit
       #[mkConst ``signSplit, mkConst ``program, mkConst ``baseFacts,
@@ -812,10 +996,10 @@ set_option linter.unusedTactic false in
 example : True := by
   run_tac
     if (← observing? <| emitChild leftContext rightInput
-        (mkConst ``rightSeed) .negative).isSome then
+        rightScope (mkConst ``rightSeed) .negative).isSome then
       throwError "interval_exp_split: mismatched child input was accepted"
     if (← observing? <| emitChild rightContext rightInput
-        (mkConst ``leftSeed) .negative).isSome then
+        rightScope (mkConst ``leftSeed) .negative).isSome then
       throwError "interval_exp_split: mismatched branch seed was accepted"
   trivial
 

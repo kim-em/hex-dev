@@ -848,8 +848,8 @@ inductive SplitReason where
   | custom (code : Nat)
   deriving DecidableEq, Repr
 
-/-- A proof-split suggestion.  The engine alone creates complementary child
-scopes; the rule supplies only a node, cut, and reason. -/
+/-- A proof-split suggestion.  The rule supplies only a node, cut, and reason;
+a checked branch manager creates complementary child scopes and facts. -/
 structure SplitRequest where
   node : NodeId
   point : Dyadic
