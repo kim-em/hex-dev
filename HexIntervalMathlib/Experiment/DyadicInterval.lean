@@ -50,6 +50,11 @@ theorem toReal_inj {left right : Dyadic} :
     exact Rat.cast_injective equal
   · exact fun equal => congrArg toReal equal
 
+@[simp]
+theorem toReal_sub (left right : Dyadic) :
+    toReal (left - right) = toReal left - toReal right := by
+  simp [toReal, Dyadic.toRat_sub]
+
 /-- Meaning of a lower interval cut. -/
 def lowerContains : Lower → ℝ → Prop
   | .unbounded, _ => True
@@ -400,6 +405,136 @@ theorem contains_intersect {limit : EndpointLimit} {left right result : Fact}
                             rw [lowerContains_intersect lowerChecked,
                               upperContains_intersect upperChecked]
                             aesop
+
+private theorem subtractionChecked_toReal {limit : EndpointLimit}
+    {left right result : Dyadic}
+    (checked : subtractionChecked limit left right = .ok result) :
+    toReal result = toReal left - toReal right := by
+  unfold subtractionChecked at checked
+  cases preflight : preflightSubtraction limit left right with
+  | error cost =>
+      simp only [preflight] at checked
+      contradiction
+  | ok _ =>
+      simp only [preflight] at checked
+      cases endpoint : endpointChecked limit (left - right) with
+      | error cost =>
+          rw [endpoint] at checked
+          contradiction
+      | ok _ =>
+          rw [endpoint] at checked
+          injection checked with same
+          subst result
+          exact toReal_sub left right
+
+private theorem lowerContains_subtract {limit : EndpointLimit}
+    {left : Lower} {right : Upper} {result : Lower} {x y : ℝ}
+    (checked : subtractLower limit left right = .ok result)
+    (leftContains : lowerContains left x)
+    (rightContains : upperContains right y) :
+    lowerContains result (x - y) := by
+  cases left with
+  | unbounded =>
+      change Except.ok .unbounded = Except.ok result at checked
+      injection checked with same
+      subst result
+      trivial
+  | finite left leftStrict =>
+      cases right with
+      | unbounded =>
+          change Except.ok .unbounded = Except.ok result at checked
+          injection checked with same
+          subst result
+          trivial
+      | finite right rightStrict =>
+          simp only [subtractLower] at checked
+          cases subtraction : subtractionChecked limit left right with
+          | error cost => simp [subtraction] at checked
+          | ok difference =>
+              simp [subtraction] at checked
+              subst result
+              have value := subtractionChecked_toReal subtraction
+              cases leftStrict <;> cases rightStrict <;>
+                simp_all [lowerContains, upperContains] <;> linarith
+
+private theorem upperContains_subtract {limit : EndpointLimit}
+    {left : Upper} {right : Lower} {result : Upper} {x y : ℝ}
+    (checked : subtractUpper limit left right = .ok result)
+    (leftContains : upperContains left x)
+    (rightContains : lowerContains right y) :
+    upperContains result (x - y) := by
+  cases left with
+  | unbounded =>
+      change Except.ok .unbounded = Except.ok result at checked
+      injection checked with same
+      subst result
+      trivial
+  | finite left leftStrict =>
+      cases right with
+      | unbounded =>
+          change Except.ok .unbounded = Except.ok result at checked
+          injection checked with same
+          subst result
+          trivial
+      | finite right rightStrict =>
+          simp only [subtractUpper] at checked
+          cases subtraction : subtractionChecked limit left right with
+          | error cost => simp [subtraction] at checked
+          | ok difference =>
+              simp [subtraction] at checked
+              subst result
+              have value := subtractionChecked_toReal subtraction
+              cases leftStrict <;> cases rightStrict <;>
+                simp_all [lowerContains, upperContains] <;> linarith
+
+/-- Every successful exact subtraction proposal contains the pointwise real
+difference of members of its two input facts. This covers the complete checked
+cut language, including open and independently unbounded ends. -/
+theorem contains_sub {limit : EndpointLimit} {left right result : Fact}
+    {x y : ℝ} (checked : sub limit left right = .ready result)
+    (leftContains : left.Contains x) (rightContains : right.Contains y) :
+    result.Contains (x - y) := by
+  cases left with
+  | mk leftRaw leftConsistent =>
+      cases right with
+      | mk rightRaw rightConsistent =>
+          cases leftRaw with
+          | empty => simp [Fact.Contains, rawContains] at leftContains
+          | bounds leftLower leftUpper =>
+              cases rightRaw with
+              | empty => simp [Fact.Contains, rawContains] at rightContains
+              | bounds rightLower rightUpper =>
+                  simp only [sub] at checked
+                  cases preflight : (do
+                      preflightLowerSubtraction limit leftLower rightUpper
+                      preflightUpperSubtraction limit leftUpper rightLower) with
+                  | error cost => simp [preflight] at checked
+                  | ok _ =>
+                      cases lowerChecked : subtractLower limit leftLower rightUpper with
+                      | error cost => simp [preflight, lowerChecked] at checked
+                      | ok lower =>
+                          cases upperChecked : subtractUpper limit leftUpper rightLower with
+                          | error cost =>
+                              simp [preflight, lowerChecked, upperChecked] at checked
+                          | ok upper =>
+                              simp [preflight, lowerChecked, upperChecked, normalize] at checked
+                              split at checked
+                              · contradiction
+                              · injection checked with installed
+                                subst result
+                                change rawContains
+                                  (Raw.normalizeUnchecked (.bounds lower upper)) (x - y)
+                                rw [rawContains_normalize]
+                                change lowerContains lower (x - y) ∧
+                                  upperContains upper (x - y)
+                                change lowerContains leftLower x ∧
+                                  upperContains leftUpper x at leftContains
+                                change lowerContains rightLower y ∧
+                                  upperContains rightUpper y at rightContains
+                                exact ⟨lowerContains_subtract lowerChecked
+                                    leftContains.1 rightContains.2,
+                                  upperContains_subtract upperChecked
+                                    leftContains.2 rightContains.1⟩
 
 /-- Attach exact interval facts to any operation semantics over real-valued
 program nodes. -/

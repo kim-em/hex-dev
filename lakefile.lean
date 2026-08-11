@@ -369,7 +369,8 @@ lean_lib HexIntervalExperiment where
     `HexInterval.Experiment.SinTenInterval].map Glob.one
 
 lean_lib HexIntervalMathlibExperiment where
-  globs := #[`HexIntervalMathlib.Experiment.Center,
+  globs := #[`HexIntervalMathlib.Experiment.Arithmetic,
+    `HexIntervalMathlib.Experiment.Center,
     `HexIntervalMathlib.Experiment.Centered,
     `HexIntervalMathlib.Experiment.DyadicInterval,
     `HexIntervalMathlib.Experiment.SineSign,
@@ -496,6 +497,8 @@ lean_lib HexConformance where
       `HexIntervalMathlib.PntTable10ExactConformance].map Glob.one
 
     ++ #[`HexInterval.StagedPolicyConformance].map Glob.one
+
+    ++ #[`HexIntervalMathlib.ArithmeticConformance].map Glob.one
 
     ++ #[`HexInterval.MinMaxConformance,
       `HexIntervalMathlib.MinMaxConformance].map Glob.one
