@@ -15,9 +15,9 @@ public import HexInterval.Experiment.StagedPolicy
 
 This policy refines `StagedPolicy` without inspecting facts, operation names,
 or package keys.  It learns only from engine-authenticated observations: actual
-fact-version changes and deterministic logical work.  Untried actions receive
-an optimism bonus, repeated fixed points decay, and a bounded age tier prevents
-continuous eligible work from starving.
+fact-version changes and deterministic logical work.  Stable application sites
+retain useful history across changed input versions, while the exact invocation
+snapshot prevents an old fixed point from suppressing newly woken work.
 
 The scores choose search order only.  Every selected offer is revalidated by
 `PolicySession`, and proof replay is independent of this module.
@@ -30,16 +30,24 @@ open Propagator Propagator.Policy TargetRun
 /-- Replaceable integer coefficients for the first feedback experiment. -/
 structure Config where
   staged : StagedPolicy.Config := {}
-  optimism : Nat := 32
-  gainWeight : Nat := 64
-  noChangePenalty : Nat := 8
-  ageBonusCap : Nat := 16
-  fairnessAge : Nat := 32
+  optimism : Nat := 16
+  gainWeight : Nat := 96
+  noChangePenalty : Nat := 12
+  ageBonusCap : Nat := 4
+  fairnessAge : Nat := 20
+  maxRecords : Nat := 256
   deriving DecidableEq, Repr
 
-/-- Package-opaque identity at which feedback is accumulated.  Input versions
-remain part of `invocation`, so a newly woken action is sampled afresh. -/
+/-- Stable, package-opaque identity at which feedback is accumulated.  The
+changing invocation snapshot is stored separately in `Record.last`. -/
 inductive Key where
+  | invocation (scope : ScopeId) (application : ApplicationId) (rule : RuleKey)
+      (anchor : NodeId) (kind : ActionKind) (effort generation : Nat)
+  | equality (scope : ScopeId) (equality : EqualityId)
+  deriving DecidableEq
+
+/-- The exact engine snapshot on which an observation was made. -/
+inductive Snapshot where
   | invocation (invocation : InvocationKey)
   | equality (equality : EqualityWorkKey)
   deriving DecidableEq
@@ -50,7 +58,11 @@ structure Record where
   runs : Nat := 0
   improvements : Nat := 0
   noChanges : Nat := 0
+  /-- Consecutive fixed points on the exact last snapshot.  This resets when
+  input versions change, so stale fixed points do not demote new work. -/
+  stagnant : Nat := 0
   work : Nat := 0
+  last : Option Snapshot := none
 
 structure State where
   config : Config
@@ -61,9 +73,20 @@ def State.initial (config : Config := {}) : State := { config }
 def work (cost : CostObservation) : Nat :=
   cost.arithmeticWork + cost.visitedEntries + cost.estimatedProofNodes
 
-def ruleKey (invocation : InvocationKey) : Key := .invocation invocation
+def ruleKey (invocation : InvocationKey) : Key :=
+  .invocation invocation.scope invocation.application invocation.rule invocation.anchor
+    invocation.kind invocation.effort invocation.generation
+
+def equalityKey (equality : EqualityWorkKey) : Key :=
+  .equality equality.scope equality.equality
 
 def offerKey? : OfferKey -> Option Key
+  | .invoke invocation => some (ruleKey invocation)
+  | .equality equality => some (equalityKey equality)
+  | .retry source effort => some (ruleKey { source with effort })
+  | .instantiate _ _ | .split _ _ _ _ => none
+
+def offerSnapshot? : OfferKey -> Option Snapshot
   | .invoke invocation => some (.invocation invocation)
   | .equality equality => some (.equality equality)
   | .retry source effort => some (.invocation { source with effort })
@@ -72,46 +95,58 @@ def offerKey? : OfferKey -> Option Key
 def find? (records : List Record) (key : Key) : Option Record :=
   records.find? fun record => record.key == key
 
-def replace (records : List Record) (record : Record) : List Record :=
-  record :: records.filter fun old => old.key != record.key
+def replace (limit : Nat) (records : List Record) (record : Record) : List Record :=
+  (record :: records.filter fun old => old.key != record.key).take limit
 
-def alter (records : List Record) (key : Key) (change : Record -> Record) : List Record :=
-  replace records (change ((find? records key).getD { key }))
+def alter (limit : Nat) (records : List Record) (key : Key)
+    (change : Record -> Record) : List Record :=
+  replace limit records (change ((find? records key).getD { key }))
 
-def recordRule (records : List Record) (observation : RuleObservation Fact) : List Record :=
-  alter records (.invocation observation.invocation) fun record =>
+def recordRule (limit : Nat) (records : List Record)
+    (observation : RuleObservation Fact) : List Record :=
+  let snapshot := Snapshot.invocation observation.invocation
+  alter limit records (ruleKey observation.invocation) fun record =>
     { record with
       runs := record.runs + 1
       improvements := record.improvements + observation.changes.size
       noChanges := record.noChanges + if observation.outcome == .noChange then 1 else 0
-      work := record.work + work observation.cost }
+      stagnant := if observation.outcome != .noChange then 0
+        else if record.last == some snapshot then record.stagnant + 1 else 1
+      work := record.work + work observation.cost
+      last := some snapshot }
 
-def recordEquality (records : List Record)
+def recordEquality (limit : Nat) (records : List Record)
     (observation : EqualityObservation Fact) : List Record :=
-  alter records (.equality observation.key) fun record =>
+  let snapshot := Snapshot.equality observation.key
+  alter limit records (equalityKey observation.key) fun record =>
     { record with
       runs := record.runs + 1
       improvements := record.improvements + observation.changes.size
       noChanges := record.noChanges + if observation.outcome == .noChange then 1 else 0
-      work := record.work + observation.narrowCalls }
+      stagnant := if observation.outcome != .noChange then 0
+        else if record.last == some snapshot then record.stagnant + 1 else 1
+      work := record.work + observation.narrowCalls
+      last := some snapshot }
 
 def update : State -> Event Fact -> State
   | state, .rule observation =>
-      { state with records := recordRule state.records observation }
+      { state with records := recordRule state.config.maxRecords state.records observation }
   | state, .equality observation =>
-      { state with records := recordEquality state.records observation }
+      { state with records := recordEquality state.config.maxRecords state.records observation }
   | state, .instance _ | state, .dismissed | state, .rejected _ |
       state, .invalidPayload _ | state, .rejectedPayload _ => state
 
 /-- Learned benefit before fairness.  All arithmetic is deterministic `Nat`
 arithmetic; subtraction saturates at zero. -/
-def learnedScore (config : Config) (record : Option Record) (age : Nat) : Nat :=
+def learnedScore (config : Config) (record : Option Record)
+    (snapshot : Option Snapshot) (age : Nat) : Nat :=
   let ageBonus := Nat.min age config.ageBonusCap
   match record with
   | none => config.optimism + ageBonus
   | some record =>
       let gain := config.gainWeight * record.improvements / (record.work + record.runs + 1)
-      gain + ageBonus - config.noChangePenalty * record.noChanges
+      if record.last != snapshot then Nat.max config.optimism gain + ageBonus
+      else gain + ageBonus - config.noChangePenalty * record.stagnant
 
 structure Ranked where
   offer : OfferView
@@ -121,13 +156,16 @@ structure Ranked where
 
 def rankOffer (state : State) (offer : OfferView) : Ranked :=
   let record := (offerKey? offer.key).bind (find? state.records)
+  let snapshot := offerSnapshot? offer.key
   { offer
     fair := state.config.fairnessAge <= offer.age
     stage := StagedPolicy.rank offer
-    score := learnedScore state.config record offer.age }
+    score := learnedScore state.config record snapshot offer.age }
 
-/-- Fair offers form the first tier.  Within one tier the staged semantic class
-still wins, then learned score, age, and finally stable input order. -/
+/-- Offers at or beyond `fairnessAge` form the first tier.  On a finite frontier,
+selection consumes offers, so this tier ensures every continuously eligible
+offer is eventually sampled.  Within one tier the staged semantic class still
+wins, then learned score, age, and finally stable input order. -/
 def better (candidate current : Ranked) : Bool :=
   (candidate.fair && !current.fair) ||
     (candidate.fair == current.fair && candidate.stage < current.stage) ||
