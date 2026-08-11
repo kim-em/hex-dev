@@ -96,7 +96,7 @@ theorem keepCheck (program : Program) (checked : program.check = true) :
   checked
 
 /-- Project an accepted transparent replay result.  The supplied equality is
-ordinary kernel reduction, never `native_decide`. -/
+ordinary kernel reduction. -/
 def replayGet {α : Type} (result : Option α) (success : result.isSome = true) : α :=
   result.get success
 

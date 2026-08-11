@@ -35,7 +35,7 @@ end TypeEquiv
 
 namespace GF2n
 
-instance : Hex.ZMod64.Bounds 2 := ⟨by decide, by decide⟩
+instance boundsTwo : Hex.ZMod64.Bounds 2 := ⟨by decide, by decide⟩
 
 private theorem prime_two : Hex.Nat.Prime 2 := by
   constructor
@@ -418,7 +418,7 @@ end GF2n
 
 namespace GF2nPoly
 
-instance : Hex.ZMod64.Bounds 2 := ⟨by decide, by decide⟩
+instance boundsTwo : Hex.ZMod64.Bounds 2 := ⟨by decide, by decide⟩
 
 private theorem prime_two : Hex.Nat.Prime 2 := by
   constructor
