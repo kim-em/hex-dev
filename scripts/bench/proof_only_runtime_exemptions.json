@@ -114,6 +114,12 @@
     "reason": "Additionally registers the generic interval goal-reification experiment only; the factorization service target and executable dependency graph are unchanged."
   },
   {
+    "path": "lakefile.lean",
+    "baseline_blob": "6dd80771ae2212333b2a9b925b52056e0037ff56",
+    "current_blob": "d61f146ae2a77f159c2afbb1b5b3b1893186d9d5",
+    "reason": "Additionally registers package-composed interval operation semantics only; the factorization service target and executable dependency graph are unchanged."
+  },
+  {
     "path": "HexBerlekamp/FactorTacticTests.lean",
     "baseline_blob": "4063e15934a89c671ac72d201fa60c2ef6feaf59",
     "current_blob": "ac61dae5d09d966186661b1b85943b9fe0d91128",

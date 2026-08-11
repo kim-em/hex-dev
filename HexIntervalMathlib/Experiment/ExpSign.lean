@@ -9,7 +9,7 @@ module
 public import Mathlib.Analysis.SpecialFunctions.Exp
 public import HexInterval.Experiment.ExpSign
 public import HexInterval.Experiment.ProofRegistry
-public import HexInterval.Experiment.GenericInstanceReconstruction
+public import HexInterval.Experiment.OperationSemantics
 
 @[expose] public section
 
@@ -23,21 +23,29 @@ over `ℝ` and contributes its semantic replay theorem and frontend handle.
 namespace Hex.Interval.Experiment.ExpSign
 
 open Propagator SemanticReplay ChronologicalReplay ProofEmitter ProofRegistry
-open GenericInstanceReconstruction
+open GenericInstanceReconstruction OperationSemantics
 
 def Contains : Bound → ℝ → Prop
   | .all, _ => True
   | .nonnegative, x => 0 ≤ x
   | .empty, _ => False
 
-def Models (graph : Program) (valuation : NodeId → ℝ) : Prop :=
-  graph.node? (node 1) = some expInstruction →
-    valuation (node 1) = Real.exp (valuation (node 0))
+def sourceModel : OperationSemantics.Model ℝ :=
+  { operation := sourceOperation
+    relation := fun inputs _ => inputs = [] }
+
+def expModel : OperationSemantics.Model ℝ :=
+  { operation := expOperation
+    relation := fun inputs output =>
+      match inputs with
+      | [input] => output = Real.exp input
+      | _ => False }
+
+def operationModels : Array (OperationSemantics.Model ℝ) :=
+  #[sourceModel, expModel]
 
 def semantics : Semantics Bound :=
-  { Value := ℝ
-    models := Models
-    holds := fun _ valuation fact => Contains fact.fact (valuation fact.node) }
+  OperationSemantics.semantics operationModels Contains
 
 theorem containsMeet (left right : Bound) (x : ℝ) :
     Contains (left.meet right) x ↔ Contains left x ∧ Contains right x := by
@@ -65,13 +73,34 @@ def laws : Laws semantics :=
       change Contains fact (valuation left) ↔ Contains fact (valuation right)
       rw [values] }
 
-theorem expEntails (assumptions : List (NodeFact Bound)) :
-    semantics.Entails program assumptions
-      { node := node 1, fact := .nonnegative } := by
+theorem expEntails (graph : Program) (assumptions : List (NodeFact Bound))
+    (output : NodeId) (instruction : Node) (input : NodeId)
+    (found : graph.node? output = some instruction)
+    (operation : instruction.op = { index := 1 })
+    (arguments : instruction.args = [input]) :
+    semantics.Entails graph assumptions
+      { node := output, fact := .nonnegative } := by
+  change ∀ valuation : NodeId → ℝ,
+    OperationSemantics.Models operationModels graph valuation →
+      (∀ assumption, assumption ∈ assumptions →
+        Contains assumption.fact (valuation assumption.node)) →
+      Contains .nonnegative (valuation output)
   intro valuation model _
-  change (0 : ℝ) ≤ valuation (node 1)
-  rw [model (by rfl)]
+  obtain ⟨meaning, meaningAt, related⟩ :=
+    model.2 output instruction found
+  simp [operationModels, operation] at meaningAt
+  subst meaning
+  have outputEq : valuation output = Real.exp (valuation input) := by
+    simpa [expModel, arguments, List.map] using related
+  change (0 : ℝ) ≤ valuation output
+  rw [outputEq]
   exact (Real.exp_pos _).le
+
+private theorem factWith {Fact : Type} (fact : NodeFact Fact) {value : Fact}
+    (equal : fact.fact = value) :
+    fact = { node := fact.node, fact := value } := by
+  cases fact
+  simp_all
 
 def expFactSchema : PackedFactSchema semantics where
   rule := expRuleKey
@@ -80,42 +109,33 @@ def expFactSchema : PackedFactSchema semantics where
   decode := fun body =>
     if body == [Bound.nonnegative.code] then some () else none
   replay := fun _ _ context _ =>
-    if graphEq : context.program = program then
-      if proposedEq : context.proposed =
-          ({ node := node 1, fact := .nonnegative } : NodeFact Bound) then
-        some
-          { proof := by
-              simpa only [graphEq, proposedEq] using
-                expEntails context.assumptions }
-      else
-        none
+    if proposedFact : context.proposed.fact = .nonnegative then
+      match found : context.program.node? context.proposed.node with
+      | some instruction =>
+          if operation : instruction.op = ({ index := 1 } : OpId) then
+            match arguments : instruction.args with
+            | [input] =>
+                some
+                  { proof := by
+                      have proposedEq :
+                          context.proposed =
+                            { node := context.proposed.node,
+                              fact := .nonnegative } := by
+                        exact factWith context.proposed proposedFact
+                      rw [proposedEq]
+                      exact
+                        expEntails context.program context.assumptions
+                          context.proposed.node instruction input found
+                          operation arguments }
+            | _ => none
+          else
+            none
+      | none => none
     else
       none
 
-theorem nodeAtPrefix {before after : Program}
-    (stepPrefix : ProgramPrefix before after)
-    (target : NodeId) (instruction : Node)
-    (found : before.node? target = some instruction) :
-    after.node? target = some instruction := by
-  have within : target.index < before.nodes.size := by
-    by_contra outside
-    simp [Program.node?, outside] at found
-  rw [Program.node?, stepPrefix.nodeAt target.index within]
-  exact found
-
 def stableLaw : StableLaw semantics :=
-  { stable := by
-      intro before after _ _ stepPrefix _
-      refine
-        { programPrefix := stepPrefix
-          modelsBefore := ?_
-          holdsOld := ?_ }
-      · intro valuation model found
-        exact model (nodeAtPrefix stepPrefix _ _ found)
-      · intro oldValue newValue fact within _ _ agreement
-        change Contains fact.fact (oldValue fact.node) ↔
-          Contains fact.fact (newValue fact.node)
-        rw [agreement fact.node within] }
+  OperationSemantics.stableLaw operationModels Contains
 
 def sourceEmit : EmitPackage Lean.Name := { schemas := [] }
 
@@ -164,9 +184,23 @@ noncomputable def valuation (x : ℝ) : NodeId → ℝ
   | ⟨1⟩ => Real.exp x
   | _ => 0
 
-theorem valuationModels (x : ℝ) : Models program (valuation x) := by
-  intro _
-  rfl
+theorem valuationModels (x : ℝ) : semantics.models program (valuation x) := by
+  refine ⟨?_, ?_⟩
+  · simp [program, operations, operationModels, sourceModel, expModel]
+  rintro ⟨index⟩ instruction found
+  cases index with
+  | zero =>
+      simp [Program.node?, program, sourceInstruction] at found
+      subst instruction
+      exact ⟨sourceModel, by rfl, by rfl⟩
+  | succ index =>
+      cases index with
+      | zero =>
+          simp [Program.node?, program, expInstruction] at found
+          subst instruction
+          exact ⟨expModel, by rfl, by rfl⟩
+      | succ index =>
+          simp [Program.node?, program] at found
 
 /-- Turn the generic emitted evidence into the ordinary user theorem. -/
 theorem closeExp (x : ℝ)

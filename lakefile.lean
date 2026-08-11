@@ -309,6 +309,7 @@ lean_lib HexIntervalExperiment where
     `HexInterval.Experiment.SemanticReplay,
     `HexInterval.Experiment.ChronologicalReplay,
     `HexInterval.Experiment.GenericInstanceReconstruction,
+    `HexInterval.Experiment.OperationSemantics,
     `HexInterval.Experiment.ProofEmitter,
     `HexInterval.Experiment.ProofRegistry,
     `HexInterval.Experiment.Frontend,
