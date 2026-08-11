@@ -184,6 +184,86 @@ def trace? : Option (Frontend.Trace Bound) := do
             step.event.fact == .nonnegative
       | _ => false
 
+/-! ## Operation-composed semantics at an arbitrary graph node -/
+
+private def nestedInstruction : Node :=
+  { domain := real, op := { index := 1 }, args := [node 1] }
+
+private def nestedProgram : Program :=
+  { operations, nodes := #[sourceInstruction, expInstruction, nestedInstruction] }
+
+private def nestedInput : CheckerInput Bound :=
+  { baseProgram := nestedProgram
+    initialFacts := #[.all, .all, .all]
+    target := { node := node 2, fact := .nonnegative } }
+
+private def nestedAction : Action :=
+  { serial := 0
+    programVersion := 0
+    application := { index := 0 }
+    rule := { index := 0 }
+    key := expRuleKey
+    node := node 2
+    kind := .forward
+    effort := 0
+    generation := 0
+    inputs := []
+    writes := [node 2] }
+
+private def nestedContext : RuleFactContext nestedInput nestedAction :=
+  { program := nestedProgram
+    basePrefix := ProgramPrefix.refl nestedProgram
+    assumptions := []
+    proposed := { node := node 2, fact := .nonnegative } }
+
+#guard (expFactSchema.replay nestedInput nestedAction nestedContext ()).isSome
+
+private def sourceContext : RuleFactContext nestedInput nestedAction :=
+  { nestedContext with
+    proposed := { node := node 0, fact := .nonnegative } }
+
+#guard (expFactSchema.replay nestedInput nestedAction sourceContext ()).isNone
+
+private def nestedEvidence : Evidence
+    (semantics.Entails nestedProgram [] nestedInput.target) :=
+  (expFactSchema.replay nestedInput nestedAction nestedContext ()).get (by rfl)
+
+private noncomputable def nestedValuation (x : ℝ) : NodeId → ℝ
+  | ⟨0⟩ => x
+  | ⟨1⟩ => Real.exp x
+  | ⟨2⟩ => Real.exp (Real.exp x)
+  | _ => 0
+
+private theorem nestedModels (x : ℝ) :
+    semantics.models nestedProgram (nestedValuation x) := by
+  refine ⟨?_, ?_⟩
+  · simp [nestedProgram, operations, operationModels, sourceModel, expModel]
+  rintro ⟨index⟩ instruction found
+  cases index with
+  | zero =>
+      simp [Program.node?, nestedProgram, sourceInstruction] at found
+      subst instruction
+      exact ⟨sourceModel, by rfl, by rfl⟩
+  | succ index =>
+      cases index with
+      | zero =>
+          simp [Program.node?, nestedProgram, expInstruction] at found
+          subst instruction
+          exact ⟨expModel, by rfl, by rfl⟩
+      | succ index =>
+          cases index with
+          | zero =>
+              simp [Program.node?, nestedProgram, nestedInstruction] at found
+              subst instruction
+              exact ⟨expModel, by rfl, by rfl⟩
+          | succ index =>
+              simp [Program.node?, nestedProgram] at found
+
+theorem nestedExp (x : ℝ) : 0 ≤ Real.exp (Real.exp x) := by
+  have holds := nestedEvidence.proof (nestedValuation x) (nestedModels x)
+    (by simp)
+  exact holds
+
 private def boundExpr : Bound → Expr
   | .all => mkConst ``Bound.all
   | .nonnegative => mkConst ``Bound.nonnegative
