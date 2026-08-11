@@ -1287,13 +1287,17 @@ chronological conformance includes an ordinary theorem term following the
 second route through a sine-shaped contractor, an independent negation step,
 equality transport, and caller-target closure. Runtime `#guard`s remain useful
 mutation tests, but never satisfy the theorem-production gate by themselves.
-The transparent `ProofEmitter.RuleStep` canary implements the quoted-data
-route for an arbitrary package-owned fact schema: it checks the full replay
-address, frozen origin, payload link, program/version links, ordered inputs,
-and write authority, then composes the schema theorem with the domain meet.
-Its downstream conformance theorem proves replay success by ordinary `rfl`
-and projects `Evidence.proof`; the opaque engine is used only in a separate
-field-for-field quote regression.
+The transparent `ProofEmitter` implements the direct-emission route for
+quoted instance, rule-fact, and equality-transport events. It checks each full
+replay address, frozen origin and payload link, the relevant program/version
+links, ordered inputs, and write authority, then composes package theorems
+with the generic extension, meet, transport, and closure lemmas. The real-sine
+conformance quotes all four live events and proves each successful replay by
+ordinary `rfl`; the resulting dependent proof chain yields the caller's
+ordinary `Real.sin` theorem. The opaque engine is used only in a separate
+field-for-field quotation regression. A transparent generic fold over an
+arbitrary quoted chronology remains an alternative to measure, not a
+prerequisite for this tactic-emitted-application architecture.
 
 A Mathlib companion must instantiate those abstract schemas, decode each
 frozen entry independently of package cache state, and recheck the
@@ -1424,8 +1428,9 @@ historical inputs and lifts them across checked program extensions.
 equality availability, and requires exact fact, instance, equality, program,
 and version exhaustion. The remaining proof-frontend work is to quote that
 accepted plain data into a transparent complete fold or emit the corresponding
-lemma applications directly; the one-rule `ProofEmitter` canary establishes
-the kernel-facing pattern but is not yet a full tactic.
+lemma applications directly. The `ProofEmitter` sine vertical now establishes
+the complete second route for one multi-package trace; frontend automation and
+a generic first-route fold remain unfinished.
 
 Because `Semantics.holds` may inspect the complete program as well as the
 valuation, conservative model extension alone cannot transport old facts or
@@ -1656,11 +1661,9 @@ prove conservative addition of the two expressions, equality of the retained
 endpoints, and the contractor's proposed fact from the actual session history
 and arena. The compact canary gives the sine-shaped operation a private integer
 model solely to test that generic route; it is not a theorem about `Real.sin`
-and does not close the non-polynomial completion gate. A Mathlib companion
-proof for the caller's real target, followed by complete chronological replay,
-remains required.
+and by itself does not close the non-polynomial completion gate.
 
-The next non-polynomial vertical keeps this graph shape but replaces the
+The first non-polynomial vertical keeps this graph shape but replaces the
 integer model with actual `Real.sin` semantics and a tiny fact lattice
 containing whole, `[0,1]`, nonnegative, and nonpositive ranges. From caller
 facts `x ∈ [0,1]`, a scoped sine propagator proves `sin x ≥ 0`; an independently
@@ -1671,6 +1674,17 @@ registered negation propagator proves `-(sin x) ≤ 0`; and the retained
 multiple arbitrary packages, instantiation, a one-sided unbounded interval,
 equality transport, and final target closure before any Taylor or rational
 endpoint backend is optimized.
+
+That vertical is now executable. The live policy session performs matcher,
+instantiation, sine propagation, independent negation propagation, and
+equality transport in that order; complete chronological replay reaches the
+original `sin (-x)` target. Separately, the proof emitter quotes the exact
+instance, two fact events, equality edge, and payload entries as plain data.
+Transparent package-schema replay and generic closure yield the ordinary
+theorem above without `native_decide` or rational normalization. This is the
+acceptance shape for further arbitrary functions: executable search and
+quotation may fail, but only kernel-checked package lemmas and generic
+composition enter the proof.
 
 ### Action kinds
 
