@@ -391,7 +391,7 @@ def emitEvents [BEq Fact] (context : Context Fact Handle) (finalValue : Program)
 
 /-- Emit a complete generic state from an already authenticated version-zero
 proof table. -/
-def emitFrom [BEq Fact] (context : Context Fact Handle)
+def emitSeeded [BEq Fact] (context : Context Fact Handle)
     (programValue : Program)
     (events : List (Frontend.Event Fact)) (table : SchemaTable Handle)
     (known : List (FactProof Fact)) : MetaM (State Fact) := do
@@ -418,7 +418,7 @@ def emitTrace [BEq Fact] (context : Context Fact Handle) (programValue : Program
     (events : List (Frontend.Event Fact)) (table : SchemaTable Handle) :
     MetaM (State Fact) := do
   let known ← seedBase context context.baseProgramTerm context.basePrefix
-  emitFrom context programValue events table known
+  emitSeeded context programValue events table known
 
 /-- Emit a restarted child chronology without reclassifying inherited parent
 consequences as caller assumptions. -/
@@ -431,6 +431,6 @@ def emitBranch [BEq Fact] (context : Context Fact Handle)
   let known ←
     seedBranch context.encoder context.semantics context.input
       context.baseFactsTerm inputValue seed
-  emitFrom context programValue events table known
+  emitSeeded context programValue events table known
 
 end Hex.Interval.Experiment.ProofFrontend
