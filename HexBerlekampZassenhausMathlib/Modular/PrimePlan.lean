@@ -153,6 +153,158 @@ theorem directDegreeBits_getElem?_iff
     (directDegreeBits_init_spec maxDegree) i hi
   simpa [Hex.directDegreeBits, Array.foldl_toList] using this
 
+/-! ## An integer divisor's degree is a modular subset sum -/
+
+/-- A nonzero modular image divides its own monic normalization: the
+normalization scales by the inverse of a nonzero leading coefficient. -/
+private theorem modP_dvd_monicModularImage
+    {p : Nat} [Hex.ZMod64.Bounds p]
+    {f : Hex.FpPoly p} (hf : f.isZero = false) :
+    f ∣ Hex.monicModularImage f := by
+  rw [monicModularImage_eq_scale_inv_leadingCoeff_of_isZero_false hf]
+  refine ⟨Hex.DensePoly.C (Hex.DensePoly.leadingCoeff f)⁻¹, ?_⟩
+  calc
+    Hex.DensePoly.scale (Hex.DensePoly.leadingCoeff f)⁻¹ f
+        = Hex.DensePoly.C (Hex.DensePoly.leadingCoeff f)⁻¹ * f := by
+          rw [Hex.FpPoly.C_mul_eq_scale]
+    _ = f * Hex.DensePoly.C (Hex.DensePoly.leadingCoeff f)⁻¹ :=
+          Hex.DensePoly.mul_comm_poly _ _
+
+/-- The recorded factor degrees are the Mathlib natural degrees of the
+transported modular factors. -/
+private theorem map_natDegree_factorsModP
+    {core : Hex.ZPoly} {data : Hex.PrimeChoiceData}
+    (hval : ModPFactorization core data) :
+    letI := data.bounds
+    data.factorsModP.toList.map
+        (fun g => (HexBerlekampMathlib.toMathlibPolynomial g).natDegree) =
+      (Hex.directFactorDegrees data).toList := by
+  letI := data.bounds
+  haveI : Fact (_root_.Nat.Prime data.p) := ⟨natPrime_of_hexNatPrime hval.prime⟩
+  haveI : Nontrivial (ZMod data.p) := inferInstance
+  simp only [Hex.directFactorDegrees, Array.toList_map]
+  refine List.map_congr_left ?_
+  intro g hg
+  have hmonic : Hex.DensePoly.Monic g := hval.monic g (by simpa using hg)
+  rw [HexBerlekampMathlib.natDegree_toMathlibPolynomial_eq_basisSize g hmonic]
+  rfl
+
+/-- Reduction at a good prime sends an integer divisor of the input to a
+subproduct of that prime's modular irreducible factors and preserves its
+degree, so the divisor's degree is one of the subset sums of the recorded
+modular factor degrees.
+
+This is the whole content of a degree filter that consults a prime other than
+the one recombination enumerates: a support whose degree is not such a subset
+sum cannot be the support of a genuine integer factor. -/
+theorem exists_subMultiset_directFactorDegrees_of_dvd
+    {core : Hex.ZPoly} {data : Hex.PrimeChoiceData}
+    (hval : ModPFactorization core data)
+    {c : Hex.ZPoly} (hdvd : c ∣ core) :
+    ∃ S ≤ ((Hex.directFactorDegrees data).toList : Multiset Nat),
+      S.sum = c.degree?.getD 0 := by
+  letI := data.bounds
+  haveI : Fact (_root_.Nat.Prime data.p) := ⟨natPrime_of_hexNatPrime hval.prime⟩
+  letI : Hex.ZMod64.PrimeModulus data.p :=
+    Hex.ZMod64.primeModulusOfPrime hval.prime
+  have hcore_modP_nz :
+      (@Hex.ZPoly.modP data.p data.bounds core).isZero = false :=
+    Hex.isGoodPrime_modP_isZero_false core data.p hval.good
+  have hadm : Hex.ZPoly.leadingCoeffModP core data.p ≠ 0 := by
+    have := Hex.isGoodPrime_leadingCoeffAdmissible core data.p hval.good
+    unfold Hex.leadingCoeffAdmissible at this
+    exact this
+  -- The divisor's leading coefficient survives reduction, so its degree does.
+  have hF_lc :
+      (Int.castRingHom (ZMod data.p))
+          (HexPolyZMathlib.toPolynomial core).leadingCoeff ≠ 0 :=
+    (IntReductionMod.intCast_zmod_leadingCoeff_ne_zero_iff_leadingCoeffModP_ne_zero
+      (p := data.p) (f := core)).mpr hadm
+  obtain ⟨d, hd⟩ :
+      HexPolyZMathlib.toPolynomial c ∣ HexPolyZMathlib.toPolynomial core :=
+    HexPolyMathlib.toPolynomial_dvd hdvd
+  have hC_lc :
+      (Int.castRingHom (ZMod data.p))
+          (HexPolyZMathlib.toPolynomial c).leadingCoeff ≠ 0 := by
+    intro h
+    apply hF_lc
+    rw [hd, Polynomial.leadingCoeff_mul, map_mul, h, zero_mul]
+  have hCmap_natDegree :
+      ((HexPolyZMathlib.toPolynomial c).map
+          (Int.castRingHom (ZMod data.p))).natDegree =
+        (HexPolyZMathlib.toPolynomial c).natDegree :=
+    Polynomial.natDegree_map_of_leadingCoeff_ne_zero _ hC_lc
+  have hCmap_ne :
+      (HexPolyZMathlib.toPolynomial c).map (Int.castRingHom (ZMod data.p)) ≠ 0 := by
+    intro hzero
+    apply hC_lc
+    have hlc :
+        ((HexPolyZMathlib.toPolynomial c).map
+          (Int.castRingHom (ZMod data.p))).leadingCoeff = 0 := by
+      rw [hzero, Polynomial.leadingCoeff_zero]
+    rw [Polynomial.leadingCoeff, Polynomial.coeff_map, hCmap_natDegree] at hlc
+    exact hlc
+  -- The reduced divisor divides the product of the recorded modular factors.
+  have hchain :
+      @Hex.ZPoly.modP data.p data.bounds c ∣
+        Hex.monicModularImage (@Hex.ZPoly.modP data.p data.bounds core) :=
+    fpPoly_dvd_trans (modP_dvd_modP_of_dvd data.p hdvd)
+      (modP_dvd_monicModularImage hcore_modP_nz)
+  have hprod :
+      (HexPolyZMathlib.toPolynomial c).map (Int.castRingHom (ZMod data.p)) ∣
+        ((data.factorsModP.toList : Multiset _).map
+          HexBerlekampMathlib.toMathlibPolynomial).prod := by
+    have h := toMathlibPolynomial_dvd hchain
+    rw [toMathlibPolynomial_modP_eq_map_intCast_zmod,
+      ← toMathlibPolynomial_factorsModP_product_eq_monicModularImage hval] at h
+    exact h
+  have hirr :
+      ∀ q ∈ ((data.factorsModP.toList : Multiset (Hex.FpPoly data.p)).map
+          HexBerlekampMathlib.toMathlibPolynomial), Irreducible q := by
+    intro q hq
+    rw [← univ_val_map_modPFactor_eq_factorsModP_map data, Multiset.mem_map] at hq
+    obtain ⟨i, -, rfl⟩ := hq
+    exact hval.irreducible i
+  obtain ⟨S, hS, hsum⟩ :=
+    UFDPartition.natDegree_eq_sum_subset_of_dvd_prod_irreducibles hCmap_ne hirr
+      hprod
+  have hdegmap :
+        ((data.factorsModP.toList : Multiset (Hex.FpPoly data.p)).map
+          HexBerlekampMathlib.toMathlibPolynomial).map Polynomial.natDegree =
+        ((Hex.directFactorDegrees data).toList : Multiset Nat) := by
+    rw [Multiset.map_coe, Multiset.map_coe, List.map_map]
+    exact congrArg _ (map_natDegree_factorsModP hval)
+  refine ⟨S, ?_, ?_⟩
+  · rw [← hdegmap]
+    exact hS
+  · rw [← hsum, hCmap_natDegree, HexPolyMathlib.natDegree_toPolynomial]
+
+/-- No false rejection.  A probe that is its own good-prime trial marks the
+degree of every genuine integer divisor of the input as reachable, so a
+traversal that discards a support whose degree is *not* marked discards no
+genuine factor. -/
+theorem reachableDegrees_of_dvd
+    {core : Hex.SquareFreeInput} {probe : Hex.DirectPrimeProbe core}
+    (hrec : probe = Hex.DirectPrimeProbe.ofData core probe.candidate probe.data)
+    (hval : ModPFactorization core.poly probe.data)
+    {c : Hex.ZPoly} (hdvd : c ∣ core.poly) :
+    probe.reachableDegrees[c.degree?.getD 0]?.getD false = true := by
+  have hcore_ne : core.poly ≠ 0 := core_ne_zero_of_modPFactorization core.poly probe.data hval
+  have hFne : HexPolyZMathlib.toPolynomial core.poly ≠ 0 := by
+    intro hzero
+    exact hcore_ne (HexPolyZMathlib.equiv.injective (by simpa using hzero))
+  have hle : c.degree?.getD 0 ≤ core.poly.degree?.getD 0 := by
+    have hdeg :=
+      Polynomial.natDegree_le_of_dvd (HexPolyMathlib.toPolynomial_dvd hdvd) hFne
+    rwa [HexPolyMathlib.natDegree_toPolynomial,
+      HexPolyMathlib.natDegree_toPolynomial] at hdeg
+  have hbits : probe.reachableDegrees =
+      Hex.directDegreeBits (core.poly.degree?.getD 0)
+        (Hex.directFactorDegrees probe.data) :=
+    congrArg Hex.DirectPrimeProbe.reachableDegrees hrec
+  rw [hbits, directDegreeBits_getElem?_iff _ _ _ hle]
+  exact exists_subMultiset_directFactorDegrees_of_dvd hval hdvd
+
 /-! ## The retained trials -/
 
 /-- The complete proof-facing contract of a direct prime probe.  Consumers
