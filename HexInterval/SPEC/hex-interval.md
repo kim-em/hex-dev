@@ -1420,10 +1420,13 @@ does not depend on that representation.
 duplicate full address, including duplicates which happen to name the same
 declaration. The tactic selects by the payload entry's `(rule, role, schema)`;
 it never dispatches on an expression's mathematical function. A declaration
-name is elaboration data, not trusted evidence: a missing name, wrong type, or
-schema whose own replay key does not match the entry makes emitted application
-construction fail. Only the resulting well-typed theorem application enters
-the kernel.
+name is elaboration data, not trusted evidence. The direct assembler resolves
+the selected handle and uses that declaration in its emitted proof term. A
+missing name, wrong type, or schema whose own replay key does not match the
+entry makes application construction or transparent replay fail. Current
+safety comes from constant lookup, ordinary Lean typechecking, and the replay
+transition's exact key check; only the resulting well-typed theorem
+application enters the kernel.
 `ProofRegistry.Package` now joins each package's semantic schemas and emitter
 fragment. Joint assembly first uses the semantic registry check to establish
 exact package-for-package ownership and bidirectional coverage against the
