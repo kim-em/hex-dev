@@ -1656,11 +1656,9 @@ prove conservative addition of the two expressions, equality of the retained
 endpoints, and the contractor's proposed fact from the actual session history
 and arena. The compact canary gives the sine-shaped operation a private integer
 model solely to test that generic route; it is not a theorem about `Real.sin`
-and does not close the non-polynomial completion gate. A Mathlib companion
-proof for the caller's real target, followed by complete chronological replay,
-remains required.
+and by itself does not close the non-polynomial completion gate.
 
-The next non-polynomial vertical keeps this graph shape but replaces the
+The first non-polynomial vertical keeps this graph shape but replaces the
 integer model with actual `Real.sin` semantics and a tiny fact lattice
 containing whole, `[0,1]`, nonnegative, and nonpositive ranges. From caller
 facts `x ∈ [0,1]`, a scoped sine propagator proves `sin x ≥ 0`; an independently
@@ -1671,6 +1669,16 @@ registered negation propagator proves `-(sin x) ≤ 0`; and the retained
 multiple arbitrary packages, instantiation, a one-sided unbounded interval,
 equality transport, and final target closure before any Taylor or rational
 endpoint backend is optimized.
+
+That vertical now runs end to end at the two boundaries which this stage is
+intended to test. The live policy session performs matcher, instantiation,
+sine propagation, independent negation propagation, and equality transport,
+and complete chronological replay accepts the resulting original-target
+closure. Separately, the same package-owned semantic lemmas compose into the
+ordinary theorem above. These paths remain deliberately separate here: the
+runtime acceptance is not itself proof evidence. Quoting the accepted trace
+into transparent replay, or emitting the corresponding lemma applications,
+is the next proof-frontend obligation.
 
 ### Action kinds
 
