@@ -1653,6 +1653,18 @@ runs the arbitrary exponential propagator in each, and retains two target
 leaves. Separate guards show that one global step leaves both children pending,
 and that zero split or one-leaf budgets retain an explicitly blocked root.
 
+A second Mathlib-free runtime canary now makes the scheduling abstraction
+observable on live work. Its root splits one source; the side-aware policy
+fork sends only the left child to split a second source, while the right child
+immediately runs the arbitrary exponential propagator. After the nested split,
+the depth-first frontier is `[left-left, left-right, right]` and the
+breadth-first frontier is `[right, left-left, left-right]`; both complete to
+the same five-node retained tree. This catches an ignored `Side` argument and
+an accidental exchange of the scheduler's old and fresh queues. The second
+source is deliberately irrelevant to the exponential target, so this is a
+scheduling and accounting canary, not the still-required useful nested
+subdivision benchmark.
+
 This runtime tree contains no proof evidence. The separate generic
 `BranchProof` frontend now folds a settled retained tree bottom-up. It first
 binds every leaf and split result back to its exact scope, base program, and
