@@ -1246,9 +1246,13 @@ central case split over function keys. The transparent
 the exact prefix of the retained final node array selected by
 `event.newNodes`, keeps the operation table fixed, and obtains stability from
 one semantics-wide prefix-locality law. It covers both ordinary node appends and
-zero-node version-only instances. Integrating this arm into `TraceReplay` and
-comparing it with package-dispatched reconstruction remains experimental.
-Neither arm may introduce a central enumeration of functions.
+zero-node version-only instances. The direct proof emitter now uses this arm
+at every quoted instantiation event: it replays the owning package's
+conservative-extension theorem, lifts every retained fact proof through the
+semantics-wide stability law, and seeds exactly the event's fresh nodes with
+top. Integrating the same arm into runtime `TraceReplay` and comparing it with
+package-dispatched reconstruction remains experimental. Neither arm may
+introduce a central enumeration of functions.
 
 The private chronological cursor is indexed by its exact program version and
 program value. Its instance transition requires the originating action to
@@ -1314,15 +1318,20 @@ yet the general tactic. Its elaborator walks the arbitrary quoted event list
 and maintains an exact `(node, version)` evidence table. Rule and transport
 steps obtain their previous facts and ordered dependencies from this table,
 select their package schemas solely by replay address, and insert their proved
-result versions. Reordering negation before the sine result it consumes fails
-before replay. This event fold contains no sine, negation, or other function
-case. It seeds caller facts by checked position in the exact base-assumption
-list and seeds the instance event's fresh nodes with domain top after checking
-their lookup in the reified final program; named sine-specific previous-fact
-proofs are absent from the tactic term. The next frontend experiment must
-derive the base program, semantic bridge, and final target for an arbitrary
-caller expression, and reconstruct intermediate programs for later or
-repeated instantiations, instead of naming this canary's fixed contexts.
+result versions. The same fold accepts instantiation events at arbitrary
+chronology positions. It reconstructs each intermediate graph as the exact
+prefix of the reified final program, carries the independently established
+program version, transports the complete evidence table across stability, and
+then seeds the new-node suffix. A second zero-node instance can therefore
+advance the version after the sine and negation rules while preserving the
+negation evidence needed by a later equality transport. Reordering negation
+before the sine result it consumes, or claiming the wrong program version,
+fails before replay. This event fold contains no sine, negation, or other
+function case. It seeds caller facts by checked position in the exact
+base-assumption list; named sine-specific previous-fact proofs are absent from
+the tactic term. The next frontend experiment must derive the base program,
+semantic bridge, and final target for an arbitrary caller expression instead
+of naming this canary's fixed contexts.
 The fixed canary also requires a live session with an exact proof history of one
 instance, one equality, three fact events, and the expected interleaving before
 it reads historical values through `Engine.factAt?`. Those values are quoted
@@ -1334,9 +1343,9 @@ earlier step.
 The quotation walker consumes arbitrary `HistoryEvent` lists, requires
 sequential role-local indices, and rejects omitted or duplicated fact or
 instance records through final exhaustion. Proof emission then folds the
-resulting fact events through its evidence state. The present fold permits one
-leading instance event; supporting later or repeated instantiations requires
-updating the checked program and seeding each new node at the corresponding
+resulting fact and instance events through its dependent program/evidence
+state. Repeated and zero-node instantiations update the checked program,
+version, prefix, extension theorem, fact bounds, and fact proofs at the exact
 chronology position.
 
 A general direct emitter maintains a table from each already-established fact

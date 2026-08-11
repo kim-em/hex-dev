@@ -9,6 +9,7 @@ module
 public import Mathlib.Analysis.SpecialFunctions.Trigonometric.Basic
 public import Mathlib.Tactic.Linarith
 public import HexInterval.Experiment.ProofEmitter
+public import HexInterval.Experiment.GenericInstanceReconstruction
 public import HexInterval.Experiment.SineSign
 
 @[expose] public section
@@ -25,6 +26,7 @@ negation propagator, and generic equality transport.
 namespace Hex.Interval.Experiment.SineSign
 
 open Propagator SemanticReplay ChronologicalReplay ProofEmitter
+open GenericInstanceReconstruction
 
 /-! ## Real interpretation -/
 
@@ -212,6 +214,41 @@ def stable : StableStep semantics baseProgram extendedProgram :=
       change Contains fact.fact (oldValue fact.node) ↔
         Contains fact.fact (newValue fact.node)
       rw [agreement] }
+
+theorem nodeAtPrefix {before after : Program}
+    (stepPrefix : ProgramPrefix before after) (target : NodeId)
+    (instruction : Node)
+    (found : before.node? target = some instruction) :
+    after.node? target = some instruction := by
+  have within : target.index < before.nodes.size := by
+    by_contra outside
+    have notWithin : ¬target.index < before.nodes.size := by omega
+    simp [Program.node?, notWithin] at found
+  rw [Program.node?, stepPrefix.nodeAt target.index within]
+  exact found
+
+/-- Node-local real semantics is stable across every checked, fixed-operation
+program prefix.  This law is independent of the sine oddness instantiator and
+can therefore drive generic reconstruction of repeated instance events. -/
+def stableLaw : StableLaw semantics :=
+  { stable := by
+      intro before after _ _ stepPrefix _
+      refine
+        { programPrefix := stepPrefix
+          modelsBefore := ?_
+          holdsOld := ?_ }
+      · intro valuation model
+        change Models after valuation at model
+        change Models before valuation
+        exact
+          ⟨fun found => model.1 (nodeAtPrefix stepPrefix _ _ found),
+           fun found => model.2.1 (nodeAtPrefix stepPrefix _ _ found),
+           fun found => model.2.2.1 (nodeAtPrefix stepPrefix _ _ found),
+           fun found => model.2.2.2 (nodeAtPrefix stepPrefix _ _ found)⟩
+      · intro oldValue newValue fact _ _ _ agreement
+        change Contains fact.fact (oldValue fact.node) ↔
+          Contains fact.fact (newValue fact.node)
+        rw [agreement] }
 
 theorem oddnessEntails :
     semantics.EntailsEq extendedProgram [] (node 2) (node 4) := by
