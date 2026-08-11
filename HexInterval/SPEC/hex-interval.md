@@ -1392,9 +1392,10 @@ do not disable an otherwise applicable proof; later operation packages may
 also extend the registry after the target prefix. Removing that last prefix
 comparison requires package-compositional construction of the program
 semantics and generic proof emission for the recorded top/assumption seed
-recipes. `GoalClosure` now supplies those two proof bridges; running compiled
-search on the resulting dynamic checker input remains the next frontend
-experiment rather than an assumed capability.
+recipes. `GoalClosure` supplies those two proof bridges, and the dynamic
+exponential vertical below now starts compiled search on the resulting checker
+input. A general policy-driven target-closure loop remains future work rather
+than an assumed capability.
 
 The first package-composed semantics experiment removes a second fixed-graph
 assumption. An operation-meaning package supplies an opaque operation signature
@@ -1448,15 +1449,23 @@ actual reified goal. One variant closes from the live exponential replay; a
 second consumes a caller hypothesis through the ordered seed path. Neither
 uses `native_decide`.
 
-This experiment still uses the exponential canary's fixed compiled search
-trace when the target is not already a caller fact, so it presently requires
-the reified graph to be exactly that two-node target graph. The next step is to
-start the generic session from the reifier's `CheckerInput`, select the target
-node in that session, and feed its dynamically quoted trace to
-`ProofFrontend`. That removes the last exact-graph check and lets supported
-hypotheses append unrelated nodes without changing proof production. Key-
-resolved semantic model selection must land before operation packages may be
-reordered; array position is not a permanent package identity.
+The next experiment removes the exponential canary's fixed compiled trace.
+It starts `PolicySession` from the reifier's actual `CheckerInput`, selects an
+offer anchored at the actual target node, quotes that resulting session, and
+feeds it to `ProofFrontend` with the dynamic base program, facts, and reflexive
+extension proofs. The ordinary tactic theorem now accepts an unrelated
+supported exponential hypothesis which appends two nodes after the target,
+and it proves `0 ≤ exp (exp x)` from a three-node target graph. Neither case
+adds a nested-exponential or extra-hypothesis branch to goal closure, semantic
+model construction, dependency assembly, or proof replay.
+
+This vertical deliberately selects one target rule whose first improvement is
+version one. General search must instead let the policy run until target
+subsumption, contradiction, or a resource limit and then select the resolved
+target version from the retained proof table. The current operation registry
+also remains the fixed source/exponential pair. Key-resolved semantic model
+selection must land before operation packages may be reordered; array position
+is not a permanent package identity.
 
 The fixed canary also requires a live session with no dropped work and an exact
 proof history of one instance, one equality, three fact events, and the
