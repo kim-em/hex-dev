@@ -1188,13 +1188,22 @@ resolver directly. A request for a positive version absent from the checked
 prefix therefore fails before recipe dispatch; the conformance test mutates
 the previous pointer to the event's own version and observes this rejection.
 The fixed-program prefix has a private constructor. Its checked start exposes
-the seed resolver only at version zero, but the current experiment does not yet
-bind that resolver to `CheckerInput.initialFacts` or validate the initial array
-length. A successful rule event appends exactly its proved positive version,
-and replaying the same `(node, version)` is rejected as a duplicate. The
-stable-step transition described below lifts this prefix across an instance
-transition. Exact initial binding and the complete interleaved event driver
-remain open checker work.
+the seed resolver only at version zero, and a successful rule event appends
+exactly its proved positive version. Replaying the same `(node, version)` is
+rejected as a duplicate. The stable-step transition described below lifts this
+prefix across an instance transition. `TraceReplay` drives these transitions
+over the complete interleaved event history and checks exact exhaustion of
+every detailed history array.
+
+The executable engine retains one compact authoritative `chronology` array
+whose entries select either an exact fact-history index or an exact
+instance-history index. The role-specific arrays retain the detailed records;
+the compact array fixes their cross-order without copying them. Equalities
+become available at their owning instance event. Each `InstanceEvent` records
+both its proposal-order equality outputs and the exact fresh equality suffix,
+so replay can distinguish a reused identity from a newly introduced edge and
+reject a reference to a future edge. A complete fold consumes every chronology
+entry and every role-specific record exactly once.
 
 The corresponding equality-transport transition checks that the retained
 source is the opposite endpoint of the exact edge, replays the package-owned
@@ -1204,12 +1213,7 @@ same fact, and validates the target meet before returning the installed-fact
 theorem. Before using that law, replay checks that both endpoints exist in the
 current program and have the same domain. A canary drives this route with the
 equality produced by the arbitrary-function matcher; the generic engine still
-has no sine case. This is currently a stand-alone transition whose source,
-previous, equality edge, and equality-assumption proofs are supplied
-explicitly. It has not yet been connected to the private chronological cursor,
-so the canary does not establish equality-ID lookup, prefix-only source and
-assumption resolution, source-version chronology, or event ordering for
-equality transport.
+has no sine case.
 
 The instance transition checks that the retained event advances exactly one
 program version from its originating action, replays the package-owned
@@ -1229,14 +1233,24 @@ complementary to, the package theorem that every old model can be extended.
 The checker uses these laws to lift all previously proved fact versions into
 the enlarged program. It then seeds every genuinely new node at version zero
 with the fact-domain top theorem. The old resolver is consulted first, so an
-old version-zero proof is not replaced with top during lifting. Binding those
-old proofs to the caller's exact initial-fact array is still the responsibility
-of the unfinished driver. A conformance fold starts from the original graph,
-replays the actual arbitrary-function instantiator, lifts the fact prefix,
-seeds its two new expressions, and only then replays the dynamically installed
-propagator. It does not yet replay the retained equality-transport events or
-close the caller's target. This path depends on no rational representation and
-contains no generic function case.
+initial fact supplied by the caller is never silently replaced with top. A
+conformance fold starts from the original graph, replays the actual
+arbitrary-function instantiator, lifts the fact prefix, seeds its two new
+expressions, and only then replays the dynamically installed propagator. This
+path depends on no rational representation and contains no generic function
+case.
+
+The runtime `TraceReplay` experiment currently receives an `InstanceBuilder`
+which reconstructs the next concrete program and its `StableStep`. This is not
+yet the intended production ownership boundary: a single callback could hide a
+central case split over function keys. The transparent
+`GenericInstanceReconstruction` comparison arm reconstructs the next program as
+the exact prefix of the retained final node array selected by
+`event.newNodes`, keeps the operation table fixed, and obtains stability from
+one semantics-wide prefix-locality law. It covers both ordinary node appends and
+zero-node version-only instances. Integrating this arm into `TraceReplay` and
+comparing it with package-dispatched reconstruction remains experimental.
+Neither arm may introduce a central enumeration of functions.
 
 The private chronological cursor is indexed by its exact program version and
 program value. Its instance transition requires the originating action to
@@ -1245,13 +1259,43 @@ name the cursor's current version, the event to advance it by exactly one, and
 self-consistent list supplied by the event. It then composes the structural
 prefix, package-owned conservative-extension theorem, and stable fact prefix
 into the next cursor. Its rule transition similarly requires the event's
-program version to equal the cursor's. There is not yet a cursor transition for
-equality transport. The arbitrary-function canary verifies that a future
-generated node has no version-zero fact before instantiation, that it receives
-top afterwards, that an old supplied proof remains available, and that the
-dynamically installed contractor's positive fact version appears only after
-its rule event. Mutually consistent but cursor-stale versions and a mutated
-`newNodes` list fail closed.
+program version to equal the cursor's. The arbitrary-function canary verifies
+that a future generated node has no version-zero fact before instantiation,
+that it receives top afterwards, that an old base fact remains available, and
+that the dynamically installed contractor's positive fact version appears
+only after its rule event. Mutually consistent but cursor-stale versions and a
+mutated `newNodes` list fail closed.
+
+The complete checker starts through its canonical `TraceReplay.startInput`,
+which constructs one node-indexed assumption from every
+`CheckerInput.initialFacts` entry and checks that the array has the base-program
+node count. It does not accept an arbitrary version-zero resolver. Final
+closure first asks the fact-domain schema to prove that the resolved result is
+contained in the caller-selected target. It then uses the accumulated
+conservative extension and semantic stability evidence to transport that
+theorem back from the final extended graph to the caller's original graph.
+Both the target node and every base assumption must belong to the original
+program.
+
+Compiled search, package caches, and the private execution cursor may remain
+opaque, but a compiled `.isSome` or `#guard` result is not a Lean proof. Proof
+production therefore has two viable architectures which remain open to
+measurement: quote the plain trace into a transparent proof-only fold, or have
+the tactic emit direct applications of the generic rule, meet, equality,
+extension, and closure lemmas selected by that trace. In either design the
+kernel sees only ordinary theorem applications and transparent certificate
+checks; `native_decide` is not a bridge across opaque execution. The
+chronological conformance includes an ordinary theorem term following the
+second route through a sine-shaped contractor, an independent negation step,
+equality transport, and caller-target closure. Runtime `#guard`s remain useful
+mutation tests, but never satisfy the theorem-production gate by themselves.
+The transparent `ProofEmitter.RuleStep` canary implements the quoted-data
+route for an arbitrary package-owned fact schema: it checks the full replay
+address, frozen origin, payload link, program/version links, ordered inputs,
+and write authority, then composes the schema theorem with the domain meet.
+Its downstream conformance theorem proves replay success by ordinary `rfl`
+and projects `Evidence.proof`; the opaque engine is used only in a separate
+field-for-field quote regression.
 
 A Mathlib companion must instantiate those abstract schemas, decode each
 frozen entry independently of package cache state, and recheck the
@@ -1317,7 +1361,15 @@ structural patterns or more selective operation-key triggers remain
 alternatives to compare against the same reference stream.
 
 1. The solver produces an `Action` naming a program snapshot, concrete rule
-   application, anchor, declared input fact versions, effort, and action kind.
+   application, anchor, declared input fact versions, exact write authority,
+   effort, and action kind. Fact history retains that write list, so semantic
+   replay rejects a proposed fact outside the frozen action authority without
+   consulting mutable final state. In the current quoted-data canary this is an
+   internal-consistency and defense-in-depth check: authenticating that list
+   against the compiled application/registration tables requires either quoting
+   and reconstructing those tables or re-running application compilation. That
+   production choice remains open; package theorem replay is the soundness
+   boundary in either design.
 2. The external function-package registry executes the routed callback and
    owns its private cache; the Mathlib companion is responsible for semantic
    replay, not hot-loop dispatch.
@@ -1367,16 +1419,15 @@ Certificate replay must instead fold events in chronological order and
 resolve every positive-version dependency only from the already-validated
 prefix. This rejects future references and cyclic provenance even if a forged
 final history contains an entry with the requested `(node, version)`.
-The checked rule and instance cursor transitions, together with the
-stand-alone equality-transport transition, are pieces of that fold. The
-private prefix resolver supplies exact historical inputs to the rule path and
-lifts them across one checked program extension. The remaining implementation
-work includes binding version-zero base nodes to the exact initial-fact array,
-adding a cursor wrapper which looks up the retained equality edge, resolves
-its assumptions and transport source from the checked prefix, and checks the
-transport event's program version and successor version, validating and
-interleaving the complete retained event arrays, and finally deriving
-`CheckerInput.target` while rejecting incomplete traces.
+The checked rule, equality-transport, and instance transitions above are the
+semantic bodies of that fold. The private prefix resolver supplies their exact
+historical inputs and lifts them across checked program extensions.
+`TraceReplay` now consumes the authoritative cross-history order, validates
+equality availability, and requires exact fact, instance, equality, program,
+and version exhaustion. The remaining proof-frontend work is to quote that
+accepted plain data into a transparent complete fold or emit the corresponding
+lemma applications directly; the one-rule `ProofEmitter` canary establishes
+the kernel-facing pattern but is not yet a full tactic.
 
 Because `Semantics.holds` may inspect the complete program as well as the
 valuation, conservative model extension alone cannot transport old facts or
@@ -1384,11 +1435,10 @@ the caller's target across a program extension. The checked `StableStep`
 boundary therefore requires both model restriction and fact stability on old
 nodes. A production semantics adapter may derive this once from a global
 prefix-locality theorem; keeping it as evidence for the exact step leaves that
-choice open during experimentation. Conditional equality assumptions still
-require an unambiguous position in the fact-event chronology; before
-completing forward replay we must either unify structural and fact events or
-retain an exact fact cursor on each instance and equality event. These are
-proof obligations, not policy choices.
+choice open during experimentation. Conditional equality assumptions resolve
+from the same already-checked fact prefix at the owning instance's position in
+the authoritative chronology. They may not consult the final fact table or a
+later event. These are proof obligations, not policy choices.
 
 Whether freezing is an explicit second request after the solver identifies
 the improving subset, or eager allocation before the `Outcome`, remains an
@@ -1611,6 +1661,18 @@ model solely to test that generic route; it is not a theorem about `Real.sin`
 and does not close the non-polynomial completion gate. A Mathlib companion
 proof for the caller's real target, followed by complete chronological replay,
 remains required.
+
+The next non-polynomial vertical keeps this graph shape but replaces the
+integer model with actual `Real.sin` semantics and a tiny fact lattice
+containing whole, `[0,1]`, nonnegative, and nonpositive ranges. From caller
+facts `x ∈ [0,1]`, a scoped sine propagator proves `sin x ≥ 0`; an independently
+registered negation propagator proves `-(sin x) ≤ 0`; and the retained
+`Real.sin_neg` equality transports that fact to the original base expression
+`sin (-x)`. Successful replay must yield the ordinary theorem
+`0 ≤ x → x ≤ 1 → Real.sin (-x) ≤ 0`. This exercises a real transcendental,
+multiple arbitrary packages, instantiation, a one-sided unbounded interval,
+equality transport, and final target closure before any Taylor or rational
+endpoint backend is optimized.
 
 ### Action kinds
 

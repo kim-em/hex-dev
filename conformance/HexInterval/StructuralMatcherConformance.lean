@@ -425,6 +425,7 @@ structure Fingerprint where
   history : Nat
   instances : Nat
   instanceHistory : Nat
+  chronology : Nat
   queue : Nat
   queueHead : Nat
   suggestions : Nat
@@ -441,6 +442,7 @@ def fingerprint (state : Engine Rank) : Fingerprint :=
     history := state.history.size
     instances := state.instances.length
     instanceHistory := state.instanceHistory.size
+    chronology := state.chronology.size
     queue := state.queue.size
     queueHead := state.queueHead
     suggestions := state.suggestions.size

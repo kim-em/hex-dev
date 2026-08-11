@@ -378,6 +378,7 @@ def admitted? : Option (PolicySession.Session Rank) := do
         session.state.engine.bindings.size == 1 &&
         session.state.engine.applications.size == 2 &&
         session.state.engine.instanceHistory.size == 1 &&
+        session.state.engine.chronology == #[.instance 0] &&
         session.state.metrics.selectedInstances == 1 &&
         match session.state.engine.bindings[0]?,
             session.state.engine.equalities[0]?,
@@ -388,6 +389,7 @@ def admitted? : Option (PolicySession.Session Rank) := do
               equality.left == node 2 && equality.right == node 4 &&
               equality.payload == payload 1 && event.payload == payload 0 &&
               event.newNodes == [node 3, node 4] &&
+              event.newEqualities == [{ index := 0 }] &&
               event.newBindings == [binding]
         | _, _, _ => false
 
@@ -413,6 +415,7 @@ def contracted? : Option (PolicySession.Session Rank) := do
       session.state.engine.facts[3]? == some 1 &&
         session.state.engine.versions[3]? == some 1 &&
         session.state.engine.history.size == 1 &&
+        session.state.engine.chronology == #[.instance 0, .fact 0] &&
         session.arena.entries.size == 3 &&
         session.arena.bodyCells == 5 &&
         session.state.metrics.selectedInvocations == 2 &&
@@ -426,7 +429,8 @@ def contracted? : Option (PolicySession.Session Rank) := do
                   entry.body == [1, 73] &&
                   match event.cause with
                   | .rule action _ proof =>
-                      action.key == contractKey && proof == payload 2
+                      action.key == contractKey &&
+                        action.writes == [node 3] && proof == payload 2
                   | .transport _ _ => false
             | _, _ => false
 
@@ -579,6 +583,7 @@ def instanceSchema : PackedInstanceSchema functionSemantics :=
                 context.event.newApplications = [{ index := 1 }] ∧
                 context.event.generation = 1 ∧
                 context.event.equalities = [{ index := 0 }] ∧
+                context.event.newEqualities = [{ index := 0 }] ∧
                 context.event.payload = payload 0 then
             match certificate with
             | .oddness batchSize =>

@@ -664,6 +664,8 @@ structure Action where
   effort : Nat
   generation : Nat := 0
   inputs : List SeenVersion
+  /-- Exact write authority frozen from the concrete application. -/
+  writes : List NodeId := []
   /-- Engine-enumerated structural inputs for this exact matcher batch. -/
   structuralInputs : List StructuralInput := []
   /-- Frozen matcher epoch which produced `structuralInputs`. -/
@@ -1166,7 +1168,18 @@ structure InstanceEvent where
   /-- Equality outputs in proposal order, including links reused from an older
   instance and repeated references to the same canonical link. -/
   equalities : List EqualityId
+  /-- The fresh equality suffix appended by this event, in array order. -/
+  newEqualities : List EqualityId := []
   payload : PayloadId
+
+/-- One entry in the engine's authoritative cross-history order. The detailed
+records remain in their role-specific arrays; this compact log says exactly
+when each committed fact or program extension became available. Equalities are
+introduced by their owning instance event. -/
+inductive HistoryEvent where
+  | fact (index : Nat)
+  | instance (index : Nat)
+  deriving DecidableEq, Repr
 
 /-- Live state of the function-agnostic scheduler. -/
 structure Engine (Fact : Type) where
@@ -1211,6 +1224,8 @@ structure Engine (Fact : Type) where
   suggestions : Array RetainedSuggestion
   instances : List InstanceKey
   instanceHistory : Array InstanceEvent
+  /-- Authoritative interleaving of `history` and `instanceHistory`. -/
+  chronology : Array HistoryEvent
   equalities : Array EqualityEdge
   contradictory : Bool
   metrics : Metrics
@@ -1365,6 +1380,7 @@ def Engine.start (factDomain : FactDomain Fact) (program : Program) (rules : Arr
       suggestions := #[]
       instances := []
       instanceHistory := #[]
+      chronology := #[]
       equalities := #[]
       contradictory := false
       metrics := { queueInsertions := applications.size }
@@ -1516,6 +1532,7 @@ def actionFresh (state : Engine Fact) (action : Action) : Bool :=
       application.rule == action.rule && application.node == action.node &&
         application.kind == action.kind && application.generation == action.generation &&
         rule.key == action.key &&
+        action.writes == application.writes &&
         (!rule.watchesProgram || action.programVersion == state.programVersion) &&
         action.inputs.map (fun input => input.node) == application.watches &&
         current == action.inputs &&
@@ -1605,6 +1622,7 @@ def issueApplication (state : Engine Fact) (applicationId : ApplicationId)
       effort := application.effort
       generation := application.generation
       inputs
+      writes := application.writes
       structuralInputs
       matcherEpoch }
   let next : Engine Fact :=
@@ -2022,6 +2040,7 @@ def installImprovement (action : Action) (candidate : Candidate Fact)
             fact
             version
             cause := .rule action candidate.fact candidate.payload }
+        chronology := state.chronology.push (.fact state.history.size)
         contradictory := state.contradictory || contradiction
         metrics :=
           { state.metrics with
@@ -2214,6 +2233,7 @@ def installTransport (equality : EqualityId) (update : TransportUpdate Fact)
         fact := update.fact
         version
         cause := .transport equality update.source }
+    chronology := state.chronology.push (.fact state.history.size)
     contradictory := state.contradictory || update.contradiction
     metrics :=
       { state.metrics with
@@ -2629,6 +2649,10 @@ def admitRetained (state : Engine Fact)
                                                         (List.range addedScopes).map fun offset =>
                                                           { index :=
                                                               state.applications.size + offset }
+                                                      let freshEqualityIds : List EqualityId :=
+                                                        (List.range equalities.length).map fun offset =>
+                                                          { index :=
+                                                              state.equalities.size + offset }
                                                       let queued := state.queued ++
                                                         Array.replicate addedApplications false
                                                       let equalityQueued := state.equalityQueued ++
@@ -2672,7 +2696,12 @@ def admitRetained (state : Engine Fact)
                                                                 newApplications := freshScopeIds
                                                                 generation
                                                                 equalities := equalityIds
+                                                                newEqualities := freshEqualityIds
                                                                 payload := request.payload }
+                                                          chronology :=
+                                                            state.chronology.push
+                                                              (.instance
+                                                                state.instanceHistory.size)
                                                           equalities := allEqualities
                                                           metrics :=
                                                             { state.metrics with

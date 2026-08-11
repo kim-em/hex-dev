@@ -93,6 +93,16 @@ structure StableStep (semantics : Semantics Fact) (before after : Program) :
       (semantics.holds before oldValue fact ↔
         semantics.holds after newValue fact)
 
+/-- The caller-owned base assumptions are exactly the version-zero facts in
+`CheckerInput.initialFacts`.  Order and duplicate assumptions are semantically
+irrelevant, but no fact may be substituted or omitted. -/
+structure InitialContext (input : CheckerInput Fact)
+    (base : List (NodeFact Fact)) : Prop where
+  size : input.initialFacts.size = input.baseProgram.nodes.size
+  member :
+    ∀ node fact,
+      { node, fact } ∈ base ↔ input.initialFacts[node.index]? = some fact
+
 /-- Every node mentioned by a fact list belongs to the given program. -/
 def FactsWithin (program : Program) (facts : List (NodeFact Fact)) : Prop :=
   ∀ fact, fact ∈ facts -> fact.node.index < program.nodes.size
@@ -198,6 +208,34 @@ theorem prefixTrans {base before after : Program}
         (second.nodeAt index (Nat.lt_of_lt_of_le within first.nodeSize))
         (first.nodeAt index within) }
 
+namespace StableStep
+
+/-- Compose semantic stability across two append-only program steps. -/
+def trans {Fact : Type} {semantics : Semantics Fact}
+    {first middle last : Program}
+    (left : StableStep semantics first middle)
+    (right : StableStep semantics middle last) :
+    StableStep semantics first last :=
+  { programPrefix := prefixTrans left.programPrefix right.programPrefix
+    modelsBefore := fun valuation model =>
+      left.modelsBefore valuation (right.modelsBefore valuation model)
+    holdsOld := by
+      intro oldValue newValue fact within oldModel newModel agreement
+      let middleModel := right.modelsBefore newValue newModel
+      have oldMiddle :=
+        left.holdsOld oldValue newValue fact within oldModel middleModel agreement
+      have withinMiddle :=
+        Nat.lt_of_lt_of_le within left.programPrefix.nodeSize
+      have reflexive : semantics.AgreeOn middle newValue newValue := by
+        intro _ _
+        rfl
+      have middleLast :=
+        right.holdsOld newValue newValue fact withinMiddle middleModel newModel
+          reflexive
+      exact oldMiddle.trans middleLast }
+
+end StableStep
+
 /-- Transport a checked consequence across an append-only semantic step.
 Both the assumptions and conclusion must refer to old nodes. -/
 def liftEntails {Fact : Type} {semantics : Semantics Fact}
@@ -292,6 +330,7 @@ def replayRuleStep {Fact : Type} {semantics : Semantics Fact}
   | .rule action proposed payload => do
       if action.programVersion != event.programVersion ||
           event.previous.node != event.node ||
+          !action.writes.contains event.node ||
           !inputNodesMatch action assumptions then
         none
       else
@@ -529,6 +568,30 @@ opaque start {Fact : Type} {semantics : Semantics Fact}
   make (ProgramPrefix.refl input.baseProgram)
     (extendRefl semantics input.baseProgram) facts
 
+/-- Start from exactly the caller's `initialFacts`, rather than an arbitrary
+version-zero resolver.  The complete trace checker uses this entry point so
+its semantic assumptions cannot drift from `CheckerInput`. -/
+opaque startInput {Fact : Type} {semantics : Semantics Fact}
+    {input : CheckerInput Fact} {base : List (NodeFact Fact)}
+    (baseWithin : FactsWithin input.baseProgram base)
+    (initial : InitialContext input base) :
+    Cursor semantics input base 0 input.baseProgram :=
+  start
+    (Prefix.start baseWithin fun seen _ within =>
+      have initialWithin : seen.node.index < input.initialFacts.size := by
+        simpa [initial.size] using within
+      let fact := input.initialFacts[seen.node.index]
+      have member : { node := seen.node, fact } ∈ base :=
+        (initial.member seen.node fact).2 (by
+          simp [fact, initialWithin])
+      some
+        { fact
+          within
+          sound :=
+            { proof := by
+                intro valuation model baseHolds
+                exact baseHolds { node := seen.node, fact } member } })
+
 /-- Replay one package-owned expression instantiation at the current cursor.
 Besides package replay, this checks the cursor-relative versions and verifies
 that the event's claimed fresh nodes are exactly the appended program suffix.
@@ -680,5 +743,148 @@ def replayTransportStep {Fact : Type} {semantics : Semantics Fact}
               previousSound exactSource assumptionsSound)
       else
         none
+
+namespace Prefix
+
+/-- Replay and append one equality-transport fact event using only equality
+assumptions, the exact source version, and the target's previous version from
+the already-checked prefix. -/
+opaque replayTransport {Fact : Type} {semantics : Semantics Fact}
+    {program : Program} {base : List (NodeFact Fact)}
+    (checked : Prefix semantics program base)
+    (registry : SemanticReplay.Registry semantics)
+    (domain : FactDomainSchema semantics) (laws : Laws semantics)
+    (input : CheckerInput Fact) (arena : Arena)
+    (event : FactEvent Fact) (edge : EqualityEdge)
+    (basePrefix : ProgramPrefix input.baseProgram program) :
+    Option (Step semantics program base event) := do
+  if within : event.node.index < program.nodes.size then
+    if event.version != event.previous.version + 1 then none else pure ()
+    let current : SeenVersion := { node := event.node, version := event.version }
+    if (checked.resolve current).isSome then none else pure ()
+    match causeProof : event.cause with
+    | .rule _ _ _ => none
+    | .transport _ sourceSeen =>
+        let previous ← checked.resolve event.previous
+        let source ← checked.resolve sourceSeen
+        let assumptions ← resolveInputs checked.resolve edge.origin.inputs
+        if nodeProof : event.previous.node = event.node then
+          let previousSound :
+              Evidence
+                (semantics.Entails program base
+                  { node := event.node, fact := previous.fact }) := by
+            simpa [nodeProof] using previous.sound
+          let sourceSound :
+              Evidence
+                (semantics.Entails program base
+                  { node := sourceSeen.node, fact := source.fact }) :=
+            source.sound
+          let sound ←
+            replayTransportStep registry domain laws input arena event edge
+              program basePrefix base assumptions.facts previous.fact source.fact
+              previousSound (by simpa [causeProof] using sourceSound)
+              assumptions.sound
+          pure { next := checked.push event within sound, sound }
+        else
+          none
+  else
+    none
+
+end Prefix
+
+namespace Cursor
+
+/-- Replay one equality-transport event at the exact current program version
+and append its installed fact to the cursor-owned prefix. -/
+opaque replayTransport {Fact : Type} {semantics : Semantics Fact}
+    {input : CheckerInput Fact} {base : List (NodeFact Fact)}
+    {version : Nat} {program : Program}
+    (checked : Cursor semantics input base version program)
+    (registry : SemanticReplay.Registry semantics)
+    (domain : FactDomainSchema semantics) (laws : Laws semantics)
+    (arena : Arena) (event : FactEvent Fact) (edge : EqualityEdge) :
+    Option (Cursor semantics input base version program) := do
+  if event.programVersion != version then none else pure ()
+  let step ←
+    checked.facts.replayTransport registry domain laws input arena event edge
+      checked.basePrefix
+  pure (make checked.basePrefix checked.extension step.next)
+
+end Cursor
+
+/-- Turn one resolved result fact into the caller's exact target fact. Asking
+the fact-domain checker to prove `actual = actual ∩ target` is the generic
+subset check; no endpoint representation is inspected here. -/
+def closeTarget {Fact : Type} {semantics : Semantics Fact}
+    (domain : FactDomainSchema semantics) (input : CheckerInput Fact)
+    (program : Program) (base : List (NodeFact Fact))
+    (result : SeenVersion)
+    (resolved : Resolved semantics program base result) :
+    Option (Evidence (semantics.Entails program base input.target)) := do
+  if nodeProof : result.node = input.target.node then
+    let meet ←
+      domain.proveMeet program result.node resolved.fact input.target.fact
+        resolved.fact
+    pure
+      { proof := by
+          intro valuation model baseHolds
+          have actual := resolved.sound.proof valuation model baseHolds
+          have targetAtResult := (meet.proof valuation model).mp actual |>.2
+          simpa [nodeProof] using targetAtResult }
+  else
+    none
+
+/-- Pull a final-program target theorem back to the caller's original program.
+The package-owned conservative extension supplies a final model; semantic
+stability and agreement on old nodes transport the assumptions forward and
+the target backward. -/
+def closeBase {Fact : Type} {semantics : Semantics Fact}
+    {input : CheckerInput Fact} {base : List (NodeFact Fact)}
+    {program : Program}
+    (stable : StableStep semantics input.baseProgram program)
+    (baseWithin : FactsWithin input.baseProgram base)
+    (targetWithin : input.target.node.index < input.baseProgram.nodes.size)
+    (extension : Evidence (semantics.Extends input.baseProgram program))
+    (final : Evidence (semantics.Entails program base input.target)) :
+    Evidence (semantics.Entails input.baseProgram base input.target) :=
+  { proof := by
+      intro oldValue oldModel oldBase
+      obtain ⟨newValue, newModel, agreement⟩ :=
+        extension.proof oldValue oldModel
+      have newBase :
+          ∀ fact, fact ∈ base ->
+            semantics.holds program newValue fact := by
+        intro fact member
+        exact
+          (stable.holdsOld oldValue newValue fact
+            (baseWithin fact member) oldModel newModel agreement).mp
+            (oldBase fact member)
+      have newTarget := final.proof newValue newModel newBase
+      exact
+        (stable.holdsOld oldValue newValue input.target targetWithin oldModel
+          newModel agreement).mpr newTarget }
+
+namespace Cursor
+
+/-- Close the caller's original target from any exact result version exposed
+by the checked prefix. -/
+def close {Fact : Type} {semantics : Semantics Fact}
+    {input : CheckerInput Fact} {base : List (NodeFact Fact)}
+    {version : Nat} {program : Program}
+    (checked : Cursor semantics input base version program)
+    (domain : FactDomainSchema semantics)
+    (stable : StableStep semantics input.baseProgram program)
+    (baseWithin : FactsWithin input.baseProgram base)
+    (targetWithin : input.target.node.index < input.baseProgram.nodes.size)
+    (result : SeenVersion) :
+    Option
+      (Evidence
+        (semantics.Entails input.baseProgram base input.target)) := do
+  let resolved ← checked.facts.resolve result
+  let final ← closeTarget domain input program base result resolved
+  pure
+    (closeBase stable baseWithin targetWithin checked.extension final)
+
+end Cursor
 
 end Hex.Interval.Experiment.ChronologicalReplay
