@@ -2109,6 +2109,100 @@ Shrinking an input does not require a rule to discard all earlier work. Cache
 reuse is a performance feature only. Every returned fact still receives a new
 or reused sound justification.
 
+### Lessons from RealPaver
+
+RealPaver is the closest concrete reference architecture for the intended
+combination of arbitrary nonlinear contractors, adaptive consistency, and
+branching. Both the classic 0.4 manual and the current 1.1 C++ implementation
+are relevant. The current system separates a generic `Contractor` interface,
+contractor composition, dependency-driven propagation, strong-consistency
+contractors, variable selection, and search-space order. This validates the
+SPEC's separation between package rules, engine transitions, policy, and the
+branch layer, but its proof boundary must be strengthened substantially for
+Lean.
+
+The current RealPaver propagation loop initially queues every contractor. After
+one contractor mutates its box, it examines only variables in that contractor's
+scope; a sufficiently large relative width reduction wakes inactive dependent
+contractors. HC4 builds one `HC4Revise` contractor per constraint over a shared
+expression DAG. BC4 similarly combines an HC4 pass with variable-occurrence
+search. The solver can compose a base HC4, BC4, or affine propagator with ACID,
+polytope relaxation, and interval Newton. This is directly translatable as:
+
+- one checked application per package contractor and an explicit watch/write
+  scope;
+- a dependency worklist rather than whole-network rescans;
+- optional stronger actions represented as additional offers, not hard-coded
+  phases in the engine;
+- policy features for relative reduction, repeated occurrences, derivative
+  influence, and recent contractor productivity.
+
+RealPaver's propagation tolerance is not a theorem. It may treat a small width
+reduction as unchanged and therefore decline to wake dependents. HexInterval
+may use the same heuristic only in policy and completion accounting: every
+accepted fact is intersected exactly, while suppressing a logically possible
+wake either belongs to an explicitly approximate profile or marks the branch
+incomplete. The tolerance can never justify `noChange`, contradiction, or
+target subsumption in emitted proof.
+
+ACID is especially useful for the upgradeable policy design. It ranks variables
+by a derivative-based smear score, alternates learning and exploitation phases,
+measures contraction gains, and learns how many variable-level 3BCID
+contractors are worth applying. The transferable idea is not its particular
+average-gain formula. A policy-private state may learn an effort frontier from
+bounded observations and choose fewer expensive offers on later boxes. The
+engine must still own action identities, exact inputs, budgets, and proof
+payloads. Learned scores are untrusted scheduling data, and mutable ACID state
+must be branch-owned or keyed by the complete semantic snapshot before it is
+reused across siblings.
+
+RealPaver's variable 3BCID implementation first slices one variable, removes
+inconsistent outer slices using a nested contractor, and then applies CID to
+the remaining middle slices, returning the hull of surviving reductions. This
+maps to the `shave` action rather than a global solver split. Its Lean replay
+payload must enumerate a finite covering partition, give a checked
+contradiction for every discarded slice, give the retained contraction for
+every surviving slice, and prove the returned hull covers all survivors. A
+coarse `Empty` status from a nested run is insufficient. The number of slices,
+nested propagation work, and retained proofs are all charged to the one action.
+
+RealPaver keeps solver branching separate. Its variable selectors include
+round-robin, largest/smallest domain, mixed discrete/continuous selection,
+derivative-smear selection, and hybrids. Its pending-node containers include
+DFS, BFS, distant-most DFS, and hybrids which search depth-first until a
+solution and then resume from a best pending node by depth or perimeter. These
+are useful initial policies to reproduce behind `Controller`; none belongs in
+the proof-producing core. For proof goals, additional useful scores are
+distance to a closing fact, predicted proof size, and whether both children are
+likely to close rather than average contraction alone.
+
+The principal non-transferable part is RealPaver's `Proof` enum. Its
+`Empty`, `Maybe`, `Feasible`, and `Inner` values are operational certificates
+returned by C++ methods, not kernel proof terms with replayable provenance. In
+HexInterval each successful analogue needs a package theorem or checked
+certificate tied to the exact box, constraint, and program snapshot.
+`Maybe` maps naturally to an unproved search result. `Empty` needs the
+refutation schema described in the split section. Feasible/existence results
+from interval Newton need separate existence and uniqueness theorem schemas;
+they must not be conflated with universal interval bounds.
+
+The RealPaver examples give small, discriminating acceptance cases:
+
+- `y = x^2` and `y = 2 - x^2` on `[0,2]^2`, where independent local
+  contraction stalls but facet shaving isolates the intersection near `(1,1)`;
+- `x*x + y^2 = 2` on `x ∈ [-2,4]`, `y ∈ [-1,1]`, where repeated occurrence
+  defeats simple hull propagation and motivates box search;
+- `x₁*x₂*x₃ = 1`, `x₁+x₂+x₃ = 0`, and
+  `max (x₁+x₂) (x₂-x₃) ≤ 0` on `[-10,10]^3`, which distinguishes one-pass
+  weak 3B, iterated 3B, and a large paving;
+- the square-system examples where interval Newton dramatically strengthens
+  local propagation, including certification of isolated roots.
+
+These should be translated into exact rational/dyadic starting boxes and
+package-owned operations. Tests compare accepted facts, branch trees, and
+proof size across policies; they do not freeze RealPaver's floating-point
+endpoints or take its output as an oracle.
+
 ## Propagation state
 
 Each live branch contains:
@@ -3241,5 +3335,11 @@ local test profile. They do not enter this Mathlib-free benchmark target.
   [An interval arithmetic for robust error estimation](https://arxiv.org/abs/2107.05784).
 - [IBEX contractor documentation](https://ibex-team.github.io/ibex-lib/contractor.html)
   and [strategy documentation](https://ibex-team.github.io/ibex-lib/strategy.html).
+- Laurent Granvilliers and Frédéric Benhamou,
+  [Algorithm 852: RealPaver, an interval solver using constraint satisfaction techniques](https://doi.org/10.1145/1132973.1132980),
+  and the [RealPaver 0.4 user manual](https://manualzilla.com/doc/6912445/realpaver-user-s-manual).
+- Raphaël Chenouard and Laurent Granvilliers,
+  [RealPaver 1.1](https://doi.org/10.21105/joss.09331), with the
+  [current implementation](https://github.com/realpaver/realpaver).
 - [IntervalArithmetic.jl construction and exact input guidance](https://juliaintervals.github.io/IntervalArithmetic.jl/stable/manual/construction/).
 - [Boost.Interval policies and representation](https://www.boost.org/doc/libs/latest/libs/numeric/interval/doc/interval.htm).
