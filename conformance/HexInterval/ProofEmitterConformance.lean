@@ -278,14 +278,22 @@ def swappedSplit :=
 
 #guard swappedSplit.isNone
 
-def branchInitial : Array SplitFact := #[.yes, .all, .all]
+def branchBase : List (NodeFact SplitFact) :=
+  [{ node := node 1, fact := .yes }]
+
+def branchInitial : Array SplitFact := #[.yes, .yes, .all]
+
+def branchInput : CheckerInput SplitFact :=
+  { baseProgram := program
+    initialFacts := branchInitial
+    target := splitTarget }
 
 def inheritedSplitFact (observed : NodeId) (different : observed ≠ splitNode)
     (fact : SplitFact) (found : branchInitial[observed.index]? = some fact) :
     Evidence
-      (splitSemantics.Entails program [] { node := observed, fact }) :=
+      (splitSemantics.Entails program branchBase { node := observed, fact }) :=
   { proof := by
-      intro _ _ _
+      intro _ _ assumptions
       cases observed with
       | mk index =>
           cases index with
@@ -295,7 +303,7 @@ def inheritedSplitFact (observed : NodeId) (different : observed ≠ splitNode)
               | zero =>
                   simp [branchInitial] at found
                   subst fact
-                  trivial
+                  exact assumptions _ (by simp [branchBase, node])
               | succ index =>
                   cases index with
                   | zero =>
@@ -305,15 +313,15 @@ def inheritedSplitFact (observed : NodeId) (different : observed ≠ splitNode)
                   | succ index => simp [branchInitial] at found }
 
 def branchSeed :
-    ProofEmitter.BranchSeed splitSemantics program []
-      { node := splitNode, fact := .yes } branchInitial :=
-  ProofEmitter.BranchSeed.make { node := splitNode, fact := .yes } branchInitial
+    ProofEmitter.BranchSeed splitSemantics branchInput branchBase
+      { node := splitNode, fact := .yes } :=
+  ProofEmitter.BranchSeed.make branchInput { node := splitNode, fact := .yes }
     (by rfl) (by rfl) inheritedSplitFact
 
 /-- The split node is proved from the new child assumption. -/
 example :
     splitSemantics.Entails program
-      [{ node := splitNode, fact := .yes }]
+      ({ node := splitNode, fact := .yes } :: branchBase)
       { node := splitNode, fact := .yes } :=
   (branchSeed.sound splitNode .yes (by rfl)).proof
 
@@ -321,8 +329,8 @@ example :
 the larger child context. -/
 example :
     splitSemantics.Entails program
-      [{ node := splitNode, fact := .yes }]
-      { node := node 1, fact := .all } :=
-  (branchSeed.sound (node 1) .all (by rfl)).proof
+      ({ node := splitNode, fact := .yes } :: branchBase)
+      { node := node 1, fact := .yes } :=
+  (branchSeed.sound (node 1) .yes (by rfl)).proof
 
 end Hex.Interval.ProofEmitterConformance

@@ -524,29 +524,30 @@ The exact array is runtime data, but each entry must already have an ordinary
 proof under the child context.  Inherited parent consequences therefore cannot
 be silently reclassified as caller assumptions. -/
 structure BranchSeed {Fact : Type} (semantics : Semantics Fact)
-    (program : Program) (base : List (NodeFact Fact)) (side : NodeFact Fact)
-    (initial : Array Fact) where
-  size : initial.size = program.nodes.size
+    (input : CheckerInput Fact) (base : List (NodeFact Fact))
+    (side : NodeFact Fact) where
+  size : input.initialFacts.size = input.baseProgram.nodes.size
   sound :
     (node : NodeId) -> (fact : Fact) ->
-      initial[node.index]? = some fact ->
+      input.initialFacts[node.index]? = some fact ->
         Evidence
-          (semantics.Entails program (side :: base) { node, fact })
+          (semantics.Entails input.baseProgram (side :: base) { node, fact })
 
 namespace BranchSeed
 
 /-- Assemble a branch root from the one new case assumption and exact proofs
 of all unchanged parent facts. -/
 def make {Fact : Type} {semantics : Semantics Fact}
-    {program : Program} {base : List (NodeFact Fact)}
-    (side : NodeFact Fact) (initial : Array Fact)
-    (size : initial.size = program.nodes.size)
-    (sideAt : initial[side.node.index]? = some side.fact)
+    (input : CheckerInput Fact) {base : List (NodeFact Fact)}
+    (side : NodeFact Fact)
+    (size : input.initialFacts.size = input.baseProgram.nodes.size)
+    (sideAt : input.initialFacts[side.node.index]? = some side.fact)
     (inherited :
       (node : NodeId) -> node ≠ side.node -> (fact : Fact) ->
-        initial[node.index]? = some fact ->
-          Evidence (semantics.Entails program base { node, fact })) :
-    BranchSeed semantics program base side initial :=
+        input.initialFacts[node.index]? = some fact ->
+          Evidence
+            (semantics.Entails input.baseProgram base { node, fact })) :
+    BranchSeed semantics input base side :=
   { size
     sound := by
       intro node fact found
@@ -555,7 +556,7 @@ def make {Fact : Type} {semantics : Semantics Fact}
         have factEq : fact = side.fact :=
           Option.some.inj (found.symm.trans sideAt)
         subst fact
-        exact assumeSplit program base side
+        exact assumeSplit input.baseProgram base side
       else
         exact inheritSplit side { node, fact } (inherited node same fact found) }
 
