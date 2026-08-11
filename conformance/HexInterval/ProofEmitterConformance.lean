@@ -326,4 +326,59 @@ info: 'Hex.Interval.ProofEmitterConformance.splitCertifies' depends on axioms: [
 #guard_msgs in
 #print axioms splitCertifies
 
+def branchBase : List (NodeFact SplitFact) :=
+  [{ node := node 1, fact := .yes }]
+
+def branchInitial : Array SplitFact := #[.yes, .yes, .all]
+
+def branchInput : CheckerInput SplitFact :=
+  { baseProgram := program
+    initialFacts := branchInitial
+    target := splitTarget }
+
+def inheritedSplitFact (observed : NodeId) (different : observed ≠ splitNode)
+    (fact : SplitFact) (found : branchInitial[observed.index]? = some fact) :
+    Evidence
+      (splitSemantics.Entails program branchBase { node := observed, fact }) :=
+  { proof := by
+      intro _ _ assumptions
+      cases observed with
+      | mk index =>
+          cases index with
+          | zero => simp [splitNode, node] at different
+          | succ index =>
+              cases index with
+              | zero =>
+                  simp [branchInitial] at found
+                  subst fact
+                  exact assumptions _ (by simp [branchBase, node])
+              | succ index =>
+                  cases index with
+                  | zero =>
+                      simp [branchInitial] at found
+                      subst fact
+                      trivial
+                  | succ index => simp [branchInitial] at found }
+
+def branchSeed :
+    ProofEmitter.BranchSeed splitSemantics branchInput branchBase
+      { node := splitNode, fact := .yes } :=
+  ProofEmitter.BranchSeed.make branchInput { node := splitNode, fact := .yes }
+    (by rfl) (by rfl) inheritedSplitFact
+
+/-- The split node is proved from the new child assumption. -/
+example :
+    splitSemantics.Entails program
+      ({ node := splitNode, fact := .yes } :: branchBase)
+      { node := splitNode, fact := .yes } :=
+  (branchSeed.sound splitNode .yes (by rfl)).proof
+
+/-- An unchanged version-zero fact is inherited as a parent consequence under
+the larger child context. -/
+example :
+    splitSemantics.Entails program
+      ({ node := splitNode, fact := .yes } :: branchBase)
+      { node := node 1, fact := .yes } :=
+  (branchSeed.sound (node 1) .yes (by rfl)).proof
+
 end Hex.Interval.ProofEmitterConformance

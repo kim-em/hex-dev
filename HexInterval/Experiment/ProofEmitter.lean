@@ -501,6 +501,71 @@ def replaySplit {Fact Cut : Type} {semantics : Semantics Fact}
   let cover <- schema.proveCover program node parent cut left right
   pure (installSplit cover parentSound leftSound rightSound)
 
+/-! ## Provenance-safe branch roots -/
+
+/-- An established parent fact remains established after adding one child
+case assumption. -/
+def inheritSplit {Fact : Type} {semantics : Semantics Fact}
+    {program : Program} {base : List (NodeFact Fact)}
+    (side fact : NodeFact Fact)
+    (sound : Evidence (semantics.Entails program base fact)) :
+    Evidence (semantics.Entails program (side :: base) fact) :=
+  { proof := by
+      intro valuation model branchHolds
+      apply sound.proof valuation model
+      intro assumption member
+      exact branchHolds assumption (List.mem_cons_of_mem side member) }
+
+/-- The exact child case is available as the sole new branch assumption. -/
+def assumeSplit {Fact : Type} {semantics : Semantics Fact}
+    (program : Program) (base : List (NodeFact Fact)) (side : NodeFact Fact) :
+    Evidence (semantics.Entails program (side :: base) side) :=
+  assumed (by simp)
+
+/-- Proof table for every version-zero fact of a restarted child session.
+
+The exact array is runtime data, but each entry must already have an ordinary
+proof under the child context.  Inherited parent consequences therefore cannot
+be silently reclassified as caller assumptions. -/
+structure BranchSeed {Fact : Type} (semantics : Semantics Fact)
+    (input : CheckerInput Fact) (base : List (NodeFact Fact))
+    (side : NodeFact Fact) where
+  size : input.initialFacts.size = input.baseProgram.nodes.size
+  sound :
+    (node : NodeId) -> (fact : Fact) ->
+      input.initialFacts[node.index]? = some fact ->
+        Evidence
+          (semantics.Entails input.baseProgram (side :: base) { node, fact })
+
+namespace BranchSeed
+
+/-- Assemble a branch root from the one new case assumption and exact proofs
+of all unchanged parent facts. -/
+def make {Fact : Type} {semantics : Semantics Fact}
+    (input : CheckerInput Fact) {base : List (NodeFact Fact)}
+    (side : NodeFact Fact)
+    (size : input.initialFacts.size = input.baseProgram.nodes.size)
+    (sideAt : input.initialFacts[side.node.index]? = some side.fact)
+    (inherited :
+      (node : NodeId) -> node ≠ side.node -> (fact : Fact) ->
+        input.initialFacts[node.index]? = some fact ->
+          Evidence
+            (semantics.Entails input.baseProgram base { node, fact })) :
+    BranchSeed semantics input base side :=
+  { size
+    sound := by
+      intro node fact found
+      if same : node = side.node then
+        subst node
+        have factEq : fact = side.fact :=
+          Option.some.inj (found.symm.trans sideAt)
+        subst fact
+        exact assumeSplit input.baseProgram base side
+      else
+        exact inheritSplit side { node, fact } (inherited node same fact found) }
+
+end BranchSeed
+
 /-- Close a requested fact from a stronger established fact at the same node.
 The independent fact-domain theorem must prove that intersecting `actual` with
 `requested` leaves `actual` unchanged.  Runtime target detection is not used

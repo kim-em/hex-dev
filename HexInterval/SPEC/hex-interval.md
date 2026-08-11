@@ -1572,8 +1572,13 @@ classify every entry as either:
 It must not feed all inherited derived facts to `ProofEmitter.assumed`: that
 would silently promote consequences of the caller's context into new caller
 hypotheses. The existing caller `InitialContext` is consequently not the
-branch-root API. A `BranchSeed` experiment should bind the exact child
-`initialFacts` array to this mixed proof table before chronological replay.
+branch-root API. The transparent `ProofEmitter.BranchSeed` now binds the exact
+child `initialFacts` array and its length to this mixed proof table. Its checked
+builder obtains the split-node entry only from the new child assumption and
+requires an inherited parent theorem for every other array entry; the
+Mathlib-free canary checks both routes. The Meta frontend still needs to turn
+such a `BranchSeed` into version-zero `FactProof` records before chronological
+child replay.
 
 Branches may instantiate different auxiliary expressions. Each child replay
 therefore closes its target back to the program snapshot at the split before
