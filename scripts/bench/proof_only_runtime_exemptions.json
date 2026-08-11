@@ -43,26 +43,68 @@
   },
   {
     "path": "bench/HexBench/FactorService.lean",
-    "baseline_blob": "13d9e7609cc4e528012ea23e7dce7a05ad0a35f5",
-    "current_blob": "f203ec23f03eced0a8e22fe1eee53983fcacd6eb",
-    "reason": "Repoints the quadraticNormCertificate entry's three checked spans at the production definitions and adds its import; the factor entry the sweep measures is unchanged."
+    "baseline_blob": "afef6b3f1ad1acb89f2a8048faf695247c7ef48c",
+    "current_blob": "1063ee045056aabe060a319d7dbe48460e6fdd75",
+    "reason": "Adds the retainedPrimeProbe diagnostic entry and its counted mirror of the proposal peel run, plus one constructor and its dispatch cases. The factor entry the sweep measures is unchanged, and the new mirror is reachable only from --entry retainedPrimeProbe."
   },
   {
     "path": "lakefile.lean",
     "baseline_blob": "3e184b73696f5afa8fd6fa440e81a3aab420f90e",
-    "current_blob": "b1fb18d0b1bf435812a49cab0bb539ee558a1e2c",
+    "current_blob": "d5f73b03b50d1d57f6d578491705524df0128e0d",
+    "reason": "Registers interval experiment and conformance modules only; the factorization service target and its executable dependency graph are unchanged."
+  },
+  {
+    "path": "lakefile.lean",
+    "baseline_blob": "6dd80771ae2212333b2a9b925b52056e0037ff56",
+    "current_blob": "b69bc0f002d892a8a7da65a0a56a7cb7a6bf6e17",
+    "reason": "Registers the semantic-replay experiment and conformance module only; the factorization service target and its executable dependency graph are unchanged."
+  },
+  {
+    "path": "lakefile.lean",
+    "baseline_blob": "6dd80771ae2212333b2a9b925b52056e0037ff56",
+    "current_blob": "adea9d7e264460970cf90b816e88cb0ac780e1f6",
+    "reason": "Registers the semantic- and chronological-replay experiments and their conformance modules only; the factorization service target and its executable dependency graph are unchanged."
+  },
+  {
+    "path": "lakefile.lean",
+    "baseline_blob": "6dd80771ae2212333b2a9b925b52056e0037ff56",
+    "current_blob": "ae3728fb01b946482533d3f2e6a0145364b65f62",
     "reason": "Registers interval trace-replay, transparent proof-emission, and generic instance-reconstruction experiments and conformance modules only; the factorization service target and executable dependency graph are unchanged."
   },
   {
     "path": "lakefile.lean",
-    "baseline_blob": "3e184b73696f5afa8fd6fa440e81a3aab420f90e",
-    "current_blob": "933416fcea9de9d88f29608f3973311e63a3183f",
+    "baseline_blob": "6dd80771ae2212333b2a9b925b52056e0037ff56",
+    "current_blob": "6f2327c8965dce5bd3bc2a6ff19f660212433796",
     "reason": "Additionally registers the interval Real.sin experiment and its conformance module only; the factorization service target and executable dependency graph are unchanged."
   },
   {
     "path": "lakefile.lean",
-    "baseline_blob": "3e184b73696f5afa8fd6fa440e81a3aab420f90e",
-    "current_blob": "596c816a110c601d849cab30f272ccc2baad09e6",
+    "baseline_blob": "6dd80771ae2212333b2a9b925b52056e0037ff56",
+    "current_blob": "877972201e72cc7577826e8433f6ef926f639003",
     "reason": "Additionally registers the transparent complete Real.sin proof-emission conformance module only; the factorization service target and executable dependency graph are unchanged."
+  },
+  {
+    "path": "HexBerlekamp/FactorTacticTests.lean",
+    "baseline_blob": "4063e15934a89c671ac72d201fa60c2ef6feaf59",
+    "current_blob": "ac61dae5d09d966186661b1b85943b9fe0d91128",
+    "reason": "Names the four ZMod64.Bounds test fixtures and marks them private, so instance search cannot capture them into terms emitted in other modules. Test-module fixtures only; no factorizer definition and nothing in the benchmarked executable graph changes."
+  },
+  {
+    "path": "HexBerlekamp/Irreducibility.lean",
+    "baseline_blob": "ebc42b9f71233e1c470ac885c43fd012bd9116db",
+    "current_blob": "d3abc2673a4968020241b5891630a42086637bd3",
+    "reason": "Renames the public ZMod64.Bounds 2 proof instance without changing its body, priority, scope or declaration position. Elaboration may now refer to the new declaration name, but Bounds is a Prop and its instance arguments are erased, so generated factorization code and runtime behaviour are unchanged."
+  },
+  {
+    "path": "HexBerlekampZassenhaus/Classical/Obstruction.lean",
+    "baseline_blob": "c6503f384a5e97defd593b440430b5dcc1d6b19b",
+    "current_blob": "a10f8bfb2b9ceef8eb49029c10ffd3c4aa2670ac",
+    "reason": "Names the public ZMod64.Bounds obstructionPrime proof instance without changing its body, priority, scope or declaration position. Elaboration may now refer to the new declaration name, but Bounds is a Prop and its instance arguments are erased, so generated factorization code and runtime behaviour are unchanged."
+  },
+  {
+    "path": "HexBerlekampZassenhaus/Modular/PrimePlan.lean",
+    "baseline_blob": "80f9ea2b180066079f41d912b8f9137074a8676a",
+    "current_blob": "23dc012088d8513f1d8c1748c5367c9a33f4120c",
+    "reason": "Adds the DirectPrimeProbe.Trial proposition and the retained-probe theorems, and rederives directPrimePlan?_selected_p_le_500 from the all-probes version. Trial is Prop-valued and nothing on the ZPoly.factorize path mentions it; no executable definition changes."
   }
 ]

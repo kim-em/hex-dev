@@ -176,10 +176,14 @@ inductive DirectSweepResult (basis : LiftData) where
   | stopped (reason : DeclineReason) (budget : Nat)
       (stats : DirectCandidateStats) (completed : Array Nat)
 
-/-- Search complete unforced cardinality levels without materializing subsets. -/
+/-- Search complete unforced cardinality levels without materializing subsets.
+
+The whole cardinality schedule runs against one residual, so the one reduction
+of that residual is reused by every level. -/
 @[expose]
 def findDirectSubset
     (coreLc : Int) (target : ZPoly) (basis : LiftData)
+    (lift : LiftSupport basis) (image : TargetImage target)
     (support : List (DirectLiftedIndex basis)) :
     (levels : List Nat) → (budget : Nat) →
       (stats : DirectCandidateStats) →
@@ -191,12 +195,13 @@ def findDirectSubset
       if levelCost > budget then
         .stopped .subsetBudget budget stats completed
       else
-        match scanDirectSubsetLevel coreLc target basis support level with
+        match scanDirectSubsetLevel coreLc target basis lift image support
+            level with
         | .found split levelStats =>
             .found split (budget - levelStats.leaves)
               (stats.add levelStats) completed
         | .exhausted levelStats =>
-            findDirectSubset coreLc target basis support levels
+            findDirectSubset coreLc target basis lift image support levels
               (budget - levelStats.leaves) (stats.add levelStats)
               (completed.push level)
 
@@ -219,10 +224,18 @@ structure DirectPartialFactorization (basis : LiftData) where
 
 /-- Repeatedly peel exact factors from one lifted basis.  `levels` controls the
 first sweep; after every split, the smaller `repeatLevels` schedule is restarted
-on the exact quotient and complementary support. -/
+on the exact quotient and complementary support.
+
+`lift` is the traversal data of the basis, which every sweep shares.  The
+residual's image in `F_q[X]` is rebuilt here, once per nonunit residual reaching
+`findDirectSubset`: an exact split replaces the residual, so the previous
+reduction describes a polynomial the search has left behind.  The reduction is
+built before that call rather than inside it, so a residual whose schedule is
+empty or whose first level does not fit the budget still pays for one. -/
 @[expose]
 def peelDirectAux
-    (coreLc : Int) (basis : LiftData) (repeatLevels : List Nat) :
+    (coreLc : Int) (basis : LiftData) (lift : LiftSupport basis)
+    (repeatLevels : List Nat) :
     Nat → ZPoly → List (DirectLiftedIndex basis) → Array ZPoly → Nat →
       ClassicalStats → List Nat → DirectPartialFactorization basis
   | 0, target, support, factors, budget, stats, _ =>
@@ -241,7 +254,8 @@ def peelDirectAux
               remainingSubsetBudget := budget
               unforcedDecline := none } }
       else
-        match findDirectSubset coreLc target basis support levels budget {} #[] with
+        match findDirectSubset coreLc target basis lift (targetImage target)
+            support levels budget {} #[] with
         | .stopped reason budget' sweepStats completed =>
             { factors, residual := target, support, budget := budget'
               stats :=
@@ -272,14 +286,15 @@ def peelDirectAux
                 residualLiftedFactorCount := split.remaining.length
                 remainingSubsetBudget := budget'
                 unforcedDecline := none }
-            peelDirectAux coreLc basis repeatLevels fuel split.quotient
+            peelDirectAux coreLc basis lift repeatLevels fuel split.quotient
               split.remaining (factors.push split.candidate) budget' stats'
               repeatLevels
 
 /-- Retain every cheap exact factor exposed by one Hensel lift.  The first
 sweep admits support sizes up to `maxCardinality`; subsequent sweeps use the
 smaller `repeatCardinality` cap so progress is reused without repeatedly paying
-for the widest combinatorial level. -/
+for the widest combinatorial level.  The basis is lifted once, so its traversal
+data is prepared once here and shared by every sweep. -/
 @[expose]
 def peelDirect
     (coreLc : Int) (target : ZPoly) (basis : LiftData)
@@ -289,7 +304,7 @@ def peelDirect
   let support := List.finRange basis.liftedFactors.size
   let levels := (List.range maxCardinality).map (· + 1)
   let repeatLevels := (List.range repeatCardinality).map (· + 1)
-  peelDirectAux coreLc basis repeatLevels (support.length + 1) target support
-    #[] budget stats levels
+  peelDirectAux coreLc basis (liftSupport basis) repeatLevels
+    (support.length + 1) target support #[] budget stats levels
 
 end Hex
