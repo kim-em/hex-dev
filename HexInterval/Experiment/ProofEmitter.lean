@@ -19,11 +19,12 @@ opaque search, and a proof recovered from the evaluator would put that
 evaluator in the trusted base.
 
 The tactic boundary instead quotes the search output as plain data.  This
-module provides transparent replay for the three proof-producing event shapes
-a tactic must quote: expression instantiation, a rule fact, and equality
-transport.  Each transition selects a package-owned theorem schema supplied
-by the caller, checks its replay address and the event's structural links, and
-composes the resulting theorem with generic semantic lemmas.
+module provides transparent replay for the proof-producing transitions a
+tactic must quote: expression instantiation, rule facts, equality transport,
+branch joins, and contradiction leaves.  Each transition selects a
+package-owned theorem schema supplied by the caller, checks its replay address
+and structural links, and composes the resulting theorem with generic semantic
+lemmas.
 
 The schemas remain abstract: neither these quote types nor their replay
 functions enumerate operations or supported mathematical functions.  A
@@ -500,6 +501,48 @@ def replaySplit {Fact Cut : Type} {semantics : Semantics Fact}
     Option (Evidence (semantics.Entails program base target)) := do
   let cover <- schema.proveCover program node parent cut left right
   pure (installSplit cover parentSound leftSound rightSound)
+
+/-! ## Proof-producing contradiction leaves -/
+
+/-- Package-owned proof boundary for one contradictory fact.
+
+The runtime engine may mark a branch contradictory after installing a bottom
+fact, but that flag is search state rather than evidence.  A domain companion
+must independently prove that the exact established fact is impossible under
+the program semantics. -/
+structure RefuteSchema (semantics : Semantics Fact) where
+  proveFalse :
+    (program : Program) -> (node : NodeId) -> (fact : Fact) ->
+      Option
+        (Evidence
+          (forall valuation, semantics.models program valuation ->
+            semantics.holds program valuation { node, fact } -> False))
+
+/-- Eliminate one checked impossible fact into an arbitrary branch target. -/
+def installRefute {Fact : Type} {semantics : Semantics Fact}
+    {program : Program} {base : List (NodeFact Fact)}
+    {fact target : NodeFact Fact}
+    (impossible :
+      Evidence
+        (forall valuation, semantics.models program valuation ->
+          semantics.holds program valuation fact -> False))
+    (factSound : Evidence (semantics.Entails program base fact)) :
+    Evidence (semantics.Entails program base target) :=
+  { proof := by
+      intro valuation model baseHolds
+      exact False.elim
+        (impossible.proof valuation model
+          (factSound.proof valuation model baseHolds)) }
+
+/-- Transparently replay one contradiction leaf from the exact established
+fact.  No runtime contradiction flag enters the returned theorem. -/
+def replayRefute {Fact : Type} {semantics : Semantics Fact}
+    (schema : RefuteSchema semantics) (program : Program)
+    (base : List (NodeFact Fact)) (fact target : NodeFact Fact)
+    (factSound : Evidence (semantics.Entails program base fact)) :
+    Option (Evidence (semantics.Entails program base target)) := do
+  let impossible <- schema.proveFalse program fact.node fact.fact
+  pure (installRefute impossible factSound)
 
 /-! ## Provenance-safe branch roots -/
 

@@ -1643,20 +1643,25 @@ old target back. Nodes, equality edges, payloads, and positive fact versions
 created below one child are scoped to that child and cannot be resolved by its
 sibling. Parent program nodes and proof terms may be shared structurally.
 
-A runtime contradiction flag is also not a closed child. The proof layer needs
-a domain-owned refutation schema which turns an exact established bottom or
-inconsistent-bound fact into `False`; generic elimination can then produce the
-branch target. Until that schema exists, a contradictory child is useful for
-search diagnostics but cannot participate in a completed join. An unexplored,
-fuel-limited, resource-limited, incomplete, or merely saturated child likewise
-does not close the parent target.
+A runtime contradiction flag is also not a closed child. The generic
+`ProofEmitter.RefuteSchema` now requires a domain companion to turn one exact
+established bottom or inconsistent fact into `False`; `replayRefute` then uses
+ordinary elimination to produce the branch target. The real exponential
+adapter supplies the first `.empty` schema, and its conformance theorem closes
+an arbitrary target from the exact bottom assumption while rejecting `.all`
+by reduction. No engine flag or evaluator result enters that theorem.
+Connecting a retained contradictory fact and its emitted evidence to this
+schema inside the tree frontend remains open. An unexplored, fuel-limited,
+resource-limited, incomplete, or merely saturated child likewise does not
+close the parent target.
 
 The first branch-start layer also rebinds each completed child result to the
 exact prepared base program and initial fact array, then rechecks the retained
 target fact and version. Its ordinary two-target closure gate rejects a stopped,
 saturated, fuel-limited, malformed, or wrong-input child. It classifies a
 runtime contradiction separately but deliberately refuses to treat that flag
-as proof closure; the refutation schema described above must land first.
+as proof closure; the frontend must first resolve an established bottom fact
+and apply the refutation schema described above.
 
 The remaining tree manager should retain internal nodes recording validated
 plans and checked child facts, and leaves retaining either a target proof, a
