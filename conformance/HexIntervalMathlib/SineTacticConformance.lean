@@ -645,7 +645,6 @@ private meta def emitInstantiation (finalValue : Program) (finalProgram : Expr)
       baseWithin
       extension
       known }
-
 private meta def emitRule (program : Expr) (version : Nat)
     (table : SchemaTable Name) (known : List FactProof) (step : RuleStep Range) :
     MetaM (List FactProof) := do
@@ -866,6 +865,13 @@ example : True := by
         [ .instantiation quote.instantiation, .rule quote.sine,
           .rule quote.negation, .transport quote.transport ] table)).isSome then
       throwError "interval_sine test: absent generated nodes were accepted"
+    let wrongVersion : TransportStep Range :=
+      { quote.transport with
+        event := { quote.transport.event with programVersion := 2 } }
+    if (← observing? (emitTrace extendedProgram
+        [ .instantiation quote.instantiation, .rule quote.sine,
+          .rule quote.negation, .transport wrongVersion ] table)).isSome then
+      throwError "interval_sine test: stale transport program version was accepted"
     if (← observing? (emitQuote malformed table)).isSome then
       throwError "interval_sine test: malformed proof emission was accepted"
     let some missingTable := SchemaTable.build [negationEmit]
