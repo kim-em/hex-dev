@@ -5,6 +5,7 @@ Authors: Kim Morrison
 -/
 
 import HexIntervalMathlib.Experiment.ExpSign
+import HexInterval.Experiment.GoalFrontend
 import HexInterval.Experiment.ProofFrontend
 import Mathlib.Lean.Elab.Tactic.Meta
 
@@ -23,7 +24,91 @@ namespace Hex.IntervalMathlib.ExpSignConformance
 open Lean Elab Tactic Meta
 open Hex.Interval.Experiment
 open Propagator PolicySession SemanticReplay ChronologicalReplay ProofEmitter
-open Frontend FrontendEncoder ProofFrontend ProofRegistry ExpSign
+open Frontend FrontendEncoder ProofFrontend ProofRegistry GoalFrontend ExpSign
+
+/-! ## Extensible goal reification -/
+
+private def sourceSyntax : GoalFrontend.Package :=
+  { operation := sourceOperation
+    recognize := fun expression => do
+      let type ← inferType expression
+      pure <|
+        if expression.isFVar && type == mkConst ``Real then some [] else none }
+
+private def expSyntax : GoalFrontend.Package :=
+  { operation := expOperation
+    recognize := fun expression =>
+      let arguments := expression.getAppArgs
+      pure <|
+        if expression.getAppFn.constName? == some ``Real.exp &&
+            arguments.size == 1 then
+          some [arguments[0]!]
+        else
+          none }
+
+private def goalRegistry? : Except String GoalFrontend.Registry :=
+  GoalFrontend.Registry.build
+    { maxPackages := 4, maxNodes := 16, maxDepth := 8 }
+    #[sourceSyntax, expSyntax]
+
+private def isZero (expression : Expr) : Bool :=
+  let arguments := expression.getAppArgs
+  expression.getAppFn.constName? == some ``OfNat.ofNat &&
+    arguments.size == 3 &&
+      match arguments[1]! with
+      | .lit (.natVal 0) => true
+      | _ => false
+
+private def claimParser : GoalFrontend.Parser Bound :=
+  { parse := fun proposition => do
+      let arguments := proposition.getAppArgs
+      if proposition.getAppFn.constName? == some ``LE.le &&
+          arguments.size ≥ 2 then
+        let left := arguments[arguments.size - 2]!
+        let right := arguments[arguments.size - 1]!
+        let rightType ← inferType right
+        if isZero left && rightType == mkConst ``Real then
+          pure <| some
+            { expression := right
+              domain := real
+              fact := .nonnegative }
+        else
+          pure none
+      else
+        pure none }
+
+private meta def reifyGoal (target : Expr) : MetaM (GoalFrontend.Result Bound) := do
+  let registry ←
+    match goalRegistry? with
+    | .ok registry => pure registry
+    | .error message =>
+        throwError "interval_exp: invalid goal registry: {message}"
+  let context ← getLCtx
+  let mut hypotheses := []
+  for declaration in context do
+    unless declaration.isImplementationDetail do
+      hypotheses := hypotheses.concat
+        (← instantiateMVars declaration.type, mkFVar declaration.fvarId)
+  GoalFrontend.reify registry factDomain claimParser hypotheses target
+
+/-- The live proof fixture covers the target-reachable prefix. Additional
+caller facts may append nodes or narrow version-zero facts without changing
+the independent exponential proof. -/
+private def sameTargetGraph (input : CheckerInput Bound) : Bool :=
+  input.baseProgram.operations.toList.take
+      checkerInput.baseProgram.operations.size ==
+    checkerInput.baseProgram.operations.toList &&
+    input.baseProgram.nodes.toList.take checkerInput.baseProgram.nodes.size ==
+      checkerInput.baseProgram.nodes.toList &&
+    input.target == checkerInput.target
+
+private def spareOperation : Operation :=
+  { key := { name := "exp-sign.spare" }, inputs := [], output := real }
+
+#guard
+  sameTargetGraph
+    { checkerInput with
+      baseProgram := { program with operations := operations.push spareOperation } }
 
 def offer? (session : PolicySession.Session Bound)
     (accepts : Propagator.Policy.OfferView → Bool) :
@@ -146,6 +231,9 @@ private def expTarget (x : ℝ) : Prop :=
   0 ≤ Real.exp x
 
 private meta def proveExp (target : Expr) : MetaM Expr := do
+  let reified ← reifyGoal target
+  unless sameTargetGraph reified.input do
+    throwError "interval_exp: goal reification produced an unexpected target graph"
   let context ← getLCtx
   for declaration in context do
     unless declaration.isImplementationDetail do
@@ -180,8 +268,58 @@ syntax (name := intervalExpTac) "interval_exp" : tactic
 theorem tacticExp (x : ℝ) : 0 ≤ Real.exp x := by
   interval_exp
 
+theorem tacticExpExtra (x y : ℝ) (_hy : 0 ≤ Real.exp y) :
+    0 ≤ Real.exp x := by
+  interval_exp
+
+theorem tacticExpDuplicate (x : ℝ) (_h₁ _h₂ : 0 ≤ Real.exp x) :
+    0 ≤ Real.exp x := by
+  interval_exp
+
+theorem tacticExpNat (x : ℝ) (n : Nat) (_hn : 0 ≤ n) :
+    0 ≤ Real.exp x := by
+  interval_exp
+
+theorem tacticExpUnsupported (x y z : ℝ) (_h : 0 ≤ y * z) :
+    0 ≤ Real.exp x := by
+  interval_exp
+
 example (_x : ℝ) : True := by
   fail_if_success interval_exp
+  trivial
+
+set_option linter.unusedTactic false in
+set_option linter.unusedVariables false in
+example (x : ℝ) (h₁ h₂ : 0 ≤ Real.exp x) : True := by
+  run_tac
+    let context ← getLCtx
+    let mut target? := none
+    for declaration in context do
+      if (← claimParser.parse declaration.type).isSome then
+        target? := some declaration.type
+    let some target := target?
+      | throwError "interval_exp goal test: parsed hypothesis is missing"
+    let result ← reifyGoal target
+    let some seed := result.seeds[1]?
+      | throwError "interval_exp goal test: target seed is missing"
+    unless result.input.baseProgram.nodes.size == 2 &&
+        result.terms.size == 2 && seed.assumptions.length == 2 &&
+        result.input.initialFacts[1]? == some .nonnegative do
+      throwError "interval_exp goal test: CSE or assumption seeding failed"
+    let aliasPackage : GoalFrontend.Package :=
+      { expSyntax with
+        operation :=
+          { expOperation with key := { name := "exp-sign.exp-alias" } } }
+    let registry ←
+      match GoalFrontend.Registry.build
+          { maxPackages := 4, maxNodes := 16, maxDepth := 8 }
+          #[sourceSyntax, expSyntax, aliasPackage] with
+      | .ok registry => pure registry
+      | .error message =>
+          throwError "interval_exp goal test: invalid alias registry: {message}"
+    if (← observing? <|
+        GoalFrontend.reify registry factDomain claimParser [] target).isSome then
+      throwError "interval_exp goal test: ambiguous syntax packages were accepted"
   trivial
 
 set_option linter.unusedTactic false in

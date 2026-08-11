@@ -1348,8 +1348,9 @@ direct emission. The current replay applications and final closure remain
 indexed by the exact `CheckerInput.baseProgram` and target. The emitter also
 seeds each instance event's fresh nodes with domain top after checking their
 lookup in the reified final program. The real-sine tactic is now a client of
-this module rather than the owner of the fold, but it still names the canary's
-fixed base graph, base list, semantic bridge, and final target.
+this module rather than the owner of the fold. Its semantic bridge and final
+proof closure still name the canary's fixed base graph, declared base list,
+and target; the goal reifier below begins removing that specialization.
 
 A second live vertical validates this separation with `Real.exp`. Its
 Mathlib-free package uses a distinct three-element fact lattice, contributes
@@ -1359,9 +1360,40 @@ one replay schema. The same policy session, joint package registry,
 fact-polymorphic quotation, shared structural encoder, and generic evidence
 fold produce the ordinary theorem `0 ≤ Real.exp x`. Thus both a multi-package
 graph-growing sine proof and a single-rule exponential proof pass through the
-same frontend API without a function switch. The next frontend experiment
-must derive the fixed context pieces and the caller-input binding from an
-arbitrary caller expression.
+same frontend API without a function switch. The goal reifier below derives
+candidate context pieces from an arbitrary caller expression, but generic
+proof emission has not yet bound its recorded seed recipe to the frontend's
+declared base list.
+
+The first goal-reification experiment now derives the exponential canary's
+base program, version-zero fact array, and target fact from the actual Lean
+goal before running its compiled fixture. Expression packages contribute an
+opaque operation signature and a Lean-expression recognizer; the reifier has
+no switch for exponential, sine, or any other mathematical function. It tries
+all packages with the required output domain, requires a unique match and
+exact arity, and runs each recognizer without retaining changes to elaborator
+state. It recursively reifies arguments in signature order, performs exact
+expression/domain CSE, validates the resulting SSA program, and enforces
+package, node, and depth limits. A separate fact parser maps propositions to a
+term, domain, and fact, so interval endpoint and open/closed semantics do not
+enter graph construction. Parser calls likewise retain no elaborator-state
+changes. The target is reified first and is strict: an unsupported or
+over-budget target fails. A parsed hypothesis is optional information; if its
+term or a recursive dependency has no package or exceeds the remaining graph
+budget, that whole immutable attempt is discarded. Malformed arity and
+ambiguous package matches remain hard registry errors. All accepted hypotheses
+narrowing the same version-zero node remain in an ordered seed recipe; later
+hypotheses cannot overwrite an earlier proof dependency, while facts about
+other recognized expressions may append a suffix after the target graph. The
+exponential tactic currently requires only the target-reachable operation and
+node prefixes, and the target fact, to match its fixed semantic/proof fixture.
+Extra supported, duplicate, unsupported-real, and non-real hypotheses therefore
+do not disable an otherwise applicable proof; later operation packages may
+also extend the registry after the target prefix. Removing that last prefix
+comparison requires package-compositional construction of the program
+semantics and generic proof emission for the recorded top/assumption seed
+recipes; it remains the next frontend experiment rather than an assumed
+capability.
 
 The fixed canary also requires a live session with no dropped work and an exact
 proof history of one instance, one equality, three fact events, and the
