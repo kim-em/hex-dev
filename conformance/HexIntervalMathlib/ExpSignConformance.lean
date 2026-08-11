@@ -689,9 +689,21 @@ syntax (name := intervalExpModelTac) "interval_exp_model" : tactic
 theorem tacticExpModeled (x : ℝ) : 0 ≤ Real.exp x := by
   interval_exp_model
 
+/--
+info: 'Hex.IntervalMathlib.ExpSignConformance.tacticExpModeled' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms tacticExpModeled
+
 theorem tacticExpModeledSeed (x : ℝ) (_h : 0 ≤ Real.exp x) :
     0 ≤ Real.exp x := by
   interval_exp_model
+
+/--
+info: 'Hex.IntervalMathlib.ExpSignConformance.tacticExpModeledSeed' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms tacticExpModeledSeed
 
 theorem tacticExpModeledExtra (x y : ℝ) (_hy : 0 ≤ Real.exp y) :
     0 ≤ Real.exp x := by
