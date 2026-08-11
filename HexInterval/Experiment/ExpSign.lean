@@ -27,6 +27,7 @@ open Propagator PayloadArena
 inductive Bound where
   | all
   | nonnegative
+  | negative
   | empty
   deriving DecidableEq, Repr
 
@@ -37,16 +38,20 @@ def meet : Bound → Bound → Bound
   | .all, right => right
   | left, .all => left
   | .nonnegative, .nonnegative => .nonnegative
+  | .negative, .negative => .negative
+  | .nonnegative, .negative | .negative, .nonnegative => .empty
 
 def code : Bound → Nat
   | .all => 0
   | .nonnegative => 1
   | .empty => 2
+  | .negative => 3
 
 def ofCode? : Nat → Option Bound
   | 0 => some .all
   | 1 => some .nonnegative
   | 2 => some .empty
+  | 3 => some .negative
   | _ => none
 
 end Bound

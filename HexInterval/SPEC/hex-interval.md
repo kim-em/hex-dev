@@ -1353,7 +1353,7 @@ proof closure still name the canary's fixed base graph, declared base list,
 and target; the goal reifier below begins removing that specialization.
 
 A second live vertical validates this separation with `Real.exp`. Its
-Mathlib-free package uses a distinct three-element fact lattice, contributes
+Mathlib-free package uses a distinct four-element fact lattice, contributes
 one unconditional nonnegativity propagator, and has neither instantiation nor
 equality transport. Its Mathlib companion contributes only real semantics and
 one replay schema. The same policy session, joint package registry,
@@ -1583,12 +1583,23 @@ the complete child `CheckerInput`, rejects any mismatch in its program, fact
 array, or target, pins the full child assumption list, and turns the seed into
 exact version-zero `FactProof` records. Its branch entry point then uses the
 unchanged function-independent chronology fold. A live child session and a
-nonempty child event trace remain the next end-to-end branch experiment.
+nonempty child event trace were the next end-to-end branch experiment.
 The shared `emitSeeded` fold is a low-level Meta helper: its raw proof table
 must already refer to the context's quoted base program and child assumptions.
 The caller-root and branch-root entry points establish that precondition via
 `seedBase` and `seedBranch`; later replay use sites still typecheck every
 stored proof expression and fail closed on a mismatch.
+
+The first live branch canary uses the independent real exponential package.
+It partitions the source fact `.all` into `.nonnegative` and strict
+`.negative`, justified by `0 ≤ x ∨ x < 0`. Each exact child input is paired
+with a `BranchSeed`, starts an actual policy session, runs the exponential
+propagator, and retains one ordinary fact event. `emitBranch` replays both
+nonempty traces, `closeTarget` closes the same exponential target in each
+child context, and `replaySplit` joins them into the caller theorem. The
+assigned tactic term is built from those two live child results. This canary
+does not yet claim that an executable `SplitPlan` constructed the child inputs;
+connecting policy selection to branch creation remains branch-manager work.
 
 Branches may instantiate different auxiliary expressions. Each child replay
 therefore closes its target back to the program snapshot at the split before
@@ -1628,10 +1639,13 @@ Several operational choices deliberately remain experimental:
   schema generic, or replace it with a registry-resolved opaque landmark.
 
 These choices may change performance and certificate size, but not the
-coverage-and-two-proofs contract. Acceptance tests for the branch layer must
-include a useful two-sided closure, one contradiction leaf plus one target
-leaf, a nested split, a child-local instantiation, a sibling-reference attack,
-a non-interior repeated split, and fuel exhaustion with no theorem emitted.
+coverage-and-two-proofs contract. The real exponential canary supplies the
+first two-sided live execution and proof join, but exponential nonnegativity
+is unconditional: neither child target proof currently needs its split
+assumption. Remaining acceptance tests include a useful branch-dependent
+two-sided closure, one contradiction leaf plus one target leaf, a nested split,
+a child-local instantiation, a sibling-reference attack, a non-interior
+repeated split, and fuel exhaustion with no theorem emitted.
 
 ### Proof-producing frontend
 
