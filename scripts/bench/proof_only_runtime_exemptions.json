@@ -96,6 +96,12 @@
     "reason": "Additionally registers joint interval semantic/emitter package assembly and its conformance module only; the factorization service target and executable dependency graph are unchanged."
   },
   {
+    "path": "lakefile.lean",
+    "baseline_blob": "6dd80771ae2212333b2a9b925b52056e0037ff56",
+    "current_blob": "ad632dd2368f1771255d0831dd6e1d4981b2a155",
+    "reason": "Additionally registers the Mathlib-free generic interval chronology quotation and proof-frontend modules only; the factorization service target and executable dependency graph are unchanged."
+  },
+  {
     "path": "HexBerlekamp/FactorTacticTests.lean",
     "baseline_blob": "4063e15934a89c671ac72d201fa60c2ef6feaf59",
     "current_blob": "ac61dae5d09d966186661b1b85943b9fe0d91128",

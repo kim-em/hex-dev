@@ -311,6 +311,8 @@ lean_lib HexIntervalExperiment where
     `HexInterval.Experiment.GenericInstanceReconstruction,
     `HexInterval.Experiment.ProofEmitter,
     `HexInterval.Experiment.ProofRegistry,
+    `HexInterval.Experiment.Frontend,
+    `HexInterval.Experiment.ProofFrontend,
     `HexInterval.Experiment.TraceReplay,
     `HexInterval.Experiment.SineSign]
 

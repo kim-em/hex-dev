@@ -5,6 +5,7 @@ Authors: Kim Morrison
 -/
 
 import HexIntervalMathlib.SineProofConformance
+import HexInterval.Experiment.ProofFrontend
 import Mathlib.Lean.Elab.Tactic.Meta
 
 /-!
@@ -27,6 +28,7 @@ namespace Hex.IntervalMathlib.SineTacticConformance
 open Lean Elab Tactic Meta
 open Hex.Interval.Experiment
 open Propagator PayloadArena SemanticReplay ChronologicalReplay ProofEmitter
+open Frontend ProofFrontend
 open SineSign SineSignConformance SineProofConformance
 
 private structure LiveQuotes where
@@ -34,16 +36,6 @@ private structure LiveQuotes where
   sine : RuleStep Range
   negation : RuleStep Range
   transport : TransportStep Range
-
-/-- Proof-producing event shapes extracted from arbitrary engine chronology. -/
-private inductive LiveEvent where
-  | instantiation (quote : InstanceQuote)
-  | rule (step : RuleStep Range)
-  | transport (step : TransportStep Range)
-
-private structure LiveTrace where
-  program : Program
-  events : List LiveEvent
 
 /-! ## A second-instantiation canary -/
 
@@ -105,70 +97,8 @@ private def noopEmit : EmitPackage Name :=
       [{ key := noopSchema.key
          handle := ``noopSchema }] }
 
-private def resolveFacts? (engine : Engine Range) (inputs : List SeenVersion) :
-    Option (List (NodeFact Range)) :=
-  inputs.mapM fun input => do
-    let fact <- engine.factAt? input
-    pure { node := input.node, fact }
-
-private def ruleStep? (engine : Engine Range) (arena : Arena)
-    (event : FactEvent Range) : Option (RuleStep Range) := do
-  let .rule action _ payload := event.cause | none
-  let entry <- arena.entry? payload .fact
-  let assumptions <- resolveFacts? engine action.inputs
-  let previous <- engine.factAt? event.previous
-  pure { event, payload, entry, assumptions, previous }
-
-private def transportStep? (engine : Engine Range) (arena : Arena)
-    (event : FactEvent Range) : Option (TransportStep Range) := do
-  let .transport equality source := event.cause | none
-  let edge <- engine.equalities[equality.index]?
-  let entry <- arena.entry? edge.payload .equality
-  let assumptions <- resolveFacts? engine edge.origin.inputs
-  let previous <- engine.factAt? event.previous
-  let sourceFact <- engine.factAt? source
-  pure
-    { event
-      equality
-      edge
-      payload := edge.payload
-      entry
-      assumptions
-      previous
-      sourceFact }
-
-/-- Walk the engine's cross-history chronology once, requiring exact
-sequential indices and complete fact/instance exhaustion. -/
-private def quoteChronology? (engine : Engine Range) (arena : Arena) :
-    List HistoryEvent -> Nat -> Nat -> Option (List LiveEvent)
-  | [], nextFact, nextInstance =>
-      if nextFact == engine.history.size &&
-          nextInstance == engine.instanceHistory.size then
-        some []
-      else
-        none
-  | .instance index :: rest, nextFact, nextInstance => do
-      if index != nextInstance then none else pure ()
-      let event <- engine.instanceHistory[index]?
-      let entry <- arena.entry? event.payload .instance
-      let tail <- quoteChronology? engine arena rest nextFact (nextInstance + 1)
-      pure
-        (.instantiation
-          { event
-            payload := event.payload
-            entry } :: tail)
-  | .fact index :: rest, nextFact, nextInstance => do
-      if index != nextFact then none else pure ()
-      let event <- engine.history[index]?
-      let head <-
-        match event.cause with
-        | .rule _ _ _ => (ruleStep? engine arena event).map .rule
-        | .transport _ _ => (transportStep? engine arena event).map .transport
-      let tail <- quoteChronology? engine arena rest (nextFact + 1) nextInstance
-      pure (head :: tail)
-
 /-- Extract the complete proof-event list from the actual returned state. -/
-private def liveTrace? : Option LiveTrace :=
+private def liveTrace? : Option (Frontend.Trace Range) :=
   match transported? with
   | none => none
   | some session => do
@@ -177,9 +107,7 @@ private def liveTrace? : Option LiveTrace :=
         none
       else
         pure ()
-      let events <-
-        quoteChronology? engine session.arena engine.chronology.toList 0 0
-      pure { program := engine.program, events }
+      Frontend.trace? engine session.arena
 
 /-- Specialize the generic quote to the literal-regression fixture. -/
 private def liveQuotes? : Option LiveQuotes := do
@@ -191,10 +119,11 @@ private def liveQuotes? : Option LiveQuotes := do
 #guard
   transported?.any fun session =>
     let engine := session.state.engine
-    (quoteChronology? engine session.arena engine.chronology.toList 0 0).isSome &&
-      (quoteChronology? engine session.arena
+    (Frontend.quote? engine session.arena
+      engine.chronology.toList 0 0).isSome &&
+      (Frontend.quote? engine session.arena
         [.instance 0, .fact 0, .fact 0, .fact 2] 0 0).isNone &&
-      (quoteChronology? engine session.arena
+      (Frontend.quote? engine session.arena
         [.instance 0, .fact 0, .fact 1] 0 0).isNone
 
 private def listExpr (type : Expr) (items : List Expr) : Expr :=
@@ -446,10 +375,6 @@ private meta def checkQuoteData (quote : LiveQuotes) : MetaM Unit := do
   checkQuote "equality transport" (← transportStepExpr quote.transport)
     (mkConst ``transportStep)
 
-private meta def getReplay (result : Expr) : MetaM Expr := do
-  let success <- mkAppM ``Eq.refl #[mkConst ``Bool.true]
-  mkAppM ``Option.get #[result, success]
-
 /-- Specialize generic caller-assumption seeding to this semantics adapter;
 the elaborator still supplies the program, base list, index, and fact. -/
 private def seedAssumed (program : Program) (base : List (NodeFact Range))
@@ -457,304 +382,47 @@ private def seedAssumed (program : Program) (base : List (NodeFact Range))
     Evidence (semantics.Entails program base fact) :=
   ProofEmitter.assumedAt program base index fact found
 
-private theorem checkedProgram (program : Program)
-    (checked : program.check = true) :
-    program.check = true :=
-  checked
-
-/-- One kernel proof already available at an exact engine fact version. -/
-private structure FactProof where
-  seen : SeenVersion
-  fact : Range
-  within : Expr
-  proof : Expr
-
-private def findFact? (known : List FactProof) (seen : SeenVersion)
-    (fact : Range) : Option FactProof := do
-  let item <- known.find? fun item => item.seen == seen
-  if item.fact == fact then some item else none
-
-private def findProof? (known : List FactProof) (seen : SeenVersion)
-    (fact : Range) : Option Expr :=
-  (findFact? known seen fact).map (fun item => item.proof)
-
-private def insertProof (known : List FactProof) (item : FactProof) :
-    MetaM (List FactProof) := do
-  if known.any fun old => old.seen == item.seen then
-    throwError "interval_sine: duplicate proof for a fact version"
-  pure (item :: known)
-
-/-- Assemble dependency evidence in the action's exact input order. -/
-private meta def inputProofs (program : Expr) (known : List FactProof) :
-    List SeenVersion -> List (NodeFact Range) -> MetaM Expr
-  | [], [] =>
-      mkAppM ``EntailsList.empty
-        #[mkConst ``semantics, program, mkConst ``baseFacts]
-  | seen :: seenTail, fact :: factTail => do
-      unless seen.node == fact.node do
-        throwError "interval_sine: input node does not match resolved fact"
-      let some head := findProof? known seen fact.fact
-        | throwError "interval_sine: input fact has not been proved yet"
-      let tail <- inputProofs program known seenTail factTail
-      mkAppM ``EntailsList.cons #[head, tail]
-  | _, _ =>
-      throwError "interval_sine: input versions and resolved facts differ in length"
-
-private meta def soundInputs (program : Expr) (known : List FactProof)
-    (seen : List SeenVersion) (facts : List (NodeFact Range)) : MetaM Expr := do
-  let proofs <- inputProofs program known seen facts
-  mkAppM ``EntailsList.sound #[proofs]
-
-private meta def emitInstance (version : Nat) (before after : Expr)
-    (basePrefix stepPrefix sameOperations : Expr) (quote : InstanceQuote)
-    (previous : Expr) (table : SchemaTable Name) : MetaM Expr := do
-  let schema <- schemaName table "instantiation" quote.entry
-  let result <-
-    mkAppM ``ProofEmitter.replayInstance
-      #[mkConst schema,
-        mkConst ``checkerInput,
-        mkNatLit version,
-        before,
-        after,
-        basePrefix,
-        stepPrefix,
-        sameOperations,
-        ← instanceQuoteExpr quote,
-        previous]
-  getReplay result
-
-/-- Derive caller-owned version-zero facts at the current program prefix. -/
-private meta def seedBase (program : Expr) (basePrefix : Expr) :
-    MetaM (List FactProof) := do
-  let mut known := []
-  let baseWithinProgram <-
-    mkAppM ``ProofEmitter.liftFacts
-      #[basePrefix, mkConst ``baseWithin]
-  for (fact, index) in baseFacts.zipIdx do
-    let factTerm <- nodeFactExpr fact
-    let someFact <- mkAppM ``Option.some #[factTerm]
-    let found <- mkAppM ``Eq.refl #[someFact]
-    let proof <-
-      mkAppM ``seedAssumed
-        #[program, mkConst ``baseFacts, mkNatLit index, factTerm, found]
-    let within <-
-      mkAppM ``ProofEmitter.factWithinAt
-        #[program, mkConst ``baseFacts, baseWithinProgram,
-          mkNatLit index, factTerm, found]
-    known <- insertProof known
-      { seen := { node := fact.node, version := 0 }
-        fact := fact.fact
-        within
-        proof }
-  pure known
-
-/-- Add domain-top proofs for exactly one instantiation's fresh node suffix. -/
-private meta def seedNew (programValue : Program) (program : Expr)
-    (newNodes : List NodeId) (known : List FactProof) :
-    MetaM (List FactProof) := do
-  let mut known := known
-  for node in newNodes do
-    let some instruction := programValue.node? node
-      | throwError "interval_sine: fresh node is absent from the final program"
-    let nodeTerm <- nodeExpr node
-    let instructionTerm <- instructionExpr instruction
-    let someInstruction <- mkAppM ``Option.some #[instructionTerm]
-    let found <- mkAppM ``Eq.refl #[someInstruction]
-    let proof <-
-      mkAppM ``ProofEmitter.topFact
-        #[mkConst ``rangeSchema, program, mkConst ``baseFacts,
-          nodeTerm, instructionTerm, found]
-    let within <-
-      mkAppM ``ProofEmitter.nodeWithin
-        #[program, nodeTerm, instructionTerm, found]
-    known <- insertProof known
-      { seen := { node, version := 0 }
-        fact := rangeSchema.top instruction.domain
-        within
-        proof }
-  pure known
-
-/-- Dependent proof state carried through the quoted chronology.  `Expr`
-fields are indexed by `program` in the kernel even though the elaborator keeps
-their relationships dynamically. -/
-private structure EmitState where
-  version : Nat
-  programValue : Program
-  program : Expr
-  snapshot : Expr
-  basePrefix : Expr
-  baseWithin : Expr
-  extension : Expr
-  known : List FactProof
-
-private meta def initialSnapshot (finalProgram : Expr) : MetaM Expr := do
-  let checked <- mkAppM ``Eq.refl #[mkConst ``Bool.true]
-  let finalChecked <- mkAppM ``checkedProgram #[finalProgram, checked]
-  let baseChecked <-
-    mkAppM ``checkedProgram #[mkConst ``baseProgram, checked]
-  mkAppM ``GenericInstanceReconstruction.Snapshot.mk
-    #[finalChecked, baseChecked, mkConst ``programPrefix,
-      mkConst ``sameOperations]
-
-private meta def liftKnown (stable stepPrefix baseWithin : Expr)
-    (known : List FactProof) : MetaM (List FactProof) :=
-  known.mapM fun item => do
-    let proof <-
-      mkAppM ``ProofEmitter.liftFact
-        #[stable, baseWithin, item.proof, item.within]
-    let within <-
-      mkAppM ``ProofEmitter.liftNode #[stepPrefix, item.within]
-    pure { item with within, proof }
-
-private meta def emitInstantiation (finalValue : Program) (finalProgram : Expr)
-    (table : SchemaTable Name) (state : EmitState) (quote : InstanceQuote) :
-    MetaM EmitState := do
-  let event <- instanceEventExpr quote.event
-  let reconstruction <-
-    mkAppM ``GenericInstanceReconstruction.reconstruct?
-      #[mkConst ``stableLaw, finalProgram, state.program, state.snapshot, event]
-  let step <- getReplay reconstruction
-  let after <-
-    mkAppM ``GenericInstanceReconstruction.Step.after #[step]
-  let stepPrefix <-
-    mkAppM ``GenericInstanceReconstruction.Step.stepPrefix #[step]
-  let stable <-
-    mkAppM ``GenericInstanceReconstruction.Step.stable #[step]
-  let sameOperations <-
-    mkAppM ``GenericInstanceReconstruction.Step.sameOperations #[step]
-  let nextSnapshot <-
-    mkAppM ``GenericInstanceReconstruction.Step.next #[step]
-  let extension <-
-    emitInstance state.version state.program after state.basePrefix stepPrefix
-      sameOperations quote state.extension table
-  let known <- liftKnown stable stepPrefix state.baseWithin state.known
-  let baseWithin <-
-    mkAppM ``ProofEmitter.liftFacts #[stepPrefix, state.baseWithin]
-  let basePrefix <-
-    mkAppM ``ChronologicalReplay.prefixTrans #[state.basePrefix, stepPrefix]
-  let nextSize := state.programValue.nodes.size + quote.event.newNodes.length
-  let afterValue :=
-    GenericInstanceReconstruction.programPrefix finalValue nextSize
-  let known <- seedNew afterValue after quote.event.newNodes known
-  pure
-    { version := quote.event.programVersion
-      programValue := afterValue
-      program := after
-      snapshot := nextSnapshot
-      basePrefix
-      baseWithin
-      extension
-      known }
-
-private meta def emitRule (program basePrefix : Expr) (version : Nat)
-    (table : SchemaTable Name) (known : List FactProof) (step : RuleStep Range) :
-    MetaM (List FactProof) := do
-  unless step.event.programVersion == version do
-    throwError "interval_sine: rule event has the wrong program version"
-  let .rule action _ _ := step.event.cause
-    | throwError "interval_sine: rule quote has a transport cause"
-  let some previous := findFact? known step.event.previous step.previous
-    | throwError "interval_sine: rule previous fact has not been proved"
-  let inputs <- soundInputs program known action.inputs step.assumptions
-  let schema <- schemaName table "fact rule" step.entry
-  let result <-
-    mkAppM ``ProofEmitter.replayRule
-      #[mkConst schema,
-        mkConst ``rangeSchema,
-        mkConst ``checkerInput,
-        program,
-        basePrefix,
-        mkConst ``baseFacts,
-        ← ruleStepExpr step,
-        previous.proof,
-        inputs]
-  let proof <- getReplay result
-  insertProof known
-    { seen := { node := step.event.node, version := step.event.version }
-      fact := step.event.fact
-      within := previous.within
-      proof }
-
-private meta def emitTransport (program basePrefix : Expr) (version : Nat)
-    (table : SchemaTable Name) (known : List FactProof)
-    (step : TransportStep Range) :
-    MetaM (List FactProof) := do
-  unless step.event.programVersion == version do
-    throwError "interval_sine: transport event has the wrong program version"
-  let .transport _ source := step.event.cause
-    | throwError "interval_sine: transport quote has a rule cause"
-  let some previous := findFact? known step.event.previous step.previous
-    | throwError "interval_sine: transport previous fact has not been proved"
-  let some sourceProof := findProof? known source step.sourceFact
-    | throwError "interval_sine: equality source fact has not been proved"
-  let inputs <- soundInputs program known step.edge.origin.inputs step.assumptions
-  let schema <- schemaName table "equality transport" step.entry
-  let result <-
-    mkAppM ``ProofEmitter.replayTransport
-      #[mkConst schema,
-        mkConst ``rangeSchema,
-        mkConst ``laws,
-        mkConst ``checkerInput,
-        mkNatLit version,
-        program,
-        basePrefix,
-        mkConst ``baseFacts,
-        ← transportStepExpr step,
-        previous.proof,
-        sourceProof,
-        inputs]
-  let proof <- getReplay result
-  insertProof known
-    { seen := { node := step.event.node, version := step.event.version }
-      fact := step.event.fact
-      within := previous.within
-      proof }
-
-private meta def emitEvents (finalValue : Program) (finalProgram : Expr)
-    (table : SchemaTable Name) :
-    List LiveEvent -> EmitState -> MetaM EmitState
-  | [], state => pure state
-  | .instantiation quote :: rest, state => do
-      let state <-
-        emitInstantiation finalValue finalProgram table state quote
-      emitEvents finalValue finalProgram table rest state
-  | .rule step :: rest, state => do
-      let known <-
-        emitRule state.program state.basePrefix state.version table state.known step
-      emitEvents finalValue finalProgram table rest { state with known }
-  | .transport step :: rest, state => do
-      let known <-
-        emitTransport state.program state.basePrefix state.version table state.known step
-      emitEvents finalValue finalProgram table rest { state with known }
+/-- The real-sine adapter for the function-independent proof-event fold. -/
+private def frontendContext : ProofFrontend.Context Range Name :=
+  { encoder :=
+      { program := programExpr
+        nodeId := nodeExpr
+        node := instructionExpr
+        fact := fun fact => pure (rangeExpr fact)
+        nodeFact := nodeFactExpr
+        instanceQuote := instanceQuoteExpr
+        ruleStep := ruleStepExpr
+        transportStep := transportStepExpr }
+    resolveSchema := pure
+    semantics := mkConst ``semantics
+    domain := mkConst ``rangeSchema
+    laws := mkConst ``laws
+    stableLaw := mkConst ``stableLaw
+    input := mkConst ``checkerInput
+    assumed := ``seedAssumed
+    baseFacts
+    baseFactsTerm := mkConst ``baseFacts
+    baseProgram := SineSign.baseProgram
+    baseProgramTerm := mkConst ``baseProgram
+    basePrefix := mkConst ``basePrefix
+    baseWithin := mkConst ``baseWithin
+    initialExtension := mkConst ``initialExtension
+    finalPrefix := mkConst ``programPrefix
+    sameOperations := mkConst ``sameOperations
+    top := fun domain => rangeSchema.top domain }
 
 /-- Emit a proof by folding arbitrary fact events through an exact
 `(node, version)` evidence table and reconstructed program state.  The event
 fold does not name any function or propagator; packages are selected only
 through their replay addresses. -/
-private meta def emitTrace (programValue : Program) (events : List LiveEvent)
+private meta def emitTrace (programValue : Program)
+    (events : List (Frontend.Event Range))
     (table : SchemaTable Name) :
     MetaM Expr := do
-  unless programValue.check do
-    throwError "interval_sine: final expression program is not checked"
-  let finalProgram <- programExpr programValue
-  let snapshot <- initialSnapshot finalProgram
-  let baseProgram := mkConst ``baseProgram
-  let basePrefix := mkConst ``basePrefix
-  let known <- seedBase baseProgram basePrefix
-  let initial : EmitState :=
-    { version := 0
-      programValue := SineSign.baseProgram
-      program := baseProgram
-      snapshot
-      basePrefix
-      baseWithin := mkConst ``baseWithin
-      extension := mkConst ``initialExtension
-      known }
-  let state <- emitEvents programValue finalProgram table events initial
-  unless state.programValue == programValue do
-    throwError "interval_sine: trace did not consume the complete final program"
+  let state ←
+    ProofFrontend.emitTrace frontendContext programValue events table
   let target := { node := node 2, version := 1 : SeenVersion }
-  let some final := findProof? state.known target .nonpositive
+  let some final := ProofFrontend.findProof? state.known target .nonpositive
     | throwError "interval_sine: trace did not prove the requested target"
   mkAppM ``closeEvidence #[state.extension, final]
 
@@ -866,7 +534,7 @@ example : True := by
           .rule quote.negation, .instantiation oversizedNoop,
           .transport lateTransport ] repeatTable)).isSome then
       throwError "interval_sine test: oversized repeated instantiation was accepted"
-    let reordered : List LiveEvent :=
+    let reordered : List (Frontend.Event Range) :=
       [ .instantiation quote.instantiation, .rule quote.negation,
         .rule quote.sine, .transport quote.transport ]
     if (← observing? (emitTrace extendedProgram reordered table)).isSome then
@@ -878,12 +546,20 @@ example : True := by
         [ .instantiation quote.instantiation, .rule quote.sine,
           .rule quote.negation, .transport wrongVersion ] table)).isSome then
       throwError "interval_sine test: stale transport program version was accepted"
+    let staleSine : RuleStep Range :=
+      { quote.sine with
+        event := { quote.sine.event with programVersion := 2 } }
+    if (← observing? (emitTrace extendedProgram
+        [ .instantiation quote.instantiation, .rule staleSine,
+          .rule quote.negation, .transport quote.transport ] table)).isSome then
+      throwError "interval_sine test: stale rule program version was accepted"
     if (← observing? (emitTrace baseProgram
         [ .instantiation quote.instantiation, .rule quote.sine,
           .rule quote.negation, .transport quote.transport ] table)).isSome then
       throwError "interval_sine test: emission against the wrong final program was accepted"
     if (← observing?
-        (seedNew baseProgram (mkConst ``baseProgram) [node 3] [])).isSome then
+        (ProofFrontend.seedNew frontendContext baseProgram (mkConst ``baseProgram)
+          [node 3] [])).isSome then
       throwError "interval_sine test: absent generated node received a top proof"
     if (← observing? (checkQuoteData malformed)).isSome then
       throwError "interval_sine test: malformed quote was accepted"
