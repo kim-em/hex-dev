@@ -264,11 +264,13 @@ theorem map_quadNorm (g : Hex.ZPoly) (d : ℤ) (r : K) (hr : r ^ 2 = (d : K)) :
 /-! ## The iterate as a sign-pattern product -/
 
 /-- The `2ⁿ` signed sums `∑ᵢ εᵢ rᵢ`, in the order the tower builds them. -/
+@[expose]
 def signedSums (rs : List K) : List K :=
   rs.foldl (fun ss r => ss.flatMap fun s => [s + r, s - r]) [0]
 
 /-- `F(c; d₁, …, dₙ) = ∏_{ε ∈ {±1}ⁿ} (X - c - ∑ᵢ εᵢ rᵢ)`, the polynomial the
 multiquadratic tower theorem is about, written over the square roots `rs`. -/
+@[expose]
 def signPatternPoly (c : K) (rs : List K) : Polynomial K :=
   ((signedSums rs).map fun s => X - C (c + s)).prod
 

@@ -29,6 +29,8 @@ public import HexBerlekampZassenhaus.Recombination
 public meta import HexBerlekampZassenhaus.Recombination
 public import HexBerlekampZassenhaus.Classical.Factorization
 public meta import HexBerlekampZassenhaus.Classical.Factorization
+public import HexBerlekampZassenhaus.QuadraticNormRecover
+public meta import HexBerlekampZassenhaus.QuadraticNormRecover
 import all HexBerlekampZassenhaus.PrimeSelection
 import all HexBerlekampZassenhaus.FactorizationData
 import all HexBerlekampZassenhaus.Certificate
@@ -64,6 +66,9 @@ inductive FactorMethod where
   | replay
   /-- Trial division by bounded candidate factors. -/
   | trial
+  /-- An iterated-quadratic-norm certificate proved the square-free core
+  irreducible. -/
+  | quadraticNorm
 deriving DecidableEq
 
 namespace FactorMethod
@@ -77,6 +82,7 @@ def name : FactorMethod → String
   | .lattice => "lattice"
   | .replay => "replay"
   | .trial => "trial"
+  | .quadraticNorm => "quadraticNorm"
 
 end FactorMethod
 
@@ -165,6 +171,9 @@ private def exhaustiveNonMonicQuadraticGuard : ZPoly :=
 attempted before exhaustive direct recombination. -/
 def proposalLiftedFactorThreshold : Nat := 24
 
+-- The iterated-quadratic-norm gate `Hex.quadraticNormCertified` and its width
+-- floor live with the certificate, in `HexBerlekampZassenhaus.QuadraticNormRecover`.
+
 /-- Number of nonzero coefficients in a polynomial. -/
 @[expose]
 def nonzeroCoefficientCount (f : ZPoly) : Nat :=
@@ -206,7 +215,18 @@ inductive ClassicalInput (f : ZPoly) where
       (selected : directPrimePlan?
         (SquareFreeInput.ofNormalized (normalizeForFactor f)) = some modular)
 
-/-- Normalize and select the modular input for direct recombination. -/
+/-- Normalize and select the modular input for direct recombination.
+
+Once the modular factorization is in hand its support width is known, and with
+it the size of the recombination walk that would follow. At or above
+{name}`Hex.QuadraticNormCertificate.widthFloor` that walk is expensive enough to be worth one
+attempt at the iterated-quadratic-norm certificate, which answers the whole
+square-free core as a single irreducible factor. A success is an ordinary
+`answered`, reassembled by the same {name}`Hex.reassemblePolynomialFactors` as
+the constant and quadratic cases, so it returns the same
+{name}`Hex.Factorization` any other singleton proof would. A failure falls
+through to `planned` with no state carried, and every route below the floor is
+untouched. -/
 @[expose]
 def classicalInput (f : ZPoly) : ClassicalInput f :=
   let normalized := normalizeForFactor f
@@ -223,7 +243,18 @@ def classicalInput (f : ZPoly) : ClassicalInput f :=
         let core := SquareFreeInput.ofNormalized normalized
         match hplan : directPrimePlan? core with
         | none => .noGoodPrime
-        | some modular => .planned modular hplan
+        | some modular =>
+            if quadraticNormCertified normalized.squareFreeCore
+                modular.data.factorsModP.size then
+              .answered
+                (reassemblePolynomialFactors normalized #[normalized.squareFreeCore])
+                { method := .quadraticNorm
+                  classical :=
+                    { prime := modular.prime
+                      primeProbes := modular.probes.size
+                      liftedFactorCount := modular.data.factorsModP.size } }
+            else
+              .planned modular hplan
 
 /-- Execute direct recombination from an already selected modular plan. -/
 @[expose]

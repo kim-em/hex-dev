@@ -112,10 +112,10 @@ def stableLaw : StableLaw semantics :=
           holdsOld := ?_ }
       · intro valuation model found
         exact model (nodeAtPrefix stepPrefix _ _ found)
-      · intro oldValue newValue fact _ _ _ agreement
+      · intro oldValue newValue fact within _ _ agreement
         change Contains fact.fact (oldValue fact.node) ↔
           Contains fact.fact (newValue fact.node)
-        rw [agreement] }
+        rw [agreement fact.node within] }
 
 def sourceEmit : EmitPackage Lean.Name := { schemas := [] }
 
