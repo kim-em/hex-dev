@@ -9,7 +9,7 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-from scripts.release import sync_released
+from scripts.release import aggregate_readme, sync_released
 
 
 class SyncReleasedTests(unittest.TestCase):
@@ -196,6 +196,7 @@ class SyncReleasedTests(unittest.TestCase):
             patch.object(sync_released, "MANIFEST", manifest),
             patch.object(sync_released, "external_pins", return_value={}),
             patch.object(sync_released, "run", return_value="source-sha"),
+            patch.object(sync_released, "selection_check", return_value=None),
             patch.object(sync_released, "sync_repo", side_effect=publish),
             patch("sys.argv", argv),
         ):
@@ -240,6 +241,7 @@ class SyncReleasedTests(unittest.TestCase):
             patch.object(sync_released, "MANIFEST", manifest),
             patch.object(sync_released, "external_pins", return_value={}),
             patch.object(sync_released, "run", return_value="source-sha"),
+            patch.object(sync_released, "selection_check", return_value=None),
             patch.object(sync_released, "sync_repo", side_effect=publish),
             patch("sys.argv", argv),
         ):
@@ -248,6 +250,209 @@ class SyncReleasedTests(unittest.TestCase):
         advanced = json.loads(baseline.read_text(encoding="utf-8"))
         self.assertEqual(advanced["upstream"], "new-upstream")
         self.assertEqual(advanced["downstream"], "new-downstream")
+
+
+class TokenPreflightTests(unittest.TestCase):
+    """A library published here but missing from the token's selected
+    repositories must stop the run before anything is pushed."""
+
+    ENTRIES = [{"repo": "leanprover/hex-basic"}, {"repo": "leanprover/hex-arith"}]
+
+    def test_writable_repos_pass(self) -> None:
+        with patch.object(sync_released, "selection_check", return_value=None):
+            self.assertEqual(sync_released.preflight_token(self.ENTRIES, "t"), [])
+
+    def test_unlisted_repo_is_reported_with_its_reason(self) -> None:
+        def check(repo: str, _token: str) -> str | None:
+            return None if repo.endswith("hex-basic") else "not in the token's selected repositories"
+
+        with patch.object(sync_released, "selection_check", side_effect=check):
+            blocked = sync_released.preflight_token(self.ENTRIES, "t")
+        self.assertEqual(len(blocked), 1)
+        self.assertIn("leanprover/hex-arith", blocked[0])
+        self.assertIn("selected repositories", blocked[0])
+
+    def _check(self, responses: list) -> str | None:
+        """Run selection_check with `_api_repo` answering from `responses`,
+        in call order: authenticated first, then the anonymous probe."""
+        with patch.object(sync_released, "_api_repo", side_effect=responses):
+            return sync_released.selection_check("leanprover/hex-arith", "t")
+
+    def test_visible_repo_passes(self) -> None:
+        self.assertIsNone(self._check([{"permissions": {"push": True}}]))
+
+    def test_visible_but_read_only_role_still_passes(self) -> None:
+        # `permissions` reports the *user's* role, not the token's grants, so it
+        # is deliberately not treated as evidence either way.
+        self.assertIsNone(self._check([{"permissions": {"push": False}}]))
+
+    def test_unselected_repo_is_named_as_such(self) -> None:
+        reason = self._check([404, {"name": "hex-arith"}])
+        self.assertIn("not in the token's selected repositories", reason)
+
+    def test_absent_repo_says_create_it(self) -> None:
+        reason = self._check([404, 404])
+        self.assertIn("no such repository", reason)
+
+    def test_rate_limit_is_indeterminate_not_a_missing_repo(self) -> None:
+        for status in (403, 429):
+            with self.subTest(status=status):
+                reason = self._check([status])
+                self.assertIn("could not be checked", reason)
+                self.assertNotIn("no such repository", reason)
+
+    def test_server_error_is_indeterminate(self) -> None:
+        reason = self._check([503])
+        self.assertIn("could not be checked", reason)
+
+    def test_anonymous_probe_failure_does_not_claim_the_repo_is_missing(self) -> None:
+        reason = self._check([404, 429])
+        self.assertIn("undetermined", reason)
+        self.assertNotIn("no such repository", reason)
+
+    def test_network_failure_is_indeterminate(self) -> None:
+        import urllib.error
+        reason = self._check([urllib.error.URLError("dns")])
+        self.assertIn("could not be checked", reason)
+
+    def test_misspelled_only_fails_instead_of_publishing_nothing(self) -> None:
+        manifest = self.repo / "released.yml"
+        manifest.write_text("repos:\n  - repo: leanprover/hex-basic\n", encoding="utf-8")
+        baseline = self.repo / "baseline.json"
+        baseline.write_text(json.dumps({"hex-basic": "old"}), encoding="utf-8")
+        argv = ["sync_released.py", "--token", "secret-token",
+                "--baseline", str(baseline), "--only", "hex-baisc"]
+        with (
+            patch.object(sync_released, "MANIFEST", manifest),
+            patch.object(sync_released, "external_pins", return_value={}),
+            patch.object(sync_released, "run", return_value="source-sha"),
+            patch.object(sync_released, "sync_repo") as publish,
+            patch("sys.argv", argv),
+        ):
+            self.assertEqual(sync_released.main(), 1)
+        publish.assert_not_called()
+
+    def test_main_refuses_to_push_when_a_target_is_unwritable(self) -> None:
+        manifest = self.repo / "released.yml"
+        manifest.write_text(
+            "repos:\n  - repo: leanprover/hex-basic\n  - repo: leanprover/hex-arith\n",
+            encoding="utf-8",
+        )
+        argv = ["sync_released.py", "--token", "secret-token",
+                "--baseline", str(self.repo / "baseline.json")]
+        with (
+            patch.object(sync_released, "MANIFEST", manifest),
+            patch.object(sync_released, "external_pins", return_value={}),
+            patch.object(sync_released, "run", return_value="source-sha"),
+            patch.object(sync_released, "selection_check", return_value="HTTP 404"),
+            patch.object(sync_released, "sync_repo") as publish,
+            patch("sys.argv", argv),
+        ):
+            self.assertEqual(sync_released.main(), 1)
+        publish.assert_not_called()
+
+    def setUp(self) -> None:
+        self.temporary = tempfile.TemporaryDirectory()
+        self.repo = Path(self.temporary.name)
+        self.addCleanup(self.temporary.cleanup)
+
+
+class AggregateReadmeTests(unittest.TestCase):
+    """The aggregate README's table is generated, never hand-maintained."""
+
+    MANIFEST = {
+        "repos": [
+            {"repo": "leanprover/hex-matrix", "lib": "HexMatrix",
+             "component": "Matrices"},
+            {"repo": "leanprover/hex-matrix-mathlib", "lib": "HexMatrixMathlib"},
+            {"repo": "leanprover/hex-lll", "lib": "HexLLL",
+             "component": "LLL lattice reduction"},
+            {"repo": "leanprover/hex-test-kit", "lib": "Hex", "aggregate": False},
+            {"repo": "leanprover/hex", "pins_only": True},
+        ],
+    }
+
+    def setUp(self) -> None:
+        self.temporary = tempfile.TemporaryDirectory()
+        self.template = Path(self.temporary.name) / "hex-README.md"
+        self.template.write_text(
+            "# hex\n\n"
+            "<!-- LIBRARIES:BEGIN (generated) -->\n"
+            "| Component | stale | rows |\n"
+            "<!-- LIBRARIES:END -->\n\n"
+            "<!-- ANNOUNCEMENTS:BEGIN (generated) -->\n"
+            "- stale announcement\n"
+            "<!-- ANNOUNCEMENTS:END -->\n\n"
+            "trailer\n",
+            encoding="utf-8",
+        )
+        self.addCleanup(self.temporary.cleanup)
+
+    def test_rows_cover_computational_libraries_only(self) -> None:
+        rows = [entry["repo"] for entry in aggregate_readme.table_entries(self.MANIFEST)]
+        # the Mathlib companion occupies a column, the test kit is not aggregated,
+        # and the aggregate does not list itself
+        self.assertEqual(rows, ["leanprover/hex-matrix", "leanprover/hex-lll"])
+
+    def test_render_replaces_the_marked_region(self) -> None:
+        text = aggregate_readme.render(self.MANIFEST, self.template)
+        self.assertNotIn("stale", text)
+        self.assertTrue(text.startswith("# hex\n"))
+        self.assertTrue(text.endswith("trailer\n"))
+        self.assertIn(
+            "| Matrices | [HexMatrix](https://github.com/leanprover/hex-matrix) | "
+            "[HexMatrixMathlib](https://github.com/leanprover/hex-matrix-mathlib) |",
+            text,
+        )
+        # a computational library with no Mathlib companion still gets a row
+        self.assertIn(
+            "| LLL lattice reduction | [HexLLL](https://github.com/leanprover/hex-lll) "
+            f"| {aggregate_readme.NO_LAYER} |",
+            text,
+        )
+
+    def test_announcements_render_per_library(self) -> None:
+        manifest = {"repos": [
+            {"repo": "leanprover/hex-lll", "lib": "HexLLL",
+             "component": "LLL lattice reduction",
+             "announcements": {"zulip": "https://z.example/t",
+                               "blog": "https://b.example/p"}},
+            {"repo": "leanprover/hex-matrix", "lib": "HexMatrix",
+             "component": "Matrices"},
+            {"repo": "leanprover/hex", "pins_only": True},
+        ]}
+        rendered = aggregate_readme.render_announcements(manifest)
+        # venue order is fixed by VENUES, not by the manifest's key order
+        self.assertEqual(
+            rendered,
+            "- LLL lattice reduction ([HexLLL](https://github.com/leanprover/hex-lll)): "
+            "[blog post](https://b.example/p), [Zulip](https://z.example/t)")
+        # a library with no announcements contributes no line
+        self.assertNotIn("Matrices", rendered)
+
+    def test_announcement_region_is_replaced(self) -> None:
+        text = aggregate_readme.render(self.MANIFEST, self.template)
+        self.assertNotIn("stale announcement", text)
+        self.assertTrue(text.endswith("trailer\n"))
+
+    def test_template_without_announcement_markers_is_an_error(self) -> None:
+        partial = Path(self.temporary.name) / "partial.md"
+        partial.write_text(
+            "# hex\n<!-- LIBRARIES:BEGIN -->\n<!-- LIBRARIES:END -->\n",
+            encoding="utf-8")
+        with self.assertRaises(ValueError):
+            aggregate_readme.render(self.MANIFEST, partial)
+
+    def test_missing_component_label_is_an_error(self) -> None:
+        manifest = {"repos": [{"repo": "leanprover/hex-matrix", "lib": "HexMatrix"}]}
+        with self.assertRaises(ValueError):
+            aggregate_readme.render(manifest, self.template)
+
+    def test_template_without_markers_is_an_error(self) -> None:
+        bare = Path(self.temporary.name) / "bare.md"
+        bare.write_text("# hex\n", encoding="utf-8")
+        with self.assertRaises(ValueError):
+            aggregate_readme.render(self.MANIFEST, bare)
 
 
 if __name__ == "__main__":
