@@ -38,8 +38,9 @@ open FrontendEncoder
 Every `Expr` field is checked again at its use site.  In particular,
 `finalPrefix` and `sameOperations` must have types referring to the reified
 final program; a caller cannot attach them to a different expression graph. -/
-structure Context (Fact : Type) where
+structure Context (Fact Handle : Type) where
   encoder : Encoder Fact
+  resolveSchema : Handle → MetaM Name
   semantics : Expr
   domain : Expr
   laws : Expr
@@ -86,11 +87,12 @@ ordinary kernel reduction, never `native_decide`. -/
 def replayGet {α : Type} (result : Option α) (success : result.isSome = true) : α :=
   result.get success
 
-/-- Resolve one exact package-owned schema declaration. -/
-def schemaName (table : SchemaTable Name) (label : String)
-    (entry : Entry) : MetaM Name := do
-  let some declaration := table.find? entry.replayKey
+/-- Resolve one exact package-owned schema handle to a declaration. -/
+def schemaName (context : Context Fact Handle) (table : SchemaTable Handle)
+    (label : String) (entry : Entry) : MetaM Name := do
+  let some handle := table.find? entry.replayKey
     | throwError "interval frontend: no proof schema for {label}"
+  let declaration ← context.resolveSchema handle
   discard <| getConstInfo declaration
   pure declaration
 
@@ -113,7 +115,7 @@ def insertProof (known : List (FactProof Fact)) (item : FactProof Fact) :
   pure (item :: known)
 
 /-- Assemble dependency evidence in the action's exact input order. -/
-def inputProofs [BEq Fact] (context : Context Fact) (program : Expr)
+def inputProofs [BEq Fact] (context : Context Fact Handle) (program : Expr)
     (known : List (FactProof Fact)) :
     List SeenVersion → List (NodeFact Fact) → MetaM Expr
   | [], [] =>
@@ -130,7 +132,7 @@ def inputProofs [BEq Fact] (context : Context Fact) (program : Expr)
       throwError "interval frontend: input versions and facts differ in length"
 
 /-- Package ordered dependency terms as the proposition consumed by replay. -/
-def soundInputs [BEq Fact] (context : Context Fact) (program : Expr)
+def soundInputs [BEq Fact] (context : Context Fact Handle) (program : Expr)
     (known : List (FactProof Fact)) (seen : List SeenVersion)
     (facts : List (NodeFact Fact)) : MetaM Expr := do
   let proofs ← inputProofs context program known seen facts
@@ -141,7 +143,7 @@ def replayResult (result : Expr) : MetaM Expr := do
   mkAppM ``replayGet #[result, success]
 
 /-- Seed caller-owned version-zero facts by exact positions in the base list. -/
-def seedBase (context : Context Fact) (program : Expr) (basePrefix : Expr) :
+def seedBase (context : Context Fact Handle) (program : Expr) (basePrefix : Expr) :
     MetaM (List (FactProof Fact)) := do
   let mut known := []
   let baseWithinProgram ←
@@ -165,7 +167,7 @@ def seedBase (context : Context Fact) (program : Expr) (basePrefix : Expr) :
   pure known
 
 /-- Seed domain-top evidence for exactly one instance's fresh-node suffix. -/
-def seedNew [BEq Fact] (context : Context Fact) (programValue : Program)
+def seedNew [BEq Fact] (context : Context Fact Handle) (programValue : Program)
     (program : Expr) (newNodes : List NodeId) (known : List (FactProof Fact)) :
     MetaM (List (FactProof Fact)) := do
   let mut known := known
@@ -202,7 +204,7 @@ def liftKnown (stable stepPrefix baseWithin : Expr)
     pure { item with within, proof }
 
 /-- Construct the initial generic reconstruction snapshot. -/
-def initialSnapshot (context : Context Fact) (finalProgram : Expr) : MetaM Expr := do
+def initialSnapshot (context : Context Fact Handle) (finalProgram : Expr) : MetaM Expr := do
   let checked ← mkAppM ``Eq.refl #[mkConst ``Bool.true]
   let finalChecked ← mkAppM ``keepCheck #[finalProgram, checked]
   let baseChecked ← mkAppM ``keepCheck #[context.baseProgramTerm, checked]
@@ -210,11 +212,11 @@ def initialSnapshot (context : Context Fact) (finalProgram : Expr) : MetaM Expr 
     #[finalChecked, baseChecked, context.finalPrefix, context.sameOperations]
 
 /-- Replay one arbitrary package-owned instantiation. -/
-def emitInstance (context : Context Fact) (version : Nat)
+def emitInstance (context : Context Fact Handle) (version : Nat)
     (before after : Expr) (basePrefix stepPrefix sameOperations : Expr)
     (quote : InstanceQuote) (quoteTerm : Expr) (previous : Expr)
-    (table : SchemaTable Name) : MetaM Expr := do
-  let schema ← schemaName table "instantiation" quote.entry
+    (table : SchemaTable Handle) : MetaM Expr := do
+  let schema ← schemaName context table "instantiation" quote.entry
   let result ←
     mkAppM ``ProofEmitter.replayInstance
       #[mkConst schema, context.input, mkNatLit version, before, after,
@@ -222,8 +224,8 @@ def emitInstance (context : Context Fact) (version : Nat)
   replayResult result
 
 /-- Replay and install one instantiation event. -/
-def emitInstantiation [BEq Fact] (context : Context Fact)
-    (finalValue : Program) (finalProgram : Expr) (table : SchemaTable Name)
+def emitInstantiation [BEq Fact] (context : Context Fact Handle)
+    (finalValue : Program) (finalProgram : Expr) (table : SchemaTable Handle)
     (state : State Fact) (quote : InstanceQuote) : MetaM (State Fact) := do
   let eventTerm ← context.encoder.instanceQuote quote
   let reconstruction ←
@@ -260,8 +262,8 @@ def emitInstantiation [BEq Fact] (context : Context Fact)
       known }
 
 /-- Replay one arbitrary fact propagator. -/
-def emitRule [BEq Fact] (context : Context Fact) (state : State Fact)
-    (table : SchemaTable Name) (step : RuleStep Fact) : MetaM (State Fact) := do
+def emitRule [BEq Fact] (context : Context Fact Handle) (state : State Fact)
+    (table : SchemaTable Handle) (step : RuleStep Fact) : MetaM (State Fact) := do
   unless step.event.programVersion == state.version do
     throwError "interval frontend: rule event has the wrong program version"
   let .rule action _ _ := step.event.cause
@@ -270,7 +272,7 @@ def emitRule [BEq Fact] (context : Context Fact) (state : State Fact)
     | throwError "interval frontend: rule previous fact has not been proved"
   let inputs ← soundInputs context state.program state.known
     action.inputs step.assumptions
-  let schema ← schemaName table "fact rule" step.entry
+  let schema ← schemaName context table "fact rule" step.entry
   let stepTerm ← context.encoder.ruleStep step
   let result ←
     mkAppM ``ProofEmitter.replayRule
@@ -285,8 +287,8 @@ def emitRule [BEq Fact] (context : Context Fact) (state : State Fact)
   pure { state with known }
 
 /-- Replay one generic equality transport. -/
-def emitTransport [BEq Fact] (context : Context Fact) (state : State Fact)
-    (table : SchemaTable Name) (step : TransportStep Fact) :
+def emitTransport [BEq Fact] (context : Context Fact Handle) (state : State Fact)
+    (table : SchemaTable Handle) (step : TransportStep Fact) :
     MetaM (State Fact) := do
   unless step.event.programVersion == state.version do
     throwError "interval frontend: transport event has the wrong program version"
@@ -298,7 +300,7 @@ def emitTransport [BEq Fact] (context : Context Fact) (state : State Fact)
     | throwError "interval frontend: equality source fact is unavailable"
   let inputs ← soundInputs context state.program state.known
     step.edge.origin.inputs step.assumptions
-  let schema ← schemaName table "equality transport" step.entry
+  let schema ← schemaName context table "equality transport" step.entry
   let stepTerm ← context.encoder.transportStep step
   let result ←
     mkAppM ``ProofEmitter.replayTransport
@@ -314,8 +316,8 @@ def emitTransport [BEq Fact] (context : Context Fact) (state : State Fact)
   pure { state with known }
 
 /-- Fold arbitrary proof events in their supplied chronology. -/
-def emitEvents [BEq Fact] (context : Context Fact) (finalValue : Program)
-    (finalProgram : Expr) (table : SchemaTable Name) :
+def emitEvents [BEq Fact] (context : Context Fact Handle) (finalValue : Program)
+    (finalProgram : Expr) (table : SchemaTable Handle) :
     List (Frontend.Event Fact) → State Fact → MetaM (State Fact)
   | [], state => pure state
   | .instantiation quote :: rest, state => do
@@ -329,8 +331,8 @@ def emitEvents [BEq Fact] (context : Context Fact) (finalValue : Program)
       emitEvents context finalValue finalProgram table rest state
 
 /-- Emit the complete generic state for one final program and chronology. -/
-def emitTrace [BEq Fact] (context : Context Fact) (programValue : Program)
-    (events : List (Frontend.Event Fact)) (table : SchemaTable Name) :
+def emitTrace [BEq Fact] (context : Context Fact Handle) (programValue : Program)
+    (events : List (Frontend.Event Fact)) (table : SchemaTable Handle) :
     MetaM (State Fact) := do
   unless programValue.check do
     throwError "interval frontend: final expression program is not checked"

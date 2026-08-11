@@ -108,9 +108,10 @@ private def seedAssumed (graph : Program) (base : List (NodeFact Bound))
     Evidence (semantics.Entails graph base fact) :=
   ProofEmitter.assumedAt graph base index fact found
 
-private def frontendContext : ProofFrontend.Context Bound :=
+private def frontendContext : ProofFrontend.Context Bound Name :=
   { encoder := FrontendEncoder.make (mkConst ``Bound)
       (fun fact => pure (boundExpr fact))
+    resolveSchema := pure
     semantics := mkConst ``semantics
     domain := mkConst ``boundSchema
     laws := mkConst ``laws
