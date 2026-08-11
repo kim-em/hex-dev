@@ -1334,10 +1334,9 @@ The fold is polymorphic in the fact type and contains no sine, negation, or
 other function case. Its `Context` receives the semantics/domain laws,
 prefix-stability theorem, caller program and facts, and a plain-data encoder;
 packages remain responsible for their replay schemas. The real-sine tactic is
-now a client of this module rather than the owner of the fold. It still names
-the canary's fixed base graph, semantic bridge, and final target. The next
-frontend experiment must derive those three pieces from an arbitrary caller
-expression.
+now a client of this module rather than the owner of the fold. Its semantic
+bridge and final proof closure still name the canary's fixed base graph and
+target; the goal reifier below begins removing that specialization.
 
 A second live vertical validates this separation with `Real.exp`. Its
 Mathlib-free package uses a distinct three-element fact lattice, contributes
@@ -1348,6 +1347,26 @@ fact-polymorphic quotation, shared structural encoder, and generic evidence
 fold produce the ordinary theorem `0 ≤ Real.exp x`. Thus both a multi-package
 graph-growing sine proof and a single-rule exponential proof pass through the
 same frontend API without a function switch.
+
+The first goal-reification experiment now derives the exponential canary's
+base program, version-zero fact array, and target fact from the actual Lean
+goal before running its compiled fixture. Expression packages contribute an
+opaque operation signature and a Lean-expression recognizer; the reifier has
+no switch for exponential, sine, or any other mathematical function. It tries
+all packages with the required output domain, requires a unique match and
+exact arity, recursively reifies arguments in signature order, performs exact
+expression/domain CSE, validates the resulting SSA program, and enforces
+package, node, and depth limits. A separate fact parser maps propositions to a
+term, domain, and fact, so interval endpoint and open/closed semantics do not
+enter graph construction. All hypotheses narrowing the same version-zero node
+remain in an ordered seed recipe; later hypotheses cannot overwrite an earlier
+proof dependency. The exponential tactic currently requires this derived
+input to equal its fixed semantic/proof fixture before emission. Removing that
+last fixture equality requires package-compositional construction of the
+program semantics and generic proof emission for the recorded top/assumption
+seed recipes; it remains the next frontend experiment rather than an assumed
+capability.
+
 The fixed canary also requires a live session with an exact proof history of one
 instance, one equality, three fact events, and the expected interleaving before
 it reads historical values through `Engine.factAt?`. Those values are quoted

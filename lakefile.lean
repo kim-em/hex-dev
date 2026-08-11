@@ -318,6 +318,7 @@ lean_lib HexIntervalExperiment where
     `HexInterval.Experiment.Frontend,
     `HexInterval.Experiment.FrontendEncoder,
     `HexInterval.Experiment.ProofFrontend,
+    `HexInterval.Experiment.GoalFrontend,
     `HexInterval.Experiment.TraceReplay,
     `HexInterval.Experiment.SineSign,
     `HexInterval.Experiment.ExpSign]
