@@ -167,8 +167,19 @@ def expProof : ProofRegistry.Package semantics Lean.Name :=
   { semantic := { factSchemas := #[expFactSchema] }
     emit := expEmit }
 
+/-- Proof-side placeholder for the executable split package, which owns no
+replay formats.  Retaining its package position keeps registry ownership
+aligned even before a split-coverage schema is added. -/
+def splitProof : ProofRegistry.Package semantics Lean.Name :=
+  { semantic := { factSchemas := #[] }
+    emit := { schemas := [] } }
+
 def proofPackages : Array (ProofRegistry.Package semantics Lean.Name) :=
   #[sourceProof, expProof]
+
+/-- Proof packages aligned with the split-enabled executable registry. -/
+def splitProofPackages : Array (ProofRegistry.Package semantics Lean.Name) :=
+  #[sourceProof, expProof, splitProof]
 
 def semanticPackages : Array (SemanticReplay.Package semantics) :=
   proofPackages.map (fun package => package.semantic)

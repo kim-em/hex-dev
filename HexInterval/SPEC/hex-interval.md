@@ -1555,8 +1555,13 @@ assigned tactic term is built from those two live child results.
 
 The corresponding executable source package now contributes a zero-landmark
 split rule. The generic `BranchStart.prepare` transition consumes the selected
-`SplitPlan` only after checking its exact scope, origin, program version, node
-fact, and fact version against the retained session. A domain-supplied
+`SplitPlan` only after checking its exact scope and reconstructing its source
+key from the supplied origin. That origin must also pass the retained engine's
+full action-freshness check: its application, registration, watched versions,
+write authority, program-sensitive version, and structural matcher provenance
+must still match engine-owned state. The transition separately checks the
+program version, node fact, and fact version for precise diagnostics. A
+domain-supplied
 `Splitter` interprets the dyadic cut; the manager independently requires both
 returned facts to be distinct, exact `.improved` results of `FactDomain.narrow`.
 It replaces only the selected slot in the parent's complete current fact
@@ -1564,6 +1569,12 @@ array, preserves the target and current program, assigns two fresh child scope
 identities, and charges separate tree depth and total-scope limits. The live
 canary checks that these prepared inputs are exactly the two proof-side inputs
 above, then starts both child sessions under the allocated scopes.
+
+The executable split package currently emits no replayable fact, instance, or
+equality event, but it still occupies a package-ownership position. Its proof
+registry therefore contains an explicit empty package at that same position.
+Conformance checks both directions: split-enabled registry assembly succeeds
+with the placeholder and rejects the shorter ordinary proof-package array.
 
 Branches may instantiate different auxiliary expressions. Each child replay
 therefore closes its target back to the program snapshot at the split before

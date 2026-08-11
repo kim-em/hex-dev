@@ -73,6 +73,7 @@ inductive Error where
   | wrongScope
   | wrongOrigin
   | staleProgram
+  | staleOrigin
   | unknownNode
   | staleFact
   | staleVersion
@@ -109,6 +110,7 @@ def prepare [DecidableEq Fact] (limits : Limits) (state : State) (depth : Nat)
     throw .wrongOrigin
   let engine := session.state.engine
   if plan.origin.programVersion != engine.programVersion then throw .staleProgram
+  if !engine.actionFresh plan.origin then throw .staleOrigin
   let instruction <-
     match engine.program.node? plan.node with
     | some instruction => pure instruction

@@ -314,6 +314,21 @@ private def prepared? : Option (ULift.{1, 0} (BranchStart.Children Bound)) :=
           | .error _ => none
       | _ => none
 
+private def splitRun? : Option (TargetRun.Result Bound Unit) :=
+  runWith? splitPackages checkerInput splitPolicy limits.policy.maxDecisions
+
+#guard
+  splitRun?.any fun result =>
+    match ProofRegistry.build result.session.registry splitProofPackages with
+    | .ok _ => true
+    | .error _ => false
+
+#guard
+  splitRun?.any fun result =>
+    match ProofRegistry.build result.session.registry proofPackages with
+    | .error (.semantic (.packageCount 3 2)) => true
+    | _ => false
+
 private def branchFact (side : Bound) : NodeFact Bound :=
   { node := node 0, fact := side }
 
@@ -440,6 +455,26 @@ private def closedChildren? : Option
               (BranchStart.State.start { index := 0 }) 0 result.session plan
               checkerInput.target signSplitter with
           | .error .depthLimit => true
+          | _ => false
+      | _ => false
+  | none => false
+
+#guard
+  match splitRun? with
+  | some result =>
+      match result.stop with
+      | .split plan =>
+          let staleOrigin :=
+            { plan.origin with
+              application := { index := result.session.state.engine.applications.size } }
+          let stalePlan :=
+            { plan with
+              origin := staleOrigin
+              source := Propagator.Policy.invocationOfAction plan.scope staleOrigin }
+          match BranchStart.prepare branchLimits
+              (BranchStart.State.start { index := 0 }) 0 result.session stalePlan
+              checkerInput.target signSplitter with
+          | .error .staleOrigin => true
           | _ => false
       | _ => false
   | none => false
