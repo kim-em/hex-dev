@@ -161,11 +161,14 @@ def offer? (session : PolicySession.Session Bound)
               viewed)
   | .resource _ _ | .contradiction _ | .invalidSession _ => none
 
-def invokesExp (offer : Propagator.Policy.OfferView) : Bool :=
+def invokesExpAt (target : NodeId) (offer : Propagator.Policy.OfferView) : Bool :=
   match offer.key with
   | .invoke invocation =>
-      invocation.rule == expRuleKey && invocation.anchor == node 1
+      invocation.rule == expRuleKey && invocation.anchor == target
   | _ => false
+
+def invokesExp (offer : Propagator.Policy.OfferView) : Bool :=
+  invokesExpAt (node 1) offer
 
 def contracted? : Option (PolicySession.Session Bound) := do
   let .ok session := start | none
@@ -191,6 +194,20 @@ structure Fixture where
 
 def fixture? : Option Fixture := do
   let session ← contracted?
+  match ProofRegistry.build session.registry proofPackages with
+  | .ok registry => some { session, registry }
+  | .error _ => none
+
+def fixtureInput? (input : CheckerInput Bound) : Option Fixture := do
+  let .ok session := PolicySession.Session.start factDomain
+      input.baseProgram packages input.initialFacts limits
+    | none
+  let (_, selection, viewed) ← offer? session (invokesExpAt input.target.node)
+  let session ←
+    match viewed.choose (.select selection) with
+    | .rule _ observation next =>
+        if observation.outcome == .success then some next else none
+    | _ => none
   match ProofRegistry.build session.registry proofPackages with
   | .ok registry => some { session, registry }
   | .error _ => none
@@ -352,13 +369,49 @@ private meta def emitEvidence : MetaM Expr := do
     | throwError "interval_exp: target fact was not emitted"
   pure proof
 
+private def inputContext (result : GoalFrontend.Result Bound)
+    (base : GoalClosure.BaseProof) : ProofFrontend.Context Bound Name :=
+  { encoder := boundEncoder
+    resolveSchema := pure
+    semantics := mkConst ``semantics
+    domain := mkConst ``boundSchema
+    laws := mkConst ``laws
+    stableLaw := mkConst ``stableLaw
+    input := base.input
+    assumed := ``seedAssumed
+    baseFacts := result.baseFacts
+    baseFactsTerm := base.facts
+    baseProgram := result.input.baseProgram
+    baseProgramTerm := base.program
+    basePrefix := base.basePrefix
+    baseWithin := base.within
+    initialExtension := base.extension
+    finalPrefix := base.basePrefix
+    sameOperations := base.sameOperations
+    top := boundSchema.top }
+
+private meta def emitInput (result : GoalFrontend.Result Bound)
+    (base : GoalClosure.BaseProof) : MetaM Expr := do
+  let some fixture := fixtureInput? result.input
+    | throwError "interval_exp: dynamic search or proof registry failed"
+  let some trace := Frontend.trace? fixture.session.state.engine fixture.session.arena
+    | throwError "interval_exp: dynamic chronology quotation failed"
+  unless trace.program == result.input.baseProgram do
+    throwError "interval_exp: exponential rule unexpectedly changed the graph"
+  let state ← ProofFrontend.emitTrace (inputContext result base)
+    trace.program trace.events fixture.registry.emit
+  let target : SeenVersion :=
+    { node := result.input.target.node, version := 1 }
+  let some proof :=
+      ProofFrontend.findProof? state.known target result.input.target.fact
+    | throwError "interval_exp: dynamic target fact was not emitted"
+  pure proof
+
 private def expTarget (x : ℝ) : Prop :=
   0 ≤ Real.exp x
 
 private meta def proveModeledExp (target : Expr) : MetaM Expr := do
   let result ← reifyGoal target
-  unless result.input.baseProgram == ExpSign.program do
-    throwError "interval_exp model test: expected the exact target graph"
   let some fallback := GoalClosure.termAt? result.terms { index := 0 }
     | throwError "interval_exp model test: missing source expression"
   if (← observing? <| GoalClosure.proveModel (mkConst ``Real) fallback
@@ -385,10 +438,7 @@ private meta def proveModeledExp (target : Expr) : MetaM Expr := do
         mkAppM ``seedAssumed
           #[base.program, base.facts, mkNatLit index, factTerm, found]
     | none =>
-        if result.baseFacts == ExpSign.baseFacts then
-          emitEvidence
-        else
-          throwError "interval_exp model test: fixed trace has different base facts"
+        emitInput result base
   let proof ←
     mkAppM ``Evidence.proof #[evidence, model.valuation, model.proof, facts]
   unless ← isDefEq (← inferType proof) target do
@@ -424,6 +474,14 @@ info: 'Hex.IntervalMathlib.ExpSignConformance.tacticExpModeledSeed' depends on a
 -/
 #guard_msgs in
 #print axioms tacticExpModeledSeed
+
+theorem tacticExpModeledExtra (x y : ℝ) (_hy : 0 ≤ Real.exp y) :
+    0 ≤ Real.exp x := by
+  interval_exp_model
+
+theorem tacticExpModeledNested (x : ℝ) :
+    0 ≤ Real.exp (Real.exp x) := by
+  interval_exp_model
 
 private meta def proveExp (target : Expr) : MetaM Expr := do
   let reified ← reifyGoal target
