@@ -1811,7 +1811,9 @@ the instance event comes first; independent sine and negation packages derive
 the unit-range fact on the two new nodes; generic equality transport installs
 that exact fact, with its retained version, on the original `sin (-x)` node;
 and only then does the independent exponential package derive the target.
-Removing or reordering any of those dependencies makes replay fail closed.
+The dependent-typed emitter requires every exact predecessor proof to be
+available at its retained version, so a missing or reordered dependency cannot
+produce a type-correct replay term.
 
 The goal reifier, target driver, policy session, chronology quotation,
 `ProofFrontend`, and final semantic closure have no sine, negation, or

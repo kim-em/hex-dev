@@ -42,7 +42,7 @@ private def negationSyntax : GoalFrontend.Package :=
       let arguments := expression.getAppArgs
       pure <|
         if expression.getAppFn.constName? == some ``Neg.neg &&
-            !arguments.isEmpty then
+            arguments.size == 3 then
           some [arguments[arguments.size - 1]!]
         else none }
 
@@ -219,16 +219,20 @@ private def exactTransportInput (step : TransportStep Bound)
             instantiation.event.newNodes == [node 4, node 5] &&
             sine.entry.replayKey == sineFactSchema.key &&
             sine.event.node == node 4 &&
+            sine.event.fact == .unit &&
             exactRuleInput sine { node := node 0, version := 0 } &&
             negation.entry.replayKey == negationFactSchema.key &&
             negation.event.node == node 5 &&
+            negation.event.fact == .unit &&
             exactRuleInput negation { node := node 4, version := 1 } &&
             transport.entry.replayKey == oddnessEqualitySchema.key &&
             transport.event.node == node 2 &&
+            transport.event.fact == .unit &&
             exactTransportInput transport { index := 0 }
               { node := node 5, version := 1 } &&
             exp.entry.replayKey == expFactSchema.key &&
             exp.event.node == node 3 &&
+            exp.event.fact == .atMostThree &&
             exactRuleInput exp { node := node 2, version := 1 }
       | _ => false
 
