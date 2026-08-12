@@ -956,13 +956,20 @@ identifier order.
 
 The inspected LeanCert snapshot is
 [`31579b5`](https://github.com/alerad/leancert/tree/31579b55618d11e4fbe622a6b5e30b0359b2ee6d).
-The inspected PNT+ snapshot is
-[`be5e07e`](https://github.com/AlexKontorovich/PrimeNumberTheoremAnd/tree/be5e07e04cde20c5ceabf63759bd097a9c88173f).
+The current PNT+ audit snapshot is
+[`21998bb`](https://github.com/AlexKontorovich/PrimeNumberTheoremAnd/tree/21998bb6196b56789f72a52656a781a75e134eb0).
 Its
-[lakefile](https://github.com/AlexKontorovich/PrimeNumberTheoremAnd/blob/be5e07e04cde20c5ceabf63759bd097a9c88173f/lakefile.toml)
-pins LeanCert `v4.32.1` at commit `87a21d7`. The differences from the inspected
-LeanCert main snapshot do not change the interval representation or trust
-findings below.
+[lakefile](https://github.com/AlexKontorovich/PrimeNumberTheoremAnd/blob/21998bb6196b56789f72a52656a781a75e134eb0/lakefile.toml)
+pins LeanCert `v4.32.2.2` at commit
+[`58edbea`](https://github.com/alerad/leancert/tree/58edbea59458e9b010262238eaca27b6e0240dae).
+The earlier detailed source audit used PNT+ snapshot
+[`be5e07e`](https://github.com/AlexKontorovich/PrimeNumberTheoremAnd/tree/be5e07e04cde20c5ceabf63759bd097a9c88173f)
+and its LeanCert `v4.32.1` pin. The PNT+ `interval_decide` corpus is unchanged
+between those snapshots: the current tree still has 290 textual occurrences
+across the same 15 files. The newer LeanCert pin itself has substantial new
+router, integration, root-finding, algebraic, and trust-mode APIs. Those APIs
+are not silently claimed as PNT+ requirements here; replacing LeanCert beyond
+the API actually exercised by PNT+ requires a separate refreshed audit.
 
 The useful LeanCert ideas are a small semantic expression language, a golden
 soundness theorem, exact rational and dyadic evaluators, affine arithmetic,
@@ -996,17 +1003,88 @@ provide regression expectations for the trust boundary.
 
 PNT+ supplies the principal real-world corpus:
 
-At the pinned snapshot it contains about 280 actual `interval_decide`
-invocations across 15 files. Compatibility must therefore be tested by
+At the current pinned snapshot it contains exactly 280 actual `interval_decide`
+invocations, and 290 textual occurrences including ten explanatory prose or
+comment mentions, across 15 files. Compatibility must therefore be tested by
 maintaining source-pinned copies of representative statements and expression
 definitions with their LeanCert calls replaced. Merely importing an upstream
 declaration whose existing proof already used compiler trust does not test the
 replacement. A few translated README examples are also insufficient.
 
-- [LogTables.lean](https://github.com/AlexKontorovich/PrimeNumberTheoremAnd/blob/be5e07e04cde20c5ceabf63759bd097a9c88173f/PrimeNumberTheoremAnd/IEANTN/LogTables.lean)
+The replacement claim has a stronger full-corpus gate than the representative
+per-PR fixtures. A checked manifest records the PNT+ commit, LeanCert pin, every
+source occurrence's file and classification, the enclosing declaration of
+every actual invocation, and the generated batch families that one source
+occurrence expands into. Refreshing either upstream
+pin must regenerate and review that manifest. The release/local profile must
+then compile a source-pinned translation of every actual call site with the Hex
+tactic, or classify it explicitly as a redundant call or a known false target
+with an expected-failure enclosure. No entry may be discharged by importing a
+PNT+ theorem whose original proof already used LeanCert. The inventory must
+cover, at minimum:
+
+- all 141 `LogTables.lean` textual occurrences, of which 136 are actual tactic
+  invocations, including nested logarithms, large exponential arguments,
+  square roots, pi, and tails down to `10^-100`;
+- all 132 BKLNW textual occurrences across nine files, of which 128 are actual
+  tactic invocations, including the generated Table 10 and roughly 135-check
+  Table 12 batches rather than merely their outer tactic call sites; and
+- all 17 remaining textual occurrences, of which 16 are actual tactic
+  invocations, in `Dusart.lean`, `FKS2.lean`, `FKS2Cor23Cor14Tail.lean`,
+  `FKS2Floor/Cor22Floor.lean`, and `Goldbach.lean`.
+
+The complete 13,590-cell FKS2 stream is a generated workload in addition to
+this source-occurrence inventory. Passing all 290 textual sites while omitting
+that generated stream is not PNT+ compatibility. Conversely, importing the
+already-proved FKS2 result does not exercise the replacement. A drift check
+fails when the pinned PNT+ commit, LeanCert pin, occurrence inventory, or batch
+sizes change without an explicit SPEC and fixture refresh.
+
+`interval_decide` is not the complete PNT+ dependency surface. The same pinned
+tree has 60 actual `interval_auto` calls in `TMEEMT.lean` and
+`RosserSchoenfeld/RSPrimeLower.lean`. It also has sixteen direct LeanCert import
+statements covering these six public modules:
+
+- `LeanCert.Tactic.IntervalAuto`;
+- `LeanCert.CertifiedBounds.Li2`;
+- `LeanCert.CertifiedBounds.Chebyshev`;
+- `LeanCert.CertifiedBounds.BKLNW`;
+- `LeanCert.ANT`; and
+- `LeanCert.Validity.AffineCover`.
+
+The certified-bound imports are load-bearing theorem dependencies, not merely
+convenient tactic imports. PNT+ uses the Li(2) integrand, positivity, boundedness,
+value, and upper/lower integral results; Chebyshev and BKLNW certified bounds;
+the ANT expression evaluator and whole-interval checker behind the extended
+FKS2 table; and an affine-cover certificate for its small-`x` floor. Some of
+these current PNT+ glue proofs evaluate LeanCert checkers with `native_decide`.
+They therefore belong to the migration and trust audit even though they do not
+spell `interval_decide`.
+
+The compatibility manifest records every `interval_auto` invocation, every
+direct LeanCert import, every referenced LeanCert declaration, and every use of
+compiled evaluation to establish a LeanCert checker result. A replacement may
+classify a finite natural-number `interval_auto` call as ordinary arithmetic
+automation rather than route it through the real interval engine, but the
+translated source must no longer need the LeanCert import. Certified-bound and
+checker uses must be replaced by an ordinary Hex theorem whose full certificate
+is replayed in the kernel; copying only LeanCert's lightweight public interface
+while leaving its heavy verification outside the build is insufficient.
+
+Accordingly, the PNT+ replacement gate is a source-level build of the pinned
+PNT+ compatibility tree with the LeanCert dependency removed. All 280
+`interval_decide` calls, all 60 `interval_auto` calls, all six directly imported
+API modules, the generated table workloads, and the exact public theorem
+dependencies PNT+ consumes must be replaced or explicitly classified. This
+gate covers all LeanCert functionality PNT+ actually uses at the pinned
+commit. It does not
+claim to replace the many newer LeanCert algebraic, integration, optimization,
+or root-finding APIs that PNT+ does not import.
+
+- [LogTables.lean](https://github.com/AlexKontorovich/PrimeNumberTheoremAnd/blob/21998bb6196b56789f72a52656a781a75e134eb0/PrimeNumberTheoremAnd/IEANTN/LogTables.lean)
   contains hundreds of `exp` and `log` point bounds, nested logs, large
   arguments, and errors down to about `10^-100`.
-- [BKLNW_a2_bounds.lean](https://github.com/AlexKontorovich/PrimeNumberTheoremAnd/blob/be5e07e04cde20c5ceabf63759bd097a9c88173f/PrimeNumberTheoremAnd/IEANTN/BKLNW/BKLNW_a2_bounds.lean)
+- [BKLNW_a2_bounds.lean](https://github.com/AlexKontorovich/PrimeNumberTheoremAnd/blob/21998bb6196b56789f72a52656a781a75e134eb0/PrimeNumberTheoremAnd/IEANTN/BKLNW/BKLNW_a2_bounds.lean)
   contains finite sums whose certified upper limits reach 433.
 - BKLNW Table 10 contains sums of exponentials with small margins. PNT+ PR
   [#1510](https://github.com/AlexKontorovich/PrimeNumberTheoremAnd/pull/1510)
@@ -1018,12 +1096,12 @@ replacement. A few translated README examples are also insufficient.
   rows, at `b = log(5e10)`, `25`, `log(3.2e13)`, and `32`; at least one
   original row remains an expected-failure regression. These cases motivate
   certified normalization, batch replay, and useful failure bounds.
-- [Table4ExtCore.lean](https://github.com/AlexKontorovich/PrimeNumberTheoremAnd/blob/be5e07e04cde20c5ceabf63759bd097a9c88173f/PrimeNumberTheoremAnd/IEANTN/FKS2Tables/Table4ExtCore.lean)
+- [Table4ExtCore.lean](https://github.com/AlexKontorovich/PrimeNumberTheoremAnd/blob/21998bb6196b56789f72a52656a781a75e134eb0/PrimeNumberTheoremAnd/IEANTN/FKS2Tables/Table4ExtCore.lean)
   defines the generic cell checker and its transport theorem. The 13,590 cells
   live in
-  [fourteen `Table4ExtData_*` shards](https://github.com/AlexKontorovich/PrimeNumberTheoremAnd/tree/be5e07e04cde20c5ceabf63759bd097a9c88173f/PrimeNumberTheoremAnd/IEANTN/FKS2Tables),
+  [fourteen `Table4ExtData_*` shards](https://github.com/AlexKontorovich/PrimeNumberTheoremAnd/tree/21998bb6196b56789f72a52656a781a75e134eb0/PrimeNumberTheoremAnd/IEANTN/FKS2Tables),
   thirteen of size 1,000 and one of size 590, and
-  [Table4Ext.lean](https://github.com/AlexKontorovich/PrimeNumberTheoremAnd/blob/be5e07e04cde20c5ceabf63759bd097a9c88173f/PrimeNumberTheoremAnd/IEANTN/FKS2Tables/Table4Ext.lean)
+  [Table4Ext.lean](https://github.com/AlexKontorovich/PrimeNumberTheoremAnd/blob/21998bb6196b56789f72a52656a781a75e134eb0/PrimeNumberTheoremAnd/IEANTN/FKS2Tables/Table4Ext.lean)
   assembles them. Their manual exponential range-reduction rewrite motivates
   shared certificates, local effort, arbitrary partitions, and bounded object
   size. PNT+ PR
@@ -1284,7 +1362,7 @@ The committed compatibility subset is `D8` unless marked `D9`:
   shard in per-PR `ci`, and all 13,590 cells in the `local`/release profile;
 - mutated Taylor, range-reduction, fold, and split certificates, all rejected.
 
-The [PNT+ log-table generator](https://github.com/AlexKontorovich/PrimeNumberTheoremAnd/blob/be5e07e04cde20c5ceabf63759bd097a9c88173f/scripts/gen_log_tables.py)
+The [PNT+ log-table generator](https://github.com/AlexKontorovich/PrimeNumberTheoremAnd/blob/21998bb6196b56789f72a52656a781a75e134eb0/scripts/gen_log_tables.py)
 is a model for optional untrusted candidate generation. The committed tests
 still exercise the native Lean planner and replay path.
 
@@ -1915,7 +1993,9 @@ shortcut, and no additional workflow or CI job is introduced.
 - Sicun Gao, Jeremy Avigad, and Edmund Clarke,
   [Delta-complete decision procedures for satisfiability over the reals](https://arxiv.org/abs/1204.3513).
 - [IntervalArithmetic.jl documentation](https://juliaintervals.github.io/IntervalArithmetic.jl/stable/).
-- LeanCert at
-  [`31579b5`](https://github.com/alerad/leancert/tree/31579b55618d11e4fbe622a6b5e30b0359b2ee6d)
+- LeanCert at the original detailed-audit snapshot
+  [`31579b5`](https://github.com/alerad/leancert/tree/31579b55618d11e4fbe622a6b5e30b0359b2ee6d),
+  the current PNT+ LeanCert pin
+  [`58edbea`](https://github.com/alerad/leancert/tree/58edbea59458e9b010262238eaca27b6e0240dae),
   and PNT+ at
-  [`be5e07e`](https://github.com/AlexKontorovich/PrimeNumberTheoremAnd/tree/be5e07e04cde20c5ceabf63759bd097a9c88173f).
+  [`21998bb`](https://github.com/AlexKontorovich/PrimeNumberTheoremAnd/tree/21998bb6196b56789f72a52656a781a75e134eb0).
