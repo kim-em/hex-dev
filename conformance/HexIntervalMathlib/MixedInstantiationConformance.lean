@@ -216,6 +216,7 @@ private def exactTransportInput (step : TransportStep Bound)
       | [.instantiation instantiation, .rule sine, .rule negation,
           .transport transport, .rule exp] =>
           instantiation.entry.replayKey == oddnessInstanceSchema.key &&
+            instantiation.event.programVersion == 1 &&
             instantiation.event.newNodes == [node 4, node 5] &&
             sine.entry.replayKey == sineFactSchema.key &&
             sine.event.node == node 4 &&
@@ -232,6 +233,7 @@ private def exactTransportInput (step : TransportStep Bound)
               { node := node 5, version := 1 } &&
             exp.entry.replayKey == expFactSchema.key &&
             exp.event.node == node 3 &&
+            exp.event.version == 1 &&
             exp.event.fact == .atMostThree &&
             exactRuleInput exp { node := node 2, version := 1 }
       | _ => false
@@ -336,6 +338,10 @@ syntax (name := intervalMixedInstantiationTac) "interval_mixed_instance" : tacti
 mixed-function goal through the generic proof frontend. -/
 theorem mixedSinNegExp (x : ℝ) : Real.exp (Real.sin (-x)) ≤ 3 := by
   interval_mixed_instance
+
+example (x : ℝ) : Real.exp (Real.sin x) ≤ 3 := by
+  fail_if_success interval_mixed_instance
+  simpa using mixedSinNegExp (-x)
 
 /--
 info: 'Hex.IntervalMathlib.MixedInstantiationConformance.mixedSinNegExp' depends on axioms: [propext,

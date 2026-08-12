@@ -1819,14 +1819,16 @@ The goal reifier, target driver, policy session, chronology quotation,
 `ProofFrontend`, and final semantic closure have no sine, negation, or
 exponential branch. Each operation supplies its own syntax recognition,
 planning, mathematical relation, and replay schema. They cooperate through
-one shared fact domain and value semantics, as required by the package
-boundary above. The final theorem is an ordinary kernel theorem, and its
+one shared fact domain and value semantics, while the sine matcher declares
+the negation operation through the ordinary `requiredOperations` package
+contract. The final theorem is an ordinary kernel theorem, and its
 guarded axiom report contains only Lean's standard propositional extensionality,
 choice, and quotient axioms. This vertical adds no rational backend and uses
 neither `native_decide` nor an unchecked proof shortcut.
 
 This is a deliberately exact canary, not yet the production abstraction. Its
-replay schemas validate the particular base and extended programs, and its
+replay schemas validate the particular base and extended programs, the tactic
+rejects other graph shapes rather than generalizing them, and its
 semantic model array still couples each operation to a numeric position.
 Consequently it demonstrates that dynamic expression instantiation composes
 with arbitrary downstream function propagation, but not yet that packages can
