@@ -2774,9 +2774,157 @@ a proof.
 
 ## Applications
 
-The tactic is the first client, not the only one. Two downstream applications
-constrain the framework without requiring either application to be implemented
-in the first release.
+The tactic is the first client, not the only one. The numerical acceptance
+programs and two downstream applications below constrain the framework without
+requiring all of them to be implemented in the first release.
+
+### Example-driven numerical roadmap
+
+The small propagation canaries above are architectural tests, not the intended
+ceiling of the numerical system. Development after the generic proof frontend
+is driven by the following executable acceptance programs. A generic mechanism
+is justified when one of these programs needs it; passing a synthetic rule test
+alone is not completion.
+
+#### Large-argument elementary functions
+
+The first range-reduction targets are:
+
+- prove `Real.sin 10 < 0` from a certified enclosure of `sin 10`; and
+- produce exact dyadic `lo` and `hi` with `0 < lo`,
+  `Real.cos (10 ^ 10) ∈ [lo, hi]`, and `hi - lo ≤ 2 ^ (-80)`.
+
+These examples must not reduce a floating-point approximation and then ask the
+kernel to trust it. A function package combines a checked constant enclosure,
+an exact integer or quadrant reduction, a small residual interval, and a local
+enclosure theorem. The large reduction integer, the selected quadrant, and the
+residual are explicit replay data. An off-by-one reduction candidate must be
+rejected. The `cos (10 ^ 10)` example is deliberately large enough that a
+low-precision approximation to pi cannot accidentally select the right
+quadrant.
+
+Range reduction depends on a pluggable constant service rather than a pi
+literal wired into the sine package. Its first serious provider uses the
+Chudnovsky series to return a certified pi interval at a requested precision.
+The certificate checks the term recurrence, finite sum, and tail bound. A
+second, slower formula such as a Machin identity is a conformance provider so
+that registry selection, fallback, and agreement of independently produced
+enclosures are load-bearing. The acceptance target is a 1,000-bit pi enclosure;
+the engine may cache and share it across every trigonometric node in a run.
+
+#### Series as package-owned numerical algorithms
+
+A registered function may supply a power or Taylor series without teaching the
+engine that function. The generic series interface carries a center, exact
+coefficient recipe or recurrence, an admissible input region, a truncation
+degree, and a theorem bounding the remainder. Replay proves the finite
+polynomial enclosure and adds the remainder interval. Different formulas for
+one function are ordinary competing providers selected by policy and checked
+by their own theorems.
+
+The first precision canary computes `Real.exp (1 / 8)` in an interval of width
+at most `2 ^ (-100)` using the usual exponential series. It is followed by a
+formula whose coefficients are not built into the interval library, proving
+that the interface is genuinely package-owned. Increasing requested precision
+must extend or refine cached series work rather than restart an unrelated
+generic expression search.
+
+#### Certified logarithm tables
+
+The table-building acceptance program constructs enclosures for
+
+`Real.log (1 + i / 256)`, for every `0 ≤ i ≤ 256`,
+
+with width at most `2 ^ (-128)`. The table certificate binds the exact index,
+exact rational argument, chosen range reduction, series data, and final
+interval. It additionally proves monotonic ordering of adjacent entries. A
+later `log` propagator may use the table for argument reduction, but every
+lookup remains an ordinary replayable dependency rather than trusted generated
+code.
+
+Table construction is a first-class batch client: common constants,
+coefficients, and remainder proofs are shared. The benchmark records total
+integer work, proof size, cache reuse, and incremental cost when the requested
+precision grows. Producing one correct entry 257 times independently does not
+satisfy the table acceptance target.
+
+#### Certified integral bounds
+
+The first quadrature target proves the strict rational enclosure
+
+`7468 / 10000 < ∫ x in 0..1, Real.exp (-(x ^ 2))`
+
+and
+
+`∫ x in 0..1, Real.exp (-(x ^ 2)) < 7469 / 10000`.
+
+The executable planner may choose a partition and a quadrature or Taylor rule.
+The proof package checks each local enclosure and its remainder theorem, then
+adds the subinterval bounds exactly. Adaptive subdivision is driven by the
+same policy observations as other refinement, but an integral certificate has
+its own compositional theorem; sampling values is never evidence for an
+integral bound. Polynomial integrands should use exact antiderivative or
+polynomial-integration providers when available instead of being forced
+through generic quadrature.
+
+#### Specialized algebraic solvers before generic propagation
+
+The generic interval engine is a coordinator and fallback, not a mandate to
+solve every recognizable fragment by branch-and-contract. Hex already has
+certified real and complex polynomial root-isolation engines. A provider may
+recognize a closed polynomial fragment, reify it into the existing `Hex.ZPoly`
+representation, invoke the specialized executable solver, and replay its
+existing certificate into interval facts, disjoint cases, root counts, or
+refutations.
+
+The initial integration targets are:
+
+- use `HexRealRoots` to isolate the unique real root of `x ^ 5 - x - 1` and
+  feed its isolating interval into the surrounding interval problem;
+- use `HexRoots` to return a complete family of disjoint certified complex
+  regions for `z ^ 5 - z + 1`; and
+- solve a mixed problem in which real-root isolation supplies finitely many
+  algebraic candidate intervals and arbitrary-function propagators, such as a
+  sine or logarithm package, eliminate or refine those candidates.
+
+For a purely polynomial goal, the acceptance trace uses the specialized
+provider and does not reproduce Sturm, Descartes, Pellet, Newton, or complex
+argument-principle search as generic expression steps. Generic interval
+propagation remains available around polynomial islands and as a bounded
+fallback when the specialized provider declines. Provider choice cannot affect
+soundness: every imported isolation is tied to the exact reified polynomial
+and checked through the existing `HexRealRootsMathlib` or `HexRootsMathlib`
+theorems.
+
+The same dispatch principle extends to other Hex libraries. Exact polynomial
+factorization, real-closed-field procedures, and future specialized linear or
+algebraic solvers should be preferred when their recognized fragment and
+certificate language fit the goal. The interval engine composes their results;
+it does not hide a slower duplicate implementation behind a uniform API.
+
+#### Required provider boundaries
+
+These examples require several independently registered numerical roles:
+
+- constant providers, such as Chudnovsky pi;
+- range-reduction providers for periodic and scale-reduced functions;
+- local function enclosures, including Taylor or other convergent formulas;
+- reusable certified table providers;
+- quadrature and integral-remainder providers; and
+- specialized algebraic solvers that return checked facts or branch families.
+
+All providers are versioned, resource-bounded at their public boundary, and
+replaceable. Their executable output is untrusted candidate data. Only exact
+data checked by package-owned theorems enters `Evidence`. Expensive provider
+internals may be native Lean, or an optional external program may propose the
+same candidate, but rejection and absence fall back without changing theorem
+statements.
+
+The roadmap order is example-driven: large-argument sine and pluggable pi;
+generic series and the high-precision log table; certified quadrature; real
+and complex root-isolator dispatch; then mixed workloads combining several of
+these providers. Verified raster and ODE clients below consume the same
+capabilities rather than introducing private numerical engines.
 
 ### Verified raster graphs
 
