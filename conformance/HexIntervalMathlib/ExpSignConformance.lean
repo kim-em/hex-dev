@@ -301,21 +301,55 @@ private def signSplitter : BranchStart.Splitter Bound :=
 private def branchLimits : BranchStart.Limits :=
   { maxDepth := 4, maxScopes := 8 }
 
-private def prepared? : Option (ULift.{1, 0} (BranchStart.Children Bound)) :=
+private def preparedResult? : Option
+    (ULift.{1, 0} (BranchStart.State × BranchStart.Children Bound)) :=
   match runWith? splitPackages checkerInput splitPolicy limits.policy.maxDecisions with
   | none => none
   | some result =>
       match result.stop with
       | .split plan =>
           match BranchStart.prepare branchLimits
-              (BranchStart.State.start { index := 0 }) 0 result.session plan
+              (BranchStart.State.start result.session) result.session plan
               checkerInput.target signSplitter with
-          | .ok (_, children) => some (ULift.up children)
+          | .ok prepared => some (ULift.up prepared)
           | .error _ => none
       | _ => none
 
+private def prepared? : Option (ULift.{1, 0} (BranchStart.Children Bound)) :=
+  preparedResult?.map fun lifted => ULift.up lifted.down.2
+
 private def splitRun? : Option (TargetRun.Result Bound Unit) :=
   runWith? splitPackages checkerInput splitPolicy limits.policy.maxDecisions
+
+private def planError? (change : Propagator.Policy.SplitPlan Bound →
+    Propagator.Policy.SplitPlan Bound)
+    (branchBudget : BranchStart.Limits := branchLimits) : Option BranchStart.Error :=
+  match splitRun? with
+  | some result =>
+      match result.stop with
+      | .split plan =>
+          match BranchStart.prepare branchBudget
+              (BranchStart.State.start result.session) result.session (change plan)
+              checkerInput.target signSplitter with
+          | .error error => some error
+          | .ok _ => none
+      | _ => none
+  | none => none
+
+private def unrelatedAction? (result : TargetRun.Result Bound Unit)
+    (plan : Propagator.Policy.SplitPlan Bound) : Option Action := do
+  let engine := result.session.state.engine
+  let index ← (List.range engine.applications.size).find?
+    (fun index => index != plan.origin.application.index)
+  let applicationId : ApplicationId := { index }
+  let application ← engine.applications[index]?
+  let rule ← engine.rules[application.rule.index]?
+  let inputs ← engine.seenVersions? application.watches
+  let views ← engine.factViews? application.watches
+  match engine.issueApplication applicationId application rule inputs views with
+  | .request request _ =>
+      if engine.actionFresh request.action then some request.action else none
+  | _ => none
 
 #guard
   splitRun?.any fun result =>
@@ -398,6 +432,11 @@ private def rightSeed :
       children.plan.point == 0 && children.plan.fact == .all
 
 #guard
+  preparedResult?.any fun lifted =>
+    let state := lifted.down.1
+    state.createdScopes == 3 && state.nextScope == 3
+
+#guard
   runInput? leftInput leftScope |>.any fun fixture =>
     fixture.reached.seen == ({ node := node 1, version := 1 } : SeenVersion) &&
       fixture.reached.fact == .nonnegative && fixture.events.size == 1 &&
@@ -445,51 +484,94 @@ private def closedChildren? : Option
         (BranchStart.closedTargets? factDomain children left right).isNone
     | _, _ => false
 
+#guard planError? (fun plan => plan)
+  ({ branchLimits with maxDepth := 0 }) == some .depthLimit
+
+#guard planError? (fun plan => plan)
+  ({ branchLimits with maxScopes := 2 }) == some .scopeLimit
+
 #guard
-  match runWith? splitPackages checkerInput splitPolicy limits.policy.maxDecisions with
-  | some result =>
+  planError? (fun plan =>
+    { plan with scope := { index := plan.scope.index + 1 } }) == some .wrongScope
+
+#guard
+  match splitRun?, preparedResult? with
+  | some result, some lifted =>
       match result.stop with
       | .split plan =>
-          match BranchStart.prepare
-              { branchLimits with maxDepth := 0 }
-              (BranchStart.State.start { index := 0 }) 0 result.session plan
+          match BranchStart.prepare branchLimits lifted.down.1 result.session plan
               checkerInput.target signSplitter with
-          | .error .depthLimit => true
+          | .error .wrongState => true
           | _ => false
       | _ => false
-  | none => false
+  | _, _ => false
+
+#guard
+  match splitRun?,
+      runWith? splitPackages checkerInput splitPolicy limits.policy.maxDecisions
+        { index := 7 } with
+  | some result, some unrelated =>
+      match result.stop with
+      | .split plan =>
+          match BranchStart.prepare branchLimits
+              (BranchStart.State.start unrelated.session) result.session plan
+              checkerInput.target signSplitter with
+          | .error .wrongState => true
+          | _ => false
+      | _ => false
+  | _, _ => false
+
+#guard
+  planError? (fun plan =>
+    { plan with suggestion := { index := plan.suggestion.index + 1 } }) ==
+      some .unknownSuggestion
+
+-- `actionFresh` deliberately ignores the request serial; exact retained-origin
+-- authentication must still reject a serial-spliced plan.
+#guard
+  planError? (fun plan =>
+    let origin := { plan.origin with serial := plan.origin.serial + 1 }
+    { plan with
+      origin
+      source := Propagator.Policy.invocationOfAction plan.scope origin }) ==
+        some .wrongOrigin
+
+#guard
+  planError? (fun plan => { plan with point := 1 }) == some .wrongSuggestion
+
+#guard
+  planError? (fun plan => { plan with node := node 1 }) == some .wrongSuggestion
+
+#guard
+  planError? (fun plan => { plan with reason := .midpoint }) == some .wrongSuggestion
+
+#guard
+  planError? (fun plan => { plan with version := plan.version + 1 }) ==
+    some .wrongSuggestionVersion
+
+-- The branch boundary repeats the endpoint preflight instead of relying on a
+-- caller to have obtained the plan from a bounded policy view.
+#guard
+  planError? (fun plan =>
+    { plan with point := Dyadic.ofIntWithPrec 1 16 }) == some .endpointLimit
 
 #guard
   match splitRun? with
   | some result =>
       match result.stop with
       | .split plan =>
-          let staleOrigin :=
-            { plan.origin with
-              application := { index := result.session.state.engine.applications.size } }
-          let stalePlan :=
-            { plan with
-              origin := staleOrigin
-              source := Propagator.Policy.invocationOfAction plan.scope staleOrigin }
-          match BranchStart.prepare branchLimits
-              (BranchStart.State.start { index := 0 }) 0 result.session stalePlan
-              checkerInput.target signSplitter with
-          | .error .staleOrigin => true
-          | _ => false
-      | _ => false
-  | none => false
-
-#guard
-  match runWith? splitPackages checkerInput splitPolicy limits.policy.maxDecisions with
-  | some result =>
-      match result.stop with
-      | .split plan =>
-          match BranchStart.prepare branchLimits
-              (BranchStart.State.start { index := 0 }) 0 result.session
-              { plan with version := plan.version + 1 }
-              checkerInput.target signSplitter with
-          | .error .staleVersion => true
-          | _ => false
+          match unrelatedAction? result plan with
+          | some origin =>
+              let forged :=
+                { plan with
+                  origin
+                  source := Propagator.Policy.invocationOfAction plan.scope origin }
+              match BranchStart.prepare branchLimits
+                  (BranchStart.State.start result.session) result.session forged
+                  checkerInput.target signSplitter with
+              | .error .wrongOrigin => true
+              | _ => false
+          | none => false
       | _ => false
   | none => false
 
@@ -501,7 +583,7 @@ private def closedChildren? : Option
           let duplicate : BranchStart.Splitter Bound :=
             { split := fun _ _ _ _ _ => some (.nonnegative, .nonnegative) }
           match BranchStart.prepare branchLimits
-              (BranchStart.State.start { index := 0 }) 0 result.session plan
+              (BranchStart.State.start result.session) result.session plan
               checkerInput.target duplicate with
           | .error .duplicateChild => true
           | _ => false

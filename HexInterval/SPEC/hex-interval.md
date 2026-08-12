@@ -1600,21 +1600,33 @@ child context, and `replaySplit` joins them into the caller theorem. The
 assigned tactic term is built from those two live child results.
 
 The corresponding executable source package now contributes a zero-landmark
-split rule. The generic `BranchStart.prepare` transition consumes the selected
-`SplitPlan` only after checking its exact scope and reconstructing its source
-key from the supplied origin. That origin must also pass the retained engine's
-full action-freshness check: its application, registration, watched versions,
-write authority, program-sensitive version, and structural matcher provenance
-must still match engine-owned state. The transition separately checks the
-program version, node fact, and fact version for precise diagnostics. A
-domain-supplied
+split rule. The generic `BranchStart.prepare` transition does not trust the
+public fields of the `SplitPlan` it receives. It resolves the plan's exact
+retained suggestion identifier and requires that record to contain a split
+with the same complete action (including its request serial), node, dyadic
+cut, reason, and proposal-time fact version. It also checks the exact scope
+and reconstructs the source key from that action. The action must pass the
+retained engine's full freshness check: its application, registration,
+watched versions, write authority, program-sensitive version, and structural
+matcher provenance must still match engine-owned state. The transition
+separately checks the current program version, node fact, and fact version for
+precise diagnostics, and repeats the configured endpoint-cost preflight at
+this boundary so a directly constructed plan cannot bypass it. This
+authenticates the plan against retained engine data; the search controller
+still owns the policy decision that selected that offer. A domain-supplied
 `Splitter` interprets the dyadic cut; the manager independently requires both
 returned facts to be distinct, exact `.improved` results of `FactDomain.narrow`.
 It replaces only the selected slot in the parent's complete current fact
 array, preserves the target and current program, assigns two fresh child scope
-identities, and charges separate tree depth and total-scope limits. The live
-canary checks that these prepared inputs are exactly the two proof-side inputs
-above, then starts both child sessions under the allocated scopes.
+identities, and charges separate tree depth and total-scope limits. Branch-tree
+state has a private constructor: its root is derived from an engine-owned
+session, and only `prepare` can remove an active parent scope, register its two
+children at the next depth, or advance the monotone counters. The live canary
+checks that these prepared inputs are exactly the two proof-side inputs above,
+then starts both child sessions under the allocated scopes. Its Meta tactic is
+still deliberately hard-coded to quote those canary constants rather than the
+runtime `Children` value; dynamically quoting an arbitrary prepared branch is
+a later frontend bridge, not a property established by this experiment.
 
 The executable split package currently emits no replayable fact, instance, or
 equality event, but it still occupies a package-ownership position. Its proof

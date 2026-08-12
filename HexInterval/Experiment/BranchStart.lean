@@ -35,17 +35,25 @@ structure Limits where
   maxScopes : Nat
   deriving DecidableEq, Repr
 
-/-- Monotone identities and resource use owned by one branch tree. -/
+/-- Monotone identities, active-scope depths, and resource use owned by one
+branch tree.  The private constructor prevents callers from choosing counters
+or registering a scope at an invented depth. -/
 structure State where
+  private mk ::
   createdScopes : Nat
   nextScope : Nat
-  deriving DecidableEq, Repr
+  private scopeDepths : List (Propagator.Policy.ScopeId × Nat)
+
+private def makeState (createdScopes nextScope : Nat)
+    (scopeDepths : List (Propagator.Policy.ScopeId × Nat)) : State :=
+  { createdScopes, nextScope, scopeDepths }
 
 namespace State
 
-/-- Account for the already-existing root scope. -/
-def start (root : Propagator.Policy.ScopeId) : State :=
-  { createdScopes := 1, nextScope := root.index + 1 }
+/-- Account for the already-existing root scope of this exact engine-owned
+session.  The sealed result can advance only through `prepare`. -/
+opaque start (session : Session Fact) : State :=
+  makeState 1 (session.state.scope.index + 1) [(session.state.scope, 0)]
 
 end State
 
@@ -71,6 +79,11 @@ inductive Error where
   | incomplete
   | contradictory
   | wrongScope
+  | wrongState
+  | endpointLimit
+  | unknownSuggestion
+  | wrongSuggestion
+  | wrongSuggestionVersion
   | wrongOrigin
   | staleProgram
   | staleOrigin
@@ -92,13 +105,14 @@ def strictChild [DecidableEq Fact] (domain : FactDomain Fact) (instruction : Nod
   | .improved installed => installed == child
   | .noChange | .contradiction _ | .malformed _ | .resourceLimit _ => false
 
-/-- Validate one selected plan and allocate two fresh child scopes.
+/-- Validate one retained split plan and allocate two fresh child scopes.
 
 The child snapshots start from the parent's current program and complete fact
 array, replacing only the split node.  Proof production must authenticate all
 unchanged entries as inherited parent facts; this function never promotes
-them to caller assumptions. -/
-def prepare [DecidableEq Fact] (limits : Limits) (state : State) (depth : Nat)
+them to caller assumptions.  The state supplies the parent depth; a caller
+cannot reset that depth independently of its registered scope. -/
+opaque prepare [DecidableEq Fact] (limits : Limits) (state : State)
     (session : Session Fact) (plan : Propagator.Policy.SplitPlan Fact)
     (target : NodeFact Fact) (splitter : Splitter Fact) :
     Except Error (State × Children Fact) := do
@@ -106,9 +120,27 @@ def prepare [DecidableEq Fact] (limits : Limits) (state : State) (depth : Nat)
   if session.droppedWork || session.state.incomplete then throw .incomplete
   if session.state.engine.contradictory then throw .contradictory
   if plan.scope != session.state.scope then throw .wrongScope
+  let depth <-
+    match state.scopeDepths.find? (fun entry => entry.1 == session.state.scope) with
+    | some entry => pure entry.2
+    | none => throw .wrongState
+  let engine := session.state.engine
+  if !(EndpointCost.ofDyadic plan.point).allowed engine.limits.splitEndpointLimit then
+    throw .endpointLimit
   if plan.source != Propagator.Policy.invocationOfAction plan.scope plan.origin then
     throw .wrongOrigin
-  let engine := session.state.engine
+  let retained <-
+    match engine.suggestions[plan.suggestion.index]? with
+    | some retained => pure retained
+    | none => throw .unknownSuggestion
+  if retained.action != plan.origin then throw .wrongOrigin
+  match retained.suggestion with
+  | .split request =>
+      if request.node != plan.node || request.point != plan.point ||
+          request.reason != plan.reason then
+        throw .wrongSuggestion
+  | .retry _ | .instantiate _ => throw .wrongSuggestion
+  if retained.splitVersion != some plan.version then throw .wrongSuggestionVersion
   if plan.origin.programVersion != engine.programVersion then throw .staleProgram
   if !engine.actionFresh plan.origin then throw .staleOrigin
   let instruction <-
@@ -146,8 +178,9 @@ def prepare [DecidableEq Fact] (limits : Limits) (state : State) (depth : Nat)
     { parent with initialFacts := engine.facts.set! plan.node.index leftFact }
   let right : CheckerInput Fact :=
     { parent with initialFacts := engine.facts.set! plan.node.index rightFact }
-  let next : State :=
-    { createdScopes := state.createdScopes + 2, nextScope := state.nextScope + 2 }
+  let remaining := state.scopeDepths.filter (fun entry => entry.1 != session.state.scope)
+  let next := makeState (state.createdScopes + 2) (state.nextScope + 2)
+    ((leftScope, childDepth) :: (rightScope, childDepth) :: remaining)
   pure (next,
     { plan, depth := childDepth, parent, leftScope, left, rightScope, right })
 
