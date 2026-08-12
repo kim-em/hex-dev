@@ -16,6 +16,7 @@
 - **hex-roots**: certified complex root isolation for `Z[x]` via dyadic squares, Pellet tests, and speculative Newton iteration
 - **hex-real-roots**: certified real root isolation for `Z[x]`: Sturm-count witnesses, a Descartes bisection search with a proven-complete Sturm fallback
 - **hex-interval**: exact open, closed, empty, and unbounded dyadic intervals; a shared expression program; and a budgeted scheduler for propagation, refinement, and subdivision
+- **hex-interval-algebraic**: planned Mathlib-facing integration of interval facts with certified real and complex polynomial root isolation; `mathlib: true`
 - **hex-rcf**: the `rcf` tactic, a complete decision procedure for univariate real-closed-field sentences (Boolean combinations of polynomial inequalities under one `∀`/`∃` over `ℝ`); `mathlib: true`, soundness theorem in the same library
 - **hex-resultant**: polynomial resultant and discriminant via the subresultant pseudo-remainder sequence
 - **hex-number-field**: fixed fields `QAdjoin p x`, factorization-lazy `AlgebraicRoot`, canonical `AlgebraicNumber`, and roots of polynomials with algebraic coefficients
@@ -74,6 +75,7 @@ Each library with its immediate dependencies:
 - **hex-roots**: hex-poly-z
 - **hex-real-roots**: hex-poly-z
 - **hex-interval**: (none)
+- **hex-interval-algebraic**: hex-interval-mathlib, hex-real-roots-mathlib, hex-roots-mathlib (mathlib: true)
 - **hex-rcf**: hex-real-roots, hex-real-roots-mathlib, hex-poly-z, hex-poly-z-mathlib (mathlib: true)
 - **hex-resultant**: hex-poly
 - **hex-number-field**: hex-poly-z, hex-roots, hex-resultant, hex-berlekamp-zassenhaus, hex-matrix, hex-row-reduce
@@ -168,10 +170,13 @@ hex-berlekamp-zassenhaus ────┤
 hex-row-reduce ──────────────┘
 ```
 
-Interval arithmetic is an independent library pair:
+The computational interval pair is independent. Its planned algebraic adapter
+joins the Mathlib-facing interval layer to the existing root-isolation graph:
 
 ```text
-hex-interval ── hex-interval-mathlib
+hex-interval ── hex-interval-mathlib ──┐
+hex-real-roots-mathlib ────────────────┼── hex-interval-algebraic
+hex-roots-mathlib ─────────────────────┘
 ```
 
 Multivariate polynomials extend the univariate polynomial library and
@@ -221,6 +226,7 @@ for developments whose source-local move has not happened yet.
 - [hex-real-roots-mathlib.md](../../HexRealRootsMathlib/SPEC/hex-real-roots-mathlib.md): Sturm's theorem, chain correspondence, soundness and completeness of `isolate?`
 - [hex-interval.md](../../HexInterval/SPEC/hex-interval.md): exact interval data, shared programs, and budgeted propagation search
 - [hex-interval-mathlib.md](hex-interval-mathlib.md): real semantics, verified propagators, proof replay, and the `interval` tactic
+- **hex-interval-algebraic** (planned): Mathlib-facing interval providers backed by certified real and complex polynomial root isolation; its provider contract is specified in [hex-interval.md](../../HexInterval/SPEC/hex-interval.md#specialized-algebraic-solvers-before-generic-propagation)
 - [hex-rcf.md](hex-rcf.md): the `rcf` tactic for univariate real-closed-field sentences
 - [hex-resultant](../../HexResultant/SPEC/hex-resultant.md): polynomial resultant and discriminant via the subresultant pseudo-remainder sequence
 - [hex-resultant-mathlib](../../HexResultantMathlib/SPEC/hex-resultant-mathlib.md): executable resultant agreement, specialization, root-product, and discriminant theorems

@@ -2774,9 +2774,198 @@ a proof.
 
 ## Applications
 
-The tactic is the first client, not the only one. Two downstream applications
-constrain the framework without requiring either application to be implemented
-in the first release.
+The tactic is the first client, not the only one. The numerical acceptance
+programs and two downstream applications below constrain the framework without
+requiring all of them to be implemented in the first release.
+
+### Example-driven numerical roadmap
+
+The small propagation canaries above are architectural tests, not the intended
+ceiling of the numerical system. Development after the generic proof frontend
+is driven by the following executable acceptance programs. A generic mechanism
+is justified when one of these programs needs it; passing a synthetic rule test
+alone is not completion.
+
+#### Large-argument elementary functions
+
+The first range-reduction targets are:
+
+- prove `Real.sin 10 < 0` from a certified enclosure of `Real.sin 10`; and
+- produce exact dyadic `lo` and `hi` with `0 < lo`,
+  `Real.cos (10 ^ 10) ∈ [lo, hi]`, and `hi - lo ≤ 2 ^ (-80)`.
+
+These examples must not reduce a floating-point approximation and then ask the
+kernel to trust it. A function package combines a checked constant enclosure,
+an exact integer or quadrant reduction, a small residual interval, and a local
+enclosure theorem. The large reduction integer, the selected quadrant, and the
+residual are explicit replay data. An off-by-one reduction candidate must be
+rejected. The reduced argument of `cos (10 ^ 10)` is not especially close to
+a quadrant boundary. Its purpose is the `2 ^ (-80)` output width: multiplying
+the pi error by a reduction integer near `10 ^ 10` forces a substantially
+higher-precision constant enclosure than quadrant selection alone.
+
+Range reduction depends on a pluggable constant service rather than a pi
+literal wired into the sine package. Its first serious provider uses a Machin-
+style arctangent identity whose identity and alternating-series remainder can
+be proved from elementary Mathlib analysis. A faster Chudnovsky provider
+follows once the Ramanujan-type identity connecting its series to `Real.pi` is
+formalized; checking only its term recurrence, finite sum, and tail would not
+establish that identity. Registry selection, fallback, and agreement of these
+independently produced enclosures are load-bearing. Before Chudnovsky is
+available, conformance compares two independently proved Machin-style
+identities. The acceptance target is a 1,000-bit pi enclosure; the engine may
+cache and share it across every trigonometric node in a run.
+
+#### Series as package-owned numerical algorithms
+
+A registered function may supply a power or Taylor series without teaching the
+engine that function. The generic series interface carries a center, exact
+coefficient recipe or recurrence, an admissible input region, a truncation
+degree, and a theorem bounding the remainder. Replay proves the finite
+polynomial enclosure and adds the remainder interval. Different formulas for
+one function are ordinary competing providers selected by policy and checked
+by their own theorems.
+
+The first precision canary computes `Real.exp (1 / 8)` in an interval of width
+at most `2 ^ (-100)` using the usual exponential series. It is followed by a
+formula whose coefficients are not built into the interval library, proving
+that the interface is genuinely package-owned. Increasing requested precision
+must extend or refine cached series work rather than restart an unrelated
+generic expression search.
+
+#### Certified logarithm tables
+
+The table-building acceptance program constructs enclosures for
+
+`Real.log (1 + (i : ℝ) / 256)`, for every `i : ℕ` with `i ≤ 256`,
+
+with width at most `2 ^ (-128)`. The table certificate binds the exact index,
+exact rational argument, chosen range reduction, series data, and final
+interval. It additionally proves monotonic ordering of adjacent entries. A
+later `log` propagator may use the table for argument reduction, but every
+lookup remains an ordinary replayable dependency rather than trusted generated
+code.
+
+Table construction is a first-class batch client: common constants,
+coefficients, and remainder proofs are shared. The benchmark records total
+integer work, proof size, cache reuse, and incremental cost when the requested
+precision grows. Producing one correct entry 257 times independently does not
+satisfy the table acceptance target.
+
+#### Certified integral bounds
+
+The first quadrature target proves the strict rational enclosure
+
+`7468 / 10000 < ∫ x in 0..1, Real.exp (-(x ^ 2))`
+
+and
+
+`∫ x in 0..1, Real.exp (-(x ^ 2)) < 7469 / 10000`.
+
+The executable planner may choose a partition and a quadrature or Taylor rule.
+The proof package checks each local enclosure and its remainder theorem, then
+adds the subinterval bounds exactly. Adaptive subdivision is driven by the
+same policy observations as other refinement, but an integral certificate has
+its own compositional theorem; sampling values is never evidence for an
+integral bound. Polynomial integrands should use exact antiderivative or
+polynomial-integration providers when available instead of being forced
+through generic quadrature.
+
+The first quadrature proof package lives in `HexIntervalMathlib`, which already
+owns real-function semantics and imports Mathlib; it does not add a dependency
+to Mathlib-free `HexInterval`. A general certified integrator with reusable
+partition APIs remains a later downstream library with its own SPEC.
+
+#### Specialized algebraic solvers before generic propagation
+
+The generic interval engine is a coordinator and fallback, not a mandate to
+solve every recognizable fragment by branch-and-contract. Hex already has
+certified real and complex polynomial root-isolation engines. A provider may
+recognize a closed univariate polynomial fragment with integer coefficients,
+or rational coefficients that can be cleared with a proved nonzero scale,
+reify it into the existing `Hex.ZPoly` representation, invoke the specialized
+executable solver, and replay its existing certificate into interval facts,
+disjoint cases, root counts, or refutations. Irrational, symbolic-coefficient,
+and multivariate fragments decline this provider and remain with generic or
+other specialized methods.
+
+The initial integration targets are:
+
+- use `HexRealRoots` to isolate the unique real root of `x ^ 5 - x - 1` and
+  feed its isolating interval into the surrounding interval problem;
+- use `HexRoots` to return a complete family of disjoint certified complex
+  regions for `z ^ 5 - z + 1`; and
+- solve a mixed problem in which real-root isolation supplies finitely many
+  algebraic candidate intervals and arbitrary-function propagators, such as a
+  sine or logarithm package, eliminate or refine those candidates.
+
+For root counting, isolation, or a sign partition determined by the roots of a
+supported univariate polynomial, the acceptance trace uses the specialized
+provider and does not reproduce Sturm, Descartes, Pellet, Newton, or complex
+argument-principle search as generic expression steps. A complete univariate
+real-closed-field sentence should be sent by the caller to `hex-rcf`, which
+already owns that end-to-end decision problem and may use real-root isolation
+internally; this is usage precedence, not a dependency or dispatch edge from
+the adapter. The adapter instead serves root-region fragments embedded in a
+larger interval problem. Polynomial range bounds on boxes use the generic
+Bernstein, centered, or Taylor-model portfolio unless they reduce to one of
+those exact decision problems. Generic interval propagation remains
+available around polynomial islands and as a bounded fallback when a
+specialized provider declines. Provider choice cannot affect soundness: every
+imported isolation is tied to the exact reified polynomial and a checked
+squarefree or simple-root certificate, then replayed through the existing
+`HexRealRootsMathlib` or `HexRootsMathlib` theorems.
+
+The root-isolation adapter does not live in `HexInterval` or
+`HexIntervalMathlib`: those libraries retain their present dependency order.
+The planned Mathlib-facing `hex-interval-algebraic` integration library depends
+on `hex-interval-mathlib`, `hex-real-roots-mathlib`, and
+`hex-roots-mathlib`, registers the specialized providers, and translates their
+results to interval facts and proof branches. This also prevents a generic
+interval import from pulling in polynomial isolation machinery.
+
+The same dispatch principle extends to other Hex libraries. Exact polynomial
+factorization, real-closed-field procedures, and future specialized linear or
+algebraic solvers should be preferred when their recognized fragment and
+certificate language fit the goal. The interval engine composes their results;
+it does not hide a slower duplicate implementation behind a uniform API.
+
+#### Required provider boundaries
+
+These examples require several independently registered numerical roles:
+
+- constant providers, such as Machin and Chudnovsky pi enclosures;
+- range-reduction providers for periodic and scale-reduced functions;
+- local function enclosures, including Taylor or other convergent formulas;
+- reusable certified table providers;
+- quadrature and integral-remainder providers; and
+- specialized algebraic solvers that return checked facts or branch families.
+
+All providers are versioned, resource-bounded at their public boundary, and
+replaceable. Their executable output is untrusted candidate data. Only exact
+candidate data becomes a fact through a package-owned theorem, and `Evidence`
+stores the resulting proof. Expensive provider internals may use compiled Lean
+search code. An optional external program may
+propose the same candidate only under the untrusted-dispatch contract in
+Scope; this SPEC still approves no `@[extern]` planner hook. Rejection and
+absence fall back without changing theorem statements.
+
+The roadmap order is example-driven: large-argument sine and pluggable pi;
+generic series and the high-precision log table; certified quadrature; real
+and complex root-isolator dispatch; then mixed workloads combining several of
+these providers. Verified raster and ODE clients below consume the same
+capabilities rather than introducing private numerical engines.
+
+In the companion development order, large-argument sine and the constant
+provider refine D5-D7, with Chudnovsky a later stretch provider; the series and
+log-table programs are D7-D8; the
+selected PNT+ point, sum, and generated-table workloads are D8-D9; adaptive
+quadrature and affine covers refine D9-D10; and root-isolator dispatch is a
+separate integration provider after the root libraries. Surveyed PNT+
+certified-bound and integral dependencies become milestone work only when a
+migration workload selects them. This mapping keeps the dependency order
+authoritative while the examples determine what each milestone must
+demonstrate.
 
 ### Verified raster graphs
 
