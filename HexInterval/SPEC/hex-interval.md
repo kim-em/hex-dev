@@ -2870,6 +2870,11 @@ integral bound. Polynomial integrands should use exact antiderivative or
 polynomial-integration providers when available instead of being forced
 through generic quadrature.
 
+The first quadrature proof package lives in `HexIntervalMathlib`, which already
+owns real-function semantics and imports Mathlib; it does not add a dependency
+to Mathlib-free `HexInterval`. A general certified integrator with reusable
+partition APIs remains a later downstream library with its own SPEC.
+
 #### Specialized algebraic solvers before generic propagation
 
 The generic interval engine is a coordinator and fallback, not a mandate to
@@ -2897,11 +2902,13 @@ For root counting, isolation, or a sign partition determined by the roots of a
 supported univariate polynomial, the acceptance trace uses the specialized
 provider and does not reproduce Sturm, Descartes, Pellet, Newton, or complex
 argument-principle search as generic expression steps. A complete univariate
-real-closed-field sentence goes first to `hex-rcf`, which already owns that
-end-to-end decision problem and may use real-root isolation internally. Direct
-root-region results use this adapter. Polynomial range bounds on boxes use the
-generic Bernstein, centered, or Taylor-model portfolio unless they reduce to
-one of those exact decision problems. Generic interval propagation remains
+real-closed-field sentence should be sent by the caller to `hex-rcf`, which
+already owns that end-to-end decision problem and may use real-root isolation
+internally; this is usage precedence, not a dependency or dispatch edge from
+the adapter. The adapter instead serves root-region fragments embedded in a
+larger interval problem. Polynomial range bounds on boxes use the generic
+Bernstein, centered, or Taylor-model portfolio unless they reduce to one of
+those exact decision problems. Generic interval propagation remains
 available around polynomial islands and as a bounded fallback when a
 specialized provider declines. Provider choice cannot affect soundness: every
 imported isolation is tied to the exact reified polynomial and a checked
@@ -2949,7 +2956,8 @@ these providers. Verified raster and ODE clients below consume the same
 capabilities rather than introducing private numerical engines.
 
 In the companion development order, large-argument sine and the constant
-provider refine D5-D7; the series and log-table programs are D7-D8; the
+provider refine D5-D7, with Chudnovsky a later stretch provider; the series and
+log-table programs are D7-D8; the
 selected PNT+ point, sum, and generated-table workloads are D8-D9; adaptive
 quadrature and affine covers refine D9-D10; and root-isolator dispatch is a
 separate integration provider after the root libraries. Surveyed PNT+

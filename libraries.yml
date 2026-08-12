@@ -555,6 +555,11 @@ libraries:
     done_through: 0
     status: planned
     proof_probes: [bench/HexIntervalMathlib]
+  HexIntervalAlgebraic:
+    deps: [HexIntervalMathlib, HexRealRootsMathlib, HexRootsMathlib]
+    mathlib: true
+    done_through: 0
+    status: planned
   HexResultantMathlib:
     deps: [HexResultant, HexPolyMathlib]
     mathlib: true

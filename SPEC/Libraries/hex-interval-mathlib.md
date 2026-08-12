@@ -954,7 +954,7 @@ identifier order.
 
 ### LeanCert and PNT+
 
-The inspected LeanCert snapshot is
+The originally inspected LeanCert snapshot is
 [`31579b5`](https://github.com/alerad/leancert/tree/31579b55618d11e4fbe622a6b5e30b0359b2ee6d).
 The current PNT+ audit snapshot is
 [`21998bb`](https://github.com/AlexKontorovich/PrimeNumberTheoremAnd/tree/21998bb6196b56789f72a52656a781a75e134eb0).
@@ -991,7 +991,8 @@ limitations to current LeanCert.
   never fall back. Hex likewise excludes `Lean.ofReduceBool`,
   `Lean.trustCompiler`, and generated
   `<decl>._native.native_decide.ax_*` dependencies from claimed kernel-only
-  results.
+  results, together with `sorryAx` and every project-local axiom forbidden by
+  the Axiom contract below.
 - `IntervalRat` represents only nonempty finite closed intervals. This library
   represents empty, open, half-open, and unbounded intervals.
 - The current LeanCert pin has a semantic router. Hex's distinct requirement is
@@ -1054,15 +1055,16 @@ SPEC and fixture refresh.
 
 The committed inventory lives at
 `conformance-fixtures/HexIntervalMathlib/pnt-inventory.jsonl` and is generated
-by `scripts/interval/pnt_inventory.py`. The generator tokenizes pinned Lean
+by `scripts/maintenance/pnt_inventory.py`. The generator tokenizes pinned Lean
 sources, counts tactic identifiers outside comments and string literals,
 records their enclosing declarations, separately records raw textual matches,
-and expands the named generated-data families. Per-PR CI validates the
-committed manifest without network access. The `local`/release refresh command
-checks out the recorded upstream revisions, regenerates it, and requires a
-reviewed diff when any count, classification, toolchain, or batch size changes.
-These artifacts are D8 deliverables; the paths name the required interface and
-do not imply that they exist before that milestone.
+and expands the named generated-data families. Per-PR CI and the mandatory
+release profile validate the committed manifest without network access. A
+separate maintainer refresh command checks out the recorded upstream revisions,
+regenerates it, and requires a reviewed diff when any count, classification,
+toolchain, or batch size changes. These artifacts are D8 deliverables; the
+paths name the required interface and do not imply that they exist before that
+milestone.
 
 `interval_decide` is not the complete PNT+ dependency surface. The same pinned
 tree has 60 actual `interval_auto` calls in `TMEEMT.lean` and
@@ -1116,11 +1118,12 @@ feature-for-feature LeanCert parity.
 The migration claim is earned when that port reproduces or strengthens the
 selected mathematical statements with ordinary kernel-checked proofs and the
 performance comparison below. The transitive axiom set of every claimed ported
-theorem excludes `Lean.ofReduceBool`, `Lean.trustCompiler`, and generated
+theorem satisfies the full Axiom contract below: it excludes `sorryAx`, every
+project-local axiom, `Lean.ofReduceBool`, `Lean.trustCompiler`, and generated
 `*.native_decide.ax_*` declarations. A retained dependency that reintroduces
 one of them is recorded as explicit trust residue and prevents that theorem
 from satisfying the kernel-only migration claim; it cannot be hidden behind a
-textually `native_decide`-free wrapper. PNT+ is allowed to adapt to Hex; Hex is
+textually clean wrapper. PNT+ is allowed to adapt to Hex; Hex is
 not advertised as a drop-in LeanCert replacement. Newer LeanCert algebraic,
 integration, optimization, root-finding, and routing APIs remain outside the
 claim unless a later workload explicitly selects them.
@@ -1379,8 +1382,10 @@ These are `D7` fixtures unless marked otherwise.
 - `exp x ≥ 1 + x` on `[0,+∞)` through derivative monotonicity;
 - `[D7]` an enclosure of `Real.exp (1 / 8)` of width at most
   `2 ^ (-100)` from a package-owned series and remainder theorem;
-- `[D7]` a 1,000-bit Machin-style pi enclosure and `[D8]` a Chudnovsky
-  enclosure at the same precision after its series identity is formalized;
+- `[D7]` a 1,000-bit Machin-style pi enclosure, plus provider fallback and
+  agreement checks against a second elementary identity;
+- `[D7]` a registered series with coefficients supplied entirely by its
+  function package rather than the interval library;
 - `[D8]` the ordered 257-entry table of
   `Real.log (1 + (i : ℝ) / 256)` for `i ≤ 256`, each entry of width at most
   `2 ^ (-128)`, with shared coefficients and remainder proofs;
@@ -1420,7 +1425,7 @@ The [PNT+ log-table generator](https://github.com/AlexKontorovich/PrimeNumberThe
 is a model for optional untrusted candidate generation. The committed tests
 still exercise the compiled Lean planner and kernel replay path.
 
-### Integration and algebraic-provider clients
+### Quadrature and algebraic-provider clients
 
 These are later Mathlib-facing or cross-library fixtures rather than first
 release requirements:
@@ -1429,13 +1434,14 @@ release requirements:
   `7468 / 10000 < ∫ x in 0..1, Real.exp (-(x ^ 2))` and
   `∫ x in 0..1, Real.exp (-(x ^ 2)) < 7469 / 10000`, obtained from a checked
   adaptive quadrature or Taylor partition rather than samples;
-- `[D10 integration]` isolate the unique real root of `x ^ 5 - x - 1` with
-  `hex-real-roots`, then consume its certified interval in an interval goal;
-- `[D10 integration]` return disjoint certified complex regions for all roots
-  of `z ^ 5 - z + 1` with `hex-roots`; and
-- `[D10 integration]` a mixed case in which exact algebraic candidate intervals
-  are refined or eliminated by independently registered sine or logarithm
-  packages.
+- `[hex-interval-algebraic]` isolate the unique real root of
+  `x ^ 5 - x - 1` with `hex-real-roots`, then consume its certified interval
+  in an interval goal;
+- `[hex-interval-algebraic]` return disjoint certified complex regions for all
+  roots of `z ^ 5 - z + 1` with `hex-roots`; and
+- `[hex-interval-algebraic]` a mixed case in which exact algebraic candidate
+  intervals are refined or eliminated by independently registered sine or
+  logarithm packages.
 
 ### Zulip and downstream challenge sets
 
@@ -1472,6 +1478,8 @@ outward regularization, and certification of a local maximum.
 The following specialized computations are stretch tests, not baseline
 requirements for a general rule:
 
+- a Chudnovsky pi enclosure after the Ramanujan-type identity connecting its
+  series to `Real.pi` has been formalized;
 - exact-`π` rational approximations following the
   [`exact-pi` interface](https://hackage.haskell.org/package/exact-pi-0.5.0.2/docs/Data-ExactPi.html#v:rationalApproximations);
 - `log 2` at 30,000 and one million decimal digits, using binary splitting and
@@ -1824,8 +1832,9 @@ The test harness records four times separately:
 4. incremental rebuild of a file importing the finished theorem.
 
 It also records allocations, program nodes, accepted actions, rule calls,
-splits, leaves, maximum endpoint heights, certificate bytes, proof nodes, and
-object-file size.
+splits, leaves, maximum endpoint heights, certificate bytes, proof nodes,
+object-file size, cache hits and reused terms, and incremental work when an
+existing series or table is extended to higher precision.
 
 Initial targets, to be confirmed on the reference host during performance
 validation, are:
@@ -1850,10 +1859,12 @@ The LeanCert version pinned by PNT+ is the migration baseline. The claim is
 factual: Hex reproduces or strengthens the selected PNT+ mathematical corpus
 with the transitive kernel-only trust set above, and on every large tier
 improves either total time or artifact size without a serious regression on the
-other measure. Both LeanCert's current kernel route and its default native
-route are reported, so the trust improvement and the performance comparison
-remain distinct. This is a mathematical-workload and engineering claim, not
-source compatibility or feature-for-feature parity.
+other measure, compared with LeanCert's trust-equivalent kernel route. A
+campaign fixes the permitted regression threshold before measuring results;
+the initial threshold is 20 percent. LeanCert's default native-route figures
+are reported as context, not used as the pass/fail baseline, so trust and
+performance remain distinct. This is a mathematical-workload and engineering
+claim, not source compatibility or feature-for-feature parity.
 
 ## Development order
 
@@ -1894,9 +1905,9 @@ source compatibility or feature-for-feature parity.
    positive-base real powers, certified range reduction, and symbolic special
    values.
 8. **D8 — large certificates.** Add production chunked folds and the selected
-   PNT+ point and sum migration corpus. Remove every need for a
-   `native_decide` proof path in the ported files, without requiring unchanged
-   PNT+ tactic syntax or unrelated LeanCert APIs.
+   PNT+ point and sum migration corpus. Ensure every claimed ported theorem's
+   transitive axiom set excludes everything forbidden by the Axiom contract,
+   without requiring unchanged PNT+ tactic syntax or unrelated LeanCert APIs.
 9. **D9 — branch search.** Add arbitrary and function-suggested subdivision,
    plus the Table 10, Table 12, and tiered FKS2 tests. Compare split variable,
    point, and node-order strategies rather than coupling them. Local shaving,
