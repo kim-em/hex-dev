@@ -992,7 +992,7 @@ limitations to current LeanCert.
   `Lean.trustCompiler`, and generated
   `<decl>._native.native_decide.ax_*` dependencies from claimed kernel-only
   results, together with `sorryAx` and every project-local axiom forbidden by
-  the Axiom contract below.
+  the Axiom contract above.
 - `IntervalRat` represents only nonempty finite closed intervals. This library
   represents empty, open, half-open, and unbounded intervals.
 - The current LeanCert pin has a semantic router. Hex's distinct requirement is
@@ -1118,7 +1118,7 @@ feature-for-feature LeanCert parity.
 The migration claim is earned when that port reproduces or strengthens the
 selected mathematical statements with ordinary kernel-checked proofs and the
 performance comparison below. The transitive axiom set of every claimed ported
-theorem satisfies the full Axiom contract below: it excludes `sorryAx`, every
+theorem satisfies the full Axiom contract above: it excludes `sorryAx`, every
 project-local axiom, `Lean.ofReduceBool`, `Lean.trustCompiler`, and generated
 `*.native_decide.ax_*` declarations. A retained dependency that reintroduces
 one of them is recorded as explicit trust residue and prevents that theorem
@@ -1383,7 +1383,7 @@ These are `D7` fixtures unless marked otherwise.
 - `[D7]` an enclosure of `Real.exp (1 / 8)` of width at most
   `2 ^ (-100)` from a package-owned series and remainder theorem;
 - `[D7]` a 1,000-bit Machin-style pi enclosure, plus provider fallback and
-  agreement checks against a second elementary identity;
+  agreement checks against a second independently proved Machin-style identity;
 - `[D7]` a registered series with coefficients supplied entirely by its
   function package rather than the interval library;
 - `[D8]` the ordered 257-entry table of
@@ -1434,12 +1434,12 @@ release requirements:
   `7468 / 10000 < ∫ x in 0..1, Real.exp (-(x ^ 2))` and
   `∫ x in 0..1, Real.exp (-(x ^ 2)) < 7469 / 10000`, obtained from a checked
   adaptive quadrature or Taylor partition rather than samples;
-- `[hex-interval-algebraic]` isolate the unique real root of
+- `[D10 cross-library: hex-interval-algebraic]` isolate the unique real root of
   `x ^ 5 - x - 1` with `hex-real-roots`, then consume its certified interval
   in an interval goal;
-- `[hex-interval-algebraic]` return disjoint certified complex regions for all
+- `[D10 cross-library: hex-interval-algebraic]` return disjoint certified complex regions for all
   roots of `z ^ 5 - z + 1` with `hex-roots`; and
-- `[hex-interval-algebraic]` a mixed case in which exact algebraic candidate
+- `[D10 cross-library: hex-interval-algebraic]` a mixed case in which exact algebraic candidate
   intervals are refined or eliminated by independently registered sine or
   logarithm packages.
 

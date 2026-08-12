@@ -2811,9 +2811,10 @@ be proved from elementary Mathlib analysis. A faster Chudnovsky provider
 follows once the Ramanujan-type identity connecting its series to `Real.pi` is
 formalized; checking only its term recurrence, finite sum, and tail would not
 establish that identity. Registry selection, fallback, and agreement of these
-independently produced enclosures are load-bearing. The acceptance target is a
-1,000-bit pi enclosure; the engine may cache and share it across every
-trigonometric node in a run.
+independently produced enclosures are load-bearing. Before Chudnovsky is
+available, conformance compares two independently proved Machin-style
+identities. The acceptance target is a 1,000-bit pi enclosure; the engine may
+cache and share it across every trigonometric node in a run.
 
 #### Series as package-owned numerical algorithms
 

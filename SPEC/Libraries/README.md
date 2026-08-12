@@ -174,11 +174,9 @@ The computational interval pair is independent. Its planned algebraic adapter
 joins the Mathlib-facing interval layer to the existing root-isolation graph:
 
 ```text
-hex-interval ── hex-interval-mathlib
-                         │
-                         └── hex-interval-algebraic
-                              ├── hex-real-roots-mathlib
-                              └── hex-roots-mathlib
+hex-interval ── hex-interval-mathlib ──┐
+hex-real-roots-mathlib ────────────────┼── hex-interval-algebraic
+hex-roots-mathlib ─────────────────────┘
 ```
 
 Multivariate polynomials extend the univariate polynomial library and
