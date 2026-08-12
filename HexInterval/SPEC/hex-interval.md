@@ -1385,8 +1385,9 @@ ambiguous package matches remain hard registry errors. All accepted hypotheses
 narrowing the same version-zero node remain in an ordered seed recipe; later
 hypotheses cannot overwrite an earlier proof dependency, while facts about
 other recognized expressions may append a suffix after the target graph. The
-exponential tactic currently requires only the target-reachable operation and
-node prefixes, and the target fact, to match its fixed semantic/proof fixture.
+fixed-fixture exponential tactic currently requires only the target-reachable
+operation and node prefixes, and the target fact, to match its semantic/proof
+fixture.
 Extra supported, duplicate, unsupported-real, and non-real hypotheses therefore
 do not disable an otherwise applicable proof; later operation packages may
 also extend the registry after the target prefix. Removing that last prefix
@@ -1449,7 +1450,7 @@ actual reified goal. One variant closes from the live exponential replay; a
 second consumes a caller hypothesis through the ordered seed path. Neither
 uses `native_decide`.
 
-The next experiment removes the exponential canary's fixed compiled trace.
+This experiment removes the exponential canary's fixed compiled trace.
 It starts `PolicySession` from the reifier's actual `CheckerInput`, selects an
 offer anchored at the actual target node, quotes that resulting session, and
 feeds it to `ProofFrontend` with the dynamic base program, facts, and reflexive
@@ -1466,6 +1467,17 @@ target version from the retained proof table. The current operation registry
 also remains the fixed source/exponential pair. Key-resolved semantic model
 selection must land before operation packages may be reordered; array position
 is not a permanent package identity.
+
+The dynamic path is still bounded by the exponential package's engine envelope,
+which permits at most five nodes and node depth four, even though the goal
+reifier admits up to sixteen nodes and expression depth eight. Thus the single
+unrelated supported hypothesis above fits, while two such hypotheses or a
+sufficiently deep nested target fail at session preflight before search. The
+current canary helper also collapses that resource stop, absence of a matching
+offer, rule failure, and proof-registry failure into one generic diagnostic.
+Aligning the two envelopes and preserving the typed stop reason in tactic
+diagnostics remain future frontend work; neither limitation is a theorem-
+production assumption.
 
 The fixed canary also requires a live session with no dropped work and an exact
 proof history of one instance, one equality, three fact events, and the
