@@ -2805,13 +2805,15 @@ the pi error by a reduction integer near `10 ^ 10` forces a substantially
 higher-precision constant enclosure than quadrant selection alone.
 
 Range reduction depends on a pluggable constant service rather than a pi
-literal wired into the sine package. Its first serious provider uses the
-Chudnovsky series to return a certified pi interval at a requested precision.
-The certificate checks the term recurrence, finite sum, and tail bound. A
-second, slower formula such as a Machin identity is a conformance provider so
-that registry selection, fallback, and agreement of independently produced
-enclosures are load-bearing. The acceptance target is a 1,000-bit pi enclosure;
-the engine may cache and share it across every trigonometric node in a run.
+literal wired into the sine package. Its first serious provider uses a Machin-
+style arctangent identity whose identity and alternating-series remainder can
+be proved from elementary Mathlib analysis. A faster Chudnovsky provider
+follows once the Ramanujan-type identity connecting its series to `Real.pi` is
+formalized; checking only its term recurrence, finite sum, and tail would not
+establish that identity. Registry selection, fallback, and agreement of these
+independently produced enclosures are load-bearing. The acceptance target is a
+1,000-bit pi enclosure; the engine may cache and share it across every
+trigonometric node in a run.
 
 #### Series as package-owned numerical algorithms
 
@@ -2873,10 +2875,13 @@ through generic quadrature.
 The generic interval engine is a coordinator and fallback, not a mandate to
 solve every recognizable fragment by branch-and-contract. Hex already has
 certified real and complex polynomial root-isolation engines. A provider may
-recognize a closed polynomial fragment, reify it into the existing `Hex.ZPoly`
-representation, invoke the specialized executable solver, and replay its
-existing certificate into interval facts, disjoint cases, root counts, or
-refutations.
+recognize a closed univariate polynomial fragment with integer coefficients,
+or rational coefficients that can be cleared with a proved nonzero scale,
+reify it into the existing `Hex.ZPoly` representation, invoke the specialized
+executable solver, and replay its existing certificate into interval facts,
+disjoint cases, root counts, or refutations. Irrational, symbolic-coefficient,
+and multivariate fragments decline this provider and remain with generic or
+other specialized methods.
 
 The initial integration targets are:
 
@@ -2888,21 +2893,28 @@ The initial integration targets are:
   algebraic candidate intervals and arbitrary-function propagators, such as a
   sine or logarithm package, eliminate or refine those candidates.
 
-For a purely polynomial goal, the acceptance trace uses the specialized
+For root counting, isolation, or a sign partition determined by the roots of a
+supported univariate polynomial, the acceptance trace uses the specialized
 provider and does not reproduce Sturm, Descartes, Pellet, Newton, or complex
-argument-principle search as generic expression steps. Generic interval
-propagation remains available around polynomial islands and as a bounded
-fallback when the specialized provider declines. Provider choice cannot affect
-soundness: every imported isolation is tied to the exact reified polynomial
-and a checked squarefree or simple-root certificate, then replayed through the
-existing `HexRealRootsMathlib` or `HexRootsMathlib` theorems.
+argument-principle search as generic expression steps. A complete univariate
+real-closed-field sentence goes first to `hex-rcf`, which already owns that
+end-to-end decision problem and may use real-root isolation internally. Direct
+root-region results use this adapter. Polynomial range bounds on boxes use the
+generic Bernstein, centered, or Taylor-model portfolio unless they reduce to
+one of those exact decision problems. Generic interval propagation remains
+available around polynomial islands and as a bounded fallback when a
+specialized provider declines. Provider choice cannot affect soundness: every
+imported isolation is tied to the exact reified polynomial and a checked
+squarefree or simple-root certificate, then replayed through the existing
+`HexRealRootsMathlib` or `HexRootsMathlib` theorems.
 
 The root-isolation adapter does not live in `HexInterval` or
 `HexIntervalMathlib`: those libraries retain their present dependency order.
-A separate integration library depends on the interval and root-isolation
-libraries, registers the specialized providers, and translates their results
-to interval facts and proof branches. This also prevents a generic interval
-import from pulling in polynomial isolation machinery.
+The planned Mathlib-facing `hex-interval-algebraic` integration library depends
+on `hex-interval-mathlib`, `hex-real-roots-mathlib`, and
+`hex-roots-mathlib`, registers the specialized providers, and translates their
+results to interval facts and proof branches. This also prevents a generic
+interval import from pulling in polynomial isolation machinery.
 
 The same dispatch principle extends to other Hex libraries. Exact polynomial
 factorization, real-closed-field procedures, and future specialized linear or
@@ -2914,7 +2926,7 @@ it does not hide a slower duplicate implementation behind a uniform API.
 
 These examples require several independently registered numerical roles:
 
-- constant providers, such as Chudnovsky pi;
+- constant providers, such as Machin and Chudnovsky pi enclosures;
 - range-reduction providers for periodic and scale-reduced functions;
 - local function enclosures, including Taylor or other convergent formulas;
 - reusable certified table providers;
@@ -2923,8 +2935,9 @@ These examples require several independently registered numerical roles:
 
 All providers are versioned, resource-bounded at their public boundary, and
 replaceable. Their executable output is untrusted candidate data. Only exact
-data checked by package-owned theorems enters `Evidence`. Expensive provider
-internals may use compiled Lean search code. An optional external program may
+candidate data becomes a fact through a package-owned theorem, and `Evidence`
+stores the resulting proof. Expensive provider internals may use compiled Lean
+search code. An optional external program may
 propose the same candidate only under the untrusted-dispatch contract in
 Scope; this SPEC still approves no `@[extern]` planner hook. Rejection and
 absence fall back without changing theorem statements.
