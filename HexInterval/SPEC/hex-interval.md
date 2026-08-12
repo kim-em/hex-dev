@@ -2790,7 +2790,7 @@ alone is not completion.
 
 The first range-reduction targets are:
 
-- prove `Real.sin 10 < 0` from a certified enclosure of `sin 10`; and
+- prove `Real.sin 10 < 0` from a certified enclosure of `Real.sin 10`; and
 - produce exact dyadic `lo` and `hi` with `0 < lo`,
   `Real.cos (10 ^ 10) ∈ [lo, hi]`, and `hi - lo ≤ 2 ^ (-80)`.
 
@@ -2799,9 +2799,10 @@ kernel to trust it. A function package combines a checked constant enclosure,
 an exact integer or quadrant reduction, a small residual interval, and a local
 enclosure theorem. The large reduction integer, the selected quadrant, and the
 residual are explicit replay data. An off-by-one reduction candidate must be
-rejected. The `cos (10 ^ 10)` example is deliberately large enough that a
-low-precision approximation to pi cannot accidentally select the right
-quadrant.
+rejected. The reduced argument of `cos (10 ^ 10)` is not especially close to
+a quadrant boundary. Its purpose is the `2 ^ (-80)` output width: multiplying
+the pi error by a reduction integer near `10 ^ 10` forces a substantially
+higher-precision constant enclosure than quadrant selection alone.
 
 Range reduction depends on a pluggable constant service rather than a pi
 literal wired into the sine package. Its first serious provider uses the
@@ -2833,7 +2834,7 @@ generic expression search.
 
 The table-building acceptance program constructs enclosures for
 
-`Real.log (1 + i / 256)`, for every `0 ≤ i ≤ 256`,
+`Real.log (1 + (i : ℝ) / 256)`, for every `i : ℕ` with `i ≤ 256`,
 
 with width at most `2 ^ (-128)`. The table certificate binds the exact index,
 exact rational argument, chosen range reduction, series data, and final
@@ -2893,8 +2894,15 @@ argument-principle search as generic expression steps. Generic interval
 propagation remains available around polynomial islands and as a bounded
 fallback when the specialized provider declines. Provider choice cannot affect
 soundness: every imported isolation is tied to the exact reified polynomial
-and checked through the existing `HexRealRootsMathlib` or `HexRootsMathlib`
-theorems.
+and a checked squarefree or simple-root certificate, then replayed through the
+existing `HexRealRootsMathlib` or `HexRootsMathlib` theorems.
+
+The root-isolation adapter does not live in `HexInterval` or
+`HexIntervalMathlib`: those libraries retain their present dependency order.
+A separate integration library depends on the interval and root-isolation
+libraries, registers the specialized providers, and translates their results
+to interval facts and proof branches. This also prevents a generic interval
+import from pulling in polynomial isolation machinery.
 
 The same dispatch principle extends to other Hex libraries. Exact polynomial
 factorization, real-closed-field procedures, and future specialized linear or
@@ -2916,15 +2924,26 @@ These examples require several independently registered numerical roles:
 All providers are versioned, resource-bounded at their public boundary, and
 replaceable. Their executable output is untrusted candidate data. Only exact
 data checked by package-owned theorems enters `Evidence`. Expensive provider
-internals may be native Lean, or an optional external program may propose the
-same candidate, but rejection and absence fall back without changing theorem
-statements.
+internals may use compiled Lean search code. An optional external program may
+propose the same candidate only under the untrusted-dispatch contract in
+Scope; this SPEC still approves no `@[extern]` planner hook. Rejection and
+absence fall back without changing theorem statements.
 
 The roadmap order is example-driven: large-argument sine and pluggable pi;
 generic series and the high-precision log table; certified quadrature; real
 and complex root-isolator dispatch; then mixed workloads combining several of
 these providers. Verified raster and ODE clients below consume the same
 capabilities rather than introducing private numerical engines.
+
+In the companion development order, large-argument sine and the constant
+provider refine D5-D7; the series and log-table programs are D7-D8; the
+selected PNT+ point, sum, and generated-table workloads are D8-D9; adaptive
+quadrature and affine covers refine D9-D10; and root-isolator dispatch is a
+separate integration provider after the root libraries. Surveyed PNT+
+certified-bound and integral dependencies become milestone work only when a
+migration workload selects them. This mapping keeps the dependency order
+authoritative while the examples determine what each milestone must
+demonstrate.
 
 ### Verified raster graphs
 
