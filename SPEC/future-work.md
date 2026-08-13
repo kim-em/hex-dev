@@ -29,31 +29,24 @@ witness. Factors whose product is the input form a decomposition;
 irreducibility of each is a further obligation. Where an item needs a
 second witness, it says which one.
 
-**Hermite normal form.** Row reduction over `Int`: upper triangular
-with positive pivots, entries above each pivot in `[0, pivot)`. Uses
-extended GCD to create pivots without division: given entries `a`, `b`
-in the same column, compute `(g, s, t)` with `s * a + t * b = g`,
-then apply the 2×2 row transformation `[[s, t], [-b/g, a/g]]` to
-zero out `b` and replace `a` with `g`. Reduce entries above each pivot
-modulo the pivot. The result is unique. Returns `RowEchelonData`; an
-`IsHNF` Prop-valued structure extending `IsEchelonForm` (parallel to
-`IsRowReduced`) certifies correctness, with HNF-specific fields:
-- Each pivot is positive
-- Entries above each pivot are in `[0, pivot)`
-- `det transform = 1 ∨ det transform = -1`
+**Hermite and Smith normal forms.** These two have graduated from this
+file and are specified in [hex-hermite](Libraries/hex-hermite.md) and
+[hex-smith](Libraries/hex-smith.md): Hermite normal form as a canonical
+representative of an integer row lattice with lattice membership,
+integer kernel bases, and integer rank on top of it, and Smith normal
+form as the diagonal form with the divisibility chain `d₁ ∣ d₂ ∣ ⋯ ∣ dᵣ`,
+the invariant factors, and the structure of a finitely generated abelian
+group. Both are separate libraries rather than additions to hex-matrix,
+because both need the extended GCD from hex-arith and the echelon
+contracts from hex-row-reduce, and Hermite normal form needs a
+determinant from hex-bareiss for its modular algorithm.
 
-HNF requires extended GCD, which lives in hex-arith. Since
-hex-matrix currently has no dependencies, HNF would either need:
-extended GCD upstreamed into Lean 4 stdlib, a new dependency
-hex-matrix → hex-arith, or a separate library (e.g.
-`hex-matrix-hermite` depending on both hex-matrix and hex-arith).
-
-**Smith normal form.** Diagonal form obtained by both row and column
-operations over a principal ideal domain. The diagonal entries satisfy
-`d₁ | d₂ | ⋯ | dᵣ` (divisibility chain). Useful for computing the
-structure of finitely generated abelian groups and solving integer
-linear systems. Like HNF, requires extended GCD and is not needed for
-Berlekamp-Zassenhaus.
+Two corrections to what this file said before those SPECs were written,
+recorded because they are easy to make again. The `IsHNF` field list
+should not carry `det transform = 1 ∨ det transform = -1`, which follows
+from `IsEchelonForm.transform_inv` and `det_mul`; and it must carry the
+condition that each pivot is the leading nonzero entry of its row, which
+`IsEchelonForm` does not imply and without which uniqueness is false.
 
 **Sylvester's identity (hex-matrix).** The Desnanot-Jacobi identity
 relating minors of a matrix. Now the primary proof strategy for
@@ -114,9 +107,14 @@ characteristic polynomial, all certified from one computation.
 Two distinctions are worth holding onto. The factorization of `χ_A` does
 not determine the canonical form, because matrices sharing a
 characteristic polynomial can have different invariant factors. And this
-is not the integer Smith normal form above: the base ring is `F[x]`, the
-units are the nonzero constants, and the two items share an algorithm
-shape rather than a theorem.
+is not the integer Smith normal form of [hex-smith](Libraries/hex-smith.md):
+the base ring is `F[x]`, the units are the nonzero constants, and the two
+items share an algorithm shape rather than a theorem. The
+[hex-hermite](Libraries/hex-hermite.md) SPEC records, under "Why `Int`
+and not a Euclidean domain class", exactly which parts transfer (the 2x2
+elimination step) and which do not (pivot normalisation, the reduction of
+entries above a pivot, the termination measure, and the growth problem
+the algorithm choice is designed around).
 
 **Certified eigenpair enclosures.** Run an untrusted floating-point
 solver, then verify its output with interval arithmetic in the style of
