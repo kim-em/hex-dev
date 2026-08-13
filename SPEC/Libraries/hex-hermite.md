@@ -30,7 +30,7 @@ What the library delivers, none of which is currently reachable:
   same dimensions* have the same integer row lattice exactly when their
   Hermite normal forms are equal, so lattice equality is decided by one
   comparison. Across dimensions the comparison is on `hnfBasis`, the
-  nonzero rows alone; see "Canonicity is per shape" below.
+  nonzero rows alone. See "Canonicity is per shape" below.
 - **Lattice membership with completeness.** `latticeContains A v` is
   `true` exactly when `v` is an integer combination of the rows of `A`.
   The `Field`-based `spanContains` answers the rational question and
@@ -56,11 +56,11 @@ Named consumers:
   exactly the pivot product above.
 - **hex-lll**, which can canonicalise a reduced basis and drop
   dependent generators. The dependency runs from this library to
-  `hex-lll`'s vocabulary rather than the other way; see "Prerequisite
+  `hex-lll`'s vocabulary rather than the other way. See "Prerequisite
   changes in other libraries".
 - The **polynomial-matrix invariant factors** item in
   [future-work](../future-work.md), which needs the same algorithm shape
-  over `F[x]`. That is not this library; see "Why `Int` and not a
+  over `F[x]`. That is not this library. See "Why `Int` and not a
   Euclidean domain class".
 
 ## The convention this library fixes
@@ -86,7 +86,7 @@ or HNF)".
 
 **`H` is unique; `U` is not.** Uniqueness of `H` is the property the
 whole library rests on: its nonzero rows depend only on the integer row
-lattice of `A`. `U` is determined only when `A` has full row rank; when
+lattice of `A`. `U` is determined only when `A` has full row rank. When
 `rank < n` the rows of `U` that map to zero can be changed by any
 unimodular transformation of the kernel lattice. No uniqueness theorem
 for `U` is stated or should be expected.
@@ -171,7 +171,7 @@ example : IsRowReduced cexM cexD where
 
 Every field is vacuous or immediate, yet `5` sits to the left of the
 declared pivot, so this is not a row echelon form under any standard
-definition. `rowReduce` of course produces leading pivots; the point is
+definition. `rowReduce` of course produces leading pivots. The point is
 that the *contract* does not say so, and a downstream proof may not
 assume it.
 
@@ -211,8 +211,8 @@ structure IsHNF {n m : Nat} (M : Matrix Int n m) (D : RowEchelonData Int n m) : 
 
 This elaborates as written against the current tree. `above_nonneg` and
 `above_lt` are separate fields rather than one conjunction so that each
-can be cited on its own; the pair is the "reduced into `[0, pivot)`"
-condition. The `D.echelon[i]` access with `i : Fin D.rank` is the same
+can be cited on its own. Together they are the "reduced into
+`[0, pivot)`" condition. The `D.echelon[i]` access with `i : Fin D.rank` is the same
 shape `IsRowReduced.pivot_one` already uses.
 
 The unimodularity of `D.transform` is inherited from
@@ -404,7 +404,7 @@ however many independent rows it has.
 `hnfSquare` chooses between the modular algorithm and the general one on
 the determinant returned by `hex-bareiss`. Both branches are complete
 algorithms, so this is a dispatch and not a total form of a partial
-helper in the sense of design principle 8; no fallback classification is
+helper in the sense of design principle 8. No fallback classification is
 required, and none should be written.
 
 ## Correctness theorems
@@ -468,7 +468,7 @@ gives a second determinant algorithm to cross-check `hex-bareiss`
 against.
 
 `memLattice` is `Hex.Matrix.memLattice`, currently defined in
-`HexLLL/Lattice.lean`; see the next section.
+`HexLLL/Lattice.lean`. See the next section.
 
 ## Certificates and certified dispatch
 
@@ -497,7 +497,7 @@ theorem hnfCert_sound :
 `isHNFForm` is the decidable shape test for the four clauses, written
 directly on the entries. Note what the three checks buy. `U * W = I`
 over a commutative ring gives `W * U = I` as well, through the adjugate,
-so unimodularity of `U` follows from one product check; the reverse
+so unimodularity of `U` follows from one product check. The reverse
 product need not be certified separately. The same-lattice statement
 then follows from `U * A = H` and `W * H = W * U * A = A`. So
 `sameLatticeCert`'s second check is redundant here and should not be
@@ -529,10 +529,11 @@ One obligation that belongs in `hex-determinant` rather than here:
 theorem Matrix.mul_eq_one_comm {U W : Matrix R n n} : U * W = 1 → W * U = 1
 ```
 
-for a commutative ring, proved from `det_mul`, `mul_adjugate`, and
-`adjugate_mul`, all of which are already Mathlib-free in
-`HexDeterminant/Adjugate.lean`. It is adjugate theory, not Hermite
-theory, and two other libraries would use it.
+for a commutative ring. `HexDeterminant/Adjugate.lean` has `det_mul` and
+`mul_adjugate` in matrix form, and the other side only entrywise as
+`adjugate_mul_apply`. The matrix-level `adjugate_mul` is not there and is
+part of this obligation rather than something to cite. It is adjugate
+theory, not Hermite theory, and two other libraries would use it.
 
 ## Prerequisite changes in other libraries
 
@@ -546,7 +547,7 @@ statement in this SPEC is phrased with it, and `hex-hermite` should not
 acquire a dependency on `hex-lll` (and through it `hex-gram-schmidt`,
 `hex-bareiss`, `hex-determinant`) to say "is an integer combination of
 the rows". Move `memLattice`, `vecMul_mul`, `memLattice_of_mul_eq`, and
-`memLattice_iff_of_mul_eq` into `HexMatrix/Lattice.lean`; leave
+`memLattice_iff_of_mul_eq` into `HexMatrix/Lattice.lean`, and leave
 `independent` where it is.
 
 **`mulEqCert` should be public.** It is in `Hex.Internal`, so it is
@@ -689,7 +690,7 @@ No new job, no matrix, no new workflow file, per [SPEC/CI.md](../CI.md).
 exposes `fmpz_mat_hnf` and `fmpz_mat_hnf_transform` in the row-style
 convention this SPEC fixes. The python-flint binding for the
 transform-returning form must be confirmed against the version CI
-installs before the driver is written; if it is not exposed, the
+installs before the driver is written. If it is not exposed, the
 fallback is PARI's `mathnf(M, 1)` through `cypari2`, which is already a
 CI dependency. The column-style-to-row-style conversion is then done in
 the driver, and it is not just a transpose: reversing rows or columns on
@@ -781,7 +782,7 @@ mostly reports where the crossover was placed.
    grow faster in the dimension than the output entry bit-size does on
    `unimodular-conjugate`, with the time spent in big-integer arithmetic
    rising as a share of total time. Instrument entry size and allocation
-   in the bench, not just wallclock; a time ratio alone cannot separate
+   in the bench, not just wallclock. A time ratio alone cannot separate
    these two causes.
 
 ## File organisation

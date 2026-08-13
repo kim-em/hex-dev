@@ -4,7 +4,7 @@ The Smith normal form of an integer matrix: a diagonal matrix `S` with
 `S = U * A * V` for unimodular `U` and `V`, whose diagonal entries are
 positive and form a divisibility chain `d₁ ∣ d₂ ∣ ⋯ ∣ d_r`. Those
 entries are the invariant factors of `A`, and they determine the
-structure of the abelian group presented by `A`. Mathlib-free; the
+structure of the abelian group presented by `A`. Mathlib-free. The
 companion `hex-smith-mathlib` builds Mathlib's
 `Module.Basis.SmithNormalForm` from the executable output and relates
 the invariant factors to the structure theorem for finitely generated
@@ -36,14 +36,14 @@ different and larger class of question:
   `∏ dᵢ` when `r = m`, and infinite otherwise.
 - **Invariant factors of a module map**, which is what the polynomial
   matrix item in [future-work](../future-work.md) wants over `F[x]`
-  rather than `ℤ`. That item is not this library; see "Why `Int`" in
+  rather than `ℤ`. That item is not this library. See "Why `Int`" in
   [hex-hermite](hex-hermite.md).
 
 The dependency on `hex-hermite` is real rather than organisational: the
 `extGcd` elimination step with its explicit inverse, the exact-division
 discipline, the certificate machinery, the conventions, and the
 `mul_eq_one_comm` obligation are all shared. Note that the default
-algorithm below does *not* call `hnf`; the Kannan-Bachem variant under
+algorithm below does *not* call `hnf`. The Kannan-Bachem variant under
 "Open questions" would, which is the other reason to keep the two
 libraries adjacent.
 
@@ -135,7 +135,7 @@ this is the library that needs it first.
 **The default is the classical Euclidean pivot algorithm**, and it is
 called that rather than Kannan-Bachem. Kannan-Bachem controls growth by
 alternating row and column Hermite normal forms on trailing submatrices,
-and its entry bound comes from that repetition; the pivot loop below does
+and its entry bound comes from that repetition. The pivot loop below does
 not inherit those bounds merely by shrinking the pivot, and saying it
 does would be an unearned claim. What the loop below has is a
 straightforward correctness argument and a termination measure. What it
@@ -279,7 +279,7 @@ columns. `detDivisor A 0 = 1`, and `detDivisor A k = 0` when
 `k > min n m` or when every such minor vanishes.
 
 This is the specification function. Its definition is the gcd above and
-mentions nothing about `snf`; `detDivisor_eq_prod` is what says the
+mentions nothing about `snf`. `detDivisor_eq_prod` is what says the
 invariant factors compute it. -/
 noncomputable def detDivisor (A : Matrix Int n m) (k : Nat) : Nat
 
@@ -287,7 +287,7 @@ end Hex.Matrix
 ```
 
 Contracts to state explicitly. `invariantFactors` drops nothing, so its
-leading entries may be `1`; `abelianStructure` drops them, because a
+leading entries may be `1`. `abelianStructure` drops them, because a
 `ℤ/1` summand is not part of anyone's answer, and returns the free rank
 `m - rank` separately. `quotientOrder` returns `0` when the free rank is
 positive, which is the same convention `latticeIndex` uses in
@@ -416,7 +416,7 @@ clauses with unimodular transforms has the rank and the diagonal of the
 Smith normal form, so an accepted candidate is the answer and no second
 witness for canonicity is needed. Note that this completeness is
 downstream of the uniqueness theorem, which is downstream of the
-`hex-determinant` prerequisite above; until that chain is closed, the
+`hex-determinant` prerequisite above. Until that chain is closed, the
 checker is sound but the "it is the answer" claim is not yet proved.
 That makes certified dispatch to an external implementation possible in
 the shape `hex-lll`'s `certCheck` already uses. It is not part of v1.
@@ -481,6 +481,12 @@ domain class" in [hex-hermite](hex-hermite.md). The polynomial case is
 the route to rational canonical form and the minimal polynomial, and it
 shares the algorithm shape and none of the normalisation, growth
 control, or termination measure.
+
+**Anything Berlekamp-Zassenhaus needs.** Nothing in the existing tree
+depends on this library. Integer factoring of polynomials reaches its
+answer without a Smith normal form, so this is new capability rather than
+a missing piece of something already built, and it can be scheduled
+purely on the strength of its own consumers.
 
 **Sparse input.** Relation matrices from group presentations are often
 very sparse, and dense elimination fills them in immediately. The sparse
@@ -645,12 +651,12 @@ Everything else arrives through `HexHermite`.
   forms on trailing submatrices and does have one, at the cost of block
   embeddings, rank-deficient handling, and accumulating the transforms
   through all of it. The growth instrumentation under "Benchmarking" is
-  what decides whether that work is called for; it should not be started
+  what decides whether that work is called for. It should not be started
   on the strength of the name.
 - **Whether `detDivisor` should be public at all.** It is the
   specification function and it has no efficient direct evaluation. The
   argument for exporting it is that the statement `d₁ ⋯ d_k = D_k` is
-  the thing a mathematician wants to cite; the argument against is that
+  the thing a mathematician wants to cite. The argument against is that
   a `noncomputable` definition with an exponential unfolding invites
   misuse. It is exported here with its docstring saying so.
 - **Sparse relation matrices**, as above. The dense algorithm is

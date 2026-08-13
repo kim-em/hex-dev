@@ -8,9 +8,10 @@ in `SPEC/future-work.md`:
 - `SPEC/Libraries/hex-hermite.md`: Hermite normal form over `Int`. Fixes
   the row-style convention, the `IsHNF` contract, the `extGcd` 2x2
   elimination step with its explicit inverse, the entry-growth analysis
-  and the algorithm choice that follows from it (Kannan-Bachem by
-  default, Domich-Kannan-Trotter modulo the determinant for square
-  nonsingular input), the API (`hnf`, `hnfData`, `latticeCoeffs`,
+  and the algorithm choice that follows from it (a total column sweep
+  with eager reduction above each pivot by default, and the
+  Domich-Kannan-Trotter recurrence on `[A; d·I]` for square nonsingular
+  input), the API (`hnf`, `hnfBasis`, `hnfData`, `latticeCoeffs`,
   `kernelBasis`, `latticeIndex`), the correctness theorems, the
   certificate, the Mathlib layer, conformance, and benchmarking with two
   thresholds written down in advance.
@@ -131,11 +132,14 @@ precedent for a draft SPEC.
 
 The sequencing the review argued for, which is now what both SPECs say:
 
-1. Four prerequisite relocations, each independently justified and each
-   doable before any Hermite commit: `memLattice` and the certificate
-   checkers from `hex-lll` to `hex-matrix`, `mulEqCert` out of
-   `Hex.Internal`, `mul_eq_one_comm` into `hex-determinant`, and
-   `exactDiv` from `hex-bareiss` into `hex-arith`.
+1. Four prerequisite changes, each independently justified and each
+   doable before any Hermite commit. Three are relocations: `memLattice`
+   with its transport lemmas and the checkers `mulEqCert` and
+   `sameLatticeCert` from `hex-lll` to `hex-matrix`, with `mulEqCert`
+   becoming public rather than `Hex.Internal`, and `exactDiv` from
+   `hex-bareiss` to `hex-arith`. The fourth is a new theorem,
+   `mul_eq_one_comm` in `hex-determinant`, which needs a matrix-level
+   `adjugate_mul` that the tree currently has only entrywise.
 2. Implement and prove Hermite normal form.
 3. Add selected submatrices, `k`-subset enumeration, and rectangular
    Cauchy-Binet to `hex-determinant`.

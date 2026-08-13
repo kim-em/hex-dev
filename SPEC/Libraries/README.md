@@ -131,12 +131,22 @@ optimisation.
 
 ## Library DAG
 
-The matrix family splits internally: `hex-matrix` is the dense base;
+The matrix family splits internally. `hex-matrix` is the dense base.
 `hex-row-reduce`, `hex-determinant`, and `hex-bareiss` build on it
-(`hex-bareiss` also on `hex-determinant`); `hex-gram-schmidt` uses all
-three; and `hex-lll` builds on `hex-gram-schmidt`. Each has a matching
+(`hex-bareiss` also on `hex-determinant`), `hex-gram-schmidt` uses all
+three, and `hex-lll` builds on `hex-gram-schmidt`. `hex-hermite` is the
+one member with a dependency outside the family, on `hex-arith` for the
+extended GCD, and `hex-smith` sits on top of it. Each has a matching
 `*-mathlib` companion of the same shape. In the diagram below,
 `hex-matrix` stands for that whole family.
+
+The integer normal forms within it:
+
+```text
+hex-row-reduce ──┐
+hex-arith ───────┼── hex-hermite ── hex-smith
+hex-bareiss ─────┘
+```
 
 The algebraic graph has three independent roots: hex-poly, hex-arith,
 and hex-matrix. The module-boundary helpers in hex-basic are an
