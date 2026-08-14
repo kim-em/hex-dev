@@ -172,5 +172,29 @@
     "baseline_blob": "9bf2c14fba5223b110dbe95f1b8834fd15294c3c",
     "current_blob": "f2fc2e74288a630fc49490e9bea3602e8e165ebb",
     "reason": "Scopes the square-free guard witnesses so importing modules stop selecting an instance they cannot legally name: the Bounds 2 guard is dropped in favour of the canonical instance, and the Bounds 5 guard becomes a private theorem with a local instance attribute. Definitions, their bodies and their declaration positions are unchanged, Bounds proofs are erased before code generation, and the elaborators do not branch on the witness expression."
+  },
+  {
+    "path": "HexMatrix/Lattice.lean",
+    "baseline_blob": null,
+    "current_blob": "58c2fa293341cb633041614e9e424e010cb142e0",
+    "reason": "Receives memLattice and its three transport lemmas verbatim from HexLLL/Lattice.lean. memLattice is a Prop and the transport lemmas are theorems, so nothing here reaches code generation."
+  },
+  {
+    "path": "HexMatrix/Certificate.lean",
+    "baseline_blob": null,
+    "current_blob": "44ecc2217334e7dc87057b98a14cefe1973953e4",
+    "reason": "Receives the packed certificate from HexLLL/Certificate.lean with bodies unchanged; mulEqCert moves from the Hex.Internal namespace to Hex.Matrix. Nothing on the ZPoly.factorize path imports the certificate checkers, which serve the external LLL provider dispatch."
+  },
+  {
+    "path": "HexLLL/Lattice.lean",
+    "baseline_blob": "673c8893b5a6f36ff606a9dd0648ffac4380765b",
+    "current_blob": "f98b3f48559a6a33b06d89b2ff61355fa83d41d7",
+    "reason": "Loses the four declarations that moved to HexMatrix/Lattice.lean and keeps independent and the row-operation lemmas with their bodies unchanged."
+  },
+  {
+    "path": "HexLLL/Checker.lean",
+    "baseline_blob": "ed2becd0baa622d6fba27ad76a34a9f07b61a4bc",
+    "current_blob": "575ebe335f863602d400a71c10c1112bc5bdfb77",
+    "reason": "Changes one import from HexLLL.Certificate to HexMatrix.Certificate. No declaration in the module changes."
   }
 ]
