@@ -84,18 +84,26 @@ private def forwardOffer : Policy.OfferView :=
 private def olderForward : Policy.OfferView :=
   offer 1 5 (.invoke (invocation 1 .forward))
 
-private def instanceOffer : Policy.OfferView :=
+private def instanceProbe : Policy.OfferView :=
   offer 2 9 (.invoke (invocation 2 .instantiate))
 
+private def instanceOffer : Policy.OfferView :=
+  offer 3 9 (.instantiate (invocation 3 .instantiate)
+    { family := 0, generation := 0, nodes := [], equalities := [], scopes := [] })
+
 private def retryOffer : Policy.OfferView :=
-  offer 3 9 (.retry (invocation 3 .improve) 2)
+  offer 4 9 (.retry (invocation 4 .improve) 2)
+
+private def splitProbe : Policy.OfferView :=
+  offer 5 9 (.invoke (invocation 5 .split))
 
 private def splitOffer : Policy.OfferView :=
-  offer 4 9 (.split (invocation 4 .split)
+  offer 6 9 (.split (invocation 6 .split)
     { node := node 0, version := 0 } 0 .midpoint)
 
 #guard
-  (StagedPolicy.choose? {} #[splitOffer, retryOffer, instanceOffer, forwardOffer]).map
+  (StagedPolicy.choose? {}
+      #[splitOffer, retryOffer, instanceOffer, instanceProbe, forwardOffer]).map
       (fun selected => selected.key) == some forwardOffer.key
 
 #guard
@@ -103,8 +111,17 @@ private def splitOffer : Policy.OfferView :=
       (fun selected => selected.key) == some olderForward.key
 
 #guard
-  (StagedPolicy.choose?
-      { allowInstantiation := false, allowRetries := false, allowSplits := false }
-      #[splitOffer, retryOffer, instanceOffer]).isNone
+  (StagedPolicy.choose? { allowInstantiation := false }
+      #[instanceProbe, instanceOffer]).isNone
+
+#guard
+  (StagedPolicy.choose? { allowRetries := false } #[retryOffer]).isNone
+
+#guard
+  (StagedPolicy.choose? { maxRetryEffort := 1 } #[retryOffer]).isNone
+
+#guard
+  (StagedPolicy.choose? { allowSplits := false }
+      #[splitProbe, splitOffer]).isNone
 
 end Hex.Interval.StagedPolicyConformance
