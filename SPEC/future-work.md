@@ -556,33 +556,28 @@ univariate case, so the API either carries irreducibility certificates
 per factor or advertises itself as returning a decomposition and lets
 the caller ask for more.
 
-**Generic finite fields, and equal-degree splitting.** Three related
-items in dependency order. This group is the best-aligned on the list,
-since distinct-degree factorization, prime-field factoring, Conway
-polynomials, and `GFq` all exist.
+**Generic finite fields, and equal-degree splitting.** Specified in
+[hex-finite-field](Libraries/hex-finite-field.md): the Mathlib-free
+`F_q` interface and its instances as a new library, and the
+equal-degree stage with both Cantor-Zassenhaus arms as amendments to
+hex-berlekamp, where the distinct-degree stage and the tactic drivers
+already are.
 
-First, **genericity**. hex-berlekamp is written against `FpPoly` and
-`ZMod64`. A finite-field interface covering cardinality, inverse,
-Frobenius, and the linear algebra Berlekamp's kernel step uses, with
-both the prime-field and extension cases implementing it, is what lets
-the factoring algorithms run over `GFq p n`. Everything else here
-depends on it.
-
-Second, **an explicit equal-degree stage**. hex-berlekamp exports
-distinct-degree factorization, while the factorizer reaches its result
-through Berlekamp-kernel splitting and a sweep over constants `c` in
-`gcd(f, h − c)`, linear in `p` per witness in the worst case.
-Introducing a DDF-to-EDF pipeline is a restructuring of the factorizer,
-not a single new function.
-
-Third, **Cantor-Zassenhaus**, which is two algorithms. For odd `q`, pick
-a random `h` and split by `gcd(f, h^((q^d − 1)/2) − 1)`, with the
-powering done in `F_q[x]/(f)`. For even `q` that exponent is not an
-integer and the split uses the trace map
-`h + h² + h⁴ + ⋯ + h^(2^(d·m−1))`. Both are Las Vegas, so randomness
-costs retries and never correctness, and the random input is an explicit
-argument rather than a monad, following the tree's existing pattern of
-separating the random draw from the deterministic function.
+Three corrections to what this file said before that SPEC was written,
+recorded because they are easy to make again. The interface does not
+need to cover the linear algebra: `Matrix.nullspace` is already stated
+for `[Lean.Grind.Field R] [DecidableEq R]`, and `DensePoly`'s division,
+gcd, and extended gcd for a bare operation list. `GFq p n` is not the
+type to generalise over, since it takes a `Conway.SupportedEntry` and so
+exists only for committed table entries; the type that admits an
+arbitrary finite field is `GFqField.FiniteField f hf hp hirr`. And there
+is no existing pattern of separating a random draw from a deterministic
+function -- no production library consumes randomness, only bench and
+conformance fixture generators -- so this item introduces the
+convention, and the generator with it. That SPEC also records five
+prerequisites the sketch did not anticipate, the largest being that
+`GFqField.FiniteField` wraps a different quotient representation from
+the one hex-poly-fp's `pow_card_eq_self_of_irreducible` is proved for.
 
 **Tactics for rational expressions.** Analogues of Mathematica's
 `Together` and `Apart`, in three pieces. Combining an expression built
