@@ -3367,6 +3367,31 @@ open/closed/unbounded interval arithmetic, provider competition,
 range-reduction selection, and computed local enclosures remain acceptance
 work.
 
+A fixed huge-argument cosine canary now establishes the ordinary theorem
+`0 < Real.cos (10^10)` through the same generic package/session/proof frontend.
+Its Mathlib-free reduction payload carries the exact odd quotient
+`3183098861` and the rational residual window
+`13/5 < 10^10 - 3183098861*pi < 27/10`. Replay derives that window from a
+strict 20-decimal pi enclosure, proves the reduced cosine negative, negates the
+fact, and uses a package-owned periodicity equality to transport the positive
+fact back to the original expression node. The retained chronology contains
+separate constant, reduction, local-cosine, negation, equality-only
+instantiation, and transport events. Mutations with an off-by-one quotient or
+a changed residual endpoint remain structurally decodable payloads but are
+rejected by semantic replay, so both large-integer reduction fields are
+load-bearing. Constant replay consumes a provider-agnostic enclosure claim;
+the retained provider discharges it with Mathlib's independently proved
+20-decimal pi bounds.
+
+This is a sign canary, not the stronger huge-argument enclosure acceptance
+target. The source value, quotient, residual endpoints, local sign rule, and
+controller are fixed fixture data. The runtime does not compute a reduction
+integer, refine the residual, select among competing constant providers, or
+produce an 80-bit cosine enclosure. The 1,000-bit package-owned pi provider,
+general huge-argument range reduction, and the exact-dyadic
+`0 < lo ≤ Real.cos (10^10) ≤ hi` result with width at most `2^(-80)`
+therefore remain acceptance work.
+
 #### Series as package-owned numerical algorithms
 
 A registered function may supply a power or Taylor series without teaching the

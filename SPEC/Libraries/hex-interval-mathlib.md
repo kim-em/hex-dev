@@ -1652,6 +1652,18 @@ These are `D7` fixtures unless marked otherwise.
   `-694/1000 < log (1/2)`, `968/1000 < cos (1/4)`,
   `exp (3/2) < 5`, and `exp (4 / exp 1) ≤ 7`.
 
+The first huge-argument cosine acceptance probe delivers the weaker but
+load-bearing ordinary theorem `0 < Real.cos (10^10)`. A Mathlib-free package
+retains the exact quotient `3183098861` and residual endpoints `13/5`, `27/10`;
+the Mathlib companion checks those values against a provider-agnostic pi
+enclosure claim, proves the local sign, and replays periodicity through the
+generic proof frontend. Wrong-quotient and wrong-residual payloads pass
+structural decoding and fail semantic replay. The current claim provider uses
+Mathlib's 20-decimal pi bounds, and all numeric choices are fixed fixture data.
+Consequently this probe does not yet satisfy the listed 80-bit enclosure,
+computed reduction, 1,000-bit package-owned constant, provider-selection, or
+precision-refinement requirements.
+
 ### PNT+ compatibility
 
 The committed compatibility subset is `D8` unless marked `D9`:
