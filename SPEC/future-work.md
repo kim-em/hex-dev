@@ -473,6 +473,12 @@ natural API is `Φₙ` as a `ZPoly`, the factorization
 `xⁿ − 1 = ∏_{d | n} Φ_d`, irreducibility over `ℚ`, and the degree
 identity `deg Φₙ = φ(n)`.
 
+[hex-int-factor](Libraries/hex-int-factor.md) needs the *values*
+`Φ_d(b)` at an integer `b`, to split `b^n ± 1` before factoring it, and
+computes them in `Nat` by Möbius inversion rather than through a
+polynomial. The two should agree where they overlap, which is one
+conformance case in that SPEC.
+
 **Multivariate gcd and squarefree decomposition.** Required by rational
 expression simplification, by the recursive view, and by multivariate
 factorization, so it gets its own entry rather than being assumed. The
@@ -493,8 +499,10 @@ the companion discharges the hypothesis.
 
 Over `ℤ` the word "squarefree" needs care: `12x` is not squarefree in
 `ℤ[x]` because `4 ∣ 12`, so the ring-theoretic predicate is partly a
-question about the integer content and needs the integer factorization
-item below. The library uses the ordinary computer-algebra convention
+question about the integer content. Deciding it does not need
+[hex-int-factor](Libraries/hex-int-factor.md) -- Mathlib already
+decides squarefreeness on `Nat` -- but producing the square divisor and
+the squarefree part does. The library uses the ordinary computer-algebra convention
 instead, pulling the content out as an unfactored scalar.
 
 Specified in [hex-mv-gcd](Libraries/hex-mv-gcd.md). Squarefree
@@ -620,30 +628,24 @@ duplicating still applies; it means contributing upstream and
 reimplementing the Mathlib-free executable core with attribution, not
 taking a dependency.
 
-**Integer factorization.** Trial division, then Pollard rho with
-Brent's cycle detection, Pollard p−1, and ECM for medium factors; a
-quadratic sieve reaches well past anything Hex needs.
+**Integer factorization.** Specified in
+[hex-int-factor](Libraries/hex-int-factor.md), which keeps this file's
+certificate design unchanged -- the prime-exponent list plus the product
+equality, complete because any further prime factor would have to
+divide a product of known primes -- and its scoping of discrete
+logarithms out of the item.
 
-The certificate is a list of primes with exponents, checked by verifying
-the product equals `n` and each listed factor is prime. Those two checks
-together do establish completeness, since any further factor would have
-to divide a product of known primes. So the search is an untrusted
-oracle and may be partial or time-bounded, while the checker is total.
-The certificate type is the prime-exponent list plus the product
-equality.
-
-The consumers are order computations: the multiplicative order of an
-element mod `p`, needed for Conway polynomials and finite field
-constructions, comes from the factorization of `p − 1`, and the pattern
-recurs for group orders throughout. These consumers want factorization
-and exponentiation rather than discrete logarithms, since checking that
-`g` is a primitive root mod `p` is checking `g^((p−1)/q) ≠ 1` for each
-prime `q | p − 1`. A general discrete logarithm (Pohlig-Hellman down to
-prime-order subgroups, then baby-step giant-step or Pollard rho) belongs
-here once something asks for one, scoped to a named cyclic subgroup of
-certified order: `g^x = h` witnesses a solution and settles neither
-uniqueness nor minimality nor, on failure, nonexistence, and the unit
-group mod a composite need not be cyclic.
+One sharpening. The consumer that actually exists in this tree is
+hex-conway Tier 2, whose group order is `p^n − 1` rather than `p − 1`,
+and that is a materially harder family: it is the Cunningham problem.
+The structure that makes it tractable is `p^n − 1 = ∏_{d | n} Φ_d(p)`,
+which splits one number of `n log p` bits into several of at most
+`φ(d) log p` bits, and the values `Φ_d(p)` can be computed in `Nat` by
+Möbius inversion without the cyclotomic polynomials of the item above.
+For the currently committed Conway table the largest such number is
+`13^6 − 1`, which trial division finishes instantly, so Tier 2 is
+cheap today and the table's growth policy is what the factorization
+cost constrains.
 
 **Ring of integers.** hex-number-field and hex-number-field-tower implement
 towers, Trager factorization, and splitting fields; their computational and
@@ -651,11 +653,13 @@ Mathlib libraries remain registered with no phases complete. The maximal order
 `O_K` is the next object: the Round 2 (Pohst-Zassenhaus) algorithm gives an
 integral basis and the field discriminant.
 
-The dependency is the integer factorization item, for the squarefree
-part of the polynomial discriminant, and it is where such computations
-turn conditional in practice. The design records what was assumed when
-factorization ran out of budget, so a possibly-non-maximal order
-announces itself as one.
+The dependency is [hex-int-factor](Libraries/hex-int-factor.md), for
+the squarefree part of the polynomial discriminant, and it is where
+such computations turn conditional in practice. The design records what
+was assumed when factorization ran out of budget, so a
+possibly-non-maximal order announces itself as one; that SPEC's
+`PartialFactorization`, which carries an unfactored `residual` and
+makes no completeness claim, is the object to record it with.
 
 **Unit and class groups.** The unit group (Dirichlet rank plus
 fundamental units) and the class group, by the Minkowski-bound-plus-

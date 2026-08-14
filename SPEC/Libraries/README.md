@@ -3,6 +3,7 @@
 - **hex-basic**: small Mathlib-free standard-library shims, including kernel-reducible array and vector operations
 - **hex-arith**: extended GCD, Barrett/Montgomery reduction, binomial coefficients, Fermat's little theorem
 - **hex-primality**: Miller-Rabin compositeness witnesses, Pocklington certificates, a kernel-reducible sieve and stored initial segment, the `primality` tactic
+- **hex-int-factor**: integer factorization with complete prime-exponent certificates, the divisor-function API, multiplicative order and primitive roots
 - **hex-poly**: dense `Array`-backed polynomial representation
 - **hex-mv-poly**: canonical distributed multivariate polynomials at fixed arity with explicit monomial orders
 - **hex-mv-gcd**: multivariate gcd with cofactors, content and primitive part, exact division, squarefree decomposition
@@ -45,6 +46,7 @@ Mathlib, and supplies correspondence proofs or Mathlib-facing APIs):
 - **hex-modular-matrix-mathlib**: Hadamard's inequality discharged, `det` = `Matrix.det`, rank = `Matrix.rank`, and the solve and kernel correspondences
 - **hex-poly-z-gcd-mathlib**: gcd divisibility and maximality in `Polynomial ℤ`, and `Decidable (a ∣ b)`
 - **hex-primality-mathlib**: `Hex.Nat.Prime ↔ Nat.Prime`, the `norm_num` extension, and segment statements over `Finset.filter Nat.Prime`
+- **hex-int-factor-mathlib**: agreement with `Nat.factorization`, `Decidable (Squarefree n)`, and `orderOf` in `(ZMod n)ˣ`
 - **hex-poly-mathlib**: `DensePoly R ≃+* Polynomial R`
 - **hex-mv-poly-mathlib**: `MvPoly n R cmp ≃+* MvPolynomial (Fin n) R`, `aeval`, and operation correspondence
 - **hex-mv-gcd-mathlib**: gcd maximality transported to `MvPolynomial (Fin n) R`, and decidable divisibility and squarefreeness
@@ -76,6 +78,7 @@ Each library with its immediate dependencies:
 - **hex-basic**: (none)
 - **hex-arith**: (none)
 - **hex-primality**: hex-arith, hex-basic
+- **hex-int-factor**: hex-primality, hex-arith, hex-basic
 - **hex-poly**: (none)
 - **hex-mv-poly**: hex-poly, hex-basic
 - **hex-mv-gcd**: hex-mv-poly, hex-poly, hex-poly-fp, hex-resultant, hex-arith, hex-mod-arith
@@ -116,6 +119,7 @@ Mathlib companion libraries (each also depends on Mathlib):
 - **hex-modular-mathlib**: hex-modular, hex-mod-arith-mathlib
 - **hex-modular-matrix-mathlib**: hex-modular-matrix, hex-matrix-mathlib, hex-determinant-mathlib, hex-row-reduce-mathlib, hex-modular-mathlib
 - **hex-primality-mathlib**: hex-primality
+- **hex-int-factor-mathlib**: hex-int-factor, hex-primality-mathlib
 - **hex-poly-mathlib**: hex-poly
 - **hex-mv-poly-mathlib**: hex-mv-poly, hex-poly-mathlib
 - **hex-mv-gcd-mathlib**: hex-mv-gcd, hex-mv-poly-mathlib, hex-resultant-mathlib, hex-poly-mathlib
@@ -251,8 +255,16 @@ exponentiation its checkers replay. The predicate stays there rather
 than moving up, because `hex-mod-arith` builds `ZMod64.PrimeModulus`
 on it and depends only on `hex-arith`.
 
+`hex-int-factor` sits on `hex-primality` in turn, and that direction is
+forced: a factorization certificate has to prove each listed factor
+prime, while a certificate search needs no proof at all, so the
+primality library owns the small untrusted partial factorization its
+own search needs and the factorization library owns the rest.
+
 ```text
-hex-arith ──── hex-primality ──── hex-primality-mathlib
+hex-arith ──── hex-primality ──── hex-int-factor
+                    │                   │
+      hex-primality-mathlib   hex-int-factor-mathlib
 ```
 
 ## Index
@@ -268,6 +280,7 @@ for developments whose source-local move has not happened yet.
 - [hex-basic](https://github.com/leanprover/hex-basic) (released): small Mathlib-free standard-library shims, including kernel-reducible array and vector operations
 - [hex-arith](../../HexArith/SPEC/hex-arith.md): extended GCD, Barrett/Montgomery reduction, binomial coefficients, Fermat's little theorem
 - [hex-primality.md](hex-primality.md): Miller-Rabin compositeness witnesses, Pocklington certificates, a kernel-reducible sieve and stored initial segment, the `primality` tactic (the Mathlib companion is specified in the same file)
+- [hex-int-factor.md](hex-int-factor.md): integer factorization with complete prime-exponent certificates, the divisor-function API, multiplicative order and primitive roots (the Mathlib companion is specified in the same file)
 - [hex-matrix](https://github.com/leanprover/hex-matrix/blob/main/SPEC/hex-matrix.md) (released): dense matrices, arithmetic, elementary row/column operations, submatrix slicing, the Gram matrix
 - [hex-row-reduce](https://github.com/leanprover/hex-row-reduce/blob/main/SPEC/hex-row-reduce.md) (released): row reduction, rank, span, nullspace
 - [hex-determinant](https://github.com/leanprover/hex-determinant/blob/main/SPEC/hex-determinant.md) (released): Leibniz determinant and cofactor/Cauchy-Binet/Plücker theory

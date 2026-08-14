@@ -1305,10 +1305,12 @@ instance : Decidable (Squarefree p)   -- MvPolynomial (Fin n) ℚ
 Divisibility is decidable over `ℤ` because it is exactly `divExact?`.
 Squarefreeness is stated over `ℚ`, where the content is a unit and the
 relative and ring-theoretic predicates agree. The corresponding `ℤ`
-instance needs the squarefree factorization of the integer content, so it
-waits on the integer factorization item in
-[future-work](../future-work.md); the SPEC promises it there rather than
-here.
+instance is a question about the squarefreeness of the integer content.
+Mathlib decides that (`DecidablePred (Squarefree : ℕ → Prop)`), so the
+`ℤ` instance is available here after all; what
+[hex-int-factor](hex-int-factor.md) adds is the square divisor and the
+squarefree part as witnesses, which the decision procedure does not
+produce.
 
 Following the project split, no mathematical theorem about `MvPoly`
 belongs in the companion beyond these, plus one correspondence lemma per
