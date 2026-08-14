@@ -1649,7 +1649,11 @@ established bottom or inconsistent fact into `False`; `replayRefute` then uses
 ordinary elimination to produce the branch target. The real exponential
 adapter supplies the first `.empty` schema, and its conformance theorem closes
 an arbitrary target from the exact bottom assumption while rejecting `.all`
-by reduction. No engine flag or evaluator result enters that theorem.
+by reduction. The conclusion is necessarily ex falso because the canary base
+contains the bottom fact; the conformance obligations are successful
+transparent replay, rejection of the satisfiable `.all` fact, and the guarded
+kernel-dependency report. No engine flag or evaluator result enters that
+theorem.
 Connecting a retained contradictory fact and its emitted evidence to this
 schema inside the tree frontend remains open. An unexplored, fuel-limited,
 resource-limited, incomplete, or merely saturated child likewise does not
@@ -1660,8 +1664,9 @@ The later proof-plan sketch represents an endpoint contradiction by two
 fact. Its frontend lowering must therefore either resolve an already-installed
 contradictory meet fact or combine the two retained proofs through the domain's
 `FactDomainSchema.proveMeet` theorem before invoking the refutation schema.
-That two-proof lowering is part of the open tree-frontend bridge, not a
-capability of the current single-fact conformance canary.
+That lowering must first check that both identifiers name facts at the same
+node. The two-proof bridge remains open; it is not a capability of the current
+single-fact conformance canary.
 
 The first branch-start layer also rebinds each completed child result to the
 exact prepared base program and initial fact array, then rechecks the retained

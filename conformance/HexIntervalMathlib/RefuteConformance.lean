@@ -41,7 +41,7 @@ conformance obligations, and no evaluator or runtime flag occurs in the
 declaration. -/
 theorem closesTarget :
     semantics.Entails program childBase checkerInput.target :=
-  (refuted?.get (by rfl)).proof
+  proofOfReplay refuted? (by rfl)
 
 /--
 info: 'Hex.IntervalMathlib.RefuteConformance.closesTarget' depends on axioms: [propext, Classical.choice, Quot.sound]
@@ -62,5 +62,16 @@ example :
     replayRefute emptyRefute program baseFacts top checkerInput.target
       topSound = none := by
   rfl
+
+/-- The negative gate reflects real semantics rather than an empty model:
+`.all` holds in the concrete exponential model and therefore cannot support a
+valid refutation schema. -/
+example :
+    ¬ (∀ valuation, semantics.models program valuation →
+      semantics.holds program valuation top → False) := by
+  intro impossible
+  exact impossible (valuation (0 : ℝ)) (valuationModels 0) (by
+    change Contains .all (valuation (0 : ℝ) (node 0))
+    trivial)
 
 end Hex.IntervalMathlib.RefuteConformance
