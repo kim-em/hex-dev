@@ -1576,9 +1576,10 @@ branch-root API. The transparent `ProofEmitter.BranchSeed` now binds the exact
 child `initialFacts` array and its length to this mixed proof table. Its checked
 builder obtains the split-node entry only from the new child assumption and
 requires an inherited parent theorem for every other array entry; the
-Mathlib-free canary checks both routes. The Meta frontend still needs to turn
-such a `BranchSeed` into version-zero `FactProof` records before chronological
-child replay.
+Mathlib-free canary checks both routes, including an inherited derived fact
+which is not a literal parent base member and an unrelated top entry. The Meta
+frontend still needs to turn such a `BranchSeed` into version-zero `FactProof`
+records before chronological child replay.
 
 Branches may instantiate different auxiliary expressions. Each child replay
 therefore closes its target back to the program snapshot at the split before

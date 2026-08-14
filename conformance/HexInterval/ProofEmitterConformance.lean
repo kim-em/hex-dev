@@ -327,9 +327,11 @@ info: 'Hex.Interval.ProofEmitterConformance.splitCertifies' depends on axioms: [
 #print axioms splitCertifies
 
 def branchBase : List (NodeFact SplitFact) :=
-  [{ node := node 1, fact := .yes }]
+  [{ node := splitBaseNode, fact := .yes }]
 
-def branchInitial : Array SplitFact := #[.yes, .yes, .all]
+/-- The child carries a derived parent consequence at node one, not the
+literal fact in `branchBase`. -/
+def branchInitial : Array SplitFact := #[.yes, .enabled, .all]
 
 def branchInput : CheckerInput SplitFact :=
   { baseProgram := program
@@ -341,7 +343,7 @@ def inheritedSplitFact (observed : NodeId) (different : observed ≠ splitNode)
     Evidence
       (splitSemantics.Entails program branchBase { node := observed, fact }) :=
   { proof := by
-      intro _ _ assumptions
+      intro valuation _ assumptions
       cases observed with
       | mk index =>
           cases index with
@@ -351,7 +353,10 @@ def inheritedSplitFact (observed : NodeId) (different : observed ≠ splitNode)
               | zero =>
                   simp [branchInitial] at found
                   subst fact
-                  exact assumptions _ (by simp [branchBase, node])
+                  have yes := assumptions
+                    { node := splitBaseNode, fact := .yes }
+                    (by simp [branchBase])
+                  exact yes
               | succ index =>
                   cases index with
                   | zero =>
@@ -373,12 +378,27 @@ example :
       { node := splitNode, fact := .yes } :=
   (branchSeed.sound splitNode .yes (by rfl)).proof
 
-/-- An unchanged version-zero fact is inherited as a parent consequence under
-the larger child context. -/
+/-- A derived version-zero fact is inherited as a parent consequence under the
+larger child context. -/
 example :
     splitSemantics.Entails program
       ({ node := splitNode, fact := .yes } :: branchBase)
-      { node := node 1, fact := .yes } :=
-  (branchSeed.sound (node 1) .yes (by rfl)).proof
+      { node := splitBaseNode, fact := .enabled } :=
+  (branchSeed.sound splitBaseNode .enabled (by rfl)).proof
+
+/-- The inherited child fact above is a proved consequence, not a literal
+member of the parent base-assumption list. -/
+example :
+    ({ node := splitBaseNode, fact := .enabled } : NodeFact SplitFact) ∉
+      branchBase := by
+  simp [branchBase]
+
+/-- The unrelated version-zero top entry is also present in the exact seed
+table and has its own inherited proof. -/
+example :
+    splitSemantics.Entails program
+      ({ node := splitNode, fact := .yes } :: branchBase)
+      { node := splitTargetNode, fact := .all } :=
+  (branchSeed.sound splitTargetNode .all (by rfl)).proof
 
 end Hex.Interval.ProofEmitterConformance

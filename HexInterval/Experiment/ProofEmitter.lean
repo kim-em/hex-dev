@@ -540,7 +540,7 @@ structure BranchSeed {Fact : Type} (semantics : Semantics Fact)
 namespace BranchSeed
 
 /-- Assemble a branch root from the one new case assumption and exact proofs
-of all unchanged parent facts. -/
+of all nonsplit parent consequences. -/
 def make {Fact : Type} {semantics : Semantics Fact}
     (input : CheckerInput Fact) {base : List (NodeFact Fact)}
     (side : NodeFact Fact)
