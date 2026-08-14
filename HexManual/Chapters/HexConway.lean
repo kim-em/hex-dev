@@ -29,8 +29,8 @@ compatible presentation of the finite field `𝔽_{pⁿ}`. The full treatment
 of Conway polynomials has three tiers: a Tier 1 lookup of committed
 table entries, Tier 2 proofs that those entries satisfy the Conway
 compatibility conditions across the subfield lattice, and Tier 3
-search for entries beyond the committed table. `HexConway` is the
-executable Tier 1 library: it exposes the imported
+search for entries beyond the committed table. `HexConway` currently
+implements Tier 1 only: it exposes the imported
 [Lübeck](http://www.math.rwth-aachen.de/~Frank.Luebeck/data/ConwayPol/)
 Conway table as a lookup, keeping the baseline lookup separate from the
 later compatibility and search work.
@@ -161,9 +161,15 @@ tag := "hex-conway-cross-references"
   {ref "hex-conway-correctness"}[correctness section]. The prime-field
   polynomial type {name}`Hex.FpPoly` and its arithmetic are reached
   transitively through it.
-* The Tier 2 compatibility proofs (Conway conditions across the
-  subfield lattice) and Tier 3 search live in separate libraries above
-  this one. This chapter documents only the Tier 1 committed lookup.
+* Tier 2 and Tier 3 belong to this library and are not yet implemented.
+  Until Tier 2 lands, what Lean checks about a committed entry is that
+  it is monic, irreducible, and of the requested degree. That it is the
+  *Conway* polynomial for its pair, rather than some other irreducible
+  of the same degree, rests on the imported Lübeck table and is checked
+  outside Lean by the conformance oracle. Nothing downstream is weakened
+  by this: {ref "hex-gfq"}[`GFq p n`] is a genuine field of order `pⁿ`
+  either way. What is not yet available is the compatibility across the
+  subfield lattice that motivates the Conway choice in the first place.
 * `HexConway` is Mathlib-free and never depends on Mathlib. The Mathlib
   correspondence proofs for the finite-field theory it draws on live in
   the higher layers' `*Mathlib` counterparts, not in this library.

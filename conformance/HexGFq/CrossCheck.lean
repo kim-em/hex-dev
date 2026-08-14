@@ -12,19 +12,18 @@ Packed-vs-generic representation cross-check for `HexGFq`.
 Oracle: none (Tier-G fast-vs-fast)
 Mode: always
 
-The committed Conway lookup currently exposes only `(2, 1)` as a
-`SupportedEntry`, so `HexGFq/Conformance.lean` exercises the correspondence
-between `GFq 2 1` (generic `FpPoly`-quotient) and `GF2q 1` (packed
-`GF2n`) at the trivial extension degree.  This module exercises the
-same correspondence at extension degrees where the implementations actually
-diverge by constructing ad-hoc moduli at degrees 4, 8, 16, and 32 and
-running pseudorandom shared inputs through both representations.
+`HexGFq/Conformance.lean` exercises the correspondence between `GFq 2 1`
+(generic `FpPoly`-quotient) and `GF2q 1` (packed `GF2n`), but at extension
+degree 1 the field is `F_2` itself, so that check has little power to
+discriminate between the two representations.  This module exercises the
+same correspondence at degrees 4, 8, 16, and 32, where the packed and
+generic implementations do different work.
 
-The moduli are not committed Conway entries; their irreducibility
-witnesses are local certificates or remaining propositional proof
-obligations.  The cross-check still computes operationally: each
-`#guard` runs the packed and generic operations on the same input and
-compares results.
+The moduli are supplied locally rather than taken from the Conway table,
+uniformly across all four degrees, each with its own Lean-checked
+irreducibility certificate.  Degree 4 happens to be inside the committed
+table; degrees 8, 16, and 32 are outside it.  Each `#guard` runs the
+packed and generic operations on the same input and compares results.
 
 Operations covered: addition, multiplication, inversion, Frobenius
 (`a ↦ a^p`).

@@ -22,12 +22,10 @@ compared against both the packed (`HexGF2.GF2n`) and the generic
 agree on a wrong polynomial, the python-flint comparison still trips
 because both `packed_*` and `generic_*` would mismatch.
 
-The `HexConway` Tier-1 table currently exposes a `Conway.SupportedEntry`
-plus `Conway.PackedGF2Entry` only at extension degree `(2, 1)`, which
-makes the committed correspondence trivial.  Following the
-`conformance/HexGFq/CrossCheck.lean` pattern, this driver exercises the correspondence
-at larger binary degrees by constructing ad-hoc moduli with local
-irreducibility witnesses; the operations themselves still execute and
+Following the `conformance/HexGFq/CrossCheck.lean` pattern, this driver
+supplies its moduli locally with their own irreducibility witnesses rather
+than taking them from the Conway table, which lets it reach binary degrees
+above the committed entries; the operations themselves still execute and
 their outputs feed the python-flint cross-check.
 
 The correspondence is binary-only by design — `HexGF2.GF2n` packs `F_2`

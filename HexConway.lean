@@ -9,6 +9,9 @@ import HexConway.Certificates
 import HexConway.Api
 
 /-!
-`HexConway` starts the Conway-polynomial database with the Tier 1 imported
-lookup API and the first committed, irreducibility-certified table entry.
+`HexConway` provides the Tier 1 imported-lookup API for the Conway-polynomial
+database: 36 committed table entries, for `p` in `2, 3, 5, 7, 11, 13` and `n`
+in `1` to `6`, each carrying a Lean-checked irreducibility certificate. Tier 2
+(primitivity and compatibility across the subfield lattice) and Tier 3
+(on-demand search) are specified but not yet implemented.
 -/
