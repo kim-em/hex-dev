@@ -183,7 +183,7 @@
     "path": "HexMatrix/Certificate.lean",
     "baseline_blob": null,
     "current_blob": "44ecc2217334e7dc87057b98a14cefe1973953e4",
-    "reason": "Receives the packed certificate from HexLLL/Certificate.lean with bodies unchanged; mulEqCert moves from the Hex.Internal namespace to Hex.Matrix. Nothing on the ZPoly.factorize path imports the certificate checkers, which serve the external LLL provider dispatch."
+    "reason": "Receives the packed certificate from HexLLL/Certificate.lean with every declaration body byte-identical; mulEqCert and mulEqCert_iff move from the Hex.Internal namespace to Hex.Matrix. The checkers ARE reachable from ZPoly.factorize when an external LLL provider is installed (lll -> certifiedReduction -> certCheck -> sameLatticeCert), so this is a relocation of conditionally-reachable executable code, not unreachable or proof-only code. What is unchanged is every body and the call graph; what changes is the module home and two generated symbol names."
   },
   {
     "path": "HexLLL/Lattice.lean",
