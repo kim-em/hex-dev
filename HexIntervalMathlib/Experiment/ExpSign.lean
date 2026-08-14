@@ -88,6 +88,20 @@ def signSplit : SplitSchema semantics Unit where
     else
       none
 
+/-- The exact bottom fact is semantically impossible over `Real`.  Runtime
+contradiction detection is deliberately absent from this proof schema. -/
+def emptyRefute : RefuteSchema semantics where
+  proveFalse := fun _ _ fact =>
+    if shape : fact = .empty then
+      some
+        { proof := by
+            subst fact
+            intro valuation _ impossible
+            change False at impossible
+            exact impossible }
+    else
+      none
+
 theorem expEntails (graph : Program) (assumptions : List (NodeFact Bound))
     (output : NodeId) (instruction : Node) (input : NodeId)
     (found : graph.node? output = some instruction)

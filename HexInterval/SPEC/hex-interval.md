@@ -1643,20 +1643,38 @@ old target back. Nodes, equality edges, payloads, and positive fact versions
 created below one child are scoped to that child and cannot be resolved by its
 sibling. Parent program nodes and proof terms may be shared structurally.
 
-A runtime contradiction flag is also not a closed child. The proof layer needs
-a domain-owned refutation schema which turns an exact established bottom or
-inconsistent-bound fact into `False`; generic elimination can then produce the
-branch target. Until that schema exists, a contradictory child is useful for
-search diagnostics but cannot participate in a completed join. An unexplored,
-fuel-limited, resource-limited, incomplete, or merely saturated child likewise
-does not close the parent target.
+A runtime contradiction flag is also not a closed child. The generic
+`ProofEmitter.RefuteSchema` now requires a domain companion to turn one exact
+established bottom or inconsistent fact into `False`; `replayRefute` then uses
+ordinary elimination to produce the branch target. The real exponential
+adapter supplies the first `.empty` schema, and its conformance theorem closes
+an arbitrary target from the exact bottom assumption while rejecting `.all`
+by reduction. The conclusion is necessarily ex falso because the canary base
+contains the bottom fact; the conformance obligations are successful
+transparent replay, rejection of the satisfiable `.all` fact, and the guarded
+kernel-dependency report. No engine flag or evaluator result enters that
+theorem.
+Connecting a retained contradictory fact and its emitted evidence to this
+schema inside the tree frontend remains open. An unexplored, fuel-limited,
+resource-limited, incomplete, or merely saturated child likewise does not
+close the parent target.
+
+The later proof-plan sketch represents an endpoint contradiction by two
+`FactId`s, whereas `replayRefute` deliberately consumes one exact established
+fact. Its frontend lowering must therefore either resolve an already-installed
+contradictory meet fact or combine the two retained proofs through the domain's
+`FactDomainSchema.proveMeet` theorem before invoking the refutation schema.
+That lowering must first check that both identifiers name facts at the same
+node. The two-proof bridge remains open; it is not a capability of the current
+single-fact conformance canary.
 
 The first branch-start layer also rebinds each completed child result to the
 exact prepared base program and initial fact array, then rechecks the retained
 target fact and version. Its ordinary two-target closure gate rejects a stopped,
 saturated, fuel-limited, malformed, or wrong-input child. It classifies a
 runtime contradiction separately but deliberately refuses to treat that flag
-as proof closure; the refutation schema described above must land first.
+as proof closure; the frontend must first resolve an established bottom fact
+and apply the refutation schema described above.
 
 The remaining tree manager should retain internal nodes recording validated
 plans and checked child facts, and leaves retaining either a target proof, a
