@@ -69,6 +69,7 @@ def real : DomainId := { index := 0 }
 def sourceKey : OpKey := { name := "exp-sign.source" }
 def expKey : OpKey := { name := "exp-sign.exp" }
 def expRuleKey : RuleKey := { name := "exp-sign.exp.nonnegative" }
+def splitRuleKey : RuleKey := { name := "exp-sign.source.split-zero" }
 
 def sourceOperation : Operation :=
   { key := sourceKey, inputs := [], output := real }
@@ -98,6 +99,15 @@ def expRule : Registration :=
     watches := [.argument 0]
     writes := [.result] }
 
+/-- The split package may suggest zero as a domain-owned landmark.  It does
+not construct either branch. -/
+def splitRule : Registration :=
+  { key := splitRuleKey
+    head := sourceKey
+    kind := .split
+    watches := [.result]
+    writes := [] }
+
 def factFormat : ReplayFormat :=
   { role := .fact
     schema := 1
@@ -121,6 +131,14 @@ def expPlan (request : RuleRequest Bound) : Plan Bound :=
              body := [Bound.nonnegative.code] }] }
   | _, _ => { outcome := .failed 1, drafts := [] }
 
+def splitInvoke (request : RuleRequest Bound) : Outcome Bound :=
+  match request.inputs, request.writes with
+  | [input], [] =>
+      .success []
+        [.split { node := input.node, point := 0, reason := .smallLandmark }]
+        { visitedEntries := 1 }
+  | _, _ => .failed 2
+
 def sourcePackage : Package Bound :=
   { Cache := Unit
     cache := ()
@@ -133,7 +151,17 @@ def expPackage : Package Bound :=
     operations := #[expOperation]
     handlers := #[Handler.statelessPlanned expRule expPlan #[factFormat]] }
 
+def splitPackage : Package Bound :=
+  { Cache := Unit
+    cache := ()
+    requiredOperations := #[sourceOperation]
+    handlers := #[Handler.statelessDroppingDrafts splitRule splitInvoke] }
+
 def packages : Array (Package Bound) := #[sourcePackage, expPackage]
+
+/-- Search configuration which additionally admits the optional zero landmark. -/
+def splitPackages : Array (Package Bound) :=
+  #[sourcePackage, expPackage, splitPackage]
 
 def engineLimits : Propagator.Limits :=
   { maxOperations := 3
