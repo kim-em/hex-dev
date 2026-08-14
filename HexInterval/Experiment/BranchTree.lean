@@ -162,7 +162,7 @@ def start (config : Config Fact PolicyState) (scope : Propagator.Policy.ScopeId)
   pure
     { nodes := #[.pending root]
       frontier := [{ index := 0 }]
-      branch := BranchStart.State.start scope
+      branch := BranchStart.State.start session
       splits := 0
       leaves := 1
       steps := 0 }
@@ -215,8 +215,8 @@ def step [DecidableEq Fact] (config : Config Fact PolicyState)
     return retainLeaf state id source (.blocked run .splitLimit) rest
   if state.leaves + 1 > config.limits.maxLeaves then
     return retainLeaf state id source (.blocked run .leafLimit) rest
-  match BranchStart.prepare config.limits.branch state.branch job.depth
-      run.session plan job.input.target config.splitter with
+  match BranchStart.prepare config.limits.branch state.branch run.session plan
+      job.input.target config.splitter with
   | .error error =>
       pure (retainLeaf state id source (.blocked run (.splitRejected error)) rest)
   | .ok (branch, children) =>
