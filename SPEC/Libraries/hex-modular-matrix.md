@@ -54,11 +54,6 @@ below all want an exact solve that does not pay that growth. Dixon
 lifting is the standard answer and its output is checkable by one
 matrix-vector product.
 
-**A `Modulus` is now hex-mod-arith's.** `ZMod64.Modulus` and
-`ZMod64.primesBelow` live beside `ZMod64`, per
-[hex-modular §The supply](hex-modular.md); this library consumes them and
-passes bare `Nat` moduli to `crtLoop`.
-
 **hex-hermite needs a determinant.** The Domich-Kannan-Trotter modular
 Hermite algorithm reduces entries modulo a determinant of a square
 nonsingular submatrix, and [hex-hermite](hex-hermite.md) names
@@ -577,6 +572,11 @@ both comes from.
 
 Five, of which three are shared with other planned libraries and are
 listed here because this library is a second consumer.
+
+**The modulus supply should move to hex-mod-arith.** `ZMod64.Modulus`,
+`ZMod64.PrimeModulus`, and `ZMod64.primesBelow` belong beside `ZMod64`,
+per [hex-modular §The supply](hex-modular.md). This library is their
+main consumer, and it passes bare `Nat` moduli on to `crtLoop`.
 
 **`zmod64FieldOfPrime` should move to hex-mod-arith.** Set out in
 [hex-modular](hex-modular.md). Without it, `rankModP` forces a dependency
