@@ -447,11 +447,29 @@ expression simplification, by the recursive view, and by multivariate
 factorization, so it gets its own entry rather than being assumed. The
 standard routes are modular and sparse-interpolation algorithms (Brown
 for the dense case, Zippel for the sparse), reducing to univariate gcds
-at evaluation points and interpolating back. The certificate is the one
-from the modular gcd item: cofactors plus a coprimality witness.
-Content and primitive part in a distinguished variable belong to this
-library. Their coefficient hypotheses are stated on the individual
-operations rather than folded into the generic polynomial interface.
+at evaluation points and interpolating back. Content and primitive part
+in a distinguished variable belong to this library. Their coefficient
+hypotheses are stated on the individual operations rather than folded
+into the generic polynomial interface.
+
+The certificate is cofactors plus a coprimality witness, and the witness
+is not the Bézout identity the modular gcd item names: `ℤ[x]` and
+`R[x₁, …, xₙ]` are not Bézout domains, so the replacement is a modular
+witness together with a recursion on contents. That recursion rests on
+the universal property of the content, which is gcd maximality one
+variable down, so the Mathlib-free soundness theorem is conditional and
+the companion discharges the hypothesis.
+
+Over `ℤ` the word "squarefree" needs care: `12x` is not squarefree in
+`ℤ[x]` because `4 ∣ 12`, so the ring-theoretic predicate is partly a
+question about the integer content and needs the integer factorization
+item below. The library uses the ordinary computer-algebra convention
+instead, pulling the content out as an unfactored scalar.
+
+Specified in [hex-mv-gcd](Libraries/hex-mv-gcd.md). Squarefree
+decomposition in positive characteristic is scheduled there but not
+solved: the Yun recursion runs over a coefficient ring that is not
+perfect, so the univariate fix does not apply level by level.
 
 **Gröbner bases.** Buchberger's algorithm with the Gebauer-Möller pair
 criteria, then F4 if benchmarks call for it. Applications are ideal
