@@ -1599,14 +1599,14 @@ nonempty traces, `closeTarget` closes the same exponential target in each
 child context, and `replaySplit` joins them into the caller theorem. The
 assigned tactic term is built from those two live child results.
 
-The corresponding executable source package now contributes a zero-landmark
-split rule. The generic `BranchStart.prepare` transition does not trust the
-public fields of the `SplitPlan` it receives. It resolves the plan's exact
-retained suggestion identifier and requires that record to contain a split
-with the same complete action (including its request serial), node, dyadic
-cut, reason, and proposal-time fact version. It also checks the exact scope
-and reconstructs the source key from that action. The action must pass the
-retained engine's full freshness check: its application, registration,
+The corresponding executable split package now contributes a zero-landmark
+rule for the source operation. The generic `BranchStart.prepare` transition
+does not trust the public fields of the `SplitPlan` it receives. It resolves
+the plan's exact retained suggestion identifier and requires that record to
+contain a split with the same complete action (including its request serial),
+node, dyadic cut, reason, and proposal-time fact version. It also checks the
+exact scope and reconstructs the source key from that action. The action must
+pass the retained engine's full freshness check: its application, registration,
 watched versions, write authority, program-sensitive version, and structural
 matcher provenance must still match engine-owned state. The transition
 separately checks the current program version, node fact, and fact version for

@@ -99,7 +99,7 @@ def expRule : Registration :=
     watches := [.argument 0]
     writes := [.result] }
 
-/-- The source package may suggest zero as a domain-owned landmark.  It does
+/-- The split package may suggest zero as a domain-owned landmark.  It does
 not construct either branch. -/
 def splitRule : Registration :=
   { key := splitRuleKey
