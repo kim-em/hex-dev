@@ -194,4 +194,136 @@ theorem quotedTraceProvesContract :
   simpa [quotedStep] using
     (ProofEmitter.proofOfReplay replayed (by rfl))
 
+/-! # Generic split joining -/
+
+inductive SplitFact where
+  | all
+  | yes
+  | no
+  | enabled
+  | certified
+  deriving DecidableEq
+
+def splitNode : NodeId := node 0
+
+def splitBaseNode : NodeId := node 1
+
+def splitTargetNode : NodeId := node 2
+
+def SplitHolds (valuation : NodeId -> Bool) : NodeFact SplitFact -> Prop
+  | { fact := .all, .. } => True
+  | { node, fact := .yes } => valuation node = true
+  | { node, fact := .no } => valuation node = false
+  | { node, fact := .enabled } => valuation node = true
+  | { fact := .certified, .. } =>
+      valuation splitBaseNode = true /\
+        (valuation splitNode = true \/ valuation splitNode = false)
+
+def splitSemantics : SemanticReplay.Semantics SplitFact :=
+  { Value := Bool
+    models := fun _ _ => True
+    holds := fun _ valuation fact => SplitHolds valuation fact }
+
+def splitBase : List (NodeFact SplitFact) :=
+  [{ node := splitBaseNode, fact := .enabled }]
+
+def splitTarget : NodeFact SplitFact :=
+  { node := splitTargetNode, fact := .certified }
+
+/-- Unlike the old Boolean-decision target, certification is not true without
+the inherited base fact. -/
+theorem splitTargetNeedsBase :
+    ¬ splitSemantics.Entails program [] splitTarget := by
+  intro sound
+  let valuation : NodeId -> Bool := fun _ => false
+  have certified := sound valuation trivial (by simp)
+  exact Bool.noConfusion certified.1
+
+def splitSchema : ProofEmitter.SplitSchema splitSemantics Unit where
+  proveCover := fun _ node parent _ left right =>
+    if shape : parent = .all /\ left = .yes /\ right = .no then
+      some
+        { proof := by
+            rcases shape with ⟨rfl, rfl, rfl⟩
+            intro valuation _ _
+            cases value : valuation node with
+            | false => exact Or.inr value
+            | true => exact Or.inl value }
+    else
+      none
+
+def splitParent :
+    Evidence
+      (splitSemantics.Entails program splitBase
+        { node := splitNode, fact := .all }) :=
+  { proof := by
+      intro _ _ _
+      trivial }
+
+def splitLeft :
+    Evidence
+      (splitSemantics.Entails program
+        ({ node := splitNode, fact := .yes } :: splitBase) splitTarget) :=
+  { proof := by
+      intro valuation _ assumptions
+      have yes :=
+        assumptions { node := splitNode, fact := .yes } (by simp)
+      have enabled :=
+        assumptions { node := splitBaseNode, fact := .enabled } (by simp [splitBase])
+      exact ⟨enabled, Or.inl yes⟩ }
+
+def splitRight :
+    Evidence
+      (splitSemantics.Entails program
+        ({ node := splitNode, fact := .no } :: splitBase) splitTarget) :=
+  { proof := by
+      intro valuation _ assumptions
+      have no :=
+        assumptions { node := splitNode, fact := .no } (by simp)
+      have enabled :=
+        assumptions { node := splitBaseNode, fact := .enabled } (by simp [splitBase])
+      exact ⟨enabled, Or.inr no⟩ }
+
+def splitReplay :=
+  ProofEmitter.replaySplit splitSchema program splitBase splitNode .all () .yes .no
+    splitTarget splitParent splitLeft splitRight
+
+/-- The non-tautological target needs the inherited base fact in both branches;
+the two distinct child assumptions supply its corresponding left and right
+cases. The runtime policy and its split suggestion do not occur in the proof
+term. -/
+theorem splitCertifies :
+    splitSemantics.Entails program splitBase splitTarget :=
+  ProofEmitter.proofOfReplay splitReplay (by rfl)
+
+/-- The demo schema fixes an orientation, so this swapped quotation exercises
+that schema guard rather than a soundness requirement of the generic join. -/
+def swappedSplit :=
+  ProofEmitter.replaySplit splitSchema program splitBase splitNode .all () .no .yes
+    splitTarget splitParent splitRight splitLeft
+
+#guard swappedSplit.isNone
+
+/-- Child order is rejected by kernel reduction of the exact quoted schema
+application, independently of the executable guard above. -/
+theorem swappedSplitRejected : swappedSplit = none := by
+  rfl
+
+/-- Two copies of the positive child genuinely fail to cover the parent,
+independently of the demo schema's orientation guard. -/
+theorem yesYesNotCovering :
+    ¬ (∀ valuation, splitSemantics.models program valuation →
+      splitSemantics.holds program valuation { node := splitNode, fact := .all } →
+        splitSemantics.holds program valuation { node := splitNode, fact := .yes } ∨
+          splitSemantics.holds program valuation { node := splitNode, fact := .yes }) := by
+  intro cover
+  have covered := cover (fun _ => false) trivial trivial
+  rcases covered with yes | yes <;> exact Bool.noConfusion yes
+
+/--
+info: 'Hex.Interval.ProofEmitterConformance.splitCertifies' depends on axioms: [propext]
+-/
+#guard_msgs in
+#print axioms splitCertifies
+
 end Hex.Interval.ProofEmitterConformance

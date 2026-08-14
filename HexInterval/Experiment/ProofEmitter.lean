@@ -414,6 +414,93 @@ def replayTransport {Fact : Type} {semantics : Semantics Fact}
       else
         none
 
+/-! ## Proof-producing solver splits -/
+
+/-- Package-owned proof boundary for one domain cut.
+
+The executable policy may propose a cut and the branch manager may compute
+candidate child facts, but neither is evidence that the children cover the
+parent.  A domain companion accepts the supplied parent, cut, and children only
+when it can prove that every value satisfying the parent lies in at least one
+child.  Binding those values to an authenticated runtime plan belongs to the
+branch layer.  Disjointness and interiority are useful search invariants, but
+are not needed for the logical join and remain branch-manager checks. -/
+structure SplitSchema (semantics : Semantics Fact) (Cut : Type) where
+  proveCover :
+    (program : Program) -> (node : NodeId) -> (parent : Fact) -> Cut ->
+      (left right : Fact) ->
+      Option
+        (Evidence
+          (forall valuation, semantics.models program valuation ->
+            semantics.holds program valuation { node, fact := parent } ->
+              semantics.holds program valuation { node, fact := left } \/
+                semantics.holds program valuation { node, fact := right }))
+
+/-- Join two conditional branch theorems using a checked coverage theorem.
+
+The child fact is an additional branch assumption, not an unconditional fact
+in the caller's context.  Facts proved before the split remain in `base` and
+are supplied identically to both children. -/
+def installSplit {Fact : Type} {semantics : Semantics Fact}
+    {program : Program} {base : List (NodeFact Fact)}
+    {node : NodeId} {parent left right : Fact} {target : NodeFact Fact}
+    (cover :
+      Evidence
+        (forall valuation, semantics.models program valuation ->
+          semantics.holds program valuation { node, fact := parent } ->
+            semantics.holds program valuation { node, fact := left } \/
+              semantics.holds program valuation { node, fact := right }))
+    (parentSound :
+      Evidence
+        (semantics.Entails program base { node, fact := parent }))
+    (leftSound :
+      Evidence
+        (semantics.Entails program ({ node, fact := left } :: base) target))
+    (rightSound :
+      Evidence
+        (semantics.Entails program ({ node, fact := right } :: base) target)) :
+    Evidence (semantics.Entails program base target) :=
+  { proof := by
+      intro valuation model baseHolds
+      have parentHolds := parentSound.proof valuation model baseHolds
+      rcases cover.proof valuation model parentHolds with leftHolds | rightHolds
+      · apply leftSound.proof valuation model
+        intro assumption member
+        rcases List.mem_cons.mp member with equal | member
+        · subst assumption
+          exact leftHolds
+        · exact baseHolds assumption member
+      · apply rightSound.proof valuation model
+        intro assumption member
+        rcases List.mem_cons.mp member with equal | member
+        · subst assumption
+          exact rightHolds
+        · exact baseHolds assumption member }
+
+/-- Transparently replay one solver split from supplied child facts.
+
+The branch searches may be arbitrary and opaque.  Their outputs enter this
+transition only as ordinary kernel evidence under the corresponding child
+assumption.  The domain schema independently proves coverage of the supplied
+children before the generic join is constructed; it does not authenticate a
+runtime plan or quotation. -/
+def replaySplit {Fact Cut : Type} {semantics : Semantics Fact}
+    (schema : SplitSchema semantics Cut) (program : Program)
+    (base : List (NodeFact Fact)) (node : NodeId) (parent : Fact) (cut : Cut)
+    (left right : Fact) (target : NodeFact Fact)
+    (parentSound :
+      Evidence
+        (semantics.Entails program base { node, fact := parent }))
+    (leftSound :
+      Evidence
+        (semantics.Entails program ({ node, fact := left } :: base) target))
+    (rightSound :
+      Evidence
+        (semantics.Entails program ({ node, fact := right } :: base) target)) :
+    Option (Evidence (semantics.Entails program base target)) := do
+  let cover <- schema.proveCover program node parent cut left right
+  pure (installSplit cover parentSound leftSound rightSound)
+
 /-- Close a requested fact from a stronger established fact at the same node.
 The independent fact-domain theorem must prove that intersecting `actual` with
 `requested` leaves `actual` unchanged.  Runtime target detection is not used
