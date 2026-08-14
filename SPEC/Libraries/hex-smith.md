@@ -41,8 +41,8 @@ different and larger class of question:
 
 The dependency on `hex-hermite` is real rather than organisational: the
 `extGcd` elimination step with its explicit inverse, the exact-division
-discipline, the certificate machinery, the conventions, and the
-`mul_eq_one_comm` obligation are all shared. Note that the default
+discipline, the certificate machinery, the conventions, and the reliance on
+`mul_eq_one_comm` are all shared. Note that the default
 algorithm below does *not* call `hnf`. The Kannan-Bachem variant under
 "Open questions" would, which is the other reason to keep the two
 libraries adjacent.
@@ -115,8 +115,8 @@ differently.
 
 **One-sided inverse fields.** `left_inv` and `right_inv` record only
 `U * W = I` and `V * X = I`. The other side follows over a commutative
-ring through the adjugate, by the `mul_eq_one_comm` lemma
-[hex-hermite](hex-hermite.md) asks `hex-determinant` for. Carrying both
+ring through the adjugate, by `Hex.Matrix.mul_eq_one_comm` in
+`HexDeterminant/Adjugate.lean`. Carrying both
 directions as fields would make every construction discharge a
 redundant obligation.
 

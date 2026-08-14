@@ -232,6 +232,21 @@ theorem adjugate_mul_apply {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
     have hji : j ≠ i := fun h => hij h.symm
     rw [if_neg hji]
 
+/-- The adjugate identity `adjugate M * M = det M • identity`.
+
+The left-hand companion to `mul_adjugate`. Having both sides in matrix form is
+what lets a one-sided inverse be turned into a two-sided one; see
+`mul_eq_one_comm`. -/
+theorem adjugate_mul {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
+    (M : Matrix R (n + 1) (n + 1)) :
+    adjugate M * M = det M • Matrix.identity (n + 1) := by
+  apply ext_getElem
+  intro i j
+  rw [adjugate_mul_apply, Matrix.smul_getElem, getElem_identity]
+  by_cases h : i = j
+  · rw [if_pos h, if_pos h]; show det M = det M * 1; grind
+  · rw [if_neg h, if_neg h]; show (0 : R) = det M * 0; grind
+
 /-- Column-`0` view of `M * adjugate M`. -/
 theorem mul_adjugate_apply_zero {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
     (M : Matrix R (n + 1) (n + 1)) (i : Fin (n + 1)) :
@@ -670,6 +685,47 @@ theorem det_setRow_setRow_mul_det
     det_setRow_eq_cofactorRowPairing M b u]
   exact cofactorRowPairing_setRow_plucker M a b hab u v
 
+
+/-- A square matrix with a right inverse over a commutative ring has that same
+matrix as a left inverse.
+
+Over a field this is linear algebra. Over a general commutative ring it needs
+the adjugate, because the inverse is only available as `adjugate M` scaled by
+`det M`, and `det M` is a unit exactly when `M` is invertible. The proof applies
+`adjugate_mul` twice: once to rewrite `adjugate U` as `det U • W`, and once to
+recognise `det U • (W * U)` as `det U • 1`.
+
+The intended consumer is a certificate checker that verifies a single product
+`U * W = 1` and reads unimodularity of `U` off it, rather than checking both
+directions or computing a determinant. -/
+theorem mul_eq_one_comm {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
+    {U W : Matrix R n n} (h : U * W = Matrix.identity n) :
+    W * U = Matrix.identity n := by
+  cases n with
+  | zero =>
+    apply ext_getElem
+    intro i _
+    exact absurd i.isLt (by omega)
+  | succ n =>
+    have hdet : det U * det W = 1 := by
+      rw [← det_mul, h, det_identity]
+    have hadj : adjugate U = det U • W := by
+      calc adjugate U
+          = adjugate U * Matrix.identity (n + 1) := (mul_identity _).symm
+        _ = adjugate U * (U * W) := by rw [h]
+        _ = adjugate U * U * W := (mul_assoc _ _ _).symm
+        _ = (det U • Matrix.identity (n + 1)) * W := by rw [adjugate_mul]
+        _ = det U • (Matrix.identity (n + 1) * W) := by rw [smul_mul]
+        _ = det U • W := by rw [identity_mul]
+    have hkey : det U • (W * U) = det U • Matrix.identity (n + 1) := by
+      rw [← smul_mul, ← hadj, adjugate_mul]
+    apply ext_getElem
+    intro i j
+    have hentry := congrArg (fun X : Matrix R (n + 1) (n + 1) => X[i][j]) hkey
+    simp only [Matrix.smul_getElem] at hentry
+    have hmul : det U * (W * U)[i][j]
+        = det U * (Matrix.identity (R := R) (n + 1))[i][j] := hentry
+    grind
 
 end Matrix
 end Hex

@@ -304,6 +304,29 @@ theorem sub_identity_mulVec [Lean.Grind.Ring R] (Q : Matrix R n n) (v : Vector R
   rw [getElem_sub, getElem_mul, getElem_mul, getElem_mul, col_sub,
     Vector.dotProduct_sub_right]
 
+/-- Row `i` of a scalar multiple is the scalar multiple of row `i`. -/
+@[simp, grind =] theorem row_smul {S : Type v} [SMul S R] (c : S)
+    (M : Matrix R n m) (i : Fin n) :
+    row (c • M) i = c • row M i := by
+  apply Vector.ext
+  intro j hj
+  simp only [Vector.getElem_smul]
+  show (row (c • M) i)[(⟨j, hj⟩ : Fin m)] = c • (row M i)[(⟨j, hj⟩ : Fin m)]
+  rw [getElem_row, getElem_row, smul_getElem]
+
+/-- Scalar multiplication commutes with matrix multiplication on the left.
+
+Together with `mul_adjugate` and `adjugate_mul` this is what turns a one-sided
+matrix inverse into a two-sided one; see `HexDeterminant.mul_eq_one_comm`. -/
+@[grind =] theorem smul_mul [Lean.Grind.Ring R] (c : R)
+    (A : Matrix R n m) (B : Matrix R m k) :
+    (c • A) * B = c • (A * B) := by
+  apply ext_getElem
+  intro i j
+  rw [smul_getElem, getElem_mul, getElem_mul, row_smul,
+    Vector.dotProduct_smul_left]
+  rfl
+
 end Matrix
 
 end Hex

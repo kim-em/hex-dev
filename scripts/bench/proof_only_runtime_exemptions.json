@@ -172,5 +172,11 @@
     "baseline_blob": "9bf2c14fba5223b110dbe95f1b8834fd15294c3c",
     "current_blob": "f2fc2e74288a630fc49490e9bea3602e8e165ebb",
     "reason": "Scopes the square-free guard witnesses so importing modules stop selecting an instance they cannot legally name: the Bounds 2 guard is dropped in favour of the canonical instance, and the Bounds 5 guard becomes a private theorem with a local instance attribute. Definitions, their bodies and their declaration positions are unchanged, Bounds proofs are erased before code generation, and the elaborators do not branch on the witness expression."
+  },
+  {
+    "path": "HexMatrix/MatrixAlgebra.lean",
+    "baseline_blob": "a203c0a4f7aa5a096774bdac2092ad43b35b92b2",
+    "current_blob": "461006d810f79d065f6e179497407449788d895a",
+    "reason": "Adds the theorems row_smul and smul_mul only; no definition, attribute, or existing declaration on the compiled factorization path changes."
   }
 ]

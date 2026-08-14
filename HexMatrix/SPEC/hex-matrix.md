@@ -84,6 +84,7 @@ to change one column.
 - `transpose` is involutive
 - `gramMatrix M = M * Mᵀ`
 - elementary-operation multiplicative and inverse-preservation lemmas
+- `smul_mul : (c • A) * B = c • (A * B)`, with `row_smul` underneath it
 
 The determinant of a row operation (`det_rowSwap`, `det_rowScale`,
 `det_rowAdd`) is stated in `hex-determinant`, where `det` is defined.
