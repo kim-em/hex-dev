@@ -77,8 +77,11 @@ about, namely whether they divide at all:
   hex-bareiss, or a detour through `ℚ` and the coefficient growth that
   brings.
 - **Multi-modular**, computing `χ_A` modulo several primes and
-  recombining, using the modular techniques below with a coefficient
-  bound from the matrix norm.
+  recombining, using [hex-modular](Libraries/hex-modular.md) with a
+  coefficient bound from the matrix norm. The determinant in
+  [hex-modular-matrix](Libraries/hex-modular-matrix.md) is the same
+  shape one degree down, and its handling of the bound is the model to
+  follow.
 
 Isolating the roots of `χ_A` with hex-real-roots and hex-roots would give
 certified eigenvalue enclosures; hex-number-field can name the resulting exact
@@ -137,46 +140,66 @@ since the project has no floating-point linear algebra: an unverified
 Lean implementation and an FFI call are equally acceptable, because the
 verification step makes the choice proof-irrelevant.
 
-**Modular techniques.** A toolkit that several libraries want
-independently:
+**Modular techniques.** These have graduated from this file and are
+specified in three libraries: [hex-modular](Libraries/hex-modular.md),
+holding integer CRT, rational reconstruction, symmetric representatives,
+and the modulus supply; [hex-modular-matrix](Libraries/hex-modular-matrix.md),
+holding the multi-modular determinant, certified rank, and Dixon p-adic
+lifting; and [hex-poly-z-gcd](Libraries/hex-poly-z-gcd.md), holding
+Brown's modular gcd for `ℤ[x]` with cofactors and a coprimality witness.
+The split is along the dependency seams: rational reconstruction has
+consumers that want no matrices, and a matrix library and a polynomial
+library should not depend on each other.
 
-- **Rational reconstruction.** Fix bounds `P, Q > 0` with `2PQ < m`.
-  From a residue `a mod m`, recover `p/q` with `q · a ≡ p (mod m)`,
-  `|p| ≤ P`, `0 < q ≤ Q`, `gcd(p, q) = 1`, and `gcd(q, m) = 1`, by
-  running the extended Euclidean algorithm on `(m, a)` and stopping at
-  the first remainder below `P`. Under `2PQ < m` the result is unique
-  when it exists, and that uniqueness theorem is what makes it usable.
-  Existence is conditional, so the signature is partial and the caller
-  retries with a larger `m`. hex-arith has the extended gcd, so this is
-  a short wrapper; the half-gcd below accelerates it without entering
-  the correctness argument.
-- **Multi-modular determinant.** Compute `det` modulo many word-sized
-  primes and recombine by CRT, with a Hadamard bound fixing how many
-  primes suffice. hex-bareiss's SPEC identifies this as the structurally
-  different approach FLINT takes, with its own asymptotic and
-  constant-factor profile, which is why that comparator is informational
-  rather than a required check; the measured ratio lives in
-  `reports/hex-bareiss-performance.md`. Implementing it here makes the
-  comparison like-for-like.
-- **Multi-modular rank**, a stronger statement than the determinant and
-  worth separating from it. Reduction mod `p` can only drop rank, so the
-  modular computation supplies a lower bound on the rational rank. An
-  exact rank pairs that with an upper bound: a rational kernel basis, a
-  rank factorization, or vanishing of all larger minors.
-- **Dixon p-adic lifting.** Solve `A x = b` over `ℚ` by lifting the
-  solution mod `p^k` and reconstructing rationals, avoiding the
-  coefficient growth of fraction-free elimination.
-- **Modular gcd for `ℤ[x]`** (Brown's algorithm): compute gcds modulo
-  several primes, CRT them, and reconstruct. The certificate carries
-  cofactors `f = g · f'` and `h = g · h'` together with a Bézout witness
-  that `f'` and `h'` are coprime, which is what pins `g` as greatest
-  rather than merely common.
+The shared shape survives. An unverified modular route produces a
+candidate and an exact check accepts it, so prime selection and every
+other heuristic needs no correctness proof. Four corrections to what this
+file said around that shape, recorded because they are easy to make
+again.
 
-These share a shape: an unverified modular route produces a candidate,
-and an exact check accepts it, so prime selection and other heuristics
-need no correctness proof. The checker's own obligations are primality
-and distinctness of the moduli, the CRT congruences, and a
-reconstruction bound large enough to determine the answer.
+**The checker's obligations are not "primality and distinctness of the
+moduli".** Primality is not needed for the determinant or for the
+polynomial gcd, because reduction modulo any `m` is a ring homomorphism;
+what elimination needs is that the pivots it inverts are units, which the
+extended gcd discovers rather than assumes. Distinctness is not the right
+property either, since distinct moduli need not be coprime. Pairwise
+coprimality is what the reconstruction needs, and one extended gcd per
+modulus checks it. Primality does appear, in the two places where a
+statement mentions `F_p` as a field: the rank of an image, and the
+coprimality witness for the gcd.
+
+**Where a checker does name a prime, the size of that prime is a cost.**
+Replaying a certificate in the kernel replays the primality proof, and
+trial division costs `√p`: measured on this tree, 0.04 s at 16 bits
+against 6.2 s at 31 bits. Certificates name small primes for that reason,
+and the multi-modular determinant may use large ones precisely because
+its argument never mentions primality.
+
+**"Reduction mod `p` can only drop rank" is the conclusion, not the
+argument.** The modular rank is a lower bound because a nonvanishing
+`r × r` minor modulo `p` is a nonvanishing integer minor, and that
+submatrix is what the certificate carries. Phrasing it the other way
+suggests the modular computation is itself the evidence.
+
+**The Bézout witness for coprime cofactors over `ℤ[x]` does not exist.**
+`ℤ[x]` is not a Bézout domain: `x` and `2` are coprime and
+`u · x + v · 2 = 1` has no solution. The replacement is a modular
+witness, and in one variable it is complete: reduce both cofactors at a
+prime dividing neither leading coefficient, exhibit a Bézout pair over
+`F_p[x]`, and check that the integer contents are coprime. The
+multivariate version of the same correction is in
+[hex-mv-gcd](Libraries/hex-mv-gcd.md), where the recursion on contents
+makes the soundness theorem conditional; in one variable the
+corresponding fact is `Int.dvd_gcd` and the theorem is unconditional.
+
+Two smaller things. The condition `gcd(q, m) = 1` on a reconstructed
+rational is a theorem rather than a fourth check, derivable from
+`gcd(p, q) = 1` and the congruence. And the determinant is the one member
+of this group with no cheap checker at all, so it is a proved algorithm
+rather than a checked candidate, it carries the group's only analytic
+hypothesis (a Hadamard bound, discharged in the companion), and certified
+dispatch to an untrusted external implementation is unavailable for it
+while remaining available for the rank and the linear solve.
 
 **Sparse matrices.** A sparse representation alongside the dense
 `Array`-backed one, with `toDense` as the specification function. The
@@ -396,8 +419,9 @@ After that, in rough order of payoff for this tree:
 - **Newton-iteration inversion** of a power series, giving fast division
   and remainder. Depends on truncated power series, below.
 - **Half-gcd** for quasi-linear gcd and extended gcd, the primitive
-  under fast rational reconstruction, fast Padé approximation, and fast
-  resultants. Its subject is the Euclidean transformation matrices, so
+  under the fast form of the rational reconstruction in
+  [hex-modular](Libraries/hex-modular.md), fast Padé approximation, and
+  fast resultants. Its subject is the Euclidean transformation matrices, so
   the prerequisite is a verified treatment of those rather than anything
   from the series side, and its correctness proof is fiddly in a way
   plain Euclid's is not.
@@ -453,7 +477,7 @@ hypotheses are stated on the individual operations rather than folded
 into the generic polynomial interface.
 
 The certificate is cofactors plus a coprimality witness, and the witness
-is not the Bézout identity the modular gcd item names: `ℤ[x]` and
+is not a Bézout identity: `ℤ[x]` and
 `R[x₁, …, xₙ]` are not Bézout domains, so the replacement is a modular
 witness together with a recursion on contents. That recursion rests on
 the universal property of the content, which is gcd maximality one
@@ -776,8 +800,9 @@ checker has proved itself on the hypergeometric case.
 **p-adic numbers as a type.** hex-hensel implements lifting as an
 algorithm. A first-class `Zp` and `Qp` at fixed precision would be
 shared by consumers that each roll their own modular tower:
-Berlekamp-Zassenhaus's lifting phase, Dixon lifting above, and the
-p-adic route to `ℤ[x]` factoring.
+Berlekamp-Zassenhaus's lifting phase, the Dixon lifting in
+[hex-modular-matrix](Libraries/hex-modular-matrix.md), and the p-adic
+route to `ℤ[x]` factoring.
 
 `Zp` at precision `N` is `ℤ/p^N ℤ` with a valuation, and is the easy
 half. `Qp` needs elements to carry precision explicitly, as a centre
