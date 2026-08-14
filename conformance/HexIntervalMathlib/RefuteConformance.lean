@@ -34,8 +34,11 @@ private def refuted? : Option
   replayRefute emptyRefute program childBase bottom checkerInput.target
     bottomSound
 
-/-- A contradiction leaf produces an ordinary kernel theorem for the branch
-target; no evaluator or runtime flag occurs in this declaration. -/
+/-- Transparent refutation replay constructs the expected ordinary kernel
+theorem; the proposition itself is ex falso because `childBase` contains the
+bottom fact. The reduction and guarded dependency report below are the
+conformance obligations, and no evaluator or runtime flag occurs in the
+declaration. -/
 theorem closesTarget :
     semantics.Entails program childBase checkerInput.target :=
   (refuted?.get (by rfl)).proof
@@ -53,8 +56,8 @@ private def topSound : Evidence
     (semantics.Entails program baseFacts top) :=
   assumed (by simp [baseFacts, top, node])
 
-/-- A non-bottom fact is rejected by reduction, so the schema check is
-load-bearing rather than decorative. -/
+/-- Pin the schema's reduction gate: the real adapter rejects a non-bottom
+fact instead of constructing refutation evidence. -/
 example :
     replayRefute emptyRefute program baseFacts top checkerInput.target
       topSound = none := by

@@ -1655,6 +1655,14 @@ schema inside the tree frontend remains open. An unexplored, fuel-limited,
 resource-limited, incomplete, or merely saturated child likewise does not
 close the parent target.
 
+The later proof-plan sketch represents an endpoint contradiction by two
+`FactId`s, whereas `replayRefute` deliberately consumes one exact established
+fact. Its frontend lowering must therefore either resolve an already-installed
+contradictory meet fact or combine the two retained proofs through the domain's
+`FactDomainSchema.proveMeet` theorem before invoking the refutation schema.
+That two-proof lowering is part of the open tree-frontend bridge, not a
+capability of the current single-fact conformance canary.
+
 The first branch-start layer also rebinds each completed child result to the
 exact prepared base program and initial fact array, then rechecks the retained
 target fact and version. Its ordinary two-target closure gate rejects a stopped,
