@@ -1743,6 +1743,28 @@ analytic-error, and ordinary-theorem replay boundary they must reuse. A general
 provider must make decoded cell/order/approximation/remainder fields inputs to
 its proof rather than extend this fixed-record decoder.
 
+The bounded dispatcher canary already exercises the intended proof boundary
+on smaller polynomials. It reconstructs one `ZPoly` from a distinguished
+variable and registered integer-constant, addition, subtraction, and
+multiplication operation keys. The real route runs `hex-real-roots` Sturm
+isolation plus refinement for `x ^ 3 - 2` and proves that every real root lies
+in `(5/4, 21/16]`. The complex route runs the `hex-roots` NK/Pellet isolator
+for `z ^ 3 - z - 1` and proves that its three certified squares cover every
+complex root. In both routes the planner's finite payload is only a candidate:
+exact graph, coefficient, precision, and region replay must reach the
+specialized engine's Mathlib correspondence theorem before `Evidence` is
+constructed. Mutated variables, operand order, coefficients, and regions are
+rejected.
+
+This is not yet a general algebraic interval package. Recognition does not
+cover rational coefficients, division, powers as primitive operations,
+multivariate graphs, shared-polynomial normalization, multiplicities, or
+arbitrary result fact schemas. The payload formats recognize only the two
+canaries, and no performance-based routing or cache policy yet compares the
+specialized engines with general interval propagation. The degree-five and
+mixed-function fixtures above remain the acceptance targets for that general
+layer.
+
 ### Zulip and downstream challenge sets
 
 The [IMO 2020 Q2 interval thread](https://leanprover.zulipchat.com/#narrow/channel/208328-IMO-grand-challenge/topic/IMO.202020/near/211282511)
