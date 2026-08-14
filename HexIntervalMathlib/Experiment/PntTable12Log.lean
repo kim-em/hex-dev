@@ -771,6 +771,42 @@ noncomputable def TableCertificate.tuple : TableCertificate → TableRow
 noncomputable def table12 : List TableRow :=
   tableCertificates.map TableCertificate.tuple
 
+/-- Exact 26-tuple list pinned from PNT+ `BKLNW_tables.lean`, including both
+logarithmic rows and the corrected row-25 fifth cell. -/
+noncomputable def sourceTable12 : List TableRow := [
+  (20, 1.68440e-3, 3.36880e-2, 6.73750e-1, 1.34750e1, 2.69500e2, 0.8, 0.81, 5e10),
+  (21, 1.06840e-3, 2.24350e-2, 4.71140e-1, 9.89390e0, 2.07780e2, 0.8, 0.81, 5e10),
+  (22, 6.76540e-4, 1.48840e-2, 3.27450e-1, 7.20380e0, 1.58490e2, 0.8, 0.81, 5e10),
+  (23, 4.27800e-4, 9.83920e-3, 2.26310e-1, 5.20500e0, 1.19720e2, 0.8, 0.81, 5e10),
+  (24, 2.70120e-4, 6.48290e-3, 1.55590e-1, 3.73410e0, 8.96190e1, 0.8, 0.81, 5e10),
+  (Real.log 5e10, 2.070820e-4, 5.101530e-3, 1.256780e-1, 3.096110e0, 7.627340e1, 0.88, 0.86, 32e12),
+  (25, 1.750020e-4, 4.375050e-3, 1.093770e-1, 2.734410e0, 6.836010e1, 0.88, 0.86, 32e12),
+  (26, 1.10220e-4, 2.86560e-3, 7.45050e-2, 1.93720e0, 5.03650e1, 0.88, 0.86, 32e12),
+  (27, 6.93270e-5, 1.87190e-3, 5.05400e-2, 1.36460e0, 3.68430e1, 0.88, 0.86, 32e12),
+  (28, 4.35580e-5, 1.21970e-3, 3.41500e-2, 9.56180e-1, 2.67730e1, 0.88, 0.86, 32e12),
+  (29, 2.73380e-5, 7.92780e-4, 2.29910e-2, 6.66730e-1, 1.93360e1, 0.88, 0.86, 32e12),
+  (30, 1.71400e-5, 5.14180e-4, 1.54260e-2, 4.62760e-1, 1.38830e1, 0.88, 0.86, 32e12),
+  (31, 1.07350e-5, 3.32790e-4, 1.034630e-2, 3.217360e-1, 1.000500e1, 0.88, 0.86, 32e12),
+  (Real.log (32e12), 1.069930e-5, 3.327130e-4, 1.034630e-2, 3.217360e-1, 1.000500e1, 0.94, 0.94, 1e19),
+  (32, 7.005640e-6, 2.241810e-4, 7.173770e-3, 2.295610e-1, 7.345940e0, 0.94, 0.94, 1e19),
+  (33, 4.38000e-6, 1.44540e-4, 4.76990e-3, 1.57410e-1, 5.19440e0, 0.94, 0.94, 1e19),
+  (34, 2.73610e-6, 9.30270e-5, 3.16300e-3, 1.07540e-1, 3.65640e0, 0.94, 0.94, 1e19),
+  (35, 1.70780e-6, 5.97730e-5, 2.09210e-3, 7.32220e-2, 2.56280e0, 0.94, 0.94, 1e19),
+  (36, 1.06520e-6, 3.83460e-5, 1.38050e-3, 4.96960e-2, 1.78910e0, 0.94, 0.94, 1e19),
+  (37, 6.63850e-7, 2.45630e-5, 9.08810e-4, 3.36260e-2, 1.24420e0, 0.94, 0.94, 1e19),
+  (38, 4.13450e-7, 1.57120e-5, 5.97020e-4, 2.26870e-2, 8.62100e-1, 0.94, 0.94, 1e19),
+  (39, 2.57330e-7, 1.00360e-5, 3.91400e-4, 1.52650e-2, 5.95320e-1, 0.94, 0.94, 1e19),
+  (40, 1.60060e-7, 6.40240e-6, 2.56100e-4, 1.02440e-2, 4.09750e-1, 0.94, 0.94, 1e19),
+  (41, 9.94970e-8, 4.07940e-6, 1.67260e-4, 6.85740e-3, 2.81160e-1, 0.94, 0.94, 1e19),
+  (42, 6.18140e-8, 2.59620e-6, 1.09040e-4, 4.57970e-3, 1.92350e-1, 0.94, 0.94, 1e19),
+  (43, 3.83820e-8, 1.65050e-6, 7.09680e-5, 3.05170e-3, 1.31220e-1, 0.94, 0.94, 1e19)]
+
+theorem table12MatchesSource : table12 = sourceTable12 := by
+  norm_num [table12, tableCertificates, sourceTable12, TableCertificate.tuple,
+    PntTable12Ordinary.ordinaryRows, PntTable12Ordinary.row,
+    PntTable12Ordinary.Decimal.value, PntTable12Ordinary.decimal,
+    fiveRow, thirtyTwoRow, decimalValue, decimal]
+
 noncomputable def tableS (b c capital : ℝ) : ℝ :=
   (capital + 1) * Real.exp (-b / 2) +
     1.03883 * Real.exp (-2 * b / 3) +
@@ -853,5 +889,22 @@ theorem table12Check (b cell1 cell2 cell3 cell4 cell5 c capital m : ℝ)
     (tableCertificatesHold certificate certificateMember)
   rw [equal] at checked
   exact checked
+
+/-- The coordinate `(log (5e10), 1)` cannot carry the mutated zero cut.  This
+is a mathematical incompatibility, not a request for a finer enclosure. -/
+theorem rejectFalseFiveCell :
+    ¬ (Real.log (decimalValue fiveRow.input)) ^ 1 *
+        rowS fiveRow (Real.log (decimalValue fiveRow.input)) ≤
+      decimalValue falseFiveRow.cell1 := by
+  have input_gt : (1 : ℝ) < decimalValue fiveRow.input := by
+    norm_num [fiveRow, decimalValue, decimal]
+  have log_pos : 0 < Real.log (decimalValue fiveRow.input) := Real.log_pos input_gt
+  have row_pos :
+      0 < rowS fiveRow (Real.log (decimalValue fiveRow.input)) := by
+    unfold rowS
+    norm_num [fiveRow, decimalValue, decimal]
+    positivity
+  norm_num [falseFiveRow, decimalValue, decimal]
+  exact mul_pos log_pos row_pos
 
 end Hex.Interval.Experiment.PntTable12Log

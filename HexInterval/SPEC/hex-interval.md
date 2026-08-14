@@ -3490,13 +3490,30 @@ total meet compares the exact nonnegative rational cuts, including combinations
 the retained chronology does not reach; equal cuts with different diagnostic
 coordinates do not count as an improvement.
 
-Together with row 25 this accounts for all 120 ordinary cells. Exactly ten
-cells remain before the 130-case family can be accepted: the two logarithmic
-rows by five columns. They require checked logarithm brackets and the final
-wrapper from arbitrary pinned `table_12` membership to the matching ordinary
-or logarithmic certificate. The generated-family record therefore remains
-`pending`; only the exact 120-leaf ordinary tactic site has complete numerical
-coverage.
+The two logarithmic certificates complete the remaining ten cells. Exact input
+facts for `5e10` and `32e12` produce checked windows
+`[24.6352888, 24.6352889]` and `[31.0967570, 31.0967571]`. The proof derives
+`log 5` from a finite atanh-series remainder, combines that result with checked
+`log 2` bounds through the identities `log (5e10) = 10 log 2 + 11 log 5` and
+`log (32e12) = 17 log 2 + 12 log 5`, and then uses fractional range reduction
+about integer floors 24 and 31 for the exponential terms. Each five-cell row
+action has its own checked log window as a replay assumption, so the dependency
+is load-bearing rather than a separate bespoke numerical proof.
+
+The logarithmic runtime has four actions, twelve chronological facts, and two
+shared row payloads. One generic proof-frontend fold closes all ten coordinate
+targets, with typed evidence retained at the first and last coordinates. The
+exact 26-tuple `sourceTable12` is copied from the pinned source and a kernel
+theorem equates it with the interleaved ordinary, row-25, and logarithmic
+certificate list. The final theorem accepts an arbitrary nine-tuple membership
+hypothesis and returns the source-shaped five-way conjunction. Thus the family
+is accepted after rewrite with honest 130/130 coverage.
+
+A zero cut at logarithmic coordinate `(log (5e10), 1)` is rejected as stable
+diagnostic `401`, with no draft or precision retry; the replay format rejects
+the mutated body and a kernel theorem proves the proposed inequality false.
+These are still pinned fixed-row certificates, not a general logarithm or batch
+API.
 
 #### Certified logarithm tables
 

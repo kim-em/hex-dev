@@ -220,6 +220,15 @@ def rowBody (certificate : RowCertificate) : List Nat :=
     encodeDecimal certificate.c ++ encodeDecimal certificate.capital ++
     [certificate.mMantissa, certificate.mExponent]
 
+/-- Pinned-source mutation used to ensure a false cell is diagnosed at its
+paper coordinate instead of being retried at higher precision. -/
+def falseFiveRow : RowCertificate := { fiveRow with cell1 := decimal 0 0 }
+def falseFiveBody : List Nat := rowBody falseFiveRow
+def falseFiveCoordinate : Coordinate := { row := .fiveE10, column := 1 }
+
+def mutationCoordinate? (body : List Nat) : Option Coordinate :=
+  if body == falseFiveBody then some falseFiveCoordinate else none
+
 def decodeWindow? (body : List Nat) : Option LogRow :=
   if body == windowBody fiveRow then some .fiveE10
   else if body == windowBody thirtyTwoRow then some .thirtyTwoE12
@@ -266,7 +275,13 @@ def logPlan (request : RuleRequest Bound) : Plan Bound :=
       | none => { outcome := .noChange {}, drafts := [] }
   | _, _ => { outcome := .failed 1, drafts := [] }
 
-def rowPlan (certificate : RowCertificate) (request : RuleRequest Bound) : Plan Bound :=
+def rowPlanForBody (certificate : RowCertificate) (body : List Nat)
+    (request : RuleRequest Bound) : Plan Bound :=
+  if body != rowBody certificate then
+    match mutationCoordinate? body with
+    | some coordinate => { outcome := .failed (coordinateCode coordinate), drafts := [] }
+    | none => { outcome := .failed 1, drafts := [] }
+  else
   match request.inputs, request.writes with
   | [input], writes =>
       if input.fact == Bound.window certificate.lower certificate.upper &&
@@ -284,6 +299,9 @@ def rowPlan (certificate : RowCertificate) (request : RuleRequest Bound) : Plan 
                body := rowBody certificate }] }
       else { outcome := .noChange {}, drafts := [] }
   | _, _ => { outcome := .failed 1, drafts := [] }
+
+def rowPlan (certificate : RowCertificate) (request : RuleRequest Bound) : Plan Bound :=
+  rowPlanForBody certificate (rowBody certificate) request
 
 def sourcePackage : Package Bound :=
   { Cache := Unit, cache := (), operations := #[sourceOperation], handlers := #[] }
@@ -304,16 +322,16 @@ def engineLimits : Propagator.Limits :=
     maxReplayFormats := 4, maxArity := 6, maxScopeNodes := 1, maxApplications := 4,
     maxQueueEntries := 40, maxActions := 8, maxMatcherVisits := 8, matcherBatchSize := 4,
     maxAcceptedFacts := 12, maxRetainedSuggestions := 0, maxEffort := 0,
-    maxObservationValue := 32, maxDiagnosticValue := 512, maxOutcomeCandidates := 5,
+    maxObservationValue := 512, maxDiagnosticValue := 512, maxOutcomeCandidates := 5,
     maxOutcomeSuggestions := 0, maxProposalItems := 5, maxInstances := 0,
-    maxGeneration := 0, maxNodeDepth := 1, maxEqualities := 0,
+    maxGeneration := 0, maxNodeDepth := 2, maxEqualities := 0,
     splitEndpointLimit := { maxEndpointHeight := 16, maxAlignmentShift := 8 } }
 
 def policyLimits : Propagator.Policy.Limits :=
   { maxDecisions := 12, maxTraversal := 64, maxLiveOffers := 12 }
 
 def arenaLimits : PayloadArena.Limits :=
-  { maxEntries := 16, maxBodyCells := 40, maxDrafts := 8, maxDraftCells := 100,
+  { maxEntries := 16, maxBodyCells := 100, maxDrafts := 8, maxDraftCells := 100,
     maxAtom := 32000000000000, maxSchema := 1, maxUses := 16 }
 
 def limits : PolicySession.Limits :=
