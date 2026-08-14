@@ -389,9 +389,16 @@ def emitEvents [BEq Fact] (context : Context Fact Handle) (finalValue : Program)
       let state ← emitTransport context state table step
       emitEvents context finalValue finalProgram table rest state
 
-/-- Emit a complete generic state from an already authenticated version-zero
-proof table. -/
-private def emitSeeded [BEq Fact] (context : Context Fact Handle)
+/-- Low-level fold from an already authenticated version-zero proof table.
+
+Every entry in `known` must contain a proof over `context.baseProgramTerm` and
+`context.baseFactsTerm`, with a node bound for that same program.  This helper
+does not establish that precondition; public callers should normally use
+`emitTrace` or `emitBranch`, which construct the table through the appropriate
+checked root.  A malformed raw table cannot create a kernel proof, because
+each stored expression is typechecked when a replay step or target consumes
+it. -/
+def emitSeeded [BEq Fact] (context : Context Fact Handle)
     (programValue : Program)
     (events : List (Frontend.Event Fact)) (table : SchemaTable Handle)
     (known : List (FactProof Fact)) : MetaM (State Fact) := do
@@ -428,6 +435,9 @@ def emitBranch [BEq Fact] (context : Context Fact Handle)
     MetaM (State Fact) := do
   unless inputValue.baseProgram == context.baseProgram do
     throwError "interval frontend: branch seed uses a different base program"
+  unless ← isDefEq (← context.encoder.program inputValue.baseProgram)
+      context.baseProgramTerm do
+    throwError "interval frontend: branch context quotes a different base program"
   let known ←
     seedBranch context.encoder context.semantics context.input
       context.baseFactsTerm inputValue seed

@@ -426,10 +426,19 @@ private def splitEncoder : FrontendEncoder.Encoder SplitFact :=
   FrontendEncoder.make (mkConst ``SplitFact)
     (fun fact => pure (splitFactExpr fact))
 
+private theorem branchPrefix : ProgramPrefix program program :=
+  ProgramPrefix.refl program
+
+private theorem branchSameOperations : program.operations = program.operations :=
+  rfl
+
 /-- The Meta frontend obtains the branch assumption and every inherited entry
 from the exact child-input-indexed proof table. -/
 example : True := by
   run_tac
+    let inputTerm ← splitEncoder.input branchInput
+    unless ← isDefEq inputTerm (mkConst ``branchInput) do
+      throwError "branch seed test: checker-input quotation is not canonical"
     let known ←
       ProofFrontend.seedBranch splitEncoder (mkConst ``splitSemantics)
         (mkConst ``branchInput) (mkConst ``branchFacts) branchInput
@@ -460,6 +469,43 @@ example : True := by
         (mkConst ``splitSemantics) (mkConst ``branchInput)
         (mkConst ``branchBase) branchInput (mkConst ``branchSeed)).isSome then
       throwError "branch seed test: mismatched child assumptions were accepted"
+    let context : ProofFrontend.Context SplitFact Unit :=
+      { encoder := splitEncoder
+        resolveSchema := fun _ => throwError "branch seed test: unexpected schema lookup"
+        semantics := mkConst ``splitSemantics
+        domain := mkConst ``True
+        laws := mkConst ``True
+        stableLaw := mkConst ``True
+        input := mkConst ``branchInput
+        assumed := ``ProofEmitter.assumedAt
+        baseFacts := branchFacts
+        baseFactsTerm := mkConst ``branchFacts
+        baseProgram := program
+        baseProgramTerm := mkConst ``program
+        basePrefix := mkConst ``branchPrefix
+        baseWithin := mkConst ``True.intro
+        initialExtension := mkConst ``True.intro
+        finalPrefix := mkConst ``branchPrefix
+        sameOperations := mkConst ``branchSameOperations
+        top := fun _ => .all }
+    let emptyTable : ProofEmitter.SchemaTable Unit :=
+      { entries := [], unique := by rfl }
+    let state ← ProofFrontend.emitBranch context branchInput
+      (mkConst ``branchSeed) program [] emptyTable
+    unless state.known.length == branchInitial.size do
+      throwError "branch emitter test: not every seed entry reached the replay state"
+    unless (ProofFrontend.findFact? state.known
+        { node := splitNode, version := 0 } .yes).isSome &&
+      (ProofFrontend.findFact? state.known
+        { node := splitBaseNode, version := 0 } .enabled).isSome &&
+      (ProofFrontend.findFact? state.known
+        { node := splitTargetNode, version := 0 } .all).isSome do
+      throwError "branch emitter test: the public bridge dropped a seed entry"
+    let wrongProgramContext :=
+      { context with baseProgramTerm := mkConst ``extendedProgram }
+    if (← observing? <| ProofFrontend.emitBranch wrongProgramContext branchInput
+        (mkConst ``branchSeed) program [] emptyTable).isSome then
+      throwError "branch emitter test: mismatched base-program term was accepted"
   trivial
 
 end Hex.Interval.ProofEmitterConformance

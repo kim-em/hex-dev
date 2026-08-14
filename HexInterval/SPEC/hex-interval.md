@@ -1584,6 +1584,11 @@ array, or target, pins the full child assumption list, and turns the seed into
 exact version-zero `FactProof` records. Its branch entry point then uses the
 unchanged function-independent chronology fold. A live child session and a
 nonempty child event trace remain the next end-to-end branch experiment.
+The shared `emitSeeded` fold is a low-level Meta helper: its raw proof table
+must already refer to the context's quoted base program and child assumptions.
+The caller-root and branch-root entry points establish that precondition via
+`seedBase` and `seedBranch`; later replay use sites still typecheck every
+stored proof expression and fail closed on a mismatch.
 
 Branches may instantiate different auxiliary expressions. Each child replay
 therefore closes its target back to the program snapshot at the split before
