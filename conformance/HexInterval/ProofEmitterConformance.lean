@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexInterval.Experiment.ProofEmitter
+import HexInterval.Experiment.ProofFrontend
 import HexInterval.PolicyFunctionConformance
 
 /-!
@@ -18,6 +18,7 @@ namespace Hex.Interval.ProofEmitterConformance
 
 open Experiment Propagator PayloadArena SemanticReplay ChronologicalReplay
 open PolicyFunctionConformance
+open Lean Meta
 
 def base : List (NodeFact Rank) :=
   [{ node := node 0, fact := 0 }]
@@ -333,6 +334,9 @@ def branchBase : List (NodeFact SplitFact) :=
 literal fact in `branchBase`. -/
 def branchInitial : Array SplitFact := #[.yes, .enabled, .all]
 
+def branchFacts : List (NodeFact SplitFact) :=
+  { node := splitNode, fact := .yes } :: branchBase
+
 def branchInput : CheckerInput SplitFact :=
   { baseProgram := program
     initialFacts := branchInitial
@@ -372,19 +376,29 @@ def branchSeed :
     (by rfl) (by rfl) inheritedSplitFact
 
 /-- The split node is proved from the new child assumption. -/
+def branchSide : Evidence
+    (splitSemantics.Entails program branchFacts
+      { node := splitNode, fact := .yes }) :=
+  branchSeed.sound splitNode .yes (by rfl)
+
 example :
     splitSemantics.Entails program
       ({ node := splitNode, fact := .yes } :: branchBase)
       { node := splitNode, fact := .yes } :=
-  (branchSeed.sound splitNode .yes (by rfl)).proof
+  branchSide.proof
 
 /-- A derived version-zero fact is inherited as a parent consequence under the
 larger child context. -/
+def branchInherited : Evidence
+    (splitSemantics.Entails program branchFacts
+      { node := splitBaseNode, fact := .enabled }) :=
+  branchSeed.sound splitBaseNode .enabled (by rfl)
+
 example :
     splitSemantics.Entails program
       ({ node := splitNode, fact := .yes } :: branchBase)
       { node := splitBaseNode, fact := .enabled } :=
-  (branchSeed.sound splitBaseNode .enabled (by rfl)).proof
+  branchInherited.proof
 
 /-- The inherited child fact above is a proved consequence, not a literal
 member of the parent base-assumption list. -/
@@ -400,5 +414,98 @@ example :
       ({ node := splitNode, fact := .yes } :: branchBase)
       { node := splitTargetNode, fact := .all } :=
   (branchSeed.sound splitTargetNode .all (by rfl)).proof
+
+private def splitFactExpr : SplitFact → Expr
+  | .all => mkConst ``SplitFact.all
+  | .yes => mkConst ``SplitFact.yes
+  | .no => mkConst ``SplitFact.no
+  | .enabled => mkConst ``SplitFact.enabled
+  | .certified => mkConst ``SplitFact.certified
+
+private def splitEncoder : FrontendEncoder.Encoder SplitFact :=
+  FrontendEncoder.make (mkConst ``SplitFact)
+    (fun fact => pure (splitFactExpr fact))
+
+private theorem branchPrefix : ProgramPrefix program program :=
+  ProgramPrefix.refl program
+
+private theorem branchSameOperations : program.operations = program.operations :=
+  rfl
+
+/-- The Meta frontend obtains the branch assumption and every inherited entry
+from the exact child-input-indexed proof table. -/
+example : True := by
+  run_tac
+    let inputTerm ← splitEncoder.input branchInput
+    unless ← isDefEq inputTerm (mkConst ``branchInput) do
+      throwError "branch seed test: checker-input quotation is not canonical"
+    let known ←
+      ProofFrontend.seedBranch splitEncoder (mkConst ``splitSemantics)
+        (mkConst ``branchInput) (mkConst ``branchFacts) branchInput
+        (mkConst ``branchSeed)
+    let some side :=
+        ProofFrontend.findFact? known { node := splitNode, version := 0 } .yes
+      | throwError "branch seed test: split assumption is missing"
+    let some inherited :=
+        ProofFrontend.findFact? known { node := splitBaseNode, version := 0 } .enabled
+      | throwError "branch seed test: inherited parent fact is missing"
+    let some top :=
+        ProofFrontend.findFact? known { node := splitTargetNode, version := 0 } .all
+      | throwError "branch seed test: unrelated top fact is missing"
+    unless ← isDefEq (← inferType side.proof) (← inferType (mkConst ``branchSide)) do
+      throwError "branch seed test: split proof has the wrong proposition"
+    unless ← isDefEq (← inferType inherited.proof)
+        (← inferType (mkConst ``branchInherited)) do
+      throwError "branch seed test: inherited proof has the wrong proposition"
+    unless top.seen.node == splitTargetNode && top.fact == .all do
+      throwError "branch seed test: unrelated top fact has the wrong identity"
+    let wrongInput : CheckerInput SplitFact :=
+      { branchInput with target := { node := node 1, fact := .yes } }
+    if (← observing? <| ProofFrontend.seedBranch splitEncoder
+        (mkConst ``splitSemantics) (mkConst ``branchInput)
+        (mkConst ``branchFacts) wrongInput (mkConst ``branchSeed)).isSome then
+      throwError "branch seed test: mismatched checker input was accepted"
+    if (← observing? <| ProofFrontend.seedBranch splitEncoder
+        (mkConst ``splitSemantics) (mkConst ``branchInput)
+        (mkConst ``branchBase) branchInput (mkConst ``branchSeed)).isSome then
+      throwError "branch seed test: mismatched child assumptions were accepted"
+    let context : ProofFrontend.Context SplitFact Unit :=
+      { encoder := splitEncoder
+        resolveSchema := fun _ => throwError "branch seed test: unexpected schema lookup"
+        semantics := mkConst ``splitSemantics
+        domain := mkConst ``True
+        laws := mkConst ``True
+        stableLaw := mkConst ``True
+        input := mkConst ``branchInput
+        assumed := ``ProofEmitter.assumedAt
+        baseFacts := branchFacts
+        baseFactsTerm := mkConst ``branchFacts
+        baseProgram := program
+        baseProgramTerm := mkConst ``program
+        basePrefix := mkConst ``branchPrefix
+        baseWithin := mkConst ``True.intro
+        initialExtension := mkConst ``True.intro
+        finalPrefix := mkConst ``branchPrefix
+        sameOperations := mkConst ``branchSameOperations
+        top := fun _ => .all }
+    let emptyTable : ProofEmitter.SchemaTable Unit :=
+      { entries := [], unique := by rfl }
+    let state ← ProofFrontend.emitBranch context branchInput
+      (mkConst ``branchSeed) program [] emptyTable
+    unless state.known.length == branchInitial.size do
+      throwError "branch emitter test: not every seed entry reached the replay state"
+    unless (ProofFrontend.findFact? state.known
+        { node := splitNode, version := 0 } .yes).isSome &&
+      (ProofFrontend.findFact? state.known
+        { node := splitBaseNode, version := 0 } .enabled).isSome &&
+      (ProofFrontend.findFact? state.known
+        { node := splitTargetNode, version := 0 } .all).isSome do
+      throwError "branch emitter test: the public bridge dropped a seed entry"
+    let wrongProgramContext :=
+      { context with baseProgramTerm := mkConst ``extendedProgram }
+    if (← observing? <| ProofFrontend.emitBranch wrongProgramContext branchInput
+        (mkConst ``branchSeed) program [] emptyTable).isSome then
+      throwError "branch emitter test: mismatched base-program term was accepted"
+  trivial
 
 end Hex.Interval.ProofEmitterConformance
