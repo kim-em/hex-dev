@@ -200,24 +200,44 @@ inductive SplitFact where
   | all
   | yes
   | no
-  | decided
+  | enabled
+  | certified
   deriving DecidableEq
 
-def SplitHolds : SplitFact -> Bool -> Prop
-  | .all, _ => True
-  | .yes, value => value = true
-  | .no, value => value = false
-  | .decided, value => value = true \/ value = false
+def splitNode : NodeId := node 0
+
+def splitBaseNode : NodeId := node 1
+
+def splitTargetNode : NodeId := node 2
+
+def SplitHolds (valuation : NodeId -> Bool) : NodeFact SplitFact -> Prop
+  | { fact := .all, .. } => True
+  | { node, fact := .yes } => valuation node = true
+  | { node, fact := .no } => valuation node = false
+  | { node, fact := .enabled } => valuation node = true
+  | { fact := .certified, .. } =>
+      valuation splitBaseNode = true /\
+        (valuation splitNode = true \/ valuation splitNode = false)
 
 def splitSemantics : SemanticReplay.Semantics SplitFact :=
   { Value := Bool
     models := fun _ _ => True
-    holds := fun _ valuation fact => SplitHolds fact.fact (valuation fact.node) }
+    holds := fun _ valuation fact => SplitHolds valuation fact }
 
-def splitNode : NodeId := node 0
+def splitBase : List (NodeFact SplitFact) :=
+  [{ node := splitBaseNode, fact := .enabled }]
 
 def splitTarget : NodeFact SplitFact :=
-  { node := splitNode, fact := .decided }
+  { node := splitTargetNode, fact := .certified }
+
+/-- Unlike the old Boolean-decision target, certification is not true without
+the inherited base fact. -/
+theorem splitTargetNeedsBase :
+    ¬ splitSemantics.Entails program [] splitTarget := by
+  intro sound
+  let valuation : NodeId -> Bool := fun _ => false
+  have certified := sound valuation trivial (by simp)
+  exact Bool.noConfusion certified.1
 
 def splitSchema : ProofEmitter.SplitSchema splitSemantics Unit where
   proveCover := fun _ node parent _ left right =>
@@ -234,7 +254,7 @@ def splitSchema : ProofEmitter.SplitSchema splitSemantics Unit where
 
 def splitParent :
     Evidence
-      (splitSemantics.Entails program []
+      (splitSemantics.Entails program splitBase
         { node := splitNode, fact := .all }) :=
   { proof := by
       intro _ _ _
@@ -243,39 +263,50 @@ def splitParent :
 def splitLeft :
     Evidence
       (splitSemantics.Entails program
-        [{ node := splitNode, fact := .yes }] splitTarget) :=
+        ({ node := splitNode, fact := .yes } :: splitBase) splitTarget) :=
   { proof := by
       intro valuation _ assumptions
       have yes :=
         assumptions { node := splitNode, fact := .yes } (by simp)
-      exact Or.inl yes }
+      have enabled :=
+        assumptions { node := splitBaseNode, fact := .enabled } (by simp [splitBase])
+      exact ⟨enabled, Or.inl yes⟩ }
 
 def splitRight :
     Evidence
       (splitSemantics.Entails program
-        [{ node := splitNode, fact := .no }] splitTarget) :=
+        ({ node := splitNode, fact := .no } :: splitBase) splitTarget) :=
   { proof := by
       intro valuation _ assumptions
       have no :=
         assumptions { node := splitNode, fact := .no } (by simp)
-      exact Or.inr no }
+      have enabled :=
+        assumptions { node := splitBaseNode, fact := .enabled } (by simp [splitBase])
+      exact ⟨enabled, Or.inr no⟩ }
 
 def splitReplay :=
-  ProofEmitter.replaySplit splitSchema program [] splitNode .all () .yes .no
+  ProofEmitter.replaySplit splitSchema program splitBase splitNode .all () .yes .no
     splitTarget splitParent splitLeft splitRight
 
-/-- Both branch assumptions are joined into an ordinary theorem; the runtime
-policy and its split suggestion do not occur in the proof term. -/
-theorem splitProvesDecision :
-    splitSemantics.Entails program [] splitTarget :=
+/-- The non-tautological target needs the inherited base fact in both branches;
+the two distinct child assumptions supply its corresponding left and right
+cases. The runtime policy and its split suggestion do not occur in the proof
+term. -/
+theorem splitCertifies :
+    splitSemantics.Entails program splitBase splitTarget :=
   ProofEmitter.proofOfReplay splitReplay (by rfl)
 
 /-- Swapping the quoted child facts is rejected before either child theorem
 can be used. -/
 def swappedSplit :=
-  ProofEmitter.replaySplit splitSchema program [] splitNode .all () .no .yes
+  ProofEmitter.replaySplit splitSchema program splitBase splitNode .all () .no .yes
     splitTarget splitParent splitRight splitLeft
 
 #guard swappedSplit.isNone
+
+/-- Child order is rejected by kernel reduction of the exact quoted schema
+application, independently of the executable guard above. -/
+theorem swappedSplitRejected : swappedSplit = none := by
+  rfl
 
 end Hex.Interval.ProofEmitterConformance

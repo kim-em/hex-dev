@@ -1531,15 +1531,19 @@ proveCover :
           semantics.holds program valuation { node, fact := right }))
 ```
 
-Thus executable child construction is checked a second time by the semantic
-domain package. The current transparent `ProofEmitter.replaySplit` implements
-the generic join. Given a proof of `parent` from the caller's `base`, a proof
-of the target from `{node,left} :: base`, and a proof of the target from
+The semantic domain package does not check executable child construction a
+second time. It independently proves only that the exact quoted parent, cut,
+and children have the required coverage relation; branch-manager checks such
+as strict narrowing and correct child construction remain separate search
+obligations. The current transparent `ProofEmitter.replaySplit` implements the
+generic join. Given a proof of `parent` from the caller's `base`, a proof of
+the target from `{node,left} :: base`, and a proof of the target from
 `{node,right} :: base`, it applies `proveCover` and returns a proof of the
 target from `base`. No policy callback, compiled session, branch score, or
-runtime comparison enters that proof. A Mathlib-free Boolean canary consumes
-both distinct child assumptions and obtains an ordinary theorem through this
-join; swapping the quoted children is rejected.
+runtime comparison enters that proof. A Mathlib-free Boolean canary uses a
+nonempty inherited base, consumes the corresponding distinct assumption in
+each child, and obtains an ordinary non-tautological theorem through this
+join; swapped quoted children reduce to rejection in a kernel-checked theorem.
 
 Coverage is the logical requirement. Disjointness, nonempty children, and a
 strictly interior cut are search-progress requirements: omitting them cannot
@@ -2145,25 +2149,30 @@ Shrinking an input does not require a rule to discard all earlier work. Cache
 reuse is a performance feature only. Every returned fact still receives a new
 or reused sound justification.
 
-### Lessons from RealPaver
+## Lessons from RealPaver
 
 RealPaver is the closest concrete reference architecture for the intended
 combination of arbitrary nonlinear contractors, adaptive consistency, and
-branching. Both the classic 0.4 manual and the current 1.1 C++ implementation
-are relevant. The current system separates a generic `Contractor` interface,
-contractor composition, dependency-driven propagation, strong-consistency
-contractors, variable selection, and search-space order. This validates the
-SPEC's separation between package rules, engine transitions, policy, and the
-branch layer, but its proof boundary must be strengthened substantially for
-Lean.
+branching. The historical claims below come from the 2004 edition 0.4 manual;
+implementation claims refer to the tagged RealPaver 1.1.1 C++ sources, rather
+than assuming that both versions expose identical algorithms. The 1.1.1
+system separates a generic `Contractor` interface, contractor composition,
+dependency-driven propagation, strong-consistency contractors, variable
+selection, and search-space order. This supports the SPEC's separation between
+package rules, engine transitions, policy, and the branch layer, but RealPaver's
+operational status values are not a proof boundary suitable for Lean.
 
-The current RealPaver propagation loop initially queues every contractor. After
+The RealPaver 1.1.1 propagation loop initially queues every contractor. After
 one contractor mutates its box, it examines only variables in that contractor's
 scope; a sufficiently large relative width reduction wakes inactive dependent
 contractors. HC4 builds one `HC4Revise` contractor per constraint over a shared
-expression DAG. BC4 similarly combines an HC4 pass with variable-occurrence
-search. The solver can compose a base HC4, BC4, or affine propagator with ACID,
-polytope relaxation, and interval Newton. This is directly translatable as:
+expression DAG. BC4 associates one `BC4Revise` with each constraint; each such
+contractor first applies `HC4Revise`, then applies `BC3Revise` only to variables
+which occur more than once in that constraint. The source calls this combined
+operator hull/box consistency; it should not be described as pure box
+consistency or conflated with standalone BC3. The solver can compose a base
+HC4, BC4, or affine propagator with ACID, polytope relaxation, and interval
+Newton. This is directly translatable as:
 
 - one checked application per package contractor and an explicit watch/write
   scope;
@@ -2816,14 +2825,15 @@ format. Its rule instead proposes a nearby dyadic guard backed by a certified
 enclosure, or handles a symbolic partition entirely inside its local proof
 payload.
 
-The concrete `Dyadic` split point and `EndpointLimit` in the current generic
-experiment are a deliberate real-domain-v1 seam, not a claim that every future
-domain or branch policy must use dyadic cuts. Keeping that seam concrete lets
-the arbitrary real-function vertical proceed without prematurely choosing
-between a cut-type parameter, a domain-owned split interface, and an opaque
-landmark decoded by the branch layer. That choice remains open and must be
-revisited before stabilizing a multi-domain API; it does not require changing
-the function-package, instantiation, or replay protocols now.
+The concrete `Dyadic` split point and `EndpointLimit` in the executable
+engine/policy protocol are a deliberate real-domain-v1 seam, not a claim that
+every future domain or runtime branch manager must use dyadic cuts. The
+proof-side `SplitSchema` is already polymorphic in its cut type. Keeping the
+runtime seam concrete lets the arbitrary real-function vertical proceed while
+the later multi-domain runtime API remains open between a domain-owned split
+interface and an opaque registry-resolved landmark. That runtime choice does
+not require changing function-package, instantiation, or proof-replay
+protocols now.
 
 A split on term `t` adds `t ≤ m` to the left child and `m < t` to the right
 child. This complementary form preserves strictness, avoids a duplicate
@@ -3562,9 +3572,17 @@ local test profile. They do not enter this Mathlib-free benchmark target.
   and [strategy documentation](https://ibex-team.github.io/ibex-lib/strategy.html).
 - Laurent Granvilliers and Frédéric Benhamou,
   [Algorithm 852: RealPaver, an interval solver using constraint satisfaction techniques](https://doi.org/10.1145/1132973.1132980),
-  and the [RealPaver 0.4 user manual](https://manualzilla.com/doc/6912445/realpaver-user-s-manual).
+  and Laurent Granvilliers's August 2004
+  [RealPaver User's Manual, edition 0.4](https://manualzz.com/doc/4136960/realpaver-user-manual)
+  (also distributed in the
+  [official 0.4 source archive](https://sourceforge.net/projects/realpaver/files/realpaver/0.4/)).
 - Raphaël Chenouard and Laurent Granvilliers,
   [RealPaver 1.1](https://doi.org/10.21105/joss.09331), with the
-  [current implementation](https://github.com/realpaver/realpaver).
+  [tagged 1.1.1 sources](https://github.com/realpaver/realpaver/tree/v1.1.1-joss2),
+  especially the exact
+  [`IntervalPropagator`](https://github.com/realpaver/realpaver/blob/v1.1.1-joss2/src/realpaver/IntervalPropagator.cpp)
+  and
+  [`BC4Revise`](https://github.com/realpaver/realpaver/blob/v1.1.1-joss2/src/realpaver/ContractorBC4Revise.hpp)
+  implementations discussed above.
 - [IntervalArithmetic.jl construction and exact input guidance](https://juliaintervals.github.io/IntervalArithmetic.jl/stable/manual/construction/).
 - [Boost.Interval policies and representation](https://www.boost.org/doc/libs/latest/libs/numeric/interval/doc/interval.htm).
