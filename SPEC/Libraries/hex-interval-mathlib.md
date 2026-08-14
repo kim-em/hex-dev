@@ -1093,6 +1093,43 @@ runtime, and therefore is not evidence for the general logarithm or certified
 table-building milestones.  Its private Mathlib proofs use the general Taylor
 remainder theorem only to validate the finite entries at kernel replay time.
 
+The next classified acceptance probe covers the numerical leaf in
+`LogTables.exp_neg_lt_1e_neg_100` while preserving the source theorem's useful
+monotone shape. At the pinned commit, the enclosing declaration is exactly
+`lemma exp_neg_lt_1e_neg_100 {x : ℝ} (hx : 231 ≤ x) :
+Real.exp (-x) < 1e-100`; after proving the boundary at `231`, its source proof
+uses exponential monotonicity. The classification therefore records the full
+reusable declaration shape, not only the inventory's tactic-line snippet.
+
+The Mathlib-free `PntExpTail` package consumes an input fact `y ≤ -231` and
+retains a four-field certificate: reduction point `231`, decimal exponent
+`100`, and the rational point enclosure `46/125` for `exp (-1)`. Its Mathlib
+companion uses `Real.exp_neg_one_lt_d9`, `Real.exp_nat_mul`, and an exact
+rational-power comparison to prove the boundary. It then reuses that result
+for every `231 ≤ x` by exponential monotonicity. The generic runtime
+chronology and `ProofFrontend` close both
+`Real.exp (-(231 : ℝ)) < 1e-100` and
+`231 ≤ x → Real.exp (-x) < 1e-100` as ordinary theorems.
+
+This fixture treats Lean scientific notation exactly: a checked lemma exposes
+`(1e-100 : ℝ)` as `1 / 10^100`, and no floating-point conversion enters the
+certificate. Mutating the reduction point to `230` is an incompatible
+enclosure, not a precision retry: planning saturates without a proposal,
+direct replay rejects both the changed assumption and changed payload, and a
+separate lower range-reduction proof establishes that the mutated strict bound
+is false. The inventory record is accepted after replacing its one-shot
+boundary tactic call with this shared checked provider and retaining monotone
+reuse. No LeanCert or PNT+ theorem is imported.
+
+Although `ReductionCertificate` gives the four payload atoms names, its current
+decoder accepts only the pinned constants `[231, 100, 46, 125]`; the fields are
+not general checked parameters. The probe is not the general `exp` algorithm.
+Its finite fact lattice, fixed point enclosure, fixed power, and exact payload
+do not establish arbitrary precision, repeated-halving selection, cached
+powers, interval endpoints, or a package-owned Taylor remainder. Those remain
+D7/D8 acceptance work; this fixture establishes the large-negative
+range-reduction and reusable-tail interfaces without overclaiming them.
+
 Refreshing an upstream pin must regenerate and review the manifest. The
 inventory prevents blind spots; it does not make exact-source compatibility a
 release criterion. It must cover, at minimum:

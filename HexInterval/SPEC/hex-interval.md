@@ -3343,6 +3343,32 @@ that the interface is genuinely package-owned. Increasing requested precision
 must extend or refine cached series work rather than restart an unrelated
 generic expression search.
 
+#### Reusable exponential tails
+
+The first source-pinned large-negative exponential probe covers PNT+'s
+`LogTables.exp_neg_lt_1e_neg_100`. Its Mathlib-free package watches the fact
+that an exponential input is at most `-231` and emits a package-owned recipe
+containing the reduction point `231`, decimal exponent `100`, and outward
+point enclosure `46/125` for `exp (-1)`. The companion checks
+`exp (-231) = exp (-1)^231`, compares `(46/125)^231` with the exact rational
+`1 / 10^100`, and reuses that boundary by monotonicity. Generic chronology
+quotation and `ProofFrontend` replay then close both the boundary leaf
+`exp (-231) < 1e-100` and the reusable theorem
+`231 ≤ x → exp (-x) < 1e-100`.
+
+The scientific literal is proved equal to `1 / 10^100`; it is never treated
+as floating-point data. Replacing `231` by `230` is rejected twice: the
+planner and replay schema refuse the incompatible input/certificate, and a
+kernel theorem using a lower enclosure of `exp (-1)` proves the mutated
+numerical claim false. Although the recipe has four named fields, its current
+decoder accepts only the pinned constants `[231, 100, 46, 125]`; those fields
+are not general checked parameters. This is evidence for one reusable
+range-reduction route, not the general exponential implementation. The finite
+fact lattice, fixed power, fixed point enclosure, and exact certificate body
+remain local to the probe. Precision-parametric point evaluation, repeated
+halving/squaring, provider selection, cached powers, and the package-owned
+Taylor-series canary above remain acceptance work.
+
 #### Certified logarithm tables
 
 The initial source-pinned PNT+ probe is intentionally narrower than this
