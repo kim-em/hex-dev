@@ -1130,6 +1130,66 @@ powers, interval endpoints, or a package-owned Taylor remainder. Those remain
 D7/D8 acceptance work; this fixture establishes the large-negative
 range-reduction and reusable-tail interfaces without overclaiming them.
 
+The coordinate-aware Table 12 probe is likewise a bounded acceptance fixture,
+not a completed family migration. At PNT+ commit
+`21998bb6196b56789f72a52656a781a75e134eb0`, the exact declaration is
+`BKLNW.table_12_check (b Cb1 Cb2 Cb3 Cb4 Cb5 c C M : ℝ)` with a hypothesis
+that the nine-tuple belongs to `table_12`; its conclusion is the five-way
+conjunction `b ^ k * C_bk_S b c C ≤ Cbk` for `k = 1, …, 5`. The tactic
+occurrence at line 1313 expands over 24 ordinary rows and five columns (120
+leaves). The occurrences at lines 1319 and 1325 are the final numerical
+premises of `C_bk_log_row_bound` for two logarithmic rows and expand to five
+leaves each. This confirms the inventory total of exactly 130, despite the
+source comment's approximate `~135`.
+
+The fixture pins the source calculation literally:
+
+```lean
+noncomputable def C_bk_S (b c C : ℝ) : ℝ :=
+  (C + 1) * exp (-b / 2) + RS_prime.c₀ * exp (-2 * b / 3)
+    + c * exp (-3 * b / 4) + RS_prime.c₀ * exp (-4 * b / 5)
+```
+
+Its exact nine-field row is:
+
+```lean
+(25, 1.750020e-4, 4.375050e-3, 1.093770e-1, 2.734410e0,
+  6.836010e1, 0.88, 0.86, 32e12)
+```
+
+For this row, the first source term has coefficient
+`C + 1 = 0.86 + 1 = 1.86`; the third has coefficient `c = 0.88`; and the
+second and fourth use the pinned `RS_prime.c₀ = 1.03883`. The proof-side
+definition preserves that shape, and a kernel theorem checks every tuple field
+encoded in the certificate, including `M = 32e12` even though `M` does not
+occur in `C_bk_S`.
+
+The checked fixture covers the five leaves of only the ordinary `b = 25` row.
+One row operation has five coordinate arguments; one runtime request, reply,
+provider action, and authenticated payload produce five chronological fact
+events. Generic `ProofFrontend` replay performs the bounded fold and closes all
+five scientific-decimal inequalities. The Mathlib proof computes four Taylor
+point enclosures once, reuses their natural powers for the shared row sum, and
+projects that sum into the five column targets. The row operation's output is
+only a token; sharing occurs in the single action/payload and proof theorem,
+not in a separate row-sum DAG node. The certificate fields are pinned
+constants, not general checked parameters.
+
+The paper's false `(b = 25, k = 5)` target `6.65350e1` is replaced in the
+pinned source by `6.836010e1`. The false payload is rejected before replay with
+coordinate code `205`, which decodes to `(25, 5)`; it emits no draft and cannot
+turn into a precision retry. Replay also rejects it, and an independent lower
+enclosure proves the claimed paper bound false. No LeanCert theorem or PNT+
+result is imported.
+
+This accounts for 5 of 130 cells only. The remaining 125 are 23 ordinary rows
+times five columns (115 cells) and two logarithmic rows times five columns (10
+cells). A full classification still needs generated certificates for those
+rows, bounded chunked replay, checked logarithm brackets, and a theorem wrapper
+that consumes arbitrary `table_12` membership. The generated-family and all
+three tactic-occurrence inventory records therefore remain `pending` with the
+partial coverage recorded explicitly.
+
 Refreshing an upstream pin must regenerate and review the manifest. The
 inventory prevents blind spots; it does not make exact-source compatibility a
 release criterion. It must cover, at minimum:
