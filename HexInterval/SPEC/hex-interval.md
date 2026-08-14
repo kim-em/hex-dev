@@ -1749,12 +1749,13 @@ replays them, and `replaySplit` produces the joined entailment evidence.
 `closeRelu` specializes that evidence to the ordinary theorem `0 ≤ max x 0`.
 Each rule rejects the unsplit top fact, and mutating either quote to use its
 sibling's assumption makes emission fail. The package remains a compact
-conformance fixture while
-we decide which parts belong in the Mathlib-free runtime and Mathlib semantic
+conformance fixture while we decide which parts belong in the Mathlib-free
+runtime and Mathlib semantic
 companion. Remaining acceptance tests include a theorem whose proof
 mathematically requires branching, a nested split, a child-local
-instantiation, a sibling-reference attack, a non-interior repeated split, and
-proof emission refusing the delivered step-limited partial tree.
+instantiation, a sibling-reference attack, a non-interior repeated split,
+per-leaf fuel exhaustion with no theorem emitted, and proof emission refusing
+the delivered step-limited partial tree.
 
 ### Proof-producing frontend
 
