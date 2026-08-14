@@ -62,9 +62,17 @@ through the normalizing constructor.
 
 The main entry point composes the two: it looks up the coefficient
 list and, on a hit, builds the polynomial. The supported coverage is
-`p ∈ {2, 3, 5, 7, 11, 13}` and `n ∈ {1, …, 6}`. Every other pair
-returns `none` rather than triggering Tier 2 compatibility checks or
-Tier 3 search.
+`p ∈ {2, 3, 5, 7, 11, 13}`, running to `n = 6` for the odd primes and
+to `n = 8` for `p = 2`, so `GF(2⁸)` is a committed Conway field. Every
+other pair returns `none` rather than triggering Tier 2 compatibility
+checks or Tier 3 search.
+
+The binary column runs further because cost decides the scope: the
+committed entries carry Rabin certificates that the kernel replays, and
+that replay is cheapest over `𝔽₂`, where every residue is one bit. The
+scope is therefore a maximum degree per prime rather than one bound for
+all of them, and widening it is a matter of measuring rather than of
+finding new mathematics.
 
 {docstring Hex.Conway.luebeckConwayPolynomial?}
 
@@ -117,9 +125,14 @@ namespace HexConwayChapter
   luebeckConwayPolynomial_2_3
 
 -- Unsupported pairs return none rather than
--- searching: n outside {1..6}, or n = 0.
-#guard luebeckConwayPolynomial? 2 7 =
+-- searching. The binary column runs to degree 8,
+-- the odd primes to 6.
+#guard luebeckConwayPolynomial? 2 8 =
+  some luebeckConwayPolynomial_2_8
+#guard luebeckConwayPolynomial? 2 9 =
   (none : Option (FpPoly 2))
+#guard luebeckConwayPolynomial? 3 7 =
+  (none : Option (FpPoly 3))
 #guard luebeckConwayPolynomial? 2 0 =
   (none : Option (FpPoly 2))
 
