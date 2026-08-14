@@ -8,6 +8,8 @@
 - **hex-row-reduce**: row reduction (RREF), rank, span, nullspace
 - **hex-determinant**: the Leibniz determinant and its cofactor/Cauchy-Binet/Plücker theory
 - **hex-bareiss**: the fraction-free Bareiss determinant algorithm
+- **hex-hermite**: Hermite normal form over `Int`, unimodular transforms, integer lattice membership, integer kernel bases
+- **hex-smith**: Smith normal form over `Int`, invariant factors, and the structure of a finitely generated abelian group
 - **hex-gram-schmidt**: Gram-Schmidt orthogonalization, GS coefficients, Gram determinants, update formulas under row operations
 - **hex-mod-arith**: `ZMod64 p`, `UInt64`-backed arithmetic in `Z/pZ`
 - **hex-poly-fp**: polynomials over `F_p`, Frobenius map, square-free decomposition, lazy reduction for small p
@@ -40,6 +42,8 @@ Mathlib, and supplies correspondence proofs or Mathlib-facing APIs):
 - **hex-row-reduce-mathlib**: rank = `Matrix.rank`, nullspace = `LinearMap.ker`, span agreement
 - **hex-determinant-mathlib**: `det` agreement with `Matrix.det`, plus the Plücker / Desnanot-Jacobi assembly
 - **hex-bareiss-mathlib**: Bareiss determinant = `Matrix.det`, via the bordered-minor invariant
+- **hex-hermite-mathlib**: row lattice = `Submodule.span ℤ`, integer rank = `Matrix.rank`, and an executable basis of the kernel submodule
+- **hex-smith-mathlib**: the executable output as `Module.Basis.SmithNormalForm`, the divisibility chain Mathlib's structure omits, and the quotient structure theorem
 - **hex-gram-schmidt-mathlib**: `GramSchmidt.Int.basis` = Mathlib's `gramSchmidt`
 - **hex-poly-z-mathlib**: `DensePoly Int ≃+* Polynomial ℤ`, Mignotte bound (via Mathlib's Mahler measure)
 - **hex-roots-mathlib**: Pellet's test on circles (built from `circleIntegral`), the Mahler separation bound, soundness of refinement and `isolate`
@@ -67,6 +71,8 @@ Each library with its immediate dependencies:
 - **hex-row-reduce**: hex-matrix
 - **hex-determinant**: hex-matrix
 - **hex-bareiss**: hex-determinant, hex-matrix
+- **hex-hermite**: hex-row-reduce, hex-arith, hex-bareiss
+- **hex-smith**: hex-hermite
 - **hex-mod-arith**: hex-arith
 - **hex-gram-schmidt**: hex-row-reduce, hex-determinant, hex-bareiss
 - **hex-lll**: hex-gram-schmidt, hex-matrix, hex-basic
@@ -105,6 +111,8 @@ Mathlib companion libraries (each also depends on Mathlib):
 - **hex-row-reduce-mathlib**: hex-row-reduce, hex-matrix-mathlib
 - **hex-determinant-mathlib**: hex-determinant, hex-bareiss, hex-matrix-mathlib
 - **hex-bareiss-mathlib**: hex-determinant-mathlib
+- **hex-hermite-mathlib**: hex-hermite, hex-row-reduce-mathlib, hex-bareiss-mathlib
+- **hex-smith-mathlib**: hex-smith, hex-hermite-mathlib
 - **hex-gram-schmidt-mathlib**: hex-gram-schmidt, hex-bareiss-mathlib
 - **hex-lll-mathlib**: hex-lll, hex-gram-schmidt-mathlib, hex-row-reduce-mathlib
 - **hex-berlekamp-mathlib**: hex-berlekamp, hex-poly-mathlib, hex-mod-arith-mathlib
@@ -123,12 +131,22 @@ optimisation.
 
 ## Library DAG
 
-The matrix family splits internally: `hex-matrix` is the dense base;
+The matrix family splits internally. `hex-matrix` is the dense base.
 `hex-row-reduce`, `hex-determinant`, and `hex-bareiss` build on it
-(`hex-bareiss` also on `hex-determinant`); `hex-gram-schmidt` uses all
-three; and `hex-lll` builds on `hex-gram-schmidt`. Each has a matching
+(`hex-bareiss` also on `hex-determinant`), `hex-gram-schmidt` uses all
+three, and `hex-lll` builds on `hex-gram-schmidt`. `hex-hermite` is the
+one member with a dependency outside the family, on `hex-arith` for the
+extended GCD, and `hex-smith` sits on top of it. Each has a matching
 `*-mathlib` companion of the same shape. In the diagram below,
 `hex-matrix` stands for that whole family.
+
+The integer normal forms within it:
+
+```text
+hex-row-reduce ──┐
+hex-arith ───────┼── hex-hermite ── hex-smith
+hex-bareiss ─────┘
+```
 
 The algebraic graph has three independent roots: hex-poly, hex-arith,
 and hex-matrix. The module-boundary helpers in hex-basic are an
@@ -209,6 +227,8 @@ for developments whose source-local move has not happened yet.
 - [hex-row-reduce-mathlib](https://github.com/leanprover/hex-row-reduce-mathlib/blob/main/SPEC/hex-row-reduce-mathlib.md) (released): rank/nullspace/span correspondence
 - [hex-determinant-mathlib](https://github.com/leanprover/hex-determinant-mathlib/blob/main/SPEC/hex-determinant-mathlib.md) (released): `det` agreement with `Matrix.det`
 - [hex-bareiss-mathlib](https://github.com/leanprover/hex-bareiss-mathlib/blob/main/SPEC/hex-bareiss-mathlib.md) (released): Bareiss determinant correctness
+- [hex-hermite.md](hex-hermite.md): Hermite normal form over `Int`, unimodular transforms, integer lattice membership and kernel bases (the Mathlib companion is specified in the same file)
+- [hex-smith.md](hex-smith.md): Smith normal form over `Int`, invariant factors, and abelian group structure (the Mathlib companion is specified in the same file)
 - [hex-mod-arith](../../HexModArith/SPEC/hex-mod-arith.md): `ZMod64 p`, `UInt64`-backed arithmetic in `Z/pZ`
 - [hex-mod-arith-mathlib](../../HexModArithMathlib/SPEC/hex-mod-arith-mathlib.md): `ZMod64 p ≃+* ZMod p`
 - [hex-poly](../../HexPoly/SPEC/hex-poly.md): dense polynomial library, operations, GCD, CRT
