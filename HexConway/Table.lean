@@ -6,6 +6,7 @@ Authors: Kim Morrison
 
 import HexBerlekamp.RabinSoundness
 import HexGFqRing.PolynomialQuotient
+import HexConway.Rebuild
 
 /-!
 Tier 1 Conway-polynomial table and dispatcher: the imported coefficient
@@ -22,6 +23,9 @@ instance boundsSeven : ZMod64.Bounds 7 := ⟨by decide, by decide⟩
 instance boundsEleven : ZMod64.Bounds 11 := ⟨by decide, by decide⟩
 instance boundsThirteen : ZMod64.Bounds 13 := ⟨by decide, by decide⟩
 
+-- Regenerate this definition with the command on the next line, which
+-- rewrites it from the committed Lübeck cache:
+-- rebuild_luebeckConwayPolynomial? primes [2, 3, 5, 7, 11, 13] degrees 6 from "scripts/oracle/luebeck_conway_cache.json"
 /-- Committed Lübeck Conway-table coefficients, stored ascending by degree. -/
 def luebeckConwayCoeffs? : Nat → Nat → Option (List Nat)
   | 2, 1 => some [1, 1]

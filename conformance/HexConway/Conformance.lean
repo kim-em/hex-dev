@@ -417,6 +417,49 @@ example :
     FpPoly.Irreducible (conwayPoly 13 2 supportedEntry_13_2) := by
   grind
 
+/-! # Table regeneration
+
+`rebuild_luebeckConwayPolynomial?` is commented out in `HexConway.Table`, so a
+build never exercises it. These checks cover its two pure halves directly, so a
+change that would make the next regeneration emit a different table fails here
+rather than silently at the next widening. -/
+
+private def sampleEntries : Array Rebuild.Entry :=
+  #[{ p := 3, n := 2, coeffs := [2, 2, 1] },
+    { p := 2, n := 1, coeffs := [1, 1] },
+    { p := 2, n := 7, coeffs := [1, 1, 0, 1, 0, 0, 0, 1] },
+    { p := 5, n := 1, coeffs := [3, 1] },
+    { p := 2, n := 2, coeffs := [1, 1, 1] }]
+
+-- The scope filter orders by prime then degree, so the emitted `match` reads in
+-- Lübeck's order however the cache happens to list its entries.
+#guard (Rebuild.selectScope sampleEntries [2, 3] 2).map (fun e => (e.p, e.n))
+    = #[(2, 1), (2, 2), (3, 2)]
+
+-- Degrees above the requested maximum are dropped, and so are primes outside
+-- the scope, so widening one axis never silently widens the other.
+#guard (Rebuild.selectScope sampleEntries [2] 6).map (fun e => (e.p, e.n))
+    = #[(2, 1), (2, 2)]
+
+private def expectedRender : String :=
+  "-- Regenerate this definition with the command on the next line, which\n"
+    ++ "-- rewrites it from the committed Lübeck cache:\n"
+    ++ "-- INVOCATION\n"
+    ++ "/-- Committed Lübeck Conway-table coefficients, stored ascending by degree. -/\n"
+    ++ "def luebeckConwayCoeffs? : Nat → Nat → Option (List Nat)\n"
+    ++ "  | 5, 1 => some [3, 1]\n"
+    ++ "  | _, _ => none"
+
+-- Rendering emits the commented-out invocation above the definition, so the
+-- file it replaces stays self-rebuilding.
+#guard Rebuild.renderTable (Rebuild.selectScope sampleEntries [5] 1) "INVOCATION"
+    = expectedRender
+
+-- The rendered invocation round-trips the scope it was given, so the comment
+-- the replacement leaves behind is the command that produced it.
+#guard Rebuild.renderInvocation [2, 3, 5] 6 "cache.json"
+    = "rebuild_luebeckConwayPolynomial? primes [2, 3, 5] degrees 6 from \"cache.json\""
+
 end ConwayConformance
 end Conway
 end Hex
