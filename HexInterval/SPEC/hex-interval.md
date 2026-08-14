@@ -1784,6 +1784,12 @@ registry. This governance relation is still defense in depth rather than part
 of theorem soundness: every selected schema must produce the required
 kernel-checked claim.
 
+The current real adapter places its domain-wide `.empty` refuter in the source
+proof package solely to give it one registry-owned lookup position. The theorem
+is about fact-domain bottom semantics, not the source operation. A second
+matching owner would make lookup ambiguous and fail closed; a future explicit
+domain-schema home may replace this provisional ownership convention.
+
 A Mathlib companion must instantiate those abstract schemas, decode each
 frozen entry independently of package cache state, and recheck the
 corresponding rule theorem. It remains an explicit compatibility

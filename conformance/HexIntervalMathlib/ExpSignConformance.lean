@@ -1285,7 +1285,8 @@ private def sameChecker (left right : CheckerInput Bound) : Bool :=
 #guard
   outputPrepared?.any fun lifted =>
     let children := lifted.down
-    sameChecker children.left outputLeftInput &&
+    children.depth == 1 && sameChecker children.parent checkerInput &&
+      sameChecker children.left outputLeftInput &&
       sameChecker children.right outputRightInput &&
       children.leftScope == outputLeftScope &&
       children.rightScope == outputRightScope
@@ -1339,6 +1340,16 @@ private meta def emitOutputRefute (input : CheckerInput Bound)
     | throwError "interval_exp_refute: contradiction child registry failed"
   let some trace := Frontend.trace? result.session.state.engine result.session.arena
     | throwError "interval_exp_refute: contradiction child quotation failed"
+  unless trace.program == input.baseProgram do
+    throwError "interval_exp_refute: contradiction trace changed the graph"
+  let [.rule step] := trace.events
+    | throwError "interval_exp_refute: contradiction trace is not exactly one rule"
+  unless step.entry.replayKey == expFactSchema.key &&
+      step.event.programVersion == 0 && step.event.node == node 1 &&
+      step.event.previous == ({ node := node 1, version := 0 } : SeenVersion) &&
+      step.event.fact == .empty && step.event.version == 1 &&
+      step.previous == .negative do
+    throwError "interval_exp_refute: contradiction rule trace drifted"
   let state ← ProofFrontend.emitBranch outputRightContext input
     (mkConst ``outputRightSeed) trace.program trace.events registry.emit
   ProofFrontend.refuteCurrent outputRightContext state registry.refute
@@ -1424,6 +1435,11 @@ example : True := by
       | throwError "interval_exp_refute test: child quotation failed"
     let state ← ProofFrontend.emitBranch outputRightContext outputRightInput
       (mkConst ``outputRightSeed) trace.program trace.events registry.emit
+    let moved := result.session.state.engine.facts.set! 0 .empty
+    if (← observing? <| ProofFrontend.refuteCurrent outputRightContext state
+        registry.refute moved result.session.state.engine.versions
+        outputRightInput.target).isSome then
+      throwError "interval_exp_refute test: bottom at an unproved node was accepted"
     let changed := result.session.state.engine.facts.set! 1 .all
     if (← observing? <| ProofFrontend.refuteCurrent outputRightContext state
         registry.refute changed result.session.state.engine.versions
