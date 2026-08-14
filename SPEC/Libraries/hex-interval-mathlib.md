@@ -1210,8 +1210,9 @@ also force representative emitted proof terms through the kernel.
 
 The final two certificates cover the ten logarithmic cells. Exact inputs
 `5e10` and `32e12` are converted to checked windows
-`[24.6352888, 24.6352889]` and `[31.0967570, 31.0967571]`. A finite
-atanh-series remainder proves the needed `log 5` enclosure; checked `log 2`
+`[24.6352888, 24.6352889]` and `[31.0967570, 31.0967571]`. A finite Mercator
+`log (1 - x)` series remainder at `x = 4/5` proves the needed `log 5` enclosure;
+checked `log 2`
 bounds and the exact identities `log (5e10) = 10 log 2 + 11 log 5` and
 `log (32e12) = 17 log 2 + 12 log 5` supply the two large logarithms. Fractional
 range reduction about floors 24 and 31 then checks the exponential terms. The
@@ -1223,8 +1224,8 @@ ten coordinate cuts. One generic frontend fold closes every logarithmic target,
 with typed first/last evidence guards. A copied 26-tuple source list and kernel
 correspondence theorem check the exact interleaving of ordinary, corrected
 row-25, and logarithmic certificates. The final wrapper maps arbitrary pinned
-`table_12` membership to its certificate and returns the five source
-inequalities, establishing honest 130/130 coverage. A zero first-cell cut for
+membership in the copied 26-tuple source list to its certificate and returns
+the five source inequalities, establishing honest 130/130 coverage. A zero first-cell cut for
 the `log (5e10)` row fails with coordinate diagnostic `401`, emits no payload,
 is rejected by the replay decoder, and is separately proved false. The family
 and all three Table 12 tactic records are therefore accepted after rewrite.

@@ -3493,7 +3493,8 @@ coordinates do not count as an improvement.
 The two logarithmic certificates complete the remaining ten cells. Exact input
 facts for `5e10` and `32e12` produce checked windows
 `[24.6352888, 24.6352889]` and `[31.0967570, 31.0967571]`. The proof derives
-`log 5` from a finite atanh-series remainder, combines that result with checked
+`log 5` from a finite Mercator `log (1 - x)` series remainder at `x = 4/5`,
+combines that result with checked
 `log 2` bounds through the identities `log (5e10) = 10 log 2 + 11 log 5` and
 `log (32e12) = 17 log 2 + 12 log 5`, and then uses fractional range reduction
 about integer floors 24 and 31 for the exponential terms. Each five-cell row

@@ -220,8 +220,8 @@ def rowBody (certificate : RowCertificate) : List Nat :=
     encodeDecimal certificate.c ++ encodeDecimal certificate.capital ++
     [certificate.mMantissa, certificate.mExponent]
 
-/-- Pinned-source mutation used to ensure a false cell is diagnosed at its
-paper coordinate instead of being retried at higher precision. -/
+/-- Synthetic zero-cut mutation of the pinned row, used to ensure a false cell
+is diagnosed at its paper coordinate instead of retried at higher precision. -/
 def falseFiveRow : RowCertificate := { fiveRow with cell1 := decimal 0 0 }
 def falseFiveBody : List Nat := rowBody falseFiveRow
 def falseFiveCoordinate : Coordinate := { row := .fiveE10, column := 1 }
@@ -345,6 +345,7 @@ def start : Except PolicySession.StartError (PolicySession.Session Bound) :=
   PolicySession.Session.start factDomain program packages initialFacts limits
 
 def coordinateForNode? (target : NodeId) : Option Coordinate :=
-  (logCells[target.index - 4]?).map CellCertificate.coordinate
+  if target.index < 4 then none
+  else (logCells[target.index - 4]?).map CellCertificate.coordinate
 
 end Hex.Interval.Experiment.PntTable12Log

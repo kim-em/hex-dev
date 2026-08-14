@@ -154,6 +154,8 @@ private def fiveRequest : RuleRequest Bound :=
     writes := fiveCellNodes }
 
 #guard coordinateCode falseFiveCoordinate == 401
+#guard coordinateForNode? (node 4) == some falseFiveCoordinate
+#guard coordinateForNode? (node 3) == none
 #guard mutationCoordinate? falseFiveBody == some falseFiveCoordinate
 #guard decodeRow? falseFiveBody == none
 #guard !factFormat.validateBody falseFiveBody
