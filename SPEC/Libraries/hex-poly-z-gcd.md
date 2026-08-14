@@ -37,7 +37,10 @@ the input and the answer are small.
 baseline to beat.** `primitiveSquareFreeDecomposition` is on the
 Berlekamp-Zassenhaus path, so its cost is paid by every integer
 factorisation, and the benchmark family below measures the new gcd
-against exactly that route.
+against exactly that route. The faster version is `ZPoly.sqfDecomp` in
+**this** library rather than a rewrite of hex-poly-z's, because this
+library depends on hex-poly-z and the reverse call would be a cycle. The
+existing implementation stays as the reference and the baseline.
 
 **Berlekamp-Zassenhaus wants it in two more places.** Prime selection
 tests whether the image is squarefree, which is a gcd over `F_p` and is
@@ -100,8 +103,11 @@ In scope: gcd with cofactors, gcd of a list, lcm, exact division and its
 `DensePoly Rat` wrapper that clears denominators and calls the integer
 routine.
 
-Not in scope: squarefree decomposition, which stays in hex-poly-z and
-becomes faster by calling this library; factorisation, which is
+In scope but only just: `ZPoly.sqfDecomp`, Yun's algorithm over `ℤ`
+driven by this library's gcd. It is here rather than in hex-poly-z
+because the dependency runs that way. Not in scope: the rest of
+hex-poly-z's squarefree surface, which stays where it is; factorisation,
+which is
 hex-berlekamp-zassenhaus; resultants, which are hex-resultant; and
 anything multivariate.
 
@@ -116,13 +122,27 @@ namespace Hex.ZPoly
 /-- The exact quotient `f / g`, or `none` when `g = 0` or `g ∤ f`. -/
 def divExact? (f g : ZPoly) : Option ZPoly
 
-instance : Dvd ZPoly
 instance (f g : ZPoly) : Decidable (g ∣ f)
 
 theorem divExact?_zero_right : divExact? f 0 = none
 theorem divExact?_eq (hg : g ≠ 0) : divExact? f g = some q ↔ f = q * g
 theorem divExact?_isSome_of_dvd (hg : g ≠ 0) : g ∣ f → (divExact? f g).isSome
 ```
+
+**No new `Dvd` instance.** `Dvd (DensePoly R)` already exists
+(`HexPoly/Euclid/DivGcd.lean:1077`, `∃ r, q = p * r`), so `ZPoly`
+inherits it, and declaring a second one would risk incoherence on the
+type this library's whole checker runs on. What is new is the decision
+procedure.
+
+**And `divExact?` is not new either, quite.**
+`HexBerlekampZassenhaus.exactQuotient?` (`Records.lean:452`) is the same
+function, written for recombination and carrying a unit-candidate
+rejection that recombination needs and this library does not. Two copies
+of exact integer-polynomial division is one too many. The right move is
+to put `divExact?` in **hex-poly-z**, below both consumers, and have
+Berlekamp-Zassenhaus's version become a thin wrapper that adds its unit
+check. That is the first prerequisite below.
 
 The `g ≠ 0` hypothesis on `divExact?_eq` is not decoration: at `f = 0`
 and `g = 0` the right-hand side holds for every `q`, and a deterministic
@@ -159,13 +179,21 @@ into `FpPoly p` and exhibit `α, β` with `α · f'ₚ + β · h'ₚ = 1`. Then
 exhibit that the integer contents of `f'` and `h'` are coprime.
 
 ```lean
+/-- A witness that two primitive-in-the-relevant-sense cofactors have no
+nonunit common divisor. -/
+inductive CoprimeWitness
+  /-- Reduce at `p`, where both cofactor degrees survive, and exhibit a
+  Bézout pair over `F_p[x]`. -/
+  | modular (p : Hex.ZMod64.PrimeModulus) (alpha beta : FpPoly p.m)
+  /-- Exhibit `u · f' + v · h' = C k` with `k ≠ 0` an integer constant.
+  Needs no prime. -/
+  | constant (u v : ZPoly) (k : Int)
+
 structure GcdCert where
   gcd  : ZPoly
   cofL : ZPoly
   cofR : ZPoly
-  prime : Hex.Modular.PrimeModulus
-  alpha : FpPoly prime.m
-  beta  : FpPoly prime.m
+  coprime : CoprimeWitness
 
 def checkGcd (f h : ZPoly) (c : GcdCert) : Bool
 
@@ -199,14 +227,43 @@ The argument uses `F_p[x]` being a domain, which is where primality
 enters, and it uses `Int.dvd_gcd`, which hex-arith has. There is no
 hypothesis and no companion obligation.
 
+**The `constant` case is what makes the certificate complete**, and an
+earlier draft of this SPEC had only the modular one. `ZMod64.Bounds`
+caps a prime at `2^31`, so with `L = lcm(1, …, 2^31 - 1)` the cofactors
+`f' = x` and `h' = x + L` are coprime over `ℤ[x]` while their images
+coincide at every allowed prime. No modular witness exists, so a total
+`gcdCert` satisfying `gcdCert_checks` was impossible as specified.
+
+Its argument is shorter than the modular one. A common divisor `d`
+divides `u · f' + v · h' = C k`, a nonzero constant, so `deg d = 0` and
+`d` is an integer dividing `k`; it also divides both contents, which are
+coprime, so `d = ±1`. The check is one polynomial identity over `ℤ` plus
+`k ≠ 0`.
+
+Such a pair always exists when the cofactors are coprime over `ℚ[x]`:
+the resultant is a nonzero integer in the ideal they generate, and the
+extended subresultant chain produces it with its cofactors. That is why
+route 4 below, the deterministic fallback, can always produce a
+certificate, and it is why `subresultantChainExt` appears in the
+prerequisites. The modular case stays primary because it is far cheaper
+to produce and to check.
+
+**A prime that preserves both degrees is not enough on its own.** Take
+`f' = x`, `h' = x + 2` and `p = 2`: both leading coefficients and both
+degrees survive, and both images are `x`, so no Bézout pair over
+`F_2[x]` exists. A usable prime must also avoid the resultant of the
+cofactors. Operationally the producer does not test that separately: it
+computes the image gcd, and a result other than `1` means "try another
+prime".
+
 **The prime should be the smallest usable one.**
 [hex-modular](hex-modular.md) measures the cost of a kernel-replayed
 primality proof: 0.04 s at 16 bits and 6.2 s at 31 bits. A certificate
-replayed by `decide +kernel` pays that, and this certificate names a
-prime, so the producer tries small primes first. Any prime not dividing
-either leading coefficient works, so a small one almost always exists,
-and when it does not the certificate is still valid and merely more
-expensive to replay.
+replayed by `decide +kernel` pays that, and the `modular` case names a
+prime, so the producer tries small primes first. Most small primes work,
+and when none does the producer moves on rather than escalating: a large
+prime is still valid and merely more expensive to replay, and the
+`constant` case names no prime at all.
 
 The rule is a consequence of trial division rather than of the
 certificate design. The "Better primality" item in
@@ -214,8 +271,9 @@ certificate design. The "Better primality" item in
 whose checker is a handful of modular exponentiations, and once one
 exists a certificate field replaces the `Hex.Nat.Prime` field here and
 the size preference goes away. The
-`GcdCert` field is written as `Hex.Modular.PrimeModulus` so that the
-change is confined to how that structure carries its evidence.
+`modular` case is written against `Hex.ZMod64.PrimeModulus` from
+hex-mod-arith so that the change is confined to how that structure
+carries its evidence.
 
 ### What the checker establishes and what it does not
 
@@ -240,6 +298,14 @@ them is `content_mul_primitivePart` and `ratPolyPrimitivePart`. The
 argument is that a common divisor, made primitive, divides the rational
 gcd, which is associate to `g` because the cofactors stay coprime over
 `ℚ[x]`, and Gauss's lemma brings the divisibility back to `ℤ[x]`.
+
+The last step already exists:
+`HexPolyZ.ZPoly.dvd_of_toRatPoly_dvd_of_primitive`
+(`HexPolyZ/Decomposition.lean:797`) is exactly "a primitive integer
+polynomial dividing `f` over `ℚ[x]` divides it over `ℤ[x]`", proved
+Mathlib-free. So the milestone is assembling three existing pieces
+rather than proving Gauss descent from scratch, which is the reason to
+schedule it here rather than defer it.
 
 ```lean
 theorem dvd_gcd_of_coprimeCofactors (hc : CoprimeCofactors f h g)
@@ -270,10 +336,16 @@ def ratGcd (f h : DensePoly Rat) : DensePoly Rat
 ```
 
 Contracts on the degenerate inputs: `gcd 0 0 = 0`, `gcd f 0 = normalize f`,
-`gcd f h = 1` when either side is a nonzero constant, `gcdList [] = 0`,
-and `lcm f 0 = 0`. Each has a matching certificate case: a unit or zero
-input is accepted through a `GcdCert` whose Bézout pair is over the
-constants.
+`gcd f c = C (Int.gcd c (content f))` for a nonzero constant `c`,
+`gcdList [] = 0`, and `lcm f 0 = 0`. Each has a matching certificate
+case, through the `constant` witness.
+
+The constant contract is the one an earlier draft got wrong, by saying
+the gcd is `1` whenever either side is a nonzero constant. It is not:
+`gcd(2, 2x) = 2`. Only a **unit** constant forces the answer to be `1`,
+and the general constant case is an integer gcd against the other
+input's content, which is also what the content examples in the
+conformance list below expect.
 
 `normalize f` makes the content positive and the leading coefficient
 positive. Over `ℤ` the two conditions are the same condition, since the
@@ -386,8 +458,12 @@ in practice it stops enormously earlier.
 
 Run hex-resultant's `subresultantChain` over `Int` unchanged, take the
 primitive part of the terminal nonzero entry, and multiply by the content
-gcd. This is deterministic, needs no prime, and is what makes `gcdCert` a
-total function with a proved postcondition:
+gcd. The **extended** chain, which tracks the transformation pair through
+the pseudo-scalings, supplies the `constant` witness for the cofactors:
+the resultant of two coprime polynomials is a nonzero integer in the
+ideal they generate, and the extended chain returns it with its
+cofactors. This is deterministic, needs no prime, and is what makes
+`gcdCert` a total function with a proved postcondition:
 
 ```lean
 theorem gcdCert_checks (f h : ZPoly) : checkGcd f h (gcdCert f h) = true
@@ -407,6 +483,39 @@ rather than anything about this library. Milestone 2 below is written so
 that a working `gcd` exists before that dependency matters, by using the
 `DensePoly Rat` Euclidean route as the initial fallback and swapping in
 the subresultant chain when it is ready.
+
+The extended chain is the one genuinely new piece.
+`subresultantAux` keeps only the remainder of each `pseudoDivMod` and
+discards the quotient (`HexResultant/Subresultant.lean:65` and `:92`), so
+accumulating the transformation is a new recurrence with proofs that each
+cofactor numerator is divisible by the Brown scalar it is divided by.
+[hex-mv-gcd](hex-mv-gcd.md) specifies the same addition as
+`subresultantChainExt` for its own `splitBezout` constructor, and it
+should be written once, in hex-resultant, for both.
+
+## Prerequisite changes in other libraries
+
+Three, each with a reason independent of this library, and each shared
+with another planned one.
+
+**`divExact?` belongs in hex-poly-z.** Exact division of integer
+polynomials already exists once, as
+`HexBerlekampZassenhaus.exactQuotient?` (`Records.lean:452`), written for
+recombination. This library runs it on every candidate, and
+Berlekamp-Zassenhaus is above hex-poly-z, so the function belongs there
+with both consumers importing it. Berlekamp-Zassenhaus keeps its
+unit-candidate rejection as a wrapper, since that rule is about its
+recombination loop rather than about division.
+
+**`subresultantChainExt` belongs in hex-resultant.** Route 4 needs the
+Bézout cofactors of the chain to produce the `constant` witness, and
+`subresultantAux` discards the quotient of each `pseudoDivMod`
+(`HexResultant/Subresultant.lean:65` and `:92`).
+[hex-mv-gcd](hex-mv-gcd.md) asks for the same addition under the same
+name for its `splitBezout` constructor, so it should be written once.
+
+**`Modulus` and `PrimeModulus` belong in hex-mod-arith**, as
+[hex-modular](hex-modular.md) sets out. The `modular` witness names one.
 
 ## Complexity
 
@@ -510,6 +619,15 @@ search for one.
   convention is visible.
 - Cyclotomic and near-cyclotomic pairs, which are the sparse inputs with
   small coefficients where the heuristic route should win.
+- `gcd(2, 2x) = 2` and `gcd(6, 4x) = 2`, the constant-input contract that
+  an earlier draft of this SPEC got wrong.
+- A pair whose cofactors are coprime but share an image at every small
+  prime, so only the `constant` witness applies. `f' = x` and
+  `h' = x + 2·3·5·7·11·13` is small enough to be a fixture and forces the
+  producer past the primes it would try first.
+- A prime that preserves both cofactor degrees and is still unusable
+  (`f' = x`, `h' = x + 2`, `p = 2`), checking that the producer retries
+  rather than emitting an unprovable witness.
 - `ratGcd` on inputs with large denominators, checking the clearing step
   happens and the result is monic.
 
@@ -547,9 +665,10 @@ checks, which matter more than the external one:
 - `gcd` must be faster than the existing `DensePoly Rat` Euclidean route
   on every family except degree-2 inputs, and faster by at least `10x` on
   the swell family.
-- `primitiveSquareFreeDecomposition` rewritten to call this library must
-  be faster than its current form on the Berlekamp-Zassenhaus input
-  ladder.
+- `ZPoly.sqfDecomp`, the fast squarefree entry point specified above,
+  must be faster than `HexPolyZ.primitiveSquareFreeDecomposition` on the
+  Berlekamp-Zassenhaus input ladder. The two compute the same thing by
+  different routes, so this is also a differential test.
 
 SymPy is the oracle and is not a performance comparator.
 
@@ -592,15 +711,19 @@ companion beyond these and one correspondence lemma per public operation.
 
 ## Milestones
 
-1. **Exact division and the certificate.** `divExact?` with its
-   theorems, the `Dvd` and `Decidable` instances, `GcdCert`, `checkGcd`,
-   and `checkGcd_sound`. Nothing computes a gcd yet, and the hardest
-   proof in the library is already done.
+1. **Exact division and the certificate.** `divExact?` (in hex-poly-z,
+   per the prerequisites) with its theorems and the `Decidable (g ∣ f)`
+   instance over the existing `Dvd`, then `CoprimeWitness`, `GcdCert`,
+   `checkGcd`, and `checkGcd_sound` for both witness cases. Nothing
+   computes a gcd yet, and the hardest proof in the library is already
+   done.
 
 2. **A correct gcd.** Route 0, route 1, and a fallback, with
    `gcdCert_checks`. The fallback is the `DensePoly Rat` Euclidean route
-   initially, so this milestone does not wait on hex-resultant. At the
-   end of it the library is usable and slow on the hard cases.
+   initially, so this milestone does not wait on hex-resultant, and it
+   produces the `constant` witness from a rational Bézout identity
+   cleared to `ℤ`. At the end of it the library is usable and slow on the
+   hard cases.
 
 3. **Maximality.** `dvd_gcd_of_coprimeCofactors`, through Gauss's lemma
    and the rational gcd. This is the milestone that decides whether the
@@ -614,17 +737,16 @@ companion beyond these and one correspondence lemma per public operation.
    replacing the rational fallback once hex-resultant is far enough
    along.
 
-6. **The companion**, and the rewrite of
-   `primitiveSquareFreeDecomposition` in hex-poly-z to call `gcd`. The
-   rewrite is the benchmark that justifies the library, so it is a
-   milestone rather than a follow-up.
+6. **The companion**, and the fast squarefree decomposition. The
+   squarefree entry point is the benchmark that justifies the library, so
+   it is a milestone rather than a follow-up.
 
 ## File organisation
 
 ```
 HexPolyZGcd/
-  Divide.lean       -- divExact?, Dvd, Decidable, the prefilters
-  Cert.lean         -- GcdCert, checkGcd, checkGcd_sound
+  Divide.lean       -- Decidable (g ∣ f), the prefilters (divExact? itself is in hex-poly-z)
+  Cert.lean         -- CoprimeWitness, GcdCert, checkGcd, checkGcd_sound
   Fast.lean         -- routes 0 and 1, isCoprime
   Heu.lean          -- route 2 and its bit budget
   Brown.lean        -- route 3
@@ -663,7 +785,7 @@ HexPolyZGcdMathlib.lean
         - name: rational
           description: the same inputs over the rationals through ratGcd
   HexPolyZGcdMathlib:
-    deps: [HexPolyZGcd, HexPolyZMathlib, HexPolyMathlib, HexModArithMathlib]
+    deps: [HexPolyZGcd, HexPolyZMathlib, HexPolyMathlib]
     mathlib: true
     done_through: 0
     status: planned
@@ -675,14 +797,16 @@ before milestone 5 needs it.
 
 ## Open questions
 
-- **Whether `primitiveSquareFreeDecomposition` should move here.** It is
-  hex-poly-z's function today, its only nontrivial dependency after this
-  library exists is the gcd, and Yun's algorithm over `ℤ` is a natural
-  neighbour of the gcd. Against moving it: it is on the
-  Berlekamp-Zassenhaus path and moving a function that far down the
-  dependency graph is disruptive. This SPEC keeps it where it is and
-  rewrites its body, and the question should be revisited if a second
-  squarefree consumer appears.
+- **How much of the squarefree surface moves here.** Rewriting
+  `HexPolyZ.primitiveSquareFreeDecomposition` to call this library is not
+  available: this library depends on hex-poly-z, so a call back the other
+  way is a cycle. The fast entry point therefore lives here, as
+  `ZPoly.sqfDecomp`, with hex-poly-z's rational implementation left in
+  place below as the reference and the benchmark baseline, and the
+  consumers above both libraries (Berlekamp-Zassenhaus first) switched
+  over. Whether the old implementation is then deleted, and whether the
+  whole squarefree surface should move rather than gain a faster
+  neighbour, is the open part.
 - **Whether the certificate should carry the prime's primality proof or
   recompute it.** Carrying it makes the certificate self-contained and
   makes its size depend on the proof term. Recomputing it makes the

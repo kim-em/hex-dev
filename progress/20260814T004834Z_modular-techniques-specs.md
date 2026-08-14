@@ -93,6 +93,103 @@ corrections. Relinked the four cross-references elsewhere in
   needs is new; and `permutationVectors` with no `length = n !` lemma,
   which is why the crude Leibniz determinant bound is not the default.
 
+## Second opinion, and what it changed
+
+Codex (read-only, full repo access) reviewed the three drafts
+adversarially and returned 22 findings. It endorsed the three-way split,
+and did not dispute the rational-reconstruction uniqueness proof, the
+derivation of `gcd(q, m) = 1`, the necessity of Garner's outer `symMod`,
+determinant reduction over arbitrary moduli, the soundness of a nonzero
+minor modulo a composite modulus, the two-sided rank argument, Dixon's
+exact division, the univariate coprimality checker's unconditional
+soundness, or the Mathlib-free route to maximality. Everything below is
+now fixed in the SPECs.
+
+**Five findings were errors that changed a design rather than a
+sentence.**
+
+- **The `2^31` modulus bound breaks three totality claims.** With
+  `L = lcm(1, …, 2^31 - 1)`, every allowed modulus divides `L`, and so
+  does every product of pairwise coprime allowed moduli. On `[L]` the
+  determinant loop never reaches its bound, the rank certificate does not
+  exist (every minor residue is zero), and for `f = x`, `h = x + L` no
+  modular coprimality witness exists. So `det` now falls back to
+  `Hex.Matrix.bareiss`, `RankCert.modulus` is an arbitrary `Nat` checked
+  in `Int` arithmetic rather than a `ZMod64` modulus, and the gcd
+  certificate gained a `constant` constructor carrying
+  `u f' + v h' = C k` with `k ≠ 0`, which the extended subresultant chain
+  always produces. hex-modular records the shared cause once.
+- **hex-poly-z-gcd's milestone 6 was a dependency cycle.** It proposed
+  rewriting `HexPolyZ.primitiveSquareFreeDecomposition` to call a library
+  that depends on hex-poly-z. The fast squarefree entry point is now
+  `ZPoly.sqfDecomp` in hex-poly-z-gcd, with the existing implementation
+  left below as the reference and the benchmark baseline.
+- **`Crt` could be driven into an inconsistent state.**
+  `Crt.init.push 1 0` passes the coprimality test, because
+  `gcd(1, 0) = 1`, and then `push_modulus`, `push_le`, and
+  `push_congr_new` are jointly unsatisfiable. Positivity and the
+  symmetric bound are now structure invariants and `push` rejects
+  `m ≤ 1`.
+- **The common-denominator vector reconstruction was incomplete.** At
+  `m = 101`, `P = 2`, `Q = 4`, the residues of `(1/2, 1/4)` reconstruct
+  entrywise to denominators `2` and `4`; multiplying them gives `d = 8`
+  and numerators outside the bounds, where `lcm` gives the correct
+  `(2, 1)/4`. The combination step now uses `lcm` and reduces the whole
+  pair, and the SPEC says that `Q` must bound the *common* denominator.
+- **The Dixon numerator bound named one replaced column.** Cramer's rule
+  uses all of them: for `A = [[1, N], [0, 1]]` and `b = (0, 1)` the
+  solution is `(-N, 1)` while the second replaced column bounds at `1`.
+  `P` is now the maximum over `i`.
+
+**Six more were real errors of statement.** `detMod?` must return
+`some 0` on an all-zero pivot column and `none` only on a nonzero
+nonunit, or `det` of a singular matrix never terminates (found
+independently before the review landed). `checkRank_sound` named the
+function it was meant to certify, so it now targets `ratRank`, defined as
+row reduction over `Rat`. `kernel?` had an unbound `r` and returned
+neither the rank nor the denominator, so it returns a structure. The rank
+producer handed an `n × r` block to a square solver; it now solves the
+`r × r` minor and checks against all `n` rows. `gcd f h = 1` for a
+nonzero constant `h` is false (`gcd(2, 2x) = 2`), so the contract is now
+an integer gcd against the content. And the determinant divisor needs
+`d⁻¹ mod m`, so moduli sharing a factor with `d` are skipped.
+
+**Four were misstatements about the tree**, all verified: the public name
+is `HexArith.Int.extGcd`, not `Hex.Int.extGcd`; `Dvd (DensePoly R)`
+already exists (`HexPoly/Euclid/DivGcd.lean:1077`) so the proposed `Dvd
+ZPoly` instance was a duplicate; `HexBerlekampZassenhaus.exactQuotient?`
+(`Records.lean:452`) is already exact integer-polynomial division, so
+`divExact?` belongs in hex-poly-z with both consumers importing it; and
+`Rat.mk'` is the raw constructor, not the normalising one
+(`Rat.normalize` is).
+
+**Two were structural.** The modulus supply belongs in hex-mod-arith
+beside `ZMod64`, not here, which leaves hex-modular depending on
+hex-arith alone and dissolves this SPEC's original "why not inside
+hex-arith" argument; the section now gives the honest reason (subject
+separation, and not reopening a `done_through: 7` library) and records
+the alternative. And "a prime preserving both cofactor degrees works" is
+false: `f' = x`, `h' = x + 2` at `p = 2` preserves both and admits no
+Bézout pair, so the producer must compute the image gcd and retry.
+
+**Two were fair pushback on confidence.** The benchmark thresholds were
+stated as required checks with no prototype behind either number; the
+"faster at every rung `n ≥ 64`" requirement also guessed a crossover in
+the same document that says it will not guess one. The Bareiss
+requirement is now the `n = 512` ratio with the crossover measured, and
+the FLINT figure is a target that becomes required after the first
+measurement. Separately, three conformance cases did not test what they
+claimed: the CRT suite had no outer-reduction regression (push `1 mod 3`
+then `0 mod 2`), nothing exercised a successful composite modulus, and a
+unit-diagonal triangular matrix is unimodular, so it is the determinant
+divisor's worst case rather than a demonstration of it.
+
+One finding strengthened a claim rather than weakening it: the Gauss
+descent step for Mathlib-free maximality already exists as
+`ZPoly.dvd_of_toRatPoly_dvd_of_primitive`
+(`HexPolyZ/Decomposition.lean:797`), so that milestone is assembling
+three existing pieces.
+
 ## Current frontier
 
 The SPECs are drafts in the sense that none of the six libraries is in

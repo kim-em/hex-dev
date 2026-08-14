@@ -83,7 +83,7 @@ Each library with its immediate dependencies:
 - **hex-hermite**: hex-row-reduce, hex-arith, hex-bareiss
 - **hex-smith**: hex-hermite
 - **hex-mod-arith**: hex-arith
-- **hex-modular**: hex-arith, hex-mod-arith
+- **hex-modular**: hex-arith
 - **hex-modular-matrix**: hex-modular, hex-matrix, hex-row-reduce, hex-determinant, hex-mod-arith, hex-arith, hex-basic
 - **hex-gram-schmidt**: hex-row-reduce, hex-determinant, hex-bareiss
 - **hex-lll**: hex-gram-schmidt, hex-matrix, hex-basic
@@ -116,7 +116,7 @@ Mathlib companion libraries (each also depends on Mathlib):
 - **hex-mv-poly-mathlib**: hex-mv-poly, hex-poly-mathlib
 - **hex-mv-gcd-mathlib**: hex-mv-gcd, hex-mv-poly-mathlib, hex-resultant-mathlib, hex-poly-mathlib
 - **hex-poly-z-mathlib**: hex-poly-z, hex-poly-mathlib
-- **hex-poly-z-gcd-mathlib**: hex-poly-z-gcd, hex-poly-z-mathlib, hex-poly-mathlib, hex-mod-arith-mathlib
+- **hex-poly-z-gcd-mathlib**: hex-poly-z-gcd, hex-poly-z-mathlib, hex-poly-mathlib
 - **hex-roots-mathlib**: hex-roots, hex-poly-z-mathlib
 - **hex-real-roots-mathlib**: hex-real-roots, hex-poly-z-mathlib
 - **hex-interval-mathlib**: hex-interval

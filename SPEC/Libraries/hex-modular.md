@@ -54,18 +54,28 @@ to need it should not write a third version.
 
 ## Why not inside hex-arith
 
-The scalar operations here (`symMod`, the truncated Euclidean run,
-`ratRecon?`) would sit comfortably next to `extGcd` in hex-arith, and if
-the library were only those it should go there. The modulus supply is
-what makes that impossible: it bundles a `ZMod64.Bounds` instance, so it
-sits above hex-mod-arith, which sits above hex-arith. Splitting the
-library to put three functions one level down would produce a library
-whose only content is a stopping rule for a loop hex-arith already has.
+An earlier draft of this SPEC gave a structural reason: the modulus
+supply bundles a `ZMod64.Bounds` instance, so it sits above
+hex-mod-arith, so the library cannot sit inside hex-arith. That reason
+does not survive putting the supply where it belongs. `Modulus` and
+`PrimeModulus` package `ZMod64` evidence and belong beside `ZMod64` in
+hex-mod-arith, generalising `SmallPrimeCandidate`, and everything left
+here is arithmetic on `Int` and `Nat`. This library therefore depends on
+hex-arith alone.
 
-The argument is structural rather than a remark about hex-arith's phase
-status. If a later consumer wants `ratRecon?` without `ZMod64`, the split
-becomes worth making, and this SPEC records it as the seam to cut along:
-`Recon.lean` and `SymMod.lean` mention nothing from hex-mod-arith.
+The honest reason for a separate library is subject separation rather
+than a dependency. Chinese remaindering and rational reconstruction have
+their own conformance fixtures, their own oracle, their own benchmark
+families, and three consumers that each want a different part; hex-arith
+is a library of scalar primitives with none of that surface, and it is
+complete at `done_through: 7`, so absorbing a new subject there means
+reopening a finished library. Principle 1 asks for many small libraries
+split along their seams, and this is one.
+
+The alternative is defensible and this SPEC records it rather than
+pretending otherwise: folding `SymMod.lean`, `Euclid.lean`, and
+`Recon.lean` into hex-arith and leaving only the loop here would also
+work, and would trade one library for one reopened phase.
 
 ## Scope
 
@@ -128,20 +138,31 @@ symmetric representative of the common solution modulo `modulus`. -/
 structure Crt where
   modulus : Nat
   value : Int
+  pos : 0 < modulus
+  le : 2 * value.natAbs ≤ modulus
 
-def Crt.init : Crt := { modulus := 1, value := 0 }
+def Crt.init : Crt := { modulus := 1, value := 0, pos := by decide, le := by decide }
 
-/-- Fold in the residue `r` modulo `m`. Returns `none` when `m` is not
-coprime to the moduli already folded in. -/
+/-- Fold in the residue `r` modulo `m`. Returns `none` when `m` is zero
+or one, or when `m` is not coprime to the moduli already folded in. -/
 def Crt.push (c : Crt) (r : Int) (m : Nat) : Option Crt
 
 /-- The same, for `k` residues sharing one modulus. -/
 def CrtVec.push (c : CrtVec k) (r : Vector Int k) (m : Nat) : Option (CrtVec k)
 ```
 
-`push` runs `Hex.Int.extGcd c.modulus m`, which returns `(g, s, t)` with
-`s * c.modulus + t * m = g`. It returns `none` unless `g = 1`, and
-otherwise `s` is the inverse of `c.modulus` modulo `m` and the update is
+**The positivity and size fields are structure invariants, not
+afterthoughts.** Without `pos`, `Crt.init.push 1 0` is accepted, because
+`gcd(1, 0) = 1`: the result has `modulus = 0`, and then `push_modulus`,
+`push_le`, and `push_congr_new` below are jointly unsatisfiable. Carrying
+the invariants in the structure makes the bad state unconstructible
+rather than merely unreachable, and `push` rejects `m ≤ 1` before doing
+any arithmetic.
+
+`push` runs `HexArith.Int.extGcd (c.modulus % m) m`, which returns
+`(g, s, t)` with `s * (c.modulus % m) + t * m = g`. It returns `none`
+unless `g = 1`, and otherwise `s` is the inverse of `c.modulus` modulo
+`m` and the update is
 
 ```
 δ        = symMod ((r - c.value) * s) m
@@ -152,6 +173,14 @@ value'   = symMod (c.value + c.modulus * δ) modulus'
 which is Garner's mixed-radix step. The arithmetic that grows with the
 number of moduli is one multiplication and one addition on integers of
 the size of the accumulated value, and everything else is word-sized.
+
+**The reduction `c.modulus % m` before the extended gcd is what makes
+that true.** `c.modulus` reaches thousands of bits, and an inverse
+computed from it directly runs the Euclidean algorithm on a large
+operand for a word-sized answer. Since `s` is determined modulo `m`, the
+reduced operand gives the same inverse. Skipping the reduction is a
+correctness-neutral performance bug, which is the kind this SPEC exists
+to prevent.
 
 **The outer `symMod` is not redundant.** With `|c.value| ≤ c.modulus/2`
 and `|δ| ≤ m/2`, the sum reaches `c.modulus·(m+1)/2`, which exceeds
@@ -221,11 +250,13 @@ is at most `P`. -/
 def euclidUntil (m a P : Int) : Row
 ```
 
-`euclidUntil` is the only new arithmetic in this library. It should be
-written against the same `@[extern]` GMP surface `extGcd` uses, since the
-operands are the same size and the inner loop is the same division.
-Sharing the loop between the two is an implementation question and a
-worthwhile one, and the SPEC does not force an answer.
+`euclidUntil` is the only new arithmetic in this library, and it is more
+than a wrapper. `HexArith.Int.extGcd` is an `@[extern]` binding that
+returns the final triple, so no intermediate row is reachable through it:
+`euclidUntil` needs either its own extern primitive or a refactoring of
+the existing one to take a stopping predicate. Which of those is right is
+an implementation question, and it is the one open question in this
+library that costs real work rather than a decision.
 
 ### The signature is checked, so soundness is free
 
@@ -242,8 +273,10 @@ def ratReconWide? (a : Int) (m : Nat) : Option Rat
 
 The return type is `Rat`, not `Int × Int`. A `Rat` is already a coprime
 pair with a positive denominator, so three of the four output conditions
-are the invariants of the type, and `Rat.mk'` normalisation is where they
-are established.
+are the invariants of the type, and `Rat.normalize` (or `mkRat`) is where
+they are established. Not `Rat.mk'`, which is the raw structure
+constructor and takes the invariants as arguments rather than
+establishing them.
 
 `ratRecon?` takes the row `euclidUntil m a P` returns, forms the
 candidate from `(r, t)` with the sign normalised so the denominator is
@@ -346,9 +379,18 @@ def ratReconVec? (a : Vector Int k) (m : Nat) (P Q : Int) :
 The algorithm reconstructs the first entry, obtaining a denominator `d`,
 and for each later entry first tries `symMod (d * aᵢ) m`, accepting it
 when it is within `P`. That test is one multiplication. Only when it
-fails does the entry get its own Euclidean run, after which `d` is
-multiplied by the new denominator and the accepted numerators are
-rescaled.
+fails does the entry get its own Euclidean run, and then `d` is replaced
+by `lcm d dᵢ`, the accepted numerators are rescaled by `lcm d dᵢ / d`,
+and the whole pair `(y, d)` is divided through by the gcd of all its
+entries.
+
+**The `lcm` and the reduction are both load-bearing, and an earlier draft
+of this SPEC had neither.** Multiplying the denominators instead
+overshoots: at `m = 101`, `P = 2`, `Q = 4`, the residues `(51, 76)` are
+`(1/2, 1/4)`, and multiplying gives `d = 8` with numerators `(4, 2)`,
+both outside the bounds, while `lcm` gives the correct `(2, 1)/4`. No
+amount of further lifting repairs the overshoot, because the fault is in
+the combination step rather than in the precision.
 
 ```lean
 theorem ratReconVec?_spec : ratReconVec? a m P Q = some (y, d) →
@@ -356,12 +398,20 @@ theorem ratReconVec?_spec : ratReconVec? a m P Q = some (y, d) →
     ∀ i, (d * a[i] - y[i]) % (m : Int) = 0 ∧ y[i].natAbs ≤ P
 ```
 
-The output is **not** claimed to be in lowest terms: the common
-denominator may be a proper multiple of the least one. Under `2PQ < m`
-the rational vector `y/d` is still unique, by `ratRecon_unique` applied
-entrywise, which is exactly the case the uniqueness proof covers without
-a coprimality hypothesis. A consumer that wants the reduced form divides
-by the gcd of the numerators and the denominator afterwards.
+The output is reduced as a whole (no integer divides `d` and every `yᵢ`)
+but individual entries need not be in lowest terms, since `d` is the
+common denominator rather than each entry's own. Under `2PQ < m` the
+rational vector `y/d` is unique, by `ratRecon_unique` applied entrywise,
+which is exactly the case the uniqueness proof covers without a
+coprimality hypothesis.
+
+**What `Q` has to bound.** The postcondition asserts `d ≤ Q`, and `d` is
+the least common denominator of the whole vector, not of any one entry.
+A caller whose bound covers each entry separately has not supplied a
+usable `Q`. Dixon's caller does supply one, because Cramer's rule bounds
+the common denominator by `|det A|`, and that is the sense in which the
+completeness statement for the vector form is about the vector rather
+than about its entries.
 
 ### Reconstruction without bounds
 
@@ -459,14 +509,16 @@ preference rather than a requirement. Neither is assumed here. This
 library is written against `isPrimeTrial`, which exists, and the
 switchover is a body change behind an unchanged signature.
 
-### The supply
+### The supply, which belongs in hex-mod-arith
 
 ```lean
-/-- A usable modulus: a natural number with the `ZMod64` small-modulus
-evidence attached. -/
+namespace Hex.ZMod64
+
+/-- A usable modulus: a natural number with the small-modulus evidence
+attached. -/
 structure Modulus where
   m : Nat
-  [bounds : ZMod64.Bounds m]
+  [bounds : Bounds m]
 
 /-- A modulus known to be prime, for the consumers whose statements
 mention `F_p`. -/
@@ -479,27 +531,46 @@ so a wrong answer here is impossible rather than merely unlikely. -/
 def primesBelow (start : Nat) : Nat → Array PrimeModulus
 ```
 
-`PrimeModulus` the structure is not `ZMod64.PrimeModulus` the class,
-which hex-mod-arith already defines and which asserts primality of a
-modulus fixed by the context. The structure's `prime` field yields that
-class through `ZMod64.primeModulusOfPrime`, and the two are named alike
-because they say the same thing about different things: the class is a
-hypothesis about a known `p`, the structure is a `p` carried with its
-evidence. If that proximity reads badly in practice, the structure is the
-one to rename, since it is new.
+These three go in **hex-mod-arith**, not here. They package
+`ZMod64.Bounds` and a primality witness, they mention nothing about
+Chinese remaindering, and hex-mod-arith already has the class
+`ZMod64.PrimeModulus` that the structure's `prime` field produces through
+`primeModulusOfPrime`. Putting them there is what lets this library
+depend on hex-arith alone, and it makes
+`HexBerlekampZassenhaus/PrimeSelection.lean`'s `SmallPrimeCandidate` the
+special case it is rather than a parallel definition.
+
+The naming collision with the existing class is deliberate and worth one
+sentence: the class is a hypothesis about a `p` fixed by the context, the
+structure is a `p` carried with its evidence. If that reads badly in
+practice the structure is the one to rename, since it is new.
 
 The `Bounds` and `Prime` fields are propositions built at runtime from a
 dependent `if` on `isPrimeTrial`, so they are erased in compiled code and
-cost nothing. This is `SmallPrimeCandidate`'s pattern from
-`HexBerlekampZassenhaus/PrimeSelection.lean` with the fixed table
-replaced by generation, and that structure should move here and be
-reused there, which is one of the relocations listed below.
+cost nothing.
 
-The default supply is primes immediately below `2^31`, the largest
-`ZMod64.Bounds` permits. Nothing in this library depends on that choice:
-`Modulus` accepts any bounded value, and a consumer that wants powers of
-a single prime (Dixon) or a stored small prime (a gcd certificate) builds
-its own.
+### The supply is bounded, and the consumers have to say so
+
+`ZMod64.Bounds` requires `m < 2^31`, and that is not only a performance
+limit. Write `L` for the least common multiple of everything below
+`2^31`. Every allowed modulus divides `L`, and any product of pairwise
+coprime allowed moduli divides `L` too, so the accumulated modulus can
+never exceed `L`. On the `1 x 1` matrix `[L]` the determinant is `L`, the
+Hadamard bound is `L`, every image is zero, and a loop that stops when
+the modulus exceeds twice the bound never stops.
+
+Nothing in this library can fix that, and it is recorded here because it
+is the shared cause of three separate obligations elsewhere:
+[hex-modular-matrix](hex-modular-matrix.md)'s determinant needs a
+fallback that does not use moduli at all, its rank certificate needs a
+lower-bound witness that is not restricted to small moduli, and
+[hex-poly-z-gcd](hex-poly-z-gcd.md)'s coprimality certificate needs a
+constructor that names no prime. Each of those SPECs carries the
+counterexample for its own case.
+
+`crtLoop` below therefore takes fuel and returns `Option`, and no
+consumer may present a modular route as total on the strength of a bound
+alone.
 
 ## The multimodular loop
 
@@ -510,10 +581,14 @@ once:
 /-- Fold moduli in until `accept` returns a result. `image` computes the
 residue vector at one modulus, `accept` attempts a reconstruction and
 returns `none` to ask for another modulus. -/
-def crtLoop (image : Modulus → Option (Vector Int k))
-    (accept : CrtVec k → Option α) (supply : Array Modulus) (fuel : Nat) :
+def crtLoop (image : Nat → Option (Vector Int k))
+    (accept : CrtVec k → Option α) (supply : Array Nat) (fuel : Nat) :
     Option α
 ```
+
+The moduli are bare `Nat`s. A consumer computing in `ZMod64` passes the
+`m` field of its `Modulus` values and recovers the evidence on its own
+side, which is what keeps this library independent of hex-mod-arith.
 
 `image` returns `none` for a modulus the consumer rejects (a vanishing
 leading coefficient, a non-invertible pivot), and those moduli are
@@ -572,11 +647,23 @@ find it rather than to assume it.
 
 ## Kernel exposure
 
-The kernel replay closure is `symMod`, `Crt.push`, and the checks inside
-`ratRecon?`, all of which are `@[expose]` and reduce cheaply. Neither
-`euclidUntil` nor the modulus supply is in it: a certificate carries the
-reconstructed answer, never the search that found it, and a checker
-re-runs the congruence rather than the Euclidean sequence.
+The kernel replay closure is `symMod`, `Crt.push`, and a separate
+checker
+
+```lean
+/-- Accepts `x` as the reconstruction of `a` modulo `m` within the given
+bounds. The predicate `ratRecon?` tests before returning, exposed on its
+own so a proof term never mentions the search. -/
+def ratReconCheck (a : Int) (m : Nat) (P Q : Int) (x : Rat) : Bool
+```
+
+all of which are `@[expose]` and reduce cheaply. `ratRecon?` itself is
+**not** exposed, and this is the correction to an earlier draft that
+claimed the checks inside it were in the closure while `euclidUntil` was
+not: an exposed `ratRecon?` unfolds to `euclidUntil`, so the Euclidean
+sequence would be in the closure with it. Splitting the predicate out
+keeps the closure to what a certificate actually replays, which is the
+congruence and the two bounds.
 
 The one thing that *is* expensive in the kernel is a primality proof, and
 the table above prices it. A downstream module carries a `decide +kernel`
@@ -618,6 +705,11 @@ Cases that must be present:
   trivial and off-by-one errors live.
 - The tie at `2|x| = m` for even `m`, checking the interval convention
   in both signs.
+- **The outer-reduction regression**: push `1` modulo `3`, then `0`
+  modulo `2`. Garner's step gives `4`, and the required symmetric
+  representative modulo `6` is `-2`. Without this case, dropping the
+  outer `symMod` passes the whole suite.
+- `m = 0` and `m = 1` offered to `push`, both of which must be rejected.
 - Non-coprime moduli, checking that `Crt.push` returns `none` rather than
   a wrong value.
 - Reconstructions that must fail: a residue with no rational inside the
@@ -706,14 +798,13 @@ operation.
 
 Three relocations, each with a reason independent of this library.
 
-**`SmallPrimeCandidate` should move to hex-mod-arith.** It bundles a
-`Nat` with `ZMod64.Bounds` and `Hex.Nat.Prime`, mentions nothing about
-polynomials or factoring, and lives in
-`HexBerlekampZassenhaus/PrimeSelection.lean` because that was the first
-consumer. `Modulus` and `PrimeModulus` above are the general form, and
-they should be defined once, in hex-mod-arith next to `PrimeModulus` the
-class, with Berlekamp-Zassenhaus importing them and keeping its own fixed
-candidate lists.
+**`Modulus`, `PrimeModulus`, and `primesBelow` belong in
+hex-mod-arith**, as "The supply" above sets out, and
+`SmallPrimeCandidate` from `HexBerlekampZassenhaus/PrimeSelection.lean`
+should become the special case of them rather than a parallel
+definition. Unlike the other two relocations, this one is a
+precondition: without it this library acquires a dependency on
+hex-mod-arith that its subject does not justify.
 
 **`zmod64FieldOfPrime` should move to hex-mod-arith.** The
 `Lean.Grind.Field (ZMod64 p)` instance and the `ZMod64.intPow` it needs
@@ -733,9 +824,10 @@ under the `Hex.ZPoly` namespace, where the Mignotte bound needed them.
 An integer square root under a polynomial namespace is a naming error as
 well as a placement one.
 
-None of the three blocks starting work here. Until they land, this
-library can name the existing paths, at the cost of a dependency on
-hex-poly-fp and hex-poly-z that it should not keep.
+The second and third do not block starting work here, and until they
+land this library can name the existing paths. The first does block, in
+the weak sense that skipping it costs a dependency this SPEC's placement
+argument says should not exist.
 
 ## Milestones
 
@@ -749,9 +841,10 @@ hex-poly-fp and hex-poly-z that it should not keep.
    `ratRecon?_den_coprime`. Completeness may lag by one milestone: it is
    the only hard proof here, and no consumer's soundness depends on it.
 
-3. **The vector forms and the loop.** `ratReconVec?`, `crtLoop`, and the
-   modulus supply. At the end of this milestone both consumer libraries
-   can be written.
+3. **The vector forms and the loop.** `ratReconVec?` with the `lcm`
+   combination and the reduction, and `crtLoop`. The modulus supply lands
+   in hex-mod-arith alongside. At the end of this milestone both consumer
+   libraries can be written.
 
 4. **Completeness and the heuristic.** `ratRecon?_complete` and
    `ratReconMaxQuot?`.
@@ -767,7 +860,6 @@ HexModular/
   Crt.lean          -- Crt, CrtVec, push, crt_unique
   Euclid.lean       -- Row, euclidUntil
   Recon.lean        -- ratRecon?, ratReconWide?, ratReconVec?, ratReconMaxQuot?
-  Modulus.lean      -- Modulus, PrimeModulus, primesBelow
   Loop.lean         -- crtLoop
 HexModular.lean
 HexModularMathlib/
@@ -776,20 +868,19 @@ HexModularMathlib/
 HexModularMathlib.lean
 ```
 
-`SymMod.lean`, `Crt.lean`, `Euclid.lean`, and `Recon.lean` mention
-nothing from hex-mod-arith, which is the seam recorded under "Why not
-inside hex-arith".
+No file here mentions `ZMod64`. `Modulus` and `primesBelow` live in
+hex-mod-arith, per "The supply", and `crtLoop` takes bare `Nat` moduli.
 
 `libraries.yml` gains:
 
 ```yaml
   HexModular:
-    deps: [HexArith, HexModArith]
+    deps: [HexArith]
     mathlib: false
     done_through: 0
     status: planned
   HexModularMathlib:
-    deps: [HexModular, HexModArithMathlib]
+    deps: [HexModular, HexModArithMathlib]   # ZMod correspondence only
     mathlib: true
     done_through: 0
     status: planned

@@ -1394,7 +1394,7 @@ HexMvGcdMathlib.lean
 
 ```yaml
   HexMvGcd:
-    deps: [HexMvPoly, HexPoly, HexPolyFp, HexResultant, HexArith, HexModArith]
+    deps: [HexMvPoly, HexPoly, HexPolyFp, HexResultant, HexArith, HexModArith, HexPolyZGcd]
     mathlib: false
     done_through: 0
     status: draft
@@ -1405,7 +1405,9 @@ HexMvGcdMathlib.lean
     status: draft
 ```
 
-`HexPolyFp` and `HexModArith` are for the univariate images over `F_p`.
+`HexPolyZGcd` is the arity-one case, called rather than reimplemented;
+see "Scope". `HexPolyFp` and `HexModArith` are for the univariate images
+over `F_p`.
 `HexResultant` is for route 5 and for the `ExactDivLaws` interface.
 `HexArith` is for the integer gcd and the extended Euclidean algorithm.
 `HexPoly` comes in through `DensePoly`, which `coeffsIn` returns.

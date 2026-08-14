@@ -158,15 +158,22 @@ file said around that shape, recorded because they are easy to make
 again.
 
 **The checker's obligations are not "primality and distinctness of the
-moduli".** Primality is not needed for the determinant or for the
-polynomial gcd, because reduction modulo any `m` is a ring homomorphism;
-what elimination needs is that the pivots it inverts are units, which the
-extended gcd discovers rather than assumes. Distinctness is not the right
-property either, since distinct moduli need not be coprime. Pairwise
-coprimality is what the reconstruction needs, and one extended gcd per
-modulus checks it. Primality does appear, in the two places where a
-statement mentions `F_p` as a field: the rank of an image, and the
-coprimality witness for the gcd.
+moduli".** Reduction modulo any `m` is a ring homomorphism, so the
+reconstruction argument never uses primality; what elimination needs is
+that the pivots it inverts are units, which the extended gcd discovers
+rather than assumes. Distinctness is not the right property either, since
+distinct moduli need not be coprime. Pairwise coprimality is what the
+reconstruction needs, and one extended gcd per modulus checks it.
+
+Primality still earns its place on the producer side, and the correction
+is about the checker alone. Brown's image gcd over a composite modulus is
+meaningless as a degree bound (`x` and `x - 6` are coprime over `ℤ[x]`
+and identical modulo `6`), so the gcd's producer and its eventual-success
+argument both want primes; what the correction buys is that a spurious
+image cannot produce a wrong answer, because the exact checker rejects
+the candidate. Two statements do need primality outright, and both say
+so: the rank of an image is a rank only over a field, and the gcd's
+modular coprimality witness needs `F_p[x]` to be a domain.
 
 **Where a checker does name a prime, the size of that prime is a cost.**
 Replaying a certificate in the kernel replays the primality proof, and

@@ -54,6 +54,11 @@ below all want an exact solve that does not pay that growth. Dixon
 lifting is the standard answer and its output is checkable by one
 matrix-vector product.
 
+**A `Modulus` is now hex-mod-arith's.** `ZMod64.Modulus` and
+`ZMod64.primesBelow` live beside `ZMod64`, per
+[hex-modular §The supply](hex-modular.md); this library consumes them and
+passes bare `Nat` moduli to `crtLoop`.
+
 **hex-hermite needs a determinant.** The Domich-Kannan-Trotter modular
 Hermite algorithm reduces entries modulo a determinant of a square
 nonsingular submatrix, and [hex-hermite](hex-hermite.md) names
@@ -104,7 +109,8 @@ and a reconstruction bound large enough to determine the answer". The
 determinant argument never uses primality: reduction modulo any `m` is a
 ring homomorphism, so `det (A mod m) = (det A) mod m` regardless, and
 what the *elimination* needs is that the pivots it inverts are units,
-which the arithmetic discovers rather than assumes. Distinctness is not
+which the arithmetic discovers rather than assumes. `detMod?` returning
+`some d` at a composite modulus is as good an image as any. Distinctness is not
 the right property either, since distinct moduli need not be coprime;
 coprimality is what the reconstruction needs and `Crt.push` checks it.
 [hex-modular](hex-modular.md) sets this out in full under "Primality is
@@ -151,10 +157,21 @@ so rather than accepting `Rat` matrices and doing it silently.
 namespace Hex.Matrix
 
 /-- The determinant of `A` reduced modulo `m`, computed by elimination.
-Returns `none` when a pivot candidate is not invertible modulo `m`, which
-for composite `m` can happen without the matrix being singular. -/
+Returns `some 0` when a pivot column is entirely zero, and `none` when
+the column contains a nonzero entry but no unit, which for composite `m`
+can happen without the matrix being singular. -/
 def detMod? (A : Matrix (ZMod64 m) n n) : Option (ZMod64 m)
 ```
+
+**The two failure branches are different and both are needed.** A pivot
+column that is entirely zero proves the determinant is zero modulo `m`,
+which is a perfectly good residue to fold in: the transformed matrix has
+a zero column, so its determinant is `0`, and the accumulated row
+operations are determinant-preserving. Only a column with a nonzero
+nonunit gives `none`. Collapsing the two makes `det` on the zero matrix
+skip every modulus and never terminate, and it is the kind of mistake
+that no oracle fixture catches because the answer is right whenever the
+function returns.
 
 This is a dedicated elimination rather than a call into
 `hex-row-reduce`. Three reasons, in order of weight:
@@ -226,10 +243,16 @@ bound here as the fallback if a Mathlib-free consumer ever appears.
 ### The reconstruction
 
 ```lean
-/-- The determinant of an integer matrix, by Chinese remaindering over
-enough moduli to determine it. -/
+/-- The determinant by Chinese remaindering, or `none` when the supply of
+moduli runs out before the bound is reached. -/
+def detModular? (A : Matrix Int n n) (fuel : Nat) : Option Int
+
+/-- The determinant. Falls back to `Hex.Matrix.bareiss` when the modular
+route does not finish. -/
 def det (A : Matrix Int n n) : Int
 
+theorem detModular?_eq [LawfulDetBound] (h : detModular? A fuel = some d) :
+    d = Matrix.det A
 theorem det_eq [LawfulDetBound] (A : Matrix Int n n) :
     det A = Matrix.det A
 ```
@@ -238,6 +261,18 @@ The loop folds one image per modulus into a `Crt` and stops when the
 accumulated modulus exceeds `2 · hadamardBound A`, at which point
 `crt_unique` identifies the symmetric representative with the answer.
 Moduli at which `detMod?` returns `none` are skipped.
+
+**The fallback is not defensive coding, it is the only way `det` is
+total.** `ZMod64.Bounds` caps a modulus at `2^31`, so every allowed
+modulus divides `L = lcm(1, …, 2^31 - 1)` and so does every product of
+pairwise coprime allowed moduli. On the `1 x 1` matrix `[L]` the
+determinant is `L`, the Hadamard bound is `L`, every image is zero, and
+the accumulated modulus never exceeds `2L`. No amount of fuel helps.
+[hex-modular](hex-modular.md) records the same obstruction for the
+supply as a whole. Under design principle 8 the classification is neither
+of the two fallback modes: `detModular?` propagates its `Option` upward,
+and `det` is a dispatch between two complete algorithms rather than a
+total form of a partial one.
 
 **Early termination is not available here, and this is the one place in
 the tree where that has to be said out loud.** Stopping when the
@@ -288,9 +323,15 @@ is easy to get wrong:
   their common gcd before using `d`. Omitting that step gives a `d` that
   does not divide the determinant and a wrong answer with no symptom.
 - The cofactor still needs a bound, and it has one: `|det A / d| ≤
-  hadamardBound A / d`, from the same hypothesis as before. Nothing is
-  assumed about how large `d` is. A small `d` costs moduli, never
-  correctness.
+  hadamardBound A / d`, from the same hypothesis as before, with floor
+  division on the right. Nothing is assumed about how large `d` is. A
+  small `d` costs moduli, never correctness.
+- **The images are of the cofactor, not of the determinant**, so each one
+  is `(det A mod m) · (d⁻¹ mod m)` and a modulus with `gcd(d, m) ≠ 1` has
+  no such inverse. Those moduli are skipped, exactly as the ones where
+  `detMod?` returns `none` are. An implementation that reconstructs
+  `det A` and divides afterwards has not saved anything, since the point
+  of the divisor is to shrink the modulus the reconstruction needs.
 
 Nonsingularity is not an extra assumption. The Dixon solve inverts `A`
 modulo a prime, and a matrix invertible modulo `p` has a determinant that
@@ -317,8 +358,9 @@ structure RankCert (n m : Nat) where
   /-- Row and column indices of a nonsingular `r × r` submatrix. -/
   rows : Vector (Fin n) r
   cols : Vector (Fin m) r
-  /-- A modulus at which that submatrix has nonzero determinant. -/
-  modulus : Modulus
+  /-- A modulus at which that submatrix has nonzero determinant. Any
+  positive `Nat`, not a `ZMod64.Modulus`; see below. -/
+  modulus : Nat
   /-- Coefficients expressing the remaining columns over the chosen ones,
   with a common denominator. -/
   coeffs : Matrix Int r (m - r)
@@ -326,41 +368,71 @@ structure RankCert (n m : Nat) where
 
 def checkRank (A : Matrix Int n m) (c : RankCert n m) : Bool
 
-theorem checkRank_sound (h : checkRank A c = true) : rank A = c.r
+/-- The rank over `ℚ`, defined independently of anything in this library:
+row reduction of the entrywise cast. -/
+def ratRank (A : Matrix Int n m) : Nat :=
+  Matrix.rowReduce_rank (A.mapEntries (fun a => (a : Rat)))
+
+theorem checkRank_sound (h : checkRank A c = true) : ratRank A = c.r
 ```
+
+The soundness theorem targets `ratRank`, not the `rank` defined below.
+A certificate checker whose conclusion mentions the function it is meant
+to certify says nothing, and an earlier draft of this SPEC made exactly
+that mistake. `ratRank` is row reduction over `Rat`, which hex-row-reduce
+already supplies and whose agreement with `Matrix.rank` is
+hex-row-reduce-mathlib's existing theorem, so the companion inherits the
+Mathlib statement rather than proving a second one.
 
 `checkRank` verifies, cheapest first: that `rows` and `cols` are strictly
 increasing (so the submatrix is well formed and the complement of `cols`
-is determined); that `detMod?` of the selected `r × r` submatrix is
-`some` and nonzero; that `denom ≠ 0`; and that
+is determined); that `1 < modulus`; that the `r × r` selected submatrix
+has determinant not congruent to `0` modulo `modulus`, computed in `Int`
+arithmetic; that `denom ≠ 0`; and that
 `A[·, cols] * coeffs = denom · A[·, colsᶜ]` as an integer matrix
 identity.
 
 The two halves of the argument:
 
 - The nonzero residue proves the `r × r` minor is a nonzero integer, so
-  those `r` columns are linearly independent over `ℚ` and `rank A ≥ r`.
-  This needs no primality, and it is why `modulus` is a `Modulus` rather
-  than a `PrimeModulus`.
+  those `r` columns are linearly independent over `ℚ` and
+  `ratRank A ≥ r`. This needs no primality.
 - The matrix identity places every remaining column in the rational span
   of the chosen `r`, so the column space has dimension at most `r` and
-  `rank A ≤ r`.
+  `ratRank A ≤ r`.
+
+**The modulus is a bare `Nat` because a bounded one makes the certificate
+incomplete.** With `modulus : ZMod64.Modulus` every value is below
+`2^31`, so on the `1 x 1` matrix `[L]` with `L = lcm(1, …, 2^31 - 1)`
+every residue of the only minor is zero and no certificate exists, even
+though the rank is `1`. Letting the checker do `Int` arithmetic at an
+arbitrary modulus costs one big-integer determinant of an `r × r` matrix
+in the rare case and restores completeness. The producer still finds its
+modulus among the small ones, and falls back to the product of the ones
+it tried.
 
 **Producing a certificate.** Reduce modulo a prime, read the pivot rows
-and columns off `rowReduce`, and Dixon-solve `A[·, cols] X = A[·, colsᶜ]`
-for the coefficients. A bad prime makes `rankModP` too small, the chosen
-column set too small, and the span check fail on some column; the
-response is another prime. The modular rank is never too large, by the
-minor argument above, so a failure always means "try again" and never
-means "the answer is wrong".
+and columns off `rowReduce`, and solve for the coefficients with the
+Dixon solve below applied to the **`r × r` selected minor**, against the
+selected rows of each remaining column. The solve is square, which
+`solve?` requires; the resulting coefficients are then checked against
+all `n` rows, and that full check is what makes the certificate say
+something about `A` rather than about its selected rows. An earlier
+draft handed the `n × r` block to `solve?` directly, which does not
+typecheck and, if it did, would be a different algorithm.
+
+A bad prime makes `rankModP` too small, the chosen column set too small,
+and the span check fail on some column; the response is another prime.
+The modular rank is never too large, by the minor argument above, so a
+failure always means "try again" and never means "the answer is wrong".
 
 ```lean
 def rankCert? (A : Matrix Int n m) (fuel : Nat) : Option (RankCert n m)
 def rank (A : Matrix Int n m) : Nat
 ```
 
-`rank` is `rankCert?` with a default budget, falling back to row
-reduction over `Rat` when the budget runs out. Under design principle 8
+`rank` is `rankCert?` with a default budget, falling back to `ratRank`
+when the budget runs out. Under design principle 8
 that fallback is an `audited-emergency-value` in neither sense: it is a
 second complete algorithm, not a default, and its result is correct on
 its own terms. The API exposes `rankCert?` so that a caller who wants the
@@ -393,11 +465,15 @@ The algorithm, with the two steps that are easy to state wrongly marked:
    `exactDiv` belongs.
 3. After `k` steps, `x ≡ Σ xᵢ pⁱ (mod p^k)`, so the solution is known
    modulo `p^k`.
-4. Reconstruct with `ratReconVec?` at bounds `P = hadamardBound Ab` and
-   `Q = hadamardBound A`, where `Ab` is `A` with one column replaced by
-   `b`. **The number of steps is set by `p^k > 2 P Q`**, from Cramer's
-   rule: the numerators are minors of `Ab` and the denominator divides
-   `det A`.
+4. Reconstruct with `ratReconVec?` at bounds
+   `P = max_i hadamardBound (A with column i replaced by b)` and
+   `Q = hadamardBound A`. **The number of steps is set by
+   `p^k > 2 P Q`**, from Cramer's rule: the `i`-th numerator is the
+   determinant of `A` with column `i` replaced by `b`, and the common
+   denominator divides `det A`. The maximum over `i` is not decoration.
+   For `A = [[1, N], [0, 1]]` and `b = (0, 1)` the solution is `(-N, 1)`,
+   while replacing the second column alone gives a bound of `1`, so a
+   `P` read off one replaced column is wrong by a factor of `N`.
 5. Check `A y = d b` over `ℤ` and return `none` if it fails.
 
 Because of step 5 the whole thing is a checked candidate. `solve?_spec`
@@ -412,13 +488,28 @@ invertible modulo `p` has nonzero determinant. The API therefore also
 offers
 
 ```lean
-/-- The prime at which `A` was inverted, which witnesses `det A ≠ 0`. -/
+/-- The solve together with a checkable witness that `A` is nonsingular:
+a modulus and the nonzero determinant residue at it. -/
+structure SolveWitness (n : Nat) where
+  num : Vector Int n
+  den : Int
+  modulus : Nat
+  detImage : Int
+  nonzero : detImage ≠ 0
+
 def solveWitness? (A : Matrix Int n n) (b : Vector Int n) (fuel : Nat) :
-    Option (Vector Int n × Int × Modulus)
+    Option (SolveWitness n)
+
+theorem solveWitness?_det_ne_zero (h : solveWitness? A b fuel = some w) :
+    Matrix.det A ≠ 0
 ```
 
-so a consumer can carry the nonsingularity evidence rather than
-recompute it.
+The modulus alone witnesses nothing, and an earlier draft of this SPEC
+returned only that. What carries the argument is the residue: a nonzero
+value of `det A` modulo `w.modulus` proves `det A ≠ 0` as an integer, by
+the same one-line argument the rank certificate's lower bound uses. The
+solve already computes it, since inverting `A` modulo `p` produces the
+pivot product.
 
 **Rational input, rational right-hand side.** A caller with `Rat` data
 clears denominators. `solve?` does not accept `Rat`, because the
@@ -429,8 +520,16 @@ accepting `Rat` would invite it to be done per call.
 
 ```lean
 /-- A basis of the rational kernel, as integer columns with a common
-denominator, in reduced column echelon shape against the free columns. -/
-def kernel? (A : Matrix Int n m) (fuel : Nat) : Option (Matrix Int m (m - r))
+denominator, in reduced column echelon shape against the free columns.
+The rank is part of the result rather than a parameter, since the caller
+does not know it in advance. -/
+structure Kernel (m : Nat) where
+  rank : Nat
+  basis : Matrix Int m (m - rank)
+  denom : Int
+  cert : RankCert n m
+
+def kernel? (A : Matrix Int n m) (fuel : Nat) : Option (Kernel m)
 ```
 
 This is the rank certificate's coefficient matrix rearranged: with pivot
@@ -554,9 +653,25 @@ present:
   not over `ℤ` (take a matrix whose determinant is a product of small
   primes), and a matrix whose determinant is exactly a modulus.
 - A determinant near the Hadamard bound (a Hadamard matrix scaled) and
-  one enormously below it (a triangular matrix with unit diagonal), which
-  are the two ends the determinant divisor is designed to separate.
+  one enormously below it with a large divisor: a matrix of large entries
+  whose determinant is a small non-unit, say `6`, where the solve's
+  denominator carries almost all of the answer. **Not** a unit-diagonal
+  triangular matrix, which is unimodular, so every rational solution has
+  denominator `1` and the divisor is `1`. That is the divisor method's
+  worst case rather than its best, and using it as the demonstration
+  contradicts the family list below.
 - A determinant of `±1`, where the divisor is `1` and no shortcut helps.
+- A **composite** modulus at which the elimination succeeds, for instance
+  a matrix with determinant `5` reduced modulo `6`, which is the case the
+  no-primality claim rests on and which a suite of prime moduli never
+  reaches.
+- A matrix whose pivot column modulo a composite modulus is nonzero with
+  no unit, so `detMod?` returns `none`, beside one whose pivot column is
+  entirely zero, so it returns `some 0`. These are the two branches that
+  an oracle comparison cannot distinguish.
+- The `1 x 1` matrix `[L]` from the totality argument is not a fixture:
+  `L` has hundreds of millions of digits. The Bareiss fallback is
+  exercised instead by a fuel of zero, which is the same code path.
 - Rank cases: full rank, rank zero, rank deficient by one, wide and tall,
   and a matrix whose rank drops modulo a small prime, constructed so the
   certificate producer must retry.
@@ -604,15 +719,23 @@ algorithm the comparison is like-for-like and the reason for the
 exemption is gone. Two thresholds, written down in advance:
 
 - **Against `Hex.Matrix.bareiss`**, on the shared tridiagonal fixture,
-  `detViaDivisor` must be faster at every rung `n ≥ 64`, and faster by at
-  least `4x` at `n = 512`. This is a required check, and failing it means
-  the library has not earned its place.
+  `detViaDivisor` must be faster at `n = 512` by at least `4x`, and the
+  crossover rung below which Bareiss wins is **measured rather than
+  predicted**, then written into the dispatch and into this SPEC. An
+  earlier draft required "faster at every rung `n ≥ 64`", which guesses
+  the crossover in the same document that says it will not guess it.
 - **Against FLINT `fmpz_mat.det`**, on the same fixture and using the
   same startup-adjusted ratio the existing report defines,
-  `detViaDivisor` must be within `5x` at every eligible rung. `5x` is
-  chosen as a plausible constant factor between Lean and tuned C over
-  GMP, given that the algorithms then agree; it is a written-down
-  threshold, to be revised only with measurements and a stated reason.
+  `detViaDivisor` should be within `5x` at every eligible rung. `5x` is a
+  plausible constant factor between Lean and tuned C over GMP once the
+  algorithms agree, and it is a target rather than a proved-reachable
+  number: it becomes the required threshold after the first
+  implementation measures it, and until then a miss is a finding to
+  investigate rather than a merge-blocking failure.
+
+Stating it that way is deliberate. A required check whose number nobody
+has measured is either vacuous or an accident waiting to block a correct
+implementation, and this SPEC has no prototype behind either figure.
 
 FLINT's `fmpz_mat.rank` and `fmpq_mat.solve` are `informational`: FLINT's
 solve uses a tuned multi-modular and Dixon hybrid with a different
@@ -718,7 +841,7 @@ HexModularMatrixMathlib.lean
       comparators:
         - tool: FLINT fmpz_mat_det via python-flint
           class: gating
-          goal: within 5x on the shared tridiagonal fixture at every eligible rung
+          goal: faster than Hex.Matrix.bareiss by at least 4x at n = 512 on the shared tridiagonal fixture, with the FLINT ratio recorded and the 5x target reviewed after the first measurement
         - tool: FLINT fmpz_mat_rank via python-flint
           class: informational
           rationale: no shared fixture history and a different crossover policy
