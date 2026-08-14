@@ -7,6 +7,7 @@ Authors: Kim Morrison
 import HexGF2
 import HexPolyFp
 import Mathlib.Data.Nat.Bitwise
+import Mathlib.Algebra.Ring.Equiv
 
 /-!
 Correspondence definitions between packed `Hex.GF2Poly` values and the generic
@@ -16,6 +17,11 @@ This module exposes the concrete unpack/repack conversions between the
 bit-packed `GF(2)` polynomial execution path and the generic dense polynomial
 over `Hex.ZMod64 2`, together with the ring equivalence and immediate simp
 lemmas needed by later `GF(2^n)` correspondence modules.
+
+The equivalence is Mathlib's `RingEquiv`, so Mathlib's transport machinery
+applies to it: this is what lets the `GF(2^n)` modules carry `Fintype` and
+cardinality for the packed types, and what lets `HexGFqMathlib` compose the
+packed correspondence with the canonical Conway field.
 -/
 
 namespace HexGF2Mathlib
@@ -23,69 +29,6 @@ namespace HexGF2Mathlib
 open Hex
 
 universe u v w
-
-/-! A minimal project-local equivalence structure used by the correspondence
-modules without depending on Mathlib's heavier equivalence hierarchy. -/
-structure TypeEquiv (α : Type u) (β : Type v) where
-  toFun : α → β
-  invFun : β → α
-  left_inv : Function.LeftInverse invFun toFun
-  right_inv : Function.RightInverse invFun toFun
-
-namespace TypeEquiv
-
-variable {α : Type u} {β : Type v} {γ : Type w}
-
-/-- Compose project-local type equivalences. -/
-def trans (e₁ : TypeEquiv α β) (e₂ : TypeEquiv β γ) : TypeEquiv α γ where
-  toFun := e₂.toFun ∘ e₁.toFun
-  invFun := e₁.invFun ∘ e₂.invFun
-  left_inv := by
-    intro x
-    exact (congrArg e₁.invFun (e₂.left_inv (e₁.toFun x))).trans (e₁.left_inv x)
-  right_inv := by
-    intro x
-    exact (congrArg e₂.toFun (e₁.right_inv (e₂.invFun x))).trans (e₂.right_inv x)
-
-end TypeEquiv
-
-/-! A minimal project-local ring equivalence structure for executable algebra
-types that have not imported Mathlib's heavier equivalence hierarchy. -/
-structure RingEquiv (R : Type u) (S : Type v) [Mul R] [Mul S] [Add R] [Add S] where
-  toFun : R → S
-  invFun : S → R
-  left_inv : Function.LeftInverse invFun toFun
-  right_inv : Function.RightInverse invFun toFun
-  map_mul' : ∀ a b : R, toFun (a * b) = toFun a * toFun b
-  map_add' : ∀ a b : R, toFun (a + b) = toFun a + toFun b
-
-infixl:25 " ≃+* " => RingEquiv
-
-namespace RingEquiv
-
-variable {R : Type u} {S : Type v} [Mul R] [Mul S] [Add R] [Add S]
-
-instance : CoeFun (R ≃+* S) (fun _ => R → S) where
-  coe e := e.toFun
-
-/-- The inverse of a project-local ring equivalence. -/
-def symm (e : R ≃+* S) : S ≃+* R where
-  toFun := e.invFun
-  invFun := e.toFun
-  left_inv := e.right_inv
-  right_inv := e.left_inv
-  map_mul' := by
-    intro a b
-    have h := e.map_mul' (e.invFun a) (e.invFun b)
-    rw [e.right_inv a, e.right_inv b] at h
-    rw [← h, e.left_inv]
-  map_add' := by
-    intro a b
-    have h := e.map_add' (e.invFun a) (e.invFun b)
-    rw [e.right_inv a, e.right_inv b] at h
-    rw [← h, e.left_inv]
-
-end RingEquiv
 
 namespace GF2Poly
 
@@ -504,7 +447,7 @@ theorem equiv_apply (p : Hex.GF2Poly) :
 
 @[simp, grind =]
 theorem equiv_symm_apply (p : Hex.FpPoly 2) :
-    RingEquiv.symm equiv p = ofFpPoly p := by
+    equiv.symm p = ofFpPoly p := by
   rfl
 
 /-- `toFpPoly` is injective: `ofFpPoly` is a left inverse. -/

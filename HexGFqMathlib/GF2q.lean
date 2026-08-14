@@ -176,49 +176,20 @@ private def genericEquivGFq :
     intro x y
     exact finiteField_cast_add modulusFpPoly_eq_conway (genericField_eq_conway (n := n)) x y
 
-set_option maxHeartbeats 800000
-
-/-- The packed-side equivalence `HexGF2Mathlib.GF2n.equiv`, repackaged with its
-domain stated as `GF2q n`. This is the project-local `HexGF2Mathlib.RingEquiv`;
-naming it avoids re-elaborating its `whnf`-heavy type inline. -/
-private def packedRingEquiv :
-    HexGF2Mathlib.RingEquiv
-      (GF2n n h.lower h.degree_pos h.degree_lt_word h.packed_irreducible)
-      (HexGF2Mathlib.GF2n.GenericFiniteField (n := n) (irr := h.lower)
-        (hn := h.degree_pos) (hn64 := h.degree_lt_word) (hirr := h.packed_irreducible)) :=
-  HexGF2Mathlib.GF2n.equiv
-    (n := n) (irr := h.lower)
-    (hn := h.degree_pos) (hn64 := h.degree_lt_word)
-    (hirr := h.packed_irreducible)
-
 /-- The optimized packed binary Conway field is ring-equivalent to the generic
-canonical Conway field over `p = 2`. The packed-side equivalence is the
-project-local `HexGF2Mathlib.RingEquiv`, which this composition repackages with
-the canonical Conway field on the generic side through `genericEquivGFq`. -/
-def equivGFq : RingEquiv (GF2q n) (GFq 2 n h.entry) where
-  toFun x := genericEquivGFq (n := n) (packedRingEquiv (n := n) x)
-  invFun x := (packedRingEquiv (n := n)).invFun ((genericEquivGFq (n := n)).symm x)
-  left_inv x := by
-    show (packedRingEquiv (n := n)).invFun
-        ((genericEquivGFq (n := n)).symm
-          (genericEquivGFq (n := n) (packedRingEquiv (n := n) x))) = x
-    rw [RingEquiv.symm_apply_apply]
-    exact (packedRingEquiv (n := n)).left_inv x
-  right_inv x := by
-    show genericEquivGFq (n := n)
-        (packedRingEquiv (n := n)
-          ((packedRingEquiv (n := n)).invFun ((genericEquivGFq (n := n)).symm x))) = x
-    rw [(packedRingEquiv (n := n)).right_inv, RingEquiv.apply_symm_apply]
-  map_mul' x y := by
-    show genericEquivGFq (n := n) (packedRingEquiv (n := n) (x * y)) =
-      genericEquivGFq (n := n) (packedRingEquiv (n := n) x) *
-        genericEquivGFq (n := n) (packedRingEquiv (n := n) y)
-    rw [(packedRingEquiv (n := n)).map_mul' x y, map_mul (genericEquivGFq (n := n))]
-  map_add' x y := by
-    show genericEquivGFq (n := n) (packedRingEquiv (n := n) (x + y)) =
-      genericEquivGFq (n := n) (packedRingEquiv (n := n) x) +
-        genericEquivGFq (n := n) (packedRingEquiv (n := n) y)
-    rw [(packedRingEquiv (n := n)).map_add' x y, map_add (genericEquivGFq (n := n))]
+canonical Conway field over `p = 2`.
+
+This is the composition the `hex-gfq-mathlib` SPEC describes: the packed side
+corresponds to the generic quotient field over the same modulus
+({name}`HexGF2Mathlib.GF2n.equiv`), and that modulus is the Conway polynomial
+for `(2, n)` ({name}`Hex.GF2q.genericField_eq_conway`). Both factors are
+Mathlib `RingEquiv`s, so the composition is just `trans`. -/
+def equivGFq : RingEquiv (GF2q n) (GFq 2 n h.entry) :=
+  (HexGF2Mathlib.GF2n.equiv
+      (n := n) (irr := h.lower)
+      (hn := h.degree_pos) (hn64 := h.degree_lt_word)
+      (hirr := h.packed_irreducible)).trans
+    (genericEquivGFq (n := n))
 
 end GF2q
 

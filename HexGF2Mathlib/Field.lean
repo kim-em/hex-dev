@@ -22,19 +22,9 @@ namespace HexGF2Mathlib
 
 open Hex
 
-namespace TypeEquiv
-
-/-- Convert the project-local equivalence record to Mathlib's `Equiv`. -/
-def toEquiv {α : Type u} {β : Type v} (e : TypeEquiv α β) : α ≃ β where
-  toFun := e.toFun
-  invFun := e.invFun
-  left_inv := e.left_inv
-  right_inv := e.right_inv
-
-end TypeEquiv
-
-namespace GF2n
-
+/-- `2` is prime, the characteristic fact both packed correspondences need to
+name the generic field over `F_2`. Stated once here rather than inside each
+namespace, since the two copies were identical. -/
 private theorem prime_two : Hex.Nat.Prime 2 := by
   constructor
   · decide
@@ -45,6 +35,8 @@ private theorem prime_two : Hex.Nat.Prime 2 := by
     · simp at hm
     · exact Or.inl rfl
     · exact Or.inr rfl
+
+namespace GF2n
 
 instance : Hex.ZMod64.PrimeModulus 2 := Hex.ZMod64.primeModulusOfPrime prime_two
 
@@ -403,7 +395,7 @@ def finEquiv : Hex.GF2n n irr hn hn64 hirr ≃ Fin (2 ^ n) where
     cases i
     simp
 
-noncomputable instance : Fintype (Hex.GF2n n irr hn hn64 hirr) :=
+instance : Fintype (Hex.GF2n n irr hn hn64 hirr) :=
   Fintype.ofEquiv (Fin (2 ^ n)) (finEquiv (n := n) (irr := irr)
     (hn := hn) (hn64 := hn64) (hirr := hirr)).symm
 
@@ -416,17 +408,6 @@ end GF2n
 
 namespace GF2nPoly
 
-private theorem prime_two : Hex.Nat.Prime 2 := by
-  constructor
-  · decide
-  · intro m hm
-    have hmle : m ≤ 2 := Nat.le_of_dvd (by decide : 0 < 2) hm
-    have hcases : m = 0 ∨ m = 1 ∨ m = 2 := by omega
-    rcases hcases with rfl | rfl | rfl
-    · simp at hm
-    · exact Or.inl rfl
-    · exact Or.inr rfl
-
 variable {f : Hex.GF2Poly} {hirr : Hex.GF2Poly.Irreducible f}
 variable {hdeg : 0 < f.degree}
 
@@ -438,7 +419,7 @@ abbrev ReducedPackedRep (f : Hex.GF2Poly) : Type :=
 
 /-- The executable packed quotient wrapper is exactly the reduced-representative
 subtype used for finite support. -/
-def reducedPackedRepEquiv : TypeEquiv (Hex.GF2nPoly f hirr) (ReducedPackedRep f) where
+def reducedPackedRepEquiv : Hex.GF2nPoly f hirr ≃ ReducedPackedRep f where
   toFun x := ⟨x.val, x.val_reduced⟩
   invFun x := ⟨x.1, x.2⟩
   left_inv := by
@@ -476,7 +457,7 @@ theorem reducedPackedRepOfIndex_index (x : ReducedPackedRep f) :
 
 /-- Reduced packed representatives are equivalent to the finite binary index
 space determined by the modulus degree. -/
-def reducedPackedRepFinEquiv : TypeEquiv (ReducedPackedRep f) (Fin (2 ^ f.degree)) where
+def reducedPackedRepFinEquiv : ReducedPackedRep f ≃ Fin (2 ^ f.degree) where
   toFun := reducedPackedRepIndex (f := f)
   invFun := reducedPackedRepOfIndex (f := f)
   left_inv := reducedPackedRepOfIndex_index (f := f)
@@ -553,7 +534,7 @@ theorem toFpPoly_reduceMod (p g : Hex.GF2Poly) (hgdeg : 0 < g.degree) :
     HexGF2Mathlib.GF2Poly.toFpPoly (p % g) =
       Hex.GFqRing.reduceMod (HexGF2Mathlib.GF2Poly.toFpPoly g)
         (HexGF2Mathlib.GF2Poly.toFpPoly p) := by
-  letI : Hex.ZMod64.PrimeModulus 2 := Hex.ZMod64.primeModulusOfPrime GF2n.prime_two
+  letI : Hex.ZMod64.PrimeModulus 2 := Hex.ZMod64.primeModulusOfPrime prime_two
   have hgne : g ≠ 0 := by
     intro h; rw [h] at hgdeg; simp [Hex.GF2Poly.degree, Hex.GF2Poly.degree?] at hgdeg
   have hgdeg' : 0 < Hex.FpPoly.degree (HexGF2Mathlib.GF2Poly.toFpPoly g) := by
@@ -589,7 +570,7 @@ model is simply its packed value, transported to `FpPoly 2`. -/
 theorem repr_toGeneric (x : Hex.GF2nPoly f hirr) :
     Hex.GFqField.repr (toGeneric (f := f) (hirr := hirr) (hdeg := hdeg) x) =
       HexGF2Mathlib.GF2Poly.toFpPoly x.val := by
-  letI : Hex.ZMod64.PrimeModulus 2 := Hex.ZMod64.primeModulusOfPrime GF2n.prime_two
+  letI : Hex.ZMod64.PrimeModulus 2 := Hex.ZMod64.primeModulusOfPrime prime_two
   unfold toGeneric
   rw [Hex.GFqField.repr_ofPoly]
   apply Hex.GFqRing.reduceMod_eq_self_of_degree_lt
@@ -615,7 +596,7 @@ theorem ofGeneric_toGeneric (x : Hex.GF2nPoly f hirr) :
 theorem toGeneric_ofGeneric (x : GenericFiniteField (f := f) (hirr := hirr) (hdeg := hdeg)) :
     toGeneric (f := f) (hirr := hirr) (hdeg := hdeg)
       (ofGeneric (f := f) (hirr := hirr) (hdeg := hdeg) x) = x := by
-  letI : Hex.ZMod64.PrimeModulus 2 := Hex.ZMod64.primeModulusOfPrime GF2n.prime_two
+  letI : Hex.ZMod64.PrimeModulus 2 := Hex.ZMod64.primeModulusOfPrime prime_two
   apply eq_of_repr_eq
   rw [repr_toGeneric]
   unfold ofGeneric
@@ -658,12 +639,10 @@ def equiv : Hex.GF2nPoly f hirr ≃+* GenericFiniteField (f := f) (hirr := hirr)
 /-- Packed arbitrary-degree field elements are indexed by reduced packed
 representatives below the modulus degree. -/
 def finEquiv : Hex.GF2nPoly f hirr ≃ Fin (2 ^ f.degree) :=
-  TypeEquiv.toEquiv <|
-    TypeEquiv.trans
-      (reducedPackedRepEquiv (f := f) (hirr := hirr))
-      (reducedPackedRepFinEquiv (f := f))
+  (reducedPackedRepEquiv (f := f) (hirr := hirr)).trans
+    (reducedPackedRepFinEquiv (f := f))
 
-noncomputable instance : Fintype (Hex.GF2nPoly f hirr) :=
+instance : Fintype (Hex.GF2nPoly f hirr) :=
   Fintype.ofEquiv (Fin (2 ^ f.degree)) (finEquiv (f := f) (hirr := hirr)).symm
 
 theorem fintype_card :
