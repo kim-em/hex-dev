@@ -3442,16 +3442,15 @@ coefficients are the tuple's `c = 0.88` and the pinned
 `RS_prime.c₀ = 1.03883`. Both the proof definition and a kernel-checked
 certificate-correspondence theorem record these equalities.
 
-The current bounded fixture proves only the five cells of the ordinary
-`b = 25` row. Five cell nodes are arguments to one row anchor, allowing one
-provider action to install all five facts from one payload. The anchor result
-is only a row token: actual sharing is in that single action and payload, and
-in the proof theorem that computes the four point enclosures, natural powers,
-and row sum once before exact rational projection into five targets. The
-retained chronology contains five fact events sharing the same replay body,
-and the generic proof frontend folds that chronology once before closing each
-coordinate. Thus this fixture exercises coordinate-aware batching and
-action/payload/proof-side sharing, but it is not the complete Table 12 family.
+The retained mutation fixture proves the five cells of the ordinary `b = 25`
+row. Five cell nodes are arguments to one row anchor, allowing one provider
+action to install all five facts from one payload. The anchor result is only a
+row token: actual sharing is in that single action and payload, and in the proof
+theorem that computes the four point enclosures, natural powers, and row sum
+once before exact rational projection into five targets. The retained
+chronology contains five fact events sharing the same replay body, and the
+generic proof frontend folds that chronology once before closing each
+coordinate.
 
 The row certificate's fields are pinned constants rather than general checked
 parameters: its decoder accepts only the corrected source row. The original
@@ -3461,14 +3460,43 @@ stable coordinate diagnostic `205`, which decodes to `(25, 5)`, emits no
 draft, and does not request more precision; replay rejects the mutation, and a
 separate lower enclosure proves that target false.
 
-Exactly 125 cells remain before the 130-case acceptance target can be claimed:
-23 further ordinary rows by five columns (115 cells), plus the two logarithmic
-rows by five columns (10 cells). Completing them requires a generated row
-table, bounded chunked replay over all row certificates, checked logarithm
-brackets for the special rows, and the final wrapper from list membership to
-the matching five-cell certificate. Until those pieces land, both the
-generated family and its three source tactic records remain classified
-`pending`.
+The generated ordinary-row extension covers the other 23 integer rows. A
+package-owned `ordinaryRows` table contains their exact nine-field source
+tuples; a kernel theorem equates every stored rational to the corresponding
+scientific literal, including the source-only `M` fields. Flattening the table
+produces 115 coordinate-bearing upper cuts and a single 391-atom authenticated
+payload. One explicitly bounded action of arity 115 installs those cuts, whose
+stable coordinates run from `(20,1)` through `(43,5)` with row 25 omitted. Its
+resource envelope therefore states 116 nodes, 115 candidates and accepted
+facts, one action, one retained payload entry, and bounded arena capacities
+for the 115 shared payload references and exact scientific-decimal identity
+fields. This is an acceptance-sized maximum chunk, not a proposed production
+chunk policy.
+
+The source's ordinary row 31 deliberately ends in the same three bounds as
+the following logarithmic row: `1.034630e-2`, `3.217360e-1`, and
+`1.000500e1`. The certificate preserves those exact pinned bounds even though
+tighter values can be reconstructed for integer `b = 31`.
+
+The proof is data-driven rather than 23 bespoke copies. Four Taylor point
+windows are proved once at `-1/2`, `-2/3`, `-3/4`, and `-4/5`; a uniform
+natural-power theorem supplies each positive integer row; and exact rational
+checks discharge each row's five projections. One indexed replay schema uses
+the coordinate's position in the authenticated table. The retained runtime
+produces exactly 115 fact events, and one generic `ProofFrontend` fold is
+required to close every coordinate. Representative first, middle, and last
+closures are additionally retained as typed kernel-checked evidence. An honest
+total meet compares the exact nonnegative rational cuts, including combinations
+the retained chronology does not reach; equal cuts with different diagnostic
+coordinates do not count as an improvement.
+
+Together with row 25 this accounts for all 120 ordinary cells. Exactly ten
+cells remain before the 130-case family can be accepted: the two logarithmic
+rows by five columns. They require checked logarithm brackets and the final
+wrapper from arbitrary pinned `table_12` membership to the matching ordinary
+or logarithmic certificate. The generated-family record therefore remains
+`pending`; only the exact 120-leaf ordinary tactic site has complete numerical
+coverage.
 
 #### Certified logarithm tables
 

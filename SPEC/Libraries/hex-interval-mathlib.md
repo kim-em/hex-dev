@@ -1164,16 +1164,16 @@ definition preserves that shape, and a kernel theorem checks every tuple field
 encoded in the certificate, including `M = 32e12` even though `M` does not
 occur in `C_bk_S`.
 
-The checked fixture covers the five leaves of only the ordinary `b = 25` row.
-One row operation has five coordinate arguments; one runtime request, reply,
-provider action, and authenticated payload produce five chronological fact
-events. Generic `ProofFrontend` replay performs the bounded fold and closes all
-five scientific-decimal inequalities. The Mathlib proof computes four Taylor
-point enclosures once, reuses their natural powers for the shared row sum, and
-projects that sum into the five column targets. The row operation's output is
-only a token; sharing occurs in the single action/payload and proof theorem,
-not in a separate row-sum DAG node. The certificate fields are pinned
-constants, not general checked parameters.
+The retained mutation fixture covers the five leaves of the ordinary `b = 25`
+row. One row operation has five coordinate arguments; one runtime request,
+reply, provider action, and authenticated payload produce five chronological
+fact events. Generic `ProofFrontend` replay performs the bounded fold and
+closes all five scientific-decimal inequalities. The Mathlib proof computes
+four Taylor point enclosures once, reuses their natural powers for the shared
+row sum, and projects that sum into the five column targets. The row
+operation's output is only a token; sharing occurs in the single action/payload
+and proof theorem, not in a separate row-sum DAG node. The certificate fields
+are pinned constants, not general checked parameters.
 
 The paper's false `(b = 25, k = 5)` target `6.65350e1` is replaced in the
 pinned source by `6.836010e1`. The false payload is rejected before replay with
@@ -1182,13 +1182,38 @@ turn into a precision retry. Replay also rejects it, and an independent lower
 enclosure proves the claimed paper bound false. No LeanCert theorem or PNT+
 result is imported.
 
-This accounts for 5 of 130 cells only. The remaining 125 are 23 ordinary rows
-times five columns (115 cells) and two logarithmic rows times five columns (10
-cells). A full classification still needs generated certificates for those
-rows, bounded chunked replay, checked logarithm brackets, and a theorem wrapper
-that consumes arbitrary `table_12` membership. The generated-family and all
-three tactic-occurrence inventory records therefore remain `pending` with the
-partial coverage recorded explicitly.
+The generated extension covers the other 23 ordinary rows without copying 23
+proof schemas. Its package-owned table records every exact source tuple and
+flattens to 115 coordinate-bearing rational cuts. A kernel correspondence
+theorem checks those stored values against the pinned scientific literals,
+including each source-only `M`. One source-pinned 391-atom payload and one
+explicitly bounded arity-115 action produce exactly 115 chronological fact
+events. The declared envelope charges 116 nodes, 115 candidates and accepted
+facts, and the coherence-required payload-use, atom, and draft/entry
+capacities. This single maximum-sized acceptance chunk is not the production
+chunk-size policy.
+
+The pinned source itself gives row 31 columns 3--5 as `1.034630e-2`,
+`3.217360e-1`, and `1.000500e1`, the same tail values as the following
+logarithmic row. They are intentionally retained as source bounds rather than
+silently tightened to values reconstructed from the defining formula.
+
+The Mathlib companion proves the four Taylor point windows once and uses one
+natural-power range-reduction theorem for every positive integer row. Exact
+rational side conditions then close all five cuts for each table member. One
+uniform indexed replay schema handles all 115 events, an honest rational-cut
+meet proves semantic intersection universally, and a single generic
+`ProofFrontend` fold must close every coordinate. Together with the retained
+row-25 theorem this establishes all 120 ordinary leaves. The fold elaborates
+all 115 closures, and first, middle, and last typed `Evidence` declarations
+also force representative emitted proof terms through the kernel.
+
+Only the ten logarithmic cells remain. Completing the generated family still
+requires checked brackets for both logarithms and a wrapper that maps arbitrary
+pinned `table_12` membership to the matching ordinary or logarithmic
+certificate. The 130-cell family stays `pending`; the exact 120-leaf ordinary
+tactic site has complete numerical coverage, while the two five-leaf
+logarithmic tactic records remain pending.
 
 Refreshing an upstream pin must regenerate and review the manifest. The
 inventory prevents blind spots; it does not make exact-source compatibility a
