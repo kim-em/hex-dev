@@ -329,6 +329,7 @@ lean_lib HexIntervalExperiment where
     `HexInterval.Experiment.PntExpTail,
     `HexInterval.Experiment.PntTable12,
     `HexInterval.Experiment.PntTable12Ordinary,
+    `HexInterval.Experiment.PntTable12Log,
     `HexInterval.Experiment.SinTen,
     `HexInterval.Experiment.SinTenInterval].map Glob.one
 
@@ -343,6 +344,7 @@ lean_lib HexIntervalMathlibExperiment where
     `HexIntervalMathlib.Experiment.PntExpTail,
     `HexIntervalMathlib.Experiment.PntTable12,
     `HexIntervalMathlib.Experiment.PntTable12Ordinary,
+    `HexIntervalMathlib.Experiment.PntTable12Log,
     `HexIntervalMathlib.Experiment.SinTen,
     `HexIntervalMathlib.Experiment.SinTenInterval].map Glob.one
 
