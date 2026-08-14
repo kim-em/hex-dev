@@ -3189,6 +3189,43 @@ available, conformance compares two independently proved Machin-style
 identities. The acceptance target is a 1,000-bit pi enclosure; the engine may
 cache and share it across every trigonometric node in a run.
 
+The first proof-side range-reduction canary toward the smaller
+`Real.sin 10 < 0` acceptance target produces that ordinary theorem without yet
+passing through the interval tactic. Its executable, Mathlib-free certificate
+names three provider choices: a rational constant enclosure, a combined
+integer-half-turn/quadrant reduction, and a local sine method. A
+Machin-owned replay theorem derives the coarse enclosure `3 < pi < 16/5`
+directly from Machin's arctangent identity and elementary kernel proofs that
+`x - x^3/3 < arctan x < x` for positive `x`. It deliberately does not consume
+Mathlib's existing decimal pi bounds, which are proved by a different
+square-root iteration. Range-reduction replay uses that enclosure to prove
+`0 < 10 - 3*pi < pi` and records the exact periodic reconstruction. The local
+sine replay sees only the reduced core interval, and final replay composes its
+positive result with the recorded odd-half-turn sign. Provider replay still
+authenticates the fixed Machin certificate, but reduction replay consumes its
+proved enclosure without matching the provider identity. A bounded numeric
+guard first limits every endpoint field to `32`, rejects zero denominators,
+then checks by cross multiplication that `3 * upper ≤ 10 ≤ 4 * lower`; those
+inequalities authenticate half-turn `3`. Reduction and local-method choices
+remain exact fixed-canary guards. Endpoint mutations outside the adequacy
+envelope, half-turns `2` or `4`, the wrong output sign, and the alternate local
+method return no evidence. The resulting theorem is ordinary kernel evidence
+and uses neither `native_decide` nor an unchecked arithmetic oracle.
+
+This canary resolves the first architectural risk: a formula can in principle
+own a checked constant enclosure strong enough to authenticate a reduction
+integer. It does not yet demonstrate a replaceable-provider registry or the
+general interval tactic. The orchestration is a fixed four-stage pipeline; the
+input `10` is hardcoded on the proof side; the local step proves only a strict
+sign and produces no endpoint enclosure; its rational certificate is exact
+fixed data rather than output from a precision-parametric series evaluator.
+The current minimal sign-fact lattice cannot express a strict-negative result,
+and the current goal parser recognizes only fixed non-strict targets, so
+routing this certificate through that frontend would falsely imply an
+integration that has not landed. Those are the next integration boundaries.
+The 1,000-bit provider and `cos (10^10)` remain acceptance targets, not
+delivered claims.
+
 #### Series as package-owned numerical algorithms
 
 A registered function may supply a power or Taylor series without teaching the
