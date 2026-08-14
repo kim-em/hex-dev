@@ -523,17 +523,16 @@ is designed for it now (the checker takes `W` as an argument rather than
 recomputing an inverse, which is the one decision that would be
 expensive to change later).
 
-One obligation that belongs in `hex-determinant` rather than here:
+The lemma this rests on is `Hex.Matrix.mul_eq_one_comm` in
+`HexDeterminant/Adjugate.lean`:
 
 ```lean
-theorem Matrix.mul_eq_one_comm {U W : Matrix R n n} : U * W = 1 → W * U = 1
+theorem mul_eq_one_comm {U W : Matrix R n n} (h : U * W = Matrix.identity n) :
+    W * U = Matrix.identity n
 ```
 
-for a commutative ring. `HexDeterminant/Adjugate.lean` has `det_mul` and
-`mul_adjugate` in matrix form, and the other side only entrywise as
-`adjugate_mul_apply`. The matrix-level `adjugate_mul` is not there and is
-part of this obligation rather than something to cite. It is adjugate
-theory, not Hermite theory, and two other libraries would use it.
+for a commutative ring, proved through `adjugate_mul` and `mul_adjugate`. It
+is adjugate theory rather than Hermite theory, which is why it lives there.
 
 ## Prerequisite changes in other libraries
 
@@ -557,7 +556,9 @@ identity without forming the product, and this library plus `hex-smith`
 are two more consumers. Promote it to `Hex.Matrix` next to
 `sameLatticeCert`, and move both to `hex-matrix` with `memLattice`.
 
-**`mul_eq_one_comm` belongs in `hex-determinant`**, as above.
+**`mul_eq_one_comm`** is done: it and the matrix-level `adjugate_mul` are in
+`HexDeterminant/Adjugate.lean`, with `smul_mul` added to `hex-matrix`
+underneath them.
 
 **`exactDiv` should move to `hex-arith`.** `HexBareiss/Bareiss.lean`
 defines the proof-free `exactDiv` with its `@[extern]` binding and proves

@@ -20,8 +20,12 @@ tracking and by `hex-bareiss` for composing row swaps into a permutation sign.
 - `det_rowScale : det (rowScale M i c) = c * det M`
 - `det_rowAdd : i ≠ j → det (rowAdd M i j c) = det M`
 - column linearity, Laplace cofactor expansion, the Cauchy-Binet column-tuple
-  product formula, the adjugate identity, and the Plücker / Desnanot-Jacobi
-  two-row identities
+  product formula, the adjugate identity on both sides (`mul_adjugate` and
+  `adjugate_mul`), and the Plücker / Desnanot-Jacobi two-row identities
+- `mul_eq_one_comm : U * W = 1 → W * U = 1` for a square matrix over a
+  commutative ring, proved through the adjugate. A one-sided inverse is
+  therefore enough to witness invertibility, which is what the integer
+  normal-form certificate checkers need.
 
 **Mathlib-free vs. Mathlib-bridge proof surface.** Theorems connecting `Hex.det`
 to Mathlib's `Matrix.det` (e.g. `det_eq : Hex.det M = Matrix.det (matrixEquiv M)`)
