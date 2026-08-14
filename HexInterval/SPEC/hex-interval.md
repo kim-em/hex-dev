@@ -1728,12 +1728,12 @@ A retained runtime result is not by itself a proof of closure: the leaf
 callback must turn it into the corresponding kernel-checked evidence before
 the bottom-up join can accept it.
 
-The useful ReLU canary now runs through this generic path. Its retained root
-has two exact live target children; the leaf callback invokes the unchanged
-generic chronology emitter with the side-specific proof registry, and the
+The distinct-assumption ReLU canary now runs through this generic path. Its
+retained root has two exact live target children; the leaf callback invokes the
+unchanged generic chronology emitter with the side-specific proof registry, and the
 split callback applies `replaySplit`. The resulting expression is assigned to
 an ordinary declaration and its axiom report is compile-checked. Separate
-negative tests reject the delivered fuel-limited partial tree, a fork whose
+negative tests reject the delivered step-limited partial tree, a fork whose
 two edges share one child, and an otherwise valid but unreachable extra node.
 For best-bound mode, unfinished leaves must contribute their inherited parent
 fact to the global hull; they never inherit a tighter sibling fact.

@@ -15,10 +15,12 @@ import HexInterval.Experiment.BranchProof
 import Mathlib.Lean.Elab.Tactic.Meta
 
 /-!
-# Branch-dependent function propagation conformance
+# Distinct-assumption function propagation conformance
 
 This module checks that a retained split tree whose children use different
-function-specific propagators can be folded into one kernel-checked proof.
+function-specific propagators can be folded into one kernel-checked proof. The
+conditional rules deliberately test branch-proof plumbing; the final ReLU
+theorem is unconditional and does not mathematically require branching.
 -/
 
 namespace Hex.IntervalMathlib.ReluConformance
@@ -75,10 +77,12 @@ private def boundEncoder : FrontendEncoder.Encoder Bound :=
 /-! ## Branch-dependent ReLU propagation
 
 Unlike exponential positivity, these two propagators are intentionally
-conditional.  The nonnegative-side rule proves `max x 0 = x` from `0 <= x`;
-the negative-side rule proves `max x 0 = 0` from `x < 0`.  The runtime and
-proof packages know those two function-specific facts, while branch creation,
-branch seeding, chronology replay, and the two-proof join stay generic. -/
+conditional.  The nonnegative-side rule proves the output fact by rewriting
+with `max x 0 = x` from `0 <= x`; the negative-side rule does so by rewriting
+with `max x 0 = 0` from `x < 0`.  This conditionality is a package-test design
+choice for an unconditional final theorem.  The runtime and proof packages
+know those two function-specific facts, while branch creation, branch seeding,
+chronology replay, and the two-proof join stay generic. -/
 
 private def reluKey : OpKey := { name := "relu-sign.max-zero" }
 
@@ -398,7 +402,7 @@ private def reluPrepared? :
       match result.stop with
       | .split plan =>
           match BranchStart.prepare branchLimits
-              (BranchStart.State.start { index := 0 }) 0 result.session plan
+              (BranchStart.State.start result.session) result.session plan
               reluInput.target signSplitter with
           | .ok (_, children) => some (ULift.up children)
           | .error _ => none
@@ -518,14 +522,11 @@ private def reluTree? (resources : BranchTree.Limits := treeLimits) :
 #guard
   reluPrepared?.any fun lifted =>
     let children := lifted.down
-    children.leftScope == ({ index := 1 } : Propagator.Policy.ScopeId) &&
+    children.depth == 1 && BranchProof.sameInput children.parent reluInput &&
+      children.leftScope == ({ index := 1 } : Propagator.Policy.ScopeId) &&
       children.rightScope == ({ index := 2 } : Propagator.Policy.ScopeId) &&
-      children.left.baseProgram == reluLeftInput.baseProgram &&
-      children.left.initialFacts == reluLeftInput.initialFacts &&
-      children.left.target == reluLeftInput.target &&
-      children.right.baseProgram == reluRightInput.baseProgram &&
-      children.right.initialFacts == reluRightInput.initialFacts &&
-      children.right.target == reluRightInput.target
+      BranchProof.sameInput children.left reluLeftInput &&
+      BranchProof.sameInput children.right reluRightInput
 
 private def reluTraceUses? (side : Bound) (input : CheckerInput Bound)
     (scope : Propagator.Policy.ScopeId) : Bool :=
@@ -536,8 +537,18 @@ private def reluTraceUses? (side : Bound) (input : CheckerInput Bound)
       | some trace =>
           match trace.events with
           | [.rule step] =>
-              step.assumptions == [reluBranchFact side] &&
+              trace.program == input.baseProgram &&
+                run.reached.seen ==
+                  ({ node := node 1, version := 1 } : SeenVersion) &&
+                run.reached.fact == .nonnegative &&
+                run.session.state.engine.facts == #[side, .nonnegative] &&
+                run.session.state.engine.versions == #[0, 1] &&
+                step.assumptions == [reluBranchFact side] &&
+                step.event.programVersion == 0 && step.event.node == node 1 &&
+                step.event.previous ==
+                  ({ node := node 1, version := 0 } : SeenVersion) &&
                 step.event.fact == .nonnegative &&
+                step.event.version == 1 && step.previous == .all &&
                 step.entry.replayKey ==
                   (if side == .nonnegative then reluNonnegativeSchema.key
                    else reluNegativeSchema.key)
@@ -610,6 +621,22 @@ private meta def emitReluChild (context : ProofFrontend.Context Bound Name)
     | throwError "interval_relu_split: child search failed"
   let some trace := Frontend.trace? run.session.state.engine run.session.arena
     | throwError "interval_relu_split: child chronology quotation failed"
+  let [.rule step] := trace.events
+    | throwError "interval_relu_split: child trace is not exactly one rule"
+  let expectedKey :=
+    if side == .nonnegative then reluNonnegativeSchema.key
+    else reluNegativeSchema.key
+  unless trace.program == input.baseProgram &&
+      run.reached.seen == ({ node := node 1, version := 1 } : SeenVersion) &&
+      run.reached.fact == .nonnegative &&
+      run.session.state.engine.facts == #[side, .nonnegative] &&
+      run.session.state.engine.versions == #[0, 1] &&
+      step.assumptions == [reluBranchFact side] &&
+      step.event.programVersion == 0 && step.event.node == node 1 &&
+      step.event.previous == ({ node := node 1, version := 0 } : SeenVersion) &&
+      step.event.fact == .nonnegative && step.event.version == 1 &&
+      step.previous == .all && step.entry.replayKey == expectedKey do
+    throwError "interval_relu_split: child result or quoted rule trace drifted"
   let state ← ProofFrontend.emitBranch context input seed trace.program
     trace.events run.registry.emit
   ProofFrontend.closeTarget context state run.reached.seen run.reached.fact input.target
@@ -641,11 +668,18 @@ private def reluJoined : Evidence
     let goal ← getMainGoal
     goal.assign (← emitReluSplit)
 
-/-- A genuinely branch-dependent arbitrary-function vertical: neither ReLU
-propagator fires before the zero split, and each child proof consumes its own
-strictly narrower source fact before the generic join closes the theorem. -/
-theorem tacticReluSplit (x : ℝ) : 0 ≤ max x 0 :=
+/-- An arbitrary-function vertical whose child proofs consume distinct split
+assumptions by construction: neither ReLU propagator fires before the zero
+split.  The final theorem is unconditional; conditionality here tests the
+branch proof plumbing rather than mathematical necessity. -/
+theorem reluSplit (x : ℝ) : 0 ≤ max x 0 :=
   closeRelu x reluJoined
+
+/--
+info: 'Hex.IntervalMathlib.ReluConformance.reluSplit' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms reluSplit
 
 private meta def emitReluTreeLeaf (source : BranchTree.Leaf Bound Unit)
     (run : TargetRun.Result Bound Unit) : MetaM Expr := do
@@ -711,14 +745,14 @@ private def reluTreeJoined : Evidence
     goal.assign (← BranchProof.emit reluProofLimits reluTreeEmitter tree
       (← goal.getType))
 
-theorem tacticReluTree (x : ℝ) : 0 ≤ max x 0 :=
+theorem reluTree (x : ℝ) : 0 ≤ max x 0 :=
   closeRelu x reluTreeJoined
 
 /--
-info: 'Hex.IntervalMathlib.ReluConformance.tacticReluTree' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: 'Hex.IntervalMathlib.ReluConformance.reluTree' depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs in
-#print axioms tacticReluTree
+#print axioms reluTree
 
 set_option linter.unusedTactic false in
 example : True := by
