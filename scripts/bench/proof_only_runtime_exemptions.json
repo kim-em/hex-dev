@@ -176,7 +176,7 @@
   {
     "path": "HexMatrix/Lattice.lean",
     "baseline_blob": null,
-    "current_blob": "58c2fa293341cb633041614e9e424e010cb142e0",
+    "current_blob": "d55dafa090e3a663d09197646b7961c7f80d77fd",
     "reason": "Receives memLattice and its three transport lemmas verbatim from HexLLL/Lattice.lean. memLattice is a Prop and the transport lemmas are theorems, so nothing here reaches code generation."
   },
   {
@@ -188,7 +188,7 @@
   {
     "path": "HexLLL/Lattice.lean",
     "baseline_blob": "673c8893b5a6f36ff606a9dd0648ffac4380765b",
-    "current_blob": "f98b3f48559a6a33b06d89b2ff61355fa83d41d7",
+    "current_blob": "c0dfee50e72e1c471f81d887378570859a9885f5",
     "reason": "Loses the four declarations that moved to HexMatrix/Lattice.lean and keeps independent and the row-operation lemmas with their bodies unchanged."
   },
   {
