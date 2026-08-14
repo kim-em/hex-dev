@@ -1773,8 +1773,7 @@ runtime and Mathlib semantic
 companion. Remaining acceptance tests include a theorem whose proof
 mathematically requires branching, a nested split, a child-local
 instantiation, a sibling-reference attack, a non-interior repeated split,
-per-leaf fuel exhaustion with no theorem emitted, and proof emission refusing
-the delivered step-limited partial tree.
+and per-leaf fuel exhaustion with no theorem emitted.
 
 ### Proof-producing frontend
 
