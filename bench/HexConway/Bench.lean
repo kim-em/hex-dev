@@ -58,7 +58,7 @@ structure EntryKey where
 
 /-- The committed Tier 1 Luebeck table keys, in source-table order. -/
 def committedEntryKeys : Array EntryKey := #[
-  ⟨2, 1⟩, ⟨2, 2⟩, ⟨2, 3⟩, ⟨2, 4⟩, ⟨2, 5⟩, ⟨2, 6⟩,
+  ⟨2, 1⟩, ⟨2, 2⟩, ⟨2, 3⟩, ⟨2, 4⟩, ⟨2, 5⟩, ⟨2, 6⟩, ⟨2, 7⟩, ⟨2, 8⟩,
   ⟨3, 1⟩, ⟨3, 2⟩, ⟨3, 3⟩, ⟨3, 4⟩, ⟨3, 5⟩, ⟨3, 6⟩,
   ⟨5, 1⟩, ⟨5, 2⟩, ⟨5, 3⟩, ⟨5, 4⟩, ⟨5, 5⟩, ⟨5, 6⟩,
   ⟨7, 1⟩, ⟨7, 2⟩, ⟨7, 3⟩, ⟨7, 4⟩, ⟨7, 5⟩, ⟨7, 6⟩,
@@ -210,10 +210,10 @@ setup_benchmark runLuebeckConwayPolynomialLookupChecksum ordinal =>
     tier1LookupComplexity ordinal
   where {
     paramFloor := 1
-    paramCeiling := 36
+    paramCeiling := 38
     paramSchedule := .custom #[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12,
       13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28,
-      29, 30, 31, 32, 33, 34, 35, 36]
+      29, 30, 31, 32, 33, 34, 35, 36, 37, 38]
     maxSecondsPerCall := 2.0
     targetInnerNanos := 100000000
     signalFloorMultiplier := 1.0

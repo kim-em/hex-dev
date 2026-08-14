@@ -3,6 +3,9 @@
 ## Bench Targets
 
 - `Hex.ConwayBench.runLuebeckConwayPolynomialLookupChecksum`: `tier1LookupComplexity ordinal`
+  (parameter domain widened from `1..36` to `1..38` when the binary column was
+  extended to degree 8; the verdict below predates that and needs a re-run on
+  `carica` before it can be cited for the current table)
 - `Hex.ConwayBench.runConwayPolySupported_2_1Checksum`: fixed canonical `SupportedEntry` recovery for `C(2, 1)`
 - `Hex.ConwayBench.runTier1Irreducibility_2_1Checksum`: fixed Rabin irreducibility check for imported `C(2, 1)`
 - `Hex.ConwayBench.runTier1Irreducibility_2_6Checksum`: fixed Rabin irreducibility check for imported `C(2, 6)`
@@ -17,6 +20,44 @@ surface only. Tier 2 full Conway compatibility verification and Tier 3
 on-demand Conway search are not implemented API surfaces in this phase slice,
 so they are not included in `HexConway.phase4.input_families` and have no
 Phase-4 bench targets yet.
+
+## Tier 1 proof budget
+
+`HexConway/SPEC/hex-conway.md` sizes the committed slice by proof-checking cost
+rather than by mathematical coverage: include as much of the Lübeck table as
+possible subject to the generated Tier 1 correctness theorems still checking in
+"only a few minutes". That cost is elaboration time, not runtime, so it is not
+one of the bench verdicts below; it is recorded here because it is the number
+that decides how wide the table may be.
+
+Measured with `lake build HexConway` on a warm dependency tree, AMD EPYC 9455
+under Linux x86_64. This is not `carica`, so these figures are not comparable
+with the scientific runs below and are useful only as a ratio between scopes.
+
+| Scope | Entries | `Table` | `Certificates` | `Api` |
+|---|---|---|---|---|
+| `2:6, 3:6, 5:6, 7:6, 11:6, 13:6` | 36 | 2.6s | 28s | 2.8s |
+| `2:8, 3:6, 5:6, 7:6, 11:6, 13:6` | 38 | 2.7s | 31s | 3.0s |
+
+Almost all of the cost is the 38 kernel `decide` calls in
+`HexConway/Certificates.lean` that replay the Rabin certificates, at 8M
+heartbeats each and 20M for four of them. Adding `C(2, 7)` and `C(2, 8)` cost
+about 3s between them, so the binary column is cheap: its residues are single
+bits and its certificates are correspondingly small.
+
+Cost grows with both the prime and the degree, which is why the committed scope
+now carries a maximum degree per prime rather than one bound for all of them,
+matching the `SLICE` in `scripts/oracle/update_luebeck_conway_cache.py`. The
+compiled Rabin checks in the verdicts below show the same shape across primes at
+fixed degree 6: `8.042 us` at `C(2, 1)` against `812.958 us` at `C(13, 6)`, a
+hundredfold spread that the kernel replay inherits and amplifies.
+
+At 31s for 38 entries the table sits well inside the "few minutes" rule, so the
+scope is bounded by what has been measured rather than by what is affordable.
+Widening further is mechanical: `rebuild_luebeckConwayPolynomial?` regenerates
+the coefficient table and `#conway_entry_source` emits the per-entry literal,
+lemmas, and certificate. The next widening should re-measure this table rather
+than extrapolate, because the odd-prime columns are where the cost is.
 
 ## Verdicts
 

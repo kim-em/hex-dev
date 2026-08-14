@@ -43,6 +43,8 @@ def emitAll : IO Unit := do
   emitAt 2 4
   emitAt 2 5
   emitAt 2 6
+  emitAt 2 7
+  emitAt 2 8
   emitAt 3 1
   emitAt 3 2
   emitAt 3 3

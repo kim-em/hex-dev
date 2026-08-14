@@ -8,11 +8,13 @@ import HexConway.Rebuild
 import HexConway.Table
 import HexConway.Certificates
 import HexConway.Api
+import HexConway.EntrySource
 
 /-!
 `HexConway` provides the Tier 1 imported-lookup API for the Conway-polynomial
-database: 36 committed table entries, for `p` in `2, 3, 5, 7, 11, 13` and `n`
-in `1` to `6`, each carrying a Lean-checked irreducibility certificate. Tier 2
+database: 38 committed table entries, for `p` in `2, 3, 5, 7, 11, 13`, running
+to degree `6` for the odd primes and to degree `8` for `p = 2`, each carrying a
+Lean-checked irreducibility certificate. Tier 2
 (primitivity and compatibility across the subfield lattice) and Tier 3
 (on-demand search) are specified but not yet implemented.
 
@@ -23,4 +25,12 @@ never reads the cache; uncommenting it offers the regenerated definition as a
 `Try this:` replacement. The module is imported here so that the command stays
 compiled and its rendering stays covered by the conformance checks, rather than
 rotting until the next time someone widens the table.
+
+`HexConway.EntrySource` covers the rest of a widening. The coefficient table is
+only the data; each entry also needs a polynomial literal, its monic and degree
+facts, a table-hit lemma, and a Rabin certificate. All of those are mechanical
+except the certificate, which has to be computed, so `#conway_entry_source`
+computes it and renders the whole block. It is imported here for the same reason
+as the command, and for the same reason it costs a build nothing: neither runs
+unless invoked.
 -/

@@ -1024,6 +1024,60 @@ private theorem luebeckConwayPolynomialOfCoeffs_13_6_monic :
   rw [hpoly]
   exact luebeckConwayPolynomial_13_6_monic
 
+/-- The coefficient-list constructor for the committed `C(2, 7)` Conway entry
+yields an irreducible `FpPoly`, via the `luebeckConwayPolynomial?` table hit and
+the literal's irreducibility proof. -/
+private theorem luebeckConwayPolynomialOfCoeffs_2_7_irreducible :
+    FpPoly.Irreducible (luebeckConwayPolynomialOfCoeffs 2 [1, 1, 0, 0, 0, 0, 0, 1]) := by
+  have hhit := luebeckConwayPolynomial?_hit_2_7
+  change some (luebeckConwayPolynomialOfCoeffs 2 [1, 1, 0, 0, 0, 0, 0, 1]) =
+    some luebeckConwayPolynomial_2_7 at hhit
+  have hpoly : luebeckConwayPolynomialOfCoeffs 2 [1, 1, 0, 0, 0, 0, 0, 1] =
+      luebeckConwayPolynomial_2_7 :=
+    Option.some.inj hhit
+  rw [hpoly]
+  exact luebeckConwayPolynomial_2_7_irreducible
+
+/-- The coefficient-list constructor for the committed `C(2, 7)` Conway entry
+yields a monic `FpPoly`. -/
+private theorem luebeckConwayPolynomialOfCoeffs_2_7_monic :
+    DensePoly.Monic (luebeckConwayPolynomialOfCoeffs 2 [1, 1, 0, 0, 0, 0, 0, 1]) := by
+  have hhit := luebeckConwayPolynomial?_hit_2_7
+  change some (luebeckConwayPolynomialOfCoeffs 2 [1, 1, 0, 0, 0, 0, 0, 1]) =
+    some luebeckConwayPolynomial_2_7 at hhit
+  have hpoly : luebeckConwayPolynomialOfCoeffs 2 [1, 1, 0, 0, 0, 0, 0, 1] =
+      luebeckConwayPolynomial_2_7 :=
+    Option.some.inj hhit
+  rw [hpoly]
+  exact luebeckConwayPolynomial_2_7_monic
+
+/-- The coefficient-list constructor for the committed `C(2, 8)` Conway entry
+yields an irreducible `FpPoly`, via the `luebeckConwayPolynomial?` table hit and
+the literal's irreducibility proof. -/
+private theorem luebeckConwayPolynomialOfCoeffs_2_8_irreducible :
+    FpPoly.Irreducible (luebeckConwayPolynomialOfCoeffs 2 [1, 0, 1, 1, 1, 0, 0, 0, 1]) := by
+  have hhit := luebeckConwayPolynomial?_hit_2_8
+  change some (luebeckConwayPolynomialOfCoeffs 2 [1, 0, 1, 1, 1, 0, 0, 0, 1]) =
+    some luebeckConwayPolynomial_2_8 at hhit
+  have hpoly : luebeckConwayPolynomialOfCoeffs 2 [1, 0, 1, 1, 1, 0, 0, 0, 1] =
+      luebeckConwayPolynomial_2_8 :=
+    Option.some.inj hhit
+  rw [hpoly]
+  exact luebeckConwayPolynomial_2_8_irreducible
+
+/-- The coefficient-list constructor for the committed `C(2, 8)` Conway entry
+yields a monic `FpPoly`. -/
+private theorem luebeckConwayPolynomialOfCoeffs_2_8_monic :
+    DensePoly.Monic (luebeckConwayPolynomialOfCoeffs 2 [1, 0, 1, 1, 1, 0, 0, 0, 1]) := by
+  have hhit := luebeckConwayPolynomial?_hit_2_8
+  change some (luebeckConwayPolynomialOfCoeffs 2 [1, 0, 1, 1, 1, 0, 0, 0, 1]) =
+    some luebeckConwayPolynomial_2_8 at hhit
+  have hpoly : luebeckConwayPolynomialOfCoeffs 2 [1, 0, 1, 1, 1, 0, 0, 0, 1] =
+      luebeckConwayPolynomial_2_8 :=
+    Option.some.inj hhit
+  rw [hpoly]
+  exact luebeckConwayPolynomial_2_8_monic
+
 /-- Every committed imported entry in the current Tier 1 slice comes with
 an irreducibility witness. -/
 @[grind →] theorem luebeckConwayPolynomial?_irreducible
@@ -1048,6 +1102,10 @@ an irreducibility witness. -/
     exact luebeckConwayPolynomialOfCoeffs_2_5_irreducible
   · cases hcoeffs
     exact luebeckConwayPolynomialOfCoeffs_2_6_irreducible
+  · cases hcoeffs
+    exact luebeckConwayPolynomialOfCoeffs_2_7_irreducible
+  · cases hcoeffs
+    exact luebeckConwayPolynomialOfCoeffs_2_8_irreducible
   · cases hcoeffs
     exact luebeckConwayPolynomialOfCoeffs_3_1_irreducible
   · cases hcoeffs
@@ -1133,6 +1191,10 @@ an irreducibility witness. -/
     exact luebeckConwayPolynomialOfCoeffs_2_5_monic
   · cases hcoeffs
     exact luebeckConwayPolynomialOfCoeffs_2_6_monic
+  · cases hcoeffs
+    exact luebeckConwayPolynomialOfCoeffs_2_7_monic
+  · cases hcoeffs
+    exact luebeckConwayPolynomialOfCoeffs_2_8_monic
   · cases hcoeffs
     exact luebeckConwayPolynomialOfCoeffs_3_1_monic
   · cases hcoeffs
@@ -1235,6 +1297,18 @@ def supportedEntry_2_6 : SupportedEntry 2 6 :=
   ⟨luebeckConwayPolynomial_2_6,
     supportedEntry_2_1.prime,
     luebeckConwayPolynomial?_hit_2_6⟩
+
+/-- The current committed table supports `C(2, 7)`. -/
+def supportedEntry_2_7 : SupportedEntry 2 7 :=
+  ⟨luebeckConwayPolynomial_2_7,
+    supportedEntry_2_1.prime,
+    luebeckConwayPolynomial?_hit_2_7⟩
+
+/-- The current committed table supports `C(2, 8)`. -/
+def supportedEntry_2_8 : SupportedEntry 2 8 :=
+  ⟨luebeckConwayPolynomial_2_8,
+    supportedEntry_2_1.prime,
+    luebeckConwayPolynomial?_hit_2_8⟩
 
 /-- The current committed table supports `C(3, 1)`. -/
 def supportedEntry_3_1 : SupportedEntry 3 1 :=

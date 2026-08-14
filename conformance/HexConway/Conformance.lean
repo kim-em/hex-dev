@@ -85,8 +85,12 @@ private def coeffs? (p n : Nat) [ZMod64.Bounds p] : Option (List Nat) :=
 #guard coeffs? 13 6 = some [2, 11, 11, 10, 0, 0, 1]
 
 #guard luebeckConwayPolynomial? 2 0 = (none : Option (FpPoly 2))
-#guard luebeckConwayPolynomial? 2 7 = (none : Option (FpPoly 2))
+#guard luebeckConwayPolynomial? 2 9 = (none : Option (FpPoly 2))
+#guard luebeckConwayPolynomial? 3 7 = (none : Option (FpPoly 3))
 #guard luebeckConwayPolynomial? 17 1 = (none : Option (FpPoly 17))
+
+#guard coeffs? 2 7 = some [1, 1, 0, 0, 0, 0, 0, 1]
+#guard coeffs? 2 8 = some [1, 0, 1, 1, 1, 0, 0, 0, 1]
 
 #guard coeffNats luebeckConwayPolynomial_2_1 = [1, 1]
 #guard supportedEntry_2_1.poly = luebeckConwayPolynomial_2_1
@@ -433,13 +437,19 @@ private def sampleEntries : Array Rebuild.Entry :=
 
 -- The scope filter orders by prime then degree, so the emitted `match` reads in
 -- Lübeck's order however the cache happens to list its entries.
-#guard (Rebuild.selectScope sampleEntries [2, 3] 2).map (fun e => (e.p, e.n))
+#guard (Rebuild.selectScope sampleEntries [(2, 2), (3, 2)]).map (fun e => (e.p, e.n))
     = #[(2, 1), (2, 2), (3, 2)]
 
--- Degrees above the requested maximum are dropped, and so are primes outside
--- the scope, so widening one axis never silently widens the other.
-#guard (Rebuild.selectScope sampleEntries [2] 6).map (fun e => (e.p, e.n))
+-- Primes outside the scope are dropped entirely, and so are degrees above that
+-- prime's maximum.
+#guard (Rebuild.selectScope sampleEntries [(2, 6)]).map (fun e => (e.p, e.n))
     = #[(2, 1), (2, 2)]
+
+-- Each prime carries its own maximum, so raising the binary column does not
+-- drag the others up with it. This is the shape the committed scope uses: the
+-- binary certificates are the cheapest to check, so that column runs further.
+#guard (Rebuild.selectScope sampleEntries [(2, 7), (3, 1)]).map (fun e => (e.p, e.n))
+    = #[(2, 1), (2, 2), (2, 7)]
 
 private def expectedRender : String :=
   "-- Regenerate this definition with the command on the next line, which\n"
@@ -452,13 +462,34 @@ private def expectedRender : String :=
 
 -- Rendering emits the commented-out invocation above the definition, so the
 -- file it replaces stays self-rebuilding.
-#guard Rebuild.renderTable (Rebuild.selectScope sampleEntries [5] 1) "INVOCATION"
+#guard Rebuild.renderTable (Rebuild.selectScope sampleEntries [(5, 1)]) "INVOCATION"
     = expectedRender
 
 -- The rendered invocation round-trips the scope it was given, so the comment
 -- the replacement leaves behind is the command that produced it.
-#guard Rebuild.renderInvocation [2, 3, 5] 6 "cache.json"
-    = "rebuild_luebeckConwayPolynomial? primes [2, 3, 5] degrees 6 from \"cache.json\""
+#guard Rebuild.renderInvocation [(2, 8), (3, 6)] "cache.json"
+    = "rebuild_luebeckConwayPolynomial? scope [2:8, 3:6] from \"cache.json\""
+
+/-! # Entry generation
+
+`#conway_entry_source` computes the Rabin certificate for a candidate entry.
+These checks run that computation on committed entries and confirm the result
+validates under the same predicate the emitted kernel check uses, so a
+regression in the generator surfaces here rather than as an unexplained `decide`
+failure the next time the table is widened. -/
+
+-- The binary column, whose certificates are the cheapest.
+#guard (EntrySource.entryCertData 2 [1, 1, 0, 0, 0, 0, 0, 1]).any
+    (EntrySource.entryCertValidates 2 [1, 1, 0, 0, 0, 0, 0, 1])
+
+-- An odd prime at the top of its committed column, where the certificate is
+-- widest.
+#guard (EntrySource.entryCertData 13 [2, 11, 11, 10, 0, 0, 1]).any
+    (EntrySource.entryCertValidates 13 [2, 11, 11, 10, 0, 0, 1])
+
+-- A reducible polynomial has no certificate, so a mistranscribed entry is
+-- rejected by the generator rather than emitted and left for the kernel.
+#guard (EntrySource.entryCertData 2 [1, 0, 1]).isNone
 
 end ConwayConformance
 end Conway

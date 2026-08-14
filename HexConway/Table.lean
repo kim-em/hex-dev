@@ -25,7 +25,7 @@ instance boundsThirteen : ZMod64.Bounds 13 := ⟨by decide, by decide⟩
 
 -- Regenerate this definition with the command on the next line, which
 -- rewrites it from the committed Lübeck cache:
--- rebuild_luebeckConwayPolynomial? primes [2, 3, 5, 7, 11, 13] degrees 6 from "scripts/oracle/luebeck_conway_cache.json"
+-- rebuild_luebeckConwayPolynomial? scope [2:8, 3:6, 5:6, 7:6, 11:6, 13:6] from "scripts/oracle/luebeck_conway_cache.json"
 /-- Committed Lübeck Conway-table coefficients, stored ascending by degree. -/
 def luebeckConwayCoeffs? : Nat → Nat → Option (List Nat)
   | 2, 1 => some [1, 1]
@@ -34,6 +34,8 @@ def luebeckConwayCoeffs? : Nat → Nat → Option (List Nat)
   | 2, 4 => some [1, 1, 0, 0, 1]
   | 2, 5 => some [1, 0, 1, 0, 0, 1]
   | 2, 6 => some [1, 1, 0, 1, 1, 0, 1]
+  | 2, 7 => some [1, 1, 0, 0, 0, 0, 0, 1]
+  | 2, 8 => some [1, 0, 1, 1, 1, 0, 0, 0, 1]
   | 3, 1 => some [1, 1]
   | 3, 2 => some [2, 2, 1]
   | 3, 3 => some [1, 2, 0, 1]
@@ -122,10 +124,11 @@ returns `none`. -/
     luebeckConwayPolynomial? 2 0 = (none : Option (FpPoly 2)) :=
   rfl
 
-/-- Degree `7` over `p = 2` is outside the committed table, so the lookup
-returns `none`. -/
-@[simp, grind =] theorem luebeckConwayPolynomial?_miss_two_seven :
-    luebeckConwayPolynomial? 2 7 = (none : Option (FpPoly 2)) :=
+/-- Degree `9` over `p = 2` is outside the committed table, so the lookup
+returns `none`. The binary column runs to degree `8`, one past the other
+primes, because its certificates are the cheapest to check. -/
+@[simp, grind =] theorem luebeckConwayPolynomial?_miss_two_nine :
+    luebeckConwayPolynomial? 2 9 = (none : Option (FpPoly 2)) :=
   rfl
 
 /-- Degree `7` over `p = 3` is outside the committed table, so the lookup
@@ -1469,6 +1472,89 @@ rewriting the table lookup to the direct `luebeckConwayPolynomial_13_6` form. -/
   | 6 => rfl
   | _ + 7 => rfl
 
+
+/-- The committed `C(2, 7)` Luebeck entry, stored ascending by degree. -/
+def luebeckConwayPolynomial_2_7 : FpPoly 2 :=
+  { coeffs := #[(1 : ZMod64 2), 1, 0, 0, 0, 0, 0, 1]
+    normalized := by
+      right
+      decide }
+
+/-- The committed `C(2, 7)` entry is monic. -/
+@[simp, grind .] theorem luebeckConwayPolynomial_2_7_monic :
+    DensePoly.Monic luebeckConwayPolynomial_2_7 := by
+  rfl
+
+/-- The committed `C(2, 7)` entry has positive degree. -/
+@[simp, grind .] theorem luebeckConwayPolynomial_2_7_degree_pos :
+    0 < FpPoly.degree luebeckConwayPolynomial_2_7 := by
+  decide
+
+/-- The committed `C(2, 8)` Luebeck entry, stored ascending by degree. -/
+def luebeckConwayPolynomial_2_8 : FpPoly 2 :=
+  { coeffs := #[(1 : ZMod64 2), 0, 1, 1, 1, 0, 0, 0, 1]
+    normalized := by
+      right
+      decide }
+
+/-- The committed `C(2, 8)` entry is monic. -/
+@[simp, grind .] theorem luebeckConwayPolynomial_2_8_monic :
+    DensePoly.Monic luebeckConwayPolynomial_2_8 := by
+  rfl
+
+/-- The committed `C(2, 8)` entry has positive degree. -/
+@[simp, grind .] theorem luebeckConwayPolynomial_2_8_degree_pos :
+    0 < FpPoly.degree luebeckConwayPolynomial_2_8 := by
+  decide
+
+/-- `luebeckConwayPolynomial? 2 7` resolves to the committed `C(2, 7)`
+literal, rewriting the table lookup to the direct `luebeckConwayPolynomial_2_7` form. -/
+@[simp, grind =] theorem luebeckConwayPolynomial?_hit_2_7 :
+    luebeckConwayPolynomial? 2 7 = some luebeckConwayPolynomial_2_7 := by
+  show some (luebeckConwayPolynomialOfCoeffs 2 [1, 1, 0, 0, 0, 0, 0, 1]) = some luebeckConwayPolynomial_2_7
+  congr 1
+  apply DensePoly.ext_coeff
+  intro k
+  rw [show DensePoly.coeff (luebeckConwayPolynomialOfCoeffs 2 [1, 1, 0, 0, 0, 0, 0, 1]) k =
+        ([1, 1, 0, 0, 0, 0, 0, 1].toArray.map (fun m => ZMod64.ofNat 2 m)).getD k
+          (Zero.zero : ZMod64 2) from
+      DensePoly.coeff_ofCoeffs _ k]
+  simp [List.toArray, Array.map, DensePoly.coeff, luebeckConwayPolynomial_2_7]
+  match k with
+  | 0 => rfl
+  | 1 => rfl
+  | 2 => rfl
+  | 3 => rfl
+  | 4 => rfl
+  | 5 => rfl
+  | 6 => rfl
+  | 7 => rfl
+  | _ + 8 => rfl
+
+/-- `luebeckConwayPolynomial? 2 8` resolves to the committed `C(2, 8)`
+literal, rewriting the table lookup to the direct `luebeckConwayPolynomial_2_8` form. -/
+@[simp, grind =] theorem luebeckConwayPolynomial?_hit_2_8 :
+    luebeckConwayPolynomial? 2 8 = some luebeckConwayPolynomial_2_8 := by
+  show some (luebeckConwayPolynomialOfCoeffs 2 [1, 0, 1, 1, 1, 0, 0, 0, 1]) = some luebeckConwayPolynomial_2_8
+  congr 1
+  apply DensePoly.ext_coeff
+  intro k
+  rw [show DensePoly.coeff (luebeckConwayPolynomialOfCoeffs 2 [1, 0, 1, 1, 1, 0, 0, 0, 1]) k =
+        ([1, 0, 1, 1, 1, 0, 0, 0, 1].toArray.map (fun m => ZMod64.ofNat 2 m)).getD k
+          (Zero.zero : ZMod64 2) from
+      DensePoly.coeff_ofCoeffs _ k]
+  simp [List.toArray, Array.map, DensePoly.coeff, luebeckConwayPolynomial_2_8]
+  match k with
+  | 0 => rfl
+  | 1 => rfl
+  | 2 => rfl
+  | 3 => rfl
+  | 4 => rfl
+  | 5 => rfl
+  | 6 => rfl
+  | 7 => rfl
+  | 8 => rfl
+  | _ + 9 => rfl
 
 end Conway
 

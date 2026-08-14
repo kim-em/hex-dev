@@ -67,17 +67,25 @@ def readCache (path : System.FilePath) : IO (Array Entry) := do
     pure { p, n, coeffs }
 
 /-- Keep the entries inside the requested scope, ordered by prime then degree so
-the generated `match` reads in the same order as Lübeck's table. -/
-def selectScope (entries : Array Entry) (primes : List Nat) (maxDegree : Nat) :
-    Array Entry :=
-  let kept := entries.filter fun e => primes.contains e.p && 1 ≤ e.n && e.n ≤ maxDegree
+the generated `match` reads in the same order as Lübeck's table.
+
+The scope gives a maximum degree per prime rather than one maximum for all of
+them, matching the `SLICE` in `scripts/oracle/update_luebeck_conway_cache.py`.
+The proof cost of an entry grows with both the prime and the degree, so a
+uniform bound would either stop the small primes short of what the budget
+affords or push the large ones past it. -/
+def selectScope (entries : Array Entry) (scope : List (Nat × Nat)) : Array Entry :=
+  let kept := entries.filter fun e =>
+    match scope.find? (fun s => s.1 = e.p) with
+    | some (_, maxDegree) => 1 ≤ e.n && e.n ≤ maxDegree
+    | none => false
   kept.qsort fun a b => if a.p = b.p then a.n < b.n else a.p < b.p
 
 /-- Render the scope back as the command that produced it, for the commented-out
 line the replacement carries. -/
-def renderInvocation (primes : List Nat) (maxDegree : Nat) (path : String) : String :=
-  let primeList := String.intercalate ", " (primes.map toString)
-  s!"rebuild_luebeckConwayPolynomial? primes [{primeList}] degrees {maxDegree} from \"{path}\""
+def renderInvocation (scope : List (Nat × Nat)) (path : String) : String :=
+  let pairs := String.intercalate ", " (scope.map fun s => s!"{s.1}:{s.2}")
+  s!"rebuild_luebeckConwayPolynomial? scope [{pairs}] from \"{path}\""
 
 /-- Render the regenerated coefficient table, including the commented-out
 invocation above it. -/
@@ -93,24 +101,26 @@ def renderTable (entries : Array Entry) (invocation : String) : String :=
     acc ++ s!"  | {e.p}, {e.n} => some [{coeffs}]\n"
   header ++ rows ++ "  | _, _ => none"
 
-/-- Scope specification: the primes to keep and the largest degree to keep for
-each of them. Degrees below the maximum that Lübeck's table happens not to list
-are simply absent, so a gap in the source is tolerated rather than fatal. -/
+/-- One scope entry, written `p:maxDegree`. -/
+syntax scopeEntry := num ":" num
+
+/-- Scope specification: a maximum degree per prime, written
+`scope [2:8, 3:6]`. Degrees below the maximum that Lübeck's table happens not to
+list are simply absent, so a gap in the source is tolerated rather than fatal. -/
 syntax (name := rebuildLuebeck)
-  "rebuild_luebeckConwayPolynomial?" &"primes" "[" num,* "]" &"degrees" num
+  "rebuild_luebeckConwayPolynomial?" &"scope" "[" scopeEntry,* "]"
     (&"from" str)? command : command
 
 @[command_elab rebuildLuebeck]
 def elabRebuild : CommandElab := fun stx => do
-  let primeStx := stx[3].getSepArgs
-  let primeScope := primeStx.toList.map fun s => s.isNatLit?.getD 0
-  let maxDegree := stx[6].isNatLit?.getD 0
-  let pathArg := stx[7]
+  let scope := stx[3].getSepArgs.toList.map fun s =>
+    (s[0].isNatLit?.getD 0, s[2].isNatLit?.getD 0)
+  let pathArg := stx[5]
   let defaultPath := "scripts/oracle/luebeck_conway_cache.json"
   let path :=
     if pathArg.isNone then defaultPath
     else pathArg[0][1].isStrLit?.getD defaultPath
-  let inner := stx[8]
+  let inner := stx[6]
 
   -- The command is only meaningful in front of the definition it regenerates;
   -- checking that here turns a misplaced invocation into an error at the
@@ -127,20 +137,20 @@ def elabRebuild : CommandElab := fun stx => do
   -- says while a rebuild is only ever offered as a suggestion.
   elabCommand inner
 
-  if primeScope.isEmpty then
+  if scope.isEmpty then
     throwError "rebuild_luebeckConwayPolynomial? needs at least one prime in its scope."
 
   let entries ← readCache path
-  let selected := selectScope entries primeScope maxDegree
+  let selected := selectScope entries scope
   if selected.isEmpty then
     throwError "the requested scope selects no entries from '{path}'."
-  let invocation := renderInvocation primeScope maxDegree path
+  let invocation := renderInvocation scope path
   let replacement := renderTable selected invocation
   liftTermElabM do
     Lean.Meta.Tactic.TryThis.addSuggestion stx
       { suggestion := .string replacement
         postInfo? := some
-          s!"\n\n{selected.size} entries for primes \
-             {String.intercalate ", " (primeScope.map toString)} through degree {maxDegree}." }
+          s!"\n\n{selected.size} entries over scope \
+             {String.intercalate ", " (scope.map fun s => s!"{s.1}:{s.2}")}." }
 
 end Hex.Conway.Rebuild
