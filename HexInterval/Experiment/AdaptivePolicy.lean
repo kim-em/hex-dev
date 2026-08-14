@@ -14,10 +14,11 @@ public import HexInterval.Experiment.StagedPolicy
 # A feedback-guided interval-search policy
 
 This policy refines `StagedPolicy` without inspecting facts, operation names,
-or package keys.  It learns only from engine-authenticated observations: actual
-fact-version changes and deterministic logical work.  Stable application sites
-retain useful history across changed input versions, while the exact invocation
-snapshot prevents an old fixed point from suppressing newly woken work.
+or package keys. It learns from observations attached to engine-authenticated
+events: engine-derived fact-version changes and bounded, package-reported
+logical work. Stable application sites retain useful history across changed
+input versions, while the exact invocation snapshot prevents an old fixed
+point from suppressing newly woken work.
 
 The scores choose search order only.  Every selected offer is revalidated by
 `PolicySession`, and proof replay is independent of this module.
@@ -52,7 +53,7 @@ inductive Snapshot where
   | equality (equality : EqualityWorkKey)
   deriving DecidableEq
 
-/-- Exact, bounded observations accumulated for one selectable transition. -/
+/-- Bounded search observations accumulated for one selectable transition. -/
 structure Record where
   key : Key
   runs : Nat := 0
@@ -70,6 +71,8 @@ structure State where
 
 def State.initial (config : Config := {}) : State := { config }
 
+/-- Package-reported deterministic work is a bounded scheduling hint, never
+proof evidence or an engine-independent measurement. -/
 def work (cost : CostObservation) : Nat :=
   cost.arithmeticWork + cost.visitedEntries + cost.estimatedProofNodes
 

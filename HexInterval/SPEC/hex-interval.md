@@ -3382,11 +3382,14 @@ diagnostic inputs for later scoring, not evidence.
 The first feedback-guided variant keeps the same function- and
 representation-independent stages but accumulates observations at a stable
 engine-owned application or equality site. Its bounded integer score rewards
-actual installed fact-version changes relative to deterministic arithmetic,
-traversal, proof-node, or equality-narrowing work. The record also retains the
-last complete invocation snapshot. A repeated `noChange` on that exact snapshot
-subtracts a configurable penalty, while changed input versions reset that
-consecutive fixed-point penalty and receive at least the untried optimism score.
+engine-derived installed fact-version changes relative to bounded,
+package-reported deterministic arithmetic, traversal, proof-node, or
+equality-narrowing work. That reported work is only a search hint and is not
+proof evidence or an independently measured engine cost. The record also
+retains the last complete invocation snapshot. A repeated `noChange` on that
+exact snapshot subtracts a configurable penalty, while changed input versions
+reset that consecutive fixed-point penalty and receive at least the untried
+optimism score.
 Thus useful history survives an ordinary wake-up without letting an obsolete
 fixed point suppress newly eligible work. The shipped coefficients are covered
 by conformance: one unit-cost improvement outranks an untried peer, a repeated
