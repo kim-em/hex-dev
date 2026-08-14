@@ -3208,6 +3208,16 @@ generic expression search.
 
 #### Certified logarithm tables
 
+The initial source-pinned PNT+ probe is intentionally narrower than this
+table-building target. A Mathlib-free package recognizes the exact input fact
+for `2` and emits a package-owned opaque fact through the generic policy
+session. Its Mathlib companion interprets that fact as PNT+'s six-decimal
+two-sided `log 2` window and replays the event from stronger existing Mathlib
+point bounds. This validates exact-input dependency, package-owned fact replay,
+and ordinary theorem closure. It is not a generic logarithm propagator, does
+not compute a series, and does not satisfy any of the precision, batching,
+ordering, or cache requirements below.
+
 The table-building acceptance program constructs enclosures for
 
 `Real.log (1 + (i : ℝ) / 256)`, for every `i : ℕ` with `i ≤ 256`,

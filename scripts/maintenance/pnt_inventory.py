@@ -29,6 +29,7 @@ from pathlib import Path
 from typing import Any, Iterable
 
 
+REPO_ROOT = Path(__file__).resolve().parents[2]
 PNT_COMMIT = "21998bb6196b56789f72a52656a781a75e134eb0"
 LEANCERT_COMMIT = "58edbea59458e9b010262238eaca27b6e0240dae"
 MATHLIB_COMMIT = "905b95818eb32af7874a58b427f50c1711a5e96c"
@@ -950,6 +951,16 @@ def require_migrations(records: list[dict[str, Any]]) -> None:
                 raise InventoryError(
                     f"record {index}: {status} requires nonempty evidence entries"
                 )
+            for item in evidence:
+                reference = item.split(":", 1)[0]
+                if "/" not in reference:
+                    continue
+                path = Path(reference)
+                if path.is_absolute() or ".." in path.parts \
+                        or not (REPO_ROOT / path).is_file():
+                    raise InventoryError(
+                        f"record {index}: evidence path does not exist: {reference}"
+                    )
             if status == "accepted-after-rewrite":
                 if not isinstance(migration.get("rewrite"), str) \
                         or not migration["rewrite"].strip():
@@ -1038,7 +1049,7 @@ def require_source_match(
 
 
 def default_fixture() -> Path:
-    return Path(__file__).resolve().parents[2] / (
+    return REPO_ROOT / (
         "conformance-fixtures/HexIntervalMathlib/pnt-inventory.jsonl"
     )
 
