@@ -326,22 +326,20 @@ def sineFactSchema : PackedFactSchema semantics where
   decode := fun body =>
     if body == [MixedFunctions.Bound.unit.code] then some () else none
   replay := fun _ _ context _ =>
-    if programEq : context.program = extendedProgram then
-      if proposedFact : context.proposed.fact = .unit then
-        match found : context.program.node? context.proposed.node with
-        | some instruction =>
-            if operation : instruction.op = ({ index := 2 } : OpId) then
-              match arguments : instruction.args with
-              | [input] =>
-                  some
-                    { proof := by
-                        rw [factWith context.proposed proposedFact]
-                        exact sineEntails context.program context.assumptions
-                          context.proposed.node instruction input found operation arguments }
-              | _ => none
-            else none
-        | none => none
-      else none
+    if proposedFact : context.proposed.fact = .unit then
+      match found : context.program.node? context.proposed.node with
+      | some instruction =>
+          if operation : instruction.op = ({ index := 2 } : OpId) then
+            match arguments : instruction.args with
+            | [input] =>
+                some
+                  { proof := by
+                      rw [factWith context.proposed proposedFact]
+                      exact sineEntails context.program context.assumptions
+                        context.proposed.node instruction input found operation arguments }
+            | _ => none
+          else none
+      | none => none
     else none
 
 def negationFactSchema : PackedFactSchema semantics where
@@ -351,26 +349,24 @@ def negationFactSchema : PackedFactSchema semantics where
   decode := fun body =>
     if body == [MixedFunctions.Bound.unit.code] then some () else none
   replay := fun _ _ context _ =>
-    if programEq : context.program = extendedProgram then
-      if proposedFact : context.proposed.fact = .unit then
-        match found : context.program.node? context.proposed.node with
-        | some instruction =>
-            if operation : instruction.op = ({ index := 1 } : OpId) then
-              match arguments : instruction.args with
-              | [input] =>
-                  if exactAssumptions :
-                      context.assumptions = [{ node := input, fact := .unit }] then
-                    some
-                      { proof := by
-                          rw [factWith context.proposed proposedFact]
-                          exact negationEntails context.program context.assumptions
-                            context.proposed.node instruction input found operation
-                            arguments exactAssumptions }
-                  else none
-              | _ => none
-            else none
-        | none => none
-      else none
+    if proposedFact : context.proposed.fact = .unit then
+      match found : context.program.node? context.proposed.node with
+      | some instruction =>
+          if operation : instruction.op = ({ index := 1 } : OpId) then
+            match arguments : instruction.args with
+            | [input] =>
+                if exactAssumptions :
+                    context.assumptions = [{ node := input, fact := .unit }] then
+                  some
+                    { proof := by
+                        rw [factWith context.proposed proposedFact]
+                        exact negationEntails context.program context.assumptions
+                          context.proposed.node instruction input found operation
+                          arguments exactAssumptions }
+                else none
+            | _ => none
+          else none
+      | none => none
     else none
 
 def expFactSchema : PackedFactSchema semantics where
@@ -380,26 +376,24 @@ def expFactSchema : PackedFactSchema semantics where
   decode := fun body =>
     if body == [MixedFunctions.Bound.atMostThree.code] then some () else none
   replay := fun _ _ context _ =>
-    if programEq : context.program = extendedProgram then
-      if proposedFact : context.proposed.fact = .atMostThree then
-        match found : context.program.node? context.proposed.node with
-        | some instruction =>
-            if operation : instruction.op = ({ index := 3 } : OpId) then
-              match arguments : instruction.args with
-              | [input] =>
-                  if exactAssumptions :
-                      context.assumptions = [{ node := input, fact := .unit }] then
-                    some
-                      { proof := by
-                          rw [factWith context.proposed proposedFact]
-                          exact expEntails context.program context.assumptions
-                            context.proposed.node instruction input found operation
-                            arguments exactAssumptions }
-                  else none
-              | _ => none
-            else none
-        | none => none
-      else none
+    if proposedFact : context.proposed.fact = .atMostThree then
+      match found : context.program.node? context.proposed.node with
+      | some instruction =>
+          if operation : instruction.op = ({ index := 3 } : OpId) then
+            match arguments : instruction.args with
+            | [input] =>
+                if exactAssumptions :
+                    context.assumptions = [{ node := input, fact := .unit }] then
+                  some
+                    { proof := by
+                        rw [factWith context.proposed proposedFact]
+                        exact expEntails context.program context.assumptions
+                          context.proposed.node instruction input found operation
+                          arguments exactAssumptions }
+                else none
+            | _ => none
+          else none
+      | none => none
     else none
 
 def oddnessInstanceSchema : PackedInstanceSchema semantics where

@@ -169,33 +169,37 @@ private def firstOffer : TargetRun.Controller Bound Unit :=
       | some offer => .select offer state
       | none => .stop state }
 
-private structure Fixture where
+private structure Run where
   result : TargetRun.Result Bound Unit
   reached : TargetRun.Reached Bound
-  registry : ProofRegistry.Registry semantics Name
 
-private def runInput? (input : CheckerInput Bound) : Option Fixture := do
+private def runSession? (input : CheckerInput Bound) : Option Run := do
   let .ok session := PolicySession.Session.start factDomain input.baseProgram
       packages input.initialFacts limits
     | none
   let result := TargetRun.drive factDomain input.target.node input.target.fact
     firstOffer limits.policy.maxDecisions session ()
   let .target reached := result.stop | none
-  let .ok registry := ProofRegistry.build result.session.registry proofPackages
+  some { result, reached }
+
+private structure Fixture where
+  result : TargetRun.Result Bound Unit
+  reached : TargetRun.Reached Bound
+  registry : ProofRegistry.Registry semantics Name
+
+private def runInput? (input : CheckerInput Bound) : Option Fixture := do
+  let some run := runSession? input | none
+  let .ok registry := ProofRegistry.build run.result.session.registry proofPackages
     | none
-  some { result, reached, registry }
+  some { result := run.result, reached := run.reached, registry }
 
 private def fixedInput : CheckerInput Bound :=
   checkerInput
 
-private def liveTrace? : Option (Frontend.Trace Bound) := do
-  let .ok session := PolicySession.Session.start factDomain fixedInput.baseProgram
-      packages fixedInput.initialFacts limits
-    | none
-  let result := TargetRun.drive factDomain fixedInput.target.node fixedInput.target.fact
-    firstOffer limits.policy.maxDecisions session ()
-  let .target _ := result.stop | none
-  Frontend.trace? result.session.state.engine result.session.arena
+private def liveTrace? : Option (Frontend.Trace Bound) :=
+  match runSession? fixedInput with
+  | some run => Frontend.trace? run.result.session.state.engine run.result.session.arena
+  | none => none
 
 private def exactRuleInput (step : RuleStep Bound) (expected : SeenVersion) : Bool :=
   match step.event.cause with
@@ -339,9 +343,10 @@ mixed-function goal through the generic proof frontend. -/
 theorem mixedSinNegExp (x : ℝ) : Real.exp (Real.sin (-x)) ≤ 3 := by
   interval_mixed_instance
 
+/-- error: interval_mixed_instance: reifier produced an unexpected input -/
+#guard_msgs in
 example (x : ℝ) : Real.exp (Real.sin x) ≤ 3 := by
-  fail_if_success interval_mixed_instance
-  simpa using mixedSinNegExp (-x)
+  interval_mixed_instance
 
 /--
 info: 'Hex.IntervalMathlib.MixedInstantiationConformance.mixedSinNegExp' depends on axioms: [propext,
@@ -350,9 +355,5 @@ info: 'Hex.IntervalMathlib.MixedInstantiationConformance.mixedSinNegExp' depends
 -/
 #guard_msgs in
 #print axioms mixedSinNegExp
-
-example (_x : ℝ) : True := by
-  fail_if_success interval_mixed_instance
-  trivial
 
 end Hex.IntervalMathlib.MixedInstantiationConformance

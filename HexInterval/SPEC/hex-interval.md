@@ -1804,7 +1804,9 @@ That acceptance case is now executable for
 `Real.exp (Real.sin (-x)) ≤ 3`. The caller graph contains only `x`, `-x`,
 `sin (-x)`, and the outer exponential. The sine forward rule deliberately
 declines an input whose instruction is negation, so direct propagation cannot
-close the target. A sine-owned network matcher recognizes the oddness shape
+close the target. This is a search-side canary restriction that forces the
+matcher path, not a mathematical limitation of the sine replay schema. A
+sine-owned network matcher recognizes the oddness shape
 and adds `sin x`, `-(sin x)`, and an equality between the latter expression
 and `sin (-x)`. The resulting successful chronology is fixed by a live guard:
 the instance event comes first; independent sine and negation packages derive
