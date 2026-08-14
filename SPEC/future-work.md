@@ -595,35 +595,30 @@ does, or required up front. Matching `field_simp` is probably right.
 with the nonvanishing proof, for use inside larger computations rather
 than as a goal-closing tactic.
 
-**Better primality.** The tree has `Hex.Nat.Prime` with executable trial
-division and a soundness theorem in `HexArith/Nat/Prime.lean`, and
-hex-berlekamp-zassenhaus carries 94 stored candidate primes in
-`PrimeSelection.lean` for modulus selection. The mechanism is in place;
-what it lacks is scale.
+**Better primality.** Specified in
+[hex-primality](Libraries/hex-primality.md). The diagnosis this file
+made -- the mechanism is in place in `HexArith/Nat/Prime.lean` and in
+hex-berlekamp-zassenhaus's 94 stored candidate primes, and what it
+lacks is scale -- is what that SPEC starts from. Mathlib's baseline is
+still the `norm_num` extension in
+`Mathlib/Tactic/NormNum/Prime.lean`.
 
-Bhavik Mehta has primality, prime sieves, and elliptic curve
-computations in flight, so Hex should adopt rather than duplicate.
-"Formal prime certificates in Lean 4",
-https://github.com/b-mehta/PrimeCert, by Bhavik Mehta and Kenny Lau, is
-kernel-only (no `native_decide`, so compatible with the project proof
-policy), reaches substantially larger primes than trial division, and is
-optimised for proving one specific large prime. Depending on it beats
-reimplementing Pocklington; benchmark it in this repository before
-committing to any figure for CI. Mathlib's baseline is the `norm_num`
-extension in `Mathlib/Tactic/NormNum/Prime.lean`.
-
-Initial segments are what Hex actually consumes, and the cheap technique
-there is a kernel-reducible trial division written with `Nat.rec` /
-`List.rec` and `Nat.mod` / `Nat.ble`, so `decide +kernel` runs it on the
-kernel's GMP-backed `Nat` operations: bootstrap the primes below `10^4`
-from the primes below `10^2`, then check individual candidates against
-the stored list. A stored initial segment plus fast per-prime checks
-against it is the shape the Conway polynomial tables and modulus
-selection want, and it extends the existing stored candidate list.
-Timing targets belong in the SPEC that adopts this, measured here.
-
-Statements of the form "every prime in `[1, x]` satisfies `P`" are a
-different problem, probably wanting a sieve, and remain open.
+Three corrections to what this file said before that SPEC was written,
+all found by reading https://github.com/b-mehta/PrimeCert (Bhavik Mehta
+and Kenny Lau) at commit `924f63d9` rather than its description. "Depending on it beats
+reimplementing Pocklington" is not available as stated: PrimeCert
+requires Mathlib, so only a `-mathlib` companion may depend on it, and
+the Mathlib-free layer -- which is where `ZMod64.PrimeModulus`, BZ prime
+selection, and `GFq` construction all live -- has to prove Pocklington
+itself. Its toolchain is `v4.33.0` against this tree's `v4.32.0-rc1`, so
+even the companion cannot depend on it today. And initial-segment sieves
+do not "remain open": `PrimeCert/Sieve.lean` is a kernel-reducible
+bitset Sieve of Eratosthenes with no imports at all, exercised at
+`10^8`, which is a strictly better technique than the
+bootstrap-by-trial-division this file proposed. Adopting rather than
+duplicating still applies; it means contributing upstream and
+reimplementing the Mathlib-free executable core with attribution, not
+taking a dependency.
 
 **Integer factorization.** Trial division, then Pollard rho with
 Brent's cycle detection, Pollard p−1, and ECM for medium factors; a
