@@ -24,16 +24,18 @@ tag := "tutorial-aes-field-story"
 %%%
 
 AES does not treat a byte as a number. It treats it as an element of the
-finite field with 256 elements, and its two least obvious operations,
-`MixColumns` and the S-box, are field multiplication and field inversion.
-That is why AES multiplication tables look nothing like ordinary
-multiplication: `0x57` times `0x83` is `0xC1`, and `0x57` plus `0x83` is
-`0xD4`, which is just their exclusive-or.
+finite field with 256 elements. `MixColumns` is a fixed linear map on each
+four-byte column, built from field additions and multiplications by the
+constants `0x01`, `0x02`, and `0x03`; the S-box is field inversion followed
+by an affine transformation. That is why AES arithmetic looks nothing like
+ordinary arithmetic on bytes: `0x57` times `0x83` is `0xC1`, and `0x57` plus
+`0x83` is `0xD4`, which is just their exclusive-or.
 
-This page builds that field with {ref "hex-gf2"}[`HexGF2`], runs the
-worked examples from the AES specification through it, and shows that the
-answers agree. Everything here is executable: each check below runs when
-the manual is built, so the page cannot drift away from the library.
+This page builds that field with {ref "hex-gf2"}[`HexGF2`] and runs the
+worked examples from the AES specification through it. Every computation
+shown in a Lean block below is evaluated rather than transcribed; what that
+does and does not establish is set out in
+{ref "tutorial-aes-field-boundary"}[the closing section].
 
 # Bytes as polynomials
 %%%
@@ -93,7 +95,9 @@ abbrev AES : Type :=
   GF2n 8 0x1B (by decide) (by decide)
     GF2Poly.aes_modulus_irreducible
 
-/-- Read a byte as a field element. -/
+/-- Read a word as a field element, reducing it
+modulo the AES modulus. Inputs above `0xFF` are
+not rejected; their higher terms reduce back in. -/
 def byte (w : UInt64) : AES := GF2n.reduce w
 
 end AESTutorial
@@ -114,6 +118,9 @@ namespace AESTutorial
 
 #guard (byte 0x57 + byte 0x83).val = 0xD4
 #guard (0x57 ^^^ 0x83 : UInt64) = 0xD4
+
+-- The product from the opening paragraph.
+#guard (byte 0x57 * byte 0x83).val = 0xC1
 
 -- Every element is its own additive inverse, so
 -- doubling in this field is not multiplication by
@@ -182,20 +189,24 @@ namespace AESTutorial
 end AESTutorial
 ```
 
-`HexGF2` does not actually multiply this way. It uses a carry-less
-multiply and then reduces, which is one hardware instruction and a few
-XORs rather than a loop over bits; see
-{ref "hex-gf2-clmul"}[Carry-less multiplication]. The point of the second
-check is that the fast route and the specification's route agree.
+`HexGF2` does not actually multiply this way. It takes the carry-less
+product of the two words and then reduces modulo the modulus; see
+{ref "hex-gf2-clmul"}[Carry-less multiplication]. The carry-less step has a
+portable shift-and-XOR implementation and an optional platform intrinsic
+(`PCLMULQDQ` on x86-64, `PMULL` on aarch64), selected at compile time by
+preprocessor guards, so which one a given build runs depends on the flags it
+was compiled with. The point of the second check is that whichever route runs
+agrees with the specification's.
 
-# The S-box: inversion
+# The S-box inversion step
 %%%
 tag := "tutorial-aes-field-sbox"
 %%%
 
-The AES S-box is a field inversion followed by an affine map over `𝔽₂`.
-The affine part is bit-shuffling; the part that needs a field is the
-inversion, and it exists only because the modulus is irreducible.
+The AES S-box is a field inversion followed by an affine transformation
+over `𝔽₂`: a fixed `𝔽₂`-linear map on the eight bits, then XOR with the
+constant `0x63`. The affine part needs no field structure. The inversion
+does, and it exists only because the modulus is irreducible.
 
 The specification's example is that `0x53` and `0xCA` are inverse bytes.
 
@@ -208,7 +219,7 @@ namespace AESTutorial
 #guard (byte 0x53)⁻¹.val = 0xCA
 #guard (byte 0xCA)⁻¹.val = 0x53
 
--- The S-box sends zero to zero, so inversion is
+-- The inversion stage sends zero to zero, so it is
 -- extended by 0⁻¹ = 0 rather than left undefined.
 #guard (byte 0)⁻¹.val = 0
 
@@ -216,11 +227,12 @@ end AESTutorial
 ```
 
 That last line is worth pausing on. `0⁻¹ = 0` is a junk value: zero has no
-inverse. It is the convention `Lean.Grind.Field` uses, so that inversion is
-a total function and the field laws can be stated without side conditions,
-and it happens to be exactly what AES specifies for the S-box at zero.
-The laws that mention inverses, such as
-{name}`Hex.GF2n.mul_inv_cancel`, carry a nonzero hypothesis.
+inverse. It is the convention {name}`Lean.Grind.Field` uses, so that inversion
+is a total function and the field laws can be stated without side conditions,
+and it agrees with what AES specifies for the *inversion stage* at zero. It
+does not agree with the S-box, which sends `0x00` to `0x63`: the affine
+transformation runs afterwards and moves it. The laws that mention inverses,
+such as {name}`Hex.GF2n.mul_inv_cancel`, carry a nonzero hypothesis.
 
 # Inversion by exponentiation
 %%%
@@ -244,8 +256,9 @@ namespace AESTutorial
 end AESTutorial
 ```
 
-{name}`Hex.GF2n.pow` is square-and-multiply, so the 254th power costs
-about eight multiplications rather than 254. The project forbids the
+{name}`Hex.GF2n.pow` is square-and-multiply, so the 254th power costs a
+number of field multiplications logarithmic in the exponent: eight squarings
+and seven conditional multiplications, rather than 254 multiplications. The project forbids the
 textbook linear recursion for exactly this reason: the exponents that
 arise in finite-field work are the size of the field, not the size of a
 loop counter one is willing to run.
@@ -260,21 +273,36 @@ order. Both give the same answer, as the checks above and in
 tag := "tutorial-aes-field-boundary"
 %%%
 
-Every `#guard` on this page is evaluated when the manual is built, so the
-byte values are computed by the same code a caller would run, not
-transcribed.
+Four different kinds of evidence appear on this page, and they are not
+interchangeable.
 
-What that does *not* do is prove anything about AES. It shows that this
-field arithmetic reproduces the worked examples in the specification,
-which is a test, not a theorem. The one genuine theorem in play is
-{name}`Hex.GF2Poly.aes_modulus_irreducible`, and it earns its keep: it is
-what makes `AES` above a legal type, and so what makes inversion total on
-nonzero bytes.
+The `#guard`s are tests. They are evaluated when the manual is built, so the
+values are computed by the same code a caller would run rather than
+transcribed, and a change that broke them would fail the build. They are
+checked by Lean's evaluator rather than by the kernel, and they say nothing
+about inputs they do not mention.
 
-The arithmetic is Mathlib-free. If you want to connect it to Mathlib's
-finite field theory, `HexGF2Mathlib` provides the ring equivalence with
-the generic quotient-field construction, along with finiteness and
-cardinality for the packed representation.
+{name}`Hex.GF2Poly.aes_modulus_irreducible` is a theorem, and the one this
+page leans on hardest: it is what makes `AES` above a legal type. It is proved
+by replaying a Rabin certificate in the kernel, not by `#guard`.
+
+{name}`Hex.GF2n.mul_inv_cancel` is a theorem too, and the one that makes
+inversion meaningful. Note what irreducibility does and does not buy here:
+`GF2n.inv` is a total function on every input, including zero, by the
+junk-value convention. What irreducibility gives is that its result is a
+genuine inverse whenever the input is nonzero.
+
+The compiled carry-less multiply is *trusted*. `Hex.clmul` carries an
+`@[extern]` attribute, and {name}`Hex.clmul_eq_pureClmul` pins its logical
+semantics to the pure-Lean {name}`Hex.pureClmul`, but the correctness of the C
+implementation the compiled binary actually calls is an assumption, on the
+same footing as the GMP externs elsewhere in the project.
+
+The arithmetic is Mathlib-free. If you want to connect it to Mathlib's finite
+field theory, `HexGF2Mathlib` provides the ring equivalence with the generic
+quotient-field construction, along with finiteness and cardinality for the
+packed representation. That cardinality is where `2⁸` is actually proved; this
+page only ever exhibits elements.
 
 # Cross-references
 %%%
@@ -290,6 +318,9 @@ tag := "tutorial-aes-field-cross-references"
   any prime, which is what `GF(2⁸)` here is a packed special case of.
 * {ref "hex-gfq"}[`HexGFq`] chooses moduli automatically from the Conway
   table. AES does not use the Conway polynomial for degree 8, so this page
-  passes the Rijndael modulus explicitly; `GF2q 8` would give the
-  canonical field, which is a different presentation of the same
-  256-element field.
+  passes the Rijndael modulus explicitly. `GF2q 8` is available and gives
+  the canonical presentation, over the Conway modulus
+  `x⁸ + x⁴ + x³ + x² + 1` (low word `0x1D`) rather than Rijndael's
+  `x⁸ + x⁴ + x³ + x + 1` (`0x1B`). The two are different irreducibles of
+  the same degree, so the fields are isomorphic but not equal, and AES
+  bytes only mean what they should under the Rijndael one.
