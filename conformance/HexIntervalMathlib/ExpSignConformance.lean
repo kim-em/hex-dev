@@ -277,6 +277,40 @@ private def nestedInput : CheckerInput Bound :=
     initialFacts := #[.all, .all, .all]
     target := { node := node 2, fact := .nonnegative } }
 
+private def nonnegativeEvidence :
+    Evidence
+      (semantics.Entails program baseFacts
+        { node := node 1, fact := .nonnegative }) :=
+  { proof :=
+      expEntails program baseFacts (node 1) expInstruction (node 0)
+        (by rfl) (by rfl) (by rfl) }
+
+private def weakerTarget? :
+    Option
+      (Evidence
+        (semantics.Entails program baseFacts
+          { node := node 1, fact := .all })) :=
+  ProofEmitter.closeFact boundSchema program baseFacts (node 1)
+    .nonnegative .all nonnegativeEvidence
+
+/-- A strictly stronger installed fact closes a weaker requested target
+through the fact-domain intersection theorem, not the runtime target test. -/
+theorem closesWeaker :
+    semantics.Entails program baseFacts { node := node 1, fact := .all } :=
+  (replayGet weakerTarget? (by rfl)).proof
+
+private def topEvidence :
+    Evidence
+      (semantics.Entails program baseFacts
+        { node := node 1, fact := .all }) := by
+  simpa [boundSchema, expInstruction] using
+    (ProofEmitter.topFact boundSchema program baseFacts (node 1)
+      expInstruction (by rfl))
+
+#guard
+  (ProofEmitter.closeFact boundSchema program baseFacts (node 1)
+    .all .nonnegative topEvidence).isNone
+
 #guard
   runInput? nestedInput |>.any fun fixture =>
     fixture.reached.seen == ({ node := node 2, version := 1 } : SeenVersion) &&
@@ -472,10 +506,8 @@ private meta def emitInput (result : GoalFrontend.Result Bound)
     throwError "interval_exp: exponential rule unexpectedly changed the graph"
   let state ← ProofFrontend.emitTrace (inputContext result base)
     trace.program trace.events fixture.registry.emit
-  let some proof :=
-      ProofFrontend.findProof? state.known fixture.reached.seen result.input.target.fact
-    | throwError "interval_exp: dynamic target fact was not emitted"
-  pure proof
+  ProofFrontend.closeTarget (inputContext result base) state fixture.reached.seen
+    fixture.reached.fact result.input.target
 
 private def expTarget (x : ℝ) : Prop :=
   0 ≤ Real.exp x
