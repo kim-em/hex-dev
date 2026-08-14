@@ -23,7 +23,13 @@ def Matrix.memLattice (b : Matrix Int n m) (v : Vector Int m) : Prop :=
   ∃ c : Vector Int n, Matrix.vecMul c b = v
 ```
 
-`Matrix.independent b` says that the rows are linearly independent.
+`memLattice`, its transport lemmas, and the packed certificate checkers
+`mulEqCert` and `sameLatticeCert` are defined in `hex-matrix`, since none of
+them mentions lattice reduction. What stays here is `Matrix.independent b`,
+which says the rows are linearly independent and needs the Gram determinants,
+together with the lemmas showing that an adjacent row swap and a size-reduction
+row combination each preserve the lattice, which need the row-operation
+multiplicative laws from `hex-row-reduce`.
 `isLLLReduced b δ η` combines:
 
 1. size reduction, `|μᵢⱼ| ≤ η` for `j < i`;

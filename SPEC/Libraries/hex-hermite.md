@@ -472,8 +472,8 @@ against.
 
 ## Certificates and certified dispatch
 
-`hex-lll` already has the machinery this library needs, and it should be
-reused rather than reinvented. `Hex.Internal.mulEqCert U A C` decides
+`hex-matrix` already has the machinery this library needs, and it should be
+reused rather than reinvented. `Hex.Matrix.mulEqCert U A C` decides
 `U * A = C` through a Kronecker-substitution digit packing, so the
 product matrix is never formed, and `mulEqCert_iff` proves it correct.
 `Hex.Matrix.sameLatticeCert` composes two of those into a same-lattice
@@ -486,8 +486,8 @@ The Hermite certificate is three checks:
 `U` and inverse transform `W`. -/
 def hnfCert (A H : Matrix Int n m) (U W : Matrix Int n n)
     (r : Nat) (piv : Vector (Fin m) r) : Bool :=
-  Hex.Internal.mulEqCert U A H
-    && Hex.Internal.mulEqCert U W (Matrix.identity n)
+  Hex.Matrix.mulEqCert U A H
+    && Hex.Matrix.mulEqCert U W (Matrix.identity n)
     && isHNFForm H r piv
 
 theorem hnfCert_sound :

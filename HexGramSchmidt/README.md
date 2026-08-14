@@ -85,7 +85,7 @@ key lattice estimate, `normSq_latticeVec_ge_min_basis_normSq`:
 ```lean
 theorem normSq_latticeVec_ge_min_basis_normSq
     (b : Matrix Int n m) (_hli : independent b)
-    (v : Vector Int m) (hv : memLattice b v) (hv' : v ≠ 0) :
+    (v : Vector Int m) (hv : Matrix.memLattice b v) (hv' : v ≠ 0) :
     ∃ i : Fin n,
       ((basis b).row i).normSq ≤ ((v.normSq : Int) : Rat)
 ```

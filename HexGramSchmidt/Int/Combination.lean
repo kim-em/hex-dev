@@ -392,7 +392,7 @@ lower-bounds an arbitrary lattice vector by an explicit basis quantity, the
 starting point for relating short lattice vectors to the input basis. -/
 theorem normSq_latticeVec_ge_min_basis_normSq
     (b : Matrix Int n m) (_hli : independent b)
-    (v : Vector Int m) (hv : memLattice b v) (hv' : v ≠ 0) :
+    (v : Vector Int m) (hv : Matrix.memLattice b v) (hv' : v ≠ 0) :
     ∃ i : Fin n,
       ((basis b).row i).normSq ≤ ((v.normSq : Int) : Rat) := by
   rcases hv with ⟨c, hcv⟩
@@ -455,7 +455,7 @@ This is the survivor-span entry point: the vanishing-above-`k` data localizes
 test on the top index `k`. -/
 theorem exists_top_index_normSq_le_of_memLattice
     (b : Matrix Int n m) (_hli : independent b)
-    (v : Vector Int m) (hv : memLattice b v) (hv' : v ≠ 0) :
+    (v : Vector Int m) (hv : Matrix.memLattice b v) (hv' : v ≠ 0) :
     ∃ (k : Fin n) (c : Vector Int n),
       Matrix.vecMul c b = v ∧
       c[k] ≠ 0 ∧
