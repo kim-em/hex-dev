@@ -1657,16 +1657,19 @@ theorem.
 
 `ProofRegistry.Package` also contributes optional fact recognizers and
 refutation handles. Lookup accepts exactly one matching handle; no match or an
-ambiguous match fails closed. The generic frontend scans the retained current
-fact and version arrays, requires that exact pair in its chronology evidence
-table, applies the selected schema, and produces the child target by ordinary
-elimination. Its first mixed join splits the exponential output: the left
-child closes directly from `.nonnegative`, while the right child starts from
-`.negative`, replays the exponential proposal to derive `.empty`, and closes
-only through `replayRefute`. The runtime contradiction result selects this
-path but is not an argument to any emitted proof combinator. An unexplored,
-fuel-limited, resource-limited, incomplete, or merely saturated child
-likewise does not close the parent target.
+ambiguous match fails closed. The low-level frontend treats its supplied fact
+and version arrays as untrusted selector data; the live child passes its exact
+retained engine arrays. For any selected fact, the frontend requires the same
+node, version, and value in its chronology evidence table before it applies the
+schema and produces the child target by ordinary elimination. Arbitrary arrays
+cannot create evidence, but this helper does not itself certify their identity
+with an engine snapshot. Its first mixed join splits the exponential output:
+the left child closes directly from `.nonnegative`, while the right child
+starts from `.negative`, replays the exponential proposal to derive `.empty`,
+and closes only through `replayRefute`. The runtime contradiction result
+selects this path but is not an argument to any emitted proof combinator. An
+unexplored, fuel-limited, resource-limited, incomplete, or merely saturated
+child likewise does not close the parent target.
 
 The later proof-plan sketch represents an endpoint contradiction by two
 `FactId`s, whereas `replayRefute` deliberately consumes one exact established

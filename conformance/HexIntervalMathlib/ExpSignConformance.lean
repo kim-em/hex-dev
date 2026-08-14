@@ -1199,7 +1199,7 @@ private def outputPrepared? : Option (ULift.{1, 0} (BranchStart.Children Bound))
       match result.stop with
       | .split plan =>
           match BranchStart.prepare branchLimits
-              (BranchStart.State.start { index := 0 }) 0 result.session plan
+              (BranchStart.State.start result.session) result.session plan
               checkerInput.target signSplitter with
           | .ok (_, children) => some (ULift.up children)
           | .error _ => none
@@ -1399,6 +1399,19 @@ impossible, and only then participates in the parent join. -/
 theorem tacticExpRefutedBranch (x : ℝ) : 0 ≤ Real.exp x := by
   interval_exp_refute
 
+/--
+info: 'Hex.IntervalMathlib.ExpSignConformance.tacticExpRefutedBranch' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+-/
+#guard_msgs in
+#print axioms tacticExpRefutedBranch
+
+/-- Failure on an unsupported target restores the tactic state. -/
+example (x : ℝ) : x = x := by
+  fail_if_success interval_exp_refute
+  rfl
+
 set_option linter.unusedTactic false in
 example : True := by
   run_tac
@@ -1411,6 +1424,11 @@ example : True := by
       | throwError "interval_exp_refute test: child quotation failed"
     let state ← ProofFrontend.emitBranch outputRightContext outputRightInput
       (mkConst ``outputRightSeed) trace.program trace.events registry.emit
+    let changed := result.session.state.engine.facts.set! 1 .all
+    if (← observing? <| ProofFrontend.refuteCurrent outputRightContext state
+        registry.refute changed result.session.state.engine.versions
+        outputRightInput.target).isSome then
+      throwError "interval_exp_refute test: changed bottom fact was accepted"
     let stale := result.session.state.engine.versions.set! 1 0
     if (← observing? <| ProofFrontend.refuteCurrent outputRightContext state
         registry.refute result.session.state.engine.facts stale

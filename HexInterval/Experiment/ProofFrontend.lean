@@ -183,9 +183,13 @@ def refuteFact [BEq Fact] (context : Context Fact Handle)
         exactFact, targetTerm, established.proof]
   replayResult result
 
-/-- Find a currently retained refutable fact, require its exact version in the
-proof table, and emit arbitrary target closure from its semantic impossibility.
-Runtime contradiction state is intentionally not an argument. -/
+/-- Select a refutable fact from supplied fact/version snapshot arrays, require
+that exact node, version, and fact in the proof table, and emit arbitrary target
+closure from its semantic impossibility.
+
+The arrays are untrusted selector data; the live caller supplies its retained
+engine arrays. Runtime contradiction state is intentionally not an argument,
+and only the chronology proof found in `state` enters the emitted theorem. -/
 def refuteCurrent [BEq Fact] (context : Context Fact Handle)
     (state : State Fact) (table : RefuteTable Fact Handle)
     (facts : Array Fact) (versions : Array Nat) (target : NodeFact Fact) :
