@@ -246,6 +246,24 @@ private def assumptionRejected :=
 
 #guard assumptionRejected.isNone
 
+private def swappedAssumptions : RuleStep DyadicInterval.Fact :=
+  { step with assumptions :=
+      [{ node := node 1, fact := rightRange }, { node := node 0, fact := leftRange }] }
+
+private def swappedInputs : Evidence
+    (InputsSound Arithmetic.semantics program base swappedAssumptions.assumptions) := by
+  simpa [swappedAssumptions, step, event] using
+    (EntailsList.cons rightSound
+      (EntailsList.cons leftSound EntailsList.nil)).sound
+
+private def swappedRejected :=
+  ProofEmitter.replayRule (Arithmetic.subFactSchema endpointLimit)
+    (Arithmetic.domain endpointLimit) checkerInput program
+    (ProgramPrefix.refl program) base swappedAssumptions
+    (by simpa [swappedAssumptions, step, event] using previousSound) swappedInputs
+
+#guard swappedRejected.isNone
+
 private def trailingPayload : RuleStep DyadicInterval.Fact :=
   { step with entry := { entry with body := [0] } }
 
