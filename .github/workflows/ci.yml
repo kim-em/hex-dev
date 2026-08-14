@@ -56,6 +56,10 @@ jobs:
           python3 scripts/ci/check_benches_mathlib_free.py
       - name: Verify conformance matrix invariant
         run: python3 scripts/conformance_targets.py --check
+      - name: Validate committed PNT+ inventory (offline)
+        run: |
+          python3 -m unittest scripts/maintenance/test_pnt_inventory.py
+          python3 scripts/maintenance/pnt_inventory.py --check
       # --- System + Python deps (union of the bench comparator and the oracles) ---
       - name: Install system dependencies
         run: |
