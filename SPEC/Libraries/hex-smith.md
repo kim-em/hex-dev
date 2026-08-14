@@ -393,11 +393,11 @@ The same shape as [hex-hermite](hex-hermite.md), with one more product:
 /-- Accepts `(S, U, W, V, X, T)` as a Smith normal form of `A`, where
 `T = U * A` is the intermediate product. -/
 def snfCert (A : Matrix Int n m) (S : SmithData n m) (T : Matrix Int n m) : Bool :=
-  Hex.Internal.mulEqCert S.left A T
-    && Hex.Internal.mulEqCert S.right.transpose T.transpose
+  Hex.Matrix.mulEqCert S.left A T
+    && Hex.Matrix.mulEqCert S.right.transpose T.transpose
           (diagMatrix S.diag n m).transpose
-    && Hex.Internal.mulEqCert S.left S.leftInv (Matrix.identity n)
-    && Hex.Internal.mulEqCert S.right S.rightInv (Matrix.identity m)
+    && Hex.Matrix.mulEqCert S.left S.leftInv (Matrix.identity n)
+    && Hex.Matrix.mulEqCert S.right S.rightInv (Matrix.identity m)
     && isSNFShape S
 
 theorem snfCert_sound : snfCert A S T = true → IsSNF A S

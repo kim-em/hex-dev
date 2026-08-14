@@ -7,7 +7,6 @@ Authors: Kim Morrison
 module
 
 public import HexGramSchmidt
-public import HexMatrix
 public import HexMatrix.Lattice
 
 public section
