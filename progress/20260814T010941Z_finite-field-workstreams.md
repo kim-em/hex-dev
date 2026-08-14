@@ -49,11 +49,14 @@ single `trans` and loses a file-scoped 800k heartbeat bump. Four `noncomputable`
 markers turn out to be unnecessary. Net 78 lines removed.
 
 **`ff-audit-w6`** (#9249) — `scripts/check_phase7.py` enforces the Phase 7
-chapter and anchored-tutorial obligations, which nothing checked. The
+chapter and anchored-tutorial obligations, which nothing checked.
+`PLAN/Phase7.md` gains the rule the checker enforces for Mathlib companions,
+which was previously an unwritten convention the code merely followed. The
 Kummer-Dedekind tutorial is re-anchored from `hex-gfq` to
 `hex-berlekamp-zassenhaus`, matching its own primary-library list. `HexGF2`
-rolls back to 6 because its AES tutorial does not exist; `HexGFq` stays at 7
-because re-anchoring leaves it with no outstanding tutorial.
+and `HexBasic` roll back to 6, the first for a missing tutorial and the second
+for a missing chapter; `HexGFq` stays at 7 because re-anchoring leaves it with
+no outstanding tutorial.
 
 ## Current frontier
 

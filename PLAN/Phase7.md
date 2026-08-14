@@ -36,6 +36,16 @@ Per-library chapter content lives at
 `HexManual/Chapters/HexArith.lean`). The top-level `HexManual.lean`
 imports all chapters.
 
+A `mathlib: true` companion does not get its own chapter. Its Phase 7
+deliverable is a `# The Mathlib correspondence` section inside its
+computational partner's chapter: `hex-poly-mathlib` is documented in
+`Chapters/HexPoly.lean`, `hex-gfq-mathlib` in `Chapters/HexGFq.lean`. A
+companion's correspondence is only meaningful beside the executable API it
+corresponds to, and splitting the two across chapters would make the reader
+hold both open at once. `scripts/check_phase7.py` enforces this: for a
+companion at `done_through: 7` it requires that section in the partner's
+chapter, and for every other library it requires the chapter itself.
+
 `HexManual.lean` splits those chapters in two: released libraries are
 included at the top level, and the rest sit under "Draft sections for
 unreleased libraries". Which side a chapter belongs on is decided by
@@ -127,12 +137,12 @@ a single library for Phase 7 bookkeeping (even if it draws on several):
 | Prime splitting (Kummer-Dedekind) | `hex-berlekamp-zassenhaus` | `HexManual/Tutorials/PrimeSplitting.lean` |
 | LLL in cryptanalysis (Coppersmith toy) | `hex-lll` | `HexManual/Tutorials/Coppersmith.lean` |
 
-The prime-splitting tutorial was previously anchored to `hex-gfq`, which is
-not one of its primary libraries: `SPEC/tutorials.md` names `hex-poly-z`,
-`hex-berlekamp-zassenhaus`, and Mathlib's `NumberTheory.KummerDedekind`. It
-factors an integer polynomial modulo a prime and reads the result as splitting
-data, so it is gated on integer factorization rather than on the finite-field
-constructors, and it is anchored accordingly.
+The prime-splitting tutorial belongs to the integer-polynomial and
+modular-factorization pipeline: it factors a number field's defining polynomial
+modulo a prime and reads the result as splitting data. `SPEC/tutorials.md`
+names `hex-poly-z`, `hex-berlekamp-zassenhaus`, and Mathlib's
+`NumberTheory.KummerDedekind` as its primary libraries, and it is anchored to
+`hex-berlekamp-zassenhaus` accordingly.
 
 Phase 7 for an anchor library is not "done" until both its reference
 chapter *and* its anchored tutorials are complete.
