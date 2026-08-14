@@ -1450,34 +1450,55 @@ actual reified goal. One variant closes from the live exponential replay; a
 second consumes a caller hypothesis through the ordered seed path. Neither
 uses `native_decide`.
 
-This experiment removes the exponential canary's fixed compiled trace.
-It starts `PolicySession` from the reifier's actual `CheckerInput`, selects an
-offer anchored at the actual target node, quotes that resulting session, and
-feeds it to `ProofFrontend` with the dynamic base program, facts, and reflexive
-extension proofs. The ordinary tactic theorem now accepts an unrelated
-supported exponential hypothesis which appends two nodes after the target,
-and it proves `0 ≤ exp (exp x)` from a three-node target graph. Neither case
-adds a nested-exponential or extra-hypothesis branch to goal closure, semantic
-model construction, dependency assembly, or proof replay.
+The dynamic exponential vertical removes the canary's fixed compiled trace. It
+starts `PolicySession` from the reifier's actual `CheckerInput`, runs the
+target-directed controller below, quotes the retained session, and feeds it to
+`ProofFrontend` with the dynamic base program, facts, and reflexive extension
+proofs. The ordinary tactic theorem accepts an unrelated supported exponential
+hypothesis which appends two nodes after the target, and it proves
+`0 ≤ exp (exp x)` from a three-node target graph. Neither case adds a nested-
+exponential or extra-hypothesis branch to goal closure, semantic model
+construction, dependency assembly, or proof replay.
 
-This vertical deliberately selects one target rule whose first improvement is
-version one. General search must instead let the policy run until target
-subsumption, contradiction, or a resource limit and then select the resolved
-target version from the retained proof table. The current operation registry
-also remains the fixed source/exponential pair. Key-resolved semantic model
-selection must land before operation packages may be reordered; array position
-is not a permanent package identity.
+`TargetRun.Controller` is polymorphic in the fact type and in arbitrary
+policy-private state. It sees only bounded engine-owned views, chooses or
+dismisses checked offers, and receives every recoverable observation in order.
+The driver retains the single proof-producing `PolicySession` and stops
+distinctly on target subsumption, saturation, contradiction, explicit policy
+stop, a prepared split, incompleteness, fuel, malformed state, or each resource
+class. It derives selections from the chosen offer and the exact view identity;
+packages and function names do not occur in the driver.
+
+Target subsumption is a runtime stopping test: narrowing the current fact by
+the requested fact must report no change. The result records the exact current
+fact and version, but neither that test nor the controller is proof evidence.
+Proof emission must still resolve the retained version and replay an independent
+fact-domain subsumption theorem. The exponential conformance policy simply
+selects the first offer. On `exp (exp x)` it therefore improves the inner and
+outer nodes in two separate steps, stops at the requested outer bound, and
+feeds both chronological events to the unchanged generic proof frontend.
+
+The current conformance closes only when the retained target fact is exactly
+the requested fact. Closing from a strictly stronger retained fact is the next
+proof-frontend connection. The driver returns split plans but does not yet
+create or join proof branches. The operation registry also remains the fixed
+source/exponential pair. Key-resolved semantic model selection must land before
+operation packages may be reordered; array position is not a permanent package
+identity.
 
 The dynamic path is still bounded by the exponential package's engine envelope,
 which permits at most five nodes and node depth four, even though the goal
 reifier admits up to sixteen nodes and expression depth eight. Thus the single
 unrelated supported hypothesis above fits, while two such hypotheses or a
 sufficiently deep nested target fail at session preflight before search. The
-current canary helper also collapses that resource stop, absence of a matching
-offer, rule failure, and proof-registry failure into one generic diagnostic.
-Aligning the two envelopes and preserving the typed stop reason in tactic
-diagnostics remain future frontend work; neither limitation is a theorem-
-production assumption.
+current tactic adapter also collapses session-start failure, every non-target
+`TargetRun` stop, and proof-registry failure into one generic diagnostic.
+Separately, a missing target or a malformed or resource-limited fact-domain
+target probe is conservatively treated as not yet reached, so search may
+continue and later return another stop reason. Aligning the two envelopes and
+preserving typed session-start, run-stop, and target-probe reasons in tactic
+diagnostics remain future frontend work; none of these limitations is a
+theorem-production assumption.
 
 The fixed canary also requires a live session with no dropped work and an exact
 proof history of one instance, one equality, three fact events, and the
