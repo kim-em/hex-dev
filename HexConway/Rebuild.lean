@@ -140,7 +140,25 @@ def elabRebuild : CommandElab := fun stx => do
   if scope.isEmpty then
     throwError "rebuild_luebeckConwayPolynomial? needs at least one prime in its scope."
 
+  -- A scope is a claim about what the committed table should contain, so a
+  -- claim that cannot mean what it appears to is rejected rather than
+  -- silently resolved. `selectScope` takes the first match for a prime, so a
+  -- repeated prime would quietly drop the second bound.
+  let primes := scope.map Prod.fst
+  for prime in primes do
+    if (primes.filter (· = prime)).length > 1 then
+      throwError "prime {prime} appears more than once in the scope; \
+                  give each prime a single maximum degree."
+  for (prime, maxDegree) in scope do
+    if maxDegree = 0 then
+      throwError "prime {prime} has maximum degree 0, which selects nothing; \
+                  drop it from the scope instead."
+
   let entries ← readCache path
+  for (prime, _) in scope do
+    if !entries.any (fun e => e.p = prime) then
+      throwError "the cache at '{path}' has no rows for prime {prime}; \
+                  widen the cache or drop the prime from the scope."
   let selected := selectScope entries scope
   if selected.isEmpty then
     throwError "the requested scope selects no entries from '{path}'."

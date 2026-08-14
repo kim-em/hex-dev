@@ -8,6 +8,7 @@ import HexBerlekamp.Irreducibility
 import HexBerlekamp.CertificateSyntax
 import HexPolyFp.Field
 import HexConway.Table
+import HexConway.Rebuild
 
 /-!
 Source generation for a single committed Conway-table entry.
@@ -27,7 +28,22 @@ and `entryBlock` renders the whole per-entry block as Lean source. The
 
 Nothing here is used by the committed library at build time. The generator
 carries no soundness claim of its own: a wrong certificate makes the committed
-`decide` check fail, so a bad entry cannot pass unnoticed.
+`decide` check fail, so a bad entry cannot pass unnoticed. What the certificate
+does *not* establish is that the entry is the Conway polynomial for its pair,
+which is why the coefficients are read from the cache rather than supplied.
+
+Two limits on the emitted block, both of which need a human rather than a
+retry:
+
+* It assumes the prime already has its `ZMod64.Bounds`, `Hex.Nat.Prime`, and
+  `ZMod64.PrimeModulus` instances, and it refers to `supportedEntry_{p}_1` for
+  the primality witness. Adding a prime the table does not yet carry, such as
+  the cache's 97, 521, or 65537, needs those prerequisites written first, and
+  the `n = 1` entry cannot take its witness from itself.
+* It emits a fixed 8M heartbeat budget, which suits the entries committed so
+  far but not all of them: four existing certificates need 20M. A generated
+  block that fails to elaborate on heartbeats wants its budget raised, not its
+  certificate regenerated.
 -/
 
 namespace Hex.Conway.EntrySource
@@ -241,24 +257,51 @@ def entryBlock (p n : Nat) (coeffs : List Nat) (cert : CertData) : String :=
     ++ "\n\n" ++ hitLemma p n coeffs name
     ++ "\n\n" ++ apiBlock p n coeffs name
 
-/-- Print the per-entry source block for a committed or candidate Conway pair.
+/-- Print the per-entry source block for a Conway pair in the committed cache.
 
-The coefficients come from the committed cache table, so this only works for
-pairs the cache already covers; widen the cache first with
-`scripts/oracle/update_luebeck_conway_cache.py` if the pair is missing. -/
+Takes only the pair. The coefficients are read from the cache row for that
+pair rather than supplied by the caller, so the emitted block cannot be
+labelled `C(p, n)` while holding some other polynomial. That distinction
+matters because Tier 1 proves only that a committed entry is monic,
+irreducible, and of the requested degree; nothing in Lean says it is *the*
+Conway polynomial, so a mislabelled entry would typecheck.
+
+Widen the cache first with `scripts/oracle/update_luebeck_conway_cache.py` if
+the pair is missing. -/
 syntax (name := conwayEntrySource)
-  "#conway_entry_source" num num &"coeffs" "[" num,* "]" : command
+  "#conway_entry_source" num num (&"from" str)? : command
 
 @[command_elab conwayEntrySource]
 def elabEntrySource : CommandElab := fun stx => do
   let p := stx[1].isNatLit?.getD 0
   let n := stx[2].isNatLit?.getD 0
-  let coeffs := stx[5].getSepArgs.toList.map fun s => s.isNatLit?.getD 0
+  let pathArg := stx[3]
+  let defaultPath := "scripts/oracle/luebeck_conway_cache.json"
+  let path :=
+    if pathArg.isNone then defaultPath else pathArg[0][1].isStrLit?.getD defaultPath
+  let entries ← Rebuild.readCache path
+  let some entry := entries.find? (fun e => e.p = p && e.n = n)
+    | throwError "the cache at '{path}' has no row for C({p}, {n}); widen it with \
+                  scripts/oracle/update_luebeck_conway_cache.py first."
+  let coeffs := entry.coeffs
+  -- Shape checks the cache itself does not enforce. A row that fails any of
+  -- these would still produce a certificate for *something*, so reject it here
+  -- rather than emit a block whose label does not match its contents.
+  unless coeffs.length = n + 1 do
+    throwError "the cache row for C({p}, {n}) has {coeffs.length} coefficients, \
+                expected {n + 1} for a degree-{n} polynomial."
+  unless coeffs.getLast? = some 1 do
+    throwError "the cache row for C({p}, {n}) is not monic."
+  unless coeffs.all (fun c => c < p) do
+    throwError "the cache row for C({p}, {n}) has a coefficient outside F_{p}."
   match entryCertData p coeffs with
   | none =>
-      throwError "no Rabin certificate for C({p}, {n}); the coefficients are not \
-                  a monic irreducible polynomial over F_{p}, so check the transcription."
+      throwError "no Rabin certificate for C({p}, {n}); the cached coefficients are \
+                  not a monic irreducible polynomial over F_{p}, so the cache is wrong."
   | some cert =>
+      unless cert.2.1 = n do
+        throwError "the certificate for C({p}, {n}) reports degree {cert.2.1}; \
+                    this is a generator bug, not a bad entry."
       unless entryCertValidates p coeffs cert do
         throwError "the generated certificate for C({p}, {n}) does not validate; \
                     this is a generator bug, not a bad entry."
