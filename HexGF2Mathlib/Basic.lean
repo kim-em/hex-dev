@@ -18,10 +18,11 @@ bit-packed `GF(2)` polynomial execution path and the generic dense polynomial
 over `Hex.ZMod64 2`, together with the ring equivalence and immediate simp
 lemmas needed by later `GF(2^n)` correspondence modules.
 
-The equivalence is Mathlib's `RingEquiv`, so Mathlib's transport machinery
-applies to it: this is what lets the `GF(2^n)` modules carry `Fintype` and
-cardinality for the packed types, and what lets `HexGFqMathlib` compose the
-packed correspondence with the canonical Conway field.
+The equivalence is Mathlib's `RingEquiv`, so it composes with other Mathlib
+equivalences: that is what lets `HexGFqMathlib` reach the canonical Conway field
+from the packed one through `RingEquiv.trans`. The `Fintype` and cardinality
+results in the `GF(2^n)` modules do not come through it; they are built directly
+from each representation's own bound.
 -/
 
 namespace HexGF2Mathlib

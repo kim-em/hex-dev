@@ -310,7 +310,9 @@ def finEquiv :
   reducedRepEquiv.trans (reducedRepFinEquiv f hf)
 
 /-- The generic executable finite-field wrapper is finite. -/
-instance fintype :
+-- `noncomputable`: `p ^ degree f` elements is not something to enumerate
+-- by accident. `finEquiv` above is computable.
+noncomputable instance fintype :
     Fintype (Hex.GFqField.FiniteField f hf hp hirr) :=
   Fintype.ofEquiv (Fin (p ^ Hex.FpPoly.degree f)) finEquiv.symm
 

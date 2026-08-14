@@ -14,7 +14,7 @@ wrappers and the generic quotient-ring finite-field construction.
 
 This module reuses the packed-polynomial conversion layer from
 `HexGF2Mathlib.Basic` to package both the single-word `GF2n` surface and the
-arbitrary-degree `GF2nPoly` surface as project-local ring equivalences with the
+arbitrary-degree `GF2nPoly` surface as Mathlib `RingEquiv`s with the
 generic `Hex.GFqField.FiniteField` model over `Hex.FpPoly 2`.
 -/
 
@@ -395,7 +395,10 @@ def finEquiv : Hex.GF2n n irr hn hn64 hirr ≃ Fin (2 ^ n) where
     cases i
     simp
 
-instance : Fintype (Hex.GF2n n irr hn hn64 hirr) :=
+-- Deliberately `noncomputable`: the field has `2 ^ n` elements for `n < 64`,
+-- so a compiled `Finset.univ` over it is a footgun rather than a feature.
+-- `finEquiv` above stays computable, which is what callers actually want.
+noncomputable instance : Fintype (Hex.GF2n n irr hn hn64 hirr) :=
   Fintype.ofEquiv (Fin (2 ^ n)) (finEquiv (n := n) (irr := irr)
     (hn := hn) (hn64 := hn64) (hirr := hirr)).symm
 
@@ -642,7 +645,9 @@ def finEquiv : Hex.GF2nPoly f hirr ≃ Fin (2 ^ f.degree) :=
   (reducedPackedRepEquiv (f := f) (hirr := hirr)).trans
     (reducedPackedRepFinEquiv (f := f))
 
-instance : Fintype (Hex.GF2nPoly f hirr) :=
+-- `noncomputable` for the same reason, and more sharply: a GHASH-sized
+-- modulus puts `2 ^ 128` elements behind `Finset.univ`.
+noncomputable instance : Fintype (Hex.GF2nPoly f hirr) :=
   Fintype.ofEquiv (Fin (2 ^ f.degree)) (finEquiv (f := f) (hirr := hirr)).symm
 
 theorem fintype_card :
