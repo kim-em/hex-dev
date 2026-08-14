@@ -1536,8 +1536,8 @@ second time. It independently proves only that the supplied parent, cut, and
 children have the required coverage relation; authenticating those values
 against a runtime `SplitPlan`, strict narrowing, and correct child construction
 remain separate branch-layer obligations. The current transparent
-`ProofEmitter.replaySplit` implements the
-generic join. Given a proof of `parent` from the caller's `base`, a proof of
+`ProofEmitter.replaySplit` implements the generic join. Given a proof of
+`parent` from the caller's `base`, a proof of
 the target from `{node,left} :: base`, and a proof of the target from
 `{node,right} :: base`, it applies `proveCover` and returns a proof of the
 target from `base`. No policy callback, compiled session, branch score, or
@@ -1617,6 +1617,8 @@ coverage-and-two-proofs contract. Acceptance tests for the branch layer must
 include a useful two-sided closure, one contradiction leaf plus one target
 leaf, a nested split, a child-local instantiation, a sibling-reference attack,
 a non-interior repeated split, and fuel exhaustion with no theorem emitted.
+
+### Proof-producing frontend
 
 The fixed canary also requires a live session with no dropped work and an exact
 proof history of one instance, one equality, three fact events, and the
@@ -2170,13 +2172,13 @@ The RealPaver 1.1.1 propagation loop initially queues every contractor. After
 one contractor mutates its box, it examines only variables in that contractor's
 scope; a sufficiently large relative width reduction wakes inactive dependent
 contractors. HC4 builds one `HC4Revise` contractor per constraint over a shared
-expression DAG. BC4 associates one `BC4Revise` with each constraint; each such
-contractor first applies `HC4Revise`, then applies `BC3Revise` only to variables
-which occur more than once in that constraint. The source calls this combined
-operator hull/box consistency; it should not be described as pure box
-consistency or conflated with standalone BC3. The solver can compose a base
-HC4, BC4, or affine propagator with ACID, polytope relaxation, and interval
-Newton. This is directly translatable as:
+expression DAG. BC4 associates one `ContractorBC4Revise` with each constraint;
+each such contractor first applies `ContractorHC4Revise`, then applies
+`ContractorBC3Revise` only to variables which occur more than once in that
+constraint. The source calls this combined operator hull/box consistency; it
+should not be described as pure box consistency or conflated with standalone
+BC3. The solver can compose a base HC4, BC4, or affine propagator with ACID,
+polytope relaxation, and interval Newton. This is directly translatable as:
 
 - one checked application per package contractor and an explicit watch/write
   scope;
@@ -2194,17 +2196,16 @@ wake either belongs to an explicitly approximate profile or marks the branch
 incomplete. The tolerance can never justify `noChange`, contradiction, or
 target subsumption in emitted proof.
 
-In RealPaver 1.1.1, ACID is especially useful for the upgradeable policy design.
-It ranks variables
-by a derivative-based smear score, alternates learning and exploitation phases,
-measures contraction gains, and learns how many variable-level 3BCID
-contractors are worth applying. The transferable idea is not its particular
-average-gain formula. A policy-private state may learn an effort frontier from
-bounded observations and choose fewer expensive offers on later boxes. The
-engine must still own action identities, exact inputs, budgets, and proof
-payloads. Learned scores are untrusted scheduling data, and mutable ACID state
-must be branch-owned or keyed by the complete semantic snapshot before it is
-reused across siblings.
+In RealPaver 1.1.1, ACID is especially useful for the upgradeable policy
+design. It ranks variables by a derivative-based smear score, alternates
+learning and exploitation phases, measures contraction gains, and learns how
+many variable-level 3BCID contractors are worth applying. The transferable
+idea is not its particular average-gain formula. A policy-private state may
+learn an effort frontier from bounded observations and choose fewer expensive
+offers on later boxes. The engine must still own action identities, exact
+inputs, budgets, and proof payloads. Learned scores are untrusted scheduling
+data, and mutable ACID state must be branch-owned or keyed by the complete
+semantic snapshot before it is reused across siblings.
 
 RealPaver 1.1.1's variable 3BCID implementation first slices one variable, removes
 inconsistent outer slices using a nested contractor, and then applies CID to
@@ -3577,10 +3578,10 @@ local test profile. They do not enter this Mathlib-free benchmark target.
   and [strategy documentation](https://ibex-team.github.io/ibex-lib/strategy.html).
 - Laurent Granvilliers and Frédéric Benhamou,
   [Algorithm 852: RealPaver, an interval solver using constraint satisfaction techniques](https://doi.org/10.1145/1132973.1132980),
-  and Laurent Granvilliers's August 2004
-  [RealPaver User's Manual, edition 0.4](https://manualzz.com/doc/4136960/realpaver-user-manual)
-  (also distributed in the
-  [official 0.4 source archive](https://sourceforge.net/projects/realpaver/files/realpaver/0.4/)).
+  and Laurent Granvilliers's August 2004 *RealPaver User's Manual*, edition
+  0.4, distributed in the
+  [official 0.4 source archive](https://sourceforge.net/projects/realpaver/files/realpaver/0.4/)
+  (with a [browsable manual mirror](https://manualzz.com/doc/4136960/realpaver-user-manual)).
 - Raphaël Chenouard and Laurent Granvilliers,
   [RealPaver 1.1: A C++ Library for Constraint Programming over Numeric or Mixed Discrete-Continuous Domains](https://doi.org/10.21105/joss.09331)
   (2026), with the
@@ -3588,7 +3589,7 @@ local test profile. They do not enter this Mathlib-free benchmark target.
   especially the exact
   [`IntervalPropagator`](https://github.com/realpaver/realpaver/blob/v1.1.1-joss2/src/realpaver/IntervalPropagator.cpp)
   and
-  [`BC4Revise`](https://github.com/realpaver/realpaver/blob/v1.1.1-joss2/src/realpaver/ContractorBC4Revise.hpp)
+  [`ContractorBC4Revise`](https://github.com/realpaver/realpaver/blob/v1.1.1-joss2/src/realpaver/ContractorBC4Revise.cpp)
   implementations discussed above.
 - [IntervalArithmetic.jl construction and exact input guidance](https://juliaintervals.github.io/IntervalArithmetic.jl/stable/manual/construction/).
 - [Boost.Interval policies and representation](https://www.boost.org/doc/libs/latest/libs/numeric/interval/doc/interval.htm).
