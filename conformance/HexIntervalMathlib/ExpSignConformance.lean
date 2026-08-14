@@ -1155,4 +1155,301 @@ example : True := by
       throwError "interval_exp test: stale rule version was accepted"
   trivial
 
+/-! ## One proved child joined with one proof-refuted child -/
+
+private def outputSplitKey : RuleKey :=
+  { name := "exp-sign.output.split-zero" }
+
+private def outputSplitRule : Registration :=
+  { key := outputSplitKey
+    head := expKey
+    kind := .split
+    watches := [.result]
+    writes := [] }
+
+private def outputSplitPackage : Package Bound :=
+  { Cache := Unit
+    cache := ()
+    requiredOperations := #[expOperation]
+    handlers :=
+      #[Handler.statelessDroppingDrafts outputSplitRule splitInvoke] }
+
+private def outputSplitPackages : Array (Package Bound) :=
+  #[sourcePackage, expPackage, outputSplitPackage]
+
+private def outputSplitOffer? (view : Propagator.Policy.View Bound) :
+    Option Propagator.Policy.OfferView :=
+  view.offers.toList.find? fun offer =>
+    match offer.key with
+    | .invoke invocation => invocation.rule == outputSplitKey
+    | .split _ target _ _ => target.node == node 1
+    | _ => false
+
+private def outputSplitPolicy : TargetRun.Controller Bound Unit :=
+  { update := fun state _ => state
+    choose := fun state view =>
+      match outputSplitOffer? view with
+      | some offer => .select offer state
+      | none => .stop state }
+
+private def outputPrepared? : Option (ULift.{1, 0} (BranchStart.Children Bound)) :=
+  match runWith? outputSplitPackages checkerInput outputSplitPolicy
+      limits.policy.maxDecisions with
+  | some result =>
+      match result.stop with
+      | .split plan =>
+          match BranchStart.prepare branchLimits
+              (BranchStart.State.start result.session) result.session plan
+              checkerInput.target signSplitter with
+          | .ok (_, children) => some (ULift.up children)
+          | .error _ => none
+      | _ => none
+  | none => none
+
+private def outputFact (side : Bound) : NodeFact Bound :=
+  { node := node 1, fact := side }
+
+private def outputFacts (side : Bound) : List (NodeFact Bound) :=
+  outputFact side :: baseFacts
+
+private def outputInitial (side : Bound) : Array Bound := #[.all, side]
+
+private def outputInput (side : Bound) : CheckerInput Bound :=
+  { baseProgram := program
+    initialFacts := outputInitial side
+    target := checkerInput.target }
+
+private def outputLeftInput : CheckerInput Bound := outputInput .nonnegative
+private def outputRightInput : CheckerInput Bound := outputInput .negative
+private def outputLeftFacts : List (NodeFact Bound) := outputFacts .nonnegative
+private def outputRightFacts : List (NodeFact Bound) := outputFacts .negative
+private def outputLeftScope : Propagator.Policy.ScopeId := { index := 1 }
+private def outputRightScope : Propagator.Policy.ScopeId := { index := 2 }
+
+private def inheritOutput (side : Bound) (observed : NodeId)
+    (different : observed ≠ node 1) (fact : Bound)
+    (found : (outputInput side).initialFacts[observed.index]? = some fact) :
+    Evidence
+      (semantics.Entails program baseFacts { node := observed, fact }) :=
+  { proof := by
+      intro _ _ assumptions
+      cases observed with
+      | mk index =>
+          cases index with
+          | zero =>
+              simp [outputInput, outputInitial] at found
+              subst fact
+              exact assumptions _ (by simp [baseFacts, node])
+          | succ index =>
+              cases index with
+              | zero => simp [node] at different
+              | succ index => simp [outputInput, outputInitial] at found }
+
+private def outputLeftSeed :
+    ProofEmitter.BranchSeed semantics outputLeftInput baseFacts
+      (outputFact .nonnegative) :=
+  ProofEmitter.BranchSeed.make outputLeftInput (outputFact .nonnegative)
+    (by rfl) (by rfl) (inheritOutput .nonnegative)
+
+private def outputRightSeed :
+    ProofEmitter.BranchSeed semantics outputRightInput baseFacts
+      (outputFact .negative) :=
+  ProofEmitter.BranchSeed.make outputRightInput (outputFact .negative)
+    (by rfl) (by rfl) (inheritOutput .negative)
+
+private theorem outputWithin (side : Bound) :
+    FactsWithin program (outputFacts side) := by
+  intro fact member
+  simp only [outputFacts, outputFact, baseFacts, List.mem_cons,
+    List.not_mem_nil, or_false] at member
+  rcases member with rfl | rfl | rfl <;> simp [program, node]
+
+private def outputLeftContext : ProofFrontend.Context Bound Name :=
+  splitContext (mkConst ``outputLeftInput) (mkConst ``outputLeftFacts)
+    (mkApp (mkConst ``outputWithin) (mkConst ``Bound.nonnegative))
+    outputLeftFacts
+
+private def outputRightContext : ProofFrontend.Context Bound Name :=
+  splitContext (mkConst ``outputRightInput) (mkConst ``outputRightFacts)
+    (mkApp (mkConst ``outputWithin) (mkConst ``Bound.negative))
+    outputRightFacts
+
+private def outputParent : Evidence
+    (semantics.Entails program baseFacts (outputFact .all)) :=
+  ProofEmitter.assumed (by simp [baseFacts, outputFact, node])
+
+private def sameChecker (left right : CheckerInput Bound) : Bool :=
+  left.baseProgram == right.baseProgram &&
+    left.initialFacts == right.initialFacts && left.target == right.target
+
+#guard
+  outputPrepared?.any fun lifted =>
+    let children := lifted.down
+    children.depth == 1 && sameChecker children.parent checkerInput &&
+      sameChecker children.left outputLeftInput &&
+      sameChecker children.right outputRightInput &&
+      children.leftScope == outputLeftScope &&
+      children.rightScope == outputRightScope
+
+#guard
+  runRaw? outputLeftInput firstOffer limits.policy.maxDecisions
+      outputLeftScope |>.any fun result =>
+    match result.stop with
+    | .target reached =>
+        reached.seen == ({ node := node 1, version := 0 } : SeenVersion) &&
+          reached.fact == .nonnegative && result.events.isEmpty
+    | _ => false
+
+#guard
+  runRaw? outputRightInput firstOffer limits.policy.maxDecisions
+      outputRightScope |>.any fun result =>
+    match result.stop with
+    | .contradiction =>
+        result.session.state.engine.facts == #[.all, .empty] &&
+          result.session.state.engine.versions == #[0, 1] &&
+          result.events.size == 1
+    | _ => false
+
+#guard
+  fixture?.any fun fixture =>
+    fixture.registry.refute.find? .empty == some ``emptyRefute &&
+      fixture.registry.refute.find? .all == none
+
+private meta def emitOutputTarget (input : CheckerInput Bound)
+    (scope : Propagator.Policy.ScopeId) : MetaM Expr := do
+  let some result := runRaw? input firstOffer limits.policy.maxDecisions scope
+    | throwError "interval_exp_refute: target child did not start"
+  let .target reached := result.stop
+    | throwError "interval_exp_refute: target child did not close"
+  let .ok registry := ProofRegistry.build result.session.registry proofPackages
+    | throwError "interval_exp_refute: target child registry failed"
+  let some trace := Frontend.trace? result.session.state.engine result.session.arena
+    | throwError "interval_exp_refute: target child quotation failed"
+  let state ← ProofFrontend.emitBranch outputLeftContext input
+    (mkConst ``outputLeftSeed) trace.program trace.events registry.emit
+  ProofFrontend.closeTarget outputLeftContext state reached.seen reached.fact
+    input.target
+
+private meta def emitOutputRefute (input : CheckerInput Bound)
+    (scope : Propagator.Policy.ScopeId) : MetaM Expr := do
+  let some result := runRaw? input firstOffer limits.policy.maxDecisions scope
+    | throwError "interval_exp_refute: contradiction child did not start"
+  let .contradiction := result.stop
+    | throwError "interval_exp_refute: contradiction child did not contradict"
+  let .ok registry := ProofRegistry.build result.session.registry proofPackages
+    | throwError "interval_exp_refute: contradiction child registry failed"
+  let some trace := Frontend.trace? result.session.state.engine result.session.arena
+    | throwError "interval_exp_refute: contradiction child quotation failed"
+  unless trace.program == input.baseProgram do
+    throwError "interval_exp_refute: contradiction trace changed the graph"
+  let [.rule step] := trace.events
+    | throwError "interval_exp_refute: contradiction trace is not exactly one rule"
+  unless step.entry.replayKey == expFactSchema.key &&
+      step.event.programVersion == 0 && step.event.node == node 1 &&
+      step.event.previous == ({ node := node 1, version := 0 } : SeenVersion) &&
+      step.event.fact == .empty && step.event.version == 1 &&
+      step.previous == .negative do
+    throwError "interval_exp_refute: contradiction rule trace drifted"
+  let state ← ProofFrontend.emitBranch outputRightContext input
+    (mkConst ``outputRightSeed) trace.program trace.events registry.emit
+  ProofFrontend.refuteCurrent outputRightContext state registry.refute
+    result.session.state.engine.facts result.session.state.engine.versions
+    input.target
+
+private meta def emitOutputSplitRefute : MetaM Expr := do
+  let some lifted := outputPrepared?
+    | throwError "interval_exp_refute: output split was not prepared"
+  let children := lifted.down
+  unless sameChecker children.left outputLeftInput &&
+      sameChecker children.right outputRightInput do
+    throwError "interval_exp_refute: prepared children differ from proof contexts"
+  let left ← emitOutputTarget children.left children.leftScope
+  let right ← emitOutputRefute children.right children.rightScope
+  let result ←
+    mkAppM ``ProofEmitter.replaySplit
+      #[mkConst ``signSplit, mkConst ``program, mkConst ``baseFacts,
+        ← boundEncoder.nodeId (node 1), ← boundEncoder.fact .all,
+        mkConst ``Unit.unit, ← boundEncoder.fact .nonnegative,
+        ← boundEncoder.fact .negative,
+        ← boundEncoder.nodeFact checkerInput.target,
+        mkConst ``outputParent, left, right]
+  ProofFrontend.replayResult result
+
+private meta def proveSplitRefute (target : Expr) : MetaM Expr := do
+  let context ← getLCtx
+  for declaration in context do
+    unless declaration.isImplementationDetail do
+      let saved ← saveState
+      let candidate? ← observing? <| mkAppM ``expTarget #[mkFVar declaration.fvarId]
+      match candidate? with
+      | some candidate =>
+          if ← isDefEq candidate target then
+            let evidence ← emitOutputSplitRefute
+            let proof ← mkAppM ``closeExp #[mkFVar declaration.fvarId, evidence]
+            unless ← isDefEq (← inferType proof) target do
+              throwError "interval_exp_refute: joined proof has the wrong target"
+            return (← instantiateMVars proof)
+          saved.restore
+      | none => saved.restore
+  throwError "interval_exp_refute: expected a goal `0 ≤ Real.exp x`"
+
+syntax (name := intervalExpRefuteTac) "interval_exp_refute" : tactic
+
+@[tactic intervalExpRefuteTac] meta def evalIntervalExpRefute : Tactic := fun stx => do
+  match stx with
+  | `(tactic| interval_exp_refute) =>
+      let goal ← getMainGoal
+      goal.withContext do
+        goal.assign (← proveSplitRefute (← instantiateMVars (← goal.getType)))
+      replaceMainGoal []
+  | _ => throwUnsupportedSyntax
+
+/-- The left branch closes from its split assumption; the right branch uses
+its incompatible assumption to derive `.empty`, proves that exact fact
+impossible, and only then participates in the parent join. -/
+theorem tacticExpRefutedBranch (x : ℝ) : 0 ≤ Real.exp x := by
+  interval_exp_refute
+
+/--
+info: 'Hex.IntervalMathlib.ExpSignConformance.tacticExpRefutedBranch' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+-/
+#guard_msgs in
+#print axioms tacticExpRefutedBranch
+
+/-- Failure on an unsupported target restores the tactic state. -/
+example (x : ℝ) : x = x := by
+  fail_if_success interval_exp_refute
+  rfl
+
+set_option linter.unusedTactic false in
+example : True := by
+  run_tac
+    let some result := runRaw? outputRightInput firstOffer
+        limits.policy.maxDecisions outputRightScope
+      | throwError "interval_exp_refute test: missing contradictory child"
+    let .ok registry := ProofRegistry.build result.session.registry proofPackages
+      | throwError "interval_exp_refute test: child registry failed"
+    let some trace := Frontend.trace? result.session.state.engine result.session.arena
+      | throwError "interval_exp_refute test: child quotation failed"
+    let state ← ProofFrontend.emitBranch outputRightContext outputRightInput
+      (mkConst ``outputRightSeed) trace.program trace.events registry.emit
+    let moved := result.session.state.engine.facts.set! 0 .empty
+    if (← observing? <| ProofFrontend.refuteCurrent outputRightContext state
+        registry.refute moved result.session.state.engine.versions
+        outputRightInput.target).isSome then
+      throwError "interval_exp_refute test: bottom at an unproved node was accepted"
+    let changed := result.session.state.engine.facts.set! 1 .all
+    if (← observing? <| ProofFrontend.refuteCurrent outputRightContext state
+        registry.refute changed result.session.state.engine.versions
+        outputRightInput.target).isSome then
+      throwError "interval_exp_refute test: changed bottom fact was accepted"
+    let stale := result.session.state.engine.versions.set! 1 0
+    if (← observing? <| ProofFrontend.refuteCurrent outputRightContext state
+        registry.refute result.session.state.engine.facts stale
+        outputRightInput.target).isSome then
+      throwError "interval_exp_refute test: stale bottom version was accepted"
+  trivial
+
 end Hex.IntervalMathlib.ExpSignConformance

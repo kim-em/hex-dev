@@ -1654,10 +1654,22 @@ contains the bottom fact; the conformance obligations are successful
 transparent replay, rejection of the satisfiable `.all` fact, and the guarded
 kernel-dependency report. No engine flag or evaluator result enters that
 theorem.
-Connecting a retained contradictory fact and its emitted evidence to this
-schema inside the tree frontend remains open. An unexplored, fuel-limited,
-resource-limited, incomplete, or merely saturated child likewise does not
-close the parent target.
+
+`ProofRegistry.Package` also contributes optional fact recognizers and
+refutation handles. Lookup accepts exactly one matching handle; no match or an
+ambiguous match fails closed. The low-level frontend treats its supplied fact
+and version arrays as untrusted selector data; the live child passes its exact
+retained engine arrays. For any selected fact, the frontend requires the same
+node, version, and value in its chronology evidence table before it applies the
+schema and produces the child target by ordinary elimination. Arbitrary arrays
+cannot create evidence, but this helper does not itself certify their identity
+with an engine snapshot. Its first mixed join splits the exponential output:
+the left child closes directly from `.nonnegative`, while the right child
+starts from `.negative`, replays the exponential proposal to derive `.empty`,
+and closes only through `replayRefute`. The runtime contradiction result
+selects this path but is not an argument to any emitted proof combinator. An
+unexplored, fuel-limited, resource-limited, incomplete, or merely saturated
+child likewise does not close the parent target.
 
 The later proof-plan sketch represents an endpoint contradiction by two
 `FactId`s, whereas `replayRefute` deliberately consumes one exact established
@@ -1665,8 +1677,8 @@ fact. Its frontend lowering must therefore either resolve an already-installed
 contradictory meet fact or combine the two retained proofs through the domain's
 `FactDomainSchema.proveMeet` theorem before invoking the refutation schema.
 That lowering must first check that both identifiers name facts at the same
-node. The two-proof bridge remains open; it is not a capability of the current
-single-fact conformance canary.
+node. The current frontend consumes an already-installed single contradictory
+fact; the two-proof lowering remains part of the open tree-frontend bridge.
 
 The first branch-start layer also rebinds each completed child result to the
 exact prepared base program and initial fact array, then rechecks the retained
@@ -1700,10 +1712,12 @@ These choices may change performance and certificate size, but not the
 coverage-and-two-proofs contract. The real exponential canary supplies the
 first two-sided live execution and proof join, but exponential nonnegativity
 is unconditional: neither child target proof currently needs its split
-assumption. Remaining acceptance tests include a useful branch-dependent
-two-sided closure, one contradiction leaf plus one target leaf, a nested split,
-a child-local instantiation, a sibling-reference attack, a non-interior
-repeated split, and fuel exhaustion with no theorem emitted.
+assumption. The mixed target/refutation join does consume the two incompatible
+output assumptions, but useful non-contradictory branch-dependent reasoning
+remains a separate acceptance test. Remaining acceptance tests include that
+useful two-sided closure, a nested split, a child-local instantiation, a
+sibling-reference attack, a non-interior repeated split, and fuel exhaustion
+with no theorem emitted.
 
 ### Proof-producing frontend
 
@@ -1755,16 +1769,26 @@ safety comes from constant lookup, ordinary Lean typechecking, and the replay
 transition's exact key check; only the resulting well-typed theorem
 application enters the kernel.
 `ProofRegistry.Package` now joins each package's semantic schemas and emitter
-fragment. Joint assembly first uses the semantic registry check to establish
-exact package-for-package ownership and bidirectional coverage against the
+fragment, plus any domain-level refutation recognizers owned by that package.
+Joint assembly first uses the semantic registry check to establish exact
+package-for-package ownership and bidirectional coverage against the
 executable formats. It then requires package-local equality of semantic and
-emitter replay-key sets and global emitter uniqueness. Consequently a handle
-cannot be omitted, added under an undeclared key, or borrowed from another
-package even if the final flattened key set would happen to match. The live
-real-sine semantic replay and direct-emission table are both projections of
-this one checked registry. This governance relation is still defense in depth
-rather than part of theorem soundness: every selected schema must produce the
-required kernel-checked claim.
+emitter replay-key sets and global emitter uniqueness. Consequently an event
+handle cannot be omitted, added under an undeclared key, or borrowed from
+another package even if the final flattened key set would happen to match.
+Refutation handles have no executable event key; exact-fact lookup instead
+requires a unique matching recognizer, and the selected `RefuteSchema` must
+accept the same fact during kernel-checked replay. The live real-sine semantic
+replay and direct-emission table are both projections of this one checked
+registry. This governance relation is still defense in depth rather than part
+of theorem soundness: every selected schema must produce the required
+kernel-checked claim.
+
+The current real adapter places its domain-wide `.empty` refuter in the source
+proof package solely to give it one registry-owned lookup position. The theorem
+is about fact-domain bottom semantics, not the source operation. A second
+matching owner would make lookup ambiguous and fail closed; a future explicit
+domain-schema home may replace this provisional ownership convention.
 
 A Mathlib companion must instantiate those abstract schemas, decode each
 frozen entry independently of package cache state, and recheck the

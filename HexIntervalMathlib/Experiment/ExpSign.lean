@@ -173,9 +173,16 @@ def expEmit : EmitPackage Lean.Name :=
       [{ key := expFactSchema.key
          handle := ``expFactSchema }] }
 
+/-- The source package is the designated registry owner for the domain-wide
+bottom refuter. This ownership supplies one unambiguous lookup position; the
+`.empty` theorem itself is fact-domain semantics, not source-operation
+semantics. -/
 def sourceProof : ProofRegistry.Package semantics Lean.Name :=
   { semantic := { factSchemas := #[] }
-    emit := sourceEmit }
+    emit := sourceEmit
+    refute :=
+      [{ accepts := fun fact => fact == .empty
+         handle := ``emptyRefute }] }
 
 def expProof : ProofRegistry.Package semantics Lean.Name :=
   { semantic := { factSchemas := #[expFactSchema] }
