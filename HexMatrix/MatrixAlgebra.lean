@@ -318,7 +318,7 @@ theorem sub_identity_mulVec [Lean.Grind.Ring R] (Q : Matrix R n n) (v : Vector R
 
 Together with `mul_adjugate` and `adjugate_mul` this is what turns a one-sided
 matrix inverse into a two-sided one; see `HexDeterminant.mul_eq_one_comm`. -/
-@[grind =] theorem smul_mul [Lean.Grind.CommRing R] (c : R)
+@[grind =] theorem smul_mul [Lean.Grind.Ring R] (c : R)
     (A : Matrix R n m) (B : Matrix R m k) :
     (c • A) * B = c • (A * B) := by
   apply ext_getElem
