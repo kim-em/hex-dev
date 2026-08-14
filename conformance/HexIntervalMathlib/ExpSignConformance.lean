@@ -1770,7 +1770,7 @@ private def reluPrepared? :
       match result.stop with
       | .split plan =>
           match BranchStart.prepare branchLimits
-              (BranchStart.State.start { index := 0 }) 0 result.session plan
+              (BranchStart.State.start result.session) result.session plan
               reluInput.target signSplitter with
           | .ok (_, children) => some (ULift.up children)
           | .error _ => none
@@ -1847,14 +1847,11 @@ private def reluRunChild? (side : Bound) (input : CheckerInput Bound)
 #guard
   reluPrepared?.any fun lifted =>
     let children := lifted.down
-    children.leftScope == ({ index := 1 } : Propagator.Policy.ScopeId) &&
+    children.depth == 1 && sameChecker children.parent reluInput &&
+      children.leftScope == ({ index := 1 } : Propagator.Policy.ScopeId) &&
       children.rightScope == ({ index := 2 } : Propagator.Policy.ScopeId) &&
-      children.left.baseProgram == reluLeftInput.baseProgram &&
-      children.left.initialFacts == reluLeftInput.initialFacts &&
-      children.left.target == reluLeftInput.target &&
-      children.right.baseProgram == reluRightInput.baseProgram &&
-      children.right.initialFacts == reluRightInput.initialFacts &&
-      children.right.target == reluRightInput.target
+      sameChecker children.left reluLeftInput &&
+      sameChecker children.right reluRightInput
 
 private def reluTraceUses? (side : Bound) (input : CheckerInput Bound)
     (scope : Propagator.Policy.ScopeId) : Bool :=
@@ -1865,8 +1862,18 @@ private def reluTraceUses? (side : Bound) (input : CheckerInput Bound)
       | some trace =>
           match trace.events with
           | [.rule step] =>
-              step.assumptions == [reluBranchFact side] &&
+              trace.program == input.baseProgram &&
+                run.reached.seen ==
+                  ({ node := node 1, version := 1 } : SeenVersion) &&
+                run.reached.fact == .nonnegative &&
+                run.session.state.engine.facts == #[side, .nonnegative] &&
+                run.session.state.engine.versions == #[0, 1] &&
+                step.assumptions == [reluBranchFact side] &&
+                step.event.programVersion == 0 && step.event.node == node 1 &&
+                step.event.previous ==
+                  ({ node := node 1, version := 0 } : SeenVersion) &&
                 step.event.fact == .nonnegative &&
+                step.event.version == 1 && step.previous == .all &&
                 step.entry.replayKey ==
                   (if side == .nonnegative then reluNonnegativeSchema.key
                    else reluNegativeSchema.key)
@@ -1939,6 +1946,22 @@ private meta def emitReluChild (context : ProofFrontend.Context Bound Name)
     | throwError "interval_relu_split: child search failed"
   let some trace := Frontend.trace? run.session.state.engine run.session.arena
     | throwError "interval_relu_split: child chronology quotation failed"
+  let [.rule step] := trace.events
+    | throwError "interval_relu_split: child trace is not exactly one rule"
+  let expectedKey :=
+    if side == .nonnegative then reluNonnegativeSchema.key
+    else reluNegativeSchema.key
+  unless trace.program == input.baseProgram &&
+      run.reached.seen == ({ node := node 1, version := 1 } : SeenVersion) &&
+      run.reached.fact == .nonnegative &&
+      run.session.state.engine.facts == #[side, .nonnegative] &&
+      run.session.state.engine.versions == #[0, 1] &&
+      step.assumptions == [reluBranchFact side] &&
+      step.event.programVersion == 0 && step.event.node == node 1 &&
+      step.event.previous == ({ node := node 1, version := 0 } : SeenVersion) &&
+      step.event.fact == .nonnegative && step.event.version == 1 &&
+      step.previous == .all && step.entry.replayKey == expectedKey do
+    throwError "interval_relu_split: child result or quoted rule trace drifted"
   let state ← ProofFrontend.emitBranch context input seed trace.program
     trace.events run.registry.emit
   ProofFrontend.closeTarget context state run.reached.seen run.reached.fact input.target
@@ -1975,6 +1998,12 @@ propagator fires before the zero split, and each child proof consumes its own
 strictly narrower source fact before the generic join closes the theorem. -/
 theorem tacticReluSplit (x : ℝ) : 0 ≤ max x 0 :=
   closeRelu x reluJoined
+
+/--
+info: 'Hex.IntervalMathlib.ExpSignConformance.tacticReluSplit' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms tacticReluSplit
 
 set_option linter.unusedTactic false in
 example : True := by
