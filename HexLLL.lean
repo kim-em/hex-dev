@@ -7,7 +7,6 @@ Authors: Kim Morrison
 module
 
 public import HexLLL.Lattice
-public import HexLLL.Certificate
 public import HexLLL.Reduced
 public import HexLLL.Interval
 public import HexLLL.Checker

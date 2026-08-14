@@ -88,6 +88,19 @@ to change one column.
 The determinant of a row operation (`det_rowSwap`, `det_rowScale`,
 `det_rowAdd`) is stated in `hex-determinant`, where `det` is defined.
 
+**Integer row lattices.** `Matrix.memLattice b v` says that `v` is an integer
+combination of the rows of `b`, with the transport lemmas that carry membership
+across an explicit integer row transform. `Matrix.mulEqCert M A C` decides
+`M * A = C` by packing each row into one integer in balanced base `2 ^ K`, so
+the product is never formed, and `Matrix.sameLatticeCert` composes two of those
+into a witness that two bases generate the same lattice.
+
+These are stated here rather than in a library that reduces lattices, because
+they mention only integer combinations of rows. `hex-gram-schmidt`, `hex-lll`,
+and the planned integer normal forms all reach them from here. Lemmas about
+particular row operations need those operations' multiplicative laws, which
+live in `hex-row-reduce`, so they stay downstream in `hex-lll`.
+
 ## Strassen-Winograd multiplication
 
 The naive product `mul` does `n^3` coefficient multiplications for an

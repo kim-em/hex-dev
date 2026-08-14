@@ -7,7 +7,7 @@ Authors: Kim Morrison
 module
 
 public import HexBasic
-public import HexLLL.Lattice
+public import HexMatrix.Lattice
 
 public section
 
@@ -48,25 +48,6 @@ def maxAbs (M : Matrix Int n m) : Nat :=
 @[expose]
 def packWidth (M : Matrix Int n n) (A C : Matrix Int n m) : Nat :=
   (n * maxAbs M * maxAbs A + maxAbs C).log2 + 2
-
-/-- Packed product-equality certificate: decides `M * A = C` without forming
-the product. Each row of `A` and of `C` is packed into one integer in
-balanced base `2^K` at the width `packWidth M A C`, and row `i` of the
-(unformed) product is compared via the single packed dot product
-`Σ_l M[i][l] · packA[l]`: `n` big-integer dot products in place of the
-`n · m` entry dot products of a materialized `Matrix.mul`.
-
-When the entries are word-scale the multiplications are big-by-small and the
-same-lattice clause costs `O(n²)` big-by-small multiplications; on wide
-entries the packed dot products cost the same bit operations as the
-materialized product. Either way the single packed comparison decides exactly
-`M * A = C` (`mulEqCert_iff`). -/
-@[expose]
-def mulEqCert (M : Matrix Int n n) (A C : Matrix Int n m) : Bool :=
-  let K := packWidth M A C
-  let packs : Vector Int n := Vector.ofFn fun l => packRow K (row A l)
-  (List.finRange n).all fun i =>
-    (row M i).dotProduct packs == packRow K (row C i)
 
 
 /-- Every entry of an integer matrix is bounded by the `maxAbs` scan. -/
@@ -297,6 +278,31 @@ theorem natAbs_mul_entry_le (M : Matrix Int n n) (A : Matrix Int n m)
     (fun l => natAbs_le_maxAbs M i l)
     (fun l => by rw [getElem_col]; exact natAbs_le_maxAbs A l j)
 
+end Internal
+
+namespace Matrix
+
+open Hex.Internal
+
+/-- Packed product-equality certificate: decides `M * A = C` without forming
+the product. Each row of `A` and of `C` is packed into one integer in
+balanced base `2^K` at the width `packWidth M A C`, and row `i` of the
+(unformed) product is compared via the single packed dot product
+`Σ_l M[i][l] · packA[l]`: `n` big-integer dot products in place of the
+`n · m` entry dot products of a materialized `Matrix.mul`.
+
+When the entries are word-scale the multiplications are big-by-small and the
+same-lattice clause costs `O(n²)` big-by-small multiplications; on wide
+entries the packed dot products cost the same bit operations as the
+materialized product. Either way the single packed comparison decides exactly
+`M * A = C` (`mulEqCert_iff`). -/
+@[expose]
+def mulEqCert (M : Matrix Int n n) (A C : Matrix Int n m) : Bool :=
+  let K := packWidth M A C
+  let packs : Vector Int n := Vector.ofFn fun l => packRow K (row A l)
+  (List.finRange n).all fun i =>
+    (row M i).dotProduct packs == packRow K (row C i)
+
 /-- The packed certificate decides product equality: sound (`= true` implies
 `M * A = C`, by balanced-digit uniqueness at width `packWidth M A C`) and
 complete (`M * A = C` implies `= true`, by congruence through
@@ -345,15 +351,9 @@ theorem mulEqCert_iff {M : Matrix Int n n} {A C : Matrix Int n m} :
   · intro h i _
     rw [h]
 
-end Internal
-
-namespace Matrix
-
-open Hex.Internal
-
 /-- Executable same-lattice certificate: two integer transforms that multiply
 the bases into each other. Each product equality is verified by the packed
-certificate {name}`Hex.Internal.mulEqCert`, so neither product matrix is ever
+certificate {name}`Hex.Matrix.mulEqCert`, so neither product matrix is ever
 formed. -/
 @[expose]
 def sameLatticeCert (B B' : Matrix Int n m) (U V : Matrix Int n n) : Bool :=

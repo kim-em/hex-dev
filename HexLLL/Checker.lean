@@ -6,7 +6,7 @@ Authors: Kim Morrison
 
 module
 
-public import HexLLL.Certificate
+public import HexMatrix.Certificate
 public import HexLLL.Interval
 
 public section

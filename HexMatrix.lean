@@ -19,13 +19,16 @@ public import HexMatrix.Pad
 public import HexMatrix.Region
 public import HexMatrix.Strassen
 public import HexMatrix.Gram
+public import HexMatrix.Lattice
+public import HexMatrix.Certificate
 
 public section
 
 /-!
 The `HexMatrix` library exposes the dense matrix core: the `Vector`-based
 matrix representation, basic vector helpers, the dot product, dense matrix
-algebra, elementary row/column operations, and submatrix/Gram helpers. The
+algebra, elementary row/column operations, submatrix/Gram helpers, integer
+row-lattice membership, and the packed same-lattice certificate. The
 row-echelon transforms, determinant APIs, and the executable Bareiss algorithm
 live in the `HexRowReduce`, `HexDeterminant`, and `HexBareiss` libraries.
 -/

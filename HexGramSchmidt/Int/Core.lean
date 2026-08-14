@@ -7,6 +7,7 @@ Authors: Kim Morrison
 module
 
 public import HexGramSchmidt.Basic
+public import HexMatrix.Lattice
 public import HexBareiss.Bareiss
 public import HexDeterminant
 
@@ -18,7 +19,7 @@ Executable array/loop machinery for the integer scaled Gram-Schmidt pass in
 
 This module defines the integer-determinant surface (`gramDet` and
 `independent`, the leading Gram matrices (`leadingGramMatrixInt`/`Rat`),
-`scaledCoeffMatrix`, lattice membership `memLattice`, and the no-pivot Bareiss
+`scaledCoeffMatrix`, and the no-pivot Bareiss
 determinant reader `gramDetVecEntry`) together with the mutable row-major array
 kernel that computes the scaled coefficients fraction-free. The kernel includes the
 nested-array storage (`gramRows`, `zeroRows`, `getArrayEntry`/`setArrayEntry`,
@@ -80,13 +81,6 @@ def scaledCoeffMatrix (b : Matrix Int n m) (i j : Fin n) (hji : j.val < i.val) :
 end GramSchmidt
 
 namespace GramSchmidt.Int
-
-/-- Integer lattice membership in the row span of `b`. This mirrors the LLL
-predicate without making `hex-gram-schmidt` depend on the downstream LLL
-library. -/
-@[expose]
-def memLattice (b : Matrix Int n m) (v : Vector Int m) : Prop :=
-  ∃ c : Vector Int n, Matrix.vecMul c b = v
 
 /-- The `k`-th Gram determinant: the determinant of the `k × k` leading
 principal Gram matrix of the integer input.
