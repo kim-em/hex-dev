@@ -691,9 +691,13 @@ matrix as a left inverse.
 
 Over a field this is linear algebra. Over a general commutative ring it needs
 the adjugate, because the inverse is only available as `adjugate M` scaled by
-`det M`, and `det M` is a unit exactly when `M` is invertible. The certificate
-checkers in the integer normal-form libraries rely on this: they verify one
-product `U * W = 1` and read unimodularity of `U` off it. -/
+`det M`, and `det M` is a unit exactly when `M` is invertible. The proof applies
+`adjugate_mul` twice: once to rewrite `adjugate U` as `det U • W`, and once to
+recognise `det U • (W * U)` as `det U • 1`.
+
+The intended consumer is a certificate checker that verifies a single product
+`U * W = 1` and reads unimodularity of `U` off it, rather than checking both
+directions or computing a determinant. -/
 theorem mul_eq_one_comm {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
     {U W : Matrix R n n} (h : U * W = Matrix.identity n) :
     W * U = Matrix.identity n := by

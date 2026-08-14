@@ -25,7 +25,7 @@ tracking and by `hex-bareiss` for composing row swaps into a permutation sign.
 - `mul_eq_one_comm : U * W = 1 → W * U = 1` for a square matrix over a
   commutative ring, proved through the adjugate. A one-sided inverse is
   therefore enough to witness invertibility, which is what the integer
-  normal-form certificate checkers need.
+  normal-form certificate checkers are specified to rely on.
 
 **Mathlib-free vs. Mathlib-bridge proof surface.** Theorems connecting `Hex.det`
 to Mathlib's `Matrix.det` (e.g. `det_eq : Hex.det M = Matrix.det (matrixEquiv M)`)

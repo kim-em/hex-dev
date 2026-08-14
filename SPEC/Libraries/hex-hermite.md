@@ -531,7 +531,7 @@ theorem mul_eq_one_comm {U W : Matrix R n n} (h : U * W = Matrix.identity n) :
     W * U = Matrix.identity n
 ```
 
-for a commutative ring, proved through `adjugate_mul` and `mul_adjugate`. It
+for a commutative ring, proved by applying `adjugate_mul` twice. It
 is adjugate theory rather than Hermite theory, which is why it lives there.
 
 ## Prerequisite changes in other libraries
