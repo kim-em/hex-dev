@@ -1455,10 +1455,12 @@ example : True := by
 /-! ## Branch-dependent ReLU propagation
 
 Unlike exponential positivity, these two propagators are intentionally
-conditional.  The nonnegative-side rule proves `max x 0 = x` from `0 <= x`;
-the negative-side rule proves `max x 0 = 0` from `x < 0`.  The runtime and
-proof packages know those two function-specific facts, while branch creation,
-branch seeding, chronology replay, and the two-proof join stay generic. -/
+conditional.  The nonnegative-side rule proves the output fact by rewriting
+with `max x 0 = x` from `0 <= x`; the negative-side rule does so by rewriting
+with `max x 0 = 0` from `x < 0`.  This conditionality is a package-test design
+choice for an unconditional final theorem.  The runtime and proof packages
+know those two function-specific facts, while branch creation, branch seeding,
+chronology replay, and the two-proof join stay generic. -/
 
 private def reluKey : OpKey := { name := "relu-sign.max-zero" }
 
@@ -1993,17 +1995,18 @@ private def reluJoined : Evidence
     let goal ← getMainGoal
     goal.assign (← emitReluSplit)
 
-/-- A genuinely branch-dependent arbitrary-function vertical: neither ReLU
-propagator fires before the zero split, and each child proof consumes its own
-strictly narrower source fact before the generic join closes the theorem. -/
-theorem tacticReluSplit (x : ℝ) : 0 ≤ max x 0 :=
+/-- An arbitrary-function vertical whose child proofs consume distinct split
+assumptions by construction: neither ReLU propagator fires before the zero
+split.  The final theorem is unconditional; conditionality here tests the
+branch proof plumbing rather than mathematical necessity. -/
+theorem reluSplit (x : ℝ) : 0 ≤ max x 0 :=
   closeRelu x reluJoined
 
 /--
-info: 'Hex.IntervalMathlib.ExpSignConformance.tacticReluSplit' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: 'Hex.IntervalMathlib.ExpSignConformance.reluSplit' depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs in
-#print axioms tacticReluSplit
+#print axioms reluSplit
 
 set_option linter.unusedTactic false in
 example : True := by
