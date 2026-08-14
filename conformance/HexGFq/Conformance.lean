@@ -195,5 +195,30 @@ example (x y z : Generic21) :
 #guard GF2q.toGFq (packed4 0x10) =
   GFq.ofPoly (GF2q.supportedEntry (n := 4)) (GF2q.reprFpPoly (packed4 0x10))
 
+/-! # Degree-8 committed entries
+
+The binary column of the committed Conway table runs to degree 8, so both
+ergonomic constructors resolve there. These guards pin that: `GFqC 2 8` and
+`GF2q 8` are the reachability claim the table widening was for, and without
+them a future narrowing would go unnoticed.
+
+Note the modulus is the Conway polynomial for `(2, 8)`, lower word `0x1D`, not
+the AES modulus `0x1B`. They are different irreducibles of the same degree, so
+these are different presentations of the same 256-element field. -/
+
+private abbrev Committed28 : Type := GFqC 2 8
+private abbrev Packed28 : Type := GF2q 8
+
+#guard GF2q.lower (n := 8) = 0x1D
+#guard GF2q.repr (GF2q.ofWord (n := 8) 0x53) = 0x53
+
+-- Reduction past degree 8 folds the Conway modulus back in.
+#guard GF2q.repr (GF2q.ofWord (n := 8) 0x1FF) = (0x1FF ^^^ 0x11D : UInt64)
+
+-- The packed modulus is the monic degree-8 word, and it is the Conway
+-- polynomial for (2, 8) rather than any convenient irreducible: that
+-- identification is the `conway_eq_packed` field of the instance.
+#guard wordArray (GF2q.modulus (n := 8)) = #[0x11D]
+
 end GfqConformance
 end Hex

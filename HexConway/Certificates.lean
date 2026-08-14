@@ -856,6 +856,56 @@ private theorem cert_13_6_incremental_check :
       luebeckConwayPolynomial_13_6 luebeckConwayPolynomial_13_6_monic cert_13_6 cert_13_6_incremental_check)
 
 
+/-- Rabin irreducibility certificate for the committed `C(2, 7)` entry. -/
+private def cert_2_7 : Berlekamp.IrreducibilityCertificate where
+  p := 2
+  n := 7
+  powChain := #[FpPoly.ofCoeffs #[(0 : ZMod64 2), 1], FpPoly.ofCoeffs #[(0 : ZMod64 2), 0, 1], FpPoly.ofCoeffs #[(0 : ZMod64 2), 0, 0, 0, 1], FpPoly.ofCoeffs #[(0 : ZMod64 2), 1, 1], FpPoly.ofCoeffs #[(0 : ZMod64 2), 0, 1, 0, 1], FpPoly.ofCoeffs #[(0 : ZMod64 2), 1, 1, 0, 1], FpPoly.ofCoeffs #[(0 : ZMod64 2), 1, 0, 0, 1], FpPoly.ofCoeffs #[(0 : ZMod64 2), 1]]
+  bezout := #[{ left := FpPoly.ofCoeffs #[(1 : ZMod64 2)], right := FpPoly.ofCoeffs #[(1 : ZMod64 2), 1, 1, 1, 1, 1] }]
+
+set_option maxRecDepth 4096 in
+set_option maxHeartbeats 8000000 in
+/-- `cert_2_7_incremental_check` confirms the incremental Rabin certificate
+`cert_2_7` validates for the committed `C(2, 7)` entry. -/
+private theorem cert_2_7_incremental_check :
+    Berlekamp.checkIrreducibilityCertificateLinearIncremental
+        luebeckConwayPolynomial_2_7 luebeckConwayPolynomial_2_7_monic cert_2_7 = true := by
+  decide
+
+/-- The committed `C(2, 7)` entry is irreducible. -/
+@[grind .] theorem luebeckConwayPolynomial_2_7_irreducible :
+    FpPoly.Irreducible luebeckConwayPolynomial_2_7 :=
+  Berlekamp.rabinTest_imp_irreducible
+    luebeckConwayPolynomial_2_7
+    luebeckConwayPolynomial_2_7_monic
+    (Berlekamp.checkIrreducibilityCertificateLinearIncremental_rabinTest
+      luebeckConwayPolynomial_2_7 luebeckConwayPolynomial_2_7_monic cert_2_7 cert_2_7_incremental_check)
+
+/-- Rabin irreducibility certificate for the committed `C(2, 8)` entry. -/
+private def cert_2_8 : Berlekamp.IrreducibilityCertificate where
+  p := 2
+  n := 8
+  powChain := #[FpPoly.ofCoeffs #[(0 : ZMod64 2), 1], FpPoly.ofCoeffs #[(0 : ZMod64 2), 0, 1], FpPoly.ofCoeffs #[(0 : ZMod64 2), 0, 0, 0, 1], FpPoly.ofCoeffs #[(1 : ZMod64 2), 0, 1, 1, 1], FpPoly.ofCoeffs #[(0 : ZMod64 2), 0, 1, 1, 0, 0, 1], FpPoly.ofCoeffs #[(1 : ZMod64 2), 0, 1, 1, 1, 0, 0, 1], FpPoly.ofCoeffs #[(1 : ZMod64 2), 1, 1, 1, 1, 0, 1], FpPoly.ofCoeffs #[(1 : ZMod64 2), 0, 1, 0, 0, 0, 0, 1], FpPoly.ofCoeffs #[(0 : ZMod64 2), 1]]
+  bezout := #[{ left := FpPoly.ofCoeffs #[(1 : ZMod64 2), 1, 0, 0, 1], right := FpPoly.ofCoeffs #[(1 : ZMod64 2), 0, 1, 0, 0, 0, 1] }]
+
+set_option maxRecDepth 4096 in
+set_option maxHeartbeats 8000000 in
+/-- `cert_2_8_incremental_check` confirms the incremental Rabin certificate
+`cert_2_8` validates for the committed `C(2, 8)` entry. -/
+private theorem cert_2_8_incremental_check :
+    Berlekamp.checkIrreducibilityCertificateLinearIncremental
+        luebeckConwayPolynomial_2_8 luebeckConwayPolynomial_2_8_monic cert_2_8 = true := by
+  decide
+
+/-- The committed `C(2, 8)` entry is irreducible. -/
+@[grind .] theorem luebeckConwayPolynomial_2_8_irreducible :
+    FpPoly.Irreducible luebeckConwayPolynomial_2_8 :=
+  Berlekamp.rabinTest_imp_irreducible
+    luebeckConwayPolynomial_2_8
+    luebeckConwayPolynomial_2_8_monic
+    (Berlekamp.checkIrreducibilityCertificateLinearIncremental_rabinTest
+      luebeckConwayPolynomial_2_8 luebeckConwayPolynomial_2_8_monic cert_2_8 cert_2_8_incremental_check)
+
 end Conway
 
 end Hex

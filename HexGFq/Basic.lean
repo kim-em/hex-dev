@@ -51,6 +51,14 @@ instance committedEntry_2_5 : CommittedEntry 2 5 where
 instance committedEntry_2_6 : CommittedEntry 2 6 where
   entry := supportedEntry_2_6
 
+/-- The committed table supports generic `GFq` construction for `C(2, 7)`. -/
+instance committedEntry_2_7 : CommittedEntry 2 7 where
+  entry := supportedEntry_2_7
+
+/-- The committed table supports generic `GFq` construction for `C(2, 8)`. -/
+instance committedEntry_2_8 : CommittedEntry 2 8 where
+  entry := supportedEntry_2_8
+
 /-- The committed table supports generic `GFq` construction for `C(3, 1)`. -/
 instance committedEntry_3_1 : CommittedEntry 3 1 where
   entry := supportedEntry_3_1
@@ -394,6 +402,30 @@ private theorem packedGF2Entry_2_6_irreducible :
     (packedGF2IrreducibilityCertificate 0x1B 6)
     (by decide)
 
+set_option maxRecDepth 4096 in
+/-- The packed Conway modulus for `C(2, 7)` (`0x3`) is irreducible,
+checked from its certificate. -/
+private theorem packedGF2Entry_2_7_irreducible :
+    GF2Poly.Irreducible (GF2Poly.ofUInt64Monic 0x3 7) :=
+  GF2Poly.checkIrreducibilityCertificate_imp_irreducible
+    (GF2Poly.ofUInt64Monic 0x3 7)
+    (packedGF2IrreducibilityCertificate 0x3 7)
+    (by decide)
+
+set_option maxRecDepth 4096 in
+/-- The packed Conway modulus for `C(2, 8)` (`0x1D`) is irreducible,
+checked from its certificate.
+
+This is not the AES modulus. AES uses `x^8 + x^4 + x^3 + x + 1` (`0x1B`), a
+different irreducible of the same degree, so `GF2q 8` and the AES field are
+different presentations of the same 256-element field. -/
+private theorem packedGF2Entry_2_8_irreducible :
+    GF2Poly.Irreducible (GF2Poly.ofUInt64Monic 0x1D 8) :=
+  GF2Poly.checkIrreducibilityCertificate_imp_irreducible
+    (GF2Poly.ofUInt64Monic 0x1D 8)
+    (packedGF2IrreducibilityCertificate 0x1D 8)
+    (by decide)
+
 /-- The committed table supports a packed `GF2n` view of `C(2, 2)`. -/
 instance packedGF2Entry_2_2 : PackedGF2Entry 2 where
   entry := supportedEntry_2_2
@@ -438,6 +470,24 @@ instance packedGF2Entry_2_6 : PackedGF2Entry 6 where
   degree_pos := by decide
   degree_lt_word := by decide
   packed_irreducible := packedGF2Entry_2_6_irreducible
+
+/-- The committed table supports a packed `GF2n` view of `C(2, 7)`. -/
+instance packedGF2Entry_2_7 : PackedGF2Entry 7 where
+  entry := supportedEntry_2_7
+  lower := 0x3
+  conway_eq_packed := rfl
+  degree_pos := by decide
+  degree_lt_word := by decide
+  packed_irreducible := packedGF2Entry_2_7_irreducible
+
+/-- The committed table supports a packed `GF2n` view of `C(2, 8)`. -/
+instance packedGF2Entry_2_8 : PackedGF2Entry 8 where
+  entry := supportedEntry_2_8
+  lower := 0x1D
+  conway_eq_packed := rfl
+  degree_pos := by decide
+  degree_lt_word := by decide
+  packed_irreducible := packedGF2Entry_2_8_irreducible
 
 end Conway
 

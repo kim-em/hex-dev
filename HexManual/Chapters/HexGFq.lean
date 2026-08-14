@@ -56,7 +56,8 @@ one-method class.
 committed {name}`Hex.Conway.SupportedEntry` for the pair `(p, n)`. The
 library commits one instance per committed table cell, named
 `committedEntry_p_n` (for example `committedEntry_2_3`), covering
-`p ∈ {2, 3, 5, 7, 11, 13}` and `n ∈ {1, …, 6}`. With the instance in
+`p ∈ {2, 3, 5, 7, 11, 13}`, to `n = 6` for the odd primes and to `n = 8`
+for `p = 2`. With the instance in
 scope, the short field spelling resolves the witness automatically. Where
 a proof needs to name the witness, the explicit form still takes it as an
 argument.
