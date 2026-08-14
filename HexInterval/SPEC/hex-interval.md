@@ -3337,6 +3337,17 @@ and ordinary theorem closure. It is not a generic logarithm propagator, does
 not compute a series, and does not satisfy any of the precision, batching,
 ordering, or cache requirements below.
 
+The source-pinned `log (log 6.58)` probe extends this boundary to genuine
+two-stage replay.  One registered package first turns the exact rational input
+fact into a strict positive enclosure for the inner logarithm, then runs again
+and consumes that exact enclosure to derive the outer lower bound.  The two
+events are replayed chronologically through the generic proof frontend; an
+inner enclosure that includes zero is domain-unknown and cannot replay the
+outer event.  The package's executable table is still finite, however.  The
+Mathlib companion validates its entries with a general logarithm Taylor
+remainder theorem, but the runtime does not yet provide arbitrary-rational
+range reduction, series construction, or precision refinement.
+
 The table-building acceptance program constructs enclosures for
 
 `Real.log (1 + (i : ℝ) / 256)`, for every `i : ℕ` with `i ≤ 256`,

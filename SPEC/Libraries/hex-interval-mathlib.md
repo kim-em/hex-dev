@@ -1071,6 +1071,28 @@ satisfy the high-accuracy table, arbitrary input, nested-logarithm, range
 reduction, or package-owned Taylor-series milestones, and must not be counted
 as evidence for those records.
 
+The next classified probe covers inventory record 404,
+`LogTables.log_log_6_58_gt`.  `PntNestedLog` runs one registered logarithm
+handler twice over the three-node graph for `log (log 6.58)`: an exact rational
+source fact produces the strict enclosure
+`1.884034 < log 6.58 < 1.884035`, then the second event consumes precisely that
+positive enclosure to prove `0.633415 < log (log 6.58)`.  The Mathlib companion
+checks both table entries from `Real.abs_log_sub_add_sum_range_le`; the outer
+schema uses the inner assumption and logarithm monotonicity rather than a
+pre-existing nested-log theorem.  Chronological replay and `ProofFrontend`
+close the source theorem.  A domain-isolation mutation removes the exact
+source fact and replaces the inner enclosure by one that includes zero; it is
+domain-unknown to the planner and rejected by replay.  Removing the source is
+deliberate because retaining it would let the first rule refine the mutated
+inner fact back to the strict positive table enclosure.
+
+This is a reusable two-stage dependency and domain-rejection vertical, but its
+runtime numerical provider is still a finite package-owned table.  It neither
+accepts arbitrary rational inputs nor constructs Taylor coefficients at
+runtime, and therefore is not evidence for the general logarithm or certified
+table-building milestones.  Its private Mathlib proofs use the general Taylor
+remainder theorem only to validate the finite entries at kernel replay time.
+
 Refreshing an upstream pin must regenerate and review the manifest. The
 inventory prevents blind spots; it does not make exact-source compatibility a
 release criterion. It must cover, at minimum:
