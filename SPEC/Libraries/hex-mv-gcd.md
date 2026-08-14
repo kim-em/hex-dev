@@ -86,6 +86,15 @@ and it depends on this library), Gröbner bases, resultants themselves
 multivariate Hensel lifting, and the sparse Hensel gcd route (see
 "Routes not specified here").
 
+Also not in scope: the univariate integer case, which is
+[hex-poly-z-gcd](hex-poly-z-gcd.md). That library computes gcds of
+`ZPoly` for the consumers that hold `DensePoly Int` and would otherwise
+convert, its certificate is the arity-one specialisation of the one
+below with an unconditional soundness theorem (the content recursion
+bottoms out in `Int.gcd`, so `LawfulContent` does not arise), and this
+library should call it for the base case of its recursion in the main
+variable rather than reimplement it.
+
 The coefficient rings that matter are `Int`, `Rat`, `ZMod64 p`, and
 `FpPoly p`. The algorithms are written against a coefficient interface
 rather than against those four, because the recursive `GcdOps` instance
@@ -426,8 +435,8 @@ whole point of the certificate is to carry the second witness.
 
 [future-work](../future-work.md) said of the modular gcd for `ℤ[x]` that
 the certificate carries cofactors "together with a Bézout witness that
-`f'` and `h'` are coprime". That witness does not exist, in one variable
-or in several. `ℤ[x]` is not a Bézout domain: `x` and `2` are coprime
+`f'` and `h'` are coprime", and now records the correction instead. That
+witness does not exist, in one variable or in several. `ℤ[x]` is not a Bézout domain: `x` and `2` are coprime
 and `u · x + v · 2 = 1` has no solution in `ℤ[x]`. The same holds in
 `R[x₁, …, xₙ]` over any base that is not a field, and over a field as
 soon as `n ≥ 2` (`x₁` and `x₂` are coprime with no Bézout identity).
@@ -1369,7 +1378,7 @@ HexMvGcdMathlib.lean
 
 ```yaml
   HexMvGcd:
-    deps: [HexMvPoly, HexPoly, HexPolyFp, HexResultant, HexArith, HexModArith]
+    deps: [HexMvPoly, HexPoly, HexPolyFp, HexResultant, HexArith, HexModArith, HexPolyZGcd]
     mathlib: false
     done_through: 0
     status: draft
@@ -1380,7 +1389,9 @@ HexMvGcdMathlib.lean
     status: draft
 ```
 
-`HexPolyFp` and `HexModArith` are for the univariate images over `F_p`.
+`HexPolyZGcd` is the arity-one case, called rather than reimplemented;
+see "Scope". `HexPolyFp` and `HexModArith` are for the univariate images
+over `F_p`.
 `HexResultant` is for route 5 and for the `ExactDivLaws` interface.
 `HexArith` is for the integer gcd and the extended Euclidean algorithm.
 `HexPoly` comes in through `DensePoly`, which `toUnivariate` returns.
