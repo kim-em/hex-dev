@@ -1582,8 +1582,7 @@ generic Meta frontend now quotes
 the complete child `CheckerInput`, rejects any mismatch in its program, fact
 array, or target, pins the full child assumption list, and turns the seed into
 exact version-zero `FactProof` records. Its branch entry point then uses the
-unchanged function-independent chronology fold. A live child session and a
-nonempty child event trace were the next end-to-end branch experiment.
+unchanged function-independent chronology fold.
 The shared `emitSeeded` fold is a low-level Meta helper: its raw proof table
 must already refer to the context's quoted base program and child assumptions.
 The caller-root and branch-root entry points establish that precondition via

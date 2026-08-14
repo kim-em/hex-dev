@@ -23,7 +23,7 @@ namespace Hex.Interval.Experiment.ExpSign
 
 open Propagator PayloadArena
 
-/-- Minimal fact lattice for exponential positivity. -/
+/-- Minimal fact lattice for exponential positivity and source sign splits. -/
 inductive Bound where
   | all
   | nonnegative

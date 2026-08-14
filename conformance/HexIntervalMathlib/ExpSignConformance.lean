@@ -601,19 +601,32 @@ private def splitParent : Evidence
   ProofEmitter.assumed (by simp [baseFacts, branchFact, node])
 
 private meta def emitChild (context : ProofFrontend.Context Bound Name)
-    (input : CheckerInput Bound) (seed : Expr) : MetaM Expr := do
+    (input : CheckerInput Bound) (seed : Expr) (side : Bound) : MetaM Expr := do
   let some fixture := runInput? input
     | throwError "interval_exp_split: child search failed"
   let some trace := Frontend.trace? fixture.session.state.engine fixture.session.arena
     | throwError "interval_exp_split: child chronology quotation failed"
+  unless trace.program == input.baseProgram do
+    throwError "interval_exp_split: child trace changed the expression graph"
+  let [.rule step] := trace.events
+    | throwError "interval_exp_split: child trace is not exactly one fact rule"
+  unless fixture.reached.seen == ({ node := node 1, version := 1 } : SeenVersion) &&
+      fixture.reached.fact == .nonnegative && fixture.events.size == 1 &&
+      fixture.session.state.engine.facts == #[side, .nonnegative] &&
+      step.entry.replayKey == expFactSchema.key &&
+      step.event.programVersion == 0 && step.event.node == node 1 &&
+      step.event.previous == ({ node := node 1, version := 0 } : SeenVersion) &&
+      step.event.fact == .nonnegative && step.event.version == 1 &&
+      step.assumptions == [branchFact side] && step.previous == .all do
+    throwError "interval_exp_split: child result or quoted rule trace drifted"
   let state ← ProofFrontend.emitBranch context input seed trace.program
     trace.events fixture.registry.emit
   ProofFrontend.closeTarget context state fixture.reached.seen
     fixture.reached.fact input.target
 
 private meta def emitSplit : MetaM Expr := do
-  let left ← emitChild leftContext leftInput (mkConst ``leftSeed)
-  let right ← emitChild rightContext rightInput (mkConst ``rightSeed)
+  let left ← emitChild leftContext leftInput (mkConst ``leftSeed) .nonnegative
+  let right ← emitChild rightContext rightInput (mkConst ``rightSeed) .negative
   let result ←
     mkAppM ``ProofEmitter.replaySplit
       #[mkConst ``signSplit, mkConst ``program, mkConst ``baseFacts,
@@ -788,6 +801,23 @@ one-event traces, and close only after the zero split coverage theorem joins
 their target proofs. -/
 theorem tacticExpSplit (x : ℝ) : 0 ≤ Real.exp x := by
   interval_exp_split
+
+/--
+info: 'Hex.IntervalMathlib.ExpSignConformance.tacticExpSplit' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms tacticExpSplit
+
+set_option linter.unusedTactic false in
+example : True := by
+  run_tac
+    if (← observing? <| emitChild leftContext rightInput
+        (mkConst ``rightSeed) .negative).isSome then
+      throwError "interval_exp_split: mismatched child input was accepted"
+    if (← observing? <| emitChild rightContext rightInput
+        (mkConst ``leftSeed) .negative).isSome then
+      throwError "interval_exp_split: mismatched branch seed was accepted"
+  trivial
 
 theorem tacticExpExtra (x y : ℝ) (_hy : 0 ≤ Real.exp y) :
     0 ≤ Real.exp x := by
