@@ -3381,6 +3381,66 @@ remain local to the probe. Precision-parametric point evaluation, repeated
 halving/squaring, provider selection, cached powers, and the package-owned
 Taylor-series canary above remain acceptance work.
 
+#### Coordinate-aware numerical batches
+
+The first source-pinned batch probe targets PNT+'s
+`BKLNW.table_12_check`. At the pinned source revision, that theorem takes nine
+real row fields plus membership in the 26-row `table_12` list and returns the
+conjunction of the five bounds
+`b ^ k * C_bk_S b c C ≤ Cb_k`, for `k = 1, …, 5`. Its ordinary-row tactic
+site expands to 24 rows by five columns (120 numerical leaves), while two
+logarithmic-row tactic sites each expand to five more leaves, for exactly 130
+checks.
+
+The numerical expression is pinned exactly, rather than reconstructed from the
+paper prose. The source definition is:
+
+```lean
+noncomputable def C_bk_S (b c C : ℝ) : ℝ :=
+  (C + 1) * exp (-b / 2) + RS_prime.c₀ * exp (-2 * b / 3)
+    + c * exp (-3 * b / 4) + RS_prime.c₀ * exp (-4 * b / 5)
+```
+
+The representative source tuple is exactly:
+
+```lean
+(25, 1.750020e-4, 4.375050e-3, 1.093770e-1, 2.734410e0,
+  6.836010e1, 0.88, 0.86, 32e12)
+```
+
+Consequently its first coefficient is `C + 1 = 0.86 + 1 = 1.86`; the other
+coefficients are the tuple's `c = 0.88` and the pinned
+`RS_prime.c₀ = 1.03883`. Both the proof definition and a kernel-checked
+certificate-correspondence theorem record these equalities.
+
+The current bounded fixture proves only the five cells of the ordinary
+`b = 25` row. Five cell nodes are arguments to one row anchor, allowing one
+provider action to install all five facts from one payload. The anchor result
+is only a row token: actual sharing is in that single action and payload, and
+in the proof theorem that computes the four point enclosures, natural powers,
+and row sum once before exact rational projection into five targets. The
+retained chronology contains five fact events sharing the same replay body,
+and the generic proof frontend folds that chronology once before closing each
+coordinate. Thus this fixture exercises coordinate-aware batching and
+action/payload/proof-side sharing, but it is not the complete Table 12 family.
+
+The row certificate's fields are pinned constants rather than general checked
+parameters: its decoder accepts only the corrected source row. The original
+paper value `6.65350e1` at `(b = 25, k = 5)`, instead of the corrected
+`6.836010e1`, is a distinguished incompatible payload. Planning returns the
+stable coordinate diagnostic `205`, which decodes to `(25, 5)`, emits no
+draft, and does not request more precision; replay rejects the mutation, and a
+separate lower enclosure proves that target false.
+
+Exactly 125 cells remain before the 130-case acceptance target can be claimed:
+23 further ordinary rows by five columns (115 cells), plus the two logarithmic
+rows by five columns (10 cells). Completing them requires a generated row
+table, bounded chunked replay over all row certificates, checked logarithm
+brackets for the special rows, and the final wrapper from list membership to
+the matching five-cell certificate. Until those pieces land, both the
+generated family and its three source tactic records remain classified
+`pending`.
+
 #### Certified logarithm tables
 
 The initial source-pinned PNT+ probe is intentionally narrower than this
