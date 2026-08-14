@@ -264,6 +264,69 @@ def trace? : Option (Frontend.Trace Bound) := do
             step.event.fact == .nonnegative
       | _ => false
 
+/-! ## Live zero-split child sessions -/
+
+private def branchFact (side : Bound) : NodeFact Bound :=
+  { node := node 0, fact := side }
+
+private def branchFacts (side : Bound) : List (NodeFact Bound) :=
+  branchFact side :: baseFacts
+
+private def branchInitial (side : Bound) : Array Bound := #[side, .all]
+
+private def branchInput (side : Bound) : CheckerInput Bound :=
+  { baseProgram := program
+    initialFacts := branchInitial side
+    target := checkerInput.target }
+
+private def inheritBranch (side : Bound) (observed : NodeId)
+    (different : observed ≠ node 0) (fact : Bound)
+    (found : (branchInput side).initialFacts[observed.index]? = some fact) :
+    Evidence
+      (semantics.Entails program baseFacts { node := observed, fact }) :=
+  { proof := by
+      intro _ _ assumptions
+      cases observed with
+      | mk index =>
+          cases index with
+          | zero => simp [node] at different
+          | succ index =>
+              cases index with
+              | zero =>
+                  simp [branchInput, branchInitial] at found
+                  subst fact
+                  exact assumptions _ (by simp [baseFacts, node])
+              | succ index => simp [branchInput, branchInitial] at found }
+
+private def leftInput : CheckerInput Bound := branchInput .nonnegative
+private def rightInput : CheckerInput Bound := branchInput .negative
+private def leftFacts : List (NodeFact Bound) := branchFacts .nonnegative
+private def rightFacts : List (NodeFact Bound) := branchFacts .negative
+
+private def leftSeed :
+    ProofEmitter.BranchSeed semantics leftInput baseFacts
+      (branchFact .nonnegative) :=
+  ProofEmitter.BranchSeed.make leftInput (branchFact .nonnegative)
+    (by rfl) (by rfl) (inheritBranch .nonnegative)
+
+private def rightSeed :
+    ProofEmitter.BranchSeed semantics rightInput baseFacts
+      (branchFact .negative) :=
+  ProofEmitter.BranchSeed.make rightInput (branchFact .negative)
+    (by rfl) (by rfl) (inheritBranch .negative)
+
+#guard
+  runInput? leftInput |>.any fun fixture =>
+    fixture.reached.seen == ({ node := node 1, version := 1 } : SeenVersion) &&
+      fixture.reached.fact == .nonnegative && fixture.events.size == 1 &&
+      fixture.session.state.engine.facts == #[.nonnegative, .nonnegative]
+
+#guard
+  runInput? rightInput |>.any fun fixture =>
+    fixture.reached.seen == ({ node := node 1, version := 1 } : SeenVersion) &&
+      fixture.reached.fact == .nonnegative && fixture.events.size == 1 &&
+      fixture.session.state.engine.facts == #[.negative, .nonnegative]
+
 /-! ## Operation-composed semantics at an arbitrary graph node -/
 
 private def nestedInstruction : Node :=
@@ -421,6 +484,7 @@ theorem nestedExp (x : ℝ) : 0 ≤ Real.exp (Real.exp x) := by
 private def boundExpr : Bound → Expr
   | .all => mkConst ``Bound.all
   | .nonnegative => mkConst ``Bound.nonnegative
+  | .negative => mkConst ``Bound.negative
   | .empty => mkConst ``Bound.empty
 
 private def boundEncoder : FrontendEncoder.Encoder Bound :=
@@ -495,6 +559,83 @@ private def inputContext (result : GoalFrontend.Result Bound)
     finalPrefix := base.basePrefix
     sameOperations := base.sameOperations
     top := boundSchema.top }
+
+private theorem branchWithin (side : Bound) :
+    FactsWithin program (branchFacts side) := by
+  intro fact member
+  simp only [branchFacts, branchFact, baseFacts, List.mem_cons,
+    List.not_mem_nil, or_false] at member
+  rcases member with rfl | rfl | rfl <;> simp [program, node]
+
+private def splitContext (input facts within : Expr)
+    (factValues : List (NodeFact Bound)) : ProofFrontend.Context Bound Name :=
+  { encoder := boundEncoder
+    resolveSchema := pure
+    semantics := mkConst ``semantics
+    domain := mkConst ``boundSchema
+    laws := mkConst ``laws
+    stableLaw := mkConst ``stableLaw
+    input
+    assumed := ``seedAssumed
+    baseFacts := factValues
+    baseFactsTerm := facts
+    baseProgram := program
+    baseProgramTerm := mkConst ``program
+    basePrefix := mkConst ``basePrefix
+    baseWithin := within
+    initialExtension := mkConst ``initialExtension
+    finalPrefix := mkConst ``basePrefix
+    sameOperations := mkConst ``sameOperations
+    top := boundSchema.top }
+
+private def leftContext : ProofFrontend.Context Bound Name :=
+  splitContext (mkConst ``leftInput) (mkConst ``leftFacts)
+    (mkApp (mkConst ``branchWithin) (mkConst ``Bound.nonnegative)) leftFacts
+
+private def rightContext : ProofFrontend.Context Bound Name :=
+  splitContext (mkConst ``rightInput) (mkConst ``rightFacts)
+    (mkApp (mkConst ``branchWithin) (mkConst ``Bound.negative)) rightFacts
+
+private def splitParent : Evidence
+    (semantics.Entails program baseFacts (branchFact .all)) :=
+  ProofEmitter.assumed (by simp [baseFacts, branchFact, node])
+
+private meta def emitChild (context : ProofFrontend.Context Bound Name)
+    (input : CheckerInput Bound) (seed : Expr) (side : Bound) : MetaM Expr := do
+  let some fixture := runInput? input
+    | throwError "interval_exp_split: child search failed"
+  let some trace := Frontend.trace? fixture.session.state.engine fixture.session.arena
+    | throwError "interval_exp_split: child chronology quotation failed"
+  unless trace.program == input.baseProgram do
+    throwError "interval_exp_split: child trace changed the expression graph"
+  let [.rule step] := trace.events
+    | throwError "interval_exp_split: child trace is not exactly one fact rule"
+  unless fixture.reached.seen == ({ node := node 1, version := 1 } : SeenVersion) &&
+      fixture.reached.fact == .nonnegative && fixture.events.size == 1 &&
+      fixture.session.state.engine.facts == #[side, .nonnegative] &&
+      step.entry.replayKey == expFactSchema.key &&
+      step.event.programVersion == 0 && step.event.node == node 1 &&
+      step.event.previous == ({ node := node 1, version := 0 } : SeenVersion) &&
+      step.event.fact == .nonnegative && step.event.version == 1 &&
+      step.assumptions == [branchFact side] && step.previous == .all do
+    throwError "interval_exp_split: child result or quoted rule trace drifted"
+  let state ← ProofFrontend.emitBranch context input seed trace.program
+    trace.events fixture.registry.emit
+  ProofFrontend.closeTarget context state fixture.reached.seen
+    fixture.reached.fact input.target
+
+private meta def emitSplit : MetaM Expr := do
+  let left ← emitChild leftContext leftInput (mkConst ``leftSeed) .nonnegative
+  let right ← emitChild rightContext rightInput (mkConst ``rightSeed) .negative
+  let result ←
+    mkAppM ``ProofEmitter.replaySplit
+      #[mkConst ``signSplit, mkConst ``program, mkConst ``baseFacts,
+        ← boundEncoder.nodeId (node 0), ← boundEncoder.fact .all,
+        mkConst ``Unit.unit, ← boundEncoder.fact .nonnegative,
+        ← boundEncoder.fact .negative,
+        ← boundEncoder.nodeFact checkerInput.target,
+        mkConst ``splitParent, left, right]
+  ProofFrontend.replayResult result
 
 private meta def emitInput (result : GoalFrontend.Result Bound)
     (base : GoalClosure.BaseProof) : MetaM Expr := do
@@ -622,6 +763,61 @@ syntax (name := intervalExpTac) "interval_exp" : tactic
 
 theorem tacticExp (x : ℝ) : 0 ≤ Real.exp x := by
   interval_exp
+
+private meta def proveSplit (target : Expr) : MetaM Expr := do
+  let context ← getLCtx
+  for declaration in context do
+    unless declaration.isImplementationDetail do
+      let saved ← saveState
+      let candidate? ← observing? <|
+        mkAppM ``expTarget #[mkFVar declaration.fvarId]
+      match candidate? with
+      | some candidate =>
+          if ← isDefEq candidate target then
+            let evidence ← emitSplit
+            let proof ←
+              mkAppM ``closeExp #[mkFVar declaration.fvarId, evidence]
+            unless ← isDefEq (← inferType proof) target do
+              throwError "interval_exp_split: joined proof has the wrong target"
+            return (← instantiateMVars proof)
+          saved.restore
+      | none => saved.restore
+  throwError "interval_exp_split: expected a goal `0 ≤ Real.exp x`"
+
+syntax (name := intervalExpSplitTac) "interval_exp_split" : tactic
+
+@[tactic intervalExpSplitTac] meta def evalIntervalExpSplit : Tactic := fun stx => do
+  match stx with
+  | `(tactic| interval_exp_split) =>
+      let goal ← getMainGoal
+      goal.withContext do
+        let proof ← proveSplit (← instantiateMVars (← goal.getType))
+        goal.assign proof
+      replaceMainGoal []
+  | _ => throwUnsupportedSyntax
+
+/-- Both live children run the arbitrary exponential propagator, replay their
+one-event traces, and close only after the zero split coverage theorem joins
+their target proofs. -/
+theorem tacticExpSplit (x : ℝ) : 0 ≤ Real.exp x := by
+  interval_exp_split
+
+/--
+info: 'Hex.IntervalMathlib.ExpSignConformance.tacticExpSplit' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms tacticExpSplit
+
+set_option linter.unusedTactic false in
+example : True := by
+  run_tac
+    if (← observing? <| emitChild leftContext rightInput
+        (mkConst ``rightSeed) .negative).isSome then
+      throwError "interval_exp_split: mismatched child input was accepted"
+    if (← observing? <| emitChild rightContext rightInput
+        (mkConst ``leftSeed) .negative).isSome then
+      throwError "interval_exp_split: mismatched branch seed was accepted"
+  trivial
 
 theorem tacticExpExtra (x y : ℝ) (_hy : 0 ≤ Real.exp y) :
     0 ≤ Real.exp x := by

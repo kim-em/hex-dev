@@ -28,6 +28,7 @@ open GenericInstanceReconstruction OperationSemantics
 def Contains : Bound → ℝ → Prop
   | .all, _ => True
   | .nonnegative, x => 0 ≤ x
+  | .negative, x => x < 0
   | .empty, _ => False
 
 def sourceModel : OperationSemantics.Model ℝ :=
@@ -72,6 +73,20 @@ def laws : Laws semantics :=
       intro _ valuation left right fact _ _ values
       change Contains fact (valuation left) ↔ Contains fact (valuation right)
       rw [values] }
+
+/-- Coverage theorem for the real zero split used by the live branch canary. -/
+def signSplit : SplitSchema semantics Unit where
+  proveCover := fun _ _ parent _ left right =>
+    if shape : parent = .all ∧ left = .nonnegative ∧ right = .negative then
+      some
+        { proof := by
+            rcases shape with ⟨rfl, rfl, rfl⟩
+            intro valuation _ _
+            change NodeId → ℝ at valuation
+            change (0 : ℝ) ≤ valuation _ ∨ valuation _ < 0
+            exact le_or_gt 0 (valuation _) }
+    else
+      none
 
 theorem expEntails (graph : Program) (assumptions : List (NodeFact Bound))
     (output : NodeId) (instruction : Node) (input : NodeId)
