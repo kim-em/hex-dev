@@ -1047,8 +1047,29 @@ accepted fixture, documented rewrite, stronger replacement theorem, retained
 dependency, or expected-failure fixture as appropriate. The release claim
 requires both this classified manifest and the referenced ported proofs; a
 status label alone cannot establish coverage. The inventory checker validates
-that evidence references are structured and nonempty; the release profile must
-also build and axiom-audit the referenced proof fixtures.
+that evidence references are structured and nonempty and that repo-relative
+proof paths exist; the release profile must also build and axiom-audit the
+referenced proof fixtures.
+
+The first classified acceptance probe covers the pinned declarations
+`LogTables.log_2_gt` and `LogTables.log_2_lt`. The Mathlib-free
+`PntLogTable` package watches an exact-input fact for `2`, runs the generic
+policy session, and emits one package-owned two-sided-window fact. Its Mathlib
+companion interprets the opaque logarithm operation, checks the stronger
+`Real.log_two_gt_d9` and `Real.log_two_lt_d9` theorems, and replays the exact
+event through `ProofFrontend` before closing the original six-decimal
+conjunction as an ordinary theorem. Conformance rejects a changed payload,
+input assumption, output node, or output fact and audits the closed theorem's
+axioms. These two records are classified as replacements by stronger numerical
+provider results, with the exact Mathlib theorem recorded explicitly; no
+LeanCert declaration is imported.
+
+This probe establishes the package/planning/replay path, not the eventual
+numerical logarithm algorithm. Its four-element finite fact lattice and its
+reuse of Mathlib's existing point bounds are deliberately local. It does not
+satisfy the high-accuracy table, arbitrary input, nested-logarithm, range
+reduction, or package-owned Taylor-series milestones, and must not be counted
+as evidence for those records.
 
 Refreshing an upstream pin must regenerate and review the manifest. The
 inventory prevents blind spots; it does not make exact-source compatibility a

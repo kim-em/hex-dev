@@ -96,7 +96,9 @@ class InventoryTests(unittest.TestCase):
             "status": "accepted-after-rewrite",
             "note": "unit-test classification",
             "rewrite": "factor the repeated bound through one shared theorem",
-            "evidence": ["conformance/HexIntervalMathlib/PNTConformance.lean:example"],
+            "evidence": [
+                "conformance/HexIntervalMathlib/PntLogTableConformance.lean"
+            ],
         }
         path = self.write_rows(meta, records)
         inventory.update_classifications(path)
@@ -210,6 +212,18 @@ class InventoryTests(unittest.TestCase):
             inventory.require_migrations([record])
         record["migration"]["replacement"] = "PNT.Hex.bklnwBounds"
         inventory.require_migrations([record])
+
+    def test_finished_classification_requires_existing_evidence_path(self) -> None:
+        record = {
+            "kind": "dependency-interface",
+            "migration": {
+                "status": "accepted-unchanged",
+                "note": "ported",
+                "evidence": ["conformance/HexIntervalMathlib/Missing.lean"],
+            },
+        }
+        with self.assertRaisesRegex(inventory.InventoryError, "evidence path"):
+            inventory.require_migrations([record])
 
     def test_dependency_surface_must_match_all_six_interfaces(self) -> None:
         imports = [
