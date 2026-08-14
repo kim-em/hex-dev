@@ -1019,9 +1019,12 @@ invocations, and 290 textual occurrences including ten explanatory prose or
 comment mentions, across 15 files. These counts define the audit surface, not a
 promise to clone every LeanCert API or preserve PNT+ source syntax. A checked
 manifest records the PNT+ commit, LeanCert pin, Lean toolchain and Mathlib
-revision, every source occurrence's file and enclosing declaration, and the
-generated batch families that one source occurrence expands into. Every entry
-is classified as one of:
+revision, every executable occurrence's file and enclosing declaration, raw
+textual matches by file and line, and the generated batch families that one
+source occurrence expands into. Declaration labels are the nearest preceding
+declaration header found by the lexical scan, not elaborated ownership. Every
+entry that represents executable or imported behavior is ultimately classified
+as one of:
 
 - accepted unchanged by a Hex frontend;
 - accepted after a documented PNT+ source rewrite or proof reorganization;
@@ -1031,6 +1034,22 @@ is classified as one of:
 - redundant, malformed, or a known false target with an expected-failure
   enclosure.
 
+Before the D8 migration is performed, `pending` is an explicit allowed state;
+raw matches in comments or strings are classified `not-a-call`. Qualified
+LeanCert references are lexical audit evidence classified `inventory-only`;
+the six imported-interface records, rather than every namespace-open token,
+carry the migration obligation. The ordinary per-PR structural gate permits
+`pending` so that adding the inventory does not pretend the port already
+exists. The D8 migration/release gate must run the same checker with
+`--require-classified`, which rejects every remaining obligation marked
+`pending`. A completed classification also carries structured evidence: an
+accepted fixture, documented rewrite, stronger replacement theorem, retained
+dependency, or expected-failure fixture as appropriate. The release claim
+requires both this classified manifest and the referenced ported proofs; a
+status label alone cannot establish coverage. The inventory checker validates
+that evidence references are structured and nonempty; the release profile must
+also build and axiom-audit the referenced proof fixtures.
+
 Refreshing an upstream pin must regenerate and review the manifest. The
 inventory prevents blind spots; it does not make exact-source compatibility a
 release criterion. It must cover, at minimum:
@@ -1039,8 +1058,16 @@ release criterion. It must cover, at minimum:
   invocations, including nested logarithms, large exponential arguments,
   square roots, pi, and tails down to `10^-100`;
 - all 132 BKLNW textual occurrences across nine files, of which 128 are actual
-  tactic invocations, including the generated Table 10 and roughly 135-check
-  Table 12 batches rather than merely their outer tactic call sites; and
+  tactic invocations. The generated Table 10 row sources contain 87 target
+  proof sites and 38 supporting `a₂`-bound proof sites. The Table 12 theorem
+  expands to 130 checks: 24 ordinary rows by five columns plus two logarithmic
+  rows by five columns. The row partition is structurally derived from the
+  exact pinned list definition, including a first tuple placed on the opening
+  bracket's line; the five-column expansion is a reviewed reading of the
+  theorem's conjunction and tactic structure. Table 10 is currently recorded
+  at executable call-site granularity; complete row/column expansion is part
+  of its D9 shard work. Both families are recorded separately from their
+  aggregate source counts; and
 - all 17 remaining textual occurrences, of which 16 are actual tactic
   invocations, in `Dusart.lean`, `FKS2.lean`, `FKS2Cor23Cor14Tail.lean`,
   `FKS2Floor/Cor22Floor.lean`, and `Goldbach.lean`.
@@ -1048,23 +1075,44 @@ release criterion. It must cover, at minimum:
 The complete 13,590-cell FKS2 stream is a generated workload in addition to
 this source-occurrence inventory. Counting the 280 actual tactic invocations
 while omitting that generated stream misses the main batch workload.
-Conversely, importing the already-proved FKS2 result does not exercise Hex. A
-drift check fails when the pinned PNT+ commit, LeanCert pin, toolchain, Mathlib
-revision, occurrence inventory, or batch sizes change without an explicit
-SPEC and fixture refresh.
+Conversely, importing the already-proved FKS2 result does not exercise Hex. The
+network-free per-PR gate detects an inconsistent or unexplained local change to
+the pinned commit, dependency revisions, occurrence inventory, or batch sizes.
+Because the upstream commit is immutable, checking for a deliberately updated
+upstream pin is a maintainer operation: `--verify-source` regenerates from the
+exact checkout and requires an explicit SPEC, constants, and fixture refresh.
 
 The committed inventory lives at
 `conformance-fixtures/HexIntervalMathlib/pnt-inventory.jsonl` and is generated
-by `scripts/maintenance/pnt_inventory.py`. The generator tokenizes pinned Lean
-sources, counts tactic identifiers outside comments and string literals,
-records their enclosing declarations, separately records raw textual matches,
-and expands the named generated-data families. Per-PR CI and the mandatory
-release profile validate the committed manifest without network access. A
-separate maintainer refresh command checks out the recorded upstream revisions,
-regenerates it, and requires a reviewed diff when any count, classification,
-toolchain, or batch size changes. These artifacts are D8 deliverables; the
-paths name the required interface and do not imply that they exist before that
-milestone.
+by `scripts/maintenance/pnt_inventory.py`. The generator uses an
+offset-preserving lexical mask over pinned Lean sources, counts tactic
+identifiers outside nested comments and string literals, records the nearest
+preceding declaration header, separately records raw textual matches, audits
+the six directly imported LeanCert interface families, and expands the named
+generated-data families. The committed metadata pins all 232 tracked Lean
+source files in the PNT+ repository, records that count in the fixture, and
+stores a digest of the fixed audit-record identity. That second digest covers
+source locations together with reviewed interface roles and generated-workload
+annotations; it is not presented as a pure parser result. Migration
+classifications are deliberately excluded so
+they can be filled in without weakening audit identity. After editing
+classifications, `--update-classifications` validates their schema and refreshes
+only the full record digest. `--refresh` carries existing decisions forward by
+exact audit identity and refuses to discard a classified record;
+`--verify-source` compares audit identity while allowing those decisions to
+differ from freshly generated `pending` defaults.
+
+Per-PR CI runs the generator's unit tests and validates the committed manifest
+without network access. For a pin bump, `--inspect-source --source
+<exact-checkout>` reports the observed pins, digest, counts, imported modules,
+and generated families without accepting or writing them. A maintainer reviews
+that report, updates the constants and workload partitions, then uses
+`--refresh` to reseal the fixture. Independent source verification uses
+`--verify-source`; the accepting commands refuse an unreviewed difference in
+HEAD, dependency pins, toolchain, Lean-source digest, counts, import surface,
+or batch sizes. The artifacts exist before D8 as an audited backlog and local
+integrity gate; they become a migration claim only when the classifications
+and ported proof fixtures are complete.
 
 `interval_decide` is not the complete PNT+ dependency surface. The same pinned
 tree has 60 actual `interval_auto` calls in `TMEEMT.lean` and
@@ -1090,8 +1138,26 @@ They therefore belong to the audit even though they do not spell
 tactic entry points as well as the certified-bound interfaces.
 
 The compatibility manifest records every `interval_auto` invocation, every
-direct LeanCert import, every referenced LeanCert declaration, and every use of
-compiled evaluation to establish a LeanCert checker result. A migration may
+direct LeanCert import, and every qualified `LeanCert.<component>` reference
+outside comments and string literals,
+the load-bearing role of each of the six imported public interface families,
+and every executable textual `native_decide` occurrence as a starting list of
+compiler-trusting proof sites. This lexical list is not the authoritative
+trust audit: macro expansion and transitive dependencies are checked from the
+ported theorems' axiom sets under the Axiom contract below. A lexical scan
+cannot soundly name-resolve an
+unqualified theorem used after `open`; the corresponding import/interface
+record is the durable backlog item, and migration review must classify that
+interface before it can leave `pending`. Qualified-reference occurrences are
+inventory-only evidence beneath that decision. Each record names its reviewed
+interface provenance; `LeanCert.Core` is reached through `LeanCert.ANT` or
+`LeanCert.Validity.AffineCover`, while the parent `LeanCert.Validity` namespace
+is attributed to the latter. The checker rejects a namespace absent from this
+reviewed provenance table. This prevents the fixture from claiming semantic
+name resolution it has not performed while still making every source-level
+dependency site and imported role explicit. The 107 qualified-reference
+occurrences include namespace opens; they are not 107 distinct declaration
+dependencies. A migration may
 classify a finite natural-number `interval_auto` call as ordinary arithmetic
 automation rather than route it through the real interval engine. A direct
 certified-bound dependency may remain outside the interval migration or be
@@ -1138,8 +1204,11 @@ claim unless a later workload explicitly selects them.
   records a false target exposed numerically. Failure diagnostics must report
   the incompatible enclosure rather than only request more precision.
 - PNT+ PR [#1405](https://github.com/AlexKontorovich/PrimeNumberTheoremAnd/pull/1405)
-  records manual treatment of `exp (-log N / k)` and a theorem containing
-  roughly 135 interval checks. It also records four false original boundary
+  records manual treatment of `exp (-log N / k)` and describes the Table 12
+  batch as roughly 135 checks. At the pinned source, this audit counts 24
+  ordinary rows and two logarithmic rows, each expanded across five columns,
+  for exactly 130 checks. The PR also
+  records four false original boundary
   rows, at `b = log(5e10)`, `25`, `log(3.2e13)`, and `32`; at least one
   original row remains an expected-failure regression. These cases motivate
   certified normalization, batch replay, and useful failure bounds.
@@ -1414,8 +1483,10 @@ The committed compatibility subset is `D8` unless marked `D9`:
 - representative `10^-20` and `10^-100` tail bounds;
 - BKLNW sums with upper limits 29, 37, 63, 145, 289, and 433;
 - `[D9]` one Table 10 shard and the recorded false target as an expected
-  failure;
-- `[D9]` the approximately 135-case Table 12 batch, plus one of its four false
+  failure. The shard fixture must bind the intended paper row/column
+  coordinates and generated theorem family, not merely replay 87 target and 38
+  supporting source-level tactic sites;
+- `[D9]` the 130-case Table 12 batch, plus one of its four false
   original boundary rows as an expected failure;
 - `[D9]` a small deterministic FKS2 sample in per-PR `core`, a measured medium
   shard in per-PR `ci`, and all 13,590 cells in the `local`/release profile;
