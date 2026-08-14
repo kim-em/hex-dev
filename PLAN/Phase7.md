@@ -120,12 +120,19 @@ authoring the tutorial pages specified in
 `HexManual/Tutorials/` as Verso chapters. Each tutorial is anchored to
 a single library for Phase 7 bookkeeping (even if it draws on several):
 
-| Tutorial | Anchor library |
-|----------|---------------|
-| AES byte arithmetic (GF(2^8)) | `hex-gf2` |
-| AES modulus irreducibility | `hex-berlekamp` |
-| Prime splitting (Kummer-Dedekind) | `hex-gfq` |
-| LLL in cryptanalysis (Coppersmith toy) | `hex-lll` |
+| Tutorial | Anchor library | Source file |
+|----------|---------------|-------------|
+| AES byte arithmetic (GF(2^8)) | `hex-gf2` | `HexManual/Tutorials/AESField.lean` |
+| AES modulus irreducibility | `hex-berlekamp` | `HexManual/Tutorials/AESModulus.lean` |
+| Prime splitting (Kummer-Dedekind) | `hex-berlekamp-zassenhaus` | `HexManual/Tutorials/PrimeSplitting.lean` |
+| LLL in cryptanalysis (Coppersmith toy) | `hex-lll` | `HexManual/Tutorials/Coppersmith.lean` |
+
+The prime-splitting tutorial was previously anchored to `hex-gfq`, which is
+not one of its primary libraries: `SPEC/tutorials.md` names `hex-poly-z`,
+`hex-berlekamp-zassenhaus`, and Mathlib's `NumberTheory.KummerDedekind`. It
+factors an integer polynomial modulo a prime and reads the result as splitting
+data, so it is gated on integer factorization rather than on the finite-field
+constructors, and it is anchored accordingly.
 
 Phase 7 for an anchor library is not "done" until both its reference
 chapter *and* its anchored tutorials are complete.

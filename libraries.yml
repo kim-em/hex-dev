@@ -196,7 +196,12 @@ libraries:
   HexGF2:
     deps: [HexPoly, HexBasic]
     mathlib: false
-    done_through: 7
+    # Rolled back from 7: the reference chapter exists, but the AES byte
+    # arithmetic tutorial anchored to this library in PLAN/Phase7.md does not,
+    # and Phase 7 is not complete until both are. Returns to 7 when
+    # HexManual/Tutorials/AESField.lean lands. scripts/check_phase7.py now
+    # enforces this rather than leaving it to be noticed.
+    done_through: 6
     status: active
     phase4:
       comparators:
