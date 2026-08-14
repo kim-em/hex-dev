@@ -1829,9 +1829,10 @@ choice, and quotient axioms. This vertical adds no rational backend and uses
 neither `native_decide` nor an unchecked proof shortcut.
 
 This is a deliberately exact canary, not yet the production abstraction. Its
-replay schemas validate the particular base and extended programs, the tactic
-rejects other graph shapes rather than generalizing them, and its
-semantic model array still couples each operation to a numeric position.
+instantiation and equality replay schemas validate the particular base and
+extended programs, while its fact schemas and semantic model array still
+resolve each operation by numeric position. The tactic rejects other graph
+shapes rather than generalizing them.
 Consequently it demonstrates that dynamic expression instantiation composes
 with arbitrary downstream function propagation, but not yet that packages can
 be reordered or instantiated under arbitrary surrounding graphs. The next
