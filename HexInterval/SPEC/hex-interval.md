@@ -1711,13 +1711,32 @@ runs the arbitrary exponential propagator in each, and retains two target
 leaves. Separate guards show that one global step leaves both children pending,
 and that zero split or one-leaf budgets retain an explicitly blocked root.
 
-This runtime tree contains no proof evidence. The existing two-child proof
-canary separately demonstrates how exact retained child runs can be replayed
-and joined, but the manager does not yet emit that term. The proof-tree layer
-must emit a theorem only when every coverage child is closed by replay or a
-checked refutation. For best-bound mode, unfinished leaves must contribute
-their inherited parent fact to the global hull; they never inherit a tighter
-sibling fact.
+This runtime tree contains no proof evidence. The separate generic
+`BranchProof` frontend now folds a settled retained tree bottom-up. It first
+binds every leaf and split result back to its exact scope, base program, and
+initial fact array. Each child is checked against the exact child input stored
+by its parent, including that input's target. Pending, blocked, failed,
+dangling, shared, cyclic, and unreachable nodes are rejected. Client callbacks
+then replay each closed leaf and apply each package-owned split join; the final
+emitted expression must have the requested Lean target type. A callback can
+therefore cause rejection or choose a different kernel-checkable proof, but
+tree data itself cannot become evidence.
+
+Every child admitted by a split's coverage theorem must eventually close by
+replaying a proof of its target or by deriving a package-checked refutation.
+A retained runtime result is not by itself a proof of closure: the leaf
+callback must turn it into the corresponding kernel-checked evidence before
+the bottom-up join can accept it.
+
+The distinct-assumption ReLU canary now runs through this generic path. Its
+retained root has two exact live target children; the leaf callback invokes the
+unchanged generic chronology emitter with the side-specific proof registry, and the
+split callback applies `replaySplit`. The resulting expression is assigned to
+an ordinary declaration and its axiom report is compile-checked. Separate
+negative tests reject the delivered step-limited partial tree, a fork whose
+two edges share one child, and an otherwise valid but unreachable extra node.
+For best-bound mode, unfinished leaves must contribute their inherited parent
+fact to the global hull; they never inherit a tighter sibling fact.
 
 Several operational choices deliberately remain experimental:
 
@@ -1754,8 +1773,7 @@ runtime and Mathlib semantic
 companion. Remaining acceptance tests include a theorem whose proof
 mathematically requires branching, a nested split, a child-local
 instantiation, a sibling-reference attack, a non-interior repeated split,
-per-leaf fuel exhaustion with no theorem emitted, and proof emission refusing
-the delivered step-limited partial tree.
+and per-leaf fuel exhaustion with no theorem emitted.
 
 ### Proof-producing frontend
 
