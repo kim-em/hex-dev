@@ -573,4 +573,129 @@ theorem partialEval_eq_subst [Lean.Grind.Semiring R] [DecidableEq R]
         (fun q => acc + (monomial Mono.zero c : MvPoly n R cmp) * q)
         hprod.symm
 
+/-! Coefficient maps.
+
+`bind` already changes the coefficient type, so `mapCoeffs φ` agrees with
+`bind φ X`, though no agreement lemma is proved here: `bind` has no
+coefficient characterisation to prove one against. It is a separate operation
+for two reasons.
+
+Cost: `bind` folds `acc + C (φ c) * Mono.prod g m` over the terms, so it pays
+one polynomial addition and one monomial product per term, quadratic in the
+term count where a map over the backing values is linear. Reduction of an
+integer polynomial modulo a prime is the inner loop of every modular algorithm
+built on this type, so the linear form is the one to have.
+
+Laws: the homomorphism lemmas below take their hypotheses on `φ` explicitly
+rather than through a bundled homomorphism record, because nothing else in
+this library needs such a record and a caller can bundle as it likes. -/
+
+section MapCoeffs
+
+variable [Zero R] [Zero S] [BEq S] [LawfulBEq S]
+
+/-- Map `φ` over the coefficients, dropping every term it sends to zero.
+
+Terms are never merged, since the monomials are untouched, so this is the
+one member of the substitution family that cannot create a collision. -/
+def mapCoeffs (φ : R → S) (p : MvPoly n R cmp) : MvPoly n S cmp :=
+  letI : DecidableEq S := instDecidableEqOfLawfulBEq
+  { termsInternal := p.termsInternal.filterMap fun _ c =>
+      let c' := φ c
+      if c' = 0 then none else some c'
+    nonzeroInternal := by
+      intro m
+      rw [Std.ExtTreeMap.getElem?_filterMap']
+      cases hcoeff : p.termsInternal[m]? with
+      | none => simp
+      | some c =>
+          simp only [Option.bind_some]
+          split <;> simp_all }
+
+/-- Coefficients of a coefficient map, for a `φ` that fixes zero. -/
+@[simp]
+theorem coeff_mapCoeffs {φ : R → S} (hzero : φ 0 = 0) (m : Mono n)
+    (p : MvPoly n R cmp) :
+    coeff m (mapCoeffs φ p) = φ (coeff m p) := by
+  letI : DecidableEq S := instDecidableEqOfLawfulBEq
+  change ((mapCoeffs φ p).termsInternal[m]?).getD 0 = φ ((p.termsInternal[m]?).getD 0)
+  change ((p.termsInternal.filterMap fun _ c =>
+    let c' := φ c
+    if c' = 0 then none else some c')[m]?).getD 0 = _
+  rw [Std.ExtTreeMap.getElem?_filterMap']
+  cases hcoeff : p.termsInternal[m]? with
+  | none => simp [hzero]
+  | some c =>
+      simp only [Option.bind_some]
+      split <;> simp_all
+
+end MapCoeffs
+
+section MapCoeffsLaws
+
+variable [Lean.Grind.Semiring R] [DecidableEq R] [BEq R] [LawfulBEq R]
+  [Lean.Grind.Semiring S] [DecidableEq S] [BEq S] [LawfulBEq S]
+
+omit [DecidableEq R] [BEq R] [LawfulBEq R] [DecidableEq S] in
+/-- A coefficient map fixing zero sends the zero polynomial to zero. -/
+theorem mapCoeffs_zero {φ : R → S} (hzero : φ 0 = 0) :
+    mapCoeffs (cmp := cmp) (n := n) φ 0 = 0 := by
+  apply ext
+  intro m
+  rw [coeff_mapCoeffs hzero, coeff_zero, coeff_zero, hzero]
+
+/-- A coefficient map fixing zero and one sends one to one. -/
+theorem mapCoeffs_one {φ : R → S} (hzero : φ 0 = 0) (hone : φ 1 = 1) :
+    mapCoeffs (cmp := cmp) (n := n) φ 1 = 1 := by
+  apply ext
+  intro m
+  rw [coeff_mapCoeffs hzero, coeff_one, coeff_one]
+  by_cases hm : m = Mono.zero
+  · simp only [hm, if_true]; exact hone
+  · simp only [hm, if_false]; exact hzero
+
+/-- An additive coefficient map commutes with polynomial addition. -/
+theorem mapCoeffs_add {φ : R → S} (hzero : φ 0 = 0)
+    (hadd : ∀ a b : R, φ (a + b) = φ a + φ b) (p q : MvPoly n R cmp) :
+    mapCoeffs (cmp := cmp) φ (p + q) =
+      mapCoeffs φ p + mapCoeffs φ q := by
+  apply ext
+  intro m
+  rw [coeff_mapCoeffs hzero, coeff_add, coeff_add, hadd,
+    coeff_mapCoeffs hzero, coeff_mapCoeffs hzero]
+
+omit [DecidableEq R] [BEq R] [LawfulBEq R] [DecidableEq S] in
+/-- Pushing a ring map through the convolution fold that computes a product
+coefficient. The accumulator is generalised so the induction goes through. -/
+private theorem foldl_map_convolution {φ : R → S} (hzero : φ 0 = 0)
+    (hadd : ∀ a b : R, φ (a + b) = φ a + φ b)
+    (hmul : ∀ a b : R, φ (a * b) = φ a * φ b) (p q : MvPoly n R cmp) :
+    ∀ (L : List (Mono n × Mono n)) (acc : R),
+      φ (L.foldl (fun acc ab => acc + coeff ab.1 p * coeff ab.2 q) acc) =
+        L.foldl
+          (fun acc ab =>
+            acc + coeff ab.1 (mapCoeffs φ p) * coeff ab.2 (mapCoeffs φ q))
+          (φ acc) := by
+  intro L
+  induction L with
+  | nil => intro acc; rfl
+  | cons ab rest ih =>
+      intro acc
+      rw [List.foldl_cons, List.foldl_cons, ih]
+      congr 1
+      rw [hadd, hmul, coeff_mapCoeffs hzero, coeff_mapCoeffs hzero]
+
+/-- A ring map on coefficients commutes with polynomial multiplication. -/
+theorem mapCoeffs_mul {φ : R → S} (hzero : φ 0 = 0)
+    (hadd : ∀ a b : R, φ (a + b) = φ a + φ b)
+    (hmul : ∀ a b : R, φ (a * b) = φ a * φ b) (p q : MvPoly n R cmp) :
+    mapCoeffs (cmp := cmp) φ (p * q) =
+      mapCoeffs φ p * mapCoeffs φ q := by
+  apply ext
+  intro m
+  rw [coeff_mapCoeffs hzero, coeff_mul, coeff_mul,
+    foldl_map_convolution hzero hadd hmul p q (Mono.splits m) 0, hzero]
+
+end MapCoeffsLaws
+
 end Hex.MvPoly

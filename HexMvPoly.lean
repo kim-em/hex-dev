@@ -13,6 +13,7 @@ public import HexMvPoly.Query
 public import HexMvPoly.Eval
 public import HexMvPoly.Structural
 public import HexMvPoly.Recursive
+public import HexMvPoly.Ring
 
 public section
 
