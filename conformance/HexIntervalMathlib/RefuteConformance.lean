@@ -40,6 +40,12 @@ theorem closesTarget :
     semantics.Entails program childBase checkerInput.target :=
   (refuted?.get (by rfl)).proof
 
+/--
+info: 'Hex.IntervalMathlib.RefuteConformance.closesTarget' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms closesTarget
+
 private def top : NodeFact Bound :=
   { node := node 0, fact := .all }
 
