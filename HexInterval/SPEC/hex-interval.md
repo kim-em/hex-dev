@@ -3226,6 +3226,50 @@ integration that has not landed. Those are the next integration boundaries.
 The 1,000-bit provider and `cos (10^10)` remain acceptance targets, not
 delivered claims.
 
+A second, deliberately narrow endpoint canary closes the chronology/replay
+part of that integration boundary. From the first canary it reuses only the
+Machin-derived coarse pi enclosure. It replaces that canary's exact-match
+certificate authentication with per-schema guards: every proof schema checks
+its own exact graph, assumptions, proposed fact or edge, and replay body before
+returning evidence. Its Mathlib-free fact type carries rational lower and upper
+endpoints plus independent closure flags. The retained target fact is
+`sin 10 ∈ [-1, 0)`. Independent executable packages install the coarse pi fact
+`(3, 16/5)`, reduce to `10 - 3*pi ∈ (2/5, 1)`, establish the local fact
+`sin (10 - 3*pi) ∈ (0, 1]`, and negate it to `[-1, 0)`. An
+instantiation handler owned by the reduction package appends the negated
+local-sine node and the periodicity equality. Generic equality contraction then
+transports the endpoint fact to the original `sin 10` node. The retained
+chronology records, in order, the constant, reduction, local-sine,
+instantiation, negation, and transport events, including exact input versions
+and exact replay bodies.
+
+The same six-event trace passes through the generic proof registry and
+`ProofFrontend`. Constant, reduction, local-sine, instantiation, negation, and
+equality schemas own their mathematical replay; the frontend contains no
+function-specific case. Closing the extended graph back to the original graph
+produces the ordinary theorem `-1 ≤ sin 10 ∧ sin 10 < 0`, with the standard
+`#print axioms` guard and no `native_decide`, `sorry`, or new axiom.
+
+This remains a fixed-data orchestration experiment, not a general interval
+implementation. It deliberately reuses the D2 `Rational.Raw` certificate
+representation because the exact Machin endpoints `16/5` and `2/5` are not
+dyadic; its decoder accepts only top and four fixed endpoint facts, all of whose
+denominators are nonzero. The source operation is proof-side constrained to the
+hardcoded value `10`; there is no goal reifier for this endpoint fact, no
+precision-parametric endpoint computation, no alternative provider whose
+selection or fallback is exercised, and no general interval intersection. The
+partial fact domain supports identical facts and top as an intersection
+identity, and rejects other pairs as malformed. The canary uses a first-offer,
+category-major controller; it does not claim that policy is the production
+search policy. Its reduction and replay hardcode the half-turn count `3`; no
+range-reduction choice is computed. The declared limits are an exact-fit
+resource envelope for this retained run (five operations, six nodes, one
+generated instance, one equality, and maximum node depth three), not evidence
+that the controller succeeds under a general resource policy. General
+open/closed/unbounded interval arithmetic, provider competition,
+range-reduction selection, and computed local enclosures remain acceptance
+work.
+
 #### Series as package-owned numerical algorithms
 
 A registered function may supply a power or Taylor series without teaching the
