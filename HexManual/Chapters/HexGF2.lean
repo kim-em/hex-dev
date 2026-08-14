@@ -260,6 +260,11 @@ Where `HexGF2` fits in the executable DAG:
   it (the packed characteristic-two entries of the `GFq` constructors),
   which reuse its {name}`Hex.GF2n` and {name}`Hex.GF2nPoly` wrappers and committed
   irreducibility certificates.
-* `HexGF2` is Mathlib-free. The Mathlib correspondence for the `GF(2ⁿ)`
-  field theory is provided by the `*Mathlib` counterparts of the
-  libraries that build on it, not by this library.
+* `HexGF2` is Mathlib-free. Its Mathlib correspondence is `HexGF2Mathlib`,
+  which unpacks `GF2Poly` into the generic `FpPoly 2` representation,
+  identifies both `GF2n` and `GF2nPoly` with the quotient-field
+  construction from {ref "hex-gfq-field"}[`HexGFqField`], and carries the
+  finiteness and cardinality results for the packed types. Nothing in
+  this chapter depends on it: the packed arithmetic, the Euclidean
+  algorithms, and the Rabin certificates above are all executable and
+  Mathlib-free.

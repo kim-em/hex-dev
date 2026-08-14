@@ -21,7 +21,10 @@ Scientific registrations:
   table key in the current Tier 1 slice, using the one-based table ordinal as
   the benchmark parameter.
 * `runConwayPolySupported_2_1Checksum`: fixed canonical measurement for the
-  currently exported `SupportedEntry` path, `C(2, 1)`.
+  `SupportedEntry` recovery path, taken at `C(2, 1)`. Recovery itself reads the
+  stored polynomial out of the witness in constant time, but the target also
+  checksums the result, and that traversal is linear in the degree, so this
+  measurement stands for `C(2, 1)` rather than for the committed table.
 * `runTier1Irreducibility_2_1Checksum`: Rabin irreducibility verification for
   the canonical imported table entry `C(2, 1)`.
 * `runTier1Irreducibility_2_6Checksum`: Rabin irreducibility verification for

@@ -632,23 +632,63 @@ def degree? (p : GF2Poly) : Option Nat :=
 def degree (p : GF2Poly) : Nat :=
   p.degree?.getD 0
 
-/-- A normalized packed polynomial is `isZero` iff its stored word array is empty. -/
-@[simp, grind =] theorem isZero_eq_true_iff_words_eq_empty (p : GF2Poly) :
+/-- A normalized packed polynomial is `isZero` iff its stored word array is empty.
+
+This is the representation-level characterisation. It is kept out of the `simp`
+set, where it would compete with the propositional form below for the same
+left-hand side, but it keeps its `grind` trigger: `grind =` registers an
+E-matching theorem rather than an oriented rewrite, so two triggers on one term
+let congruence closure learn both consequences instead of racing. -/
+@[grind =] theorem isZero_eq_true_iff_words_eq_empty (p : GF2Poly) :
     p.isZero = true ↔ p.words = #[] := by
   simp [isZero]
 
-/-- A normalized packed polynomial is non-`isZero` iff its stored word array is nonempty. -/
-@[simp, grind =] theorem isZero_eq_false_iff_words_ne_empty (p : GF2Poly) :
+/-- A normalized packed polynomial is non-`isZero` iff its stored word array is
+nonempty. The representation-level counterpart of the propositional form below:
+out of `simp` for the same reason, and a `grind` trigger for the same reason. -/
+@[grind =] theorem isZero_eq_false_iff_words_ne_empty (p : GF2Poly) :
     p.isZero = false ↔ p.words ≠ #[] := by
   simp [isZero]
 
-/-- `isZero` agrees with propositional equality to the zero polynomial. -/
+/-- `isZero` agrees with propositional equality to the zero polynomial.
+
+This is the `simp` normal form for a successful `isZero` check; the
+representation-level {name}`Hex.GF2Poly.isZero_eq_true_iff_words_eq_empty`
+shares its left-hand side and is deliberately not a `simp` lemma. -/
 @[simp, grind =] theorem isZero_iff_eq_zero (p : GF2Poly) :
     p.isZero = true ↔ p = 0 := by
   constructor
   · intro h
     apply ext_words
     exact (isZero_eq_true_iff_words_eq_empty p).mp h
+  · intro h
+    subst h
+    rfl
+
+/-- A failing `isZero` check agrees with propositional inequality to the zero
+polynomial. The `simp` normal form for a failing check, matching
+{name}`Hex.GF2Poly.isZero_iff_eq_zero` on the successful one. -/
+@[simp, grind =] theorem isZero_eq_false_iff_ne_zero (p : GF2Poly) :
+    p.isZero = false ↔ p ≠ 0 := by
+  constructor
+  · intro h hp
+    rw [(isZero_iff_eq_zero p).mpr hp] at h
+    exact Bool.noConfusion h
+  · intro h
+    cases hz : p.isZero
+    · rfl
+    · exact absurd ((isZero_iff_eq_zero p).mp hz) h
+
+/-- An empty stored word array is exactly the zero polynomial.
+
+The `simp` bridge from the representation to the propositional form, so that a
+goal stated about `words` and a goal stated about `isZero` reach the same normal
+form instead of sitting either side of the representation boundary. -/
+@[simp, grind =] theorem words_eq_empty_iff (p : GF2Poly) :
+    p.words = #[] ↔ p = 0 := by
+  constructor
+  · intro h
+    exact ext_words h
   · intro h
     subst h
     rfl
@@ -692,8 +732,12 @@ theorem ne_zero_of_degree?_eq_some {p : GF2Poly} {d : Nat}
   rw [hzero] at hfalse
   contradiction
 
-/-- The default-`0` degree extracts the witness of a successful degree search. -/
-@[simp] theorem degree_eq_of_degree?_eq_some {p : GF2Poly} {d : Nat}
+/-- The default-`0` degree extracts the witness of a successful degree search.
+
+Not a `simp` lemma: its left-hand side `p.degree` does not determine `d`, so
+`simp` would have to guess the witness before it could discharge the
+hypothesis. Apply it to an explicit `degree?` equation instead. -/
+theorem degree_eq_of_degree?_eq_some {p : GF2Poly} {d : Nat}
     (h : p.degree? = some d) :
     p.degree = d := by
   simp [degree, h]

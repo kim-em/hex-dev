@@ -10,17 +10,22 @@ import LeanBench
 /-!
 Benchmark registrations for `hex-gfq`.
 
-The committed public Conway-wrapper surface currently exposes one generic
-entry, `GFq 2 1`, and one packed binary entry, `GF2q 1`. The fixed
-registrations cover the selected modulus helpers for that committed entry.
-The parametric registrations vary the size of deterministic representatives
-fed to the public constructor/projection pairs:
+These registrations all instantiate the wrapper at the degree-one committed
+entries, `GFq 2 1` and `GF2q 1`, and vary the size of the representative fed
+to the constructor rather than the size of the field. That measures the
+constructor and projection surface `hex-gfq` itself contributes; the modulus
+arithmetic underneath it is measured by `hex-gfq-field` and `hex-gf2`.
+
+The committed table is wider than what is exercised here: `hex-conway` commits
+36 generic entries (`p` in `2, 3, 5, 7, 11, 13`, `n` in `1` to `6`), all
+reachable through `Conway.CommittedEntry` instances, and this library exposes
+`Conway.PackedGF2Entry` instances for `n` in `1` to `6`. Sweeping the bench
+across that range is outstanding work, not a limit of the public API.
 
 * `runGFqOfPolyReprChecksum`: generic `GFq.ofPoly` plus `GFq.repr` on a
   degree-`n` binary representative, `O(n)` against the fixed linear modulus.
 * `runGF2qOfWordReprChecksum`: packed `GF2q.ofWord` plus `GF2q.repr` on the
-  committed single-word `GF2q 1` entry, fixed because no higher packed Conway
-  entries are currently public.
+  committed single-word `GF2q 1` entry.
 * `runGF2qOfWordReprProfileChecksum`: the same packed constructor/projection
   surface registered parametrically so timed-region-filtered profiling can
   exercise it at a representative word input.
