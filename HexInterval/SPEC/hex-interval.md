@@ -2129,17 +2129,17 @@ A retained runtime result is not by itself a proof of closure: the leaf
 callback must turn it into the corresponding kernel-checked evidence before
 the bottom-up join can accept it.
 
- A Mathlib-free live canary first propagates an unrelated exponential node,
- then splits a source, and finally closes both children on a second exponential
- target. Its split parent contains the propagated fact and therefore differs
- from the starting input; the generic fold accepts the exact post-run snapshot,
- but rejects replacing it with the stale start snapshot or changing the stored
- split point. The package callback remains responsible for replaying any
- pre-split improvements needed by the eventual parent theorem.
+A Mathlib-free live canary first propagates an unrelated exponential node,
+then splits a source, and finally closes both children on a second exponential
+target. Its split parent contains the propagated fact and therefore differs
+from the starting input; the generic fold accepts the exact post-run snapshot,
+but rejects replacing it with the stale start snapshot or changing the stored
+split point. The package callback remains responsible for replaying any
+pre-split improvements needed by the eventual parent theorem.
 
- The distinct-assumption ReLU canary now runs through this generic path. Its
- retained root has two exact live target children; the leaf callback invokes the
- unchanged generic chronology emitter with the side-specific proof registry, and the
+The distinct-assumption ReLU canary now runs through this generic path. Its
+retained root has two exact live target children; the leaf callback invokes the
+unchanged generic chronology emitter with the side-specific proof registry, and the
 split callback applies `replaySplit`. The resulting expression is assigned to
 an ordinary declaration and its axiom report is compile-checked. Separate
 negative tests reject the delivered step-limited partial tree, a fork whose
