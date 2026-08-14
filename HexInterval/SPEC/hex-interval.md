@@ -1722,8 +1722,9 @@ proves the output fact by rewriting `max x 0` to `x` from the left split fact;
 the strict-negative rule proves the same output fact by rewriting `max x 0` to
 `0` from the right split fact. Both child sessions retain one ordinary rule
 event with the exact side fact as an input, the unchanged generic frontend
-replays them, and `replaySplit` produces the joined entailment evidence. `closeRelu` specializes
-that evidence to the ordinary theorem `0 ≤ max x 0`. Each rule rejects the
+replays them, and `replaySplit` produces the joined entailment evidence.
+`closeRelu` specializes that evidence to the ordinary theorem `0 ≤ max x 0`.
+Each rule rejects the
 unsplit top fact, and mutating either quote to use its sibling's assumption
 makes emission fail. The package remains a compact conformance fixture while
 we decide which parts belong in the Mathlib-free runtime and Mathlib semantic
