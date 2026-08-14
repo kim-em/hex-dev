@@ -248,121 +248,94 @@ only, and the division loop remains the decision.
 
 ## The recursive view
 
-hex-mv-poly supplies `toUnivariate i cmp' : MvPoly (n+1) R cmp →
-DensePoly (MvPoly n R cmp')`, which drops the arity. Every algorithm
-here instead recurses on a set of active variables while the ambient
-type stays fixed: content in `xᵢ` is a polynomial that happens not to
-involve `xᵢ`, evaluation substitutes some variables and keeps the rest,
-and the certificate recursion removes one variable at a time from a
-list. Written against `toUnivariate`, each of those steps changes the
-type, forces a comparator to be chosen at every arity, and carries
-`Fin.succAbove` reindexing through every lemma.
-
-The trade is real in both directions. The arity-dropping view enforces "the coefficients do not
-involve `xᵢ`" **in the type**. The arity-preserving view has to carry
-that as an invariant. What this library needs is:
+hex-mv-poly supplies the arity-dropping pair, and this library uses it as
+it stands:
 
 ```lean
-/-- Polynomials in `n` variables not involving `xᵢ`. -/
-abbrev Without (i : Fin n) (R : Type u) (cmp : Mono n → Mono n → Ordering) :=
-  { p : MvPoly n R cmp // degreeOf i p = 0 }
+def toUnivariate (i : Fin (n+1)) (cmp' : Mono n → Mono n → Ordering)
+    [Std.TransCmp cmp'] [Std.LawfulEqCmp cmp']
+    (p : MvPoly (n+1) R cmp) : DensePoly (MvPoly n R cmp')
 
-/-- Coefficients of `p` in the variable `i`. -/
-def coeffsIn (i : Fin n) (p : MvPoly n R cmp) : DensePoly (Without i R cmp)
-
-/-- Inverse of `coeffsIn`. -/
-def ofCoeffsIn (i : Fin n) (q : DensePoly (Without i R cmp)) : MvPoly n R cmp
-
-def leadingCoeffIn (i : Fin n) (p : MvPoly n R cmp) : Without i R cmp
-def degreeIn? (i : Fin n) (p : MvPoly n R cmp) : Option Nat
+def ofUnivariate (i : Fin (n+1)) (cmp' : Mono n → Mono n → Ordering)
+    [Std.TransCmp cmp'] [Std.LawfulEqCmp cmp']
+    (q : DensePoly (MvPoly n R cmp')) : MvPoly (n+1) R cmp
 ```
 
-The subtype is not optional. With an unrestricted
-`DensePoly (MvPoly n R cmp)` the round trip
-`coeffsIn i (ofCoeffsIn i q) = q` is **false**: a coefficient containing
-`xᵢ` merges with the outer indeterminate, so the constant coefficient
-`xᵢ` and the degree-one coefficient `1` produce the same ambient
-polynomial. Only `ofCoeffsIn i (coeffsIn i p) = p` holds unconditionally.
+`HexMvPoly/Recursive.lean` proves `toUnivariate_coeff`,
+`ofUnivariate_coeff`, and both round trips, on top of the `removeVar` and
+`insertVar` monomial reindexing. Everything the algorithms need in the
+main variable then comes from hex-poly on the result: `DensePoly.degree?`
+is the degree in `xᵢ`, distinguishing the zero polynomial from a constant
+as the certificate's degree checks require; `DensePoly.leadingCoeff` is
+the leading coefficient in `xᵢ`; and `DensePoly.coeff k` is the
+`xᵢ`-degree-`k` slice.
 
-Required theorems: both round trips (the first under the subtype), a
-coefficient characterisation in each direction, `degreeIn?` agreeing
-with the degree of `coeffsIn`, multiplicativity of `leadingCoeffIn` (in
-a domain), and one lemma relating `coeffsIn` to hex-mv-poly's
-`toUnivariate` through the map that reinserts the omitted variable.
+The arity drops at every step, and two costs follow. Reindexing between
+the remaining `n` variables and the original `n+1` is `Fin.succAbove i`
+and its partial inverse, and it appears in every statement relating a
+coefficient back to the polynomial it came from. And nothing determines
+the comparator on the remaining variables, so `cmp'` is an explicit
+argument that every recursive step chooses and every statement carries.
 
-`degreeIn?` returns `Option Nat` rather than `Nat`. The certificate's
-degree-preservation checks distinguish the zero polynomial from a
-constant, and a `Nat` degree conflates them.
+An arity-preserving view, whose coefficients stay in the same `n`
+variables and merely happen not to involve `xᵢ`, removes both costs. It
+is not worth its price. `Recursive.lean` is 436 lines with three fold
+lemmas and four round-trip theorems, and the arity-preserving pair would
+mirror all of it, where the reindexing is bookkeeping inside proofs that
+are being written anyway.
 
-## Additions needed in hex-mv-poly
+The arity drop also buys something the other view has to pay for. "The
+coefficients do not involve `xᵢ`" holds **in the type**, so no invariant
+is carried, and the certificate below recurses structurally on the arity
+rather than on a set of remaining variables. Progress is then free rather
+than a side condition the checker has to verify.
 
-hex-mv-poly is finished (`done_through: 7`), so these are additions to a
-complete library rather than changes to a draft. All three are additive:
-no existing signature moves, and nothing below asks for a behaviour
-change. They were checked against the source on `main`, not against the
-SPEC text, because the two have diverged in one place noted below.
+One operation is needed that hex-mv-poly does not name, and it belongs
+here rather than there:
 
-1. **`coeffsIn` / `ofCoeffsIn` / `leadingCoeffIn` / `degreeIn?`**, as
-   above, next to `toUnivariate` in `HexMvPoly/Recursive.lean`, with the
-   `Without` subtype, the conditional round trip, and the lemma relating
-   them to `toUnivariate`. `HexMvPoly/Recursive.lean` currently supplies
-   only the arity-dropping pair `toUnivariate` / `ofUnivariate` at
-   `i : Fin (n+1)`, together with the `removeVar` and `insertVar`
-   monomial reindexing they are built from.
+```lean
+/-- Embed a polynomial in the remaining variables as one that is constant
+in `xᵢ`. `ofUnivariate i cmp'` applied to a `DensePoly.C`. -/
+def constIn (i : Fin (n+1)) (cmp' : Mono n → Mono n → Ordering)
+    [Std.TransCmp cmp'] [Std.LawfulEqCmp cmp']
+    (c : MvPoly n R cmp') : MvPoly (n+1) R cmp
+```
 
-2. **A linear `mapCoeffs`, and homomorphism laws for it.** The
-   coefficient map already exists functionally: `Structural.bind` takes
-   `f : R → S` alongside the variable map, so `mapCoeffs φ = bind φ X`.
-   Two things are missing.
+with `coeff_constIn`, `constIn_mul` (it is a ring homomorphism), and
+injectivity. Content and primitive part are stated through it.
 
-   The first is complexity. `bind` is
-   `foldTerms (fun acc m c => acc + C (f c) * Mono.prod g m) 0`, which
-   costs one polynomial addition and one `Mono.prod` per term, so a pure
-   coefficient map through it is quadratic in the term count where a map
-   over the backing values is linear. Design principle 7 asks for the
-   intended complexity on the first commit, and reduction modulo a prime
-   is on the inner loop of every modular route here.
+## What hex-mv-poly supplies
 
-   ```lean
-   def mapCoeffs (φ : R → S) (p : MvPoly n R cmp) : MvPoly n S cmp
-   theorem coeff_mapCoeffs : coeff m (mapCoeffs φ p) = φ (coeff m p)
-   theorem mapCoeffs_bind : mapCoeffs φ p = bind φ X p
-   theorem mapCoeffs_add, mapCoeffs_mul, mapCoeffs_one   -- under hom laws on φ
-   ```
+hex-mv-poly is finished (`done_through: 7`), so the two additions this
+library needed were made to a complete library rather than to a draft.
+Both are landed, in `HexMvPoly/Ring.lean` and `HexMvPoly/Structural.lean`.
 
-   The second is the laws. The certificate needs `mapCoeffs_mul` and a
-   commutation lemma with `partialEval`, and neither holds for an
-   arbitrary `φ`, so both have to be stated against an explicit
-   Mathlib-free homomorphism record. `bind` carries no such laws today.
-   `mapCoeffs` can drop terms (when `φ` sends a coefficient to zero) but
-   never merges them, so it is the easy member of the substitution
-   family.
+**`Lean.Grind.CommRing (MvPoly n R cmp)`**, with the `NatCast`, `OfNat`,
+`SMul Nat`, `IntCast`, `SMul Int`, semiring, and ring instances beneath
+it. Every hex-resultant correctness theorem takes
+`[Lean.Grind.CommRing S]`, so without it the subresultant chain runs over
+`MvPoly` and none of its theorems apply.
+`HexResultant/ExactDiv.lean:255-434` builds the same tower for
+`DensePoly`. The `Semiring.npow` field uses hex-mv-poly's existing
+`npowBySq` and its proved `pow_succ` rather than a second power
+operation.
 
-3. **A Mathlib-free `Lean.Grind.CommRing (MvPoly n R cmp)`**, with the
-   `NatCast`, `OfNat`, `NSMul`, `NPow`, `IntCast`, `ZSMul`, semiring and
-   ring instances beneath it. hex-mv-poly supplies `Zero`, `Add`, `Neg`,
-   `Sub`, `Mul`, `One`, and `Pow` and no `Grind` ring structure; the one
-   `Grind` mention in the library is a local instance attribute for
-   `natCast` in `Structural.lean`. Its SPEC assigns `CommSemiring` and
-   `CommRing` to the Mathlib companion, which is right for the Mathlib
-   hierarchy and leaves Lean's own `Grind` hierarchy unprovided. Every
-   hex-resultant correctness theorem takes `[Lean.Grind.CommRing S]`, so
-   without this the executable chain runs over `MvPoly` and none of its
-   theorems apply. The `DensePoly` tower in
-   `HexResultant/ExactDiv.lean:255-434` is the pattern to copy; whether
-   the copy lives in hex-mv-poly or here is a placement question and
-   either answer is defensible, but it has to be somewhere.
+**`mapCoeffs`**, a linear coefficient map with `coeff_mapCoeffs` and the
+homomorphism laws `mapCoeffs_zero`, `mapCoeffs_one`, `mapCoeffs_add`, and
+`mapCoeffs_mul`. `Structural.bind` already changes the coefficient type,
+so `bind φ X` is a coefficient map, but it folds one polynomial addition
+and one monomial product per term, making a pure coefficient map
+quadratic in the term count where a map over the backing values is
+linear. Reduction modulo a prime is on the inner loop of every modular
+route below. `bind` also carries no homomorphism laws, which is what the
+certificate needs. The laws take their hypotheses on `φ` explicitly
+rather than through a bundled homomorphism record.
 
-`monoContent` is **not** on this list, although the algorithms use it.
-`Mono.gcd` already exists, and the fold over `support` is three lines
-that belong with the content operations in this library rather than in
-hex-mv-poly.
-
-Two smaller mismatches between hex-mv-poly's SPEC text and its source
-are worth knowing when reading the signatures in this document. The
-constructors take `[BEq R] [LawfulBEq R]` rather than the
-`[DecidableEq R]` its SPEC shows, and evaluation and substitution take
-`[Lean.Grind.Semiring R]`. Signatures here follow the source.
+Nothing further is needed from hex-mv-poly. `monoContent` is not one of
+its additions: `Mono.gcd` exists and the fold over `support` is three
+lines belonging with the content operations here. The arity-preserving
+recursive view is not wanted at all, for the reason under "The recursive
+view".
 
 ## Required amendment to hex-resultant
 
@@ -394,18 +367,24 @@ questions" says whether `splitBezout` is worth having.
 ## Content and primitive part
 
 ```lean
-def contentIn (i : Fin n) (p : MvPoly n R cmp) : Without i R cmp
-def primPartIn (i : Fin n) (p : MvPoly n R cmp) : MvPoly n R cmp
+def contentIn (i : Fin (n+1)) (cmp' : Mono n → Mono n → Ordering)
+    (p : MvPoly (n+1) R cmp) : MvPoly n R cmp'
+def primPartIn (i : Fin (n+1)) (cmp' : Mono n → Mono n → Ordering)
+    (p : MvPoly (n+1) R cmp) : MvPoly (n+1) R cmp
 def content (p : MvPoly n R cmp) : R
 def primPart (p : MvPoly n R cmp) : MvPoly n R cmp
 ```
 
 ```lean
-theorem contentIn_mul_primPartIn : contentIn i p * primPartIn i p = p
-theorem contentIn_dvd_coeff : ∀ k, contentIn i p ∣ (coeffsIn i p).coeff k
-theorem primPartIn_content : contentIn i (primPartIn i p) = 1
-theorem contentIn_mul  : contentIn i (p * q) = contentIn i p * contentIn i q
-theorem primPartIn_mul : primPartIn i (p * q) = primPartIn i p * primPartIn i q
+theorem contentIn_mul_primPartIn :
+    constIn i cmp' (contentIn i cmp' p) * primPartIn i cmp' p = p
+theorem contentIn_dvd_coeff :
+    ∀ k, contentIn i cmp' p ∣ (toUnivariate i cmp' p).coeff k
+theorem primPartIn_content : contentIn i cmp' (primPartIn i cmp' p) = 1
+theorem contentIn_mul  :
+    contentIn i cmp' (p * q) = contentIn i cmp' p * contentIn i cmp' q
+theorem primPartIn_mul :
+    primPartIn i cmp' (p * q) = primPartIn i cmp' p * primPartIn i cmp' q
 ```
 
 The last two are Gauss's lemma. They are stated for the normalised
@@ -417,7 +396,8 @@ the largest piece of algebra in the Mathlib-free layer.
 this list.**
 
 ```lean
-theorem dvd_contentIn (d) : (∀ k, d ∣ (coeffsIn i p).coeff k) → d ∣ contentIn i p
+theorem dvd_contentIn (d) :
+    (∀ k, d ∣ (toUnivariate i cmp' p).coeff k) → d ∣ contentIn i cmp' p
 ```
 
 `contentIn` is computed by folding this library's own multivariate
@@ -456,14 +436,15 @@ Two things do work, and both are supported.
 
 ### The modular witness, which is primary
 
-Fix an active variable `i`, a prime `p`, a homomorphism
+Fix a variable `i`, a comparator `cmp'` on the remaining variables, a
+prime `p`, a homomorphism
 `φ_R : CoeffHom R p`, and a point `a : Fin n → Option (ZMod64 p)`
-assigning values to every active variable except `i`. Write `φ` for
+assigning values to the remaining variables. Write `φ` for
 `partialEval a` composed with `mapCoeffs φ_R.toField?`, followed by
-`coeffsIn i`, landing in `FpPoly p`. The evaluation point lives in the
+`toUnivariate i cmp'`, landing in `FpPoly p`. The evaluation point lives in the
 target field, not in `R`.
 
-If `degreeIn? i f' = (φ f').degree?` and `degreeIn? i h' = (φ h').degree?`
+If `(toUnivariate i cmp' f').degree? = (φ f').degree?` and the same for `h'`,
 and `α · φ f' + β · φ h' = 1` in `FpPoly p`, then `f'` and `h'` have no
 common divisor of positive degree in `xᵢ`.
 
@@ -493,26 +474,29 @@ the certificate.
 
 ```lean
 /-- A witness that two elements of `MvPoly n R cmp` have no nonunit
-common divisor. `active` is the set of variables not yet eliminated;
-every `split` removes one, so the recursion has a termination measure
-and the producer has a completeness obligation that can be stated. -/
-inductive CoprimeCert (n : Nat) (R : Type u) (cmp : Mono n → Mono n → Ordering)
+common divisor. The recursion is structural in the arity: each `split`
+eliminates one variable and lands one arity down, so progress is a
+property of the type rather than a side condition the checker verifies. -/
+inductive CoprimeCert : (n : Nat) → (R : Type u) → (cmp : Mono n → Mono n → Ordering) → Type u
   /-- One side is a unit. -/
-  | unit
-  /-- No active variables remain: both sides are constants, with a
-  Bézout pair in `R`. -/
-  | base (u v : R)
-  /-- Split on the active variable `i` at the prime `p` and the point
-  `a`, with a Bézout pair over `FpPoly p`. -/
-  | split (i : Fin n) (p : Nat) (φ : CoeffHom R p) (a : Fin n → Option (ZMod64 p))
-          (α β : FpPoly p) (rest : CoprimeCert n R cmp)
-  /-- Split on the active variable `i` with `u · f + v · h = r`, where
-  `r ≠ 0` has degree zero in `xᵢ`. -/
-  | splitBezout (i : Fin n) (u v r : MvPoly n R cmp)
-                (rest : CoprimeCert n R cmp)
+  | unit : CoprimeCert n R cmp
+  /-- Arity zero: both sides are constants, with a Bézout pair in `R`. -/
+  | base (u v : R) : CoprimeCert 0 R cmp
+  /-- Split on `xᵢ` at the prime `p` and the point `a`, with a Bézout
+  pair over `FpPoly p`, and a certificate for the contents one arity
+  down under the chosen comparator `cmp'`. -/
+  | split (i : Fin (n+1)) (cmp' : Mono n → Mono n → Ordering)
+          (p : Nat) (φ : CoeffHom R p) (a : Fin n → Option (ZMod64 p))
+          (α β : FpPoly p) (rest : CoprimeCert n R cmp') :
+      CoprimeCert (n+1) R cmp
+  /-- Split on `xᵢ` with `u · f + v · h = constIn i cmp' r`, where
+  `r ≠ 0` lives in the remaining variables. -/
+  | splitBezout (i : Fin (n+1)) (cmp' : Mono n → Mono n → Ordering)
+                (u v : MvPoly (n+1) R cmp) (r : MvPoly n R cmp')
+                (rest : CoprimeCert n R cmp') :
+      CoprimeCert (n+1) R cmp
 
-def checkCoprime (active : List (Fin n)) (f h : MvPoly n R cmp) :
-    CoprimeCert n R cmp → Bool
+def checkCoprime (f h : MvPoly n R cmp) : CoprimeCert n R cmp → Bool
 
 structure GcdCert (n : Nat) (R : Type u) (cmp : Mono n → Mono n → Ordering) where
   gcd     : MvPoly n R cmp
@@ -522,27 +506,25 @@ structure GcdCert (n : Nat) (R : Type u) (cmp : Mono n → Mono n → Ordering) 
 
 def checkGcd (f h : MvPoly n R cmp) (c : GcdCert n R cmp) : Bool :=
   c.gcd * c.cofL == f && c.gcd * c.cofR == h &&
-  checkCoprime (vars c.cofL ∪ vars c.cofR) c.cofL c.cofR c.coprime &&
+  checkCoprime c.cofL c.cofR c.coprime &&
   isNormalized c.gcd
 ```
 
-`checkCoprime` on `split` verifies, cheapest first: that `i ∈ active`;
-that `p` is prime and within `ZMod64.Bounds`; that `φ` is defined on
-every coefficient involved; the two degree equalities; the Bézout
-identity in `FpPoly p`; and then recursively, with `active.erase i`, that
-`contentIn i f` and `contentIn i h` are coprime. On `splitBezout` it
-verifies `i ∈ active`, `r ≠ 0`, `degreeIn? i r = some 0`,
-`u · f + v · h = r`, and the same recursion. On `base` it verifies that
-`active` is empty, that both sides are constants, and that
+`checkCoprime` on `split` verifies, cheapest first: that `p` is prime and
+within `ZMod64.Bounds`; that `φ` is defined on every coefficient
+involved; the two degree equalities on `toUnivariate i cmp'`; the Bézout
+identity in `FpPoly p`; and then recursively, one arity down, that
+`contentIn i cmp' f` and `contentIn i cmp' h` are coprime. On
+`splitBezout` it verifies `r ≠ 0`, `u · f + v · h = constIn i cmp' r`,
+and the same recursion. On `base` it verifies that
 `u · a + v · b = 1`. On `unit` it verifies that one side satisfies
 `GcdOps.isUnit`.
 
-Carrying `active` and requiring `i ∈ active` is what makes "each step
-removes a variable" true. Without it a producer may split on the same
-variable forever, or on a variable occurring in neither input; the
-checker still terminates, because the certificate is a finite term, but
-the recursion makes no progress and producer completeness cannot be
-stated.
+Indexing the certificate by the arity is what makes "each step removes a
+variable" true, and it is free: the constructor's result type says so.
+An arity-preserving certificate would need a set of remaining variables
+carried alongside and an `i ∈ active` check in the checker, purely to
+recover the same guarantee.
 
 **Degenerate inputs are certificate completeness cases, not output
 conventions.** A coprime pair cannot contain zero unless the other side
@@ -553,8 +535,9 @@ all-variables-eliminated case go through `base`. Without these the
 modular constructor has no image Bézout identity to produce.
 
 The `splitBezout` argument is the shorter of the two: a common divisor
-`d` divides `r`, and `degreeIn? i r = some 0` in a domain forces
-`degreeIn? i d = some 0`, so `d` divides both contents. It needs no
+`d` divides `constIn i cmp' r`, and a divisor of something constant in
+`xᵢ` is constant in `xᵢ` in a domain, so `d` divides both contents. It
+needs no
 prime, no point, and no homomorphism. It is not primary because `u` and
 `v` come from an extended subresultant computation, which suffers the
 coefficient swell the modular routes exist to avoid, and because
@@ -578,10 +561,10 @@ proves soundness conditionally on it:
 `Int`, `Rat`, and `ZMod64 p` coefficients in `hex-mv-gcd-mathlib`. -/
 class LawfulContent (n : Nat) (R : Type u) (cmp : Mono n → Mono n → Ordering) : Prop where
   dvd_contentIn : ∀ (i : Fin n) (p d : MvPoly n R cmp),
-    (∀ k, d ∣ ((coeffsIn i p).coeff k : MvPoly n R cmp)) → d ∣ (contentIn i p : MvPoly n R cmp)
+    (∀ k, d ∣ (toUnivariate i cmp' p).coeff k) → d ∣ contentIn i cmp' p
 
 theorem checkCoprime_sound [LawfulContent n R cmp] :
-    checkCoprime active f h c = true → ∀ d, d ∣ f → d ∣ h → IsUnit d
+    checkCoprime f h c = true → ∀ d, d ∣ f → d ∣ h → IsUnit d
 
 /-- What the checker establishes: the cofactor identities, and
 coprimality of the cofactors. -/
@@ -604,7 +587,7 @@ consumer of this library gets a theorem with a hypothesis it cannot
 discharge. Everything that wants the unconditional statement, including
 the `cancel` tactic, therefore lives in the companion, in the same way
 `factor_poly`'s `Polynomial ℤ` provider does. The alternative, proving
-`LawfulContent` Mathlib-free by induction on the active-variable list,
+`LawfulContent` Mathlib-free by induction on the arity,
 is a genuine option and amounts to proving `MvPoly n R cmp` is a gcd
 domain from scratch. It is recorded under "Open questions" rather than
 adopted, because it moves the largest proof in the project into
@@ -698,20 +681,20 @@ Zero and unit inputs return immediately with the certificate cases named
 above. Then, in order: divide out the monomial content of each input and
 put the monomial gcd into the answer; divide out the `R`-content of each
 input and put `GcdOps.gcd` of the two contents into the answer; and
-restrict the active-variable list to `vars f ∩ vars h`. Each is linear in
+restrict attention to `vars f ∩ vars h`. Each is linear in
 the term count and each strictly shrinks the problem.
 
 ### 1. Coprime detection, the case that dominates
 
-`isCoprime` runs, per active variable, one evaluation and one univariate
-gcd: pick a prime and a random point for all active variables but one,
+`isCoprime` runs, per variable, one evaluation and one univariate
+gcd: pick a prime and a random point for all remaining variables,
 check the degrees survive, and compute `gcd` in `FpPoly p`. A result of
 `1` yields the `split` constructor and the recursion continues on the
-contents with one fewer active variable. A result other than `1` proves
+contents one arity down. A result other than `1` proves
 nothing (the point may be unlucky) and the route falls through.
 
 That asymmetry is the point: the cheap test is conclusive exactly in the
-case that occurs most often. The cost is up to one image gcd per active
+case that occurs most often. The cost is up to one image gcd per
 variable, not one in total.
 
 The requirement this places on the implementation is that `gcd f h` must
@@ -754,14 +737,15 @@ Two nested evaluation and reconstruction schemes: primes with CRT for the
 integer coefficients, and points with dense interpolation for each
 variable.
 
-Fix the main variable `i`. Recursion on the remaining active variables:
+Fix the main variable `i`. Recursion on the remaining variables:
 
 - Reduce both inputs modulo a prime `p` chosen so that the leading
   coefficients in `xᵢ` do not vanish.
 - Compute the gcd of the images at each evaluation point `a` for the
   outermost remaining variable.
 - **Leading-coefficient correction.** The image gcd is monic and the
-  true gcd is not. Compute `γ = gcd(leadingCoeffIn i f, leadingCoeffIn i h)`
+  true gcd is not. Compute `γ` as the gcd of the two `DensePoly.leadingCoeff`s
+  of `toUnivariate i cmp' f` and `toUnivariate i cmp' h`
   recursively, and scale each image gcd so that its leading coefficient
   in `xᵢ` equals `γ` evaluated at that point. Interpolating uncorrected
   images gives the wrong polynomial.
@@ -824,9 +808,9 @@ the pattern the equal-degree-splitting item in
 
 ### 5. The subresultant fallback
 
-Recurse on the active-variable list. In the main variable `xᵢ`, run
+Recurse on the arity. In the main variable `xᵢ`, run
 hex-resultant's `subresultantChain` **unchanged** over the coefficient
-ring `Without i R cmp`, take the primitive part in `xᵢ` of the terminal
+ring `MvPoly n R cmp'`, take the primitive part in `xᵢ` of the terminal
 nonzero entry, and multiply by the recursively computed gcd of the
 contents.
 
@@ -966,11 +950,11 @@ holds in characteristic zero and for finite fields, and fails for
 
 ### The decomposition in characteristic zero
 
-Recursion on the active-variable list.
+Recursion on the arity.
 
 - Zero and constant inputs return `⟨p.constCoeff, []⟩`.
 - Split off the `R`-content into the `content` field.
-- Pick an active variable `i` with `degreeOf i p > 0`.
+- Pick a variable `i` with `degreeOf i p > 0`.
 - Split `p = contentIn i p * primPartIn i p` and decompose the content
   recursively with `i` removed.
 - Run Yun's algorithm on `primPartIn i p` with the derivative in `xᵢ`.
@@ -1099,10 +1083,10 @@ decomposition.
 |---|---|---|
 | `monoContent` | `Mono.gcd` fold over the support | `O(n · t)` machine ops |
 | `content` | `GcdOps.gcd` fold | `t` coefficient gcds |
-| `coeffsIn` | partition by the exponent of `xᵢ` | `O(n · t log t)` machine ops |
+| `toUnivariate` | partition by the exponent of `xᵢ` | `O(n · t log t)` machine ops |
 | `contentIn` | `d` gcds on polynomials of `t/d` terms | `d` recursive gcds |
 | `divExact?` | leading-monomial cancellation, early failure | `O(n · t_q · t_g · log)` machine ops |
-| `isCoprime` | one image gcd per active variable | `≤ n` image gcds |
+| `isCoprime` | one image gcd per variable | `≤ n` image gcds |
 | heuristic gcd | one `Int.gcd`, integers of `O(t · log ξ · ∏(dⱼ+1))` bits | 1 integer gcd |
 | Brown | one image gcd per evaluation point, per prime | `O(D)` image gcds |
 | Zippel | images plus Vandermonde solves | `O(n · s · d)` image gcds, `O(s²)` per solve |
@@ -1118,7 +1102,7 @@ count, and route 5 has no bound and settles the rest.
 ## Kernel exposure
 
 The kernel replay closure is `checkGcd` and what it calls: polynomial
-multiplication and equality from hex-mv-poly, `divExact?`, `degreeIn?`,
+multiplication and equality from hex-mv-poly, `divExact?`, `toUnivariate`,
 `contentIn`, `mapCoeffs`, `partialEval`, and `FpPoly` multiplication,
 addition, and equality. Each is `@[expose]`, and a downstream module
 carries a `decide +kernel` test that fails if any of them stops reducing.
@@ -1279,9 +1263,10 @@ theorem dvd_gcd (d) : d ∣ e f → d ∣ e h → d ∣ e (gcd f h)
 theorem coprimeCofactors_greatest (hc : CoprimeCofactors f h g) (d) :
     d ∣ e f → d ∣ e h → d ∣ e g
 
-theorem contentIn_dvd_coeff (k) : e (contentIn i p) ∣ e ((coeffsIn i p).coeff k)
+theorem contentIn_dvd_coeff (k) :
+    e (contentIn i cmp' p) ∣ e ((toUnivariate i cmp' p).coeff k)
 theorem dvd_contentIn (d) :
-    (∀ k, d ∣ e ((coeffsIn i p).coeff k)) → d ∣ e (contentIn i p)
+    (∀ k, d ∣ e ((toUnivariate i cmp' p).coeff k)) → d ∣ e (contentIn i cmp' p)
 
 theorem squarefree_spec : Squarefree p ↔ _root_.Squarefree (e (primPart p))
 theorem sqfDecomp_unique : ...   -- up to units, from unique factorization
@@ -1325,15 +1310,14 @@ public semantic operation: `gcd`, `cofactors`, `contentIn`, `primPartIn`,
 
 1. **Coefficient interface, exact division, and the recursive view.**
    `GcdOps`, `BezoutOps`, `LawfulGcdOps`, `CoeffHom`, `divMod`,
-   `divExact?`, the `Dvd` / `Div` / `ExactDivLaws` instances, the
-   `Lean.Grind.CommRing` tower, `Without`, `coeffsIn` and its inverse,
-   `mapCoeffs`, `monoContent`, `contentIn`, `primPartIn`, and Gauss's
-   lemma. At the end of this milestone hex-resultant's chain runs over
-   `MvPoly` **and** its correctness theorems apply.
+   `divExact?`, the `Dvd` / `Div` / `ExactDivLaws` instances, `constIn`,
+   `monoContent`, `contentIn`, `primPartIn`, and Gauss's lemma. The `Lean.Grind.CommRing` tower and `mapCoeffs` are already in
+   hex-mv-poly, so hex-resultant's chain runs over `MvPoly` with its
+   correctness theorems applying as soon as `Div` and `ExactDivLaws`
+   land here.
 
-2. **The certificate and the fallback.** `CoprimeCert` with its active
-   set, `checkCoprime`, `GcdCert`, `checkGcd`, `LawfulContent`,
-   `checkGcd_sound`, and route 5. A correct but slow `gcd`, with
+2. **The certificate and the fallback.** `CoprimeCert`, `checkCoprime`,
+   `GcdCert`, `checkGcd`, `LawfulContent`, `checkGcd_sound`, and route 5. A correct but slow `gcd`, with
    `gcdCert_checks` proved. Squarefree decomposition in characteristic
    zero, `radical`, and `isSquarefree` land here, since they need only a
    working gcd.
@@ -1361,7 +1345,7 @@ public semantic operation: `gcd`, `cofactors`, `contentIn`, `primPartIn`,
 HexMvGcd/
   Coeff.lean        -- GcdOps, BezoutOps, LawfulGcdOps, CoeffHom, base instances
   Divide.lean       -- divMod, divExact?, Dvd/Div/ExactDivLaws, Grind ring tower
-  View.lean         -- Without, coeffsIn, ofCoeffsIn, leadingCoeffIn, degreeIn?
+  View.lean         -- constIn and the degree helpers on the univariate view
   Content.lean      -- monoContent, content, contentIn, primPartIn, Gauss
   Cert.lean         -- CoprimeCert, checkCoprime, GcdCert, checkGcd, LawfulContent
   Prs.lean          -- the subresultant fallback, route 5
@@ -1399,7 +1383,7 @@ HexMvGcdMathlib.lean
 `HexPolyFp` and `HexModArith` are for the univariate images over `F_p`.
 `HexResultant` is for route 5 and for the `ExactDivLaws` interface.
 `HexArith` is for the integer gcd and the extended Euclidean algorithm.
-`HexPoly` comes in through `DensePoly`, which `coeffsIn` returns.
+`HexPoly` comes in through `DensePoly`, which `toUnivariate` returns.
 
 Every dependency is `active`, `HexMvPoly` and `HexMvPolyMathlib` at
 `done_through: 7`, so nothing here waits on another library's status.
@@ -1426,7 +1410,7 @@ of the proofs.
   takes it as a hypothesis discharged by the companion, which keeps
   milestone 2 small at the cost of leaving Mathlib-free consumers with an
   undischargeable hypothesis. Proving it by induction on the
-  active-variable list is the alternative, and it amounts to proving
+  arity is the alternative, and it amounts to proving
   `MvPoly n R cmp` is a gcd domain from scratch. Worth revisiting if a
   Mathlib-free consumer appears; nothing currently on the roadmap is one.
 - **Which coprimality certificate to make primary.** The modular witness
