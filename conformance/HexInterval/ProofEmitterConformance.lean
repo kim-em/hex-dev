@@ -296,8 +296,8 @@ theorem splitCertifies :
     splitSemantics.Entails program splitBase splitTarget :=
   ProofEmitter.proofOfReplay splitReplay (by rfl)
 
-/-- Swapping the quoted child facts is rejected before either child theorem
-can be used. -/
+/-- The demo schema fixes an orientation, so this swapped quotation exercises
+that schema guard rather than a soundness requirement of the generic join. -/
 def swappedSplit :=
   ProofEmitter.replaySplit splitSchema program splitBase splitNode .all () .no .yes
     splitTarget splitParent splitRight splitLeft
@@ -308,5 +308,22 @@ def swappedSplit :=
 application, independently of the executable guard above. -/
 theorem swappedSplitRejected : swappedSplit = none := by
   rfl
+
+/-- Two copies of the positive child genuinely fail to cover the parent,
+independently of the demo schema's orientation guard. -/
+theorem yesYesNotCovering :
+    ¬ (∀ valuation, splitSemantics.models program valuation →
+      splitSemantics.holds program valuation { node := splitNode, fact := .all } →
+        splitSemantics.holds program valuation { node := splitNode, fact := .yes } ∨
+          splitSemantics.holds program valuation { node := splitNode, fact := .yes }) := by
+  intro cover
+  have covered := cover (fun _ => false) trivial trivial
+  rcases covered with yes | yes <;> exact Bool.noConfusion yes
+
+/--
+info: 'Hex.Interval.ProofEmitterConformance.splitCertifies' depends on axioms: [propext]
+-/
+#guard_msgs in
+#print axioms splitCertifies
 
 end Hex.Interval.ProofEmitterConformance

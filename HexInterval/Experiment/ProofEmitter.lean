@@ -420,10 +420,11 @@ def replayTransport {Fact : Type} {semantics : Semantics Fact}
 
 The executable policy may propose a cut and the branch manager may compute
 candidate child facts, but neither is evidence that the children cover the
-parent.  A domain companion accepts the exact quoted parent, cut, and children
-only when it can prove that every value satisfying the parent lies in at least
-one child.  Disjointness and interiority are useful search invariants, but are
-not needed for the logical join and remain branch-manager checks. -/
+parent.  A domain companion accepts the supplied parent, cut, and children only
+when it can prove that every value satisfying the parent lies in at least one
+child.  Binding those values to an authenticated runtime plan belongs to the
+branch layer.  Disjointness and interiority are useful search invariants, but
+are not needed for the logical join and remain branch-manager checks. -/
 structure SplitSchema (semantics : Semantics Fact) (Cut : Type) where
   proveCover :
     (program : Program) -> (node : NodeId) -> (parent : Fact) -> Cut ->
@@ -476,12 +477,13 @@ def installSplit {Fact : Type} {semantics : Semantics Fact}
           exact rightHolds
         · exact baseHolds assumption member }
 
-/-- Transparently replay one solver split from exact quoted children.
+/-- Transparently replay one solver split from supplied child facts.
 
 The branch searches may be arbitrary and opaque.  Their outputs enter this
 transition only as ordinary kernel evidence under the corresponding child
-assumption.  The domain schema independently authenticates coverage of the
-quoted children before the generic join is constructed. -/
+assumption.  The domain schema independently proves coverage of the supplied
+children before the generic join is constructed; it does not authenticate a
+runtime plan or quotation. -/
 def replaySplit {Fact Cut : Type} {semantics : Semantics Fact}
     (schema : SplitSchema semantics Cut) (program : Program)
     (base : List (NodeFact Fact)) (node : NodeId) (parent : Fact) (cut : Cut)

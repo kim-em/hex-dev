@@ -1532,18 +1532,22 @@ proveCover :
 ```
 
 The semantic domain package does not check executable child construction a
-second time. It independently proves only that the exact quoted parent, cut,
-and children have the required coverage relation; branch-manager checks such
-as strict narrowing and correct child construction remain separate search
-obligations. The current transparent `ProofEmitter.replaySplit` implements the
+second time. It independently proves only that the supplied parent, cut, and
+children have the required coverage relation; authenticating those values
+against a runtime `SplitPlan`, strict narrowing, and correct child construction
+remain separate branch-layer obligations. The current transparent
+`ProofEmitter.replaySplit` implements the
 generic join. Given a proof of `parent` from the caller's `base`, a proof of
 the target from `{node,left} :: base`, and a proof of the target from
 `{node,right} :: base`, it applies `proveCover` and returns a proof of the
 target from `base`. No policy callback, compiled session, branch score, or
 runtime comparison enters that proof. A Mathlib-free Boolean canary uses a
-nonempty inherited base, consumes the corresponding distinct assumption in
-each child, and obtains an ordinary non-tautological theorem through this
-join; swapped quoted children reduce to rejection in a kernel-checked theorem.
+nonempty inherited base; each supplied child proof explicitly consumes its
+corresponding distinct assumption as well as that base. It obtains an ordinary
+target not entailed by the empty context. Kernel-checked theorems pin both the
+demo schema's chosen child orientation and the genuine failure of two positive
+children to cover the parent. The former is a schema-format regression, not a
+logical requirement that all coverage schemas use the same orientation.
 
 Coverage is the logical requirement. Disjointness, nonempty children, and a
 strictly interior cut are search-progress requirements: omitting them cannot
@@ -2190,7 +2194,8 @@ wake either belongs to an explicitly approximate profile or marks the branch
 incomplete. The tolerance can never justify `noChange`, contradiction, or
 target subsumption in emitted proof.
 
-ACID is especially useful for the upgradeable policy design. It ranks variables
+In RealPaver 1.1.1, ACID is especially useful for the upgradeable policy design.
+It ranks variables
 by a derivative-based smear score, alternates learning and exploitation phases,
 measures contraction gains, and learns how many variable-level 3BCID
 contractors are worth applying. The transferable idea is not its particular
@@ -2201,7 +2206,7 @@ payloads. Learned scores are untrusted scheduling data, and mutable ACID state
 must be branch-owned or keyed by the complete semantic snapshot before it is
 reused across siblings.
 
-RealPaver's variable 3BCID implementation first slices one variable, removes
+RealPaver 1.1.1's variable 3BCID implementation first slices one variable, removes
 inconsistent outer slices using a nested contractor, and then applies CID to
 the remaining middle slices, returning the hull of surviving reductions. This
 maps to the `shave` action rather than a global solver split. Its Lean replay
@@ -2211,7 +2216,7 @@ every surviving slice, and prove the returned hull covers all survivors. A
 coarse `Empty` status from a nested run is insufficient. The number of slices,
 nested propagation work, and retained proofs are all charged to the one action.
 
-RealPaver keeps solver branching separate. Its variable selectors include
+RealPaver 1.1.1 keeps solver branching separate. Its variable selectors include
 round-robin, largest/smallest domain, mixed discrete/continuous selection,
 derivative-smear selection, and hybrids. Its pending-node containers include
 DFS, BFS, distant-most DFS, and hybrids which search depth-first until a
@@ -2221,7 +2226,7 @@ the proof-producing core. For proof goals, additional useful scores are
 distance to a closing fact, predicted proof size, and whether both children are
 likely to close rather than average contraction alone.
 
-The principal non-transferable part is RealPaver's `Proof` enum. Its
+The principal non-transferable part of RealPaver 1.1.1 is its `Proof` enum. Its
 `Empty`, `Maybe`, `Feasible`, and `Inner` values are operational certificates
 returned by C++ methods, not kernel proof terms with replayable provenance. In
 HexInterval each successful analogue needs a package theorem or checked
@@ -2231,7 +2236,7 @@ refutation schema described in the split section. Feasible/existence results
 from interval Newton need separate existence and uniqueness theorem schemas;
 they must not be conflated with universal interval bounds.
 
-The RealPaver examples give small, discriminating acceptance cases:
+The RealPaver 0.4 manual gives small, discriminating acceptance cases:
 
 - `y = x^2` and `y = 2 - x^2` on `[0,2]^2`, where independent local
   contraction stalls but facet shaving isolates the intersection near `(1,1)`;
@@ -3577,7 +3582,8 @@ local test profile. They do not enter this Mathlib-free benchmark target.
   (also distributed in the
   [official 0.4 source archive](https://sourceforge.net/projects/realpaver/files/realpaver/0.4/)).
 - Raphaël Chenouard and Laurent Granvilliers,
-  [RealPaver 1.1](https://doi.org/10.21105/joss.09331), with the
+  [RealPaver 1.1: A C++ Library for Constraint Programming over Numeric or Mixed Discrete-Continuous Domains](https://doi.org/10.21105/joss.09331)
+  (2026), with the
   [tagged 1.1.1 sources](https://github.com/realpaver/realpaver/tree/v1.1.1-joss2),
   especially the exact
   [`IntervalPropagator`](https://github.com/realpaver/realpaver/blob/v1.1.1-joss2/src/realpaver/IntervalPropagator.cpp)
