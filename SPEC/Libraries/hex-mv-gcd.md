@@ -812,8 +812,9 @@ performance claim depends on implementing the pieces above rather than
 the sketch.
 
 The random point is an explicit argument rather than a monad, following
-the pattern the equal-degree-splitting item in
-[future-work](../future-work.md) sets.
+the pattern [hex-finite-field](hex-finite-field.md) sets under
+"Randomness", and drawn from the `Hex.Rand` generator that SPEC
+introduces.
 
 ### 5. The subresultant fallback
 
