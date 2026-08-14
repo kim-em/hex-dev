@@ -1714,19 +1714,21 @@ first two-sided live execution and proof join, but exponential nonnegativity
 is unconditional: neither child target proof currently needs its split
 assumption. The mixed target/refutation join does consume the two incompatible
 output assumptions. A separate conformance-local max-zero/ReLU package now
-uses deliberately conditional rules to supply the first useful
-non-contradictory branch-dependent vertical, even though its final theorem is
-itself unconditional. The nonnegative-side rule proves the output fact by
-rewriting `max x 0` to `x` from the left split fact; the strict-negative rule
-proves the same output fact by rewriting `max x 0` to `0` from the right split
-fact. Both child sessions retain one ordinary rule event with the exact side
-fact as an input, the unchanged generic frontend replays them, and
-`replaySplit` produces the joined entailment evidence. `closeRelu` specializes
+uses deliberately conditional rules to supply the first explicit
+non-contradictory distinct-assumption plumbing vertical. This conditionality
+is a package-test design choice, not a claim that branching is mathematically
+necessary for its unconditional final theorem. The nonnegative-side rule
+proves the output fact by rewriting `max x 0` to `x` from the left split fact;
+the strict-negative rule proves the same output fact by rewriting `max x 0` to
+`0` from the right split fact. Both child sessions retain one ordinary rule
+event with the exact side fact as an input, the unchanged generic frontend
+replays them, and `replaySplit` produces the joined entailment evidence. `closeRelu` specializes
 that evidence to the ordinary theorem `0 ≤ max x 0`. Each rule rejects the
 unsplit top fact, and mutating either quote to use its sibling's assumption
 makes emission fail. The package remains a compact conformance fixture while
 we decide which parts belong in the Mathlib-free runtime and Mathlib semantic
-companion. Remaining acceptance tests include a nested split, a child-local
+companion. Remaining acceptance tests include a theorem whose proof
+mathematically requires branching, a nested split, a child-local
 instantiation, a sibling-reference attack, a non-interior repeated split, and
 fuel exhaustion with no theorem emitted.
 
