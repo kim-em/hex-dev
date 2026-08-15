@@ -3513,10 +3513,12 @@ Taylor-series canary above remain acceptance work.
 The first certified-bound dependency probe replaces PNT+
 `BKLNW_a2_bounds.lean:cert_pow433_upper`, specifically its use of
 `LeanCert.CertifiedBounds.BKLNW.pow433_upper`. The Mathlib-free package
-retains eight load-bearing natural atoms: the upper limit `433`, isolated
-index `4`, tail start `5`, dyadic exponents `36` and `57`, exact tail
-cardinality `429`, and numerator/denominator of the provider cut. Its checker
-authenticates the structural coordinates, exponent inequalities, exact count,
+retains eight authenticated natural atoms: the upper limit `433`, structural
+coordinates `4` and `5`, dyadic exponents `36` and `57`, exact tail
+cardinality `429`, and numerator/denominator of the provider cut. The limit,
+exponents, cardinality, and cut are load-bearing in the proof; the split
+coordinates are pinned structural metadata for this fixed operation. Its checker
+authenticates those coordinates, exponent inequalities, exact count,
 the complete rational product inequality, and containment in the source
 target before emitting one fact. The declared arithmetic work is the 429-term
 tail represented by that analytic fold; the payload is bounded to eight atoms

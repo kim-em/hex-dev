@@ -73,6 +73,9 @@ private def wrongCardinalityBody : List Nat :=
 private def unsupportedExponentBody : List Nat :=
   [433, 4, 5, 37, 57, 429, 100000001948, 100000000000]
 
+private def unsupportedTailExponentBody : List Nat :=
+  [433, 4, 5, 36, 58, 429, 100000001948, 100000000000]
+
 private def wrongEndpointBody : List Nat :=
   [433, 4, 5, 36, 57, 429, 100000001900, 100000000000]
 
@@ -80,11 +83,13 @@ private def wrongEndpointBody : List Nat :=
 #guard (decodeCertificate? wrongLimitBody).isSome
 #guard (decodeCertificate? wrongCardinalityBody).isSome
 #guard (decodeCertificate? unsupportedExponentBody).isSome
+#guard (decodeCertificate? unsupportedTailExponentBody).isSome
 #guard (decodeCertificate? wrongEndpointBody).isSome
 #guard factFormat.validateBody body
 #guard !factFormat.validateBody wrongLimitBody
 #guard !factFormat.validateBody wrongCardinalityBody
 #guard !factFormat.validateBody unsupportedExponentBody
+#guard !factFormat.validateBody unsupportedTailExponentBody
 #guard !factFormat.validateBody wrongEndpointBody
 
 private def action : Action :=
@@ -121,6 +126,7 @@ private def planFails (cells : List Nat) : Bool :=
 #guard planFails wrongLimitBody
 #guard planFails wrongCardinalityBody
 #guard planFails unsupportedExponentBody
+#guard planFails unsupportedTailExponentBody
 #guard planFails wrongEndpointBody
 
 private def replayContext : RuleFactContext checkerInput action :=
@@ -137,6 +143,8 @@ private def wrongCardinality : FoldCertificate :=
   { certificate with tailCardinality := 428 }
 private def unsupportedExponent : FoldCertificate :=
   { certificate with isolatedExponent := 37 }
+private def unsupportedTailExponent : FoldCertificate :=
+  { certificate with tailExponent := 58 }
 private def wrongEndpoint : FoldCertificate :=
   { certificate with targetNumerator := 100000001900 }
 
@@ -146,6 +154,7 @@ private def wrongFact : RuleFactContext checkerInput action :=
 #guard (foldFactSchema.replay checkerInput action replayContext wrongLimit).isNone
 #guard (foldFactSchema.replay checkerInput action replayContext wrongCardinality).isNone
 #guard (foldFactSchema.replay checkerInput action replayContext unsupportedExponent).isNone
+#guard (foldFactSchema.replay checkerInput action replayContext unsupportedTailExponent).isNone
 #guard (foldFactSchema.replay checkerInput action replayContext wrongEndpoint).isNone
 #guard (foldFactSchema.replay checkerInput action wrongFact certificate).isNone
 

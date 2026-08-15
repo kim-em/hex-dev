@@ -19,8 +19,8 @@ namespace Hex.Interval.Experiment.PntBKLNWPow
 
 open Real Finset
 
-/-- Exact PNT+ definition copied from the pinned `BKLNW_a2_bounds.lean`
-dependency boundary. -/
+/-- Exact PNT+ definition copied from the pinned `BKLNW.lean` definition used
+by `BKLNW_a2_bounds.lean`. -/
 noncomputable def sourceF (x : ℝ) : ℝ :=
   ∑ k ∈ Icc 3 ⌊log x / log 2⌋₊, x ^ ((1 : ℝ) / k - 1 / 3)
 
