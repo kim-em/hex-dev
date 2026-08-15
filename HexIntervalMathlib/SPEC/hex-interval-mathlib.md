@@ -123,6 +123,15 @@ rows only; arbitrary rational inputs, generated precision/endpoints, table
 persistence, and every admitted LeanCert-owned public bound remain outside its
 claim.
 
+`HexIntervalMathlib.Experiment.PntExpPoint` proves the nine remaining pinned
+exponential statements from one rational Taylor/power theorem. Each source row
+fixes a signed rational input, a step in `[-1, 1]`, a positive natural
+multiplier, one checked side of a fourteen-term Taylor enclosure, and the final
+rational cut. The result preserves the source statements and does not import a
+LeanCert theorem. It is not a public arbitrary-input exponential operation.
+The separate pending π statement cannot use Mathlib's Chudnovsky sum as
+evidence because its equality with `π⁻¹` is still `proof_wanted`.
+
 ## Conformance
 
 `HexIntervalMathlib.IntervalConformance` pins both directions of intersection
@@ -148,3 +157,8 @@ fixed rows and sends the representative large-shift `32e12` certificate through
 generic planning, payload authentication, chronological replay, and the proof
 frontend, with source, reduction, term-count, cross-row, window, and false-cut
 rejection guards.
+`HexIntervalMathlib.PntExpPointConformance` runs all nine fixed exponential
+rows and sends the tight `exp 20` certificate through generic planning,
+payload authentication, chronological replay, and the proof frontend. It also
+pins source, Taylor-step, natural-power, term-count, cross-row, and false-cut
+rejection.

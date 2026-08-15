@@ -4314,9 +4314,8 @@ chronology and `ProofFrontend`.
 Wrong inputs, shifts, term counts, coordinates, windows, and a mathematically
 false endpoint fail closed. Acceptance is exact source-row lookup plus a
 reusable kernel theorem, not arbitrary-rational runtime range reduction,
-endpoint generation, or a LeanCert compatibility layer. Twelve actual
-`LogTables.lean` tactic sites remain pending in other provider families; this
-slice does not import or rely on any admitted LeanCert-owned public bound.
+endpoint generation, or a LeanCert compatibility layer. This slice does not
+import or rely on any admitted LeanCert-owned public bound.
 
 The negative-exponential table provider covers the complete 79-declaration
 Table-10 block `exp_neg_10_lt` through `exp_neg_200_lt` in the same pinned
@@ -4332,6 +4331,26 @@ Unknown coordinates and mutations of the sixth count, term count, source row,
 or endpoint fail closed.  This is a fixed source lookup plus a reusable kernel
 power reduction, not arbitrary exponential interval evaluation, requested
 precision, generated endpoints, or a LeanCert compatibility layer.
+
+The exponential-point provider covers the other nine pinned exponential tactic
+sites in `LogTables.lean`, including lower and upper small negative points, the
+`x ≥ 50` decay boundary, `exp 1.112`, and the isolated `exp 2`, `exp 20`,
+`exp 22`, and `exp (-13.5)` bounds. One schema authenticates a signed rational
+source, a rational step in `[-1, 1]`, its natural multiplier, the side and
+endpoint of a fourteen-term Taylor enclosure, and the final source cut. The
+kernel theorem raises the checked step enclosure to the authenticated power;
+the `x ≥ 50` wrapper then applies exponential monotonicity. All nine rows use
+the same runtime and proof theorem, while the tight forty-factor `exp 20` row
+also traverses generic chronology and `ProofFrontend`.
+
+Wrong sources, steps, powers, term counts, directions, cross-row cuts, and a
+mathematically false endpoint fail closed. This is exact source lookup plus a
+reusable rational Taylor/power certificate, not arbitrary exponential range
+reduction or endpoint synthesis. Three actual LogTables tactic sites remain:
+the two-sided nested `log (log 2)` pair needs a distinct two-stage positive-log
+provider, and `π ≤ 3.15` needs a separate ordinary-kernel π bound. Mathlib's
+Chudnovsky file leaves the identification of its sum with `π⁻¹` as
+`proof_wanted`, so that identity is not accepted as migration evidence.
 
 The first precision-indexed log provider moves beyond an opaque six-decimal
 table fact. Its program contains separate exact-input and precision-request
@@ -4675,6 +4694,10 @@ their declared cost inside a scheduler bound.
   exponential source table, authenticated sixth-power certificates, and exact
   endpoint comparisons.  Real Taylor and power semantics live in the Mathlib
   companion.
+- `HexInterval/Experiment/PntExpPoint.lean`: nine bounded signed-rational
+  exponential point records with authenticated Taylor steps, natural powers,
+  directions, and final endpoints. Real Taylor semantics and source-shaped
+  theorems live in the Mathlib companion.
 - `scripts/conformance/run_pnt_fks2_family.sh`: fail-closed entry point for the
   non-default complete-family proof and conformance profile.
 - `bench/HexInterval/Bench.lean`: Mathlib-free interval and scheduler
