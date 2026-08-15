@@ -64,10 +64,13 @@ theorem decimalLe_iff (left right : Decimal) :
   simp only [decide_eq_true_eq]
   constructor <;> intro comparison <;> exact_mod_cast comparison
 
+noncomputable def coefficientMajorant (A1 A2 E : ℝ) (column : Nat) (y : ℝ) : ℝ :=
+  A1 * y ^ column * Real.exp (-(y / 2)) +
+    A2 * y ^ column * Real.exp (-(2 * y / 3)) + E * y ^ column
+
 noncomputable def majorant (column : Nat) (y : ℝ) : ℝ :=
-  certificate.a1.value * y ^ column * Real.exp (-(y / 2)) +
-    certificate.a2.value * y ^ column * Real.exp (-(2 * y / 3)) +
-    certificate.epsilon.value * y ^ column
+  coefficientMajorant certificate.a1.value certificate.a2.value
+    certificate.epsilon.value column y
 
 noncomputable def endpointValue (cell : Cell) : ℝ :=
   max (majorant cell.coordinate.column certificate.row)
@@ -162,7 +165,7 @@ private theorem twoThirdLower :
   norm_num [sum_range_succ] at remainder ⊢
   linarith
 
-private theorem expTermsUpper (b : Nat) (positive : b ≠ 0) :
+theorem expTermsUpper (b : Nat) (positive : b ≠ 0) :
     Real.exp (-(b : ℝ) / 2) < (0.606530660 : ℝ) ^ b ∧
       Real.exp (-(2 * b : ℝ) / 3) < (0.513417120 : ℝ) ^ b := by
   have half := pow_lt_pow_left₀ halfUpper
@@ -215,7 +218,7 @@ theorem endpointUpper (cell : Cell) (member : cell ∈ certificate.cells) :
   simp only [Certificate.cells, List.mem_cons, List.not_mem_nil, or_false] at member
   rcases member with rfl | rfl | rfl | rfl | rfl
   all_goals
-    unfold endpointValue majorant
+    unfold endpointValue majorant coefficientMajorant
     rw [max_le_iff]
     constructor
     · norm_num [certificate, sourceCell, corrected, margin, Decimal.mul,
@@ -280,8 +283,9 @@ private theorem G1'_hasDerivAt (A1 A2 E y : ℝ) :
   convert! (h1.add h2).add h3 using 1
   all_goals ring
 
-private theorem G1_convexOn {A1 A2 E : ℝ} (hA1 : 0 ≤ A1) (hA2 : 0 ≤ A2) :
-    ConvexOn ℝ (Icc 25 26) (G1 A1 A2 E) := by
+private theorem G1_convexOn {A1 A2 E lower upper : ℝ} (hLower : 20 ≤ lower)
+    (hA1 : 0 ≤ A1) (hA2 : 0 ≤ A2) :
+    ConvexOn ℝ (Icc lower upper) (G1 A1 A2 E) := by
   apply convexOn_of_hasDerivWithinAt2_nonneg (convex_Icc _ _)
     (by unfold G1 eT; fun_prop : Continuous (G1 A1 A2 E)).continuousOn
   · intro y _
@@ -295,12 +299,12 @@ private theorem G1_convexOn {A1 A2 E : ℝ} (hA1 : 0 ≤ A1) (hA2 : 0 ≤ A2) :
         Real.exp (-((1 / 2 : ℝ) * y))) := by
       apply mul_nonneg hA1
       apply mul_nonneg _ (Real.exp_pos _).le
-      nlinarith [hy.1]
+      nlinarith [hy.1, hLower]
     have second : 0 ≤ A2 * (((2 / 3 : ℝ) ^ 2 * y - 2 * (2 / 3)) *
         Real.exp (-((2 / 3 : ℝ) * y))) := by
       apply mul_nonneg hA2
       apply mul_nonneg _ (Real.exp_pos _).le
-      nlinarith [hy.1]
+      nlinarith [hy.1, hLower]
     linarith
 
 noncomputable def pT (m : Nat) (c y : ℝ) : ℝ :=
@@ -389,9 +393,9 @@ private theorem pTdd_nonneg {c : ℝ} (hc : 1 / 2 ≤ c) {m : Nat} (hm : m ≤ 3
   apply mul_nonneg ym
   exact quad_nonneg hc hy mNonneg mLe
 
-private theorem Pp_convexOn {A1 A2 E : ℝ} (m : Nat) (hm : m ≤ 3)
-    (hA1 : 0 ≤ A1) (hA2 : 0 ≤ A2) (hE : 0 ≤ E) :
-    ConvexOn ℝ (Icc 25 26) (Pp m A1 A2 E) := by
+private theorem Pp_convexOn {A1 A2 E lower upper : ℝ} (hLower : 20 ≤ lower)
+    (m : Nat) (hm : m ≤ 3) (hA1 : 0 ≤ A1) (hA2 : 0 ≤ A2) (hE : 0 ≤ E) :
+    ConvexOn ℝ (Icc lower upper) (Pp m A1 A2 E) := by
   apply convexOn_of_hasDerivWithinAt2_nonneg (convex_Icc _ _)
     (by unfold Pp pT; fun_prop : Continuous (Pp m A1 A2 E)).continuousOn
   · intro y _
@@ -402,13 +406,43 @@ private theorem Pp_convexOn {A1 A2 E : ℝ} (m : Nat) (hm : m ≤ 3)
     rw [interior_Icc] at hy
     unfold Pp''
     have first : 0 ≤ A1 * pTdd m (1 / 2) y :=
-      mul_nonneg hA1 (pTdd_nonneg (by norm_num) hm (by linarith [hy.1]))
+      mul_nonneg hA1 (pTdd_nonneg (by norm_num) hm (by linarith [hy.1, hLower]))
     have second : 0 ≤ A2 * pTdd m (2 / 3) y :=
-      mul_nonneg hA2 (pTdd_nonneg (by norm_num) hm (by linarith [hy.1]))
+      mul_nonneg hA2 (pTdd_nonneg (by norm_num) hm (by linarith [hy.1, hLower]))
     have third : 0 ≤ E * (((m + 2 : Nat) : ℝ) * (((m + 1 : Nat) : ℝ) * y ^ m)) := by
       apply mul_nonneg hE
-      exact mul_nonneg (by positivity) (mul_nonneg (by positivity) (pow_nonneg (by linarith [hy.1]) m))
+      exact mul_nonneg (by positivity) (mul_nonneg (by positivity)
+        (pow_nonneg (by linarith [hy.1, hLower]) m))
     linarith
+
+/-- The `k = 1` coefficient majorant is convex on every interval starting at
+`20` or later.  Table 10 row batches instantiate this once per source row. -/
+theorem coefficientMajorantConvex1 {A1 A2 E lower upper : ℝ}
+    (hLower : 20 ≤ lower) (hA1 : 0 ≤ A1) (hA2 : 0 ≤ A2) :
+    ConvexOn ℝ (Icc lower upper) (coefficientMajorant A1 A2 E 1) := by
+  have formula : coefficientMajorant A1 A2 E 1 = G1 A1 A2 E := by
+    funext y
+    unfold coefficientMajorant G1 eT
+    rw [show -(y / 2) = -((1 / 2 : ℝ) * y) by ring,
+      show -(2 * y / 3) = -((2 / 3 : ℝ) * y) by ring]
+    ring
+  rw [formula]
+  exact G1_convexOn hLower hA1 hA2
+
+/-- The `k = 2,…,5` coefficient majorants are convex on every interval
+starting at `20` or later. -/
+theorem coefficientMajorantConvexSucc {A1 A2 E lower upper : ℝ}
+    (hLower : 20 ≤ lower) (m : Nat) (hm : m ≤ 3)
+    (hA1 : 0 ≤ A1) (hA2 : 0 ≤ A2) (hE : 0 ≤ E) :
+    ConvexOn ℝ (Icc lower upper) (coefficientMajorant A1 A2 E (m + 2)) := by
+  have formula : coefficientMajorant A1 A2 E (m + 2) = Pp m A1 A2 E := by
+    funext y
+    unfold coefficientMajorant Pp pT
+    rw [show -(y / 2) = -((1 / 2 : ℝ) * y) by ring,
+      show -(2 * y / 3) = -((2 / 3 : ℝ) * y) by ring]
+    ring
+  rw [formula]
+  exact Pp_convexOn hLower m hm hA1 hA2 hE
 
 def RowHolds (cell : Cell) : Prop :=
   ∀ y ∈ Icc (25 : ℝ) 26, majorant cell.coordinate.column y ≤ cell.target.value
@@ -417,13 +451,14 @@ private theorem convex1 : ConvexOn ℝ (Icc 25 26) (majorant 1) := by
   have formula : majorant 1 = G1 certificate.a1.value certificate.a2.value
       certificate.epsilon.value := by
     funext y
-    unfold majorant G1 eT
+    unfold majorant coefficientMajorant G1 eT
     rw [show -(y / 2) = -((1 / 2 : ℝ) * y) by ring,
       show -(2 * y / 3) = -((2 / 3 : ℝ) * y) by ring]
     ring
   rw [formula]
   exact G1_convexOn (A1 := certificate.a1.value) (A2 := certificate.a2.value)
-    (E := certificate.epsilon.value) (by norm_num [certificate, Decimal.value, decimal])
+    (E := certificate.epsilon.value) (by norm_num)
+      (by norm_num [certificate, Decimal.value, decimal])
       (by norm_num [certificate, Decimal.value, decimal])
 
 private theorem convexSucc (m : Nat) (hm : m ≤ 3) :
@@ -431,13 +466,13 @@ private theorem convexSucc (m : Nat) (hm : m ≤ 3) :
   have formula : majorant (m + 2) = Pp m certificate.a1.value certificate.a2.value
       certificate.epsilon.value := by
     funext y
-    unfold majorant Pp pT
+    unfold majorant coefficientMajorant Pp pT
     rw [show -(y / 2) = -((1 / 2 : ℝ) * y) by ring,
       show -(2 * y / 3) = -((2 / 3 : ℝ) * y) by ring]
     ring
   rw [formula]
   exact Pp_convexOn (A1 := certificate.a1.value) (A2 := certificate.a2.value)
-    (E := certificate.epsilon.value) m hm
+    (E := certificate.epsilon.value) (by norm_num) m hm
       (by norm_num [certificate, Decimal.value, decimal])
       (by norm_num [certificate, Decimal.value, decimal])
       (by norm_num [certificate, Decimal.value, decimal])
@@ -637,7 +672,7 @@ theorem rejectBareK5 :
   have twoThird : (5.7777e-8 : ℝ) < Real.exp (-(2 * 25 : ℝ) / 3) := by
     norm_num at lower ⊢
     nlinarith [lower.2]
-  unfold majorant
+  unfold majorant coefficientMajorant
   norm_num [certificate, Decimal.value, decimal]
   nlinarith [half, twoThird]
 

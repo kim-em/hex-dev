@@ -1469,10 +1469,28 @@ no draft or retry, and separately proves the endpoint inequality false in the
 kernel. A duplicated/wrong column is also rejected.
 
 This remains a coordinate-pinned D9 shard, not acceptance of the Table 10
-family: it covers five numeric target premises after a localized source
-rewrite, not the surrounding `B_8_exact` declarations, the other 82 target
-sites, the 38 supporting `a₂` sites, arbitrary rows, or production batching
-and performance. The inventory classification therefore remains `pending`.
+family. The generated inventory's 87-target count is executable tactic-call
+granularity rather than a count of distinct row/column declarations.
+
+The parameterized convex-row batch adds the exact source tuples at
+`BKLNW_tables.lean:833–838`: rows 60, 65, 70, 75, 80, and 85, all five columns,
+and their respective next endpoints through 90. These thirty margin
+declarations share one source reduction, so one bounded payload authenticates
+the row order, coefficients, sixty rational endpoint inequalities, and all
+listed/corrected coordinates. The ordinary-kernel proof lifts the checked
+decimal powers to exponential bounds and reuses the generalized convexity
+proof; `rowOfMem` retains exact tuple membership and `k ∈ Finset.Icc 1 5`.
+Generic replay closes all thirty facts.
+
+Endpoint, coordinate, and cross-row-order mutations reject without drafts or
+precision retry. The batch replaces 60 executable endpoint calls in the
+thirty margin declarations; its stronger row-60/k=5 margin theorem also
+replaces the two calls in the separate bare theorem. Thus 62 of 87 executable
+target occurrences are covered here, leaving 25 target calls with different
+logarithmic or pointwise provider shapes. The 38 supporting `a₂` sites,
+surrounding `B_8_exact` reductions, arbitrary table rows, and production
+performance remain pending. This is a localized PNT+ rewrite boundary, not
+LeanCert API compatibility.
 
 The coordinate-aware Table 12 implementation is a bounded acceptance fixture
 that completes this family migration. At PNT+ commit

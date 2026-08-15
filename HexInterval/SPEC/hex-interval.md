@@ -3890,9 +3890,40 @@ kernel lower bound proves `¬ majorant 5 25 ≤ 71.291`.
 
 This accepts only the five numeric majorant leaves for row 25 after a localized
 PNT+ rewrite to the source-shaped numeric bridge. It does not import or wrap
-LeanCert, prove the surrounding PNT+ `B_8_exact` reduction, accept arbitrary
-Table 10 rows, or cover the other 82 target sites and 38 supporting `a₂` sites.
-The Table 10 inventory family therefore remains `pending`.
+LeanCert or prove the surrounding PNT+ `B_8_exact` reduction. The generated
+inventory's count of 87 is executable target tactic occurrences, not 87
+distinct row/column declarations; the next batch below records coverage at
+both levels.
+
+#### Parameterized Table 10 convex-row batch
+
+The next bounded package pins the six source tuples at
+`BKLNW_tables.lean:833–838`, with row intervals `60–65`, `65–70`, `70–75`,
+`75–80`, `80–85`, and `85–90`. These are the largest contiguous source batch
+sharing exactly the `row_bound_k1` / `row_bound_kge2` / `row_bound_k5`
+convex-endpoint reduction and the fixed `a₁ = 1.00000002` bound. One payload
+authenticates all six rows in order, their row-specific `a₂` and epsilon
+bounds, thirty exact listed/corrected cells, and sixty rational endpoint
+inequalities based on the checked decimal upper bounds for `exp (-1/2)` and
+`exp (-2/3)`.
+
+One generic operation installs thirty coordinate facts. The Mathlib companion
+lifts each accepted rational endpoint through the exponential bounds, uses the
+shared convexity theorem for columns 1 through 5, and exposes `rowOfMem` with
+the pinned tuple-membership and `k ∈ Finset.Icc 1 5` hypotheses. Generic
+chronology/schema replay and `ProofFrontend` close all thirty facts. A false
+row-75/column-3 endpoint, a duplicated row-80 column, and a cross-row reorder
+are decoded and rejected without drafts or a retry.
+
+This replaces, after localized PNT+ majorant rewrites, the 30 margin
+declarations for rows 60–85 and their 60 executable endpoint tactic calls. The
+row-60 margin result is stronger than the separate bare `table_10_row60_k5`
+target and also replaces its two endpoint calls, so 62 of the inventory's 87
+target occurrences are covered by this batch. The remaining 25 target calls
+need the `43 → 19·log 10`, `19·log 10 → 44`, pointwise rows 90/95, or
+large-decimal-row providers. All 38 supporting `a₂` sites, the surrounding
+`B_8_exact` reductions, arbitrary rows, and production-scale performance
+remain pending; this is not a LeanCert compatibility layer.
 
 #### Coordinate-aware numerical batches
 
