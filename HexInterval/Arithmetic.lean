@@ -68,13 +68,13 @@ def allowed (limits : PowLimits) (work : PowWork) : Bool :=
 
 end PowWork
 
-/-! ## Precision-indexed rational conversion -/
+/-! ## Precision-indexed arithmetic -/
 
 /-- Limits needed before entering Core's rational-backed dyadic reciprocal or
-division. Retained endpoints and aggregate conversion shifts keep their
-existing meanings. Precision encoding and temporary rational integers have
-separate bounds rather than being disguised as endpoint height or comparison
-cost. -/
+division and directed dyadic rounding. Retained endpoints and aggregate
+conversion/rounding shifts keep their existing meanings. Precision encoding
+and temporary integer sizes have separate bounds rather than being disguised
+as endpoint height or comparison cost. -/
 structure PrecisionLimits where
   endpoint : EndpointLimit
   maxPrecisionMagnitude : Nat
@@ -102,6 +102,116 @@ def allowed (limits : PrecisionLimits) (cost : PrecisionCost) : Bool :=
     cost.magnitude ≤ limits.maxPrecisionMagnitude
 
 end PrecisionCost
+
+/-! ## Directed-rounding resources -/
+
+/-- Conservative pre-allocation record for one nonzero Core dyadic rounding.
+
+`shiftBound` bounds the signed subtraction of the source exponent and requested
+precision without assuming cancellation. `temporaryBits` bounds the shifted
+integer passed to `Dyadic.ofIntWithPrec`. The predicted result fields bound the
+canonical endpoint after trailing-zero removal. -/
+structure RoundCost where
+  source : EndpointCost
+  shiftBound : Nat
+  temporaryBits : Nat
+  predictedNumeratorBits : Nat
+  predictedExponentMagnitude : Nat
+  predictedResultHeight : Nat
+  deriving DecidableEq, Repr
+
+namespace RoundCost
+
+/-- Derive a rounding bound from the exact source and already-authenticated
+precision. This computes metadata only; it does not call Core rounding. -/
+def ofDyadic (value : Dyadic) (precision : Precision)
+    (precisionCost : PrecisionCost) : RoundCost :=
+  let source := EndpointCost.ofDyadic value
+  match value with
+  | .zero =>
+      { source
+        shiftBound := 0
+        temporaryBits := 0
+        predictedNumeratorBits := 0
+        predictedExponentMagnitude := 0
+        predictedResultHeight := 0 }
+  | .ofOdd _ exponent _ =>
+      let unchanged := exponent ≤ precision
+      let temporaryBits := if exponent < precision then 0 else source.numeratorBits
+      let predictedNumeratorBits := source.numeratorBits
+      let predictedExponentMagnitude :=
+        if unchanged then source.exponentMagnitude
+        else precisionCost.magnitude + source.numeratorBits
+      { source
+        shiftBound := source.exponentMagnitude + precisionCost.magnitude
+        temporaryBits
+        predictedNumeratorBits
+        predictedExponentMagnitude
+        predictedResultHeight := predictedNumeratorBits + predictedExponentMagnitude }
+
+/-- Admit retained source size, exponent/precision subtraction, integer
+temporary, and conservative canonical result height. -/
+def allowed (limits : PrecisionLimits) (cost : RoundCost) : Bool :=
+  cost.source.allowed limits.endpoint &&
+    cost.shiftBound ≤ limits.endpoint.maxAlignmentShift &&
+    cost.temporaryBits ≤ limits.maxTemporaryBits &&
+    cost.predictedResultHeight ≤ limits.endpoint.maxEndpointHeight
+
+end RoundCost
+
+/-- Complete resource record for regularizing both finite interval cuts. A
+missing side is unbounded or zero and performs no Core rounding work.
+`finalAlignmentBound` conservatively bounds the comparison used to seal the
+two rounded cuts. -/
+structure RegularizeCost where
+  precision : PrecisionCost
+  lower : Option RoundCost
+  upper : Option RoundCost
+  finalAlignmentBound : Nat
+  deriving DecidableEq, Repr
+
+namespace RegularizeCost
+
+private def ofLower (precision : Precision) (precisionCost : PrecisionCost) :
+    Lower → Option RoundCost
+  | .unbounded | .finite .zero _ => none
+  | .finite value _ => some (RoundCost.ofDyadic value precision precisionCost)
+
+private def ofUpper (precision : Precision) (precisionCost : PrecisionCost) :
+    Upper → Option RoundCost
+  | .unbounded | .finite .zero _ => none
+  | .finite value _ => some (RoundCost.ofDyadic value precision precisionCost)
+
+/-- Build the interval-wide rounding record after source and precision
+admission. -/
+def ofCuts (lower : Lower) (upper : Upper) (precision : Precision)
+    (precisionCost : PrecisionCost) : RegularizeCost :=
+  let lowerCost := ofLower precision precisionCost lower
+  let upperCost := ofUpper precision precisionCost upper
+  let lowerExponent := lowerCost.map (·.predictedExponentMagnitude) |>.getD 0
+  let upperExponent := upperCost.map (·.predictedExponentMagnitude) |>.getD 0
+  { precision := precisionCost
+    lower := lowerCost
+    upper := upperCost
+    finalAlignmentBound := lowerExponent + upperExponent }
+
+/-- Admit all endpoint-local rounding bounds and the final rounded-cut
+alignment. -/
+def allowed (limits : PrecisionLimits) (cost : RegularizeCost) : Bool :=
+  cost.precision.allowed limits &&
+    cost.lower.all (RoundCost.allowed limits) &&
+    cost.upper.all (RoundCost.allowed limits) &&
+    cost.finalAlignmentBound ≤ limits.endpoint.maxAlignmentShift
+
+end RegularizeCost
+
+/-- Successful regularization preflight. `unchanged` covers shapes containing
+no nonzero finite endpoint, for which Core rounding does not inspect the
+precision. -/
+inductive RegularizePlan where
+  | unchanged
+  | checked (cost : RegularizeCost)
+  deriving DecidableEq, Repr
 
 /-- Conservative bit bounds for the numerator and denominator of a rational
 temporary. These are integer bit lengths, not retained dyadic endpoint data. -/
@@ -164,9 +274,10 @@ inductive QuotientPlan where
   deriving DecidableEq, Repr
 
 /-- Resource diagnostics for checked public arithmetic. Product growth,
-direct-power work, precision requests, and rational-backed quotient work are
-separate cases from endpoint and comparison work; none can be inferred
-honestly from the cost of comparing already-admitted endpoints. -/
+direct-power work, precision requests, rational-backed quotient work, and
+directed regularization work are separate cases from endpoint and comparison
+work; none can be inferred honestly from the cost of comparing already-admitted
+endpoints. -/
 inductive Cost where
   | endpoint (cost : EndpointCost)
   | comparison (cost : CompareCost)
@@ -174,6 +285,7 @@ inductive Cost where
   | power (work : PowWork)
   | precision (cost : PrecisionCost)
   | quotient (cost : QuotientCost)
+  | regularization (cost : RegularizeCost)
   deriving DecidableEq, Repr
 
 /-- Result type for public arithmetic whose work is not described by
@@ -298,6 +410,46 @@ def admitPrecision (limits : PrecisionLimits) (precision : Precision) :
   let cost := PrecisionCost.ofPrecision precision
   if !cost.allowed limits then throw (.precision cost)
   pure cost
+
+private def needsLowerRound : Lower → Bool
+  | .unbounded | .finite .zero _ => false
+  | .finite (.ofOdd _ _ _) _ => true
+
+private def needsUpperRound : Upper → Bool
+  | .unbounded | .finite .zero _ => false
+  | .finite (.ofOdd _ _ _) _ => true
+
+private def admitLower (limits : PrecisionLimits) : Lower → Except Cost Unit
+  | .unbounded => pure ()
+  | .finite value _ => do
+      let _ ← admitEndpoint limits value
+      pure ()
+
+private def admitUpper (limits : PrecisionLimits) : Upper → Except Cost Unit
+  | .unbounded => pure ()
+  | .finite value _ => do
+      let _ ← admitEndpoint limits value
+      pure ()
+
+/-- Preflight Core `Dyadic.roundDown` / `roundUp` for every finite nonzero cut
+before either is evaluated. A shape with no nonzero finite endpoint preserves
+its cuts without inspecting the requested precision. For a real rounding path,
+all retained sources precede precision, rounding temporary/result bounds, and
+the final rounded-cut alignment. -/
+def preflightRegularize (limits : PrecisionLimits) (raw : Raw)
+    (precision : Precision) : Except Cost RegularizePlan := do
+  match raw with
+  | .empty => pure .unchanged
+  | .bounds lower upper =>
+      if !(needsLowerRound lower || needsUpperRound upper) then
+        pure .unchanged
+      else
+        admitLower limits lower
+        admitUpper limits upper
+        let precisionCost ← admitPrecision limits precision
+        let cost := RegularizeCost.ofCuts lower upper precision precisionCost
+        if !cost.allowed limits then throw (.regularization cost)
+        pure (.checked cost)
 
 namespace QuotientCost
 

@@ -17,6 +17,8 @@ computed connected outward cuts and a sound pointwise theorem for Lean's total
 inverse, including `0⁻¹ = 0`.
 Division exposes direct outward cuts for two nonzero finite singletons, exact
 empty and total-zero cases, and a sound whole-line fallback otherwise.
+Outward regularization exposes exact Core-rounded cuts, source containment,
+and raw-cut idempotence without claiming a globally grid-tightest enclosure.
 Propagator, provider, replay, and tactic modules remain experiments and are not
 re-exported by the public umbrella. The user-facing tactic contract below is
 the release target, not a claim that the tactic is already supported.
@@ -198,6 +200,19 @@ theorem pow_mem_powWithin
     (h : powWithin limit workLimits I exponent = .ready result) :
     I.Contains x → result.Contains (x ^ exponent)
 
+theorem contains_regularizeWithin
+    (h : regularizeWithin limits precision I = .ready result) :
+    result.Contains x ↔
+      (I.view.regularizeUnchecked precision).Contains x
+
+theorem mem_regularizeWithin
+    (h : regularizeWithin limits precision I = .ready result) :
+    I.Contains x → result.Contains x
+
+theorem regularizeUnchecked_idem :
+    (raw.regularizeUnchecked precision).regularizeUnchecked precision =
+      raw.regularizeUnchecked precision
+
 theorem contains_splitWithin_left
     (h : splitWithin limit I point = .ready left right) :
     left.Contains x ↔ I.Contains x ∧ x ≤ toReal point
@@ -278,6 +293,15 @@ nonempty exponent zero, positive odd, and positive even cases; the even case
 maps the exact absolute-value hull. Neither operation exports an unproved
 set-image converse.
 
+Outward regularization preserves empty and unbounded sides, rounds finite lower
+cuts down and upper cuts up with Core's directed dyadic operations, makes moved
+cuts strict, and inherits strictness at unchanged endpoints. A dedicated
+preflight bounds the exponent/precision subtraction, shifted integer
+temporaries, retained rounded endpoints, and final cut alignment before either
+rounding operation executes. The one-sided Core inequalities prove source
+containment and its fixed-point lemmas prove raw-cut idempotence. The absent
+converse optimality lemmas are why no global grid-tightest theorem is exported.
+
 Transactional splitting returns both sealed children or one resource refusal;
 it cannot expose a partial pair. Empty bypasses point inspection. For a
 nonempty input, the retained point, both finite source/point selectors, and
@@ -317,7 +341,6 @@ theorem mem_mul : x ∈ᵢ I → y ∈ᵢ J → x * y ∈ᵢ mul I J
 theorem mem_invAt : x ∈ᵢ I → x⁻¹ ∈ᵢ invAt p I
 theorem mem_divAt : x ∈ᵢ I → y ∈ᵢ J → x / y ∈ᵢ divAt p I J
 theorem mem_pow : x ∈ᵢ I → x ^ n ∈ᵢ pow I n
-theorem mem_regularize : x ∈ᵢ I → x ∈ᵢ regularize p I
 ```
 
 Proofs cover empty and unbounded inputs directly. They do not infer field laws
