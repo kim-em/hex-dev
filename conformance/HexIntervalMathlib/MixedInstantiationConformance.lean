@@ -264,25 +264,42 @@ private def oddnessAction : Action :=
             instantiation.entry.schema == 1 &&
             instantiation.entry.body == [1] &&
             sine.entry.replayKey == sineFactSchema.key &&
+            sine.event.programVersion == 1 &&
             sine.event.node == node 4 &&
+            sine.event.previous == ({ node := node 4, version := 0 } : SeenVersion) &&
             sine.event.version == 1 &&
             sine.event.fact == .unit &&
+            sine.previous == .all &&
+            sine.assumptions == [{ node := node 0, fact := .all }] &&
             exactRuleInput sine { node := node 0, version := 0 } &&
             negation.entry.replayKey == negationFactSchema.key &&
+            negation.event.programVersion == 1 &&
             negation.event.node == node 5 &&
+            negation.event.previous == ({ node := node 5, version := 0 } : SeenVersion) &&
             negation.event.version == 1 &&
             negation.event.fact == .unit &&
+            negation.previous == .all &&
+            negation.assumptions == [{ node := node 4, fact := .unit }] &&
             exactRuleInput negation { node := node 4, version := 1 } &&
             transport.entry.replayKey == oddnessEqualitySchema.key &&
+            transport.event.programVersion == 1 &&
             transport.event.node == node 2 &&
+            transport.event.previous == ({ node := node 2, version := 0 } : SeenVersion) &&
             transport.event.version == 1 &&
             transport.event.fact == .unit &&
+            transport.previous == .all &&
+            transport.sourceFact == .unit &&
+            transport.assumptions == [] &&
             exactTransportInput transport { index := 0 }
               { node := node 5, version := 1 } &&
             exp.entry.replayKey == expFactSchema.key &&
+            exp.event.programVersion == 1 &&
             exp.event.node == node 3 &&
+            exp.event.previous == ({ node := node 3, version := 0 } : SeenVersion) &&
             exp.event.version == 1 &&
             exp.event.fact == .atMostThree &&
+            exp.previous == .all &&
+            exp.assumptions == [{ node := node 2, fact := .unit }] &&
             exactRuleInput exp { node := node 2, version := 1 }
       | _ => false
 
