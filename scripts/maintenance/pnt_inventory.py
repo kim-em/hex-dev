@@ -136,6 +136,21 @@ FKS2_SHARD_COUNTS = tuple([1000] * 13 + [590])
 FKS2_DIGEST_RE = re.compile(
     r'⟨(?P<shard>\d+),\s*(?P<cells>\d+),\s*"(?P<digest>[0-9a-f]{64})"⟩'
 )
+SMALL_PRIME_PROVIDER = (
+    REPO_ROOT / "HexIntervalMathlib/Experiment/PntPrimeLogSmall.lean"
+)
+SMALL_PRIME_FAMILIES = {
+    "PrimeNumberTheoremAnd/IEANTN/RosserSchoenfeld/RSPrimeLower.lean": (
+        "nth_prime_gt_bound", "p_n_lower_small",
+    ),
+    "PrimeNumberTheoremAnd/IEANTN/TMEEMT.lean": ("key", "p_n_gt_1"),
+}
+SMALL_PRIME_SNIPPET_RE = re.compile(
+    r"\b(?P<helper>nth_prime_gt_bound|key)\s+"
+    r"(?P<n>\d+)\s+(?P<cut>\d+)\s+"
+    r"count_prime_(?P<count_cut>\d+)_le_(?P<count>\d+)\s+"
+    r"\(by\s+interval_auto\)"
+)
 
 
 class InventoryError(RuntimeError):
@@ -398,6 +413,104 @@ def require_fks2_family_match(source_root: Path) -> None:
         if recorded_count != expected_count or recorded_digest != expected_digest:
             raise InventoryError(
                 f"local FKS2 shard {shard:02} digest record does not match source"
+            )
+
+
+def small_prime_provider_rows(provider_text: str) -> tuple[list[tuple[int, int]],
+                                                            list[tuple[int, int]]]:
+    """Read the literal ``sourceRows`` and ``sourceCut`` tables."""
+    rows_match = re.search(
+        r"\bdef\s+sourceRows\s*:\s*Array\s*\(Nat\s*×\s*Nat\)\s*:=\s*#\["
+        r"(?P<body>.*?)\]",
+        provider_text,
+        re.DOTALL,
+    )
+    if rows_match is None:
+        raise InventoryError("cannot locate the local small-prime sourceRows table")
+    row_pairs = [
+        (int(match.group(1)), int(match.group(2)))
+        for match in re.finditer(r"\((\d+)\s*,\s*(\d+)\)", rows_match.group("body"))
+    ]
+
+    cut_match = re.search(
+        r"\bdef\s+sourceCut\s*:\s*Nat\s*→\s*Nat(?P<body>.*?)"
+        r"\bdef\s+sourceRows\b",
+        provider_text,
+        re.DOTALL,
+    )
+    if cut_match is None:
+        raise InventoryError("cannot locate the local small-prime sourceCut table")
+    cut_pairs = [
+        (int(match.group(1)), int(match.group(2)))
+        for match in re.finditer(
+            r"^\s*\|\s*(\d+)\s*=>\s*(\d+)\s*$",
+            cut_match.group("body"), re.MULTILINE,
+        )
+    ]
+    if not re.search(
+        r"^\s*\|\s*_\s*=>\s*0\s*$", cut_match.group("body"), re.MULTILINE,
+    ):
+        raise InventoryError("local small-prime sourceCut lacks its zero default")
+    return row_pairs, cut_pairs
+
+
+def require_small_prime_log_match(
+    records: list[dict[str, Any]], provider_text: str | None = None,
+) -> None:
+    """Correlate all sixty committed snippets with both local source tables."""
+    families: dict[str, list[tuple[int, int]]] = {
+        path: [] for path in SMALL_PRIME_FAMILIES
+    }
+    for record in records:
+        path = record.get("path")
+        if path not in SMALL_PRIME_FAMILIES or record.get("kind") != "tactic-occurrence" \
+                or record.get("tactic") != "interval_auto" or not record.get("actual"):
+            continue
+        helper, declaration = SMALL_PRIME_FAMILIES[path]
+        if record.get("declaration") != declaration:
+            raise InventoryError(
+                f"small-prime source evidence in {path} has declaration "
+                f"{record.get('declaration')!r}, expected {declaration!r}"
+            )
+        match = SMALL_PRIME_SNIPPET_RE.search(record.get("snippet", ""))
+        if match is None:
+            raise InventoryError(
+                f"cannot parse small-prime source snippet at {path}:{record.get('line')}"
+            )
+        n = int(match.group("n"))
+        cut = int(match.group("cut"))
+        if match.group("helper") != helper:
+            raise InventoryError(f"wrong small-prime helper at {path}:{record.get('line')}")
+        if int(match.group("count_cut")) != cut or int(match.group("count")) != n - 1:
+            raise InventoryError(
+                f"small-prime counting evidence disagrees at {path}:{record.get('line')}"
+            )
+        families[path].append((n, cut))
+
+    expected_coordinates: list[tuple[int, int]] | None = None
+    for path, coordinates in families.items():
+        if len(coordinates) != 30:
+            raise InventoryError(
+                f"small-prime family {path} must contain 30 coordinates, "
+                f"found {len(coordinates)}"
+            )
+        if len(set(coordinates)) != len(coordinates):
+            raise InventoryError(f"duplicate small-prime coordinate in {path}")
+        if expected_coordinates is None:
+            expected_coordinates = coordinates
+        elif coordinates != expected_coordinates:
+            raise InventoryError("the two small-prime theorem families have different coordinates")
+
+    assert expected_coordinates is not None
+    if provider_text is None:
+        provider_text = SMALL_PRIME_PROVIDER.read_text(encoding="utf-8")
+    source_rows, source_cut = small_prime_provider_rows(provider_text)
+    for name, coordinates in (("sourceRows", source_rows), ("sourceCut", source_cut)):
+        if len(set(coordinates)) != len(coordinates):
+            raise InventoryError(f"duplicate coordinate in local small-prime {name}")
+        if coordinates != expected_coordinates:
+            raise InventoryError(
+                f"local small-prime {name} differs from the committed source snippets"
             )
 
 
@@ -1111,6 +1224,7 @@ def validate_inventory(
     require_migrations(records)
     counts = summarize(records)
     require_workload_partitions(records)
+    require_small_prime_log_match(records)
     if meta.get("counts") != counts:
         raise InventoryError(f"inventory counts disagree: {meta.get('counts')} != {counts}")
     for name, expected in EXPECTED.items():
