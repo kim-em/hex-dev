@@ -649,9 +649,10 @@ lower endpoint is `invAtPrec upper precision`; its upper endpoint is
 `-invAtPrec (-lower) precision`. Thus both directions reuse Core's downward
 rounding, while the second is upward rounding after sign reflection. Every
 moved finite result cut is conservatively closed: the operation proves outward
-enclosure, not endpoint attainment or grid optimality. Empty and singleton
-zero bypass precision work; open zero maps to the corresponding unbounded
-one-sided limit and is never passed to Core.
+enclosure, not endpoint attainment or grid optimality. Every input not
+separated from zero bypasses precision work; this includes empty, singleton
+zero, one-sided-zero, and sign-crossing inputs. Open zero maps to the
+corresponding unbounded one-sided limit and is never passed to Core.
 
 Following Lean's total inverse, a closed zero contributes `0⁻¹ = 0`:
 `[0,b]` has connected hull `[0,+∞)`, `[a,0]` has hull `(-∞,0]`, singleton
@@ -4196,9 +4197,10 @@ their declared cost inside a scheduler bound.
   selection, and the sealed `mulWithin` entry point.
 - `HexInterval/Interval.lean`: supported resource-safe intersection, hull,
   negation, addition, subtraction, minimum, maximum, absolute value, and
-  natural power, including the public decoder helpers `Raw.powCutsUnchecked`
-  and `Raw.powUnchecked`, followed by future arithmetic, splitting, and
-  regularization operations.
+  natural power; transactional splitting; and checked precision-indexed
+  reciprocal. Its public raw helpers, including the power, split, and
+  reciprocal cut selectors, are decoder-level counterparts of checked
+  operations. Division and regularization remain future work.
 - `HexIntervalMathlib/Interval.lean`: real-set semantics for the supported
   public construction, intersection, hull, and negation operations.
 - `HexIntervalMathlib/Addition.lean`: exact summed-cut semantics and the
@@ -4215,6 +4217,10 @@ their declared cost inside a scheduler bound.
   an image-tightness converse.
 - `HexIntervalMathlib/Power.lean`: exact normalized selected-cut semantics and
   the one-way successful natural-power image theorem.
+- `HexIntervalMathlib/Split.lean`: exact transactional child semantics,
+  containment, coverage, disjointness, and left ownership of the cut point.
+- `HexIntervalMathlib/Inverse.lean`: exact computed reciprocal-cut semantics
+  and the one-way total-real-inverse connected-hull enclosure theorem.
 - `HexInterval/Program.lean`: node identifiers, SSA program, dependencies.
 - `HexInterval/Fact.lean`: facts, versions, provenance, contradiction checks.
 - `HexInterval/Action.lean`: requests, outcomes, suggestions, observations.
@@ -4249,8 +4255,9 @@ typical, boundary, and adversarial inputs. In particular it includes:
 - `abs`, `min`, and `max` with tied open and closed extrema;
 - minimum and maximum preflight refusal on either same-side comparison and on
   the distinct selected-cut final comparison;
-- precision-indexed reciprocal and division for `{3}`, positive, negative,
-  singleton-zero, one-sided-zero, and sign-crossing inputs;
+- precision-indexed reciprocal for `{3}`, positive, negative, singleton-zero,
+  one-sided-zero, sign-crossing, and sign-separated unbounded inputs; division
+  remains a future conformance family;
 - powers on negative, mixed-sign, open-zero, and singleton inputs;
 - rational-to-dyadic projection at exact and inexact values, including the
   strict cut gained by moving a closed source outward;

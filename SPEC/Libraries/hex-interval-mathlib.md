@@ -8,11 +8,13 @@ theorems for interval operations and propagators. It depends on Mathlib and
 The current supported surface interprets public canonical intervals over `ℝ`
 and proves exact semantics for successful resource-checked intersection, hull,
 negation, addition, subtraction, multiplication, minimum, maximum, absolute
-value, natural power, and transactional splitting. Natural power exposes exact
-computed cuts and a sound pointwise real image theorem, without claiming a
-set-image converse. Splitting exposes both children together and proves exact
-closed-left/strict-right membership, containment, cover, disjointness, and cut
-ownership.
+value, natural power, transactional splitting, and precision-indexed
+reciprocal. Natural power exposes exact computed cuts and a sound pointwise
+real image theorem, without claiming a set-image converse. Splitting exposes
+both children together and proves exact closed-left/strict-right membership,
+containment, cover, disjointness, and cut ownership. Reciprocal exposes its
+computed connected outward cuts and a sound pointwise theorem for Lean's total
+inverse, including `0⁻¹ = 0`.
 Propagator, provider, replay, and tactic modules remain experiments and are not
 re-exported by the public umbrella. The user-facing tactic contract below is
 the release target, not a claim that the tactic is already supported.
@@ -222,6 +224,14 @@ theorem splitWithin_point_left
 theorem splitWithin_point_not_right
     (h : splitWithin limit I point = .ready left right) :
     ¬right.Contains (toReal point)
+
+theorem contains_invWithin
+    (h : invWithin limits precision I = .ready result) :
+    result.Contains x ↔ I.view.InvContains precision x
+
+theorem inv_mem_invWithin
+    (h : invWithin limits precision I = .ready result) :
+    I.Contains x → result.Contains x⁻¹
 ```
 
 For two nonempty bounded raw inputs, `HullContains` is exactly
@@ -264,6 +274,15 @@ nonempty input, the retained point, both finite source/point selectors, and
 both selected child normalization costs are admitted before final sealing.
 Successful children are exactly `I ∩ (-∞, point]` and
 `I ∩ (point, +∞)`, so they remain inside `I`, cover it, and are disjoint.
+
+`invWithin` uses Core's directed reciprocal rounding only when the input is
+strictly separated from zero. Otherwise it returns the connected interval
+hull required by Lean's total inverse, including zero, one-sided-zero, and
+sign-crossing cases, without precision work. Successful results have exactly
+the normalized computed cuts, and `inv_mem_invWithin` proves the pointwise
+real-image enclosure. Finite rounded cuts are conservatively closed; no
+converse image equality, endpoint attainment, grid optimality, or exact
+disconnected-image claim is made.
 
 The remaining target theorems include:
 
@@ -2564,8 +2583,19 @@ the fixed soundness and trust contracts.
 
 ## File organization
 
-- `HexIntervalMathlib/Semantics.lean`: real membership and cut/set lemmas.
-- `HexIntervalMathlib/Arithmetic.lean`: soundness of exact interval operations.
+- `HexIntervalMathlib/Interval.lean`: real membership, cut lemmas, and exact
+  semantics for construction, intersection, hull, and negation.
+- `HexIntervalMathlib/Addition.lean` and
+  `HexIntervalMathlib/Subtraction.lean`: exact computed-cut semantics and
+  pointwise real-image theorems.
+- `HexIntervalMathlib/MinMax.lean`, `HexIntervalMathlib/Absolute.lean`,
+  `HexIntervalMathlib/Multiplication.lean`, and
+  `HexIntervalMathlib/Power.lean`: exact selected-cut semantics and the current
+  one-way pointwise image theorems.
+- `HexIntervalMathlib/Split.lean`: transactional child membership,
+  containment, cover, disjointness, and cut ownership.
+- `HexIntervalMathlib/Inverse.lean`: computed reciprocal-cut semantics and the
+  total-real-inverse connected-hull enclosure theorem.
 - `HexIntervalMathlib/Program.lean`: real program evaluation and natural
   evaluator soundness.
 - `HexIntervalMathlib/Rule.lean`: registration environment and theorem-schema
@@ -2585,8 +2615,11 @@ the fixed soundness and trust contracts.
   checks for `hex-interval` only.
 - `conformance/HexInterval/EmitFixtures.lean`: Mathlib-free arithmetic oracle
   fixtures.
-- `conformance/HexIntervalMathlib/Conformance.lean`: tactic, replay, axiom, and
-  small migrated downstream regressions in the per-PR `core` profile.
+- `conformance/HexIntervalMathlib/IntervalConformance.lean`: the current
+  supported interval-operation semantics and guarded ordinary-kernel axiom
+  reports.
+- `conformance/HexIntervalMathlib/Conformance.lean`: tactic, replay, and small
+  migrated downstream regressions in the per-PR `core` profile.
 - `conformance/HexIntervalMathlib/CrossCheck.lean`: the measured deterministic
   medium FKS2 shard, included in the per-PR `HexConformance` target under the
   repository's standard heavier-check module name.

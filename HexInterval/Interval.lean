@@ -298,7 +298,8 @@ preflight both final child comparisons before constructing either result. -/
 upper source cut approaches zero from one side; an open zero source endpoint
 approaches infinity and is never passed to `Dyadic.invAtPrec`.  Finite rounded
 cuts are closed because this public operation promises an outward enclosure,
-not exact endpoint attainment. -/
+not exact endpoint attainment. This is a decoder-level cut helper; untrusted
+callers use `invWithin`. -/
 @[expose] def invLowerUnchecked (precision : Precision) : Upper → Lower
   | .unbounded => .finite 0 true
   | .finite value _ =>
@@ -306,7 +307,8 @@ not exact endpoint attainment. -/
       else .finite (value.invAtPrec precision) false
 
 /-- An upper reciprocal cut, rounded toward positive infinity by negating the
-downward-rounded reciprocal of the negated source lower endpoint. -/
+downward-rounded reciprocal of the negated source lower endpoint. This is a
+decoder-level cut helper; untrusted callers use `invWithin`. -/
 @[expose] def invUpperUnchecked (precision : Precision) : Lower → Upper
   | .unbounded => .finite 0 true
   | .finite value _ =>
@@ -314,25 +316,30 @@ downward-rounded reciprocal of the negated source lower endpoint. -/
       else .finite (-(-value).invAtPrec precision) false
 
 /-- Whether a lower cut places the entire nonempty interval strictly above
-zero.  The equality case is positive exactly for an open lower cut. -/
+zero.  The equality case is positive exactly for an open lower cut. This is a
+decoder-level classifier used to interpret checked reciprocal output. -/
 @[expose] def strictlyPositive : Lower → Bool
   | .unbounded => false
   | .finite value strict =>
       if 0 < value then true else if value = 0 then strict else false
 
 /-- Whether an upper cut places the entire nonempty interval strictly below
-zero.  The equality case is negative exactly for an open upper cut. -/
+zero.  The equality case is negative exactly for an open upper cut. This is a
+decoder-level classifier used to interpret checked reciprocal output. -/
 @[expose] def strictlyNegative : Upper → Bool
   | .unbounded => false
   | .finite value strict =>
       if value < 0 then true else if value = 0 then strict else false
 
 /-- Whether a cut is the closed zero endpoint used by the connected-hull
-policy for Lean's total reciprocal (`0⁻¹ = 0`). -/
+policy for Lean's total reciprocal (`0⁻¹ = 0`). This decoder-level
+classifier does not perform resource admission. -/
 @[expose] def closedZeroLower : Lower → Bool
   | .finite value strict => value = 0 && !strict
   | .unbounded => false
 
+/-- Upper-cut counterpart of `closedZeroLower`, used only to decode the
+connected-hull reciprocal shape after checked admission. -/
 @[expose] def closedZeroUpper : Upper → Bool
   | .finite value strict => value = 0 && !strict
   | .unbounded => false
@@ -342,7 +349,8 @@ interval separated from zero it reverses the cuts and rounds both finite
 endpoints outward.  A closed zero endpoint contributes the value zero and an
 unbounded one-sided branch; a sign-crossing interval has the whole line as its
 connected hull. This cut computation does not claim a tightness converse for
-the generally disconnected image across zero. -/
+the generally disconnected image across zero. It is a decoder-level
+combinator; untrusted callers use `invWithin`. -/
 @[expose] def invUnchecked (precision : Precision) : Raw → Raw
   | .empty => .empty
   | .bounds lower upper =>
@@ -785,8 +793,9 @@ theorem view_splitWithin_ready {limit : EndpointLimit}
 /-- Precision-indexed connected outward enclosure of Lean's total reciprocal.
 The operation internally invokes `Arithmetic.preflightInv` for every nonzero
 endpoint it will evaluate before either Core reciprocal call; no caller-provided
-plan is accepted. Empty and zero-only inputs perform no precision work. Across
-zero the result follows the connected-hull policy of `Raw.invUnchecked`, not a
+plan is accepted. Every input not separated from zero, including empty and
+zero-only inputs, performs no precision work. Across zero the result follows
+the connected-hull policy of `Raw.invUnchecked`, not a
 tightness converse for the generally disconnected image. -/
 def invWithin (limits : Arithmetic.PrecisionLimits) (precision : Precision)
     (input : Hex.Interval) : Arithmetic.Result :=

@@ -348,6 +348,8 @@ def roundingBound (precision : Precision) (bound : RationalBound) : RationalBoun
         numeratorBits := if bound.numeratorBits = 0 then 0 else bound.numeratorBits + shift }
   | .negSucc shift => { bound with denominatorBits := bound.denominatorBits + shift + 1 }
 
+/-- Whether the retained dyadic input is strictly negative. This private
+classifier supplies the sign of the quotient before floor rounding. -/
 private def negative : Dyadic → Bool
   | .ofOdd (.negSucc _) _ _ => true
   | _ => false
@@ -355,9 +357,9 @@ private def negative : Dyadic → Bool
 /-- Bound the integer quotient passed to `Dyadic.ofIntWithPrec`. A positive
 quotient has no more bits than the shifted rational numerator; flooring a
 negative quotient may add one magnitude bit. -/
-def boundQuotientBits (isNegative : Bool) (rounding : RationalBound) : Nat :=
+def boundQuotientBits (quotientNegative : Bool) (rounding : RationalBound) : Nat :=
   if rounding.numeratorBits = 0 then 0
-  else rounding.numeratorBits + (if isNegative then 1 else 0)
+  else rounding.numeratorBits + (if quotientNegative then 1 else 0)
 
 /-- Bound the canonical result height after `Dyadic.ofIntWithPrec`. Removing
 `t` trailing zeroes decreases numerator bits by `t` while changing exponent

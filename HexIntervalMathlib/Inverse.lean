@@ -6,7 +6,7 @@ Authors: Kim Morrison
 
 module
 
-public import HexIntervalMathlib.Subtraction
+public import HexIntervalMathlib.Interval
 public import Mathlib.Algebra.Order.Field.Basic
 
 @[expose] public section
