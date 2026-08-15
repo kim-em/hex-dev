@@ -3336,6 +3336,28 @@ uses four stages.
 4. If no candidate has adequate predicted gain, choose a solver split and
    repeat in both children.
 
+The first executable staged baseline now implements this ordering without
+inspecting facts, operation keys, or package identities. It ranks engine-owned
+equality and forward/backward/rewrite offers first, then structural
+instantiation discovery and admission, then improve/shave/regularize and
+bounded retry offers, then split probes and their retained split plans.
+Configuration independently disables instantiation, retries, or splits and
+bounds retry effort; the oldest offer wins within a stage and stable view order
+is the final tie-breaker. If enabled semantic work finishes while only
+disabled offers remain, the target driver stops with `policyStop` and retains
+the live-offer count; it does not dismiss or execute those offers.
+Policy-private counters record rule and equality runs, actual fact-version
+changes, no-change and inapplicable outcomes,
+extensions, failures, dismissals, and rejected selections. These counters are
+diagnostic inputs for later scoring, not evidence.
+
+A live Mathlib-free arbitrary-function canary presents two exponential
+forward contractors and one source split rule in the same frontier. The policy
+selects both fact improvements, then invokes the split probe, then returns its
+split plan; it contains no reference to any of those rule keys. This establishes
+the replaceable staging seam. It does not yet claim that fixed stage order is
+the best policy, nor does it implement width- or goal-sensitive scoring.
+
 The prototype computes a goal-directed potential rather than summing raw widths.
 Nodes on the backwards dependency slice from the desired comparison or current
 contradiction receive greater weight. A node's uncertainty records:

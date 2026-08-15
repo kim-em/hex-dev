@@ -307,6 +307,7 @@ lean_lib HexIntervalExperiment where
     `HexInterval.Experiment.PayloadSession,
     `HexInterval.Experiment.PolicySession,
     `HexInterval.Experiment.TargetRun,
+    `HexInterval.Experiment.StagedPolicy,
     `HexInterval.Experiment.BranchStart,
     `HexInterval.Experiment.BranchTree,
     `HexInterval.Experiment.BranchProof,
@@ -473,6 +474,8 @@ lean_lib HexConformance where
       `HexIntervalMathlib.PntTable10LogCoupledConformance,
       `HexIntervalMathlib.PntTable10A2Conformance,
       `HexIntervalMathlib.PntTable10ExactConformance].map Glob.one
+
+    ++ #[`HexInterval.StagedPolicyConformance].map Glob.one
 
     ++ #[`HexInterval.MinMaxConformance,
       `HexIntervalMathlib.MinMaxConformance].map Glob.one
