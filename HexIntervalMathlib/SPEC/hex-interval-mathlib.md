@@ -19,7 +19,9 @@ theorems. `HexIntervalMathlib.Power` supplies exact selected-cut semantics
 and a one-way real-image theorem for checked natural power.
 `HexIntervalMathlib.Split` proves exact closed-left/strict-right membership
 for transactional splitting. `HexIntervalMathlib.Inverse` proves the computed
-connected-cut characterization and sound total-real-inverse enclosure.
+connected-cut characterization and sound total-real-inverse enclosure, while
+`HexIntervalMathlib.Division` proves the computed first-slice quotient cuts and
+sound total-real-division enclosure.
 
 For every successful resource-checked public operation it proves:
 
@@ -73,7 +75,11 @@ For every successful resource-checked public operation it proves:
   normalized computed outward-cut predicate; this does not identify the
   connected hull with the generally-disconnected exact image;
 - `inv_mem_invWithin`: every real source member maps under Lean's total
-  reciprocal into the successful enclosure, including `0⁻¹ = 0`.
+  reciprocal into the successful enclosure, including `0⁻¹ = 0`;
+- `contains_divWithin`: membership in successful division is exactly its
+  computed singleton outward cuts or explicit whole-line fallback;
+- `div_mem_divWithin`: both source memberships are consumed to place their
+  Lean-total real quotient in every successful enclosure.
 
 These theorems depend on the exact successful result equation: `BuildResult`
 or `Arithmetic.Result` for unary/binary images, and transactional
@@ -88,14 +94,18 @@ not import the experimental propagation fact domain.
 The public companion grows only with the supported `Hex.Interval` API. The
 existing modules under `HexIntervalMathlib/Experiment` remain evidence for
 future operations, replay schemas, transcendental providers, and tactics, but
-are not re-exported here. Further arithmetic images, regularization, and
-precision-indexed division require their own
+are not re-exported here. Further arithmetic images, regularization, and useful
+bounded nonsingleton division require their own
 operation-specific semantic theorems before promotion. An image operation must
 at least prove successful-result cut semantics and sound real-image enclosure;
 it claims a tightness converse only when that converse is separately proved.
 Public reciprocal is sound but
 conservatively closes finite rounded cuts; endpoint attainment, grid
 optimality, and disconnected interval-set precision remain future work.
+Public division directly encloses two nonzero finite singletons, handles empty
+and total-zero cases exactly, and deliberately returns whole for every other
+nonempty shape. No tightness converse or bounded nonsingleton quotient is
+claimed.
 
 ## Conformance
 
@@ -104,7 +114,8 @@ membership, exact hull closure and both input inclusions, negation transport,
 addition, subtraction, and multiplication cut exactness and image transport,
 exact split membership/coverage/disjointness/point ownership, and the exact
 ordinary-kernel axiom surface. It also pins reciprocal computed-cut exactness
-and total-real-inverse enclosure, without a tightness converse.
+and total-real-inverse enclosure, plus division computed-cut exactness and
+total-real-division enclosure, without tightness converses.
 `HexIntervalMathlib.MinMaxConformance` separately pins exact selected cuts,
 both image enclosures, and their axiom surfaces; it does not assert a set-image
 converse.

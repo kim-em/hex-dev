@@ -366,6 +366,34 @@ combinator; untrusted callers use `invWithin`. -/
       else
         .bounds .unbounded .unbounded
 
+/-! ## Precision-indexed division enclosure -/
+
+/-- Recover the value of a closed finite singleton. This decoder-level
+classifier performs no resource admission; untrusted callers use `divWithin`. -/
+@[expose] def singletonValue? : Raw → Option Dyadic
+  | .bounds (.finite lower false) (.finite upper false) =>
+      if lower = upper then some lower else none
+  | _ => none
+
+/-- Raw first-slice enclosure of Lean's total division. Empty is absorbing. A
+singleton-zero numerator or denominator maps exactly to `{0}`. Two nonzero
+finite singletons use direct outward Core division, and every other nonempty
+shape returns the whole interval. This decoder-level combinator performs no
+resource admission; untrusted callers use `divWithin`. -/
+@[expose] def divUnchecked (precision : Precision)
+    (numerator denominator : Raw) : Raw :=
+  match numerator, denominator with
+  | .empty, _ | _, .empty => .empty
+  | numerator, denominator =>
+      match numerator.singletonValue?, denominator.singletonValue? with
+      | some .zero, _ | _, some .zero =>
+          .bounds (.finite 0 false) (.finite 0 false)
+      | some numeratorValue, some denominatorValue =>
+          .bounds
+            (.finite (numeratorValue.divAtPrec denominatorValue precision) false)
+            (.finite (-(-numeratorValue).divAtPrec denominatorValue precision) false)
+      | _, _ => .bounds .unbounded .unbounded
+
 end Raw
 
 /-- Transactional result of a checked split. A successful value contains both
@@ -578,6 +606,44 @@ private def admitInv (limits : Arithmetic.PrecisionLimits)
       if Raw.strictlyPositive lower || Raw.strictlyNegative upper then
         admitInvLower limits precision upper
         admitInvUpper limits precision lower
+
+/-- Admit every finite cut carried by a nonempty raw source. This performs no
+comparison or arithmetic beyond the public endpoint resource check. -/
+private def admitRawEndpoints (limits : Arithmetic.PrecisionLimits) : Raw →
+    Except Arithmetic.Cost Unit
+  | .empty => pure ()
+  | .bounds lower upper => do
+      match lower with
+      | .unbounded => pure ()
+      | .finite value _ => do
+          let _ ← Arithmetic.admitEndpoint limits value
+          pure ()
+      match upper with
+      | .unbounded => pure ()
+      | .finite value _ => do
+          let _ ← Arithmetic.admitEndpoint limits value
+          pure ()
+
+/-- Admit every finite source cut, then preflight both direct Core quotient
+calls before either executes. Empty remains absorbing before source admission;
+total-zero cases and the whole-line nonsingleton fallback perform no quotient
+work. No caller-provided plan or intermediate reciprocal is accepted. -/
+private def admitDiv (limits : Arithmetic.PrecisionLimits)
+    (precision : Precision) (numerator denominator : Raw) :
+    Except Arithmetic.Cost Unit := do
+  match numerator, denominator with
+  | .empty, _ | _, .empty => pure ()
+  | numerator, denominator =>
+      admitRawEndpoints limits numerator
+      admitRawEndpoints limits denominator
+      match numerator.singletonValue?, denominator.singletonValue? with
+      | some .zero, _ | _, some .zero => pure ()
+      | some numeratorValue, some denominatorValue =>
+          let _ ← Arithmetic.preflightDiv
+            limits numeratorValue denominatorValue precision
+          let _ ← Arithmetic.preflightDiv
+            limits (-numeratorValue) denominatorValue precision
+      | _, _ => pure ()
 
 /-- Exact set intersection with preflighted dyadic comparisons.  Refusal is
 distinct from the canonical empty result. -/
@@ -818,6 +884,42 @@ theorem view_invWithin_ready {limits : Arithmetic.PrecisionLimits}
   · contradiction
   · generalize builtEq :
         ofRawWithin limits.endpoint (Raw.invUnchecked precision input.view) = built at h
+    cases built with
+    | ready interval =>
+        simp only [Arithmetic.Result.ofBuild] at h
+        cases h
+        exact view_ofRawWithin_ready builtEq
+    | resourceLimit cost =>
+        simp [Arithmetic.Result.ofBuild] at h
+
+/-- Precision-indexed public division using Core's direct rational quotient
+for two nonzero finite singletons. Both quotient calls are internally
+preflighted before either executes; no caller plan or intermediate reciprocal
+is accepted. Empty and total-zero cases are exact, while every other nonempty
+shape receives the sound whole-line enclosure. -/
+def divWithin (limits : Arithmetic.PrecisionLimits) (precision : Precision)
+    (numerator denominator : Hex.Interval) : Arithmetic.Result :=
+  match admitDiv limits precision numerator.view denominator.view with
+  | .error cost => .resourceLimit cost
+  | .ok () =>
+      Arithmetic.Result.ofBuild
+        (ofRawWithin limits.endpoint
+          (Raw.divUnchecked precision numerator.view denominator.view))
+
+/-- Every successful division exposes exactly the normalized computed cuts.
+This theorem does not claim that the whole-line fallback is an exact image or
+that rounded singleton endpoints are attained. -/
+theorem view_divWithin_ready {limits : Arithmetic.PrecisionLimits}
+    {precision : Precision} {numerator denominator result : Hex.Interval}
+    (h : divWithin limits precision numerator denominator = .ready result) :
+    result.view =
+      (Raw.divUnchecked precision numerator.view denominator.view).normalizeUnchecked := by
+  unfold divWithin at h
+  split at h
+  · contradiction
+  · generalize builtEq :
+        ofRawWithin limits.endpoint
+          (Raw.divUnchecked precision numerator.view denominator.view) = built at h
     cases built with
     | ready interval =>
         simp only [Arithmetic.Result.ofBuild] at h

@@ -597,16 +597,17 @@ product of source members belongs to it. No separate image-tightness converse
 is currently claimed.
 
 The public tree also contains the allocation prerequisite for
-precision-indexed reciprocal and division. It now exposes the checked
-reciprocal operation
+precision-indexed reciprocal and division. It exposes the checked operations
 
 ```lean
 invWithin (limits : Arithmetic.PrecisionLimits) (precision : Precision)
   (input : Hex.Interval) : Arithmetic.Result
+
+divWithin (limits : Arithmetic.PrecisionLimits) (precision : Precision)
+  (numerator denominator : Hex.Interval) : Arithmetic.Result
 ```
 
-but no `divWithin` interval operation. Core `Dyadic.invAtPrec` converts a
-nonzero source through
+Core `Dyadic.invAtPrec` converts a nonzero source through
 `Dyadic.toRat`, inverts the rational, then calls `Rat.toDyadic`; `divAtPrec`
 converts both sources and additionally runs reduced rational cross-products.
 Neither `CompareCost` nor `Arithmetic.Growth` accounts for those shifts or
@@ -664,14 +665,36 @@ disconnected interval-set representation.
 `view_invWithin_ready` exactly characterizes every successful computed cut;
 the Mathlib companion independently proves that every real source member's
 Lean-total inverse lies in that result. No converse image theorem, finite-cut
-attainment, grid optimality, or disconnected-image tightness is claimed. The
-public division operation remains future work.
+attainment, grid optimality, or disconnected-image tightness is claimed.
+
+`divWithin` is a deliberately narrow first supported slice. Empty is
+absorbing. A singleton-zero numerator or denominator returns singleton zero,
+following Lean's total division. Two nonzero finite singletons call Core's
+`divAtPrec numerator denominator precision` directly for the lower endpoint
+and `-divAtPrec (-numerator) denominator precision` for the upper endpoint.
+The operation internally rederives both `preflightDiv` plans, and both must
+pass before either Core call executes; it accepts no caller plan and allocates
+no intermediate reciprocal. Every other nonempty pair returns the whole
+interval without precision work. This explicitly includes nonsingleton,
+unbounded, zero-touching, and sign-crossing shapes.
+
+Every finite cut in both nonempty sources is admitted before that
+classification. After the selected Core cuts are computed, they still cross
+`ofRawWithin`; its independent final endpoint-retention and comparison checks
+may refuse the result.
+
+`view_divWithin_ready` exactly characterizes those computed cuts, and the
+Mathlib companion consumes both source memberships to prove a one-way theorem
+for Lean's total real division. No converse image theorem, rounded-cut
+attainment, grid optimality, useful bounded nonsingleton quotient, or
+disconnected-result precision is claimed.
 
 The public raw intersection and hull cut selectors, `intersectUnchecked`,
 `hullUnchecked`, `negUnchecked`, `addUnchecked`, `subUnchecked`, `minUnchecked`,
 `maxUnchecked`, `absUnchecked`, `powCutsUnchecked`, `powUnchecked`, and
-`mulUnchecked`, together with `splitUnchecked` and `invUnchecked`, are related
-to the checked operations by successful-result and semantic theorems.
+`mulUnchecked`, together with `splitUnchecked`, `invUnchecked`,
+`singletonValue?`, and `divUnchecked`, are related to the checked operations by
+successful-result and semantic theorems.
 `powCutsUnchecked` is
 only the strictly monotone cut mapper;
 its caller must establish the positive odd or nonnegative positive-exponent
@@ -680,10 +703,10 @@ case. `powUnchecked` performs the zero/odd/even direct-hull selection. Like
 are decoder-level combinators: untrusted callers use the checked `Interval`
 operations above.
 
-The remaining target surface includes precision-indexed division and
-regularization. Their public signatures are fixed only after an
-allocation audit; no total API is promised for an operation that may align,
-compare, or enlarge arbitrary-precision endpoints.
+The remaining target surface includes useful bounded nonsingleton division and
+regularization. Its public signatures and resource policy are fixed only after
+the corresponding allocation audit; no operation may silently align, compare,
+or enlarge arbitrary-precision endpoints.
 
 For the initial dyadic backend, `Precision` is an alias for signed `Int` and
 the implementation reuses core `Dyadic.roundDown`, `roundUp`, `invAtPrec`, and
@@ -766,6 +789,13 @@ endpoint mapping to an unbounded side). The concrete package has an executable
 across-zero regression for that legacy behavior and is not the public
 operation. Selecting an interval-set result remains a possible future
 precision improvement rather than a requirement for sound connected-hull use.
+
+The supported `divWithin` implements only the direct two-finite-singleton grid
+enclosure plus exact empty and total-zero cases. Its whole-line fallback makes
+all remaining shapes sound but does not satisfy the eventual bounded quotient
+or grid-tightness target. In particular, a whole fallback is a deliberate
+first-slice loss of precision, not a claim that the exact image is the whole
+line.
 
 Grid-tightness remains an acceptance target, not an assumed consequence of
 core's API. Core currently proves the one-sided `roundDown_le` and
@@ -4198,9 +4228,10 @@ their declared cost inside a scheduler bound.
 - `HexInterval/Interval.lean`: supported resource-safe intersection, hull,
   negation, addition, subtraction, minimum, maximum, absolute value, and
   natural power; transactional splitting; and checked precision-indexed
-  reciprocal. Its public raw helpers, including the power, split, and
-  reciprocal cut selectors, are decoder-level counterparts of checked
-  operations. Division and regularization remain future work.
+  reciprocal and first-slice division. Its public raw helpers, including the
+  power, split, reciprocal, and division cut selectors, are decoder-level
+  counterparts of checked operations. Useful bounded nonsingleton division and
+  regularization remain future work.
 - `HexIntervalMathlib/Interval.lean`: real-set semantics for the supported
   public construction, intersection, hull, and negation operations.
 - `HexIntervalMathlib/Addition.lean`: exact summed-cut semantics and the
@@ -4221,6 +4252,8 @@ their declared cost inside a scheduler bound.
   containment, coverage, disjointness, and left ownership of the cut point.
 - `HexIntervalMathlib/Inverse.lean`: exact computed reciprocal-cut semantics
   and the one-way total-real-inverse connected-hull enclosure theorem.
+- `HexIntervalMathlib/Division.lean`: exact computed first-slice quotient-cut
+  semantics and the one-way total-real-division enclosure theorem.
 - `HexInterval/Program.lean`: node identifiers, SSA program, dependencies.
 - `HexInterval/Fact.lean`: facts, versions, provenance, contradiction checks.
 - `HexInterval/Action.lean`: requests, outcomes, suggestions, observations.
@@ -4256,8 +4289,10 @@ typical, boundary, and adversarial inputs. In particular it includes:
 - minimum and maximum preflight refusal on either same-side comparison and on
   the distinct selected-cut final comparison;
 - precision-indexed reciprocal for `{3}`, positive, negative, singleton-zero,
-  one-sided-zero, sign-crossing, and sign-separated unbounded inputs; division
-  remains a future conformance family;
+  one-sided-zero, sign-crossing, and sign-separated unbounded inputs;
+- first-slice division for all four singleton sign combinations, total-zero,
+  empty, whole fallback, wrong endpoints, actual-result bounds, and every
+  precision/quotient resource refusal stage including second-call priority;
 - powers on negative, mixed-sign, open-zero, and singleton inputs;
 - rational-to-dyadic projection at exact and inexact values, including the
   strict cut gained by moving a closed source outward;

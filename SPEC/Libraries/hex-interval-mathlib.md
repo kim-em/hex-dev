@@ -9,12 +9,14 @@ The current supported surface interprets public canonical intervals over `ℝ`
 and proves exact semantics for successful resource-checked intersection, hull,
 negation, addition, subtraction, multiplication, minimum, maximum, absolute
 value, natural power, transactional splitting, and precision-indexed
-reciprocal. Natural power exposes exact computed cuts and a sound pointwise
-real image theorem, without claiming a set-image converse. Splitting exposes
+reciprocal and division. Natural power exposes exact computed cuts and a sound
+pointwise real image theorem, without claiming a set-image converse. Splitting exposes
 both children together and proves exact closed-left/strict-right membership,
 containment, cover, disjointness, and cut ownership. Reciprocal exposes its
 computed connected outward cuts and a sound pointwise theorem for Lean's total
 inverse, including `0⁻¹ = 0`.
+Division exposes direct outward cuts for two nonzero finite singletons, exact
+empty and total-zero cases, and a sound whole-line fallback otherwise.
 Propagator, provider, replay, and tactic modules remain experiments and are not
 re-exported by the public umbrella. The user-facing tactic contract below is
 the release target, not a claim that the tactic is already supported.
@@ -232,6 +234,14 @@ theorem contains_invWithin
 theorem inv_mem_invWithin
     (h : invWithin limits precision I = .ready result) :
     I.Contains x → result.Contains x⁻¹
+
+theorem contains_divWithin
+    (h : divWithin limits precision I J = .ready result) :
+    result.Contains x ↔ I.view.DivContains precision J.view x
+
+theorem div_mem_divWithin
+    (h : divWithin limits precision I J = .ready result) :
+    I.Contains x → J.Contains y → result.Contains (x / y)
 ```
 
 For two nonempty bounded raw inputs, `HullContains` is exactly
@@ -283,6 +293,15 @@ the normalized computed cuts, and `inv_mem_invWithin` proves the pointwise
 real-image enclosure. Finite rounded cuts are conservatively closed; no
 converse image equality, endpoint attainment, grid optimality, or exact
 disconnected-image claim is made.
+
+`divWithin` calls Core's direct quotient only for two nonzero finite
+singletons, after internally rederiving and passing both quotient preflights
+before either call. Empty and singleton-zero numerator or denominator cases
+are exact under Lean's total division; every other nonempty pair is the whole
+interval without precision work. `contains_divWithin` characterizes these
+computed cuts and `div_mem_divWithin` consumes both memberships for a one-way
+real-image theorem. It claims no converse, endpoint attainment, grid
+optimality, or useful bounded nonsingleton result.
 
 The remaining target theorems include:
 
@@ -2596,6 +2615,8 @@ the fixed soundness and trust contracts.
   containment, cover, disjointness, and cut ownership.
 - `HexIntervalMathlib/Inverse.lean`: computed reciprocal-cut semantics and the
   total-real-inverse connected-hull enclosure theorem.
+- `HexIntervalMathlib/Division.lean`: computed first-slice quotient-cut
+  semantics and the total-real-division enclosure theorem.
 - `HexIntervalMathlib/Program.lean`: real program evaluation and natural
   evaluator soundness.
 - `HexIntervalMathlib/Rule.lean`: registration environment and theorem-schema

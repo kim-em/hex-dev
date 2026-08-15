@@ -1661,6 +1661,236 @@ private def singletonShiftInput : Hex.Interval :=
       cost.predictedResultHeight == 17 && !cost.allowed tightResultLimits
   | _ => false
 
+/-! # Supported precision-indexed division -/
+
+private def singletonOneOver256 : Hex.Interval :=
+  ready (.bounds (.finite oneOver256 false) (.finite oneOver256 false))
+
+private def singletonConvertedTemporary : Hex.Interval :=
+  ready (.bounds (.finite convertedTemporary false) (.finite convertedTemporary false))
+
+private def singleton47 : Hex.Interval := ready (finite 47 false 47 false)
+
+/-- Execute the public prerequisite and Core quotient, then check that the
+actual retained endpoint fits the successful predicted height. -/
+private def divCostBounded (numerator denominator : Dyadic)
+    (precision : Precision) : Bool :=
+  match Arithmetic.preflightDiv precisionLimits numerator denominator precision with
+  | .ok (.checked cost) =>
+      (EndpointCost.ofDyadic (numerator.divAtPrec denominator precision)).allowed
+        { maxEndpointHeight := cost.predictedResultHeight, maxAlignmentShift := 0 }
+  | _ => false
+
+-- The conservative prediction bounds actual Core results for both quotient
+-- signs and for a nonzero quotient at negative precision.
+#guard divCostBounded (d 1) (d 3) 8
+#guard divCostBounded (d (-1)) (d 3) 8
+#guard divCostBounded (d 1) oneOver256 (-8)
+#guard (d 1).divAtPrec oneOver256 (-8) == .ofOdd 1 (-8) (by decide)
+
+-- Both numerator and denominator signs are load-bearing. Sign reflection of
+-- the numerator supplies the outward upper endpoint without an intermediate
+-- reciprocal.
+#guard
+  match Hex.Interval.divWithin precisionLimits 8 singletonOne singletonThree with
+  | .ready interval =>
+      interval.view == .bounds
+        (.finite invDownThree false) (.finite invUpThree false)
+  | .resourceLimit _ => false
+
+#guard
+  match Hex.Interval.divWithin precisionLimits 8 singletonNegOne singletonThree with
+  | .ready interval =>
+      interval.view == .bounds
+        (.finite (-invUpThree) false) (.finite (-invDownThree) false)
+  | .resourceLimit _ => false
+
+#guard
+  match Hex.Interval.divWithin precisionLimits 8 singletonOne singletonNegThree with
+  | .ready interval =>
+      interval.view == .bounds
+        (.finite (-invUpThree) false) (.finite (-invDownThree) false)
+  | .resourceLimit _ => false
+
+#guard
+  match Hex.Interval.divWithin precisionLimits 8 singletonNegOne singletonNegThree with
+  | .ready interval =>
+      interval.view == .bounds
+        (.finite invDownThree false) (.finite invUpThree false)
+  | .resourceLimit _ => false
+
+-- Expected-failure mutation: copying the downward endpoint into the upper cut
+-- is not the checked result.
+#guard
+  match Hex.Interval.divWithin precisionLimits 8 singletonOne singletonThree with
+  | .ready interval =>
+      interval.view != .bounds
+        (.finite invDownThree false) (.finite invDownThree false)
+  | .resourceLimit _ => false
+
+-- Empty is absorbing. Lean's total zero numerator or denominator is exact.
+-- Every remaining nonsingleton, zero-touching, sign-crossing, or unbounded
+-- nonempty pair uses the explicit whole-line fallback without quotient or
+-- precision work after finite source admission.
+#guard
+  match Hex.Interval.divWithin precisionLimits 1024
+      Hex.Interval.empty crossesZero with
+  | .ready interval => interval == Hex.Interval.empty
+  | .resourceLimit _ => false
+
+#guard
+  match Hex.Interval.divWithin precisionLimits 1024
+      crossesZero Hex.Interval.empty with
+  | .ready interval => interval == Hex.Interval.empty
+  | .resourceLimit _ => false
+
+#guard
+  match Hex.Interval.divWithin precisionLimits 1024 singletonZero crossesZero with
+  | .ready interval => interval == singletonZero
+  | .resourceLimit _ => false
+
+#guard
+  match Hex.Interval.divWithin precisionLimits 1024 closed01 singletonZero with
+  | .ready interval => interval == singletonZero
+  | .resourceLimit _ => false
+
+#guard
+  match Hex.Interval.divWithin precisionLimits 1024 singletonOne crossesZero with
+  | .ready interval => interval == Hex.Interval.whole
+  | .resourceLimit _ => false
+
+#guard
+  match Hex.Interval.divWithin precisionLimits 1024 closed01 singletonThree with
+  | .ready interval => interval == Hex.Interval.whole
+  | .resourceLimit _ => false
+
+-- The whole-line fallback never bypasses source admission. This oversized,
+-- zero-touching nonsingleton would otherwise take that fallback immediately.
+#guard
+  match Hex.Interval.divWithin precisionLimits 8 absCrossFar singletonThree with
+  | .resourceLimit (.endpoint cost) =>
+      cost.exponentMagnitude == 200 && !cost.allowed precisionLimits.endpoint
+  | _ => false
+
+-- Precision magnitude and encoding, each retained source, conversion shifts,
+-- converted rationals, division cross-products, integer quotient size, and
+-- retained result height are discriminating public refusals.
+#guard
+  match Hex.Interval.divWithin precisionLimits 1024 singletonOne singletonThree with
+  | .resourceLimit (.precision cost) =>
+      cost.magnitude == 1024 && !cost.allowed precisionLimits
+  | _ => false
+
+#guard
+  match Hex.Interval.divWithin tightPrecisionBitsLimits 8 singletonOne singletonThree with
+  | .resourceLimit (.precision cost) =>
+      cost.magnitude == 8 && cost.encodedBits == 4 &&
+        !cost.allowed tightPrecisionBitsLimits
+  | _ => false
+
+#guard
+  match Hex.Interval.divWithin precisionLimits 0 farSingleton singletonOne with
+  | .resourceLimit (.endpoint cost) =>
+      cost.exponentMagnitude == 1000000000 &&
+        !cost.allowed precisionLimits.endpoint
+  | _ => false
+
+#guard
+  match Hex.Interval.divWithin precisionLimits 0 singletonOne farSingleton with
+  | .resourceLimit (.endpoint cost) =>
+      cost.exponentMagnitude == 1000000000 &&
+        !cost.allowed precisionLimits.endpoint
+  | _ => false
+
+#guard
+  match Hex.Interval.divWithin nonCancellingLimits 8 singletonOne singletonShiftInput with
+  | .resourceLimit (.quotient cost) =>
+      cost.conversionShift == 16 && !cost.allowed nonCancellingLimits
+  | _ => false
+
+#guard
+  match Hex.Interval.divWithin tightConvertedLimits 0
+      singletonConvertedTemporary singletonOne with
+  | .resourceLimit (.quotient cost) =>
+      cost.converted ==
+        [{ numeratorBits := 2, denominatorBits := 17 },
+          { numeratorBits := 1, denominatorBits := 1 }] &&
+        !cost.allowed tightConvertedLimits
+  | _ => false
+
+#guard
+  match Hex.Interval.divWithin tightTemporaryLimits 0 singleton255 singletonOneOver256 with
+  | .resourceLimit (.quotient cost) =>
+      match cost.crossProduct with
+      | some cross =>
+          cross.numeratorBits == 16 &&
+            !cross.allowed tightTemporaryLimits.maxTemporaryBits &&
+            !cost.allowed tightTemporaryLimits
+      | none => false
+  | _ => false
+
+-- At negative precision, both converted sources and the reduced
+-- cross-product fit nine bits, but the denominator shifted for rounding does
+-- not. This isolates the rounding-temporary gate from quotient/result bounds.
+#guard
+  match Hex.Interval.divWithin tightQuotientLimits (-8) singletonOne singletonThree with
+  | .resourceLimit (.quotient cost) =>
+      cost.converted.all
+          (Arithmetic.RationalBound.allowed tightQuotientLimits.maxTemporaryBits) &&
+        cost.crossProduct.all
+          (Arithmetic.RationalBound.allowed tightQuotientLimits.maxTemporaryBits) &&
+        cost.rounding.denominatorBits == 10 &&
+        !cost.rounding.allowed tightQuotientLimits.maxTemporaryBits &&
+        cost.quotientBits ≤ tightQuotientLimits.maxTemporaryBits &&
+        cost.predictedResultHeight ≤ tightQuotientLimits.endpoint.maxEndpointHeight &&
+        !cost.allowed tightQuotientLimits
+  | _ => false
+
+#guard
+  match Hex.Interval.divWithin tightQuotientLimits 8 singletonNegOne singletonThree with
+  | .resourceLimit (.quotient cost) =>
+      cost.quotientBits == 10 &&
+        !(cost.quotientBits ≤ tightQuotientLimits.maxTemporaryBits) &&
+        !cost.allowed tightQuotientLimits
+  | _ => false
+
+#guard
+  match Hex.Interval.divWithin tightResultLimits 8 singletonOne singletonThree with
+  | .resourceLimit (.quotient cost) =>
+      cost.predictedResultHeight == 17 && !cost.allowed tightResultLimits
+  | _ => false
+
+private def finalCompareLimits : Arithmetic.PrecisionLimits :=
+  { precisionLimits with endpoint := eightBitLimit }
+
+-- Both actual singleton quotient calls pass every arithmetic preflight. Their
+-- outward cuts are `15` and `16`; canonicalization exposes exponents `0` and
+-- `-4`, so only the independent final comparison alignment gate refuses.
+#guard
+  match Arithmetic.preflightDiv finalCompareLimits (d 47) (d 3) 0,
+      Arithmetic.preflightDiv finalCompareLimits (d (-47)) (d 3) 0,
+      Hex.Interval.divWithin finalCompareLimits 0 singleton47 singletonThree with
+  | .ok (.checked lowerCost), .ok (.checked upperCost),
+      .resourceLimit (.comparison cost) =>
+      lowerCost.allowed finalCompareLimits && upperCost.allowed finalCompareLimits &&
+        cost.lower.allowed finalCompareLimits.endpoint &&
+        cost.upper.allowed finalCompareLimits.endpoint &&
+        cost.alignmentShift == 4 && !cost.allowed finalCompareLimits.endpoint
+  | _, _, _ => false
+
+private def upperResultLimits : Arithmetic.PrecisionLimits :=
+  { precisionLimits with endpoint.maxEndpointHeight := 17 }
+
+-- The positive lower call passes, then the sign-reflected upper call is the
+-- reported refusal. This pins both-preflights-before-execution ordering.
+#guard
+  match Arithmetic.preflightDiv upperResultLimits (d 1) (d 3) 8,
+      Hex.Interval.divWithin upperResultLimits 8 singletonOne singletonThree with
+  | .ok (.checked lowerCost), .resourceLimit (.quotient upperCost) =>
+      lowerCost.predictedResultHeight == 17 && lowerCost.allowed upperResultLimits &&
+        upperCost.predictedResultHeight == 18 && !upperCost.allowed upperResultLimits
+  | _, _ => false
+
 /-- The supported public view exposes its carried canonicality theorem without
 adding any trust assumption. -/
 theorem publicViewCanonical (interval : Hex.Interval) : interval.view.CutConsistent :=

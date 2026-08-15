@@ -10,7 +10,8 @@ import HexIntervalMathlib
 Conformance checks for the supported public interval semantics.  Computational
 shape/resource cases live in `HexInterval.Conformance`; this companion pins the
 ordinary-kernel meaning of every successful intersection, hull, addition,
-subtraction, multiplication, negation, absolute value, and natural power.
+subtraction, multiplication, negation, absolute value, natural power,
+transactional split, reciprocal, and division.
 -/
 
 namespace Hex.IntervalMathlib.Conformance
@@ -200,6 +201,29 @@ theorem invImage {limits : Hex.Interval.Arithmetic.PrecisionLimits}
     (member : input.Contains x) : result.Contains x⁻¹ :=
   Hex.Interval.inv_mem_invWithin checked member
 
+/-- A successful division has exactly its computed outward-cut or explicit
+whole-line fallback predicate. -/
+theorem divExact {limits : Hex.Interval.Arithmetic.PrecisionLimits}
+    {precision : Hex.Interval.Precision}
+    {numerator denominator result : Hex.Interval} {x : ℝ}
+    (checked : Hex.Interval.divWithin limits precision numerator denominator =
+      .ready result) :
+    result.Contains x ↔
+      numerator.view.DivContains precision denominator.view x :=
+  Hex.Interval.contains_divWithin checked x
+
+/-- Both source memberships are required by the ordinary-kernel total-division
+image theorem. -/
+theorem divImage {limits : Hex.Interval.Arithmetic.PrecisionLimits}
+    {precision : Hex.Interval.Precision}
+    {numerator denominator result : Hex.Interval} {x y : ℝ}
+    (checked : Hex.Interval.divWithin limits precision numerator denominator =
+      .ready result)
+    (numeratorMember : numerator.Contains x)
+    (denominatorMember : denominator.Contains y) :
+    result.Contains (x / y) :=
+  Hex.Interval.div_mem_divWithin checked numeratorMember denominatorMember
+
 /-- info: 'Hex.IntervalMathlib.Conformance.intersectMember' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms intersectMember
@@ -291,5 +315,13 @@ theorem invImage {limits : Hex.Interval.Arithmetic.PrecisionLimits}
 /-- info: 'Hex.IntervalMathlib.Conformance.invImage' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms invImage
+
+/-- info: 'Hex.IntervalMathlib.Conformance.divExact' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms divExact
+
+/-- info: 'Hex.IntervalMathlib.Conformance.divImage' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms divImage
 
 end Hex.IntervalMathlib.Conformance
