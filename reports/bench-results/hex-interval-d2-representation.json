@@ -1,12 +1,12 @@
 {
   "schema": "hex-interval-d2-representation-v2",
   "environment": {
-    "git_commit": "f57ab4ad78e471a24841d9f5e2122f358fe2aa21",
+    "git_commit": "9c87f7cf28bea3bf346f94ab1e6956c6fdc90e83",
     "git_dirty": false,
-    "toolchain": "leanprover/lean4:v4.32.0-rc1",
+    "toolchain": "leanprover/lean4:v4.33.0-rc1",
     "hostname": "chungus2",
-    "platform": "Linux-6.12.95-x86_64-with-glibc2.42",
-    "python": "3.13.13"
+    "platform": "Linux-6.12.100-x86_64-with-glibc2.42",
+    "python": "3.14.6"
   },
   "config": {
     "samples": 5,
@@ -15,10 +15,10 @@
       4096
     ],
     "source_sha256": {
-      "HexInterval/Basic.lean": "3a0e40636583ba19b36b44f6858d8da25bc26a5bfdec52ac82034f866d2301fc",
-      "HexInterval/Experiment/Rational.lean": "950b2ae5fb3934fa31b967fae21129ee0cfed0d284def09ad9f24cf38cae71bf",
+      "HexInterval/Basic.lean": "48ee7967e265beba21c355b5ac2657321637794ce322c9ad7f2880c853ecd850",
+      "HexInterval/Experiment/Rational.lean": "a02f3d348856c1b3c71490f02136cf759a640247d85092f8ded25a68fb222564",
       "HexInterval/Experiment/Representation.lean": "32b974a49ccc73d46a793a44b8130f5c9399d25ddd3281ee95fde525e75fde2b",
-      "HexInterval.lean": "c1178859f2397cea0c2e93b7c0808acaf394c2e6aae8934ea69211bf50205239",
+      "HexInterval.lean": "694903e86de1e9e41f29fa1897dddc95cdc4718664dbcb80989eefaa5dc1dcf6",
       "bench/HexBench/IntervalRepresentationSpike.lean": "786b3dd6e361fe86a08b4f1f6d6d1cc53230eee18b23066cd057ccfa4ffe08fd",
       "bench/HexInterval/ImportBundled.lean": "b84644ce36b3b455d11d878752c27ca4cfc3f0a8e53c5adf1213aed8a803a0de",
       "bench/HexInterval/ImportChecked.lean": "5bfe1acee71f4fc55970d7acb2025cec1dd8be4e91600da75d5b4115c42e036b",
@@ -35,9 +35,9 @@
       "bench/HexInterval/WhnfRationalBaseline.lean": "dfa9c7e76b4f2656e149c81dc0e4784cfcb8beb8c5df38861c12e1b9eb6d01d8",
       "bench/HexInterval/WhnfRationalChecked.lean": "3836add542af8827440bc6af74ff9fb58f5f421f42e687a8a0690edff3a0850e",
       "bench/HexInterval/WhnfRationalDirect.lean": "bc7dd6ef8188dd43a63c64090b55146b3aae4542df37138017d85e8fd7b383c6",
-      "lake-manifest.json": "5315ef9d575b3b13138a8e10e222cec2b7cf16a96069f550a79d2fe6d20e3264",
-      "lakefile.lean": "88b35a8cdeb0cf1cc3513d84764153c3c43a9fd6e35a33ed125580b0b0c67eb1",
-      "lean-toolchain": "72681913b978b3f7c2f48229836771f736f6e97d833917726b2263afbc6108ed",
+      "lake-manifest.json": "a3fe83c407715b04ccabe01b74d561ced52b899aa9b6a0b0742e092e5db6c3b1",
+      "lakefile.lean": "5f13f66d89725e7afcd8f1bd83788eb28a6f379921cc5f474f77c9b5c3221d64",
+      "lean-toolchain": "62c2d9c0fc1ec4c67e151c11eff41ca004ef38e179cf9476c230406e6defedef",
       "scripts/bench/interval_representation_sweep.py": "7ad6ac110324cf16650ecee42f949ffda0b59f811748790963daac608c0f7212"
     },
     "compiled_driver": ".lake/build/bin/hex_interval_representation_spike",
@@ -50,43 +50,43 @@
       "repeats": 4618,
       "samples": [
         {
-          "outer_wall_nanos": 193552846,
-          "inner_total_nanos": 180452432,
-          "per_call_nanos": 39075,
+          "outer_wall_nanos": 184350502,
+          "inner_total_nanos": 181240850,
+          "per_call_nanos": 39246,
           "checksum": 13103900578367572860,
-          "peak_rss_kb": 3976
+          "peak_rss_kb": 8412
         },
         {
-          "outer_wall_nanos": 182183800,
-          "inner_total_nanos": 178584323,
-          "per_call_nanos": 38671,
+          "outer_wall_nanos": 192727835,
+          "inner_total_nanos": 188711649,
+          "per_call_nanos": 40864,
           "checksum": 13103900578367572860,
-          "peak_rss_kb": 6320
+          "peak_rss_kb": 8348
         },
         {
-          "outer_wall_nanos": 185593685,
-          "inner_total_nanos": 180446954,
-          "per_call_nanos": 39074,
+          "outer_wall_nanos": 182607757,
+          "inner_total_nanos": 179682300,
+          "per_call_nanos": 38909,
           "checksum": 13103900578367572860,
-          "peak_rss_kb": 6372
+          "peak_rss_kb": 8396
         },
         {
-          "outer_wall_nanos": 188266788,
-          "inner_total_nanos": 180233888,
-          "per_call_nanos": 39028,
+          "outer_wall_nanos": 182867924,
+          "inner_total_nanos": 180111366,
+          "per_call_nanos": 39002,
           "checksum": 13103900578367572860,
-          "peak_rss_kb": 3980
+          "peak_rss_kb": 8388
         },
         {
-          "outer_wall_nanos": 185366819,
-          "inner_total_nanos": 177965415,
-          "per_call_nanos": 38537,
+          "outer_wall_nanos": 185872258,
+          "inner_total_nanos": 183074119,
+          "per_call_nanos": 39643,
           "checksum": 13103900578367572860,
-          "peak_rss_kb": 3940
+          "peak_rss_kb": 8360
         }
       ],
-      "median_per_call_nanos": 39028,
-      "median_peak_rss_kb": 3980
+      "median_per_call_nanos": 39246,
+      "median_peak_rss_kb": 8388
     },
     "checked:433": {
       "variant": "checked",
@@ -94,43 +94,43 @@
       "repeats": 4618,
       "samples": [
         {
-          "outer_wall_nanos": 182531575,
-          "inner_total_nanos": 178232251,
-          "per_call_nanos": 38595,
+          "outer_wall_nanos": 182649119,
+          "inner_total_nanos": 179752924,
+          "per_call_nanos": 38924,
           "checksum": 13103900578367572860,
-          "peak_rss_kb": 4000
+          "peak_rss_kb": 8468
         },
         {
-          "outer_wall_nanos": 182599336,
-          "inner_total_nanos": 177370512,
-          "per_call_nanos": 38408,
+          "outer_wall_nanos": 180722512,
+          "inner_total_nanos": 177930651,
+          "per_call_nanos": 38529,
           "checksum": 13103900578367572860,
-          "peak_rss_kb": 3956
+          "peak_rss_kb": 8504
         },
         {
-          "outer_wall_nanos": 183529665,
-          "inner_total_nanos": 177597900,
-          "per_call_nanos": 38457,
+          "outer_wall_nanos": 184017368,
+          "inner_total_nanos": 181188783,
+          "per_call_nanos": 39235,
           "checksum": 13103900578367572860,
-          "peak_rss_kb": 6288
+          "peak_rss_kb": 8408
         },
         {
-          "outer_wall_nanos": 187196241,
-          "inner_total_nanos": 182192051,
-          "per_call_nanos": 39452,
+          "outer_wall_nanos": 184628434,
+          "inner_total_nanos": 181749705,
+          "per_call_nanos": 39356,
           "checksum": 13103900578367572860,
-          "peak_rss_kb": 3980
+          "peak_rss_kb": 8348
         },
         {
-          "outer_wall_nanos": 190758874,
-          "inner_total_nanos": 177280779,
-          "per_call_nanos": 38389,
+          "outer_wall_nanos": 183708129,
+          "inner_total_nanos": 180854908,
+          "per_call_nanos": 39163,
           "checksum": 13103900578367572860,
-          "peak_rss_kb": 3916
+          "peak_rss_kb": 8404
         }
       ],
-      "median_per_call_nanos": 38457,
-      "median_peak_rss_kb": 3980
+      "median_per_call_nanos": 39163,
+      "median_peak_rss_kb": 8408
     },
     "bundled-boundary:433": {
       "variant": "bundled-boundary",
@@ -138,43 +138,43 @@
       "repeats": 4618,
       "samples": [
         {
-          "outer_wall_nanos": 187966093,
-          "inner_total_nanos": 178552976,
-          "per_call_nanos": 38664,
+          "outer_wall_nanos": 181645761,
+          "inner_total_nanos": 178886239,
+          "per_call_nanos": 38736,
           "checksum": 13103900578367572860,
-          "peak_rss_kb": 3916
+          "peak_rss_kb": 8364
         },
         {
-          "outer_wall_nanos": 190323789,
-          "inner_total_nanos": 179659577,
-          "per_call_nanos": 38904,
+          "outer_wall_nanos": 182376645,
+          "inner_total_nanos": 179790479,
+          "per_call_nanos": 38932,
           "checksum": 13103900578367572860,
-          "peak_rss_kb": 4028
+          "peak_rss_kb": 8432
         },
         {
-          "outer_wall_nanos": 194488644,
-          "inner_total_nanos": 178028418,
-          "per_call_nanos": 38550,
+          "outer_wall_nanos": 185813641,
+          "inner_total_nanos": 181329321,
+          "per_call_nanos": 39265,
           "checksum": 13103900578367572860,
-          "peak_rss_kb": 6288
+          "peak_rss_kb": 8388
         },
         {
-          "outer_wall_nanos": 202535896,
-          "inner_total_nanos": 179032697,
-          "per_call_nanos": 38768,
+          "outer_wall_nanos": 182301703,
+          "inner_total_nanos": 179404206,
+          "per_call_nanos": 38848,
           "checksum": 13103900578367572860,
-          "peak_rss_kb": 3956
+          "peak_rss_kb": 8348
         },
         {
-          "outer_wall_nanos": 181906238,
-          "inner_total_nanos": 177959576,
-          "per_call_nanos": 38536,
+          "outer_wall_nanos": 182839421,
+          "inner_total_nanos": 179668709,
+          "per_call_nanos": 38906,
           "checksum": 13103900578367572860,
-          "peak_rss_kb": 3960
+          "peak_rss_kb": 8352
         }
       ],
-      "median_per_call_nanos": 38664,
-      "median_peak_rss_kb": 3960
+      "median_per_call_nanos": 38906,
+      "median_peak_rss_kb": 8364
     },
     "checked-boundary:433": {
       "variant": "checked-boundary",
@@ -182,43 +182,43 @@
       "repeats": 4618,
       "samples": [
         {
-          "outer_wall_nanos": 212158093,
-          "inner_total_nanos": 207028047,
-          "per_call_nanos": 44830,
+          "outer_wall_nanos": 206418988,
+          "inner_total_nanos": 203654288,
+          "per_call_nanos": 44100,
           "checksum": 13103900578367572860,
-          "peak_rss_kb": 4008
+          "peak_rss_kb": 8360
         },
         {
-          "outer_wall_nanos": 205027701,
-          "inner_total_nanos": 200662058,
-          "per_call_nanos": 43452,
+          "outer_wall_nanos": 203568120,
+          "inner_total_nanos": 200846624,
+          "per_call_nanos": 43492,
           "checksum": 13103900578367572860,
-          "peak_rss_kb": 8392
+          "peak_rss_kb": 8356
         },
         {
-          "outer_wall_nanos": 209687820,
-          "inner_total_nanos": 200059664,
-          "per_call_nanos": 43321,
+          "outer_wall_nanos": 208729885,
+          "inner_total_nanos": 205477952,
+          "per_call_nanos": 44495,
           "checksum": 13103900578367572860,
-          "peak_rss_kb": 6324
+          "peak_rss_kb": 8376
         },
         {
-          "outer_wall_nanos": 214161864,
-          "inner_total_nanos": 209999803,
-          "per_call_nanos": 45474,
+          "outer_wall_nanos": 202417133,
+          "inner_total_nanos": 199577553,
+          "per_call_nanos": 43217,
           "checksum": 13103900578367572860,
-          "peak_rss_kb": 3976
+          "peak_rss_kb": 8440
         },
         {
-          "outer_wall_nanos": 215341614,
-          "inner_total_nanos": 199664408,
-          "per_call_nanos": 43236,
+          "outer_wall_nanos": 204565770,
+          "inner_total_nanos": 201501676,
+          "per_call_nanos": 43633,
           "checksum": 13103900578367572860,
-          "peak_rss_kb": 3968
+          "peak_rss_kb": 8484
         }
       ],
-      "median_per_call_nanos": 43452,
-      "median_peak_rss_kb": 4008
+      "median_per_call_nanos": 43633,
+      "median_peak_rss_kb": 8376
     },
     "bundled:4096": {
       "variant": "bundled",
@@ -226,43 +226,43 @@
       "repeats": 488,
       "samples": [
         {
-          "outer_wall_nanos": 192820450,
-          "inner_total_nanos": 187537157,
-          "per_call_nanos": 384297,
+          "outer_wall_nanos": 191111889,
+          "inner_total_nanos": 187050666,
+          "per_call_nanos": 383300,
           "checksum": 18433152544017910708,
-          "peak_rss_kb": 3912
+          "peak_rss_kb": 8332
         },
         {
-          "outer_wall_nanos": 191278885,
-          "inner_total_nanos": 185662959,
-          "per_call_nanos": 380456,
+          "outer_wall_nanos": 192012704,
+          "inner_total_nanos": 188005692,
+          "per_call_nanos": 385257,
           "checksum": 18433152544017910708,
-          "peak_rss_kb": 6316
+          "peak_rss_kb": 8396
         },
         {
-          "outer_wall_nanos": 208561030,
-          "inner_total_nanos": 202709934,
-          "per_call_nanos": 415389,
+          "outer_wall_nanos": 192224518,
+          "inner_total_nanos": 188339006,
+          "per_call_nanos": 385940,
           "checksum": 18433152544017910708,
-          "peak_rss_kb": 6344
+          "peak_rss_kb": 8376
         },
         {
-          "outer_wall_nanos": 196391305,
-          "inner_total_nanos": 190094719,
-          "per_call_nanos": 389538,
+          "outer_wall_nanos": 192974401,
+          "inner_total_nanos": 189047607,
+          "per_call_nanos": 387392,
           "checksum": 18433152544017910708,
-          "peak_rss_kb": 4020
+          "peak_rss_kb": 8356
         },
         {
-          "outer_wall_nanos": 193133956,
-          "inner_total_nanos": 186680587,
-          "per_call_nanos": 382542,
+          "outer_wall_nanos": 191822152,
+          "inner_total_nanos": 187861538,
+          "per_call_nanos": 384962,
           "checksum": 18433152544017910708,
-          "peak_rss_kb": 3980
+          "peak_rss_kb": 8364
         }
       ],
-      "median_per_call_nanos": 384297,
-      "median_peak_rss_kb": 4020
+      "median_per_call_nanos": 385257,
+      "median_peak_rss_kb": 8364
     },
     "checked:4096": {
       "variant": "checked",
@@ -270,43 +270,43 @@
       "repeats": 488,
       "samples": [
         {
-          "outer_wall_nanos": 199466375,
-          "inner_total_nanos": 191529076,
-          "per_call_nanos": 392477,
+          "outer_wall_nanos": 189647708,
+          "inner_total_nanos": 185605453,
+          "per_call_nanos": 380339,
           "checksum": 18433152544017910708,
-          "peak_rss_kb": 3968
+          "peak_rss_kb": 8424
         },
         {
-          "outer_wall_nanos": 189671402,
-          "inner_total_nanos": 185419327,
-          "per_call_nanos": 379957,
+          "outer_wall_nanos": 190176701,
+          "inner_total_nanos": 186108148,
+          "per_call_nanos": 381369,
           "checksum": 18433152544017910708,
-          "peak_rss_kb": 8404
+          "peak_rss_kb": 8392
         },
         {
-          "outer_wall_nanos": 220233617,
-          "inner_total_nanos": 189031353,
-          "per_call_nanos": 387359,
+          "outer_wall_nanos": 188537821,
+          "inner_total_nanos": 184672229,
+          "per_call_nanos": 378426,
           "checksum": 18433152544017910708,
-          "peak_rss_kb": 6336
+          "peak_rss_kb": 8496
         },
         {
-          "outer_wall_nanos": 253720959,
-          "inner_total_nanos": 184483900,
-          "per_call_nanos": 378040,
+          "outer_wall_nanos": 188348380,
+          "inner_total_nanos": 184424821,
+          "per_call_nanos": 377919,
           "checksum": 18433152544017910708,
-          "peak_rss_kb": 6432
+          "peak_rss_kb": 8400
         },
         {
-          "outer_wall_nanos": 194283721,
-          "inner_total_nanos": 186615561,
-          "per_call_nanos": 382408,
+          "outer_wall_nanos": 189530223,
+          "inner_total_nanos": 185635858,
+          "per_call_nanos": 380401,
           "checksum": 18433152544017910708,
-          "peak_rss_kb": 3936
+          "peak_rss_kb": 8420
         }
       ],
-      "median_per_call_nanos": 382408,
-      "median_peak_rss_kb": 6336
+      "median_per_call_nanos": 380339,
+      "median_peak_rss_kb": 8420
     },
     "bundled-boundary:4096": {
       "variant": "bundled-boundary",
@@ -314,43 +314,43 @@
       "repeats": 488,
       "samples": [
         {
-          "outer_wall_nanos": 202478591,
-          "inner_total_nanos": 186108939,
-          "per_call_nanos": 381370,
+          "outer_wall_nanos": 192062188,
+          "inner_total_nanos": 187955127,
+          "per_call_nanos": 385153,
           "checksum": 18433152544017910708,
-          "peak_rss_kb": 3960
+          "peak_rss_kb": 8472
         },
         {
-          "outer_wall_nanos": 194026228,
-          "inner_total_nanos": 186842207,
-          "per_call_nanos": 382873,
+          "outer_wall_nanos": 190966362,
+          "inner_total_nanos": 187104155,
+          "per_call_nanos": 383410,
           "checksum": 18433152544017910708,
-          "peak_rss_kb": 8520
+          "peak_rss_kb": 8360
         },
         {
-          "outer_wall_nanos": 194069793,
-          "inner_total_nanos": 188450021,
-          "per_call_nanos": 386168,
+          "outer_wall_nanos": 191816423,
+          "inner_total_nanos": 187779086,
+          "per_call_nanos": 384793,
           "checksum": 18433152544017910708,
-          "peak_rss_kb": 6296
+          "peak_rss_kb": 8408
         },
         {
-          "outer_wall_nanos": 193447620,
-          "inner_total_nanos": 187060681,
-          "per_call_nanos": 383321,
+          "outer_wall_nanos": 191797626,
+          "inner_total_nanos": 187860197,
+          "per_call_nanos": 384959,
           "checksum": 18433152544017910708,
-          "peak_rss_kb": 4020
+          "peak_rss_kb": 8360
         },
         {
-          "outer_wall_nanos": 193538916,
-          "inner_total_nanos": 187601562,
-          "per_call_nanos": 384429,
+          "outer_wall_nanos": 190416797,
+          "inner_total_nanos": 186492928,
+          "per_call_nanos": 382157,
           "checksum": 18433152544017910708,
-          "peak_rss_kb": 3988
+          "peak_rss_kb": 8440
         }
       ],
-      "median_per_call_nanos": 383321,
-      "median_peak_rss_kb": 4020
+      "median_per_call_nanos": 384793,
+      "median_peak_rss_kb": 8408
     },
     "checked-boundary:4096": {
       "variant": "checked-boundary",
@@ -358,43 +358,43 @@
       "repeats": 488,
       "samples": [
         {
-          "outer_wall_nanos": 229624041,
-          "inner_total_nanos": 209427935,
-          "per_call_nanos": 429155,
+          "outer_wall_nanos": 214177063,
+          "inner_total_nanos": 209965397,
+          "per_call_nanos": 430256,
           "checksum": 18433152544017910708,
-          "peak_rss_kb": 4008
+          "peak_rss_kb": 8468
         },
         {
-          "outer_wall_nanos": 234158584,
-          "inner_total_nanos": 210835733,
-          "per_call_nanos": 432040,
+          "outer_wall_nanos": 213807825,
+          "inner_total_nanos": 209547527,
+          "per_call_nanos": 429400,
           "checksum": 18433152544017910708,
-          "peak_rss_kb": 6280
+          "peak_rss_kb": 8400
         },
         {
-          "outer_wall_nanos": 233492707,
-          "inner_total_nanos": 207957245,
-          "per_call_nanos": 426141,
+          "outer_wall_nanos": 213048689,
+          "inner_total_nanos": 208877083,
+          "per_call_nanos": 428026,
           "checksum": 18433152544017910708,
-          "peak_rss_kb": 6372
+          "peak_rss_kb": 8392
         },
         {
-          "outer_wall_nanos": 221133181,
-          "inner_total_nanos": 208994803,
-          "per_call_nanos": 428268,
+          "outer_wall_nanos": 212802765,
+          "inner_total_nanos": 208545361,
+          "per_call_nanos": 427347,
           "checksum": 18433152544017910708,
-          "peak_rss_kb": 3968
+          "peak_rss_kb": 8372
         },
         {
-          "outer_wall_nanos": 220259876,
-          "inner_total_nanos": 210948300,
-          "per_call_nanos": 432271,
+          "outer_wall_nanos": 212602859,
+          "inner_total_nanos": 208478933,
+          "per_call_nanos": 427210,
           "checksum": 18433152544017910708,
-          "peak_rss_kb": 3992
+          "peak_rss_kb": 8392
         }
       ],
-      "median_per_call_nanos": 429155,
-      "median_peak_rss_kb": 4008
+      "median_per_call_nanos": 428026,
+      "median_peak_rss_kb": 8392
     }
   },
   "replay": {
@@ -402,45 +402,45 @@
       "module": "HexInterval.ReplayBaseline",
       "samples": [
         {
-          "wall_nanos": 1165298014,
-          "peak_rss_kb": 808216,
+          "wall_nanos": 863730604,
+          "peak_rss_kb": 844068,
           "axioms": [],
           "whnf_nanos": null
         },
         {
-          "wall_nanos": 1416469189,
-          "peak_rss_kb": 808048,
+          "wall_nanos": 865301020,
+          "peak_rss_kb": 844116,
           "axioms": [],
           "whnf_nanos": null
         },
         {
-          "wall_nanos": 1680206986,
-          "peak_rss_kb": 808676,
+          "wall_nanos": 864450859,
+          "peak_rss_kb": 844204,
           "axioms": [],
           "whnf_nanos": null
         },
         {
-          "wall_nanos": 1096703154,
-          "peak_rss_kb": 823304,
+          "wall_nanos": 882802292,
+          "peak_rss_kb": 843928,
           "axioms": [],
           "whnf_nanos": null
         },
         {
-          "wall_nanos": 902354207,
-          "peak_rss_kb": 822228,
+          "wall_nanos": 864309055,
+          "peak_rss_kb": 844208,
           "axioms": [],
           "whnf_nanos": null
         }
       ],
-      "median_wall_nanos": 1165298014,
-      "median_peak_rss_kb": 808676
+      "median_wall_nanos": 864450859,
+      "median_peak_rss_kb": 844116
     },
     "bundled": {
       "module": "HexInterval.ReplayBundled",
       "samples": [
         {
-          "wall_nanos": 2130896437,
-          "peak_rss_kb": 809548,
+          "wall_nanos": 1272339178,
+          "peak_rss_kb": 843548,
           "axioms": [
             "propext",
             "Quot.sound"
@@ -448,8 +448,8 @@
           "whnf_nanos": null
         },
         {
-          "wall_nanos": 2354085762,
-          "peak_rss_kb": 809508,
+          "wall_nanos": 1262112420,
+          "peak_rss_kb": 844300,
           "axioms": [
             "propext",
             "Quot.sound"
@@ -457,8 +457,8 @@
           "whnf_nanos": null
         },
         {
-          "wall_nanos": 2311267473,
-          "peak_rss_kb": 809924,
+          "wall_nanos": 1274394140,
+          "peak_rss_kb": 844096,
           "axioms": [
             "propext",
             "Quot.sound"
@@ -466,8 +466,8 @@
           "whnf_nanos": null
         },
         {
-          "wall_nanos": 1563533532,
-          "peak_rss_kb": 823248,
+          "wall_nanos": 1276426221,
+          "peak_rss_kb": 844512,
           "axioms": [
             "propext",
             "Quot.sound"
@@ -475,8 +475,8 @@
           "whnf_nanos": null
         },
         {
-          "wall_nanos": 1808498975,
-          "peak_rss_kb": 822508,
+          "wall_nanos": 1278935540,
+          "peak_rss_kb": 845720,
           "axioms": [
             "propext",
             "Quot.sound"
@@ -484,16 +484,16 @@
           "whnf_nanos": null
         }
       ],
-      "median_wall_nanos": 2130896437,
-      "median_import_baseline_subtracted_nanos": 965598423,
-      "median_peak_rss_kb": 809924
+      "median_wall_nanos": 1274394140,
+      "median_import_baseline_subtracted_nanos": 409943281,
+      "median_peak_rss_kb": 844300
     },
     "import_bundled": {
       "module": "HexInterval.ImportBundled",
       "samples": [
         {
-          "wall_nanos": 1273555070,
-          "peak_rss_kb": 808496,
+          "wall_nanos": 858826311,
+          "peak_rss_kb": 844868,
           "axioms": [
             "propext",
             "Quot.sound"
@@ -501,8 +501,8 @@
           "whnf_nanos": null
         },
         {
-          "wall_nanos": 1074533898,
-          "peak_rss_kb": 810288,
+          "wall_nanos": 869837940,
+          "peak_rss_kb": 844844,
           "axioms": [
             "propext",
             "Quot.sound"
@@ -510,8 +510,8 @@
           "whnf_nanos": null
         },
         {
-          "wall_nanos": 1484309689,
-          "peak_rss_kb": 808788,
+          "wall_nanos": 859875675,
+          "peak_rss_kb": 844000,
           "axioms": [
             "propext",
             "Quot.sound"
@@ -519,8 +519,8 @@
           "whnf_nanos": null
         },
         {
-          "wall_nanos": 1326264292,
-          "peak_rss_kb": 813128,
+          "wall_nanos": 860598275,
+          "peak_rss_kb": 844780,
           "axioms": [
             "propext",
             "Quot.sound"
@@ -528,8 +528,8 @@
           "whnf_nanos": null
         },
         {
-          "wall_nanos": 1393725274,
-          "peak_rss_kb": 813856,
+          "wall_nanos": 861228557,
+          "peak_rss_kb": 843920,
           "axioms": [
             "propext",
             "Quot.sound"
@@ -537,55 +537,55 @@
           "whnf_nanos": null
         }
       ],
-      "median_wall_nanos": 1326264292,
-      "median_import_baseline_subtracted_nanos": 160966278,
-      "median_peak_rss_kb": 810288
+      "median_wall_nanos": 860598275,
+      "median_import_baseline_subtracted_nanos": -3852584,
+      "median_peak_rss_kb": 844780
     },
     "whnf_bundled": {
       "module": "HexInterval.WhnfBundled",
       "samples": [
         {
-          "wall_nanos": 2522852775,
-          "peak_rss_kb": 886940,
+          "wall_nanos": 1550965274,
+          "peak_rss_kb": 939776,
           "axioms": [],
-          "whnf_nanos": 672423353
+          "whnf_nanos": 370497617
         },
         {
-          "wall_nanos": 2485328392,
-          "peak_rss_kb": 886852,
+          "wall_nanos": 1560284181,
+          "peak_rss_kb": 941620,
           "axioms": [],
-          "whnf_nanos": 747300038
+          "whnf_nanos": 361870803
         },
         {
-          "wall_nanos": 2859350182,
-          "peak_rss_kb": 889764,
+          "wall_nanos": 1569039782,
+          "peak_rss_kb": 945236,
           "axioms": [],
-          "whnf_nanos": 820201612
+          "whnf_nanos": 380466499
         },
         {
-          "wall_nanos": 2614368124,
-          "peak_rss_kb": 906760,
+          "wall_nanos": 1566817685,
+          "peak_rss_kb": 938180,
           "axioms": [],
-          "whnf_nanos": 622322963
+          "whnf_nanos": 363717801
         },
         {
-          "wall_nanos": 2203885399,
-          "peak_rss_kb": 896852,
+          "wall_nanos": 1571746222,
+          "peak_rss_kb": 939080,
           "axioms": [],
-          "whnf_nanos": 729337828
+          "whnf_nanos": 386640714
         }
       ],
-      "median_wall_nanos": 2522852775,
-      "median_import_baseline_subtracted_nanos": 789065157,
-      "median_peak_rss_kb": 889764,
-      "median_whnf_nanos": 729337828
+      "median_wall_nanos": 1566817685,
+      "median_import_baseline_subtracted_nanos": 393554809,
+      "median_peak_rss_kb": 939776,
+      "median_whnf_nanos": 370497617
     },
     "checked": {
       "module": "HexInterval.ReplayChecked",
       "samples": [
         {
-          "wall_nanos": 1967934028,
-          "peak_rss_kb": 808064,
+          "wall_nanos": 1286551603,
+          "peak_rss_kb": 846800,
           "axioms": [
             "propext",
             "Quot.sound"
@@ -593,8 +593,8 @@
           "whnf_nanos": null
         },
         {
-          "wall_nanos": 1758408001,
-          "peak_rss_kb": 811268,
+          "wall_nanos": 1273131421,
+          "peak_rss_kb": 844792,
           "axioms": [
             "propext",
             "Quot.sound"
@@ -602,8 +602,8 @@
           "whnf_nanos": null
         },
         {
-          "wall_nanos": 2385189836,
-          "peak_rss_kb": 808636,
+          "wall_nanos": 1260440058,
+          "peak_rss_kb": 844092,
           "axioms": [
             "propext",
             "Quot.sound"
@@ -611,8 +611,8 @@
           "whnf_nanos": null
         },
         {
-          "wall_nanos": 1613555432,
-          "peak_rss_kb": 822436,
+          "wall_nanos": 1276758464,
+          "peak_rss_kb": 846400,
           "axioms": [
             "propext",
             "Quot.sound"
@@ -620,8 +620,8 @@
           "whnf_nanos": null
         },
         {
-          "wall_nanos": 2646728963,
-          "peak_rss_kb": 814064,
+          "wall_nanos": 1271125208,
+          "peak_rss_kb": 844892,
           "axioms": [
             "propext",
             "Quot.sound"
@@ -629,16 +629,16 @@
           "whnf_nanos": null
         }
       ],
-      "median_wall_nanos": 1967934028,
-      "median_import_baseline_subtracted_nanos": 802636014,
-      "median_peak_rss_kb": 811268
+      "median_wall_nanos": 1273131421,
+      "median_import_baseline_subtracted_nanos": 408680562,
+      "median_peak_rss_kb": 844892
     },
     "import_checked": {
       "module": "HexInterval.ImportChecked",
       "samples": [
         {
-          "wall_nanos": 1306830891,
-          "peak_rss_kb": 809408,
+          "wall_nanos": 856029314,
+          "peak_rss_kb": 844936,
           "axioms": [
             "propext",
             "Quot.sound"
@@ -646,8 +646,8 @@
           "whnf_nanos": null
         },
         {
-          "wall_nanos": 1161077930,
-          "peak_rss_kb": 809288,
+          "wall_nanos": 878626603,
+          "peak_rss_kb": 843660,
           "axioms": [
             "propext",
             "Quot.sound"
@@ -655,8 +655,8 @@
           "whnf_nanos": null
         },
         {
-          "wall_nanos": 1331685338,
-          "peak_rss_kb": 814608,
+          "wall_nanos": 870436556,
+          "peak_rss_kb": 844820,
           "axioms": [
             "propext",
             "Quot.sound"
@@ -664,8 +664,8 @@
           "whnf_nanos": null
         },
         {
-          "wall_nanos": 1475859283,
-          "peak_rss_kb": 813844,
+          "wall_nanos": 869109617,
+          "peak_rss_kb": 843080,
           "axioms": [
             "propext",
             "Quot.sound"
@@ -673,8 +673,8 @@
           "whnf_nanos": null
         },
         {
-          "wall_nanos": 1182522333,
-          "peak_rss_kb": 822440,
+          "wall_nanos": 869667302,
+          "peak_rss_kb": 845052,
           "axioms": [
             "propext",
             "Quot.sound"
@@ -682,129 +682,129 @@
           "whnf_nanos": null
         }
       ],
-      "median_wall_nanos": 1306830891,
-      "median_import_baseline_subtracted_nanos": 141532877,
-      "median_peak_rss_kb": 813844
+      "median_wall_nanos": 869667302,
+      "median_import_baseline_subtracted_nanos": 5216443,
+      "median_peak_rss_kb": 844820
     },
     "whnf_checked": {
       "module": "HexInterval.WhnfChecked",
       "samples": [
         {
-          "wall_nanos": 2507388627,
-          "peak_rss_kb": 886668,
+          "wall_nanos": 1560295940,
+          "peak_rss_kb": 941708,
           "axioms": [],
-          "whnf_nanos": 804692935
+          "whnf_nanos": 372211608
         },
         {
-          "wall_nanos": 2784406346,
-          "peak_rss_kb": 887700,
+          "wall_nanos": 1566318668,
+          "peak_rss_kb": 936732,
           "axioms": [],
-          "whnf_nanos": 885667771
+          "whnf_nanos": 355956373
         },
         {
-          "wall_nanos": 3030364023,
-          "peak_rss_kb": 900532,
+          "wall_nanos": 1570057702,
+          "peak_rss_kb": 941084,
           "axioms": [],
-          "whnf_nanos": 929931223
+          "whnf_nanos": 384244452
         },
         {
-          "wall_nanos": 1667756607,
-          "peak_rss_kb": 915092,
+          "wall_nanos": 1577819640,
+          "peak_rss_kb": 944828,
           "axioms": [],
-          "whnf_nanos": 505391073
+          "whnf_nanos": 387617734
         },
         {
-          "wall_nanos": 1949348658,
-          "peak_rss_kb": 911916,
+          "wall_nanos": 1566240847,
+          "peak_rss_kb": 938616,
           "axioms": [],
-          "whnf_nanos": 525340393
+          "whnf_nanos": 412812755
         }
       ],
-      "median_wall_nanos": 2507388627,
-      "median_import_baseline_subtracted_nanos": 773601009,
-      "median_peak_rss_kb": 900532,
-      "median_whnf_nanos": 804692935
+      "median_wall_nanos": 1566318668,
+      "median_import_baseline_subtracted_nanos": 393055792,
+      "median_peak_rss_kb": 941084,
+      "median_whnf_nanos": 384244452
     },
     "whnf_baseline": {
       "module": "HexInterval.WhnfBaseline",
       "samples": [
         {
-          "wall_nanos": 3169081712,
-          "peak_rss_kb": 802240,
+          "wall_nanos": 1176005879,
+          "peak_rss_kb": 844976,
           "axioms": [],
           "whnf_nanos": null
         },
         {
-          "wall_nanos": 1733787618,
-          "peak_rss_kb": 817216,
+          "wall_nanos": 1178959898,
+          "peak_rss_kb": 844980,
           "axioms": [],
           "whnf_nanos": null
         },
         {
-          "wall_nanos": 1974581455,
-          "peak_rss_kb": 811356,
+          "wall_nanos": 1155268244,
+          "peak_rss_kb": 843460,
           "axioms": [],
           "whnf_nanos": null
         },
         {
-          "wall_nanos": 1236511593,
-          "peak_rss_kb": 822516,
+          "wall_nanos": 1173262876,
+          "peak_rss_kb": 844280,
           "axioms": [],
           "whnf_nanos": null
         },
         {
-          "wall_nanos": 1367948793,
-          "peak_rss_kb": 823264,
+          "wall_nanos": 1165491221,
+          "peak_rss_kb": 845084,
           "axioms": [],
           "whnf_nanos": null
         }
       ],
-      "median_wall_nanos": 1733787618,
-      "median_peak_rss_kb": 817216
+      "median_wall_nanos": 1173262876,
+      "median_peak_rss_kb": 844976
     },
     "rational_baseline": {
       "module": "HexInterval.ReplayRationalBaseline",
       "samples": [
         {
-          "wall_nanos": 1373412475,
-          "peak_rss_kb": 819028,
+          "wall_nanos": 871397257,
+          "peak_rss_kb": 844320,
           "axioms": [],
           "whnf_nanos": null
         },
         {
-          "wall_nanos": 1348053238,
-          "peak_rss_kb": 812896,
+          "wall_nanos": 868242086,
+          "peak_rss_kb": 845028,
           "axioms": [],
           "whnf_nanos": null
         },
         {
-          "wall_nanos": 1351551396,
-          "peak_rss_kb": 809092,
+          "wall_nanos": 870796032,
+          "peak_rss_kb": 844200,
           "axioms": [],
           "whnf_nanos": null
         },
         {
-          "wall_nanos": 1652279593,
-          "peak_rss_kb": 806100,
+          "wall_nanos": 863200177,
+          "peak_rss_kb": 844884,
           "axioms": [],
           "whnf_nanos": null
         },
         {
-          "wall_nanos": 1351508026,
-          "peak_rss_kb": 807648,
+          "wall_nanos": 850666110,
+          "peak_rss_kb": 844412,
           "axioms": [],
           "whnf_nanos": null
         }
       ],
-      "median_wall_nanos": 1351551396,
-      "median_peak_rss_kb": 809092
+      "median_wall_nanos": 868242086,
+      "median_peak_rss_kb": 844412
     },
     "rational_direct": {
       "module": "HexInterval.ReplayRationalDirect",
       "samples": [
         {
-          "wall_nanos": 1107139301,
-          "peak_rss_kb": 823056,
+          "wall_nanos": 863419456,
+          "peak_rss_kb": 844276,
           "axioms": [
             "propext",
             "Classical.choice",
@@ -813,8 +813,8 @@
           "whnf_nanos": null
         },
         {
-          "wall_nanos": 1344507499,
-          "peak_rss_kb": 810992,
+          "wall_nanos": 972629637,
+          "peak_rss_kb": 844860,
           "axioms": [
             "propext",
             "Classical.choice",
@@ -823,8 +823,8 @@
           "whnf_nanos": null
         },
         {
-          "wall_nanos": 1430964086,
-          "peak_rss_kb": 809308,
+          "wall_nanos": 867450010,
+          "peak_rss_kb": 845052,
           "axioms": [
             "propext",
             "Classical.choice",
@@ -833,8 +833,8 @@
           "whnf_nanos": null
         },
         {
-          "wall_nanos": 1653309399,
-          "peak_rss_kb": 809380,
+          "wall_nanos": 869770030,
+          "peak_rss_kb": 844744,
           "axioms": [
             "propext",
             "Classical.choice",
@@ -843,8 +843,8 @@
           "whnf_nanos": null
         },
         {
-          "wall_nanos": 1464436711,
-          "peak_rss_kb": 807844,
+          "wall_nanos": 878024069,
+          "peak_rss_kb": 844672,
           "axioms": [
             "propext",
             "Classical.choice",
@@ -853,54 +853,54 @@
           "whnf_nanos": null
         }
       ],
-      "median_wall_nanos": 1430964086,
-      "median_import_baseline_subtracted_nanos": 79412690,
-      "median_peak_rss_kb": 809380
+      "median_wall_nanos": 869770030,
+      "median_import_baseline_subtracted_nanos": 1527944,
+      "median_peak_rss_kb": 844744
     },
     "rational_checked": {
       "module": "HexInterval.ReplayRationalChecked",
       "samples": [
         {
-          "wall_nanos": 1459494784,
-          "peak_rss_kb": 817612,
+          "wall_nanos": 970450296,
+          "peak_rss_kb": 844416,
           "axioms": [],
           "whnf_nanos": null
         },
         {
-          "wall_nanos": 1563899081,
-          "peak_rss_kb": 813576,
+          "wall_nanos": 959351386,
+          "peak_rss_kb": 845080,
           "axioms": [],
           "whnf_nanos": null
         },
         {
-          "wall_nanos": 1600691206,
-          "peak_rss_kb": 810828,
+          "wall_nanos": 966204768,
+          "peak_rss_kb": 844736,
           "axioms": [],
           "whnf_nanos": null
         },
         {
-          "wall_nanos": 1589048457,
-          "peak_rss_kb": 807276,
+          "wall_nanos": 950893710,
+          "peak_rss_kb": 844340,
           "axioms": [],
           "whnf_nanos": null
         },
         {
-          "wall_nanos": 1528498699,
-          "peak_rss_kb": 812324,
+          "wall_nanos": 968398058,
+          "peak_rss_kb": 844984,
           "axioms": [],
           "whnf_nanos": null
         }
       ],
-      "median_wall_nanos": 1563899081,
-      "median_import_baseline_subtracted_nanos": 212347685,
-      "median_peak_rss_kb": 812324
+      "median_wall_nanos": 966204768,
+      "median_import_baseline_subtracted_nanos": 97962682,
+      "median_peak_rss_kb": 844736
     },
     "rational_ops": {
       "module": "HexInterval.ReplayRational",
       "samples": [
         {
-          "wall_nanos": 1854762174,
-          "peak_rss_kb": 815412,
+          "wall_nanos": 866202603,
+          "peak_rss_kb": 849100,
           "axioms": [
             "propext",
             "Classical.choice",
@@ -909,8 +909,8 @@
           "whnf_nanos": null
         },
         {
-          "wall_nanos": 1355533117,
-          "peak_rss_kb": 811388,
+          "wall_nanos": 876234578,
+          "peak_rss_kb": 845764,
           "axioms": [
             "propext",
             "Classical.choice",
@@ -919,8 +919,8 @@
           "whnf_nanos": null
         },
         {
-          "wall_nanos": 1503183487,
-          "peak_rss_kb": 808944,
+          "wall_nanos": 856080801,
+          "peak_rss_kb": 847152,
           "axioms": [
             "propext",
             "Classical.choice",
@@ -929,8 +929,8 @@
           "whnf_nanos": null
         },
         {
-          "wall_nanos": 1591122090,
-          "peak_rss_kb": 811952,
+          "wall_nanos": 867063536,
+          "peak_rss_kb": 847312,
           "axioms": [
             "propext",
             "Classical.choice",
@@ -939,8 +939,8 @@
           "whnf_nanos": null
         },
         {
-          "wall_nanos": 1190595564,
-          "peak_rss_kb": 807468,
+          "wall_nanos": 863093869,
+          "peak_rss_kb": 846608,
           "axioms": [
             "propext",
             "Classical.choice",
@@ -949,124 +949,124 @@
           "whnf_nanos": null
         }
       ],
-      "median_wall_nanos": 1503183487,
-      "median_import_baseline_subtracted_nanos": 151632091,
-      "median_peak_rss_kb": 811388
+      "median_wall_nanos": 866202603,
+      "median_import_baseline_subtracted_nanos": -2039483,
+      "median_peak_rss_kb": 847152
     },
     "whnf_rational_direct": {
       "module": "HexInterval.WhnfRationalDirect",
       "samples": [
         {
-          "wall_nanos": 1900417209,
-          "peak_rss_kb": 827788,
+          "wall_nanos": 1169841891,
+          "peak_rss_kb": 857128,
           "axioms": [],
-          "whnf_nanos": 49202915
+          "whnf_nanos": 37518808
         },
         {
-          "wall_nanos": 2009470950,
-          "peak_rss_kb": 811832,
+          "wall_nanos": 1265805376,
+          "peak_rss_kb": 855016,
           "axioms": [],
-          "whnf_nanos": 118233720
+          "whnf_nanos": 39645292
         },
         {
-          "wall_nanos": 1948980881,
-          "peak_rss_kb": 814788,
+          "wall_nanos": 1165250099,
+          "peak_rss_kb": 855468,
           "axioms": [],
-          "whnf_nanos": 95169602
+          "whnf_nanos": 36770809
         },
         {
-          "wall_nanos": 1971435768,
-          "peak_rss_kb": 808048,
+          "wall_nanos": 1273156355,
+          "peak_rss_kb": 857452,
           "axioms": [],
-          "whnf_nanos": 91346414
+          "whnf_nanos": 38217744
         },
         {
-          "wall_nanos": 2090537849,
-          "peak_rss_kb": 810192,
+          "wall_nanos": 1282005045,
+          "peak_rss_kb": 859152,
           "axioms": [],
-          "whnf_nanos": 92736966
+          "whnf_nanos": 39870164
         }
       ],
-      "median_wall_nanos": 1971435768,
-      "median_import_baseline_subtracted_nanos": 103567891,
-      "median_peak_rss_kb": 811832,
-      "median_whnf_nanos": 92736966
+      "median_wall_nanos": 1265805376,
+      "median_import_baseline_subtracted_nanos": 98389576,
+      "median_peak_rss_kb": 857128,
+      "median_whnf_nanos": 38217744
     },
     "whnf_rational_checked": {
       "module": "HexInterval.WhnfRationalChecked",
       "samples": [
         {
-          "wall_nanos": 1807010110,
-          "peak_rss_kb": 835780,
+          "wall_nanos": 1267526951,
+          "peak_rss_kb": 866288,
           "axioms": [],
-          "whnf_nanos": 142809871
+          "whnf_nanos": 70728336
         },
         {
-          "wall_nanos": 2146319071,
-          "peak_rss_kb": 833640,
+          "wall_nanos": 1275885625,
+          "peak_rss_kb": 868428,
           "axioms": [],
-          "whnf_nanos": 122086623
+          "whnf_nanos": 72621624
         },
         {
-          "wall_nanos": 2001146130,
-          "peak_rss_kb": 817736,
+          "wall_nanos": 1252598440,
+          "peak_rss_kb": 866732,
           "axioms": [],
-          "whnf_nanos": 190936380
+          "whnf_nanos": 72408227
         },
         {
-          "wall_nanos": 2327207528,
-          "peak_rss_kb": 808284,
+          "wall_nanos": 1273510850,
+          "peak_rss_kb": 863716,
           "axioms": [],
-          "whnf_nanos": 290232291
+          "whnf_nanos": 68136101
         },
         {
-          "wall_nanos": 2057870483,
-          "peak_rss_kb": 814564,
+          "wall_nanos": 1266062424,
+          "peak_rss_kb": 868940,
           "axioms": [],
-          "whnf_nanos": 157013691
+          "whnf_nanos": 70822415
         }
       ],
-      "median_wall_nanos": 2057870483,
-      "median_import_baseline_subtracted_nanos": 190002606,
-      "median_peak_rss_kb": 817736,
-      "median_whnf_nanos": 157013691
+      "median_wall_nanos": 1267526951,
+      "median_import_baseline_subtracted_nanos": 100111151,
+      "median_peak_rss_kb": 866732,
+      "median_whnf_nanos": 70822415
     },
     "whnf_rational_baseline": {
       "module": "HexInterval.WhnfRationalBaseline",
       "samples": [
         {
-          "wall_nanos": 1339246859,
-          "peak_rss_kb": 820228,
+          "wall_nanos": 1166690547,
+          "peak_rss_kb": 844032,
           "axioms": [],
           "whnf_nanos": null
         },
         {
-          "wall_nanos": 2043391516,
-          "peak_rss_kb": 810088,
+          "wall_nanos": 1171120294,
+          "peak_rss_kb": 845012,
           "axioms": [],
           "whnf_nanos": null
         },
         {
-          "wall_nanos": 1663980690,
-          "peak_rss_kb": 812104,
+          "wall_nanos": 1167415800,
+          "peak_rss_kb": 844832,
           "axioms": [],
           "whnf_nanos": null
         },
         {
-          "wall_nanos": 2151360933,
-          "peak_rss_kb": 807580,
+          "wall_nanos": 1174028875,
+          "peak_rss_kb": 844084,
           "axioms": [],
           "whnf_nanos": null
         },
         {
-          "wall_nanos": 1867867877,
-          "peak_rss_kb": 810888,
+          "wall_nanos": 1155705261,
+          "peak_rss_kb": 844904,
           "axioms": [],
           "whnf_nanos": null
         }
       ],
-      "median_wall_nanos": 1867867877,
-      "median_peak_rss_kb": 810888
+      "median_wall_nanos": 1167415800,
+      "median_peak_rss_kb": 844832
     }
   },
   "artifacts": {
