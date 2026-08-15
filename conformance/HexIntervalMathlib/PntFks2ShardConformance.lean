@@ -11,8 +11,8 @@ import HexInterval.Experiment.TargetRun
 /-!
 # PNT+ FKS2 shard conformance
 
-Runs eight bounded actions over 128 source-pinned cells, checks exact
-coordinate diagnostics for a false mutation, and replays representative
+Runs fifty bounded actions over all 1,000 source-pinned shard-11 cells, checks
+exact coordinate diagnostics for a false mutation, and replays representative
 first/middle/last cells by direct indexed schema dispatch.  The generic
 large-payload `ProofFrontend` fold is deliberately not part of this probe.
 -/
@@ -20,8 +20,8 @@ large-payload `ProofFrontend` fold is deliberately not part of this probe.
 namespace Hex.IntervalMathlib.PntFks2ShardConformance
 
 open Hex.Interval.Experiment
-open Propagator PolicySession SemanticReplay ChronologicalReplay ProofEmitter
-open Frontend ProofRegistry PntFks2Shard
+open Propagator PolicySession SemanticReplay ChronologicalReplay
+open Frontend PntFks2Shard
 
 private def firstOffer : TargetRun.Controller Bound Unit :=
   { update := fun state _ => state
@@ -33,7 +33,7 @@ private def firstOffer : TargetRun.Controller Bound Unit :=
 def checkerInput : CheckerInput Bound :=
   { baseProgram := program
     initialFacts
-    target := { node := node 127, fact := .nonnegative } }
+    target := { node := node 999, fact := .nonnegative } }
 
 private def run? : Option (TargetRun.Result Bound Unit) := do
   let .ok session := start | none
@@ -42,32 +42,36 @@ private def run? : Option (TargetRun.Result Bound Unit) := do
 
 structure Fixture where
   session : PolicySession.Session Bound
-  registry : ProofRegistry.Registry semantics Lean.Name
   reached : TargetRun.Reached Bound
   events : Array (TargetRun.Event Bound)
 
 def fixture? : Option Fixture := do
   let result ← run?
   let .target reached := result.stop | none
-  let .ok registry := ProofRegistry.build result.session.registry proofPackages | none
-  some { session := result.session, registry, reached, events := result.events }
+  some { session := result.session, reached, events := result.events }
 
-#guard cells11.length == 128
-#guard chunkCount == 8
-#guard (List.range chunkCount).all fun index => (chunk index).length == 16
+#guard cells11.length == 1000
+#guard chunkCount == 50
+#guard (List.range chunkCount).all fun index => (chunk index).length == 20
 #guard cells11[0]?.any fun cell => cell.b == 11010 && cell.b' == 11011
-#guard cells11[127]?.any fun cell => cell.b == 11137 && cell.b' == 11138
+#guard cells11[989]?.any fun cell => cell.b == 11999 && cell.b' == 12000
+#guard cells11[990]?.any fun cell => cell.b == 12000 && cell.b' == 12005
+#guard cells11[999]?.any fun cell => cell.b == 12045 && cell.b' == 12050
 #guard cells11.all checkCell
 
 #guard run?.isSome
 #guard fixture?.isSome
-#guard fixture?.any fun fixture => fixture.events.size == 8
-#guard fixture?.any fun fixture => fixture.session.state.engine.chronology.size == 128
-#guard fixture?.any fun fixture => fixture.session.state.engine.metrics.requests == 8
-#guard fixture?.any fun fixture => fixture.session.state.engine.metrics.replies == 8
-#guard fixture?.any fun fixture => fixture.session.state.engine.metrics.candidates == 128
-#guard fixture?.any fun fixture => fixture.session.state.engine.metrics.improvements == 128
-#guard fixture?.any fun fixture => fixture.session.arena.entries.size == 8
+#guard fixture?.any fun fixture => fixture.events.size == 50
+#guard fixture?.any fun fixture => fixture.session.state.engine.chronology.size == 1000
+#guard fixture?.any fun fixture => fixture.session.state.engine.metrics.requests == 50
+#guard fixture?.any fun fixture => fixture.session.state.engine.metrics.replies == 50
+#guard fixture?.any fun fixture => fixture.session.state.engine.metrics.candidates == 1000
+#guard fixture?.any fun fixture => fixture.session.state.engine.metrics.improvements == 1000
+#guard fixture?.any fun fixture => fixture.session.arena.entries.size == 50
+#guard fixture?.any fun fixture => fixture.session.arena.bodyCells == 8000
+#guard limits.engine.maxNodes == 1001 && limits.engine.maxArity == 1000
+#guard limits.arena.maxBodyCells == 8192 &&
+  limits.arena.maxAtom == 100000000000000000000000000000000000000
 
 def falseFirst : Cell :=
   ⟨11010, 11011, 4761/100000000000000000000000000000000000,
@@ -126,8 +130,8 @@ private def request0 : RuleRequest Bound :=
       { programVersion := 0
         operations := program.operations
         nodes := program.nodes
-        generations := Array.replicate 129 0
-        depths := Array.replicate 129 0 }
+        generations := Array.replicate 1001 0
+        depths := Array.replicate 1001 0 }
     inputs := []
     writes := chunkNodes 0 }
 
@@ -157,10 +161,14 @@ private def context (chunkIndex : Nat) (target : NodeId) :
     assumptions := []
     proposed := { node := target, fact := .nonnegative } }
 
-#guard (chunk0Schema.replay checkerInput (action 0) (context 0 (node 0)) ()).isSome
-#guard (chunk4Schema.replay checkerInput (action 4) (context 4 (node 64)) ()).isSome
-#guard (chunk7Schema.replay checkerInput (action 7) (context 7 (node 127)) ()).isSome
-#guard (chunk0Schema.replay checkerInput (action 0) (context 0 (node 16)) ()).isNone
+#guard ((batchFactSchema 0).replay checkerInput
+  (action 0) (context 0 (node 0)) ()).isSome
+#guard ((batchFactSchema 25).replay checkerInput
+  (action 25) (context 25 (node 500)) ()).isSome
+#guard ((batchFactSchema 49).replay checkerInput
+  (action 49) (context 49 (node 999)) ()).isSome
+#guard ((batchFactSchema 0).replay checkerInput
+  (action 0) (context 0 (node 20)) ()).isNone
 
 def trace? : Option (Frontend.Trace Bound) := do
   match fixture? with
@@ -169,16 +177,22 @@ def trace? : Option (Frontend.Trace Bound) := do
       Frontend.trace? fixture.session.state.engine fixture.session.arena
 
 #guard trace?.any fun trace =>
-  trace.program == program && trace.events.length == 128
+  trace.program == program && trace.events.length == 1000
 
-/-- Source-declaration-shaped arbitrary membership wrapper. -/
-theorem shard11Segment (cell : Cell) (member : cell ∈ cells11) : CellHolds cell :=
+/--
+info: 'Hex.Interval.Experiment.PntFks2Shard.cells11_checked' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms cells11_checked
+
+/-- Source-declaration-shaped arbitrary membership wrapper for the full shard. -/
+theorem shard11Full (cell : Cell) (member : cell ∈ cells11) : CellHolds cell :=
   cells11_holds cell member
 
 /--
-info: 'Hex.IntervalMathlib.PntFks2ShardConformance.shard11Segment' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: 'Hex.IntervalMathlib.PntFks2ShardConformance.shard11Full' depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs in
-#print axioms shard11Segment
+#print axioms shard11Full
 
 end Hex.IntervalMathlib.PntFks2ShardConformance

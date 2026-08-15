@@ -8,9 +8,9 @@ module
 
 public import Mathlib.Analysis.Complex.ExponentialBounds
 public import Mathlib.Data.Rat.Cast.Order
+public import Mathlib.Tactic.IntervalCases
 public import Mathlib.Tactic.NormNum
 public import HexInterval.Experiment.PntFks2Shard
-public import HexInterval.Experiment.ProofRegistry
 public import HexInterval.Experiment.OperationSemantics
 
 @[expose] public section
@@ -18,7 +18,7 @@ public import HexInterval.Experiment.OperationSemantics
 /-!
 # Checked semantics for the FKS2 shard probe
 
-One Taylor remainder theorem serves all 128 cells.  Each generated rational
+One Taylor remainder theorem serves all 1,000 cells.  Each generated rational
 leaf authenticates its source endpoints, square-root enclosure, and final
 split-exponential comparison exactly.
 -/
@@ -26,8 +26,7 @@ split-exponential comparison exactly.
 namespace Hex.Interval.Experiment.PntFks2Shard
 
 open Finset Real
-open Propagator SemanticReplay ChronologicalReplay ProofEmitter ProofRegistry
-open GenericInstanceReconstruction OperationSemantics
+open Propagator SemanticReplay OperationSemantics
 
 noncomputable def Q.value (value : Q) : ℝ := value
 
@@ -188,9 +187,8 @@ theorem cellHolds_of_check (cell : Cell) (checked : checkCell cell = true) :
     _ ≤ aq.value * cell.slo.value ^ 3 := endpoint
     _ ≤ aq.value * s ^ 3 := mul_le_mul_of_nonneg_left cubeMono aqNonnegative
 
-/-- The exact rational obligations authenticated for each source cell.  The
-square conditions retain the source's `sqrt b` enclosure checks even though
-the slab theorem itself only consumes their resulting interval. -/
+/-- The exact rational obligations authenticated for each source cell. The
+square conditions retain both source square-root endpoint checks. -/
 def CellValid (cell : Cell) : Prop :=
   (((((Q.value 0 < cell.eps.value ∧ Q.value 0 ≤ cell.slo.value) ∧
     cell.slo.value ≤ cell.shi.value) ∧
@@ -205,141 +203,38 @@ theorem check_of_valid (cell : Cell) (valid : CellValid cell) :
   simp only [checkCell, Bool.and_eq_true, qLt_iff, qLe_iff]
   simpa only [CellValid] using valid
 
-theorem cellHolds_of_valid (cell : Cell) (valid : CellValid cell) :
-    CellHolds cell := cellHolds_of_check cell (check_of_valid cell valid)
-
 set_option maxRecDepth 100000 in
-set_option maxHeartbeats 2000000 in
-theorem chunk0_valid (cell : Cell) (member : cell ∈ chunk 0) : CellValid cell := by
-  simp only [chunk, chunkSize, cells11, List.drop, List.take, List.mem_cons,
-    List.not_mem_nil, or_false] at member
-  rcases member with rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl |
-    rfl | rfl | rfl | rfl | rfl | rfl | rfl
-  all_goals
+set_option maxHeartbeats 20000000 in
+theorem chunk_valid (index : Nat) (valid : index < chunkCount)
+    (cell : Cell) (member : cell ∈ chunk index) : CellValid cell := by
+  norm_num [chunkCount] at valid
+  interval_cases index <;>
+    simp only [chunk, cellChunk, List.mem_cons, List.not_mem_nil, or_false] at member <;>
+    rcases member with rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl |
+      rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl <;>
     simp only [CellValid, qmul_value, qpow_value, qpow128_value,
-      taylorUpper_value]
+      taylorUpper_value] <;>
     norm_num [Q.value, cq128, aq]
 
-set_option maxRecDepth 100000 in
-set_option maxHeartbeats 2000000 in
-theorem chunk1_valid (cell : Cell) (member : cell ∈ chunk 1) : CellValid cell := by
-  simp only [chunk, chunkSize, cells11, List.drop, List.take, List.mem_cons,
-    List.not_mem_nil, or_false] at member
-  rcases member with rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl |
-    rfl | rfl | rfl | rfl | rfl | rfl | rfl
-  all_goals
-    simp only [CellValid, qmul_value, qpow_value, qpow128_value,
-      taylorUpper_value]
-    norm_num [Q.value, cq128, aq]
-
-set_option maxRecDepth 100000 in
-set_option maxHeartbeats 2000000 in
-theorem chunk2_valid (cell : Cell) (member : cell ∈ chunk 2) : CellValid cell := by
-  simp only [chunk, chunkSize, cells11, List.drop, List.take, List.mem_cons,
-    List.not_mem_nil, or_false] at member
-  rcases member with rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl |
-    rfl | rfl | rfl | rfl | rfl | rfl | rfl
-  all_goals
-    simp only [CellValid, qmul_value, qpow_value, qpow128_value,
-      taylorUpper_value]
-    norm_num [Q.value, cq128, aq]
-
-set_option maxRecDepth 100000 in
-set_option maxHeartbeats 2000000 in
-theorem chunk3_valid (cell : Cell) (member : cell ∈ chunk 3) : CellValid cell := by
-  simp only [chunk, chunkSize, cells11, List.drop, List.take, List.mem_cons,
-    List.not_mem_nil, or_false] at member
-  rcases member with rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl |
-    rfl | rfl | rfl | rfl | rfl | rfl | rfl
-  all_goals
-    simp only [CellValid, qmul_value, qpow_value, qpow128_value,
-      taylorUpper_value]
-    norm_num [Q.value, cq128, aq]
-
-set_option maxRecDepth 100000 in
-set_option maxHeartbeats 2000000 in
-theorem chunk4_valid (cell : Cell) (member : cell ∈ chunk 4) : CellValid cell := by
-  simp only [chunk, chunkSize, cells11, List.drop, List.take, List.mem_cons,
-    List.not_mem_nil, or_false] at member
-  rcases member with rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl |
-    rfl | rfl | rfl | rfl | rfl | rfl | rfl
-  all_goals
-    simp only [CellValid, qmul_value, qpow_value, qpow128_value,
-      taylorUpper_value]
-    norm_num [Q.value, cq128, aq]
-
-set_option maxRecDepth 100000 in
-set_option maxHeartbeats 2000000 in
-theorem chunk5_valid (cell : Cell) (member : cell ∈ chunk 5) : CellValid cell := by
-  simp only [chunk, chunkSize, cells11, List.drop, List.take, List.mem_cons,
-    List.not_mem_nil, or_false] at member
-  rcases member with rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl |
-    rfl | rfl | rfl | rfl | rfl | rfl | rfl
-  all_goals
-    simp only [CellValid, qmul_value, qpow_value, qpow128_value,
-      taylorUpper_value]
-    norm_num [Q.value, cq128, aq]
-
-set_option maxRecDepth 100000 in
-set_option maxHeartbeats 2000000 in
-theorem chunk6_valid (cell : Cell) (member : cell ∈ chunk 6) : CellValid cell := by
-  simp only [chunk, chunkSize, cells11, List.drop, List.take, List.mem_cons,
-    List.not_mem_nil, or_false] at member
-  rcases member with rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl |
-    rfl | rfl | rfl | rfl | rfl | rfl | rfl
-  all_goals
-    simp only [CellValid, qmul_value, qpow_value, qpow128_value,
-      taylorUpper_value]
-    norm_num [Q.value, cq128, aq]
-
-set_option maxRecDepth 100000 in
-set_option maxHeartbeats 2000000 in
-theorem chunk7_valid (cell : Cell) (member : cell ∈ chunk 7) : CellValid cell := by
-  simp only [chunk, chunkSize, cells11, List.drop, List.take, List.mem_cons,
-    List.not_mem_nil, or_false] at member
-  rcases member with rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl |
-    rfl | rfl | rfl | rfl | rfl | rfl | rfl
-  all_goals
-    simp only [CellValid, qmul_value, qpow_value, qpow128_value,
-      taylorUpper_value]
-    norm_num [Q.value, cq128, aq]
-
-theorem cells11_chunks :
-    cells11 = chunk 0 ++ chunk 1 ++ chunk 2 ++ chunk 3 ++
-      chunk 4 ++ chunk 5 ++ chunk 6 ++ chunk 7 := by rfl
-
-/-- Arbitrary-membership wrapper for the represented source segment. -/
-theorem cells11_valid (cell : Cell) (member : cell ∈ cells11) : CellValid cell := by
-  rw [cells11_chunks] at member
-  simp only [List.mem_append] at member
-  rcases member with ((((((member | member) | member) | member) | member) |
-    member) | member) | member
-  · exact chunk0_valid cell member
-  · exact chunk1_valid cell member
-  · exact chunk2_valid cell member
-  · exact chunk3_valid cell member
-  · exact chunk4_valid cell member
-  · exact chunk5_valid cell member
-  · exact chunk6_valid cell member
-  · exact chunk7_valid cell member
-
-/-- Exact source-shaped executable check for all 128 represented cells. -/
+/-- Exact source-shaped executable check for all 1,000 pinned cells. The fifty
+bounded kernel checks evaluate the package-owned rational predicate; no native
+evaluator or PNT+/LeanCert theorem is imported. -/
 theorem cells11_checked : cells11.all checkCell = true := by
-  exact List.all_eq_true.mpr fun cell member => check_of_valid cell (cells11_valid cell member)
+  exact List.all_eq_true.mpr fun cell member => by
+    rw [cells11, List.mem_flatMap] at member
+    obtain ⟨index, indexMember, cellMember⟩ := member
+    exact check_of_valid cell (chunk_valid index (List.mem_range.mp indexMember)
+      cell (by simpa [chunk] using cellMember))
 
-/-- Semantic wrapper consumed by indexed replay. -/
+/-- Arbitrary-membership semantic wrapper for the complete pinned shard. -/
 theorem cells11_holds (cell : Cell) (member : cell ∈ cells11) : CellHolds cell :=
-  cellHolds_of_valid cell (cells11_valid cell member)
+  cellHolds_of_check cell (List.all_eq_true.mp cells11_checked cell member)
 
-/-! ## Indexed semantic replay for the eight runtime chunks -/
+/-! ## Indexed semantic replay for the fifty runtime chunks -/
 
 def Contains : Bound → ℝ → Prop
   | .all, _ => True
   | .nonnegative, value => 0 ≤ value
-
-theorem containsMeet (left right : Bound) (value : ℝ) :
-    Contains (left.meet right) value ↔ Contains left value ∧ Contains right value := by
-  cases left <;> cases right <;> simp [Bound.meet, Contains]
 
 noncomputable def cellMargins : List ℝ := cells11.map Cell.margin
 
@@ -352,45 +247,22 @@ def batchModel : OperationSemantics.Model ℝ :=
 def operationModels : Array (OperationSemantics.Model ℝ) := #[sourceModel, batchModel]
 def semantics : Semantics Bound := OperationSemantics.semantics operationModels Contains
 
-/-- Retained for the future generic large-payload frontend fold.  Direct
-indexed replay below does not consume the meet/equality frontend bundle. -/
-def boundSchema : FactDomainSchema semantics where
-  top := fun _ => .all
-  topSound := by intros; trivial
-  proveMeet := fun _ _ previous proposed installed =>
-    if exact : installed = previous.meet proposed then
-      some
-        { proof := by
-            subst installed
-            intro valuation _
-            exact containsMeet previous proposed (valuation _) }
-    else none
-
-def laws : Laws semantics :=
-  { holdsEq := by
-      intro _ valuation left right fact _ _ values
-      change Contains fact (valuation left) ↔ Contains fact (valuation right)
-      rw [values] }
-
-def stableLaw : StableLaw semantics :=
-  OperationSemantics.stableLaw operationModels Contains
-
 private theorem marginsForall (cells : List Cell)
-    (valid : ∀ cell ∈ cells, CellValid cell) :
+    (checked : ∀ cell ∈ cells, checkCell cell = true) :
     List.Forall₂ (fun value (_ : Cell) => 0 ≤ value)
       (cells.map Cell.margin) cells := by
   induction cells with
   | nil => exact .nil
   | cons head tail induction =>
-      exact .cons (margin_nonnegative_of_check head
-        (check_of_valid head (valid head (by simp))))
+    exact .cons (margin_nonnegative_of_check head
+        (checked head (by simp)))
         (induction (by
           intro cell member
-          exact valid cell (by simp [member])))
+          exact checked cell (by simp [member])))
 
 theorem cellsMarginsNonnegative :
     List.Forall₂ (fun value (_ : Cell) => 0 ≤ value) cellMargins cells11 := by
-  exact marginsForall cells11 cells11_valid
+  exact marginsForall cells11 (List.all_eq_true.mp cells11_checked)
 
 private theorem forall₂_right_get? {relation : α → β → Prop}
     {left : List α} {right : List β} (related : List.Forall₂ relation left right)
@@ -482,37 +354,5 @@ def batchFactSchema (chunkIndex : Nat) : PackedFactSchema semantics where
           else none
         else none
     | none => none
-
-def chunk0Schema := batchFactSchema 0
-def chunk1Schema := batchFactSchema 1
-def chunk2Schema := batchFactSchema 2
-def chunk3Schema := batchFactSchema 3
-def chunk4Schema := batchFactSchema 4
-def chunk5Schema := batchFactSchema 5
-def chunk6Schema := batchFactSchema 6
-def chunk7Schema := batchFactSchema 7
-
-def sourceEmit : EmitPackage Lean.Name := { schemas := [] }
-def batchEmit : EmitPackage Lean.Name :=
-  { schemas := [
-      { key := chunk0Schema.key, handle := ``chunk0Schema },
-      { key := chunk1Schema.key, handle := ``chunk1Schema },
-      { key := chunk2Schema.key, handle := ``chunk2Schema },
-      { key := chunk3Schema.key, handle := ``chunk3Schema },
-      { key := chunk4Schema.key, handle := ``chunk4Schema },
-      { key := chunk5Schema.key, handle := ``chunk5Schema },
-      { key := chunk6Schema.key, handle := ``chunk6Schema },
-      { key := chunk7Schema.key, handle := ``chunk7Schema }] }
-
-def sourceProof : ProofRegistry.Package semantics Lean.Name :=
-  { semantic := { factSchemas := #[] }, emit := sourceEmit }
-
-def batchProof : ProofRegistry.Package semantics Lean.Name :=
-  { semantic := { factSchemas := #[chunk0Schema, chunk1Schema, chunk2Schema,
-      chunk3Schema, chunk4Schema, chunk5Schema, chunk6Schema, chunk7Schema] }
-    emit := batchEmit }
-
-def proofPackages : Array (ProofRegistry.Package semantics Lean.Name) :=
-  #[sourceProof, batchProof]
 
 end Hex.Interval.Experiment.PntFks2Shard

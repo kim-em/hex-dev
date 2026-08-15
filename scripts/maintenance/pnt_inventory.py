@@ -128,8 +128,8 @@ FKS_CELL_RE = re.compile(r"^\s*⟨")
 FKS2_PROBE_SOURCE = (
     "PrimeNumberTheoremAnd/IEANTN/FKS2Tables/Table4ExtData_11.lean"
 )
-FKS2_PROBE_PROVIDER = REPO_ROOT / "HexInterval/Experiment/PntFks2Shard.lean"
-FKS2_PROBE_CELLS = 128
+FKS2_PROBE_PROVIDER = REPO_ROOT / "HexInterval/Experiment/PntFks2ShardData.lean"
+FKS2_PROBE_CELLS = 1000
 
 
 class InventoryError(RuntimeError):
@@ -317,8 +317,8 @@ def fks_cell_rows(text: str) -> list[str]:
     ]
 
 
-def require_fks2_segment_match(source_text: str, provider_text: str) -> None:
-    """Require the retained provider table to equal pinned shard 11's prefix."""
+def require_fks2_shard_match(source_text: str, provider_text: str) -> None:
+    """Require the retained provider table to equal pinned shard 11."""
     source_rows = fks_cell_rows(source_text)
     provider_rows = fks_cell_rows(provider_text)
     if len(source_rows) < FKS2_PROBE_CELLS:
@@ -327,20 +327,20 @@ def require_fks2_segment_match(source_text: str, provider_text: str) -> None:
         )
     if len(provider_rows) != FKS2_PROBE_CELLS:
         raise InventoryError(
-            "local FKS2 probe must contain exactly "
+            "local FKS2 shard must contain exactly "
             f"{FKS2_PROBE_CELLS} cells, found {len(provider_rows)}"
         )
     for index, (source_row, provider_row) in enumerate(
             zip(source_rows[:FKS2_PROBE_CELLS], provider_rows, strict=True)):
         if source_row != provider_row:
             raise InventoryError(
-                f"local FKS2 probe differs from pinned shard 11 at cell {index}"
+                f"local FKS2 shard differs from pinned shard 11 at cell {index}"
             )
 
 
 def require_fks2_probe_match(source_root: Path) -> None:
     source_path = source_root / FKS2_PROBE_SOURCE
-    require_fks2_segment_match(
+    require_fks2_shard_match(
         source_path.read_text(encoding="utf-8"),
         FKS2_PROBE_PROVIDER.read_text(encoding="utf-8"),
     )
