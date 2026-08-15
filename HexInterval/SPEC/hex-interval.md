@@ -3564,6 +3564,30 @@ Mathlib companion validates its entries with a general logarithm Taylor
 remainder theorem, but the runtime does not yet provide arbitrary-rational
 range reduction, series construction, or precision refinement.
 
+The first precision-indexed log provider moves beyond an opaque six-decimal
+table fact. Its program contains separate exact-input and precision-request
+nodes. The same Mathlib-free package accepts requests for 20 or 50 decimal
+digits and selects 22 or 53 terms respectively. Each replay body authenticates
+the requested precision, term count, both rational endpoints, and the exact
+source fact for `2`. The proof companion instantiates Mathlib's two-sided
+partial-sum bounds for
+`1/2 * log ((1+x)/(1-x))` at `x = 1/3`, where the logarithm argument reduces
+exactly to `2`. The certificate's recorded term count is the count supplied to
+those bounds, so a certificate recording too few terms cannot prove its own
+endpoints. A finite partial sum gives the lower bound and an explicit dominated
+geometric tail gives the upper bound. Exact rational normalization proves a
+strict interval of width `10^(-50)` around `Real.log 2`, and generic chronology
+quotation plus `ProofFrontend` produces the ordinary theorem. Structurally
+valid mutations with 52 rather than 53 terms, a changed endpoint, a mismatched
+precision, or a non-`2` source assumption are rejected by semantic replay.
+
+This remains a two-entry experimental provider, not a persistent table
+service. The runtime selects already recorded rational certificates rather
+than computing arbitrary endpoints, and there is no arbitrary rational input
+reduction, adaptive term search, cross-request cache, serialized table,
+257-entry batch, ordering proof, or performance result. Those remain part of
+the full table-building acceptance target below.
+
 The table-building acceptance program constructs enclosures for
 
 `Real.log (1 + (i : ℝ) / 256)`, for every `i : ℕ` with `i ≤ 256`,

@@ -1664,6 +1664,18 @@ Consequently this probe does not yet satisfy the listed 80-bit enclosure,
 computed reduction, 1,000-bit package-owned constant, provider-selection, or
 precision-refinement requirements.
 
+The bounded precision-indexed logarithm experiment supplies both 20- and
+50-decimal requests for `Real.log 2`. The requests select different term
+counts, 22 and 53, and replay authenticates the precision, term count, exact
+source input, and rational output window. The Mathlib companion derives the
+window from its recorded term count using the two-sided odd-power partial-sum
+bounds at `1/3` and a checked geometric tail bound; the 50-decimal request
+closes an ordinary strict enclosure of width `10^(-50)` through the generic
+proof frontend. Insufficient-term,
+wrong-endpoint, wrong-precision, and wrong-source mutations reject. This does
+not yet provide arbitrary log arguments, adaptive runtime endpoint generation,
+the ordered 257-entry table, persistence, caching, or performance evidence.
+
 ### PNT+ compatibility
 
 The committed compatibility subset is `D8` unless marked `D9`:
