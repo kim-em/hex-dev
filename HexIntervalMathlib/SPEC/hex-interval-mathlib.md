@@ -114,6 +114,40 @@ and total-zero cases exactly, and deliberately returns whole for every other
 nonempty shape. No tightness converse or bounded nonsingleton quotient is
 claimed.
 
+`HexIntervalMathlib.Experiment.PntLogRational` is a fixed-source acceptance
+provider rather than public interval arithmetic. It proves the original
+strength of seventeen pinned PNT+ direct-log declarations over fifteen
+rational inputs from an authenticated dyadic reduction, eight-term atanh sum,
+geometric tail, and checked `log 2` bounds. The runtime accepts exact source
+rows only; arbitrary rational inputs, generated precision/endpoints, table
+persistence, and every admitted LeanCert-owned public bound remain outside its
+claim.
+
+`HexIntervalMathlib.Experiment.PntExpPoint` proves the nine remaining pinned
+exponential statements from one rational Taylor/power theorem. Each source row
+fixes a signed rational input, a step in `[-1, 1]`, a positive natural
+multiplier, one checked side of a fourteen-term Taylor enclosure, and the final
+rational cut. The result preserves the source statements and does not import a
+LeanCert theorem. It is not a public arbitrary-input exponential operation.
+
+`HexIntervalMathlib.Experiment.PntNestedLogTwo` proves the two pinned
+`log (log 2)` statements through two chronological checked log events. The
+first establishes a strict positive two-sided `log 2` enclosure; the second
+consumes both endpoints in fourteen-term rational remainder checks. The
+ordinary replay theorem is strictly stronger than both source statements, and
+zero-touching or bypassed inner facts reject.
+
+`HexIntervalMathlib.Experiment.PntPiPoint` interprets a provider-agnostic
+constant operation as `Real.pi`, authenticates the exact `315 / 100` cut, and
+uses the axiom-clean `Real.pi_lt_d2` theorem from `Analysis.Real.Pi.Bounds`.
+It does not import Mathlib's Chudnovsky development; the latter's
+`proof_wanted` sum-to-`π⁻¹` identity is not migration evidence.
+
+Together with the other source-pinned providers, these slices cover every
+actual pinned `LogTables.lean` tactic site after localized rewrites or stronger
+results. They do not provide LeanCert API parity, arbitrary input/precision
+support, persistent tables, or table-scale performance evidence.
+
 ## Conformance
 
 `HexIntervalMathlib.IntervalConformance` pins both directions of intersection
@@ -134,3 +168,19 @@ set-image converse is exported.
 The Mathlib-free companion tests separately pin representative strict, closed,
 unbounded, and empty shapes together with pre-allocation resource refusal. The
 semantic theorem itself is exhaustive over the complete cut language.
+`HexIntervalMathlib.PntLogRationalConformance` additionally runs all fifteen
+fixed rows and sends the representative large-shift `32e12` certificate through
+generic planning, payload authentication, chronological replay, and the proof
+frontend, with source, reduction, term-count, cross-row, window, and false-cut
+rejection guards.
+`HexIntervalMathlib.PntExpPointConformance` runs all nine fixed exponential
+rows and sends the tight `exp 20` certificate through generic planning,
+payload authentication, chronological replay, and the proof frontend. It also
+pins source, Taylor-step, natural-power, term-count, cross-row, and false-cut
+rejection.
+`HexIntervalMathlib.PntNestedLogTwoConformance` pins the two-event dependency
+chain, positive-domain rejection, both exact source wrappers, and generic
+proof-frontend closure of the stronger two-sided theorem.
+`HexIntervalMathlib.PntPiPointConformance` pins the exact constant certificate,
+wrong-source and false-endpoint rejection, the ordinary π-bound axiom surface,
+and generic proof-frontend closure.
