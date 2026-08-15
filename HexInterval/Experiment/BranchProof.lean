@@ -69,11 +69,7 @@ def sameParent [DecidableEq Fact] (source : BranchTree.Leaf Fact PolicyState)
     parent.target == source.input.target
 
 def samePlan [DecidableEq Fact] (left right : Propagator.Policy.SplitPlan Fact) : Bool :=
-  left.scope == right.scope && left.suggestion == right.suggestion &&
-    left.origin == right.origin && left.node == right.node &&
-    left.version == right.version && left.fact == right.fact &&
-    left.point == right.point && left.reason == right.reason &&
-    left.source == right.source
+  left == right
 
 def sameChild [DecidableEq Fact]
     (scope : Propagator.Policy.ScopeId) (depth : Nat)

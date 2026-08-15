@@ -278,6 +278,15 @@ example : True := by
     if (← observing? <| BranchProof.emit postProofLimits trueEmitter changed
         (mkConst ``True)).isSome then
       throwError "interval post-run split mutation: changed plan was accepted"
+    let wrongVersion := { children.plan with version := children.plan.version + 1 }
+    let changedVersionChildren := { children with plan := wrongVersion }
+    let changedVersion :=
+      { tree with
+        nodes := tree.nodes.set! 0
+          (.split source result changedVersionChildren left right) }
+    if (← observing? <| BranchProof.emit postProofLimits trueEmitter changedVersion
+        (mkConst ``True)).isSome then
+      throwError "interval post-run split mutation: changed plan version was accepted"
   trivial
 
 end Hex.Interval.NestedBranchConformance
