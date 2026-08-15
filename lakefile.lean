@@ -332,6 +332,21 @@ lean_lib HexIntervalExperiment where
     `HexInterval.Experiment.PntTable12Log,
     `HexInterval.Experiment.PntFks2ShardData,
     `HexInterval.Experiment.PntFks2Shard,
+    `HexInterval.Experiment.PntFks2FamilyData00,
+    `HexInterval.Experiment.PntFks2FamilyData01,
+    `HexInterval.Experiment.PntFks2FamilyData02,
+    `HexInterval.Experiment.PntFks2FamilyData03,
+    `HexInterval.Experiment.PntFks2FamilyData04,
+    `HexInterval.Experiment.PntFks2FamilyData05,
+    `HexInterval.Experiment.PntFks2FamilyData06,
+    `HexInterval.Experiment.PntFks2FamilyData07,
+    `HexInterval.Experiment.PntFks2FamilyData08,
+    `HexInterval.Experiment.PntFks2FamilyData09,
+    `HexInterval.Experiment.PntFks2FamilyData10,
+    `HexInterval.Experiment.PntFks2FamilyData12,
+    `HexInterval.Experiment.PntFks2FamilyData13,
+    `HexInterval.Experiment.PntFks2FamilyData,
+    `HexInterval.Experiment.PntFks2Family,
     `HexInterval.Experiment.CosBillion,
     `HexInterval.Experiment.LogTablePrecision,
     `HexInterval.Experiment.IntegralCanary,
@@ -439,6 +454,30 @@ lean_lib HexConformance where
 
     ++ #[`HexInterval.MinMaxConformance,
       `HexIntervalMathlib.MinMaxConformance].map Glob.one
+
+-- The expensive complete-family Mathlib proofs are owned only by this
+-- non-default library. They are excluded from both merge-gating
+-- `HexIntervalMathlibExperiment` and `HexConformance`.
+lean_lib HexIntervalPntFks2Local where
+  globs := #[`HexIntervalMathlib.Experiment.PntFks2FamilyProof00,
+    `HexIntervalMathlib.Experiment.PntFks2FamilyProof01,
+    `HexIntervalMathlib.Experiment.PntFks2FamilyProof02,
+    `HexIntervalMathlib.Experiment.PntFks2FamilyProof03,
+    `HexIntervalMathlib.Experiment.PntFks2FamilyProof04,
+    `HexIntervalMathlib.Experiment.PntFks2FamilyProof05,
+    `HexIntervalMathlib.Experiment.PntFks2FamilyProof06,
+    `HexIntervalMathlib.Experiment.PntFks2FamilyProof07,
+    `HexIntervalMathlib.Experiment.PntFks2FamilyProof08,
+    `HexIntervalMathlib.Experiment.PntFks2FamilyProof09,
+    `HexIntervalMathlib.Experiment.PntFks2FamilyProof10,
+    `HexIntervalMathlib.Experiment.PntFks2FamilyProof12,
+    `HexIntervalMathlib.Experiment.PntFks2FamilyProof13,
+    `HexIntervalMathlib.Experiment.PntFks2Family].map Glob.one
+
+-- The local executable owns the complete runtime and guarded-axiom driver.
+lean_exe hex_interval_pnt_fks2_local where
+  srcDir := "conformance"
+  root := `HexIntervalMathlib.PntFks2FamilyConformance
 
 -- Public umbrellas intentionally contain only the supported API. Executable
 -- examples and regression tests are compiled through this separate target so

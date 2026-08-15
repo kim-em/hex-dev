@@ -3954,7 +3954,7 @@ the mutated body and a kernel theorem proves the proposed inequality false.
 These are still pinned fixed-row certificates, not a general logarithm or batch
 API.
 
-#### Generated FKS2 shard scale probe
+#### Generated FKS2 batch profiles
 
 The generated-table scale probe carries all 1,000 cells of pinned PNT+
 `Table4ExtData_11.lean`, from `b = 11010` through `b' = 12050`. The final ten
@@ -3972,11 +3972,45 @@ payload cells under an 8,192-cell cap, 65,536 policy traversals, and payload
 atoms at most `10^38`. A failed cell reports its source `b` coordinate before
 payload allocation and does not trigger a precision retry.
 
-This is a bounded batching experiment, not a general FKS2 table service. It
-covers this exact shard declaration but not the other 12,590 family cells.
-Direct indexed schema replay is retained for representative chunks; proof
-registry emission metadata, a generic large-payload `ProofFrontend` fold, and
-a full-family production profile remain outside this acceptance fixture.
+The merge-gating fixture remains a bounded batching experiment, not a general
+FKS2 table service. Direct indexed schema replay is retained for representative
+chunks; proof registry emission metadata and a generic large-payload
+`ProofFrontend` fold remain outside this acceptance fixture.
+
+The separate full-family local/release profile extends the same provider to all
+13,590 tuples in the fourteen pinned source shards. Thirteen generated data and
+proof modules complement the retained shard-11 module. Each generated kernel
+wrapper proves one complete source shard through ten- or twenty-cell proof
+chunks; a fourteen-way fold then exposes `allCells_checked` and arbitrary
+membership without one theorem per literal. Every source `cells_*_checked`
+declaration therefore has a source-shaped package-owned replacement.
+This substitutes the package-owned `checkCell` for upstream
+`Table4ExtCore.checkCell`; it requires a localized PNT+ rewrite and is not a
+literal reproof or LeanCert-compatible API.
+
+Runtime uses 680 actions of at most twenty cells over one 13,590-argument
+operation. Each payload contains one shard identifier and at most 160 cell
+atoms. The explicit envelope permits 14,000 nodes and accepted facts, 700
+rules/applications/actions and payload entries, 2,048 registry entries, twenty
+candidates and drafts per reply, 161 cells per draft, and 110,000 aggregate
+payload cells; the measured run retains 109,400. Stable diagnostics encode the
+pair `(shard, b)` with radix 100,000. Cross-shard payload substitution fails
+closed, and a false shard-00 cell reports `(0, 10)` before allocation with no
+retry.
+
+The complete campaign is the non-default `hex_interval_pnt_fks2_local` Lake
+target, invoked fail-closed by
+`scripts/conformance/run_pnt_fks2_family.sh`. The committed Mathlib-free family
+data and checker remain in merge-gating `HexIntervalExperiment`; the thirteen
+full-family Mathlib proof wrappers, aggregate proof, and complete conformance
+driver belong only to non-default `HexIntervalPntFks2Local` and the local
+executable, not `HexIntervalMathlibExperiment` or `HexConformance`. On the
+shared 96-core development host, eleven uncached proof shards plus the
+aggregate built in 226 seconds; the eleven simultaneous Lean processes peaked
+at roughly 42 GiB in aggregate. Separately, shard 00 and shard 13 took 183 and
+101 seconds. The full 680-action runtime and 13,590-event trace then elaborated
+in 122 seconds. These measurements justify the separate local/release profile
+and are observations, not stable budgets.
 
 #### Certified logarithm tables
 
@@ -4328,6 +4362,11 @@ their declared cost inside a scheduler bound.
 - `HexInterval/Trace.lean`: diagnostics and machine-readable telemetry.
 - `conformance/HexInterval/{Conformance,MinMaxConformance,EmitFixtures}.lean`:
   Lean-only checks and oracle fixtures.
+- `HexInterval/Experiment/PntFks2FamilyData*.lean` and
+  `HexInterval/Experiment/PntFks2Family.lean`: committed source-pinned family
+  data and the Mathlib-free complete-family checker.
+- `scripts/conformance/run_pnt_fks2_family.sh`: fail-closed entry point for the
+  non-default complete-family proof and conformance profile.
 - `bench/HexInterval/Bench.lean`: Mathlib-free interval and scheduler
   benchmarks.
 

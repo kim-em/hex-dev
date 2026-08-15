@@ -20,6 +20,7 @@ BUILD_ONLY_LIBS = {
     "HexMvPolyMathlibProofProbe",
     "HexIntervalExperiment",
     "HexIntervalMathlibExperiment",
+    "HexIntervalPntFks2Local",
     "HexIntervalReplayProbe",
     "HexIntervalMathlibReplayProbe",
     "HexRealRootsMathlibReplayProbe",

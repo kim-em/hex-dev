@@ -130,6 +130,12 @@ FKS2_PROBE_SOURCE = (
 )
 FKS2_PROBE_PROVIDER = REPO_ROOT / "HexInterval/Experiment/PntFks2ShardData.lean"
 FKS2_PROBE_CELLS = 1000
+FKS2_FAMILY_PROVIDER = REPO_ROOT / "HexInterval/Experiment/PntFks2FamilyData.lean"
+FKS2_FAMILY_DATA = REPO_ROOT / "HexInterval/Experiment"
+FKS2_SHARD_COUNTS = tuple([1000] * 13 + [590])
+FKS2_DIGEST_RE = re.compile(
+    r'⟨(?P<shard>\d+),\s*(?P<cells>\d+),\s*"(?P<digest>[0-9a-f]{64})"⟩'
+)
 
 
 class InventoryError(RuntimeError):
@@ -344,6 +350,55 @@ def require_fks2_probe_match(source_root: Path) -> None:
         source_path.read_text(encoding="utf-8"),
         FKS2_PROBE_PROVIDER.read_text(encoding="utf-8"),
     )
+
+
+def fks_rows_digest(rows: list[str]) -> str:
+    """Hash the exact normalized tuple stream used by the generated provider."""
+    return hashlib.sha256(("\n".join(rows) + "\n").encode()).hexdigest()
+
+
+def require_fks2_family_match(source_root: Path) -> None:
+    """Require every generated shard and digest to match the pinned family."""
+    records_text = FKS2_FAMILY_PROVIDER.read_text(encoding="utf-8")
+    records = {
+        int(match.group("shard")): (
+            int(match.group("cells")), match.group("digest")
+        )
+        for match in FKS2_DIGEST_RE.finditer(records_text)
+    }
+    if len(records) != len(FKS2_SHARD_COUNTS):
+        raise InventoryError(
+            f"local FKS2 family must record 14 shard digests, found {len(records)}"
+        )
+    for shard, expected_count in enumerate(FKS2_SHARD_COUNTS):
+        source_path = source_root / (
+            "PrimeNumberTheoremAnd/IEANTN/FKS2Tables/"
+            f"Table4ExtData_{shard:02}.lean"
+        )
+        provider_path = (
+            FKS2_PROBE_PROVIDER if shard == 11 else
+            FKS2_FAMILY_DATA / f"PntFks2FamilyData{shard:02}.lean"
+        )
+        source_rows = fks_cell_rows(source_path.read_text(encoding="utf-8"))
+        provider_rows = fks_cell_rows(provider_path.read_text(encoding="utf-8"))
+        if len(source_rows) != expected_count or len(provider_rows) != expected_count:
+            raise InventoryError(
+                f"FKS2 shard {shard:02} count mismatch: source {len(source_rows)}, "
+                f"provider {len(provider_rows)}, expected {expected_count}"
+            )
+        for index, (source_row, provider_row) in enumerate(
+                zip(source_rows, provider_rows, strict=True)):
+            if source_row != provider_row:
+                raise InventoryError(
+                    f"local FKS2 family differs from pinned shard {shard:02} "
+                    f"at cell {index}"
+                )
+        recorded_count, recorded_digest = records[shard]
+        expected_digest = fks_rows_digest(source_rows)
+        if recorded_count != expected_count or recorded_digest != expected_digest:
+            raise InventoryError(
+                f"local FKS2 shard {shard:02} digest record does not match source"
+            )
 
 
 def source_digest(sources: Iterable[Source]) -> str:
@@ -1146,6 +1201,7 @@ def main() -> int:
         source_root = args.source.resolve()
         meta, records = generate(source_root)
         require_fks2_probe_match(source_root)
+        require_fks2_family_match(source_root)
         if args.refresh:
             carried = 0
             removed = 0

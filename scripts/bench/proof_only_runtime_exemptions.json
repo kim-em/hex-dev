@@ -388,5 +388,11 @@
     "baseline_blob": "6dd80771ae2212333b2a9b925b52056e0037ff56",
     "current_blob": "eda9d3d5a14830576c3a07734d2920bfb5d73242",
     "reason": "Additionally registers the generated Mathlib-free 1,000-cell FKS2 shard-11 data module on top of the retained BKLNW, regularization, and public interval registrations; the factorization service target and executable dependency graph are unchanged."
+  },
+  {
+    "path": "lakefile.lean",
+    "baseline_blob": "6dd80771ae2212333b2a9b925b52056e0037ff56",
+    "current_blob": "66c476924f3d2d44968150b5d86e23f5dcc35125",
+    "reason": "Additionally registers the generated Mathlib-free complete FKS2 family in the merge-gated experiment plus a dedicated non-default proof library and local conformance executable on top of the reviewed shard-11 and BKLNW registrations; the expensive Mathlib proof wrappers and aggregate are excluded from HexIntervalMathlibExperiment and HexConformance, and the factorization service target and executable dependency graph are unchanged."
   }
 ]
