@@ -114,6 +114,15 @@ and total-zero cases exactly, and deliberately returns whole for every other
 nonempty shape. No tightness converse or bounded nonsingleton quotient is
 claimed.
 
+`HexIntervalMathlib.Experiment.PntLogRational` is a fixed-source acceptance
+provider rather than public interval arithmetic. It proves the original
+strength of seventeen pinned PNT+ direct-log declarations over fifteen
+rational inputs from an authenticated dyadic reduction, eight-term atanh sum,
+geometric tail, and checked `log 2` bounds. The runtime accepts exact source
+rows only; arbitrary rational inputs, generated precision/endpoints, table
+persistence, and every admitted LeanCert-owned public bound remain outside its
+claim.
+
 ## Conformance
 
 `HexIntervalMathlib.IntervalConformance` pins both directions of intersection
@@ -134,3 +143,8 @@ set-image converse is exported.
 The Mathlib-free companion tests separately pin representative strict, closed,
 unbounded, and empty shapes together with pre-allocation resource refusal. The
 semantic theorem itself is exhaustive over the complete cut language.
+`HexIntervalMathlib.PntLogRationalConformance` additionally runs all fifteen
+fixed rows and sends the representative large-shift `32e12` certificate through
+generic planning, payload authentication, chronological replay, and the proof
+frontend, with source, reduction, term-count, cross-row, window, and false-cut
+rejection guards.

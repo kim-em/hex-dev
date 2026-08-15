@@ -4300,6 +4300,24 @@ sites after localized rewrites.  It is not a general logarithm rule or a claim
 about all of `LogTables.lean`: arbitrary inputs, requested precision, generated
 endpoints, caching, persistence, and batch-performance evidence remain future.
 
+The rational-logarithm companion applies the same proof architecture to the
+largest coherent remaining direct-log family: fifteen exact positive rational
+inputs supporting seventeen pinned source declarations. The Mathlib-free
+runtime authenticates the source coordinate, numerator and denominator,
+dyadic shift, reduced atanh parameter, eight-term count, scale, and both
+endpoints. The semantic theorem checks the reduction identity, finite lower
+sum, geometric tail, and `log 2` contribution, then exports every source
+statement at its original strength. All fifteen rows execute through the
+bounded package, while the tight large-shift `32e12` row traverses generic
+chronology and `ProofFrontend`.
+
+Wrong inputs, shifts, term counts, coordinates, windows, and a mathematically
+false endpoint fail closed. Acceptance is exact source-row lookup plus a
+reusable kernel theorem, not arbitrary-rational runtime range reduction,
+endpoint generation, or a LeanCert compatibility layer. Twelve actual
+`LogTables.lean` tactic sites remain pending in other provider families; this
+slice does not import or rely on any admitted LeanCert-owned public bound.
+
 The negative-exponential table provider covers the complete 79-declaration
 Table-10 block `exp_neg_10_lt` through `exp_neg_200_lt` in the same pinned
 source.  Every argument is authenticated as an integer number of sixths.  One
@@ -4649,6 +4667,10 @@ their declared cost inside a scheduler bound.
   natural-number log-table data, dyadic-reduction authentication, and generic
   package planning.  Its real semantics and source-shaped theorems live in the
   Mathlib companion.
+- `HexInterval/Experiment/PntLogRational.lean`: bounded source-pinned rational
+  log-table data, exact reduction and endpoint authentication, and generic
+  package planning. Its ordinary-kernel atanh proof and seventeen
+  source-shaped declarations live in the Mathlib companion.
 - `HexInterval/Experiment/PntExpNegative.lean`: the bounded 79-row negative
   exponential source table, authenticated sixth-power certificates, and exact
   endpoint comparisons.  Real Taylor and power semantics live in the Mathlib
