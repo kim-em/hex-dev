@@ -230,7 +230,7 @@
   {
     "path": "lakefile.lean",
     "baseline_blob": "6dd80771ae2212333b2a9b925b52056e0037ff56",
-    "current_blob": "7290f6737c31d26bf0a72c5b93f0e63e0608055e",
+    "current_blob": "319283a50eba7d760cd305280e67ea2593dd8c04",
     "reason": "Additionally registers the isolated Mathlib-free package policy-feature experiment and its conformance module; the factorization service target and executable dependency graph are unchanged."
   },
   {
