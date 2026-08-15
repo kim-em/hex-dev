@@ -21,9 +21,11 @@ for facts, functions, operations, or package families.
 
 Compatible feature data changes ordering only.  A decorator/scorer limit
 mismatch or oversized learned score fails closed with no selection.  A
-successful choice is the exact engine-owned `OfferView` retained by the
-decorator, so the ordinary policy session remains the authority for freshness
-and transition validity.
+For a view returned by the decorator, a successful choice is the exact
+engine-owned `OfferView` which that decorator retained.  The public view type
+also admits hand-built test data; scoring it does not authenticate feature
+provenance or its base view.  In either case the ordinary policy session
+remains the authority for freshness and transition validity.
 -/
 
 namespace Hex.Interval.Experiment.FeaturePolicy
@@ -197,8 +199,10 @@ def better (candidate current : Ranked) : Bool :=
       (current.score < candidate.score ||
         (current.score == candidate.score && current.offer.age < candidate.offer.age)))
 
-/-- Rank a successfully decorated view.  The returned value is always the
-exact `FeaturedOffer.base`; ordinary engine revalidation remains authoritative.
+/-- Rank a bounded, aligned featured view.  Only `PolicyFeature.decorate`
+authenticates provider provenance; this function deliberately also accepts
+hand-built experiment data.  The returned value is always the exact
+`FeaturedOffer.base`, and ordinary engine revalidation remains authoritative.
 Unknown and missing configured features contribute zero. -/
 def choose? (limits : Limits) (state : AdaptivePolicy.State) (plan : Plan)
     (view : PolicyFeature.View Fact) : Except Error (Option OfferView) := do

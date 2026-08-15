@@ -244,13 +244,15 @@ private def scoredView (first second : OfferView) (firstScore secondScore : Int)
     metrics := { providerChecks := 0, emittedFeatures := 2 } }
 
 /- With no configured feature terms and learned scores inside the explicit
-bound, adaptive ordering is preserved exactly. -/
+bound, the result equals the wrapped adaptive policy's result exactly. -/
 #guard
   match do
     let plan <- planOrError emptyPlan?
-    FeaturePolicy.choose? scoreLimits (AdaptivePolicy.State.initial {}) plan
-      (scoredView (invokeOffer 0) { invokeOffer 1 with age := 1 } 20 (-20)) with
-  | .ok (some selected) => selected.id == (invokeOffer 1).id
+    let state := AdaptivePolicy.State.initial {}
+    let featured := scoredView (invokeOffer 0) { invokeOffer 1 with age := 1 } 20 (-20)
+    let selected <- FeaturePolicy.choose? scoreLimits state plan featured
+    pure (selected, AdaptivePolicy.choose? state featured.base.offers) with
+  | .ok (selected, adaptive) => selected == adaptive
   | _ => false
 
 /- Feature score cannot cross the adaptive fairness tier. -/
@@ -341,6 +343,20 @@ private def misaligned : PolicyFeature.View Nat :=
   match do
     let plan <- planOrError widthPlan?
     FeaturePolicy.choose? scoreLimits (AdaptivePolicy.State.initial {}) plan misaligned with
+  | .error .offerAlignment => true
+  | _ => false
+
+/- Alignment compares every field of each retained offer, not only its engine
+identity or array position. -/
+private def changedOffer : PolicyFeature.View Nat :=
+  { base := view #[invokeOffer 0]
+    offers := #[{ base := { invokeOffer 0 with age := 1 }, features := #[] }]
+    metrics := { providerChecks := 0, emittedFeatures := 0 } }
+
+#guard
+  match do
+    let plan <- planOrError emptyPlan?
+    FeaturePolicy.choose? scoreLimits (AdaptivePolicy.State.initial {}) plan changedOffer with
   | .error .offerAlignment => true
   | _ => false
 
