@@ -447,7 +447,8 @@ private theorem upperContains_neg (lower : Lower) (x : ℝ) :
         rw [toReal_neg]
         constructor <;> intro bound <;> linarith
 
-private theorem rawContains_neg (raw : Raw) (x : ℝ) :
+/-- Raw negation contains `x` exactly when its source contains `-x`. -/
+theorem contains_negUnchecked (raw : Raw) (x : ℝ) :
     raw.negUnchecked.Contains x ↔ raw.Contains (-x) := by
   cases raw with
   | empty => simp [Raw.negUnchecked, Raw.Contains]
@@ -469,6 +470,6 @@ theorem contains_negWithin {limit : EndpointLimit} {input result : Hex.Interval}
     result.Contains x ↔ input.Contains (-x) := by
   simp only [Contains]
   rw [view_negWithin_ready checked, contains_normalize]
-  exact rawContains_neg input.view x
+  exact contains_negUnchecked input.view x
 
 end Hex.Interval

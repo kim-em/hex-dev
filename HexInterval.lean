@@ -16,9 +16,9 @@ data, propagation search, and replayable derivations.
 
 The public implementation exposes canonical exact intervals through a sealed
 representation, resource-safe smart constructors, and resource-checked
-intersection, hull, negation, addition, subtraction, minimum, and maximum. A separate arithmetic
-resource layer preflights product growth without yet exposing interval
-multiplication. Raw cuts remain
+intersection, hull, negation, addition, subtraction, minimum, maximum, and
+absolute value. A separate arithmetic resource layer preflights product growth
+without yet exposing interval multiplication. Raw cuts remain
 visible as the explicit decoder and inspection boundary; D2 propagation and
 replay experiments still live outside this supported umbrella.
 -/

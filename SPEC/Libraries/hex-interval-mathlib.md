@@ -7,9 +7,10 @@ theorems for interval operations and propagators. It depends on Mathlib and
 
 The current supported surface interprets public canonical intervals over `ℝ`
 and proves exact semantics for successful resource-checked intersection, hull,
-negation, addition, subtraction, minimum, and maximum. Propagator, provider, replay, and tactic modules remain experiments
-and are not re-exported by the public umbrella. The user-facing tactic contract
-below is the release target, not a claim that the tactic is already supported.
+negation, addition, subtraction, minimum, maximum, and absolute value.
+Propagator, provider, replay, and tactic modules remain experiments and are not
+re-exported by the public umbrella. The user-facing tactic contract below is
+the release target, not a claim that the tactic is already supported.
 
 The tactic proves bounds for ordinary Lean expressions over `ℝ`. It reads
 bounds from the local context, reifies shared expressions to an immutable
