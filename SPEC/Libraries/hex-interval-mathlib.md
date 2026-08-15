@@ -1130,8 +1130,8 @@ powers, interval endpoints, or a package-owned Taylor remainder. Those remain
 D7/D8 acceptance work; this fixture establishes the large-negative
 range-reduction and reusable-tail interfaces without overclaiming them.
 
-The coordinate-aware Table 12 probe is likewise a bounded acceptance fixture,
-not a completed family migration. At PNT+ commit
+The coordinate-aware Table 12 implementation is a bounded acceptance fixture
+that completes this family migration. At PNT+ commit
 `21998bb6196b56789f72a52656a781a75e134eb0`, the exact declaration is
 `BKLNW.table_12_check (b Cb1 Cb2 Cb3 Cb4 Cb5 c C M : ℝ)` with a hypothesis
 that the nine-tuple belongs to `table_12`; its conclusion is the five-way
@@ -1208,12 +1208,29 @@ row-25 theorem this establishes all 120 ordinary leaves. The fold elaborates
 all 115 closures, and first, middle, and last typed `Evidence` declarations
 also force representative emitted proof terms through the kernel.
 
-Only the ten logarithmic cells remain. Completing the generated family still
-requires checked brackets for both logarithms and a wrapper that maps arbitrary
-pinned `table_12` membership to the matching ordinary or logarithmic
-certificate. The 130-cell family stays `pending`; the exact 120-leaf ordinary
-tactic site has complete numerical coverage, while the two five-leaf
-logarithmic tactic records remain pending.
+The final two certificates cover the ten logarithmic cells. Exact inputs
+`5e10` and `32e12` are converted to checked windows
+`[24.6352888, 24.6352889]` and `[31.0967570, 31.0967571]`. A finite Mercator
+`log (1 - x)` series remainder at `x = 4/5` proves the needed `log 5` enclosure;
+checked `log 2`
+bounds and the exact identities `log (5e10) = 10 log 2 + 11 log 5` and
+`log (32e12) = 17 log 2 + 12 log 5` supply the two large logarithms. Fractional
+range reduction about floors 24 and 31 then checks the exponential terms. The
+two row schemas consume those exact window facts as replay assumptions, so the
+logarithm dependency is load-bearing.
+
+Four provider actions install twelve chronological facts: two log windows and
+ten coordinate cuts. One generic frontend fold closes every logarithmic target,
+with typed first/last evidence guards. A copied 26-tuple source list and kernel
+correspondence theorem check the exact interleaving of ordinary, corrected
+row-25, and logarithmic certificates. The final wrapper maps arbitrary pinned
+membership in the copied 26-tuple source list to its certificate and returns
+the five source inequalities, establishing honest 130/130 coverage. A zero first-cell cut for
+the `log (5e10)` row fails with coordinate diagnostic `401`, emits no payload,
+is rejected by the replay decoder, and is separately proved false. The family
+and all three Table 12 tactic records are therefore accepted after rewrite.
+This remains a fixed-source acceptance table, not a general-purpose logarithm
+or production batching interface.
 
 Refreshing an upstream pin must regenerate and review the manifest. The
 inventory prevents blind spots; it does not make exact-source compatibility a
