@@ -3811,18 +3811,23 @@ Its package-owned table gives checked eight-decimal upper bounds for
 `2^(1/k - 1/3)`, `4 ≤ k ≤ 21`; each decimal follows from the checked
 20-digit `log 2` series window and an ordinary exponential remainder theorem.
 The reusable fold handles `k = 4..20` separately and uses the `k = 21` base
-for the authenticated remaining cardinality. The checker pins the source
-limit/endpoint pair, split coordinates, table denominator, cardinality, and
-the complete rational inequality. Cross-row replay and mutations of every
-structural class reject, and an endpoint-at-one mutation is independently
-proved false. For these fixed records the declared observation budget is
+for the authenticated remaining cardinality. Runtime acceptance authenticates
+the exact source-row limit/endpoint lookup together with the split coordinates,
+table denominator, and cardinality. Its Boolean validity test also evaluates
+the complete all-natural inequality for that fixed row; the kernel soundness
+theorem consumes the corresponding proposition to prove the rational bound.
+Cross-row replay and reachable source/metadata mutations reject, and an
+endpoint-at-one mutation is independently proved false; the mutation suite
+does not claim to isolate the final inequality conjunct because exact row
+lookup already pins its endpoint. For these fixed records the declared
+observation budget is
 `18M`, matching the 18 table bases raised to the selected limit, and the
 payload atom bound is raised only to the selected source numerator (the
 `M = 289` endpoint is the largest). These are explicit per-request bounds,
 not a claim of input-independent constant work.
 
-The same direct-interface migration now also covers the 22 (eleven pairs, not
-the stale count twenty) `a2_*_exp_lower/upper` declarations at arguments 20,
+The same direct-interface migration covers the 22 declarations (eleven
+lower/upper pairs) `a2_*_exp_lower/upper` at arguments 20,
 25, 30, 35, 40, 43, 100, 150, 200, 250, and 300. One parameterized certificate
 authenticates the exact source row, logarithmic floor, lower and upper target,
 twelve-decimal base-table scale, explicit band through 63, and any tail from
@@ -3832,8 +3837,9 @@ and bounds the high-row tail by monotonicity. Generic planning and replay emit
 one two-sided window; cross-row and structural mutations reject, while false
 lower and upper endpoint mutations have independent ordinary refutations.
 
-Consequently all eleven power aliases and all 22 exponential aliases actually
-used by pinned `BKLNW_a2_bounds.lean` have ordinary-kernel Hex replacements.
+Consequently all eleven power declarations and all 22 exponential declarations
+actually used by pinned `BKLNW_a2_bounds.lean` have ordinary-kernel Hex
+replacements.
 The inventory classifies that imported role as accepted after a localized PNT+
 rewrite, not as LeanCert namespace or drop-in API compatibility. This remains
 a fixed-source acceptance provider: arbitrary arguments, caller-supplied base

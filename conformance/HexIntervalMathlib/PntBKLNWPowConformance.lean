@@ -164,6 +164,18 @@ private def smallerLadder : List LadderCertificate :=
   [ladder29, ladder37, ladder44, ladder51, ladder58,
     ladder63, ladder145, ladder217, ladder289, ladder361]
 
+private def ladderPlanSucceeds (value : LadderCertificate) : Bool :=
+  let plan := ladderPlanForBody (ladderCertificateBody value) request
+  match plan.outcome with
+  | .success _ _ _ => !plan.drafts.isEmpty
+  | _ => false
+
+private def ladderPlanFails (value : LadderCertificate) : Bool :=
+  let plan := ladderPlanForBody (ladderCertificateBody value) request
+  match plan.outcome with
+  | .failed _ => plan.drafts.isEmpty
+  | _ => false
+
 private def runLadder? (value : LadderCertificate) :
     Option (TargetRun.Result Bound Unit) := do
   let .ok session := ladderStart value | none
@@ -175,6 +187,7 @@ private def runLadder? (value : LadderCertificate) :
   decodeLadderCertificate? (ladderCertificateBody value) == some value
 #guard smallerLadder.all fun value => ladderFactFormat.validateBody
   (ladderCertificateBody value)
+#guard smallerLadder.all ladderPlanSucceeds
 #guard smallerLadder.all fun value =>
   (runLadder? value).any fun result =>
     match result.stop with
@@ -201,8 +214,7 @@ private def ladderMutations : List LadderCertificate :=
   (decodeLadderCertificate? (ladderCertificateBody value)).isSome
 #guard ladderMutations.all fun value =>
   !ladderFactFormat.validateBody (ladderCertificateBody value)
-#guard ladderMutations.all fun value =>
-  planFails (ladderCertificateBody value)
+#guard ladderMutations.all ladderPlanFails
 
 #guard smallerLadder.all fun value =>
   ((ladderFoldFactSchema value).replay checkerInput action replayContext value).isSome

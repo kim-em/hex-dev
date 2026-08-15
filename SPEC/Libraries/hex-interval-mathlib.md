@@ -1401,10 +1401,9 @@ the `M = 289` record has the largest endpoint atom. This reports the retained
 fixed-ladder cost honestly rather than treating the analytic fold as zero
 work.
 
-The companion `PntBKLNWExp` provider completes the other **22** declarations
-used from the pinned certified-bounds interface: lower and upper bounds at
-`b = 20, 25, 30, 35, 40, 43, 100, 150, 200, 250, 300`. (Earlier prose said
-twenty; the source and inventory contain eleven pairs.) One source-indexed
+The companion `PntBKLNWExp` provider covers the **22** declarations—eleven
+lower/upper pairs—used from the pinned certified-bounds interface at
+`b = 20, 25, 30, 35, 40, 43, 100, 150, 200, 250, 300`. One source-indexed
 certificate pins `b`, `⌊b / log 2⌋₊`, both rational cuts, the twelve-decimal
 base-table scale, and the exact-band/tail split. The kernel proves the floor
 from the package-owned 20-digit `log 2` series window, proves every
