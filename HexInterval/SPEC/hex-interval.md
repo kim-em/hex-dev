@@ -4346,11 +4346,30 @@ also traverses generic chronology and `ProofFrontend`.
 Wrong sources, steps, powers, term counts, directions, cross-row cuts, and a
 mathematically false endpoint fail closed. This is exact source lookup plus a
 reusable rational Taylor/power certificate, not arbitrary exponential range
-reduction or endpoint synthesis. Three actual LogTables tactic sites remain:
-the two-sided nested `log (log 2)` pair needs a distinct two-stage positive-log
-provider, and `π ≤ 3.15` needs a separate ordinary-kernel π bound. Mathlib's
-Chudnovsky file leaves the identification of its sum with `π⁻¹` as
-`proof_wanted`, so that identity is not accepted as migration evidence.
+reduction or endpoint synthesis.
+
+The final two nested-log sites use another genuine two-stage run of one generic
+log package. The first event checks the strict positive enclosure
+`0.6931471803 < log 2 < 0.6931471808`; the second consumes both endpoints in
+two independent fourteen-term rational remainder checks and derives
+`-0.366513 < log (log 2) < -0.366512`. A zero-touching inner enclosure is
+domain-unknown, and wrong sources, bypassed inner facts, and wrong outer facts
+cannot replay. Both original non-strict source statements follow from this
+stronger ordinary theorem.
+
+The final π site crosses a provider-agnostic constant-operation boundary. Its
+Mathlib-free certificate authenticates the exact `315 / 100` upper cut; the
+Mathlib companion replays `Real.pi_lt_d2` from
+`Mathlib.Analysis.Real.Pi.Bounds`. That theorem has an ordinary axiom surface
+and does not use the Chudnovsky development. Mathlib's Chudnovsky sum-to-`π⁻¹`
+identity remains `proof_wanted` and is neither imported nor accepted as
+evidence.
+
+Thus all actual pinned PNT+ `LogTables.lean` tactic sites have accepted
+localized rewrites or stronger replacement results. This is migration
+coverage, not LeanCert API compatibility or an arbitrary-input transcendental
+evaluator: row generation, requested precision outside the dedicated log-2
+probe, caching, persistence, and performance at table scale remain future.
 
 The first precision-indexed log provider moves beyond an opaque six-decimal
 table fact. Its program contains separate exact-input and precision-request
@@ -4698,6 +4717,11 @@ their declared cost inside a scheduler bound.
   exponential point records with authenticated Taylor steps, natural powers,
   directions, and final endpoints. Real Taylor semantics and source-shaped
   theorems live in the Mathlib companion.
+- `HexInterval/Experiment/PntNestedLogTwo.lean`: a bounded two-event log
+  package for the strict positive inner `log 2` enclosure and its two-sided
+  outer logarithm window.
+- `HexInterval/Experiment/PntPiPoint.lean`: a provider-agnostic constant
+  operation package authenticating the exact `315 / 100` π cut.
 - `scripts/conformance/run_pnt_fks2_family.sh`: fail-closed entry point for the
   non-default complete-family proof and conformance profile.
 - `bench/HexInterval/Bench.lean`: Mathlib-free interval and scheduler

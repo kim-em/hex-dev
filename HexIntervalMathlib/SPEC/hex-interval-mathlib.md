@@ -129,8 +129,24 @@ fixes a signed rational input, a step in `[-1, 1]`, a positive natural
 multiplier, one checked side of a fourteen-term Taylor enclosure, and the final
 rational cut. The result preserves the source statements and does not import a
 LeanCert theorem. It is not a public arbitrary-input exponential operation.
-The separate pending π statement cannot use Mathlib's Chudnovsky sum as
-evidence because its equality with `π⁻¹` is still `proof_wanted`.
+
+`HexIntervalMathlib.Experiment.PntNestedLogTwo` proves the two pinned
+`log (log 2)` statements through two chronological checked log events. The
+first establishes a strict positive two-sided `log 2` enclosure; the second
+consumes both endpoints in fourteen-term rational remainder checks. The
+ordinary replay theorem is strictly stronger than both source statements, and
+zero-touching or bypassed inner facts reject.
+
+`HexIntervalMathlib.Experiment.PntPiPoint` interprets a provider-agnostic
+constant operation as `Real.pi`, authenticates the exact `315 / 100` cut, and
+uses the axiom-clean `Real.pi_lt_d2` theorem from `Analysis.Real.Pi.Bounds`.
+It does not import Mathlib's Chudnovsky development; the latter's
+`proof_wanted` sum-to-`π⁻¹` identity is not migration evidence.
+
+Together with the other source-pinned providers, these slices cover every
+actual pinned `LogTables.lean` tactic site after localized rewrites or stronger
+results. They do not provide LeanCert API parity, arbitrary input/precision
+support, persistent tables, or table-scale performance evidence.
 
 ## Conformance
 
@@ -162,3 +178,9 @@ rows and sends the tight `exp 20` certificate through generic planning,
 payload authentication, chronological replay, and the proof frontend. It also
 pins source, Taylor-step, natural-power, term-count, cross-row, and false-cut
 rejection.
+`HexIntervalMathlib.PntNestedLogTwoConformance` pins the two-event dependency
+chain, positive-domain rejection, both exact source wrappers, and generic
+proof-frontend closure of the stronger two-sided theorem.
+`HexIntervalMathlib.PntPiPointConformance` pins the exact constant certificate,
+wrong-source and false-endpoint rejection, the ordinary π-bound axiom surface,
+and generic proof-frontend closure.
