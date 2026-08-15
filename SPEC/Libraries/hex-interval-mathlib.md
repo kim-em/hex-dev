@@ -1565,17 +1565,17 @@ Conversely, importing the already-proved FKS2 result does not exercise Hex. The
 network-free per-PR gate detects an inconsistent or unexplained local change to
 the pinned commit, dependency revisions, occurrence inventory, or batch sizes.
 
-The first scale probe represents exactly 128 of those 13,590 cells: source
-indices `0–127` of pinned `Table4ExtData_11.lean`, covering the contiguous
-intervals `b = 11010` through `b' = 11138`. The pinned shard declaration is
+The shard-11 scale probe represents exactly 1,000 of those 13,590 cells: all
+source indices `0–999` of pinned `Table4ExtData_11.lean`, covering the
+contiguous intervals `b = 11010` through `b' = 12050`. The last ten cells use
+width five; the preceding 990 use width one. The pinned shard declaration is
 `cells_11 : List Cell`, followed by
 `cells_11_checked : cells_11.all checkCell = true`; the package supplies the
 same boolean-all shape with its own package-owned `checkCell` predicate, plus
 an arbitrary-membership semantic wrapper. Every five-field rational tuple is
-copied exactly, and `pnt_inventory.py --verify-source` compares all 128
-normalized tuples against the pinned shard prefix. This
-segment does not reach shard 11's later transition to width-five cells, and it
-does not claim the remaining 872 cells of that shard or any other shard.
+copied exactly into a generated fifty-case table, and
+`pnt_inventory.py --verify-source` compares all 1,000 normalized tuples
+against the complete pinned shard. This does not claim any other shard.
 
 The provider replaces LeanCert's 64-way dyadic expression check with a
 package-owned 128-way split. One Mathlib `Real.exp_bound'` theorem proves the
@@ -1585,29 +1585,33 @@ endpoint enclosures, the reduced argument, and the final inequality for every
 cell. The power `128` is checked by seven explicit squarings rather than 128
 linear rational normalizations.
 
-Runtime work is divided into eight independently scheduled actions of sixteen
-coordinates over one shared 128-argument operation. The retained resource
-envelope charges eight requests and replies, 128 candidates and chronological
-facts, eight payload entries, at most sixteen candidates per outcome, 1,024
-payload cells, atoms at most `10^36`, and 2,048 bounded policy traversals.
-The proof-side chunk theorems each declare at most 2,000,000 heartbeats and
-recursion depth 100,000; rebuilding the Mathlib companion took 8.9 seconds on
-the development host. This is an observed
-acceptance-fixture cost, not a stable CI budget or a linear full-family
-extrapolation. Eight chunk schemas share one indexed definition, each covering
-sixteen addresses; conformance directly replays one representative address in
-the first, middle, and last chunks and checks that the retained program trace
-has 128 events. It does not yet
-retain a generic `ProofFrontend` fold over this large payload, so that closure
-and the full-shard/full-family profiles remain acceptance work.
+Runtime work is divided into fifty independently scheduled actions of twenty
+coordinates over one shared 1,000-argument operation. The retained resource
+envelope charges fifty requests and replies, 1,000 candidates and
+chronological facts, fifty payload entries, at most twenty candidates per
+outcome, 8,000 actual payload cells under an 8,192-cell cap, atoms at most
+`10^38`, and 65,536 bounded policy traversals. One indexed replay definition
+serves every chunk; conformance directly replays representative addresses in
+the first, middle, and last chunks and checks the complete 1,000-event trace.
+
+The generated kernel proof checks fifty twenty-cell branches and has a
+20,000,000-heartbeat, 100,000-recursion-depth envelope. A cold rebuild of the
+Mathlib companion took 295 seconds and peaked near 4.1 GB resident memory on
+the shared development host; rebuilding conformance then took 21 seconds.
+These are observed local acceptance-fixture costs, not stable CI budgets or a
+linear full-family extrapolation. The probe deliberately retains neither
+proof-registry emission metadata nor a generic large-payload `ProofFrontend`
+fold; direct indexed kernel replay is the claimed proof boundary.
 
 Doubling the first cell's `eps` field constructs a false source cell at
 coordinate `11010`. The numeric checker returns that exact coordinate before
 payload allocation, the plan contains no draft, its replay body is rejected,
 and a lower Taylor enclosure proves the mutated endpoint inequality false.
-There is no effort or precision retry. Consequently the generated-family inventory remains
-`pending` with explicit evidence for partial `128/13590` coverage; neither the
-family nor the `LeanCert.ANT` dependency is reclassified by this probe.
+There is no effort or precision retry. The exact source declaration's
+`native_decide` inventory record is therefore `accepted-after-rewrite` with
+full 1,000/1,000 coverage. The generated-family inventory remains `pending`
+with explicit `1000/13590` coverage, and the broader `LeanCert.ANT` dependency
+remains pending because the other 12,590 cells are not covered.
 
 Because the upstream commit is immutable, checking for a deliberately updated
 upstream pin is a maintainer operation: `--verify-source` regenerates from the

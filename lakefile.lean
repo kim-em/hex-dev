@@ -330,6 +330,7 @@ lean_lib HexIntervalExperiment where
     `HexInterval.Experiment.PntTable12,
     `HexInterval.Experiment.PntTable12Ordinary,
     `HexInterval.Experiment.PntTable12Log,
+    `HexInterval.Experiment.PntFks2ShardData,
     `HexInterval.Experiment.PntFks2Shard,
     `HexInterval.Experiment.CosBillion,
     `HexInterval.Experiment.LogTablePrecision,
