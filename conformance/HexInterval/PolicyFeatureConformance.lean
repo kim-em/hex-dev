@@ -43,6 +43,16 @@ private def splitOffer : OfferView :=
     offerClass := .split
     age := 1 }
 
+private def sameOffer (left right : OfferView) : Bool :=
+  left.id == right.id && left.key == right.key &&
+    left.offerClass == right.offerClass && left.age == right.age
+
+private def sameOffers : List OfferView -> List OfferView -> Bool
+  | [], [] => true
+  | left :: lefts, right :: rights =>
+      sameOffer left right && sameOffers lefts rights
+  | _, _ => false
+
 private def baseView : Policy.View Nat :=
   { scope := { index := 0 }
     serial := 9
@@ -61,6 +71,15 @@ private def baseView : Policy.View Nat :=
         queueEntries := 8
         generation := 8 }
     incomplete := false }
+
+private def sameView (left right : Policy.View Nat) : Bool :=
+  left.scope == right.scope && left.serial == right.serial &&
+    left.programVersion == right.programVersion &&
+    sameOffers left.offers.toList right.offers.toList &&
+    left.facts.facts == right.facts.facts &&
+    left.facts.versions == right.facts.versions &&
+    left.facts.contradictory == right.facts.contradictory &&
+    left.remaining == right.remaining && left.incomplete == right.incomplete
 
 private def widthKey : ProviderKey := { family := 41, version := 2 }
 private def goalKey : ProviderKey := { family := 73, version := 1 }
@@ -109,16 +128,17 @@ private def featured? : Option (PolicyFeature.View Nat) := do
 responses still consume one provider check. -/
 #guard
   featured?.any fun view =>
-    view.metrics == { providerChecks := 4, emittedFeatures := 4 } &&
+    sameView view.base baseView &&
+      view.metrics == { providerChecks := 4, emittedFeatures := 4 } &&
       view.offers.size == 2 &&
       match view.offers[0]?, view.offers[1]? with
       | some first, some second =>
-          first.base.key == invokeOffer.key && first.features.size == 2 &&
+          sameOffer first.base invokeOffer && first.features.size == 2 &&
             first.feature? widthKey 0 == some 6 &&
             first.features[0]?.any (fun feature => feature.provider == widthKey) &&
             first.features[1]?.any (fun feature =>
               feature.provider == goalKey && feature.key == 1 && feature.value == -2) &&
-            second.base.key == splitOffer.key && second.features.size == 2 &&
+            sameOffer second.base splitOffer && second.features.size == 2 &&
             second.features[0]?.any (fun feature =>
               feature.provider == goalKey && feature.key == 3 && feature.value == -4) &&
             second.features[1]?.any (fun feature =>
@@ -131,6 +151,13 @@ private def duplicateRegistry : Except Error (Registry Nat) :=
 #guard
   match duplicateRegistry with
   | .error (.duplicateProvider key) => key == widthKey
+  | _ => false
+
+/- Provider count is bounded when the immutable registry is assembled. -/
+#guard
+  match Registry.buildWithin { limits with maxProviders := 1 }
+      #[widthProvider, goalProvider] with
+  | .error .providerLimit => true
   | _ => false
 
 private def duplicateOutput : Provider Nat :=
@@ -159,6 +186,19 @@ private def oversizedValue : Provider Nat :=
           provider == oversizedValue.key && key == 2 && value == -11
       | _ => false
 
+private def oversizedKey : Provider Nat :=
+  { key := { family := 100, version := 2 }
+    features := fun _ => #[{ key := 11, value := 0 }] }
+
+#guard
+  match Registry.buildWithin limits #[oversizedKey] with
+  | .error _ => false
+  | .ok registry =>
+      match decorate limits registry baseView with
+      | .error (.featureKeyLimit provider key) =>
+          provider == oversizedKey.key && key == 11
+      | _ => false
+
 private def tooMany : Provider Nat :=
   { key := { family := 101, version := 1 }
     features := fun _ =>
@@ -182,6 +222,23 @@ accepted into a partial decorated view. -/
   | .ok registry =>
       match decorate { limits with maxProviderChecks := 3 } registry baseView with
       | .error .providerCheckLimit => true
+      | _ => false
+
+/- Per-offer and whole-view caps are independent of the provider-local cap. -/
+#guard
+  match Registry.buildWithin limits #[widthProvider, goalProvider] with
+  | .error _ => false
+  | .ok registry =>
+      match decorate { limits with maxFeaturesPerOffer := 1 } registry baseView with
+      | .error (.offerFeatureLimit offer) => offer == invokeOffer.id
+      | _ => false
+
+#guard
+  match Registry.buildWithin limits #[widthProvider, goalProvider] with
+  | .error _ => false
+  | .ok registry =>
+      match decorate { limits with maxTotalFeatures := 3 } registry baseView with
+      | .error .totalFeatureLimit => true
       | _ => false
 
 /- Decoration rechecks the provider-count limit rather than trusting the
@@ -209,9 +266,14 @@ the complete base offers without manufacturing features. -/
             maxTotalFeatures := 0 }
           registry baseView with
       | .ok view =>
-          view.offers.size == baseView.offers.size &&
+          sameView view.base baseView &&
+            view.offers.size == baseView.offers.size &&
             view.metrics == { providerChecks := 0, emittedFeatures := 0 } &&
-            view.offers.all fun offer => offer.features.isEmpty
+            match view.offers[0]?, view.offers[1]? with
+            | some first, some second =>
+                sameOffer first.base invokeOffer && first.features.isEmpty &&
+                  sameOffer second.base splitOffer && second.features.isEmpty
+            | _, _ => false
       | .error _ => false
 
 end Hex.Interval.PolicyFeatureConformance
