@@ -451,6 +451,20 @@ the resulting raw cuts then cross `ofRawWithin` exactly once. The theorem
 `Raw.sub_eq_add_neg` pins that the direct raw result still agrees with addition
 after raw negation.
 
+The supported tree also contains the resource prerequisite for multiplicative
+arithmetic, but not yet interval multiplication itself. `Arithmetic.Growth`
+records admitted source endpoint costs and a conservative predicted result;
+multiplication records the sum of input numerator-bit lengths and the exact
+magnitude of the signed exponent sum. A direct power can reuse the same shape
+with one source and its separately predicted endpoint. `Arithmetic.preflightMul`
+checks the inputs before forming that small signed exponent sum and never
+multiplies their mantissas. `Arithmetic.Cost.growth` keeps this refusal distinct
+from endpoint and exact comparison costs, and `Arithmetic.Result` is a separate checked-arithmetic
+result so the existing `BuildResult` APIs above do not acquire a misleading or
+breaking cost variant. For example, under endpoint height `8`, the endpoints
+`255` and `255` and their comparison are admitted, while their predicted
+sixteen-bit product numerator is refused before multiplication.
+
 The public raw intersection and hull cut selectors, `intersectUnchecked`,
 `hullUnchecked`, `negUnchecked`, `addUnchecked`, and `subUnchecked` are related
 to the checked operations by successful-result and semantic theorems. Like
@@ -458,7 +472,7 @@ to the checked operations by successful-result and semantic theorems. Like
 are decoder-level combinators: untrusted callers use the checked `Interval`
 operations above.
 
-The remaining target surface includes multiplication,
+The remaining target surface includes the interval operation for multiplication,
 precision-indexed reciprocal and division, powers, absolute value, min/max,
 splitting, and regularization. Their public signatures are fixed only after an
 allocation audit; no total API is promised for an operation that may align,

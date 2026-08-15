@@ -6,7 +6,7 @@ Authors: Kim Morrison
 
 module
 
-public import HexInterval.Canonical
+public import HexInterval.Arithmetic
 
 public section
 

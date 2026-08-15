@@ -27,6 +27,10 @@ private def smallLimit : EndpointLimit where
   maxEndpointHeight := 128
   maxAlignmentShift := 64
 
+private def eightBitLimit : EndpointLimit where
+  maxEndpointHeight := 8
+  maxAlignmentShift := 0
+
 #guard Raw.empty.normalizeUnchecked = .empty
 #guard (Raw.bounds .unbounded .unbounded).normalizeUnchecked = .bounds .unbounded .unbounded
 #guard
@@ -118,6 +122,22 @@ private def far : Dyadic := .ofOdd 1 1000000000 (by decide)
   match Hex.Interval.belowWithin smallLimit far false with
   | .ready _ => false
   | .resourceLimit cost => cost.upper.exponentMagnitude == 1000000000
+
+-- Comparison cost cannot stand in for multiplicative growth. Both factors
+-- fit the eight-bit endpoint limit and compare without alignment, but the
+-- conservative product numerator needs sixteen bits. The arithmetic
+-- preflight refuses before constructing `255 * 255` and reports that distinct
+-- product cost.
+#guard (EndpointCost.ofDyadic (d 255)).allowed eightBitLimit
+#guard (CompareCost.ofDyadic (d 255) (d 255)).allowed eightBitLimit
+#guard
+  match Arithmetic.preflightMul eightBitLimit (d 255) (d 255) with
+  | .error (.growth cost) =>
+      cost.sources.map (·.numeratorBits) == [8, 8] &&
+        cost.predicted.numeratorBits == 16 &&
+        cost.predicted.exponentMagnitude == 0 &&
+        !cost.allowed eightBitLimit
+  | _ => false
 
 private def ready (raw : Raw) : Hex.Interval :=
   match Hex.Interval.ofRawWithin smallLimit raw with
