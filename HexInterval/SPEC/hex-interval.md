@@ -432,6 +432,7 @@ def subWithin       : EndpointLimit → Interval → Interval → BuildResult
 def minWithin       : EndpointLimit → Interval → Interval → BuildResult
 def maxWithin       : EndpointLimit → Interval → Interval → BuildResult
 def absWithin       : EndpointLimit → Interval → BuildResult
+def mulWithin       : EndpointLimit → Interval → Interval → Arithmetic.Result
 ```
 
 These names retain the budget because a public interval does not store the
@@ -477,8 +478,9 @@ the selector aligns finite dyadics, and the selected raw cuts then cross
 `ofRawWithin`. Thus an interval admitted under a larger earlier budget cannot
 force an unchecked alignment or silently turn refusal into empty.
 
-The supported tree also contains the resource prerequisites for multiplicative
-arithmetic, but not yet interval multiplication or powers. `Arithmetic.Growth`
+Multiplication uses the separate checked-arithmetic result because growth
+refusal is distinct from both empty output and endpoint/comparison refusal.
+`Arithmetic.Growth`
 records admitted source endpoint costs and a conservative predicted result.
 Multiplication records the sum of input numerator-bit lengths and the exact
 magnitude of the signed exponent sum. `Arithmetic.preflightMul` checks both
@@ -513,16 +515,37 @@ comparison costs, and `Arithmetic.Result` is a separate checked-arithmetic
 result so the existing `BuildResult` APIs above do not acquire a misleading or
 breaking cost variant.
 
+`mulWithin` first admits every finite source endpoint before sign inspection.
+It then
+admits all four finite corner products through `Arithmetic.preflightMul`
+before multiplying any mantissas, admits every evaluated finite candidate as
+an endpoint, and only then admits all candidate alignment comparisons before
+extremum selection. Source height refusal is observably `Cost.endpoint`,
+predicted product growth is `Cost.growth`, and candidate alignment refusal is
+`Cost.comparison`. Candidate-height admission is a defensive invariant check,
+not a currently reachable first refusal: every finite corner is bounded by its
+already admitted growth prediction, and the only additional candidate is zero.
+The explicit stage ensures a future candidate source cannot bypass endpoint
+admission. The exact raw candidate enumerates the four
+extended-endpoint products, omitting the undefined formal products
+`0 * ±∞`; an attained zero candidate is added exactly when either nonempty
+factor contains zero. Tied corner values combine attainment, so open and
+closed extrema, zero attainment, independent unbounded sides, and empty
+absorption are preserved. A successful result has an explicit selected lower-
+and upper-cut characterization after normalization, and the Mathlib companion proves that every
+product of source members belongs to it. No separate image-tightness converse
+is currently claimed.
+
 The public raw intersection and hull cut selectors, `intersectUnchecked`,
 `hullUnchecked`, `negUnchecked`, `addUnchecked`, `subUnchecked`, `minUnchecked`,
-`maxUnchecked`, and `absUnchecked` are related to the checked operations by
-successful-result and semantic theorems. Like
+`maxUnchecked`, `absUnchecked`, and `mulUnchecked` are related
+to the checked operations by successful-result and semantic theorems. Like
 `Raw.normalizeUnchecked`, they
 are decoder-level combinators: untrusted callers use the checked `Interval`
 operations above.
 
-The remaining target surface includes the interval operation for multiplication,
-precision-indexed reciprocal and division, powers,
+The remaining target surface includes precision-indexed reciprocal and
+division and powers,
 splitting, and regularization. Their public signatures are fixed only after an
 allocation audit; no total API is promised for an operation that may align,
 compare, or enlarge arbitrary-precision endpoints.
@@ -556,9 +579,10 @@ tests also check the following exactness rules.
   cut, and uses intersection attainment on the lower tie but hull attainment on
   the upper tie. Thus a tied lower endpoint is closed only if both inputs attain
   it, while a tied upper endpoint is closed if either input attains it.
-- After the empty-input short circuit, multiplication partitions both inputs
-  by sign, enumerates finite corner and zero candidates, and tracks whether
-  each extremum is attained. Zero is an attained extremum whenever either
+- After the empty-input short circuit, multiplication unconditionally
+  enumerates the four extended-endpoint corners plus a justified zero
+  candidate; sign inspection only resolves finite-by-infinite corners. It
+  tracks whether each extremum is attained. Zero is an attained extremum whenever either
   nonempty factor contains zero, not only when a factor is the singleton zero.
   For example,
   `[0,1] * (0,1] = [0,1]`, while `(0,1] * (0,1] = (0,1]`.
@@ -4030,6 +4054,9 @@ their declared cost inside a scheduler bound.
 - `HexInterval/Arithmetic.lean`: multiplication and direct-power endpoint
   growth prerequisites; it does not expose an interval multiplication or power
   operation.
+- `HexInterval/Multiplication.lean`: resource-checked interval multiplication,
+  unconditional extended-corner evaluation, attainment-aware extremum
+  selection, and the sealed `mulWithin` entry point.
 - `HexInterval/Interval.lean`: supported resource-safe intersection, hull,
   negation, addition, subtraction, minimum, maximum, and absolute value,
   followed by future arithmetic, splitting, and regularization operations.
@@ -4043,6 +4070,9 @@ their declared cost inside a scheduler bound.
   real-image enclosure theorems for minimum and maximum.
 - `HexIntervalMathlib/Absolute.lean`: exact selected-cut semantics and the
   successful absolute-value image theorem.
+- `HexIntervalMathlib/Multiplication.lean`: explicit selected-candidate-cut
+  semantics and the one-way real-product enclosure theorem; it does not claim
+  an image-tightness converse.
 - `HexInterval/Program.lean`: node identifiers, SSA program, dependencies.
 - `HexInterval/Fact.lean`: facts, versions, provenance, contradiction checks.
 - `HexInterval/Action.lean`: requests, outcomes, suggestions, observations.

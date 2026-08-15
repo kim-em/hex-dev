@@ -8,7 +8,7 @@ module
 
 public import HexInterval.Canonical
 
-@[expose] public section
+public section
 
 /-!
 # Arithmetic resource preflight
@@ -16,9 +16,11 @@ public import HexInterval.Canonical
 Endpoint comparison cost does not bound numerator growth in multiplication or
 direct powers. This module supplies a separate, nonbreaking result and
 diagnostic layer for checked arithmetic. Existing constructors and supported
-public interval operations continue to return `BuildResult`; future
-multiplicative operations can report growth without fabricating a
-`CompareCost`.
+public interval operations continue to return `BuildResult`; multiplicative
+operations can report growth without fabricating a `CompareCost`. Concrete
+corner enumeration and interval multiplication live in
+`HexInterval.Multiplication`, not in this reusable cost layer; direct-power
+preflight remains a prerequisite rather than a public interval-power API.
 -/
 
 namespace Hex.Interval.Arithmetic
@@ -62,7 +64,7 @@ namespace Result
 /-- Embed the existing checked-construction result into the richer arithmetic
 result without changing the constructor, intersection, hull, addition, or
 subtraction APIs. -/
-def ofBuild : BuildResult → Result
+@[expose] def ofBuild : BuildResult → Result
   | .ready interval => .ready interval
   | .resourceLimit cost => .resourceLimit (.comparison cost)
 

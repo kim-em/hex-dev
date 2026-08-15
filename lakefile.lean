@@ -364,7 +364,8 @@ lean_lib HexIntervalMathlibExperiment where
 lean_lib HexIntervalMathlib where
   globs := #[`HexIntervalMathlib, `HexIntervalMathlib.Interval,
     `HexIntervalMathlib.Addition, `HexIntervalMathlib.Subtraction,
-    `HexIntervalMathlib.MinMax, `HexIntervalMathlib.Absolute].map Glob.one
+    `HexIntervalMathlib.MinMax, `HexIntervalMathlib.Absolute,
+    `HexIntervalMathlib.Multiplication].map Glob.one
 
 lean_lib HexIntervalReplayProbe where
   srcDir := "bench"

@@ -10,7 +10,7 @@ import HexIntervalMathlib
 Conformance checks for the supported public interval semantics.  Computational
 shape/resource cases live in `HexInterval.Conformance`; this companion pins the
 ordinary-kernel meaning of every successful intersection, hull, addition,
-subtraction, negation, and absolute value.
+subtraction, multiplication, negation, and absolute value.
 -/
 
 namespace Hex.IntervalMathlib.Conformance
@@ -108,6 +108,23 @@ theorem absImage {limit : Hex.Interval.EndpointLimit}
     (member : input.Contains x) : result.Contains |x| :=
   Hex.Interval.abs_mem_absWithin checked member
 
+/-- A successful multiplication has exactly its normalized computed corner
+candidate semantics. -/
+theorem mulExact {limit : Hex.Interval.EndpointLimit}
+    {left right result : Hex.Interval} {x : ℝ}
+    (checked : Hex.Interval.mulWithin limit left right = .ready result) :
+    result.Contains x ↔ left.view.MulContains right.view x :=
+  Hex.Interval.contains_mulWithin checked x
+
+/-- Both source membership proofs are consumed by the arithmetic image theorem
+for successful interval multiplication. -/
+theorem mulImage {limit : Hex.Interval.EndpointLimit}
+    {left right result : Hex.Interval} {x y : ℝ}
+    (checked : Hex.Interval.mulWithin limit left right = .ready result)
+    (leftMember : left.Contains x) (rightMember : right.Contains y) :
+    result.Contains (x * y) :=
+  Hex.Interval.mul_mem_mulWithin checked leftMember rightMember
+
 /-- info: 'Hex.IntervalMathlib.Conformance.intersectMember' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms intersectMember
@@ -155,5 +172,13 @@ theorem absImage {limit : Hex.Interval.EndpointLimit}
 /-- info: 'Hex.IntervalMathlib.Conformance.absImage' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms absImage
+
+/-- info: 'Hex.IntervalMathlib.Conformance.mulExact' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms mulExact
+
+/-- info: 'Hex.IntervalMathlib.Conformance.mulImage' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms mulImage
 
 end Hex.IntervalMathlib.Conformance

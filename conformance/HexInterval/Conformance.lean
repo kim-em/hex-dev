@@ -82,6 +82,32 @@ private def eightBitLimit : EndpointLimit where
 -- can allocate an aligned mantissa.
 private def far : Dyadic := .ofOdd 1 1000000000 (by decide)
 
+-- Multiplication's phase helpers remain distinguishable. Source size is an
+-- observable endpoint refusal; the direct candidate guard pins the defensive
+-- endpoint stage even though admitted corner growth makes it unreachable as
+-- the first refusal of the current `mulWithin` pipeline. Only alignment is
+-- reported as comparison work.
+#guard
+  match Raw.Mul.preflightEdge smallLimit (.finite far false) with
+  | .error (.endpoint cost) => cost.exponentMagnitude == 1000000000
+  | _ => false
+
+#guard
+  match Raw.Mul.preflightCandidate smallLimit (.finite far true) with
+  | .error (.endpoint cost) => cost.exponentMagnitude == 1000000000
+  | _ => false
+
+#guard
+  match Raw.Mul.preflightCompare
+      { maxEndpointHeight := 1000000100, maxAlignmentShift := 64 }
+      (.finite (d 1) true) (.finite far false) with
+  | .error (.comparison cost) =>
+      cost.lower.allowed { maxEndpointHeight := 1000000100, maxAlignmentShift := 64 } &&
+        cost.upper.allowed
+          { maxEndpointHeight := 1000000100, maxAlignmentShift := 64 } &&
+        cost.alignmentShift == 1000000000
+  | _ => false
+
 #guard
   match Raw.normalizeWithin
       { maxEndpointHeight := 1000000100, maxAlignmentShift := 64 }
@@ -257,6 +283,15 @@ private def ready (raw : Raw) : Hex.Interval :=
   | .ready interval => interval
   | .resourceLimit _ => Hex.Interval.empty
 
+private def farSingleton : Hex.Interval :=
+  match Hex.Interval.singletonWithin
+      { maxEndpointHeight := 1000000100, maxAlignmentShift := 0 } far with
+  | .ready interval => interval
+  | .resourceLimit _ => Hex.Interval.empty
+
+#guard farSingleton.view ==
+  .bounds (.finite far false) (.finite far false)
+
 private def closed01 : Hex.Interval := ready (finite 0 false 1 false)
 private def closed12 : Hex.Interval := ready (finite 1 false 2 false)
 private def openLower12 : Hex.Interval := ready (finite 1 true 2 false)
@@ -281,6 +316,15 @@ private def openClosed01 : Hex.Interval := ready (finite 0 true 1 false)
 private def closedOpen23 : Hex.Interval := ready (finite 2 false 3 true)
 private def singletonOne : Hex.Interval := ready (finite 1 false 1 false)
 private def singletonNegOne : Hex.Interval := ready (finite (-1) false (-1) false)
+private def singletonZero : Hex.Interval := ready (finite 0 false 0 false)
+private def singleton255 : Hex.Interval :=
+  match Hex.Interval.singletonWithin eightBitLimit (d 255) with
+  | .ready interval => interval
+  | .resourceLimit _ => Hex.Interval.empty
+private def mixedLeft : Hex.Interval := ready (finite (-2) false 3 false)
+private def mixedRight : Hex.Interval := ready (finite (-4) false 5 false)
+private def nonnegative : Hex.Interval :=
+  ready (.bounds (.finite (d 0) false) .unbounded)
 private def half : Dyadic := .ofOdd 1 1 (by decide)
 private def singletonHalf : Hex.Interval :=
   ready (.bounds (.finite half false) (.finite half false))
@@ -749,6 +793,99 @@ private def mediumToOne : Hex.Interval :=
       powerBand singletonOne with
   | .ready _ => false
   | .resourceLimit cost => cost.alignmentShift == 100
+
+-- A public interval admitted under a larger construction budget is rejected
+-- at multiplication's source-endpoint phase under a smaller caller budget.
+#guard
+  match Hex.Interval.mulWithin smallLimit farSingleton singletonOne with
+  | .resourceLimit (.endpoint cost) => cost.exponentMagnitude == 1000000000
+  | _ => false
+
+-- Source endpoints and all product-growth predictions fit, but the retained
+-- candidates 1 and 2^100 require a prohibited alignment shift. This reaches
+-- the public candidate-comparison diagnostic rather than only its helper.
+#guard
+  match Hex.Interval.mulWithin
+      { maxEndpointHeight := 256, maxAlignmentShift := 50 }
+      widePower singletonOne with
+  | .resourceLimit (.comparison cost) =>
+      cost.lower.allowed { maxEndpointHeight := 256, maxAlignmentShift := 50 } &&
+        cost.upper.allowed { maxEndpointHeight := 256, maxAlignmentShift := 50 } &&
+        cost.alignmentShift == 100
+  | _ => false
+
+-- Multiplication tracks endpoint attainment independently from the numerical
+-- corner value. A contained zero closes the lower product endpoint even when
+-- the other factor approaches zero only strictly.
+#guard
+  match Hex.Interval.mulWithin smallLimit closed01 openClosed01 with
+  | .ready interval => interval == closed01
+  | .resourceLimit _ => false
+
+#guard
+  match Hex.Interval.mulWithin smallLimit openClosed01 openClosed01 with
+  | .ready interval => interval == openClosed01
+  | .resourceLimit _ => false
+
+-- Mixed signs exercise both minimum and maximum corner selectors.
+#guard
+  match Hex.Interval.mulWithin smallLimit mixedLeft mixedRight with
+  | .ready interval => interval.view == finite (-12) false 15 false
+  | .resourceLimit _ => false
+
+-- Empty is absorbing. Singleton zero annihilates even a two-sided unbounded
+-- factor, whereas a non-singleton interval containing zero still exposes both
+-- unbounded directions when multiplied by the whole line.
+#guard
+  match Hex.Interval.mulWithin smallLimit Hex.Interval.empty Hex.Interval.whole with
+  | .ready interval => interval == Hex.Interval.empty
+  | .resourceLimit _ => false
+
+#guard
+  match Hex.Interval.mulWithin smallLimit singletonZero Hex.Interval.whole with
+  | .ready interval => interval == singletonZero
+  | .resourceLimit _ => false
+
+#guard
+  match Hex.Interval.mulWithin smallLimit Hex.Interval.whole singletonZero with
+  | .ready interval => interval == singletonZero
+  | .resourceLimit _ => false
+
+#guard
+  match Hex.Interval.mulWithin smallLimit closed01 Hex.Interval.whole with
+  | .ready interval => interval == Hex.Interval.whole
+  | .resourceLimit _ => false
+
+-- The unconditional extended-corner enumeration retains independent
+-- unbounded sides; sign inspection only resolves finite-by-infinite corners.
+#guard
+  match Hex.Interval.mulWithin smallLimit nonnegative closed01 with
+  | .ready interval => interval == nonnegative
+  | .resourceLimit _ => false
+
+private def nonpositiveOne : Hex.Interval :=
+  ready (.bounds .unbounded (.finite (d (-1)) false))
+
+#guard
+  match Hex.Interval.mulWithin smallLimit nonpositiveOne nonpositiveOne with
+  | .ready interval =>
+      interval.view == .bounds (.finite (d 1) false) .unbounded
+  | .resourceLimit _ => false
+
+-- Product-growth refusal remains distinct from empty and happens while both
+-- input endpoints and their exact comparison still fit the caller limit.
+#guard
+  match Hex.Interval.mulWithin eightBitLimit singleton255 singleton255 with
+  | .ready _ => false
+  | .resourceLimit (.growth cost) => cost.predicted.numeratorBits == 16
+  | .resourceLimit _ => false
+
+-- Ordinary positive multiplication succeeds through the richer arithmetic
+-- result and retains both closed extrema.
+#guard
+  match Hex.Interval.mulWithin smallLimit closed12 closed23 with
+  | .ready interval => interval.view == finite 2 false 6 false
+  | .resourceLimit _ => false
 
 -- Negation swaps the endpoints and preserves openness; empty stays empty.
 #guard
