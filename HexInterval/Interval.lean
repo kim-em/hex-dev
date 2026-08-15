@@ -14,13 +14,13 @@ public section
 # Public exact interval operations
 
 This module begins the supported arithmetic surface with exact intersection,
-hull, negation, addition, subtraction, minimum, maximum, and absolute value.
-The operations retain a resource-aware result: public
-interval values do not remember the construction budget under which their
-endpoints were admitted, so a later comparison must preflight its own alignment
-work. Resource-checked multiplication is kept in `HexInterval.Multiplication`
-because it additionally depends on arithmetic-growth diagnostics and corner
-candidate selection.
+hull, negation, addition, subtraction, minimum, maximum, absolute value,
+natural power, and splitting. The operations retain a resource-aware result:
+public interval values do not remember the construction budget under which
+their endpoints were admitted, so a later comparison must preflight its own
+alignment work. Resource-checked multiplication is kept in
+`HexInterval.Multiplication` because it additionally depends on
+arithmetic-growth diagnostics and corner candidate selection.
 -/
 
 namespace Hex.Interval
@@ -278,7 +278,27 @@ theorem sub_eq_add_neg (left right : Raw) :
           cases leftLower <;> cases leftUpper <;>
             cases rightLower <;> cases rightUpper <;> rfl
 
+/-! ## Interval splitting -/
+
+/-- Raw split at a dyadic point. The left child owns the point and the right
+child excludes it. The pair remains unnormalized so the public wrapper can
+preflight both final child comparisons before constructing either result. -/
+@[expose] def splitUnchecked (input : Raw) (point : Dyadic) : Raw × Raw :=
+  match input with
+  | .empty => (.empty, .empty)
+  | .bounds lower upper =>
+      ( .bounds lower
+          (intersectUpperUnchecked upper (.finite point false)),
+        .bounds
+          (intersectLowerUnchecked lower (.finite point true)) upper )
+
 end Raw
+
+/-- Transactional result of a checked split. A successful value contains both
+sealed canonical children; refusal exposes no partial pair. -/
+inductive SplitResult where
+  | ready (left right : Hex.Interval)
+  | resourceLimit (cost : CompareCost)
 
 private def compareCost? (limit : EndpointLimit) (left right : Dyadic) :
     Option CompareCost :=
@@ -408,6 +428,39 @@ private def powCost? (endpointLimit : EndpointLimit)
         | some cost => some (.comparison cost)
         | none =>
             powCutsCost? endpointLimit workLimits raw.absUnchecked exponent
+
+private def refused? (limit : EndpointLimit) (cost : CompareCost) : Option CompareCost :=
+  if cost.allowed limit then none else some cost
+
+/-- Authenticated raw split candidate. The equality is proof-only; the runtime
+payload is the one selected pair that the checked wrapper will seal. -/
+private structure PreparedSplit (input : Raw) (point : Dyadic) where
+  children : Raw × Raw
+  selected : children = input.splitUnchecked point
+
+/-- Prepare both raw children only after point and selector preflight, then
+preflight both final normalization comparisons before returning the selected
+pair. -/
+private def admitSplit (limit : EndpointLimit) (input : Raw) (point : Dyadic) :
+    Except CompareCost (PreparedSplit input point) := do
+  match hinput : input with
+  | .empty => pure ⟨(.empty, .empty), by simp [hinput, Raw.splitUnchecked]⟩
+  | .bounds lower upper =>
+      let pointCost :=
+        (Raw.bounds .unbounded (.finite point false)).normalizeCost
+      if let some cost := refused? limit pointCost then throw cost
+      match lower with
+      | .finite lower _ =>
+          if let some cost := compareCost? limit lower point then throw cost
+      | .unbounded => pure ()
+      match upper with
+      | .finite upper _ =>
+          if let some cost := compareCost? limit point upper then throw cost
+      | .unbounded => pure ()
+      let children := Raw.splitUnchecked (.bounds lower upper) point
+      if let some cost := refused? limit children.1.normalizeCost then throw cost
+      if let some cost := refused? limit children.2.normalizeCost then throw cost
+      pure ⟨children, by simp [hinput, children, Raw.splitUnchecked]⟩
 
 /-- Exact set intersection with preflighted dyadic comparisons.  Refusal is
 distinct from the canonical empty result. -/
@@ -585,5 +638,39 @@ theorem view_powWithin_ready {endpointLimit : EndpointLimit}
         exact view_ofRawWithin_ready hraw
     | resourceLimit cost =>
         simp [Arithmetic.Result.ofBuild, hraw] at h
+
+/-- Split an interval into `input ∩ (-∞, point]` and
+`input ∩ (point, +∞)`. Empty short-circuits without inspecting the point.
+For a nonempty input, all point, selector, and final child comparisons are
+preflighted before the transactional result can expose either child. -/
+def splitWithin (limit : EndpointLimit) (input : Hex.Interval)
+    (point : Dyadic) : SplitResult :=
+  match admitSplit limit input.view point with
+  | .error cost => .resourceLimit cost
+  | .ok prepared =>
+      match ofRawWithin limit prepared.children.1,
+          ofRawWithin limit prepared.children.2 with
+      | .ready left, .ready right => .ready left right
+      -- `admitSplit` already admitted these exact normalization costs. These
+      -- defensive arms keep final sealing honest and still expose no partial
+      -- pair if that checked constructor is strengthened in the future.
+      | .resourceLimit cost, _ | _, .resourceLimit cost => .resourceLimit cost
+
+/-- A successful split exposes exactly both normalized raw children. -/
+theorem view_splitWithin_ready {limit : EndpointLimit}
+    {input left right : Hex.Interval} {point : Dyadic}
+    (h : splitWithin limit input point = .ready left right) :
+    let children := Raw.splitUnchecked input.view point
+    left.view = children.1.normalizeUnchecked ∧
+      right.view = children.2.normalizeUnchecked := by
+  unfold splitWithin at h
+  split at h
+  · contradiction
+  · next prepared preparedEq =>
+      generalize leftEq : ofRawWithin limit prepared.children.1 = leftResult at h
+      generalize rightEq : ofRawWithin limit prepared.children.2 = rightResult at h
+      cases leftResult <;> cases rightResult <;> simp_all
+      rw [← prepared.selected]
+      exact ⟨view_ofRawWithin_ready leftEq, view_ofRawWithin_ready rightEq⟩
 
 end Hex.Interval
