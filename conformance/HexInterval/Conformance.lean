@@ -31,6 +31,13 @@ private def eightBitLimit : EndpointLimit where
   maxEndpointHeight := 8
   maxAlignmentShift := 0
 
+private def nineBitLimit : EndpointLimit where
+  maxEndpointHeight := 9
+  maxAlignmentShift := 0
+
+private def smallPowLimits : Arithmetic.PowLimits where
+  maxExponent := 8
+
 #guard Raw.empty.normalizeUnchecked = .empty
 #guard (Raw.bounds .unbounded .unbounded).normalizeUnchecked = .bounds .unbounded .unbounded
 #guard
@@ -169,7 +176,7 @@ private def far : Dyadic := .ofOdd 1 1000000000 (by decide)
 -- eight-bit endpoint limit, while `3^5` is refused from metadata before
 -- `Dyadic.pow` can allocate its mantissa.
 #guard
-  match Arithmetic.preflightPow eightBitLimit (d 3) 4 with
+  match Arithmetic.preflightPowGrowth eightBitLimit (d 3) 4 with
   | .ok cost =>
       cost.sources.map (·.numeratorBits) == [2] &&
         cost.predicted.numeratorBits == 8 &&
@@ -178,7 +185,7 @@ private def far : Dyadic := .ofOdd 1 1000000000 (by decide)
   | _ => false
 
 #guard
-  match Arithmetic.preflightPow eightBitLimit (d 3) 5 with
+  match Arithmetic.preflightPowGrowth eightBitLimit (d 3) 5 with
   | .error (.growth cost) =>
       cost.sources.map (·.numeratorBits) == [2] &&
         cost.predicted.numeratorBits == 10 &&
@@ -188,24 +195,24 @@ private def far : Dyadic := .ofOdd 1 1000000000 (by decide)
 -- Unit numerators remain unit-sized even at a large exponent. This keeps the
 -- preflight useful for exact powers of `1`, `-1`, and powers of two.
 #guard
-  match Arithmetic.preflightPow eightBitLimit (d 1) 1000000000 with
+  match Arithmetic.preflightPowGrowth eightBitLimit (d 1) 1000000000 with
   | .ok cost => cost.predicted == EndpointCost.ofDyadic (d 1)
   | _ => false
 
 #guard
-  match Arithmetic.preflightPow eightBitLimit (d (-1)) 1000000001 with
+  match Arithmetic.preflightPowGrowth eightBitLimit (d (-1)) 1000000001 with
   | .ok cost => cost.predicted == EndpointCost.ofDyadic (d 1)
   | _ => false
 
 -- The direct-image convention keeps `0^0 = 1`; positive powers of zero stay
 -- zero. Both have exact constant-size predictions.
 #guard
-  match Arithmetic.preflightPow eightBitLimit (d 0) 0 with
+  match Arithmetic.preflightPowGrowth eightBitLimit (d 0) 0 with
   | .ok cost => cost.predicted == EndpointCost.ofDyadic ((d 0) ^ 0)
   | _ => false
 
 #guard
-  match Arithmetic.preflightPow eightBitLimit (d 0) 1000000000 with
+  match Arithmetic.preflightPowGrowth eightBitLimit (d 0) 1000000000 with
   | .ok cost => cost.predicted == EndpointCost.ofDyadic ((d 0) ^ 1000000000)
   | _ => false
 
@@ -217,7 +224,7 @@ private def negThreeHalves : Dyadic := .ofOdd (-3) 1 (by decide)
 -- Both signs of Core's signed dyadic exponent multiplication are reflected by
 -- the exact magnitude metadata. Unit mantissas do not acquire numerator cost.
 #guard
-  match Arithmetic.preflightPow eightBitLimit two 3 with
+  match Arithmetic.preflightPowGrowth eightBitLimit two 3 with
   | .ok cost => cost.predicted == EndpointCost.ofDyadic (two ^ 3)
   | _ => false
 
@@ -225,7 +232,7 @@ private def negThreeHalves : Dyadic := .ofOdd (-3) 1 (by decide)
 -- the predicted retained height. Six mantissa bits plus exponent magnitude
 -- three exceed the eight-bit combined endpoint limit.
 #guard
-  match Arithmetic.preflightPow eightBitLimit threeHalves 3 with
+  match Arithmetic.preflightPowGrowth eightBitLimit threeHalves 3 with
   | .error (.growth cost) =>
       cost.predicted.numeratorBits == 6 &&
         cost.predicted.exponentMagnitude == 3 &&
@@ -234,19 +241,19 @@ private def negThreeHalves : Dyadic := .ofOdd (-3) 1 (by decide)
 
 -- Sign does not alter growth metadata, and exponent one is the identity case.
 #guard
-  match Arithmetic.preflightPow eightBitLimit negThreeHalves 1 with
+  match Arithmetic.preflightPowGrowth eightBitLimit negThreeHalves 1 with
   | .ok cost => cost.predicted == EndpointCost.ofDyadic (negThreeHalves ^ 1)
   | _ => false
 
 #guard
-  match Arithmetic.preflightPow eightBitLimit quarter 3 with
+  match Arithmetic.preflightPowGrowth eightBitLimit quarter 3 with
   | .ok cost =>
       cost.predicted.numeratorBits == 1 &&
         cost.predicted.exponentMagnitude == 6
   | _ => false
 
 #guard
-  match Arithmetic.preflightPow eightBitLimit quarter 4 with
+  match Arithmetic.preflightPowGrowth eightBitLimit quarter 4 with
   | .error (.growth cost) =>
       cost.predicted.numeratorBits == 1 &&
         cost.predicted.exponentMagnitude == 8 &&
@@ -256,12 +263,12 @@ private def negThreeHalves : Dyadic := .ofOdd (-3) 1 (by decide)
 -- An inadmissible source is reported before multiplying its exponent by the
 -- natural power. This separates source admission from predicted growth.
 #guard
-  match Arithmetic.preflightPow eightBitLimit far 1000000000 with
+  match Arithmetic.preflightPowGrowth eightBitLimit far 1000000000 with
   | .error (.endpoint cost) => cost.exponentMagnitude == 1000000000
   | _ => false
 
 #guard
-  match Arithmetic.preflightPow eightBitLimit far 0 with
+  match Arithmetic.preflightPowGrowth eightBitLimit far 0 with
   | .error (.endpoint cost) => cost.exponentMagnitude == 1000000000
   | _ => false
 
@@ -271,11 +278,80 @@ private def negThreeHalves : Dyadic := .ofOdd (-3) 1 (by decide)
 private def beyondUInt64 : Nat := 18446744073709551616
 
 #guard
-  match Arithmetic.preflightPow eightBitLimit two beyondUInt64 with
+  match Arithmetic.preflightPowGrowth eightBitLimit two beyondUInt64 with
   | .error (.growth cost) =>
       cost.predicted.numeratorBits == 1 &&
         cost.predicted.exponentMagnitude == beyondUInt64 &&
         !cost.allowed eightBitLimit
+  | _ => false
+
+-- The composite prerequisite refuses huge nonzero unit powers with a distinct
+-- work diagnostic even though their retained-growth prediction is constant.
+#guard
+  match Arithmetic.preflightPow eightBitLimit smallPowLimits
+      (d 1) beyondUInt64 with
+  | .error (.power work) => work.exponent == beyondUInt64
+  | _ => false
+
+#guard
+  match Arithmetic.preflightPow eightBitLimit smallPowLimits
+      (d (-1)) beyondUInt64 with
+  | .error (.power work) => work.exponent == beyondUInt64
+  | _ => false
+
+-- Core's zero branch does not execute natural power or exponent conversion,
+-- so it safely bypasses the scalar work cap even for an arbitrary large Nat.
+#guard
+  match Arithmetic.preflightPow eightBitLimit smallPowLimits
+      (d 0) beyondUInt64 with
+  | .ok cost =>
+      cost.predicted == EndpointCost.ofDyadic ((d 0) ^ beyondUInt64)
+  | _ => false
+
+-- Once work passes, the composite preserves the growth prerequisite's exact
+-- source and predicted-result diagnostic.
+#guard
+  match Arithmetic.preflightPow eightBitLimit smallPowLimits
+      threeHalves 3 with
+  | .error (.growth cost) =>
+      cost.sources == [EndpointCost.ofDyadic threeHalves] &&
+        cost.predicted.numeratorBits == 6 &&
+        cost.predicted.encodedExponentBits == EndpointCost.natBits 3 &&
+        cost.predicted.exponentMagnitude == 3 &&
+        !cost.allowed eightBitLimit
+  | _ => false
+
+-- Source admission remains load-bearing after the work cap succeeds.
+#guard
+  match Arithmetic.preflightPow eightBitLimit smallPowLimits far 1 with
+  | .error (.endpoint cost) => cost == EndpointCost.ofDyadic far
+  | _ => false
+
+-- An ordinary nonunit power is admitted only after both the actual exponent
+-- and its combined retained growth pass.
+#guard
+  match Arithmetic.preflightPow nineBitLimit smallPowLimits
+      threeHalves 3 with
+  | .ok cost =>
+      cost.predicted.numeratorBits == 6 &&
+        cost.predicted.exponentMagnitude == 3
+  | _ => false
+
+-- Actual arbitrary-precision Nat comparison has no UInt64 wraparound: the
+-- boundary value is admitted, while its successor is refused.
+private def widePowLimits : Arithmetic.PowLimits where
+  maxExponent := beyondUInt64
+
+#guard
+  match Arithmetic.preflightPow eightBitLimit widePowLimits
+      (d 1) beyondUInt64 with
+  | .ok cost => cost.predicted == EndpointCost.ofDyadic (d 1)
+  | _ => false
+
+#guard
+  match Arithmetic.preflightPow eightBitLimit widePowLimits
+      (d 1) (beyondUInt64 + 1) with
+  | .error (.power work) => work.exponent == beyondUInt64 + 1
   | _ => false
 
 private def ready (raw : Raw) : Hex.Interval :=

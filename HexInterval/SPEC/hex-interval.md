@@ -489,9 +489,10 @@ mantissas. For example, under endpoint height `8`, the endpoints `255` and
 `255` and their comparison are admitted, while their predicted sixteen-bit
 product numerator is refused before multiplication.
 
-`Arithmetic.preflightPow` applies the same boundary to a direct natural power
-with one source. It predicts the exact magnitude of the dyadic exponent and a
-conservative mantissa-bit count without raising the mantissa. Numerators of
+`Arithmetic.preflightPowGrowth` applies the same boundary to a direct natural
+power with one source. It predicts the exact magnitude of the dyadic exponent
+and a conservative mantissa-bit count without raising the mantissa. Numerators
+of
 absolute value one retain their exact one-bit cost, so large powers of `1`,
 `-1`, and unit-mantissa powers of two do not incur fictitious mantissa growth;
 powers of two are still charged their exact signed exponent magnitude. The
@@ -509,6 +510,27 @@ resource gate for a public interval power. In particular, when the dyadic
 exponent is zero and the mantissa has absolute value one, arbitrarily large
 natural exponents pass the endpoint-growth check. A future `powWithin` must add
 and enforce a separate exponent/work cap before invoking `Dyadic.pow`.
+
+`Arithmetic.PowLimits` supplies that smallest execution-work prerequisite.
+Its `maxExponent` bounds the actual arbitrary-precision `Nat` value, not the
+number of bits used to encode it. `Arithmetic.preflightPow` checks this cap
+for every nonzero dyadic before composing transactionally with
+`preflightPowGrowth`; a work refusal is `Arithmetic.Cost.power`, never a
+fabricated endpoint or growth diagnostic. A successful composite check
+guarantees that a future caller reaches Core's nonzero power only with a
+bounded source, bounded retained-result growth, and
+`exponent ≤ maxExponent`.
+
+Zero alone bypasses the work cap. Core's zero branch only distinguishes `0^0`
+from a positive power and returns `1` or `0`; it does not invoke `Nat.pow`,
+convert the exponent to `Int`, or form the signed dyadic-exponent product.
+This exemption does not extend to `1` or `-1`, whose Core path still processes
+the natural exponent. The scalar cap is sufficient to bound that Core path
+when combined with the existing endpoint/growth limits, but it is not a
+wall-clock estimate and does not charge work already spent constructing,
+parsing, or reifying the input `Nat`. A future public `powWithin` must use the
+composite gate before Core power; this prerequisite still does not expose that
+operation.
 
 `Arithmetic.Cost.growth` keeps these refusals distinct from endpoint and exact
 comparison costs, and `Arithmetic.Result` is a separate checked-arithmetic
@@ -4051,9 +4073,9 @@ their declared cost inside a scheduler bound.
   normalization.
 - `HexInterval/Canonical.lean`: sealed canonical values, views, and
   resource-safe smart constructors.
-- `HexInterval/Arithmetic.lean`: multiplication and direct-power endpoint
-  growth prerequisites; it does not expose an interval multiplication or power
-  operation.
+- `HexInterval/Arithmetic.lean`: multiplication growth plus direct-power
+  retained-growth and exponent-work prerequisites; it does not expose an
+  interval operation.
 - `HexInterval/Multiplication.lean`: resource-checked interval multiplication,
   unconditional extended-corner evaluation, attainment-aware extremum
   selection, and the sealed `mulWithin` entry point.

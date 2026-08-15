@@ -44,13 +44,36 @@ def allowed (limit : EndpointLimit) (growth : Growth) : Bool :=
 
 end Growth
 
+/-- Execution-work limit for a future direct natural-power operation. The cap
+is on the actual exponent value, not the size of its binary encoding. -/
+structure PowLimits where
+  maxExponent : Nat
+  deriving DecidableEq, Repr
+
+/-- Work demanded by Core's nonzero dyadic natural-power path. -/
+structure PowWork where
+  exponent : Nat
+  deriving DecidableEq, Repr
+
+namespace PowWork
+
+/-- Admit Core nonzero power work only when the actual natural exponent is no
+larger than the configured scalar cap. `Nat` comparison is arbitrary precision
+and cannot wrap at a machine-word boundary. -/
+def allowed (limits : PowLimits) (work : PowWork) : Bool :=
+  work.exponent ≤ limits.maxExponent
+
+end PowWork
+
 /-- Resource diagnostics for checked public arithmetic. Product growth is a
 separate case from endpoint and comparison work: a comparison between two
-admitted factors may be cheap even when their product is too large. -/
+admitted factors may be cheap even when their product is too large. Direct
+power execution work is also reported separately from retained growth. -/
 inductive Cost where
   | endpoint (cost : EndpointCost)
   | comparison (cost : CompareCost)
   | growth (cost : Growth)
+  | power (work : PowWork)
   deriving DecidableEq, Repr
 
 /-- Result type for public arithmetic whose work is not described by
@@ -113,7 +136,8 @@ signed dyadic-exponent multiplication. In particular, a unit mantissa at
 dyadic exponent zero can pass this growth check for an arbitrarily large
 natural exponent. A future public power operation must enforce a separate
 exponent/work limit before invoking `Dyadic.pow`. -/
-def preflightPow (limit : EndpointLimit) (source : Dyadic) (exponent : Nat) :
+def preflightPowGrowth (limit : EndpointLimit) (source : Dyadic)
+    (exponent : Nat) :
     Except Cost Growth := do
   let sourceCost := EndpointCost.ofDyadic source
   if !sourceCost.allowed limit then
@@ -137,5 +161,26 @@ def preflightPow (limit : EndpointLimit) (source : Dyadic) (exponent : Nat) :
   if !cost.allowed limit then
     throw (.growth cost)
   pure cost
+
+/-- Transactional prerequisite for invoking Core direct dyadic power.
+
+For a nonzero source, the actual `Nat` exponent is checked before the retained
+growth preflight and before any call to `Dyadic.pow`; refusal has the distinct
+`Cost.power` diagnostic. A successful result therefore authenticates both the
+work cap and `preflightPowGrowth`'s source/result endpoint-growth boundary.
+
+The zero source deliberately bypasses the exponent cap. Core's `Dyadic.pow`
+zero branch only tests whether the exponent is zero and returns `1` or `0`; it
+does not evaluate `Nat.pow`, convert the exponent to `Int`, or multiply a
+dyadic exponent. This exception does not apply to either `1` or `-1`. -/
+def preflightPow (endpointLimit : EndpointLimit) (workLimits : PowLimits)
+    (source : Dyadic) (exponent : Nat) : Except Cost Growth :=
+  match source with
+  | .zero => preflightPowGrowth endpointLimit source exponent
+  | .ofOdd _ _ _ => do
+      let work : PowWork := { exponent }
+      if !work.allowed workLimits then
+        throw (.power work)
+      preflightPowGrowth endpointLimit source exponent
 
 end Hex.Interval.Arithmetic
