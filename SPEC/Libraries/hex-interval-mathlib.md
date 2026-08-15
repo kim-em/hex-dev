@@ -7,7 +7,7 @@ theorems for interval operations and propagators. It depends on Mathlib and
 
 The current supported surface interprets public canonical intervals over `ℝ`
 and proves exact semantics for successful resource-checked intersection, hull,
-negation, and addition. Propagator, provider, replay, and tactic modules remain experiments
+negation, addition, and subtraction. Propagator, provider, replay, and tactic modules remain experiments
 and are not re-exported by the public umbrella. The user-facing tactic contract
 below is the release target, not a claim that the tactic is already supported.
 
@@ -135,6 +135,14 @@ theorem contains_addWithin
 theorem add_mem_addWithin
     (h : addWithin limit I J = .ready result) :
     I.Contains x → J.Contains y → result.Contains (x + y)
+
+theorem contains_subWithin
+    (h : subWithin limit I J = .ready result) :
+    result.Contains x ↔ I.view.SubContains J.view x
+
+theorem sub_mem_subWithin
+    (h : subWithin limit I J = .ready result) :
+    I.Contains x → J.Contains y → result.Contains (x - y)
 ```
 
 For two nonempty bounded raw inputs, `HullContains` is exactly
@@ -151,6 +159,13 @@ strict if either contributor is strict. The successful image theorem consumes
 both source membership proofs. A representation-independent tightness theorem
 for the real Minkowski sum remains future work. Resource refusal has no
 membership semantics.
+
+`SubContains` is the directional crossed-cut analogue: left lower minus right
+upper, and left upper minus right lower. Empty is absorbing, either relevant
+unbounded input makes that output side unbounded, and finite strictness is
+disjunction. `sub_mem_subWithin` proves the representation-independent image
+enclosure. As for addition, a separate real Minkowski-image tightness converse
+remains future work rather than a current claim.
 
 The remaining target theorems include:
 

@@ -14,7 +14,8 @@ public section
 # Public exact interval operations
 
 This module begins the supported arithmetic surface with exact intersection,
-hull, negation, and addition.  The operations retain a resource-aware result: public
+hull, negation, addition, and subtraction. The operations retain a
+resource-aware result: public
 interval values do not remember the construction budget under which their
 endpoints were admitted, so a later comparison must preflight its own alignment
 work.
@@ -117,6 +118,41 @@ the public wrapper checks its retained endpoint sizes and final comparison. -/
         (addLowerUnchecked leftLower rightLower)
         (addUpperUnchecked leftUpper rightUpper)
 
+/-- Exact lower cut of a Minkowski difference. An unbounded left lower or
+right upper cut makes the result unbounded below. Finite strictness is
+disjunction because the endpoint is attained exactly when both contributors
+attain theirs.
+
+This helper may align dyadic mantissas. Call it only after preflighting the
+finite endpoint pair with `CompareCost`. -/
+@[expose] def subLowerUnchecked : Lower → Upper → Lower
+  | .unbounded, _ | _, .unbounded => .unbounded
+  | .finite left leftStrict, .finite right rightStrict =>
+      .finite (left - right) (leftStrict || rightStrict)
+
+/-- Exact upper cut of a Minkowski difference. An unbounded left upper or
+right lower cut makes the result unbounded above. Finite strictness is
+disjunction because the endpoint is attained exactly when both contributors
+attain theirs.
+
+This helper may align dyadic mantissas. Call it only after preflighting the
+finite endpoint pair with `CompareCost`. -/
+@[expose] def subUpperUnchecked : Upper → Lower → Upper
+  | .unbounded, _ | _, .unbounded => .unbounded
+  | .finite left leftStrict, .finite right rightStrict =>
+      .finite (left - right) (leftStrict || rightStrict)
+
+/-- Exact raw Minkowski-difference cuts after the crossed finite endpoint
+subtractions have been preflighted. Empty is absorbing. The candidate remains
+unnormalized so the public wrapper checks retained endpoint sizes and the final
+comparison. -/
+@[expose] def subUnchecked : Raw → Raw → Raw
+  | .empty, _ | _, .empty => .empty
+  | .bounds leftLower leftUpper, .bounds rightLower rightUpper =>
+      .bounds
+        (subLowerUnchecked leftLower rightUpper)
+        (subUpperUnchecked leftUpper rightLower)
+
 /-- Exact raw image under negation.  Negation swaps the cuts and preserves
 their strictness. -/
 @[expose] def negUnchecked : Raw → Raw
@@ -132,6 +168,20 @@ their strictness. -/
         | .finite value strict => Upper.finite (-value) strict
       Raw.bounds resultLower resultUpper
 
+/-- Direct raw subtraction agrees with addition after raw negation. The
+checked public operation uses the direct form so it can preflight only the two
+crossed endpoint pairs, without normalizing an intermediate negated interval. -/
+theorem sub_eq_add_neg (left right : Raw) :
+    subUnchecked left right = addUnchecked left (negUnchecked right) := by
+  cases left with
+  | empty => cases right <;> rfl
+  | bounds leftLower leftUpper =>
+      cases right with
+      | empty => rfl
+      | bounds rightLower rightUpper =>
+          cases leftLower <;> cases leftUpper <;>
+            cases rightLower <;> cases rightUpper <;> rfl
+
 end Raw
 
 private def compareCost? (limit : EndpointLimit) (left right : Dyadic) :
@@ -144,6 +194,14 @@ private def lowerCost? (limit : EndpointLimit) : Lower → Lower → Option Comp
   | _, _ => none
 
 private def upperCost? (limit : EndpointLimit) : Upper → Upper → Option CompareCost
+  | .finite left _, .finite right _ => compareCost? limit left right
+  | _, _ => none
+
+private def lowerUpperCost? (limit : EndpointLimit) : Lower → Upper → Option CompareCost
+  | .finite left _, .finite right _ => compareCost? limit left right
+  | _, _ => none
+
+private def upperLowerCost? (limit : EndpointLimit) : Upper → Lower → Option CompareCost
   | .finite left _, .finite right _ => compareCost? limit left right
   | _, _ => none
 
@@ -175,6 +233,17 @@ private def addCost? (limit : EndpointLimit) : Raw → Raw → Option CompareCos
       match lowerCost? limit leftLower rightLower with
       | some cost => some cost
       | none => upperCost? limit leftUpper rightUpper
+
+/-- The first crossed finite endpoint subtraction refused by the direct
+Minkowski-difference preflight. `CompareCost.allowed` bounds both inputs and
+their exponent gap before `Dyadic.sub` negates and shifts a mantissa. The raw
+result is retained only after the separate `ofRawWithin` check. -/
+private def subCost? (limit : EndpointLimit) : Raw → Raw → Option CompareCost
+  | .empty, _ | _, .empty => none
+  | .bounds leftLower leftUpper, .bounds rightLower rightUpper =>
+      match lowerUpperCost? limit leftLower rightUpper with
+      | some cost => some cost
+      | none => upperLowerCost? limit leftUpper rightLower
 
 /-- Exact set intersection with preflighted dyadic comparisons.  Refusal is
 distinct from the canonical empty result. -/
@@ -230,6 +299,27 @@ theorem view_addWithin_ready {limit : EndpointLimit}
     (h : addWithin limit left right = .ready result) :
     result.view = (Raw.addUnchecked left.view right.view).normalizeUnchecked := by
   unfold addWithin at h
+  split at h
+  · contradiction
+  · exact view_ofRawWithin_ready h
+
+/-- Exact interval subtraction with allocation-safe crossed endpoint
+differences. The direct implementation avoids an intermediate checked
+negation, whose unrelated endpoint comparison could refuse before either
+subtraction. Empty is absorbing and resource refusal remains distinct. -/
+def subWithin (limit : EndpointLimit)
+    (left right : Hex.Interval) : BuildResult :=
+  match subCost? limit left.view right.view with
+  | some cost => .resourceLimit cost
+  | none => ofRawWithin limit (Raw.subUnchecked left.view right.view)
+
+/-- A successful subtraction exposes exactly the normalized
+Minkowski-difference cuts. -/
+theorem view_subWithin_ready {limit : EndpointLimit}
+    {left right result : Hex.Interval}
+    (h : subWithin limit left right = .ready result) :
+    result.view = (Raw.subUnchecked left.view right.view).normalizeUnchecked := by
+  unfold subWithin at h
   split at h
   · contradiction
   · exact view_ofRawWithin_ready h

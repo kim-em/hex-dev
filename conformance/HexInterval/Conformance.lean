@@ -138,6 +138,7 @@ private def bridgeRight : Hex.Interval := ready (finite 3 false 12 false)
 private def openClosed01 : Hex.Interval := ready (finite 0 true 1 false)
 private def closedOpen23 : Hex.Interval := ready (finite 2 false 3 true)
 private def singletonOne : Hex.Interval := ready (finite 1 false 1 false)
+private def singletonNegOne : Hex.Interval := ready (finite (-1) false (-1) false)
 private def half : Dyadic := .ofOdd 1 1 (by decide)
 private def singletonHalf : Hex.Interval :=
   ready (.bounds (.finite half false) (.finite half false))
@@ -146,6 +147,14 @@ private def widePower : Hex.Interval :=
   match Hex.Interval.betweenWithin
       { maxEndpointHeight := 128, maxAlignmentShift := 128 }
       (d 1) false twoPow100 false with
+  | .ready interval => interval
+  | .resourceLimit _ => Hex.Interval.empty
+private def powerPlusOne : Dyadic := twoPow100 + d 1
+private def powerPlusTwo : Dyadic := twoPow100 + d 2
+private def powerBand : Hex.Interval :=
+  match Hex.Interval.betweenWithin
+      { maxEndpointHeight := 256, maxAlignmentShift := 128 }
+      powerPlusOne false powerPlusTwo false with
   | .ready interval => interval
   | .resourceLimit _ => Hex.Interval.empty
 
@@ -185,6 +194,15 @@ private def farLower : Hex.Interval :=
 private def farUpper : Hex.Interval :=
   match Hex.Interval.belowWithin
       { maxEndpointHeight := 1000000100, maxAlignmentShift := 64 } far false with
+  | .ready interval => interval
+  | .resourceLimit _ => Hex.Interval.empty
+
+private def mediumFar : Dyadic := .ofOdd 1 200 (by decide)
+
+private def mediumToOne : Hex.Interval :=
+  match Hex.Interval.betweenWithin
+      { maxEndpointHeight := 256, maxAlignmentShift := 200 }
+      mediumFar false (d 1) false with
   | .ready interval => interval
   | .resourceLimit _ => Hex.Interval.empty
 
@@ -374,6 +392,100 @@ private def farUpper : Hex.Interval :=
   match Hex.Interval.addWithin
       { maxEndpointHeight := 256, maxAlignmentShift := 50 }
       widePower widePower with
+  | .ready _ => false
+  | .resourceLimit cost => cost.alignmentShift == 100
+
+-- Subtraction uses crossed endpoints and is directional: [2,3] - [0,1] is
+-- [1,3], while reversing the operands yields [-3,-1].
+#guard
+  match Hex.Interval.subWithin smallLimit closed23 closed01 with
+  | .ready interval => interval.view == finite 1 false 3 false
+  | .resourceLimit _ => false
+
+#guard
+  match Hex.Interval.subWithin smallLimit closed01 closed23 with
+  | .ready interval => interval.view == finite (-3) false (-1) false
+  | .resourceLimit _ => false
+
+-- The lower result consumes the left lower and right upper strictness; the
+-- upper result consumes the left upper and right lower strictness.
+#guard
+  match Hex.Interval.subWithin smallLimit openClosed01 closedOpen23 with
+  | .ready interval => interval.view == finite (-3) true (-1) false
+  | .resourceLimit _ => false
+
+#guard
+  match Hex.Interval.subWithin smallLimit closedOpen23 openClosed01 with
+  | .ready interval => interval.view == finite 1 false 3 true
+  | .resourceLimit _ => false
+
+-- Empty is absorbing. The right upper controls lower unboundedness and the
+-- right lower controls upper unboundedness; two matching half-lines can span
+-- the whole line.
+#guard
+  match Hex.Interval.subWithin smallLimit Hex.Interval.empty closed01 with
+  | .ready interval => interval == Hex.Interval.empty
+  | .resourceLimit _ => false
+
+#guard
+  match Hex.Interval.subWithin smallLimit closed01 Hex.Interval.empty with
+  | .ready interval => interval == Hex.Interval.empty
+  | .resourceLimit _ => false
+
+#guard
+  match Hex.Interval.subWithin smallLimit closed01 atLeastOne with
+  | .ready interval =>
+      interval.view == .bounds .unbounded (.finite (d 0) false)
+  | .resourceLimit _ => false
+
+#guard
+  match Hex.Interval.subWithin smallLimit closed01 atMostOne with
+  | .ready interval =>
+      interval.view == .bounds (.finite (d (-1)) false) .unbounded
+  | .resourceLimit _ => false
+
+#guard
+  match Hex.Interval.subWithin smallLimit atMostOne atMostOne with
+  | .ready interval => interval == Hex.Interval.whole
+  | .resourceLimit _ => false
+
+-- Each crossed endpoint pair has its own pre-allocation check.
+#guard
+  match Hex.Interval.subWithin smallLimit closed12 farUpper with
+  | .ready _ => false
+  | .resourceLimit cost => cost.alignmentShift == 1000000000
+
+#guard
+  match Hex.Interval.subWithin smallLimit atMostOne farLower with
+  | .ready _ => false
+  | .resourceLimit cost => cost.alignmentShift == 1000000000
+
+-- The lower subtraction `1 - 1` is cheap, but the upper pair needs a 200-bit
+-- shift. The second preflight rejects before either unchecked subtraction
+-- runs; the fixture itself stays small enough not to perform a huge admitted
+-- comparison during construction.
+#guard
+  match Hex.Interval.subWithin smallLimit singletonOne mediumToOne with
+  | .ready _ => false
+  | .resourceLimit cost => cost.alignmentShift == 200
+
+-- Both endpoint subtractions fit this tiny budget, but retaining the result
+-- singleton `2` does not.
+#guard
+  match Hex.Interval.subWithin
+      { maxEndpointHeight := 1, maxAlignmentShift := 0 }
+      singletonOne singletonNegOne with
+  | .ready _ => false
+  | .resourceLimit cost =>
+      cost.lower.exponentMagnitude == 1 && cost.upper.exponentMagnitude == 1
+
+-- The two crossed input pairs need shifts zero and one. Cancellation produces
+-- output endpoints `2^100` and `2^100 + 1`, so only the distinct final
+-- canonical comparison exceeds this operation's alignment budget.
+#guard
+  match Hex.Interval.subWithin
+      { maxEndpointHeight := 256, maxAlignmentShift := 50 }
+      powerBand singletonOne with
   | .ready _ => false
   | .resourceLimit cost => cost.alignmentShift == 100
 

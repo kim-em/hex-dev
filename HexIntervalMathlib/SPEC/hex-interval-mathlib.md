@@ -10,7 +10,8 @@ perform planner search or turn runtime checks into proof evidence.
 The foundational supported module is `HexIntervalMathlib.Interval`. It defines the
 real value of a dyadic endpoint and membership for every public interval cut:
 strict or closed finite ends, independent unbounded ends, and canonical empty.
-`HexIntervalMathlib.Addition` adds the public arithmetic image theorem.
+`HexIntervalMathlib.Addition` and `HexIntervalMathlib.Subtraction` add the
+public arithmetic image theorems.
 
 For every successful resource-checked public operation it proves:
 
@@ -27,7 +28,12 @@ For every successful resource-checked public operation it proves:
   summed Minkowski cuts, with empty absorption, unbounded sides, and endpoint
   strictness;
 - `add_mem_addWithin`: two input members add to a member of every successful
-  result.
+  result;
+- `contains_subWithin`: exact successful-result membership in the crossed
+  difference cuts, including empty absorption and independent unbounded
+  sides;
+- `sub_mem_subWithin`: two input members subtract to a member of every
+  successful result.
 
 These theorems depend on the exact successful `BuildResult` equation. A
 resource refusal has no set interpretation and is never treated as an empty
@@ -48,7 +54,8 @@ set-enclosure and stated tightness theorems before promotion.
 
 `HexIntervalMathlib.IntervalConformance` pins both directions of intersection
 membership, exact hull closure and both input inclusions, negation transport,
-addition cut exactness and image transport, and the exact ordinary-kernel axiom surface.
+addition and subtraction cut exactness and image transport, and the exact
+ordinary-kernel axiom surface.
 The Mathlib-free companion tests separately pin representative strict, closed,
 unbounded, and empty shapes together with pre-allocation resource refusal. The
 semantic theorem itself is exhaustive over the complete cut language.
