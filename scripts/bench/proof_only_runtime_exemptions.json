@@ -218,7 +218,7 @@
   {
     "path": "lakefile.lean",
     "baseline_blob": "6dd80771ae2212333b2a9b925b52056e0037ff56",
-    "current_blob": "18d0023a4f774efcd6b90df25aeeac6f8a94532b",
+    "current_blob": "f1f86f8596ed6f3597788046e086abad0bce9173",
     "reason": "Additionally registers the proof-only exact contraction-to-split conformance module alongside the isolated interval experiments; the factorization service target and executable dependency graph are unchanged."
   },
   {

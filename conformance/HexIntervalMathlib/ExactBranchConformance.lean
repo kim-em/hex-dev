@@ -856,6 +856,20 @@ theorem tacticExactBranch (x : ℝ)
     lowerContains, upperContains, DyadicInterval.toReal_zero, toReal_quarter,
     valuation, node, and_true] using result
 
+-- The theorem's three hypotheses are jointly inhabited; the right-child
+-- contradiction closes only one branch and does not make the root statement
+-- vacuous.
+private theorem premiseWitness :
+    3 / 16 ≤ (1 / 4 : ℝ) - ((1 / 2 : ℝ) - 1 / 2) ^ 2 ∧
+      (1 / 4 : ℝ) - ((1 / 2 : ℝ) - 1 / 2) ^ 2 ≤ 1 / 4 ∧
+      (1 / 2 : ℝ) ≤ 1 / 2 := by
+  norm_num
+
+example :
+    0 ≤ |(1 / 2 : ℝ) - 1 / 2| ∧ |(1 / 2 : ℝ) - 1 / 2| ≤ 1 / 4 := by
+  exact tacticExactBranch (1 / 2) premiseWitness.1 premiseWitness.2.1
+    premiseWitness.2.2
+
 /--
 info: 'Hex.IntervalMathlib.ExactBranchConformance.tacticExactBranch' depends on axioms: [propext,
  Classical.choice,
