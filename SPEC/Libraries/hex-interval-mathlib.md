@@ -44,6 +44,17 @@ registration and operation keys cannot provide another such parameterization.
 Arbitrary-function package discovery, goal reification, encoding and evidence
 folds, search-to-recipe orchestration, and tactic syntax remain experimental
 and are not re-exported by the public umbrella.
+The supported `Frontend` is instead a tactic-independent, flat programmatic
+client. It recursively reifies bounded `Term` values by stable operation key,
+rechecks the transparent result's exact node/term/ordered-edge correspondence,
+binds the exact selected source intervals, invokes Rule/Proof replay on an
+explicit caller-supplied event list, and eliminates the resulting evidence to
+lower, upper, conjunction, or closed-singleton equality theorems. It covers
+the current Rule operations but inherits the package's one shared exponent,
+constant, and precision. Array caps precede the revalidation scans, while
+construction and structural equality of programmatic caller `Term` values are
+not preemptible. It does not parse Lean expressions or hypotheses, extract
+recipes from generic Search trees, or expose tactic syntax.
 The user-facing tactic contract below is the release target, not a claim that
 the tactic is already supported.
 

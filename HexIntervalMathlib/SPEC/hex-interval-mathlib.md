@@ -23,6 +23,64 @@ connected-cut characterization and sound total-real-inverse enclosure, while
 `HexIntervalMathlib.Division` proves the computed first-slice quotient cuts and
 sound total-real-division enclosure. `HexIntervalMathlib.Regularize` proves
 exact rounded-cut semantics, outward containment, and raw-cut idempotence.
+`HexIntervalMathlib.Program` is the supported function-agnostic interpretation
+of the Mathlib-free expression DAG. A package contributes an exact opaque
+operation signature and relation; `Program.Models` requires pointwise
+alignment with the complete operation array and one relation witness for every
+SSA node. `HexIntervalMathlib.Proof` is the supported chronological proof
+contract over `Program`, `Fact`, `Action`, `State`, `Policy`, and `Search`.
+It owns semantic consequence, locality and conservative-extension laws,
+package theorem schemas, globally unambiguous registry assembly, plain quoted
+fact/equality/transport/instance/refutation steps, immutable typed proof state,
+and exact caller-target closure.
+
+`HexIntervalMathlib.Rule` is the first supported concrete registry. Its
+immutable configuration fixes endpoint limits, natural-power work and one
+exponent, precision resources, and one dyadic constant. It owns stable
+operation and rule keys, exact real meanings, local registrations, and forward
+schemas for that constant, negation, addition, subtraction, multiplication,
+natural power, absolute value, minimum, maximum, reciprocal, division, and
+regularization. Source nodes obtain their version-zero facts from
+caller hypotheses rather than a rule. Every schema authenticates the exact
+node operation and argument order, source fact versions through the quoted
+action, proposed interval, one-cell body, and the result of rerunning the
+public checked operation. Its fact-domain meet independently reruns checked
+intersection. `Rule.quote` converts the exact accepted `State.Branch` history
+to plain proof chronology; that conversion grants no evidence. Additional
+operation schemas extend the registry only when their public checked operation
+and one-way image theorem are available in the same library revision.
+
+`HexIntervalMathlib.Frontend` is a supported programmatic client of
+those contracts. Its recursive arithmetic `Term` reifier resolves every
+operation from the configured meaning array by stable key, preserves exact
+structural sharing, checks the completed SSA program, and enforces explicit
+source, operation, node, and depth caps separately from registry and replay
+caps. Before seeding facts it rechecks the transparent result's one-entry-per-
+node correspondence, structural sharing, stable operation key, ordered child
+edges, and source-index range. It then binds every caller-selected source
+interval exactly once, leaves computed nodes at domain top, and requires
+constants and every improvement to enter through package-owned chronology.
+Successful replay can be eliminated to a target membership theorem, either
+endpoint inequality, their conjunction, or equality for a closed singleton.
+These are ordinary theorem combinators over a flat caller-supplied event
+chronology: the module does not turn a generic search tree into proof recipes,
+parse Lean expressions or hypotheses, or contain tactic syntax. The caps run
+before array scans; construction and structural equality of caller `Term`
+values remain an explicit programmatic-caller, non-preemptible envelope.
+
+The proof contract treats runtime states, callback replies, payload bytes,
+search decisions, contradiction flags, and diagnostic traces as untrusted
+decoded data. Every accepted fact or equality is an ordinary theorem returned
+by the exact package schema; every instance carries an append-only stability
+theorem and a model-extension theorem. Replay authenticates the complete
+schema address, registry rule index/key/kind, anchor operation, ordered
+read/write projection, scope, action/program versions, node/fact versions,
+dependencies, body, equality orientation, instance suffix, final program, and
+target. A refuter consumes one already-proved exact fact; runtime
+`contradictory` state is not an argument. The final Meta emitter runs
+transactionally and accepts a package-produced `Expr` only after rollback,
+placeholder rejection, `Meta.check`, inference, and definitional equality with
+the exact expected proposition in the caller environment.
 
 For every successful resource-checked public operation it proves:
 
@@ -112,8 +170,8 @@ Runtime search state, callbacks, payload bytes, and traces are untrusted and
 cannot enter `Proof.Evidence`. The built-in arithmetic package registry and
 its supported branch/session `Cause`-to-`Proof.Event` quotation ship below.
 Arbitrary-function package discovery, goal reification, encoding and evidence
-folds, search-to-recipe orchestration, and tactic syntax remain experimental. Further
-arithmetic images and useful bounded nonsingleton division require their own
+folds, search-to-recipe orchestration, and tactic syntax remain experimental.
+Further arithmetic images and useful bounded nonsingleton division require their own
 operation-specific semantic theorems before promotion. An image operation must
 at least prove successful-result cut semantics and sound real-image enclosure;
 it claims a tightness converse only when that converse is separately proved.
@@ -236,3 +294,9 @@ proof-frontend closure of the stronger two-sided theorem.
 `HexIntervalMathlib.PntPiPointConformance` pins the exact constant certificate,
 wrong-source and false-endpoint rejection, the ordinary π-bound axiom surface,
 and generic proof-frontend closure.
+`HexIntervalMathlib.FrontendConformance` reconstructs that shared arithmetic
+DAG recursively, pins exact source and configured-constant node binding,
+rejects malformed result entries, duplicate stable keys, and one-over
+source/operation/node/depth limits, replays a flat supported chronology, and
+closes lower inequality, two-sided conjunction, and equality theorems with
+guarded ordinary-theorem axiom reports.
