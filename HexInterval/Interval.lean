@@ -18,7 +18,9 @@ hull, negation, addition, subtraction, minimum, maximum, and absolute value.
 The operations retain a resource-aware result: public
 interval values do not remember the construction budget under which their
 endpoints were admitted, so a later comparison must preflight its own alignment
-work.
+work. Resource-checked multiplication is kept in `HexInterval.Multiplication`
+because it additionally depends on arithmetic-growth diagnostics and corner
+candidate selection.
 -/
 
 namespace Hex.Interval

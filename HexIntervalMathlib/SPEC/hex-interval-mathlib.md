@@ -46,16 +46,17 @@ For every successful resource-checked public operation it proves:
   value cuts;
 - `abs_mem_absWithin`: the absolute value of every input member belongs to every
   successful result;
-- `contains_mulWithin`: exact successful-result membership in the normalized
-  computed corner candidate, including empty, unbounded, strict, closed, and
-  zero-attainment cases;
+- `contains_mulWithin`: exact successful-result membership in the explicit
+  selected lower and upper candidate cuts after normalization, including
+  empty, unbounded, strict, closed, and zero-attainment cases;
 - `mul_mem_mulWithin`: two input members multiply to a member of every
   successful result. This is an enclosure theorem; no separate image-tightness
   converse is claimed.
 
-These theorems depend on the exact successful `BuildResult` equation. A
-resource refusal has no set interpretation and is never treated as an empty
-interval. The proofs use the public operation's checked view-characterization
+These theorems depend on the exact successful operation-result equation
+(`BuildResult` or `Arithmetic.Result`). A resource refusal has no set
+interpretation and is never treated as an empty interval. The proofs use the
+public operation's checked view-characterization
 theorems and independently establish the complete raw-cut semantics; they do
 not import the experimental propagation fact domain.
 

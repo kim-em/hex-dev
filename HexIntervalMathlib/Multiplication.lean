@@ -29,11 +29,32 @@ theorem toReal_mul (left right : Dyadic) :
 theorem toReal_zero : toReal 0 = 0 := by
   simp [toReal]
 
-/-- Computed cut predicate for exact raw multiplication. This describes the
-algorithm's normalized candidate; it does not claim a separate set-image
-tightness converse. -/
-def Raw.MulContains (left right : Raw) (x : ℝ) : Prop :=
-  (left.mulUnchecked right).normalizeUnchecked.Contains x
+/-- Computed cut predicate for exact raw multiplication. Empty is absorbing.
+For two bounded-cut inputs it is the conjunction of the selected lower and
+upper candidate cuts. This characterizes the algorithm's computed enclosure;
+it does not claim a separate set-image tightness converse. -/
+def Raw.MulContains : Raw → Raw → ℝ → Prop
+  | .empty, _, _ | _, .empty, _ => False
+  | .bounds leftLower leftUpper, .bounds rightLower rightUpper, x =>
+      match Raw.Mul.candidatesUnchecked
+          leftLower leftUpper rightLower rightUpper with
+      | [] => False
+      | first :: rest =>
+          (Raw.Mul.lowerCut (Raw.Mul.minimum first rest)).Contains x ∧
+            (Raw.Mul.upperCut (Raw.Mul.maximum first rest)).Contains x
+
+private theorem rawContains_mulUnchecked (left right : Raw) (x : ℝ) :
+    (left.mulUnchecked right).Contains x ↔ left.MulContains right x := by
+  cases left with
+  | empty => simp [Raw.mulUnchecked, Raw.Contains, Raw.MulContains]
+  | bounds leftLower leftUpper =>
+      cases right with
+      | empty => simp [Raw.mulUnchecked, Raw.Contains, Raw.MulContains]
+      | bounds rightLower rightUpper =>
+          simp only [Raw.mulUnchecked, Raw.MulContains]
+          generalize candidatesEq : Raw.Mul.candidatesUnchecked
+            leftLower leftUpper rightLower rightUpper = candidates
+          cases candidates <;> simp [Raw.Mul.result, Raw.Contains]
 
 private def Raw.Mul.Candidate.LowerBounds : Raw.Mul.Candidate → ℝ → Prop
   | .negInf, _ => True
@@ -295,44 +316,6 @@ private theorem mul_upper_eq {x b y d : ℝ} (xPos : 0 < x) (xLe : x ≤ b)
   subst x
   exact ⟨rfl, mul_left_cancel₀ bPos.ne' equal⟩
 
-private theorem finiteLower_nonneg_of_pos_not_zero
-    (lower upper : Dyadic) (lowerStrict upperStrict : Bool) {x : ℝ}
-    (member : (Lower.finite lower lowerStrict).Contains x ∧
-      (Upper.finite upper upperStrict).Contains x)
-    (xPos : 0 < x)
-    (notZero : Raw.Mul.containsZeroUnchecked (.finite lower lowerStrict)
-      (.finite upper upperStrict) = false) :
-    0 ≤ toReal lower := by
-  by_contra notNonneg
-  have lowerNeg : toReal lower < 0 := lt_of_not_ge notNonneg
-  have zeroMember : (Lower.finite lower lowerStrict).Contains 0 ∧
-      (Upper.finite upper upperStrict).Contains 0 := by
-    constructor
-    · cases lowerStrict <;> simp [Lower.Contains] <;> linarith
-    · cases upperStrict <;> simp [Upper.Contains] at member ⊢ <;> linarith
-  have yes := Raw.Mul.containsZeroUnchecked_of_mem
-    (.finite lower lowerStrict) (.finite upper upperStrict) zeroMember rfl
-  simp [notZero] at yes
-
-private theorem finiteUpper_nonpos_of_neg_not_zero
-    (lower upper : Dyadic) (lowerStrict upperStrict : Bool) {x : ℝ}
-    (member : (Lower.finite lower lowerStrict).Contains x ∧
-      (Upper.finite upper upperStrict).Contains x)
-    (xNeg : x < 0)
-    (notZero : Raw.Mul.containsZeroUnchecked (.finite lower lowerStrict)
-      (.finite upper upperStrict) = false) :
-    toReal upper ≤ 0 := by
-  by_contra notNonpos
-  have upperPos : 0 < toReal upper := lt_of_not_ge notNonpos
-  have zeroMember : (Lower.finite lower lowerStrict).Contains 0 ∧
-      (Upper.finite upper upperStrict).Contains 0 := by
-    constructor
-    · cases lowerStrict <;> simp [Lower.Contains] at member ⊢ <;> linarith
-    · cases upperStrict <;> simp [Upper.Contains] <;> linarith
-  have yes := Raw.Mul.containsZeroUnchecked_of_mem
-    (.finite lower lowerStrict) (.finite upper upperStrict) zeroMember rfl
-  simp [notZero] at yes
-
 private theorem upper_nonpos_of_neg_not_zero
     (lower : Lower) (upper : Dyadic) (upperStrict : Bool) {x : ℝ}
     (member : lower.Contains x ∧ (Upper.finite upper upperStrict).Contains x)
@@ -371,310 +354,6 @@ private theorem lower_nonneg_of_pos_not_zero
     (.finite lower lowerStrict) upper zeroMember rfl
   simp [notZero] at yes
 
-private theorem Raw.Mul.finite_corner_bounds
-    (leftLower leftUpper rightLower rightUpper : Dyadic)
-    (leftLowerStrict leftUpperStrict rightLowerStrict rightUpperStrict : Bool)
-    {x y : ℝ}
-    (leftMember :
-      (Lower.finite leftLower leftLowerStrict).Contains x ∧
-        (Upper.finite leftUpper leftUpperStrict).Contains x)
-    (rightMember :
-      (Lower.finite rightLower rightLowerStrict).Contains y ∧
-        (Upper.finite rightUpper rightUpperStrict).Contains y) :
-    (∃ candidate ∈ Raw.Mul.candidatesUnchecked
-        (.finite leftLower leftLowerStrict) (.finite leftUpper leftUpperStrict)
-        (.finite rightLower rightLowerStrict) (.finite rightUpper rightUpperStrict),
-      candidate.LowerBounds (x * y)) ∧
-    (∃ candidate ∈ Raw.Mul.candidatesUnchecked
-        (.finite leftLower leftLowerStrict) (.finite leftUpper leftUpperStrict)
-        (.finite rightLower rightLowerStrict) (.finite rightUpper rightUpperStrict),
-      candidate.UpperBounds (x * y)) := by
-  rw [Lower.contains_iff_bounds, Upper.contains_iff_bounds] at leftMember rightMember
-  by_cases productZero : x * y = 0
-  · rcases mul_eq_zero.mp productZero with xZero | yZero
-    · have containsZero := Raw.Mul.containsZeroUnchecked_of_mem
-        (.finite leftLower leftLowerStrict) (.finite leftUpper leftUpperStrict)
-        ⟨(Lower.contains_iff_bounds _ _).2 leftMember.1,
-          (Upper.contains_iff_bounds _ _).2 leftMember.2⟩ xZero
-      refine ⟨⟨.finite 0 true, ?_, ?_⟩, ⟨.finite 0 true, ?_, ?_⟩⟩
-      all_goals simp [Raw.Mul.candidatesUnchecked, containsZero, productZero,
-        Raw.Mul.Candidate.LowerBounds, Raw.Mul.Candidate.UpperBounds]
-    · have containsZero := Raw.Mul.containsZeroUnchecked_of_mem
-        (.finite rightLower rightLowerStrict) (.finite rightUpper rightUpperStrict)
-        ⟨(Lower.contains_iff_bounds _ _).2 rightMember.1,
-          (Upper.contains_iff_bounds _ _).2 rightMember.2⟩ yZero
-      refine ⟨⟨.finite 0 true, ?_, ?_⟩, ⟨.finite 0 true, ?_, ?_⟩⟩
-      all_goals simp [Raw.Mul.candidatesUnchecked, containsZero, productZero,
-        Raw.Mul.Candidate.LowerBounds, Raw.Mul.Candidate.UpperBounds]
-  have leftContains : (Lower.finite leftLower leftLowerStrict).Contains x ∧
-      (Upper.finite leftUpper leftUpperStrict).Contains x :=
-    ⟨(Lower.contains_iff_bounds _ _).2 leftMember.1,
-      (Upper.contains_iff_bounds _ _).2 leftMember.2⟩
-  have rightContains : (Lower.finite rightLower rightLowerStrict).Contains y ∧
-      (Upper.finite rightUpper rightUpperStrict).Contains y :=
-    ⟨(Lower.contains_iff_bounds _ _).2 rightMember.1,
-      (Upper.contains_iff_bounds _ _).2 rightMember.2⟩
-  have ll : toReal leftLower ≤ x := leftMember.1.1
-  have lu : x ≤ toReal leftUpper := leftMember.2.1
-  have rl : toReal rightLower ≤ y := rightMember.1.1
-  have ru : y ≤ toReal rightUpper := rightMember.2.1
-  have xNonzero : x ≠ 0 := fun equal => productZero (by simp [equal])
-  have yNonzero : y ≠ 0 := fun equal => productZero (by simp [equal])
-  have memberLL : Raw.Mul.Candidate.finite (leftLower * rightLower)
-      (!leftLowerStrict && !rightLowerStrict) ∈
-      Raw.Mul.candidatesUnchecked (.finite leftLower leftLowerStrict)
-        (.finite leftUpper leftUpperStrict) (.finite rightLower rightLowerStrict)
-        (.finite rightUpper rightUpperStrict) := by
-    simp [Raw.Mul.candidatesUnchecked, Raw.Mul.corners, Raw.Mul.evaluate,
-      Raw.Mul.productUnchecked, Raw.Mul.lowerEdge, Raw.Mul.upperEdge] <;>
-      split <;> simp
-  have memberLU : Raw.Mul.Candidate.finite (leftLower * rightUpper)
-      (!leftLowerStrict && !rightUpperStrict) ∈
-      Raw.Mul.candidatesUnchecked (.finite leftLower leftLowerStrict)
-        (.finite leftUpper leftUpperStrict) (.finite rightLower rightLowerStrict)
-        (.finite rightUpper rightUpperStrict) := by
-    simp [Raw.Mul.candidatesUnchecked, Raw.Mul.corners, Raw.Mul.evaluate,
-      Raw.Mul.productUnchecked, Raw.Mul.lowerEdge, Raw.Mul.upperEdge] <;>
-      split <;> simp
-  have memberUL : Raw.Mul.Candidate.finite (leftUpper * rightLower)
-      (!leftUpperStrict && !rightLowerStrict) ∈
-      Raw.Mul.candidatesUnchecked (.finite leftLower leftLowerStrict)
-        (.finite leftUpper leftUpperStrict) (.finite rightLower rightLowerStrict)
-        (.finite rightUpper rightUpperStrict) := by
-    simp [Raw.Mul.candidatesUnchecked, Raw.Mul.corners, Raw.Mul.evaluate,
-      Raw.Mul.productUnchecked, Raw.Mul.lowerEdge, Raw.Mul.upperEdge] <;>
-      split <;> simp
-  have memberUU : Raw.Mul.Candidate.finite (leftUpper * rightUpper)
-      (!leftUpperStrict && !rightUpperStrict) ∈
-      Raw.Mul.candidatesUnchecked (.finite leftLower leftLowerStrict)
-        (.finite leftUpper leftUpperStrict) (.finite rightLower rightLowerStrict)
-        (.finite rightUpper rightUpperStrict) := by
-    simp [Raw.Mul.candidatesUnchecked, Raw.Mul.corners, Raw.Mul.evaluate,
-      Raw.Mul.productUnchecked, Raw.Mul.lowerEdge, Raw.Mul.upperEdge] <;>
-      split <;> simp
-  by_cases hx : x < 0
-  · have nx : 0 < -x := neg_pos.mpr hx
-    by_cases hy : y < 0
-    ·
-      have ny : 0 < -y := neg_pos.mpr hy
-      by_cases zero :
-          Raw.Mul.containsZeroUnchecked (.finite leftLower leftLowerStrict)
-              (.finite leftUpper leftUpperStrict) ||
-            Raw.Mul.containsZeroUnchecked (.finite rightLower rightLowerStrict)
-              (.finite rightUpper rightUpperStrict)
-      · have memberZero : Raw.Mul.Candidate.finite 0 true ∈
-            Raw.Mul.candidatesUnchecked (.finite leftLower leftLowerStrict)
-              (.finite leftUpper leftUpperStrict) (.finite rightLower rightLowerStrict)
-              (.finite rightUpper rightUpperStrict) := by
-          simp [Raw.Mul.candidatesUnchecked, zero]
-        refine ⟨⟨.finite 0 true, memberZero, ?_⟩,
-          ⟨.finite (leftLower * rightLower)
-            (!leftLowerStrict && !rightLowerStrict), memberLL, ?_⟩⟩
-        · exact ⟨by simpa using (mul_pos_of_neg_of_neg hx hy).le, by simp
-            [Raw.Mul.Candidate.LowerBounds]⟩
-        · simp only [Raw.Mul.Candidate.UpperBounds, toReal_mul]
-          constructor
-          · have bound := mul_le_mul_of_nonneg_right (neg_le_neg ll) ny.le
-            have bound' := mul_le_mul_of_nonneg_left (neg_le_neg rl)
-              (neg_nonneg.mpr (ll.trans_lt hx).le)
-            nlinarith
-          · intro equal
-            have ends := mul_upper_eq nx (neg_le_neg ll) ny (neg_le_neg rl) (by nlinarith)
-            have leftClosed := leftMember.1.2 (by nlinarith [ends.1])
-            have rightClosed := rightMember.1.2 (by nlinarith [ends.2])
-            simp [leftClosed, rightClosed]
-      · have noZero := Bool.eq_false_of_not_eq_true zero
-        have sides := Bool.or_eq_false_iff.mp noZero
-        have leftUpperNonpos := finiteUpper_nonpos_of_neg_not_zero
-          leftLower leftUpper leftLowerStrict leftUpperStrict leftContains hx sides.1
-        have rightUpperNonpos := finiteUpper_nonpos_of_neg_not_zero
-          rightLower rightUpper rightLowerStrict rightUpperStrict rightContains hy sides.2
-        refine ⟨⟨.finite (leftUpper * rightUpper)
-            (!leftUpperStrict && !rightUpperStrict), memberUU, ?_⟩,
-          ⟨.finite (leftLower * rightLower)
-            (!leftLowerStrict && !rightLowerStrict), memberLL, ?_⟩⟩
-        · simp only [Raw.Mul.Candidate.LowerBounds, toReal_mul]
-          constructor
-          · have bound := mul_le_mul_of_nonneg_right (neg_le_neg lu)
-              (neg_nonneg.mpr rightUpperNonpos)
-            have bound' := mul_le_mul_of_nonneg_left (neg_le_neg ru) nx.le
-            nlinarith
-          · intro equal
-            have ends := mul_lower_eq (neg_nonneg.mpr leftUpperNonpos)
-              (neg_le_neg lu) (neg_nonneg.mpr rightUpperNonpos)
-              (neg_le_neg ru) (by simpa using productZero) (by nlinarith)
-            have leftClosed := leftMember.2.2 (by nlinarith [ends.1])
-            have rightClosed := rightMember.2.2 (by nlinarith [ends.2])
-            simp [leftClosed, rightClosed]
-        · simp only [Raw.Mul.Candidate.UpperBounds, toReal_mul]
-          constructor
-          · have bound := mul_le_mul_of_nonneg_right (neg_le_neg ll) ny.le
-            have bound' := mul_le_mul_of_nonneg_left (neg_le_neg rl)
-              (neg_nonneg.mpr (ll.trans_lt hx).le)
-            nlinarith
-          · intro equal
-            have ends := mul_upper_eq nx (neg_le_neg ll) ny (neg_le_neg rl) (by nlinarith)
-            have leftClosed := leftMember.1.2 (by nlinarith [ends.1])
-            have rightClosed := rightMember.1.2 (by nlinarith [ends.2])
-            simp [leftClosed, rightClosed]
-    · have yPos : 0 < y := lt_of_le_of_ne (le_of_not_gt hy) (Ne.symm yNonzero)
-      have lowerBound : toReal leftLower * toReal rightUpper ≤ x * y := by
-        have first := mul_le_mul_of_nonneg_right (neg_le_neg ll) yPos.le
-        have second := mul_le_mul_of_nonneg_left ru nx.le
-        nlinarith
-      have lowerEqual : x * y = toReal leftLower * toReal rightUpper →
-          x = toReal leftLower ∧ y = toReal rightUpper := by
-        intro equal
-        have ends := mul_upper_eq nx (neg_le_neg ll) yPos ru (by nlinarith)
-        exact ⟨by nlinarith [ends.1], ends.2⟩
-      by_cases zero :
-          Raw.Mul.containsZeroUnchecked (.finite leftLower leftLowerStrict)
-              (.finite leftUpper leftUpperStrict) ||
-            Raw.Mul.containsZeroUnchecked (.finite rightLower rightLowerStrict)
-              (.finite rightUpper rightUpperStrict)
-      · have memberZero : Raw.Mul.Candidate.finite 0 true ∈
-            Raw.Mul.candidatesUnchecked (.finite leftLower leftLowerStrict)
-              (.finite leftUpper leftUpperStrict) (.finite rightLower rightLowerStrict)
-              (.finite rightUpper rightUpperStrict) := by
-          simp [Raw.Mul.candidatesUnchecked, zero]
-        refine ⟨⟨.finite (leftLower * rightUpper)
-            (!leftLowerStrict && !rightUpperStrict), memberLU, ?_⟩,
-          ⟨.finite 0 true, memberZero, ?_⟩⟩
-        · simp only [Raw.Mul.Candidate.LowerBounds, toReal_mul]
-          exact ⟨lowerBound, fun equal => by
-            have ends := lowerEqual equal.symm
-            simp [leftMember.1.2 ends.1.symm, rightMember.2.2 ends.2]⟩
-        · exact ⟨by simpa using (mul_neg_of_neg_of_pos hx yPos).le, by simp
-            [Raw.Mul.Candidate.UpperBounds]⟩
-      · have noZero := Bool.eq_false_of_not_eq_true zero
-        have sides := Bool.or_eq_false_iff.mp noZero
-        have leftUpperNonpos := finiteUpper_nonpos_of_neg_not_zero
-          leftLower leftUpper leftLowerStrict leftUpperStrict leftContains hx sides.1
-        have rightLowerNonneg := finiteLower_nonneg_of_pos_not_zero
-          rightLower rightUpper rightLowerStrict rightUpperStrict rightContains yPos sides.2
-        refine ⟨⟨.finite (leftLower * rightUpper)
-            (!leftLowerStrict && !rightUpperStrict), memberLU, ?_⟩,
-          ⟨.finite (leftUpper * rightLower)
-            (!leftUpperStrict && !rightLowerStrict), memberUL, ?_⟩⟩
-        · simp only [Raw.Mul.Candidate.LowerBounds, toReal_mul]
-          exact ⟨lowerBound, fun equal => by
-            have ends := lowerEqual equal.symm
-            simp [leftMember.1.2 ends.1.symm, rightMember.2.2 ends.2]⟩
-        · simp only [Raw.Mul.Candidate.UpperBounds, toReal_mul]
-          constructor
-          · have first := mul_le_mul_of_nonneg_right (neg_le_neg lu) rightLowerNonneg
-            have second := mul_le_mul_of_nonneg_left rl nx.le
-            nlinarith
-          · intro equal
-            have ends := mul_lower_eq (neg_nonneg.mpr leftUpperNonpos)
-              (neg_le_neg lu) rightLowerNonneg rl
-              (mul_ne_zero (neg_ne_zero.mpr xNonzero) yNonzero) (by nlinarith)
-            have leftClosed := leftMember.2.2 (by nlinarith [ends.1])
-            have rightClosed := rightMember.1.2 (by nlinarith [ends.2])
-            simp [leftClosed, rightClosed]
-  · have xPos : 0 < x := lt_of_le_of_ne (le_of_not_gt hx) (Ne.symm xNonzero)
-    by_cases hy : y < 0
-    · have ny : 0 < -y := neg_pos.mpr hy
-      have lowerBound : toReal leftUpper * toReal rightLower ≤ x * y := by
-        have first := mul_le_mul_of_nonneg_right lu ny.le
-        have second := mul_le_mul_of_nonneg_left (neg_le_neg rl) xPos.le
-        nlinarith
-      have lowerEqual : x * y = toReal leftUpper * toReal rightLower →
-          x = toReal leftUpper ∧ y = toReal rightLower := by
-        intro equal
-        have ends := mul_upper_eq xPos lu ny (neg_le_neg rl) (by nlinarith)
-        exact ⟨ends.1, by nlinarith [ends.2]⟩
-      by_cases zero :
-          Raw.Mul.containsZeroUnchecked (.finite leftLower leftLowerStrict)
-              (.finite leftUpper leftUpperStrict) ||
-            Raw.Mul.containsZeroUnchecked (.finite rightLower rightLowerStrict)
-              (.finite rightUpper rightUpperStrict)
-      · have memberZero : Raw.Mul.Candidate.finite 0 true ∈
-            Raw.Mul.candidatesUnchecked (.finite leftLower leftLowerStrict)
-              (.finite leftUpper leftUpperStrict) (.finite rightLower rightLowerStrict)
-              (.finite rightUpper rightUpperStrict) := by
-          simp [Raw.Mul.candidatesUnchecked, zero]
-        refine ⟨⟨.finite (leftUpper * rightLower)
-            (!leftUpperStrict && !rightLowerStrict), memberUL, ?_⟩,
-          ⟨.finite 0 true, memberZero, ?_⟩⟩
-        · simp only [Raw.Mul.Candidate.LowerBounds, toReal_mul]
-          exact ⟨lowerBound, fun equal => by
-            have ends := lowerEqual equal.symm
-            simp [leftMember.2.2 ends.1, rightMember.1.2 ends.2.symm]⟩
-        · exact ⟨by simpa using (mul_neg_of_pos_of_neg xPos hy).le, by simp
-            [Raw.Mul.Candidate.UpperBounds]⟩
-      · have noZero := Bool.eq_false_of_not_eq_true zero
-        have sides := Bool.or_eq_false_iff.mp noZero
-        have leftLowerNonneg := finiteLower_nonneg_of_pos_not_zero
-          leftLower leftUpper leftLowerStrict leftUpperStrict leftContains xPos sides.1
-        have rightUpperNonpos := finiteUpper_nonpos_of_neg_not_zero
-          rightLower rightUpper rightLowerStrict rightUpperStrict rightContains hy sides.2
-        refine ⟨⟨.finite (leftUpper * rightLower)
-            (!leftUpperStrict && !rightLowerStrict), memberUL, ?_⟩,
-          ⟨.finite (leftLower * rightUpper)
-            (!leftLowerStrict && !rightUpperStrict), memberLU, ?_⟩⟩
-        · simp only [Raw.Mul.Candidate.LowerBounds, toReal_mul]
-          exact ⟨lowerBound, fun equal => by
-            have ends := lowerEqual equal.symm
-            simp [leftMember.2.2 ends.1, rightMember.1.2 ends.2.symm]⟩
-        · simp only [Raw.Mul.Candidate.UpperBounds, toReal_mul]
-          constructor
-          · have first := mul_le_mul_of_nonneg_right ll (neg_nonneg.mpr rightUpperNonpos)
-            have second := mul_le_mul_of_nonneg_left (neg_le_neg ru) xPos.le
-            nlinarith
-          · intro equal
-            have ends := mul_lower_eq leftLowerNonneg ll
-              (neg_nonneg.mpr rightUpperNonpos) (neg_le_neg ru)
-              (mul_ne_zero xNonzero (neg_ne_zero.mpr yNonzero)) (by nlinarith)
-            have leftClosed := leftMember.1.2 ends.1.symm
-            have rightClosed := rightMember.2.2 (by nlinarith [ends.2])
-            simp [leftClosed, rightClosed]
-    · have yPos : 0 < y := lt_of_le_of_ne (le_of_not_gt hy) (Ne.symm yNonzero)
-      by_cases zero :
-          Raw.Mul.containsZeroUnchecked (.finite leftLower leftLowerStrict)
-              (.finite leftUpper leftUpperStrict) ||
-            Raw.Mul.containsZeroUnchecked (.finite rightLower rightLowerStrict)
-              (.finite rightUpper rightUpperStrict)
-      · have memberZero : Raw.Mul.Candidate.finite 0 true ∈
-            Raw.Mul.candidatesUnchecked (.finite leftLower leftLowerStrict)
-              (.finite leftUpper leftUpperStrict) (.finite rightLower rightLowerStrict)
-              (.finite rightUpper rightUpperStrict) := by
-          simp [Raw.Mul.candidatesUnchecked, zero]
-        refine ⟨⟨.finite 0 true, memberZero, ?_⟩,
-          ⟨.finite (leftUpper * rightUpper)
-            (!leftUpperStrict && !rightUpperStrict), memberUU, ?_⟩⟩
-        · exact ⟨by simpa using (mul_pos xPos yPos).le, by simp
-            [Raw.Mul.Candidate.LowerBounds]⟩
-        · simp only [Raw.Mul.Candidate.UpperBounds, toReal_mul]
-          constructor
-          · exact mul_le_mul lu ru yPos.le (xPos.le.trans lu)
-          · intro equal
-            have ends := mul_upper_eq xPos lu yPos ru equal
-            simp [leftMember.2.2 ends.1, rightMember.2.2 ends.2]
-      · have noZero := Bool.eq_false_of_not_eq_true zero
-        have sides := Bool.or_eq_false_iff.mp noZero
-        have leftLowerNonneg := finiteLower_nonneg_of_pos_not_zero
-          leftLower leftUpper leftLowerStrict leftUpperStrict leftContains xPos sides.1
-        have rightLowerNonneg := finiteLower_nonneg_of_pos_not_zero
-          rightLower rightUpper rightLowerStrict rightUpperStrict rightContains yPos sides.2
-        refine ⟨⟨.finite (leftLower * rightLower)
-            (!leftLowerStrict && !rightLowerStrict), memberLL, ?_⟩,
-          ⟨.finite (leftUpper * rightUpper)
-            (!leftUpperStrict && !rightUpperStrict), memberUU, ?_⟩⟩
-        · simp only [Raw.Mul.Candidate.LowerBounds, toReal_mul]
-          constructor
-          · exact mul_le_mul ll rl rightLowerNonneg xPos.le
-          · intro equal
-            have ends := mul_lower_eq leftLowerNonneg ll rightLowerNonneg rl
-              productZero equal.symm
-            simp [leftMember.1.2 ends.1.symm, rightMember.1.2 ends.2.symm]
-        · simp only [Raw.Mul.Candidate.UpperBounds, toReal_mul]
-          constructor
-          · exact mul_le_mul lu ru yPos.le (xPos.le.trans lu)
-          · intro equal
-            have ends := mul_upper_eq xPos lu yPos ru equal
-            simp [leftMember.2.2 ends.1, rightMember.2.2 ends.2]
-
 private def Raw.Mul.HasBounds (leftLower : Lower) (leftUpper : Upper)
     (rightLower : Lower) (rightUpper : Upper) (x y : ℝ) : Prop :=
   (∃ candidate ∈ Raw.Mul.candidatesUnchecked leftLower leftUpper rightLower rightUpper,
@@ -710,7 +389,7 @@ private theorem Raw.Mul.mem_cornerLL {leftLower : Lower} {leftUpper : Upper}
     (pairs := Raw.Mul.corners leftLower leftUpper rightLower rightUpper)
     (pair := (Raw.Mul.lowerEdge leftLower, Raw.Mul.lowerEdge rightLower))
     (by simp [Raw.Mul.corners]) evaluates
-  unfold Raw.Mul.candidatesUnchecked
+  unfold Raw.Mul.candidatesUnchecked Raw.Mul.withZeroUnchecked
   split <;> simp [member]
 
 private theorem Raw.Mul.mem_cornerLU {leftLower : Lower} {leftUpper : Upper}
@@ -723,7 +402,7 @@ private theorem Raw.Mul.mem_cornerLU {leftLower : Lower} {leftUpper : Upper}
     (pairs := Raw.Mul.corners leftLower leftUpper rightLower rightUpper)
     (pair := (Raw.Mul.lowerEdge leftLower, Raw.Mul.upperEdge rightUpper))
     (by simp [Raw.Mul.corners]) evaluates
-  unfold Raw.Mul.candidatesUnchecked
+  unfold Raw.Mul.candidatesUnchecked Raw.Mul.withZeroUnchecked
   split <;> simp [member]
 
 private theorem Raw.Mul.mem_cornerUL {leftLower : Lower} {leftUpper : Upper}
@@ -736,7 +415,7 @@ private theorem Raw.Mul.mem_cornerUL {leftLower : Lower} {leftUpper : Upper}
     (pairs := Raw.Mul.corners leftLower leftUpper rightLower rightUpper)
     (pair := (Raw.Mul.upperEdge leftUpper, Raw.Mul.lowerEdge rightLower))
     (by simp [Raw.Mul.corners]) evaluates
-  unfold Raw.Mul.candidatesUnchecked
+  unfold Raw.Mul.candidatesUnchecked Raw.Mul.withZeroUnchecked
   split <;> simp [member]
 
 private theorem Raw.Mul.mem_cornerUU {leftLower : Lower} {leftUpper : Upper}
@@ -749,7 +428,7 @@ private theorem Raw.Mul.mem_cornerUU {leftLower : Lower} {leftUpper : Upper}
     (pairs := Raw.Mul.corners leftLower leftUpper rightLower rightUpper)
     (pair := (Raw.Mul.upperEdge leftUpper, Raw.Mul.upperEdge rightUpper))
     (by simp [Raw.Mul.corners]) evaluates
-  unfold Raw.Mul.candidatesUnchecked
+  unfold Raw.Mul.candidatesUnchecked Raw.Mul.withZeroUnchecked
   split <;> simp [member]
 
 private theorem Raw.Mul.mem_zero {leftLower : Lower} {leftUpper : Upper}
@@ -758,14 +437,11 @@ private theorem Raw.Mul.mem_zero {leftLower : Lower} {leftUpper : Upper}
       Raw.Mul.containsZeroUnchecked rightLower rightUpper) :
     Raw.Mul.Candidate.finite 0 true ∈ Raw.Mul.candidatesUnchecked
       leftLower leftUpper rightLower rightUpper := by
-  simp [Raw.Mul.candidatesUnchecked, contains]
+  simp [Raw.Mul.candidatesUnchecked, Raw.Mul.withZeroUnchecked, contains]
 
-set_option maxHeartbeats 3000000 in
 private theorem Raw.Mul.corner_bounds_neg_neg
     (leftLower : Lower) (leftUpper : Upper)
     (rightLower : Lower) (rightUpper : Upper) {x y : ℝ}
-    (leftConsistent : (Raw.bounds leftLower leftUpper).CutConsistent)
-    (rightConsistent : (Raw.bounds rightLower rightUpper).CutConsistent)
     (leftMember : leftLower.Contains x ∧ leftUpper.Contains x)
     (rightMember : rightLower.Contains y ∧ rightUpper.Contains y)
     (hx : x < 0) (hy : y < 0) :
@@ -876,12 +552,9 @@ private theorem Raw.Mul.corner_bounds_neg_neg
                 (by nlinarith [ends.2])
               simp [leftClosed, rightClosed]
 
-set_option maxHeartbeats 3000000 in
 private theorem Raw.Mul.corner_bounds_neg_pos
     (leftLower : Lower) (leftUpper : Upper)
     (rightLower : Lower) (rightUpper : Upper) {x y : ℝ}
-    (leftConsistent : (Raw.bounds leftLower leftUpper).CutConsistent)
-    (rightConsistent : (Raw.bounds rightLower rightUpper).CutConsistent)
     (leftMember : leftLower.Contains x ∧ leftUpper.Contains x)
     (rightMember : rightLower.Contains y ∧ rightUpper.Contains y)
     (hx : x < 0) (hy : 0 < y) :
@@ -988,12 +661,9 @@ private theorem Raw.Mul.corner_bounds_neg_pos
                   ends.2.symm
                 simp [leftClosed, rightClosed]
 
-set_option maxHeartbeats 3000000 in
 private theorem Raw.Mul.corner_bounds_pos_neg
     (leftLower : Lower) (leftUpper : Upper)
     (rightLower : Lower) (rightUpper : Upper) {x y : ℝ}
-    (leftConsistent : (Raw.bounds leftLower leftUpper).CutConsistent)
-    (rightConsistent : (Raw.bounds rightLower rightUpper).CutConsistent)
     (leftMember : leftLower.Contains x ∧ leftUpper.Contains x)
     (rightMember : rightLower.Contains y ∧ rightUpper.Contains y)
     (hx : 0 < x) (hy : y < 0) :
@@ -1100,12 +770,9 @@ private theorem Raw.Mul.corner_bounds_pos_neg
                   (by nlinarith [ends.2])
                 simp [leftClosed, rightClosed]
 
-set_option maxHeartbeats 3000000 in
 private theorem Raw.Mul.corner_bounds_pos_pos
     (leftLower : Lower) (leftUpper : Upper)
     (rightLower : Lower) (rightUpper : Upper) {x y : ℝ}
-    (leftConsistent : (Raw.bounds leftLower leftUpper).CutConsistent)
-    (rightConsistent : (Raw.bounds rightLower rightUpper).CutConsistent)
     (leftMember : leftLower.Contains x ∧ leftUpper.Contains x)
     (rightMember : rightLower.Contains y ∧ rightUpper.Contains y)
     (hx : 0 < x) (hy : 0 < y) :
@@ -1208,8 +875,6 @@ private theorem Raw.Mul.corner_bounds_pos_pos
 private theorem Raw.Mul.corner_bounds
     (leftLower : Lower) (leftUpper : Upper)
     (rightLower : Lower) (rightUpper : Upper) {x y : ℝ}
-    (leftConsistent : (Raw.bounds leftLower leftUpper).CutConsistent)
-    (rightConsistent : (Raw.bounds rightLower rightUpper).CutConsistent)
     (leftMember : leftLower.Contains x ∧ leftUpper.Contains x)
     (rightMember : rightLower.Contains y ∧ rightUpper.Contains y) :
     Raw.Mul.HasBounds leftLower leftUpper rightLower rightUpper x y := by
@@ -1218,30 +883,30 @@ private theorem Raw.Mul.corner_bounds
     · have containsZero := Raw.Mul.containsZeroUnchecked_of_mem
         leftLower leftUpper leftMember xZero
       refine ⟨⟨.finite 0 true, ?_, ?_⟩, ⟨.finite 0 true, ?_, ?_⟩⟩
-      all_goals simp [Raw.Mul.HasBounds, Raw.Mul.candidatesUnchecked, containsZero,
-        productZero, Raw.Mul.Candidate.LowerBounds, Raw.Mul.Candidate.UpperBounds]
+      all_goals simp [Raw.Mul.HasBounds, Raw.Mul.candidatesUnchecked,
+        Raw.Mul.withZeroUnchecked, containsZero, productZero,
+        Raw.Mul.Candidate.LowerBounds, Raw.Mul.Candidate.UpperBounds]
     · have containsZero := Raw.Mul.containsZeroUnchecked_of_mem
         rightLower rightUpper rightMember yZero
       refine ⟨⟨.finite 0 true, ?_, ?_⟩, ⟨.finite 0 true, ?_, ?_⟩⟩
-      all_goals simp [Raw.Mul.HasBounds, Raw.Mul.candidatesUnchecked, containsZero,
-        productZero, Raw.Mul.Candidate.LowerBounds, Raw.Mul.Candidate.UpperBounds]
+      all_goals simp [Raw.Mul.HasBounds, Raw.Mul.candidatesUnchecked,
+        Raw.Mul.withZeroUnchecked, containsZero, productZero,
+        Raw.Mul.Candidate.LowerBounds, Raw.Mul.Candidate.UpperBounds]
   have xNonzero : x ≠ 0 := fun equal => productZero (by simp [equal])
   have yNonzero : y ≠ 0 := fun equal => productZero (by simp [equal])
   by_cases hx : x < 0
   · by_cases hy : y < 0
-    · exact Raw.Mul.corner_bounds_neg_neg _ _ _ _ leftConsistent rightConsistent
-        leftMember rightMember hx hy
-    · exact Raw.Mul.corner_bounds_neg_pos _ _ _ _ leftConsistent rightConsistent
-        leftMember rightMember hx (lt_of_le_of_ne (le_of_not_gt hy) (Ne.symm yNonzero))
+    · exact Raw.Mul.corner_bounds_neg_neg _ _ _ _ leftMember rightMember hx hy
+    · exact Raw.Mul.corner_bounds_neg_pos _ _ _ _ leftMember rightMember hx
+        (lt_of_le_of_ne (le_of_not_gt hy) (Ne.symm yNonzero))
   · by_cases hy : y < 0
-    · exact Raw.Mul.corner_bounds_pos_neg _ _ _ _ leftConsistent rightConsistent
-        leftMember rightMember (lt_of_le_of_ne (le_of_not_gt hx) (Ne.symm xNonzero)) hy
-    · exact Raw.Mul.corner_bounds_pos_pos _ _ _ _ leftConsistent rightConsistent
-        leftMember rightMember (lt_of_le_of_ne (le_of_not_gt hx) (Ne.symm xNonzero))
+    · exact Raw.Mul.corner_bounds_pos_neg _ _ _ _ leftMember rightMember
+        (lt_of_le_of_ne (le_of_not_gt hx) (Ne.symm xNonzero)) hy
+    · exact Raw.Mul.corner_bounds_pos_pos _ _ _ _ leftMember rightMember
+        (lt_of_le_of_ne (le_of_not_gt hx) (Ne.symm xNonzero))
         (lt_of_le_of_ne (le_of_not_gt hy) (Ne.symm yNonzero))
 
 private theorem raw_mul_mem (left right : Raw) {x y : ℝ}
-    (leftConsistent : left.CutConsistent) (rightConsistent : right.CutConsistent)
     (leftMember : left.Contains x) (rightMember : right.Contains y) :
     (left.mulUnchecked right).Contains (x * y) := by
   cases left with
@@ -1252,9 +917,9 @@ private theorem raw_mul_mem (left right : Raw) {x y : ℝ}
       | bounds rightLower rightUpper =>
           apply Raw.Mul.result_mem
           · exact (Raw.Mul.corner_bounds leftLower leftUpper rightLower rightUpper
-              leftConsistent rightConsistent leftMember rightMember).1
+              leftMember rightMember).1
           · exact (Raw.Mul.corner_bounds leftLower leftUpper rightLower rightUpper
-              leftConsistent rightConsistent leftMember rightMember).2
+              leftMember rightMember).2
 
 /-- A successful multiplication has exactly its normalized computed-cut
 predicate. -/
@@ -1262,8 +927,9 @@ theorem contains_mulWithin {limit : EndpointLimit}
     {left right result : Hex.Interval}
     (checked : mulWithin limit left right = .ready result) (x : ℝ) :
     result.Contains x ↔ left.view.MulContains right.view x := by
-  simp only [Contains, Raw.MulContains]
-  rw [view_mulWithin_ready checked]
+  simp only [Contains]
+  rw [view_mulWithin_ready checked, contains_normalize]
+  exact rawContains_mulUnchecked left.view right.view x
 
 /-- Multiplication maps every pair of source members into the successful
 computed interval. -/
@@ -1273,8 +939,7 @@ theorem mul_mem_mulWithin {limit : EndpointLimit}
     (leftMember : left.Contains x) (rightMember : right.Contains y) :
     result.Contains (x * y) :=
   (contains_mulWithin checked (x * y)).2
-    ((contains_normalize (left.view.mulUnchecked right.view) (x * y)).2
-      (raw_mul_mem left.view right.view (view_consistent left)
-        (view_consistent right) leftMember rightMember))
+    ((rawContains_mulUnchecked left.view right.view (x * y)).1
+      (raw_mul_mem left.view right.view leftMember rightMember))
 
 end Hex.Interval

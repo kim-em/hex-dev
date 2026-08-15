@@ -82,6 +82,30 @@ private def eightBitLimit : EndpointLimit where
 -- can allocate an aligned mantissa.
 private def far : Dyadic := .ofOdd 1 1000000000 (by decide)
 
+-- Multiplication's four refusal phases remain distinguishable. Source and
+-- candidate size failures are endpoint diagnostics; product growth has its own
+-- diagnostic; only comparison alignment is reported as comparison work.
+#guard
+  match Raw.Mul.preflightEdge smallLimit (.finite far false) with
+  | .error (.endpoint cost) => cost.exponentMagnitude == 1000000000
+  | _ => false
+
+#guard
+  match Raw.Mul.preflightCandidate smallLimit (.finite far true) with
+  | .error (.endpoint cost) => cost.exponentMagnitude == 1000000000
+  | _ => false
+
+#guard
+  match Raw.Mul.preflightCompare
+      { maxEndpointHeight := 1000000100, maxAlignmentShift := 64 }
+      (.finite (d 1) true) (.finite far false) with
+  | .error (.comparison cost) =>
+      cost.lower.allowed { maxEndpointHeight := 1000000100, maxAlignmentShift := 64 } &&
+        cost.upper.allowed
+          { maxEndpointHeight := 1000000100, maxAlignmentShift := 64 } &&
+        cost.alignmentShift == 1000000000
+  | _ => false
+
 #guard
   match Raw.normalizeWithin
       { maxEndpointHeight := 1000000100, maxAlignmentShift := 64 }
@@ -801,7 +825,8 @@ private def mediumToOne : Hex.Interval :=
   | .ready interval => interval == Hex.Interval.whole
   | .resourceLimit _ => false
 
--- Independent unbounded sides are selected by endpoint signs.
+-- The unconditional extended-corner enumeration retains independent
+-- unbounded sides; sign inspection only resolves finite-by-infinite corners.
 #guard
   match Hex.Interval.mulWithin smallLimit nonnegative closed01 with
   | .ready interval => interval == nonnegative

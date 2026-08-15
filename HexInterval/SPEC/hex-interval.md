@@ -515,16 +515,20 @@ comparison costs, and `Arithmetic.Result` is a separate checked-arithmetic
 result so the existing `BuildResult` APIs above do not acquire a misleading or
 breaking cost variant.
 
-`mulWithin` first admits every finite endpoint comparison with zero. It then
+`mulWithin` first admits every finite source endpoint before sign inspection.
+It then
 admits all four finite corner products through `Arithmetic.preflightMul`
-before multiplying any mantissas, and admits all finite candidate comparisons
-before extremum selection. The exact raw candidate enumerates the four
+before multiplying any mantissas, admits every evaluated finite candidate as
+an endpoint, and only then admits all candidate alignment comparisons before
+extremum selection. Source or candidate height refusal is `Cost.endpoint`,
+predicted product growth is `Cost.growth`, and candidate alignment refusal is
+`Cost.comparison`. The exact raw candidate enumerates the four
 extended-endpoint products, omitting the undefined formal products
 `0 * ±∞`; an attained zero candidate is added exactly when either nonempty
 factor contains zero. Tied corner values combine attainment, so open and
 closed extrema, zero attainment, independent unbounded sides, and empty
-absorption are preserved. A successful result has an exact normalized
-computed-cut characterization, and the Mathlib companion proves that every
+absorption are preserved. A successful result has an explicit selected lower-
+and upper-cut characterization after normalization, and the Mathlib companion proves that every
 product of source members belongs to it. No separate image-tightness converse
 is currently claimed.
 
@@ -571,9 +575,10 @@ tests also check the following exactness rules.
   cut, and uses intersection attainment on the lower tie but hull attainment on
   the upper tie. Thus a tied lower endpoint is closed only if both inputs attain
   it, while a tied upper endpoint is closed if either input attains it.
-- After the empty-input short circuit, multiplication partitions both inputs
-  by sign, enumerates finite corner and zero candidates, and tracks whether
-  each extremum is attained. Zero is an attained extremum whenever either
+- After the empty-input short circuit, multiplication unconditionally
+  enumerates the four extended-endpoint corners plus a justified zero
+  candidate; sign inspection only resolves finite-by-infinite corners. It
+  tracks whether each extremum is attained. Zero is an attained extremum whenever either
   nonempty factor contains zero, not only when a factor is the singleton zero.
   For example,
   `[0,1] * (0,1] = [0,1]`, while `(0,1] * (0,1] = (0,1]`.

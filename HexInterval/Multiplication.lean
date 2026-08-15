@@ -8,7 +8,7 @@ module
 
 public import HexInterval.Interval
 
-@[expose] public section
+public section
 
 /-!
 # Resource-checked interval multiplication
@@ -18,7 +18,8 @@ omitting the undefined formal products `0 * ±∞`, and adds an attained zero
 candidate exactly when either nonempty factor contains zero. Every finite
 endpoint is admitted before sign inspection, all finite corner products pass
 `Arithmetic.preflightMul` before the first mantissa multiplication, and all
-finite candidate comparisons are admitted before extremum selection.
+finite candidate endpoints are admitted before their alignment comparisons
+and extremum selection.
 -/
 
 namespace Hex.Interval
@@ -41,22 +42,22 @@ inductive Candidate where
   deriving DecidableEq
 
 /-- Lower cut as an extended endpoint. -/
-def lowerEdge : Lower → Edge
+@[expose] def lowerEdge : Lower → Edge
   | .unbounded => .negInf
   | .finite value strict => .finite value strict
 
 /-- Upper cut as an extended endpoint. -/
-def upperEdge : Upper → Edge
+@[expose] def upperEdge : Upper → Edge
   | .finite value strict => .finite value strict
   | .unbounded => .posInf
 
 /-- Sign inspection after the caller has admitted comparison with zero. -/
-def signUnchecked (value : Dyadic) : Ordering :=
+@[expose] def signUnchecked (value : Dyadic) : Ordering :=
   if value < 0 then .lt else if value = 0 then .eq else .gt
 
 /-- One extended corner product. Formal `0 * ±∞` contributes no corner;
 zero attainment is handled independently from interval membership. -/
-def productUnchecked : Edge → Edge → Option Candidate
+@[expose] def productUnchecked : Edge → Edge → Option Candidate
   | .finite left leftStrict, .finite right rightStrict =>
       some (.finite (left * right) (!leftStrict && !rightStrict))
   | .negInf, .negInf | .posInf, .posInf => some .posInf
@@ -73,7 +74,7 @@ def productUnchecked : Edge → Edge → Option Candidate
       | .gt => some .posInf
 
 /-- The four extended endpoint-pair recipes. -/
-def corners (leftLower : Lower) (leftUpper : Upper)
+@[expose] def corners (leftLower : Lower) (leftUpper : Upper)
     (rightLower : Lower) (rightUpper : Upper) : List (Edge × Edge) :=
   let ll := lowerEdge leftLower
   let lu := upperEdge leftUpper
@@ -83,7 +84,7 @@ def corners (leftLower : Lower) (leftUpper : Upper)
 
 /-- A lower cut permits zero after its finite comparison with zero is
 admitted. -/
-def lowerAllowsZeroUnchecked : Lower → Bool
+@[expose] def lowerAllowsZeroUnchecked : Lower → Bool
   | .unbounded => true
   | .finite value strict =>
       match signUnchecked value with
@@ -93,7 +94,7 @@ def lowerAllowsZeroUnchecked : Lower → Bool
 
 /-- An upper cut permits zero after its finite comparison with zero is
 admitted. -/
-def upperAllowsZeroUnchecked : Upper → Bool
+@[expose] def upperAllowsZeroUnchecked : Upper → Bool
   | .unbounded => true
   | .finite value strict =>
       match signUnchecked value with
@@ -102,15 +103,17 @@ def upperAllowsZeroUnchecked : Upper → Bool
       | .gt => true
 
 /-- Whether nonempty bounds contain zero. -/
-def containsZeroUnchecked (lower : Lower) (upper : Upper) : Bool :=
+@[expose] def containsZeroUnchecked (lower : Lower) (upper : Upper) : Bool :=
   lowerAllowsZeroUnchecked lower && upperAllowsZeroUnchecked upper
 
-/-- Admit one finite endpoint before sign inspection. -/
+/-- Admit one finite source endpoint before sign inspection. Comparing a
+dyadic with zero requires no exponent alignment, so a refusal here is an
+endpoint diagnostic rather than a degenerate comparison diagnostic. -/
 def preflightEdge (limit : EndpointLimit) : Edge → Except Arithmetic.Cost Unit
   | .negInf | .posInf => pure ()
   | .finite value _ =>
-      let cost := CompareCost.ofDyadic value 0
-      if cost.allowed limit then pure () else throw (.comparison cost)
+      let cost := EndpointCost.ofDyadic value
+      if cost.allowed limit then pure () else throw (.endpoint cost)
 
 /-- Admit every endpoint sign inspection before any product is formed. -/
 def preflightEdges (limit : EndpointLimit) : List Edge → Except Arithmetic.Cost Unit
@@ -135,19 +138,38 @@ def preflightProducts (limit : EndpointLimit) :
       preflightProducts limit rest
 
 /-- Evaluate already-admitted corner recipes. -/
-def evaluate : List (Edge × Edge) → List Candidate
+@[expose] def evaluate : List (Edge × Edge) → List Candidate
   | [] => []
   | pair :: rest =>
       match productUnchecked pair.1 pair.2 with
       | none => evaluate rest
       | some candidate => candidate :: evaluate rest
 
+/-- Admit one finite candidate endpoint after product growth has been
+preflighted and before any candidate comparison. -/
+def preflightCandidate (limit : EndpointLimit) : Candidate → Except Arithmetic.Cost Unit
+  | .negInf | .posInf => pure ()
+  | .finite value _ =>
+      let cost := EndpointCost.ofDyadic value
+      if cost.allowed limit then pure () else throw (.endpoint cost)
+
+/-- Admit every retained candidate endpoint before comparison. -/
+def preflightCandidates (limit : EndpointLimit) :
+    List Candidate → Except Arithmetic.Cost Unit
+  | [] => pure ()
+  | candidate :: rest => do
+      preflightCandidate limit candidate
+      preflightCandidates limit rest
+
 /-- Admit one exact comparison between finite, already-bounded candidates. -/
 def preflightCompare (limit : EndpointLimit) : Candidate → Candidate →
     Except Arithmetic.Cost Unit
   | .finite left _, .finite right _ =>
       let cost := CompareCost.ofDyadic left right
-      if cost.allowed limit then pure () else throw (.comparison cost)
+      if cost.alignmentShift ≤ limit.maxAlignmentShift then
+        pure ()
+      else
+        throw (.comparison cost)
   | _, _ => pure ()
 
 /-- Admit all pairwise finite comparisons before extremum selection. -/
@@ -161,7 +183,7 @@ def preflightComparisons (limit : EndpointLimit) :
 
 /-- Select the smaller already-admitted candidate, combining attainment at a
 tied finite value. -/
-def minUnchecked : Candidate → Candidate → Candidate
+@[expose] def minUnchecked : Candidate → Candidate → Candidate
   | .negInf, _ | _, .negInf => .negInf
   | .posInf, candidate | candidate, .posInf => candidate
   | left@(.finite leftValue leftAttained), right@(.finite rightValue rightAttained) =>
@@ -172,7 +194,7 @@ def minUnchecked : Candidate → Candidate → Candidate
 
 /-- Select the larger already-admitted candidate, combining attainment at a
 tied finite value. -/
-def maxUnchecked : Candidate → Candidate → Candidate
+@[expose] def maxUnchecked : Candidate → Candidate → Candidate
   | .posInf, _ | _, .posInf => .posInf
   | .negInf, candidate | candidate, .negInf => candidate
   | left@(.finite leftValue leftAttained), right@(.finite rightValue rightAttained) =>
@@ -182,41 +204,48 @@ def maxUnchecked : Candidate → Candidate → Candidate
       else left
 
 /-- Minimum of a nonempty candidate list. -/
-def minimum : Candidate → List Candidate → Candidate
+@[expose] def minimum : Candidate → List Candidate → Candidate
   | candidate, [] => candidate
   | candidate, next :: rest => minimum (minUnchecked candidate next) rest
 
 /-- Maximum of a nonempty candidate list. -/
-def maximum : Candidate → List Candidate → Candidate
+@[expose] def maximum : Candidate → List Candidate → Candidate
   | candidate, [] => candidate
   | candidate, next :: rest => maximum (maxUnchecked candidate next) rest
 
 /-- Convert the selected minimum to a lower cut. -/
-def lowerCut : Candidate → Lower
+@[expose] def lowerCut : Candidate → Lower
   | .negInf => .unbounded
   | .finite value attained => .finite value (!attained)
   | .posInf => .unbounded
 
 /-- Convert the selected maximum to an upper cut. -/
-def upperCut : Candidate → Upper
+@[expose] def upperCut : Candidate → Upper
   | .negInf => .unbounded
   | .finite value attained => .finite value (!attained)
   | .posInf => .unbounded
 
-/-- Candidate list for two nonempty raw bounds. -/
-def candidatesUnchecked (leftLower : Lower) (leftUpper : Upper)
-    (rightLower : Lower) (rightUpper : Upper) : List Candidate :=
-  let cornerCandidates := evaluate (corners leftLower leftUpper rightLower rightUpper)
+/-- Add the attained-zero candidate, when justified, to an already evaluated
+corner list. -/
+@[expose] def withZeroUnchecked (leftLower : Lower) (leftUpper : Upper)
+    (rightLower : Lower) (rightUpper : Upper)
+    (cornerCandidates : List Candidate) : List Candidate :=
   if containsZeroUnchecked leftLower leftUpper ||
       containsZeroUnchecked rightLower rightUpper then
     .finite 0 true :: cornerCandidates
   else
     cornerCandidates
 
+/-- Candidate list for two nonempty raw bounds. -/
+@[expose] def candidatesUnchecked (leftLower : Lower) (leftUpper : Upper)
+    (rightLower : Lower) (rightUpper : Upper) : List Candidate :=
+  withZeroUnchecked leftLower leftUpper rightLower rightUpper
+    (evaluate (corners leftLower leftUpper rightLower rightUpper))
+
 /-- Convert a candidate list to its enclosing raw cuts. The empty fallback is
 unreachable for canonical nonempty interval inputs, but keeps this decoder
 helper total on arbitrary raw data. -/
-def result : List Candidate → Raw
+@[expose] def result : List Candidate → Raw
   | [] => .empty
   | first :: rest =>
       .bounds (lowerCut (minimum first rest)) (upperCut (maximum first rest))
@@ -227,16 +256,17 @@ namespace Raw
 
 /-- Exact raw multiplication candidate without resource checks. Call
 `mulChecked` at untrusted boundaries. -/
-def mulUnchecked : Raw → Raw → Raw
+@[expose] def mulUnchecked : Raw → Raw → Raw
   | .empty, _ | _, .empty => .empty
   | .bounds leftLower leftUpper, .bounds rightLower rightUpper =>
       Mul.result
         (Mul.candidatesUnchecked leftLower leftUpper rightLower rightUpper)
 
-/-- Compute exact multiplication cuts with preflighted sign inspection,
-product growth, and candidate ordering. Empty is absorbing. This raw boundary
-accepts arbitrary cut data; the supported `mulWithin` entry point supplies
-canonical public inputs and checks the final result. -/
+/-- Compute exact multiplication cuts with preflighted source endpoints,
+product growth, retained candidates, and candidate ordering. Empty is
+absorbing. This raw boundary accepts arbitrary cut data; the supported
+`mulWithin` entry point supplies canonical public inputs and checks the final
+result. -/
 def mulChecked (limit : EndpointLimit) : Raw → Raw → Except Arithmetic.Cost Raw
   | .empty, _ | _, .empty => pure .empty
   | .bounds leftLower leftUpper, .bounds rightLower rightUpper => do
@@ -245,8 +275,10 @@ def mulChecked (limit : EndpointLimit) : Raw → Raw → Except Arithmetic.Cost 
         [Mul.lowerEdge leftLower, Mul.upperEdge leftUpper,
           Mul.lowerEdge rightLower, Mul.upperEdge rightUpper]
       Mul.preflightProducts limit recipes
-      let candidates :=
-        Mul.candidatesUnchecked leftLower leftUpper rightLower rightUpper
+      let cornerCandidates := Mul.evaluate recipes
+      let candidates := Mul.withZeroUnchecked leftLower leftUpper
+        rightLower rightUpper cornerCandidates
+      Mul.preflightCandidates limit candidates
       Mul.preflightComparisons limit candidates
       pure (Mul.result candidates)
 
@@ -271,13 +303,15 @@ theorem eq_mulUnchecked_of_mulChecked {limit : EndpointLimit} {left right raw : 
             [Mul.lowerEdge leftLower, Mul.upperEdge leftUpper,
               Mul.lowerEdge rightLower, Mul.upperEdge rightUpper]
           let recipes := Mul.corners leftLower leftUpper rightLower rightUpper
-          let candidates :=
-            Mul.candidatesUnchecked leftLower leftUpper rightLower rightUpper
+          let cornerCandidates := Mul.evaluate recipes
+          let candidates := Mul.withZeroUnchecked leftLower leftUpper
+            rightLower rightUpper cornerCandidates
           cases edgeCheck : Mul.preflightEdges limit edges with
           | error cost =>
               change (do
                 Mul.preflightEdges limit edges
                 Mul.preflightProducts limit recipes
+                Mul.preflightCandidates limit candidates
                 Mul.preflightComparisons limit candidates
                 pure (Mul.result candidates)) = .ok raw at checked
               rw [edgeCheck] at checked
@@ -289,31 +323,48 @@ theorem eq_mulUnchecked_of_mulChecked {limit : EndpointLimit} {left right raw : 
                   change (do
                     Mul.preflightEdges limit edges
                     Mul.preflightProducts limit recipes
+                    Mul.preflightCandidates limit candidates
                     Mul.preflightComparisons limit candidates
                     pure (Mul.result candidates)) = .ok raw at checked
                   rw [edgeCheck, productCheck] at checked
                   contradiction
               | ok value =>
                   cases value
-                  cases comparisonCheck : Mul.preflightComparisons limit candidates with
+                  cases candidateCheck : Mul.preflightCandidates limit candidates with
                   | error cost =>
                       change (do
                         Mul.preflightEdges limit edges
                         Mul.preflightProducts limit recipes
+                        Mul.preflightCandidates limit candidates
                         Mul.preflightComparisons limit candidates
                         pure (Mul.result candidates)) = .ok raw at checked
-                      rw [edgeCheck, productCheck, comparisonCheck] at checked
+                      rw [edgeCheck, productCheck, candidateCheck] at checked
                       contradiction
                   | ok value =>
                       cases value
-                      change (do
-                        Mul.preflightEdges limit edges
-                        Mul.preflightProducts limit recipes
-                        Mul.preflightComparisons limit candidates
-                        pure (Mul.result candidates)) = .ok raw at checked
-                      rw [edgeCheck, productCheck, comparisonCheck] at checked
-                      cases checked
-                      rfl
+                      cases comparisonCheck : Mul.preflightComparisons limit candidates with
+                      | error cost =>
+                          change (do
+                            Mul.preflightEdges limit edges
+                            Mul.preflightProducts limit recipes
+                            Mul.preflightCandidates limit candidates
+                            Mul.preflightComparisons limit candidates
+                            pure (Mul.result candidates)) = .ok raw at checked
+                          rw [edgeCheck, productCheck, candidateCheck,
+                            comparisonCheck] at checked
+                          contradiction
+                      | ok value =>
+                          cases value
+                          change (do
+                            Mul.preflightEdges limit edges
+                            Mul.preflightProducts limit recipes
+                            Mul.preflightCandidates limit candidates
+                            Mul.preflightComparisons limit candidates
+                            pure (Mul.result candidates)) = .ok raw at checked
+                          rw [edgeCheck, productCheck, candidateCheck,
+                            comparisonCheck] at checked
+                          cases checked
+                          rfl
 
 end Raw
 
