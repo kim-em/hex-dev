@@ -1485,12 +1485,28 @@ Generic replay closes all thirty facts.
 Endpoint, coordinate, and cross-row-order mutations reject without drafts or
 precision retry. The batch replaces 60 executable endpoint calls in the
 thirty margin declarations; its stronger row-60/k=5 margin theorem also
-replaces the two calls in the separate bare theorem. Thus 62 of 87 executable
-target occurrences are covered here, leaving 25 target calls with different
-logarithmic or pointwise provider shapes. The 38 supporting `a₂` sites,
-surrounding `B_8_exact` reductions, arbitrary table rows, and production
-performance remain pending. This is a localized PNT+ rewrite boundary, not
-LeanCert API compatibility.
+replaces the two calls in the separate bare theorem. This batch therefore
+covers 62 of 87 executable target occurrences.
+
+The pointwise-row batch adds the exact row-90 and row-95 source tuples at
+`BKLNW_tables.lean:839–840` and all ten declarations in
+`BKLNW_table10_rows_90_95.lean`. Those declarations share one
+`row_bound_pointwise` shape: the next row bounds `y^k`, the current row bounds
+the two decreasing exponentials, and a single numeric premise combines the
+row-specific `A₁`, `A₂`, and epsilon bounds. One bounded payload authenticates
+the row order, coefficients, ten exact listed/corrected cells, and ten rational
+majorants. The ordinary-kernel companion lifts the checked decimal powers to
+the real exponentials and exposes a tuple-membership/finite-column `rowOfMem`;
+generic replay closes all ten facts.
+
+A bare endpoint, wrong column, cross-row reorder, and wrong replay target
+reject without a draft or retry. The rational-majorant rejection is also an
+ordinary theorem. Together the convex and pointwise providers cover 72 of 87
+executable target calls after localized PNT+ rewrites. The remaining 15 target
+calls use the row-43/logarithmic transition, the 19·log 10 transition, or the
+large decimal row. The 38 supporting `a₂` sites, surrounding `B_8_exact`
+reductions, arbitrary table rows, and production performance remain pending.
+This is a localized PNT+ rewrite boundary, not LeanCert API compatibility.
 
 The coordinate-aware Table 12 implementation is a bounded acceptance fixture
 that completes this family migration. At PNT+ commit

@@ -3918,12 +3918,39 @@ are decoded and rejected without drafts or a retry.
 This replaces, after localized PNT+ majorant rewrites, the 30 margin
 declarations for rows 60–85 and their 60 executable endpoint tactic calls. The
 row-60 margin result is stronger than the separate bare `table_10_row60_k5`
-target and also replaces its two endpoint calls, so 62 of the inventory's 87
-target occurrences are covered by this batch. The remaining 25 target calls
-need the `43 → 19·log 10`, `19·log 10 → 44`, pointwise rows 90/95, or
-large-decimal-row providers. All 38 supporting `a₂` sites, the surrounding
-`B_8_exact` reductions, arbitrary rows, and production-scale performance
-remain pending; this is not a LeanCert compatibility layer.
+target and also replaces its two endpoint calls, so this batch covers 62 of
+the inventory's 87 target occurrences.
+
+#### Parameterized Table 10 pointwise-row batch
+
+The late-range pointwise package pins the two source tuples at
+`BKLNW_tables.lean:839–840` and the ten declarations
+`table_10_row90_k1_margin` through `table_10_row95_k5_margin` in
+`BKLNW_table10_rows_90_95.lean`. Each declaration uses the same
+`row_bound_pointwise` reduction and has one numeric premise
+
+```text
+A₁ * b' ^ k * exp (-(b / 2)) +
+  A₂ * b' ^ k * exp (-(2 * b / 3)) + E * b' ^ k ≤ listed * 1.002001.
+```
+
+One bounded payload authenticates both rows in order, `b`, `b'`, `A₁`, `A₂`,
+`E`, the ten listed/corrected coordinates, and the ten exact-rational
+majorants. The Mathlib companion reuses the kernel proofs that
+`exp (-1/2) < 0.606530660` and `exp (-2/3) < 0.513417120`, lifts their powers,
+and proves the complete numeric premise. `rowOfMem` retains exact source tuple
+membership and `k ∈ Finset.Icc 1 5`; generic chronology/schema replay and
+`ProofFrontend` close every installed fact. A bare-target mutation, duplicated
+column, cross-row reorder, and wrong replay target all reject without a draft
+or precision retry. The kernel also proves that the rational majorant for the
+bare row-90/k=1 target is strictly too large.
+
+Together the convex and pointwise batches cover 72 of 87 executable Table 10
+target calls after localized PNT+ rewrites. The remaining 15 target calls need
+the `43 → 19·log 10`, `19·log 10 → 44`, or large-decimal-row providers. All 38
+supporting `a₂` sites, the surrounding `B_8_exact` reductions, arbitrary rows,
+and production-scale performance remain pending; this is not a LeanCert
+compatibility layer.
 
 #### Coordinate-aware numerical batches
 
