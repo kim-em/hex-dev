@@ -1564,10 +1564,13 @@ watched output premise is load-bearing. Richer packages may add retries,
 instantiators, and split suggestions without changing this interface.
 
 The exact arithmetic package contributes its first replay schema through this
-same boundary. The forward subtraction callback remains Mathlib-free and
-computes over the complete canonical dyadic cut language; its companion schema
-recomputes the successful proposal and proves the pointwise real subtraction
-law from the exact ordered pair of input facts. The live conformance case uses
+same boundary. This is package-callback replay over
+`Experiment.DyadicInterval.Fact`, not a second supported interval-arithmetic
+API; the public resource-checked operation remains `Hex.Interval.subWithin`.
+The forward subtraction callback remains Mathlib-free and computes over the
+complete experimental dyadic cut language; its companion schema recomputes the
+successful proposal and proves the pointwise real subtraction law from the
+exact ordered pair of input facts. The live conformance case uses
 `x ∈ (1,+∞)` and `y ∈ (-∞,3]` to derive `x - y ∈ (-2,+∞)`, so both
 strictness and independent unboundedness are load-bearing. The generic proof
 emitter contains no arithmetic case. Weakening the left premise or adding a

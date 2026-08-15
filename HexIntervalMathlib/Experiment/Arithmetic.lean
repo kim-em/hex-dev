@@ -17,7 +17,9 @@ public import HexInterval.Experiment.DyadicRules
 This companion supplies the first package-owned arithmetic replay schema for
 the Mathlib-free dyadic registry. The generic proof emitter remains unaware of
 subtraction: it checks the rule address and event links, then invokes the
-schema below on the exact ordered input facts.
+schema below on the exact ordered input facts. This experiment is a package
+callback/proof adapter, not another public interval subtraction API; the
+supported resource-checked operation is `Hex.Interval.subWithin`.
 -/
 
 namespace Hex.Interval.Experiment.Arithmetic
