@@ -4300,6 +4300,21 @@ sites after localized rewrites.  It is not a general logarithm rule or a claim
 about all of `LogTables.lean`: arbitrary inputs, requested precision, generated
 endpoints, caching, persistence, and batch-performance evidence remain future.
 
+The negative-exponential table provider covers the complete 79-declaration
+Table-10 block `exp_neg_10_lt` through `exp_neg_200_lt` in the same pinned
+source.  Every argument is authenticated as an integer number of sixths.  One
+package-owned fourteen-term Taylor enclosure for `exp (-1/6)` is raised to the
+recorded natural power, and an exact integer cross-product check authenticates
+the source endpoint.  The runtime schema records the source coordinate,
+argument, Taylor anchor, term count, and output cut; all 79 rows run through
+the bounded package, while representative `exp_neg_70_3_lt` also traverses
+chronological replay and `ProofFrontend`.
+
+Unknown coordinates and mutations of the sixth count, term count, source row,
+or endpoint fail closed.  This is a fixed source lookup plus a reusable kernel
+power reduction, not arbitrary exponential interval evaluation, requested
+precision, generated endpoints, or a LeanCert compatibility layer.
+
 The first precision-indexed log provider moves beyond an opaque six-decimal
 table fact. Its program contains separate exact-input and precision-request
 nodes. The same Mathlib-free package accepts requests for 20 or 50 decimal
@@ -4634,6 +4649,10 @@ their declared cost inside a scheduler bound.
   natural-number log-table data, dyadic-reduction authentication, and generic
   package planning.  Its real semantics and source-shaped theorems live in the
   Mathlib companion.
+- `HexInterval/Experiment/PntExpNegative.lean`: the bounded 79-row negative
+  exponential source table, authenticated sixth-power certificates, and exact
+  endpoint comparisons.  Real Taylor and power semantics live in the Mathlib
+  companion.
 - `scripts/conformance/run_pnt_fks2_family.sh`: fail-closed entry point for the
   non-default complete-family proof and conformance profile.
 - `bench/HexInterval/Bench.lean`: Mathlib-free interval and scheduler

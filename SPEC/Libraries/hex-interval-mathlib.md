@@ -1339,12 +1339,33 @@ fail closed.
 
 These 24 tactic sites are accepted after localized PNT+ rewrites. This is a
 bounded fixed-source family, not LeanCert API compatibility and not acceptance
-of the whole `LogTables.lean` interface: 108 actual tactic sites in that file
-remain pending. Arbitrary rational inputs, precision-selected term counts,
+of the whole `LogTables.lean` interface: after the negative-exponential block
+below, 29 actual tactic sites in that file remain pending. Arbitrary rational
+inputs, precision-selected term counts,
 endpoint generation rather than lookup, persistent table storage, and measured
 batch performance remain future work. The separate 20/50-digit `log 2`
 experiment supplies precision-indexed series evidence but is not silently
 combined with this fixed six-decimal runtime schema.
+
+The complete direct Table-10 negative-exponential block contributes 79 more
+source-shaped declarations, from `exp_neg_10_lt` through `exp_neg_200_lt`.
+All source arguments have denominator dividing six. The Mathlib-free
+`PntExpNegative` package therefore authenticates each argument in sixths, one
+fourteen-term `exp (-1/6)` Taylor anchor, the natural-power count, and the exact
+decimal output cut. Its companion proves the anchor with `Real.exp_bound`,
+uses `Real.exp_nat_mul` for range reduction, and turns the executable integer
+cross-product into the source inequality. All 79 records execute through the
+same bounded schema; the tight representative `exp_neg_70_3_lt` additionally
+crosses policy selection, payload chronology, semantic replay, and the generic
+proof frontend.
+
+Mutations of the source coordinate, sixth count, Taylor term count, cross-row
+payload, or endpoint are rejected without retry or draft acceptance, and a
+zero endpoint is separately refuted by positivity. These 79 tactic sites are
+accepted after localized PNT+ rewrites. This is package-owned ordinary-kernel
+evidence, but remains a fixed source family: it does not claim arbitrary
+exponential arguments, precision-driven Taylor construction, generated cuts,
+batch-performance evidence, or LeanCert API compatibility.
 
 The small-prime logarithm cluster replaces all sixty actual `interval_auto`
 calls in `RosserSchoenfeld/RSPrimeLower.lean` and `TMEEMT.lean`. At the pinned
@@ -2964,6 +2985,13 @@ the fixed soundness and trust contracts.
 - `conformance/HexIntervalMathlib/PntLogNaturalConformance.lean`: all-row
   runtime validation, mutation rejection, representative generic frontend
   closure, and guarded ordinary-kernel axiom report.
+- `HexInterval/Experiment/PntExpNegative.lean` and
+  `HexIntervalMathlib/Experiment/PntExpNegative.lean`: the authenticated
+  79-row sixth-power runtime and its shared Taylor/range-reduction theorem with
+  exact source-shaped wrappers.
+- `conformance/HexIntervalMathlib/PntExpNegativeConformance.lean`: all-row
+  runtime validation, malformed and cross-row rejection, representative
+  generic frontend closure, and guarded ordinary-kernel axiom reports.
 - `HexIntervalMathlib/Contractor.lean`: backwards propagation theorems.
 - `HexIntervalMathlib/Tactic.lean`: `interval`, `interval?`, and
   `interval_bound`.
