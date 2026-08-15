@@ -20,7 +20,10 @@ public interval operations whose costs are comparisons continue to return
 `BuildResult`; multiplication and direct natural power report growth without
 fabricating a `CompareCost`. Concrete corner enumeration and interval
 multiplication live in `HexInterval.Multiplication`, not in this reusable cost
-layer.
+layer. Precision-indexed reciprocal and division additionally cross Core's
+`Dyadic.toRat`/`Rat.toDyadic` boundary, so their prerequisites record
+precision, rational-conversion, and temporary product bounds separately from
+retained endpoint growth.
 -/
 
 namespace Hex.Interval.Arithmetic
@@ -65,15 +68,112 @@ def allowed (limits : PowLimits) (work : PowWork) : Bool :=
 
 end PowWork
 
-/-- Resource diagnostics for checked public arithmetic. Product growth is a
-separate case from endpoint and comparison work: a comparison between two
-admitted factors may be cheap even when their product is too large. Direct
-power execution work is also reported separately from retained growth. -/
+/-! ## Precision-indexed rational conversion -/
+
+/-- Limits needed before entering Core's rational-backed dyadic reciprocal or
+division. Retained endpoints and aggregate conversion shifts keep their
+existing meanings. Precision encoding and temporary rational integers have
+separate bounds rather than being disguised as endpoint height or comparison
+cost. -/
+structure PrecisionLimits where
+  endpoint : EndpointLimit
+  maxPrecisionMagnitude : Nat
+  maxPrecisionBits : Nat
+  maxTemporaryBits : Nat
+  deriving DecidableEq, Repr
+
+/-- Allocation-independent size of a requested signed precision. -/
+structure PrecisionCost where
+  encodedBits : Nat
+  magnitude : Nat
+  deriving DecidableEq, Repr
+
+namespace PrecisionCost
+
+/-- Measure a signed precision without constructing a power of two. -/
+def ofPrecision (precision : Precision) : PrecisionCost :=
+  let magnitude := precision.natAbs
+  { encodedBits := EndpointCost.natBits magnitude, magnitude }
+
+/-- Admit both the magnitude of a precision and the size of its existing
+arbitrary-precision encoding. -/
+def allowed (limits : PrecisionLimits) (cost : PrecisionCost) : Bool :=
+  cost.encodedBits ≤ limits.maxPrecisionBits &&
+    cost.magnitude ≤ limits.maxPrecisionMagnitude
+
+end PrecisionCost
+
+/-- Conservative bit bounds for the numerator and denominator of a rational
+temporary. These are integer bit lengths, not retained dyadic endpoint data. -/
+structure RationalBound where
+  numeratorBits : Nat
+  denominatorBits : Nat
+  deriving DecidableEq, Repr
+
+namespace RationalBound
+
+/-- Admit both integer components of a rational temporary. -/
+def allowed (limit : Nat) (bound : RationalBound) : Bool :=
+  bound.numeratorBits ≤ limit && bound.denominatorBits ≤ limit
+
+end RationalBound
+
+/-- Complete pre-allocation record for a nonzero reciprocal or division.
+
+`converted` bounds the exact `Dyadic.toRat` source shapes. `conversionShift`
+charges every source-exponent shift plus the precision shift without signed
+cancellation. `crossProduct` is absent for `invAtPrec` and bounds the reduced
+rational numerator/denominator products formed by `divAtPrec`. `rounding`
+bounds the rational side shifted by `Rat.toDyadic`, `quotientBits` bounds the
+integer passed to `Dyadic.ofIntWithPrec`, and
+`predictedResultHeight` bounds the canonical retained dyadic height after
+trailing-zero normalization. -/
+structure QuotientCost where
+  sources : List EndpointCost
+  precision : PrecisionCost
+  converted : List RationalBound
+  conversionShift : Nat
+  crossProduct : Option RationalBound
+  rounding : RationalBound
+  quotientBits : Nat
+  predictedResultHeight : Nat
+  deriving DecidableEq, Repr
+
+namespace QuotientCost
+
+/-- Admit all retained inputs, precision metadata, conversion work,
+rational temporaries, the integer quotient, and the retained result bound. -/
+def allowed (limits : PrecisionLimits) (cost : QuotientCost) : Bool :=
+  cost.sources.all (EndpointCost.allowed limits.endpoint) &&
+    cost.precision.allowed limits &&
+    cost.converted.all (RationalBound.allowed limits.maxTemporaryBits) &&
+    cost.conversionShift ≤ limits.endpoint.maxAlignmentShift &&
+    cost.crossProduct.all (RationalBound.allowed limits.maxTemporaryBits) &&
+    cost.rounding.allowed limits.maxTemporaryBits &&
+    cost.quotientBits ≤ limits.maxTemporaryBits &&
+    cost.predictedResultHeight ≤ limits.endpoint.maxEndpointHeight
+
+end QuotientCost
+
+/-- A successful preflight. Core returns zero without rational conversion when
+the reciprocal input or division denominator is zero; that plan still retains
+the endpoint costs already admitted before the short circuit. -/
+inductive QuotientPlan where
+  | zero (sources : List EndpointCost)
+  | checked (cost : QuotientCost)
+  deriving DecidableEq, Repr
+
+/-- Resource diagnostics for checked public arithmetic. Product growth,
+direct-power work, precision requests, and rational-backed quotient work are
+separate cases from endpoint and comparison work; none can be inferred
+honestly from the cost of comparing already-admitted endpoints. -/
 inductive Cost where
   | endpoint (cost : EndpointCost)
   | comparison (cost : CompareCost)
   | growth (cost : Growth)
   | power (work : PowWork)
+  | precision (cost : PrecisionCost)
+  | quotient (cost : QuotientCost)
   deriving DecidableEq, Repr
 
 /-- Result type for public arithmetic whose work is not described by
@@ -182,5 +282,147 @@ def preflightPow (endpointLimit : EndpointLimit) (workLimits : PowLimits)
       if !work.allowed workLimits then
         throw (.power work)
       preflightPowGrowth endpointLimit source exponent
+
+/-! ## Reciprocal and division prerequisites -/
+
+/-- Admit one retained source endpoint before any precision or rational work. -/
+def admitEndpoint (limits : PrecisionLimits) (value : Dyadic) :
+    Except Cost EndpointCost := do
+  let cost := EndpointCost.ofDyadic value
+  if !cost.allowed limits.endpoint then throw (.endpoint cost)
+  pure cost
+
+/-- Admit a signed precision before any rational conversion or shift metadata. -/
+def admitPrecision (limits : PrecisionLimits) (precision : Precision) :
+    Except Cost PrecisionCost := do
+  let cost := PrecisionCost.ofPrecision precision
+  if !cost.allowed limits then throw (.precision cost)
+  pure cost
+
+namespace QuotientCost
+
+/-- Exact component bit lengths allocated by `Dyadic.toRat`, computed without
+performing its power-of-two shift. The endpoint cost is derived from the same
+value, so callers cannot pair unrelated cost and value records. -/
+def conversionBound (value : Dyadic) : RationalBound :=
+  let cost := EndpointCost.ofDyadic value
+  match value with
+  | .zero => { numeratorBits := 0, denominatorBits := 1 }
+  | .ofOdd _ (.ofNat exponent) _ =>
+      { numeratorBits := cost.numeratorBits, denominatorBits := exponent + 1 }
+  | .ofOdd _ (.negSucc exponent) _ =>
+      { numeratorBits := cost.numeratorBits + exponent + 1, denominatorBits := 1 }
+
+/-- Swapping a reduced nonzero rational's components performs no allocation. -/
+def invertBound (bound : RationalBound) : RationalBound :=
+  { numeratorBits := bound.denominatorBits
+    denominatorBits := bound.numeratorBits }
+
+/-- Exact bit length of a nonzero integer multiplied by a power of two whose
+bit length is `powerBits`. A zero integer remains zero. This helper is private:
+its second-argument invariant is established only by `conversionBound`. -/
+private def mulPowTwo (valueBits powerBits : Nat) : Nat :=
+  if valueBits = 0 then 0 else valueBits + powerBits - 1
+
+/-- Conservative bounds for `left / right` after `Rat.mul` performs its two
+cross-gcd reductions and before either retained product is allocated.
+
+`conversionBound` establishes structurally that every dyadic denominator is
+an exact power of two (including one). Thus the unreduced numerator is the
+left numerator times the right power-of-two denominator, and the unreduced
+denominator is the left power-of-two denominator times the right numerator.
+The private exact shift bound applies to precisely those products; gcd
+reduction can only make their retained components smaller. -/
+def divisionBound (left right : Dyadic) : RationalBound :=
+  let leftBound := conversionBound left
+  let rightBound := conversionBound right
+  { numeratorBits := mulPowTwo leftBound.numeratorBits rightBound.denominatorBits
+    denominatorBits := mulPowTwo rightBound.numeratorBits leftBound.denominatorBits }
+
+/-- Bound the numerator/denominator shifted by Core `Rat.toDyadic`. Shifting a
+zero numerator left preserves its zero-bit size at every positive precision. -/
+def roundingBound (precision : Precision) (bound : RationalBound) : RationalBound :=
+  match precision with
+  | .ofNat shift =>
+      { bound with
+        numeratorBits := if bound.numeratorBits = 0 then 0 else bound.numeratorBits + shift }
+  | .negSucc shift => { bound with denominatorBits := bound.denominatorBits + shift + 1 }
+
+/-- Whether floor rounding may increase the quotient's magnitude by one bit. -/
+def isNegative : Dyadic → Bool
+  | .ofOdd (.negSucc _) _ _ => true
+  | _ => false
+
+/-- Bound the integer quotient passed to `Dyadic.ofIntWithPrec`. A positive
+quotient has no more bits than the shifted rational numerator; flooring a
+negative quotient may add one magnitude bit. -/
+def boundQuotientBits (isNegative : Bool) (rounding : RationalBound) : Nat :=
+  if rounding.numeratorBits = 0 then 0
+  else rounding.numeratorBits + (if isNegative then 1 else 0)
+
+/-- Bound the canonical result height after `Dyadic.ofIntWithPrec`. Removing
+`t` trailing zeroes decreases numerator bits by `t` while changing exponent
+magnitude by at most `t`, so quotient bits plus precision magnitude suffices. -/
+def boundResultHeight (precision : Precision) (quotientBits : Nat) : Nat :=
+  if quotientBits = 0 then 0 else quotientBits + precision.natAbs
+
+end QuotientCost
+
+/-- Preflight the public resource prerequisite for Core `Dyadic.invAtPrec`.
+No rational conversion, shift, division, or result construction occurs here. -/
+def preflightInv (limits : PrecisionLimits) (value : Dyadic)
+    (precision : Precision) : Except Cost QuotientPlan := do
+  let source ← admitEndpoint limits value
+  match value with
+  | .zero => pure (.zero [source])
+  | _ =>
+      let precisionCost ← admitPrecision limits precision
+      let converted := QuotientCost.conversionBound value
+      let rounding := QuotientCost.roundingBound precision (QuotientCost.invertBound converted)
+      let quotientBits :=
+        QuotientCost.boundQuotientBits (QuotientCost.isNegative value) rounding
+      let cost : QuotientCost :=
+        { sources := [source]
+          precision := precisionCost
+          converted := [converted]
+          conversionShift := source.exponentMagnitude + precisionCost.magnitude
+          crossProduct := none
+          rounding
+          quotientBits
+          predictedResultHeight := QuotientCost.boundResultHeight precision quotientBits }
+      if !cost.allowed limits then throw (.quotient cost)
+      pure (.checked cost)
+
+/-- Preflight the public resource prerequisite for Core `Dyadic.divAtPrec`.
+Both retained sources are admitted before the denominator-zero short circuit.
+For a nonzero denominator, the record bounds both `toRat` conversions, the
+reduced rational cross-products, the precision shift, and the retained result.
+No source conversion or arithmetic is executed here. -/
+def preflightDiv (limits : PrecisionLimits) (left right : Dyadic)
+    (precision : Precision) : Except Cost QuotientPlan := do
+  let leftCost ← admitEndpoint limits left
+  let rightCost ← admitEndpoint limits right
+  match right with
+  | .zero => pure (.zero [leftCost, rightCost])
+  | _ =>
+      let precisionCost ← admitPrecision limits precision
+      let leftBound := QuotientCost.conversionBound left
+      let rightBound := QuotientCost.conversionBound right
+      let crossProduct := QuotientCost.divisionBound left right
+      let rounding := QuotientCost.roundingBound precision crossProduct
+      let quotientBits := QuotientCost.boundQuotientBits
+        (QuotientCost.isNegative left != QuotientCost.isNegative right) rounding
+      let cost : QuotientCost :=
+        { sources := [leftCost, rightCost]
+          precision := precisionCost
+          converted := [leftBound, rightBound]
+          conversionShift := leftCost.exponentMagnitude + rightCost.exponentMagnitude +
+            precisionCost.magnitude
+          crossProduct := some crossProduct
+          rounding
+          quotientBits
+          predictedResultHeight := QuotientCost.boundResultHeight precision quotientBits }
+      if !cost.allowed limits then throw (.quotient cost)
+      pure (.checked cost)
 
 end Hex.Interval.Arithmetic
