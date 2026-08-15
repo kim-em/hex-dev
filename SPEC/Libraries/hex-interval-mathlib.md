@@ -1384,15 +1384,55 @@ showing that the proposed smaller cut is false. The guarded axiom report has
 only the permitted Mathlib foundations and, unlike the pinned LeanCert
 implementation of this provider leaf, no `native_decide` dependency.
 
-This is partial evidence for the imported BKLNW certified-bound interface, not
-a completed classification of that interface or of the 128 BKLNW tactic
-sites. The retained runtime operation still names the `M = 433` source leaf;
-it does not dispatch the smaller limits 29, 37, 44, 51, 58, 63, 145, 217,
-289, and 361, enumerate per-term interval facts, handle the exponential-bound
-half of the imported interface, or establish the required comparative
-replay/size measurements.
-The uniform tail theorem avoids expanding 431 terms, but this fixed canary is
-not yet evidence for the production balanced-fold implementation.
+The same module now covers the complete source-pinned `pow*_upper` ladder at
+limits 29, 37, 44, 51, 58, 63, 145, 217, 289, 361, and 433. The smaller
+limits cannot use the coarse two-band `pow433` estimate. A second,
+parameterized schema instead authenticates a package-owned table of
+eight-decimal upper bounds for `2^(1/k - 1/3)`, `k = 4..21`, the exact
+`k = 4..20` band, the `k ≥ 21` cardinality, and the exact source endpoint.
+Every table entry is derived in the kernel from the package-owned 20-digit
+`log 2` series enclosure and an exponential Taylor remainder bound. One
+generic fold theorem and one generic replay schema cover all ten added source
+shapes. Decoded limit, split, cardinality, scale, endpoint, and cross-row
+mutations reject; the endpoint-at-one mutation also has an independent false
+theorem. The bounded runtime declares `18M` arithmetic/observation work and
+raises its payload-atom limit only to the selected source numerator; notably,
+the `M = 289` record has the largest endpoint atom. This reports the retained
+fixed-ladder cost honestly rather than treating the analytic fold as zero
+work.
+
+The companion `PntBKLNWExp` provider covers the **22** declarations—eleven
+lower/upper pairs—used from the pinned certified-bounds interface at
+`b = 20, 25, 30, 35, 40, 43, 100, 150, 200, 250, 300`. One source-indexed
+certificate pins `b`, `⌊b / log 2⌋₊`, both rational cuts, the twelve-decimal
+base-table scale, and the exact-band/tail split. The kernel proves the floor
+from the package-owned 20-digit `log 2` series window, proves every
+`exp (1/k - 1/3)` table cell with an exponential Taylor remainder, and folds
+the `k = 4..min(N,63)` band. Rows above 63 use an authenticated cardinality
+and the checked `k = 64` base for the remaining tail; lower bounds safely omit
+that positive tail.
+
+All eleven records pass the same Mathlib-free decoder and planner, and the
+same parameterized replay theorem proves both endpoints. Cross-row replay is
+rejected even when the foreign row is independently valid. Mutations of the
+source index, argument, floor, split, tail cardinality, scale, and either
+endpoint remain syntactically decodable but fail validation and planning;
+separate ordinary theorems refute the endpoint-at-`2` lower claim and
+endpoint-at-`1` upper claim. A representative `b = 20` event is closed through
+generic chronology and `ProofFrontend`, and guarded axiom reports contain only
+the permitted Mathlib foundations. No LeanCert theorem or `native_decide`
+enters the proof.
+
+Together with the eleven power declarations this accepts, after a localized
+PNT+ rewrite, the actual `LeanCert.CertifiedBounds.BKLNW` theorem role used by
+`BKLNW_a2_bounds.lean`. It is deliberately not namespace or drop-in API
+compatibility. The runtime remains a fixed eleven-row acceptance package with
+61 twelve-decimal base cells and a coarse tail, not an arbitrary-`b`
+exponential-sum evaluator. Its retained work charge counts the explicit lower
+and upper table powers (and the high-row tail power), but does not claim a
+big-integer bit-complexity model, production balanced folds, caching,
+comparative proof-size results, or coverage of the separate 128 BKLNW tactic
+sites and Table 10 workload.
 
 The coordinate-aware Table 12 implementation is a bounded acceptance fixture
 that completes this family migration. At PNT+ commit
@@ -1996,7 +2036,8 @@ The committed compatibility subset is `D8` unless marked `D9`:
 - `log 11723 ≤ 9.37`, `exp 20 ≤ 485165196`, and
   `10^9 ≤ exp 22`;
 - representative `10^-20` and `10^-100` tail bounds;
-- BKLNW sums with upper limits 29, 37, 63, 145, 289, and 433;
+- BKLNW sums with every source upper limit 29, 37, 44, 51, 58, 63, 145, 217,
+  289, 361, and 433;
 - `[D9]` one Table 10 shard and the recorded false target as an expected
   failure. The shard fixture must bind the intended paper row/column
   coordinates and generated theorem family, not merely replay 87 target and 38

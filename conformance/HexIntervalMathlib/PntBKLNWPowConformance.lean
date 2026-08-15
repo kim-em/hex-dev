@@ -12,10 +12,10 @@ import Mathlib.Lean.Elab.Tactic.Meta
 /-!
 # Checked PNT+ BKLNW power-fold acceptance
 
-The Mathlib-free package authenticates the split coordinates, dyadic
-exponents, exact tail cardinality, and rational endpoint.  Generic package
-planning and chronological replay then produce the ordinary-kernel theorem
-used by PNT+ `BKLNW_a2_bounds.lean:cert_pow433_upper`.
+The Mathlib-free package authenticates the split coordinates, base table,
+exact tail cardinality, and source rational endpoint.  The original `pow433`
+two-band canary and the parameterized fine ladder together cover all eleven
+source `pow*_upper` declarations without importing LeanCert.
 -/
 
 namespace Hex.IntervalMathlib.PntBKLNWPowConformance
@@ -158,6 +158,76 @@ private def wrongFact : RuleFactContext checkerInput action :=
 #guard (foldFactSchema.replay checkerInput action replayContext wrongEndpoint).isNone
 #guard (foldFactSchema.replay checkerInput action wrongFact certificate).isNone
 
+/-! ## Complete parameterized ladder schema -/
+
+private def smallerLadder : List LadderCertificate :=
+  [ladder29, ladder37, ladder44, ladder51, ladder58,
+    ladder63, ladder145, ladder217, ladder289, ladder361]
+
+private def ladderPlanSucceeds (value : LadderCertificate) : Bool :=
+  let plan := ladderPlanForBody (ladderCertificateBody value) request
+  match plan.outcome with
+  | .success _ _ _ => !plan.drafts.isEmpty
+  | _ => false
+
+private def ladderPlanFails (value : LadderCertificate) : Bool :=
+  let plan := ladderPlanForBody (ladderCertificateBody value) request
+  match plan.outcome with
+  | .failed _ => plan.drafts.isEmpty
+  | _ => false
+
+private def runLadder? (value : LadderCertificate) :
+    Option (TargetRun.Result Bound Unit) := do
+  let .ok session := ladderStart value | none
+  some (TargetRun.drive factDomain checkerInput.target.node checkerInput.target.fact
+    firstOffer limits.policy.maxDecisions session ())
+
+#guard smallerLadder.all validLadderCertificate
+#guard smallerLadder.all fun value =>
+  decodeLadderCertificate? (ladderCertificateBody value) == some value
+#guard smallerLadder.all fun value => ladderFactFormat.validateBody
+  (ladderCertificateBody value)
+#guard smallerLadder.all ladderPlanSucceeds
+#guard smallerLadder.all fun value =>
+  (runLadder? value).any fun result =>
+    match result.stop with
+    | .target reached => reached.fact == .upper
+    | _ => false
+
+private def wrongLadderLimit : LadderCertificate :=
+  { ladder29 with limit := 30 }
+private def wrongLadderSplit : LadderCertificate :=
+  { ladder29 with exactStop := 19 }
+private def wrongLadderTail : LadderCertificate :=
+  { ladder29 with tailCardinality := 8 }
+private def wrongLadderScale : LadderCertificate :=
+  { ladder29 with baseDenominator := 10000000 }
+private def wrongLadderEndpoint : LadderCertificate :=
+  { ladder29 with targetNumerator := 10000, targetDenominator := 10000 }
+
+private def ladderMutations : List LadderCertificate :=
+  [wrongLadderLimit, wrongLadderSplit, wrongLadderTail,
+    wrongLadderScale, wrongLadderEndpoint]
+
+/- Every mutation remains syntactically decodable; rejection is semantic. -/
+#guard ladderMutations.all fun value =>
+  (decodeLadderCertificate? (ladderCertificateBody value)).isSome
+#guard ladderMutations.all fun value =>
+  !ladderFactFormat.validateBody (ladderCertificateBody value)
+#guard ladderMutations.all ladderPlanFails
+
+#guard smallerLadder.all fun value =>
+  ((ladderFoldFactSchema value).replay checkerInput action replayContext value).isSome
+
+/- A valid certificate for another source row cannot replay against the
+selected operation model. -/
+#guard
+  ((ladderFoldFactSchema ladder29).replay checkerInput action replayContext
+    ladder37).isNone
+#guard
+  ((ladderFoldFactSchema ladder29).replay checkerInput action replayContext
+    wrongLadderEndpoint).isNone
+
 /-! ## Generic chronology and ordinary theorem closure -/
 
 def trace? : Option (Frontend.Trace Bound) := do
@@ -254,5 +324,29 @@ info: 'Hex.Interval.Experiment.PntBKLNWPow.rejectWrongEndpoint' depends on axiom
 -/
 #guard_msgs in
 #print axioms rejectWrongEndpoint
+
+/--
+info: 'Hex.Interval.Experiment.PntBKLNWPow.certPow29Upper' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms certPow29Upper
+
+/--
+info: 'Hex.Interval.Experiment.PntBKLNWPow.certPow361Upper' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms certPow361Upper
+
+/--
+info: 'Hex.Interval.Experiment.PntBKLNWPow.ladderCertificateUpper' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms ladderCertificateUpper
+
+/--
+info: 'Hex.Interval.Experiment.PntBKLNWPow.rejectPow29Endpoint' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms rejectPow29Endpoint
 
 end Hex.IntervalMathlib.PntBKLNWPowConformance
