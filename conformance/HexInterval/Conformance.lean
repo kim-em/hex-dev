@@ -119,6 +119,79 @@ private def far : Dyadic := .ofOdd 1 1000000000 (by decide)
   | .ready _ => false
   | .resourceLimit cost => cost.upper.exponentMagnitude == 1000000000
 
+private def ready (raw : Raw) : Hex.Interval :=
+  match Hex.Interval.ofRawWithin smallLimit raw with
+  | .ready interval => interval
+  | .resourceLimit _ => Hex.Interval.empty
+
+private def closed01 : Hex.Interval := ready (finite 0 false 1 false)
+private def closed12 : Hex.Interval := ready (finite 1 false 2 false)
+private def openLower12 : Hex.Interval := ready (finite 1 true 2 false)
+private def openAtOne : Hex.Interval := ready (finite 0 false 1 true)
+private def atMostOne : Hex.Interval :=
+  ready (.bounds .unbounded (.finite (d 1) false))
+
+-- Public intersection is exact at tied open/closed cuts, absorbs empty, and
+-- retains independently unbounded ends.
+#guard
+  match Hex.Interval.intersectWithin smallLimit closed01 openLower12 with
+  | .ready interval => interval.view == .empty
+  | .resourceLimit _ => false
+
+#guard
+  match Hex.Interval.intersectWithin smallLimit closed01 atMostOne with
+  | .ready interval => interval.view == finite 0 false 1 false
+  | .resourceLimit _ => false
+
+-- A tied endpoint is open when either contributing cut is open.  The strict
+-- cut is deliberately the right input so this distinguishes disjunction from
+-- copying the left flag.
+#guard
+  match Hex.Interval.intersectWithin smallLimit atMostOne openAtOne with
+  | .ready interval => interval.view == finite 0 false 1 true
+  | .resourceLimit _ => false
+
+#guard
+  match Hex.Interval.intersectWithin smallLimit Hex.Interval.empty closed01 with
+  | .ready interval => interval == Hex.Interval.empty
+  | .resourceLimit _ => false
+
+-- A finite-cut comparison is refused before the unchecked dyadic ordering can
+-- align a billion-bit exponent gap.
+private def farLower : Hex.Interval :=
+  match Hex.Interval.aboveWithin
+      { maxEndpointHeight := 1000000100, maxAlignmentShift := 64 } far false with
+  | .ready interval => interval
+  | .resourceLimit _ => Hex.Interval.empty
+
+#guard
+  match Hex.Interval.intersectWithin smallLimit closed12 farLower with
+  | .ready _ => false
+  | .resourceLimit cost => cost.alignmentShift == 1000000000
+
+-- Same-side checks are absent for crossed one-sided inputs, so the selected
+-- lower/upper normalization must itself remain behind `ofRawWithin`.
+#guard
+  match Hex.Interval.intersectWithin smallLimit farLower atMostOne with
+  | .ready _ => false
+  | .resourceLimit cost => cost.alignmentShift == 1000000000
+
+-- Negation swaps the endpoints and preserves openness; empty stays empty.
+#guard
+  match Hex.Interval.negWithin smallLimit (ready (finite (-2) true 1 false)) with
+  | .ready interval => interval.view == finite (-1) false 2 true
+  | .resourceLimit _ => false
+
+#guard
+  match Hex.Interval.negWithin smallLimit atMostOne with
+  | .ready interval => interval.view == .bounds (.finite (d (-1)) false) .unbounded
+  | .resourceLimit _ => false
+
+#guard
+  match Hex.Interval.negWithin smallLimit Hex.Interval.empty with
+  | .ready interval => interval == Hex.Interval.empty
+  | .resourceLimit _ => false
+
 /-- The supported public view exposes its carried canonicality theorem without
 adding any trust assumption. -/
 theorem publicViewCanonical (interval : Hex.Interval) : interval.view.CutConsistent :=

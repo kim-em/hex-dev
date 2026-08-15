@@ -553,7 +553,7 @@ libraries:
     deps: [HexInterval]
     mathlib: true
     done_through: 0
-    status: planned
+    status: active
     proof_probes: [bench/HexIntervalMathlib]
   HexIntervalAlgebraic:
     deps: [HexIntervalMathlib, HexRealRootsMathlib, HexRootsMathlib]
