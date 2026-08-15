@@ -139,6 +139,119 @@ private def far : Dyadic := .ofOdd 1 1000000000 (by decide)
         !cost.allowed eightBitLimit
   | _ => false
 
+-- Direct powers have their own one-source growth prediction. `3^4` fits the
+-- eight-bit endpoint limit, while `3^5` is refused from metadata before
+-- `Dyadic.pow` can allocate its mantissa.
+#guard
+  match Arithmetic.preflightPow eightBitLimit (d 3) 4 with
+  | .ok cost =>
+      cost.sources.map (·.numeratorBits) == [2] &&
+        cost.predicted.numeratorBits == 8 &&
+        (EndpointCost.ofDyadic ((d 3) ^ 4)).numeratorBits == 7 &&
+        cost.predicted.exponentMagnitude == 0
+  | _ => false
+
+#guard
+  match Arithmetic.preflightPow eightBitLimit (d 3) 5 with
+  | .error (.growth cost) =>
+      cost.sources.map (·.numeratorBits) == [2] &&
+        cost.predicted.numeratorBits == 10 &&
+        !cost.allowed eightBitLimit
+  | _ => false
+
+-- Unit numerators remain unit-sized even at a large exponent. This keeps the
+-- preflight useful for exact powers of `1`, `-1`, and powers of two.
+#guard
+  match Arithmetic.preflightPow eightBitLimit (d 1) 1000000000 with
+  | .ok cost => cost.predicted == EndpointCost.ofDyadic (d 1)
+  | _ => false
+
+#guard
+  match Arithmetic.preflightPow eightBitLimit (d (-1)) 1000000001 with
+  | .ok cost => cost.predicted == EndpointCost.ofDyadic (d 1)
+  | _ => false
+
+-- The direct-image convention keeps `0^0 = 1`; positive powers of zero stay
+-- zero. Both have exact constant-size predictions.
+#guard
+  match Arithmetic.preflightPow eightBitLimit (d 0) 0 with
+  | .ok cost => cost.predicted == EndpointCost.ofDyadic ((d 0) ^ 0)
+  | _ => false
+
+#guard
+  match Arithmetic.preflightPow eightBitLimit (d 0) 1000000000 with
+  | .ok cost => cost.predicted == EndpointCost.ofDyadic ((d 0) ^ 1000000000)
+  | _ => false
+
+private def quarter : Dyadic := .ofOdd 1 2 (by decide)
+private def two : Dyadic := .ofOdd 1 (-1) (by decide)
+private def threeHalves : Dyadic := .ofOdd 3 1 (by decide)
+private def negThreeHalves : Dyadic := .ofOdd (-3) 1 (by decide)
+
+-- Both signs of Core's signed dyadic exponent multiplication are reflected by
+-- the exact magnitude metadata. Unit mantissas do not acquire numerator cost.
+#guard
+  match Arithmetic.preflightPow eightBitLimit two 3 with
+  | .ok cost => cost.predicted == EndpointCost.ofDyadic (two ^ 3)
+  | _ => false
+
+-- A non-unit mantissa and nonzero dyadic exponent contribute independently to
+-- the predicted retained height. Six mantissa bits plus exponent magnitude
+-- three exceed the eight-bit combined endpoint limit.
+#guard
+  match Arithmetic.preflightPow eightBitLimit threeHalves 3 with
+  | .error (.growth cost) =>
+      cost.predicted.numeratorBits == 6 &&
+        cost.predicted.exponentMagnitude == 3 &&
+        !cost.allowed eightBitLimit
+  | _ => false
+
+-- Sign does not alter growth metadata, and exponent one is the identity case.
+#guard
+  match Arithmetic.preflightPow eightBitLimit negThreeHalves 1 with
+  | .ok cost => cost.predicted == EndpointCost.ofDyadic (negThreeHalves ^ 1)
+  | _ => false
+
+#guard
+  match Arithmetic.preflightPow eightBitLimit quarter 3 with
+  | .ok cost =>
+      cost.predicted.numeratorBits == 1 &&
+        cost.predicted.exponentMagnitude == 6
+  | _ => false
+
+#guard
+  match Arithmetic.preflightPow eightBitLimit quarter 4 with
+  | .error (.growth cost) =>
+      cost.predicted.numeratorBits == 1 &&
+        cost.predicted.exponentMagnitude == 8 &&
+        !cost.allowed eightBitLimit
+  | _ => false
+
+-- An inadmissible source is reported before multiplying its exponent by the
+-- natural power. This separates source admission from predicted growth.
+#guard
+  match Arithmetic.preflightPow eightBitLimit far 1000000000 with
+  | .error (.endpoint cost) => cost.exponentMagnitude == 1000000000
+  | _ => false
+
+#guard
+  match Arithmetic.preflightPow eightBitLimit far 0 with
+  | .error (.endpoint cost) => cost.exponentMagnitude == 1000000000
+  | _ => false
+
+-- Growth metadata is arbitrary-precision `Nat`, not a machine counter. This
+-- exponent is one beyond `UInt64` range; it is diagnosed without wrapping and
+-- without invoking Core power.
+private def beyondUInt64 : Nat := 18446744073709551616
+
+#guard
+  match Arithmetic.preflightPow eightBitLimit two beyondUInt64 with
+  | .error (.growth cost) =>
+      cost.predicted.numeratorBits == 1 &&
+        cost.predicted.exponentMagnitude == beyondUInt64 &&
+        !cost.allowed eightBitLimit
+  | _ => false
+
 private def ready (raw : Raw) : Hex.Interval :=
   match Hex.Interval.ofRawWithin smallLimit raw with
   | .ready interval => interval
