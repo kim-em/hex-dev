@@ -3805,11 +3805,28 @@ decimal inequality as an ordinary theorem. Mutated source limit, tail count,
 dyadic exponent, and endpoint records decode structurally but fail validation,
 planning, and replay; the smaller endpoint is independently proved false.
 
-This is a fixed `M = 433` acceptance operation with parameterized proof fields,
-not the production fold engine. It neither covers the smaller BKLNW scaling
-ladder nor supplies per-term interval data, chunking, a balanced aggregation
-tree, incremental reuse, or measured linear-size/logarithmic-depth evidence.
-Those remain required before claiming the BKLNW interface or fold milestone.
+The complete source-pinned power ladder now adds limits `29`, `37`, `44`,
+`51`, `58`, `63`, `145`, `217`, `289`, and `361` through one second schema.
+Its package-owned table gives checked eight-decimal upper bounds for
+`2^(1/k - 1/3)`, `4 ≤ k ≤ 21`; each decimal follows from the checked
+20-digit `log 2` series window and an ordinary exponential remainder theorem.
+The reusable fold handles `k = 4..20` separately and uses the `k = 21` base
+for the authenticated remaining cardinality. The checker pins the source
+limit/endpoint pair, split coordinates, table denominator, cardinality, and
+the complete rational inequality. Cross-row replay and mutations of every
+structural class reject, and an endpoint-at-one mutation is independently
+proved false. For these fixed records the declared observation budget is
+`18M`, matching the 18 table bases raised to the selected limit, and the
+payload atom bound is raised only to the selected source numerator (the
+`M = 289` endpoint is the largest). These are explicit per-request bounds,
+not a claim of input-independent constant work.
+
+Thus all eleven `pow*_upper` declarations used by the pinned PNT+ file have
+ordinary-kernel replacements, but this is not yet the whole imported BKLNW
+interface: its twenty exponential lower/upper declarations remain pending.
+The bounded table is also not the production fold engine. It does not yet
+supply arbitrary per-term interval data, chunking, incremental reuse, or
+measured balanced-tree scaling evidence.
 
 #### Coordinate-aware numerical batches
 

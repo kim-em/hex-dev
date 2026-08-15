@@ -214,4 +214,188 @@ def limits : PolicySession.Limits :=
 def start : Except PolicySession.StartError (PolicySession.Session Bound) :=
   PolicySession.Session.start factDomain program packages #[.all] limits
 
+/-! ## Complete source-pinned power ladder
+
+The original `pow433` canary above deliberately remains stable.  The smaller
+PNT+ bounds need a finer provider: exact rational upper bounds for the bases
+`2^(1/k - 1/3)`, `4 ≤ k ≤ 20`, followed by one uniform `k ≥ 21` tail.  The
+following schema is parameterized by the source limit and authenticates the
+source endpoint rather than selecting a theorem by an unchecked tag. -/
+
+/-- One source-pinned row of the BKLNW `pow*_upper` interface. -/
+structure SourceRecord where
+  limit : Nat
+  targetNumerator : Nat
+  targetDenominator : Nat
+  deriving DecidableEq, Repr
+
+def sourceRecord? : Nat → Option SourceRecord
+  | 29 => some ⟨29, 14263, 10000⟩
+  | 37 => some ⟨37, 12196, 10000⟩
+  | 44 => some ⟨44, 11211, 10000⟩
+  | 51 => some ⟨51, 107087, 100000⟩
+  | 58 => some ⟨58, 104320, 100000⟩
+  | 63 => some ⟨63, 103253, 100000⟩
+  | 145 => some ⟨145, 10002421, 10000000⟩
+  | 217 => some ⟨217, 1000003758, 1000000000⟩
+  | 289 => some ⟨289, 100000007813, 100000000000⟩
+  | 361 => some ⟨361, 100000002125, 100000000000⟩
+  | 433 => some ⟨433, 100000002937, 100000000000⟩
+  | _ => none
+
+def sourceLimits : List Nat := [29, 37, 44, 51, 58, 63, 145, 217, 289, 361, 433]
+
+/-- The shared rational-base certificate.  The base table itself is
+package-owned; these fields authenticate its interpretation and the exact
+source row being requested. -/
+structure LadderCertificate where
+  limit : Nat
+  exactStart : Nat
+  exactStop : Nat
+  tailStart : Nat
+  tailCardinality : Nat
+  baseDenominator : Nat
+  targetNumerator : Nat
+  targetDenominator : Nat
+  deriving DecidableEq, Repr
+
+def baseDenominator : Nat := 100000000
+
+/-- Upward-rounded eight-decimal bounds for `2^(1/k - 1/3)`, `k = 4..21`.
+The Mathlib companion proves every entry from the package-owned log-2 series
+and an exponential remainder bound. -/
+def baseNumerators : List Nat :=
+  [94387432, 91172249, 89089872, 87631643, 86553657, 85724399,
+    85066717, 84532368, 84089642, 83716839, 83398610, 83123790,
+    82884066, 82673118, 82486060, 82319051, 82169032, 82033536]
+
+def exactBaseNumerators : List Nat := baseNumerators.take 17
+def tailBaseNumerator : Nat := baseNumerators.getD 17 0
+
+def sumPowers (exponent : Nat) : List Nat → Nat
+  | [] => 0
+  | value :: values => value ^ exponent + sumPowers exponent values
+
+def ladderSumNumerator (value : LadderCertificate) : Nat :=
+  value.baseDenominator ^ value.limit +
+    sumPowers value.limit exactBaseNumerators +
+    value.tailCardinality * tailBaseNumerator ^ value.limit
+
+def ladderSumDenominator (value : LadderCertificate) : Nat :=
+  value.baseDenominator ^ value.limit
+
+def ladderCertificateFor? (limit : Nat) : Option LadderCertificate := do
+  let source ← sourceRecord? limit
+  some
+    { limit := source.limit
+      exactStart := 4
+      exactStop := 20
+      tailStart := 21
+      tailCardinality := source.limit - 20
+      baseDenominator
+      targetNumerator := source.targetNumerator
+      targetDenominator := source.targetDenominator }
+
+def ladderCertificateBody (value : LadderCertificate) : List Nat :=
+  [value.limit, value.exactStart, value.exactStop, value.tailStart,
+    value.tailCardinality, value.baseDenominator,
+    value.targetNumerator, value.targetDenominator]
+
+def decodeLadderCertificate? : List Nat → Option LadderCertificate
+  | [limit, exactStart, exactStop, tailStart, tailCardinality,
+      denominator, targetNumerator, targetDenominator] =>
+      some
+        { limit, exactStart, exactStop, tailStart, tailCardinality,
+          baseDenominator := denominator, targetNumerator, targetDenominator }
+  | _ => none
+
+/-- The checker pins the split, base-table scale, exact source endpoint, tail
+cardinality, and the final all-natural rational inequality. -/
+def LadderValid (value : LadderCertificate) : Prop :=
+  sourceRecord? value.limit =
+      some ⟨value.limit, value.targetNumerator, value.targetDenominator⟩ ∧
+    21 ≤ value.limit ∧
+    value.exactStart = 4 ∧ value.exactStop = 20 ∧ value.tailStart = 21 ∧
+    value.tailCardinality + 20 = value.limit ∧
+    value.baseDenominator = baseDenominator ∧
+    0 < value.targetDenominator ∧
+    alphaNumerator * ladderSumNumerator value * value.targetDenominator ≤
+      value.targetNumerator *
+        (alphaDenominator * ladderSumDenominator value)
+
+instance (value : LadderCertificate) : Decidable (LadderValid value) := by
+  unfold LadderValid
+  infer_instance
+
+def validLadderCertificate (value : LadderCertificate) : Bool :=
+  decide (LadderValid value)
+
+def defaultLadderCertificate : LadderCertificate :=
+  ⟨0, 0, 0, 0, 0, 0, 0, 0⟩
+
+def ladder29 : LadderCertificate :=
+  (ladderCertificateFor? 29).getD defaultLadderCertificate
+def ladder37 : LadderCertificate :=
+  (ladderCertificateFor? 37).getD defaultLadderCertificate
+def ladder44 : LadderCertificate :=
+  (ladderCertificateFor? 44).getD defaultLadderCertificate
+def ladder51 : LadderCertificate :=
+  (ladderCertificateFor? 51).getD defaultLadderCertificate
+def ladder58 : LadderCertificate :=
+  (ladderCertificateFor? 58).getD defaultLadderCertificate
+def ladder63 : LadderCertificate :=
+  (ladderCertificateFor? 63).getD defaultLadderCertificate
+def ladder145 : LadderCertificate :=
+  (ladderCertificateFor? 145).getD defaultLadderCertificate
+def ladder217 : LadderCertificate :=
+  (ladderCertificateFor? 217).getD defaultLadderCertificate
+def ladder289 : LadderCertificate :=
+  (ladderCertificateFor? 289).getD defaultLadderCertificate
+def ladder361 : LadderCertificate :=
+  (ladderCertificateFor? 361).getD defaultLadderCertificate
+
+def ladderFactFormat : ReplayFormat :=
+  { role := .fact
+    schema := 2
+    validateBody := fun cells =>
+      (decodeLadderCertificate? cells).any validLadderCertificate }
+
+def ladderPlanForBody (cells : List Nat) (request : RuleRequest Bound) : Plan Bound :=
+  match decodeLadderCertificate? cells with
+  | some value =>
+      if validLadderCertificate value then
+        match request.inputs, request.writes with
+        | [], [target] =>
+            { outcome :=
+                .success [{ node := target, fact := .upper, payload }] []
+                  { arithmeticWork := value.limit * 18,
+                    estimatedProofNodes := 36 }
+              drafts :=
+                [{ label := payload, role := .fact, schema := 2, body := cells }] }
+        | _, _ => { outcome := .failed 1, drafts := [] }
+      else { outcome := .failed 2, drafts := [] }
+  | none => { outcome := .failed 3, drafts := [] }
+
+def ladderPackageFor (value : LadderCertificate) : Package Bound :=
+  { Cache := Unit
+    cache := ()
+    operations := #[foldOperation]
+    handlers := #[Handler.statelessPlanned foldRule
+      (ladderPlanForBody (ladderCertificateBody value)) #[ladderFactFormat]] }
+
+def ladderPackagesFor (value : LadderCertificate) : Array (Package Bound) :=
+  #[ladderPackageFor value]
+
+def ladderStart (value : LadderCertificate) :
+    Except PolicySession.StartError (PolicySession.Session Bound) :=
+  PolicySession.Session.start factDomain program (ladderPackagesFor value) #[.all]
+    { limits with
+      engine := { limits.engine with
+        maxEffort := value.limit * 18
+        maxObservationValue := value.limit * 18
+        maxDiagnosticValue := value.limit * 18 }
+      arena := { limits.arena with
+        maxAtom := max limits.arena.maxAtom value.targetNumerator
+        maxSchema := 2 } }
+
 end Hex.Interval.Experiment.PntBKLNWPow
