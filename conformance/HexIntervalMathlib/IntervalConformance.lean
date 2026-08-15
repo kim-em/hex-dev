@@ -183,6 +183,23 @@ theorem splitPoint {limit : Hex.Interval.EndpointLimit}
   ⟨Hex.Interval.splitWithin_point_left checked,
     Hex.Interval.splitWithin_point_not_right checked⟩
 
+/-- A successful reciprocal has exactly its computed connected outward-cut
+predicate. This is cut exactness, not a claim that rounded cuts are attained
+or that a connected hull equals the generally-disconnected image. -/
+theorem invExact {limits : Hex.Interval.Arithmetic.PrecisionLimits}
+    {precision : Hex.Interval.Precision} {input result : Hex.Interval} {x : ℝ}
+    (checked : Hex.Interval.invWithin limits precision input = .ready result) :
+    result.Contains x ↔ input.view.InvContains precision x :=
+  Hex.Interval.contains_invWithin checked x
+
+/-- Lean's total reciprocal maps every source member into every successful
+public enclosure, including `0⁻¹ = 0` and the connected hull across zero. -/
+theorem invImage {limits : Hex.Interval.Arithmetic.PrecisionLimits}
+    {precision : Hex.Interval.Precision} {input result : Hex.Interval} {x : ℝ}
+    (checked : Hex.Interval.invWithin limits precision input = .ready result)
+    (member : input.Contains x) : result.Contains x⁻¹ :=
+  Hex.Interval.inv_mem_invWithin checked member
+
 /-- info: 'Hex.IntervalMathlib.Conformance.intersectMember' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms intersectMember
@@ -266,5 +283,13 @@ theorem splitPoint {limit : Hex.Interval.EndpointLimit}
 /-- info: 'Hex.IntervalMathlib.Conformance.splitPoint' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms splitPoint
+
+/-- info: 'Hex.IntervalMathlib.Conformance.invExact' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms invExact
+
+/-- info: 'Hex.IntervalMathlib.Conformance.invImage' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms invImage
 
 end Hex.IntervalMathlib.Conformance

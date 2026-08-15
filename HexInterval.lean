@@ -21,8 +21,9 @@ intersection, hull, negation, addition, subtraction, multiplication, minimum,
 maximum, absolute value, natural power, and transactional splitting at a
 dyadic cut. The arithmetic resource layer preflights product growth,
 direct-power retained growth, exponent work, and rational-backed
-precision/quotient work independently of exact comparison work. Reciprocal and
-division operations remain unexposed. Raw cuts remain visible as the explicit
-decoder and inspection boundary; D2 propagation and replay experiments still
-live outside this supported umbrella.
+precision/quotient work independently of exact comparison work. The reciprocal
+operation is a precision-indexed connected outward enclosure; division remains
+unexposed. Raw cuts remain visible as the explicit decoder and inspection
+boundary; D2 propagation and replay experiments still live outside this
+supported umbrella.
 -/

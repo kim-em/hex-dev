@@ -292,6 +292,72 @@ preflight both final child comparisons before constructing either result. -/
         .bounds
           (intersectLowerUnchecked lower (.finite point true)) upper )
 
+/-! ## Precision-indexed reciprocal enclosure -/
+
+/-- A lower reciprocal cut, rounded toward negative infinity.  A missing
+upper source cut approaches zero from one side; an open zero source endpoint
+approaches infinity and is never passed to `Dyadic.invAtPrec`.  Finite rounded
+cuts are closed because this public operation promises an outward enclosure,
+not exact endpoint attainment. -/
+@[expose] def invLowerUnchecked (precision : Precision) : Upper → Lower
+  | .unbounded => .finite 0 true
+  | .finite value _ =>
+      if value = 0 then .unbounded
+      else .finite (value.invAtPrec precision) false
+
+/-- An upper reciprocal cut, rounded toward positive infinity by negating the
+downward-rounded reciprocal of the negated source lower endpoint. -/
+@[expose] def invUpperUnchecked (precision : Precision) : Lower → Upper
+  | .unbounded => .finite 0 true
+  | .finite value _ =>
+      if value = 0 then .unbounded
+      else .finite (-(-value).invAtPrec precision) false
+
+/-- Whether a lower cut places the entire nonempty interval strictly above
+zero.  The equality case is positive exactly for an open lower cut. -/
+@[expose] def strictlyPositive : Lower → Bool
+  | .unbounded => false
+  | .finite value strict =>
+      if 0 < value then true else if value = 0 then strict else false
+
+/-- Whether an upper cut places the entire nonempty interval strictly below
+zero.  The equality case is negative exactly for an open upper cut. -/
+@[expose] def strictlyNegative : Upper → Bool
+  | .unbounded => false
+  | .finite value strict =>
+      if value < 0 then true else if value = 0 then strict else false
+
+/-- Whether a cut is the closed zero endpoint used by the connected-hull
+policy for Lean's total reciprocal (`0⁻¹ = 0`). -/
+@[expose] def closedZeroLower : Lower → Bool
+  | .finite value strict => value = 0 && !strict
+  | .unbounded => false
+
+@[expose] def closedZeroUpper : Upper → Bool
+  | .finite value strict => value = 0 && !strict
+  | .unbounded => false
+
+/-- Raw connected outward enclosure of Lean's total reciprocal. On an
+interval separated from zero it reverses the cuts and rounds both finite
+endpoints outward.  A closed zero endpoint contributes the value zero and an
+unbounded one-sided branch; a sign-crossing interval has the whole line as its
+connected hull. This cut computation does not claim a tightness converse for
+the generally disconnected image across zero. -/
+@[expose] def invUnchecked (precision : Precision) : Raw → Raw
+  | .empty => .empty
+  | .bounds lower upper =>
+      if Raw.strictlyPositive lower || Raw.strictlyNegative upper then
+        .bounds (invLowerUnchecked precision upper) (invUpperUnchecked precision lower)
+      else if Raw.closedZeroLower lower then
+        if Raw.closedZeroUpper upper then
+          .bounds (.finite 0 false) (.finite 0 false)
+        else
+          .bounds (.finite 0 false) .unbounded
+      else if Raw.closedZeroUpper upper then
+        .bounds .unbounded (.finite 0 false)
+      else
+        .bounds .unbounded .unbounded
+
 end Raw
 
 /-- Transactional result of a checked split. A successful value contains both
@@ -461,6 +527,49 @@ private def admitSplit (limit : EndpointLimit) (input : Raw) (point : Dyadic) :
       if let some cost := refused? limit children.1.normalizeCost then throw cost
       if let some cost := refused? limit children.2.normalizeCost then throw cost
       pure ⟨children, by simp [hinput, children, Raw.splitUnchecked]⟩
+
+private def admitZeroComparison (limits : Arithmetic.PrecisionLimits)
+    (value : Dyadic) : Except Arithmetic.Cost Unit := do
+  let _ ← Arithmetic.admitEndpoint limits value
+  let cost := CompareCost.ofDyadic value 0
+  if !cost.allowed limits.endpoint then
+    throw (.comparison cost)
+
+private def admitLowerZero (limits : Arithmetic.PrecisionLimits) : Lower →
+    Except Arithmetic.Cost Unit
+  | .unbounded => pure ()
+  | .finite value _ => admitZeroComparison limits value
+
+private def admitUpperZero (limits : Arithmetic.PrecisionLimits) : Upper →
+    Except Arithmetic.Cost Unit
+  | .unbounded => pure ()
+  | .finite value _ => admitZeroComparison limits value
+
+private def admitInvLower (limits : Arithmetic.PrecisionLimits)
+    (precision : Precision) : Upper → Except Arithmetic.Cost Unit
+  | .unbounded => pure ()
+  | .finite value _ => do
+      if value ≠ 0 then
+        let _ ← Arithmetic.preflightInv limits value precision
+
+private def admitInvUpper (limits : Arithmetic.PrecisionLimits)
+    (precision : Precision) : Lower → Except Arithmetic.Cost Unit
+  | .unbounded => pure ()
+  | .finite value _ => do
+      if value ≠ 0 then
+        let _ ← Arithmetic.preflightInv limits (-value) precision
+
+/-- Preflight every retained source comparison before classification, then
+both rational-backed endpoint computations before either is executed. -/
+private def admitInv (limits : Arithmetic.PrecisionLimits)
+    (precision : Precision) : Raw → Except Arithmetic.Cost Unit
+  | .empty => pure ()
+  | .bounds lower upper => do
+      admitLowerZero limits lower
+      admitUpperZero limits upper
+      if Raw.strictlyPositive lower || Raw.strictlyNegative upper then
+        admitInvLower limits precision upper
+        admitInvUpper limits precision lower
 
 /-- Exact set intersection with preflighted dyadic comparisons.  Refusal is
 distinct from the canonical empty result. -/
@@ -672,5 +781,40 @@ theorem view_splitWithin_ready {limit : EndpointLimit}
       cases leftResult <;> cases rightResult <;> simp_all
       rw [← prepared.selected]
       exact ⟨view_ofRawWithin_ready leftEq, view_ofRawWithin_ready rightEq⟩
+
+/-- Precision-indexed connected outward enclosure of Lean's total reciprocal.
+The operation internally invokes `Arithmetic.preflightInv` for every nonzero
+endpoint it will evaluate before either Core reciprocal call; no caller-provided
+plan is accepted. Empty and zero-only inputs perform no precision work. Across
+zero the result follows the connected-hull policy of `Raw.invUnchecked`, not a
+tightness converse for the generally disconnected image. -/
+def invWithin (limits : Arithmetic.PrecisionLimits) (precision : Precision)
+    (input : Hex.Interval) : Arithmetic.Result :=
+  match admitInv limits precision input.view with
+  | .error cost => .resourceLimit cost
+  | .ok () =>
+      Arithmetic.Result.ofBuild
+        (ofRawWithin limits.endpoint (Raw.invUnchecked precision input.view))
+
+/-- Every successful reciprocal exposes exactly the normalized computed
+outward cuts.  This characterizes the successful result, without claiming
+that a connected hull is the exact image across zero or that rounded finite
+cuts are attained. -/
+theorem view_invWithin_ready {limits : Arithmetic.PrecisionLimits}
+    {precision : Precision} {input result : Hex.Interval}
+    (h : invWithin limits precision input = .ready result) :
+    result.view = (Raw.invUnchecked precision input.view).normalizeUnchecked := by
+  unfold invWithin at h
+  split at h
+  · contradiction
+  · generalize builtEq :
+        ofRawWithin limits.endpoint (Raw.invUnchecked precision input.view) = built at h
+    cases built with
+    | ready interval =>
+        simp only [Arithmetic.Result.ofBuild] at h
+        cases h
+        exact view_ofRawWithin_ready builtEq
+    | resourceLimit cost =>
+        simp [Arithmetic.Result.ofBuild] at h
 
 end Hex.Interval

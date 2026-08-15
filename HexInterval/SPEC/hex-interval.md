@@ -597,8 +597,16 @@ product of source members belongs to it. No separate image-tightness converse
 is currently claimed.
 
 The public tree also contains the allocation prerequisite for
-precision-indexed reciprocal and division, but no `invWithin` or `divWithin`
-interval operation. Core `Dyadic.invAtPrec` converts a nonzero source through
+precision-indexed reciprocal and division. It now exposes the checked
+reciprocal operation
+
+```lean
+invWithin (limits : Arithmetic.PrecisionLimits) (precision : Precision)
+  (input : Hex.Interval) : Arithmetic.Result
+```
+
+but no `divWithin` interval operation. Core `Dyadic.invAtPrec` converts a
+nonzero source through
 `Dyadic.toRat`, inverts the rational, then calls `Rat.toDyadic`; `divAtPrec`
 converts both sources and additionally runs reduced rational cross-products.
 Neither `CompareCost` nor `Arithmetic.Growth` accounts for those shifts or
@@ -631,15 +639,39 @@ denominator to claim cancellation. Conformance accepts positive and negative
 `{3}` prerequisites and separately exercises precision encoding, zero
 numerators, admitted zero-path sources, failure priority, converted and
 cross-product temporaries, quotient size, non-cancelling conversion shifts,
-and predicted retained result. Endpoint selection, outward cut direction,
-zero-crossing interval semantics, final canonicalization, Mathlib enclosure
-proofs, and the actual public inverse/division operations remain future work.
+and predicted retained result.
+
+`invWithin` admits every finite source cut before classifying it relative to
+zero, then preflights both required nonzero endpoint reciprocals before either
+Core call. The operation invokes `Arithmetic.preflightInv` internally for each
+endpoint it will evaluate and accepts no caller-supplied `QuotientPlan`. Its
+lower endpoint is `invAtPrec upper precision`; its upper endpoint is
+`-invAtPrec (-lower) precision`. Thus both directions reuse Core's downward
+rounding, while the second is upward rounding after sign reflection. Every
+moved finite result cut is conservatively closed: the operation proves outward
+enclosure, not endpoint attainment or grid optimality. Empty and singleton
+zero bypass precision work; open zero maps to the corresponding unbounded
+one-sided limit and is never passed to Core.
+
+Following Lean's total inverse, a closed zero contributes `0⁻¹ = 0`:
+`[0,b]` has connected hull `[0,+∞)`, `[a,0]` has hull `(-∞,0]`, singleton
+zero stays singleton zero, and a two-sign interval returns the whole line.
+Unbounded sign-separated inputs retain a strict zero limit on the output side.
+This is the connected-hull policy expressible by one `Hex.Interval`, not a
+disconnected interval-set representation.
+
+`view_invWithin_ready` exactly characterizes every successful computed cut;
+the Mathlib companion independently proves that every real source member's
+Lean-total inverse lies in that result. No converse image theorem, finite-cut
+attainment, grid optimality, or disconnected-image tightness is claimed. The
+public division operation remains future work.
 
 The public raw intersection and hull cut selectors, `intersectUnchecked`,
 `hullUnchecked`, `negUnchecked`, `addUnchecked`, `subUnchecked`, `minUnchecked`,
 `maxUnchecked`, `absUnchecked`, `powCutsUnchecked`, `powUnchecked`, and
-`mulUnchecked`, together with `splitUnchecked`, are related to the checked
-operations by successful-result and semantic theorems. `powCutsUnchecked` is
+`mulUnchecked`, together with `splitUnchecked` and `invUnchecked`, are related
+to the checked operations by successful-result and semantic theorems.
+`powCutsUnchecked` is
 only the strictly monotone cut mapper;
 its caller must establish the positive odd or nonnegative positive-exponent
 case. `powUnchecked` performs the zero/odd/even direct-hull selection. Like
@@ -647,8 +679,8 @@ case. `powUnchecked` performs the zero/odd/even direct-hull selection. Like
 are decoder-level combinators: untrusted callers use the checked `Interval`
 operations above.
 
-The remaining target surface includes precision-indexed reciprocal and
-division and regularization. Their public signatures are fixed only after an
+The remaining target surface includes precision-indexed division and
+regularization. Their public signatures are fixed only after an
 allocation audit; no total API is promised for an operation that may align,
 compare, or enlarge arbitrary-precision endpoints.
 
@@ -723,14 +755,16 @@ whole-interval hull. A rule can request a split at zero before using a tighter
 sign-specific result. A later `IntervalSet` with at most two components is an
 isolated extension, not a reason to complicate every initial operation.
 
-This paragraph is the target contract, not a description of the current
-component canary. `Experiment.DyadicInterval.reciprocal` currently returns
+The supported `invWithin` implements the connected-hull and outward-direction
+part of this target, but conservatively closes every computed finite cut. It
+therefore does not yet claim the moved-cut attainment rule or grid-optimality.
+The older `Experiment.DyadicInterval.reciprocal` still returns
 `inapplicable` for singleton zero, a closed zero endpoint, or a sign-crossing
 input; it implements only the sign-separated cases (including an open zero
 endpoint mapping to an unbounded side). The concrete package has an executable
-across-zero regression for that behavior. Implementing the connected hull of
-Lean's total inverse, or selecting an interval-set result, is an explicit
-experimental gap before reciprocal can claim the target contract above.
+across-zero regression for that legacy behavior and is not the public
+operation. Selecting an interval-set result remains a possible future
+precision improvement rather than a requirement for sound connected-hull use.
 
 Grid-tightness remains an acceptance target, not an assumed consequence of
 core's API. Core currently proves the one-sided `roundDown_le` and

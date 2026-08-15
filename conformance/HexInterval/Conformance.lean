@@ -1477,6 +1477,190 @@ private def nonpositiveOne : Hex.Interval :=
   | .ready interval => interval == Hex.Interval.empty
   | .resourceLimit _ => false
 
+/-! # Supported precision-indexed reciprocal -/
+
+private def singletonNegThree : Hex.Interval := ready (finite (-3) false (-3) false)
+private def closedOneThree : Hex.Interval := ready (finite 1 false 3 false)
+private def closedNegOneZero : Hex.Interval := ready (finite (-1) false 0 false)
+private def crossesZero : Hex.Interval := ready (finite (-1) false 1 false)
+private def invDownThree : Dyadic := .ofOdd 85 8 (by decide)
+private def invUpThree : Dyadic := .ofOdd 43 7 (by decide)
+
+/-- Execute both the public prerequisite and Core reciprocal, then check that
+the actual retained endpoint fits the successful predicted height. -/
+private def invCostBounded (value : Dyadic) (precision : Precision) : Bool :=
+  match Arithmetic.preflightInv precisionLimits value precision with
+  | .ok (.checked cost) =>
+      (EndpointCost.ofDyadic (value.invAtPrec precision)).allowed
+        { maxEndpointHeight := cost.predictedResultHeight, maxAlignmentShift := 0 }
+  | _ => false
+
+-- The conservative prediction is checked against the actual Core result for
+-- both input signs and for a nonzero negative precision. The last case uses
+-- `2⁻⁸`, whose reciprocal is the nonzero coarse-grid value `2⁸`.
+#guard invCostBounded (d 3) 8
+#guard invCostBounded (d (-3)) 8
+#guard invCostBounded oneOver256 (-8)
+#guard oneOver256.invAtPrec (-8) == .ofOdd 1 (-8) (by decide)
+
+-- `{3}` uses two independently rounded Core reciprocal calls.  The unequal
+-- endpoints distinguish the outward upper rounding from copying the downward
+-- result, and the negative case pins the sign-reversed construction.
+#guard
+  match Hex.Interval.invWithin precisionLimits 8 singletonThree with
+  | .ready interval =>
+      interval.view == .bounds
+        (.finite invDownThree false) (.finite invUpThree false)
+  | .resourceLimit _ => false
+
+#guard
+  match Hex.Interval.invWithin precisionLimits 8 singletonNegThree with
+  | .ready interval =>
+      interval.view == .bounds
+        (.finite (-invUpThree) false) (.finite (-invDownThree) false)
+  | .resourceLimit _ => false
+
+#guard
+  match Hex.Interval.invWithin precisionLimits 8 closedOneThree with
+  | .ready interval =>
+      interval.view == .bounds
+        (.finite invDownThree false) (.finite (d 1) false)
+  | .resourceLimit _ => false
+
+-- Expected-failure mutations: neither the downward endpoint reused as an
+-- upper cut nor its sign-reflected analogue is the successful result.
+#guard
+  match Hex.Interval.invWithin precisionLimits 8 singletonThree with
+  | .ready interval =>
+      interval.view != .bounds
+        (.finite invDownThree false) (.finite invDownThree false)
+  | .resourceLimit _ => false
+
+#guard
+  match Hex.Interval.invWithin precisionLimits 8 singletonNegThree with
+  | .ready interval =>
+      interval.view != .bounds
+        (.finite (-invDownThree) false) (.finite (-invDownThree) false)
+  | .resourceLimit _ => false
+
+-- Open zero is a one-sided limit, while a closed zero contributes Lean's
+-- total-inverse value `0⁻¹ = 0`. Crossing both signs requires the whole
+-- connected hull. The singleton zero remains exact.
+#guard
+  match Hex.Interval.invWithin precisionLimits 8 openClosed01 with
+  | .ready interval =>
+      interval.view == .bounds (.finite (d 1) false) .unbounded
+  | .resourceLimit _ => false
+
+#guard
+  match Hex.Interval.invWithin precisionLimits 8 closed01 with
+  | .ready interval =>
+      interval.view == .bounds (.finite 0 false) .unbounded
+  | .resourceLimit _ => false
+
+#guard
+  match Hex.Interval.invWithin precisionLimits 8 closedNegOneZero with
+  | .ready interval =>
+      interval.view == .bounds .unbounded (.finite 0 false)
+  | .resourceLimit _ => false
+
+#guard
+  match Hex.Interval.invWithin precisionLimits 8 crossesZero with
+  | .ready interval => interval == Hex.Interval.whole
+  | .resourceLimit _ => false
+
+-- Unbounded sign-separated inputs retain a strict zero limit. Whole remains
+-- whole because the exact total-inverse image has both unbounded signs.
+#guard
+  match Hex.Interval.invWithin precisionLimits 8 atLeastOne with
+  | .ready interval =>
+      interval.view == .bounds (.finite 0 true) (.finite (d 1) false)
+  | .resourceLimit _ => false
+
+#guard
+  match Hex.Interval.invWithin precisionLimits 8 atMostNegOne with
+  | .ready interval =>
+      interval.view == .bounds (.finite (d (-1)) false) (.finite 0 true)
+  | .resourceLimit _ => false
+
+#guard
+  match Hex.Interval.invWithin precisionLimits 8 negOneToOpenZero with
+  | .ready interval =>
+      interval.view == .bounds .unbounded (.finite (d (-1)) false)
+  | .resourceLimit _ => false
+
+#guard
+  match Hex.Interval.invWithin precisionLimits 8 Hex.Interval.whole with
+  | .ready interval => interval == Hex.Interval.whole
+  | .resourceLimit _ => false
+
+#guard
+  match Hex.Interval.invWithin precisionLimits 1024 singletonZero with
+  | .ready interval => interval == singletonZero
+  | .resourceLimit _ => false
+
+#guard
+  match Hex.Interval.invWithin precisionLimits 1024 Hex.Interval.empty with
+  | .ready interval => interval == Hex.Interval.empty
+  | .resourceLimit _ => false
+
+-- Exact policy mutations: open zero never contributes Lean's value at zero,
+-- closed zero is never discarded, and an unbounded sign-separated input keeps
+-- its strict zero limit rather than closing it.
+#guard
+  match Hex.Interval.invWithin precisionLimits 8 openClosed01 with
+  | .ready interval =>
+      interval.view != .bounds (.finite 0 false) .unbounded
+  | .resourceLimit _ => false
+
+#guard
+  match Hex.Interval.invWithin precisionLimits 8 closed01 with
+  | .ready interval =>
+      interval.view != .bounds (.finite 0 true) .unbounded
+  | .resourceLimit _ => false
+
+#guard
+  match Hex.Interval.invWithin precisionLimits 8 atLeastOne with
+  | .ready interval =>
+      interval.view != .bounds (.finite 0 false) (.finite (d 1) false)
+  | .resourceLimit _ => false
+
+#guard
+  match Hex.Interval.invWithin precisionLimits 8 crossesZero with
+  | .ready interval =>
+      interval.view != .bounds .unbounded (.finite 0 false)
+  | .resourceLimit _ => false
+
+-- Precision, retained source, and predicted retained result are distinct
+-- refusals, all occurring before `Dyadic.invAtPrec` is called.
+#guard
+  match Hex.Interval.invWithin precisionLimits 1024 singletonThree with
+  | .resourceLimit (.precision cost) =>
+      cost.magnitude == 1024 && !cost.allowed precisionLimits
+  | _ => false
+
+#guard
+  match Hex.Interval.invWithin precisionLimits 0 farLower with
+  | .resourceLimit (.endpoint cost) =>
+      cost.exponentMagnitude == 1000000000 &&
+        !cost.allowed precisionLimits.endpoint
+  | _ => false
+
+private def singletonShiftInput : Hex.Interval :=
+  ready (.bounds (.finite inverseShiftInput false) (.finite inverseShiftInput false))
+
+#guard
+  match Hex.Interval.invWithin nonCancellingLimits 8 singletonShiftInput with
+  | .resourceLimit (.quotient cost) =>
+      cost.conversionShift == 16 && !cost.allowed nonCancellingLimits
+  | _ => false
+
+#guard
+  match Hex.Interval.invWithin tightResultLimits 8 singletonThree with
+  | .resourceLimit (.quotient cost) =>
+      cost.predictedResultHeight == 17 && !cost.allowed tightResultLimits
+  | _ => false
+
 /-- The supported public view exposes its carried canonicality theorem without
 adding any trust assumption. -/
 theorem publicViewCanonical (interval : Hex.Interval) : interval.view.CutConsistent :=
