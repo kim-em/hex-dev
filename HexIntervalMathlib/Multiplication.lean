@@ -6,7 +6,7 @@ Authors: Kim Morrison
 
 module
 
-public import HexIntervalMathlib.Subtraction
+public import HexIntervalMathlib.Interval
 public import HexInterval.Multiplication
 
 @[expose] public section

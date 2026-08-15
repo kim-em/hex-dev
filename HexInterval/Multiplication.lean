@@ -145,15 +145,19 @@ def preflightProducts (limit : EndpointLimit) :
       | none => evaluate rest
       | some candidate => candidate :: evaluate rest
 
-/-- Admit one finite candidate endpoint after product growth has been
-preflighted and before any candidate comparison. -/
+/-- Defensively re-admit one finite candidate endpoint after product growth
+has been preflighted and before any candidate comparison. In the current
+pipeline every finite corner is bounded by its admitted growth prediction and
+the only extra candidate is zero, so this cannot be the first observable
+`mulWithin` refusal. Keeping the stage explicit protects that invariant if a
+future candidate source is added. -/
 def preflightCandidate (limit : EndpointLimit) : Candidate → Except Arithmetic.Cost Unit
   | .negInf | .posInf => pure ()
   | .finite value _ =>
       let cost := EndpointCost.ofDyadic value
       if cost.allowed limit then pure () else throw (.endpoint cost)
 
-/-- Admit every retained candidate endpoint before comparison. -/
+/-- Defensively re-admit every retained candidate endpoint before comparison. -/
 def preflightCandidates (limit : EndpointLimit) :
     List Candidate → Except Arithmetic.Cost Unit
   | [] => pure ()

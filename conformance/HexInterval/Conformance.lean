@@ -82,9 +82,11 @@ private def eightBitLimit : EndpointLimit where
 -- can allocate an aligned mantissa.
 private def far : Dyadic := .ofOdd 1 1000000000 (by decide)
 
--- Multiplication's four refusal phases remain distinguishable. Source and
--- candidate size failures are endpoint diagnostics; product growth has its own
--- diagnostic; only comparison alignment is reported as comparison work.
+-- Multiplication's phase helpers remain distinguishable. Source size is an
+-- observable endpoint refusal; the direct candidate guard pins the defensive
+-- endpoint stage even though admitted corner growth makes it unreachable as
+-- the first refusal of the current `mulWithin` pipeline. Only alignment is
+-- reported as comparison work.
 #guard
   match Raw.Mul.preflightEdge smallLimit (.finite far false) with
   | .error (.endpoint cost) => cost.exponentMagnitude == 1000000000
@@ -280,6 +282,15 @@ private def ready (raw : Raw) : Hex.Interval :=
   match Hex.Interval.ofRawWithin smallLimit raw with
   | .ready interval => interval
   | .resourceLimit _ => Hex.Interval.empty
+
+private def farSingleton : Hex.Interval :=
+  match Hex.Interval.singletonWithin
+      { maxEndpointHeight := 1000000100, maxAlignmentShift := 0 } far with
+  | .ready interval => interval
+  | .resourceLimit _ => Hex.Interval.empty
+
+#guard farSingleton.view ==
+  .bounds (.finite far false) (.finite far false)
 
 private def closed01 : Hex.Interval := ready (finite 0 false 1 false)
 private def closed12 : Hex.Interval := ready (finite 1 false 2 false)
@@ -782,6 +793,26 @@ private def mediumToOne : Hex.Interval :=
       powerBand singletonOne with
   | .ready _ => false
   | .resourceLimit cost => cost.alignmentShift == 100
+
+-- A public interval admitted under a larger construction budget is rejected
+-- at multiplication's source-endpoint phase under a smaller caller budget.
+#guard
+  match Hex.Interval.mulWithin smallLimit farSingleton singletonOne with
+  | .resourceLimit (.endpoint cost) => cost.exponentMagnitude == 1000000000
+  | _ => false
+
+-- Source endpoints and all product-growth predictions fit, but the retained
+-- candidates 1 and 2^100 require a prohibited alignment shift. This reaches
+-- the public candidate-comparison diagnostic rather than only its helper.
+#guard
+  match Hex.Interval.mulWithin
+      { maxEndpointHeight := 256, maxAlignmentShift := 50 }
+      widePower singletonOne with
+  | .resourceLimit (.comparison cost) =>
+      cost.lower.allowed { maxEndpointHeight := 256, maxAlignmentShift := 50 } &&
+        cost.upper.allowed { maxEndpointHeight := 256, maxAlignmentShift := 50 } &&
+        cost.alignmentShift == 100
+  | _ => false
 
 -- Multiplication tracks endpoint attainment independently from the numerical
 -- corner value. A contained zero closes the lower product endpoint even when

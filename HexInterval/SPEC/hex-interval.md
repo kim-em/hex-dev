@@ -520,9 +520,13 @@ It then
 admits all four finite corner products through `Arithmetic.preflightMul`
 before multiplying any mantissas, admits every evaluated finite candidate as
 an endpoint, and only then admits all candidate alignment comparisons before
-extremum selection. Source or candidate height refusal is `Cost.endpoint`,
+extremum selection. Source height refusal is observably `Cost.endpoint`,
 predicted product growth is `Cost.growth`, and candidate alignment refusal is
-`Cost.comparison`. The exact raw candidate enumerates the four
+`Cost.comparison`. Candidate-height admission is a defensive invariant check,
+not a currently reachable first refusal: every finite corner is bounded by its
+already admitted growth prediction, and the only additional candidate is zero.
+The explicit stage ensures a future candidate source cannot bypass endpoint
+admission. The exact raw candidate enumerates the four
 extended-endpoint products, omitting the undefined formal products
 `0 * ±∞`; an attained zero candidate is added exactly when either nonempty
 factor contains zero. Tied corner values combine attainment, so open and
@@ -4050,6 +4054,9 @@ their declared cost inside a scheduler bound.
 - `HexInterval/Arithmetic.lean`: multiplication and direct-power endpoint
   growth prerequisites; it does not expose an interval multiplication or power
   operation.
+- `HexInterval/Multiplication.lean`: resource-checked interval multiplication,
+  unconditional extended-corner evaluation, attainment-aware extremum
+  selection, and the sealed `mulWithin` entry point.
 - `HexInterval/Interval.lean`: supported resource-safe intersection, hull,
   negation, addition, subtraction, minimum, maximum, and absolute value,
   followed by future arithmetic, splitting, and regularization operations.
@@ -4063,6 +4070,9 @@ their declared cost inside a scheduler bound.
   real-image enclosure theorems for minimum and maximum.
 - `HexIntervalMathlib/Absolute.lean`: exact selected-cut semantics and the
   successful absolute-value image theorem.
+- `HexIntervalMathlib/Multiplication.lean`: explicit selected-candidate-cut
+  semantics and the one-way real-product enclosure theorem; it does not claim
+  an image-tightness converse.
 - `HexInterval/Program.lean`: node identifiers, SSA program, dependencies.
 - `HexInterval/Fact.lean`: facts, versions, provenance, contradiction checks.
 - `HexInterval/Action.lean`: requests, outcomes, suggestions, observations.
