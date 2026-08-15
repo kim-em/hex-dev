@@ -181,9 +181,9 @@ value's proof field.
 
 The initial supported slice exposes `view`, `empty`, `whole`, and endpoint-cost
 preflighted raw, singleton, one-sided, and finite constructors. The first
-supported operations are resource-checked intersection, hull, negation, and
-addition.
-Their Mathlib companion proves exact set semantics for the complete cut language;
+supported operations are resource-checked intersection, hull, negation,
+addition, and subtraction.
+Their Mathlib companion proves exact computed-cut semantics and image theorems;
 the remaining arithmetic is promoted separately rather than being declared
 public merely because narrower experiment implementations exist. All public
 examples use the fully qualified `Hex.Interval`, because Mathlib also has a
@@ -200,6 +200,10 @@ meaning and contains both inputs; this is deliberately not set union. A
 successful `negWithin` contains `x` exactly when the input contains `-x`.
 Successful `addWithin` exposes the exact independently summed lower and upper
 Minkowski cuts, and its image theorem maps any two input members to their sum.
+Successful `subWithin` similarly exposes the crossed left-lower-minus-right-upper
+and left-upper-minus-right-lower cuts, and maps two input members to their
+difference. Neither arithmetic theorem currently claims the separate
+representation-independent tightness converse for the real Minkowski image.
 Separately, the experiment form of the intersection theorem is installed as the
 generic `FactDomainSchema.proveMeet` boundary, and the transparent proof
 frontend uses it to close a weaker requested interval from a stronger
@@ -417,6 +421,7 @@ def intersectWithin : EndpointLimit → Interval → Interval → BuildResult
 def hullWithin      : EndpointLimit → Interval → Interval → BuildResult
 def negWithin       : EndpointLimit → Interval → BuildResult
 def addWithin       : EndpointLimit → Interval → Interval → BuildResult
+def subWithin       : EndpointLimit → Interval → Interval → BuildResult
 ```
 
 These names retain the budget because a public interval does not store the
@@ -435,19 +440,29 @@ bounded by the larger input numerator plus `S` and one carry bit. The summed
 raw cuts then cross `ofRawWithin`, which separately checks retained endpoint
 height and their final crossed comparison.
 
+`subWithin` uses the same allocation argument on the crossed pairs: left lower
+with right upper, then left upper with right lower. It is deliberately direct,
+not `addWithin left` after `negWithin right`. The composed form would first
+normalize an intermediate negated interval and could refuse its unrelated
+right-endpoint comparison even when both crossed subtraction pairs fit. Direct
+preflight therefore admits strictly more valid operations and performs no
+dyadic negation or aligned subtraction until both crossed pairs are admitted;
+the resulting raw cuts then cross `ofRawWithin` exactly once. The theorem
+`Raw.sub_eq_add_neg` pins that the direct raw result still agrees with addition
+after raw negation.
+
 The public raw intersection and hull cut selectors, `intersectUnchecked`,
-`hullUnchecked`, `negUnchecked`, and `addUnchecked` are related to the checked
-operations by successful-result and semantic theorems. Like
+`hullUnchecked`, `negUnchecked`, `addUnchecked`, and `subUnchecked` are related
+to the checked operations by successful-result and semantic theorems. Like
 `Raw.normalizeUnchecked`, they
 are decoder-level combinators: untrusted callers use the checked `Interval`
 operations above.
 
-The remaining target surface includes subtraction, multiplication,
+The remaining target surface includes multiplication,
 precision-indexed reciprocal and division, powers, absolute value, min/max,
 splitting, and regularization. Their public signatures are fixed only after an
 allocation audit; no total API is promised for an operation that may align,
-compare, or enlarge arbitrary-precision endpoints. Subtraction in particular
-requires a checked `subWithin` boundary for the same reason as addition.
+compare, or enlarge arbitrary-precision endpoints.
 
 For the initial dyadic backend, `Precision` is an alias for signed `Int` and
 the implementation reuses core `Dyadic.roundDown`, `roundUp`, `invAtPrec`, and
@@ -464,6 +479,11 @@ tests also check the following exactness rules.
 - `addWithin` absorbs empty, adds corresponding finite endpoints, and retains
   an unbounded side if either corresponding input side is unbounded. A finite
   endpoint of a sum is closed exactly when both contributing endpoints are
+  closed.
+- `subWithin` absorbs empty and uses crossed endpoints: the lower cut is left
+  lower minus right upper, and the upper cut is left upper minus right lower.
+  Either corresponding unbounded contributor makes that result side
+  unbounded; a finite side is closed exactly when both contributors are
   closed.
 - After the empty-input short circuit, multiplication partitions both inputs
   by sign, enumerates finite corner and zero candidates, and tracks whether
@@ -3907,12 +3927,14 @@ their declared cost inside a scheduler bound.
 - `HexInterval/Canonical.lean`: sealed canonical values, views, and
   resource-safe smart constructors.
 - `HexInterval/Interval.lean`: supported resource-safe intersection, hull,
-  negation, and addition, followed by future arithmetic, splitting, and regularization
+  negation, addition, and subtraction, followed by future arithmetic, splitting, and regularization
   operations.
 - `HexIntervalMathlib/Interval.lean`: real-set semantics for the supported
   public construction, intersection, hull, and negation operations.
 - `HexIntervalMathlib/Addition.lean`: exact summed-cut semantics and the
   successful addition image theorem.
+- `HexIntervalMathlib/Subtraction.lean`: exact crossed-difference-cut semantics
+  and the successful subtraction image theorem.
 - `HexInterval/Program.lean`: node identifiers, SSA program, dependencies.
 - `HexInterval/Fact.lean`: facts, versions, provenance, contradiction checks.
 - `HexInterval/Action.lean`: requests, outcomes, suggestions, observations.
