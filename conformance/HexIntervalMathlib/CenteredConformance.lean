@@ -269,4 +269,195 @@ info: 'Hex.IntervalMathlib.CenteredConformance.tacticCentered' depends on axioms
 #guard_msgs in
 #print axioms tacticCentered
 
+/-! ## Independent backward contractor -/
+
+private def backwardKey : RuleKey :=
+  { name := "real.centered-product.backward-high" }
+
+private def backwardRule : Registration :=
+  { key := backwardKey
+    head := centeredOp
+    kind := .backward
+    watches := [.result]
+    writes := [.argument 0] }
+
+private def backwardPlan (request : RuleRequest DyadicInterval.Fact) :
+    Plan DyadicInterval.Fact :=
+  match request.inputs, request.writes with
+  | [output], [target] =>
+      if output.fact == highRange then
+        planOfResult target 1 2 [] (.ready middleRange)
+      else
+        withoutPayloads .inapplicable
+  | _, _ => withoutPayloads (.failed 72)
+
+/-- A separately assembled package can attach another propagation direction
+to the centered operation without owning or redefining that operation. -/
+private def backwardPackage : Package DyadicInterval.Fact :=
+  { Cache := Unit
+    cache := ()
+    operations := #[]
+    requiredOperations := centeredOperations real
+    handlers := #[factHandler backwardRule backwardPlan]
+    acceptsLimits := fun _ _ _ => true }
+
+private def backwardSession? :
+    Option (PayloadSession.Session DyadicInterval.Fact) :=
+  match PayloadSession.Session.start
+      (DyadicInterval.factDomain Centered.endpointLimit) program
+      #[centeredPackage config real, backwardPackage] #[.whole, highRange]
+      limits arenaLimits with
+  | .ok session => some session
+  | .error _ => none
+
+private def backwardRun? : Option (PayloadSession.Run DyadicInterval.Fact) := do
+  let session ← backwardSession?
+  pure (session.drive 12)
+
+private def backwardAction : Action :=
+  { serial := 2
+    programVersion := 0
+    application := { index := 2 }
+    rule := { index := 3 }
+    key := backwardKey
+    node := node 1
+    kind := .backward
+    effort := 0
+    generation := 0
+    inputs := [{ node := node 1, version := 0 }]
+    writes := [node 0] }
+
+private def backwardEvent : FactEvent DyadicInterval.Fact :=
+  { programVersion := 0
+    node := node 0
+    previous := { node := node 0, version := 0 }
+    fact := middleRange
+    version := 1
+    cause := .rule backwardAction middleRange (payload 1) }
+
+private def backwardEntry : Entry :=
+  { origin := backwardAction
+    role := .fact
+    schema := 0
+    body := [] }
+
+private def backwardStep : RuleStep DyadicInterval.Fact :=
+  { event := backwardEvent
+    payload := payload 1
+    entry := backwardEntry
+    assumptions := [{ node := node 1, fact := highRange }]
+    previous := .whole }
+
+private def backwardMatchesLive : Bool :=
+  match backwardRun? with
+  | some run =>
+      run.stop == .saturated && run.session.complete &&
+        run.session.engine.history.size == 1 &&
+        run.session.arena.entries.size == 3 &&
+        run.session.arena.bodyCells == 0 &&
+        run.session.engine.factAt? { node := node 0, version := 1 } ==
+          some middleRange &&
+        match run.session.engine.history[0]?,
+            run.session.arena.entry? (payload 1) .fact with
+        | some actualEvent, some actualEntry =>
+            sameEvent actualEvent backwardEvent &&
+              sameEntry actualEntry backwardEntry
+        | _, _ => false
+  | none => false
+
+#guard backwardMatchesLive
+
+private def backwardInput : CheckerInput DyadicInterval.Fact :=
+  { baseProgram := program
+    initialFacts := #[.whole, highRange]
+    target := { node := node 0, fact := middleRange } }
+
+private def backwardBase : List (NodeFact DyadicInterval.Fact) :=
+  [{ node := node 0, fact := .whole }, { node := node 1, fact := highRange }]
+
+private def backwardPrevious : Evidence
+    (Centered.semantics.Entails program backwardBase
+      { node := node 0, fact := backwardStep.previous }) := by
+  apply ProofEmitter.assumed
+  simp [backwardStep, backwardBase]
+
+private def backwardAssumption : Evidence
+    (Centered.semantics.Entails program backwardBase
+      { node := node 1, fact := highRange }) :=
+  ProofEmitter.assumed (by simp [backwardBase])
+
+private def backwardInputs : Evidence
+    (InputsSound Centered.semantics program backwardBase
+      backwardStep.assumptions) := by
+  simpa [backwardStep, backwardEvent] using
+    (EntailsList.singleton backwardAssumption)
+
+private def backwardReplayed :=
+  ProofEmitter.replayRule (Centered.backwardFactSchema backwardKey)
+    Centered.domain backwardInput program (ProgramPrefix.refl program)
+    backwardBase backwardStep backwardPrevious backwardInputs
+
+#guard backwardReplayed.isSome
+
+private def weakenedOutput : Evidence
+    (Centered.semantics.Entails program backwardBase
+      { node := node 1, fact := quarterRange }) :=
+  (ProofEmitter.closeFact Centered.domain program backwardBase (node 1)
+    highRange quarterRange backwardAssumption).get (by rfl)
+
+private def malformedBackward : RuleStep DyadicInterval.Fact :=
+  { backwardStep with
+    assumptions := [{ node := node 1, fact := quarterRange }] }
+
+private def malformedBackwardInputs : Evidence
+    (InputsSound Centered.semantics program backwardBase
+      malformedBackward.assumptions) := by
+  simpa [malformedBackward, backwardStep, backwardEvent] using
+    (EntailsList.singleton weakenedOutput)
+
+private def backwardRejected :=
+  ProofEmitter.replayRule (Centered.backwardFactSchema backwardKey)
+    Centered.domain backwardInput program (ProgramPrefix.refl program)
+    backwardBase malformedBackward
+    (by simpa [malformedBackward, backwardStep, backwardEvent] using backwardPrevious)
+    malformedBackwardInputs
+
+#guard backwardRejected.isNone
+
+theorem emittedBackward :
+    Centered.semantics.Entails program backwardBase backwardInput.target :=
+  ProofEmitter.proofOfReplay backwardReplayed (by rfl)
+
+/-- A backward arbitrary-function contractor narrows the input from a fact
+about the output, through the same generic replay transition as the forward
+contractor. -/
+theorem tacticCenteredBackward (x : ℝ)
+    (lower : 3 / 16 ≤ (1 / 4 : ℝ) - (x - (1 / 2 : ℝ)) ^ 2)
+    (upper : (1 / 4 : ℝ) - (x - (1 / 2 : ℝ)) ^ 2 ≤ 1 / 4) :
+    1 / 4 ≤ x ∧ x ≤ (3 / 4 : ℝ) := by
+  have result := emittedBackward (valuation x) (models x) (by
+    intro assumption member
+    simp only [backwardBase, List.mem_cons, List.not_mem_nil, or_false] at member
+    rcases member with rfl | rfl
+    · change DyadicInterval.Fact.whole.Contains (valuation x (node 0))
+      simp [DyadicInterval.Fact.Contains, DyadicInterval.Fact.whole,
+        rawContains, lowerContains, upperContains]
+    · change highRange.Contains (valuation x (node 1))
+      simpa only [highRange, DyadicInterval.Fact.Contains, rawContains,
+        lowerContains, upperContains, Centered.toReal_threeSixteenths,
+        Centered.toReal_quarter, node, valuation, and_true] using
+          And.intro lower upper)
+  change middleRange.Contains (valuation x (node 0)) at result
+  simpa only [middleRange, DyadicInterval.Fact.Contains, rawContains,
+    lowerContains, upperContains, Centered.toReal_quarter,
+    Centered.toReal_threeQuarters, node, valuation, and_true] using result
+
+/--
+info: 'Hex.IntervalMathlib.CenteredConformance.tacticCenteredBackward' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+-/
+#guard_msgs in
+#print axioms tacticCenteredBackward
+
 end Hex.IntervalMathlib.CenteredConformance
