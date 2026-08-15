@@ -1229,9 +1229,10 @@ implementation of this provider leaf, no `native_decide` dependency.
 This is partial evidence for the imported BKLNW certified-bound interface, not
 a completed classification of that interface or of the 128 BKLNW tactic
 sites. The retained runtime operation still names the `M = 433` source leaf;
-it does not dispatch the smaller limits 29, 37, 63, 145, and 289, enumerate
-per-term interval facts, handle the exponential-bound half of the imported
-interface, or establish the required comparative replay/size measurements.
+it does not dispatch the smaller limits 29, 37, 44, 51, 58, 63, 145, 217,
+289, and 361, enumerate per-term interval facts, handle the exponential-bound
+half of the imported interface, or establish the required comparative
+replay/size measurements.
 The uniform tail theorem avoids expanding 431 terms, but this fixed canary is
 not yet evidence for the production balanced-fold implementation.
 
