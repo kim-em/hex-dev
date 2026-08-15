@@ -1813,6 +1813,9 @@ the instance event comes first; independent sine and negation packages derive
 the unit-range fact on the two new nodes; generic equality transport installs
 that exact fact, with its retained version, on the original `sin (-x)` node;
 and only then does the independent exponential package derive the target.
+The guard pins the complete initial matcher batch and engine-issued action,
+every instance output and generation field, and the frozen quote entry's
+origin, role, schema, and body.
 The dependent-typed emitter requires every exact predecessor proof to be
 available at its retained version, so a missing or reordered dependency cannot
 produce a type-correct replay term.

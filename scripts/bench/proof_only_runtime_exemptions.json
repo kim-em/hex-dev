@@ -248,7 +248,7 @@
   {
     "path": "lakefile.lean",
     "baseline_blob": "6dd80771ae2212333b2a9b925b52056e0037ff56",
-    "current_blob": "8b2d6935591884d4f8990b7b54f08d26f1785caa",
+    "current_blob": "4f674f1f40c82a55f5e81b255b394f8326c7afba",
     "reason": "Additionally registers the mixed-function dynamic-instantiation interval experiment, its proof-only real-semantics companion, and conformance module; the factorization service target and executable dependency graph are unchanged."
   },
   {

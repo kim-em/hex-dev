@@ -213,6 +213,31 @@ private def exactTransportInput (step : TransportStep Bound)
   | .transport equality source =>
       equality == expectedEquality && source == expectedSource
 
+private def initialMatcherBatch : List StructuralInput :=
+  [{ key := .node (node 0), generation := 0 },
+   { key := .node (node 1), generation := 0 },
+   { key := .node (node 2), generation := 0 },
+   { key := .node (node 3), generation := 0 },
+   { key := .application { index := 0 }, generation := 0 },
+   { key := .application { index := 1 }, generation := 0 },
+   { key := .application { index := 2 }, generation := 0 },
+   { key := .application { index := 3 }, generation := 0 }]
+
+private def oddnessAction : Action :=
+  { serial := 2
+    programVersion := 0
+    application := { index := 2 }
+    rule := { index := 2 }
+    key := oddnessRuleKey
+    node := node 2
+    kind := .instantiate
+    effort := 0
+    generation := 0
+    inputs := []
+    writes := []
+    structuralInputs := initialMatcherBatch
+    matcherEpoch := some 0 }
+
 #guard
   liveTrace?.any fun trace =>
     trace.program == extendedProgram &&
@@ -221,13 +246,23 @@ private def exactTransportInput (step : TransportStep Bound)
           .transport transport, .rule exp] =>
           instantiation.entry.replayKey == oddnessInstanceSchema.key &&
             instantiation.event.programVersion == 1 &&
+            instantiation.event.origin == oddnessAction &&
             instantiation.event.family == 1 &&
             instantiation.event.substitution == [node 2] &&
             instantiation.event.products == [node 4, node 5] &&
             instantiation.event.newNodes == [node 4, node 5] &&
+            instantiation.event.bindings == [] &&
+            instantiation.event.newBindings == [] &&
+            instantiation.event.applications == [] &&
+            instantiation.event.newApplications == [] &&
+            instantiation.event.generation == 1 &&
             instantiation.event.equalities == [{ index := 0 }] &&
             instantiation.event.newEqualities == [{ index := 0 }] &&
             instantiation.event.payload == instantiation.payload &&
+            instantiation.entry.origin == instantiation.event.origin &&
+            instantiation.entry.role == .instance &&
+            instantiation.entry.schema == 1 &&
+            instantiation.entry.body == [1] &&
             sine.entry.replayKey == sineFactSchema.key &&
             sine.event.node == node 4 &&
             sine.event.version == 1 &&
