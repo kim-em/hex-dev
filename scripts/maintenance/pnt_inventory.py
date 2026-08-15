@@ -125,6 +125,11 @@ DECL_RE = re.compile(
     r"(?:\s+(?P<name>[A-Za-z_][A-Za-z0-9_'.]*))?"
 )
 FKS_CELL_RE = re.compile(r"^\s*⟨")
+FKS2_PROBE_SOURCE = (
+    "PrimeNumberTheoremAnd/IEANTN/FKS2Tables/Table4ExtData_11.lean"
+)
+FKS2_PROBE_PROVIDER = REPO_ROOT / "HexInterval/Experiment/PntFks2Shard.lean"
+FKS2_PROBE_CELLS = 128
 
 
 class InventoryError(RuntimeError):
@@ -301,6 +306,44 @@ def load_sources(root: Path) -> list[Source]:
             declarations=declaration_map(masked),
         ))
     return sources
+
+
+def fks_cell_rows(text: str) -> list[str]:
+    """Return whitespace-insensitive source cell tuples, without trailing commas."""
+    return [
+        re.sub(r"\s+", "", line).removesuffix(",")
+        for line in mask_lean(text).splitlines()
+        if FKS_CELL_RE.match(line)
+    ]
+
+
+def require_fks2_segment_match(source_text: str, provider_text: str) -> None:
+    """Require the retained provider table to equal pinned shard 11's prefix."""
+    source_rows = fks_cell_rows(source_text)
+    provider_rows = fks_cell_rows(provider_text)
+    if len(source_rows) < FKS2_PROBE_CELLS:
+        raise InventoryError(
+            f"pinned FKS2 shard 11 has only {len(source_rows)} cells"
+        )
+    if len(provider_rows) != FKS2_PROBE_CELLS:
+        raise InventoryError(
+            "local FKS2 probe must contain exactly "
+            f"{FKS2_PROBE_CELLS} cells, found {len(provider_rows)}"
+        )
+    for index, (source_row, provider_row) in enumerate(
+            zip(source_rows[:FKS2_PROBE_CELLS], provider_rows, strict=True)):
+        if source_row != provider_row:
+            raise InventoryError(
+                f"local FKS2 probe differs from pinned shard 11 at cell {index}"
+            )
+
+
+def require_fks2_probe_match(source_root: Path) -> None:
+    source_path = source_root / FKS2_PROBE_SOURCE
+    require_fks2_segment_match(
+        source_path.read_text(encoding="utf-8"),
+        FKS2_PROBE_PROVIDER.read_text(encoding="utf-8"),
+    )
 
 
 def source_digest(sources: Iterable[Source]) -> str:
@@ -942,25 +985,32 @@ def require_migrations(records: list[dict[str, Any]]) -> None:
             note = migration.get("note")
             if not isinstance(note, str) or not note.strip():
                 raise InventoryError(f"record {index}: migration requires a nonempty note")
+            evidence = migration.get("evidence")
+            if evidence is not None:
+                if not isinstance(evidence, list) or not evidence or not all(
+                    isinstance(item, str) and item.strip() for item in evidence
+                ):
+                    raise InventoryError(
+                        f"record {index}: evidence must be a nonempty string list"
+                    )
+                for item in evidence:
+                    reference = item.split(":", 1)[0]
+                    if "/" not in reference:
+                        continue
+                    path = Path(reference)
+                    if path.is_absolute() or ".." in path.parts \
+                            or not (REPO_ROOT / path).is_file():
+                        raise InventoryError(
+                            f"record {index}: evidence path does not exist: {reference}"
+                        )
             if status == "pending":
                 continue
-            evidence = migration.get("evidence")
             if not isinstance(evidence, list) or not evidence or not all(
                 isinstance(item, str) and item.strip() for item in evidence
             ):
                 raise InventoryError(
                     f"record {index}: {status} requires nonempty evidence entries"
                 )
-            for item in evidence:
-                reference = item.split(":", 1)[0]
-                if "/" not in reference:
-                    continue
-                path = Path(reference)
-                if path.is_absolute() or ".." in path.parts \
-                        or not (REPO_ROOT / path).is_file():
-                    raise InventoryError(
-                        f"record {index}: evidence path does not exist: {reference}"
-                    )
             if status == "accepted-after-rewrite":
                 if not isinstance(migration.get("rewrite"), str) \
                         or not migration["rewrite"].strip():
@@ -1093,7 +1143,9 @@ def main() -> int:
         if args.inspect_source:
             print(json.dumps(inspect_source(args.source.resolve()), indent=2, sort_keys=True))
             return 0
-        meta, records = generate(args.source.resolve())
+        source_root = args.source.resolve()
+        meta, records = generate(source_root)
+        require_fks2_probe_match(source_root)
         if args.refresh:
             carried = 0
             removed = 0
