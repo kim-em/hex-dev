@@ -1528,11 +1528,38 @@ mutations reject without drafts or precision retry. The proof-side source
 tuple contains the exact real coordinate `19 * log 10`; the numeric runtime
 tag is only a decoder discriminator.
 
+The supporting `a₂` provider covers the exact 38 declarations
+`row21_a2_le` through `row24_a2_le` and `row26_a2_le` through `row59_a2_le`
+in `BKLNW_table10_rows_20_43.lean` and
+`BKLNW_table10_rows_44_59.lean`. All 38 instantiate the same source
+`a2_mid_le` reduction: an authenticated floor `⌊b / log 2⌋₊ = K`, explicit
+head terms `k = 3,…,12`, and `(K - 11)` tail terms bounded by the `k = 13`
+term. Rows 20 and 25 use a different pre-existing certified-bound shape and
+are not part of this 38-site family.
+
+One Mathlib-free source-indexed schema authenticates `(b, K)`, the exact
+rational target and scale, a two-sided 20-decimal `log 2` window, the
+package-owned twelve-decimal exponential-table scale, and the complete
+natural-number upper inequality. The ordinary-kernel companion reconstructs
+both arguments of the `max` in the copied PNT+ `Inputs.default.a₂`: it proves
+the `exp b` sum identity and separately bounds the
+`2^(floor (b/log 2)+1)` branch before applying one head-plus-tail theorem.
+Thus the migrated target numerics are not used as assumptions and there is no
+Table 10 circularity.
+
+All 38 source records pass the same bounded planner and replay schema.
+Argument, floor, log endpoint/scale, base scale, and false target mutations
+remain decodable but produce no draft; valid records are not interchangeable
+across replay models. The false endpoint is also refuted by an ordinary
+theorem. A representative row closes through generic package chronology and
+`ProofFrontend`, while `rowOfMem` supplies the parameterized source-dispatch
+boundary for every record.
+
 After localized PNT+ rewrites, the coordinate-pinned providers cover all 87
-executable target calls. The family remains pending because the 38 supporting
-`a₂` sites and surrounding `B_8_exact` dispatch are not supplied, and because
-arbitrary table rows and production performance remain future work. This is a
-localized PNT+ rewrite boundary, not LeanCert API compatibility.
+executable target calls and all 38 supporting `a₂` calls. The family remains
+pending because the surrounding `B_8_exact` dispatch is not supplied, and
+because arbitrary table rows and production performance remain future work.
+This is a localized PNT+ rewrite boundary, not LeanCert API compatibility.
 
 The coordinate-aware Table 12 implementation is a bounded acceptance fixture
 that completes this family migration. At PNT+ commit
@@ -1650,10 +1677,11 @@ release criterion. It must cover, at minimum:
   rows by five columns. The row partition is structurally derived from the
   exact pinned list definition, including a first tuple placed on the opening
   bracket's line; the five-column expansion is a reviewed reading of the
-  theorem's conjunction and tactic structure. Table 10 is currently recorded
-  at executable call-site granularity; complete row/column expansion is part
-  of its D9 shard work. Both families are recorded separately from their
-  aggregate source counts; and
+  theorem's conjunction and tactic structure. Table 10 is recorded at
+  executable call-site granularity: all 87 target and 38 supporting `a₂` calls
+  have bounded providers, while the surrounding `B_8_exact` dispatch remains
+  D9 work. Both families are recorded separately from their aggregate source
+  counts; and
 - all 17 remaining textual occurrences, of which 16 are actual tactic
   invocations, in `Dusart.lean`, `FKS2.lean`, `FKS2Cor23Cor14Tail.lean`,
   `FKS2Floor/Cor22Floor.lean`, and `Goldbach.lean`.
@@ -2179,9 +2207,10 @@ The committed compatibility subset is `D8` unless marked `D9`:
   289, 361, and 433;
 - `[D9]` coordinate-pinned Table 10 providers bind all 87 target-numeric calls,
   including the coupled logarithmic transition, and reject recorded or
-  injected false targets with kernel falsity proofs. This is still partial
-  family evidence: the 38 supporting `a₂` sites and surrounding `B_8_exact`
-  dispatch remain pending;
+  injected false targets with kernel falsity proofs. One parameterized
+  head-plus-tail provider also binds all 38 supporting `a₂` calls without
+  assuming those target numerics. This is still partial family evidence: the
+  surrounding `B_8_exact` dispatch remains pending;
 - `[D9]` the 130-case Table 12 batch, plus one of its four false
   original boundary rows as an expected failure;
 - `[D9]` a small deterministic FKS2 sample in per-PR `core`, a measured medium

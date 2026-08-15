@@ -3992,11 +3992,43 @@ or retry. The uncorrected row-43 first target is separately refuted in the
 kernel. The runtime row tag `19010` is only a bounded decoder code; the proof
 side source tuple uses the exact real abscissa `19 * log 10`.
 
+#### Supporting Table 10 `a₂` batch
+
+The 38 supporting declarations are exactly `row21_a2_le` through
+`row24_a2_le` and `row26_a2_le` through `row59_a2_le` in the pinned
+`BKLNW_table10_rows_20_43.lean` and
+`BKLNW_table10_rows_44_59.lean`. They are one coherent source family: each
+uses `a2_mid_le` with a row-specific integer `b`, authenticated
+`K = ⌊b / log 2⌋₊`, and rational upper target. Rows 20 and 25 use the
+separate certified `a2_*_mem_Icc` route and are not included in this count.
+
+The Mathlib-free `PntTable10A2` package accepts one of 38 exact source records.
+Its payload carries the argument, floor, target numerator/denominator,
+two-sided 20-decimal log window, and exponential-table scale. The natural
+checker verifies both floor inequalities and a complete rational
+head-plus-tail majorant before proposing one upper fact. All source records
+use the same bounded operation, plan, decoder, and replay format.
+
+The Mathlib companion copies the exact unfolded shape of
+`Inputs.default.a₂`, proves the finite `f (exp b)` identity, and independently
+bounds the second `max` branch `f (2^(K+1))`. It then bounds terms `4,…,12`
+with the package-owned exponential base table and all terms `13,…,K+1` by
+the term at 13. This proof consumes no Table 10 target-coordinate theorem, so
+the supporting layer is not circular. `rowOfMem` gives one source-dispatch
+theorem for all 38 records, and a row-21 instance closes through generic
+chronology and `ProofFrontend`.
+
+Wrong source, argument, floor, log endpoints/scale, table scale, and false
+endpoint payloads decode but fail without drafts; cross-row replay rejects.
+The false endpoint also has an ordinary-kernel refutation. The retained work
+charge counts ten table powers per row but is not a big-integer complexity or
+production throughput claim.
+
 After localized PNT+ rewrites, the coordinate-pinned providers now cover all
-87 executable Table 10 target calls. The family remains pending: all 38
-supporting `a₂` sites and the surrounding `B_8_exact` dispatch are outside
-these numeric-premise providers, as are arbitrary rows and production-scale
-performance. This is not a LeanCert compatibility layer.
+87 executable Table 10 target calls and the supporting provider covers all 38
+`a₂` calls. The family remains pending because the surrounding `B_8_exact`
+dispatch, arbitrary rows, and production-scale performance are outside these
+numeric providers. This is not a LeanCert compatibility layer.
 
 #### Coordinate-aware numerical batches
 
