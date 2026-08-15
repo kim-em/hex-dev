@@ -6,8 +6,8 @@ theorems for interval operations and propagators. It depends on Mathlib and
 `hex-interval`. There is no separate proof-only companion beyond this library.
 
 The current supported surface interprets public canonical intervals over `ℝ`
-and proves exact semantics for successful resource-checked intersection and
-negation. Propagator, provider, replay, and tactic modules remain experiments
+and proves exact semantics for successful resource-checked intersection, hull,
+and negation. Propagator, provider, replay, and tactic modules remain experiments
 and are not re-exported by the public umbrella. The user-facing tactic contract
 below is the release target, not a claim that the tactic is already supported.
 
@@ -112,17 +112,34 @@ theorem contains_intersectWithin
     (h : intersectWithin limit I J = .ready result) :
     result.Contains x ↔ I.Contains x ∧ J.Contains x
 
+theorem contains_hullWithin
+    (h : hullWithin limit I J = .ready result) :
+    result.Contains x ↔ I.view.HullContains J.view x
+
+theorem contains_hullWithin_left
+    (h : hullWithin limit I J = .ready result) :
+    I.Contains x → result.Contains x
+
+theorem contains_hullWithin_right
+    (h : hullWithin limit I J = .ready result) :
+    J.Contains x → result.Contains x
+
 theorem contains_negWithin
     (h : negWithin limit I = .ready result) :
     result.Contains x ↔ I.Contains (-x)
 ```
 
+For two nonempty bounded raw inputs, `HullContains` is exactly
+`(I.lower.Contains x ∨ J.lower.Contains x) ∧
+(I.upper.Contains x ∨ J.upper.Contains x)`. If either input is empty it is
+the other input's membership predicate. Thus hull denotes the least interval
+selected by the outer cuts and can contain points in the gap between disjoint
+inputs; it is not their set union.
+
 The remaining target theorems include:
 
 ```lean
 theorem mem_intersect : x ∈ᵢ I → x ∈ᵢ J → x ∈ᵢ intersect I J
-theorem mem_hull_left  : x ∈ᵢ I → x ∈ᵢ hull I J
-theorem mem_hull_right : x ∈ᵢ J → x ∈ᵢ hull I J
 theorem split_cover : x ∈ᵢ I → x ∈ᵢ (split I m).1 ∨ x ∈ᵢ (split I m).2
 theorem not_mem_empty : ¬x ∈ᵢ .empty
 ```

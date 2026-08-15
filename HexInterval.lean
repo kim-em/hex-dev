@@ -15,7 +15,8 @@ public section
 data, propagation search, and replayable derivations.
 
 The public implementation exposes canonical exact intervals through a sealed
-representation, resource-safe smart constructors, intersection, and negation.
-Raw cuts remain visible as the explicit decoder and inspection boundary; D2
-propagation and replay experiments still live outside this supported umbrella.
+representation, resource-safe smart constructors, intersection, hull, and
+negation. Raw cuts remain visible as the explicit decoder and inspection
+boundary; D2 propagation and replay experiments still live outside this
+supported umbrella.
 -/

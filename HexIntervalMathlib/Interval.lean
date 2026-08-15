@@ -17,8 +17,9 @@ public import HexInterval.Interval
 # Real semantics for public intervals
 
 This companion interprets every canonical public interval as a subset of
-`ℝ`.  Successful resource-checked intersection is exactly conjunction, and
-successful negation is exactly precomposition by real negation.
+`ℝ`. Successful resource-checked intersection is exactly conjunction, hull is
+the exact interval/selected-cut closure of its inputs, and negation is exactly
+precomposition by real negation.
 -/
 
 namespace Hex.Interval
@@ -62,6 +63,17 @@ def Upper.Contains : Upper → ℝ → Prop
 def Raw.Contains : Raw → ℝ → Prop
   | .empty, _ => False
   | .bounds lower upper, x => lower.Contains x ∧ upper.Contains x
+
+/-- Exact selected-cut meaning of the interval hull of two raw inputs. Empty
+is an identity. For two bounded inputs, the hull uses the union of their lower
+predicates and the union of their upper predicates; this deliberately includes
+the interval interior between separated inputs and is not set union. -/
+def Raw.HullContains : Raw → Raw → ℝ → Prop
+  | .empty, right, x => right.Contains x
+  | left, .empty, x => left.Contains x
+  | .bounds leftLower leftUpper, .bounds rightLower rightUpper, x =>
+      (leftLower.Contains x ∨ rightLower.Contains x) ∧
+        (leftUpper.Contains x ∨ rightUpper.Contains x)
 
 /-- Mathematical membership in a canonical public interval. -/
 def Contains (interval : Hex.Interval) (x : ℝ) : Prop := interval.view.Contains x
@@ -256,6 +268,152 @@ theorem contains_intersectWithin {limit : EndpointLimit}
   simp only [Contains]
   rw [view_intersectWithin_ready checked, rawContains_normalize]
   exact rawContains_intersect left.view right.view x
+
+private theorem lowerContains_hull (left right : Lower) (x : ℝ) :
+    (Raw.hullLowerUnchecked left right).Contains x ↔
+      left.Contains x ∨ right.Contains x := by
+  cases left with
+  | unbounded => simp [Raw.hullLowerUnchecked, Lower.Contains]
+  | finite left leftStrict =>
+      cases right with
+      | unbounded => simp [Raw.hullLowerUnchecked, Lower.Contains]
+      | finite right rightStrict =>
+          by_cases less : left < right
+          · have realOrder := toReal_lt less
+            rw [Raw.hullLowerUnchecked]
+            simp only [less, ↓reduceIte]
+            constructor
+            · exact Or.inl
+            · rintro (leftBound | rightBound)
+              · exact leftBound
+              · cases leftStrict <;> cases rightStrict <;>
+                  simp [Lower.Contains] at * <;> linarith
+          · by_cases equal : left = right
+            · subst right
+              rw [Raw.hullLowerUnchecked]
+              simp only [less, ↓reduceIte]
+              cases leftStrict <;> cases rightStrict <;>
+                simp [Lower.Contains] <;> exact le_of_lt
+            · have realNotLess : ¬toReal left < toReal right := by
+                simpa only [toReal_lt_iff] using less
+              have realNotEqual : toReal left ≠ toReal right := by
+                intro same
+                exact equal (toReal_inj.mp same)
+              have realOrder : toReal right < toReal left :=
+                lt_of_le_of_ne (le_of_not_gt realNotLess) (Ne.symm realNotEqual)
+              rw [Raw.hullLowerUnchecked]
+              simp only [less, equal, ↓reduceIte]
+              constructor
+              · exact Or.inr
+              · rintro (leftBound | rightBound)
+                · cases leftStrict <;> cases rightStrict <;>
+                    simp [Lower.Contains] at * <;> linarith
+                · exact rightBound
+
+private theorem upperContains_hull (left right : Upper) (x : ℝ) :
+    (Raw.hullUpperUnchecked left right).Contains x ↔
+      left.Contains x ∨ right.Contains x := by
+  cases left with
+  | unbounded => simp [Raw.hullUpperUnchecked, Upper.Contains]
+  | finite left leftStrict =>
+      cases right with
+      | unbounded => simp [Raw.hullUpperUnchecked, Upper.Contains]
+      | finite right rightStrict =>
+          by_cases less : left < right
+          · have realOrder := toReal_lt less
+            rw [Raw.hullUpperUnchecked]
+            simp only [less, ↓reduceIte]
+            constructor
+            · exact Or.inr
+            · rintro (leftBound | rightBound)
+              · cases leftStrict <;> cases rightStrict <;>
+                  simp [Upper.Contains] at * <;> linarith
+              · exact rightBound
+          · by_cases equal : left = right
+            · subst right
+              rw [Raw.hullUpperUnchecked]
+              simp only [less, ↓reduceIte]
+              cases leftStrict <;> cases rightStrict <;>
+                simp [Upper.Contains] <;> exact le_of_lt
+            · have realNotLess : ¬toReal left < toReal right := by
+                simpa only [toReal_lt_iff] using less
+              have realNotEqual : toReal left ≠ toReal right := by
+                intro same
+                exact equal (toReal_inj.mp same)
+              have realOrder : toReal right < toReal left :=
+                lt_of_le_of_ne (le_of_not_gt realNotLess) (Ne.symm realNotEqual)
+              rw [Raw.hullUpperUnchecked]
+              simp only [less, equal, ↓reduceIte]
+              constructor
+              · exact Or.inl
+              · rintro (leftBound | rightBound)
+                · exact leftBound
+                · cases leftStrict <;> cases rightStrict <;>
+                    simp [Upper.Contains] at * <;> linarith
+
+private theorem rawContains_hull (left right : Raw) (x : ℝ) :
+    (Raw.hullUnchecked left right).Contains x ↔ left.HullContains right x := by
+  cases left with
+  | empty => simp [Raw.hullUnchecked, Raw.HullContains]
+  | bounds leftLower leftUpper =>
+      cases right with
+      | empty => simp [Raw.hullUnchecked, Raw.HullContains]
+      | bounds rightLower rightUpper =>
+          rw [Raw.hullUnchecked]
+          change
+            (Raw.hullLowerUnchecked leftLower rightLower).Contains x ∧
+                (Raw.hullUpperUnchecked leftUpper rightUpper).Contains x ↔ _
+          rw [lowerContains_hull, upperContains_hull]
+          rfl
+
+/-- Exact membership in a successful interval hull. For two nonempty inputs
+this is the selected-cut (equivalently, interval-convex-closure)
+characterization, not membership in the set union. -/
+theorem contains_hullWithin {limit : EndpointLimit}
+    {left right result : Hex.Interval}
+    (checked : hullWithin limit left right = .ready result) (x : ℝ) :
+    result.Contains x ↔ left.view.HullContains right.view x := by
+  simp only [Contains]
+  rw [view_hullWithin_ready checked, rawContains_normalize]
+  exact rawContains_hull left.view right.view x
+
+private theorem rawContains_hull_left (left right : Raw) (x : ℝ) :
+    left.Contains x → left.HullContains right x := by
+  cases left with
+  | empty => simp [Raw.Contains]
+  | bounds leftLower leftUpper =>
+      cases right with
+      | empty => simp [Raw.HullContains]
+      | bounds rightLower rightUpper =>
+          rintro ⟨lower, upper⟩
+          exact ⟨Or.inl lower, Or.inl upper⟩
+
+private theorem rawContains_hull_right (left right : Raw) (x : ℝ) :
+    right.Contains x → left.HullContains right x := by
+  cases left with
+  | empty => simp [Raw.HullContains]
+  | bounds leftLower leftUpper =>
+      cases right with
+      | empty => simp [Raw.Contains]
+      | bounds rightLower rightUpper =>
+          rintro ⟨lower, upper⟩
+          exact ⟨Or.inr lower, Or.inr upper⟩
+
+/-- Every member of the left input belongs to a successful hull. -/
+theorem contains_hullWithin_left {limit : EndpointLimit}
+    {left right result : Hex.Interval} {x : ℝ}
+    (checked : hullWithin limit left right = .ready result)
+    (member : left.Contains x) : result.Contains x :=
+  (contains_hullWithin checked x).2
+    (rawContains_hull_left left.view right.view x member)
+
+/-- Every member of the right input belongs to a successful hull. -/
+theorem contains_hullWithin_right {limit : EndpointLimit}
+    {left right result : Hex.Interval} {x : ℝ}
+    (checked : hullWithin limit left right = .ready result)
+    (member : right.Contains x) : result.Contains x :=
+  (contains_hullWithin checked x).2
+    (rawContains_hull_right left.view right.view x member)
 
 private theorem lowerContains_neg (upper : Upper) (x : ℝ) :
     (match upper with
