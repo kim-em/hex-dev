@@ -3508,6 +3508,34 @@ remain local to the probe. Precision-parametric point evaluation, repeated
 halving/squaring, provider selection, cached powers, and the package-owned
 Taylor-series canary above remain acceptance work.
 
+#### Source-pinned BKLNW power fold
+
+The first certified-bound dependency probe replaces PNT+
+`BKLNW_a2_bounds.lean:cert_pow433_upper`, specifically its use of
+`LeanCert.CertifiedBounds.BKLNW.pow433_upper`. The Mathlib-free package
+retains eight load-bearing natural atoms: the upper limit `433`, isolated
+index `4`, tail start `5`, dyadic exponents `36` and `57`, exact tail
+cardinality `429`, and numerator/denominator of the provider cut. Its checker
+authenticates the structural coordinates, exponent inequalities, exact count,
+the complete rational product inequality, and containment in the source
+target before emitting one fact. The declared arithmetic work is the 429-term
+tail represented by that analytic fold; the payload is bounded to eight atoms
+and one retained entry.
+
+The Mathlib companion proves a parameterized two-band fold theorem over the
+actual `Finset.Icc 3 M` source sum. It proves the logarithmic floor at `2^M`,
+evaluates the `k = 3` term, isolates `k = 4`, and uniformly bounds every
+`k ≥ 5` term. Generic chronology and frontend replay close the exact PNT+
+decimal inequality as an ordinary theorem. Mutated source limit, tail count,
+dyadic exponent, and endpoint records decode structurally but fail validation,
+planning, and replay; the smaller endpoint is independently proved false.
+
+This is a fixed `M = 433` acceptance operation with parameterized proof fields,
+not the production fold engine. It neither covers the smaller BKLNW scaling
+ladder nor supplies per-term interval data, chunking, a balanced aggregation
+tree, incremental reuse, or measured linear-size/logarithmic-depth evidence.
+Those remain required before claiming the BKLNW interface or fold milestone.
+
 #### Coordinate-aware numerical batches
 
 The first source-pinned batch probe targets PNT+'s

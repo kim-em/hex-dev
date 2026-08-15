@@ -1196,6 +1196,45 @@ powers, interval endpoints, or a package-owned Taylor remainder. Those remain
 D7/D8 acceptance work; this fixture establishes the large-negative
 range-reduction and reusable-tail interfaces without overclaiming them.
 
+The first load-bearing `LeanCert.CertifiedBounds.BKLNW` probe targets the
+private PNT+ declaration `BKLNW_a2_bounds.lean:cert_pow433_upper`, whose first
+step is exactly `LeanCert.CertifiedBounds.BKLNW.pow433_upper`. Rather than
+wrapping that theorem, `PntBKLNWPow` copies the source definition
+
+```lean
+∑ k ∈ Finset.Icc 3 ⌊Real.log x / Real.log 2⌋₊,
+  x ^ ((1 : ℝ) / k - 1 / 3)
+```
+
+and authenticates its specialization at `x = 2^433`. The kernel proof first
+checks the logarithmic floor identity, isolates the exact `k = 3` and `k = 4`
+terms, and bounds all 429 terms from `k = 5` through `433` uniformly. The
+certificate carries the limit, split coordinates, two dyadic exponents, exact
+tail cardinality, and rational output cut. Its pure-natural predicate checks
+`12a ≤ M`, `15b ≤ 2M`, exact cardinality, the complete rational product
+bound, and containment in the PNT+ endpoint. The companion theorem is
+parameterized over every accepted choice of exponents and endpoint; the
+retained certificate uses `a = 36`, `b = 57`, and the stronger cut
+`100000001948 / 100000000000`.
+
+The package sends that certificate through the generic policy session,
+chronology, schema replay, and `ProofFrontend` before closing the exact PNT+
+decimal target as an ordinary theorem. Structurally valid mutations of the
+limit, tail cardinality, exponent, or rational endpoint are rejected by both
+planning and replay. The endpoint mutation additionally has a kernel theorem
+showing that the proposed smaller cut is false. The guarded axiom report has
+only the permitted Mathlib foundations and, unlike the pinned LeanCert
+implementation of this provider leaf, no `native_decide` dependency.
+
+This is partial evidence for the imported BKLNW certified-bound interface, not
+a completed classification of that interface or of the 128 BKLNW tactic
+sites. The retained runtime operation still names the `M = 433` source leaf;
+it does not dispatch the smaller limits 29, 37, 63, 145, and 289, enumerate
+per-term interval facts, handle the exponential-bound half of the imported
+interface, or establish the required comparative replay/size measurements.
+The uniform tail theorem avoids expanding 431 terms, but this fixed canary is
+not yet evidence for the production balanced-fold implementation.
+
 The coordinate-aware Table 12 implementation is a bounded acceptance fixture
 that completes this family migration. At PNT+ commit
 `21998bb6196b56789f72a52656a781a75e134eb0`, the exact declaration is
