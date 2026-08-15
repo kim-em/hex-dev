@@ -151,6 +151,21 @@ SMALL_PRIME_SNIPPET_RE = re.compile(
     r"count_prime_(?P<count_cut>\d+)_le_(?P<count>\d+)\s+"
     r"\(by\s+interval_auto\)"
 )
+DUSART_PROVIDER = REPO_ROOT / "HexInterval/Experiment/PntDusartExp.lean"
+DUSART_ROWS = (
+    (361, "proposition_5_4a", 0, 29, 1, 4000000000000000000, "upperLe"),
+    (406, "proposition_5_4a", 1, 10, 1, 4000000000000000000, "upperLt"),
+    (458, "proposition_5_4b", 2, 1283, 100, 370261, "lowerLe"),
+    (463, "proposition_5_4b", 3, 1312, 100, 492113, "lowerLe"),
+    (468, "proposition_5_4b", 4, 1452, 100, 2010733, "lowerLe"),
+    (473, "proposition_5_4b", 5, 1666, 100, 17051707, "lowerLe"),
+    (527, "proposition_5_4b", 6, 43, 1, 4000000000000000000, "lowerLe"),
+    (532, "proposition_5_4b", 7, 22, 1, 117352333, "lowerLe"),
+)
+DUSART_PROVIDER_ROW_RE = re.compile(
+    r"⟨(?P<index>\d+),\s*(?P<num>\d+),\s*(?P<den>\d+),\s*"
+    r"(?P<target>\d+),\s*\.(?P<relation>upperLe|upperLt|lowerLe),\s*64,\s*12⟩"
+)
 
 
 class InventoryError(RuntimeError):
@@ -512,6 +527,37 @@ def require_small_prime_log_match(
             raise InventoryError(
                 f"local small-prime {name} differs from the committed source snippets"
             )
+
+
+def require_dusart_exp_match(
+    records: list[dict[str, Any]], provider_text: str | None = None,
+) -> None:
+    """Tie the eight committed Dusart sites to the local certificate table."""
+    source_records = [
+        row for row in records
+        if row.get("kind") == "tactic-occurrence"
+        and row.get("actual")
+        and row.get("path") == "PrimeNumberTheoremAnd/IEANTN/Dusart.lean"
+    ]
+    observed = tuple((row.get("line"), row.get("declaration")) for row in source_records)
+    expected_sites = tuple((line, declaration) for line, declaration, *_ in DUSART_ROWS)
+    if observed != expected_sites:
+        raise InventoryError(
+            f"Dusart exponential sites differ: {observed} != {expected_sites}"
+        )
+    if provider_text is None:
+        provider_text = DUSART_PROVIDER.read_text(encoding="utf-8")
+    provider_rows = tuple(
+        (int(match.group("index")), int(match.group("num")),
+         int(match.group("den")), int(match.group("target")),
+         match.group("relation"))
+        for match in DUSART_PROVIDER_ROW_RE.finditer(provider_text)
+    )
+    expected_rows = tuple(row[2:] for row in DUSART_ROWS)
+    if provider_rows != expected_rows:
+        raise InventoryError(
+            f"local Dusart sourceRows differ: {provider_rows} != {expected_rows}"
+        )
 
 
 def source_digest(sources: Iterable[Source]) -> str:
@@ -1225,6 +1271,7 @@ def validate_inventory(
     counts = summarize(records)
     require_workload_partitions(records)
     require_small_prime_log_match(records)
+    require_dusart_exp_match(records)
     if meta.get("counts") != counts:
         raise InventoryError(f"inventory counts disagree: {meta.get('counts')} != {counts}")
     for name, expected in EXPECTED.items():

@@ -179,6 +179,32 @@ class InventoryTests(unittest.TestCase):
         with self.assertRaisesRegex(inventory.InventoryError, "duplicate"):
             inventory.require_small_prime_log_match(duplicate, provider)
 
+    def test_dusart_sites_match_local_table(self) -> None:
+        records = [
+            {
+                "kind": "tactic-occurrence",
+                "actual": True,
+                "path": "PrimeNumberTheoremAnd/IEANTN/Dusart.lean",
+                "line": line,
+                "declaration": declaration,
+            }
+            for line, declaration, *_ in inventory.DUSART_ROWS
+        ]
+        provider = "def sourceRows : List Certificate := [\n" + "\n".join(
+            f"  ⟨{index}, {num}, {den}, {target}, .{relation}, 64, 12⟩,"
+            for _, _, index, num, den, target, relation in inventory.DUSART_ROWS
+        ) + "\n]"
+        inventory.require_dusart_exp_match(records, provider)
+
+        wrong_provider = provider.replace("⟨2, 1283, 100, 370261,", "⟨2, 1283, 100, 400000,")
+        with self.assertRaisesRegex(inventory.InventoryError, "sourceRows differ"):
+            inventory.require_dusart_exp_match(records, wrong_provider)
+
+        wrong_sites = copy.deepcopy(records)
+        wrong_sites[2]["line"] = 459
+        with self.assertRaisesRegex(inventory.InventoryError, "sites differ"):
+            inventory.require_dusart_exp_match(wrong_sites, provider)
+
     def test_committed_inventory_is_valid_but_not_yet_classified(self) -> None:
         inventory.check_inventory(self.fixture, require_classified=False)
         with self.assertRaisesRegex(inventory.InventoryError, "pending decisions"):
