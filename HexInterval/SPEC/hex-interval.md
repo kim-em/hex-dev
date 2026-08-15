@@ -3821,12 +3821,26 @@ payload atom bound is raised only to the selected source numerator (the
 `M = 289` endpoint is the largest). These are explicit per-request bounds,
 not a claim of input-independent constant work.
 
-Thus all eleven `pow*_upper` declarations used by the pinned PNT+ file have
-ordinary-kernel replacements, but this is not yet the whole imported BKLNW
-interface: its twenty exponential lower/upper declarations remain pending.
-The bounded table is also not the production fold engine. It does not yet
-supply arbitrary per-term interval data, chunking, incremental reuse, or
-measured balanced-tree scaling evidence.
+The same direct-interface migration now also covers the 22 (eleven pairs, not
+the stale count twenty) `a2_*_exp_lower/upper` declarations at arguments 20,
+25, 30, 35, 40, 43, 100, 150, 200, 250, and 300. One parameterized certificate
+authenticates the exact source row, logarithmic floor, lower and upper target,
+twelve-decimal base-table scale, explicit band through 63, and any tail from
+64 onward. The companion kernel proof derives the floor from the package log-2
+series, checks all 61 exponential bases by Taylor remainder, folds both bands,
+and bounds the high-row tail by monotonicity. Generic planning and replay emit
+one two-sided window; cross-row and structural mutations reject, while false
+lower and upper endpoint mutations have independent ordinary refutations.
+
+Consequently all eleven power aliases and all 22 exponential aliases actually
+used by pinned `BKLNW_a2_bounds.lean` have ordinary-kernel Hex replacements.
+The inventory classifies that imported role as accepted after a localized PNT+
+rewrite, not as LeanCert namespace or drop-in API compatibility. This remains
+a fixed-source acceptance provider: arbitrary arguments, caller-supplied base
+precision, incremental/chunked folds, caching, a big-integer complexity model,
+and production balanced-tree scaling evidence are still future work. The
+separate 128 BKLNW tactic occurrences and Table 10 workload are not implied by
+this interface result.
 
 #### Coordinate-aware numerical batches
 

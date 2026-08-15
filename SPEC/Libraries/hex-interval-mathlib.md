@@ -1401,11 +1401,39 @@ the `M = 289` record has the largest endpoint atom. This reports the retained
 fixed-ladder cost honestly rather than treating the analytic fold as zero
 work.
 
-This completes the eleven power declarations, not the imported
-`LeanCert.CertifiedBounds.BKLNW` interface or all 128 BKLNW tactic sites. The
-twenty source exponential lower/upper declarations remain pending, as do
-arbitrary per-term interval facts, comparative replay/size measurements, and
-production balanced-fold scaling evidence.
+The companion `PntBKLNWExp` provider completes the other **22** declarations
+used from the pinned certified-bounds interface: lower and upper bounds at
+`b = 20, 25, 30, 35, 40, 43, 100, 150, 200, 250, 300`. (Earlier prose said
+twenty; the source and inventory contain eleven pairs.) One source-indexed
+certificate pins `b`, `⌊b / log 2⌋₊`, both rational cuts, the twelve-decimal
+base-table scale, and the exact-band/tail split. The kernel proves the floor
+from the package-owned 20-digit `log 2` series window, proves every
+`exp (1/k - 1/3)` table cell with an exponential Taylor remainder, and folds
+the `k = 4..min(N,63)` band. Rows above 63 use an authenticated cardinality
+and the checked `k = 64` base for the remaining tail; lower bounds safely omit
+that positive tail.
+
+All eleven records pass the same Mathlib-free decoder and planner, and the
+same parameterized replay theorem proves both endpoints. Cross-row replay is
+rejected even when the foreign row is independently valid. Mutations of the
+source index, argument, floor, split, tail cardinality, scale, and either
+endpoint remain syntactically decodable but fail validation and planning;
+separate ordinary theorems refute the endpoint-at-`2` lower claim and
+endpoint-at-`1` upper claim. A representative `b = 20` event is closed through
+generic chronology and `ProofFrontend`, and guarded axiom reports contain only
+the permitted Mathlib foundations. No LeanCert theorem or `native_decide`
+enters the proof.
+
+Together with the eleven power declarations this accepts, after a localized
+PNT+ rewrite, the actual `LeanCert.CertifiedBounds.BKLNW` theorem role used by
+`BKLNW_a2_bounds.lean`. It is deliberately not namespace or drop-in API
+compatibility. The runtime remains a fixed eleven-row acceptance package with
+61 twelve-decimal base cells and a coarse tail, not an arbitrary-`b`
+exponential-sum evaluator. Its retained work charge counts the explicit lower
+and upper table powers (and the high-row tail power), but does not claim a
+big-integer bit-complexity model, production balanced folds, caching,
+comparative proof-size results, or coverage of the separate 128 BKLNW tactic
+sites and Table 10 workload.
 
 The coordinate-aware Table 12 implementation is a bounded acceptance fixture
 that completes this family migration. At PNT+ commit
