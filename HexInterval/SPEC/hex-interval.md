@@ -3964,12 +3964,39 @@ wrong-column, wrong fixed-point row, and wrong replay-target mutations reject
 without a retained draft or precision retry; the bare rational-majorant
 failure is also an ordinary theorem.
 
-Together the convex and two pointwise providers cover 77 of 87 executable
-Table 10 target calls after localized PNT+ rewrites. The remaining ten target
-calls are the coupled `43 → 19·log 10` and `19·log 10 → 44` groups. All 38
-supporting `a₂` sites, the surrounding `B_8_exact` reductions, arbitrary rows,
-and production-scale performance remain pending; this is not a LeanCert
-compatibility layer.
+#### Coupled logarithmic Table 10 transition
+
+The final target-numeric package pins the consecutive source tuples at
+`BKLNW_tables.lean:815–816` and all ten declarations split between
+`BKLNW_table10_rows_20_43.lean:table_10_row43_k1_margin` through
+`table_10_row43_k5_margin` and
+`BKLNW_table10_rows_misc.lean:table_10_row19log10_k1_margin` through
+`table_10_row19log10_k5_margin`. Their real intervals are
+`43 → 19 * log 10` and `19 * log 10 → 44`.
+
+One bounded Mathlib-free payload authenticates both source rows in order,
+their coefficients and ten listed/corrected coordinates, the integer-endpoint
+exponential bases, the shared upper point `43.75`, and the two logarithmic
+endpoint tails `3.17e-10` and `2.16e-13`. Every field participates in the
+rational endpoint checks and exact source-payload equality. The Mathlib
+companion independently proves `2.3025850924 < log 10 < 2.302585094` from a
+finite logarithm series, derives the row chronology and `19 * log 10 ≤ 43.75`,
+and proves both tail inequalities through exact real-power identities and a
+kernel-checked power comparison. Convexity then covers both complete real
+intervals; generic package chronology, replay, and `ProofFrontend` close all
+ten facts.
+
+Bare-target, false-coordinate, cross-row chronology, exponential-base,
+log-endpoint, and both tail mutations remain decodable but produce no draft
+or retry. The uncorrected row-43 first target is separately refuted in the
+kernel. The runtime row tag `19010` is only a bounded decoder code; the proof
+side source tuple uses the exact real abscissa `19 * log 10`.
+
+After localized PNT+ rewrites, the coordinate-pinned providers now cover all
+87 executable Table 10 target calls. The family remains pending: all 38
+supporting `a₂` sites and the surrounding `B_8_exact` dispatch are outside
+these numeric-premise providers, as are arbitrary rows and production-scale
+performance. This is not a LeanCert compatibility layer.
 
 #### Coordinate-aware numerical batches
 

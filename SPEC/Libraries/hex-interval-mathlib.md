@@ -1513,12 +1513,26 @@ complete rational premises without building a 13,800-step decimal power.
 Bare-target, wrong-column, wrong-row, and wrong-replay mutations reject without
 a draft or retry.
 
-Together the convex and two pointwise providers cover 77 of 87 executable
-target calls after localized PNT+ rewrites. The remaining ten target calls are
-the coupled row-43/logarithmic and 19·log 10 transitions. The 38 supporting
-`a₂` sites, surrounding `B_8_exact` reductions, arbitrary table rows, and
-production performance remain pending. This is a localized PNT+ rewrite
-boundary, not LeanCert API compatibility.
+The coupled logarithmic-transition provider adds the exact consecutive tuples
+at `BKLNW_tables.lean:815–816` and all ten remaining numeric declarations for
+the intervals `43 → 19 * log 10` and `19 * log 10 → 44`. One bounded payload
+authenticates both rows and their chronology, coefficients, ten coordinates,
+integer-endpoint bases, the shared `43.75` logarithmic point bound, and both
+exponential-tail bounds. Its Mathlib proof derives a two-sided `log 10` window
+from a finite logarithm series, proves the real row order, and connects the
+two tail fields to exact `rpow` identities. The same convexity and generic
+replay boundary then proves all ten source-shaped numeric premises.
+
+False-target, wrong-coordinate, cross-row, base, logarithmic-point, and tail
+mutations reject without drafts or precision retry. The proof-side source
+tuple contains the exact real coordinate `19 * log 10`; the numeric runtime
+tag is only a decoder discriminator.
+
+After localized PNT+ rewrites, the coordinate-pinned providers cover all 87
+executable target calls. The family remains pending because the 38 supporting
+`a₂` sites and surrounding `B_8_exact` dispatch are not supplied, and because
+arbitrary table rows and production performance remain future work. This is a
+localized PNT+ rewrite boundary, not LeanCert API compatibility.
 
 The coordinate-aware Table 12 implementation is a bounded acceptance fixture
 that completes this family migration. At PNT+ commit
@@ -2163,10 +2177,11 @@ The committed compatibility subset is `D8` unless marked `D9`:
 - representative `10^-20` and `10^-100` tail bounds;
 - BKLNW sums with every source upper limit 29, 37, 44, 51, 58, 63, 145, 217,
   289, 361, and 433;
-- `[D9]` the row-25 Table 10 shard binds all five exact source coordinates and
-  rejects the recorded false `k = 5` target with a kernel falsity proof. This
-  is partial family evidence; the remaining target and supporting sites are
-  still pending;
+- `[D9]` coordinate-pinned Table 10 providers bind all 87 target-numeric calls,
+  including the coupled logarithmic transition, and reject recorded or
+  injected false targets with kernel falsity proofs. This is still partial
+  family evidence: the 38 supporting `a₂` sites and surrounding `B_8_exact`
+  dispatch remain pending;
 - `[D9]` the 130-case Table 12 batch, plus one of its four false
   original boundary rows as an expected failure;
 - `[D9]` a small deterministic FKS2 sample in per-PR `core`, a measured medium
