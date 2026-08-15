@@ -253,8 +253,27 @@ exactly one natural exponent and one dyadic constant: every node at the
 built-in power operation index shares that exponent, and every node at the
 built-in constant index shares that value. Duplicate package registration and
 operation keys cannot add another parameterization. Arbitrary-function package
-discovery, goal reification, encoding and evidence folds, search-to-recipe
-orchestration, and tactic syntax remain experimental.
+discovery, generic search-to-recipe orchestration, split-search tactic
+integration, and default package discovery remain experimental. The supported
+direct-forward reifier and tactic syntax are a narrow client of this registry,
+not the missing generic search bridge.
+
+The supported proof fold also accepts a `Search.Result.Tree` only after the
+tree passes `Tree.check` under the exact caller-supplied search limits and
+measure. A separate untrusted `TreeRecipe` must echo every parent, side, and
+seed edge and supply the ordered proof events. On a split, the child proof
+state restarts at program version zero: the one branch seed becomes a new
+assumption, while every inherited parent fact remains derived evidence rebased
+to the child-local version. Package-owned keyed split and refutation schemas
+authenticate the cover and contradiction; runtime terminal tags, bodies, and
+contradiction state never become evidence. `Proof.TreeLimits` separately bound
+proof nodes, depth, body cells, and structural work. Pending and unknown leaves
+reject transactionally. Search callback quotation into this recipe and tactic
+integration remain later work. The current retained-tree builder repeatedly
+validates retained branches and pairwise scope uniqueness; incremental
+construction therefore has the documented `Θ(N² * B + N³)` reference cost,
+where `B` is branch validation work, rather than a production-local-update
+claim.
 
 `HexIntervalMathlib.Experiment.PntLogRational` is a fixed-source acceptance
 provider rather than public interval arithmetic. It proves the original

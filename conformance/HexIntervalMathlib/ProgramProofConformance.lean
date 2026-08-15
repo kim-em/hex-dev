@@ -11,8 +11,10 @@ import HexIntervalMathlib.Proof
 
 This canary exercises a complete function-agnostic chronology: an authenticated
 reflexive program instance, a fact theorem, an equality theorem, equality
-transport, exact target closure, and a separately owned refuter. Mutated quote
-fields fail before they can alter the immutable proof state.
+transport, exact target closure, a separately owned refuter, and an
+authenticated retained split whose children distinguish one new branch
+assumption from inherited derived facts. Mutated quote and tree fields fail
+before they can alter the immutable proof state.
 -/
 
 namespace Hex.IntervalMathlib.ProgramProofConformance
@@ -21,7 +23,7 @@ open Hex.Interval
 open Hex.Interval.Proof
 
 inductive TestFact where
-  | all | yes | no | empty
+  | all | yes | no | decided | empty
   deriving DecidableEq, Repr
 
 def domain : DomainId := { index := 0 }
@@ -53,6 +55,8 @@ example : ¬ Hex.Interval.Program.Models #[] program (fun _ => true) := by
   simpa [Hex.Interval.Program.Models, program] using model.1
 
 def scope : Policy.ScopeId := { index := 7 }
+def leftScope : Policy.ScopeId := { index := 8 }
+def rightScope : Policy.ScopeId := { index := 9 }
 def factRule : RuleKey := { name := "proof-fact", schema := 3 }
 def equalityRule : RuleKey := { name := "proof-equality", schema := 3 }
 def instanceRule : RuleKey := { name := "proof-instance", schema := 3 }
@@ -108,6 +112,7 @@ def contains : TestFact → Bool → Prop
   | .all, _ => True
   | .yes, value => value = true
   | .no, value => value = false
+  | .decided, value => value = true ∨ value = false
   | .empty, _ => False
 
 def semantics : Proof.Semantics TestFact :=
@@ -211,7 +216,7 @@ def refuteSchema : Proof.RefuteSchema semantics :=
     Certificate := Unit
     decode := decode 44
     prove := fun context _ =>
-      if shape : context.scope = scope ∧ context.program = program ∧
+      if shape : (context.scope = scope ∨ context.scope = rightScope) ∧ context.program = program ∧
           context.fact = .empty then
         some
           { proof := by
@@ -227,7 +232,8 @@ def package : Proof.Package semantics :=
     facts := #[factSchema]
     equalities := #[equalitySchema]
     instances := #[instanceSchema]
-    refuters := #[refuteSchema] }
+    refuters := #[refuteSchema]
+    splits := #[] }
 
 def limits : Proof.Limits :=
   { maxPackages := 1, maxSchemas := 4, maxBodyCells := 1,
@@ -435,6 +441,286 @@ def unowned : Proof.Package semantics := { registrations := #[], refuters := #[r
 #guard match Proof.Registry.buildWithin limits program #[unowned] with
   | .error (.emptyRefuterOwner 0 key) => key == refuteKey
   | _ => false
+
+/-! ## Authenticated retained split fold -/
+
+def splitRule : RuleKey := { name := "proof-split", schema := 3 }
+
+def splitRegistration : Registration :=
+  { key := splitRule
+    head := sourceKey
+    kind := .split
+    watches := [.result]
+    writes := [] }
+
+def splitKey : Proof.Key := { rule := splitRule, role := .split, bodySchema := 5 }
+
+def splitSchema : Proof.SplitSchema semantics (List Nat) :=
+  { key := splitKey
+    Certificate := Unit
+    decode := decode 55
+    prove := fun context _ =>
+      if shape : context.scope = scope ∧ context.programVersion = 1 ∧
+          context.program = program ∧
+          context.assumptions = [{ node := node0, fact := .yes }] ∧
+          context.parent = { node := node0, fact := .yes } ∧
+          context.left = { node := node0, fact := .all } ∧
+          context.right = { node := node0, fact := .empty } ∧
+          context.plan = [55] then
+        some
+          { proof := by
+              rcases shape with ⟨_, _, _, _, _, leftEq, _, _⟩
+              intro valuation model inputs
+              left
+              simp [leftEq, semantics, contains] }
+      else none }
+
+def splitPackage : Proof.Package semantics (List Nat) :=
+  { registrations := #[factRegistration, equalityRegistration, instanceRegistration,
+      refuteRegistration, splitRegistration]
+    facts := #[factSchema]
+    equalities := #[equalitySchema]
+    instances := #[instanceSchema]
+    refuters := #[refuteSchema]
+    splits := #[splitSchema] }
+
+def splitLimits : Proof.Limits :=
+  { limits with maxSchemas := 5 }
+
+def splitRegistry? : Option (Proof.Registry semantics (List Nat)) :=
+  (Proof.Registry.buildWithin splitLimits program #[splitPackage]).toOption
+
+#guard match Proof.Registry.buildWithin splitLimits program #[splitPackage] with
+  | .ok built => built.splits.size == 1 && built.registrations.size == 5
+  | .error _ => false
+
+def stateLimits : State.Limits :=
+  { maxOperations := 2
+    maxNodes := 2
+    maxRules := 5
+    maxRegistryEntries := 5
+    maxReplayFormats := 5
+    maxArity := 1
+    maxApplications := 5
+    maxQueueEntries := 5
+    maxActions := 5
+    maxAcceptedFacts := 2
+    maxRetainedSuggestions := 2
+    maxEffort := 4
+    maxObservationValue := 8
+    maxDiagnosticValue := 8
+    maxOutcomeCandidates := 2
+    maxOutcomeSuggestions := 2
+    maxProposalItems := 4
+    maxInstances := 2
+    maxGeneration := 2
+    maxNodeDepth := 1
+    maxEqualities := 1
+    splitEndpointLimit := { maxEndpointHeight := 32, maxAlignmentShift := 32 } }
+
+def rootBranch? : Option (State.Branch TestFact Nat) := do
+  let branch ← (State.Branch.startWithin stateLimits program input.facts).toOption
+  let branch ← (State.Branch.extendWithin stateLimits branch program #[] 0).toOption
+  let branch ← (State.Branch.pushWithin stateLimits branch
+    { programVersion := 1, node := node0, previous := seen node0 0,
+      fact := .yes, version := 1, cause := 1 }).toOption
+  (State.Branch.pushWithin stateLimits branch
+    { programVersion := 1, node := node1, previous := seen node1 0,
+      fact := .yes, version := 1, cause := 2 }).toOption
+
+def searchLimits : Search.Result.Limits :=
+  { search :=
+      { maxSteps := 3, maxSplits := 1, maxLeaves := 2, maxFrontier := 2,
+        maxDepth := 1, maxScopes := 3, leafFuel := 4 }
+    state := stateLimits
+    maxNodes := 3
+    maxBodyCells := 1
+    maxBytes := 64
+    maxWork := 64
+    maxCode := 8 }
+
+def unitCost : Search.Result.Cost := { bytes := 1, work := 1 }
+
+def treeMeasure : Search.Result.Measure TestFact Nat (List Nat) Proof.Key :=
+  { node := unitCost
+    branch := fun branch =>
+      { bytes := branch.snapshot.facts.size + branch.history.size,
+        work := branch.versions.size + branch.history.size }
+    fact := fun _ => unitCost
+    action := fun _ => unitCost
+    plan := fun _ => unitCost
+    schema := fun _ => unitCost
+    body := fun _ => unitCost
+    code := fun _ => unitCost }
+
+def splitAction : Action :=
+  action 3 1 4 splitRule .split node0 [seen node0 1] []
+
+def splitRecipe : Search.Result.Split (List Nat) Proof.Key :=
+  { scope
+    programVersion := 1
+    action := splitAction
+    parent := seen node0 1
+    plan := [55]
+    schema := splitKey
+    body := [55] }
+
+def leftSeed : Search.Result.Seed TestFact :=
+  { node := node0, previous := splitRecipe.parent, fact := .all }
+
+def rightSeed : Search.Result.Seed TestFact :=
+  { node := node0, previous := splitRecipe.parent, fact := .empty }
+
+def leftEnd : Search.Result.End Proof.Key :=
+  .target { scope := leftScope, programVersion := 0, seen := seen node1 0 }
+
+def rightEnd : Search.Result.End Proof.Key :=
+  .refute
+    { scope := rightScope, programVersion := 0, seen := seen node0 0,
+      schema := refuteKey, body := [44] }
+
+def treeWith? (split := splitRecipe) (left := leftSeed) (right := rightSeed)
+    (leftTerminal := leftEnd) (rightTerminal := rightEnd) :
+    Option (Search.Result.Tree TestFact Nat (List Nat) Proof.Key) := do
+  let branch ← rootBranch?
+  let tree ← (Search.Result.startWithin searchLimits treeMeasure scope branch).toOption
+  let tree ← (Search.Result.splitWithin searchLimits treeMeasure .depthFirst tree
+    split left right).toOption
+  let tree ← (Search.Result.settleWithin searchLimits treeMeasure tree leftTerminal).toOption
+  (Search.Result.settleWithin searchLimits treeMeasure tree rightTerminal).toOption
+
+def splitTree? : Option (Search.Result.Tree TestFact Nat (List Nat) Proof.Key) :=
+  treeWith?
+
+def treeRecipe : Proof.TreeRecipe TestFact :=
+  { events := #[events, [], []]
+    edges :=
+      #[{},
+        { parent := some { index := 0 }, side := some .left, seed := some leftSeed },
+        { parent := some { index := 0 }, side := some .right, seed := some rightSeed }] }
+
+def treeLimits : Proof.TreeLimits :=
+  { maxNodes := 3, maxDepth := 1, maxBodyCells := 5, maxWork := 16 }
+
+def treeRun : Except Proof.Error
+    (Proof.Evidence (semantics.Entails input.program (Proof.initialBase input) input.target)) :=
+  match splitTree? with
+  | none => .error .wrongTree
+  | some tree => match splitRegistry? with
+    | none => .error .invalidInput
+    | some registry => Proof.replayTree searchLimits treeMeasure splitLimits treeLimits
+        registry factDomain laws input tree treeRecipe
+
+#guard treeRun.isOk
+
+def decisionInput : Proof.Input TestFact :=
+  { scope, program, facts := #[.all, .all], target := { node := node0, fact := .decided } }
+
+def leftFact : Proof.NodeFact TestFact := { node := node0, fact := .yes }
+def rightFact : Proof.NodeFact TestFact := { node := node0, fact := .no }
+
+def coverEvidence : Proof.Evidence
+    (semantics.Covers program (Proof.initialBase decisionInput) leftFact rightFact) :=
+  { proof := by
+      intro valuation model assumptions
+      cases value : valuation node0 <;>
+        simp [semantics, contains, leftFact, rightFact, value] }
+
+def leftEvidence : Proof.Evidence
+    (semantics.Entails program (Proof.initialBase decisionInput ++ [leftFact])
+      decisionInput.target) :=
+  { proof := by
+      intro valuation model assumptions
+      have branch := assumptions leftFact (by simp)
+      left
+      simpa [semantics, contains, leftFact, decisionInput] using branch }
+
+def rightEvidence : Proof.Evidence
+    (semantics.Entails program (Proof.initialBase decisionInput ++ [rightFact])
+      decisionInput.target) :=
+  { proof := by
+      intro valuation model assumptions
+      have branch := assumptions rightFact (by simp)
+      right
+      simpa [semantics, contains, rightFact, decisionInput] using branch }
+
+def splitEvidence : Proof.Evidence
+    (semantics.Entails decisionInput.program (Proof.initialBase decisionInput)
+      decisionInput.target) :=
+  Proof.joinCover semantics coverEvidence leftEvidence rightEvidence
+
+/-- The preceding executable guard runs the authenticated retained-tree fold.
+This ordinary theorem separately exercises a genuine Boolean cover whose two
+child proofs consume distinct `yes` and `no` assumptions, so the axiom report
+does not rely on compiled evaluation of the `Except` result. -/
+theorem splitCanary :
+    semantics.Entails decisionInput.program (Proof.initialBase decisionInput)
+      decisionInput.target :=
+  splitEvidence.proof
+
+/--
+info: 'Hex.IntervalMathlib.ProgramProofConformance.splitCanary' depends on axioms: [propext, Quot.sound]
+-/
+#guard_msgs in
+#print axioms splitCanary
+
+def treeError
+    (candidate : Option (Search.Result.Tree TestFact Nat (List Nat) Proof.Key) := splitTree?)
+    (quote : Proof.TreeRecipe TestFact := treeRecipe)
+    (measured : Search.Result.Measure TestFact Nat (List Nat) Proof.Key := treeMeasure)
+    (proofLimits : Proof.TreeLimits := treeLimits) : Option Proof.Error :=
+  match splitRegistry?, candidate with
+  | some registry, some tree =>
+      match Proof.replayTree searchLimits measured splitLimits proofLimits registry
+          factDomain laws input tree quote with
+      | .ok _ => none
+      | .error error => some error
+  | _, _ => some .wrongTree
+
+#guard treeError (candidate := treeWith? (split := { splitRecipe with schema := factKey })) ==
+  some .wrongSchema
+#guard treeError (candidate := treeWith? (split := { splitRecipe with body := [56] })) ==
+  some .malformedBody
+#guard treeError (candidate := treeWith? (split := { splitRecipe with plan := [56] })) ==
+  some .malformedBody
+#guard treeError (candidate := treeWith? (rightTerminal := .refute
+  { scope := rightScope, programVersion := 0, seen := seen node0 0,
+    schema := refuteKey, body := [45] })) == some .malformedBody
+#guard treeError (candidate := treeWith? (rightTerminal := .refute
+  { scope := rightScope, programVersion := 0, seen := seen node0 0,
+    schema := factKey, body := [44] })) == some .wrongSchema
+#guard treeError (candidate := treeWith? (leftTerminal := .target
+  { scope := leftScope, programVersion := 0, seen := seen node0 0 })) == some .wrongTarget
+
+def mapEdge (quote : Proof.TreeRecipe TestFact) (index : Nat)
+    (change : Proof.TreeEdge TestFact → Proof.TreeEdge TestFact) :
+    Proof.TreeRecipe TestFact :=
+  match quote.edges[index]? with
+  | some edge => { quote with edges := quote.edges.set! index (change edge) }
+  | none => quote
+
+#guard treeError (quote := mapEdge treeRecipe 1 fun edge =>
+  { edge with parent := some { index := 2 } }) == some .wrongTree
+#guard treeError (quote := mapEdge treeRecipe 1 fun edge =>
+  { edge with side := some .right }) == some .wrongTree
+#guard treeError (quote := mapEdge treeRecipe 1 fun edge =>
+  { edge with seed := edge.seed.map fun seed => { seed with fact := .no } }) ==
+  some .wrongTree
+#guard treeError (candidate := treeWith? (left := rightSeed) (right := leftSeed)) ==
+  some .malformedBody
+#guard treeError (candidate := treeWith? (leftTerminal := .unknown
+  { scope := leftScope, programVersion := 0, code := 1 })) == some .unknownLeaf
+#guard treeError (quote := { treeRecipe with events := #[events, []] }) == some .wrongTree
+#guard treeError (measured := { treeMeasure with node := { bytes := 2, work := 1 } }) ==
+  some .wrongTree
+#guard treeError (proofLimits := { treeLimits with maxNodes := 2 }) ==
+  some .proofNodeLimit
+#guard treeError (proofLimits := { treeLimits with maxDepth := 0 }) ==
+  some .proofDepthLimit
+#guard treeError (proofLimits := { treeLimits with maxBodyCells := 4 }) ==
+  some .proofBodyLimit
+#guard treeError (proofLimits := { treeLimits with maxWork := 14 }) ==
+  some .proofWorkLimit
 
 open Lean Meta Elab Tactic
 
