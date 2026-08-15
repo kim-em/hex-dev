@@ -9,7 +9,7 @@ import HexIntervalMathlib
 /-!
 Conformance checks for the supported public interval semantics.  Computational
 shape/resource cases live in `HexInterval.Conformance`; this companion pins the
-ordinary-kernel meaning of every successful intersection and negation.
+ordinary-kernel meaning of every successful intersection, hull, and negation.
 -/
 
 namespace Hex.IntervalMathlib.Conformance
@@ -30,6 +30,28 @@ theorem intersectInputs {limit : Hex.Interval.EndpointLimit}
     (member : result.Contains x) : left.Contains x ∧ right.Contains x :=
   (Hex.Interval.contains_intersectWithin checked x).1 member
 
+/-- A successful hull has the exact selected-cut/interval-closure meaning,
+including explicit empty identities. -/
+theorem hullExact {limit : Hex.Interval.EndpointLimit}
+    {left right result : Hex.Interval} {x : ℝ}
+    (checked : Hex.Interval.hullWithin limit left right = .ready result) :
+    result.Contains x ↔ left.view.HullContains right.view x :=
+  Hex.Interval.contains_hullWithin checked x
+
+/-- The left input is contained in every successful public hull. -/
+theorem hullLeft {limit : Hex.Interval.EndpointLimit}
+    {left right result : Hex.Interval} {x : ℝ}
+    (checked : Hex.Interval.hullWithin limit left right = .ready result)
+    (member : left.Contains x) : result.Contains x :=
+  Hex.Interval.contains_hullWithin_left checked member
+
+/-- The right input is contained in every successful public hull. -/
+theorem hullRight {limit : Hex.Interval.EndpointLimit}
+    {left right result : Hex.Interval} {x : ℝ}
+    (checked : Hex.Interval.hullWithin limit left right = .ready result)
+    (member : right.Contains x) : result.Contains x :=
+  Hex.Interval.contains_hullWithin_right checked member
+
 /-- Public negation transports membership in both directions. -/
 theorem negMember {limit : Hex.Interval.EndpointLimit}
     {input result : Hex.Interval} {x : ℝ}
@@ -44,6 +66,18 @@ theorem negMember {limit : Hex.Interval.EndpointLimit}
 /-- info: 'Hex.IntervalMathlib.Conformance.intersectInputs' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms intersectInputs
+
+/-- info: 'Hex.IntervalMathlib.Conformance.hullExact' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms hullExact
+
+/-- info: 'Hex.IntervalMathlib.Conformance.hullLeft' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms hullLeft
+
+/-- info: 'Hex.IntervalMathlib.Conformance.hullRight' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms hullRight
 
 /-- info: 'Hex.IntervalMathlib.Conformance.negMember' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in

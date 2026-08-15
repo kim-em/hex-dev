@@ -130,6 +130,11 @@ private def openLower12 : Hex.Interval := ready (finite 1 true 2 false)
 private def openAtOne : Hex.Interval := ready (finite 0 false 1 true)
 private def atMostOne : Hex.Interval :=
   ready (.bounds .unbounded (.finite (d 1) false))
+private def atLeastOne : Hex.Interval :=
+  ready (.bounds (.finite (d 1) false) .unbounded)
+private def closed23 : Hex.Interval := ready (finite 2 false 3 false)
+private def bridgeLeft : Hex.Interval := ready (finite 1 false 4 false)
+private def bridgeRight : Hex.Interval := ready (finite 3 false 12 false)
 
 -- Public intersection is exact at tied open/closed cuts, absorbs empty, and
 -- retains independently unbounded ends.
@@ -175,6 +180,86 @@ private def farLower : Hex.Interval :=
   match Hex.Interval.intersectWithin smallLimit farLower atMostOne with
   | .ready _ => false
   | .resourceLimit cost => cost.alignmentShift == 1000000000
+
+-- Hull chooses the smaller lower and larger upper cuts. Tied cuts are closed
+-- when either input contains the endpoint; the strict input is placed first
+-- so these guards reject copying one operand's flag.
+#guard
+  match Hex.Interval.hullWithin smallLimit openLower12 closed12 with
+  | .ready interval => interval == closed12
+  | .resourceLimit _ => false
+
+#guard
+  match Hex.Interval.hullWithin smallLimit openAtOne closed01 with
+  | .ready interval => interval == closed01
+  | .resourceLimit _ => false
+
+-- Both strict contributors keep a tied endpoint strict; together with the
+-- mixed guards above this pins conjunction rather than a constant flag.
+#guard
+  match Hex.Interval.hullWithin smallLimit openLower12 openLower12 with
+  | .ready interval => interval == openLower12
+  | .resourceLimit _ => false
+
+#guard
+  match Hex.Interval.hullWithin smallLimit openAtOne openAtOne with
+  | .ready interval => interval == openAtOne
+  | .resourceLimit _ => false
+
+-- Reversing separated inputs exercises both selector directions. The result
+-- is the interval closure [0,3], including the gap between [0,1] and [2,3].
+#guard
+  match Hex.Interval.hullWithin smallLimit closed01 closed23 with
+  | .ready interval => interval.view == finite 0 false 3 false
+  | .resourceLimit _ => false
+
+#guard
+  match Hex.Interval.hullWithin smallLimit closed23 closed01 with
+  | .ready interval => interval.view == finite 0 false 3 false
+  | .resourceLimit _ => false
+
+-- Empty is an identity, while either unbounded side is retained.
+#guard
+  match Hex.Interval.hullWithin smallLimit Hex.Interval.empty closed01 with
+  | .ready interval => interval == closed01
+  | .resourceLimit _ => false
+
+#guard
+  match Hex.Interval.hullWithin smallLimit closed01 Hex.Interval.empty with
+  | .ready interval => interval == closed01
+  | .resourceLimit _ => false
+
+#guard
+  match Hex.Interval.hullWithin smallLimit atMostOne closed12 with
+  | .ready interval =>
+      interval.view == .bounds .unbounded (.finite (d 2) false)
+  | .resourceLimit _ => false
+
+#guard
+  match Hex.Interval.hullWithin smallLimit atLeastOne closed01 with
+  | .ready interval =>
+      interval.view == .bounds (.finite (d 0) false) .unbounded
+  | .resourceLimit _ => false
+
+#guard
+  match Hex.Interval.hullWithin smallLimit atMostOne atLeastOne with
+  | .ready interval => interval == Hex.Interval.whole
+  | .resourceLimit _ => false
+
+-- Same-side selection refuses an excessive alignment before ordering.
+#guard
+  match Hex.Interval.hullWithin smallLimit closed12 farLower with
+  | .ready _ => false
+  | .resourceLimit cost => cost.alignmentShift == 1000000000
+
+-- Same-side selectors need no shift here, but their selected outer cuts do.
+-- This pins the separate final-normalization preflight in `ofRawWithin`.
+#guard
+  match Hex.Interval.hullWithin
+      { maxEndpointHeight := 128, maxAlignmentShift := 0 }
+      bridgeLeft bridgeRight with
+  | .ready _ => false
+  | .resourceLimit cost => cost.alignmentShift == 2
 
 -- Negation swaps the endpoints and preserves openness; empty stays empty.
 #guard

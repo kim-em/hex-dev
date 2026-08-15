@@ -181,8 +181,8 @@ value's proof field.
 
 The initial supported slice exposes `view`, `empty`, `whole`, and endpoint-cost
 preflighted raw, singleton, one-sided, and finite constructors. The first
-supported operations are resource-checked intersection and negation. Their
-Mathlib companion proves exact set semantics for the complete cut language;
+supported operations are resource-checked intersection, hull, and negation.
+Their Mathlib companion proves exact set semantics for the complete cut language;
 the remaining arithmetic is promoted separately rather than being declared
 public merely because narrower experiment implementations exist. All public
 examples use the fully qualified `Hex.Interval`, because Mathlib also has a
@@ -194,6 +194,8 @@ The public Mathlib companion interprets every canonical interval as a subset
 of `ℝ`. It proves that a successful executable `intersectWithin` denotes
 logical conjunction for the complete cut language: strict and closed ends,
 tied endpoints, empty results, and either end unbounded. It also proves that a
+successful `hullWithin` has the exact selected-cut/interval-convex-closure
+meaning and contains both inputs; this is deliberately not set union. A
 successful `negWithin` contains `x` exactly when the input contains `-x`.
 Separately, the experiment form of the intersection theorem is installed as the
 generic `FactDomainSchema.proveMeet` boundary, and the transparent proof
@@ -409,6 +411,7 @@ The supported first operation slice is:
 
 ```lean
 def intersectWithin : EndpointLimit → Interval → Interval → BuildResult
+def hullWithin      : EndpointLimit → Interval → Interval → BuildResult
 def negWithin       : EndpointLimit → Interval → BuildResult
 ```
 
@@ -420,17 +423,17 @@ larger than either stored mantissa. A refused comparison returns
 Negation still takes a limit because its finite output endpoints and final
 canonical comparison cross the same public boundary.
 
-The public `Raw.intersectLowerUnchecked`, `intersectUpperUnchecked`,
-`intersectUnchecked`, and `negUnchecked` helpers state successful-result and
-semantic theorems. Like `Raw.normalizeUnchecked`, they are decoder-level
-combinators: untrusted callers use the checked `Interval` operations above.
+The public raw intersection and hull cut selectors, `intersectUnchecked`,
+`hullUnchecked`, and `negUnchecked` are related to the checked operations by
+successful-result and semantic theorems. Like `Raw.normalizeUnchecked`, they
+are decoder-level combinators: untrusted callers use the checked `Interval`
+operations above.
 
 The remaining target surface is:
 
 ```lean
 namespace Hex.Interval
 
-def hullWithin : EndpointLimit → Interval → Interval → BuildResult
 def add        : Interval → Interval → Interval
 def sub        : Interval → Interval → Interval
 def mul        : Interval → Interval → Interval
@@ -455,7 +458,7 @@ tests also check the following exactness rules.
 
 - `intersectWithin` chooses the larger lower cut and the smaller upper cut. At equal
   endpoints it chooses open if either input is open.
-- `hull` chooses the smaller lower cut and the larger upper cut. At equal
+- `hullWithin` chooses the smaller lower cut and the larger upper cut. At equal
   endpoints it chooses closed if either input contains the endpoint.
 - `negWithin` swaps the ends and preserves their openness.
 - A finite endpoint of a sum is closed exactly when both contributing
@@ -3878,8 +3881,8 @@ their declared cost inside a scheduler bound.
   normalization.
 - `HexInterval/Canonical.lean`: sealed canonical values, views, and
   resource-safe smart constructors.
-- `HexInterval/Interval.lean`: supported resource-safe intersection and
-  negation, followed by future hull, arithmetic, splitting, and regularization
+- `HexInterval/Interval.lean`: supported resource-safe intersection, hull, and
+  negation, followed by future arithmetic, splitting, and regularization
   operations.
 - `HexIntervalMathlib/Interval.lean`: real-set semantics for the supported
   public operations.
