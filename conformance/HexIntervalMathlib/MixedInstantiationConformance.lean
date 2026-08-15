@@ -221,17 +221,26 @@ private def exactTransportInput (step : TransportStep Bound)
           .transport transport, .rule exp] =>
           instantiation.entry.replayKey == oddnessInstanceSchema.key &&
             instantiation.event.programVersion == 1 &&
+            instantiation.event.family == 1 &&
+            instantiation.event.substitution == [node 2] &&
+            instantiation.event.products == [node 4, node 5] &&
             instantiation.event.newNodes == [node 4, node 5] &&
+            instantiation.event.equalities == [{ index := 0 }] &&
+            instantiation.event.newEqualities == [{ index := 0 }] &&
+            instantiation.event.payload == instantiation.payload &&
             sine.entry.replayKey == sineFactSchema.key &&
             sine.event.node == node 4 &&
+            sine.event.version == 1 &&
             sine.event.fact == .unit &&
             exactRuleInput sine { node := node 0, version := 0 } &&
             negation.entry.replayKey == negationFactSchema.key &&
             negation.event.node == node 5 &&
+            negation.event.version == 1 &&
             negation.event.fact == .unit &&
             exactRuleInput negation { node := node 4, version := 1 } &&
             transport.entry.replayKey == oddnessEqualitySchema.key &&
             transport.event.node == node 2 &&
+            transport.event.version == 1 &&
             transport.event.fact == .unit &&
             exactTransportInput transport { index := 0 }
               { node := node 5, version := 1 } &&
