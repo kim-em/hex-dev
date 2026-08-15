@@ -17,6 +17,8 @@ enclosure theorems for minimum and maximum, and
 `HexIntervalMathlib.Absolute` supplies the corresponding absolute-value
 theorems. `HexIntervalMathlib.Power` supplies exact selected-cut semantics
 and a one-way real-image theorem for checked natural power.
+`HexIntervalMathlib.Split` proves exact closed-left/strict-right membership
+for transactional splitting.
 
 For every successful resource-checked public operation it proves:
 
@@ -59,12 +61,19 @@ For every successful resource-checked public operation it proves:
 - `contains_powWithin`: exact membership in the normalized direct cuts selected
   for exponent zero, positive odd powers, and positive even powers;
 - `pow_mem_powWithin`: every source member raised to the caller's natural
-  exponent belongs to every successful result.
+  exponent belongs to every successful result;
+- `contains_splitWithin_left` and `contains_splitWithin_right`: exact child
+  membership as source membership conjoined with `x ≤ point` or `point < x`;
+- `splitWithin_contained`, `splitWithin_cover`, and `splitWithin_disjoint`:
+  both children remain in the source, jointly cover it, and do not overlap;
+- `splitWithin_point_left` and `splitWithin_point_not_right`: the cut point is
+  left-owned exactly when it belonged to the source and never right-owned.
 
-These theorems depend on the exact successful operation-result equation
-(`BuildResult` or `Arithmetic.Result`). A resource refusal has no set
-interpretation and is never treated as an empty interval. The proofs use the
-public operation's checked view-characterization
+These theorems depend on the exact successful result equation: `BuildResult`
+or `Arithmetic.Result` for unary/binary images, and transactional
+`SplitResult` for splitting. A resource refusal has no set interpretation and
+is never treated as an empty interval. The proofs use the public operation's
+checked view-characterization
 theorems and independently establish the complete raw-cut semantics; they do
 not import the experimental propagation fact domain.
 
@@ -73,8 +82,8 @@ not import the experimental propagation fact domain.
 The public companion grows only with the supported `Hex.Interval` API. The
 existing modules under `HexIntervalMathlib/Experiment` remain evidence for
 future operations, replay schemas, transcendental providers, and tactics, but
-are not re-exported here. Further arithmetic images, splitting, regularization,
-and precision-indexed reciprocal/division require their own
+are not re-exported here. Further arithmetic images, regularization, and
+precision-indexed reciprocal/division require their own
 operation-specific semantic theorems before promotion. An image operation must
 at least prove successful-result cut semantics and sound real-image enclosure;
 it claims a tightness converse only when that converse is separately proved.
@@ -84,7 +93,8 @@ it claims a tightness converse only when that converse is separately proved.
 `HexIntervalMathlib.IntervalConformance` pins both directions of intersection
 membership, exact hull closure and both input inclusions, negation transport,
 addition, subtraction, and multiplication cut exactness and image transport,
-and the exact ordinary-kernel axiom surface.
+exact split membership/coverage/disjointness/point ownership, and the exact
+ordinary-kernel axiom surface.
 `HexIntervalMathlib.MinMaxConformance` separately pins exact selected cuts,
 both image enclosures, and their axiom surfaces; it does not assert a set-image
 converse.

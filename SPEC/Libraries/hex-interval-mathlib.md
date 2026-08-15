@@ -7,9 +7,12 @@ theorems for interval operations and propagators. It depends on Mathlib and
 
 The current supported surface interprets public canonical intervals over `ℝ`
 and proves exact semantics for successful resource-checked intersection, hull,
-negation, addition, subtraction, minimum, maximum, absolute value, and natural
-power. Natural power exposes exact computed cuts and a sound pointwise real
-image theorem, without claiming a set-image converse.
+negation, addition, subtraction, multiplication, minimum, maximum, absolute
+value, natural power, and transactional splitting. Natural power exposes exact
+computed cuts and a sound pointwise real image theorem, without claiming a
+set-image converse. Splitting exposes both children together and proves exact
+closed-left/strict-right membership, containment, cover, disjointness, and cut
+ownership.
 Propagator, provider, replay, and tactic modules remain experiments and are not
 re-exported by the public umbrella. The user-facing tactic contract below is
 the release target, not a claim that the tactic is already supported.
@@ -175,6 +178,14 @@ theorem abs_mem_absWithin
     (h : absWithin limit I = .ready result) :
     I.Contains x → result.Contains |x|
 
+theorem contains_mulWithin
+    (h : mulWithin limit I J = .ready result) :
+    result.Contains x ↔ I.view.MulContains J.view x
+
+theorem mul_mem_mulWithin
+    (h : mulWithin limit I J = .ready result) :
+    I.Contains x → J.Contains y → result.Contains (x * y)
+
 theorem contains_powWithin
     (h : powWithin limit workLimits I exponent = .ready result) :
     result.Contains x ↔ (I.view.powUnchecked exponent).Contains x
@@ -182,6 +193,35 @@ theorem contains_powWithin
 theorem pow_mem_powWithin
     (h : powWithin limit workLimits I exponent = .ready result) :
     I.Contains x → result.Contains (x ^ exponent)
+
+theorem contains_splitWithin_left
+    (h : splitWithin limit I point = .ready left right) :
+    left.Contains x ↔ I.Contains x ∧ x ≤ toReal point
+
+theorem contains_splitWithin_right
+    (h : splitWithin limit I point = .ready left right) :
+    right.Contains x ↔ I.Contains x ∧ toReal point < x
+
+theorem splitWithin_contained
+    (h : splitWithin limit I point = .ready left right) :
+    (left.Contains x → I.Contains x) ∧
+      (right.Contains x → I.Contains x)
+
+theorem splitWithin_cover
+    (h : splitWithin limit I point = .ready left right) :
+    I.Contains x → left.Contains x ∨ right.Contains x
+
+theorem splitWithin_disjoint
+    (h : splitWithin limit I point = .ready left right) :
+    ¬(left.Contains x ∧ right.Contains x)
+
+theorem splitWithin_point_left
+    (h : splitWithin limit I point = .ready left right) :
+    left.Contains (toReal point) ↔ I.Contains (toReal point)
+
+theorem splitWithin_point_not_right
+    (h : splitWithin limit I point = .ready left right) :
+    ¬right.Contains (toReal point)
 ```
 
 For two nonempty bounded raw inputs, `HullContains` is exactly
@@ -218,11 +258,17 @@ nonempty exponent zero, positive odd, and positive even cases; the even case
 maps the exact absolute-value hull. Neither operation exports an unproved
 set-image converse.
 
+Transactional splitting returns both sealed children or one resource refusal;
+it cannot expose a partial pair. Empty bypasses point inspection. For a
+nonempty input, the retained point, both finite source/point selectors, and
+both selected child normalization costs are admitted before final sealing.
+Successful children are exactly `I ∩ (-∞, point]` and
+`I ∩ (point, +∞)`, so they remain inside `I`, cover it, and are disjoint.
+
 The remaining target theorems include:
 
 ```lean
 theorem mem_intersect : x ∈ᵢ I → x ∈ᵢ J → x ∈ᵢ intersect I J
-theorem split_cover : x ∈ᵢ I → x ∈ᵢ (split I m).1 ∨ x ∈ᵢ (split I m).2
 theorem not_mem_empty : ¬x ∈ᵢ .empty
 ```
 

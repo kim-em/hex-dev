@@ -182,7 +182,8 @@ value's proof field.
 The initial supported slice exposes `view`, `empty`, `whole`, and endpoint-cost
 preflighted raw, singleton, one-sided, and finite constructors. The first
 supported operations are resource-checked intersection, hull, negation,
-addition, subtraction, minimum, maximum, absolute value, and natural power.
+addition, subtraction, multiplication, minimum, maximum, absolute value,
+natural power, and transactional splitting at a dyadic point.
 Their Mathlib companion proves exact computed-cut semantics and image theorems;
 the remaining arithmetic is promoted separately rather than being declared
 public merely because narrower experiment implementations exist. All public
@@ -438,7 +439,13 @@ def absWithin       : EndpointLimit → Interval → BuildResult
 def mulWithin       : EndpointLimit → Interval → Interval → Arithmetic.Result
 def powWithin       : EndpointLimit → Arithmetic.PowLimits → Interval → Nat →
   Arithmetic.Result
+def splitWithin     : EndpointLimit → Interval → Dyadic → SplitResult
 ```
+
+`SplitResult.ready left right` carries both children together;
+`SplitResult.resourceLimit cost` carries neither. This dedicated result keeps
+refusal distinct from both canonical empty children and makes a partial pair
+unrepresentable.
 
 These names retain the budget because a public interval does not store the
 limit under which it was constructed. Comparing endpoints admitted under two
@@ -482,6 +489,15 @@ endpoints are strict. The opposite-magnitude comparison is preflighted before
 the selector aligns finite dyadics, and the selected raw cuts then cross
 `ofRawWithin`. Thus an interval admitted under a larger earlier budget cannot
 force an unchecked alignment or silently turn refusal into empty.
+
+`splitWithin` is likewise direct and transactional. Empty short-circuits to
+two empty children without inspecting the point. For a nonempty source it
+first checks the retained point endpoint, then every finite source/point
+selector comparison, before running an unchecked selector. It next preflights
+the normalization cost of both raw candidates before constructing either
+sealed child. Success returns the canonical intersections with `(-∞, point]`
+and `(point, +∞)` together; any failed check returns one resource refusal and
+no child.
 
 Multiplication uses the separate checked-arithmetic result because growth
 refusal is distinct from both empty output and endpoint/comparison refusal.
@@ -583,8 +599,9 @@ is currently claimed.
 The public raw intersection and hull cut selectors, `intersectUnchecked`,
 `hullUnchecked`, `negUnchecked`, `addUnchecked`, `subUnchecked`, `minUnchecked`,
 `maxUnchecked`, `absUnchecked`, `powCutsUnchecked`, `powUnchecked`, and
-`mulUnchecked` are related to the checked operations by successful-result and
-semantic theorems. `powCutsUnchecked` is only the strictly monotone cut mapper;
+`mulUnchecked`, together with `splitUnchecked`, are related to the checked
+operations by successful-result and semantic theorems. `powCutsUnchecked` is
+only the strictly monotone cut mapper;
 its caller must establish the positive odd or nonnegative positive-exponent
 case. `powUnchecked` performs the zero/odd/even direct-hull selection. Like
 `Raw.normalizeUnchecked`, they
@@ -592,8 +609,7 @@ are decoder-level combinators: untrusted callers use the checked `Interval`
 operations above.
 
 The remaining target surface includes precision-indexed reciprocal and
-division,
-splitting, and regularization. Their public signatures are fixed only after an
+division and regularization. Their public signatures are fixed only after an
 allocation audit; no total API is promised for an operation that may align,
 compare, or enlarge arbitrary-precision endpoints.
 
@@ -640,12 +656,13 @@ tests also check the following exactness rules.
   contains a closed zero exactly when the input contains zero, and a tied
   magnitude extremum combines both contributing closure witnesses rather than
   copying one endpoint flag.
-- `split I m` returns `I ∩ (-∞,m]` and `I ∩ (m,+∞)`. The children are disjoint
-  and cover `I`.
+- `splitWithin limit I m` returns `I ∩ (-∞,m]` and `I ∩ (m,+∞)` together.
+  The left child owns `m` exactly when `I` does, the right child never owns
+  `m`, and the children are disjoint and cover `I`.
 - Empty is canonical. Unary image operations and regularization preserve empty;
   binary image and intersection operations absorb an empty argument; and
-  `split empty m = (empty, empty)`. Hull instead has empty as a two-sided
-  identity.
+  `splitWithin limit empty m = SplitResult.ready empty empty` without charging
+  the point. Hull instead has empty as a two-sided identity.
 - `pow I 0` is `{1}` for nonempty `I`, including unbounded `I`, and is `empty`
   for empty `I`. Thus the operation is the direct image of Lean's power
   function rather than a vacuously sound but noncanonical enclosure.

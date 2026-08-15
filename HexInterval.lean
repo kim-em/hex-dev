@@ -18,9 +18,10 @@ data, propagation search, and replayable derivations.
 The public implementation exposes canonical exact intervals through a sealed
 representation, resource-safe smart constructors, and resource-checked
 intersection, hull, negation, addition, subtraction, multiplication, minimum,
-maximum, absolute value, and natural power. The arithmetic resource layer
-preflights product growth, direct-power retained growth, and exponent work
-independently of exact comparison work. Raw cuts remain visible as the explicit
-decoder and inspection boundary; D2 propagation and replay experiments still
-live outside this supported umbrella.
+maximum, absolute value, natural power, and transactional splitting at a
+dyadic cut. The arithmetic resource layer preflights product growth,
+direct-power retained growth, and exponent work independently of exact
+comparison work. Raw cuts remain visible as the explicit decoder and inspection
+boundary; D2 propagation and replay experiments still live outside this
+supported umbrella.
 -/

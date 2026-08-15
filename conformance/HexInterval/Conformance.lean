@@ -432,6 +432,118 @@ private def absCrossFar : Hex.Interval :=
   | .ready interval => interval
   | .resourceLimit _ => Hex.Interval.empty
 
+-- Checked splitting is transactional: success carries both canonical
+-- children, with the point closed on the left and strict on the right.
+#guard
+  match Hex.Interval.splitWithin smallLimit closed12 (d 1) with
+  | .ready left right =>
+      left.view == finite 1 false 1 false &&
+        right.view == finite 1 true 2 false
+  | .resourceLimit _ => false
+
+#guard
+  match Hex.Interval.splitWithin smallLimit closed23 (d 2) with
+  | .ready left right =>
+      left.view == finite 2 false 2 false &&
+        right.view == finite 2 true 3 false
+  | .resourceLimit _ => false
+
+-- Whole has no source endpoints to select. A retained zero therefore produces
+-- the canonical closed-left/strict-right half-lines directly.
+#guard
+  match Hex.Interval.splitWithin smallLimit Hex.Interval.whole (d 0) with
+  | .ready left right =>
+      left.view == .bounds .unbounded (.finite (d 0) false) &&
+        right.view == .bounds (.finite (d 0) true) .unbounded
+  | .resourceLimit _ => false
+
+-- Point admission precedes every selector and child-normalization check, even
+-- when the source itself has no finite endpoints.
+#guard
+  match Hex.Interval.splitWithin smallLimit Hex.Interval.whole far with
+  | .ready _ _ => false
+  | .resourceLimit cost => cost.upper.exponentMagnitude == 1000000000
+
+-- A point outside the source gives one empty child and leaves the other
+-- source set unchanged; no partial result is observable.
+#guard
+  match Hex.Interval.splitWithin smallLimit closed12 (d 0) with
+  | .ready left right =>
+      left == Hex.Interval.empty && right == closed12
+  | .resourceLimit _ => false
+
+#guard
+  match Hex.Interval.splitWithin smallLimit closed12 (d 3) with
+  | .ready left right =>
+      left == closed12 && right == Hex.Interval.empty
+  | .resourceLimit _ => false
+
+-- Point ownership never adds a point excluded by the source interval.
+#guard
+  match Hex.Interval.splitWithin smallLimit openLower12 (d 1) with
+  | .ready left right =>
+      left == Hex.Interval.empty && right == openLower12
+  | .resourceLimit _ => false
+
+-- Empty bypasses point inspection and succeeds even for an endpoint that
+-- would be over budget on a nonempty source.
+#guard
+  match Hex.Interval.splitWithin smallLimit Hex.Interval.empty far with
+  | .ready left right =>
+      left == Hex.Interval.empty && right == Hex.Interval.empty
+  | .resourceLimit _ => false
+
+#guard
+  match Hex.Interval.splitWithin smallLimit closed12 far with
+  | .ready _ _ => false
+  | .resourceLimit cost => cost.upper.exponentMagnitude == 1000000000
+
+-- Once the point itself fits, each source-boundary selector comparison is
+-- still independently refused before the unchecked dyadic comparison can
+-- allocate its aligned mantissa.
+private def splitFar : Dyadic := .ofOdd 1 100 (by decide)
+
+#guard
+  match Hex.Interval.splitWithin smallLimit atLeastOne splitFar with
+  | .ready _ _ => false
+  | .resourceLimit cost => cost.alignmentShift == 100
+
+#guard
+  match Hex.Interval.splitWithin smallLimit atMostOne splitFar with
+  | .ready _ _ => false
+  | .resourceLimit cost => cost.alignmentShift == 100
+
+-- This bounded source was admitted with a ten-bit alignment budget. The
+-- outside point lies between the endpoint exponents, so both selector
+-- comparisons need only five bits, but the retained left child is the source
+-- itself and its final normalization still needs ten. This isolates the
+-- child-normalization preflight from point and selector refusal.
+private def splitChildLimit : EndpointLimit where
+  maxEndpointHeight := 16
+  maxAlignmentShift := 5
+
+private def splitSourceLimit : EndpointLimit where
+  maxEndpointHeight := 16
+  maxAlignmentShift := 10
+
+private def splitLower : Dyadic := .ofOdd 1 10 (by decide)
+private def splitOutside : Dyadic := .ofOdd 33 5 (by decide)
+
+private def splitWideSource : Hex.Interval :=
+  match Hex.Interval.betweenWithin splitSourceLimit
+      splitLower false (d 1) false with
+  | .ready interval => interval
+  | .resourceLimit _ => Hex.Interval.empty
+
+#guard (CompareCost.ofDyadic splitLower splitOutside).allowed splitChildLimit
+#guard (CompareCost.ofDyadic splitOutside (d 1)).allowed splitChildLimit
+#guard !(splitWideSource.view.normalizeCost.allowed splitChildLimit)
+
+#guard
+  match Hex.Interval.splitWithin splitChildLimit splitWideSource splitOutside with
+  | .ready _ _ => false
+  | .resourceLimit cost => cost.alignmentShift == 10
+
 -- Public intersection is exact at tied open/closed cuts, absorbs empty, and
 -- retains independently unbounded ends.
 #guard
@@ -476,6 +588,19 @@ private def farNegative : Hex.Interval :=
       { maxEndpointHeight := 1000000100, maxAlignmentShift := 64 } (-far) false with
   | .ready interval => interval
   | .resourceLimit _ => Hex.Interval.empty
+
+-- A source created under a larger budget is recharged at this operation's
+-- boundary; sealing the source does not let an oversized endpoint bypass the
+-- split preflight.
+#guard
+  match Hex.Interval.splitWithin smallLimit farLower (d 0) with
+  | .ready _ _ => false
+  | .resourceLimit cost => cost.lower.exponentMagnitude == 1000000000
+
+#guard
+  match Hex.Interval.splitWithin smallLimit farUpper (d 0) with
+  | .ready _ _ => false
+  | .resourceLimit cost => cost.upper.exponentMagnitude == 1000000000
 
 private def mediumFar : Dyadic := .ofOdd 1 200 (by decide)
 

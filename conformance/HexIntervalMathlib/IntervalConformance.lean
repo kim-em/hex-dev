@@ -144,6 +144,45 @@ theorem powImage {limit : Hex.Interval.EndpointLimit}
     (member : input.Contains x) : result.Contains (x ^ exponent) :=
   Hex.Interval.pow_mem_powWithin checked member
 
+/-- Successful splitting has exact closed-left membership. -/
+theorem splitLeft {limit : Hex.Interval.EndpointLimit}
+    {input left right : Hex.Interval} {point : Dyadic} {x : ℝ}
+    (checked : Hex.Interval.splitWithin limit input point = .ready left right) :
+    left.Contains x ↔ input.Contains x ∧ x ≤ Hex.Interval.toReal point :=
+  Hex.Interval.contains_splitWithin_left checked x
+
+/-- Successful splitting has exact strict-right membership. -/
+theorem splitRight {limit : Hex.Interval.EndpointLimit}
+    {input left right : Hex.Interval} {point : Dyadic} {x : ℝ}
+    (checked : Hex.Interval.splitWithin limit input point = .ready left right) :
+    right.Contains x ↔ input.Contains x ∧ Hex.Interval.toReal point < x :=
+  Hex.Interval.contains_splitWithin_right checked x
+
+/-- Both source subsets are produced by a successful transactional split. -/
+theorem splitCover {limit : Hex.Interval.EndpointLimit}
+    {input left right : Hex.Interval} {point : Dyadic} {x : ℝ}
+    (checked : Hex.Interval.splitWithin limit input point = .ready left right)
+    (member : input.Contains x) : left.Contains x ∨ right.Contains x :=
+  Hex.Interval.splitWithin_cover checked member
+
+/-- Closed-left/strict-right ownership makes successful children disjoint. -/
+theorem splitDisjoint {limit : Hex.Interval.EndpointLimit}
+    {input left right : Hex.Interval} {point : Dyadic} (x : ℝ)
+    (checked : Hex.Interval.splitWithin limit input point = .ready left right) :
+    ¬(left.Contains x ∧ right.Contains x) :=
+  Hex.Interval.splitWithin_disjoint checked x
+
+/-- The point is owned by the left child exactly when it was in the source,
+and is never owned by the right child. -/
+theorem splitPoint {limit : Hex.Interval.EndpointLimit}
+    {input left right : Hex.Interval} {point : Dyadic}
+    (checked : Hex.Interval.splitWithin limit input point = .ready left right) :
+    (left.Contains (Hex.Interval.toReal point) ↔
+        input.Contains (Hex.Interval.toReal point)) ∧
+      ¬right.Contains (Hex.Interval.toReal point) :=
+  ⟨Hex.Interval.splitWithin_point_left checked,
+    Hex.Interval.splitWithin_point_not_right checked⟩
+
 /-- info: 'Hex.IntervalMathlib.Conformance.intersectMember' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms intersectMember
@@ -207,5 +246,25 @@ theorem powImage {limit : Hex.Interval.EndpointLimit}
 /-- info: 'Hex.IntervalMathlib.Conformance.powImage' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms powImage
+
+/-- info: 'Hex.IntervalMathlib.Conformance.splitLeft' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms splitLeft
+
+/-- info: 'Hex.IntervalMathlib.Conformance.splitRight' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms splitRight
+
+/-- info: 'Hex.IntervalMathlib.Conformance.splitCover' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms splitCover
+
+/-- info: 'Hex.IntervalMathlib.Conformance.splitDisjoint' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms splitDisjoint
+
+/-- info: 'Hex.IntervalMathlib.Conformance.splitPoint' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms splitPoint
 
 end Hex.IntervalMathlib.Conformance
