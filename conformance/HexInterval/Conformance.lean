@@ -401,6 +401,9 @@ private def mixedLeft : Hex.Interval := ready (finite (-2) false 3 false)
 private def mixedRight : Hex.Interval := ready (finite (-4) false 5 false)
 private def nonnegative : Hex.Interval :=
   ready (.bounds (.finite (d 0) false) .unbounded)
+private def singletonThree : Hex.Interval := ready (finite 3 false 3 false)
+private def atMostNegOne : Hex.Interval :=
+  ready (.bounds .unbounded (.finite (d (-1)) false))
 private def half : Dyadic := .ofOdd 1 1 (by decide)
 private def singletonHalf : Hex.Interval :=
   ready (.bounds (.finite half false) (.finite half false))
@@ -618,6 +621,159 @@ private def mediumToOne : Hex.Interval :=
       { maxEndpointHeight := 256, maxAlignmentShift := 64 } mediumToOne with
   | .ready _ => false
   | .resourceLimit cost => cost.alignmentShift == 200
+
+-- Natural power keeps empty absorbing even at exponent zero, while every
+-- nonempty zero power is the singleton one.
+#guard
+  match Hex.Interval.powWithin smallLimit smallPowLimits
+      Hex.Interval.empty beyondUInt64 with
+  | .ready interval => interval == Hex.Interval.empty
+  | .resourceLimit _ => false
+
+-- Core's zero short circuit remains load-bearing through the public operation:
+-- an arbitrary large exponent does not consume the nonzero power-work budget.
+#guard
+  match Hex.Interval.powWithin smallLimit smallPowLimits
+      singletonZero beyondUInt64 with
+  | .ready interval => interval.view == finite 0 false 0 false
+  | .resourceLimit _ => false
+
+#guard
+  match Hex.Interval.powWithin smallLimit smallPowLimits closed01 0 with
+  | .ready interval => interval.view == finite 1 false 1 false
+  | .resourceLimit _ => false
+
+-- Positive odd powers are strictly monotone over all reals and map direct
+-- cuts, including negative/open and unbounded endpoints.
+#guard
+  match Hex.Interval.powWithin smallLimit smallPowLimits leftAbsOpen 3 with
+  | .ready interval => interval.view == finite (-8) true 1 false
+  | .resourceLimit _ => false
+
+#guard
+  match Hex.Interval.powWithin smallLimit smallPowLimits closedNeg21 3 with
+  | .ready interval => interval.view == finite (-8) false (-1) false
+  | .resourceLimit _ => false
+
+#guard
+  match Hex.Interval.powWithin smallLimit smallPowLimits atMostOne 3 with
+  | .ready interval =>
+      interval.view == .bounds .unbounded (.finite (d 1) false)
+  | .resourceLimit _ => false
+
+-- Positive even powers map the exact absolute-value hull. Strict zero is
+-- retained when zero is excluded on either sign-separated side; mixed-sign
+-- inputs contain zero and therefore close it.
+#guard
+  match Hex.Interval.powWithin smallLimit smallPowLimits openClosed01 2 with
+  | .ready interval => interval.view == finite 0 true 1 false
+  | .resourceLimit _ => false
+
+#guard
+  match Hex.Interval.powWithin smallLimit smallPowLimits negOneToOpenZero 2 with
+  | .ready interval => interval.view == finite 0 true 1 false
+  | .resourceLimit _ => false
+
+#guard
+  match Hex.Interval.powWithin smallLimit smallPowLimits closedNeg21 2 with
+  | .ready interval => interval.view == finite 1 false 4 false
+  | .resourceLimit _ => false
+
+#guard
+  match Hex.Interval.powWithin smallLimit smallPowLimits rightAbsOpen 2 with
+  | .ready interval => interval.view == finite 0 false 4 true
+  | .resourceLimit _ => false
+
+#guard
+  match Hex.Interval.powWithin smallLimit smallPowLimits leftAbsOpen 2 with
+  | .ready interval => interval.view == finite 0 false 4 true
+  | .resourceLimit _ => false
+
+#guard
+  match Hex.Interval.powWithin smallLimit smallPowLimits tiedAbsMixed 2 with
+  | .ready interval => interval.view == finite 0 false 1 false
+  | .resourceLimit _ => false
+
+#guard
+  match Hex.Interval.powWithin smallLimit smallPowLimits tiedAbsOpen 2 with
+  | .ready interval => interval.view == finite 0 false 1 true
+  | .resourceLimit _ => false
+
+#guard
+  match Hex.Interval.powWithin smallLimit smallPowLimits atMostNegOne 2 with
+  | .ready interval =>
+      interval.view == .bounds (.finite (d 1) false) .unbounded
+  | .resourceLimit _ => false
+
+#guard
+  match Hex.Interval.powWithin smallLimit smallPowLimits atMostOne 2 with
+  | .ready interval =>
+      interval.view == .bounds (.finite (d 0) false) .unbounded
+  | .resourceLimit _ => false
+
+#guard
+  match Hex.Interval.powWithin smallLimit smallPowLimits Hex.Interval.whole 2 with
+  | .ready interval =>
+      interval.view == .bounds (.finite (d 0) false) .unbounded
+  | .resourceLimit _ => false
+
+#guard
+  match Hex.Interval.powWithin smallLimit smallPowLimits
+      Hex.Interval.whole beyondUInt64 with
+  | .ready interval =>
+      interval.view == .bounds (.finite (d 0) false) .unbounded
+  | .resourceLimit _ => false
+
+#guard
+  match Hex.Interval.powWithin smallLimit smallPowLimits singletonNegOne 2 with
+  | .ready interval => interval.view == finite 1 false 1 false
+  | .resourceLimit _ => false
+
+#guard
+  match Hex.Interval.powWithin smallLimit smallPowLimits singletonZero 2 with
+  | .ready interval => interval.view == finite 0 false 0 false
+  | .resourceLimit _ => false
+
+-- Refusal categories remain distinct. Work refuses huge nonzero unit powers;
+-- growth refuses before `3^5`; even-power magnitude selection refuses before
+-- its wide comparison; and final normalization can still refuse independently
+-- after every endpoint power prerequisite succeeds.
+#guard
+  match Hex.Interval.powWithin smallLimit smallPowLimits
+      singletonOne beyondUInt64 with
+  | .resourceLimit (.power work) => work.exponent == beyondUInt64
+  | _ => false
+
+#guard
+  match Hex.Interval.powWithin smallLimit smallPowLimits
+      singletonNegOne beyondUInt64 with
+  | .resourceLimit (.power work) => work.exponent == beyondUInt64
+  | _ => false
+
+#guard
+  match Hex.Interval.powWithin eightBitLimit smallPowLimits singletonThree 5 with
+  | .resourceLimit (.growth cost) =>
+      cost.predicted.numeratorBits == 10 && !cost.allowed eightBitLimit
+  | _ => false
+
+#guard
+  match Hex.Interval.powWithin smallLimit smallPowLimits farNegative 1 with
+  | .resourceLimit (.endpoint cost) => cost.exponentMagnitude == 1000000000
+  | _ => false
+
+#guard
+  match Hex.Interval.powWithin
+      { maxEndpointHeight := 256, maxAlignmentShift := 64 }
+      smallPowLimits absCrossFar 2 with
+  | .resourceLimit (.comparison cost) => cost.alignmentShift == 200
+  | _ => false
+
+#guard
+  match Hex.Interval.powWithin
+      { maxEndpointHeight := 256, maxAlignmentShift := 64 }
+      smallPowLimits mediumToOne 1 with
+  | .resourceLimit (.comparison cost) => cost.alignmentShift == 200
+  | _ => false
 
 #guard
   match Hex.Interval.hullWithin smallLimit openAtOne openAtOne with

@@ -13,12 +13,13 @@ public import HexIntervalMathlib.Subtraction
 public import HexIntervalMathlib.MinMax
 public import HexIntervalMathlib.Absolute
 public import HexIntervalMathlib.Multiplication
+public import HexIntervalMathlib.Power
 
 public section
 
 /-!
 `HexIntervalMathlib` supplies Mathlib semantics and proof-facing theorems for
 the supported `Hex.Interval` operations, including resource-checked addition,
-subtraction, and multiplication, exact minimum/maximum images, and absolute
-value.
+subtraction, and multiplication, exact minimum/maximum images, absolute value,
+and natural power.
 -/

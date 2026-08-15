@@ -7,7 +7,9 @@ theorems for interval operations and propagators. It depends on Mathlib and
 
 The current supported surface interprets public canonical intervals over `ℝ`
 and proves exact semantics for successful resource-checked intersection, hull,
-negation, addition, subtraction, minimum, maximum, and absolute value.
+negation, addition, subtraction, minimum, maximum, absolute value, and natural
+power. Natural power exposes exact computed cuts and a sound pointwise real
+image theorem, without claiming a set-image converse.
 Propagator, provider, replay, and tactic modules remain experiments and are not
 re-exported by the public umbrella. The user-facing tactic contract below is
 the release target, not a claim that the tactic is already supported.
@@ -160,6 +162,26 @@ theorem contains_maxWithin
 theorem max_mem_maxWithin
     (h : maxWithin limit I J = .ready result) :
     I.Contains x → J.Contains y → result.Contains (max x y)
+
+theorem contains_absWithin
+    (h : absWithin limit I = .ready result) :
+    result.Contains x ↔ I.view.absUnchecked.Contains x
+
+theorem contains_absUnchecked
+    (h : raw.Contains x) :
+    raw.absUnchecked.Contains |x|
+
+theorem abs_mem_absWithin
+    (h : absWithin limit I = .ready result) :
+    I.Contains x → result.Contains |x|
+
+theorem contains_powWithin
+    (h : powWithin limit workLimits I exponent = .ready result) :
+    result.Contains x ↔ (I.view.powUnchecked exponent).Contains x
+
+theorem pow_mem_powWithin
+    (h : powWithin limit workLimits I exponent = .ready result) :
+    I.Contains x → result.Contains (x ^ exponent)
 ```
 
 For two nonempty bounded raw inputs, `HullContains` is exactly
@@ -189,6 +211,12 @@ upper-cut predicates; `MaxContains` uses the intersection of lower-cut
 predicates and union of upper-cut predicates. These characterize the exact
 computed cuts. The corresponding image theorems are one-way enclosures of
 pointwise real `min` and `max`; no converse set-image theorem is claimed.
+
+Absolute value and natural power likewise expose their exact normalized
+selected cuts and one-way pointwise image enclosures. Power distinguishes
+nonempty exponent zero, positive odd, and positive even cases; the even case
+maps the exact absolute-value hull. Neither operation exports an unproved
+set-image converse.
 
 The remaining target theorems include:
 

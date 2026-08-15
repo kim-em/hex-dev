@@ -71,7 +71,8 @@ private theorem abs_lt_tied {lower upper x : ℝ}
   · rw [abs_of_nonpos (le_of_not_ge nonnegative)]
     linarith
 
-private theorem rawContains_abs (raw : Raw) {x : ℝ}
+/-- Raw absolute-value cuts contain the absolute value of every source member. -/
+theorem contains_absUnchecked (raw : Raw) {x : ℝ}
     (member : raw.Contains x) : raw.absUnchecked.Contains |x| := by
   cases raw with
   | empty => simp [Raw.Contains] at member
@@ -211,6 +212,6 @@ theorem abs_mem_absWithin {limit : EndpointLimit}
     {input result : Hex.Interval} {x : ℝ}
     (checked : absWithin limit input = .ready result)
     (member : input.Contains x) : result.Contains |x| :=
-  (contains_absWithin checked |x|).2 (rawContains_abs input.view member)
+  (contains_absWithin checked |x|).2 (contains_absUnchecked input.view member)
 
 end Hex.Interval
