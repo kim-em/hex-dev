@@ -354,6 +354,223 @@ private def widePowLimits : Arithmetic.PowLimits where
   | .error (.power work) => work.exponent == beyondUInt64 + 1
   | _ => false
 
+/-! # Precision-indexed reciprocal/division resource prerequisite -/
+
+private def precisionLimits : Arithmetic.PrecisionLimits where
+  endpoint := { maxEndpointHeight := 18, maxAlignmentShift := 16 }
+  maxPrecisionMagnitude := 16
+  maxPrecisionBits := 8
+  maxTemporaryBits := 32
+
+-- The prerequisite authenticates Core's two rational-conversion shifts and
+-- retained result without computing the reciprocal.  Positive and negative
+-- `{3}` differ by the possible one-bit magnitude carry from flooring a
+-- negative rational.
+#guard
+  match Arithmetic.preflightInv precisionLimits (d 3) 8 with
+  | .ok (.checked cost) =>
+      cost.sources.length == 1 &&
+        cost.precision.magnitude == 8 && cost.precision.encodedBits == 4 &&
+        cost.conversionShift == 8 && cost.crossProduct.isNone &&
+        cost.rounding.numeratorBits == 9 && cost.rounding.denominatorBits == 2 &&
+        cost.quotientBits == 9 && cost.predictedResultHeight == 17 &&
+        cost.allowed precisionLimits
+  | _ => false
+
+#guard
+  match Arithmetic.preflightInv precisionLimits (d (-3)) 8 with
+  | .ok (.checked cost) =>
+      cost.rounding.numeratorBits == 9 &&
+        cost.quotientBits == 10 && cost.predictedResultHeight == 18 &&
+        cost.allowed precisionLimits
+  | _ => false
+
+-- Direct division records the reduced rational cross-product bounds.  These
+-- are not inferred from a comparison or from retained endpoint growth.
+#guard
+  match Arithmetic.preflightDiv precisionLimits (d 1) (d 3) 8 with
+  | .ok (.checked cost) =>
+      match cost.crossProduct with
+      | some cross =>
+          cross.numeratorBits == 1 && cross.denominatorBits == 2 &&
+            cost.predictedResultHeight == 17 && cost.allowed precisionLimits
+      | none => false
+  | _ => false
+
+#guard
+  match Arithmetic.preflightDiv precisionLimits (d (-1)) (d 3) 8 with
+  | .ok (.checked cost) =>
+      cost.predictedResultHeight == 18 && cost.allowed precisionLimits
+  | _ => false
+
+-- A zero numerator remains zero through positive-precision rounding instead
+-- of acquiring the precision's bit count. The nonzero denominator is still an
+-- admitted, load-bearing source.
+#guard
+  match Arithmetic.preflightDiv precisionLimits 0 (d 3) 8 with
+  | .ok (.checked cost) =>
+      cost.sources == [EndpointCost.ofDyadic 0, EndpointCost.ofDyadic (d 3)] &&
+        cost.rounding.numeratorBits == 0 && cost.quotientBits == 0 &&
+        cost.predictedResultHeight == 0 && cost.allowed precisionLimits
+  | _ => false
+
+#guard
+  match Arithmetic.preflightDiv precisionLimits 0 (d 3) (-8) with
+  | .ok (.checked cost) =>
+      cost.rounding.numeratorBits == 0 && cost.rounding.denominatorBits == 10 &&
+        cost.quotientBits == 0 && cost.predictedResultHeight == 0 &&
+        cost.allowed precisionLimits
+  | _ => false
+
+-- Core's zero cases do not inspect precision or enter rational conversion,
+-- but the plan preserves every endpoint cost admitted before the short cut.
+#guard
+  match Arithmetic.preflightInv precisionLimits 0 1024 with
+  | .ok (.zero sources) => sources == [EndpointCost.ofDyadic 0]
+  | _ => false
+#guard
+  match Arithmetic.preflightDiv precisionLimits (d 1) 0 1024 with
+  | .ok (.zero sources) =>
+      sources == [EndpointCost.ofDyadic (d 1), EndpointCost.ofDyadic 0]
+  | _ => false
+
+-- Precision magnitude and encoding are refused before either rational
+-- conversion or the source-exponent/precision metadata sum is formed.
+#guard
+  match Arithmetic.preflightInv precisionLimits (d 3) 1024 with
+  | .error (.precision cost) =>
+      cost.magnitude == 1024 && cost.encodedBits == 11 &&
+        !cost.allowed precisionLimits
+  | _ => false
+
+private def tightPrecisionBitsLimits : Arithmetic.PrecisionLimits :=
+  { precisionLimits with maxPrecisionMagnitude := 1024, maxPrecisionBits := 3 }
+
+-- Encoding size is an independent gate: magnitude eight is admitted while
+-- its four-bit encoding exceeds this deliberately smaller cap.
+#guard
+  match Arithmetic.preflightInv tightPrecisionBitsLimits (d 3) 8 with
+  | .error (.precision cost) =>
+      cost.magnitude == 8 && cost.encodedBits == 4 &&
+        cost.magnitude ≤ tightPrecisionBitsLimits.maxPrecisionMagnitude &&
+        !cost.allowed tightPrecisionBitsLimits
+  | _ => false
+
+private def inverseShiftInput : Dyadic := .ofOdd 3 (-8) (by decide)
+
+private def nonCancellingLimits : Arithmetic.PrecisionLimits where
+  endpoint := { maxEndpointHeight := 32, maxAlignmentShift := 15 }
+  maxPrecisionMagnitude := 16
+  maxPrecisionBits := 8
+  maxTemporaryBits := 32
+
+-- Core performs the source conversion and precision shifts separately.  The
+-- signed values `-8` and `8` cancel algebraically, but the allocation work is
+-- charged as `8 + 8` and refused before `toRat`.
+#guard
+  match Arithmetic.preflightInv nonCancellingLimits inverseShiftInput 8 with
+  | .error (.quotient cost) =>
+      cost.conversionShift == 16 &&
+        cost.predictedResultHeight == 17 && !cost.allowed nonCancellingLimits
+  | _ => false
+
+private def oversizedSource : Dyadic := .ofOdd 1 32 (by decide)
+
+-- Retained source admission precedes precision and rational-shape work.
+#guard
+  match Arithmetic.preflightInv precisionLimits oversizedSource 0 with
+  | .error (.endpoint cost) =>
+      cost.numeratorBits == 1 && cost.exponentMagnitude == 32 &&
+        !cost.allowed precisionLimits.endpoint
+  | _ => false
+
+-- When source and precision both exceed their limits, source admission wins
+-- deterministically and no precision metadata is consulted.
+#guard
+  match Arithmetic.preflightInv precisionLimits oversizedSource 1024 with
+  | .error (.endpoint cost) => cost == EndpointCost.ofDyadic oversizedSource
+  | _ => false
+
+private def convertedTemporary : Dyadic := .ofOdd 3 16 (by decide)
+
+private def tightConvertedLimits : Arithmetic.PrecisionLimits :=
+  { precisionLimits with maxTemporaryBits := 16 }
+
+-- The source and precision fit, but `toRat` would allocate a seventeen-bit
+-- power-of-two denominator. The converted-shape gate is therefore
+-- load-bearing independently of endpoint admission.
+#guard
+  match Arithmetic.preflightInv tightConvertedLimits convertedTemporary 0 with
+  | .error (.quotient cost) =>
+      cost.sources.all (EndpointCost.allowed tightConvertedLimits.endpoint) &&
+        cost.precision.allowed tightConvertedLimits &&
+        cost.converted == [{ numeratorBits := 2, denominatorBits := 17 }] &&
+        !cost.converted.all
+          (Arithmetic.RationalBound.allowed tightConvertedLimits.maxTemporaryBits) &&
+        !cost.allowed tightConvertedLimits
+  | _ => false
+
+private def tightResultLimits : Arithmetic.PrecisionLimits where
+  endpoint := { maxEndpointHeight := 16, maxAlignmentShift := 16 }
+  maxPrecisionMagnitude := 16
+  maxPrecisionBits := 8
+  maxTemporaryBits := 32
+
+-- Conversion and rounding temporaries fit, but the separately predicted
+-- retained result height does not.
+#guard
+  match Arithmetic.preflightInv tightResultLimits (d 3) 8 with
+  | .error (.quotient cost) =>
+      cost.conversionShift == 8 &&
+        cost.rounding.numeratorBits == 9 && cost.rounding.denominatorBits == 2 &&
+        cost.rounding.allowed tightResultLimits.maxTemporaryBits &&
+        cost.quotientBits == 9 && cost.predictedResultHeight == 17 &&
+        !cost.allowed tightResultLimits
+  | _ => false
+
+private def tightQuotientLimits : Arithmetic.PrecisionLimits :=
+  { precisionLimits with maxTemporaryBits := 9 }
+
+-- Negative flooring may add one quotient-magnitude bit. All rational
+-- temporaries fit nine bits, while the ten-bit integer quotient does not.
+#guard
+  match Arithmetic.preflightInv tightQuotientLimits (d (-3)) 8 with
+  | .error (.quotient cost) =>
+      cost.converted.all
+          (Arithmetic.RationalBound.allowed tightQuotientLimits.maxTemporaryBits) &&
+        cost.rounding.allowed tightQuotientLimits.maxTemporaryBits &&
+        cost.quotientBits == 10 &&
+        !(cost.quotientBits ≤ tightQuotientLimits.maxTemporaryBits) &&
+        cost.predictedResultHeight ≤ tightQuotientLimits.endpoint.maxEndpointHeight &&
+        !cost.allowed tightQuotientLimits
+  | _ => false
+
+private def oneOver256 : Dyadic := .ofOdd 1 8 (by decide)
+
+private def tightTemporaryLimits : Arithmetic.PrecisionLimits where
+  endpoint := { maxEndpointHeight := 16, maxAlignmentShift := 16 }
+  maxPrecisionMagnitude := 16
+  maxPrecisionBits := 8
+  maxTemporaryBits := 15
+
+-- Both retained sources and their `toRat` shapes fit, as does the predicted
+-- retained result.  Division is nevertheless refused because `Rat.mul` may
+-- allocate the sixteen-bit cross-product `255 * 256`.
+#guard
+  match Arithmetic.preflightDiv tightTemporaryLimits (d 255) oneOver256 0 with
+  | .error (.quotient cost) =>
+      cost.converted.all
+          (Arithmetic.RationalBound.allowed tightTemporaryLimits.maxTemporaryBits) &&
+        cost.conversionShift == 8 && cost.predictedResultHeight == 16 &&
+        match cost.crossProduct with
+        | some cross =>
+            cross.numeratorBits == 16 && cross.denominatorBits == 1 &&
+              !cross.allowed tightTemporaryLimits.maxTemporaryBits &&
+              cost.quotientBits == 16 &&
+              !cost.allowed tightTemporaryLimits
+        | none => false
+  | _ => false
+
 private def ready (raw : Raw) : Hex.Interval :=
   match Hex.Interval.ofRawWithin smallLimit raw with
   | .ready interval => interval

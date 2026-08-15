@@ -596,6 +596,45 @@ and upper-cut characterization after normalization, and the Mathlib companion pr
 product of source members belongs to it. No separate image-tightness converse
 is currently claimed.
 
+The public tree also contains the allocation prerequisite for
+precision-indexed reciprocal and division, but no `invWithin` or `divWithin`
+interval operation. Core `Dyadic.invAtPrec` converts a nonzero source through
+`Dyadic.toRat`, inverts the rational, then calls `Rat.toDyadic`; `divAtPrec`
+converts both sources and additionally runs reduced rational cross-products.
+Neither `CompareCost` nor `Arithmetic.Growth` accounts for those shifts or
+temporary numerators and denominators. `Arithmetic.PrecisionLimits` therefore
+retains the existing endpoint-height and aggregate-shift policy while adding
+separate precision-magnitude, encoded-precision, and rational-temporary bit
+limits. Its embedded `EndpointLimit.maxAlignmentShift` is deliberately reused
+as the cap on the sum of all source-conversion shift magnitudes plus the
+precision-shift magnitude: this is an aggregate allocation-work budget, not a
+claim that those signed shifts are one comparison alignment or may cancel.
+`Arithmetic.Cost.precision` refuses an oversized request before any
+source conversion or source-exponent/precision sum. After admitted precision,
+`Arithmetic.QuotientCost` records exact source conversion shapes, the sum of
+source exponent magnitudes and precision magnitude without signed
+cancellation, an explicit division cross-product bound, the `toDyadic` shift,
+and a conservative retained result-height bound. For positive precision the
+precision magnitude can occur once in the shifted quotient-bit bound and again
+in the canonical endpoint-height bound. This intentional doubled allowance
+avoids assuming how many trailing zeroes `Dyadic.ofIntWithPrec` will remove;
+zero quotients remain exactly zero-sized.
+
+`preflightInv` and `preflightDiv` construct only this metadata; they
+do not call the Core arithmetic. The reciprocal zero and division-by-zero
+paths record Core's no-conversion short circuit, although division first admits
+both retained public sources; their `QuotientPlan.zero` records those admitted
+source costs rather than discarding preflight provenance. The result-height
+bound deliberately allows one
+extra quotient-magnitude bit for negative floor rounding and does not use the
+denominator to claim cancellation. Conformance accepts positive and negative
+`{3}` prerequisites and separately exercises precision encoding, zero
+numerators, admitted zero-path sources, failure priority, converted and
+cross-product temporaries, quotient size, non-cancelling conversion shifts,
+and predicted retained result. Endpoint selection, outward cut direction,
+zero-crossing interval semantics, final canonicalization, Mathlib enclosure
+proofs, and the actual public inverse/division operations remain future work.
+
 The public raw intersection and hull cut selectors, `intersectUnchecked`,
 `hullUnchecked`, `negUnchecked`, `addUnchecked`, `subUnchecked`, `minUnchecked`,
 `maxUnchecked`, `absUnchecked`, `powCutsUnchecked`, `powUnchecked`, and
