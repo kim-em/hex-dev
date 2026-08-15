@@ -1720,6 +1720,29 @@ release requirements:
   intervals are refined or eliminated by independently registered sine or
   logarithm packages.
 
+The `IntegralCanary` experiment realizes the first fixed D10 quadrature leaf
+without treating the integral as a known constant.  Its Mathlib-free package
+emits an exact fixed one-cell record for `[0, 1]` containing the cell endpoints,
+eight Taylor terms, the integrated polynomial value
+`1009219 / 1351350`, the integrated remainder `1 / 609280`, and the requested
+four-decimal endpoints.  Kernel replay applies `Real.exp_bound` pointwise to
+`exp (-x^2)`, integrates the resulting `x^16` remainder, integrates each
+polynomial monomial exactly, and then closes the strict window through the
+generic chronology and `ProofFrontend`.  The replay theorem proves those fixed
+values rather than interpreting arbitrary numeric record fields.  Conformance
+therefore rejects any different record, including an omitted cell, an unproved
+tighter error denominator, and a changed right endpoint.
+
+This is deliberately a bounded one-cell canary, not the general integration
+provider.  It does not yet choose partitions or Taylor orders, accept an
+arbitrary integrand or interval, combine multiple cell certificates, perform
+adaptive refinement, persist quadrature tables, or establish useful
+performance.  Those capabilities, along with composite Simpson or higher
+order local models, remain D10 work; the canary establishes the certificate,
+analytic-error, and ordinary-theorem replay boundary they must reuse. A general
+provider must make decoded cell/order/approximation/remainder fields inputs to
+its proof rather than extend this fixed-record decoder.
+
 ### Zulip and downstream challenge sets
 
 The [IMO 2020 Q2 interval thread](https://leanprover.zulipchat.com/#narrow/channel/208328-IMO-grand-challenge/topic/IMO.202020/near/211282511)
