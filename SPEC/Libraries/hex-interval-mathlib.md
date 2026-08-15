@@ -1436,6 +1436,150 @@ big-integer bit-complexity model, production balanced folds, caching,
 comparative proof-size results, or coverage of the separate 128 BKLNW tactic
 sites and Table 10 workload.
 
+The first Table 10 shard pins all five coordinates of source row 25 as one
+batch. At PNT+ revision `21998bb6196b56789f72a52656a781a75e134eb0`, the
+tuple in `BKLNW_tables.lean` is
+`(25, 1.8251e-4, 4.5626e-3, 1.1407e-1, 2.8516e0, 7.1291e1)`, and declarations
+`table_10_row25_k1_margin` through `table_10_row25_k5_margin` prove
+`B_8_exact k 25 26 ≤ listed_k * table_10_margin`. The package pins
+`table_10_margin = 1.002001`, both integer endpoints, the three coefficient
+bounds, four exponential windows, and each row/column/listed/corrected cell.
+One bounded provider action installs five coordinate facts from one payload.
+
+Pinned `BKLNW_table10_dispatch.lean:bklnw_table_10_verification` takes
+`(b, B 1, B 2, B 3, B 4, B 5) ∈ table_10` and returns every column for
+`k ∈ Finset.Icc 1 5`. The shard's `sourceTable` copies the exact row-25 tuple,
+and `row25OfMem` keeps that membership/finite-column shape while strengthening
+the local numerical premise. This shard alone stops before the surrounding
+`B_8_exact` reduction; the shared exact bridge described below supplies it.
+
+The proof boundary reconstructs the source coefficient majorant, proves its
+two endpoint inequalities by exact rational arithmetic plus kernel-checked
+exponential windows, and proves convexity once for `k = 1` and once for the
+parameterized `k = m + 2`, `m ≤ 3`, family. One indexed replay schema and a
+generic frontend fold close all five source-shaped numeric inequalities. No
+LeanCert or PNT+ theorem is imported; PNT+ may replace the local numerical
+premise by this stronger, explicitly checked bridge.
+
+The source comment immediately above `table_10_row25_k5_margin` identifies
+the historical false target: the un-margined endpoint has
+`G₅(25) = 71.2922 > 71.291`. The canary changes only that coordinate's target
+to the listed value, decodes it, rejects it with coordinate code `205`, emits
+no draft or retry, and separately proves the endpoint inequality false in the
+kernel. A duplicated/wrong column is also rejected.
+
+This remains a coordinate-pinned D9 shard and is not by itself acceptance of
+the Table 10 family. The generated inventory's 87-target count is executable
+tactic-call granularity rather than a count of distinct row/column
+declarations.
+
+The parameterized convex-row batch adds the exact source tuples at
+`BKLNW_tables.lean:833–838`: rows 60, 65, 70, 75, 80, and 85, all five columns,
+and their respective next endpoints through 90. These thirty margin
+declarations share one source reduction, so one bounded payload authenticates
+the row order, coefficients, sixty rational endpoint inequalities, and all
+listed/corrected coordinates. The ordinary-kernel proof lifts the checked
+decimal powers to exponential bounds and reuses the generalized convexity
+proof; `rowOfMem` retains exact tuple membership and `k ∈ Finset.Icc 1 5`.
+Generic replay closes all thirty facts.
+
+Endpoint, coordinate, and cross-row-order mutations reject without drafts or
+precision retry. The batch replaces 60 executable endpoint calls in the
+thirty margin declarations; its stronger row-60/k=5 margin theorem also
+replaces the two calls in the separate bare theorem. This batch therefore
+covers 62 of 87 executable target occurrences.
+
+The pointwise-row batch adds the exact row-90 and row-95 source tuples at
+`BKLNW_tables.lean:839–840` and all ten declarations in
+`BKLNW_table10_rows_90_95.lean`. Those declarations share one
+`row_bound_pointwise` shape: the next row bounds `y^k`, the current row bounds
+the two decreasing exponentials, and a single numeric premise combines the
+row-specific `A₁`, `A₂`, and epsilon bounds. One bounded payload authenticates
+the row order, coefficients, ten exact listed/corrected cells, and ten rational
+majorants. The ordinary-kernel companion lifts the checked decimal powers to
+the real exponentials and exposes a tuple-membership/finite-column `rowOfMem`;
+generic replay closes all ten facts.
+
+A bare endpoint, wrong column, cross-row reorder, and wrong replay target
+reject without a draft or retry. The rational-majorant rejection is also an
+ordinary theorem.
+
+The large-decimal pointwise provider covers all five margin declarations for
+row `13800.7464` and the exact tuple at `BKLNW_tables.lean:1067`. Its bounded
+payload authenticates the fixed-point row, upper endpoint, coefficients,
+shared `1e-100` tail, and five listed/corrected cells. The Mathlib companion
+reuses the checked PNT exponential-tail theorem because both real exponential
+arguments are below `-231`; it then proves and generically replays the five
+complete rational premises without building a 13,800-step decimal power.
+Bare-target, wrong-column, wrong-row, and wrong-replay mutations reject without
+a draft or retry.
+
+The coupled logarithmic-transition provider adds the exact consecutive tuples
+at `BKLNW_tables.lean:815–816`, all ten remaining margin declarations, and the
+separate tighter `table_10_row43_k5` theorem for
+the intervals `43 → 19 * log 10` and `19 * log 10 → 44`. One bounded payload
+authenticates both rows and their chronology, coefficients, ten coordinates,
+the bare `3.1563` target, integer-endpoint bases, the shared `43.75`
+logarithmic point bound, and both
+exponential-tail bounds. Its Mathlib proof derives a two-sided `log 10` window
+from a finite logarithm series, proves the real row order, and connects the
+two tail fields to exact `rpow` identities. The same convexity and generic
+replay boundary then proves all ten margin premises, while a narrow exact
+adapter preserves the source's strictly tighter
+`B_8_exact 5 43 (19 * log 10) ≤ 3.1563` statement. A lowered bare target is a
+decoded no-draft mutation.
+
+False-target, wrong-coordinate, cross-row, base, logarithmic-point, and tail
+mutations reject without drafts or precision retry. The proof-side source
+tuple contains the exact real coordinate `19 * log 10`; the numeric runtime
+tag is only a decoder discriminator.
+
+The supporting `a₂` provider covers the exact 38 declarations
+`row21_a2_le` through `row24_a2_le` and `row26_a2_le` through `row59_a2_le`
+in `BKLNW_table10_rows_20_43.lean` and
+`BKLNW_table10_rows_44_59.lean`. All 38 instantiate the same source
+`a2_mid_le` reduction: an authenticated floor `⌊b / log 2⌋₊ = K`, explicit
+head terms `k = 3,…,12`, and `(K - 11)` tail terms bounded by the `k = 13`
+term. Rows 20 and 25 use a different pre-existing certified-bound shape and
+are not part of this 38-site family.
+
+One Mathlib-free source-indexed schema authenticates `(b, K)`, the exact
+rational target and scale, a two-sided 20-decimal `log 2` window, the
+package-owned twelve-decimal exponential-table scale, and the complete
+natural-number upper inequality. The ordinary-kernel companion reconstructs
+both arguments of the `max` in the copied PNT+ `Inputs.default.a₂`: it proves
+the `exp b` sum identity and separately bounds the
+`2^(floor (b/log 2)+1)` branch before applying one head-plus-tail theorem.
+Thus the migrated target numerics are not used as assumptions and there is no
+Table 10 circularity.
+
+All 38 source records pass the same bounded planner and replay schema.
+Argument, floor, log endpoint/scale, base scale, and false target mutations
+remain decodable but produce no draft; valid records are not interchangeable
+across replay models. The false endpoint is also refuted by an ordinary
+theorem. A representative row closes through generic package chronology and
+`ProofFrontend`, while `rowOfMem` supplies the parameterized source-dispatch
+boundary for every record.
+
+After localized PNT+ rewrites, the coordinate-pinned providers cover all 87
+executable target calls and all 38 supporting `a₂` calls. The shared
+`PntTable10Exact` bridge copies the exact two-term supremum shape, proves its
+equality with the unfolded source sum, and proves both the convex/full-interval
+and late-row pointwise reductions. Its five adapters preserve the exact source
+tuple and column hypotheses and consume the existing PNT+ coefficient facts.
+The pinned source has 287 rows and 1,435 row/column margin theorems. The 87
+migrated target tactic calls occur in 54 margin theorems plus two bare helper
+theorems. The row-43 bare statement is reproduced at its original `3.1563`
+endpoint by the tighter checked adapter; the row-60 bare statement is implied
+by its stronger checked margin result. Both source theorem statements are
+therefore preserved. The remaining 1,381 row/column margin theorems and the
+generated dispatcher are already ordinary PNT+/Mathlib proofs and remain
+unchanged.
+
+The exact pinned Table 10 interface is accepted after this localized rewrite.
+Arbitrary caller-supplied tables and production performance remain future
+work; this is not LeanCert API compatibility.
+
 The coordinate-aware Table 12 implementation is a bounded acceptance fixture
 that completes this family migration. At PNT+ commit
 `21998bb6196b56789f72a52656a781a75e134eb0`, the exact declaration is
@@ -1552,10 +1696,11 @@ release criterion. It must cover, at minimum:
   rows by five columns. The row partition is structurally derived from the
   exact pinned list definition, including a first tuple placed on the opening
   bracket's line; the five-column expansion is a reviewed reading of the
-  theorem's conjunction and tactic structure. Table 10 is currently recorded
-  at executable call-site granularity; complete row/column expansion is part
-  of its D9 shard work. Both families are recorded separately from their
-  aggregate source counts; and
+  theorem's conjunction and tactic structure. Table 10 is recorded at
+  executable call-site granularity: all 87 target and 38 supporting `a₂` calls
+  have bounded providers and ordinary exact-supremum adapters. The unaffected
+  row proofs and finite dispatcher remain in PNT+; both Table families are
+  recorded separately from their aggregate source counts; and
 - all 17 remaining textual occurrences, of which 16 are actual tactic
   invocations, in `Dusart.lean`, `FKS2.lean`, `FKS2Cor23Cor14Tail.lean`,
   `FKS2Floor/Cor22Floor.lean`, and `Goldbach.lean`.
@@ -2079,10 +2224,13 @@ The committed compatibility subset is `D8` unless marked `D9`:
 - representative `10^-20` and `10^-100` tail bounds;
 - BKLNW sums with every source upper limit 29, 37, 44, 51, 58, 63, 145, 217,
   289, 361, and 433;
-- `[D9]` one Table 10 shard and the recorded false target as an expected
-  failure. The shard fixture must bind the intended paper row/column
-  coordinates and generated theorem family, not merely replay 87 target and 38
-  supporting source-level tactic sites;
+- `[D9]` coordinate-pinned Table 10 providers bind all 87 target-numeric calls,
+  including the coupled logarithmic transition, and reject recorded or
+  injected false targets with kernel falsity proofs. One parameterized
+  head-plus-tail provider also binds all 38 supporting `a₂` calls without
+  assuming those target numerics. Generic full-interval and pointwise bridges
+  recover the exact unfolded `B_8_exact` statements, so the pinned interface is
+  accepted after localized rewrite;
 - `[D9]` the 130-case Table 12 batch, plus one of its four false
   original boundary rows as an expected failure;
 - `[D9]` a small deterministic FKS2 sample in per-PR `core`, a measured medium
@@ -2734,6 +2882,9 @@ the fixed soundness and trust contracts.
   enclosures.
 - `HexIntervalMathlib/Elementary/{SinCos,ExpLog,Sqrt,Constants}.lean`:
   elementary point and range rules.
+- `HexIntervalMathlib/Experiment/PntTable10Exact.lean`: the exact unfolded
+  BKLNW supremum, full-interval and pointwise reduction theorems, and the five
+  source-pinned adapters completing the Table 10 localized rewrite.
 - `HexIntervalMathlib/Contractor.lean`: backwards propagation theorems.
 - `HexIntervalMathlib/Tactic.lean`: `interval`, `interval?`, and
   `interval_bound`.

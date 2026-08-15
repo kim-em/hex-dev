@@ -329,6 +329,12 @@ lean_lib HexIntervalExperiment where
     `HexInterval.Experiment.PntExpTail,
     `HexInterval.Experiment.PntTable12,
     `HexInterval.Experiment.PntTable12Ordinary,
+    `HexInterval.Experiment.PntTable10Shard,
+    `HexInterval.Experiment.PntTable10Convex,
+    `HexInterval.Experiment.PntTable10Pointwise,
+    `HexInterval.Experiment.PntTable10LargePointwise,
+    `HexInterval.Experiment.PntTable10LogCoupled,
+    `HexInterval.Experiment.PntTable10A2,
     `HexInterval.Experiment.PntTable12Log,
     `HexInterval.Experiment.PntFks2ShardData,
     `HexInterval.Experiment.PntFks2Shard,
@@ -366,6 +372,13 @@ lean_lib HexIntervalMathlibExperiment where
     `HexIntervalMathlib.Experiment.PntExpTail,
     `HexIntervalMathlib.Experiment.PntTable12,
     `HexIntervalMathlib.Experiment.PntTable12Ordinary,
+    `HexIntervalMathlib.Experiment.PntTable10Shard,
+    `HexIntervalMathlib.Experiment.PntTable10Convex,
+    `HexIntervalMathlib.Experiment.PntTable10Pointwise,
+    `HexIntervalMathlib.Experiment.PntTable10LargePointwise,
+    `HexIntervalMathlib.Experiment.PntTable10LogCoupled,
+    `HexIntervalMathlib.Experiment.PntTable10A2,
+    `HexIntervalMathlib.Experiment.PntTable10Exact,
     `HexIntervalMathlib.Experiment.PntTable12Log,
     `HexIntervalMathlib.Experiment.PntFks2Shard,
     `HexIntervalMathlib.Experiment.CosBillion,
@@ -451,6 +464,14 @@ lean_lib HexRCFProofProbeScientific where
 lean_lib HexConformance where
   srcDir := "conformance"
   globs := #[`HexArith.Conformance, `HexArith.CrossCheck, `HexBerlekamp.Conformance, `HexBerlekampZassenhaus.Conformance, `HexBerlekampZassenhaus.CrossCheck, `HexConway.Conformance, `HexGF2.Conformance, `HexGF2.CrossCheck, `HexGF2.FastCheck, `HexGFq.Conformance, `HexGFq.CrossCheck, `HexGFqField.Conformance, `HexGFqRing.Conformance, `HexGramSchmidt.Conformance, `HexHensel.Conformance, `HexHensel.CrossCheck, `HexInterval.Conformance, `HexIntervalMathlib.IntervalConformance, `HexInterval.CenterConformance, `HexInterval.ScaleConformance, `HexInterval.PropagatorConformance, `HexInterval.ScopeConformance, `HexInterval.StructuralMatcherConformance, `HexInterval.MatcherSchedulerConformance, `HexInterval.NestedBranchConformance, `HexInterval.StructureViewConformance, `HexInterval.PolicyConformance, `HexInterval.PolicyFrontierConformance, `HexInterval.PolicyDriverConformance, `HexInterval.PackageRegistryConformance, `HexInterval.DyadicIntervalConformance, `HexInterval.DyadicRulesConformance, `HexInterval.PayloadArenaConformance, `HexInterval.PayloadSessionConformance, `HexInterval.PolicySessionConformance, `HexInterval.PolicyFunctionConformance, `HexInterval.SemanticReplayConformance, `HexInterval.ChronologicalReplayConformance, `HexInterval.GenericInstanceReconstructionConformance, `HexInterval.ProofEmitterConformance, `HexInterval.TraceReplayConformance, `HexInterval.SinTenIntervalConformance, `HexIntervalMathlib.DyadicIntervalConformance, `HexIntervalMathlib.CenteredConformance, `HexIntervalMathlib.SineSignConformance, `HexIntervalMathlib.SineProofConformance, `HexIntervalMathlib.SineTacticConformance, `HexIntervalMathlib.ProofRegistryConformance, `HexIntervalMathlib.ExpSignConformance, `HexIntervalMathlib.ReluConformance, `HexIntervalMathlib.RefuteConformance, `HexIntervalMathlib.PntLogTableConformance, `HexIntervalMathlib.PntNestedLogConformance, `HexIntervalMathlib.PntExpTailConformance, `HexIntervalMathlib.PntTable12Conformance, `HexIntervalMathlib.PntTable12OrdinaryConformance, `HexIntervalAlgebraic.PolynomialDispatchConformance, `HexIntervalMathlib.PntTable12LogConformance, `HexIntervalMathlib.PntFks2ShardConformance, `HexIntervalMathlib.LogTablePrecisionConformance, `HexIntervalMathlib.IntegralCanaryConformance, `HexIntervalMathlib.PntBKLNWExpConformance, `HexIntervalMathlib.PntBKLNWPowConformance, `HexIntervalMathlib.SinTenConformance, `HexIntervalMathlib.SinTenIntervalConformance, `HexIntervalMathlib.CosBillionConformance, `HexLLL.Conformance, `HexMatrix.Conformance, `HexMvPolyFixtures, `HexMvPoly.Conformance, `HexMvPolyMathlib.Conformance, `HexRowReduce.Conformance, `HexDeterminant.Conformance, `HexBareiss.Conformance, `HexModArith.Conformance, `HexModArith.FastCheck, `HexNumberField.Conformance, `HexNumberFieldTower.Conformance, `HexPoly.Conformance, `HexPolyFp.Conformance, `HexPolyZ.Conformance, `HexRCF.Conformance, `HexRealRoots.Conformance, `HexRealRootsMathlib.Conformance, `HexResultant.Conformance, `HexRoots.Conformance].map Glob.one
+
+    ++ #[`HexIntervalMathlib.PntTable10ShardConformance,
+      `HexIntervalMathlib.PntTable10ConvexConformance,
+      `HexIntervalMathlib.PntTable10PointwiseConformance,
+      `HexIntervalMathlib.PntTable10LargePointwiseConformance,
+      `HexIntervalMathlib.PntTable10LogCoupledConformance,
+      `HexIntervalMathlib.PntTable10A2Conformance,
+      `HexIntervalMathlib.PntTable10ExactConformance].map Glob.one
 
     ++ #[`HexInterval.MinMaxConformance,
       `HexIntervalMathlib.MinMaxConformance].map Glob.one
