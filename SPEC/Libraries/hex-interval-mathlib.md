@@ -1446,15 +1446,34 @@ grossly low cut `20` is false at `n = 31`; exact endpoint fidelity comes from
 the offline mechanical comparison of all sixty committed source snippets with
 both local source tables, not from that theorem or a precision retry.
 
-The next broad dependency-interface candidates remain distinct work. A
-package-owned replacement for `LeanCert.CertifiedBounds.Chebyshev` needs a
-checked variable-input logarithm provider for the prime and prime-power folds
-through 11,723; the current precision table certifies only fixed inputs.
-`LeanCert.CertifiedBounds.Li2` additionally needs subdivision and reciprocal-
-log range machinery for its symmetric integral. The pinned public LeanCert
-lower and upper declarations are admitted, so merely importing those names
-would not meet Hex's kernel-only contract. These are concrete provider gaps,
-not reasons to reproduce either LeanCert API.
+The medium-range Chebyshev vertical closes the exact pinned theorem
+
+```lean
+theorem psi_num_2 (x : ℝ) (hx : x > 0) (hx2 : x ≤ 11723) :
+    Chebyshev.psi x ≤ 1.11 * x
+```
+
+without importing LeanCert. `PntChebyshevProbe.logData_log_le` is a generic
+positive-integer logarithm upper enclosure: it reduces by a power of two,
+uses two atanh terms with an exact geometric remainder, and rounds upward to
+tenths. A bounded trial-division classifier and exact non-prime prime-power
+table choose the von Mangoldt contribution at every coordinate through
+`11723`. The accumulated natural-number inequalities are split into 46
+ordinary-kernel certificates of at most 256 coordinates and joined by a
+shared structural replay theorem. Twelve sequential chunk modules bound
+elaboration and retained proof terms; no `native_decide`, imported PNT+
+theorem, or LeanCert declaration is kernel evidence.
+
+This accepts only the pinned `allChecks_11723` native-evaluation site after a
+localized rewrite to the package-owned checker. It does not claim a generic
+runtime `ProofFrontend` action or LeanCert API compatibility. The shared
+`LeanCert.CertifiedBounds.Chebyshev` dependency/import records remain pending:
+PNT+ also consumes theta bounds through `22027` in the FKS2-floor development
+and through `599` in the Ramanujan development. `LeanCert.CertifiedBounds.Li2`
+likewise still needs subdivision and reciprocal-log range machinery for its
+symmetric integral. The pinned public LeanCert lower and upper declarations
+are admitted, so merely importing those names would not meet Hex's kernel-only
+contract.
 
 The next classified acceptance probe covers the numerical leaf in
 `LogTables.exp_neg_lt_1e_neg_100` while preserving the source theorem's useful
@@ -3111,6 +3130,14 @@ the fixed soundness and trust contracts.
 - `conformance/HexIntervalMathlib/PntPrimeLogSmallConformance.lean`: source
   coordinate guards, both bounded theorem shapes, false-cut rejection, and
   guarded axiom reports.
+- `HexIntervalMathlib/Experiment/PntChebyshevProbe.lean`: shared checked
+  positive-integer logarithm, bounded primality/prime-power provider, and
+  structural Chebyshev fold semantics through `11723`.
+- `HexIntervalMathlib/Experiment/PntChebyshevChunk*.lean`: 46 bounded
+  coordinate certificates arranged in twelve sequential replay modules;
+  `PntChebyshev.lean` closes the natural and exact real source theorem shapes.
+- `conformance/HexIntervalMathlib/PntChebyshevConformance.lean`: chunk-boundary,
+  false-prime, false-prime-power, source-shape, and guarded axiom checks.
 
 Unlike a correspondence-only companion, `hex-interval-mathlib` contains an
 executable reifier, rule registry, and tactic. Its own conformance target tests

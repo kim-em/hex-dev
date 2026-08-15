@@ -347,6 +347,16 @@ theorem checkState_add (start count acc : Nat)
       rw [ih']
       simp only [Nat.add_eq]
 
+/-- Join one checked bounded chunk to an authenticated prefix state. -/
+theorem advance {start count acc next : Nat}
+    (prefixState : checkState start = (acc, true))
+    (chunkCert : checkChunk start count acc = (next, true)) :
+    checkState (start + count) = (next, true) :=
+  (checkState_add start count acc prefixState).trans chunkCert
+
+/-- The empty prefix starts with an exact zero accumulator. -/
+theorem stateZero : checkState 0 = (0, true) := rfl
+
 /-- A true prefix state contains every individual slope comparison in that
 prefix. -/
 theorem checkState_bound {bound : Nat} (hcheck : (checkState bound).2 = true)
@@ -397,11 +407,6 @@ theorem psi_nat_of_state
     exact_mod_cast arithmetic
   norm_num at arithmetic ⊢
   nlinarith [arithmeticReal]
-
-set_option maxRecDepth 100000 in
-example : checkChunk 0 256 0 = (2574, true) := by decide
-set_option maxRecDepth 100000 in
-example : checkChunk 11520 203 116961 = (118671, true) := by decide
 
 end Hex.IntervalMathlib.Experiment.PntChebyshevProbe
 
