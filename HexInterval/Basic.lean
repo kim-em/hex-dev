@@ -14,15 +14,15 @@ public import Init.Data.Dyadic
 # Exact interval cuts
 
 This module defines the representation-independent raw data shared by the
-`hex-interval` representation experiments.  A finite cut carries its exact
+`hex-interval` representation and replay layers.  A finite cut carries its exact
 dyadic value and a strictness bit; either side may instead be unbounded.
 
 `Raw.normalizeUnchecked` is the exact canonicalizer for values that have
 already passed an endpoint-cost preflight. `Raw.normalizeWithin` is the safe
 entry point for untrusted values: it rejects an excessive dyadic height or
-alignment shift before comparison can allocate a shifted mantissa. The
-eventual opaque `Hex.Interval` backing store will be selected by the D2
-measurements; neither candidate is baked into this module.
+alignment shift before comparison can allocate a shifted mantissa. The sealed
+`Hex.Interval` wrapper selected by the D2 measurements lives in
+`HexInterval.Canonical`; this module remains the explicit raw decoder boundary.
 -/
 
 namespace Hex.Interval

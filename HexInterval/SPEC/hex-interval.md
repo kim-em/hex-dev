@@ -127,12 +127,12 @@ validator, checker soundness theorem, and native absence/rejection fallback.
 
 ## Interval representation
 
-The semantic shape is intentionally small. The exact constructors and the
-placement of the canonicity invariant remain experimental, but the observable
-distinctions below are part of the contract. `Dyadic` means Lean core's
-`Init.Data.Dyadic` type. The rounding precision used by the initial dyadic
-backend is signed `Int`, as in core; negative values are needed for coarse
-grids at large magnitudes.
+The semantic shape is intentionally small. The D2 measurement selected a
+sealed public value carrying canonical raw cuts and their consistency proof;
+the observable distinctions below are part of the contract. `Dyadic` means
+Lean core's `Init.Data.Dyadic` type. The rounding precision used by the initial
+dyadic backend is signed `Int`, as in core; negative values are needed for
+coarse grids at large magnitudes.
 
 ```lean
 namespace Hex
@@ -156,24 +156,38 @@ end Interval
 end Hex
 ```
 
-`Raw` avoids shadowing Lean's `Repr` typeclass. The public `Hex.Interval` is an
-opaque API with a `view : Hex.Interval → Hex.Interval.Raw` eliminator, smart
-constructors, and normalization; consumers do not project its backing store.
-Two internal candidates must be compared during the vertical feasibility
-prototype:
+`Raw` avoids shadowing Lean's `Repr` typeclass. The public `Hex.Interval` is a
+sealed API with a canonical `view`, smart constructors, and normalization. Its
+constructor and consistency proof are private. Two internal candidates were
+compared during the vertical feasibility prototype:
 
 1. a structure bundling `raw : Raw` with a proof of `raw.CutConsistent`;
 2. plain data whose `Bool`-valued consistency and normalization are checked at
    construction or replay boundaries, without carrying a proof in every hot
    value.
 
-The comparison measures compiled search, ordinary kernel replay, proof bytes,
-allocation, and whether a proof field obstructs safe `#eval`. The SPEC freezes
-neither candidate before that measurement. All public examples use the fully
-qualified `Hex.Interval`, because Mathlib also has a root `Interval` type; the
-public namespace is itself revisitable before release if qualification proves
-awkward. Unless a block explicitly says otherwise, unqualified API sketches
-below are declarations inside `Hex.Interval`.
+The refreshed five-sample comparison at repository commit `31024b715` and Lean
+`v4.33.0-rc1` records both 433-value and 4096-value workloads in
+`reports/bench-results/hex-interval-d2-representation.json`. The checked hot
+loop is within two percent of the bundled loop, while revalidating the checked
+arena at the boundary costs about twelve percent relative to using the bundled
+invariant. Generated C and object sizes are identical because the proof field
+erases. Kernel replay and WHNF timings favor different candidates and are noisy
+after import-baseline subtraction; they do not justify moving validation into
+every trust boundary. The public value therefore uses the bundled invariant.
+Internal planners and certificates may still use plain data when their own
+checked boundary authenticates it; proof traces do not inherit the public
+value's proof field.
+
+The initial supported slice exposes `view`, `empty`, `whole`, and endpoint-cost
+preflighted raw, singleton, one-sided, and finite constructors. Arithmetic is
+promoted separately with its complete semantic theorems rather than being
+declared public merely because narrower experiment implementations exist. All
+public examples use the fully qualified `Hex.Interval`, because Mathlib also
+has a root `Interval` type; the public namespace is itself revisitable before
+release if qualification proves awkward. Unless a block explicitly says
+otherwise, unqualified API sketches below are declarations inside
+`Hex.Interval`.
 
 The bundled candidate now has a Mathlib companion interpreting every canonical
 fact as a subset of `ℝ`. It proves that a successful executable `intersect`
@@ -181,9 +195,10 @@ denotes logical conjunction for the complete cut language: strict and closed
 ends, tied endpoints, empty results, and either end unbounded. That theorem is
 installed as the generic `FactDomainSchema.proveMeet` boundary, and the
 transparent proof frontend uses it to close a weaker requested interval from a
-stronger established one. This validates the semantic interface without
-settling the representation comparison or adding a function case to the
-frontend.
+stronger established one. This validated the semantic interface used to select
+the public bundled representation without adding a function case to the
+frontend. Porting that complete semantic theorem from the experiment companion
+to the supported public value accompanies the public `intersect` operation.
 
 The comments describe cuts as viewed from outside the interval. In semantic
 notation, a finite lower cut `(a, false)` means `a ≤ x`, and `(a, true)` means
@@ -3840,9 +3855,12 @@ their declared cost inside a scheduler bound.
 
 ## File organization
 
-- `HexInterval/Bound.lean`: lower and upper cuts, comparison, normalization.
-- `HexInterval/Interval.lean`: intersection, hull, arithmetic, splitting, and
-  regularization.
+- `HexInterval/Basic.lean`: raw lower and upper cuts, comparison, and
+  normalization.
+- `HexInterval/Canonical.lean`: sealed canonical values, views, and
+  resource-safe smart constructors.
+- `HexInterval/Interval.lean`: future supported intersection, hull, arithmetic,
+  splitting, and regularization operations.
 - `HexInterval/Program.lean`: node identifiers, SSA program, dependencies.
 - `HexInterval/Fact.lean`: facts, versions, provenance, contradiction checks.
 - `HexInterval/Action.lean`: requests, outcomes, suggestions, observations.

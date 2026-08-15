@@ -4,13 +4,15 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
+import HexInterval
 import HexInterval.Experiment.Representation
 
 /-!
 Conformance checks for exact raw interval cuts and canonical normalization.
 The table covers every finite closure combination, both one-sided unbounded
 shapes, the whole interval, the unique empty value, proper singletons, all
-three empty equal-endpoint shapes, and reversed endpoints.
+three empty equal-endpoint shapes, and reversed endpoints.  It also pins the
+sealed public representation and its resource-safe constructors.
 -/
 
 namespace Hex.Interval.Conformance
@@ -90,5 +92,42 @@ private def far : Dyadic := .ofOdd 1 1000000000 (by decide)
       (.bounds .unbounded (.finite far false)) with
   | .ready _ _ => false
   | .resourceLimit cost => cost.upper.exponentMagnitude == 1000000000
+
+-- Public construction exposes the same canonical views without exposing a
+-- constructor or representation field.
+#guard Hex.Interval.empty.view == .empty
+#guard Hex.Interval.whole.view == .bounds .unbounded .unbounded
+#guard decide (Hex.Interval.empty ≠ Hex.Interval.whole)
+
+#guard
+  match Hex.Interval.betweenWithin smallLimit (d 0) false (d 1) true with
+  | .ready interval => interval.view == finite 0 false 1 true
+  | .resourceLimit _ => false
+
+#guard
+  match Hex.Interval.betweenWithin smallLimit (d 2) false (d 1) false with
+  | .ready interval => interval.view == .empty
+  | .resourceLimit _ => false
+
+#guard
+  match Hex.Interval.singletonWithin smallLimit (d 1) with
+  | .ready interval => interval.view == finite 1 false 1 false
+  | .resourceLimit _ => false
+
+#guard
+  match Hex.Interval.belowWithin smallLimit far false with
+  | .ready _ => false
+  | .resourceLimit cost => cost.upper.exponentMagnitude == 1000000000
+
+example (interval : Hex.Interval) : interval.view.CutConsistent :=
+  Hex.Interval.view_consistent interval
+
+example {limit : EndpointLimit} {raw : Raw} {interval : Hex.Interval}
+    (h : Hex.Interval.ofRawWithin limit raw = .ready interval) :
+    interval.view = raw.normalizeUnchecked :=
+  Hex.Interval.view_ofRawWithin_ready h
+
+example (left right : Hex.Interval) (h : left.view = right.view) : left = right :=
+  Hex.Interval.ext h
 
 end Hex.Interval.Conformance
