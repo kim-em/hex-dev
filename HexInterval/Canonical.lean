@@ -38,7 +38,7 @@ theorem view_consistent (interval : Hex.Interval) : interval.view.CutConsistent 
 
 /-- Equality of canonical views determines equality of public intervals. -/
 @[ext]
-opaque ext {left right : Hex.Interval} (h : left.view = right.view) : left = right := by
+theorem ext {left right : Hex.Interval} (h : left.view = right.view) : left = right := by
   cases left
   cases right
   simp_all
@@ -64,7 +64,7 @@ def ofRawWithin (limit : EndpointLimit) (raw : Raw) : BuildResult :=
 
 /-- A successful untrusted construction exposes exactly the canonicalized
 input cuts. -/
-opaque view_ofRawWithin_ready {limit : EndpointLimit} {raw : Raw}
+theorem view_ofRawWithin_ready {limit : EndpointLimit} {raw : Raw}
     {interval : Hex.Interval} (h : ofRawWithin limit raw = .ready interval) :
     interval.view = raw.normalizeUnchecked := by
   unfold ofRawWithin at h
@@ -106,10 +106,10 @@ def betweenWithin (limit : EndpointLimit)
     (.bounds (.finite lower lowerStrict) (.finite upper upperStrict))
 
 @[simp]
-opaque view_empty : empty.view = .empty := by rfl
+theorem view_empty : empty.view = .empty := by rfl
 
 @[simp]
-opaque view_whole : whole.view = .bounds .unbounded .unbounded := by rfl
+theorem view_whole : whole.view = .bounds .unbounded .unbounded := by rfl
 
 end Interval
 end Hex
