@@ -183,7 +183,8 @@ The initial supported slice exposes `view`, `empty`, `whole`, and endpoint-cost
 preflighted raw, singleton, one-sided, and finite constructors. The first
 supported operations are resource-checked intersection, hull, negation,
 addition, subtraction, multiplication, minimum, maximum, absolute value,
-natural power, and transactional splitting at a dyadic point.
+natural power, outward regularization, and transactional splitting at a dyadic
+point.
 Their Mathlib companion proves exact computed-cut semantics and image theorems;
 the remaining arithmetic is promoted separately rather than being declared
 public merely because narrower experiment implementations exist. All public
@@ -212,7 +213,10 @@ does not claim a converse characterization of every result member as an
 absolute-value image. Successful `powWithin` exposes its exact normalized
 direct cuts for exponent zero, positive odd powers, and positive even powers,
 and maps every input member to its real natural power. It likewise makes no
-set-image converse claim. Neither addition nor subtraction currently claims the
+set-image converse claim. Successful `regularizeWithin` exposes the exact
+normalized Core-rounded cuts and contains every member of its source. Repeating
+the raw cut transform at the same precision is idempotent; no global
+grid-tightest claim is made. Neither addition nor subtraction currently claims the
 separate representation-independent tightness converse for the real Minkowski
 image.
 Separately, the experiment form of the intersection theorem is installed as the
@@ -438,6 +442,8 @@ def maxWithin       : EndpointLimit → Interval → Interval → BuildResult
 def absWithin       : EndpointLimit → Interval → BuildResult
 def mulWithin       : EndpointLimit → Interval → Interval → Arithmetic.Result
 def powWithin       : EndpointLimit → Arithmetic.PowLimits → Interval → Nat →
+  Arithmetic.Result
+def regularizeWithin : Arithmetic.PrecisionLimits → Precision → Interval →
   Arithmetic.Result
 def splitWithin     : EndpointLimit → Interval → Dyadic → SplitResult
 ```
@@ -689,12 +695,27 @@ for Lean's total real division. No converse image theorem, rounded-cut
 attainment, grid optimality, useful bounded nonsingleton quotient, or
 disconnected-result precision is claimed.
 
+The same `PrecisionLimits` also supports public outward regularization, but a
+rational-quotient cost would be fictitious for Core `roundDown` / `roundUp`.
+`Arithmetic.RegularizeCost` instead records each nonzero finite source, a
+non-cancelling bound for the exponent/precision subtraction, the shifted
+integer temporary, conservative canonical result height, and a final two-cut
+alignment bound. `preflightRegularize` admits all finite sources before the
+precision and every rounding bound before either Core operation executes.
+A shape with no nonzero finite endpoint performs no nontrivial rounding work
+and does not inspect the requested precision. `regularizeWithin` then rounds
+lower cuts down and upper cuts up and seals the resulting pair. A moved
+endpoint is strict because it lies strictly outside the old cut; an unchanged
+endpoint inherits its source strictness. Refusal remains an
+`Arithmetic.Result.resourceLimit`, with the dedicated `Cost.regularization`
+diagnostic rather than a fabricated quotient or comparison.
+
 The public raw intersection and hull cut selectors, `intersectUnchecked`,
 `hullUnchecked`, `negUnchecked`, `addUnchecked`, `subUnchecked`, `minUnchecked`,
 `maxUnchecked`, `absUnchecked`, `powCutsUnchecked`, `powUnchecked`, and
 `mulUnchecked`, together with `splitUnchecked`, `invUnchecked`,
-`singletonValue?`, and `divUnchecked`, are related to the checked operations by
-successful-result and semantic theorems.
+`singletonValue?`, `divUnchecked`, and `regularizeUnchecked`, are related to
+the checked operations by successful-result and semantic theorems.
 `powCutsUnchecked` is
 only the strictly monotone cut mapper;
 its caller must establish the positive odd or nonnegative positive-exponent
@@ -704,9 +725,9 @@ are decoder-level combinators: untrusted callers use the checked `Interval`
 operations above.
 
 The remaining target surface includes useful bounded nonsingleton division and
-regularization. Its public signatures and resource policy are fixed only after
-the corresponding allocation audit; no operation may silently align, compare,
-or enlarge arbitrary-precision endpoints.
+other arithmetic images. Their public signatures and resource policies are
+fixed only after the corresponding allocation audits; no operation may
+silently align, compare, or enlarge arbitrary-precision endpoints.
 
 For the initial dyadic backend, `Precision` is an alias for signed `Int` and
 the implementation reuses core `Dyadic.roundDown`, `roundUp`, `invAtPrec`, and
@@ -824,18 +845,21 @@ using a tighter theorem.
 
 ### Outward regularization
 
-`regularize p I` widens finite endpoints onto the grid `2^-p · ℤ`. It rounds a
-lower endpoint down and an upper endpoint up. It never
-replaces the strongest fact in the solver. Instead, it creates a cheaper view
-that a later rule may use.
+`regularizeWithin limits p I` widens finite endpoints onto the grid
+`2^-p · ℤ`. It rounds a lower endpoint down and an upper endpoint up. It never
+replaces the strongest fact in the solver. Instead, it creates a coarser
+outward view that a later rule may use. This is not necessarily cheaper to
+store: coarse negative precision can raise retained endpoint height, and that
+predicted result growth is preflighted before rounding.
 
 If an endpoint moves, the regularized cut is strict: a moved lower endpoint
 is strictly below the old lower endpoint, and a moved upper endpoint is
 strictly above the old upper endpoint. An unchanged endpoint inherits its old
 strictness. This is the candidate strongest sound outward view and makes
 regularization idempotent without throwing away useful strict inequalities;
-the same rounding-characterization lemmas used for grid-tightness must certify
-both claims.
+Core's one-sided rounding inequalities prove containment and its precision and
+fixed-point lemmas prove raw-cut idempotence. The missing converse optimality
+lemmas still prevent a global grid-tightest theorem.
 
 This distinction matters. Exact dyadic numerators can still grow rapidly.
 Discarding a strong fact to shorten it would make the state order-dependent.
@@ -4219,19 +4243,20 @@ their declared cost inside a scheduler bound.
   normalization.
 - `HexInterval/Canonical.lean`: sealed canonical values, views, and
   resource-safe smart constructors.
-- `HexInterval/Arithmetic.lean`: multiplication growth plus direct-power
-  retained-growth and exponent-work prerequisites; it does not expose an
-  interval operation.
+- `HexInterval/Arithmetic.lean`: multiplication growth, direct-power
+  retained-growth and exponent-work prerequisites, rational-backed precision
+  prerequisites, and the dedicated regularization preflight metadata; it does
+  not expose an interval operation.
 - `HexInterval/Multiplication.lean`: resource-checked interval multiplication,
   unconditional extended-corner evaluation, attainment-aware extremum
   selection, and the sealed `mulWithin` entry point.
 - `HexInterval/Interval.lean`: supported resource-safe intersection, hull,
   negation, addition, subtraction, minimum, maximum, absolute value, and
-  natural power; transactional splitting; and checked precision-indexed
-  reciprocal and first-slice division. Its public raw helpers, including the
-  power, split, reciprocal, and division cut selectors, are decoder-level
-  counterparts of checked operations. Useful bounded nonsingleton division and
-  regularization remain future work.
+  natural power; outward regularization; transactional splitting; and checked
+  precision-indexed reciprocal and first-slice division. Its public raw
+  helpers, including the power, regularization, split, reciprocal, and division
+  cut selectors, are decoder-level counterparts of checked operations. Useful
+  bounded nonsingleton division remains future work.
 - `HexIntervalMathlib/Interval.lean`: real-set semantics for the supported
   public construction, intersection, hull, and negation operations.
 - `HexIntervalMathlib/Addition.lean`: exact summed-cut semantics and the
@@ -4254,6 +4279,8 @@ their declared cost inside a scheduler bound.
   and the one-way total-real-inverse connected-hull enclosure theorem.
 - `HexIntervalMathlib/Division.lean`: exact computed first-slice quotient-cut
   semantics and the one-way total-real-division enclosure theorem.
+- `HexIntervalMathlib/Regularize.lean`: exact normalized rounded-cut semantics,
+  outward containment, and raw-cut idempotence without a grid-tightest claim.
 - `HexInterval/Program.lean`: node identifiers, SSA program, dependencies.
 - `HexInterval/Fact.lean`: facts, versions, provenance, contradiction checks.
 - `HexInterval/Action.lean`: requests, outcomes, suggestions, observations.
@@ -4300,7 +4327,7 @@ typical, boundary, and adversarial inputs. In particular it includes:
   `0 / 1`, and rejection of zero denominators, noncoprime equivalent
   encodings, unused oversized entries, excessive projection shifts, and
   one-step-over-budget cross-products before allocation;
-- regularization idempotence, outward containment, moved closed cuts, and
+- regularization idempotence, outward containment, moved strict cuts, and
   exact-grid open cuts;
 - a dependency worklist in which one fact wakes only the affected consumers;
 - opaque unary chains, fan-out with a ternary join, and forward/backward rule

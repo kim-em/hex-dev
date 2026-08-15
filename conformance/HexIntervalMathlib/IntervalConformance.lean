@@ -11,7 +11,7 @@ Conformance checks for the supported public interval semantics.  Computational
 shape/resource cases live in `HexInterval.Conformance`; this companion pins the
 ordinary-kernel meaning of every successful intersection, hull, addition,
 subtraction, multiplication, negation, absolute value, natural power,
-transactional split, reciprocal, and division.
+regularization, transactional split, reciprocal, and division.
 -/
 
 namespace Hex.IntervalMathlib.Conformance
@@ -144,6 +144,31 @@ theorem powImage {limit : Hex.Interval.EndpointLimit}
       .ready result)
     (member : input.Contains x) : result.Contains (x ^ exponent) :=
   Hex.Interval.pow_mem_powWithin checked member
+
+/-- A successful regularization has exactly its normalized direct rounded-cut
+semantics. -/
+theorem regularizeExact {limits : Hex.Interval.Arithmetic.PrecisionLimits}
+    {input result : Hex.Interval} {precision : Hex.Interval.Precision} {x : ℝ}
+    (checked : Hex.Interval.regularizeWithin limits precision input =
+      .ready result) :
+    result.Contains x ↔
+      (input.view.regularizeUnchecked precision).Contains x :=
+  Hex.Interval.contains_regularizeWithin checked x
+
+/-- Source membership is consumed by the outward-containment theorem. -/
+theorem regularizeImage {limits : Hex.Interval.Arithmetic.PrecisionLimits}
+    {input result : Hex.Interval} {precision : Hex.Interval.Precision} {x : ℝ}
+    (checked : Hex.Interval.regularizeWithin limits precision input =
+      .ready result)
+    (member : input.Contains x) : result.Contains x :=
+  Hex.Interval.mem_regularizeWithin checked member
+
+/-- Repeating a requested precision leaves the computed raw cuts unchanged. -/
+theorem regularizeIdem (raw : Hex.Interval.Raw)
+    (precision : Hex.Interval.Precision) :
+    (raw.regularizeUnchecked precision).regularizeUnchecked precision =
+      raw.regularizeUnchecked precision :=
+  Hex.Interval.regularizeUnchecked_idem raw precision
 
 /-- Successful splitting has exact closed-left membership. -/
 theorem splitLeft {limit : Hex.Interval.EndpointLimit}
@@ -287,6 +312,18 @@ theorem divImage {limits : Hex.Interval.Arithmetic.PrecisionLimits}
 /-- info: 'Hex.IntervalMathlib.Conformance.powImage' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms powImage
+
+/-- info: 'Hex.IntervalMathlib.Conformance.regularizeExact' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms regularizeExact
+
+/-- info: 'Hex.IntervalMathlib.Conformance.regularizeImage' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms regularizeImage
+
+/-- info: 'Hex.IntervalMathlib.Conformance.regularizeIdem' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms regularizeIdem
 
 /-- info: 'Hex.IntervalMathlib.Conformance.splitLeft' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in

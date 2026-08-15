@@ -15,7 +15,8 @@ public section
 
 This module begins the supported arithmetic surface with exact intersection,
 hull, negation, addition, subtraction, minimum, maximum, absolute value,
-natural power, and splitting. The operations retain a resource-aware result:
+natural power, outward regularization, and splitting. The operations retain a
+resource-aware result:
 public interval values do not remember the construction budget under which
 their endpoints were admitted, so a later comparison must preflight its own
 alignment work. Resource-checked multiplication is kept in
@@ -263,6 +264,37 @@ this decoder-level helper. -/
         powCutsUnchecked raw exponent
       else
         powCutsUnchecked raw.absUnchecked exponent
+
+/-! ## Directed outward regularization -/
+
+/-- Round one finite lower cut down. A moved endpoint becomes strict because
+the new grid point lies strictly below the source endpoint; an unchanged grid
+point inherits source attainment. Resource admission belongs to the public
+wrapper. -/
+@[expose] def regularizeLowerUnchecked (precision : Precision) : Lower → Lower
+  | .unbounded => .unbounded
+  | .finite value strict =>
+      let rounded := value.roundDown precision
+      .finite rounded (if rounded = value then strict else true)
+
+/-- Round one finite upper cut up. A moved endpoint becomes strict because the
+new grid point lies strictly above the source endpoint; an unchanged grid
+point inherits source attainment. Resource admission belongs to the public
+wrapper. -/
+@[expose] def regularizeUpperUnchecked (precision : Precision) : Upper → Upper
+  | .unbounded => .unbounded
+  | .finite value strict =>
+      let rounded := value.roundUp precision
+      .finite rounded (if rounded = value then strict else true)
+
+/-- Direct outward dyadic-grid view. Empty and unbounded sides are preserved;
+finite lower cuts use Core `roundDown` and finite upper cuts use Core
+`roundUp`. -/
+@[expose] def regularizeUnchecked : Raw → Precision → Raw
+  | .empty, _ => .empty
+  | .bounds lower upper, precision =>
+      .bounds (regularizeLowerUnchecked precision lower)
+        (regularizeUpperUnchecked precision upper)
 
 /-- Direct raw subtraction agrees with addition after raw negation. The
 checked public operation uses the direct form so it can preflight only the two
@@ -815,6 +847,39 @@ theorem view_powWithin_ready {endpointLimit : EndpointLimit}
   · contradiction
   · cases hraw : ofRawWithin endpointLimit
         (Raw.powUnchecked input.view exponent) with
+    | ready interval =>
+        simp only [Arithmetic.Result.ofBuild, hraw] at h
+        cases h
+        exact view_ofRawWithin_ready hraw
+    | resourceLimit cost =>
+        simp [Arithmetic.Result.ofBuild, hraw] at h
+
+/-- Outward regularization on the requested dyadic grid. Every nonzero finite
+source, requested precision, Core rounding temporary/result, and the final
+rounded-cut alignment is preflighted before either endpoint is rounded. A
+shape with no nonzero finite endpoint does not inspect the requested
+precision. -/
+def regularizeWithin (limits : Arithmetic.PrecisionLimits)
+    (precision : Precision) (input : Hex.Interval) : Arithmetic.Result :=
+  match Arithmetic.preflightRegularize limits input.view precision with
+  | .error cost => .resourceLimit cost
+  | .ok _ =>
+      Arithmetic.Result.ofBuild
+        (ofRawWithin limits.endpoint
+          (Raw.regularizeUnchecked input.view precision))
+
+/-- A successful regularization exposes exactly the normalized direct rounded
+cuts. -/
+theorem view_regularizeWithin_ready {limits : Arithmetic.PrecisionLimits}
+    {input result : Hex.Interval} {precision : Precision}
+    (h : regularizeWithin limits precision input = .ready result) :
+    result.view =
+      (Raw.regularizeUnchecked input.view precision).normalizeUnchecked := by
+  unfold regularizeWithin at h
+  split at h
+  · contradiction
+  · cases hraw : ofRawWithin limits.endpoint
+        (Raw.regularizeUnchecked input.view precision) with
     | ready interval =>
         simp only [Arithmetic.Result.ofBuild, hraw] at h
         cases h

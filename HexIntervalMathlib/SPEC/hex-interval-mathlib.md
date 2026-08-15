@@ -21,7 +21,8 @@ and a one-way real-image theorem for checked natural power.
 for transactional splitting. `HexIntervalMathlib.Inverse` proves the computed
 connected-cut characterization and sound total-real-inverse enclosure, while
 `HexIntervalMathlib.Division` proves the computed first-slice quotient cuts and
-sound total-real-division enclosure.
+sound total-real-division enclosure. `HexIntervalMathlib.Regularize` proves
+exact rounded-cut semantics, outward containment, and raw-cut idempotence.
 
 For every successful resource-checked public operation it proves:
 
@@ -65,6 +66,12 @@ For every successful resource-checked public operation it proves:
   for exponent zero, positive odd powers, and positive even powers;
 - `pow_mem_powWithin`: every source member raised to the caller's natural
   exponent belongs to every successful result;
+- `contains_regularizeWithin`: exact membership in the normalized Core-rounded
+  cuts;
+- `contains_regularizeUnchecked` and `mem_regularizeWithin`: every source
+  member remains in the raw and checked outward views;
+- `regularizeUnchecked_idem`: repeating the same requested precision leaves
+  every computed raw cut unchanged, without claiming global grid tightness;
 - `contains_splitWithin_left` and `contains_splitWithin_right`: exact child
   membership as source membership conjoined with `x ≤ point` or `point < x`;
 - `splitWithin_contained`, `splitWithin_cover`, and `splitWithin_disjoint`:
@@ -94,8 +101,8 @@ not import the experimental propagation fact domain.
 The public companion grows only with the supported `Hex.Interval` API. The
 existing modules under `HexIntervalMathlib/Experiment` remain evidence for
 future operations, replay schemas, transcendental providers, and tactics, but
-are not re-exported here. Further arithmetic images, regularization, and useful
-bounded nonsingleton division require their own
+are not re-exported here. Further arithmetic images and useful bounded
+nonsingleton division require their own
 operation-specific semantic theorems before promotion. An image operation must
 at least prove successful-result cut semantics and sound real-image enclosure;
 it claims a tightness converse only when that converse is separately proved.
@@ -113,6 +120,7 @@ claimed.
 membership, exact hull closure and both input inclusions, negation transport,
 addition, subtraction, and multiplication cut exactness and image transport,
 exact split membership/coverage/disjointness/point ownership, and the exact
+regularization cut semantics/outward containment/idempotence, together with the
 ordinary-kernel axiom surface. It also pins reciprocal computed-cut exactness
 and total-real-inverse enclosure, plus division computed-cut exactness and
 total-real-division enclosure, without tightness converses.

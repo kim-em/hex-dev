@@ -571,6 +571,128 @@ private def tightTemporaryLimits : Arithmetic.PrecisionLimits where
         | none => false
   | _ => false
 
+/-! # Directed-rounding and regularization resources -/
+
+private def threeQuarters : Dyadic := .ofOdd 3 2 (by decide)
+private def fiveQuarters : Dyadic := .ofOdd 5 2 (by decide)
+
+-- Pin the exact Core operations used by the interval wrapper at positive and
+-- negative requested precision.
+#guard threeQuarters.roundDown 1 == .ofOdd 1 1 (by decide)
+#guard threeQuarters.roundUp 1 == d 1
+#guard threeQuarters.roundDown (-1) == d 0
+#guard threeQuarters.roundUp (-1) == d 2
+#guard (-threeQuarters).roundDown 1 == d (-1)
+#guard (-threeQuarters).roundUp 1 == .ofOdd (-1) 1 (by decide)
+
+private def regularizeLimits : Arithmetic.PrecisionLimits where
+  endpoint := { maxEndpointHeight := 32, maxAlignmentShift := 32 }
+  maxPrecisionMagnitude := 16
+  maxPrecisionBits := 8
+  maxTemporaryBits := 16
+
+private def regularizeRaw : Raw :=
+  .bounds (.finite threeQuarters false) (.finite fiveQuarters false)
+
+-- Both endpoint plans are tied to the same authenticated precision. The
+-- conservative result and final-alignment fields are computed without
+-- invoking either Core rounding function.
+#guard
+  match Arithmetic.preflightRegularize regularizeLimits regularizeRaw 1 with
+  | .ok (.checked cost) =>
+      cost.precision == Arithmetic.PrecisionCost.ofPrecision 1 &&
+        match cost.lower, cost.upper with
+        | some lower, some upper =>
+            lower.source == EndpointCost.ofDyadic threeQuarters &&
+              lower.shiftBound == 3 && lower.temporaryBits == 2 &&
+              lower.predictedResultHeight == 5 &&
+              upper.source == EndpointCost.ofDyadic fiveQuarters &&
+              upper.shiftBound == 3 && upper.temporaryBits == 3 &&
+              upper.predictedResultHeight == 7 &&
+              cost.finalAlignmentBound == 7 && cost.allowed regularizeLimits
+        | _, _ => false
+  | _ => false
+
+-- Shapes with no nonzero finite endpoint execute no rounding and therefore do
+-- not inspect even an otherwise prohibited precision.
+#guard
+  match Arithmetic.preflightRegularize regularizeLimits .empty 1024 with
+  | .ok .unchanged => true
+  | _ => false
+#guard
+  match Arithmetic.preflightRegularize regularizeLimits
+      (.bounds .unbounded .unbounded) 1024 with
+  | .ok .unchanged => true
+  | _ => false
+#guard
+  match Arithmetic.preflightRegularize regularizeLimits
+      (.bounds (.finite 0 false) (.finite 0 false)) 1024 with
+  | .ok .unchanged => true
+  | _ => false
+
+-- Retained sources precede precision; a genuine nonzero rounding request then
+-- refuses excessive precision before shift/result metadata is constructed.
+#guard
+  match Arithmetic.preflightRegularize regularizeLimits
+      (.bounds (.finite oversizedSource false) .unbounded) 1024 with
+  | .error (.endpoint cost) => cost == EndpointCost.ofDyadic oversizedSource
+  | _ => false
+
+#guard
+  match Arithmetic.preflightRegularize regularizeLimits regularizeRaw 1024 with
+  | .error (.precision cost) =>
+      cost.magnitude == 1024 && cost.encodedBits == 11 &&
+        !cost.allowed regularizeLimits
+  | _ => false
+
+private def tightRoundTemporary : Arithmetic.PrecisionLimits :=
+  { regularizeLimits with maxTemporaryBits := 4 }
+
+#guard
+  match Arithmetic.preflightRegularize tightRoundTemporary
+      (.bounds (.finite (d 31) false) (.finite (d 31) false)) (-1) with
+  | .error (.regularization cost) =>
+      match cost.lower with
+      | some lower =>
+          lower.temporaryBits == 5 &&
+            !(lower.temporaryBits ≤ tightRoundTemporary.maxTemporaryBits) &&
+            !cost.allowed tightRoundTemporary
+      | none => false
+  | _ => false
+
+private def tightRoundResult : Arithmetic.PrecisionLimits :=
+  { regularizeLimits with
+    endpoint := { maxEndpointHeight := 8, maxAlignmentShift := 32 } }
+
+#guard
+  match Arithmetic.preflightRegularize tightRoundResult
+      (.bounds (.finite threeQuarters false)
+        (.finite threeQuarters false)) (-5) with
+  | .error (.regularization cost) =>
+      match cost.lower with
+      | some lower =>
+          lower.predictedNumeratorBits == 2 &&
+            lower.predictedExponentMagnitude == 7 &&
+            lower.predictedResultHeight == 9 &&
+            !cost.allowed tightRoundResult
+      | none => false
+  | _ => false
+
+private def tightRoundAlignment : Arithmetic.PrecisionLimits :=
+  { regularizeLimits with
+    endpoint := { maxEndpointHeight := 32, maxAlignmentShift := 6 } }
+
+-- Both endpoint-local subtraction bounds fit, but the separately predicted
+-- final rounded-cut comparison does not.
+#guard
+  match Arithmetic.preflightRegularize tightRoundAlignment regularizeRaw 1 with
+  | .error (.regularization cost) =>
+      cost.lower.all (fun lower => lower.shiftBound ≤ 6) &&
+        cost.upper.all (fun upper => upper.shiftBound ≤ 6) &&
+        cost.finalAlignmentBound == 7 &&
+        !cost.allowed tightRoundAlignment
+  | _ => false
+
 private def ready (raw : Raw) : Hex.Interval :=
   match Hex.Interval.ofRawWithin smallLimit raw with
   | .ready interval => interval
@@ -622,6 +744,15 @@ private def singletonThree : Hex.Interval := ready (finite 3 false 3 false)
 private def atMostNegOne : Hex.Interval :=
   ready (.bounds .unbounded (.finite (d (-1)) false))
 private def half : Dyadic := .ofOdd 1 1 (by decide)
+
+-- Pin the strict `<` boundary in the Core-rounding temporary model: matching
+-- the source precision still retains its numerator, while a strictly coarser
+-- source than the requested precision needs no shifted temporary.
+#guard (Arithmetic.RoundCost.ofDyadic half 1
+    (Arithmetic.PrecisionCost.ofPrecision 1)).temporaryBits == 1
+#guard (Arithmetic.RoundCost.ofDyadic half 2
+    (Arithmetic.PrecisionCost.ofPrecision 2)).temporaryBits == 0
+
 private def singletonHalf : Hex.Interval :=
   ready (.bounds (.finite half false) (.finite half false))
 private def twoPow100 : Dyadic := .ofOdd 1 (-100) (by decide)
@@ -640,6 +771,27 @@ private def powerBand : Hex.Interval :=
   | .ready interval => interval
   | .resourceLimit _ => Hex.Interval.empty
 
+private def regularizeBand : Hex.Interval :=
+  ready (.bounds (.finite threeQuarters false) (.finite fiveQuarters false))
+
+private def regularizeInherited : Hex.Interval :=
+  ready (.bounds (.finite half true) (.finite fiveQuarters false))
+
+private def regularizeClosedInherited : Hex.Interval :=
+  ready (.bounds (.finite half false) (.finite fiveQuarters false))
+
+private def regularizeAtMost : Hex.Interval :=
+  ready (.bounds .unbounded (.finite fiveQuarters false))
+
+private def regularizeAtLeast : Hex.Interval :=
+  ready (.bounds (.finite threeQuarters false) .unbounded)
+
+private def regularize31 : Hex.Interval :=
+  ready (.bounds (.finite (d 31) false) (.finite (d 31) false))
+
+private def regularizeThreeQuarters : Hex.Interval :=
+  ready (.bounds (.finite threeQuarters false) (.finite threeQuarters false))
+
 private def absFar : Dyadic := .ofOdd 1 200 (by decide)
 
 private def absCrossFar : Hex.Interval :=
@@ -648,6 +800,94 @@ private def absCrossFar : Hex.Interval :=
       (-absFar) false (d 1) false with
   | .ready interval => interval
   | .resourceLimit _ => Hex.Interval.empty
+
+-- Public regularization uses the same Core values pinned above. Moved cuts are
+-- strict; an unchanged cut inherits source strictness.
+#guard
+  match Hex.Interval.regularizeWithin regularizeLimits 1 regularizeBand with
+  | .ready interval =>
+      interval.view == .bounds
+        (.finite (.ofOdd 1 1 (by decide)) true)
+        (.finite (.ofOdd 3 1 (by decide)) true)
+  | .resourceLimit _ => false
+
+#guard
+  match Hex.Interval.regularizeWithin regularizeLimits (-1) regularizeBand with
+  | .ready interval => interval.view == finite 0 true 2 true
+  | .resourceLimit _ => false
+
+#guard
+  match Hex.Interval.regularizeWithin regularizeLimits 1 regularizeInherited with
+  | .ready interval =>
+      interval.view == .bounds
+        (.finite (.ofOdd 1 1 (by decide)) true)
+        (.finite (.ofOdd 3 1 (by decide)) true)
+  | .resourceLimit _ => false
+
+#guard
+  match Hex.Interval.regularizeWithin regularizeLimits
+      1 regularizeClosedInherited with
+  | .ready interval =>
+      interval.view == .bounds
+        (.finite (.ofOdd 1 1 (by decide)) false)
+        (.finite (.ofOdd 3 1 (by decide)) true)
+  | .resourceLimit _ => false
+
+-- Shapes with no nonzero finite endpoint preserve their exact structure and
+-- do not inspect an otherwise oversized precision. One-sided shapes still
+-- regularize their single nonzero finite endpoint.
+#guard
+  match Hex.Interval.regularizeWithin regularizeLimits 1024 Hex.Interval.empty with
+  | .ready interval => interval == Hex.Interval.empty
+  | .resourceLimit _ => false
+
+#guard
+  match Hex.Interval.regularizeWithin regularizeLimits 1024 Hex.Interval.whole with
+  | .ready interval => interval == Hex.Interval.whole
+  | .resourceLimit _ => false
+
+#guard
+  match Hex.Interval.regularizeWithin regularizeLimits 1024 singletonZero with
+  | .ready interval => interval == singletonZero
+  | .resourceLimit _ => false
+
+#guard
+  match Hex.Interval.regularizeWithin regularizeLimits 1 regularizeAtMost with
+  | .ready interval =>
+      interval.view == .bounds .unbounded
+        (.finite (.ofOdd 3 1 (by decide)) true)
+  | .resourceLimit _ => false
+
+#guard
+  match Hex.Interval.regularizeWithin regularizeLimits 1 regularizeAtLeast with
+  | .ready interval =>
+      interval.view == .bounds
+        (.finite (.ofOdd 1 1 (by decide)) true) .unbounded
+  | .resourceLimit _ => false
+
+-- Public refusal retains the preflight chronology and dedicated cost shape.
+#guard
+  match Hex.Interval.regularizeWithin regularizeLimits 0 farSingleton with
+  | .resourceLimit (.endpoint cost) => cost.exponentMagnitude == 1000000000
+  | _ => false
+
+#guard
+  match Hex.Interval.regularizeWithin regularizeLimits 1024 regularizeBand with
+  | .resourceLimit (.precision cost) => cost.magnitude == 1024
+  | _ => false
+
+#guard
+  match Hex.Interval.regularizeWithin tightRoundTemporary (-1) regularize31 with
+  | .resourceLimit (.regularization cost) =>
+      cost.lower.any (fun lower => lower.temporaryBits == 5)
+  | _ => false
+
+#guard
+  match Hex.Interval.regularizeWithin tightRoundResult
+      (-5) regularizeThreeQuarters with
+  | .resourceLimit (.regularization cost) =>
+      cost.lower.any (fun lower => lower.predictedResultHeight == 9)
+  | _ => false
 
 -- Checked splitting is transactional: success carries both canonical
 -- children, with the point closed on the left and strict on the right.

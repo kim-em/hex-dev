@@ -17,6 +17,7 @@ public import HexIntervalMathlib.Power
 public import HexIntervalMathlib.Split
 public import HexIntervalMathlib.Inverse
 public import HexIntervalMathlib.Division
+public import HexIntervalMathlib.Regularize
 
 public section
 
@@ -24,6 +25,7 @@ public section
 `HexIntervalMathlib` supplies Mathlib semantics and proof-facing theorems for
 the supported `Hex.Interval` operations, including resource-checked addition,
 subtraction, and multiplication, exact minimum/maximum images, absolute value,
-natural power, closed-left/strict-right transactional splitting, and
-precision-indexed reciprocal and division enclosures.
+natural power, outward regularization, and closed-left/strict-right
+transactional splitting, plus precision-indexed reciprocal and division
+enclosures.
 -/
