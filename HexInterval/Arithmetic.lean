@@ -13,11 +13,12 @@ public import HexInterval.Canonical
 /-!
 # Arithmetic resource preflight
 
-Endpoint comparison cost does not bound numerator growth in multiplication.
-This module supplies a separate, nonbreaking result and diagnostic layer for
-checked arithmetic. Existing constructors and the additive public operations
-continue to return `BuildResult`; multiplicative operations can report product
-growth without fabricating a `CompareCost`.
+Endpoint comparison cost does not bound numerator growth in multiplication or
+direct powers. This module supplies a separate, nonbreaking result and
+diagnostic layer for checked arithmetic. Existing constructors and supported
+public interval operations continue to return `BuildResult`; future
+multiplicative operations can report growth without fabricating a
+`CompareCost`.
 -/
 
 namespace Hex.Interval.Arithmetic
@@ -91,6 +92,46 @@ def preflightMul (limit : EndpointLimit) (left right : Dyadic) :
           encodedExponentBits := EndpointCost.natBits exponentMagnitude
           exponentMagnitude }
   let cost : Growth := { sources := [leftCost, rightCost], predicted }
+  if !cost.allowed limit then
+    throw (.growth cost)
+  pure cost
+
+/-- Preflight a direct dyadic natural power without raising its mantissa.
+
+The source endpoint is admitted before any products involving the exponent
+are formed. The remaining calculations use arbitrary-precision natural-number
+metadata, not fixed-width counters: a conservative numerator-bit count and the
+exact magnitude of the result exponent. Numerators of absolute value one are
+treated exactly, so powers of `1` and `-1` are not spuriously charged in
+proportion to the exponent.
+
+This is only a retained-endpoint growth prerequisite. It does not bound the
+execution work of `Nat.pow` or conversion of the natural exponent into Core's
+signed dyadic-exponent multiplication. In particular, a unit mantissa at
+dyadic exponent zero can pass this growth check for an arbitrarily large
+natural exponent. A future public power operation must enforce a separate
+exponent/work limit before invoking `Dyadic.pow`. -/
+def preflightPow (limit : EndpointLimit) (source : Dyadic) (exponent : Nat) :
+    Except Cost Growth := do
+  let sourceCost := EndpointCost.ofDyadic source
+  if !sourceCost.allowed limit then
+    throw (.endpoint sourceCost)
+  let predicted :=
+    match source with
+    | .zero =>
+        if exponent = 0 then EndpointCost.ofDyadic 1
+        else EndpointCost.ofDyadic 0
+    | .ofOdd numerator sourceExponent _ =>
+        if exponent = 0 then EndpointCost.ofDyadic 1
+        else
+          let numeratorBits :=
+            if numerator.natAbs = 1 then 1
+            else sourceCost.numeratorBits * exponent
+          let exponentMagnitude := sourceExponent.natAbs * exponent
+          { numeratorBits
+            encodedExponentBits := EndpointCost.natBits exponentMagnitude
+            exponentMagnitude }
+  let cost : Growth := { sources := [sourceCost], predicted }
   if !cost.allowed limit then
     throw (.growth cost)
   pure cost

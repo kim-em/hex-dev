@@ -477,19 +477,41 @@ the selector aligns finite dyadics, and the selected raw cuts then cross
 `ofRawWithin`. Thus an interval admitted under a larger earlier budget cannot
 force an unchecked alignment or silently turn refusal into empty.
 
-The supported tree also contains the resource prerequisite for multiplicative
-arithmetic, but not yet interval multiplication itself. `Arithmetic.Growth`
-records admitted source endpoint costs and a conservative predicted result;
-multiplication records the sum of input numerator-bit lengths and the exact
-magnitude of the signed exponent sum. A direct power can reuse the same shape
-with one source and its separately predicted endpoint. `Arithmetic.preflightMul`
-checks the inputs before forming that small signed exponent sum and never
-multiplies their mantissas. `Arithmetic.Cost.growth` keeps this refusal distinct
-from endpoint and exact comparison costs, and `Arithmetic.Result` is a separate checked-arithmetic
+The supported tree also contains the resource prerequisites for multiplicative
+arithmetic, but not yet interval multiplication or powers. `Arithmetic.Growth`
+records admitted source endpoint costs and a conservative predicted result.
+Multiplication records the sum of input numerator-bit lengths and the exact
+magnitude of the signed exponent sum. `Arithmetic.preflightMul` checks both
+inputs before forming that small signed exponent sum and never multiplies their
+mantissas. For example, under endpoint height `8`, the endpoints `255` and
+`255` and their comparison are admitted, while their predicted sixteen-bit
+product numerator is refused before multiplication.
+
+`Arithmetic.preflightPow` applies the same boundary to a direct natural power
+with one source. It predicts the exact magnitude of the dyadic exponent and a
+conservative mantissa-bit count without raising the mantissa. Numerators of
+absolute value one retain their exact one-bit cost, so large powers of `1`,
+`-1`, and unit-mantissa powers of two do not incur fictitious mantissa growth;
+powers of two are still charged their exact signed exponent magnitude. The
+metadata uses arbitrary-precision `Nat` arithmetic rather than fixed-width
+counters. Under endpoint height `8`, `3^4` is admitted by its eight-bit bound,
+while `3^5` is refused from its ten-bit bound before `Dyadic.pow` allocates the
+result. A quarter cubed is admitted with exponent magnitude six, while its
+fourth power is refused because one numerator bit plus exponent magnitude
+eight exceeds the retained-height budget.
+
+This preflight bounds retained endpoint growth only. It does not bound the
+execution work of `Nat.pow` or the conversion of the natural exponent used in
+Core's signed dyadic-exponent multiplication, and it is not the complete
+resource gate for a public interval power. In particular, when the dyadic
+exponent is zero and the mantissa has absolute value one, arbitrarily large
+natural exponents pass the endpoint-growth check. A future `powWithin` must add
+and enforce a separate exponent/work cap before invoking `Dyadic.pow`.
+
+`Arithmetic.Cost.growth` keeps these refusals distinct from endpoint and exact
+comparison costs, and `Arithmetic.Result` is a separate checked-arithmetic
 result so the existing `BuildResult` APIs above do not acquire a misleading or
-breaking cost variant. For example, under endpoint height `8`, the endpoints
-`255` and `255` and their comparison are admitted, while their predicted
-sixteen-bit product numerator is refused before multiplication.
+breaking cost variant.
 
 The public raw intersection and hull cut selectors, `intersectUnchecked`,
 `hullUnchecked`, `negUnchecked`, `addUnchecked`, `subUnchecked`, `minUnchecked`,
@@ -4005,6 +4027,9 @@ their declared cost inside a scheduler bound.
   normalization.
 - `HexInterval/Canonical.lean`: sealed canonical values, views, and
   resource-safe smart constructors.
+- `HexInterval/Arithmetic.lean`: multiplication and direct-power endpoint
+  growth prerequisites; it does not expose an interval multiplication or power
+  operation.
 - `HexInterval/Interval.lean`: supported resource-safe intersection, hull,
   negation, addition, subtraction, minimum, maximum, and absolute value,
   followed by future arithmetic, splitting, and regularization operations.
