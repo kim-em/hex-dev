@@ -412,5 +412,11 @@
     "baseline_blob": "6dd80771ae2212333b2a9b925b52056e0037ff56",
     "current_blob": "9375f2f3431d2369497b7ce6aed343aa96ad7504",
     "reason": "Additionally registers the proof-only bounded PNT+ small-prime logarithm theorem family and its conformance module on top of the complete FKS2 and Table 10 registrations; these acceptance-only modules do not enter the factorization service target or its executable dependency graph."
+  },
+  {
+    "path": "lakefile.lean",
+    "baseline_blob": "6dd80771ae2212333b2a9b925b52056e0037ff56",
+    "current_blob": "d3ac044f73ebc00b2b86ca89a658495091d350e6",
+    "reason": "Additionally registers the bounded Mathlib-free staged-policy experiment and its conformance module on top of the current PNT and interval registrations; neither enters the factorization service target or changes its executable dependency graph."
   }
 ]
