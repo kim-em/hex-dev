@@ -1319,6 +1319,33 @@ runtime, and therefore is not evidence for the general logarithm or certified
 table-building milestones.  Its private Mathlib proofs use the general Taylor
 remainder theorem only to validate the finite entries at kernel replay time.
 
+The complete natural-number subtable adds the 24 pinned declarations
+`log_n_gt` and `log_n_lt` for
+`n = 3, 5, 7, 10, 11, 13, 17, 19, 23, 29, 30, 32`. One Mathlib-free
+`PntLogNatural` package authenticates the source input, power-of-two shift,
+reduced rational atanh parameter, eight-term count, decimal scale, and both
+source endpoints. The Mathlib companion proves the reusable identity
+
+`log n = k * log 2 + log ((1 + x) / (1 - x))`
+
+for each authenticated row, combines checked ten-decimal bounds for `log 2`
+with a finite atanh sum and explicit geometric tail, and exports all 24 exact
+source-shaped ordinary theorems. Row 29 additionally runs through the generic
+policy session, payload arena, chronological replay, and `ProofFrontend`; it
+is a representative nontrivial row from the family. Every row is exercised
+by the runtime fixture. Mutations of the shift, term count, source row,
+cross-row payload, output window, and a mathematically false lower endpoint
+fail closed.
+
+These 24 tactic sites are accepted after localized PNT+ rewrites. This is a
+bounded fixed-source family, not LeanCert API compatibility and not acceptance
+of the whole `LogTables.lean` interface: 108 actual tactic sites in that file
+remain pending. Arbitrary rational inputs, precision-selected term counts,
+endpoint generation rather than lookup, persistent table storage, and measured
+batch performance remain future work. The separate 20/50-digit `log 2`
+experiment supplies precision-indexed series evidence but is not silently
+combined with this fixed six-decimal runtime schema.
+
 The small-prime logarithm cluster replaces all sixty actual `interval_auto`
 calls in `RosserSchoenfeld/RSPrimeLower.lean` and `TMEEMT.lean`. At the pinned
 source commit, the enclosing theorem shapes are exactly
@@ -2930,6 +2957,13 @@ the fixed soundness and trust contracts.
 - `HexIntervalMathlib/Experiment/PntTable10Exact.lean`: the exact unfolded
   BKLNW supremum, full-interval and pointwise reduction theorems, and the five
   source-pinned adapters completing the Table 10 localized rewrite.
+- `HexInterval/Experiment/PntLogNatural.lean` and
+  `HexIntervalMathlib/Experiment/PntLogNatural.lean`: the bounded twelve-row
+  natural logarithm table, authenticated dyadic reductions, atanh remainder
+  theorem, and 24 exact source-shaped wrappers.
+- `conformance/HexIntervalMathlib/PntLogNaturalConformance.lean`: all-row
+  runtime validation, mutation rejection, representative generic frontend
+  closure, and guarded ordinary-kernel axiom report.
 - `HexIntervalMathlib/Contractor.lean`: backwards propagation theorems.
 - `HexIntervalMathlib/Tactic.lean`: `interval`, `interval?`, and
   `interval_bound`.

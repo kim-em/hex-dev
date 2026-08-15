@@ -4282,6 +4282,24 @@ Mathlib companion validates its entries with a general logarithm Taylor
 remainder theorem, but the runtime does not yet provide arbitrary-rational
 range reduction, series construction, or precision refinement.
 
+The next fixed-source provider covers all twelve remaining natural-number rows
+of pinned PNT+ `LogTables.lean`: the two-sided six-decimal bounds for
+`3, 5, 7, 10, 11, 13, 17, 19, 23, 29, 30, 32`.  One bounded Mathlib-free
+schema authenticates the exact input, dyadic shift, reduced atanh parameter,
+eight-term count, decimal scale, and both endpoints.  The companion checks the
+range-reduction identity, a finite atanh lower sum, an explicit geometric tail,
+and the required `log 2` contribution before exporting the 24 source-shaped
+ordinary theorems.  The representative row-29 result is also produced through
+generic planning, payload authentication, chronology, and `ProofFrontend`,
+while conformance executes the same runtime schema for every row.
+
+Wrong reductions and insufficient term counts fail decoding; source, cross-row,
+window, and false-endpoint mutations fail replay, and the false endpoint has an
+ordinary mathematical refutation.  This accepts exactly those 24 source tactic
+sites after localized rewrites.  It is not a general logarithm rule or a claim
+about all of `LogTables.lean`: arbitrary inputs, requested precision, generated
+endpoints, caching, persistence, and batch-performance evidence remain future.
+
 The first precision-indexed log provider moves beyond an opaque six-decimal
 table fact. Its program contains separate exact-input and precision-request
 nodes. The same Mathlib-free package accepts requests for 20 or 50 decimal
@@ -4612,6 +4630,10 @@ their declared cost inside a scheduler bound.
 - `HexInterval/Experiment/PntFks2FamilyData*.lean` and
   `HexInterval/Experiment/PntFks2Family.lean`: committed source-pinned family
   data and the Mathlib-free complete-family checker.
+- `HexInterval/Experiment/PntLogNatural.lean`: bounded source-pinned
+  natural-number log-table data, dyadic-reduction authentication, and generic
+  package planning.  Its real semantics and source-shaped theorems live in the
+  Mathlib companion.
 - `scripts/conformance/run_pnt_fks2_family.sh`: fail-closed entry point for the
   non-default complete-family proof and conformance profile.
 - `bench/HexInterval/Bench.lean`: Mathlib-free interval and scheduler
