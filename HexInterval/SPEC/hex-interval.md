@@ -3888,12 +3888,13 @@ listed `71.291` remains structurally decodable but fails with coordinate code
 `205`, retains no draft, and cannot become a precision retry. An independent
 kernel lower bound proves `¬ majorant 5 25 ≤ 71.291`.
 
-This accepts only the five numeric majorant leaves for row 25 after a localized
-PNT+ rewrite to the source-shaped numeric bridge. It does not import or wrap
-LeanCert or prove the surrounding PNT+ `B_8_exact` reduction. The generated
-inventory's count of 87 is executable target tactic occurrences, not 87
-distinct row/column declarations; the next batch below records coverage at
-both levels.
+This shard accepts only the five numeric majorant leaves for row 25 after a
+localized PNT+ rewrite to the source-shaped numeric bridge. It does not import
+or wrap LeanCert, and by itself stops before the surrounding PNT+
+`B_8_exact` reduction; the shared exact bridge below supplies that reduction.
+The generated inventory's count of 87 is executable target tactic
+occurrences, not 87 distinct row/column declarations; the next batch below
+records coverage at both levels.
 
 #### Parameterized Table 10 convex-row batch
 
@@ -4024,11 +4025,21 @@ The false endpoint also has an ordinary-kernel refutation. The retained work
 charge counts ten table powers per row but is not a big-integer complexity or
 production throughput claim.
 
-After localized PNT+ rewrites, the coordinate-pinned providers now cover all
-87 executable Table 10 target calls and the supporting provider covers all 38
-`a₂` calls. The family remains pending because the surrounding `B_8_exact`
-dispatch, arbitrary rows, and production-scale performance are outside these
-numeric providers. This is not a LeanCert compatibility layer.
+After localized PNT+ rewrites, the coordinate-pinned providers cover all 87
+executable Table 10 target calls and the supporting provider covers all 38
+`a₂` calls. `PntTable10Exact` supplies the remaining reusable analytic
+bridge: `exactBound_eq_sourceSum` pins its supremum to unfolded PNT+
+`B_8_exact`, `exactBound_le_of_majorant` handles the full-interval providers,
+and `exactBound_le_of_pointwise` handles the late-row one-point reductions.
+Source-pinned adapters retain row membership, column membership, chronology,
+and PNT+'s three coefficient hypotheses while consuming the checked numeric
+facts. Thus PNT+ may replace the 125 tactic calls locally, retain its other
+ordinary row theorems, and leave the 287-row/five-column dispatcher unchanged.
+
+The exact pinned Table 10 interface is therefore accepted after rewrite. This
+does not claim a LeanCert compatibility layer, arbitrary caller-supplied table
+generation, or production-scale performance for tables beyond the pinned
+source.
 
 #### Coordinate-aware numerical batches
 
