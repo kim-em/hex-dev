@@ -119,8 +119,14 @@ private def far : Dyadic := .ofOdd 1 1000000000 (by decide)
   | .ready _ => false
   | .resourceLimit cost => cost.upper.exponentMagnitude == 1000000000
 
-example (interval : Hex.Interval) : interval.view.CutConsistent :=
+/-- The supported public view exposes its carried canonicality theorem without
+adding any trust assumption. -/
+theorem publicViewCanonical (interval : Hex.Interval) : interval.view.CutConsistent :=
   Hex.Interval.view_consistent interval
+
+/-- info: 'Hex.Interval.Conformance.publicViewCanonical' depends on axioms: [propext] -/
+#guard_msgs in
+#print axioms publicViewCanonical
 
 example {limit : EndpointLimit} {raw : Raw} {interval : Hex.Interval}
     (h : Hex.Interval.ofRawWithin limit raw = .ready interval) :
