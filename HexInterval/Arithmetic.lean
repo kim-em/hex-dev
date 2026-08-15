@@ -16,11 +16,11 @@ public section
 Endpoint comparison cost does not bound numerator growth in multiplication or
 direct powers. This module supplies a separate, nonbreaking result and
 diagnostic layer for checked arithmetic. Existing constructors and supported
-public interval operations continue to return `BuildResult`; multiplicative
-operations can report growth without fabricating a `CompareCost`. Concrete
-corner enumeration and interval multiplication live in
-`HexInterval.Multiplication`, not in this reusable cost layer; direct-power
-preflight remains a prerequisite rather than a public interval-power API.
+public interval operations whose costs are comparisons continue to return
+`BuildResult`; multiplication and direct natural power report growth without
+fabricating a `CompareCost`. Concrete corner enumeration and interval
+multiplication live in `HexInterval.Multiplication`, not in this reusable cost
+layer.
 -/
 
 namespace Hex.Interval.Arithmetic
@@ -44,7 +44,7 @@ def allowed (limit : EndpointLimit) (growth : Growth) : Bool :=
 
 end Growth
 
-/-- Execution-work limit for a future direct natural-power operation. The cap
+/-- Execution-work limit for the direct natural-power operation. The cap
 is on the actual exponent value, not the size of its binary encoding. -/
 structure PowLimits where
   maxExponent : Nat
@@ -134,8 +134,8 @@ This is only a retained-endpoint growth prerequisite. It does not bound the
 execution work of `Nat.pow` or conversion of the natural exponent into Core's
 signed dyadic-exponent multiplication. In particular, a unit mantissa at
 dyadic exponent zero can pass this growth check for an arbitrarily large
-natural exponent. A future public power operation must enforce a separate
-exponent/work limit before invoking `Dyadic.pow`. -/
+natural exponent. Public `powWithin` therefore composes this check with the
+separate exponent/work limit before invoking `Dyadic.pow`. -/
 def preflightPowGrowth (limit : EndpointLimit) (source : Dyadic)
     (exponent : Nat) :
     Except Cost Growth := do

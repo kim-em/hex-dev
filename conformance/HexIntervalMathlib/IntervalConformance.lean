@@ -10,7 +10,7 @@ import HexIntervalMathlib
 Conformance checks for the supported public interval semantics.  Computational
 shape/resource cases live in `HexInterval.Conformance`; this companion pins the
 ordinary-kernel meaning of every successful intersection, hull, addition,
-subtraction, multiplication, negation, and absolute value.
+subtraction, multiplication, negation, absolute value, and natural power.
 -/
 
 namespace Hex.IntervalMathlib.Conformance
@@ -125,6 +125,25 @@ theorem mulImage {limit : Hex.Interval.EndpointLimit}
     result.Contains (x * y) :=
   Hex.Interval.mul_mem_mulWithin checked leftMember rightMember
 
+/-- A successful natural power has exactly its normalized selected raw cuts. -/
+theorem powExact {limit : Hex.Interval.EndpointLimit}
+    {workLimits : Hex.Interval.Arithmetic.PowLimits}
+    {input result : Hex.Interval} {exponent : Nat} {x : ℝ}
+    (checked : Hex.Interval.powWithin limit workLimits input exponent =
+      .ready result) :
+    result.Contains x ↔ (input.view.powUnchecked exponent).Contains x :=
+  Hex.Interval.contains_powWithin checked x
+
+/-- Source membership and the caller's exponent are consumed by the direct
+natural-power image theorem. -/
+theorem powImage {limit : Hex.Interval.EndpointLimit}
+    {workLimits : Hex.Interval.Arithmetic.PowLimits}
+    {input result : Hex.Interval} {exponent : Nat} {x : ℝ}
+    (checked : Hex.Interval.powWithin limit workLimits input exponent =
+      .ready result)
+    (member : input.Contains x) : result.Contains (x ^ exponent) :=
+  Hex.Interval.pow_mem_powWithin checked member
+
 /-- info: 'Hex.IntervalMathlib.Conformance.intersectMember' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms intersectMember
@@ -180,5 +199,13 @@ theorem mulImage {limit : Hex.Interval.EndpointLimit}
 /-- info: 'Hex.IntervalMathlib.Conformance.mulImage' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms mulImage
+
+/-- info: 'Hex.IntervalMathlib.Conformance.powExact' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms powExact
+
+/-- info: 'Hex.IntervalMathlib.Conformance.powImage' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms powImage
 
 end Hex.IntervalMathlib.Conformance

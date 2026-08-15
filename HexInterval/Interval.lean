@@ -229,6 +229,41 @@ public wrapper preflights it before calling this decoder-level helper. -/
             Upper.finite leftMagnitude lowerStrict
         .bounds (.finite 0 false) resultUpper
 
+/-- Raise both finite cuts to a natural power, preserving strictness and
+unbounded sides. This decoder-level helper is used only where the power map is
+known to be strictly monotone: directly for odd exponents, and after
+`absUnchecked` for positive even exponents. -/
+@[expose] def powCutsUnchecked : Raw → Nat → Raw
+  | .empty, _ => .empty
+  | .bounds lower upper, exponent =>
+      let resultLower :=
+        match lower with
+        | .unbounded => Lower.unbounded
+        | .finite value strict => Lower.finite (value ^ exponent) strict
+      let resultUpper :=
+        match upper with
+        | .unbounded => Upper.unbounded
+        | .finite value strict => Upper.finite (value ^ exponent) strict
+      .bounds resultLower resultUpper
+
+/-- Exact raw hull of a natural-power image. Empty remains empty even at
+exponent zero. Every nonempty zero power is `{1}`. Positive odd powers map the
+source cuts directly; positive even powers first select the exact absolute
+value cuts and then map their nonnegative endpoints.
+
+Endpoint powers and the magnitude comparison inside `absUnchecked` are
+unchecked here. The public wrapper authenticates all of them before calling
+this decoder-level helper. -/
+@[expose] def powUnchecked : Raw → Nat → Raw
+  | .empty, _ => .empty
+  | .bounds _ _, 0 =>
+      .bounds (.finite 1 false) (.finite 1 false)
+  | raw@(.bounds _ _), exponent =>
+      if exponent % 2 = 1 then
+        powCutsUnchecked raw exponent
+      else
+        powCutsUnchecked raw.absUnchecked exponent
+
 /-- Direct raw subtraction agrees with addition after raw negation. The
 checked public operation uses the direct form so it can preflight only the two
 crossed endpoint pairs, without normalizing an intermediate negated interval. -/
@@ -326,6 +361,53 @@ private def absCost? (limit : EndpointLimit) : Raw → Option CompareCost
       if 0 ≤ lower || upper ≤ 0 then none
       else compareCost? limit lower upper
   | _ => none
+
+/-- First refused Core-power prerequisite for one selected finite cut. -/
+private def powValueCost? (endpointLimit : EndpointLimit)
+    (workLimits : Arithmetic.PowLimits) (value : Dyadic) (exponent : Nat) :
+    Option Arithmetic.Cost :=
+  match Arithmetic.preflightPow endpointLimit workLimits value exponent with
+  | .ok _ => none
+  | .error cost => some cost
+
+/-- First refused Core-power prerequisite for the finite cuts selected by a
+monotone power map. Both cuts are checked before either is evaluated. -/
+private def powCutsCost? (endpointLimit : EndpointLimit)
+    (workLimits : Arithmetic.PowLimits) (raw : Raw) (exponent : Nat) :
+    Option Arithmetic.Cost :=
+  match raw with
+  | .empty => none
+  | .bounds lower upper =>
+      let lowerCost :=
+        match lower with
+        | .unbounded => none
+        | .finite value _ =>
+            powValueCost? endpointLimit workLimits value exponent
+      match lowerCost with
+      | some cost => some cost
+      | none =>
+          match upper with
+          | .unbounded => none
+          | .finite value _ =>
+              powValueCost? endpointLimit workLimits value exponent
+
+/-- First refusal before constructing a natural-power image. The mixed-sign
+absolute-value selector comparison is authenticated before it executes, then
+all selected finite endpoint powers are preflighted before any Core power.
+Exponent zero and empty inputs perform no endpoint power. -/
+private def powCost? (endpointLimit : EndpointLimit)
+    (workLimits : Arithmetic.PowLimits) (raw : Raw) (exponent : Nat) :
+    Option Arithmetic.Cost :=
+  match raw, exponent with
+  | .empty, _ | _, 0 => none
+  | raw@(.bounds _ _), exponent =>
+      if exponent % 2 = 1 then
+        powCutsCost? endpointLimit workLimits raw exponent
+      else
+        match absCost? endpointLimit raw with
+        | some cost => some (.comparison cost)
+        | none =>
+            powCutsCost? endpointLimit workLimits raw.absUnchecked exponent
 
 /-- Exact set intersection with preflighted dyadic comparisons.  Refusal is
 distinct from the canonical empty result. -/
@@ -471,5 +553,37 @@ theorem view_absWithin_ready {limit : EndpointLimit} {input result : Hex.Interva
   split at h
   · contradiction
   · exact view_ofRawWithin_ready h
+
+/-- Exact interval natural power with authenticated exponent work, retained
+endpoint growth, even-power magnitude selection, and final canonicalization.
+Empty is absorbing, including at exponent zero. Refusal is never interpreted
+as an empty image. -/
+def powWithin (endpointLimit : EndpointLimit)
+    (workLimits : Arithmetic.PowLimits) (input : Hex.Interval)
+    (exponent : Nat) : Arithmetic.Result :=
+  match powCost? endpointLimit workLimits input.view exponent with
+  | some cost => .resourceLimit cost
+  | none =>
+      Arithmetic.Result.ofBuild
+        (ofRawWithin endpointLimit (Raw.powUnchecked input.view exponent))
+
+/-- A successful natural power exposes exactly the normalized direct image
+cuts selected by `Raw.powUnchecked`. -/
+theorem view_powWithin_ready {endpointLimit : EndpointLimit}
+    {workLimits : Arithmetic.PowLimits} {input result : Hex.Interval}
+    {exponent : Nat}
+    (h : powWithin endpointLimit workLimits input exponent = .ready result) :
+    result.view = (Raw.powUnchecked input.view exponent).normalizeUnchecked := by
+  unfold powWithin at h
+  split at h
+  · contradiction
+  · cases hraw : ofRawWithin endpointLimit
+        (Raw.powUnchecked input.view exponent) with
+    | ready interval =>
+        simp only [Arithmetic.Result.ofBuild, hraw] at h
+        cases h
+        exact view_ofRawWithin_ready hraw
+    | resourceLimit cost =>
+        simp [Arithmetic.Result.ofBuild, hraw] at h
 
 end Hex.Interval

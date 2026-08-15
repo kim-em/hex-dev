@@ -182,7 +182,7 @@ value's proof field.
 The initial supported slice exposes `view`, `empty`, `whole`, and endpoint-cost
 preflighted raw, singleton, one-sided, and finite constructors. The first
 supported operations are resource-checked intersection, hull, negation,
-addition, subtraction, minimum, maximum, and absolute value.
+addition, subtraction, minimum, maximum, absolute value, and natural power.
 Their Mathlib companion proves exact computed-cut semantics and image theorems;
 the remaining arithmetic is promoted separately rather than being declared
 public merely because narrower experiment implementations exist. All public
@@ -208,7 +208,10 @@ input members. They do not claim the converse characterization of every result
 member as a pointwise image. Successful `absWithin` exposes its exact normalized
 selected-cut predicate and maps every input member `x` to `|x|`; it likewise
 does not claim a converse characterization of every result member as an
-absolute-value image. Neither addition nor subtraction currently claims the
+absolute-value image. Successful `powWithin` exposes its exact normalized
+direct cuts for exponent zero, positive odd powers, and positive even powers,
+and maps every input member to its real natural power. It likewise makes no
+set-image converse claim. Neither addition nor subtraction currently claims the
 separate representation-independent tightness converse for the real Minkowski
 image.
 Separately, the experiment form of the intersection theorem is installed as the
@@ -433,6 +436,8 @@ def minWithin       : EndpointLimit → Interval → Interval → BuildResult
 def maxWithin       : EndpointLimit → Interval → Interval → BuildResult
 def absWithin       : EndpointLimit → Interval → BuildResult
 def mulWithin       : EndpointLimit → Interval → Interval → Arithmetic.Result
+def powWithin       : EndpointLimit → Arithmetic.PowLimits → Interval → Nat →
+  Arithmetic.Result
 ```
 
 These names retain the budget because a public interval does not store the
@@ -503,13 +508,13 @@ result. A quarter cubed is admitted with exponent magnitude six, while its
 fourth power is refused because one numerator bit plus exponent magnitude
 eight exceeds the retained-height budget.
 
-This preflight bounds retained endpoint growth only. It does not bound the
+On its own, this preflight bounds retained endpoint growth only. It does not bound the
 execution work of `Nat.pow` or the conversion of the natural exponent used in
-Core's signed dyadic-exponent multiplication, and it is not the complete
-resource gate for a public interval power. In particular, when the dyadic
+Core's signed dyadic-exponent multiplication, and therefore is not the complete
+resource gate used by public interval power. In particular, when the dyadic
 exponent is zero and the mantissa has absolute value one, arbitrarily large
-natural exponents pass the endpoint-growth check. A future `powWithin` must add
-and enforce a separate exponent/work cap before invoking `Dyadic.pow`.
+natural exponents pass the endpoint-growth check. `powWithin` therefore adds
+and enforces a separate exponent/work cap before invoking `Dyadic.pow`.
 
 `Arithmetic.PowLimits` supplies that smallest execution-work prerequisite.
 Its `maxExponent` bounds the actual arbitrary-precision `Nat` value, not the
@@ -517,9 +522,8 @@ number of bits used to encode it. `Arithmetic.preflightPow` checks this cap
 for every nonzero dyadic before composing transactionally with
 `preflightPowGrowth`; a work refusal is `Arithmetic.Cost.power`, never a
 fabricated endpoint or growth diagnostic. A successful composite check
-guarantees that a future caller reaches Core's nonzero power only with a
-bounded source, bounded retained-result growth, and
-`exponent ≤ maxExponent`.
+guarantees that `powWithin` reaches Core's nonzero power only with a bounded
+source, bounded retained-result growth, and `exponent ≤ maxExponent`.
 
 Zero alone bypasses the work cap. Core's zero branch only distinguishes `0^0`
 from a positive power and returns `1` or `0`; it does not invoke `Nat.pow`,
@@ -528,9 +532,27 @@ This exemption does not extend to `1` or `-1`, whose Core path still processes
 the natural exponent. The scalar cap is sufficient to bound that Core path
 when combined with the existing endpoint/growth limits, but it is not a
 wall-clock estimate and does not charge work already spent constructing,
-parsing, or reifying the input `Nat`. A future public `powWithin` must use the
-composite gate before Core power; this prerequisite still does not expose that
-operation.
+parsing, or reifying the input `Nat`.
+
+`powWithin` is the direct checked hull, rather than repeated interval
+multiplication. Empty is absorbing at every exponent. A nonempty input at
+exponent zero becomes the closed singleton `{1}` without evaluating an
+endpoint power. A positive odd exponent maps the two source cuts directly. A
+positive even exponent first computes the exact absolute-value hull, so a
+negative interval reverses magnitude order and a mixed interval gets a closed
+zero exactly when zero belongs to the source; it then maps the nonnegative
+cuts with their selected attainment flags.
+
+Before any Core power evaluation, every selected finite endpoint passes
+`preflightPow`. The even mixed-sign magnitude comparison passes the same
+exact comparison preflight used by `absWithin` before selection. Both selected
+endpoint prerequisites are checked before either power is evaluated, and the
+resulting raw cuts finally cross `ofRawWithin` for endpoint retention and
+canonical-order comparison. A refusal at any stage is an
+`Arithmetic.Result.resourceLimit`, not empty. The public view theorem exposes
+exactly the normalized `Raw.powUnchecked` cuts; the Mathlib companion proves
+that every input member maps to its real natural power. It does not claim the
+set-image converse.
 
 `Arithmetic.Cost.growth` keeps these refusals distinct from endpoint and exact
 comparison costs, and `Arithmetic.Result` is a separate checked-arithmetic
@@ -560,14 +582,17 @@ is currently claimed.
 
 The public raw intersection and hull cut selectors, `intersectUnchecked`,
 `hullUnchecked`, `negUnchecked`, `addUnchecked`, `subUnchecked`, `minUnchecked`,
-`maxUnchecked`, `absUnchecked`, and `mulUnchecked` are related
-to the checked operations by successful-result and semantic theorems. Like
+`maxUnchecked`, `absUnchecked`, `powCutsUnchecked`, `powUnchecked`, and
+`mulUnchecked` are related to the checked operations by successful-result and
+semantic theorems. `powCutsUnchecked` is only the strictly monotone cut mapper;
+its caller must establish the positive odd or nonnegative positive-exponent
+case. `powUnchecked` performs the zero/odd/even direct-hull selection. Like
 `Raw.normalizeUnchecked`, they
 are decoder-level combinators: untrusted callers use the checked `Interval`
 operations above.
 
 The remaining target surface includes precision-indexed reciprocal and
-division and powers,
+division,
 splitting, and regularization. Their public signatures are fixed only after an
 allocation audit; no total API is promised for an operation that may align,
 compare, or enlarge arbitrary-precision endpoints.
@@ -4080,8 +4105,10 @@ their declared cost inside a scheduler bound.
   unconditional extended-corner evaluation, attainment-aware extremum
   selection, and the sealed `mulWithin` entry point.
 - `HexInterval/Interval.lean`: supported resource-safe intersection, hull,
-  negation, addition, subtraction, minimum, maximum, and absolute value,
-  followed by future arithmetic, splitting, and regularization operations.
+  negation, addition, subtraction, minimum, maximum, absolute value, and
+  natural power, including the public decoder helpers `Raw.powCutsUnchecked`
+  and `Raw.powUnchecked`, followed by future arithmetic, splitting, and
+  regularization operations.
 - `HexIntervalMathlib/Interval.lean`: real-set semantics for the supported
   public construction, intersection, hull, and negation operations.
 - `HexIntervalMathlib/Addition.lean`: exact summed-cut semantics and the
@@ -4091,10 +4118,13 @@ their declared cost inside a scheduler bound.
 - `HexIntervalMathlib/MinMax.lean`: exact selected-cut semantics and one-way
   real-image enclosure theorems for minimum and maximum.
 - `HexIntervalMathlib/Absolute.lean`: exact selected-cut semantics and the
-  successful absolute-value image theorem.
+  successful absolute-value image theorem, plus the raw one-way theorem
+  `contains_absUnchecked` used by natural power.
 - `HexIntervalMathlib/Multiplication.lean`: explicit selected-candidate-cut
   semantics and the one-way real-product enclosure theorem; it does not claim
   an image-tightness converse.
+- `HexIntervalMathlib/Power.lean`: exact normalized selected-cut semantics and
+  the one-way successful natural-power image theorem.
 - `HexInterval/Program.lean`: node identifiers, SSA program, dependencies.
 - `HexInterval/Fact.lean`: facts, versions, provenance, contradiction checks.
 - `HexInterval/Action.lean`: requests, outcomes, suggestions, observations.

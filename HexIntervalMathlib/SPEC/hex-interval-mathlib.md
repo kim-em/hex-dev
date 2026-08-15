@@ -15,7 +15,8 @@ strict or closed finite ends, independent unbounded ends, and canonical empty.
 while `HexIntervalMathlib.MinMax` supplies selected-cut and real-image
 enclosure theorems for minimum and maximum, and
 `HexIntervalMathlib.Absolute` supplies the corresponding absolute-value
-theorems.
+theorems. `HexIntervalMathlib.Power` supplies exact selected-cut semantics
+and a one-way real-image theorem for checked natural power.
 
 For every successful resource-checked public operation it proves:
 
@@ -44,6 +45,9 @@ For every successful resource-checked public operation it proves:
   maximum of two input members belong to every successful result;
 - `contains_absWithin`: exact membership in the normalized selected absolute
   value cuts;
+- `contains_absUnchecked`: raw absolute-value cuts contain `|x|` whenever the
+  source raw interval contains `x`; this is a one-way image theorem, not a
+  converse characterization;
 - `abs_mem_absWithin`: the absolute value of every input member belongs to every
   successful result;
 - `contains_mulWithin`: exact successful-result membership in the explicit
@@ -51,7 +55,11 @@ For every successful resource-checked public operation it proves:
   empty, unbounded, strict, closed, and zero-attainment cases;
 - `mul_mem_mulWithin`: two input members multiply to a member of every
   successful result. This is an enclosure theorem; no separate image-tightness
-  converse is claimed.
+  converse is claimed;
+- `contains_powWithin`: exact membership in the normalized direct cuts selected
+  for exponent zero, positive odd powers, and positive even powers;
+- `pow_mem_powWithin`: every source member raised to the caller's natural
+  exponent belongs to every successful result.
 
 These theorems depend on the exact successful operation-result equation
 (`BuildResult` or `Arithmetic.Result`). A resource refusal has no set
@@ -65,8 +73,8 @@ not import the experimental propagation fact domain.
 The public companion grows only with the supported `Hex.Interval` API. The
 existing modules under `HexIntervalMathlib/Experiment` remain evidence for
 future operations, replay schemas, transcendental providers, and tactics, but
-are not re-exported here. Further arithmetic images, powers, splitting,
-regularization, and precision-indexed reciprocal/division require their own
+are not re-exported here. Further arithmetic images, splitting, regularization,
+and precision-indexed reciprocal/division require their own
 operation-specific semantic theorems before promotion. An image operation must
 at least prove successful-result cut semantics and sound real-image enclosure;
 it claims a tightness converse only when that converse is separately proved.
@@ -81,7 +89,9 @@ and the exact ordinary-kernel axiom surface.
 both image enclosures, and their axiom surfaces; it does not assert a set-image
 converse.
 The interval conformance module also pins absolute-value cut exactness, image
-transport, and its ordinary-kernel axiom surface.
+transport, and its ordinary-kernel axiom surface, together with natural-power
+cut exactness and image transport. The power theorem is one-way: no unproved
+set-image converse is exported.
 The Mathlib-free companion tests separately pin representative strict, closed,
 unbounded, and empty shapes together with pre-allocation resource refusal. The
 semantic theorem itself is exhaustive over the complete cut language.
