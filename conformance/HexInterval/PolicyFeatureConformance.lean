@@ -16,6 +16,13 @@ decorator contains neither interpretation.
 
 namespace Hex.Interval.PolicyFeatureConformance
 
+local notation "OfferView" =>
+  Hex.Interval.Policy.OfferView _root_.Hex.Interval.Experiment.Propagator.Policy.OfferId _root_.Hex.Interval.Experiment.Propagator.Policy.OfferKey
+local notation "Selection" =>
+  Hex.Interval.Policy.Decision _root_.Hex.Interval.Experiment.Propagator.Policy.OfferId _root_.Hex.Interval.Experiment.Propagator.Policy.OfferKey
+local notation "ScopeId" => Hex.Interval.Policy.ScopeId
+local notation "OfferClass" => Hex.Interval.Policy.OfferClass
+
 open Experiment Propagator Propagator.Policy PolicyFeature
 
 private def node (index : Nat) : NodeId := { index }
@@ -53,7 +60,7 @@ private def sameOffers : List OfferView -> List OfferView -> Bool
       sameOffer left right && sameOffers lefts rights
   | _, _ => false
 
-private def baseView : Policy.View Nat :=
+private def baseView : (Hex.Interval.Policy.View Nat _root_.Hex.Interval.Experiment.Propagator.Policy.OfferId _root_.Hex.Interval.Experiment.Propagator.Policy.OfferKey) :=
   { scope := { index := 0 }
     serial := 9
     programVersion := 7
@@ -72,7 +79,7 @@ private def baseView : Policy.View Nat :=
         generation := 8 }
     incomplete := false }
 
-private def sameView (left right : Policy.View Nat) : Bool :=
+private def sameView (left right : (Hex.Interval.Policy.View Nat _root_.Hex.Interval.Experiment.Propagator.Policy.OfferId _root_.Hex.Interval.Experiment.Propagator.Policy.OfferKey)) : Bool :=
   left.scope == right.scope && left.serial == right.serial &&
     left.programVersion == right.programVersion &&
     sameOffers left.offers.toList right.offers.toList &&

@@ -11,6 +11,7 @@ public import HexInterval.Multiplication
 public import HexInterval.Action
 public import HexInterval.State
 public import HexInterval.Trace
+public import HexInterval.Policy
 
 public section
 
@@ -34,6 +35,9 @@ visible as the explicit decoder and inspection boundary. The public structural
 contracts also cover checked typed SSA programs, versioned fact projections,
 registrations, scoped bindings, actions, immutable package requests, checked
 immutable branch state, dependency/work queues, authoritative chronology, and
-bounded diagnostics. Concrete callbacks and proposals, policy selection,
-search, proof replay, and measurement-selected storage remain experimental.
+bounded diagnostics. The public policy contract exposes bounded immutable
+offers, exact echoed decisions, and fail-closed revalidation without selecting
+a default policy.
+Concrete callbacks and proposals, policy implementations, search, proof replay,
+and measurement-selected storage remain experimental.
 -/

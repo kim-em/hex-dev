@@ -18,6 +18,13 @@ stream records their different causal histories exactly.
 
 namespace Hex.Interval.PolicyDriverConformance
 
+local notation "OfferView" =>
+  Hex.Interval.Policy.OfferView _root_.Hex.Interval.Experiment.Propagator.Policy.OfferId _root_.Hex.Interval.Experiment.Propagator.Policy.OfferKey
+local notation "Selection" =>
+  Hex.Interval.Policy.Decision _root_.Hex.Interval.Experiment.Propagator.Policy.OfferId _root_.Hex.Interval.Experiment.Propagator.Policy.OfferKey
+local notation "ScopeId" => Hex.Interval.Policy.ScopeId
+local notation "OfferClass" => Hex.Interval.Policy.OfferClass
+
 open Experiment.Propagator
 open Experiment.Propagator.Policy
 open Experiment.Propagator.Policy.Driver
@@ -32,10 +39,10 @@ inductive Command
   | stale (id : OfferId)
   | stop
 
-def findOffer? (view : View Fact) (id : OfferId) : Option OfferView :=
+def findOffer? (view : (Hex.Interval.Policy.View Fact _root_.Hex.Interval.Experiment.Propagator.Policy.OfferId _root_.Hex.Interval.Experiment.Propagator.Policy.OfferKey)) (id : OfferId) : Option OfferView :=
   view.offers.toList.find? fun offer => offer.id == id
 
-def selection? (view : View Fact) (id : OfferId) : Option Selection := do
+def selection? (view : (Hex.Interval.Policy.View Fact _root_.Hex.Interval.Experiment.Propagator.Policy.OfferId _root_.Hex.Interval.Experiment.Propagator.Policy.OfferKey)) (id : OfferId) : Option Selection := do
   let offer <- findOffer? view id
   some
     { scope := view.scope
@@ -44,7 +51,7 @@ def selection? (view : View Fact) (id : OfferId) : Option Selection := do
       id
       expected := offer.key }
 
-def choose : List Command -> View Rank -> Step (List Command)
+def choose : List Command -> (Hex.Interval.Policy.View Rank _root_.Hex.Interval.Experiment.Propagator.Policy.OfferId _root_.Hex.Interval.Experiment.Propagator.Policy.OfferKey) -> Step (List Command)
   | [], _ => .stop []
   | .stop :: rest, _ => .stop rest
   | .select id :: rest, view =>

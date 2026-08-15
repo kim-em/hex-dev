@@ -25,6 +25,13 @@ theorem is unconditional and does not mathematically require branching.
 
 namespace Hex.IntervalMathlib.ReluConformance
 
+local notation "OfferView" =>
+  Hex.Interval.Policy.OfferView _root_.Hex.Interval.Experiment.Propagator.Policy.OfferId _root_.Hex.Interval.Experiment.Propagator.Policy.OfferKey
+local notation "Selection" =>
+  Hex.Interval.Policy.Decision _root_.Hex.Interval.Experiment.Propagator.Policy.OfferId _root_.Hex.Interval.Experiment.Propagator.Policy.OfferKey
+local notation "ScopeId" => Hex.Interval.Policy.ScopeId
+local notation "OfferClass" => Hex.Interval.Policy.OfferClass
+
 open Lean Elab Tactic Meta
 open Hex.Interval
 open Hex.Interval.Experiment
@@ -32,8 +39,8 @@ open Propagator PolicySession SemanticReplay ChronologicalReplay ProofEmitter
 open Frontend FrontendEncoder ProofFrontend ProofRegistry GoalFrontend ExpSign
 open GoalClosure BranchStart
 
-private def splitOffer? (view : Propagator.Policy.View Bound) :
-    Option Propagator.Policy.OfferView :=
+private def splitOffer? (view : (Hex.Interval.Policy.View Bound Propagator.Policy.OfferId Propagator.Policy.OfferKey)) :
+    Option (Hex.Interval.Policy.OfferView _root_.Hex.Interval.Experiment.Propagator.Policy.OfferId _root_.Hex.Interval.Experiment.Propagator.Policy.OfferKey) :=
   view.offers.toList.find? fun offer =>
     match offer.key with
     | .invoke invocation => invocation.rule == splitRuleKey
@@ -370,8 +377,8 @@ private theorem closeRelu (x : ℝ)
       rcases member with rfl | rfl <;> trivial)
   exact holds
 
-private def reluOffer? (key : RuleKey) (view : Propagator.Policy.View Bound) :
-    Option Propagator.Policy.OfferView :=
+private def reluOffer? (key : RuleKey) (view : (Hex.Interval.Policy.View Bound Propagator.Policy.OfferId Propagator.Policy.OfferKey)) :
+    Option (Hex.Interval.Policy.OfferView _root_.Hex.Interval.Experiment.Propagator.Policy.OfferId _root_.Hex.Interval.Experiment.Propagator.Policy.OfferKey) :=
   view.offers.toList.find? fun offer =>
     match offer.key with
     | .invoke invocation => invocation.rule == key
@@ -387,7 +394,7 @@ private def reluRulePolicy (key : RuleKey) :
 
 private def reluRunWith? (runtimePackages : Array (Package Bound))
     (input : CheckerInput Bound) (controller : TargetRun.Controller Bound Unit)
-    (scope : Propagator.Policy.ScopeId := { index := 0 }) :
+    (scope : Hex.Interval.Policy.ScopeId := { index := 0 }) :
     Option (TargetRun.Result Bound Unit) := do
   let .ok session := PolicySession.Session.start factDomain
       input.baseProgram runtimePackages input.initialFacts limits scope
@@ -469,7 +476,7 @@ private structure ReluRun where
   reached : TargetRun.Reached Bound
 
 private def reluRunChild? (side : Bound) (input : CheckerInput Bound)
-    (scope : Propagator.Policy.ScopeId) : Option ReluRun := do
+    (scope : Hex.Interval.Policy.ScopeId) : Option ReluRun := do
   let key := if side == .nonnegative then reluNonnegativeKey else reluNegativeKey
   let result ← reluRunWith? reluPackages input (reluRulePolicy key) scope
   let .target reached := result.stop | none
@@ -524,13 +531,13 @@ private def reluTree? (resources : BranchTree.Limits := treeLimits) :
   reluPrepared?.any fun lifted =>
     let children := lifted.down
     children.depth == 1 && BranchProof.sameInput children.parent reluInput &&
-      children.leftScope == ({ index := 1 } : Propagator.Policy.ScopeId) &&
-      children.rightScope == ({ index := 2 } : Propagator.Policy.ScopeId) &&
+      children.leftScope == ({ index := 1 } : Hex.Interval.Policy.ScopeId) &&
+      children.rightScope == ({ index := 2 } : Hex.Interval.Policy.ScopeId) &&
       BranchProof.sameInput children.left reluLeftInput &&
       BranchProof.sameInput children.right reluRightInput
 
 private def reluTraceUses? (side : Bound) (input : CheckerInput Bound)
-    (scope : Propagator.Policy.ScopeId) : Bool :=
+    (scope : Hex.Interval.Policy.ScopeId) : Bool :=
   match reluRunChild? side input scope with
   | none => false
   | some run =>
@@ -617,7 +624,7 @@ private def reluParent : Evidence
 
 private meta def emitReluChild (context : ProofFrontend.Context Bound Name)
     (side : Bound) (input : CheckerInput Bound)
-    (scope : Propagator.Policy.ScopeId) (seed : Expr) : MetaM Expr := do
+    (scope : Hex.Interval.Policy.ScopeId) (seed : Expr) : MetaM Expr := do
   let some run := reluRunChild? side input scope
     | throwError "interval_relu_split: child search failed"
   let some trace := Frontend.trace? run.session.state.engine run.session.arena
@@ -791,7 +798,7 @@ example : True := by
   run_tac
     let checkMutation (context : ProofFrontend.Context Bound Name)
         (side wrong : Bound) (input : CheckerInput Bound)
-        (scope : Propagator.Policy.ScopeId) (seed : Expr) : MetaM Unit := do
+        (scope : Hex.Interval.Policy.ScopeId) (seed : Expr) : MetaM Unit := do
       let some run := reluRunChild? side input scope
         | throwError "interval_relu_split mutation: child search failed"
       let some trace := Frontend.trace? run.session.state.engine run.session.arena

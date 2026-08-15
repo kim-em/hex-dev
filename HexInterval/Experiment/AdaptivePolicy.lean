@@ -27,6 +27,10 @@ The scores choose search order only.  Every selected offer is revalidated by
 namespace Hex.Interval.Experiment.AdaptivePolicy
 
 open Propagator Propagator.Policy TargetRun
+open Hex.Interval.Policy (ScopeId)
+
+local notation "PolicyOffer" =>
+  Hex.Interval.Policy.OfferView Propagator.Policy.OfferId Propagator.Policy.OfferKey
 
 /-- Replaceable integer coefficients for the first feedback experiment. -/
 structure Config where
@@ -152,12 +156,12 @@ def learnedScore (config : Config) (record : Option Record)
       else gain + ageBonus - config.noChangePenalty * record.stagnant
 
 structure Ranked where
-  offer : OfferView
+  offer : PolicyOffer
   fair : Bool
   stage : Nat
   score : Nat
 
-def rankOffer (state : State) (offer : OfferView) : Ranked :=
+def rankOffer (state : State) (offer : PolicyOffer) : Ranked :=
   let record := (offerKey? offer.key).bind (find? state.records)
   let snapshot := offerSnapshot? offer.key
   { offer
@@ -176,7 +180,7 @@ def better (candidate current : Ranked) : Bool :=
       (current.score < candidate.score ||
         (current.score == candidate.score && current.offer.age < candidate.offer.age)))
 
-def choose? (state : State) (offers : Array OfferView) : Option OfferView :=
+def choose? (state : State) (offers : Array PolicyOffer) : Option PolicyOffer :=
   (offers.foldl (fun best offer =>
     if !StagedPolicy.allowed state.config.staged offer then best
     else

@@ -71,9 +71,15 @@ work-queue, chronology, and bounded diagnostic snapshots. These records
 deliberately contain neither function callbacks nor proof evidence. The state
 records are a stable decoded interchange and validation contract; they do not
 select the eventual mutable, persistent, paged, or trail-backed implementation
-used inside a high-performance branch search. Package assembly, callback
-outcomes and proposals, policy choice, sessions, branch search, payload
-storage, proof replay, and that optimized backing store remain experimental.
+used inside a high-performance branch search. The supported boundary also
+includes generic bounded policy offers/views, exact echoed decisions, a
+replaceable choice interface, package-measured byte/pair/work caps, and
+transactional revalidation against exact program, fact snapshot, scope,
+serial, program version, remaining budget, and complete offer fields. It does
+not choose a semantic offer-key encoding or a default policy. Package assembly,
+callback outcomes and proposals, concrete policy algorithms, sessions, branch
+search, payload storage, proof replay, and that optimized backing store remain
+experimental.
 In particular, the current instantiation proposal's package-supplied numeric
 policy family is not part of the supported action contract.
 
@@ -3087,6 +3093,28 @@ equality-pair key. Replay-facing trigger metadata is deliberately absent;
 `PolicyFeature` is a bounded exact integer key/value; and frontier events are
 engine-issued additions, refreshes, tombstones, and observations:
 
+The current Mathlib-free `HexInterval/Policy.lean` contract implements the
+generic part of this boundary. `OfferView Id SemanticKey` retains the complete
+controller-issued offer, and `Decision Id SemanticKey` echoes its scope,
+serial, program version, remaining budget, identifier, semantic key, class,
+age, and bounded score. `checkViewWithin`, `revalidate`, and
+`checkDecisionWithin` fail transactionally on malformed program/fact state,
+duplicate identifiers, stale stamps or budgets, changed offer fields, and
+independent offer-count, byte, pair, logical-work, and score caps. Identifier
+and semantic-key measurement callbacks, and equality on nested key values,
+remain an explicit non-preemptible envelope; the cap governs accepted retained
+data and subsequent adapter work, not arbitrary callback allocation or time.
+The returned runtime value has no theorem authority.
+
+The experimental target controller now implements the supported `Interface`
+and returns the actual supported `Step`; it stamps a selected supported offer
+into a supported decision before the policy session performs the existing
+engine-owned key/freshness transition checks. The concrete `OfferId`,
+`OfferKey`, instantiation/split encodings, staged/adaptive/feature policies,
+package callbacks, event history, sessions, and branch-search loop remain under
+`HexInterval/Experiment`. In particular no `balancedV1`, score model, storage
+layout, scheduler, or default policy is selected by the supported contract.
+
 ```lean
 structure PolicyKey where
   name    : String
@@ -5037,6 +5065,11 @@ their declared cost inside a scheduler bound.
   dependency watchers, dirty bits, append-only work queues with policy
   tombstones, controller resources, and transactional checked builders. These
   decoded arrays do not select the optimized branch-storage implementation.
+- `HexInterval/Policy.lean`: supported Mathlib-free scope and policy keys,
+  generic bounded offer/view/decision/step/interface contracts, exact retained
+  offer revalidation, and checked count/byte/pair/work/score admission. Concrete
+  semantic offer keys and policies remain experimental; package measurement
+  and nested-key equality callbacks are explicitly non-preemptible.
 - `HexInterval/Experiment/Propagator.lean`: current experimental concrete
   applications, callbacks, outcomes, untrusted proposals and replies, and
   extension admission. Its engine extends and mutates only through the

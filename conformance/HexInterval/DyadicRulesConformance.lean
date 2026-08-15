@@ -18,6 +18,13 @@ place of the registry when checking the final facts.
 
 namespace Hex.Interval.DyadicRulesConformance
 
+local notation "OfferView" =>
+  Hex.Interval.Policy.OfferView _root_.Hex.Interval.Experiment.Propagator.Policy.OfferId _root_.Hex.Interval.Experiment.Propagator.Policy.OfferKey
+local notation "Selection" =>
+  Hex.Interval.Policy.Decision _root_.Hex.Interval.Experiment.Propagator.Policy.OfferId _root_.Hex.Interval.Experiment.Propagator.Policy.OfferKey
+local notation "ScopeId" => Hex.Interval.Policy.ScopeId
+local notation "OfferClass" => Hex.Interval.Policy.OfferClass
+
 open Experiment Propagator
 open DyadicRules
 
@@ -629,7 +636,7 @@ inductive ConcreteCommand
   | split (key : RuleKey)
 
 def commandMatches (command : ConcreteCommand)
-    (offer : Propagator.Policy.OfferView) : Bool :=
+    (offer : (Hex.Interval.Policy.OfferView _root_.Hex.Interval.Experiment.Propagator.Policy.OfferId _root_.Hex.Interval.Experiment.Propagator.Policy.OfferKey)) : Bool :=
   match command, offer.key with
   | .invoke key, .invoke source => source.rule == key
   | .instantiate key, .instantiate source _ => source.rule == key
@@ -640,7 +647,7 @@ def commandMatches (command : ConcreteCommand)
   | _, _ => false
 
 def concreteChoose (commands : List ConcreteCommand)
-    (view : Propagator.Policy.View Fact) :
+    (view : (Hex.Interval.Policy.View Fact Propagator.Policy.OfferId Propagator.Policy.OfferKey)) :
     Propagator.Policy.Driver.Step (List ConcreteCommand) :=
   match commands with
   | [] => .stop []

@@ -42,10 +42,10 @@ structure State where
   private mk ::
   createdScopes : Nat
   nextScope : Nat
-  private scopeDepths : List (Propagator.Policy.ScopeId × Nat)
+  private scopeDepths : List (Hex.Interval.Policy.ScopeId × Nat)
 
 private def makeState (createdScopes nextScope : Nat)
-    (scopeDepths : List (Propagator.Policy.ScopeId × Nat)) : State :=
+    (scopeDepths : List (Hex.Interval.Policy.ScopeId × Nat)) : State :=
   { createdScopes, nextScope, scopeDepths }
 
 namespace State
@@ -68,9 +68,9 @@ structure Children (Fact : Type) where
   plan : Propagator.Policy.SplitPlan Fact
   depth : Nat
   parent : CheckerInput Fact
-  leftScope : Propagator.Policy.ScopeId
+  leftScope : Hex.Interval.Policy.ScopeId
   left : CheckerInput Fact
-  rightScope : Propagator.Policy.ScopeId
+  rightScope : Hex.Interval.Policy.ScopeId
   right : CheckerInput Fact
 
 /-- Fail-closed reasons for refusing to create child sessions. -/
@@ -170,8 +170,8 @@ opaque prepare [DecidableEq Fact] (limits : Limits) (state : State)
   let childDepth := depth + 1
   if childDepth > limits.maxDepth then throw .depthLimit
   if state.createdScopes + 2 > limits.maxScopes then throw .scopeLimit
-  let leftScope : Propagator.Policy.ScopeId := { index := state.nextScope }
-  let rightScope : Propagator.Policy.ScopeId := { index := state.nextScope + 1 }
+  let leftScope : Hex.Interval.Policy.ScopeId := { index := state.nextScope }
+  let rightScope : Hex.Interval.Policy.ScopeId := { index := state.nextScope + 1 }
   let parent : CheckerInput Fact :=
     { baseProgram := engine.program, initialFacts := engine.facts, target }
   let left : CheckerInput Fact :=
@@ -192,7 +192,7 @@ inductive LeafStatus (Fact : Type)
   | unfinished
   | wrongInput
 
-def sameInput [DecidableEq Fact] (scope : Propagator.Policy.ScopeId)
+def sameInput [DecidableEq Fact] (scope : Hex.Interval.Policy.ScopeId)
     (input : CheckerInput Fact)
     (result : TargetRun.Result Fact PolicyState) : Bool :=
   result.session.state.scope == scope &&
@@ -203,7 +203,7 @@ def sameInput [DecidableEq Fact] (scope : Propagator.Policy.ScopeId)
 input.  Target closure is rechecked against the retained current fact and
 version. -/
 def status [DecidableEq Fact] (domain : FactDomain Fact)
-    (scope : Propagator.Policy.ScopeId) (input : CheckerInput Fact)
+    (scope : Hex.Interval.Policy.ScopeId) (input : CheckerInput Fact)
     (result : TargetRun.Result Fact PolicyState) :
     LeafStatus Fact :=
   if !sameInput scope input result then .wrongInput

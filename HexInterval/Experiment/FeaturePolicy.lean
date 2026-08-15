@@ -32,6 +32,9 @@ namespace Hex.Interval.Experiment.FeaturePolicy
 
 open Propagator Propagator.Policy PolicyFeature
 
+local notation "PolicyOffer" =>
+  Hex.Interval.Policy.OfferView Propagator.Policy.OfferId Propagator.Policy.OfferKey
+
 /-- Globally unambiguous configured feature address. -/
 structure Address where
   provider : ProviderKey
@@ -175,7 +178,7 @@ def featureScore (limits : Limits) (plan : Plan)
   pure score
 
 structure Ranked where
-  offer : OfferView
+  offer : PolicyOffer
   fair : Bool
   stage : Nat
   score : Int
@@ -205,7 +208,7 @@ hand-built experiment data.  The returned value is always the exact
 `FeaturedOffer.base`, and ordinary engine revalidation remains authoritative.
 Unknown and missing configured features contribute zero. -/
 def choose? (limits : Limits) (state : AdaptivePolicy.State) (plan : Plan)
-    (view : PolicyFeature.View Fact) : Except Error (Option OfferView) := do
+    (view : PolicyFeature.View Fact) : Except Error (Option PolicyOffer) := do
   preflight limits plan view
   let mut best : Option Ranked := none
   for offer in view.offers do

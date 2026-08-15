@@ -23,6 +23,13 @@ empty, and closes through package-owned refutation.
 
 namespace Hex.IntervalMathlib.ExactBranchConformance
 
+local notation "OfferView" =>
+  Hex.Interval.Policy.OfferView _root_.Hex.Interval.Experiment.Propagator.Policy.OfferId _root_.Hex.Interval.Experiment.Propagator.Policy.OfferKey
+local notation "Selection" =>
+  Hex.Interval.Policy.Decision _root_.Hex.Interval.Experiment.Propagator.Policy.OfferId _root_.Hex.Interval.Experiment.Propagator.Policy.OfferKey
+local notation "ScopeId" => Hex.Interval.Policy.ScopeId
+local notation "OfferClass" => Hex.Interval.Policy.OfferClass
+
 open Lean Elab Tactic Meta
 open Hex.Interval Hex.Interval.Experiment
 open Propagator PayloadArena PolicySession SemanticReplay ChronologicalReplay
@@ -505,8 +512,8 @@ private inductive Route where
   deriving DecidableEq, Repr
 
 private def offerFor (key : RuleKey)
-    (view : Propagator.Policy.View DyadicInterval.Fact) :
-    Option Propagator.Policy.OfferView :=
+    (view : (Hex.Interval.Policy.View DyadicInterval.Fact Propagator.Policy.OfferId Propagator.Policy.OfferKey)) :
+    Option (Hex.Interval.Policy.OfferView _root_.Hex.Interval.Experiment.Propagator.Policy.OfferId _root_.Hex.Interval.Experiment.Propagator.Policy.OfferKey) :=
   view.offers.toList.find? fun offer =>
     match offer.key with
     | .invoke invocation => invocation.rule == key

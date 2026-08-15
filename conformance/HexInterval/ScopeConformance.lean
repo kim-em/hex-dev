@@ -569,7 +569,7 @@ def scopeOnlyAdmitted? (customLimits : Hex.Interval.State.Limits := limits) :
             event.newApplications == [{ index := 3 }])
   | none => false
 
-def scopePolicyLimits : Policy.Limits :=
+def scopePolicyLimits : Experiment.Propagator.Policy.Limits :=
   { maxDecisions := 4
     maxTraversal := 64
     maxLiveOffers := 16 }
@@ -579,7 +579,7 @@ def scopePolicyLimits : Policy.Limits :=
 #guard
   match scopeOnlyAdmitted? with
   | some (engine, _) =>
-      match (Policy.State.start engine scopePolicyLimits).view with
+      match (Experiment.Propagator.Policy.State.start engine scopePolicyLimits).view with
       | .ok (view, _) => view.remaining.generation == 1
       | .error _ => false
   | none => false
@@ -590,7 +590,7 @@ def scopePolicyLimits : Policy.Limits :=
 #guard
   match scopeOnlyAdmitted? with
   | some (engine, _) =>
-      match (Policy.State.start engine
+      match (Experiment.Propagator.Policy.State.start engine
           { scopePolicyLimits with maxTraversal := 5 }).view with
       | .error .traversalLimit => true
       | _ => false
@@ -599,7 +599,7 @@ def scopePolicyLimits : Policy.Limits :=
 #guard
   match scopeOnlyAdmitted? with
   | some (engine, _) =>
-      match (Policy.State.start engine
+      match (Experiment.Propagator.Policy.State.start engine
           { scopePolicyLimits with maxTraversal := 24 }).view with
       | .error .traversalLimit => true
       | _ => false
@@ -608,7 +608,7 @@ def scopePolicyLimits : Policy.Limits :=
 #guard
   match scopeOnlyAdmitted? with
   | some (engine, _) =>
-      match (Policy.State.start engine
+      match (Experiment.Propagator.Policy.State.start engine
           { scopePolicyLimits with maxTraversal := 25 }).view with
       | .ok (_, next) => next.metrics.traversal == 25
       | .error _ => false

@@ -7,6 +7,7 @@ Authors: Kim Morrison
 module
 
 public import HexInterval.Experiment.Propagator
+public import HexInterval.Policy
 
 @[expose] public section
 
@@ -30,17 +31,7 @@ namespace Hex.Interval.Experiment.Propagator.Policy
 
 /-! # Stable semantic offer descriptions -/
 
-/-- Scope identity is explicit even though the first experiment has one root
-scope.  It prevents a later branch-local choice from being transplanted. -/
-structure ScopeId where
-  index : Nat
-  deriving DecidableEq, Repr
-
-/-- Versioned name of a deterministic external policy. -/
-structure PolicyKey where
-  name : String
-  version : Nat
-  deriving DecidableEq, Repr
+open Hex.Interval.Policy (ScopeId PolicyKey OfferClass EngineBudgetView)
 
 /-- Collision-free engine identity for each kind of live work. -/
 inductive OfferId where
@@ -121,14 +112,6 @@ def InstantiationSemanticKey.ofRequest
         watches := scope.watches
         writes := scope.writes } }
 
-inductive OfferClass where
-  | invoke
-  | equality
-  | retry
-  | instantiate
-  | split
-  deriving DecidableEq, Repr
-
 /-- Semantic key which a selection must echo exactly.  Split freshness
 includes the target fact version, not an unrelated whole-program version. -/
 inductive OfferKey where
@@ -147,12 +130,8 @@ def OfferKey.offerClass : OfferKey -> OfferClass
   | .instantiate _ _ => .instantiate
   | .split _ _ _ _ => .split
 
-structure OfferView where
-  id : OfferId
-  key : OfferKey
-  offerClass : OfferClass
-  age : Nat
-  deriving DecidableEq
+local notation "OfferView" => Hex.Interval.Policy.OfferView OfferId OfferKey
+local notation "Selection" => Hex.Interval.Policy.Decision OfferId OfferKey
 
 /-! # Engine-owned frontier state -/
 
@@ -460,37 +439,28 @@ private def stateOffers (state : State Fact) : Except ViewError (Array OfferView
   if state.limits.maxLiveOffers < offers.size then throw .liveOfferLimit
   pure (offers, traversal)
 
-structure EngineBudgetView where
-  actions : Nat
-  matcherVisits : Nat
-  acceptedFacts : Nat
-  nodes : Nat
-  applications : Nat
-  equalities : Nat
-  retainedSuggestions : Nat
-  instances : Nat
-  queueEntries : Nat
-  generation : Nat
-  deriving DecidableEq, Repr
-
-structure View (Fact : Type) where
-  scope : ScopeId
-  serial : Nat
-  programVersion : Nat
-  offers : Array OfferView
-  facts : Snapshot Fact
-  remaining : EngineBudgetView
-  incomplete : Bool
-
 def remaining (limit used : Nat) : Nat := limit - used
 
-/-- Highest theorem-instantiation generation already committed in this
-branch.  Instance events cover node-, equality-, and scope-only extensions. -/
-private def usedGeneration (state : State Fact) : Nat :=
-  state.engine.instanceHistory.foldl
+/-- Exact remaining engine budget echoed by a policy decision. -/
+def State.budgetView (state : State Fact) : EngineBudgetView :=
+  let generation := state.engine.instanceHistory.foldl
     (fun greatest event => Nat.max greatest event.generation) 0
+  { actions := remaining state.engine.limits.maxActions state.engine.metrics.queuePops
+    matcherVisits :=
+      remaining state.engine.limits.maxMatcherVisits state.engine.metrics.matcherVisits
+    acceptedFacts := remaining state.engine.limits.maxAcceptedFacts state.engine.history.size
+    nodes := remaining state.engine.limits.maxNodes state.engine.program.nodes.size
+    applications :=
+      remaining state.engine.limits.maxApplications state.engine.applications.size
+    equalities := remaining state.engine.limits.maxEqualities state.engine.equalities.size
+    retainedSuggestions :=
+      remaining state.engine.limits.maxRetainedSuggestions state.engine.suggestions.size
+    instances := remaining state.engine.limits.maxInstances state.engine.instances.length
+    queueEntries := remaining state.engine.limits.maxQueueEntries state.engine.queue.size
+    generation := remaining state.engine.limits.maxGeneration generation }
 
-opaque State.view (state : State Fact) : Except ViewError (View Fact × State Fact) := do
+opaque State.view (state : State Fact) :
+    Except ViewError (Hex.Interval.Policy.View Fact OfferId OfferKey × State Fact) := do
   let (offers, traversal) <- stateOffers state
   pure
     ({ scope := state.scope
@@ -499,24 +469,7 @@ opaque State.view (state : State Fact) : Except ViewError (View Fact × State Fa
        offers
        facts := state.engine.toBranch.snapshot
        incomplete := state.incomplete
-       remaining :=
-        { actions := remaining state.engine.limits.maxActions state.engine.metrics.queuePops
-          matcherVisits :=
-            remaining state.engine.limits.maxMatcherVisits
-              state.engine.metrics.matcherVisits
-          acceptedFacts := remaining state.engine.limits.maxAcceptedFacts state.engine.history.size
-          nodes := remaining state.engine.limits.maxNodes state.engine.program.nodes.size
-          applications :=
-            remaining state.engine.limits.maxApplications state.engine.applications.size
-          equalities := remaining state.engine.limits.maxEqualities state.engine.equalities.size
-          retainedSuggestions :=
-            remaining state.engine.limits.maxRetainedSuggestions state.engine.suggestions.size
-          instances := remaining state.engine.limits.maxInstances state.engine.instances.length
-          queueEntries :=
-            remaining state.engine.limits.maxQueueEntries state.engine.queue.size
-          generation :=
-            remaining state.engine.limits.maxGeneration
-              (usedGeneration state) } },
+       remaining := state.budgetView },
      { state with
        metrics := { state.metrics with traversal := state.metrics.traversal + traversal } })
 
@@ -524,13 +477,6 @@ opaque State.view (state : State Fact) : Except ViewError (View Fact × State Fa
 
 /-- A policy echoes both the engine identity and the semantic key from one
 particular view. -/
-structure Selection where
-  scope : ScopeId
-  serial : Nat
-  programVersion : Nat
-  id : OfferId
-  expected : OfferKey
-
 inductive Rejection where
   | decisionLimit
   | wrongScope

@@ -2653,6 +2653,163 @@ def retainedLog? : Option Hex.Interval.Trace.Log :=
       | _ => false
   | _, _ => false
 
+/-! # Supported bounded policy boundary -/
+
+def policyAction : Action :=
+  { action with
+    serial := 0
+    programVersion := 0
+    application := { index := 0 }
+    inputs := [{ node := contractNode 0, version := 0 }]
+    generation := 0 }
+
+def policyOffer : Hex.Interval.Policy.OfferView Nat Action :=
+  { id := 7
+    key := policyAction
+    offerClass := .invoke
+    age := 3
+    score := 2 }
+
+def policyBudget : Hex.Interval.Policy.EngineBudgetView :=
+  { actions := 4
+    matcherVisits := 3
+    acceptedFacts := 2
+    nodes := 2
+    applications := 1
+    equalities := 1
+    retainedSuggestions := 1
+    instances := 1
+    queueEntries := 2
+    generation := 1 }
+
+def policyView : Hex.Interval.Policy.View Nat Nat Action :=
+  { scope := { index := 5 }
+    serial := 11
+    programVersion := 0
+    offers := #[policyOffer]
+    facts := { facts := #[13, 23], versions := #[0, 0], contradictory := false }
+    remaining := policyBudget
+    incomplete := false }
+
+def policyLimits : Hex.Interval.Policy.Limits :=
+  { maxOffers := 1
+    maxBytes := 4
+    maxPairs := 1
+    maxWork := 2
+    maxScore := 2 }
+
+def policyMeasure : Hex.Interval.Policy.Measure Nat Action :=
+  { id := fun _ => { bytes := 1 }
+    key := fun action =>
+      { bytes := 3, pairs := action.inputs.length, work := 2 } }
+
+def policyDecision : Hex.Interval.Policy.Decision Nat Action :=
+  Hex.Interval.Policy.select policyView policyOffer
+
+def policyError (wanted : Hex.Interval.Policy.Error)
+    (result : Except Hex.Interval.Policy.Error α) : Bool :=
+  match result with
+  | .error actual => decide (actual = wanted)
+  | .ok _ => false
+
+#guard match Hex.Interval.Policy.checkViewWithin policyLimits policyMeasure
+    contractProgram policyView with
+  | .ok cost => cost.bytes == 4 && cost.pairs == 1 && cost.work == 2
+  | .error _ => false
+
+#guard match branch? with
+  | some branch =>
+      match Hex.Interval.Policy.checkDecisionWithin policyLimits policyMeasure branch
+          policyView policyDecision with
+      | .ok offer => decide (offer = policyOffer)
+      | .error _ => false
+  | none => false
+
+-- Exact scope, serial, program, budget, fact version, and action identity are
+-- independently load-bearing.
+#guard policyError .wrongScope <| Hex.Interval.Policy.revalidate policyView
+  { policyDecision with scope := { index := 6 } }
+#guard policyError .staleSerial <| Hex.Interval.Policy.revalidate policyView
+  { policyDecision with serial := 12 }
+#guard policyError .staleProgram <| Hex.Interval.Policy.revalidate policyView
+  { policyDecision with programVersion := 1 }
+#guard policyError .staleBudget <| Hex.Interval.Policy.revalidate policyView
+  { policyDecision with remaining := { policyBudget with actions := 3 } }
+#guard policyError .mutatedOffer <| Hex.Interval.Policy.revalidate policyView
+  { policyDecision with expected :=
+      { policyAction with inputs := [{ node := contractNode 0, version := 1 }] } }
+#guard policyError .mutatedOffer <| Hex.Interval.Policy.revalidate policyView
+  { policyDecision with expected :=
+      { policyAction with key := { localKey with schema := 5 } } }
+#guard match branch? with
+  | some branch =>
+      let staleFacts :=
+        { policyView with facts := { policyView.facts with versions := #[1, 0] } }
+      policyError .malformedState <|
+        Hex.Interval.Policy.checkDecisionWithin policyLimits policyMeasure branch
+          staleFacts policyDecision
+  | none => false
+#guard match branch? with
+  | some branch =>
+      let staleFacts :=
+        { policyView with facts := { policyView.facts with facts := #[13, 999] } }
+      policyError .malformedState <|
+        Hex.Interval.Policy.checkDecisionWithin policyLimits policyMeasure branch
+          staleFacts policyDecision
+  | none => false
+
+-- Every exposed offer field is echoed, not just its compact identifier/key.
+#guard policyError .mutatedOffer <| Hex.Interval.Policy.revalidate policyView
+  { policyDecision with offerClass := .retry }
+#guard policyError .mutatedOffer <| Hex.Interval.Policy.revalidate policyView
+  { policyDecision with age := 4 }
+#guard policyError .mutatedOffer <| Hex.Interval.Policy.revalidate policyView
+  { policyDecision with score := 1 }
+#guard policyError .missingOffer <| Hex.Interval.Policy.revalidate policyView
+  { policyDecision with id := 8 }
+
+-- Each retained dimension has a distinct transactional one-under refusal.
+#guard policyError .offerLimit <| Hex.Interval.Policy.checkViewWithin
+  { policyLimits with maxOffers := 0 } policyMeasure contractProgram policyView
+#guard policyError .byteLimit <| Hex.Interval.Policy.checkViewWithin
+  { policyLimits with maxBytes := 3 } policyMeasure contractProgram policyView
+#guard policyError .pairLimit <| Hex.Interval.Policy.checkViewWithin
+  { policyLimits with maxPairs := 0 } policyMeasure contractProgram policyView
+#guard policyError .workLimit <| Hex.Interval.Policy.checkViewWithin
+  { policyLimits with maxWork := 1 } policyMeasure contractProgram policyView
+#guard policyError .scoreLimit <| Hex.Interval.Policy.checkViewWithin
+  { policyLimits with maxScore := 1 } policyMeasure contractProgram policyView
+#guard policyError .duplicateId <| Hex.Interval.Policy.checkViewWithin
+  { policyLimits with maxOffers := 2 } policyMeasure contractProgram
+    { policyView with offers := #[policyOffer, policyOffer] }
+
+def stoppedPolicy : Hex.Interval.Policy.Interface Nat Bool Nat Action :=
+  { choose := fun state _ => .stop state }
+
+def firstPolicy : Hex.Interval.Policy.Interface Nat Bool Nat Action :=
+  { choose := fun state view =>
+      match view.offers[0]? with
+      | some offer => .select offer state
+      | none => .stop state }
+
+#guard match stoppedPolicy.choose false policyView with
+  | .stop false => true
+  | _ => false
+
+#guard match firstPolicy.choose false policyView with
+  | .select offer false => offer == policyOffer
+  | _ => false
+
+/-- Kernel replay is parameterized by neither policy choice nor policy-private
+state.  Substituting an arbitrary policy cannot change this theorem. -/
+theorem replayIgnoresPolicy
+    (_policy : Hex.Interval.Policy.Interface Nat Bool Nat Action) :
+    policyOffer.key = policyAction := rfl
+
+/-- info: 'Hex.Interval.Conformance.Contracts.replayIgnoresPolicy' does not depend on any axioms -/
+#guard_msgs in
+#print axioms replayIgnoresPolicy
+
 end Contracts
 
 end Hex.Interval.Conformance

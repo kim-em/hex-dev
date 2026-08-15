@@ -31,12 +31,12 @@ namespace Hex.Interval.Experiment.TargetRun
 
 open Propagator PolicySession
 
-/-- One external policy decision.  The driver fills in the view identity and
-uses the chosen offer's complete semantic key when constructing a selection. -/
-inductive Decision (PolicyState : Type)
-  | select (offer : Propagator.Policy.OfferView) (next : PolicyState)
-  | dismiss (offer : Propagator.Policy.OfferView) (next : PolicyState)
-  | stop (next : PolicyState)
+local notation "OfferView" =>
+  Hex.Interval.Policy.OfferView Propagator.Policy.OfferId Propagator.Policy.OfferKey
+local notation "PolicyView" =>
+  Hex.Interval.Policy.View
+local notation "PolicyDecision" =>
+  Hex.Interval.Policy.Decision Propagator.Policy.OfferId Propagator.Policy.OfferKey
 
 /-- Observations delivered back to the external policy in execution order. -/
 inductive Event (Fact : Type)
@@ -49,9 +49,10 @@ inductive Event (Fact : Type)
   | rejectedPayload (resource : PayloadArena.Resource)
 
 /-- An arbitrary upgradeable policy over bounded engine-owned views. -/
-structure Controller (Fact PolicyState : Type) where
+structure Controller (Fact PolicyState : Type) extends
+    Hex.Interval.Policy.Interface Fact PolicyState
+      Propagator.Policy.OfferId Propagator.Policy.OfferKey where
   update : PolicyState -> Event Fact -> PolicyState
-  choose : PolicyState -> Propagator.Policy.View Fact -> Decision PolicyState
 
 /-- The exact retained fact version which triggered target stopping. -/
 structure Reached (Fact : Type) where
@@ -84,13 +85,9 @@ structure Result (Fact PolicyState : Type) where
   events : Array (Event Fact)
   stop : Stop Fact
 
-def selection (view : Propagator.Policy.View Fact)
-    (offer : Propagator.Policy.OfferView) : Propagator.Policy.Selection :=
-  { scope := view.scope
-    serial := view.serial
-    programVersion := view.programVersion
-    id := offer.id
-    expected := offer.key }
+def selection (view : PolicyView Fact Propagator.Policy.OfferId Propagator.Policy.OfferKey)
+    (offer : OfferView) : PolicyDecision :=
+  Hex.Interval.Policy.select view offer
 
 /-- Check whether the installed fact entails the requested target.  This is a
 runtime search test, not proof evidence. -/
