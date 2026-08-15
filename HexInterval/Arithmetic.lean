@@ -348,17 +348,18 @@ def roundingBound (precision : Precision) (bound : RationalBound) : RationalBoun
         numeratorBits := if bound.numeratorBits = 0 then 0 else bound.numeratorBits + shift }
   | .negSucc shift => { bound with denominatorBits := bound.denominatorBits + shift + 1 }
 
-/-- Whether floor rounding may increase the quotient's magnitude by one bit. -/
-def isNegative : Dyadic → Bool
+/-- Whether the retained dyadic input is strictly negative. This private
+classifier supplies the sign of the quotient before floor rounding. -/
+private def negative : Dyadic → Bool
   | .ofOdd (.negSucc _) _ _ => true
   | _ => false
 
 /-- Bound the integer quotient passed to `Dyadic.ofIntWithPrec`. A positive
 quotient has no more bits than the shifted rational numerator; flooring a
 negative quotient may add one magnitude bit. -/
-def boundQuotientBits (isNegative : Bool) (rounding : RationalBound) : Nat :=
+def boundQuotientBits (quotientNegative : Bool) (rounding : RationalBound) : Nat :=
   if rounding.numeratorBits = 0 then 0
-  else rounding.numeratorBits + (if isNegative then 1 else 0)
+  else rounding.numeratorBits + (if quotientNegative then 1 else 0)
 
 /-- Bound the canonical result height after `Dyadic.ofIntWithPrec`. Removing
 `t` trailing zeroes decreases numerator bits by `t` while changing exponent
@@ -380,7 +381,7 @@ def preflightInv (limits : PrecisionLimits) (value : Dyadic)
       let converted := QuotientCost.conversionBound value
       let rounding := QuotientCost.roundingBound precision (QuotientCost.invertBound converted)
       let quotientBits :=
-        QuotientCost.boundQuotientBits (QuotientCost.isNegative value) rounding
+        QuotientCost.boundQuotientBits (QuotientCost.negative value) rounding
       let cost : QuotientCost :=
         { sources := [source]
           precision := precisionCost
@@ -411,7 +412,7 @@ def preflightDiv (limits : PrecisionLimits) (left right : Dyadic)
       let crossProduct := QuotientCost.divisionBound left right
       let rounding := QuotientCost.roundingBound precision crossProduct
       let quotientBits := QuotientCost.boundQuotientBits
-        (QuotientCost.isNegative left != QuotientCost.isNegative right) rounding
+        (QuotientCost.negative left != QuotientCost.negative right) rounding
       let cost : QuotientCost :=
         { sources := [leftCost, rightCost]
           precision := precisionCost
