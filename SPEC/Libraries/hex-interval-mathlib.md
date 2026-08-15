@@ -1436,6 +1436,44 @@ big-integer bit-complexity model, production balanced folds, caching,
 comparative proof-size results, or coverage of the separate 128 BKLNW tactic
 sites and Table 10 workload.
 
+The first Table 10 shard pins all five coordinates of source row 25 as one
+batch. At PNT+ revision `21998bb6196b56789f72a52656a781a75e134eb0`, the
+tuple in `BKLNW_tables.lean` is
+`(25, 1.8251e-4, 4.5626e-3, 1.1407e-1, 2.8516e0, 7.1291e1)`, and declarations
+`table_10_row25_k1_margin` through `table_10_row25_k5_margin` prove
+`B_8_exact k 25 26 ≤ listed_k * table_10_margin`. The package pins
+`table_10_margin = 1.002001`, both integer endpoints, the three coefficient
+bounds, four exponential windows, and each row/column/listed/corrected cell.
+One bounded provider action installs five coordinate facts from one payload.
+
+Pinned `BKLNW_table10_dispatch.lean:bklnw_table_10_verification` takes
+`(b, B 1, B 2, B 3, B 4, B 5) ∈ table_10` and returns every column for
+`k ∈ Finset.Icc 1 5`. The shard's `sourceTable` copies the exact row-25 tuple,
+and `row25OfMem` keeps that membership/finite-column shape while strengthening
+the local numerical premise. It does not claim the surrounding `B_8_exact`
+reduction, which is the localized PNT+ rewrite boundary.
+
+The proof boundary reconstructs the source coefficient majorant, proves its
+two endpoint inequalities by exact rational arithmetic plus kernel-checked
+exponential windows, and proves convexity once for `k = 1` and once for the
+parameterized `k = m + 2`, `m ≤ 3`, family. One indexed replay schema and a
+generic frontend fold close all five source-shaped numeric inequalities. No
+LeanCert or PNT+ theorem is imported; PNT+ may replace the local numerical
+premise by this stronger, explicitly checked bridge.
+
+The source comment immediately above `table_10_row25_k5_margin` identifies
+the historical false target: the un-margined endpoint has
+`G₅(25) = 71.2922 > 71.291`. The canary changes only that coordinate's target
+to the listed value, decodes it, rejects it with coordinate code `205`, emits
+no draft or retry, and separately proves the endpoint inequality false in the
+kernel. A duplicated/wrong column is also rejected.
+
+This remains a coordinate-pinned D9 shard, not acceptance of the Table 10
+family: it covers five numeric target premises after a localized source
+rewrite, not the surrounding `B_8_exact` declarations, the other 82 target
+sites, the 38 supporting `a₂` sites, arbitrary rows, or production batching
+and performance. The inventory classification therefore remains `pending`.
+
 The coordinate-aware Table 12 implementation is a bounded acceptance fixture
 that completes this family migration. At PNT+ commit
 `21998bb6196b56789f72a52656a781a75e134eb0`, the exact declaration is
@@ -2079,10 +2117,10 @@ The committed compatibility subset is `D8` unless marked `D9`:
 - representative `10^-20` and `10^-100` tail bounds;
 - BKLNW sums with every source upper limit 29, 37, 44, 51, 58, 63, 145, 217,
   289, 361, and 433;
-- `[D9]` one Table 10 shard and the recorded false target as an expected
-  failure. The shard fixture must bind the intended paper row/column
-  coordinates and generated theorem family, not merely replay 87 target and 38
-  supporting source-level tactic sites;
+- `[D9]` the row-25 Table 10 shard binds all five exact source coordinates and
+  rejects the recorded false `k = 5` target with a kernel falsity proof. This
+  is partial family evidence; the remaining target and supporting sites are
+  still pending;
 - `[D9]` the 130-case Table 12 batch, plus one of its four false
   original boundary rows as an expected failure;
 - `[D9]` a small deterministic FKS2 sample in per-PR `core`, a measured medium

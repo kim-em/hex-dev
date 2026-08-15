@@ -3848,6 +3848,52 @@ and production balanced-tree scaling evidence are still future work. The
 separate 128 BKLNW tactic occurrences and Table 10 workload are not implied by
 this interface result.
 
+#### Coordinate-pinned BKLNW Table 10 shard
+
+The first Table 10 canary pins the shared source row
+
+```text
+(25, 1.8251e-4, 4.5626e-3, 1.1407e-1, 2.8516e0, 7.1291e1)
+```
+
+at PNT+ revision `21998bb6196b56789f72a52656a781a75e134eb0`.
+The five coordinates correspond to
+`BKLNW_table10_rows_20_43.lean:table_10_row25_k1_margin` through
+`table_10_row25_k5_margin`; each source conclusion is
+`B_8_exact k 25 26 ≤ listed_k * table_10_margin`, with
+`table_10_margin = 1.002001`.
+
+The exact consumer shape is
+`BKLNW_table10_dispatch.lean:bklnw_table_10_verification`: it assumes
+`(b, B 1, B 2, B 3, B 4, B 5) ∈ table_10` and quantifies
+`k ∈ Finset.Icc 1 5`. The proof-side `sourceTable` copies the exact row-25
+tuple, and `row25OfMem` preserves those membership and finite-column
+hypotheses for the checked numeric majorant conclusion. The surrounding
+`B_8_exact` reduction remains the explicit localized PNT+ rewrite boundary.
+
+One bounded Mathlib-free row action authenticates the adjacent rows `25` and
+`26`, the coefficient bounds `1.00000002`, `1.2196`, and `3.5032e-6`, four
+source exponential windows, and all five listed/corrected coordinates. Exact
+rational endpoint arithmetic must pass before a single payload produces five
+facts. The Mathlib companion proves convexity of the `k = 1` majorant and one
+parameterized `k = m + 2`, `m ≤ 3`, family for the other columns. Generic
+chronology/schema replay and `ProofFrontend` close every coordinate as an
+ordinary kernel theorem. This is a reusable shared-row mechanism, not five
+copied row proofs.
+
+The pinned source explicitly records that the bare row-25/column-5 endpoint
+claim is false: its comment gives `G₅(25) = 71.2922 > 71.291`, so the theorem
+uses the safety margin. A payload which changes only that target back to the
+listed `71.291` remains structurally decodable but fails with coordinate code
+`205`, retains no draft, and cannot become a precision retry. An independent
+kernel lower bound proves `¬ majorant 5 25 ≤ 71.291`.
+
+This accepts only the five numeric majorant leaves for row 25 after a localized
+PNT+ rewrite to the source-shaped numeric bridge. It does not import or wrap
+LeanCert, prove the surrounding PNT+ `B_8_exact` reduction, accept arbitrary
+Table 10 rows, or cover the other 82 target sites and 38 supporting `a₂` sites.
+The Table 10 inventory family therefore remains `pending`.
+
 #### Coordinate-aware numerical batches
 
 The first source-pinned batch probe targets PNT+'s
