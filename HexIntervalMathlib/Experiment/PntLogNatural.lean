@@ -312,7 +312,8 @@ theorem log_30_lt : Real.log 30 < (3.401198 : ℝ) := log30Bounds.2
 theorem log_32_gt : (3.465735 : ℝ) < Real.log 32 := log32Bounds.1
 theorem log_32_lt : Real.log 32 < (3.465736 : ℝ) := log32Bounds.2
 
-/-! Generic proof-frontend fixture at the worst reduced ratio among the rows. -/
+/-! Generic proof-frontend fixture at representative row 29; row 30 has the
+worst reduced ratio among the rows. -/
 
 def baseFacts : List (NodeFact Bound) :=
   [{ node := node 0, fact := .exact row29.input },

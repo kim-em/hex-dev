@@ -1337,15 +1337,16 @@ by the runtime fixture. Mutations of the shift, term count, source row,
 cross-row payload, output window, and a mathematically false lower endpoint
 fail closed.
 
-These 24 tactic sites are accepted after localized PNT+ rewrites. This is a
-bounded fixed-source family, not LeanCert API compatibility and not acceptance
-of the whole `LogTables.lean` interface: after the negative-exponential block
-below, 29 actual tactic sites in that file remain pending. Arbitrary rational
-inputs, precision-selected term counts,
-endpoint generation rather than lookup, persistent table storage, and measured
-batch performance remain future work. The separate 20/50-digit `log 2`
-experiment supplies precision-indexed series evidence but is not silently
-combined with this fixed six-decimal runtime schema.
+These 24 tactic sites are accepted after localized PNT+ rewrites. This remains
+a bounded fixed-source family rather than a generic logarithm evaluator. In
+combination with the providers below, all 136 actual pinned
+`LogTables.lean` tactic sites are covered: 134 are accepted after localized
+rewrites and two are replaced by stronger results. This complete source
+coverage does not claim LeanCert API compatibility, arbitrary rational inputs,
+general precision-selected term counts, endpoint generation rather than
+lookup, persistent table storage, or measured batch performance. The separate
+20/50-digit `log 2` experiment supplies precision-indexed series evidence but
+is not silently combined with this fixed six-decimal runtime schema.
 
 The complete direct Table-10 negative-exponential block contributes 79 more
 source-shaped declarations, from `exp_neg_10_lt` through `exp_neg_200_lt`.
@@ -1366,6 +1367,35 @@ accepted after localized PNT+ rewrites. This is package-owned ordinary-kernel
 evidence, but remains a fixed source family: it does not claim arbitrary
 exponential arguments, precision-driven Taylor construction, generated cuts,
 batch-performance evidence, or LeanCert API compatibility.
+
+The rational-logarithm provider covers seventeen pinned declarations over
+fifteen exact positive rational inputs. Its bounded runtime authenticates the
+source coordinate, dyadic shift, reduced atanh parameter, eight-term count,
+scale, and both endpoints. The ordinary-kernel theorem checks the reduction
+identity, finite lower sum, geometric tail, and `log 2` contribution. Every
+source statement is preserved at its original strength; arbitrary rational
+inputs, generated precision and endpoints, and persistent tables remain
+outside the claim.
+
+The exponential-point provider covers the other nine pinned exponential
+statements with one rational Taylor/power theorem. Each row authenticates a
+signed rational input, a step in `[-1, 1]`, its positive natural multiplier,
+one checked side of a fourteen-term enclosure, and the final cut. The result
+does not import a LeanCert theorem and is not a public arbitrary-input
+exponential operation.
+
+The final two nested-log statements use two chronological applications of one
+checked log package. The first establishes a strict positive two-sided
+enclosure for `log 2`; the second consumes both inner endpoints in independent
+fourteen-term rational remainder checks. The resulting strict two-sided
+ordinary theorem strengthens both source statements, while zero-touching and
+bypassed inner facts reject.
+
+The final π statement crosses a provider-agnostic constant-operation boundary.
+Its runtime authenticates the exact `315 / 100` cut, and the Mathlib companion
+uses the ordinary `Real.pi_lt_d2` theorem from `Analysis.Real.Pi.Bounds`.
+Mathlib's Chudnovsky development is not imported; its `proof_wanted`
+sum-to-`π⁻¹` identity is not migration evidence.
 
 The small-prime logarithm cluster replaces all sixty actual `interval_auto`
 calls in `RosserSchoenfeld/RSPrimeLower.lean` and `TMEEMT.lean`. At the pinned
@@ -2992,6 +3022,31 @@ the fixed soundness and trust contracts.
 - `conformance/HexIntervalMathlib/PntExpNegativeConformance.lean`: all-row
   runtime validation, malformed and cross-row rejection, representative
   generic frontend closure, and guarded ordinary-kernel axiom reports.
+- `HexInterval/Experiment/PntLogRational.lean` and
+  `HexIntervalMathlib/Experiment/PntLogRational.lean`: the bounded fifteen-row
+  rational-log table, authenticated dyadic reductions, atanh remainder proof,
+  and seventeen source-shaped wrappers.
+- `conformance/HexIntervalMathlib/PntLogRationalConformance.lean`: all-row
+  validation plus reduction, term-count, cross-row, window, false-cut, and
+  representative proof-frontend guards.
+- `HexInterval/Experiment/PntExpPoint.lean` and
+  `HexIntervalMathlib/Experiment/PntExpPoint.lean`: nine authenticated
+  signed-rational Taylor/power records and their source-shaped theorems.
+- `conformance/HexIntervalMathlib/PntExpPointConformance.lean`: all-row
+  validation, source/step/power/term/cross-row rejection, and generic closure
+  of the tight `exp 20` row.
+- `HexInterval/Experiment/PntNestedLogTwo.lean` and
+  `HexIntervalMathlib/Experiment/PntNestedLogTwo.lean`: the bounded two-event
+  log package and ordinary proof consuming both positive inner endpoints.
+- `conformance/HexIntervalMathlib/PntNestedLogTwoConformance.lean`: exact
+  dependency chronology, zero-domain and bypass rejection, source wrappers,
+  and stronger two-sided proof-frontend closure.
+- `HexInterval/Experiment/PntPiPoint.lean` and
+  `HexIntervalMathlib/Experiment/PntPiPoint.lean`: the provider-agnostic π
+  operation, exact rational cut, and `Real.pi_lt_d2` semantic boundary.
+- `conformance/HexIntervalMathlib/PntPiPointConformance.lean`: constant
+  certificate, wrong-source and false-endpoint rejection, guarded axiom
+  surface, and generic proof-frontend closure.
 - `HexIntervalMathlib/Contractor.lean`: backwards propagation theorems.
 - `HexIntervalMathlib/Tactic.lean`: `interval`, `interval?`, and
   `interval_bound`.
