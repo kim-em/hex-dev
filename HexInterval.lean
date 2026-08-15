@@ -7,6 +7,7 @@ Authors: Kim Morrison
 module
 
 public import HexInterval.Interval
+public import HexInterval.Multiplication
 
 public section
 
@@ -16,9 +17,10 @@ data, propagation search, and replayable derivations.
 
 The public implementation exposes canonical exact intervals through a sealed
 representation, resource-safe smart constructors, and resource-checked
-intersection, hull, negation, addition, subtraction, minimum, maximum, and
-absolute value. A separate arithmetic resource layer preflights product growth
-and direct-power growth without yet exposing interval multiplication or power.
-Raw cuts remain visible as the explicit decoder and inspection boundary; D2
-propagation and replay experiments still live outside this supported umbrella.
+intersection, hull, negation, addition, subtraction, multiplication, minimum,
+maximum, and absolute value. The arithmetic resource layer preflights product
+and direct-power growth independently of exact comparison work; public interval
+power remains future work. Raw cuts remain visible as the explicit decoder and
+inspection boundary; D2 propagation and replay experiments still live outside
+this supported umbrella.
 -/

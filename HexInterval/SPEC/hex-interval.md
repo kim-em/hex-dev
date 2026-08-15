@@ -432,6 +432,7 @@ def subWithin       : EndpointLimit → Interval → Interval → BuildResult
 def minWithin       : EndpointLimit → Interval → Interval → BuildResult
 def maxWithin       : EndpointLimit → Interval → Interval → BuildResult
 def absWithin       : EndpointLimit → Interval → BuildResult
+def mulWithin       : EndpointLimit → Interval → Interval → Arithmetic.Result
 ```
 
 These names retain the budget because a public interval does not store the
@@ -477,8 +478,9 @@ the selector aligns finite dyadics, and the selected raw cuts then cross
 `ofRawWithin`. Thus an interval admitted under a larger earlier budget cannot
 force an unchecked alignment or silently turn refusal into empty.
 
-The supported tree also contains the resource prerequisites for multiplicative
-arithmetic, but not yet interval multiplication or powers. `Arithmetic.Growth`
+Multiplication uses the separate checked-arithmetic result because growth
+refusal is distinct from both empty output and endpoint/comparison refusal.
+`Arithmetic.Growth`
 records admitted source endpoint costs and a conservative predicted result.
 Multiplication records the sum of input numerator-bit lengths and the exact
 magnitude of the signed exponent sum. `Arithmetic.preflightMul` checks both
@@ -513,16 +515,29 @@ comparison costs, and `Arithmetic.Result` is a separate checked-arithmetic
 result so the existing `BuildResult` APIs above do not acquire a misleading or
 breaking cost variant.
 
+`mulWithin` first admits every finite endpoint comparison with zero. It then
+admits all four finite corner products through `Arithmetic.preflightMul`
+before multiplying any mantissas, and admits all finite candidate comparisons
+before extremum selection. The exact raw candidate enumerates the four
+extended-endpoint products, omitting the undefined formal products
+`0 * ±∞`; an attained zero candidate is added exactly when either nonempty
+factor contains zero. Tied corner values combine attainment, so open and
+closed extrema, zero attainment, independent unbounded sides, and empty
+absorption are preserved. A successful result has an exact normalized
+computed-cut characterization, and the Mathlib companion proves that every
+product of source members belongs to it. No separate image-tightness converse
+is currently claimed.
+
 The public raw intersection and hull cut selectors, `intersectUnchecked`,
 `hullUnchecked`, `negUnchecked`, `addUnchecked`, `subUnchecked`, `minUnchecked`,
-`maxUnchecked`, and `absUnchecked` are related to the checked operations by
-successful-result and semantic theorems. Like
+`maxUnchecked`, `absUnchecked`, and `mulUnchecked` are related
+to the checked operations by successful-result and semantic theorems. Like
 `Raw.normalizeUnchecked`, they
 are decoder-level combinators: untrusted callers use the checked `Interval`
 operations above.
 
-The remaining target surface includes the interval operation for multiplication,
-precision-indexed reciprocal and division, powers,
+The remaining target surface includes precision-indexed reciprocal and
+division and powers,
 splitting, and regularization. Their public signatures are fixed only after an
 allocation audit; no total API is promised for an operation that may align,
 compare, or enlarge arbitrary-precision endpoints.
