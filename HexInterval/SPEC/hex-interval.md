@@ -182,7 +182,7 @@ value's proof field.
 The initial supported slice exposes `view`, `empty`, `whole`, and endpoint-cost
 preflighted raw, singleton, one-sided, and finite constructors. The first
 supported operations are resource-checked intersection, hull, negation,
-addition, and subtraction.
+addition, subtraction, minimum, and maximum.
 Their Mathlib companion proves exact computed-cut semantics and image theorems;
 the remaining arithmetic is promoted separately rather than being declared
 public merely because narrower experiment implementations exist. All public
@@ -202,7 +202,10 @@ Successful `addWithin` exposes the exact independently summed lower and upper
 Minkowski cuts, and its image theorem maps any two input members to their sum.
 Successful `subWithin` similarly exposes the crossed left-lower-minus-right-upper
 and left-upper-minus-right-lower cuts, and maps two input members to their
-difference. Neither arithmetic theorem currently claims the separate
+difference. Successful `minWithin` and `maxWithin` expose their exact selected
+cut predicates and enclose the pointwise real minimum and maximum of any two
+input members. They do not claim the converse characterization of every result
+member as a pointwise image. Neither addition nor subtraction currently claims the separate
 representation-independent tightness converse for the real Minkowski image.
 Separately, the experiment form of the intersection theorem is installed as the
 generic `FactDomainSchema.proveMeet` boundary, and the transparent proof
@@ -422,6 +425,8 @@ def hullWithin      : EndpointLimit → Interval → Interval → BuildResult
 def negWithin       : EndpointLimit → Interval → BuildResult
 def addWithin       : EndpointLimit → Interval → Interval → BuildResult
 def subWithin       : EndpointLimit → Interval → Interval → BuildResult
+def minWithin       : EndpointLimit → Interval → Interval → BuildResult
+def maxWithin       : EndpointLimit → Interval → Interval → BuildResult
 ```
 
 These names retain the budget because a public interval does not store the
@@ -451,6 +456,14 @@ the resulting raw cuts then cross `ofRawWithin` exactly once. The theorem
 `Raw.sub_eq_add_neg` pins that the direct raw result still agrees with addition
 after raw negation.
 
+`minWithin` and `maxWithin` are also direct checked primitives, not compositions
+through unchecked total interval APIs. Empty is absorbing. Both same-side
+finite endpoint comparisons are preflighted before either selector executes.
+Minimum selects the hull lower cut and intersection upper cut; maximum selects
+the intersection lower cut and hull upper cut. The selected candidate then
+crosses `ofRawWithin`, whose independent endpoint/final-comparison check may
+still refuse even when both selector comparisons fit.
+
 The supported tree also contains the resource prerequisite for multiplicative
 arithmetic, but not yet interval multiplication itself. `Arithmetic.Growth`
 records admitted source endpoint costs and a conservative predicted result;
@@ -466,14 +479,15 @@ breaking cost variant. For example, under endpoint height `8`, the endpoints
 sixteen-bit product numerator is refused before multiplication.
 
 The public raw intersection and hull cut selectors, `intersectUnchecked`,
-`hullUnchecked`, `negUnchecked`, `addUnchecked`, and `subUnchecked` are related
+`hullUnchecked`, `negUnchecked`, `addUnchecked`, `subUnchecked`, `minUnchecked`,
+and `maxUnchecked` are related
 to the checked operations by successful-result and semantic theorems. Like
 `Raw.normalizeUnchecked`, they
 are decoder-level combinators: untrusted callers use the checked `Interval`
 operations above.
 
 The remaining target surface includes the interval operation for multiplication,
-precision-indexed reciprocal and division, powers, absolute value, min/max,
+precision-indexed reciprocal and division, powers, absolute value,
 splitting, and regularization. Their public signatures are fixed only after an
 allocation audit; no total API is promised for an operation that may align,
 compare, or enlarge arbitrary-precision endpoints.
@@ -499,6 +513,14 @@ tests also check the following exactness rules.
   Either corresponding unbounded contributor makes that result side
   unbounded; a finite side is closed exactly when both contributors are
   closed.
+- `minWithin` absorbs empty, chooses the smaller lower cut and the smaller upper
+  cut, and uses hull attainment on the lower tie but intersection attainment on
+  the upper tie. Thus a tied lower endpoint is closed if either input attains it,
+  while a tied upper endpoint is closed only if both inputs attain it.
+- `maxWithin` absorbs empty, chooses the larger lower cut and the larger upper
+  cut, and uses intersection attainment on the lower tie but hull attainment on
+  the upper tie. Thus a tied lower endpoint is closed only if both inputs attain
+  it, while a tied upper endpoint is closed if either input attains it.
 - After the empty-input short circuit, multiplication partitions both inputs
   by sign, enumerates finite corner and zero candidates, and tracks whether
   each extremum is attained. Zero is an attained extremum whenever either
@@ -508,10 +530,10 @@ tests also check the following exactness rules.
 - A power distinguishes zero, odd powers, and positive even powers. It does
   not implement powers by repeated interval multiplication when a direct hull
   is tighter.
-- `abs`, `min`, and `max` use the same candidate-and-attainment discipline.
-  In particular, `abs` contains a closed zero exactly when the input contains
-  zero, and tied extrema combine the contributing closure witnesses rather
-  than blindly copying one endpoint flag.
+- `abs` uses the same candidate-and-attainment discipline. In particular, it
+  contains a closed zero exactly when the input contains zero, and a tied
+  magnitude extremum combines both contributing closure witnesses rather than
+  copying one endpoint flag.
 - `split I m` returns `I ∩ (-∞,m]` and `I ∩ (m,+∞)`. The children are disjoint
   and cover `I`.
 - Empty is canonical. Unary image operations and regularization preserve empty;
@@ -3971,7 +3993,7 @@ their declared cost inside a scheduler bound.
 - `HexInterval/Canonical.lean`: sealed canonical values, views, and
   resource-safe smart constructors.
 - `HexInterval/Interval.lean`: supported resource-safe intersection, hull,
-  negation, addition, and subtraction, followed by future arithmetic, splitting, and regularization
+  negation, addition, subtraction, minimum, and maximum, followed by future arithmetic, splitting, and regularization
   operations.
 - `HexIntervalMathlib/Interval.lean`: real-set semantics for the supported
   public construction, intersection, hull, and negation operations.
@@ -3979,6 +4001,8 @@ their declared cost inside a scheduler bound.
   successful addition image theorem.
 - `HexIntervalMathlib/Subtraction.lean`: exact crossed-difference-cut semantics
   and the successful subtraction image theorem.
+- `HexIntervalMathlib/MinMax.lean`: exact selected-cut semantics and one-way
+  real-image enclosure theorems for minimum and maximum.
 - `HexInterval/Program.lean`: node identifiers, SSA program, dependencies.
 - `HexInterval/Fact.lean`: facts, versions, provenance, contradiction checks.
 - `HexInterval/Action.lean`: requests, outcomes, suggestions, observations.
@@ -3986,8 +4010,8 @@ their declared cost inside a scheduler bound.
 - `HexInterval/Policy.lean`: policy interface and `balancedV1`.
 - `HexInterval/Search.lean`: budgeted branch search and derivation slicing.
 - `HexInterval/Trace.lean`: diagnostics and machine-readable telemetry.
-- `conformance/HexInterval/{Conformance,EmitFixtures}.lean`: Lean-only checks
-  and oracle fixtures.
+- `conformance/HexInterval/{Conformance,MinMaxConformance,EmitFixtures}.lean`:
+  Lean-only checks and oracle fixtures.
 - `bench/HexInterval/Bench.lean`: Mathlib-free interval and scheduler
   benchmarks.
 
@@ -4011,6 +4035,8 @@ typical, boundary, and adversarial inputs. In particular it includes:
 - the distinct cases `mul empty whole = empty`, `mul {0} whole = {0}`, and
   `mul whole {0} = {0}`;
 - `abs`, `min`, and `max` with tied open and closed extrema;
+- minimum and maximum preflight refusal on either same-side comparison and on
+  the distinct selected-cut final comparison;
 - precision-indexed reciprocal and division for `{3}`, positive, negative,
   singleton-zero, one-sided-zero, and sign-crossing inputs;
 - powers on negative, mixed-sign, open-zero, and singleton inputs;

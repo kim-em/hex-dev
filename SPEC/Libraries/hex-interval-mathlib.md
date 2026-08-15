@@ -7,7 +7,7 @@ theorems for interval operations and propagators. It depends on Mathlib and
 
 The current supported surface interprets public canonical intervals over `ℝ`
 and proves exact semantics for successful resource-checked intersection, hull,
-negation, addition, and subtraction. Propagator, provider, replay, and tactic modules remain experiments
+negation, addition, subtraction, minimum, and maximum. Propagator, provider, replay, and tactic modules remain experiments
 and are not re-exported by the public umbrella. The user-facing tactic contract
 below is the release target, not a claim that the tactic is already supported.
 
@@ -143,6 +143,22 @@ theorem contains_subWithin
 theorem sub_mem_subWithin
     (h : subWithin limit I J = .ready result) :
     I.Contains x → J.Contains y → result.Contains (x - y)
+
+theorem contains_minWithin
+    (h : minWithin limit I J = .ready result) :
+    result.Contains x ↔ I.view.MinContains J.view x
+
+theorem min_mem_minWithin
+    (h : minWithin limit I J = .ready result) :
+    I.Contains x → J.Contains y → result.Contains (min x y)
+
+theorem contains_maxWithin
+    (h : maxWithin limit I J = .ready result) :
+    result.Contains x ↔ I.view.MaxContains J.view x
+
+theorem max_mem_maxWithin
+    (h : maxWithin limit I J = .ready result) :
+    I.Contains x → J.Contains y → result.Contains (max x y)
 ```
 
 For two nonempty bounded raw inputs, `HullContains` is exactly
@@ -166,6 +182,12 @@ unbounded input makes that output side unbounded, and finite strictness is
 disjunction. `sub_mem_subWithin` proves the representation-independent image
 enclosure. As for addition, a separate real Minkowski-image tightness converse
 remains future work rather than a current claim.
+
+`MinContains` uses the union of lower-cut predicates and intersection of
+upper-cut predicates; `MaxContains` uses the intersection of lower-cut
+predicates and union of upper-cut predicates. These characterize the exact
+computed cuts. The corresponding image theorems are one-way enclosures of
+pointwise real `min` and `max`; no converse set-image theorem is claimed.
 
 The remaining target theorems include:
 

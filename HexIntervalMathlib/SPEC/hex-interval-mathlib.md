@@ -11,7 +11,8 @@ The foundational supported module is `HexIntervalMathlib.Interval`. It defines t
 real value of a dyadic endpoint and membership for every public interval cut:
 strict or closed finite ends, independent unbounded ends, and canonical empty.
 `HexIntervalMathlib.Addition` and `HexIntervalMathlib.Subtraction` add the
-public arithmetic image theorems.
+public arithmetic image theorems, while `HexIntervalMathlib.MinMax` supplies
+selected-cut and real-image enclosure theorems for minimum and maximum.
 
 For every successful resource-checked public operation it proves:
 
@@ -34,6 +35,10 @@ For every successful resource-checked public operation it proves:
   sides;
 - `sub_mem_subWithin`: two input members subtract to a member of every
   successful result.
+- `contains_minWithin` and `contains_maxWithin`: exact membership in the
+  computed selected cuts;
+- `min_mem_minWithin` and `max_mem_maxWithin`: pointwise real minimum and
+  maximum of two input members belong to every successful result.
 
 These theorems depend on the exact successful `BuildResult` equation. A
 resource refusal has no set interpretation and is never treated as an empty
@@ -48,14 +53,18 @@ existing modules under `HexIntervalMathlib/Experiment` remain evidence for
 future operations, replay schemas, transcendental providers, and tactics, but
 are not re-exported here. Further arithmetic images, powers, splitting,
 regularization, and precision-indexed reciprocal/division require their own
-set-enclosure and stated tightness theorems before promotion.
+operation-specific semantic theorems before promotion. An image operation must
+at least prove successful-result cut semantics and sound real-image enclosure;
+it claims a tightness converse only when that converse is separately proved.
 
 ## Conformance
 
 `HexIntervalMathlib.IntervalConformance` pins both directions of intersection
 membership, exact hull closure and both input inclusions, negation transport,
 addition and subtraction cut exactness and image transport, and the exact
-ordinary-kernel axiom surface.
+ordinary-kernel axiom surface. `HexIntervalMathlib.MinMaxConformance` separately
+pins exact selected cuts, both image enclosures, and their axiom surfaces; it
+does not assert a set-image converse.
 The Mathlib-free companion tests separately pin representative strict, closed,
 unbounded, and empty shapes together with pre-allocation resource refusal. The
 semantic theorem itself is exhaustive over the complete cut language.

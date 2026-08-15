@@ -14,7 +14,7 @@ public section
 # Public exact interval operations
 
 This module begins the supported arithmetic surface with exact intersection,
-hull, negation, addition, and subtraction. The operations retain a
+hull, negation, addition, subtraction, minimum, and maximum. The operations retain a
 resource-aware result: public
 interval values do not remember the construction budget under which their
 endpoints were admitted, so a later comparison must preflight its own alignment
@@ -84,6 +84,28 @@ unnormalized so the supported wrapper preflights its final comparison. -/
   | .bounds leftLower leftUpper, .bounds rightLower rightUpper =>
       Raw.bounds
         (hullLowerUnchecked leftLower rightLower)
+        (hullUpperUnchecked leftUpper rightUpper)
+
+/-- Exact raw interval image under binary minimum. Empty is absorbing. The
+lower cut is the hull-selected lower cut, while the upper cut is the
+intersection-selected upper cut; their tied strictness records whether the
+corresponding extremum is attained by either or both inputs respectively. -/
+@[expose] def minUnchecked : Raw → Raw → Raw
+  | .empty, _ | _, .empty => .empty
+  | .bounds leftLower leftUpper, .bounds rightLower rightUpper =>
+      .bounds
+        (hullLowerUnchecked leftLower rightLower)
+        (intersectUpperUnchecked leftUpper rightUpper)
+
+/-- Exact raw interval image under binary maximum. Empty is absorbing. The
+lower cut is the intersection-selected lower cut, while the upper cut is the
+hull-selected upper cut; their tied strictness records whether the
+corresponding extremum is attained by both or either input respectively. -/
+@[expose] def maxUnchecked : Raw → Raw → Raw
+  | .empty, _ | _, .empty => .empty
+  | .bounds leftLower leftUpper, .bounds rightLower rightUpper =>
+      .bounds
+        (intersectLowerUnchecked leftLower rightLower)
         (hullUpperUnchecked leftUpper rightUpper)
 
 /-- Exact lower cut of a Minkowski sum. Either unbounded lower input makes the
@@ -221,6 +243,16 @@ private def hullCost? (limit : EndpointLimit) : Raw → Raw → Option CompareCo
       | some cost => some cost
       | none => upperCost? limit leftUpper rightUpper
 
+/-- The first same-side finite-cut comparison refused before selecting the
+cuts of a minimum or maximum image. Both comparisons finish before either
+unchecked selector runs. -/
+private def minMaxCost? (limit : EndpointLimit) : Raw → Raw → Option CompareCost
+  | .empty, _ | _, .empty => none
+  | .bounds leftLower leftUpper, .bounds rightLower rightUpper =>
+      match lowerCost? limit leftLower rightLower with
+      | some cost => some cost
+      | none => upperCost? limit leftUpper rightUpper
+
 /-- The first finite endpoint addition refused by the Minkowski-sum preflight.
 `CompareCost.allowed` bounds both retained inputs and their exponent gap before
 `Dyadic.add` shifts a mantissa. A successful preflight bounds the temporary
@@ -279,6 +311,44 @@ theorem view_hullWithin_ready {limit : EndpointLimit}
     (h : hullWithin limit left right = .ready result) :
     result.view = (Raw.hullUnchecked left.view right.view).normalizeUnchecked := by
   unfold hullWithin at h
+  split at h
+  · contradiction
+  · exact view_ofRawWithin_ready h
+
+/-- Exact interval image under binary minimum. Empty is absorbing. Both
+same-side finite comparisons are preflighted before cut selection, and the
+selected candidate crosses `ofRawWithin` for its independent final check. -/
+def minWithin (limit : EndpointLimit)
+    (left right : Hex.Interval) : BuildResult :=
+  match minMaxCost? limit left.view right.view with
+  | some cost => .resourceLimit cost
+  | none => ofRawWithin limit (Raw.minUnchecked left.view right.view)
+
+/-- A successful minimum exposes exactly the normalized selected cuts. -/
+theorem view_minWithin_ready {limit : EndpointLimit}
+    {left right result : Hex.Interval}
+    (h : minWithin limit left right = .ready result) :
+    result.view = (Raw.minUnchecked left.view right.view).normalizeUnchecked := by
+  unfold minWithin at h
+  split at h
+  · contradiction
+  · exact view_ofRawWithin_ready h
+
+/-- Exact interval image under binary maximum. Empty is absorbing. Both
+same-side finite comparisons are preflighted before cut selection, and the
+selected candidate crosses `ofRawWithin` for its independent final check. -/
+def maxWithin (limit : EndpointLimit)
+    (left right : Hex.Interval) : BuildResult :=
+  match minMaxCost? limit left.view right.view with
+  | some cost => .resourceLimit cost
+  | none => ofRawWithin limit (Raw.maxUnchecked left.view right.view)
+
+/-- A successful maximum exposes exactly the normalized selected cuts. -/
+theorem view_maxWithin_ready {limit : EndpointLimit}
+    {left right result : Hex.Interval}
+    (h : maxWithin limit left right = .ready result) :
+    result.view = (Raw.maxUnchecked left.view right.view).normalizeUnchecked := by
+  unfold maxWithin at h
   split at h
   · contradiction
   · exact view_ofRawWithin_ready h
