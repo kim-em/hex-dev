@@ -1515,14 +1515,19 @@ Bare-target, wrong-column, wrong-row, and wrong-replay mutations reject without
 a draft or retry.
 
 The coupled logarithmic-transition provider adds the exact consecutive tuples
-at `BKLNW_tables.lean:815–816` and all ten remaining numeric declarations for
+at `BKLNW_tables.lean:815–816`, all ten remaining margin declarations, and the
+separate tighter `table_10_row43_k5` theorem for
 the intervals `43 → 19 * log 10` and `19 * log 10 → 44`. One bounded payload
 authenticates both rows and their chronology, coefficients, ten coordinates,
-integer-endpoint bases, the shared `43.75` logarithmic point bound, and both
+the bare `3.1563` target, integer-endpoint bases, the shared `43.75`
+logarithmic point bound, and both
 exponential-tail bounds. Its Mathlib proof derives a two-sided `log 10` window
 from a finite logarithm series, proves the real row order, and connects the
 two tail fields to exact `rpow` identities. The same convexity and generic
-replay boundary then proves all ten source-shaped numeric premises.
+replay boundary then proves all ten margin premises, while a narrow exact
+adapter preserves the source's strictly tighter
+`B_8_exact 5 43 (19 * log 10) ≤ 3.1563` statement. A lowered bare target is a
+decoded no-draft mutation.
 
 False-target, wrong-coordinate, cross-row, base, logarithmic-point, and tail
 mutations reject without drafts or precision retry. The proof-side source
@@ -1563,10 +1568,13 @@ equality with the unfolded source sum, and proves both the convex/full-interval
 and late-row pointwise reductions. Its five adapters preserve the exact source
 tuple and column hypotheses and consume the existing PNT+ coefficient facts.
 The pinned source has 287 rows and 1,435 row/column margin theorems. The 87
-migrated target tactic calls occur in 56 declarations: 54 of those margin
-theorems plus two stronger bare helper theorems. The remaining 1,381
-row/column margin theorems and the generated dispatcher are already ordinary
-PNT+/Mathlib proofs and remain unchanged.
+migrated target tactic calls occur in 54 margin theorems plus two bare helper
+theorems. The row-43 bare statement is reproduced at its original `3.1563`
+endpoint by the tighter checked adapter; the row-60 bare statement is implied
+by its stronger checked margin result. Both source theorem statements are
+therefore preserved. The remaining 1,381 row/column margin theorems and the
+generated dispatcher are already ordinary PNT+/Mathlib proofs and remain
+unchanged.
 
 The exact pinned Table 10 interface is accepted after this localized rewrite.
 Arbitrary caller-supplied tables and production performance remain future

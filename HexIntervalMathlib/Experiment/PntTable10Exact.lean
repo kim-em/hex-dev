@@ -298,6 +298,27 @@ theorem rowOfMem (value : PntTable10LogCoupled.RowCertificate)
     PntTable10Shard.coefficientMajorant] using
       PntTable10LogCoupled.rowOfMem value rowMember B member k column
 
+/-- Exact-supremum form of the source's separate, tighter
+row-43/column-5 theorem. -/
+theorem row43K5 (a1 a2 epsilon : Real)
+    (hA1 : 0 ≤ PntTable10LogCoupled.row43.a1.value)
+    (hA2 : 0 ≤ PntTable10LogCoupled.row43.a2.value)
+    (hE : 0 ≤ PntTable10LogCoupled.row43.epsilon.value)
+    (ha1 : a1 ≤ PntTable10LogCoupled.row43.a1.value)
+    (ha2 : a2 ≤ PntTable10LogCoupled.row43.a2.value)
+    (hepsilon : epsilon ≤ PntTable10LogCoupled.row43.epsilon.value) :
+    exactBound 5 a1 a2 epsilon 43 (19 * Real.log 10) ≤
+      PntTable10LogCoupled.certificate.row43K5.value := by
+  apply exactBound_le_of_majorant 5 a1 a2 epsilon
+    PntTable10LogCoupled.row43.a1.value
+    PntTable10LogCoupled.row43.a2.value
+    PntTable10LogCoupled.row43.epsilon.value 43 (19 * Real.log 10)
+    PntTable10LogCoupled.certificate.row43K5.value
+    PntTable10LogCoupled.rowChronology.1 (by norm_num)
+    hA1 hA2 hE ha1 ha2 hepsilon
+  simpa only [PntTable10LogCoupled.majorant,
+    PntTable10Shard.coefficientMajorant] using PntTable10LogCoupled.row43K5
+
 end LogCoupled
 
 end Hex.Interval.Experiment.PntTable10Exact

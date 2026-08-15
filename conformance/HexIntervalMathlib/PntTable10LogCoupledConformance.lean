@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexIntervalMathlib.Experiment.PntTable10LogCoupled
+import HexIntervalMathlib.Experiment.PntTable10Exact
 import HexInterval.Experiment.ProofFrontend
 import HexInterval.Experiment.TargetRun
 import Mathlib.Lean.Elab.Tactic.Meta
@@ -59,7 +59,7 @@ set_option maxRecDepth 10000 in
 set_option exponentiation.threshold 2000 in
 #guard validCertificate certificate
 #guard (cells certificate).length == 10
-#guard body.length == 84
+#guard body.length == 86
 #guard decodeCertificate? body == some certificate
 #guard decodeBatch? body == some ()
 #guard expectedCandidates.length == 10
@@ -68,6 +68,8 @@ set_option exponentiation.threshold 2000 in
 #guard certificate.logUpper == PntTable10Shard.decimal 4375 2
 #guard certificate.halfTail == PntTable10Shard.decimal 317 12
 #guard certificate.twoThirdTail == PntTable10Shard.decimal 216 15
+#guard certificate.row43K5 == PntTable10Shard.decimal 31563 4
+#guard checkBare certificate
 #guard certificate.row43.cell1.listed == PntTable10Shard.decimal 85986 11
 #guard certificate.rowLog.cell5.listed == PntTable10Shard.decimal 32352 4
 #guard run?.isSome
@@ -142,9 +144,11 @@ def crossedRows : Certificate :=
   { certificate with row43 := certificate.rowLog, rowLog := certificate.row43 }
 
 #guard decodeCertificate? (encodeCertificate crossedRows) == some crossedRows
-#guard firstFailure? crossedRows |>.isNone
+#guard firstFailure? crossedRows ==
+  some (PntTable10Shard.coordinateCode (bareCell crossedRows).coordinate)
 #guard !validCertificate crossedRows
-#guard failsAt (encodeCertificate crossedRows) 1
+#guard failsAt (encodeCertificate crossedRows)
+  (PntTable10Shard.coordinateCode (bareCell crossedRows).coordinate)
 
 def wrongHalfBase : Certificate :=
   { certificate with halfBase := PntTable10Shard.decimal 606530661 9 }
@@ -161,6 +165,11 @@ def wrongHalfTail : Certificate :=
 def wrongTwoThirdTail : Certificate :=
   { certificate with twoThirdTail := PntTable10Shard.decimal 217 15 }
 
+/-- A target below the authenticated rational endpoint is rejected before any
+draft survives. -/
+def wrongBareTarget : Certificate :=
+  { certificate with row43K5 := PntTable10Shard.decimal 31505 4 }
+
 set_option maxRecDepth 10000 in
 set_option exponentiation.threshold 2000 in
 #guard failsWithoutDraft wrongHalfBase
@@ -168,6 +177,9 @@ set_option exponentiation.threshold 2000 in
 #guard failsWithoutDraft wrongLogUpper
 #guard failsWithoutDraft wrongHalfTail
 #guard failsWithoutDraft wrongTwoThirdTail
+#guard !checkBare wrongBareTarget
+#guard firstFailure? wrongBareTarget == some 349
+#guard failsAt (encodeCertificate wrongBareTarget) 349
 
 private def action : Action := mutationAction
 
@@ -325,6 +337,24 @@ theorem table_10_row19log10_dispatch (B : Nat → ℝ)
   simpa [certificate, lowerPoint, upperPoint, rowLog, rowCertificate, logRowCode] using
     rowOfMem rowLog (by simp [rows, certificate]) B member
 
+/-- Exact source-shaped replacement for `table_10_row43_k5`; unlike the
+margin dispatcher, this retains the source theorem's tighter `3.1563`
+endpoint. -/
+theorem table_10_row43_k5 (a1 a2 epsilon : ℝ)
+    (ha1 : a1 ≤ row43.a1.value) (ha2 : a2 ≤ row43.a2.value)
+    (hepsilon : epsilon ≤ row43.epsilon.value) :
+    PntTable10Exact.exactBound 5 a1 a2 epsilon 43 (19 * Real.log 10) ≤
+      (3.1563 : ℝ) := by
+  convert PntTable10Exact.LogCoupled.row43K5 a1 a2 epsilon
+      (by norm_num [row43, rowCertificate, PntTable10Shard.Decimal.value,
+        PntTable10Shard.decimal])
+      (by norm_num [row43, rowCertificate, PntTable10Shard.Decimal.value,
+        PntTable10Shard.decimal])
+      (by norm_num [row43, rowCertificate, PntTable10Shard.Decimal.value,
+        PntTable10Shard.decimal])
+      ha1 ha2 hepsilon using 1;
+    norm_num [certificate, PntTable10Shard.Decimal.value, PntTable10Shard.decimal]
+
 set_option exponentiation.threshold 2000 in
 /-- The row-43 rational majorant exceeds its uncorrected first source target,
 so the bounded provider rejects that false coordinate without retry. -/
@@ -350,6 +380,14 @@ info: 'Hex.IntervalMathlib.PntTable10LogCoupledConformance.table_10_row19log10_d
 -/
 #guard_msgs in
 #print axioms table_10_row19log10_dispatch
+
+/--
+info: 'Hex.IntervalMathlib.PntTable10LogCoupledConformance.table_10_row43_k5' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+-/
+#guard_msgs in
+#print axioms table_10_row43_k5
 
 /--
 info: 'Hex.IntervalMathlib.PntTable10LogCoupledConformance.replayLast' depends on axioms: [propext,

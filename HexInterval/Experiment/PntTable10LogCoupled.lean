@@ -45,6 +45,8 @@ structure Certificate where
   logUpper : Decimal
   halfTail : Decimal
   twoThirdTail : Decimal
+  /-- The tighter target of the source's separate row-43/column-5 theorem. -/
+  row43K5 : Decimal
   row43 : RowCertificate
   rowLog : RowCertificate
   deriving DecidableEq, Repr
@@ -85,6 +87,7 @@ def certificate : Certificate :=
     logUpper := decimal 4375 2
     halfTail := decimal 317 12
     twoThirdTail := decimal 216 15
+    row43K5 := decimal 31563 4
     row43, rowLog }
 
 def RowCertificate.cells (value : RowCertificate) : List Cell :=
@@ -119,13 +122,25 @@ def checkCell (value : Certificate) (row : RowCertificate) (cell : Cell) : Bool 
     (leftEndpoint value row cell).le cell.target &&
     (rightEndpoint value row cell).le cell.target
 
+/-- The source's separate row-43/column-5 target, checked with the same two
+endpoint computation as the margin-amended row. -/
+def bareCell (value : Certificate) : Cell :=
+  { value.row43.cell5 with target := value.row43K5 }
+
+def checkBare (value : Certificate) : Bool :=
+  checkCell value value.row43 (bareCell value)
+
 def firstFailure? (value : Certificate) : Option Nat :=
-  (rows value).findSome? fun row =>
+  match (rows value).findSome? fun row =>
     row.cells.findSome? fun cell =>
       if checkCell value row cell then none else some (coordinateCode cell.coordinate)
+  with
+  | some coordinate => some coordinate
+  | none => if checkBare value then none else some (coordinateCode (bareCell value).coordinate)
 
 def validCertificate (value : Certificate) : Bool :=
-  value == certificate && (rows value).all fun row => row.cells.all (checkCell value row)
+  value == certificate && (rows value).all (fun row => row.cells.all (checkCell value row)) &&
+    checkBare value
 
 def encodeRow (value : RowCertificate) : List Nat :=
   [value.rowCode] ++ encodeDecimal value.a1 ++ encodeDecimal value.a2 ++
@@ -148,7 +163,8 @@ def decodeRow? : List Nat → Option (RowCertificate × List Nat)
 def encodeCertificate (value : Certificate) : List Nat :=
   encodeDecimal value.halfBase ++ encodeDecimal value.twoThirdBase ++
     encodeDecimal value.logUpper ++ encodeDecimal value.halfTail ++
-    encodeDecimal value.twoThirdTail ++ encodeRow value.row43 ++ encodeRow value.rowLog
+    encodeDecimal value.twoThirdTail ++ encodeDecimal value.row43K5 ++
+    encodeRow value.row43 ++ encodeRow value.rowLog
 
 def decodeCertificate? (body : List Nat) : Option Certificate := do
   let (halfBase, rest) ← decodeDecimal? body
@@ -156,10 +172,11 @@ def decodeCertificate? (body : List Nat) : Option Certificate := do
   let (logUpper, rest) ← decodeDecimal? rest
   let (halfTail, rest) ← decodeDecimal? rest
   let (twoThirdTail, rest) ← decodeDecimal? rest
+  let (row43K5, rest) ← decodeDecimal? rest
   let (row43, rest) ← decodeRow? rest
   let (rowLog, rest) ← decodeRow? rest
   if rest.isEmpty then
-    some { halfBase, twoThirdBase, logUpper, halfTail, twoThirdTail, row43, rowLog }
+    some { halfBase, twoThirdBase, logUpper, halfTail, twoThirdTail, row43K5, row43, rowLog }
   else none
 
 def body : List Nat := encodeCertificate certificate

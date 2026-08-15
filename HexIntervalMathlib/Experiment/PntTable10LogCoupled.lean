@@ -302,6 +302,21 @@ theorem rowCell (row : RowCertificate) (cell : Cell)
   obtain ⟨rowMember, cellMember⟩ := pairParts row cell member
   exact cellOfCheck row cell rowMember (sourceChecked row cell rowMember cellMember)
 
+set_option maxRecDepth 10000 in
+set_option exponentiation.threshold 2000 in
+/-- The authenticated tighter target of the source's separate
+row-43/column-5 theorem.  This uses the same endpoint and convexity checker as
+the margin-amended coordinate, but its target is `3.1563` rather than
+`3.15 * 1.002001`. -/
+theorem row43K5 :
+    ∀ y ∈ Icc (43 : ℝ) (19 * Real.log 10),
+      majorant row43 5 y ≤ certificate.row43K5.value := by
+  have checked : checkCell certificate row43 (bareCell certificate) = true := by decide
+  simpa [certificate, lowerPoint, upperPoint, row43, rowCertificate, sourceCell,
+    bareCell] using
+    cellOfCheck row43 (bareCell certificate)
+      (by simp [rows, certificate]) checked
+
 abbrev SourceTuple := ℝ × ℝ × ℝ × ℝ × ℝ × ℝ
 
 noncomputable def sourceTuple (row : RowCertificate) : SourceTuple :=

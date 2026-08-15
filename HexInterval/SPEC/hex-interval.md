@@ -3968,30 +3968,36 @@ failure is also an ordinary theorem.
 #### Coupled logarithmic Table 10 transition
 
 The final target-numeric package pins the consecutive source tuples at
-`BKLNW_tables.lean:815–816` and all ten declarations split between
+`BKLNW_tables.lean:815–816`, the ten margin declarations split between
 `BKLNW_table10_rows_20_43.lean:table_10_row43_k1_margin` through
 `table_10_row43_k5_margin` and
 `BKLNW_table10_rows_misc.lean:table_10_row19log10_k1_margin` through
-`table_10_row19log10_k5_margin`. Their real intervals are
+`table_10_row19log10_k5_margin`, and the separate tighter source theorem
+`table_10_row43_k5`. Their real intervals are
 `43 → 19 * log 10` and `19 * log 10 → 44`.
 
 One bounded Mathlib-free payload authenticates both source rows in order,
-their coefficients and ten listed/corrected coordinates, the integer-endpoint
-exponential bases, the shared upper point `43.75`, and the two logarithmic
-endpoint tails `3.17e-10` and `2.16e-13`. Every field participates in the
-rational endpoint checks and exact source-payload equality. The Mathlib
+their coefficients and ten listed/corrected coordinates, the tighter
+row-43/column-5 target `3.1563`, the integer-endpoint exponential bases, the
+shared upper point `43.75`, and the two logarithmic endpoint tails `3.17e-10`
+and `2.16e-13`. Every field participates in the rational endpoint checks and
+exact source-payload equality. The Mathlib
 companion independently proves `2.3025850924 < log 10 < 2.302585094` from a
 finite logarithm series, derives the row chronology and `19 * log 10 ≤ 43.75`,
 and proves both tail inequalities through exact real-power identities and a
 kernel-checked power comparison. Convexity then covers both complete real
 intervals; generic package chronology, replay, and `ProofFrontend` close all
-ten facts.
+ten margin facts. The same checked endpoints feed a narrow ordinary-kernel
+adapter that reproduces the source's strictly tighter
+`B_8_exact 5 43 (19 * log 10) ≤ 3.1563` theorem.
 
 Bare-target, false-coordinate, cross-row chronology, exponential-base,
 log-endpoint, and both tail mutations remain decodable but produce no draft
-or retry. The uncorrected row-43 first target is separately refuted in the
-kernel. The runtime row tag `19010` is only a bounded decoder code; the proof
-side source tuple uses the exact real abscissa `19 * log 10`.
+or retry. In particular, lowering the separate `3.1563` certificate below its
+rational endpoint is rejected. The uncorrected row-43 first target is
+separately refuted in the kernel. The runtime row tag `19010` is only a
+bounded decoder code; the proof side source tuple uses the exact real abscissa
+`19 * log 10`.
 
 #### Supporting Table 10 `a₂` batch
 
@@ -4033,8 +4039,12 @@ bridge: `exactBound_eq_sourceSum` pins its supremum to unfolded PNT+
 and `exactBound_le_of_pointwise` handles the late-row one-point reductions.
 Source-pinned adapters retain row membership, column membership, chronology,
 and PNT+'s three coefficient hypotheses while consuming the checked numeric
-facts. Thus PNT+ may replace the 125 tactic calls locally, retain its other
-ordinary row theorems, and leave the 287-row/five-column dispatcher unchanged.
+facts. The 87 target calls occur in 54 margin theorems and two bare helper
+theorems. The row-43 bare statement is replaced at its original `3.1563`
+endpoint by the tighter adapter; the row-60 bare statement follows from the
+provider's stronger margin result. Thus both source theorem statements are
+preserved while PNT+ replaces the 125 tactic calls locally and leaves the
+287-row/five-column dispatcher unchanged.
 
 The exact pinned Table 10 interface is therefore accepted after rewrite. This
 does not claim a LeanCert compatibility layer, arbitrary caller-supplied table
