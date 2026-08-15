@@ -142,7 +142,7 @@ theorem contains_normalize (raw : Raw) (x : ℝ) :
                     simpa [Raw.Contains, Lower.Contains, Upper.Contains,
                       Raw.normalizeUnchecked, Raw.consistent, less, equal] using impossible
 
-private theorem lowerContains_intersect (left right : Lower) (x : ℝ) :
+theorem lowerContains_intersect (left right : Lower) (x : ℝ) :
     (Raw.intersectLowerUnchecked left right).Contains x ↔
       left.Contains x ∧ right.Contains x := by
   cases left with
@@ -192,7 +192,7 @@ private theorem lowerContains_intersect (left right : Lower) (x : ℝ) :
                   simp [Lower.Contains] at leftBound ⊢ <;> linarith
               · exact fun bounds => bounds.1
 
-private theorem upperContains_intersect (left right : Upper) (x : ℝ) :
+theorem upperContains_intersect (left right : Upper) (x : ℝ) :
     (Raw.intersectUpperUnchecked left right).Contains x ↔
       left.Contains x ∧ right.Contains x := by
   cases left with
@@ -269,7 +269,7 @@ theorem contains_intersectWithin {limit : EndpointLimit}
   rw [view_intersectWithin_ready checked, contains_normalize]
   exact rawContains_intersect left.view right.view x
 
-private theorem lowerContains_hull (left right : Lower) (x : ℝ) :
+theorem lowerContains_hull (left right : Lower) (x : ℝ) :
     (Raw.hullLowerUnchecked left right).Contains x ↔
       left.Contains x ∨ right.Contains x := by
   cases left with
@@ -310,7 +310,7 @@ private theorem lowerContains_hull (left right : Lower) (x : ℝ) :
                     simp [Lower.Contains] at * <;> linarith
                 · exact rightBound
 
-private theorem upperContains_hull (left right : Upper) (x : ℝ) :
+theorem upperContains_hull (left right : Upper) (x : ℝ) :
     (Raw.hullUpperUnchecked left right).Contains x ↔
       left.Contains x ∨ right.Contains x := by
   cases left with
