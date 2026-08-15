@@ -4,8 +4,9 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexInterval.Experiment.BranchTree
+import HexInterval.Experiment.BranchProof
 import HexInterval.Experiment.ExpSign
+import Lean.Elab.Tactic.Basic
 
 /-!
 # Nested branch scheduling conformance
@@ -18,9 +19,10 @@ frontiers differ on live pending work.
 
 namespace Hex.Interval.NestedBranchConformance
 
+open Lean Elab Tactic Meta
 open Experiment
 open Propagator PolicySession SemanticReplay TargetRun BranchStart BranchTree
-open ExpSign
+open BranchProof ExpSign
 
 private def program : Program :=
   { operations
@@ -160,5 +162,131 @@ private def leafReached? (entry : Node Bound Route) : Bool :=
     state.settled && state.steps == 5 && state.splits == 2 &&
       state.leaves == 3 && state.nodes.size == 5 &&
       state.nodes.toList.countP leafReached? == 3
+
+/-! ## Propagate before splitting -/
+
+private def postProgram : Program :=
+  { operations
+    nodes := #[sourceInstruction, expInstruction, expInstruction] }
+
+private def postTarget : NodeFact Bound :=
+  { node := node 2, fact := .nonnegative }
+
+private def postInput : CheckerInput Bound :=
+  { baseProgram := postProgram
+    initialFacts := #[.all, .all, .all]
+    target := postTarget }
+
+private inductive PostRoute where
+  | improve
+  | split
+  | close
+  deriving DecidableEq, Repr
+
+private def postController : Controller Bound PostRoute :=
+  { update := fun state event =>
+      match state, event with
+      | .improve, .rule _ => .split
+      | state, _ => state
+    choose := fun state view =>
+      let selected :=
+        match state with
+        | .improve => expAt (node 1) view
+        | .split => splitAt (node 0) view
+        | .close => expAt (node 2) view
+      match selected with
+      | some offer => .select offer state
+      | none => .stop state }
+
+private def postFork (_ : PostRoute) (_ : Side) : PostRoute := .close
+
+private def postResources : BranchTree.Limits :=
+  { branch := { maxDepth := 1, maxScopes := 3 }
+    maxSteps := 3
+    maxSplits := 1
+    maxLeaves := 2
+    leafFuel := limits.policy.maxDecisions }
+
+private def postConfig : Config Bound PostRoute :=
+  { factDomain
+    packages := splitPackages
+    sessionLimits := limits
+    controller := postController
+    splitter
+    forkPolicy := postFork
+    order := .depthFirst
+    limits := postResources }
+
+private def postTree? : Option (State Bound PostRoute) := do
+  let .ok state := BranchTree.start postConfig { index := 0 } postInput .improve
+    | none
+  let .ok state := BranchTree.run postConfig state | none
+  some state
+
+/- The split parent is the exact post-propagation snapshot. It intentionally
+differs from the run's starting input at the unrelated exponential node. -/
+#guard
+  postTree?.any fun tree =>
+    tree.settled && tree.nodes.size == 3 &&
+      match tree.nodes[0]? with
+      | some (BranchTree.Node.split source result children _ _) =>
+          !BranchProof.sameInput source.input children.parent &&
+            BranchProof.sameParent source result children.parent &&
+            children.parent.initialFacts == #[.all, .nonnegative, .all] &&
+            match result.stop with
+            | .split plan => BranchProof.samePlan plan children.plan
+            | _ => false
+      | _ => false
+
+private def trueEmitter : BranchProof.Emitter Bound PostRoute :=
+  { leaf := fun _ _ => pure (mkConst ``True.intro)
+    split := fun _ _ _ _ _ => pure (mkConst ``True.intro) }
+
+private def postProofLimits : BranchProof.Limits :=
+  { maxNodes := 3, maxDepth := 1 }
+
+/-- The generic fold accepts a live tree whose parent performed a fact
+improvement before subdividing. -/
+example : True := by
+  run_tac
+    let some tree := postTree?
+      | throwError "interval post-run split: runtime tree failed"
+    let goal ← getMainGoal
+    goal.assign (← BranchProof.emit postProofLimits trueEmitter tree
+      (← goal.getType))
+
+example : True := by
+  run_tac
+    let some tree := postTree?
+      | throwError "interval post-run split mutation: runtime tree failed"
+    let some root := tree.nodes[0]?
+      | throwError "interval post-run split mutation: root missing"
+    let BranchTree.Node.split source result children left right := root
+      | throwError "interval post-run split mutation: root is not split"
+    let staleChildren := { children with parent := source.input }
+    let stale :=
+      { tree with
+        nodes := tree.nodes.set! 0 (.split source result staleChildren left right) }
+    if (← observing? <| BranchProof.emit postProofLimits trueEmitter stale
+        (mkConst ``True)).isSome then
+      throwError "interval post-run split mutation: stale parent was accepted"
+    let wrongPlan := { children.plan with point := 1 }
+    let changedChildren := { children with plan := wrongPlan }
+    let changed :=
+      { tree with
+        nodes := tree.nodes.set! 0 (.split source result changedChildren left right) }
+    if (← observing? <| BranchProof.emit postProofLimits trueEmitter changed
+        (mkConst ``True)).isSome then
+      throwError "interval post-run split mutation: changed plan was accepted"
+    let wrongVersion := { children.plan with version := children.plan.version + 1 }
+    let changedVersionChildren := { children with plan := wrongVersion }
+    let changedVersion :=
+      { tree with
+        nodes := tree.nodes.set! 0
+          (.split source result changedVersionChildren left right) }
+    if (← observing? <| BranchProof.emit postProofLimits trueEmitter changedVersion
+        (mkConst ``True)).isSome then
+      throwError "interval post-run split mutation: changed plan version was accepted"
+  trivial
 
 end Hex.Interval.NestedBranchConformance

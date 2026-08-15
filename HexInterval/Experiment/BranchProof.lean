@@ -59,6 +59,18 @@ def sameInput [DecidableEq Fact]
   left.baseProgram == right.baseProgram &&
     left.initialFacts == right.initialFacts && left.target == right.target
 
+/-- The split parent is the completed run's current snapshot, not necessarily
+its starting input: propagation and instantiation may precede subdivision. -/
+def sameParent [DecidableEq Fact] (source : BranchTree.Leaf Fact PolicyState)
+    (run : TargetRun.Result Fact PolicyState)
+    (parent : SemanticReplay.CheckerInput Fact) : Bool :=
+  parent.baseProgram == run.session.state.engine.program &&
+    parent.initialFacts == run.session.state.engine.facts &&
+    parent.target == source.input.target
+
+def samePlan [DecidableEq Fact] (left right : Propagator.Policy.SplitPlan Fact) : Bool :=
+  left == right
+
 def sameChild [DecidableEq Fact]
     (scope : Propagator.Policy.ScopeId) (depth : Nat)
     (input : SemanticReplay.CheckerInput Fact)
@@ -98,8 +110,14 @@ partial def emitAt [DecidableEq Fact]
       let rightOutput ← emitAt limits emitter tree (depth + 1) right
       unless BranchStart.sameInput source.scope source.input run do
         throwError "interval branch proof: split input does not match its run"
-      unless sameInput source.input children.parent do
-        throwError "interval branch proof: split parent input changed"
+      unless sameParent source run children.parent do
+        throwError "interval branch proof: split parent is not the run's current state"
+      match run.stop with
+      | .split plan =>
+          unless samePlan plan children.plan do
+            throwError "interval branch proof: split plan changed"
+      | _ =>
+          throwError "interval branch proof: retained split did not stop at a split"
       unless sameChild children.leftScope children.depth children.left
           leftOutput.source do
         throwError "interval branch proof: left child input changed"

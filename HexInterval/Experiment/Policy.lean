@@ -575,6 +575,7 @@ structure SplitPlan (Fact : Type) where
   point : Dyadic
   reason : SplitReason
   source : InvocationKey
+  deriving DecidableEq
 
 inductive Completed where
   | instanceAdmitted (newNodes : List NodeId)

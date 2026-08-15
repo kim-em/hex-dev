@@ -11,7 +11,6 @@ import HexInterval.Experiment.ProofFrontend
 import HexInterval.Experiment.TargetRun
 import HexInterval.Experiment.BranchStart
 import HexInterval.Experiment.BranchTree
-import HexInterval.Experiment.BranchProof
 import Mathlib.Lean.Elab.Tactic.Meta
 
 /-!
