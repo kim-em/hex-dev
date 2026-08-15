@@ -224,7 +224,7 @@
   {
     "path": "lakefile.lean",
     "baseline_blob": "6dd80771ae2212333b2a9b925b52056e0037ff56",
-    "current_blob": "9595b5335e7568bcc2c3e18d4c66c763ed855a44",
+    "current_blob": "79027f494a8353cf4a8cc485c925bb9734931fb7",
     "reason": "Additionally registers the isolated Mathlib-free adaptive interval-policy experiment; the factorization service target and executable dependency graph are unchanged."
   },
   {

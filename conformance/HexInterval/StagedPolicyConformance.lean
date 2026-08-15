@@ -291,6 +291,39 @@ private def bounded : AdaptivePolicy.State :=
     (AdaptivePolicy.find? bounded.records
       (AdaptivePolicy.ruleKey productiveKey)).isNone
 
+/- Updating an existing site moves it to the MRU front, so the next insertion
+evicts the other retained site deterministically. -/
+private def touchedBounded : AdaptivePolicy.State :=
+  let state := AdaptivePolicy.State.initial { maxRecords := 2 }
+  let state := AdaptivePolicy.update state <|
+    .rule (observation productiveKey .success #[change 0])
+  let state := AdaptivePolicy.update state <|
+    .rule (observation quietKey .success #[change 1])
+  let state := AdaptivePolicy.update state <|
+    .rule (observation productiveKey .noChange #[])
+  AdaptivePolicy.update state <|
+    .rule (observation freshKey .success #[change 2])
+
+#guard
+  touchedBounded.records.length == 2 &&
+    (AdaptivePolicy.find? touchedBounded.records
+      (AdaptivePolicy.ruleKey productiveKey)).any (fun record => record.runs == 2) &&
+    (AdaptivePolicy.find? touchedBounded.records
+      (AdaptivePolicy.ruleKey quietKey)).isNone &&
+    (AdaptivePolicy.find? touchedBounded.records
+      (AdaptivePolicy.ruleKey freshKey)).isSome
+
+/- Stable input order is the final tie-breaker for otherwise equal offers. -/
+private def tiedKey := invocation 4 0
+private def tiedOffer := offer 4 0 (.invoke tiedKey)
+private def unlearned := AdaptivePolicy.State.initial config
+
+#guard
+  (AdaptivePolicy.choose? unlearned #[freshOffer, tiedOffer]).map
+      (fun selected => selected.key) == some freshOffer.key &&
+    (AdaptivePolicy.choose? unlearned #[tiedOffer, freshOffer]).map
+      (fun selected => selected.key) == some tiedOffer.key
+
 /- Fairness is a separate tier and eventually samples an old eligible action
 even when its learned score is poor. -/
 private def fairQuiet := { quietOffer with age := 20 }

@@ -3401,8 +3401,7 @@ not generally demote unproductive sites across successive input versions.
 
 The feedback table has an explicit deterministic record bound and evicts the
 least recently updated stable site when full. Instantiation and split offers
-retain
-their staged rank but do not yet have feedback records; invocation, retry, and
+retain their staged rank but do not yet have feedback records; invocation, retry, and
 equality work do. Offers at or beyond the configured fairness age form the first
 tier. On the normative finite frontier, where selection consumes an offer, this
 eventually samples every continuously eligible item; stable offer order remains
