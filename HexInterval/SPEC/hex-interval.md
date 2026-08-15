@@ -3343,8 +3343,11 @@ instantiation discovery and admission, then improve/shave/regularize and
 bounded retry offers, then split probes and their retained split plans.
 Configuration independently disables instantiation, retries, or splits and
 bounds retry effort; the oldest offer wins within a stage and stable view order
-is the final tie-breaker. Policy-private counters record rule and equality
-runs, actual fact-version changes, no-change and inapplicable outcomes,
+is the final tie-breaker. If enabled semantic work finishes while only
+disabled offers remain, the target driver stops with `policyStop` and retains
+the live-offer count; it does not dismiss or execute those offers.
+Policy-private counters record rule and equality runs, actual fact-version
+changes, no-change and inapplicable outcomes,
 extensions, failures, dismissals, and rejected selections. These counters are
 diagnostic inputs for later scoring, not evidence.
 

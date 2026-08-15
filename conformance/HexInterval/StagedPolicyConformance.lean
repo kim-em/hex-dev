@@ -65,6 +65,27 @@ resulting semantic split offer. -/
             plan.node == node 0 && plan.point == 0 && plan.reason == .smallLandmark
       | _, _, _, _ => false
 
+private def disabledResult? : Option (TargetRun.Result Bound StagedPolicy.State) := do
+  let session ← session?
+  pure (TargetRun.drive factDomain input.target.node input.target.fact
+    StagedPolicy.controller 16 session
+      (StagedPolicy.State.initial
+        { allowInstantiation := false
+          allowRetries := false
+          allowSplits := false }))
+
+-- Enabled semantic work still passes through the ordinary session boundary.
+-- Once only the disabled split-discovery offer remains, the controller stops
+-- honestly with that live offer retained rather than selecting it.
+#guard
+  disabledResult?.any fun result =>
+    result.events.size == 2 &&
+      result.session.state.engine.history.size == 2 &&
+      result.session.state.engine.facts == #[.all, .nonnegative, .nonnegative] &&
+      match result.stop with
+      | .policyStop liveOffers => liveOffers == 1
+      | _ => false
+
 private def invocation (index : Nat) (kind : ActionKind) : Policy.InvocationKey :=
   { scope := { index := 0 }
     programVersion := 0
