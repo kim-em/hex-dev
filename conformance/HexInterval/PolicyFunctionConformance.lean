@@ -198,7 +198,7 @@ def packageWith (plan : RuleRequest Rank -> Plan Rank) : Package Rank :=
 def package : Package Rank := packageWith matcherPlan
 def rejectedPackage : Package Rank := packageWith rejectedMatcherPlan
 
-def engineLimits : Propagator.Limits :=
+def engineLimits : Hex.Interval.State.Limits :=
   { maxOperations := 3
     maxNodes := 5
     maxRules := 2

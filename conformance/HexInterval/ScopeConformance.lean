@@ -90,7 +90,7 @@ def scope : ScopeBinding :=
 def writeOnlyScope : ScopeBinding :=
   { scope with watches := [node 0, node 1] }
 
-def limits : Limits :=
+def limits : Hex.Interval.State.Limits :=
   { maxOperations := 8
     maxNodes := 16
     maxRules := 8
@@ -264,7 +264,7 @@ def writeOnlyRun? : Option (RunResult Rank Nat) := do
       | .error _ => false
   | none => false
 
-def firstRequest? (customLimits : Limits := limits) :
+def firstRequest? (customLimits : Hex.Interval.State.Limits := limits) :
     Option (RuleRequest Rank × Engine Rank) := do
   let state <- match Engine.start rankDomain program #[scopedRule]
       #[4, 6, 0, 0, 0, 9] customLimits #[scope] with
@@ -438,7 +438,7 @@ def dynamicRequest : InstantiationRequest :=
     scopes := [proposedDynamicScope, proposedDynamicScope]
     payload := { index := 7 } }
 
-def retainedDynamic? (customLimits : Limits := limits) : Option (Engine Rank) := do
+def retainedDynamic? (customLimits : Hex.Interval.State.Limits := limits) : Option (Engine Rank) := do
   let state <- match Engine.start rankDomain program
       #[localRule, scopedRule, dynamicRule] #[4, 6, 0, 0, 0, 9]
       customLimits #[scope] with
@@ -452,7 +452,7 @@ def retainedDynamic? (customLimits : Limits := limits) : Option (Engine Rank) :=
   | .accepted _ state => some state
   | _ => none
 
-def admittedDynamic? (customLimits : Limits := limits) : Option (Engine Rank) := do
+def admittedDynamic? (customLimits : Hex.Interval.State.Limits := limits) : Option (Engine Rank) := do
   let state <- retainedDynamic? customLimits
   match state.admitInstantiation { index := 0 } with
   | .admitted [fresh] state => if fresh == node 6 then some state else none
@@ -526,7 +526,7 @@ def scopeOnlyRequest : InstantiationRequest :=
     scopes := [existingDynamicScope, existingDynamicScope]
     payload := { index := 9 } }
 
-def scopeOnlyInitial? (customLimits : Limits := limits) : Option (Engine Rank) := do
+def scopeOnlyInitial? (customLimits : Hex.Interval.State.Limits := limits) : Option (Engine Rank) := do
   let state <- match Engine.start rankDomain program
       #[localRule, scopedRule, dynamicRule] #[4, 6, 0, 0, 0, 9]
       customLimits #[scope] with
@@ -540,7 +540,7 @@ def scopeOnlyInitial? (customLimits : Limits := limits) : Option (Engine Rank) :
   | .accepted _ state => some state
   | _ => none
 
-def scopeOnlyAdmitted? (customLimits : Limits := limits) :
+def scopeOnlyAdmitted? (customLimits : Hex.Interval.State.Limits := limits) :
     Option (Engine Rank × SuggestionId) := do
   let state <- scopeOnlyInitial? customLimits
   let selected : SuggestionId := { index := 0 }
@@ -854,7 +854,7 @@ def listSubsequence [DecidableEq alpha] (old new : List alpha) : Bool :=
       else listSubsequence (previous :: old) new
 termination_by old.length + new.length
 
-def watcherSubsequences (old new : Array (List WorkItem)) : Bool := Id.run do
+def watcherSubsequences (old new : Array (List Hex.Interval.State.Work)) : Bool := Id.run do
   if new.size < old.size then return false
   for index in [0:old.size] do
     match old[index]?, new[index]? with
@@ -1028,7 +1028,7 @@ def cseEqualityRetained? : Option (Engine Rank × RetainedSuggestion) := do
   | none => false
 
 def startError (rules : Array Registration) (bindings : Array ScopeBinding)
-    (customLimits : Limits := limits) : Option StartError :=
+    (customLimits : Hex.Interval.State.Limits := limits) : Option StartError :=
   match Engine.start rankDomain program rules #[4, 6, 0, 0, 0, 9]
       customLimits bindings with
   | .ok _ => none

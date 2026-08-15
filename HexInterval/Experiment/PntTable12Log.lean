@@ -317,7 +317,7 @@ def rowPackage : Package Bound :=
 
 def packages : Array (Package Bound) := #[sourcePackage, logPackage, rowPackage]
 
-def engineLimits : Propagator.Limits :=
+def engineLimits : Hex.Interval.State.Limits :=
   { maxOperations := 4, maxNodes := 16, maxRules := 3, maxRegistryEntries := 12,
     maxReplayFormats := 4, maxArity := 6, maxScopeNodes := 1, maxApplications := 4,
     maxQueueEntries := 40, maxActions := 8, maxMatcherVisits := 8, matcherBatchSize := 4,

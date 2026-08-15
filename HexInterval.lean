@@ -9,6 +9,8 @@ module
 public import HexInterval.Interval
 public import HexInterval.Multiplication
 public import HexInterval.Action
+public import HexInterval.State
+public import HexInterval.Trace
 
 public section
 
@@ -30,7 +32,8 @@ cuts for two nonzero finite singletons, exact empty and total-zero cases, and a
 sound whole-line fallback for every other nonempty shape. Raw cuts remain
 visible as the explicit decoder and inspection boundary. The public structural
 contracts also cover checked typed SSA programs, versioned fact projections,
-registrations, scoped bindings, actions, and immutable package requests.
-Concrete state, callback outcomes and proposals, scheduling, policy, search,
-and replay remain experimental.
+registrations, scoped bindings, actions, immutable package requests, checked
+immutable branch state, dependency/work queues, authoritative chronology, and
+bounded diagnostics. Concrete callbacks and proposals, policy selection,
+search, proof replay, and measurement-selected storage remain experimental.
 -/

@@ -63,17 +63,19 @@ keys. Dyadic, rational, elementary-function, and Mathlib theorem backends plug
 into that framework; backend-specific replay experiments do not block or
 define the scheduler architecture.
 
-The current supported Mathlib-free boundary now includes the structural half
-of that milestone: checked typed SSA `Program`s; versioned fact snapshots and
-projected views; stable operation/rule keys; registrations and explicit scope
-bindings; and immutable actions and package requests. These records
-deliberately contain neither function callbacks nor proof evidence. Concrete
-dependency storage, worklists, resource counters, package assembly, callback
-outcomes and proposals, scheduling, policy, branch search, payload storage,
-and replay are still experimental; their current types are not supported APIs
-and do not determine the eventual storage or default policy. In particular,
-the current instantiation proposal's package-supplied numeric policy family is
-not part of the supported action contract.
+The current supported Mathlib-free boundary includes checked typed SSA
+`Program`s; versioned fact snapshots and projected views; stable
+operation/rule keys; registrations and explicit scope bindings; immutable
+actions and package requests; and checked immutable branch, dependency,
+work-queue, chronology, and bounded diagnostic snapshots. These records
+deliberately contain neither function callbacks nor proof evidence. The state
+records are a stable decoded interchange and validation contract; they do not
+select the eventual mutable, persistent, paged, or trail-backed implementation
+used inside a high-performance branch search. Package assembly, callback
+outcomes and proposals, policy choice, sessions, branch search, payload
+storage, proof replay, and that optimized backing store remain experimental.
+In particular, the current instantiation proposal's package-supplied numeric
+policy family is not part of the supported action contract.
 
 The active implementation gate is to harden and compare the first complete
 arbitrary-function vertical: independently assembled forward and backward
@@ -971,6 +973,47 @@ Anchor-local inspection adds no wakeup beyond the declared fact slots; a rule
 which reads the whole view declares `watchesProgram`, making program extension
 an explicit dependency.
 
+### Supported state and trace snapshots
+
+`State.Branch Fact Cause` is the function-independent decoded branch contract.
+It retains the exact base program and caller facts, current append-only
+program, an immutable version-zero seed for every base or generated node,
+current facts and versions, structural generations and depths, exact updates,
+and the contradiction search flag. `Cause` is opaque data at this layer.
+`Branch.check` reconstructs every current version from the ordered predecessor
+links and validates the base/program prefix and all aligned arrays. It does not
+interpret a fact or provenance cause as evidence.
+
+`Branch.startWithin`, `pushWithin`, and `extendWithin` are transactional.
+Structural count/arity/depth/generation caps are checked before allocating
+aligned arrays; fact-history capacity is checked before appending an update;
+and a stale node/version, wrong program version, malformed current branch, or
+non-prefix extension returns no replacement branch. Generated version-zero
+facts are retained in the seed array rather than reconstructed by a later
+callback. This makes quotation independent of mutable package state.
+
+`State.Dependencies` retains node-aligned watcher lists and separate dirty bits
+for application and equality work. `State.Queue` is an append-only bounded work
+log plus its FIFO cursor. A policy may consume work out of FIFO order through
+`Queue.deactivate`, leaving a checked tombstone. A later wake appends a fresh
+occurrence; `Queue.pop` skips tombstones and clears exactly the next still-dirty
+item. Queue construction, enqueue, deactivation, and pop validate reference,
+array, live-bit, cursor, and retained-count alignment before returning a new
+snapshot. The append-only array is the current decoded/reference
+representation, not a decision against a compacting or persistent production
+queue with the same behavior.
+
+`Trace.Order` is the authoritative interleaving of fact updates and program
+instances. Its checked append operations require the exact next role-local
+index and independent fact/instance history caps. The role-specific histories
+retain payload and provenance; the order alone carries no proof authority.
+`Trace.Log` is a separate diagnostic stream with exact event-count,
+already-allocated payload-byte, declared-work, and code limits. Refusal marks
+the diagnostic stream truncated without changing any branch or chronology.
+Because byte admission occurs after an event exists, arbitrary callback and
+Lean-object construction is explicitly non-preemptible and remains the
+package's bounded responsibility.
+
 The transparent structural-cursor module is the reference semantics for
 bounded whole-network matching. Within each epoch it enumerates the
 append-only node, equality, and concrete-application identifier spaces in that
@@ -1237,8 +1280,8 @@ dependency item is therefore a sum:
 structure EqualityId where
   index : Nat
 
-inductive WorkItem
-  | rule     (application : ApplicationId)
+inductive State.Work
+  | application (application : ApplicationId)
   | equality (edge : EqualityId)
 ```
 
@@ -3234,7 +3277,14 @@ is merely the current bounded aggregate derived from earlier events, not a
 second observation channel. Successful and fixed-point cost components are
 checked against `maxObservationValue`; candidate, suggestion, and proposal
 counts have separate structural caps, and negative identifiers have their own
-diagnostic cap. The current event protocol has no general encoded-byte cap.
+diagnostic cap. The supported `Trace.Log` contract provides exact retained
+event-count, payload-byte, logical-work, and code limits with explicit
+truncation. The current experimental `PolicyEvent` protocol does not yet
+encode into that log: it retains exact fact values and therefore still has no
+general byte cap. `Trace.Log.append` sees an already allocated byte payload,
+so it cannot preempt arbitrary callback, `Fact`, `String`, or Lean-object
+construction. Packages must bound that explicitly non-preemptible construction
+envelope before returning; controller retention begins only afterward.
 
 It may be cleaner to normalize the registry result as one bounded `RuleReport`
 containing an outcome tag, candidate list, suggestion list, and cost. That
@@ -4952,15 +5002,25 @@ their declared cost inside a scheduler bound.
   registrations, scope bindings, validated immutable program/request views,
   and exact read/write projections. It has no callbacks, outcomes, policy, or
   proof evidence.
+- `HexInterval/Trace.lean`: supported exact fact/instance chronology and
+  bounded diagnostic-log contracts. Diagnostic bytes count retained `UInt8`
+  payload cells after callback construction; they do not claim to preempt
+  arbitrary Lean allocation.
+- `HexInterval/State.lean`: supported immutable branch seeds, current facts,
+  exact version/provenance history, structural/generation side tables,
+  dependency watchers, dirty bits, append-only work queues with policy
+  tombstones, controller resources, and transactional checked builders. These
+  decoded arrays do not select the optimized branch-storage implementation.
 - `HexInterval/Experiment/Propagator.lean`: current experimental concrete
-  applications, dependency indexes, worklists, counters, callback outcomes
-  and untrusted proposals, replies, extension admission, and engine state,
-  consuming the supported contracts.
+  applications, callbacks, outcomes, untrusted proposals and replies, and
+  extension admission. Its engine extends and mutates only through the
+  supported state/trace contracts, while its public record remains an
+  inspectable experimental storage candidate.
 - `HexInterval/Experiment/{PackageRegistry,PolicyDriver,PolicySession,
   StagedPolicy,AdaptivePolicy,FeaturePolicy,BranchTree}.lean`: current
   provisional package callback, policy, session, and branch-search designs.
-   Future supported state/policy/search/trace modules will be selected from
-   measurements; no storage representation or default policy is frozen yet.
+   Optimized storage, policy/search APIs, and a default policy will be selected
+   from measurements; none is frozen by the decoded supported snapshots.
 - `conformance/HexInterval/{Conformance,MinMaxConformance,EmitFixtures}.lean`:
   Lean-only checks and oracle fixtures.
 - `HexInterval/Experiment/PntFks2FamilyData*.lean` and
@@ -5003,6 +5063,14 @@ typical, boundary, and adversarial inputs. In particular it includes:
 - malformed registration, scope, and request snapshots, including wrong
   operation/rule versions, duplicate or out-of-range ports, misaligned side
   tables, changed fact versions, and changed ordered write authority;
+- malformed or over-budget state snapshots, including stale/cross-node update
+  predecessors, wrong program versions, non-prefix extensions, exact generated
+  version-zero seed restoration, dependency/watcher misalignment, stale dirty
+  bits, policy tombstones, queue and chronology one-over limits, and reordered
+  fact/instance chronology;
+- diagnostic event count, payload-byte, logical-work, and code refusal,
+  malformed cached totals, and a truncation canary showing that diagnostic
+  loss cannot change branch facts, versions, provenance, or contradiction;
 - equal endpoints in all closure combinations;
 - empty, singleton, one-sided unbounded, and whole intervals;
 - table-driven empty laws: every unary operation and `regularize` preserve

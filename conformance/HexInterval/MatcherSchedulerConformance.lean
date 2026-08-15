@@ -72,7 +72,7 @@ def contractRule : Registration :=
     writes := []
     binding := .scoped }
 
-def limits : Limits :=
+def limits : Hex.Interval.State.Limits :=
   { maxOperations := 4
     maxNodes := 8
     maxRules := 2
@@ -297,7 +297,7 @@ def afterOddness? : Option (Engine Rank) := do
 
 /-! ## Growth before a frozen matcher epoch is exhausted -/
 
-def earlyLimits : Limits :=
+def earlyLimits : Hex.Interval.State.Limits :=
   { limits with matcherBatchSize := 1 }
 
 def earlyStarted? : Option (Engine Rank) :=
@@ -512,7 +512,7 @@ def package : Package Rank :=
         { Handler.bareDroppingDrafts contractRule packageContract with
           acceptsScope := fun _ binding => binding.rule == contractKey }] }
 
-def packageLimits : Limits :=
+def packageLimits : Hex.Interval.State.Limits :=
   { limits with maxDiagnosticValue := 300 }
 
 def payloadLimits : Experiment.PayloadArena.Limits :=

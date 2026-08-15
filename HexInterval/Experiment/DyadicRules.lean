@@ -517,7 +517,7 @@ def centeredPackage (config : Config) (real : DomainId) : Package Fact :=
         limits.maxOperations ≤ limits.maxObservationValue &&
         limits.maxNodes ≤ limits.maxObservationValue - limits.maxOperations }
 
-def buildRegistry (config : Config) (real : DomainId) (limits : Limits) :
+def buildRegistry (config : Config) (real : DomainId) (limits : Hex.Interval.State.Limits) :
     Except RegistryError (Propagator.Registry Fact) :=
   Propagator.Registry.buildWithin limits
     #[arithmeticPackage config real, centeredPackage config real]
@@ -545,7 +545,7 @@ inductive StartError where
 /-- The checked entry point binds the exact flattened registrations to their
 callbacks and retains the existential registry as the driver's cache. -/
 def start (config : Config) (real : DomainId) (program : Program)
-    (rawFacts : Array Raw) (limits : Limits) :
+    (rawFacts : Array Raw) (limits : Hex.Interval.State.Limits) :
     Except StartError (Engine Fact × Propagator.Registry Fact) :=
   match buildRegistry config real limits with
   | .error error => .error (.registry error)

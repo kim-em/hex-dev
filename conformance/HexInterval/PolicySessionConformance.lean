@@ -36,7 +36,7 @@ def config : Config :=
     reciprocalBasePrecision := 2
     maxReciprocalEffort := 4 }
 
-def engineLimits : Propagator.Limits :=
+def engineLimits : Hex.Interval.State.Limits :=
   { maxOperations := 24
     maxNodes := 32
     maxRules := 16
@@ -434,7 +434,7 @@ def capacityFacts? : Option (Array Fact) :=
   | .ok facts => some facts.toArray
   | .error _ => none
 
-def capacityEngineLimits : Propagator.Limits :=
+def capacityEngineLimits : Hex.Interval.State.Limits :=
   { engineLimits with
     maxOutcomeCandidates := 1
     maxOutcomeSuggestions := 0

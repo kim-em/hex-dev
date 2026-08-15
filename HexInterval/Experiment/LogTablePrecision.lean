@@ -198,7 +198,7 @@ def decimal20Input : SemanticReplay.CheckerInput Bound :=
 def decimal50Input : SemanticReplay.CheckerInput Bound :=
   checkerInput 50 decimal50Certificate
 
-def engineLimits : Propagator.Limits :=
+def engineLimits : Hex.Interval.State.Limits :=
   { maxOperations := 3, maxNodes := 3, maxRules := 1, maxRegistryEntries := 8,
     maxReplayFormats := 2, maxArity := 2, maxScopeNodes := 1,
     maxApplications := 2, maxQueueEntries := 16, maxActions := 8,

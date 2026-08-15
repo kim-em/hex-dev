@@ -108,7 +108,7 @@ def rankFacts : FactDomainSchema functionSemantics :=
         else none
       else none }
 
-def replaysStep (mutate : FactEvent Rank -> FactEvent Rank := id)
+def replaysStep (mutate : Hex.Interval.State.Update Rank (FactCause Rank) -> Hex.Interval.State.Update Rank (FactCause Rank) := id)
     (inputNode : NodeId := node 0) : Bool :=
   match semanticFixture? with
   | none => false
@@ -157,7 +157,7 @@ def replaysStep (mutate : FactEvent Rank -> FactEvent Rank := id)
       | .transport _ _ => event) &&
     !replaysStep (fun event => { event with fact := 0 })
 
-def replaysResolved (mutate : FactEvent Rank -> FactEvent Rank := id) : Bool :=
+def replaysResolved (mutate : Hex.Interval.State.Update Rank (FactCause Rank) -> Hex.Interval.State.Update Rank (FactCause Rank) := id) : Bool :=
   match semanticFixture? with
   | none => false
   | some fixture =>
@@ -646,7 +646,7 @@ theorem callerSinNegRange :
     functionSemantics.Entails program base { node := node 2, fact := 1 } := by
   simpa [rangeTargetInput, checkerInput] using emittedTarget.proof
 
-def transportEvent (source : NodeId := node 4) : FactEvent Rank :=
+def transportEvent (source : NodeId := node 4) : Hex.Interval.State.Update Rank (FactCause Rank) :=
   { programVersion := 1
     node := node 2
     previous := { node := node 2, version := 0 }

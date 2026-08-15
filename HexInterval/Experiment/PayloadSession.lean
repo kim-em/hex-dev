@@ -76,7 +76,7 @@ private def make (engine : Engine Fact) (registry : Registry Fact)
 /-- A sound upper bound on payload-arena work in any engine-valid reply:
 every candidate, every suggestion constructor, and at most
 `maxProposalItems` nested equalities for each suggestion. -/
-def requiredUses (limits : Propagator.Limits) : Nat :=
+def requiredUses (limits : Hex.Interval.State.Limits) : Nat :=
   limits.maxOutcomeCandidates +
     limits.maxOutcomeSuggestions * (limits.maxProposalItems + 1)
 
@@ -85,7 +85,7 @@ payload use. `maxDrafts ≤ maxUses` also bounds malformed pre-coverage draft
 lists by the use-traversal envelope, while the local draft and cell caps must
 fit an empty arena. Therefore only capacity consumed by earlier commits can
 produce a whole-run exhaustion. -/
-def limitsCoherent (limits : Propagator.Limits)
+def limitsCoherent (limits : Hex.Interval.State.Limits)
     (arenaLimits : PayloadArena.Limits) : Bool :=
   requiredUses limits ≤ arenaLimits.maxDrafts &&
     arenaLimits.maxDrafts ≤ arenaLimits.maxUses &&
@@ -98,7 +98,7 @@ The generic engine preflight precedes any package callback which may traverse
 the program. -/
 opaque Session.start (factDomain : FactDomain Fact) (program : Program)
     (packages : Array (Package Fact)) (facts : Array Fact)
-    (limits : Propagator.Limits) (arenaLimits : PayloadArena.Limits) :
+    (limits : Hex.Interval.State.Limits) (arenaLimits : PayloadArena.Limits) :
     Except StartError (Session Fact) :=
   match Registry.buildWithin limits packages with
   | .error error => .error (.registry error)
@@ -123,7 +123,7 @@ inductive Step (Fact : Type) where
   | saturated (session : Session Fact)
   | incomplete (session : Session Fact)
   | contradiction (session : Session Fact)
-  | engineResource (resource : Propagator.Resource) (session : Session Fact)
+  | engineResource (resource : Hex.Interval.State.Resource) (session : Session Fact)
   | factResource (budget : Nat) (session : Session Fact)
   | invalidReply (error : ReplyError) (session : Session Fact)
   | invalidPayload (error : PayloadArena.Invalid) (session : Session Fact)
@@ -171,7 +171,7 @@ private def outcomeDropsWork : Outcome Fact -> Bool
 before the arena traverses payload uses or drafts. Nested instantiation lists
 remain bounded by the arena cap here and by `maxProposalItems` during engine
 admission. -/
-private def outcomeListsBounded (limits : Propagator.Limits) : Outcome Fact -> Bool
+private def outcomeListsBounded (limits : Hex.Interval.State.Limits) : Outcome Fact -> Bool
   | .success candidates suggestions _ =>
       listWithin limits.maxOutcomeCandidates candidates &&
         listWithin limits.maxOutcomeSuggestions suggestions
@@ -292,7 +292,7 @@ inductive Stop where
   | saturated
   | incomplete
   | contradiction
-  | engineResource (resource : Propagator.Resource)
+  | engineResource (resource : Hex.Interval.State.Resource)
   | factResource (budget : Nat)
   | invalidReply (error : ReplyError)
   | payloadResource (resource : PayloadArena.Resource)

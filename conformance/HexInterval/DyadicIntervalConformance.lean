@@ -490,7 +490,7 @@ private def sourceProgram : Program :=
   { operations := #[{ key := sourceOp, inputs := [], output := real }]
     nodes := #[{ domain := real, op := { index := 0 }, args := [] }] }
 
-private def engineLimits : Limits :=
+private def engineLimits : Hex.Interval.State.Limits :=
   { maxOperations := 4
     maxNodes := 4
     maxRules := 0

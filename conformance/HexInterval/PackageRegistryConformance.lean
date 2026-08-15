@@ -235,7 +235,7 @@ def factDomain : FactDomain Nat where
   narrow _ current candidate :=
     if current < candidate then .improved candidate else .noChange
 
-def limits : Limits :=
+def limits : Hex.Interval.State.Limits :=
   { maxOperations := 8
     maxNodes := 8
     maxRules := 8
@@ -280,22 +280,22 @@ def externalRegistry? : Option (Registry Nat) :=
   | .ok registry => some registry
   | .error _ => none
 
-def lowDiagnosticLimits : Limits :=
+def lowDiagnosticLimits : Hex.Interval.State.Limits :=
   { limits with maxDiagnosticValue := 999999 }
 
 def shortArenaLimits : Experiment.PayloadArena.Limits :=
   { arenaLimits with maxEntries := 3 }
 
-def shortRuleLimits : Limits :=
+def shortRuleLimits : Hex.Interval.State.Limits :=
   { limits with maxRules := 3 }
 
-def shortOperationLimits : Limits :=
+def shortOperationLimits : Hex.Interval.State.Limits :=
   { limits with maxOperations := 3 }
 
-def shortMetadataLimits : Limits :=
+def shortMetadataLimits : Hex.Interval.State.Limits :=
   { limits with maxRegistryEntries := 8 }
 
-def nullaryLimits : Limits :=
+def nullaryLimits : Hex.Interval.State.Limits :=
   { limits with maxArity := 0 }
 
 def run? : Option (RunResult Nat (Registry Nat)) :=

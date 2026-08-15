@@ -719,7 +719,7 @@ def importInitialFacts (limit : EndpointLimit) :
 canonical and nonempty; malformed cuts, empty cuts, and resource failures are
 reported before the generic scheduler can observe them. -/
 def start (endpointLimit : EndpointLimit) (program : Program)
-    (rules : Array Registration) (rawFacts : Array Raw) (limits : Limits) :
+    (rules : Array Registration) (rawFacts : Array Raw) (limits : Hex.Interval.State.Limits) :
     Except StartError (Engine Fact) := do
   -- Bound the raw-fact scan with the same resource-first validation used by
   -- the generic engine.  In particular, no oversized program, registry, or

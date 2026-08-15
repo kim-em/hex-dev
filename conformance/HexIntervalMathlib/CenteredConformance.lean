@@ -44,7 +44,7 @@ private def config : Config :=
     reciprocalBasePrecision := 2
     maxReciprocalEffort := 0 }
 
-private def limits : Propagator.Limits :=
+private def limits : Hex.Interval.State.Limits :=
   { maxOperations := 16
     maxNodes := 8
     maxRules := 8
@@ -105,7 +105,7 @@ private def action : Action :=
     inputs := [{ node := node 0, version := 0 }]
     writes := [node 1] }
 
-private def event : FactEvent DyadicInterval.Fact :=
+private def event : Hex.Interval.State.Update DyadicInterval.Fact (FactCause DyadicInterval.Fact) :=
   { programVersion := 0
     node := node 1
     previous := { node := node 1, version := 0 }
@@ -130,7 +130,7 @@ private def sameEntry (left right : Entry) : Bool :=
   left.origin == right.origin && left.role == right.role &&
     left.schema == right.schema && left.body == right.body
 
-private def sameEvent (left right : FactEvent DyadicInterval.Fact) : Bool :=
+private def sameEvent (left right : Hex.Interval.State.Update DyadicInterval.Fact (FactCause DyadicInterval.Fact)) : Bool :=
   left.programVersion == right.programVersion && left.node == right.node &&
     left.previous == right.previous && left.fact == right.fact &&
     left.version == right.version &&
@@ -151,7 +151,7 @@ private def quotesMatchLive : Bool :=
         run.session.engine.history.size == 1 &&
         run.session.arena.entries.size == 1 &&
         run.session.arena.bodyCells == 0 &&
-        run.session.engine.factAt? { node := node 1, version := 1 } ==
+        run.session.engine.toBranch.factAt? { node := node 1, version := 1 } ==
           some quarterRange &&
         match run.session.engine.history[0]?,
             run.session.arena.entry? (payload 0) .fact with
@@ -327,7 +327,7 @@ private def backwardAction : Action :=
     inputs := [{ node := node 1, version := 0 }]
     writes := [node 0] }
 
-private def backwardEvent : FactEvent DyadicInterval.Fact :=
+private def backwardEvent : Hex.Interval.State.Update DyadicInterval.Fact (FactCause DyadicInterval.Fact) :=
   { programVersion := 0
     node := node 0
     previous := { node := node 0, version := 0 }
@@ -355,7 +355,7 @@ private def backwardMatchesLive : Bool :=
         run.session.engine.history.size == 1 &&
         run.session.arena.entries.size == 3 &&
         run.session.arena.bodyCells == 0 &&
-        run.session.engine.factAt? { node := node 0, version := 1 } ==
+        run.session.engine.toBranch.factAt? { node := node 0, version := 1 } ==
           some middleRange &&
         match run.session.engine.history[0]?,
             run.session.arena.entry? (payload 1) .fact with

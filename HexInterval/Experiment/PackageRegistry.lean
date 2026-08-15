@@ -184,7 +184,7 @@ structure Package (Fact : Type) where
   operations : Array Operation := #[]
   requiredOperations : Array Operation := #[]
   handlers : Array (Handler Fact Cache)
-  acceptsLimits : Program -> Limits -> PayloadArena.Limits -> Bool :=
+  acceptsLimits : Program -> Hex.Interval.State.Limits -> PayloadArena.Limits -> Bool :=
     fun _ _ _ => true
   /-- Non-semantic routing telemetry used to check that only the selected
   package snapshot changes. -/
@@ -235,7 +235,7 @@ inductive RegistryError where
   | duplicateRule (key : RuleKey)
   | duplicateFormat (key : PayloadArena.ReplayKey)
   | undeclaredHead (rule : RuleKey) (head : OpKey)
-  | resourceLimit (resource : Resource)
+  | resourceLimit (resource : Hex.Interval.State.Resource)
   deriving DecidableEq, Repr
 
 namespace Registry
@@ -300,7 +300,7 @@ def flatten : Nat -> List (Package Fact) -> Array Operation ->
         addHandlers packageIndex 0 package.handlers.toList registrations routes
       flatten (packageIndex + 1) rest operations registrations routes
 
-def preflight (limits : Limits) (packages : Array (Package Fact)) :
+def preflight (limits : Hex.Interval.State.Limits) (packages : Array (Package Fact)) :
     Except RegistryError Unit := do
   if limits.maxRegistryEntries < packages.size then
     throw (.resourceLimit .registryEntries)
@@ -339,7 +339,7 @@ array allocation. Dedicated caps bound total metadata and replay-format
 declarations without borrowing executable operation headroom. Assembly order
 is package-major and then handler-major; exact operation and rule keys are
 unique in the snapshot. -/
-opaque buildWithin (limits : Limits) (packages : Array (Package Fact)) :
+opaque buildWithin (limits : Hex.Interval.State.Limits) (packages : Array (Package Fact)) :
     Except RegistryError (Registry Fact) :=
   match preflight limits packages with
   | .error error => .error error
@@ -370,7 +370,7 @@ def acceptsProgram (registry : Registry Fact) (program : Program) : Bool :=
 /-- Run every package-owned configuration preflight over the final program,
 engine resource envelope, and proof-payload arena envelope. -/
 def acceptsLimits (registry : Registry Fact) (program : Program)
-    (limits : Limits) (arenaLimits : PayloadArena.Limits) : Bool :=
+    (limits : Hex.Interval.State.Limits) (arenaLimits : PayloadArena.Limits) : Bool :=
   DispatchCode.requestMismatch ≤ limits.maxDiagnosticValue &&
     registry.packages.all fun package =>
       package.acceptsLimits program limits arenaLimits

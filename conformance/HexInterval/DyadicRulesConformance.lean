@@ -37,7 +37,7 @@ def config : Config :=
 
 abbrev ConcreteRegistry := Propagator.Registry Fact
 
-def limits : Experiment.Propagator.Limits :=
+def limits : Hex.Interval.State.Limits :=
   { maxOperations := 16
     maxNodes := 32
     maxRules := 16
@@ -509,26 +509,26 @@ def ownsV0 (arena : PayloadArena.Arena) (payload : PayloadId)
       | _ => false
   | none => false
 
-def lowEffortLimits : Experiment.Propagator.Limits :=
+def lowEffortLimits : Hex.Interval.State.Limits :=
   { limits with maxEffort := 3 }
 
-def lowDiagnosticLimits : Experiment.Propagator.Limits :=
+def lowDiagnosticLimits : Hex.Interval.State.Limits :=
   { limits with maxDiagnosticValue := 70 }
 
-def noCandidateLimits : Experiment.Propagator.Limits :=
+def noCandidateLimits : Hex.Interval.State.Limits :=
   { limits with maxOutcomeCandidates := 0 }
 
-def noSuggestionLimits : Experiment.Propagator.Limits :=
+def noSuggestionLimits : Hex.Interval.State.Limits :=
   { limits with maxOutcomeSuggestions := 0 }
 
-def shortProposalLimits : Experiment.Propagator.Limits :=
+def shortProposalLimits : Hex.Interval.State.Limits :=
   { limits with maxProposalItems := 3 }
 
-def tinySplitLimits : Experiment.Propagator.Limits :=
+def tinySplitLimits : Hex.Interval.State.Limits :=
   { limits with
     splitEndpointLimit := { maxEndpointHeight := 0, maxAlignmentShift := 0 } }
 
-def rejectsPackageLimits (candidateLimits : Experiment.Propagator.Limits) : Bool :=
+def rejectsPackageLimits (candidateLimits : Hex.Interval.State.Limits) : Bool :=
   match DyadicRules.start config real centeredProgram
       #[finite 0 false 1 false, finite 1 false 1 false, whole, whole]
       candidateLimits with

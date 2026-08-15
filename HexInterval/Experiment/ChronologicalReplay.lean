@@ -314,7 +314,7 @@ def replayRuleStep {Fact : Type} {semantics : Semantics Fact}
     (registry : SemanticReplay.Registry semantics)
     (domain : FactDomainSchema semantics)
     (input : CheckerInput Fact) (arena : Arena)
-    (event : FactEvent Fact) (program : Program)
+    (event : Hex.Interval.State.Update Fact (FactCause Fact)) (program : Program)
     (basePrefix : ProgramPrefix input.baseProgram program)
     (base assumptions : List (NodeFact Fact)) (previous : Fact)
     (previousSound :
@@ -347,7 +347,7 @@ def replayResolvedRule {Fact : Type} {semantics : Semantics Fact}
     (registry : SemanticReplay.Registry semantics)
     (domain : FactDomainSchema semantics)
     (input : CheckerInput Fact) (arena : Arena)
-    (event : FactEvent Fact) (program : Program)
+    (event : Hex.Interval.State.Update Fact (FactCause Fact)) (program : Program)
     (basePrefix : ProgramPrefix input.baseProgram program)
     (base : List (NodeFact Fact))
     (resolve : (seen : SeenVersion) ->
@@ -416,7 +416,7 @@ accepted event. -/
 private def push {Fact : Type} {semantics : Semantics Fact}
     {program : Program} {base : List (NodeFact Fact)}
     (checked : Prefix semantics program base)
-    (event : FactEvent Fact)
+    (event : Hex.Interval.State.Update Fact (FactCause Fact))
     (within : event.node.index < program.nodes.size)
     (sound :
       Evidence
@@ -438,7 +438,7 @@ private def push {Fact : Type} {semantics : Semantics Fact}
 
 /-- Result of one accepted rule event. -/
 structure Step {Fact : Type} (semantics : Semantics Fact) (program : Program)
-    (base : List (NodeFact Fact)) (event : FactEvent Fact) where
+    (base : List (NodeFact Fact)) (event : Hex.Interval.State.Update Fact (FactCause Fact)) where
   next : Prefix semantics program base
   sound :
     Evidence
@@ -454,7 +454,7 @@ opaque replayRule {Fact : Type} {semantics : Semantics Fact}
     (registry : SemanticReplay.Registry semantics)
     (domain : FactDomainSchema semantics)
     (input : CheckerInput Fact) (arena : Arena)
-    (event : FactEvent Fact)
+    (event : Hex.Interval.State.Update Fact (FactCause Fact))
     (basePrefix : ProgramPrefix input.baseProgram program) :
     Option (Step semantics program base event) := do
   if within : event.node.index < program.nodes.size then
@@ -629,7 +629,7 @@ opaque replayRule {Fact : Type} {semantics : Semantics Fact}
     (checked : Cursor semantics input base version program)
     (registry : SemanticReplay.Registry semantics)
     (domain : FactDomainSchema semantics) (arena : Arena)
-    (event : FactEvent Fact) :
+    (event : Hex.Interval.State.Update Fact (FactCause Fact)) :
     Option (Cursor semantics input base version program) := do
   if event.programVersion != version then none else pure ()
   let step ←
@@ -696,7 +696,7 @@ def replayTransportStep {Fact : Type} {semantics : Semantics Fact}
     (registry : SemanticReplay.Registry semantics)
     (domain : FactDomainSchema semantics) (laws : Laws semantics)
     (input : CheckerInput Fact) (arena : Arena)
-    (event : FactEvent Fact) (edge : EqualityEdge) (program : Program)
+    (event : Hex.Interval.State.Update Fact (FactCause Fact)) (edge : EqualityEdge) (program : Program)
     (basePrefix : ProgramPrefix input.baseProgram program)
     (base equalityAssumptions : List (NodeFact Fact))
     (previous sourceFact : Fact)
@@ -755,7 +755,7 @@ opaque replayTransport {Fact : Type} {semantics : Semantics Fact}
     (registry : SemanticReplay.Registry semantics)
     (domain : FactDomainSchema semantics) (laws : Laws semantics)
     (input : CheckerInput Fact) (arena : Arena)
-    (event : FactEvent Fact) (edge : EqualityEdge)
+    (event : Hex.Interval.State.Update Fact (FactCause Fact)) (edge : EqualityEdge)
     (basePrefix : ProgramPrefix input.baseProgram program) :
     Option (Step semantics program base event) := do
   if within : event.node.index < program.nodes.size then
@@ -802,7 +802,7 @@ opaque replayTransport {Fact : Type} {semantics : Semantics Fact}
     (checked : Cursor semantics input base version program)
     (registry : SemanticReplay.Registry semantics)
     (domain : FactDomainSchema semantics) (laws : Laws semantics)
-    (arena : Arena) (event : FactEvent Fact) (edge : EqualityEdge) :
+    (arena : Arena) (event : Hex.Interval.State.Update Fact (FactCause Fact)) (edge : EqualityEdge) :
     Option (Cursor semantics input base version program) := do
   if event.programVersion != version then none else pure ()
   let step ←

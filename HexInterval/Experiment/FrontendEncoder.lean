@@ -169,8 +169,8 @@ def factCauseExpr (factType : Expr) (factExpr : Fact → MetaM Expr) :
         (← equalityExpr equality) (← seenExpr source)
 
 def factEventExpr (factType : Expr) (factExpr : Fact → MetaM Expr)
-    (event : FactEvent Fact) : MetaM Expr := do
-  mkAppM ``FactEvent.mk
+    (event : Hex.Interval.State.Update Fact (FactCause Fact)) : MetaM Expr := do
+  mkAppM ``Hex.Interval.State.Update.mk
     #[mkNatLit event.programVersion,
       ← nodeIdExpr event.node,
       ← seenExpr event.previous,

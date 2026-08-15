@@ -303,7 +303,7 @@ def packages : Array (Package Range) :=
 
 /-! ## A bounded proof-producing session -/
 
-def engineLimits : Propagator.Limits :=
+def engineLimits : Hex.Interval.State.Limits :=
   { maxOperations := 3
     maxNodes := 5
     maxRules := 3
