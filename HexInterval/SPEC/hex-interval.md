@@ -3578,6 +3578,29 @@ the mutated body and a kernel theorem proves the proposed inequality false.
 These are still pinned fixed-row certificates, not a general logarithm or batch
 API.
 
+#### Generated FKS2 shard scale probe
+
+The first generated-table scale probe carries exactly the first 128 cells of
+pinned PNT+ `Table4ExtData_11.lean`, from `b = 11010` through `b' = 11138`.
+Its Mathlib-free `checkCell` is a package-owned exact-rational predicate, not
+LeanCert's source predicate: it checks positive error, ordered square-root
+endpoints, a 128-way reduced exponential argument, and the final rational
+Taylor enclosure. Seven squarings compute the 128th power.
+
+One 128-argument operation shares the row of margin facts. Eight bounded
+actions each install one 16-cell chunk, retaining eight payloads and 128
+chronological facts. The exact resource envelope permits 129 nodes, eight
+rules/applications/actions, sixteen candidates per outcome, 1,024 payload
+cells, 2,048 policy traversals, and payload atoms at most `10^36`, the largest
+encoded denominator in this segment. A failed cell reports its source `b`
+coordinate before payload allocation and does not trigger a precision retry.
+
+This is a bounded batching experiment, not a general FKS2 table service. It
+does not cover the remaining 872 cells of shard 11, the other shards, or the
+later width-five transition. Direct indexed schema replay is retained for
+representative chunks; the generic large-payload `ProofFrontend` fold and a
+full-family production profile remain acceptance work.
+
 #### Certified logarithm tables
 
 The initial source-pinned PNT+ probe is intentionally narrower than this

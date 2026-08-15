@@ -1295,6 +1295,51 @@ while omitting that generated stream misses the main batch workload.
 Conversely, importing the already-proved FKS2 result does not exercise Hex. The
 network-free per-PR gate detects an inconsistent or unexplained local change to
 the pinned commit, dependency revisions, occurrence inventory, or batch sizes.
+
+The first scale probe represents exactly 128 of those 13,590 cells: source
+indices `0–127` of pinned `Table4ExtData_11.lean`, covering the contiguous
+intervals `b = 11010` through `b' = 11138`. The pinned shard declaration is
+`cells_11 : List Cell`, followed by
+`cells_11_checked : cells_11.all checkCell = true`; the package supplies the
+same boolean-all shape with its own package-owned `checkCell` predicate, plus
+an arbitrary-membership semantic wrapper. Every five-field rational tuple is
+copied exactly, and `pnt_inventory.py --verify-source` compares all 128
+normalized tuples against the pinned shard prefix. This
+segment does not reach shard 11's later transition to width-five cells, and it
+does not claim the remaining 872 cells of that shard or any other shard.
+
+The provider replaces LeanCert's 64-way dyadic expression check with a
+package-owned 128-way split. One Mathlib `Real.exp_bound'` theorem proves the
+degree-11 Taylor polynomial plus explicit degree-12 remainder on `[0,1]`;
+exact rational obligations then authenticate positivity, both square-root
+endpoint enclosures, the reduced argument, and the final inequality for every
+cell. The power `128` is checked by seven explicit squarings rather than 128
+linear rational normalizations.
+
+Runtime work is divided into eight independently scheduled actions of sixteen
+coordinates over one shared 128-argument operation. The retained resource
+envelope charges eight requests and replies, 128 candidates and chronological
+facts, eight payload entries, at most sixteen candidates per outcome, 1,024
+payload cells, atoms at most `10^36`, and 2,048 bounded policy traversals.
+The proof-side chunk theorems each declare at most 2,000,000 heartbeats and
+recursion depth 100,000; rebuilding the Mathlib companion took 8.9 seconds on
+the development host. This is an observed
+acceptance-fixture cost, not a stable CI budget or a linear full-family
+extrapolation. Eight chunk schemas share one indexed definition, each covering
+sixteen addresses; conformance directly replays one representative address in
+the first, middle, and last chunks and checks that the retained program trace
+has 128 events. It does not yet
+retain a generic `ProofFrontend` fold over this large payload, so that closure
+and the full-shard/full-family profiles remain acceptance work.
+
+Doubling the first cell's `eps` field constructs a false source cell at
+coordinate `11010`. The numeric checker returns that exact coordinate before
+payload allocation, the plan contains no draft, its replay body is rejected,
+and a lower Taylor enclosure proves the mutated endpoint inequality false.
+There is no effort or precision retry. Consequently the generated-family inventory remains
+`pending` with explicit evidence for partial `128/13590` coverage; neither the
+family nor the `LeanCert.ANT` dependency is reclassified by this probe.
+
 Because the upstream commit is immutable, checking for a deliberately updated
 upstream pin is a maintainer operation: `--verify-source` regenerates from the
 exact checkout and requires an explicit SPEC, constants, and fixture refresh.

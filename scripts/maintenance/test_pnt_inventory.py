@@ -61,6 +61,18 @@ class MaskLeanTests(unittest.TestCase):
         rows = inventory.table_rows(inventory.mask_lean(source), "table_12")
         self.assertEqual(rows, ["(1, f (2))", "(3, 4)"])
 
+    def test_fks2_probe_requires_exact_source_prefix(self) -> None:
+        source = "def cells_11 := [\n  ⟨1, 2, 3/4, 5/6, 7/8⟩,\n  ⟨2, 3, 4/5, 6/7, 8/9⟩\n]\n"
+        provider = "def cells11 := [\n⟨1,2,3/4,5/6,7/8⟩,\n⟨2,3,4/5,6/7,8/9⟩\n]\n"
+        old_count = inventory.FKS2_PROBE_CELLS
+        inventory.FKS2_PROBE_CELLS = 2
+        self.addCleanup(setattr, inventory, "FKS2_PROBE_CELLS", old_count)
+        inventory.require_fks2_segment_match(source, provider)
+        with self.assertRaisesRegex(inventory.InventoryError, "cell 1"):
+            inventory.require_fks2_segment_match(
+                source, provider.replace("8/9", "9/10")
+            )
+
     def test_declaration_map_tracks_enclosing_declaration(self) -> None:
         masked = inventory.mask_lean(
             "theorem first : True := by\n  trivial\n\nexample : True := by\n  trivial\n"
@@ -219,6 +231,18 @@ class InventoryTests(unittest.TestCase):
             "migration": {
                 "status": "accepted-unchanged",
                 "note": "ported",
+                "evidence": ["conformance/HexIntervalMathlib/Missing.lean"],
+            },
+        }
+        with self.assertRaisesRegex(inventory.InventoryError, "evidence path"):
+            inventory.require_migrations([record])
+
+    def test_pending_classification_validates_supplied_evidence_path(self) -> None:
+        record = {
+            "kind": "generated-family",
+            "migration": {
+                "status": "pending",
+                "note": "partial probe",
                 "evidence": ["conformance/HexIntervalMathlib/Missing.lean"],
             },
         }
