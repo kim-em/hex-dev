@@ -98,10 +98,14 @@ not import the experimental propagation fact domain.
 
 ## Boundary
 
-The public companion grows only with the supported `Hex.Interval` API. The
-existing modules under `HexIntervalMathlib/Experiment` remain evidence for
-future operations, replay schemas, transcendental providers, and tactics, but
-are not re-exported here. Further arithmetic images and useful bounded
+The public companion grows only with the supported `Hex.Interval` API. Its
+`Program` module gives exact meanings to the supported decoded SSA program,
+and its `Proof` module owns function-agnostic package schemas, chronological
+typed replay, target closure, and the kernel-checked `Expr` emission boundary.
+Runtime search state, callbacks, payload bytes, and traces are untrusted and
+cannot enter `Proof.Evidence`. The concrete package registry, goal reifier,
+search-to-proof quotation, and tactic syntax remain experimental and are not
+re-exported here. Further arithmetic images and useful bounded
 nonsingleton division require their own
 operation-specific semantic theorems before promotion. An image operation must
 at least prove successful-result cut semantics and sound real-image enclosure;
@@ -168,6 +172,11 @@ set-image converse is exported.
 The Mathlib-free companion tests separately pin representative strict, closed,
 unbounded, and empty shapes together with pre-allocation resource refusal. The
 semantic theorem itself is exhaustive over the complete cut language.
+`HexIntervalMathlib.ProgramProofConformance` independently pins exact operation
+alignment and a live instance → fact → equality → transport chronology,
+including body/source/version/final-state mutations, refuter ownership, a
+nonvacuous ordinary theorem with a guarded axiom report, and transactional
+Meta-state restoration after a wrongly typed emitter.
 `HexIntervalMathlib.PntLogRationalConformance` additionally runs all fifteen
 fixed rows and sends the representative large-shift `32e12` certificate through
 generic planning, payload authentication, chronological replay, and the proof

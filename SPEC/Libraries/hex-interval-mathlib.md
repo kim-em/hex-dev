@@ -19,9 +19,13 @@ Division exposes direct outward cuts for two nonzero finite singletons, exact
 empty and total-zero cases, and a sound whole-line fallback otherwise.
 Outward regularization exposes exact Core-rounded cuts, source containment,
 and raw-cut idempotence without claiming a globally grid-tightest enclosure.
-Propagator, provider, replay, and tactic modules remain experiments and are not
-re-exported by the public umbrella. The user-facing tactic contract below is
-the release target, not a claim that the tactic is already supported.
+The supported proof surface also gives exact function-agnostic meanings to
+decoded SSA programs and replays package-owned fact, equality, instantiation,
+and refutation schemas chronologically into ordinary kernel-checked proofs.
+Concrete packages, goal reification, search-to-proof quotation, and tactic
+syntax remain experimental and are not re-exported by the public umbrella.
+The user-facing tactic contract below is the release target, not a claim that
+the tactic is already supported.
 
 The tactic proves bounds for ordinary Lean expressions over `ℝ`. It reads
 bounds from the local context, reifies shared expressions to an immutable

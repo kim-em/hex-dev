@@ -5187,6 +5187,14 @@ their declared cost inside a scheduler bound.
   an image-tightness converse.
 - `HexIntervalMathlib/Power.lean`: exact normalized selected-cut semantics and
   the one-way successful natural-power image theorem.
+- `HexIntervalMathlib/Program.lean`: exact function-agnostic operation
+  meanings, complete operation-array alignment, per-node SSA relations, and
+  global model assembly over the supported decoded program.
+- `HexIntervalMathlib/Proof.lean`: supported package-owned fact, equality,
+  instance, and refutation theorem schemas; exact registry/action validation;
+  chronological typed proof state and caller-target closure; and the
+  transactional kernel-checked `Expr` emission boundary. Concrete packages,
+  goal reification, tactic syntax, and default registries remain experimental.
 - `HexIntervalMathlib/Split.lean`: exact transactional child semantics,
   containment, coverage, disjointness, and left ownership of the cut point.
 - `HexIntervalMathlib/Inverse.lean`: exact computed reciprocal-cut semantics
@@ -5238,9 +5246,12 @@ their declared cost inside a scheduler bound.
    target driver, and split-construction designs. Optimized storage, concrete
    offer generation, package protocols, and a default policy will be selected
    from measurements; none is frozen by the decoded supported snapshots.
- - `conformance/HexInterval/{Conformance,SearchConformance,MinMaxConformance,
-   EmitFixtures}.lean`:
-   Lean-only checks and oracle fixtures.
+- `conformance/HexInterval/{Conformance,SearchConformance,MinMaxConformance,
+  EmitFixtures}.lean`:
+  Lean-only checks and oracle fixtures.
+- `conformance/HexIntervalMathlib/ProgramProofConformance.lean`: supported
+  program-model, registry, chronology, refutation, target-closure, mutation,
+  Meta-state restoration, and guarded ordinary-theorem canaries.
 - `HexInterval/Experiment/PntFks2FamilyData*.lean` and
   `HexInterval/Experiment/PntFks2Family.lean`: committed source-pinned family
   data and the Mathlib-free complete-family checker.
