@@ -166,7 +166,7 @@ compared during the vertical feasibility prototype:
    construction or replay boundaries, without carrying a proof in every hot
    value.
 
-The refreshed five-sample comparison at repository commit `31024b715` and Lean
+The refreshed five-sample comparison at repository commit `9c87f7cf2` and Lean
 `v4.33.0-rc1` records both 433-value and 4096-value workloads in
 `reports/bench-results/hex-interval-d2-representation.json`. The checked hot
 loop is within two percent of the bundled loop, while revalidating the checked
