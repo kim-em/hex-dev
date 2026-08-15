@@ -236,7 +236,7 @@
   {
     "path": "lakefile.lean",
     "baseline_blob": "6dd80771ae2212333b2a9b925b52056e0037ff56",
-    "current_blob": "0b9892f3618ff9cbb1b2a38e1976501b891bac5c",
+    "current_blob": "05026d60972019c6462cfcda5dd502d03d1fc40c",
     "reason": "Additionally registers the isolated Mathlib-free bounded feature-scoring policy experiment and its conformance module; the factorization service target and executable dependency graph are unchanged."
   },
   {

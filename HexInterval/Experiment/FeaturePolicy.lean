@@ -20,8 +20,8 @@ versioned feature addresses and signed integer weights.  It contains no cases
 for facts, functions, operations, or package families.
 
 Compatible feature data changes ordering only.  A decorator/scorer limit
-mismatch or oversized learned score fails closed with no selection.  A
-For a view returned by the decorator, a successful choice is the exact
+mismatch or oversized learned score fails closed with no selection.  For a
+view returned by the decorator, a successful choice is the exact
 engine-owned `OfferView` which that decorator retained.  The public view type
 also admits hand-built test data; scoring it does not authenticate feature
 provenance or its base view.  In either case the ordinary policy session
