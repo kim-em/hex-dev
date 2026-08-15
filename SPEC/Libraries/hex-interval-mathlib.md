@@ -1319,6 +1319,51 @@ runtime, and therefore is not evidence for the general logarithm or certified
 table-building milestones.  Its private Mathlib proofs use the general Taylor
 remainder theorem only to validate the finite entries at kernel replay time.
 
+The small-prime logarithm cluster replaces all sixty actual `interval_auto`
+calls in `RosserSchoenfeld/RSPrimeLower.lean` and `TMEEMT.lean`. At the pinned
+source commit, the enclosing theorem shapes are exactly
+
+```lean
+lemma RS_prime_helper.p_n_lower_small (n : ℕ) (hn1 : n > 1)
+    (hn2 : n ≤ 31) :
+  (nth_prime' n : ℝ) >
+    n * (Real.log n + Real.log (Real.log n) - 3 / 2)
+
+theorem Rosser1938.p_n_gt_1 (n : ℕ) (hn : n ≥ 2) :
+  nth_prime' n > n * Real.log n
+```
+
+Both proofs enumerate `n = 2, ..., 31` and pass the same exact `(n, m)`
+coordinates `(2,3), (3,5), ..., (31,127)` to an existing prime-counting
+helper. The Hex rewrite preserves those theorem statements and the PNT+-owned
+counting lemmas, but replaces each family of thirty transcendental premises by
+`PntPrimeLogSmall.logLeaf` and `PntPrimeLogSmall.nestedLogLeaf`. One committed
+coordinate table pins all thirty source pairs; the conformance guard checks
+that every row agrees with the theorem's `sourceCut` function.
+
+The ordinary kernel proof consumes the package-owned 20-digit `log 2`
+enclosure. A five-term atanh series with its Mathlib remainder theorem proves
+the additional coarse `log 3 < 1.1` bound. Monotonicity, exact factorizations,
+and rational caps then cover the whole bounded family; no LeanCert tactic,
+PNT+ theorem, `native_decide`, or one-proof-per-literal generated declaration
+is imported. The provider is deliberately specialized to the pinned range
+and source cuts. It is not a generic logarithm evaluator and is not evidence
+that the `LeanCert.Tactic.IntervalAuto` dependency interface as a whole has
+been replaced. The separate `rejectWrongCut` theorem proves only that the
+grossly low cut `20` is false at `n = 31`; exact endpoint fidelity comes from
+the offline mechanical comparison of all sixty committed source snippets with
+both local source tables, not from that theorem or a precision retry.
+
+The next broad dependency-interface candidates remain distinct work. A
+package-owned replacement for `LeanCert.CertifiedBounds.Chebyshev` needs a
+checked variable-input logarithm provider for the prime and prime-power folds
+through 11,723; the current precision table certifies only fixed inputs.
+`LeanCert.CertifiedBounds.Li2` additionally needs subdivision and reciprocal-
+log range machinery for its symmetric integral. The pinned public LeanCert
+lower and upper declarations are admitted, so merely importing those names
+would not meet Hex's kernel-only contract. These are concrete provider gaps,
+not reasons to reproduce either LeanCert API.
+
 The next classified acceptance probe covers the numerical leaf in
 `LogTables.exp_neg_lt_1e_neg_100` while preserving the source theorem's useful
 monotone shape. At the pinned commit, the enclosing declaration is exactly
@@ -2918,6 +2963,12 @@ the fixed soundness and trust contracts.
 - `scripts/maintenance/generate_fks2_family.py`: authenticate the pinned PNT+
   commit and regenerate the split data/proof modules; the inventory verifier
   independently compares every tuple and per-shard digest.
+- `HexIntervalMathlib/Experiment/PntPrimeLogSmall.lean`: the exact bounded
+  `(n, m)` source table and two shared ordinary-kernel logarithm leaves for the
+  sixty small-prime tactic sites.
+- `conformance/HexIntervalMathlib/PntPrimeLogSmallConformance.lean`: source
+  coordinate guards, both bounded theorem shapes, false-cut rejection, and
+  guarded axiom reports.
 
 Unlike a correspondence-only companion, `hex-interval-mathlib` contains an
 executable reifier, rule registry, and tactic. Its own conformance target tests

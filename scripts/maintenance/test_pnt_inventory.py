@@ -135,6 +135,50 @@ class InventoryTests(unittest.TestCase):
         inventory.write_inventory(path, meta, records)
         return path
 
+    def test_small_prime_snippets_match_both_local_tables(self) -> None:
+        rows = [(n, n * 10 + 1) for n in range(2, 32)]
+        records = []
+        for path, (helper, declaration) in inventory.SMALL_PRIME_FAMILIES.items():
+            for line, (n, cut) in enumerate(rows, 1):
+                records.append({
+                    "kind": "tactic-occurrence",
+                    "tactic": "interval_auto",
+                    "actual": True,
+                    "path": path,
+                    "line": line,
+                    "declaration": declaration,
+                    "snippet": (
+                        f"· exact {helper} {n} {cut} "
+                        f"count_prime_{cut}_le_{n - 1} (by interval_auto)"
+                    ),
+                })
+        provider = (
+            "def sourceCut : Nat → Nat\n"
+            + "".join(f"  | {n} => {cut}\n" for n, cut in rows)
+            + "  | _ => 0\n\n"
+            + "def sourceRows : Array (Nat × Nat) := #["
+            + ", ".join(f"({n}, {cut})" for n, cut in rows)
+            + "]\n"
+        )
+        inventory.require_small_prime_log_match(records, provider)
+
+        wrong = copy.deepcopy(records)
+        for index in (0, 30):
+            wrong[index]["snippet"] = wrong[index]["snippet"].replace(
+                " 21 count_prime_21", " 22 count_prime_22",
+            )
+        with self.assertRaisesRegex(inventory.InventoryError, "sourceRows differs"):
+            inventory.require_small_prime_log_match(wrong, provider)
+
+        missing = records[:-1]
+        with self.assertRaisesRegex(inventory.InventoryError, "must contain 30"):
+            inventory.require_small_prime_log_match(missing, provider)
+
+        duplicate = copy.deepcopy(records)
+        duplicate[29]["snippet"] = duplicate[28]["snippet"]
+        with self.assertRaisesRegex(inventory.InventoryError, "duplicate"):
+            inventory.require_small_prime_log_match(duplicate, provider)
+
     def test_committed_inventory_is_valid_but_not_yet_classified(self) -> None:
         inventory.check_inventory(self.fixture, require_classified=False)
         with self.assertRaisesRegex(inventory.InventoryError, "pending decisions"):
