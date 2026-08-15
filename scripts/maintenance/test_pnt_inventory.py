@@ -233,6 +233,52 @@ class InventoryTests(unittest.TestCase):
         with self.assertRaisesRegex(inventory.InventoryError, "duplicate"):
             inventory.require_dusart_exp_match(duplicate, provider)
 
+    def test_fks2_mu_sites_match_local_table(self) -> None:
+        records = [
+            {
+                "kind": "tactic-occurrence",
+                "actual": True,
+                "path": path,
+                "line": line,
+                "declaration": declaration,
+                "snippet": snippet,
+            }
+            for (path, line, declaration, *_), snippet in zip(
+                inventory.FKS2_MU_ROWS, inventory.FKS2_MU_SNIPPETS, strict=True
+            )
+        ]
+        provider = "def sourceRows := [\n" + "\n".join(
+            f"  ⟨⟨.{file}, {line}⟩, .{relation}, {input_num}, {input_den}, "
+            f"{target_num}, {target_den}⟩,"
+            for _, line, _, file, relation, input_num, input_den,
+                target_num, target_den in inventory.FKS2_MU_ROWS
+        ) + "\n]"
+        inventory.require_fks2_mu_match(records, provider)
+
+        wrong_provider = provider.replace("10138790, 10000000", "10138789, 10000000", 1)
+        with self.assertRaisesRegex(inventory.InventoryError, "sourceRows differ"):
+            inventory.require_fks2_mu_match(records, wrong_provider)
+
+        wrong_sites = copy.deepcopy(records)
+        wrong_sites[2]["line"] = 25
+        with self.assertRaisesRegex(inventory.InventoryError, "sites differ"):
+            inventory.require_fks2_mu_match(wrong_sites, provider)
+
+        wrong_snippet = copy.deepcopy(records)
+        wrong_snippet[0]["snippet"] = wrong_snippet[0]["snippet"].replace(
+            "141.4213562", "141.4213563",
+        )
+        with self.assertRaisesRegex(inventory.InventoryError, "snippets differ"):
+            inventory.require_fks2_mu_match(wrong_snippet, provider)
+
+        with self.assertRaisesRegex(inventory.InventoryError, "sites differ"):
+            inventory.require_fks2_mu_match(records[:-1], provider)
+
+        duplicate = copy.deepcopy(records)
+        duplicate[-1] = copy.deepcopy(duplicate[-2])
+        with self.assertRaisesRegex(inventory.InventoryError, "sites differ"):
+            inventory.require_fks2_mu_match(duplicate, provider)
+
     def test_committed_inventory_is_valid_but_not_yet_classified(self) -> None:
         inventory.check_inventory(self.fixture, require_classified=False)
         with self.assertRaisesRegex(inventory.InventoryError, "pending decisions"):

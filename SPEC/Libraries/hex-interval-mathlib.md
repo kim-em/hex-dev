@@ -1604,6 +1604,44 @@ the proposed inequality false by producing the incompatible strict upper
 bound. This completes the numerical leaves, not the surrounding Dusart
 number-theory development and not the global `IntervalAuto` interface.
 
+The bounded FKS2 mu-asymptotic leaf family covers all four executable
+numerical calls in the two pinned declarations
+
+```lean
+theorem FKS2.mu_asymp_num_le {A : ℝ} (hA : 1 ≤ A) :
+    μ_asymp A 1.5 0.8476 1 2 (Real.exp 20000) ≤ 5.01516e-5
+
+theorem FKS2.mu_asymp_num_le_cor14 :
+    μ_asymp 121.0961 1.5 2 5.5666305 2 (Real.exp 20000) ≤ 9e-5
+```
+
+Each proof contains the same two leaves: the lower enclosure
+`141.4213562 ≤ sqrt 20000` and, after the source's exact rewrite of
+`0.117²`, the upper enclosure `exp (13689/1000000) ≤ 1.0138790`.
+`PntFks2Mu.sourceRows` records both file-and-line pairs, so the repeated facts
+remain source-correlated rather than being accepted as an unordered bag. The
+square-root provider checks the lower cut's square by exact rational
+arithmetic. The exponential provider reuses the package-owned FKS2 degree-11
+Taylor sum and explicit degree-12 remainder on `[0,1]`. One ordinary-kernel
+theorem turns either accepted relation into the exact real inequality.
+
+The offline inventory validator compares all four pinned declaration sites
+with the literal provider rows. The two square-root snippets contain and
+byte-pin their numerical goals. The two exponential invocation snippets are
+only the bare text `interval_decide`; their files, lines, declarations, and
+whole-source digest are pinned, and the validator correlates them with the
+explicitly audited rows produced by each immediately preceding exact
+`0.117² = 13689/1000000` rewrite. It does not claim to parse those numerals
+from the bare snippets. The four-row checker has no precision search: each
+authenticated row performs one exact rational square comparison or one fixed
+degree-11 Taylor plus degree-12 remainder comparison. A mutation raising the square-root lower cut
+to `142` fails at the exact `FKS2.lean:4274` coordinate without a precision
+retry, and an ordinary theorem proves that proposed inequality false. The
+localized PNT+ rewrite substitutes only these four leaves; both enclosing
+theorem statements, their log-table premises, and all number-theoretic
+arguments are unchanged. The separate `FKS2.theorem_6_2` nested-log leaf and
+the global `IntervalAuto` interface remain pending.
+
 The next classified acceptance probe covers the numerical leaf in
 `LogTables.exp_neg_lt_1e_neg_100` while preserving the source theorem's useful
 monotone shape. At the pinned commit, the enclosing declaration is exactly
@@ -3285,6 +3323,13 @@ the fixed soundness and trust contracts.
 - `conformance/HexIntervalMathlib/PntDusartExpConformance.lean`: all eight
   source-shaped leaves (seven table rows plus one stronger replacement), exact
   coordinate failure, false-bound rejection, and guarded axiom reports.
+- `HexInterval/Experiment/PntFks2Mu.lean`: the exact four-coordinate repeated
+  square-root/exponential table and rational checker.
+- `HexIntervalMathlib/Experiment/PntFks2Mu.lean`: exact-square semantics and
+  reuse of the FKS2 Taylor remainder kernel.
+- `conformance/HexIntervalMathlib/PntFks2MuConformance.lean`: all four
+  source-shaped leaf adapters, coordinate failure, false-cut rejection, and
+  guarded axiom reports.
 
 Unlike a correspondence-only companion, `hex-interval-mathlib` contains an
 executable reifier, rule registry, and tactic. Its own conformance target tests

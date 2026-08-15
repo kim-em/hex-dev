@@ -199,6 +199,30 @@ DUSART_PROVIDER_ROW_RE = re.compile(
     r"⟨(?P<index>\d+),\s*(?P<num>\d+),\s*(?P<den>\d+),\s*"
     r"(?P<target>\d+),\s*\.(?P<relation>upperLe|upperLt|lowerLe),\s*64,\s*12⟩"
 )
+FKS2_MU_PROVIDER = REPO_ROOT / "HexInterval/Experiment/PntFks2Mu.lean"
+FKS2_MU_ROWS = (
+    ("PrimeNumberTheoremAnd/IEANTN/FKS2.lean", 4274, "mu_asymp_num_le",
+     "fks2", "sqrtLower", 20000, 1, 1414213562, 10000000),
+    ("PrimeNumberTheoremAnd/IEANTN/FKS2.lean", 4282, "mu_asymp_num_le",
+     "fks2", "expUpper", 13689, 1000000, 10138790, 10000000),
+    ("PrimeNumberTheoremAnd/IEANTN/FKS2Cor23Cor14Tail.lean", 24,
+     "mu_asymp_num_le_cor14", "cor14", "sqrtLower", 20000, 1,
+     1414213562, 10000000),
+    ("PrimeNumberTheoremAnd/IEANTN/FKS2Cor23Cor14Tail.lean", 32,
+     "mu_asymp_num_le_cor14", "cor14", "expUpper", 13689, 1000000,
+    10138790, 10000000),
+)
+FKS2_MU_SNIPPETS = (
+    "have hs_lo : (141.4213562 : ℝ) ≤ Real.sqrt 20000 := by interval_decide",
+    "interval_decide",
+    "have hs_lo : (141.4213562 : ℝ) ≤ Real.sqrt 20000 := by interval_decide",
+    "interval_decide",
+)
+FKS2_MU_PROVIDER_ROW_RE = re.compile(
+    r"⟨⟨\.(?P<file>fks2|cor14),\s*(?P<line>\d+)⟩,\s*"
+    r"\.(?P<relation>sqrtLower|expUpper),\s*(?P<input_num>\d+),\s*"
+    r"(?P<input_den>\d+),\s*(?P<target_num>\d+),\s*(?P<target_den>\d+)⟩"
+)
 
 
 class InventoryError(RuntimeError):
@@ -632,6 +656,45 @@ def _parse_dusart_snippet(snippet: str) -> tuple[int, int, int, str]:
         return (int(match.group("num")), 1,
                 _scientific_value(match.group("target")), "lowerLe")
     raise InventoryError(f"unrecognized Dusart exponential snippet: {snippet!r}")
+
+
+def require_fks2_mu_match(
+    records: list[dict[str, Any]], provider_text: str | None = None,
+) -> None:
+    """Tie both mu-asymptotic numerical pairs to the local certificate rows."""
+    expected_sites = tuple(row[:3] for row in FKS2_MU_ROWS)
+    source_records = [
+        row for row in records
+        if row.get("kind") == "tactic-occurrence" and row.get("actual")
+        and (row.get("path"), row.get("line"), row.get("declaration"))
+        in expected_sites
+    ]
+    observed_sites = tuple(
+        (row.get("path"), row.get("line"), row.get("declaration"))
+        for row in source_records
+    )
+    if observed_sites != expected_sites:
+        raise InventoryError(
+            f"FKS2 mu sites differ: {observed_sites} != {expected_sites}"
+        )
+    observed_snippets = tuple(row.get("snippet") for row in source_records)
+    if observed_snippets != FKS2_MU_SNIPPETS:
+        raise InventoryError(
+            f"FKS2 mu snippets differ: {observed_snippets} != {FKS2_MU_SNIPPETS}"
+        )
+    if provider_text is None:
+        provider_text = FKS2_MU_PROVIDER.read_text(encoding="utf-8")
+    provider_rows = tuple(
+        (match.group("file"), int(match.group("line")), match.group("relation"),
+         int(match.group("input_num")), int(match.group("input_den")),
+         int(match.group("target_num")), int(match.group("target_den")))
+        for match in FKS2_MU_PROVIDER_ROW_RE.finditer(provider_text)
+    )
+    expected_rows = tuple((row[3], row[1], *row[4:]) for row in FKS2_MU_ROWS)
+    if provider_rows != expected_rows:
+        raise InventoryError(
+            f"local FKS2 mu sourceRows differ: {provider_rows} != {expected_rows}"
+        )
 
 
 def source_digest(sources: Iterable[Source]) -> str:
@@ -1346,6 +1409,7 @@ def validate_inventory(
     require_workload_partitions(records)
     require_small_prime_log_match(records)
     require_dusart_exp_match(records)
+    require_fks2_mu_match(records)
     if meta.get("counts") != counts:
         raise InventoryError(f"inventory counts disagree: {meta.get('counts')} != {counts}")
     for name, expected in EXPECTED.items():
