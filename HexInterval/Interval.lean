@@ -14,8 +14,8 @@ public section
 # Public exact interval operations
 
 This module begins the supported arithmetic surface with exact intersection,
-hull, negation, addition, subtraction, minimum, and maximum. The operations retain a
-resource-aware result: public
+hull, negation, addition, subtraction, minimum, maximum, and absolute value.
+The operations retain a resource-aware result: public
 interval values do not remember the construction budget under which their
 endpoints were admitted, so a later comparison must preflight its own alignment
 work.
@@ -190,6 +190,43 @@ their strictness. -/
         | .finite value strict => Upper.finite (-value) strict
       Raw.bounds resultLower resultUpper
 
+/-- Exact raw image under absolute value. The result retains a zero endpoint
+exactly when the source retains zero. If the source crosses zero, its upper
+cut is selected from the larger endpoint magnitude; tied magnitudes are strict
+only when both source endpoints are strict.
+
+The comparison between opposite endpoint magnitudes is unchecked here. The
+public wrapper preflights it before calling this decoder-level helper. -/
+@[expose] def absUnchecked : Raw → Raw
+  | .empty => .empty
+  | .bounds .unbounded .unbounded =>
+      .bounds (.finite 0 false) .unbounded
+  | .bounds .unbounded (.finite upper upperStrict) =>
+      if upper ≤ 0 then
+        .bounds (.finite (-upper) upperStrict) .unbounded
+      else
+        .bounds (.finite 0 false) .unbounded
+  | .bounds (.finite lower lowerStrict) .unbounded =>
+      if 0 ≤ lower then
+        .bounds (.finite lower lowerStrict) .unbounded
+      else
+        .bounds (.finite 0 false) .unbounded
+  | .bounds (.finite lower lowerStrict) (.finite upper upperStrict) =>
+      if 0 ≤ lower then
+        .bounds (.finite lower lowerStrict) (.finite upper upperStrict)
+      else if upper ≤ 0 then
+        .bounds (.finite (-upper) upperStrict) (.finite (-lower) lowerStrict)
+      else
+        let leftMagnitude := -lower
+        let resultUpper :=
+          if leftMagnitude < upper then
+            Upper.finite upper upperStrict
+          else if leftMagnitude = upper then
+            Upper.finite upper (lowerStrict && upperStrict)
+          else
+            Upper.finite leftMagnitude lowerStrict
+        .bounds (.finite 0 false) resultUpper
+
 /-- Direct raw subtraction agrees with addition after raw negation. The
 checked public operation uses the direct form so it can preflight only the two
 crossed endpoint pairs, without normalizing an intermediate negated interval. -/
@@ -276,6 +313,17 @@ private def subCost? (limit : EndpointLimit) : Raw → Raw → Option CompareCos
       match lowerUpperCost? limit leftLower rightUpper with
       | some cost => some cost
       | none => upperLowerCost? limit leftUpper rightLower
+
+/-- Refused opposite-magnitude comparison for an interval that crosses zero.
+Negation preserves endpoint size and exponent, so the cost is computed from
+the retained lower and upper values before allocating the negated lower used
+by the selector. Sign-separated and unbounded cases need no endpoint selection
+comparison. -/
+private def absCost? (limit : EndpointLimit) : Raw → Option CompareCost
+  | .bounds (.finite lower _) (.finite upper _) =>
+      if 0 ≤ lower || upper ≤ 0 then none
+      else compareCost? limit lower upper
+  | _ => none
 
 /-- Exact set intersection with preflighted dyadic comparisons.  Refusal is
 distinct from the canonical empty result. -/
@@ -404,5 +452,22 @@ theorem view_negWithin_ready {limit : EndpointLimit} {input result : Hex.Interva
     (h : negWithin limit input = .ready result) :
     result.view = (Raw.negUnchecked input.view).normalizeUnchecked :=
   view_ofRawWithin_ready h
+
+/-- Exact interval absolute value with preflighted opposite-magnitude
+selection. Empty is preserved. Resource refusal remains distinct from an
+empty image. -/
+def absWithin (limit : EndpointLimit) (input : Hex.Interval) : BuildResult :=
+  match absCost? limit input.view with
+  | some cost => .resourceLimit cost
+  | none => ofRawWithin limit (Raw.absUnchecked input.view)
+
+/-- A successful absolute value exposes exactly the normalized selected cuts. -/
+theorem view_absWithin_ready {limit : EndpointLimit} {input result : Hex.Interval}
+    (h : absWithin limit input = .ready result) :
+    result.view = (Raw.absUnchecked input.view).normalizeUnchecked := by
+  unfold absWithin at h
+  split at h
+  · contradiction
+  · exact view_ofRawWithin_ready h
 
 end Hex.Interval

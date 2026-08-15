@@ -153,6 +153,15 @@ private def atMostOne : Hex.Interval :=
 private def atLeastOne : Hex.Interval :=
   ready (.bounds (.finite (d 1) false) .unbounded)
 private def closed23 : Hex.Interval := ready (finite 2 false 3 false)
+private def closedNeg21 : Hex.Interval := ready (finite (-2) false (-1) false)
+private def negOneToOpenZero : Hex.Interval := ready (finite (-1) false 0 true)
+private def closedNeg21Cross : Hex.Interval := ready (finite (-2) false 1 false)
+private def rightAbsClosed : Hex.Interval := ready (finite (-1) false 2 false)
+private def rightAbsOpen : Hex.Interval := ready (finite (-1) false 2 true)
+private def leftAbsOpen : Hex.Interval := ready (finite (-2) true 1 false)
+private def tiedAbsMixed : Hex.Interval := ready (finite (-1) false 1 true)
+private def tiedAbsMixedReverse : Hex.Interval := ready (finite (-1) true 1 false)
+private def tiedAbsOpen : Hex.Interval := ready (finite (-1) true 1 true)
 private def bridgeLeft : Hex.Interval := ready (finite 1 false 4 false)
 private def bridgeRight : Hex.Interval := ready (finite 3 false 12 false)
 private def openClosed01 : Hex.Interval := ready (finite 0 true 1 false)
@@ -175,6 +184,15 @@ private def powerBand : Hex.Interval :=
   match Hex.Interval.betweenWithin
       { maxEndpointHeight := 256, maxAlignmentShift := 128 }
       powerPlusOne false powerPlusTwo false with
+  | .ready interval => interval
+  | .resourceLimit _ => Hex.Interval.empty
+
+private def absFar : Dyadic := .ofOdd 1 200 (by decide)
+
+private def absCrossFar : Hex.Interval :=
+  match Hex.Interval.betweenWithin
+      { maxEndpointHeight := 256, maxAlignmentShift := 200 }
+      (-absFar) false (d 1) false with
   | .ready interval => interval
   | .resourceLimit _ => Hex.Interval.empty
 
@@ -214,6 +232,12 @@ private def farLower : Hex.Interval :=
 private def farUpper : Hex.Interval :=
   match Hex.Interval.belowWithin
       { maxEndpointHeight := 1000000100, maxAlignmentShift := 64 } far false with
+  | .ready interval => interval
+  | .resourceLimit _ => Hex.Interval.empty
+
+private def farNegative : Hex.Interval :=
+  match Hex.Interval.belowWithin
+      { maxEndpointHeight := 1000000100, maxAlignmentShift := 64 } (-far) false with
   | .ready interval => interval
   | .resourceLimit _ => Hex.Interval.empty
 
@@ -257,6 +281,110 @@ private def mediumToOne : Hex.Interval :=
   match Hex.Interval.hullWithin smallLimit openLower12 openLower12 with
   | .ready interval => interval == openLower12
   | .resourceLimit _ => false
+
+-- Absolute value preserves sign-separated cuts, reverses negative cuts, and
+-- closes zero exactly when the source contains it.
+#guard
+  match Hex.Interval.absWithin smallLimit Hex.Interval.empty with
+  | .ready interval => interval == Hex.Interval.empty
+  | .resourceLimit _ => false
+
+#guard
+  match Hex.Interval.absWithin smallLimit openClosed01 with
+  | .ready interval => interval == openClosed01
+  | .resourceLimit _ => false
+
+#guard
+  match Hex.Interval.absWithin smallLimit closedNeg21 with
+  | .ready interval => interval.view == finite 1 false 2 false
+  | .resourceLimit _ => false
+
+#guard
+  match Hex.Interval.absWithin smallLimit negOneToOpenZero with
+  | .ready interval => interval.view == finite 0 true 1 false
+  | .resourceLimit _ => false
+
+#guard
+  match Hex.Interval.absWithin smallLimit closedNeg21Cross with
+  | .ready interval => interval.view == finite 0 false 2 false
+  | .resourceLimit _ => false
+
+-- Both unequal selector directions and the selected endpoint's strictness are
+-- observable. The larger right magnitude contributes its own closure flag;
+-- the larger left magnitude inherits the source lower cut's strictness after
+-- negation.
+#guard
+  match Hex.Interval.absWithin smallLimit rightAbsClosed with
+  | .ready interval => interval.view == finite 0 false 2 false
+  | .resourceLimit _ => false
+
+#guard
+  match Hex.Interval.absWithin smallLimit rightAbsOpen with
+  | .ready interval => interval.view == finite 0 false 2 true
+  | .resourceLimit _ => false
+
+#guard
+  match Hex.Interval.absWithin smallLimit leftAbsOpen with
+  | .ready interval => interval.view == finite 0 false 2 true
+  | .resourceLimit _ => false
+
+-- At tied magnitudes the image endpoint is attained when either source end
+-- is attained; it remains strict only when both are strict.
+#guard
+  match Hex.Interval.absWithin smallLimit tiedAbsMixed with
+  | .ready interval => interval.view == finite 0 false 1 false
+  | .resourceLimit _ => false
+
+#guard
+  match Hex.Interval.absWithin smallLimit tiedAbsMixedReverse with
+  | .ready interval => interval.view == finite 0 false 1 false
+  | .resourceLimit _ => false
+
+#guard
+  match Hex.Interval.absWithin smallLimit tiedAbsOpen with
+  | .ready interval => interval.view == finite 0 false 1 true
+  | .resourceLimit _ => false
+
+#guard
+  match Hex.Interval.absWithin smallLimit Hex.Interval.whole with
+  | .ready interval =>
+      interval.view == .bounds (.finite (d 0) false) .unbounded
+  | .resourceLimit _ => false
+
+#guard
+  match Hex.Interval.absWithin smallLimit atLeastOne with
+  | .ready interval => interval == atLeastOne
+  | .resourceLimit _ => false
+
+#guard
+  match Hex.Interval.absWithin smallLimit atMostOne with
+  | .ready interval =>
+      interval.view == .bounds (.finite (d 0) false) .unbounded
+  | .resourceLimit _ => false
+
+-- Opposite endpoint magnitudes are preflighted before the unchecked selector
+-- can align their mantissas.
+#guard
+  match Hex.Interval.absWithin
+      { maxEndpointHeight := 256, maxAlignmentShift := 64 } absCrossFar with
+  | .ready _ => false
+  | .resourceLimit cost => cost.alignmentShift == 200
+
+-- A sign-separated case needs no selector comparison, but the selected
+-- endpoint is still re-admitted under the caller's current retained-height
+-- budget.
+#guard
+  match Hex.Interval.absWithin smallLimit farNegative with
+  | .ready _ => false
+  | .resourceLimit cost => cost.lower.exponentMagnitude == 1000000000
+
+-- Returning an otherwise unchanged positive interval still rechecks its final
+-- canonical comparison under the current caller budget.
+#guard
+  match Hex.Interval.absWithin
+      { maxEndpointHeight := 256, maxAlignmentShift := 64 } mediumToOne with
+  | .ready _ => false
+  | .resourceLimit cost => cost.alignmentShift == 200
 
 #guard
   match Hex.Interval.hullWithin smallLimit openAtOne openAtOne with

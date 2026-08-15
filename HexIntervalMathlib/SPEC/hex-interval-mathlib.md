@@ -12,7 +12,9 @@ real value of a dyadic endpoint and membership for every public interval cut:
 strict or closed finite ends, independent unbounded ends, and canonical empty.
 `HexIntervalMathlib.Addition` and `HexIntervalMathlib.Subtraction` add the
 public arithmetic image theorems, while `HexIntervalMathlib.MinMax` supplies
-selected-cut and real-image enclosure theorems for minimum and maximum.
+selected-cut and real-image enclosure theorems for minimum and maximum, and
+`HexIntervalMathlib.Absolute` supplies the corresponding absolute-value
+theorems.
 
 For every successful resource-checked public operation it proves:
 
@@ -39,6 +41,10 @@ For every successful resource-checked public operation it proves:
   computed selected cuts;
 - `min_mem_minWithin` and `max_mem_maxWithin`: pointwise real minimum and
   maximum of two input members belong to every successful result.
+- `contains_absWithin`: exact membership in the normalized selected absolute
+  value cuts;
+- `abs_mem_absWithin`: the absolute value of every input member belongs to
+  every successful result.
 
 These theorems depend on the exact successful `BuildResult` equation. A
 resource refusal has no set interpretation and is never treated as an empty
@@ -64,7 +70,9 @@ membership, exact hull closure and both input inclusions, negation transport,
 addition and subtraction cut exactness and image transport, and the exact
 ordinary-kernel axiom surface. `HexIntervalMathlib.MinMaxConformance` separately
 pins exact selected cuts, both image enclosures, and their axiom surfaces; it
-does not assert a set-image converse.
+does not assert a set-image converse. The interval conformance module also pins
+absolute-value cut exactness, image transport, and its ordinary-kernel axiom
+surface.
 The Mathlib-free companion tests separately pin representative strict, closed,
 unbounded, and empty shapes together with pre-allocation resource refusal. The
 semantic theorem itself is exhaustive over the complete cut language.

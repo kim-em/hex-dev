@@ -182,7 +182,7 @@ value's proof field.
 The initial supported slice exposes `view`, `empty`, `whole`, and endpoint-cost
 preflighted raw, singleton, one-sided, and finite constructors. The first
 supported operations are resource-checked intersection, hull, negation,
-addition, subtraction, minimum, and maximum.
+addition, subtraction, minimum, maximum, and absolute value.
 Their Mathlib companion proves exact computed-cut semantics and image theorems;
 the remaining arithmetic is promoted separately rather than being declared
 public merely because narrower experiment implementations exist. All public
@@ -205,8 +205,12 @@ and left-upper-minus-right-lower cuts, and maps two input members to their
 difference. Successful `minWithin` and `maxWithin` expose their exact selected
 cut predicates and enclose the pointwise real minimum and maximum of any two
 input members. They do not claim the converse characterization of every result
-member as a pointwise image. Neither addition nor subtraction currently claims the separate
-representation-independent tightness converse for the real Minkowski image.
+member as a pointwise image. Successful `absWithin` exposes its exact normalized
+selected-cut predicate and maps every input member `x` to `|x|`; it likewise
+does not claim a converse characterization of every result member as an
+absolute-value image. Neither addition nor subtraction currently claims the
+separate representation-independent tightness converse for the real Minkowski
+image.
 Separately, the experiment form of the intersection theorem is installed as the
 generic `FactDomainSchema.proveMeet` boundary, and the transparent proof
 frontend uses it to close a weaker requested interval from a stronger
@@ -427,6 +431,7 @@ def addWithin       : EndpointLimit → Interval → Interval → BuildResult
 def subWithin       : EndpointLimit → Interval → Interval → BuildResult
 def minWithin       : EndpointLimit → Interval → Interval → BuildResult
 def maxWithin       : EndpointLimit → Interval → Interval → BuildResult
+def absWithin       : EndpointLimit → Interval → BuildResult
 ```
 
 These names retain the budget because a public interval does not store the
@@ -464,6 +469,14 @@ the intersection lower cut and hull upper cut. The selected candidate then
 crosses `ofRawWithin`, whose independent endpoint/final-comparison check may
 still refuse even when both selector comparisons fit.
 
+`absWithin` preserves empty and sign-separated endpoint strictness. An input
+crossing zero has a closed zero lower cut and chooses the larger endpoint
+magnitude for its upper cut; equal magnitudes are strict only when both source
+endpoints are strict. The opposite-magnitude comparison is preflighted before
+the selector aligns finite dyadics, and the selected raw cuts then cross
+`ofRawWithin`. Thus an interval admitted under a larger earlier budget cannot
+force an unchecked alignment or silently turn refusal into empty.
+
 The supported tree also contains the resource prerequisite for multiplicative
 arithmetic, but not yet interval multiplication itself. `Arithmetic.Growth`
 records admitted source endpoint costs and a conservative predicted result;
@@ -480,14 +493,14 @@ sixteen-bit product numerator is refused before multiplication.
 
 The public raw intersection and hull cut selectors, `intersectUnchecked`,
 `hullUnchecked`, `negUnchecked`, `addUnchecked`, `subUnchecked`, `minUnchecked`,
-and `maxUnchecked` are related
-to the checked operations by successful-result and semantic theorems. Like
+`maxUnchecked`, and `absUnchecked` are related to the checked operations by
+successful-result and semantic theorems. Like
 `Raw.normalizeUnchecked`, they
 are decoder-level combinators: untrusted callers use the checked `Interval`
 operations above.
 
 The remaining target surface includes the interval operation for multiplication,
-precision-indexed reciprocal and division, powers, absolute value,
+precision-indexed reciprocal and division, powers,
 splitting, and regularization. Their public signatures are fixed only after an
 allocation audit; no total API is promised for an operation that may align,
 compare, or enlarge arbitrary-precision endpoints.
@@ -3993,8 +4006,8 @@ their declared cost inside a scheduler bound.
 - `HexInterval/Canonical.lean`: sealed canonical values, views, and
   resource-safe smart constructors.
 - `HexInterval/Interval.lean`: supported resource-safe intersection, hull,
-  negation, addition, subtraction, minimum, and maximum, followed by future arithmetic, splitting, and regularization
-  operations.
+  negation, addition, subtraction, minimum, maximum, and absolute value,
+  followed by future arithmetic, splitting, and regularization operations.
 - `HexIntervalMathlib/Interval.lean`: real-set semantics for the supported
   public construction, intersection, hull, and negation operations.
 - `HexIntervalMathlib/Addition.lean`: exact summed-cut semantics and the
@@ -4003,6 +4016,8 @@ their declared cost inside a scheduler bound.
   and the successful subtraction image theorem.
 - `HexIntervalMathlib/MinMax.lean`: exact selected-cut semantics and one-way
   real-image enclosure theorems for minimum and maximum.
+- `HexIntervalMathlib/Absolute.lean`: exact selected-cut semantics and the
+  successful absolute-value image theorem.
 - `HexInterval/Program.lean`: node identifiers, SSA program, dependencies.
 - `HexInterval/Fact.lean`: facts, versions, provenance, contradiction checks.
 - `HexInterval/Action.lean`: requests, outcomes, suggestions, observations.

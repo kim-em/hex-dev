@@ -10,7 +10,7 @@ import HexIntervalMathlib
 Conformance checks for the supported public interval semantics.  Computational
 shape/resource cases live in `HexInterval.Conformance`; this companion pins the
 ordinary-kernel meaning of every successful intersection, hull, addition,
-subtraction, and negation.
+subtraction, negation, and absolute value.
 -/
 
 namespace Hex.IntervalMathlib.Conformance
@@ -94,6 +94,20 @@ theorem subImage {limit : Hex.Interval.EndpointLimit}
     result.Contains (x - y) :=
   Hex.Interval.sub_mem_subWithin checked leftMember rightMember
 
+/-- A successful absolute value has exactly its selected raw cuts. -/
+theorem absExact {limit : Hex.Interval.EndpointLimit}
+    {input result : Hex.Interval} {x : ℝ}
+    (checked : Hex.Interval.absWithin limit input = .ready result) :
+    result.Contains x ↔ input.view.absUnchecked.Contains x :=
+  Hex.Interval.contains_absWithin checked x
+
+/-- Source membership is consumed by the absolute-value image theorem. -/
+theorem absImage {limit : Hex.Interval.EndpointLimit}
+    {input result : Hex.Interval} {x : ℝ}
+    (checked : Hex.Interval.absWithin limit input = .ready result)
+    (member : input.Contains x) : result.Contains |x| :=
+  Hex.Interval.abs_mem_absWithin checked member
+
 /-- info: 'Hex.IntervalMathlib.Conformance.intersectMember' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms intersectMember
@@ -133,5 +147,13 @@ theorem subImage {limit : Hex.Interval.EndpointLimit}
 /-- info: 'Hex.IntervalMathlib.Conformance.subImage' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms subImage
+
+/-- info: 'Hex.IntervalMathlib.Conformance.absExact' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms absExact
+
+/-- info: 'Hex.IntervalMathlib.Conformance.absImage' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms absImage
 
 end Hex.IntervalMathlib.Conformance
