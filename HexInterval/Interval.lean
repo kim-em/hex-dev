@@ -388,10 +388,10 @@ resource admission; untrusted callers use `divWithin`. -/
       match numerator.singletonValue?, denominator.singletonValue? with
       | some .zero, _ | _, some .zero =>
           .bounds (.finite 0 false) (.finite 0 false)
-      | some numerator, some denominator =>
+      | some numeratorValue, some denominatorValue =>
           .bounds
-            (.finite (numerator.divAtPrec denominator precision) false)
-            (.finite (-(-numerator).divAtPrec denominator precision) false)
+            (.finite (numeratorValue.divAtPrec denominatorValue precision) false)
+            (.finite (-(-numeratorValue).divAtPrec denominatorValue precision) false)
       | _, _ => .bounds .unbounded .unbounded
 
 end Raw
@@ -607,8 +607,26 @@ private def admitInv (limits : Arithmetic.PrecisionLimits)
         admitInvLower limits precision upper
         admitInvUpper limits precision lower
 
-/-- Preflight both direct Core quotient calls before either executes. Empty,
-total-zero cases, and the whole-line nonsingleton fallback perform no quotient
+/-- Admit every finite cut carried by a nonempty raw source. This performs no
+comparison or arithmetic beyond the public endpoint resource check. -/
+private def admitRawEndpoints (limits : Arithmetic.PrecisionLimits) : Raw →
+    Except Arithmetic.Cost Unit
+  | .empty => pure ()
+  | .bounds lower upper => do
+      match lower with
+      | .unbounded => pure ()
+      | .finite value _ => do
+          let _ ← Arithmetic.admitEndpoint limits value
+          pure ()
+      match upper with
+      | .unbounded => pure ()
+      | .finite value _ => do
+          let _ ← Arithmetic.admitEndpoint limits value
+          pure ()
+
+/-- Admit every finite source cut, then preflight both direct Core quotient
+calls before either executes. Empty remains absorbing before source admission;
+total-zero cases and the whole-line nonsingleton fallback perform no quotient
 work. No caller-provided plan or intermediate reciprocal is accepted. -/
 private def admitDiv (limits : Arithmetic.PrecisionLimits)
     (precision : Precision) (numerator denominator : Raw) :
@@ -616,11 +634,15 @@ private def admitDiv (limits : Arithmetic.PrecisionLimits)
   match numerator, denominator with
   | .empty, _ | _, .empty => pure ()
   | numerator, denominator =>
+      admitRawEndpoints limits numerator
+      admitRawEndpoints limits denominator
       match numerator.singletonValue?, denominator.singletonValue? with
       | some .zero, _ | _, some .zero => pure ()
-      | some numerator, some denominator =>
-          let _ ← Arithmetic.preflightDiv limits numerator denominator precision
-          let _ ← Arithmetic.preflightDiv limits (-numerator) denominator precision
+      | some numeratorValue, some denominatorValue =>
+          let _ ← Arithmetic.preflightDiv
+            limits numeratorValue denominatorValue precision
+          let _ ← Arithmetic.preflightDiv
+            limits (-numeratorValue) denominatorValue precision
       | _, _ => pure ()
 
 /-- Exact set intersection with preflighted dyadic comparisons.  Refusal is

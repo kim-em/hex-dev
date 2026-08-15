@@ -678,6 +678,11 @@ no intermediate reciprocal. Every other nonempty pair returns the whole
 interval without precision work. This explicitly includes nonsingleton,
 unbounded, zero-touching, and sign-crossing shapes.
 
+Every finite cut in both nonempty sources is admitted before that
+classification. After the selected Core cuts are computed, they still cross
+`ofRawWithin`; its independent final endpoint-retention and comparison checks
+may refuse the result.
+
 `view_divWithin_ready` exactly characterizes those computed cuts, and the
 Mathlib companion consumes both source memberships to prove a one-way theorem
 for Lean's total real division. No converse image theorem, rounded-cut

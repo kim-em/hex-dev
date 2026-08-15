@@ -23,7 +23,7 @@ dyadic cut. The arithmetic resource layer preflights product growth,
 direct-power retained growth, exponent work, and rational-backed
 precision/quotient work independently of exact comparison work. The reciprocal
 operation is a precision-indexed connected outward enclosure. Division exposes
-direct outward cuts for two finite singletons, exact empty and total-zero
+direct outward cuts for two nonzero finite singletons, exact empty and total-zero
 cases, and a sound whole-line fallback for every other nonempty shape. Raw cuts
 remain visible as the explicit decoder and inspection boundary; D2 propagation
 and replay experiments still live outside this supported umbrella.
