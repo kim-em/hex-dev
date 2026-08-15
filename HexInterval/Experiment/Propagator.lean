@@ -6,6 +6,7 @@ Authors: Kim Morrison
 
 module
 
+public import HexInterval.Action
 public import HexInterval.Experiment.StructuralCursor
 
 @[expose] public section
@@ -27,163 +28,17 @@ semantically untrusted: intersection can preserve consistency and monotonicity,
 but only successful replay of their opaque proof payloads establishes
 soundness.
 
-This experimental module is separate from the supported `HexInterval` API.
-Selecting a
-retained expression proposal runs a separate atomic validator before extending
-the live program and appending its new concrete rule applications.
+The stable structural `Program`, `Fact`, and `Action` records live in the
+supported Mathlib-free library. This module remains experimental because it
+chooses concrete application storage, queues, resource counters, suggestion
+handling, package callbacks, and search transitions. Selecting a retained
+expression proposal runs a separate atomic validator before extending the live
+program and appending its new concrete rule applications.
 -/
 
 namespace Hex.Interval.Experiment.Propagator
 
-/-! # Typed expression program -/
-
-/-- Compact domain identifier.  The initial corpus uses only the real domain,
-but the scheduler does not assume that all nodes have the same type. -/
-structure DomainId where
-  index : Nat
-  deriving DecidableEq, Repr
-
-/-- Stable, versioned semantic operation name. -/
-structure OpKey where
-  name : String
-  version : Nat := 1
-  deriving DecidableEq, Repr
-
-/-- Compact index into a program's operation table. -/
-structure OpId where
-  index : Nat
-  deriving DecidableEq, Repr
-
-/-- Compact index into a program's node table. -/
-structure NodeId where
-  index : Nat
-  deriving DecidableEq, Repr
-
-/-- An operation signature known to the typed frontend, but not interpreted by
-the scheduler. -/
-structure Operation where
-  key : OpKey
-  inputs : List DomainId
-  output : DomainId
-  deriving DecidableEq, Repr
-
-/-- One instruction in a typed single-assignment expression DAG. -/
-structure Node where
-  domain : DomainId
-  op : OpId
-  args : List NodeId
-  deriving DecidableEq, Repr
-
-/-- Immutable base expression program. -/
-structure Program where
-  operations : Array Operation
-  nodes : Array Node
-  deriving DecidableEq, Repr
-
-namespace Program
-
-/-- Exact optional operation lookup. -/
-def operation? (program : Program) (operation : OpId) : Option Operation :=
-  program.operations[operation.index]?
-
-/-- Exact optional node lookup. -/
-def node? (program : Program) (node : NodeId) : Option Node :=
-  program.nodes[node.index]?
-
-def uniqueOpKeys : List Operation -> Bool
-  | [] => true
-  | operation :: operations =>
-      !(operations.any fun other => other.key == operation.key) &&
-        uniqueOpKeys operations
-
-def argsCheck (program : Program) (outputIndex : Nat) :
-    List NodeId -> List DomainId -> Bool
-  | [], [] => true
-  | argument :: arguments, domain :: domains =>
-      argument.index < outputIndex &&
-        (program.node? argument).any (fun node => node.domain == domain) &&
-        argsCheck program outputIndex arguments domains
-  | _, _ => false
-
-def nodeCheck (program : Program) (outputIndex : Nat) (node : Node) : Bool :=
-  match program.operation? node.op with
-  | none => false
-  | some operation =>
-      node.domain == operation.output &&
-        argsCheck program outputIndex node.args operation.inputs
-
-def nodesCheckFrom (program : Program) : Nat -> List Node -> Bool
-  | _, [] => true
-  | outputIndex, node :: nodes =>
-      nodeCheck program outputIndex node && nodesCheckFrom program (outputIndex + 1) nodes
-
-/-- Validate operation-key uniqueness, operation references, arities, domains,
-and SSA topology. -/
-def check (program : Program) : Bool :=
-  uniqueOpKeys program.operations.toList && nodesCheckFrom program 0 program.nodes.toList
-
-/-- Structural expression depth, with nullary nodes at depth zero. -/
-def nodeDepth? (depths : Array Nat) (arguments : List NodeId) : Option Nat := do
-  if arguments.isEmpty then
-    pure 0
-  else
-    let mut greatest := 0
-    for argument in arguments do
-      let depth <- depths[argument.index]?
-      greatest := Nat.max greatest depth
-    pure (greatest + 1)
-
-/-- Reconstruct the structural depth of every node in a validated SSA
-program.  This measure is independent of theorem-instantiation generation. -/
-def depths? (program : Program) : Option (Array Nat) := do
-  let mut depths := #[]
-  for index in [0:program.nodes.size] do
-    let node <- program.nodes[index]?
-    let depth <- nodeDepth? depths node.args
-    depths := depths.push depth
-  pure depths
-
-end Program
-
-/-! # Rule registration -/
-
-/-- Stable rule name and compatibility epoch.  `schema` versions the complete
-handler/theorem contract; replay requires this exact key and never falls back
-to a newer epoch.  A payload's own schema is a separate recipe variant within
-this epoch. -/
-structure RuleKey where
-  name : String
-  schema : Nat := 1
-  deriving DecidableEq, Repr
-
-/-- Compact index into one registry snapshot. -/
-structure RuleId where
-  index : Nat
-  deriving DecidableEq, Repr
-
-/-- Compact index of a rule application to a particular expression node. -/
-structure ApplicationId where
-  index : Nat
-  deriving DecidableEq, Repr
-
-/-- Compact index of one admitted structural equality. -/
-structure EqualityId where
-  index : Nat
-  deriving DecidableEq, Repr
-
-/-- Stable structural evidence inspected by a matcher. -/
-inductive StructuralKey where
-  | node (node : NodeId)
-  | equality (equality : EqualityId)
-  | application (application : ApplicationId)
-  deriving DecidableEq, Repr
-
-/-- One engine-enumerated structural input with its immutable creation
-generation. -/
-structure StructuralInput where
-  key : StructuralKey
-  generation : Nat
-  deriving DecidableEq, Repr
+/-! # Experimental controller state -/
 
 abbrev MatcherSize := StructuralCursor.Size
 abbrev MatcherView := StructuralCursor.View
@@ -197,76 +52,6 @@ and engine-owned equality contractors. -/
 inductive WorkItem where
   | application (application : ApplicationId)
   | equality (equality : EqualityId)
-  deriving DecidableEq, Repr
-
-/-- Propagator roles are policy data, not operation semantics. -/
-inductive ActionKind where
-  | forward
-  | backward
-  | improve
-  | shave
-  | instantiate
-  | rewrite
-  | regularize
-  | split
-  deriving DecidableEq, Repr
-
-/-- A registration names the result node or one of its arguments without
-depending on concrete node identifiers. -/
-inductive Slot where
-  | result
-  | argument (index : Nat)
-  deriving DecidableEq, Repr
-
-/-- How concrete applications of a registration enter the scheduler.  Local
-registrations are resolved at every node with the matching head operation.
-Scoped registrations are bound explicitly to an arbitrary finite set of
-program nodes by the frontend or a package matcher. -/
-inductive BindingKind where
-  | local
-  | scoped
-  /-- One registration-wide application, anchored at the first node with the
-  declared head.  This is the initial ownership model for whole-network
-  structural matchers: program growth wakes one cursor, not one cursor per
-  matching expression. -/
-  | global
-  deriving DecidableEq, Repr
-
-/-- Structural enumeration attached to one concrete application.  The first
-reference arm scans the whole append-only network; selective operation,
-equality, and compiled-pattern watches remain later variants. -/
-inductive MatchWatch where
-  | none
-  | network
-  deriving DecidableEq, Repr
-
-/-- One explicit propagator registration.  Several registrations may have the
-same `head`; they remain independent methods with independent rule keys. -/
-structure Registration where
-  key : RuleKey
-  head : OpKey
-  kind : ActionKind
-  watches : List Slot
-  writes : List Slot
-  binding : BindingKind := .local
-  /-- Re-run existing applications after any append-only program extension.
-  This is the coarse first trigger for rules whose result depends on shape
-  outside their anchor's immutable argument subgraph. -/
-  watchesProgram : Bool := false
-  matchWatch : MatchWatch := .none
-  initialEffort : Nat := 0
-  deriving Repr
-
-/-- One concrete application of a scoped registration.  Start-time bindings
-come from the frontend or a package matcher; later bindings may be resolved
-from an atomic instantiation proposal.  The anchor identifies the structural
-occurrence which justifies the application; ordered `watches` and `writes` may
-name any nodes in the validated program. -/
-structure ScopeBinding where
-  rule : RuleKey
-  anchor : NodeId
-  watches : List NodeId
-  writes : List NodeId
   deriving DecidableEq, Repr
 
 /-- A registration resolved against one concrete program node. -/
@@ -301,102 +86,8 @@ def dedupListFrom [DecidableEq alpha] (seen : List alpha) : List alpha -> List a
 def dedupList [DecidableEq alpha] (items : List alpha) : List alpha :=
   dedupListFrom [] items
 
-def uniqueRuleKeys : List Registration -> Bool
-  | [] => true
-  | rule :: rules =>
-      !(rules.any fun other => other.key == rule.key) && uniqueRuleKeys rules
-
-/-- Resolve a stable rule key to its compact identifier and immutable
-registration in this registry snapshot. -/
-def ruleEntry? (rules : Array Registration) (key : RuleKey) :
-    Option (RuleId × Registration) := do
-  for index in [0:rules.size] do
-    let rule <- rules[index]?
-    if rule.key == key then return ({ index }, rule)
-  none
-
 def opKeyExists (program : Program) (key : OpKey) : Bool :=
   program.operations.any fun operation => operation.key == key
-
-def Program.operationWithKey? (program : Program) (key : OpKey) : Option Operation :=
-  program.operations.toList.find? fun operation => operation.key == key
-
-/-- Resolve both the signature and the compact identifier assigned by this
-particular final program.  Package-local operation order is not authoritative
-for frontend nodes. -/
-def Program.operationEntry? (program : Program) (key : OpKey) :
-    Option (OpId × Operation) := do
-  for index in [0:program.operations.size] do
-    let operation <- program.operations[index]?
-    if operation.key == key then return ({ index }, operation)
-  none
-
-def Slot.validFor (operation : Operation) : Slot -> Bool
-  | .result => true
-  | .argument index => operation.inputs[index]?.isSome
-
-def resolveSlot? (output : NodeId) (node : Node) : Slot -> Option NodeId
-  | .result => some output
-  | .argument index => node.args[index]?
-
-def resolveSlots? (output : NodeId) (node : Node)
-    (slots : List Slot) : Option (List NodeId) :=
-  slots.mapM (resolveSlot? output node)
-
-/-- Reject duplicate keys and unknown heads.  Local registrations additionally
-require unique in-range slots; scoped registrations leave their concrete ports
-to `ScopeBinding`.  Empty writes are valid for discovery and split rules. -/
-def registrationsCheck (program : Program) (rules : Array Registration) : Bool :=
-  uniqueRuleKeys rules.toList && rules.all fun rule =>
-    match program.operationWithKey? rule.head with
-    | none => false
-    | some operation =>
-        let matchValid :=
-          match rule.matchWatch with
-          | .none => rule.binding != .global
-          | .network =>
-              rule.binding == .global && rule.kind == .instantiate &&
-                rule.watchesProgram && rule.watches.isEmpty && rule.writes.isEmpty
-        matchValid && match rule.binding with
-          | .local =>
-              uniqueList rule.watches && uniqueList rule.writes &&
-                rule.watches.all (Slot.validFor operation) &&
-                  rule.writes.all (Slot.validFor operation)
-          | .scoped => rule.watches.isEmpty && rule.writes.isEmpty
-          | .global => rule.watches.isEmpty && rule.writes.isEmpty
-
-def ScopeBinding.same (left right : ScopeBinding) : Bool :=
-  left.rule == right.rule && left.anchor == right.anchor &&
-    left.watches == right.watches && left.writes == right.writes
-
-def ScopeBinding.nodes (binding : ScopeBinding) : List NodeId :=
-  binding.anchor :: binding.watches ++ binding.writes
-
-def uniqueScopeBindings : List ScopeBinding -> Bool
-  | [] => true
-  | binding :: bindings =>
-      !(bindings.any fun other => binding.same other) && uniqueScopeBindings bindings
-
-/-- Validate one concrete scoped application without interpreting its
-operation or rule key. -/
-def ScopeBinding.valid (program : Program) (rules : Array Registration)
-    (binding : ScopeBinding) : Bool :=
-  match ruleEntry? rules binding.rule, program.node? binding.anchor with
-  | some (_, rule), some anchor =>
-      rule.binding == .scoped &&
-        (program.operation? anchor.op).any (fun operation => operation.key == rule.head) &&
-        uniqueList binding.watches && uniqueList binding.writes &&
-        binding.watches.all (fun node => (program.node? node).isSome) &&
-        binding.writes.all (fun node => (program.node? node).isSome)
-  | _, _ => false
-
-/-- Validate explicit scoped applications.  Package-owned semantic checkers
-remain responsible for proving that each chosen scope is an instance of their
-contractor schema. -/
-def scopeBindingsCheck (program : Program) (rules : Array Registration)
-    (bindings : Array ScopeBinding) : Bool :=
-  uniqueScopeBindings bindings.toList &&
-    bindings.all (ScopeBinding.valid program rules)
 
 /-- Resolve immutable scoped bindings in their declared order, followed by
 every local `(registration, node)` match in node-major, registration-minor
@@ -405,14 +96,14 @@ instantiated.  Operation keys are opaque to this compiler. -/
 def compileApplications (program : Program) (rules : Array Registration)
     (bindings : Array ScopeBinding := #[]) :
     Option (Array Application) := do
-  if !program.check || !registrationsCheck program rules ||
-      !scopeBindingsCheck program rules bindings then
+  if !program.check || !Registration.check program rules ||
+      !ScopeBinding.checkAll program rules bindings then
     none
   else
     let mut applications := #[]
     let mut globalCompiled := Array.replicate rules.size false
     for binding in bindings do
-      let (ruleId, rule) <- ruleEntry? rules binding.rule
+      let (ruleId, rule) <- Registration.find? rules binding.rule
       applications := applications.push
         { rule := ruleId
           node := binding.anchor
@@ -427,8 +118,8 @@ def compileApplications (program : Program) (rules : Array Registration)
       for ruleIndex in [0:rules.size] do
         let rule <- rules[ruleIndex]?
         if rule.binding == .local && rule.head == operation.key then
-          let watches <- resolveSlots? { index := nodeIndex } node rule.watches
-          let writes <- resolveSlots? { index := nodeIndex } node rule.writes
+          let watches <- Slot.resolveAll? { index := nodeIndex } node rule.watches
+          let writes <- Slot.resolveAll? { index := nodeIndex } node rule.writes
           applications := applications.push
             { rule := { index := ruleIndex }
               node := { index := nodeIndex }
@@ -454,15 +145,15 @@ registry; error `true` denotes the exact application cap. -/
 def compileApplicationsWithin (limit : Nat) (program : Program)
     (rules : Array Registration) (bindings : Array ScopeBinding := #[]) :
     Except Bool (Array Application) := do
-  if !program.check || !registrationsCheck program rules ||
-      !scopeBindingsCheck program rules bindings then
+  if !program.check || !Registration.check program rules ||
+      !ScopeBinding.checkAll program rules bindings then
     throw false
   let mut applications := #[]
   let mut globalCompiled := Array.replicate rules.size false
   for binding in bindings do
     if limit <= applications.size then
       throw true
-    let some (ruleId, rule) := ruleEntry? rules binding.rule | throw false
+    let some (ruleId, rule) := Registration.find? rules binding.rule | throw false
     applications := applications.push
       { rule := ruleId
         node := binding.anchor
@@ -479,9 +170,9 @@ def compileApplicationsWithin (limit : Nat) (program : Program)
       if rule.binding == .local && rule.head == operation.key then
         if limit <= applications.size then
           throw true
-        let some watches := resolveSlots? { index := nodeIndex } node rule.watches
+        let some watches := Slot.resolveAll? { index := nodeIndex } node rule.watches
           | throw false
-        let some writes := resolveSlots? { index := nodeIndex } node rule.writes
+        let some writes := Slot.resolveAll? { index := nodeIndex } node rule.writes
           | throw false
         applications := applications.push
           { rule := { index := ruleIndex }
@@ -536,7 +227,7 @@ scope.  The registration snapshot, rather than proposal metadata, supplies
 the action kind and baseline effort. -/
 def applicationForBinding? (rules : Array Registration)
     (binding : ScopeBinding) : Option Application := do
-  let (ruleId, rule) <- ruleEntry? rules binding.rule
+  let (ruleId, rule) <- Registration.find? rules binding.rule
   if rule.binding != .scoped then none else pure ()
   pure
     { rule := ruleId
@@ -600,7 +291,7 @@ def compileLocalApplicationsWithin (limit start : Nat) (program : Program)
     (rules : Array Registration) (existing : Array Application := #[])
     (generation : Nat := 0) :
     Except Bool (Array Application) := do
-  if program.nodes.size < start || !program.check || !registrationsCheck program rules then
+  if program.nodes.size < start || !program.check || !Registration.check program rules then
     throw false
   let mut applications := #[]
   let mut globalCompiled := Array.replicate rules.size false
@@ -616,9 +307,9 @@ def compileLocalApplicationsWithin (limit start : Nat) (program : Program)
       let some rule := rules[ruleIndex]? | throw false
       if rule.binding == .local && rule.head == operation.key then
         if limit <= applications.size then throw true
-        let some watches := resolveSlots? { index := nodeIndex } node rule.watches
+        let some watches := Slot.resolveAll? { index := nodeIndex } node rule.watches
           | throw false
-        let some writes := resolveSlots? { index := nodeIndex } node rule.writes
+        let some writes := Slot.resolveAll? { index := nodeIndex } node rule.writes
           | throw false
         applications := applications.push
           { rule := { index := ruleIndex }
@@ -645,173 +336,40 @@ def compileLocalApplicationsWithin (limit start : Nat) (program : Program)
 
 /-! # Request/reply protocol -/
 
-/-- Monotone version observed for one watched fact. -/
-structure SeenVersion where
-  node : NodeId
-  version : Nat
-  deriving DecidableEq, Repr
-
-/-- One scheduler request.  `serial` prevents a delayed registry reply from
-being confused with a later invocation of the same rule. -/
-structure Action where
-  serial : Nat
-  programVersion : Nat
-  application : ApplicationId
-  rule : RuleId
-  key : RuleKey
-  node : NodeId
-  kind : ActionKind
-  effort : Nat
-  generation : Nat := 0
-  inputs : List SeenVersion
-  /-- Exact write authority frozen from the concrete application. -/
-  writes : List NodeId := []
-  /-- Engine-enumerated structural inputs for this exact matcher batch. -/
-  structuralInputs : List StructuralInput := []
-  /-- Frozen matcher epoch which produced `structuralInputs`. -/
-  matcherEpoch : Option Nat := none
-  deriving DecidableEq, Repr
-
-/-- Immutable fact view supplied with an action. -/
-structure Snapshot (Fact : Type) where
-  facts : Array Fact
-  versions : Array Nat
-  contradictory : Bool
-
-namespace Snapshot
-
-/-- Exact optional fact lookup. -/
-def fact? (snapshot : Snapshot Fact) (node : NodeId) : Option Fact :=
-  snapshot.facts[node.index]?
-
-/-- Exact optional version lookup. -/
-def version? (snapshot : Snapshot Fact) (node : NodeId) : Option Nat :=
-  snapshot.versions[node.index]?
-
-end Snapshot
-
-/-- One declared rule input.  Propagators receive these projected views rather
-than an unrestricted snapshot, so every semantic dependency has a watcher. -/
-structure FactView (Fact : Type) where
-  node : NodeId
-  fact : Fact
-  version : Nat
-
-/-- Immutable structural metadata supplied to a propagator.  The engine builds
-this view only from a validated program whose operation, node, arity, and
-generation arrays are already covered by its structural limits.  It contains
-no interval facts: semantic fact access remains restricted to declared
-`FactView`s.
-
-The explicit version lets registries key structural caches by the exact
-append-only snapshot.  Reply validation remains bound to the engine-owned
-`Action`, while retained instantiations recheck action freshness and resolve
-their complete structural effect against the current program.  Observing this
-view grants no mutation authority.
-
-A matcher may follow structure determined by its action anchor. Any additional
-side node which affects a proposed theorem instance must be named either by a
-declared fact input or by an explicit `existing` proposal reference.
-Generation accounting does not track arbitrary calls to `ProgramView.node?`. -/
-structure ProgramView where
-  programVersion : Nat
-  operations : Array Operation
-  nodes : Array Node
-  generations : Array Nat
-  depths : Array Nat
-
-namespace ProgramView
-
-/-- Exact optional operation lookup in this immutable snapshot. -/
-def operation? (view : ProgramView) (operation : OpId) : Option Operation :=
-  view.operations[operation.index]?
-
-/-- Resolve a stable operation key to this snapshot's compact identifier and
-exact signature. Package callbacks must not assume a particular operation-table
-order. -/
-def findOp? (view : ProgramView) (key : OpKey) : Option (OpId × Operation) := do
-  for index in [0:view.operations.size] do
-    let operation <- view.operations[index]?
-    if operation.key == key then return ({ index }, operation)
-  none
-
-/-- Exact optional node lookup in this immutable snapshot. -/
-def node? (view : ProgramView) (node : NodeId) : Option Node :=
-  view.nodes[node.index]?
-
-/-- Exact optional instantiation-generation lookup. -/
-def generation? (view : ProgramView) (node : NodeId) : Option Nat :=
-  view.generations[node.index]?
-
-/-- Exact optional structural-depth lookup. -/
-def depth? (view : ProgramView) (node : NodeId) : Option Nat :=
-  view.depths[node.index]?
-
-/-- Resolve a node's opaque semantic operation key without interpreting it. -/
-def operationKey? (view : ProgramView) (node : NodeId) : Option OpKey := do
-  let instruction <- view.node? node
-  let operation <- view.operation? instruction.op
-  pure operation.key
-
-end ProgramView
-
-/-- Function-specific registry request with exactly the application's declared
-fact inputs and a bounded structural snapshot. -/
-structure RuleRequest (Fact : Type) where
-  action : Action
-  program : ProgramView
-  inputs : List (FactView Fact)
-  writes : List NodeId
-
-namespace RuleRequest
-
-/-- Lookup is restricted to declared inputs. -/
-def fact? (request : RuleRequest Fact) (node : NodeId) : Option Fact :=
-  (request.inputs.find? fun input => input.node == node).map (fun input => input.fact)
-
-end RuleRequest
-
-/-- Immutable proof payload allocated by the companion registry.  It is not a
-pointer into a mutable propagator cache. -/
+/-- Immutable proof-payload address allocated by the experimental companion
+registry. It is not a pointer into mutable package cache state. -/
 structure PayloadId where
   index : Nat
   deriving DecidableEq, Repr
 
-/-- One semantically untrusted proposed fact about an existing expression
-node. Its payload must later replay to a checked theorem; merely intersecting
-the fact into engine state does not prove it sound. -/
+/-- One semantically untrusted proposed fact. Its payload must later replay to
+an independently checked theorem. -/
 structure Candidate (Fact : Type) where
   node : NodeId
   fact : Fact
   payload : PayloadId
 
-/-- A reference in a proposed expression extension. -/
+/-- A reference in one proposed expression extension. -/
 inductive NodeRef where
   | existing (node : NodeId)
   | proposed (index : Nat)
   deriving DecidableEq, Repr
 
-/-- One SSA instruction proposed by a shape-triggered propagator. -/
+/-- One SSA instruction proposed by an experimental package matcher. -/
 structure ProposedNode where
   domain : DomainId
   op : OpId
   args : List NodeRef
   deriving Repr
 
-/-- An equality proposed alongside new expressions.  This experiment retains
-the opaque payload and endpoints as untrusted replay data.  Once admitted, the
-edge is scheduler-active: its typed endpoints drive equality contraction, and
-replay must reconstruct and check the payload before any transported fact can
-prove a goal. -/
+/-- One untrusted equality proposed alongside an extension. -/
 structure ProposedEquality where
   left : NodeRef
   right : NodeRef
   payload : PayloadId
   deriving Repr
 
-/-- One scoped application proposed against the program produced by the same
-atomic instantiation.  References may name old nodes or any resolved node
-draft; concrete application identifiers remain engine-owned. -/
+/-- One scoped application proposed against the atomically extended program. -/
 structure ProposedScope where
   rule : RuleKey
   anchor : NodeRef
@@ -819,8 +377,9 @@ structure ProposedScope where
   writes : List NodeRef
   deriving Repr
 
-/-- Untrusted atomic expression-extension request.  The engine, not the rule,
-recomputes generations and assigns concrete node identifiers. -/
+/-- Experimental atomic append-only expression-extension request. `key` is a
+provisional package/policy family and is deliberately not part of the
+supported action contract. -/
 structure InstantiationRequest where
   key : Nat
   nodes : List ProposedNode
@@ -829,14 +388,7 @@ structure InstantiationRequest where
   payload : PayloadId
   deriving Repr
 
-/-- Cached policy-key surface for one validated instantiation proposal. -/
-def InstantiationRequest.policyItems (request : InstantiationRequest) : Nat :=
-  request.nodes.length + request.equalities.length + request.scopes.length +
-    request.nodes.foldl (fun count node => count + node.args.length) 0 +
-    request.scopes.foldl (fun count scope =>
-      count + 1 + scope.watches.length + scope.writes.length) 0
-
-/-- Why a propagator recommends a proof-state split. -/
+/-- Why an experimental package recommends a proof-state split. -/
 inductive SplitReason where
   | singularity
   | totalityBoundary
@@ -848,12 +400,19 @@ inductive SplitReason where
   | custom (code : Nat)
   deriving DecidableEq, Repr
 
-/-- A proof-split suggestion.  The rule supplies only a node, cut, and reason;
-a checked branch manager creates complementary child scopes and facts. -/
+/-- An experimental split suggestion. A checked branch manager owns child
+scopes and facts. -/
 structure SplitRequest where
   node : NodeId
   point : Dyadic
   reason : SplitReason
+
+/-- Cached policy-key surface for one validated instantiation proposal. -/
+def instantiationPolicyItems (request : InstantiationRequest) : Nat :=
+  request.nodes.length + request.equalities.length + request.scopes.length +
+    request.nodes.foldl (fun count node => count + node.args.length) 0 +
+    request.scopes.foldl (fun count scope =>
+      count + 1 + scope.watches.length + scope.writes.length) 0
 
 /-- Non-fact information returned to the search policy. -/
 inductive Suggestion where
@@ -963,30 +522,11 @@ structure Reply (Fact : Type) where
   application : ApplicationId
   outcome : Outcome Fact
 
-def Action.reply (action : Action) (outcome : Outcome Fact) : Reply Fact :=
+def _root_.Hex.Interval.Action.reply (action : Action) (outcome : Outcome Fact) : Reply Fact :=
   { serial := action.serial
     programVersion := action.programVersion
     application := action.application
     outcome }
-
-/-! # Fact intersection boundary -/
-
-/-- Result of intersecting an untrusted candidate with the current strongest
-fact.  The explicit record passed to `submit` supplies this operation; the
-scheduler is independent of endpoint representation. -/
-inductive NarrowResult (Fact : Type) where
-  | noChange
-  | improved (fact : Fact)
-  | contradiction (fact : Fact)
-  | malformed (code : Nat)
-  | resourceLimit (budget : Nat)
-
-/-- The only fact-domain behavior needed by propagation scheduling.
-`narrow` enforces the fact representation's intersection discipline; it does
-not authenticate the semantic claim carried by a candidate. -/
-structure FactDomain (Fact : Type) where
-  top : DomainId -> Fact
-  narrow : DomainId -> Fact -> Fact -> NarrowResult Fact
 
 /-- Bounded list check which inspects at most one constructor beyond the
 trusted limit. -/
@@ -1323,12 +863,12 @@ def preflightStart (program : Program) (rules : Array Registration)
   let some depths := program.depths? | throw .invalidProgram
   if depths.any (fun depth => limits.maxNodeDepth < depth) then
     throw (.resourceLimit .nodeDepth)
-  if !registrationsCheck program rules then
+  if !Registration.check program rules then
     throw .invalidRegistrations
   if limits.matcherBatchSize == 0 &&
       rules.any (fun rule => rule.matchWatch == .network) then
     throw .invalidRegistrations
-  if !scopeBindingsCheck program rules bindings then
+  if !ScopeBinding.checkAll program rules bindings then
     throw .invalidBindings
 
 /-- Validate and compile an engine.  The caller supplies one initial fact per
@@ -1783,22 +1323,18 @@ def suggestionsEffortBounded (limit : Nat) (suggestions : List Suggestion) : Boo
 
 /-! # Structural proposal validation -/
 
-namespace Node
-
 /-- Exact syntactic node equality used by the experiment's linear CSE table. -/
-def same (left right : Node) : Bool :=
+def sameNode (left right : Node) : Bool :=
   left.domain == right.domain && left.op == right.op && left.args == right.args
-
-end Node
 
 /-- Linear reference CSE lookup.  The experiment measures this against indexed
 tables before selecting a production representation. -/
 def findNodeFrom : Nat -> List Node -> Node -> Option NodeId
   | _, [], _ => none
   | index, node :: nodes, target =>
-      if node.same target then some { index } else findNodeFrom (index + 1) nodes target
+      if sameNode node target then some { index } else findNodeFrom (index + 1) nodes target
 
-def Program.findNode? (program : Program) (target : Node) : Option NodeId :=
+def findNode? (program : Program) (target : Node) : Option NodeId :=
   findNodeFrom 0 program.nodes.toList target
 
 /-- Resolve a draft reference.  `existing` IDs are restricted to the immutable
@@ -1834,7 +1370,7 @@ def resolveDrafts (baseSize : Nat) :
         throw .badReferenceOrShape
       let some candidateDepth := Program.nodeDepth? depths args
         | throw .badReferenceOrShape
-      match program.findNode? candidate with
+      match findNode? program candidate with
       | some id =>
           let some storedDepth := depths[id.index]? | throw .badReferenceOrShape
           if storedDepth != candidateDepth then throw .badReferenceOrShape
@@ -1879,7 +1415,7 @@ def resolveRequestedScopes (baseSize : Nat) (resolved : List NodeId)
       let watches <- resolveRefs? baseSize resolved proposal.watches
       let writes <- resolveRefs? baseSize resolved proposal.writes
       let binding : ScopeBinding := { rule := proposal.rule, anchor, watches, writes }
-      if !binding.valid program rules then none else pure ()
+      if !ScopeBinding.check program rules binding then none else pure ()
       let rest <- resolveRequestedScopes baseSize resolved program rules proposals
       some (binding :: rest)
 
@@ -2008,7 +1544,7 @@ def retainSuggestion (state : Engine Fact) (action : Action)
       | .retry _ | .instantiate _ => none
     policyItems := action.structuralInputs.length +
       match suggestion with
-      | .instantiate request => request.policyItems
+      | .instantiate request => instantiationPolicyItems request
       | .retry _ | .split _ => 0 }
 
 def candidateNodesUnique (candidates : List (Candidate Fact)) : Bool :=

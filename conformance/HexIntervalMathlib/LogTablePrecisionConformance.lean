@@ -20,6 +20,7 @@ frontend to an ordinary theorem about `Real.log 2`.
 namespace Hex.IntervalMathlib.LogTablePrecisionConformance
 
 open Lean Elab Tactic Meta
+open Hex.Interval
 open Hex.Interval.Experiment
 open Propagator PolicySession SemanticReplay ChronologicalReplay ProofEmitter
 open Frontend FrontendEncoder ProofFrontend ProofRegistry

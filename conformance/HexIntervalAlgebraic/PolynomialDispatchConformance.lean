@@ -21,6 +21,7 @@ generic proof frontend can construct evidence.
 namespace Hex.IntervalAlgebraic.PolynomialDispatchConformance
 
 open Lean Elab Tactic Meta
+open Hex.Interval
 open Hex.Interval.Experiment
 open Propagator PolicySession SemanticReplay ProofEmitter ProofRegistry Frontend
 open Hex.Interval.Experiment.PolynomialDispatch

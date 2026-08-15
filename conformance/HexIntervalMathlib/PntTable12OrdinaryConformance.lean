@@ -21,6 +21,7 @@ logarithmic-row leaves remain separate acceptance work.
 namespace Hex.IntervalMathlib.PntTable12OrdinaryConformance
 
 open Lean Elab Tactic Meta
+open Hex.Interval
 open Hex.Interval.Experiment
 open Propagator PolicySession SemanticReplay ChronologicalReplay ProofEmitter
 open Frontend ProofFrontend ProofRegistry PntTable12Ordinary

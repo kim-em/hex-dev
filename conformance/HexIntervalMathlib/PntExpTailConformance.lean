@@ -23,6 +23,7 @@ This fixture covers the numerical leaf inside
 namespace Hex.IntervalMathlib.PntExpTailConformance
 
 open Lean Elab Tactic Meta
+open Hex.Interval
 open Hex.Interval.Experiment
 open Propagator PolicySession SemanticReplay ChronologicalReplay ProofEmitter
 open Frontend ProofFrontend ProofRegistry PntExpTail

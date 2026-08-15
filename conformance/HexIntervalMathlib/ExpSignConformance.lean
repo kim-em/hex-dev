@@ -26,6 +26,7 @@ ordinary kernel-checked theorem.
 namespace Hex.IntervalMathlib.ExpSignConformance
 
 open Lean Elab Tactic Meta
+open Hex.Interval
 open Hex.Interval.Experiment
 open Propagator PolicySession SemanticReplay ChronologicalReplay ProofEmitter
 open Frontend FrontendEncoder ProofFrontend ProofRegistry GoalFrontend ExpSign

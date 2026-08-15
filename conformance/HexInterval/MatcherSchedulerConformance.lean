@@ -107,7 +107,7 @@ def started? : Option (Engine Rank) :=
   | .error _ => none
 
 #guard program.check
-#guard registrationsCheck program #[matcherRule, contractRule]
+#guard Registration.check program #[matcherRule, contractRule]
 
 -- A whole-network matcher is compiled once for the registration, even though
 -- its declared head can occur many times after instantiation.

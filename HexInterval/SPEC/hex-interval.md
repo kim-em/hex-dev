@@ -63,6 +63,18 @@ keys. Dyadic, rational, elementary-function, and Mathlib theorem backends plug
 into that framework; backend-specific replay experiments do not block or
 define the scheduler architecture.
 
+The current supported Mathlib-free boundary now includes the structural half
+of that milestone: checked typed SSA `Program`s; versioned fact snapshots and
+projected views; stable operation/rule keys; registrations and explicit scope
+bindings; and immutable actions and package requests. These records
+deliberately contain neither function callbacks nor proof evidence. Concrete
+dependency storage, worklists, resource counters, package assembly, callback
+outcomes and proposals, scheduling, policy, branch search, payload storage,
+and replay are still experimental; their current types are not supported APIs
+and do not determine the eventual storage or default policy. In particular,
+the current instantiation proposal's package-supplied numeric policy family is
+not part of the supported action contract.
+
 The active implementation gate is to harden and compare the first complete
 arbitrary-function vertical: independently assembled forward and backward
 propagators, function-owned retries and split suggestions, structural
@@ -923,11 +935,13 @@ operation key to infer that, for example, addition reads two arguments or a
 contractor writes one of them. Later shape rules may propose validated
 cross-node applications without changing the scheduler protocol.
 
-The current arbitrary-propagator experiment gives each request a bounded,
-immutable `ProgramView` containing the exact program version, operation table,
+The supported request contract gives each action a bounded, immutable
+`ProgramView` containing the exact program version, operation table,
 SSA node table, per-node theorem-instantiation generations, and per-node
 structural expression depths. It contains no facts.
-The engine constructs it only from a validated state already covered by the
+`ProgramView.check` validates the decoded SSA program and exact alignment of
+the generation/depth side tables; the experimental engine constructs it only
+from a validated state already covered by the
 operation, node, arity, generation, and structural-depth limits. Thus an
 external shape rule can follow a product argument to a nested difference,
 compare opaque operation keys, recover the repeated `NodeId`, and construct a
@@ -1414,6 +1428,16 @@ Rules are explicit registrations, not typeclass instances. Typeclass search
 must not recursively decide which algorithm computes an expression's bound.
 The registry may contain several rules for one head symbol, and the policy may
 try or combine all of them.
+
+`Registration.check` is supported and validates exact versioned heads,
+duplicate-free keys, binding shapes, and local slot ranges against a checked
+program. `ScopeBinding.check` validates ordered concrete ports and exact
+anchor heads without interpreting a function. `RuleRequest.accepts` validates
+the immutable program view plus the registration's exact stable key, action
+kind, fact versions, and ordered read/write projection. Compact rule and
+application identifiers, action serials, fact values, and pending-state
+ownership can only be authenticated by the controller that issued the action;
+these structural checks neither claim that authority nor create evidence.
 
 A registry snapshot is assembled from independently upgradeable function
 packages. The current canary chooses an ordered `Array (Package Fact)`. Each
@@ -4909,13 +4933,24 @@ their declared cost inside a scheduler bound.
   semantics and the one-way total-real-division enclosure theorem.
 - `HexIntervalMathlib/Regularize.lean`: exact normalized rounded-cut semantics,
   outward containment, and raw-cut idempotence without a grid-tightest claim.
-- `HexInterval/Program.lean`: node identifiers, SSA program, dependencies.
-- `HexInterval/Fact.lean`: facts, versions, provenance, contradiction checks.
-- `HexInterval/Action.lean`: requests, outcomes, suggestions, observations.
-- `HexInterval/State.lean`: branch state and incremental worklists.
-- `HexInterval/Policy.lean`: policy interface and `balancedV1`.
-- `HexInterval/Search.lean`: budgeted branch search and derivation slicing.
-- `HexInterval/Trace.lean`: diagnostics and machine-readable telemetry.
+- `HexInterval/Program.lean`: supported stable operation/domain/node
+  identifiers, decoded typed SSA programs, fail-closed validation, and
+  structural depths.
+- `HexInterval/Fact.lean`: supported versioned fact snapshots, projected fact
+  views, narrowing results, and the function-agnostic fact-domain interface.
+- `HexInterval/Action.lean`: supported stable rule/action identities,
+  registrations, scope bindings, validated immutable program/request views,
+  and exact read/write projections. It has no callbacks, outcomes, policy, or
+  proof evidence.
+- `HexInterval/Experiment/Propagator.lean`: current experimental concrete
+  applications, dependency indexes, worklists, counters, callback outcomes
+  and untrusted proposals, replies, extension admission, and engine state,
+  consuming the supported contracts.
+- `HexInterval/Experiment/{PackageRegistry,PolicyDriver,PolicySession,
+  StagedPolicy,AdaptivePolicy,FeaturePolicy,BranchTree}.lean`: current
+  provisional package callback, policy, session, and branch-search designs.
+   Future supported state/policy/search/trace modules will be selected from
+   measurements; no storage representation or default policy is frozen yet.
 - `conformance/HexInterval/{Conformance,MinMaxConformance,EmitFixtures}.lean`:
   Lean-only checks and oracle fixtures.
 - `HexInterval/Experiment/PntFks2FamilyData*.lean` and
@@ -4953,6 +4988,11 @@ The required Lean-only profile covers every interval shape and operation with
 typical, boundary, and adversarial inputs. In particular it includes:
 
 - all four finite endpoint closure combinations;
+- malformed structural programs, including duplicate operation keys, wrong
+  arity/domain, unknown operations, and self/forward SSA references;
+- malformed registration, scope, and request snapshots, including wrong
+  operation/rule versions, duplicate or out-of-range ports, misaligned side
+  tables, changed fact versions, and changed ordered write authority;
 - equal endpoints in all closure combinations;
 - empty, singleton, one-sided unbounded, and whole intervals;
 - table-driven empty laws: every unary operation and `regularize` preserve

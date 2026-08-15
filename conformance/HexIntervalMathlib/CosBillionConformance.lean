@@ -20,6 +20,7 @@ ordinary theorem `0 < Real.cos (10^10)`.
 namespace Hex.IntervalMathlib.CosBillionConformance
 
 open Lean Elab Tactic Meta
+open Hex.Interval
 open Hex.Interval.Experiment
 open Propagator PolicySession SemanticReplay ChronologicalReplay ProofEmitter
 open Frontend FrontendEncoder ProofFrontend ProofRegistry

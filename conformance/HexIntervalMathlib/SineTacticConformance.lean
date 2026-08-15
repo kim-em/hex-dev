@@ -26,6 +26,7 @@ assigned to the goal is checked by Lean's kernel.
 namespace Hex.IntervalMathlib.SineTacticConformance
 
 open Lean Elab Tactic Meta
+open Hex.Interval
 open Hex.Interval.Experiment
 open Propagator PayloadArena SemanticReplay ChronologicalReplay ProofEmitter
 open Frontend ProofFrontend

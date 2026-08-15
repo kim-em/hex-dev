@@ -17,6 +17,7 @@ against the Mathlib theorem schemas.
 
 namespace Hex.IntervalMathlib.SineSignConformance
 
+open Hex.Interval
 open Hex.Interval.Experiment
 open Propagator PolicySession SemanticReplay ChronologicalReplay TraceReplay
   ProofRegistry

@@ -23,6 +23,7 @@ the ordinary cosine periodicity theorem.
 
 namespace Hex.IntervalMathlib.Experiment.CosBillion
 
+open Hex.Interval
 open Hex.Interval.Experiment
 open Propagator SemanticReplay ChronologicalReplay ProofEmitter ProofRegistry
 open GenericInstanceReconstruction OperationSemantics

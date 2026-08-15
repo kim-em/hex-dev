@@ -16,6 +16,7 @@ operation key, or package registry.
 
 namespace Hex.Interval.GenericInstanceReconstructionConformance
 
+open Hex.Interval
 open Experiment Propagator SemanticReplay ChronologicalReplay
 open GenericInstanceReconstruction
 
@@ -44,7 +45,7 @@ def finalProgram : Program :=
 def baseProgram : Program :=
   programPrefix finalProgram 1
 
-theorem baseSnapshot : Snapshot finalProgram baseProgram :=
+theorem baseSnapshot : GenericInstanceReconstruction.Snapshot finalProgram baseProgram :=
   { finalChecked := by rfl
     currentChecked := by rfl
     finalPrefix :=

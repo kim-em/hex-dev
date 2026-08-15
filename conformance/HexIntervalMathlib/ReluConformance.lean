@@ -26,6 +26,7 @@ theorem is unconditional and does not mathematically require branching.
 namespace Hex.IntervalMathlib.ReluConformance
 
 open Lean Elab Tactic Meta
+open Hex.Interval
 open Hex.Interval.Experiment
 open Propagator PolicySession SemanticReplay ChronologicalReplay ProofEmitter
 open Frontend FrontendEncoder ProofFrontend ProofRegistry GoalFrontend ExpSign
