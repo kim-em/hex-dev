@@ -332,6 +332,7 @@ lean_lib HexIntervalExperiment where
     `HexInterval.Experiment.PntTable10Shard,
     `HexInterval.Experiment.PntTable10Convex,
     `HexInterval.Experiment.PntTable10Pointwise,
+    `HexInterval.Experiment.PntTable10LargePointwise,
     `HexInterval.Experiment.PntTable12Log,
     `HexInterval.Experiment.PntFks2ShardData,
     `HexInterval.Experiment.PntFks2Shard,
@@ -372,6 +373,7 @@ lean_lib HexIntervalMathlibExperiment where
     `HexIntervalMathlib.Experiment.PntTable10Shard,
     `HexIntervalMathlib.Experiment.PntTable10Convex,
     `HexIntervalMathlib.Experiment.PntTable10Pointwise,
+    `HexIntervalMathlib.Experiment.PntTable10LargePointwise,
     `HexIntervalMathlib.Experiment.PntTable12Log,
     `HexIntervalMathlib.Experiment.PntFks2Shard,
     `HexIntervalMathlib.Experiment.CosBillion,
@@ -460,7 +462,8 @@ lean_lib HexConformance where
 
     ++ #[`HexIntervalMathlib.PntTable10ShardConformance,
       `HexIntervalMathlib.PntTable10ConvexConformance,
-      `HexIntervalMathlib.PntTable10PointwiseConformance].map Glob.one
+      `HexIntervalMathlib.PntTable10PointwiseConformance,
+      `HexIntervalMathlib.PntTable10LargePointwiseConformance].map Glob.one
 
     ++ #[`HexInterval.MinMaxConformance,
       `HexIntervalMathlib.MinMaxConformance].map Glob.one

@@ -3945,9 +3945,28 @@ column, cross-row reorder, and wrong replay target all reject without a draft
 or precision retry. The kernel also proves that the rational majorant for the
 bare row-90/k=1 target is strictly too large.
 
-Together the convex and pointwise batches cover 72 of 87 executable Table 10
-target calls after localized PNT+ rewrites. The remaining 15 target calls need
-the `43 → 19·log 10`, `19·log 10 → 44`, or large-decimal-row providers. All 38
+#### Large-decimal Table 10 pointwise row
+
+The next fixed package covers all five margin declarations for source row
+`13800.7464` in `BKLNW_table10_rows_regime3_12600_24000.lean`. It
+authenticates the exact fixed-point row, upper endpoint `14000`, coefficients
+`A₁ = 2`, `A₂ = 19913`, `E = 2.5423e-35`, the shared tail `1e-100`, and all
+five source coordinates at `BKLNW_tables.lean:1067`. The rational checker uses
+the same pointwise formula as rows 90/95, but avoids constructing powers with
+13,800-digit exponents.
+
+The Mathlib companion reuses the ordinary-kernel theorem behind the existing
+PNT exponential-tail canary: both exponential arguments are at most `-231`,
+so each exponential is strictly below the authenticated `1e-100` tail. The
+five resulting rational premises are replayed through the generic frontend
+and exposed through an exact tuple-membership `rowOfMem`. Bare-target,
+wrong-column, wrong fixed-point row, and wrong replay-target mutations reject
+without a retained draft or precision retry; the bare rational-majorant
+failure is also an ordinary theorem.
+
+Together the convex and two pointwise providers cover 77 of 87 executable
+Table 10 target calls after localized PNT+ rewrites. The remaining ten target
+calls are the coupled `43 → 19·log 10` and `19·log 10 → 44` groups. All 38
 supporting `a₂` sites, the surrounding `B_8_exact` reductions, arbitrary rows,
 and production-scale performance remain pending; this is not a LeanCert
 compatibility layer.

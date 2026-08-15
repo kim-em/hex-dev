@@ -1501,12 +1501,24 @@ generic replay closes all ten facts.
 
 A bare endpoint, wrong column, cross-row reorder, and wrong replay target
 reject without a draft or retry. The rational-majorant rejection is also an
-ordinary theorem. Together the convex and pointwise providers cover 72 of 87
-executable target calls after localized PNT+ rewrites. The remaining 15 target
-calls use the row-43/logarithmic transition, the 19·log 10 transition, or the
-large decimal row. The 38 supporting `a₂` sites, surrounding `B_8_exact`
-reductions, arbitrary table rows, and production performance remain pending.
-This is a localized PNT+ rewrite boundary, not LeanCert API compatibility.
+ordinary theorem.
+
+The large-decimal pointwise provider covers all five margin declarations for
+row `13800.7464` and the exact tuple at `BKLNW_tables.lean:1067`. Its bounded
+payload authenticates the fixed-point row, upper endpoint, coefficients,
+shared `1e-100` tail, and five listed/corrected cells. The Mathlib companion
+reuses the checked PNT exponential-tail theorem because both real exponential
+arguments are below `-231`; it then proves and generically replays the five
+complete rational premises without building a 13,800-step decimal power.
+Bare-target, wrong-column, wrong-row, and wrong-replay mutations reject without
+a draft or retry.
+
+Together the convex and two pointwise providers cover 77 of 87 executable
+target calls after localized PNT+ rewrites. The remaining ten target calls are
+the coupled row-43/logarithmic and 19·log 10 transitions. The 38 supporting
+`a₂` sites, surrounding `B_8_exact` reductions, arbitrary table rows, and
+production performance remain pending. This is a localized PNT+ rewrite
+boundary, not LeanCert API compatibility.
 
 The coordinate-aware Table 12 implementation is a bounded acceptance fixture
 that completes this family migration. At PNT+ commit
