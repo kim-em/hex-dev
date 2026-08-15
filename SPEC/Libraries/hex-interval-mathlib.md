@@ -1,9 +1,15 @@
 # hex-interval-mathlib (real semantics, verified propagators, and the `interval` tactic)
 
 `hex-interval-mathlib` gives mathematical meaning to
-[hex-interval](../../HexInterval/SPEC/hex-interval.md), proves soundness theorems for interval
-propagators, and provides the `interval` tactic. It depends on Mathlib and
+[hex-interval](../../HexInterval/SPEC/hex-interval.md) and owns soundness
+theorems for interval operations and propagators. It depends on Mathlib and
 `hex-interval`. There is no separate proof-only companion beyond this library.
+
+The current supported surface interprets public canonical intervals over `ℝ`
+and proves exact semantics for successful resource-checked intersection and
+negation. Propagator, provider, replay, and tactic modules remain experiments
+and are not re-exported by the public umbrella. The user-facing tactic contract
+below is the release target, not a claim that the tactic is already supported.
 
 The tactic proves bounds for ordinary Lean expressions over `ℝ`. It reads
 bounds from the local context, reifies shared expressions to an immutable
@@ -25,9 +31,9 @@ separate domain contract; the dense dyadic-cut invariant is not reused for
 them. No frontend uses recursive typeclass search to synthesize
 per-expression propagators.
 
-## User contract
+## Target user contract
 
-The main tactic is best-effort:
+The eventual main tactic is best-effort:
 
 ```lean
 example (x : ℝ) (hx : x ∈ Set.Icc 0 1) : x * (1 - x) ≤ 1 / 4 := by
@@ -75,31 +81,43 @@ relation is:
 namespace Hex
 namespace Interval
 
-def Lower.Holds : Lower → ℝ → Prop
+def Lower.Contains : Lower → ℝ → Prop
   | .unbounded, _      => True
   | .finite a false, x => (a.toRat : ℝ) ≤ x
   | .finite a true,  x => (a.toRat : ℝ) < x
 
-def Upper.Holds : Upper → ℝ → Prop
+def Upper.Contains : Upper → ℝ → Prop
   | .finite b false, x => x ≤ (b.toRat : ℝ)
   | .finite b true,  x => x < (b.toRat : ℝ)
   | .unbounded, _      => True
 
 end Interval
 
-def Interval.Mem (I : Interval) (x : ℝ) : Prop :=
+def Interval.Contains (I : Interval) (x : ℝ) : Prop :=
   match I.view with
   | .empty        => False
-  | .bounds lo hi => lo.Holds x ∧ hi.Holds x
+  | .bounds lo hi => lo.Contains x ∧ hi.Contains x
 
 end Hex
 ```
 
-The notation `x ∈ᵢ I` is local to this library. The public conversion lemmas
-identify each normalized shape with the corresponding Mathlib set interval.
-Infinities are endpoint markers, not real values.
+Future tactic modules may use local notation for this predicate. Conversions
+to the corresponding Mathlib set intervals remain future surface API;
+infinities are endpoint markers, not real values.
 
-The foundational theorems are:
+The currently supported foundational theorems are:
+
+```lean
+theorem contains_intersectWithin
+    (h : intersectWithin limit I J = .ready result) :
+    result.Contains x ↔ I.Contains x ∧ J.Contains x
+
+theorem contains_negWithin
+    (h : negWithin limit I = .ready result) :
+    result.Contains x ↔ I.Contains (-x)
+```
+
+The remaining target theorems include:
 
 ```lean
 theorem mem_intersect : x ∈ᵢ I → x ∈ᵢ J → x ∈ᵢ intersect I J

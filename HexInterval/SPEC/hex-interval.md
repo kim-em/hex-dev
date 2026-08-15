@@ -180,25 +180,26 @@ checked boundary authenticates it; proof traces do not inherit the public
 value's proof field.
 
 The initial supported slice exposes `view`, `empty`, `whole`, and endpoint-cost
-preflighted raw, singleton, one-sided, and finite constructors. Arithmetic is
-promoted separately with its complete semantic theorems rather than being
-declared public merely because narrower experiment implementations exist. All
-public examples use the fully qualified `Hex.Interval`, because Mathlib also
-has a root `Interval` type; the public namespace is itself revisitable before
-release if qualification proves awkward. Unless a block explicitly says
-otherwise, unqualified API sketches below are declarations inside
-`Hex.Interval`.
+preflighted raw, singleton, one-sided, and finite constructors. The first
+supported operations are resource-checked intersection and negation. Their
+Mathlib companion proves exact set semantics for the complete cut language;
+the remaining arithmetic is promoted separately rather than being declared
+public merely because narrower experiment implementations exist. All public
+examples use the fully qualified `Hex.Interval`, because Mathlib also has a
+root `Interval` type; the public namespace is itself revisitable before release
+if qualification proves awkward. Unless a block explicitly says otherwise,
+unqualified API sketches below are declarations inside `Hex.Interval`.
 
-The bundled candidate now has a Mathlib companion interpreting every canonical
-fact as a subset of `ℝ`. It proves that a successful executable `intersect`
-denotes logical conjunction for the complete cut language: strict and closed
-ends, tied endpoints, empty results, and either end unbounded. That theorem is
-installed as the generic `FactDomainSchema.proveMeet` boundary, and the
-transparent proof frontend uses it to close a weaker requested interval from a
-stronger established one. This validated the semantic interface used to select
-the public bundled representation without adding a function case to the
-frontend. Porting that complete semantic theorem from the experiment companion
-to the supported public value accompanies the public `intersect` operation.
+The public Mathlib companion interprets every canonical interval as a subset
+of `ℝ`. It proves that a successful executable `intersectWithin` denotes
+logical conjunction for the complete cut language: strict and closed ends,
+tied endpoints, empty results, and either end unbounded. It also proves that a
+successful `negWithin` contains `x` exactly when the input contains `-x`.
+Separately, the experiment form of the intersection theorem is installed as the
+generic `FactDomainSchema.proveMeet` boundary, and the transparent proof
+frontend uses it to close a weaker requested interval from a stronger
+established one. The supported theorem is independent of that experiment
+package.
 
 The comments describe cuts as viewed from outside the interval. In semantic
 notation, a finite lower cut `(a, false)` means `a ≤ x`, and `(a, true)` means
@@ -404,14 +405,32 @@ Interval addition and multiplication do not satisfy the algebraic laws that a
 consumer expects from instances, and division across zero needs an explicit
 policy.
 
-The initial operations are:
+The supported first operation slice is:
+
+```lean
+def intersectWithin : EndpointLimit → Interval → Interval → BuildResult
+def negWithin       : EndpointLimit → Interval → BuildResult
+```
+
+These names retain the budget because a public interval does not store the
+limit under which it was constructed. Comparing endpoints admitted under two
+different caller limits can otherwise allocate an exponent-alignment shift far
+larger than either stored mantissa. A refused comparison returns
+`BuildResult.resourceLimit`; it is never interpreted as an empty interval.
+Negation still takes a limit because its finite output endpoints and final
+canonical comparison cross the same public boundary.
+
+The public `Raw.intersectLowerUnchecked`, `intersectUpperUnchecked`,
+`intersectUnchecked`, and `negUnchecked` helpers state successful-result and
+semantic theorems. Like `Raw.normalizeUnchecked`, they are decoder-level
+combinators: untrusted callers use the checked `Interval` operations above.
+
+The remaining target surface is:
 
 ```lean
 namespace Hex.Interval
 
-def intersect  : Interval → Interval → Interval
-def hull       : Interval → Interval → Interval
-def neg        : Interval → Interval
+def hullWithin : EndpointLimit → Interval → Interval → BuildResult
 def add        : Interval → Interval → Interval
 def sub        : Interval → Interval → Interval
 def mul        : Interval → Interval → Interval
@@ -434,11 +453,11 @@ the implementation reuses core `Dyadic.roundDown`, `roundUp`, `invAtPrec`, and
 The Mathlib companion proves their set-enclosure theorems. The computational
 tests also check the following exactness rules.
 
-- `intersect` chooses the larger lower cut and the smaller upper cut. At equal
+- `intersectWithin` chooses the larger lower cut and the smaller upper cut. At equal
   endpoints it chooses open if either input is open.
 - `hull` chooses the smaller lower cut and the larger upper cut. At equal
   endpoints it chooses closed if either input contains the endpoint.
-- Negation swaps the ends and preserves their openness.
+- `negWithin` swaps the ends and preserves their openness.
 - A finite endpoint of a sum is closed exactly when both contributing
   endpoints are closed.
 - After the empty-input short circuit, multiplication partitions both inputs
@@ -3859,8 +3878,11 @@ their declared cost inside a scheduler bound.
   normalization.
 - `HexInterval/Canonical.lean`: sealed canonical values, views, and
   resource-safe smart constructors.
-- `HexInterval/Interval.lean`: future supported intersection, hull, arithmetic,
-  splitting, and regularization operations.
+- `HexInterval/Interval.lean`: supported resource-safe intersection and
+  negation, followed by future hull, arithmetic, splitting, and regularization
+  operations.
+- `HexIntervalMathlib/Interval.lean`: real-set semantics for the supported
+  public operations.
 - `HexInterval/Program.lean`: node identifiers, SSA program, dependencies.
 - `HexInterval/Fact.lean`: facts, versions, provenance, contradiction checks.
 - `HexInterval/Action.lean`: requests, outcomes, suggestions, observations.
