@@ -1792,7 +1792,10 @@ part in one run must agree on a fact representation and semantic value model.
 Future domain adapters may embed a package's private facts into a richer shared
 domain; merely joining registries with incompatible `Fact` parameters is not
 meaningful. The mixed target already exercises recursive structural discovery
-of both functions. It does not add a new expression during propagation; a
+of both functions. Like the current package-composed semantics experiment, it
+still requires the operation, meaning, and proof-package arrays in one fixed
+aligned order; key-resolved package reordering remains future work. It does not
+add a new expression during propagation; a
 later mixed-function acceptance case should use the existing instantiation
 protocol to introduce an auxiliary expression whose package then participates
 in the same dependent chain.

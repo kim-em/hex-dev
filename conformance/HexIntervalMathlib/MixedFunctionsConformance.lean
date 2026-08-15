@@ -174,6 +174,60 @@ private def mixedInput : CheckerInput Bound :=
     initialFacts := #[.all, .all, .all]
     target := { node := node 2, fact := .atMostThree } }
 
+private def mixedView : ProgramView :=
+  { programVersion := 0
+    operations
+    nodes := mixedProgram.nodes
+    generations := #[0, 0, 0]
+    depths := #[0, 1, 2] }
+
+private def expAction : Action :=
+  { serial := 1
+    programVersion := 0
+    application := { index := 1 }
+    rule := { index := 1 }
+    key := expRuleKey
+    node := node 2
+    kind := .forward
+    effort := 0
+    inputs := [{ node := node 1, version := 1 }]
+    writes := [node 2] }
+
+private def expRequest (fact : Bound) (version : Nat) : RuleRequest Bound :=
+  { action := { expAction with inputs := [{ node := node 1, version }] }
+    program := mixedView
+    inputs := [{ node := node 1, fact, version }]
+    writes := [node 2] }
+
+/- The exponential callback is unavailable at the initial top fact and becomes
+applicable only after the exact sine fact has been installed. -/
+#guard
+  match (expPlan (expRequest .all 0)).outcome with
+  | .failed 2 => true
+  | _ => false
+
+#guard
+  match (expPlan (expRequest .unit 1)).outcome with
+  | .success [candidate] [] _ =>
+      candidate.node == node 2 && candidate.fact == .atMostThree
+  | _ => false
+
+private def expContext : RuleFactContext mixedInput expAction :=
+  { program := mixedProgram
+    basePrefix := ProgramPrefix.refl mixedProgram
+    assumptions := [{ node := node 1, fact := .unit }]
+    proposed := { node := node 2, fact := .atMostThree } }
+
+private def wrongExpFact : RuleFactContext mixedInput expAction :=
+  { expContext with assumptions := [{ node := node 1, fact := .all }] }
+
+private def bypassedSine : RuleFactContext mixedInput expAction :=
+  { expContext with assumptions := [{ node := node 0, fact := .unit }] }
+
+#guard (expFactSchema.replay mixedInput expAction expContext ()).isSome
+#guard (expFactSchema.replay mixedInput expAction wrongExpFact ()).isNone
+#guard (expFactSchema.replay mixedInput expAction bypassedSine ()).isNone
+
 private structure MixedSummary where
   reached : SeenVersion
   fact : Bound
