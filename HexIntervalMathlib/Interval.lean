@@ -78,7 +78,7 @@ def Raw.HullContains : Raw → Raw → ℝ → Prop
 /-- Mathematical membership in a canonical public interval. -/
 def Contains (interval : Hex.Interval) (x : ℝ) : Prop := interval.view.Contains x
 
-private theorem rawContains_normalize (raw : Raw) (x : ℝ) :
+theorem contains_normalize (raw : Raw) (x : ℝ) :
     raw.normalizeUnchecked.Contains x ↔ raw.Contains x := by
   cases raw with
   | empty => simp [Raw.Contains, Raw.normalizeUnchecked]
@@ -266,7 +266,7 @@ theorem contains_intersectWithin {limit : EndpointLimit}
     (checked : intersectWithin limit left right = .ready result) (x : ℝ) :
     result.Contains x ↔ left.Contains x ∧ right.Contains x := by
   simp only [Contains]
-  rw [view_intersectWithin_ready checked, rawContains_normalize]
+  rw [view_intersectWithin_ready checked, contains_normalize]
   exact rawContains_intersect left.view right.view x
 
 private theorem lowerContains_hull (left right : Lower) (x : ℝ) :
@@ -374,7 +374,7 @@ theorem contains_hullWithin {limit : EndpointLimit}
     (checked : hullWithin limit left right = .ready result) (x : ℝ) :
     result.Contains x ↔ left.view.HullContains right.view x := by
   simp only [Contains]
-  rw [view_hullWithin_ready checked, rawContains_normalize]
+  rw [view_hullWithin_ready checked, contains_normalize]
   exact rawContains_hull left.view right.view x
 
 private theorem rawContains_hull_left (left right : Raw) (x : ℝ) :
@@ -468,7 +468,7 @@ theorem contains_negWithin {limit : EndpointLimit} {input result : Hex.Interval}
     (checked : negWithin limit input = .ready result) (x : ℝ) :
     result.Contains x ↔ input.Contains (-x) := by
   simp only [Contains]
-  rw [view_negWithin_ready checked, rawContains_normalize]
+  rw [view_negWithin_ready checked, contains_normalize]
   exact rawContains_neg input.view x
 
 end Hex.Interval

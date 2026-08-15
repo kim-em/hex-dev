@@ -8,10 +8,11 @@ module
 
 
 public import HexIntervalMathlib.Interval
+public import HexIntervalMathlib.Addition
 
 public section
 
 /-!
 `HexIntervalMathlib` supplies Mathlib semantics and proof-facing theorems for
-the supported `Hex.Interval` operations.
+the supported `Hex.Interval` operations, including resource-checked addition.
 -/

@@ -7,7 +7,7 @@ theorems for interval operations and propagators. It depends on Mathlib and
 
 The current supported surface interprets public canonical intervals over `ℝ`
 and proves exact semantics for successful resource-checked intersection, hull,
-and negation. Propagator, provider, replay, and tactic modules remain experiments
+negation, and addition. Propagator, provider, replay, and tactic modules remain experiments
 and are not re-exported by the public umbrella. The user-facing tactic contract
 below is the release target, not a claim that the tactic is already supported.
 
@@ -127,6 +127,14 @@ theorem contains_hullWithin_right
 theorem contains_negWithin
     (h : negWithin limit I = .ready result) :
     result.Contains x ↔ I.Contains (-x)
+
+theorem contains_addWithin
+    (h : addWithin limit I J = .ready result) :
+    result.Contains x ↔ I.view.AddContains J.view x
+
+theorem add_mem_addWithin
+    (h : addWithin limit I J = .ready result) :
+    I.Contains x → J.Contains y → result.Contains (x + y)
 ```
 
 For two nonempty bounded raw inputs, `HullContains` is exactly
@@ -135,6 +143,14 @@ For two nonempty bounded raw inputs, `HullContains` is exactly
 the other input's membership predicate. Thus hull denotes the least interval
 selected by the outer cuts and can contain points in the gap between disjoint
 inputs; it is not their set union.
+
+`AddContains` characterizes the computed summed cuts. Empty is absorbing;
+otherwise it conjoins the sum lower cut and sum upper cut. A corresponding
+side is unbounded if either input side is unbounded, and a finite summed cut is
+strict if either contributor is strict. The successful image theorem consumes
+both source membership proofs. A representation-independent tightness theorem
+for the real Minkowski sum remains future work. Resource refusal has no
+membership semantics.
 
 The remaining target theorems include:
 
@@ -147,7 +163,6 @@ theorem not_mem_empty : ¬x ∈ᵢ .empty
 Each arithmetic operation has an image theorem. Representative shapes are:
 
 ```lean
-theorem mem_add : x ∈ᵢ I → y ∈ᵢ J → x + y ∈ᵢ add I J
 theorem mem_mul : x ∈ᵢ I → y ∈ᵢ J → x * y ∈ᵢ mul I J
 theorem mem_invAt : x ∈ᵢ I → x⁻¹ ∈ᵢ invAt p I
 theorem mem_divAt : x ∈ᵢ I → y ∈ᵢ J → x / y ∈ᵢ divAt p I J
@@ -359,10 +374,11 @@ theorem add_check_sound
     x ∈ᵢ I → y ∈ᵢ J → x + y ∈ᵢ out
 ```
 
-For a theorem whose output is already a transparent function of its inputs,
-the registration may apply `mem_add` directly and omit `payload`. A Taylor
-rule instead stores its polynomial degree, reduced argument, endpoint values,
-and remainder witness, then uses a checker theorem for those fields.
+For a transparent checked operation, the registration may recompute
+`addWithin` from its recorded limit and inputs, discharge the successful-result
+equation, and apply `add_mem_addWithin` without a separate certificate payload.
+A Taylor rule instead stores its polynomial degree, reduced argument, endpoint
+values, and remainder witness, then uses a checker theorem for those fields.
 
 The registration command validates the theorem's conclusion against the head
 symbol and argument mapping. It also rejects duplicate `RuleKey`s.

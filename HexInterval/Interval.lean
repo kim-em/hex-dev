@@ -14,7 +14,7 @@ public section
 # Public exact interval operations
 
 This module begins the supported arithmetic surface with exact intersection,
-hull, and negation.  The operations retain a resource-aware result: public
+hull, negation, and addition.  The operations retain a resource-aware result: public
 interval values do not remember the construction budget under which their
 endpoints were admitted, so a later comparison must preflight its own alignment
 work.
@@ -85,6 +85,38 @@ unnormalized so the supported wrapper preflights its final comparison. -/
         (hullLowerUnchecked leftLower rightLower)
         (hullUpperUnchecked leftUpper rightUpper)
 
+/-- Exact lower cut of a Minkowski sum. Either unbounded lower input makes the
+sum unbounded below; finite endpoint strictness is disjunction because the sum
+attains its lower endpoint exactly when both inputs attain theirs.
+
+This helper may align dyadic mantissas. Call it only after preflighting the
+finite endpoint pair with `CompareCost`. -/
+@[expose] def addLowerUnchecked : Lower → Lower → Lower
+  | .unbounded, _ | _, .unbounded => .unbounded
+  | .finite left leftStrict, .finite right rightStrict =>
+      .finite (left + right) (leftStrict || rightStrict)
+
+/-- Exact upper cut of a Minkowski sum. Either unbounded upper input makes the
+sum unbounded above; finite endpoint strictness is disjunction because the sum
+attains its upper endpoint exactly when both inputs attain theirs.
+
+This helper may align dyadic mantissas. Call it only after preflighting the
+finite endpoint pair with `CompareCost`. -/
+@[expose] def addUpperUnchecked : Upper → Upper → Upper
+  | .unbounded, _ | _, .unbounded => .unbounded
+  | .finite left leftStrict, .finite right rightStrict =>
+      .finite (left + right) (leftStrict || rightStrict)
+
+/-- Exact raw Minkowski-sum cuts after both finite endpoint additions have
+been preflighted. Empty is absorbing. The candidate remains unnormalized so
+the public wrapper checks its retained endpoint sizes and final comparison. -/
+@[expose] def addUnchecked : Raw → Raw → Raw
+  | .empty, _ | _, .empty => .empty
+  | .bounds leftLower leftUpper, .bounds rightLower rightUpper =>
+      .bounds
+        (addLowerUnchecked leftLower rightLower)
+        (addUpperUnchecked leftUpper rightUpper)
+
 /-- Exact raw image under negation.  Negation swaps the cuts and preserves
 their strictness. -/
 @[expose] def negUnchecked : Raw → Raw
@@ -131,6 +163,19 @@ private def hullCost? (limit : EndpointLimit) : Raw → Raw → Option CompareCo
       | some cost => some cost
       | none => upperCost? limit leftUpper rightUpper
 
+/-- The first finite endpoint addition refused by the Minkowski-sum preflight.
+`CompareCost.allowed` bounds both retained inputs and their exponent gap before
+`Dyadic.add` shifts a mantissa. A successful preflight bounds the temporary
+sum numerator by the larger input numerator plus the permitted shift and one
+carry bit. The eventual retained result is checked separately by
+`ofRawWithin`. -/
+private def addCost? (limit : EndpointLimit) : Raw → Raw → Option CompareCost
+  | .empty, _ | _, .empty => none
+  | .bounds leftLower leftUpper, .bounds rightLower rightUpper =>
+      match lowerCost? limit leftLower rightLower with
+      | some cost => some cost
+      | none => upperCost? limit leftUpper rightUpper
+
 /-- Exact set intersection with preflighted dyadic comparisons.  Refusal is
 distinct from the canonical empty result. -/
 def intersectWithin (limit : EndpointLimit)
@@ -165,6 +210,26 @@ theorem view_hullWithin_ready {limit : EndpointLimit}
     (h : hullWithin limit left right = .ready result) :
     result.view = (Raw.hullUnchecked left.view right.view).normalizeUnchecked := by
   unfold hullWithin at h
+  split at h
+  · contradiction
+  · exact view_ofRawWithin_ready h
+
+/-- Exact interval addition with allocation-safe dyadic endpoint sums.
+Empty is absorbing. Every finite endpoint pair is preflighted before addition;
+the raw result then crosses the checked canonical boundary, so refusal remains
+distinct from an empty sum. -/
+def addWithin (limit : EndpointLimit)
+    (left right : Hex.Interval) : BuildResult :=
+  match addCost? limit left.view right.view with
+  | some cost => .resourceLimit cost
+  | none => ofRawWithin limit (Raw.addUnchecked left.view right.view)
+
+/-- A successful addition exposes exactly the normalized Minkowski-sum cuts. -/
+theorem view_addWithin_ready {limit : EndpointLimit}
+    {left right result : Hex.Interval}
+    (h : addWithin limit left right = .ready result) :
+    result.view = (Raw.addUnchecked left.view right.view).normalizeUnchecked := by
+  unfold addWithin at h
   split at h
   · contradiction
   · exact view_ofRawWithin_ready h
