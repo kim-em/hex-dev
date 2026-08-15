@@ -73,6 +73,46 @@ class MaskLeanTests(unittest.TestCase):
                 source, provider.replace("8/9", "9/10")
             )
 
+    def test_fks2_family_requires_every_digest_and_tuple(self) -> None:
+        directory = tempfile.TemporaryDirectory()
+        self.addCleanup(directory.cleanup)
+        root = Path(directory.name)
+        source_dir = root / "source/PrimeNumberTheoremAnd/IEANTN/FKS2Tables"
+        provider_dir = root / "provider"
+        source_dir.mkdir(parents=True)
+        provider_dir.mkdir()
+        records = []
+        for shard in range(14):
+            row = f"⟨{shard}, {shard + 1}, 3/4, 5/6, 7/8⟩"
+            (source_dir / f"Table4ExtData_{shard:02}.lean").write_text(
+                f"def cells := [\n  {row}\n]\n", encoding="utf-8"
+            )
+            provider = provider_dir / f"PntFks2FamilyData{shard:02}.lean"
+            provider.write_text(f"def cells := [\n  {row}\n]\n", encoding="utf-8")
+            normalized = [row.replace(" ", "")]
+            records.append(
+                f'⟨{shard}, 1, "{inventory.fks_rows_digest(normalized)}"⟩'
+            )
+        aggregate = root / "family.lean"
+        aggregate.write_text("\n".join(records), encoding="utf-8")
+        old_counts = inventory.FKS2_SHARD_COUNTS
+        old_family = inventory.FKS2_FAMILY_PROVIDER
+        old_data = inventory.FKS2_FAMILY_DATA
+        old_probe = inventory.FKS2_PROBE_PROVIDER
+        inventory.FKS2_SHARD_COUNTS = tuple([1] * 14)
+        inventory.FKS2_FAMILY_PROVIDER = aggregate
+        inventory.FKS2_FAMILY_DATA = provider_dir
+        inventory.FKS2_PROBE_PROVIDER = provider_dir / "PntFks2FamilyData11.lean"
+        self.addCleanup(setattr, inventory, "FKS2_SHARD_COUNTS", old_counts)
+        self.addCleanup(setattr, inventory, "FKS2_FAMILY_PROVIDER", old_family)
+        self.addCleanup(setattr, inventory, "FKS2_FAMILY_DATA", old_data)
+        self.addCleanup(setattr, inventory, "FKS2_PROBE_PROVIDER", old_probe)
+        inventory.require_fks2_family_match(root / "source")
+        bad = provider_dir / "PntFks2FamilyData12.lean"
+        bad.write_text(bad.read_text().replace("7/8", "8/9"), encoding="utf-8")
+        with self.assertRaisesRegex(inventory.InventoryError, "shard 12 at cell 0"):
+            inventory.require_fks2_family_match(root / "source")
+
     def test_declaration_map_tracks_enclosing_declaration(self) -> None:
         masked = inventory.mask_lean(
             "theorem first : True := by\n  trivial\n\nexample : True := by\n  trivial\n"

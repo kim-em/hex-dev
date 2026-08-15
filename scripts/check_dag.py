@@ -32,6 +32,7 @@ UMBRELLA_BUILD_TARGETS = {
     "HexMvPolyMathlibProofProbe",
     "HexIntervalExperiment",
     "HexIntervalMathlibExperiment",
+    "HexIntervalPntFks2Local",
     "HexIntervalReplayProbe",
     "HexIntervalMathlibReplayProbe",
     "HexRealRootsMathlibReplayProbe",
