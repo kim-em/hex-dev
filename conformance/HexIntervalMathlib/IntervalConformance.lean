@@ -9,7 +9,8 @@ import HexIntervalMathlib
 /-!
 Conformance checks for the supported public interval semantics.  Computational
 shape/resource cases live in `HexInterval.Conformance`; this companion pins the
-ordinary-kernel meaning of every successful intersection, hull, and negation.
+ordinary-kernel meaning of every successful intersection, hull, addition, and
+negation.
 -/
 
 namespace Hex.IntervalMathlib.Conformance
@@ -59,6 +60,23 @@ theorem negMember {limit : Hex.Interval.EndpointLimit}
     result.Contains x ↔ input.Contains (-x) :=
   Hex.Interval.contains_negWithin checked x
 
+/-- A successful addition has exactly its independent summed lower and upper
+cut semantics, including empty absorption and unbounded sides. -/
+theorem addExact {limit : Hex.Interval.EndpointLimit}
+    {left right result : Hex.Interval} {x : ℝ}
+    (checked : Hex.Interval.addWithin limit left right = .ready result) :
+    result.Contains x ↔ left.view.AddContains right.view x :=
+  Hex.Interval.contains_addWithin checked x
+
+/-- Both source membership proofs are consumed by the arithmetic image
+theorem for successful interval addition. -/
+theorem addImage {limit : Hex.Interval.EndpointLimit}
+    {left right result : Hex.Interval} {x y : ℝ}
+    (checked : Hex.Interval.addWithin limit left right = .ready result)
+    (leftMember : left.Contains x) (rightMember : right.Contains y) :
+    result.Contains (x + y) :=
+  Hex.Interval.add_mem_addWithin checked leftMember rightMember
+
 /-- info: 'Hex.IntervalMathlib.Conformance.intersectMember' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms intersectMember
@@ -82,5 +100,13 @@ theorem negMember {limit : Hex.Interval.EndpointLimit}
 /-- info: 'Hex.IntervalMathlib.Conformance.negMember' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms negMember
+
+/-- info: 'Hex.IntervalMathlib.Conformance.addExact' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms addExact
+
+/-- info: 'Hex.IntervalMathlib.Conformance.addImage' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms addImage
 
 end Hex.IntervalMathlib.Conformance

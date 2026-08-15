@@ -135,6 +135,19 @@ private def atLeastOne : Hex.Interval :=
 private def closed23 : Hex.Interval := ready (finite 2 false 3 false)
 private def bridgeLeft : Hex.Interval := ready (finite 1 false 4 false)
 private def bridgeRight : Hex.Interval := ready (finite 3 false 12 false)
+private def openClosed01 : Hex.Interval := ready (finite 0 true 1 false)
+private def closedOpen23 : Hex.Interval := ready (finite 2 false 3 true)
+private def singletonOne : Hex.Interval := ready (finite 1 false 1 false)
+private def half : Dyadic := .ofOdd 1 1 (by decide)
+private def singletonHalf : Hex.Interval :=
+  ready (.bounds (.finite half false) (.finite half false))
+private def twoPow100 : Dyadic := .ofOdd 1 (-100) (by decide)
+private def widePower : Hex.Interval :=
+  match Hex.Interval.betweenWithin
+      { maxEndpointHeight := 128, maxAlignmentShift := 128 }
+      (d 1) false twoPow100 false with
+  | .ready interval => interval
+  | .resourceLimit _ => Hex.Interval.empty
 
 -- Public intersection is exact at tied open/closed cuts, absorbs empty, and
 -- retains independently unbounded ends.
@@ -165,6 +178,12 @@ private def bridgeRight : Hex.Interval := ready (finite 3 false 12 false)
 -- align a billion-bit exponent gap.
 private def farLower : Hex.Interval :=
   match Hex.Interval.aboveWithin
+      { maxEndpointHeight := 1000000100, maxAlignmentShift := 64 } far false with
+  | .ready interval => interval
+  | .resourceLimit _ => Hex.Interval.empty
+
+private def farUpper : Hex.Interval :=
+  match Hex.Interval.belowWithin
       { maxEndpointHeight := 1000000100, maxAlignmentShift := 64 } far false with
   | .ready interval => interval
   | .resourceLimit _ => Hex.Interval.empty
@@ -260,6 +279,103 @@ private def farLower : Hex.Interval :=
       bridgeLeft bridgeRight with
   | .ready _ => false
   | .resourceLimit cost => cost.alignmentShift == 2
+
+-- Addition uses the exact Minkowski endpoint sums. Closed endpoints are
+-- attained, while either strict contributor makes the corresponding result
+-- endpoint strict.
+#guard
+  match Hex.Interval.addWithin smallLimit closed01 closed23 with
+  | .ready interval => interval.view == finite 2 false 4 false
+  | .resourceLimit _ => false
+
+#guard
+  match Hex.Interval.addWithin smallLimit openClosed01 closedOpen23 with
+  | .ready interval => interval.view == finite 2 true 4 true
+  | .resourceLimit _ => false
+
+#guard
+  match Hex.Interval.addWithin smallLimit closedOpen23 openClosed01 with
+  | .ready interval => interval.view == finite 2 true 4 true
+  | .resourceLimit _ => false
+
+-- Opposite exponent orders exercise both alignment branches in `Dyadic.add`.
+#guard
+  match Hex.Interval.addWithin smallLimit singletonHalf singletonOne with
+  | .ready interval =>
+      interval.view == .bounds
+        (.finite ((d 3) >>> 1) false) (.finite ((d 3) >>> 1) false)
+  | .resourceLimit _ => false
+
+#guard
+  match Hex.Interval.addWithin smallLimit singletonOne singletonHalf with
+  | .ready interval =>
+      interval.view == .bounds
+        (.finite ((d 3) >>> 1) false) (.finite ((d 3) >>> 1) false)
+  | .resourceLimit _ => false
+
+-- Empty is absorbing. Independent unbounded ends propagate through the
+-- corresponding Minkowski cut, including the whole-line sum.
+#guard
+  match Hex.Interval.addWithin smallLimit Hex.Interval.empty closed01 with
+  | .ready interval => interval == Hex.Interval.empty
+  | .resourceLimit _ => false
+
+#guard
+  match Hex.Interval.addWithin smallLimit closed01 Hex.Interval.empty with
+  | .ready interval => interval == Hex.Interval.empty
+  | .resourceLimit _ => false
+
+#guard
+  match Hex.Interval.addWithin smallLimit atMostOne closed12 with
+  | .ready interval =>
+      interval.view == .bounds .unbounded (.finite (d 3) false)
+  | .resourceLimit _ => false
+
+#guard
+  match Hex.Interval.addWithin smallLimit atLeastOne closed01 with
+  | .ready interval =>
+      interval.view == .bounds (.finite (d 1) false) .unbounded
+  | .resourceLimit _ => false
+
+#guard
+  match Hex.Interval.addWithin smallLimit atMostOne atLeastOne with
+  | .ready interval => interval == Hex.Interval.whole
+  | .resourceLimit _ => false
+
+-- Endpoint addition refuses the billion-bit shift before `Dyadic.add` can
+-- allocate the aligned mantissa.
+#guard
+  match Hex.Interval.addWithin smallLimit closed12 farLower with
+  | .ready _ => false
+  | .resourceLimit cost => cost.alignmentShift == 1000000000
+
+-- With both lower cuts unbounded, the independently preflighted upper
+-- endpoint pair must still reject the same prohibited allocation.
+#guard
+  match Hex.Interval.addWithin smallLimit atMostOne farUpper with
+  | .ready _ => false
+  | .resourceLimit cost => cost.alignmentShift == 1000000000
+
+-- Input addition needs no shift and fits this tiny limit, but retaining the
+-- canonical result `2` exceeds its endpoint-height budget. This pins the
+-- separate checked output boundary after bounded temporary arithmetic.
+#guard
+  match Hex.Interval.addWithin
+      { maxEndpointHeight := 1, maxAlignmentShift := 0 }
+      singletonOne singletonOne with
+  | .ready _ => false
+  | .resourceLimit cost =>
+      cost.lower.exponentMagnitude == 1 && cost.upper.exponentMagnitude == 1
+
+-- Corresponding input endpoints require no alignment, but the two summed
+-- output endpoints are one hundred powers of two apart. The final checked
+-- canonicalization must reject that distinct output-comparison cost.
+#guard
+  match Hex.Interval.addWithin
+      { maxEndpointHeight := 256, maxAlignmentShift := 50 }
+      widePower widePower with
+  | .ready _ => false
+  | .resourceLimit cost => cost.alignmentShift == 100
 
 -- Negation swaps the endpoints and preserves openness; empty stays empty.
 #guard

@@ -360,7 +360,8 @@ lean_lib HexIntervalMathlibExperiment where
 
 @[default_target]
 lean_lib HexIntervalMathlib where
-  globs := #[`HexIntervalMathlib, `HexIntervalMathlib.Interval].map Glob.one
+  globs := #[`HexIntervalMathlib, `HexIntervalMathlib.Interval,
+    `HexIntervalMathlib.Addition].map Glob.one
 
 lean_lib HexIntervalReplayProbe where
   srcDir := "bench"

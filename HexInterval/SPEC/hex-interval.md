@@ -181,7 +181,8 @@ value's proof field.
 
 The initial supported slice exposes `view`, `empty`, `whole`, and endpoint-cost
 preflighted raw, singleton, one-sided, and finite constructors. The first
-supported operations are resource-checked intersection, hull, and negation.
+supported operations are resource-checked intersection, hull, negation, and
+addition.
 Their Mathlib companion proves exact set semantics for the complete cut language;
 the remaining arithmetic is promoted separately rather than being declared
 public merely because narrower experiment implementations exist. All public
@@ -197,6 +198,8 @@ tied endpoints, empty results, and either end unbounded. It also proves that a
 successful `hullWithin` has the exact selected-cut/interval-convex-closure
 meaning and contains both inputs; this is deliberately not set union. A
 successful `negWithin` contains `x` exactly when the input contains `-x`.
+Successful `addWithin` exposes the exact independently summed lower and upper
+Minkowski cuts, and its image theorem maps any two input members to their sum.
 Separately, the experiment form of the intersection theorem is installed as the
 generic `FactDomainSchema.proveMeet` boundary, and the transparent proof
 frontend uses it to close a weaker requested interval from a stronger
@@ -413,6 +416,7 @@ The supported first operation slice is:
 def intersectWithin : EndpointLimit → Interval → Interval → BuildResult
 def hullWithin      : EndpointLimit → Interval → Interval → BuildResult
 def negWithin       : EndpointLimit → Interval → BuildResult
+def addWithin       : EndpointLimit → Interval → Interval → BuildResult
 ```
 
 These names retain the budget because a public interval does not store the
@@ -421,33 +425,29 @@ different caller limits can otherwise allocate an exponent-alignment shift far
 larger than either stored mantissa. A refused comparison returns
 `BuildResult.resourceLimit`; it is never interpreted as an empty interval.
 Negation still takes a limit because its finite output endpoints and final
-canonical comparison cross the same public boundary.
+canonical comparison cross the same public boundary. Addition cannot be the
+previously sketched total `Interval → Interval → Interval`: core
+`Dyadic.add` aligns finite mantissas by their exponent gap, so inputs admitted
+under unrelated limits can request an arbitrarily large shift. `addWithin`
+preflights both finite endpoint pairs before either addition. When endpoint
+height is bounded by `H` and alignment by `S`, the temporary numerator is
+bounded by the larger input numerator plus `S` and one carry bit. The summed
+raw cuts then cross `ofRawWithin`, which separately checks retained endpoint
+height and their final crossed comparison.
 
 The public raw intersection and hull cut selectors, `intersectUnchecked`,
-`hullUnchecked`, and `negUnchecked` are related to the checked operations by
-successful-result and semantic theorems. Like `Raw.normalizeUnchecked`, they
+`hullUnchecked`, `negUnchecked`, and `addUnchecked` are related to the checked
+operations by successful-result and semantic theorems. Like
+`Raw.normalizeUnchecked`, they
 are decoder-level combinators: untrusted callers use the checked `Interval`
 operations above.
 
-The remaining target surface is:
-
-```lean
-namespace Hex.Interval
-
-def add        : Interval → Interval → Interval
-def sub        : Interval → Interval → Interval
-def mul        : Interval → Interval → Interval
-def invAt      : Precision → Interval → Interval
-def divAt      : Precision → Interval → Interval → Interval
-def pow        : Interval → Nat → Interval
-def abs        : Interval → Interval
-def min        : Interval → Interval → Interval
-def max        : Interval → Interval → Interval
-def split      : Interval → Dyadic → Interval × Interval
-def regularize : Precision → Interval → Interval
-
-end Hex.Interval
-```
+The remaining target surface includes subtraction, multiplication,
+precision-indexed reciprocal and division, powers, absolute value, min/max,
+splitting, and regularization. Their public signatures are fixed only after an
+allocation audit; no total API is promised for an operation that may align,
+compare, or enlarge arbitrary-precision endpoints. Subtraction in particular
+requires a checked `subWithin` boundary for the same reason as addition.
 
 For the initial dyadic backend, `Precision` is an alias for signed `Int` and
 the implementation reuses core `Dyadic.roundDown`, `roundUp`, `invAtPrec`, and
@@ -461,8 +461,10 @@ tests also check the following exactness rules.
 - `hullWithin` chooses the smaller lower cut and the larger upper cut. At equal
   endpoints it chooses closed if either input contains the endpoint.
 - `negWithin` swaps the ends and preserves their openness.
-- A finite endpoint of a sum is closed exactly when both contributing
-  endpoints are closed.
+- `addWithin` absorbs empty, adds corresponding finite endpoints, and retains
+  an unbounded side if either corresponding input side is unbounded. A finite
+  endpoint of a sum is closed exactly when both contributing endpoints are
+  closed.
 - After the empty-input short circuit, multiplication partitions both inputs
   by sign, enumerates finite corner and zero candidates, and tracks whether
   each extremum is attained. Zero is an attained extremum whenever either
@@ -3904,11 +3906,13 @@ their declared cost inside a scheduler bound.
   normalization.
 - `HexInterval/Canonical.lean`: sealed canonical values, views, and
   resource-safe smart constructors.
-- `HexInterval/Interval.lean`: supported resource-safe intersection, hull, and
-  negation, followed by future arithmetic, splitting, and regularization
+- `HexInterval/Interval.lean`: supported resource-safe intersection, hull,
+  negation, and addition, followed by future arithmetic, splitting, and regularization
   operations.
 - `HexIntervalMathlib/Interval.lean`: real-set semantics for the supported
-  public operations.
+  public construction, intersection, hull, and negation operations.
+- `HexIntervalMathlib/Addition.lean`: exact summed-cut semantics and the
+  successful addition image theorem.
 - `HexInterval/Program.lean`: node identifiers, SSA program, dependencies.
 - `HexInterval/Fact.lean`: facts, versions, provenance, contradiction checks.
 - `HexInterval/Action.lean`: requests, outcomes, suggestions, observations.
