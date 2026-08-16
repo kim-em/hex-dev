@@ -152,6 +152,7 @@ structure OfferView where
   key : OfferKey
   offerClass : OfferClass
   age : Nat
+  deriving DecidableEq
 
 /-! # Engine-owned frontier state -/
 

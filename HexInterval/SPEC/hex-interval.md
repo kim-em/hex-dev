@@ -3446,6 +3446,50 @@ allocation inside a callback. Production providers therefore need either a
 restricted bounded builder or an auditable
 declared-work protocol in addition to these output bounds.
 
+The first consumer of this interface is a generic bounded scoring adapter over
+the feedback-guided policy. Its immutable plan is an ordered array of
+`(provider family, provider version, local key, signed weight)` terms. Plan
+construction transactionally rejects duplicate addresses and separately bounds
+the term count, provider components, local keys, and absolute weights. Selection
+revalidates that plan against its own limits, so a plan built under a more
+generous configuration cannot bypass a stricter caller. It also requires the
+base and decorated offer counts to fit before traversing them, then requires
+the decorated offers to match the exact base view in order and field-for-field.
+It subsequently bounds features per offer and the conservative
+feature/term comparison count before scoring. Every decorated feature address
+and value is rechecked against independent component, key, and absolute-value
+limits before lookup or multiplication.
+Consequently the adapter's own configuration sizes and traversal counts are
+bounded. Equality of authentic offer keys may still traverse their engine-
+bounded nested structural lists; hostile hand-built keys need a separately
+bounded representation. The earlier limitation on work performed inside a
+provider callback remains.
+The decorator and scorer limits are independently valid configurations, so a
+caller must choose compatible bounds. A decorated view which exceeds a scorer
+bound fails closed with no selection. An adaptive learned score above the
+configured score bound is likewise rejected rather than silently clamped and
+allowed to flatten two different priorities.
+
+Scores use exact `Int` multiplication followed by explicit symmetric
+saturation, and saturating addition is applied in configured term order.
+Unknown emitted features and configured addresses missing from an offer are
+inert. Signed feature values and signed weights are both supported. Feature
+score is combined with the bounded adaptive learned score only after the
+fairness tier and staged semantic class have been fixed; it therefore cannot
+move a fresh action ahead of a fairness action or move a split ahead of cheap
+propagation. Age and stable decorated-view order remain the final tie-breakers.
+The chosen result is the exact aligned base `OfferView`, not a reconstruction,
+so ordinary engine revalidation remains authoritative. Conformance uses two
+unrelated providers to make width and goal/split data reverse otherwise-tied
+choices, and covers missing, unknown, negative, saturated, duplicate,
+oversized, and runtime-resource cases.
+
+Only `PolicyFeature.decorate` authenticates provider origin and uniqueness.
+The public featured-view structure remains useful for scoring experiments, but
+a hand-built view may fabricate or duplicate feature identities; those values
+can influence ordering after passing the explicit bounds, yet cannot alter the
+aligned base offer, authorize a transition, or enter proof evidence.
+
 A live Mathlib-free arbitrary-function canary presents two exponential
 forward contractors and one source split rule in the same frontier. The policy
 selects both fact improvements, then invokes the split probe, then returns its
