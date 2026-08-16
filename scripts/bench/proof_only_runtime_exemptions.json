@@ -218,8 +218,8 @@
   {
     "path": "lakefile.lean",
     "baseline_blob": "6dd80771ae2212333b2a9b925b52056e0037ff56",
-    "current_blob": "f1f86f8596ed6f3597788046e086abad0bce9173",
-    "reason": "Additionally registers the proof-only exact contraction-to-split conformance module alongside the isolated interval experiments; the factorization service target and executable dependency graph are unchanged."
+    "current_blob": "8e8fa300e9bc27e82b168e7f4cc3e24989994339",
+    "reason": "Additionally registers the proof-only exact contraction-to-split conformance module on top of the retained subtraction replay, staged policy, complete LogTables, PNT, and public interval registrations; it does not enter the factorization service target or change its executable dependency graph."
   },
   {
     "path": "HexBerlekamp/FactorTacticTests.lean",
