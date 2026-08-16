@@ -140,11 +140,14 @@ def preflightSubtraction (limit : EndpointLimit) (left right : Dyadic) :
   if !comparison.allowed limit then throw (.comparison comparison)
 
 def subtractionChecked (limit : EndpointLimit) (left right : Dyadic) :
-    Except WorkCost Dyadic := do
-  preflightSubtraction limit left right
-  let result := left - right
-  endpointChecked limit result
-  pure result
+    Except WorkCost Dyadic :=
+  match preflightSubtraction limit left right with
+  | .error cost => .error cost
+  | .ok _ =>
+      let result := left - right
+      match endpointChecked limit result with
+      | .error cost => .error cost
+      | .ok _ => .ok result
 
 def multiplicationAllowed (limit : EndpointLimit) (left right : Dyadic) : Bool :=
   let leftCost := EndpointCost.ofDyadic left

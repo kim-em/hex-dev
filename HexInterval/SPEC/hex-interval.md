@@ -1563,6 +1563,22 @@ band is weakened to `[0,1/4]`, and its ordinary theorem confirms that the
 watched output premise is load-bearing. Richer packages may add retries,
 instantiators, and split suggestions without changing this interface.
 
+The exact arithmetic package contributes its first replay schema through this
+same boundary. This is package-callback replay over
+`Experiment.DyadicInterval.Fact`, not a second supported interval-arithmetic
+API; the public resource-checked operation remains `Hex.Interval.subWithin`.
+The forward subtraction callback remains Mathlib-free and computes over the
+complete experimental dyadic cut language; its companion schema recomputes the
+successful proposal and proves the pointwise real subtraction law from the
+exact ordered pair of input facts. The live conformance case uses
+`x ∈ (1,+∞)` and `y ∈ (-∞,3]` to derive `x - y ∈ (-2,+∞)`, so both
+strictness and independent unboundedness are load-bearing. The generic proof
+emitter contains no arithmetic case. Weakening the left premise or adding a
+trailing schema-zero payload cell is rejected, and the accepted quote yields
+the ordinary theorem `1 < x → y ≤ 3 → -2 < x - y`. Further arithmetic
+schemas extend this package-owned pattern without introducing a
+rational-normalization dependency into propagation replay.
+
 The prefix resolver returns an exact fact together with its theorem for a
 requested `(node, version)`, and builds the rule's ordered input list by
 traversing the immutable `Action.inputs`. The rule transition consumes this
