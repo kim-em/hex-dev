@@ -244,6 +244,15 @@ PNT_EXP_UPPER_PROVIDER_ROW_RE = re.compile(
     r"\.(?P<relation>strict|weak),\s*(?P<exponent>\d+),\s*"
     r"(?P<additive>\d+),\s*(?P<target>\d+)⟩"
 )
+FKS2_NESTED_PROVIDER = (
+    REPO_ROOT / "HexInterval/Experiment/PntFks2Nested.lean"
+)
+FKS2_NESTED_PATH = "PrimeNumberTheoremAnd/IEANTN/FKS2.lean"
+FKS2_NESTED_DECLARATION = "theorem_6_2"
+FKS2_NESTED_ROW = (3605, 14, 3, 3, 11, 8, 2, 3, 1)
+FKS2_NESTED_SNIPPET = (
+    "show (0 : ℝ) < log 14 + log (log 14) - 1 from by interval_decide]"
+)
 
 
 class InventoryError(RuntimeError):
@@ -757,6 +766,58 @@ def require_pnt_exp_upper_match(
     if provider_rows != expected_rows:
         raise InventoryError(
             f"local positive-exp sourceRows differ: {provider_rows} != {expected_rows}"
+        )
+
+
+def fks2_nested_provider_row(provider_text: str) -> tuple[int, ...]:
+    """Read the literal source row for the theorem-6.2 nested-log premise."""
+    table = re.search(
+        r"\bdef\s+sourceRows\s*:\s*List\s+Certificate\s*:=\s*\["
+        r"(?P<body>.*?)\]",
+        provider_text,
+        re.DOTALL,
+    )
+    if table is None:
+        raise InventoryError("cannot locate the local FKS2 nested sourceRows table")
+    row = re.fullmatch(
+        r"\s*⟨⟨(?P<line>\d+)⟩,\s*(?P<input>\d+),\s*(?P<shift>\d+),\s*"
+        r"(?P<x_num>\d+),\s*(?P<x_den>\d+),\s*(?P<terms>\d+),\s*"
+        r"(?P<lower>\d+),\s*(?P<upper>\d+),\s*(?P<threshold>\d+)⟩\s*",
+        table.group("body"),
+    )
+    if row is None:
+        raise InventoryError("cannot parse the local FKS2 nested source row")
+    return tuple(int(row.group(name)) for name in (
+        "line", "input", "shift", "x_num", "x_den", "terms", "lower",
+        "upper", "threshold",
+    ))
+
+
+def require_fks2_nested_match(
+    records: list[dict[str, Any]], provider_text: str | None = None,
+) -> None:
+    """Tie the pinned theorem-6.2 snippet to its fixed local certificate."""
+    matches = [
+        record for record in records
+        if record.get("path") == FKS2_NESTED_PATH
+        and record.get("kind") == "tactic-occurrence"
+        and record.get("tactic") == "interval_decide"
+        and record.get("actual")
+        and record.get("declaration") == FKS2_NESTED_DECLARATION
+    ]
+    if len(matches) != 1:
+        raise InventoryError(
+            f"expected one FKS2 nested-log source site, found {len(matches)}"
+        )
+    record = matches[0]
+    if record.get("line") != FKS2_NESTED_ROW[0] \
+            or record.get("snippet") != FKS2_NESTED_SNIPPET:
+        raise InventoryError("committed FKS2 nested-log snippet differs from pinned source")
+    if provider_text is None:
+        provider_text = FKS2_NESTED_PROVIDER.read_text(encoding="utf-8")
+    if fks2_nested_provider_row(provider_text) != FKS2_NESTED_ROW:
+        raise InventoryError(
+            "local FKS2 nested sourceRows differs from the committed source snippet"
         )
 
 
@@ -1474,6 +1535,7 @@ def validate_inventory(
     require_dusart_exp_match(records)
     require_fks2_mu_match(records)
     require_pnt_exp_upper_match(records)
+    require_fks2_nested_match(records)
     if meta.get("counts") != counts:
         raise InventoryError(f"inventory counts disagree: {meta.get('counts')} != {counts}")
     for name, expected in EXPECTED.items():

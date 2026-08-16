@@ -325,6 +325,38 @@ class InventoryTests(unittest.TestCase):
         with self.assertRaisesRegex(inventory.InventoryError, "duplicate"):
             inventory.require_pnt_exp_upper_match(duplicate, provider)
 
+    def test_fks2_nested_snippet_matches_literal_provider_row(self) -> None:
+        record = {
+            "kind": "tactic-occurrence",
+            "tactic": "interval_decide",
+            "actual": True,
+            "path": inventory.FKS2_NESTED_PATH,
+            "line": 3605,
+            "declaration": inventory.FKS2_NESTED_DECLARATION,
+            "snippet": inventory.FKS2_NESTED_SNIPPET,
+        }
+        provider = """def sourceRows : List Certificate := [
+  ⟨⟨3605⟩, 14, 3, 3, 11, 8, 2, 3, 1⟩
+]
+"""
+        inventory.require_fks2_nested_match([record], provider)
+
+        wrong_source = copy.deepcopy(record)
+        wrong_source["snippet"] = wrong_source["snippet"].replace("log 14", "log 15", 1)
+        with self.assertRaisesRegex(inventory.InventoryError, "differs from pinned source"):
+            inventory.require_fks2_nested_match([wrong_source], provider)
+
+        with self.assertRaisesRegex(inventory.InventoryError, "sourceRows differs"):
+            inventory.require_fks2_nested_match(
+                [record], provider.replace(", 1⟩", ", 5⟩"),
+            )
+
+        with self.assertRaisesRegex(inventory.InventoryError, "found 0"):
+            inventory.require_fks2_nested_match([], provider)
+
+        with self.assertRaisesRegex(inventory.InventoryError, "found 2"):
+            inventory.require_fks2_nested_match([record, copy.deepcopy(record)], provider)
+
     def test_committed_inventory_is_valid_but_not_yet_classified(self) -> None:
         inventory.check_inventory(self.fixture, require_classified=False)
         with self.assertRaisesRegex(inventory.InventoryError, "pending decisions"):
