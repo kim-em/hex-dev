@@ -503,6 +503,8 @@ lean_lib HexConformance where
     ++ #[`HexInterval.MinMaxConformance,
       `HexIntervalMathlib.MinMaxConformance].map Glob.one
 
+    ++ #[`HexIntervalMathlib.ExactBranchConformance].map Glob.one
+
 -- The expensive complete-family Mathlib proofs are owned only by this
 -- non-default library. They are excluded from both merge-gating
 -- `HexIntervalMathlibExperiment` and `HexConformance`.

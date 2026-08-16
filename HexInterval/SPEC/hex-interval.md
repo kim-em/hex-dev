@@ -2200,6 +2200,18 @@ mathematically requires branching, a nested split, a child-local
 instantiation, a sibling-reference attack, a non-interior repeated split,
 and per-leaf fuel exhaustion with no theorem emitted.
 
+The concrete dyadic interval canary now composes the useful pieces across a
+post-contraction split. A live backward centered-function contractor narrows
+the source from the whole line to `[1/4,3/4]`; the exact splitter then produces
+`[1/4,1/2]` and `(1/2,3/4]`. The left child uses its closed interval assumption
+to prove `|x - 1/2| ∈ [0,1/4]`. The right child uses its strict lower cut together
+with a separately modeled identity-node fact `x ≤ 1/2` to derive exact empty,
+then closes only through the package-owned refutation schema. The root callback
+replays the retained backward event to recover the contracted parent proof
+before applying the package-owned coverage theorem. The generic `BranchProof`
+fold binds that proof to the live post-run snapshot and exact child inputs;
+mutating either child trace to name its sibling's interval is rejected.
+
 ### Proof-producing frontend
 
 The fixed canary also requires a live session with no dropped work and an exact
