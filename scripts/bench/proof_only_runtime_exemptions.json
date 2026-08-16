@@ -236,8 +236,8 @@
   {
     "path": "lakefile.lean",
     "baseline_blob": "6dd80771ae2212333b2a9b925b52056e0037ff56",
-    "current_blob": "95a55634a8b10cd0c7bb08d4b30f333f23ce2f16",
-    "reason": "Additionally registers the isolated Mathlib-free bounded feature-scoring policy experiment and its conformance module; the factorization service target and executable dependency graph are unchanged."
+    "current_blob": "6f4ad627fd141e71916da6a287d0743d93c30197",
+    "reason": "Additionally registers the isolated Mathlib-free bounded feature-scoring policy experiment and its conformance module on top of the retained PolicyFeature, adaptive policy, exact-branch proof, subtraction replay, staged policy, complete LogTables, PNT, and public interval registrations; neither enters the factorization service target or changes its executable dependency graph."
   },
   {
     "path": "HexBerlekamp/FactorTacticTests.lean",
