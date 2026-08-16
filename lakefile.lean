@@ -308,6 +308,7 @@ lean_lib HexIntervalExperiment where
     `HexInterval.Experiment.PolicySession,
     `HexInterval.Experiment.TargetRun,
     `HexInterval.Experiment.StagedPolicy,
+    `HexInterval.Experiment.AdaptivePolicy,
     `HexInterval.Experiment.BranchStart,
     `HexInterval.Experiment.BranchTree,
     `HexInterval.Experiment.BranchProof,

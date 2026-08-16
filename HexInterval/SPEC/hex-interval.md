@@ -3379,6 +3379,37 @@ changes, no-change and inapplicable outcomes,
 extensions, failures, dismissals, and rejected selections. These counters are
 diagnostic inputs for later scoring, not evidence.
 
+The first feedback-guided variant keeps the same function- and
+representation-independent stages but accumulates observations at a stable
+engine-owned application or equality site. Its bounded integer score rewards
+engine-derived installed fact-version changes relative to bounded,
+package-reported deterministic arithmetic, traversal, proof-node, or
+equality-narrowing work. That reported work is only a search hint and is not
+proof evidence or an independently measured engine cost. The record also
+retains the last complete invocation snapshot. A repeated `noChange` on that
+exact snapshot subtracts a configurable penalty, while changed input versions
+reset that consecutive fixed-point penalty and receive at least the untried
+optimism score.
+Thus useful history survives an ordinary wake-up without letting an obsolete
+fixed point suppress newly eligible work. The shipped coefficients are covered
+by conformance: one unit-cost improvement outranks an untried peer, a repeated
+fixed point falls below it, and a changed-version wake-up reuses the stable gain.
+The fixed-point penalty applies only when an already observed exact invocation
+is offered again without a snapshot change. Ordinary wake-ups change the
+snapshot, so this first policy promotes historically productive sites but does
+not generally demote unproductive sites across successive input versions.
+
+The feedback table has an explicit deterministic record bound and evicts the
+least recently updated stable site when full. Instantiation and split offers
+retain their staged rank but do not yet have feedback records; invocation, retry, and
+equality work do. Offers at or beyond the configured fairness age form the first
+tier. On the normative finite frontier, where selection consumes an offer, this
+eventually samples every continuously eligible item; stable offer order remains
+the last tie-break. This policy still does not interpret interval width, target
+distance, mathematical function, or package key. It tests the upgradeable
+feedback seam before domain-specific potential features are admitted through an
+equally bounded interface.
+
 A live Mathlib-free arbitrary-function canary presents two exponential
 forward contractors and one source split rule in the same frontier. The policy
 selects both fact improvements, then invokes the split probe, then returns its
