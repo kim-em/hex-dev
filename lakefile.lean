@@ -309,6 +309,7 @@ lean_lib HexIntervalExperiment where
     `HexInterval.Experiment.TargetRun,
     `HexInterval.Experiment.StagedPolicy,
     `HexInterval.Experiment.AdaptivePolicy,
+    `HexInterval.Experiment.PolicyFeature,
     `HexInterval.Experiment.BranchStart,
     `HexInterval.Experiment.BranchTree,
     `HexInterval.Experiment.BranchProof,
@@ -504,7 +505,8 @@ lean_lib HexConformance where
     ++ #[`HexInterval.MinMaxConformance,
       `HexIntervalMathlib.MinMaxConformance].map Glob.one
 
-    ++ #[`HexIntervalMathlib.ExactBranchConformance].map Glob.one
+    ++ #[`HexInterval.PolicyFeatureConformance,
+      `HexIntervalMathlib.ExactBranchConformance].map Glob.one
 
 -- The expensive complete-family Mathlib proofs are owned only by this
 -- non-default library. They are excluded from both merge-gating
