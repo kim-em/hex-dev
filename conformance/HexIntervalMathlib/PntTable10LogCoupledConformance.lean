@@ -20,6 +20,7 @@ mutations all reject without producing a draft or retry.
 namespace Hex.IntervalMathlib.PntTable10LogCoupledConformance
 
 open Lean Elab Tactic Meta
+open Hex.Interval
 open Hex.Interval.Experiment
 open Propagator PolicySession SemanticReplay ChronologicalReplay ProofEmitter
 open Frontend ProofFrontend ProofRegistry PntTable10LogCoupled

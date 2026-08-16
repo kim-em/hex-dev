@@ -22,6 +22,7 @@ row.  The generic proof frontend is exercised at representative row 29.
 namespace Hex.IntervalMathlib.PntLogNaturalConformance
 
 open Lean Elab Tactic Meta
+open Hex.Interval
 open Hex.Interval.Experiment
 open Propagator PolicySession SemanticReplay ChronologicalReplay ProofEmitter
 open Frontend ProofFrontend ProofRegistry PntLogNatural

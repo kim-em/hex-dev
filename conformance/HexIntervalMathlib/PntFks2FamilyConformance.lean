@@ -19,6 +19,7 @@ representative cells from both sides of shard boundaries.
 
 namespace Hex.IntervalMathlib.PntFks2FamilyConformance
 
+open Hex.Interval
 open Hex.Interval.Experiment
 open Propagator PolicySession SemanticReplay ChronologicalReplay
 open Frontend PntFks2Family

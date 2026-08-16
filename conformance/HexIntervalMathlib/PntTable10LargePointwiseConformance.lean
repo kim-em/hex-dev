@@ -19,6 +19,7 @@ Endpoint and coordinate mutations reject without a draft or retry.
 namespace Hex.IntervalMathlib.PntTable10LargePointwiseConformance
 
 open Lean Elab Tactic Meta
+open Hex.Interval
 open Hex.Interval.Experiment
 open Propagator PolicySession SemanticReplay ChronologicalReplay ProofEmitter
 open Frontend ProofFrontend ProofRegistry PntTable10LargePointwise

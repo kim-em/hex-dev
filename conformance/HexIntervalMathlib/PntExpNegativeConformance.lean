@@ -22,6 +22,7 @@ run through the same bounded sixth-power provider; the tight representative
 namespace Hex.IntervalMathlib.PntExpNegativeConformance
 
 open Lean Elab Tactic Meta
+open Hex.Interval
 open Hex.Interval.Experiment
 open Propagator PolicySession SemanticReplay ChronologicalReplay ProofEmitter
 open Frontend ProofFrontend ProofRegistry PntExpNegative
@@ -204,8 +205,8 @@ theorem closeRepresentative
 
 private def sourceExpr (value : Source) : Expr :=
   mkApp2 (mkConst ``Source.mk) (mkNatLit value.sourceIndex) (mkNatLit value.sixths)
-private def upperExpr (value : Upper) : Expr :=
-  mkApp3 (mkConst ``Upper.mk) (mkNatLit value.sourceIndex)
+private def upperExpr (value : PntExpNegative.Upper) : Expr :=
+  mkApp3 (mkConst ``PntExpNegative.Upper.mk) (mkNatLit value.sourceIndex)
     (mkNatLit value.numerator) (mkNatLit value.scale)
 private def boundExpr : Bound → Expr
   | .all => mkConst ``Bound.all

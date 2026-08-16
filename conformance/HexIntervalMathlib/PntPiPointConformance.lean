@@ -20,6 +20,7 @@ proved `Real.pi_lt_d2`; no Chudnovsky or LeanCert theorem is imported.
 namespace Hex.IntervalMathlib.PntPiPointConformance
 
 open Lean Elab Tactic Meta
+open Hex.Interval
 open Hex.Interval.Experiment
 open Propagator PolicySession SemanticReplay ChronologicalReplay ProofEmitter
 open Frontend ProofFrontend ProofRegistry PntPiPoint

@@ -21,6 +21,7 @@ that the un-margined endpoint inequality is false.
 namespace Hex.IntervalMathlib.PntTable10ShardConformance
 
 open Lean Elab Tactic Meta
+open Hex.Interval
 open Hex.Interval.Experiment
 open Propagator PolicySession SemanticReplay ChronologicalReplay ProofEmitter
 open Frontend ProofFrontend ProofRegistry PntTable10Shard
