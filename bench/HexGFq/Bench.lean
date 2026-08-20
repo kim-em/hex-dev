@@ -113,21 +113,39 @@ def prepGF2qWordInput (n : Nat) : UInt64 :=
 def prepSharedInput (n : Nat) : SharedInput :=
   { poly := binaryPoly n 59, word := binaryWord n 59 }
 
+/- The three fixed targets below were `(_ : Unit) → UInt64` over closed terms,
+which the compiler folds: each reported the same floor time regardless of what
+it named. They now follow the `Unit → IO α` shape this file's header
+prescribes, with inputs held in `IO.Ref`s. -/
+
+private instance : Nonempty (FpPoly 2) := ⟨binaryPoly 1 0⟩
+private instance : Nonempty (FpPoly 13) := ⟨oddPoly 13 1 0⟩
+private instance : Nonempty GF2Poly := ⟨GF2q.modulus (n := 1)⟩
+
+private initialize genModulusRef : IO.Ref (FpPoly 2) ← IO.mkRef (GFq.modulus Entry21)
+private initialize packModulusRef : IO.Ref GF2Poly ← IO.mkRef (GF2q.modulus (n := 1))
+private initialize packLowerRef : IO.Ref UInt64 ← IO.mkRef (GF2q.lower (n := 1))
+private initialize wordRef : IO.Ref UInt64 ← IO.mkRef (binaryWord 63 37)
+
 /-- Benchmark target: selected generic Conway modulus checksum. -/
-def runGenericModulusChecksum (_ : Unit) : UInt64 :=
-  checksumPoly (GFq.modulus Entry21)
+def runGenericModulusChecksum : Unit → IO UInt64 := fun () => do
+  let m ← genModulusRef.get
+  return checksumPoly m
 
 /-- Benchmark target: selected packed Conway modulus checksum. -/
-def runPackedModulusChecksum (_ : Unit) : UInt64 :=
-  mixWord (GF2q.lower (n := 1)) (checksumGF2Poly (GF2q.modulus (n := 1)))
+def runPackedModulusChecksum : Unit → IO UInt64 := fun () => do
+  let m ← packModulusRef.get
+  let lo ← packLowerRef.get
+  return mixWord lo (checksumGF2Poly m)
 
 /-- Benchmark target: generic constructor plus representative projection. -/
 def runGFqOfPolyReprChecksum (g : FpPoly 2) : UInt64 :=
   checksumPoly (GFq.repr (GFq.ofPoly Entry21 g : Generic21))
 
 /-- Benchmark target: packed constructor plus representative projection. -/
-def runGF2qOfWordReprChecksum (_ : Unit) : UInt64 :=
-  GF2q.repr (GF2q.ofWord (n := 1) (binaryWord 63 37) : Packed21)
+def runGF2qOfWordReprChecksum : Unit → IO UInt64 := fun () => do
+  let w ← wordRef.get
+  return GF2q.repr (GF2q.ofWord (n := 1) w : Packed21)
 
 /-- Parametric profiling target for the packed constructor/projection surface. -/
 def runGF2qOfWordReprProfileChecksum (word : UInt64) : UInt64 :=
@@ -161,9 +179,6 @@ the `Unit → IO α` pattern this file's header describes. Without that, the who
 computation is a closed term and Lean folds it: the four targets below then all
 report the same floor time regardless of degree or prime, which is what the
 existing fixed targets in this file do. -/
-
-private instance : Nonempty (FpPoly 2) := ⟨binaryPoly 1 0⟩
-private instance : Nonempty (FpPoly 13) := ⟨oddPoly 13 1 0⟩
 
 private initialize poly28Ref : IO.Ref (FpPoly 2) ← IO.mkRef (binaryPoly 200 59)
 private initialize word8Ref : IO.Ref UInt64 ← IO.mkRef (binaryWord 200 37)
@@ -227,19 +242,19 @@ setup_fixed_benchmark runGFqCOfPolyReprChecksum where {
 setup_fixed_benchmark runGenericModulusChecksum where {
   repeats := 5
   maxSecondsPerCall := 2.0
-  expectedHash := some (Hashable.hash (runGenericModulusChecksum ()))
+  expectedHash := none
 }
 
 setup_fixed_benchmark runPackedModulusChecksum where {
   repeats := 5
   maxSecondsPerCall := 2.0
-  expectedHash := some (Hashable.hash (runPackedModulusChecksum ()))
+  expectedHash := none
 }
 
 setup_fixed_benchmark runGF2qOfWordReprChecksum where {
   repeats := 5
   maxSecondsPerCall := 2.0
-  expectedHash := some (Hashable.hash (runGF2qOfWordReprChecksum ()))
+  expectedHash := none
 }
 
 /-

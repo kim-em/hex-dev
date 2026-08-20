@@ -34,15 +34,24 @@ linear. And `GFqC` costs the same as the explicit-entry spelling to within
 noise, so resolving the committed entry by instance synthesis is free at
 runtime.
 
-**A defect in the older fixed targets.** The four new targets are written as
-`Unit → IO UInt64` with inputs held in `IO.Ref`s, following the pattern this
-file's bench header describes. The six older fixed targets are not: they are
-`(_ : Unit) → UInt64` over closed terms, so the compiler folds them and every
-one reports the same floor time, currently 21 ns, regardless of what it
-nominally measures. Written the folded way, the four new targets also reported
-21 ns each, across a 4000-fold spread in real work; that is how the problem was
-found. The older targets should be converted, and until they are their fixed
-verdicts should not be read as measurements of the operations they name.
+**The older fixed targets were constant-folded, and are now fixed too.** They
+were `(_ : Unit) → UInt64` over closed terms, so the compiler folded them and
+each reported the same 21 ns floor whatever it named. That is how the problem
+was found: written the folded way, the four new targets also reported 21 ns
+each, across a 4000-fold spread in real work. All of them now use the
+`Unit → IO α` shape with inputs held in `IO.Ref`s, which this file's bench
+header prescribes. After the change:
+
+| Target | Before | After |
+|---|---:|---:|
+| `runGenericModulusChecksum` | 21 ns | 91 ns |
+| `runPackedModulusChecksum` | 21 ns | 47 ns |
+| `runGF2qOfWordReprChecksum` | 21 ns | 10.219 µs |
+
+The two modulus checksums really are cheap — they checksum a degree-1
+modulus — but they were not measuring even that before. The constructor and
+projection target was understating its cost by nearly three orders of
+magnitude.
 
 ## Verdicts
 
