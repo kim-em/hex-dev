@@ -196,9 +196,7 @@ libraries:
   HexGF2:
     deps: [HexPoly, HexBasic]
     mathlib: false
-    # Phase 7 awaits HexManual/Tutorials/AESField.lean, the tutorial
-    # PLAN/Phase7.md anchors to this library.
-    done_through: 6
+    done_through: 7
     status: active
     phase4:
       comparators:

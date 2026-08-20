@@ -36,6 +36,7 @@ import HexManual.Chapters.HexRCF
 import HexManual.Chapters.HexNumberField
 import HexManual.Chapters.HexNumberFieldTower
 -- Tutorials (application-first capstone pages, see SPEC/tutorials.md).
+import HexManual.Tutorials.AESField
 import HexManual.Tutorials.Coppersmith
 
 open Verso.Genre Manual
@@ -113,6 +114,8 @@ tutorials here are application-first: each leads with a problem a reader
 already cares about and shows the libraries carrying a recognizable
 end-to-end workflow, with every code snippet checked as part of this
 build.
+
+{include 2 HexManual.Tutorials.AESField}
 
 {include 2 HexManual.Tutorials.Coppersmith}
 
