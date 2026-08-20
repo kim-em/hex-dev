@@ -69,7 +69,18 @@ theorem reduceMod_eq_self_of_degree_lt (f g : FpPoly p) :
 def IsReduced (f : FpPoly p) (g : FpPoly p) : Prop :=
   ∃ h : FpPoly p, g = reduceMod f h
 
-/-- Executable quotient elements represented by canonical reduced polynomials. -/
+/-- Executable quotient elements, carrying the reducedness invariant in the type.
+
+A value of this type is a polynomial *together with* a proof that it lies in the
+image of `reduceMod f`, so a raw `FpPoly p` cannot be supplied where one of these
+is expected.
+
+That representative is the canonical one for its residue class only when `p` is
+prime, which is what makes `reduceMod` a genuine remainder; see
+`isReduced_iff_degree_lt`. For composite `p` the division step divides by a
+leading coefficient that need not be a unit, `reduceMod` is then not a canonical
+form, and two values of this type can represent the same class. Every ring
+operation and every canonicality result below assumes `ZMod64.PrimeModulus p`. -/
 abbrev PolyQuotient (f : FpPoly p) (_hf : 0 < FpPoly.degree f) :=
   { g : FpPoly p // IsReduced f g }
 
@@ -137,6 +148,23 @@ variable [ZMod64.PrimeModulus p]
   rcases x.2 with ⟨g, hx⟩
   simpa [repr, hx, IsReduced, reduceMod, FpPoly.degree, DensePoly.mod_eq_divMod]
     using DensePoly.mod_degree_lt_of_pos_degree g f hf
+
+/-- Reducedness is exactly a degree bound, so the representative a
+{name}`PolyQuotient` stores is the unique one of its residue class.
+
+This is the theorem behind the "equality is equality of canonical
+representatives" contract, and it is where primality is load-bearing: the
+right-to-left direction needs `reduceMod` to fix every polynomial below the
+modulus, which fails when the leading coefficient of `f` is not a unit. -/
+theorem isReduced_iff_degree_lt {f : FpPoly p} (hf : 0 < FpPoly.degree f)
+    (g : FpPoly p) :
+    IsReduced f g ↔ FpPoly.degree g < FpPoly.degree f := by
+  constructor
+  · rintro ⟨h, rfl⟩
+    simpa [IsReduced, reduceMod, FpPoly.degree, DensePoly.mod_eq_divMod]
+      using DensePoly.mod_degree_lt_of_pos_degree h f hf
+  · intro hdeg
+    exact ⟨g, (reduceMod_eq_self_of_degree_lt f g hdeg).symm⟩
 
 /-- Applying {name}`reduceMod` to a reduced representative is a no-op. -/
 @[simp, grind =] theorem reduceMod_idem (f : FpPoly p) (g : FpPoly p) :

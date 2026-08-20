@@ -23,11 +23,21 @@ API.
   `n+1 ↦ pred + 1` recursion is forbidden.
 - `Lean.Grind.CommRing (PolyQuotient p f hf)` instance
 
-Representation choice: the stored representative is always canonical.
-Callers do not manage reduction manually; `ofPoly` and all ring
-operations normalize through `reduceMod`. Equality of quotient elements
-is therefore equality of canonical representatives, not a separate
-setoid-style relation.
+Representation choice: the stored representative is canonical, and the
+type says so — `PolyQuotient` is a subtype carrying `IsReduced`, so a raw
+`FpPoly` cannot be passed where a quotient element is expected. Callers
+do not manage reduction manually; `ofPoly` and all ring operations
+normalize through `reduceMod`. Equality of quotient elements is therefore
+equality of canonical representatives, not a separate setoid-style
+relation.
+
+Canonicality requires `p` prime, and the operations require it too. The
+`PolyQuotient` type itself asks only for `ZMod64.Bounds p`, but at
+composite `p` the long-division step divides by a leading coefficient
+that need not be a unit, `reduceMod` is not a canonical form, and two
+values can represent one residue class. `isReduced_iff_degree_lt` states
+the canonicality contract under `ZMod64.PrimeModulus p`, which is the
+only regime this library supports.
 
 This does NOT require `f` to be irreducible — the quotient is always a
 ring. When `f` is irreducible, the same underlying representation
