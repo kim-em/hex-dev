@@ -269,9 +269,7 @@ abbrev ReducedRep (f : Hex.FpPoly p) : Type :=
 /-- The executable finite-field wrapper is equivalent to its canonical reduced
 polynomial representatives. -/
 def reducedRepEquiv :
-    HexGF2Mathlib.TypeEquiv
-      (Hex.GFqField.FiniteField f hf hp hirr)
-      (ReducedRep f) where
+    Hex.GFqField.FiniteField f hf hp hirr ≃ ReducedRep f where
   toFun x := ⟨Hex.GFqField.repr x, Hex.GFqField.degree_repr_lt_degree x⟩
   invFun x := Hex.GFqField.ofPoly f hf hp hirr x.1
   left_inv := by
@@ -289,9 +287,7 @@ positive-degree hypothesis is needed for the decoder's degree bound (see
 `FpPoly.ofIndexBelowDegree_degree_lt`); it is supplied at every call site by the
 nonconstant-modulus assumption. -/
 def reducedRepFinEquiv (f : Hex.FpPoly p) (hf : 0 < Hex.FpPoly.degree f) :
-    HexGF2Mathlib.TypeEquiv
-      (ReducedRep f)
-      (Fin (p ^ Hex.FpPoly.degree f)) where
+    ReducedRep f ≃ Fin (p ^ Hex.FpPoly.degree f) where
   toFun x :=
     ⟨FpPoly.coeffIndex (Hex.FpPoly.degree f) x.1,
       FpPoly.coeffIndex_lt_of_degree_lt x.2⟩
@@ -308,13 +304,14 @@ def reducedRepFinEquiv (f : Hex.FpPoly p) (hf : 0 < Hex.FpPoly.degree f) :
 
 /-- Generic finite-field elements are equivalent to the expected finite index
 type. -/
-noncomputable def finEquiv :
+def finEquiv :
     Hex.GFqField.FiniteField f hf hp hirr ≃
       Fin (p ^ Hex.FpPoly.degree f) :=
-  HexGF2Mathlib.TypeEquiv.toEquiv <|
-    HexGF2Mathlib.TypeEquiv.trans reducedRepEquiv (reducedRepFinEquiv f hf)
+  reducedRepEquiv.trans (reducedRepFinEquiv f hf)
 
 /-- The generic executable finite-field wrapper is finite. -/
+-- `noncomputable`: `p ^ degree f` elements is not something to enumerate
+-- by accident. `finEquiv` above is computable.
 noncomputable instance fintype :
     Fintype (Hex.GFqField.FiniteField f hf hp hirr) :=
   Fintype.ofEquiv (Fin (p ^ Hex.FpPoly.degree f)) finEquiv.symm
