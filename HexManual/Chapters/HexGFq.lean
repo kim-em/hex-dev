@@ -194,7 +194,7 @@ certificate, never by {tactic}`native_decide`. The degree-one case is small
 enough to prove by exhausting the two monic linear polynomials over
 `𝔽₂`:
 
-{docstring Hex.Conway.packedGF2Entry_2_1_irreducible}
+{docstring Hex.GFq.packedGF2Entry_2_1_irreducible}
 
 Higher-degree committed entries are certified the same way through the
 `HexGF2` certificate checker. Because the check runs at elaboration time,
