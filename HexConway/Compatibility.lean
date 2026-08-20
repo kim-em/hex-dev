@@ -7,6 +7,7 @@ Authors: Kim Morrison
 import HexConway.Api
 import HexPolyFp.ModCompose
 import HexPolyFp.Frobenius
+import HexPolyFp.QuotientCompose
 
 /-!
 Tier 2: compatibility of the committed Conway entries across the subfield
@@ -120,6 +121,85 @@ abbrev Compatible (p m n : Nat) [ZMod64.Bounds p] [ZMod64.PrimeModulus p]
     (hm : SupportedEntry p m) (hn : SupportedEntry p n) : Prop :=
   compatCheck (conwayPoly p m hm) (conwayPoly p n hn)
     (conwayPoly_monic p n hn) m (n / m) = true
+
+/-- The committed modulus has positive degree, in the `degree?.getD` spelling
+the quotient type is indexed by. `conwayPoly_nonconstant` says the same thing
+through `FpPoly.degree`; the two are definitionally equal, but instance search
+on `Quotient` wants this shape. -/
+theorem conwayPoly_degree_pos (p n : Nat) [ZMod64.Bounds p]
+    (hn : SupportedEntry p n) :
+    0 < (conwayPoly p n hn).degree?.getD 0 :=
+  conwayPoly_nonconstant p n hn
+
+/-! # What compatibility says about field elements
+
+The `Bool` above is what `decide` can run. This section says what it means:
+the norm really is an element of `F_p[x] / (C(p, n))`, and `C(p, m)` really
+vanishes on it.
+-/
+
+/-- The generator of the canonical degree-`m` subfield of
+`F_p[x] / (C(p, n))`, as an element of the quotient rather than as a
+representative: the class of the norm of `x`. -/
+def subfieldGen (p m n : Nat) [ZMod64.Bounds p] [ZMod64.PrimeModulus p]
+    (hn : SupportedEntry p n) :
+    FpPoly.Quotient (conwayPoly p n hn) (conwayPoly_monic p n hn)
+      (conwayPoly_degree_pos p n hn) :=
+  FpPoly.Quotient.reduce
+    (normX (conwayPoly p n hn) (conwayPoly_monic p n hn) m (n / m))
+
+/--
+The subfield generator is a root of the smaller Conway polynomial.
+
+This is compatibility as a statement about field elements: evaluating
+`C(p, m)` at {name}`Hex.Conway.subfieldGen` in `F_p[x] / (C(p, n))` gives zero.
+The `Bool`-valued {name}`Hex.Conway.Compatible` is the computation; this is
+what the computation establishes, and it is the well-definedness input a
+subfield embedding needs.
+-/
+theorem eval_conwayPoly_subfieldGen_eq_zero
+    {p m n : Nat} [ZMod64.Bounds p] [ZMod64.PrimeModulus p]
+    (hm : SupportedEntry p m) (hn : SupportedEntry p n)
+    (hcompat : Compatible p m n hm hn) :
+    FpPoly.Quotient.Internal.eval
+        (g := conwayPoly p n hn) (hmonic := conwayPoly_monic p n hn)
+        (hg_pos := conwayPoly_degree_pos p n hn)
+        (conwayPoly p m hm) (subfieldGen p m n hn) =
+      FpPoly.Quotient.zero (g := conwayPoly p n hn)
+        (hmonic := conwayPoly_monic p n hn)
+        (hg_pos := conwayPoly_degree_pos p n hn) := by
+  apply FpPoly.Quotient.eval_reduce_eq_zero_of_composeModMonicImpl_eq_zero
+  exact beq_iff_eq.mp hcompat
+
+/-! # Towards the subfield embedding
+
+Compatibility is what an embedding `F_p[x]/(C(p, m)) → F_p[x]/(C(p, n))` is
+built from: send the generator to {name}`Hex.Conway.subfieldGen`, which the
+theorem above shows is a root of `C(p, m)`, and substitute.
+
+That map is *not* defined here, and the reason is worth recording rather than
+working around. Substitution is well defined on residues only if congruent
+representatives evaluate equally, and for `c - c' = q * C(p, m)` that means
+
+```
+eval (q * C(p, m)) β = eval q β * eval (C(p, m)) β
+```
+
+so it needs multiplicativity of quotient evaluation. `Quotient.Internal` proves
+`eval_add`, `eval_sub`, `eval_C_mul`, and `eval_monomial`, but not `eval_mul`
+for a general pair of polynomials, and without it the embedding would be a
+definition whose defining property is unproved.
+
+The route is known and short to describe. By
+{name}`Hex.FpPoly.Quotient.eval_reduce_eq_reduce_composeModMonic`, and because
+every quotient element is `reduce` of its own representative, `eval_mul`
+reduces to `DensePoly.compose (f * h) b = compose f b * compose h b` — plain
+composition, no quotient. `HexPolyFp.Degree` already proves the scalar analogue
+`DensePoly.eval_mul` by decomposing `f * h` into shifted scaled rows
+(`mul_eq_fold_shift_scale_rows`), and that decomposition is a polynomial
+identity that transfers unchanged; what is needed beside it is the composition
+counterpart of `fold_eval_shift_scale_rows`.
+-/
 
 /-! # The committed compatibility facts
 

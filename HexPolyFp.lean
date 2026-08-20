@@ -18,6 +18,7 @@ public import HexPolyFp.Frobenius
 public import HexPolyFp.SquareFree
 public import HexPolyFp.ModCompose
 public import HexPolyFp.Quotient
+public import HexPolyFp.QuotientCompose
 public import HexPolyFp.QuotientFrobenius
 
 public section

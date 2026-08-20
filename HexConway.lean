@@ -15,9 +15,11 @@ import HexConway.EntrySource
 `HexConway` provides the Tier 1 imported-lookup API for the Conway-polynomial
 database: 38 committed table entries, for `p` in `2, 3, 5, 7, 11, 13`, running
 to degree `6` for the odd primes and to degree `8` for `p = 2`, each carrying a
-Lean-checked irreducibility certificate. Tier 2
-(primitivity and compatibility across the subfield lattice) and Tier 3
-(on-demand search) are specified but not yet implemented.
+Lean-checked irreducibility certificate, and the divisor-compatibility half of
+Tier 2 in `HexConway.Compatibility`: for every committed pair whose degrees
+divide, the norm of the generator down to the smaller subfield is a root of the
+smaller Conway polynomial. Tier 2's primitivity half and Tier 3 (on-demand
+search) are specified but not yet implemented.
 
 `HexConway.Rebuild` supplies the `rebuild_luebeckConwayPolynomial?` command that
 regenerates the committed coefficient table from the cached Lübeck slice. The

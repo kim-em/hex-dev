@@ -117,23 +117,48 @@ benchmarking, or user-facing expectations.
     table covers. -/
 structure SupportedEntry (p n : Nat) [ZMod64.Bounds p]
 
-def conwayPoly (p n : Nat) [ZMod64.Bounds p] (h : SupportedEntry p n) : FpPoly p
-
-theorem conwayPoly_nonconstant (p n) [ZMod64.Bounds p] (h : SupportedEntry p n) :
-    0 < (conwayPoly p n h).degree
-theorem conwayPoly_irreducible (p n) [ZMod64.Bounds p] (h : SupportedEntry p n) :
-    Irreducible (conwayPoly p n h)
-theorem conwayPoly_monic (p n) [ZMod64.Bounds p] (h : SupportedEntry p n) :
-    Monic (conwayPoly p n h)
-
--- Tier 2, not yet implemented:
-theorem conwayPoly_compat (p m n : Nat) (h : m ∣ n) : ...
+theorem conwayPoly_nonconstant (p n : Nat) : 0 < (conwayPoly p n).degree
+theorem conwayPoly_irreducible (p n : Nat) : Irreducible (conwayPoly p n)
 ```
 
-The `SupportedEntry` argument is how "total only for committed entries" is
-enforced. It carries the table hit as a proof, so an uncommitted pair cannot
-produce one and the constructor cannot be applied. There is no fallback
-modulus and no `Option`.
+**Tier 2, as shipped.** `HexConway/Compatibility.lean` proves divisor
+compatibility for every committed pair `(p, m, n)` with `m ∣ n` and `m < n`:
+fifty-two theorems `compat_p_m_n : Compatible p m n`, plus
+`not_compatible_11_4_6` as a negative control so the check is visibly not
+vacuous.
+
+`Compatible` is a decidable `Bool` statement about the norm
+
+```
+N(α) = α ^ ((p^n - 1) / (p^m - 1))
+```
+
+being a root of `C(p, m)`. The exponent reaches `402234` at `(13, 1, 6)`, which
+would be a poor thing to hand the kernel; it does not have to be, because that
+exponent is `1 + p^m + ... + p^((k-1)m)`, so the norm is a product of Frobenius
+images and each Frobenius step is a modular composition. The whole block costs
+seventeen seconds, against minutes for the Tier 1 certificates.
+
+`eval_conwayPoly_subfieldGen_eq_zero` promotes the computation to a statement
+about field elements: `C(p, m)` evaluated at `subfieldGen`, an element of
+`F_p[x] / (C(p, n))`, is zero. The promotion goes through
+`FpPoly.Quotient.eval_reduce_eq_reduce_composeModMonic`, which says modular
+composition on representatives is evaluation in the quotient.
+
+**What Tier 2 still owes.** Primitivity of each committed entry is not proved.
+It needs the multiplicative order of the generator, hence a factorization of
+`p^n - 1` carried as checkable data and an order predicate over the executable
+field, and the Mathlib-free stack has neither.
+
+The subfield embedding `GFq p m → GFq p n` is likewise not built. Compatibility
+is its input, but well-definedness on residues needs multiplicativity of
+quotient evaluation, and `Quotient.Internal` proves `eval_add`, `eval_sub`,
+`eval_C_mul`, and `eval_monomial` but not `eval_mul`. Shipping the map without
+that would be shipping a definition whose defining property is unproved. The
+route is recorded at the head of `Compatibility.lean`: via the bridge above,
+`eval_mul` reduces to `compose_mul` for `DensePoly`, and `HexPolyFp.Degree`
+already proves the scalar analogue by the row decomposition
+`mul_eq_fold_shift_scale_rows`.
 
 The API should expose the tiers explicitly rather than hiding them all
 behind one partial-performance promise. Concretely:
