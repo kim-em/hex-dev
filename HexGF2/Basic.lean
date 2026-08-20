@@ -1254,6 +1254,40 @@ theorem xorWords_self (xs : Array UInt64) :
     _ = #[] := by
           simp [ofWords, normalizeWords_replicate_zero]
 
+/-- Negation in `F_2[x]` is the identity: characteristic two makes every
+element its own additive inverse. Present so that the additive group structure
+can be named, not because it computes anything. -/
+@[expose]
+def neg (p : GF2Poly) : GF2Poly :=
+  p
+
+instance : Neg GF2Poly where
+  neg := neg
+
+/-- Subtraction in `F_2[x]` coincides with addition. -/
+@[expose]
+def sub (p q : GF2Poly) : GF2Poly :=
+  add p q
+
+instance : Sub GF2Poly where
+  sub := sub
+
+/-- Negation is the identity. -/
+@[simp, grind =] theorem neg_eq_self (p : GF2Poly) :
+    -p = p :=
+  rfl
+
+/-- Subtraction is addition. -/
+@[simp, grind =] theorem sub_eq_add (p q : GF2Poly) :
+    p - q = p + q :=
+  rfl
+
+/-- Every element cancels against its negation, which in characteristic two is
+itself. -/
+@[simp, grind =] theorem neg_add_cancel (p : GF2Poly) :
+    -p + p = 0 := by
+  rw [neg_eq_self, add_self]
+
 /-- Zero is the left identity for `F_2[x]` addition. -/
 @[simp, grind =] theorem zero_add (p : GF2Poly) :
     0 + p = p := by

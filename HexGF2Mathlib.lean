@@ -6,6 +6,7 @@ Authors: Kim Morrison
 
 import HexGF2Mathlib.Basic
 import HexGF2Mathlib.Field
+import HexGF2Mathlib.Algebra
 
 /-!
 The `HexGF2Mathlib` library connects the packed `HexGF2` execution path to the
@@ -13,5 +14,6 @@ generic proof-facing polynomial and finite-field constructions.
 
 It exposes the packed-polynomial equivalence `Hex.GF2Poly ≃+* Hex.FpPoly 2`
 together with the corresponding single-word/arbitrary-degree `GF(2^n)`
-correspondence modules.
+correspondence modules, and carries Mathlib's `CommRing` and `Field`
+structure on the packed types.
 -/
