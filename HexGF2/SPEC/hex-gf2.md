@@ -72,8 +72,28 @@ runtime CPU detection): x86-64 `__PCLMUL__` uses
 `vmull_p64`; otherwise it runs a portable shift-and-XOR mirroring
 `Hex.pureClmul`. Correctness of the intrinsic paths is trusted, same
 as the GMP externs in hex-arith. Tests must exercise each compiled
-wrapper path and the pure-Lean body (built without the extern
-attached) to catch divergence.
+wrapper path and the pure-Lean body to catch divergence.
+
+Because the choice is made at compile time, one build runs exactly one
+path, and the Lake target passes only `-O3`, so ordinary builds compile
+the portable fallback. Covering the requirement therefore needs two
+compilations rather than one:
+
+- `scripts/ci/check_clmul_paths.sh` compiles `HexGF2/ffi/clmul_selftest.c`
+  against `clmul.c` twice, plain and with the flag that enables the host's
+  intrinsic (`-mpclmul` on x86-64, `-march=armv8-a+crypto` on aarch64),
+  and cross-checks the intrinsic against the portable reference on 100000
+  deterministic pairs. A build that asked for an intrinsic and did not get
+  one fails rather than passing quietly.
+- `conformance/HexGF2/CrossCheck.lean` compares the extern against
+  `Hex.pureClmul` over a pseudorandom stream, which is the Lean half: it
+  checks the compiled wrapper against the logical definition the proofs
+  use.
+
+`clmul.c` exposes `hex_clmul_portable`, `hex_clmul_intrinsic`, and
+`hex_clmul_uses_intrinsic` so both halves can address the paths
+individually; `HEX_CLMUL_NO_LEAN` drops the export wrapper so the
+self-test needs no Lean runtime.
 
 **GF(2^n) elements.** Elements of `GF(2^n)` are polynomials of degree
 < n over F_2, reduced modulo an irreducible of degree n. This library
