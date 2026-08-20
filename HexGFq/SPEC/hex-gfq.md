@@ -16,11 +16,11 @@ abbrev GFq (p n : Nat) [ZMod64.Bounds p] (h : Conway.SupportedEntry p n) : Type
 
 /-- The same field with the committed entry found by instance synthesis, which
     is the spelling users want. -/
-abbrev GFqC (p n : Nat) [ZMod64.Bounds p] [h : Conway.CommittedEntry p n] : Type
+abbrev GFqC (p n : Nat) [ZMod64.Bounds p] [h : GFq.CommittedEntry p n] : Type
 
 /-- Optimized canonical `GF(2^n)`, using the Conway polynomial chosen by
     `hex-conway` but represented with the packed `hex-gf2` backend. -/
-abbrev GF2q (n : Nat) [h : Conway.PackedGF2Entry n] : Type
+abbrev GF2q (n : Nat) [h : GFq.PackedGF2Entry n] : Type
 ```
 
 The evidence is explicit in the type rather than assumed. `GFq` takes a
