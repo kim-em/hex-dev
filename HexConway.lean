@@ -9,6 +9,7 @@ import HexConway.Table
 import HexConway.Certificates
 import HexConway.Api
 import HexConway.Compatibility
+import HexConway.Primitivity
 import HexConway.EntrySource
 
 /-!
@@ -18,8 +19,9 @@ to degree `6` for the odd primes and to degree `8` for `p = 2`, each carrying a
 Lean-checked irreducibility certificate, and the divisor-compatibility half of
 Tier 2 in `HexConway.Compatibility`: for every committed pair whose degrees
 divide, the norm of the generator down to the smaller subfield is a root of the
-smaller Conway polynomial. Tier 2's primitivity half and Tier 3 (on-demand
-search) are specified but not yet implemented.
+smaller Conway polynomial, and `HexConway.Primitivity`, which checks that each
+committed entry's generator has multiplicative order exactly `p^n - 1`. Tier 3
+(on-demand search) is specified but not yet implemented.
 
 `HexConway.Rebuild` supplies the `rebuild_luebeckConwayPolynomial?` command that
 regenerates the committed coefficient table from the cached Lübeck slice. The

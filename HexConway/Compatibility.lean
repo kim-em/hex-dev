@@ -68,8 +68,8 @@ Two mechanical bridges are still missing before it can be applied here: that
 `powModMonicLinear X f p` reduces to `X^p` in the quotient, and that evaluating
 a polynomial at the class of `x` returns the class of the polynomial. Both are
 list inductions of the same shape as `eval_pow_prime` itself. The same two
-bridges are what Tier 2 primitivity needs, since primitivity's exponents are
-only tractable through Frobenius iteration.
+bridges are what would let `HexConway.Primitivity`'s committed facts become a
+statement about `orderOf`.
 -/
 
 namespace Hex

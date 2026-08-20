@@ -145,10 +145,37 @@ about field elements: `C(p, m)` evaluated at `subfieldGen`, an element of
 `FpPoly.Quotient.eval_reduce_eq_reduce_composeModMonic`, which says modular
 composition on representatives is evaluation in the quotient.
 
-**What Tier 2 still owes.** Primitivity of each committed entry is not proved.
-It needs the multiplicative order of the generator, hence a factorization of
-`p^n - 1` carried as checkable data and an order predicate over the executable
-field, and the Mathlib-free stack has neither.
+**Primitivity, as shipped.** `HexConway/Primitivity.lean` checks each committed
+entry with `p^n > 2` — thirty-seven of the thirty-eight, `C(2, 1)` having a
+trivial multiplicative group. `primitiveCheck` validates its own factorization
+data (that the supplied primes are prime, and that their product with the
+supplied multiplicities is `p^n - 1`) and then the two power conditions,
+`α ^ (p^n - 1) = 1` and `α ^ ((p^n - 1) / q) ≠ 1` for each prime `q`. Because
+the factorization is validated, a short prime list cannot make the check pass.
+
+The exponents reach `4826808`, so they are not replayed by repeated
+multiplication. The exponent is written in base `p` and evaluated by Horner:
+`n` steps, each `p` multiplications plus at most `p - 1` more, so a few hundred
+modular multiplications rather than millions. The computation is structural
+throughout because `GFqField.pow` is square-and-multiply over well-founded
+recursion and does not reduce in the kernel.
+
+Given all of it the multiplicative order of `α` is `p^n - 1`. That last step is
+not formalised, and the obstacle is a typeclass diamond rather than the
+mathematics: `GFq` carries both Hex's `Pow` and the `npowRec` that Mathlib's
+`Field` instance installs, and they are not definitionally equal, so a
+statement written with `^` on the field side picks up whichever instance
+elaboration reaches first and the power lemmas then fail to match. Mathlib
+supplies the group theory (`orderOf_eq_of_pow_and_pow_div_prime`) and
+`HexGFqMathlib.ofPolyHom` supplies the ring homomorphism; settling the diamond
+is what remains.
+
+The primality of the divisors is a hypothesis of `Primitive` rather than part
+of the `Bool` check, because deciding it inline does not scale: the divisors of
+`p^n - 1` reach five digits and the linear `Decidable` instance is far too slow
+there. The committed proofs use `Hex.Nat.prime_of_bounded`, which bounds trial
+division by a supplied square root. The whole thirty-seven-entry block replays
+in about ninety seconds.
 
 The subfield embedding `GFq p m →+* GFq p n` is built, in hex-gfq-mathlib
 (`HexGFqMathlib/Subfield.lean`), because `→+*` is a Mathlib notion. Given `m ∣ n`
