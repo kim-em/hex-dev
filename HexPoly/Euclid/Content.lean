@@ -6,6 +6,7 @@ Authors: Kim Morrison
 
 module
 
+public import HexPoly.Conditional
 public import Init.Grind.Ring.Basic
 public import Init.Data.List.Lemmas
 public import HexPoly.Operations
@@ -92,8 +93,8 @@ theorem primitivePart_eq_primitivePartImpl (p : DensePoly Int) :
     primitivePart p = primitivePartImpl p := by
   simp only [primitivePart, primitivePartImpl, ofList, ← contentNat_eq_contentNatImpl]
   by_cases h : contentNat p = 0
-  · rw [if_pos h, if_pos h]
-  · rw [if_neg h, if_neg h]
+  · rw [HexPoly.ite_eq_left h, HexPoly.ite_eq_left h]
+  · rw [HexPoly.ite_eq_right h, HexPoly.ite_eq_right h]
     congr 1
     show ((p.toArray.toList).map
         (fun coeff => coeff / Int.ofNat (contentNat p))).toArray = _
@@ -829,7 +830,7 @@ theorem content_mul_primitivePart (p : DensePoly Int) :
       · have hpart :
             (primitivePart p).coeff n = p.coeff n / content p := by
           unfold primitivePart content
-          rw [if_neg hc, coeff_ofList, list_getD_map_ediv_zero]
+          rw [HexPoly.ite_eq_right hc, coeff_ofList, list_getD_map_ediv_zero]
           unfold coeff toList toArray Array.getD
           by_cases hn : n < p.coeffs.size
           · simp [hn]
@@ -912,12 +913,12 @@ private theorem all_zero_of_trimTrailingZerosList_nil (xs : List Int)
   | cons x xs' ih =>
       rw [trimTrailingZerosList_cons_int] at htrim
       by_cases hinner : trimTrailingZerosList xs' = [] ∧ x = (0 : Int)
-      · rw [if_pos hinner] at htrim
+      · rw [HexPoly.ite_eq_left hinner] at htrim
         intro y hy
         rcases List.mem_cons.mp hy with hyx | hyxs
         · rw [hyx]; exact hinner.2
         · exact ih hinner.1 y hyxs
-      · rw [if_neg hinner] at htrim
+      · rw [HexPoly.ite_eq_right hinner] at htrim
         exact absurd htrim (List.cons_ne_nil _ _)
 
 /-- Trimming trailing zeros before the `Nat.gcd`-over-`natAbs` fold gives the
@@ -931,13 +932,13 @@ private theorem foldl_gcd_natAbs_trim_eq (xs : List Int) (acc : Nat) :
   | cons x xs' ih =>
       rw [trimTrailingZerosList_cons_int]
       by_cases hinner : trimTrailingZerosList xs' = [] ∧ x = (0 : Int)
-      · rw [if_pos hinner]
+      · rw [HexPoly.ite_eq_left hinner]
         rw [List.foldl_nil, List.foldl_cons, hinner.2]
         simp only [Int.natAbs_zero, Nat.gcd_zero_right]
         have hzero : ∀ y ∈ xs', y = (0 : Int) :=
           all_zero_of_trimTrailingZerosList_nil xs' hinner.1
         exact (foldl_gcd_natAbs_of_all_zero xs' acc hzero).symm
-      · rw [if_neg hinner]
+      · rw [HexPoly.ite_eq_right hinner]
         rw [List.foldl_cons, List.foldl_cons]
         exact ih (Nat.gcd acc x.natAbs)
 

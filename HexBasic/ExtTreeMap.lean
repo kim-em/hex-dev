@@ -6,6 +6,7 @@ Authors: Kim Morrison
 
 module
 
+public import HexBasic.Conditional
 public import Std.Data.ExtTreeMap.Lemmas
 
 @[expose] public section
@@ -121,7 +122,7 @@ private theorem getElem?_foldl_alter_of_forall [TransCmp cmp]
   | nil => rfl
   | cons entry entries ih =>
       rw [List.foldl_cons, ih]
-      · rw [getElem?_alter, if_neg (h entry (by simp))]
+      · rw [getElem?_alter, Hex.ite_eq_right (h entry (by simp))]
       · intro later hlater
         exact h later (by simp [hlater])
 
@@ -149,7 +150,7 @@ private theorem getElem?_foldl_alter_of_mem
           apply hpair.1 later hlater
           simp [hkey]
       · rw [List.foldl_cons, ih (out := out.alter entry.1 (update entry.1 entry.2))
-          hpair.2 hmem, getElem?_alter, if_neg (hpair.1 (key, value) hmem)]
+          hpair.2 hmem, getElem?_alter, Hex.ite_eq_right (hpair.1 (key, value) hmem)]
 
 private theorem getElem?_foldl_alter [TransCmp cmp] [LawfulEqCmp cmp]
     (source : ExtTreeMap α γ cmp) (out : ExtTreeMap α β cmp)

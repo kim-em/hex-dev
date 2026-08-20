@@ -6,6 +6,7 @@ Authors: Kim Morrison
 
 module
 
+public import HexBasic.Conditional
 import HexBasic.Fold
 public import HexMvPoly.Structural
 public import HexPoly
@@ -195,8 +196,8 @@ private theorem coeff_foldSteps
       rw [ih htail _ (size_toUnivariateStep i coeffs term |>.trans hsize)]
       rw [getD_toUnivariateStep i coeffs term e hbound]
       by_cases heq : Mono.degreeOf i term.1 = e
-      · rw [if_pos heq, if_pos heq, coeff_addMonomial]
-      · rw [if_neg heq, if_neg heq]
+      · rw [Hex.ite_eq_left heq, Hex.ite_eq_left heq, coeff_addMonomial]
+      · rw [Hex.ite_eq_right heq, Hex.ite_eq_right heq]
 
 /-- Coefficients of `p` as a dense univariate polynomial in variable `i`.
 Each coefficient is a polynomial in the remaining `n` variables. -/
@@ -254,7 +255,7 @@ theorem toUnivariate_coeff [Lean.Grind.Semiring R] [DecidableEq R]
       rw [hkey, degreeOf_insertVar]
     have hremove : m = removeVar i term.1 := by
       rw [hkey, removeVar_insertVar]
-    rw [if_pos hdegree, if_pos hremove, if_pos hkey]
+    rw [Hex.ite_eq_left hdegree, Hex.ite_eq_left hremove, Hex.ite_eq_left hkey]
   · by_cases hdegree : Mono.degreeOf i term.1 = e
     · by_cases hremove : m = removeVar i term.1
       · have hkey' : term.1 = insertVar i e m := by
@@ -265,8 +266,8 @@ theorem toUnivariate_coeff [Lean.Grind.Semiring R] [DecidableEq R]
               (insertVar_removeVar i term.1).symm
             _ = insertVar i e m := by rw [hdegree, ← hremove]
         exact (hkey hkey').elim
-      · rw [if_pos hdegree, if_neg hremove, if_neg hkey]
-    · rw [if_neg hdegree, if_neg hkey]
+      · rw [Hex.ite_eq_left hdegree, Hex.ite_eq_right hremove, Hex.ite_eq_right hkey]
+    · rw [Hex.ite_eq_right hdegree, Hex.ite_eq_right hkey]
 
 /-- Folding one recursive coefficient into the multivariate result changes
 exactly its inserted monomials. -/
@@ -313,7 +314,7 @@ private theorem coeff_foldInsert [Lean.Grind.Semiring R] [DecidableEq R]
       coeff (insertVar i e m) init + if d = e then coeff m p else 0
   by_cases hde : d = e
   · subst d
-    rw [if_pos rfl]
+    rw [Hex.ite_eq_left rfl]
     calc
       p.termsList.foldl
           (fun acc term =>
@@ -328,11 +329,11 @@ private theorem coeff_foldInsert [Lean.Grind.Semiring R] [DecidableEq R]
               by_cases hkey : term.1 = m
               · have hinsert : insertVar i e m = insertVar i e term.1 := by
                   rw [hkey]
-                rw [if_pos hinsert, if_pos hkey]
+                rw [Hex.ite_eq_left hinsert, Hex.ite_eq_left hkey]
               · have hinsert : insertVar i e m ≠ insertVar i e term.1 := by
                   intro h
                   exact hkey ((insertVar_inj i e e m term.1).mp h).2.symm
-                rw [if_neg hinsert, if_neg hkey,
+                rw [Hex.ite_eq_right hinsert, Hex.ite_eq_right hkey,
                   Lean.Grind.Semiring.add_zero]
       _ = coeff (insertVar i e m) init +
           p.termsList.foldl
@@ -346,10 +347,10 @@ private theorem coeff_foldInsert [Lean.Grind.Semiring R] [DecidableEq R]
         intro acc term _
         simp only [decide_eq_true_eq]
         by_cases hkey : term.1 = m
-        · rw [if_pos hkey, if_pos hkey]
-        · rw [if_neg hkey, if_neg hkey,
+        · rw [Hex.ite_eq_left hkey, Hex.ite_eq_left hkey]
+        · rw [Hex.ite_eq_right hkey, Hex.ite_eq_right hkey,
             Lean.Grind.Semiring.add_zero]
-  · rw [if_neg hde, Lean.Grind.Semiring.add_zero]
+  · rw [Hex.ite_eq_right hde, Lean.Grind.Semiring.add_zero]
     calc
       p.termsList.foldl
           (fun acc term =>
@@ -363,7 +364,7 @@ private theorem coeff_foldInsert [Lean.Grind.Semiring R] [DecidableEq R]
               have hinsert : insertVar i e m ≠ insertVar i d term.1 := by
                 intro h
                 exact hde ((insertVar_inj i e d m term.1).mp h).1.symm
-              rw [if_neg hinsert]
+              rw [Hex.ite_eq_right hinsert]
       _ = coeff (insertVar i e m) init :=
         List.foldl_const_step _ _
 
@@ -409,7 +410,7 @@ theorem ofUnivariate_coeff [Lean.Grind.Semiring R] [DecidableEq R]
     intro d hd
     have hdlt : d < q.size := List.mem_range.mp hd
     have hde : d ≠ e := by omega
-    rw [if_neg hde]
+    rw [Hex.ite_eq_right hde]
 
 /-- Converting to the recursive view and back is the identity. -/
 theorem ofUnivariate_toUnivariate [Lean.Grind.Semiring R] [DecidableEq R]

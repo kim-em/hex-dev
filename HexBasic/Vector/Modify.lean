@@ -6,6 +6,7 @@ Authors: Kim Morrison
 
 module
 
+public import HexBasic.Conditional
 public import Std
 
 public section
@@ -38,13 +39,13 @@ index is unchanged. -/
 /-- The modified index of `modify` reads back `f` applied to the old value. -/
 theorem getElem_modify_self {xs : Vector α n} {i : Nat} {f : α → α} (hi : i < n) :
     (xs.modify i f)[i] = f xs[i] := by
-  rw [getElem_modify hi, if_pos rfl]
+  rw [getElem_modify hi, Hex.ite_eq_left rfl]
 
 /-- Any index other than the modified one is unchanged by `modify`. -/
 theorem getElem_modify_of_ne {xs : Vector α n} {i j : Nat} {f : α → α}
     (hj : j < n) (h : i ≠ j) :
     (xs.modify i f)[j] = xs[j] := by
-  rw [getElem_modify hj, if_neg h]
+  rw [getElem_modify hj, Hex.ite_eq_right h]
 
 /-- `modify` agrees with the read-then-{name}`set` form (value-level; `modify` avoids
 the copy this form would force). -/
