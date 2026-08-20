@@ -10,19 +10,25 @@ polynomial GCD are planned.
 **Contents:**
 
 ```lean
-/-- Polynomial over F_2, packed into 64-bit words.
-    Bit j of words[i] represents the coefficient of x^(64*i + j). -/
+/-- Packed-word normalization: either the polynomial is zero, or its
+    highest stored word is nonzero. -/
+def GF2PolyNormalized (words : Array UInt64) : Prop :=
+  words.size = 0 ∨ words.back? ≠ some (0 : UInt64)
+
+/-- Polynomials over F_2, packed into 64-bit words.
+    Bit j of words[i] stores the coefficient of x^(64*i + j). -/
 structure GF2Poly where
   words : Array UInt64
-  degree : Nat
-  wf : (words = #[] ∧ degree = 0) ∨
-       (words.back! ≠ 0 ∧ degree < 64 * words.size ∧
-        words[degree / 64]! &&& (1 <<< (degree % 64)) ≠ 0 ∧
-        ∀ i, degree < i → i < 64 * words.size →
-          words[i / 64]! &&& (1 <<< (i % 64)) = 0)
-  -- Zero: words = #[], degree = 0.
-  -- Nonzero: last word nonzero, bit `degree` set, no bits above.
+  normalized : GF2PolyNormalized words
 ```
+
+Two fields, not three. The degree is derived (`GF2Poly.degree?` reads the
+highest set bit, `GF2Poly.degree` is its `getD 0` form) rather than cached in
+the structure, so the only invariant to maintain is that the top word is
+nonzero. Caching the degree would mean carrying a four-clause well-formedness
+condition through every operation and re-establishing it after each; deriving
+it costs one scan of the top word and makes equality of elements equality of
+word arrays (`GF2Poly.ext_words`).
 
 - Addition: word-by-word XOR
 - Multiplication: schoolbook or Karatsuba on 64-bit blocks, where
@@ -173,6 +179,46 @@ The ring equivalences `GF2n ≃+* FiniteField 2 f hf hirr` and
 transferring via `GF2Poly ≃+* FpPoly 2`; that bridge library is also the
 home for `Fintype` and cardinality results about the packed
 representations.
+
+## Irreducibility: the test, its soundness, and the committed moduli
+
+Forming a field needs a proof that the modulus is irreducible, and this library
+produces those proofs from an executable test rather than by trusting a table.
+Three modules carry that, and they are a substantial fraction of the library.
+
+**`HexGF2.Irreducibility`** defines the test. `rabinTest f` is the Rabin
+criterion on the packed representation: `x^(2^deg f) ≡ x (mod f)`, and for each
+maximal proper divisor `d` of `deg f`, `gcd(x^(2^d) - x, f) = 1`.
+`checkIrreducibilityCertificate` replays a supplied certificate instead of
+recomputing the test, and `checkIrreducibilityCertificateLinear` is its
+kernel-reducible variant, for `decide` on small closed terms.
+
+**`HexGF2.RabinSoundness`** is the soundness half, and holds the library's
+headline theorem. `rabinTest_imp_irreducible` lifts a passing test to
+`GF2Poly.Irreducible`, and `checkIrreducibilityCertificate_imp_irreducible`
+does the same from a checked certificate. Without these the test would be a
+heuristic; with them a committed modulus is irreducible as a matter of Lean
+proof, and a corrupted entry fails to elaborate rather than silently yielding a
+reducible modulus.
+
+**`HexGF2.CommonIrreducibility`** commits the moduli cryptography actually
+uses, each with its certificate and irreducibility proof, so a caller naming
+one does not supply a proof:
+
+| Modulus | Field | Declaration |
+|---|---|---|
+| `x^4 + x + 1` (`0x3`) | `GF(16)` | `gf16Modulus`, `gf16_modulus_irreducible` |
+| `x^8 + x^4 + x^3 + x + 1` (Rijndael, `0x1B`) | `GF(256)` | `aesModulus`, `aes_modulus_irreducible` |
+| `x^16 + x^12 + x^3 + x + 1` (`0x100B`) | `GF(65536)` | `gf65kModulus`, `gf65k_modulus_irreducible` |
+| `x^128 + x^7 + x^2 + x + 1` (GHASH) | `GF(2^128)` | `ghashModulus`, `gf2nPoly_modulus_irreducible` |
+
+The names index the field size, not the modulus degree: `gf16` is the degree-4
+modulus presenting the sixteen-element field, and `gf65k` the degree-16 one.
+
+None of these use `native_decide`; the certificates are replayed by the kernel.
+The GHASH certificate stores precomputed `x^(2^k) mod ghashModulus` entries
+rather than recomputing them, which is what keeps a degree-128 check inside the
+proof budget.
 
 ## External comparators
 

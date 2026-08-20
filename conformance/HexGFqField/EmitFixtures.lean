@@ -7,6 +7,7 @@ Authors: Kim Morrison
 import Hex.Conformance.Emit
 import HexGFqField.Operations
 import HexBerlekamp.RabinSoundness
+import HexConway
 
 /-!
 JSONL emit driver for the `hex-gfq-field` oracle.
@@ -154,7 +155,7 @@ private theorem one_ne_zero_seven : (1 : ZMod64 7) ≠ 0 := by
   simp at hm
 
 /-- Run one case for a fully-specified modulus: emit one `gfqfield`
-fixture plus the five op results.  Each call site supplies the
+fixture plus the op results.  Each call site supplies the
 prime witness `hp`, modulus `m`, positive-degree and irreducibility
 proofs, the case identifier, the unreduced operand coefficient
 lists, and the `zpow` exponent. -/
@@ -176,6 +177,17 @@ private def emitAt
   emitResult lib caseId "div"  (polyValue (liftCoeffs (repr (xa / xb))))
   emitResult lib caseId "frob" (polyValue (liftCoeffs (repr (frob xa))))
   emitResult lib caseId "zpow" (polyValue (liftCoeffs (repr (zpow xa zexp))))
+  -- Additive surface and the natural-power surface. These are benched but
+  -- were not cross-checked; the multiplicative ops above cannot catch a
+  -- coefficient-reduction bug that only shows up under addition.
+  emitResult lib caseId "add"  (polyValue (liftCoeffs (repr (xa + xb))))
+  emitResult lib caseId "sub"  (polyValue (liftCoeffs (repr (xa - xb))))
+  emitResult lib caseId "neg"  (polyValue (liftCoeffs (repr (-xa))))
+  emitResult lib caseId "pow"  (polyValue (liftCoeffs (repr (xa ^ 5))))
+  -- The `ofPoly`/`repr` round trip: reducing a representative and reading it
+  -- back must be the identity on already-reduced values.
+  emitResult lib caseId "roundtrip"
+    (polyValue (liftCoeffs (repr (ofPoly m hpos hp hirr (repr xa)))))
 
 /-! # Per-modulus declarations and emit helpers.
 
@@ -955,3 +967,28 @@ def main : IO Unit := do
   emitAt prime_seven m_p7_n3 m_p7_n3_pos m_p7_n3_irr "p7/n3/typical" [3, 6, 1] [5, 2, 4] (-2)
   emitAt prime_seven m_p7_n4 m_p7_n4_pos m_p7_n4_irr "p7/n4/typical" [1, 2, 4, 6] [5, 3, 0, 1] (-3)
   emitAt prime_seven m_p7_n6 m_p7_n6_pos m_p7_n6_irr "p7/n6/typical" [6, 0, 5, 2, 4, 1] [1, 4, 2, 0, 5, 3] 2
+  -- p = 11 and p = 13. These take their moduli straight from the committed
+  -- Conway table rather than re-deriving a certificate: `hex-conway` already
+  -- proves each entry irreducible, and the emitter only needs the modulus and
+  -- that proof. Without these two primes the top of the committed range was
+  -- never cross-checked against an external oracle.
+  emitAt Hex.Conway.supportedEntry_11_2.prime
+    (Hex.Conway.conwayPoly 11 2 Hex.Conway.supportedEntry_11_2)
+    (Hex.Conway.conwayPoly_nonconstant 11 2 Hex.Conway.supportedEntry_11_2)
+    (Hex.Conway.conwayPoly_irreducible 11 2 Hex.Conway.supportedEntry_11_2)
+    "p11/n2/typical" [7, 3] [10, 5] 3
+  emitAt Hex.Conway.supportedEntry_11_4.prime
+    (Hex.Conway.conwayPoly 11 4 Hex.Conway.supportedEntry_11_4)
+    (Hex.Conway.conwayPoly_nonconstant 11 4 Hex.Conway.supportedEntry_11_4)
+    (Hex.Conway.conwayPoly_irreducible 11 4 Hex.Conway.supportedEntry_11_4)
+    "p11/n4/typical" [2, 9, 0, 4] [8, 1, 6, 3] (-2)
+  emitAt Hex.Conway.supportedEntry_13_2.prime
+    (Hex.Conway.conwayPoly 13 2 Hex.Conway.supportedEntry_13_2)
+    (Hex.Conway.conwayPoly_nonconstant 13 2 Hex.Conway.supportedEntry_13_2)
+    (Hex.Conway.conwayPoly_irreducible 13 2 Hex.Conway.supportedEntry_13_2)
+    "p13/n2/typical" [12, 4] [5, 11] 4
+  emitAt Hex.Conway.supportedEntry_13_6.prime
+    (Hex.Conway.conwayPoly 13 6 Hex.Conway.supportedEntry_13_6)
+    (Hex.Conway.conwayPoly_nonconstant 13 6 Hex.Conway.supportedEntry_13_6)
+    (Hex.Conway.conwayPoly_irreducible 13 6 Hex.Conway.supportedEntry_13_6)
+    "p13/n6/typical" [3, 0, 7, 12, 1, 9] [10, 6, 2, 0, 8, 4] (-3)

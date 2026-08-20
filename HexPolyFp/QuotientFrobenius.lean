@@ -372,6 +372,47 @@ private theorem quotMonoSum_pow_pPow_eq_self
       congr 1
       rw [reduce_monomial_eq, mul_pow, reduce_C_pow_pPow_eq, X_pow_pPowN hp_pos hX m]
 
+private theorem zero_pow_of_pos {k : Nat} (hk : 0 < k) :
+    (0 : Quotient g hmonic hg_pos) ^ k = 0 := by
+  rcases Nat.exists_eq_succ_of_ne_zero (Nat.pos_iff_ne_zero.mp hk) with ⟨j, hj⟩
+  rw [hj, pow_succ, mul_zero]
+
+/-- Evaluation commutes with the Frobenius.
+
+`g(β^p) = g(β)^p` in characteristic `p`: freshman's dream distributes the power
+over the Horner sum, and Fermat fixes each coefficient, since the coefficients
+live in the prime field. This is the step that identifies composing with
+`x^p mod f` as the `p`-th power map on residues, which is what makes the
+Conway norm computable by Frobenius iteration rather than by modular
+exponentiation. -/
+theorem Internal.evalCoeffList_pow_prime (β : Quotient g hmonic hg_pos) :
+    ∀ cs : List (ZMod64 p),
+      Internal.evalCoeffList
+          (cs.map fun c =>
+            reduce (g := g) (hmonic := hmonic) (hg_pos := hg_pos) (DensePoly.C c))
+          (β ^ p) =
+        (Internal.evalCoeffList
+          (cs.map fun c =>
+            reduce (g := g) (hmonic := hmonic) (hg_pos := hg_pos) (DensePoly.C c))
+          β) ^ p
+  | [] => by
+      have hp : Hex.Nat.Prime p := ZMod64.PrimeModulus.prime (p := p)
+      have hp_pos : 0 < p := Nat.lt_of_lt_of_le (by decide) (Hex.Nat.Prime.two_le hp)
+      show (0 : Quotient g hmonic hg_pos) = (0 : Quotient g hmonic hg_pos) ^ p
+      exact (zero_pow_of_pos hp_pos).symm
+  | c :: cs => by
+      rw [List.map_cons, Internal.evalCoeffList_cons, Internal.evalCoeffList_cons,
+        Internal.evalCoeffList_pow_prime β cs, add_pow_prime, mul_pow,
+        reduce_C_pow_prime_eq]
+
+/-- The `FpPoly`-level form of {name}`Hex.FpPoly.Quotient.Internal.evalCoeffList_pow_prime`. -/
+theorem Internal.eval_pow_prime (f : FpPoly p) (β : Quotient g hmonic hg_pos) :
+    Internal.eval (g := g) (hmonic := hmonic) (hg_pos := hg_pos) f (β ^ p) =
+      (Internal.eval (g := g) (hmonic := hmonic) (hg_pos := hg_pos) f β) ^ p := by
+  rw [Internal.eval_eq_evalCoeffList, Internal.eval_eq_evalCoeffList]
+  unfold Internal.evalQuotientCoeffs
+  exact Internal.evalCoeffList_pow_prime β f.toList
+
 /-- If the Frobenius iterate `β ↦ β ^ (p ^ n)` fixes
 {name}`Quotient.X`, it fixes every quotient element.
 

@@ -48,6 +48,28 @@ and `α ↦ α^p` is the Frobenius, which on residues is composition with
 modular multiplications, with `n ≤ 8` and `k ≤ 8`, rather than a modular
 exponentiation with a six-digit exponent. Everything below is structurally
 recursive for the same reason: the kernel has to run it.
+
+# What is proved, and what is design rationale
+
+The two displayed identities above are why `normX` is defined
+the way it is. Neither is a theorem in this file. What is proved is that
+`C(p, m)` vanishes at the class of `normX`
+(`eval_conwayPoly_subfieldGen_eq_zero`), which is what a
+subfield embedding needs and what makes the degree-`m` subfield canonical.
+
+Proving `normX = α ^ ((p^n - 1) / (p^m - 1))` outright needs the step this file
+takes on faith: that composing with `x^p mod f` computes the `p`-th power on
+residues. The heart of that step is now available as
+`FpPoly.Quotient.Internal.eval_pow_prime`, which says evaluation
+commutes with the Frobenius (`g(β^p) = g(β)^p`, by freshman's dream over the
+Horner sum with Fermat fixing each coefficient).
+
+Two mechanical bridges are still missing before it can be applied here: that
+`powModMonicLinear X f p` reduces to `X^p` in the quotient, and that evaluating
+a polynomial at the class of `x` returns the class of the polynomial. Both are
+list inductions of the same shape as `eval_pow_prime` itself. The same two
+bridges are what Tier 2 primitivity needs, since primitivity's exponents are
+only tractable through Frobenius iteration.
 -/
 
 namespace Hex
