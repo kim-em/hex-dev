@@ -291,3 +291,31 @@ example {a b : AESPolyField} {k : Nat}
 
 end GF2nPoly
 end Hex
+
+/-! # Bundled algebraic structure
+
+`grind` gets its ring reasoning on the packed quotient from the `Lean.Grind`
+instances, so these check that the bundle is actually wired up rather than
+merely present. The characteristic-two identity is the one that needs the
+nonconstant-modulus hypothesis, since `GF2Poly.Irreducible` alone admits the
+constant modulus, whose quotient is trivial. -/
+
+section GrindStructure
+variable {f : Hex.GF2Poly} {hirr : Hex.GF2Poly.Irreducible f}
+
+example (a b c : Hex.GF2nPoly f hirr) : (a + b) * c = a * c + b * c := by grind
+
+example (a b c : Hex.GF2nPoly f hirr) : a * (b * c) = (a * b) * c := by grind
+
+example (a : Hex.GF2nPoly f hirr) : a ^ 3 = a * a * a := by grind
+
+example (a : Hex.GF2nPoly f hirr) : a * 1 + 0 = a := by grind
+
+-- With a nonconstant modulus the field laws and characteristic are available.
+example (a : Hex.GF2nPoly f hirr) (ha : a ≠ 0) : a * a⁻¹ = 1 :=
+  Hex.GF2nPoly.mul_inv_cancel a ha
+
+example (hdeg : 0 < f.degree) : (0 : Hex.GF2nPoly f hirr) ≠ 1 :=
+  Hex.GF2nPoly.zero_ne_one_of_degree_pos hdeg
+
+end GrindStructure
