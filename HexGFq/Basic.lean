@@ -18,7 +18,14 @@ separate declarations so the representation choice remains explicit.
 -/
 namespace Hex
 
-namespace Conway
+namespace GFq
+
+-- Everything in this block is `hex-gfq`'s own material: the two
+-- instance-synthesis classes that select a committed table entry, the packed
+-- binary modulus they name, and their certificates. The Conway table itself
+-- stays in `hex-conway`, and is opened here rather than qualified at each of
+-- the forty-odd instances.
+open Conway
 
 /-- A committed Conway-table entry available through instance synthesis.
 
@@ -489,7 +496,7 @@ instance packedGF2Entry_2_8 : PackedGF2Entry 8 where
   degree_lt_word := by decide
   packed_irreducible := packedGF2Entry_2_8_irreducible
 
-end Conway
+end GFq
 
 /-- Canonical finite field with `p^n` elements for a committed Conway-table
 entry, using the generic quotient-field representation. -/
@@ -762,12 +769,12 @@ end GFq
 
 Use `GFqC p n` when the committed entry should be inferred from the current
 Conway table. Use explicit `GFq p n h` when a proof needs to name the witness. -/
-abbrev GFqC (p n : Nat) [ZMod64.Bounds p] [h : Conway.CommittedEntry p n] : Type :=
+abbrev GFqC (p n : Nat) [ZMod64.Bounds p] [h : GFq.CommittedEntry p n] : Type :=
   GFq p n h.entry
 
 namespace GFqC
 
-variable {p n : Nat} [ZMod64.Bounds p] [h : Conway.CommittedEntry p n]
+variable {p n : Nat} [ZMod64.Bounds p] [h : GFq.CommittedEntry p n]
 
 /-- The committed Conway-table entry selected for `GFqC p n`. -/
 abbrev entry : Conway.SupportedEntry p n :=
@@ -848,12 +855,12 @@ end GFqC
 
 /-- Optimized canonical binary field for committed Conway entries that have a
 single-word packed modulus. -/
-abbrev GF2q (n : Nat) [h : Conway.PackedGF2Entry n] : Type :=
+abbrev GF2q (n : Nat) [h : GFq.PackedGF2Entry n] : Type :=
   GF2n n h.lower h.degree_pos h.degree_lt_word h.packed_irreducible
 
 namespace GF2q
 
-variable {n : Nat} [h : Conway.PackedGF2Entry n]
+variable {n : Nat} [h : GFq.PackedGF2Entry n]
 
 /-- The supported Conway-table entry backing this optimized binary field. -/
 def supportedEntry : Conway.SupportedEntry 2 n :=
@@ -887,13 +894,13 @@ def modulus : GF2Poly :=
 /-- The packed modulus, viewed through the generic `FpPoly 2` representation,
 is the committed Conway polynomial for this entry. -/
 theorem conway_eq_packed :
-    Conway.conwayPoly 2 n h.entry = Conway.packedGF2FpPoly h.lower n :=
+    Conway.conwayPoly 2 n h.entry = GFq.packedGF2FpPoly h.lower n :=
   h.conway_eq_packed
 
 /-- The generic `GFq` modulus for a packed binary entry agrees with the packed
 modulus viewed as an `FpPoly 2`. -/
 theorem gfq_modulus_eq_packedFpPoly :
-    GFq.modulus h.entry = Conway.packedGF2FpPoly (lower (n := n)) n := by
+    GFq.modulus h.entry = GFq.packedGF2FpPoly (lower (n := n)) n := by
   simpa [GFq.modulus, lower] using h.conway_eq_packed
 
 /-- The selected packed modulus has positive extension degree. -/

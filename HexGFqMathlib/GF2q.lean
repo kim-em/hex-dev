@@ -17,7 +17,7 @@ namespace Hex
 
 namespace GF2q
 
-variable {n : Nat} [h : Conway.PackedGF2Entry n]
+variable {n : Nat} [h : GFq.PackedGF2Entry n]
 
 
 private theorem cast_symm_cast {α β : Type u} (h : α = β) (x : α) :
@@ -89,11 +89,11 @@ private theorem bit_and_one_eq_zero_iff (w : UInt64) {i : Nat} (hi : i < 64) :
 /-- Coefficients of the packed binary modulus polynomial: the implicit leading
 `x^n` term, with lower degrees reading the bits of `lower`. -/
 private theorem coeff_packedGF2FpPoly (lower : UInt64) (n i : Nat) :
-    (Conway.packedGF2FpPoly lower n).coeff i =
+    (GFq.packedGF2FpPoly lower n).coeff i =
       if i = n then (1 : Hex.ZMod64 2)
       else if i < n then (if (lower >>> i.toUInt64 &&& 1) = 0 then 0 else 1)
       else 0 := by
-  unfold Conway.packedGF2FpPoly
+  unfold GFq.packedGF2FpPoly
   rw [Hex.FpPoly.ofCoeffs, Hex.DensePoly.coeff_ofCoeffs, Array.getD_eq_getD_getElem?,
     Array.getElem?_push]
   have hsz : (((List.range n).map fun j =>
@@ -119,7 +119,7 @@ theorem modulusFpPoly_eq_conway :
   apply Hex.DensePoly.ext_coeff
   intro i
   show (HexGF2Mathlib.GF2Poly.toFpPoly (Hex.GF2Poly.ofUInt64Monic h.lower n)).coeff i =
-      (Conway.packedGF2FpPoly h.lower n).coeff i
+      (GFq.packedGF2FpPoly h.lower n).coeff i
   have hn64 : n < 64 := h.degree_lt_word
   rw [HexGF2Mathlib.GF2Poly.coeff_toFpPoly,
     Hex.GF2Poly.coeff_ofUInt64Monic h.lower h.degree_lt_word,
@@ -190,6 +190,24 @@ def equivGFq : RingEquiv (GF2q n) (GFq 2 n h.entry) :=
       (hn := h.degree_pos) (hn64 := h.degree_lt_word)
       (hirr := h.packed_irreducible)).trans
     (genericEquivGFq (n := n))
+
+/-- The optimized packed binary Conway field is ring-equivalent to Mathlib's
+{name}`GaloisField` of the same order.
+
+This is the composite the `hex-gfq-mathlib` SPEC describes: {name}`Hex.GF2q.equivGFq`
+carries the packed representation onto the generic one, and
+{name}`HexGFqMathlib.GFq.equivGaloisField` carries that onto Mathlib. It is the
+statement a user reaches for when they want to discharge a `GaloisField 2 n`
+goal by computing in the packed representation.
+
+Noncomputable because the second leg goes through
+`FiniteField.ringEquivOfCardEq`, which chooses an isomorphism rather than
+constructing one; {name}`Hex.GF2q.equivGFq`, the leg that does the packing work,
+is computable. -/
+noncomputable def equivGaloisField : RingEquiv (GF2q n) (GaloisField 2 n) :=
+  haveI : Fact (_root_.Nat.Prime 2) := ⟨_root_.Nat.prime_two⟩
+  (equivGFq (n := n)).trans
+    (HexGFqMathlib.GFq.equivGaloisField h.entry (Nat.pos_iff_ne_zero.mp h.degree_pos))
 
 end GF2q
 

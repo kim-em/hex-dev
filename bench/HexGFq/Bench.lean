@@ -18,8 +18,8 @@ arithmetic underneath it is measured by `hex-gfq-field` and `hex-gf2`.
 
 The committed table is wider than what is exercised here: `hex-conway` commits
 36 generic entries (`p` in `2, 3, 5, 7, 11, 13`, `n` in `1` to `6`), all
-reachable through `Conway.CommittedEntry` instances, and this library exposes
-`Conway.PackedGF2Entry` instances for `n` in `1` to `6`. Sweeping the bench
+reachable through `GFq.CommittedEntry` instances, and this library exposes
+`GFq.PackedGF2Entry` instances for `n` in `1` to `6`. Sweeping the bench
 across that range is outstanding work, not a limit of the public API.
 
 * `runGFqOfPolyReprChecksum`: generic `GFq.ofPoly` plus `GFq.repr` on a

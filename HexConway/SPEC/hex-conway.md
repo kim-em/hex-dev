@@ -111,12 +111,29 @@ benchmarking, or user-facing expectations.
 
 **API:**
 ```lean
-def conwayPoly (p n : Nat) : FpPoly p
+/-- A committed table hit, packaging the polynomial with its primality witness
+    and a proof that the lookup resolves to it. Unconstructible for an
+    uncommitted pair, which is how `conwayPoly` stays total only where the
+    table covers. -/
+structure SupportedEntry (p n : Nat) [ZMod64.Bounds p]
 
-theorem conwayPoly_nonconstant (p n : Nat) : 0 < (conwayPoly p n).degree
-theorem conwayPoly_irreducible (p n : Nat) : Irreducible (conwayPoly p n)
+def conwayPoly (p n : Nat) [ZMod64.Bounds p] (h : SupportedEntry p n) : FpPoly p
+
+theorem conwayPoly_nonconstant (p n) [ZMod64.Bounds p] (h : SupportedEntry p n) :
+    0 < (conwayPoly p n h).degree
+theorem conwayPoly_irreducible (p n) [ZMod64.Bounds p] (h : SupportedEntry p n) :
+    Irreducible (conwayPoly p n h)
+theorem conwayPoly_monic (p n) [ZMod64.Bounds p] (h : SupportedEntry p n) :
+    Monic (conwayPoly p n h)
+
+-- Tier 2, not yet implemented:
 theorem conwayPoly_compat (p m n : Nat) (h : m ∣ n) : ...
 ```
+
+The `SupportedEntry` argument is how "total only for committed entries" is
+enforced. It carries the table hit as a proof, so an uncommitted pair cannot
+produce one and the constructor cannot be applied. There is no fallback
+modulus and no `Option`.
 
 The API should expose the tiers explicitly rather than hiding them all
 behind one partial-performance promise. Concretely:
