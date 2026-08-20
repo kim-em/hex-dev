@@ -206,4 +206,6 @@ GAP exposes the same Lübeck data, not a separately-engineered
 search; and SageMath / FLINT either consume the same table or run
 ad-hoc search code that is not packaged as a benchmarkable API.
 The Phase-4 evidence is therefore the declared-complexity verdict
-of HexConway's own bench targets across the three tiers.
+of HexConway's own bench targets, across the two implemented tiers:
+`tier1-committed-table` and `tier2-divisor-compatibility`. Tier 3 is
+unimplemented, so there is nothing to measure for it.

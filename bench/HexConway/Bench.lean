@@ -10,10 +10,11 @@ import LeanBench
 /-!
 Benchmark registrations for `hex-conway`.
 
-This Phase 4 slice covers only Tier 1 committed-table surfaces: imported
-Luebeck lookup and fixed irreducibility verification of selected imported
-entries. It does not benchmark Tier 2 Conway compatibility verification or
-Tier 3 on-demand Conway search.
+This Phase 4 slice covers the two implemented tiers: Tier 1 committed-table
+surfaces (imported Luebeck lookup and fixed irreducibility verification of
+selected entries) and Tier 2 divisor compatibility. It does not benchmark
+Tier 3 on-demand Conway search, which is unimplemented, nor Tier 2
+primitivity, which is likewise unimplemented.
 
 Scientific registrations:
 
@@ -39,6 +40,12 @@ Scientific registrations:
   the odd-prime higher-degree imported table entry `C(11, 6)`.
 * `runTier1Irreducibility_13_6Checksum`: Rabin irreducibility verification for
   the odd-prime higher-degree imported table entry `C(13, 6)`.
+* `runTier2Compat_2_3_6Checksum`, `runTier2Compat_13_1_6Checksum`,
+  `runTier2Compat_2_4_8Checksum`: Tier 2 divisor-compatibility verification,
+  at the binary mid-degree pair, the largest odd-prime pair, and the deepest
+  binary pair respectively. Each runs the norm construction (`n / m`
+  Frobenius steps, one modular composition apiece) and then evaluates the
+  smaller Conway polynomial at the result.
 
 Fixed registrations are wrapped as `Unit → IO α` so the harness exercises
 them per-call rather than measuring a closed compile-time-folded constant
@@ -195,6 +202,63 @@ def runTier1Irreducibility_13_6Checksum : Unit → IO Bool := fun () => do
   let mp ← tier1_13_6Ref.get
   return Berlekamp.rabinTest mp.poly mp.monic
 
+/-- One committed Tier 2 divisor pair, carried through an `IO.Ref` so the
+workload is not constant-folded. -/
+structure CompatPair (p : Nat) [ZMod64.Bounds p] where
+  /-- The smaller modulus `C(p, m)`. -/
+  small : FpPoly p
+  /-- The larger modulus `C(p, n)`. -/
+  large : FpPoly p
+  /-- Monicity of the larger modulus, which the norm construction needs. -/
+  largeMonic : DensePoly.Monic large
+  /-- The subfield degree `m`. -/
+  m : Nat
+  /-- The number of Frobenius factors, `n / m`. -/
+  k : Nat
+
+/- `Nonempty` witnesses for the `IO.Ref (CompatPair p)` declarations, for the
+same reason as `MonicPoly`: the dependent monicity field blocks derivation. -/
+private instance : Nonempty (CompatPair 2) :=
+  ⟨⟨Conway.conwayPoly 2 3 Conway.supportedEntry_2_3,
+    Conway.conwayPoly 2 6 Conway.supportedEntry_2_6,
+    Conway.conwayPoly_monic 2 6 Conway.supportedEntry_2_6, 3, 2⟩⟩
+private instance : Nonempty (CompatPair 13) :=
+  ⟨⟨Conway.conwayPoly 13 1 Conway.supportedEntry_13_1,
+    Conway.conwayPoly 13 6 Conway.supportedEntry_13_6,
+    Conway.conwayPoly_monic 13 6 Conway.supportedEntry_13_6, 1, 6⟩⟩
+
+private initialize compat_2_3_6Ref : IO.Ref (CompatPair 2) ←
+  IO.mkRef ⟨Conway.conwayPoly 2 3 Conway.supportedEntry_2_3,
+            Conway.conwayPoly 2 6 Conway.supportedEntry_2_6,
+            Conway.conwayPoly_monic 2 6 Conway.supportedEntry_2_6, 3, 2⟩
+private initialize compat_13_1_6Ref : IO.Ref (CompatPair 13) ←
+  IO.mkRef ⟨Conway.conwayPoly 13 1 Conway.supportedEntry_13_1,
+            Conway.conwayPoly 13 6 Conway.supportedEntry_13_6,
+            Conway.conwayPoly_monic 13 6 Conway.supportedEntry_13_6, 1, 6⟩
+private initialize compat_2_4_8Ref : IO.Ref (CompatPair 2) ←
+  IO.mkRef ⟨Conway.conwayPoly 2 4 Conway.supportedEntry_2_4,
+            Conway.conwayPoly 2 8 Conway.supportedEntry_2_8,
+            Conway.conwayPoly_monic 2 8 Conway.supportedEntry_2_8, 4, 2⟩
+
+/-- Benchmark target: Tier 2 compatibility for the binary mid-degree pair
+`C(2, 3)` inside `C(2, 6)`. -/
+def runTier2Compat_2_3_6Checksum : Unit → IO Bool := fun () => do
+  let cp ← compat_2_3_6Ref.get
+  return Conway.compatCheck cp.small cp.large cp.largeMonic cp.m cp.k
+
+/-- Benchmark target: Tier 2 compatibility for the largest odd-prime pair,
+`C(13, 1)` inside `C(13, 6)`. This is the deepest Frobenius chain in the
+committed table: six factors. -/
+def runTier2Compat_13_1_6Checksum : Unit → IO Bool := fun () => do
+  let cp ← compat_13_1_6Ref.get
+  return Conway.compatCheck cp.small cp.large cp.largeMonic cp.m cp.k
+
+/-- Benchmark target: Tier 2 compatibility for the deepest binary pair,
+`C(2, 4)` inside `C(2, 8)`. -/
+def runTier2Compat_2_4_8Checksum : Unit → IO Bool := fun () => do
+  let cp ← compat_2_4_8Ref.get
+  return Conway.compatCheck cp.small cp.large cp.largeMonic cp.m cp.k
+
 /-- Textbook model for finite committed-table lookup at a given table key. -/
 def tier1LookupComplexity (_ordinal : Nat) : Nat :=
   1
@@ -273,6 +337,24 @@ setup_fixed_benchmark runTier1Irreducibility_11_6Checksum where {
 }
 
 setup_fixed_benchmark runTier1Irreducibility_13_6Checksum where {
+  repeats := 5
+  maxSecondsPerCall := 2.0
+  expectedHash := some (Hashable.hash true)
+}
+
+setup_fixed_benchmark runTier2Compat_2_3_6Checksum where {
+  repeats := 5
+  maxSecondsPerCall := 2.0
+  expectedHash := some (Hashable.hash true)
+}
+
+setup_fixed_benchmark runTier2Compat_13_1_6Checksum where {
+  repeats := 5
+  maxSecondsPerCall := 2.0
+  expectedHash := some (Hashable.hash true)
+}
+
+setup_fixed_benchmark runTier2Compat_2_4_8Checksum where {
   repeats := 5
   maxSecondsPerCall := 2.0
   expectedHash := some (Hashable.hash true)

@@ -359,6 +359,8 @@ libraries:
       input_families:
         - name: tier1-committed-table
           description: Imported Luebeck Conway-table entries for supported `(p, n)` pairs, covering finite table lookup, supported-entry recovery, and Tier-1 irreducibility verification.
+        - name: tier2-divisor-compatibility
+          description: Committed Conway divisor pairs `(p, m, n)` with `m | n`, covering the norm construction by Frobenius iteration and evaluation of the smaller Conway polynomial at the result.
   HexGFq:
     deps: [HexGFqField, HexConway, HexGF2]
     mathlib: false

@@ -14,12 +14,46 @@
 - `Hex.ConwayBench.runTier1Irreducibility_7_6Checksum`: fixed Rabin irreducibility check for imported `C(7, 6)`
 - `Hex.ConwayBench.runTier1Irreducibility_11_6Checksum`: fixed Rabin irreducibility check for imported `C(11, 6)`
 - `Hex.ConwayBench.runTier1Irreducibility_13_6Checksum`: fixed Rabin irreducibility check for imported `C(13, 6)`
+- `Hex.ConwayBench.runTier2Compat_2_3_6Checksum`: fixed Tier 2 compatibility check for `C(2, 3)` inside `C(2, 6)`
+- `Hex.ConwayBench.runTier2Compat_2_4_8Checksum`: fixed Tier 2 compatibility check for `C(2, 4)` inside `C(2, 8)`
+- `Hex.ConwayBench.runTier2Compat_13_1_6Checksum`: fixed Tier 2 compatibility check for `C(13, 1)` inside `C(13, 6)`
 
-The current `HexConway` implementation advertises the Tier 1 committed-table
-surface only. Tier 2 full Conway compatibility verification and Tier 3
-on-demand Conway search are not implemented API surfaces in this phase slice,
-so they are not included in `HexConway.phase4.input_families` and have no
-Phase-4 bench targets yet.
+`HexConway` now advertises two implemented tiers: the Tier 1 committed-table
+surface, and Tier 2 divisor compatibility. Both appear in
+`HexConway.phase4.input_families` as `tier1-committed-table` and
+`tier2-divisor-compatibility`. Tier 3 on-demand Conway search remains
+unimplemented and has no bench targets; Tier 2 primitivity is likewise
+unimplemented and is not covered by the `tier2-divisor-compatibility` family,
+which measures only the compatibility check.
+
+## Tier 2 divisor compatibility
+
+Measured on `chungus2` (Linux, x86_64, lean 4.33.0-rc1), five repeats each,
+medians:
+
+| Target | Pair | Frobenius factors | Median |
+|---|---|---:|---:|
+| `runTier2Compat_2_3_6Checksum` | `C(2, 3)` in `C(2, 6)` | 2 | 26.086 µs |
+| `runTier2Compat_2_4_8Checksum` | `C(2, 4)` in `C(2, 8)` | 2 | 48.880 µs |
+| `runTier2Compat_13_1_6Checksum` | `C(13, 1)` in `C(13, 6)` | 6 | 77.773 µs |
+
+For scale, the Tier 1 Rabin check on the same largest entry
+(`runTier1Irreducibility_13_6Checksum`) is 131.070 µs, and on `C(2, 6)` it is
+19.349 µs. So a compatibility check costs less than the irreducibility check
+for the same entry, which is the expected shape: compatibility runs `n / m`
+Frobenius steps at one modular composition apiece plus a final evaluation,
+while the Rabin test runs a pow chain over the maximal proper divisors of the
+degree.
+
+The three targets span the axes that matter. `2_3_6` and `2_4_8` share the
+factor count and differ in degree, and the cost roughly doubles with degree.
+`13_1_6` has the deepest chain in the committed table at six factors, over the
+largest prime; it is the worst case and is still under 80 µs.
+
+This is the runtime cost. The kernel-replay cost, which is what actually
+bounds the committed table, is separate: the fifty-two `decide`-discharged
+compatibility theorems together add about seventeen seconds to a
+`lake build HexConway`, against minutes for the Tier 1 certificates.
 
 ## Tier 1 proof budget
 
