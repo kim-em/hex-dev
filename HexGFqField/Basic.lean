@@ -33,6 +33,9 @@ structure FiniteField
   /-- The underlying reduced quotient-ring residue backing this field element. -/
   toQuotient : GFqRing.PolyQuotient f hf
 
+/-- Field equality is decidable, and decided by comparing canonical
+representatives: elements are wrappers around reduced quotient values, so
+equality of the wrapped values is equality of the elements. -/
 instance {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f} :
     DecidableEq (FiniteField f hf hp hirr) := by
   intro x y

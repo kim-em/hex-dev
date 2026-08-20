@@ -17,10 +17,22 @@ per-entry polynomial literals with their monic/degree/table-hit lemmas.
 namespace Hex
 
 namespace Conway
+
+/-! # Word bounds for the committed primes
+
+`ZMod64.Bounds p` is what lets coefficient arithmetic modulo `p` stay in a
+machine word. Every prime the table commits to needs one in scope, so they are
+declared here beside the table rather than at each use site. -/
+
+/-- Word bound for the committed prime `3`. -/
 instance boundsThree : ZMod64.Bounds 3 := ⟨by decide, by decide⟩
+/-- Word bound for the committed prime `5`. -/
 instance boundsFive : ZMod64.Bounds 5 := ⟨by decide, by decide⟩
+/-- Word bound for the committed prime `7`. -/
 instance boundsSeven : ZMod64.Bounds 7 := ⟨by decide, by decide⟩
+/-- Word bound for the committed prime `11`. -/
 instance boundsEleven : ZMod64.Bounds 11 := ⟨by decide, by decide⟩
+/-- Word bound for the committed prime `13`. -/
 instance boundsThirteen : ZMod64.Bounds 13 := ⟨by decide, by decide⟩
 
 -- Regenerate this definition with the command on the next line, which

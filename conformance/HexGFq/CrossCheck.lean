@@ -161,15 +161,15 @@ set_option maxRecDepth 4096 in
 packed degree-4 `GF(2)` modulus `0x3`. -/
 private theorem genericN4Cert_check :
     Berlekamp.checkIrreducibilityCertificateLinear
-        (Conway.packedGF2FpPoly 0x3 4)
-        (by unfold Conway.packedGF2FpPoly; rfl)
+        (GFq.packedGF2FpPoly 0x3 4)
+        (by unfold GFq.packedGF2FpPoly; rfl)
         genericN4Cert = true := by
   simp [Berlekamp.checkIrreducibilityCertificateLinear,
     genericN4Cert,
     Berlekamp.IrreducibilityCertificate.toAmbient?,
     Berlekamp.checkPowChainLinear, Berlekamp.checkRabinBezoutWitnesses,
     Berlekamp.checkRabinBezoutWitness, Berlekamp.certifiedFrobeniusDiffMod,
-    maxProperDiv_4, Conway.packedGF2FpPoly, polyP2]
+    maxProperDiv_4, GFq.packedGF2FpPoly, polyP2]
   constructor
   · constructor
     · constructor
@@ -183,12 +183,12 @@ private theorem genericN4Cert_check :
 /-- The packed degree-4 `GF(2)` modulus `0x3` is irreducible, certified via
 `genericN4Cert`. -/
 private theorem genericN4_irr :
-    FpPoly.Irreducible (Conway.packedGF2FpPoly 0x3 4) :=
-  Berlekamp.rabinTest_imp_irreducible (Conway.packedGF2FpPoly 0x3 4)
-    (by unfold Conway.packedGF2FpPoly; rfl)
+    FpPoly.Irreducible (GFq.packedGF2FpPoly 0x3 4) :=
+  Berlekamp.rabinTest_imp_irreducible (GFq.packedGF2FpPoly 0x3 4)
+    (by unfold GFq.packedGF2FpPoly; rfl)
     (Berlekamp.checkIrreducibilityCertificateLinear_rabinTest
-      (Conway.packedGF2FpPoly 0x3 4)
-      (by unfold Conway.packedGF2FpPoly; rfl)
+      (GFq.packedGF2FpPoly 0x3 4)
+      (by unfold GFq.packedGF2FpPoly; rfl)
       genericN4Cert
       genericN4Cert_check)
 
@@ -211,8 +211,8 @@ set_option maxRecDepth 4096 in
 against the packed degree-8 `GF(2)` modulus `0x1B`. -/
 private theorem genericN8Cert_check :
     Berlekamp.checkIrreducibilityCertificateLinearIncremental
-        (Conway.packedGF2FpPoly 0x1B 8)
-        (by unfold Conway.packedGF2FpPoly; rfl)
+        (GFq.packedGF2FpPoly 0x1B 8)
+        (by unfold GFq.packedGF2FpPoly; rfl)
         genericN8Cert = true := by
   simp [Berlekamp.checkIrreducibilityCertificateLinearIncremental,
     genericN8Cert,
@@ -221,7 +221,7 @@ private theorem genericN8Cert_check :
     Berlekamp.checkPowChainLinearIncrementalStep,
     Berlekamp.checkRabinBezoutWitnesses,
     Berlekamp.checkRabinBezoutWitness, Berlekamp.certifiedFrobeniusDiffMod,
-    maxProperDiv_8, Conway.packedGF2FpPoly, polyP2]
+    maxProperDiv_8, GFq.packedGF2FpPoly, polyP2]
   constructor
   · constructor
     · constructor
@@ -238,12 +238,12 @@ private theorem genericN8Cert_check :
 /-- The packed degree-8 `GF(2)` modulus `0x1B` is irreducible, certified via
 `genericN8Cert`. -/
 private theorem genericN8_irr :
-    FpPoly.Irreducible (Conway.packedGF2FpPoly 0x1B 8) :=
-  Berlekamp.rabinTest_imp_irreducible (Conway.packedGF2FpPoly 0x1B 8)
-    (by unfold Conway.packedGF2FpPoly; rfl)
+    FpPoly.Irreducible (GFq.packedGF2FpPoly 0x1B 8) :=
+  Berlekamp.rabinTest_imp_irreducible (GFq.packedGF2FpPoly 0x1B 8)
+    (by unfold GFq.packedGF2FpPoly; rfl)
     (Berlekamp.checkIrreducibilityCertificateLinearIncremental_rabinTest
-      (Conway.packedGF2FpPoly 0x1B 8)
-      (by unfold Conway.packedGF2FpPoly; rfl)
+      (GFq.packedGF2FpPoly 0x1B 8)
+      (by unfold GFq.packedGF2FpPoly; rfl)
       genericN8Cert
       genericN8Cert_check)
 
@@ -274,16 +274,16 @@ private def genericN16Cert : Berlekamp.IrreducibilityCertificate where
 
 /-- The packed degree-16 `GF(2)` modulus `0x100B` as an `FpPoly 2`. -/
 private def genericN16Mod : FpPoly 2 :=
-  Conway.packedGF2FpPoly 0x100B 16
+  GFq.packedGF2FpPoly 0x100B 16
 
 /-- The packed degree-16 `GF(2)` modulus `genericN16Mod` is monic. -/
 private theorem genericN16Mod_monic : DensePoly.Monic genericN16Mod := by
-  unfold genericN16Mod Conway.packedGF2FpPoly
+  unfold genericN16Mod GFq.packedGF2FpPoly
   rfl
 
 /-- The packed degree-16 `GF(2)` modulus `genericN16Mod` has degree 16. -/
 private theorem genericN16Mod_degree_eq : genericN16Mod.degree?.getD 0 = 16 := by
-  unfold genericN16Mod Conway.packedGF2FpPoly DensePoly.degree? DensePoly.size
+  unfold genericN16Mod GFq.packedGF2FpPoly DensePoly.degree? DensePoly.size
   rfl
 
 /-- The packed degree-16 `GF(2)` modulus `genericN16Mod` has positive degree. -/
@@ -347,7 +347,7 @@ private theorem genericN16_step0_check :
   · exact polyP2_size_le_16 (by decide)
   · exact polyP2_size_le_16 (by decide)
   · simp [polyP2, FpPoly.ofCoeffs, DensePoly.ofCoeffs, genericN16Mod,
-      Conway.packedGF2FpPoly]
+      GFq.packedGF2FpPoly]
     decide
 
 set_option maxRecDepth 65536 in
@@ -368,7 +368,7 @@ private theorem genericN16_step1_check :
   · exact polyP2_size_le_16 (by decide)
   · exact polyP2_size_le_16 (by decide)
   · simp [polyP2, FpPoly.ofCoeffs, DensePoly.ofCoeffs, genericN16Mod,
-      Conway.packedGF2FpPoly]
+      GFq.packedGF2FpPoly]
     decide
 
 set_option maxRecDepth 65536 in
@@ -389,7 +389,7 @@ private theorem genericN16_step2_check :
   · exact polyP2_size_le_16 (by decide)
   · exact polyP2_size_le_16 (by decide)
   · simp [polyP2, FpPoly.ofCoeffs, DensePoly.ofCoeffs, genericN16Mod,
-      Conway.packedGF2FpPoly]
+      GFq.packedGF2FpPoly]
     decide
 
 set_option maxRecDepth 65536 in
@@ -410,7 +410,7 @@ private theorem genericN16_step3_check :
   · exact polyP2_size_le_16 (by decide)
   · exact polyP2_size_le_16 (by decide)
   · simp [polyP2, FpPoly.ofCoeffs, DensePoly.ofCoeffs, genericN16Mod,
-      Conway.packedGF2FpPoly]
+      GFq.packedGF2FpPoly]
     decide
 
 set_option maxRecDepth 65536 in
@@ -431,7 +431,7 @@ private theorem genericN16_step4_check :
   · exact polyP2_size_le_16 (by decide)
   · exact polyP2_size_le_16 (by decide)
   · simp [polyP2, FpPoly.ofCoeffs, DensePoly.ofCoeffs, genericN16Mod,
-      Conway.packedGF2FpPoly]
+      GFq.packedGF2FpPoly]
     decide
 
 set_option maxRecDepth 65536 in
@@ -452,7 +452,7 @@ private theorem genericN16_step5_check :
   · exact polyP2_size_le_16 (by decide)
   · exact polyP2_size_le_16 (by decide)
   · simp [polyP2, FpPoly.ofCoeffs, DensePoly.ofCoeffs, genericN16Mod,
-      Conway.packedGF2FpPoly]
+      GFq.packedGF2FpPoly]
     decide
 
 set_option maxRecDepth 65536 in
@@ -473,7 +473,7 @@ private theorem genericN16_step6_check :
   · exact polyP2_size_le_16 (by decide)
   · exact polyP2_size_le_16 (by decide)
   · simp [polyP2, FpPoly.ofCoeffs, DensePoly.ofCoeffs, genericN16Mod,
-      Conway.packedGF2FpPoly]
+      GFq.packedGF2FpPoly]
     decide
 
 set_option maxRecDepth 65536 in
@@ -494,7 +494,7 @@ private theorem genericN16_step7_check :
   · exact polyP2_size_le_16 (by decide)
   · exact polyP2_size_le_16 (by decide)
   · simp [polyP2, FpPoly.ofCoeffs, DensePoly.ofCoeffs, genericN16Mod,
-      Conway.packedGF2FpPoly]
+      GFq.packedGF2FpPoly]
     decide
 
 set_option maxRecDepth 65536 in
@@ -515,7 +515,7 @@ private theorem genericN16_step8_check :
   · exact polyP2_size_le_16 (by decide)
   · exact polyP2_size_le_16 (by decide)
   · simp [polyP2, FpPoly.ofCoeffs, DensePoly.ofCoeffs, genericN16Mod,
-      Conway.packedGF2FpPoly]
+      GFq.packedGF2FpPoly]
     decide
 
 set_option maxRecDepth 65536 in
@@ -536,7 +536,7 @@ private theorem genericN16_step9_check :
   · exact polyP2_size_le_16 (by decide)
   · exact polyP2_size_le_16 (by decide)
   · simp [polyP2, FpPoly.ofCoeffs, DensePoly.ofCoeffs, genericN16Mod,
-      Conway.packedGF2FpPoly]
+      GFq.packedGF2FpPoly]
     decide
 
 set_option maxRecDepth 65536 in
@@ -557,7 +557,7 @@ private theorem genericN16_step10_check :
   · exact polyP2_size_le_16 (by decide)
   · exact polyP2_size_le_16 (by decide)
   · simp [polyP2, FpPoly.ofCoeffs, DensePoly.ofCoeffs, genericN16Mod,
-      Conway.packedGF2FpPoly]
+      GFq.packedGF2FpPoly]
     decide
 
 set_option maxRecDepth 65536 in
@@ -578,7 +578,7 @@ private theorem genericN16_step11_check :
   · exact polyP2_size_le_16 (by decide)
   · exact polyP2_size_le_16 (by decide)
   · simp [polyP2, FpPoly.ofCoeffs, DensePoly.ofCoeffs, genericN16Mod,
-      Conway.packedGF2FpPoly]
+      GFq.packedGF2FpPoly]
     decide
 
 set_option maxRecDepth 65536 in
@@ -599,7 +599,7 @@ private theorem genericN16_step12_check :
   · exact polyP2_size_le_16 (by decide)
   · exact polyP2_size_le_16 (by decide)
   · simp [polyP2, FpPoly.ofCoeffs, DensePoly.ofCoeffs, genericN16Mod,
-      Conway.packedGF2FpPoly]
+      GFq.packedGF2FpPoly]
     decide
 
 set_option maxRecDepth 65536 in
@@ -620,7 +620,7 @@ private theorem genericN16_step13_check :
   · exact polyP2_size_le_16 (by decide)
   · exact polyP2_size_le_16 (by decide)
   · simp [polyP2, FpPoly.ofCoeffs, DensePoly.ofCoeffs, genericN16Mod,
-      Conway.packedGF2FpPoly]
+      GFq.packedGF2FpPoly]
     decide
 
 set_option maxRecDepth 65536 in
@@ -641,7 +641,7 @@ private theorem genericN16_step14_check :
   · exact polyP2_size_le_16 (by decide)
   · exact polyP2_size_le_16 (by decide)
   · simp [polyP2, FpPoly.ofCoeffs, DensePoly.ofCoeffs, genericN16Mod,
-      Conway.packedGF2FpPoly]
+      GFq.packedGF2FpPoly]
     decide
 
 set_option maxRecDepth 65536 in
@@ -662,7 +662,7 @@ private theorem genericN16_step15_check :
   · exact polyP2_size_le_16 (by decide)
   · exact polyP2_size_le_16 (by decide)
   · simp [polyP2, FpPoly.ofCoeffs, DensePoly.ofCoeffs, genericN16Mod,
-      Conway.packedGF2FpPoly]
+      GFq.packedGF2FpPoly]
     decide
 
 set_option maxRecDepth 65536 in
@@ -679,7 +679,7 @@ private theorem genericN16QuotientWitnesses_check :
   · apply Berlekamp.checkPowChainLinearIncrementalQuotientWitnesses_first_of_coeffs
       (first := polyP2 #[0, 1])
     · rfl
-    · simp [genericN16Mod, Conway.packedGF2FpPoly, polyP2, FpPoly.X,
+    · simp [genericN16Mod, GFq.packedGF2FpPoly, polyP2, FpPoly.X,
         DensePoly.monomial, FpPoly.modByMonic, DensePoly.modByMonic_eq_mod]
       decide
   · intro k hk
@@ -721,7 +721,7 @@ private theorem genericN16_bezout :
   unfold Berlekamp.checkRabinBezoutWitnesses Berlekamp.checkRabinBezoutWitness
     Berlekamp.certifiedFrobeniusDiffMod
   simp [genericN16SamePrimeCert, genericN16Cert, maxProperDiv_16,
-    genericN16Mod, Conway.packedGF2FpPoly, polyP2]
+    genericN16Mod, GFq.packedGF2FpPoly, polyP2]
   decide
 
 /-- `genericN16SamePrimeCert.n` equals the Berlekamp basis size of `genericN16Mod`. -/
@@ -761,8 +761,8 @@ set_option maxHeartbeats 1000000 in
 for the degree-16 packed modulus `0x100B`. -/
 private theorem genericN16Cert_check :
     Berlekamp.checkIrreducibilityCertificateLinearIncremental
-        (Conway.packedGF2FpPoly 0x100B 16)
-        (by unfold Conway.packedGF2FpPoly; rfl)
+        (GFq.packedGF2FpPoly 0x100B 16)
+        (by unfold GFq.packedGF2FpPoly; rfl)
         genericN16Cert = true := by
   simp [Berlekamp.checkIrreducibilityCertificateLinearIncremental,
     genericN16Cert, Berlekamp.IrreducibilityCertificate.toAmbient?]
@@ -773,12 +773,12 @@ private theorem genericN16Cert_check :
 
 /-- The degree-16 packed modulus `0x100B` is irreducible over `FpPoly 2`. -/
 theorem genericN16_irr :
-    FpPoly.Irreducible (Conway.packedGF2FpPoly 0x100B 16) :=
-  Berlekamp.rabinTest_imp_irreducible (Conway.packedGF2FpPoly 0x100B 16)
-    (by unfold Conway.packedGF2FpPoly; rfl)
+    FpPoly.Irreducible (GFq.packedGF2FpPoly 0x100B 16) :=
+  Berlekamp.rabinTest_imp_irreducible (GFq.packedGF2FpPoly 0x100B 16)
+    (by unfold GFq.packedGF2FpPoly; rfl)
     (Berlekamp.checkIrreducibilityCertificateLinearIncremental_rabinTest
-      (Conway.packedGF2FpPoly 0x100B 16)
-      (by unfold Conway.packedGF2FpPoly; rfl)
+      (GFq.packedGF2FpPoly 0x100B 16)
+      (by unfold GFq.packedGF2FpPoly; rfl)
       genericN16Cert
       genericN16Cert_check)
 
@@ -786,7 +786,7 @@ theorem genericN16_irr :
 
 For each extension degree `n` we fix a known irreducible packed
 modulus, declare the matching `FpPoly 2` modulus via
-`Conway.packedGF2FpPoly`, and provide irreducibility plus positive-degree
+`GFq.packedGF2FpPoly`, and provide irreducibility plus positive-degree
 witnesses for both representations.  The four `#guard`s
 per degree compare 50 pseudorandom shared inputs across addition,
 multiplication, inversion, and Frobenius (`a ↦ a^2`).
@@ -807,7 +807,7 @@ private theorem packed_irr :
   exact GF2Poly.gf16_modulus_irreducible
 
 private def genericMod : FpPoly 2 :=
-  Conway.packedGF2FpPoly lower n
+  GFq.packedGF2FpPoly lower n
 
 private theorem generic_pos : 0 < FpPoly.degree genericMod := by
   decide
@@ -864,7 +864,7 @@ private theorem packed_irr :
   exact GF2Poly.aes_modulus_irreducible
 
 private def genericMod : FpPoly 2 :=
-  Conway.packedGF2FpPoly lower n
+  GFq.packedGF2FpPoly lower n
 
 private theorem generic_pos : 0 < FpPoly.degree genericMod := by
   decide
@@ -922,7 +922,7 @@ private theorem packed_irr :
   exact GF2Poly.gf65k_modulus_irreducible
 
 private def genericMod : FpPoly 2 :=
-  Conway.packedGF2FpPoly lower n
+  GFq.packedGF2FpPoly lower n
 
 private theorem generic_pos : 0 < FpPoly.degree genericMod := by
   decide
@@ -1005,11 +1005,11 @@ private theorem packed_irr :
 
 /-- The packed degree-32 `GF(2)` modulus `x^32 + x^7 + x^3 + x^2 + 1` as an `FpPoly 2`. -/
 private def genericMod : FpPoly 2 :=
-  Conway.packedGF2FpPoly lower n
+  GFq.packedGF2FpPoly lower n
 
 /-- The packed degree-32 `GF(2)` modulus `genericMod` is monic. -/
 private theorem genericMod_monic : DensePoly.Monic genericMod := by
-  unfold genericMod Conway.packedGF2FpPoly
+  unfold genericMod GFq.packedGF2FpPoly
   rfl
 
 /-- The Frobenius power chain `x^(2^k) mod genericMod` for the degree-32 certificate. -/
@@ -1113,7 +1113,7 @@ private def genericN32Cert : Berlekamp.IrreducibilityCertificate where
 
 /-- The packed degree-32 `GF(2)` modulus `genericMod` has degree 32. -/
 private theorem genericMod_degree_eq : genericMod.degree?.getD 0 = 32 := by
-  unfold genericMod Conway.packedGF2FpPoly DensePoly.degree? DensePoly.size
+  unfold genericMod GFq.packedGF2FpPoly DensePoly.degree? DensePoly.size
   rfl
 
 /-- The packed degree-32 `GF(2)` modulus `genericMod` has positive degree. -/
@@ -1150,7 +1150,7 @@ private theorem genericN32_step0_check :
   · exact polyP2_size_le_32 (by decide)
   · exact polyP2_size_le_32 (by decide)
   · simp [polyP2, FpPoly.ofCoeffs, DensePoly.ofCoeffs, genericMod,
-      Conway.packedGF2FpPoly]
+      GFq.packedGF2FpPoly]
     decide
 
 set_option maxRecDepth 65536 in
@@ -1171,7 +1171,7 @@ private theorem genericN32_step1_check :
   · exact polyP2_size_le_32 (by decide)
   · exact polyP2_size_le_32 (by decide)
   · simp [polyP2, FpPoly.ofCoeffs, DensePoly.ofCoeffs, genericMod,
-      Conway.packedGF2FpPoly]
+      GFq.packedGF2FpPoly]
     decide
 
 set_option maxRecDepth 65536 in
@@ -1192,7 +1192,7 @@ private theorem genericN32_step2_check :
   · exact polyP2_size_le_32 (by decide)
   · exact polyP2_size_le_32 (by decide)
   · simp [polyP2, FpPoly.ofCoeffs, DensePoly.ofCoeffs, genericMod,
-      Conway.packedGF2FpPoly]
+      GFq.packedGF2FpPoly]
     decide
 
 set_option maxRecDepth 65536 in
@@ -1213,7 +1213,7 @@ private theorem genericN32_step3_check :
   · exact polyP2_size_le_32 (by decide)
   · exact polyP2_size_le_32 (by decide)
   · simp [polyP2, FpPoly.ofCoeffs, DensePoly.ofCoeffs, genericMod,
-      Conway.packedGF2FpPoly]
+      GFq.packedGF2FpPoly]
     decide
 
 set_option maxRecDepth 65536 in
@@ -1234,7 +1234,7 @@ private theorem genericN32_step4_check :
   · exact polyP2_size_le_32 (by decide)
   · exact polyP2_size_le_32 (by decide)
   · simp [polyP2, FpPoly.ofCoeffs, DensePoly.ofCoeffs, genericMod,
-      Conway.packedGF2FpPoly]
+      GFq.packedGF2FpPoly]
     decide
 
 set_option maxRecDepth 65536 in
@@ -1255,7 +1255,7 @@ private theorem genericN32_step5_check :
   · exact polyP2_size_le_32 (by decide)
   · exact polyP2_size_le_32 (by decide)
   · simp [polyP2, FpPoly.ofCoeffs, DensePoly.ofCoeffs, genericMod,
-      Conway.packedGF2FpPoly]
+      GFq.packedGF2FpPoly]
     decide
 
 set_option maxRecDepth 65536 in
@@ -1276,7 +1276,7 @@ private theorem genericN32_step6_check :
   · exact polyP2_size_le_32 (by decide)
   · exact polyP2_size_le_32 (by decide)
   · simp [polyP2, FpPoly.ofCoeffs, DensePoly.ofCoeffs, genericMod,
-      Conway.packedGF2FpPoly]
+      GFq.packedGF2FpPoly]
     decide
 
 set_option maxRecDepth 65536 in
@@ -1297,7 +1297,7 @@ private theorem genericN32_step7_check :
   · exact polyP2_size_le_32 (by decide)
   · exact polyP2_size_le_32 (by decide)
   · simp [polyP2, FpPoly.ofCoeffs, DensePoly.ofCoeffs, genericMod,
-      Conway.packedGF2FpPoly]
+      GFq.packedGF2FpPoly]
     decide
 
 set_option maxRecDepth 65536 in
@@ -1318,7 +1318,7 @@ private theorem genericN32_step8_check :
   · exact polyP2_size_le_32 (by decide)
   · exact polyP2_size_le_32 (by decide)
   · simp [polyP2, FpPoly.ofCoeffs, DensePoly.ofCoeffs, genericMod,
-      Conway.packedGF2FpPoly]
+      GFq.packedGF2FpPoly]
     decide
 
 set_option maxRecDepth 65536 in
@@ -1339,7 +1339,7 @@ private theorem genericN32_step9_check :
   · exact polyP2_size_le_32 (by decide)
   · exact polyP2_size_le_32 (by decide)
   · simp [polyP2, FpPoly.ofCoeffs, DensePoly.ofCoeffs, genericMod,
-      Conway.packedGF2FpPoly]
+      GFq.packedGF2FpPoly]
     decide
 
 set_option maxRecDepth 65536 in
@@ -1360,7 +1360,7 @@ private theorem genericN32_step10_check :
   · exact polyP2_size_le_32 (by decide)
   · exact polyP2_size_le_32 (by decide)
   · simp [polyP2, FpPoly.ofCoeffs, DensePoly.ofCoeffs, genericMod,
-      Conway.packedGF2FpPoly]
+      GFq.packedGF2FpPoly]
     decide
 
 set_option maxRecDepth 65536 in
@@ -1381,7 +1381,7 @@ private theorem genericN32_step11_check :
   · exact polyP2_size_le_32 (by decide)
   · exact polyP2_size_le_32 (by decide)
   · simp [polyP2, FpPoly.ofCoeffs, DensePoly.ofCoeffs, genericMod,
-      Conway.packedGF2FpPoly]
+      GFq.packedGF2FpPoly]
     decide
 
 set_option maxRecDepth 65536 in
@@ -1402,7 +1402,7 @@ private theorem genericN32_step12_check :
   · exact polyP2_size_le_32 (by decide)
   · exact polyP2_size_le_32 (by decide)
   · simp [polyP2, FpPoly.ofCoeffs, DensePoly.ofCoeffs, genericMod,
-      Conway.packedGF2FpPoly]
+      GFq.packedGF2FpPoly]
     decide
 
 set_option maxRecDepth 65536 in
@@ -1423,7 +1423,7 @@ private theorem genericN32_step13_check :
   · exact polyP2_size_le_32 (by decide)
   · exact polyP2_size_le_32 (by decide)
   · simp [polyP2, FpPoly.ofCoeffs, DensePoly.ofCoeffs, genericMod,
-      Conway.packedGF2FpPoly]
+      GFq.packedGF2FpPoly]
     decide
 
 set_option maxRecDepth 65536 in
@@ -1444,7 +1444,7 @@ private theorem genericN32_step14_check :
   · exact polyP2_size_le_32 (by decide)
   · exact polyP2_size_le_32 (by decide)
   · simp [polyP2, FpPoly.ofCoeffs, DensePoly.ofCoeffs, genericMod,
-      Conway.packedGF2FpPoly]
+      GFq.packedGF2FpPoly]
     decide
 
 set_option maxRecDepth 65536 in
@@ -1465,7 +1465,7 @@ private theorem genericN32_step15_check :
   · exact polyP2_size_le_32 (by decide)
   · exact polyP2_size_le_32 (by decide)
   · simp [polyP2, FpPoly.ofCoeffs, DensePoly.ofCoeffs, genericMod,
-      Conway.packedGF2FpPoly]
+      GFq.packedGF2FpPoly]
     decide
 
 set_option maxRecDepth 65536 in
@@ -1486,7 +1486,7 @@ private theorem genericN32_step16_check :
   · exact polyP2_size_le_32 (by decide)
   · exact polyP2_size_le_32 (by decide)
   · simp [polyP2, FpPoly.ofCoeffs, DensePoly.ofCoeffs, genericMod,
-      Conway.packedGF2FpPoly]
+      GFq.packedGF2FpPoly]
     decide
 
 set_option maxRecDepth 65536 in
@@ -1507,7 +1507,7 @@ private theorem genericN32_step17_check :
   · exact polyP2_size_le_32 (by decide)
   · exact polyP2_size_le_32 (by decide)
   · simp [polyP2, FpPoly.ofCoeffs, DensePoly.ofCoeffs, genericMod,
-      Conway.packedGF2FpPoly]
+      GFq.packedGF2FpPoly]
     decide
 
 set_option maxRecDepth 65536 in
@@ -1528,7 +1528,7 @@ private theorem genericN32_step18_check :
   · exact polyP2_size_le_32 (by decide)
   · exact polyP2_size_le_32 (by decide)
   · simp [polyP2, FpPoly.ofCoeffs, DensePoly.ofCoeffs, genericMod,
-      Conway.packedGF2FpPoly]
+      GFq.packedGF2FpPoly]
     decide
 
 set_option maxRecDepth 65536 in
@@ -1549,7 +1549,7 @@ private theorem genericN32_step19_check :
   · exact polyP2_size_le_32 (by decide)
   · exact polyP2_size_le_32 (by decide)
   · simp [polyP2, FpPoly.ofCoeffs, DensePoly.ofCoeffs, genericMod,
-      Conway.packedGF2FpPoly]
+      GFq.packedGF2FpPoly]
     decide
 
 set_option maxRecDepth 65536 in
@@ -1570,7 +1570,7 @@ private theorem genericN32_step20_check :
   · exact polyP2_size_le_32 (by decide)
   · exact polyP2_size_le_32 (by decide)
   · simp [polyP2, FpPoly.ofCoeffs, DensePoly.ofCoeffs, genericMod,
-      Conway.packedGF2FpPoly]
+      GFq.packedGF2FpPoly]
     decide
 
 set_option maxRecDepth 65536 in
@@ -1591,7 +1591,7 @@ private theorem genericN32_step21_check :
   · exact polyP2_size_le_32 (by decide)
   · exact polyP2_size_le_32 (by decide)
   · simp [polyP2, FpPoly.ofCoeffs, DensePoly.ofCoeffs, genericMod,
-      Conway.packedGF2FpPoly]
+      GFq.packedGF2FpPoly]
     decide
 
 set_option maxRecDepth 65536 in
@@ -1612,7 +1612,7 @@ private theorem genericN32_step22_check :
   · exact polyP2_size_le_32 (by decide)
   · exact polyP2_size_le_32 (by decide)
   · simp [polyP2, FpPoly.ofCoeffs, DensePoly.ofCoeffs, genericMod,
-      Conway.packedGF2FpPoly]
+      GFq.packedGF2FpPoly]
     decide
 
 set_option maxRecDepth 65536 in
@@ -1633,7 +1633,7 @@ private theorem genericN32_step23_check :
   · exact polyP2_size_le_32 (by decide)
   · exact polyP2_size_le_32 (by decide)
   · simp [polyP2, FpPoly.ofCoeffs, DensePoly.ofCoeffs, genericMod,
-      Conway.packedGF2FpPoly]
+      GFq.packedGF2FpPoly]
     decide
 
 set_option maxRecDepth 65536 in
@@ -1654,7 +1654,7 @@ private theorem genericN32_step24_check :
   · exact polyP2_size_le_32 (by decide)
   · exact polyP2_size_le_32 (by decide)
   · simp [polyP2, FpPoly.ofCoeffs, DensePoly.ofCoeffs, genericMod,
-      Conway.packedGF2FpPoly]
+      GFq.packedGF2FpPoly]
     decide
 
 set_option maxRecDepth 65536 in
@@ -1675,7 +1675,7 @@ private theorem genericN32_step25_check :
   · exact polyP2_size_le_32 (by decide)
   · exact polyP2_size_le_32 (by decide)
   · simp [polyP2, FpPoly.ofCoeffs, DensePoly.ofCoeffs, genericMod,
-      Conway.packedGF2FpPoly]
+      GFq.packedGF2FpPoly]
     decide
 
 set_option maxRecDepth 65536 in
@@ -1696,7 +1696,7 @@ private theorem genericN32_step26_check :
   · exact polyP2_size_le_32 (by decide)
   · exact polyP2_size_le_32 (by decide)
   · simp [polyP2, FpPoly.ofCoeffs, DensePoly.ofCoeffs, genericMod,
-      Conway.packedGF2FpPoly]
+      GFq.packedGF2FpPoly]
     decide
 
 set_option maxRecDepth 65536 in
@@ -1717,7 +1717,7 @@ private theorem genericN32_step27_check :
   · exact polyP2_size_le_32 (by decide)
   · exact polyP2_size_le_32 (by decide)
   · simp [polyP2, FpPoly.ofCoeffs, DensePoly.ofCoeffs, genericMod,
-      Conway.packedGF2FpPoly]
+      GFq.packedGF2FpPoly]
     decide
 
 set_option maxRecDepth 65536 in
@@ -1738,7 +1738,7 @@ private theorem genericN32_step28_check :
   · exact polyP2_size_le_32 (by decide)
   · exact polyP2_size_le_32 (by decide)
   · simp [polyP2, FpPoly.ofCoeffs, DensePoly.ofCoeffs, genericMod,
-      Conway.packedGF2FpPoly]
+      GFq.packedGF2FpPoly]
     decide
 
 set_option maxRecDepth 65536 in
@@ -1759,7 +1759,7 @@ private theorem genericN32_step29_check :
   · exact polyP2_size_le_32 (by decide)
   · exact polyP2_size_le_32 (by decide)
   · simp [polyP2, FpPoly.ofCoeffs, DensePoly.ofCoeffs, genericMod,
-      Conway.packedGF2FpPoly]
+      GFq.packedGF2FpPoly]
     decide
 
 set_option maxRecDepth 65536 in
@@ -1780,7 +1780,7 @@ private theorem genericN32_step30_check :
   · exact polyP2_size_le_32 (by decide)
   · exact polyP2_size_le_32 (by decide)
   · simp [polyP2, FpPoly.ofCoeffs, DensePoly.ofCoeffs, genericMod,
-      Conway.packedGF2FpPoly]
+      GFq.packedGF2FpPoly]
     decide
 
 set_option maxRecDepth 65536 in
@@ -1801,7 +1801,7 @@ private theorem genericN32_step31_check :
   · exact polyP2_size_le_32 (by decide)
   · exact polyP2_size_le_32 (by decide)
   · simp [polyP2, FpPoly.ofCoeffs, DensePoly.ofCoeffs, genericMod,
-      Conway.packedGF2FpPoly]
+      GFq.packedGF2FpPoly]
     decide
 
 /-- `FpPoly.X` reduced modulo the monic `genericMod` is `FpPoly.X` itself, its
@@ -1891,7 +1891,7 @@ private theorem genericN32_bezout :
     Berlekamp.certifiedFrobeniusDiffMod
   rw [genericMod_modByMonic_X]
   simp [genericN32SamePrimeCert, genericN32PowChain, maxProperDiv_32,
-    genericMod, Conway.packedGF2FpPoly, lower, n, polyP2]
+    genericMod, GFq.packedGF2FpPoly, lower, n, polyP2]
   decide
 
 /-- `genericN32SamePrimeCert.n` equals the Berlekamp basis size of `genericMod`. -/

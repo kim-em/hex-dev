@@ -52,7 +52,7 @@ irreducibility proofs. Passing that witness explicitly everywhere is
 verbose, so `HexGFq` makes it available through instance synthesis with a
 one-method class.
 
-{name}`Hex.Conway.CommittedEntry` carries a single field `entry`, the
+{name}`Hex.GFq.CommittedEntry` carries a single field `entry`, the
 committed {name}`Hex.Conway.SupportedEntry` for the pair `(p, n)`. The
 library commits one instance per committed table cell, named
 `committedEntry_p_n` (for example `committedEntry_2_3`), covering
@@ -72,7 +72,7 @@ The headline type is {name}`Hex.GFq`: given an explicit
 the committed Conway modulus, with the positive-degree, primality, and
 irreducibility hypotheses discharged from the entry. Its ergonomic
 sibling {name}`Hex.GFqC` is the same field with the entry resolved by
-{name}`Hex.Conway.CommittedEntry` synthesis, so `GFqC 2 3` denotes
+{name}`Hex.GFq.CommittedEntry` synthesis, so `GFqC 2 3` denotes
 `GF(8)` with no further arguments.
 
 Each field element is a polynomial over `F_p` of degree below `n`: the
@@ -113,22 +113,22 @@ proves the two agree.
 The translation from a packed single-word modulus to the generic
 `FpPoly 2` view is:
 
-{docstring Hex.Conway.packedGF2FpPoly}
+{docstring Hex.GFq.packedGF2FpPoly}
 
 A committed binary entry that also admits the packed view is recorded by
-the class {name}`Hex.Conway.PackedGF2Entry`. Its fields bundle the
+the class {name}`Hex.GFq.PackedGF2Entry`. Its fields bundle the
 `HexConway` {name}`Hex.Conway.SupportedEntry`, the packed lower-word modulus
-{name}`Hex.Conway.PackedGF2Entry.lower`, the
+{name}`Hex.GFq.PackedGF2Entry.lower`, the
 extension-degree bounds `0 < n < 64`, the certified irreducibility of the
 packed modulus, and (crucially)
-{name}`Hex.Conway.PackedGF2Entry.conway_eq_packed`, the proof that the
+{name}`Hex.GFq.PackedGF2Entry.conway_eq_packed`, the proof that the
 committed Conway polynomial *equals* the packed modulus viewed as an
 {name}`Hex.FpPoly` with modulus `2`. That equality is what lets the optimized field stand in for
 the canonical one without changing the mathematics. The committed
 instances are named `packedGF2Entry_2_n`.
 
 The optimized field itself is {name}`Hex.GF2q`: for a committed
-{name}`Hex.Conway.PackedGF2Entry` at degree `n`, the single-word `HexGF2` field
+{name}`Hex.GFq.PackedGF2Entry` at degree `n`, the single-word `HexGF2` field
 {name}`Hex.GF2n` with that
 modulus. A `UInt64` word becomes a packed element through:
 
@@ -194,7 +194,7 @@ certificate, never by {tactic}`native_decide`. The degree-one case is small
 enough to prove by exhausting the two monic linear polynomials over
 `𝔽₂`:
 
-{docstring Hex.Conway.packedGF2Entry_2_1_irreducible}
+{docstring Hex.GFq.packedGF2Entry_2_1_irreducible}
 
 Higher-degree committed entries are certified the same way through the
 `HexGF2` certificate checker. Because the check runs at elaboration time,
@@ -227,7 +227,7 @@ tag := "hex-gfq-cross-references"
 
 * {ref "hex-conway"}[`HexConway`] supplies the committed Conway moduli
   and their {name}`Hex.Conway.SupportedEntry` witnesses; each
-  {name}`Hex.Conway.CommittedEntry` instance wraps one.
+  {name}`Hex.GFq.CommittedEntry` instance wraps one.
 * {ref "hex-gfq-field"}[`HexGFqField`] (over
   {ref "hex-gfq-ring"}[`HexGFqRing`]) is the generic quotient field
   backing {name}`Hex.GFq` and {name}`Hex.GFqC`; every generic operation

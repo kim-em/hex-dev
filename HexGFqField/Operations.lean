@@ -226,7 +226,13 @@ private theorem dvd_trans_poly {a b c : FpPoly p} (hab : a ∣ b) (hbc : b ∣ c
 
 This normalizes the extended-GCD left coefficient by the gcd's constant-unit
 factor, producing a polynomial whose residue is the multiplicative inverse
-whenever the quotient element is nonzero. -/
+whenever the quotient element is nonzero.
+
+At zero this is not an inverse and does not claim to be: the extended GCD of `0`
+and `f` returns `f` itself, so the result is `f` scaled by the inverse of its own
+constant coefficient. It stays public because `inv` is `@[expose]` and mentions
+it, but `inv` decides the zero case before reaching it, and callers should
+reason through the field-level lemmas below rather than by unfolding this. -/
 @[expose]
 def invPoly {f : FpPoly p} {hf : 0 < FpPoly.degree f}
     (x : GFqRing.PolyQuotient f hf) : FpPoly p :=
@@ -840,6 +846,7 @@ theorem inv_mul_cancel
     _ = (x * x⁻¹ : FiniteField f hf hp hirr).toQuotient := rfl
     _ = (1 : FiniteField f hf hp hirr).toQuotient := congrArg FiniteField.toQuotient hleft
 
+/-- The additive-identity representative is the reduced form of `0`. -/
 @[simp, grind =] theorem repr_zero
     (f : FpPoly p) (hf : 0 < FpPoly.degree f) (hp : Hex.Nat.Prime p) (hirr : FpPoly.Irreducible f) :
     repr (0 : FiniteField f hf hp hirr) = GFqRing.reduceMod f 0 :=
