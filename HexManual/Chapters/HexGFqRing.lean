@@ -124,23 +124,7 @@ namespace HexGFqRingChapterExample
 
 local instance boundsFive : ZMod64.Bounds 5 := ⟨by decide, by decide⟩
 
-private theorem prime_five : Hex.Nat.Prime 5 := by
-  constructor
-  · decide
-  · intro m hm
-    have hmle : m ≤ 5 :=
-      Nat.le_of_dvd (by decide : 0 < 5) hm
-    have hcases :
-        m = 0 ∨ m = 1 ∨ m = 2 ∨
-        m = 3 ∨ m = 4 ∨ m = 5 := by omega
-    rcases hcases with
-      rfl | rfl | rfl | rfl | rfl | rfl
-    · simp at hm
-    · exact Or.inl rfl
-    · simp at hm
-    · simp at hm
-    · simp at hm
-    · exact Or.inr rfl
+private theorem prime_five : Hex.Nat.Prime 5 := by decide
 
 private instance : ZMod64.PrimeModulus 5 := ⟨prime_five⟩
 

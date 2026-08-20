@@ -25,16 +25,7 @@ open Hex
 /-- `2` is prime, the characteristic fact both packed correspondences need to
 name the generic field over `F_2`. Stated once here rather than inside each
 namespace, since the two copies were identical. -/
-private theorem prime_two : Hex.Nat.Prime 2 := by
-  constructor
-  · decide
-  · intro m hm
-    have hmle : m ≤ 2 := Nat.le_of_dvd (by decide : 0 < 2) hm
-    have hcases : m = 0 ∨ m = 1 ∨ m = 2 := by omega
-    rcases hcases with rfl | rfl | rfl
-    · simp at hm
-    · exact Or.inl rfl
-    · exact Or.inr rfl
+private theorem prime_two : Hex.Nat.Prime 2 := by decide
 
 namespace GF2n
 

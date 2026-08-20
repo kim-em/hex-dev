@@ -134,6 +134,39 @@ theorem dvd_mul {p a b : Nat} (hp : Hex.Nat.Prime p) :
 
 end Prime
 
+/-- Primality as a bounded search: for `p ≥ 2`, having only trivial divisors is
+the same as having no divisor strictly between `1` and `p`. The point of the
+restatement is that the right-hand side quantifies over a finite range, which is
+what makes the decidability instance below possible. -/
+theorem prime_iff_forall_lt (p : Nat) :
+    Prime p ↔ 2 ≤ p ∧ ∀ m, m < p → 2 ≤ m → ¬ m ∣ p := by
+  constructor
+  · rintro ⟨hp, hdiv⟩
+    refine ⟨hp, ?_⟩
+    intro m hmlt hm2 hmdvd
+    rcases hdiv m hmdvd with rfl | rfl <;> omega
+  · rintro ⟨hp, hno⟩
+    refine ⟨hp, ?_⟩
+    intro m hmdvd
+    have hppos : 0 < p := by omega
+    have hmle : m ≤ p := Nat.le_of_dvd hppos hmdvd
+    rcases Nat.lt_or_ge m 2 with hm2 | hm2
+    · rcases Nat.lt_or_ge m 1 with hm1 | hm1
+      · have hm0 : m = 0 := by omega
+        subst hm0
+        have : p = 0 := Nat.zero_dvd.mp hmdvd
+        omega
+      · exact Or.inl (by omega)
+    · rcases Nat.lt_or_ge m p with hmlt | hmge
+      · exact absurd hmdvd (hno m hmlt hm2)
+      · exact Or.inr (Nat.le_antisymm hmle hmge)
+
+/-- Primality is decidable by trial division below `p`, so a concrete prime is
+`by decide` rather than a hand-written divisor case split. Intended for the
+small moduli this project commits to: the search is linear in `p`. -/
+instance instDecidablePrime (p : Nat) : Decidable (Prime p) :=
+  decidable_of_iff _ (prime_iff_forall_lt p).symm
+
 private theorem not_dvd_of_pos_lt {p k : Nat} (hk : 0 < k) (hk' : k < p) :
     ¬ p ∣ k := by
   intro hpk

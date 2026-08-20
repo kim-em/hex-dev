@@ -149,16 +149,7 @@ executable Rabin checker. -/
   decide
 
 /-- `Hex.Nat.Prime` witness for `p = 2`, the smallest committed Conway prime. -/
-theorem prime_two : Hex.Nat.Prime 2 := by
-  constructor
-  · decide
-  · intro m hm
-    have hmle : m ≤ 2 := Nat.le_of_dvd (by decide : 0 < 2) hm
-    have hcases : m = 0 ∨ m = 1 ∨ m = 2 := by omega
-    rcases hcases with rfl | rfl | rfl
-    · simp at hm
-    · exact Or.inl rfl
-    · exact Or.inr rfl
+theorem prime_two : Hex.Nat.Prime 2 := by decide
 
 /-- Registers `2` as a `ZMod64.PrimeModulus`, the witness derived from
 `prime_two`. -/
@@ -166,17 +157,7 @@ instance instPrimeModulusTwo : ZMod64.PrimeModulus 2 :=
   ZMod64.primeModulusOfPrime prime_two
 
 /-- `Hex.Nat.Prime` witness for `p = 3`, the first committed odd Conway prime. -/
-theorem prime_three : Hex.Nat.Prime 3 := by
-  constructor
-  · decide
-  · intro m hm
-    have hmle : m ≤ 3 := Nat.le_of_dvd (by decide : 0 < 3) hm
-    have hcases : m = 0 ∨ m = 1 ∨ m = 2 ∨ m = 3 := by omega
-    rcases hcases with rfl | rfl | rfl | rfl
-    · simp at hm
-    · exact Or.inl rfl
-    · simp at hm
-    · exact Or.inr rfl
+theorem prime_three : Hex.Nat.Prime 3 := by decide
 
 /-- Registers `3` as a `ZMod64.PrimeModulus`, the witness derived from
 `prime_three`. -/
@@ -184,19 +165,7 @@ instance instPrimeModulus3 : ZMod64.PrimeModulus 3 :=
   ZMod64.primeModulusOfPrime prime_three
 
 /-- `Hex.Nat.Prime` witness for `p = 5`, a committed odd Conway prime. -/
-theorem prime_five : Hex.Nat.Prime 5 := by
-  constructor
-  · decide
-  · intro m hm
-    have hmle : m ≤ 5 := Nat.le_of_dvd (by decide : 0 < 5) hm
-    have hcases : m = 0 ∨ m = 1 ∨ m = 2 ∨ m = 3 ∨ m = 4 ∨ m = 5 := by omega
-    rcases hcases with rfl | rfl | rfl | rfl | rfl | rfl
-    · simp at hm
-    · exact Or.inl rfl
-    · simp at hm
-    · simp at hm
-    · simp at hm
-    · exact Or.inr rfl
+theorem prime_five : Hex.Nat.Prime 5 := by decide
 
 /-- Registers `5` as a `ZMod64.PrimeModulus`, the witness derived from
 `prime_five`. -/
@@ -204,21 +173,7 @@ instance instPrimeModulus5 : ZMod64.PrimeModulus 5 :=
   ZMod64.primeModulusOfPrime prime_five
 
 /-- `Hex.Nat.Prime` witness for `p = 7`, a committed odd Conway prime. -/
-theorem prime_seven : Hex.Nat.Prime 7 := by
-  constructor
-  · decide
-  · intro m hm
-    have hmle : m ≤ 7 := Nat.le_of_dvd (by decide : 0 < 7) hm
-    have hcases : m = 0 ∨ m = 1 ∨ m = 2 ∨ m = 3 ∨ m = 4 ∨ m = 5 ∨ m = 6 ∨ m = 7 := by omega
-    rcases hcases with rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl
-    · simp at hm
-    · exact Or.inl rfl
-    · simp at hm
-    · simp at hm
-    · simp at hm
-    · simp at hm
-    · simp at hm
-    · exact Or.inr rfl
+theorem prime_seven : Hex.Nat.Prime 7 := by decide
 
 /-- Registers `7` as a `ZMod64.PrimeModulus`, the witness derived from
 `prime_seven`. -/
@@ -226,25 +181,7 @@ instance instPrimeModulus7 : ZMod64.PrimeModulus 7 :=
   ZMod64.primeModulusOfPrime prime_seven
 
 /-- `Hex.Nat.Prime` witness for `p = 11`, a committed odd Conway prime. -/
-theorem prime_eleven : Hex.Nat.Prime 11 := by
-  constructor
-  · decide
-  · intro m hm
-    have hmle : m ≤ 11 := Nat.le_of_dvd (by decide : 0 < 11) hm
-    have hcases : m = 0 ∨ m = 1 ∨ m = 2 ∨ m = 3 ∨ m = 4 ∨ m = 5 ∨ m = 6 ∨ m = 7 ∨ m = 8 ∨ m = 9 ∨ m = 10 ∨ m = 11 := by omega
-    rcases hcases with rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl
-    · simp at hm
-    · exact Or.inl rfl
-    · simp at hm
-    · simp at hm
-    · simp at hm
-    · simp at hm
-    · simp at hm
-    · simp at hm
-    · simp at hm
-    · simp at hm
-    · simp at hm
-    · exact Or.inr rfl
+theorem prime_eleven : Hex.Nat.Prime 11 := by decide
 
 /-- Registers `11` as a `ZMod64.PrimeModulus`, the witness derived from
 `prime_eleven`. -/
@@ -252,27 +189,7 @@ instance instPrimeModulus11 : ZMod64.PrimeModulus 11 :=
   ZMod64.primeModulusOfPrime prime_eleven
 
 /-- `Hex.Nat.Prime` witness for `p = 13`, a committed odd Conway prime. -/
-theorem prime_thirteen : Hex.Nat.Prime 13 := by
-  constructor
-  · decide
-  · intro m hm
-    have hmle : m ≤ 13 := Nat.le_of_dvd (by decide : 0 < 13) hm
-    have hcases : m = 0 ∨ m = 1 ∨ m = 2 ∨ m = 3 ∨ m = 4 ∨ m = 5 ∨ m = 6 ∨ m = 7 ∨ m = 8 ∨ m = 9 ∨ m = 10 ∨ m = 11 ∨ m = 12 ∨ m = 13 := by omega
-    rcases hcases with rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl
-    · simp at hm
-    · exact Or.inl rfl
-    · simp at hm
-    · simp at hm
-    · simp at hm
-    · simp at hm
-    · simp at hm
-    · simp at hm
-    · simp at hm
-    · simp at hm
-    · simp at hm
-    · simp at hm
-    · simp at hm
-    · exact Or.inr rfl
+theorem prime_thirteen : Hex.Nat.Prime 13 := by decide
 
 /-- Registers `13` as a `ZMod64.PrimeModulus`, the witness derived from
 `prime_thirteen`. -/
