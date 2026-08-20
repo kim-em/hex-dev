@@ -6,6 +6,7 @@ Authors: Kim Morrison
 
 module
 
+public import HexPoly.Conditional
 public import Init.Grind.Ring.Basic
 public import Init.Data.List.Lemmas
 public import HexPoly.Operations
@@ -507,13 +508,13 @@ theorem coeff_mul_top_int (p q : DensePoly Int)
   rw [coeff_mul, mulCoeffSum_eq_diagonal, foldl_add_int_eq_at_predecessor _ p.size hp]
   · unfold diagonalMulCoeffTerm
     have hno : ¬ (p.size - 1 + (q.size - 1)) < p.size - 1 := by omega
-    rw [if_neg hno]
+    rw [HexPoly.ite_eq_right hno]
     have hsub : p.size - 1 + (q.size - 1) - (p.size - 1) = q.size - 1 := by omega
     rw [hsub]
   · intro i hi
     unfold diagonalMulCoeffTerm
     have hno : ¬ (p.size - 1 + (q.size - 1)) < i := by omega
-    rw [if_neg hno]
+    rw [HexPoly.ite_eq_right hno]
     have hsub : (p.size - 1 + (q.size - 1)) - i ≥ q.size := by omega
     rw [coeff_eq_zero_of_size_le q hsub]
     show p.coeff i * (0 : Int) = 0
@@ -590,7 +591,7 @@ private theorem foldl_add_int_diagonal_scaled
         unfold diagonalMulCoeffTerm
         by_cases hn : n < m'
         · simp [hn]
-        · rw [if_neg hn]
+        · rw [HexPoly.ite_eq_right hn]
           rw [coeff_scale a r m' (Int.mul_zero a), coeff_scale b s (n - m') (Int.mul_zero b)]
           grind
       rw [hterm]

@@ -6,6 +6,7 @@ Authors: Kim Morrison
 
 module
 
+public import HexBasic.Conditional
 public import HexBasic.ListShim
 public import HexMvPoly.Mono
 
@@ -339,10 +340,10 @@ theorem coeff_monomial [Zero R] [BEq R] [LawfulBEq R] [DecidableEq R]
     coeff m (monomial m' c : MvPoly n R cmp) =
       if m = m' then c else 0 := by
   by_cases hc : c = 0
-  · rw [monomial, dif_pos hc]
+  · rw [monomial, Hex.dite_eq_left hc]
     change ((∅ : Std.ExtTreeMap (Mono n) R cmp)[m]?).getD 0 = _
     simp [hc]
-  · rw [monomial, dif_neg hc]
+  · rw [monomial, Hex.dite_eq_right hc]
     unfold coeff coeff?
     rw [Std.ExtTreeMap.getElem?_insert]
     by_cases hm : m = m'

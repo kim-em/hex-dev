@@ -508,5 +508,83 @@
     "baseline_blob": null,
     "current_blob": "fde67d026f80dc6b1bdf156c1a2c0220bb5dfb06",
     "reason": "Adds a scoped Mathlib CommRing instance on FpPoly and linearPow_eq_pow. Instances and theorems only, in a Mathlib companion that no executable path imports; the factorization service and its dependency graph are unchanged."
+  },
+  {
+    "path": "HexBasic/ExtTreeMap.lean",
+    "baseline_blob": "3bf43f7b6ec5c15e81dcf5d9110d1d428c4ebb52",
+    "current_blob": "9ce7098cfe9d5aaf05a3ba8e878918072fbe357c",
+    "reason": "Replaces deprecated conditional rewrite theorem names in proof scripts with their Lean 4.34 names; compiled factorization code is unchanged."
+  },
+  {
+    "path": "HexBasic/Fold.lean",
+    "baseline_blob": "452ad4ff435f3046c54717c99cb6f5a6f2faf02f",
+    "current_blob": "526c6d59061d7c8dc71cfc58477784dc34080544",
+    "reason": "Replaces deprecated conditional rewrite theorem names in proof scripts with their Lean 4.34 names; compiled factorization code is unchanged."
+  },
+  {
+    "path": "HexBasic/Vector/Modify.lean",
+    "baseline_blob": "5b7c223b92d9e248eed6ff559c24e42b90a90956",
+    "current_blob": "3aa8731c5ae4aebf7e78d4bbeb3c002002c029b8",
+    "reason": "Replaces deprecated conditional rewrite theorem names in proof scripts with their Lean 4.34 names; compiled factorization code is unchanged."
+  },
+  {
+    "path": "HexPoly/Dense.lean",
+    "baseline_blob": "e733247cf5aaf1f03d27aab58d9b4d08ada29fae",
+    "current_blob": "919dec4f5be58dd40ef9285b372e3379dc5dfec5",
+    "reason": "Replaces deprecated conditional rewrite theorem names in proof scripts with their Lean 4.34 names; compiled factorization code is unchanged."
+  },
+  {
+    "path": "HexPoly/Euclid.lean",
+    "baseline_blob": "02c31021555da6611ab93e146f31cfa625c2936f",
+    "current_blob": "cb1e71843d119dbafc3614fbd4b9886203b4ef1d",
+    "reason": "Replaces deprecated conditional rewrite theorem names in proof scripts with their Lean 4.34 names; compiled factorization code is unchanged."
+  },
+  {
+    "path": "HexPoly/Euclid/Content.lean",
+    "baseline_blob": "7f2b0e7c2ed23822ef9aa74fabcc6f1c739cfd1d",
+    "current_blob": "c042dd3b6abd8b31a2617f335af5b956a0315435",
+    "reason": "Replaces deprecated conditional rewrite theorem names in proof scripts with their Lean 4.34 names; compiled factorization code is unchanged."
+  },
+  {
+    "path": "HexPoly/Euclid/DivGcd.lean",
+    "baseline_blob": "fdd34e2dbbe6c1b69eda91494b9944b086e92a69",
+    "current_blob": "22be88d54a51e98d2f2ff026f3ac00e8a55c466e",
+    "reason": "Replaces deprecated conditional rewrite theorem names in proof scripts with their Lean 4.34 names; compiled factorization code is unchanged."
+  },
+  {
+    "path": "HexPoly/Euclid/EvalMul.lean",
+    "baseline_blob": "93b495d3db37ff1cc4b73d947dc4ca0a97fca68b",
+    "current_blob": "42b9f0b85f1601da5b5af9243530ca992b76c113",
+    "reason": "Replaces deprecated conditional rewrite theorem names in proof scripts with their Lean 4.34 names; compiled factorization code is unchanged."
+  },
+  {
+    "path": "HexPoly/Euclid/MulRing.lean",
+    "baseline_blob": "f95823cb041cd7d716ddaad500ea9b7f1a914b12",
+    "current_blob": "ac64178be71e2a335ca904cef0b9510751c7562d",
+    "reason": "Replaces deprecated conditional rewrite theorem names in proof scripts with their Lean 4.34 names; compiled factorization code is unchanged."
+  },
+  {
+    "path": "HexPoly/Euclid/Reconstruction.lean",
+    "baseline_blob": "4103b3268766f78536f2d73c6221468421722089",
+    "current_blob": "0fbecb1b24baea8c9b765d808a1ae47ff6f6204a",
+    "reason": "Replaces deprecated conditional rewrite theorem names in proof scripts with their Lean 4.34 names; compiled factorization code is unchanged."
+  },
+  {
+    "path": "HexPoly/Operations.lean",
+    "baseline_blob": "f9dec7f6e6691dfbea72dfaab93c25aa6b8b9668",
+    "current_blob": "625575890d88f03bb29ea64d13798edd74951613",
+    "reason": "Replaces deprecated conditional rewrite theorem names in proof scripts with their Lean 4.34 names; compiled factorization code is unchanged."
+  },
+  {
+    "path": "HexBasic/Conditional.lean",
+    "baseline_blob": null,
+    "current_blob": "9a05dbc008fe5dc93f9f158faaa8709ba808fa88",
+    "reason": "Adds proof-only conditional reduction aliases that are stable across Lean 4.33 and 4.34; no executable factorization definitions are added or changed."
+  },
+  {
+    "path": "HexPoly/Conditional.lean",
+    "baseline_blob": null,
+    "current_blob": "a2a567db59005c2be9c3ccfc5e2ae092183a3613",
+    "reason": "Adds proof-only conditional reduction aliases to the standalone HexPoly library without changing its dependency graph or executable factorization definitions."
   }
 ]

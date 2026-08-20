@@ -6,6 +6,7 @@ Authors: Kim Morrison
 
 module
 
+public import HexPoly.Conditional
 public import Std
 
 public section
@@ -232,8 +233,8 @@ private theorem trimTrailingZerosGo_eq (n : Nat) :
       intro coeffs hsize
       rw [trimTrailingZerosGo]
       by_cases hb : coeffs.back? = some (Zero.zero : R)
-      · rw [if_pos hb, ih coeffs.pop (by rw [Array.size_pop]; omega), trimTrailingZeros_pop coeffs hb]
-      · rw [if_neg hb, trimTrailingZeros_self coeffs hb]
+      · rw [HexPoly.ite_eq_left hb, ih coeffs.pop (by rw [Array.size_pop]; omega), trimTrailingZeros_pop coeffs hb]
+      · rw [HexPoly.ite_eq_right hb, trimTrailingZeros_self coeffs hb]
 
 /-- Runtime implementation of {name}`trimTrailingZeros`. -/
 @[expose]
@@ -346,11 +347,11 @@ elsewhere, even when `c = 0` (in which case the polynomial is zero and every coe
     (monomial n c).coeff i = if i = n then c else (Zero.zero : R) := by
   unfold monomial
   by_cases hc : c = (Zero.zero : R)
-  · rw [dif_pos hc]
+  · rw [HexPoly.dite_eq_left hc]
     change (0 : DensePoly R).coeff i = if i = n then c else (Zero.zero : R)
     by_cases hi : i = n
     · subst i
-      rw [if_pos rfl, hc]
+      rw [HexPoly.ite_eq_left rfl, hc]
       change (#[] : Array R).getD n (Zero.zero : R) = Zero.zero
       simp [Array.getD]
     · change (#[] : Array R).getD i (Zero.zero : R) = if i = n then c else Zero.zero
@@ -358,7 +359,7 @@ elsewhere, even when `c = 0` (in which case the polynomial is zero and every coe
   · simp [hc, coeff, Array.getD]
     by_cases hi : i = n
     · subst i
-      rw [dif_pos (Nat.lt_succ_self n)]
+      rw [HexPoly.dite_eq_left (Nat.lt_succ_self n)]
       rw [show
           ((Array.replicate n (Zero.zero : R)).push c)[n] = c by
             simpa using
@@ -368,11 +369,11 @@ elsewhere, even when `c = 0` (in which case the polynomial is zero and every coe
       · have hrep : i < (Array.replicate n (Zero.zero : R)).size := by
           simpa using hlt
         have hpush : i < n + 1 := by omega
-        rw [dif_pos hpush, Array.getElem_push_lt hrep]
+        rw [HexPoly.dite_eq_left hpush, Array.getElem_push_lt hrep]
         simp [hi]
       · have hnle : n < i := by omega
         have hpush_not : ¬ i < n + 1 := by omega
-        rw [dif_neg hpush_not]
+        rw [HexPoly.dite_eq_right hpush_not]
         simp [hi]
 
 /-- Coefficient of `ofList coeffs` agrees with `coeffs.getD _ 0`: normalization does not change
@@ -410,7 +411,7 @@ theorem coeff_eq_zero_of_size_le (p : DensePoly R) {i : Nat} (h : p.size ≤ i) 
   unfold coeff Array.getD
   have hcoeffs : p.coeffs.size ≤ i := by
     simpa [size] using h
-  rw [dif_neg (Nat.not_lt.mpr hcoeffs)]
+  rw [HexPoly.dite_eq_right (Nat.not_lt.mpr hcoeffs)]
 
 /-- The last stored coefficient of a nonzero normalized dense polynomial is nonzero. -/
 theorem coeff_last_ne_zero_of_pos_size (p : DensePoly R) (hpos : 0 < p.size) :
@@ -596,14 +597,14 @@ theorem isZero_C_eq_true_iff (c : R) : (C c).isZero = true ↔ c = (0 : R) := by
 /-- The monomial with zero coefficient is the zero polynomial. -/
 @[simp, grind =] theorem monomial_zero (n : Nat) : monomial n (0 : R) = 0 := by
   change monomial n (Zero.zero : R) = 0
-  rw [monomial, dif_pos rfl]
+  rw [monomial, HexPoly.dite_eq_left rfl]
 
 /-- A monomial with nonzero coefficient stores exactly the `n + 1` coefficients up to degree `n`.
 -/
 theorem size_monomial_of_ne_zero {n : Nat} {c : R} (hc : c ≠ (0 : R)) :
     (monomial n c).size = n + 1 := by
   change c ≠ Zero.zero at hc
-  rw [monomial, dif_neg hc]
+  rw [monomial, HexPoly.dite_eq_right hc]
   change ((Array.replicate n (Zero.zero : R)).push c).size = n + 1
   simp
 
@@ -652,7 +653,7 @@ theorem degree?_eq_none_iff (p : DensePoly R) :
 theorem degree?_eq_some_of_pos_size (p : DensePoly R) (hpos : 0 < p.size) :
     p.degree? = some (p.size - 1) := by
   unfold degree?
-  rw [dif_neg (Nat.ne_of_gt hpos)]
+  rw [HexPoly.dite_eq_right (Nat.ne_of_gt hpos)]
 
 /-- A monomial with nonzero coefficient has degree exactly its exponent. -/
 theorem degree?_monomial_of_ne_zero {n : Nat} {c : R} (hc : c ≠ (0 : R)) :
