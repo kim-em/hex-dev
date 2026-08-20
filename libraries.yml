@@ -478,8 +478,20 @@ libraries:
     mathlib: true
     done_through: 4
     status: active
+  HexPolyFpMathlib:
+    deps: [HexPolyFp, HexPolyMathlib, HexModArithMathlib]
+    mathlib: true
+    # Starts at 0 rather than inheriting the phase state of the library the code
+    # was extracted from. The declarations are sorry-free and were exercised as
+    # part of HexBerlekampMathlib, but this library has not been through Phase 2
+    # scaffolding review or Phase 3 conformance in its own right, and recording
+    # phases it has not completed is the drift these phases exist to prevent.
+    # HexBerlekampMathlib is unaffected in practice: at done_through 3 it is
+    # already blocked from Phase 4 by HexBerlekamp, also at 3.
+    done_through: 0
+    status: active
   HexBerlekampMathlib:
-    deps: [HexBerlekamp, HexPolyMathlib, HexModArithMathlib]
+    deps: [HexBerlekamp, HexPolyMathlib, HexModArithMathlib, HexPolyFpMathlib]
     mathlib: true
     done_through: 3
     status: active
@@ -489,7 +501,7 @@ libraries:
     done_through: 7
     status: active
   HexGF2Mathlib:
-    deps: [HexGF2, HexPolyFp, HexGFqField]
+    deps: [HexGF2, HexPolyFp, HexGFqField, HexPolyFpMathlib]
     mathlib: true
     done_through: 4
     status: active

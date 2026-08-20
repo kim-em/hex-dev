@@ -8,6 +8,7 @@ import HexGF2
 import HexPolyFp
 import Mathlib.Data.Nat.Bitwise
 import Mathlib.Algebra.Ring.Equiv
+import HexPolyFpMathlib
 
 /-!
 Correspondence definitions between packed `Hex.GF2Poly` values and the generic
@@ -809,6 +810,50 @@ theorem ofNatBelowDegree_toNat {p : Hex.GF2Poly} {degree : Nat}
   · have hge : degree ≤ j := Nat.le_of_not_gt hj
     rw [coeff_ofNatBelowDegree_eq_false_of_bound hbound hge,
       coeff_eq_false_of_degree_le h hge]
+
+/-! # Reaching Mathlib's polynomial type
+
+`equiv` lands on `Hex.FpPoly 2`, which is still a Hex type. Composing it with
+the prime-field correspondence gives the equivalence a Mathlib user starts
+from. -/
+
+/-- The packed `GF(2)` polynomial representation is ring-equivalent to Mathlib
+polynomials over `ZMod 2`.
+
+The composition of the packed-to-generic correspondence with the generic
+prime-field one, which is what makes the packed representation reachable from
+Mathlib rather than only from the rest of Hex. `noncomputable` because
+Mathlib's polynomial multiplication is; the packed side stays executable. -/
+noncomputable def equivPolynomial : Hex.GF2Poly ≃+* Polynomial (ZMod 2) :=
+  equiv.trans HexPolyFpMathlib.fpPolyEquiv
+
+/-- The forward direction of `equivPolynomial` transports the packed value
+through the generic representation. -/
+@[simp, grind =]
+theorem equivPolynomial_apply (q : Hex.GF2Poly) :
+    equivPolynomial q = HexPolyFpMathlib.fpPolyEquiv (toFpPoly q) := by
+  rfl
+
+/-- The inverse direction unpacks a Mathlib polynomial back to packed words. -/
+@[simp, grind =]
+theorem equivPolynomial_symm_apply (P : Polynomial (ZMod 2)) :
+    equivPolynomial.symm P = ofFpPoly (HexPolyFpMathlib.polynomialToFpPoly P) := by
+  rfl
+
+/-- Coefficients survive the crossing: bit `i` of the packed representation is
+the `i`-th Mathlib coefficient, as `1` or `0` in `ZMod 2`.
+
+This is the lemma a caller reaches for first, and the reason it is stated
+rather than left to `simp`: unfolding through both legs leaves a `toZMod`
+applied to an `if`, which needs the branchwise cast lemmas to finish. -/
+@[simp, grind =]
+theorem coeff_equivPolynomial (q : Hex.GF2Poly) (i : Nat) :
+    (equivPolynomial q).coeff i = if q.coeff i then (1 : ZMod 2) else 0 := by
+  rw [equivPolynomial_apply, HexPolyFpMathlib.fpPolyEquiv_apply,
+    HexPolyFpMathlib.coeff_toMathlibPolynomial, coeff_toFpPoly]
+  by_cases h : q.coeff i
+  · rw [if_pos h, if_pos h, HexModArithMathlib.ZMod64.toZMod_one]
+  · rw [if_neg h, if_neg h, HexModArithMathlib.ZMod64.toZMod_zero]
 
 end GF2Poly
 

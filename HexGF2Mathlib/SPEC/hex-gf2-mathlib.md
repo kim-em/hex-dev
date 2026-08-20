@@ -45,10 +45,11 @@ The computational hex-gf2 library stays Mathlib-free.
 
 ## Reaching Mathlib's own types
 
-`GF2Poly ≃+* FpPoly 2` lands on a Hex type, not a Mathlib one. Composing it
-with `FpPoly p ≃+* Polynomial (ZMod p)` gives `GF2Poly ≃+* Polynomial (ZMod 2)`,
-which is where a Mathlib user starts. That second equivalence is not yet in a
-library this one can depend on.
+`GF2Poly ≃+* FpPoly 2` lands on a Hex type, not a Mathlib one. `equivPolynomial`
+composes it with `FpPoly p ≃+* Polynomial (ZMod p)` from hex-poly-fp-mathlib to
+give `GF2Poly ≃+* Polynomial (ZMod 2)`, which is where a Mathlib user starts. It
+is `noncomputable`, since Mathlib's polynomial multiplication is; the packed
+side stays executable.
 
 ## External comparators
 
