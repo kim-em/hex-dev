@@ -484,5 +484,29 @@
     "baseline_blob": "ebc42b9f71233e1c470ac885c43fd012bd9116db",
     "current_blob": "de4103699a6ad204c72ad32395c3496deb960a7a",
     "reason": "Marks checkIrreducibilityCertificateLinear and checkPowChainLinear @[expose], and replaces a hand-written primality proof with by decide. @[expose] widens what the elaborator may unfold; it does not alter compiled code, and the replaced proof is a Prop."
+  },
+  {
+    "path": "HexPolyFp/Compose.lean",
+    "baseline_blob": "218c8f9c2748eabc283f7baf40877f8f157b232a",
+    "current_blob": "5f2ddb7456186793f29a6187c490c3e7dea90686",
+    "reason": "Adds compose_add and compose_monomial, new theorems derived from the existing compose_sub and the power-sum characterization. No definition changes, so the compiled factorization path is unchanged."
+  },
+  {
+    "path": "HexPolyFp/QuotientCompose.lean",
+    "baseline_blob": null,
+    "current_blob": "48cd72f73100465311303e0a6ab1e34f6fcfdf63",
+    "reason": "New file, proofs only: it states that modular composition on representatives equals evaluation in the quotient. It defines no operation and is imported by no executable path; the factorization service does not reference it."
+  },
+  {
+    "path": "HexPolyFp.lean",
+    "baseline_blob": "e1ea7d1bdde28fae1f647cfc2a35a73063928627",
+    "current_blob": "7ca67bbd9ea1453691641675f65c969dc95be8c7",
+    "reason": "Adds the umbrella import of the proof-only HexPolyFp.QuotientCompose. No definition changes, so the compiled factorization path is unchanged."
+  },
+  {
+    "path": "HexPolyFpMathlib/Basic.lean",
+    "baseline_blob": null,
+    "current_blob": "fde67d026f80dc6b1bdf156c1a2c0220bb5dfb06",
+    "reason": "Adds a scoped Mathlib CommRing instance on FpPoly and linearPow_eq_pow. Instances and theorems only, in a Mathlib companion that no executable path imports; the factorization service and its dependency graph are unchanged."
   }
 ]
