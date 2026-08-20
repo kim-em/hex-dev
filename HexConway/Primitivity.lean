@@ -42,17 +42,10 @@ is no room for a missing one. So checking `α ^ (N / q) ≠ 1` across the suppli
 list really does cover every prime divisor, and a caller cannot weaken the test
 by handing it a short list: the product would come out wrong.
 
-Given all of it, the multiplicative order of `α` is `N`. That last step is not
-formalised here, and the obstacle is worth naming: `GFq` carries both Hex's
-`Pow` and the `npowRec` that Mathlib's `Field` instance installs, and the two
-are not definitionally equal. So a statement written with `^` on the field side
-picks up whichever instance elaboration reaches first, and the power lemmas
-then fail to match. Getting to `orderOf` means pinning that down — either by
-keeping every power on the `FpPoly` side, where the scoped `CommRing` makes `^`
-unambiguous, or by reconciling the two instances on `GFq`. Mathlib supplies the
-group theory itself (`orderOf_eq_of_pow_and_pow_div_prime`) and
-`HexGFqMathlib.ofPolyHom` supplies the ring homomorphism; it is the diamond in
-between that needs settling.
+Given all of it, the multiplicative order of `α` is `N`. The transport that
+states this in Mathlib's terms is in `HexGFqMathlib.Primitivity`, which carries
+these structural powers to Mathlib powers along `ofPolyHom` and supplies the
+exhaustiveness of the prime list.
 
 What this file provides is the verified computational content, for all
 thirty-seven committed entries with `p^n > 2`.

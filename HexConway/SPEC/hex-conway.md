@@ -160,15 +160,20 @@ modular multiplications rather than millions. The computation is structural
 throughout because `GFqField.pow` is square-and-multiply over well-founded
 recursion and does not reduce in the kernel.
 
-Given all of it the multiplicative order of `α` is `p^n - 1`. That last step is
-not formalised, and the obstacle is a typeclass diamond rather than the
-mathematics: `GFq` carries both Hex's `Pow` and the `npowRec` that Mathlib's
-`Field` instance installs, and they are not definitionally equal, so a
-statement written with `^` on the field side picks up whichever instance
-elaboration reaches first and the power lemmas then fail to match. Mathlib
-supplies the group theory (`orderOf_eq_of_pow_and_pow_div_prime`) and
-`HexGFqMathlib.ofPolyHom` supplies the ring homomorphism; settling the diamond
-is what remains.
+Given all of it the multiplicative order of `α` is `p^n - 1`. The transport
+that states this in Mathlib's terms lives in `HexGFqMathlib.Primitivity`:
+`ofPolyHom_digitPowMod_one` carries the executable Horner power to a Mathlib
+power, `ofPolyHom_eq_one_iff` moves the `≠ 1` across on reduced
+representatives, and `mem_of_prime_dvd_primePowerProduct` supplies the
+exhaustiveness of the prime list that `orderOf_eq_of_pow_and_pow_div_prime`
+asks for.
+
+That transport was blocked until `HexGFqMathlib.field` pinned `npow` to the
+executable power. Left at Mathlib's `npowRec` default, `GFq` carried two
+exponentiations that were not definitionally equal, so a statement written with
+`^` picked up whichever instance elaboration reached first and Mathlib's power
+lemmas quietly failed to apply. They are now one operation, and
+`x ^ n = GFqField.pow x n` holds by `rfl`.
 
 The primality of the divisors is a hypothesis of `Primitive` rather than part
 of the `Bool` check, because deciding it inline does not scale: the divisors of
