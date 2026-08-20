@@ -177,28 +177,23 @@ Compatibility is what an embedding `F_p[x]/(C(p, m)) → F_p[x]/(C(p, n))` is
 built from: send the generator to {name}`Hex.Conway.subfieldGen`, which the
 theorem above shows is a root of `C(p, m)`, and substitute.
 
-That map is *not* defined here, and the reason is worth recording rather than
-working around. Substitution is well defined on residues only if congruent
-representatives evaluate equally, and for `c - c' = q * C(p, m)` that means
+That map is *not* defined here. Substitution is well defined on residues only
+if congruent representatives evaluate equally, and for `c - c' = q * C(p, m)`
+that needs the substitution map to be multiplicative. Defining it without that
+would be defining something whose defining property is unproved.
 
-```
-eval (q * C(p, m)) β = eval q β * eval (C(p, m)) β
-```
+The remaining work is smaller than it looks, and it is not a Mathlib-free
+problem. `→+*` is a Mathlib notion, so the embedding belongs in
+hex-gfq-mathlib, and there multiplicativity comes for free:
+`Polynomial.eval₂RingHom` is a ring homomorphism by construction, and
+`Polynomial.induction_on'` reduces agreement with the executable substitution
+to the additive and monomial cases. `Hex.FpPoly.compose_add` supplies the
+first; `compose_C` and the monomial lemmas in `HexPolyFp.Compose` supply the
+second. What is then left is the descent to residues, which is Hex's own
+division identity plus the vanishing fact proved above.
 
-so it needs multiplicativity of quotient evaluation. `Quotient.Internal` proves
-`eval_add`, `eval_sub`, `eval_C_mul`, and `eval_monomial`, but not `eval_mul`
-for a general pair of polynomials, and without it the embedding would be a
-definition whose defining property is unproved.
-
-The route is known and short to describe. By
-{name}`Hex.FpPoly.Quotient.eval_reduce_eq_reduce_composeModMonic`, and because
-every quotient element is `reduce` of its own representative, `eval_mul`
-reduces to `DensePoly.compose (f * h) b = compose f b * compose h b` — plain
-composition, no quotient. `HexPolyFp.Degree` already proves the scalar analogue
-`DensePoly.eval_mul` by decomposing `f * h` into shifted scaled rows
-(`mul_eq_fold_shift_scale_rows`), and that decomposition is a polynomial
-identity that transfers unchanged; what is needed beside it is the composition
-counterpart of `fold_eval_shift_scale_rows`.
+Note in particular that no `compose_mul` is required: the induction principle
+needs additivity only, and the multiplicative structure is Mathlib's.
 -/
 
 /-! # The committed compatibility facts

@@ -150,15 +150,15 @@ It needs the multiplicative order of the generator, hence a factorization of
 `p^n - 1` carried as checkable data and an order predicate over the executable
 field, and the Mathlib-free stack has neither.
 
-The subfield embedding `GFq p m → GFq p n` is likewise not built. Compatibility
-is its input, but well-definedness on residues needs multiplicativity of
-quotient evaluation, and `Quotient.Internal` proves `eval_add`, `eval_sub`,
-`eval_C_mul`, and `eval_monomial` but not `eval_mul`. Shipping the map without
-that would be shipping a definition whose defining property is unproved. The
-route is recorded at the head of `Compatibility.lean`: via the bridge above,
-`eval_mul` reduces to `compose_mul` for `DensePoly`, and `HexPolyFp.Degree`
-already proves the scalar analogue by the row decomposition
-`mul_eq_fold_shift_scale_rows`.
+The subfield embedding `GFq p m →+* GFq p n` is likewise not built, though the
+blocker is now removed. `→+*` is a Mathlib notion, so the embedding belongs in
+hex-gfq-mathlib rather than here, and on that side multiplicativity is free:
+`Polynomial.eval₂RingHom` is a ring homomorphism by construction, and
+`Polynomial.induction_on'` reduces agreement with the executable substitution
+to the additive and monomial cases. `Hex.FpPoly.compose_add`, added with this
+work and derived in a dozen lines from the existing `compose_sub`, supplies the
+additive case. No `compose_mul` is needed. What remains is the descent to
+residues: Hex's own division identity, plus the vanishing fact above.
 
 The API should expose the tiers explicitly rather than hiding them all
 behind one partial-performance promise. Concretely:

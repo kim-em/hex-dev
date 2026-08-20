@@ -508,6 +508,25 @@ theorem compose_sub [ZMod64.PrimeModulus p] (f h w : FpPoly p) :
   rw [hcoeff]
   exact composeCoeffPowerSumUpTo_sub f h w bound 0
 
+/-- Substitution is additive. Follows from {name}`Hex.FpPoly.compose_sub`, since
+`f + h = f - (0 - h)` and substitution fixes zero. -/
+theorem compose_add [ZMod64.PrimeModulus p] (f h w : FpPoly p) :
+    DensePoly.compose (f + h) w = DensePoly.compose f w + DensePoly.compose h w := by
+  have hneg : DensePoly.compose (0 - h) w = 0 - DensePoly.compose h w := by
+    rw [compose_sub, compose_zero]
+  have hfh : f + h = f - (0 - h) := by
+    apply DensePoly.ext_coeff
+    intro i
+    rw [DensePoly.coeff_add_semiring, DensePoly.coeff_sub_ring,
+      DensePoly.coeff_sub_ring, DensePoly.coeff_zero]
+    grind
+  rw [hfh, compose_sub, hneg]
+  apply DensePoly.ext_coeff
+  intro i
+  rw [DensePoly.coeff_sub_ring, DensePoly.coeff_sub_ring,
+    DensePoly.coeff_zero, DensePoly.coeff_add_semiring]
+  grind
+
 /-- Narrow specialisation needed by the witness-substitution caller:
 substituting `w` for {name}`X` in `a - X` yields `compose a w - w`. -/
 theorem compose_sub_X [ZMod64.PrimeModulus p] (a w : FpPoly p) :
