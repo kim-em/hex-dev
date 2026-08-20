@@ -586,5 +586,11 @@
     "baseline_blob": null,
     "current_blob": "a2a567db59005c2be9c3ccfc5e2ae092183a3613",
     "reason": "Adds proof-only conditional reduction aliases to the standalone HexPoly library without changing its dependency graph or executable factorization definitions."
+  },
+  {
+    "path": "HexPolyFp/QuotientFrobenius.lean",
+    "baseline_blob": "fabac9e32d1e5c364fa51077d067129c76dabb03",
+    "current_blob": "dc13ffdd544ac3037114ffba1000eddd09ecde90",
+    "reason": "Adds eval_pow_prime and its coefficient-list form, new theorems saying quotient evaluation commutes with the Frobenius. Theorems only, no definition changes, so the compiled factorization path is unchanged."
   }
 ]
