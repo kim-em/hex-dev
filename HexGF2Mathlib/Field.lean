@@ -402,6 +402,8 @@ noncomputable instance : Fintype (Hex.GF2n n irr hn hn64 hirr) :=
   Fintype.ofEquiv (Fin (2 ^ n)) (finEquiv (n := n) (irr := irr)
     (hn := hn) (hn64 := hn64) (hirr := hirr)).symm
 
+/-- A single-word `GF(2^n)` has `2 ^ n` elements, read off the `val` bound
+rather than transported across the ring equivalence. -/
 theorem fintype_card :
     Fintype.card (Hex.GF2n n irr hn hn64 hirr) = 2 ^ n := by
   simpa using Fintype.card_congr (finEquiv (n := n) (irr := irr)
@@ -650,6 +652,8 @@ def finEquiv : Hex.GF2nPoly f hirr ≃ Fin (2 ^ f.degree) :=
 noncomputable instance : Fintype (Hex.GF2nPoly f hirr) :=
   Fintype.ofEquiv (Fin (2 ^ f.degree)) (finEquiv (f := f) (hirr := hirr)).symm
 
+/-- The packed quotient by `f` has `2 ^ deg f` elements, counted through its
+reduced-representative subtype. -/
 theorem fintype_card :
     Fintype.card (Hex.GF2nPoly f hirr) = 2 ^ f.degree := by
   simpa using Fintype.card_congr (finEquiv (f := f) (hirr := hirr))

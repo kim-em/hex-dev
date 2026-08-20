@@ -381,6 +381,10 @@ modulo an irreducible polynomial. -/
 structure GF2nPoly (f : GF2Poly) (hirr : GF2Poly.Irreducible f) where
   /-- The canonical residue representing this field element, reduced modulo `f`. -/
   val : GF2Poly
+  /-- The representative is reduced modulo `f`: it is either zero or of degree
+  below the modulus, so each field element has exactly one packed spelling.
+  Zero is called out separately because the packed degree of the zero
+  polynomial is `0`, not `-∞`. -/
   val_reduced : val.IsZero ∨ val.degree < f.degree
 
 /-- `GF(2^n)` packed into one machine word. The modulus stores only the lower
@@ -392,6 +396,9 @@ structure GF2n (n : Nat) (irr : UInt64)
   /-- The packed canonical representative: the lower `n` coefficients of the
   residue modulo the implicit modulus `x^n + irr`. -/
   val : UInt64
+  /-- The representative is reduced: only the lower `n` bits are set, so each
+  field element has exactly one packed spelling and equality of elements is
+  equality of words. -/
   val_lt : val.toNat < 2 ^ n
 
 
