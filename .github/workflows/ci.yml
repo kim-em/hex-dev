@@ -45,6 +45,8 @@ jobs:
         run: python3 scripts/release/check_manual_split.py
       - run: python3 -m unittest scripts/release/test_sync_released.py
       - run: python3 scripts/release/check_trust_surface.py
+      - name: Cross-check every compiled clmul path (HexGF2/SPEC/hex-gf2.md)
+        run: bash scripts/ci/check_clmul_paths.sh
       - run: python3 scripts/check_phase4.py
       - name: Check Phase 7 chapters and anchored tutorials (PLAN/Phase7.md)
         run: |
