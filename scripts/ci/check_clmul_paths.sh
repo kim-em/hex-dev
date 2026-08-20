@@ -30,15 +30,14 @@ build_and_run() {
   local label="$1"; shift
   local out="$WORK/selftest_$label"
   echo "--- $label ---"
+  # No skip-on-failure path. The point of this script is that both compiled
+  # paths run; a build that quietly declines to compile the intrinsic and exits
+  # zero reports success for a check that did not happen. Architectures with no
+  # intrinsic path at all are handled by not calling this for them.
   if ! "$CC" "${COMMON[@]}" "$@" "$SRC" "$TEST" -o "$out" 2>"$WORK/err_$label"; then
-    if [ "$label" = "portable" ]; then
-      cat "$WORK/err_$label" >&2
-      echo "check_clmul_paths: the portable build must compile" >&2
-      exit 1
-    fi
-    echo "check_clmul_paths: $label did not compile on this host; skipping"
-    sed 's/^/    /' "$WORK/err_$label" | head -5
-    return 0
+    cat "$WORK/err_$label" >&2
+    echo "check_clmul_paths: the $label build must compile" >&2
+    exit 1
   fi
   "$out"
 }
@@ -46,14 +45,14 @@ build_and_run() {
 # The path ordinary builds take.
 build_and_run portable
 
-# The intrinsic paths. Which one applies depends on the host architecture, so
-# try the one that matches and let the other be skipped. A host that cannot
-# build either still gets the portable check, and says so rather than passing
-# silently.
+# The intrinsic path for this architecture. `-msse4.1` is needed alongside
+# `-mpclmul`: the x86 wrapper reads the high half of the product with
+# `_mm_extract_epi64`, which is SSE4.1, and with only `-mpclmul` the compiler
+# refuses to inline it.
 ARCH="$(uname -m)"
 case "$ARCH" in
   x86_64 | amd64)
-    build_and_run pclmul -mpclmul -DHEX_CLMUL_SELFTEST_EXPECT_INTRINSIC
+    build_and_run pclmul -mpclmul -msse4.1 -DHEX_CLMUL_SELFTEST_EXPECT_INTRINSIC
     ;;
   aarch64 | arm64)
     build_and_run pmull -march=armv8-a+crypto -DHEX_CLMUL_SELFTEST_EXPECT_INTRINSIC
