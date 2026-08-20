@@ -80,12 +80,14 @@ def ofPolyHom (f : Hex.FpPoly p) (hf : 0 < Hex.FpPoly.degree f)
   rfl
 
 open HexModArithMathlib.ZMod64 in
+omit [Hex.ZMod64.PrimeModulus p] in
 /-- `toZMod` is injective, since `ofZMod` inverts it. -/
 private theorem toZMod_injective {a b : Hex.ZMod64 p} (h : toZMod a = toZMod b) :
     a = b := by
   rw [← ofZMod_toZMod a, ← ofZMod_toZMod b, h]
 
 open HexModArithMathlib.ZMod64 in
+omit [Hex.ZMod64.PrimeModulus p] in
 /-- The inverse coefficient map is additive. Derived from `toZMod_add`; the
 `≃+*` bundling cannot be used directly here because `Hex.ZMod64 p` has no
 Mathlib `NonAssocSemiring`, so the hom classes do not apply to it. -/
@@ -95,6 +97,7 @@ private theorem ofZMod_add (a b : ZMod p) :
   rw [toZMod_add, toZMod_ofZMod, toZMod_ofZMod, toZMod_ofZMod]
 
 open HexModArithMathlib.ZMod64 in
+omit [Hex.ZMod64.PrimeModulus p] in
 /-- The inverse coefficient map is multiplicative. -/
 private theorem ofZMod_mul (a b : ZMod p) :
     ofZMod (p := p) (a * b) = ofZMod a * ofZMod b := by
