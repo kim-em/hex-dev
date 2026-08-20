@@ -478,8 +478,13 @@ libraries:
     mathlib: true
     done_through: 4
     status: active
+  HexPolyFpMathlib:
+    deps: [HexPolyFp, HexPolyMathlib, HexModArithMathlib]
+    mathlib: true
+    done_through: 0
+    status: active
   HexBerlekampMathlib:
-    deps: [HexBerlekamp, HexPolyMathlib, HexModArithMathlib]
+    deps: [HexBerlekamp, HexPolyMathlib, HexModArithMathlib, HexPolyFpMathlib]
     mathlib: true
     done_through: 3
     status: active
@@ -489,7 +494,7 @@ libraries:
     done_through: 7
     status: active
   HexGF2Mathlib:
-    deps: [HexGF2, HexPolyFp, HexGFqField]
+    deps: [HexGF2, HexPolyFp, HexGFqField, HexPolyFpMathlib]
     mathlib: true
     done_through: 4
     status: active

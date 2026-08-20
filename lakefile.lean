@@ -154,6 +154,8 @@ lean_lib HexNumberFieldMathlib where
 lean_lib HexNumberFieldTowerMathlib where
 
 @[default_target]
+lean_lib HexPolyFpMathlib where
+
 lean_lib HexBerlekampMathlib where
 
 @[default_target]
