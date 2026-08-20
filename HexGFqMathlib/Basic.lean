@@ -246,7 +246,7 @@ through the field laws already proved for the implementation-facing
 `Lean.Grind.Field` hierarchy. -/
 noncomputable instance field :
     Field (Hex.GFqField.FiniteField f hf hp hirr) :=
-  Field.ofMinimalAxioms (Hex.GFqField.FiniteField f hf hp hirr)
+  { Field.ofMinimalAxioms (Hex.GFqField.FiniteField f hf hp hirr)
     (by intro a b c; exact Lean.Grind.Semiring.add_assoc a b c)
     (by
       intro a
@@ -260,7 +260,17 @@ noncomputable instance field :
     (by intro a ha; exact Lean.Grind.Field.mul_inv_cancel ha)
     (Lean.Grind.Field.inv_zero (α := Hex.GFqField.FiniteField f hf hp hirr))
     (by intro a b c; exact Lean.Grind.Semiring.left_distrib a b c)
-    ⟨0, 1, Hex.GFqField.zero_ne_one f hf hp hirr⟩
+    ⟨0, 1, Hex.GFqField.zero_ne_one f hf hp hirr⟩ with
+    -- `npow` is pinned to the executable power rather than left at Mathlib's
+    -- `npowRec` default. `HexGFqField` already installs a `Pow` instance, so
+    -- the default would put two different exponentiations on the type, not
+    -- definitionally equal (`npowRec` is repeated multiplication, the
+    -- executable one is square-and-multiply). A statement written with `^`
+    -- would then pick up whichever instance elaboration reached first, and
+    -- Mathlib's power lemmas would silently fail to apply to it.
+    npow := fun n x => Hex.GFqField.pow x n
+    npow_zero := fun x => Hex.GFqField.pow_zero_eq_one x
+    npow_succ := fun n x => Lean.Grind.Semiring.pow_succ x n }
 
 /-- Reduced polynomial representatives for the quotient by `f`. -/
 abbrev ReducedRep (f : Hex.FpPoly p) : Type :=

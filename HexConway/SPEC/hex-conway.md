@@ -145,10 +145,42 @@ about field elements: `C(p, m)` evaluated at `subfieldGen`, an element of
 `FpPoly.Quotient.eval_reduce_eq_reduce_composeModMonic`, which says modular
 composition on representatives is evaluation in the quotient.
 
-**What Tier 2 still owes.** Primitivity of each committed entry is not proved.
-It needs the multiplicative order of the generator, hence a factorization of
-`p^n - 1` carried as checkable data and an order predicate over the executable
-field, and the Mathlib-free stack has neither.
+**Primitivity, as shipped.** `HexConway/Primitivity.lean` checks each committed
+entry with `p^n > 2` — thirty-seven of the thirty-eight, `C(2, 1)` having a
+trivial multiplicative group. `primitiveCheck` validates its own factorization
+data (that the supplied primes are prime, and that their product with the
+supplied multiplicities is `p^n - 1`) and then the two power conditions,
+`α ^ (p^n - 1) = 1` and `α ^ ((p^n - 1) / q) ≠ 1` for each prime `q`. Because
+the factorization is validated, a short prime list cannot make the check pass.
+
+The exponents reach `4826808`, so they are not replayed by repeated
+multiplication. The exponent is written in base `p` and evaluated by Horner:
+`n` steps, each `p` multiplications plus at most `p - 1` more, so a few hundred
+modular multiplications rather than millions. The computation is structural
+throughout because `GFqField.pow` is square-and-multiply over well-founded
+recursion and does not reduce in the kernel.
+
+Given all of it the multiplicative order of `α` is `p^n - 1`. The transport
+that states this in Mathlib's terms lives in `HexGFqMathlib.Primitivity`:
+`ofPolyHom_digitPowMod_one` carries the executable Horner power to a Mathlib
+power, `ofPolyHom_eq_one_iff` moves the `≠ 1` across on reduced
+representatives, and `mem_of_prime_dvd_primePowerProduct` supplies the
+exhaustiveness of the prime list that `orderOf_eq_of_pow_and_pow_div_prime`
+asks for.
+
+That transport was blocked until `HexGFqMathlib.field` pinned `npow` to the
+executable power. Left at Mathlib's `npowRec` default, `GFq` carried two
+exponentiations that were not definitionally equal, so a statement written with
+`^` picked up whichever instance elaboration reached first and Mathlib's power
+lemmas quietly failed to apply. They are now one operation, and
+`x ^ n = GFqField.pow x n` holds by `rfl`.
+
+The primality of the divisors is a hypothesis of `Primitive` rather than part
+of the `Bool` check, because deciding it inline does not scale: the divisors of
+`p^n - 1` reach five digits and the linear `Decidable` instance is far too slow
+there. The committed proofs use `Hex.Nat.prime_of_bounded`, which bounds trial
+division by a supplied square root. The whole thirty-seven-entry block replays
+in about ninety seconds.
 
 The subfield embedding `GFq p m →+* GFq p n` is built, in hex-gfq-mathlib
 (`HexGFqMathlib/Subfield.lean`), because `→+*` is a Mathlib notion. Given `m ∣ n`

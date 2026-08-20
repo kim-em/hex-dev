@@ -7,6 +7,7 @@ Authors: Kim Morrison
 import HexGFqMathlib.Basic
 import HexGFqMathlib.GF2q
 import HexGFqMathlib.Subfield
+import HexGFqMathlib.Primitivity
 
 /-!
 Mathlib-side correspondence lemmas for the canonical finite-field convenience
