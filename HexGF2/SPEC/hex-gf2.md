@@ -37,6 +37,9 @@ structure GF2Poly where
 **Key properties:**
 - Ring axioms (char 2 gives `a + a = 0`; mul commutativity from the
   convolution definition over a commutative coefficient ring)
+- `GF2nPoly` carries the bundled `Lean.Grind.Semiring`, `Ring`, and
+  `CommRing` instances, so `grind` reasons about the packed quotient the way
+  it does about `hex-gfq-field`'s generic one
 - `GF2Poly` is a Euclidean domain (degree function is the norm)
 - Equivalence: `GF2Poly ≃+* FpPoly 2` (unpack/repack, in hex-gf2-mathlib)
 
@@ -135,10 +138,24 @@ structure GF2nPoly (f : GF2Poly) (hirr : GF2Poly.Irreducible f) where
   val_reduced : val.IsZero ∨ val.degree < f.degree
 ```
 
-For the small case, `GF2n` gets its executable `Field` operations and
-algebraic laws directly from the irreducibility proof `hirr`, while
-finiteness/cardinality stay on the Mathlib bridge side of the project
-split. For large n, `GF2nPoly` likewise builds the packed quotient-field
+For the small case, `GF2n` gets its executable `Field` operations from the
+irreducibility proof `hirr`, while finiteness and cardinality stay in the
+Mathlib companion.
+
+**Irreducibility alone does not give a field.** `GF2Poly.Irreducible f` asks
+that `f` be nonzero and admit no factorization into two positive-degree parts.
+The constant `1` satisfies both, and `GF2nPoly 1 _` is then the trivial ring,
+where every residue is `0` and `0 = 1`. So `zero_ne_one`, the field laws, and
+characteristic two are *not* consequences of `hirr`; they need `0 < f.degree`
+as well.
+
+`hex-gfq-field` avoids this by carrying `hf : 0 < f.degree` as a type parameter
+beside the irreducibility proof. The packed types do not, so the ring structure
+is supplied as instances, which hold for every admissible modulus, and the field
+laws as `fieldOfDegreePos` and `isCharPOfDegreePos`, which take the degree
+hypothesis. Callers have it: every committed `PackedGF2Entry` carries
+`degree_pos`. Adding the hypothesis to the structures, so the field laws could
+be instances too, is the alternative and would be a breaking change. For large n, `GF2nPoly` likewise builds the packed quotient-field
 execution structure (parallel to hex-gfq-ring/hex-gfq-field, but over
 the packed `GF2Poly` representation rather than `FpPoly`) without
 introducing Mathlib-only `Fintype` machinery into the computational
