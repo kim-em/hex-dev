@@ -46,6 +46,10 @@ jobs:
       - run: python3 -m unittest scripts/release/test_sync_released.py
       - run: python3 scripts/release/check_trust_surface.py
       - run: python3 scripts/check_phase4.py
+      - name: Check Phase 7 chapters and anchored tutorials (PLAN/Phase7.md)
+        run: |
+          python3 -m unittest scripts/test_check_phase7.py
+          python3 scripts/check_phase7.py
       - name: Lint benches are Mathlib-free (SPEC/benchmarking.md §Mathlib-free benches)
         run: |
           python3 -m unittest scripts/ci/test_check_benches_mathlib_free.py

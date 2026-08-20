@@ -36,6 +36,16 @@ Per-library chapter content lives at
 `HexManual/Chapters/HexArith.lean`). The top-level `HexManual.lean`
 imports all chapters.
 
+A `mathlib: true` companion does not get its own chapter. Its Phase 7
+deliverable is a `# The Mathlib correspondence` section inside its
+computational partner's chapter: `hex-poly-mathlib` is documented in
+`Chapters/HexPoly.lean`, `hex-gfq-mathlib` in `Chapters/HexGFq.lean`. A
+companion's correspondence is only meaningful beside the executable API it
+corresponds to, and splitting the two across chapters would make the reader
+hold both open at once. `scripts/check_phase7.py` enforces this: for a
+companion at `done_through: 7` it requires that section in the partner's
+chapter, and for every other library it requires the chapter itself.
+
 `HexManual.lean` splits those chapters in two: released libraries are
 included at the top level, and the rest sit under "Draft sections for
 unreleased libraries". Which side a chapter belongs on is decided by
@@ -120,12 +130,19 @@ authoring the tutorial pages specified in
 `HexManual/Tutorials/` as Verso chapters. Each tutorial is anchored to
 a single library for Phase 7 bookkeeping (even if it draws on several):
 
-| Tutorial | Anchor library |
-|----------|---------------|
-| AES byte arithmetic (GF(2^8)) | `hex-gf2` |
-| AES modulus irreducibility | `hex-berlekamp` |
-| Prime splitting (Kummer-Dedekind) | `hex-gfq` |
-| LLL in cryptanalysis (Coppersmith toy) | `hex-lll` |
+| Tutorial | Anchor library | Source file |
+|----------|---------------|-------------|
+| AES byte arithmetic (GF(2^8)) | `hex-gf2` | `HexManual/Tutorials/AESField.lean` |
+| AES modulus irreducibility | `hex-berlekamp` | `HexManual/Tutorials/AESModulus.lean` |
+| Prime splitting (Kummer-Dedekind) | `hex-berlekamp-zassenhaus` | `HexManual/Tutorials/PrimeSplitting.lean` |
+| LLL in cryptanalysis (Coppersmith toy) | `hex-lll` | `HexManual/Tutorials/Coppersmith.lean` |
+
+The prime-splitting tutorial belongs to the integer-polynomial and
+modular-factorization pipeline: it factors a number field's defining polynomial
+modulo a prime and reads the result as splitting data. `SPEC/tutorials.md`
+names `hex-poly-z`, `hex-berlekamp-zassenhaus`, and Mathlib's
+`NumberTheory.KummerDedekind` as its primary libraries, and it is anchored to
+`hex-berlekamp-zassenhaus` accordingly.
 
 Phase 7 for an anchor library is not "done" until both its reference
 chapter *and* its anchored tutorials are complete.
