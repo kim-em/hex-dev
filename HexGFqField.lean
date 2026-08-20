@@ -8,6 +8,7 @@ module
 
 public import HexGFqField.Basic
 public import HexGFqField.Operations
+public import HexGFqField.Example
 
 public section
 

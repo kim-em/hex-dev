@@ -132,107 +132,27 @@ operations. Irreducibility of the modulus is discharged by a Rabin
 Bézout witness are checked by the kernel-reducible
 {name}`Hex.Berlekamp.checkIrreducibilityCertificateLinear` and routed to
 {name}`Hex.FpPoly.Irreducible` through
-{name}`Hex.Berlekamp.rabinTest_imp_irreducible`.
+{name}`Hex.Berlekamp.rabinTest_imp_irreducible`. All of that is committed
+once as {name}`Hex.GFqField.Example.modulus`, so the example below cites
+the result rather than rebuilding a certificate inline.
+
+{docstring Hex.GFqField.Example.modulus}
+
+{docstring Hex.GFqField.Example.modulus_irreducible}
+
+{docstring Hex.GFqField.Example.F}
 
 ```lean
 open Hex Hex.GFqField
 
 namespace HexGFqFieldChapterExample
 
-local instance boundsFive : ZMod64.Bounds 5 :=
-  ⟨by decide, by decide⟩
+open GFqField.Example (boundsFive prime_five)
 
-private theorem prime_five : Hex.Nat.Prime 5 := by
-  constructor
-  · decide
-  · intro m hm
-    have hmle : m ≤ 5 :=
-      Nat.le_of_dvd (by decide : 0 < 5) hm
-    have hcases :
-        m = 0 ∨ m = 1 ∨ m = 2 ∨
-        m = 3 ∨ m = 4 ∨ m = 5 := by omega
-    rcases hcases with
-      rfl | rfl | rfl | rfl | rfl | rfl
-    · simp at hm
-    · exact Or.inl rfl
-    · simp at hm
-    · simp at hm
-    · simp at hm
-    · exact Or.inr rfl
-
-private instance : ZMod64.PrimeModulus 5 :=
-  ZMod64.primeModulusOfPrime prime_five
-
-/-- Monic degree-4 modulus x⁴ + 2 over F₅. -/
-private def modulus : FpPoly 5 := #p[2, 0, 0, 0, 1]
-
-private theorem modulus_pos_degree :
-    0 < FpPoly.degree modulus := by decide
-
-private theorem modulus_monic :
-    DensePoly.Monic modulus := by rfl
-
-private theorem maxProperDiv_4 :
-    Berlekamp.maximalProperDivisors 4 = [2] := by
-  decide
-
-/-- Rabin irreducibility certificate for x⁴ + 2. -/
-private def cert :
-    Berlekamp.IrreducibilityCertificate where
-  p := 5
-  n := 4
-  powChain := #[
-    #p[0, 1],
-    #p[0, 3],
-    #p[0, 4],
-    #p[0, 2],
-    #p[0, 1]
-  ]
-  bezout := #[
-    { left := #p[3]
-      right := #p[0, 0, 0, 4] }
-  ]
-
-set_option maxRecDepth 131072 in
-set_option maxHeartbeats 8000000 in
-private theorem cert_check :
-    Berlekamp.checkIrreducibilityCertificateLinear
-        modulus modulus_monic cert = true := by
-  simp [Berlekamp.checkIrreducibilityCertificateLinear,
-    cert, Berlekamp.IrreducibilityCertificate.toAmbient?,
-    Berlekamp.checkPowChainLinear,
-    Berlekamp.checkRabinBezoutWitnesses,
-    Berlekamp.checkRabinBezoutWitness,
-    Berlekamp.certifiedFrobeniusDiffMod,
-    maxProperDiv_4, modulus]
-  constructor
-  · constructor
-    · constructor
-      · rfl
-      · intro x hx
-        have hcases :
-            x = 0 ∨ x = 1 ∨ x = 2 ∨
-            x = 3 ∨ x = 4 := by omega
-        rcases hcases with
-          rfl | rfl | rfl | rfl | rfl <;> rfl
-    · rfl
-  · rfl
-
-private theorem modulus_irreducible :
-    FpPoly.Irreducible modulus :=
-  have h :=
-    Berlekamp.checkIrreducibilityCertificateLinear_rabinTest
-      modulus modulus_monic cert cert_check
-  Berlekamp.rabinTest_imp_irreducible
-    modulus modulus_monic h
-
-private abbrev F :=
-  FiniteField modulus modulus_pos_degree
-    prime_five modulus_irreducible
+private abbrev F := GFqField.Example.F
 
 private def ff (f : FpPoly 5) : F :=
-  ofPoly modulus modulus_pos_degree
-    prime_five modulus_irreducible f
+  GFqField.Example.ofPoly f
 
 private def reprNats (x : F) : List Nat :=
   (repr x).toArray.toList.map ZMod64.toNat

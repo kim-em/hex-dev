@@ -159,6 +159,49 @@ factor structure of the committed table is part of the library's
 guarantee, not a runtime assertion: a corrupted entry would fail to
 typecheck rather than silently return a reducible polynomial.
 
+# Regenerating the table
+%%%
+tag := "hex-conway-rebuild"
+%%%
+
+The committed table is ordinary Lean code that the kernel checks like
+any other definition, and it is long: coefficient literals, monicity and
+degree lemmas, a Rabin certificate, and an irreducibility proof for
+every entry. Changing which slice of Lübeck's data is committed is
+therefore not a hand edit. Two commands do it.
+
+`rebuild_luebeckConwayPolynomial?` regenerates the coefficient table. It
+reads the committed cache, keeps the entries inside a requested scope,
+and offers the regenerated definition as a `Try this:` replacement for
+the definition written immediately below it:
+
+```
+rebuild_luebeckConwayPolynomial? scope [2:8, 3:6, 5:6, 7:6, 11:6, 13:6]
+```
+
+The scope is a maximum degree per prime, which is what makes the binary
+column reach `n = 8` while the odd primes stop at `n = 6`. The emitted
+replacement carries that invocation commented out directly above the
+definition, so the next reader can see which scope produced the
+committed table and re-run it without reconstructing the arguments.
+
+`#conway_entry_source p n` prints the per-entry block: the polynomial
+literal, its monicity and degree lemmas, the Rabin certificate, and the
+irreducibility proof that replays it. The coefficients come from the
+cache rather than from the caller, so the command cannot be talked into
+emitting a valid certificate under a mislabelled `C(p, n)`.
+
+Neither command touches the network. The cache itself is refreshed from
+Lübeck's published table by
+`scripts/oracle/update_luebeck_conway_cache.py`, which is the only step
+that does, so a rebuild is reproducible offline and its output is a pure
+function of the cache and the scope.
+
+Widening the scope is a cost decision, not a mathematical one. The
+kernel replays each certificate at elaboration time, and that replay is
+what the scope is measured against; `reports/hex-conway-performance.md`
+records the per-entry cost that set the current bounds.
+
 # Cross-references
 %%%
 tag := "hex-conway-cross-references"
@@ -183,6 +226,13 @@ tag := "hex-conway-cross-references"
   by this: {ref "hex-gfq"}[`GFq p n`] is a genuine field of order `pⁿ`
   either way. What is not yet available is the compatibility across the
   subfield lattice that motivates the Conway choice in the first place.
+* `HexConway` is consumed by {ref "hex-gfq"}[`HexGFq`], which turns a
+  {name}`Hex.Conway.SupportedEntry` into the canonical field `GFq p n`
+  by handing the committed modulus to the quotient construction in
+  {ref "hex-gfq-field"}[`HexGFqField`]. The table is what makes that
+  field *canonical* rather than merely *a* field of order `pⁿ`: every
+  caller naming `GFq 3 4` gets the same modulus, so elements computed in
+  one place are comparable with elements computed in another.
 * `HexConway` is Mathlib-free and never depends on Mathlib. The Mathlib
   correspondence proofs for the finite-field theory it draws on live in
   the higher layers' `*Mathlib` counterparts, not in this library.
