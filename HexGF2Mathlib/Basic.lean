@@ -834,6 +834,27 @@ theorem equivPolynomial_apply (q : Hex.GF2Poly) :
     equivPolynomial q = HexPolyFpMathlib.fpPolyEquiv (toFpPoly q) := by
   rfl
 
+/-- The inverse direction unpacks a Mathlib polynomial back to packed words. -/
+@[simp, grind =]
+theorem equivPolynomial_symm_apply (P : Polynomial (ZMod 2)) :
+    equivPolynomial.symm P = ofFpPoly (HexPolyFpMathlib.polynomialToFpPoly P) := by
+  rfl
+
+/-- Coefficients survive the crossing: bit `i` of the packed representation is
+the `i`-th Mathlib coefficient, as `1` or `0` in `ZMod 2`.
+
+This is the lemma a caller reaches for first, and the reason it is stated
+rather than left to `simp`: unfolding through both legs leaves a `toZMod`
+applied to an `if`, which needs the branchwise cast lemmas to finish. -/
+@[simp, grind =]
+theorem coeff_equivPolynomial (q : Hex.GF2Poly) (i : Nat) :
+    (equivPolynomial q).coeff i = if q.coeff i then (1 : ZMod 2) else 0 := by
+  rw [equivPolynomial_apply, HexPolyFpMathlib.fpPolyEquiv_apply,
+    HexPolyFpMathlib.coeff_toMathlibPolynomial, coeff_toFpPoly]
+  by_cases h : q.coeff i
+  · rw [if_pos h, if_pos h, HexModArithMathlib.ZMod64.toZMod_one]
+  · rw [if_neg h, if_neg h, HexModArithMathlib.ZMod64.toZMod_zero]
+
 end GF2Poly
 
 end HexGF2Mathlib

@@ -16,22 +16,27 @@ Everything below this library is Hex's own tower: `DensePoly` over `ZMod64`,
 reached through hex-poly-mathlib and hex-mod-arith-mathlib. Everything a
 Mathlib user starts from is on the far side of `fpPolyEquiv`.
 
-## Why this is its own library
+## Ownership
 
-The equivalence originally lived in hex-berlekamp-mathlib, because factoring
-over `F_p` was its first consumer. It is not specific to factoring. Any library
-that relates an `FpPoly`-backed construction to Mathlib needs it:
-hex-gf2-mathlib composes it with the packed correspondence to state
-`GF2Poly ≃+* Polynomial (ZMod 2)`, and the finite-field construction libraries
-need it to speak about their moduli in Mathlib's terms.
+Any library relating an `FpPoly`-backed construction to Mathlib depends on this
+one: hex-gf2-mathlib composes the equivalence with the packed correspondence to
+state `GF2Poly ≃+* Polynomial (ZMod 2)`, and the finite-field construction
+libraries need it to speak about their moduli in Mathlib's terms. None of them
+should have to depend on a factoring library to reach Mathlib.
 
-Leaving it in a factoring library meant those consumers had to depend on
-factoring to reach Mathlib, which is both a false dependency and an awkward one:
-hex-berlekamp-mathlib is well behind them in the phase order, so depending on it
-would have coupled a mature library to an immature one.
+hex-berlekamp-mathlib re-exports the names, so call sites spelling them
+`HexBerlekampMathlib.fpPolyEquiv` resolve unchanged.
 
-hex-berlekamp-mathlib re-exports the names it moved, so call sites that spelled
-them `HexBerlekampMathlib.fpPolyEquiv` continue to work.
+The equivalence needs only `ZMod64.Bounds p`, not primality: `FpPoly p` is a
+ring for any admissible modulus, and so is `Polynomial (ZMod p)`. Lemmas that do
+need `p` prime, such as the coprimality transports, say so in their own
+hypotheses.
+
+The dependency on hex-poly-mathlib is narrow and worth naming, since it is not
+the obvious one: the generic `DensePoly R ≃+* Polynomial R` cannot be reused
+here, because `ZMod64` deliberately carries no Mathlib `Semiring` instance. The
+edge exists for the list helper `list_getD_map_range_zero`, which the inverse
+map's coefficient reasoning uses.
 
 ## What belongs here, and what does not
 

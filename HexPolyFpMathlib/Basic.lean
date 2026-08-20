@@ -278,6 +278,91 @@ theorem toMathlibPolynomial_monic (f : Hex.FpPoly p) :
       Hex.DensePoly.leadingCoeff_eq_one_of_monic hmonic]
     exact HexModArithMathlib.ZMod64.toZMod_one
 
+/-! # Ring operations across the correspondence
+
+The transport is a ring equivalence, so these follow from it; they are
+stated because a caller reaching for one of them should not have to
+rediscover which `RingEquiv` lemma to compose. -/
+
+/-- Formal derivatives commute with the finite-field polynomial transport. -/
+theorem toMathlibPolynomial_derivative (f : Hex.FpPoly p) :
+    toMathlibPolynomial (Hex.DensePoly.derivative f) =
+      Polynomial.derivative (toMathlibPolynomial f) := by
+  ext n
+  rw [coeff_toMathlibPolynomial,
+    Hex.DensePoly.coeff_derivative f n (Lean.Grind.Semiring.mul_zero _),
+    HexModArithMathlib.ZMod64.toZMod_mul, HexModArithMathlib.ZMod64.toZMod_natCast,
+    Polynomial.coeff_derivative, coeff_toMathlibPolynomial]
+  push_cast
+  ring
+
+/-- Multiplication commutes with the finite-field polynomial transport. -/
+theorem toMathlibPolynomial_mul (f g : Hex.FpPoly p) :
+    toMathlibPolynomial (f * g) = toMathlibPolynomial f * toMathlibPolynomial g :=
+  map_mul fpPolyEquiv f g
+
+/-- Addition commutes with the finite-field polynomial transport. -/
+theorem toMathlibPolynomial_add (f g : Hex.FpPoly p) :
+    toMathlibPolynomial (f + g) = toMathlibPolynomial f + toMathlibPolynomial g :=
+  map_add fpPolyEquiv f g
+
+/-- Subtraction commutes with the finite-field polynomial transport. -/
+theorem toMathlibPolynomial_sub (f g : Hex.FpPoly p) :
+    toMathlibPolynomial (f - g) = toMathlibPolynomial f - toMathlibPolynomial g := by
+  apply Polynomial.ext
+  intro n
+  rw [Polynomial.coeff_sub, coeff_toMathlibPolynomial, coeff_toMathlibPolynomial,
+    coeff_toMathlibPolynomial, Hex.DensePoly.coeff_sub_ring,
+    HexModArithMathlib.ZMod64.toZMod_sub]
+
+/-- The constant executable polynomial transports to the Mathlib constant. -/
+theorem toMathlibPolynomial_C (c : Hex.ZMod64 p) :
+    toMathlibPolynomial (Hex.DensePoly.C c) =
+      Polynomial.C (HexModArithMathlib.ZMod64.toZMod c) := by
+  apply Polynomial.ext
+  intro n
+  rw [coeff_toMathlibPolynomial, Hex.DensePoly.coeff_C, Polynomial.coeff_C]
+  by_cases hn : n = 0
+  · subst hn; rw [if_pos rfl, if_pos rfl]
+  · rw [if_neg hn, if_neg hn]; exact HexModArithMathlib.ZMod64.toZMod_zero
+
+/-- The monic monomial `X^m` transports to `X^m` over `ZMod p`. -/
+theorem toMathlibPolynomial_monomial_one (m : Nat) :
+    toMathlibPolynomial (Hex.DensePoly.monomial m (1 : Hex.ZMod64 p)) =
+      (Polynomial.X : Polynomial (ZMod p)) ^ m := by
+  apply Polynomial.ext
+  intro n
+  rw [coeff_toMathlibPolynomial, Hex.DensePoly.coeff_monomial, Polynomial.coeff_X_pow]
+  by_cases hn : n = m
+  · rw [if_pos hn, if_pos hn]; exact HexModArithMathlib.ZMod64.toZMod_one
+  · rw [if_neg hn, if_neg hn]; exact HexModArithMathlib.ZMod64.toZMod_zero
+
+/-- The executable indeterminate transports to Mathlib's `X`. -/
+theorem toMathlibPolynomial_X :
+    toMathlibPolynomial (Hex.FpPoly.X (p := p)) = (Polynomial.X : Polynomial (ZMod p)) := by
+  apply Polynomial.ext
+  intro n
+  rw [coeff_toMathlibPolynomial, Hex.FpPoly.coeff_X, Polynomial.coeff_X]
+  by_cases hn : n = 1
+  · subst hn; rw [if_pos rfl, if_pos rfl, HexModArithMathlib.ZMod64.toZMod_one]
+  · rw [if_neg hn, if_neg (show ¬ (1 = n) by omega), HexModArithMathlib.ZMod64.toZMod_zero]
+
+/-- Divisibility transports along the finite-field polynomial map. -/
+theorem toMathlibPolynomial_dvd {f g : Hex.FpPoly p} (h : f ∣ g) :
+    toMathlibPolynomial f ∣ toMathlibPolynomial g := by
+  obtain ⟨r, hr⟩ := h
+  exact ⟨toMathlibPolynomial r, by rw [hr, toMathlibPolynomial_mul]⟩
+
+/-- The Mathlib primality fact yields the executable prime-modulus witness, so
+executable field-dependent lemmas (gcd/Bezout, modular division) become
+available in the Mathlib transport layer. -/
+theorem primeModulus_of_fact (p : Nat) [Fact (Nat.Prime p)] :
+    Hex.ZMod64.PrimeModulus p :=
+  Hex.ZMod64.primeModulusOfPrime
+    ⟨(Fact.out : Nat.Prime p).two_le,
+      fun m hm => (Fact.out : Nat.Prime p).eq_one_or_self_of_dvd m hm⟩
+
+
 end
 
 end HexPolyFpMathlib

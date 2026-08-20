@@ -33,11 +33,15 @@ noncomputable section
 
 open Polynomial
 
-variable {p : Nat} [Hex.ZMod64.Bounds p]
+-- The transport layer lives in `HexPolyFpMathlib`. Re-exported here so call
+-- sites spelling these `HexBerlekampMathlib.foo` keep resolving.
 export HexPolyFpMathlib (fpPolyToPolynomial polynomialToFpPoly
   coeff_fpPolyToPolynomial fpPolyEquiv toMathlibPolynomial fpPolyEquiv_apply
   fpPolyEquiv_symm_apply coeff_toMathlibPolynomial coeff_toMathlibPolynomial_equiv
-  toMathlibPolynomial_monic)
+  toMathlibPolynomial_monic toMathlibPolynomial_derivative toMathlibPolynomial_mul
+  toMathlibPolynomial_add toMathlibPolynomial_sub toMathlibPolynomial_C
+  toMathlibPolynomial_monomial_one toMathlibPolynomial_X toMathlibPolynomial_dvd
+  primeModulus_of_fact)
 
 variable {p : Nat} [Hex.ZMod64.Bounds p]
 
@@ -90,75 +94,6 @@ theorem natDegree_toMathlibPolynomial_eq_basisSize
   rw [le_antisymm hub hlb]
   unfold Hex.Berlekamp.basisSize Hex.DensePoly.degree?
   simp [Nat.ne_of_gt hsize_pos]
-
-/-- Formal derivatives commute with the finite-field polynomial transport. -/
-theorem toMathlibPolynomial_derivative (f : Hex.FpPoly p) :
-    toMathlibPolynomial (Hex.DensePoly.derivative f) =
-      Polynomial.derivative (toMathlibPolynomial f) := by
-  ext n
-  rw [coeff_toMathlibPolynomial,
-    Hex.DensePoly.coeff_derivative f n (Lean.Grind.Semiring.mul_zero _),
-    HexModArithMathlib.ZMod64.toZMod_mul, HexModArithMathlib.ZMod64.toZMod_natCast,
-    Polynomial.coeff_derivative, coeff_toMathlibPolynomial]
-  push_cast
-  ring
-
-/-- Multiplication commutes with the finite-field polynomial transport. -/
-theorem toMathlibPolynomial_mul (f g : Hex.FpPoly p) :
-    toMathlibPolynomial (f * g) = toMathlibPolynomial f * toMathlibPolynomial g :=
-  map_mul fpPolyEquiv f g
-
-/-- Addition commutes with the finite-field polynomial transport. -/
-theorem toMathlibPolynomial_add (f g : Hex.FpPoly p) :
-    toMathlibPolynomial (f + g) = toMathlibPolynomial f + toMathlibPolynomial g :=
-  map_add fpPolyEquiv f g
-
-/-- Subtraction commutes with the finite-field polynomial transport. -/
-theorem toMathlibPolynomial_sub (f g : Hex.FpPoly p) :
-    toMathlibPolynomial (f - g) = toMathlibPolynomial f - toMathlibPolynomial g := by
-  apply Polynomial.ext
-  intro n
-  rw [Polynomial.coeff_sub, coeff_toMathlibPolynomial, coeff_toMathlibPolynomial,
-    coeff_toMathlibPolynomial, Hex.DensePoly.coeff_sub_ring,
-    HexModArithMathlib.ZMod64.toZMod_sub]
-
-/-- The constant executable polynomial transports to the Mathlib constant. -/
-theorem toMathlibPolynomial_C (c : Hex.ZMod64 p) :
-    toMathlibPolynomial (Hex.DensePoly.C c) =
-      Polynomial.C (HexModArithMathlib.ZMod64.toZMod c) := by
-  apply Polynomial.ext
-  intro n
-  rw [coeff_toMathlibPolynomial, Hex.DensePoly.coeff_C, Polynomial.coeff_C]
-  by_cases hn : n = 0
-  · subst hn; rw [if_pos rfl, if_pos rfl]
-  · rw [if_neg hn, if_neg hn]; exact HexModArithMathlib.ZMod64.toZMod_zero
-
-/-- The monic monomial `X^m` transports to `X^m` over `ZMod p`. -/
-theorem toMathlibPolynomial_monomial_one (m : Nat) :
-    toMathlibPolynomial (Hex.DensePoly.monomial m (1 : Hex.ZMod64 p)) =
-      (Polynomial.X : Polynomial (ZMod p)) ^ m := by
-  apply Polynomial.ext
-  intro n
-  rw [coeff_toMathlibPolynomial, Hex.DensePoly.coeff_monomial, Polynomial.coeff_X_pow]
-  by_cases hn : n = m
-  · rw [if_pos hn, if_pos hn]; exact HexModArithMathlib.ZMod64.toZMod_one
-  · rw [if_neg hn, if_neg hn]; exact HexModArithMathlib.ZMod64.toZMod_zero
-
-/-- The executable indeterminate transports to Mathlib's `X`. -/
-theorem toMathlibPolynomial_X :
-    toMathlibPolynomial (Hex.FpPoly.X (p := p)) = (Polynomial.X : Polynomial (ZMod p)) := by
-  apply Polynomial.ext
-  intro n
-  rw [coeff_toMathlibPolynomial, Hex.FpPoly.coeff_X, Polynomial.coeff_X]
-  by_cases hn : n = 1
-  · subst hn; rw [if_pos rfl, if_pos rfl, HexModArithMathlib.ZMod64.toZMod_one]
-  · rw [if_neg hn, if_neg (show ¬ (1 = n) by omega), HexModArithMathlib.ZMod64.toZMod_zero]
-
-/-- Divisibility transports along the finite-field polynomial map. -/
-theorem toMathlibPolynomial_dvd {f g : Hex.FpPoly p} (h : f ∣ g) :
-    toMathlibPolynomial f ∣ toMathlibPolynomial g := by
-  obtain ⟨r, hr⟩ := h
-  exact ⟨toMathlibPolynomial r, by rw [hr, toMathlibPolynomial_mul]⟩
 
 /-- An executable unit polynomial (a nonzero constant) transports to a Mathlib
 unit. -/
@@ -231,15 +166,6 @@ theorem irreducible_toMathlibPolynomial_of_fpPolyIrreducible
       (by unfold Hex.Berlekamp.isUnitPolynomial; rw [hdeg]; rfl))
   · exact Or.inr (hb ▸ isUnit_toMathlibPolynomial_of_isUnitPolynomial
       (by unfold Hex.Berlekamp.isUnitPolynomial; rw [hdeg]; rfl))
-
-/-- The Mathlib primality fact yields the executable prime-modulus witness, so
-executable field-dependent lemmas (gcd/Bezout, modular division) become
-available in the Mathlib transport layer. -/
-theorem primeModulus_of_fact (p : Nat) [Fact (Nat.Prime p)] :
-    Hex.ZMod64.PrimeModulus p :=
-  Hex.ZMod64.primeModulusOfPrime
-    ⟨(Fact.out : Nat.Prime p).two_le,
-      fun m hm => (Fact.out : Nat.Prime p).eq_one_or_self_of_dvd m hm⟩
 
 /-- A passing executable gcd-unit check transports to Mathlib coprimality of the
 transported polynomials, via the executable Bezout identity. -/
