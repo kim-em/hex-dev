@@ -264,6 +264,62 @@ private theorem compose_monomial_k_one_eq
     composeCoeffPowerSumFrom_replicate_zero_append_one]
   rw [Nat.zero_add]
 
+private theorem composeCoeffPowerSumFrom_replicate_zero_append
+    [ZMod64.PrimeModulus p] (w : FpPoly p) (c : ZMod64 p) :
+    ∀ (k base : Nat),
+      composeCoeffPowerSumFrom
+        ((List.replicate k (Zero.zero : ZMod64 p)) ++ [c]) base w =
+          DensePoly.C c * linearPow w (base + k)
+  | 0, base => by
+      simp only [List.replicate, List.nil_append]
+      show DensePoly.C c * linearPow w base +
+          composeCoeffPowerSumFrom [] (base + 1) w =
+        DensePoly.C c * linearPow w (base + 0)
+      change DensePoly.C c * linearPow w base + 0 = _
+      rw [FpPoly.add_zero, Nat.add_zero]
+  | k + 1, base => by
+      simp only [List.replicate, List.cons_append]
+      show DensePoly.C (Zero.zero : ZMod64 p) * linearPow w base +
+          composeCoeffPowerSumFrom
+            (List.replicate k (Zero.zero : ZMod64 p) ++ [c]) (base + 1) w =
+          DensePoly.C c * linearPow w (base + (k + 1))
+      have hCz : (DensePoly.C (Zero.zero : ZMod64 p) : FpPoly p) = 0 := C_zero_eq_zero
+      rw [hCz, FpPoly.zero_mul, FpPoly.zero_add,
+        composeCoeffPowerSumFrom_replicate_zero_append w c k (base + 1)]
+      congr 2
+      omega
+
+private theorem monomial_toList_eq (k : Nat) {c : ZMod64 p}
+    (hc : c ≠ (Zero.zero : ZMod64 p)) :
+    (DensePoly.monomial k c : FpPoly p).toList =
+      List.replicate k (Zero.zero : ZMod64 p) ++ [c] := by
+  show ((DensePoly.monomial k c : FpPoly p).coeffs.toList : List (ZMod64 p)) = _
+  unfold DensePoly.monomial
+  rw [dif_neg hc]
+  show ((Array.replicate k (Zero.zero : ZMod64 p)).push c).toList =
+    List.replicate k (Zero.zero : ZMod64 p) ++ [c]
+  rw [Array.toList_push, Array.toList_replicate]
+
+/-- Substituting `w` into a monomial gives the coefficient times a power of `w`.
+
+This is the monomial case that `Polynomial.induction_on'` asks for on the
+Mathlib side, so it is what lets a Mathlib ring homomorphism be identified with
+the executable substitution. -/
+theorem compose_monomial [ZMod64.PrimeModulus p] (w : FpPoly p) (k : Nat)
+    (c : ZMod64 p) :
+    DensePoly.compose ((DensePoly.monomial k c) : FpPoly p) w =
+      DensePoly.C c * linearPow w k := by
+  by_cases hc : c = (Zero.zero : ZMod64 p)
+  · subst hc
+    have hzero : (DensePoly.monomial k (Zero.zero : ZMod64 p) : FpPoly p) = 0 := by
+      unfold DensePoly.monomial
+      rw [dif_pos rfl]
+    have hCz : (DensePoly.C (Zero.zero : ZMod64 p) : FpPoly p) = 0 := C_zero_eq_zero
+    rw [hzero, compose_zero, hCz, FpPoly.zero_mul]
+  · rw [compose_eq_powerSum, monomial_toList_eq k hc,
+      composeCoeffPowerSumFrom_replicate_zero_append]
+    rw [Nat.zero_add]
+
 /-- `compose (linearPow X k) w = linearPow w k`. -/
 theorem compose_linearPow_X
     [ZMod64.PrimeModulus p] (w : FpPoly p) (k : Nat) :

@@ -329,8 +329,9 @@ theorem factorsModP_coprime_of_factorsModPBerlekampForm
   have h_dvd_X_mapped :
       Hex.Berlekamp.factorProduct (raw.map Hex.monicModularImage) ∣
         Hex.monicModularImage (Hex.ZPoly.modP primeData.p core) := by
+    -- `rw` closes this: rewriting by `hprod_mapped` leaves `a ∣ a`, and
+    -- `dvd_refl` is a `@[refl]` lemma, so the trailing `rfl` discharges it.
     rw [hprod_mapped]
-    exact Hex.DensePoly.dvd_refl_poly _
   have hcps :
       Hex.ZPoly.QuadraticMultifactorCoprimeSplits primeData.p
         (raw.map Hex.monicModularImage) :=

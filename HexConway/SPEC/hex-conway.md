@@ -150,15 +150,19 @@ It needs the multiplicative order of the generator, hence a factorization of
 `p^n - 1` carried as checkable data and an order predicate over the executable
 field, and the Mathlib-free stack has neither.
 
-The subfield embedding `GFq p m →+* GFq p n` is likewise not built, though the
-blocker is now removed. `→+*` is a Mathlib notion, so the embedding belongs in
-hex-gfq-mathlib rather than here, and on that side multiplicativity is free:
-`Polynomial.eval₂RingHom` is a ring homomorphism by construction, and
-`Polynomial.induction_on'` reduces agreement with the executable substitution
-to the additive and monomial cases. `Hex.FpPoly.compose_add`, added with this
-work and derived in a dozen lines from the existing `compose_sub`, supplies the
-additive case. No `compose_mul` is needed. What remains is the descent to
-residues: Hex's own division identity, plus the vanishing fact above.
+The subfield embedding `GFq p m →+* GFq p n` is built, in hex-gfq-mathlib
+(`HexGFqMathlib/Subfield.lean`), because `→+*` is a Mathlib notion. Given `m ∣ n`
+and compatibility of the two committed entries, `conwayEmbed` substitutes the
+norm element for the generator, and it is canonical because the target is the
+Conway norm rather than an arbitrary root of `C(p, m)`: two callers embedding
+`GF(p^m)` into `GF(p^n)` land on the same copy.
+
+Multiplicativity is Mathlib's rather than ours. `Polynomial.eval₂RingHom` is a
+ring homomorphism by construction, and `ofPolyHom_compose_eq_eval₂` identifies
+it with the executable substitution using `Polynomial.induction_on'`, which
+needs only `compose_add` and `compose_monomial`. No `compose_mul` is involved.
+The descent to residues is Hex's own division identity plus the vanishing fact,
+which is Tier 2 compatibility.
 
 The API should expose the tiers explicitly rather than hiding them all
 behind one partial-performance promise. Concretely:

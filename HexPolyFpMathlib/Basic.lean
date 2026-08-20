@@ -9,6 +9,7 @@ module
 public import HexPolyFp
 public import HexModArithMathlib
 public import HexPolyMathlib
+public import Mathlib.Algebra.Ring.MinimalAxioms
 
 public section
 
@@ -362,6 +363,48 @@ theorem primeModulus_of_fact (p : Nat) [Fact (Nat.Prime p)] :
     ⟨(Fact.out : Nat.Prime p).two_le,
       fun m hm => (Fact.out : Nat.Prime p).eq_one_or_self_of_dvd m hm⟩
 
+
+/-! # Mathlib ring structure on the executable polynomials
+
+`SPEC/design-principles.md` puts Mathlib instances on an executable type in the
+companion, transported so that the operations stay the executable ones. This is
+also a prerequisite rather than a convenience: without it `Hex.FpPoly p →+* R`
+is not a well-formed type, so nothing downstream can build a ring homomorphism
+out of the executable polynomials.
+-/
+
+/-- The executable prime-field polynomials are a Mathlib commutative ring, with
+the executable operations. Built from the laws `HexPolyFp.Ring` proves rather
+than transported along {name}`HexPolyFpMathlib.fpPolyEquiv`, which would attach
+the right laws to Mathlib's operations instead of these.
+
+`sub` and `neg` are pinned to the executable ones rather than left at the
+minimal-axioms defaults (`a - b = a + -b`). `HexPolyFp` already defines `Sub`
+and `Neg`, so leaving the defaults would put two different subtractions on the
+type and Mathlib's lemmas would not fire on the spelling callers write. -/
+instance commRing : CommRing (Hex.FpPoly p) :=
+  { CommRing.ofMinimalAxioms
+      (R := Hex.FpPoly p)
+      Hex.FpPoly.add_assoc
+      Hex.FpPoly.zero_add
+      Hex.FpPoly.add_left_neg
+      Hex.FpPoly.mul_assoc
+      Hex.FpPoly.mul_comm
+      Hex.FpPoly.one_mul
+      Hex.FpPoly.left_distrib with
+    sub := fun a b => Hex.DensePoly.sub a b
+    neg := fun a => Hex.DensePoly.neg a
+    sub_eq_add_neg := Hex.FpPoly.sub_eq_add_neg }
+
+/-- The executable linear power is Mathlib's monoid power. `HexPolyFp` defines
+`linearPow` by structural recursion for kernel reduction; the `CommRing` above
+supplies `npowRec`. They agree, and saying so once lets `map_pow` be used on
+executable powers. -/
+theorem linearPow_eq_pow (b : Hex.FpPoly p) : ∀ k, Hex.FpPoly.linearPow b k = b ^ k
+  | 0 => by
+      rw [Hex.FpPoly.linearPow_zero, pow_zero]
+  | k + 1 => by
+      rw [Hex.FpPoly.linearPow_succ, linearPow_eq_pow b k, pow_succ]
 
 end
 
