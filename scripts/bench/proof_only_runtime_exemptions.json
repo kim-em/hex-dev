@@ -592,5 +592,11 @@
     "baseline_blob": "fabac9e32d1e5c364fa51077d067129c76dabb03",
     "current_blob": "dc13ffdd544ac3037114ffba1000eddd09ecde90",
     "reason": "Adds eval_pow_prime and its coefficient-list form, new theorems saying quotient evaluation commutes with the Frobenius. Theorems only, no definition changes, so the compiled factorization path is unchanged."
+  },
+  {
+    "path": "lakefile.lean",
+    "baseline_blob": "6dd80771ae2212333b2a9b925b52056e0037ff56",
+    "current_blob": "f8b696cb4dc5f8a99fdc57e21d8dbdaf163a2ba5",
+    "reason": "Registers Examples.FiniteFields in the HexReleaseExamples glob. That target is a release example library, not part of the measured executable set; the factorization service target and its dependency graph are unchanged."
   }
 ]
