@@ -80,6 +80,12 @@ def binaryPoly (n salt : Nat) : FpPoly 2 :=
     else
       ZMod64.ofNat 2 0
 
+/-- Deterministic dense representative over an odd prime, with `n` coefficients
+spread across the whole residue range so reduction has work to do. -/
+def oddPoly (q n salt : Nat) [ZMod64.Bounds q] : FpPoly q :=
+  FpPoly.ofCoeffs <| (Array.range n).map fun i =>
+    ZMod64.ofNat q ((i * 7 + salt * 13 + 1) % q)
+
 /-- Single-word representative with a deterministic prefix and a high bit at `n`. -/
 def binaryWord (n salt : Nat) : UInt64 :=
   let hi := if n = 0 then 0 else Nat.min n 63
@@ -127,11 +133,96 @@ def runGF2qOfWordReprChecksum (_ : Unit) : UInt64 :=
 def runGF2qOfWordReprProfileChecksum (word : UInt64) : UInt64 :=
   GF2q.repr (GF2q.ofWord (n := 1) word : Packed21)
 
+/-! # Degree beyond one
+
+The targets above sit at `GFq 2 1` and `GF2q 1`, where the modulus is linear
+and reduction is trivial, so they measure the constructor and projection
+surface and nothing else. These add the top of the committed range, where
+reduction actually runs: the deepest binary entry, the largest odd-prime
+entry, and the ergonomic `GFqC` spelling, which had no coverage at all. -/
+
+private abbrev Entry28 : Conway.SupportedEntry 2 8 :=
+  Conway.supportedEntry_2_8
+
+private abbrev Generic28 : Type :=
+  GFq 2 8 Entry28
+
+private abbrev Packed28 : Type :=
+  GF2q 8
+
+private abbrev Entry136 : Conway.SupportedEntry 13 6 :=
+  Conway.supportedEntry_13_6
+
+private abbrev Generic136 : Type :=
+  GFq 13 6 Entry136
+
+/- Inputs are threaded through `IO.Ref`s and the targets return `IO`, following
+the `Unit → IO α` pattern this file's header describes. Without that, the whole
+computation is a closed term and Lean folds it: the four targets below then all
+report the same floor time regardless of degree or prime, which is what the
+existing fixed targets in this file do. -/
+
+private instance : Nonempty (FpPoly 2) := ⟨binaryPoly 1 0⟩
+private instance : Nonempty (FpPoly 13) := ⟨oddPoly 13 1 0⟩
+
+private initialize poly28Ref : IO.Ref (FpPoly 2) ← IO.mkRef (binaryPoly 200 59)
+private initialize word8Ref : IO.Ref UInt64 ← IO.mkRef (binaryWord 200 37)
+private initialize poly136Ref : IO.Ref (FpPoly 13) ← IO.mkRef (oddPoly 13 40 41)
+
+/-- Benchmark target: generic constructor plus projection at the deepest
+committed binary degree, where reduction modulo a degree-8 modulus runs. -/
+def runGFqOfPolyRepr_2_8_Checksum : Unit → IO UInt64 := fun () => do
+  let g ← poly28Ref.get
+  return checksumPoly (GFq.repr (GFq.ofPoly Entry28 g : Generic28))
+
+/-- Benchmark target: packed constructor plus projection at degree 8. -/
+def runGF2qOfWordRepr_8_Checksum : Unit → IO UInt64 := fun () => do
+  let w ← word8Ref.get
+  return GF2q.repr (GF2q.ofWord (n := 8) w : Packed28)
+
+/-- Benchmark target: generic constructor plus projection at the largest
+committed odd-prime entry, `GF(13^6)`. This is the widest coefficient
+arithmetic in the table. -/
+def runGFqOfPolyRepr_13_6_Checksum : Unit → IO UInt64 := fun () => do
+  let g ← poly136Ref.get
+  return checksumPoly (GFq.repr (GFq.ofPoly Entry136 g : Generic136))
+
+/-- Benchmark target: the ergonomic `GFqC` spelling, which resolves its
+committed entry by instance synthesis rather than taking it explicitly. Same
+work as the explicit form; this measures that the convenience costs nothing. -/
+def runGFqCOfPolyReprChecksum : Unit → IO UInt64 := fun () => do
+  let g ← poly136Ref.get
+  return checksumPoly (GFqC.repr (GFqC.ofPoly (p := 13) (n := 6) g))
+
 /-- Benchmark target: packed and generic checksums on shared binary inputs. -/
 def runPackedGenericSharedChecksum (input : SharedInput) : UInt64 :=
   let packed := GF2q.repr (GF2q.ofWord (n := 1) input.word : Packed21)
   let generic := checksumPoly (GFq.repr (GFq.ofPoly Entry21 input.poly : Generic21))
   mixWord packed generic
+
+setup_fixed_benchmark runGFqOfPolyRepr_2_8_Checksum where {
+  repeats := 5
+  maxSecondsPerCall := 2.0
+  expectedHash := none
+}
+
+setup_fixed_benchmark runGF2qOfWordRepr_8_Checksum where {
+  repeats := 5
+  maxSecondsPerCall := 2.0
+  expectedHash := none
+}
+
+setup_fixed_benchmark runGFqOfPolyRepr_13_6_Checksum where {
+  repeats := 5
+  maxSecondsPerCall := 2.0
+  expectedHash := none
+}
+
+setup_fixed_benchmark runGFqCOfPolyReprChecksum where {
+  repeats := 5
+  maxSecondsPerCall := 2.0
+  expectedHash := none
+}
 
 setup_fixed_benchmark runGenericModulusChecksum where {
   repeats := 5

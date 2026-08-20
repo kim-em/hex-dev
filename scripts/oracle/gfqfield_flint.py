@@ -137,6 +137,16 @@ def _check_op(
         oracle_value = _coeffs(a ** p)
     elif op == "zpow":
         oracle_value = _coeffs(a ** zexp)
+    elif op == "add":
+        oracle_value = _coeffs(a + b)
+    elif op == "sub":
+        oracle_value = _coeffs(a - b)
+    elif op == "neg":
+        oracle_value = _coeffs(-a)
+    elif op == "pow":
+        oracle_value = _coeffs(a ** 5)
+    elif op == "roundtrip":
+        oracle_value = _coeffs(a)
     else:
         raise OracleMismatch(
             f"{lib}/{case_id}: unsupported op {op!r} in gfqfield_flint.py; "

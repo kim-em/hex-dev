@@ -8,6 +8,41 @@
 - `Hex.GfqBench.runGF2qOfWordReprProfileChecksum`: parametric profiling companion for packed `GF2q.ofWord` plus `GF2q.repr` on the committed `GF2q 1` entry.
 - `Hex.GfqBench.runGFqOfPolyReprChecksum`: `n`, generic `GFq.ofPoly` plus `GFq.repr` on deterministic degree-`n` binary representatives for the committed `GFq 2 1` entry.
 - `Hex.GfqBench.runPackedGenericSharedChecksum`: `n`, shared packed/generic constructor-projection checksum on the same deterministic binary representative family.
+- `Hex.GfqBench.runGFqOfPolyRepr_2_8_Checksum`: fixed, generic constructor plus projection at `GFq 2 8`.
+- `Hex.GfqBench.runGF2qOfWordRepr_8_Checksum`: fixed, packed constructor plus projection at `GF2q 8`.
+- `Hex.GfqBench.runGFqOfPolyRepr_13_6_Checksum`: fixed, generic constructor plus projection at `GFq 13 6`.
+- `Hex.GfqBench.runGFqCOfPolyReprChecksum`: fixed, the ergonomic `GFqC` spelling at `(13, 6)`.
+
+## Degree beyond one
+
+The six targets above all sit at `GFq 2 1` and `GF2q 1`, where the modulus is
+linear and reduction is trivial. The four added targets reach the top of the
+committed range. Measured on `chungus2` (Linux, x86_64, lean 4.33.0-rc1), five
+repeats each, medians:
+
+| Target | Entry | Median |
+|---|---|---:|
+| `runGFqOfPolyRepr_2_8_Checksum` | `GFq 2 8` | 27.177 µs |
+| `runGF2qOfWordRepr_8_Checksum` | `GF2q 8` | 6.878 µs |
+| `runGFqOfPolyRepr_13_6_Checksum` | `GFq 13 6` | 6.579 µs |
+| `runGFqCOfPolyReprChecksum` | `GFqC 13 6` | 6.560 µs |
+
+Two readings. At degree 8 the packed representation is about four times faster
+than the generic one on the same field, which is the packed-vs-generic claim
+this library exists to support, now measured somewhere the modulus is not
+linear. And `GFqC` costs the same as the explicit-entry spelling to within
+noise, so resolving the committed entry by instance synthesis is free at
+runtime.
+
+**A defect in the older fixed targets.** The four new targets are written as
+`Unit → IO UInt64` with inputs held in `IO.Ref`s, following the pattern this
+file's bench header describes. The six older fixed targets are not: they are
+`(_ : Unit) → UInt64` over closed terms, so the compiler folds them and every
+one reports the same floor time, currently 21 ns, regardless of what it
+nominally measures. Written the folded way, the four new targets also reported
+21 ns each, across a 4000-fold spread in real work; that is how the problem was
+found. The older targets should be converted, and until they are their fixed
+verdicts should not be read as measurements of the operations they name.
 
 ## Verdicts
 
