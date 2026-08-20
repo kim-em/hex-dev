@@ -8,6 +8,7 @@ import HexConway.Rebuild
 import HexConway.Table
 import HexConway.Certificates
 import HexConway.Api
+import HexConway.Compatibility
 import HexConway.EntrySource
 
 /-!
