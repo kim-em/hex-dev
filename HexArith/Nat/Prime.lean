@@ -161,9 +161,115 @@ theorem prime_iff_forall_lt (p : Nat) :
       · exact absurd hmdvd (hno m hmlt hm2)
       · exact Or.inr (Nat.le_antisymm hmle hmge)
 
-/-- Primality is decidable by trial division below `p`, so a concrete prime is
-`by decide` rather than a hand-written divisor case split. Intended for the
-small moduli this project commits to: the search is linear in `p`. -/
+/-- Primality by trial division up to the square root.
+
+A composite has a nontrivial divisor `d` with `d * d ≤ p`: of any factor pair
+`p = d * e`, the smaller one qualifies. Bounding the search that way is what
+makes `decide` practical. The linear form above needs `p` steps, which is fine
+for a two-digit modulus and is not fine beyond that — `decide` on
+`Prime 3221` takes about fourteen seconds through it, and the primes that turn
+up in `p ^ n - 1` for the committed Conway table run to five digits. This form
+needs about `√p` steps instead. -/
+theorem prime_iff_forall_le_sqrt (p : Nat) :
+    Prime p ↔ 2 ≤ p ∧ ∀ m, m < Nat.sqrt p + 1 → 2 ≤ m → ¬ m ∣ p := by
+  -- Core supplies `sqrt k * sqrt k ≤ k` and `k < (sqrt k + 1) ^ 2`; everything
+  -- here is derived from those two, since `HexArith` is Mathlib-free.
+  have sq_le_of_lt_succ : ∀ {a k : Nat}, a * a ≤ k → a < Nat.sqrt k + 1 := by
+    intro a k hak
+    rcases Nat.lt_or_ge a (Nat.sqrt k + 1) with h | h
+    · exact h
+    · exact absurd hak (by
+        have hmul : (Nat.sqrt k + 1) * (Nat.sqrt k + 1) ≤ a * a :=
+          Nat.mul_le_mul h h
+        have hlt : k < (Nat.sqrt k + 1) * (Nat.sqrt k + 1) := Nat.lt_succ_sqrt k
+        omega)
+  have sqrt_lt : ∀ k : Nat, 2 ≤ k → Nat.sqrt k < k := by
+    intro k hk
+    rcases Nat.lt_or_ge (Nat.sqrt k) k with h | h
+    · exact h
+    · exact absurd (Nat.sqrt_le k) (by
+        have hmul : k * k ≤ Nat.sqrt k * Nat.sqrt k := Nat.mul_le_mul h h
+        have hkk : k * 2 ≤ k * k := Nat.mul_le_mul_left k hk
+        omega)
+  constructor
+  · rintro ⟨hp, hdiv⟩
+    refine ⟨hp, ?_⟩
+    intro m hmlt hm2 hmdvd
+    rcases hdiv m hmdvd with rfl | rfl
+    · omega
+    · have := sqrt_lt m (by omega)
+      omega
+  · rintro ⟨hp, hno⟩
+    refine ⟨hp, ?_⟩
+    intro d hd
+    obtain ⟨e, he⟩ := hd
+    by_cases hd1 : d = 1
+    · exact Or.inl hd1
+    by_cases hdp : d = p
+    · exact Or.inr hdp
+    exfalso
+    have hd0 : d ≠ 0 := by
+      intro h
+      rw [h, Nat.zero_mul] at he
+      omega
+    have he0 : e ≠ 0 := by
+      intro h
+      rw [h, Nat.mul_zero] at he
+      omega
+    have hd2 : 2 ≤ d := by omega
+    have he2 : 2 ≤ e := by
+      rcases Nat.lt_or_ge e 2 with h | h
+      · have he1 : e = 1 := by omega
+        rw [he1, Nat.mul_one] at he
+        omega
+      · exact h
+    rcases Nat.le_total d e with h | h
+    · have hdd : d * d ≤ p := by
+        calc d * d ≤ d * e := Nat.mul_le_mul_left d h
+          _ = p := he.symm
+      exact hno d (sq_le_of_lt_succ hdd) hd2 ⟨e, he⟩
+    · have hee : e * e ≤ p := by
+        calc e * e ≤ d * e := Nat.mul_le_mul_right e h
+          _ = p := he.symm
+      exact hno e (sq_le_of_lt_succ hee) he2 ⟨d, by rw [he, Nat.mul_comm]⟩
+
+/--
+Primality from trial division up to a caller-supplied bound.
+
+`prime_iff_forall_le_sqrt` cannot drive a `decide`: core's `Nat.sqrt` is
+defined by well-founded recursion, so the kernel will not evaluate it. Taking
+the bound as data instead keeps everything the kernel sees structural. The
+caller supplies `b` with `p < (b + 1) ^ 2`, which `decide` checks in one
+multiplication, and then only `b + 1` divisors have to be ruled out rather
+than `p` of them.
+
+For a five-digit prime that is the difference between a couple of hundred
+steps and tens of thousands: `decide (Prime 3221)` through
+the linear instance below takes about fourteen seconds, and the primes
+appearing in `p ^ n - 1` for the committed Conway table are larger still.
+-/
+theorem prime_of_bounded (p b : Nat) (hp : 2 ≤ p)
+    (hb : p < (b + 1) * (b + 1))
+    (h : ∀ m, m < b + 1 → 2 ≤ m → ¬ m ∣ p) :
+    Prime p := by
+  refine (prime_iff_forall_le_sqrt p).mpr ⟨hp, ?_⟩
+  intro m hmlt hm2 hmdvd
+  refine h m ?_ hm2 hmdvd
+  -- `m ≤ sqrt p` gives `m * m ≤ p < (b + 1) ^ 2`, hence `m < b + 1`.
+  have hmsq : m * m ≤ p := by
+    have hle : m ≤ Nat.sqrt p := by omega
+    have := Nat.mul_le_mul hle hle
+    have hs := Nat.sqrt_le p
+    omega
+  rcases Nat.lt_or_ge m (b + 1) with hlt | hge
+  · exact hlt
+  · exact absurd hmsq (by
+      have := Nat.mul_le_mul hge hge
+      omega)
+
+/-- Primality is decidable by trial division below `p`. Correct for any `p`,
+but linear: use {name}`Hex.Nat.prime_of_bounded` for anything beyond a few
+thousand. -/
 instance instDecidablePrime (p : Nat) : Decidable (Prime p) :=
   decidable_of_iff _ (prime_iff_forall_lt p).symm
 

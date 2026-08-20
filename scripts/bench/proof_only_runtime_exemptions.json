@@ -474,12 +474,6 @@
     "reason": "Registers HexPolyFpMathlib, a proof-only Mathlib companion holding the FpPoly-to-Polynomial correspondence, on top of the retained interval registrations; no Mathlib companion is in the checker's measured executable set, and the factorization service target and its executable dependency graph are unchanged."
   },
   {
-    "path": "HexArith/Nat/Prime.lean",
-    "baseline_blob": "8b5cf744140acde03da1c72c50482410e0c65029",
-    "current_blob": "4d71124dba913e1c12e15d5d04fa431871e8dea2",
-    "reason": "Adds prime_iff_forall_lt and a Decidable instance for the Prop-valued Hex.Nat.Prime. Both are new declarations; no existing definition changes, and Hex.Nat.Prime appears only in proofs, so the compiled factorization path is untouched."
-  },
-  {
     "path": "HexBerlekamp/Irreducibility.lean",
     "baseline_blob": "ebc42b9f71233e1c470ac885c43fd012bd9116db",
     "current_blob": "de4103699a6ad204c72ad32395c3496deb960a7a",
@@ -598,5 +592,11 @@
     "baseline_blob": "6dd80771ae2212333b2a9b925b52056e0037ff56",
     "current_blob": "f8b696cb4dc5f8a99fdc57e21d8dbdaf163a2ba5",
     "reason": "Registers Examples.FiniteFields in the HexReleaseExamples glob. That target is a release example library, not part of the measured executable set; the factorization service target and its dependency graph are unchanged."
+  },
+  {
+    "path": "HexArith/Nat/Prime.lean",
+    "baseline_blob": "8b5cf744140acde03da1c72c50482410e0c65029",
+    "current_blob": "5fbaa75456c2217771a4f7a27e7f2ff40417fe3a",
+    "reason": "Adds prime_iff_forall_le_sqrt and prime_of_bounded, theorems about the Prop-valued Hex.Nat.Prime, on top of the earlier decidability work. New declarations only; no existing definition changes, so the compiled factorization path is unchanged."
   }
 ]
