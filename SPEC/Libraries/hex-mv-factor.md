@@ -184,17 +184,28 @@ Mathlib's `Irreducible`. -/
 -- Hex.MvHensel.Irred
 
 def IsFactorizationOf (f : MvPoly n Int cmp) (D : Decomp n cmp) : Prop :=
+  f ≠ 0 ∧
   IsDecompOf f D ∧
   (∀ e ∈ D.factors, MvHensel.Irred e.factor) ∧
   D.factors.Pairwise fun a b =>
     ∀ u : Int, u * u = 1 → a.factor ≠ b.factor * C u
 ```
 
-`checkComplete f K` runs `checkDecomp f K.decomp`, requires
-`K.certs.length = K.decomp.factors.length`, and runs `checkIrred` on
-each factor against its certificate. Its soundness theorem is stated
-with the univariate obligations under "The irreducibility certificate",
-because that is where they arise.
+`checkComplete f K` requires `f ≠ 0`, runs `checkDecomp f K.decomp`,
+requires `K.certs.length = K.decomp.factors.length`, and runs
+`checkIrred` on each factor against its certificate. Its soundness
+theorem is stated with the univariate obligations under "The
+irreducibility certificate", because that is where they arise.
+
+**The `f ≠ 0` check is not decoration, and leaving it out is the
+easiest way to make this type lie.** `⟨⟨0, []⟩, []⟩` passes
+`checkDecomp` (its product is `C 0 = 0`), passes the length check, and
+passes the empty list of certificate checks vacuously. Without the
+explicit rejection, `checkComplete` would therefore accept a "complete
+factorization of `0`", contradicting the convention under "Degenerate
+inputs" that `0` has none. The same clause is in `IsFactorizationOf`
+for the same reason: `0` is not a product of irreducibles, and a Prop
+that says it is cannot be transported to Mathlib's `Irreducible`.
 
 The pairwise clause is non-association, and it is what makes the
 multiplicities the true ones rather than an arbitrary split of them.
@@ -348,9 +359,11 @@ content check then makes `u` a unit, exactly as in `degreeOne`.
 received it*. The images this library builds are rescaled by Wang's
 leading-coefficient correction, so `inp.images[j] = γ_j · h_j` with
 `γ_j` a nonunit integer whenever the evaluation introduces content, and
-the hypothesis is then false while the conclusion is still true. Citing
-the theorem in that situation would be using it outside its stated
-hypotheses, so this library proves the scaled form itself. The proof is
+the hypothesis is then false while the conclusion is still true. When
+the scale happens to be `± 1` the theorem does apply, given its other
+hypotheses; the point is that nothing guarantees it, so this library
+proves the scaled form itself rather than depending on a case
+distinction the caller cannot control. The proof is
 the same argument with one extra Gauss step, it needs no lift at all,
 and it is the reason `image` mentions no prime, no exponent, and no
 `Input`. "Open questions" records the amendment that would let
@@ -460,6 +473,63 @@ enumeration, which the checker does re-run, is exact division and
 nothing else. That is the smallest checker this route admits: a
 negative statement about every subset has no shorter witness than the
 list of refutations, and each refutation is one division.
+
+### The other side: reducibility
+
+Irreducibility is expensive to certify and reducibility is cheap, so
+the two get different types:
+
+```lean
+/-- A factorization into two nonunits. -/
+structure Split (n : Nat) (cmp : Mono n → Mono n → Ordering) where
+  left  : MvPoly n Int cmp
+  right : MvPoly n Int cmp
+
+def checkSplit (g : MvPoly n Int cmp) (S : Split n cmp) : Bool
+
+theorem checkSplit_sound : checkSplit g S = true → ¬ MvHensel.Irred g
+```
+
+`checkSplit g S` requires `S.left * S.right = g` and that neither side
+is a unit, which for `MvPoly n Int cmp` is `polyIsUnit`. One
+multiplication and two constant-time tests, no obligations.
+
+The Kronecker sweep produces one or the other, and that is what makes
+it a decision rather than a search:
+
+```lean
+inductive Verdict (n : Nat) (cmp : Mono n → Mono n → Ordering)
+  | irreducible (cert : IrredCert n cmp)
+  | reducible   (split : Split n cmp)
+
+/-- Total on a nonconstant primitive subject: the sweep either refutes
+every candidate divisor, and returns the certificate recording that, or
+it finds one, and returns it. -/
+def kronDecide (g : MvPoly n Int cmp) : Verdict n cmp
+
+theorem kronDecide_irreducible
+    (h : kronDecide g = .irreducible c)
+    (ho : ∀ F ∈ obligations g c, MvHensel.Irred F) :
+    MvHensel.Irred g
+theorem kronDecide_reducible (h : kronDecide g = .reducible S) :
+    checkSplit g S = true
+```
+
+**Retaining the divisor is not an optimisation.** Without it the sweep
+would answer "no certificate produced", which is indistinguishable from
+"budget exhausted" and cannot discharge a negative. The companion's
+`Decidable` instance needs both branches of a genuine decision, and
+`.reducible` is the branch that supplies the `isFalse`. The sweep
+already has the divisor in hand at the moment it stops, so keeping it
+costs nothing.
+
+Constants are outside `kronDecide`, which requires `¬ IsConst g`. `C p`
+is irreducible in `ℤ[x₁, …, x_v]` exactly when `p` is a prime integer,
+and this library has no primality test and does not want one, for the
+reason under "The two claims". The constant case is therefore decided
+in the companion, where Mathlib's integer primality decision is already
+available; `0` and `± 1` are the two remaining constants, and neither
+is irreducible.
 
 ### Why a failed lift is not a refutation
 
@@ -599,6 +669,15 @@ inductive PointReject
   | degreeDrop
   | notSquarefree
   | leadingSplit
+
+/-- What an accepted point yields. The point loop returns this, so the
+univariate factorization and the assignment are computed once and not
+recomputed by the caller. -/
+structure Probe (n : Nat) (cmp) (cmp') where
+  point   : Fin n → Int
+  images  : List ZPoly                 -- rescaled, so V3 and V4 hold
+  leading : List (MvPoly n Int cmp')
+  uni     : List ZPoly                 -- the primitive irreducible h_j
 ```
 
 A candidate `a : Fin n → Int` is admissible when:
@@ -606,9 +685,20 @@ A candidate `a : Fin n → Int` is admissible when:
 1. **No degree drop.** `MvPoly.eval a (lcIn i cmp' s) ≠ 0`. This is
    hex-mv-hensel's V2, it is one evaluation, and it is checked first
    because it is the cheapest.
-2. **Squarefree image.** `imageAt i cmp' a s` is squarefree in `ℤ[x]`,
-   tested by the gcd with its derivative through
+2. **Squarefree image.** `SquareFreeRat (imageAt i cmp' a s)`, which is
+   [hex-poly-z](../../HexPolyZ/SPEC/hex-poly-z.md)'s relative predicate
+   and already carries a `Decidable` instance; the underlying test is
+   the gcd of the *primitive part* with its derivative, through
    [hex-poly-z-gcd](hex-poly-z-gcd.md).
+
+   The relative predicate is the right one and the ring-theoretic one
+   would be wrong here. Evaluation routinely gives the image a nonunit
+   integer content, and `F = 2(x² + 1)` is not squarefree in `ℤ[x]`
+   while its polynomial part is and its factorization is
+   multiplicity-free. Testing `F` itself would reject good points for a
+   property the algorithm does not need. This is the same convention
+   [hex-mv-gcd](hex-mv-gcd.md) fixes under "What squarefree means
+   here".
 3. **A usable leading-coefficient distribution exists**, in the sense
    of the next section.
 
@@ -654,10 +744,12 @@ factorization, so doing it below the factorizer would make the graph
 circular.
 
 Decompose `Λ = lcIn i cmp' s` by recursive entry into this pipeline at
-arity `n`, giving `Λ = c · ∏_m Ω_m^{b_m}`. Write `h_1, …, h_r` for the
-primitive irreducible univariate factors of `F = imageAt i cmp' a s`,
-so that `F = scalar · ∏_j h_j` with the product multiplicity-free by
-admissibility condition 2.
+arity `n`, giving `Λ = c · ∏_m Ω_m^{b_m}`. That decomposition does not
+depend on the point, so it is computed **once per main variable**,
+before the point loop, and only the assignment below is redone per
+point. Write `h_1, …, h_r` for the primitive irreducible univariate
+factors of `F = imageAt i cmp' a s`, so that `F = scalar · ∏_j h_j`
+with the product multiplicity-free by admissibility condition 2.
 
 **A decomposition suffices here; irreducibility of the `Ω_m` is not
 needed.** V4 constrains the product and the values, not the nature of
@@ -668,23 +760,45 @@ point rather than correctness. This matters because the leading
 coefficient is one of the two places the pipeline recurses, and paying
 for certificates there would multiply the work for no gain.
 
-Wang's assignment then uses the integers. Evaluate each `Ω_m` at `a`,
-and look for a prime `q_m` dividing `Ω_m(a)`, dividing no other
-`Ω_{m'}(a)`, and not dividing `scalar`. If every `Ω_m` has such a
-*distinct prime divisor*, the assignment is forced: the multiplicity of
-`q_m` in `lc h_j` is the exponent of `Ω_m` in `L_j`, and the assignment
-is rejected unless those exponents sum over `j` to `b_m`. If some `Ω_m`
-has no distinct prime divisor, the point is rejected with
-`.leadingSplit` and the search moves on. That is one of the responses
-hex-mv-hensel names under "Leading coefficients", and it costs one
-point rather than a search over distributions.
+Wang's assignment then works entirely in the integers, in two stages:
+first which `Ω_m` go where, then how much of `c` goes with them.
 
-**The integer `c` has to be distributed too, and putting it all in one
-`L_j` is wrong.** The tempting shortcut is to say that V4 constrains
-only the product `∏_j L_j` and the values `L_j(a)`, so the placement of
-`c` does not matter. It does. `check`'s condition C4 pins each lifted
-factor's leading coefficient to the `L_j` it was given, so a placement
-that differs from the true factors' own leading coefficients makes
+**Stage one: the polynomial parts, by division by the evaluated
+factor.** Set `d_m = Ω_m(a)`. The assignment is unambiguous exactly
+when the `d_m` can be separated from each other and from `scalar`, and
+the test for that needs no prime factorization: strip
+`g = gcd(d_m, previous)` repeatedly from `d_m` while `g ≠ 1`, and
+require what is left to be more than `1`. That is Wang's non-divisor
+condition, and it is the gcd loop
+`dmp_zz_wang_non_divisors` implements. When it fails, the point is
+rejected with `.leadingSplit` and the search moves on, which is one of
+the responses hex-mv-hensel names under "Leading coefficients" and
+costs one point rather than a search over distributions.
+
+With the condition in force, the exponent of `Ω_m` in `L_j` is the
+number of times `d_m` divides `lc h_j · c`, computed by repeated exact
+division, and the assignment is rejected unless those exponents sum
+over `j` to `b_m`.
+
+**Divide by the value, not by a prime.** Counting instead the
+multiplicity of some prime `q_m ∣ d_m` in `lc h_j` is wrong whenever
+`d_m` is not squarefree as an integer. With
+`s = (y·x + 1)(x + 1)` at `y = 4`, `Λ = Ω_1 = y` and `b_1 = 1`, the
+images have leading coefficients `4` and `1`, and `d_1 = 4`. The only
+available prime is `q = 2`, whose multiplicity in `4` is `2`, so the
+prime rule assigns `Ω_1` the exponent `2` and the sum check then
+rejects a distribution that is in fact correct. Dividing by `d_1 = 4`
+gives the exponent `1`, which is the truth. The prime formulation also
+smuggles in an integer factorization that neither the dependency list
+nor the complexity table pays for; the division formulation needs only
+exact division and gcd.
+
+**Stage two: the integer part, and why putting it all in one `L_j` is
+wrong.** The tempting shortcut is to say that V4 constrains only the
+product `∏_j L_j` and the values `L_j(a)`, so the placement of `c` does
+not matter. It does. `check`'s condition C4 pins each lifted factor's
+leading coefficient to the `L_j` it was given, so a placement that
+differs from the true factors' own leading coefficients makes
 `IsLiftOf` uninhabited, and `lift` then reports `.reconstruct` on an
 input that has a perfectly good factorization. With main variable `x`,
 one other variable `y`, and
@@ -695,23 +809,32 @@ does not even admit an integer rescaling, and a variant of the same
 example where both rescalings happen to be exact fails later and more
 expensively.
 
-So the integer part is distributed under the same divisibility
-requirement that the rescaling below needs: `lc h_j ∣ L_j(a)` for every
-`j`, together with `∏_j L_j = Λ`. Wang computes it greedily, dividing
-out `gcd (lc h_j) (P_j(a))` factor by factor, where `P_j` is the
-polynomial part already assigned to `j`, and rejecting the assignment
-when an integer is left over at the end. That leftover test is
-SymPy's `ExtraneousFactors` condition, and it is what the conformance
-comparison against `dmp_zz_wang_lead_coeffs` checks.
+Write `P_j` for the polynomial part stage one assigned to `j`. The
+rescaling below needs `lc h_j ∣ L_j(a)`, so the integer multiplier of
+`L_j` is at least
 
-**The integer placement can be genuinely ambiguous, and the recovery is
-the ordinary one.** With `Λ = 8`, `lc h_1 = 2`, and `lc h_2 = 2`, both
-`(2, 4)` and `(4, 2)` satisfy every constraint above and at most one
-matches the truth. The greedy pass takes the first, a wrong choice
-shows up as a `.reconstruct` failure, and the response is the same as
-for an unlucky point: try another point. Enumerating the placements
-instead would sometimes save a point, and "Open questions" records that
-rather than assuming the greedy pass is complete.
+```text
+need_j = |lc h_j| / gcd (|lc h_j|) (|P_j(a)|) .
+```
+
+Those are forced. The assignment is rejected unless `∏_j need_j ∣ |c|`,
+each `L_j` receives its `need_j`, and the residual `|c| / ∏_j need_j`
+together with the sign of `c` is placed on `L_1`. On the running
+example, `need_1 = 10 / gcd(10, 5) = 2` and `need_2 = 3 / gcd(3, 1) = 3`,
+whose product is exactly `|c| = 6`, so the residual is `1` and the
+assignment is the truth.
+
+**The residual placement can be genuinely ambiguous, and the recovery
+is the ordinary one.** The `need_j` are forced but the residual is not.
+With `Λ = 8` and `lc h_1 = lc h_2 = 2` the `need_j` are both `1` and
+the residual is `8`, so `(2, 4)` and `(4, 2)` both satisfy every
+constraint above and at most one matches the truth. Putting the
+residual on `L_1` is a deterministic choice, not a derivation; a wrong
+choice shows up as a `.reconstruct` failure, and the response is the
+same as for an unlucky point, another point. Enumerating the residual's
+placements instead would sometimes save a point, and "Open questions"
+records that rather than pretending the deterministic choice is
+forced.
 
 The assignment produces candidate leading coefficients `L_1, …, L_r`
 with `∏_j L_j = Λ`, which is V4's first condition. The second
@@ -754,7 +877,7 @@ distribution problem entirely: every factor's leading coefficient is
 `1` and the assignment is unique. It also multiplies the coefficient
 size by up to `‖Λ‖^(d₁ - 1)` and multiplies the degrees in the other
 variables by `d₁`, which the lift pays for as `∏_{j ≠ i}(d_j + 1)`
-grows. This library uses the distinct-prime-divisor assignment and
+grows. This library uses the non-divisor assignment above and
 treats its failure as a reason to change the point. "Open questions"
 records what monicisation would be worth if the assignment turns out to
 fail often in practice.
@@ -850,17 +973,32 @@ the splitting that already failed. So a failed lift at `r = 2` means
 another point immediately, and the example above is exactly that case.
 Recombination earns its budget from `r ≥ 3`.
 
-**The image never hides a factorization, which is what makes this
-search the right one.** If `s = u · w` with both nonconstant in `x_i`,
-then neither drops degree at an admissible point, so both images have
-positive degree and the image is reducible; and if one of them is
-constant in `x_i` it divides `contentIn i cmp' s = 1`. So an
+**The image never hides a factorization, and that is what makes a
+subset search the right shape.** If `s = u · w` with both nonconstant
+in `x_i`, then neither drops degree at an admissible point, so both
+images have positive degree and the image is reducible; and if one of
+them is constant in `x_i` it divides `contentIn i cmp' s = 1`. So an
 *irreducible* image proves `s` irreducible, which is the `image`
-certificate, and a reducible image means every true factor's image is a
-subproduct of the `h_j`, which is what the enumeration ranges over. The
-only way the enumeration misses a factor is a lift that fails for lack
-of modulus, which is the schedule's limitation and not the
-enumeration's.
+certificate, and with a squarefree image every true factor's
+*primitive* image is, up to sign, a subproduct of the `h_j`.
+
+**Being the right shape is not the same as being exhaustive, and the
+difference is worth stating precisely.** Three separate conditions have
+to hold before "the enumeration found nothing" would mean "there is
+nothing":
+
+- the leading-coefficient assignment for the subset has to match the
+  true factor's own leading coefficient, which the `need_j` rule forces
+  only up to the residual placement of step 4;
+- every cardinality has to be enabled, where `cfg.recombLevels` bounds
+  them;
+- the modulus has to be large enough for the lift of the true grouping
+  to reconstruct, which the heuristic schedule does not guarantee.
+
+The search satisfies none of the three by default, which is exactly why
+an exhausted recombination is reported as `.recombine` and never as
+irreducibility. Irreducibility comes from `IrredCert` and from nowhere
+else.
 
 **The cost per candidate is a lift, not a division.** Univariate
 Berlekamp-Zassenhaus recombines by trial-dividing a candidate product,
@@ -881,13 +1019,40 @@ schedule ran out, and the response is a new point rather than more
 doublings, because a new point is usually cheaper than another doubling
 of `l`.
 
+### 8. Normalization and the merge
+
+The factors the lift returns are correct and not yet canonical, and the
+gap is easy to miss because `check` looks like it has already settled
+everything. `check_sound` gives the product identity, the image at the
+point, and the leading coefficient in the *main* variable. It says
+nothing about the `cmp`-leading coefficient of the factor as a whole,
+which is what D4's `polyNormalize` is about, and the two are different
+coefficients: the main-variable leading coefficient is
+`lcIn i cmp' g`, a polynomial, while `polyNormalize` looks at the one
+monomial that `cmp` ranks highest. A lifted factor can perfectly well
+come back with that coefficient negative.
+
+So the last thing the pipeline does, before offering anything to
+`checkDecomp`, is:
+
+- normalize every factor with `polyNormalize`, and multiply the `±1`
+  units it extracts into `Decomp.content`, which is where D4 requires
+  them to end up;
+- merge entries that are now equal, adding their multiplicities, which
+  is what D5 requires and what makes the multiplicities meaningful;
+- sort by multiplicity, so the answer is reproducible across runs and
+  comparable across monomial orders.
+
+Each step is linear in the number of factors and none of them can fail.
+Leaving any of them out produces a correct product that `checkDecomp`
+rejects, which is the good failure mode, but it wastes a whole search.
+
 ## Failure cases
 
 ```lean
 inductive Failure (n : Nat) (cmp : Mono n → Mono n → Ordering)
   | zero
-  | point       (attempts : Nat) (last : PointReject)
-  | leading     (attempts : Nat)
+  | point       (attempts : Nat) (last : Option PointReject)
   | lift        (inner : MvHensel.Failure)
   | recombine   (levels : Nat)
   | irreducible (factor : MvPoly n Int cmp)
@@ -902,12 +1067,21 @@ structure Partial (f : MvPoly n Int cmp) where
 | failure | what it means | who acts |
 |---|---|---|
 | `.zero` | a complete factorization of `0` was requested | caller: the zero decomposition is available from `factor?` |
-| `.point` | no admissible point within `cfg.pointFuel`, with the last rejection recorded | caller: raise the fuel or the shell bound |
-| `.leading` | every scouted point failed the distinct-prime-divisor assignment | caller: raise `pointScouts`, or accept a coarser answer |
+| `.point` | no admissible point within `cfg.pointFuel`, with the last rejection recorded when there was one | caller: raise the fuel or the shell bound, and read `last` to learn which admissibility condition was failing |
 | `.lift` | hex-mv-hensel refused in a way the retry policy does not handle, `.arity` and `.witnessDegree` in particular | producer bug in this library; these are the constructors a correct caller cannot trigger |
 | `.recombine` | groupings up to `cfg.recombLevels` were exhausted | caller: raise the level budget, or accept the decomposition found |
 | `.irreducible` | a decomposition was found but no `IrredCert` for the named factor was produced within budget | caller: enable the Kronecker route, or accept the decomposition |
 | `.random` | the generator was exhausted | caller: supply a fresh `Rand` |
+
+**There is no separate `.leading` failure.** A leading-coefficient
+assignment that cannot be built is a property of the point, it is
+already admissibility condition 3, and it is already
+`PointReject.leadingSplit`. A second constructor for it would be
+unreachable, and the aggregate that a caller actually wants is
+"`cfg.pointFuel` points tried, the last one rejected for this reason",
+which is what `.point` carries. `last` is an `Option` because
+`pointFuel = 0` and an empty shell both give up without having rejected
+anything.
 
 **Every failure carries the decomposition found so far.** `Partial`
 holds a `CheckedDecomp`, so a caller that runs out of budget keeps the
@@ -1023,10 +1197,30 @@ structure Complete (n : Nat) (cmp)
 inductive IrredCert (n : Nat) (cmp)
 inductive Failure (n : Nat) (cmp)
 inductive PointReject
+structure Probe (n : Nat) (cmp) (cmp')
 structure Partial (f : MvPoly n Int cmp)
 
 structure CheckedDecomp (f : MvPoly n Int cmp)
 structure CheckedComplete (f : MvPoly n Int cmp)
+
+/-- The witness on the other side: a factorization into two nonunits.
+Checking it is one multiplication and two unit tests, so reducibility
+is as cheaply certified as irreducibility is expensively. -/
+structure Split (n : Nat) (cmp) where
+  left  : MvPoly n Int cmp
+  right : MvPoly n Int cmp
+
+def checkSplit (g : MvPoly n Int cmp) (S : Split n cmp) : Bool
+
+/-- The total decision the Kronecker route supports on a nonconstant
+primitive subject. -/
+inductive Verdict (n : Nat) (cmp)
+  | irreducible (cert : IrredCert n cmp)
+  | reducible   (split : Split n cmp)
+
+/-- True when every certificate in `K` avoids the `kronecker`
+constructor, which is what makes `checkComplete K` kernel-replayable. -/
+def NoKronecker (K : Complete n cmp) : Bool
 
 structure Config where
   rand         : Rand
@@ -1070,14 +1264,27 @@ def irredCert?   (cfg : Config) (g : MvPoly n Int cmp) :
     Except (Failure n cmp) (IrredCert n cmp × Rand)
 
 -- Pieces the conformance drivers exercise directly
-def admissible?  (cfg : Config) (i : Fin (n+1)) (cmp') (a : Fin n → Int)
-    (s : MvPoly (n+1) Int cmp) : Except PointReject Unit
+def probe (cfg : Config) (i : Fin (n+1)) (cmp') (a : Fin n → Int)
+    (s : MvPoly (n+1) Int cmp) (lc : Decomp n cmp') (r : Rand) :
+    Except PointReject (Probe (n+1) cmp cmp' × Rand)
 def distribute?  (i : Fin (n+1)) (cmp') (a : Fin n → Int)
-    (lc : Decomp n cmp') (images : List ZPoly) :
+    (lc : Decomp n cmp') (uni : List ZPoly) (scalar : Int) :
     Option (List (MvPoly n Int cmp') × List ZPoly)
-def kron   (d : Fin n → Nat) (p : MvPoly n Int cmp) : ZPoly
+def kron    (d : Fin n → Nat) (p : MvPoly n Int cmp) : ZPoly
 def unKron? (d : Fin n → Nat) (P : ZPoly) : Option (MvPoly n Int cmp)
+
+/-- The complete route as a decision. Total on a nonconstant primitive
+subject, and the only entry point that answers "reducible" with a
+witness rather than with an exhausted budget. -/
+def kronDecide (g : MvPoly n Int cmp) : Verdict n cmp
 ```
+
+`probe` takes the leading coefficient's decomposition rather than
+computing it, because that decomposition does not depend on the point
+and the point loop runs many times. It returns the rescaled images and
+the assigned leading coefficients, so the driver above it constructs an
+`MvHensel.Input` without recomputing anything, and it returns the
+advanced `Rand`.
 
 `factor?` and `complete?` are `factorWith` and `completeWith` at
 `Config.default`, discarding the advanced `Rand`, so ordinary use is
@@ -1098,17 +1305,24 @@ multiset of factors up to a per-factor sign. `reorder` is
 hex-mv-poly's comparator change. -/
 theorem factor_reorder {D : Decomp n cmp} {D' : Decomp n cmp₂}
     (hK : IsFactorizationOf f D) (hK' : IsFactorizationOf (reorder f) D') :
-    D.content = D'.content ∧
-      ∃ us : List Int, (∀ u ∈ us, u * u = 1) ∧
-        D'.factors.Perm (D.factors.zipWith
-          (fun e u => ⟨reorder e.factor * C u, e.multiplicity⟩) us)
+    ∃ us : List Int, (∀ u ∈ us, u * u = 1) ∧
+      D'.factors.Perm (D.factors.zipWith
+        (fun e u => ⟨reorder e.factor * C u, e.multiplicity⟩) us) ∧
+      D.content = D'.content *
+        (D.factors.zipWith (fun e u => u ^ e.multiplicity) us).prod
 ```
 
-stated with an explicit unit for the reason under "The two claims":
-normalization is `cmp`-dependent and the sign of a factor can change
-with the order even over `ℤ`. It is stated about *complete* answers
-because that is where uniqueness makes the pairing canonical; two
-checked decompositions of the same subject need not correspond at all.
+The content is corrected by the same units, and saying instead that the
+two contents are equal would be false. For `f = x - y`, an order with
+`x` leading gives content `1` and factor `x - y`; an order with `y`
+leading sees leading coefficient `-1`, normalizes the factor to
+`y - x`, and must carry `-1` in the content to keep the product. The
+units appear with the multiplicities because a factor of even
+multiplicity contributes none.
+
+The statement is about *complete* answers, because that is where
+uniqueness makes the pairing canonical; two checked decompositions of
+the same subject need not correspond at all.
 
 ## Complexity
 
@@ -1130,18 +1344,19 @@ pieces in the decomposition of `lcIn i cmp' f`.
 | `sqfDecomp` | hex-mv-gcd, Yun with content recursion | `O(v · M)` multivariate gcds |
 | one point test | one evaluation and one `ZPoly` gcd | `O(t · v)` coefficient operations plus one univariate gcd |
 | point search | shells until admissible, then scouting | `≤ pointFuel` point tests |
-| univariate factorization | `ZPoly.factorize` at degree `d₁` | one call |
-| leading-coefficient factorization | recursive entry at arity `n` | one factorization in `v - 1` variables |
-| distribution | distinct prime divisors among `w` integers | `O(w²)` integer gcds plus `O(r · w)` divisions |
+| univariate factorization | `ZPoly.factorize` at degree `d₁` | one call per admissible point, so up to `pointScouts` of them |
+| leading-coefficient decomposition | recursive entry at arity `n`, hoisted out of the point loop | one factorization in `v - 1` variables per main variable |
+| distribution | gcd-stripping non-divisor test, then division by the evaluated factors | `O(w²)` integer gcds plus `O(r · w)` exact divisions, and no integer factorization |
 | one lift attempt | hex-mv-hensel `liftWith` | `O(∏_{j ≠ i} (d_j + 1))` univariate solves per doubling |
 | recombination | one lift per grouping | `Σ_{k ≤ recombLevels} C(r, k)` lift attempts |
-| `checkDecomp` | powers by square-and-multiply, then one product | `O(Σ_k log e_k)` multiplications |
+| `checkDecomp` | powers by square-and-multiply, then one product | `O(r + Σ_k log e_k)` multiplications, `r` of them for the product itself |
 | `checkIrred` `image` | one evaluation, one content replay | `O(t)` coefficient operations plus the `ContentCert` replay |
-| `checkIrred` `kronecker` | substitution, product identity, subset sweep | `∏_k (e_k + 1)` exact divisions at univariate degree `∏_j (d_j + 1) - 1` |
-| `kron` | exponent rewriting | `O(v · t)` machine operations |
+| `kronDecide` producer | one `ZPoly.factorize` at degree `∏_j (d_j + 1) - 1`, then the sweep | one univariate factorization at dense-size degree, plus the sweep below |
+| `checkIrred` `kronecker` | substitution, one product identity in `ZPoly`, subset sweep | `∏_k (e_k + 1)` multivariate `divExact?` calls, each preceded by one `unKron?` |
+| `kron`, `unKron?` | exponent rewriting in mixed radix | `O(v · t)` machine operations |
 
 The table carries the design argument twice. The accepted answer costs
-`O(Σ log e_k)` multiplications to check regardless of how it was found,
+`O(r + Σ log e_k)` multiplications to check regardless of how it was found,
 which is what makes replay affordable and is why every claim is
 attached to a checker. And the two irreducibility routes are separated
 by an enormous constant, which is why the search tries the `image`
@@ -1165,10 +1380,21 @@ and never appear in a proof term. `Config`, `Failure`, `Partial`, and
 `checkIrred` on `kronecker` is **deliberately outside** the closure.
 Its sweep runs `∏_k (e_k + 1)` exact divisions on polynomials of dense
 size, and `divExact?` is one of the operations hex-mv-gcd explicitly
-keeps out of its own closure. A consumer that needs a kernel-replayable
-irreducibility witness must obtain an `image` certificate, and the
-`kroneckerDeg` cap in `Config` exists so that the expensive route is
-never entered by accident.
+keeps out of its own closure.
+
+**The restriction has to be visible in the data, not only in the
+prose.** `checkComplete` dispatches on whichever constructors its
+argument happens to carry, so "the closure is `checkComplete` minus
+`kronecker`" is not a statement about a function; it is a statement
+about the data it is applied to. `NoKronecker K` is the decidable
+predicate that says so, and the kernel claim is: for `K` with
+`NoKronecker K = true`, `checkComplete f K` replays in the kernel at
+the cost the complexity table gives. `cfg.kroneckerDeg` bounds the
+*producer* and says nothing about a certificate a caller constructs, so
+it cannot carry this guarantee.
+
+`checkSplit` is in the closure: one multiplication and two unit tests
+is the cheapest thing in this library.
 
 One thing the closure does *not* contain is a discharge of the
 obligations. A replayed `checkIrred` establishes the implication, not
@@ -1206,7 +1432,7 @@ kinds, and hex-mv-hensel's two.
 likely to have**, for the reason [hex-mv-gcd](hex-mv-gcd.md) gives
 about its own routes. Every answer goes through `checkDecomp`, and a
 rejected candidate falls through to another point or another grouping,
-so an end-to-end fixture passes even when the distinct-prime-divisor
+so an end-to-end fixture passes even when the non-divisor
 assignment never fires, when the point scouting always keeps the first
 point, or when recombination is dead code. The suite therefore has two
 halves.
@@ -1215,7 +1441,7 @@ halves.
 asserting on internals: that a constructed degree-dropping point was
 rejected with `.degreeDrop` and a non-squarefree one with
 `.notSquarefree`; that `distribute?` returns the assignment forced by
-the distinct prime divisors on a case built to have them, and `none` on
+the non-divisor condition on a case built to satisfy it, and `none` on
 a case built not to; that the rescaled images satisfy V3 and V4
 exactly, checked by calling `MvHensel.valid`; that an unlucky point
 reaches recombination and that the two-block grouping that succeeds is
@@ -1236,7 +1462,7 @@ present:
 - Nonconstant `L_j` sharing a common factor, which is the case Wang's
   assignment exists for and the case a lift that quietly renormalises
   leading coefficients gets wrong.
-- A leading coefficient with no distinct prime divisor at the first
+- A leading coefficient failing the non-divisor condition at the first
   admissible point, so the `.leadingSplit` rejection and the move to
   another point are both exercised.
 - A leading coefficient whose integer part must be split between two
@@ -1275,11 +1501,16 @@ present:
 
 **Oracle choice.** SymPy is the oracle. `sympy.factor_list` covers the
 public answer over `ℤ` including the content convention, which is the
-same convention this library uses, so the comparison needs no
-renormalisation. For the route-level halves that a public answer cannot
+same convention this library uses. The comparison is nevertheless up to
+a per-factor sign and a permutation: SymPy normalizes signs by its own
+generator order, while this library normalizes by the `cmp` under test,
+and `factor_reorder` is the statement that the two differ by units. The
+driver therefore compares the factor multisets after normalizing the
+oracle's output under the tested comparator, and compares the contents
+after the same correction. For the route-level halves that a public answer cannot
 see, `sympy.polys.factortools` exposes the matching internals:
 `dmp_zz_wang_test_points` for point admissibility,
-`dmp_zz_wang_non_divisors` for the distinct-prime-divisor test,
+`dmp_zz_wang_non_divisors` for the non-divisor test,
 `dmp_zz_wang_lead_coeffs` for the assignment and the rescaling, and
 `dmp_zz_wang` for the whole EEZ driver. Comparing those directly is
 what catches an inverted divisibility test or an off-by-one in the
@@ -1296,9 +1527,14 @@ itself.
 
 Irreducibility is compared through `factor_list` rather than through
 `Poly.is_irreducible`: the list form is defined for every arity and
-every domain the fixtures use, and "irreducible" is then "one factor,
-multiplicity one, unit content", which is exactly this library's
-`Complete` with a singleton factor list.
+every domain the fixtures use, and for a *nonconstant* subject
+"irreducible" is then "one factor, multiplicity one, unit content",
+which is exactly this library's `Complete` with a singleton factor
+list. Constants are not covered by that reading, since `C 2` is
+irreducible with an empty factor list and a nonunit content; the
+`mvirred` fixtures record the constant cases as the companion decides
+them, against `sympy.isprime` on the content, and the Mathlib-free
+`kronDecide` declines them by its `¬ IsConst` precondition.
 
 The companion adds randomised comparison against
 `MvPolynomial (Fin n) ℤ` through hex-mv-poly's `equiv`, checking
@@ -1382,12 +1618,26 @@ theorem checkIrred_irreducible (h : checkIrred g c = true)
     (ho : ∀ F ∈ obligations g c, Irreducible (eZ F)) :
     Irreducible (e g)
 
-theorem factorization_spec (h : checkComplete f K = true) (hf : f ≠ 0) : …
+/-- The transported factorization statement. It takes the same
+obligation hypothesis `checkComplete_sound` does, because
+`checkComplete` does not establish it. -/
+theorem factorization_spec (h : checkComplete f K = true)
+    (ho : ∀ e ∈ K.decomp.factors.zip K.certs,
+            ∀ F ∈ obligations e.1.factor e.2, Irreducible (eZ F)) : …
     -- e f = C K.decomp.content * ∏ (e factor) ^ multiplicity,
     -- with every factor irreducible and pairwise non-associated
 
+/-- The form a caller normally wants: provenance discharges the
+obligations through `obligations_irred`, so there is nothing left to
+supply. -/
+theorem factorization_spec_of_complete
+    (h : completeWith cfg f = .ok (K, r)) : …
+
 theorem factorization_unique : …
     -- against UniqueFactorizationMonoid (MvPolynomial (Fin n) ℤ)
+
+theorem checkSplit_not_irreducible (h : checkSplit g S = true) :
+    ¬ Irreducible (e g)
 
 instance : DecidablePred (Irreducible : MvPolynomial (Fin n) ℤ → Prop)
 ```
@@ -1403,12 +1653,37 @@ directly. A certificate assembled by a caller from other data gets the
 weaker `checkIrred_irreducible`, where the caller supplies the
 obligations.
 
-The `Decidable` instance is total because the `kronecker` route is:
-`ZPoly.factorize` is total, `unKron?` and exact division are total, and
-the subset sweep is finite. Its executable path tries `irredCert?` at
-the default configuration first and falls back to the Kronecker sweep,
-so it is fast on the inputs where the `image` route fires and merely
-finite elsewhere. This is the multivariate counterpart of
+**`factorization_spec` may not drop that hypothesis, and the tempting
+version of it is false.** A `checkComplete`-only statement concluding
+irreducibility would let a caller hand in the singleton decomposition
+of `x² - 1` with an `image` certificate at any point where the degree
+does not drop: the product identity holds, the content certificate
+checks, and the single obligation is the *reducible* polynomial
+`x² - 1`, which nobody ever verified. The obligation hypothesis, or
+provenance through `completeWith`, is exactly what rules that out. This
+is the one place in this SPEC where dropping a hypothesis would turn a
+product check into an irreducibility claim.
+
+The `Decidable` instance is assembled from three cases, and each needs
+saying, because a decision procedure has to answer on every input and
+`IrredCert` alone answers on none of the negative ones.
+
+- **Zero and units.** `0` and `± 1` are not irreducible, decided
+  outright.
+- **Other constants.** `C p` is irreducible exactly when `p` is prime
+  in `ℤ`, which Mathlib decides. This is the case no `IrredCert`
+  constructor covers, by the content convention, and it is why the
+  instance lives in the companion rather than in the Mathlib-free
+  layer.
+- **Nonconstant.** Take the primitive part, run `kronDecide`, and use
+  `kronDecide_irreducible` or `kronDecide_reducible` accordingly. A
+  nonunit content makes the input reducible and supplies its own split.
+  `kronDecide` is total because `ZPoly.factorize` is total, `unKron?`
+  and exact division are total, and the sweep is finite.
+
+The executable path tries `irredCert?` at the default configuration
+first, so it is fast on the inputs where the `image` route fires and
+merely finite elsewhere. This is the multivariate counterpart of
 `hex-berlekamp-zassenhaus-mathlib`'s `Decidable (Irreducible f)` for
 `Polynomial ℤ`.
 
@@ -1443,12 +1718,13 @@ semantic operation: `checkDecomp`, `checkIrred`, `factor?`,
 
 2. **Irreducibility certificates without search.** `IrredCert`,
    `checkIrred`, `obligations`, `checkIrred_sound` for `degreeOne`,
-   `image`, and `embed`, `Complete`, `checkComplete`, and
-   `IsFactorizationOf`. The `image` soundness proof, with its Gauss
-   step, is the substantial piece.
+   `image`, and `embed`, `Split` with `checkSplit`, `Complete`,
+   `checkComplete`, `NoKronecker`, and `IsFactorizationOf`. The `image`
+   soundness proof, with its Gauss step, is the substantial piece.
 
-3. **The point and leading-coefficient layer.** `admissible?`,
-   `PointReject`, the shell enumeration, `distribute?`, the rescaling,
+3. **The point and leading-coefficient layer.** `probe`, `Probe`,
+   `PointReject`, the shell enumeration, `distribute?` with its
+   non-divisor test and `need_j` allocation, the rescaling,
    and the route-level tests that check V1 to V6 by calling
    `MvHensel.valid` on the constructed `Input`. Written before the
    driver, because they are what the driver's failures are diagnosed
@@ -1456,12 +1732,14 @@ semantic operation: `checkDecomp`, `checkIrred`, `factor?`,
 
 4. **The EEZ driver.** `Config`, `Failure`, `Partial`, the squarefree
    and content recursion, prime selection, the modulus schedule, the
-   lift call, recombination, and `factorWith` / `factor?`. This is the
-   first usable release: it returns checked decompositions and, through
-   milestone 2, certificates whenever the `image` route fires.
+   lift call, recombination, the normalization and merge pass, and
+   `factorWith` / `factor?`. This is the first usable release: it
+   returns checked decompositions and, through milestone 2,
+   certificates whenever the `image` route fires.
 
 5. **The complete route.** `kron`, `unKron?`, the `kronecker`
-   constructor and its soundness, `irredCert?`'s fallback, and
+   constructor and its soundness, `Verdict` and `kronDecide` with both
+   of its theorems, `irredCert?`'s fallback, and
    `completeWith` / `complete?`.
 
 6. **Conformance and benchmarks.** The three fixture kinds, the SymPy
@@ -1477,12 +1755,12 @@ semantic operation: `checkDecomp`, `checkIrred`, `factor?`,
 ```
 HexMvFactor/
   Decomp.lean     -- Factor, Decomp, checkDecomp, soundness, structural reductions
-  Irred.lean      -- IrredCert, checkIrred, obligations, soundness of each constructor
-  Point.lean      -- admissible?, PointReject, the shell enumeration
+  Irred.lean      -- IrredCert, checkIrred, obligations, Split, soundness of each constructor
+  Point.lean      -- probe, Probe, PointReject, the shell enumeration
   Leading.lean    -- lc factorization, distribute?, the rescaling to V3 and V4
   Input.lean      -- building MvHensel.Input, prime selection, the modulus schedule
-  Eez.lean        -- the per-squarefree driver, retries, recombination
-  Kronecker.lean  -- kron, unKron?, the complete route
+  Eez.lean        -- the per-squarefree driver, retries, recombination, normalization
+  Kronecker.lean  -- kron, unKron?, kronDecide, the complete route
   Factor.lean     -- Config, the top-level recursion, the public API
 HexMvFactor.lean
 HexMvFactorMathlib/
@@ -1524,7 +1802,7 @@ supplies the univariate integer gcd behind the squarefree-image test.
 `HexPolyZ` supplies `ZPoly` and its content and primitive part.
 `HexPolyFp`, `HexModArith`, and `HexModular` come in through the prime
 supply and the symmetric representatives, and `HexArith` through the
-integer gcd behind the distinct-prime-divisor test. `HexPoly` comes in
+integer gcd behind the non-divisor test. `HexPoly` comes in
 through `DensePoly`.
 
 `HexMvPoly`, `HexMvPolyMathlib`, `HexPoly`, `HexPolyZ`, `HexPolyFp`,
