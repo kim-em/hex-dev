@@ -392,7 +392,7 @@ theorem Result.seed_contains (config : Rule.Config) (values : Nat → ℝ)
             cases h : entry.term <;> simp [Term.source?, h] at sourceTerm
             case source index =>
               subst source
-              exact h
+              simpa using h
           have sourceLt : source < result.sourceCount := by simpa [termEq] using sourceWithin
           have sourceArrayWithin : source < sources.size := by simpa [sourceSize] using sourceLt
           let sourceFact := sources[source]'sourceArrayWithin

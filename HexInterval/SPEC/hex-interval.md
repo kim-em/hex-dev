@@ -88,9 +88,11 @@ caller-supplied authenticated flat
 chronology, and projects
 the result to lower, upper, conjunction, or closed-singleton equality theorems.
 Its depth cap rejects over-deep descent but does not bound construction or a
-full traversal of an already-built branching term. Lean-expression parsing,
-local-hypothesis proof synthesis, tactic syntax, and Meta quotation of the
-supported records remain experimental. The first
+full traversal of an already-built branching term. The supported direct
+forward tactic client below parses its bounded Lean-expression and integer-cut
+subset, quotes the exact flat chronology, and independently synthesizes caller
+proofs. Generic search-selected recipes, broader local-context parsing, and
+split replay remain experimental. The first
 concrete supported registry is the Mathlib arithmetic package for one
 configured constant and natural exponent plus public negation, addition,
 subtraction, multiplication, power, absolute-value, min/max, reciprocal,
@@ -5274,6 +5276,13 @@ their declared cost inside a scheduler bound.
   and closed-singleton equality closure about the evaluated target term.
   Search-to-recipe integration, Lean syntax, and Meta quotation remain outside
   this module.
+- `HexIntervalMathlib/Tactic.lean`: supported Meta quotation for exact
+  program/input/chronology data, recursive forward-arithmetic expression and
+  integer-cut parsing, reciprocal/division and automatic outward-
+  regularization rows, independently checked caller-proof emission, and the
+  current transactional bare `interval`, `interval?`, and `interval_bound`
+  subset. Search-selected recipes, arbitrary functions, subdivision, and the
+  expanded configuration syntax remain experimental or unimplemented.
 - `HexInterval/Program.lean`: supported stable operation/domain/node
   identifiers, decoded typed SSA programs, fail-closed validation, and
   structural depths.
@@ -5358,7 +5367,12 @@ their declared cost inside a scheduler bound.
   recursive shared-DAG reification, exact source binding, malformed-entry,
   root/operation-table, stable-key, and resource rejection, derived semantic
   model, flat chronological replay, and ordinary inequality, conjunction, and
-  equality theorem/axiom canaries without a caller-supplied `Program.Models`.
+  equality theorem/axiom canaries from source containment without a caller-
+  supplied `Program.Models` or per-node initial-fact premise.
+- `conformance/HexIntervalMathlib/TacticConformance.lean`: supported Meta
+  parsing, quotation, emission, strict and closed cuts, conjunction, equality,
+  resource refusal, transactional failure, diagnostics, and guarded ordinary-
+  theorem canaries.
 - `bench/HexInterval/Bench.lean`: Mathlib-free interval and scheduler
   benchmarks.
 

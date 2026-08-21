@@ -58,15 +58,37 @@ source, operation, node, and depth caps separately from registry and replay
 caps. Before seeding facts it rechecks the transparent result's one-entry-per-
 node correspondence, structural sharing, stable operation key, ordered child
 edges, and source-index range. It then binds every caller-selected source
-interval exactly once, leaves computed nodes at domain top, and requires
+interval exactly once, proves computed domain-top seeds automatically, and requires
 constants and every improvement to enter through package-owned chronology.
 Successful replay can be eliminated to a target membership theorem, either
 endpoint inequality, their conjunction, or equality for a closed singleton.
 These are ordinary theorem combinators over a flat caller-supplied event
 chronology: the module does not turn a generic search tree into proof recipes,
 parse Lean expressions or hypotheses, or contain tactic syntax. The caps run
-before array scans; construction and structural equality of caller `Term`
-values remain an explicit programmatic-caller, non-preemptible envelope.
+before array scans. A successful depth check may still traverse the complete
+already-constructed branching `Term`; construction and structural equality of
+caller terms remain an explicit non-preemptible envelope.
+
+`HexIntervalMathlib.Tactic` is the first supported Meta client. It recursively
+parses real local variables and the registered forward arithmetic operations,
+selects strongest integer lower and upper hypotheses, quotes the exact
+supported `Program`, `Proof.Input`, and chronology, reruns `Frontend.replay`,
+and independently reconstructs a caller proof through package-owned image
+theorems and `Proof.emitChecked`. The bare `interval` tactic currently closes
+strict or non-strict lower and upper goals, closed-singleton equality, and
+conjunctions. `interval?` reports the fixed forward configuration before
+running the same transaction. `interval_bound e` leaves the goal unchanged
+and reports the proved cut and recipe size. Programmatic
+`Tactic.deriveBound` exposes the exact authenticated forward bundle.
+
+This first vertical deliberately accepts only integer source and target cuts,
+zero, the configured natural exponent, and forward negation, addition,
+subtraction, multiplication, power, absolute value, minimum, maximum,
+reciprocal, and division. It appends configured outward regularization after
+each computed arithmetic row, and fails transactionally on precision-resource
+refusal. It has no subdivision, contractors, arbitrary-function discovery, named-
+hypothesis selection, or search-selected recipe emitter. All parse, resource,
+quotation, replay, and emission failures leave the tactic state unchanged.
 
 The proof contract treats runtime states, callback replies, payload bytes,
 search decisions, contradiction flags, and diagnostic traces as untrusted
@@ -169,8 +191,9 @@ performs the final check when the caller installs the expression.
 Runtime search state, callbacks, payload bytes, and traces are untrusted and
 cannot enter `Proof.Evidence`. The built-in arithmetic package registry and
 its supported branch/session `Cause`-to-`Proof.Event` quotation ship below.
-Arbitrary-function package discovery, goal reification, encoding and evidence
-folds, search-to-recipe orchestration, and tactic syntax remain experimental.
+Arbitrary-function package discovery, generic search-selected recipes, and
+default registries remain experimental. The supported tactic below is a
+deliberately narrow direct forward client, not the generic search bridge.
 Further arithmetic images and useful bounded nonsingleton division require their own
 operation-specific semantic theorems before promotion. An image operation must
 at least prove successful-result cut semantics and sound real-image enclosure;
@@ -298,5 +321,11 @@ and generic proof-frontend closure.
 DAG recursively, pins exact source and configured-constant node binding,
 rejects malformed result entries, duplicate stable keys, and one-over
 source/operation/node/depth limits, replays a flat supported chronology, and
-closes lower inequality, two-sided conjunction, and equality theorems with
-guarded ordinary-theorem axiom reports.
+closes fully discharged lower inequality, two-sided conjunction, and equality
+theorems from source containment alone, with guarded ordinary-theorem axiom
+reports.
+`HexIntervalMathlib.TacticConformance` exercises supported Meta quotation and
+caller-proof emission over closed, strict, negative, shared-expression, power,
+absolute-value, minimum, and maximum examples. It pins conjunction and both
+equality orientations, diagnostic non-mutation, unsupported and missing-bound
+rejection, zero-node refusal, and the guarded ordinary-kernel axiom surface.

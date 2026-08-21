@@ -71,7 +71,7 @@ def model? := Frontend.modelWithin config sourceValues result
       found.sourceCount == result.sourceCount
   | .error _ => false
 
-theorem resultChecked : result.check := by decide
+theorem resultChecked : result.check := by rfl
 
 theorem resultOperations : result.program.operations =
     (Rule.meanings config.rule).map (Program.Meaning.operation) := by

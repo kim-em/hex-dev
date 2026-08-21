@@ -747,6 +747,25 @@ and deterministic work decide the production default.
 
 ## Tactic interface
 
+The current supported implementation is a deliberately smaller forward
+vertical. `HexIntervalMathlib.Tactic` provides bare `interval`, `interval?`,
+`interval_bound e`, and programmatic `Tactic.deriveBound`. It recognizes real
+local variables, integer lower/upper hypotheses, zero, and the built-in exact
+negation, addition, subtraction, multiplication, natural power, absolute
+value, minimum, maximum, reciprocal, and division rules. Every computed
+arithmetic row is followed by the configured outward-regularization rule, so
+precision resources and the regularization proof are load-bearing. It quotes
+and replays the exact supported chronology, then independently emits the caller
+proof through package theorems. It does not yet run the supported `Search`
+controller, subdivide,
+invoke contractors, select named hypotheses, accept configuration syntax, or
+emit a recipe chosen by arbitrary-function search. `interval?` therefore
+reports the fixed forward caps, while `interval_bound` reports one global
+forward enclosure and leaves the goal unchanged.
+
+The following is the target interface once the search-to-proof recipe bridge
+and remaining package integrations are supported:
+
 The planned syntax is:
 
 ```lean
@@ -3125,8 +3144,10 @@ the fixed soundness and trust contracts.
   certificate, wrong-source and false-endpoint rejection, guarded axiom
   surface, and generic proof-frontend closure.
 - `HexIntervalMathlib/Contractor.lean`: backwards propagation theorems.
-- `HexIntervalMathlib/Tactic.lean`: `interval`, `interval?`, and
-  `interval_bound`.
+- `HexIntervalMathlib/Tactic.lean`: supported recursive Lean-expression and
+  local-cut parsing, exact supported-data quotation, independently checked
+  forward proof emission, and the current bare `interval`, `interval?`, and
+  `interval_bound` subset; configurable search integration remains target work.
 - `HexIntervalMathlib/Examples.lean`: small user-facing examples.
 - `conformance/HexInterval/Conformance.lean`: Mathlib-free computational
   checks for `hex-interval` only.
