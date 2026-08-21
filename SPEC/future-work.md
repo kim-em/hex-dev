@@ -67,38 +67,28 @@ products. Keep the current `Int` API as a specialization. The determinant
 proof reuses the public Desnanot-Jacobi and Plücker API already in
 hex-determinant-mathlib; that identity is not a new prerequisite library.
 
-**Characteristic polynomial (`hex-char-poly`, `hex-char-poly-mathlib`).** The
-matrix family holds dense operations in hex-matrix, rank and nullspace in
-hex-row-reduce, and the determinant and adjugate in hex-determinant. A
-characteristic polynomial belongs alongside them. The algorithms divide along
-the line this project cares about, namely whether they divide at all:
+**Characteristic polynomial.** This one has graduated from this file and
+is specified in [hex-char-poly](Libraries/hex-char-poly.md): the
+Samuelson-Berkowitz algorithm, division-free over any commutative ring at
+`O(n⁴)`, depending only on hex-matrix and hex-poly, with a companion that
+identifies the output with Mathlib's `Matrix.charpoly` and derives
+Cayley-Hamilton from it. Hessenberg reduction, Danilevsky's method,
+generic Bareiss, and multi-modular recombination are recorded there as
+later alternative implementations behind the same public name, each with
+the measurement that would justify it, rather than as dependencies of
+version one.
 
-- **Berkowitz (Samuelson-Berkowitz)** is division-free, works over any
-  commutative ring with no invertibility side conditions, and costs
-  `O(n⁴)`. For a library whose base ring is `Int` this is the natural
-  default and the easiest to state correctly.
-- **Hessenberg reduction** followed by the recurrence on leading
-  principal minors, and **Danilevsky's method** (reduction to Frobenius
-  companion form by similarity), are faster and divide by pivot entries.
-  Over `ℤ` each wants a fraction-free reformulation in the style of
-  hex-bareiss, or a detour through `ℚ` and the coefficient growth that
-  brings.
-- **Multi-modular**, computing `χ_A` modulo several primes and
-  recombining, using [hex-modular](Libraries/hex-modular.md) with a
-  coefficient bound from the matrix norm. The determinant in
-  [hex-modular-matrix](Libraries/hex-modular-matrix.md) is the same
-  shape one degree down, and its handling of the bound is the model to
-  follow.
-
-The first computational library depends only on hex-matrix and hex-poly and
-uses Berkowitz as its public default. Its companion identifies the result with
-Mathlib's characteristic polynomial and may use hex-determinant-mathlib in the
-proof. Generic Bareiss is an optional later implementation, not a dependency of
-the first version.
+One correction to what this file said before that SPEC was written,
+recorded because it is easy to make again. The characteristic polynomial
+was described here as belonging alongside the determinant and the
+adjugate in hex-determinant. Berkowitz computes no determinant, so
+hex-determinant is not a computational dependency at all, and the
+identification of the output with `det (x·I − A)` is a theorem of the
+companion.
 
 Isolating the roots of `χ_A` with hex-real-roots and hex-roots would give
-certified eigenvalue enclosures; hex-number-field can name the resulting exact
-eigenvalues.
+certified eigenvalue enclosures. hex-number-field can name the resulting
+exact eigenvalues.
 
 **Minimal polynomial (`hex-min-poly`, `hex-min-poly-mathlib`).** A separate
 computation from the characteristic polynomial. The Krylov sequence
@@ -114,10 +104,10 @@ are independent through degree `deg m − 1` and annihilated at degree
 it too, and give more.
 
 The Krylov implementation depends on hex-matrix, hex-row-reduce, and the
-polynomial Euclidean/gcd/lcm API. Characteristic polynomial is a recommended
-earlier SPEC because Cayley-Hamilton gives a useful bound and cross-check, but
-it is not an algorithmic prerequisite: basis-wide Krylov witnesses can certify
-minimality directly.
+polynomial Euclidean/gcd/lcm API. [hex-char-poly](Libraries/hex-char-poly.md)
+is a useful earlier read because Cayley-Hamilton gives a bound and a
+cross-check, but it is not an algorithmic prerequisite: basis-wide Krylov
+witnesses can certify minimality directly.
 
 **Polynomial Smith form (`hex-poly-smith`, `hex-poly-smith-mathlib`).**
 Matrices over `F[x]` need no new matrix representation: they are
@@ -145,7 +135,8 @@ their product is the characteristic polynomial, all certified from one
 computation.
 
 The application library depends on hex-poly-smith. Its correspondence layer
-also depends on hex-char-poly and hex-min-poly so those equalities compare
+also depends on [hex-char-poly](Libraries/hex-char-poly.md) and hex-min-poly
+so those equalities compare
 against the independently specified computations rather than introducing
 second definitions. Factorization of `χ_A` does not determine this data:
 matrices sharing a characteristic polynomial can have different invariant
