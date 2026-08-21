@@ -233,15 +233,9 @@ def limits : Proof.Limits :=
   { maxPackages := 1, maxSchemas := 4, maxBodyCells := 1,
     maxDependencies := 1, maxChronology := 4 }
 
-def registry : Proof.Registry semantics :=
-  { registrations := #[factRegistration, equalityRegistration, instanceRegistration,
-      refuteRegistration]
-    facts := #[factSchema]
-    equalities := #[equalitySchema]
-    instances := #[instanceSchema]
-    refuters := #[refuteSchema] }
+def builtRegistry := Proof.Registry.buildWithin limits program #[package]
 
-#guard match Proof.Registry.buildWithin limits program #[package] with
+#guard match builtRegistry with
   | .ok built => built.registrations.size == 4 && built.facts.size == 1 &&
       built.equalities.size == 1 && built.instances.size == 1 && built.refuters.size == 1
   | .error _ => false
@@ -254,12 +248,65 @@ def registry : Proof.Registry semantics :=
   | .error .schemaLimit => true
   | _ => false
 
+def orphanRule : RuleKey := { name := "proof-orphan", schema := 3 }
+def orphanSchema : Proof.FactSchema semantics := { factSchema with
+  key := { role := .fact, rule := orphanRule, bodySchema := 9 } }
+def orphanPackage : Proof.Package semantics := { package with facts := #[orphanSchema] }
+def duplicatePackage : Proof.Package semantics := { package with facts := #[factSchema, factSchema] }
+def duplicateRegistrationPackage : Proof.Package semantics := { package with registrations :=
+  #[factRegistration, equalityRegistration, instanceRegistration, refuteRegistration,
+    factRegistration] }
+def globalRule : RuleKey := { name := "proof-global", schema := 3 }
+def globalRegistration : Registration :=
+  { key := globalRule
+    head := sourceKey
+    kind := .instantiate
+    watches := []
+    writes := []
+    binding := .global
+    watchesProgram := true
+    matchWatch := .network }
+def globalPackage : Proof.Package semantics := { registrations := #[globalRegistration] }
+def globalRegistry := Proof.Registry.buildWithin limits program #[globalPackage]
+def badGlobalRegistration : Registration := { globalRegistration with watches := [.result] }
+def badGlobalPackage : Proof.Package semantics := { registrations := #[badGlobalRegistration] }
+
+#guard match Proof.Registry.buildWithin limits program #[orphanPackage] with
+  | .error (.foreignSchema 0 key) => key == orphanSchema.key
+  | _ => false
+
+#guard match Proof.Registry.buildWithin { limits with maxSchemas := 5 } program
+    #[duplicatePackage] with
+  | .error (.duplicateSchema key) => key == factKey
+  | _ => false
+
+#guard match Proof.Registry.buildWithin limits program #[duplicateRegistrationPackage] with
+  | .error (.duplicateRegistration key) => key == factRule
+  | _ => false
+
+#guard match Proof.Registry.buildWithin limits program #[badGlobalPackage] with
+  | .error (.invalidRegistration _) => true
+  | _ => false
+
 def input : Proof.Input TestFact :=
   { scope, program, facts := #[.yes, .all], target := { node := node1, fact := .yes } }
 
 def instanceAction := action 0 0 2 instanceRule .instantiate node0 [] []
 def factAction := action 1 1 0 factRule .forward node0 [seen node0 0] [node0]
 def equalityAction := action 2 1 1 equalityRule .rewrite node0 [seen node0 1] []
+
+def globalAction : Action :=
+  { action 0 0 0 globalRule .instantiate node0 [] [] with
+    structuralInputs := [{ key := .node node0, generation := 0 }]
+    matcherEpoch := some 0 }
+
+#guard match globalRegistry with
+  | .ok registry => registry.acceptsAction program globalAction []
+  | .error _ => false
+#guard match globalRegistry with
+  | .ok registry => !registry.acceptsAction program
+      { globalAction with inputs := [seen node0 0] } [node0]
+  | .error _ => false
 
 def instanceStep : Proof.InstanceStep :=
   { scope, beforeVersion := 0, afterVersion := 1, action := instanceAction,
@@ -283,7 +330,10 @@ def events : List (Proof.Event TestFact) :=
   [.instance instanceStep, .fact factStep, .equality equalityStep, .transport transportStep]
 
 def run (quoted := events) :=
-  Proof.replay limits registry factDomain laws input quoted 1 program (seen node1 1)
+  match builtRegistry with
+  | .ok registry =>
+      Proof.replay limits registry factDomain laws input quoted 1 program (seen node1 1)
+  | .error _ => .error .invalidInput
 
 def succeeds : Bool := match run with | .ok _ => true | .error _ => false
 
@@ -317,25 +367,31 @@ def succeeds : Bool := match run with | .ok _ => true | .error _ => false
   | .ok _ => true | .error _ => false)
 #guard !(match run (events.set 3 (.transport { transportStep with source := seen node1 0 })) with
   | .ok _ => true | .error _ => false)
-#guard !(match Proof.replay limits registry factDomain laws input events 0 program (seen node1 1) with
-  | .ok _ => true | .error _ => false)
+#guard !(match builtRegistry with
+  | .ok registry =>
+      match Proof.replay limits registry factDomain laws input events 0 program (seen node1 1) with
+      | .ok _ => true | .error _ => false
+  | .error _ => true)
 #guard !(match run (events ++ [.fact factStep]) with
   | .ok _ => true | .error _ => false)
 
 /-- A rejected transition cannot alter the state subsequently used by a valid
 transition. -/
 def restores : Bool :=
-  match Proof.replayInstance limits registry factDomain input
-      (Proof.State.start semantics input rfl) instanceStep with
+  match builtRegistry with
   | .error _ => false
-  | .ok afterInstance =>
-      let bad := { factStep with body := [12] }
-      match Proof.replayFact limits registry factDomain input afterInstance bad with
-      | .ok _ => false
-      | .error _ =>
-          match Proof.replayFact limits registry factDomain input afterInstance factStep with
-          | .ok _ => true
-          | .error _ => false
+  | .ok registry =>
+      match Proof.replayInstance limits registry factDomain input
+          (Proof.State.start semantics input rfl) instanceStep with
+      | .error _ => false
+      | .ok afterInstance =>
+          let bad := { factStep with body := [12] }
+          match Proof.replayFact limits registry factDomain input afterInstance bad with
+          | .ok _ => false
+          | .error _ =>
+              match Proof.replayFact limits registry factDomain input afterInstance factStep with
+              | .ok _ => true
+              | .error _ => false
 
 #guard restores
 
@@ -364,10 +420,13 @@ def refuteStep : Proof.RefuteStep :=
   { scope, programVersion := 0, seen := seen node0 0, schema := refuteKey, body := [44] }
 
 def refutes : Bool :=
-  match Proof.replayRefute limits registry impossibleInput
-      (Proof.State.start semantics impossibleInput rfl) refuteStep impossibleInput.target with
-  | .ok _ => true
+  match builtRegistry with
   | .error _ => false
+  | .ok registry =>
+      match Proof.replayRefute limits registry impossibleInput
+          (Proof.State.start semantics impossibleInput rfl) refuteStep impossibleInput.target with
+      | .ok _ => true
+      | .error _ => false
 
 #guard refutes
 
@@ -388,23 +447,93 @@ elab "proof_emit_restore" : tactic => do
     { emit := fun _ => do
         goal.assign (mkConst ``True.intro)
         pure (mkNatLit 0) }
-  try
+  let accepted ← try
     let _ ← Proof.emitChecked emitter () expected
-    throwError "wrongly typed proof emitter was accepted"
-  catch _ =>
-    if ← goal.isAssigned then
-      throwError "failed proof emitter leaked its Meta assignment"
-    goal.assign (mkConst ``True.intro)
-    replaceMainGoal []
+    pure true
+  catch _ => pure false
+  if accepted then throwError "wrongly typed proof emitter was accepted"
+  if ← goal.isAssigned then
+    throwError "failed proof emitter leaked its Meta assignment"
+  goal.assign (mkConst ``True.intro)
+  replaceMainGoal []
 
 example : True := by proof_emit_restore
+
+/-- Structural checking rejects an application whose explicit argument has the
+wrong type, even though the raw expression can be constructed. -/
+elab "proof_emit_reject_ill_typed" : tactic => do
+  let goal ← getMainGoal
+  let expected ← goal.getType
+  let illTyped := mkApp2 (mkConst ``id [Level.zero]) (mkConst ``Bool) (mkNatLit 0)
+  let emitter : Proof.Emitter Unit := { emit := fun _ => pure illTyped }
+  let accepted ← try
+    let _ ← Proof.emitChecked emitter () expected
+    pure true
+  catch _ => pure false
+  if accepted then throwError "ill-typed proof emitter expression was accepted"
+  goal.assign (mkConst ``True.intro)
+  replaceMainGoal []
+
+example : True := by proof_emit_reject_ill_typed
+
+/-- Synthetic placeholder expressions are rejected even at the expected type. -/
+elab "proof_emit_reject_placeholder" : tactic => do
+  let goal ← getMainGoal
+  let expected ← goal.getType
+  let emitter : Proof.Emitter Unit := { emit := fun _ => mkSorry expected true }
+  let accepted ← try
+    let _ ← Proof.emitChecked emitter () expected
+    pure true
+  catch _ => pure false
+  if accepted then throwError "placeholder proof emitter expression was accepted"
+  goal.assign (mkConst ``True.intro)
+  replaceMainGoal []
+
+example : True := by proof_emit_reject_placeholder
+
+/-- Open candidate and expected metavariables are both rejected without being
+assigned by definitional equality. -/
+elab "proof_emit_reject_mvars" : tactic => do
+  let goal ← getMainGoal
+  let expected ← goal.getType
+  let openCandidate ← mkFreshExprMVar expected
+  let candidateId := openCandidate.mvarId!
+  let candidateEmitter : Proof.Emitter Unit := { emit := fun _ => pure openCandidate }
+  let candidateAccepted ← try
+    let _ ← Proof.emitChecked candidateEmitter () expected
+    pure true
+  catch _ => pure false
+  if candidateAccepted then throwError "open proof emitter metavariable was accepted"
+  if ← candidateId.isAssigned then
+    throwError "rejected proof emitter metavariable was assigned"
+  let openExpected ← mkFreshExprMVar (mkSort Level.zero)
+  let expectedId := openExpected.mvarId!
+  let expectedEmitter : Proof.Emitter Unit :=
+    { emit := fun _ => pure (mkConst ``True.intro) }
+  let expectedAccepted ← try
+    let _ ← Proof.emitChecked expectedEmitter () openExpected
+    pure true
+  catch _ => pure false
+  if expectedAccepted then throwError "open expected proposition was accepted"
+  if ← expectedId.isAssigned then
+    throwError "rejected expected metavariable was assigned"
+  goal.assign (mkConst ``True.intro)
+  replaceMainGoal []
+
+example : True := by proof_emit_reject_mvars
 
 elab "proof_emit_accept" : tactic => do
   let goal ← getMainGoal
   let expected ← goal.getType
+  let scratch ← mkFreshExprMVar (mkConst ``Nat)
+  let scratchId := scratch.mvarId!
   let emitter : Proof.Emitter Unit :=
-    { emit := fun _ => pure (mkConst ``replayCanary) }
+    { emit := fun _ => do
+        scratchId.assign (mkNatLit 0)
+        pure (mkConst ``replayCanary) }
   let evidence ← Proof.emitChecked emitter () expected
+  if ← scratchId.isAssigned then
+    throwError "successful proof emitter leaked a Meta assignment"
   goal.assign evidence
   replaceMainGoal []
 

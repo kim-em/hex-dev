@@ -5193,8 +5193,14 @@ their declared cost inside a scheduler bound.
 - `HexIntervalMathlib/Proof.lean`: supported package-owned fact, equality,
   instance, and refutation theorem schemas; exact registry/action validation;
   chronological typed proof state and caller-target closure; and the
-  transactional kernel-checked `Expr` emission boundary. Concrete packages,
-  goal reification, tactic syntax, and default registries remain experimental.
+  transactional placeholder/metavariable rejection, `Meta.check`, and exact
+  type-definitional-equality expression boundary. The kernel performs the final
+  check when the caller installs the expression in a declaration. Under
+  ordinary imports, only `Registry.buildWithin` can construct the theorem
+  registry; `import all HexIntervalMathlib.Proof` is a trusted-internals escape
+  hatch rejected outside the exact empty repository allowlist. Concrete
+  packages, goal reification, tactic syntax, and default registries remain
+  experimental.
 - `HexIntervalMathlib/Split.lean`: exact transactional child semantics,
   containment, coverage, disjointness, and left ownership of the cut point.
 - `HexIntervalMathlib/Inverse.lean`: exact computed reciprocal-cut semantics

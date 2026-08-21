@@ -101,7 +101,10 @@ not import the experimental propagation fact domain.
 The public companion grows only with the supported `Hex.Interval` API. Its
 `Program` module gives exact meanings to the supported decoded SSA program,
 and its `Proof` module owns function-agnostic package schemas, chronological
-typed replay, target closure, and the kernel-checked `Expr` emission boundary.
+typed replay, target closure, and an expression-emission boundary that rejects
+placeholders and unresolved metavariables, runs `Meta.check`, and checks exact
+type definitional equality transactionally. The kernel performs the final
+check when the caller installs the expression in a declaration.
 Runtime search state, callbacks, payload bytes, and traces are untrusted and
 cannot enter `Proof.Evidence`. The concrete package registry, goal reifier,
 search-to-proof quotation, and tactic syntax remain experimental and are not
@@ -125,6 +128,12 @@ caller facts, schema decoding, or package theorem callbacks. Authenticated
 search output must first pass the Mathlib-free `Search` envelope; a direct
 trusted caller of `Proof` is responsible for bounding its program and package
 assembly before replay.
+
+Under ordinary imports, the theorem-registry constructor is private and
+`Registry.buildWithin` is the only supported construction path. Lean's
+deliberate `import all HexIntervalMathlib.Proof` exposes trusted internals and
+lies outside the decoded-runtime threat model; the repository DAG checker
+rejects that import outside an exact reviewed allowlist, currently empty.
 
 `HexIntervalMathlib.Experiment.PntLogRational` is a fixed-source acceptance
 provider rather than public interval arithmetic. It proves the original

@@ -22,8 +22,11 @@ owner, body, action, scope, versions, dependencies, and chronology all match.
 
 Schema decoders and theorem builders are package callbacks, but their returned
 `Evidence` contains an ordinary Lean proof of the exact indexed proposition.
-The final Meta boundary accepts an emitted expression only after kernel-facing
-type inference and definitional equality, restoring Meta state on failure.
+The final Meta boundary instantiates and rejects unresolved metavariables and
+placeholders, runs the elaborator's structural `Meta.check`, and checks the
+inferred type against the exact expected proposition by definitional equality.
+It restores Meta state on success and failure. The kernel performs the final
+check only when the caller installs the returned expression in a declaration.
 Concrete operations, packages, goal reification, tactic syntax, registries of
 declaration names, and default search policy are intentionally absent.
 
@@ -306,7 +309,11 @@ inductive BuildError where
   | emptyRefuterOwner (package : Nat) (key : Key)
   deriving DecidableEq, Repr
 
+/-! Under ordinary imports, only `Registry.buildWithin` can construct this
+trusted theorem registry. `import all HexIntervalMathlib.Proof` is a deliberate
+trusted-internals escape hatch guarded by the repository DAG checker. -/
 structure Registry (semantics : Semantics Fact) where
+  private mk ::
   registrations : Array Registration
   facts : Array (FactSchema semantics)
   equalities : Array (EqualitySchema semantics)
@@ -315,11 +322,18 @@ structure Registry (semantics : Semantics Fact) where
 
 namespace Registry
 
+private def make (registrations : Array Registration)
+    (facts : Array (FactSchema semantics))
+    (equalities : Array (EqualitySchema semantics))
+    (instances : Array (InstanceSchema semantics))
+    (refuters : Array (RefuteSchema semantics)) : Registry semantics :=
+  .mk registrations facts equalities instances refuters
+
 def owns (package : Package semantics) (key : Key) : Bool :=
   package.registrations.any fun registration => registration.key == key.rule
 
 /-- Assemble a package-local, globally unambiguous theorem registry. -/
-def buildWithin (limits : Limits) (program : Program)
+opaque buildWithin (limits : Limits) (program : Program)
     (packages : Array (Package semantics)) : Except BuildError (Registry semantics) := do
   if !program.check then throw .invalidProgram
   if limits.maxPackages < packages.size then throw .packageLimit
@@ -369,7 +383,7 @@ def buildWithin (limits : Limits) (program : Program)
       if seen.contains schema.key then throw (.duplicateSchema schema.key)
       seen := schema.key :: seen
       refuters := refuters.push schema
-  pure { registrations, facts, equalities, instances, refuters }
+  pure (make registrations facts equalities instances refuters)
 
 def fact? (registry : Registry semantics) (key : Key) : Option (FactSchema semantics) :=
   registry.facts.toList.find? fun schema => schema.key == key
@@ -409,7 +423,9 @@ def acceptsAction (registry : Registry semantics) (program : Program)
             allDistinct inputs && allDistinct action.writes &&
             inputs.all (fun node => (program.node? node).isSome) &&
             action.writes.all (fun node => (program.node? node).isSome)
-      | .global => inputs.isEmpty && action.writes.isEmpty
+      | .global =>
+          registration.watches.isEmpty && registration.writes.isEmpty &&
+            inputs.isEmpty && action.writes.isEmpty
   | _, _ => false
 
 end Registry
@@ -566,8 +582,9 @@ def push (equalities : Equalities semantics program base)
 
 end Equalities
 
-/-- Complete proof state at one exact program version. Constructor privacy
-prevents transplanting facts or equalities to another program. -/
+/-- Complete proof state at one exact program version. Its dependent type
+indices prevent facts or equalities from being transplanted to a different
+program without also supplying the corresponding typed semantic evidence. -/
 structure State (semantics : Semantics Fact) (input : Input Fact) where
   version : Nat
   program : Program
@@ -1015,23 +1032,40 @@ def replayRefute (limits : Limits) (registry : Registry semantics)
         exact False.elim (impossible.proof valuation model
           (established.sound.proof valuation model baseHolds)) }
 
-/-! ## Kernel-facing expression boundary -/
+/-! ## Elaborator-facing expression boundary -/
 
 /-- Package-owned expression producer. It has no proof authority beyond the
-kernel type of the expression it returns. -/
+type of an expression accepted by the elaborator checks below and eventually
+installed in a kernel-checked declaration. -/
 structure Emitter (Quote : Type) where
   emit : Quote → Lean.MetaM Lean.Expr
 
-/-- Run one package emitter transactionally and accept only an expression
-whose inferred type is definitionally equal to the exact expected proposition. -/
+/-- Run one package emitter transactionally. The returned expression contains
+no unresolved metavariables or placeholders, passes `Meta.check`, and has an
+inferred type definitionally equal to the exact closed expected proposition.
+All emitter and unification state is restored even on success. -/
 def emitChecked (emitter : Emitter Quote) (quote : Quote)
     (expected : Lean.Expr) : Lean.MetaM Lean.Expr := do
   let saved ← Lean.Meta.saveState
   try
-    let candidate ← emitter.emit quote
-    let actual ← Lean.Meta.inferType candidate
+    let expected ← Lean.instantiateMVars expected
+    if expected.hasMVar then
+      throwError "interval proof emitter expected type contains unresolved metavariables"
+    let candidate ← Lean.instantiateMVars (← emitter.emit quote)
+    if candidate.hasSorry then
+      throwError "interval proof emitter returned a placeholder expression"
+    if candidate.hasMVar then
+      throwError "interval proof emitter returned unresolved metavariables"
+    Lean.Meta.check candidate
+    let actual ← Lean.instantiateMVars (← Lean.Meta.inferType candidate)
+    if actual.hasMVar then
+      throwError "interval proof emitter inferred an unresolved type"
     unless ← Lean.Meta.isDefEq actual expected do
       throwError "interval proof emitter returned type {actual}; expected {expected}"
+    let candidate ← Lean.instantiateMVars candidate
+    if candidate.hasMVar then
+      throwError "interval proof emitter unification left unresolved metavariables"
+    saved.restore
     pure candidate
   catch error =>
     saved.restore

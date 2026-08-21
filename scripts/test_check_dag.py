@@ -14,14 +14,19 @@ class SealedImportAllTest(unittest.TestCase):
     def test_ownerless_roots_are_checked(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
-            files = [
-                Path("conformance/HexInterval/Bypass.lean"),
-                Path("bench/HexInterval/Bypass.lean"),
+            cases = [
+                (Path("conformance/HexInterval/Bypass.lean"), "HexInterval.Search"),
+                (Path("bench/HexInterval/Bypass.lean"), "HexInterval.Search"),
+                (Path("conformance/HexIntervalMathlib/Bypass.lean"),
+                    "HexIntervalMathlib.Proof"),
+                (Path("bench/HexIntervalMathlib/Bypass.lean"),
+                    "HexIntervalMathlib.Proof"),
             ]
-            for path in files:
+            files = [path for path, _ in cases]
+            for path, module in cases:
                 full_path = root / path
                 full_path.parent.mkdir(parents=True, exist_ok=True)
-                full_path.write_text("import all HexInterval.Search\n", encoding="utf-8")
+                full_path.write_text(f"import all {module}\n", encoding="utf-8")
 
             self.assertEqual(
                 check_sealed_import_all(root, files),
@@ -30,6 +35,10 @@ class SealedImportAllTest(unittest.TestCase):
                     "HexInterval.Search` outside its exact trusted-internals allowlist",
                     "bench/HexInterval/Bypass.lean:1 uses `import all "
                     "HexInterval.Search` outside its exact trusted-internals allowlist",
+                    "conformance/HexIntervalMathlib/Bypass.lean:1 uses `import all "
+                    "HexIntervalMathlib.Proof` outside its exact trusted-internals allowlist",
+                    "bench/HexIntervalMathlib/Bypass.lean:1 uses `import all "
+                    "HexIntervalMathlib.Proof` outside its exact trusted-internals allowlist",
                 ],
             )
 
