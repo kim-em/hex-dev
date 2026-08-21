@@ -106,6 +106,7 @@ inductive StartError where
   | scopeLimit
   | unknownTarget
   | session (error : PolicySession.StartError)
+  | accounting (error : Hex.Interval.Search.Error)
   deriving DecidableEq, Repr
 
 /-- An append-only tree should only schedule valid pending nodes. -/
@@ -148,11 +149,15 @@ def start (config : Config Fact PolicyState) (scope : Hex.Interval.Policy.ScopeI
     | .error error => throw (.session error)
   let root : Job Fact PolicyState :=
     { scope, depth := 0, input, policyState, session }
-  pure
-    { nodes := #[.pending root]
-      frontier := .singleton { index := 0 }
-      branch := BranchStart.State.start session
-      accounting := { nextScope := scope.index + 1 } }
+  let frontier : Hex.Interval.Search.Frontier TreeId := .singleton { index := 0 }
+  match Hex.Interval.Search.Accounting.startWithin config.limits scope frontier with
+  | .error error => throw (.accounting error)
+  | .ok accounting =>
+      pure
+        { nodes := #[.pending root]
+          frontier
+          branch := BranchStart.State.start session
+          accounting }
 
 def childNode (config : Config Fact PolicyState) (side : Side)
     (scope : Hex.Interval.Policy.ScopeId) (depth : Nat) (input : CheckerInput Fact)
@@ -170,13 +175,19 @@ def childNode (config : Config Fact PolicyState) (side : Side)
           session }, true)
   | .error error => (.leaf source (.startError error), false)
 
-def retainLeaf (state : State Fact PolicyState) (id : TreeId)
+def retainLeaf (limits : Hex.Interval.Search.Limits)
+    (state : State Fact PolicyState) (id : TreeId)
     (source : Leaf Fact PolicyState) (ending : LeafEnd Fact PolicyState)
-    (rest : Hex.Interval.Search.Frontier TreeId) : State Fact PolicyState :=
-  { state with
-    nodes := state.nodes.set! id.index (.leaf source ending)
-    frontier := rest
-    accounting := { state.accounting with steps := state.accounting.steps + 1 } }
+    (rest : Hex.Interval.Search.Frontier TreeId) : Except Error (State Fact PolicyState) := do
+  match Hex.Interval.Search.Accounting.settleWithin
+      limits state.frontier state.accounting with
+  | .error _ => throw .malformedAccounting
+  | .ok accounting =>
+      pure
+        { state with
+          nodes := state.nodes.set! id.index (.leaf source ending)
+          frontier := rest
+          accounting }
 
 /-- Process one pending leaf.  Split rejection and tree-resource exhaustion
 are terminal leaf data; only a malformed internal frontier returns `Error`. -/
@@ -193,19 +204,19 @@ def step [DecidableEq Fact] (config : Config Fact PolicyState)
     job.input.target.fact config.controller config.limits.leafFuel
     job.session job.policyState
   let .split plan := run.stop |
-    return retainLeaf state id source (.result run) rest
+    return ← retainLeaf config.limits state id source (.result run) rest
   if state.accounting.splits >= config.limits.maxSplits then
-    return retainLeaf state id source (.blocked run .splitLimit) rest
+    return ← retainLeaf config.limits state id source (.blocked run .splitLimit) rest
   if state.accounting.leaves + 1 > config.limits.maxLeaves then
-    return retainLeaf state id source (.blocked run .leafLimit) rest
+    return ← retainLeaf config.limits state id source (.blocked run .leafLimit) rest
   if rest.pending.length + 2 > config.limits.maxFrontier then
-    return retainLeaf state id source (.blocked run .frontierLimit) rest
+    return ← retainLeaf config.limits state id source (.blocked run .frontierLimit) rest
   let branchLimits : BranchStart.Limits :=
     { maxDepth := config.limits.maxDepth, maxScopes := config.limits.maxScopes }
   match BranchStart.prepare branchLimits state.branch run.session plan
       job.input.target config.splitter with
   | .error error =>
-      pure (retainLeaf state id source (.blocked run (.splitRejected error)) rest)
+      retainLeaf config.limits state id source (.blocked run (.splitRejected error)) rest
   | .ok (branch, children) =>
       if children.leftScope.index != state.accounting.nextScope ||
           children.rightScope.index != state.accounting.nextScope + 1 then
@@ -219,17 +230,16 @@ def step [DecidableEq Fact] (config : Config Fact PolicyState)
       let fresh :=
         (if leftPending then [leftId] else []) ++
           (if rightPending then [rightId] else [])
-      pure
-        { nodes := (state.nodes.set! id.index
-              (.split source run children leftId rightId)).push leftNode |>.push rightNode
-          frontier := rest.schedule config.order fresh
-          branch
-          accounting :=
-            { steps := state.accounting.steps + 1
-              splits := state.accounting.splits + 1
-              leaves := state.accounting.leaves + 1
-              scopes := state.accounting.scopes + 2
-              nextScope := state.accounting.nextScope + 2 } }
+      match Hex.Interval.Search.Accounting.splitWithin
+          config.limits state.frontier state.accounting with
+      | .error _ => throw .malformedAccounting
+      | .ok accounting =>
+          pure
+            { nodes := (state.nodes.set! id.index
+                  (.split source run children leftId rightId)).push leftNode |>.push rightNode
+              frontier := rest.schedule config.order fresh
+              branch
+              accounting }
 
 /-- Run for at most the caller fuel and never beyond the retained global step
 budget.  A nonempty frontier in the result is an honest partial tree. -/

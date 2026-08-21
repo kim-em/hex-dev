@@ -203,9 +203,45 @@ private def startNetworkError (limits : State.Limits) : Option Search.Error := d
       | _ => false
   | _, _ => false
 
+private def settleAccounting : Nat -> Search.Accounting -> Option Search.Accounting
+  | 0, accounting => some accounting
+  | fuel + 1, accounting => do
+      let accounting <-
+        (Search.Accounting.settleWithin searchLimits (.singleton ()) accounting).toOption
+      settleAccounting fuel accounting
+
+private def rootAccounting? : Option Search.Accounting :=
+  (Search.Accounting.startWithin searchLimits { index := 5 }
+    (Search.Frontier.singleton ())).toOption
+
+-- `Accounting` has no public constructor or record-update surface. These
+-- canaries consume only its checked builders and pin their exact counter
+-- progression and fail-closed exhaustion behavior.
+#guard rootAccounting?.any fun accounting =>
+  accounting.steps == 0 && accounting.splits == 0 && accounting.leaves == 1 &&
+    accounting.scopes == 1 && accounting.nextScope == 6
+
+#guard match rootAccounting? with
+  | some accounting =>
+      (settleAccounting searchLimits.maxSteps accounting).any fun charged =>
+        charged.steps == searchLimits.maxSteps && charged.splits == 0 &&
+          charged.leaves == 1 && charged.scopes == 1 && charged.nextScope == 6
+  | none => false
+
+#guard match rootAccounting? >>= settleAccounting searchLimits.maxSteps with
+  | some accounting =>
+      searchError (.resource .steps) <|
+        Search.Accounting.settleWithin searchLimits (.singleton ()) accounting
+  | none => false
+
+#guard searchError .invalidSession <|
+  Search.Accounting.startWithin searchLimits { index := 5 }
+    ({ pending := [] } : Search.Frontier Unit)
+
 private def atStepLimit? : Option (Search.Session Nat Nat Nat Action) := do
   let session <- session?
-  pure { session with accounting := { session.accounting with steps := searchLimits.maxSteps } }
+  let accounting <- settleAccounting searchLimits.maxSteps session.accounting
+  pure { session with accounting }
 
 -- A resource stop cannot launder a malformed decision, while `invokeWithin`
 -- refuses before evaluating a callback once the authenticated step budget is
@@ -398,11 +434,13 @@ private def nested? (order : Search.Order) :
 -- Both stable orders retain left-to-right sibling order and differ only in
 -- where fresh work is placed relative to the old suffix.
 #guard nested? .depthFirst |>.any fun result =>
-  result.1 == { steps := 2, splits := 2, leaves := 3, scopes := 5, nextScope := 5 } &&
+  result.1.steps == 2 && result.1.splits == 2 && result.1.leaves == 3 &&
+    result.1.scopes == 5 && result.1.nextScope == 5 &&
     result.2.pending.map (fun leaf => leaf.scope.index) == [3, 4, 2]
 
 #guard nested? .breadthFirst |>.any fun result =>
-  result.1 == { steps := 2, splits := 2, leaves := 3, scopes := 5, nextScope := 5 } &&
+  result.1.steps == 2 && result.1.splits == 2 && result.1.leaves == 3 &&
+    result.1.scopes == 5 && result.1.nextScope == 5 &&
     result.2.pending.map (fun leaf => leaf.scope.index) == [2, 3, 4]
 
 -- Child restoration returns the exact immutable parent, including scope,

@@ -3117,14 +3117,17 @@ generic boundary. Its decoded `Search.Session` binds one exact checked
 `State.Branch`, registration snapshot, scope, serial, complete policy view,
 controller-owned offer-to-`Action` bindings, bounded diagnostic log, and
 global accounting. Before any semantic scan or package measurement, session
-authentication caps the base and current program, history and aligned branch
-arrays, registry, binding/application/equality arrays, retained actions, every
+authentication uses `Policy.maxOffers` to cap the retained offer array before
+mapping or traversing it. It separately caps the base and current program,
+history and aligned branch arrays, registry, binding/application/equality
+arrays, every
 operation/node/rule/binding port list, and every action input/write/structural
 input list against the corresponding `State.Limits`. Binding count uses
 `maxApplications`; `maxScopeNodes` independently caps each scoped read list and
-write list. The same preflight enforces operation/node/rule/arity/depth,
-matcher-batch, effort, generation, action, application, equality, and accepted-
-fact limits with the exact State resource class.
+write list. `State.maxActions` is cumulative controller work, not an offer-array
+cap. The same preflight enforces operation/node/rule/arity/depth, matcher-batch,
+effort, generation, application, equality, and accepted-fact limits with the
+exact State resource class.
 
 The current supported session retains generation stamps for compact
 `ApplicationId`s but not the concrete application table compiled by the
@@ -3155,7 +3158,11 @@ contradiction state.
 
 `Search.Frontier` and `Search.Accounting` supply stable depth-first and
 breadth-first ordering plus independent step, split, retained-leaf, frontier,
-depth, and scope limits. Child records retain an exact immutable parent branch
+depth, and scope limits. `Accounting` has a private constructor: decoded callers
+cannot reset its counters or `nextScope`, and supported code can create or
+advance it only through checked singleton-start, settle, and split builders.
+The experimental `BranchTree` consumes those builders rather than constructing
+or updating accounting records. Child records retain an exact immutable parent branch
 for restoration. `splitWithin` consumes the complete bounded pre-split
 frontier, rejects duplicate pending leaves, derives the parent and remaining
 frontier by popping the stable head internally, preflights every retained
@@ -5069,8 +5076,11 @@ candidates, and `b` the number of live branch states.
   `invokeWithin` call, that authentication and the package-owned policy
   measurements run once. Accepted callback batches fold already-preflighted
   exact successor updates without re-running `Branch.check` for every event.
-  Split admission traverses at most the bounded retained frontier and validates
-  its popped parent and both children once. Arbitrary callback execution and
+  Split admission preflights every branch in the bounded retained frontier,
+  then validates the popped parent and both children. With `f` pending leaves
+  and branch validation cost `B`, its current transparent-reference cost is
+  `O(f * B)`, plus bounded scope-uniqueness work; it is not one parent/child
+  validation independent of frontier size. Arbitrary callback execution and
   equality on caller-selected facts, causes, identifiers, and keys
   remain non-preemptible.
 - Fact comparison and contradiction checks use exact endpoint comparison. For

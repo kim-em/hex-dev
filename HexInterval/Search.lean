@@ -54,12 +54,12 @@ structure Limits where
 /-- Exact global accounting. `leaves` counts retained current leaves, including
 settled leaves; a binary split increments it by one. -/
 structure Accounting where
+  private mk ::
   steps : Nat := 0
   splits : Nat := 0
   leaves : Nat := 1
   scopes : Nat := 1
   nextScope : Nat := 1
-  deriving DecidableEq, Repr
 
 def Accounting.check (limits : Limits) (frontierCount : Nat)
     (accounting : Accounting) : Bool :=
@@ -145,6 +145,61 @@ inductive Error where
   | resource (resource : Resource)
   deriving DecidableEq, Repr
 
+/-- Check a decoded list against a cap without traversing beyond the first
+disallowed cell. -/
+def listWithin : Nat -> List α -> Bool
+  | _, [] => true
+  | 0, _ :: _ => false
+  | limit + 1, _ :: rest => listWithin limit rest
+
+namespace Accounting
+
+private def frontierCountWithin (limits : Limits) (frontier : Frontier α) :
+    Except Error Nat := do
+  if !listWithin limits.maxFrontier frontier.pending then throw (.resource .frontier)
+  pure frontier.pending.length
+
+/-- Create the only initial accounting value for one exact singleton
+frontier. The private constructor prevents decoded callers from choosing
+counters or `nextScope` directly. -/
+opaque startWithin (limits : Limits) (scope : Policy.ScopeId) (frontier : Frontier α) :
+    Except Error Accounting := do
+  let count <- frontierCountWithin limits frontier
+  if count != 1 then throw .invalidSession
+  if limits.maxLeaves < 1 then throw (.resource .leaves)
+  if limits.maxScopes < 1 then throw (.resource .scopes)
+  let accounting : Accounting := { nextScope := scope.index + 1 }
+  if !accounting.check limits count then throw .invalidSession
+  pure accounting
+
+/-- Charge one authenticated non-split step against a nonempty frontier. -/
+opaque settleWithin (limits : Limits) (frontier : Frontier α) (accounting : Accounting) :
+    Except Error Accounting := do
+  let count <- frontierCountWithin limits frontier
+  if count == 0 || !accounting.check limits count then throw .invalidSession
+  if accounting.steps >= limits.maxSteps then throw (.resource .steps)
+  pure { accounting with steps := accounting.steps + 1 }
+
+/-- Charge one binary split of the authenticated frontier head. Child meaning,
+depth, and branch checks remain the caller's responsibility. -/
+opaque splitWithin (limits : Limits) (frontier : Frontier α) (accounting : Accounting) :
+    Except Error Accounting := do
+  let count <- frontierCountWithin limits frontier
+  if count == 0 || !accounting.check limits count then throw .invalidSession
+  if accounting.steps >= limits.maxSteps then throw (.resource .steps)
+  if accounting.splits >= limits.maxSplits then throw (.resource .splits)
+  if accounting.leaves >= limits.maxLeaves then throw (.resource .leaves)
+  if accounting.scopes + 2 > limits.maxScopes then throw (.resource .scopes)
+  if limits.maxFrontier < count + 1 then throw (.resource .frontier)
+  pure
+    { steps := accounting.steps + 1
+      splits := accounting.splits + 1
+      leaves := accounting.leaves + 1
+      scopes := accounting.scopes + 2
+      nextScope := accounting.nextScope + 2 }
+
+end Accounting
+
 /-- A decoded session. Every mutating consumer rechecks this record; its public
 constructor grants no authority. -/
 structure Session (Fact Cause OfferId SemanticKey : Type) where
@@ -174,13 +229,6 @@ def Session.view (session : Session Fact Cause OfferId SemanticKey) :
     facts := session.branch.snapshot
     remaining := session.remaining
     incomplete := session.incomplete }
-
-/-- Check a decoded list against a cap without traversing beyond the first
-disallowed cell. -/
-def listWithin : Nat -> List α -> Bool
-  | _, [] => true
-  | 0, _ :: _ => false
-  | limit + 1, _ :: rest => listWithin limit rest
 
 private def stateResource (resource : State.Resource) : Error :=
   .resource (.state resource)
@@ -262,7 +310,7 @@ private def preflightSession (limits : State.Limits)
   for offer in session.offers do
     preflightAction limits session.rules offer.action
 
-private def actionCurrentWithin (limits : State.Limits) (branch : State.Branch Fact Cause)
+private def actionCurrentChecked (limits : State.Limits) (branch : State.Branch Fact Cause)
     (rules : Array Registration) (bindings : Array ScopeBinding)
     (applicationGenerations equalityGenerations : Array Nat)
     (matcherEpoch serial : Nat)
@@ -277,7 +325,6 @@ private def actionCurrentWithin (limits : State.Limits) (branch : State.Branch F
   let some registration := rules[action.rule.index]? | throw .invalidSession
   if registration.key != action.key || registration.kind != action.kind then
     throw .invalidSession
-  preflightAction limits rules action
   let some instruction := branch.program.node? action.node | throw .invalidSession
   let some operation := branch.program.operation? instruction.op | throw .invalidSession
   if operation.key != registration.head || !allDistinct action.inputs ||
@@ -318,8 +365,10 @@ opaque actionCurrent (limits : State.Limits) (branch : State.Branch Fact Cause)
     (rules : Array Registration) (bindings : Array ScopeBinding)
     (applicationGenerations equalityGenerations : Array Nat)
     (matcherEpoch serial : Nat) (action : Action) : Bool :=
-  (actionCurrentWithin limits branch rules bindings applicationGenerations
-    equalityGenerations matcherEpoch serial action).isOk
+  (do
+    preflightAction limits rules action
+    actionCurrentChecked limits branch rules bindings applicationGenerations
+      equalityGenerations matcherEpoch serial action).isOk
 
 private structure Checked (Fact OfferId SemanticKey : Type) where
   view : Policy.View Fact OfferId SemanticKey
@@ -349,7 +398,7 @@ private def authenticate [DecidableEq Fact] [DecidableEq Cause] [DecidableEq Off
   | .error error => throw (.policy error)
   | .ok _ => pure ()
   for offer in session.offers do
-    actionCurrentWithin envelope.state session.branch session.rules
+    actionCurrentChecked envelope.state session.branch session.rules
       session.bindings session.applicationGenerations session.equalityGenerations
       session.matcherEpoch session.serial offer.action
   pure { view }
@@ -369,6 +418,7 @@ opaque Session.startWithin [DecidableEq Fact] [DecidableEq Cause] [DecidableEq O
     (offers : Array (Offer OfferId SemanticKey))
     (remaining : Policy.EngineBudgetView := {}) (incomplete : Bool := false) :
     Except Error (Session Fact Cause OfferId SemanticKey) := do
+  let accounting <- Accounting.startWithin envelope.search scope (.singleton ())
   let session : Session Fact Cause OfferId SemanticKey :=
     { branch
       rules
@@ -382,7 +432,7 @@ opaque Session.startWithin [DecidableEq Fact] [DecidableEq Cause] [DecidableEq O
       remaining
       incomplete
       trace := {}
-      accounting := { nextScope := scope.index + 1 } }
+      accounting }
   let _ <- authenticate envelope measure session
   pure session
 
@@ -548,6 +598,7 @@ private def acceptChecked [DecidableEq OfferId] [DecidableEq SemanticKey]
         branch <- pushChecked branch event outcome.contradiction
       if outcome.contradiction && outcome.updates.isEmpty then throw .malformedOutcome
       let trace <- appendDiagnostic envelope.trace session.trace outcome.diagnostic
+      let accounting <- Accounting.settleWithin envelope.search (.singleton ()) session.accounting
       let next : Session Fact Cause OfferId SemanticKey :=
         { session with
           branch
@@ -555,7 +606,7 @@ private def acceptChecked [DecidableEq OfferId] [DecidableEq SemanticKey]
           offers := #[]
           incomplete := true
           trace
-          accounting := { session.accounting with steps := session.accounting.steps + 1 } }
+          accounting }
       pure (.applied next)
 
 /-- Validate and commit the whole returned delta transactionally. Every event
@@ -617,12 +668,11 @@ def Leaf.restoreParent? (leaf : Leaf Fact Cause Payload) : Option (Parent Fact C
 opaque startFrontierWithin (stateLimits : State.Limits) (limits : Limits)
     (root : Leaf Fact Cause Payload) :
     Except Error (Accounting × Frontier (Leaf Fact Cause Payload)) := do
-  if limits.maxLeaves < 1 then throw (.resource .leaves)
-  if limits.maxScopes < 1 then throw (.resource .scopes)
-  if limits.maxFrontier < 1 then throw (.resource .frontier)
+  let frontier := .singleton root
+  let accounting <- Accounting.startWithin limits root.scope frontier
   preflightBranch stateLimits root.branch
   if root.depth != 0 || root.parent.isSome || !root.branch.check then throw .invalidSession
-  pure ({ nextScope := root.scope.index + 1 }, .singleton root)
+  pure (accounting, frontier)
 
 /-- Pop the stable next pending leaf. -/
 def pop (frontier : Frontier α) : Option (α × Frontier α) := do
@@ -632,12 +682,8 @@ def pop (frontier : Frontier α) : Option (α × Frontier α) := do
 /-- Retain the authenticated frontier head as a terminal leaf and charge
 exactly one processing step. The caller cannot substitute a detached count. -/
 def settleWithin (limits : Limits) (frontier : Frontier α) (accounting : Accounting) :
-    Except Error Accounting := do
-  if !listWithin limits.maxFrontier frontier.pending then throw (.resource .frontier)
-  if frontier.pending.isEmpty ||
-      !accounting.check limits frontier.pending.length then throw .invalidSession
-  if accounting.steps >= limits.maxSteps then throw (.resource .steps)
-  pure { accounting with steps := accounting.steps + 1 }
+    Except Error Accounting :=
+  Accounting.settleWithin limits frontier accounting
 
 /-- Admit an exact binary split and schedule its children transactionally.
 The package owns child semantics; generic search authenticates the retained
@@ -648,19 +694,14 @@ opaque splitWithin [DecidableEq Fact] [DecidableEq Cause]
     (accounting : Accounting) (frontier : Frontier (Leaf Fact Cause Payload))
     (left right : Leaf Fact Cause Payload) :
     Except Error (Accounting × Frontier (Leaf Fact Cause Payload)) := do
-  if !listWithin limits.maxFrontier frontier.pending then throw (.resource .frontier)
+  let nextAccounting <- Accounting.splitWithin limits frontier accounting
   for pending in frontier.pending do
     preflightBranch stateLimits pending.branch
     match pending.parent with
     | none => pure ()
     | some retained => preflightBranch stateLimits retained.branch
   if !allDistinct (frontier.pending.map (·.scope)) then throw .invalidSession
-  if !accounting.check limits frontier.pending.length then throw .invalidSession
   let some (parent, rest) := pop frontier | throw .invalidSession
-  if accounting.steps >= limits.maxSteps then throw (.resource .steps)
-  if accounting.splits >= limits.maxSplits then throw (.resource .splits)
-  if accounting.leaves >= limits.maxLeaves then throw (.resource .leaves)
-  if accounting.scopes + 2 > limits.maxScopes then throw (.resource .scopes)
   let depth := parent.depth + 1
   if limits.maxDepth < depth then throw (.resource .depth)
   preflightBranch stateLimits left.branch
@@ -677,13 +718,6 @@ opaque splitWithin [DecidableEq Fact] [DecidableEq Cause]
       left.scope.index != accounting.nextScope ||
       right.scope.index != accounting.nextScope + 1 ||
       !left.branch.check || !right.branch.check then throw .invalidSession
-  if limits.maxFrontier < rest.pending.length + 2 then throw (.resource .frontier)
-  let accounting :=
-    { steps := accounting.steps + 1
-      splits := accounting.splits + 1
-      leaves := accounting.leaves + 1
-      scopes := accounting.scopes + 2
-      nextScope := accounting.nextScope + 2 }
-  pure (accounting, rest.schedule order [left, right])
+  pure (nextAccounting, rest.schedule order [left, right])
 
 end Hex.Interval.Search
