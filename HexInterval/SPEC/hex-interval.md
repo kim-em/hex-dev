@@ -5225,9 +5225,21 @@ their declared cost inside a scheduler bound.
   expression. Under
   ordinary imports, only `Registry.buildWithin` can construct the theorem
   registry; `import all HexIntervalMathlib.Proof` is a trusted-internals escape
-  hatch rejected outside the exact empty repository allowlist. Concrete
-  packages, goal reification, tactic syntax, and default registries remain
-  experimental.
+  hatch rejected outside the exact empty repository allowlist. The built-in
+  arithmetic package is supported below; arbitrary-function packages, goal
+  reification, tactic syntax, and default registries remain experimental.
+- `HexIntervalMathlib/Rule.lean`: the supported stable-key arithmetic package,
+  exact real operation meanings, package-owned fact schemas, checked registry
+  assembly, and state-to-proof quotation for negation, addition, subtraction,
+  multiplication, natural power, absolute value, minimum, maximum, constants,
+  reciprocal, division, and outward regularization. Every schema recomputes
+  its fixed-resource public interval operation; decoded search results remain
+  untrusted. One package `Config` supplies exactly one natural exponent and
+  one dyadic constant, shared by every node at the corresponding built-in
+  operation index; duplicate package registration and operation keys cannot
+  add a second parameterization. Direct registry assembly does not preempt
+  construction or equality of caller program/meaning arrays and therefore
+  requires the supported search envelope for decoded inputs.
 - `HexIntervalMathlib/Split.lean`: exact transactional child semantics,
   containment, coverage, disjointness, and left ownership of the cut point.
 - `HexIntervalMathlib/Inverse.lean`: exact computed reciprocal-cut semantics
@@ -5285,6 +5297,11 @@ their declared cost inside a scheduler bound.
 - `conformance/HexIntervalMathlib/ProgramProofConformance.lean`: supported
   program-model, registry, chronology, refutation, target-closure, mutation,
   Meta-state restoration, and guarded ordinary-theorem canaries.
+- `conformance/HexIntervalMathlib/RuleConformance.lean`: supported arithmetic
+  package assembly, shared-DAG state quotation, chronological replay into an
+  ordinary theorem, exact inv/div/regularize adapters, malformed-key/body/
+  source/order/cut mutations, and registry/chronology/body/dependency/
+  precision refusal guards.
 - `HexInterval/Experiment/PntFks2FamilyData*.lean` and
   `HexInterval/Experiment/PntFks2Family.lean`: committed source-pinned family
   data and the Mathlib-free complete-family checker.

@@ -425,7 +425,7 @@ lean_lib HexIntervalMathlib where
     `HexIntervalMathlib.Power, `HexIntervalMathlib.Split,
     `HexIntervalMathlib.Inverse, `HexIntervalMathlib.Division,
     `HexIntervalMathlib.Regularize, `HexIntervalMathlib.Program,
-    `HexIntervalMathlib.Proof].map Glob.one
+    `HexIntervalMathlib.Proof, `HexIntervalMathlib.Rule].map Glob.one
 
 lean_lib HexIntervalReplayProbe where
   srcDir := "bench"
@@ -520,6 +520,7 @@ lean_lib HexConformance where
       `HexInterval.FeaturePolicyConformance,
       `HexInterval.SearchConformance,
       `HexIntervalMathlib.ProgramProofConformance,
+      `HexIntervalMathlib.RuleConformance,
       `HexIntervalMathlib.MixedFunctionsConformance,
       `HexIntervalMathlib.MixedInstantiationConformance,
       `HexIntervalMathlib.ExactBranchConformance].map Glob.one

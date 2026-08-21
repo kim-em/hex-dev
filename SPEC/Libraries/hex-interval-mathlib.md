@@ -31,8 +31,19 @@ rollback; the kernel checks the term when the caller installs it in a
 declaration. The theorem registry is constructible only through its
 checked builder under ordinary imports; deliberate `import all` is a guarded
 trusted-internals escape hatch, not decoded runtime authority.
-Concrete packages, goal reification, search-to-proof quotation, and tactic
-syntax remain experimental and are not re-exported by the public umbrella.
+The supported `Rule` registry owns stable arithmetic meanings and schemas for
+negation, addition, subtraction, multiplication, natural power, absolute
+value, minimum, maximum, constants, reciprocal, division, and regularization.
+Each schema recomputes the fixed-resource public operation before producing
+evidence; source nodes remain caller assumptions. Supported `quote` and
+`quoteSession` convert exact branch/session causes into proof events without
+granting runtime state evidence authority. The current package fixes one
+natural exponent and one dyadic constant, shared respectively by every node at
+the built-in power and constant operation indices; duplicate package
+registration and operation keys cannot provide another such parameterization.
+Arbitrary-function package discovery, goal reification, encoding and evidence
+folds, search-to-recipe orchestration, and tactic syntax remain experimental
+and are not re-exported by the public umbrella.
 The user-facing tactic contract below is the release target, not a claim that
 the tactic is already supported.
 

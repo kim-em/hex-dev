@@ -109,10 +109,11 @@ definitional equality transactionally in the caller's environment. Emitted
 terms may reference only declarations that survive that rollback. The kernel
 performs the final check when the caller installs the expression.
 Runtime search state, callbacks, payload bytes, and traces are untrusted and
-cannot enter `Proof.Evidence`. The concrete package registry, goal reifier,
-search-to-proof quotation, and tactic syntax remain experimental and are not
-re-exported here. Further arithmetic images and useful bounded
-nonsingleton division require their own
+cannot enter `Proof.Evidence`. The built-in arithmetic package registry and
+its supported branch/session `Cause`-to-`Proof.Event` quotation ship below.
+Arbitrary-function package discovery, goal reification, encoding and evidence
+folds, search-to-recipe orchestration, and tactic syntax remain experimental. Further
+arithmetic images and useful bounded nonsingleton division require their own
 operation-specific semantic theorems before promotion. An image operation must
 at least prove successful-result cut semantics and sound real-image enclosure;
 it claims a tightness converse only when that converse is separately proved.
@@ -137,6 +138,22 @@ Under ordinary imports, the theorem-registry constructor is private and
 deliberate `import all HexIntervalMathlib.Proof` exposes trusted internals and
 lies outside the decoded-runtime threat model; the repository DAG checker
 rejects that import outside an exact reviewed allowlist, currently empty.
+
+`HexIntervalMathlib.Rule` is the first supported package registry. Its stable
+arithmetic schemas recompute exact checked negation, addition, subtraction,
+multiplication, natural power, absolute value, minimum, maximum, constant,
+reciprocal, division, and regularization results before producing evidence.
+Source facts remain caller assumptions. Direct registry assembly bounds the
+retained packages and schemas but does not preempt construction or equality of
+caller program/meaning arrays; decoded callers must first cross `Search`.
+Its `quote` and `quoteSession` functions convert supported branch/session
+causes to proof events without making runtime state evidence. `Config` fixes
+exactly one natural exponent and one dyadic constant: every node at the
+built-in power operation index shares that exponent, and every node at the
+built-in constant index shares that value. Duplicate package registration and
+operation keys cannot add another parameterization. Arbitrary-function package
+discovery, goal reification, encoding and evidence folds, search-to-recipe
+orchestration, and tactic syntax remain experimental.
 
 `HexIntervalMathlib.Experiment.PntLogRational` is a fixed-source acceptance
 provider rather than public interval arithmetic. It proves the original
@@ -197,6 +214,12 @@ alignment and a live instance → fact → equality → transport chronology,
 including body/source/version/final-state mutations, refuter ownership, a
 nonvacuous ordinary theorem with a guarded axiom report, and transactional
 Meta-state restoration after a wrongly typed emitter.
+`HexIntervalMathlib.RuleConformance` replays a shared arithmetic DAG through
+the supported state quote and proof registry. Its ordinary theorem makes both
+source assumptions load-bearing through add/sub/mul and checked
+inv/div/regularize successors; mutations pin rule keys, bodies, argument order,
+proposed cuts, chronology, and proof-resource limits. A precision refusal is
+recomputed by the package and cannot be interpreted as a fact.
 `HexIntervalMathlib.PntLogRationalConformance` additionally runs all fifteen
 fixed rows and sends the representative large-shift `32e12` certificate through
 generic planning, payload authentication, chronological replay, and the proof

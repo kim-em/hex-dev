@@ -20,6 +20,7 @@ public import HexIntervalMathlib.Division
 public import HexIntervalMathlib.Regularize
 public import HexIntervalMathlib.Program
 public import HexIntervalMathlib.Proof
+public import HexIntervalMathlib.Rule
 
 public section
 
@@ -31,4 +32,6 @@ natural power, outward regularization, and closed-left/strict-right
 transactional splitting, plus precision-indexed reciprocal and division
 enclosures. It also supplies the function-agnostic semantics of supported
 programs and the chronological, package-owned proof-replay boundary.
+`HexIntervalMathlib.Rule` supplies a checked built-in arithmetic package whose
+schemas recompute checked public operations before producing proof evidence.
 -/
