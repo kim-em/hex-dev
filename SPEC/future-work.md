@@ -500,14 +500,36 @@ rather than real closed ones. The two are complementary: Gröbner bases
 answer questions about complex solutions, CAD about real ones.
 
 **Multivariate Hensel lifting (`hex-mv-hensel`,
-`hex-mv-hensel-mathlib`).** Specify the lifting engine before
+`hex-mv-hensel-mathlib`).** The lifting engine, specified before
 factorization. Unlike hex-hensel, it lifts a factorization in several
-variables against an evaluation ideal and must carry the coprimality,
-leading-coefficient, modulus/precision, and reconstruction conditions used by
-Wang's EEZ algorithm. Hex-hensel is a design model, not an implementation the
-new library can call unchanged. The first SPEC should target the
-`MvPoly n Int cmp` representation and depend on hex-mv-poly and the exact
-division/gcd infrastructure in hex-mv-gcd.
+variables against an evaluation ideal and carries the coprimality,
+leading-coefficient, modulus/precision, and reconstruction conditions used
+by Wang's EEZ algorithm. Hex-hensel is a design model, not an
+implementation the new library can call unchanged.
+
+Specified in [hex-mv-hensel](Libraries/hex-mv-hensel.md), over
+`MvPoly (n+1) Int cmp` and on top of hex-mv-poly and hex-mv-gcd's exact
+division and gcd contract.
+
+Four corrections to what this file said before that SPEC was written,
+recorded because they are easy to make again. The sharpest reason
+hex-hensel does not apply is not the number of variables: it is that its
+prime is simultaneously the residue field and the lifting direction,
+whereas multivariately the lifting direction is the evaluation ideal and
+the prime only makes the univariate coefficient arithmetic invertible.
+The working modulus is therefore fixed for the whole lift, and the
+coprimality witness computed at the start stays valid at every step,
+where hex-hensel must update its Bézout data. The leading-coefficient
+distribution is an *input contract* rather than something the lifting
+engine searches for, since finding it is itself recursive multivariate
+factorization; what the lifting engine gets from that contract is the
+degree drop `deg_{x_i}(f - ∏ F_j) < deg_{x_i} f` that makes every
+correction equation solvable. And the ideal-adic direction needs no
+coefficient bound at all, because the per-variable degrees of `f` bound
+the precision exactly; only the reconstruction of integer coefficients
+needs a bound, and Gel'fond's inequality is the one worth proving, with
+Kronecker substitution into hex-poly-z's Mignotte bound as the valid but
+very weak alternative.
 
 **Multivariate factorization (`hex-mv-factor`,
 `hex-mv-factor-mathlib`).** Scope the first version to
@@ -517,16 +539,25 @@ univariate polynomial with Berlekamp-Zassenhaus, then lift with hex-mv-hensel,
 including leading-coefficient correction and retry on a bad evaluation point.
 
 The hard prerequisites are hex-mv-poly, [hex-mv-gcd](Libraries/hex-mv-gcd.md),
-univariate Berlekamp-Zassenhaus, and hex-mv-hensel. General factorization over
+univariate Berlekamp-Zassenhaus, and
+[hex-mv-hensel](Libraries/hex-mv-hensel.md). General factorization over
 arbitrary coefficient domains is not the first library: finite fields,
 number fields, and `ℤ` require materially different algorithms and
 certificates.
 
-The product check certifies a decomposition. Irreducibility of each
-returned factor is the further obligation, hard in the same way as the
-univariate case, so the API either carries irreducibility certificates
-per factor or advertises itself as returning a decomposition and lets
-the caller ask for more.
+The evaluation-point search, the leading-coefficient distribution, the
+retry policy, and the recombination of coarser groupings all live here
+rather than in the lifting engine; that boundary is drawn in
+[hex-mv-hensel §What stays in the downstream consumer](Libraries/hex-mv-hensel.md).
+
+The product check certifies a decomposition, not irreducibility. The gap
+is smaller than it first appears: when the input is primitive in the main
+variable and every univariate image is irreducible over `ℤ`, a checked
+lift already gives irreducible multivariate factors, by
+`irreducible_of_image_irreducible` in that SPEC. Both extra hypotheses
+are data this library holds anyway, so the design question is whether to
+carry them into the returned certificate or to advertise a decomposition
+and let the caller ask for more.
 
 **Generic finite fields, and equal-degree splitting.** Specified in
 [hex-finite-field](Libraries/hex-finite-field.md): the Mathlib-free
