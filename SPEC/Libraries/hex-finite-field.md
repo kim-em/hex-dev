@@ -14,8 +14,7 @@ is a new library; the second and third are specified here as amendments
 to [hex-berlekamp](../../HexBerlekamp/SPEC/hex-berlekamp.md), for the
 reason set out under "Where the equal-degree stage lives".
 
-Three claims in that entry need correcting before anything is built,
-and all three are corrected below.
+Three source-level constraints refine that entry.
 
 - **The linear algebra is already generic.** The entry lists "the
   linear algebra Berlekamp's kernel step uses" among the things the
@@ -93,10 +92,16 @@ out of hex-poly-fp into hex-poly, adding the two instances at their
 types, and the equal-degree stage and Cantor-Zassenhaus in
 hex-berlekamp.
 
+The executable factorizer is accompanied by generic product, monicity,
+and irreducibility theorems.  These are ordinary correctness theorems
+about the Mathlib-free algorithm; they are distinct from the reflected
+certificates used by `factor_poly`.  The reflected certificate and tactic
+remain prime-field-only.
+
 Not in scope: normal bases, Zech logarithms, `fq_zech`-style
 small-field representations, field extension towers (that is
 hex-number-field-tower's subject over `ℚ`, and has no `F_q` analogue in
-this tree yet), discrete logarithms, and the packed `GF(2^n)` path,
+this tree yet), discrete logarithms, and reimplementing the packed `GF(2^n)` path,
 which stays in hex-gf2 with its own optimised arithmetic and receives
 an instance rather than a reimplementation.
 
@@ -105,14 +110,15 @@ an instance rather than a reimplementation.
 Five things have to exist before the interface can be stated, let alone
 instantiated. Each was found by checking the source rather than the
 SPECs, and each is a real development rather than a relocation. They are
-listed here, at the front, because an earlier draft of this SPEC called
-the whole item "the best-aligned on the list" on the strength of
-components that turn out not to compose.
+listed here because the existing executable components do not yet
+compose at their proof and representation boundaries.
 
 1. **A quotient-representation bridge for `pow_card`**, as set out
    above. Without it the extension-field instance has no proof.
 
-2. **Generic `DensePoly.DivModLaws` and `DensePoly.GcdLaws`.** The
+2. **Generic polynomial field algebra.** `DensePoly.DivModLaws` and
+   `DensePoly.GcdLaws` have to be available Mathlib-free from
+   `[Lean.Grind.Field K] [DecidableEq K]`. The
    executable `divMod`, `modByMonic`, `xgcd`, and `gcd` are generic in
    their operation lists, but every theorem about them is stated under
    these two law classes, and the Mathlib-free instances are for
@@ -122,7 +128,24 @@ components that turn out not to compose.
    (`HexPolyMathlib/Euclid.lean:190`, `:252`), is on the Mathlib side
    and requires a Mathlib `Field`. So a Mathlib-free
    `[Lean.Grind.Field K] [DecidableEq K] → DivModLaws K` and the
-   matching `GcdLaws K` are prerequisites, in hex-poly. Until they
+   matching `GcdLaws K` are prerequisites, in hex-poly. The same
+   milestone moves the algebraic definition of irreducibility from the
+   `FpPoly` namespace to a generic `DensePoly.Irreducible` (leaving the
+   old name as an abbreviation), and generalises
+   `FpPoly.normalizeMonic` and `FpPoly.monicGcd` to `DensePoly`.  The
+   generic executable predicate
+   `DensePoly.SquareFree f := DensePoly.monicGcd f f.derivative = 1`
+   (with the existing nonzero/nonconstant conventions made explicit)
+   lives beside them. Over an arbitrary field, hex-poly proves only the
+   unconditional direction from this gcd criterion to absence of a
+   repeated irreducible divisor. The converse is false over imperfect
+   fields: over `F_2(t)`, `X²-t` is irreducible but has zero derivative.
+   Hex-finite-field proves the converse under `LawfulFiniteField`, using
+   finiteness/perfectness from `pow_card`. The
+   following laws are required, not optional conveniences: reconstruction
+   by the extracted leading coefficient, monicity and nonzeroness of the
+   normalised polynomial for nonzero input, divisibility equivalence up to
+   a unit, and monicity of `monicGcd` when the gcd is nonzero. Until they
    exist, "the polynomial operations are already generic" is true of
    the code and false of the proofs.
 
@@ -141,16 +164,27 @@ components that turn out not to compose.
    a large `FpPoly`-specific development (six files, roughly 8000
    lines, `HexPolyFp/SquareFree/`). Yun in characteristic `p` also
    needs a coefficient `p`-th root when a derivative vanishes, which
-   over `F_q` is the inverse Frobenius `x ↦ x^(q/p)` and is not in the
-   interface above. Generalising it is its own milestone, not a
-   consequence of generalising the factorizer.
+   over `F_q` is the inverse Frobenius `x ↦ x^(q/p)`. The generic
+   quotient layer derives this as `frobInv` by iterating the class's
+   coefficient Frobenius. Generalising Yun is still its own milestone, not a
+   consequence of generalising the factorizer. It lives in
+   `HexBerlekamp/SquareFree.lean`, above both hex-poly-fp and
+   hex-finite-field. It cannot stay in hex-poly-fp: making that library
+   import hex-finite-field would form a cycle because hex-finite-field
+   already imports hex-poly-fp.
 
-5. **The packed `GF(2^n)` algebraic tower.** `GF2n`
+5. **The binary-field algebraic towers.** `GF2n`
    (`HexGF2/Field.lean`) has the arithmetic operations and
    `mul_inv_cancel`, but no `DecidableEq`, no `Lean.Grind.Field`, and
    no `Lean.Grind.IsCharP`. It cannot satisfy the generic context until
-   those exist. The `GF2n` instance is therefore a milestone with its
-   own acceptance criteria, not a line in a table.
+   those exist. Moreover, `GF2n` is defined only under `n < 64`; it
+   cannot represent degree 64. Both binary representations therefore
+   receive the missing field/characteristic tower and a finite-field
+   instance (`GF2nPoly` already has `DecidableEq`):
+   `GF2n` for `n < 64`, and `GF2nPoly` for arbitrary positive modulus
+   degree. Benchmarks at degree 64 use `GF2nPoly`, never `GF2n` or
+   `GF2q`. These instances are a milestone with their own acceptance
+   criteria, not lines in a table.
 
 None of these is a reason not to do the item. All five are reasons the
 item is larger than one library plus two amendments, and the milestone
@@ -193,8 +227,11 @@ class FiniteFieldOps (K : Type u) where
 operations so a consumer may compute without them, and so the
 instances may be discharged one at a time. -/
 class LawfulFiniteField (K : Type u) [Lean.Grind.Field K] [DecidableEq K]
-    [FiniteFieldOps K]
-    extends Lean.Grind.IsCharP K (FiniteFieldOps.char K) : Prop where
+    [FiniteFieldOps K] : Prop where
+  /-- Kept as data, not a global parent instance: `IsCharP`'s
+  characteristic parameter is an `outParam`. Consumers install this
+  projection as a local instance. -/
+  isCharP     : Lean.Grind.IsCharP K (FiniteFieldOps.char K)
   char_prime  : Hex.Nat.Prime (FiniteFieldOps.char K)
   deg_pos     : 0 < FiniteFieldOps.deg K
   frob_eq_pow : ∀ x : K, FiniteFieldOps.frob x = x ^ FiniteFieldOps.char K
@@ -206,14 +243,17 @@ class LawfulFiniteField (K : Type u) [Lean.Grind.Field K] [DecidableEq K]
   toIndex_ofIndex : ∀ i, i < card K → toIndex (ofIndex i) = i
 ```
 
-`LawfulFiniteField` **extends** `Lean.Grind.IsCharP K (FiniteFieldOps.char K)`.
-An earlier draft left it out, on the grounds that a consumer could ask
-for it separately. That is wrong: the freshman's dream
-`(a + b)^p = a^p + b^p` is what makes every Frobenius argument below
-work, it is not implied by the other fields, and every generic
-algorithm in this SPEC needs it. Both instances already have it
-(`HexGFqField/Operations.lean:1117` for the extension case), so
-bundling costs nothing.
+`LawfulFiniteField` **carries** `Lean.Grind.IsCharP K
+(FiniteFieldOps.char K)`, but does not extend it. `IsCharP` declares its
+characteristic parameter as an `outParam`; an inherited global instance
+could compete with the concrete `ZMod64` and `GFqField` instances and
+select a non-definitionally-equal instance family. Modules that use the
+freshman's dream install `LawfulFiniteField.isCharP` locally. Leaving
+the fact out entirely would also be wrong: `(a + b)^p = a^p + b^p`
+is what makes every Frobenius argument below work. Both concrete types
+already have the fact (`HexGFqField/Operations.lean:1117` for the
+extension case), so carrying it as data costs nothing while keeping
+instance search stable.
 
 `pow_card` is the load-bearing law and it is the one worth checking is
 dischargeable before committing to the class. It is:
@@ -232,20 +272,25 @@ dischargeable before committing to the class. It is:
   modulus is only of positive degree and irreducible. No bridge between
   the two quotient representations exists.
 
-An earlier draft of this SPEC claimed this instance needed "no new
-mathematics" by citing the weaker propagation lemma
+The weaker propagation lemma
 `pow_pPowN_eq_self_of_pow_pPowN_X_eq_X`
 (`HexPolyFp/QuotientFrobenius.lean:381`), which only pushes the
 hypothesis `X^(p^n) = X` out to every element and does not derive it
-from irreducibility. That claim was wrong twice over: the stronger
-theorem exists, and neither applies to the type the instance is for.
+from irreducibility, does not discharge the instance. The stronger
+theorem exists, but neither theorem applies directly to the target
+representation.
 
 The prerequisite is therefore one of three, and the choice should be
 made before milestone 1 starts:
 
-1. an equivalence `GFqRing.PolyQuotient f hf ≃ FpPoly.Quotient (toMonic f) _ _`
+1. a ring isomorphism
+   `GFqRing.PolyQuotient f hf ≃+* FpPoly.Quotient (toMonic f) _ _`
    with `pow_card` transported along it, which is the smallest change
-   and the one this SPEC assumes;
+   and the one this SPEC assumes. Its proof includes
+   `degree (toMonic f) = degree f` so the exponents agree and transports
+   irreducibility using the existing scalar-normalisation theorem; a
+   bare type equivalence is insufficient because it need not preserve
+   powers;
 2. a direct Mathlib-free cardinality argument for
    `GFqRing.PolyQuotient`, duplicating the existing proof; or
 3. changing `FiniteField` to use the already-proved quotient type,
@@ -254,7 +299,7 @@ made before milestone 1 starts:
 
 Option 1 is a real development -- the two quotient types have different
 reduction functions and different canonical-form invariants -- and it is
-listed in "Prerequisites" below rather than waved at.
+listed explicitly in the prerequisites.
 
 `ofIndex` and `toIndex` are a bijection with `[0, card)` and nothing
 more. They are **not** a ring map, they are not required to be
@@ -290,19 +335,20 @@ instance {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f}
   toIndex := ...                  -- the coefficient vector read in base `p`
 ```
 
-`frob = id` on the prime field is the point of having `frob` in the
-class at all: `frob_eq_pow` then says `x = x ^ p`, which is Fermat, and
-every generic algorithm that iterates Frobenius pays nothing on the
-prime field instead of paying a `log p`-step modular powering. The
-existing `FpPoly.frobeniusXMod` computes `X^p mod f` by
-square-and-multiply on the exponent `p`; the generic code must not
-inherit that cost when `deg = 1`.
+`frob = id` on the prime field makes the coefficient `p`-th-root
+operation below free. It does **not** accelerate `X^p mod f`: that is a
+quotient computation and still uses square-and-multiply. The class
+stores coefficient Frobenius because generic square-free decomposition
+uses its inverse and because the Mathlib companion identifies it with
+Mathlib's Frobenius, not as a hidden quotient fast path.
 
 `GF2n` from hex-gf2 gets an instance too, with `frob` the squaring
 map, `char = 2`, and `ofIndex` the packed word; `GF2q n` is an
 abbreviation declared in hex-gfq (`HexGFq/Basic.lean:800`) and inherits
-it. Prerequisite 5 is what that instance waits on. That instance
-is the reason the class is stated over an abstract `K` rather than
+it when `n < 64`. `GF2nPoly` gets the same interface with polynomial
+bit indexing and covers arbitrary positive degrees, including 64.
+Prerequisite 5 is what those instances wait on. Those instances are
+the reason the class is stated over an abstract `K` rather than
 being a structure of functions on `FpPoly`: hex-gf2's representation is
 a packed `UInt64` vector, not a coefficient array, and the whole point
 is that the factoring algorithms should run over it unchanged. It goes
@@ -312,9 +358,21 @@ acquire a dependency on hex-gf2.
 **Where each instance lives.** The class lives here. The `ZMod64 p`
 instance lives here (this library depends on hex-mod-arith). The
 `FiniteField` instance lives in **hex-gfq-field**, and the `GF2n`
-instance in **hex-gf2**, each next to its type. Splitting class from
+and `GF2nPoly` instances in **hex-gf2**, each next to its type. Splitting class from
 instance across libraries is what keeps the DAG acyclic and is
 discussed under "Placement in the DAG".
+
+The base-`p` encoder and decoder used by the `FiniteField` instance are
+currently embedded in `HexGFqMathlib/Basic.lean` as part of its
+`Fintype` construction. Their definitions move to a Mathlib-free
+`HexGFqField/Index.lean`, but this is not a mechanical relocation: the
+current inverse proofs use Mathlib's `Nat.ofDigits`, `Fin`, and
+`Finset`. Milestone 2 reproves Mathlib-free versions of
+`coeffIndex_lt`, `coeffIndex_ofIndexBelowDegree`, and
+`ofIndexBelowDegree_coeffIndex`, plus the `reduceMod`-idempotence witness
+needed by `GFqRing.PolyQuotient`'s canonical-representative subtype. The
+companion then reuses this codec rather than maintaining a second
+enumeration.
 
 ## Placement in the DAG
 
@@ -357,6 +415,16 @@ hex-mod-arith (prerequisite 3); hex-matrix for `frobeniusMatrix`. This
 is the one authoritative dependency list; the `libraries.yml` block at
 the end repeats it and nothing else in this file states it again.
 
+Extension-field integration tests cannot live in hex-finite-field or
+hex-berlekamp: the `FiniteFieldOps (GFqField.FiniteField ...)` instance
+lives in hex-gfq-field, while hex-gfq-field's conformance and bench
+surface already depends on hex-berlekamp to construct Rabin witnesses.
+Such a test below both libraries would create a cycle. End-to-end tests
+using the concrete extension and packed binary instances therefore live
+in **hex-gfq**, which is already above hex-gfq-field, hex-gf2, and
+hex-berlekamp. Hex-berlekamp tests exercise the generic algorithms with
+the prime-field instance and locally defined small test fields only.
+
 ## The generic quotient layer
 
 Everything the factoring algorithms do in `F_q[x]/(f)` reduces to
@@ -382,8 +450,10 @@ same reason.
 it is the kernel-reducible specification twin, its lemma surface is
 `ZMod64`-specific in places, and no generic algorithm calls it.
 
-This is a relocation, not a generalisation of an algorithm, and it is
-the only change hex-poly needs.
+This is a relocation, not a generalisation of an algorithm. It is the
+quotient-arithmetic part of hex-poly's milestone-0 work; the generic
+law instances, irreducibility/square-free predicates, and monic
+normalisation listed in prerequisite 2 are additional changes.
 
 ### The `q`-power Frobenius
 
@@ -393,17 +463,44 @@ namespace Hex.FiniteField
 variable {K : Type u} [Lean.Grind.Field K] [DecidableEq K]
   [FiniteFieldOps K] [LawfulFiniteField K]
 
+local instance : Lean.Grind.IsCharP K (FiniteFieldOps.char K) :=
+  LawfulFiniteField.isCharP
+
+/-- Inverse coefficient Frobenius, obtained by iterating `frob`
+`deg K - 1` times. -/
+def frobInv (x : K) : K
+
+theorem frobInv_pow_char (x : K) :
+    frobInv x ^ FiniteFieldOps.char K = x
+
 /-- `X^q mod f`, by square-and-multiply on the exponent `card K`. -/
 def frobeniusXMod (f : DensePoly K) (hmonic : DensePoly.Monic f) : DensePoly K
 
 /-- The matrix of `h ↦ h^q mod f` in the basis `1, X, …, X^{n-1}`,
 built from `frobeniusXMod` by `n` modular multiplications. -/
 def frobeniusMatrix (f : DensePoly K) (hmonic : DensePoly.Monic f) :
-    Matrix K (DensePoly.degree f) (DensePoly.degree f)
+    Matrix K (f.degree?.getD 0) (f.degree?.getD 0)
 
-/-- Apply the `q`-power Frobenius to a reduced representative. -/
-def frobeniusApply (Q : Matrix K n n) (h : DensePoly K) : DensePoly K
+/-- Apply a Frobenius matrix to a representative that fits its basis. -/
+def frobeniusApply (Q : Matrix K n n) (h : DensePoly K)
+    (hsize : h.size ≤ n) : DensePoly K
+
+theorem frobeniusApply_matrix
+    (f : DensePoly K) (hmonic : DensePoly.Monic f)
+    (h : DensePoly K) (hsize : h.size ≤ f.degree?.getD 0) :
+    frobeniusApply (frobeniusMatrix f hmonic) h hsize =
+      DensePoly.powModMonic h f hmonic (card K)
 ```
+
+`frobInv` is the coefficient `p`-th root required when Yun reaches a
+zero derivative. Its proof uses `frob_eq_pow`, `pow_card`, and
+`deg_pos`; at `deg K = 1` it is the identity. It is an operation derived
+from the class, not another class field.
+
+`DensePoly` has `degree?`, not a total `degree`; all displayed APIs in
+this SPEC use `degree?.getD 0` (or `size`) accordingly. The size
+hypothesis on `frobeniusApply` is essential: without it the matrix drops
+high coefficients and the advertised correctness statement is false.
 
 **Only the `q`-power map is `K`-linear, and this is the place to be
 careful.** On `K[x]/(f)` the map `x ↦ x^q` satisfies
@@ -414,18 +511,14 @@ matrix-vector product at `O(n²)`.
 
 The `p`-power map is **not** `K`-linear when `deg K > 1`: it is
 `p`-semilinear, `(c·a)^p = c^p a^p`, and `c^p ≠ c` in general. It has no
-matrix over `K`, and an earlier draft of this SPEC proposed building one
-and iterating it. That was wrong, and the same error appeared in the
-characteristic-two trace, which is `F_2`-linear rather than `K`-linear.
+matrix over `K`. The characteristic-two trace is likewise `F_2`-linear
+rather than `K`-linear.
 `FiniteFieldOps.frob` is a coefficientwise operation, and any algorithm
 that wants the `p`-power map on the quotient has to compose it with a
 modular composition, never with a `Matrix K`.
 
-**One algorithm, not three.** An earlier draft described `frobeniusXMod`
-as `deg K` modular multiplications in one place, as modular compositions
-or matrix-vector products in another, and as one square-and-multiply in
-the complexity table. Those are different algorithms. The specified v1 is
-the last: `frobeniusXMod = powModMonic X f hmonic (card K)`, costing
+**The specified v1 algorithm.** `frobeniusXMod` is
+`powModMonic X f hmonic (card K)`, costing
 `O(log q)` modular squarings at `O(n²)` each, so `O(n² log q)`. On the
 prime field `card K = p` and this is exactly what
 `FpPoly.frobeniusXMod` does today, so the prime-field path is unchanged.
@@ -445,6 +538,15 @@ Brent-Kung composition that [future-work](../future-work.md) lists under
 "Fast polynomial arithmetic" would change that, and this library is the
 consumer that entry names.
 
+A matrix is tied to one modulus and one basis dimension. The matrix
+built for a square-free parent during DDF is therefore not passed to
+EDF for a proper bucket, and an EDF matrix for a bucket is not reused
+after that bucket is split into smaller moduli. Any characteristic-two
+split node builds the matrix for its own current modulus once and reuses
+it only across the random attempts at that node. Restricting a parent
+matrix to a factor could be an optimisation, but no such restriction
+map or correctness theorem exists in v1.
+
 ## Randomness
 
 The tree has no randomness. `Hex.Rand` is new, and it is small.
@@ -460,20 +562,40 @@ structure Rand where
   state : UInt64
 
 def Rand.next (r : Rand) : UInt64 × Rand
-/-- Uniform on `[0, bound)` by rejection sampling over enough words to
-cover `bound`. Not `next % bound`, which is biased, and not one word,
-which cannot reach `bound > 2^64`. -/
-def Rand.nat (r : Rand) (bound : Nat) : Nat × Rand
+
+inductive RandError where
+  | zeroBound
+  | exhausted (attempts : Nat) (rand : Rand)
+
+/-- Form a candidate from enough 64-bit words and use rejection
+sampling. `fuel` bounds rejection retries, including the initial
+candidate. -/
+def Rand.nat (r : Rand) (bound fuel : Nat) :
+    Except RandError (Nat × Rand)
 def Rand.ofSeed (seed : Nat) : Rand
 ```
 
-Sampling a field element is `FiniteFieldOps.ofIndex` applied to
-`Rand.nat r (card K)`, and sampling a polynomial of degree below `n` is
-`n` independent element draws. Both need `Rand.nat` to be uniform on a
-bound that may exceed `2^64`: `card K` is `2^64` for `GF(2^{64})` and
-`card K ^ n` is far larger. Rejection sampling over `⌈log₂ bound / 64⌉`
-words is the specified implementation, and the bias of `% bound` is the
-reason it is specified rather than left open.
+Sampling a field element binds
+`Rand.nat r (card K) sampleFuel` and applies
+`FiniteFieldOps.ofIndex` to the successful bounded index; sampling a polynomial of degree below `n` is
+`n` successive element draws. Each draw is bounded by `card K`; no
+algorithm samples one integer below `card K ^ n`. Rejection sampling
+forms a candidate from `⌈log₂ bound / 64⌉` words and rejects the
+incomplete top interval, avoiding the additional modulo bias of
+`next % bound`. `bound = 0` returns `zeroBound`. Rejection is not hidden
+inside an allegedly total recursive definition: exhaustion returns the
+advanced state in `RandError.exhausted`, and all callers propagate it.
+
+This concrete function is **not specified as mathematically uniform or
+independent**. A deterministic generator with only 64 bits of state has
+at most `2^64` possible streams and cannot induce a uniform draw on an
+arbitrary larger `Nat` bound; successive values are deterministic once
+the seed is fixed. Its contract is instead executable and testable:
+range correctness, deterministic replay, explicit state advancement,
+no modulo reduction of an incomplete interval, and bounded termination.
+The Cantor-Zassenhaus probability analysis below is carried out against
+a separate ideal model of independent uniform coefficient draws. It
+motivates the retry budget but is not a theorem about splitmix64.
 
 `Rand` belongs in **hex-basic**, not here. It has no dependencies, and
 it has a second consumer already specified: [hex-mv-gcd](hex-mv-gcd.md)
@@ -485,21 +607,20 @@ The discipline, which this item sets rather than follows:
 
 - Every randomised function takes `Rand` as an explicit argument and
   returns the advanced state. No monad, no `IO`, no global generator.
-- The seed is a parameter of the public entry point with a documented
-  default, so a failing input can be replayed exactly.
+- `factorWithRand` is the composable public entry point. A convenience
+  `factor` wrapper accepts `seed : Nat := 0` and constructs the initial
+  state, so the documented default exists in the API rather than only
+  in prose.
 - Randomness affects **how long** a Las Vegas algorithm runs, never
   **what** it returns. Every randomised result passes the same checker
   the deterministic path would.
 - Fuel is explicit and finite. Fuel exhaustion is a documented
   outcome, reported in the return type, never as a wrong answer and
   never as a nonterminating loop.
-- **Probability statements are about ideal draws, not about
+- **Probability statements are about the ideal sampler, not about
   splitmix64.** Every bound below (`2^{1-r}` per attempt, and the union
-  bounds derived from it) is a statement about independent uniform
-  draws. A fixed seeded stream is deterministic, so those bounds
-  describe the algorithm's design and the expected behaviour over
-  seeds; they are not theorems about a particular run, and nothing in
-  the tree may treat them as such.
+  bounds derived from it) explicitly assumes independent uniform field
+  coefficients. No theorem transfers those bounds to the concrete PRNG.
 
 ## Where the equal-degree stage lives
 
@@ -520,9 +641,9 @@ weight:
    output. Splitting them across libraries puts the two halves of one
    pipeline on either side of a release boundary.
 3. **The Berlekamp kernel stays in the pipeline.** It is not replaced;
-   it is the small-`q` path and the source of the factor count `r`,
-   which EDF uses for its own early exit. Two algorithms that call each
-   other belong together.
+   it is the small-`q` path alongside DDF/EDF. Keeping both dispatch
+   routes in one library avoids duplicating factor-list assembly and
+   proof infrastructure.
 
 What goes where is therefore: the interface, the instances, the generic
 Frobenius, and `Rand` are new; the algorithms are hex-berlekamp
@@ -530,8 +651,7 @@ amendments. The rest of this SPEC specifies those amendments.
 
 ## Amendment 1: generalising hex-berlekamp
 
-Not mechanical, and an earlier draft of this SPEC called it that. It
-splits into four stages with separate acceptance criteria, because they
+The generalisation splits into four stages with separate acceptance criteria, because they
 have separate risks.
 
 ### 1a. Executable genericization
@@ -550,15 +670,31 @@ variable {K : Type u} [Lean.Grind.Field K] [DecidableEq K]
 and works on `DensePoly K`, with `p` replaced by `card K` in every
 exponent. `FpPoly p` entry points remain as specialisations.
 
-Three places need more than a substitution.
+The public executable result type is generalised at the same time:
+
+```lean
+structure Factorization (K : Type u) where
+  input   : DensePoly K
+  factors : List (DensePoly K)
+```
+
+The existing `Factorization p`, which is indexed by a characteristic
+`Nat`, is not reused with `K` in place of `p`; that expression is
+ill-typed today. Existing prime-field callers migrate to
+`Factorization (ZMod64 p)`, with a compatibility abbreviation if source
+compatibility warrants it.
+
+Four places need more than a substitution.
 
 - **`berlekampColumn`** builds columns from `FpPoly.frobeniusXMod`,
   which becomes `FiniteField.frobeniusXMod`. Over an extension field the
-  `p`-power Frobenius is the wrong map: its fixed field is `F_p`, not
-  `F_q`, so `Q_p - I` has the wrong nullspace and the factorization is
-  silently wrong rather than ill-typed. This is the one place where a
-  careless generalisation type-checks and lies, and the conformance
-  suite carries a case for it.
+  unchanged construction computes the `K`-linear substitution
+  `h(X) ↦ h(X^p)`, not the quotient Frobenius `h ↦ h^q`. It still has
+  a matrix over `K`, so the mistake typechecks, but `Q-I` has the wrong
+  nullspace. This differs from the genuinely `p`-semilinear map
+  discussed below. The extension conformance case pins the matrix as
+  well as the final factor multiset so this silent error cannot be
+  masked downstream.
 - **`kernelWitnessSplit?`'s constant sweep** is bounded by the literal
   `p` in `cachedSplitAux f witness reduced p 0`
   (`HexBerlekamp/Factor.lean:308`). Generically it is `card K`, and it
@@ -566,10 +702,21 @@ Three places need more than a substitution.
   otherwise skipped in favour of EDF.
 - **Rabin's test** holds with `q` for `p` throughout and `n` the degree
   over `F_q`.
+- **Every gcd entering a factor list or a DDF bucket is normalised.**
+  `DensePoly.gcd` is deliberately unnormalised (`gcd X (2*X) = 2*X`
+  over `F_3`), so raw gcd output cannot supply the `Monic` hypotheses
+  needed by recursive EDF. DDF and both Cantor-Zassenhaus arms use the
+  generic `DensePoly.monicGcd`; the complementary quotient is
+  normalised as well, and the unit is reconciled using the
+  reconstruction theorem. Buckets, work-list entries, and final factors
+  are monic by construction.
 
-Acceptance: the generic code compiles, the `FpPoly` specialisations are
-definitionally the old ones, and the existing conformance fixtures pass
-unchanged.
+Acceptance: the generic code compiles, compatibility wrappers preserve
+the old `FpPoly` behaviour, every stored nonconstant factor is monic,
+and the existing conformance fixtures pass unchanged. The wrappers need
+not be definitionally identical after mandatory monic normalisation;
+factor multisets and the existing public theorem contracts are the
+compatibility criterion.
 
 ### 1b. Proof genericization
 
@@ -583,11 +730,16 @@ arguments.
 Acceptance: no `ZMod64`-specific instance is named anywhere in
 `HexBerlekamp/` outside the specialisation wrappers.
 
+This stage proves the generic algebraic lemmas needed by DDF and the
+later split proofs, including monic-gcd divisibility and quotient
+reconstruction. The EDF and full-pipeline theorem names are introduced
+with the executable definitions in milestones 5 and 6 rather than
+being promised before their statements exist.
+
 ### 1c. Certificates and the tactic: prime-field only, for now
 
-**This SPEC does not generalise the certificate or the tactic**, and an
-earlier draft that proposed adding one field to
-`IrreducibilityCertificate` badly understated the work.
+**This SPEC does not generalise the certificate or the tactic.** Doing
+so is not a one-field change to `IrreducibilityCertificate`:
 `Berlekamp.IrreducibilityCertificate` stores `Array (FpPoly p)` and an
 array of `RabinBezoutWitness p` whose own fields are `FpPoly p`
 (`HexBerlekamp/Irreducibility.lean:101`), and
@@ -600,10 +752,12 @@ So the scope decision, stated once and honoured everywhere below:
 - **Over `F_p`**, everything is as it is today: `factor_poly` and
   `irreducibility` produce `FpPoly.Factored` with `factors_irred`,
   backed by Rabin certificate replay.
-- **Over a general `F_q`**, this library supplies a *runtime*
-  factorization API and no theorem-producing elaborator. The product
-  identity is checkable; per-factor irreducibility is not, because
-  there is no generic certificate to replay.
+- **Over a general `F_q`**, this library supplies a runtime
+  factorization API and generic correctness theorems, but no
+  theorem-producing elaborator. A caller can use the theorems in an
+  ordinary Lean proof. There is no reflected certificate/reifier that
+  turns a computed extension-field factorization into a compact kernel
+  term automatically.
 
 A generic irreducibility certificate is a follow-on item with its own
 SPEC. It is not in scope here, and `FpPoly.Factored`'s `factors_irred`
@@ -635,14 +789,29 @@ f  ──squarefree──▶  (fᵢ, i)  ──DDF──▶  (f_{i,d}, d)  ─�
 
 1. **Square-free decomposition**, which hex-poly-fp already has as
    `FpPoly.squareFreeDecomposition` (`HexPolyFp/SquareFree.lean:40`),
-   generalised along with everything else. Its output is
+   generalised in `HexBerlekamp/SquareFree.lean`. Its output is
    multiplicity-tagged square-free pieces.
 2. **Distinct-degree factorization**, already present as
    `distinctDegreeFactor`, generalised to `q`. Its output is
    `DegreeBucket` values, each recording a product of irreducibles of
    one known degree.
 3. **Equal-degree factorization** of each bucket, which is new.
-4. **Certificate emission**, unchanged in shape.
+4. **Result assembly and correctness**, expanding multiplicities and
+   proving the product and irreducibility contracts. Prime-field tactic
+   certificate emission remains unchanged in shape.
+
+The pipeline-facing DDF result contains only valid buckets and proves
+that their product is its monic square-free input. The current bounded
+`DistinctDegreeFactorization` exposes a separate `residual`; in the
+generic pipeline, a non-unit residual left after the `d ≤ n/2` loop is
+normalised and appended as the final bucket with its remaining degree,
+with the standard theorem that it is irreducible. A compatibility view
+may continue exposing `residual`, but the pipeline may not silently drop
+it or pass it to EDF without a `DegreeBucket.Valid` proof.
+Accordingly, the proof-bearing DDF entry point takes both
+`DensePoly.Monic f` and `DensePoly.SquareFree f`; an unchecked
+compatibility view may retain the old monic-only signature but cannot
+export `distinctDegreeFactor_valid`.
 
 The gain is not asymptotic in the parameter that dominates today. It is
 that stage 3's cost is independent of `q`, where the sweep's is linear
@@ -661,71 +830,119 @@ distinct, which is the common case, and the current factorizer pays a
 ```lean
 namespace Hex.Berlekamp
 
-/-- What a failed split has to report so the caller can resume. -/
-structure SplitFailure where
-  attempts : Nat
-  rand     : Rand
+/-- One monic DDF bucket. -/
+structure DegreeBucket (K : Type u) where
+  degree : Nat
+  factor : DensePoly K
 
-/-- Split a monic square-free `f`, all of whose irreducible factors
-have degree exactly `d`, into two proper factors. A failure is fuel
-exhaustion, never a claim that `f` is irreducible: the caller
-establishes `d < DensePoly.degree f` before calling. -/
-def equalDegreeSplit (f : DensePoly K) (hmonic : DensePoly.Monic f)
-    (d : Nat) (r : Rand) (fuel : Nat) :
-    Except SplitFailure (DensePoly K × DensePoly K × Rand)
+/-- The semantic contract established by DDF: the bucket is nontrivial,
+monic and square-free, and every irreducible divisor has exactly the
+recorded degree. -/
+def DegreeBucket.Valid (b : DegreeBucket K) : Prop :=
+  0 < b.degree ∧
+  DensePoly.Monic b.factor ∧
+  DensePoly.SquareFree b.factor ∧
+  (∃ r, 0 < r ∧ b.factor.degree? = some (r * b.degree)) ∧
+  ∀ g, DensePoly.Irreducible g → g ∣ b.factor →
+    g.degree? = some b.degree
+
+/-- A bounded sampler or split-search failure. The caller still knows
+the bucket it supplied; this value records diagnostics and the next
+stream state, not a hidden recursive checkpoint. -/
+inductive SplitFailure where
+  | random (error : RandError)
+  | exhausted (attempts : Nat) (rand : Rand)
+
+/-- A successful split, including the erased proof payload needed by
+recursive EDF. -/
+structure DegreeSplit (parent : DegreeBucket K) where
+  left right : DensePoly K
+  product     : left * right = parent.factor
+  leftValid   : ({ degree := parent.degree, factor := left } : DegreeBucket K).Valid
+  rightValid  : ({ degree := parent.degree, factor := right } : DegreeBucket K).Valid
+  left_lt     : left.degree?.getD 0 < parent.factor.degree?.getD 0
+  right_lt    : right.degree?.getD 0 < parent.factor.degree?.getD 0
+
+/-- Split a valid bucket whose factor has degree greater than the bucket
+degree into two proper monic factors. -/
+def equalDegreeSplit (b : DegreeBucket K) (hvalid : b.Valid)
+    (hsplit : b.degree < b.factor.degree?.getD 0)
+    (r : Rand) (fuel sampleFuel : Nat) :
+    Except SplitFailure (DegreeSplit b × Rand)
 
 /-- Fully split a bucket into its irreducible factors. -/
-def equalDegreeFactor (f : DensePoly K) (hmonic : DensePoly.Monic f)
-    (d : Nat) (r : Rand) (fuel : Nat) :
+def equalDegreeFactor (b : DegreeBucket K) (hvalid : b.Valid)
+    (r : Rand) (fuel sampleFuel : Nat) :
     Except SplitFailure (List (DensePoly K) × Rand)
 ```
 
-`Except`, not `Option`. An earlier draft returned
-`Option (result × Rand)`, which hands back the advanced generator only
-on success and therefore cannot support the prose promise that a
-failure is reported with its seed and attempt count so the caller can
-resume from where it stopped.
+`Except`, not `Option`. Failures preserve the advanced generator state
+for diagnostics or a new retry, but do not claim to contain the
+recursive factor work-list. Exact replay restarts from the original
+seed; continuation from an internal recursive checkpoint is not part of
+this API.
 
-`d` is an explicit argument and is **not** inferred. Calling with the
-wrong `d` is the caller's obligation, discharged by DDF having produced
-the bucket, and **the product identity does not catch a wrong `d`**: a
-split obtained under the wrong `d` can still multiply back to `f`
-exactly, and a wrong `d` need not exhaust fuel either, since it may
-produce a valid split by accident. What catches it is checking each
-returned leaf has degree `d`, which `equalDegreeFactor` does before
-returning. An earlier draft claimed the product check sufficed and
-required a conformance case asserting fuel exhaustion on a wrong `d`;
-both are removed.
+The degree is explicit in `DegreeBucket`, but it is not accepted without
+its proof. Calling a bare `(f, d)` pair is unsound: for
+`f = (X-a)(X-b)`, supplying `d = 2` makes the degree-based early exit
+return the reducible `f`, and checking that the returned leaf has degree
+`d` does not detect the mistake. Degree `d` implies irreducibility only
+under `DegreeBucket.Valid`. DDF therefore exports
+`distinctDegreeFactor_valid`, and the pipeline passes that theorem into
+EDF. There is no public unchecked entry point and no conformance test
+claiming arbitrary wrong degrees can be detected at runtime.
+
+`equalDegreeFactor` checks the leaf degree as a defensive executable
+invariant, but its irreducibility theorem relies on `hvalid`, not on the
+check alone. Recursive calls use `DegreeSplit.leftValid` and
+`rightValid`; termination is by `b.factor.degree?.getD 0`, decreasing
+through `left_lt` and `right_lt`. The early exit is taken only after the
+validity proof is available.
+
+Milestone 5 exports `split_product`, `split_proper`,
+`split_valid_left`, `split_valid_right`,
+`equalDegreeFactor_product`, `equalDegreeFactor_monic`, and
+`equalDegreeFactor_irreducible`. The exact statements quantify over a
+successful `Except.ok` result and `DegreeBucket.Valid`; the properness
+and inherited-validity facts are required to elaborate the recursive
+definition, not merely post-hoc documentation. Milestone 6 adds
+`factor_product`, `factor_monic`, and `factor_irreducible` for the full
+pipeline.
 
 ### Cantor-Zassenhaus, odd characteristic
 
-For `q` odd. Draw `a ∈ F_q[x]/(f)` uniformly, `deg a < deg f`.
+For `q` odd. The executable sampler draws the next reproducible
+`a ∈ F_q[x]/(f)`, `deg a < deg f`; the analysis below models `a` as
+uniform, as specified in the ideal sampler contract.
 
 ```
 g ← gcd(f, a)                        -- a lucky non-unit split, cheap
-if 1 < deg g < deg f then split
+if 0 < deg g < deg f then split
 b ← a^((q^d − 1)/2) mod f
 g ← gcd(f, b − 1)
-if 1 < deg g < deg f then split
+if 0 < deg g < deg f then split
 otherwise retry with the next draw
 ```
+
+Both tests mean "non-unit proper divisor" and agree with the existing
+`isNontrivialSplitFactor`: a degree-one gcd is a valid split and must
+not be rejected. This is essential for every `d = 1` bucket.
 
 The powering is the cost: exponent `(q^d − 1)/2` has `d · log q` bits,
 so one attempt is `d log q` modular squarings at `O(n²)` each, `n` the
 degree of the bucket.
 
-Why it works, stated because this is where an implementation and an
-earlier draft of this SPEC both go wrong. Write `f = ∏_{j<r} f_j` with
+Why it works: write `f = ∏_{j<r} f_j` with
 each `f_j` irreducible of degree `d`, and `Q = q^d`. By CRT,
 `F_q[x]/(f) ≅ ∏_j F_Q`, and `a` is a uniform independent element of
-each coordinate. In `F_Q` with `Q` odd, `x^{(Q−1)/2}` is `0` at `x = 0`
+each coordinate **under the ideal sampler model**. In `F_Q` with `Q`
+odd, `x^{(Q−1)/2}` is `0` at `x = 0`
 and `±1` otherwise, taking each sign on exactly half the nonzero
 elements.
 
 The subset of coordinates where `b − 1` vanishes is **not**
 unconditionally uniform, because a coordinate with `a = 0` gives
-`b = 0`, not `b = ±1`. The earlier draft asserted uniformity and drew
-the bound from it. The first `gcd(f, a)` step is what handles those
+`b = 0`, not `b = ±1`. The first `gcd(f, a)` step handles those
 coordinates -- it is not an optimisation and must not be dropped -- and
 conditioning on all coordinates being nonzero gives the exact
 per-attempt failure probability
@@ -753,24 +970,35 @@ on exactly half of `F_{q^d}`, and the same coordinate argument gives
 the same `2^{1−r}` failure bound.
 
 **How to compute it.** Squaring is `F_2`-linear, not `K`-linear, so
-there is no `Matrix K` implementing it and an earlier draft's "`dm − 1`
-applications of the squaring Frobenius matrix" is not an available
-algorithm. Two routes are:
+there is no `Matrix K` implementing it. Two routes are:
 
 - `dm − 1` squarings and additions directly in `F_q[x]/(f)`, at
   `O(d m n²)`; or
 - trace transitivity,
   `Tr_{F_{q^d}/F_2} = Tr_{K/F_2} ∘ Tr_{F_{q^d}/K}`, computing the
   relative trace `a + a^q + ⋯ + a^{q^{d−1}}` with `d − 1` applications
-  of the `q`-Frobenius matrix (which does exist), then applying the
-  coefficient-field absolute trace elementwise.
+  of the `q`-Frobenius matrix for the **current bucket modulus**, then
+  computing `t + t² + ⋯ + t^{2^{m-1}}` by `m − 1` squarings in
+  that same quotient.
 
-The second is specified, because it costs `d` matrix-vector products
-rather than `dm` quotient squarings and it reuses the matrix the
-distinct-degree stage already built.
+The second is specified. It costs one matrix construction per split
+node, `d − 1` matrix-vector products per attempt, and `m − 1`
+quotient squarings per attempt. The matrix is reused across attempts at
+that node, but is neither the DDF parent matrix nor reusable by child
+factors.
+
+Applying `Tr_{K/F_2}` **coefficientwise is forbidden**. A quotient
+element fixed componentwise by the `q`-Frobenius need not be represented
+by a polynomial whose coefficients can be traced independently. For
+example, with `K = F_4`, `ω²+ω+1=0`,
+`f = X(X+ω)`, and `a=X`, the relative trace for `d=1` is `X`, while
+the coefficientwise trace sends it to zero because
+`Tr_{K/F_2}(1)=0`; the correct quotient absolute trace is
+`X+X² mod f = ω²X`. The quotient squarings in the specified
+algorithm are therefore mathematically necessary.
 
 Dispatch is on `FiniteFieldOps.char K = 2`, decided once at the top of
-`equalDegreeSplit?`. The two branches share the draw, the gcd, the
+`equalDegreeSplit`. The two branches share the draw, the gcd, the
 retry loop, and the fuel accounting, and differ only in the map applied
 to `a`. They are one function with two arms, not two functions.
 
@@ -779,27 +1007,41 @@ The trace arm generalises to any `char = p` as
 by `gcd(f, T(a) − c)` swept over `c ∈ F_p`. That is a `p`-wide sweep
 again, so it is worth having only for `p = 2` where the sweep is one
 value. The SPEC specifies the `p = 2` case and records the general
-form here so the next reader does not rediscover it and mistake it for
-an improvement.
+form here as an explicitly deferred variant.
 
 ### Totality, and what a failure means
 
-`equalDegreeFactor` returns `Except`, and the failure propagates to the
-generic public entry point:
+`equalDegreeFactor` returns `Except`, and both sampler and split
+exhaustion propagate to the generic public entry point:
 
 ```lean
-def factor (f : DensePoly K) (hmonic : DensePoly.Monic f)
-    (r : Rand) (fuel : Nat) :
+def factorWithRand (f : DensePoly K) (hmonic : DensePoly.Monic f)
+    (r : Rand) (fuel sampleFuel : Nat) :
     Except SplitFailure (Factorization K × Rand)
+
+def factor (f : DensePoly K) (hmonic : DensePoly.Monic f)
+    (seed : Nat := 0) (fuel : Nat := 40)
+    (sampleFuel : Nat := 128) :
+    Except SplitFailure (Factorization K)
 ```
 
 This is the third remedy design principle 8 names: propagate the
 failure upward until the public API takes responsibility for it. No
 total form of `equalDegreeSplit` is introduced, and none should be.
 
-The existing total `berlekampFactor : FpPoly p → Factorization p` stays
-exactly as it is, and stays total. On a prime field the sweep is a
-complete deterministic algorithm, so nothing is lost. The generic entry
+The existing total `berlekampFactor` remains as a compatibility wrapper
+returning `Factorization (ZMod64 p)`, and stays total. It first runs the
+guarded pipeline; if that returns `SplitFailure`, it runs the existing
+complete, unguarded prime-field sweep. This single fallback site is
+classified as `audited-emergency-value` under design principle 8: the
+fallback is deterministic and mathematically complete, its product is
+checked before return, its correctness theorem is retained, and the
+prime-field tactic still replays irreducibility certificates. No other
+caller converts `SplitFailure` to a value. The prime-field regression
+benchmarks this public wrapper, including cases on both sides of the
+sweep threshold.
+
+The generic entry
 point can fail because over a large extension field there is no
 practical deterministic fallback: deterministic polynomial-time
 factorization over `F_q` for large `q` is open without GRH, and a
@@ -811,11 +1053,19 @@ rather than being asserted. A bucket with `r` irreducible factors needs
 attempt fails with probability at most `2^{-1}`. So a bucket fails with
 probability at most `(r − 1) · 2^{-fuel}`, and an input whose buckets
 have `r_1, …, r_t` factors fails with probability at most
-`(Σ (r_i − 1)) · 2^{-fuel} ≤ deg f · 2^{-fuel}`. An earlier draft said
-`2^{-fuel}` flat and did not say what fuel was measured per; both are
-fixed. `fuel = 40` puts the bound below `2^{-30}` for any input this
-tree will see, and the default is stated in terms of that bound rather
-than picked.
+`(Σ (r_i − 1)) · 2^{-fuel} ≤ deg f · 2^{-fuel}`. `fuel = 40`
+puts the ideal-model bound at or below `2^{-30}`
+for input degree at most `2^10`. Callers requiring the same bound at
+larger degree choose `fuel ≥ 30 + ⌈log₂ (deg f)⌉`; the API exposes
+the parameter rather than claiming 40 is universally sufficient.
+
+`sampleFuel` is a separate engineering bound for the concrete
+rejection sampler. It does not enter the ideal Cantor-Zassenhaus
+probability bound. A failure returns the advanced generator and can be
+retried for the same known split input. `equalDegreeFactor` does not
+claim to preserve a hidden recursive checkpoint: retrying its public
+call restarts the work-list, either from the original seed for exact
+replay or from the returned state for a different deterministic run.
 
 ### Certificates
 
@@ -827,29 +1077,36 @@ The randomised search sits entirely outside that: `equalDegreeSplit`
 proposes two factors, the product check accepts them, and no property
 of the draw, the fuel, or the seed enters any proof term.
 
-**Over a general `F_q` there is no certificate**, per the scope
-decision in Amendment 1c. The generic API returns a decomposition whose
-product identity is checkable and whose factors are irreducible because
-the algorithm is correct, not because anything replays. Callers that
-need a proof use the prime-field path.
+**Over a general `F_q` there is no reflected certificate**, per the
+scope decision in Amendment 1c. There are nevertheless generic Lean
+correctness theorems. For a successful `factorWithRand` result they
+prove the stored product equals the monic input and every stored factor
+is monic and `DensePoly.Irreducible`. The proof composes the generic
+square-free, DDF-validity, split-product, and valid-bucket leaf theorems;
+it does not appeal to the sentence "the algorithm is correct" as an
+unstated assumption. Callers that want automatic compact kernel replay
+use the prime-field tactic path.
 
 Two additions on the prime-field path:
 
 - EDF output carries the bucket degree `d`, and the pipeline checks
-  `DensePoly.degree g = d` for each returned factor. This is what
-  catches a wrong `d`, as set out above, and it is cheap where the
-  irreducibility replay is not.
+  `g.degree? = some d` for each returned factor as a defensive
+  invariant. The proof that this makes the leaf irreducible uses
+  `DegreeBucket.Valid`; the check is not advertised as validating an
+  arbitrary caller-supplied `d`.
 - The `Factored` structure and the `factor_poly` term-level contract
   (`scalar`, `factors`, `factors_mul`, `factors_irred`) are unchanged.
 
 ## Complexity
 
-Counting field operations, with setup and per-step costs separated
-because an earlier draft of this SPEC conflated them. `n` is the degree
+Counting field operations, with setup and per-step costs separated.
+`n` is the degree
 of the input, `q = card K`, `r` the number of irreducible factors of a
 bucket, `d` a bucket degree, `m = deg K`.
 
-**Setup, once per input.**
+**DDF setup, once per square-free component.** If the input is already
+square-free this is once; repeated-factor inputs may have several
+component moduli.
 
 | stage | cost |
 |---|---|
@@ -860,13 +1117,15 @@ bucket, `d` a bucket degree, `m = deg K`.
 
 | stage | cost | note |
 |---|---|---|
-| square-free, per Yun level | `O(n²)` | unchanged |
+| square-free, ordinary Yun level | `O(n²)` | derivative/gcd/division |
+| square-free, zero-derivative root | `O(n m C_frob)` | `frobInv` on at most `n` coefficients; `C_frob` is one coefficient Frobenius |
 | DDF, per degree | `O(n²)` | one matrix-vector product plus one gcd |
 | DDF, all degrees | `O(n³)` | at most `n/2` steps |
 | Berlekamp kernel | `O(n³)` | row reduction of `Q - I` |
 | constant sweep, per witness | `O(q n²)` | **the term this item removes** |
 | CZ attempt, odd `q` | `O(d n² log q)` | one modular powering |
-| CZ attempt, `q = 2^m` | `O(d n²)` + one absolute trace | `d` matrix-vector products |
+| binary CZ setup, per split node | `O(n³)` | matrix for that node's modulus |
+| CZ attempt, `q = 2^m` | `O((d + m)n²)` | `d` matrix-vector products plus `m` quotient squarings |
 
 **Totals.** Splitting one bucket of `r` factors costs `r − 1` splits at
 an expected two attempts each. Factoring one input is setup plus DDF
@@ -883,10 +1142,11 @@ version was not:
   factor of 64 into every modular powering. That is exactly the regime
   where the characteristic-two trace arm, which does no powering at
   all, is the one that runs.
-- **The characteristic-two row counts `q`-Frobenius applications**, not
-  quotient squarings, per the trace-transitivity implementation above.
+- **The characteristic-two row counts both operations required by trace
+  transitivity**: `q`-Frobenius applications for the relative trace and
+  quotient squarings for the absolute trace. It also charges a fresh
+  matrix setup after every successful split because the modulus changes.
 
-## Kernel exposure
 ## Kernel exposure
 
 The kernel replay closure is unchanged: `DensePoly.beqCoeffs`, the
@@ -895,78 +1155,105 @@ stays prime-field only, per Amendment 1c, so the existing budget guard
 `deg · p ≤ 2^{26}` (`HexBerlekamp/TacticCore.lean:156`) is unchanged
 too.
 
-An earlier draft proposed replacing `p` with `card K` and claimed that
-"therefore refuses every extension field". It does not: `F_4` and `F_8`
-pass a cost bound comfortably. The guard is a cost limit and nothing
-else, and the restriction to coefficient-field degree one is a separate,
-explicit check with its own error message.
+The tactic remains statically specialised to `FpPoly p`, so extension
+fields never reach this guard and `p` is not replaced by `card K`.
+There is consequently no new runtime "coefficient degree one" check to
+specify. A future generic tactic would need both a representation check
+and a separately measured cost guard; neither is inferred from this
+SPEC.
 
-Nothing in `equalDegreeSplit?`, `Rand`, `frobeniusMatrix`, or the DDF
+Nothing in `equalDegreeSplit`, `Rand`, `frobeniusMatrix`, or the DDF
 loop is in the closure, and none of it should be `@[expose]`.
 
-`FiniteFieldOps.ofIndex` and `toIndex` are `@[expose]`, because the
-guarded constant sweep reaches them on the prime-field path that
-already replays in the kernel.
+`FiniteFieldOps.ofIndex` and `toIndex` are runtime enumeration
+operations and are not marked `@[expose]` merely for this project. The
+prime-field kernel replay keeps using its existing direct `ZMod64`
+constant construction; the random sampler and generic enumeration do
+not enter the replay closure. Any future generic tactic must specify and
+measure a new closure before changing these annotations.
 
 ## Conformance
 
 Per [SPEC/testing.md](../testing.md). The generic algorithms live in
-hex-berlekamp, so its existing driver and fixture file extend rather
-than a new tuple being added:
+hex-berlekamp, so its existing prime-field driver and fixture file
+extend rather than a new tuple being added:
 `conformance/HexBerlekamp/EmitFixtures.lean` gains fixture kinds, and
 `scripts/oracle/berlekamp_flint.py` gains the matching arms. A new
 tuple is appended to `ORACLES` in `scripts/ci/run_oracles.sh` only for
 `HexFiniteField` itself:
 
 ```
-"HexFiniteField|hexfinitefield_emit_fixtures|scripts/oracle/finitefield_flint.py|conformance-fixtures/HexFiniteField/finitefield.jsonl"
+"HexFiniteField|hexfinitefield_emit_fixtures|scripts/oracle/polyfp_flint.py|conformance-fixtures/HexFiniteField/finitefield.jsonl"
 ```
+
+HexFiniteField can instantiate only `ZMod64 p`, so the tuple uses the
+existing `scripts/oracle/polyfp_flint.py`, not an `fq_default` driver.
+The extension-field arms live in hex-gfq's existing tuple and reuse
+`gfq_flint.py` / the persistent `fq_default` codec. There is no second
+finite-field encoding implementation.
 
 Fixture kinds: `ffops` (cardinality, index round trip, Frobenius on
 sampled elements), `frobmat` (the Frobenius matrix of a given modulus),
-and, in hex-berlekamp, `edf` (bucket, degree, factor list).
+and, in hex-berlekamp, `edf` (a DDF-produced valid bucket and factor
+list). Concrete extension-field end-to-end fixtures and route tests are
+added to hex-gfq's existing conformance driver, the first existing
+library above the instance libraries and hex-berlekamp.
 
 Cases that must be present, chosen because each catches a specific way
 this can be wrong:
 
-- **`p`-power versus `q`-power Frobenius.** A polynomial over
+- **`p`-power versus `q`-power Frobenius (HexGFq).** A polynomial over
   `F_{p^2}` whose factorization differs from the answer the `p`-power
   Berlekamp matrix would give. This is the one silent failure mode of
   Amendment 1, and the fixture exists to catch it.
-- **A bucket that is already irreducible** (`deg f = d`), which must
-  not enter `equalDegreeSplit?` at all.
-- **A bucket with `r = 2`**, the worst case for the split probability.
-- **A bucket with `r` large** and `d = 1`, so the answer is a full
+- **A bucket that is already irreducible (HexBerlekamp and HexGFq)**
+  (`deg f = d`), which must
+  not enter `equalDegreeSplit` at all.
+- **A bucket with `r = 2` (HexBerlekamp and HexGFq)**, the worst case
+  for the split probability.
+- **A bucket with `r` large (HexBerlekamp and HexGFq)** and `d = 1`, so the answer is a full
   linear factorization.
-- **Characteristic two** at `m = 1` (so `q = 2` and the trace is over
-  `F_2` directly) and at `m > 1`, since the trace length is `dm` and an
-  implementation that uses `d` passes the first and fails the second.
-- **`q = 3` and `q = 5`**, small odd `q`, where `(q^d − 1)/2` is small
+- **Characteristic two**, with `m = 1` in HexBerlekamp and `m > 1` in
+  HexGFq. The latter includes the concrete
+  `F_4`, `f=X(X+ω)`, `a=X` regression: coefficientwise base-field
+  trace returns zero while quotient-level absolute trace returns a
+  nonzero split.
+- **`q = 3` and `q = 5` (HexBerlekamp)**, small odd `q`, where `(q^d − 1)/2` is small
   and an off-by-one in the exponent is visible.
-- **A wrong `d`**, supplied deliberately, checking the leaf-degree
-  validation rejects it. Not a fuel-exhaustion case: a wrong `d` may
-  produce a valid-looking split, and the product identity does not
-  notice.
-- **Seed reproducibility**: the same seed gives the same factor list in
+- **The proof-bearing bucket boundary (HexBerlekamp).** Tests construct EDF inputs only
+  through DDF and exercise `distinctDegreeFactor_valid`. There is no
+  runtime "wrong `d` is rejected" test, because no such complete
+  validation is possible from leaf degree and product checks.
+- **Seed reproducibility (HexBerlekamp and HexGFq)**: the same seed gives the same factor list in
   the same order, on every platform.
-- **Prime-field agreement**: for every existing hex-berlekamp fixture,
+- **Prime-field agreement (HexBerlekamp)**: for every existing hex-berlekamp fixture,
   the generic path at `deg K = 1` returns the same factor multiset as
   `berlekampFactor`. Checked in Lean, not against the oracle, since
   both sides are ours.
+- **Fallback audit (HexBerlekamp)**: above the sweep threshold with
+  zero split fuel, `factorWithRand` returns `SplitFailure` while the
+  total `berlekampFactor` wrapper takes its sole audited exhaustive-sweep
+  fallback, passes the product check, and returns the certified factor
+  multiset.
 
 **Oracle choice.** FLINT's `fq_default_poly_factor` covers factoring
-over `F_q` for both prime and extension fields, and
-`fq_default_poly_factor_equal_deg` covers the equal-degree stage
-directly, so the EDF surface has a like-for-like oracle rather than an
-end-to-end one. `nmod_poly_factor_distinct_deg`, already wired for
+over `F_q` for both prime and extension fields. The direct
+`fq_default_poly_factor_equal_deg` C entry point covers EDF, but
+python-flint exposes full and square-free factorisation rather than this
+route-level function. The existing persistent oracle subprocess gains a
+small C binding (or equivalent compiled helper) for the direct EDF call;
+the SPEC does not pretend a Python method already exists. The binding
+enforces FLINT's preconditions that the input be monic, nonconstant, and
+square-free. `nmod_poly_factor_distinct_deg`, already wired for
 `runDistinctDegreeChecksum`, covers the DDF stage. Factor lists are
 compared as multisets after monic normalisation, since neither side
 promises an order that the other shares.
 
 **An end-to-end fixture cannot catch a broken EDF.** If
-`equalDegreeSplit?` never succeeds, the pipeline falls through to the
-sweep on a small field and returns the right answer. So the suite needs
-route-level tests in Lean asserting that EDF produced the split, that
+the dispatcher selects the sweep on a small field, EDF is never called
+and the pipeline returns the right answer even if EDF is broken. So the suite needs
+route-level tests in Lean (in hex-berlekamp for prime fields and
+hex-gfq for concrete extensions) asserting that EDF produced the split, that
 the sweep did not run, and that the attempt count was within the
 expected range for the seed. This is the same split
 [hex-mv-gcd](hex-mv-gcd.md) makes between route-level tests and oracle
@@ -974,8 +1261,12 @@ fixtures, and for the same reason.
 
 ## Benchmarking
 
-Per [SPEC/benchmarking.md](../benchmarking.md), with drivers extending
-`bench/HexBerlekamp/Bench.lean` and a new `bench/HexFiniteField/Bench.lean`.
+Per [SPEC/benchmarking.md](../benchmarking.md). Prime-field and generic
+interface families extend `bench/HexBerlekamp/Bench.lean` and a new
+`bench/HexFiniteField/Bench.lean`. Concrete extension-field and binary
+families extend `bench/HexGFq/Bench.lean`, which is already above
+hex-gfq-field, hex-gf2, and hex-berlekamp; placing them in either lower
+driver would create the same cycle avoided by the conformance layout.
 Native only; the kernel path is certificate replay, which
 hex-berlekamp's existing suite measures.
 
@@ -988,30 +1279,43 @@ Families:
   a regression here blocks the change regardless of how good the
   extension-field numbers are.
 - **Sweep crossover**, one input family swept over `q` from `3` to the
-  largest prime the `ZMod64` bounds allow, timing the sweep path and
-  the EDF path separately on the same inputs. The output is the
-  measured threshold, which is then committed as the guard constant.
+  largest prime below `2^16`, timing the sweep path and the EDF path
+  separately on the same inputs. Exhaustively approaching the
+  `ZMod64.Bounds` ceiling near `2^31` would itself require billions of
+  sweep gcds and is not a benchmark. The crossover sweep runs on the
+  scheduled dedicated-hardware workflow; merge-gating CI retains a
+  small regression set around the committed threshold. The guard is
+  selected from the measured window and conservatively extrapolated,
+  then checked by those regression points.
 - **Extension-field factoring**, `F_{p^m}` for `m` from `2` to the
   largest committed Conway degree, and `F_{2^m}` through hex-gf2's
-  packed representation for `m` up to `64`. There is no prior art in
-  this tree to regress against; the comparator is FLINT.
+  packed `GF2n` representation for `m ≤ 63`. Degree 64 and larger
+  binary cases use `GF2nPoly`. There is no prior art in this tree to
+  regress against; the comparator is FLINT.
 - **DDF-only inputs**, where all factor degrees are distinct so EDF
   never runs. Measures the pipeline's overhead on the common case.
 - **Equal-degree stress**, `r` copies of degree-`d` irreducibles for
   `r` from `2` to `32`, which is the family where the `2^{1−r}` bound
   is exercised and where a wrong retry policy shows up as variance
   rather than as a wrong answer.
-- **Characteristic two**, the trace arm, at `m = 1, 8, 32, 64`.
+- **Characteristic two**, the trace arm, at `m = 1, 8, 32, 63` through
+  packed `GF2n`, and at `m = 64` through `GF2nPoly`.
+
+The last two families are owned by `bench/HexGFq/Bench.lean`; neither
+hex-finite-field nor hex-berlekamp imports the concrete instance
+libraries for benchmarking.
 
 **Comparators.** FLINT `fq_default_poly_factor` via python-flint,
-**gating** on the extension-field family: it is the same operation with
-the same algorithm class, and there is no structural reason for a gap.
+**informational** on the extension-field family. FLINT's full factorizer
+selects among tuned algorithms, including Kaltofen-Shoup regimes this
+SPEC does not implement, and its representation differs from both Hex
+extension representations; a gating ratio would not isolate this
+project's algorithm. Correctness fixtures remain gating.
 FLINT `nmod_poly_factor` remains gating on the prime-field family as it
 is today. FLINT `fq_default_poly_factor_equal_deg` is **informational**
-on the equal-degree family: it is the same algorithm, but FLINT selects
-between Cantor-Zassenhaus and Kaltofen-Shoup by a tuned crossover this
-SPEC does not specify, so a required ratio would be a check on an
-algorithm that is not implemented here.
+on the equal-degree family. The direct C function has the same semantic
+operation, but its implementation and representation are not a stable
+like-for-like performance contract.
 
 No advance ratio is claimed on the characteristic-two family: hex-gf2's
 packed representation and FLINT's `fq_zech` are different
@@ -1023,21 +1327,41 @@ representations of the same field, and which wins is the measurement.
 interface means what its name says.
 
 ```lean
-variable {K : Type u} [Lean.Grind.Field K] [DecidableEq K]
+variable {K : Type u} [Field K] [DecidableEq K]
   [FiniteFieldOps K] [LawfulFiniteField K]
 
-instance : Fintype K
+instance (priority := 50) : Fintype K
 theorem card_eq : Fintype.card K = Hex.card K
-theorem charP : CharP K (FiniteFieldOps.char K)
+instance (priority := 50) charP : CharP K (FiniteFieldOps.char K)
+theorem char_prime : Nat.Prime (FiniteFieldOps.char K)
+local instance : Fact (Nat.Prime (FiniteFieldOps.char K)) := ⟨char_prime⟩
 theorem frob_eq_frobenius : FiniteFieldOps.frob = frobenius K (FiniteFieldOps.char K)
 ```
+
+These signatures require Mathlib's `Field K`. Mathlib installs
+`Field.toGrindField` at priority 100; there is intentionally no reverse
+instance from `Lean.Grind.Field` to `Field`, so the weaker context from
+the Mathlib-free layer does not elaborate here. The characteristic
+bridge is an instance before `frobenius` is mentioned, and the existing
+`HexBerlekampMathlib.nat_prime_of_hex` proof is relocated to
+hex-mod-arith-mathlib as the generic `Hex.Nat.Prime → Nat.Prime`
+bridge (with a compatibility theorem left behind). Both companions
+already need the modular-arithmetic correspondence layer, and this
+keeps a fact about `Nat` out of either factoring or finite-field
+namespaces. It supplies the local `Fact` used by Mathlib's
+`ExpChar`/Frobenius API.
 
 `Fintype K` follows from `ofIndex` / `toIndex` being mutually inverse
 on `[0, card)`, which is why those are laws rather than conveniences:
 without them the class describes a field with a `Nat` attached and
-proves nothing. `charP` is a transport of the `Lean.Grind.IsCharP`
-that `LawfulFiniteField` now extends, not a consequence of the other
-fields.
+proves nothing. `charP` is a transport of the locally installed
+`LawfulFiniteField.isCharP`, not a consequence of the other fields.
+
+The generic `Fintype` and `CharP` instances have deliberately low priority. Current
+`GFqField`/`GFq` and binary Mathlib companions already provide concrete
+instances; when both are imported their specialised instances win,
+avoiding an instance-choice regression while the concrete companions
+are migrated to reuse the generic enumeration.
 
 **The concrete transports do not live here.** hex-gfq-mathlib is above
 hex-gfq (`libraries.yml`), and the generic companion is below both and
@@ -1046,12 +1370,13 @@ must stay there, so the `GFq`/`GaloisField` transport cannot be in
 cardinality, and characteristic statements here; the `ZMod64 p ≃+* ZMod p`
 transport already in hex-mod-arith-mathlib; the `FiniteField` and `GFq`
 transports in hex-gfq-mathlib, which already promises
-`Fintype (FiniteField p f hf hirr)` and `card = p ^ f.degree`. An
-earlier draft put all of them here and would have inverted the graph.
+`Fintype (FiniteField p f hf hirr)` and `card = p ^ f.degree`.
 
-The factoring correctness statements stay in
+The Mathlib correspondence statements stay in
 **hex-berlekamp-mathlib**, generalised the same way the executable
-layer is: `irreducible_of_mem_berlekampFactor` and `rabin_irreducible`
+layer is: the DensePoly correctness theorems above are transported to
+`Polynomial K`, alongside generic versions of
+`irreducible_of_mem_berlekampFactor` and `rabin_irreducible`
 over `Polynomial K` for `K` a Mathlib `Field` with `Fintype`, rather
 than over `Polynomial (ZMod p)`. Mathlib's `Polynomial.roots`,
 `Polynomial.expand`, and the `ZMod p`-specific arguments in the current
@@ -1060,62 +1385,86 @@ Mathlib supports are `FiniteField.pow_card`, `FiniteField.card`, and
 `Polynomial.card_nthRoots`, which is what the generic proof should be
 built from.
 
-**The equal-degree stage needs no new Mathlib-side theorem.** It
-returns a decomposition that the existing product check and existing
-per-factor irreducibility certificate certify. The `2^{1−r}` probability
-bound is a statement about the running time and appears in no proof
-term, which is the point of the Las Vegas design and the reason it is
-cheap here.
+The equal-degree stage therefore does need named generic correspondence
+theorems, even though it needs no probability theorem. The required
+surface includes `equalDegreeFactor_product`,
+`equalDegreeFactor_irreducible`, `factor_product`, and
+`factor_irreducible` (or short namespace-equivalent names) for the
+Mathlib `Polynomial` view. The `2^{1−r}` probability bound is a
+running-time statement under the ideal sampler and appears in no proof
+term.
 
 ## Milestones
 
-The prerequisites come first, and they are most of the work. Numbering
-them as milestones rather than listing them as assumptions is the main
-correction this SPEC made after review.
+The prerequisites come first, and they are most of the work.
 
 0. **Prerequisites.** The quotient-representation bridge for
-   `pow_card`; Mathlib-free `DivModLaws` / `GcdLaws` from
-   `Lean.Grind.Field`; `Hex.Rand` in hex-basic with rejection sampling;
+   `pow_card`; Mathlib-free `DivModLaws` / `GcdLaws`, generic
+   `DensePoly.Irreducible` / `SquareFree`, and generic
+   `normalizeMonic` / `monicGcd` with their laws (only the unconditional
+   square-free-to-no-repeated-divisor direction is proved here); `Hex.Rand` in
+   hex-basic with fuel-bounded rejection sampling and explicit errors;
    the hex-poly relocation of `powModMonic` and `composeModMonic`, each
    with its kernel-facing name, runtime twin, and `@[csimp]` equality
    restated after the move.
 
 1. **The interface and the prime-field instance.** `FiniteFieldOps`,
-   `LawfulFiniteField` (extending `IsCharP`), and the `ZMod64 p`
+   `LawfulFiniteField` (carrying `IsCharP` as a non-instance field), and the `ZMod64 p`
    instance with `pow_card` from `Hex.Nat.pow_prime_mod`. Complete when
-   the instance typechecks with no `sorry`.
+   the instance typechecks with no `sorry`; proofs may rewrite
+   `p ^ 1 = p` and are not required to close by `rfl`.
 
-2. **The extension-field instance**, on top of milestone 0's bridge.
+2. **The extension-field instance**, on top of milestone 0's bridge,
+   including the Mathlib-free re-proof of the base-`p` index codec laws
+   and quotient canonicality in `HexGFqField/Index.lean`.
 
 3. **The generic quotient layer.** `frobeniusXMod` as
    `powModMonic X f (card K)`, `frobeniusMatrix`, `frobeniusApply`, and
-   the `frob = id` prime-field fast path, with the `ffops` and
+   coefficient `frobInv`, with the `ffops` and
    `frobmat` conformance fixtures.
 
 4. **Amendment 1a and 1b.** hex-berlekamp generalised in executables
-   and then in proofs, `FpPoly p` entry points preserved. The
+   and then in proofs, including the generic `Factorization K`, monic
+   DDF buckets, `DegreeBucket.Valid`, `distinctDegreeFactor_valid`, and
+   the DDF correctness surface. The finite-field converse connecting
+   the square-free gcd criterion to absence of repeated irreducible
+   divisors is proved here under `LawfulFiniteField`. `FpPoly p` entry points are
+   preserved. The
    prime-field regression benchmark family decides whether this lands:
    it does so only if the existing numbers hold.
 
-5. **Amendment 2, odd characteristic.** `equalDegreeSplit`,
-   `equalDegreeFactor`, the four-stage pipeline, the guarded sweep, and
-   the measured threshold.
+5. **Amendment 2, odd characteristic on valid square-free buckets.**
+   `equalDegreeSplit`, `equalDegreeFactor`, their product/monicity/
+   irreducibility theorems, the guarded sweep, and the measured
+   threshold. This milestone does not yet claim an arbitrary-input
+   four-stage factorizer.
 
 6. **Generic square-free decomposition** (prerequisite 4), including
-   the inverse-Frobenius coefficient `p`-th root. Needed before the
-   generic pipeline is complete on inputs with repeated factors.
+   the inverse-Frobenius coefficient `p`-th root, followed by assembly
+   of the full four-stage `factorWithRand` / `factor` pipeline and its
+   product, monicity, and irreducibility theorems. This ordering makes
+   the milestone's arbitrary-input claim true.
 
-7. **The packed `GF(2^n)` tower** (prerequisite 5): `DecidableEq`,
-   `Lean.Grind.Field`, and `Lean.Grind.IsCharP` for `GF2n`, then the
-   instance. `GF2q` inherits it as an abbreviation; any explicit
-   `GF2q` API stays in hex-gfq.
+7. **The binary-field towers** (prerequisite 5): `DecidableEq` for
+   `GF2n` (already present for `GF2nPoly`), and
+   `Lean.Grind.Field` / `Lean.Grind.IsCharP` for both types, then both
+   finite-field instances. `GF2q` inherits the
+   packed instance only in its existing `n < 64` range; degree 64 uses
+   `GF2nPoly`.
 
 8. **Amendment 2, characteristic two.** The trace arm, via trace
-   transitivity, on top of milestone 7.
+   transitivity with quotient-level squarings, on top of milestone 7.
+   Acceptance includes the `F_4` coefficientwise-trace counterexample
+   and rebuilds the Frobenius matrix for each changed modulus.
 
-9. **The companion.** `Fintype`, `card_eq`, `charP`, and the
-   generalisation of hex-berlekamp-mathlib's correctness theorems.
-   Begins after milestone 1 and runs in parallel with 3 onward.
+9. **The companions, in dependency order.** The low-priority generic
+   `Fintype`, `card_eq`, `CharP` instance, and Frobenius
+   correspondence in hex-finite-field-mathlib may begin after milestone
+   1; the generic `Hex.Nat.Prime → Nat.Prime` bridge moves first to
+   hex-mod-arith-mathlib. The hex-berlekamp-mathlib product and irreducibility
+   correspondence theorems begin only after the executable statements
+   they mention exist (milestone 5 for EDF and milestone 6 for the full
+   pipeline; milestone 8 for the binary trace arm).
 
 A generic irreducibility certificate and a generic `factor_poly` are
 **not** on this list; see Amendment 1c.
@@ -1126,7 +1475,7 @@ A generic irreducibility certificate and a generic `factor_poly` are
 HexFiniteField/
   Ops.lean          -- FiniteFieldOps, LawfulFiniteField, card
   Prime.lean        -- the ZMod64 p instance and pow_card
-  Frobenius.lean    -- frobeniusXMod, frobeniusMatrix, frobeniusApply
+  Frobenius.lean    -- frobInv, frobeniusXMod/matrix/apply
 HexFiniteField.lean
 HexFiniteFieldMathlib/
   Card.lean         -- Fintype, card_eq, charP, frob_eq_frobenius
@@ -1137,9 +1486,12 @@ New files in existing libraries:
 
 ```
 HexBasic/Rand.lean                  -- splitmix64
+HexModArithMathlib/Prime.lean       -- Hex.Nat.Prime to Nat.Prime
+HexGFqField/Index.lean              -- Mathlib-free base-p index codec
 HexGFqField/FiniteFieldOps.lean     -- the extension-field instance
-HexGF2/FiniteFieldOps.lean          -- the packed GF(2^n) instance
-HexBerlekamp/EqualDegree.lean       -- equalDegreeSplit?, equalDegreeFactor?
+HexGF2/FiniteFieldOps.lean          -- GF2n and GF2nPoly instances
+HexBerlekamp/SquareFree.lean        -- generic square-free decomposition
+HexBerlekamp/EqualDegree.lean       -- equalDegreeSplit, equalDegreeFactor
 HexBerlekamp/Pipeline.lean          -- the four-stage dispatch
 ```
 
@@ -1155,17 +1507,33 @@ neighbourhood, with `FpPoly` abbreviations left behind.
     deps: [HexArith, HexModArith, HexPoly, HexPolyFp, HexMatrix, HexBasic]
     mathlib: false
     done_through: 0
-    status: draft
+    status: planned
   HexFiniteFieldMathlib:
-    deps: [HexFiniteField, HexModArithMathlib, HexPolyMathlib]
+    deps: [HexFiniteField, HexModArithMathlib]
     mathlib: true
     done_through: 0
-    status: draft
+    status: planned
 ```
 
-and the following existing entries gain a dependency: `HexBerlekamp`
+`status: planned` records that the API contracts, correctness
+obligations, dependency placement, failure semantics, and acceptance
+tests are now closed. The measured sweep threshold is a milestone
+output, not a design blocker.
+
+The following existing entries gain a dependency: `HexBerlekamp`
 on `HexFiniteField`, `HexGFqField` on `HexFiniteField`, `HexGF2` on
-`HexFiniteField`.
+`HexFiniteField`, and `HexBerlekampMathlib` on
+`HexFiniteFieldMathlib`. The latter edge is required by the generic
+`CharP`, cardinality, and Frobenius correspondence used in its proofs.
+
+`lakefile.lean` changes in the same milestone: it gains
+`lean_lib HexFiniteField`, default target
+`lean_lib HexFiniteFieldMathlib`, and
+`lean_exe hexfinitefield_emit_fixtures` rooted at
+`HexFiniteField.EmitFixtures`, plus `lean_exe hexfinitefield_bench`
+rooted at `HexFiniteField.Bench`. These declarations are part of the DAG
+acceptance check; updating only `libraries.yml` fails
+`libgraph.check_lakefile_alignment`.
 
 `HexGF2` currently depends on `[HexPoly, HexBasic]`, so adding
 `HexFiniteField` puts it above hex-mod-arith and hex-poly-fp, which it
@@ -1179,15 +1547,15 @@ the whole tree rather than against production sources only. That is why
 `HexGFqField` already declares a dependency on `HexBerlekamp` it does
 not import in `HexGFqField/`.
 
-## Open questions
+## Fixed v1 choices and deferred optimisations
 
-- **Whether `deg` belongs in `FiniteFieldOps` or is derived.** It is
+- **`deg` stays in `FiniteFieldOps`.** It is
   needed to compute `card` and to size the trace, and no operation
   produces it, so it is a field. If a future instance has a cheap
   cardinality but an awkward degree (a Zech-logarithm representation,
   say), `card` becomes the field and `deg` the derived quantity. Nothing
   above depends on which way round it is.
-- **Whether `frobeniusMatrix` or modular composition should drive DDF.**
+- **`frobeniusMatrix` drives DDF in v1.**
   The matrix costs `O(n³)` once and `O(n²)` per step; Horner composition
   costs `O(n³)` per step; Brent-Kung would cost less than either and
   does not exist. The default above is the matrix. The DDF-only
@@ -1197,20 +1565,13 @@ not import in `HexGFqField/`.
   measurement is the "sweep crossover" family; until it is taken, the
   guard is `card K ≤ 64`, chosen to be safely below any plausible
   crossover rather than to be right.
-- **Whether the trace arm should cover odd characteristic.** The
+- **The trace arm does not cover odd characteristic in v1.** The
   `F_q`-trace plus a `p`-wide sweep is a third algorithm that beats the
   powering arm when `p` is tiny and `d log q` is large. It is a small
   addition to a function that already exists and it is not specified
   above, because no input family in the benchmark set is in that regime.
-- **Whether `Rand` should be `Nat`-backed rather than `UInt64`-backed.**
-  Nothing here needs more than 64 bits of state. [hex-mv-gcd](hex-mv-gcd.md)
-  draws points in `ZMod64 p`, so it does not either. A future consumer
-  that wants random integers of unbounded size would want a different
-  generator, and that is the point at which to revisit it.
-- **Whether the `IrreducibilityCertificate` change should carry a
-  version tag.** [future-work](../future-work.md)'s "Certificate
-  serialization and caching" entry proposes an envelope with a schema
-  version, and this is the first change that would break a stored
-  certificate. Adding the field without a version is a one-off cost;
-  adding the envelope is the cross-cutting project that entry
-  describes. This SPEC takes the one-off cost and flags the coincidence.
+- **`Rand` remains `UInt64`-state-backed.** Its contract is
+  deterministic replay rather than exact uniformity. Consumers needing
+  a distribution theorem or a larger state space must introduce a
+  different generator and an explicit refinement theorem; they must not
+  strengthen this class's claims retrospectively.
