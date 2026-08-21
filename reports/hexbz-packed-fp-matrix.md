@@ -5,6 +5,11 @@ degree-pattern scout, so the modular share of a factorization had to be
 remeasured before any matrix specialization was justified. This page is that
 remeasurement, and it is a **go**.
 
+**The numbers below price a benchmark prototype, not shipped code.** The
+specialization they justified has since landed;
+[reports/hexbz-packed-fp-matrix-integration.md](hexbz-packed-fp-matrix-integration.md)
+measures the implementation, and its factors are the ones to quote.
+
 On `cyclo_phi385` the row reduction and nullspace basis at the selected prime
 are **46.5% of total factor time** and **94.6% of that prime's Berlekamp
 split**; on `cyclo_phi128_x_phi165`, 44.6% and 89.3%; on
