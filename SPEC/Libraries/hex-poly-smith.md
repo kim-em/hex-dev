@@ -21,8 +21,8 @@ follows from it, is `hex-invariant-factors` in
 
 ## Read the integer pair first, and then discount most of it
 
-[hex-smith](hex-smith.md) and [hex-hermite](hex-hermite.md) specify the
-same normal form over `ℤ`. They are worth reading first because they fix
+[hex-smith](hex-smith.md) and [hex-hermite](hex-hermite.md) are the two
+integer normal-form SPECs. They are worth reading first because they fix
 the vocabulary this SPEC reuses (the data-plus-inverse contract, the
 determinantal-divisor argument, the certificate shape, the
 "matrix-update counts rather than complexity" convention). They are also
@@ -42,7 +42,7 @@ hypothesised, the inventory can be made exact:
 | explicit inverse of the step | direct computation | direct computation | yes, as a technique; the entries differ |
 | exact division | `exactDiv` with an `@[extern]` integer primitive | the quotient component of `divMod` | no: there is no cheaper polynomial primitive to relocate |
 | termination measure | `(\|pivot\|, c)` lexicographic | `(deg pivot, c)` lexicographic | yes, as a shape; the first component is computed differently |
-| repetition bound `P` | bit length of the entries | degree of the entries | yes, as a shape |
+| repetition bound `P` | bit length of the pivot entering the stage | degree of the pivot entering the stage | yes, as a shape |
 | reduction of entries above a pivot | `%` into `[0, p)` | not needed | no: Smith form clears off-diagonal entries to zero, and the residue range is a Hermite-form concern |
 | growth problem | coefficient size | degree, and coefficient size again when `F = ℚ` | no: two problems where `ℤ` has one |
 | determinantal divisors | gcd of `k × k` minors, in `Nat` | monic gcd of `k × k` minors, in `DensePoly F` | yes, and it needs the same missing Cauchy-Binet work |
@@ -75,9 +75,13 @@ while the integer step gets its normalisation from `extGcd`'s return
 type. A Euclidean-domain class carrying `xgcd`, exact division, and a
 normalisation would let one *loop skeleton* be written once, at the cost
 of an indirection on the innermost path of both libraries, and would
-share no theorem at all: the uniqueness argument is the same argument,
+share no *library* theorem: the uniqueness argument is the same argument,
 but its statement mentions `Nat` on one side and `DensePoly F` on the
-other. The question is now closed rather than deferred.
+other. What the two libraries do share is `mul_eq_one_comm`, and that
+already lives in `hex-determinant` over an arbitrary commutative ring,
+which is the point: the genuinely shared content is downstream of both
+and needs no class to be shared. The question is now closed rather than
+deferred.
 
 ## Why this library exists
 
@@ -107,7 +111,7 @@ below is new capability rather than an increment.
   `r = m`, which for square input is the monic associate of `det A`.
 - **Canonical forms of a linear operator**, through
   `hex-invariant-factors`. That library is not this one. It supplies
-  `xI - A`, calls `snf`, and reads the answer; every theorem it needs
+  `xI - A`, calls `snf`, and reads the diagonal; every theorem it needs
   about `snf` is stated here.
 
 The dependency list is short and each entry is used for a specific
@@ -229,8 +233,8 @@ gets a conformance fixture.
 - **`A = 0`.** Rank `0`, both transforms the identity, `diag` empty. The
   pivot loop must stop on the first test rather than searching for a
   pivot that is not there.
-- **`1 × 1`.** `snf ⟨#v[p]⟩` has rank `1` and diagonal `#v[monicize p]`
-  when `p ≠ 0`, and rank `0` otherwise. This is the smallest case that
+- **`1 × 1`.** `snf ⟨#v[p]⟩` is `⟨#v[monicize p]⟩` with `snfRank` equal
+  to `1` when `p ≠ 0`, and `⟨#v[0]⟩` with rank `0` otherwise. This is the smallest case that
   distinguishes monic normalisation from no normalisation.
 - **Unit entries.** An entry that is a nonzero constant is a unit of
   `F[x]`, so it becomes a pivot of `1` and clears its whole row and
@@ -240,7 +244,8 @@ gets a conformance fixture.
   ordinary, and the trailing diagonal positions are `0`. Rectangular
   input in both orientations is ordinary.
 - **A diagonal input containing zeros or non-monic entries.** This is the
-  input to `snfDiagonal` and the place its normalisation phase is not
+  input to `snfDiagonal` and `snfDiagonalData`, and the place their
+  normalisation phase is not
   skippable: `#v[0, x]` is diagonal and is not in Smith normal form, and
   `#v[0, 0]` has no gcd to divide by. See "A fast path for diagonal
   input".
@@ -357,24 +362,34 @@ the inverse of the leading coefficient of `g`, and `ĝ := u · g` for the
 monic associate. The 2x2 matrix
 
 ```
-E = ⎡  u·s    u·t ⎤          E⁻¹ = ⎡ a/ĝ   -t ⎤
-    ⎣ -b/g   a/g  ⎦                ⎣ b/ĝ    s ⎦
+E = ⎡    u·s        u·t   ⎤          E⁻¹ = ⎡ a/ĝ   -t ⎤
+    ⎣ -u·(b/ĝ)   u·(a/ĝ)  ⎦                ⎣ b/ĝ    s ⎦
 ```
 
-applied to the two rows replaces `(a, b)` by `(ĝ, 0)`. All four
-divisions are exact. `det E = u·(s·a + t·b)/g = u`, a nonzero constant,
-so `E` is unimodular, and the displayed `E⁻¹` is its inverse by direct
+applied to the two rows replaces `(a, b)` by `(ĝ, 0)`. It is invoked
+only when `a ∤ b` and `b ∤ a`; the divisible cases are handled by a plain
+subtraction, for the termination reason under "Algorithms". Every
+division in
+both matrices is an exact division **by the monic `ĝ`**, so every one of
+them can go through `divModMonic` and none of them needs a coefficient
+division. `det E = u²·(s·a + t·b)/ĝ = u²·g/ĝ = u`, a nonzero constant, so
+`E` is unimodular, and the displayed `E⁻¹` is its inverse by direct
 computation: the `(0,0)` entry of `E * E⁻¹` is
-`u·(s·a + t·b)/ĝ = u·g/ĝ = u·u⁻¹ = 1`, the `(1,1)` entry is
-`(t·b + s·a)/g = g/g = 1`, and the two off-diagonal entries cancel
-termwise.
+`u·(s·a + t·b)/ĝ = u·g/ĝ = 1`, the `(1,1)` entry is
+`u·(t·b + s·a)/ĝ = 1`, and the two off-diagonal entries cancel termwise.
 
-Every one of these identities is checked numerically over `Rat` on ten
-inputs (generic, coprime, non-monic leading coefficients, `a = 0`,
-`b = 0`, both zero, `a = b`, either side a unit, each side dividing the
-other), and the checks are worth keeping as `#guard`s in the
-implementation, because a sign or a unit misplaced here produces a
-matrix that is correct on the inputs where `g` is already monic.
+Writing the bottom row as `[-b/g, a/g]` instead, with the raw `g`, gives
+the same matrix, because `a/g = u·(a/ĝ)`. The `ĝ` form is the one to
+implement: it is the same arithmetic with the coefficient division
+hoisted into `u`, and it keeps every polynomial division monic.
+
+Every one of these identities is checked numerically over `Rat` on
+thirteen inputs (generic, coprime, non-monic leading coefficients,
+`a = 0`, `b = 0`, both zero, `a = b`, either side a unit, each side
+dividing the other, and `(x, 2x)` in both orders), and the checks are
+worth keeping as `#guard`s in the implementation, because a unit
+misplaced here produces a matrix that is correct on every input where
+`g` happens to be monic.
 
 Three things about this are worth stating, because a port of the
 integer step gets each of them wrong.
@@ -399,11 +414,12 @@ scalar multiplications of the Bezout coefficients and keeps the number
 of accumulated transform updates per step at one, which is what a
 separate normalising row operation would double.
 
-**The divisions on the two sides use different divisors.** `E` divides by
-`g` and `E⁻¹` divides by `ĝ`. Writing `ĝ` in both places, or `g` in both
-places, produces a matrix that is off by the unit `u` in one entry, which
-is invisible on any input where `g` happens to be monic. Every fixture
-in the conformance list whose gcd is non-monic exists to catch this.
+**The two sides carry different powers of `u`.** `E` has a `u` on every
+entry and `E⁻¹` has none. Dropping the `u` from the bottom row of `E`, or
+adding one to `E⁻¹`, leaves a pair that is off by a unit in one entry,
+and that error is invisible on any input where `g` happens to be monic.
+Every fixture in the conformance list whose gcd is non-monic exists to
+catch it.
 
 **The all-zero case is a separate branch.** When `a = b = 0` the gcd is
 `0`, `lc g = 0`, `u = 1/0 = 0` by the junk-value convention of
@@ -441,33 +457,52 @@ The pivot loop:
 1. If the remaining block is zero, stop with the current rank.
 2. Move a nonzero entry of **minimal degree** to the pivot position by
    one row swap and one column swap.
-3. Clear the pivot's column with row operations and its row with column
-   operations, using the `E` above. Each application replaces the pivot
-   by the monic gcd of the pivot and the entry, so `deg pivot` never
-   grows and the pivot stays monic.
-4. If some entry `a[i][j]` of the remaining block is not divisible by the
+3. Normalise the pivot to monic, by scaling its row by `1 / lc p`.
+4. Clear the pivot's column with row operations and its row with column
+   operations, **branching on divisibility at each entry**. For an entry
+   `b` in the pivot's column, with monic pivot `p`:
+   - if `p ∣ b`, subtract `(b/p)` times the pivot row from `b`'s row.
+     This zeroes `b`, leaves the pivot row untouched, and is one exact
+     division by a monic divisor;
+   - otherwise apply the `E` above to the two rows, which replaces the
+     pivot by the monic gcd of `p` and `b`, a strict divisor of `p`.
+
+   The column case is the transpose of this with column operations.
+5. If some entry `a[i][j]` of the remaining block is not divisible by the
    pivot `p`, add row `i` to the pivot row **and immediately run the
    column-`j` elimination against the new entry**, which replaces `p` by
-   the monic gcd of `p` and `a[i][j]`, then return to step 3. This is the
+   the monic gcd of `p` and `a[i][j]`, then return to step 4. This is the
    step that produces the divisibility chain, and it is the step a naive
    implementation omits.
-5. Otherwise advance to the next diagonal position.
+6. Otherwise advance to the next diagonal position.
 
-The pivot is monic from the first application of `E` onwards, so the
-divisibility test in step 4 is `Hex.DensePoly.mod` against a monic
-divisor and the exact divisions in step 3 are divisions by a monic
-divisor. Whether to thread the monicity *proof* through the loop so that
-`divModMonic` can be called directly, rather than relying on `divMod` to
-divide by a leading coefficient that happens to be `1`, is a measured
-decision and is written down as such under "Benchmarking".
+**The branch in step 4 is not an optimisation, it is what makes the loop
+terminate.** Using `E` on a divisible entry is correct but destroys the
+measure, and the failure is not exotic. Take pivot `p = x` and entry
+`b = 2x` over `ℚ`. Then `xgcd x (2x)` returns `⟨2x, 0, 1⟩` (this is what
+the current implementation returns, not a hypothetical), so `s = 0` and
+the new pivot row is `u` times the *other* row. The pivot degree is
+unchanged at `1`, and every nonzero entry of row `i` has just been
+copied into the pivot row, so the count of nonzero off-pivot entries
+goes up. The measure increases. `xgcd p p` does the same thing. The
+plain-subtraction branch avoids this by not touching the pivot row at
+all.
+
+The pivot is monic from step 3 onwards, so every division in step 4,
+in both branches, is by a monic divisor, and the divisibility test is
+`Hex.DensePoly.mod` against a monic divisor. Whether to thread the
+monicity *proof* through the loop so that `divModMonic` can be called
+directly, rather than relying on `divMod` to divide by a leading
+coefficient that happens to be `1`, is a measured decision and is
+written down as such under "Benchmarking".
 
 **Termination measure.** The pair `(deg pivot, c)` ordered
 lexicographically, where `deg pivot` is `p.degree?.getD 0` for the
 current nonzero pivot `p` and `c` is the number of nonzero entries in the
-pivot row and column other than the pivot itself. Step 3 either leaves
-`deg pivot` fixed and decreases `c` (when the pivot divides the entry, so
-the step is a plain subtraction) or strictly decreases `deg pivot` (when
-it does not). Both components are naturals, so the loop is well-founded.
+pivot row and column other than the pivot itself. The divisible branch of
+step 4 leaves `deg pivot` fixed and decreases `c` by one; the `E` branch
+strictly decreases `deg pivot`. Both components are naturals, so the loop
+is well-founded.
 
 The strict decrease is the one place the polynomial argument is *simpler*
 than the integer one. If `p ∤ b` then `gcd(p, b)` is a proper divisor of
@@ -478,13 +513,15 @@ values and needs the same argument phrased through positivity. No clause
 in this library does case analysis on a sign, which is a category of
 error the integer library has to handle and this one does not.
 
-Step 4 is stated as one fused step for exactly the reason
+Step 5 is stated as one fused step for exactly the reason
 [hex-smith](hex-smith.md) gives: adding row `i` to the pivot row on its
 own leaves `deg pivot` fixed and raises `c` from `0`, so the measure
 *increases*, and Lean needs the recursive call itself to decrease.
 Fusing the column elimination into the same step makes the recursion
 happen only after the pivot has become `gcd(p, a[i][j])`, whose degree is
-strictly smaller because `p ∤ a[i][j]`.
+strictly smaller because `p ∤ a[i][j]`. Note that the fused elimination
+takes the `E` branch of step 4 by construction, since the entry it runs
+against is not divisible by the pivot.
 
 Whether the measure is threaded as a `termination_by` clause or as
 explicit fuel with a sufficiency theorem is an implementation decision,
@@ -500,11 +537,21 @@ idiom.
 **A fast path for diagonal input.** A diagonal matrix is already almost
 in Smith normal form and needs only normalisation and the chain. The
 normalisation is not skippable, because the input diagonal may contain
-zeros and non-monic entries: monicize each nonzero entry (a column scale
-by a unit, accumulated into all four transforms), move the nonzero
-entries stably before the zeros by transpositions, and take the rank to
-be the number of nonzero entries. The sweep then runs on the monic
-prefix alone, which is what makes the divisions below defined:
+zeros and non-monic entries. It has two phases:
+
+- **Monicize each nonzero entry.** Scaling column `i` by `1 / lc dᵢ`
+  makes `dᵢ` monic. This is a right-hand operation: it updates `right`
+  and `rightInv` (the latter by the reciprocal scale) and leaves `left`
+  and `leftInv` alone. Doing it on the row instead is equally valid and
+  updates the other two; what is not valid is updating all four, which
+  would compose the unit in twice.
+- **Move the nonzero entries stably before the zeros.** On a diagonal
+  matrix, exchanging positions `i` and `j` is a *paired* row and column
+  transposition: the row swap alone moves the entry off the diagonal. So
+  each move updates all four transforms, one swap on each side.
+
+The rank is then the number of nonzero entries, and the sweep runs on
+the monic prefix alone, which is what makes the divisions below defined:
 `#v[0, 0]` has no `ĝ` to divide by, and `#v[0, x]` is not in Smith normal
 form despite being diagonal.
 
@@ -513,19 +560,42 @@ For two adjacent normalised entries `a, b` monic, with
 the pair
 
 ```
-L = ⎡ 1  1 ⎤ then ⎡      1        0 ⎤     V = ⎡ u·s   -b/ĝ ⎤
-    ⎣ 0  1 ⎦      ⎣ -u·t·b/ĝ      1 ⎦         ⎣ u·t    a/ĝ ⎦
+L₁ = ⎡ 1  1 ⎤   L₂ = ⎡     1      0 ⎤   V = ⎡ u·s   -b/ĝ ⎤
+     ⎣ 0  1 ⎦        ⎣ -u·t·b/ĝ   1 ⎦       ⎣ u·t    a/ĝ ⎦
 ```
 
-sends `diag(a, b)` to `diag(ĝ, l)`: adding the second row to the first
-gives `[[a, b], [0, b]]`, right-multiplying by `V` (whose determinant is
-`u·(s·a + t·b)/ĝ = 1`) gives `[[ĝ, 0], [u·t·b, l]]`, and the second row
-operation clears the `u·t·b` entry, which is divisible by `ĝ` because
-`ĝ` divides `b`. Both `ĝ` and `l` are monic, because `a` and `b` are.
-Sweeping this over adjacent pairs until no pair changes yields the chain
-in `O(r²)` `xgcd` calls. This is the polynomial form of FLINT's
-`snf_diagonal`, and it is the path a direct-sum presentation of a module
-takes, which is the common case for the headline consumer.
+sends `diag(a, b)` to `diag(ĝ, l)` as `L₂ · L₁ · diag(a, b) · V`: adding
+the second row to the first gives `[[a, b], [0, b]]`, right-multiplying
+by `V` (whose determinant is `u·(s·a + t·b)/ĝ = 1`) gives
+`[[ĝ, 0], [u·t·b, l]]`, and `L₂` clears the `u·t·b` entry, which is
+divisible by `ĝ` because `ĝ` divides `b`. Both `ĝ` and `l` are monic,
+because `a` and `b` are.
+
+The inverses are needed as data, so they are displayed too:
+
+```
+L₁⁻¹ = ⎡ 1  -1 ⎤   L₂⁻¹ = ⎡    1      0 ⎤   V⁻¹ = ⎡  a/ĝ   b/ĝ ⎤
+       ⎣ 0   1 ⎦          ⎣ u·t·b/ĝ   1 ⎦         ⎣ -u·t   u·s ⎦
+```
+
+`V⁻¹` is the adjugate of `V`, which is `V`'s inverse outright because
+`det V = 1`. All four displayed matrices and the product identity are
+checked numerically over `Rat`, as the elimination step is.
+
+**The sweep is a fixed network, not a loop to a fixed point.** "Repeat
+adjacent-pair passes until nothing changes" bounds nothing by itself.
+Run instead the `r(r-1)/2` comparison schedule of a bubble sort: `r-1`
+passes, pass `k` visiting positions `0 … r-2-k`, each position applying
+the pair above. The reason a fixed schedule is enough is that
+`(a, b) ↦ (gcd a b, lcm a b)` is the comparator of the divisibility
+lattice on monic polynomials, which is distributive, and a comparator
+network that sorts every `0`/`1` sequence sorts over any distributive
+lattice. Bubble sort's network does, so this one produces the
+divisibility chain, in exactly `r(r-1)/2` `xgcd` calls with no
+convergence argument to make. This
+is the polynomial form of FLINT's `snf_diagonal`, and it is the path a
+direct-sum presentation of a module takes, which is the common case for
+the headline consumer.
 
 **Not specified: a modular variant.** [hex-smith](hex-smith.md) carries
 `snfSquareDiag`, the Iliopoulos algorithm run modulo a multiple of the
@@ -549,22 +619,34 @@ ratio against a library that uses them measures the same algorithm.
 ```lean
 namespace Hex.PolyMatrix
 
-/-- Smith normal form data for `A`. -/
-def snf (A : Matrix (DensePoly F) n m) : SmithData F n m
+/-- The Smith normal form of `A`. Does not compute the transforms. -/
+def snf (A : Matrix (DensePoly F) n m) : Matrix (DensePoly F) n m
+
+/-- The number of nonzero diagonal entries of `snf A`, that is the rank
+of `A` over `F(x)`. Computed without building the transforms. -/
+def snfRank (A : Matrix (DensePoly F) n m) : Nat
+
+/-- Smith normal form data for `A`: the form, both transforms, and both
+inverses. -/
+def snfData (A : Matrix (DensePoly F) n m) : SmithData F n m
 
 /-- The invariant factors of `A`, monic and in a divisibility chain. -/
 def invariantFactors (A : Matrix (DensePoly F) n m) :
-    Vector (DensePoly F) (snf A).rank
+    Vector (DensePoly F) (snfRank A)
 
 /-- Smith normal form of a diagonal matrix, given its diagonal. -/
-def snfDiagonal {r : Nat} (d : Vector (DensePoly F) r) : SmithData F r r
+def snfDiagonal {r : Nat} (d : Vector (DensePoly F) r) : Matrix (DensePoly F) r r
+
+/-- Smith normal form of a diagonal matrix, with the transforms. -/
+def snfDiagonalData {r : Nat} (d : Vector (DensePoly F) r) : SmithData F r r
 
 /-- The structure of `F[x]^m / rowmodule A`: the free rank, and the
 torsion invariants in a divisibility chain with the units dropped. -/
 def moduleStructure (A : Matrix (DensePoly F) n m) : Nat × Array (DensePoly F)
 
-/-- The monic generator of the order ideal of the torsion part of
-`F[x]^m / rowmodule A`, or `0` when the quotient is not torsion. -/
+/-- The monic generator of the order ideal (the zeroth Fitting ideal) of
+`F[x]^m / rowmodule A`, and `0` when that ideal is `0`, which is exactly
+when the quotient has a free summand. -/
 def quotientOrder (A : Matrix (DensePoly F) n m) : DensePoly F
 
 /-- A polynomial solution of `vecMul x A = b`, or `none` when there is
@@ -594,6 +676,24 @@ end Hex.PolyMatrix
 Contracts to state explicitly, because an implementer would otherwise
 choose differently.
 
+**The transforms are a separate entry point, as in
+[hex-hermite](hex-hermite.md) and [hex-smith](hex-smith.md).** `snf`,
+`snfRank`, `invariantFactors`, `snfDiagonal`, `moduleStructure`, and
+`quotientOrder` accumulate none of the four transform matrices; only
+`snfData`, `snfDiagonalData`, and `solve` do. This is not a stylistic
+alignment with the sibling libraries: this SPEC says under "Complexity"
+and "The inverses are data" that the polynomial transforms are the
+expensive part and that their degrees are the unbounded quantity, and it
+would be incoherent to say that and then make every consumer pay for
+them. `solve` is the only named consumer that genuinely needs them, since
+it maps the right-hand side through `V` and the answer back through `U`.
+`hex-invariant-factors` reads the diagonal and wants `snf`; it needs
+`snfData` only if it goes on to build the basis realising a canonical
+form, which is its decision and not this library's.
+
+Both paths run the same loop, parameterised by whether the accumulators
+are updated, so there is one algorithm and not two.
+
 `invariantFactors` drops nothing, so its leading entries may be `1`.
 `moduleStructure` drops them, because an `F[x]/(1)` summand is not part
 of anyone's answer, and returns the free rank `m - rank` separately.
@@ -601,15 +701,26 @@ of anyone's answer, and returns the free rank `m - rank` separately.
 `quotientOrder` returns the monic product of the invariant factors when
 `rank = m` and `0` otherwise. Both values are correct rather than
 fallbacks, and the `0` is the same convention `latticeIndex` uses in
-[hex-hermite](hex-hermite.md). Note what the polynomial case does *not*
-have: [hex-smith](hex-smith.md)'s `quotientOrder` returns an integer
-because a finite abelian group has an order. An `F[x]`-torsion module has
-no cardinality worth reporting (it is infinite as soon as `F` is), so the
-polynomial answer is the generator of the order ideal, a monic
-polynomial, and the analogy is with the *ideal* rather than with the
-number. Its degree is the dimension of the quotient as an `F`-vector
-space, which is the number a caller usually wants next, and is one
-`degree?` away.
+[hex-hermite](hex-hermite.md): an element of `F[x]` annihilates the whole
+quotient only if it annihilates the free summand, so when `rank < m` the
+order ideal really is `0`.
+
+It is therefore an invariant **of the quotient**, not of the quotient's
+torsion part, and the difference matters. The torsion part is annihilated
+by `∏ dᵢ` whatever the free rank is, so its own order polynomial is
+`(invariantFactors A).foldl (· * ·) 1` unconditionally. That is one fold
+away and is not given its own name here, but a caller who wants "the
+order polynomial" and reads `0` has asked the wrong function.
+
+Note what the polynomial case does *not* have.
+[hex-smith](hex-smith.md)'s `quotientOrder` returns an integer, because a
+finite abelian group has an order and the analogy there is with a number.
+Over `F[x]` the coefficient-field-independent answer is the monic
+generator, so the analogy is with the *ideal*. A cardinality exists only
+when `F` is finite: over `F_q` the torsion part has `q^(∑ deg dᵢ)`
+elements. The degree `∑ deg dᵢ` is the dimension of the torsion part as
+an `F`-vector space, which is the number a caller usually wants next, and
+is one `degree?` away.
 
 `solve` needs both transforms, not one. From `S = U * A * V`, the system
 `vecMul x A = b` becomes `vecMul z S = vecMul b V` with
@@ -646,9 +757,12 @@ proof obligation at every use site.
 ## Correctness theorems
 
 ```lean
-theorem snf_isSNF (A : Matrix (DensePoly F) n m) : IsSNF A (snf A)
-theorem snfDiagonal_isSNF {r : Nat} (d : Vector (DensePoly F) r) :
-    IsSNF (diagMatrix d r r) (snfDiagonal d)
+theorem snfData_isSNF (A : Matrix (DensePoly F) n m) : IsSNF A (snfData A)
+theorem snf_eq (A : Matrix (DensePoly F) n m) :
+    snf A = diagMatrix (snfData A).diag n m
+theorem snfRank_eq (A : Matrix (DensePoly F) n m) : snfRank A = (snfData A).rank
+theorem snfDiagonalData_isSNF {r : Nat} (d : Vector (DensePoly F) r) :
+    IsSNF (diagMatrix d r r) (snfDiagonalData d)
 
 -- The determinantal-divisor characterisation, which is the specification.
 -- Stated for every k, including k > S.rank, where both sides are zero.
@@ -663,15 +777,15 @@ theorem IsSNF.diag_eq (h : IsSNF A S) (h' : IsSNF A S') (i : Nat)
     (hi : i < S.rank) (hi' : i < S'.rank) : S.diag[i] = S'.diag[i]
 
 -- Agreement with the determinant, in value and in degree.
-theorem prod_invariantFactors (A : Matrix (DensePoly F) n n) (h : (snf A).rank = n) :
+theorem prod_invariantFactors (A : Matrix (DensePoly F) n n) (h : snfRank A = n) :
     (invariantFactors A).foldl (· * ·) 1 = monicize (Matrix.det A)
 theorem degree_prod_invariantFactors (A : Matrix (DensePoly F) n n)
-    (h : (snf A).rank = n) :
+    (h : snfRank A = n) :
     ((invariantFactors A).foldl (fun acc p => acc + p.degree?.getD 0) 0) =
       (Matrix.det A).degree?.getD 0
 
 -- The consumer-facing statements.
-theorem solve_iff_diagonal {A : Matrix (DensePoly F) n m} {b} (S := snf A) :
+theorem solve_iff_diagonal {A : Matrix (DensePoly F) n m} {b} (S := snfData A) :
     (∃ x, vecMul x A = b) ↔
       ∃ z, vecMul z (diagMatrix S.diag n m) = vecMul b S.right
 theorem solve_sound {A : Matrix (DensePoly F) n m} {b x} :
@@ -680,7 +794,7 @@ theorem solve_complete {A : Matrix (DensePoly F) n m} {b} :
     (∃ x, vecMul x A = b) → (solve A b).isSome
 theorem quotientOrder_eq (A : Matrix (DensePoly F) n m) :
     quotientOrder A =
-      if (snf A).rank = m then (invariantFactors A).foldl (· * ·) 1 else 0
+      if snfRank A = m then (invariantFactors A).foldl (· * ·) 1 else 0
 ```
 
 Every signature above elaborates as written against the current tree,
@@ -746,10 +860,43 @@ def snfCert (A : Matrix (DensePoly F) n m) (S : SmithData F n m)
 theorem snfCert_sound : snfCert A S T = true → IsSNF A S
 ```
 
-`isSNFShape` is the decidable test for the three form clauses written
-directly on the entries: off-diagonal entries zero, the first `rank`
-diagonal entries monic and the rest zero, and `S.diag[i] ∣ S.diag[i+1]`
-decided by `mod` against a monic divisor.
+`isSNFShape` is the decidable reflection of **exactly the four fields of
+`IsSNF` that the four product identities do not already establish**:
+
+```lean
+def isSNFShape (S : SmithData F n m) : Bool :=
+  decide (S.rank ≤ n) && decide (S.rank ≤ m)
+    && S.diag.toList.all (fun p => p.leadingCoeff == 1)
+    && (S.diag.toList.zip S.diag.toList.tail).all (fun q => (q.2 % q.1).isZero)
+```
+
+This elaborates as written. Two of its clauses are written out rather
+than stated abstractly, and in both cases the abstract version does not
+elaborate, which is worth recording so an implementer does not spend the
+afternoon rediscovering it. `Hex.DensePoly.Monic p` is
+`p.leadingCoeff = 1`, a `Prop` with no `Decidable` instance derived
+through the definition, so the test is written on `leadingCoeff`
+directly. `Hex.DensePoly`'s `Dvd` instance is `∃ r, q = p * r`, which is
+not decidable at all, so the chain is tested by `%` against a divisor the
+`Monic` clause has just established is monic, and `isSNFShape`'s
+soundness proof has to supply the existential witness from that
+remainder.
+
+It does **not** test that the off-diagonal entries vanish or that the
+trailing diagonal entries are zero, and adding those tests would be a
+mistake worth naming, because it is the obvious thing to write. Those
+two conditions are not conditions on `S` at all: `mul_eq` compares
+against `diagMatrix S.diag n m`, which is *constructed* zero off the
+diagonal and zero past `S.rank`, so the second product identity already
+carries them and a Boolean re-test of a constructed matrix checks
+nothing.
+
+The rank bounds, by contrast, are not implied by anything else in the
+checker, and dropping them is unsound rather than merely redundant. Take
+`n = m = 0`, `S.rank = 1`, `S.diag = #v[1]`, and all four transforms the
+empty identity. Every product identity holds, because every matrix
+involved is empty, and `S.diag[0]` is monic. `rank_le_n` is `1 ≤ 0`. A
+shape test built out of the entry conditions alone accepts this.
 
 Because the products are formed, the right-hand identity is checked
 directly rather than transposed. [hex-smith](hex-smith.md) checks
@@ -772,28 +919,43 @@ try. The polynomial case has its own primitive.
 **The polynomial substitute is evaluation.** Two `n × m` matrices over
 `F[x]` with entries of degree at most `D` are equal exactly when they
 agree at `D + 1` distinct points of `F`, so each product identity reduces
-to `D + 1` scalar matrix products over `F`. With classical polynomial
-multiplication that is asymptotically cheaper than forming the
-polynomial product by a factor of `D`, and it is deterministic, so it
+to `D + 1` scalar matrix products over `F`. It is deterministic, so it
 supports a `Bool` with a soundness theorem rather than a probabilistic
 argument:
 
 ```lean
 /-- Decides `U * A = C` by evaluation at the supplied points. Sound when
-the points are distinct and `k` exceeds the degree of every entry of
-`U * A` and `C`. -/
+the `k` points are pairwise distinct and `k` exceeds the degree of every
+entry of `U * A` and of `C`. -/
 def mulEqCertAt {k : Nat} (pts : Vector F k)
     (U : Matrix (DensePoly F) n n) (A C : Matrix (DensePoly F) n m) : Bool
 ```
 
+**When it wins, and when it does not.** Checking `U * A = C` for
+`U : n × n` and `A : n × m` with classical polynomial multiplication
+costs `Θ(n² m D²)` coefficient operations. The evaluation route costs
+`Θ((n² + n m) D²)` to evaluate the two input matrices at `D + 1` points
+by Horner, plus `Θ(n² m D)` for the `D + 1` scalar products. So the
+saving is a factor of `D` on the multiplication term only, and it is a
+real saving exactly when `n² m D` dominates `(n² + n m) D²`, which is
+when the dimensions are large relative to the degree. At small `n` and
+large `D` the evaluation is the whole cost and there is nothing to win.
+Do not state the factor of `D` unconditionally.
+
 The hypothesis `|F| > D` is real, and is why the points are an argument
 rather than something the checker invents. Over `ZMod64 p` with a large
 `p` it is satisfied for every degree that fits in memory; over
-`ZMod64 2` it fails for every `D ≥ 2`. The v1 checker forms the products directly, and
-the evaluation route is a measured optimisation with a decision rule
-under "Benchmarking" and a required fallback when the point supply runs
-out. Extending the point set into an extension field of `F` would remove
-the hypothesis and is out of scope.
+`ZMod64 2` it fails for every `D ≥ 2`.
+
+**`snfCert` uses the direct products, and `mulEqCertAt` is a separate,
+conditional helper.** No dispatcher between the two is specified, because
+a sound dispatcher would have to compute a degree bound for `U * A` and
+then produce that many pairwise distinct points of `F`, and "produce `k`
+distinct points" is an interface `F` does not have in this project.
+Specifying one is the work decision rule 4 under "Benchmarking" would
+authorise, and it is not v1. Extending the point set into an extension
+field of `F` would remove the `|F| > D` hypothesis and is also out of
+scope.
 
 **The certificate is complete**, as in [hex-smith](hex-smith.md): by
 `IsSNF.rank_eq` and `IsSNF.diag_eq`, anything satisfying the shape
@@ -825,12 +987,16 @@ def monicize [Lean.Grind.Field F] [DecidableEq F] (p : DensePoly F) : DensePoly 
 It is total with no junk branch: `leadingCoeff 0 = 0` and
 `Lean.Grind.Field.inv_zero` give `monicize 0 = 0`, which is the value the
 callers want. This is not a new definition for one consumer:
-`DensePoly.scale (DensePoly.leadingCoeff f)⁻¹ f` is written out inline
+`DensePoly.scale (DensePoly.leadingCoeff g)⁻¹ g` is written out inline
 throughout `HexBerlekamp/RabinSoundness.lean` and
-`HexBerlekampZassenhaus/BhksCandidates.lean`, and `hex-poly-fp` already
-carries the `ZMod64 p` specialisation of its monicity lemma as
+`HexBerlekamp/Irreducibility.lean`, and `hex-poly-fp` already carries the
+`ZMod64 p` specialisation of its monicity lemma as
 `FpPoly.scale_inv_leadingCoeff_monic`. Naming the operation once, at the
-generic field, is what lets that lemma be stated once too.
+generic field, is what lets that lemma be stated once too. Note that
+`HexBerlekampZassenhaus/BhksCandidates.lean` scales by
+`leadingCoeff f` rather than by its inverse, which is the
+leading-coefficient trick from the Mignotte bound and not this
+operation; it is not a call site.
 
 **`Lean.Grind.CommRing (DensePoly R)` belongs in `hex-poly`.** The
 instance is `instGrindCommRingDensePoly` in `HexResultant/ExactDiv.lean`.
@@ -841,24 +1007,42 @@ example {F : Type u} [Lean.Grind.Field F] [DecidableEq F] :
     Lean.Grind.CommRing (DensePoly F) := inferInstance
 ```
 
-fails without importing `hex-resultant`. Everything the instance is built
-from (`mul_comm_poly` and the surrounding ring lemmas in
-`HexPoly/Euclid/MulRing.lean`) is already in `hex-poly`; only the
-`Lean.Grind.CommRing.mk` application is elsewhere. This matters here
-because `Matrix.det`, `Matrix.adjugate`, and `mul_eq_one_comm` are all
-stated for `[Lean.Grind.CommRing R]`.
+fails without importing `hex-resultant`.
 
-The size of the problem is worth stating, because it is small and it is
-easy to overestimate. Elaborating every Lean block in this SPEC against
-`HexPoly`, `HexMatrix`, and `HexDeterminant` alone produces exactly four
-failures, all of them instance-synthesis failures at a use of
-`Matrix.det`: `IsSNF.left_unit`, `IsSNF.right_unit`,
-`prod_invariantFactors`, and `degree_prod_invariantFactors`. Nothing
-else in the library needs the instance. So the alternative to moving it
-is a dependency on `hex-resultant` bought for four theorem statements,
-which is the wrong trade in a project whose DAG is the thing it keeps
-clean. Moving it also removes the same accidental dependency from any
-future consumer of polynomial matrices.
+**This is not a two-line move, and describing it as one would send an
+implementer down the wrong path.** What sits in
+`HexResultant/ExactDiv.lean` is the whole lightweight algebraic
+hierarchy for `DensePoly R`: `natPow`, then `instNatCast`, `instOfNat`,
+`instNSMul`, `instNPow`, `instIntCast`, `instZSMul` with their
+coefficient lemmas, then `instGrindSemiringDensePoly`,
+`instGrindRingDensePoly`, and only at the end
+`instGrindCommRingDensePoly`. The underlying *lemmas* are in `hex-poly`
+already (`mul_comm_poly`, `mul_assoc_poly`, `mul_add_right_poly`,
+`mul_add_left_poly`, `mul_one_right_poly` in
+`HexPoly/Euclid/MulRing.lean`, plus the additive laws in
+`HexPoly/Operations.lean`), but the instance block assembled from them is
+a couple of hundred lines and it has to move as a unit, with
+`hex-resultant` re-exporting or importing what it still needs.
+
+Which class each consumer wants is worth getting right, because they
+differ. `Hex.Matrix.det` is stated for `[Lean.Grind.Ring R]`;
+`Matrix.det_mul`, `Matrix.adjugate`, and `Matrix.mul_eq_one_comm` are
+stated for `[Lean.Grind.CommRing R]`. Since the whole tower lives in one
+file, both are unavailable together today.
+
+The measured size of the gap: elaborating every Lean block in this SPEC
+against `HexPoly`, `HexMatrix`, and `HexDeterminant` alone produces
+exactly four failures, all `Lean.Grind.Ring (DensePoly F)` synthesis
+failures at a use of `Matrix.det`, in `IsSNF.left_unit`,
+`IsSNF.right_unit`, `prod_invariantFactors`, and
+`degree_prod_invariantFactors`. Nothing else in the library needs the
+tower. So the alternative to moving it is a dependency on
+`hex-resultant` bought for four theorem statements, which is the wrong
+trade in a project whose DAG is the thing it keeps clean. Moving it also
+removes the same accidental dependency from any future consumer of
+polynomial matrices, and
+[hex-char-poly](hex-char-poly.md) records the same request from the
+Cayley-Hamilton side.
 
 **`DivModLaws` and `GcdLaws` need a generic field instance.** The three
 existing instances are per-coefficient-type (`ZMod64 p`, `Rat`) or
@@ -869,13 +1053,21 @@ lemmas `gcd_dvd_left_of_divModLaws`, `gcd_dvd_right_of_divModLaws`,
 `HexPoly/Euclid/Reconstruction.lean` already reduce it to `DivModLaws`
 plus one remainder lemma, and both existing Mathlib-free instances are
 assembled from exactly those. The
-`DivModLaws` half needs the three coefficient hypotheses that the
-division lemmas already take as arguments (`hcancel`, `hexact`,
-`h_top_ne` in `divMod_eq_of_reconstruction`), each of which follows from
-`mul_inv_cancel` and the absence of zero divisors in a
-`Lean.Grind.Field`. It is a genuine piece of work, it belongs in
-`hex-poly` next to the existing law packages, and it subsumes the two
-concrete instances.
+`DivModLaws` half is the real work, and it is larger than the three
+coefficient hypotheses the division lemmas take as arguments (`hcancel`,
+`hexact`, `h_top_ne` in `divMod_eq_of_reconstruction`), each of which
+does follow from `mul_inv_cancel` and the absence of zero divisors in a
+`Lean.Grind.Field`. `DivModLaws` has nine fields: those hypotheses give
+`divMod_spec`, `divMod_remainder_degree_lt_of_pos_degree`, and
+`divModMonic_eq_divMod_of_monic`, and the remaining six
+(`mod_self_eq_zero`, `mod_eq_zero_of_dvd`, `mod_mod_of_not_pos_degree`,
+`mod_eq_mod_of_congr`, `mod_add_mod`, `mod_mul_mod`) are the
+modular-arithmetic laws, which the `ZMod64 p` and `Rat` instances each
+discharge separately and which the Mathlib instance gets from
+`EuclideanDomain`. What the prerequisite asks for is a single generic
+constructor deriving all nine from the field hypotheses, stated once in
+`hex-poly` next to the existing law packages, subsuming the two concrete
+instances. It is a piece of work, not a rearrangement.
 
 **`diagMatrix` must land in `hex-matrix` generic in `R`**, as described
 under "Data and contract". This is the only one of the four that
@@ -897,21 +1089,54 @@ product is measured rather than derived.
 
 `P` is the number of times the pivot loop repeats at one diagonal
 position. Each repetition strictly decreases the degree of the pivot, so
-`P ≤ D + 1`, bounded by the input degree and not by any matrix
-dimension. This is the same statement as [hex-smith](hex-smith.md)'s
-"`P` is bounded by the bit length of the entries", with degree in place
-of bit length.
+`P` is at most one more than the degree of the pivot at the moment the
+position is entered, and in particular is bounded by no matrix
+dimension.
 
-| operation | algorithm | matrix updates and `xgcd` calls | entry degree |
+Resist strengthening that to `P ≤ D + 1`. It is true at the first
+diagonal position, where the pivot is an entry of `A`. At later
+positions the pivot is chosen from the *working* block, whose degrees
+have grown by an amount this SPEC does not bound, so the bound is stated
+in a quantity the algorithm does not control. This is the same statement
+as [hex-smith](hex-smith.md)'s "`P` is bounded by the bit length of the
+entries", with degree in place of bit length, and it has the same
+weakness for the same reason: the honest content is that `P` does not
+depend on `n` or `m`.
+
+| operation | algorithm | matrix updates, `xgcd` calls, divisibility tests | entry degree |
 |---|---|---|---|
-| `snf` | classical Euclidean pivot loop | `O(P · r · (n + m) · max n m)` | unbounded; measured, not proved |
-| `snfDiagonal` | normalisation plus adjacent-pair sweep | `O(r²)` | bounded by the total degree of the input diagonal |
-| `invariantFactors` | `snf`, then a slice | as `snf` | `∑ deg dᵢ ≤ deg det A` for square nonsingular `A` |
+| `snf`, `snfRank` | classical Euclidean pivot loop, no accumulators | `O(P · r · (n + m) · max n m)` updates, plus `O(P · r · n · m)` `mod` tests | unbounded; measured, not proved |
+| `snfData` | the same loop with four accumulators | `+ O(P · r · (n² + m²))` | larger than the form; see "Complexity" below |
+| `snfDiagonal` | normalisation plus the bubble network | `r(r-1)/2` `xgcd` calls | bounded by the total degree of the input diagonal |
+| `snfDiagonalData` | the same, with accumulators | `+ O(r²)` transform updates | transforms not bounded here |
+| `invariantFactors` | `snf`, then a slice | as `snf` | `∑ deg dᵢ = deg det A` for square nonsingular `A` |
 | `moduleStructure` | `snf` plus a filter | as `snf` | as `snf` |
-| `solve` | `snf`, one diagonal solve, two `vecMul`s | `+ O(n · m)` | as `snf` |
-| `quotientOrder` | product of the diagonal | `O(r)` | `deg = deg det A` when `rank = m = n` |
+| `solve` | `snfData`, one diagonal solve, two `vecMul`s | as `snfData`, plus `O(n² + m²)` | as `snfData` |
+| `quotientOrder` | `snf`, then a product of the diagonal | as `snf`, plus `O(r)` | `deg = deg det A` when `rank = m = n` |
 
-Two things the table does not say and should.
+Four things the table does not say and should.
+
+**The divisibility tests are a separate column for a reason.** Step 5 of
+the pivot loop scans the trailing block asking `p ∣ a[i][j]`, and each
+question is a polynomial remainder, not a comparison. On a run where the
+answer is always yes, those `mod` calls are the whole cost of the step
+and no `xgcd` is called at all, so folding them into the `xgcd` count
+would understate the work by a factor that depends on the input.
+
+**`snfDiagonalData`'s transforms are not bounded by its diagonal.** The
+output diagonal is bounded by the total degree of the input diagonal,
+because each entry divides the product. The accumulated `left`, `right`,
+and their inverses are built from the Bezout coefficients of `r(r-1)/2`
+`xgcd` calls, and this SPEC states no invariant bounding their degrees.
+That is the same gap as for `snfData`, at a smaller scale, and the bench
+records it on `diagonal-polysmith` for the same reason.
+
+**The transform accumulation is the term to watch.** `snfData` costs
+`snf` plus four accumulator updates per elementary operation, on
+matrices of size `n × n` and `m × m` rather than `n × m`, and those
+updates are polynomial multiplications whose operands grow. This is why
+the two paths exist, and it is what decision rule 3 under "Benchmarking"
+measures.
 
 **The output is bounded and the working matrix is not.** For square
 nonsingular `A`, `∑ deg dᵢ = deg det A ≤ n · D`, so the answer is small.
@@ -946,9 +1171,24 @@ emitter takes `List (List Int)`: there is no way to express a polynomial
 entry through it. So this library needs
 
 - a new fixture kind `polymatrix`, emitted by a new
-  `emitPolyMatrixFixture` in `Hex/Conformance/Emit.lean`, carrying the
-  coefficient field descriptor (a prime `p`, or `rat`), the dimensions,
-  and the entries as lists of coefficient lists;
+  `emitPolyMatrixFixture` in `Hex/Conformance/Emit.lean`. Its schema has
+  to be written down rather than left as "the entries", because the two
+  coefficient types encode differently and the existing emitter already
+  shows how:
+
+  ```json
+  {"kind": "polymatrix", "field": {"p": 65521} | {"rat": true},
+   "rows": 3, "cols": 4,
+   "entries": [[[c00…], [c01…], …], …]}
+  ```
+
+  For `ZMod64 p` each entry is a list of `Int` coefficients ascending by
+  exponent, as `emitPolyFixture` already does. For `Rat` an entry is
+  `{"num": [...], "den": [...]}`, two parallel `Int` lists with the
+  denominators positive and each coefficient in lowest terms, which is
+  the encoding `Hex/Conformance/Emit.lean` already uses for `Q`-valued
+  polynomial results. A zero polynomial is the empty list, `rows` or
+  `cols` may be `0`, and `entries` is then empty;
 - a new oracle driver `scripts/oracle/polymatrix.py`;
 - an emit driver `conformance/HexPolySmith/EmitFixtures.lean` exposed as
   `lean_exe hexpolysmith_emit_fixtures`, a property-check driver
@@ -972,10 +1212,17 @@ installs before accepting it. The two candidates are sympy's
 `sympy.matrices.normalforms.smith_normal_form` at a polynomial domain
 (`GF(p)[x]`, `QQ[x]`), and PARI's `matsnf` on a matrix of `t_POL`
 entries through `cypari2`. Both sympy and cypari2 are already CI
-dependencies, so neither adds an install step. Both must be confirmed
-against the versions CI installs, including whether the polynomial
-domain is accepted at all and what normalisation the result carries,
-before the driver is written. If neither is usable the fallback is a
+dependencies, so neither adds an install step.
+
+They do not cover the same surface. PARI's documented polynomial-entry
+`matsnf` takes a square matrix, and the fixture list below requires both
+rectangular orientations, so PARI can serve at most as a square-input
+cross-check. sympy's `smith_normal_form` takes a matrix over any domain
+it considers a principal ideal domain, so it is the only candidate for
+the rectangular cases and the primary oracle unless it turns out not to
+accept the polynomial domain. Both claims must be confirmed against the
+versions CI installs, including what normalisation and what ordering the
+results carry, before the driver is written. If neither is usable the fallback is a
 self-check driver that verifies `U * A * V = S`, the two inverse
 identities, and the shape clauses in Python against an independently
 computed diagonal, which is weaker than an oracle and must be labelled
@@ -1028,10 +1275,11 @@ identities instead.
 - an unsolvable and a solvable polynomial system through `solve`, with
   the solvable one chosen so that `V ≠ I`, which is what catches a
   `solve` that forgets to transform the right-hand side;
-- a `ZMod64 2` fixture of degree at least `2`, where the
-  evaluation-based product check has too few points, checking that the
-  fallback to the direct product is taken rather than a wrong answer
-  returned;
+- a `ZMod64 2` fixture of degree at least `2`, which is where the
+  `|F| > D` hypothesis of `mulEqCertAt` fails. `snfCert` must accept it,
+  because `snfCert` forms the products directly; the fixture exists so
+  that a later change routing `snfCert` through `mulEqCertAt` fails here
+  rather than silently accepting a wrong candidate;
 - a `ℚ` fixture chosen so that naive elimination produces large
   coefficients, with the peak coefficient size recorded, so the growth
   claim under "Complexity" is checked rather than asserted.
@@ -1100,11 +1348,22 @@ rather than at one ladder endpoint.
    difference that shows on one coefficient type and not the other. The
    cost is carrying a proof through the recursion, which is real, so a
    win on `Rat` alone is the case that justifies it.
-3. The evaluation-based `mulEqCertAt` is kept only if it beats the
-   direct product across the upper half of the degree ladder at a fixed
-   dimension. It is an optimisation to a checker that is not on the hot
-   path of any consumer, so a marginal win does not justify carrying
-   both routes and the point-supply fallback that comes with it.
+3. The `snf` and `snfData` paths are measured separately on every
+   family, and the ratio between them is reported rather than the
+   absolute times alone. That ratio is the evidence for the API split: if
+   it is close to `1` across both ladders, the split is carrying
+   complexity for nothing and one entry point returning `SmithData`
+   should replace both. The prediction is that it grows with the
+   dimension, because the accumulators are `n × n` and `m × m` while the
+   form is `n × m`.
+4. The evaluation-based `mulEqCertAt` is kept only if it beats the
+   direct product across the upper half of the **dimension** ladder at
+   fixed degree, which is the regime the operation count above says it
+   can win in. Measuring it along the degree ladder instead would be
+   measuring the case it is predicted to lose. It is an optimisation to a
+   checker that is not on the hot path of any consumer, so a marginal win
+   does not justify carrying both routes and the point supply a
+   dispatcher would need.
 
 ## The Mathlib layer
 
@@ -1121,11 +1380,11 @@ submodule spanned by the rows of `A`. -/
 noncomputable def smithNormalForm (A : Hex.Matrix (DensePoly F) n m) :
     Module.Basis.SmithNormalForm
       (Submodule.span (Polynomial F) (Set.range (polyMatrixEquiv A))) (Fin m)
-      (snf A).rank
+      (snfRank A)
 
 /-- The divisibility chain, which Mathlib's structure does not carry. -/
 theorem smithNormalForm_chain (A : Hex.Matrix (DensePoly F) n m) (i : Nat)
-    (h : i + 1 < (snf A).rank) :
+    (h : i + 1 < snfRank A) :
     (smithNormalForm A).a ⟨i, by omega⟩ ∣ (smithNormalForm A).a ⟨i + 1, h⟩
 
 /-- Monic is Mathlib's canonical associate for `Polynomial F`. -/
@@ -1136,13 +1395,14 @@ theorem monicize_eq_normalize (p : DensePoly F) :
 noncomputable def quotientEquiv (A : Hex.Matrix (DensePoly F) n m) :
     (Fin m → Polynomial F) ⧸ Submodule.span (Polynomial F)
         (Set.range (polyMatrixEquiv A)) ≃ₗ[Polynomial F]
-      (Fin (m - (snf A).rank) → Polynomial F) ×
-        ⨁ i, Polynomial F ⧸ Ideal.span {toPolynomial (invariantFactors A i)}
+      (Fin (m - snfRank A) → Polynomial F) ×
+        ⨁ i : Fin (snfRank A),
+          Polynomial F ⧸ Ideal.span {toPolynomial ((invariantFactors A)[i])}
 
 /-- The executable rank is the rank over the field of rational
 functions. -/
 theorem rank_eq_ratFunc_rank (A : Hex.Matrix (DensePoly F) n m) :
-    (snf A).rank =
+    snfRank A =
       ((polyMatrixEquiv A).map (algebraMap (Polynomial F) (RatFunc F))).rank
 ```
 
@@ -1176,12 +1436,17 @@ Mathlib-side consumer use Mathlib's gcd vocabulary on the executable
 output without a second normalisation convention. The integer library
 has no counterpart, because `Int.gcd`'s codomain already settles it.
 
-**The rank statement is the expensive one.** `Polynomial F` is not a
-field, so `Matrix.rank` does not apply directly and the statement has to
-go through `RatFunc F`. It is the correct statement and it is worth
-having, but it needs the `algebraMap` into `RatFunc` and the fact that
-the invariant factors are nonzero exactly below the rank, so it should
-be scheduled after the module statements rather than with them.
+**The rank statement is the expensive one, and not for the obvious
+reason.** `Matrix.rank` is defined over any commutative semiring in
+Mathlib, so it does apply at `Polynomial F`; what it computes there is
+the rank of the image submodule, which over a non-field is not the number
+this library returns. The statement worth having is the one over the
+fraction field, which is why `rank_eq_ratFunc_rank` passes through
+`RatFunc F`. It needs the `algebraMap` into `RatFunc`, the fact that the
+invariant factors are nonzero exactly below the rank, and the transport
+of unimodularity, so it should be scheduled after the module statements
+rather than with them. Stating it against `(polyMatrixEquiv A).rank`
+instead would typecheck and would be a different, weaker theorem.
 
 Following the project split, the uniqueness theorems `IsSNF.rank_eq` and
 `IsSNF.diag_eq` are Mathlib-free and proved in `hex-poly-smith`: they are
@@ -1243,10 +1508,10 @@ first". The question is closed, not deferred.
 HexPolySmith/
   Contracts.lean     -- SmithData, IsSNF, isSNFShape, IsSNF.left_unit
   Step.lean          -- the monic-normalising 2x2 step and its inverse
-  Smith.lean         -- snf, the classical Euclidean pivot loop
-  Diagonal.lean      -- snfDiagonal: normalisation and the adjacent-pair sweep
+  Smith.lean         -- snf, snfRank, snfData: one loop, accumulators optional
+  Diagonal.lean      -- snfDiagonal, snfDiagonalData: normalisation and the sweep
   Divisor.lean       -- detDivisor, detDivisor_spec, IsSNF.detDivisor_eq
-  Unique.lean        -- IsSNF.rank_eq, IsSNF.diag_eq
+  Unique.lean        -- IsSNF.rank_eq, IsSNF.diag_eq, snfRank_eq, snf_eq
   Structure.lean     -- invariantFactors, moduleStructure, quotientOrder, solve
   Cert.lean          -- snfCert, mulEqCertAt, and their soundness
 HexPolySmith.lean    -- umbrella
@@ -1305,13 +1570,13 @@ the reason the move is listed at all.
   claims, or a sign that the layout is the natural one for the subject
   and says nothing. Revisit only if a third instance of the same shape
   appears.
-- **Whether `snf` should have a form-only entry point.**
-  [hex-hermite](hex-hermite.md) separates `hnf` from `hnfData` because
-  the transform is the dominant cost and many callers do not want it. The
-  same is true here, and more so, since a polynomial transform is larger
-  than a polynomial form by the same factor and its entries are
-  polynomials. This SPEC returns `SmithData` from a single entry point
-  because the headline consumers (`moduleStructure`, `solve`,
-  `hex-invariant-factors`) all need the transforms, but a caller that
-  wants only `invariantFactors` currently pays for them, and the bench
-  should measure what that costs before the question is settled.
+- **Whether `snfRank` can avoid the full elimination.** The API splits
+  the form from the transforms, which is settled, but `snfRank` still
+  runs the whole pivot loop to count nonzero diagonal entries, and the
+  rank of `A` over `F(x)` is in principle available from a cheaper
+  computation (row reduction over the fraction field, or an evaluation at
+  a point where the rank does not drop). Neither route is free: the first
+  needs `RatFunc`-style arithmetic the Mathlib-free layer does not have,
+  and the second needs a bound on the bad points. Measure `snfRank`
+  against `snf` on `random-dense-polysmith` before deciding whether the
+  question is worth reopening.

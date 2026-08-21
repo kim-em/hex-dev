@@ -52,6 +52,47 @@ SPEC with `lake env lean` against `HexPoly`, `HexMatrix`, `HexDeterminant`:
   serves both Smith libraries.
 - `git diff --check` passes; every relative link in the touched files resolves.
 
+## Second opinion, and what it changed
+
+Codex reviewed the SPEC and found two real correctness problems plus a
+number of overstatements. All were fixed:
+
+- **The termination measure was false.** Step 3 originally applied the `E`
+  matrix at every entry. When the pivot already divides the entry, `xgcd`
+  can return `s = 0` (verified: `xgcd x (2x) = ⟨2x, 0, 1⟩`), and then `E`
+  replaces the pivot row by a multiple of the other row, leaving the pivot
+  degree fixed while raising the off-pivot nonzero count. The measure goes
+  up. The loop now branches: plain subtraction when the pivot divides,
+  `E` only when it does not.
+- **`isSNFShape` did not check the rank bounds**, so `snfCert_sound` was
+  unprovable: `n = m = 0`, `rank = 1`, `diag = #v[1]` passes every product
+  identity. The shape test is now exactly the reflection of the four
+  `IsSNF` fields the products do not establish, and it elaborates.
+- Rewrote `E` so all four divisions are by the monic `ĝ` rather than by
+  the raw `g` (they are equal, since `a/g = u·(a/ĝ)`), which makes the
+  earlier claim that every division in the loop is monic actually true.
+  Re-verified numerically on thirteen inputs, and verified the diagonal
+  sweep's `V`, `V⁻¹`, `L₁`, `L₂` and product identity on five.
+- Split the API into form-only (`snf`, `snfRank`, `snfDiagonal`) and
+  full-data (`snfData`, `snfDiagonalData`) paths, matching `hex-hermite`
+  and the revised `hex-smith`. The old single entry point was justified by
+  a false claim that every headline consumer needs the transforms; only
+  `solve` does.
+- Corrected: the `Lean.Grind.CommRing (DensePoly R)` relocation is a
+  couple of hundred lines (the whole `NatCast`/`OfNat`/`NSMul`/`NPow`/
+  `IntCast`/`ZSMul`/`Semiring`/`Ring` tower), not two lines, and the four
+  measured failures are `Lean.Grind.Ring`, not `CommRing`, because
+  `Matrix.det` takes `Ring`. `DivModLaws` has nine fields, not three.
+  `BhksCandidates.lean` scales by `leadingCoeff f`, not its inverse, so it
+  is not a `monicize` call site. The evaluation checker is not
+  unconditionally a factor of `D` cheaper. `solve`'s `vecMul`s cost
+  `O(n² + m²)`. The diagonal sweep needs paired row and column swaps and a
+  fixed bubble network (justified by the 0/1 principle for distributive
+  lattices) rather than "until nothing changes". PARI's polynomial
+  `matsnf` is square-only, so sympy is the primary oracle. `Matrix.rank`
+  does apply over `Polynomial F`; the reason to pass to `RatFunc` is that
+  it computes a different thing there.
+
 ## Current frontier
 
 The SPEC is complete and no library source was written, per the issue.
