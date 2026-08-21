@@ -761,6 +761,7 @@ structure Hex.Interval.Config where
   maxSplits      : Nat
   maxDepth       : Nat
   maxLeaves      : Nat
+  maxFrontier    : Nat
   maxLocalPieces : Nat
   maxEndpointHeight : Nat
   maxAlignmentShift : Nat

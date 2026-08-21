@@ -604,5 +604,11 @@
     "baseline_blob": null,
     "current_blob": "d21532df570af19a454bcf6c2fcd1e350ecf3ee1",
     "reason": "Relocates the exact-division contract from HexResultant/ExactDiv.lean into a new HexBasic module: the ExactDivLaws class, its cancellation theorems, the total exactDiv wrapper, and the Int and field instances, all verbatim. The factorization path reaches it through the HexBasic umbrella, but no executable factorization definition calls exactDiv or mentions ExactDivLaws, and the two instances were already global via hex-resultant, so the compiled call graph is unchanged."
+  },
+  {
+    "path": "lakefile.lean",
+    "baseline_blob": "6dd80771ae2212333b2a9b925b52056e0037ff56",
+    "current_blob": "a860987f71b25a081e9a8575048cf7a0484bed2b",
+    "reason": "Additionally registers the Mathlib-free supported HexInterval search-contract conformance module on top of the current public interval and PNT registrations; it does not enter the factorization service target or change its executable dependency graph."
   }
 ]
