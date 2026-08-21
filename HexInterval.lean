@@ -12,6 +12,7 @@ public import HexInterval.Action
 public import HexInterval.State
 public import HexInterval.Trace
 public import HexInterval.Policy
+public import HexInterval.Search
 
 public section
 
@@ -37,7 +38,9 @@ registrations, scoped bindings, actions, immutable package requests, checked
 immutable branch state, dependency/work queues, authoritative chronology, and
 bounded diagnostics. The public policy contract exposes bounded immutable
 offers, exact echoed decisions, and fail-closed revalidation without selecting
-a default policy.
-Concrete callbacks and proposals, policy implementations, search, proof replay,
-and measurement-selected storage remain experimental.
+a default policy. The public search contract authenticates selected actions, transactionally
+checks untrusted callback deltas, and supplies bounded stable branch-frontier
+accounting. Concrete callbacks and proposals, offer generation, policy
+implementations, split semantics, proof replay, and measurement-selected
+storage remain experimental.
 -/

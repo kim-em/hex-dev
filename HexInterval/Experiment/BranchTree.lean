@@ -7,6 +7,7 @@ Authors: Kim Morrison
 module
 
 public import HexInterval.Experiment.BranchStart
+public import HexInterval.Search
 
 @[expose] public section
 
@@ -34,22 +35,6 @@ inductive Side where
   | right
   deriving DecidableEq, Repr
 
-/-- Replaceable pending-leaf order. -/
-inductive Order where
-  | depthFirst
-  | breadthFirst
-  deriving DecidableEq, Repr
-
-/-- Global tree resources.  Child sessions retain their independent engine,
-policy, and payload limits. -/
-structure Limits where
-  branch : BranchStart.Limits
-  maxSteps : Nat
-  maxSplits : Nat
-  maxLeaves : Nat
-  leafFuel : Nat
-  deriving DecidableEq, Repr
-
 /-- Everything needed to run and split one pending leaf. -/
 structure Config (Fact PolicyState : Type) : Type 1 where
   factDomain : FactDomain Fact
@@ -58,8 +43,8 @@ structure Config (Fact PolicyState : Type) : Type 1 where
   controller : TargetRun.Controller Fact PolicyState
   splitter : BranchStart.Splitter Fact
   forkPolicy : PolicyState -> Side -> PolicyState
-  order : Order
-  limits : Limits
+  order : Hex.Interval.Search.Order
+  limits : Hex.Interval.Search.Limits
 
 /-- Stable index into the append-only node array. -/
 structure TreeId where
@@ -86,6 +71,7 @@ inductive Blocked where
   | splitRejected (error : BranchStart.Error)
   | splitLimit
   | leafLimit
+  | frontierLimit
   deriving DecidableEq, Repr
 
 /-- Terminal runtime data for a leaf.  None of these constructors is proof
@@ -109,15 +95,14 @@ inductive Node (Fact PolicyState : Type) : Type 1
 an accepted binary split increases it by exactly one. -/
 structure State (Fact PolicyState : Type) : Type 1 where
   nodes : Array (Node Fact PolicyState)
-  frontier : List TreeId
+  frontier : Hex.Interval.Search.Frontier TreeId
   branch : BranchStart.State
-  splits : Nat
-  leaves : Nat
-  steps : Nat
+  accounting : Hex.Interval.Search.Accounting
 
 /-- Failure before a coherent root tree exists. -/
 inductive StartError where
   | leafLimit
+  | frontierLimit
   | scopeLimit
   | unknownTarget
   | session (error : PolicySession.StartError)
@@ -127,6 +112,8 @@ inductive StartError where
 inductive Error where
   | missingNode (id : TreeId)
   | settledNode (id : TreeId)
+  | malformedAccounting
+  | wrongScope
   deriving DecidableEq, Repr
 
 def sourceOf (job : Job Fact PolicyState) : Leaf Fact PolicyState :=
@@ -141,15 +128,17 @@ def State.settled (state : State Fact PolicyState) : Bool :=
   state.frontier.isEmpty
 
 /-- The global processing budget may leave a nonempty frontier. -/
-def State.stepLimited (limits : Limits) (state : State Fact PolicyState) : Bool :=
-  state.steps >= limits.maxSteps && !state.frontier.isEmpty
+def State.stepLimited (limits : Hex.Interval.Search.Limits)
+    (state : State Fact PolicyState) : Bool :=
+  state.accounting.steps >= limits.maxSteps && !state.frontier.isEmpty
 
 /-- Build a coherent root session from the exact caller input. -/
 def start (config : Config Fact PolicyState) (scope : Hex.Interval.Policy.ScopeId)
     (input : CheckerInput Fact) (policyState : PolicyState) :
     Except StartError (State Fact PolicyState) := do
   if config.limits.maxLeaves = 0 then throw .leafLimit
-  if config.limits.branch.maxScopes = 0 then throw .scopeLimit
+  if config.limits.maxFrontier = 0 then throw .frontierLimit
+  if config.limits.maxScopes = 0 then throw .scopeLimit
   if (input.baseProgram.node? input.target.node).isNone then
     throw StartError.unknownTarget
   let session <-
@@ -161,16 +150,9 @@ def start (config : Config Fact PolicyState) (scope : Hex.Interval.Policy.ScopeI
     { scope, depth := 0, input, policyState, session }
   pure
     { nodes := #[.pending root]
-      frontier := [{ index := 0 }]
+      frontier := .singleton { index := 0 }
       branch := BranchStart.State.start session
-      splits := 0
-      leaves := 1
-      steps := 0 }
-
-def schedule (order : Order) (rest fresh : List TreeId) : List TreeId :=
-  match order with
-  | .depthFirst => fresh ++ rest
-  | .breadthFirst => rest ++ fresh
+      accounting := { nextScope := scope.index + 1 } }
 
 def childNode (config : Config Fact PolicyState) (side : Side)
     (scope : Hex.Interval.Policy.ScopeId) (depth : Nat) (input : CheckerInput Fact)
@@ -190,19 +172,20 @@ def childNode (config : Config Fact PolicyState) (side : Side)
 
 def retainLeaf (state : State Fact PolicyState) (id : TreeId)
     (source : Leaf Fact PolicyState) (ending : LeafEnd Fact PolicyState)
-    (rest : List TreeId) : State Fact PolicyState :=
+    (rest : Hex.Interval.Search.Frontier TreeId) : State Fact PolicyState :=
   { state with
     nodes := state.nodes.set! id.index (.leaf source ending)
     frontier := rest
-    steps := state.steps + 1 }
+    accounting := { state.accounting with steps := state.accounting.steps + 1 } }
 
 /-- Process one pending leaf.  Split rejection and tree-resource exhaustion
 are terminal leaf data; only a malformed internal frontier returns `Error`. -/
 def step [DecidableEq Fact] (config : Config Fact PolicyState)
     (state : State Fact PolicyState) : Except Error (State Fact PolicyState) := do
-  if state.steps >= config.limits.maxSteps then return state
-  let some id := state.frontier.head? | return state
-  let rest := state.frontier.tail
+  if !state.accounting.check config.limits state.frontier.pending.length then
+    throw .malformedAccounting
+  if state.accounting.steps >= config.limits.maxSteps then return state
+  let some (id, rest) := Hex.Interval.Search.pop state.frontier | return state
   let some node := state.nodes[id.index]? | throw (.missingNode id)
   let .pending job := node | throw (.settledNode id)
   let source := sourceOf job
@@ -211,15 +194,22 @@ def step [DecidableEq Fact] (config : Config Fact PolicyState)
     job.session job.policyState
   let .split plan := run.stop |
     return retainLeaf state id source (.result run) rest
-  if state.splits >= config.limits.maxSplits then
+  if state.accounting.splits >= config.limits.maxSplits then
     return retainLeaf state id source (.blocked run .splitLimit) rest
-  if state.leaves + 1 > config.limits.maxLeaves then
+  if state.accounting.leaves + 1 > config.limits.maxLeaves then
     return retainLeaf state id source (.blocked run .leafLimit) rest
-  match BranchStart.prepare config.limits.branch state.branch run.session plan
+  if rest.pending.length + 2 > config.limits.maxFrontier then
+    return retainLeaf state id source (.blocked run .frontierLimit) rest
+  let branchLimits : BranchStart.Limits :=
+    { maxDepth := config.limits.maxDepth, maxScopes := config.limits.maxScopes }
+  match BranchStart.prepare branchLimits state.branch run.session plan
       job.input.target config.splitter with
   | .error error =>
       pure (retainLeaf state id source (.blocked run (.splitRejected error)) rest)
   | .ok (branch, children) =>
+      if children.leftScope.index != state.accounting.nextScope ||
+          children.rightScope.index != state.accounting.nextScope + 1 then
+        throw .wrongScope
       let leftId : TreeId := { index := state.nodes.size }
       let rightId : TreeId := { index := state.nodes.size + 1 }
       let (leftNode, leftPending) := childNode config .left children.leftScope
@@ -232,11 +222,14 @@ def step [DecidableEq Fact] (config : Config Fact PolicyState)
       pure
         { nodes := (state.nodes.set! id.index
               (.split source run children leftId rightId)).push leftNode |>.push rightNode
-          frontier := schedule config.order rest fresh
+          frontier := rest.schedule config.order fresh
           branch
-          splits := state.splits + 1
-          leaves := state.leaves + 1
-          steps := state.steps + 1 }
+          accounting :=
+            { steps := state.accounting.steps + 1
+              splits := state.accounting.splits + 1
+              leaves := state.accounting.leaves + 1
+              scopes := state.accounting.scopes + 2
+              nextScope := state.accounting.nextScope + 2 } }
 
 /-- Run for at most the caller fuel and never beyond the retained global step
 budget.  A nonempty frontier in the result is an honest partial tree. -/
@@ -244,7 +237,7 @@ def runFrom [DecidableEq Fact] (config : Config Fact PolicyState) :
     Nat -> State Fact PolicyState -> Except Error (State Fact PolicyState)
   | 0, state => pure state
   | fuel + 1, state =>
-      if state.settled || state.steps >= config.limits.maxSteps then pure state
+      if state.settled || state.accounting.steps >= config.limits.maxSteps then pure state
       else do
         let state ← step config state
         runFrom config fuel state

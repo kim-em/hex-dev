@@ -609,14 +609,16 @@ private def treePolicy : TargetRun.Controller Bound Unit :=
       | none => .stop state }
 
 private def treeLimits (maxSteps := 3) (maxSplits := 1)
-    (maxLeaves := 2) : BranchTree.Limits :=
-  { branch := branchLimits
-    maxSteps
+    (maxLeaves := 2) : Search.Limits :=
+  { maxSteps
     maxSplits
     maxLeaves
+    maxFrontier := maxLeaves
+    maxDepth := branchLimits.maxDepth
+    maxScopes := branchLimits.maxScopes
     leafFuel := limits.policy.maxDecisions }
 
-private def treeConfig (resources : BranchTree.Limits) :
+private def treeConfig (resources : Search.Limits) :
     BranchTree.Config Bound Unit :=
   { factDomain
     packages := splitPackages
@@ -627,7 +629,7 @@ private def treeConfig (resources : BranchTree.Limits) :
     order := .depthFirst
     limits := resources }
 
-private def runTree? (resources : BranchTree.Limits) :
+private def runTree? (resources : Search.Limits) :
     Option (BranchTree.State Bound Unit) := do
   let .ok state := BranchTree.start (treeConfig resources) { index := 0 }
       checkerInput () | none
@@ -651,7 +653,7 @@ private def targetLeaf (expectedScope : Nat) (expectedSource : Bound)
 #guard
   runTree? (treeLimits) |>.any fun state =>
     state.nodes.size == 3 && state.frontier.isEmpty && state.settled &&
-      state.steps == 3 && state.splits == 1 && state.leaves == 2 &&
+      state.accounting.steps == 3 && state.accounting.splits == 1 && state.accounting.leaves == 2 &&
       match state.nodes[0]?, state.nodes[1]?, state.nodes[2]? with
       | some (BranchTree.Node.split source _ children left right),
           some leftNode, some rightNode =>
@@ -668,8 +670,8 @@ private def targetLeaf (expectedScope : Nat) (expectedSource : Bound)
 not claim that either child or the tree is complete. -/
 #guard
   runTree? (treeLimits (maxSteps := 1)) |>.any fun state =>
-    state.nodes.size == 3 && state.steps == 1 && state.splits == 1 &&
-      state.leaves == 2 && state.frontier == [{ index := 1 }, { index := 2 }] &&
+    state.nodes.size == 3 && state.accounting.steps == 1 && state.accounting.splits == 1 &&
+      state.accounting.leaves == 2 && state.frontier.pending == [{ index := 1 }, { index := 2 }] &&
       state.stepLimited (treeLimits (maxSteps := 1)) &&
       match state.nodes[1]?, state.nodes[2]? with
       | some (BranchTree.Node.pending _), some (BranchTree.Node.pending _) => true
@@ -677,8 +679,8 @@ not claim that either child or the tree is complete. -/
 
 #guard
   runTree? (treeLimits (maxSplits := 0)) |>.any fun state =>
-    state.nodes.size == 1 && state.frontier.isEmpty && state.splits == 0 &&
-      state.leaves == 1 &&
+    state.nodes.size == 1 && state.frontier.isEmpty && state.accounting.splits == 0 &&
+      state.accounting.leaves == 1 &&
       match state.nodes[0]? with
       | some (BranchTree.Node.leaf _
           (BranchTree.LeafEnd.blocked _ BranchTree.Blocked.splitLimit)) => true
@@ -686,21 +688,23 @@ not claim that either child or the tree is complete. -/
 
 #guard
   runTree? (treeLimits (maxLeaves := 1)) |>.any fun state =>
-    state.nodes.size == 1 && state.frontier.isEmpty && state.splits == 0 &&
-      state.leaves == 1 &&
+    state.nodes.size == 1 && state.frontier.isEmpty && state.accounting.splits == 0 &&
+      state.accounting.leaves == 1 &&
       match state.nodes[0]? with
       | some (BranchTree.Node.leaf _
           (BranchTree.LeafEnd.blocked _ BranchTree.Blocked.leafLimit)) => true
       | _ => false
 
 #guard
-  BranchTree.schedule .depthFirst [{ index := 9 }]
-      [{ index := 1 }, { index := 2 }] ==
+  (Search.Frontier.schedule .depthFirst
+      ({ pending := [{ index := 9 }] } : Search.Frontier BranchTree.TreeId)
+      [{ index := 1 }, { index := 2 }]).pending ==
     [{ index := 1 }, { index := 2 }, { index := 9 }]
 
 #guard
-  BranchTree.schedule .breadthFirst [{ index := 9 }]
-      [{ index := 1 }, { index := 2 }] ==
+  (Search.Frontier.schedule .breadthFirst
+      ({ pending := [{ index := 9 }] } : Search.Frontier BranchTree.TreeId)
+      [{ index := 1 }, { index := 2 }]).pending ==
     [{ index := 9 }, { index := 1 }, { index := 2 }]
 
 /-! ## Operation-composed semantics at an arbitrary graph node -/

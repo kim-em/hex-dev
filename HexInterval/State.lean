@@ -132,6 +132,7 @@ structure Update (Fact Cause : Type) where
   fact : Fact
   version : Nat
   cause : Cause
+  deriving DecidableEq
 
 /-- Immutable fact state for one search branch. Base facts and appended-node
 seeds are the authoritative version-zero facts; later current facts are
@@ -150,6 +151,7 @@ structure Branch (Fact Cause : Type) where
   depths : Array Nat
   history : Array (Update Fact Cause)
   contradictory : Bool
+  deriving DecidableEq
 
 inductive BranchError where
   | invalidProgram

@@ -2267,11 +2267,13 @@ The first generic runtime tree manager now retains internal nodes recording
 validated plans and exact child inputs, and leaves recording target,
 contradiction, saturation, resource failure, split refusal, session-start
 failure, or any other precise `TargetRun` result. It stores the append-only
-node array and a separate pending frontier, so a global step limit returns an
-honest partial tree rather than relabelling unexplored leaves as closed.
-Independent limits bound processed leaves, accepted splits, current leaf
-count, split depth, total created scopes, and each leaf run's policy fuel in
-addition to the per-session engine and payload limits. Split- and leaf-limit
+node array and the supported stable pending frontier, so a global step limit
+returns an honest partial tree rather than relabelling unexplored leaves as
+closed.
+Independent supported limits bound processed leaves, accepted splits, current
+leaf count, pending frontier count, split depth, total created scopes, and each
+leaf run's policy fuel in addition to the per-session engine and payload limits.
+Split- and leaf-limit
 exhaustion is retained at the exact parent leaf. A child session which cannot
 start is likewise retained beside its sibling instead of silently deleting
 the branch.
@@ -3110,6 +3112,28 @@ reconstructs and validates the branch snapshot once, then checks bounded offers
 without repeating whole-program validation. The returned runtime value has no
 theorem authority.
 
+The supported Mathlib-free `HexInterval/Search.lean` layer owns the next
+generic boundary. Its decoded `Search.Session` binds one exact checked
+`State.Branch`, registration snapshot, scope, serial, complete policy view,
+controller-owned offer-to-`Action` bindings, bounded diagnostic log, and
+global accounting. `prepareWithin` revalidates the external policy decision
+and returns only the exact controller-owned action. `acceptWithin` checks an
+untrusted callback batch against that action's serial, program version, input
+versions, and write set and applies the whole batch to a local branch before
+returning a replacement session. A stale later update therefore cannot
+partially commit an earlier update. Callback failure has an exact conservative
+stop, and diagnostic truncation can change only the log, not facts, versions,
+provenance, scope, or contradiction state.
+
+`Search.Frontier` and `Search.Accounting` supply stable depth-first and
+breadth-first ordering plus independent step, split, retained-leaf, frontier,
+depth, and scope limits. Child records retain an exact immutable parent branch
+for restoration; the generic layer validates this binding but deliberately
+does not interpret split semantics. Callback execution, measurements, and
+equality on caller-selected Lean objects remain explicitly non-preemptible:
+packages must bound result construction before returning, after which search
+preflights returned counts, retained bytes, and declared work.
+
 The experimental target controller now implements the supported `Interface`
 and returns the actual supported `Step`; it stamps a selected supported offer
 into a supported decision before the policy session authenticates the exact
@@ -3117,9 +3141,16 @@ scope, serial, program version, remaining budget, identifier, semantic key,
 class, age, and score and performs the existing engine-owned freshness checks.
 The concrete `OfferId`,
 `OfferKey`, instantiation/split encodings, staged/adaptive/feature policies,
-package callbacks, event history, sessions, and branch-search loop remain under
-`HexInterval/Experiment`. In particular no `balancedV1`, score model, storage
-layout, scheduler, or default policy is selected by the supported contract.
+package callbacks, semantic outcome interpretation, event history, concrete
+policy sessions, target-specific stop taxonomy, and proof replay remain under
+`HexInterval/Experiment`. The experimental `BranchTree` consumes the supported
+search order, limits, accounting, and frontier container, while its
+package-specific child construction remains behind `BranchStart`. The older
+sealed propagator session is not presented as a supported `Search.Session`:
+its concrete engine/registry/payload ownership must be migrated through the
+new authenticated transition boundary rather than hidden by an alias. No
+`balancedV1`, score model, storage layout, offer generator, scheduler default,
+or proof format is selected by the supported contracts.
 
 The implemented generic records and current concrete experimental keys are
 sketched below:
@@ -5089,6 +5120,12 @@ their declared cost inside a scheduler bound.
   semantic offer keys and policies remain experimental; package measurement
   callbacks and equality on nested identifiers, keys, and reconstructed facts
   are explicitly non-preemptible.
+- `HexInterval/Search.lean`: supported Mathlib-free authenticated
+  policy/action sessions, transactional callback-delta validation, exact
+  generic stop/resource classes, stable depth-first/breadth-first frontiers,
+  immutable parent restoration, and bounded step/split/leaf/frontier/depth/
+  scope accounting. It contains no concrete callback, offer generator, split
+  semantics, policy algorithm, storage choice, or proof replay.
 - `HexInterval/Experiment/Propagator.lean`: current experimental concrete
   applications, callbacks, outcomes, untrusted proposals and replies, and
   extension admission. Its engine extends and mutates only through the
@@ -5096,11 +5133,13 @@ their declared cost inside a scheduler bound.
   inspectable experimental storage candidate.
 - `HexInterval/Experiment/{PackageRegistry,PolicyDriver,PolicySession,
   StagedPolicy,AdaptivePolicy,FeaturePolicy,BranchTree}.lean`: current
-  provisional package callback, policy, session, and branch-search designs.
-   Optimized storage, policy/search APIs, and a default policy will be selected
+   provisional package callback, policy implementation, semantic session,
+   target driver, and split-construction designs. Optimized storage, concrete
+   offer generation, package protocols, and a default policy will be selected
    from measurements; none is frozen by the decoded supported snapshots.
-- `conformance/HexInterval/{Conformance,MinMaxConformance,EmitFixtures}.lean`:
-  Lean-only checks and oracle fixtures.
+ - `conformance/HexInterval/{Conformance,SearchConformance,MinMaxConformance,
+   EmitFixtures}.lean`:
+   Lean-only checks and oracle fixtures.
 - `HexInterval/Experiment/PntFks2FamilyData*.lean` and
   `HexInterval/Experiment/PntFks2Family.lean`: committed source-pinned family
   data and the Mathlib-free complete-family checker.
@@ -5149,6 +5188,11 @@ typical, boundary, and adversarial inputs. In particular it includes:
 - diagnostic event count, payload-byte, logical-work, and code refusal,
   malformed cached totals, and a truncation canary showing that diagnostic
   loss cannot change branch facts, versions, provenance, or contradiction;
+- stale or mutated search decisions and callback replies, unauthorized writes,
+  stale later updates with whole-batch rollback, callback failure, and exact
+  step/split/leaf/frontier/depth/scope one-over refusal; stable DFS/BFS order,
+  exact parent scope/version/provenance restoration, and trace truncation with
+  identical retained branch state;
 - equal endpoints in all closure combinations;
 - empty, singleton, one-sided unbounded, and whole intervals;
 - table-driven empty laws: every unary operation and `regularize` preserve

@@ -66,11 +66,13 @@ private def branchLimits : BranchStart.Limits :=
   { maxDepth := 4, maxScopes := 8 }
 
 private def treeLimits (maxSteps := 3) (maxSplits := 1)
-    (maxLeaves := 2) : BranchTree.Limits :=
-  { branch := branchLimits
-    maxSteps
+    (maxLeaves := 2) : Search.Limits :=
+  { maxSteps
     maxSplits
     maxLeaves
+    maxFrontier := maxLeaves
+    maxDepth := branchLimits.maxDepth
+    maxScopes := branchLimits.maxScopes
     leafFuel := limits.policy.maxDecisions }
 
 private def boundExpr : Bound → Expr
@@ -496,7 +498,7 @@ private def reluTreePolicy : TargetRun.Controller Bound Unit :=
       | some offer => .select offer state
       | none => .stop state }
 
-private def reluTreeConfig (resources : BranchTree.Limits) :
+private def reluTreeConfig (resources : Search.Limits) :
     BranchTree.Config Bound Unit :=
   { factDomain
     packages := reluSplitPackages
@@ -507,7 +509,7 @@ private def reluTreeConfig (resources : BranchTree.Limits) :
     order := .depthFirst
     limits := resources }
 
-private def reluTree? (resources : BranchTree.Limits := treeLimits) :
+private def reluTree? (resources : Search.Limits := treeLimits) :
     Option (BranchTree.State Bound Unit) := do
   let .ok state := BranchTree.start (reluTreeConfig resources) { index := 0 }
       reluInput () | none
@@ -516,8 +518,8 @@ private def reluTree? (resources : BranchTree.Limits := treeLimits) :
 
 #guard
   reluTree?.any fun state =>
-    state.settled && state.nodes.size == 3 && state.steps == 3 &&
-      state.splits == 1 && state.leaves == 2 &&
+    state.settled && state.nodes.size == 3 && state.accounting.steps == 3 &&
+      state.accounting.splits == 1 && state.accounting.leaves == 2 &&
       match state.nodes[1]?, state.nodes[2]? with
       | some (BranchTree.Node.leaf left (BranchTree.LeafEnd.result leftRun)),
           some (BranchTree.Node.leaf right (BranchTree.LeafEnd.result rightRun)) =>

@@ -1,0 +1,291 @@
+/-
+Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Kim Morrison
+-/
+
+import HexInterval.Conformance
+
+/-!
+# Supported search-contract conformance
+
+These guards discriminate exact policy/action binding, transactional callback
+updates, independent resource stops, stable frontier order, parent restoration,
+and diagnostic truncation from proof-state mutation.
+-/
+
+namespace Hex.Interval.SearchConformance
+
+open Conformance.Contracts
+open Search
+
+private def searchLimits : Search.Limits :=
+  { maxSteps := 4
+    maxSplits := 2
+    maxLeaves := 3
+    maxFrontier := 3
+    maxDepth := 2
+    maxScopes := 5
+    leafFuel := 4 }
+
+private def traceLimits : Trace.Limit :=
+  { maxEvents := 1, maxBytes := 1, maxWork := 1, maxCode := 8 }
+
+private def envelope : Search.Envelope :=
+  { state := stateLimits
+    policy := policyLimits
+    trace := traceLimits
+    search := searchLimits }
+
+private def offer : Search.Offer Nat Action :=
+  { view := policyOffer, action := policyAction }
+
+private def session? : Option (Search.Session Nat Nat Nat Action) := do
+  let branch <- branch?
+  (Search.Session.startWithin envelope policyMeasure branch #[localRule] #[]
+    #[0] #[0] 0 { index := 5 } #[offer] policyBudget false).toOption
+
+private def decision? : Option (Policy.Decision Nat Action) := do
+  let session <- session?
+  pure (Policy.select session.view offer.view)
+
+private def outcome (updates : Array (State.Update Nat Nat) := #[firstUpdate])
+    (diagnostic : Option Trace.Event := none) : Search.Outcome Nat Nat Nat Action :=
+  { scope := { index := 5 }
+    serial := 0
+    programVersion := 0
+    offer := offer.view
+    action := policyAction
+    updates
+    diagnostic }
+
+private def searchError (wanted : Search.Error)
+    (result : Except Search.Error α) : Bool :=
+  match result with
+  | .error actual => decide (actual = wanted)
+  | .ok _ => false
+
+#guard match session? with
+  | some session => session.check envelope policyMeasure
+  | none => false
+
+-- A successful batch is bound to the exact selected action and commits one
+-- versioned update atomically.
+#guard match session?, decision? with
+  | some session, some decision =>
+      match Search.acceptWithin envelope policyMeasure session decision
+          (.outcome (outcome)) with
+      | .ok (.applied next) =>
+          next.branch.snapshot.facts == #[13, 29] && next.branch.versions == #[0, 1] &&
+            next.branch.history == #[firstUpdate] && next.serial == 1 &&
+            next.offers.isEmpty && next.accounting.steps == 1
+      | _ => false
+  | _, _ => false
+
+-- Application generation is authenticated rather than inferred from a compact
+-- count. A stale generation makes the entire decoded session invalid.
+#guard match session?, decision? with
+  | some session, some decision =>
+      searchError .invalidSession <|
+        Search.prepareWithin envelope policyMeasure
+          { session with applicationGenerations := #[1] } decision
+  | _, _ => false
+
+-- Scope, serial, program, semantic key, and every exposed offer field remain
+-- load-bearing at the supported transition boundary.
+#guard match session?, decision? with
+  | some session, some decision =>
+      searchError (.policy .wrongScope) <|
+        Search.prepareWithin envelope policyMeasure session
+          { decision with scope := { index := 4 } }
+  | _, _ => false
+
+#guard match session?, decision? with
+  | some session, some decision =>
+      searchError (.policy .staleSerial) <|
+        Search.prepareWithin envelope policyMeasure session
+          { decision with serial := 1 }
+  | _, _ => false
+
+#guard match session?, decision? with
+  | some session, some decision =>
+      searchError (.policy .staleProgram) <|
+        Search.prepareWithin envelope policyMeasure session
+          { decision with programVersion := 1 }
+  | _, _ => false
+
+#guard match session?, decision? with
+  | some session, some decision =>
+      searchError .staleReply <|
+        Search.acceptWithin envelope policyMeasure session decision <|
+          .outcome { outcome with action := { policyAction with serial := 1 } }
+  | _, _ => false
+
+#guard match session?, decision? with
+  | some session, some decision =>
+      let changed :=
+        { session with offers := #[{ offer with
+            action := { policyAction with key := { localKey with schema := 9 } } }] }
+      searchError .invalidSession <|
+        Search.prepareWithin envelope policyMeasure changed decision
+  | _, _ => false
+
+#guard match session?, decision? with
+  | some session, some decision =>
+      searchError .staleReply <|
+        Search.acceptWithin envelope policyMeasure session decision <|
+          .outcome { outcome with offer := { offer.view with age := 9 } }
+  | _, _ => false
+
+#guard match session?, decision? with
+  | some session, some decision =>
+      searchError .malformedOutcome <|
+        Search.acceptWithin envelope policyMeasure session decision <|
+          .outcome { outcome (#[]) with contradiction := true }
+  | _, _ => false
+
+-- Writes outside exact action authority and a stale second update reject the
+-- whole batch. The caller still owns the unchanged original session.
+#guard match session?, decision? with
+  | some session, some decision =>
+      let wrongNode : State.Update Nat Nat :=
+        { firstUpdate with
+          node := contractNode 0
+          previous := { node := contractNode 0, version := 0 } }
+      searchError (.unauthorizedWrite (contractNode 0)) <|
+        Search.acceptWithin envelope policyMeasure session decision
+          (.outcome (outcome #[wrongNode]))
+  | _, _ => false
+
+#guard match session?, decision? with
+  | some session, some decision =>
+      let staleSecond :=
+        { secondUpdate with previous := { node := contractNode 1, version := 0 } }
+      searchError (.state (.staleVersion (contractNode 1)))
+          (Search.acceptWithin envelope policyMeasure session decision
+            (.outcome (outcome #[firstUpdate, staleSecond]))) &&
+        session.branch.snapshot.facts == #[13, 23] && session.branch.history.isEmpty
+  | _, _ => false
+
+#guard match session?, decision? with
+  | some session, some decision =>
+      searchError .outcomeLimit <|
+        Search.acceptWithin
+          { envelope with state := { stateLimits with maxOutcomeCandidates := 0 } }
+          policyMeasure session decision (.outcome (outcome))
+  | _, _ => false
+
+-- A callback failure has an exact stop and cannot mutate branch facts,
+-- versions, provenance, or contradiction state.
+#guard match session?, decision? with
+  | some session, some decision =>
+      match Search.acceptWithin envelope policyMeasure session decision (.failure 3) with
+      | .ok (.stopped (.callbackFailure 3) next) => next.branch == session.branch
+      | _ => false
+  | _, _ => false
+
+-- Diagnostic truncation changes only the retained log. The accepted proof
+-- state is byte-for-byte the same as the no-diagnostic run.
+#guard match session?, decision? with
+  | some session, some decision =>
+      let plain := Search.acceptWithin envelope policyMeasure session decision
+        (.outcome (outcome))
+      let noisy := Search.acceptWithin envelope policyMeasure session decision
+        (.outcome (outcome (diagnostic := some { code := 1, payload := #[1, 2] })))
+      match plain, noisy with
+      | .ok (.applied left), .ok (.applied right) =>
+          left.branch == right.branch && !left.trace.truncated && right.trace.truncated
+      | _, _ => false
+  | _, _ => false
+
+-- Stopping is conservative even with a nonempty frontier. A policy which
+-- returns a mutated copy is rejected rather than authorized.
+private def stopped : Policy.Interface Nat Bool Nat Action :=
+  { choose := fun state _ => .stop state }
+
+private def mutated : Policy.Interface Nat Bool Nat Action :=
+  { choose := fun state _ => .select { offer.view with score := 0 } state }
+
+#guard match session? with
+  | some session =>
+      match Search.chooseWithin envelope policyMeasure stopped false session with
+      | .ok (.stopped (.policyStop 1) false) => true
+      | _ => false
+  | none => false
+
+#guard match session? with
+  | some session =>
+      searchError (.policy .mutatedOffer) <|
+        Search.chooseWithin envelope policyMeasure mutated false session
+  | none => false
+
+private def leaf (scope depth payload : Nat)
+    (parent : Option (Search.Parent Nat Nat) := none) : Option (Search.Leaf Nat Nat Nat) := do
+  let branch <- branch?
+  pure { scope := { index := scope }, depth, branch, parent, payload }
+
+private def nested? (order : Search.Order) :
+    Option (Search.Accounting × Search.Frontier (Search.Leaf Nat Nat Nat)) := do
+  let root <- leaf 0 0 0
+  let .ok (accounting, frontier) := Search.startFrontierWithin searchLimits root | none
+  let (root, rest) <- Search.pop frontier
+  let parent := root.asParent
+  let left <- leaf 1 1 1 (some parent)
+  let right <- leaf 2 1 2 (some parent)
+  let .ok (accounting, frontier) :=
+    Search.splitWithin searchLimits order accounting root rest left right | none
+  let (left, rest) <- Search.pop frontier
+  let parent := left.asParent
+  let leftLeft <- leaf 3 2 3 (some parent)
+  let leftRight <- leaf 4 2 4 (some parent)
+  let .ok result :=
+    Search.splitWithin searchLimits order accounting left rest leftLeft leftRight | none
+  pure result
+
+-- Both stable orders retain left-to-right sibling order and differ only in
+-- where fresh work is placed relative to the old suffix.
+#guard nested? .depthFirst |>.any fun result =>
+  result.1 == { steps := 2, splits := 2, leaves := 3, scopes := 5, nextScope := 5 } &&
+    result.2.pending.map (fun leaf => leaf.scope.index) == [3, 4, 2]
+
+#guard nested? .breadthFirst |>.any fun result =>
+  result.1 == { steps := 2, splits := 2, leaves := 3, scopes := 5, nextScope := 5 } &&
+    result.2.pending.map (fun leaf => leaf.scope.index) == [2, 3, 4]
+
+-- Child restoration returns the exact immutable parent, including scope,
+-- fact versions, and provenance history.
+#guard nested? .depthFirst |>.any fun result =>
+  match result.2.pending[0]? with
+  | some child =>
+      child.restoreParent?.any fun parent =>
+        parent.scope.index == 1 && parent.branch.versions == #[0, 0] &&
+          parent.branch.history.isEmpty
+  | none => false
+
+-- Independent one-over resources fail before a replacement frontier or
+-- accounting value is returned.
+#guard match leaf 0 0 0 with
+  | some root =>
+      searchError (.resource .frontier) <|
+        Search.startFrontierWithin { searchLimits with maxFrontier := 0 } root
+  | none => false
+
+private def splitError (limits : Search.Limits) : Option Search.Error := do
+  let root <- leaf 0 0 0
+  let .ok (accounting, frontier) := Search.startFrontierWithin searchLimits root | none
+  let (root, rest) <- Search.pop frontier
+  let parent := root.asParent
+  let left <- leaf 1 1 1 (some parent)
+  let right <- leaf 2 1 2 (some parent)
+  match Search.splitWithin limits .depthFirst accounting root rest left right with
+  | .error error => some error
+  | .ok _ => none
+
+#guard splitError { searchLimits with maxSteps := 0 } == some (.resource .steps)
+#guard splitError { searchLimits with maxSplits := 0 } == some (.resource .splits)
+#guard splitError { searchLimits with maxLeaves := 1 } == some (.resource .leaves)
+#guard splitError { searchLimits with maxScopes := 2 } == some (.resource .scopes)
+#guard splitError { searchLimits with maxDepth := 0 } == some (.resource .depth)
+#guard splitError { searchLimits with maxFrontier := 1 } == some (.resource .frontier)
+
+end Hex.Interval.SearchConformance

@@ -93,14 +93,16 @@ private def splitter : Splitter Bound :=
       else
         none }
 
-private def resources : BranchTree.Limits :=
-  { branch := { maxDepth := 3, maxScopes := 5 }
-    maxSteps := 5
+private def resources : Search.Limits :=
+  { maxSteps := 5
     maxSplits := 2
     maxLeaves := 3
+    maxFrontier := 3
+    maxDepth := 3
+    maxScopes := 5
     leafFuel := limits.policy.maxDecisions }
 
-private def config (order : Order) : Config Bound Route :=
+private def config (order : Search.Order) : Config Bound Route :=
   { factDomain
     packages := splitPackages
     sessionLimits := limits
@@ -110,7 +112,7 @@ private def config (order : Order) : Config Bound Route :=
     order
     limits := resources }
 
-private def run? (order : Order) (fuel : Nat) : Option (State Bound Route) := do
+private def run? (order : Search.Order) (fuel : Nat) : Option (State Bound Route) := do
   let .ok state := BranchTree.start (config order) { index := 0 } input .root
     | none
   let .ok state := BranchTree.runFrom (config order) fuel state | none
@@ -131,18 +133,18 @@ private def leafReached? (entry : BranchTree.Node Bound Route) : Bool :=
 
 #guard
   (run? .depthFirst 2).any fun state =>
-    state.steps == 2 && state.splits == 2 && state.leaves == 3 &&
-      state.frontier == [{ index := 3 }, { index := 4 }, { index := 2 }]
+    state.accounting.steps == 2 && state.accounting.splits == 2 && state.accounting.leaves == 3 &&
+      state.frontier.pending == [{ index := 3 }, { index := 4 }, { index := 2 }]
 
 #guard
   (run? .breadthFirst 2).any fun state =>
-    state.steps == 2 && state.splits == 2 && state.leaves == 3 &&
-      state.frontier == [{ index := 2 }, { index := 3 }, { index := 4 }]
+    state.accounting.steps == 2 && state.accounting.splits == 2 && state.accounting.leaves == 3 &&
+      state.frontier.pending == [{ index := 2 }, { index := 3 }, { index := 4 }]
 
 #guard
   (run? .depthFirst 5).any fun state =>
-    state.settled && state.steps == 5 && state.splits == 2 &&
-      state.leaves == 3 && state.nodes.size == 5 &&
+    state.settled && state.accounting.steps == 5 && state.accounting.splits == 2 &&
+      state.accounting.leaves == 3 && state.nodes.size == 5 &&
       match state.nodes[0]?, state.nodes[1]?, state.nodes[2]?,
           state.nodes[3]?, state.nodes[4]? with
       | some (BranchTree.Node.split root _ rootChildren left right),
@@ -167,8 +169,8 @@ private def leafReached? (entry : BranchTree.Node Bound Route) : Bool :=
 
 #guard
   (run? .breadthFirst 5).any fun state =>
-    state.settled && state.steps == 5 && state.splits == 2 &&
-      state.leaves == 3 && state.nodes.size == 5 &&
+    state.settled && state.accounting.steps == 5 && state.accounting.splits == 2 &&
+      state.accounting.leaves == 3 && state.nodes.size == 5 &&
       state.nodes.toList.countP leafReached? == 3
 
 /-! ## Propagate before splitting -/
@@ -208,11 +210,13 @@ private def postController : Controller Bound PostRoute :=
 
 private def postFork (_ : PostRoute) (_ : Side) : PostRoute := .close
 
-private def postResources : BranchTree.Limits :=
-  { branch := { maxDepth := 1, maxScopes := 3 }
-    maxSteps := 3
+private def postResources : Search.Limits :=
+  { maxSteps := 3
     maxSplits := 1
     maxLeaves := 2
+    maxFrontier := 2
+    maxDepth := 1
+    maxScopes := 3
     leafFuel := limits.policy.maxDecisions }
 
 private def postConfig : Config Bound PostRoute :=
