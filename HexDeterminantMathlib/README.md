@@ -49,9 +49,18 @@ The proof-facing API connects the executable determinant to Mathlib:
 - submatrix transport: `matrixEquiv_borderedMinor` and the determinant forms
   `det_principalSubmatrix_eq_submatrix_det` and
   `det_borderedMinor_eq_submatrix_det`;
-- the Plücker three-term identity `det_plucker_three_term` and the
-  Desnanot-Jacobi identities `desnanot_jacobi` and
+- the unrestricted three-term Grassmann-Plücker relation
+  `det_plucker_three_term`;
+- the Desnanot-Jacobi identity, over Mathlib matrices as `desnanot_jacobi`,
+  under an arbitrary row/column reindexing as
+  `desnanot_jacobi_matrixEquiv_reindex`, in Hex minor terms as
+  `desnanot_jacobi_deleteRowCol_endpoints`, and in the bordered-minor form
   `desnanot_jacobi_borderedMinor` used by the Bareiss correctness proof.
+
+Sylvester's determinant identity, the general statement that an `m × m` matrix
+of bordered minors has determinant `det A₀ ^ (m - 1) * det A`, is **not** proved
+here; the Bareiss recurrence needs only its `2 × 2` case, which is
+Desnanot-Jacobi.
 
 # Verification
 
@@ -63,7 +72,9 @@ theorem det_eq [CommRing R] (M : Hex.Matrix R n n) :
     Hex.Matrix.det M = Matrix.det (matrixEquiv M)
 ```
 
-The Plücker three-term identity, assembled for the Bareiss correctness proof:
+The unrestricted three-term Grassmann-Plücker relation, for any three ordered
+rows `p1 < p2 < p3` (`hex-determinant` proves the Mathlib-free specialisation
+where `p2` and `p3` are the last two rows):
 
 ```lean
 theorem det_plucker_three_term

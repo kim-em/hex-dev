@@ -642,8 +642,14 @@ private theorem det_mul_cofactor_setRow_eq
 
 For matrix `M : Matrix R (n+1) (n+1)`, distinct rows `a` and `b`, and
 replacement vectors `u`, `v`, the determinant of `M` paired with the
-two-row-replaced cofactor-row pairing satisfies the quadratic Sylvester
-relation against the four one-row cofactor-row pairings of `u` and `v`. -/
+two-row-replaced cofactor-row pairing is the two-by-two difference of the four
+one-row cofactor-row pairings of `u` and `v`.
+
+This is the two-by-two case of Jacobi's identity for minors of the adjugate,
+written with row replacement rather than row deletion. It is *not* the general
+Sylvester determinant identity, the statement that an `m` by `m` matrix of
+bordered minors has determinant `det A0 ^ (m - 1) * det A`, which is not proved
+in this project. -/
 theorem cofactorRowPairing_setRow_plucker
     {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
     (M : Matrix R (n + 1) (n + 1)) (a b : Fin (n + 1)) (hab : a ≠ b)
@@ -670,7 +676,13 @@ theorem cofactorRowPairing_setRow_plucker
   rw [hpre]
   grind
 
-/-- Two-row replacement determinant Plucker identity. -/
+/-- Two-row replacement determinant identity: replacing distinct rows `a` and
+`b` of `M` by `u` and `v` relates `det M` times the doubly-replaced determinant
+to the four singly-replaced determinants.
+
+Substituting standard basis vectors for `u` and `v` turns each singly-replaced
+determinant into a signed one-row/one-column minor, recovering Desnanot-Jacobi
+for an arbitrary row pair and column pair. -/
 theorem det_setRow_setRow_mul_det
     {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
     (M : Matrix R (n + 1) (n + 1)) (a b : Fin (n + 1)) (hab : a ≠ b)

@@ -51,7 +51,7 @@ def M : Matrix Int 3 3 := Matrix.ofFn fun i j => if i = j then (2 : Int) else 1
 # Verification
 
 Over a `CommRing` the determinant's behaviour is fully proven, starting with
-`det_one` and the row-operation laws `det_rowSwap`, `det_rowScale`, and
+`det_identity` and the row-operation laws `det_rowSwap`, `det_rowScale`, and
 `det_rowAdd`.
 
 The headline theorem for each of the remaining results (with
@@ -78,9 +78,36 @@ The `List.finRange` reference form `det_eq_foldl_laplace_row` states the same
 expansion as a `List.foldl`, bridged by `Fin.foldl_eq_finRange_foldl`.
 
 We prove the Cauchy-Binet column-tuple product formula (Gram form) as
-`det_gramMatrix_eq_sum_columnTuples`, the adjugate identity
-`M * adjugate M = det M • identity` as `mul_adjugate`, and the three-term
-Plücker / Desnanot-Jacobi identity as `det_plucker_three_term_consecutive_top`.
+`det_gramMatrix_eq_sum_columnTuples` and the adjugate identity
+`M * adjugate M = det M • identity` as `mul_adjugate`.
+
+Two quadratic identities among minors are proved here, and it is worth keeping
+their names apart. `det_setRow_setRow_mul_det` is the two-row replacement
+identity, the `2 × 2` case of Jacobi's adjugate-minor identity: for distinct
+rows `a`, `b` and arbitrary vectors `u`, `v`,
+
+```lean
+theorem det_setRow_setRow_mul_det
+    (M : Matrix R (n + 1) (n + 1)) (a b : Fin (n + 1)) (hab : a ≠ b)
+    (u v : Vector R (n + 1)) :
+    det M * det (setRow (setRow M a u) b v) =
+      det (setRow M a u) * det (setRow M b v) -
+        det (setRow M a v) * det (setRow M b u)
+```
+
+`det_plucker_three_term_consecutive_top` is a three-term Grassmann-Plücker
+relation, in the specialisation where the two larger of the three distinguished
+rows are the last two rows. It relates the maximal minors of a tall
+`B : Matrix R (k + 2) k` to those of `B` with a column appended: `nDet B p q`
+deletes two rows of `B`, while `mDet B v p` deletes one row of `[B | v]`. Taking
+`v` a standard basis vector recovers the ordinary six-maximal-minor relation
+among `nDet`s.
+
+Desnanot-Jacobi itself, and the unrestricted three-term relation for any
+`p1 < p2 < p3`, are stated in
+[`hex-determinant-mathlib`](https://github.com/leanprover/hex-determinant-mathlib).
+Sylvester's determinant identity, the general `m × m` bordered-minor statement,
+is not proved anywhere in the project.
 
 The identification of this determinant with Mathlib's `Matrix.det`, and the
 correspondence with the executable Bareiss determinant

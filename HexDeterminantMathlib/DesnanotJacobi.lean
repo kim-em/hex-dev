@@ -9,14 +9,16 @@ Copyright (c) 2026 Slava Naprienko. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Slava Naprienko
 
-Inlined into hex-matrix-mathlib from
+Inlined into hex-determinant-mathlib from
 https://github.com/leanprover-community/mathlib4/pull/37716
 ("feat(LinearAlgebra/Matrix/Determinant): Desnanot-Jacobi identity",
-authored by Slava Naprienko, commit `bbe9ab491bc1`). The proof is
-copied verbatim modulo Lean module-system syntax (the upstream version
-uses the new `module`/`public import` declarations; this project still
-uses plain `import`). Delete this file and import the upstream module
-once mathlib4 PR #37716 merges.
+authored by Slava Naprienko, commit `bbe9ab491bc1`). The proof was
+copied verbatim from that commit and has since been migrated to the
+`module`/`public import` system and had two `simp` sets repaired across
+toolchain bumps, so it is no longer character-for-character upstream.
+Delete this file and import the upstream module once mathlib4 PR #37716
+merges; the upstream branch has moved on from `bbe9ab491bc1`, so re-check
+the statement rather than assuming a drop-in swap.
 -/
 module
 
