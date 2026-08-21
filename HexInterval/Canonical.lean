@@ -90,6 +90,14 @@ def whole : Hex.Interval :=
 def singletonWithin (limit : EndpointLimit) (value : Dyadic) : BuildResult :=
   ofRawWithin limit (.bounds (.finite value false) (.finite value false))
 
+/-- A successful singleton exposes its exact normalized closed cuts. -/
+theorem view_singletonWithin_ready {limit : EndpointLimit} {value : Dyadic}
+    {result : Hex.Interval} (h : singletonWithin limit value = .ready result) :
+    result.view =
+      (Raw.bounds (.finite value false) (.finite value false)).normalizeUnchecked := by
+  unfold singletonWithin at h
+  exact view_ofRawWithin_ready h
+
 /-- Construct a one-sided interval with a finite lower cut. -/
 def aboveWithin (limit : EndpointLimit) (value : Dyadic) (strict : Bool) : BuildResult :=
   ofRawWithin limit (.bounds (.finite value strict) .unbounded)

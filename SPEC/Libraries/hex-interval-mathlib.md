@@ -31,8 +31,13 @@ rollback; the kernel checks the term when the caller installs it in a
 declaration. The theorem registry is constructible only through its
 checked builder under ordinary imports; deliberate `import all` is a guarded
 trusted-internals escape hatch, not decoded runtime authority.
-Concrete packages, goal reification, search-to-proof quotation, and tactic
-syntax remain experimental and are not re-exported by the public umbrella.
+The supported `Rule` registry owns stable arithmetic meanings and schemas for
+negation, addition, subtraction, multiplication, natural power, absolute
+value, minimum, maximum, constants, reciprocal, division, and regularization.
+Each schema recomputes the fixed-resource public operation before producing
+evidence; source nodes remain caller assumptions. Arbitrary-function package
+discovery, goal reification, search-to-proof quotation, and tactic syntax
+remain experimental and are not re-exported by the public umbrella.
 The user-facing tactic contract below is the release target, not a claim that
 the tactic is already supported.
 
