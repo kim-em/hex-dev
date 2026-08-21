@@ -408,6 +408,7 @@ lean_lib HexIntervalMathlibExperiment where
     `HexIntervalMathlib.Experiment.PntBKLNWExp,
     `HexIntervalMathlib.Experiment.PntBKLNWPow,
     `HexIntervalMathlib.Experiment.PntPrimeLogSmall,
+    `HexIntervalMathlib.Experiment.PntChebyshev,
     `HexIntervalAlgebraic.Experiment.PolynomialDispatch,
     `HexIntervalAlgebraic.Experiment.PolynomialDispatchProof,
     `HexIntervalMathlib.Experiment.SinTen,
@@ -497,6 +498,8 @@ lean_lib HexConformance where
 
     ++ #[`HexIntervalMathlib.PntNestedLogTwoConformance,
       `HexIntervalMathlib.PntPiPointConformance].map Glob.one
+
+    ++ #[`HexIntervalMathlib.PntChebyshevConformance].map Glob.one
 
     ++ #[`HexIntervalMathlib.PntTable10ShardConformance,
       `HexIntervalMathlib.PntTable10ConvexConformance,

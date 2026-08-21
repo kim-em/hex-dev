@@ -4736,6 +4736,29 @@ at roughly 42 GiB in aggregate. Separately, shard 00 and shard 13 took 183 and
 in 122 seconds. These measurements justify the separate local/release profile
 and are observations, not stable budgets.
 
+#### Bounded Chebyshev fold profile
+
+The pinned PNT+ medium-range theorem keeps its exact real statement
+`0 < x → x ≤ 11723 → ψ x ≤ 1.11 * x`. Its localized Hex rewrite
+replaces the `native_decide` checker with a package-owned positive-integer
+logarithm enclosure, bounded primality classifier, exact prime-power table,
+and natural-number von Mangoldt fold. The logarithm provider reduces by a
+power of two and proves a two-term atanh enclosure with an exact geometric
+remainder before one upward rounding to tenths.
+
+The 11,723-coordinate fold is replayed by 46 ordinary-kernel certificates of
+at most 256 coordinates, joined sequentially by one structural prefix theorem.
+This chunk bound is the retained resource boundary; it avoids a monolithic
+proof term while preserving every coordinate inequality. Composite-as-prime
+and wrong-prime-power-base mutations are rejected at their exact coordinates
+without a precision retry.
+
+This is a proof-side bounded campaign, not a retained runtime action or a
+generic `ProofFrontend` fold. It accepts only PNT+'s `allChecks_11723` site
+after a localized predicate rewrite. The shared Chebyshev import and interface
+remain pending because the FKS2-floor and Ramanujan developments also consume
+distinct theta-bound checkers.
+
 #### Certified logarithm tables
 
 The initial source-pinned PNT+ probe is intentionally narrower than this
