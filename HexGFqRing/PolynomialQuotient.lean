@@ -75,12 +75,18 @@ A value of this type is a polynomial *together with* a proof that it lies in the
 image of `reduceMod f`, so a raw `FpPoly p` cannot be supplied where one of these
 is expected.
 
-The modulus is required to be prime, and that is what makes the representative
-canonical: `reduceMod` is a genuine remainder only when the leading coefficient
-it divides by is a unit. Over a composite modulus the division step can subtract
-zero and leave the remainder untouched, so `reduceMod` is not a canonical form
-and two values would represent one residue class. `isReduced_iff_degree_lt`
-states the contract this hypothesis buys.
+The modulus is required to be prime, which guarantees the representative is
+canonical for every nonconstant `f`: `reduceMod` is a genuine remainder only
+when the leading coefficient it divides by is a unit, and over a prime modulus
+every nonzero coefficient is. Drop the hypothesis and canonicality can fail. At
+`p = 4` with `f = 2X` the division step subtracts zero and leaves the remainder
+untouched, so `f` and `0` are congruent yet both reduced and distinct.
+`isReduced_iff_degree_lt` states the contract this hypothesis buys.
+
+Primality is sufficient, not necessary: a monic `f` needs no coefficient
+inversion and would be canonical over any modulus. The uniform prime hypothesis
+is the deliberate choice here, since every modulus this library serves is over a
+prime field anyway.
 
 `reduceMod` itself, and its degree-short-circuit lemmas above, stay general; it
 is the quotient *type* that is restricted, because that is what carries the
@@ -155,9 +161,11 @@ instance {f : FpPoly p} {hf : 0 < FpPoly.degree f} : DecidableEq (PolyQuotient f
 {name}`PolyQuotient` stores is the unique one of its residue class.
 
 This is the theorem behind the "equality is equality of canonical
-representatives" contract, and it is where primality is load-bearing: the
-right-to-left direction needs `reduceMod` to fix every polynomial below the
-modulus, which fails when the leading coefficient of `f` is not a unit. -/
+representatives" contract, and it is where primality is load-bearing. The
+forward direction is the one that needs it: a reduced polynomial is only known
+to sit below the modulus because the remainder-degree law holds over a field,
+and that law is what fails when the leading coefficient of `f` is not a unit.
+The converse is `reduceMod_eq_self_of_degree_lt`, which holds generally. -/
 theorem isReduced_iff_degree_lt {f : FpPoly p} (hf : 0 < FpPoly.degree f)
     (g : FpPoly p) :
     IsReduced f g ↔ FpPoly.degree g < FpPoly.degree f := by

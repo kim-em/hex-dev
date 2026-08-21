@@ -172,6 +172,7 @@ instance {f : FpPoly p} {hf : 0 < FpPoly.degree f} : SMul Int (PolyQuotient f hf
     repr (const f hf c) = reduceMod f (FpPoly.C c) :=
   rfl
 
+omit [ZMod64.PrimeModulus p] in
 private theorem zmod64_eq_zero_of_modulus_one
     (hp : p = 1) (a : ZMod64 p) : a = 0 := by
   apply ZMod64.ext
@@ -180,6 +181,7 @@ private theorem zmod64_eq_zero_of_modulus_one
     exact Nat.lt_one_iff.mp (by simpa [hp] using a.isLt)
   exact ha
 
+omit [ZMod64.PrimeModulus p] in
 private theorem zmod64_zero_ne_one_of_pos_degree
     (f : FpPoly p) (hf : 0 < FpPoly.degree f) :
     (0 : ZMod64 p) ≠ 1 := by
@@ -350,6 +352,7 @@ def linearPow {f : FpPoly p} {hf : 0 < FpPoly.degree f}
     linearPow x (n + 1) = linearPow x n * x :=
   rfl
 
+omit [ZMod64.PrimeModulus p] in
 private theorem fpPoly_C_add (a b : ZMod64 p) :
     FpPoly.C (a + b) = (FpPoly.C a + FpPoly.C b : FpPoly p) := by
   apply DensePoly.ext_coeff

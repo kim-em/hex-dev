@@ -31,13 +31,20 @@ normalize through `reduceMod`. Equality of quotient elements is therefore
 equality of canonical representatives, not a separate setoid-style
 relation.
 
-Canonicality requires `p` prime, and `PolyQuotient` says so: it takes
-`[ZMod64.PrimeModulus p]`, so a quotient element cannot be formed over a
-composite modulus at all. That restriction is real rather than
-defensive. At composite `p` the long-division step divides by a leading
-coefficient that need not be a unit, `reduceMod` is then not a canonical
-form, and two values would represent one residue class.
-`isReduced_iff_degree_lt` states the contract the hypothesis buys.
+`PolyQuotient` takes `[ZMod64.PrimeModulus p]`, so a quotient element
+cannot be formed over a composite modulus at all. That restriction is
+real rather than defensive: at composite `p` the long-division step
+divides by a leading coefficient that need not be a unit, `reduceMod` is
+then not a canonical form, and two values would represent one residue
+class. `isReduced_iff_degree_lt` states the contract the hypothesis
+buys.
+
+Primality is sufficient rather than necessary. A monic modulus needs no
+coefficient inversion and would be canonical over any `p`; the uniform
+prime hypothesis is the deliberate choice, since every modulus this
+library serves is over a prime field. Generalizing to monic moduli over
+a general coefficient ring would need a division-law package that does
+not exist yet.
 
 `reduceMod` itself stays general, along with its degree-short-circuit
 lemmas; it is the quotient type that carries the canonicality claim, so
