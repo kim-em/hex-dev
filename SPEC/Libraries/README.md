@@ -28,6 +28,7 @@
 - **hex-gf2**: packed bitwise polynomials over `F_2` (XOR + CLMUL), `GF(2^n)` elements
 - **hex-poly-z**: polynomials over `Z`, content/primitive part, Mignotte bound
 - **hex-poly-z-gcd**: modular gcd for `Z[x]` with cofactors, a coprimality witness, and exact division
+- **hex-cyclotomic**: dense integer cyclotomic polynomials from a checked factorization of the index, the divisor family, and the factorization of `x^n - 1`
 - **hex-roots**: certified complex root isolation for `Z[x]` via dyadic squares, Pellet tests, and speculative Newton iteration
 - **hex-real-roots**: certified real root isolation for `Z[x]`: Sturm-count witnesses, a Descartes bisection search with a proven-complete Sturm fallback
 - **hex-interval**: exact open, closed, empty, and unbounded dyadic intervals; a shared expression program; and a budgeted scheduler for propagation, refinement, and subdivision
@@ -53,6 +54,7 @@ Mathlib, and supplies correspondence proofs or Mathlib-facing APIs):
 - **hex-padics-mathlib**: an approximation as a ball in `ℤ_[p]` or `ℚ_[p]`, the fibres of `PadicInt.toZModPow`, the valuation correspondence in `WithTop ℤ`, and the sharpness of each operation
 - **hex-modular-matrix-mathlib**: Hadamard's inequality discharged, `det` = `Matrix.det`, rank = `Matrix.rank`, and the solve and kernel correspondences
 - **hex-poly-z-gcd-mathlib**: gcd divisibility and maximality in `Polynomial ℤ`, and `Decidable (a ∣ b)`
+- **hex-cyclotomic-mathlib**: agreement with `Polynomial.cyclotomic n ℤ`, the degree `Nat.totient n`, irreducibility over `ℤ` and `ℚ`, and the divisor product
 - **hex-primality-mathlib**: `Hex.Nat.Prime ↔ Nat.Prime`, the `norm_num` extension, and segment statements over `Finset.filter Nat.Prime`
 - **hex-int-factor-mathlib**: agreement with `Nat.factorization`, `Decidable (Squarefree n)`, and `orderOf` in `(ZMod n)ˣ`
 - **hex-finite-field-mathlib**: `Fintype K` and `Fintype.card K = card K` for any `LawfulFiniteField`, and `frob = frobenius`
@@ -118,6 +120,7 @@ Each library with its immediate dependencies:
 - **hex-poly-fp**: hex-poly, hex-mod-arith
 - **hex-poly-z**: hex-poly, hex-arith, hex-basic
 - **hex-poly-z-gcd**: hex-poly-z, hex-poly-fp, hex-poly, hex-modular, hex-mod-arith, hex-arith, hex-resultant
+- **hex-cyclotomic**: hex-poly-z, hex-int-factor, hex-poly
 - **hex-roots**: hex-poly-z
 - **hex-real-roots**: hex-poly-z
 - **hex-interval**: (none)
@@ -152,6 +155,7 @@ Mathlib companion libraries (each also depends on Mathlib):
 - **hex-truncated-series-mathlib**: hex-truncated-series
 - **hex-poly-z-mathlib**: hex-poly-z, hex-poly-mathlib
 - **hex-poly-z-gcd-mathlib**: hex-poly-z-gcd, hex-poly-z-mathlib, hex-poly-mathlib
+- **hex-cyclotomic-mathlib**: hex-cyclotomic, hex-poly-z-mathlib, hex-poly-mathlib, hex-int-factor-mathlib
 - **hex-roots-mathlib**: hex-roots, hex-poly-z-mathlib
 - **hex-real-roots-mathlib**: hex-real-roots, hex-poly-z-mathlib
 - **hex-interval-mathlib**: hex-interval
@@ -422,6 +426,29 @@ hex-primality ──┘                │
                                  └── hex-modular-matrix (adapter)
 ```
 
+`hex-cyclotomic` is the one library that joins the polynomial graph to
+the factorization graph. It builds `Φₙ` as a `ZPoly`, so it sits on
+hex-poly-z and on hex-poly for the dense division and the substitution
+of `x^k`, and every one of its entry points is indexed by a
+`CheckedFactorization`, so it sits on hex-int-factor for the certificate
+and the divisor, radical, and totient functions. It does **not** depend
+on hex-sparse-poly: dense output is the default and the sparse form is
+an adapter at a consumer, for the reasons in
+[hex-cyclotomic §Sparse output is an adapter, not a dependency](hex-cyclotomic.md).
+The relationship with hex-int-factor's own `cyclotomicSplit?`, which
+computes the *values* `Φ_d(b)` in `Nat` without a polynomial, is a
+conformance boundary rather than a dependency in either direction.
+
+```text
+hex-poly-z ──────┐
+hex-poly ────────┼── hex-cyclotomic ──┐
+hex-int-factor ──┘                    │
+                                      ├── hex-cyclotomic-mathlib
+hex-poly-z-mathlib ───────────────────┤
+hex-poly-mathlib ─────────────────────┤
+hex-int-factor-mathlib ───────────────┘
+```
+
 ## Index
 
 Libraries marked **(released)** are published as standalone
@@ -469,6 +496,7 @@ for developments whose source-local move has not happened yet.
 - [hex-poly-z](../../HexPolyZ/SPEC/hex-poly-z.md): polynomials over `Z`, content/primitive part, Mignotte bound
 - [hex-poly-z-mathlib](../../HexPolyZMathlib/SPEC/hex-poly-z-mathlib.md): Mignotte bound proof via Mathlib's Mahler measure
 - [hex-poly-z-gcd.md](hex-poly-z-gcd.md): modular gcd for `Z[x]` with cofactors, a coprimality witness, and exact division (the Mathlib companion is specified in the same file)
+- [hex-cyclotomic.md](hex-cyclotomic.md): dense integer cyclotomic polynomials indexed by a checked factorization, the squarefree-kernel and divisor-recursion routes, the divisor family, and the factorization of `x^n - 1` (the Mathlib companion is specified in the same file)
 - [hex-roots.md](../../HexRoots/SPEC/hex-roots.md): certified complex root isolation for `Z[x]`
 - [hex-roots-mathlib](../../HexRootsMathlib/SPEC/hex-roots-mathlib.md): Pellet's test on circles, the Mahler separation bound, soundness of refinement and `isolate`
 - [hex-real-roots.md](../../HexRealRoots/SPEC/hex-real-roots.md): certified real root isolation for `Z[x]`, Sturm-count witnesses, Descartes search with Sturm fallback

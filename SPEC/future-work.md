@@ -419,33 +419,36 @@ Newton iterations doubling precision per step so that the fuel bound is
 logarithmic.
 
 **Cyclotomic polynomials (`hex-cyclotomic`,
-`hex-cyclotomic-mathlib`).** `Φₙ` for positive `n`, constructed by the
-recursive division `Φₙ = (xⁿ − 1) / ∏_{d | n, d < n} Φ_d`, or faster
-from the squarefree kernel of `n` and the identity
-`Φₙ(x) = Φ_rad(n)(x^(n/rad n))`. The index is positive throughout, so
-the API takes `0 < n` or `[NeZero n]` rather than a bare `Nat`; the
-identity and the degree formula both need it.
+`hex-cyclotomic-mathlib`).** Specified in
+[hex-cyclotomic](Libraries/hex-cyclotomic.md). `Φₙ` for positive `n`,
+constructed by the recursive division
+`Φₙ = (xⁿ − 1) / ∏_{d | n, d < n} Φ_d`, or faster from the squarefree
+kernel of `n` and the identity `Φₙ(x) = Φ_rad(n)(x^(n/rad n))`.
 
-Small enough to build rather than plan, and worth recording because
-cyclotomics currently appear across the tree as hard-coded fixtures and
-benchmark inputs rather than as something a library constructs. The
-natural API is `Φₙ` as a `ZPoly`, the factorization
+Worth building because cyclotomics currently appear across the tree as
+hard-coded fixtures and benchmark inputs rather than as something a
+library constructs. The API is `Φₙ` as a `ZPoly`, the factorization
 `xⁿ − 1 = ∏_{d | n} Φ_d`, irreducibility over `ℚ`, and the degree
 identity `deg Φₙ = φ(n)`.
 
 The computational library depends on hex-poly-z and
-[hex-int-factor](Libraries/hex-int-factor.md). Its primary constructor should
-accept a `CheckedFactorization` of the positive index, making divisor
-enumeration, `radical`, and `totient` total and avoiding hidden refactorization;
-a convenience search API may factor the index first. Sparse output is an
-optional adapter through hex-sparse-poly, not a prerequisite of the dense
-constructor.
+[hex-int-factor](Libraries/hex-int-factor.md). Its primary constructor
+accepts a `CheckedFactorization` of the index, making divisor
+enumeration, `radical`, and `totient` total and avoiding hidden
+refactorization; a convenience search API factors the index first.
+That SPEC corrects the positivity requirement named here: the
+certificate already requires `0 < subject`, so `CheckedFactorization 0`
+is uninhabited and neither a `0 < n` argument nor `[NeZero n]` is
+needed. Sparse output is an adapter at a consumer through
+hex-sparse-poly rather than a dependency of the dense constructor,
+because Lake has no conditional dependencies.
 
 [hex-int-factor](Libraries/hex-int-factor.md) needs the *values*
 `Φ_d(b)` at an integer `b`, to split `b^n ± 1` before factoring it, and
-computes them in `Nat` by Möbius inversion rather than through a
-polynomial. The two should agree where they overlap, which is one
-conformance case in that SPEC.
+computes them in `Nat` by its own recursion rather than through a
+polynomial. The two agree where they overlap, which is a conformance
+boundary owned by the cyclotomic library, since it is the one that can
+import both.
 
 **Multivariate gcd and squarefree decomposition.** Required by rational
 expression simplification, by the recursive view, and by multivariate
