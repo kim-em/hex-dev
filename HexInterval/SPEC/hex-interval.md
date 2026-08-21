@@ -102,15 +102,18 @@ The supported proof companion can separately consume a checked retained
 authenticates package-owned binary cover and refutation schemas, its checked
 state rebases inherited child facts without promoting them to assumptions, and
 its bounded recursive fold closes target/refutation leaves, rejects unknown
-leaves, and joins siblings only through the exact cover. Producing that proof
-recipe from generic search callbacks and invoking the fold from the public
-tactic remain later controller work. The first
+leaves, and joins siblings only through the exact cover. The supported
+one-step driver now invokes an already-selected authenticated package callback
+and transactionally retains its exact runtime command and separately checked
+recipe data together. It can advance root and child-local fact histories before
+splitting or settling. Offer generation, autonomous search iteration, and
+invoking this path from the public tactic remain later controller work. The first
 concrete supported registry is the Mathlib arithmetic package for one
 configured constant and natural exponent plus public negation, addition,
 subtraction, multiplication, power, absolute-value, min/max, reciprocal,
 division, and regularization operations. Arbitrary-function package assembly,
-callback outcomes and proposals, concrete policy algorithms and default
-scheduling, the branch-search controller, callback-to-recipe orchestration,
+concrete callback implementations and offer generation, concrete policy
+algorithms and default scheduling, the complete branch-search loop,
 payload storage, and the optimized backing store remain experimental.
 Supported authenticated sessions and the narrow direct-forward tactic do not
 yet supply that missing controller bridge.
@@ -3265,8 +3268,12 @@ not stored in the tree: a later call may relax them, while a tightened call
 rejects an already-retained value which exceeds the new caps rather than
 grandfathering it.
 Semantic split coverage, package-owned refutation theorems, recursive proof
-replay, search-to-recipe quotation, and unknown-leaf rejection by a proof fold
-remain later supported edges.
+replay, and unknown-leaf rejection are supported by the Mathlib proof fold.
+The supported one-step driver retains one already-selected authenticated
+callback command together with its exact separately checked recipe data and
+can advance the current root or child source before a split or terminal.
+Offer generation, repeated autonomous scheduling, and public-tactic
+split-search integration remain later controller edges.
 
 This visibility is not a claim against Lean's deliberate `import all
 HexInterval.Search`. That form exposes private implementation names to trusted
@@ -4028,14 +4035,15 @@ tree first; changing that measure can make the same pure tree fail validation.
 These limits are checked independently because runtime tree records and proof
 recipes are both untrusted data.
 
-The current retained tree freezes each node's `Source.branch` when that node is
-created. A split child restarts its program version and fact generations at
-zero and the retained-tree API does not yet advance that child snapshot.
-Consequently a non-root proof chronology must be empty or proof-state-only,
-and a target/refutation terminal can cite only facts current at node creation.
-This edge proves exact split/refutation folding, not recursive propagation in
-children; authenticated callback-to-recipe quotation plus branch advancement
-is the next controller edge.
+Every split child begins at program version zero with zero fact generations
+and the exact parent snapshot plus one seed. The sealed retained-tree
+transition can then replace the current node's source only with the after-state
+of an accepted callback tied to that exact source branch. The supported
+one-step driver appends the same callback's fact events to that node's recipe
+in the same transaction. Non-root target/refutation leaves and later splits
+may therefore consume child-local fact history after exact replay. This is not
+yet an autonomous controller: offer generation, repeated policy-driven
+iteration, and public-tactic split search remain separate work.
 
 `maxEndpointHeight` is measured after canonical dyadic normalization as the bit
 length of the absolute numerator plus the magnitude of the signed binary
@@ -5338,8 +5346,13 @@ their declared cost inside a scheduler bound.
   registry; `import all HexIntervalMathlib.Proof` is a trusted-internals escape
   hatch rejected outside the exact empty repository allowlist. The built-in
   arithmetic package and direct-forward reifier/tactic are supported below;
-  arbitrary-function packages, callback-to-tree-recipe orchestration,
-  split-search tactic integration, and default registries remain experimental.
+  arbitrary-function packages, autonomous search orchestration, split-search
+  tactic integration, and default registries remain experimental.
+- `HexIntervalMathlib/Driver.lean`: supported one-step execution of an exact
+  already-selected package action, atomic retained-source advancement/split/
+  terminal updates, and bounded alignment of the sealed result tree with its
+  separately untrusted node recipe. It does not generate offers, choose a
+  policy, or run an autonomous search loop.
 - `HexIntervalMathlib/Rule.lean`: the supported stable-key arithmetic package,
   exact real operation meanings, package-owned fact schemas, checked registry
   assembly, and state-to-proof quotation for negation, addition, subtraction,
@@ -5408,8 +5421,9 @@ their declared cost inside a scheduler bound.
   a separately sealed parent/depth/scope-checked leaf frontier, immutable parent
   restoration, sealed cumulative step/split/leaf/frontier/depth/scope
   accounting, and a sealed bounded retained result tree with exact single-delta
-  child reconstruction and target/refute/unknown terminals. It contains no
-  concrete callback, offer generator, semantic split/refutation theorem,
+  child reconstruction, authenticated fact-history advancement, and
+  target/refute/unknown terminals. It contains no concrete callback, offer
+  generator, semantic split/refutation theorem,
   policy algorithm, storage choice, proof recipe, or proof replay.
 - `HexInterval/Experiment/Propagator.lean`: current experimental concrete
   applications, callbacks, outcomes, untrusted proposals and replies, and

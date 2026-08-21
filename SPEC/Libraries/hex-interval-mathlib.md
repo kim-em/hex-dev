@@ -41,9 +41,12 @@ granting runtime state evidence authority. The current package fixes one
 natural exponent and one dyadic constant, shared respectively by every node at
 the built-in power and constant operation indices; duplicate package
 registration and operation keys cannot provide another such parameterization.
-Arbitrary-function package discovery, generic search-to-recipe orchestration,
+Arbitrary-function package discovery, a complete autonomous search loop,
 split-search tactic integration, and default package discovery remain
-experimental. The supported direct-forward reifier and tactic are a narrow
+experimental. The supported callback driver executes one already-selected
+authenticated package action and atomically advances a sealed result tree and
+its separately checked proof recipe; it does not choose or enumerate offers.
+The supported direct-forward reifier and tactic are a narrow
 client rather than that missing generic bridge. The supported proof layer can
 replay a separately supplied, bounded chronology over a checked
 retained search tree: package-owned binary-cover and refutation schemas are
@@ -55,12 +58,12 @@ measure, and the untrusted recipe separately echoes every parent, side, and
 seed edge. Child proof states restart at program version zero; inherited facts
 are rebased as derived evidence rather than promoted to assumptions.
 `Proof.TreeLimits` independently cap proof nodes, depth, body cells, and
-structural work. Generic callback-to-recipe quotation and tactic-driven split
-search remain later integration edges. Each retained node currently freezes
-its `Source.branch` at creation; non-root snapshots restart at version zero,
-so their chronology must be empty or proof-state-only and terminals can cite
-only facts current in that creation snapshot. Recursive child propagation
-remains part of the later controller edge. Current retained-tree construction
+structural work. Tactic-driven split search remains a later integration edge.
+Each non-root snapshot starts at version zero from the exact parent-plus-seed
+origin. The supported driver may advance that retained source only with an
+accepted update from the same authenticated session; its node-local recipe is
+retained in the same transaction, so recursive child propagation is replayed
+exactly by the existing proof fold. Current retained-tree construction
 inherits the Mathlib-free reference cost `Θ(N² * B + N³)` from repeated branch
 validation and pairwise scope-uniqueness checking; this is not a production
 storage-complexity claim.
@@ -3167,6 +3170,11 @@ the fixed soundness and trust contracts.
 - `HexIntervalMathlib/Proof.lean`: chronological and retained-tree replay,
   package-owned fact/equality/instance/refutation/split schemas, exact child
   seeding and cover joins, certificate checks, and proof construction.
+- `HexIntervalMathlib/Driver.lean`: one-step authenticated package invocation,
+  atomic retained-node advancement/split/terminal updates, and bounded exact
+  alignment of the sealed runtime tree with a separately untrusted proof
+  recipe. Offer generation, policy selection, and the autonomous search loop
+  remain outside this module.
 - `HexIntervalMathlib/Reify.lean`: expressions, hypotheses, targets, and folds.
 - `HexIntervalMathlib/Derivative.lean`: automatic differentiation and centered
   enclosures.
