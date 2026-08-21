@@ -76,10 +76,47 @@ includes generic bounded policy offers/views, exact echoed decisions, a
 replaceable choice interface, package-measured byte/pair/work caps, and
 transactional revalidation against exact program, fact snapshot, scope,
 serial, program version, remaining budget, and complete offer fields. It does
-not choose a semantic offer-key encoding or a default policy. Package assembly,
-callback outcomes and proposals, concrete policy algorithms, sessions, branch
-search, payload storage, proof replay, and that optimized backing store remain
-experimental.
+not choose a semantic offer-key encoding or a default policy. The supported
+Mathlib companion now also owns the function-agnostic program interpretation,
+package theorem registry, chronological proof fold, exact caller closure, and
+checked expression boundary. Its first programmatic frontend recursively
+reifies a bounded arithmetic term language by stable operation key, rechecks
+the transparent result's exact node/term correspondence, places exact caller
+facts at source rows and `whole` at computed version-zero rows, derives all
+initial containments from only the source obligations, and replays a
+caller-supplied authenticated flat
+chronology, and projects
+the result to lower, upper, conjunction, or closed-singleton equality theorems.
+Its depth cap rejects over-deep descent but does not bound construction or a
+full traversal of an already-built branching term. The supported direct
+forward tactic client below parses its bounded Lean-expression and integer-cut
+subset, authenticates the exact flat runtime chronology as untrusted data, and
+independently synthesizes caller proofs. Its fixed public-tactic precision `16`
+uses the dyadic grid `2⁻¹⁶`; programmatic clients may choose another precision
+within the explicit envelope. Because each computed arithmetic layer is
+followed by an internal regularization layer, its term-depth cap `32` admits
+about 16 nested arithmetic operations along one expression spine. Generic
+search-selected recipes and broader local-context parsing remain experimental.
+The supported proof companion can separately consume a checked retained
+`Search.Result.Tree` plus caller-supplied proof chronology: its registry
+authenticates package-owned binary cover and refutation schemas, its checked
+state rebases inherited child facts without promoting them to assumptions, and
+its bounded recursive fold closes target/refutation leaves, rejects unknown
+leaves, and joins siblings only through the exact cover. The supported
+one-step driver now invokes an already-selected authenticated package callback
+and transactionally retains its exact runtime command and separately checked
+recipe data together. It can advance root and child-local fact histories before
+splitting or settling. Offer generation, autonomous search iteration, and
+invoking this path from the public tactic remain later controller work. The first
+concrete supported registry is the Mathlib arithmetic package for one
+configured constant and natural exponent plus public negation, addition,
+subtraction, multiplication, power, absolute-value, min/max, reciprocal,
+division, and regularization operations. Arbitrary-function package assembly,
+concrete callback implementations and offer generation, concrete policy
+algorithms and default scheduling, the complete branch-search loop,
+payload storage, and the optimized backing store remain experimental.
+Supported authenticated sessions and the narrow direct-forward tactic do not
+yet supply that missing controller bridge.
 In particular, the current instantiation proposal's package-supplied numeric
 policy family is not part of the supported action contract.
 
@@ -2267,11 +2304,13 @@ The first generic runtime tree manager now retains internal nodes recording
 validated plans and exact child inputs, and leaves recording target,
 contradiction, saturation, resource failure, split refusal, session-start
 failure, or any other precise `TargetRun` result. It stores the append-only
-node array and a separate pending frontier, so a global step limit returns an
-honest partial tree rather than relabelling unexplored leaves as closed.
-Independent limits bound processed leaves, accepted splits, current leaf
-count, split depth, total created scopes, and each leaf run's policy fuel in
-addition to the per-session engine and payload limits. Split- and leaf-limit
+node array and the supported stable pending frontier, so a global step limit
+returns an honest partial tree rather than relabelling unexplored leaves as
+closed.
+Independent supported limits bound processed leaves, accepted splits, current
+leaf count, pending frontier count, split depth, total created scopes, and each
+leaf run's policy fuel in addition to the per-session engine and payload limits.
+Split- and leaf-limit
 exhaustion is retained at the exact parent leaf. A child session which cannot
 start is likewise retained beside its sibling instead of silently deleting
 the branch.
@@ -3110,6 +3149,182 @@ reconstructs and validates the branch snapshot once, then checks bounded offers
 without repeating whole-program validation. The returned runtime value has no
 theorem authority.
 
+The supported Mathlib-free `HexInterval/Search.lean` layer owns the next
+generic boundary. Under ordinary/public imports, its sealed `Search.Session`
+binds one exact checked `State.Branch`, registration snapshot, scope, serial,
+complete policy view,
+controller-owned offer-to-`Action` bindings, bounded diagnostic log, and
+the cumulative accepted-step count for that run. `Session.startWithin` is the
+only reset point and creates a new run; no public-import client can use its
+record constructor or update to install fresh counters into a live session.
+Session-only accounting does not require frontier capacity, so
+`maxFrontier = 0` does not reject a non-branching session. Before any semantic
+scan or package measurement, session authentication uses `Policy.maxOffers` to
+cap the retained offer array before
+mapping or traversing it. It separately caps the base and current program,
+history and aligned branch arrays, registry, binding/application/equality
+arrays, every
+operation/node/rule/binding port list, and every action input/write/structural
+input list against the corresponding `State.Limits`. Binding count uses
+`maxApplications`; `maxScopeNodes` independently caps each scoped read list and
+write list. `State.maxActions` is cumulative controller work, not an offer-array
+cap. The same preflight enforces operation/node/rule/arity/depth, matcher-batch,
+effort, generation, application, equality, and accepted-fact limits with the
+exact State resource class.
+
+The checked `Envelope` is supplied to each session transition and is not stored
+inside the session value. A later call may supply different, including tighter,
+limits while the cumulative accepted-step count remains part of the session.
+
+The current supported session retains generation stamps for compact
+`ApplicationId`s but not the concrete application table compiled by the
+experimental controller. Search therefore treats the compact identifier as an
+opaque scheduler handle: it authenticates its bounds and generation while
+independently checking the action's rule key and local rule id, anchor,
+operation, kind, reads, writes, and structural inputs. A callback must not use
+the compact application id as authority for a rule or anchor. Retaining and
+checking the exact application table is an obligation for the supported
+controller/package assembly; the present Search contract does not claim that
+correspondence.
+
+`prepareWithin` authenticates the session once, revalidates the external policy
+decision against that already-checked immutable view, and returns only the
+exact controller-owned action. `chooseWithin`, `acceptWithin`, and
+`invokeWithin` use the same private-constructor checked artifact internally:
+each public transition reconstructs branch history and invokes policy
+measurement callbacks once, while callers cannot forge or retain the artifact.
+`invokeWithin` authenticates the decision and checks step exhaustion before
+executing the non-preemptible callback. `acceptWithin` checks an untrusted
+callback batch against that action's serial, program version, input versions,
+and write set, preflights total retained history, and folds exact successor
+updates over the once-authenticated local branch before returning a replacement
+session. A stale later update therefore cannot partially commit an earlier
+update. Callback failure has an exact conservative stop, and diagnostic
+truncation can change only the log, not facts, versions, provenance, scope, or
+contradiction state.
+
+`invokeWithWithin` is the supported same-invocation payload bridge. Its sealed
+`Applied` value binds the exact before session, selected request, echoed
+outcome, and accepted after session; `AppliedStep` and `Invocation` distinguish
+accepted updates, conservative stops, and the opaque payload produced by that
+same single callback. These values remain runtime data rather than proof
+authority, but a checked consumer such as `Result.advanceWithin` can use the
+sealed before/after relation without reconstructing it from causes or flags.
+
+`Search.Frontier` is a public ordering value, but ordinary-import live tree
+authority is the sealed `Search.FrontierState`, which owns the pending frontier
+and its cumulative step, split, retained-leaf, scope, and next-scope accounting.
+The raw `Accounting` constructor and advance operations are private. Checked
+composite start, settle-head, and split-head transitions consume and return the
+whole sealed value, so a fresh counter cannot be transplanted onto an existing
+frontier and a phantom frontier cannot advance live counters. Reusing an old
+pure value may produce an alternative bounded successor; it cannot create a
+successor which bypasses the limits supplied to that checked transition/run
+handle. Limits are not stored in the value and may be tightened by a later
+transition. A separate start creates a documented new run rather than resetting
+an existing one.
+
+The supported parent/depth/scope/branch contract adds a second
+ordinary-import-sealed type, `Search.LeafFrontier Fact Cause Payload`. Its
+private constructor and private inner `FrontierState (Leaf ...)` prevent callers
+from feeding a generically
+scheduled leaf-shaped frontier back into `Search.splitWithin`. Read-only head,
+pending, raw-frontier, and accounting projections support inspection. Only
+`startFrontierWithin`, `settleWithin`, and the specialized `splitWithin` return
+another `LeafFrontier`, and the latter checks exact parent restoration, child
+depth, fresh scopes, branch validity, and retained-scope uniqueness before the
+new wrapper becomes available. Thus the generic composite remains usable by a
+different sealed controller such as `BranchTree`, but it is not authority for
+the stronger leaf protocol for public-import clients.
+
+`Search.Result.Tree` is the supported retained-result prerequisite for a later
+proof-tree fold. Its private constructor keeps the exact node array, sealed
+`FrontierState Result.Id`, cumulative advance count, accounting, and logical
+cost together; callers cannot transplant a raw frontier, reset counters, or
+supply a complete child snapshot. `Result.startWithin` admits one checked root.
+`Result.advanceWithin` consumes a sealed `Applied` transition whose before
+branch is the exact pending head, requires a nonempty accepted update, retains
+the same seeded origin/program dimensions, replaces only that head's live
+branch with the authenticated after branch, and increments both the frontier
+step count and private advance count transactionally.
+`Result.splitWithin` authenticates the exact pending parent and current
+predecessor, structurally checks and retains the complete runtime split action,
+allocates the two fresh scopes through the sealed frontier, and reconstructs
+each restarted child from the checked current parent fact array with exactly
+one version-zero seed delta. At creation, the restarted `State.Branch`
+represents every inherited fact at version zero, resets every generation stamp
+to zero, has no history, and has `contradictory = false`. Later accepted
+same-session `Result.advanceWithin` transitions may advance that live child's
+versions, history, facts, and contradiction status through the ordinary
+checked `State.Branch` rules. Its `baseProgram`, `initialFacts`, checked
+`program`, `seeds`, `generations`, node `depths`, and `programVersion` remain
+pinned to the creation branch for the lifetime of that retained child. The
+inherited creation facts are not thereby reclassified as assumptions or given
+intrinsic derived provenance by the child branch. Instead, the retained tree's
+exact parent/side/seed edge authenticates that they came from the current
+parent consequence snapshot. A downstream controller or proof quotation must
+consume that edge and must not carry pre-split generation stamps into the
+restarted child. `Result.splitWithin`
+does not independently resolve the action's rule key against a package
+registry. `Result.settleWithin` consumes the exact pending head and retains an
+exact target, refutation, or unknown record.
+Whole-tree validation reconstructs every parent/side/seed edge, restored
+parent, pending set, branch consistency, and logical cost; it pins the seeded
+origin and program dimensions while accepting only live branch states that
+pass `Branch.check`. Its cumulative equation is exactly
+`steps = advances + splits + terminals`, rather than equality between a live
+advanced child and its creation-time versions or history.
+
+Result limits independently bound retained nodes, each package body, declared
+logical bytes and work, plus the existing search and state resources. Count
+caps are checked before retained arrays and body lists are traversed. Adapter
+measurement, equality, and construction of arbitrary facts, causes, plans,
+schemas, and bodies remain explicitly non-preemptible; packages must bound
+those values before return. The split plan, schema, refutation record, target
+record, and runtime contradiction state are untrusted data, never evidence.
+As for the sealed frontier, `Result.Tree` is a reusable pure value rather than
+a linear capability. Reusing an old tree may form alternative successors, but
+the checked transition keeps scopes unique within each resulting lineage and
+cannot reset that lineage's retained counters. Limits are supplied per call,
+not stored in the tree: a later call may relax them, while a tightened call
+rejects an already-retained value which exceeds the new caps rather than
+grandfathering it. The `Envelope` which authenticated an `Applied` session and
+the `Result.Limits` supplied to the retained-tree transition are independent
+per-call envelopes; neither substitutes for the other's checks.
+Semantic split coverage, package-owned refutation theorems, recursive proof
+replay, and unknown-leaf rejection are supported by the Mathlib proof fold.
+The supported one-step driver retains one already-selected authenticated
+callback command together with its exact separately checked recipe data and
+can advance the current root or child source before a split or terminal.
+Offer generation, repeated autonomous scheduling, and public-tactic
+split-search integration remain later controller edges.
+
+This visibility is not a claim against Lean's deliberate `import all
+HexInterval.Search`. That form exposes private implementation names to trusted
+source and is an explicit trusted-internals escape hatch, not decoded runtime
+data or proof authority. Arbitrary trusted Lean source can already use `unsafe`
+or introduce axioms, so it lies outside the fail-closed callback/data threat
+model. The repository DAG check rejects `import all HexInterval.Search` outside
+an exact reviewed owning/internal allowlist (currently empty); downstream code
+which deliberately chooses `import all` accepts that trusted-source boundary.
+
+Under ordinary imports, experimental `BranchTree.State` is likewise sealed and
+contains one `FrontierState TreeId`; callers cannot independently replace its
+nodes, frontier, branch manager, or counters. Its checked transitions derive
+the exact head internally. The generic composite split authenticates only cumulative
+resources and stable scheduling for at most two package-validated children;
+the enclosing sealed `BranchTree` checks child construction and semantics.
+The supported `Search.splitWithin` specialization additionally preflights
+every retained parent/child branch, requires exact immutable parent records,
+fresh scopes and depth, and rejects detached parents. `settleWithin` likewise
+returns and charges the exact head rather than trusting a detached count.
+`BranchTree.snapshot` deliberately exports editable retained nodes/frontier as
+untrusted proof-fold input, but that snapshot carries no live accounting or
+mutation authority. Callback execution, measurements, and equality on caller-
+selected Lean objects remain explicitly non-preemptible: packages must bound
+result construction before returning, after which search preflights returned
+counts, retained bytes, and declared work.
+
 The experimental target controller now implements the supported `Interface`
 and returns the actual supported `Step`; it stamps a selected supported offer
 into a supported decision before the policy session authenticates the exact
@@ -3117,9 +3332,19 @@ scope, serial, program version, remaining budget, identifier, semantic key,
 class, age, and score and performs the existing engine-owned freshness checks.
 The concrete `OfferId`,
 `OfferKey`, instantiation/split encodings, staged/adaptive/feature policies,
-package callbacks, event history, sessions, and branch-search loop remain under
-`HexInterval/Experiment`. In particular no `balancedV1`, score model, storage
-layout, scheduler, or default policy is selected by the supported contract.
+package callbacks, semantic outcome interpretation, event history, concrete
+policy sessions, target-specific stop taxonomy, and the older concrete
+controller/branch-proof driver remain under `HexInterval/Experiment`. The
+supported Mathlib companion now owns the generic callback-to-recipe driver;
+its existence does not make the older concrete `BranchProof` controller a
+supported API. The experimental `BranchTree` consumes the supported
+search order, limits, accounting, and frontier container, while its
+package-specific child construction remains behind `BranchStart`. The older
+sealed propagator session is not presented as a supported `Search.Session`:
+its concrete engine/registry/payload ownership must be migrated through the
+new authenticated transition boundary rather than hidden by an alias. No
+`balancedV1`, score model, storage layout, offer generator, scheduler default,
+or proof format is selected by the supported contracts.
 
 The implemented generic records and current concrete experimental keys are
 sketched below:
@@ -3810,7 +4035,7 @@ arguments.
 
 ### Budgets and termination
 
-Every search is finite because the configuration bounds:
+Every target search is required to be finite because its configuration bounds:
 
 - reified base nodes, dynamically generated nodes and equality edges,
   instantiation actions and generation depth, and alternate forms per original
@@ -3824,6 +4049,31 @@ Every search is finite because the configuration bounds:
 - retained trace nodes, frozen payload entries and bytes, kernel-checker work,
   and estimated proof nodes;
 - optional wall-clock time.
+
+The current supported proof layer has two distinct decoded-data envelopes.
+`Proof.Limits` bounds packages, schemas, body cells, ordered dependencies, and
+flat chronology. `Proof.TreeLimits` additionally bounds retained proof nodes,
+depth, aggregate tree/body cells, and structural proof work. It does not expose
+a separate checker-execution counter. The Mathlib-free `Search.Result.Limits`
+and exact caller-supplied `Measure` authenticate and bound the retained runtime
+tree first; changing that measure can make the same pure tree fail validation.
+The callback driver additionally applies a caller-owned `Driver.Measure` to
+the complete logical encoding of every retained proof event and edge,
+including nested facts, actions, schema keys, dependency versions, body
+naturals, and seed data, then enforces independent recipe byte/work caps over
+the complete bundle on every transition. These callbacks and arbitrary-value
+equality remain non-preemptible. The limits are checked independently because
+runtime tree records and proof recipes are both untrusted data.
+
+Every split child begins at program version zero with zero fact generations
+and the exact parent snapshot plus one seed. The sealed retained-tree
+transition can then replace the current node's source only with the after-state
+of an accepted callback tied to that exact source branch. The supported
+one-step driver appends the same callback's fact events to that node's recipe
+in the same transaction. Non-root target/refutation leaves and later splits
+may therefore consume child-local fact history after exact replay. This is not
+yet an autonomous controller: offer generation, repeated policy-driven
+iteration, and public-tactic split search remain separate work.
 
 `maxEndpointHeight` is measured after canonical dyadic normalization as the bit
 length of the absolute numerator plus the magnitude of the signed binary
@@ -3887,14 +4137,16 @@ Reaching a budget returns `unknown` with the best state and diagnostics. It
 does not silently lower a target, discard a branch, or turn a failed strict
 bound into a weak one.
 
-After any solver split, a reported bound is global. For each requested node,
-the result takes the hull of its proved interval over every live, completed,
-and pending leaf. An unexplored child contributes at least its inherited
-ancestor facts, never the tighter state of its sibling. The result retains a
-partial `BranchTree` whose leaves close membership in this hull, even if they
-do not close the original goal. `interval_bound` can therefore replay a real
-theorem from an `unknown` search; diagnostics never present a branch-local cut
-as a context-wide fact.
+The target branch-search API must report only global bounds after a split. For
+each requested node, it will take the hull of the proved interval over every
+live, completed, and pending leaf; an unexplored child must contribute at least
+its inherited ancestor facts, never the tighter state of its sibling. That
+partial-tree hull and its proof are not implemented by the current public
+`interval_bound`: today that command runs only the supported direct-forward
+derivation and prints its selected cuts as diagnostics. The retained-tree
+proof fold implemented below closes a target only when every leaf is a checked
+target or refutation; it rejects unknown leaves rather than manufacturing a
+global bound from them.
 
 ## Derivation trace
 
@@ -4621,6 +4873,29 @@ at roughly 42 GiB in aggregate. Separately, shard 00 and shard 13 took 183 and
 in 122 seconds. These measurements justify the separate local/release profile
 and are observations, not stable budgets.
 
+#### Bounded Chebyshev fold profile
+
+The pinned PNT+ medium-range theorem keeps its exact real statement
+`0 < x → x ≤ 11723 → ψ x ≤ 1.11 * x`. Its localized Hex rewrite
+replaces the `native_decide` checker with a package-owned positive-integer
+logarithm enclosure, bounded primality classifier, exact prime-power table,
+and natural-number von Mangoldt fold. The logarithm provider reduces by a
+power of two and proves a two-term atanh enclosure with an exact geometric
+remainder before one upward rounding to tenths.
+
+The 11,723-coordinate fold is replayed by 46 ordinary-kernel certificates of
+at most 256 coordinates, joined sequentially by one structural prefix theorem.
+This chunk bound is the retained resource boundary; it avoids a monolithic
+proof term while preserving every coordinate inequality. Composite-as-prime
+and wrong-prime-power-base mutations are rejected at their exact coordinates
+without a precision retry.
+
+This is a proof-side bounded campaign, not a retained runtime action or a
+generic `ProofFrontend` fold. It accepts only PNT+'s `allChecks_11723` site
+after a localized predicate rewrite. The shared Chebyshev import and interface
+remain pending because the FKS2-floor and Ramanujan developments also consume
+distinct theta-bound checkers.
+
 #### Certified logarithm tables
 
 The initial source-pinned PNT+ probe is intentionally narrower than this
@@ -4995,6 +5270,31 @@ candidates, and `b` the number of live branch states.
   scans its retained order. Avoiding these whole-state scans is a requirement
   for the selected production store and queue, not a property of the current
   transparent reference builders.
+- One supported `Search` transition first performs bounded prefix checks on
+  every decoded list and O(1) size checks on every retained array, then validates
+  the complete base/current branch chronology, registry, scoped bindings,
+  offers, and actions. The current transparent reference contract therefore
+  still has whole-branch/program/registry work; it does not claim local
+  asymptotics. Within one `prepareWithin`, `chooseWithin`, `acceptWithin`, or
+  `invokeWithin` call, that authentication and the package-owned policy
+  measurements run once. Accepted callback batches fold already-preflighted
+  exact successor updates without re-running `Branch.check` for every event.
+  Split admission preflights every branch in the bounded retained frontier,
+  then validates the popped parent and both children. With `f` pending leaves
+  and branch validation cost `B`, its current transparent-reference cost is
+  `O(f * B)`, plus bounded scope-uniqueness work; it is not one parent/child
+  validation independent of frontier size. Arbitrary callback execution and
+  equality on caller-selected facts, causes, identifiers, and keys
+  remain non-preemptible.
+- The current `Search.Result.Tree` reference builders validate the complete
+  retained prefix before and after every split or settlement. If `N` nodes are
+  retained incrementally and `B` is the bounded per-node branch/state
+  validation cost, the repeated branch-validation term is `Θ(N² * B)`.
+  The current pairwise retained-scope uniqueness scan adds `Θ(N³)` across
+  the same incremental construction, for a combined `Θ(N² * B + N³)`
+  reference cost. This is not an incremental tree-store bound. `maxNodes`
+  therefore stays small and measurement-gated until a production
+  representation avoids repeated full-prefix validation.
 - Fact comparison and contradiction checks use exact endpoint comparison. For
   the dyadic candidate, integer cost is proportional to effective endpoint
   height and the permitted exponent-alignment shift; a rational candidate must
@@ -5056,6 +5356,47 @@ their declared cost inside a scheduler bound.
   an image-tightness converse.
 - `HexIntervalMathlib/Power.lean`: exact normalized selected-cut semantics and
   the one-way successful natural-power image theorem.
+- `HexIntervalMathlib/Program.lean`: exact function-agnostic operation
+  meanings, complete operation-array alignment, per-node SSA relations, and
+  global model assembly over the supported decoded program.
+- `HexIntervalMathlib/Proof.lean`: supported package-owned fact, equality,
+  instance, refutation, and binary-cover theorem schemas; exact
+  registry/action validation; chronological typed proof state and caller-target
+  closure; separately authenticated retained-tree recipes; exact child seeding
+  with one new branch assumption and derived inherited evidence; bounded
+  target/refutation replay with unknown-leaf rejection and cover joins; and the
+  expression boundary that rejects placeholders and metavariables, restores
+  emitter environment/messages/information/metavariables and clears both
+  environment-dependent elaborator caches, then transactionally runs
+  `Meta.check` and exact type-definitional-equality checking in the caller's
+  environment. Emitted terms may reference only declarations surviving that
+  rollback. The kernel performs the final check when the caller installs the
+  expression. Under
+  ordinary imports, only `Registry.buildWithin` can construct the theorem
+  registry; `import all HexIntervalMathlib.Proof` is a trusted-internals escape
+  hatch rejected outside the exact empty repository allowlist. The built-in
+  arithmetic package and direct-forward reifier/tactic are supported below;
+  arbitrary-function packages, autonomous search orchestration, split-search
+  tactic integration, and default registries remain experimental.
+- `HexIntervalMathlib/Driver.lean`: supported one-step execution of an exact
+  already-selected package action, atomic retained-source advancement/split/
+  terminal updates, and bounded alignment of the sealed result tree with its
+  separately untrusted node recipe. A required logical recipe measure and
+  independent byte/work caps charge all retained event and edge payloads over
+  the complete bundle. It does not generate offers, choose a policy, or run an
+  autonomous search loop.
+- `HexIntervalMathlib/Rule.lean`: the supported stable-key arithmetic package,
+  exact real operation meanings, package-owned fact schemas, checked registry
+  assembly, and state-to-proof quotation for negation, addition, subtraction,
+  multiplication, natural power, absolute value, minimum, maximum, constants,
+  reciprocal, division, and outward regularization. Every schema recomputes
+  its fixed-resource public interval operation; decoded search results remain
+  untrusted. One package `Config` supplies exactly one natural exponent and
+  one dyadic constant, shared by every node at the corresponding built-in
+  operation index; duplicate package registration and operation keys cannot
+  add a second parameterization. Direct registry assembly does not preempt
+  construction or equality of caller program/meaning arrays and therefore
+  requires the supported search envelope for decoded inputs.
 - `HexIntervalMathlib/Split.lean`: exact transactional child semantics,
   containment, coverage, disjointness, and left ownership of the cut point.
 - `HexIntervalMathlib/Inverse.lean`: exact computed reciprocal-cut semantics
@@ -5064,6 +5405,23 @@ their declared cost inside a scheduler bound.
   semantics and the one-way total-real-division enclosure theorem.
 - `HexIntervalMathlib/Regularize.lean`: exact normalized rounded-cut semantics,
   outward containment, and raw-cut idempotence without a grid-tightest claim.
+- `HexIntervalMathlib/Frontend.lean`: bounded recursive arithmetic-term
+  reification with structural sharing and stable-key resolution, checked
+  node/term/root correspondence and exact source binding, derivation of the
+  complete real `Program.Models` witness from caller source values, supported
+  registry/flat-replay invocation, and programmatic lower, upper, conjunction,
+  and closed-singleton equality closure about the evaluated target term.
+  Search-to-recipe integration, Lean syntax, and Meta quotation remain outside
+  this module.
+- `HexIntervalMathlib/Tactic.lean`: exact runtime program/input/chronology
+  construction and authentication, recursive forward-arithmetic expression
+  and integer-cut parsing, reciprocal/division and automatic outward-
+  regularization rows, independently checked caller-proof emission, and the
+  current transactional bare `interval`, `interval?`, and `interval_bound`
+  subset. `interval_bound` renders selected cuts as diagnostics; a noninteger
+  dyadic endpoint is not pasteable into the current integer-only goal parser.
+  Search-selected recipes, arbitrary functions, subdivision, and the
+  expanded configuration syntax remain experimental or unimplemented.
 - `HexInterval/Program.lean`: supported stable operation/domain/node
   identifiers, decoded typed SSA programs, fail-closed validation, and
   structural depths.
@@ -5089,6 +5447,16 @@ their declared cost inside a scheduler bound.
   semantic offer keys and policies remain experimental; package measurement
   callbacks and equality on nested identifiers, keys, and reconstructed facts
   are explicitly non-preemptible.
+- `HexInterval/Search.lean`: supported Mathlib-free sealed authenticated
+  policy/action sessions, transactional callback-delta validation, exact
+  generic stop/resource classes, stable depth-first/breadth-first frontiers,
+  a separately sealed parent/depth/scope-checked leaf frontier, immutable parent
+  restoration, sealed cumulative step/split/leaf/frontier/depth/scope
+  accounting, and a sealed bounded retained result tree with exact single-delta
+  child reconstruction, authenticated fact-history advancement, and
+  target/refute/unknown terminals. It contains no concrete callback, offer
+  generator, semantic split/refutation theorem,
+  policy algorithm, storage choice, proof recipe, or proof replay.
 - `HexInterval/Experiment/Propagator.lean`: current experimental concrete
   applications, callbacks, outcomes, untrusted proposals and replies, and
   extension admission. Its engine extends and mutates only through the
@@ -5096,11 +5464,22 @@ their declared cost inside a scheduler bound.
   inspectable experimental storage candidate.
 - `HexInterval/Experiment/{PackageRegistry,PolicyDriver,PolicySession,
   StagedPolicy,AdaptivePolicy,FeaturePolicy,BranchTree}.lean`: current
-  provisional package callback, policy, session, and branch-search designs.
-   Optimized storage, policy/search APIs, and a default policy will be selected
+   provisional package callback, policy implementation, semantic session,
+   target driver, and split-construction designs. Optimized storage, concrete
+   offer generation, package protocols, and a default policy will be selected
    from measurements; none is frozen by the decoded supported snapshots.
-- `conformance/HexInterval/{Conformance,MinMaxConformance,EmitFixtures}.lean`:
+- `conformance/HexInterval/{Conformance,SearchConformance,MinMaxConformance,
+  EmitFixtures}.lean`:
   Lean-only checks and oracle fixtures.
+- `conformance/HexIntervalMathlib/ProgramProofConformance.lean`: supported
+  program-model, registry, chronology, refutation, binary-cover/tree replay,
+  target-closure, mutation, Meta-state restoration, and guarded
+  ordinary-theorem canaries.
+- `conformance/HexIntervalMathlib/RuleConformance.lean`: supported arithmetic
+  package assembly, shared-DAG state quotation, chronological replay into an
+  ordinary theorem, exact inv/div/regularize adapters, malformed-key/body/
+  source/order/cut mutations, and registry/chronology/body/dependency/
+  precision refusal guards.
 - `HexInterval/Experiment/PntFks2FamilyData*.lean` and
   `HexInterval/Experiment/PntFks2Family.lean`: committed source-pinned family
   data and the Mathlib-free complete-family checker.
@@ -5127,6 +5506,16 @@ their declared cost inside a scheduler bound.
   operation package authenticating the exact `315 / 100` π cut.
 - `scripts/conformance/run_pnt_fks2_family.sh`: fail-closed entry point for the
   non-default complete-family proof and conformance profile.
+- `conformance/HexIntervalMathlib/FrontendConformance.lean`: supported
+  recursive shared-DAG reification, exact source binding, malformed-entry,
+  root/operation-table, stable-key, and resource rejection, derived semantic
+  model, flat chronological replay, and ordinary inequality, conjunction, and
+  equality theorem/axiom canaries from source containment without a caller-
+  supplied `Program.Models` or per-node initial-fact premise.
+- `conformance/HexIntervalMathlib/TacticConformance.lean`: supported Meta
+  parsing, runtime authentication, emission, strict and closed cuts,
+  conjunction, equality, exact resource roles, transactional failure,
+  diagnostics, and guarded ordinary-theorem canaries.
 - `bench/HexInterval/Bench.lean`: Mathlib-free interval and scheduler
   benchmarks.
 
@@ -5149,6 +5538,11 @@ typical, boundary, and adversarial inputs. In particular it includes:
 - diagnostic event count, payload-byte, logical-work, and code refusal,
   malformed cached totals, and a truncation canary showing that diagnostic
   loss cannot change branch facts, versions, provenance, or contradiction;
+- stale or mutated search decisions and callback replies, unauthorized writes,
+  stale later updates with whole-batch rollback, callback failure, and exact
+  step/split/leaf/frontier/depth/scope one-over refusal; stable DFS/BFS order,
+  exact parent scope/version/provenance restoration, and trace truncation with
+  identical retained branch state;
 - equal endpoints in all closure combinations;
 - empty, singleton, one-sided unbounded, and whole intervals;
 - table-driven empty laws: every unary operation and `regularize` preserve

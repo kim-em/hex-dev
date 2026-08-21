@@ -545,9 +545,9 @@ private def splitter : BranchStart.Splitter DyadicInterval.Fact :=
         | .error _ => none
       else none }
 
-private def treeLimits : BranchTree.Limits :=
-  { branch := { maxDepth := 1, maxScopes := 3 }
-    maxSteps := 3, maxSplits := 1, maxLeaves := 2
+private def treeLimits : Search.Limits :=
+  { maxSteps := 3, maxSplits := 1, maxLeaves := 2, maxFrontier := 2
+    maxDepth := 1, maxScopes := 3
     leafFuel := sessionLimits.policy.maxDecisions }
 
 private def config : BranchTree.Config DyadicInterval.Fact Route :=
@@ -572,7 +572,7 @@ private def rightInput : CheckerInput DyadicInterval.Fact :=
 
 #guard
   tree?.any fun tree =>
-    tree.settled && tree.nodes.size == 3 && tree.steps == 3 &&
+    tree.settled && tree.nodes.size == 3 && tree.accounting.steps == 3 &&
       match tree.nodes[0]?, tree.nodes[1]?, tree.nodes[2]? with
       | some (BranchTree.Node.split source run children _ _),
           some (BranchTree.Node.leaf left (.result leftRun)),

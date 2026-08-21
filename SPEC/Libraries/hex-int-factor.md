@@ -501,9 +501,9 @@ way round it was. Invalid domains use the existing failure channel: at
 `b ≤ 1` or `n = 0` the identities degenerate and no caller wants an
 answer.
 
-This needs cyclotomic polynomials evaluated at an integer, which is
-[future-work](../future-work.md)'s "Cyclotomic polynomials" entry --
-described there as "small enough to build rather than plan". Evaluating
+This needs cyclotomic polynomials evaluated at an integer, which is the
+subject of [hex-cyclotomic](hex-cyclotomic.md). This library does not
+depend on it. Evaluating
 `Φ_d(b)` does not need the polynomial: the recursion
 
 ```
@@ -521,6 +521,11 @@ order is not justified in `Nat`. The recursive producer is specified
 because it is the natural fast candidate algorithm; a separate
 Mathlib-free formalization of cyclotomic-polynomial identities is not a
 prerequisite for this checked search optimization.
+
+The two computations of `Φ_d(b)`, this one in `Nat` and
+[hex-cyclotomic](hex-cyclotomic.md)'s evaluation of the constructed
+polynomial, are independent and must agree. The comparison lives in that
+library's conformance suite, which is the one that can import both.
 
 **The parts need not be pairwise coprime**, so factoring them
 separately can produce the same prime twice with different exponents.

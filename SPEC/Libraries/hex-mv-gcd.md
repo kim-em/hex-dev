@@ -78,8 +78,9 @@ Not in scope: full positive-characteristic squarefree decomposition,
 factorization into irreducibles (that is `hex-mv-factor`,
 and it depends on this library), Gröbner bases, resultants themselves
 (hex-resultant computes them once this library supplies the instances),
-multivariate Hensel lifting, and the sparse Hensel gcd route (see
-"Routes not specified here").
+multivariate Hensel lifting (that is
+[hex-mv-hensel](hex-mv-hensel.md), which depends on this library), and
+the sparse Hensel gcd route (see "Routes not specified here").
 
 Also not in scope: the univariate integer case, which is
 [hex-poly-z-gcd](hex-poly-z-gcd.md). That library computes gcds of
@@ -1740,6 +1741,9 @@ decomposition. It is between verification and fast routes:
   Hensel lifting have different prerequisites and failure policies. The
   sparse stress benchmarks measure the gap, but this SPEC intentionally
   does not choose an underspecified route.
+  [hex-mv-hensel](hex-mv-hensel.md) has the same open question about its
+  own dense diophantine recursion, and the two should be decided
+  together: one sparse interpolation layer could serve both.
 - **Sparse exponent vectors.** hex-mv-poly leaves open whether a large
   arity with few active variables wants a sparse `Mono`. The sparse gcd
   family here, at 12 variables, is one of the two measurements that would

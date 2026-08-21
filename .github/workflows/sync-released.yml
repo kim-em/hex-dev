@@ -8,7 +8,9 @@ name: Sync released repos
 # to their `main`, and advances the baseline — one dispatch drives it all the way
 # through. The uncoordinated-commit guard skips any released repo whose `main` has
 # moved off the baseline, so out-of-band commits are never clobbered. Needs the
-# `RELEASED_SYNC_PAT` secret (contents:write on the released repos).
+# `RELEASED_SYNC_PAT` and `RELEASED_SYNC_PAT_2` secrets (contents:write on the
+# released repos; the set is split across two fine-grained tokens because one
+# token caps its selected-repository list — the sync routes per repo).
 
 on:
   workflow_dispatch:
@@ -59,6 +61,7 @@ jobs:
       - name: Sync released repos
         env:
           RELEASED_SYNC_PAT: ${{ secrets.RELEASED_SYNC_PAT }}
+          RELEASED_SYNC_PAT_2: ${{ secrets.RELEASED_SYNC_PAT_2 }}
         run: |
           args=()
           [ "${{ inputs.dry_run }}" = "false" ] || args+=(--dry-run)

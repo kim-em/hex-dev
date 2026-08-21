@@ -419,33 +419,36 @@ Newton iterations doubling precision per step so that the fuel bound is
 logarithmic.
 
 **Cyclotomic polynomials (`hex-cyclotomic`,
-`hex-cyclotomic-mathlib`).** `Φₙ` for positive `n`, constructed by the
-recursive division `Φₙ = (xⁿ − 1) / ∏_{d | n, d < n} Φ_d`, or faster
-from the squarefree kernel of `n` and the identity
-`Φₙ(x) = Φ_rad(n)(x^(n/rad n))`. The index is positive throughout, so
-the API takes `0 < n` or `[NeZero n]` rather than a bare `Nat`; the
-identity and the degree formula both need it.
+`hex-cyclotomic-mathlib`).** Specified in
+[hex-cyclotomic](Libraries/hex-cyclotomic.md). `Φₙ` for positive `n`,
+constructed by the recursive division
+`Φₙ = (xⁿ − 1) / ∏_{d | n, d < n} Φ_d`, or faster from the squarefree
+kernel of `n` and the identity `Φₙ(x) = Φ_rad(n)(x^(n/rad n))`.
 
-Small enough to build rather than plan, and worth recording because
-cyclotomics currently appear across the tree as hard-coded fixtures and
-benchmark inputs rather than as something a library constructs. The
-natural API is `Φₙ` as a `ZPoly`, the factorization
+Worth building because cyclotomics currently appear across the tree as
+hard-coded fixtures and benchmark inputs rather than as something a
+library constructs. The API is `Φₙ` as a `ZPoly`, the factorization
 `xⁿ − 1 = ∏_{d | n} Φ_d`, irreducibility over `ℚ`, and the degree
 identity `deg Φₙ = φ(n)`.
 
 The computational library depends on hex-poly-z and
-[hex-int-factor](Libraries/hex-int-factor.md). Its primary constructor should
-accept a `CheckedFactorization` of the positive index, making divisor
-enumeration, `radical`, and `totient` total and avoiding hidden refactorization;
-a convenience search API may factor the index first. Sparse output is an
-optional adapter through hex-sparse-poly, not a prerequisite of the dense
-constructor.
+[hex-int-factor](Libraries/hex-int-factor.md). Its primary constructor
+accepts a `CheckedFactorization` of the index, making divisor
+enumeration, `radical`, and `totient` total and avoiding hidden
+refactorization; a convenience search API factors the index first.
+That SPEC corrects the positivity requirement named here: the
+certificate already requires `0 < subject`, so `CheckedFactorization 0`
+is uninhabited and neither a `0 < n` argument nor `[NeZero n]` is
+needed. Sparse output is an adapter at a consumer through
+hex-sparse-poly rather than a dependency of the dense constructor,
+because Lake has no conditional dependencies.
 
 [hex-int-factor](Libraries/hex-int-factor.md) needs the *values*
 `Φ_d(b)` at an integer `b`, to split `b^n ± 1` before factoring it, and
-computes them in `Nat` by Möbius inversion rather than through a
-polynomial. The two should agree where they overlap, which is one
-conformance case in that SPEC.
+computes them in `Nat` by its own recursion rather than through a
+polynomial. The two agree where they overlap, which is a conformance
+boundary owned by the cyclotomic library, since it is the one that can
+import both.
 
 **Multivariate gcd and squarefree decomposition.** Required by rational
 expression simplification, by the recursive view, and by multivariate
@@ -508,14 +511,36 @@ rather than real closed ones. The two are complementary: Gröbner bases
 answer questions about complex solutions, CAD about real ones.
 
 **Multivariate Hensel lifting (`hex-mv-hensel`,
-`hex-mv-hensel-mathlib`).** Specify the lifting engine before
+`hex-mv-hensel-mathlib`).** The lifting engine, specified before
 factorization. Unlike hex-hensel, it lifts a factorization in several
-variables against an evaluation ideal and must carry the coprimality,
-leading-coefficient, modulus/precision, and reconstruction conditions used by
-Wang's EEZ algorithm. Hex-hensel is a design model, not an implementation the
-new library can call unchanged. The first SPEC should target the
-`MvPoly n Int cmp` representation and depend on hex-mv-poly and the exact
-division/gcd infrastructure in hex-mv-gcd.
+variables against an evaluation ideal and carries the coprimality,
+leading-coefficient, modulus/precision, and reconstruction conditions used
+by Wang's EEZ algorithm. Hex-hensel is a design model, not an
+implementation the new library can call unchanged.
+
+Specified in [hex-mv-hensel](Libraries/hex-mv-hensel.md), over
+`MvPoly (n+1) Int cmp` and on top of hex-mv-poly and hex-mv-gcd's exact
+division and gcd contract.
+
+Four corrections to what this file said before that SPEC was written,
+recorded because they are easy to make again. The sharpest reason
+hex-hensel does not apply is not the number of variables: it is that its
+prime is simultaneously the residue field and the lifting direction,
+whereas multivariately the lifting direction is the evaluation ideal and
+the prime only makes the univariate coefficient arithmetic invertible.
+The working modulus is therefore fixed for the whole lift, and the
+coprimality witness computed at the start stays valid at every step,
+where hex-hensel must update its Bézout data. The leading-coefficient
+distribution is an *input contract* rather than something the lifting
+engine searches for, since finding it is itself recursive multivariate
+factorization; what the lifting engine gets from that contract is the
+degree drop `deg_{x_i}(f - ∏ F_j) < deg_{x_i} f` that makes every
+correction equation solvable. And the ideal-adic direction needs no
+coefficient bound at all, because the per-variable degrees of `f` bound
+the precision exactly; only the reconstruction of integer coefficients
+needs a bound, and Gel'fond's inequality is the one worth proving, with
+Kronecker substitution into hex-poly-z's Mignotte bound as the valid but
+very weak alternative.
 
 **Multivariate factorization (`hex-mv-factor`,
 `hex-mv-factor-mathlib`).** Scope the first version to
@@ -525,16 +550,25 @@ univariate polynomial with Berlekamp-Zassenhaus, then lift with hex-mv-hensel,
 including leading-coefficient correction and retry on a bad evaluation point.
 
 The hard prerequisites are hex-mv-poly, [hex-mv-gcd](Libraries/hex-mv-gcd.md),
-univariate Berlekamp-Zassenhaus, and hex-mv-hensel. General factorization over
+univariate Berlekamp-Zassenhaus, and
+[hex-mv-hensel](Libraries/hex-mv-hensel.md). General factorization over
 arbitrary coefficient domains is not the first library: finite fields,
 number fields, and `ℤ` require materially different algorithms and
 certificates.
 
-The product check certifies a decomposition. Irreducibility of each
-returned factor is the further obligation, hard in the same way as the
-univariate case, so the API either carries irreducibility certificates
-per factor or advertises itself as returning a decomposition and lets
-the caller ask for more.
+The evaluation-point search, the leading-coefficient distribution, the
+retry policy, and the recombination of coarser groupings all live here
+rather than in the lifting engine; that boundary is drawn in
+[hex-mv-hensel §What stays in the downstream consumer](Libraries/hex-mv-hensel.md).
+
+The product check certifies a decomposition, not irreducibility. The gap
+is smaller than it first appears: when the input is primitive in the main
+variable and every univariate image is irreducible over `ℤ`, a checked
+lift already gives irreducible multivariate factors, by
+`irreducible_of_image_irreducible` in that SPEC. Both extra hypotheses
+are data this library holds anyway, so the design question is whether to
+carry them into the returned certificate or to advertise a decomposition
+and let the caller ask for more.
 
 **Generic finite fields, and equal-degree splitting.** Specified in
 [hex-finite-field](Libraries/hex-finite-field.md): the Mathlib-free
@@ -770,12 +804,21 @@ worth deferring until the certificate checkers have proved themselves
 on the hypergeometric case.
 
 **Fixed-precision p-adic approximations (`hex-padics`,
-`hex-padics-mathlib`).** hex-hensel implements lifting as an
-algorithm. First-class `ZpApprox` and `QpApprox` values would be
+`hex-padics-mathlib`).** Specified in
+[hex-padics](Libraries/hex-padics.md). hex-hensel implements lifting as
+an algorithm. First-class `ZpApprox` and `QpApprox` values would be
 shared by consumers that each roll their own modular tower:
 Berlekamp-Zassenhaus's lifting phase, the Dixon lifting in
 [hex-modular-matrix](Libraries/hex-modular-matrix.md), and the p-adic
 route to `ℤ[x]` factoring.
+
+That SPEC qualifies the sharing claim. The Dixon solve and hex-hensel
+work on integer vectors and coefficient arrays with one shared modulus,
+so replacing an entry by a boxed approximation costs more than the
+shared bookkeeping saves. What those consumers should take is the
+modulus record, the exact division, the valuation, and the
+exactification, and the element type is for consumers that hold single
+p-adic scalars.
 
 `ZpApprox p N` is a residue modulo `p^N` together with reduction maps and a
 valuation lower bound. `QpApprox p` carries a normalized centre, valuation,

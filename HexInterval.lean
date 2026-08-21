@@ -12,6 +12,7 @@ public import HexInterval.Action
 public import HexInterval.State
 public import HexInterval.Trace
 public import HexInterval.Policy
+public import HexInterval.Search
 
 public section
 
@@ -37,7 +38,21 @@ registrations, scoped bindings, actions, immutable package requests, checked
 immutable branch state, dependency/work queues, authoritative chronology, and
 bounded diagnostics. The public policy contract exposes bounded immutable
 offers, exact echoed decisions, and fail-closed revalidation without selecting
-a default policy.
-Concrete callbacks and proposals, policy implementations, search, proof replay,
-and measurement-selected storage remain experimental.
+a default policy. At the ordinary/public import boundary, the search contract
+seals authenticated sessions,
+authenticates selected actions, transactionally checks untrusted callback
+deltas, and supplies bounded stable branch-frontier accounting. Its specialized
+leaf frontier can advance only through the parent/depth/scope/branch-checked
+transition; generic frontier scheduling cannot be installed into it. A
+separate sealed retained-result tree reconstructs split children from the
+checked current parent snapshot and one exact seed delta, retains explicit
+target/refutation/unknown terminals, and carries no theorem authority. A
+deliberate `import all HexInterval.Search` is trusted implementation access,
+not decoded-runtime authority, and repository checks reject accidental uses.
+Concrete callbacks and offer generation, policy implementations, a complete
+branch-search loop, and measurement-selected storage remain experimental. The
+Mathlib companion supplies a bounded authenticated callback-to-tree-recipe
+step driver; package callbacks and their recipe data remain untrusted. Exact public interval
+splitting is already supported; the Mathlib companion separately owns flat
+forward replay and checked retained-tree proof folding.
 -/

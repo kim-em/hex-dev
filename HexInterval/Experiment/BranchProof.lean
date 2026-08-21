@@ -79,7 +79,7 @@ def sameChild [DecidableEq Fact]
 
 partial def emitAt [DecidableEq Fact]
     (limits : Limits) (emitter : Emitter Fact PolicyState)
-    (tree : BranchTree.State Fact PolicyState) (depth : Nat)
+    (tree : BranchTree.Snapshot Fact PolicyState) (depth : Nat)
     (id : BranchTree.TreeId) : MetaM (Output Fact PolicyState) := do
   if depth > limits.maxDepth then
     throwError "interval branch proof: traversal depth exhausted"
@@ -138,8 +138,8 @@ partial def emitAt [DecidableEq Fact]
 `expected` is normally the current goal type.  The final check is deliberately
 inside the generic frontend, so even a single-leaf tree cannot return an
 unrelated callback term. -/
-def emit [DecidableEq Fact] (limits : Limits) (emitter : Emitter Fact PolicyState)
-    (tree : BranchTree.State Fact PolicyState) (expected : Expr) : MetaM Expr := do
+def emitSnapshot [DecidableEq Fact] (limits : Limits) (emitter : Emitter Fact PolicyState)
+    (tree : BranchTree.Snapshot Fact PolicyState) (expected : Expr) : MetaM Expr := do
   if !tree.frontier.isEmpty then
     throwError "interval branch proof: tree still has pending work"
   if tree.nodes.isEmpty then
@@ -153,5 +153,10 @@ def emit [DecidableEq Fact] (limits : Limits) (emitter : Emitter Fact PolicyStat
   unless ← isDefEq (← inferType proof) expected do
     throwError "interval branch proof: emitted root has the wrong type"
   pure proof
+
+/-- Snapshot a sealed live tree, then replay its untrusted retained data. -/
+def emit [DecidableEq Fact] (limits : Limits) (emitter : Emitter Fact PolicyState)
+    (tree : BranchTree.State Fact PolicyState) (expected : Expr) : MetaM Expr :=
+  emitSnapshot limits emitter tree.snapshot expected
 
 end Hex.Interval.Experiment.BranchProof

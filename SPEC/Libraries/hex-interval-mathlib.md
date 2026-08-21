@@ -19,9 +19,83 @@ Division exposes direct outward cuts for two nonzero finite singletons, exact
 empty and total-zero cases, and a sound whole-line fallback otherwise.
 Outward regularization exposes exact Core-rounded cuts, source containment,
 and raw-cut idempotence without claiming a globally grid-tightest enclosure.
-Propagator, provider, replay, and tactic modules remain experiments and are not
-re-exported by the public umbrella. The user-facing tactic contract below is
-the release target, not a claim that the tactic is already supported.
+The supported proof surface also gives exact function-agnostic meanings to
+decoded SSA programs and replays package-owned fact, equality, instantiation,
+and refutation schemas chronologically into ordinary typed proofs. Its emitted
+expression boundary rejects placeholders and unresolved metavariables,
+restores emitter environment, messages, information, and metavariables, clears
+both environment-dependent elaborator caches, then transactionally runs the
+elaborator's `Meta.check` and exact type definitional equality in the caller's
+environment. Emitted terms may reference only declarations surviving that
+rollback; the kernel checks the term when the caller installs it in a
+declaration. The theorem registry is constructible only through its
+checked builder under ordinary imports; deliberate `import all` is a guarded
+trusted-internals escape hatch, not decoded runtime authority.
+The supported `Rule` registry owns stable arithmetic meanings and schemas for
+negation, addition, subtraction, multiplication, natural power, absolute
+value, minimum, maximum, constants, reciprocal, division, and regularization.
+Each schema recomputes the fixed-resource public operation before producing
+evidence; source nodes remain caller assumptions. Supported `quote` and
+`quoteSession` convert exact branch/session causes into proof events without
+granting runtime state evidence authority. The current package fixes one
+natural exponent and one dyadic constant, shared respectively by every node at
+the built-in power and constant operation indices; duplicate package
+registration and operation keys cannot provide another such parameterization.
+Arbitrary-function package discovery, a complete autonomous search loop,
+split-search tactic integration, and default package discovery remain
+experimental. The supported callback driver executes one already-selected
+authenticated package action and atomically advances a sealed result tree and
+its separately checked proof recipe. A caller-owned logical measure charges
+the complete encoding of every retained event and edge—including nested facts,
+actions, schema keys, dependency versions, body naturals, and seed data—and
+independent recipe byte/work caps are rechecked over the complete bundle on
+every transition. Measurement and callback execution remain non-preemptible.
+The driver does not choose or enumerate offers.
+The supported direct-forward reifier and tactic are a narrow
+client rather than that missing generic bridge. The supported proof layer can
+replay a separately supplied, bounded chronology over a checked
+retained search tree: package-owned binary-cover and refutation schemas are
+resolved by exact key, each child adds exactly one branch assumption while
+inherited parent consequences retain derived evidence, target/refutation
+leaves close, unknown leaves reject, and sibling proofs join only through the
+checked cover. The tree must pass its exact caller-supplied search limits and
+measure, and the untrusted recipe separately echoes every parent, side, and
+seed edge. Child proof states restart at program version zero; inherited facts
+are rebased as derived evidence rather than promoted to assumptions.
+`Proof.TreeLimits` independently cap proof nodes, depth, body cells, and
+structural work. Tactic-driven split search remains a later integration edge.
+Each non-root snapshot starts at version zero from the exact parent-plus-seed
+origin. The supported driver may advance that retained source only with an
+accepted update from the same authenticated session; its node-local recipe is
+retained in the same transaction, so recursive child propagation is replayed
+exactly by the existing proof fold. Current retained-tree construction
+inherits the Mathlib-free reference cost `Θ(N² * B + N³)` from repeated branch
+validation and pairwise scope-uniqueness checking; this is not a production
+storage-complexity claim.
+The supported `Frontend` is instead a tactic-independent, flat programmatic
+client. It recursively reifies bounded `Term` values by stable operation key,
+rechecks the transparent result's exact node/term/ordered-edge correspondence,
+and authenticates that the retained root is the original target term. From a
+caller mapping of source indices to real values it derives the complete exact
+`Program.Models` witness. `Result.facts` places the selected source interval at
+each source row and `whole` at each computed row; the supplied source
+containments therefore discharge every version-zero fact through
+`Result.initial_contains`, rather than requiring one caller proof per SSA node.
+The frontend binds the exact selected source intervals,
+invokes Rule/Proof replay on an explicit caller-supplied event list, and
+eliminates the resulting evidence to lower, upper, conjunction, or
+closed-singleton equality theorems about the evaluated target `Term`. It covers
+the current Rule operations but inherits the package's one shared exponent,
+constant, and precision. Array caps and a short-circuit recursive-depth check
+precede revalidation. A successful depth check can still visit every
+constructor in an already-built branching `Term`: `maxDepth` limits nesting and
+`maxNodes` limits retained SSA rows, but neither preempts caller-side term
+construction or structural equality. The caller's opaque source-value
+function is also outside this preemptible envelope. It does not
+parse Lean expressions or hypotheses, extract recipes from generic Search
+trees, or expose tactic syntax.
+The user-facing tactic contract below remains the broader release target; the
+direct forward subset described above is the currently supported tactic.
 
 The tactic proves bounds for ordinary Lean expressions over `ℝ`. It reads
 bounds from the local context, reifies shared expressions to an immutable
@@ -701,6 +775,35 @@ and deterministic work decide the production default.
 
 ## Tactic interface
 
+The current supported implementation is a deliberately smaller forward
+vertical. `HexIntervalMathlib.Tactic` provides bare `interval`, `interval?`,
+`interval_bound e`, and programmatic `Tactic.deriveBound`. It recognizes real
+local variables, integer lower/upper hypotheses, zero, and the built-in exact
+negation, addition, subtraction, multiplication, natural power, absolute
+value, minimum, maximum, reciprocal, and division rules. Every computed
+arithmetic row is followed by the configured outward-regularization rule, so
+precision resources and the regularization proof are load-bearing. The bare
+tactics use precision `16`, hence the dyadic grid `2⁻¹⁶`; programmatic
+`deriveBound` callers may supply another admitted precision. It authenticates
+and replays the exact supported runtime chronology as untrusted data, then
+independently emits the caller proof through package theorems; it does not
+perform unused Meta quotation of those runtime records. It does not yet run the supported `Search`
+controller, subdivide,
+invoke contractors, select named hypotheses, accept configuration syntax, or
+emit a recipe chosen by arbitrary-function search. `interval?` therefore
+reports the fixed forward caps after successful closure and emits no result on
+failure, while `interval_bound` elaborates and derives transactionally, reports
+one global forward enclosure with concrete selected lower/upper cuts, and
+leaves the goal unchanged. Each computed arithmetic layer also inserts an
+internal regularization layer. Thus the reported/default term-depth cap `32`
+admits about 16 nested arithmetic operations along one expression spine; it is
+not a 32-operation nesting promise. The selected cuts are diagnostics, not a
+pasteable tactic script: the backend may print noninteger dyadic endpoints,
+but this first goal parser accepts integer target cuts only.
+
+The following is the target interface once the search-to-proof recipe bridge
+and remaining package integrations are supported:
+
 The planned syntax is:
 
 ```lean
@@ -761,6 +864,7 @@ structure Hex.Interval.Config where
   maxSplits      : Nat
   maxDepth       : Nat
   maxLeaves      : Nat
+  maxFrontier    : Nat
   maxLocalPieces : Nat
   maxEndpointHeight : Nat
   maxAlignmentShift : Nat
@@ -1432,15 +1536,73 @@ grossly low cut `20` is false at `n = 31`; exact endpoint fidelity comes from
 the offline mechanical comparison of all sixty committed source snippets with
 both local source tables, not from that theorem or a precision retry.
 
-The next broad dependency-interface candidates remain distinct work. A
-package-owned replacement for `LeanCert.CertifiedBounds.Chebyshev` needs a
-checked variable-input logarithm provider for the prime and prime-power folds
-through 11,723; the current precision table certifies only fixed inputs.
-`LeanCert.CertifiedBounds.Li2` additionally needs subdivision and reciprocal-
-log range machinery for its symmetric integral. The pinned public LeanCert
-lower and upper declarations are admitted, so merely importing those names
-would not meet Hex's kernel-only contract. These are concrete provider gaps,
-not reasons to reproduce either LeanCert API.
+The medium-range Chebyshev vertical closes the exact pinned theorem
+
+```lean
+theorem psi_num_2 (x : ℝ) (hx : x > 0) (hx2 : x ≤ 11723) :
+    Chebyshev.psi x ≤ 1.11 * x
+```
+
+without importing LeanCert. `PntChebyshevProbe.logData_log_le` is a generic
+positive-integer logarithm upper enclosure: it reduces by a power of two,
+uses two atanh terms with an exact geometric remainder, and rounds upward to
+tenths. A bounded trial-division classifier and exact non-prime prime-power
+table choose the von Mangoldt contribution at every coordinate through
+`11723`. The accumulated natural-number inequalities are split into 46
+ordinary-kernel certificates of at most 256 coordinates and joined by a
+shared structural replay theorem. Twelve sequential chunk modules bound
+elaboration and retained proof terms; no `native_decide`, imported PNT+
+theorem, or LeanCert declaration is kernel evidence.
+
+This accepts only the pinned `allChecks_11723` native-evaluation site after a
+localized rewrite to the package-owned checker. It does not claim a generic
+runtime `ProofFrontend` action or LeanCert API compatibility. The shared
+`LeanCert.CertifiedBounds.Chebyshev` dependency/import records remain pending:
+PNT+ also consumes theta bounds through `22027` in the FKS2-floor development
+and through `599` in the Ramanujan development. `LeanCert.CertifiedBounds.Li2`
+likewise still needs subdivision and reciprocal-log range machinery for its
+symmetric integral. The pinned public LeanCert lower and upper declarations
+are admitted, so merely importing those names would not meet Hex's kernel-only
+contract.
+
+The Dusart exponential cluster replaces all eight executable
+`interval_decide` leaves in the pinned declarations
+
+```lean
+theorem Dusart.proposition_5_4a : HasPrimeInInterval.log_thm 4e18 3
+
+theorem Dusart.proposition_5_4b (x : ℝ)
+    (hx : x ∈ Set.Ioo 360653 4e18) :
+    HasPrimeInInterval x (x / (Real.log x) ^ (3 : ℝ))
+```
+
+The localized rewrite preserves both theorem statements and their surrounding
+number-theoretic proof. It substitutes only the exact leaves for
+`exp 29`, `exp 10`, `exp 12.83`, `exp 13.12`, `exp 14.52`, `exp 16.66`,
+`exp 43`, and `exp 22`. `PntDusartExp.sourceRows` authenticates the first seven
+rational arguments, integer targets, comparison directions, the fixed split
+`64`, and the fixed term count `12`. One package-owned checker reduces those
+arguments by 64, computes the degree-11 Taylor sum and an explicit degree-12
+remainder bound with exact rational arithmetic, and raises the resulting lower
+or upper bound by six squarings. The eighth leaf is an explicit weakening of
+the checked package theorem `PntExpPoint.one_e9_le_exp_22`, since
+`117352333 ≤ 1e9`. The offline inventory validator correlates all eight
+pinned source sites: seven with the literal local table and `exp 22` with that
+named stronger replacement. Seven invocation snippets contain their numerical
+goal text and are parsed directly. The line-406 `exp 10` invocation snippet
+contains only the enclosing logarithm proof term, so the validator byte-pins
+that exact context and correlates it with the explicitly audited expected goal
+row `exp 10 < 4e18`; it does not claim to parse those numerals from the snippet.
+Its Mathlib companion proves the shared kernel from
+`Real.sum_le_exp_of_nonneg` and `Real.exp_bound'`; it does not import a PNT+
+or LeanCert theorem.
+
+Conformance elaborates all eight exact source leaves as ordinary theorems. A
+mutation raising the `12.83` lower target from `370261` to `400000` fails at
+source coordinate `2` with no precision retry, and the same provider proves
+the proposed inequality false by producing the incompatible strict upper
+bound. This completes the numerical leaves, not the surrounding Dusart
+number-theory development and not the global `IntervalAuto` interface.
 
 The next classified acceptance probe covers the numerical leaf in
 `LogTables.exp_neg_lt_1e_neg_100` while preserving the source theorem's useful
@@ -1977,11 +2139,12 @@ They therefore belong to the audit even though they do not spell
 `interval_decide` and `interval_auto`, so the six-module import list covers the
 tactic entry points as well as the certified-bound interfaces.
 
-Six of the sixteen exact import-site records are accepted after localized
-PNT+ rewrites. Two are the Table 10 tactic imports; the other four are the
+Seven of the sixteen exact import-site records are accepted after localized
+PNT+ rewrites. Two are the Table 10 tactic imports; the other five are the
 complete `BKLNW_a2_bounds` power/exponential family's tactic and certified-bound
 imports, the complete FKS2 Table4Ext workload's ANT import, and the complete
-`LogTables` tactic import. Ten import sites remain pending. These site-level
+`LogTables` tactic import, plus the Dusart tactic import. Nine import sites
+remain pending. These site-level
 decisions remove imports from the corresponding bounded source rewrites; they
 do not classify `LeanCert.Tactic.IntervalAuto` as a general compatible
 interface. At the dependency-interface level, ANT and the exercised BKLNW
@@ -3009,8 +3172,15 @@ the fixed soundness and trust contracts.
   evaluator soundness.
 - `HexIntervalMathlib/Rule.lean`: registration environment and theorem-schema
   validation.
-- `HexIntervalMathlib/Proof.lean`: derivation slicing, certificate checks, and
-  proof construction.
+- `HexIntervalMathlib/Proof.lean`: chronological and retained-tree replay,
+  package-owned fact/equality/instance/refutation/split schemas, exact child
+  seeding and cover joins, certificate checks, and proof construction.
+- `HexIntervalMathlib/Driver.lean`: one-step authenticated package invocation,
+  atomic retained-node advancement/split/terminal updates, and bounded exact
+  alignment of the sealed runtime tree with a separately untrusted proof
+  recipe. Its explicit logical event/edge measure and independent byte/work
+  caps cover the complete retained recipe bundle. Offer generation, policy
+  selection, and the autonomous search loop remain outside this module.
 - `HexIntervalMathlib/Reify.lean`: expressions, hypotheses, targets, and folds.
 - `HexIntervalMathlib/Derivative.lean`: automatic differentiation and centered
   enclosures.
@@ -3059,8 +3229,10 @@ the fixed soundness and trust contracts.
   certificate, wrong-source and false-endpoint rejection, guarded axiom
   surface, and generic proof-frontend closure.
 - `HexIntervalMathlib/Contractor.lean`: backwards propagation theorems.
-- `HexIntervalMathlib/Tactic.lean`: `interval`, `interval?`, and
-  `interval_bound`.
+- `HexIntervalMathlib/Tactic.lean`: supported recursive Lean-expression and
+  local-cut parsing, exact runtime-data authentication, independently checked
+  forward proof emission, and the current bare `interval`, `interval?`, and
+  `interval_bound` subset; configurable search integration remains target work.
 - `HexIntervalMathlib/Examples.lean`: small user-facing examples.
 - `conformance/HexInterval/Conformance.lean`: Mathlib-free computational
   checks for `hex-interval` only.
@@ -3097,6 +3269,22 @@ the fixed soundness and trust contracts.
 - `conformance/HexIntervalMathlib/PntPrimeLogSmallConformance.lean`: source
   coordinate guards, both bounded theorem shapes, false-cut rejection, and
   guarded axiom reports.
+- `HexIntervalMathlib/Experiment/PntChebyshevProbe.lean`: shared checked
+  positive-integer logarithm, bounded primality/prime-power provider, and
+  structural Chebyshev fold semantics through `11723`.
+- `HexIntervalMathlib/Experiment/PntChebyshevChunk*.lean`: 46 bounded
+  coordinate certificates arranged in twelve sequential replay modules;
+  `PntChebyshev.lean` closes the natural and exact real source theorem shapes.
+- `conformance/HexIntervalMathlib/PntChebyshevConformance.lean`: chunk-boundary,
+  false-prime, false-prime-power, source-shape, and guarded axiom checks.
+- `HexInterval/Experiment/PntDusartExp.lean`: the exact seven-row Dusart
+  exponential table and bounded rational Taylor checker; the eighth leaf uses
+  a named stronger package theorem.
+- `HexIntervalMathlib/Experiment/PntDusartExp.lean`: the shared ordinary-kernel
+  range-reduction and Taylor-remainder semantics.
+- `conformance/HexIntervalMathlib/PntDusartExpConformance.lean`: all eight
+  source-shaped leaves (seven table rows plus one stronger replacement), exact
+  coordinate failure, false-bound rejection, and guarded axiom reports.
 
 Unlike a correspondence-only companion, `hex-interval-mathlib` contains an
 executable reifier, rule registry, and tactic. Its own conformance target tests

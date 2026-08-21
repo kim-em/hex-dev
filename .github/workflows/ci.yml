@@ -39,7 +39,10 @@ jobs:
       - run: python3 scripts/check_copyright_headers.py
       - name: Lint Lean file line counts (SPEC/CI.md §Source-file lints)
         run: python3 scripts/check_file_line_counts.py
-      - run: python3 scripts/check_dag.py
+      - name: Check dependency DAG and trusted-internals imports
+        run: |
+          python3 -m unittest scripts/test_check_dag.py
+          python3 scripts/check_dag.py
       - run: python3 scripts/release/check_released_manifest.py
       - name: Check the manual's released/unreleased split matches released.yml
         run: python3 scripts/release/check_manual_split.py

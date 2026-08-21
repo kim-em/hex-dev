@@ -12,11 +12,13 @@
 # Order is topological (upstream first) so each repo's freshly-pushed SHA is
 # known before its downstream consumers are processed.
 #
-# ADDING A REPO HERE IS ONLY HALF THE JOB. The publishing token is scoped to an
-# explicit list of repositories, so the new one must also be added to the
-# `hex-publishing` fine-grained token and approved by an organization owner
-# before the sync can push to it. See PLAN/Releases.md
-# §"Publishing a new library: widen the token first"; sync_released.py
+# ADDING A REPO HERE IS ONLY HALF THE JOB. Each publishing token is scoped to
+# an explicit list of repositories (and a fine-grained token caps that list,
+# so there is more than one), so the new repo must also be added to one of the
+# `hex-publishing` / `hex-publishing-2` fine-grained tokens and approved by an
+# organization owner before the sync can push to it. Any token with room
+# works; the sync routes per repo. See PLAN/Releases.md
+# §"Publishing a new library: widen a token first"; sync_released.py
 # preflights this and refuses to start if it was missed.
 #
 # Per-repo managed path conventions (resolved by the driver):

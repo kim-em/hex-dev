@@ -41,10 +41,11 @@ cyclotomics is exactly the one this representation stores well: `Φ_p`
 has degree `p − 1` and all `p` of its coefficients are `1`, so it is
 dense, and the `p^k` members are that dense polynomial with its
 exponents scaled. The
-cyclotomic library specified in [future-work](../future-work.md) builds
-`ZPoly` and offers sparse output as an optional adapter over this
-library. That adapter is downstream: nothing here knows what a
-cyclotomic polynomial is.
+cyclotomic library specified in [hex-cyclotomic](hex-cyclotomic.md)
+builds `ZPoly` and leaves sparse output to an adapter over this library
+at a consumer that holds both. That adapter is downstream and is not a
+dependency in either direction: nothing here knows what a cyclotomic
+polynomial is.
 
 **Dense stays the default.** Berlekamp-Zassenhaus, hex-poly-z,
 hex-resultant, and hex-number-field all hold `DensePoly` and see full

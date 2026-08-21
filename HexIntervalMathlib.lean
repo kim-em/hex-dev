@@ -17,7 +17,13 @@ public import HexIntervalMathlib.Power
 public import HexIntervalMathlib.Split
 public import HexIntervalMathlib.Inverse
 public import HexIntervalMathlib.Division
+public import HexIntervalMathlib.Driver
 public import HexIntervalMathlib.Regularize
+public import HexIntervalMathlib.Program
+public import HexIntervalMathlib.Proof
+public import HexIntervalMathlib.Rule
+public import HexIntervalMathlib.Frontend
+public import HexIntervalMathlib.Tactic
 
 public section
 
@@ -27,5 +33,14 @@ the supported `Hex.Interval` operations, including resource-checked addition,
 subtraction, and multiplication, exact minimum/maximum images, absolute value,
 natural power, outward regularization, and closed-left/strict-right
 transactional splitting, plus precision-indexed reciprocal and division
-enclosures.
+enclosures. It also supplies the function-agnostic semantics of supported
+programs and the chronological, package-owned proof-replay boundary.
+`HexIntervalMathlib.Rule` supplies a checked built-in arithmetic package whose
+schemas recompute checked public operations before producing proof evidence.
+`HexIntervalMathlib.Frontend` supplies bounded recursive arithmetic reification,
+source-driven version-zero facts, and flat programmatic replay/closure
+combinators.
+`HexIntervalMathlib.Tactic` supplies the first supported Lean-expression,
+local-hypothesis, runtime-authentication, and transactional tactic bridge for
+forward arithmetic bounds. Its bare tactics use the `2⁻¹⁶` dyadic grid.
 -/
