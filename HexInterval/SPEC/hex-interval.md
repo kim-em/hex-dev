@@ -81,12 +81,16 @@ Mathlib companion now also owns the function-agnostic program interpretation,
 package theorem registry, chronological proof fold, exact caller closure, and
 checked expression boundary. Its first programmatic frontend recursively
 reifies a bounded arithmetic term language by stable operation key, rechecks
-the transparent result's exact node/term correspondence, binds the exact
-selected source facts, replays a caller-supplied authenticated flat
+the transparent result's exact node/term correspondence, places exact caller
+facts at source rows and `whole` at computed version-zero rows, derives all
+initial containments from only the source obligations, and replays a
+caller-supplied authenticated flat
 chronology, and projects
 the result to lower, upper, conjunction, or closed-singleton equality theorems.
-Lean-expression parsing, local-hypothesis proof synthesis, tactic syntax, and
-Meta quotation of the supported records remain experimental. The first
+Its depth cap rejects over-deep descent but does not bound construction or a
+full traversal of an already-built branching term. Lean-expression parsing,
+local-hypothesis proof synthesis, tactic syntax, and Meta quotation of the
+supported records remain experimental. The first
 concrete supported registry is the Mathlib arithmetic package for one
 configured constant and natural exponent plus public negation, addition,
 subtraction, multiplication, power, absolute-value, min/max, reciprocal,

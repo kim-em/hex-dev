@@ -58,7 +58,10 @@ inductive Term where
 caps. `maxSources` also bounds caller fact-array traversal. `maxOperations`
 admits the already-constructed configured meaning array before stable-key
 lookup; it does not preempt construction of `Rule.Config` or structural
-equality on caller `Term` values. -/
+equality on caller `Term` values. `maxDepth` stops recursive descent beyond the
+admitted depth, but does not itself bound the number of constructors in an
+already-built branching `Term`; `maxNodes` bounds retained SSA rows, not that
+caller-side construction. -/
 structure Limits where
   maxSources : Nat
   maxOperations : Nat
@@ -147,9 +150,15 @@ protected def Term.inputs : Term → List Term
   | .add left right | .sub left right | .mul left right | .div left right |
       .min left right | .max left right => [left, right]
 
+protected def Term.source? : Term → Option Nat
+  | .source index => some index
+  | _ => none
+
 /-- Short-circuit before descending beyond the caller's admitted term depth.
 This authenticates decoded `Result` terms; `reifyWithin` enforces the same
-root-at-depth-zero convention while constructing them. -/
+root-at-depth-zero convention while constructing them. A successful check may
+visit the whole already-constructed tree; depth is not a constructor-count
+cap. -/
 protected def Term.depthWithin : Nat → Term → Bool
   | _, .source _ | _, .constant => true
   | 0, _ => false
@@ -317,6 +326,18 @@ noncomputable def Result.valuation (config : Rule.Config) (sources : Nat → ℝ
     (result : Result) (node : NodeId) : ℝ :=
   Result.valueAt config sources result.entries node
 
+/-- Version-zero fact selected for one authenticated reifier entry. Source
+nodes receive the corresponding caller fact; every computed node receives
+domain top. -/
+def Result.seed (sources : Array Hex.Interval) (entry : Entry) : Hex.Interval :=
+  match entry.term.source? with
+  | some index => sources[index]?.getD Hex.Interval.whole
+  | none => Hex.Interval.whole
+
+/-- Exact version-zero fact array determined by the retained node/term rows. -/
+def Result.facts (result : Result) (sources : Array Hex.Interval) : Array Hex.Interval :=
+  result.entries.map (Result.seed sources)
+
 private theorem Result.slot_of_check (result : Result) (checked : result.check)
     {index : Nat} (within : index < result.entries.size) : result.slotCheck index := by
   have split : result.headerCheck = true ∧
@@ -343,6 +364,57 @@ private theorem Result.inputs_eval (config : Rule.Config) (sources : Nat → ℝ
           | some entry =>
               have termEq : entry.term = term := by simpa using matched.1
               simp [Result.valueAt, found, termEq, ih matched.2]
+
+/-- Source containment is the only caller-supplied semantic obligation for the
+version-zero facts constructed by `Result.facts`. -/
+def SourcesContain (values : Nat → ℝ) (sources : Array Hex.Interval) : Prop :=
+  ∀ index (fact : Hex.Interval), sources[index]? = some fact → fact.Contains (values index)
+
+theorem Result.seed_contains (config : Rule.Config) (values : Nat → ℝ)
+    (result : Result) (sources : Array Hex.Interval) (checked : result.check)
+    (sourceSize : sources.size = result.sourceCount)
+    (sourceHolds : SourcesContain values sources)
+    (index : Nat) (within : index < result.entries.size) :
+    (result.facts sources)[index]'(by simpa [Result.facts] using within) |>.Contains
+      (result.valuation config values { index }) := by
+  let entry := result.entries[index]'within
+  have entryFound : result.entries[index]? = some entry := by simp [entry]
+  have slot := result.slot_of_check checked within
+  generalize nodeFound : result.program.nodes[index]? = node? at slot
+  cases node? with
+  | none => simp [Result.slotCheck, entryFound, nodeFound] at slot
+  | some node =>
+      simp only [Result.slotCheck, entryFound, nodeFound, Bool.and_eq_true, beq_iff_eq] at slot
+      have sourceWithin := slot.1.2
+      cases sourceTerm : entry.term.source? with
+      | some source =>
+          have termEq : entry.term = .source source := by
+            cases h : entry.term <;> simp [Term.source?, h] at sourceTerm
+            case source index =>
+              subst source
+              exact h
+          have sourceLt : source < result.sourceCount := by simpa [termEq] using sourceWithin
+          have sourceArrayWithin : source < sources.size := by simpa [sourceSize] using sourceLt
+          let sourceFact := sources[source]'sourceArrayWithin
+          have sourceFound : sources[source]? = some sourceFact := by simp [sourceFact]
+          have member := sourceHolds source sourceFact sourceFound
+          have seeded :
+              (result.facts sources)[index]'(by simpa [Result.facts] using within) = sourceFact := by
+            simp [Result.facts, Result.seed, entry, termEq, Term.source?, sourceFound]
+          have valued : result.valuation config values { index } = values source := by
+            simp [Result.valuation, Result.valueAt, entryFound, termEq, Term.eval]
+          rw [seeded, valued]
+          exact member
+      | none =>
+          have seeded :
+              (result.facts sources)[index]'(by simpa [Result.facts] using within) =
+                Hex.Interval.whole := by
+            simp [Result.facts, Result.seed, entry, sourceTerm]
+          rw [seeded]
+          change Hex.Interval.whole.Contains _
+          change Raw.Contains Hex.Interval.whole.view _
+          rw [Hex.Interval.view_whole]
+          exact ⟨trivial, trivial⟩
 
 /-- The checked reification record determines a mathematical model from source
 values; callers do not reconstruct one semantic relation per SSA node. -/
@@ -410,6 +482,7 @@ theorem Result.target_eval (config : Rule.Config) (sources : Nat → ℝ)
 result. Its valuation is fixed by the retained term at every node, and the
 authenticated root evaluates to the caller's original target term. -/
 structure Model (config : Rule.Config) (sources : Nat → ℝ) (result : Result) : Type where
+  checked : result.check
   sound : Program.Models (Rule.meanings config) result.program
     (result.valuation config sources)
   target : result.valuation config sources result.target = result.term.eval config sources
@@ -432,6 +505,7 @@ def modelWithin (config : Config) (sources : Nat → ℝ) (result : Result) :
   if operations : result.program.operations = meanings.map (Program.Meaning.operation) then
     if checked : result.check then
       pure {
+        checked
         sound := result.models config.rule sources checked operations
         target := result.target_eval config.rule sources checked }
     else throw .malformedResult
@@ -458,17 +532,37 @@ def inputWithin (config : Config) (scope : Policy.ScopeId) (result : Result)
     throw .malformedProgram
   if !result.check then throw .malformedResult
   if sources.size != result.sourceCount then throw .wrongSourceCount
-  let mut facts := Array.replicate result.program.nodes.size Hex.Interval.whole
   for index in [0:result.sourceCount] do
-    let some node := result.sourceNode? index | throw (.missingSource index)
-    let some fact := sources[index]? | throw .wrongSourceCount
-    facts := facts.set! node.index fact
+    let some _ := result.sourceNode? index | throw (.missingSource index)
+  let facts := result.facts sources
   let input : Proof.Input Hex.Interval :=
     { scope
       program := result.program
       facts
       target := { node := result.target, fact := target } }
   pure input
+
+/-- The exact `Result.facts` seed array discharges every computed top fact;
+only caller source containment remains. -/
+theorem Result.initial_contains (config : Rule.Config) (values : Nat → ℝ)
+    (result : Result) (sourceFacts : Array Hex.Interval) (checked : result.check)
+    (sourceSize : sourceFacts.size = result.sourceCount)
+    (sourceHolds : SourcesContain values sourceFacts)
+    (input : Proof.Input Hex.Interval)
+    (facts : input.facts = result.facts sourceFacts) :
+    ∀ fact, fact ∈ Proof.initialBase input →
+      fact.fact.Contains (result.valuation config values fact.node) := by
+  intro fact member
+  rw [Proof.initialBase, List.mem_ofFn] at member
+  obtain ⟨index, rfl⟩ := member
+  have within : index.val < result.entries.size := by
+    have sizeEq : input.facts.size = result.entries.size := by
+      rw [facts]
+      simp [Result.facts]
+    exact sizeEq ▸ index.isLt
+  have seeded := result.seed_contains config values sourceFacts checked sourceSize
+    sourceHolds index.val within
+  simpa [facts] using seeded
 
 /-- Bounded supported registry assembly followed by exact chronological replay.
 Neither the reifier nor the caller-supplied event list has proof authority. The
@@ -589,6 +683,97 @@ theorem closeTermSingleton (config : Config) (result : Result) (sources : Nat �
     result.term.eval config.rule sources = toReal value := by
   rcases closeTermBounds config result sources model input evidence program target assumptions
     _ _ shape with ⟨lower, upper⟩
+  exact le_antisymm upper lower
+
+/-- Close the target from caller source facts. Computed version-zero nodes are
+seeded with `whole` and discharged by `Result.initial_contains`. -/
+theorem closeSources (config : Config) (result : Result) (values : Nat → ℝ)
+    (model : Model config.rule values result) (input : Proof.Input Hex.Interval)
+    (evidence : Proof.Evidence
+      ((Rule.semantics config.rule).Entails input.program
+        (Proof.initialBase input) input.target))
+    (program : input.program = result.program)
+    (target : input.target.node = result.target)
+    (sourceFacts : Array Hex.Interval)
+    (sourceSize : sourceFacts.size = result.sourceCount)
+    (facts : input.facts = result.facts sourceFacts)
+    (sourceHolds : SourcesContain values sourceFacts) :
+    input.target.fact.Contains (result.term.eval config.rule values) :=
+  closeTerm config result values model input evidence program target
+    (result.initial_contains config.rule values sourceFacts model.checked sourceSize
+      sourceHolds input facts)
+
+theorem closeSourcesBounds (config : Config) (result : Result) (values : Nat → ℝ)
+    (model : Model config.rule values result) (input : Proof.Input Hex.Interval)
+    (evidence : Proof.Evidence
+      ((Rule.semantics config.rule).Entails input.program
+        (Proof.initialBase input) input.target))
+    (program : input.program = result.program)
+    (target : input.target.node = result.target)
+    (sourceFacts : Array Hex.Interval)
+    (sourceSize : sourceFacts.size = result.sourceCount)
+    (facts : input.facts = result.facts sourceFacts)
+    (sourceHolds : SourcesContain values sourceFacts)
+    (lower : Lower) (upper : Upper)
+    (shape : input.target.fact.view = .bounds lower upper) :
+    lower.Contains (result.term.eval config.rule values) ∧
+      upper.Contains (result.term.eval config.rule values) := by
+  have member := closeSources config result values model input evidence program target sourceFacts
+    sourceSize facts sourceHolds
+  change input.target.fact.view.Contains (result.term.eval config.rule values) at member
+  simpa [shape, Raw.Contains] using member
+
+theorem closeSourcesLower (config : Config) (result : Result) (values : Nat → ℝ)
+    (model : Model config.rule values result) (input : Proof.Input Hex.Interval)
+    (evidence : Proof.Evidence
+      ((Rule.semantics config.rule).Entails input.program
+        (Proof.initialBase input) input.target))
+    (program : input.program = result.program)
+    (target : input.target.node = result.target)
+    (sourceFacts : Array Hex.Interval)
+    (sourceSize : sourceFacts.size = result.sourceCount)
+    (facts : input.facts = result.facts sourceFacts)
+    (sourceHolds : SourcesContain values sourceFacts)
+    (value : Dyadic) (strict : Bool) (upper : Upper)
+    (shape : input.target.fact.view = .bounds (.finite value strict) upper) :
+    (Lower.finite value strict).Contains (result.term.eval config.rule values) :=
+  (closeSourcesBounds config result values model input evidence program target sourceFacts
+    sourceSize facts sourceHolds _ _ shape).1
+
+theorem closeSourcesUpper (config : Config) (result : Result) (values : Nat → ℝ)
+    (model : Model config.rule values result) (input : Proof.Input Hex.Interval)
+    (evidence : Proof.Evidence
+      ((Rule.semantics config.rule).Entails input.program
+        (Proof.initialBase input) input.target))
+    (program : input.program = result.program)
+    (target : input.target.node = result.target)
+    (sourceFacts : Array Hex.Interval)
+    (sourceSize : sourceFacts.size = result.sourceCount)
+    (facts : input.facts = result.facts sourceFacts)
+    (sourceHolds : SourcesContain values sourceFacts)
+    (lower : Lower) (value : Dyadic) (strict : Bool)
+    (shape : input.target.fact.view = .bounds lower (.finite value strict)) :
+    (Upper.finite value strict).Contains (result.term.eval config.rule values) :=
+  (closeSourcesBounds config result values model input evidence program target sourceFacts
+    sourceSize facts sourceHolds _ _ shape).2
+
+theorem closeSourcesSingleton (config : Config) (result : Result) (values : Nat → ℝ)
+    (model : Model config.rule values result) (input : Proof.Input Hex.Interval)
+    (evidence : Proof.Evidence
+      ((Rule.semantics config.rule).Entails input.program
+        (Proof.initialBase input) input.target))
+    (program : input.program = result.program)
+    (target : input.target.node = result.target)
+    (sourceFacts : Array Hex.Interval)
+    (sourceSize : sourceFacts.size = result.sourceCount)
+    (facts : input.facts = result.facts sourceFacts)
+    (sourceHolds : SourcesContain values sourceFacts)
+    (value : Dyadic)
+    (shape : input.target.fact.view =
+      .bounds (.finite value false) (.finite value false)) :
+    result.term.eval config.rule values = toReal value := by
+  rcases closeSourcesBounds config result values model input evidence program target sourceFacts
+    sourceSize facts sourceHolds _ _ shape with ⟨lower, upper⟩
   exact le_antisymm upper lower
 
 /-- Close both endpoint predicates. This is the conjunction frontend used for
