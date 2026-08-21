@@ -42,4 +42,3 @@ theorem state : checkState 7168 = (72865, true) := by
 end Hex.IntervalMathlib.Experiment.PntChebyshevProbe.Chunk06
 
 end
-
