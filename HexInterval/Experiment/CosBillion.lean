@@ -280,7 +280,7 @@ def negationPackage : Package Bound :=
 def packages : Array (Package Bound) :=
   #[sourcePackage, localPackage, constantPackage, reductionPackage, negationPackage]
 
-def engineLimits : Propagator.Limits :=
+def engineLimits : Hex.Interval.State.Limits :=
   { maxOperations := 5, maxNodes := 6, maxRules := 5, maxRegistryEntries := 24,
     maxReplayFormats := 8, maxArity := 2, maxScopeNodes := 1,
     maxApplications := 12, maxQueueEntries := 96, maxActions := 80,

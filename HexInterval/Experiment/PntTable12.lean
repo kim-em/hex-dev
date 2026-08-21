@@ -276,7 +276,7 @@ def rowPackage : Package Bound :=
 
 def packages : Array (Package Bound) := #[sourcePackage, rowPackage]
 
-def engineLimits : Propagator.Limits :=
+def engineLimits : Hex.Interval.State.Limits :=
   { maxOperations := 2
     maxNodes := 6
     maxRules := 1

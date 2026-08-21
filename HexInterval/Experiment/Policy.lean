@@ -497,7 +497,7 @@ opaque State.view (state : State Fact) : Except ViewError (View Fact × State Fa
        serial := state.serial
        programVersion := state.engine.programVersion
        offers
-       facts := state.engine.snapshot
+       facts := state.engine.toBranch.snapshot
        incomplete := state.incomplete
        remaining :=
         { actions := remaining state.engine.limits.maxActions state.engine.metrics.queuePops
@@ -553,7 +553,7 @@ inductive EqualityOutcome where
   | noChange
   | improved
   | contradiction
-  | engineResource (resource : Resource)
+  | engineResource (resource : Hex.Interval.State.Resource)
   | factResource (budget : Nat)
   | invalid (fault : EqualityFault)
   deriving DecidableEq, Repr
@@ -591,7 +591,7 @@ inductive SelectResult (Fact : Type) where
   | completed (completion : Completed) (state : State Fact)
   | split (plan : SplitPlan Fact) (state : State Fact)
   | rejected (reason : Rejection) (state : State Fact)
-  | engineResource (resource : Resource) (state : State Fact)
+  | engineResource (resource : Hex.Interval.State.Resource) (state : State Fact)
   | factResource (budget : Nat) (state : State Fact)
 
 private inductive DecisionClass where
@@ -672,6 +672,16 @@ private def prepareMatchForPolicy (state : State Fact) (applicationId : Applicat
               .invalid
         | _, _ => .invalid
 
+/-- Consume one policy-selected dirty item through the supported queue
+contract. Policy order may differ from FIFO order, so the retained entry
+becomes a tombstone rather than moving the FIFO cursor. -/
+private def clearWork? (engine : Engine Fact) (work : Hex.Interval.State.Work) :
+    Option (Engine Fact) := do
+  let (dependencies, queue) <-
+    (engine.toQueue.deactivate engine.limits.maxQueueEntries engine.program.nodes.size
+      engine.applications.size engine.equalities.size engine.toDependencies work).toOption
+  pure { engine with toDependencies := dependencies, toQueue := queue }
+
 private def prepareApplication (state : State Fact) (applicationId : ApplicationId)
     (effort : Option Nat) (clearDirty : Bool) (decision : DecisionClass)
     (source : Option Action := none) : SelectResult Fact :=
@@ -709,25 +719,25 @@ private def prepareApplication (state : State Fact) (applicationId : Application
                 writes := application.writes
                 structuralInputs
                 matcherEpoch }
-            let queued :=
-              if clearDirty then state.engine.queued.set! applicationId.index false
-              else state.engine.queued
-            let engine : Engine Fact :=
-              { state.engine with
-                queued
-                pending := some action
-                pendingMatcher
-                metrics :=
-                  { state.engine.metrics with
-                    queuePops := state.engine.metrics.queuePops + 1
-                    requests := state.engine.metrics.requests + 1 } }
-            let state := advanceState (chargeDecision state decision) engine
-            .request
-              { action
-                program := state.engine.programView
-                inputs := views
-                writes := application.writes }
-              state
+            match if clearDirty then clearWork? state.engine (.application applicationId)
+                else some state.engine with
+            | none => reject state .malformedState
+            | some base =>
+                let engine : Engine Fact :=
+                  { base with
+                    pending := some action
+                    pendingMatcher
+                    metrics :=
+                      { base.metrics with
+                        queuePops := state.engine.metrics.queuePops + 1
+                        requests := state.engine.metrics.requests + 1 } }
+                let state := advanceState (chargeDecision state decision) engine
+                .request
+                  { action
+                    program := state.engine.programView
+                    inputs := views
+                    writes := application.writes }
+                  state
         | _, _, _ => reject state .malformedState
 
 private def consumeSuggestion (state : State Fact) (suggestion : SuggestionId) : State Fact :=
@@ -747,39 +757,40 @@ def equalityObservation (key : EqualityWorkKey) (before after : Engine Fact)
 private def selectEquality (state : State Fact) (key : EqualityWorkKey) : SelectResult Fact :=
   if state.engine.limits.maxActions <= state.engine.metrics.queuePops then
     reject state .actionLimit
-  else
-    let running : Engine Fact :=
-      { state.engine with
-        equalityQueued := state.engine.equalityQueued.set! key.equality.index false
-        metrics :=
-          { state.engine.metrics with
-            queuePops := state.engine.metrics.queuePops + 1
-            equalityRuns := state.engine.metrics.equalityRuns + 1 } }
-    let selectedClock :=
-      match state.equalities[key.equality.index]? with
-      | some clock =>
-          { state with equalities :=
-              state.equalities.set! key.equality.index { clock with active := false } }
-      | none => state
-    match running.contractEquality key.equality with
-    | .advanced narrowCalls engine =>
-        let outcome :=
-          if engine.contradictory && !state.engine.contradictory then .contradiction
-          else if engine.history.size == state.engine.history.size then .noChange
-          else .improved
-        let observation := equalityObservation key state.engine engine outcome narrowCalls
-        .equality observation (advanceState (chargeDecision selectedClock .equality) engine)
-    | .invalid fault narrowCalls engine =>
-        .equality (equalityObservation key state.engine engine (.invalid fault) narrowCalls)
-          (chargeDecision state .equality)
-    | .resourceLimit resource narrowCalls engine =>
-        .equality (equalityObservation key state.engine engine
-            (.engineResource resource) narrowCalls)
-          (chargeDecision state .equality)
-    | .factResourceLimit budget narrowCalls engine =>
-        .equality (equalityObservation key state.engine engine
-            (.factResource budget) narrowCalls)
-          (chargeDecision state .equality)
+  else match clearWork? state.engine (.equality key.equality) with
+  | none => reject state .malformedState
+  | some base =>
+      let running : Engine Fact :=
+        { base with
+          metrics :=
+            { base.metrics with
+              queuePops := state.engine.metrics.queuePops + 1
+              equalityRuns := state.engine.metrics.equalityRuns + 1 } }
+      let selectedClock :=
+        match state.equalities[key.equality.index]? with
+        | some clock =>
+            { state with equalities :=
+                state.equalities.set! key.equality.index { clock with active := false } }
+        | none => state
+      match running.contractEquality key.equality with
+      | .advanced narrowCalls engine =>
+          let outcome :=
+            if engine.contradictory && !state.engine.contradictory then .contradiction
+            else if engine.history.size == state.engine.history.size then .noChange
+            else .improved
+          let observation := equalityObservation key state.engine engine outcome narrowCalls
+          .equality observation (advanceState (chargeDecision selectedClock .equality) engine)
+      | .invalid fault narrowCalls engine =>
+          .equality (equalityObservation key state.engine engine (.invalid fault) narrowCalls)
+            (chargeDecision state .equality)
+      | .resourceLimit resource narrowCalls engine =>
+          .equality (equalityObservation key state.engine engine
+              (.engineResource resource) narrowCalls)
+            (chargeDecision state .equality)
+      | .factResourceLimit budget narrowCalls engine =>
+          .equality (equalityObservation key state.engine engine
+              (.factResource budget) narrowCalls)
+            (chargeDecision state .equality)
 
 private def selectSuggestion (state : State Fact) (suggestionId : SuggestionId)
     (key : OfferKey) : SelectResult Fact :=
@@ -853,26 +864,29 @@ opaque State.dismiss (state : State Fact) (selection : Selection) : SelectResult
   match state.validate selection with
   | .error reason => reject state reason
   | .ok _ =>
-      let next := match selection.id with
-        | .application application =>
-            let engine :=
-              { state.engine with queued := state.engine.queued.set! application.index false }
-            { advanceState (chargeDecision state .dismissal) engine with incomplete := true }
-        | .equality equality =>
-            let engine :=
-              { state.engine with
-                equalityQueued := state.engine.equalityQueued.set! equality.index false }
-            { advanceState (chargeDecision state .dismissal) engine with incomplete := true }
-        | .suggestion suggestion =>
-            let next := chargeDecision (consumeSuggestion state suggestion) .dismissal
-            match state.engine.suggestions[suggestion.index]? with
-            | some retained =>
+      match selection.id with
+      | .application application =>
+          match clearWork? state.engine (.application application) with
+          | none => reject state .malformedState
+          | some engine =>
+              .completed .dismissed
+                { advanceState (chargeDecision state .dismissal) engine with incomplete := true }
+      | .equality equality =>
+          match clearWork? state.engine (.equality equality) with
+          | none => reject state .malformedState
+          | some engine =>
+              .completed .dismissed
+                { advanceState (chargeDecision state .dismissal) engine with incomplete := true }
+      | .suggestion suggestion =>
+          let next := chargeDecision (consumeSuggestion state suggestion) .dismissal
+          match state.engine.suggestions[suggestion.index]? with
+          | some retained =>
+              .completed .dismissed <|
                 if Suggestion.affectsClosure retained.suggestion then
                   { next with incomplete := true }
                 else
                   next
-            | none => { next with incomplete := true }
-      .completed .dismissed next
+          | none => reject state .malformedState
 
 /-! # Exact rule observations -/
 
@@ -913,7 +927,7 @@ def emittedSuggestions (before after : Nat) : Array OfferId := Id.run do
 inductive SubmitResult (Fact : Type) where
   | accepted (observation : RuleObservation Fact) (state : State Fact)
   | invalid (error : ReplyError) (state : State Fact)
-  | engineResource (resource : Resource) (state : State Fact)
+  | engineResource (resource : Hex.Interval.State.Resource) (state : State Fact)
   | factResource (budget : Nat) (state : State Fact)
   | malformedState (state : State Fact)
 

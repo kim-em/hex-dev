@@ -70,7 +70,7 @@ def factDomain : FactDomain Fact where
   narrow _ current candidate :=
     if current < candidate then .improved candidate else .noChange
 
-def limits : Limits :=
+def limits : Hex.Interval.State.Limits :=
   { maxOperations := 16
     maxNodes := 32
     maxRules := 8

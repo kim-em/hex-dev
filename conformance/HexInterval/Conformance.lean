@@ -2300,6 +2300,359 @@ def snapshot : Snapshot Nat :=
 #guard ({ node := contractNode 1, version := 5 : SeenVersion }) !=
   ({ node := contractNode 1, version := 6 : SeenVersion })
 
+def stateLimits : Hex.Interval.State.Limits :=
+  { maxOperations := 4
+    maxNodes := 4
+    maxRules := 4
+    maxRegistryEntries := 4
+    maxReplayFormats := 4
+    maxArity := 2
+    maxScopeNodes := 2
+    maxApplications := 2
+    maxQueueEntries := 4
+    maxActions := 4
+    maxMatcherVisits := 4
+    matcherBatchSize := 1
+    maxAcceptedFacts := 2
+    maxRetainedSuggestions := 2
+    maxEffort := 4
+    maxObservationValue := 8
+    maxDiagnosticValue := 8
+    maxOutcomeCandidates := 2
+    maxOutcomeSuggestions := 2
+    maxProposalItems := 4
+    maxInstances := 2
+    maxGeneration := 2
+    maxNodeDepth := 3
+    maxEqualities := 2
+    splitEndpointLimit := smallLimit }
+
+def branch? : Option (Hex.Interval.State.Branch Nat Nat) :=
+  (Hex.Interval.State.Branch.startWithin stateLimits contractProgram #[13, 23]).toOption
+
+def firstUpdate : Hex.Interval.State.Update Nat Nat :=
+  { programVersion := 0
+    node := contractNode 1
+    previous := { node := contractNode 1, version := 0 }
+    fact := 29
+    version := 1
+    cause := 71 }
+
+def secondUpdate : Hex.Interval.State.Update Nat Nat :=
+  { firstUpdate with
+    previous := { node := contractNode 1, version := 1 }
+    fact := 31
+    version := 2 }
+
+-- Version zero and every later version are immutable retained facts. Exact
+-- predecessor links reconstruct the live version array.
+#guard match branch? with
+  | none => false
+  | some branch =>
+      match branch.pushWithin stateLimits firstUpdate with
+      | .error _ => false
+      | .ok next =>
+          next.check && next.restoredVersions? == some #[0, 1] &&
+            next.restoredFacts? == some #[13, 29] &&
+            next.snapshot.facts == #[13, 29] &&
+            next.factAt? { node := contractNode 1, version := 0 } == some 23 &&
+            next.factAt? { node := contractNode 1, version := 1 } == some 29
+
+-- Base facts are authoritative and appended-node seeds retain only the exact
+-- suffix. A forged duplicate base seed cannot enter a checked branch.
+#guard match branch? with
+  | none => false
+  | some branch =>
+      branch.seeds.isEmpty &&
+        ({ branch with seeds := #[999, 23] }).restoredFacts?.isNone &&
+        !({ branch with seeds := #[999, 23] }).check &&
+        branch.factAt? { node := contractNode 0, version := 0 } == some 13
+
+-- There is no independently mutable current-fact field. A forged retained
+-- fact event changes the reconstructed snapshot, but without its matching
+-- version transition the decoded branch is rejected.
+#guard match branch? with
+  | none => false
+  | some branch =>
+      let malformed := { branch with history := #[{ firstUpdate with fact := 999 }] }
+      !malformed.check && malformed.snapshot.facts == #[13, 999]
+
+-- Stale, cross-node, and wrong-program provenance fail without a replacement
+-- branch. A malformed current snapshot cannot be repaired by appending to it.
+#guard match branch? with
+  | none => false
+  | some branch =>
+      match branch.pushWithin stateLimits
+          { firstUpdate with previous := { node := contractNode 0, version := 0 } } with
+      | .error (.staleVersion node) => node == contractNode 1
+      | _ => false
+
+#guard match branch? with
+  | none => false
+  | some branch =>
+      match branch.pushWithin stateLimits { firstUpdate with programVersion := 1 } with
+      | .error .wrongProgramVersion => true
+      | _ => false
+
+#guard match branch? with
+  | none => false
+  | some branch =>
+      let malformed := { branch with versions := #[0] }
+      match malformed.pushWithin stateLimits firstUpdate with
+      | .error .invalidProgram => malformed.snapshot.facts == #[13, 23]
+      | _ => false
+
+-- The history limit is checked before the second event is retained.
+#guard match branch? with
+  | none => false
+  | some branch =>
+      let one := { stateLimits with maxAcceptedFacts := 1 }
+      match branch.pushWithin one firstUpdate with
+      | .error _ => false
+      | .ok next =>
+          match next.pushWithin one secondUpdate with
+          | .error (.resource .acceptedFacts) =>
+              next.history.size == 1 && next.snapshot.facts[1]? == some 29
+          | _ => false
+
+def extendedProgram : Program :=
+  { contractProgram with
+    nodes := contractProgram.nodes.push
+      { domain := realDomain, op := { index := 1 }, args := [contractNode 1] } }
+
+-- Decoded base-program limits are checked before the malformed prefix is
+-- traversed by `Branch.check`.
+#guard match branch? with
+  | none => false
+  | some branch =>
+      let malformed := { branch with baseProgram := extendedProgram }
+      let tiny := { stateLimits with maxNodes := 2 }
+      match malformed.pushWithin tiny firstUpdate with
+      | .error (.resource .nodes) => malformed.history.isEmpty
+      | _ => false
+
+#guard match branch? with
+  | none => false
+  | some branch =>
+      let overHistory := { branch with history := #[firstUpdate] }
+      let none := { stateLimits with maxAcceptedFacts := 0 }
+      match overHistory.extendWithin none extendedProgram #[37] 1 with
+      | .error (.resource .acceptedFacts) => overHistory.program == contractProgram
+      | _ => false
+
+-- Extension retains the exact generated version-zero seed rather than asking
+-- a later callback to reconstruct it. Non-prefix and wrong-count extensions
+-- are rejected before branch arrays change.
+#guard match branch? with
+  | none => false
+  | some branch =>
+      match branch.extendWithin stateLimits extendedProgram #[37] 1 with
+      | .error _ => false
+      | .ok next =>
+          next.check && next.programVersion == 1 && next.seeds == #[37] &&
+            next.generations == #[0, 0, 1] &&
+            next.factAt? { node := contractNode 2, version := 0 } == some 37
+
+#guard match branch? with
+  | none => false
+  | some branch =>
+      match branch.extendWithin stateLimits extendedProgram #[37] 2 with
+      | .error .invalidGeneration => branch.programVersion == 0
+      | _ => false
+
+#guard match branch? with
+  | none => false
+  | some branch =>
+      !({ branch with generations := #[1, 0] }).check
+
+#guard match branch? with
+  | none => false
+  | some branch =>
+      match branch.extendWithin stateLimits extendedProgram #[] 1 with
+      | .error .wrongFactCount => branch.programVersion == 0
+      | _ => false
+
+def dependencies : Hex.Interval.State.Dependencies :=
+  { watchers := #[[], [.application { index := 0 }, .equality { index := 0 }]]
+    queued := #[true]
+    equalityQueued := #[false] }
+
+def initialQueue? : Option Hex.Interval.State.Queue :=
+  (Hex.Interval.State.Queue.initialWithin 1 1).toOption
+
+#guard dependencies.check 2 1 1
+#guard !({ dependencies with watchers := #[[], [.application { index := 1 }]] }).check 2 1 1
+#guard match initialQueue? with
+  | some queue => queue.check dependencies 2 1 1 1
+  | none => false
+
+-- Queue builders receive the exact node count; watcher alignment is not
+-- inferred tautologically from the malformed watcher array itself.
+#guard match initialQueue? with
+  | none => false
+  | some queue =>
+      !queue.check dependencies 1 1 1 1 &&
+        match queue.enqueueWithin 2 1 1 1 dependencies (.equality { index := 0 }) with
+        | .error .malformed => true
+        | _ => false
+
+-- Count refusal precedes initial queue allocation. Enqueue and pop preserve
+-- exact live-suffix/dirty-bit agreement for both work roles.
+#guard match Hex.Interval.State.Queue.initialWithin 0 1 with
+  | .error .queueEntries => true
+  | _ => false
+
+#guard match initialQueue? with
+  | none => false
+  | some queue =>
+      match queue.enqueueWithin 2 2 1 1 dependencies (.equality { index := 0 }) with
+      | .error _ => false
+      | .ok (dependencies, queue) =>
+          queue.check dependencies 2 1 1 2 &&
+            match queue.pop 2 2 1 1 dependencies with
+            | .error _ | .ok (none, _, _) => false
+            | .ok (some (.application _), dependencies, queue) =>
+                queue.check dependencies 2 1 1 2 &&
+                  match queue.pop 2 2 1 1 dependencies with
+                  | .ok (some (.equality _), dependencies, queue) =>
+                      queue.check dependencies 2 1 1 2 && queue.queueHead == 2
+                  | _ => false
+            | _ => false
+
+#guard match initialQueue? with
+  | none => false
+  | some queue =>
+      let misaligned := { dependencies with queued := #[] }
+      match queue.enqueueWithin 2 2 1 1 misaligned (.equality { index := 0 }) with
+      | .error .malformed => queue.queue.size == 1
+      | _ => false
+
+#guard match initialQueue? with
+  | none => false
+  | some queue =>
+      match queue.deactivate 1 2 1 1 dependencies (.application { index := 0 }) with
+      | .error _ => false
+      | .ok (dependencies, queue) =>
+          match queue.pop 1 2 1 1 dependencies with
+          | .ok (none, dependencies, queue) =>
+              queue.queueHead == 1 && dependencies.queued == #[false] &&
+                queue.check dependencies 2 1 1 1
+          | _ => false
+
+def twoDependencies : Hex.Interval.State.Dependencies :=
+  { watchers := #[[]]
+    queued := #[true, true]
+    equalityQueued := #[] }
+
+def twoQueue? : Option Hex.Interval.State.Queue :=
+  (Hex.Interval.State.Queue.initialWithin 3 2).toOption
+
+-- Deactivating the first occurrence leaves an occurrence-local tombstone.
+-- Re-enqueueing that work cannot resurrect it ahead of the still-live second
+-- application, so FIFO order remains load-bearing.
+#guard match twoQueue? with
+  | none => false
+  | some queue =>
+      match queue.deactivate 3 1 2 0 twoDependencies (.application { index := 0 }) with
+      | .error _ => false
+      | .ok (dependencies, queue) =>
+          match queue.enqueueWithin 3 1 2 0 dependencies (.application { index := 0 }) with
+          | .error _ => false
+          | .ok (dependencies, queue) =>
+              queue.live == #[false, true, true] &&
+                match queue.pop 3 1 2 0 dependencies with
+                | .ok (some (.application application), dependencies, queue) =>
+                    application.index == 1 && queue.queueHead == 2 &&
+                      queue.live == #[false, false, true] &&
+                      queue.check dependencies 1 2 0 3
+                | _ => false
+
+def orderLimit : Hex.Interval.Trace.Order.Limit :=
+  { maxFacts := 1, maxInstances := 1 }
+
+def exactOrder? : Option Hex.Interval.Trace.Order := do
+  let order ← (Hex.Interval.Trace.Order.empty.appendFact orderLimit 0).toOption
+  (order.appendInstance orderLimit 0).toOption
+
+#guard match exactOrder? with
+  | some order => order.check 1 1
+  | none => false
+
+#guard match Hex.Interval.Trace.Order.empty.appendFact
+    { maxFacts := 2, maxInstances := 1 } 1 with
+  | .error .malformed => true
+  | _ => false
+
+#guard match exactOrder? with
+  | none => false
+  | some order =>
+      match order.appendFact orderLimit 1 with
+      | .error .facts => order.check 1 1
+      | _ => false
+
+-- Total-cap refusal precedes traversal of malformed retained chronology.
+-- Without the size preflight these bad local indices would report malformed.
+def overCapOrder : Hex.Interval.Trace.Order :=
+  { chronology := #[.fact 7, .instance 9, .fact 11] }
+
+#guard match overCapOrder.appendFact orderLimit 0 with
+  | .error .facts => true
+  | _ => false
+
+#guard match overCapOrder.appendInstance orderLimit 0 with
+  | .error .instances => true
+  | _ => false
+
+def traceLimit : Hex.Interval.Trace.Limit :=
+  { maxEvents := 1, maxBytes := 2, maxWork := 3, maxCode := 4 }
+
+def traceEvent : Hex.Interval.Trace.Event :=
+  { code := 4, payload := #[7, 8], work := 3 }
+
+def retainedLog? : Option Hex.Interval.Trace.Log :=
+  match ({} : Hex.Interval.Trace.Log).append traceLimit traceEvent with
+  | .retained log => some log
+  | _ => none
+
+#guard match retainedLog? with
+  | some log => log.check traceLimit && log.bytes == 2 && log.work == 3
+  | none => false
+
+-- Each one-over count/byte/work refusal is explicit truncation and retains
+-- neither the event nor its totals. Malformed cached totals are distinct.
+#guard match retainedLog? with
+  | none => false
+  | some log =>
+      match log.append traceLimit { code := 0 } with
+      | .truncated next =>
+          next.truncated && next.events.size == 1 && next.bytes == 2 && next.work == 3
+      | _ => false
+
+#guard match ({} : Hex.Interval.Trace.Log).append
+    { traceLimit with maxBytes := 1 } traceEvent with
+  | .truncated log => log.events.isEmpty && log.truncated
+  | _ => false
+
+#guard match ({} : Hex.Interval.Trace.Log).append
+    { traceLimit with maxWork := 2 } traceEvent with
+  | .truncated log => log.events.isEmpty && log.truncated
+  | _ => false
+
+#guard match ({ bytes := 1 } : Hex.Interval.Trace.Log).append traceLimit traceEvent with
+  | .malformed => true
+  | _ => false
+
+-- Diagnostic loss has no branch-state argument and therefore cannot alter
+-- facts, versions, provenance, or contradiction state.
+#guard match branch?, retainedLog? with
+  | some branch, some log =>
+      match log.append traceLimit { code := 0 } with
+      | .truncated _ =>
+          branch.snapshot.facts == #[13, 23] && branch.snapshot.versions == #[0, 0] &&
+            branch.history.isEmpty && !branch.contradictory
+      | _ => false
+  | _, _ => false
+
 end Contracts
 
 end Hex.Interval.Conformance

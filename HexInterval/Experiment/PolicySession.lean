@@ -39,7 +39,7 @@ open Propagator
 
 /-- All deterministic envelopes used to assemble one policy session. -/
 structure Limits where
-  engine : Propagator.Limits
+  engine : Hex.Interval.State.Limits
   policy : Propagator.Policy.Limits
   arena : PayloadArena.Limits
   deriving DecidableEq, Repr
@@ -79,7 +79,7 @@ private def make (state : Propagator.Policy.State Fact)
 /-- A sound upper bound on proof-payload traversal for any engine-valid
 reply.  It charges every candidate and suggestion and the maximum number of
 equalities which may be nested below each suggestion. -/
-def requiredUses (limits : Propagator.Limits) : Nat :=
+def requiredUses (limits : Hex.Interval.State.Limits) : Nat :=
   limits.maxOutcomeCandidates +
     limits.maxOutcomeSuggestions * (limits.maxProposalItems + 1)
 
@@ -206,7 +206,7 @@ inductive Step (Fact : Type) where
   | rejected (selection : Propagator.Policy.Selection)
       (reason : Propagator.Policy.Rejection) (session : Session Fact)
   | contradiction (session : Session Fact)
-  | engineResource (resource : Propagator.Resource) (session : Session Fact)
+  | engineResource (resource : Hex.Interval.State.Resource) (session : Session Fact)
   | factResource (budget : Nat) (session : Session Fact)
   | invalidReply (error : ReplyError) (session : Session Fact)
   | invalidPayload (error : PayloadArena.Invalid) (session : Session Fact)
@@ -217,7 +217,7 @@ inductive Step (Fact : Type) where
   | payloadResource (resource : PayloadArena.Resource) (session : Session Fact)
   | invalidSession (session : Session Fact)
 
-private def outcomeListsBounded (limits : Propagator.Limits) : Outcome Fact -> Bool
+private def outcomeListsBounded (limits : Hex.Interval.State.Limits) : Outcome Fact -> Bool
   | .success candidates suggestions _ =>
       listWithin limits.maxOutcomeCandidates candidates &&
         listWithin limits.maxOutcomeSuggestions suggestions

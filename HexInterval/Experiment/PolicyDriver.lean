@@ -62,7 +62,7 @@ inductive Event (Fact : Type)
   | dismissal (selection : Selection) (halts : Bool) (causesIncomplete : Bool)
   | splitPrepared (selection : Selection) (plan : SplitPlan Fact)
   | choiceRejected (selection : Selection) (reason : Rejection)
-  | engineResource (origin : ResourceOrigin) (resource : Resource)
+  | engineResource (origin : ResourceOrigin) (resource : Hex.Interval.State.Resource)
   | factResource (origin : ResourceOrigin) (budget : Nat)
   | decisionResource
   | viewResource (error : ViewError)
@@ -95,7 +95,7 @@ inductive Stop (Fact : Type)
   | contradiction
   | split (plan : SplitPlan Fact)
   | unknown (reason : UnknownReason)
-  | engineResource (resource : Resource)
+  | engineResource (resource : Hex.Interval.State.Resource)
   | factResource (budget : Nat)
   | decisionResource
   | viewResource (error : ViewError)

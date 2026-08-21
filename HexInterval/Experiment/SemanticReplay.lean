@@ -540,17 +540,17 @@ end Registry
 facts, and target are intentionally absent; they remain in `CheckerInput`. -/
 structure Trace (Fact : Type) where
   program : Program
-  events : Array (FactEvent Fact)
+  events : Array (Hex.Interval.State.Update Fact (FactCause Fact))
   arena : Arena
 
 namespace Trace
 
 /-- Read an event only when its index is strictly before the replay cursor.
 Even if the untrusted array contains a future entry, it is inaccessible. -/
-def eventAt? (trace : Trace Fact) (cursor index : Nat) : Option (FactEvent Fact) :=
+def eventAt? (trace : Trace Fact) (cursor index : Nat) : Option (Hex.Interval.State.Update Fact (FactCause Fact)) :=
   if index < cursor then trace.events[index]? else none
 
-def findVersionPrefix? (events : Array (FactEvent Fact)) (seen : SeenVersion) :
+def findVersionPrefix? (events : Array (Hex.Interval.State.Update Fact (FactCause Fact))) (seen : SeenVersion) :
     Nat -> Nat -> Option Fact
   | 0, _ => none
   | cursor + 1, index =>

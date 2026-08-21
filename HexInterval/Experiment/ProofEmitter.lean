@@ -42,7 +42,7 @@ open Propagator PayloadArena SemanticReplay ChronologicalReplay
 the quote, rather than retaining the opaque arena lookup, is what makes the
 proof-side reduction independent of the compiled search implementation. -/
 structure RuleStep (Fact : Type) where
-  event : FactEvent Fact
+  event : Hex.Interval.State.Update Fact (FactCause Fact)
   payload : PayloadId
   entry : Entry
   assumptions : List (NodeFact Fact)
@@ -56,7 +56,7 @@ structure InstanceQuote where
 
 /-- Plain data quoted for one equality-caused fact improvement. -/
 structure TransportStep (Fact : Type) where
-  event : FactEvent Fact
+  event : Hex.Interval.State.Update Fact (FactCause Fact)
   equality : EqualityId
   edge : EqualityEdge
   payload : PayloadId

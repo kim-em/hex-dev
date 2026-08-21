@@ -67,7 +67,7 @@ inductive Stop (Fact : Type)
   | policyStop (liveOffers : Nat)
   | incomplete
   | viewResource (error : Propagator.Policy.ViewError)
-  | engineResource (resource : Propagator.Resource)
+  | engineResource (resource : Hex.Interval.State.Resource)
   | factResource (budget : Nat)
   | payloadResource (resource : PayloadArena.Resource)
   | invalidReply (error : ReplyError)

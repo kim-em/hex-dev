@@ -69,7 +69,7 @@ def gRule : Registration :=
     watches := [.argument 0]
     writes := [.result] }
 
-def engineLimits : Experiment.Propagator.Limits :=
+def engineLimits : Hex.Interval.State.Limits :=
   { maxOperations := 8
     maxNodes := 8
     maxRules := 8
@@ -99,7 +99,7 @@ def policyLimits : Experiment.Propagator.Policy.Limits :=
     maxTraversal := 512
     maxLiveOffers := 32 }
 
-def initialWithLimits? (engineLimit : Experiment.Propagator.Limits)
+def initialWithLimits? (engineLimit : Hex.Interval.State.Limits)
     (policyLimit : Experiment.Propagator.Policy.Limits) : Option (State Rank) := do
   let engine <- match Engine.start rankDomain program #[fRule, gRule] #[0, 0] engineLimit with
     | .ok engine => some engine
@@ -392,7 +392,7 @@ def afterInitial? : Option (State Rank) := do
   let (_, state) <- submit? state request
   some state
 
-def afterReplyWith? (engineLimit : Experiment.Propagator.Limits)
+def afterReplyWith? (engineLimit : Hex.Interval.State.Limits)
     (reply : RuleRequest Rank -> Outcome Rank) : Option (State Rank) := do
   let state <- initialWithLimits? engineLimit policyLimits
   let (request, state) <- request? state (.application (application 0))
@@ -400,7 +400,7 @@ def afterReplyWith? (engineLimit : Experiment.Propagator.Limits)
   | .accepted _ next => some next
   | _ => none
 
-def observedWith? (engineLimit : Experiment.Propagator.Limits)
+def observedWith? (engineLimit : Hex.Interval.State.Limits)
     (reply : RuleRequest Rank -> Outcome Rank) :
     Option (RuleObservation Rank × State Rank) := do
   let state <- initialWithLimits? engineLimit policyLimits
@@ -409,7 +409,7 @@ def observedWith? (engineLimit : Experiment.Propagator.Limits)
   | .accepted observation next => some (observation, next)
   | _ => none
 
-def afterInitialWith? (engineLimit : Experiment.Propagator.Limits) : Option (State Rank) :=
+def afterInitialWith? (engineLimit : Hex.Interval.State.Limits) : Option (State Rank) :=
   afterReplyWith? engineLimit invoke
 
 -- Adopting a snapshot with an open reply latch cannot reconstruct the selected
@@ -553,7 +553,7 @@ def oneDecisionState? : Option (State Rank) :=
 
 /-! # Resource preservation and exact equality observations -/
 
-def retainedEngineWith? (limits : Experiment.Propagator.Limits) : Option (Engine Rank) := do
+def retainedEngineWith? (limits : Hex.Interval.State.Limits) : Option (Engine Rank) := do
   let engine <- match Engine.start rankDomain program #[fRule, gRule] #[0, 0] limits with
     | .ok engine => some engine
     | .error _ => none
@@ -564,7 +564,7 @@ def retainedEngineWith? (limits : Experiment.Propagator.Limits) : Option (Engine
       | _ => none
   | _ => none
 
-def equalityReadyWith? (limits : Experiment.Propagator.Limits)
+def equalityReadyWith? (limits : Hex.Interval.State.Limits)
     (domain : FactDomain Rank) : Option (State Rank) := do
   let engine <- retainedEngineWith? limits
   let state := State.start { engine with factDomain := domain } policyLimits

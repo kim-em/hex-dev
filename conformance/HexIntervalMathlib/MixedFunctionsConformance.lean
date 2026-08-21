@@ -233,7 +233,7 @@ private structure MixedSummary where
   reached : SeenVersion
   fact : Bound
   facts : Array Bound
-  chronology : Array HistoryEvent
+  chronology : Array Hex.Interval.Trace.Ref
 
 private def mixedSummary? : Option MixedSummary := do
   let .ok session := PolicySession.Session.start factDomain mixedProgram

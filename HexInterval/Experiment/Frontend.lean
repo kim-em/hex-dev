@@ -45,27 +45,27 @@ in its already-established prefix. -/
 def resolveFacts? (engine : Engine Fact) (inputs : List SeenVersion) :
     Option (List (NodeFact Fact)) :=
   inputs.mapM fun input => do
-    let fact ← engine.factAt? input
+    let fact ← engine.toBranch.factAt? input
     pure { node := input.node, fact }
 
 /-- Quote one rule-produced fact record and its immutable payload entry. -/
 def ruleStep? (engine : Engine Fact) (arena : Arena)
-    (event : FactEvent Fact) : Option (RuleStep Fact) := do
+    (event : Hex.Interval.State.Update Fact (FactCause Fact)) : Option (RuleStep Fact) := do
   let .rule action _ payload := event.cause | none
   let entry ← arena.entry? payload .fact
   let assumptions ← resolveFacts? engine action.inputs
-  let previous ← engine.factAt? event.previous
+  let previous ← engine.toBranch.factAt? event.previous
   pure { event, payload, entry, assumptions, previous }
 
 /-- Quote one equality-transport fact record, retained edge, and payload. -/
 def transportStep? (engine : Engine Fact) (arena : Arena)
-    (event : FactEvent Fact) : Option (TransportStep Fact) := do
+    (event : Hex.Interval.State.Update Fact (FactCause Fact)) : Option (TransportStep Fact) := do
   let .transport equality source := event.cause | none
   let edge ← engine.equalities[equality.index]?
   let entry ← arena.entry? edge.payload .equality
   let assumptions ← resolveFacts? engine edge.origin.inputs
-  let previous ← engine.factAt? event.previous
-  let sourceFact ← engine.factAt? source
+  let previous ← engine.toBranch.factAt? event.previous
+  let sourceFact ← engine.toBranch.factAt? source
   pure
     { event
       equality
@@ -83,7 +83,7 @@ must exhaust both detailed histories.  Cross-role causal checks deliberately
 belong to the dependent proof fold, which has the evidence and program state
 needed to validate them. -/
 def quote? (engine : Engine Fact) (arena : Arena) :
-    List HistoryEvent → Nat → Nat → Option (List (Event Fact))
+    List Hex.Interval.Trace.Ref → Nat → Nat → Option (List (Event Fact))
   | [], nextFact, nextInstance =>
       if nextFact == engine.history.size &&
           nextInstance == engine.instanceHistory.size then

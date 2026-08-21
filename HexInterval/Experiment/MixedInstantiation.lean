@@ -238,7 +238,7 @@ def expPackage : Package Bound :=
 def packages : Array (Package Bound) :=
   #[sourcePackage, negationPackage, sinePackage, expPackage]
 
-def engineLimits : Propagator.Limits :=
+def engineLimits : Hex.Interval.State.Limits :=
   { maxOperations := 4
     maxNodes := 6
     maxRules := 4

@@ -104,7 +104,7 @@ def resourceDomain : FactDomain Nat where
   top _ := 0
   narrow _ _ _ := .resourceLimit 6
 
-def limits : Propagator.Limits :=
+def limits : Hex.Interval.State.Limits :=
   { maxOperations := 4
     maxNodes := 4
     maxRules := 2
@@ -775,7 +775,7 @@ def opaqueProgram : Program :=
         instruction 1 [node 0],
         instruction 2 [node 0]] }
 
-def opaqueLimits : Propagator.Limits :=
+def opaqueLimits : Hex.Interval.State.Limits :=
   { limits with maxOperations := 6, maxRules := 4 }
 
 def start (package : Package Nat)
@@ -784,19 +784,19 @@ def start (package : Package Nat)
   PayloadSession.Session.start factDomain program #[package] #[3, 0, 0]
     limits payloadLimits
 
-def startWithin (package : Package Nat) (engineLimits : Propagator.Limits)
+def startWithin (package : Package Nat) (engineLimits : Hex.Interval.State.Limits)
     (payloadLimits : PayloadArena.Limits) :
     Except PayloadSession.StartError (PayloadSession.Session Nat) :=
   PayloadSession.Session.start factDomain program #[package] #[3, 0, 0]
     engineLimits payloadLimits
 
-def matcherLimits : Propagator.Limits :=
+def matcherLimits : Hex.Interval.State.Limits :=
   { limits with
     maxScopeNodes := 2
     maxMatcherVisits := 8
     matcherBatchSize := 2 }
 
-def oneMatcherUseLimits : Propagator.Limits :=
+def oneMatcherUseLimits : Hex.Interval.State.Limits :=
   { matcherLimits with
     maxOutcomeCandidates := 0
     maxOutcomeSuggestions := 1
@@ -809,18 +809,18 @@ def oneMatcherEntryArena : PayloadArena.Limits :=
     maxUses := 1 }
 
 def startMatcher (package : Package Nat)
-    (engineLimits : Propagator.Limits := matcherLimits)
+    (engineLimits : Hex.Interval.State.Limits := matcherLimits)
     (payloadLimits : PayloadArena.Limits := arenaLimits) :
     Except PayloadSession.StartError (PayloadSession.Session Nat) :=
   startWithin package engineLimits payloadLimits
 
-def oneReplyLimits : Propagator.Limits :=
+def oneReplyLimits : Hex.Interval.State.Limits :=
   { limits with
     maxOutcomeCandidates := 1
     maxOutcomeSuggestions := 0
     maxProposalItems := 0 }
 
-def twoUseLimits : Propagator.Limits :=
+def twoUseLimits : Hex.Interval.State.Limits :=
   { oneReplyLimits with maxOutcomeCandidates := 2 }
 
 def lateExtraArena : PayloadArena.Limits :=
@@ -839,7 +839,7 @@ def lateMalformedArena : PayloadArena.Limits :=
     maxDraftCells := 2
     maxUses := 1 }
 
-def nestedUsesLimits : Propagator.Limits :=
+def nestedUsesLimits : Hex.Interval.State.Limits :=
   { limits with
     maxOutcomeCandidates := 0
     maxOutcomeSuggestions := 1
@@ -850,7 +850,7 @@ def nestedUsesArena : PayloadArena.Limits :=
     maxDrafts := PayloadSession.requiredUses nestedUsesLimits
     maxUses := PayloadSession.requiredUses nestedUsesLimits }
 
-def overflowLimits : Propagator.Limits :=
+def overflowLimits : Hex.Interval.State.Limits :=
   { limits with maxOutcomeSuggestions := 3 }
 
 def overflowArenaLimits : PayloadArena.Limits :=

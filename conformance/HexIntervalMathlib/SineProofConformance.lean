@@ -344,12 +344,12 @@ def sameFactCause {Fact : Type} [BEq Fact]
   | _, _ => false
 
 def sameFactEvent {Fact : Type} [BEq Fact]
-    (left right : FactEvent Fact) : Bool :=
+    (left right : Hex.Interval.State.Update Fact (FactCause Fact)) : Bool :=
   left.programVersion == right.programVersion && left.node == right.node &&
     left.previous == right.previous && left.fact == right.fact &&
     left.version == right.version && sameFactCause left.cause right.cause
 
-def mutatedTransportEvent : FactEvent Range :=
+def mutatedTransportEvent : Hex.Interval.State.Update Range (FactCause Range) :=
   { transportStep.event with
     cause := .transport { index := 0 } { node := node 3, version := 1 } }
 

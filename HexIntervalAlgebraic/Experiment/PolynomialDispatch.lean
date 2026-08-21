@@ -357,7 +357,7 @@ def complexProgram : Program :=
         instruction 6 [node 2, node 0], instruction 5 [node 3, node 0],
         instruction 5 [node 4, node 1], instruction 9 [node 0, node 5]] }
 
-def engineLimits : Propagator.Limits :=
+def engineLimits : Hex.Interval.State.Limits :=
   { maxOperations := 10
     maxNodes := 8
     maxRules := 2

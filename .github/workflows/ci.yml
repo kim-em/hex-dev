@@ -243,9 +243,10 @@ jobs:
             hexrealroots_bench hexrcf_bench hexroots_bench \
             hexresultant_bench hexnumberfield_bench \
             hexnumberfieldtower_bench
-          # The policy-frontier spike is an exact logical-count canary rather
-          # than a lean-bench timing registration. Build it above and exercise
-          # all three representation fixtures directly here.
+          # These interval scheduler spikes are exact logical-count canaries
+          # rather than lean-bench timing registrations. Build them above and
+          # exercise their fixtures directly here.
+          .lake/build/bin/hex_interval_scheduler_spike canary
           .lake/build/bin/hex_interval_policy_frontier_spike canary
           touch "$RUNNER_TEMP/bench.ok"
       - name: Conformance oracles + BZ gates

@@ -49,7 +49,7 @@ def operations : Array Operation :=
   #[{ key := sourceOp, inputs := [], output := real },
     { key := unaryOp, inputs := [real], output := real }]
 
-def generous : Limits :=
+def generous : Hex.Interval.State.Limits :=
   { maxOperations := 16
     maxNodes := 64
     maxRules := 16
@@ -99,7 +99,7 @@ def copyInvoke (calls : List Nat) (request : RuleRequest Rank) :
   | none => (.failed 1, calls)
 
 def start? (program : Program) (rules : Array Registration) (facts : Array Rank)
-    (limits : Limits := generous) : Option (Engine Rank) :=
+    (limits : Hex.Interval.State.Limits := generous) : Option (Engine Rank) :=
   match Engine.start rankDomain program rules facts limits with
   | .ok state => some state
   | .error _ => none
@@ -366,7 +366,7 @@ def dynamicInvoke (calls : List String) (request : RuleRequest Rank) :
   else
     (.failed 7, calls)
 
-def dynamicInitial? (limits : Limits := generous) :
+def dynamicInitial? (limits : Hex.Interval.State.Limits := generous) :
     Option (RunResult Rank (List String)) := do
   let program : Program :=
     { operations := dynamicOperations, nodes := #[sourceNode, unaryNode 0] }
@@ -402,12 +402,12 @@ def dynamicFinal? : Option (RunResult Rank (List String) × SuggestionId) := do
 #guard
   match dynamicAdmitted? with
   | some (state, _, _) =>
-      state.factAt? { node := node 0, version := 0 } == some 4 &&
-        state.factAt? { node := node 1, version := 0 } == some 0 &&
-        state.factAt? { node := node 1, version := 1 } == some 4 &&
-        state.factAt? { node := node 2, version := 0 } == some 0 &&
-        state.factAt? { node := node 2, version := 1 } == none &&
-        state.factAt? { node := node 3, version := 0 } == none
+      state.toBranch.factAt? { node := node 0, version := 0 } == some 4 &&
+        state.toBranch.factAt? { node := node 1, version := 0 } == some 0 &&
+        state.toBranch.factAt? { node := node 1, version := 1 } == some 4 &&
+        state.toBranch.factAt? { node := node 2, version := 0 } == some 0 &&
+        state.toBranch.factAt? { node := node 2, version := 1 } == none &&
+        state.toBranch.factAt? { node := node 3, version := 0 } == none
   | none => false
 
 #guard
@@ -416,9 +416,9 @@ def dynamicFinal? : Option (RunResult Rank (List String) × SuggestionId) := do
       result.stop == .saturated && result.state.facts.toList == [4, 4, 4] &&
         result.state.metrics.requests == 3 && result.state.metrics.improvements == 2 &&
         result.state.history.size == 2 &&
-        result.state.factAt? { node := node 2, version := 0 } == some 0 &&
-        result.state.factAt? { node := node 2, version := 1 } == some 4 &&
-        result.state.factAt? { node := node 2, version := 2 } == none
+        result.state.toBranch.factAt? { node := node 2, version := 0 } == some 0 &&
+        result.state.toBranch.factAt? { node := node 2, version := 1 } == some 4 &&
+        result.state.toBranch.factAt? { node := node 2, version := 2 } == none
   | none => false
 
 -- Selecting the same structural extension twice allocates nothing.
@@ -649,7 +649,7 @@ def ladderInvoke (calls : List String) (request : RuleRequest Rank) :
   else
     (.failed 9, calls)
 
-def ladderInitial? (limits : Limits := generous) :
+def ladderInitial? (limits : Hex.Interval.State.Limits := generous) :
     Option (RunResult Rank (List String)) := do
   let program : Program :=
     { operations := ladderOperations, nodes := #[sourceNode, unaryNode 0] }
@@ -658,7 +658,7 @@ def ladderInitial? (limits : Limits := generous) :
   let state <- start? program rules #[4, 0] limits
   pure (drive ladderInvoke 8 state [])
 
-def ladderAfterFirst? (limits : Limits := generous) :
+def ladderAfterFirst? (limits : Hex.Interval.State.Limits := generous) :
     Option (RunResult Rank (List String)) := do
   let initial <- ladderInitial? limits
   match initial.state.admitInstantiation (suggestion 0) with
@@ -829,20 +829,20 @@ def pairEqualityInvoke (calls : Nat) (_request : RuleRequest PairRank) :
 def pairProgram : Program :=
   { operations, nodes := #[sourceNode, sourceNode, unaryNode 0] }
 
-def pairInitial? (limits : Limits := generous) : Option (RunResult PairRank Nat) := do
+def pairInitial? (limits : Hex.Interval.State.Limits := generous) : Option (RunResult PairRank Nat) := do
   let state <- match Engine.start pairDomain pairProgram #[pairEqualityRule]
       #[pair 4 0, pair 0 5, pair 0 0] limits with
     | .ok state => some state
     | .error _ => none
   pure (drive pairEqualityInvoke 8 state 0)
 
-def pairAdmitted? (limits : Limits := generous) : Option (Engine PairRank) := do
+def pairAdmitted? (limits : Hex.Interval.State.Limits := generous) : Option (Engine PairRank) := do
   let initial <- pairInitial? limits
   match initial.state.admitInstantiation (suggestion 0) with
   | .admitted [] state => some state
   | _ => none
 
-def pairFinal? (limits : Limits := generous) : Option (RunResult PairRank Nat) := do
+def pairFinal? (limits : Hex.Interval.State.Limits := generous) : Option (RunResult PairRank Nat) := do
   let state <- pairAdmitted? limits
   pure (drive pairEqualityInvoke 8 state 1)
 
@@ -979,19 +979,19 @@ def pairReuseAdmitted? : Option (Engine PairRank) := do
             edge.origin.key == pairEqualityKey && edge.origin.node == node 2 &&
               left.node == node 0 && left.previous == { node := node 0, version := 0 } &&
               right.node == node 1 && right.previous == { node := node 1, version := 0 } &&
-              result.state.factAt? left.previous == some (pair 4 0) &&
-              result.state.factAt? right.previous == some (pair 0 5) &&
-              result.state.factAt? { node := left.node, version := left.version } ==
+              result.state.toBranch.factAt? left.previous == some (pair 4 0) &&
+              result.state.toBranch.factAt? right.previous == some (pair 0 5) &&
+              result.state.toBranch.factAt? { node := left.node, version := left.version } ==
                 some (pair 4 5) &&
-              result.state.factAt? { node := right.node, version := right.version } ==
+              result.state.toBranch.factAt? { node := right.node, version := right.version } ==
                 some (pair 4 5) &&
               match left.cause, right.cause with
               | .transport leftEquality leftSource, .transport rightEquality rightSource =>
                   leftEquality == { index := 0 } && rightEquality == { index := 0 } &&
                     leftSource == { node := node 1, version := 0 } &&
                     rightSource == { node := node 0, version := 0 } &&
-                    result.state.factAt? leftSource == some (pair 0 5) &&
-                    result.state.factAt? rightSource == some (pair 4 0)
+                    result.state.toBranch.factAt? leftSource == some (pair 0 5) &&
+                    result.state.toBranch.factAt? rightSource == some (pair 4 0)
               | _, _ => false
         | _, _, _ => false
   | none => false
@@ -1087,14 +1087,14 @@ def alternateEqualityInvoke (calls : List String) (request : RuleRequest Rank) :
   else
     (.failed 12, calls)
 
-def alternateEqualityInitial? (limits : Limits := generous) :
+def alternateEqualityInitial? (limits : Hex.Interval.State.Limits := generous) :
     Option (RunResult Rank (List String)) := do
   let program : Program :=
     { operations := ladderOperations, nodes := #[sourceNode, unaryNode 0] }
   let state <- start? program #[alternateEqualityRule, nextCopyRule] #[4, 4] limits
   pure (drive alternateEqualityInvoke 8 state [])
 
-def alternateEqualityAdmitted? (limits : Limits := generous) :
+def alternateEqualityAdmitted? (limits : Hex.Interval.State.Limits := generous) :
     Option (Engine Rank × List String) := do
   let initial <- alternateEqualityInitial? limits
   match initial.state.admitInstantiation (suggestion 0) with

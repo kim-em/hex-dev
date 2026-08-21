@@ -234,7 +234,7 @@ def packageFor (value : Certificate) : Package Bound :=
 
 def packagesFor (value : Certificate) : Array (Package Bound) := #[packageFor value]
 
-def engineLimitsFor (value : Certificate) : Propagator.Limits :=
+def engineLimitsFor (value : Certificate) : State.Limits :=
   { maxOperations := 1
     maxNodes := 1
     maxRules := 1

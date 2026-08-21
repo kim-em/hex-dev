@@ -308,7 +308,7 @@ def rightRuntime : Propagator.Package Fact :=
           (registration rightRuleKey rightOpKey) rightPlan
           #[rightFormat, rightEqualityFormat]] }
 
-def limits : Propagator.Limits :=
+def limits : Hex.Interval.State.Limits :=
   { maxOperations := 3
     maxNodes := 3
     maxRules := 2
@@ -600,7 +600,7 @@ example : (factDomain.proveMeet program (node 1) .top (.exact 4) (.exact 4)).isS
     true := by
   decide
 
-def event (version value : Nat) : FactEvent Fact :=
+def event (version value : Nat) : Hex.Interval.State.Update Fact (FactCause Fact) :=
   { programVersion := 0
     node := node 1
     previous := { node := node 1, version := version - 1 }

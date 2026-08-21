@@ -29,7 +29,9 @@ this file exercises no rational or endpoint arithmetic.
 The primary measurements are deterministic rule-invocation and improvement
 counts.  A position-sensitive checksum pins the final facts, so a lower count
 cannot be obtained by silently skipping propagation.  Wall-clock timing can be
-layered on this module later without changing the logical workload.
+layered on this module later without changing the logical workload, but current
+timings include the transparent reference engine's whole-state validation and
+queue-history costs rather than measuring dependency discovery alone.
 -/
 
 namespace Hex.Interval.Experiment.Propagator.Bench
@@ -95,7 +97,7 @@ def refineFirstRoot (facts : Array Nat) : Option (Array Nat) := do
 
 def applicationCount (trees depth : Nat) : Nat := trees * depth
 
-def generousLimits (trees depth : Nat) : Limits :=
+def generousLimits (trees depth : Nat) : Hex.Interval.State.Limits :=
   let nodeCount := trees * (depth + 1)
   let applications := applicationCount trees depth
   { maxOperations := operations.size
@@ -176,24 +178,25 @@ def stopOfRun : RunStop -> Stop
   | .contradiction | .engineResource _ | .factResource _ | .invalidReply _ |
       .invalidEngine => .engineFailure
 
-/-- Clear the initial all-rules queue to model an old fixed point, install one
-new source fact, and wake exactly that source's watchers. -/
+/-- Start from a canonical version-zero source refinement, clear the initial
+all-rules queue through checked per-occurrence deactivation to model an old
+fixed point, and wake exactly that source's watchers. -/
 def prepareIncremental (trees depth : Nat) : Option (Engine Nat) := do
   if trees = 0 then none else pure ()
+  let facts <- refineFirstRoot (saturatedFacts trees depth)
   let initial <-
-    match Engine.start factDomain (forestProgram trees depth) rules (saturatedFacts trees depth)
+    match Engine.start factDomain (forestProgram trees depth) rules facts
         (generousLimits trees depth) with
     | .ok state => some state
     | .error _ => none
-  let facts <- refineFirstRoot initial.facts
-  let idle : Engine Nat :=
-    { initial with
-      facts
-      versions := initial.versions.set! firstRoot.index 1
-      queue := #[]
-      queueHead := 0
-      queued := Array.replicate initial.applications.size false
-      metrics := {} }
+  let mut idle := initial
+  for index in [0:initial.applications.size] do
+    let (dependencies, queue) <-
+      (idle.toQueue.deactivate idle.limits.maxQueueEntries idle.program.nodes.size
+        idle.applications.size idle.equalities.size idle.toDependencies
+          (.application { index })).toOption
+    idle := { idle with toDependencies := dependencies, toQueue := queue }
+  idle := { idle with metrics := {} }
   match idle.wakeNode firstRoot with
   | .ok ready => some ready
   | .error _ => none
@@ -326,7 +329,7 @@ def canary : Comparison := compare 4 8
 /-- Suggested logical-count corpus.  Increasing the disconnected-tree count
 leaves incremental work fixed at `depth`, while structural work grows as
 `2 * trees * depth`. -/
-def corpus : Array (Nat × Nat × Comparison) :=
+def corpus (_ : Unit) : Array (Nat × Nat × Comparison) :=
   #[(1, 64, compare 1 64),
     (8, 64, compare 8 64),
     (64, 64, compare 64 64),

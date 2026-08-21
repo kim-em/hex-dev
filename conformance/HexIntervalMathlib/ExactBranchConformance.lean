@@ -448,7 +448,7 @@ private def proofPackage : ProofRegistry.Package semantics Name :=
 private def proofPackages : Array (ProofRegistry.Package semantics Name) :=
   #[proofPackage]
 
-private def limits : Propagator.Limits :=
+private def limits : Hex.Interval.State.Limits :=
   { maxOperations := 8
     maxNodes := 8
     maxRules := 8

@@ -150,7 +150,7 @@ def integrationPackage : Package Bound :=
 
 def packages : Array (Package Bound) := #[integrationPackage]
 
-def engineLimits : Propagator.Limits :=
+def engineLimits : Hex.Interval.State.Limits :=
   { maxOperations := 1
     maxNodes := 1
     maxRules := 1

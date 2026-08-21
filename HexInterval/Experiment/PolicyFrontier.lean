@@ -147,7 +147,7 @@ def rankDomain : FactDomain Rank where
   narrow _ current candidate :=
     if current < candidate then .improved candidate else .noChange
 
-def engineLimits (workload : Workload) : Experiment.Propagator.Limits :=
+def engineLimits (workload : Workload) : Hex.Interval.State.Limits :=
   let arity := Nat.max workload.roots (sinkArity workload)
   let applications := applicationCount workload
   { maxOperations := 3
@@ -632,7 +632,7 @@ structure Index where
   suggestionCursor : Nat
   deriving Repr
 
-def offerIdOfWork : WorkItem -> OfferId
+def offerIdOfWork : Hex.Interval.State.Work -> OfferId
   | .application application => .application application
   | .equality equality => .equality equality
 

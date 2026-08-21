@@ -33,9 +33,9 @@ open Propagator PayloadArena SemanticReplay ChronologicalReplay
 structure Trace (Fact : Type) where
   programVersion : Nat
   program : Program
-  facts : Array (FactEvent Fact)
+  facts : Array (Hex.Interval.State.Update Fact (FactCause Fact))
   instances : Array InstanceEvent
-  chronology : Array HistoryEvent
+  chronology : Array Hex.Interval.Trace.Ref
   equalities : Array EqualityEdge
   arena : Arena
 
@@ -162,7 +162,7 @@ def replayEvent {Fact : Type} {semantics : Semantics Fact}
     (registry : SemanticReplay.Registry semantics)
     (domain : FactDomainSchema semantics) (laws : Laws semantics)
     (buildInstance : InstanceBuilder semantics) (trace : Trace Fact)
-    (checked : State semantics input base) (entry : HistoryEvent) :
+    (checked : State semantics input base) (entry : Hex.Interval.Trace.Ref) :
     Option (State semantics input base) := do
   match entry with
   | .fact index =>
@@ -211,7 +211,7 @@ def replayEvents {Fact : Type} {semantics : Semantics Fact}
     (registry : SemanticReplay.Registry semantics)
     (domain : FactDomainSchema semantics) (laws : Laws semantics)
     (buildInstance : InstanceBuilder semantics) (trace : Trace Fact) :
-    List HistoryEvent -> State semantics input base ->
+    List Hex.Interval.Trace.Ref -> State semantics input base ->
       Option (State semantics input base)
   | [], checked => some checked
   | entry :: entries, checked => do

@@ -117,7 +117,7 @@ def batchPackage : Package Bound :=
 def packages : Array (Package Bound) := #[sourcePackage, batchPackage]
 
 /-- Explicit global and per-action resource envelope for the local profile. -/
-def engineLimits : Propagator.Limits :=
+def engineLimits : State.Limits :=
   { maxOperations := 2
     maxNodes := 14000
     maxRules := 700

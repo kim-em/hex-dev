@@ -338,7 +338,7 @@ def sinContractRule : Registration :=
     writes := []
     binding := .scoped }
 
-def engineLimits : Experiment.Propagator.Limits :=
+def engineLimits : Hex.Interval.State.Limits :=
   { maxOperations := 4
     maxNodes := 8
     maxRules := 4
@@ -448,7 +448,7 @@ def fingerprint (state : Engine Rank) : Fingerprint :=
     suggestions := state.suggestions.size
     pending := state.pending.isSome }
 
-def refusedUnchanged (resource : Resource) (limits : Experiment.Propagator.Limits) : Bool :=
+def refusedUnchanged (resource : Hex.Interval.State.Resource) (limits : Hex.Interval.State.Limits) : Bool :=
   match retained? with
   | none => false
   | some state =>
