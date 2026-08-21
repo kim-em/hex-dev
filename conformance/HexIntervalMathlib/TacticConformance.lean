@@ -17,6 +17,15 @@ equality, conjunction, transactional rejection, and the diagnostic surface.
 
 namespace Hex.IntervalMathlib.TacticConformance
 
+set_option linter.unusedTactic false in
+example : True := by
+  run_tac do
+    let rendered := Hex.Interval.Tactic.describeSelectedCuts
+      (.bounds (.finite (.ofInt 2) false) (.finite (.ofInt 4) false))
+    unless rendered == "selected cuts: 2 ≤ e and e ≤ 4" do
+      throwError "selected-cut diagnostic changed: {rendered}"
+  trivial
+
 example {x : ℝ} (lower : 1 ≤ x) (upper : x ≤ 2) : 2 ≤ x + x := by
   interval
 
@@ -150,6 +159,24 @@ example {x : ℝ} (lower : 1 ≤ x) (upper : x ≤ 2) : True := by
     | some message =>
         unless message == "interval: derived endpoint does not prove the requested target" do
           throwError "incompatible target produced the wrong diagnostic: {message}"
+  trivial
+
+set_option linter.unusedTactic false in
+set_option linter.unusedVariables false in
+example {x : ℝ} (source : x = 2) : True := by
+  run_tac do
+    let x ← Lean.Meta.getFVarFromUserName `x
+    let one ← Lean.Elab.Tactic.elabTerm (← `(term| (1 : ℝ))) (some (Lean.mkConst ``Real))
+    let target ← Lean.Meta.mkAppM ``Eq #[x, one]
+    let failure ← try
+      let _ ← Hex.Interval.Tactic.proveTarget Hex.Interval.Tactic.defaultConfig target
+      pure none
+    catch error => pure (some (← error.toMessageData.toString))
+    match failure with
+    | none => throwError "false equality target was accepted"
+    | some message =>
+        unless message == "interval: derived endpoint does not prove the requested target" do
+          throwError "false equality produced the wrong diagnostic: {message}"
   trivial
 
 theorem ordinary {x : ℝ} (lower : 1 ≤ x) (upper : x ≤ 2) :

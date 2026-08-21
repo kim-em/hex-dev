@@ -765,7 +765,11 @@ invoke contractors, select named hypotheses, accept configuration syntax, or
 emit a recipe chosen by arbitrary-function search. `interval?` therefore
 reports the fixed forward caps after successful closure and emits no result on
 failure, while `interval_bound` elaborates and derives transactionally, reports
-one global forward enclosure, and leaves the goal unchanged.
+one global forward enclosure with concrete selected lower/upper cuts, and
+leaves the goal unchanged. Each computed arithmetic layer also inserts an
+internal regularization layer. Thus the reported/default term-depth cap `32`
+admits about 16 nested arithmetic operations along one expression spine; it is
+not a 32-operation nesting promise.
 
 The following is the target interface once the search-to-proof recipe bridge
 and remaining package integrations are supported:

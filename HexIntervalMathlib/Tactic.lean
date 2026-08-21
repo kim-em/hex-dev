@@ -27,6 +27,9 @@ the configured constant, natural power, precision, reciprocal, and division.
 Every computed arithmetic row is followed by the package's authenticated
 outward regularization row. The bare tactic uses precision `16`, hence the
 dyadic grid `2⁻¹⁶`; programmatic callers may supply another admitted precision.
+Automatic regularization contributes a second `Frontend.Term` layer for every
+computed arithmetic layer, so the default term-depth cap `32` admits roughly
+16 nested arithmetic operations along one expression spine.
 Caller cuts use integer endpoints. Unsupported syntax and every resource
 refusal fail transactionally.
 -/
@@ -251,21 +254,6 @@ theorem upperOfEqLeft {actual x : ℝ} (equality : actual = x) : x ≤ actual :=
 
 namespace Quote
 
-variable {Fact : Type}
-
-meta def listExpr (type : Expr) (items : List Expr) : Expr :=
-  items.foldr
-    (fun item tail => mkApp3 (mkConst ``List.cons [Level.zero]) type item tail)
-    (mkApp (mkConst ``List.nil [Level.zero]) type)
-
-meta def arrayExpr (type : Expr) (items : List Expr) : MetaM Expr :=
-  mkAppM ``Array.mk #[listExpr type items]
-
-meta def natOptionExpr : Option Nat → Expr
-  | none => mkApp (mkConst ``Option.none [Level.zero]) (mkConst ``Nat)
-  | some value => mkApp2 (mkConst ``Option.some [Level.zero])
-      (mkConst ``Nat) (mkNatLit value)
-
 meta def dyadicExpr (value : Dyadic) : MetaM Expr := do
   let rational := value.toRat
   let base ← mkAppM ``Dyadic.ofInt #[mkIntLit rational.num]
@@ -297,96 +285,6 @@ meta def precisionLimitsExpr (limits : Arithmetic.PrecisionLimits) : MetaM Expr 
     #[← endpointExpr limits.endpoint, mkNatLit limits.maxPrecisionMagnitude,
       mkNatLit limits.maxPrecisionBits, mkNatLit limits.maxTemporaryBits]
 
-meta def domainExpr (domain : DomainId) : MetaM Expr :=
-  mkAppM ``DomainId.mk #[mkNatLit domain.index]
-
-meta def nodeIdExpr (node : NodeId) : MetaM Expr :=
-  mkAppM ``NodeId.mk #[mkNatLit node.index]
-
-meta def opIdExpr (operation : OpId) : MetaM Expr :=
-  mkAppM ``OpId.mk #[mkNatLit operation.index]
-
-meta def opKeyExpr (key : OpKey) : MetaM Expr :=
-  mkAppM ``OpKey.mk #[toExpr key.name, mkNatLit key.version]
-
-meta def operationExpr (operation : Operation) : MetaM Expr := do
-  mkAppM ``Operation.mk
-    #[← opKeyExpr operation.key,
-      listExpr (mkConst ``DomainId) (← operation.inputs.mapM domainExpr),
-      ← domainExpr operation.output]
-
-meta def nodeExpr (node : Node) : MetaM Expr := do
-  mkAppM ``Node.mk
-    #[← domainExpr node.domain, ← opIdExpr node.op,
-      listExpr (mkConst ``NodeId) (← node.args.mapM nodeIdExpr)]
-
-meta def programExpr (program : Program) : MetaM Expr := do
-  mkAppM ``Program.mk
-    #[← arrayExpr (mkConst ``Operation) (← program.operations.toList.mapM operationExpr),
-      ← arrayExpr (mkConst ``Node) (← program.nodes.toList.mapM nodeExpr)]
-
-meta def scopeExpr (scope : Policy.ScopeId) : MetaM Expr :=
-  mkAppM ``Policy.ScopeId.mk #[mkNatLit scope.index]
-
-meta def seenExpr (seen : SeenVersion) : MetaM Expr := do
-  mkAppM ``SeenVersion.mk #[← nodeIdExpr seen.node, mkNatLit seen.version]
-
-meta def ruleKeyExpr (key : RuleKey) : MetaM Expr :=
-  mkAppM ``RuleKey.mk #[toExpr key.name, mkNatLit key.schema]
-
-meta def ruleIdExpr (rule : RuleId) : MetaM Expr :=
-  mkAppM ``RuleId.mk #[mkNatLit rule.index]
-
-meta def applicationExpr (application : ApplicationId) : MetaM Expr :=
-  mkAppM ``ApplicationId.mk #[mkNatLit application.index]
-
-meta def equalityExpr (equality : EqualityId) : MetaM Expr :=
-  mkAppM ``EqualityId.mk #[mkNatLit equality.index]
-
-meta def structuralKeyExpr : StructuralKey → MetaM Expr
-  | .node node => do mkAppM ``StructuralKey.node #[← nodeIdExpr node]
-  | .equality equality => do
-      mkAppM ``StructuralKey.equality #[← equalityExpr equality]
-  | .application application => do
-      mkAppM ``StructuralKey.application #[← applicationExpr application]
-
-meta def structuralInputExpr (input : StructuralInput) : MetaM Expr := do
-  mkAppM ``StructuralInput.mk
-    #[← structuralKeyExpr input.key, mkNatLit input.generation]
-
-meta def actionKindExpr : ActionKind → Expr
-  | .forward => mkConst ``ActionKind.forward
-  | .backward => mkConst ``ActionKind.backward
-  | .improve => mkConst ``ActionKind.improve
-  | .shave => mkConst ``ActionKind.shave
-  | .instantiate => mkConst ``ActionKind.instantiate
-  | .rewrite => mkConst ``ActionKind.rewrite
-  | .regularize => mkConst ``ActionKind.regularize
-  | .split => mkConst ``ActionKind.split
-
-meta def actionExpr (action : Action) : MetaM Expr := do
-  mkAppM ``Action.mk
-    #[mkNatLit action.serial, mkNatLit action.programVersion,
-      ← applicationExpr action.application, ← ruleIdExpr action.rule,
-      ← ruleKeyExpr action.key, ← nodeIdExpr action.node,
-      actionKindExpr action.kind, mkNatLit action.effort,
-      mkNatLit action.generation,
-      listExpr (mkConst ``SeenVersion) (← action.inputs.mapM seenExpr),
-      listExpr (mkConst ``NodeId) (← action.writes.mapM nodeIdExpr),
-      listExpr (mkConst ``StructuralInput)
-        (← action.structuralInputs.mapM structuralInputExpr),
-      natOptionExpr action.matcherEpoch]
-
-meta def roleExpr : Proof.Role → Expr
-  | .fact => mkConst ``Proof.Role.fact
-  | .equality => mkConst ``Proof.Role.equality
-  | .instance => mkConst ``Proof.Role.instance
-  | .refute => mkConst ``Proof.Role.refute
-
-meta def keyExpr (key : Proof.Key) : MetaM Expr := do
-  mkAppM ``Proof.Key.mk
-    #[← ruleKeyExpr key.rule, roleExpr key.role, mkNatLit key.bodySchema]
-
 meta def trueProof : MetaM Expr :=
   mkAppM ``Eq.refl #[mkConst ``Bool.true]
 
@@ -404,70 +302,6 @@ meta def intervalExpr (limit : EndpointLimit) (interval : Hex.Interval) : MetaM 
       pure encoded
   | .resourceLimit _ =>
       throwError "interval quotation exceeded the endpoint envelope"
-
-meta def nodeFactExpr (factExpr : Fact → MetaM Expr) (fact : Proof.NodeFact Fact) :
-    MetaM Expr := do
-  mkAppM ``Proof.NodeFact.mk #[← nodeIdExpr fact.node, ← factExpr fact.fact]
-
-meta def inputExpr (factType : Expr) (factExpr : Fact → MetaM Expr)
-    (input : Proof.Input Fact) : MetaM Expr := do
-  mkAppM ``Proof.Input.mk
-    #[← scopeExpr input.scope, ← programExpr input.program,
-      ← arrayExpr factType (← input.facts.toList.mapM factExpr),
-      ← nodeFactExpr factExpr input.target]
-
-meta def factStepExpr (_factType : Expr) (factExpr : Fact → MetaM Expr)
-    (step : Proof.FactStep Fact) : MetaM Expr := do
-  mkAppM ``Proof.FactStep.mk
-    #[← scopeExpr step.scope, mkNatLit step.programVersion,
-      ← actionExpr step.action, ← nodeIdExpr step.node,
-      ← seenExpr step.previous, mkNatLit step.version,
-      ← factExpr step.proposed, ← factExpr step.installed,
-      listExpr (mkConst ``SeenVersion) (← step.assumptions.mapM seenExpr),
-      ← keyExpr step.schema,
-      listExpr (mkConst ``Nat) (step.body.map mkNatLit)]
-
-meta def equalityStepExpr (step : Proof.EqualityStep) : MetaM Expr := do
-  mkAppM ``Proof.EqualityStep.mk
-    #[← scopeExpr step.scope, mkNatLit step.programVersion,
-      ← actionExpr step.action, ← equalityExpr step.equality,
-      ← nodeIdExpr step.left, ← nodeIdExpr step.right,
-      listExpr (mkConst ``SeenVersion) (← step.assumptions.mapM seenExpr),
-      ← keyExpr step.schema,
-      listExpr (mkConst ``Nat) (step.body.map mkNatLit)]
-
-meta def transportStepExpr (factExpr : Fact → MetaM Expr)
-    (step : Proof.TransportStep Fact) : MetaM Expr := do
-  mkAppM ``Proof.TransportStep.mk
-    #[← scopeExpr step.scope, mkNatLit step.programVersion,
-      ← nodeIdExpr step.node, ← seenExpr step.previous,
-      mkNatLit step.version, ← equalityExpr step.equality,
-      ← seenExpr step.source, ← factExpr step.installed]
-
-meta def instanceStepExpr (step : Proof.InstanceStep) : MetaM Expr := do
-  mkAppM ``Proof.InstanceStep.mk
-    #[← scopeExpr step.scope, mkNatLit step.beforeVersion,
-      mkNatLit step.afterVersion, ← actionExpr step.action,
-      ← programExpr step.after,
-      listExpr (mkConst ``NodeId) (← step.newNodes.mapM nodeIdExpr),
-      ← keyExpr step.schema,
-      listExpr (mkConst ``Nat) (step.body.map mkNatLit)]
-
-meta def eventExpr (factType : Expr) (factExpr : Fact → MetaM Expr) :
-    Proof.Event Fact → MetaM Expr
-  | .fact step => do
-      mkAppM ``Proof.Event.fact #[← factStepExpr factType factExpr step]
-  | .equality step => do
-      mkAppM ``Proof.Event.equality #[factType, ← equalityStepExpr step]
-  | .transport step => do
-      mkAppM ``Proof.Event.transport #[← transportStepExpr factExpr step]
-  | .instance step => do
-      mkAppM ``Proof.Event.instance #[factType, ← instanceStepExpr step]
-
-meta def eventsExpr (factType : Expr) (factExpr : Fact → MetaM Expr)
-    (events : List (Proof.Event Fact)) : MetaM Expr := do
-  pure <| listExpr (mkApp (mkConst ``Proof.Event [Level.zero]) factType)
-    (← events.mapM (eventExpr factType factExpr))
 
 end Quote
 
@@ -506,7 +340,8 @@ meta def ParseState.record (state : ParseState) (term : Frontend.Term)
   else { state with terms := state.terms.push (term, expression) }
 
 /-- Retain both the exact arithmetic row and the package-configured outward
-regularization row denoting the same real expression. -/
+regularization row denoting the same real expression. Consequently every
+computed arithmetic layer consumes two frontend term-depth levels. -/
 meta def ParseState.computed (state : ParseState) (term : Frontend.Term)
     (expression : Expr) : Frontend.Term × ParseState :=
   let state := state.record term expression
@@ -1099,6 +934,8 @@ meta def closeClaim (config : Frontend.Config) (bound : Bound) (claim : Claim)
         | .finite left false, .finite right false =>
             unless left == right do
               throwError "interval: derived interval is not a singleton"
+            unless left.toRat == (value : Rat) do
+              throwError "interval: derived endpoint does not prove the requested target"
             let equalityRat ← do
               let proposition ← mkAppM ``Eq #[toExpr left.toRat, toExpr (value : Rat)]
               mkDecideProof proposition
@@ -1154,6 +991,23 @@ meta def describeRaw : Raw → String
             toString endpoint.toRat ++ (if strict then ")" else "]")
       left ++ ", " ++ right
 
+meta def describeSelectedCuts : Raw → String
+  | .empty => "no selected cut (empty result)"
+  | .bounds lower upper =>
+      let lowerCut := match lower with
+        | .unbounded => none
+        | .finite endpoint strict =>
+            some <| toString endpoint.toRat ++ (if strict then " < e" else " ≤ e")
+      let upperCut := match upper with
+        | .unbounded => none
+        | .finite endpoint strict =>
+            some <| (if strict then "e < " else "e ≤ ") ++ toString endpoint.toRat
+      match lowerCut, upperCut with
+      | some left, some right => "selected cuts: " ++ left ++ " and " ++ right
+      | some left, none => "selected lower cut: " ++ left
+      | none, some right => "selected upper cut: " ++ right
+      | none, none => "no finite selected cut"
+
 @[tactic intervalTac] meta def evalInterval : Lean.Elab.Tactic.Tactic := fun stx => do
   match stx with
   | `(tactic| interval) =>
@@ -1173,7 +1027,7 @@ meta def describeRaw : Raw → String
   match stx with
   | `(tactic| interval?) =>
       evalInterval (← `(tactic| interval))
-      logInfo m!"interval? using nodes={defaultConfig.reify.maxNodes}, depth={defaultConfig.reify.maxDepth}, chronology={defaultConfig.proof.maxChronology}, precision={defaultConfig.rule.precision}"
+      logInfo m!"interval? using nodes={defaultConfig.reify.maxNodes}, term-depth={defaultConfig.reify.maxDepth} (about {defaultConfig.reify.maxDepth / 2} arithmetic levels after automatic regularization), chronology={defaultConfig.proof.maxChronology}, precision={defaultConfig.rule.precision}"
   | _ => throwUnsupportedSyntax
 
 @[tactic intervalBoundTac] meta def evalIntervalBound : Lean.Elab.Tactic.Tactic := fun stx => do
@@ -1184,7 +1038,7 @@ meta def describeRaw : Raw → String
         let report ← withoutModifyingState do
           let value ← Lean.Elab.Term.elabTerm expression (some (mkConst ``Real))
           let bound ← deriveBound defaultConfig value
-          pure m!"interval_bound: {describeRaw bound.interval.view}; proved by a {bound.reified.program.nodes.size}-node recipe with {bound.events.length} replay events; use `have : _ := by interval` to materialize a selected cut"
+          pure m!"interval_bound: {describeRaw bound.interval.view}; {describeSelectedCuts bound.interval.view}, where e = {expression}; proved by a {bound.reified.program.nodes.size}-node recipe with {bound.events.length} replay events"
         logInfo report
   | _ => throwUnsupportedSyntax
 

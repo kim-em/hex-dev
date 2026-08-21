@@ -93,7 +93,10 @@ forward tactic client below parses its bounded Lean-expression and integer-cut
 subset, authenticates the exact flat runtime chronology as untrusted data, and
 independently synthesizes caller proofs. Its fixed public-tactic precision `16`
 uses the dyadic grid `2⁻¹⁶`; programmatic clients may choose another precision
-within the explicit envelope. Generic search-selected recipes, broader local-context parsing, and
+within the explicit envelope. Because each computed arithmetic layer is
+followed by an internal regularization layer, its term-depth cap `32` admits
+about 16 nested arithmetic operations along one expression spine. Generic
+search-selected recipes, broader local-context parsing, and
 split replay remain experimental. The first
 concrete supported registry is the Mathlib arithmetic package for one
 configured constant and natural exponent plus public negation, addition,

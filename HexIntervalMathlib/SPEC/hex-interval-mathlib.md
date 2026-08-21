@@ -81,7 +81,7 @@ strict or non-strict lower and upper goals, closed-singleton equality, and
 conjunctions. `interval?` reports the fixed forward configuration only after
 the same transaction succeeds; failure emits no misleading query result.
 `interval_bound e` elaborates and derives inside `withoutModifyingState`, then
-reports the proved cut and recipe size. Programmatic
+reports concrete selected lower/upper cuts and the recipe size. Programmatic
 `Tactic.deriveBound` exposes the exact authenticated forward bundle.
 
 This first vertical deliberately accepts only integer source and target cuts,
@@ -91,7 +91,10 @@ reciprocal, and division. It appends configured outward regularization after
 each computed arithmetic row, and fails transactionally on precision-resource
 refusal. Its fixed public-tactic precision is `16`, the dyadic grid `2⁻¹⁶`;
 programmatic `deriveBound` may instead receive another precision admitted by
-the explicit resource envelope. Noninteger hypotheses are not authenticated
+the explicit resource envelope. Automatic regularization adds one internal
+`Term` layer after every computed arithmetic layer, so the reported/default
+term-depth cap `32` permits about 16 nested arithmetic operations on a source
+spine. Noninteger hypotheses are not authenticated
 as integer cuts. It has no subdivision, contractors, arbitrary-function discovery, named-
 hypothesis selection, or search-selected recipe emitter. All parse, resource,
 replay, and emission failures leave the tactic state unchanged.
