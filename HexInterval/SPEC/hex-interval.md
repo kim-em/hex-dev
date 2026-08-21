@@ -3113,15 +3113,17 @@ without repeating whole-program validation. The returned runtime value has no
 theorem authority.
 
 The supported Mathlib-free `HexInterval/Search.lean` layer owns the next
-generic boundary. Its sealed `Search.Session` binds one exact checked
-`State.Branch`, registration snapshot, scope, serial, complete policy view,
+generic boundary. Under ordinary/public imports, its sealed `Search.Session`
+binds one exact checked `State.Branch`, registration snapshot, scope, serial,
+complete policy view,
 controller-owned offer-to-`Action` bindings, bounded diagnostic log, and
 the cumulative accepted-step count for that run. `Session.startWithin` is the
-only reset point and creates a new run; no decoded record constructor or record
-update can install fresh counters into a live session. Session-only accounting
-does not require frontier capacity, so `maxFrontier = 0` does not reject a
-non-branching session. Before any semantic scan or package measurement, session
-authentication uses `Policy.maxOffers` to cap the retained offer array before
+only reset point and creates a new run; no public-import client can use its
+record constructor or update to install fresh counters into a live session.
+Session-only accounting does not require frontier capacity, so
+`maxFrontier = 0` does not reject a non-branching session. Before any semantic
+scan or package measurement, session authentication uses `Policy.maxOffers` to
+cap the retained offer array before
 mapping or traversing it. It separately caps the base and current program,
 history and aligned branch arrays, registry, binding/application/equality
 arrays, every
@@ -3160,20 +3162,23 @@ update. Callback failure has an exact conservative stop, and diagnostic
 truncation can change only the log, not facts, versions, provenance, scope, or
 contradiction state.
 
-`Search.Frontier` is a public ordering value, but live tree authority is the
-sealed `Search.FrontierState`, which inseparably owns the pending frontier and
-its cumulative step, split, retained-leaf, scope, and next-scope accounting.
+`Search.Frontier` is a public ordering value, but ordinary-import live tree
+authority is the sealed `Search.FrontierState`, which owns the pending frontier
+and its cumulative step, split, retained-leaf, scope, and next-scope accounting.
 The raw `Accounting` constructor and advance operations are private. Checked
 composite start, settle-head, and split-head transitions consume and return the
 whole sealed value, so a fresh counter cannot be transplanted onto an existing
 frontier and a phantom frontier cannot advance live counters. Reusing an old
 pure value may produce an alternative bounded successor; it cannot create a
-successor which bypasses that value's own limits. A separate start creates a
-documented new run rather than resetting an existing one.
+successor which bypasses the limits supplied to that checked transition/run
+handle. Limits are not stored in the value and may be tightened by a later
+transition. A separate start creates a documented new run rather than resetting
+an existing one.
 
-The supported parent/depth/scope/branch contract adds a second sealed type,
-`Search.LeafFrontier Fact Cause Payload`. Its private constructor and private
-inner `FrontierState (Leaf ...)` prevent callers from feeding a generically
+The supported parent/depth/scope/branch contract adds a second
+ordinary-import-sealed type, `Search.LeafFrontier Fact Cause Payload`. Its
+private constructor and private inner `FrontierState (Leaf ...)` prevent callers
+from feeding a generically
 scheduled leaf-shaped frontier back into `Search.splitWithin`. Read-only head,
 pending, raw-frontier, and accounting projections support inspection. Only
 `startFrontierWithin`, `settleWithin`, and the specialized `splitWithin` return
@@ -3181,12 +3186,21 @@ another `LeafFrontier`, and the latter checks exact parent restoration, child
 depth, fresh scopes, branch validity, and retained-scope uniqueness before the
 new wrapper becomes available. Thus the generic composite remains usable by a
 different sealed controller such as `BranchTree`, but it is not authority for
-the stronger leaf protocol.
+the stronger leaf protocol for public-import clients.
 
-The experimental `BranchTree.State` is likewise sealed and contains one
-`FrontierState TreeId`; callers cannot independently replace its nodes,
-frontier, branch manager, or counters. Its checked transitions derive the exact
-head internally. The generic composite split authenticates only cumulative
+This visibility is not a claim against Lean's deliberate `import all
+HexInterval.Search`. That form exposes private implementation names to trusted
+source and is an explicit trusted-internals escape hatch, not decoded runtime
+data or proof authority. Arbitrary trusted Lean source can already use `unsafe`
+or introduce axioms, so it lies outside the fail-closed callback/data threat
+model. The repository DAG check rejects `import all HexInterval.Search` outside
+an exact reviewed owning/internal allowlist (currently empty); downstream code
+which deliberately chooses `import all` accepts that trusted-source boundary.
+
+Under ordinary imports, experimental `BranchTree.State` is likewise sealed and
+contains one `FrontierState TreeId`; callers cannot independently replace its
+nodes, frontier, branch manager, or counters. Its checked transitions derive
+the exact head internally. The generic composite split authenticates only cumulative
 resources and stable scheduling for at most two package-validated children;
 the enclosing sealed `BranchTree` checks child construction and semantics.
 The supported `Search.splitWithin` specialization additionally preflights

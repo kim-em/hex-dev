@@ -28,6 +28,13 @@ result nor a runtime contradiction is theorem evidence.
 
 Concrete callbacks, offer generation, package assembly, policy algorithms,
 storage choices, split semantics, and proof replay remain outside this module.
+
+Here and below, "sealed" means sealed at the ordinary/public import boundary.
+Lean's deliberate `import all HexInterval.Search` escape hatch exposes private
+implementation names to trusted source. Such source is already outside the
+decoded-runtime threat model (and can use `unsafe` or introduce axioms); a
+repository static check rejects accidental uses outside an exact reviewed
+allowlist.
 -/
 
 namespace Hex.Interval.Search
@@ -118,8 +125,8 @@ def schedule (order : Order) (rest : Frontier α) (fresh : List α) : Frontier �
 
 end Frontier
 
-/-- A sealed pending frontier and the cumulative accounting that governs it.
-The private constructor prevents a fresh counter from being transplanted onto
+/-- An ordinary-import-sealed pending frontier and its cumulative accounting.
+The private constructor prevents public-import clients from transplanting a fresh counter onto
 an existing frontier, or an independently edited frontier from being paired
 with live counters. -/
 structure FrontierState (α : Type) where
@@ -208,8 +215,8 @@ private def frontierCountWithin (limits : Limits) (frontier : Frontier α) :
 
 namespace FrontierState
 
-/-- Start a sealed singleton frontier. This is the only reset point; consumers
-must keep the returned composite inside their own sealed live state. -/
+/-- Start an ordinary-import-sealed singleton frontier. This is the only public
+reset point; consumers keep the composite inside their own sealed live state. -/
 opaque startWithin (limits : Limits) (scope : Policy.ScopeId) (root : α) :
     Except Error (FrontierState α) := do
   if limits.maxFrontier < 1 then throw (.resource .frontier)
@@ -240,8 +247,8 @@ opaque splitHeadWithin (limits : Limits) (order : Order) (state : FrontierState 
 
 end FrontierState
 
-/-- A sealed live search session. `startWithin` is the documented reset point
-for a new run; subsequent transitions preserve its cumulative step count. -/
+/-- An ordinary-import-sealed live search session. `startWithin` is the public
+reset point for a new run; later transitions preserve its cumulative steps. -/
 structure Session (Fact Cause OfferId SemanticKey : Type) where
   private mk ::
   branch : State.Branch Fact Cause
@@ -695,8 +702,8 @@ structure Leaf (Fact Cause Payload : Type) where
   payload : Payload
   deriving DecidableEq
 
-/-- A sealed leaf frontier. Its inner generic frontier is readable for
-inspection, but only the specialized checked transitions can construct another
+/-- An ordinary-import-sealed leaf frontier. Read-only projections expose its
+contents, but only specialized checked public transitions construct another
 `LeafFrontier`; generic scheduling therefore cannot bypass leaf invariants. -/
 structure LeafFrontier (Fact Cause Payload : Type) where
   private mk ::

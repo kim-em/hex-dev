@@ -91,8 +91,9 @@ inductive Node (Fact PolicyState : Type) : Type 1
       (run : TargetRun.Result Fact PolicyState)
       (children : BranchStart.Children Fact) (left right : TreeId)
 
-/-- Monotone retained state for one tree.  `leaves` counts current leaves, so
-an accepted binary split increases it by exactly one. -/
+/-- Ordinary-import-sealed monotone retained state for one tree. `leaves`
+counts current leaves, so an accepted binary split increases it by one. A
+deliberate `import all` is trusted implementation access, not decoded data. -/
 structure State (Fact PolicyState : Type) : Type 1 where
   private mk ::
   nodes : Array (Node Fact PolicyState)

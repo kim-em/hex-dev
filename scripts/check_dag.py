@@ -23,6 +23,17 @@ LEAN_EXE_ROOT_RE = re.compile(r"^\s*root\s*:=\s*`([A-Za-z0-9_.]+)\s*$")
 LEAN_GLOB_MODULE_RE = re.compile(r"`([A-Z][A-Za-z0-9_.]+)")
 LEAN_LIB_RE = re.compile(r"^lean_lib\s+([A-Za-z0-9_]+)\b")
 QUALIFIED_IMPORT_RE = re.compile(r"^\s*(?:public\s+|private\s+)?import\s+([A-Za-z0-9_.]+)\s*$")
+IMPORT_ALL_RE = re.compile(
+    r"^\s*(?:(?:public|private|meta)\s+)*import\s+all\s+([A-Za-z0-9_.]+)\s*$"
+)
+
+# Private constructors in these modules are an ordinary/public-import API
+# boundary. `import all` is a deliberate trusted-internals escape hatch, so
+# every owning exception must be an exact reviewed path rather than a suffix or
+# directory convention. There are currently no required exceptions.
+SEALED_IMPORT_ALL_ALLOWLIST: dict[str, frozenset[Path]] = {
+    "HexInterval.Search": frozenset(),
+}
 
 UMBRELLA_BUILD_TARGETS = {
     "HexLLLBenchSupport",
@@ -231,6 +242,15 @@ def main() -> int:
             continue
         path = root / rel_path
         for line_no, line in enumerate(path.read_text(encoding="utf-8").splitlines(), start=1):
+            import_all = IMPORT_ALL_RE.match(line.split("--", 1)[0].rstrip())
+            if import_all:
+                module = import_all.group(1)
+                allowed = SEALED_IMPORT_ALL_ALLOWLIST.get(module)
+                if allowed is not None and rel_path not in allowed:
+                    errors.append(
+                        f"{rel_path}:{line_no} uses `import all {module}` outside its "
+                        "exact trusted-internals allowlist"
+                    )
             for imported_root in import_roots(line):
                 if imported_root == owner:
                     continue

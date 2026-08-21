@@ -38,11 +38,15 @@ registrations, scoped bindings, actions, immutable package requests, checked
 immutable branch state, dependency/work queues, authoritative chronology, and
 bounded diagnostics. The public policy contract exposes bounded immutable
 offers, exact echoed decisions, and fail-closed revalidation without selecting
-a default policy. The public search contract seals authenticated sessions,
+a default policy. At the ordinary/public import boundary, the search contract
+seals authenticated sessions,
 authenticates selected actions, transactionally checks untrusted callback
 deltas, and supplies bounded stable branch-frontier accounting. Its specialized
 leaf frontier can advance only through the parent/depth/scope/branch-checked
-transition; generic frontier scheduling cannot be installed into it. Concrete
+transition; generic frontier scheduling cannot be installed into it. A
+deliberate `import all HexInterval.Search` is trusted implementation access,
+not decoded-runtime authority, and repository checks reject accidental uses.
+Concrete
 callbacks and proposals, offer generation, policy
 implementations, split semantics, proof replay, and measurement-selected
 storage remain experimental.

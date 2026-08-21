@@ -397,6 +397,26 @@ private def leaf (scope depth payload : Nat)
   let branch <- branch?
   pure { scope := { index := scope }, depth, branch, parent, payload }
 
+private def settledRoot? : Option (Search.Leaf Nat Nat Nat × Search.LeafFrontier Nat Nat Nat) := do
+  let root <- leaf 0 0 0
+  let .ok state := Search.startFrontierWithin stateLimits searchLimits root | none
+  Search.settleWithin searchLimits state |>.toOption
+
+-- Settle consumes and returns the exact head, empties a singleton frontier,
+-- and charges one step in the same sealed leaf frontier.
+#guard settledRoot?.any fun result =>
+  result.1.payload == 0 && result.2.isEmpty && result.2.accounting.steps == 1 &&
+    result.2.accounting.splits == 0
+
+#guard match leaf 0 0 0 with
+  | some root =>
+      match Search.startFrontierWithin stateLimits searchLimits root with
+      | .ok state =>
+          searchError (.resource .steps) <|
+            Search.settleWithin { searchLimits with maxSteps := 0 } state
+      | .error _ => false
+  | none => false
+
 private def nested? (order : Search.Order) :
     Option (Search.LeafFrontier Nat Nat Nat) := do
   let root <- leaf 0 0 0
@@ -484,8 +504,39 @@ private def wrongChildScopeError : Option Search.Error := do
   let root <- leaf 0 0 0
   let .ok state := Search.startFrontierWithin stateLimits searchLimits root | none
   let parent := root.asParent
+  let left <- leaf 3 1 1 (some parent)
+  let right <- leaf 2 1 2 (some parent)
+  match Search.splitWithin stateLimits searchLimits .depthFirst state left right with
+  | .error error => some error
+  | .ok _ => none
+
+private def wrongChildDepthError : Option Search.Error := do
+  let root <- leaf 0 0 0
+  let .ok state := Search.startFrontierWithin stateLimits searchLimits root | none
+  let parent := root.asParent
+  let left <- leaf 1 2 1 (some parent)
+  let right <- leaf 2 1 2 (some parent)
+  match Search.splitWithin stateLimits searchLimits .depthFirst state left right with
+  | .error error => some error
+  | .ok _ => none
+
+private def missingChildParentError : Option Search.Error := do
+  let root <- leaf 0 0 0
+  let .ok state := Search.startFrontierWithin stateLimits searchLimits root | none
+  let parent := root.asParent
+  let left <- leaf 1 1 1
+  let right <- leaf 2 1 2 (some parent)
+  match Search.splitWithin stateLimits searchLimits .depthFirst state left right with
+  | .error error => some error
+  | .ok _ => none
+
+private def malformedChildBranchError : Option Search.Error := do
+  let root <- leaf 0 0 0
+  let .ok state := Search.startFrontierWithin stateLimits searchLimits root | none
+  let parent := root.asParent
   let left <- leaf 1 1 1 (some parent)
-  let right <- leaf 3 1 2 (some parent)
+  let left := { left with branch := { left.branch with versions := #[9, 0] } }
+  let right <- leaf 2 1 2 (some parent)
   match Search.splitWithin stateLimits searchLimits .depthFirst state left right with
   | .error error => some error
   | .ok _ => none
@@ -509,6 +560,9 @@ private def secondSplitError (limits : Search.Limits) : Option Search.Error := d
 #guard malformedParentError == some .invalidSession
 #guard detachedParentError == some .invalidSession
 #guard wrongChildScopeError == some .invalidSession
+#guard wrongChildDepthError == some .invalidSession
+#guard missingChildParentError == some .invalidSession
+#guard malformedChildBranchError == some .invalidSession
 #guard secondSplitError { searchLimits with maxSteps := 1 } == some (.resource .steps)
 #guard secondSplitError { searchLimits with maxSplits := 1 } == some (.resource .splits)
 #guard secondSplitError { searchLimits with maxFrontier := 2 } == some (.resource .frontier)
