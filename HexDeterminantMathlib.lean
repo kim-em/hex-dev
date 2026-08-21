@@ -13,7 +13,8 @@ public section
 /-!
 The `HexDeterminantMathlib` library is the Mathlib bridge for `hex-determinant`.
 It connects the executable Leibniz determinant `Hex.Matrix.det` to Mathlib's
-`Matrix.det` (`det_eq`), together with the permutation-sign transport and the
-four-row / double-row Plücker and Desnanot-Jacobi assembly used by the Bareiss
-correctness proof. This module re-exports the determinant correspondence core.
+`Matrix.det` (`det_eq`), together with the permutation-sign transport, the
+Desnanot-Jacobi bordered-minor identity used by the Bareiss correctness proof,
+and the four-row / double-row Grassmann-Plücker assembly. This module
+re-exports the determinant correspondence core.
 -/

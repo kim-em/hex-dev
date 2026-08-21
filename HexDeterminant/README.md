@@ -95,13 +95,19 @@ theorem det_setRow_setRow_mul_det
         det (setRow M a v) * det (setRow M b u)
 ```
 
-`det_plucker_three_term_consecutive_top` is the three-term Grassmann-Plücker
-relation among maximal minors of a tall matrix, in the specialisation where the
-two larger of the three distinguished rows are the last two rows of the matrix.
-Desnanot-Jacobi itself, and
-the unrestricted three-term relation, are stated in
-[`hex-determinant-mathlib`](https://github.com/leanprover/hex-determinant-mathlib);
-Sylvester's determinant identity is not proved anywhere in the project.
+`det_plucker_three_term_consecutive_top` is a three-term Grassmann-Plücker
+relation, in the specialisation where the two larger of the three distinguished
+rows are the last two rows. It relates the maximal minors of a tall
+`B : Matrix R (k + 2) k` to those of `B` with a column appended: `nDet B p q`
+deletes two rows of `B`, while `mDet B v p` deletes one row of `[B | v]`. Taking
+`v` a standard basis vector recovers the ordinary six-maximal-minor relation
+among `nDet`s.
+
+Desnanot-Jacobi itself, and the unrestricted three-term relation for any
+`p1 < p2 < p3`, are stated in
+[`hex-determinant-mathlib`](https://github.com/leanprover/hex-determinant-mathlib).
+Sylvester's determinant identity, the general `m × m` bordered-minor statement,
+is not proved anywhere in the project.
 
 The identification of this determinant with Mathlib's `Matrix.det`, and the
 correspondence with the executable Bareiss determinant

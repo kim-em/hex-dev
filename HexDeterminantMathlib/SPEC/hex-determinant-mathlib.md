@@ -1,9 +1,10 @@
 # hex-determinant-mathlib (depends on hex-determinant + hex-bareiss + hex-matrix-mathlib + Mathlib)
 
 Mathlib layer for `hex-determinant`: proves that our executable Leibniz
-determinant corresponds to Mathlib's `Matrix.det`, and assembles the
-Desnanot-Jacobi identity and the three-term Grassmann-Plücker relation used by
-the Bareiss correctness proof.
+determinant corresponds to Mathlib's `Matrix.det`, assembles the Desnanot-Jacobi
+identity in the bordered-minor form the Bareiss correctness proof consumes, and
+proves the unrestricted three-term Grassmann-Plücker relation (which nothing in
+the tree consumes yet).
 
 **Determinant correspondence:**
 ```lean
@@ -17,7 +18,11 @@ adjugate identities) transfer to our executable determinant.
 ## Module layout and export chain
 
 Everything lives in the `HexMatrixMathlib` namespace, except `desnanot_jacobi`,
-which is in the root namespace because it is verbatim upstream Mathlib.
+which is in the root namespace because it is upstream Mathlib content. Two
+sub-namespaces sit inside it: `HexMatrixMathlib.PermutationVector` (the
+permutation-sign transport, including `toPerm`, `equivs` and
+`detSign_eq_permSign`) and `HexMatrixMathlib.OrderedFourShift` (the cycle
+helpers for the four-row transport).
 
 | module | contents |
 |---|---|
@@ -30,16 +35,22 @@ The umbrella `HexDeterminantMathlib.lean` imports `Core` only. `DesnanotJacobi`
 reaches it transitively, through `CoreTransport`'s `public import`, so
 `desnanot_jacobi` *is* part of the umbrella's export surface even though no
 module names it in an import list next to `Core`. That chain is load-bearing:
-`DesnanotJacobi` has no other importer, and dropping the `public` from
+`DesnanotJacobi` has no other importer, so dropping the `public` from
 `CoreTransport`'s import of it would silently remove `desnanot_jacobi` from the
-published library.
+umbrella's export surface. The module would still exist and stay directly
+importable as `HexDeterminantMathlib.DesnanotJacobi`, which is exactly what
+makes the regression easy to miss.
 
-`DesnanotJacobi.lean` is a verbatim inline of
+`DesnanotJacobi.lean` was copied verbatim from commit `bbe9ab491bc1` of
 https://github.com/leanprover-community/mathlib4/pull/37716
 ("feat(LinearAlgebra/Matrix/Determinant): Desnanot-Jacobi identity", by Slava
-Naprienko), carrying its own copyright header, and is to be deleted in favour of
-the upstream module once that PR merges. Everything in it except the final
-theorem is `private`.
+Naprienko) and carries its own copyright header. It is no longer verbatim: it
+has since been migrated to the `module` / `public import` system and had two
+`simp` sets repaired across toolchain bumps. It is to be deleted in favour of
+the upstream module once that PR merges, and the upstream branch has itself
+moved on from the pinned commit, so expect to re-check the statement rather
+than assume a drop-in swap. Everything in the file except the final theorem is
+`private`.
 
 ## Desnanot-Jacobi: the four public forms
 
@@ -66,8 +77,11 @@ theorem desnanot_jacobi {R : Type*} [CommRing R] {n : ℕ}
 `desnanot_jacobi_matrixEquiv_reindex` (`CoreTransport`) takes an arbitrary pair
 of `Equiv.Perm`s `row` and `col` and states the same identity for
 `(matrixEquiv M).submatrix row col`. This is the form to use when the two
-distinguished rows and columns are not the endpoints: choose `row` and `col` to
-carry them to `0` and `Fin.last`.
+distinguished rows and columns are not the endpoints. Mind the direction:
+`submatrix` composes, so `row` maps *new* indices to original ones. To
+distinguish original rows `r1` and `r2`, pick `row` with `row 0 = r1` and
+`row (Fin.last (n + 1)) = r2`, equivalently `row.symm` carrying `r1` and `r2`
+to the endpoints.
 
 `desnanot_jacobi_deleteRowCol_endpoints` (`CoreTransport`) is the endpoint case
 restated entirely in Hex terms, with `Hex.Matrix.deleteRowCol` in place of
@@ -167,7 +181,7 @@ consumers of the released library.
 ## Sylvester's determinant identity: absent
 
 The general Sylvester identity is **not** proved anywhere in this project, and
-no existing theorem should be relabelled to suggest otherwise. It states: for
+no existing theorem should be renamed to claim it. It states: for
 `A` square of size `k + m`, let `A₀` be the leading `k × k` principal submatrix
 and let `b i j` for `i j : Fin m` be the bordered minor on rows
 `{0, …, k-1} ∪ {k + i}` and columns `{0, …, k-1} ∪ {k + j}`. Then the `m × m`

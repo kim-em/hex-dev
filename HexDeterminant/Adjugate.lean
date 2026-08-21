@@ -646,9 +646,10 @@ two-row-replaced cofactor-row pairing is the two-by-two difference of the four
 one-row cofactor-row pairings of `u` and `v`.
 
 This is the two-by-two case of Jacobi's identity for minors of the adjugate,
-written with row replacement rather than row deletion. It is *not* Sylvester's
-determinant identity, which is the `k`-fold statement about a matrix of bordered
-minors and is not proved in this project. -/
+written with row replacement rather than row deletion. It is *not* the general
+Sylvester determinant identity, the statement that an `m` by `m` matrix of
+bordered minors has determinant `det A0 ^ (m - 1) * det A`, which is not proved
+in this project. -/
 theorem cofactorRowPairing_setRow_plucker
     {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
     (M : Matrix R (n + 1) (n + 1)) (a b : Fin (n + 1)) (hab : a ≠ b)

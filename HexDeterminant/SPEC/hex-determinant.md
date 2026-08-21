@@ -49,8 +49,9 @@ det M * det M^{1,n+2}_{1,n+2} = det M^1_1 * det M^{n+2}_{n+2}
 ```
 
 Both distinguished rows and both distinguished columns are *deleted*.
-`hex-determinant` does **not** prove this. It is stated only over Mathlib
-matrices, in `hex-determinant-mathlib`.
+`hex-determinant` states no theorem in this deletion form. Deletion-form
+Desnanot-Jacobi exists only over Mathlib matrices, in
+`hex-determinant-mathlib`.
 
 **Jacobi's minor identity for the adjugate**, restricted to `2 × 2` minors. In
 row-replacement rather than row-deletion form: for distinct rows `a`, `b` and
@@ -62,19 +63,27 @@ det M * det (M with rows a, b replaced by u, v)
   - det (M with row a := v) * det (M with row b := u)
 ```
 
-This is what `hex-determinant` proves, as `det_setRow_setRow_mul_det`.
-Substituting standard basis vectors for `u` and `v` turns each one-row
-replacement into a signed one-row/one-column minor and recovers Desnanot-Jacobi
-for an arbitrary row pair and column pair, so the replacement form is at least
-as strong. It is **not** Sylvester's identity.
+This is what `hex-determinant` proves, as `det_setRow_setRow_mul_det`. It is
+equivalent to Desnanot-Jacobi for an arbitrary row pair and column pair, in both
+directions. Forwards, take `u = e_{j1}` and `v = e_{j2}` with `a < b` and
+`j1 < j2`: each one-row replacement becomes a cofactor,
+`det (setRow M a e_j) = cofactorSign a j * det (deleteRowCol M a j)`, and the
+two-row replacement becomes the doubly-deleted minor with sign
+`(-1)^(a + b + j1 + j2)`. That sign is common to all three products, so it
+cancels and leaves Desnanot-Jacobi on rows `{a, b}` and columns `{j1, j2}`.
+Backwards, both sides are bilinear in `(u, v)`, so expanding in the standard
+basis reduces the general case to those basis pairs (the diagonal `j1 = j2`
+terms vanish on both sides). It is **not** the general Sylvester determinant
+identity; via that equivalence it is Sylvester's `2 x 2` case.
 
-**Sylvester's determinant identity** is the `k`-fold generalisation over
-bordered minors, and it is absent from both determinant libraries. Its exact
+**Sylvester's determinant identity** is the general statement that an
+`m x m` matrix of bordered minors has determinant `det A0 ^ (m - 1) * det A`,
+and it is absent from both determinant libraries. Its exact
 statement and proposed home are recorded in
 [hex-determinant-mathlib](https://github.com/leanprover/hex-determinant-mathlib/blob/main/SPEC/hex-determinant-mathlib.md).
-Nothing already in the tree may be relabelled "Sylvester". The Bareiss
-recurrence uses only the case where the bordered-minor matrix is `2 × 2`, and
-that case *is* Desnanot-Jacobi.
+Nothing already in the tree proves it, so nothing already in the tree may be
+renamed to claim it. The Bareiss recurrence uses only the case where the
+bordered-minor matrix is `2 × 2`, and that case *is* Desnanot-Jacobi.
 
 **Grassmann-Plücker relations** are the quadratic relations among the *maximal*
 minors of a rectangular matrix. The three-term relation is the one this library
@@ -119,11 +128,15 @@ before `det_setRow_eq_cofactorRowPairing` rewrites each side into determinants.
 The only hypothesis is `a ≠ b`. The replacement vectors are unconstrained, and
 there is no nondegeneracy or integral-domain assumption: the proof runs through
 `det_mul_cofactor_setRow_eq`, which evaluates a single entry of
-`adjugate (setRow M a u) * (setRow M a u * adjugate M)` two ways using
-`mul_adjugate` and `adjugate_mul`, so the `det M` factor is *produced* rather
-than cancelled. Mathlib's `desnanot_jacobi` reaches the same generality by a
-different route, proving the identity over an integral domain and then
-transferring it along an `MvPolynomial` evaluation from the universal matrix.
+`adjugate (setRow M a u) * (setRow M a u * adjugate M)` two ways. One
+association uses `adjugate_mul_apply`; the other splits the sum over rows with
+`setRow_mul_adjugate_apply_self` and `_ne`, whose off-replacement case is
+`cofactorRowPairing_self` on the diagonal and `cofactorRowPairing_alien_eq_zero`
+off it. The `det M` factor is *produced* by that split rather than cancelled.
+
+Mathlib's `desnanot_jacobi` reaches the same generality by a different route,
+proving the identity over an integral domain and then transferring it along an
+`MvPolynomial` evaluation from the universal matrix.
 
 Three-term Grassmann-Plücker, in `HexDeterminant/Plucker.lean`:
 
@@ -140,8 +153,9 @@ theorem det_plucker_three_term_consecutive_top
 
 This is the *consecutive-top* specialisation: the three distinguished rows are
 `alpha`, `k`, and `k+1` inside `Fin (k + 2)`, so the largest is the last row of
-`B` and the case `q > p3` cannot arise. That restriction is what keeps the proof
-Mathlib-free. The unrestricted three-term relation, for arbitrary
+`B` and the case `q > p3` cannot arise. Removing that case is what makes the
+Mathlib-free proof tractable; it is a proof-effort restriction, not a
+mathematical one. The unrestricted three-term relation, for arbitrary
 `p1 < p2 < p3`, is `det_plucker_three_term` in `hex-determinant-mathlib`; it is
 not restated here.
 

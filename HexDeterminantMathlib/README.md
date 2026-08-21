@@ -57,9 +57,10 @@ The proof-facing API connects the executable determinant to Mathlib:
   `desnanot_jacobi_deleteRowCol_endpoints`, and in the bordered-minor form
   `desnanot_jacobi_borderedMinor` used by the Bareiss correctness proof.
 
-Sylvester's determinant identity, the `k`-fold generalisation over a matrix of
-bordered minors, is **not** proved here; the Bareiss recurrence needs only its
-`2 × 2` case, which is Desnanot-Jacobi.
+Sylvester's determinant identity, the general statement that an `m × m` matrix
+of bordered minors has determinant `det A₀ ^ (m - 1) * det A`, is **not** proved
+here; the Bareiss recurrence needs only its `2 × 2` case, which is
+Desnanot-Jacobi.
 
 # Verification
 

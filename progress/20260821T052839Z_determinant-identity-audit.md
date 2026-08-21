@@ -64,6 +64,44 @@ content, so the SPEC records it and the code was left alone.
 Added `{docstring Hex.Matrix.det_setRow_setRow_mul_det}` to the manual chapter:
 it is a headline public theorem that had no manual coverage.
 
+## Second-opinion round
+
+A Codex review confirmed the mathematics (the basis-vector specialisation and
+its signs, the `det_sylvester` statement and its `m = 0` and `m = 1` cases, the
+Grassmann-Plücker naming, the export chain, and the no-nondegeneracy claim) and
+flagged wording that was too absolute or imprecise. Acted on all of it:
+
+- "It is not Sylvester's identity" contradicted the SPEC's own statement that
+  Desnanot-Jacobi *is* Sylvester's `2 × 2` case. Narrowed to "not the general
+  Sylvester determinant identity" throughout.
+- "would remove `desnanot_jacobi` from the published library" overstated private
+  imports. It would remove it from the umbrella's export surface; the module
+  stays directly importable, which is what makes such a regression easy to miss.
+- The reindexing direction in `desnanot_jacobi_matrixEquiv_reindex` was stated
+  backwards. In `A.submatrix row col`, `row` maps *new* indices to original
+  ones, so you want `row 0 = r1` and `row (Fin.last _) = r2`.
+- `DesnanotJacobi.lean`'s header claimed verbatim-upstream status and said this
+  project "still uses plain `import`". Neither is true: the file was migrated to
+  the module system and had two `simp` sets repaired across toolchain bumps
+  (#8436, plus a style pass), and upstream has moved past `bbe9ab491bc1`. The
+  header and SPEC now say so and warn against assuming a drop-in swap.
+- The proof-mechanism paragraph named `mul_adjugate` and `adjugate_mul` as
+  directly used. The code calls `adjugate_mul_apply` on one association and
+  `setRow_mul_adjugate_apply_self`/`_ne` on the other, resting on
+  `cofactorRowPairing_self` and `cofactorRowPairing_alien_eq_zero`.
+- "That restriction is what keeps the proof Mathlib-free" implied a mathematical
+  dependency. It only removes the `q > p3` case.
+- "maximal minors of a tall matrix" hid that the relation mixes `mDet` of
+  `[B | v]` with `nDet` of `B`. Spelled out in both READMEs and the manual.
+- "`k`-fold Sylvester identity" clashed with the proposed statement's use of `k`
+  for the core size. Now "the general `m × m` bordered-minor statement".
+
+The sign claim was independently checked outside Lean over 200 random integer
+matrices of sizes 3, 4 and 5, across every row pair and column pair: the
+replacement identity at basis vectors, the
+`(-1)^(a + b + j1 + j2)` double-replacement sign, and generalized
+Desnanot-Jacobi all hold with no failures.
+
 ## Current frontier
 
 Documentation for the determinant libraries now matches the declarations. No

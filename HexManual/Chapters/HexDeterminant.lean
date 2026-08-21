@@ -129,11 +129,12 @@ of a square matrix, times the determinant with two rows replaced, to the
 four determinants with one row replaced; it is the `2 × 2` case of
 Jacobi's identity for minors of the adjugate, and substituting standard
 basis vectors recovers Desnanot-Jacobi. The three-term
-Grassmann-Plücker relation is a statement about the maximal minors of a
-*tall* matrix, proved here in the specialisation where the two larger of
-the three distinguished rows are the last two rows. Sylvester's
-determinant identity, the `k`-fold statement about a matrix of bordered
-minors, is not proved in this project.
+Grassmann-Plücker relation instead relates the maximal minors of a
+*tall* matrix `B` to those of `B` with a column appended, proved here in
+the specialisation where the two larger of the three distinguished rows
+are the last two rows. Sylvester's determinant identity, the general
+statement about an `m × m` matrix of bordered minors, is not proved in
+this project.
 
 The triangular-determinant law gives the determinant of an upper- or
 lower-triangular matrix as the product of its diagonal entries.
