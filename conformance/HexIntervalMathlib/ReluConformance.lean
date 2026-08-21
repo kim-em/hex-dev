@@ -776,21 +776,22 @@ example : True := by
       throwError "interval_relu_tree test: pending children produced a proof"
     let some tree := reluTree?
       | throwError "interval_relu_tree test: complete tree failed"
-    let some root := tree.nodes[0]?
+    let snapshot := tree.snapshot
+    let some root := snapshot.nodes[0]?
       | throwError "interval_relu_tree test: root is missing"
     let BranchTree.Node.split source run children left _ := root
       | throwError "interval_relu_tree test: root is not a split"
     let shared :=
-      { tree with
-        nodes := tree.nodes.set! 0
+      { snapshot with
+        nodes := snapshot.nodes.set! 0
           (BranchTree.Node.split source run children left left) }
-    if (← observing? <| BranchProof.emit reluProofLimits reluTreeEmitter shared
+    if (← observing? <| BranchProof.emitSnapshot reluProofLimits reluTreeEmitter shared
         expected).isSome then
       throwError "interval_relu_tree test: a shared sibling produced a proof"
-    let some extra := tree.nodes[1]?
+    let some extra := snapshot.nodes[1]?
       | throwError "interval_relu_tree test: child is missing"
-    let unreachable := { tree with nodes := tree.nodes.push extra }
-    if (← observing? <| BranchProof.emit reluProofLimits reluTreeEmitter unreachable
+    let unreachable := { snapshot with nodes := snapshot.nodes.push extra }
+    if (← observing? <| BranchProof.emitSnapshot reluProofLimits reluTreeEmitter unreachable
         expected).isSome then
       throwError "interval_relu_tree test: an unreachable node produced a proof"
   trivial

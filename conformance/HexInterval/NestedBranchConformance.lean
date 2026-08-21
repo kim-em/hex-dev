@@ -271,32 +271,33 @@ example : True := by
   run_tac
     let some tree := postTree?
       | throwError "interval post-run split mutation: runtime tree failed"
-    let some root := tree.nodes[0]?
+    let snapshot := tree.snapshot
+    let some root := snapshot.nodes[0]?
       | throwError "interval post-run split mutation: root missing"
     let BranchTree.Node.split source result children left right := root
       | throwError "interval post-run split mutation: root is not split"
     let staleChildren := { children with parent := source.input }
     let stale :=
-      { tree with
-        nodes := tree.nodes.set! 0 (.split source result staleChildren left right) }
-    if (← observing? <| BranchProof.emit postProofLimits trueEmitter stale
+      { snapshot with
+        nodes := snapshot.nodes.set! 0 (.split source result staleChildren left right) }
+    if (← observing? <| BranchProof.emitSnapshot postProofLimits trueEmitter stale
         (mkConst ``True)).isSome then
       throwError "interval post-run split mutation: stale parent was accepted"
     let wrongPlan := { children.plan with point := 1 }
     let changedChildren := { children with plan := wrongPlan }
     let changed :=
-      { tree with
-        nodes := tree.nodes.set! 0 (.split source result changedChildren left right) }
-    if (← observing? <| BranchProof.emit postProofLimits trueEmitter changed
+      { snapshot with
+        nodes := snapshot.nodes.set! 0 (.split source result changedChildren left right) }
+    if (← observing? <| BranchProof.emitSnapshot postProofLimits trueEmitter changed
         (mkConst ``True)).isSome then
       throwError "interval post-run split mutation: changed plan was accepted"
     let wrongVersion := { children.plan with version := children.plan.version + 1 }
     let changedVersionChildren := { children with plan := wrongVersion }
     let changedVersion :=
-      { tree with
-        nodes := tree.nodes.set! 0
+      { snapshot with
+        nodes := snapshot.nodes.set! 0
           (.split source result changedVersionChildren left right) }
-    if (← observing? <| BranchProof.emit postProofLimits trueEmitter changedVersion
+    if (← observing? <| BranchProof.emitSnapshot postProofLimits trueEmitter changedVersion
         (mkConst ``True)).isSome then
       throwError "interval post-run split mutation: changed plan version was accepted"
   trivial

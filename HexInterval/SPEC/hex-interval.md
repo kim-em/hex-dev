@@ -3113,10 +3113,14 @@ without repeating whole-program validation. The returned runtime value has no
 theorem authority.
 
 The supported Mathlib-free `HexInterval/Search.lean` layer owns the next
-generic boundary. Its decoded `Search.Session` binds one exact checked
+generic boundary. Its sealed `Search.Session` binds one exact checked
 `State.Branch`, registration snapshot, scope, serial, complete policy view,
 controller-owned offer-to-`Action` bindings, bounded diagnostic log, and
-global accounting. Before any semantic scan or package measurement, session
+the cumulative accepted-step count for that run. `Session.startWithin` is the
+only reset point and creates a new run; no decoded record constructor or record
+update can install fresh counters into a live session. Session-only accounting
+does not require frontier capacity, so `maxFrontier = 0` does not reject a
+non-branching session. Before any semantic scan or package measurement, session
 authentication uses `Policy.maxOffers` to cap the retained offer array before
 mapping or traversing it. It separately caps the base and current program,
 history and aligned branch arrays, registry, binding/application/equality
@@ -3156,21 +3160,30 @@ update. Callback failure has an exact conservative stop, and diagnostic
 truncation can change only the log, not facts, versions, provenance, scope, or
 contradiction state.
 
-`Search.Frontier` and `Search.Accounting` supply stable depth-first and
-breadth-first ordering plus independent step, split, retained-leaf, frontier,
-depth, and scope limits. `Accounting` has a private constructor: decoded callers
-cannot reset its counters or `nextScope`, and supported code can create or
-advance it only through checked singleton-start, settle, and split builders.
-The experimental `BranchTree` consumes those builders rather than constructing
-or updating accounting records. Child records retain an exact immutable parent branch
-for restoration. `splitWithin` consumes the complete bounded pre-split
-frontier, rejects duplicate pending leaves, derives the parent and remaining
-frontier by popping the stable head internally, preflights every retained
-parent/child branch against State limits, and then checks exact parent records;
-a caller cannot supply a detached parent/rest pair or keep a second scheduled
-copy of the split head. `settleWithin` likewise consumes the frontier instead
-of trusting a detached count. The generic layer deliberately does not interpret
-split semantics. Callback execution, measurements, and equality on caller-
+`Search.Frontier` is a public ordering value, but live tree authority is the
+sealed `Search.FrontierState`, which inseparably owns the pending frontier and
+its cumulative step, split, retained-leaf, scope, and next-scope accounting.
+The raw `Accounting` constructor and advance operations are private. Checked
+composite start, settle-head, and split-head transitions consume and return the
+whole sealed value, so a fresh counter cannot be transplanted onto an existing
+frontier and a phantom frontier cannot advance live counters. Reusing an old
+pure value may produce an alternative bounded successor; it cannot create a
+successor which bypasses that value's own limits. A separate start creates a
+documented new run rather than resetting an existing one.
+
+The experimental `BranchTree.State` is likewise sealed and contains one
+`FrontierState TreeId`; callers cannot independently replace its nodes,
+frontier, branch manager, or counters. Its checked transitions derive the exact
+head internally. The generic composite split authenticates only cumulative
+resources and stable scheduling for at most two package-validated children;
+the enclosing sealed `BranchTree` checks child construction and semantics.
+The supported `Search.splitWithin` specialization additionally preflights
+every retained parent/child branch, requires exact immutable parent records,
+fresh scopes and depth, and rejects detached parents. `settleWithin` likewise
+returns and charges the exact head rather than trusting a detached count.
+`BranchTree.snapshot` deliberately exports editable retained nodes/frontier as
+untrusted proof-fold input, but that snapshot carries no live accounting or
+mutation authority. Callback execution, measurements, and equality on caller-
 selected Lean objects remain explicitly non-preemptible: packages must bound
 result construction before returning, after which search preflights returned
 counts, retained bytes, and declared work.
@@ -5177,11 +5190,11 @@ their declared cost inside a scheduler bound.
   semantic offer keys and policies remain experimental; package measurement
   callbacks and equality on nested identifiers, keys, and reconstructed facts
   are explicitly non-preemptible.
-- `HexInterval/Search.lean`: supported Mathlib-free authenticated
+- `HexInterval/Search.lean`: supported Mathlib-free sealed authenticated
   policy/action sessions, transactional callback-delta validation, exact
   generic stop/resource classes, stable depth-first/breadth-first frontiers,
-  immutable parent restoration, and bounded step/split/leaf/frontier/depth/
-  scope accounting. It contains no concrete callback, offer generator, split
+  immutable parent restoration, and sealed cumulative step/split/leaf/frontier/
+  depth/scope accounting. It contains no concrete callback, offer generator, split
   semantics, policy algorithm, storage choice, or proof replay.
 - `HexInterval/Experiment/Propagator.lean`: current experimental concrete
   applications, callbacks, outcomes, untrusted proposals and replies, and
