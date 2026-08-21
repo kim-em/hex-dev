@@ -66,6 +66,54 @@ Decisions the SPEC records, each with the argument for it in the text:
 - Reversion coefficients `0, 1, -1, 2, -5, 14` for `x + x²` and the
   `ZMod 2` / `ZMod 9` square-root counterexamples were checked by hand.
 
+## Review round
+
+A Codex second opinion found real errors, all now fixed. Recording the
+substantive ones because they are the kind a successor could reintroduce:
+
+- **The degenerate disjunct was in the wrong place** for two of the
+  three success conditions. `rev?` drops the linear-coefficient test at
+  precision one but keeps the constant-term test, so
+  `rev? (C 1 : TSeries R 1)` is `none`; the original
+  `n ≤ 1 ∨ (b.coeff 0 = 0 ∧ …)` claimed every precision-one series is
+  reversible. `sqrt?` splits the same way: at `n ≤ 1` unitality of
+  `2 * r` is irrelevant but `r * r = a.coeff 0` still holds, so
+  `sqrt? (4 + x) 2` over `ℤ` succeeds at precision one.
+- **Two Mathlib correspondence theorems were false.**
+  `PowerSeries.HasSubst` is `IsNilpotent (constantCoeff a)`, not
+  vanishing, so `ofPowerSeries_subst` under it fails over `ZMod 4` with
+  `g = C 2`. `PowerSeries.invOfUnit f u` uses whatever `u` it is handed,
+  so the transport needs `constantCoeff f = u`, which is exactly what
+  `mul_invOfUnit` carries.
+- **Mathlib refuses `Grind.CommRing → CommRing`.**
+  `Mathlib/Algebra/Ring/GrindInstances.lean` carries the converse as an
+  `example` with a comment that the direction should never be used. The
+  companion builds the instance from the executable operations,
+  following `HexPolyFpMathlib.commRing`.
+- **`exp` and `log` did not need `[UnitOps R]`** (they invert only with
+  the literal witness `1`), and carrying it would have made the
+  `[Algebra ℚ R]` correspondence unstatable.
+- **The reversion iteration did not typecheck**, the same `n - 1` trap
+  as the `log` one: `b.deriv : TSeries R (n-1)` against `y : TSeries R n`.
+  Resolved with a zero-padded derivative plus the lemma that the missing
+  top coefficient is never read.
+- **The geometric bound needed the bounded discipline to propagate.**
+  The `exp` step calls `log` and the reversion step calls `comp`; at
+  full precision those give `O(M(n) log n)`, so `invUpTo`, `logUpTo`,
+  and `compUpTo` are now specified.
+- Smaller: `NatInverses (ZMod q) m` needs `q` prime, and the boundary is
+  `n ≤ p` not `n < p`; the Lagrange claim is about the direct `1/k`
+  evaluation, not about reversion needing integer inverses; a series
+  does not have exactly two square roots (`1` has four in `ℤ/15`); fast
+  multiplication lands in this library, not hex-poly-fast, because a
+  downstream library cannot change what `invOfUnit` calls; `DecidableEq R`
+  is localized; the Brent-Kung bench requirement no longer names a
+  crossover the SPEC says it will not guess.
+
+Two errors I found myself before the review: the "within 2x" bench
+threshold was unachievable (the counted ratio is 8/3), and `log` as
+`integrate (deriv a * inv a)` does not typecheck at precision zero.
+
 ## Current frontier
 
 The SPEC is complete. No Lean was written, per the issue.

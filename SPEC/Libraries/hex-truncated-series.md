@@ -901,6 +901,11 @@ theorem rev_le_one (b : TSeries R n) (hn : n ≤ 1) (h0 : b.coeff 0 = 0) :
     comp b 0 = X ∧ comp 0 b = X
 ```
 
+`revOfUnit_comp` covers `n ≥ 2` and `rev_le_one` covers `n ≤ 1`, where
+`hv` has no solution over a nontrivial `R`. Together they are what
+`rev?_isSome_iff` is proved from, and `rev?` dispatches on `n ≤ 1`
+before consulting `UnitOps` for the same reason.
+
 The iteration is Newton on `y ↦ y - (b ∘ y - x) / (b' ∘ y)`, started
 from `C v * X`, doubling the precision each step. Both compositions run
 at the step's target precision, and the division is `invOfUnit` applied
