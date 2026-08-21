@@ -38,7 +38,7 @@ hypothesised, the inventory can be made exact:
 |---|---|---|---|
 | unit group | `{1, -1}` | `F \ {0}` | no: "unimodular" is `det ∈ F^×`, not `det = ±1` |
 | pivot normalisation | positive | monic | no: `extGcd` returns a nonnegative `g` for free, `xgcd` returns an arbitrary associate |
-| 2x2 elimination shape | `[[s, t], [-b/g, a/g]]` | same shape, scaled by `1/lc g` | partly: the shape transfers, the matrix does not |
+| 2x2 elimination shape | `[[s, t], [-b/g, a/g]]`, determinant `1` | `u · [[s, t], [-b/ĝ, a/ĝ]]` with `u = 1/lc g`, determinant `u` | partly: the shape transfers, the matrix and its determinant do not |
 | explicit inverse of the step | direct computation | direct computation | yes, as a technique; the entries differ |
 | exact division | the generic `Hex.exactDiv`, plus an `@[extern]` `Int` fast path in `hex-bareiss` | the same generic `Hex.exactDiv`, no fast path | partly: the wrapper transfers, the machine-division fast path has no analogue |
 | termination measure | `(\|pivot\|, c)` lexicographic | `(deg pivot, c)` lexicographic | yes, as a shape; the first component is computed differently |
