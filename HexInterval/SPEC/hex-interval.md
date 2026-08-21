@@ -3226,11 +3226,17 @@ child snapshot. `Result.startWithin` admits one checked root.
 predecessor, structurally checks and retains the complete runtime split action,
 allocates the two fresh scopes through the sealed frontier, and reconstructs
 each restarted child from the checked current parent fact array with exactly
-one version-zero seed delta. It does not independently resolve the action's
-rule key against a package registry. All other child facts therefore come from
-the retained parent consequence snapshot rather than being reclassified as
-new assumptions. `Result.settleWithin` consumes the exact pending head and
-retains an exact target, refutation, or unknown record.
+one version-zero seed delta. The restarted `State.Branch` represents every
+inherited fact at version zero, resets every generation stamp to zero, has no
+history, and has `contradictory = false`. Its inherited facts are not thereby
+reclassified as assumptions or given intrinsic derived provenance by the child
+branch. Instead, the retained tree's exact parent/side/seed edge authenticates
+that they came from the current parent consequence snapshot. A downstream
+controller or proof quotation must consume that edge and must not carry
+pre-split generation stamps into the restarted child. `Result.splitWithin`
+does not independently resolve the action's rule key against a package
+registry. `Result.settleWithin` consumes the exact pending head and retains an
+exact target, refutation, or unknown record.
 Whole-tree validation reconstructs every parent/side/seed edge, restored
 parent, pending set, step/split/leaf/scope equation, branch state, and logical
 cost.
@@ -3242,6 +3248,13 @@ measurement, equality, and construction of arbitrary facts, causes, plans,
 schemas, and bodies remain explicitly non-preemptible; packages must bound
 those values before return. The split plan, schema, refutation record, target
 record, and runtime contradiction state are untrusted data, never evidence.
+As for the sealed frontier, `Result.Tree` is a reusable pure value rather than
+a linear capability. Reusing an old tree may form alternative successors, but
+the checked transition keeps scopes unique within each resulting lineage and
+cannot reset that lineage's retained counters. Limits are supplied per call,
+not stored in the tree: a later call may relax them, while a tightened call
+rejects an already-retained value which exceeds the new caps rather than
+grandfathering it.
 Semantic split coverage, package-owned refutation theorems, recursive proof
 replay, search-to-recipe quotation, and unknown-leaf rejection by a proof fold
 remain later supported edges.
@@ -5203,6 +5216,13 @@ candidates, and `b` the number of live branch states.
   validation independent of frontier size. Arbitrary callback execution and
   equality on caller-selected facts, causes, identifiers, and keys
   remain non-preemptible.
+- The current `Search.Result.Tree` reference builders validate the complete
+  retained prefix before and after every split or settlement. If `N` nodes are
+  retained incrementally and `B` is the bounded per-node branch/state
+  validation cost, this construction/revalidation term is `Θ(N² * B)`;
+  it is not an incremental tree-store bound. `maxNodes` therefore stays small
+  and measurement-gated until a production representation avoids repeated
+  full-prefix validation.
 - Fact comparison and contradiction checks use exact endpoint comparison. For
   the dyadic candidate, integer cost is proportional to effective endpoint
   height and the permitted exponent-alignment shift; a rational candidate must

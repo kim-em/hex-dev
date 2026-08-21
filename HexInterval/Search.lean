@@ -951,7 +951,12 @@ def Node.source : Node Fact Cause Plan Schema → Source Fact Cause
 
 /-- Ordinary-import-sealed live retained tree. Its frontier and cumulative
 accounting cannot be reset, advanced, or transplanted independently. Public
-construction and transitions recheck exact tree shape and resources. -/
+construction and transitions recheck exact tree shape and resources. Limits
+are supplied per transition rather than retained in this pure value: a later
+call may tighten or relax them, and reusing an old tree may create alternative
+bounded lineages but cannot duplicate a scope within either lineage. The
+reference builders revalidate the complete retained prefix before and after
+each transition; `maxNodes` therefore remains small and measurement-gated. -/
 structure Tree (Fact Cause Plan Schema : Type) where
   private mk ::
   nodes : Array (Node Fact Cause Plan Schema)
@@ -1006,10 +1011,10 @@ private def throwCost (limits : Limits) (cost : Cost) : Except Error Unit := do
   if limits.maxBytes < cost.bytes then throw (.resource .bytes)
   if limits.maxWork < cost.work then throw (.resource .work)
 
-def seenCurrent (branch : State.Branch Fact Cause) (seen : SeenVersion) : Bool :=
+private def seenCurrent (branch : State.Branch Fact Cause) (seen : SeenVersion) : Bool :=
   branch.versions[seen.node.index]? == some seen.version && (branch.factAt? seen).isSome
 
-def inputsCurrent (branch : State.Branch Fact Cause) (inputs : List SeenVersion) : Bool :=
+private def inputsCurrent (branch : State.Branch Fact Cause) (inputs : List SeenVersion) : Bool :=
   inputs.all (seenCurrent branch)
 
 private def bodyWithin (limits : Limits) (body : List Nat) : Bool :=
@@ -1021,7 +1026,7 @@ private def actionWithin (limits : State.Limits) (action : Action) : Bool :=
     listWithin limits.matcherBatchSize action.structuralInputs &&
     action.effort ≤ limits.maxEffort
 
-opaque Split.check (limits : Limits) (source : Source Fact Cause)
+private opaque Split.check (limits : Limits) (source : Source Fact Cause)
     (recipe : Split Plan Schema) : Bool :=
   bodyWithin limits recipe.body && actionWithin limits.state recipe.action &&
     recipe.scope == source.scope &&
@@ -1031,7 +1036,7 @@ opaque Split.check (limits : Limits) (source : Source Fact Cause)
     recipe.action.inputs.contains recipe.parent &&
     inputsCurrent source.branch recipe.action.inputs && seenCurrent source.branch recipe.parent
 
-opaque End.check (limits : Limits) (source : Source Fact Cause) : End Schema → Bool := fun
+private opaque End.check (limits : Limits) (source : Source Fact Cause) : End Schema → Bool := fun
   | .target entry =>
       entry.scope == source.scope &&
         entry.programVersion == source.branch.programVersion &&
@@ -1062,7 +1067,7 @@ private def childBranchWithin [DecidableEq Fact] (limits : Limits)
   | .ok branch => pure branch
   | .error error => throw (.state error)
 
-opaque childMatches [DecidableEq Fact] [DecidableEq Cause]
+private opaque childMatches [DecidableEq Fact] [DecidableEq Cause]
     (limits : Limits) (parentId : Id) (parent : Source Fact Cause)
     (side : Side) (child : Source Fact Cause) : Bool :=
   child.parent == some parentId && child.side == some side &&
@@ -1126,7 +1131,12 @@ opaque Tree.check [DecidableEq Fact] [DecidableEq Cause]
             right.index ≤ index then return false
         let some leftNode := tree.nodes[left.index]? | return false
         let some rightNode := tree.nodes[right.index]? | return false
-        if !childMatches limits { index } source .left leftNode.source ||
+        let some leftSeed := leftNode.source.seed | return false
+        let some rightSeed := rightNode.source.seed | return false
+        if leftSeed.node != recipe.parent.node || rightSeed.node != recipe.parent.node ||
+            leftSeed.previous != recipe.parent || rightSeed.previous != recipe.parent ||
+            leftSeed.fact == rightSeed.fact ||
+            !childMatches limits { index } source .left leftNode.source ||
             !childMatches limits { index } source .right rightNode.source then return false
         incoming := incoming.set! left.index (incoming[left.index]! + 1)
         incoming := incoming.set! right.index (incoming[right.index]! + 1)

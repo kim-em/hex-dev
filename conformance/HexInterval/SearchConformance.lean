@@ -684,7 +684,9 @@ private def split? : Option (Tree Nat Nat Nat Nat) := do
       left.branch.snapshot.facts == #[13, 19] &&
         right.branch.snapshot.facts == #[13, 31] &&
         left.branch.versions == #[0, 0] && right.branch.versions == #[0, 0] &&
+        left.branch.generations == #[0, 0] && right.branch.generations == #[0, 0] &&
         left.branch.history.isEmpty && right.branch.history.isEmpty &&
+        !left.branch.contradictory && !right.branch.contradictory &&
         left.seed == some leftSeed && right.seed == some rightSeed
   | _, _ => false
 
@@ -746,6 +748,18 @@ private def resultError (wanted : Search.Result.Error)
 #guard root?.any fun tree =>
   resultError .split <| Search.Result.splitWithin limits measure .depthFirst tree
     recipe { leftSeed with previous := { node := contractNode 1, version := 0 } } rightSeed
+
+#guard root?.any fun tree =>
+  resultError .split <| Search.Result.splitWithin limits measure .depthFirst tree
+    recipe { leftSeed with node := contractNode 0 } rightSeed
+
+#guard root?.any fun tree =>
+  resultError .split <| Search.Result.splitWithin limits measure .depthFirst tree
+    recipe leftSeed { rightSeed with previous := { node := contractNode 1, version := 0 } }
+
+#guard root?.any fun tree =>
+  resultError .split <| Search.Result.splitWithin limits measure .depthFirst tree
+    recipe leftSeed { rightSeed with node := contractNode 0 }
 
 #guard root?.any fun tree =>
   resultError .split <| Search.Result.splitWithin limits measure .depthFirst tree
