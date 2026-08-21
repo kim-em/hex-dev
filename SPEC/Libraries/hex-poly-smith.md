@@ -40,7 +40,7 @@ hypothesised, the inventory can be made exact:
 | pivot normalisation | positive | monic | no: `extGcd` returns a nonnegative `g` for free, `xgcd` returns an arbitrary associate |
 | 2x2 elimination shape | `[[s, t], [-b/g, a/g]]` | same shape, scaled by `1/lc g` | partly: the shape transfers, the matrix does not |
 | explicit inverse of the step | direct computation | direct computation | yes, as a technique; the entries differ |
-| exact division | `exactDiv` with an `@[extern]` integer primitive | the quotient component of `divMod` | no: there is no cheaper polynomial primitive to relocate |
+| exact division | the generic `Hex.exactDiv`, plus an `@[extern]` `Int` fast path in `hex-bareiss` | the same generic `Hex.exactDiv`, no fast path | partly: the wrapper transfers, the machine-division fast path has no analogue |
 | termination measure | `(\|pivot\|, c)` lexicographic | `(deg pivot, c)` lexicographic | yes, as a shape; the first component is computed differently |
 | repetition bound `P` | bit length of the pivot entering the stage | degree of the pivot entering the stage | yes, as a shape |
 | reduction of entries above a pivot | `%` into `[0, p)` | not needed | no: Smith form clears off-diagonal entries to zero, and the residue range is a Hermite-form concern |
@@ -433,16 +433,31 @@ returns `⟨a, 1, 0⟩` and `xgcd 0 b` returns `⟨b, 0, 1⟩`, so the displayed
 matrices specialise to a scaling and to a swap-and-scale respectively,
 and a unit input just makes `ĝ = 1`.
 
-**Exact division needs no new primitive.** [hex-hermite](hex-hermite.md)
-asks for `exactDiv` to move to `hex-arith`, because integer exact
-division has an `@[extern]` implementation that is cheaper than the
-general quotient and must not be copied into three libraries. There is
-no polynomial analogue to relocate: the quotient component of `divMod`
-*is* the exact quotient when the divisor divides the dividend, and long
-division by a monic divisor is already the cheapest available route
-(`divModMonic`, which skips the coefficient division at every step). So
-this SPEC asks for nothing here, and an implementer looking for the
-`exactDiv` counterpart should stop looking.
+**Exact division needs no new primitive, and the shared one already
+applies.** `Hex.exactDiv` and its `ExactDivLaws` class live in
+`hex-basic` (`HexBasic/ExactDiv.lean`), generic over any
+`[Zero R] [DecidableEq R] [Div R]` with `exactDiv a 0 = 0` as a
+documented junk branch, and `hex-resultant` supplies
+`instExactDivLawsDensePoly`. So the four divisions in `E` go through the
+same wrapper the integer libraries use, at `R = DensePoly F`, and this
+SPEC asks for no polynomial-specific division primitive.
+
+What it does ask for is that `instExactDivLawsDensePoly` travel with the
+commutative-ring tower when that moves down into `hex-poly`, for the
+reason under "Prerequisite changes in other libraries": otherwise the
+generic wrapper is available and the instance that makes it meaningful
+here is not.
+
+There is also nothing faster to reach for. The quotient component of
+`divMod` *is* the exact quotient when the divisor divides the dividend,
+and long division by a monic divisor is already the cheapest route
+(`divModMonic`, which skips the coefficient division at every step),
+which is why the `ĝ` form of `E` above is the one to implement. What has
+no counterpart is the `@[extern "lean_int_div_exact"]` binding in
+`HexBareiss/Bareiss.lean`, which is where the integer libraries get
+their exact-division speed: that saving is one machine division
+instruction, and there is no such thing for a polynomial, so an
+implementer looking for the analogue should stop looking.
 
 ## Algorithms
 
@@ -969,7 +984,7 @@ shape `hex-lll`'s `certCheck` already uses, and is not part of v1.
 
 ## Prerequisite changes in other libraries
 
-Four items. Each has a reason independent of this library, and none of
+Five items. Each has a reason independent of this library, and none of
 them blocks starting work here, because this SPEC can name the existing
 paths until they land.
 
@@ -1069,8 +1084,14 @@ constructor deriving all nine from the field hypotheses, stated once in
 `hex-poly` next to the existing law packages, subsuming the two concrete
 instances. It is a piece of work, not a rearrangement.
 
+**`instExactDivLawsDensePoly` should move with the tower.** It is in
+`HexResultant/ExactDiv.lean` beside the commutative-ring instances, and
+it is what makes `hex-basic`'s generic `exactDiv` meaningful at
+`DensePoly F`. Moving the tower and leaving this behind would produce
+exactly the situation the relocation exists to avoid.
+
 **`diagMatrix` must land in `hex-matrix` generic in `R`**, as described
-under "Data and contract". This is the only one of the four that
+under "Data and contract". This is the only one of the five that
 [hex-smith](hex-smith.md) also asks for; what this library adds is the
 requirement that the relocated signature not be specialised to `Int`.
 The same relocation is discussed from a third side in
