@@ -398,7 +398,7 @@ private def leaf (scope depth payload : Nat)
   pure { scope := { index := scope }, depth, branch, parent, payload }
 
 private def nested? (order : Search.Order) :
-    Option (Search.FrontierState (Search.Leaf Nat Nat Nat)) := do
+    Option (Search.LeafFrontier Nat Nat Nat) := do
   let root <- leaf 0 0 0
   let .ok state := Search.startFrontierWithin stateLimits searchLimits root | none
   let root <- state.head?
@@ -480,6 +480,16 @@ private def detachedParentError : Option Search.Error := do
   | .error error => some error
   | .ok _ => none
 
+private def wrongChildScopeError : Option Search.Error := do
+  let root <- leaf 0 0 0
+  let .ok state := Search.startFrontierWithin stateLimits searchLimits root | none
+  let parent := root.asParent
+  let left <- leaf 1 1 1 (some parent)
+  let right <- leaf 3 1 2 (some parent)
+  match Search.splitWithin stateLimits searchLimits .depthFirst state left right with
+  | .error error => some error
+  | .ok _ => none
+
 private def secondSplitError (limits : Search.Limits) : Option Search.Error := do
   let root <- leaf 0 0 0
   let .ok state := Search.startFrontierWithin stateLimits limits root | none
@@ -498,6 +508,7 @@ private def secondSplitError (limits : Search.Limits) : Option Search.Error := d
 -- one live frontier. Detached parents and nested one-over resources fail.
 #guard malformedParentError == some .invalidSession
 #guard detachedParentError == some .invalidSession
+#guard wrongChildScopeError == some .invalidSession
 #guard secondSplitError { searchLimits with maxSteps := 1 } == some (.resource .steps)
 #guard secondSplitError { searchLimits with maxSplits := 1 } == some (.resource .splits)
 #guard secondSplitError { searchLimits with maxFrontier := 2 } == some (.resource .frontier)

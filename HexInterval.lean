@@ -38,9 +38,12 @@ registrations, scoped bindings, actions, immutable package requests, checked
 immutable branch state, dependency/work queues, authoritative chronology, and
 bounded diagnostics. The public policy contract exposes bounded immutable
 offers, exact echoed decisions, and fail-closed revalidation without selecting
-a default policy. The public search contract authenticates selected actions, transactionally
-checks untrusted callback deltas, and supplies bounded stable branch-frontier
-accounting. Concrete callbacks and proposals, offer generation, policy
+a default policy. The public search contract seals authenticated sessions,
+authenticates selected actions, transactionally checks untrusted callback
+deltas, and supplies bounded stable branch-frontier accounting. Its specialized
+leaf frontier can advance only through the parent/depth/scope/branch-checked
+transition; generic frontier scheduling cannot be installed into it. Concrete
+callbacks and proposals, offer generation, policy
 implementations, split semantics, proof replay, and measurement-selected
 storage remain experimental.
 -/

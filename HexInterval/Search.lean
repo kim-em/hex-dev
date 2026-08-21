@@ -217,7 +217,7 @@ opaque startWithin (limits : Limits) (scope : Policy.ScopeId) (root : α) :
   pure { accounting, frontier := .singleton root }
 
 /-- Pop and charge the exact head of a sealed frontier. -/
-opaque settleWithin (limits : Limits) (state : FrontierState α) :
+opaque settleHeadWithin (limits : Limits) (state : FrontierState α) :
     Except Error (α × FrontierState α) := do
   let count <- frontierCountWithin limits state.frontier
   let some head := state.frontier.head? | throw .invalidSession
@@ -228,7 +228,7 @@ opaque settleWithin (limits : Limits) (state : FrontierState α) :
 caller-validated pending children. This container transition authenticates
 only cumulative resources and ordering; the enclosing sealed controller owns
 child semantics. -/
-opaque splitWithin (limits : Limits) (order : Order) (state : FrontierState α)
+opaque splitHeadWithin (limits : Limits) (order : Order) (state : FrontierState α)
     (fresh : List α) : Except Error (α × FrontierState α) := do
   if !listWithin 2 fresh then throw .invalidSession
   let count <- frontierCountWithin limits state.frontier
@@ -695,6 +695,31 @@ structure Leaf (Fact Cause Payload : Type) where
   payload : Payload
   deriving DecidableEq
 
+/-- A sealed leaf frontier. Its inner generic frontier is readable for
+inspection, but only the specialized checked transitions can construct another
+`LeafFrontier`; generic scheduling therefore cannot bypass leaf invariants. -/
+structure LeafFrontier (Fact Cause Payload : Type) where
+  private mk ::
+  private state : FrontierState (Leaf Fact Cause Payload)
+
+opaque LeafFrontier.accounting (frontier : LeafFrontier Fact Cause Payload) : Accounting :=
+  frontier.state.accounting
+
+opaque LeafFrontier.frontier (state : LeafFrontier Fact Cause Payload) :
+    Frontier (Leaf Fact Cause Payload) :=
+  state.state.frontier
+
+opaque LeafFrontier.pending (state : LeafFrontier Fact Cause Payload) :
+    List (Leaf Fact Cause Payload) :=
+  state.state.pending
+
+opaque LeafFrontier.isEmpty (state : LeafFrontier Fact Cause Payload) : Bool :=
+  state.state.isEmpty
+
+opaque LeafFrontier.head? (state : LeafFrontier Fact Cause Payload) :
+    Option (Leaf Fact Cause Payload) :=
+  state.state.head?
+
 def Leaf.asParent (leaf : Leaf Fact Cause Payload) : Parent Fact Cause :=
   { scope := leaf.scope, depth := leaf.depth, branch := leaf.branch }
 
@@ -704,13 +729,13 @@ def Leaf.restoreParent? (leaf : Leaf Fact Cause Payload) : Option (Parent Fact C
   leaf.parent
 
 /-- Build a root frontier after all structural and count caps admit it. -/
-opaque startFrontierWithin (stateLimits : State.Limits) (limits : Limits)
+opaque LeafFrontier.startWithin (stateLimits : State.Limits) (limits : Limits)
     (root : Leaf Fact Cause Payload) :
-    Except Error (FrontierState (Leaf Fact Cause Payload)) := do
+    Except Error (LeafFrontier Fact Cause Payload) := do
   let state <- FrontierState.startWithin limits root.scope root
   preflightBranch stateLimits root.branch
   if root.depth != 0 || root.parent.isSome || !root.branch.check then throw .invalidSession
-  pure state
+  pure { state }
 
 /-- Pop the stable next pending leaf. -/
 def pop (frontier : Frontier α) : Option (α × Frontier α) := do
@@ -719,20 +744,21 @@ def pop (frontier : Frontier α) : Option (α × Frontier α) := do
 
 /-- Retain and return the authenticated frontier head while charging exactly
 one processing step in the same sealed frontier state. -/
-def settleWithin (limits : Limits) (state : FrontierState α) :
-    Except Error (α × FrontierState α) :=
-  state.settleWithin limits
+opaque LeafFrontier.settleWithin (limits : Limits) (state : LeafFrontier Fact Cause Payload) :
+    Except Error (Leaf Fact Cause Payload × LeafFrontier Fact Cause Payload) := do
+  let (leaf, next) <- state.state.settleHeadWithin limits
+  pure (leaf, { state := next })
 
 /-- Admit an exact binary split and schedule its children transactionally.
 The package owns child semantics; generic search authenticates the retained
 frontier head as the parent, checked child branches, fresh scopes, depth, and
 global resources. -/
-opaque splitWithin [DecidableEq Fact] [DecidableEq Cause]
+opaque LeafFrontier.splitWithin [DecidableEq Fact] [DecidableEq Cause]
     (stateLimits : State.Limits) (limits : Limits) (order : Order)
-    (state : FrontierState (Leaf Fact Cause Payload))
+    (state : LeafFrontier Fact Cause Payload)
     (left right : Leaf Fact Cause Payload) :
-    Except Error (FrontierState (Leaf Fact Cause Payload)) := do
-  let (parent, next) <- state.splitWithin limits order [left, right]
+    Except Error (LeafFrontier Fact Cause Payload) := do
+  let (parent, next) <- state.state.splitHeadWithin limits order [left, right]
   let frontier := state.frontier
   for pending in state.pending do
     preflightBranch stateLimits pending.branch
@@ -757,6 +783,12 @@ opaque splitWithin [DecidableEq Fact] [DecidableEq Cause]
       left.scope.index != state.accounting.nextScope ||
       right.scope.index != state.accounting.nextScope + 1 ||
       !left.branch.check || !right.branch.check then throw .invalidSession
-  pure next
+  pure { state := next }
+
+def startFrontierWithin := @LeafFrontier.startWithin
+
+def settleWithin := @LeafFrontier.settleWithin
+
+def splitWithin := @LeafFrontier.splitWithin
 
 end Hex.Interval.Search

@@ -194,7 +194,7 @@ private def retainLeaf (limits : Hex.Interval.Search.Limits)
     (state : State Fact PolicyState) (id : TreeId)
     (source : Leaf Fact PolicyState) (ending : LeafEnd Fact PolicyState) :
     Except Error (State Fact PolicyState) := do
-  match state.search.settleWithin limits with
+  match state.search.settleHeadWithin limits with
   | .error _ => throw .malformedAccounting
   | .ok (settled, search) =>
       if settled != id then throw .malformedAccounting
@@ -244,7 +244,7 @@ opaque step [DecidableEq Fact] (config : Config Fact PolicyState)
       let fresh :=
         (if leftPending then [leftId] else []) ++
           (if rightPending then [rightId] else [])
-      match state.search.splitWithin config.limits config.order fresh with
+      match state.search.splitHeadWithin config.limits config.order fresh with
       | .error _ => throw .malformedAccounting
       | .ok (splitId, search) =>
           if splitId != id then throw .malformedAccounting

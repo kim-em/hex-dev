@@ -3171,6 +3171,18 @@ pure value may produce an alternative bounded successor; it cannot create a
 successor which bypasses that value's own limits. A separate start creates a
 documented new run rather than resetting an existing one.
 
+The supported parent/depth/scope/branch contract adds a second sealed type,
+`Search.LeafFrontier Fact Cause Payload`. Its private constructor and private
+inner `FrontierState (Leaf ...)` prevent callers from feeding a generically
+scheduled leaf-shaped frontier back into `Search.splitWithin`. Read-only head,
+pending, raw-frontier, and accounting projections support inspection. Only
+`startFrontierWithin`, `settleWithin`, and the specialized `splitWithin` return
+another `LeafFrontier`, and the latter checks exact parent restoration, child
+depth, fresh scopes, branch validity, and retained-scope uniqueness before the
+new wrapper becomes available. Thus the generic composite remains usable by a
+different sealed controller such as `BranchTree`, but it is not authority for
+the stronger leaf protocol.
+
 The experimental `BranchTree.State` is likewise sealed and contains one
 `FrontierState TreeId`; callers cannot independently replace its nodes,
 frontier, branch manager, or counters. Its checked transitions derive the exact
@@ -5193,8 +5205,9 @@ their declared cost inside a scheduler bound.
 - `HexInterval/Search.lean`: supported Mathlib-free sealed authenticated
   policy/action sessions, transactional callback-delta validation, exact
   generic stop/resource classes, stable depth-first/breadth-first frontiers,
-  immutable parent restoration, and sealed cumulative step/split/leaf/frontier/
-  depth/scope accounting. It contains no concrete callback, offer generator, split
+  a separately sealed parent/depth/scope-checked leaf frontier, immutable parent
+  restoration, and sealed cumulative step/split/leaf/frontier/depth/scope
+  accounting. It contains no concrete callback, offer generator, split
   semantics, policy algorithm, storage choice, or proof replay.
 - `HexInterval/Experiment/Propagator.lean`: current experimental concrete
   applications, callbacks, outcomes, untrusted proposals and replies, and
