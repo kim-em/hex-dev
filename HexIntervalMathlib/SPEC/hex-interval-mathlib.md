@@ -71,14 +71,17 @@ caller terms remain an explicit non-preemptible envelope.
 
 `HexIntervalMathlib.Tactic` is the first supported Meta client. It recursively
 parses real local variables and the registered forward arithmetic operations,
-selects strongest integer lower and upper hypotheses, quotes the exact
-supported `Program`, `Proof.Input`, and chronology, reruns `Frontend.replay`,
-and independently reconstructs a caller proof through package-owned image
-theorems and `Proof.emitChecked`. The bare `interval` tactic currently closes
+selects strongest integer lower and upper hypotheses, constructs the exact
+runtime `Program`, `Proof.Input`, and chronology as plain checked data, reruns
+`Frontend.replay`, and independently reconstructs a caller proof
+through package-owned image theorems and `Proof.emitChecked`. It does not emit
+those discarded runtime records as Lean expressions. The bare `interval`
+tactic currently closes
 strict or non-strict lower and upper goals, closed-singleton equality, and
-conjunctions. `interval?` reports the fixed forward configuration before
-running the same transaction. `interval_bound e` leaves the goal unchanged
-and reports the proved cut and recipe size. Programmatic
+conjunctions. `interval?` reports the fixed forward configuration only after
+the same transaction succeeds; failure emits no misleading query result.
+`interval_bound e` elaborates and derives inside `withoutModifyingState`, then
+reports the proved cut and recipe size. Programmatic
 `Tactic.deriveBound` exposes the exact authenticated forward bundle.
 
 This first vertical deliberately accepts only integer source and target cuts,
@@ -86,9 +89,12 @@ zero, the configured natural exponent, and forward negation, addition,
 subtraction, multiplication, power, absolute value, minimum, maximum,
 reciprocal, and division. It appends configured outward regularization after
 each computed arithmetic row, and fails transactionally on precision-resource
-refusal. It has no subdivision, contractors, arbitrary-function discovery, named-
+refusal. Its fixed public-tactic precision is `16`, the dyadic grid `2⁻¹⁶`;
+programmatic `deriveBound` may instead receive another precision admitted by
+the explicit resource envelope. Noninteger hypotheses are not authenticated
+as integer cuts. It has no subdivision, contractors, arbitrary-function discovery, named-
 hypothesis selection, or search-selected recipe emitter. All parse, resource,
-quotation, replay, and emission failures leave the tactic state unchanged.
+replay, and emission failures leave the tactic state unchanged.
 
 The proof contract treats runtime states, callback replies, payload bytes,
 search decisions, contradiction flags, and diagnostic traces as untrusted
@@ -324,8 +330,11 @@ source/operation/node/depth limits, replays a flat supported chronology, and
 closes fully discharged lower inequality, two-sided conjunction, and equality
 theorems from source containment alone, with guarded ordinary-theorem axiom
 reports.
-`HexIntervalMathlib.TacticConformance` exercises supported Meta quotation and
+`HexIntervalMathlib.TacticConformance` exercises supported Meta parsing and
 caller-proof emission over closed, strict, negative, shared-expression, power,
-absolute-value, minimum, and maximum examples. It pins conjunction and both
-equality orientations, diagnostic non-mutation, unsupported and missing-bound
-rejection, zero-node refusal, and the guarded ordinary-kernel axiom surface.
+absolute-value, minimum, maximum, reciprocal, and division examples. It pins
+conjunction and both equality orientations, a decimal-hypothesis poisoning
+regression, diagnostic non-mutation, unsupported and false-target rejection,
+exact zero-node and reciprocal-quotient resource roles, the load-bearing
+nonintegral `2⁻¹ + 2⁻¹ = 1` default-precision theorem, and guarded
+ordinary-kernel axiom surfaces.

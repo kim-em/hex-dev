@@ -25,8 +25,10 @@ runtime check is reflected into proof syntax.
 The current production subset is forward arithmetic over real local variables,
 the configured constant, natural power, precision, reciprocal, and division.
 Every computed arithmetic row is followed by the package's authenticated
-outward regularization row. Caller cuts use integer endpoints. Unsupported
-syntax and every resource refusal fail transactionally.
+outward regularization row. The bare tactic uses precision `16`, hence the
+dyadic grid `2⁻¹⁶`; programmatic callers may supply another admitted precision.
+Caller cuts use integer endpoints. Unsupported syntax and every resource
+refusal fail transactionally.
 -/
 
 namespace Hex.Interval.Tactic
@@ -480,7 +482,9 @@ meta def defaultConfig : Frontend.Config :=
           { endpoint := { maxEndpointHeight := 256, maxAlignmentShift := 256 }
             maxPrecisionMagnitude := 64, maxPrecisionBits := 64
             maxTemporaryBits := 512 }
-        precision := 0
+        -- The default working grid is `2⁻¹⁶`; integer-grid regularization loses
+        -- elementary reciprocal facts such as `2⁻¹ + 2⁻¹ = 1`.
+        precision := 16
         constant := 0 }
     reify := { maxSources := 32, maxOperations := 13, maxNodes := 256, maxDepth := 32 }
     proof :=
@@ -512,11 +516,20 @@ meta def ParseState.computed (state : ParseState) (term : Frontend.Term)
 meta def ParseState.expression? (state : ParseState) (term : Frontend.Term) : Option Expr :=
   (state.terms.toList.find? fun entry => entry.1 == term).map (·.2)
 
+/-- Recognize only a literal natural or the numeral payload of `OfNat.ofNat`.
+In particular, do not scan arbitrary application arguments: scientific decimal
+syntax carries unrelated natural fields and is not an integer cut. -/
 meta def natLiteral? (expression : Expr) : Option Nat :=
-  expression.getAppArgs.toList.findSome? fun argument =>
-    match argument with
-    | .lit (.natVal value) => some value
-    | _ => none
+  match expression with
+  | .lit (.natVal value) => some value
+  | _ =>
+      if expression.getAppFn.constName? != some ``OfNat.ofNat then none else
+      let arguments := expression.getAppArgs
+      if h : 2 ≤ arguments.size then
+        match arguments[arguments.size - 2] with
+        | .lit (.natVal value) => some value
+        | _ => none
+      else none
 
 meta def intLiteral? (expression : Expr) : Option Int :=
   if expression.getAppFn.constName? == some ``Neg.neg then
@@ -770,7 +783,8 @@ meta def getDerived (derived : Array Derived) (node : NodeId) : MetaM Derived :=
   | none => throwError "interval: arithmetic dependency escaped the derived table"
 
 meta def buildValueExpr (result : Expr) : MetaM (Expr × Expr) := do
-  let success ← Quote.trueProof
+  let ready ← mkAppM ``BuildResult.isReady #[result]
+  let success ← mkDecideProof (← mkAppM ``Eq #[ready, toExpr true])
   let value ← mkAppM ``BuildResult.getValue #[result, success]
   let checked ← mkAppM ``BuildResult.eq_ready #[result, success]
   pure (value, checked)
@@ -801,8 +815,10 @@ meta def deriveOperation (config : Frontend.Config) (term : Frontend.Term)
   let endpoint ← Quote.endpointExpr config.rule.endpoint
   let finishBuild (runtime : BuildResult) (resultTerm : Expr) (theoremName : Name)
       (ruleIndex tag : Nat) (key : RuleKey) : MetaM OperationResult := do
-    let .ready interval := runtime
-      | throwError "interval: arithmetic operation exceeded its resource envelope"
+    let interval ← match runtime with
+      | .ready interval => pure interval
+      | .resourceLimit cost =>
+          throwError "interval: {key.name} resource refusal: {repr cost}"
     let (intervalExpr, checked) ← buildValueExpr resultTerm
     let proof ← mkAppM theoremName (#[checked] ++ arguments.toArray.map (·.proof))
     let expected ← mkAppM ``Hex.Interval.Contains #[intervalExpr, expression]
@@ -812,8 +828,10 @@ meta def deriveOperation (config : Frontend.Config) (term : Frontend.Term)
   let finishArithmetic (runtime : Arithmetic.Result) (resultTerm : Expr)
       (theoremName : Name) (ruleIndex tag : Nat) (key : RuleKey) :
       MetaM OperationResult := do
-    let .ready interval := runtime
-      | throwError "interval: arithmetic operation exceeded its resource envelope"
+    let interval ← match runtime with
+      | .ready interval => pure interval
+      | .resourceLimit cost =>
+          throwError "interval: {key.name} resource refusal: {repr cost}"
     let (intervalExpr, checked) ← arithmeticValueExpr resultTerm
     let proof ← mkAppM theoremName (#[checked] ++ arguments.toArray.map (·.proof))
     let expected ← mkAppM ``Hex.Interval.Contains #[intervalExpr, expression]
@@ -827,8 +845,10 @@ meta def deriveOperation (config : Frontend.Config) (term : Frontend.Term)
       let runtime := singletonWithin config.rule.endpoint config.rule.constant
       let resultTerm ← mkAppM ``singletonWithin
         #[endpoint, ← Quote.dyadicExpr config.rule.constant]
-      let .ready interval := runtime
-        | throwError "interval: arithmetic operation exceeded its resource envelope"
+      let interval ← match runtime with
+        | .ready interval => pure interval
+        | .resourceLimit cost =>
+            throwError "interval: {Rule.constantKey.name} resource refusal: {repr cost}"
       let (intervalExpr, checked) ← buildValueExpr resultTerm
       let proof ← mkAppM ``zero_mem #[checked]
       let expected ← mkAppM ``Hex.Interval.Contains #[intervalExpr, expression]
@@ -961,11 +981,6 @@ meta def deriveBound (config : Frontend.Config) (expression : Expr) : MetaM Boun
   match Frontend.replay config input events 0 reified.program output.seen with
   | .error error => throwError "interval: supported replay rejected the recipe: {repr error}"
   | .ok _ => pure ()
-  -- Exercise the supported data quotation boundary before any goal mutation.
-  let factExpr := Quote.intervalExpr config.rule.endpoint
-  let _ ← Quote.programExpr reified.program
-  let _ ← Quote.inputExpr (mkConst ``Hex.Interval) factExpr input
-  let _ ← Quote.eventsExpr (mkConst ``Hex.Interval) factExpr events
   let canonicalExpr ← Quote.intervalExpr config.rule.endpoint output.interval
   let canonicalExpected ← mkAppM ``Hex.Interval.Contains #[canonicalExpr, expression]
   let intervalEq ← mkDecideProof (← mkAppM ``Eq #[output.intervalExpr, canonicalExpr])
@@ -1016,9 +1031,15 @@ meta def parseClaim (target : Expr) : MetaM Claim := do
     throwError "interval: equality target needs an integer endpoint"
   throwError "interval: expected a real inequality, equality, or conjunction"
 
-meta def ratOrderProof (left right : Rat) (strict : Bool) : MetaM Expr := do
+meta def ratIntCast (value : Int) : MetaM Expr :=
+  mkAppOptM ``Int.cast #[some (mkConst ``Rat), none, some (mkIntLit value)]
+
+meta def ratOrderProof (leftValue rightValue : Rat) (left right : Expr)
+    (strict : Bool) : MetaM Expr := do
+  unless (if strict then decide (leftValue < rightValue) else decide (leftValue ≤ rightValue)) do
+    throwError "interval: derived endpoint does not prove the requested target"
   let proposition ← mkAppM (if strict then ``LT.lt else ``LE.le)
-    #[toExpr left, toExpr right]
+    #[left, right]
   mkDecideProof proposition
 
 meta def closeClaim (config : Frontend.Config) (bound : Bound) (claim : Claim)
@@ -1038,10 +1059,12 @@ meta def closeClaim (config : Frontend.Config) (bound : Bound) (claim : Claim)
           | throwError "interval: derived result has no finite lower bound"
         let actual ← mkAppM ``lowerOfMem #[shape, bound.proof]
         let neededStrict := strict && !endpointStrict
-        let orderRat ← ratOrderProof value endpoint.toRat neededStrict
+        let endpointExpr ← Quote.dyadicExpr endpoint
+        let orderRat ← ratOrderProof value endpoint.toRat (← ratIntCast value)
+          (← mkAppM ``Dyadic.toRat #[endpointExpr]) neededStrict
         let order ← mkAppOptM
           (if neededStrict then ``intCastLtDyadic else ``intCastLeDyadic)
-          #[some (mkIntLit value), some (← Quote.dyadicExpr endpoint), some orderRat]
+          #[some (mkIntLit value), some endpointExpr, some orderRat]
         let theoremName :=
           if strict then
             if endpointStrict then ``lowerOpenFromOpen else ``lowerOpenFromClosed
@@ -1056,10 +1079,12 @@ meta def closeClaim (config : Frontend.Config) (bound : Bound) (claim : Claim)
           | throwError "interval: derived result has no finite upper bound"
         let actual ← mkAppM ``upperOfMem #[shape, bound.proof]
         let neededStrict := strict && !endpointStrict
-        let orderRat ← ratOrderProof endpoint.toRat value neededStrict
+        let endpointExpr ← Quote.dyadicExpr endpoint
+        let orderRat ← ratOrderProof endpoint.toRat value
+          (← mkAppM ``Dyadic.toRat #[endpointExpr]) (← ratIntCast value) neededStrict
         let order ← mkAppOptM
           (if neededStrict then ``dyadicLtIntCast else ``dyadicLeIntCast)
-          #[some (← Quote.dyadicExpr endpoint), some (mkIntLit value), some orderRat]
+          #[some endpointExpr, some (mkIntLit value), some orderRat]
         let theoremName :=
           if strict then
             if endpointStrict then ``upperOpenFromOpen else ``upperOpenFromClosed
@@ -1147,8 +1172,8 @@ meta def describeRaw : Raw → String
 @[tactic intervalQueryTac] meta def evalIntervalQuery : Lean.Elab.Tactic.Tactic := fun stx => do
   match stx with
   | `(tactic| interval?) =>
-      logInfo m!"interval? using nodes={defaultConfig.reify.maxNodes}, depth={defaultConfig.reify.maxDepth}, chronology={defaultConfig.proof.maxChronology}"
       evalInterval (← `(tactic| interval))
+      logInfo m!"interval? using nodes={defaultConfig.reify.maxNodes}, depth={defaultConfig.reify.maxDepth}, chronology={defaultConfig.proof.maxChronology}, precision={defaultConfig.rule.precision}"
   | _ => throwUnsupportedSyntax
 
 @[tactic intervalBoundTac] meta def evalIntervalBound : Lean.Elab.Tactic.Tactic := fun stx => do
@@ -1156,9 +1181,11 @@ meta def describeRaw : Raw → String
   | `(tactic| interval_bound $expression) =>
       let goal ← Lean.Elab.Tactic.getMainGoal
       goal.withContext do
-        let value ← Lean.Elab.Term.elabTerm expression (some (mkConst ``Real))
-        let bound ← deriveBound defaultConfig value
-        logInfo m!"interval_bound: {describeRaw bound.interval.view}; proved by a {bound.reified.program.nodes.size}-node recipe with {bound.events.length} replay events; use `have : _ := by interval` to materialize a selected cut"
+        let report ← withoutModifyingState do
+          let value ← Lean.Elab.Term.elabTerm expression (some (mkConst ``Real))
+          let bound ← deriveBound defaultConfig value
+          pure m!"interval_bound: {describeRaw bound.interval.view}; proved by a {bound.reified.program.nodes.size}-node recipe with {bound.events.length} replay events; use `have : _ := by interval` to materialize a selected cut"
+        logInfo report
   | _ => throwUnsupportedSyntax
 
 end Hex.Interval.Tactic

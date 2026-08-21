@@ -754,14 +754,18 @@ local variables, integer lower/upper hypotheses, zero, and the built-in exact
 negation, addition, subtraction, multiplication, natural power, absolute
 value, minimum, maximum, reciprocal, and division rules. Every computed
 arithmetic row is followed by the configured outward-regularization rule, so
-precision resources and the regularization proof are load-bearing. It quotes
-and replays the exact supported chronology, then independently emits the caller
-proof through package theorems. It does not yet run the supported `Search`
+precision resources and the regularization proof are load-bearing. The bare
+tactics use precision `16`, hence the dyadic grid `2⁻¹⁶`; programmatic
+`deriveBound` callers may supply another admitted precision. It authenticates
+and replays the exact supported runtime chronology as untrusted data, then
+independently emits the caller proof through package theorems; it does not
+perform unused Meta quotation of those runtime records. It does not yet run the supported `Search`
 controller, subdivide,
 invoke contractors, select named hypotheses, accept configuration syntax, or
 emit a recipe chosen by arbitrary-function search. `interval?` therefore
-reports the fixed forward caps, while `interval_bound` reports one global
-forward enclosure and leaves the goal unchanged.
+reports the fixed forward caps after successful closure and emits no result on
+failure, while `interval_bound` elaborates and derives transactionally, reports
+one global forward enclosure, and leaves the goal unchanged.
 
 The following is the target interface once the search-to-proof recipe bridge
 and remaining package integrations are supported:
@@ -3145,7 +3149,7 @@ the fixed soundness and trust contracts.
   surface, and generic proof-frontend closure.
 - `HexIntervalMathlib/Contractor.lean`: backwards propagation theorems.
 - `HexIntervalMathlib/Tactic.lean`: supported recursive Lean-expression and
-  local-cut parsing, exact supported-data quotation, independently checked
+  local-cut parsing, exact runtime-data authentication, independently checked
   forward proof emission, and the current bare `interval`, `interval?`, and
   `interval_bound` subset; configurable search integration remains target work.
 - `HexIntervalMathlib/Examples.lean`: small user-facing examples.

@@ -40,6 +40,6 @@ schemas recompute checked public operations before producing proof evidence.
 source-driven version-zero facts, and flat programmatic replay/closure
 combinators.
 `HexIntervalMathlib.Tactic` supplies the first supported Lean-expression,
-local-hypothesis, quotation, and transactional tactic bridge for forward
-arithmetic bounds.
+local-hypothesis, runtime-authentication, and transactional tactic bridge for
+forward arithmetic bounds. Its bare tactics use the `2⁻¹⁶` dyadic grid.
 -/
