@@ -17,13 +17,17 @@ pins resolve to the freshly-pushed commits. Its one managed artifact is the
 README, rendered by `aggregate_readme.py` from a template plus the manifest's
 `component:` labels so the published library table cannot fall behind.
 
-Auth (non-dry-run): a token from --token or $RELEASED_SYNC_PAT is used as an
-`x-access-token` basic-auth credential for clone and push. Dry-run clones over
-public https and never pushes.
+Auth (non-dry-run): tokens from --token (repeatable) or the environment
+($RELEASED_SYNC_PAT, $RELEASED_SYNC_PAT_2, ... in numeric order) are used as
+`x-access-token` basic-auth credentials for clone and push. A fine-grained
+token caps its selected-repository list, so the published set is split across
+more than one token; the preflight probes each target repository against each
+token and routes every clone and push through the first token that can see
+that repository. Dry-run clones over public https and never pushes.
 
 Usage:
   python3 scripts/release/sync_released.py --dry-run
-  RELEASED_SYNC_PAT=... python3 scripts/release/sync_released.py
+  RELEASED_SYNC_PAT=... RELEASED_SYNC_PAT_2=... python3 scripts/release/sync_released.py
 """
 from __future__ import annotations
 
@@ -52,21 +56,25 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 MANIFEST = REPO_ROOT / "scripts" / "release" / "released.yml"
 BASELINE = REPO_ROOT / "scripts" / "release" / "synced.json"
 TOOLCHAIN = REPO_ROOT / "lean-toolchain"
-# The `RELEASED_SYNC_PAT` secret holds the `hex-publishing` fine-grained token.
-# It is deliberately scoped to the hex repositories rather than to every
-# repository, which means publishing a *new* library is a two-part change: add
-# it to released.yml here, and add it to the token's selected repositories
-# there. The second part needs an organization owner's approval, so start it
-# before the release rather than discovering it mid-publish.
+# The `RELEASED_SYNC_PAT` / `RELEASED_SYNC_PAT_2` secrets hold the
+# `hex-publishing` / `hex-publishing-2` fine-grained tokens. Each is
+# deliberately scoped to hex repositories rather than to every repository, and
+# a fine-grained token caps how many repositories it can select, which is why
+# there is more than one. Publishing a *new* library is therefore a two-part
+# change: add it to released.yml here, and add it to the selected repositories
+# of a token with room. The second part needs an organization owner's
+# approval, so start it before the release rather than discovering it
+# mid-publish. The sync does not care which token carries which repository; it
+# routes per repository to the first token that can see it.
 TOKEN_HELP = (
-    "Add the repositories above to the selected repositories of the token behind\n"
-    "the RELEASED_SYNC_PAT secret (Contents: Read and write). That is currently\n"
-    "the `hex-publishing` fine-grained token, at the time of writing\n"
-    "https://github.com/settings/personal-access-tokens/16433897 ; if it has been\n"
-    "rotated since, find the current one under\n"
-    "https://github.com/settings/personal-access-tokens . The token is scoped to\n"
-    "the hex repositories on purpose, so each newly published library has to be\n"
-    "added by hand. An organization owner then approves the request at\n"
+    "Add the repositories above to the selected repositories of one of the tokens\n"
+    "behind the RELEASED_SYNC_PAT / RELEASED_SYNC_PAT_2 secrets (Contents: Read\n"
+    "and write). Those are currently the `hex-publishing` and `hex-publishing-2`\n"
+    "fine-grained tokens, listed under\n"
+    "https://github.com/settings/personal-access-tokens . Any token with room\n"
+    "works; the sync routes per repository. Each token is scoped to hex\n"
+    "repositories on purpose, so each newly published library has to be added by\n"
+    "hand. An organization owner then approves the request at\n"
     "https://github.com/organizations/leanprover/settings/personal-access-token-requests"
 )
 LAKE_MANIFEST = REPO_ROOT / "lake-manifest.json"
@@ -240,21 +248,33 @@ def selection_check(repo: str, token: str) -> str | None:
             "missing or unselected is undetermined")
 
 
-def preflight_token(entries: list[dict], token: str) -> list[str]:
-    """Report every repo this run would push to that the token cannot reach.
+def route_tokens(entries: list[dict], tokens: list[str]) -> tuple[dict[str, str], list[str]]:
+    """Assign each target repo the first token that can see it.
 
-    Checked up front, before the first push: the publishing token is scoped to
-    an explicit list of repositories, so a library released here but not added
-    to that list would otherwise fail partway through, after earlier repos were
-    already published. This proves selection, not write access; see
+    Returns (repo -> token, blocked-report lines). Checked up front, before the
+    first push: each publishing token is scoped to an explicit list of
+    repositories, and a fine-grained token caps that list, so the published set
+    is split across more than one token. Nothing here assumes any particular
+    split; each repository is probed against each token in order and every
+    later clone and push uses the token routed here. A library released here
+    but on no token's list would otherwise fail partway through, after earlier
+    repos were already published. This proves selection, not write access; see
     `selection_check`.
     """
+    routed: dict[str, str] = {}
     blocked: list[str] = []
     for entry in entries:
-        reason = selection_check(entry["repo"], token)
-        if reason:
-            blocked.append(f"{entry['repo']}: {reason}")
-    return blocked
+        repo = entry["repo"]
+        reasons: list[str] = []
+        for index, token in enumerate(tokens):
+            reason = selection_check(repo, token)
+            if reason is None:
+                routed[repo] = token
+                break
+            reasons.append(f"token {index + 1}: {reason}")
+        else:
+            blocked.append(f"{repo}: " + "; ".join(reasons))
+    return routed, blocked
 
 
 def _lake_files(clone: Path, name_globs: list[str]) -> list[Path]:
@@ -753,11 +773,23 @@ def sync_repo(entry: dict, source_sha: str, token: str | None, dry_run: bool,
         return True
 
 
+def env_tokens() -> list[str]:
+    """Tokens from $RELEASED_SYNC_PAT, $RELEASED_SYNC_PAT_2, ... in numeric order."""
+    def order(name: str) -> int:
+        suffix = name.removeprefix("RELEASED_SYNC_PAT")
+        return int(suffix[1:]) if suffix else 1
+    names = [name for name in os.environ
+             if re.fullmatch(r"RELEASED_SYNC_PAT(_[0-9]+)?", name) and os.environ[name]]
+    return [os.environ[name] for name in sorted(names, key=order)]
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description="Publish released split repos from the monorepo.")
     ap.add_argument("--dry-run", action="store_true", help="print planned changes; do not push")
-    ap.add_argument("--token", default=os.environ.get("RELEASED_SYNC_PAT"),
-                    help="GitHub token with contents:write on the released repos")
+    ap.add_argument("--token", action="append", default=None,
+                    help="GitHub token with contents:write on (a subset of) the "
+                         "released repos; repeatable, tried in order per repo. "
+                         "Defaults to $RELEASED_SYNC_PAT, $RELEASED_SYNC_PAT_2, ...")
     ap.add_argument("--only", help="sync only this repo short-name (e.g. hex-matrix)")
     ap.add_argument("--force", action="store_true",
                     help="override the uncoordinated-commit guard and overwrite anyway")
@@ -766,8 +798,10 @@ def main() -> int:
                          "(the workflow points this at the release-sync-baseline branch's copy)")
     args = ap.parse_args()
 
-    if not args.dry_run and not args.token:
-        ap.error("a token (--token or $RELEASED_SYNC_PAT) is required unless --dry-run")
+    tokens = args.token or env_tokens()
+    if not args.dry_run and not tokens:
+        ap.error("a token (--token or $RELEASED_SYNC_PAT / $RELEASED_SYNC_PAT_2 / ...) "
+                 "is required unless --dry-run")
 
     manifest = yaml.safe_load(MANIFEST.read_text(encoding="utf-8"))
     baseline_doc = json.loads(args.baseline.read_text(encoding="utf-8")) if args.baseline.exists() else {}
@@ -792,19 +826,20 @@ def main() -> int:
         print(f"release sync: --only {args.only} matches {len(targets)} manifest "
               "entries; expected exactly one", file=sys.stderr)
         return 1
+    repo_token: dict[str, str] = {}
     if not args.dry_run:
-        blocked = preflight_token(targets, args.token)
+        repo_token, blocked = route_tokens(targets, tokens)
         if blocked:
-            print(f"\nrelease sync: the publishing token cannot reach "
-                  f"{len(blocked)} of {len(targets)} target repositories:",
+            print(f"\nrelease sync: none of the {len(tokens)} publishing token(s) "
+                  f"can reach {len(blocked)} of {len(targets)} target repositories:",
                   file=sys.stderr)
             for line in blocked:
                 print(f"  {line}", file=sys.stderr)
             print(f"\n{TOKEN_HELP}", file=sys.stderr)
             return 1
-        print(f"token preflight: all {len(targets)} target repositories are in "
-              "the token's selection (this does not prove write access; see "
-              "selection_check)")
+        print(f"token preflight: all {len(targets)} target repositories are covered "
+              f"by the {len(tokens)} publishing token(s) (this does not prove write "
+              "access; see selection_check)")
 
     failed_repo: str | None = None
     current_repo = "<manifest>"
@@ -813,13 +848,14 @@ def main() -> int:
             current_repo = entry["repo"]
             if args.only and entry["repo"].split("/")[-1] != args.only:
                 continue
-            sync_repo(entry, source_sha, args.token, args.dry_run,
+            token = repo_token.get(entry["repo"], tokens[0] if tokens else None)
+            sync_repo(entry, source_sha, token, args.dry_run,
                       synced, baseline, args.force, dep_owner, pins)
     except Exception as exc:
         failed_repo = current_repo
         message = str(exc)
-        if args.token:
-            message = message.replace(args.token, "<redacted>")
+        for token in tokens:
+            message = message.replace(token, "<redacted>")
         print(
             f"\nrelease sync failed in {failed_repo}: "
             f"{type(exc).__name__}: {message}",
