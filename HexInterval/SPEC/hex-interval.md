@@ -5286,7 +5286,9 @@ their declared cost inside a scheduler bound.
   and integer-cut parsing, reciprocal/division and automatic outward-
   regularization rows, independently checked caller-proof emission, and the
   current transactional bare `interval`, `interval?`, and `interval_bound`
-  subset. Search-selected recipes, arbitrary functions, subdivision, and the
+  subset. `interval_bound` renders selected cuts as diagnostics; a noninteger
+  dyadic endpoint is not pasteable into the current integer-only goal parser.
+  Search-selected recipes, arbitrary functions, subdivision, and the
   expanded configuration syntax remain experimental or unimplemented.
 - `HexInterval/Program.lean`: supported stable operation/domain/node
   identifiers, decoded typed SSA programs, fail-closed validation, and

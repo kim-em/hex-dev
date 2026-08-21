@@ -20,10 +20,20 @@ namespace Hex.IntervalMathlib.TacticConformance
 set_option linter.unusedTactic false in
 example : True := by
   run_tac do
-    let rendered := Hex.Interval.Tactic.describeSelectedCuts
-      (.bounds (.finite (.ofInt 2) false) (.finite (.ofInt 4) false))
-    unless rendered == "selected cuts: 2 ≤ e and e ≤ 4" do
-      throwError "selected-cut diagnostic changed: {rendered}"
+    let check (raw : Hex.Interval.Raw) (expected : String) : Lean.Meta.MetaM Unit := do
+      let rendered := Hex.Interval.Tactic.describeSelectedCuts raw
+      unless rendered == expected do
+        throwError "selected-cut diagnostic changed: expected {expected}, got {rendered}"
+    check (.bounds (.finite (.ofInt 2) false) (.finite (.ofInt 4) false))
+      "selected cuts: 2 ≤ e and e ≤ 4"
+    check (.bounds (.finite (.ofInt 2) true) (.finite (.ofInt 4) true))
+      "selected cuts: 2 < e and e < 4"
+    check (.bounds (.finite (.ofInt 2) true) .unbounded)
+      "selected lower cut: 2 < e"
+    check (.bounds .unbounded (.finite (.ofInt 4) true))
+      "selected upper cut: e < 4"
+    check (.bounds .unbounded .unbounded) "no finite selected cut"
+    check .empty "no selected cut (empty result)"
   trivial
 
 example {x : ℝ} (lower : 1 ≤ x) (upper : x ≤ 2) : 2 ≤ x + x := by
@@ -69,6 +79,12 @@ example {x : ℝ} (singleton : x = 2) : 0 ≤ x⁻¹ := by
   interval
 
 theorem reciprocalSum {x : ℝ} (singleton : x = 2) : x⁻¹ + x⁻¹ = 1 := by
+  interval
+
+-- Twelve nested arithmetic layers become twenty-four internal arithmetic and
+-- regularization rows, remaining below the documented term-depth cap 32.
+example {x : ℝ} (singleton : x = 1) :
+    -(-(-(-(-(-(-(-(-(-(-(-x))))))))))) = 1 := by
   interval
 
 example {x y : ℝ} (hx : x = 4) (hy : y = 2) : x / y = 2 := by
@@ -183,7 +199,16 @@ theorem ordinary {x : ℝ} (lower : 1 ≤ x) (upper : x ≤ 2) :
     2 ≤ x + x ∧ x + x ≤ 4 := by
   interval
 
+/--
+info: 'Hex.IntervalMathlib.TacticConformance.ordinary' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
 #print axioms ordinary
+
+/--
+info: 'Hex.IntervalMathlib.TacticConformance.reciprocalSum' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
 #print axioms reciprocalSum
 
 end Hex.IntervalMathlib.TacticConformance

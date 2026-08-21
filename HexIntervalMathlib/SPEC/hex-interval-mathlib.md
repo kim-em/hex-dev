@@ -81,7 +81,10 @@ strict or non-strict lower and upper goals, closed-singleton equality, and
 conjunctions. `interval?` reports the fixed forward configuration only after
 the same transaction succeeds; failure emits no misleading query result.
 `interval_bound e` elaborates and derives inside `withoutModifyingState`, then
-reports concrete selected lower/upper cuts and the recipe size. Programmatic
+reports concrete selected lower/upper cuts and the recipe size. Those cuts are
+diagnostics, not tactic syntax: noninteger dyadic endpoints may be displayed,
+while the current goal parser accepts only integer targets, so reported cuts
+are not necessarily pasteable. Programmatic
 `Tactic.deriveBound` exposes the exact authenticated forward bundle.
 
 This first vertical deliberately accepts only integer source and target cuts,

@@ -769,7 +769,9 @@ one global forward enclosure with concrete selected lower/upper cuts, and
 leaves the goal unchanged. Each computed arithmetic layer also inserts an
 internal regularization layer. Thus the reported/default term-depth cap `32`
 admits about 16 nested arithmetic operations along one expression spine; it is
-not a 32-operation nesting promise.
+not a 32-operation nesting promise. The selected cuts are diagnostics, not a
+pasteable tactic script: the backend may print noninteger dyadic endpoints,
+but this first goal parser accepts integer target cuts only.
 
 The following is the target interface once the search-to-proof recipe bridge
 and remaining package integrations are supported:
