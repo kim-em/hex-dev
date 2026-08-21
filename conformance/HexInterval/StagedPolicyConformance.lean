@@ -19,6 +19,13 @@ resulting solver split.
 
 namespace Hex.Interval.StagedPolicyConformance
 
+local notation "OfferView" =>
+  Hex.Interval.Policy.OfferView _root_.Hex.Interval.Experiment.Propagator.Policy.OfferId _root_.Hex.Interval.Experiment.Propagator.Policy.OfferKey
+local notation "Selection" =>
+  Hex.Interval.Policy.Decision _root_.Hex.Interval.Experiment.Propagator.Policy.OfferId _root_.Hex.Interval.Experiment.Propagator.Policy.OfferKey
+local notation "ScopeId" => Hex.Interval.Policy.ScopeId
+local notation "OfferClass" => Hex.Interval.Policy.OfferClass
+
 open Experiment
 open Propagator PolicySession SemanticReplay TargetRun
 open ExpSign StagedPolicy
@@ -97,29 +104,29 @@ private def invocation (index : Nat) (kind : ActionKind) : Policy.InvocationKey 
     effort := 0
     inputs := [] }
 
-private def offer (index age : Nat) (key : Policy.OfferKey) : Policy.OfferView :=
+private def offer (index age : Nat) (key : Policy.OfferKey) : OfferView :=
   { id := .suggestion { index }, key, offerClass := key.offerClass, age }
 
-private def forwardOffer : Policy.OfferView :=
+private def forwardOffer : OfferView :=
   offer 0 1 (.invoke (invocation 0 .forward))
 
-private def olderForward : Policy.OfferView :=
+private def olderForward : OfferView :=
   offer 1 5 (.invoke (invocation 1 .forward))
 
-private def instanceProbe : Policy.OfferView :=
+private def instanceProbe : OfferView :=
   offer 2 9 (.invoke (invocation 2 .instantiate))
 
-private def instanceOffer : Policy.OfferView :=
+private def instanceOffer : OfferView :=
   offer 3 9 (.instantiate (invocation 3 .instantiate)
     { family := 0, generation := 0, nodes := [], equalities := [], scopes := [] })
 
-private def retryOffer : Policy.OfferView :=
+private def retryOffer : OfferView :=
   offer 4 9 (.retry (invocation 4 .improve) 2)
 
-private def splitProbe : Policy.OfferView :=
+private def splitProbe : OfferView :=
   offer 5 9 (.invoke (invocation 5 .split))
 
-private def splitOffer : Policy.OfferView :=
+private def splitOffer : OfferView :=
   offer 6 9 (.split (invocation 6 .split)
     { node := node 0, version := 0 } 0 .midpoint)
 
@@ -163,7 +170,7 @@ private def invocation (index effort : Nat) (kind : ActionKind := .forward) :
     effort
     inputs := [] }
 
-private def offer (index age : Nat) (key : Policy.OfferKey) : Policy.OfferView :=
+private def offer (index age : Nat) (key : Policy.OfferKey) : OfferView :=
   { id := .application { index }, key, offerClass := key.offerClass, age }
 
 private def change (index : Nat) : Policy.FactDelta Nat :=
@@ -245,7 +252,7 @@ exact-snapshot fixed-point penalty. -/
 private def rewokenProductiveKey : Policy.InvocationKey :=
   { productiveKey with inputs := [{ node := node 0, version := 1 }] }
 
-private def rewokenProductiveOffer : Policy.OfferView :=
+private def rewokenProductiveOffer : OfferView :=
   offer 0 0 (.invoke rewokenProductiveKey)
 
 #guard
@@ -334,7 +341,7 @@ private def fairQuiet := { quietOffer with age := 20 }
 
 /- Learning never lets a speculative split leapfrog unsaturated cheap
 propagation merely because it is untried. -/
-private def splitOffer : Policy.OfferView :=
+private def splitOffer : OfferView :=
   offer 3 0 (.split (invocation 3 0 .split)
     { node := node 0, version := 0 } 0 .midpoint)
 
@@ -358,7 +365,7 @@ private def equalityLearned : AdaptivePolicy.State :=
         changes := #[change 0]
         narrowCalls := 2 }
 
-private def equalityOffer : Policy.OfferView :=
+private def equalityOffer : OfferView :=
   { id := .equality { index := 0 }
     key := .equality equalityKey
     offerClass := .equality

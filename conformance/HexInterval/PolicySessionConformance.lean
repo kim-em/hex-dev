@@ -18,6 +18,13 @@ narrowing work, and prepare a split.
 
 namespace Hex.Interval.PolicySessionConformance
 
+local notation "OfferView" =>
+  Hex.Interval.Policy.OfferView _root_.Hex.Interval.Experiment.Propagator.Policy.OfferId _root_.Hex.Interval.Experiment.Propagator.Policy.OfferKey
+local notation "Selection" =>
+  Hex.Interval.Policy.Decision _root_.Hex.Interval.Experiment.Propagator.Policy.OfferId _root_.Hex.Interval.Experiment.Propagator.Policy.OfferKey
+local notation "ScopeId" => Hex.Interval.Policy.ScopeId
+local notation "OfferClass" => Hex.Interval.Policy.OfferClass
+
 open Experiment Propagator
 open DyadicRules
 open PolicySession
@@ -129,7 +136,7 @@ inductive Command
   | dismissRetry (key : RuleKey) (effort : Nat)
   | split (key : RuleKey)
 
-def commandMatches : Command -> Propagator.Policy.OfferView -> Bool
+def commandMatches : Command -> (Hex.Interval.Policy.OfferView _root_.Hex.Interval.Experiment.Propagator.Policy.OfferId _root_.Hex.Interval.Experiment.Propagator.Policy.OfferKey) -> Bool
   | .invoke key, { key := .invoke source, .. } => source.rule == key
   | .instantiate key, { key := .instantiate source _, .. } => source.rule == key
   | .retry key effort, { key := .retry source offered, .. } =>
@@ -141,18 +148,14 @@ def commandMatches : Command -> Propagator.Policy.OfferView -> Bool
   | _, _ => false
 
 def selection? (session : PolicySession.Session Fact) (command : Command) :
-    Option (Propagator.Policy.Selection × PolicySession.Session Fact) :=
+    Option ((Hex.Interval.Policy.Decision _root_.Hex.Interval.Experiment.Propagator.Policy.OfferId _root_.Hex.Interval.Experiment.Propagator.Policy.OfferKey) × PolicySession.Session Fact) :=
   match session.view with
   | .ready view viewed =>
       match view.offers.toList.find? (commandMatches command) with
       | none => none
       | some offer =>
           some
-            ({ scope := view.scope
-               serial := view.serial
-               programVersion := view.programVersion
-               id := offer.id
-               expected := offer.key },
+            (Hex.Interval.Policy.select view offer,
              viewed)
   | .resource _ _ | .contradiction _ | .invalidSession _ => none
 
@@ -763,7 +766,7 @@ def matcherStart? : Option (PolicySession.Session Nat) :=
   | .error _ => none
 
 def matcherSelection? (session : PolicySession.Session Nat) :
-    Option (Propagator.Policy.Selection × PolicySession.Session Nat) :=
+    Option ((Hex.Interval.Policy.Decision _root_.Hex.Interval.Experiment.Propagator.Policy.OfferId _root_.Hex.Interval.Experiment.Propagator.Policy.OfferKey) × PolicySession.Session Nat) :=
   match session.view with
   | .ready view viewed =>
       match view.offers.toList.find? fun offer =>
@@ -774,11 +777,7 @@ def matcherSelection? (session : PolicySession.Session Nat) :
       | none => none
       | some offer =>
           some
-            ({ scope := view.scope
-               serial := view.serial
-               programVersion := view.programVersion
-               id := offer.id
-               expected := offer.key },
+            (Hex.Interval.Policy.select view offer,
              viewed)
   | .resource _ _ | .contradiction _ | .invalidSession _ => none
 

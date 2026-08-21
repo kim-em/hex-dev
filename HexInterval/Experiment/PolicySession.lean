@@ -37,6 +37,11 @@ namespace Hex.Interval.Experiment.PolicySession
 
 open Propagator
 
+local notation "PolicyDecision" =>
+  Hex.Interval.Policy.Decision Propagator.Policy.OfferId Propagator.Policy.OfferKey
+local notation "PolicyView" =>
+  Hex.Interval.Policy.View
+
 /-- All deterministic envelopes used to assemble one policy session. -/
 structure Limits where
   engine : Hex.Interval.State.Limits
@@ -97,7 +102,7 @@ def limitsCoherent (limits : Limits) : Bool :=
 configuration, then compile the engine and put it under policy control. -/
 opaque Session.start (factDomain : FactDomain Fact) (program : Program)
     (packages : Array (Package Fact)) (facts : Array Fact) (limits : Limits)
-    (scope : Propagator.Policy.ScopeId := { index := 0 }) :
+    (scope : Hex.Interval.Policy.ScopeId := { index := 0 }) :
     Except StartError (Session Fact) :=
   match Registry.buildWithin limits.engine packages with
   | .error error => .error (.registry error)
@@ -166,13 +171,14 @@ opaque Session.complete (session : Session Fact) : Bool :=
 
 /-- A policy can select any checked offer or explicitly dismiss it. -/
 inductive Choice where
-  | select (selection : Propagator.Policy.Selection)
-  | dismiss (selection : Propagator.Policy.Selection)
+  | select (selection : PolicyDecision)
+  | dismiss (selection : PolicyDecision)
 
 /-- A bounded policy view also returns the same owned session with traversal
 accounting committed. -/
 inductive ViewStep (Fact : Type) where
-  | ready (view : Propagator.Policy.View Fact) (session : Session Fact)
+  | ready (view : PolicyView Fact Propagator.Policy.OfferId Propagator.Policy.OfferKey)
+      (session : Session Fact)
   | resource (error : Propagator.Policy.ViewError) (session : Session Fact)
   | contradiction (session : Session Fact)
   | invalidSession (session : Session Fact)
@@ -192,18 +198,18 @@ opaque Session.view (session : Session Fact) : ViewStep Fact :=
 /-- Result of one policy-owned choice.  Every successful constructor returns
 the next coherent session rather than separable components. -/
 inductive Step (Fact : Type) where
-  | rule (selection : Propagator.Policy.Selection)
+  | rule (selection : PolicyDecision)
       (observation : Propagator.Policy.RuleObservation Fact)
       (session : Session Fact)
-  | equality (selection : Propagator.Policy.Selection)
+  | equality (selection : PolicyDecision)
       (observation : Propagator.Policy.EqualityObservation Fact)
       (session : Session Fact)
-  | instance (selection : Propagator.Policy.Selection)
+  | instance (selection : PolicyDecision)
       (completion : Propagator.Policy.Completed) (session : Session Fact)
-  | dismissed (selection : Propagator.Policy.Selection) (session : Session Fact)
-  | split (selection : Propagator.Policy.Selection)
+  | dismissed (selection : PolicyDecision) (session : Session Fact)
+  | split (selection : PolicyDecision)
       (plan : Propagator.Policy.SplitPlan Fact) (session : Session Fact)
-  | rejected (selection : Propagator.Policy.Selection)
+  | rejected (selection : PolicyDecision)
       (reason : Propagator.Policy.Rejection) (session : Session Fact)
   | contradiction (session : Session Fact)
   | engineResource (resource : Hex.Interval.State.Resource) (session : Session Fact)
@@ -283,11 +289,12 @@ private def rejectedSession (session : Session Fact)
   match reason with
   | .decisionLimit | .actionLimit | .malformedState =>
       halt session state
-  | .wrongScope | .staleSerial | .staleProgram | .missingOffer | .wrongKey =>
+  | .wrongScope | .staleSerial | .staleProgram | .staleBudget | .missingOffer |
+      .wrongKey | .mutatedOffer =>
       withState session state
 
 private def finishEquality (session : Session Fact)
-    (selection : Propagator.Policy.Selection)
+    (selection : PolicyDecision)
     (observation : Propagator.Policy.EqualityObservation Fact)
     (state : Propagator.Policy.State Fact) : Step Fact :=
   match observation.outcome with
@@ -301,7 +308,7 @@ private def finishEquality (session : Session Fact)
       .equality selection observation (withState session state)
 
 private def submitInvocation (session : Session Fact)
-    (selection : Propagator.Policy.Selection)
+    (selection : PolicyDecision)
     (request : RuleRequest Fact) (state : Propagator.Policy.State Fact)
     (invocation : Invocation Fact) (registry : Registry Fact) : Step Fact :=
   let plan := invocation.plan
@@ -343,7 +350,7 @@ private def submitInvocation (session : Session Fact)
             .invalidSession (halt session next registry)
 
 private def select (session : Session Fact)
-    (selection : Propagator.Policy.Selection) : Step Fact :=
+    (selection : PolicyDecision) : Step Fact :=
   match session.state.select selection with
   | .request request state =>
       let (invocation, registry) := session.registry.invokePlanned request
@@ -365,7 +372,7 @@ private def select (session : Session Fact)
       .factResource budget (halt session state)
 
 private def dismiss (session : Session Fact)
-    (selection : Propagator.Policy.Selection) : Step Fact :=
+    (selection : PolicyDecision) : Step Fact :=
   match session.state.dismiss selection with
   | .completed .dismissed state =>
       .dismissed selection (withState session state)

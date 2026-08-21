@@ -19,6 +19,13 @@ frontiers differ on live pending work.
 
 namespace Hex.Interval.NestedBranchConformance
 
+local notation "OfferView" =>
+  Hex.Interval.Policy.OfferView _root_.Hex.Interval.Experiment.Propagator.Policy.OfferId _root_.Hex.Interval.Experiment.Propagator.Policy.OfferKey
+local notation "Selection" =>
+  Hex.Interval.Policy.Decision _root_.Hex.Interval.Experiment.Propagator.Policy.OfferId _root_.Hex.Interval.Experiment.Propagator.Policy.OfferKey
+local notation "ScopeId" => Hex.Interval.Policy.ScopeId
+local notation "OfferClass" => Hex.Interval.Policy.OfferClass
+
 open Lean Elab Tactic Meta
 open Hex.Interval
 open Experiment
@@ -43,8 +50,8 @@ private inductive Route where
   | close
   deriving DecidableEq, Repr
 
-private def splitAt (wanted : NodeId) (view : Policy.View Bound) :
-    Option Policy.OfferView :=
+private def splitAt (wanted : NodeId) (view : (Hex.Interval.Policy.View Bound _root_.Hex.Interval.Experiment.Propagator.Policy.OfferId _root_.Hex.Interval.Experiment.Propagator.Policy.OfferKey)) :
+    Option OfferView :=
   view.offers.toList.find? fun offer =>
     match offer.key with
     | .invoke invocation =>
@@ -52,8 +59,8 @@ private def splitAt (wanted : NodeId) (view : Policy.View Bound) :
     | .split _ seen _ _ => seen.node == wanted
     | _ => false
 
-private def expAt (wanted : NodeId) (view : Policy.View Bound) :
-    Option Policy.OfferView :=
+private def expAt (wanted : NodeId) (view : (Hex.Interval.Policy.View Bound _root_.Hex.Interval.Experiment.Propagator.Policy.OfferId _root_.Hex.Interval.Experiment.Propagator.Policy.OfferKey)) :
+    Option OfferView :=
   view.offers.toList.find? fun offer =>
     match offer.key with
     | .invoke invocation =>

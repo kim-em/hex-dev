@@ -32,7 +32,13 @@ it does not by itself choose a production representation.
 
 namespace Hex.Interval.Experiment.Propagator.PolicyFrontier
 
-open Policy
+open _root_.Hex.Interval.Experiment.Propagator.Policy
+open Hex.Interval.Policy (OfferClass)
+
+local notation "PolicyOffer" =>
+  Hex.Interval.Policy.OfferView Policy.OfferId Policy.OfferKey
+local notation "PolicyDecision" =>
+  Hex.Interval.Policy.Decision Policy.OfferId Policy.OfferKey
 
 abbrev Rank := Nat
 
@@ -252,21 +258,21 @@ def offerIndex : OfferId -> Nat
   | .equality equality => equality.index
   | .suggestion suggestion => suggestion.index
 
-def priorityOf (offer : OfferView) : Priority :=
+def priorityOf (offer : PolicyOffer) : Priority :=
   { tier := classPriority offer.offerClass, index := offerIndex offer.id }
 
 def Priority.higher (left right : Priority) : Bool :=
   right.tier < left.tier ||
     (left.tier == right.tier && right.index < left.index)
 
-def offerHigher (left right : OfferView) : Bool :=
+def offerHigher (left right : PolicyOffer) : Bool :=
   (priorityOf left).higher (priorityOf right)
 
 /-- Select the maximum semantic offer and report exact policy comparisons.
 This is intentionally not `offers[0]?`: both representations exercise a real
 choice over the frontier. -/
-def chooseMaximum (offers : Array OfferView) : Option OfferView × Nat := Id.run do
-  let mut best : Option OfferView := none
+def chooseMaximum (offers : Array PolicyOffer) : Option PolicyOffer × Nat := Id.run do
+  let mut best : Option PolicyOffer := none
   let mut comparisons := 0
   for offer in offers do
     match best with
@@ -355,7 +361,7 @@ def Heap.pop (heap : Heap) : Option (Entry × Heap × HeapCost) :=
       let (entries, cost) := siftDown entries 0 { moves := 2 }
       some (first, { entries }, cost)
 
-def Heap.ofOffers (offers : Array OfferView) : Heap × HeapCost := Id.run do
+def Heap.ofOffers (offers : Array PolicyOffer) : Heap × HeapCost := Id.run do
   let mut heap : Heap := {}
   let mut cost : HeapCost := {}
   for offer in offers do
@@ -411,7 +417,7 @@ def offerSemanticItems (state : Policy.State Fact) : OfferId -> Nat
   | .suggestion suggestion =>
       (state.engine.suggestions[suggestion.index]?).map retainedSemanticItems |>.getD 0
 
-def offersSemanticItems (state : Policy.State Fact) (offers : Array OfferView) : Nat :=
+def offersSemanticItems (state : Policy.State Fact) (offers : Array PolicyOffer) : Nat :=
   offers.foldl (fun count offer => count + offerSemanticItems state offer.id) 0
 
 def pruneSemanticItems (state : Policy.State Fact) : Nat := Id.run do
@@ -426,7 +432,7 @@ def pruneSemanticItems (state : Policy.State Fact) : Nat := Id.run do
 def frontierBacking (state : Policy.State Fact) : Nat :=
   state.applications.size + state.equalities.size + state.suggestions.size
 
-def Work.view (work : Work) (state : Policy.State Fact) (offers : Array OfferView) : Work :=
+def Work.view (work : Work) (state : Policy.State Fact) (offers : Array PolicyOffer) : Work :=
   { work with
     frontierSlots := work.frontierSlots + frontierBacking state
     frontierEmits := work.frontierEmits + offers.size
@@ -451,12 +457,16 @@ def Work.dependencies (work : Work) (before after : Engine Rank) : Work :=
     metricDelta before.metrics.suppressedInsertions after.metrics.suppressedInsertions
   { work with dependencyVisits := work.dependencyVisits + inserted + suppressed }
 
-def selectionFor (state : Policy.State Rank) (offer : OfferView) : Selection :=
+def selectionFor (state : Policy.State Rank) (offer : PolicyOffer) : PolicyDecision :=
   { scope := state.scope
     serial := state.serial
     programVersion := state.engine.programVersion
     id := offer.id
-    expected := offer.key }
+    expected := offer.key
+    offerClass := offer.offerClass
+    age := offer.age
+    score := offer.score
+    remaining := state.budgetView }
 
 structure Step where
   state : Policy.State Rank
@@ -466,7 +476,7 @@ structure Step where
 arbitrary registry, instantiations go through engine-owned structural
 admission, and only optional split suggestions are dismissed. -/
 def execute (workload : Workload) (state : Policy.State Rank)
-    (offer : OfferView) (work : Work) : Option Step :=
+    (offer : PolicyOffer) (work : Work) : Option Step :=
   let selection := selectionFor state offer
   let work :=
     { work with

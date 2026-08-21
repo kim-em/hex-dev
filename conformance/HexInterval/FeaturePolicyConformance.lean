@@ -15,6 +15,13 @@ The policy sees only configured addresses and signed integers.
 
 namespace Hex.Interval.FeaturePolicyConformance
 
+local notation "OfferView" =>
+  Hex.Interval.Policy.OfferView _root_.Hex.Interval.Experiment.Propagator.Policy.OfferId _root_.Hex.Interval.Experiment.Propagator.Policy.OfferKey
+local notation "Selection" =>
+  Hex.Interval.Policy.Decision _root_.Hex.Interval.Experiment.Propagator.Policy.OfferId _root_.Hex.Interval.Experiment.Propagator.Policy.OfferKey
+local notation "ScopeId" => Hex.Interval.Policy.ScopeId
+local notation "OfferClass" => Hex.Interval.Policy.OfferClass
+
 open Experiment Propagator Propagator.Policy PolicyFeature FeaturePolicy
 
 private def node (index : Nat) : NodeId := { index }
@@ -42,7 +49,7 @@ private def splitOffer (index : Nat) : OfferView :=
     offerClass := .split
     age := 0 }
 
-private def view (offers : Array OfferView) : Policy.View Nat :=
+private def view (offers : Array OfferView) : (Hex.Interval.Policy.View Nat _root_.Hex.Interval.Experiment.Propagator.Policy.OfferId _root_.Hex.Interval.Experiment.Propagator.Policy.OfferKey) :=
   { scope := { index := 0 }
     serial := 2
     programVersion := 3

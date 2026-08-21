@@ -17,6 +17,13 @@ against the Mathlib theorem schemas.
 
 namespace Hex.IntervalMathlib.SineSignConformance
 
+local notation "OfferView" =>
+  Hex.Interval.Policy.OfferView _root_.Hex.Interval.Experiment.Propagator.Policy.OfferId _root_.Hex.Interval.Experiment.Propagator.Policy.OfferKey
+local notation "Selection" =>
+  Hex.Interval.Policy.Decision _root_.Hex.Interval.Experiment.Propagator.Policy.OfferId _root_.Hex.Interval.Experiment.Propagator.Policy.OfferKey
+local notation "ScopeId" => Hex.Interval.Policy.ScopeId
+local notation "OfferClass" => Hex.Interval.Policy.OfferClass
+
 open Hex.Interval
 open Hex.Interval.Experiment
 open Propagator PolicySession SemanticReplay ChronologicalReplay TraceReplay
@@ -24,9 +31,9 @@ open Propagator PolicySession SemanticReplay ChronologicalReplay TraceReplay
 open SineSign
 
 def offer? (session : PolicySession.Session Range)
-    (accepts : Propagator.Policy.OfferView -> Bool) :
+    (accepts : (Hex.Interval.Policy.OfferView _root_.Hex.Interval.Experiment.Propagator.Policy.OfferId _root_.Hex.Interval.Experiment.Propagator.Policy.OfferKey) -> Bool) :
     Option
-      (Propagator.Policy.OfferView × Propagator.Policy.Selection ×
+      ((Hex.Interval.Policy.OfferView _root_.Hex.Interval.Experiment.Propagator.Policy.OfferId _root_.Hex.Interval.Experiment.Propagator.Policy.OfferKey) × (Hex.Interval.Policy.Decision _root_.Hex.Interval.Experiment.Propagator.Policy.OfferId _root_.Hex.Interval.Experiment.Propagator.Policy.OfferKey) ×
         PolicySession.Session Range) :=
   match session.view with
   | .ready view viewed =>
@@ -34,27 +41,21 @@ def offer? (session : PolicySession.Session Range)
       | none => none
       | some offer =>
           some
-            (offer,
-              { scope := view.scope
-                serial := view.serial
-                programVersion := view.programVersion
-                id := offer.id
-                expected := offer.key },
-              viewed)
+            (offer, Hex.Interval.Policy.select view offer, viewed)
   | .resource _ _ | .contradiction _ | .invalidSession _ => none
 
 def invokes (key : RuleKey) (anchor : NodeId)
-    (offer : Propagator.Policy.OfferView) : Bool :=
+    (offer : (Hex.Interval.Policy.OfferView _root_.Hex.Interval.Experiment.Propagator.Policy.OfferId _root_.Hex.Interval.Experiment.Propagator.Policy.OfferKey)) : Bool :=
   match offer.key with
   | .invoke invocation => invocation.rule == key && invocation.anchor == anchor
   | _ => false
 
-def instantiatesOddness (offer : Propagator.Policy.OfferView) : Bool :=
+def instantiatesOddness (offer : (Hex.Interval.Policy.OfferView _root_.Hex.Interval.Experiment.Propagator.Policy.OfferId _root_.Hex.Interval.Experiment.Propagator.Policy.OfferKey)) : Bool :=
   match offer.key with
   | .instantiate source _ => source.rule == oddnessRuleKey
   | _ => false
 
-def firstEquality (offer : Propagator.Policy.OfferView) : Bool :=
+def firstEquality (offer : (Hex.Interval.Policy.OfferView _root_.Hex.Interval.Experiment.Propagator.Policy.OfferId _root_.Hex.Interval.Experiment.Propagator.Policy.OfferKey)) : Bool :=
   match offer.key with
   | .equality contractor => contractor.equality == ({ index := 0 } : EqualityId)
   | _ => false

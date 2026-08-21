@@ -26,6 +26,9 @@ namespace Hex.Interval.Experiment.StagedPolicy
 
 open Propagator Propagator.Policy TargetRun
 
+local notation "PolicyOffer" =>
+  Hex.Interval.Policy.OfferView Propagator.Policy.OfferId Propagator.Policy.OfferKey
+
 /-- Replaceable feature gates for the staged baseline. -/
 structure Config where
   allowInstantiation : Bool := true
@@ -67,7 +70,7 @@ def splitReasonRank : SplitReason -> Nat
 
 /-- Coarse replaceable stages. Lower values run first. An invocation which
 discovers an instantiation or split precedes the resulting semantic offer. -/
-def rank : OfferView -> Nat
+def rank : PolicyOffer -> Nat
   | { key := .equality _, .. } => 0
   | { key := .invoke invocation, .. } =>
       match invocation.kind with
@@ -79,7 +82,7 @@ def rank : OfferView -> Nat
   | { key := .retry _ _, .. } => 21
   | { key := .split _ _ _ reason, .. } => 40 + splitReasonRank reason
 
-def allowed (config : Config) (offer : OfferView) : Bool :=
+def allowed (config : Config) (offer : PolicyOffer) : Bool :=
   match offer.key with
   | .retry _ effort => config.allowRetries && effort <= config.maxRetryEffort
   | .instantiate _ _ => config.allowInstantiation
@@ -91,13 +94,13 @@ def allowed (config : Config) (offer : OfferView) : Bool :=
       | .forward | .backward | .improve | .shave | .rewrite | .regularize => true
   | .equality _ => true
 
-def better (candidate current : OfferView) : Bool :=
+def better (candidate current : PolicyOffer) : Bool :=
   rank candidate < rank current ||
     (rank candidate == rank current && current.age < candidate.age)
 
 /-- Select the oldest offer in the earliest enabled stage. Array order is the
 final deterministic tie-breaker. -/
-def choose? (config : Config) (offers : Array OfferView) : Option OfferView :=
+def choose? (config : Config) (offers : Array PolicyOffer) : Option PolicyOffer :=
   offers.foldl (fun best candidate =>
     if !allowed config candidate then best
     else

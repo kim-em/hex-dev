@@ -71,9 +71,15 @@ work-queue, chronology, and bounded diagnostic snapshots. These records
 deliberately contain neither function callbacks nor proof evidence. The state
 records are a stable decoded interchange and validation contract; they do not
 select the eventual mutable, persistent, paged, or trail-backed implementation
-used inside a high-performance branch search. Package assembly, callback
-outcomes and proposals, policy choice, sessions, branch search, payload
-storage, proof replay, and that optimized backing store remain experimental.
+used inside a high-performance branch search. The supported boundary also
+includes generic bounded policy offers/views, exact echoed decisions, a
+replaceable choice interface, package-measured byte/pair/work caps, and
+transactional revalidation against exact program, fact snapshot, scope,
+serial, program version, remaining budget, and complete offer fields. It does
+not choose a semantic offer-key encoding or a default policy. Package assembly,
+callback outcomes and proposals, concrete policy algorithms, sessions, branch
+search, payload storage, proof replay, and that optimized backing store remain
+experimental.
 In particular, the current instantiation proposal's package-supplied numeric
 policy family is not part of the supported action contract.
 
@@ -3079,13 +3085,44 @@ conditional fact into the parent scope.
 The policy affects success and performance, never validity. In particular it
 does not construct an `Action`: action serials, program snapshots, concrete
 applications, and input versions are engine-owned authority. The engine owns a
-bounded frontier of offers and the policy returns only the stable identity and
-canonical key of one offer it observed. In the sketch below,
+bounded frontier of offers and the policy echoes the complete controller-owned
+description of one offer it observed; selection returns the retained offer,
+never the policy's copy. In the sketch below,
 `InstantiationSemanticKey` is the payload-erased canonical family,
 engine-computed generation, proposed-operation/reference graph, and unordered
 equality-pair key. Replay-facing trigger metadata is deliberately absent;
 `PolicyFeature` is a bounded exact integer key/value; and frontier events are
-engine-issued additions, refreshes, tombstones, and observations:
+engine-issued additions, refreshes, tombstones, and observations.
+
+The current Mathlib-free `HexInterval/Policy.lean` contract implements the
+generic part of this boundary. `OfferView Id SemanticKey` retains the complete
+controller-issued offer, and `Decision Id SemanticKey` echoes its scope,
+serial, program version, remaining budget, identifier, semantic key, class,
+age, and bounded score. `checkViewWithin`, `revalidate`, and
+`checkDecisionWithin` fail transactionally on malformed program/fact state,
+duplicate identifiers, stale stamps or budgets, changed offer fields, and
+independent offer-count, byte, pair, logical-work, and score caps. Identifier
+and semantic-key measurement callbacks, equality on nested key values, and
+equality on arbitrary reconstructed facts remain an explicit non-preemptible
+envelope; the cap governs accepted retained data and subsequent adapter work,
+not arbitrary callback allocation or time. Branch-backed decision validation
+reconstructs and validates the branch snapshot once, then checks bounded offers
+without repeating whole-program validation. The returned runtime value has no
+theorem authority.
+
+The experimental target controller now implements the supported `Interface`
+and returns the actual supported `Step`; it stamps a selected supported offer
+into a supported decision before the policy session authenticates the exact
+scope, serial, program version, remaining budget, identifier, semantic key,
+class, age, and score and performs the existing engine-owned freshness checks.
+The concrete `OfferId`,
+`OfferKey`, instantiation/split encodings, staged/adaptive/feature policies,
+package callbacks, event history, sessions, and branch-search loop remain under
+`HexInterval/Experiment`. In particular no `balancedV1`, score model, storage
+layout, scheduler, or default policy is selected by the supported contract.
+
+The implemented generic records and current concrete experimental keys are
+sketched below:
 
 ```lean
 structure PolicyKey where
@@ -3143,11 +3180,16 @@ structure PolicyBudget where
   noteBytes : Nat
 
 structure EngineBudgetView where
-  actions       : Nat
-  acceptedFacts : Nat
-  nodes         : Nat
-  equalities    : Nat
-  branches      : Nat
+  actions             : Nat
+  matcherVisits       : Nat
+  acceptedFacts       : Nat
+  nodes               : Nat
+  applications        : Nat
+  equalities          : Nat
+  retainedSuggestions : Nat
+  instances           : Nat
+  queueEntries        : Nat
+  generation          : Nat
 
 structure FactDelta (Fact : Type) where
   node          : NodeId
@@ -3202,12 +3244,16 @@ structure PolicyView (Fact : Type) where
   goalFeatures   : Array PolicyFeature
   remaining      : EngineBudgetView
 
-structure Selection where
+structure Decision where
   scope          : ScopeId
   serial         : Nat
   programVersion : Nat
   id             : OfferId
   expected       : OfferKey
+  offerClass     : OfferClass
+  age            : Nat
+  score          : Int
+  remaining      : EngineBudgetView
 
 inductive PolicyEvent (Fact : Type)
   | frontier (added : Array OfferView) (removed : Array OfferId)
@@ -3215,7 +3261,7 @@ inductive PolicyEvent (Fact : Type)
   | equality (observation : EqualityObservation Fact)
   | instanceAdmitted (programVersion : Nat) (added : Array OfferView)
   | splitPrepared (scope : ScopeId) (node : NodeId) (point : Dyadic)
-  | choiceRejected (choice : Selection) (reason : Nat)
+  | choiceRejected (choice : Decision) (reason : Nat)
   | engineResource (resource : Resource)
 
 structure DecisionNote where
@@ -3224,8 +3270,8 @@ structure DecisionNote where
   score  : Nat
 
 inductive PolicyStep (State : Type)
-  | select  (choice : Selection) (note : DecisionNote) (next : State)
-  | dismiss (choice : Selection) (note : DecisionNote) (next : State)
+  | select  (choice : Decision) (note : DecisionNote) (next : State)
+  | dismiss (choice : Decision) (note : DecisionNote) (next : State)
   | stop    (reason : Nat) (next : State)
 
 structure Policy (Fact : Type) where
@@ -5037,6 +5083,12 @@ their declared cost inside a scheduler bound.
   dependency watchers, dirty bits, append-only work queues with policy
   tombstones, controller resources, and transactional checked builders. These
   decoded arrays do not select the optimized branch-storage implementation.
+- `HexInterval/Policy.lean`: supported Mathlib-free scope and policy keys,
+  generic bounded offer/view/decision/step/interface contracts, exact retained
+  offer revalidation, and checked count/byte/pair/work/score admission. Concrete
+  semantic offer keys and policies remain experimental; package measurement
+  callbacks and equality on nested identifiers, keys, and reconstructed facts
+  are explicitly non-preemptible.
 - `HexInterval/Experiment/Propagator.lean`: current experimental concrete
   applications, callbacks, outcomes, untrusted proposals and replies, and
   extension admission. Its engine extends and mutates only through the

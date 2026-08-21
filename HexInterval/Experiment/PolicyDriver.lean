@@ -30,13 +30,22 @@ namespace Hex.Interval.Experiment.Propagator.Policy.Driver
 
 universe u
 
+open Hex.Interval.Policy (ScopeId PolicyKey OfferClass)
+
+local notation "PolicyOffer" =>
+  Hex.Interval.Policy.OfferView OfferId OfferKey
+local notation "PolicyDecision" =>
+  Hex.Interval.Policy.Decision OfferId OfferKey
+local notation "PolicyView" =>
+  Hex.Interval.Policy.View
+
 /-! ## External policy protocol -/
 
 /-- One external policy decision.  Policy-private state has an arbitrary Lean
 type and remains outside the trusted engine. -/
 inductive Step (PolicyState : Type)
-  | select (selection : Selection) (next : PolicyState)
-  | dismiss (selection : Selection) (next : PolicyState)
+  | select (selection : PolicyDecision) (next : PolicyState)
+  | dismiss (selection : PolicyDecision) (next : PolicyState)
   | stop (next : PolicyState)
 
 /-- Outcome of selecting one retained instantiation offer. -/
@@ -48,20 +57,20 @@ inductive InstanceOutcome
 
 /-- The engine transition which exhausted a resource. -/
 inductive ResourceOrigin
-  | choice (selection : Selection)
-  | invocation (selection : Selection) (invocation : InvocationKey)
+  | choice (selection : PolicyDecision)
+  | invocation (selection : PolicyDecision) (invocation : InvocationKey)
 
 /-- One ordered policy observation.  Successful choices retain the exact
 selection as well as the engine-produced semantic observation. -/
 inductive Event (Fact : Type)
-  | rule (selection : Selection) (observation : RuleObservation Fact)
-  | replyRejected (selection : Selection) (invocation : InvocationKey)
+  | rule (selection : PolicyDecision) (observation : RuleObservation Fact)
+  | replyRejected (selection : PolicyDecision) (invocation : InvocationKey)
       (error : ReplyError)
-  | equality (selection : Selection) (observation : EqualityObservation Fact)
-  | instance (selection : Selection) (outcome : InstanceOutcome)
-  | dismissal (selection : Selection) (halts : Bool) (causesIncomplete : Bool)
-  | splitPrepared (selection : Selection) (plan : SplitPlan Fact)
-  | choiceRejected (selection : Selection) (reason : Rejection)
+  | equality (selection : PolicyDecision) (observation : EqualityObservation Fact)
+  | instance (selection : PolicyDecision) (outcome : InstanceOutcome)
+  | dismissal (selection : PolicyDecision) (halts : Bool) (causesIncomplete : Bool)
+  | splitPrepared (selection : PolicyDecision) (plan : SplitPlan Fact)
+  | choiceRejected (selection : PolicyDecision) (reason : Rejection)
   | engineResource (origin : ResourceOrigin) (resource : Hex.Interval.State.Resource)
   | factResource (origin : ResourceOrigin) (budget : Nat)
   | decisionResource
@@ -79,13 +88,14 @@ external code cannot establish a theorem. -/
 structure Controller (Fact PolicyState : Type) where
   key : PolicyKey
   update : PolicyState -> Event Fact -> PolicyState
-  choose : PolicyState -> View Fact -> Step PolicyState
+  choose : PolicyState ->
+    PolicyView Fact OfferId OfferKey -> Step PolicyState
 
 /-! ## Driver result -/
 
 inductive UnknownReason
   | policyStop (liveOffers : Nat)
-  | requiredDismissal (selection : Selection)
+  | requiredDismissal (selection : PolicyDecision)
   | incomplete
 
 /-- Why policy execution stopped.  A prepared split is returned rather than
@@ -138,7 +148,7 @@ def dismissalAffects : OfferClass -> Bool
 /-- Whether this dismissal is responsible for completeness being unavailable.
 The offer class remains visible even if an earlier transition had already
 made the state incomplete. -/
-def dismissalCauses (before : State Fact) (selection : Selection)
+def dismissalCauses (before : State Fact) (selection : PolicyDecision)
     (after : State Fact) : Bool :=
   after.incomplete &&
     (!before.incomplete || dismissalAffects selection.expected.offerClass)
@@ -276,8 +286,8 @@ def driveFrom {Cache : Type u} (controller : Controller Fact PolicyState)
                           | .malformedState =>
                               finish controller .invalidState .invalidState
                                 afterRejection cache next events
-                          | .wrongScope | .staleSerial | .staleProgram |
-                              .missingOffer | .wrongKey =>
+                          | .wrongScope | .staleSerial | .staleProgram | .staleBudget |
+                              .missingOffer | .wrongKey | .mutatedOffer =>
                               driveFrom controller invoke remaining afterRejection cache next events
                       | .engineResource resource afterResource =>
                           finish controller (.engineResource (.choice selection) resource)
@@ -316,8 +326,8 @@ def driveFrom {Cache : Type u} (controller : Controller Fact PolicyState)
                           | .malformedState =>
                               finish controller .invalidState .invalidState
                                 afterRejection cache next events
-                          | .wrongScope | .staleSerial | .staleProgram |
-                              .missingOffer | .wrongKey =>
+                          | .wrongScope | .staleSerial | .staleProgram | .staleBudget |
+                              .missingOffer | .wrongKey | .mutatedOffer =>
                               driveFrom controller invoke remaining afterRejection cache next events
                       | .request _ invalid | .equality _ invalid | .completed _ invalid |
                           .split _ invalid | .engineResource _ invalid |

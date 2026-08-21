@@ -20,6 +20,13 @@ contribute to theorem-instantiation generation.
 
 namespace Hex.Interval.MatcherSchedulerConformance
 
+local notation "OfferView" =>
+  Hex.Interval.Policy.OfferView _root_.Hex.Interval.Experiment.Propagator.Policy.OfferId _root_.Hex.Interval.Experiment.Propagator.Policy.OfferKey
+local notation "Selection" =>
+  Hex.Interval.Policy.Decision _root_.Hex.Interval.Experiment.Propagator.Policy.OfferId _root_.Hex.Interval.Experiment.Propagator.Policy.OfferKey
+local notation "ScopeId" => Hex.Interval.Policy.ScopeId
+local notation "OfferClass" => Hex.Interval.Policy.OfferClass
+
 open Experiment.Propagator
 
 abbrev Rank := Nat
@@ -586,16 +593,18 @@ def registryAdmitted? : Option (Registry Rank × Engine Rank) := do
 
 /-! ## The replaceable policy sees and selects the same engine-owned batch -/
 
-def policyLimits : Policy.Limits :=
+def policyLimits : Experiment.Propagator.Policy.Limits :=
   { maxDecisions := 8
     maxTraversal := 32
     maxLiveOffers := 8 }
 
 def retainedTraversal (maxTraversal : Nat) :
-    Option (Except Policy.ViewError (Policy.View Rank × Policy.State Rank)) := do
+    Option (Except Experiment.Propagator.Policy.ViewError
+      (Hex.Interval.Policy.View Rank Experiment.Propagator.Policy.OfferId
+        Experiment.Propagator.Policy.OfferKey × Experiment.Propagator.Policy.State Rank)) := do
   let engine <- retainedOddness?
   let state :=
-    Policy.State.start engine { policyLimits with maxTraversal }
+    Experiment.Propagator.Policy.State.start engine { policyLimits with maxTraversal }
   some state.view
 
 -- The retained oddness offer costs two backing slots, nine proposal items,
@@ -621,9 +630,9 @@ def retryEngine? : Option (Engine Rank) := do
       (request.action.reply (.success [] [.retry 1] {})) | none
   if plan.kept.length == 1 then some state else none
 
-def selectedRetry? : Option (RuleRequest Rank × Policy.State Rank) := do
+def selectedRetry? : Option (RuleRequest Rank × Experiment.Propagator.Policy.State Rank) := do
   let engine <- retryEngine?
-  let state := Policy.State.start engine policyLimits
+  let state := Experiment.Propagator.Policy.State.start engine policyLimits
   let offer <- state.offer? (.suggestion { index := 0 })
   let .request request state :=
     state.select
@@ -631,7 +640,11 @@ def selectedRetry? : Option (RuleRequest Rank × Policy.State Rank) := do
         serial := state.serial
         programVersion := state.engine.programVersion
         id := offer.id
-        expected := offer.key } | none
+        expected := offer.key
+        offerClass := offer.offerClass
+        age := offer.age
+        score := offer.score
+        remaining := state.budgetView } | none
   pure (request, state)
 
 -- A retained retry replays its original structural evidence without claiming
@@ -664,7 +677,7 @@ def selectedRetry? : Option (RuleRequest Rank × Policy.State Rank) := do
             { engine with
               matcherCursors :=
                 engine.matcherCursors.set! 0 (some { cursor with epoch := cursor.epoch + 1 }) }
-          let state := Policy.State.start engine policyLimits
+          let state := Experiment.Propagator.Policy.State.start engine policyLimits
           match state.offer? (.suggestion { index := 0 }) with
           | some offer =>
               match state.select
@@ -672,7 +685,11 @@ def selectedRetry? : Option (RuleRequest Rank × Policy.State Rank) := do
                     serial := state.serial
                     programVersion := state.engine.programVersion
                     id := offer.id
-                    expected := offer.key } with
+                    expected := offer.key
+                    offerClass := offer.offerClass
+                    age := offer.age
+                    score := offer.score
+                    remaining := state.budgetView } with
               | .rejected .malformedState after =>
                   after.engine.metrics.matcherVisits == 2
               | _ => false
@@ -680,9 +697,11 @@ def selectedRetry? : Option (RuleRequest Rank × Policy.State Rank) := do
       | _ => false
   | none => false
 
-def policyView? : Option (Policy.View Rank × Policy.State Rank) := do
+def policyView? : Option
+    (Hex.Interval.Policy.View Rank Experiment.Propagator.Policy.OfferId
+      Experiment.Propagator.Policy.OfferKey × Experiment.Propagator.Policy.State Rank) := do
   let engine <- started?
-  match (Policy.State.start engine policyLimits).view with
+  match (Experiment.Propagator.Policy.State.start engine policyLimits).view with
   | .ok pair => some pair
   | .error _ => none
 
@@ -691,7 +710,7 @@ def policyView? : Option (Policy.View Rank × Policy.State Rank) := do
   | some (view, _) =>
       view.offers.size == 1 && view.remaining.matcherVisits == 16 &&
         match view.offers[0]?.map (fun offer => offer.key) with
-        | some (Policy.OfferKey.invoke invocation) =>
+        | some (Experiment.Propagator.Policy.OfferKey.invoke invocation) =>
             invocation.structuralInputs.map (fun input => input.key) ==
                 [.node (node 0), .node (node 1)] &&
               invocation.matcherEpoch == some 0 && !invocation.matcherBlocked
@@ -699,16 +718,11 @@ def policyView? : Option (Policy.View Rank × Policy.State Rank) := do
   | none => false
 
 def policySelected? :
-    Option (RuleRequest Rank × Policy.State Rank × Policy.InvocationKey) := do
+    Option (RuleRequest Rank × Experiment.Propagator.Policy.State Rank × Experiment.Propagator.Policy.InvocationKey) := do
   let (view, state) <- policyView?
   let offer <- view.offers[0]?
-  let Policy.OfferKey.invoke invocation := offer.key | none
-  let selection : Policy.Selection :=
-    { scope := view.scope
-      serial := view.serial
-      programVersion := view.programVersion
-      id := offer.id
-      expected := offer.key }
+  let Experiment.Propagator.Policy.OfferKey.invoke invocation := offer.key | none
+  let selection : Selection := Hex.Interval.Policy.select view offer
   let .request request state := state.select selection | none
   pure (request, state, invocation)
 
@@ -731,11 +745,13 @@ def policySelected? :
         | _ => false
   | none => false
 
-def blockedPolicy? : Option (Policy.View Rank × Policy.State Rank) := do
+def blockedPolicy? : Option
+    (Hex.Interval.Policy.View Rank Experiment.Propagator.Policy.OfferId
+      Experiment.Propagator.Policy.OfferKey × Experiment.Propagator.Policy.State Rank) := do
   let .ok engine :=
     Engine.start rankDomain program #[matcherRule, contractRule] #[0, 0, 0]
       { limits with maxMatcherVisits := 0 } | none
-  match (Policy.State.start engine policyLimits).view with
+  match (Experiment.Propagator.Policy.State.start engine policyLimits).view with
   | .ok pair => some pair
   | .error _ => none
 
@@ -747,14 +763,18 @@ def blockedPolicy? : Option (Policy.View Rank × Policy.State Rank) := do
       match view.offers[0]? with
       | some offer =>
           match offer.key with
-          | Policy.OfferKey.invoke invocation =>
+          | Experiment.Propagator.Policy.OfferKey.invoke invocation =>
               invocation.matcherBlocked &&
                 match state.select
                     { scope := view.scope
                       serial := view.serial
                       programVersion := view.programVersion
                       id := offer.id
-                      expected := offer.key } with
+                      expected := offer.key
+                      offerClass := offer.offerClass
+                      age := offer.age
+                      score := offer.score
+                      remaining := view.remaining } with
                 | .engineResource .matcherVisits _ => true
                 | _ => false
           | _ => false

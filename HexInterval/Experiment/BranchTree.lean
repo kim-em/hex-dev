@@ -68,14 +68,14 @@ structure TreeId where
 
 /-- Exact input, scope, depth, and private policy state of one leaf. -/
 structure Leaf (Fact PolicyState : Type) where
-  scope : Propagator.Policy.ScopeId
+  scope : Hex.Interval.Policy.ScopeId
   depth : Nat
   input : CheckerInput Fact
   policyState : PolicyState
 
 /-- A leaf whose policy session can still be run. -/
 structure Job (Fact PolicyState : Type) : Type 1 where
-  scope : Propagator.Policy.ScopeId
+  scope : Hex.Interval.Policy.ScopeId
   depth : Nat
   input : CheckerInput Fact
   policyState : PolicyState
@@ -145,7 +145,7 @@ def State.stepLimited (limits : Limits) (state : State Fact PolicyState) : Bool 
   state.steps >= limits.maxSteps && !state.frontier.isEmpty
 
 /-- Build a coherent root session from the exact caller input. -/
-def start (config : Config Fact PolicyState) (scope : Propagator.Policy.ScopeId)
+def start (config : Config Fact PolicyState) (scope : Hex.Interval.Policy.ScopeId)
     (input : CheckerInput Fact) (policyState : PolicyState) :
     Except StartError (State Fact PolicyState) := do
   if config.limits.maxLeaves = 0 then throw .leafLimit
@@ -173,7 +173,7 @@ def schedule (order : Order) (rest fresh : List TreeId) : List TreeId :=
   | .breadthFirst => rest ++ fresh
 
 def childNode (config : Config Fact PolicyState) (side : Side)
-    (scope : Propagator.Policy.ScopeId) (depth : Nat) (input : CheckerInput Fact)
+    (scope : Hex.Interval.Policy.ScopeId) (depth : Nat) (input : CheckerInput Fact)
     (policyState : PolicyState) : Node Fact PolicyState × Bool :=
   let childState := config.forkPolicy policyState side
   let source : Leaf Fact PolicyState := { scope, depth, input, policyState := childState }

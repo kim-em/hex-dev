@@ -25,6 +25,13 @@ ordinary kernel-checked theorem.
 
 namespace Hex.IntervalMathlib.ExpSignConformance
 
+local notation "OfferView" =>
+  Hex.Interval.Policy.OfferView _root_.Hex.Interval.Experiment.Propagator.Policy.OfferId _root_.Hex.Interval.Experiment.Propagator.Policy.OfferKey
+local notation "Selection" =>
+  Hex.Interval.Policy.Decision _root_.Hex.Interval.Experiment.Propagator.Policy.OfferId _root_.Hex.Interval.Experiment.Propagator.Policy.OfferKey
+local notation "ScopeId" => Hex.Interval.Policy.ScopeId
+local notation "OfferClass" => Hex.Interval.Policy.OfferClass
+
 open Lean Elab Tactic Meta
 open Hex.Interval
 open Hex.Interval.Experiment
@@ -146,9 +153,9 @@ private def spareOperation : Operation :=
       baseProgram := { program with operations := operations.push spareOperation } }
 
 def offer? (session : PolicySession.Session Bound)
-    (accepts : Propagator.Policy.OfferView → Bool) :
+    (accepts : (Hex.Interval.Policy.OfferView _root_.Hex.Interval.Experiment.Propagator.Policy.OfferId _root_.Hex.Interval.Experiment.Propagator.Policy.OfferKey) → Bool) :
     Option
-      (Propagator.Policy.OfferView × Propagator.Policy.Selection ×
+      ((Hex.Interval.Policy.OfferView _root_.Hex.Interval.Experiment.Propagator.Policy.OfferId _root_.Hex.Interval.Experiment.Propagator.Policy.OfferKey) × (Hex.Interval.Policy.Decision _root_.Hex.Interval.Experiment.Propagator.Policy.OfferId _root_.Hex.Interval.Experiment.Propagator.Policy.OfferKey) ×
         PolicySession.Session Bound) :=
   match session.view with
   | .ready view viewed =>
@@ -156,22 +163,16 @@ def offer? (session : PolicySession.Session Bound)
       | none => none
       | some offer =>
           some
-            (offer,
-              { scope := view.scope
-                serial := view.serial
-                programVersion := view.programVersion
-                id := offer.id
-                expected := offer.key },
-              viewed)
+            (offer, Hex.Interval.Policy.select view offer, viewed)
   | .resource _ _ | .contradiction _ | .invalidSession _ => none
 
-def invokesExpAt (target : NodeId) (offer : Propagator.Policy.OfferView) : Bool :=
+def invokesExpAt (target : NodeId) (offer : (Hex.Interval.Policy.OfferView _root_.Hex.Interval.Experiment.Propagator.Policy.OfferId _root_.Hex.Interval.Experiment.Propagator.Policy.OfferKey)) : Bool :=
   match offer.key with
   | .invoke invocation =>
       invocation.rule == expRuleKey && invocation.anchor == target
   | _ => false
 
-def invokesExp (offer : Propagator.Policy.OfferView) : Bool :=
+def invokesExp (offer : (Hex.Interval.Policy.OfferView _root_.Hex.Interval.Experiment.Propagator.Policy.OfferId _root_.Hex.Interval.Experiment.Propagator.Policy.OfferKey)) : Bool :=
   invokesExpAt (node 1) offer
 
 def contracted? : Option (PolicySession.Session Bound) := do
@@ -233,7 +234,7 @@ structure RunFixture extends Fixture where
 
 def runWith? (runtimePackages : Array (Package Bound))
     (input : CheckerInput Bound) (controller : TargetRun.Controller Bound Unit)
-    (fuel : Nat) (scope : Propagator.Policy.ScopeId := { index := 0 }) :
+    (fuel : Nat) (scope : Hex.Interval.Policy.ScopeId := { index := 0 }) :
     Option (TargetRun.Result Bound Unit) := do
   let .ok session := PolicySession.Session.start factDomain
       input.baseProgram runtimePackages input.initialFacts limits scope
@@ -242,12 +243,12 @@ def runWith? (runtimePackages : Array (Package Bound))
     fuel session ())
 
 def runRaw? (input : CheckerInput Bound) (controller : TargetRun.Controller Bound Unit)
-    (fuel : Nat) (scope : Propagator.Policy.ScopeId := { index := 0 }) :
+    (fuel : Nat) (scope : Hex.Interval.Policy.ScopeId := { index := 0 }) :
     Option (TargetRun.Result Bound Unit) :=
   runWith? packages input controller fuel scope
 
 def runInput? (input : CheckerInput Bound)
-    (scope : Propagator.Policy.ScopeId := { index := 0 }) : Option RunFixture := do
+    (scope : Hex.Interval.Policy.ScopeId := { index := 0 }) : Option RunFixture := do
   let result <- runRaw? input firstOffer limits.policy.maxDecisions scope
   let .target reached := result.stop | none
   match ProofRegistry.build result.session.registry proofPackages with
@@ -277,8 +278,8 @@ def trace? : Option (Frontend.Trace Bound) := do
 
 /-! ## Live zero-split child sessions -/
 
-private def splitOffer? (view : Propagator.Policy.View Bound) :
-    Option Propagator.Policy.OfferView :=
+private def splitOffer? (view : (Hex.Interval.Policy.View Bound Propagator.Policy.OfferId Propagator.Policy.OfferKey)) :
+    Option (Hex.Interval.Policy.OfferView _root_.Hex.Interval.Experiment.Propagator.Policy.OfferId _root_.Hex.Interval.Experiment.Propagator.Policy.OfferKey) :=
   view.offers.toList.find? fun offer =>
     match offer.key with
     | .invoke invocation => invocation.rule == splitRuleKey
@@ -399,8 +400,8 @@ private def inheritBranch (side : Bound) (observed : NodeId)
 
 private def leftInput : CheckerInput Bound := branchInput .nonnegative
 private def rightInput : CheckerInput Bound := branchInput .negative
-private def leftScope : Propagator.Policy.ScopeId := { index := 1 }
-private def rightScope : Propagator.Policy.ScopeId := { index := 2 }
+private def leftScope : Hex.Interval.Policy.ScopeId := { index := 1 }
+private def rightScope : Hex.Interval.Policy.ScopeId := { index := 2 }
 private def leftFacts : List (NodeFact Bound) := branchFacts .nonnegative
 private def rightFacts : List (NodeFact Bound) := branchFacts .negative
 
@@ -976,7 +977,7 @@ private def splitParent : Evidence
   ProofEmitter.assumed (by simp [baseFacts, branchFact, node])
 
 private meta def emitChild (context : ProofFrontend.Context Bound Name)
-    (input : CheckerInput Bound) (scope : Propagator.Policy.ScopeId)
+    (input : CheckerInput Bound) (scope : Hex.Interval.Policy.ScopeId)
     (seed : Expr) (side : Bound) : MetaM Expr := do
   let some fixture := runInput? input scope
     | throwError "interval_exp_split: child search failed"
@@ -1289,8 +1290,8 @@ private def outputSplitPackage : Package Bound :=
 private def outputSplitPackages : Array (Package Bound) :=
   #[sourcePackage, expPackage, outputSplitPackage]
 
-private def outputSplitOffer? (view : Propagator.Policy.View Bound) :
-    Option Propagator.Policy.OfferView :=
+private def outputSplitOffer? (view : (Hex.Interval.Policy.View Bound Propagator.Policy.OfferId Propagator.Policy.OfferKey)) :
+    Option (Hex.Interval.Policy.OfferView _root_.Hex.Interval.Experiment.Propagator.Policy.OfferId _root_.Hex.Interval.Experiment.Propagator.Policy.OfferKey) :=
   view.offers.toList.find? fun offer =>
     match offer.key with
     | .invoke invocation => invocation.rule == outputSplitKey
@@ -1335,8 +1336,8 @@ private def outputLeftInput : CheckerInput Bound := outputInput .nonnegative
 private def outputRightInput : CheckerInput Bound := outputInput .negative
 private def outputLeftFacts : List (NodeFact Bound) := outputFacts .nonnegative
 private def outputRightFacts : List (NodeFact Bound) := outputFacts .negative
-private def outputLeftScope : Propagator.Policy.ScopeId := { index := 1 }
-private def outputRightScope : Propagator.Policy.ScopeId := { index := 2 }
+private def outputLeftScope : Hex.Interval.Policy.ScopeId := { index := 1 }
+private def outputRightScope : Hex.Interval.Policy.ScopeId := { index := 2 }
 
 private def inheritOutput (side : Bound) (observed : NodeId)
     (different : observed ≠ node 1) (fact : Bound)
@@ -1428,7 +1429,7 @@ private def sameChecker (left right : CheckerInput Bound) : Bool :=
       fixture.registry.refute.find? .all == none
 
 private meta def emitOutputTarget (input : CheckerInput Bound)
-    (scope : Propagator.Policy.ScopeId) : MetaM Expr := do
+    (scope : Hex.Interval.Policy.ScopeId) : MetaM Expr := do
   let some result := runRaw? input firstOffer limits.policy.maxDecisions scope
     | throwError "interval_exp_refute: target child did not start"
   let .target reached := result.stop
@@ -1443,7 +1444,7 @@ private meta def emitOutputTarget (input : CheckerInput Bound)
     input.target
 
 private meta def emitOutputRefute (input : CheckerInput Bound)
-    (scope : Propagator.Policy.ScopeId) : MetaM Expr := do
+    (scope : Hex.Interval.Policy.ScopeId) : MetaM Expr := do
   let some result := runRaw? input firstOffer limits.policy.maxDecisions scope
     | throwError "interval_exp_refute: contradiction child did not start"
   let .contradiction := result.stop

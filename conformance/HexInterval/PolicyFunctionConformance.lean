@@ -26,6 +26,13 @@ and matcher cursor together.
 
 namespace Hex.Interval.PolicyFunctionConformance
 
+local notation "OfferView" =>
+  Hex.Interval.Policy.OfferView _root_.Hex.Interval.Experiment.Propagator.Policy.OfferId _root_.Hex.Interval.Experiment.Propagator.Policy.OfferKey
+local notation "Selection" =>
+  Hex.Interval.Policy.Decision _root_.Hex.Interval.Experiment.Propagator.Policy.OfferId _root_.Hex.Interval.Experiment.Propagator.Policy.OfferKey
+local notation "ScopeId" => Hex.Interval.Policy.ScopeId
+local notation "OfferClass" => Hex.Interval.Policy.OfferClass
+
 open Experiment Propagator PayloadArena PolicySession SemanticReplay
 
 abbrev Rank := Nat
@@ -255,19 +262,19 @@ def matcherInputs : List StructuralInput :=
    { key := .node (node 2), generation := 0 },
    { key := .application { index := 0 }, generation := 0 }]
 
-def invokes (key : RuleKey) (offer : Propagator.Policy.OfferView) : Bool :=
+def invokes (key : RuleKey) (offer : (Hex.Interval.Policy.OfferView _root_.Hex.Interval.Experiment.Propagator.Policy.OfferId _root_.Hex.Interval.Experiment.Propagator.Policy.OfferKey)) : Bool :=
   match offer.key with
   | .invoke invocation => invocation.rule == key
   | _ => false
 
-def instantiatesMatcher (offer : Propagator.Policy.OfferView) : Bool :=
+def instantiatesMatcher (offer : (Hex.Interval.Policy.OfferView _root_.Hex.Interval.Experiment.Propagator.Policy.OfferId _root_.Hex.Interval.Experiment.Propagator.Policy.OfferKey)) : Bool :=
   match offer.key with
   | .instantiate source _ => source.rule == matcherKey
   | _ => false
 
 def invocation? (session : PolicySession.Session Rank) (key : RuleKey) :
     Option
-      (Propagator.Policy.OfferView × Propagator.Policy.Selection ×
+      ((Hex.Interval.Policy.OfferView _root_.Hex.Interval.Experiment.Propagator.Policy.OfferId _root_.Hex.Interval.Experiment.Propagator.Policy.OfferKey) × (Hex.Interval.Policy.Decision _root_.Hex.Interval.Experiment.Propagator.Policy.OfferId _root_.Hex.Interval.Experiment.Propagator.Policy.OfferKey) ×
         PolicySession.Session Rank) :=
   match session.view with
   | .ready view viewed =>
@@ -276,17 +283,13 @@ def invocation? (session : PolicySession.Session Rank) (key : RuleKey) :
       | some offer =>
           some
             (offer,
-              { scope := view.scope
-                serial := view.serial
-                programVersion := view.programVersion
-                id := offer.id
-                expected := offer.key },
+              Hex.Interval.Policy.select view offer,
               viewed)
   | .resource _ _ | .contradiction _ | .invalidSession _ => none
 
 def instantiation? (session : PolicySession.Session Rank) :
     Option
-      (Propagator.Policy.OfferView × Propagator.Policy.Selection ×
+      ((Hex.Interval.Policy.OfferView _root_.Hex.Interval.Experiment.Propagator.Policy.OfferId _root_.Hex.Interval.Experiment.Propagator.Policy.OfferKey) × (Hex.Interval.Policy.Decision _root_.Hex.Interval.Experiment.Propagator.Policy.OfferId _root_.Hex.Interval.Experiment.Propagator.Policy.OfferKey) ×
         PolicySession.Session Rank) :=
   match session.view with
   | .ready view viewed =>
@@ -295,11 +298,7 @@ def instantiation? (session : PolicySession.Session Rank) :
       | some offer =>
           some
             (offer,
-              { scope := view.scope
-                serial := view.serial
-                programVersion := view.programVersion
-                id := offer.id
-                expected := offer.key },
+              Hex.Interval.Policy.select view offer,
               viewed)
   | .resource _ _ | .contradiction _ | .invalidSession _ => none
 

@@ -30,6 +30,11 @@ validation of the trace that search eventually generates.
 namespace Hex.Interval.Experiment.PolicyFeature
 
 open Propagator Propagator.Policy
+open Hex.Interval.Policy (ScopeId EngineBudgetView)
+
+local notation "PolicyOffer" =>
+  Hex.Interval.Policy.OfferView Propagator.Policy.OfferId Propagator.Policy.OfferKey
+local notation "PolicyView" => Hex.Interval.Policy.View
 
 /-- Versioned identity of one independently registered feature provider.
 Changing the meaning of any local feature requires a new provider version. -/
@@ -64,7 +69,7 @@ structure Request (Fact : Type) where
   facts : Snapshot Fact
   remaining : EngineBudgetView
   incomplete : Bool
-  offer : OfferView
+  offer : PolicyOffer
 
 /-- Stateless companion contribution from one interval or frontend package.
 Returning an empty array means this provider contributes nothing for the offer. -/
@@ -132,7 +137,7 @@ end Registry
 /-- One engine offer decorated with package data.  `base` is returned unchanged
 when a policy selects this item. -/
 structure FeaturedOffer where
-  base : OfferView
+  base : PolicyOffer
   features : Array Feature
 
 /-- Deterministic callback/output counts reported by one successful decoration. -/
@@ -144,11 +149,13 @@ structure Metrics where
 /-- A policy view plus aligned featured offers.  The base view remains the
 freshness authority. -/
 structure View (Fact : Type) where
-  base : Policy.View Fact
+  base : PolicyView Fact Propagator.Policy.OfferId Propagator.Policy.OfferKey
   offers : Array FeaturedOffer
   metrics : Metrics
 
-private def request (view : Policy.View Fact) (offer : OfferView) : Request Fact :=
+private def request
+    (view : PolicyView Fact Propagator.Policy.OfferId Propagator.Policy.OfferKey)
+    (offer : PolicyOffer) : Request Fact :=
   { scope := view.scope
     serial := view.serial
     programVersion := view.programVersion
@@ -166,7 +173,8 @@ The complete provider/offer cross product is preflight-counted before any
 callback is entered.  Returned arrays are then checked incrementally against
 per-provider, per-offer, whole-view, key, and value limits. -/
 opaque decorate (limits : Limits) (registry : Registry Fact)
-    (view : Policy.View Fact) : Except Error (View Fact) := do
+    (view : PolicyView Fact Propagator.Policy.OfferId Propagator.Policy.OfferKey) :
+    Except Error (View Fact) := do
   if limits.maxProviders < registry.providers.size then throw .providerLimit
   let checks := registry.providers.size * view.offers.size
   if limits.maxProviderChecks < checks then throw .providerCheckLimit

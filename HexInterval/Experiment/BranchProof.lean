@@ -72,7 +72,7 @@ def samePlan [DecidableEq Fact] (left right : Propagator.Policy.SplitPlan Fact) 
   left == right
 
 def sameChild [DecidableEq Fact]
-    (scope : Propagator.Policy.ScopeId) (depth : Nat)
+    (scope : Hex.Interval.Policy.ScopeId) (depth : Nat)
     (input : SemanticReplay.CheckerInput Fact)
     (source : BranchTree.Leaf Fact PolicyState) : Bool :=
   source.scope == scope && source.depth == depth && sameInput source.input input
