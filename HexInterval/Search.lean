@@ -199,6 +199,13 @@ private def Accounting.settleWithin (limits : Limits) (frontierCount : Nat)
   if accounting.steps >= limits.maxSteps then throw (.resource .steps)
   pure { accounting with steps := accounting.steps + 1 }
 
+/-- Charge one accepted callback update while retaining the current frontier
+head. This primitive is private: only a sealed retained-tree transition may
+bind the charged step to the exact updated head branch. -/
+private def Accounting.advanceWithin (limits : Limits) (frontierCount : Nat)
+    (accounting : Accounting) : Except Error Accounting :=
+  accounting.settleWithin limits frontierCount
+
 private def Accounting.splitWithin (limits : Limits) (frontierCount : Nat)
     (accounting : Accounting) :
     Except Error Accounting := do
@@ -236,6 +243,15 @@ opaque settleHeadWithin (limits : Limits) (state : FrontierState α) :
   let some head := state.frontier.head? | throw .invalidSession
   let accounting <- Accounting.settleWithin limits count state.accounting
   pure (head, { accounting, frontier := state.frontier.tail })
+
+/-- Charge and retain the exact stable head. Kept private so generic frontier
+users cannot detach accounting from the enclosing authenticated transition. -/
+private opaque advanceHeadWithin (limits : Limits) (state : FrontierState α) :
+    Except Error (α × FrontierState α) := do
+  let count <- frontierCountWithin limits state.frontier
+  let some head := state.frontier.head? | throw .invalidSession
+  let accounting <- Accounting.advanceWithin limits count state.accounting
+  pure (head, { accounting, frontier := state.frontier })
 
 /-- Pop and charge the exact head of a sealed frontier, then schedule the
 caller-validated pending children. This container transition authenticates
@@ -533,6 +549,29 @@ inductive Reply (Fact Cause OfferId SemanticKey : Type)
   | outcome (outcome : Outcome Fact Cause OfferId SemanticKey)
   | failure (code : Nat) (diagnostic : Option Trace.Event := none)
 
+/-- Ordinary-import-sealed witness of one exact accepted callback invocation.
+It binds the authenticated pre-state, request, echoed outcome, and committed
+replacement session. The value is data, not theorem evidence; its only runtime
+authority is through supported checked consumers. -/
+structure Applied (Fact Cause OfferId SemanticKey : Type) where
+  private mk ::
+  before : Session Fact Cause OfferId SemanticKey
+  request : Request Fact OfferId SemanticKey
+  outcome : Outcome Fact Cause OfferId SemanticKey
+  after : Session Fact Cause OfferId SemanticKey
+
+/-- Result of a callback invocation that additionally retains an opaque
+caller payload produced by that same single callback execution. -/
+inductive AppliedStep (Fact Cause OfferId SemanticKey : Type)
+  | applied (transition : Applied Fact Cause OfferId SemanticKey)
+  | stopped (stop : Stop Unit Unit) (session : Session Fact Cause OfferId SemanticKey)
+
+/-- A payload callback is not executed when the authenticated session has
+already exhausted its step budget. -/
+inductive Invocation (Fact Cause OfferId SemanticKey Payload : Type)
+  | produced (step : AppliedStep Fact Cause OfferId SemanticKey) (payload : Payload)
+  | stopped (stop : Stop Unit Unit) (session : Session Fact Cause OfferId SemanticKey)
+
 /-- A checked callback step either commits a replacement session or stops with
 an unchanged proof state. -/
 inductive Step (Fact Cause OfferId SemanticKey : Type)
@@ -629,11 +668,11 @@ private def pushChecked (branch : State.Branch Fact Cause)
       history := branch.history.push event
       contradictory := branch.contradictory || contradiction }
 
-private def acceptChecked [DecidableEq OfferId] [DecidableEq SemanticKey]
+private def acceptAppliedChecked [DecidableEq OfferId] [DecidableEq SemanticKey]
     (envelope : Envelope) (session : Session Fact Cause OfferId SemanticKey)
     (request : Request Fact OfferId SemanticKey)
     (reply : Reply Fact Cause OfferId SemanticKey) :
-    Except Error (Step Fact Cause OfferId SemanticKey) := do
+    Except Error (AppliedStep Fact Cause OfferId SemanticKey) := do
   match reply with
   | .failure code diagnostic =>
       if envelope.trace.maxCode < code then throw .malformedOutcome
@@ -661,7 +700,16 @@ private def acceptChecked [DecidableEq OfferId] [DecidableEq SemanticKey]
           incomplete := true
           trace
           steps := session.steps + 1 }
-      pure (.applied next)
+      pure (.applied { before := session, request, outcome, after := next })
+
+private def acceptChecked [DecidableEq OfferId] [DecidableEq SemanticKey]
+    (envelope : Envelope) (session : Session Fact Cause OfferId SemanticKey)
+    (request : Request Fact OfferId SemanticKey)
+    (reply : Reply Fact Cause OfferId SemanticKey) :
+    Except Error (Step Fact Cause OfferId SemanticKey) := do
+  match ← acceptAppliedChecked envelope session request reply with
+  | .applied transition => pure (.applied transition.after)
+  | .stopped stop next => pure (.stopped stop next)
 
 /-- Validate and commit the whole returned delta transactionally. Every event
 must be an exact successor for a node in the selected action's write set. The
@@ -677,6 +725,29 @@ opaque acceptWithin [DecidableEq Fact] [DecidableEq Cause] [DecidableEq OfferId]
   if session.steps >= envelope.search.maxSteps then
     return .stopped (.resource .steps) session
   acceptChecked envelope session request reply
+
+/-- Execute one arbitrary callback exactly once after authenticating the
+selected request, then validate its reply while retaining the caller payload
+returned by that same invocation. Callback and payload construction remain
+non-preemptible; no returned value has mutation or proof authority before the
+checks complete. -/
+opaque invokeWithWithin [DecidableEq Fact] [DecidableEq Cause]
+    [DecidableEq OfferId] [DecidableEq SemanticKey] (envelope : Envelope)
+    (measure : Policy.Measure OfferId SemanticKey)
+    (owner : RuleKey)
+    (callback : Request Fact OfferId SemanticKey →
+      Reply Fact Cause OfferId SemanticKey × Payload)
+    (session : Session Fact Cause OfferId SemanticKey)
+    (decision : Policy.Decision OfferId SemanticKey) :
+    Except Error (Invocation Fact Cause OfferId SemanticKey Payload) := do
+  let checked <- authenticate envelope measure session
+  let request <- prepareChecked session checked decision
+  if request.action.key != owner then throw .invalidSession
+  if session.steps >= envelope.search.maxSteps then
+    return .stopped (.resource .steps) session
+  let (reply, payload) := callback request
+  let step <- acceptAppliedChecked envelope session request reply
+  pure (.produced step payload)
 
 /-- Invoke an arbitrary callback and then pass its decoded result through
 `acceptWithin`. Callback execution itself is deliberately non-preemptible and
@@ -961,6 +1032,9 @@ structure Tree (Fact Cause Plan Schema : Type) where
   private mk ::
   nodes : Array (Node Fact Cause Plan Schema)
   private live : FrontierState Id
+  /-- Accepted callback-update transitions retained independently of binary
+  splits and terminal settlement. -/
+  private advances : Nat
   cost : Cost
 
 opaque Tree.frontier (tree : Tree Fact Cause Plan Schema) : Frontier Id :=
@@ -1074,7 +1148,21 @@ private opaque childMatches [DecidableEq Fact] [DecidableEq Cause]
     child.depth == parent.depth + 1 &&
     match child.seed with
     | none => false
-    | some seed => (childBranchWithin limits parent seed).toOption == some child.branch
+    | some seed =>
+        match (childBranchWithin limits parent seed).toOption with
+        | none => false
+        | some initial =>
+            /- `child.branch` may have advanced through sealed accepted-update
+            transitions since creation. Its checked history reconstructs the
+            live snapshot; this edge pins the immutable base program, initial
+            facts, checked program, seeds, generations, depths, and program
+            version from the seeded creation branch. -/
+            initial.baseProgram == child.branch.baseProgram &&
+              initial.initialFacts == child.branch.initialFacts &&
+              initial.program == child.branch.program && initial.seeds == child.branch.seeds &&
+              initial.generations == child.branch.generations &&
+              initial.depths == child.branch.depths &&
+              initial.programVersion == child.branch.programVersion
 
 def pendingIds (tree : Tree Fact Cause Plan Schema) : List Id :=
   (List.range tree.nodes.size).filterMap fun index =>
@@ -1149,7 +1237,8 @@ opaque Tree.check [DecidableEq Fact] [DecidableEq Cause]
   let splits := splitCount tree
   let terminals := terminalCount tree
   if tree.nodes.size != splits * 2 + 1 || tree.accounting.splits != splits ||
-      tree.accounting.steps != splits + terminals || tree.accounting.leaves != splits + 1 ||
+      tree.accounting.steps != tree.advances + splits + terminals ||
+      tree.accounting.leaves != splits + 1 ||
       tree.accounting.scopes != tree.nodes.size ||
       tree.accounting.nextScope != rootSource.scope.index + tree.nodes.size then return false
   let cost := tree.recomputeCost measure
@@ -1173,7 +1262,7 @@ opaque startWithin [DecidableEq Fact] [DecidableEq Cause]
   let live <- (FrontierState.startWithin limits.search scope ({ index := 0 } : Id)).mapError fromSearch
   let cost := sumCost (nodes.toList.map (nodeCost measure))
   throwCost limits cost
-  checked limits measure { nodes, live, cost }
+  checked limits measure { nodes, live, advances := 0, cost }
 
 opaque current? (tree : Tree Fact Cause Plan Schema) : Option (Id × Source Fact Cause) := do
   let id ← tree.live.head?
@@ -1181,6 +1270,31 @@ opaque current? (tree : Tree Fact Cause Plan Schema) : Option (Id × Source Fact
   match node with
   | .pending source => some (id, source)
   | _ => none
+
+/-- Atomically bind one sealed accepted callback update to the exact retained
+head source. The frontier head is retained and charged once; callers cannot
+replace a source branch from an unattached session or a fabricated delta. -/
+opaque advanceWithin [DecidableEq Fact] [DecidableEq Cause]
+    [DecidableEq OfferId] [DecidableEq SemanticKey]
+    (limits : Limits) (measure : Measure Fact Cause Plan Schema)
+    (tree : Tree Fact Cause Plan Schema)
+    (transition : Applied Fact Cause OfferId SemanticKey) :
+    Except Error (Tree Fact Cause Plan Schema) := do
+  let tree ← checked limits measure tree
+  let some (id, source) := current? tree | throw .terminal
+  if transition.outcome.updates.isEmpty || transition.before.scope != source.scope ||
+      transition.request.scope != source.scope || transition.after.scope != source.scope ||
+      transition.before.branch != source.branch ||
+      transition.after.branch.baseProgram != source.branch.baseProgram ||
+      transition.after.branch.initialFacts != source.branch.initialFacts then
+    throw .malformed
+  let (head, live) ← tree.live.advanceHeadWithin limits.search |>.mapError fromSearch
+  if head != id then throw .malformed
+  let nextSource := { source with branch := transition.after.branch }
+  let nodes := tree.nodes.set! id.index (.pending nextSource)
+  let cost := sumCost (nodes.toList.map (nodeCost measure))
+  throwCost limits cost
+  checked limits measure { nodes, live, advances := tree.advances + 1, cost }
 
 /-- Restore the exact retained parent source by append-only node identity. -/
 def restoreParent? (tree : Tree Fact Cause Plan Schema) (child : Id) :
@@ -1228,7 +1342,7 @@ opaque splitWithin [DecidableEq Fact] [DecidableEq Cause]
     |>.push (.pending left) |>.push (.pending right)
   let cost := sumCost (nodes.toList.map (nodeCost measure))
   throwCost limits cost
-  checked limits measure { nodes, live, cost }
+  checked limits measure { nodes, live, advances := tree.advances, cost }
 
 /-- Retain one exact terminal and remove the stable frontier head
 transactionally. Target and refutation records are authenticated runtime data,
@@ -1248,7 +1362,7 @@ opaque settleWithin [DecidableEq Fact] [DecidableEq Cause]
   let nodes := tree.nodes.set! id.index (.terminal source ending)
   let cost := sumCost (nodes.toList.map (nodeCost measure))
   throwCost limits cost
-  checked limits measure { nodes, live, cost }
+  checked limits measure { nodes, live, advances := tree.advances, cost }
 
 end Result
 

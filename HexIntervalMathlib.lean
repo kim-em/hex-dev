@@ -17,6 +17,7 @@ public import HexIntervalMathlib.Power
 public import HexIntervalMathlib.Split
 public import HexIntervalMathlib.Inverse
 public import HexIntervalMathlib.Division
+public import HexIntervalMathlib.Driver
 public import HexIntervalMathlib.Regularize
 public import HexIntervalMathlib.Program
 public import HexIntervalMathlib.Proof

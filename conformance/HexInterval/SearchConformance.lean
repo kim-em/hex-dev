@@ -608,6 +608,10 @@ open Search.Result
 #guard_msgs in
 #check Search.Result.Tree.mk
 
+/-- error: Unknown constant `Hex.Interval.Search.Applied.mk` -/
+#guard_msgs in
+#check Search.Applied.mk
+
 private def limits : Search.Result.Limits :=
   { search := { searchLimits with maxSteps := 6 }
     state := stateLimits
@@ -630,6 +634,12 @@ private def measure : Measure Nat Nat Nat Nat :=
     schema := fun _ => unitCost
     body := fun _ => unitCost
     code := fun _ => unitCost }
+
+private def resultError (wanted : Search.Result.Error)
+    (result : Except Search.Result.Error α) : Bool :=
+  match result with
+  | .error actual => actual == wanted
+  | .ok _ => false
 
 private def refinedBranch? : Option (State.Branch Nat Nat) := do
   let branch <- branch?
@@ -661,6 +671,24 @@ private def root? : Option (Tree Nat Nat Nat Nat) := do
   let branch <- refinedBranch?
   (Search.Result.startWithin limits measure { index := 5 } branch).toOption
 
+private def unrefinedRoot? : Option (Tree Nat Nat Nat Nat) := do
+  let branch <- branch?
+  (Search.Result.startWithin limits measure { index := 5 } branch).toOption
+
+private def applied? (updates : Array (State.Update Nat Nat) := #[firstUpdate]) :
+    Option (Search.Applied Nat Nat Nat Action) := do
+  let session <- session?
+  let decision <- decision?
+  match Search.invokeWithWithin envelope policyMeasure localRule.key
+      (fun _ => (.outcome (outcome updates), ())) session decision with
+  | .ok (.produced (.applied transition) ()) => some transition
+  | _ => none
+
+private def advanced? : Option (Tree Nat Nat Nat Nat) := do
+  let tree <- unrefinedRoot?
+  let transition <- applied?
+  (Search.Result.advanceWithin limits measure tree transition).toOption
+
 private def split? : Option (Tree Nat Nat Nat Nat) := do
   let root <- root?
   (Search.Result.splitWithin limits measure .depthFirst root recipe leftSeed rightSeed).toOption
@@ -668,6 +696,41 @@ private def split? : Option (Tree Nat Nat Nat Nat) := do
 #guard root?.any fun tree =>
   tree.check limits measure && tree.nodes.size == 1 &&
     tree.pending == [{ index := 0 }] && tree.accounting.nextScope == 6
+
+#guard match advanced?, branch? with
+  | some tree, some initial =>
+      tree.check limits measure && tree.accounting.steps == 1 &&
+        tree.pending == [{ index := 0 }] &&
+        match Search.Result.current? tree with
+        | some (_, source) =>
+            source.branch.versions == #[0, 1] && source.branch.history == #[firstUpdate] &&
+              source.branch.generations == initial.generations &&
+              source.branch.depths == initial.depths &&
+              source.branch.programVersion == initial.programVersion
+        | none => false
+  | _, _ => false
+
+-- An accepted callback is tied to its exact before branch, must contain an
+-- update, and cannot advance a head which has already settled.
+#guard match root?, applied? with
+  | some tree, some transition =>
+      resultError .malformed <| Search.Result.advanceWithin limits measure tree transition
+  | _, _ => false
+
+#guard match unrefinedRoot?, applied? #[] with
+  | some tree, some transition =>
+      resultError .malformed <| Search.Result.advanceWithin limits measure tree transition
+  | _, _ => false
+
+#guard match unrefinedRoot?, applied? with
+  | some tree, some transition =>
+      match Search.Result.settleWithin limits measure tree (.target
+          { scope := { index := 5 }, programVersion := 0,
+            seen := { node := contractNode 1, version := 0 } }) with
+      | .ok terminal =>
+          resultError .terminal <| Search.Result.advanceWithin limits measure terminal transition
+      | .error _ => false
+  | _, _ => false
 
 #guard split?.any fun tree =>
   tree.check limits measure && tree.nodes.size == 3 &&
@@ -727,12 +790,6 @@ private def unknown? : Option (Tree Nat Nat Nat Nat) := do
 
 #guard unknown?.any fun tree =>
   tree.check limits measure && tree.isEmpty && terminalCount tree == 1
-
-private def resultError (wanted : Search.Result.Error)
-    (result : Except Search.Result.Error α) : Bool :=
-  match result with
-  | .error actual => actual == wanted
-  | .ok _ => false
 
 -- Action kind, current dependency, exact predecessor, sibling distinction,
 -- and nontrivial child deltas are independently load-bearing.

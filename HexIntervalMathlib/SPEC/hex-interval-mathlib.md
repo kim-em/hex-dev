@@ -73,9 +73,12 @@ The Mathlib-free layer now retains an authenticated `Search.Result.Tree` with
 exact parent/child seed relations and target/refute/unknown terminal data.
 Restarted child branches themselves reset versions and generations and carry
 no inherited derivation proof; the exact tree edge is what retains that
-provenance. That runtime tree is not evidence. This companion still does not
-quote it into package-owned split/refutation recipes or recursively replay and
-join it; those remain separate later proof edges.
+provenance. That runtime tree is not evidence. This companion now separately
+checks package-owned split/refutation recipes, recursively replays and joins a
+checked tree, and provides a one-selected-callback driver which advances the
+retained source and appends the callback's exact fact events in one
+transaction. Autonomous offer generation, repeated policy iteration, and
+public-tactic split search remain later edges.
 
 `HexIntervalMathlib.Tactic` is the first supported Meta client. It recursively
 parses real local variables and the registered forward arithmetic operations,
@@ -253,10 +256,10 @@ exactly one natural exponent and one dyadic constant: every node at the
 built-in power operation index shares that exponent, and every node at the
 built-in constant index shares that value. Duplicate package registration and
 operation keys cannot add another parameterization. Arbitrary-function package
-discovery, generic search-to-recipe orchestration, split-search tactic
-integration, and default package discovery remain experimental. The supported
-direct-forward reifier and tactic syntax are a narrow client of this registry,
-not the missing generic search bridge.
+discovery, autonomous offer generation and policy iteration, split-search
+tactic integration, and default package discovery remain experimental. The
+supported direct-forward reifier and tactic syntax are a narrow client of this
+registry, not the missing autonomous controller.
 
 The supported proof fold also accepts a `Search.Result.Tree` only after the
 tree passes `Tree.check` under the exact caller-supplied search limits and
@@ -268,12 +271,18 @@ to the child-local version. Package-owned keyed split and refutation schemas
 authenticate the cover and contradiction; runtime terminal tags, bodies, and
 contradiction state never become evidence. `Proof.TreeLimits` separately bound
 proof nodes, depth, body cells, and structural work. Pending and unknown leaves
-reject transactionally. Search callback quotation into this recipe and tactic
-integration remain later work. Each retained node currently freezes its
-`Source.branch` at creation; non-root snapshots restart at version zero, so a
-non-root chronology must be empty or proof-state-only and its terminal can cite
-only creation-snapshot facts. Recursive child propagation is not yet supported.
-The current retained-tree builder repeatedly
+reject transactionally. `HexIntervalMathlib.Driver` executes one
+already-selected, authenticated package callback and returns the updated
+sealed tree plus separately untrusted recipe atomically. The current head
+source may advance through that callback before splitting or settling, so
+child-local propagation and its chronology replay are supported. Its
+caller-owned `Driver.Measure` must charge complete logical encodings of every
+retained event and edge, including nested facts, actions, schemas, dependency
+versions, body naturals, and seed data; independent recipe byte/work caps are
+rechecked across the complete bundle on every transition. Measurement and
+callback execution remain explicitly non-preemptible. Autonomous offer
+generation, policy iteration, and tactic integration remain later work. The
+current retained-tree builder repeatedly
 validates retained branches and pairwise scope uniqueness; incremental
 construction therefore has the documented `Θ(N² * B + N³)` reference cost,
 where `B` is branch validation work, rather than a production-local-update

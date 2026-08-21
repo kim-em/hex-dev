@@ -1567,11 +1567,10 @@ decreasing_by
 
 /-- Check an exact retained search tree, authenticate its root against the
 caller input, and replay all leaves transactionally. Unknown or pending leaves
-cannot produce a proof. The current retained `Source.branch` is frozen when
-its node is created: non-root sources restart at program version zero, so their
-chronology can only be empty or proof-state-only and their terminals can cite
-only facts already current in that creation snapshot. Recursive branch
-advancement belongs to the later search-to-recipe controller. -/
+cannot produce a proof. A non-root source starts at program version zero from
+its exact parent-plus-seed origin. Sealed driver transitions may subsequently
+advance its fact history; the node-local recipe must replay that exact history
+before a terminal or another split can be consumed. -/
 def replayTree [DecidableEq Fact] [DecidableEq Cause] [DecidableEq Plan]
     (searchLimits : Search.Result.Limits)
     (measure : Search.Result.Measure Fact Cause Plan Key)
