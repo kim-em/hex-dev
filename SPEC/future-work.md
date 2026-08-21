@@ -48,23 +48,30 @@ from `IsEchelonForm.transform_inv` and `det_mul`; and it must carry the
 condition that each pivot is the leading nonzero entry of its row, which
 `IsEchelonForm` does not imply and without which uniqueness is false.
 
-**Sylvester's identity (hex-matrix).** The Desnanot-Jacobi identity
-relating minors of a matrix. Now the primary proof strategy for
-`bareiss_eq_det` (see hex-matrix section above). Listed here as
-further work only in the sense that it's a useful standalone result
-beyond the Bareiss application.
+**Shared exact division (`HexBasic.ExactDiv`, refactor).** The total exact
+division operation and its law package already exist in
+`HexResultant/ExactDiv.lean`, but generic Bareiss and future Euclidean-domain
+algorithms need the same contract below `hex-resultant`. Move `exactDiv`,
+`ExactDivLaws`, and the coefficient-independent cancellation lemmas into
+`HexBasic.ExactDiv`; leave polynomial-specific operations and instances with
+the polynomial consumer. This is a dependency refactor, not a new quotient
+semantics: division by zero remains deterministic, while correctness only uses
+the law that division by a nonzero known factor cancels.
 
-**Generic Bareiss over integral domains (hex-matrix).** Generalize
-Bareiss from `Int` to any integral domain with a data-carrying exact
-division operation (`ediv : α → α → α` with `b ∣ a → ediv a b * b = a`);
-for `Int` this is `Int.divExact`
-and no zero divisors (`a * b = 0 → a = 0 ∨ b = 0`).
+**Generic Bareiss over integral domains (`hex-bareiss`, amendment).**
+Generalize the existing `Int` implementation rather than adding a matrix
+library. The executable recurrence uses the shared total exact-division
+operation; its correctness layer assumes a commutative ring, decidable
+equality, and `ExactDivLaws`, which supplies cancellation and rules out zero
+products. Keep the current `Int` API as a specialization. The determinant
+proof reuses the public Desnanot-Jacobi and Plücker API already in
+hex-determinant-mathlib; that identity is not a new prerequisite library.
 
-**Characteristic polynomial.** The matrix family holds dense operations
-in hex-matrix, rank and nullspace in hex-row-reduce, and the determinant
-and adjugate in hex-determinant. A characteristic polynomial belongs
-alongside them. The algorithms divide along the line this project cares
-about, namely whether they divide at all:
+**Characteristic polynomial (`hex-char-poly`, `hex-char-poly-mathlib`).** The
+matrix family holds dense operations in hex-matrix, rank and nullspace in
+hex-row-reduce, and the determinant and adjugate in hex-determinant. A
+characteristic polynomial belongs alongside them. The algorithms divide along
+the line this project cares about, namely whether they divide at all:
 
 - **Berkowitz (Samuelson-Berkowitz)** is division-free, works over any
   commutative ring with no invertibility side conditions, and costs
@@ -83,15 +90,21 @@ about, namely whether they divide at all:
   shape one degree down, and its handling of the bound is the model to
   follow.
 
+The first computational library depends only on hex-matrix and hex-poly and
+uses Berkowitz as its public default. Its companion identifies the result with
+Mathlib's characteristic polynomial and may use hex-determinant-mathlib in the
+proof. Generic Bareiss is an optional later implementation, not a dependency of
+the first version.
+
 Isolating the roots of `χ_A` with hex-real-roots and hex-roots would give
 certified eigenvalue enclosures; hex-number-field can name the resulting exact
 eigenvalues.
 
-**Minimal polynomial.** A separate computation from the characteristic
-polynomial. The Krylov sequence `v, Av, A²v, …` yields the minimal
-polynomial of the vector `v`, which divides the matrix minimal
-polynomial and coincides with it for generic `v`; the lcm over a basis
-removes the genericity assumption.
+**Minimal polynomial (`hex-min-poly`, `hex-min-poly-mathlib`).** A separate
+computation from the characteristic polynomial. The Krylov sequence
+`v, Av, A²v, …` yields the minimal polynomial of the vector `v`, which divides
+the matrix minimal polynomial and coincides with it for generic `v`; the lcm
+over a basis removes the genericity assumption.
 
 Certifying minimality takes a lower-bound witness, since annihilation
 plus division into `χ_A` is satisfied by every multiple of the true
@@ -100,17 +113,21 @@ are independent through degree `deg m − 1` and annihilated at degree
 `deg m` supplies the missing half. Certified invariant factors supply
 it too, and give more.
 
-**Polynomial matrices and invariant factors.** Matrices over `F[x]`,
-the Smith normal form of the characteristic matrix `xI − A`, and the
-invariant factors read off its diagonal. This is the route to canonical
-forms: the invariant factors give the rational canonical form directly,
-the largest of them is the minimal polynomial, and their product is the
-characteristic polynomial, all certified from one computation.
+The Krylov implementation depends on hex-matrix, hex-row-reduce, and the
+polynomial Euclidean/gcd/lcm API. Characteristic polynomial is a recommended
+earlier SPEC because Cayley-Hamilton gives a useful bound and cross-check, but
+it is not an algorithmic prerequisite: basis-wide Krylov witnesses can certify
+minimality directly.
 
-Two distinctions are worth holding onto. The factorization of `χ_A` does
-not determine the canonical form, because matrices sharing a
-characteristic polynomial can have different invariant factors. And this
-is not the integer Smith normal form of [hex-smith](Libraries/hex-smith.md):
+**Polynomial Smith form (`hex-poly-smith`, `hex-poly-smith-mathlib`).**
+Matrices over `F[x]` need no new matrix representation: they are
+`Matrix (DensePoly F) n m`. What is new is an executable Smith form over the
+Euclidean domain `F[x]`, with monic pivot normalization, unimodular transforms,
+the divisibility chain, and a termination argument suited to polynomial
+degree. This reusable algorithm should be specified separately from its
+application to a characteristic matrix.
+
+This is not the integer Smith normal form of [hex-smith](Libraries/hex-smith.md):
 the base ring is `F[x]`, the units are the nonzero constants, and the two
 items share an algorithm shape rather than a theorem. The
 [hex-hermite](Libraries/hex-hermite.md) SPEC records, under "Why `Int`
@@ -118,6 +135,21 @@ and not a Euclidean domain class", exactly which parts transfer (the 2x2
 elimination step) and which do not (pivot normalisation, the reduction of
 entries above a pivot, the termination measure, and the growth problem
 the algorithm choice is designed around).
+
+**Matrix invariant factors (`hex-invariant-factors`,
+`hex-invariant-factors-mathlib`).** Apply polynomial Smith form to the
+characteristic matrix `xI − A` and read the invariant factors from its
+diagonal. This is the route to canonical forms: the invariant factors give the
+rational canonical form directly, the largest is the minimal polynomial, and
+their product is the characteristic polynomial, all certified from one
+computation.
+
+The application library depends on hex-poly-smith. Its correspondence layer
+also depends on hex-char-poly and hex-min-poly so those equalities compare
+against the independently specified computations rather than introducing
+second definitions. Factorization of `χ_A` does not determine this data:
+matrices sharing a characteristic polynomial can have different invariant
+factors.
 
 **Certified eigenpair enclosures.** Run an untrusted floating-point
 solver, then verify its output with interval arithmetic in the style of
@@ -271,128 +303,25 @@ project actually has, Berlekamp's kernel step among them. The
 correctness statement is pleasant: the returned vector is checked by one
 matrix-vector product.
 
-**Swappable polynomial representations.** Abstract over the polynomial
-representation via typeclasses, allowing sparse and hash-backed
-representations alongside `DensePoly`. For now, all libraries use
-`DensePoly` directly.
+**Swappable polynomial representations (deferred).** Do not introduce a
+`PolyOps` / `LawfulPolyOps` abstraction merely because a second representation
+exists. Dense and sparse algorithms have materially different useful
+operations, complexity, and normalization behaviour, and gcd or division of
+sparse inputs generally becomes dense. Build the sparse representation with
+explicit conversions first; reconsider a common interface only after multiple
+real consumers demonstrate which operations belong in it.
 
-The same abstraction problem is now concrete for multivariate polynomials.
-The release-quality HexMvPoly kernel sweep at clean commit
-`91adf91b04cd9aa676e7bb08fed176f2038fd0a2` did not meet its predeclared
-gate. After round-matched import and construction subtraction, the
-canonical sorted-list proxy's terminal point ratios were 5.216× for addition,
-2.379× for cancellation, 2.890× for SOS, and 1.586× for structural
-collisions. The first three conservative intervals began at 1.287×, 1.265×,
-and 1.477× respectively; addition and structural collisions were
-noise-limited. Collision-heavy multiplication had a 0.930× point estimate
-with an unresolved [0.359×, 2.329×] interval. No family had a lower bound
-above 2×, let alone two families. The exact record is
-`reports/bench-results/hex-mv-poly-kernel-91adf91b-chungus2.json`.
-
-The current evidence therefore does not demonstrate the gate.
-`Hex.MvPoly` remains the single `ExtTreeMap` representation by default. The
-proof-probe sorted adapter is comparison evidence only and must not be exposed
-as production API. All five terminal comparisons are unresolved, and the
-measured rungs finish well below the per-module budget rather than
-establishing the largest budget-fitting cases required for a positive
-decision. A future decision needs a preregistered larger ladder, more samples,
-and preferably a quiescent host. In particular, the SOS-scale null has a
-1.199 s conservative envelope, a 3.252% IQR/build ratio, and yields a 2.890×
-SOS point estimate with only a 1.477× conservative lower bound.
-
-Typeclass interface:
-```lean
-class PolyOps (P : Type*) (R : outParam Type*) extends
-    Add P, Mul P, Neg P, Zero P, One P, BEq P where
-  X : P
-  C : R → P
-  degree : P → Nat
-  coeff : P → Nat → R
-  leadingCoeff : P → R
-  dropZeros : P → P
-  divMod : P → P → P × P
-  eval : P → R → R
-  ofCoeffs : Array R → P
-  toCoeffs : P → Array R
-
-class LawfulPolyOps (P : Type*) (R : outParam Type*) [PolyOps P R] where
-  -- Ring axioms
-  add_comm : ∀ a b : P, a + b = b + a
-  add_assoc : ∀ a b c : P, a + b + c = a + (b + c)
-  mul_comm : ∀ a b : P, a * b = b * a
-  mul_assoc : ∀ a b c : P, a * b * c = a * (b * c)
-  add_zero : ∀ a : P, a + 0 = a
-  mul_one : ∀ a : P, a * 1 = a
-  left_distrib : ∀ a b c : P, a * (b + c) = a * b + a * c
-  -- Coefficient semantics
-  coeff_add : ∀ (a b : P) (i : Nat), coeff (a + b) i = coeff a i + coeff b i
-  coeff_mul : ...  -- convolution formula
-  -- BEq correctness: == agrees with coefficient equality
-  beq_iff : ∀ a b : P, (a == b) = true ↔ ∀ i, coeff a i = coeff b i
-  -- dropZeros: normalization to canonical form
-  dropZeros_idem : ∀ p, dropZeros (dropZeros p) = dropZeros p
-  dropZeros_coeff : ∀ p i, coeff (dropZeros p) i = coeff p i
-  dropZeros_ext : ∀ p q, dropZeros p = p → dropZeros q = q →
-      (∀ i, coeff p i = coeff q i) → p = q
-  -- Division
-  divMod_spec : ∀ a b : P, let (q, r) := divMod a b; q * b + r = a
-  -- Evaluation is a ring homomorphism
-  eval_C : ∀ r x, eval (C r) x = r
-  eval_X : ∀ x, eval X x = x
-  eval_add : ∀ p q x, eval (p + q) x = eval p x + eval q x
-  eval_mul : ∀ p q x, eval (p * q) x = eval p x * eval q x
-```
-
-`dropZeros` is the canonical form function. For dense representations,
-it strips trailing zeros. For sparse representations, it removes entries
-with zero coefficients. `dropZeros_ext` gives extensionality on the
-subtype `{ p : P // dropZeros p = p }` — two canonical-form polynomials
-with the same coefficients are propositionally equal.
-
-The subtype `CanonicalPoly P := { p : P // dropZeros p = p }` is where
-the `≃+*` lives. The `-mathlib` companion would prove:
-
-```lean
-def CanonicalPoly (P : Type*) [PolyOps P R] := { p : P // dropZeros p = p }
-
-def equiv [LawfulPolyOps P R] : CanonicalPoly P ≃+* Polynomial R
-```
-
-Eagerly-normalizing implementations (like `DensePoly`) satisfy
-`dropZeros = id`, so `CanonicalPoly (DensePoly R) ≃ DensePoly R` and
-the subtype wrapper is trivial. Lazy implementations pay the cost of
-normalization only when they need propositional equality.
-
-Alternative representations:
-
-Sparse sorted array:
-```lean
-structure SparsePoly (R : Type*) [Zero R] [DecidableEq R] where
-  terms : Array (Nat × R)
-  sorted : ∀ i j, i < j → i < terms.size → j < terms.size →
-           (terms[i]).1 < (terms[j]).1
-  nonzero : ∀ i, i < terms.size → (terms[i]).2 ≠ 0
-```
-
-Sparse `ExtHashMap`-backed (with extensional equality):
-```lean
-structure ExtHashPoly (R : Type*) [Zero R] [BEq R] [Hashable Nat]
-    [EquivBEq Nat] [LawfulHashable Nat] where
-  map : ExtHashMap Nat R
-  nonzero : ∀ k v, map.find? k = some v → v ≠ 0
-```
-
-Using `ExtHashMap` (not `HashMap`) gives extensionality lemmas — two
-`ExtHashPoly` values are equal iff they have the same key-value pairs.
-
-**Sparse univariate polynomials.** The `SparsePoly` sketch above,
-implemented: addition by merging two sorted term lists; multiplication
-by combining all pairwise exponent sums, which wants a heap or a map
+**Sparse univariate polynomials (`hex-sparse-poly`,
+`hex-sparse-poly-mathlib`).** Use a canonical sorted array of
+`(exponent, coefficient)` terms with strictly increasing exponents and no zero
+coefficients. Addition merges two arrays; multiplication combines all
+pairwise exponent sums, which wants a heap or a map
 keyed on the exponent (or a produce-sort-combine pass) rather than a
 merge, with canonicalisation afterwards to drop terms whose
-coefficients cancelled. Then `toDense` / `ofDense` with a round-trip
-proof, and the `PolyOps` / `LawfulPolyOps` instances so it drops into
-the abstraction.
+coefficients cancelled. Provide direct construction, evaluation, derivative,
+and substitution, then `toDense` / `ofDense` with semantic and round-trip
+proofs. The library depends on hex-poly at this conversion boundary rather
+than making hex-poly generic over representations.
 
 The payoff is inputs whose dense storage is linear in the *exponent*
 where sparse storage is linear in the *number of terms*: `x^1000000 − 1`
@@ -424,7 +353,9 @@ After that, in rough order of payoff for this tree:
 - **Multipoint evaluation and interpolation** via subproduct trees,
   which the reconstruction and factorization work wants.
 - **Newton-iteration inversion** of a power series, giving fast division
-  and remainder. Depends on truncated power series, below.
+  and remainder. Put the polynomial adapter and fast division in a later
+  `hex-poly-fast` layer depending on both hex-poly and truncated series; do
+  not make those two core libraries depend cyclically on each other.
 - **Half-gcd** for quasi-linear gcd and extended gcd, the primitive
   under the fast form of the rational reconstruction in
   [hex-modular](Libraries/hex-modular.md), fast Padé approximation, and
@@ -437,11 +368,18 @@ After that, in rough order of payoff for this tree:
   hex-mod-arith's modular arithmetic and hex-arith's Barrett/Montgomery
   reduction.
 
-**Truncated power series.** `R[[x]]` truncated at a fixed precision,
+**Truncated power series (`hex-truncated-series`,
+`hex-truncated-series-mathlib`).** `R[[x]]` truncated at a fixed precision,
 with Newton iteration for inverse, square root, `exp`, and `log`, plus
 composition and reversion (Lagrange inversion or the Brent-Kung
 algorithm). The consumer is fast division above, which is Newton
 iteration on the reversed polynomial.
+
+The core representation is a fixed-length coefficient vector and depends only
+on hex-basic, not on hex-poly. State its semantics coefficientwise and put
+conversion to reversed `DensePoly`, together with fast polynomial division, in
+the later `hex-poly-fast` consumer. This dependency direction lets the series
+library remain useful independently and prevents a release-graph cycle.
 
 The API splits in two, because only part of it is coefficient-generic.
 The ring structure and truncation are generic; each algorithm on top
@@ -453,13 +391,13 @@ and linear terms. A generic truncated series ring plus separately
 constrained algorithms states all of that honestly; one bundled
 interface does not.
 
-The specification function is truncation from the polynomial type, and
-the theorems are the precision contract: an operation on inputs correct
+The theorems are the precision contract: an operation on inputs correct
 to precision `n` returns a result correct to precision `n`, with the
 Newton iterations doubling precision per step so that the fuel bound is
 logarithmic.
 
-**Cyclotomic polynomials.** `Φₙ` for positive `n`, constructed by the
+**Cyclotomic polynomials (`hex-cyclotomic`,
+`hex-cyclotomic-mathlib`).** `Φₙ` for positive `n`, constructed by the
 recursive division `Φₙ = (xⁿ − 1) / ∏_{d | n, d < n} Φ_d`, or faster
 from the squarefree kernel of `n` and the identity
 `Φₙ(x) = Φ_rad(n)(x^(n/rad n))`. The index is positive throughout, so
@@ -472,6 +410,14 @@ benchmark inputs rather than as something a library constructs. The
 natural API is `Φₙ` as a `ZPoly`, the factorization
 `xⁿ − 1 = ∏_{d | n} Φ_d`, irreducibility over `ℚ`, and the degree
 identity `deg Φₙ = φ(n)`.
+
+The computational library depends on hex-poly-z and
+[hex-int-factor](Libraries/hex-int-factor.md). Its primary constructor should
+accept a `CheckedFactorization` of the positive index, making divisor
+enumeration, `radical`, and `totient` total and avoiding hidden refactorization;
+a convenience search API may factor the index first. Sparse output is an
+optional adapter through hex-sparse-poly, not a prerequisite of the dense
+constructor.
 
 [hex-int-factor](Libraries/hex-int-factor.md) needs the *values*
 `Φ_d(b)` at an integer `b`, to split `b^n ± 1` before factoring it, and
@@ -537,18 +483,28 @@ decomposition item below attacks, over algebraically closed fields
 rather than real closed ones. The two are complementary: Gröbner bases
 answer questions about complex solutions, CAD about real ones.
 
-**Multivariate factorization.** Multivariate squarefree decomposition,
-split off the content in the main variable, evaluate the remaining
-variables at a well-chosen point to reduce to a univariate problem over
-`ℤ`, factor that with Berlekamp-Zassenhaus, then lift the factorization
-back by multivariate Hensel lifting (Wang's EEZ algorithm), with
-leading-coefficient correction and retry on a bad evaluation point.
+**Multivariate Hensel lifting (`hex-mv-hensel`,
+`hex-mv-hensel-mathlib`).** Specify the lifting engine before
+factorization. Unlike hex-hensel, it lifts a factorization in several
+variables against an evaluation ideal and must carry the coprimality,
+leading-coefficient, modulus/precision, and reconstruction conditions used by
+Wang's EEZ algorithm. Hex-hensel is a design model, not an implementation the
+new library can call unchanged. The first SPEC should target the
+`MvPoly n Int cmp` representation and depend on hex-mv-poly and the exact
+division/gcd infrastructure in hex-mv-gcd.
 
-Prerequisites are the multivariate gcd, content, and squarefree
-decomposition above, and univariate Berlekamp-Zassenhaus. Multivariate
-Hensel lifting is its own algorithm rather than a call into hex-hensel:
-it lifts in several variables against an evaluation ideal, so hex-hensel
-is the model to follow.
+**Multivariate factorization (`hex-mv-factor`,
+`hex-mv-factor-mathlib`).** Scope the first version to
+`ℤ[x₁, …, xₙ]`: squarefree-decompose, split off content in the main variable,
+evaluate the remaining variables at a well-chosen point, factor the resulting
+univariate polynomial with Berlekamp-Zassenhaus, then lift with hex-mv-hensel,
+including leading-coefficient correction and retry on a bad evaluation point.
+
+The hard prerequisites are hex-mv-poly, [hex-mv-gcd](Libraries/hex-mv-gcd.md),
+univariate Berlekamp-Zassenhaus, and hex-mv-hensel. General factorization over
+arbitrary coefficient domains is not the first library: finite fields,
+number fields, and `ℤ` require materially different algorithms and
+certificates.
 
 The product check certifies a decomposition. Irreducibility of each
 returned factor is the further obligation, hard in the same way as the
@@ -798,21 +754,29 @@ differential equations with polynomial coefficients, of which Zeilberger
 is one instance. A larger project, worth deferring until the certificate
 checker has proved itself on the hypergeometric case.
 
-**p-adic numbers as a type.** hex-hensel implements lifting as an
-algorithm. A first-class `Zp` and `Qp` at fixed precision would be
+**Fixed-precision p-adic approximations (`hex-padics`,
+`hex-padics-mathlib`).** hex-hensel implements lifting as an
+algorithm. First-class `ZpApprox` and `QpApprox` values would be
 shared by consumers that each roll their own modular tower:
 Berlekamp-Zassenhaus's lifting phase, the Dixon lifting in
 [hex-modular-matrix](Libraries/hex-modular-matrix.md), and the p-adic
 route to `ℤ[x]` factoring.
 
-`Zp` at precision `N` is `ℤ/p^N ℤ` with a valuation, and is the easy
-half. `Qp` needs elements to carry precision explicitly, as a centre
-with a valuation and a precision bound rather than as a residue: finite
-data cannot distinguish zero from a value of very high valuation, so
-inversion and division are partial and lose precision by the valuation
-of the divisor. The theorems are that precision contract, in the same
-spirit as the truncated power series item though over a different
-valuation; a shared abstraction may emerge once both exist.
+`ZpApprox p N` is a residue modulo `p^N` together with reduction maps and a
+valuation lower bound. `QpApprox p` carries a normalized centre, valuation,
+and absolute precision rather than pretending that finite data is an exact
+p-adic number: finite data cannot distinguish zero from a value of very high
+valuation, so inversion and division are partial and lose precision by the
+valuation of the divisor. Approximation equality is not mathematical equality
+in `ℚ_p`.
+
+The library depends on hex-arith and hex-modular, and uses a checked
+hex-primality witness for `p`. Keep the approximation core below hex-hensel,
+Berlekamp-Zassenhaus, and hex-modular-matrix; adapters in those consumers can
+then replace their private modular towers without creating cycles. An actual
+inverse-limit or lazy exact `ℤ_p` / `ℚ_p` type is separate future work. The
+precision contract resembles truncated series, but a shared valued-approximation
+typeclass should wait until both concrete APIs have been exercised.
 
 **Certificate serialization and caching.** hex-interval-mathlib's SPEC
 specifies certificate replay with a stable rule name and a versioned
