@@ -362,11 +362,19 @@ After that, in rough order of payoff for this tree:
   reduction.
 
 **Truncated power series (`hex-truncated-series`,
-`hex-truncated-series-mathlib`).** `R[[x]]` truncated at a fixed precision,
-with Newton iteration for inverse, square root, `exp`, and `log`, plus
-composition and reversion (Lagrange inversion or the Brent-Kung
-algorithm). The consumer is fast division above, which is Newton
-iteration on the reversed polynomial.
+`hex-truncated-series-mathlib`).** Specified in
+[hex-truncated-series](Libraries/hex-truncated-series.md). `R[[x]]`
+truncated at a fixed precision, with Newton iteration for inverse,
+square root, `exp`, and `log`, plus composition and reversion
+(Lagrange inversion or the Brent-Kung algorithm). The consumer is fast
+division above, which is Newton iteration on the reversed polynomial.
+
+That SPEC corrects the reversion route named here: Lagrange inversion
+divides by `k` at every coefficient index and so needs inverses of the
+integers below the precision, which `ℤ` does not supply, while the
+reversion itself is integral over `ℤ`. Newton iteration on the
+composition is the route with the honest hypotheses, and Lagrange
+inversion is kept as a second route where the integer inverses exist.
 
 The core representation is a fixed-length coefficient vector and depends only
 on hex-basic, not on hex-poly. State its semantics coefficientwise and put
