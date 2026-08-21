@@ -598,5 +598,11 @@
     "baseline_blob": "8b5cf744140acde03da1c72c50482410e0c65029",
     "current_blob": "5fbaa75456c2217771a4f7a27e7f2ff40417fe3a",
     "reason": "Adds prime_iff_forall_le_sqrt and prime_of_bounded, theorems about the Prop-valued Hex.Nat.Prime, on top of the earlier decidability work. New declarations only; no existing definition changes, so the compiled factorization path is unchanged."
+  },
+  {
+    "path": "HexBasic/ExactDiv.lean",
+    "baseline_blob": null,
+    "current_blob": "d21532df570af19a454bcf6c2fcd1e350ecf3ee1",
+    "reason": "Relocates the exact-division contract from HexResultant/ExactDiv.lean into a new HexBasic module: the ExactDivLaws class, its cancellation theorems, the total exactDiv wrapper, and the Int and field instances, all verbatim. The factorization path reaches it through the HexBasic umbrella, but no executable factorization definition calls exactDiv or mentions ExactDivLaws, and the two instances were already global via hex-resultant, so the compiled call graph is unchanged."
   }
 ]
