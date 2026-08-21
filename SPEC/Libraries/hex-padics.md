@@ -333,7 +333,8 @@ of balls with no canonicality side condition, which is what `mem_iff`
 says. No caller can build a non-canonical value, so no operation has to
 defend against one. And `lt` itself proves `0 < p ^ N`, so every
 operation taking an argument of this type is total without a positivity
-hypothesis, which is why only `ofInt` needs `[PrimeBase p]`.
+hypothesis, which is why most of the interface needs no
+`[PrimeBase p]`.
 
 The alternative, hex-hensel's `ZPoly.Canonical f m` as a separate
 predicate, is right there because a polynomial's coefficients are
@@ -376,14 +377,14 @@ exact input, which is the only source of them.
 **The ring structure.**
 
 ```lean
-instance : Zero (ZpApprox p N)
-instance : One (ZpApprox p N)
+instance [PrimeBase p] : Zero (ZpApprox p N)
+instance [PrimeBase p] : One (ZpApprox p N)
 instance : Add (ZpApprox p N)
 instance : Neg (ZpApprox p N)
 instance : Sub (ZpApprox p N)
 instance : Mul (ZpApprox p N)
 /-- Square-and-multiply, per design principle 7. -/
-instance : Pow (ZpApprox p N) Nat
+instance [PrimeBase p] : Pow (ZpApprox p N) Nat
 
 theorem mem_add (hx : x ∈ a) (hy : y ∈ b) : x + y ∈ a + b
 theorem mem_mul (hx : x ∈ a) (hy : y ∈ b) : x * y ∈ a * b
@@ -391,16 +392,18 @@ theorem mem_pow (hx : x ∈ a) : x ^ k ∈ a ^ k
 
 /-- At a fixed `N` the operations are exactly `ZMod (p ^ N)`
 arithmetic, so the approximations form a commutative ring. -/
-instance : Lean.Grind.CommRing (ZpApprox p N)
+instance [PrimeBase p] : Lean.Grind.CommRing (ZpApprox p N)
 ```
 
-`Zero` and `One` are the two operations with no argument to take the
-positivity from, so their bodies use `Nat.mod` against `p ^ N` and land
-in the type only when `0 < p ^ N`. At `p = 0` and `N > 0` there is no
-element, so they are defined by the same vacuous argument the rest of
-the section rests on, and no `[PrimeBase p]` is needed. An
-implementation that reaches for the instance there has misread the
-obligation.
+**`Zero`, `One`, and `Pow` are the ones that need the instance, and
+they genuinely need it.** `Add`, `Neg`, `Sub`, and `Mul` each have an
+argument, and that argument's `lt` field proves `0 < p ^ N`. `Zero` and
+`One` have no argument, and at `p = 0` with `N > 0` the type is empty,
+so there is nothing for them to return and no vacuous argument to reach
+for. `Pow` inherits the requirement from its `k = 0` base case, which
+is `one`. The ring instance mentions all three. Putting `[PrimeBase p]`
+on `Add` and `Mul` as well would be harmless and would obscure where
+the requirement comes from.
 
 **`ZpApprox p N` is a ring, and that is a fact about the approximations
 and not about `ℤ_p`.** Multiplication preserves absolute precision `N`
