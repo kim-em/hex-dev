@@ -755,7 +755,7 @@ Writing `v` for the valuation, `r` for the relative precision, and
 | `a * b` | `v a + v b` | `min (r a) (r b)` | `v a + v b + min (r a) (r b)` |
 | `inv? a` | `-(v a)` | `r a` | `r a - v a` |
 | `div? a b` | `v a - v b` | `min (r a) (r b)` | `v a - v b + min (r a) (r b)` |
-| `a ^ k`, `k ≥ 1` | `k * v a` | `min (r a + v_p k) (2 * r a)` | derived |
+| `a ^ k`, `k ≥ 1` | `k * v a` | `r a + v_p k`, with one `p = 2` exception | derived |
 | `coarsen m` | unchanged, or lost | derived | `min m (prec a)` |
 
 Each row is derived rather than asserted, and each derivation is short
@@ -817,29 +817,55 @@ a point in favour of putting the invariant in the constructor.
 ```lean
 def pow [PrimeBase p] (a : QpApprox p) (k : Nat) : QpApprox p
 
-theorem rel?_pow (h : a.rel? = some r) (hk : 1 ≤ k) :
-    (pow a k).rel? = some (min (r + natVal p k) (2 * r))
+/-- Lifting the exponent: a power gains `v_p k` significant digits. -/
+theorem rel?_pow (h : a.rel? = some r) (hk : 1 ≤ k) (hr : p ≠ 2 ∨ 2 ≤ r) :
+    (pow a k).rel? = some (r + natVal p k)
+
+/-- The one exception, at `p = 2` with a single significant digit,
+where an even power gains one digit more. -/
+theorem rel?_pow_two (hp : p = 2) (h : a.rel? = some 1) (hk : 2 ∣ k) :
+    (pow a k).rel? = some (natVal p k + 2)
 ```
 
 Square-and-multiply through `mul` would give relative precision `r`,
-which is sound and is not sharp. The sharp answer is
-`min (r + v_p k) (2r)`, and the gap is real: at `p = 2`, squaring an
-approximation with three significant digits gives four, not three.
+which is sound and is not sharp. The gap is real: at `p = 2`, squaring
+an approximation with one significant digit gives three.
 
-The derivation, which also shows the answer is computable. Write
-`u' = u + p^r t` for another lift of the unit part. Then
+The rule is **lifting the exponent**, applied to the ratio of two lifts
+of the unit part rather than to a difference of integers. For lifts `u`
+and `u'` of that unit part, `v(u' - u) ≥ r` and `p ∤ u`, so the ratio
+`u'/u` lies in `1 + p^r ℤ_p`, on which raising to the `k`th power is
+multiplication by `k` in the logarithm coordinate. Hence
 
 ```text
-u'^k - u^k = Σ_{j ≥ 1} C(k, j) u^(k-j) p^(j r) t^j
+v(u'^k - u^k) = v(u' - u) + v_p(k)          (p odd, or p = 2 and r ≥ 2)
 ```
 
-The `j = 1` term has valuation exactly `v_p(k) + r` when `p ∤ t`, and
-every `j ≥ 2` term has valuation at least `2r`. So `u^k` is determined
-modulo `p^min(r + v_p k, 2r)` by `u` modulo `p^r`: the choice of lift
-does not affect the answer at that precision, and it does affect it one
-digit further, so the bound is attained. The implementation computes
-`u^k` modulo `p^min(r + v_p k, 2r)` by square-and-multiply using any
-lift, and records the higher relative precision.
+so `u^k` is determined modulo `p^(r + v_p k)` by `u` modulo `p^r`, and
+no further, since the equality is attained by a lift with
+`v(u' - u) = r` exactly. The implementation computes `u^k` modulo that
+higher modulus by square-and-multiply on any lift, and records the
+higher relative precision.
+
+**The `p = 2` exception is real and is not an artefact of the proof.**
+At `p = 2` and `r = 1` the ball is the whole unit group `1 + 2ℤ_2`, and
+lifting the exponent carries its usual correction term `v_2(u' + u)`,
+which is at least `2` there rather than `1`. Concretely `1² = 1` and
+`3² = 9` differ by `8`, every odd square is `1` modulo `8`, and so
+squaring a unit known to one digit gives a square known to three. An
+implementation that applies the uniform rule at `p = 2` and `r = 1`
+reports two, which is sound and not sharp. One that applies the
+exception at `r ≥ 2` reports one digit too many, which is **wrong**.
+
+**A binomial bound is not enough to get this right, which is why the
+statement above is the group one.** Reading
+`(u + p^r t)^k - u^k = Σ_{j ≥ 1} C(k, j) u^(k-j) p^(j r) t^j` term by
+term gives `v_p(k) + r` from the linear term and `2r` from the rest,
+hence the bound `min (r + v_p k) (2r)`. That bound is sound and it is
+not sharp: at `p = 3`, `r = 1`, `k = 9` it reports two digits, while
+`1⁹`, `4⁹`, and `7⁹` are all `1` modulo `27`, so three are determined.
+The tail terms are not independent of the linear one, and only the
+group statement sees that.
 
 **`pow a 0` is the one operation with no sharp answer.** The image of
 any ball under `x ↦ x^0` is the single point `1`, and no smallest ball
@@ -1214,9 +1240,13 @@ explicit checks:
   fails the suite. The check is that the left side's ball is contained
   in the right side's, not that they are equal.
 - **Powers at `p ∣ k`.** Squaring at `p = 2` and cubing at `p = 3`,
-  checking that the relative precision *rises* by `v_p k`, and the
-  `2r` cap at `k = 2^r`. A square-and-multiply implementation through
-  `mul` passes every soundness check here and fails these.
+  checking that the relative precision *rises* by `v_p k`; the
+  `p = 2`, `r = 1` exception, where it rises by one more; and
+  `p = 3`, `r = 1`, `k = 9`, where the binomial bound reports two
+  digits and three are determined. A square-and-multiply
+  implementation through `mul` passes every soundness check here and
+  fails all three, and one using the binomial bound passes the first
+  and fails the third.
 - **Canonicity.** `norm` on centres already divisible by `p`, on
   centres divisible by `p` to exactly the precision bound, and on `0`,
   checking the unique normal form each time. Two constructions of the
@@ -1392,9 +1422,9 @@ theorem mul_sharp (a b : QpApprox p) (e : QpApprox p)
 **`pow` has no sharpness theorem at `k = 0` and the SPEC says so.** The
 image is a single point, no smallest ball contains it, so the statement
 above is unsatisfiable there. For `k ≥ 1` the sharp precision is the
-`min (r + v_p k) (2r)` of "Powers", and the sharpness proof is exactly
-the `j = 1` term of the binomial expansion having valuation
-`v_p(k) + r` for a suitable lift.
+`r + v_p k` of "Powers", with the `p = 2`, `r = 1` exception, and the
+sharpness proof is lifting the exponent on `1 + p^r ℤ_p` rather than a
+term-by-term binomial bound.
 
 **No `CommRing (QpApprox p)` instance appears in the companion
 either.** The counterexample under "Why `QpApprox` is not a ring" is
