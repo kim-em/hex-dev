@@ -879,9 +879,21 @@ sharp, for the same reason `ofRat` takes a precision from the caller.
 
 ## Why `QpApprox` is not a ring
 
-There is no `CommRing (QpApprox p)` instance and there must not be one.
-Addition is associative and commutative, multiplication is associative
-and commutative, `zero` and `one` behave, and **distributivity fails**.
+There is no `CommRing (QpApprox p)` instance and there must not be one,
+for two independent reasons.
+
+**There is no `Zero` and no `One` to build it from.** The exact values
+`0` and `1` have unbounded precision, and no ball contains exactly one
+point, so `zero m` and `mk 0 1 r` are approximations of them at a
+precision someone had to choose. `Zero (QpApprox p)` would have to pick
+an `m` out of the air. This is the same obstruction as `ofRat` taking a
+precision and `pow a 0` having no sharp answer, and it is why those two
+are stated the way they are.
+
+**Distributivity fails**, which is the substantive reason and does not
+depend on the first. Addition is associative and commutative,
+multiplication is associative and commutative, and the distributive law
+is false.
 
 At `p = 5`, take
 
