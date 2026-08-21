@@ -228,8 +228,10 @@ prime dividing neither leading coefficient, exhibit a Bézout pair over
 `F_p[x]`, and check that the integer contents are coprime. The
 multivariate version of the same correction is in
 [hex-mv-gcd](Libraries/hex-mv-gcd.md), where the recursion on contents
-makes the soundness theorem conditional; in one variable the
-corresponding fact is `Int.dvd_gcd` and the theorem is unconditional.
+makes the Gauss/common-factor development substantially larger. The
+certificate checker is unconditional in both libraries; multivariate gcd
+maximality is a separate Mathlib-free theorem rather than a hidden checker
+premise.
 
 Two smaller things. The condition `gcd(q, m) = 1` on a reconstructed
 rational is a theorem rather than a fourth check, derivable from
@@ -440,8 +442,9 @@ is not a Bézout identity: `ℤ[x]` and
 `R[x₁, …, xₙ]` are not Bézout domains, so the replacement is a modular
 witness together with a recursion on contents. That recursion rests on
 the universal property of the content, which is gcd maximality one
-variable down, so the Mathlib-free soundness theorem is conditional and
-the companion discharges the hypothesis.
+variable down. The SPEC separates certificate replay from maximality and
+schedules the fraction-field embedding, primitive descent, and Gauss
+common-factor law needed to prove the latter Mathlib-free.
 
 Over `ℤ` the word "squarefree" needs care: `12x` is not squarefree in
 `ℤ[x]` because `4 ∣ 12`, so the ring-theoretic predicate is partly a
@@ -452,9 +455,10 @@ the squarefree part does. The library uses the ordinary computer-algebra convent
 instead, pulling the content out as an unfactored scalar.
 
 Specified in [hex-mv-gcd](Libraries/hex-mv-gcd.md). Squarefree
-decomposition in positive characteristic is scheduled there but not
-solved: the Yun recursion runs over a coefficient ring that is not
-perfect, so the univariate fix does not apply level by level.
+decomposition in positive characteristic is explicitly outside that
+library version: the Yun recursion runs over a coefficient ring that is
+not perfect, so a later amendment must specify the multi-derivative
+algorithm rather than reserving an unimplementable milestone.
 
 **Gröbner bases.** Buchberger's algorithm with the Gebauer-Möller pair
 criteria, then F4 if benchmarks call for it. Applications are ideal

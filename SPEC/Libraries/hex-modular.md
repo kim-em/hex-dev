@@ -57,8 +57,8 @@ to need it should not write a third version.
 An earlier draft of this SPEC gave a structural reason: the modulus
 supply bundles a `ZMod64.Bounds` instance, so it sits above
 hex-mod-arith, so the library cannot sit inside hex-arith. That reason
-does not survive putting the supply where it belongs. `Modulus` and
-`PrimeModulus` package `ZMod64` evidence and belong beside `ZMod64` in
+does not survive putting the supply where it belongs. `Modulus` and the
+bundled `Prime` package `ZMod64` evidence and belong beside `ZMod64` in
 hex-mod-arith, generalising `SmallPrimeCandidate`, and everything left
 here is arithmetic on `Int` and `Nat`. This library therefore depends on
 hex-arith alone.
@@ -520,15 +520,16 @@ structure Modulus where
   m : Nat
   [bounds : Bounds m]
 
-/-- A modulus known to be prime, for the consumers whose statements
-mention `F_p`. -/
-structure PrimeModulus extends Modulus where
+/-- A bundled modulus known to be prime, for the consumers whose statements
+mention `F_p`. Named differently from the existing `PrimeModulus p`
+typeclass. -/
+structure Prime extends Modulus where
   prime : Hex.Nat.Prime m
 
 /-- Successive primes below `2^31`, descending from `start`. Untrusted:
 the primality test runs at runtime and its result is carried as evidence,
 so a wrong answer here is impossible rather than merely unlikely. -/
-def primesBelow (start : Nat) : Nat → Array PrimeModulus
+def primesBelow (start : Nat) : Nat → Array Prime
 ```
 
 These three go in **hex-mod-arith**, not here. They package
@@ -798,7 +799,7 @@ operation.
 
 Three relocations, each with a reason independent of this library.
 
-**`Modulus`, `PrimeModulus`, and `primesBelow` belong in
+**`Modulus`, the bundled `Prime`, and `primesBelow` belong in
 hex-mod-arith**, as "The supply" above sets out, and
 `SmallPrimeCandidate` from `HexBerlekampZassenhaus/PrimeSelection.lean`
 should become the special case of them rather than a parallel

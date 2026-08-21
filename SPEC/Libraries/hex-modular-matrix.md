@@ -574,7 +574,7 @@ Five, of which three are shared with other planned libraries and are
 listed here because this library is a second consumer.
 
 **The modulus supply should move to hex-mod-arith.** `ZMod64.Modulus`,
-`ZMod64.PrimeModulus`, and `ZMod64.primesBelow` belong beside `ZMod64`,
+the bundled `ZMod64.Prime`, and `ZMod64.primesBelow` belong beside `ZMod64`,
 per [hex-modular §The supply](hex-modular.md). This library is their
 main consumer, and it passes bare `Nat` moduli on to `crtLoop`.
 
