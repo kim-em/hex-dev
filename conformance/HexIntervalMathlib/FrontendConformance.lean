@@ -45,13 +45,48 @@ def expectedProgram : Program :=
   | .error _ => false
 
 def result : Frontend.Result :=
+  { program := expectedProgram
+    target := RuleConformance.product
+    term := term
+    entries :=
+      #[{ term := .source 0, node := RuleConformance.x },
+        { term := .source 1, node := RuleConformance.y },
+        { term := .add (.source 0) (.source 1), node := RuleConformance.sum },
+        { term := .sub (.source 0) (.source 1), node := RuleConformance.difference },
+        { term, node := RuleConformance.product }]
+    sourceCount := 2 }
+
+def sourceValues : Nat → ℝ
+  | 0 => 1
+  | 1 => 2
+  | _ => 0
+
+def model? := Frontend.modelWithin config sourceValues result
+
+#guard match model? with | .ok _ => true | .error _ => false
+#guard
   match result? with
-  | .ok result => result
-  | .error _ =>
-      { program := expectedProgram
-        target := RuleConformance.product
-        entries := #[]
-        sourceCount := 2 }
+  | .ok found => found.program == result.program && found.target == result.target &&
+      found.term == result.term && found.entries == result.entries &&
+      found.sourceCount == result.sourceCount
+  | .error _ => false
+
+theorem resultChecked : result.check := by decide
+
+theorem resultOperations : result.program.operations =
+    (Rule.meanings config.rule).map (Program.Meaning.operation) := by
+  simp [result, expectedProgram, RuleConformance.program, config, RuleConformance.config,
+    Rule.meanings, Rule.builtinMeanings, Rule.operations, Rule.sourceMeaning,
+    Rule.negMeaning, Rule.addMeaning, Rule.subMeaning, Rule.mulMeaning, Rule.powMeaning,
+    Rule.absMeaning, Rule.minMeaning, Rule.maxMeaning, Rule.constantMeaning, Rule.invMeaning,
+    Rule.divMeaning, Rule.regularizeMeaning]
+
+noncomputable def semanticModel : Frontend.Model config.rule sourceValues result :=
+  { sound := result.models config.rule sourceValues resultChecked resultOperations
+    target := result.target_eval config.rule sourceValues resultChecked }
+
+theorem targetValue : term.eval config.rule sourceValues = -3 := by
+  norm_num [term, Frontend.Term.eval, sourceValues]
 
 def input? := Frontend.inputWithin config RuleConformance.scope result
   #[RuleConformance.xFact, RuleConformance.yFact] RuleConformance.productFact
@@ -115,6 +150,15 @@ def duplicateEntry : Frontend.Result :=
   let bad : Frontend.Entry := { term := .source 0, node := { index := 1 } }
   { result with entries := result.entries.set! 1 bad }
 
+def wrongRoot : Frontend.Result := { result with term := .source 0 }
+
+def wrongOperations : Frontend.Result :=
+  { result with program :=
+      { result.program with operations := result.program.operations.push RuleConformance.opaqueOp } }
+
+def roomy : Frontend.Config :=
+  { config with reify := { limits with maxOperations := 14 } }
+
 #guard
   match Frontend.inputWithin config RuleConformance.scope wrongEntryNode
       #[RuleConformance.xFact, RuleConformance.yFact] RuleConformance.productFact with
@@ -129,6 +173,35 @@ def duplicateEntry : Frontend.Result :=
   match Frontend.inputWithin config RuleConformance.scope duplicateEntry
       #[RuleConformance.xFact, RuleConformance.yFact] RuleConformance.productFact with
   | .error .malformedResult => true
+  | _ => false
+#guard
+  match Frontend.inputWithin config RuleConformance.scope wrongRoot
+      #[RuleConformance.xFact, RuleConformance.yFact] RuleConformance.productFact with
+  | .error .malformedResult => true
+  | _ => false
+#guard
+  match Frontend.modelWithin config sourceValues wrongRoot with
+  | .error .malformedResult => true
+  | _ => false
+#guard
+  match Frontend.modelWithin roomy sourceValues wrongOperations with
+  | .error .malformedProgram => true
+  | _ => false
+#guard
+  match Frontend.modelWithin fewNodes sourceValues result with
+  | .error .nodeLimit => true
+  | _ => false
+#guard
+  match Frontend.modelWithin shallow sourceValues result with
+  | .error .depthLimit => true
+  | _ => false
+#guard
+  match Frontend.modelWithin fewSources sourceValues result with
+  | .error .sourceLimit => true
+  | _ => false
+#guard
+  match Frontend.modelWithin fewOperations sourceValues result with
+  | .error .operationLimit => true
   | _ => false
 
 #guard
@@ -236,36 +309,37 @@ def evidence : Proof.Evidence
   | .ok found => found
   | .error _ => fallbackEvidence
 
-theorem closesConjunction (valuation : NodeId → ℝ)
-    (model : Program.Models (Rule.meanings config.rule) input.program valuation)
+theorem closesConjunction
     (assumptions : ∀ fact, fact ∈ Proof.initialBase input →
-      fact.fact.Contains (valuation fact.node)) :
+      fact.fact.Contains (result.valuation config.rule sourceValues fact.node)) :
     (Lower.finite (RuleConformance.d (-3)) false).Contains
-        (valuation RuleConformance.product) ∧
+        (term.eval config.rule sourceValues) ∧
       (Upper.finite (RuleConformance.d (-3)) false).Contains
-        (valuation RuleConformance.product) := by
-  exact Frontend.closeBounds config input evidence valuation model assumptions
+        (term.eval config.rule sourceValues) := by
+  exact Frontend.closeTermBounds config result sourceValues semanticModel input evidence
+    (by decide) (by decide) assumptions
     (.finite (RuleConformance.d (-3)) false)
     (.finite (RuleConformance.d (-3)) false) productShape
 
-theorem closesLower (valuation : NodeId → ℝ)
-    (model : Program.Models (Rule.meanings config.rule) input.program valuation)
+theorem closesLower
     (assumptions : ∀ fact, fact ∈ Proof.initialBase input →
-      fact.fact.Contains (valuation fact.node)) :
-    toReal (RuleConformance.d (-3)) ≤ valuation RuleConformance.product := by
-  exact Frontend.closeLower config input evidence valuation model assumptions
+      fact.fact.Contains (result.valuation config.rule sourceValues fact.node)) :
+    toReal (RuleConformance.d (-3)) ≤ term.eval config.rule sourceValues := by
+  exact Frontend.closeTermLower config result sourceValues semanticModel input evidence
+    (by decide) (by decide) assumptions
     (RuleConformance.d (-3)) false (.finite (RuleConformance.d (-3)) false) productShape
 
-theorem closesEquality (valuation : NodeId → ℝ)
-    (model : Program.Models (Rule.meanings config.rule) input.program valuation)
+theorem closesEquality
     (assumptions : ∀ fact, fact ∈ Proof.initialBase input →
-      fact.fact.Contains (valuation fact.node)) :
-    valuation RuleConformance.product = toReal (RuleConformance.d (-3)) := by
-  exact Frontend.closeSingleton config input evidence valuation model assumptions
+      fact.fact.Contains (result.valuation config.rule sourceValues fact.node)) :
+    term.eval config.rule sourceValues = toReal (RuleConformance.d (-3)) := by
+  exact Frontend.closeTermSingleton config result sourceValues semanticModel input evidence
+    (by decide) (by decide) assumptions
     (RuleConformance.d (-3)) productShape
 
 #print axioms closesConjunction
 #print axioms closesLower
 #print axioms closesEquality
+#print axioms targetValue
 
 end Hex.IntervalMathlib.FrontendConformance

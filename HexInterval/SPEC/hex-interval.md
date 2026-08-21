@@ -5264,10 +5264,12 @@ their declared cost inside a scheduler bound.
   outward containment, and raw-cut idempotence without a grid-tightest claim.
 - `HexIntervalMathlib/Frontend.lean`: bounded recursive arithmetic-term
   reification with structural sharing and stable-key resolution, checked
-  node/term correspondence and exact source binding, supported
-  registry/flat-replay invocation, and programmatic lower,
-  upper, conjunction, and closed-singleton equality closure. Search-to-recipe
-  integration, Lean syntax, and Meta quotation remain outside this module.
+  node/term/root correspondence and exact source binding, derivation of the
+  complete real `Program.Models` witness from caller source values, supported
+  registry/flat-replay invocation, and programmatic lower, upper, conjunction,
+  and closed-singleton equality closure about the evaluated target term.
+  Search-to-recipe integration, Lean syntax, and Meta quotation remain outside
+  this module.
 - `HexInterval/Program.lean`: supported stable operation/domain/node
   identifiers, decoded typed SSA programs, fail-closed validation, and
   structural depths.
@@ -5350,8 +5352,9 @@ their declared cost inside a scheduler bound.
   non-default complete-family proof and conformance profile.
 - `conformance/HexIntervalMathlib/FrontendConformance.lean`: supported
   recursive shared-DAG reification, exact source binding, malformed-entry,
-  stable-key, and resource rejection, flat chronological replay, and ordinary
-  inequality, conjunction, and equality theorem/axiom canaries.
+  root/operation-table, stable-key, and resource rejection, derived semantic
+  model, flat chronological replay, and ordinary inequality, conjunction, and
+  equality theorem/axiom canaries without a caller-supplied `Program.Models`.
 - `bench/HexInterval/Bench.lean`: Mathlib-free interval and scheduler
   benchmarks.
 

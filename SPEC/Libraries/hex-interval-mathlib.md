@@ -47,14 +47,21 @@ and are not re-exported by the public umbrella.
 The supported `Frontend` is instead a tactic-independent, flat programmatic
 client. It recursively reifies bounded `Term` values by stable operation key,
 rechecks the transparent result's exact node/term/ordered-edge correspondence,
-binds the exact selected source intervals, invokes Rule/Proof replay on an
-explicit caller-supplied event list, and eliminates the resulting evidence to
-lower, upper, conjunction, or closed-singleton equality theorems. It covers
+and authenticates that the retained root is the original target term. From a
+caller mapping of source indices to real values it derives the complete exact
+`Program.Models` witness; callers prove only that their version-zero source
+intervals contain those values, rather than reconstructing one semantic
+relation per SSA node. The frontend binds the exact selected source intervals,
+invokes Rule/Proof replay on an explicit caller-supplied event list, and
+eliminates the resulting evidence to lower, upper, conjunction, or
+closed-singleton equality theorems about the evaluated target `Term`. It covers
 the current Rule operations but inherits the package's one shared exponent,
-constant, and precision. Array caps precede the revalidation scans, while
-construction and structural equality of programmatic caller `Term` values are
-not preemptible. It does not parse Lean expressions or hypotheses, extract
-recipes from generic Search trees, or expose tactic syntax.
+constant, and precision. Array caps and a short-circuit recursive-depth check
+precede the revalidation scans, while construction and structural equality of
+programmatic caller `Term` values and the caller's opaque source-value function
+are not preemptible. It does not
+parse Lean expressions or hypotheses, extract recipes from generic Search
+trees, or expose tactic syntax.
 The user-facing tactic contract below is the release target, not a claim that
 the tactic is already supported.
 
