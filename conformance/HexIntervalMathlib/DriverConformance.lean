@@ -20,6 +20,10 @@ namespace Hex.IntervalMathlib.DriverConformance
 open Hex.Interval
 open Hex.Interval.Proof
 
+/-- error: Unknown constant `Hex.Interval.Driver.Bundle.mk` -/
+#guard_msgs in
+#check Driver.Bundle.mk
+
 inductive Fact where
   | all | yes | empty
   deriving DecidableEq, Repr

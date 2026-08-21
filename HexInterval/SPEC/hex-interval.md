@@ -3203,6 +3203,14 @@ update. Callback failure has an exact conservative stop, and diagnostic
 truncation can change only the log, not facts, versions, provenance, scope, or
 contradiction state.
 
+`invokeWithWithin` is the supported same-invocation payload bridge. Its sealed
+`Applied` value binds the exact before session, selected request, echoed
+outcome, and accepted after session; `AppliedStep` and `Invocation` distinguish
+accepted updates, conservative stops, and the opaque payload produced by that
+same single callback. These values remain runtime data rather than proof
+authority, but a checked consumer such as `Result.advanceWithin` can use the
+sealed before/after relation without reconstructing it from causes or flags.
+
 `Search.Frontier` is a public ordering value, but ordinary-import live tree
 authority is the sealed `Search.FrontierState`, which owns the pending frontier
 and its cumulative step, split, retained-leaf, scope, and next-scope accounting.
@@ -3231,27 +3239,38 @@ the stronger leaf protocol for public-import clients.
 
 `Search.Result.Tree` is the supported retained-result prerequisite for a later
 proof-tree fold. Its private constructor keeps the exact node array, sealed
-`FrontierState Result.Id`, cumulative accounting, and logical cost together;
-callers cannot transplant a raw frontier, reset counters, or supply a complete
-child snapshot. `Result.startWithin` admits one checked root.
+`FrontierState Result.Id`, cumulative advance count, accounting, and logical
+cost together; callers cannot transplant a raw frontier, reset counters, or
+supply a complete child snapshot. `Result.startWithin` admits one checked root.
+`Result.advanceWithin` consumes a sealed `Applied` transition whose before
+branch is the exact pending head, requires a nonempty accepted update, retains
+the same seeded origin/program dimensions, replaces only that head's live
+branch with the authenticated after branch, and increments both the frontier
+step count and private advance count transactionally.
 `Result.splitWithin` authenticates the exact pending parent and current
 predecessor, structurally checks and retains the complete runtime split action,
 allocates the two fresh scopes through the sealed frontier, and reconstructs
 each restarted child from the checked current parent fact array with exactly
-one version-zero seed delta. The restarted `State.Branch` represents every
-inherited fact at version zero, resets every generation stamp to zero, has no
-history, and has `contradictory = false`. Its inherited facts are not thereby
-reclassified as assumptions or given intrinsic derived provenance by the child
-branch. Instead, the retained tree's exact parent/side/seed edge authenticates
-that they came from the current parent consequence snapshot. A downstream
-controller or proof quotation must consume that edge and must not carry
-pre-split generation stamps into the restarted child. `Result.splitWithin`
+one version-zero seed delta. At creation, the restarted `State.Branch`
+represents every inherited fact at version zero, resets every generation stamp
+to zero, has no history, and has `contradictory = false`. Later accepted
+same-session `Result.advanceWithin` transitions may advance that live child's
+versions, history, generations, facts, and contradiction status through the
+ordinary checked `State.Branch` rules. The inherited creation facts are not
+thereby reclassified as assumptions or given intrinsic derived provenance by
+the child branch. Instead, the retained tree's exact parent/side/seed edge
+authenticates that they came from the current parent consequence snapshot. A
+downstream controller or proof quotation must consume that edge and must not
+carry pre-split generation stamps into the restarted child. `Result.splitWithin`
 does not independently resolve the action's rule key against a package
 registry. `Result.settleWithin` consumes the exact pending head and retains an
 exact target, refutation, or unknown record.
 Whole-tree validation reconstructs every parent/side/seed edge, restored
-parent, pending set, step/split/leaf/scope equation, branch state, and logical
-cost.
+parent, pending set, branch consistency, and logical cost; it pins the seeded
+origin and program dimensions while accepting only live branch states that
+pass `Branch.check`. Its cumulative equation is exactly
+`steps = advances + splits + terminals`, rather than equality between a live
+advanced child and its creation-time versions or history.
 
 Result limits independently bound retained nodes, each package body, declared
 logical bytes and work, plus the existing search and state resources. Count
@@ -3266,7 +3285,9 @@ the checked transition keeps scopes unique within each resulting lineage and
 cannot reset that lineage's retained counters. Limits are supplied per call,
 not stored in the tree: a later call may relax them, while a tightened call
 rejects an already-retained value which exceeds the new caps rather than
-grandfathering it.
+grandfathering it. The `Envelope` which authenticated an `Applied` session and
+the `Result.Limits` supplied to the retained-tree transition are independent
+per-call envelopes; neither substitutes for the other's checks.
 Semantic split coverage, package-owned refutation theorems, recursive proof
 replay, and unknown-leaf rejection are supported by the Mathlib proof fold.
 The supported one-step driver retains one already-selected authenticated
@@ -3309,9 +3330,10 @@ class, age, and score and performs the existing engine-owned freshness checks.
 The concrete `OfferId`,
 `OfferKey`, instantiation/split encodings, staged/adaptive/feature policies,
 package callbacks, semantic outcome interpretation, event history, concrete
-policy sessions, target-specific stop taxonomy, and callback-to-proof-recipe
-driver remain under `HexInterval/Experiment`. The Mathlib companion's generic
-tree replay does not make the older concrete `BranchProof` controller a
+policy sessions, target-specific stop taxonomy, and the older concrete
+controller/branch-proof driver remain under `HexInterval/Experiment`. The
+supported Mathlib companion now owns the generic callback-to-recipe driver;
+its existence does not make the older concrete `BranchProof` controller a
 supported API. The experimental `BranchTree` consumes the supported
 search order, limits, accounting, and frontier container, while its
 package-specific child construction remains behind `BranchStart`. The older
