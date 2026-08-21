@@ -313,9 +313,11 @@ valid publication order in
 [`scripts/release/released.yml`](../../scripts/release/released.yml).
 
 ```text
-hex-basic ──── hex-truncated-series ──── hex-truncated-series-mathlib
-                        │
-hex-poly ───────────────┴──── hex-poly-fast (planned)
+hex-basic ── hex-truncated-series ── hex-truncated-series-mathlib
+
+hex-truncated-series ──┐
+                       ├── hex-poly-fast (planned)
+hex-poly ──────────────┘
 ```
 
 `hex-primality` sits directly on `hex-arith`, which owns the
