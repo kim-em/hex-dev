@@ -948,6 +948,11 @@ compare opaque operation keys, recover the repeated `NodeId`, and construct a
 proposal without duplicating either engine-owned depth calculation. It still
 receives facts only for its registration's declared watch slots. Structural
 inspection does not become a hidden fact dependency.
+The current package-boundary dispatch deliberately runs this complete check
+again through `RuleRequest.accepts` for every selected request. This is a
+fail-closed structural authentication boundary, not a hot-path complexity
+claim: it scans the whole program and reconstructs its depth array before the
+package callback runs.
 `ProgramView.findOp?` resolves a stable `OpKey` to this snapshot's local
 `OpId` and exact signature; package assembly order is never authoritative for
 frontend node identifiers.
@@ -4857,10 +4862,15 @@ design with its own SPEC.
 ## Complexity contract
 
 Let `n` be the number of program nodes, `e` the number of argument-to-consumer
-edges, `q` the number of queued candidates, and `b` the number of live branch
-states.
+edges, `k` the number of registered operations, `q` the number of queued
+candidates, and `b` the number of live branch states.
 
-- Program validation and initial dependency construction are `O(n + e)`.
+- `Program.check` is `O(n + e + k²)`: it checks the SSA nodes and edges and
+  performs the current pairwise operation-key uniqueness check. Initial
+  dependency construction is `O(n + e)`. `RuleRequest.accepts` deliberately
+  revalidates the complete `ProgramView` per selected request, including depth
+  reconstruction, so the current package-boundary dispatch performs this
+  whole-program work before each callback.
 - One worklist update is proportional to the number of rules attached to the
   changed node and its consumers. The scheduler does not scan all `n` nodes
   after every fact.
