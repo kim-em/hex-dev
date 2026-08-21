@@ -440,6 +440,16 @@ Mathlib's `PowerSeries.invOfUnit`.
 **An `Option`-returning form** that looks for the witness using the
 coefficient ring's `UnitOps`, and returns `none` when there is none.
 
+**The witness-taking forms are total without being fallbacks, and the
+distinction is the one design principle 8 turns on.** `invOfUnit a u`
+runs the same code for every `u`; there is no branch that tests `u` and
+returns something else. Given a `u` that does not invert `a.coeff 0` it
+returns a well-defined series that is not an inverse, and
+`invOfUnit_mul` simply does not apply. The same holds for `comp a b`
+with `b.coeff 0 ≠ 0`, which is the fold `Σ_{k<n} a_k b^k` in every case
+and is the composition only under the hypothesis. Principle 8 is about a
+`none` branch given a stand-in value, and there is no such branch here.
+
 There is **no** total form that falls back to a junk value on failure.
 Design principle 8 requires any such form to be classified as
 `unreachable-by-pipeline-invariant` or `audited-emergency-value`, and
@@ -658,9 +668,27 @@ theorem exp_add (a b : TSeries R n) (ha : a.coeff 0 = 0) (hb : b.coeff 0 = 0) :
     exp (a + b) = exp a * exp b
 ```
 
-`log a = integrate (deriv a * inv a)`, at precision `n - 1` inside and
-`n` outside. `exp` is Newton on `y ↦ y * (1 + a - log y)`, started from
-`1`.
+`log a` is `integrate (deriv a * inv a)` followed by a truncation back
+to `n`:
+
+```lean
+def log [UnitOps R] [NatInverses R (n - 1)] (a : TSeries R n) : TSeries R n :=
+  (integrate (a.deriv * (invOfUnit a 1).truncate (n - 1) (Nat.sub_le n 1)))
+    |>.truncate n (by omega)   -- `n ≤ n - 1 + 1`, and this is not `rfl`
+```
+
+**That final truncation is not decoration, and leaving it out does not
+typecheck.** The inner value has precision `n - 1 + 1`, and `n - 1 + 1`
+is `n` for every `n ≥ 1` but is `1` at `n = 0`, where truncated
+subtraction floors. So the composite lands at precision `max n 1` and
+has to come back down. Discovering this at implementation time rather
+than here would be a small annoyance; discovering it by adding an
+`n ≠ 0` hypothesis to `log` would be the wrong repair, since `log` is
+total at precision zero.
+
+`exp` is Newton on `y ↦ y * (1 + a - log y)`, started from `1`. The
+iterates all have constant term `1`, which is what keeps `log y`
+applicable at every step.
 
 **The index `n - 1` in the `NatInverses` hypothesis is exact, and the
 truncated subtraction is doing real work.** `integrate` from precision
