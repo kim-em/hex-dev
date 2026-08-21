@@ -326,6 +326,7 @@ noncomputable instance fintype :
     Fintype (Hex.GFqField.FiniteField f hf hp hirr) :=
   Fintype.ofEquiv (Fin (p ^ Hex.FpPoly.degree f)) finEquiv.symm
 
+omit [ZMod64.PrimeModulus p] in
 /-- The generic executable finite-field wrapper has the expected cardinality. -/
 @[simp, grind =]
 theorem fintype_card :
@@ -346,6 +347,7 @@ noncomputable instance fintype (h : Hex.Conway.SupportedEntry p n) :
     Fintype (Hex.GFq p n h) :=
   FiniteField.fintype
 
+omit [ZMod64.PrimeModulus p] in
 /-- Cardinality of the canonical Conway-backed `GFq` in terms of its selected
 modulus degree. -/
 theorem fintype_card (h : Hex.Conway.SupportedEntry p n) :
@@ -371,12 +373,14 @@ theorem conwayPoly_degree (h : Hex.Conway.SupportedEntry p n) :
     Hex.FpPoly.degree (Hex.Conway.conwayPoly p n h) = n :=
   modulus_degree h
 
+omit [Hex.ZMod64.PrimeModulus p] in
 /-- Cardinality of canonical `GFq p n` as `p ^ n`. -/
 @[simp]
 theorem fintype_card_eq_pow (h : Hex.Conway.SupportedEntry p n) :
     Fintype.card (Hex.GFq p n h) = p ^ n := by
   rw [fintype_card h, modulus_degree h]
 
+omit [Hex.ZMod64.PrimeModulus p] in
 /-- Canonical {name}`Hex.GFq` and Mathlib's
 {name}`GaloisField` have matching cardinalities. -/
 theorem card_eq_galoisField_card [Fact p.Prime]

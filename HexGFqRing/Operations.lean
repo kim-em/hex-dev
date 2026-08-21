@@ -23,7 +23,10 @@ namespace Hex
 
 namespace GFqRing
 
-variable {p : Nat} [ZMod64.Bounds p]
+-- `PolyQuotient` is a prime-modulus type: `reduceMod` is a canonical form only
+-- when the leading coefficient it divides by is a unit.  Every declaration here
+-- mentions the quotient, so the hypothesis is in scope for the whole namespace.
+variable {p : Nat} [ZMod64.Bounds p] [ZMod64.PrimeModulus p]
 
 /-- The quotient zero element. -/
 @[expose]
@@ -169,6 +172,7 @@ instance {f : FpPoly p} {hf : 0 < FpPoly.degree f} : SMul Int (PolyQuotient f hf
     repr (const f hf c) = reduceMod f (FpPoly.C c) :=
   rfl
 
+omit [ZMod64.PrimeModulus p] in
 private theorem zmod64_eq_zero_of_modulus_one
     (hp : p = 1) (a : ZMod64 p) : a = 0 := by
   apply ZMod64.ext
@@ -177,6 +181,7 @@ private theorem zmod64_eq_zero_of_modulus_one
     exact Nat.lt_one_iff.mp (by simpa [hp] using a.isLt)
   exact ha
 
+omit [ZMod64.PrimeModulus p] in
 private theorem zmod64_zero_ne_one_of_pos_degree
     (f : FpPoly p) (hf : 0 < FpPoly.degree f) :
     (0 : ZMod64 p) ≠ 1 := by
@@ -347,6 +352,7 @@ def linearPow {f : FpPoly p} {hf : 0 < FpPoly.degree f}
     linearPow x (n + 1) = linearPow x n * x :=
   rfl
 
+omit [ZMod64.PrimeModulus p] in
 private theorem fpPoly_C_add (a b : ZMod64 p) :
     FpPoly.C (a + b) = (FpPoly.C a + FpPoly.C b : FpPoly p) := by
   apply DensePoly.ext_coeff
@@ -558,10 +564,6 @@ theorem neg_zero_eq {f : FpPoly p} {hf : 0 < FpPoly.degree f} :
     -(0 : PolyQuotient f hf) = 0 := by
   apply ext
   rw [repr_neg, repr_zero, reduceMod_zero f hf, FpPoly.neg_zero, reduceMod_zero f hf]
-
--- From here the quotient-ring algebra rests on `reduceMod` congruence lemmas
--- that need `ZMod64 p` to be a field, so the modulus must be prime.
-variable [ZMod64.PrimeModulus p]
 
 /-- Public alias for {name}`reduceMod_mul_reduceMod_congr`: reducing both factors before quotient
 reduction preserves the canonical representative. -/
