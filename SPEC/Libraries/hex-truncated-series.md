@@ -392,7 +392,7 @@ class NatInverses (R : Type u) [Lean.Grind.CommRing R] (m : Nat) where
 is the point of the class.** Over `ℤ` the instance holds at `m = 1` and
 fails at `m = 2`, so `exp` and `log` over `ℤ` exist up to precision `2`
 and not beyond, which is correct: `exp(x)` truncated at precision `3` is
-`1 + x + x²/2`, and `x²/2 ∉ ℤ[x]`. A class stated as "`R` is a
+`1 + x + x²/2`, and `1/2 ∉ ℤ`. A class stated as "`R` is a
 `ℚ`-algebra", or an unstated assumption that a coefficient can be
 divided by a small integer, would either exclude precision `2` over `ℤ`
 or would be false. Over `ZMod p` the instance holds exactly for
@@ -402,8 +402,9 @@ or would be false. Over `ZMod p` the instance holds exactly for
 supplied as `NatInverses.mono`, a `def` and not an `instance`, since as
 an instance it loops.
 
-Instances shipped here: `Rat` for every `m`, `Int` for `m ≤ 1`, and
-`UnitOps Rat`, `UnitOps Int`. The `ZMod64 p` instances are **not**
+Instances shipped here: `NatInverses Rat m` for every `m`,
+`NatInverses Int 0` and `NatInverses Int 1`, `UnitOps Rat`, and
+`UnitOps Int`. The `ZMod64 p` instances are **not**
 here, because `ZMod64` is hex-mod-arith's type and depending on
 hex-mod-arith would add an edge this library does not need. They belong
 in whichever library has both types in scope, which in practice is
@@ -416,6 +417,7 @@ Per-algorithm hypotheses, collected:
 | `invOfUnit a u` | `a.coeff 0 * u = 1` |
 | `inv?` | `[UnitOps R] [LawfulUnitOps R]` |
 | `sqrtOfRoot a r v` | `r * r = a.coeff 0` and `(2 * r) * v = 1` |
+| `sqrt? a r` | `[UnitOps R] [LawfulUnitOps R]`, and `r` from the caller |
 | `exp` | `a.coeff 0 = 0` and `[NatInverses R (n - 1)]` |
 | `log` | `(a - 1).coeff 0 = 0` and `[NatInverses R (n - 1)]` |
 | `comp a b` | `b.coeff 0 = 0` |
@@ -462,13 +464,14 @@ is a unit".** At `n = 0` it is `true` and the constant term is `0`. The
 right reading is "`a` is a unit of `TSeries R n`", which is what the
 theorem says and what the caller almost always wants.
 
-`sqrt` has no searching form. Finding a square root of the constant term
-is a problem in `R`: over `ZMod p` it is Tonelli-Shanks, over `ℤ` it is
-an integer square root with an exactness test, and over `ℚ` it is that
-twice. Putting a `SqrtOps R` class here would oblige this library to
-carry instances for rings it does not depend on. The root is an
-argument, the caller supplies it, and the choice of root is a real
-choice: `r` and `-r` give the two square roots when `2` is a unit.
+**`sqrt` never searches for the constant root.** Finding a square root
+in `R` is a problem in `R`: over `ZMod p` it is Tonelli-Shanks, over `ℤ`
+it is an integer square root with an exactness test, and over `ℚ` it is
+that twice. Putting a `SqrtOps R` class here would oblige this library
+to carry instances for rings it does not depend on. The root is an
+argument in both forms, and the choice of root is a real choice: `r` and
+`-r` give the two square roots when `2` is a unit. What `sqrt?` does
+look up is the inverse of `2 * r`, which is what `UnitOps` is for.
 
 ## Newton iteration and the step count
 
@@ -496,14 +499,24 @@ value on exhaustion, which design principle 8 would then require a
 classification for, and the classification would be
 `unreachable-by-pipeline-invariant` resting on exactly the theorem
 `two_pow_steps_ge` above. Recursing on the step count directly discharges
-that obligation by construction. Well-founded recursion on the precision,
-halving, would also work and was rejected: well-founded definitions do
-not reduce in the kernel, and "Kernel exposure" below needs these to.
+that obligation by construction. Well-founded recursion on the
+precision, halving, would also work and was rejected: it compiles to
+`WellFounded.fix` and so to `Acc.rec`, which the kernel does not reduce,
+and "Kernel exposure" below needs these to reduce.
+
+`Nat.log2` is core Lean's floor base-two logarithm, and `steps` may use
+it directly. It reduces in the kernel:
+`example : Nat.log2 8 = 3 := by decide +kernel` is accepted on this
+toolchain, because core elaborates `log2` to a `Nat.rec` on the argument
+reused as a decreasing bound rather than to `WellFounded.fix`. So no
+structurally recursive replacement of the kind hex-basic supplies for
+`Array.ofFn` is needed here, and the implementation should recheck that
+`decide +kernel` line rather than assume it.
 
 `steps n` is `⌈log₂ n⌉`. The looser `Nat.log2 n + 1` is also a correct
-bound and is easier to prove things about; it costs at most one extra
+bound and is easier to prove things about. It costs at most one extra
 doubling, which is one extra full-precision multiplication. Either is
-acceptable, and the SPEC states the tight form so that a later
+acceptable, and this SPEC states the tight form so that a later
 implementation using the loose one is a recorded choice rather than an
 accident.
 
@@ -514,8 +527,8 @@ linearly. Writing every step at full precision `n` would be correct and
 would cost `O(M(n) · log n)`, which is the mistake this paragraph
 exists to prevent.
 
-The correctness statement common to all four Newton algorithms, with
-`op` standing for the operation and `P` for its defining equation:
+The correctness statement common to all four Newton algorithms, written
+schematically with `P` for the operation's defining equation:
 
 ```lean
 theorem newton_correct (j : Nat) (i : Nat) (hi : i < min n (2 ^ j)) :
@@ -567,6 +580,14 @@ false.
 /-- The square root of `a` with constant term `r`, given `v` inverting
 `2 * r`. -/
 def sqrtOfRoot (a : TSeries R n) (r v : R) : TSeries R n
+/-- The square root of `a` with constant term `r`, looking up the
+inverse of `2 * r` and checking that `r` really is a root of the
+constant term. -/
+def sqrt? [UnitOps R] (a : TSeries R n) (r : R) : Option (TSeries R n)
+
+theorem sqrt?_isSome_iff (a : TSeries R n) (r : R) :
+    (sqrt? a r).isSome = true ↔
+      n = 0 ∨ (r * r = a.coeff 0 ∧ ∃ v, (2 * r) * v = 1)
 
 theorem sqrtOfRoot_sq (a : TSeries R n) (r v : R)
     (hr : r * r = a.coeff 0) (hv : (2 * r) * v = 1) :
@@ -586,12 +607,15 @@ commutative ring a product is a unit exactly when both factors are, so
 and it is the quantity the iteration divides by. Splitting it into two
 hypotheses would state the same thing less usefully.
 
-Both halves are needed and neither implies the other, which two examples
-show. Over `ZMod 2`, `r = 1` is a unit and `1 + x` has no square root at
-precision `2`: `(1 + ax)² = 1 + a²x²`, whose coefficient of `x` is `0`,
-never `1`. Over `ℤ`, `2` is not a unit either, and even where `r` is
-chosen well the iteration divides by `2r`: `4 + x` has constant root
-`r = 2`, and its square root `2 + x/4 + …` is not in `ℤ[[x]]`.
+Both halves are needed, and two examples show that neither one alone is
+enough. Over `ZMod 2` the constant root `r = 1` is a unit while `2` is
+not, and `1 + x` has no square root at precision `2`: `(1 + ax)²` is
+`1 + a²x²`, whose coefficient of `x` is `0` and never `1`. Over
+`ZMod 9`, `2` is a unit (`2 * 5 = 1`) while the constant root `r = 3` is
+not, and `x` has no square root with constant term `3` at precision `2`:
+`(3 + bx)²` is `6bx`, and `6b = 1` has no solution. Over `ℤ` both halves
+fail at once, which is why `4 + x` has constant root `r = 2` and a
+square root `2 + x/4 + …` that is not integral.
 
 The uniqueness proof is three lines and is the reason the constant root
 is an argument. If `s² = t²` with `s` and `t` sharing the constant term
@@ -602,8 +626,9 @@ distinguished exactly by which root of the constant term they carry.
 
 The iteration is on the **inverse** square root, `z ↦ z * (3 - a * z²) *
 v'` where `v'` inverts `2`, followed by `sqrt a = a * z`. This avoids an
-inversion inside the loop, which is the standard reason to prefer it,
-and it needs `2` invertible, which the hypothesis already gives.
+inversion inside the loop, which is the standard reason to prefer it.
+Both constants it needs come from the one hypothesis: `v' = r * v`
+inverts `2`, and the starting value `C (2 * v)` is the inverse of `r`.
 
 ## `exp` and `log`
 
@@ -693,9 +718,10 @@ coefficient is out of range there.
 
 Two algorithms, with the second the intended one:
 
-- **Horner**, `a_{n-1}`, then `acc ↦ acc * b + C a_k` downward. `n`
+- **Horner**, starting from `C a_{n-1}` and applying
+  `acc ↦ acc * b + C a_k` for `k` from `n - 2` down to `0`. That is `n`
   truncated multiplications, `O(n · M(n))`.
-- **Brent-Kung**, splitting `a` into `⌈√n⌉ blocks` of `⌈√n⌉` coefficients,
+- **Brent-Kung**, splitting `a` into `⌈√n⌉` blocks of `⌈√n⌉` coefficients,
   computing the powers `b^0 … b^{⌈√n⌉}` once, evaluating each block by a
   coefficient-matrix product, then combining by Horner in `b^{⌈√n⌉}`.
   `O(√n)` truncated multiplications plus `O(n²)` coefficient operations
@@ -705,7 +731,7 @@ Two algorithms, with the second the intended one:
 Brent-Kung is a real improvement even at schoolbook multiplication,
 `O(n^{2.5})` against Horner's `O(n³)`, so unlike inversion the fast
 route pays before hex-poly-fast exists. The crossover between them is a
-measured number and this SPEC does not guess it. The quasi-linear
+measured number and this SPEC does not guess it. The near-linear
 composition algorithms published since 2024 are out of scope and are
 recorded in the open questions.
 
@@ -724,8 +750,10 @@ theorem revOfUnit_coeff_one (h0 : b.coeff 0 = 0) (hv : b.coeff 1 * v = 1)
     (h : 1 < n) : (revOfUnit b v).coeff 1 = v
 ```
 
-The iteration is Newton on `y ↦ y - (comp b y - X) * inv (comp b.deriv y)`,
-started from `C 0 + C v * X`, doubling the precision each step.
+The iteration is Newton on `y ↦ y - (b ∘ y - x) / (b' ∘ y)`, started
+from `C v * X`, doubling the precision each step. Both compositions run
+at the step's target precision, and the division is `invOfUnit` applied
+to `b' ∘ y`, whose constant term is `b.coeff 1`.
 
 **The route is Newton and not Lagrange inversion, and the reason is the
 whole point of this section.** Lagrange inversion computes the answer in
@@ -777,6 +805,7 @@ implementation.
 | `invOfUnit a u` | returns the unique element, `hu` unsatisfiable | `= C u` | hypothesis fails, no call | irrelevant |
 | `inv?` | `some`, unconditionally | `some` iff `coeff 0` a unit | `none` | irrelevant |
 | `sqrtOfRoot a r v` | unique element, `hv` unsatisfiable | `= C r` | `hv` fails when `2r` is a nonunit | irrelevant |
+| `sqrt? a r` | `some`, unconditionally | `some` iff `r * r = coeff 0` and `2r` a unit | `none` when `2r` is a nonunit | irrelevant |
 | `exp` | `= 0 = 1`, no inverse used | `= 1` | needs `coeff 0 = 0`, not unitality | irrelevant |
 | `log` | `= 0 = 1`, no inverse used | `= 0` | needs `(a-1).coeff 0 = 0` | irrelevant |
 | `comp a b` | `= 0` | `= C (a.coeff 0)` | needs `b.coeff 0 = 0` | irrelevant |
@@ -784,8 +813,8 @@ implementation.
 | `revOfUnit b v` | unique element, `hv` unsatisfiable | `= 0`, `hv` unsatisfiable | needs `coeff 0 = 0` | hypothesis fails |
 | `rev?` | `some` | `some` | `none` when `coeff 0 ≠ 0` | `none` for `n ≥ 2` |
 
-Three rows deserve their statement in prose because an implementation
-gets them wrong in the same way each time.
+Three of those rows deserve a statement in prose, because an
+implementation gets them wrong in the same way each time.
 
 **`inv?` and `rev?` succeed at precision `0` with no test.** The
 constant term is out of range and the answer is the unique element of
@@ -825,14 +854,17 @@ schoolbook, and whatever hex-poly-fast later installs.
 | `comp` | Brent-Kung | `O(√n · M(n) + n²)` |
 | `rev` | Newton with a `comp` per step | `O(comp(n))` |
 
-The geometric sum is the load-bearing claim in four of those rows and it
-holds only because the step is bounded: `Σ_{j < ⌈log₂ n⌉} M(2^j) =
-O(M(n))` whenever `M` is at least linear and superadditive.
+The geometric sum is the load-bearing claim in the three Newton rows,
+and it holds only because the step is bounded:
+`Σ_{j < ⌈log₂ n⌉} M(2^j) = O(M(n))` whenever `M` is at least linear and
+superadditive.
 
-At schoolbook multiplication every row above except the two composition
-rows and the reversion row ties the corresponding naive linear
-recurrence, and the table should be read as a description of what
-happens when `M` improves rather than as a claim of a present-day win.
+At schoolbook multiplication the inverse, square root, `exp`, and `log`
+rows all tie the naive linear recurrence for the same operation, which
+is `O(n²)` in each case. Only composition and reversion win outright
+today. The table should therefore be read as a description of what
+happens when `M` improves rather than as a claim of a present-day win
+across the board.
 
 ## Kernel exposure
 
@@ -852,12 +884,12 @@ they do not leak to consumers. A module that forgets gets a stuck
 
 The Newton driver is in the closure, which is the second reason it is
 structurally recursive on the step count. A well-founded recursion on
-the precision would not reduce, and the `decide +kernel` test would fail
-on `inv` at any precision.
+the precision compiles to `Acc.rec` and would not reduce, and the
+`decide +kernel` test would fail on `inv` at every precision.
 
 The composition and reversion routines are **not** in the closure. They
 are search-free but expensive, no proof term mentions them, and exposing
-them would put a `Brent-Kung` block decomposition into the kernel for no
+them would put the Brent-Kung block decomposition into the kernel for no
 benefit.
 
 ## Conformance
@@ -908,8 +940,13 @@ Cases that must be present:
   linear coefficient `2` is not a unit of `ℤ`) and `some` for `n ≤ 1`.
 - `sqrtOfRoot` over `Rat` on `1 + x` with `r = 1` and with `r = -1`,
   checking the two answers are negatives of each other.
-- `sqrtOfRoot` over `Int` on `4 + x` with `r = 2`, which must be refused
-  by the checked form because `2 * r = 4` is not a unit of `ℤ`.
+- `sqrt?` over `Int` on `4 + x` with `r = 2`, expecting `none` at every
+  positive precision because `2 * r = 4` is not a unit of `ℤ`, and
+  `some` at precision `0`.
+- `sqrt?` over `Rat` on `1 + x` with `r = 2`, expecting `none` because
+  `2 * 2 ≠ 1 = a.coeff 0`. This is the check on the other half of
+  `sqrt?_isSome_iff`, which an implementation that only tests `2 * r`
+  for unitality fails.
 - `exp` and `log` over `Rat` at precisions `1` through `16`, with
   `log (exp a) = a` and `exp (a + b) = exp a * exp b` checked in Lean as
   differential tests beside the oracle comparison.
@@ -972,9 +1009,10 @@ Two required internal checks, which matter more than the external one:
   route pays before hex-poly-fast exists, so this check is the evidence
   that Brent-Kung was implemented rather than declared.
 
-The bench target imports `HexBasic` and `Std` only, so the Mathlib-free
-requirement of [SPEC/benchmarking.md](../benchmarking.md) is met without
-further argument.
+The bench target imports `HexTruncatedSeries`, which imports `HexBasic`
+and `Std` and nothing else, so the Mathlib-free requirement of
+[SPEC/benchmarking.md](../benchmarking.md) is met without further
+argument.
 
 ## The Mathlib layer
 
@@ -1019,7 +1057,8 @@ theorem ofPowerSeries_subst (f g : PowerSeries R) (hg : PowerSeries.HasSubst g) 
 
 theorem ofPowerSeries_substInvOfIsUnit (g : PowerSeries R)
     (h0 : PowerSeries.constantCoeff g = 0) (hu : IsUnit (PowerSeries.coeff 1 g)) :
-    ofPowerSeries (n := n) (g.substInvOfIsUnit hu) = revOfUnit (ofPowerSeries g) _
+    ofPowerSeries (n := n) (g.substInvOfIsUnit hu)
+      = revOfUnit (ofPowerSeries g) ((hu.unit⁻¹ : Rˣ) : R)
 
 theorem ofPowerSeries_exp [Algebra ℚ R] (f : PowerSeries R)
     (h : PowerSeries.constantCoeff f = 0) :
@@ -1056,11 +1095,12 @@ and hold over `ZMod p` at every precision below `p`, where Mathlib's
 `exp` does not exist. A precision-indexed `PowerSeries.expTrunc` would
 fix this upstream and is recorded in the open questions.
 
-Mathlib has no square root of a power series. `Mathlib/RingTheory/
-PowerSeries/Binomial.lean` has `binomialSeries`, which would give
-`(1 + X)^(1/2)` over a `BinomialRing`, but that hypothesis is not the
-one this library uses and the special case is not stated. The companion
-therefore proves an existence and uniqueness statement itself,
+Mathlib has no square root of a power series.
+`Mathlib/RingTheory/PowerSeries/Binomial.lean` has `binomialSeries`,
+which would give `(1 + X)^(1/2)` over a `BinomialRing`, but that
+hypothesis is not the one this library uses and the special case is not
+stated. The companion therefore proves an existence and uniqueness
+statement itself,
 
 ```lean
 theorem exists_unique_sq (f : PowerSeries R) (r : R)
@@ -1095,8 +1135,10 @@ operation.
    quasi-linear-ready inverse and the hardest infrastructure proof is
    done.
 
-4. **Square root, `exp`, and `log`**, with the functional equations and
-   the `NatInverses Int 1` boundary case exercised.
+4. **Square root, `exp`, and `log`.** `sqrtOfRoot`, `sqrt?`,
+   `sqrt_unique`, then `exp` and `log` with the functional equations.
+   The `NatInverses Int 1` boundary case is exercised here, since it is
+   the case a later refactor is most likely to lose.
 
 5. **Composition and reversion.** Horner first, then Brent-Kung, then
    Newton reversion, then Lagrange inversion as the second route under
@@ -1114,7 +1156,7 @@ HexTruncatedSeries/
   Classes.lean      -- UnitOps, LawfulUnitOps, NatInverses and its instances
   Newton.lean       -- the driver, steps, two_pow_steps_ge
   Inverse.lean      -- invOfUnit, inv?, uniqueness
-  Sqrt.lean         -- sqrtOfRoot and uniqueness
+  Sqrt.lean         -- sqrtOfRoot, sqrt?, uniqueness
   ExpLog.lean       -- exp, log, the functional equations
   Comp.lean         -- Horner and Brent-Kung
   Revert.lean       -- Newton reversion, and Lagrange as the second route
@@ -1186,9 +1228,9 @@ release time.
 - **The Horner/Brent-Kung crossover**, and whether Brent-Kung's block
   size should be `⌈√n⌉` or tuned. Both are measured numbers and this
   SPEC does not guess them.
-- **Whether quasi-linear composition belongs here later.** Composition
-  of power series in `O(M(n) log n)` was published in 2024 (Kinoshita
-  and Li) and supersedes Brent-Kung asymptotically. It is out of scope
+- **Whether near-linear composition belongs here later.** Kinoshita and
+  Li, "Power series composition in near-linear time" (2024), supersedes
+  Brent-Kung asymptotically. It is out of scope
   now because its constant factor is unmeasured in this setting and
   because Brent-Kung is the algorithm with an accessible correctness
   argument. Worth revisiting once composition is a measured bottleneck
