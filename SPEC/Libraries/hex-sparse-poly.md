@@ -833,8 +833,11 @@ least `e`, and otherwise subtracts `e` from each. Subtraction is total on
 the terms that pass the check, the order is preserved, and no coefficient
 changes, so the result is canonical with no filtering. Dividing by
 `c · x^e` for a nonunit `c` would additionally have to divide or check
-each coefficient, which is a coefficient-ring question rather than a
-representation one, so it is not offered.
+each coefficient. That is a coefficient-ring question rather than a
+representation one, and it already has a name in a library this one
+depends on: `HexBasic.ExactDivLaws` with its total `exactDiv`. Offering
+it here would mean carrying that contract through the whole API for one
+operation, so it is not offered.
 
 ## Complexity
 
