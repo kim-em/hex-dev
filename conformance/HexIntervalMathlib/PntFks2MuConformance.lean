@@ -23,6 +23,10 @@ open Hex.Interval.Experiment.PntFks2Mu
 #guard firstFailure? 0 certificates == none
 #guard sourceRows[0]? == some
   ⟨⟨.fks2, 4274⟩, .sqrtLower, 20000, 1, 1414213562, 10000000⟩
+#guard sourceRows[1]? == some
+  ⟨⟨.fks2, 4282⟩, .expUpper, 13689, 1000000, 10138790, 10000000⟩
+#guard sourceRows[2]? == some
+  ⟨⟨.cor14, 24⟩, .sqrtLower, 20000, 1, 1414213562, 10000000⟩
 #guard sourceRows[3]? == some
   ⟨⟨.cor14, 32⟩, .expUpper, 13689, 1000000, 10138790, 10000000⟩
 
@@ -34,9 +38,18 @@ def wrongExp : List Certificate :=
     [{ sourceRows[1] with targetNum := 1, targetDen := 1 }] ++ sourceRows.drop 2
 
 #guard firstFailure? 0 wrongSqrt == some ⟨.fks2, 4274⟩
+#guard !checkComparison wrongSqrt[0]
 #guard !validCertificate 0 wrongSqrt[0]
 #guard firstFailure? 0 wrongExp == some ⟨.fks2, 4282⟩
+#guard !checkComparison wrongExp[1]
 #guard !validCertificate 1 wrongExp[1]
+
+def wrongCoordinate : List Certificate :=
+  { sourceRows[0] with coordinate := ⟨.fks2, 4275⟩ } :: sourceRows.drop 1
+
+#guard firstFailure? 0 wrongCoordinate == some ⟨.fks2, 4274⟩
+#guard checkComparison wrongCoordinate[0]
+#guard !validCertificate 0 wrongCoordinate[0]
 
 theorem fks2SqrtLower :
     (141.4213562 : ℝ) ≤ Real.sqrt 20000 := by
@@ -79,6 +92,14 @@ example : ¬ (142 : ℝ) ≤ Real.sqrt 20000 := rejectWrongSqrt
 /-- info: 'Hex.IntervalMathlib.PntFks2MuConformance.fks2ExpUpper' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms fks2ExpUpper
+
+/-- info: 'Hex.IntervalMathlib.PntFks2MuConformance.cor14SqrtLower' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms cor14SqrtLower
+
+/-- info: 'Hex.IntervalMathlib.PntFks2MuConformance.cor14ExpUpper' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms cor14ExpUpper
 
 /-- info: 'Hex.Interval.Experiment.PntFks2Mu.rejectWrongSqrt' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in

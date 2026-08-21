@@ -1642,6 +1642,46 @@ theorem statements, their log-table premises, and all number-theoretic
 arguments are unchanged. The separate `FKS2.theorem_6_2` nested-log leaf and
 the global `IntervalAuto` interface remain pending.
 
+The shared positive-exponential family covers the three remaining integer
+exponential leaves outside that nested-log proof. It preserves the exact
+source theorem
+
+```lean
+theorem FKS2.Floor.exp10_lt : Real.exp 10 < 22027
+```
+
+and the two source-shaped premises inside
+`Goldbach.kadiri_lumley_odd_goldbach_finite`:
+
+```lean
+Real.exp 59 + 4 + 1 ≤ 11325 * 10 ^ 22
+Real.exp 60 + 4 + 1 ≤ 7785131284000000000000000004
+```
+
+`PntExpUpper.sourceRows` authenticates the exact file, line, comparison
+direction, positive integer exponent, additive allowance, and integer target.
+All three rows use one package-owned kernel: reduce the exponent by `128`,
+apply the FKS2 degree-11 Taylor sum with its explicit degree-12 remainder on
+`[0,1]`, and reconstruct the integer exponent with seven exact squarings. The
+FKS2 row requires a strict final rational comparison; the two Goldbach rows
+retain their weak source comparisons. These are fixed provider constants, not
+a general precision or accepted-parameter API.
+
+The offline validator byte-pins all three complete invocation snippets and
+correlates them with the literal shared table. In particular, it retains the
+source spelling `11325 * 10 ^ 22` while checking the corresponding normalized
+integer table target. Wrong number, direction, missing, duplicate, and local
+provider-row mutations fail validation. Runtime mutations lower the FKS2
+endpoint to `22026`, lower the first Goldbach endpoint to `64`, or change a
+source coordinate; they report the exact coordinate and do not retry at higher
+precision. Ordinary theorems prove both lowered endpoints incompatible.
+
+This localized rewrite changes only the three numerical leaves. The other
+LeanCert and `native_decide` obligations in `Cor22Floor.lean` remain pending,
+and no general `IntervalAuto` compatibility is claimed. Among the five
+file-local numerical clusters audited here, only the independent
+`FKS2.theorem_6_2` nested-log leaf remains pending.
+
 The next classified acceptance probe covers the numerical leaf in
 `LogTables.exp_neg_lt_1e_neg_100` while preserving the source theorem's useful
 monotone shape. At the pinned commit, the enclosing declaration is exactly
@@ -2024,7 +2064,7 @@ release criterion. It must cover, at minimum:
   have bounded providers and ordinary exact-supremum adapters. The unaffected
   row proofs and finite dispatcher remain in PNT+; both Table families are
   recorded separately from their aggregate source counts; and
-- all 17 remaining textual occurrences, of which 16 are actual tactic
+- all 17 other textual occurrences, of which 16 are actual tactic
   invocations, in `Dusart.lean`, `FKS2.lean`, `FKS2Cor23Cor14Tail.lean`,
   `FKS2Floor/Cor22Floor.lean`, and `Goldbach.lean`.
 
@@ -3330,6 +3370,13 @@ the fixed soundness and trust contracts.
 - `conformance/HexIntervalMathlib/PntFks2MuConformance.lean`: all four
   source-shaped leaf adapters, coordinate failure, false-cut rejection, and
   guarded axiom reports.
+- `HexInterval/Experiment/PntExpUpper.lean`: the exact three-coordinate
+  FKS2-floor/Goldbach positive-exponential table and bounded rational checker.
+- `HexIntervalMathlib/Experiment/PntExpUpper.lean`: the shared `x/128`
+  Taylor/remainder and seven-squaring real semantics.
+- `conformance/HexIntervalMathlib/PntExpUpperConformance.lean`: all three
+  source-shaped theorem adapters, exact coordinate/endpoint mutations, false
+  bounds, and guarded axiom reports.
 
 Unlike a correspondence-only companion, `hex-interval-mathlib` contains an
 executable reifier, rule registry, and tactic. Its own conformance target tests

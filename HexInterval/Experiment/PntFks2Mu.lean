@@ -82,7 +82,10 @@ def firstFailure? : Nat → List Certificate → Option Coordinate
   | _, [] => none
   | index, value :: values =>
       if validCertificate index value then firstFailure? (index + 1) values
-      else some value.coordinate
+      else
+        match sourceRows[index]? with
+        | some expected => some expected.coordinate
+        | none => some value.coordinate
 
 end Hex.Interval.Experiment.PntFks2Mu
 

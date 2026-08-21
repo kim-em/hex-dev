@@ -279,6 +279,52 @@ class InventoryTests(unittest.TestCase):
         with self.assertRaisesRegex(inventory.InventoryError, "sites differ"):
             inventory.require_fks2_mu_match(duplicate, provider)
 
+    def test_positive_exp_sites_match_shared_table(self) -> None:
+        records = [
+            {
+                "kind": "tactic-occurrence",
+                "tactic": "interval_decide",
+                "actual": True,
+                "path": path,
+                "line": line,
+                "declaration": declaration,
+                "snippet": snippet,
+            }
+            for (path, line, declaration, *_), snippet in zip(
+                inventory.PNT_EXP_UPPER_ROWS,
+                inventory.PNT_EXP_UPPER_SNIPPETS,
+                strict=True,
+            )
+        ]
+        provider = "def sourceRows := [\n" + "\n".join(
+            f"  ⟨⟨.{file}, {line}⟩, .{relation}, {exponent}, {additive}, {target}⟩,"
+            for _, line, _, file, relation, exponent, additive, target
+                in inventory.PNT_EXP_UPPER_ROWS
+        ) + "\n]"
+        inventory.require_pnt_exp_upper_match(records, provider)
+
+        wrong_provider = provider.replace(".strict, 10, 0, 22027", ".weak, 10, 0, 22027")
+        with self.assertRaisesRegex(inventory.InventoryError, "sourceRows differ"):
+            inventory.require_pnt_exp_upper_match(records, wrong_provider)
+
+        wrong_number = copy.deepcopy(records)
+        wrong_number[1]["snippet"] = wrong_number[1]["snippet"].replace("11325", "11324")
+        with self.assertRaisesRegex(inventory.InventoryError, "snippets differ"):
+            inventory.require_pnt_exp_upper_match(wrong_number, provider)
+
+        wrong_direction = copy.deepcopy(records)
+        wrong_direction[2]["snippet"] = wrong_direction[2]["snippet"].replace("≤", "<")
+        with self.assertRaisesRegex(inventory.InventoryError, "snippets differ"):
+            inventory.require_pnt_exp_upper_match(wrong_direction, provider)
+
+        with self.assertRaisesRegex(inventory.InventoryError, "sites differ"):
+            inventory.require_pnt_exp_upper_match(records[:-1], provider)
+
+        duplicate = copy.deepcopy(records)
+        duplicate[-1] = copy.deepcopy(duplicate[-2])
+        with self.assertRaisesRegex(inventory.InventoryError, "duplicate"):
+            inventory.require_pnt_exp_upper_match(duplicate, provider)
+
     def test_committed_inventory_is_valid_but_not_yet_classified(self) -> None:
         inventory.check_inventory(self.fixture, require_classified=False)
         with self.assertRaisesRegex(inventory.InventoryError, "pending decisions"):
