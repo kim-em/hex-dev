@@ -191,8 +191,9 @@ hex-arith ─────────┼── hex-hermite ── hex-smith
 hex-determinant ───┘
 ```
 
-`hex-char-poly` is the one member of the matrix family that reaches the
-polynomial root rather than another matrix library. The Samuelson-Berkowitz
+`hex-char-poly` sits on the matrix family too, but it is the only member
+whose second dependency is `hex-poly` rather than `hex-arith` or another
+matrix library. The Samuelson-Berkowitz
 algorithm computes no determinant, so `hex-determinant` is not among its
 computational dependencies. Its companion does depend on
 `hex-determinant-mathlib`, because the correspondence with
