@@ -41,7 +41,7 @@ granting runtime state evidence authority. The current package fixes one
 natural exponent and one dyadic constant, shared respectively by every node at
 the built-in power and constant operation indices; duplicate package
 registration and operation keys cannot provide another such parameterization.
-Arbitrary-function package discovery, a complete autonomous search loop,
+Arbitrary-function package discovery, Mathlib-free runtime packages,
 split-search tactic integration, and default package discovery remain
 experimental. The supported callback driver executes one already-selected
 authenticated package action and atomically advances a sealed result tree and
@@ -50,6 +50,14 @@ the complete encoding of every retained event and edge—including nested facts,
 actions, schema keys, dependency versions, body naturals, and seed data—and
 independent recipe byte/work caps are rechecked over the complete bundle on
 every transition. Measurement and callback execution remain non-preemptible.
+The supported explicit controller aligns a stable fact-event application table
+with the runtime and proof registries, regenerates bounded deterministic offers,
+and repeats policy selection over the sealed tree/session bundle. A
+caller-owned logical measure caps the initial policy state and every callback
+successor before retention; arbitrary-state construction and measurement remain
+non-preemptible. The current live controller theorem uses toy callbacks;
+concrete built-in arithmetic `Driver.Package` callbacks and application
+generators are still missing.
 The driver does not choose or enumerate offers.
 The supported direct-forward reifier and tactic are a narrow
 client rather than that missing generic bridge. The supported proof layer can
@@ -3286,6 +3294,15 @@ the fixed soundness and trust contracts.
   recipe. Its explicit logical event/edge measure and independent byte/work
   caps cover the complete retained recipe bundle. Offer generation, policy
   selection, and the autonomous search loop remain outside this module.
+- `HexIntervalMathlib/Controller.lean`: explicit fact-event runtime/proof
+  registry alignment, stable application-generator identities, resource-first
+  deterministic offer snapshots, and bounded repeated policy selection over
+  the sealed session/tree bundle, including caller-measured byte/pair/work caps
+  for each retained policy state. The current conformance vertical uses toy
+  fact-event packages; concrete built-in arithmetic driver callbacks and
+  application generators are not yet shipped. It does not yet provide Mathlib-free raw
+  package drafts, equality/instance applications, program-extension or package
+  discovery, or public-tactic split search.
 - `HexIntervalMathlib/Reify.lean`: expressions, hypotheses, targets, and folds.
 - `HexIntervalMathlib/Derivative.lean`: automatic differentiation and centered
   enclosures.

@@ -77,8 +77,15 @@ provenance. That runtime tree is not evidence. This companion now separately
 checks package-owned split/refutation recipes, recursively replays and joins a
 checked tree, and provides a one-selected-callback driver which advances the
 retained source and appends the callback's exact fact events in one
-transaction. Autonomous offer generation, repeated policy iteration, and
-public-tactic split search remain later edges.
+transaction. Its supported `Controller` explicitly aligns stable application
+generators with the same-order runtime and proof registries, regenerates
+resource-first deterministic offers from the authenticated current head, and
+runs bounded repeated policy selection over the sealed tree/session bundle.
+Its current vertical uses toy fact-event packages; concrete built-in arithmetic
+`Driver.Package` callbacks and application generators remain to be implemented.
+Mathlib-free raw packages, automatic discovery/program extension,
+equality/instance runtime events, and public-tactic split search remain later
+edges.
 
 `HexIntervalMathlib.Tactic` is the first supported Meta client. It recursively
 parses real local variables and the registered forward arithmetic operations,
@@ -214,9 +221,11 @@ performs the final check when the caller installs the expression.
 Runtime search state, callbacks, payload bytes, and traces are untrusted and
 cannot enter `Proof.Evidence`. The built-in arithmetic package registry and
 its supported branch/session `Cause`-to-`Proof.Event` quotation ship below.
-Arbitrary-function package discovery, generic search-selected recipes, and
-default registries remain experimental. The supported tactic below is a
-deliberately narrow direct forward client, not the generic search bridge.
+Automatic arbitrary-function package discovery, Mathlib-free raw packages,
+equality/instance runtime recipes, and default registries remain experimental.
+The supported explicit fact-event controller can produce and replay
+search-selected recipes, while the tactic below remains a deliberately narrow
+direct forward client rather than that generic search bridge.
 Further arithmetic images and useful bounded nonsingleton division require their own
 operation-specific semantic theorems before promotion. An image operation must
 at least prove successful-result cut semantics and sound real-image enclosure;
@@ -256,10 +265,10 @@ exactly one natural exponent and one dyadic constant: every node at the
 built-in power operation index shares that exponent, and every node at the
 built-in constant index shares that value. Duplicate package registration and
 operation keys cannot add another parameterization. Arbitrary-function package
-discovery, autonomous offer generation and policy iteration, split-search
-tactic integration, and default package discovery remain experimental. The
+discovery, Mathlib-free runtime packages, split-search tactic integration, and
+default package discovery remain experimental. The
 supported direct-forward reifier and tactic syntax are a narrow client of this
-registry, not the missing autonomous controller.
+registry, not the autonomous split-search tactic.
 
 The supported proof fold also accepts a `Search.Result.Tree` only after the
 tree passes `Tree.check` under the exact caller-supplied search limits and
@@ -280,8 +289,34 @@ caller-owned `Driver.Measure` must charge complete logical encodings of every
 retained event and edge, including nested facts, actions, schemas, dependency
 versions, body naturals, and seed data; independent recipe byte/work caps are
 rechecked across the complete bundle on every transition. Measurement and
-callback execution remain explicitly non-preemptible. Autonomous offer
-generation, policy iteration, and tactic integration remain later work. The
+callback execution remain explicitly non-preemptible.
+`HexIntervalMathlib.Controller` supplies the next supported explicit-assembly
+layer: its sealed registry declares one stable compatibility key, exact
+application slot to rule/runtime route, and same-order proof registration; its
+sealed state rejects a selected compact identifier or live session transplanted
+across registry keys. The key is deliberately a trusted compatibility epoch,
+not callback-object identity: separately built registries using the same key
+assert interchangeable implementations, whose returned data still crosses all
+runtime and proof checks. Generator/policy/equality callbacks remain
+non-preemptible, while program, branch, registration, binding, action-port,
+structural-input, application, offer, and retained-result caps are checked
+before controller-owned traversal or allocation. A caller-owned logical
+policy-state measure is also non-preemptible, but the initial value and every
+callback successor must fit explicit byte/pair/work caps before retention.
+Offer age is the bounded
+sealed session serial rather than package data. The choice cap is cumulative
+per returned sealed state lineage; explicit `State.startWithin` creates a new
+zeroed handle from a sealed bundle, and pure state reuse creates separately
+bounded successors rather than a global budget. This current controller is a
+fact-event Mathlib assembly whose conformance callbacks are toy packages, not
+the missing concrete built-in arithmetic driver adapters, automatic package
+discovery, or public split-search tactic. Every immutable offer snapshot has
+one constant controller-owned serial age; any malformed draft aborts its whole
+regeneration. Dismissing a non-split offer marks the snapshot incomplete,
+whereas dismissing a split probe does not. Policy stop returns a resumable
+sealed chunk boundary, while `maxChoices` exhaustion is a resource error. The
+reference cost of up to `maxChoices` selected transitions includes complete
+retained-tree/bundle validation each time. The
 current retained-tree builder repeatedly
 validates retained branches and pairwise scope uniqueness; incremental
 construction therefore has the documented `Θ(N² * B + N³)` reference cost,
