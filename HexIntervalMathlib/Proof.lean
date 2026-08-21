@@ -23,10 +23,11 @@ owner, body, action, scope, versions, dependencies, and chronology all match.
 Schema decoders and theorem builders are package callbacks, but their returned
 `Evidence` contains an ordinary Lean proof of the exact indexed proposition.
 The final Meta boundary instantiates and rejects unresolved metavariables and
-placeholders, restores every emitter change, then runs the elaborator's
-structural `Meta.check` and checks the inferred type against the exact expected
-proposition by definitional equality in the caller's environment. It restores
-validation state on success and failure. The kernel performs the final check
+placeholders, restores the caller's environment, messages, information, and
+metavariable state, and clears both elaborator caches before running structural
+`Meta.check` and checking the inferred type against the exact expected
+proposition by definitional equality. Validation state is restored and its
+caches are cleared on success and failure. The kernel performs the final check
 only when the caller installs the returned expression in a declaration.
 Concrete operations, packages, goal reification, tactic syntax, registries of
 declaration names, and default search policy are intentionally absent.
@@ -1044,12 +1045,19 @@ structure Emitter (Quote : Type) where
   emit : Quote → Lean.MetaM Lean.Expr
 
 /-- Run one package emitter transactionally. The returned expression contains
-no unresolved metavariables or placeholders. Every emitter change is restored
-before the expression passes `Meta.check` and exact type checking in the
-caller's environment. Validation changes are also restored on success and
-failure. -/
+no unresolved metavariables or placeholders. Emitter environment, message,
+information, and metavariable changes are restored and environment-dependent
+caches are cleared before the expression passes `Meta.check` and exact type
+checking in the caller's environment. Validation state is likewise restored
+and its caches cleared on success and failure. -/
 def emitChecked (emitter : Emitter Quote) (quote : Quote)
     (expected : Lean.Expr) : Lean.MetaM Lean.Expr := do
+  -- `Meta.SavedState.restore` deliberately retains both the `Meta.State` and
+  -- `Core.State` caches, which may depend on a declaration rolled back below.
+  let restoreClean (saved : Lean.Meta.SavedState) : Lean.MetaM Unit := do
+    saved.restore
+    Lean.Meta.resetCache
+    modifyThe Lean.Core.State fun state => { state with cache := {} }
   let emitterSaved ← Lean.Meta.saveState
   let prepared ← try
     let expected ← Lean.instantiateMVars expected
@@ -1064,9 +1072,9 @@ def emitChecked (emitter : Emitter Quote) (quote : Quote)
       throwError "interval proof emitter returned unresolved metavariables"
     pure (candidate, expected)
   catch error =>
-    emitterSaved.restore
+    restoreClean emitterSaved
     throw error
-  emitterSaved.restore
+  restoreClean emitterSaved
   let (candidate, expected) := prepared
   let validationSaved ← Lean.Meta.saveState
   try
@@ -1079,10 +1087,10 @@ def emitChecked (emitter : Emitter Quote) (quote : Quote)
     let candidate ← Lean.instantiateMVars candidate
     if candidate.hasMVar then
       throwError "interval proof emitter unification left unresolved metavariables"
-    validationSaved.restore
+    restoreClean validationSaved
     pure candidate
   catch error =>
-    validationSaved.restore
+    restoreClean validationSaved
     throw error
 
 /-- Project the ordinary theorem from a successfully checked proof object. -/

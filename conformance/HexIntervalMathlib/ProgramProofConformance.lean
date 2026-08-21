@@ -478,6 +478,31 @@ elab "proof_emit_reject_ill_typed" : tactic => do
 
 example : True := by proof_emit_reject_ill_typed
 
+/-- An emitter cannot use the retained Meta infer-type cache to make an
+ill-typed application appear well typed after its environment is rolled back. -/
+elab "proof_emit_reject_poisoned_cache" : tactic => do
+  let goal ← getMainGoal
+  let expected ← goal.getType
+  let function := mkApp (mkConst ``id [Level.zero]) expected
+  let illTyped := mkApp function (mkNatLit 0)
+  let emitter : Proof.Emitter Unit :=
+    { emit := fun _ => do
+        let key ← mkExprConfigCacheKey function
+        let checkKey ← withTransparency .all <| mkExprConfigCacheKey function
+        let poisonedType ← mkArrow (mkConst ``Nat) expected
+        modifyInferTypeCache fun cache =>
+          (cache.insert key poisonedType).insert checkKey poisonedType
+        pure illTyped }
+  let accepted ← try
+    let _ ← Proof.emitChecked emitter () expected
+    pure true
+  catch _ => pure false
+  if accepted then throwError "proof emitter poisoned the retained Meta cache"
+  goal.assign (mkConst ``True.intro)
+  replaceMainGoal []
+
+example : True := by proof_emit_reject_poisoned_cache
+
 /-- An emitter-created declaration is rolled back before authoritative
 validation, so a returned reference to it is rejected rather than dangling. -/
 elab "proof_emit_reject_aux" : tactic => do
@@ -493,6 +518,9 @@ elab "proof_emit_reject_aux" : tactic => do
             levelParams := []
             type := expected
             value := mkConst ``True.intro }
+        let inferred ← inferType (mkConst auxName)
+        unless ← isDefEq inferred expected do
+          throwError "transient proof-emitter declaration has the wrong type"
         pure (mkConst auxName) }
   let accepted ← try
     let _ ← Proof.emitChecked emitter () expected
@@ -505,6 +533,33 @@ elab "proof_emit_reject_aux" : tactic => do
   replaceMainGoal []
 
 example : True := by proof_emit_reject_aux
+
+/-- Cache activity involving a transient declaration cannot poison a successful
+emission of a proof that uses only the caller's pre-existing environment. -/
+elab "proof_emit_accept_after_aux" : tactic => do
+  let goal ← getMainGoal
+  let expected ← goal.getType
+  let auxName := `Hex.IntervalMathlib.ProgramProofConformance.transientEmitterCache
+  if (← getEnv).contains auxName then
+    throwError "transient proof-emitter cache declaration already exists"
+  let emitter : Proof.Emitter Unit :=
+    { emit := fun _ => do
+        addDecl <| .thmDecl
+          { name := auxName
+            levelParams := []
+            type := expected
+            value := mkConst ``True.intro }
+        let inferred ← inferType (mkConst auxName)
+        unless ← isDefEq inferred expected do
+          throwError "transient proof-emitter cache declaration has the wrong type"
+        pure (mkConst ``True.intro) }
+  let evidence ← Proof.emitChecked emitter () expected
+  if (← getEnv).contains auxName then
+    throwError "successful proof emitter leaked its transient declaration"
+  goal.assign evidence
+  replaceMainGoal []
+
+example : True := by proof_emit_accept_after_aux
 
 /-- Synthetic placeholder expressions are rejected even at the expected type. -/
 elab "proof_emit_reject_placeholder" : tactic => do

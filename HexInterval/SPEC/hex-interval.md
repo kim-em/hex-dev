@@ -5194,10 +5194,12 @@ their declared cost inside a scheduler bound.
   instance, and refutation theorem schemas; exact registry/action validation;
   chronological typed proof state and caller-target closure; and the
   expression boundary that rejects placeholders and metavariables, restores
-  emitter changes, then transactionally runs `Meta.check` and exact
-  type-definitional-equality checking in the caller's environment. Emitted
-  terms may reference only declarations surviving that rollback. The kernel
-  performs the final check when the caller installs the expression. Under
+  emitter environment/messages/information/metavariables and clears both
+  environment-dependent elaborator caches, then transactionally runs
+  `Meta.check` and exact type-definitional-equality checking in the caller's
+  environment. Emitted terms may reference only declarations surviving that
+  rollback. The kernel performs the final check when the caller installs the
+  expression. Under
   ordinary imports, only `Registry.buildWithin` can construct the theorem
   registry; `import all HexIntervalMathlib.Proof` is a trusted-internals escape
   hatch rejected outside the exact empty repository allowlist. Concrete
