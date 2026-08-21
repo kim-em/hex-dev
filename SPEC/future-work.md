@@ -72,6 +72,14 @@ products. Keep the current `Int` API as a specialization. The determinant
 proof reuses the public Desnanot-Jacobi and Plücker API already in
 hex-determinant-mathlib; that identity is not a new prerequisite library.
 
+Note that `HexBareiss/Bareiss.lean` already defines its own
+`Hex.Matrix.exactDiv`, an `Int`-specific `num / denom` that borrows both
+arguments with `@&`. Generalizing the recurrence means reconciling it with
+`Hex.exactDiv`, which is a total wrapper with a zero test and no borrow
+annotations. The two agree on values, since `Int` division by zero is already
+zero, so this is a code-generation question on the elimination hot path rather
+than a semantic one, and it wants a benchmark rather than a rewrite on sight.
+
 **Characteristic polynomial.** This one has graduated from this file and
 is specified in [hex-char-poly](Libraries/hex-char-poly.md): the
 Samuelson-Berkowitz algorithm, division-free over any commutative ring at
