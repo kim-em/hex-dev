@@ -76,10 +76,24 @@ includes generic bounded policy offers/views, exact echoed decisions, a
 replaceable choice interface, package-measured byte/pair/work caps, and
 transactional revalidation against exact program, fact snapshot, scope,
 serial, program version, remaining budget, and complete offer fields. It does
-not choose a semantic offer-key encoding or a default policy. Package assembly,
+not choose a semantic offer-key encoding or a default policy. The supported
+Mathlib companion now also owns the function-agnostic program interpretation,
+package theorem registry, chronological proof fold, exact caller closure, and
+checked expression boundary. Its first programmatic frontend recursively
+reifies a bounded arithmetic term language by stable operation key, rechecks
+the transparent result's exact node/term correspondence, binds the exact
+selected source facts, replays a caller-supplied authenticated flat
+chronology, and projects
+the result to lower, upper, conjunction, or closed-singleton equality theorems.
+Lean-expression parsing, local-hypothesis proof synthesis, tactic syntax, and
+Meta quotation of the supported records remain experimental. The first
+concrete supported registry is the Mathlib arithmetic package for one
+configured constant and natural exponent plus public negation, addition,
+subtraction, multiplication, power, absolute-value, min/max, reciprocal,
+division, and regularization operations. Arbitrary-function package assembly,
 callback outcomes and proposals, concrete policy algorithms, sessions, branch
-search, payload storage, proof replay, and that optimized backing store remain
-experimental.
+search, search-to-recipe orchestration, payload storage, tactic syntax, and the
+optimized backing store remain experimental.
 In particular, the current instantiation proposal's package-supplied numeric
 policy family is not part of the supported action contract.
 
@@ -5248,6 +5262,12 @@ their declared cost inside a scheduler bound.
   semantics and the one-way total-real-division enclosure theorem.
 - `HexIntervalMathlib/Regularize.lean`: exact normalized rounded-cut semantics,
   outward containment, and raw-cut idempotence without a grid-tightest claim.
+- `HexIntervalMathlib/Frontend.lean`: bounded recursive arithmetic-term
+  reification with structural sharing and stable-key resolution, checked
+  node/term correspondence and exact source binding, supported
+  registry/flat-replay invocation, and programmatic lower,
+  upper, conjunction, and closed-singleton equality closure. Search-to-recipe
+  integration, Lean syntax, and Meta quotation remain outside this module.
 - `HexInterval/Program.lean`: supported stable operation/domain/node
   identifiers, decoded typed SSA programs, fail-closed validation, and
   structural depths.
@@ -5328,6 +5348,10 @@ their declared cost inside a scheduler bound.
   operation package authenticating the exact `315 / 100` π cut.
 - `scripts/conformance/run_pnt_fks2_family.sh`: fail-closed entry point for the
   non-default complete-family proof and conformance profile.
+- `conformance/HexIntervalMathlib/FrontendConformance.lean`: supported
+  recursive shared-DAG reification, exact source binding, malformed-entry,
+  stable-key, and resource rejection, flat chronological replay, and ordinary
+  inequality, conjunction, and equality theorem/axiom canaries.
 - `bench/HexInterval/Bench.lean`: Mathlib-free interval and scheduler
   benchmarks.
 

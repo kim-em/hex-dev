@@ -21,6 +21,7 @@ public import HexIntervalMathlib.Regularize
 public import HexIntervalMathlib.Program
 public import HexIntervalMathlib.Proof
 public import HexIntervalMathlib.Rule
+public import HexIntervalMathlib.Frontend
 
 public section
 
@@ -34,4 +35,6 @@ enclosures. It also supplies the function-agnostic semantics of supported
 programs and the chronological, package-owned proof-replay boundary.
 `HexIntervalMathlib.Rule` supplies a checked built-in arithmetic package whose
 schemas recompute checked public operations before producing proof evidence.
+`HexIntervalMathlib.Frontend` supplies bounded recursive arithmetic reification,
+exact source binding, and flat programmatic replay/closure combinators.
 -/
