@@ -3217,6 +3217,35 @@ new wrapper becomes available. Thus the generic composite remains usable by a
 different sealed controller such as `BranchTree`, but it is not authority for
 the stronger leaf protocol for public-import clients.
 
+`Search.Result.Tree` is the supported retained-result prerequisite for a later
+proof-tree fold. Its private constructor keeps the exact node array, sealed
+`FrontierState Result.Id`, cumulative accounting, and logical cost together;
+callers cannot transplant a raw frontier, reset counters, or supply a complete
+child snapshot. `Result.startWithin` admits one checked root.
+`Result.splitWithin` authenticates the exact pending parent and current
+predecessor, structurally checks and retains the complete runtime split action,
+allocates the two fresh scopes through the sealed frontier, and reconstructs
+each restarted child from the checked current parent fact array with exactly
+one version-zero seed delta. It does not independently resolve the action's
+rule key against a package registry. All other child facts therefore come from
+the retained parent consequence snapshot rather than being reclassified as
+new assumptions. `Result.settleWithin` consumes the exact pending head and
+retains an exact target, refutation, or unknown record.
+Whole-tree validation reconstructs every parent/side/seed edge, restored
+parent, pending set, step/split/leaf/scope equation, branch state, and logical
+cost.
+
+Result limits independently bound retained nodes, each package body, declared
+logical bytes and work, plus the existing search and state resources. Count
+caps are checked before retained arrays and body lists are traversed. Adapter
+measurement, equality, and construction of arbitrary facts, causes, plans,
+schemas, and bodies remain explicitly non-preemptible; packages must bound
+those values before return. The split plan, schema, refutation record, target
+record, and runtime contradiction state are untrusted data, never evidence.
+Semantic split coverage, package-owned refutation theorems, recursive proof
+replay, search-to-recipe quotation, and unknown-leaf rejection by a proof fold
+remain later supported edges.
+
 This visibility is not a claim against Lean's deliberate `import all
 HexInterval.Search`. That form exposes private implementation names to trusted
 source and is an explicit trusted-internals escape hatch, not decoded runtime
@@ -5319,9 +5348,11 @@ their declared cost inside a scheduler bound.
   policy/action sessions, transactional callback-delta validation, exact
   generic stop/resource classes, stable depth-first/breadth-first frontiers,
   a separately sealed parent/depth/scope-checked leaf frontier, immutable parent
-  restoration, and sealed cumulative step/split/leaf/frontier/depth/scope
-  accounting. It contains no concrete callback, offer generator, split
-  semantics, policy algorithm, storage choice, or proof replay.
+  restoration, sealed cumulative step/split/leaf/frontier/depth/scope
+  accounting, and a sealed bounded retained result tree with exact single-delta
+  child reconstruction and target/refute/unknown terminals. It contains no
+  concrete callback, offer generator, semantic split/refutation theorem,
+  policy algorithm, storage choice, proof recipe, or proof replay.
 - `HexInterval/Experiment/Propagator.lean`: current experimental concrete
   applications, callbacks, outcomes, untrusted proposals and replies, and
   extension admission. Its engine extends and mutates only through the

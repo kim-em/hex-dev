@@ -17,7 +17,8 @@ This module is the supported, Mathlib-free ownership boundary for generic
 search. It authenticates policy choices against immutable views, binds the
 selected offer to an exact `Action`, and transactionally validates untrusted
 callback updates against `State.Branch`. It also supplies bounded tree
-accounting and stable depth-first/breadth-first frontier operations.
+accounting, stable depth-first/breadth-first frontier operations, and a sealed
+retained result tree whose children are reconstructed from one seed delta.
 
 The callback invocation and equality on caller-selected facts, causes,
 identifiers, and keys are explicitly non-preemptible. A callback
@@ -26,8 +27,13 @@ counts, versions, write authority, retained diagnostic bytes, and declared
 work before it commits any branch mutation. Neither an accepted callback
 result nor a runtime contradiction is theorem evidence.
 
-Concrete callbacks, offer generation, package assembly, policy algorithms,
-storage choices, split semantics, and proof replay remain outside this module.
+The retained tree binds structurally checked runtime actions, opaque plans,
+ordered sides, parent snapshots, and target/refutation/unknown terminal
+records. It does not authenticate an action against a package registry,
+interpret semantic split coverage or refutation schemas, or grant proof
+authority. Concrete callbacks, offer generation, package assembly, policy
+algorithms, storage choices, semantic split validation, and proof replay remain
+outside this module.
 
 Here and below, "sealed" means sealed at the ordinary/public import boundary.
 Lean's deliberate `import all HexInterval.Search` escape hatch exposes private
@@ -799,5 +805,441 @@ def startFrontierWithin := @LeafFrontier.startWithin
 def settleWithin := @LeafFrontier.settleWithin
 
 def splitWithin := @LeafFrontier.splitWithin
+
+/-! ## Retained authenticated search results -/
+
+namespace Result
+
+/-- Stable append-only address in one retained result tree. -/
+structure Id where
+  index : Nat
+  deriving DecidableEq, Repr
+
+/-- Ordered child identity retained for later package-owned coverage replay. -/
+inductive Side where
+  | left
+  | right
+  deriving DecidableEq, Repr
+
+/-- Adapter-declared logical storage and work. These are not physical heap
+bytes or a preemptible bound around arbitrary caller values. -/
+structure Cost where
+  bytes : Nat := 0
+  work : Nat := 0
+  deriving DecidableEq, Repr
+
+namespace Cost
+
+def add (left right : Cost) : Cost :=
+  { bytes := left.bytes + right.bytes, work := left.work + right.work }
+
+instance : Add Cost := ⟨add⟩
+
+end Cost
+
+/-- Caller-owned logical accounting for retained opaque values. Each callback
+must charge the complete encoding of its argument. Callback execution and the
+construction/equality of arbitrary Lean values are non-preemptible. -/
+structure Measure (Fact Cause Plan Schema : Type) where
+  node : Cost
+  branch : State.Branch Fact Cause → Cost
+  fact : Fact → Cost
+  action : Action → Cost
+  plan : Plan → Cost
+  schema : Schema → Cost
+  body : Nat → Cost
+  code : Nat → Cost
+
+/-- Retained-result limits layered over branch and search limits. `maxNodes`
+bounds the complete retained tree, while `maxBodyCells` bounds each opaque
+package body before its logical cost is measured. -/
+structure Limits where
+  search : Search.Limits
+  state : State.Limits
+  maxNodes : Nat
+  maxBodyCells : Nat
+  maxBytes : Nat
+  maxWork : Nat
+  maxCode : Nat
+  deriving DecidableEq, Repr
+
+inductive Resource where
+  | nodes
+  | body
+  | bytes
+  | work
+  deriving DecidableEq, Repr
+
+inductive Error where
+  | malformed
+  | terminal
+  | split
+  | search (resource : Search.Resource)
+  | state (error : State.BranchError)
+  | resource (resource : Resource)
+  deriving DecidableEq, Repr
+
+/-- The single version-zero delta used to construct a split child. All other
+child facts come from the exact checked current parent snapshot. -/
+structure Seed (Fact : Type) where
+  node : NodeId
+  previous : SeenVersion
+  fact : Fact
+  deriving DecidableEq, Repr
+
+/-- Exact untrusted split record. A later proof layer must resolve `schema`
+through a package registry and establish semantic coverage; none of these
+runtime fields is theorem evidence. -/
+structure Split (Plan Schema : Type) where
+  scope : Policy.ScopeId
+  programVersion : Nat
+  action : Action
+  parent : SeenVersion
+  plan : Plan
+  schema : Schema
+  body : List Nat
+  deriving DecidableEq, Repr
+
+structure Target where
+  scope : Policy.ScopeId
+  programVersion : Nat
+  seen : SeenVersion
+  deriving DecidableEq, Repr
+
+structure Refute (Schema : Type) where
+  scope : Policy.ScopeId
+  programVersion : Nat
+  seen : SeenVersion
+  schema : Schema
+  body : List Nat
+  deriving DecidableEq, Repr
+
+structure Unknown where
+  scope : Policy.ScopeId
+  programVersion : Nat
+  code : Nat
+  deriving DecidableEq, Repr
+
+/-- Explicit terminal status. Unknown leaves remain honest incomplete results
+and cannot be consumed by a future total proof-tree fold. -/
+inductive End (Schema : Type)
+  | target (target : Target)
+  | refute (refute : Refute Schema)
+  | unknown (unknown : Unknown)
+  deriving DecidableEq, Repr
+
+/-- Exact runtime source for one retained node. Every non-root source binds its
+parent address, ordered side, and sole child seed delta. -/
+structure Source (Fact Cause : Type) where
+  scope : Policy.ScopeId
+  depth : Nat
+  branch : State.Branch Fact Cause
+  parent : Option Id := none
+  side : Option Side := none
+  seed : Option (Seed Fact) := none
+  deriving DecidableEq
+
+inductive Node (Fact Cause Plan Schema : Type)
+  | pending (source : Source Fact Cause)
+  | terminal (source : Source Fact Cause) (ending : End Schema)
+  | split (source : Source Fact Cause) (recipe : Split Plan Schema)
+      (left right : Id)
+  deriving DecidableEq
+
+def Node.source : Node Fact Cause Plan Schema → Source Fact Cause
+  | .pending source | .terminal source _ | .split source _ _ _ => source
+
+/-- Ordinary-import-sealed live retained tree. Its frontier and cumulative
+accounting cannot be reset, advanced, or transplanted independently. Public
+construction and transitions recheck exact tree shape and resources. -/
+structure Tree (Fact Cause Plan Schema : Type) where
+  private mk ::
+  nodes : Array (Node Fact Cause Plan Schema)
+  private live : FrontierState Id
+  cost : Cost
+
+opaque Tree.frontier (tree : Tree Fact Cause Plan Schema) : Frontier Id :=
+  tree.live.frontier
+
+opaque Tree.accounting (tree : Tree Fact Cause Plan Schema) : Accounting :=
+  tree.live.accounting
+
+opaque Tree.pending (tree : Tree Fact Cause Plan Schema) : List Id :=
+  tree.live.pending
+
+opaque Tree.isEmpty (tree : Tree Fact Cause Plan Schema) : Bool :=
+  tree.live.isEmpty
+
+def sumCost (items : List Cost) : Cost :=
+  items.foldl (init := {}) (fun total item => total + item)
+
+def bodyCost (measure : Measure Fact Cause Plan Schema) (body : List Nat) : Cost :=
+  sumCost (body.map measure.body)
+
+def sourceCost (measure : Measure Fact Cause Plan Schema)
+    (source : Source Fact Cause) : Cost :=
+  measure.node + measure.branch source.branch +
+    match source.seed with
+    | none => {}
+    | some seed => measure.fact seed.fact
+
+def nodeCost (measure : Measure Fact Cause Plan Schema) :
+    Node Fact Cause Plan Schema → Cost
+  | .pending source => sourceCost measure source
+  | .terminal source (.target _) => sourceCost measure source
+  | .terminal source (.unknown unknown) =>
+      sourceCost measure source + measure.code unknown.code
+  | .terminal source (.refute refute) =>
+      sourceCost measure source + measure.schema refute.schema + bodyCost measure refute.body
+  | .split source recipe _ _ =>
+      sourceCost measure source + measure.action recipe.action + measure.plan recipe.plan +
+        measure.schema recipe.schema + bodyCost measure recipe.body
+
+def Tree.recomputeCost (measure : Measure Fact Cause Plan Schema)
+    (tree : Tree Fact Cause Plan Schema) : Cost :=
+  sumCost (tree.nodes.toList.map (nodeCost measure))
+
+def withinCost (limits : Limits) (cost : Cost) : Bool :=
+  cost.bytes ≤ limits.maxBytes && cost.work ≤ limits.maxWork
+
+private def throwCost (limits : Limits) (cost : Cost) : Except Error Unit := do
+  if limits.maxBytes < cost.bytes then throw (.resource .bytes)
+  if limits.maxWork < cost.work then throw (.resource .work)
+
+def seenCurrent (branch : State.Branch Fact Cause) (seen : SeenVersion) : Bool :=
+  branch.versions[seen.node.index]? == some seen.version && (branch.factAt? seen).isSome
+
+def inputsCurrent (branch : State.Branch Fact Cause) (inputs : List SeenVersion) : Bool :=
+  inputs.all (seenCurrent branch)
+
+private def bodyWithin (limits : Limits) (body : List Nat) : Bool :=
+  listWithin limits.maxBodyCells body
+
+private def actionWithin (limits : State.Limits) (action : Action) : Bool :=
+  let portLimit := Nat.max (limits.maxArity + 1) limits.maxScopeNodes
+  listWithin portLimit action.inputs && listWithin portLimit action.writes &&
+    listWithin limits.matcherBatchSize action.structuralInputs &&
+    action.effort ≤ limits.maxEffort
+
+opaque Split.check (limits : Limits) (source : Source Fact Cause)
+    (recipe : Split Plan Schema) : Bool :=
+  bodyWithin limits recipe.body && actionWithin limits.state recipe.action &&
+    recipe.scope == source.scope &&
+    recipe.programVersion == source.branch.programVersion &&
+    recipe.action.programVersion == source.branch.programVersion &&
+    recipe.action.kind == .split && recipe.action.node == recipe.parent.node &&
+    recipe.action.inputs.contains recipe.parent &&
+    inputsCurrent source.branch recipe.action.inputs && seenCurrent source.branch recipe.parent
+
+opaque End.check (limits : Limits) (source : Source Fact Cause) : End Schema → Bool := fun
+  | .target entry =>
+      entry.scope == source.scope &&
+        entry.programVersion == source.branch.programVersion &&
+        seenCurrent source.branch entry.seen
+  | .refute entry =>
+      entry.scope == source.scope &&
+        entry.programVersion == source.branch.programVersion &&
+        bodyWithin limits entry.body && seenCurrent source.branch entry.seen
+  | .unknown entry =>
+      entry.scope == source.scope &&
+        entry.programVersion == source.branch.programVersion && entry.code ≤ limits.maxCode
+
+private def fromSearch : Search.Error → Error
+  | .resource resource => .search resource
+  | _ => .malformed
+
+private def childBranchWithin [DecidableEq Fact] (limits : Limits)
+    (parent : Source Fact Cause) (seed : Seed Fact) :
+    Except Error (State.Branch Fact Cause) := do
+  if seed.previous.node != seed.node || !seenCurrent parent.branch seed.previous then
+    throw .split
+  let _ ← (preflightBranch limits.state parent.branch).mapError fromSearch
+  let some snapshot := parent.branch.checkedSnapshot? | throw .split
+  let some old := snapshot.facts[seed.node.index]? | throw .split
+  if old == seed.fact then throw .split
+  let facts := snapshot.facts.set! seed.node.index seed.fact
+  match State.Branch.startWithin limits.state parent.branch.program facts with
+  | .ok branch => pure branch
+  | .error error => throw (.state error)
+
+opaque childMatches [DecidableEq Fact] [DecidableEq Cause]
+    (limits : Limits) (parentId : Id) (parent : Source Fact Cause)
+    (side : Side) (child : Source Fact Cause) : Bool :=
+  child.parent == some parentId && child.side == some side &&
+    child.depth == parent.depth + 1 &&
+    match child.seed with
+    | none => false
+    | some seed => (childBranchWithin limits parent seed).toOption == some child.branch
+
+def pendingIds (tree : Tree Fact Cause Plan Schema) : List Id :=
+  (List.range tree.nodes.size).filterMap fun index =>
+    match tree.nodes[index]? with
+    | some (Node.pending _) => some { index }
+    | _ => none
+
+def terminalCount (tree : Tree Fact Cause Plan Schema) : Nat :=
+  tree.nodes.toList.countP fun node => match node with
+    | .terminal _ _ => true
+    | _ => false
+
+def splitCount (tree : Tree Fact Cause Plan Schema) : Nat :=
+  tree.nodes.toList.countP fun node => match node with
+    | .split _ _ _ _ => true
+    | _ => false
+
+private def nodePreflight (limits : Limits) (node : Node Fact Cause Plan Schema) : Bool :=
+  (preflightBranch limits.state node.source.branch).isOk &&
+    match node with
+    | .pending _ | .terminal _ (.target _) => true
+    | .terminal _ (.unknown _) => true
+    | .terminal _ (.refute refute) => bodyWithin limits refute.body
+    | .split _ split _ _ =>
+        bodyWithin limits split.body && actionWithin limits.state split.action
+
+/-- Validate the complete retained shape, exact parent/child seed relation,
+terminal records, cumulative search accounting, and adapter-declared cost. -/
+opaque Tree.check [DecidableEq Fact] [DecidableEq Cause]
+    (limits : Limits) (measure : Measure Fact Cause Plan Schema)
+    (tree : Tree Fact Cause Plan Schema) : Bool := Id.run do
+  if tree.nodes.isEmpty || limits.maxNodes < tree.nodes.size then return false
+  let some frontierCount := (frontierCountWithin limits.search tree.live.frontier).toOption
+    | return false
+  if !tree.accounting.check limits.search frontierCount ||
+      tree.nodes.any (fun node => !nodePreflight limits node) then return false
+  let some root := tree.nodes[0]? | return false
+  let rootSource := root.source
+  if rootSource.depth != 0 || rootSource.parent.isSome || rootSource.side.isSome ||
+      rootSource.seed.isSome || !rootSource.branch.check then return false
+  let mut incoming := Array.replicate tree.nodes.size 0
+  let mut scopes : List Policy.ScopeId := []
+  for index in [0:tree.nodes.size] do
+    let some node := tree.nodes[index]? | return false
+    let source := node.source
+    if !source.branch.check || limits.search.maxDepth < source.depth ||
+        source.scope.index != rootSource.scope.index + index then return false
+    scopes := source.scope :: scopes
+    match node with
+    | .pending _ => pure ()
+    | .terminal _ ending => if !ending.check limits source then return false
+    | .split _ recipe left right =>
+        if !recipe.check limits source || left == right || left.index ≤ index ||
+            right.index ≤ index then return false
+        let some leftNode := tree.nodes[left.index]? | return false
+        let some rightNode := tree.nodes[right.index]? | return false
+        if !childMatches limits { index } source .left leftNode.source ||
+            !childMatches limits { index } source .right rightNode.source then return false
+        incoming := incoming.set! left.index (incoming[left.index]! + 1)
+        incoming := incoming.set! right.index (incoming[right.index]! + 1)
+  if !allDistinct scopes || incoming[0]? != some 0 then return false
+  for index in [1:incoming.size] do
+    if incoming[index]? != some 1 then return false
+  let pending := pendingIds tree
+  if !allDistinct tree.pending || tree.pending.length != pending.length ||
+      !tree.pending.all pending.contains then return false
+  let splits := splitCount tree
+  let terminals := terminalCount tree
+  if tree.nodes.size != splits * 2 + 1 || tree.accounting.splits != splits ||
+      tree.accounting.steps != splits + terminals || tree.accounting.leaves != splits + 1 ||
+      tree.accounting.scopes != tree.nodes.size ||
+      tree.accounting.nextScope != rootSource.scope.index + tree.nodes.size then return false
+  let cost := tree.recomputeCost measure
+  return tree.cost == cost && withinCost limits cost
+
+private def checked [DecidableEq Fact] [DecidableEq Cause]
+    (limits : Limits) (measure : Measure Fact Cause Plan Schema)
+    (tree : Tree Fact Cause Plan Schema) : Except Error (Tree Fact Cause Plan Schema) :=
+  if tree.check limits measure then .ok tree else .error .malformed
+
+/-- Start a sealed singleton retained tree from an exact checked root branch. -/
+opaque startWithin [DecidableEq Fact] [DecidableEq Cause]
+    (limits : Limits) (measure : Measure Fact Cause Plan Schema)
+    (scope : Policy.ScopeId) (branch : State.Branch Fact Cause) :
+    Except Error (Tree Fact Cause Plan Schema) := do
+  if limits.maxNodes < 1 then throw (.resource .nodes)
+  let _ ← (preflightBranch limits.state branch).mapError fromSearch
+  if !branch.check then throw .malformed
+  let source : Source Fact Cause := { scope, depth := 0, branch }
+  let nodes : Array (Node Fact Cause Plan Schema) := #[.pending source]
+  let live <- (FrontierState.startWithin limits.search scope ({ index := 0 } : Id)).mapError fromSearch
+  let cost := sumCost (nodes.toList.map (nodeCost measure))
+  throwCost limits cost
+  checked limits measure { nodes, live, cost }
+
+opaque current? (tree : Tree Fact Cause Plan Schema) : Option (Id × Source Fact Cause) := do
+  let id ← tree.live.head?
+  let node ← tree.nodes[id.index]?
+  match node with
+  | .pending source => some (id, source)
+  | _ => none
+
+/-- Restore the exact retained parent source by append-only node identity. -/
+def restoreParent? (tree : Tree Fact Cause Plan Schema) (child : Id) :
+    Option (Source Fact Cause) := do
+  let node ← tree.nodes[child.index]?
+  let parent ← node.source.parent
+  let parentNode ← tree.nodes[parent.index]?
+  pure parentNode.source
+
+private def makeChild [DecidableEq Fact] (limits : Limits) (parentId : Id)
+    (parent : Source Fact Cause) (side : Side) (scope : Policy.ScopeId)
+    (seed : Seed Fact) : Except Error (Source Fact Cause) := do
+  let branch ← childBranchWithin limits parent seed
+  pure
+    { scope, depth := parent.depth + 1, branch,
+      parent := some parentId, side := some side, seed := some seed }
+
+/-- Retain one exact binary split transactionally. Child branches are rebuilt
+from the checked parent snapshot plus one seed delta each; callers cannot
+supply or transplant a complete child snapshot. -/
+opaque splitWithin [DecidableEq Fact] [DecidableEq Cause]
+    (limits : Limits) (measure : Measure Fact Cause Plan Schema)
+    (order : Order) (tree : Tree Fact Cause Plan Schema)
+    (recipe : Split Plan Schema) (leftSeed rightSeed : Seed Fact) :
+    Except Error (Tree Fact Cause Plan Schema) := do
+  let tree ← checked limits measure tree
+  let some (parentId, parent) := current? tree | throw .split
+  if !bodyWithin limits recipe.body then throw (.resource .body)
+  if !recipe.check limits parent then throw .split
+  if tree.nodes.size + 2 > limits.maxNodes then throw (.resource .nodes)
+  if limits.search.maxDepth < parent.depth + 1 then throw (.search .depth)
+  if leftSeed.node != recipe.parent.node || rightSeed.node != recipe.parent.node ||
+      leftSeed.previous != recipe.parent || rightSeed.previous != recipe.parent ||
+      leftSeed.fact == rightSeed.fact then throw .split
+  let leftId : Id := { index := tree.nodes.size }
+  let rightId : Id := { index := tree.nodes.size + 1 }
+  let (head, live) ← tree.live.splitHeadWithin limits.search order [leftId, rightId]
+      |>.mapError fromSearch
+  if head != parentId then throw .split
+  let left ← makeChild limits parentId parent .left
+    { index := tree.accounting.nextScope } leftSeed
+  let right ← makeChild limits parentId parent .right
+    { index := tree.accounting.nextScope + 1 } rightSeed
+  let nodes := (tree.nodes.set! parentId.index (.split parent recipe leftId rightId))
+    |>.push (.pending left) |>.push (.pending right)
+  let cost := sumCost (nodes.toList.map (nodeCost measure))
+  throwCost limits cost
+  checked limits measure { nodes, live, cost }
+
+/-- Retain one exact terminal and remove the stable frontier head
+transactionally. Target and refutation records are authenticated runtime data,
+not proof evidence; unknown leaves remain explicit. -/
+opaque settleWithin [DecidableEq Fact] [DecidableEq Cause]
+    (limits : Limits) (measure : Measure Fact Cause Plan Schema)
+    (tree : Tree Fact Cause Plan Schema) (ending : End Schema) :
+    Except Error (Tree Fact Cause Plan Schema) := do
+  let tree ← checked limits measure tree
+  let some (id, source) := current? tree | throw .terminal
+  match ending with
+  | .refute entry => if !bodyWithin limits entry.body then throw (.resource .body)
+  | _ => pure ()
+  if !ending.check limits source then throw .terminal
+  let (head, live) ← tree.live.settleHeadWithin limits.search |>.mapError fromSearch
+  if head != id then throw .terminal
+  let nodes := tree.nodes.set! id.index (.terminal source ending)
+  let cost := sumCost (nodes.toList.map (nodeCost measure))
+  throwCost limits cost
+  checked limits measure { nodes, live, cost }
+
+end Result
 
 end Hex.Interval.Search

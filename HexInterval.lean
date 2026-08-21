@@ -44,6 +44,9 @@ authenticates selected actions, transactionally checks untrusted callback
 deltas, and supplies bounded stable branch-frontier accounting. Its specialized
 leaf frontier can advance only through the parent/depth/scope/branch-checked
 transition; generic frontier scheduling cannot be installed into it. A
+separate sealed retained-result tree reconstructs split children from the
+checked current parent snapshot and one exact seed delta, retains explicit
+target/refutation/unknown terminals, and carries no theorem authority. A
 deliberate `import all HexInterval.Search` is trusted implementation access,
 not decoded-runtime authority, and repository checks reject accidental uses.
 Concrete

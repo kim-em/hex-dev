@@ -598,4 +598,274 @@ private def secondSplitError (limits : Search.Limits) : Option Search.Error := d
 #guard secondSplitError { searchLimits with maxSplits := 1 } == some (.resource .splits)
 #guard secondSplitError { searchLimits with maxFrontier := 2 } == some (.resource .frontier)
 
+/-! ## Sealed retained result trees -/
+
+namespace Retained
+
+open Search.Result
+
+/-- error: Unknown constant `Hex.Interval.Search.Result.Tree.mk` -/
+#guard_msgs in
+#check Search.Result.Tree.mk
+
+private def limits : Search.Result.Limits :=
+  { search := { searchLimits with maxSteps := 6 }
+    state := stateLimits
+    maxNodes := 3
+    maxBodyCells := 2
+    maxBytes := 96
+    maxWork := 96
+    maxCode := 8 }
+
+private def unitCost : Cost := { bytes := 1, work := 1 }
+
+private def measure : Measure Nat Nat Nat Nat :=
+  { node := unitCost
+    branch := fun branch =>
+      { bytes := branch.initialFacts.size + branch.seeds.size + branch.history.size
+        work := branch.versions.size + branch.history.size }
+    fact := fun _ => unitCost
+    action := fun _ => unitCost
+    plan := fun _ => unitCost
+    schema := fun _ => unitCost
+    body := fun _ => unitCost
+    code := fun _ => unitCost }
+
+private def refinedBranch? : Option (State.Branch Nat Nat) := do
+  let branch <- branch?
+  (branch.pushWithin stateLimits firstUpdate).toOption
+
+private def splitAction : Action :=
+  { policyAction with
+    kind := .split
+    node := contractNode 1
+    inputs := [{ node := contractNode 1, version := 1 }]
+    writes := [] }
+
+private def recipe : Split Nat Nat :=
+  { scope := { index := 5 }
+    programVersion := 0
+    action := splitAction
+    parent := { node := contractNode 1, version := 1 }
+    plan := 37
+    schema := 41
+    body := [43] }
+
+private def leftSeed : Seed Nat :=
+  { node := contractNode 1, previous := recipe.parent, fact := 19 }
+
+private def rightSeed : Seed Nat :=
+  { node := contractNode 1, previous := recipe.parent, fact := 31 }
+
+private def root? : Option (Tree Nat Nat Nat Nat) := do
+  let branch <- refinedBranch?
+  (Search.Result.startWithin limits measure { index := 5 } branch).toOption
+
+private def split? : Option (Tree Nat Nat Nat Nat) := do
+  let root <- root?
+  (Search.Result.splitWithin limits measure .depthFirst root recipe leftSeed rightSeed).toOption
+
+#guard root?.any fun tree =>
+  tree.check limits measure && tree.nodes.size == 1 &&
+    tree.pending == [{ index := 0 }] && tree.accounting.nextScope == 6
+
+#guard split?.any fun tree =>
+  tree.check limits measure && tree.nodes.size == 3 &&
+    tree.pending == [{ index := 1 }, { index := 2 }] &&
+    tree.accounting.steps == 1 && tree.accounting.splits == 1 &&
+    tree.accounting.leaves == 2 && tree.accounting.nextScope == 8
+
+-- Child state is rebuilt from the exact current parent snapshot and one
+-- version-one seed delta. The inherited node is not replaced, and no parent
+-- history or current version is silently installed in the restarted child.
+#guard split?.any fun tree =>
+  match tree.nodes[1]?, tree.nodes[2]? with
+  | some (Node.pending left), some (Node.pending right) =>
+      left.branch.snapshot.facts == #[13, 19] &&
+        right.branch.snapshot.facts == #[13, 31] &&
+        left.branch.versions == #[0, 0] && right.branch.versions == #[0, 0] &&
+        left.branch.history.isEmpty && right.branch.history.isEmpty &&
+        left.seed == some leftSeed && right.seed == some rightSeed
+  | _, _ => false
+
+-- Restoration follows the sealed tree address rather than a caller-supplied
+-- copy and recovers the exact refined parent chronology.
+#guard split?.any fun tree =>
+  match Search.Result.restoreParent? tree { index := 1 }, tree.nodes[0]? with
+  | some parent, some root =>
+      parent == root.source && parent.branch.history == #[firstUpdate] &&
+        parent.branch.snapshot.facts == #[13, 29]
+  | _, _ => false
+
+private def leftTarget : End Nat := .target
+  { scope := { index := 6 }
+    programVersion := 0
+    seen := { node := contractNode 1, version := 0 } }
+
+private def rightRefute : End Nat := .refute
+  { scope := { index := 7 }
+    programVersion := 0
+    seen := { node := contractNode 1, version := 0 }
+    schema := 47
+    body := [53] }
+
+private def settled? : Option (Tree Nat Nat Nat Nat) := do
+  let tree <- split?
+  let .ok tree := Search.Result.settleWithin limits measure tree leftTarget | none
+  (Search.Result.settleWithin limits measure tree rightRefute).toOption
+
+#guard settled?.any fun tree =>
+  tree.check limits measure && tree.isEmpty && tree.accounting.steps == 3 &&
+    terminalCount tree == 2 && splitCount tree == 1
+
+private def unknown? : Option (Tree Nat Nat Nat Nat) := do
+  let tree <- root?
+  (Search.Result.settleWithin limits measure tree (.unknown
+    { scope := { index := 5 }, programVersion := 0, code := 8 })).toOption
+
+#guard unknown?.any fun tree =>
+  tree.check limits measure && tree.isEmpty && terminalCount tree == 1
+
+private def resultError (wanted : Search.Result.Error)
+    (result : Except Search.Result.Error α) : Bool :=
+  match result with
+  | .error actual => actual == wanted
+  | .ok _ => false
+
+-- Action kind, current dependency, exact predecessor, sibling distinction,
+-- and nontrivial child deltas are independently load-bearing.
+#guard root?.any fun tree =>
+  resultError .split <| Search.Result.splitWithin limits measure .depthFirst tree
+    { recipe with action := { splitAction with kind := .forward } } leftSeed rightSeed
+
+#guard root?.any fun tree =>
+  resultError .split <| Search.Result.splitWithin limits measure .depthFirst tree
+    { recipe with action := { splitAction with inputs :=
+      [{ node := contractNode 1, version := 0 }] } } leftSeed rightSeed
+
+#guard root?.any fun tree =>
+  resultError .split <| Search.Result.splitWithin limits measure .depthFirst tree
+    recipe { leftSeed with previous := { node := contractNode 1, version := 0 } } rightSeed
+
+#guard root?.any fun tree =>
+  resultError .split <| Search.Result.splitWithin limits measure .depthFirst tree
+    recipe leftSeed { rightSeed with fact := leftSeed.fact }
+
+#guard root?.any fun tree =>
+  resultError .split <| Search.Result.splitWithin limits measure .depthFirst tree
+    recipe { leftSeed with fact := 29 } rightSeed
+
+-- Terminal scope, program version, retained version, and unknown code are
+-- checked before the sealed frontier advances.
+#guard split?.any fun tree =>
+  resultError .terminal <| Search.Result.settleWithin limits measure tree (.target
+    { scope := { index := 7 }
+      programVersion := 0
+      seen := { node := contractNode 1, version := 0 } })
+
+#guard split?.any fun tree =>
+  resultError .terminal <| Search.Result.settleWithin limits measure tree (.target
+    { scope := { index := 6 }
+      programVersion := 1
+      seen := { node := contractNode 1, version := 0 } })
+
+#guard split?.any fun tree =>
+  resultError .terminal <| Search.Result.settleWithin limits measure tree (.refute
+    { scope := { index := 6 }
+      programVersion := 0
+      seen := { node := contractNode 1, version := 1 }
+      schema := 47
+      body := [53] })
+
+#guard split?.any fun tree =>
+  resultError .terminal <| Search.Result.settleWithin limits measure tree (.unknown
+    { scope := { index := 6 }, programVersion := 0, code := 9 })
+
+-- Independent one-over tree, body, search, state, logical-byte, and work
+-- resources reject the whole transition without advancing the original tree.
+#guard match refinedBranch? with
+  | some branch =>
+      resultError (.resource .nodes) <|
+        Search.Result.startWithin { limits with maxNodes := 0 }
+          measure { index := 5 } branch
+  | none => false
+
+#guard match refinedBranch? with
+  | some branch =>
+      resultError (.search (.state .nodes)) <|
+        Search.Result.startWithin { limits with state := { stateLimits with maxNodes := 1 } }
+          measure { index := 5 } branch
+  | none => false
+
+#guard root?.any fun tree =>
+  (resultError (.resource .nodes) <|
+      Search.Result.splitWithin { limits with maxNodes := 2 }
+        measure .depthFirst tree recipe leftSeed rightSeed) &&
+    tree.check limits measure && tree.pending == [{ index := 0 }]
+
+#guard root?.any fun tree =>
+  resultError (.resource .body) <|
+    Search.Result.splitWithin { limits with maxBodyCells := 0 }
+      measure .depthFirst tree recipe leftSeed rightSeed
+
+#guard root?.any fun tree =>
+  resultError (.search .leaves) <|
+    Search.Result.splitWithin
+      { limits with search := { limits.search with maxLeaves := 1 } }
+      measure .depthFirst tree recipe leftSeed rightSeed
+
+#guard root?.any fun tree =>
+  resultError (.search .steps) <|
+    Search.Result.splitWithin
+      { limits with search := { limits.search with maxSteps := 0 } }
+      measure .depthFirst tree recipe leftSeed rightSeed
+
+#guard root?.any fun tree =>
+  resultError (.search .splits) <|
+    Search.Result.splitWithin
+      { limits with search := { limits.search with maxSplits := 0 } }
+      measure .depthFirst tree recipe leftSeed rightSeed
+
+#guard root?.any fun tree =>
+  resultError (.search .scopes) <|
+    Search.Result.splitWithin
+      { limits with search := { limits.search with maxScopes := 2 } }
+      measure .depthFirst tree recipe leftSeed rightSeed
+
+#guard root?.any fun tree =>
+  resultError (.search .depth) <|
+    Search.Result.splitWithin
+      { limits with search := { limits.search with maxDepth := 0 } }
+      measure .depthFirst tree recipe leftSeed rightSeed
+
+#guard root?.any fun tree =>
+  resultError (.search .frontier) <|
+    Search.Result.splitWithin
+      { limits with search := { limits.search with maxFrontier := 1 } }
+      measure .depthFirst tree recipe leftSeed rightSeed
+
+#guard split?.any fun tree =>
+  let exact := tree.recomputeCost measure
+  resultError (.resource .bytes) <|
+    Search.Result.settleWithin { limits with maxBytes := exact.bytes }
+      measure tree (.refute
+        { scope := { index := 6 }
+          programVersion := 0
+          seen := { node := contractNode 1, version := 0 }
+          schema := 47
+          body := [53] })
+
+#guard split?.any fun tree =>
+  let exact := tree.recomputeCost measure
+  resultError (.resource .work) <|
+    Search.Result.settleWithin { limits with maxWork := exact.work }
+      measure tree (.refute
+        { scope := { index := 6 }
+          programVersion := 0
+          seen := { node := contractNode 1, version := 0 }
+          schema := 47
+          body := [53] })
+
+end Retained
+
 end Hex.Interval.SearchConformance
