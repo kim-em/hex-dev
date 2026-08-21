@@ -683,20 +683,23 @@ driver, and for the same reason.
 **The semantics is stated over `Rat`, and the companion upgrades it.**
 
 ```lean
-/-- The p-adic valuation of a positive natural number. -/
-def natVal (p n : Nat) : Nat
+/-- The p-adic valuation of a positive natural number. `p` is explicit
+because these three are p-generic helpers rather than operations on an
+approximation, and the instance is what makes the stripping loop
+terminate. -/
+def natVal (p : Nat) [PrimeBase p] (n : Nat) : Nat
 
 /-- The p-adic valuation of a nonzero rational; `none` at zero. -/
-def ratVal (x : Rat) : Option Int
+def ratVal (p : Nat) [PrimeBase p] (x : Rat) : Option Int
 
 /-- `x` is within absolute precision `m` of zero: every determined
 valuation of `x` is at least `m`, and `x = 0` satisfies it. -/
-def NearZero (m : Int) (x : Rat) : Prop :=
+def NearZero (p : Nat) [PrimeBase p] (m : Int) (x : Rat) : Prop :=
   ∀ k, ratVal p x = some k → m ≤ k
 
 /-- The rationals this approximation does not exclude. -/
 instance : Membership Rat (QpApprox p) where
-  mem a x := NearZero a.prec (x - a.centre)
+  mem a x := NearZero p a.prec (x - a.centre)
 ```
 
 `NearZero` is written as a universally quantified implication rather
@@ -860,7 +863,7 @@ def pow (a : QpApprox p) (k : Nat) : QpApprox p
 /-- The relative precision of a positive power: `r + v_p k`, except at
 `p = 2` with a single significant digit and an even exponent, where it
 is one more. -/
-def powRel (p r k : Nat) : Nat :=
+def powRel (p : Nat) [PrimeBase p] (r k : Nat) : Nat :=
   if p = 2 ∧ r = 1 ∧ 2 ∣ k then natVal 2 k + 2 else r + natVal p k
 
 /-- Lifting the exponent: a power gains `v_p k` significant digits, and
