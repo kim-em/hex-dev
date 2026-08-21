@@ -24,16 +24,23 @@ is a fixture nobody can extend, and an irreducibility benchmark whose
 inputs stop at the degrees somebody was willing to type is a benchmark
 with an accidental ceiling.
 
-**They are the standard hard family for integer factorisation of
-polynomials.** `Φₙ` is irreducible over `ℚ` of degree `φ(n)`, its
-coefficients are small while its degree is large, and for `p ∤ n` its
-reduction mod `p` splits into `φ(n)/ord_n(p)` factors of equal degree,
-where `ord_n(p)` is the multiplicative order of `p` mod `n`. That combination
-is the worst case for Berlekamp-Zassenhaus recombination: many modular
-factors, no small true factor, and a lattice step that has to run to the
-end before it can report "irreducible". Generating those inputs from an
-index rather than from a table is what makes the benchmark family
-extensible.
+**They are a standard hard family for integer factorisation of
+polynomials.** `Φₙ` is irreducible over `ℚ` of degree `φ(n)`, and for
+`p ∤ n` its reduction mod `p` splits into `φ(n)/ord_n(p)` factors of
+equal degree, where `ord_n(p)` is the multiplicative order of `p` mod
+`n`. When the chosen reduction prime has small `ord_n(p)` that is the
+worst case for Berlekamp-Zassenhaus recombination: many modular factors,
+no small true factor, and a lattice step that has to run to the end
+before it can report "irreducible". The hardness is a property of the
+pair `(n, p)` and not of `n` alone. `ord₇(3) = 6`, so `Φ₇` stays
+irreducible mod `3` and is an easy input at that prime.
+
+The families the benchmark suite would draw from here combine a large
+degree with coefficients that are usually small, which is the shape that
+stresses recombination rather than coefficient arithmetic. "Usually" is
+the honest word: the heights are not uniformly small, as the Erdős
+result recorded under "Complexity" says. Generating these inputs from an
+index rather than from a table is what makes the family extensible.
 
 **`xⁿ − 1` is the identity two other libraries want.**
 [hex-int-factor](hex-int-factor.md) splits `bⁿ ± 1` before factoring it
@@ -79,9 +86,14 @@ open Hex.Nat
 def cyclotomic {n : Nat} (F : CheckedFactorization n) : ZPoly
 ```
 
-Every public function in this library takes `F : CheckedFactorization n`
-and none takes a bare `Nat`. Three separate things follow from that, and
-each of them is a requirement the issue behind this SPEC names.
+Every public function that constructs a cyclotomic polynomial or the
+divisor family takes `F : CheckedFactorization n`, and none of them
+takes a bare `Nat`. The one public function that does take a bare index
+is `xPowSubOne`, which is not a cyclotomic construction: it is
+`xⁿ − 1`, it is total, and at `n = 0` it returns `x⁰ − 1 = 0`, which is
+the right answer rather than a degenerate one. Three separate things
+follow from the rule, and each of them is a requirement the issue behind
+this SPEC names.
 
 **Positivity is a consequence, not a hypothesis.**
 `checkFactorization` requires `0 < F.subject` as its first condition, so
@@ -101,7 +113,9 @@ second copy of it is a second thing a caller has to supply.
 
 `Φ₀` is therefore not defined. Mathlib defines `cyclotomic 0 R = 1`, and
 that convention is a choice made at an index where the divisor product
-`∏_{d ∣ 0} Φ_d` is the empty product `1` while `x⁰ − 1` is `0`, so the
+`∏_{d ∈ Nat.divisors 0} Φ_d` is the empty product `1` (Mathlib's
+`Nat.divisors 0` is empty by convention, not because `0` has no positive
+divisors) while `x⁰ − 1` is `0`, so the
 factorization identity fails there whatever value is chosen. The
 companion states no correspondence at `0` and does not need one. The
 degree formula happens to survive Mathlib's convention, since
@@ -141,18 +155,20 @@ hide the one cost in this library that is not linear in the output size.
 
 Write `rad n = ∏_{p ∣ n} p` for the squarefree kernel and `φ` for the
 totient. Everything below rests on two facts about `Φ`, both stated for
-`p` prime.
+`p` prime and `0 < m`. The positivity is not decoration: `Φ₀` is not
+defined here, so an identity mentioning `Φ_m` has to say that `m` is
+positive, and every use below satisfies it.
 
 ```
-(1)  p ∤ m   ⟹   Φ_m(x^p) = Φ_{mp}(x) · Φ_m(x)
-(2)  p ∣ m   ⟹   Φ_m(x^p) = Φ_{mp}(x)
+(1)  0 < m,  p ∤ m   ⟹   Φ_m(x^p) = Φ_{mp}(x) · Φ_m(x)
+(2)  0 < m,  p ∣ m   ⟹   Φ_m(x^p) = Φ_{mp}(x)
 ```
 
 Identity (2) iterated gives the squarefree-kernel form, which is the one
 that makes a large powerful index cheap:
 
 ```
-Φₙ(x) = Φ_{rad n}(x^{n / rad n})
+0 < n   ⟹   Φₙ(x) = Φ_{rad n}(x^{n / rad n})
 ```
 
 Identity (1) run over the distinct primes of `n` in ascending order
@@ -205,17 +221,18 @@ once, as a single substitution, and that last substitution is where the
 output size appears: the ladder works at degree `φ(rad n)` and only the
 final spread reaches degree `φ(n)`.
 
-Ascending prime order is what the implementation does, and the cost
-formula in the complexity table below is stated so that a reader can
-check what a different order would cost. The order changes the constant
-and not the shape.
+Ascending prime order is what the implementation does, and it is optimal
+for the cost model in the complexity table below rather than an
+arbitrary choice. The adjacent-exchange argument is under "Open
+questions", where what remains open is only whether measured time agrees
+with the operation count.
 
 ### The divisor recursion, which is the specification
 
 ```lean
 /-- `Φₙ` by identity (3): the quotient of `xⁿ − 1` by the product of the
 `Φ_d` over the proper divisors of `n`. This is the reference route. It
-is not the implementation; see the complexity table. -/
+is not the implementation. See the complexity table. -/
 def cyclotomicRec {n : Nat} (F : CheckedFactorization n) : ZPoly
 
 theorem cyclotomic_eq_rec {n : Nat} (F : CheckedFactorization n) :
@@ -250,7 +267,7 @@ This is what the `bⁿ ± 1` consumer actually wants, and computing the
 family together is cheaper than calling `cyclotomic` once per divisor,
 because the ladders for the divisors share their prefixes.
 `divisorsChecked` is the hex-int-factor prerequisite that supplies a
-`CheckedFactorization d` per divisor without a second search; it is
+`CheckedFactorization d` per divisor without a second search. It is
 described under "Prerequisite changes in other libraries".
 
 ### Routes not taken, and why they are recorded
@@ -300,10 +317,51 @@ true one. What is deferred is a correctness theorem, which is the
 ordinary situation, and not a hidden failure case. This is why
 `cyclotomic` has the type a mathematical object should have.
 
+`divMod` rather than `divModMonic` because `divModMonic` takes the
+monicity proof as an argument (`HexPoly/Euclid/DivGcd.lean:1001`), so a
+recursion that called it would have to carry monicity of every
+intermediate value at definition time, and monicity of `Φ_m` is a
+milestone-4 theorem.
+
+**The two facts this route needs about integer division already exist**,
+which is worth stating because it means milestone 4 owes only cyclotomic
+theory and no new division theory:
+
+```lean
+theorem Hex.ZPoly.divMod_reconstruction_of_monic (target candidate : ZPoly)
+    (hmonic : DensePoly.Monic candidate) :
+    (DensePoly.divMod target candidate).1 * candidate
+      + (DensePoly.divMod target candidate).2 = target
+
+theorem Hex.ZPoly.divMod_eq_mul (target candidate quotient : ZPoly)
+    (hpos_lc : 0 < DensePoly.leadingCoeff candidate)
+    (hmul : quotient * candidate = target) :
+    DensePoly.divMod target candidate = (quotient, 0)
+```
+
+(`HexPolyZ/IntegerPolynomial.lean:1359` and `:1470`.) The first is the
+unconditional division identity for a monic integer divisor. The second
+is the one the correctness proof actually uses: once the cyclotomic
+identity supplies an exact factorization `q * Φ_m = Φ_m(x^p)`, this says
+the executable `divMod` returns exactly that `q` with zero remainder. So
+the obligation "the ladder computes the cyclotomic polynomial" reduces
+to the identity and nothing else.
+
+Neither routes through `DensePoly.DivModLaws`, and that matters: there
+is no `DivModLaws Int` instance and there cannot be one, since `Int`
+division truncates. The whole reason the divisors here are monic is that
+it does. The generic
+`divModMonic_eq_divMod_of_monic_of_scale`
+(`HexPoly/Euclid/DivGcd.lean:1633`) also applies, with `a / 1 = a`
+discharging its scale hypothesis, but it carries the extra
+`¬ p.degree < q.degree` side condition for `divMod`'s early shortcut, so
+the two integer lemmas above are the better citations.
+
 **The checked constructor divides with hex-poly-z's `divExact?`**, which
 divides and then verifies, returning `some q` only when `q * g = f`
-holds as a checked equality, and whose soundness theorem `divExact?_eq`
-is unconditional. Since the divisor is monic, that function's
+holds as a checked equality. Its soundness theorem `divExact?_eq` needs
+one hypothesis, `g ≠ 0`, and a monic divisor is nonzero, so nothing here
+has to carry it further. Since the divisor is monic, that function's
 leading-coefficient prefilter never rejects, so its `none` branch is
 unreachable on the inputs this library passes. That unreachability is a
 theorem about cyclotomic polynomials rather than about division, and it
@@ -336,7 +394,7 @@ theorem prod_cyclotomic_eq {n : Nat} (F : CheckedFactorization n)
 more, so it is available on the day the library compiles. What it buys
 is a proof of the factorization of `xⁿ − 1` **for one `n`**, at the cost
 of forming a product of degree `n`. A consumer that needs the identity
-for a specific modest `n` can have it now; a consumer that needs it for
+for a specific modest `n` can have it now. A consumer that needs it for
 all `n` waits for milestone 4 or uses the companion. The cost of the
 check is stated in the complexity table so that nobody reaches for it
 inside a loop.
@@ -367,8 +425,9 @@ can go wrong.
 **Monicity is what pins the sign.** `x − 1` and `1 − x` generate the
 same ideal and either could be called "the" first cyclotomic
 polynomial. Monic picks the first. The whole ladder preserves it:
-`Φ₁` is monic, `substPow` of a monic polynomial is monic because the
-exponent map is strictly monotone and fixes the leading term, and the
+`Φ₁` is monic, `substPow k` of a monic polynomial is monic for `0 < k`
+because the exponent map is then strictly monotone and fixes the leading
+term, and the
 exact quotient of a monic by a monic is monic because `ℤ` has no zero
 divisors and the leading coefficients multiply. That chain is what
 `monic_cyclotomic` proves, and it needs the exactness of the division,
@@ -403,25 +462,41 @@ Milestone 4 is the Mathlib-free proof of `cyclotomic_eq_rec`,
 `monic_cyclotomic`, `degree_cyclotomic`, and identity (3). Following
 "push sorries earlier", the decomposition is:
 
-1. `dvd_xPowSubOne`: the product of `Φ_d` over the proper divisors of
+1. `squarefree_xPowSubOne`: over `ℚ`, `xⁿ − 1` is coprime to its
+   derivative `n·x^{n-1}` for `0 < n`, so it is squarefree. This is the
+   one step with existing infrastructure behind it: `DensePoly Rat` has
+   `DivModLaws` and `GcdLaws` instances (`HexPolyZ/Rational.lean:1361`
+   and `:1434`), so the gcd computation and its maximality are available
+   without new machinery.
+2. `coprime_cyclotomic`: distinct `Φ_d` and `Φ_e` for `d, e ∣ n` have no
+   common nonunit factor over `ℚ`.
+3. `dvd_xPowSubOne`: the product of `Φ_d` over the proper divisors of
    `n` divides `xⁿ − 1`. This is the fact that makes the recursion's
-   division exact, and it is the one genuinely hard step. The route is
-   strong induction on `n` with the divisor lattice, using that
-   `x^d − 1 ∣ xⁿ − 1` for `d ∣ n` and that the proper-divisor product
-   is the least common multiple of the `x^d − 1`.
-2. `substPow_mul` and `degree_substPow`: substitution of `x^k` is a ring
-   homomorphism and multiplies degrees by `k`. These are hex-poly facts
-   about the new `DensePoly.substPow` and belong there, not here.
-3. `ladder_step`: identity (1), by induction from 1 and 2.
-4. `kernel_step`: identity (2), likewise.
-5. `cyclotomic_eq_rec` and the degree formula follow from 3 and 4
+   division exact, and it is the hard step. Each factor divides, since
+   `Φ_d ∣ x^d − 1 ∣ xⁿ − 1`, and **that is not enough on its own**: a
+   product of divisors need not divide. What closes it is 1 and 2
+   together, which say the proper-divisor product is the least common
+   multiple of the `x^d − 1` rather than merely a common multiple of the
+   individual factors. Neither hex-poly nor hex-poly-z exposes a
+   polynomial `lcm` API today, so the combining step is stated over
+   pairwise coprime factors rather than through an `lcm`, and adding
+   `lcm` is a decision for hex-poly rather than a hidden assumption
+   here.
+4. `substPow_mul` and `degree_substPow`: substitution of `x^k` is a ring
+   homomorphism, and for `0 < k` it multiplies degrees by `k`. These are
+   hex-poly facts about the new `DensePoly.substPow` and belong there,
+   not here.
+5. `ladder_step`: identity (1), by induction from 3 and 4.
+6. `kernel_step`: identity (2), likewise.
+7. `cyclotomic_eq_rec` and the degree formula follow from 5 and 6
    together with two facts about the totient: it is multiplicative on
    coprime arguments, which is what makes the ladder's degrees come out
    as `φ(m_i)`, and `Σ_{d ∣ n} φ(d) = n`, which is what makes the
-   proper-divisor product have degree `n − φ(n)`. Both are owed by
-   hex-int-factor's divisor API for its own `totient_eq_count`.
+   proper-divisor product have degree `n − φ(n)`. Neither is currently
+   promised by hex-int-factor's divisor API, so both are listed as
+   prerequisites below rather than assumed.
 
-Steps 1, 3, and 4 are cyclotomic theory and are real work. The SPEC
+Steps 2, 3, 5, and 6 are cyclotomic theory and are real work. The SPEC
 records them here rather than leaving them implicit, because the
 alternative is a Mathlib-free layer whose only semantics is "whatever
 the ladder computes", and the project rule is that the Mathlib-free
@@ -433,7 +508,7 @@ Proof debt does not cross the layer boundary: the companion's proofs
 must not cite a `sorry`-carrying Mathlib-free lemma from this list.
 Since the companion proves the correspondence directly from Mathlib's
 own cyclotomic development and from the executable division and
-substitution lemmas, it does not need any of steps 1, 3, or 4, and the
+substitution lemmas, it does not need any of the steps above, and the
 two milestones are independent.
 
 ## Complexity
@@ -446,14 +521,15 @@ Coefficient sizes are discussed after the table.
 |---|---|
 | `xPowSubOne n` | `O(n)` to write the array |
 | ladder step `i` | `O(φ(m_i) · φ(m_{i-1}))` |
-| `cyclotomicRadical` | `O(Σ_i φ(m_i) · φ(m_{i-1}))`, dominated by the last step, `O(φ(r)² / (p_k − 1))` |
-| final substitution | `O(φ(n))`, which is the output size |
+| `cyclotomicRadical`, `k ≥ 1` | `O(Σ_i φ(m_i) · φ(m_{i-1}))`, dominated by the last step, `O(φ(r)² / (p_k − 1))` |
+| `cyclotomicRadical`, `k = 0` | `O(1)`: the ladder is empty and the answer is `x − 1` |
+| final substitution, `1 ≤ k'` where `k' = n / r` | `O(φ(n))`, which is the output size |
 | `cyclotomic` | `O(φ(r)² + φ(n))` |
 | `cyclotomicRec` at one divisor `d` | `O(d²)`: the proper-divisor product has degree `d − φ(d)` and the division costs `O(φ(d) · (d − φ(d)))` |
 | `cyclotomicRec` | `O(n²)`, since `Σ_{d ∣ n} d² < 1.65 n²` |
 | `cyclotomicDivisors` | `O(Σ_{d ∣ n} (φ(rad d)² + φ(d)))`, at most `O(τ · φ(r)² + n)` |
 | `checkCyclotomicProd` | `O(n²)`: it forms a product of degree `n` |
-| `eval` at an integer `b` | `O(φ(n))` `Int` operations on values up to `φ(n) · log b` bits |
+| `eval` at an integer `b` | `O(φ(n))` `Int` operations, on values of `O(log H(Φₙ) + φ(n) · log(2 + |b|))` bits |
 
 **The ladder against the recursion is the whole design.** For
 `n = 2²⁰` the radical is `2`, the ladder computes `Φ₂ = x + 1` and
@@ -464,15 +540,18 @@ coefficient operations for the same output. That is why `cyclotomicRec`
 is the specification and not the implementation, and why
 `cyclotomic_eq_rec` is a theorem rather than a definitional unfolding.
 
-**Coefficient growth is not in the table because it is not bounded by
-anything simple.** The coefficients of `Φₙ` are `±1` and `0` whenever
-`n` has at most two distinct odd prime factors (Migotti), the first
-index with a coefficient of absolute value `2` is `105`, and the height
-of `Φₙ` is not bounded by any polynomial in `n` (Erdős). The
-squarefree-index bench family below is the one where the coefficients
-stop being small, and it is the family that decides whether the `Int`
-arithmetic ever matters. For every other family the coefficients fit in
-a machine word and the cost model above is the whole story.
+**Coefficient growth is written `H(Φₙ)` above rather than bounded,
+because it is not bounded by anything simple.** The coefficients of `Φₙ`
+are `±1` and `0` whenever `n` has at most two distinct odd prime factors
+(Migotti), the first index with a coefficient of absolute value `2` is
+`105`, and the height of `Φₙ` is not bounded by any polynomial in `n`
+(Erdős). The squarefree-index bench family below is the one where the
+family stops being flat and the heights start to matter:
+`H(Φ₂₅₅₂₅₅) = 532` and `H(Φ₄₈₄₉₈₄₅) = 669606`. Both still fit a machine
+word, so the point of that family is the arithmetic on growing values
+rather than a crossing into big-integer territory. For every other
+family the coefficients are `0` and `±1` and the cost model above is the
+whole story.
 
 **The number of nonzero terms of `Φₙ` equals that of `Φ_{rad n}`**,
 because the final substitution only spreads them. That is the fact the
@@ -498,8 +577,10 @@ def cyclotomicSparse {n : Nat} (F : CheckedFactorization n) : SparsePoly Int :=
   (SparsePoly.ofDense (ZPoly.cyclotomicRadical F)).substPow (n / radical F)
 ```
 
-Its cost is `O(φ(rad n))` terms and it never allocates a `φ(n)`-sized
-array, against the dense constructor's `O(φ(n))`. For
+It runs the same ladder, so its time is the ladder's plus one `O(φ(r))`
+scan, and what it saves is the final substitution: it stores at most
+`φ(r) + 1` terms and never allocates a `φ(n)`-sized array, against the
+dense constructor's `O(φ(n))` for that step. For
 `n = 2²⁰` that is two terms against half a million coefficients. The
 agreement with the dense constructor is one application of
 hex-sparse-poly's `substPow_toDense`:
@@ -537,10 +618,19 @@ for every `part` that `cyclotomicSplit? b n sign` returns, where `F_d`
 is the checked factorization of `part.index` that `divisorsChecked`
 supplies.
 
+**Which parent certificate supplies `F_d` differs by sign.** In the
+minus case every part index divides `n`, so one `CheckedFactorization n`
+and one `divisorsChecked` call cover the whole split. In the plus case
+the indices divide `2n` and generally not `n`, so the driver factors
+`2n` once instead and derives the parts from that. Either way the
+conformance driver performs one factorization per `(b, n, sign)` row and
+no per-divisor search, which is the same discipline the library itself
+follows.
+
 This is a differential test of two genuinely different algorithms, and
 it is the sharpest one either library has. hex-int-factor's route can
 be wrong in a way its own product check does not catch only if two
-errors cancel in the product; this comparison is per part, so it does
+errors cancel in the product. This comparison is per part, so it does
 not have that hole. Conversely a sign error or an off-by-one in the
 divisor set here shows up immediately, because the parts are indexed.
 
@@ -693,13 +783,13 @@ Families:
   `φ(n)` and independent of `k` beyond that.
 - **squarefree-index**: `n` the product of the first `j` odd primes for
   `j ≤ 6`, so `n` runs `3, 15, 105, 1155, 15015, 255255`. This is where
-  the ladder does all of its work and where the coefficients stop
-  fitting in a machine word. The reported number is time against
-  `φ(n)²`. The next member, `4849845`, has `φ(n) = 1658880` and a ladder
-  cost around `10¹¹` coefficient operations, which is past the CI
-  wallclock cap in [SPEC/benchmarking.md](../benchmarking.md), so it
-  belongs to the scheduled timing workflow rather than to the
-  merge-gating one.
+  the ladder does all of its work and where the family stops being flat:
+  `H(Φ₂₅₅₂₅₅) = 532` against `H(Φ₁₀₅) = 2`. The reported number is time
+  against `φ(n)²`. The next member, `4849845`, has `φ(n) = 1658880`,
+  `H = 669606`, and a ladder cost around `10¹¹` coefficient operations,
+  which is past the CI wallclock cap in
+  [SPEC/benchmarking.md](../benchmarking.md), so it belongs to the
+  scheduled timing workflow rather than to the merge-blocking one.
 - **highly-composite-index**: `n ∈ {5040, 27720, 720720}`, where `τ(n)`
   is large, measuring `cyclotomicDivisors` against `τ(n)` separate
   constructions. The required property is that the shared computation
@@ -723,13 +813,13 @@ is the conformance oracle, and the measurement includes cypari2's
 marshalling of a degree-`φ(n)` coefficient vector into Python, so the
 ratio does not isolate the algorithm. SymPy's `cyclotomic_poly`,
 `informational`, for the same reason and more so. No external comparator
-is registered as `gating`, and that is the justification.
+is registered with `class: gating`, and that is the justification.
 
 Two required internal checks, which matter more than the external ones:
 
 - The powerful-index family must be linear in `φ(n)`. A regression here
   means the final substitution started going through `compose` rather
-  than a direct spread, which costs a factor of `φ(rad n)`.
+  than a direct spread, which costs a factor of the output degree.
 - `cyclotomicDivisors` must cost less than `τ(n)` separate `cyclotomic`
   calls on the highly-composite family. A regression means the shared
   prefixes stopped being shared.
@@ -756,6 +846,9 @@ theorem irreducible_rat {n : Nat} (F : CheckedFactorization n) :
     Irreducible ((HexPolyMathlib.toPolynomial (Hex.ZPoly.cyclotomic F)).map
       (Int.castRingHom ℚ))
 
+theorem divisors_index_nodup {n : Nat} (F : CheckedFactorization n) :
+    ((Hex.ZPoly.cyclotomicDivisors F).map (·.1)).toList.Nodup
+
 theorem divisors_index_eq {n : Nat} (F : CheckedFactorization n) :
     ((Hex.ZPoly.cyclotomicDivisors F).map (·.1)).toList.toFinset = n.divisors
 
@@ -770,16 +863,25 @@ through, exactly as `factorization_eq` is for
 consequences of it together with Mathlib's `natDegree_cyclotomic`,
 `cyclotomic.irreducible`, `cyclotomic.irreducible_rat`, and
 `prod_cyclotomic_eq_X_pow_sub_one`. Exact helper names are read from the
-pinned Mathlib during implementation; the SPEC does not depend on
+pinned Mathlib during implementation. The SPEC does not depend on
 remembered names that may be deprecated or absent.
 
 The divisor-product statement is written over the executable array with
-`divisors_index_eq` supplying the identification of its index set
+the two index theorems supplying the identification of its index set
 with `Nat.divisors n`, rather than over `n.divisors` directly. The
 reason is that a statement over `n.divisors` would need a function from
 a Mathlib divisor to a checked factorization of it, which is a
-dependent lookup with a membership proof, and writing the two statements
+dependent lookup with a membership proof, and writing the statements
 separately keeps the arithmetic content and the index bookkeeping apart.
+
+**`divisors_index_nodup` is not redundant.** Passing to `toFinset`
+discards both order and duplicates. Order is harmless, since polynomial
+multiplication is commutative and the `foldl` may be reassociated
+freely. Duplicates are not: a list with a repeated index has the same
+`toFinset` and a different product, so `divisors_index_eq` alone cannot
+carry the array fold to Mathlib's `Finset.prod`. The Mathlib-free layer
+already has the enumeration fact, since `divisorsChecked` is ascending
+in the divisor, so this is a transport rather than new content.
 
 **The proof of the correspondence follows the ladder, not the
 recursion.** Mathlib has both halves of it already:
@@ -813,21 +915,36 @@ correspondence and one consequence per public operation.
 **hex-poly** gains a dense substitution of a power of `x`:
 
 ```lean
-/-- `p(x^k)`: multiply every exponent by `k`. -/
-def substPow [Zero R] [DecidableEq R] (p : DensePoly R) (k : Nat) : DensePoly R
+/-- `p(x^k)`: multiply every exponent by `k`. At `k = 0` every exponent
+collapses to `0` and the result is the constant `p(1)`. -/
+def substPow [Zero R] [Add R] [DecidableEq R] (p : DensePoly R) (k : Nat) :
+    DensePoly R
 
-theorem coeff_substPow, eval_substPow, degree_substPow, substPow_eq_compose_monomial
+theorem coeff_substPow, eval_substPow, substPow_eq_compose_monomial
+theorem degree_substPow (hk : 0 < k), monic_substPow (hk : 0 < k)
 ```
 
-The name matches [hex-sparse-poly](hex-sparse-poly.md)'s sparse
-operation, so the two libraries state the same fact about the same
-named thing. It is not merely a convenience: `compose p (monomial k 1)`
-computes the same value by Horner, shifting a growing polynomial `deg p`
-times, which is `O(deg p · deg p · k)` against the direct spread's
-`O(deg p · k)`, and the direct spread's cost is the output size, so it
-cannot be improved. The final ladder step is the largest polynomial this
-library ever writes, which is why the factor matters here and not
-elsewhere.
+`[Add R]` is there for `k = 0`, which sums the coefficients. That case
+is not reachable from this library, since the kernel exponent
+`n / rad n` is at least `1`, but it is reachable from
+[hex-sparse-poly](hex-sparse-poly.md), whose `substPow` takes `[Add R]`
+for exactly this reason and whose SPEC lists the collapse as a
+canonicalisation case. Mathlib agrees: `Polynomial.expand R 0 f` is
+`C (f.eval 1)`. The degree and monicity statements carry `0 < k`, since
+at `k = 0` the degree drops to `0` and the constant `p(1)` is not
+generally `1`.
+
+The name matches hex-sparse-poly's sparse operation, so the two
+libraries state the same fact about the same named thing. It is not
+merely a convenience. `compose p (monomial k 1)` computes the same value
+by Horner, and `monomial k 1` is a dense array of `k + 1` coefficients
+whose zeros the schoolbook multiplication still traverses, so Horner
+stage `j` multiplies an array of size `jk` by one of size `k` and the
+total is `Θ(d²k²)` for `d = deg p`. The direct spread is `Θ(dk)`, which
+is the output size and cannot be improved. The slowdown is therefore a
+factor of `Θ(dk)`, the output degree itself. The final ladder step is
+the largest polynomial this library ever writes, which is why the factor
+matters here and not elsewhere.
 
 **hex-poly-z** must have `divExact?`, which
 [hex-poly-z-gcd](hex-poly-z-gcd.md) already schedules as its first
@@ -855,6 +972,26 @@ def divisorsChecked {n : Nat} (F : CheckedFactorization n) :
 theorem divisorsChecked_fst {n : Nat} (F : CheckedFactorization n) :
     (divisorsChecked F).map (·.1) = divisors F
 ```
+
+and the two totient facts milestone 4 needs, neither of which the
+published divisor API promises today:
+
+```lean
+/-- `φ` is multiplicative on coprime arguments. -/
+theorem totient_mul_of_coprime {a b : Nat} (Fa : CheckedFactorization a)
+    (Fb : CheckedFactorization b) (Fab : CheckedFactorization (a * b))
+    (h : Nat.Coprime a b) : totient Fab = totient Fa * totient Fb
+
+/-- Gauss: the totients of the divisors sum to the index. -/
+theorem sum_totient_divisors {n : Nat} (F : CheckedFactorization n) :
+    ((divisorsChecked F).map (fun ⟨_, Fd⟩ => totient Fd)).sum = n
+```
+
+Multiplicativity may fall out of the finite-CRT counting argument that
+hex-int-factor's own `totient_eq_count` already needs. The divisor sum
+does not: nothing in that library requires it. Both belong there rather
+than here, since they are statements about the divisor API, and if that
+library declines them they become local obligations of milestone 4.
 
 `divisorsChecked` is the requirement that this library not hide a
 repeated factorization, and it is the only new API of the three that has
@@ -1012,13 +1149,15 @@ until those entries land.
   consumer a run-time guarantee without importing the proof, and the
   argument against is that the API should not carry two names for one
   polynomial. The conformance emitter is the deciding consumer.
-- **Whether the prime order in the ladder should be tuned.** The cost is
-  `Σ_i φ(m_i) · φ(m_{i-1})`, which depends on the order, and ascending
-  is chosen because it keeps the intermediate degrees small for longest.
-  A descending order or a greedy order might win on indices with one
-  large prime. The squarefree-index family is where this would show up,
-  and the SPEC does not choose in advance beyond fixing ascending as the
-  implementation.
+- **Whether the measured cost of the prime order matches the counted
+  one.** The counted cost is settled: ascending is optimal. Writing `A`
+  for the totient of the prefix before two adjacent primes `a < b`, the
+  two orders cost `A²[(a−1) + (a−1)²(b−1)]` and
+  `A²[(b−1) + (b−1)²(a−1)]`, and the second minus the first is
+  `A²(b−a)(1 + (a−1)(b−1)) > 0`, so every adjacent exchange out of
+  ascending order costs more. What is open is only whether wall time
+  agrees, since coefficient sizes and locality are not in the count.
+  The squarefree-index family is where a disagreement would show up.
 - **Whether `Φₙ` mod `p` deserves an entry point.** Reducing the
   coefficients is a one-line map to `FpPoly p` at the call site, and the
   result is generally reducible, so a named function would suggest a
