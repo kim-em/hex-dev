@@ -286,8 +286,8 @@ def driveFrom {Cache : Type u} (controller : Controller Fact PolicyState)
                           | .malformedState =>
                               finish controller .invalidState .invalidState
                                 afterRejection cache next events
-                          | .wrongScope | .staleSerial | .staleProgram |
-                              .missingOffer | .wrongKey =>
+                          | .wrongScope | .staleSerial | .staleProgram | .staleBudget |
+                              .missingOffer | .wrongKey | .mutatedOffer =>
                               driveFrom controller invoke remaining afterRejection cache next events
                       | .engineResource resource afterResource =>
                           finish controller (.engineResource (.choice selection) resource)
@@ -326,8 +326,8 @@ def driveFrom {Cache : Type u} (controller : Controller Fact PolicyState)
                           | .malformedState =>
                               finish controller .invalidState .invalidState
                                 afterRejection cache next events
-                          | .wrongScope | .staleSerial | .staleProgram |
-                              .missingOffer | .wrongKey =>
+                          | .wrongScope | .staleSerial | .staleProgram | .staleBudget |
+                              .missingOffer | .wrongKey | .mutatedOffer =>
                               driveFrom controller invoke remaining afterRejection cache next events
                       | .request _ invalid | .equality _ invalid | .completed _ invalid |
                           .split _ invalid | .engineResource _ invalid |

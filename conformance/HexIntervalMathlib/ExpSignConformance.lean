@@ -163,13 +163,7 @@ def offer? (session : PolicySession.Session Bound)
       | none => none
       | some offer =>
           some
-            (offer,
-              { scope := view.scope
-                serial := view.serial
-                programVersion := view.programVersion
-                id := offer.id
-                expected := offer.key },
-              viewed)
+            (offer, Hex.Interval.Policy.select view offer, viewed)
   | .resource _ _ | .contradiction _ | .invalidSession _ => none
 
 def invokesExpAt (target : NodeId) (offer : (Hex.Interval.Policy.OfferView _root_.Hex.Interval.Experiment.Propagator.Policy.OfferId _root_.Hex.Interval.Experiment.Propagator.Policy.OfferKey)) : Bool :=

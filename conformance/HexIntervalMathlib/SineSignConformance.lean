@@ -41,13 +41,7 @@ def offer? (session : PolicySession.Session Range)
       | none => none
       | some offer =>
           some
-            (offer,
-              { scope := view.scope
-                serial := view.serial
-                programVersion := view.programVersion
-                id := offer.id
-                expected := offer.key },
-              viewed)
+            (offer, Hex.Interval.Policy.select view offer, viewed)
   | .resource _ _ | .contradiction _ | .invalidSession _ => none
 
 def invokes (key : RuleKey) (anchor : NodeId)

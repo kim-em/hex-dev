@@ -44,12 +44,7 @@ def findOffer? (view : (Hex.Interval.Policy.View Fact _root_.Hex.Interval.Experi
 
 def selection? (view : (Hex.Interval.Policy.View Fact _root_.Hex.Interval.Experiment.Propagator.Policy.OfferId _root_.Hex.Interval.Experiment.Propagator.Policy.OfferKey)) (id : OfferId) : Option Selection := do
   let offer <- findOffer? view id
-  some
-    { scope := view.scope
-      serial := view.serial
-      programVersion := view.programVersion
-      id
-      expected := offer.key }
+  some (Hex.Interval.Policy.select view offer)
 
 def choose : List Command -> (Hex.Interval.Policy.View Rank _root_.Hex.Interval.Experiment.Propagator.Policy.OfferId _root_.Hex.Interval.Experiment.Propagator.Policy.OfferKey) -> Step (List Command)
   | [], _ => .stop []
@@ -64,14 +59,8 @@ def choose : List Command -> (Hex.Interval.Policy.View Rank _root_.Hex.Interval.
       | none => .stop rest
   | .wrongRetry id effort :: rest, view =>
       match selection? view (.suggestion id) with
-      | some { expected := .retry source _, .. } =>
-          .select
-            { scope := view.scope
-              serial := view.serial
-              programVersion := view.programVersion
-              id := .suggestion id
-              expected := .retry source effort }
-            rest
+      | some selection@{ expected := .retry source _, .. } =>
+          .select { selection with expected := .retry source effort } rest
       | _ => .stop rest
   | .stale id :: rest, view =>
       match selection? view id with

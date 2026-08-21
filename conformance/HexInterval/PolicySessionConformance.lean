@@ -155,11 +155,7 @@ def selection? (session : PolicySession.Session Fact) (command : Command) :
       | none => none
       | some offer =>
           some
-            ({ scope := view.scope
-               serial := view.serial
-               programVersion := view.programVersion
-               id := offer.id
-               expected := offer.key },
+            (Hex.Interval.Policy.select view offer,
              viewed)
   | .resource _ _ | .contradiction _ | .invalidSession _ => none
 
@@ -781,11 +777,7 @@ def matcherSelection? (session : PolicySession.Session Nat) :
       | none => none
       | some offer =>
           some
-            ({ scope := view.scope
-               serial := view.serial
-               programVersion := view.programVersion
-               id := offer.id
-               expected := offer.key },
+            (Hex.Interval.Policy.select view offer,
              viewed)
   | .resource _ _ | .contradiction _ | .invalidSession _ => none
 

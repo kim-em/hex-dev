@@ -137,7 +137,11 @@ def selectOffer (state : State Rank) (id : OfferId) : SelectResult Rank :=
           serial := state.serial
           programVersion := state.engine.programVersion
           id
-          expected := offer.key }
+          expected := offer.key
+          offerClass := offer.offerClass
+          age := offer.age
+          score := offer.score
+          remaining := state.budgetView }
 
 def dismissOffer (state : State Rank) (id : OfferId) : Option (State Rank) := do
   let offer <- state.offer? id
@@ -146,7 +150,11 @@ def dismissOffer (state : State Rank) (id : OfferId) : Option (State Rank) := do
         serial := state.serial
         programVersion := state.engine.programVersion
         id
-        expected := offer.key } with
+        expected := offer.key
+        offerClass := offer.offerClass
+        age := offer.age
+        score := offer.score
+        remaining := state.budgetView } with
   | .completed .dismissed next => some next
   | _ => none
 
@@ -353,7 +361,11 @@ def instantiateFirst? : Option ScheduleResult := do
         serial := state.serial
         programVersion := state.engine.programVersion
         id := .suggestion (suggestion 0)
-        expected := retryOffer.key } with
+        expected := retryOffer.key
+        offerClass := retryOffer.offerClass
+        age := retryOffer.age
+        score := retryOffer.score
+        remaining := state.budgetView } with
     | .completed .dismissed next => some next
     | _ => none
   let (splitPlan, state) <- split? state (suggestion 2)
@@ -495,13 +507,17 @@ def afterInitialWith? (engineLimit : Hex.Interval.State.Limits) : Option (State 
   | none => false
   | some state =>
       match state.offer? (.suggestion (suggestion 0)) with
-      | some { key := .retry source 1, .. } =>
+      | some offer@{ key := .retry source 1, .. } =>
           let fabricated : Selection :=
             { scope := state.scope
               serial := state.serial
               programVersion := state.engine.programVersion
               id := .suggestion (suggestion 0)
-              expected := .retry source 2 }
+              expected := .retry source 2
+              offerClass := offer.offerClass
+              age := offer.age
+              score := offer.score
+              remaining := state.budgetView }
           match state.select fabricated with
           | .rejected .wrongKey next =>
               next.metrics.decisions == state.metrics.decisions + 1 &&
@@ -512,6 +528,52 @@ def afterInitialWith? (engineLimit : Hex.Interval.State.Limits) : Option (State 
                 | none => false
           | _ => false
       | _ => false
+
+-- The experimental controller authenticates the complete supported decision
+-- echo, including the engine budget and every exposed offer field.
+#guard
+  match initial? with
+  | some state =>
+      match state.offer? (.application (application 0)) with
+      | some offer =>
+          let exact : Selection :=
+            { scope := state.scope
+              serial := state.serial
+              programVersion := state.engine.programVersion
+              id := offer.id
+              expected := offer.key
+              offerClass := offer.offerClass
+              age := offer.age
+              score := offer.score
+              remaining := state.budgetView }
+          match state.select
+              { exact with
+                remaining := { exact.remaining with actions := exact.remaining.actions + 1 } } with
+          | .rejected .staleBudget next => next.metrics.rejected == 1
+          | _ => false
+      | none => false
+  | none => false
+
+#guard
+  match initial? with
+  | some state =>
+      match state.offer? (.application (application 0)) with
+      | some offer =>
+          let exact : Selection :=
+            { scope := state.scope
+              serial := state.serial
+              programVersion := state.engine.programVersion
+              id := offer.id
+              expected := offer.key
+              offerClass := offer.offerClass
+              age := offer.age
+              score := offer.score
+              remaining := state.budgetView }
+          match state.select { exact with age := exact.age + 1 } with
+          | .rejected .mutatedOffer next => next.metrics.rejected == 1
+          | _ => false
+      | none => false
+  | none => false
 
 def staleEqualityResult? : Option (SelectResult Rank) := do
   let state <- afterInitial?
@@ -524,7 +586,11 @@ def staleEqualityResult? : Option (SelectResult Rank) := do
       serial := state.serial
       programVersion := state.engine.programVersion
       id := .equality (equality 0)
-      expected := oldOffer.key }
+      expected := oldOffer.key
+      offerClass := oldOffer.offerClass
+      age := oldOffer.age
+      score := oldOffer.score
+      remaining := state.budgetView }
 
 -- A still-dirty equality is rejected when either endpoint version has moved.
 #guard
@@ -1080,7 +1146,11 @@ def splitChangedTarget (request : RuleRequest Rank) : Outcome Rank :=
                 serial := state.serial
                 programVersion := state.engine.programVersion
                 id := offer.id
-                expected := offer.key } with
+                expected := offer.key
+                offerClass := offer.offerClass
+                age := offer.age
+                score := offer.score
+                remaining := state.budgetView } with
           | .completed .dismissed next =>
               match next.view with
               | .ok (view, _) => view.offers.isEmpty && view.incomplete

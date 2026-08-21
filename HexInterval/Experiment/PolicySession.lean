@@ -289,7 +289,8 @@ private def rejectedSession (session : Session Fact)
   match reason with
   | .decisionLimit | .actionLimit | .malformedState =>
       halt session state
-  | .wrongScope | .staleSerial | .staleProgram | .missingOffer | .wrongKey =>
+  | .wrongScope | .staleSerial | .staleProgram | .staleBudget | .missingOffer |
+      .wrongKey | .mutatedOffer =>
       withState session state
 
 private def finishEquality (session : Session Fact)

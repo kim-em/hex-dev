@@ -3085,8 +3085,9 @@ conditional fact into the parent scope.
 The policy affects success and performance, never validity. In particular it
 does not construct an `Action`: action serials, program snapshots, concrete
 applications, and input versions are engine-owned authority. The engine owns a
-bounded frontier of offers and the policy returns only the stable identity and
-canonical key of one offer it observed. In the sketch below,
+bounded frontier of offers and the policy echoes the complete controller-owned
+description of one offer it observed; selection returns the retained offer,
+never the policy's copy. In the sketch below,
 `InstantiationSemanticKey` is the payload-erased canonical family,
 engine-computed generation, proposed-operation/reference graph, and unordered
 equality-pair key. Replay-facing trigger metadata is deliberately absent;
@@ -3101,15 +3102,20 @@ age, and bounded score. `checkViewWithin`, `revalidate`, and
 `checkDecisionWithin` fail transactionally on malformed program/fact state,
 duplicate identifiers, stale stamps or budgets, changed offer fields, and
 independent offer-count, byte, pair, logical-work, and score caps. Identifier
-and semantic-key measurement callbacks, and equality on nested key values,
-remain an explicit non-preemptible envelope; the cap governs accepted retained
-data and subsequent adapter work, not arbitrary callback allocation or time.
-The returned runtime value has no theorem authority.
+and semantic-key measurement callbacks, equality on nested key values, and
+equality on arbitrary reconstructed facts remain an explicit non-preemptible
+envelope; the cap governs accepted retained data and subsequent adapter work,
+not arbitrary callback allocation or time. Branch-backed decision validation
+reconstructs and validates the branch snapshot once, then checks bounded offers
+without repeating whole-program validation. The returned runtime value has no
+theorem authority.
 
 The experimental target controller now implements the supported `Interface`
 and returns the actual supported `Step`; it stamps a selected supported offer
-into a supported decision before the policy session performs the existing
-engine-owned key/freshness transition checks. The concrete `OfferId`,
+into a supported decision before the policy session authenticates the exact
+scope, serial, program version, remaining budget, identifier, semantic key,
+class, age, and score and performs the existing engine-owned freshness checks.
+The concrete `OfferId`,
 `OfferKey`, instantiation/split encodings, staged/adaptive/feature policies,
 package callbacks, event history, sessions, and branch-search loop remain under
 `HexInterval/Experiment`. In particular no `balancedV1`, score model, storage
@@ -5069,7 +5075,8 @@ their declared cost inside a scheduler bound.
   generic bounded offer/view/decision/step/interface contracts, exact retained
   offer revalidation, and checked count/byte/pair/work/score admission. Concrete
   semantic offer keys and policies remain experimental; package measurement
-  and nested-key equality callbacks are explicitly non-preemptible.
+  callbacks and equality on nested identifiers, keys, and reconstructed facts
+  are explicitly non-preemptible.
 - `HexInterval/Experiment/Propagator.lean`: current experimental concrete
   applications, callbacks, outcomes, untrusted proposals and replies, and
   extension admission. Its engine extends and mutates only through the

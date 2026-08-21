@@ -283,11 +283,7 @@ def invocation? (session : PolicySession.Session Rank) (key : RuleKey) :
       | some offer =>
           some
             (offer,
-              { scope := view.scope
-                serial := view.serial
-                programVersion := view.programVersion
-                id := offer.id
-                expected := offer.key },
+              Hex.Interval.Policy.select view offer,
               viewed)
   | .resource _ _ | .contradiction _ | .invalidSession _ => none
 
@@ -302,11 +298,7 @@ def instantiation? (session : PolicySession.Session Rank) :
       | some offer =>
           some
             (offer,
-              { scope := view.scope
-                serial := view.serial
-                programVersion := view.programVersion
-                id := offer.id
-                expected := offer.key },
+              Hex.Interval.Policy.select view offer,
               viewed)
   | .resource _ _ | .contradiction _ | .invalidSession _ => none
 

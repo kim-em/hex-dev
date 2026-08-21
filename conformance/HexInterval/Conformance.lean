@@ -2330,6 +2330,18 @@ def stateLimits : Hex.Interval.State.Limits :=
 def branch? : Option (Hex.Interval.State.Branch Nat Nat) :=
   (Hex.Interval.State.Branch.startWithin stateLimits contractProgram #[13, 23]).toOption
 
+-- Checked reconstruction returns the exact authenticated snapshot once, and
+-- malformed retained seed data produces no partially trusted snapshot.
+#guard match branch? with
+  | some branch =>
+      match branch.checkedSnapshot? with
+      | some checked =>
+          checked.facts == #[13, 23] && checked.versions == #[0, 0] &&
+            !checked.contradictory &&
+            ({ branch with seeds := #[999, 23] }).checkedSnapshot?.isNone
+      | none => false
+  | none => false
+
 def firstUpdate : Hex.Interval.State.Update Nat Nat :=
   { programVersion := 0
     node := contractNode 1

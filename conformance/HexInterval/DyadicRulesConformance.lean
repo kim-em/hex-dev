@@ -655,13 +655,7 @@ def concreteChoose (commands : List ConcreteCommand)
       match view.offers.toList.find? (commandMatches command) with
       | none => .stop rest
       | some offer =>
-      .select
-        { scope := view.scope
-          serial := view.serial
-          programVersion := view.programVersion
-          id := offer.id
-          expected := offer.key }
-        rest
+      .select (Hex.Interval.Policy.select view offer) rest
 
 def concreteController :
     Propagator.Policy.Driver.Controller Fact (List ConcreteCommand) where

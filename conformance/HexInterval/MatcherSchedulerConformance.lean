@@ -640,7 +640,11 @@ def selectedRetry? : Option (RuleRequest Rank × Experiment.Propagator.Policy.St
         serial := state.serial
         programVersion := state.engine.programVersion
         id := offer.id
-        expected := offer.key } | none
+        expected := offer.key
+        offerClass := offer.offerClass
+        age := offer.age
+        score := offer.score
+        remaining := state.budgetView } | none
   pure (request, state)
 
 -- A retained retry replays its original structural evidence without claiming
@@ -681,7 +685,11 @@ def selectedRetry? : Option (RuleRequest Rank × Experiment.Propagator.Policy.St
                     serial := state.serial
                     programVersion := state.engine.programVersion
                     id := offer.id
-                    expected := offer.key } with
+                    expected := offer.key
+                    offerClass := offer.offerClass
+                    age := offer.age
+                    score := offer.score
+                    remaining := state.budgetView } with
               | .rejected .malformedState after =>
                   after.engine.metrics.matcherVisits == 2
               | _ => false
@@ -714,12 +722,7 @@ def policySelected? :
   let (view, state) <- policyView?
   let offer <- view.offers[0]?
   let Experiment.Propagator.Policy.OfferKey.invoke invocation := offer.key | none
-  let selection : Selection :=
-    { scope := view.scope
-      serial := view.serial
-      programVersion := view.programVersion
-      id := offer.id
-      expected := offer.key }
+  let selection : Selection := Hex.Interval.Policy.select view offer
   let .request request state := state.select selection | none
   pure (request, state, invocation)
 
@@ -767,7 +770,11 @@ def blockedPolicy? : Option
                       serial := view.serial
                       programVersion := view.programVersion
                       id := offer.id
-                      expected := offer.key } with
+                      expected := offer.key
+                      offerClass := offer.offerClass
+                      age := offer.age
+                      score := offer.score
+                      remaining := view.remaining } with
                 | .engineResource .matcherVisits _ => true
                 | _ => false
           | _ => false

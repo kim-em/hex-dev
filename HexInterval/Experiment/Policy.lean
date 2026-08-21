@@ -475,15 +475,17 @@ opaque State.view (state : State Fact) :
 
 /-! # Validated selection -/
 
-/-- A policy echoes both the engine identity and the semantic key from one
-particular view. -/
+/-- A policy echoes the exact engine stamps, remaining budget, identifier,
+semantic key, class, age, and score from one particular view. -/
 inductive Rejection where
   | decisionLimit
   | wrongScope
   | staleSerial
   | staleProgram
+  | staleBudget
   | missingOffer
   | wrongKey
+  | mutatedOffer
   | actionLimit
   | malformedState
   deriving DecidableEq, Repr
@@ -576,13 +578,19 @@ private def reject (state : State Fact) (reason : Rejection) : SelectResult Fact
   | .decisionLimit => .rejected reason state
   | _ => .rejected reason (chargeDecision state .rejected)
 
+/-- Authenticate every supported decision field against the current retained
+state and return the engine-owned offer rather than the policy's copy. -/
 def State.validate (state : State Fact) (selection : Selection) : Except Rejection OfferView := do
   if state.limits.maxDecisions <= state.metrics.decisions then throw .decisionLimit
   if selection.scope != state.scope then throw .wrongScope
   if selection.serial != state.serial then throw .staleSerial
   if selection.programVersion != state.engine.programVersion then throw .staleProgram
+  if selection.remaining != state.budgetView then throw .staleBudget
   let some offer := state.offer? selection.id | throw .missingOffer
   if selection.expected != offer.key then throw .wrongKey
+  if selection.offerClass != offer.offerClass || selection.age != offer.age ||
+      selection.score != offer.score then
+    throw .mutatedOffer
   pure offer
 
 def deltasFor (before after : Engine Fact) (nodes : List NodeId) : Array (FactDelta Fact) := Id.run do

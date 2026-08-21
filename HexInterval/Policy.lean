@@ -21,10 +21,11 @@ cannot construct an action or authorize a state transition.
 
 The checked adapter bounds retained offer count, declared score magnitude, and
 package-defined key size, pair, and logical-work measures.  The measurement
-callbacks and equality on arbitrary identifiers and semantic keys are an
-explicit non-preemptible envelope: they may traverse nested Lean objects before
-returning a bounded number.  Successful checking bounds only the retained
-decoded view and subsequent controller work, not callback allocation or time.
+callbacks and equality on arbitrary identifiers, semantic keys, and
+reconstructed facts are an explicit non-preemptible envelope: they may traverse
+nested Lean objects before returning a bounded number.  Successful checking
+bounds only the retained decoded view and subsequent controller work, not
+callback allocation or time.
 -/
 
 namespace Hex.Interval.Policy
@@ -168,12 +169,10 @@ def addWithin (limits : Limits) (left right : Cost) : Except Error Cost := do
 
 variable {Fact Id SemanticKey Cause PolicyState : Type}
 
-/-- Validate all bounded retained dimensions of a complete view.  No prefix is
-returned on failure. -/
-def checkViewWithin [DecidableEq Id] (limits : Limits) (measure : Measure Id SemanticKey)
-    (program : Program) (view : View Fact Id SemanticKey) : Except Error Cost := do
-  if !program.check then throw .invalidProgram
-  if !view.facts.check program then throw .malformedState
+/-- Validate the bounded offer portion of a view whose program and fact-array
+alignment have already been authenticated by the caller. -/
+def checkOffersWithin [DecidableEq Id] (limits : Limits)
+    (measure : Measure Id SemanticKey) (view : View Fact Id SemanticKey) : Except Error Cost := do
   if limits.maxOffers < view.offers.size then throw .offerLimit
   let mut total : Cost := {}
   for index in [0:view.offers.size] do
@@ -185,6 +184,16 @@ def checkViewWithin [DecidableEq Id] (limits : Limits) (measure : Measure Id Sem
     total <- addWithin limits total (measure.id offer.id)
     total <- addWithin limits total (measure.key offer.key)
   pure total
+
+/-- Validate all bounded retained dimensions of a complete view.  No prefix is
+returned on failure. -/
+def checkViewWithin [DecidableEq Id] (limits : Limits) (measure : Measure Id SemanticKey)
+    (program : Program) (view : View Fact Id SemanticKey) : Except Error Cost := do
+  if !program.check then throw .invalidProgram
+  if view.facts.facts.size != program.nodes.size ||
+      view.facts.versions.size != program.nodes.size then
+    throw .malformedState
+  checkOffersWithin limits measure view
 
 /-- Construct the exact decision which an external policy must return. -/
 def select (view : View Fact Id SemanticKey) (offer : OfferView Id SemanticKey) :
@@ -217,17 +226,19 @@ def revalidate [DecidableEq Id] [DecidableEq SemanticKey]
   pure offer
 
 /-- Validate state/program alignment as well as bounded view retention before
-accepting a choice.  Runtime success remains data, never theorem evidence. -/
+accepting a choice.  Branch reconstruction and program validation happen once;
+comparison of arbitrary reconstructed facts remains non-preemptible.  Runtime
+success remains data, never theorem evidence. -/
 def checkDecisionWithin [DecidableEq Fact] [DecidableEq Id] [DecidableEq SemanticKey]
     (limits : Limits) (measure : Measure Id SemanticKey)
     (branch : State.Branch Fact Cause) (view : View Fact Id SemanticKey)
     (decision : Decision Id SemanticKey) : Except Error (OfferView Id SemanticKey) := do
-  let snapshot := branch.snapshot
-  if !branch.check || branch.programVersion != view.programVersion ||
+  let some snapshot := branch.checkedSnapshot? | throw .malformedState
+  if branch.programVersion != view.programVersion ||
       snapshot.facts != view.facts.facts || snapshot.versions != view.facts.versions ||
       snapshot.contradictory != view.facts.contradictory then
     throw .malformedState
-  let _ <- checkViewWithin limits measure branch.program view
+  let _ <- checkOffersWithin limits measure view
   revalidate view decision
 
 end Hex.Interval.Policy

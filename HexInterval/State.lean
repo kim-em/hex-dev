@@ -254,10 +254,15 @@ def generationsCheck (branch : Branch Fact Cause) : Bool := Id.run do
   return true
 
 /-- Validate all immutable array alignments, append-only program structure,
-depths, and exact per-node update chronology. -/
-def check (branch : Branch Fact Cause) : Bool :=
-  let snapshot := branch.snapshot
-  branch.baseProgram.check && branch.program.check &&
+depths, and exact per-node update chronology, returning the reconstructed
+snapshot without repeating that work. -/
+def checkedSnapshot? (branch : Branch Fact Cause) : Option (Snapshot Fact) := do
+  let facts <- branch.restoredFacts?
+  let snapshot : Snapshot Fact :=
+    { facts
+      versions := branch.versions
+      contradictory := branch.contradictory }
+  if branch.baseProgram.check && branch.program.check &&
     programPrefix branch.baseProgram branch.program &&
     branch.initialFacts.size == branch.baseProgram.nodes.size &&
     branch.seeds.size == branch.program.nodes.size - branch.baseProgram.nodes.size &&
@@ -265,7 +270,15 @@ def check (branch : Branch Fact Cause) : Bool :=
     snapshot.versions.size == branch.program.nodes.size &&
     branch.generationsCheck &&
     branch.program.depths? == some branch.depths &&
-    branch.restoredVersions? == some branch.versions
+    branch.restoredVersions? == some branch.versions then
+    some snapshot
+  else
+    none
+
+/-- Validate all immutable array alignments, append-only program structure,
+depths, and exact per-node update chronology. -/
+def check (branch : Branch Fact Cause) : Bool :=
+  branch.checkedSnapshot?.isSome
 
 /-- Install one already-computed update only when it names the exact live
 predecessor and current program version. -/
