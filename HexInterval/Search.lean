@@ -1154,12 +1154,15 @@ private opaque childMatches [DecidableEq Fact] [DecidableEq Cause]
         | some initial =>
             /- `child.branch` may have advanced through sealed accepted-update
             transitions since creation. Its checked history reconstructs the
-            live snapshot; this edge pins the immutable seeded origin and the
-            still-unchanged program dimensions. -/
+            live snapshot; this edge pins the immutable base program, initial
+            facts, checked program, seeds, generations, depths, and program
+            version from the seeded creation branch. -/
             initial.baseProgram == child.branch.baseProgram &&
               initial.initialFacts == child.branch.initialFacts &&
               initial.program == child.branch.program && initial.seeds == child.branch.seeds &&
-              initial.generations == child.branch.generations && initial.depths == child.branch.depths
+              initial.generations == child.branch.generations &&
+              initial.depths == child.branch.depths &&
+              initial.programVersion == child.branch.programVersion
 
 def pendingIds (tree : Tree Fact Cause Plan Schema) : List Id :=
   (List.range tree.nodes.size).filterMap fun index =>

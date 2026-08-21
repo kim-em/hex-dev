@@ -3255,13 +3255,16 @@ one version-zero seed delta. At creation, the restarted `State.Branch`
 represents every inherited fact at version zero, resets every generation stamp
 to zero, has no history, and has `contradictory = false`. Later accepted
 same-session `Result.advanceWithin` transitions may advance that live child's
-versions, history, generations, facts, and contradiction status through the
-ordinary checked `State.Branch` rules. The inherited creation facts are not
-thereby reclassified as assumptions or given intrinsic derived provenance by
-the child branch. Instead, the retained tree's exact parent/side/seed edge
-authenticates that they came from the current parent consequence snapshot. A
-downstream controller or proof quotation must consume that edge and must not
-carry pre-split generation stamps into the restarted child. `Result.splitWithin`
+versions, history, facts, and contradiction status through the ordinary
+checked `State.Branch` rules. Its `baseProgram`, `initialFacts`, checked
+`program`, `seeds`, `generations`, node `depths`, and `programVersion` remain
+pinned to the creation branch for the lifetime of that retained child. The
+inherited creation facts are not thereby reclassified as assumptions or given
+intrinsic derived provenance by the child branch. Instead, the retained tree's
+exact parent/side/seed edge authenticates that they came from the current
+parent consequence snapshot. A downstream controller or proof quotation must
+consume that edge and must not carry pre-split generation stamps into the
+restarted child. `Result.splitWithin`
 does not independently resolve the action's rule key against a package
 registry. `Result.settleWithin` consumes the exact pending head and retains an
 exact target, refutation, or unknown record.

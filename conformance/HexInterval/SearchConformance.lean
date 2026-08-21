@@ -697,13 +697,18 @@ private def split? : Option (Tree Nat Nat Nat Nat) := do
   tree.check limits measure && tree.nodes.size == 1 &&
     tree.pending == [{ index := 0 }] && tree.accounting.nextScope == 6
 
-#guard advanced?.any fun tree =>
-  tree.check limits measure && tree.accounting.steps == 1 &&
-    tree.pending == [{ index := 0 }] &&
-    match Search.Result.current? tree with
-    | some (_, source) =>
-        source.branch.versions == #[0, 1] && source.branch.history == #[firstUpdate]
-    | none => false
+#guard match advanced?, branch? with
+  | some tree, some initial =>
+      tree.check limits measure && tree.accounting.steps == 1 &&
+        tree.pending == [{ index := 0 }] &&
+        match Search.Result.current? tree with
+        | some (_, source) =>
+            source.branch.versions == #[0, 1] && source.branch.history == #[firstUpdate] &&
+              source.branch.generations == initial.generations &&
+              source.branch.depths == initial.depths &&
+              source.branch.programVersion == initial.programVersion
+        | none => false
+  | _, _ => false
 
 -- An accepted callback is tied to its exact before branch, must contain an
 -- update, and cannot advance a head which has already settled.

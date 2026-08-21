@@ -503,6 +503,24 @@ def refusesRecipeWorkOneOver
 #guard (firstWith oversizedStopPackage).isNone
 #guard (firstWith rootPackage { limits with proof := { proofLimits with maxChronology := 0 } }).isNone
 
+def changedRecipeMeasure : Driver.Measure Fact :=
+  { recipeMeasure with cell := { bytes := 2, work := 1 } }
+
+def changedMeasureRejected : Bool := Id.run do
+  let some branch := (State.Branch.startWithin stateLimits program input.facts).toOption
+    | return false
+  let some bundle := (Driver.Bundle.startWithin limits resultMeasure recipeMeasure
+    scope branch).toOption | return false
+  let some session := (makeSession branch scope rootBindings
+    (offer 0 .forward rootAction)).toOption | return false
+  let some decision := choose? session | return false
+  return match Driver.runWithin envelope policyMeasure limits resultMeasure changedRecipeMeasure
+      .depthFirst rootPackage bundle session decision with
+    | .error .mismatch => true
+    | _ => false
+
+#guard changedMeasureRejected
+
 def staleAction := { rootAction with generation := 1 }
 #guard match State.Branch.startWithin stateLimits program input.facts with
   | .ok branch => match makeSession branch scope rootBindings
@@ -511,28 +529,48 @@ def staleAction := { rootAction with generation := 1 }
     | .ok _ => false
   | .error _ => false
 
+def splitResult (package : Driver.Package Fact Nat Nat Nat (List Nat))
+    (candidateLimits : Driver.Limits := limits) :
+    Except Driver.Error (Driver.Step Fact Nat Nat Nat (List Nat)) := do
+  let branch ← (State.Branch.startWithin stateLimits program input.facts).mapError fun _ => .mismatch
+  let bundle ← Driver.Bundle.startWithin candidateLimits resultMeasure recipeMeasure scope branch
+  let session ← (makeSession branch scope rootBindings
+    (offer 0 .forward rootAction)).mapError Driver.Error.search
+  let some decision := choose? session | throw .mismatch
+  let .continued bundle session ← Driver.runWithin envelope policyMeasure candidateLimits
+    resultMeasure recipeMeasure .depthFirst rootPackage bundle session decision | throw .mismatch
+  let session ← (Search.Session.refreshWithin envelope policyMeasure session
+    #[offer 1 .split splitAction] {} false).mapError Driver.Error.search
+  let some decision := choose? session | throw .mismatch
+  Driver.runWithin envelope policyMeasure candidateLimits resultMeasure recipeMeasure
+    .depthFirst package bundle session decision
+
 def splitWith (package : Driver.Package Fact Nat Nat Nat (List Nat))
     (candidateLimits : Driver.Limits := limits) :
-    Option (Driver.Step Fact Nat Nat Nat (List Nat)) := do
-  let branch ← (State.Branch.startWithin stateLimits program input.facts).toOption
-  let bundle ← (Driver.Bundle.startWithin candidateLimits resultMeasure recipeMeasure
-    scope branch).toOption
-  let session ← (makeSession branch scope rootBindings (offer 0 .forward rootAction)).toOption
-  let decision ← choose? session
-  let .continued bundle session ← (Driver.runWithin envelope policyMeasure candidateLimits resultMeasure
-    recipeMeasure .depthFirst rootPackage bundle session decision).toOption | none
-  let session ← (Search.Session.refreshWithin envelope policyMeasure session
-    #[offer 1 .split splitAction] {} false).toOption
-  let decision ← choose? session
-  (Driver.runWithin envelope policyMeasure candidateLimits resultMeasure recipeMeasure
-    .depthFirst package
-    bundle session decision).toOption
+    Option (Driver.Step Fact Nat Nat Nat (List Nat)) :=
+  (splitResult package candidateLimits).toOption
 
 #guard match splitWith splitPackage with | some (.split _) => true | _ => false
 #guard (splitWith badSplitSchemaPackage).isNone
 #guard (splitWith staleSplitSeedPackage).isNone
 #guard (splitWith splitPackage
   { limits with result := { resultLimits with maxNodes := 2 } }).isNone
+
+def splitRecipeCost? : Option Search.Result.Cost := do
+  let .split bundle ← splitWith splitPackage generousRecipeLimits | none
+  pure bundle.recipeCost
+
+def seededEdgeByteOneOver : Bool := Id.run do
+  let some cost := splitRecipeCost? | return false
+  if cost.bytes == 0 then return false
+  let candidate :=
+    { generousRecipeLimits with
+      recipe := { generousRecipeLimits.recipe with maxBytes := cost.bytes - 1 } }
+  return match splitResult splitPackage candidate with
+    | .error (.resource .bytes) => true
+    | _ => false
+
+#guard seededEdgeByteOneOver
 
 def wrongHeadSession : Bool := Id.run do
   let some branch := (State.Branch.startWithin stateLimits program input.facts).toOption
