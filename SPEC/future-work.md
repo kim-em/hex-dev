@@ -310,7 +310,8 @@ explicit conversions first; reconsider a common interface only after multiple
 real consumers demonstrate which operations belong in it.
 
 **Sparse univariate polynomials (`hex-sparse-poly`,
-`hex-sparse-poly-mathlib`).** Use a canonical sorted array of
+`hex-sparse-poly-mathlib`).** Specified in
+[hex-sparse-poly](Libraries/hex-sparse-poly.md). Use a canonical sorted array of
 `(exponent, coefficient)` terms with strictly increasing exponents and no zero
 coefficients. Addition merges two arrays; multiplication combines all
 pairwise exponent sums, which wants a heap or a map
@@ -325,8 +326,8 @@ The payoff is inputs whose dense storage is linear in the *exponent*
 where sparse storage is linear in the *number of terms*: `x^1000000 − 1`
 is two terms against a million coefficients, and substituting `x^k`
 behaves the same way. Among cyclotomics the sparse family is
-`Φ_{p^k}(x) = Φ_p(x^{p^{k-1}})`; `Φ_p` itself has `p − 1` nonzero
-coefficients and is dense. Dense stays the default for
+`Φ_{p^k}(x) = Φ_p(x^{p^{k-1}})`. `Φ_p` has degree `p − 1` and all `p` of
+its coefficients are `1`, so it is dense. Dense stays the default for
 Berlekamp-Zassenhaus, where degrees are small and coefficient vectors
 are full.
 
