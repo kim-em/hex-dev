@@ -13,11 +13,11 @@ public import HexInterval.Experiment.Rational
 /-!
 # Source-pinned Dusart exponential leaves
 
-The eight executable numerical leaves in PNT+'s `Dusart.proposition_5_4a`
-and `Dusart.proposition_5_4b` are fixed comparisons with `Real.exp`.  This
-Mathlib-free half retains their exact rational arguments, targets, and
-directions, and checks every comparison after a 64-way reduction and one
-degree-11 Taylor window.
+Seven of the eight executable numerical leaves in PNT+'s
+`Dusart.proposition_5_4a` and `Dusart.proposition_5_4b` are fixed comparisons
+checked here after a 64-way reduction and one degree-11 Taylor window.  The
+remaining `exp 22` leaf is supplied by an existing stronger package theorem
+in the Mathlib companion.
 -/
 
 namespace Hex.Interval.Experiment.PntDusartExp
@@ -99,8 +99,7 @@ def sourceRows : List Certificate := [
   ⟨3, 1312, 100, 492113, .lowerLe, 64, 12⟩,
   ⟨4, 1452, 100, 2010733, .lowerLe, 64, 12⟩,
   ⟨5, 1666, 100, 17051707, .lowerLe, 64, 12⟩,
-  ⟨6, 43, 1, 4000000000000000000, .lowerLe, 64, 12⟩,
-  ⟨7, 22, 1, 117352333, .lowerLe, 64, 12⟩
+  ⟨6, 43, 1, 4000000000000000000, .lowerLe, 64, 12⟩
 ]
 
 /-- Authenticate the exact source row and the bounded Taylor computation. -/
