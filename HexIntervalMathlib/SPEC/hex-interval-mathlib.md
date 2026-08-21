@@ -102,9 +102,11 @@ The public companion grows only with the supported `Hex.Interval` API. Its
 `Program` module gives exact meanings to the supported decoded SSA program,
 and its `Proof` module owns function-agnostic package schemas, chronological
 typed replay, target closure, and an expression-emission boundary that rejects
-placeholders and unresolved metavariables, runs `Meta.check`, and checks exact
-type definitional equality transactionally. The kernel performs the final
-check when the caller installs the expression in a declaration.
+placeholders and unresolved metavariables, restores all emitter changes, then
+runs `Meta.check` and checks exact type definitional equality transactionally
+in the caller's environment. Emitted terms may reference only declarations
+that survive that rollback. The kernel performs the final check when the caller
+installs the expression in a declaration.
 Runtime search state, callbacks, payload bytes, and traces are untrusted and
 cannot enter `Proof.Evidence`. The concrete package registry, goal reifier,
 search-to-proof quotation, and tactic syntax remain experimental and are not

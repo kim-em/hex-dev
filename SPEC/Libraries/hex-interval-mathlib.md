@@ -22,10 +22,12 @@ and raw-cut idempotence without claiming a globally grid-tightest enclosure.
 The supported proof surface also gives exact function-agnostic meanings to
 decoded SSA programs and replays package-owned fact, equality, instantiation,
 and refutation schemas chronologically into ordinary typed proofs. Its emitted
-expression boundary transactionally rejects placeholders and unresolved
-metavariables, runs the elaborator's `Meta.check`, and checks exact type
-definitional equality; the kernel checks the term when the caller installs it
-in a declaration. The theorem registry is constructible only through its
+expression boundary rejects placeholders and unresolved metavariables,
+restores emitter changes, then transactionally runs the elaborator's
+`Meta.check` and exact type definitional equality in the caller's environment.
+Emitted terms may reference only declarations surviving that rollback; the
+kernel checks the term when the caller installs it in a declaration. The
+theorem registry is constructible only through its
 checked builder under ordinary imports; deliberate `import all` is a guarded
 trusted-internals escape hatch, not decoded runtime authority.
 Concrete packages, goal reification, search-to-proof quotation, and tactic

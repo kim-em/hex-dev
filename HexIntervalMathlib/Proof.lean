@@ -23,10 +23,11 @@ owner, body, action, scope, versions, dependencies, and chronology all match.
 Schema decoders and theorem builders are package callbacks, but their returned
 `Evidence` contains an ordinary Lean proof of the exact indexed proposition.
 The final Meta boundary instantiates and rejects unresolved metavariables and
-placeholders, runs the elaborator's structural `Meta.check`, and checks the
-inferred type against the exact expected proposition by definitional equality.
-It restores Meta state on success and failure. The kernel performs the final
-check only when the caller installs the returned expression in a declaration.
+placeholders, restores every emitter change, then runs the elaborator's
+structural `Meta.check` and checks the inferred type against the exact expected
+proposition by definitional equality in the caller's environment. It restores
+validation state on success and failure. The kernel performs the final check
+only when the caller installs the returned expression in a declaration.
 Concrete operations, packages, goal reification, tactic syntax, registries of
 declaration names, and default search policy are intentionally absent.
 
@@ -1036,19 +1037,24 @@ def replayRefute (limits : Limits) (registry : Registry semantics)
 
 /-- Package-owned expression producer. It has no proof authority beyond the
 type of an expression accepted by the elaborator checks below and eventually
-installed in a kernel-checked declaration. -/
+installed in a kernel-checked declaration. A returned expression may reference
+only declarations that existed before `emit`; emitter-created declarations are
+rolled back before authoritative validation. -/
 structure Emitter (Quote : Type) where
   emit : Quote → Lean.MetaM Lean.Expr
 
 /-- Run one package emitter transactionally. The returned expression contains
-no unresolved metavariables or placeholders, passes `Meta.check`, and has an
-inferred type definitionally equal to the exact closed expected proposition.
-All emitter and unification state is restored even on success. -/
+no unresolved metavariables or placeholders. Every emitter change is restored
+before the expression passes `Meta.check` and exact type checking in the
+caller's environment. Validation changes are also restored on success and
+failure. -/
 def emitChecked (emitter : Emitter Quote) (quote : Quote)
     (expected : Lean.Expr) : Lean.MetaM Lean.Expr := do
-  let saved ← Lean.Meta.saveState
-  try
+  let emitterSaved ← Lean.Meta.saveState
+  let prepared ← try
     let expected ← Lean.instantiateMVars expected
+    if expected.hasSorry then
+      throwError "interval proof emitter expected type contains a placeholder expression"
     if expected.hasMVar then
       throwError "interval proof emitter expected type contains unresolved metavariables"
     let candidate ← Lean.instantiateMVars (← emitter.emit quote)
@@ -1056,6 +1062,14 @@ def emitChecked (emitter : Emitter Quote) (quote : Quote)
       throwError "interval proof emitter returned a placeholder expression"
     if candidate.hasMVar then
       throwError "interval proof emitter returned unresolved metavariables"
+    pure (candidate, expected)
+  catch error =>
+    emitterSaved.restore
+    throw error
+  emitterSaved.restore
+  let (candidate, expected) := prepared
+  let validationSaved ← Lean.Meta.saveState
+  try
     Lean.Meta.check candidate
     let actual ← Lean.instantiateMVars (← Lean.Meta.inferType candidate)
     if actual.hasMVar then
@@ -1065,10 +1079,10 @@ def emitChecked (emitter : Emitter Quote) (quote : Quote)
     let candidate ← Lean.instantiateMVars candidate
     if candidate.hasMVar then
       throwError "interval proof emitter unification left unresolved metavariables"
-    saved.restore
+    validationSaved.restore
     pure candidate
   catch error =>
-    saved.restore
+    validationSaved.restore
     throw error
 
 /-- Project the ordinary theorem from a successfully checked proof object. -/

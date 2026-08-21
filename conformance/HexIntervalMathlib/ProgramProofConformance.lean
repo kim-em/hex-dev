@@ -460,11 +460,13 @@ elab "proof_emit_restore" : tactic => do
 example : True := by proof_emit_restore
 
 /-- Structural checking rejects an application whose explicit argument has the
-wrong type, even though the raw expression can be constructed. -/
+wrong type even though raw type inference reports the expected result type. -/
 elab "proof_emit_reject_ill_typed" : tactic => do
   let goal ← getMainGoal
   let expected ← goal.getType
-  let illTyped := mkApp2 (mkConst ``id [Level.zero]) (mkConst ``Bool) (mkNatLit 0)
+  let illTyped := mkApp2 (mkConst ``id [Level.zero]) expected (mkNatLit 0)
+  unless ← isDefEq (← inferType illTyped) expected do
+    throwError "ill-typed proof-emitter canary does not isolate Meta.check"
   let emitter : Proof.Emitter Unit := { emit := fun _ => pure illTyped }
   let accepted ← try
     let _ ← Proof.emitChecked emitter () expected
@@ -475,6 +477,34 @@ elab "proof_emit_reject_ill_typed" : tactic => do
   replaceMainGoal []
 
 example : True := by proof_emit_reject_ill_typed
+
+/-- An emitter-created declaration is rolled back before authoritative
+validation, so a returned reference to it is rejected rather than dangling. -/
+elab "proof_emit_reject_aux" : tactic => do
+  let goal ← getMainGoal
+  let expected ← goal.getType
+  let auxName := `Hex.IntervalMathlib.ProgramProofConformance.transientEmitterTheorem
+  if (← getEnv).contains auxName then
+    throwError "transient proof-emitter declaration already exists"
+  let emitter : Proof.Emitter Unit :=
+    { emit := fun _ => do
+        addDecl <| .thmDecl
+          { name := auxName
+            levelParams := []
+            type := expected
+            value := mkConst ``True.intro }
+        pure (mkConst auxName) }
+  let accepted ← try
+    let _ ← Proof.emitChecked emitter () expected
+    pure true
+  catch _ => pure false
+  if accepted then throwError "transient proof-emitter declaration was accepted"
+  if (← getEnv).contains auxName then
+    throwError "failed proof emitter leaked its transient declaration"
+  goal.assign (mkConst ``True.intro)
+  replaceMainGoal []
+
+example : True := by proof_emit_reject_aux
 
 /-- Synthetic placeholder expressions are rejected even at the expected type. -/
 elab "proof_emit_reject_placeholder" : tactic => do
@@ -491,8 +521,8 @@ elab "proof_emit_reject_placeholder" : tactic => do
 
 example : True := by proof_emit_reject_placeholder
 
-/-- Open candidate and expected metavariables are both rejected without being
-assigned by definitional equality. -/
+/-- Open candidate and expected metavariables, and an expected placeholder,
+are rejected without being assigned by definitional equality. -/
 elab "proof_emit_reject_mvars" : tactic => do
   let goal ← getMainGoal
   let expected ← goal.getType
@@ -517,6 +547,12 @@ elab "proof_emit_reject_mvars" : tactic => do
   if expectedAccepted then throwError "open expected proposition was accepted"
   if ← expectedId.isAssigned then
     throwError "rejected expected metavariable was assigned"
+  let placeholderExpected ← mkSorry expected true
+  let placeholderAccepted ← try
+    let _ ← Proof.emitChecked expectedEmitter () placeholderExpected
+    pure true
+  catch _ => pure false
+  if placeholderAccepted then throwError "placeholder expected proposition was accepted"
   goal.assign (mkConst ``True.intro)
   replaceMainGoal []
 
