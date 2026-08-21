@@ -33,6 +33,7 @@ IMPORT_ALL_RE = re.compile(
 # directory convention. There are currently no required exceptions.
 SEALED_IMPORT_ALL_ALLOWLIST: dict[str, frozenset[Path]] = {
     "HexInterval.Search": frozenset(),
+    "HexIntervalMathlib.Proof": frozenset(),
 }
 
 UMBRELLA_BUILD_TARGETS = {

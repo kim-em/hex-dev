@@ -98,10 +98,20 @@ not import the experimental propagation fact domain.
 
 ## Boundary
 
-The public companion grows only with the supported `Hex.Interval` API. The
-existing modules under `HexIntervalMathlib/Experiment` remain evidence for
-future operations, replay schemas, transcendental providers, and tactics, but
-are not re-exported here. Further arithmetic images and useful bounded
+The public companion grows only with the supported `Hex.Interval` API. Its
+`Program` module gives exact meanings to the supported decoded SSA program,
+and its `Proof` module owns function-agnostic package schemas, chronological
+typed replay, target closure, and an expression-emission boundary that rejects
+placeholders and unresolved metavariables, restores emitter environment,
+message, information, and metavariable changes, clears both environment-
+dependent elaborator caches, then runs `Meta.check` and checks exact type
+definitional equality transactionally in the caller's environment. Emitted
+terms may reference only declarations that survive that rollback. The kernel
+performs the final check when the caller installs the expression.
+Runtime search state, callbacks, payload bytes, and traces are untrusted and
+cannot enter `Proof.Evidence`. The concrete package registry, goal reifier,
+search-to-proof quotation, and tactic syntax remain experimental and are not
+re-exported here. Further arithmetic images and useful bounded
 nonsingleton division require their own
 operation-specific semantic theorems before promotion. An image operation must
 at least prove successful-result cut semantics and sound real-image enclosure;
@@ -113,6 +123,20 @@ Public division directly encloses two nonzero finite singletons, handles empty
 and total-zero cases exactly, and deliberately returns whole for every other
 nonempty shape. No tightness converse or bounded nonsingleton quotient is
 claimed.
+
+The supported proof limits cap retained package and schema counts, certificate
+body cells, ordered dependencies, and chronology. They do not claim to
+preempt full `Program.check` or registration validation, equality on arbitrary
+caller facts, schema decoding, or package theorem callbacks. Authenticated
+search output must first pass the Mathlib-free `Search` envelope; a direct
+trusted caller of `Proof` is responsible for bounding its program and package
+assembly before replay.
+
+Under ordinary imports, the theorem-registry constructor is private and
+`Registry.buildWithin` is the only supported construction path. Lean's
+deliberate `import all HexIntervalMathlib.Proof` exposes trusted internals and
+lies outside the decoded-runtime threat model; the repository DAG checker
+rejects that import outside an exact reviewed allowlist, currently empty.
 
 `HexIntervalMathlib.Experiment.PntLogRational` is a fixed-source acceptance
 provider rather than public interval arithmetic. It proves the original
@@ -168,6 +192,11 @@ set-image converse is exported.
 The Mathlib-free companion tests separately pin representative strict, closed,
 unbounded, and empty shapes together with pre-allocation resource refusal. The
 semantic theorem itself is exhaustive over the complete cut language.
+`HexIntervalMathlib.ProgramProofConformance` independently pins exact operation
+alignment and a live instance → fact → equality → transport chronology,
+including body/source/version/final-state mutations, refuter ownership, a
+nonvacuous ordinary theorem with a guarded axiom report, and transactional
+Meta-state restoration after a wrongly typed emitter.
 `HexIntervalMathlib.PntLogRationalConformance` additionally runs all fifteen
 fixed rows and sends the representative large-shift `32e12` certificate through
 generic planning, payload authentication, chronological replay, and the proof

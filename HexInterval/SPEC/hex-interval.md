@@ -5187,6 +5187,24 @@ their declared cost inside a scheduler bound.
   an image-tightness converse.
 - `HexIntervalMathlib/Power.lean`: exact normalized selected-cut semantics and
   the one-way successful natural-power image theorem.
+- `HexIntervalMathlib/Program.lean`: exact function-agnostic operation
+  meanings, complete operation-array alignment, per-node SSA relations, and
+  global model assembly over the supported decoded program.
+- `HexIntervalMathlib/Proof.lean`: supported package-owned fact, equality,
+  instance, and refutation theorem schemas; exact registry/action validation;
+  chronological typed proof state and caller-target closure; and the
+  expression boundary that rejects placeholders and metavariables, restores
+  emitter environment/messages/information/metavariables and clears both
+  environment-dependent elaborator caches, then transactionally runs
+  `Meta.check` and exact type-definitional-equality checking in the caller's
+  environment. Emitted terms may reference only declarations surviving that
+  rollback. The kernel performs the final check when the caller installs the
+  expression. Under
+  ordinary imports, only `Registry.buildWithin` can construct the theorem
+  registry; `import all HexIntervalMathlib.Proof` is a trusted-internals escape
+  hatch rejected outside the exact empty repository allowlist. Concrete
+  packages, goal reification, tactic syntax, and default registries remain
+  experimental.
 - `HexIntervalMathlib/Split.lean`: exact transactional child semantics,
   containment, coverage, disjointness, and left ownership of the cut point.
 - `HexIntervalMathlib/Inverse.lean`: exact computed reciprocal-cut semantics
@@ -5238,9 +5256,12 @@ their declared cost inside a scheduler bound.
    target driver, and split-construction designs. Optimized storage, concrete
    offer generation, package protocols, and a default policy will be selected
    from measurements; none is frozen by the decoded supported snapshots.
- - `conformance/HexInterval/{Conformance,SearchConformance,MinMaxConformance,
-   EmitFixtures}.lean`:
-   Lean-only checks and oracle fixtures.
+- `conformance/HexInterval/{Conformance,SearchConformance,MinMaxConformance,
+  EmitFixtures}.lean`:
+  Lean-only checks and oracle fixtures.
+- `conformance/HexIntervalMathlib/ProgramProofConformance.lean`: supported
+  program-model, registry, chronology, refutation, target-closure, mutation,
+  Meta-state restoration, and guarded ordinary-theorem canaries.
 - `HexInterval/Experiment/PntFks2FamilyData*.lean` and
   `HexInterval/Experiment/PntFks2Family.lean`: committed source-pinned family
   data and the Mathlib-free complete-family checker.
