@@ -433,9 +433,14 @@ has a primitive image. `g` is primitive, so every divisor of `g` is
 primitive up to sign, and its image is therefore `± ∏_k P_k ^ b_k` for
 some `b ≤ e`, by unique factorization in `ℤ[z]` and the obligations.
 The enumeration visits the image of every candidate proper divisor, so
-refuting all of them refutes every proper factorization. `scalar` is
-not enumerated over, because a primitive divisor contributes none of
-it.
+refuting all of them refutes every proper factorization. Two things are
+deliberately not enumerated. `scalar` is not, because a primitive
+divisor contributes none of it. And the sign is not, because
+`unKron?` is linear and `u ∣ g` exactly when `-u ∣ g`, so one
+representative of each pair settles both. `b = 0` and `b = e` are the
+excluded ends for the same reason they are the trivial factorizations:
+`kron` is injective on the monomials involved, so `b = e` forces
+`u = ± g` and `b = 0` forces `u = ± 1`.
 
 **Its cost is the point of it, not an oversight.** `kron d g` has
 degree `∏_j (d j + 1) - 1`, so factoring it is univariate factorization
