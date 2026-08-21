@@ -564,14 +564,23 @@ retry policy, and the recombination of coarser groupings all live here
 rather than in the lifting engine; that boundary is drawn in
 [hex-mv-hensel §What stays in the downstream consumer](Libraries/hex-mv-hensel.md).
 
-The product check certifies a decomposition, not irreducibility. The gap
-is smaller than it first appears: when the input is primitive in the main
-variable and every univariate image is irreducible over `ℤ`, a checked
-lift already gives irreducible multivariate factors, by
-`irreducible_of_image_irreducible` in that SPEC. Both extra hypotheses
-are data this library holds anyway, so the design question is whether to
-carry them into the returned certificate or to advertise a decomposition
-and let the caller ask for more.
+Specified in [hex-mv-factor](Libraries/hex-mv-factor.md), over
+`MvPoly n Int cmp` and on top of the four prerequisites above.
+
+The product check certifies a decomposition, not irreducibility, and
+that SPEC keeps the two claims in separate types with separate
+checkers: `checkDecomp` for the product and `checkIrred` for
+irreducibility, the latter reducing to a named list of univariate
+irreducibility obligations that the Mathlib companion discharges. Two
+corrections to what this file said before it was written. The
+`irreducible_of_image_irreducible` route does *not* apply verbatim,
+because Wang's leading-coefficient correction rescales each univariate
+image by an integer and that theorem's hypothesis is irreducibility of
+the image as the lift received it; the factorizer proves the scaled
+form itself, one Gauss step longer. And a failed lift is not a
+refutation at any modulus the search reaches, so the unconditional
+completeness route is a Kronecker substitution into univariate
+factorization rather than an exhausted recombination search.
 
 **Generic finite fields, and equal-degree splitting.** Specified in
 [hex-finite-field](Libraries/hex-finite-field.md): the Mathlib-free

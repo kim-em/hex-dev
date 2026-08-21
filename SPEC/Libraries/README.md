@@ -9,6 +9,7 @@
 - **hex-mv-poly**: canonical distributed multivariate polynomials at fixed arity with explicit monomial orders
 - **hex-mv-gcd**: multivariate gcd with cofactors, content and primitive part, exact division, squarefree decomposition
 - **hex-mv-hensel**: multivariate Hensel lifting against an evaluation ideal, with the coprimality witness, leading-coefficient contract, and reconstruction that Wang's EEZ factorization needs
+- **hex-mv-factor**: factorization of `Z[x_1, ..., x_n]` by Wang's EEZ algorithm, with a checked product decomposition and a separate irreducibility certificate
 - **hex-truncated-series**: power series truncated at a precision fixed in the type, with Newton inversion, square root, `exp`, `log`, composition, and reversion
 - **hex-matrix**: dense matrices, matrix/vector arithmetic, elementary row and column operations, submatrix slicing, the Gram matrix
 - **hex-row-reduce**: row reduction (RREF), rank, span, nullspace
@@ -65,6 +66,7 @@ Mathlib, and supplies correspondence proofs or Mathlib-facing APIs):
 - **hex-mv-poly-mathlib**: `MvPoly n R cmp ≃+* MvPolynomial (Fin n) R`, `aeval`, and operation correspondence
 - **hex-mv-gcd-mathlib**: gcd maximality transported to `MvPolynomial (Fin n) R`, and decidable divisibility and squarefreeness
 - **hex-mv-hensel-mathlib**: the evaluation ideal and its residue ring as Mathlib objects, the lifted identities transported to `MvPolynomial (Fin (n+1)) ℤ`, and the factor-coefficient bound
+- **hex-mv-factor-mathlib**: discharge of the univariate irreducibility obligations, factorization correctness and uniqueness in `MvPolynomial (Fin n) ℤ`, and `Decidable (Irreducible p)`
 - **hex-truncated-series-mathlib**: `TSeries R n ≃+* PowerSeries R ⧸ (X ^ n)`, and agreement with `PowerSeries.invOfUnit`, `subst`, `substInvOfIsUnit`, `exp`, and `logOf`
 - **hex-matrix-mathlib**: matrix equivalence, row operations as transvections, and the Mathlib algebra tower transported onto our matrix type
 - **hex-row-reduce-mathlib**: rank = `Matrix.rank`, nullspace = `LinearMap.ker`, span agreement
@@ -105,6 +107,7 @@ Each library with its immediate dependencies:
 - **hex-mv-poly**: hex-poly, hex-basic
 - **hex-mv-gcd**: hex-mv-poly, hex-poly, hex-poly-fp, hex-resultant, hex-arith, hex-mod-arith
 - **hex-mv-hensel**: hex-mv-gcd, hex-mv-poly, hex-poly, hex-poly-z, hex-poly-fp, hex-mod-arith, hex-modular, hex-arith, hex-basic
+- **hex-mv-factor**: hex-mv-hensel, hex-mv-gcd, hex-mv-poly, hex-berlekamp-zassenhaus, hex-poly, hex-poly-z, hex-poly-z-gcd, hex-poly-fp, hex-mod-arith, hex-modular, hex-arith, hex-basic
 - **hex-truncated-series**: hex-basic
 - **hex-matrix**: hex-basic
 - **hex-row-reduce**: hex-matrix
@@ -158,6 +161,7 @@ Mathlib companion libraries (each also depends on Mathlib):
 - **hex-mv-poly-mathlib**: hex-mv-poly, hex-poly-mathlib
 - **hex-mv-gcd-mathlib**: hex-mv-gcd, hex-mv-poly-mathlib, hex-resultant-mathlib, hex-poly-mathlib
 - **hex-mv-hensel-mathlib**: hex-mv-hensel, hex-mv-poly-mathlib, hex-poly-mathlib, hex-poly-z-mathlib
+- **hex-mv-factor-mathlib**: hex-mv-factor, hex-mv-hensel-mathlib, hex-mv-gcd-mathlib, hex-mv-poly-mathlib, hex-berlekamp-zassenhaus-mathlib, hex-poly-z-mathlib
 - **hex-truncated-series-mathlib**: hex-truncated-series
 - **hex-poly-z-mathlib**: hex-poly-z, hex-poly-mathlib
 - **hex-poly-z-gcd-mathlib**: hex-poly-z-gcd, hex-poly-z-mathlib, hex-poly-mathlib
@@ -399,6 +403,30 @@ hex-poly-z ────┼── hex-mv-hensel ──── hex-mv-hensel-mathli
 hex-poly-fp ───┘
 ```
 
+`hex-mv-factor` is the top of that chain and the library the other
+three were built for. It joins the multivariate graph to the univariate
+factorization graph, because Wang's EEZ algorithm factors the
+univariate image of its input: it depends on `hex-mv-hensel` for the
+lift, on `hex-mv-gcd` for content, exact division, squarefree
+decomposition, and the content certificates its irreducibility checker
+replays, on `hex-berlekamp-zassenhaus` for `ZPoly.factorize`, and on
+`hex-poly-z-gcd` for the squarefree test on the univariate image. It
+does **not** depend on `hex-int-factor`: the integer content is
+returned unfactored, following the same convention as
+`hex-berlekamp-zassenhaus` and `sqfDecomp`, and a caller who wants the
+constant primes composes the two answers. The boundary with the lifting
+engine is drawn in
+[hex-mv-hensel §What stays in the downstream consumer](hex-mv-hensel.md),
+and what the product check does and does not prove is in
+[hex-mv-factor §The two claims, and why they have separate types](hex-mv-factor.md).
+
+```text
+hex-mv-hensel ─────────────┐
+hex-mv-gcd ────────────────┤
+hex-berlekamp-zassenhaus ──┼── hex-mv-factor ──── hex-mv-factor-mathlib
+hex-poly-z-gcd ────────────┘
+```
+
 `hex-truncated-series` sits directly on `hex-basic` and names no
 polynomial type. That is what keeps the fast-arithmetic corner acyclic.
 Newton inversion of a truncated series is the primitive under fast
@@ -535,6 +563,7 @@ for developments whose source-local move has not happened yet.
 - [hex-mv-poly-mathlib](../../HexMvPolyMathlib/SPEC/hex-mv-poly-mathlib.md): `MvPoly n R cmp ≃+* MvPolynomial (Fin n) R`, `aeval`, and operation correspondence
 - [hex-mv-gcd](hex-mv-gcd.md): multivariate gcd with cofactors, content and primitive part, exact division, squarefree decomposition
 - [hex-mv-hensel.md](hex-mv-hensel.md): multivariate Hensel lifting against an evaluation ideal, its coprimality witness and leading-coefficient contract, reconstruction, and the checked-decomposition certificate (the Mathlib companion is specified in the same file)
+- [hex-mv-factor.md](hex-mv-factor.md): factorization of `Z[x_1, ..., x_n]` by Wang's EEZ algorithm, the evaluation-point and leading-coefficient search, the checked product decomposition, and the separate irreducibility certificate (the Mathlib companion is specified in the same file)
 - [hex-truncated-series.md](hex-truncated-series.md): power series truncated at a precision fixed in the type, Newton inversion, square root, `exp`, `log`, composition, and reversion (the Mathlib companion is specified in the same file)
 - [hex-poly-fp](../../HexPolyFp/SPEC/hex-poly-fp.md): polynomials over `F_p`, Frobenius, square-free decomposition
 - [hex-gf2](../../HexGF2/SPEC/hex-gf2.md): packed bitwise polynomials over `F_2`, `GF(2^n)` elements
