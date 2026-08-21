@@ -1,0 +1,1266 @@
+# hex-min-poly (matrix minimal polynomial, depends on hex-matrix, hex-row-reduce and hex-poly)
+
+The minimal polynomial `m_A` of a dense square matrix over a field: the
+monic generator of the ideal of polynomials annihilating `A`. Computed
+from Krylov sequences. For a vector `v`, the first linear dependency in
+`v, Av, A²v, …` gives the *order polynomial* of `v`, the monic generator
+of the annihilator of `v`; the least common multiple of the order
+polynomials of the standard basis vectors is `m_A`. Mathlib-free.
+
+The library ships a certificate that establishes **both** halves of the
+claim, annihilation and minimality, and the minimality half is the point
+of the design. The companion `hex-min-poly-mathlib` identifies the
+executable output with Mathlib's `minpoly F M`, and adds the two facts
+whose proofs go through the characteristic polynomial: divisibility into
+`χ_A`, and the degree bound `deg m_A ≤ n`.
+
+FLINT ships `fmpz_mat_minpoly` and PARI's `minpoly` accepts a matrix, so
+an executable minimal polynomial is not new. What is new here is a
+minimal polynomial that arrives with a checkable minimality witness, and
+a proved correspondence to Mathlib's `minpoly`, which is declared
+`noncomputable` and cannot be run.
+
+## Why this library exists
+
+`m_A` answers questions that `χ_A` does not, and the gap between them is
+the whole subject.
+
+- **Diagonalisability, decided.** `A` is diagonalisable over `F` exactly
+  when `m_A` is squarefree and splits over `F`. `χ_A` cannot decide
+  this: `I₂` and `[[1,1],[0,1]]` share the characteristic polynomial
+  `(x − 1)²` and only the first is diagonalisable, while their minimal
+  polynomials `x − 1` and `(x − 1)²` differ.
+- **The smallest Cayley-Hamilton relation.** Reducing `A^k` to a
+  combination of `I, A, …` costs `deg m_A` terms rather than `n`. On a
+  derogatory matrix that is the difference between a degree-1 relation
+  and a degree-`n` one, and a consumer computing high matrix powers or
+  a matrix exponential wants the smaller relation.
+- **The generator of the annihilator, per vector.** `vecMinPoly A v` is
+  the object Krylov solvers, Wiedemann's method, and linear recurrence
+  recovery are all built on. Specifying it as a public operation with
+  its own contract, rather than as an internal step, is what makes those
+  consumers reuse it.
+- **The largest invariant factor, computed independently.** The
+  invariant-factor library in [future-work](../future-work.md) will
+  compute the same polynomial as a byproduct of the polynomial Smith
+  form of `xI − A`. It wants an independent computation to compare
+  against, for the same reason
+  [hex-char-poly](hex-char-poly.md) wants one. This library must
+  therefore not be derived from that one, and this SPEC does not depend
+  on it in either direction.
+
+## Conventions
+
+`A : Matrix F n n` over a field `F` with decidable equality, in the
+Mathlib-free sense: `[Lean.Grind.Field F] [DecidableEq F]`.
+
+**A field, not a commutative ring.** Unlike
+[hex-char-poly](hex-char-poly.md), this algorithm divides. Row reduction
+divides by pivots, and the minimal polynomial is not even well defined
+over a general commutative ring, where the annihilator of `A` need not
+be principal. Over `Z` the annihilator of `[[2, 0], [0, 3]]` is generated
+by `(x − 2)(x − 3)` as an ideal of `Z[x]`, and that is a principal
+generator only by accident of this example; the general statement is
+false, so the base ring is a field by hypothesis and not by convenience.
+
+**The result is monic, always.** `Lean.Grind.Field` carries
+`zero_ne_one`, so the trivial ring is excluded by the hypothesis and
+there is no zero-ring caveat of the kind
+[hex-char-poly §Conventions](hex-char-poly.md) has to carry. Every
+polynomial this library returns is monic, including the degenerate
+answers `1` (at `n = 0`) and `x` (for the zero matrix).
+
+**Coefficients are stored ascending and are produced ascending.**
+`Hex.DensePoly` indexes coefficients by exponent. The dependency
+coefficients come out of `spanCoeffs` in increasing power order already,
+so unlike the Berkowitz recursion there is no reversal step and no place
+for a coefficient-order mistake to hide. The conformance records are
+ascending too, matching FLINT's `coeffs()`.
+
+**Krylov objects are indexed by row count, not by a subtracted index.**
+`krylovMat A v r` has exactly `r` rows, `v` through `A^{r-1} v`. Writing
+it as "the iterates up to degree `d − 1`" would put a truncated `Nat`
+subtraction in a type index and make `d = 0` ill-typed rather than
+empty. The same reasoning is written out at greater length in
+[hex-char-poly §Why the recursion is indexed by block size](hex-char-poly.md);
+the conclusion transfers verbatim.
+
+**`lcm` is monic-normalised, and `gcd` is not.** `Hex.DensePoly.gcd`
+returns the last nonzero Euclidean remainder, which is only *associated*
+to the monic gcd; `HexPolyMathlib.toPolynomial_gcd_associated` says so in
+its docstring and its statement. The `lcm` this library needs is
+specified as monic (see "Prerequisite changes in other libraries"), which
+matches the convention `hex-poly-z-gcd` and `hex-mv-gcd` already fix for
+their own types, and which is what makes the minimal polynomial monic
+without a final renormalisation. Every input to the fold here is already
+monic, so the normalisation costs one pass over the coefficients and
+changes nothing.
+
+## What a certificate has to establish, and what does not
+
+The minimal polynomial is characterised by three properties together:
+monic, annihilating, and of least degree among monic annihilators.
+Equivalently and more usefully, monic and *dividing every* annihilator.
+Any verification method that establishes fewer than all three accepts
+wrong answers, and the specific wrong answers are worth naming.
+
+**Annihilation alone is not a certificate.** `p(A) = 0` says exactly
+that `m_A ∣ p`. Every multiple of `m_A` passes, including `χ_A` and
+including `m_A · q` for arbitrary `q`.
+
+**Annihilation plus divisibility into `χ_A` is not a certificate
+either.** Take `F = Q`, `n = 2`, `A = 0`. Then `χ_A = x²` and
+`m_A = x`. The polynomial `p = x²` is monic, annihilates `A`, and
+divides `χ_A`, and `p ≠ m_A`. The set of polynomials passing this test
+is the set of divisors of `χ_A` that are multiples of `m_A`, which is a
+single point only when `m_A = χ_A`, that is, only on non-derogatory
+input. A checker accepting this test therefore fails precisely on the
+inputs where the minimal polynomial is interesting. This case is in the
+conformance suite and in the Lean-side `#guard` list for that reason.
+
+**Annihilation plus a degree claim is not a certificate, because the
+degree claim is the thing that needs a witness.** If `p` is monic,
+`p(A) = 0`, and `deg p = deg m_A`, then `p = m_A` follows. But
+`deg m_A` is not known independently of computing `m_A`, so the
+hypothesis is not checkable. What is checkable is a *lower bound* on
+`deg m_A`, and that is what the certificate below supplies.
+
+**The lower bound is linear independence of Krylov iterates.** If
+`v, Av, …, A^{d-1} v` are linearly independent then no nonzero
+polynomial of degree less than `d` annihilates `v`, so no such
+polynomial annihilates `A` either, so `deg m_A ≥ d`. Independence of a
+list of vectors is checkable by one identity, and that is the whole
+mechanism.
+
+## The algorithm
+
+### The order polynomial of a vector
+
+Fix `A : Matrix F n n` and `v : Vector F n`. Write `w_j = A^j v`.
+
+1. **Iterate.** Compute `w_0, …, w_n` with `n` matrix-vector products.
+   Nothing beyond `Hex.Matrix.mulVec` is used, so no matrix-matrix
+   product appears anywhere in this library. See "Only `mulVec`" below.
+2. **Find the first dependency.** Let `K` be the `(n+1) × n` matrix with
+   rows `w_0, …, w_n` and let `d = rank K`, computed by one call to
+   `Hex.Matrix.rowReduce_rank`.
+3. **Solve for the coefficients.** `spanCoeffs (krylovMat A v d) w_d`
+   returns `some c` with `Σ_{j<d} c_j w_j = w_d`.
+4. **Assemble.** `vecMinPoly A v = x^d − Σ_{j<d} c_j x^j`, monic of
+   degree `d`.
+
+**Step 2 is the step that needs an argument, and it is short.** Let `d`
+be the least index with `w_d ∈ span(w_0, …, w_{d-1})`; such an index
+exists and is at most `n`, since `n + 1` vectors in `F^n` are dependent
+and the first dependency in the list is of this shape. Then
+`w_0, …, w_{d-1}` are independent by minimality of `d`, and the span of
+the whole list collapses: if `w_k ∈ span(w_0, …, w_{d-1})` then
+`w_{k+1} = A w_k ∈ span(w_1, …, w_d) ⊆ span(w_0, …, w_{d-1})`, the last
+inclusion because `w_d` itself is in that span. So by induction every
+`w_k` lies in `span(w_0, …, w_{d-1})`, the row space of `K` has dimension
+exactly `d`, and `rank K = d`. This is why one rank computation on the
+whole Krylov matrix replaces a linear search with `n` separate span
+tests, and it is the only nonobvious fact in the computation.
+
+**Step 3 cannot return `none`.** `w_d` is in the row span of
+`krylovMat A v d` by the previous paragraph, and
+`Hex.Matrix.spanCoeffs_eq_none_iff` turns that into `isSome`. Under
+design principle 8 this is the `unreachable-by-pipeline-invariant`
+classification, and the unreachability theorem that principle requires
+is named `krylovCoeffs_isSome` below. The `none` branch of the total form
+is dead code and returns `1`.
+
+### The matrix minimal polynomial
+
+`m_A = lcm_{i < n} (vecMinPoly A e_i)`, where `e_i` is the `i`-th
+standard basis vector, folded left from the empty-family value `1`.
+
+The correctness statement is one line: `p(A) = 0` if and only if
+`p(A) e_i = 0` for every `i`, if and only if `vecMinPoly A e_i ∣ p` for
+every `i`, if and only if the least common multiple divides `p`. The
+first step is that the `e_i` span `F^n` and `p(A)` is linear; the second
+is that the order polynomial generates the annihilator of its vector;
+the third is the universal property of `lcm`.
+
+**Basis-wide coverage is not optional, and the failure is not exotic.**
+Restricting the fold to a subfamily computes the minimal polynomial of
+`A` restricted to the `A`-invariant subspace that subfamily generates,
+which is a proper divisor of `m_A` in general. With
+`A = [[0, 1], [0, 0]]` and the subfamily `{e_0}`, the order polynomial is
+`x`, since `A e_0 = 0`; the answer `x` is not an annihilator of `A`,
+because `A ≠ 0`. The true answer is `x²`, contributed by `e_1`. Any
+implementation that stops early, samples a subset, or reuses an
+accumulated span across basis vectors has to defend itself against this
+two-by-two matrix; see "What is deliberately not here".
+
+**Only `mulVec`.** `Hex.Matrix.mul` is a `noncomputable def` carrying a
+`@[csimp]` replacement `mulImpl` under design principle 11, and anything
+routed through it inherits that discipline;
+[hex-char-poly](hex-char-poly.md) marks `evalMatrix` `noncomputable` for
+exactly this reason. This library never forms a matrix-matrix product:
+Krylov iteration, Horner evaluation at `A` applied to a vector, and the
+independence check are all matrix-vector products, and
+`Hex.Matrix.mulVec` is an ordinary `def`. So every definition here is
+computable without appeal to the `@[csimp]` route, which is a property
+worth keeping rather than a coincidence to be spent later. This was
+checked and not assumed: `krylovVec` as `A * w`, `krylovMat` through
+`Matrix.ofRows`, `krylovDeg` through `rowReduce_rank`, `krylovCoeffs?`
+through `spanCoeffs`, the certificate structures, and the independence
+identity `krylovMat A v o.deg * o.inv = Matrix.identity o.deg` all
+elaborate against the current tree with no `noncomputable` marker
+anywhere.
+
+## API
+
+```lean
+namespace Hex.Matrix
+
+variable {F : Type u} [Lean.Grind.Field F] [DecidableEq F] {n : Nat}
+
+/-- The `i`-th standard basis vector of `F^n`, as the `i`-th row of the
+identity matrix. -/
+def basisVec (n : Nat) (i : Fin n) : Vector F n :=
+  Matrix.row (Matrix.identity n) i
+
+/-- `A^j • v`, by `j` matrix-vector products. -/
+def krylovVec (A : Matrix F n n) (v : Vector F n) (j : Nat) : Vector F n
+
+/-- The `r × n` matrix whose rows are `v, A v, …, A^{r-1} v`. -/
+def krylovMat (A : Matrix F n n) (v : Vector F n) (r : Nat) : Matrix F r n
+
+/-- The degree of the order polynomial of `v`: the length of the longest
+independent prefix of the Krylov sequence, equivalently the rank of the
+full Krylov matrix. -/
+def krylovDeg (A : Matrix F n n) (v : Vector F n) : Nat :=
+  rowReduce_rank (krylovMat A v (n + 1))
+
+/-- The coefficients of the first Krylov dependency, ascending. `none` is
+unreachable on every input; see `krylovCoeffs_isSome`. -/
+def krylovCoeffs? (A : Matrix F n n) (v : Vector F n) :
+    Option (Vector F (krylovDeg A v)) :=
+  spanCoeffs (krylovMat A v (krylovDeg A v)) (krylovVec A v (krylovDeg A v))
+
+/-- The order polynomial of `v`: the monic generator of
+`{p | p(A) v = 0}`, of degree `krylovDeg A v`. -/
+def vecMinPoly (A : Matrix F n n) (v : Vector F n) : DensePoly F
+
+/-- Horner evaluation of `p` at `A`, applied to `v`. Computes `p(A) v`
+with `deg p` matrix-vector products and no matrix-matrix product. -/
+def evalVec (p : DensePoly F) (A : Matrix F n n) (v : Vector F n) : Vector F n
+
+/-- The minimal polynomial of `A`: the monic generator of
+`{p | p(A) = 0}`, the least common multiple of the order polynomials of
+the standard basis vectors. -/
+def minPoly (A : Matrix F n n) : DensePoly F
+
+end Hex.Matrix
+```
+
+Three placement notes.
+
+**`basisVec` is a convenience, not a new primitive.** `hex-matrix` has
+`identity` and `row`, and `HexRowReduce/Span.lean`'s `vecMul_single`
+already writes the vector inline as
+`Vector.ofFn fun l => if i = l then 1 else 0`. Defining it once as the
+row of the identity means the annihilation statement per basis vector
+can be discharged from `identity_mulVec` rather than from a fresh
+`Vector.ofFn` fold each time. If `hex-matrix` grows a named standard
+basis vector, this definition is deleted and the uses are unchanged.
+
+**`evalVec` is the evaluation primitive of this library, and it is not
+`evalMatrix`.** [hex-char-poly](hex-char-poly.md) specifies
+`evalMatrix p A : Matrix F n n`, which is what a consumer of
+Cayley-Hamilton wants. Here the statement that has to be checked is
+`p(A) v = 0` for particular vectors, and forming the whole matrix to do
+that would cost `deg p` matrix-matrix products where `deg p`
+matrix-vector products suffice, a factor of `n`. The two are related by
+`evalVec p A v = evalMatrix p A * v`, which is a theorem of whichever
+library ends up depending on both, and is not needed here.
+
+**`krylovDeg` is `rowReduce_rank` of an `(n+1) × n` matrix, not a
+loop.** The alternative, testing `spanContains` at each `k` in turn,
+costs `d` row reductions instead of one and needs a fuel argument or a
+proof of termination at `k ≤ n`. The rank formulation gets the same
+number from one call, and the prefix-collapse argument under "The
+algorithm" is what makes them agree.
+
+## Contracts
+
+These are the statements the Mathlib-free library proves. Each mentions
+only hex-matrix, hex-row-reduce, and hex-poly.
+
+```lean
+/-- The `none` branch of `krylovCoeffs?` is unreachable. -/
+theorem krylovCoeffs_isSome (A : Matrix F n n) (v : Vector F n) :
+    (krylovCoeffs? A v).isSome
+
+theorem krylovDeg_le (A : Matrix F n n) (v : Vector F n) : krylovDeg A v ≤ n
+
+theorem vecMinPoly_monic (A : Matrix F n n) (v : Vector F n) :
+    (vecMinPoly A v).Monic
+
+theorem degree?_vecMinPoly (A : Matrix F n n) (v : Vector F n) :
+    (vecMinPoly A v).degree? = some (krylovDeg A v)
+
+/-- The order polynomial annihilates its vector. -/
+theorem evalVec_vecMinPoly (A : Matrix F n n) (v : Vector F n) :
+    evalVec (vecMinPoly A v) A v = 0
+
+/-- The order polynomial generates the annihilator of its vector: this is
+the minimality half, in divisibility form. -/
+theorem vecMinPoly_dvd (A : Matrix F n n) (v : Vector F n) (p : DensePoly F) :
+    evalVec p A v = 0 → vecMinPoly A v ∣ p
+
+theorem minPoly_monic (A : Matrix F n n) : (minPoly A).Monic
+
+/-- The minimal polynomial annihilates `A`, stated on every vector rather
+than through a matrix-matrix product. -/
+theorem evalVec_minPoly (A : Matrix F n n) (v : Vector F n) :
+    evalVec (minPoly A) A v = 0
+
+/-- Minimality: `minPoly A` divides every annihilator. -/
+theorem minPoly_dvd (A : Matrix F n n) (p : DensePoly F) :
+    (∀ v, evalVec p A v = 0) → minPoly A ∣ p
+
+/-- `p` annihilates `A` exactly when it annihilates every standard basis
+vector. This is what makes the finite check in `MinPolyCert.check`
+equivalent to the quantified statement above. -/
+theorem evalVec_eq_zero_iff (A : Matrix F n n) (p : DensePoly F) :
+    (∀ v, evalVec p A v = 0) ↔ ∀ i : Fin n, evalVec p A (basisVec n i) = 0
+
+theorem minPoly_empty (A : Matrix F 0 0) : minPoly A = 1
+
+theorem minPoly_zero (n : Nat) (hn : 0 < n) :
+    minPoly (0 : Matrix F n n) = #p[0, 1]
+
+theorem minPoly_one_by_one (A : Matrix F 1 1) :
+    minPoly A = #p[-A[(0, 0)], 1]
+```
+
+The load-bearing supporting lemmas, in the order they are needed:
+
+```lean
+/-- Horner evaluation is a row combination of the Krylov matrix: this is
+the identity that turns a polynomial statement into a linear-algebra one
+and back. -/
+theorem evalVec_eq_vecMul_krylov (p : DensePoly F) (A : Matrix F n n)
+    (v : Vector F n) (r : Nat) (hr : p.size ≤ r) :
+    evalVec p A v = vecMul (p.coeffVec r) (krylovMat A v r)
+
+/-- Composition: `(p * q)(A) v = p(A) (q(A) v)`. -/
+theorem evalVec_mul (p q : DensePoly F) (A : Matrix F n n) (v : Vector F n) :
+    evalVec (p * q) A v = evalVec p A (evalVec q A v)
+
+/-- Linearity in the vector argument. -/
+theorem evalVec_add (p : DensePoly F) (A : Matrix F n n) (u v : Vector F n) :
+    evalVec p A (u + v) = evalVec p A u + evalVec p A v
+
+theorem evalVec_smul (p : DensePoly F) (A : Matrix F n n) (c : F) (v : Vector F n) :
+    evalVec p A (c • v) = c • evalVec p A v
+```
+
+`evalVec_eq_vecMul_krylov` is the one to get right first. Everything the
+certificate does is an application of it in one direction or the other:
+annihilation of a vector is a vanishing row combination of its Krylov
+matrix, and independence of the Krylov rows is nonexistence of a
+vanishing row combination. `p.coeffVec r` is the length-`r` vector of
+coefficients `p.coeff 0, …, p.coeff (r-1)`, which is
+`Vector.ofFn fun j => p.coeff j`; `Hex.DensePoly.coeff` is total and
+returns `0` past the stored size, so the `p.size ≤ r` hypothesis is only
+needed to know that no coefficient is dropped.
+
+`vecMinPoly_dvd` is proved by division with remainder by a *monic*
+divisor, which is the cheap case: write `p = s · vecMinPoly A v + r`
+using `Hex.DensePoly.divModMonic`, note `evalVec r A v = 0` by
+`evalVec_mul` and `evalVec_vecMinPoly`, then observe that
+`deg r < krylovDeg A v` together with independence of the first
+`krylovDeg A v` Krylov rows forces `r = 0`.
+
+## The certificate
+
+The certificate is the artifact this library exists to produce. It is
+checked by ring identities in `DensePoly F`, matrix-vector products, and
+equality tests. It performs **no division**, no row reduction, and no
+pivot search, so the whole verification path is free of the branching
+that the search does.
+
+```lean
+namespace Hex.Matrix
+
+/-- The witness for one vector: a claimed order polynomial, its degree,
+and a right inverse of its Krylov matrix. -/
+structure OrderCert (F : Type u) [Zero F] [DecidableEq F] (n : Nat) where
+  /-- The claimed order polynomial, monic of degree `deg`. -/
+  poly : DensePoly F
+  /-- The claimed degree, stored so `inv` has a fixed type index. -/
+  deg : Nat
+  /-- `inv` satisfies `krylovMat A v deg * inv = identity deg`, which is
+  the independence half of the witness. -/
+  inv : Matrix F n deg
+
+/-- One step of the running least-common-multiple fold. The fields are
+exactly the data that makes both halves of the `lcm` property checkable
+by ring identities: `common` with its two cofactors gives the
+common-multiple half, and the Bezout pair gives the least half. -/
+structure LcmStep (F : Type u) [Zero F] [DecidableEq F] where
+  /-- A common divisor of the running lcm and the incoming order
+  polynomial. The checker never needs it to be the gcd. -/
+  common : DensePoly F
+  /-- `running = common * left`. -/
+  left : DensePoly F
+  /-- `incoming = common * right`. -/
+  right : DensePoly F
+  /-- Bezout multiplier on the running lcm. -/
+  bezoutLeft : DensePoly F
+  /-- Bezout multiplier on the incoming order polynomial. -/
+  bezoutRight : DensePoly F
+  /-- The new running lcm, `left * incoming`. -/
+  result : DensePoly F
+
+/-- A complete minimality certificate for `minPoly A`. Coverage of the
+whole standard basis is enforced by the length index on `order`, not by
+a runtime test. -/
+structure MinPolyCert (F : Type u) [Zero F] [DecidableEq F] (n : Nat) where
+  /-- The claimed minimal polynomial. -/
+  poly : DensePoly F
+  /-- One witness per standard basis vector, in index order. -/
+  order : Vector (OrderCert F n) n
+  /-- One fold step per basis vector, in the same order. -/
+  steps : Vector (LcmStep F) n
+
+/-- The running value of the fold after `j` steps: `1` at `j = 0` and
+`(steps.get ⟨j-1⟩).result` after that. -/
+def MinPolyCert.running (c : MinPolyCert F n) (j : Nat) (hj : j ≤ n) : DensePoly F
+
+/-- The kernel-reducible checker. -/
+def MinPolyCert.check (A : Matrix F n n) (c : MinPolyCert F n) : Bool
+
+/-- The producer. -/
+def minPolyCert (A : Matrix F n n) : MinPolyCert F n
+
+end Hex.Matrix
+```
+
+`check A c` is the conjunction of the following, and nothing else.
+
+For each `i : Fin n`, writing `o = c.order.get i` and `v = basisVec n i`:
+
+1. `o.poly.size = o.deg + 1` and `o.poly.coeff o.deg = 1`, that is,
+   `o.poly` is monic of degree exactly `o.deg`.
+2. `evalVec o.poly A v = 0`.
+3. `krylovMat A v o.deg * o.inv = Matrix.identity o.deg`, checked
+   column by column as `o.deg` matrix-vector products.
+
+For each `j : Fin n`, writing `s = c.steps.get j`, `L = c.running j` and
+`m = (c.order.get j).poly`:
+
+4. `L = s.common * s.left`.
+5. `m = s.common * s.right`.
+6. `s.bezoutLeft * L + s.bezoutRight * m = s.common`.
+7. `s.result = s.left * m`.
+
+And finally:
+
+8. `c.poly = c.running n`.
+9. `c.poly.coeff (c.poly.size - 1) = 1`, that is, `c.poly` is monic.
+
+**What each check buys.** Checks 1 and 2 say `o.poly` is *an* annihilator
+of `v`, monic of degree `o.deg`; on their own they admit every multiple
+of the true order polynomial. Check 3 supplies the lower bound: if
+`c : Vector F o.deg` satisfies `vecMul c (krylovMat A v o.deg) = 0` then
+
+```text
+c = vecMul c (identity o.deg)
+  = vecMul c (krylovMat A v o.deg * o.inv)
+  = vecMul (vecMul c (krylovMat A v o.deg)) o.inv
+  = vecMul 0 o.inv = 0,
+```
+
+so the first `o.deg` Krylov rows are independent and, by
+`evalVec_eq_vecMul_krylov`, no nonzero polynomial of degree below
+`o.deg` annihilates `v`. Together with checks 1 and 2 this pins
+`o.poly = vecMinPoly A v` exactly: the true order polynomial divides
+`o.poly` by check 2, both are monic, and the degrees agree.
+
+The middle step of that display is associativity of `vecMul` against a
+matrix product; see "Prerequisite changes in other libraries" for where
+it currently lives.
+
+Checks 4 to 7 make each fold step a least common multiple, without the
+checker ever computing a gcd. `s.result` is a common multiple of `L` and
+`m` directly from 4 and 7: `s.result = s.left * m`, and
+`s.result = s.left * s.common * s.right = L * s.right`. For the least
+half, suppose `p = L a = m b`. Multiply the Bezout identity 6 by `p`:
+
+```text
+p * s.common = s.bezoutLeft * L * p + s.bezoutRight * m * p
+             = s.bezoutLeft * L * m * b + s.bezoutRight * m * L * a
+             = L * m * (s.bezoutLeft * b + s.bezoutRight * a)
+             = s.common * s.left * m * (s.bezoutLeft * b + s.bezoutRight * a)
+             = s.common * s.result * (s.bezoutLeft * b + s.bezoutRight * a),
+```
+
+and cancelling `s.common` gives `s.result ∣ p`. Cancellation is legal
+because `DensePoly F` over a field is an integral domain and
+`s.common ≠ 0`: check 5 writes the monic `m` as `s.common * s.right`, and
+a monic polynomial is nonzero, so neither factor is zero. **No separate
+nonzero test is needed and none is specified**; adding one would be
+harmless but would suggest the check is load-bearing when it is derived.
+
+Check 8 ties the chain to the claimed answer and check 9 makes it monic.
+Note that 9 is not implied by the rest: `s.left` is not constrained to be
+monic, so the fold could in principle produce a non-monic common multiple
+if the certificate is adversarial, and monicity is what makes the answer
+unique rather than unique up to a scalar.
+
+**Soundness.**
+
+```lean
+theorem MinPolyCert.check_sound (A : Matrix F n n) (c : MinPolyCert F n)
+    (h : c.check A = true) :
+    c.poly.Monic ∧ (∀ v, evalVec c.poly A v = 0) ∧
+      ∀ p, (∀ v, evalVec p A v = 0) → c.poly ∣ p
+
+theorem minPolyCert_check (A : Matrix F n n) : (minPolyCert A).check A = true
+
+theorem minPolyCert_poly (A : Matrix F n n) : (minPolyCert A).poly = minPoly A
+```
+
+The three conjuncts are monicity, annihilation, and minimality in its
+strongest form. They characterise `c.poly` completely: two monic
+polynomials that each divide the other are equal, so `check_sound` says
+`c.poly` *is* the minimal polynomial, not merely that it has the right
+properties.
+
+**The certificate excludes every proper lower-degree annihilator.** This
+is the property the SPEC is required to sanity-check, so the argument is
+written out in full rather than left to the theorem statement. Suppose
+`check A c = true`, `p ≠ 0`, `p(A) = 0` in the sense
+`∀ v, evalVec p A v = 0`, and `deg p < deg c.poly`.
+
+1. By checks 1 to 3, `(c.order.get i).poly = vecMinPoly A (basisVec n i)`
+   for every `i`, as shown above.
+2. `evalVec p A (basisVec n i) = 0` is an instance of the hypothesis, so
+   `vecMinPoly A (basisVec n i) ∣ p` by `vecMinPoly_dvd`, so
+   `(c.order.get i).poly ∣ p` for every `i`.
+3. By induction on `j`, using checks 4 to 7 at each step, any common
+   multiple of `c.running j` and the order polynomials at indices `j`
+   through `n − 1` is a multiple of `c.running n`. The base case is
+   `c.running 0 = 1`, which divides everything. So `c.poly ∣ p` by
+   check 8.
+4. `p ≠ 0` and `c.poly ∣ p` give `deg c.poly ≤ deg p`, contradicting the
+   assumption.
+
+Step 4 is the only place a degree fact about a product is used, and it is
+the reason `size_mul` appears in the prerequisite list. Steps 1 to 3 are
+divisibility statements throughout and need no degree arithmetic at all,
+which is why the *primary* minimality theorem is stated as divisibility
+and the degree corollary is derived from it rather than the other way
+round.
+
+**How the producer builds each witness.** The dependency coefficients
+come from `spanCoeffs` as in "The algorithm". The right inverse comes
+from a second row reduction, of the *transpose*:
+`rowReduce (transpose (krylovMat A v d))` reduces an `n × d` matrix of
+full column rank `d`, so its pivot columns are `0, …, d-1`, its reduced
+echelon form is the `d × d` identity stacked on zero rows, and its
+transform `T : Matrix F n n` therefore satisfies
+`T_top * transpose (krylovMat A v d) = identity d` where `T_top` is the
+first `d` rows of `T`. Transposing gives
+`krylovMat A v d * transpose T_top = identity d`, so
+`inv = transpose T_top`. This is one row reduction, `O(n d²)`, and it
+reuses `hex-row-reduce`'s existing `transform` field rather than asking
+for a matrix inverse the library does not have.
+
+Proving `minPolyCert_check` therefore rests on one fact about
+`hex-row-reduce` that the API does not currently state: the reduced
+echelon form of a matrix whose rank equals its column count is the
+identity stacked on zero rows. It follows from `pivotCols_sorted`, the
+rank bound `rank ≤ m`, and the normalised-pivot clauses of
+`IsRowReduced`, all of which are present. It is a genuine proof
+obligation and not a rewrite, and it is the largest single item in the
+certificate work.
+
+**The certificate is not asymptotically cheaper than the search, and
+that is not the claim.** Checking costs `O(n⁴)` field operations, the
+same order as computing the answer, for the reasons in "Complexity".
+What it buys is that the trusted path contains no division, no pivot
+selection, and no row reduction, so an error in the most delicate part
+of the implementation cannot produce an accepted wrong answer. The same
+trade is recorded for the interpolation check in
+[hex-char-poly §Verification and certificates](hex-char-poly.md).
+
+**A single-vector certificate would be smaller, and version one does not
+use it.** For every `A` over every field there is a vector `u` with
+`vecMinPoly A u = minPoly A`, by the maximal-order argument for modules
+over a principal ideal domain, so a certificate consisting of one
+`OrderCert` plus `evalVec c.poly A (basisVec n i) = 0` for each `i` would
+also be complete and would be `n` times smaller. It is not specified
+here because *producing* `u` is extra work with a failure branch that
+would have to be specified: a random `u` succeeds with probability at
+least `1 − deg m_A / |F|`, which is vacuous over `F_2`, and the
+deterministic construction combines vectors of coprime order and needs
+machinery this library otherwise does not. The basis sweep produces its
+witnesses as a byproduct of the computation it already performs. This is
+an open question below, not a closed door.
+
+## Degenerate dimensions and degenerate input
+
+Each of these is a case an implementation gets wrong silently, so each
+gets a conformance fixture.
+
+- **`n = 0`.** `minPoly A = 1`. The fold is empty and returns the
+  empty-family value `1`, the certificate has no `OrderCert` and no
+  `LcmStep`, and `check` reduces to `1 = 1` plus monicity of `1`.
+  Soundness holds vacuously in a useful way: `Vector F 0` has a single
+  inhabitant, the empty vector, which is zero, so every polynomial
+  annihilates and `1` is correctly the least one. FLINT agrees:
+  `fmpz_mat(0, 0).minpoly()` is `1`. Note that this is the one place the
+  empty-family value of `lcm` matters, and it is `1`, not `0`.
+- **`n = 1`, `A = [a]`.** `minPoly A = x − a`, from `d = 1` and
+  `c_0 = a`, with `inv = [[1]]` since `krylovMat A e_0 1` is the `1 × 1`
+  matrix `[1]`. The sub-case `a = 0` gives `x`, not `1`: the scalar zero
+  matrix is annihilated by `x` and not by any nonzero constant.
+- **`A = 0` at `n ≥ 1`.** `minPoly A = x`. Every basis vector has
+  `w_1 = 0`, which *is* in the span of `{w_0}`, so `d = 1` and
+  `c_0 = 0`. An implementation that treats "the next iterate is zero" as
+  a failure rather than as the ordinary dependency `w_1 = 0 · w_0`
+  answers `1` here and is wrong.
+- **`A = identity`.** `minPoly A = x − 1`, degree `1` against a
+  characteristic polynomial of degree `n`. This is the widest gap
+  between `m_A` and `χ_A` and the cheapest case to get right.
+- **The zero vector, as an argument to `vecMinPoly`.** `krylovDeg A 0 = 0`
+  and `vecMinPoly A 0 = 1`, since the zero vector is the empty
+  combination of the empty family and the rank of an all-zero Krylov
+  matrix is `0`. `krylovMat A 0 0` is the `0 × n` matrix and `inv` is the
+  `n × 0` matrix, and check 3 is a conjunction over an empty index set.
+  Standard basis vectors are never zero when `n ≥ 1`, so this case never
+  arises inside `minPoly`; it arises because `vecMinPoly` is public.
+- **A nilpotent Jordan block.** `minPoly = x^n = χ`, the case where the
+  order polynomial of a single vector already realises the answer and
+  where every Krylov iterate up to `A^{n-1} v` is needed.
+- **A derogatory matrix.** `diag(1, 1, 2)` has `m_A = (x−1)(x−2)` of
+  degree `2` and `χ_A` of degree `3`. This is the case where the answer
+  is a proper divisor of `χ_A` and the `χ_A`-based checks fail, and it
+  must appear in both the oracle list and the `#guard` list.
+- **Coefficient-field degeneracy.** None. `Lean.Grind.Field` carries
+  `zero_ne_one`, so the trivial ring is excluded by hypothesis.
+- **Small fields are ordinary here.** `ZMod64 2` has one nonzero
+  element, and nothing in the algorithm or the certificate cares: the
+  certificate is a set of ring identities, not an evaluation at distinct
+  points, so there is no "enough elements of `F`" hypothesis of the kind
+  [hex-poly-smith](hex-poly-smith.md) has to carry for its product
+  check. This is a direct consequence of choosing an identity-based
+  witness and is worth not giving up.
+
+## Totality and failure-free behaviour
+
+`vecMinPoly` and `minPoly` are total functions with no failure mode.
+
+- **One partial helper, with the classification.** `krylovCoeffs?`
+  returns `Option`, and its total form is admissible under design
+  principle 8 as `unreachable-by-pipeline-invariant`, discharged by
+  `krylovCoeffs_isSome`. The pipeline invariant is the prefix-collapse
+  argument under "The algorithm": the rank of the full Krylov matrix
+  equals the length of its independent prefix, so the vector being
+  solved for is in the span of the rows being solved against. The `none`
+  branch returns `1` and is dead code.
+- **No fuel.** `krylovVec` recurses structurally on `j` and `krylovMat`
+  on `r`; the fold over the basis is a `Vector.foldl` of length `n`.
+  `Hex.DensePoly.gcd` inside `lcm` takes its own fuel argument, sized by
+  `p.size + q.size + 1` as it already is at its definition, and this
+  library does not add a second fuel parameter.
+- **Division is confined to two places.** `rowReduce` divides by pivots,
+  which are nonzero by construction, and `monicize` divides by a leading
+  coefficient, which is nonzero on nonzero input and where
+  `Lean.Grind.Field.inv_zero` makes the zero case total anyway. The
+  certificate checker divides nowhere.
+- **No randomness.** Unlike a generic-vector or Wiedemann approach, the
+  basis sweep is deterministic, so this library takes no `Rand` state
+  and its answer does not depend on a seed. The contrast with
+  [hex-mv-gcd](hex-mv-gcd.md), which does carry `Rand`, is deliberate.
+
+## Complexity
+
+`A` is `n × n` over `F`. Write `D = deg m_A` and `d_i = deg` of the order
+polynomial of `e_i`, so `d_i ≤ n` and `D ≤ n`. Field operations, with the
+`Rat` operand-size question treated separately below.
+
+| operation | field multiplications | notes |
+|---|---|---|
+| `krylovVec A v j` | `j n²` | `j` matrix-vector products |
+| `krylovMat A v (n+1)` | `n³` | shares the iterates |
+| `krylovDeg` | `O(n³)` | one `rowReduce` of `(n+1) × n` |
+| `krylovCoeffs?` | `O(n³)` | one `rowReduce` of `d × n` inside `spanCoeffs` |
+| `vecMinPoly` | `O(n³)` | the three above |
+| the right inverse for one vector | `O(n d²)`, `O(n³)` | one `rowReduce` of the transpose |
+| `minPoly` | `O(n⁴)` | `n` order polynomials plus an `O(n³)` fold |
+| `evalVec` of a degree-`e` polynomial | `e n²` | Horner, no matrix product |
+| `MinPolyCert.check` | `O(n⁴)` | `Σ_i (d_i n² + d_i² n)` plus `O(n³)` polynomial work |
+
+The `O(n⁴)` for `minPoly` is `n` independent `O(n³)` computations, one
+per basis vector, and it is the same order as the Samuelson-Berkowitz
+characteristic polynomial. The lcm fold is `n` steps of gcd, exact
+division and multiplication on polynomials of degree at most `n`, each
+`O(n²)` by the classical algorithms `hex-poly` implements, so `O(n³)`
+overall and subdominant.
+
+**There is no proved bound on coefficient growth over `Rat`, and this
+SPEC does not claim one.** Row reduction over `Q` is the source: the
+entries of an intermediate echelon form are ratios of minors, and while
+Hadamard's inequality bounds each minor, `hex-row-reduce` performs no
+fraction-free reformulation and the running denominators are not
+controlled by the statement of its API.
+[hex-smith](hex-smith.md) reports the same situation for its pivot loop,
+and the honest comparison is that this library is in that category and
+not in [hex-char-poly](hex-char-poly.md)'s, which does have a proved
+bit bound because Berkowitz is division-free. The `ZMod64 p` route has
+none of the problem, since every intermediate is a machine word, and it
+is the route to use when the answer is wanted modulo a prime. The
+benchmark instrumentation below records peak coefficient size because a
+measured curve is the only evidence available here.
+
+**A fraction-free route exists and is not taken in version one.**
+Clearing denominators and running the whole computation over `Z` with a
+Bareiss-style elimination would give a bit bound, at the cost of a
+dependency on `hex-bareiss` and a reformulation of the span solve. It is
+listed under "What is deliberately not here".
+
+## What the Mathlib-free layer does not establish
+
+Two things, both of which look like they should be in the list of
+contracts and are not.
+
+**`deg m_A ≤ n`.** Each `d_i ≤ n`, but the degree of a least common
+multiple is not bounded by the maximum of the degrees, so the contracts
+above give only `deg m_A ≤ Σ_i d_i ≤ n²`. The true bound is exactly
+Cayley-Hamilton: `m_A ∣ χ_A` and `deg χ_A = n`. Proving it Mathlib-free
+would need either the Cayley-Hamilton theorem, which
+[hex-char-poly](hex-char-poly.md) places in its companion and states the
+four missing pieces for, or a direct argument building an `A`-invariant
+filtration from the Krylov spaces and summing the jump degrees. The
+second is a real Mathlib-free proof and is not small. So version one
+states the bound in the companion, and the Mathlib-free layer says so
+here rather than implying otherwise through a suggestive theorem name.
+
+**`m_A ∣ χ_A`.** Same reason, and it is the statement the previous item
+is derived from. It is a theorem of `hex-min-poly-mathlib`, which
+depends on `hex-char-poly-mathlib` for it.
+
+Neither absence affects the algorithm: no definition here needs a degree
+bound, and no proof here needs the characteristic polynomial. The
+`(n+1)`-row Krylov matrix is sized by the ambient dimension, not by
+`deg m_A`, and the fold is `n` steps regardless.
+
+**A conformance driver cannot route around this**, for the reason
+[hex-char-poly](hex-char-poly.md) records: `scripts/release/released.yml`
+gives each published repo one flat `pins` list covering library, bench
+and conformance sources alike, so a conformance-only import of
+`hex-char-poly` would become a real Lake pin of the released
+`hex-min-poly`. The `m_A ∣ χ_A` cross-check therefore lives in the
+companion and in the external oracle, and this SPEC puts it in both.
+
+## The Mathlib layer
+
+`hex-min-poly-mathlib` depends on hex-min-poly, hex-matrix-mathlib,
+hex-poly-mathlib, and hex-char-poly-mathlib. It does **not** depend on
+hex-row-reduce-mathlib: the Mathlib-free layer already proves everything
+the correspondence needs about the row reduction, so no rank or
+nullspace statement has to be transported. That is the same shape of
+observation [hex-char-poly](hex-char-poly.md) makes in the other
+direction about hex-determinant-mathlib, and it is worth checking rather
+than assuming when the library is written.
+
+```lean
+namespace HexMinPolyMathlib
+
+open HexMatrixMathlib HexPolyMathlib
+
+variable {F : Type*} [Field F] [DecidableEq F] {n : Nat}
+
+/-- Horner evaluation at a matrix applied to a vector is Mathlib's
+`aeval` followed by `mulVec`. -/
+theorem vectorEquiv_evalVec (p : Hex.DensePoly F) (A : Hex.Matrix F n n)
+    (v : Vector F n) :
+    vectorEquiv (Hex.Matrix.evalVec p A v) =
+      (Polynomial.aeval (matrixEquiv A) (equiv p)).mulVec (vectorEquiv v)
+
+/-- The executable minimal polynomial is Mathlib's. -/
+theorem equiv_minPoly (A : Hex.Matrix F n n) :
+    equiv (Hex.Matrix.minPoly A) = minpoly F (matrixEquiv A)
+
+/-- The order polynomial generates the annihilator of its vector, stated
+over `Polynomial F`. -/
+theorem vecMinPoly_dvd_iff (A : Hex.Matrix F n n) (v : Vector F n)
+    (p : Polynomial F) :
+    equiv (Hex.Matrix.vecMinPoly A v) ∣ p ↔
+      (Polynomial.aeval (matrixEquiv A) p).mulVec (vectorEquiv v) = 0
+
+/-- The minimal polynomial divides the characteristic polynomial. -/
+theorem minPoly_dvd_charPoly (A : Hex.Matrix F n n) :
+    Hex.Matrix.minPoly A ∣ Hex.Matrix.charPoly A
+
+/-- The degree bound the Mathlib-free layer does not have. -/
+theorem degree?_minPoly_le (A : Hex.Matrix F n n) :
+    (Hex.Matrix.minPoly A).degree?.getD 0 ≤ n
+
+/-- The executable `lcm` is Mathlib's, as an equality rather than an
+association, because both are monic-normalised. -/
+theorem equiv_lcm (p q : Hex.DensePoly F) :
+    equiv (Hex.DensePoly.lcm p q) = lcm (equiv p) (equiv q)
+
+end HexMinPolyMathlib
+```
+
+`equiv_minPoly` is proved from `minpoly.unique`, which asks for exactly
+the three properties the Mathlib-free layer supplies:
+
+- monic, from `Hex.Matrix.minPoly_monic` transported by
+  `HexPolyMathlib`'s monicity correspondence;
+- `Polynomial.aeval (matrixEquiv A) (equiv (minPoly A)) = 0`, from
+  `evalVec_minPoly` and `vectorEquiv_evalVec`, using that a matrix
+  killing every vector is zero (`Matrix.ext` against
+  `Matrix.mulVec_single`);
+- minimal degree, from `Hex.Matrix.minPoly_dvd` together with
+  `Polynomial.degree_le_of_dvd`, since a monic annihilator is nonzero.
+
+Note the direction: the Mathlib-free `minPoly_dvd` is the *strong* form
+of minimality, and Mathlib's `minpoly.unique` needs only the weak
+degree form, so the transport loses nothing and needs no extra lemma.
+The alternative route through `minpoly.dvd` in both directions would also
+work and would be shorter to write; `unique` is named here because it
+makes the three obligations explicit and each one maps to a named
+Mathlib-free theorem.
+
+`minPoly_dvd_charPoly` is `Matrix.minpoly_dvd_charpoly` transported
+along `equiv_minPoly` and `HexCharPolyMathlib.equiv_charPoly`, plus the
+divisibility transport in `HexPolyMathlib/Euclid.lean`.
+`degree?_minPoly_le` follows from it and
+`Matrix.charpoly_natDegree_eq_dim`, whose `[Nontrivial F]` hypothesis is
+free for a field.
+
+`equiv_lcm` is an equality rather than an `Associated` statement, and the
+contrast with `HexPolyMathlib.toPolynomial_gcd_associated` is the point:
+Mathlib's `lcm` on `Polynomial F` is normalised by the
+`NormalizedGCDMonoid` instance, `normalize` on a polynomial over a field
+is exactly monic (`Polynomial.Monic.normalize_eq_self`), and the
+prerequisite `Hex.DensePoly.lcm` is specified monic to match. The
+executable `gcd` is not normalised and cannot be given this treatment
+without changing its definition, which this SPEC does not propose.
+[hex-poly-smith](hex-poly-smith.md) requests the same
+`monicize_eq_normalize` lemma from the other side; it should be written
+once.
+
+## Prerequisite changes in other libraries
+
+Four items. Three of them are already requested by another SPEC, and are
+listed here with a pointer rather than a second argument, so that the
+implementer knows to write each one once. All four were confirmed absent
+by elaborating them against the current tree.
+
+**`Hex.DensePoly.monicize` and `Lean.Grind.CommRing (Hex.DensePoly R)`
+belong in hex-poly.** Both are specified, with definitions and with the
+warning that the second is a couple of hundred lines moving as a unit
+out of `HexResultant/ExactDiv.lean`, in
+[hex-poly-smith §Prerequisite changes in other libraries](hex-poly-smith.md).
+[hex-char-poly](hex-char-poly.md) records the same request for the
+`CommRing` instance from the Cayley-Hamilton side. This library needs
+`monicize` for the `lcm` below and the `CommRing` instance for the ring
+identities the certificate is checked by. Do not write second copies.
+
+**A generic `DivModLaws` / `GcdLaws` instance at
+`[Lean.Grind.Field F]`.** The existing instances are per-coefficient-type
+or Mathlib-facing, so a Mathlib-free library generic in `F` cannot
+discharge them; `example {F} [Lean.Grind.Field F] [DecidableEq F] :
+Hex.DensePoly.GcdLaws F := inferInstance` fails today. Specified in
+[hex-poly-smith](hex-poly-smith.md); the same instance serves here.
+
+**`Hex.DensePoly.lcm` belongs in hex-poly, and this SPEC is the first
+consumer.** There is no polynomial `lcm` anywhere in the tree;
+[hex-cyclotomic](hex-cyclotomic.md) records the gap and states that
+adding one is a decision for hex-poly rather than a hidden assumption at
+a consumer. The decision is taken here:
+
+```lean
+/-- The monic least common multiple of `p` and `q`, and `0` when either
+is zero. -/
+def lcm [Lean.Grind.Field F] [DecidableEq F] (p q : DensePoly F) : DensePoly F :=
+  if p.isZero || q.isZero then 0
+  else monicize (p * (divModMonic q (monicize (gcd p q)) (by ...)).1)
+
+/-- The least common multiple of a list, `1` on the empty list. -/
+def lcmList [Lean.Grind.Field F] [DecidableEq F] : List (DensePoly F) → DensePoly F
+```
+
+with contracts `lcm p 0 = lcm 0 q = 0`, `lcm 0 0 = 0`, `lcmList [] = 1`,
+`p ∣ lcm p q`, `q ∣ lcm p q`, `p ∣ r → q ∣ r → lcm p q ∣ r`, and
+`monicize (lcm p q) = lcm p q`. Four notes on the definition.
+
+- **The divisor is `monicize (gcd p q)`, not `gcd p q`.** The executable
+  gcd is the last Euclidean remainder and is only associated to the monic
+  gcd, so dividing by it directly leaves a scalar in the answer.
+  `divModMonic` also wants a monic divisor, and it is the cheaper
+  division routine because it skips the coefficient division at every
+  step, so monicising first pays for itself.
+- **The zero cases are decided by the guard, not by the arithmetic.**
+  `gcd 0 0 = 0` and `monicize 0 = 0`, so without the guard the definition
+  would divide by zero. The chosen values match Mathlib's
+  `GCDMonoid` convention (`lcm a 0 = 0`) and the conventions
+  [hex-poly-z-gcd](hex-poly-z-gcd.md) and [hex-mv-gcd](hex-mv-gcd.md)
+  already fix for their types.
+- **`lcmList [] = 1`, not `0`.** The empty family has every polynomial as
+  a common multiple, so the least one is the unit. This is the value
+  `minPoly` returns at `n = 0`, where it is also the right answer for
+  the empty matrix, and it is the opposite convention from
+  `gcdList [] = 0` for the same structural reason.
+- **The outer `monicize` is a no-op on this library's inputs.** When `p`
+  and `q` are monic, so is `monicize (gcd p q)`, so is the quotient, and
+  so is the product; the normalisation is there for the general contract
+  and for the equality with Mathlib's `lcm`, and it costs one pass over
+  the coefficients.
+
+**Two small hex-matrix and hex-poly lemmas.** Neither is a design
+question, and each is a few lines given what is already present.
+
+- `Hex.Matrix.vecMul_mul`, associativity of a row-vector product against
+  a matrix product, at any `Lean.Grind.CommRing`. The `Int`-only copy in
+  `HexLLL/Lattice.lean` is under `Hex.Internal` and is stated in the
+  transposed form the lattice argument wants. The generic form follows
+  from `Hex.Matrix.mul_assoc_vec` and
+  `Hex.Matrix.transpose_mul_of_mul_comm`, both already in
+  `HexMatrix/MatrixAlgebra.lean` at the right generality. The
+  independence half of the certificate is stated with it.
+- `Hex.DensePoly.size_mul`, the size of a product as an equality rather
+  than the `size_mul_le` inequality that `HexPoly/Operations.lean`
+  exports. The equality is already established inside the proof of
+  `Hex.DensePoly.leadingCoeff_mul` in
+  `HexPoly/Euclid/Reconstruction.lean` and is discarded; exporting it,
+  with the same no-cancellation hypothesis, is what lets "a nonzero
+  multiple has at least the degree of its divisor" be stated. Only the
+  degree corollary of minimality needs it; the divisibility form does
+  not.
+
+None of the four blocks starting work: the library can be written
+against the existing paths, with `monicize` and `lcm` defined privately
+under `Hex.Matrix` and moved down when hex-poly grows them. That is a
+worse end state than moving them first, and it is recorded as the
+fallback rather than the plan.
+
+## Conformance
+
+Per [SPEC/testing.md](../testing.md), extending the shared matrix driver
+rather than adding a new one: a new `minpoly` handler in
+`scripts/oracle/matrix_flint.py` against python-flint's
+`fmpz_mat.minpoly()` and `fmpq_mat.minpoly()`, an emit driver
+`conformance/HexMinPoly/EmitFixtures.lean` exposed as
+`lean_exe hexminpoly_emit_fixtures`, a snapshot at
+`conformance-fixtures/HexMinPoly/minpoly.jsonl`, and one tuple appended
+to `ORACLES` in `scripts/ci/run_oracles.sh`:
+
+```
+"HexMinPoly|hexminpoly_emit_fixtures|scripts/oracle/matrix_flint.py|conformance-fixtures/HexMinPoly/minpoly.jsonl"
+```
+
+The fixture record is the existing `matrix` kind emitted by
+`Hex.Conformance.Emit.emitMatrixFixture`, as the `hex-row-reduce`,
+`hex-determinant` and `hex-bareiss` streams already use, so no new
+fixture schema is needed. The result value is the ascending coefficient
+list. Input is an integer matrix read on the Lean side over `Rat`, which
+is what the existing `rank` and `rref` handlers already do.
+
+**`minpoly` is available in python-flint and was checked, not assumed.**
+`fmpz_mat`, `fmpq_mat` and `nmod_mat` all expose `minpoly` in
+python-flint 0.9.0, which is what the unpinned
+`pip install python-flint` in `.github/workflows/ci.yml` currently
+resolves to. `fmpz_mat(0, 0).minpoly()` is `1` and
+`fmpz_mat([[0,0],[0,0]]).minpoly()` is `x`, so the two degenerate cases
+this SPEC fixes agree with FLINT rather than merely being self-
+consistent. `coeffs()` is ascending, matching the record order.
+
+**The oracle checks two things per record, not one.** Equality of the
+minimal polynomial against FLINT, and `minpoly ∣ charpoly` computed
+inside the oracle from `charpoly()`. The second is the cross-check that
+the Mathlib-free layer cannot state, and it is free here because FLINT
+computes both. It is a necessary condition, not a certificate, and the
+oracle comment should say so.
+
+**Oracle cases that must be present.** Each is one `matrix` fixture and
+one `minpoly` result record, compared for exact equality.
+
+- `n = 0` and `n = 1`, checking `1` and `x − a`, including `a = 0`;
+- the zero matrix at `n = 3`, whose answer is `x`, and the identity at
+  `n = 3`, whose answer is `x − 1`. These are the two shortest answers
+  against a degree-`3` characteristic polynomial;
+- `A = [[0, 1], [0, 0]]`, whose answer is `x²`. This is the matrix that
+  breaks the accumulated-span optimisation described under "The
+  algorithm", and it is the single most important case in the list;
+- a nilpotent Jordan block of size `4`, answer `x⁴`, where `m_A = χ_A`;
+- `diag(1, 2, 3)`, answer `(x−1)(x−2)(x−3)`, whose coefficient list is
+  not palindromic, so a reversed emission fails here;
+- `diag(1, 1, 2)`, answer `(x−1)(x−2)` against a degree-`3`
+  characteristic polynomial. The first derogatory case, and the one the
+  `#guard` list below reuses;
+- a block-diagonal matrix whose two blocks have coprime minimal
+  polynomials, checking that the lcm is the product, and a second whose
+  two blocks have equal minimal polynomials, checking that it is not;
+- a companion matrix of a chosen degree-`6` polynomial, where
+  `m_A = χ_A` and every `d_i` is large, which is the worst case for the
+  polynomial arithmetic in the fold;
+- a matrix and its transpose, as two fixtures, checking they agree;
+- a matrix conjugated by an elementary transvection from
+  `HexMatrix/Elementary.lean`, whose inverse is the opposite
+  transvection, checking similarity invariance without a general matrix
+  inverse;
+- entries near `2⁶³` at `n = 4`, as an arbitrary-precision stress test
+  over `Rat`;
+- a `ZMod64 2` case, against `nmod_mat.minpoly()`, at a size where the
+  answer has repeated irreducible factors. Small fields are ordinary
+  input here and the fixture exists to keep them that way.
+
+**Lean-side `#guard` checks**, in
+`conformance/HexMinPoly/Conformance.lean`, for the things the JSONL
+schema cannot express. The schema has one `value` per `op`, so none of
+these is an oracle record.
+
+- `MinPolyCert.check A (minPolyCert A) = true` on every case above. This
+  is the certificate exercising itself, and it is the check that would
+  catch a producer whose witnesses do not actually verify.
+- The negative case for annihilation-plus-divisibility checking, at
+  `n = 2` with `A = 0`, where `χ_A = x²`. The candidate `x²` annihilates
+  `A` and divides `χ_A`, and is not the answer:
+  `evalVec #p[0, 0, 1] A (basisVec 2 i) = 0` for both `i`, and
+  `minPoly A = #p[0, 1]`, so `minPoly A ≠ #p[0, 0, 1]`. The divisibility
+  half is `x² ∣ x²`, which needs no polynomial to be computed and
+  therefore no import of `hex-char-poly`, for the pins reason under
+  "What the Mathlib-free layer does not establish". These make the
+  counterexample under "What a certificate has to establish" a thing the
+  build re-checks rather than a remark in prose.
+- The negative case for subfamily coverage, at `n = 2` with
+  `A = [[0, 1], [0, 0]]`: `vecMinPoly A (basisVec 2 0) = #p[0, 1]` and
+  `minPoly A = #p[0, 0, 1]`, so the single-basis-vector answer is a
+  proper divisor of the true one.
+- `krylovDeg A 0 = 0` and `vecMinPoly A 0 = 1`, the zero-vector case,
+  which no matrix fixture reaches.
+
+## Benchmarking
+
+Per [SPEC/benchmarking.md](../benchmarking.md), drivers at
+`bench/HexMinPoly/Bench.lean`, no Mathlib import.
+
+**Input families.**
+
+- `random-dense-minpoly`: uniform integer entries over a fixed bit
+  width, read over `Rat`, across the dimension ladder. A random matrix
+  is non-derogatory with high probability, so this family measures the
+  case `m_A = χ_A` and is the headline.
+- `modular-minpoly`: the same matrices over `ZMod64 p`. This is the
+  family where operand size is constant by construction, so the curve
+  isolates the operation count from the coefficient growth that
+  `random-dense-minpoly` mixes in. `hex-poly-smith` makes the same
+  split for the same reason and it is the right one here too.
+- `derogatory-minpoly`: block-diagonal matrices with many repeated
+  blocks, where `deg m_A` is a small constant while `n` grows. This is
+  the family where the basis sweep does the most redundant work, since
+  every basis vector produces a low-degree order polynomial and the
+  lcm stops changing early, and it is the family a spanning-set
+  algorithm would win on. Report `deg m_A` alongside wallclock so the
+  redundancy is visible rather than inferred.
+- `companion-minpoly`: companion matrices of chosen polynomials, where
+  `m_A = χ_A` has degree `n` and is known in closed form, so a wrong
+  answer is caught by the bench itself and not only by conformance.
+
+**Comparators.** FLINT `fmpz_mat_minpoly` and `fmpq_mat.minpoly()`
+through python-flint, `informational`. FLINT's minimal polynomial is not
+this algorithm: it works from a small number of vectors and repeats when
+the result fails to annihilate, so the comparison is across algorithms
+and no required threshold can be held. PARI `minpoly` through `cypari2`,
+also `informational`, for the same reason. Both are installed by the
+existing `pip install` step in `.github/workflows/ci.yml`, so neither
+adds a CI dependency.
+
+**No within-Lean comparator in version one.** The natural one is
+`hex-char-poly` followed by trial division of `χ_A`, which is not even
+an algorithm for the minimal polynomial without a factorisation, and
+which would put `hex-char-poly` in the bench sub-project and therefore
+in the released repo's pins.
+
+**Growth instrumentation.** Record peak intermediate coefficient bit size
+alongside wallclock on `random-dense-minpoly`. Unlike
+[hex-char-poly](hex-char-poly.md), there is no predicted ceiling to
+compare against, because no bit bound is proved; the measurement is the
+evidence, and a superlinear curve in `n` at fixed entry size is the
+signal that the fraction-free route under "Complexity" is worth taking.
+Record `deg m_A` and `Σ_i d_i` on every family, since the ratio of those
+two is exactly the redundancy the basis sweep pays for determinism.
+
+**Decision rules written down in advance.**
+
+1. The basis sweep remains the public default unless a replacement
+   arrives with a minimality witness of the same strength. A faster
+   algorithm that returns the polynomial without a checkable lower bound
+   does not replace it; it sits beside it under its own name, and the
+   certificate producer stays on the deterministic route.
+2. A randomised generic-vector fast path is decided on measured
+   wallclock **and** on whether its failure branch is specified. It is
+   admissible as an accelerator only in the shape hex-mv-gcd already
+   uses: propose a candidate, verify it with the existing checker, fall
+   back to the deterministic route when verification fails. In that
+   shape a bad proposal costs time and cannot change the answer. It is
+   not admissible as a probabilistic public answer.
+3. A spanning-set algorithm that reuses an accumulated span across basis
+   vectors is decided against the `derogatory-minpoly` family, and only
+   after the correctness question under "What is deliberately not here"
+   is settled. Wallclock is not the blocking question for that one.
+
+## What is deliberately not here
+
+**The accumulated-span optimisation, until its correctness is
+established.** The obvious way to make the algorithm `O(n³)` is to
+maintain a running echelon basis of the subspace already covered and, for
+each new basis vector, iterate only until the new iterate falls into that
+accumulated span. The relative order polynomial this produces is a
+divisor of the true order polynomial, and **the lcm of the relative
+order polynomials is not the minimal polynomial**. With
+`A = [[0, 1], [0, 0]]`: processing `e_0` gives the covered subspace
+`span(e_0)` and relative order `x`; processing `e_1` gives
+`A e_1 = e_0`, which is already covered, so the relative order is `x`
+again; the lcm is `x`, while `m_A = x²`. The absolute order of `e_1` is
+`x²`, which the full sweep finds. The correct `O(n³)` versions of this
+idea exist and carry an extra argument about which polynomial the
+accumulated subspace contributes; specifying one is a separate item, and
+adopting one without that argument is the bug this paragraph exists to
+prevent.
+
+**Randomised generic-vector selection as the default.** A single random
+`v` has `vecMinPoly A v = m_A` with probability at least
+`1 − deg m_A / |F|`, and checking the candidate is cheap. Over `F_2`
+the bound is vacuous, over `ZMod64 p` for a large `p` it is excellent,
+and in neither case is it a *default*, because the fallback is the
+deterministic sweep this SPEC specifies. See decision rule 2.
+
+**Wiedemann and block Wiedemann.** The black-box route recovers the
+minimal polynomial of a Krylov *scalar sequence* by Berlekamp-Massey
+rather than by row reduction, and it is the method of choice for large
+sparse input over a finite field. It needs a linear recurrence solver
+this project does not have, it is probabilistic, and its input model is a
+matrix-vector product rather than stored entries. It is a separate item
+in [future-work](../future-work.md), not a variant of this one.
+
+**Polynomial Smith form and invariant factors.** The largest invariant
+factor of `xI − A` is `m_A`, and the invariant-factor library planned in
+[future-work](../future-work.md) will produce it along with strictly
+more information: the full divisibility chain and the rational canonical
+form. This library does not depend on it, in either direction, for three
+reasons. The DAG one: `hex-poly-smith` sits on `hex-poly`,
+`hex-matrix` and `hex-determinant`, and routing the minimal polynomial
+through it would put every consumer of `m_A` above the whole polynomial
+matrix stack for one polynomial. The cost one: the polynomial Smith form
+of an `n × n` matrix over `F[x]` with degree-`1` entries is a
+substantially larger computation than `n` Krylov sweeps, and
+[hex-poly-smith](hex-poly-smith.md) reports no proved bound on its
+intermediate growth. The evidence one: future-work already records that
+the invariant-factor library's correspondence layer should compare
+against an independently specified `hex-min-poly`, which is only
+meaningful if the two computations do not share code.
+
+**A fraction-free route over `Z`.** Clearing denominators and running the
+span solves with a Bareiss-style elimination would give the bit bound
+"Complexity" says is missing. It needs `hex-bareiss` and a
+reformulation of `spanCoeffs`, and it is worth reconsidering if the
+growth instrumentation shows a problem.
+
+**The characteristic polynomial.** This library does not compute it, does
+not depend on it, and does not need it. `hex-char-poly` supplies the
+bound `deg m_A ≤ n` and the cross-check `m_A ∣ χ_A`, both in the
+companion, and neither is an algorithmic prerequisite. The dependency
+runs one way only: nothing in `hex-char-poly` or its companion refers to
+this library.
+
+**Eigenvalues and diagonalisability decisions.** Isolating the roots of
+`m_A` is `hex-real-roots` and `hex-roots`, and deciding
+diagonalisability needs a squarefreeness test and a splitting test, both
+of which are polynomial questions with existing homes. All of them
+consume a polynomial, so nothing here changes to serve them.
+
+## File organisation
+
+```
+HexMinPoly/
+  EvalVec.lean      -- evalVec, evalVec_mul, linearity in the vector
+  Krylov.lean       -- basisVec, krylovVec, krylovMat, evalVec_eq_vecMul_krylov
+  Order.lean        -- krylovDeg, krylovCoeffs?, krylovCoeffs_isSome, vecMinPoly
+  Lcm.lean          -- the running fold over the standard basis
+  MinPoly.lean      -- minPoly, monicity, annihilation, minPoly_dvd
+  Cert.lean         -- OrderCert, LcmStep, MinPolyCert, check, check_sound
+  Producer.lean     -- minPolyCert and minPolyCert_check
+  Small.lean        -- the closed forms at n = 0, 1 and for 0 and identity
+HexMinPoly.lean     -- umbrella
+HexMinPolyMathlib/
+  EvalVec.lean      -- vectorEquiv_evalVec
+  Basic.lean        -- equiv_minPoly via minpoly.unique
+  Order.lean        -- vecMinPoly_dvd_iff and equiv_lcm
+  CharPoly.lean     -- minPoly_dvd_charPoly and degree?_minPoly_le
+HexMinPolyMathlib.lean
+```
+
+`Cert.lean` and `Producer.lean` are separate because the checker is
+stated against arbitrary certificate data and the producer is stated
+against the row reduction, and the file that proves
+`minPolyCert_check` needs the `hex-row-reduce` pivot-structure argument
+that nothing else in the library uses.
+
+`libraries.yml` gains:
+
+```yaml
+  HexMinPoly:
+    deps: [HexMatrix, HexRowReduce, HexPoly]
+    mathlib: false
+    done_through: 0
+    status: draft
+  HexMinPolyMathlib:
+    deps: [HexMinPoly, HexMatrixMathlib, HexPolyMathlib, HexCharPolyMathlib]
+    mathlib: true
+    done_through: 0
+    status: draft
+```
+
+`HexBasic` arrives through `HexMatrix`, and `HexRowReduce` already
+depends on `HexMatrix`, so listing both is redundant in the graph and
+kept for readability, as the existing entries do. Nothing in
+`HexMatrix`, `HexRowReduce` or `HexPoly` reaches this library, so the
+addition is acyclic. On the Mathlib side, `HexCharPolyMathlib` depends on
+`HexCharPoly`, `HexMatrixMathlib`, `HexPolyMathlib` and
+`HexDeterminantMathlib`, none of which reach `HexMinPoly`, so that
+addition is acyclic too.
+
+## Open questions
+
+- **Whether the single-vector certificate should replace the basis-wide
+  one.** It is `n` times smaller and always exists. What it costs is a
+  producer with a specified failure branch, which is the reason version
+  one does not take it. Revisit once the deterministic order-combining
+  construction is written down, or once `random-dense-minpoly` shows the
+  certificate size actually matters.
+- **Whether `deg m_A ≤ n` should be proved Mathlib-free.** The route is
+  an `A`-invariant filtration built from the Krylov spaces of the basis
+  vectors, with the jump degrees summing to at most `n`. It would remove
+  the only reason a consumer of the bound needs the companion. It is not
+  made a prerequisite because the algorithm does not use the bound.
+- **Whether `vecMinPoly` should return its certificate.** Every consumer
+  of the vector version, in particular a future Krylov solver, wants the
+  independence witness for its own soundness argument, and the search
+  computes it anyway. The argument against is that `vecMinPoly` is the
+  simple public name and returning a record makes the common call site
+  noisier. The pattern `hex-poly-z-gcd` uses, a `gcdCert` producer with
+  a thin projection to `gcd`, applies directly.
+- **Whether the accumulated-span algorithm can be specified with a
+  correct lcm statement.** It is the difference between `O(n⁴)` and
+  `O(n³)` and the counterexample above rules out only the naive form.
+  Settle the mathematics before the engineering; the family
+  `derogatory-minpoly` exists to measure what it would be worth.
+- **Whether `evalVec` belongs in hex-matrix.** It is Horner evaluation of
+  a polynomial at a matrix applied to a vector, it needs nothing beyond
+  `mulVec` and `DensePoly.coeff`, and any Krylov consumer wants it.
+  Moving it would put a `hex-poly` dependency on `hex-matrix`, which is
+  the reason not to, and is the same trade
+  [hex-char-poly](hex-char-poly.md) declines for `evalMatrix`.

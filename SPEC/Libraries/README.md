@@ -15,6 +15,7 @@
 - **hex-determinant**: the Leibniz determinant and its cofactor/Cauchy-Binet/Plücker theory
 - **hex-bareiss**: the fraction-free Bareiss determinant algorithm
 - **hex-char-poly**: the characteristic polynomial by the division-free Samuelson-Berkowitz algorithm, over any commutative ring
+- **hex-min-poly**: the matrix minimal polynomial over a field, from Krylov sequences, with a certificate proving annihilation and minimality
 - **hex-hermite**: Hermite normal form over `Int`, unimodular transforms, integer lattice membership, integer kernel bases
 - **hex-smith**: Smith normal form over `Int`, invariant factors, and the structure of a finitely generated abelian group
 - **hex-poly-smith**: Smith normal form over `F[x]`, monic pivot normalization, unimodular transforms with inverses, and the structure of a finitely generated `F[x]`-module
@@ -69,6 +70,7 @@ Mathlib, and supplies correspondence proofs or Mathlib-facing APIs):
 - **hex-determinant-mathlib**: `det` agreement with `Matrix.det`, plus the Plücker / Desnanot-Jacobi assembly
 - **hex-bareiss-mathlib**: Bareiss determinant = `Matrix.det`, via the bordered-minor invariant
 - **hex-char-poly-mathlib**: agreement with `Matrix.charpoly`, Cayley-Hamilton, the trace and determinant coefficients, transpose and similarity invariance
+- **hex-min-poly-mathlib**: agreement with `minpoly`, the annihilator-generator statement for the vector order polynomial, divisibility into the characteristic polynomial, and the degree bound
 - **hex-hermite-mathlib**: row lattice = `Submodule.span ℤ`, integer rank = `Matrix.rank`, and an executable basis of the kernel submodule
 - **hex-smith-mathlib**: the executable output as `Module.Basis.SmithNormalForm`, the divisibility chain Mathlib's structure omits, and the quotient structure theorem
 - **hex-poly-smith-mathlib**: the executable polynomial matrix over `Polynomial F`, `Module.Basis.SmithNormalForm` from the executable output, monic as Mathlib's `normalize`, and the quotient structure theorem
@@ -107,6 +109,7 @@ Each library with its immediate dependencies:
 - **hex-determinant**: hex-matrix
 - **hex-bareiss**: hex-determinant, hex-matrix
 - **hex-char-poly**: hex-matrix, hex-poly
+- **hex-min-poly**: hex-matrix, hex-row-reduce, hex-poly
 - **hex-hermite**: hex-row-reduce, hex-arith, hex-determinant
 - **hex-smith**: hex-hermite
 - **hex-poly-smith**: hex-poly, hex-matrix, hex-determinant
@@ -167,6 +170,7 @@ Mathlib companion libraries (each also depends on Mathlib):
 - **hex-determinant-mathlib**: hex-determinant, hex-bareiss, hex-matrix-mathlib
 - **hex-bareiss-mathlib**: hex-determinant-mathlib
 - **hex-char-poly-mathlib**: hex-char-poly, hex-matrix-mathlib, hex-poly-mathlib, hex-determinant-mathlib
+- **hex-min-poly-mathlib**: hex-min-poly, hex-matrix-mathlib, hex-poly-mathlib, hex-char-poly-mathlib
 - **hex-hermite-mathlib**: hex-hermite, hex-row-reduce-mathlib, hex-determinant-mathlib
 - **hex-smith-mathlib**: hex-smith, hex-hermite-mathlib
 - **hex-poly-smith-mathlib**: hex-poly-smith, hex-poly-mathlib, hex-matrix-mathlib, hex-determinant-mathlib
@@ -234,6 +238,27 @@ hex-poly ────────────────┘                   �
 hex-matrix-mathlib ──────┐                   │
 hex-poly-mathlib ────────┼───────────────────┴── hex-char-poly-mathlib
 hex-determinant-mathlib ─┘
+```
+
+`hex-min-poly` is a sibling rather than a descendant. The Krylov
+algorithm computes no characteristic polynomial, so `hex-char-poly` is
+not among its computational dependencies; it reaches `hex-row-reduce`
+instead, for the rank and span solves the first Krylov dependency needs,
+and `hex-poly` for the Euclidean gcd its lcm is built from. The two
+facts that do go through the characteristic polynomial, `m_A ∣ χ_A` and
+`deg m_A ≤ n`, are theorems of the companion, which is why
+`hex-char-poly-mathlib` appears on the Mathlib side of the diagram and
+nowhere on the computational side. The reasoning is in
+[hex-min-poly §What the Mathlib-free layer does not establish](hex-min-poly.md).
+
+```text
+hex-matrix ──────────────┐
+hex-row-reduce ──────────┼── hex-min-poly ──┐
+hex-poly ────────────────┘                  │
+                                            │
+hex-matrix-mathlib ──────┐                  │
+hex-poly-mathlib ────────┼──────────────────┴── hex-min-poly-mathlib
+hex-char-poly-mathlib ───┘
 ```
 
 The polynomial normal form is a sibling rather than a descendant. It
@@ -472,6 +497,7 @@ for developments whose source-local move has not happened yet.
 - [hex-determinant-mathlib](https://github.com/leanprover/hex-determinant-mathlib/blob/main/SPEC/hex-determinant-mathlib.md) (released): `det` agreement with `Matrix.det`
 - [hex-bareiss-mathlib](https://github.com/leanprover/hex-bareiss-mathlib/blob/main/SPEC/hex-bareiss-mathlib.md) (released): Bareiss determinant correctness
 - [hex-char-poly.md](hex-char-poly.md): the characteristic polynomial by the division-free Samuelson-Berkowitz algorithm, with Cayley-Hamilton and the `Matrix.charpoly` correspondence (the Mathlib companion is specified in the same file)
+- [hex-min-poly.md](hex-min-poly.md): the matrix minimal polynomial from Krylov sequences, the vector order polynomial, the lcm over the standard basis, and a certificate carrying an independence witness for minimality (the Mathlib companion is specified in the same file)
 - [hex-hermite.md](hex-hermite.md): Hermite normal form over `Int`, unimodular transforms, integer lattice membership and kernel bases (the Mathlib companion is specified in the same file)
 - [hex-smith.md](hex-smith.md): Smith normal form over `Int`, invariant factors, and abelian group structure (the Mathlib companion is specified in the same file)
 - [hex-poly-smith.md](hex-poly-smith.md): Smith normal form over `F[x]`, monic pivot normalization, unimodular transforms with inverses, and `F[x]`-module structure (the Mathlib companion is specified in the same file)
