@@ -15,9 +15,10 @@ statement about this library, not a priority claim against other systems:
 FLINT already ships `fmpz_mat_charpoly_berkowitz`, and PARI's `charpoly`
 accepts an algorithm flag selecting a division-free method. What is new
 here is an executable characteristic polynomial inside the Hex graph with
-a proved correspondence to Mathlib's. Mathlib's `Matrix.charpoly` is
-`noncomputable`, since `Polynomial R` has no computable representation, so
-`(charmatrix M).det` cannot be run.
+a proved correspondence to Mathlib's. Mathlib declares `Matrix.charpoly`
+inside a `noncomputable section`, so it cannot be run: the generic
+`Polynomial R` API does not carry the decidable-equality and enumeration
+assumptions an executable representation needs.
 
 ## Why this library exists
 
@@ -36,8 +37,11 @@ question none of those do.
   the polynomial.
 - **Cayley-Hamilton as a computation.** `χ_A(A) = 0` turns `A^n` into a
   combination of `I, A, …, A^{n-1}`, which is how a consumer computes
-  high matrix powers, matrix inverses over a commutative ring, and
-  Krylov relations without a linear solve.
+  high matrix powers and Krylov relations without a linear solve. It also
+  gives the inverse of a matrix whose determinant is a unit, since then
+  the constant coefficient is a unit and the identity can be solved for
+  `A^{-1}`. It says nothing about a matrix whose determinant is not a
+  unit.
 - **Two coefficients that are already wanted.** The coefficient of
   `x^{n-1}` is `−tr A` and the constant coefficient is `(−1)^n det A`, so
   the polynomial carries the determinant and the trace and every
@@ -74,10 +78,17 @@ being spread through the recursion.
 whenever `(1 : R) ≠ 0`. For `n = 0` it is the constant `1`, which is the
 determinant of the empty matrix and matches Mathlib's value. Over the
 zero ring `1 = 0`, `DensePoly.ofCoeffs` trims the leading coefficient
-away along with everything else and `charPoly A = 0`. Every degree, size,
-and coefficient statement below therefore carries `(1 : R) ≠ 0` as a
-hypothesis, which is the Mathlib-free analogue of the `[Nontrivial R]`
-hypothesis on `Matrix.charpoly_natDegree_eq_dim`.
+away along with everything else and `charPoly A = 0`. The size and degree
+statements below therefore carry `(1 : R) ≠ 0` as a hypothesis, which is
+the Mathlib-free analogue of the `[Nontrivial R]` hypothesis on
+`Matrix.charpoly_natDegree_eq_dim`.
+
+The *coefficient* statements do not need it, and adding it would be a
+mistake worth naming, because trimming is easy to over-read.
+`Hex.DensePoly.coeff_ofCoeffs` says `(ofCoeffs c).coeff k = c.getD k 0`
+for every `k`: trimming trailing zeros changes the stored size, never a
+coefficient value. So `coeff_charPoly` and `coeff_charPoly_pred` hold
+over the zero ring too, where both sides are `0`.
 
 Monicity is the exception and needs no hypothesis, for the same reason
 `Matrix.charpoly_monic` needs none: `Hex.DensePoly.Monic p` unfolds to
@@ -137,19 +148,26 @@ Let `T` be the `(k+2) × (k+1)` lower-triangular Toeplitz matrix whose
 first column is
 
 ```text
-t₀ = 1,   t₁ = −a,   t_{j+2} = −(R ⬝ B^j ⬝ C)   for 0 ≤ j ≤ k − 1,
+t₀ = 1,   t₁ = −a,   t_{j+2} = −(R ⬝ B^j ⬝ C)   for 0 ≤ j < k,
 ```
 
-so `T[i][l] = t_{i-l}` when `l ≤ i` and `0` otherwise. Then the
-descending coefficient vector of `χ_{B_{k+1}}` is `T` applied to the
-descending coefficient vector of `χ_{B_k}`, and the recursion starts from
-the length-one vector `(1)` for `B_0`.
+written `j < k` rather than `j ≤ k − 1` because truncated `Nat`
+subtraction makes the latter admit `j = 0` at `k = 0`, where there is no
+`t₂`. The largest index is `j + 2 = k + 1`, the last position of a
+`Vector R (k + 2)`.
 
-Worked check at `n = 2`, with `A = [[a, b], [c, d]]`. At `k = 0` the
-vector is `(1)`. At `k = 1` the trailing block is `[d]`, the row and
-column are empty, and `T = [[1], [−d]]`, giving `(1, −d)`, that is
-`x − d`. At `k = 2` we have `a` in the corner, `R = (b)`, `C = (c)`,
-`B = [d]`, and `t₀ = 1`, `t₁ = −a`, `t₂ = −bc`, so
+With `T[i][l] = t_{i-l}` when `l ≤ i` and `0` otherwise, the descending
+coefficient vector of `χ_{B_{k+1}}` is `T` applied to the descending
+coefficient vector of `χ_{B_k}`, and the recursion starts from the
+length-one vector `(1)` for `B_0`.
+
+Worked check at `n = 2`, with `A = [[a, b], [c, d]]`. Steps are named by
+the step parameter `k`, which is the size of the *old* block `B_k`, so
+step `k` produces `χ_{B_{k+1}}`. The vector for `B_0` is `(1)`. Step
+`k = 0` has `B_1 = [d]` with empty row and column, so `T = [[1], [−d]]`
+and the vector for `B_1` is `(1, −d)`, that is `x − d`. Step `k = 1` has
+`B_2 = A`, with `a` in the corner, `R = (b)`, `C = (c)`, `B = [d]`, and
+`t₀ = 1`, `t₁ = −a`, `t₂ = −bc`, so
 
 ```text
 ⎡  1     0 ⎤              ⎡     1     ⎤
@@ -168,10 +186,14 @@ which is `(n − k, n − k)`. Materialize `B` once with
 `Hex.Matrix.Region.toMatrix` at that offset, read `R` and `C` with
 `Vector.ofFn`, then iterate `w₀ = C`, `w_{j+1} = B ⬝ w_j` using
 `Hex.Matrix.mulVec`, recording `t_{j+2} = −(R ⬝ w_j)` with
-`Hex.Matrix.dotProduct` at each step. Materializing `B` costs `O(k²)` per
-step and `O(n³)` overall, which is subdominant to the `O(n⁴)` products,
-so the simpler code that calls the existing `mulVec` is the right choice
-over reading through a `Region` descriptor inside the inner loop.
+`Vector.dotProduct` at each step. Note the namespace: `dotProduct` is
+declared in `HexMatrix/Basic.lean` but sits in the root `Vector`
+namespace, not under `Hex.Matrix`. Only `w_0 … w_{k-1}` are consumed, so
+the loop runs `k − 1` matrix-vector products and `k` dot products, not
+`k` of each. Materializing `B` costs `O(k²)` per step and `O(n³)`
+overall, which is subdominant to the `O(n⁴)` products, so the simpler
+code that calls the existing `mulVec` is the right choice over reading
+through a `Region` descriptor inside the inner loop.
 
 **Why the recursion is indexed by block size and not by row index.**
 Writing it as "for `i` from `0` to `n − 1`, take the trailing block from
@@ -226,7 +248,7 @@ def trace (A : Matrix R n n) : R
 
 /-- Horner evaluation of a dense polynomial at a square matrix, with the
 constant coefficient scaling the identity. -/
-def evalMatrix (p : DensePoly R) (A : Matrix R n n) : Matrix R n n
+noncomputable def evalMatrix (p : DensePoly R) (A : Matrix R n n) : Matrix R n n
 
 end Hex.Matrix
 ```
@@ -237,17 +259,23 @@ Three placement notes.
 the library that needs it first.** There is no `trace` anywhere in the
 current tree. It is a general accessor on a square matrix, it costs one
 fold over the diagonal, and a second consumer would want it immediately.
-This is the same situation [hex-smith](hex-smith.md) records for
-`diagMatrix`, and the two requests should be satisfied by one addition to
-hex-matrix rather than by each library growing its own copy. Until that
-addition lands, `trace` lives here.
+[hex-smith](hex-smith.md) makes a similar request for `diagMatrix`, and
+both are cases of hex-matrix lacking a small general accessor its
+consumers keep wanting. They are not the same addition: `diagMatrix`
+builds a rectangular matrix from a diagonal vector, and this library does
+not need it. Until `trace` moves, it lives here.
 
 **`evalMatrix` is not a Berkowitz helper.** The algorithm never
 evaluates a polynomial at a matrix. `evalMatrix` is here because it is
 the operation a consumer needs in order to *use* Cayley-Hamilton, it
 needs nothing beyond hex-matrix and hex-poly, and stating
 `evalMatrix (charPoly A) A = 0` without it would mean writing the Horner
-fold inline in a theorem statement.
+fold inline in a theorem statement. It is `noncomputable` because
+`Hex.Matrix.mul` is: `mul` is the kernel-facing specification with
+`mulImpl` swapped in by the proved `@[csimp]` lemma `mul_eq_mulImpl`, and
+anything defined through the `Mul` instance inherits that discipline
+under principle 11. Berkowitz itself uses only `mulVec`, so `charPoly` is
+unaffected.
 
 **`toeplitzMulVec` is written as the kernel-facing specification.** Its
 body folds over all `k + 1` columns with a `l ≤ i` test rather than over
@@ -266,7 +294,7 @@ only hex-matrix and hex-poly.
 ```lean
 theorem berkowitz_zero (A : Matrix R n n) : (berkowitz A)[0] = 1
 
-theorem coeff_charPoly (h1 : (1 : R) ≠ 0) (A : Matrix R n n) {k : Nat} (hk : k ≤ n) :
+theorem coeff_charPoly (A : Matrix R n n) {k : Nat} (hk : k ≤ n) :
     (charPoly A).coeff k = (berkowitz A)[n - k]
 
 theorem size_charPoly (h1 : (1 : R) ≠ 0) (A : Matrix R n n) :
@@ -277,7 +305,7 @@ theorem degree?_charPoly (h1 : (1 : R) ≠ 0) (A : Matrix R n n) :
 
 theorem charPoly_monic (A : Matrix R n n) : (charPoly A).Monic
 
-theorem coeff_charPoly_pred (h1 : (1 : R) ≠ 0) (A : Matrix R n n) (hn : 0 < n) :
+theorem coeff_charPoly_pred (A : Matrix R n n) (hn : 0 < n) :
     (charPoly A).coeff (n - 1) = -trace A
 
 theorem charPoly_empty (A : Matrix R 0 0) : charPoly A = 1
@@ -300,11 +328,14 @@ size statement in the nontrivial case and from `leadingCoeff_zero` over
 the zero ring, which is the case split its hypothesis-free form costs.
 
 `coeff_charPoly_pred` is the one coefficient identity with a short
-Mathlib-free proof. At index `1`, `toeplitzMulVec t v` is
-`t₀ * v₁ + t₁ * v₀ = v₁ − a`, so the entry accumulates `−a` once per
-step and the induction over `k` gives `−(a_{n-1} + ⋯ + a_0)`. Nothing
-else in the coefficient vector telescopes like this, which is why the
-determinant coefficient is not on this list.
+Mathlib-free proof. At index `1`, `toeplitzMulVec t v` sums `t_{1-l} * v_l`
+over `l ≤ min 1 k`. At `k = 0` the input has length `1`, so the only term
+is `t₁ * v₀ = −a`. At `k ≥ 1` there are two terms, `t₀ * v₁ + t₁ * v₀`,
+which is `v₁ − a`. Either way the entry accumulates `−a` once per step,
+and the induction over `k` gives `−(a_{n-1} + ⋯ + a_0)`. The `k = 0` split
+is not optional: `v₁` does not typecheck at `k = 0`. Nothing else in the
+coefficient vector telescopes like this, which is why the determinant
+coefficient is not on this list.
 
 ## What the Mathlib-free layer does not establish
 
@@ -318,7 +349,7 @@ suggestive theorem name.
 
 This is a deliberate trade and it is worth stating what the alternative
 would buy. Depending on hex-determinant would let the library state
-`eval (charPoly A) t = det (scalar t − A)` and the principal-minor
+`eval (charPoly A) t = det (t • identity n − A)` and the principal-minor
 characterisation of the coefficients Mathlib-free. It would cost a
 dependency that the algorithm itself never calls, since Berkowitz
 computes no determinant, and it would make the correctness proof a
@@ -331,8 +362,8 @@ than a concession.
 **A conformance driver cannot route around this.** The monorepo builds
 one `HexConformance` library over the whole tree, so a driver under
 `conformance/HexCharPoly/` could import `HexDeterminant` and check
-`eval (charPoly A) t` against `det (scalar t − A)` locally. In the split
-repos it could not: `scripts/release/released.yml` gives each published
+`eval (charPoly A) t` against `det (t • identity n − A)` locally. In the
+split repos it could not: `scripts/release/released.yml` gives each published
 repo one flat `pins` list covering its library, bench, and conformance
 sources alike, so a conformance-only import of hex-determinant becomes a
 real Lake pin of the released `hex-char-poly`. The determinant
@@ -393,11 +424,24 @@ theorem equiv_charPoly (A : Hex.Matrix R n n) :
 ```
 
 The proof is an induction on the trailing block size, transporting each
-Berkowitz step into `Polynomial R` and identifying it with the Laplace
-expansion of `det (charmatrix B_{k+1})` along the first row and column.
-`hex-determinant-mathlib` is where the determinant identities used in
-that step come from, which is why it is a dependency of the companion and
-not of the computational library. `Matrix.charmatrix_apply` and
+Berkowitz step into `Polynomial R`. The identity that has to be proved at
+each step is a bordered-determinant expansion, not a Laplace expansion,
+and saying "Laplace" would understate the work. Writing
+`χ_B = Σ_{i≤k} b_i x^{k-i}` with `b_0 = 1`, and `s_j = R ⬝ B^j ⬝ C`, the
+step needs
+
+```text
+χ_{[[a, R], [C, B]]} = (x − a) · χ_B − Σ_{j<k} s_j · Σ_{i ≤ k-1-j} b_i x^{k-1-j-i}
+```
+
+which is exactly the Toeplitz column applied to the coefficient vector of
+`χ_B`. The route to it is the Schur-complement form
+`(x − a) · det (xI − B) − R ⬝ adjugate (xI − B) ⬝ C`, together with the
+expansion of `adjugate (xI − B)` as `Σ_m x^{k-1-m} Σ_{i ≤ m} b_i B^{m-i}`,
+which is what produces the moments `s_j`. `hex-determinant-mathlib` is
+where the adjugate and block-determinant identities come from, which is
+why it is a dependency of the companion and not of the computational
+library. `Matrix.charmatrix_apply` and
 `Matrix.charmatrix_apply_eq` give the entries of the characteristic
 matrix, and `HexMatrixMathlib.det_eq` relates any executable determinant
 that appears on the way to `Matrix.det`. Note the namespace: that theorem
@@ -407,26 +451,27 @@ is declared in `HexDeterminantMathlib/CoreTransport.lean` but sits under
 From `equiv_charPoly`, transporting Mathlib's existing results:
 
 ```lean
-/-- Cayley-Hamilton for the executable objects. -/
-theorem evalMatrix_charPoly (A : Hex.Matrix R n n) :
-    Hex.Matrix.evalMatrix (Hex.Matrix.charPoly A) A = 0
-
 /-- Horner evaluation at a matrix is Mathlib's `aeval`. -/
 theorem equiv_evalMatrix (p : Hex.DensePoly R) (A : Hex.Matrix R n n) :
     matrixEquiv (Hex.Matrix.evalMatrix p A) =
       Polynomial.aeval (matrixEquiv A) (HexPolyMathlib.equiv p)
 
+/-- Cayley-Hamilton for the executable objects. -/
+theorem evalMatrix_charPoly (A : Hex.Matrix R n n) :
+    Hex.Matrix.evalMatrix (Hex.Matrix.charPoly A) A = 0
+
 /-- Evaluating `χ_A` is taking a determinant. -/
 theorem eval_charPoly (A : Hex.Matrix R n n) (t : R) :
-    (Hex.Matrix.charPoly A).eval t = (Matrix.scalar (Fin n) t - matrixEquiv A).det
+    (Hex.Matrix.charPoly A).eval t =
+      Hex.Matrix.det (t • Hex.Matrix.identity n - A)
 
 /-- The determinant coefficient, which the Mathlib-free layer does not have. -/
 theorem coeff_zero_charPoly (A : Hex.Matrix R n n) :
     (Hex.Matrix.charPoly A).coeff 0 = (-1) ^ n * Hex.Matrix.det A
 
-/-- The trace coefficient, agreeing with the Mathlib-free statement. -/
-theorem coeff_charPoly_pred (A : Hex.Matrix R n n) (hn : 0 < n) :
-    (Hex.Matrix.charPoly A).coeff (n - 1) = -Matrix.trace (matrixEquiv A)
+/-- The executable trace is Mathlib's. -/
+theorem matrixEquiv_trace (A : Hex.Matrix R n n) :
+    Hex.Matrix.trace A = Matrix.trace (matrixEquiv A)
 
 theorem charPoly_transpose (A : Hex.Matrix R n n) :
     Hex.Matrix.charPoly A.transpose = Hex.Matrix.charPoly A
@@ -439,23 +484,37 @@ end HexCharPolyMathlib
 
 `evalMatrix_charPoly` follows from `equiv_evalMatrix`, `equiv_charPoly`,
 and `Matrix.aeval_self_charpoly`, which Mathlib proves over an arbitrary
-commutative ring. `eval_charPoly` uses `Matrix.eval_charpoly`.
+commutative ring. The order above is the declaration order, since
+`evalMatrix_charPoly` uses `equiv_evalMatrix`. `eval_charPoly` uses
+`Matrix.eval_charpoly` and `HexMatrixMathlib.det_eq`.
 `coeff_zero_charPoly` uses `Matrix.det_eq_sign_charpoly_coeff` together
 with `HexMatrixMathlib.det_eq`, and the `n` in the exponent is
-`Fintype.card (Fin n)` rewritten. `coeff_charPoly_pred` uses
-`Matrix.trace_eq_neg_charpoly_coeff`, whose `[Nonempty n]` hypothesis is
-the `0 < n` above. `charPoly_transpose` and `charPoly_conj` are stated
-here rather than Mathlib-free because Berkowitz applied to `Aᵀ` is a
-different computation from Berkowitz applied to `A`, so there is no
-recursion-level argument for either.
+`Fintype.card (Fin n)` rewritten. `matrixEquiv_trace` closes the gap
+between the Mathlib-free `coeff_charPoly_pred`, which is about
+`Hex.Matrix.trace`, and `Matrix.trace_eq_neg_charpoly_coeff`, whose
+`[Nonempty n]` hypothesis is `0 < n`.
 
-**`eval_charPoly` is stated with Mathlib's `Matrix.scalar` on purpose.**
-An executable `t·I` would let the identity be stated entirely in terms of
-executable objects, which is what a caller wants. hex-matrix has no
-diagonal or scalar-matrix constructor today. That gap is already recorded
-in [hex-smith](hex-smith.md) under `diagMatrix`, and one constructor in
-hex-matrix serves both libraries. If it lands before this one is
-implemented, restate `eval_charPoly` against it.
+`charPoly_conj` is here because similarity invariance has no
+recursion-level argument: conjugating changes every trailing block.
+**`charPoly_transpose` is a different case and is listed here only for
+proof-engineering reasons.** It does have a recursion-level argument:
+transposing swaps `R` and `C` and replaces `B` by `Bᵀ`, and
+`Cᵀ ⬝ (Bᵀ)^j ⬝ Rᵀ = (R ⬝ B^j ⬝ C)ᵀ = R ⬝ B^j ⬝ C`, the last step because
+a `1 × 1` matrix is its own transpose. Every Berkowitz column therefore
+agrees by direct induction. It is
+placed in the companion because the induction needs
+`transpose_mulVec`-style transport lemmas that the Mathlib-free layer
+would otherwise have to grow, not because the statement is out of reach.
+Moving it down is a reasonable first amendment once the library exists.
+
+**`eval_charPoly` is stated with executable objects on both sides.**
+hex-matrix has no *named* scalar-matrix constructor, but it does not need
+one here: `HexMatrix/Basic.lean` declares `SMul S (Matrix R n m)`, so
+`t • Hex.Matrix.identity n` is the scalar matrix and the subtraction is
+the existing `Sub` instance. A named `scalar` would be a convenience, not
+a prerequisite. This is narrower than the `diagMatrix` request
+[hex-smith](hex-smith.md) makes, which is a general diagonal from a
+vector and is not needed by this library at all.
 
 ## The Cayley-Hamilton boundary
 
@@ -527,37 +586,55 @@ consequence of the algorithm rather than of a fallback.
 
 ## Complexity
 
-`A` is `n × n` over `R`, and `H` bounds the absolute value of every entry
-when `R = Int`. (`B` is the trailing block in "The algorithm" and is not
-reused here.)
+`A` is `n × n` over `R`. When `R = Int`, write `H` for the largest
+absolute value of an entry and `H₊ = max (1, H)`, so that `log H₊` is
+defined on the zero matrix. (`B` is the trailing block in "The algorithm"
+and is not reused here.)
 
 | operation | ring multiplications | ring additions | operand bit size when `R = Int` |
 |---|---|---|---|
-| `berkowitzColumn` at size `k+1` | `k` products of a `k × k` matrix with a vector plus `k` dot products, `k³ + k²` | same order | `O(n log (n H))` |
-| `berkowitz` | `n⁴/4 + O(n³)` | same order | `O(n log (n H))` |
+| `berkowitzColumn` at size `k+1` | `k − 1` products of a `k × k` matrix with a vector plus `k` dot products, `k³` | same order | `O(n (log n + log H₊))` |
+| `berkowitz` | `n⁴/4 + O(n³)` | same order | `O(n (log n + log H₊))` |
 | `charPoly` | as `berkowitz` | as `berkowitz` | as `berkowitz` |
 | `toeplitzMulVec` at size `k` | `O(k²)`, `O(n³)` summed over the recursion | same order | as `berkowitz` |
 | `evalMatrix` of a degree-`d` polynomial | `d` matrix products, `d · n³` | same order | grows with `d` |
-| `trace` | `0` | `n − 1` | `log(n H)` |
+| `trace` | `0` | `n`, for a fold seeded at `0` | `log (n H₊)` |
 
-The `n⁴/4` comes from `Σ_{k<n} k³`. The `O(n³)` Toeplitz products and the
-`O(n³)` of block materialization are both subdominant.
+The `n⁴/4` comes from `Σ_{k<n} k³ = n⁴/4 − n³/2 + O(n²)`. Only
+`w_0 … w_{k-1}` are consumed, so the loop runs `k − 1` matrix-vector
+products, not `k`. The `O(n³)` Toeplitz products and the `O(n³)` of block
+materialization are both subdominant.
 
-**Operand growth is bounded, and the bound is elementary.** Writing `B`
-again for the trailing block, entries of `B^j C` are at most `k^j H^{j+1}`
-in absolute value, so `|R ⬝ B^j ⬝ C| ≤ k^{j+1} H^{j+2} ≤ n^n H^{n+1}`,
-giving `O(n log (n H))` bits. Every partial product `v` in the recursion
-is itself the coefficient vector of the characteristic polynomial of a
-trailing block, so it obeys the output bound
-`|c_{n-k}| ≤ binom(n, k) · k^{k/2} H^k` from Hadamard's inequality
-applied to the `k × k` principal minors, which is also `O(n log (n H))`
-bits. No intermediate exceeds the output size by more than a constant
-factor. This is the concrete respect in which Berkowitz is better behaved
-than a fraction-free elimination, whose intermediates are minors of
-growing size, and it is why [hex-smith](hex-smith.md)'s warning about
-unproven entry growth does not apply here. The benchmark instrumentation
-below records the peak intermediate size anyway, because a bound in a
-SPEC and a measured curve are different kinds of evidence.
+**Operand growth has a proved worst-case bound.** Writing `B` again for
+the trailing block, entries of `B^j C` are at most `m^j H^{j+1}` in
+absolute value for an `m × m` block, so
+`|R ⬝ B^j ⬝ C| ≤ m^{j+1} H^{j+2} ≤ n^n H₊^{n+1}`, giving
+`O(n (log n + log H₊))` bits. Every partial product `v` in the recursion
+is itself the coefficient vector of the characteristic polynomial of an
+`m × m` trailing block, so its entry of order `r` obeys
+`|c_{m-r}| ≤ binom(m, r) · r^{r/2} H^r` from Hadamard's inequality applied
+to the `r × r` principal minors, which is the same
+`O(n (log n + log H₊))` bound. So the whole computation stays inside one
+asymptotic bit bound, which is what [hex-smith](hex-smith.md) reports it
+does *not* have for its pivot loop.
+
+**What that bound does not say.** It does not say intermediates track the
+*actual* output size, and they do not, because of cancellation. Take
+
+```text
+A = ⎡  H   H ⎤ ,   A² = 0,   χ_A = x².
+    ⎣ −H  −H ⎦
+```
+
+Here `t₂ = −(R ⬝ C) = H²`, while every output coefficient is `0` or `1`.
+The ratio of peak intermediate to output size is unbounded in `H`. Nor is
+this an advantage over fraction-free elimination: Bareiss intermediates
+are minors and obey the same Hadamard bit bound. The honest comparison is
+that the two have the same proved worst-case bound, and that Berkowitz
+has one at all where the Smith pivot loop does not. The benchmark
+instrumentation below records the peak intermediate size because a bound
+in a SPEC and a measured curve are different kinds of evidence, not
+because the two are predicted to coincide.
 
 ## Conformance
 
@@ -582,9 +659,10 @@ needed. The result value is the coefficient list.
 not normalise it.** FLINT's `fmpz_poly` coefficient list is ascending, so
 ascending is also the cheapest thing for the oracle to compare against.
 If the emit driver were allowed to send whichever order was convenient, a
-reversed implementation would pass on every palindromic case and on every
-symmetric-spectrum matrix. Fixing the order in the record and including
-an asymmetric case below is what makes a reversal a failure.
+reversed implementation would pass on every case whose coefficient vector
+is palindromic, which is exactly the self-reciprocal characteristic
+polynomials. Fixing the order in the record and including cases that are
+not self-reciprocal is what makes a reversal a failure.
 
 **Oracle cases that must be present.** Each is one `matrix` fixture and
 one `charpoly` result record, compared against FLINT for exact equality.
@@ -611,9 +689,10 @@ one `charpoly` result record, compared against FLINT for exact equality.
   where the minimal polynomial is a proper divisor of `χ_A`;
 - dense random input at `n = 6, 7, 8` with mixed signs, which is where
   a sign error in `t₁` versus `t_{j+2}` shows up;
-- input with entries near `2⁶³` at `n = 5`, checking that intermediates
-  are arbitrary-precision throughout and that the growth bound above is
-  not violated on a case chosen to be adversarial for it.
+- input with entries near `2⁶³` at `n = 5`, as an arbitrary-precision
+  stress test. This checks that no step silently truncates to a machine
+  word. It does not check the growth bound under "Complexity", which is
+  about intermediates and needs the bench instrumentation to observe.
 
 **Lean-side `#guard` checks**, in `conformance/HexCharPoly/Conformance.lean`,
 for the two things the JSONL schema cannot express. The schema has one
@@ -626,10 +705,11 @@ for the two things the JSONL schema cannot express. The schema has one
   otherwise be the only check against.
 - The negative case for annihilation-only checking, at `n = 2` with
   `A = 0`: both `evalMatrix #p[0, -1, 1] A = 0` and
-  `charPoly A ≠ #p[0, -1, 1]`, where `#p[0, -1, 1]` is `x² − x`. The two
-  `#guard`s together are the executable statement of the counterexample
-  under "Verification and certificates", and they are what stops a later
-  implementation from being "verified" by annihilation alone.
+  `charPoly A ≠ #p[0, -1, 1]`, where `#p[0, -1, 1]` is `x² − x`. These two
+  `#guard`s are executable documentation of the counterexample under
+  "Verification and certificates". They cannot stop anyone from adopting
+  an inadequate verification method, but they do make the counterexample
+  a thing the build re-checks rather than a remark in prose.
 
 ## Benchmarking
 
@@ -642,25 +722,35 @@ Per [SPEC/benchmarking.md](../benchmarking.md), drivers at
   square, across the dimension ladder. The headline family.
 - `small-entry-charpoly`: tridiagonal matrices with entries in
   `{-1, 0, 1, 2}`, following the shape
-  `bench/HexDeterminant/Bench.lean` already uses. Big-integer arithmetic
-  stays out of the measurement, so the curve tests the `n⁴` operation
-  count rather than operand growth.
+  `bench/HexDeterminant/Bench.lean` already uses. This keeps operand
+  growth mild, so the curve is dominated by the `n⁴` operation count. It
+  does not eliminate big-integer arithmetic: the characteristic
+  coefficients of a fixed-small-entry tridiagonal matrix still reach
+  `Θ(n)` bits, so the family isolates the operation count only up to that
+  residual growth. Isolating it completely would need a fixed-word
+  modular base ring, which would put hex-mod-arith in the bench
+  sub-project and therefore in the released repo's pins.
 - `structured-charpoly`: companion matrices and Jordan blocks, whose
   characteristic polynomials are known in closed form, so a wrong answer
   is caught by the bench itself rather than only by conformance.
 
 **Comparators.** FLINT `fmpz_mat_charpoly` through python-flint,
-`informational`: FLINT's default entry point dispatches to a modular
-algorithm, so the ratio compares different algorithms and does not hold a
-required threshold. PARI `charpoly` through `cypari2`, also
-`informational`. PARI accepts an algorithm flag that selects a
-division-free method, and if the flag available in the PARI version
-pinned by `.github/workflows/ci.yml` does select Berkowitz then this is
-the one comparator measuring the same algorithm. The benchmarking phase
-must confirm the flag against that pinned version before recording the
-ratio as a same-algorithm comparison, and must record it as
-cross-algorithm otherwise. Both comparators are already installed by the
-existing `pip install` step in `ci.yml`, so neither adds a CI dependency.
+`informational`. Its default entry point chooses between Berkowitz and a
+modular algorithm according to the input, so which algorithm the ratio
+compares against is not fixed across the ladder and no required threshold
+can be held. Do not describe it as "the modular algorithm": that is wrong
+at small sizes. A same-algorithm comparison would need FLINT's explicit
+`fmpz_mat_charpoly_berkowitz` entry point, which python-flint does not
+expose, so it is out of scope rather than merely unmeasured.
+
+PARI `charpoly` through `cypari2`, also `informational`. PARI's `charpoly`
+takes an algorithm flag, and flag `3` is documented as Berkowitz, which
+makes this the one available same-algorithm comparator. Confirm the flag
+against the PARI version pinned by `.github/workflows/ci.yml` before
+recording the ratio as same-algorithm, since flag numbering is a
+documented interface that can still move between releases. Both
+comparators are already installed by the existing `pip install` step in
+`ci.yml`, so neither adds a CI dependency.
 
 **No within-Lean comparator in version one.** The natural one is `n`
 Bareiss determinants plus interpolation, and it would need hex-bareiss in
@@ -669,11 +759,12 @@ same reason a conformance import would. It belongs to whichever library
 already depends on hex-bareiss.
 
 **Growth instrumentation.** Record peak intermediate coefficient bit size
-alongside wallclock on `random-dense-charpoly`. The bound under
-"Complexity" predicts that this tracks the output coefficient size to
-within a constant factor. A measured curve that does not is either a
-refutation of the bound or an implementation that is not the algorithm
-specified here, and both need finding.
+alongside wallclock on `random-dense-charpoly`. What the bound under
+"Complexity" predicts is a ceiling of `O(n (log n + log H₊))` bits, not
+agreement with the output size. Peak exceeding output is the expected
+consequence of cancellation and is not a finding. Peak exceeding the
+ceiling is a finding, and means either the bound is wrong or the
+implementation is not the algorithm specified here.
 
 **Decision rules written down in advance.**
 
@@ -683,11 +774,12 @@ specified here, and both need finding.
    story that needs no invertibility side condition. A faster partial
    function does not replace a total one, it sits beside it under its own
    name with its own precondition in the signature.
-2. A multi-modular implementation is considered only after the growth
-   instrumentation shows operand size rather than operation count
-   dominating on `random-dense-charpoly`. If the `O(n log (n H))` bound
-   holds in measurement, the `n⁴` operation count is the thing to attack
-   and multi-modular is the wrong lever.
+2. A multi-modular implementation is decided on measured wallclock
+   against the Berkowitz default across the dimension and entry-bit-size
+   ladders, not on whether the bit-size bound holds. The bound holding
+   says nothing about which of operand size and operation count dominates
+   the running time, so it is not evidence either way. The growth
+   instrumentation is input to the diagnosis, not the decision rule.
 
 ## What is deliberately not here
 
@@ -748,7 +840,7 @@ HexCharPoly/
 HexCharPoly.lean    -- umbrella
 HexCharPolyMathlib/
   Basic.lean        -- equiv_charPoly, the correspondence with Matrix.charpoly
-  Coeff.lean        -- determinant, trace, degree, monicity transported
+  Coeff.lean        -- matrixEquiv_trace, determinant, degree, monicity transported
   CayleyHamilton.lean -- equiv_evalMatrix and evalMatrix_charPoly
   Invariance.lean   -- charPoly_transpose and charPoly_conj
 HexCharPolyMathlib.lean
@@ -770,22 +862,23 @@ HexCharPolyMathlib.lean
 ```
 
 `HexBasic` arrives through `HexMatrix`. The computational dependencies
-are two roots of the algebraic graph and nothing else, and neither
-`HexMatrix` nor `HexPoly` depends on anything that depends on this
-library, so the addition is acyclic. On the Mathlib side,
+are `HexMatrix` and `HexPoly` and nothing else, which is two of the three
+roots the DAG section of [Libraries/README.md](README.md) names, up to
+`HexMatrix` sitting on the `HexBasic` utility root. Neither depends on
+anything that depends on this library, so the addition is acyclic. On the Mathlib side,
 `HexDeterminantMathlib` depends on `HexDeterminant`, `HexBareiss`, and
 `HexMatrixMathlib`, none of which reach `HexCharPoly`, so that addition
 is acyclic too.
 
 ## Open questions
 
-- **Whether `trace` and a scalar-matrix constructor should land in
-  hex-matrix first.** Both are wanted here, `diagMatrix` is wanted by
-  [hex-smith](hex-smith.md), and neither exists. One addition to
-  hex-matrix satisfies all three requests and removes the temporary
-  `Trace.lean` from the file list above. It is not made a prerequisite,
-  because the library is implementable without it and the addition is
-  independently scheduled.
+- **Whether `trace` should land in hex-matrix first.** It is wanted here,
+  it is a general accessor, and it does not exist anywhere in the tree.
+  Moving it removes `Trace.lean` from the file list above. It is not made
+  a prerequisite, because the library is implementable without it and the
+  addition is independently scheduled. A named scalar-matrix constructor
+  is *not* part of this question: `t • Hex.Matrix.identity n` already
+  works through the existing `SMul` instance.
 - **Whether `Lean.Grind.CommRing (Hex.DensePoly R)` should be assembled
   in hex-poly now.** It is not needed by this library, it is needed by
   any Mathlib-free treatment of matrices over polynomials, and the
@@ -800,6 +893,12 @@ is acyclic too.
   it private and expose only `charPoly`, at the cost of stating every
   recursion lemma about a private definition. It is exported here with a
   docstring that names the order in its first line.
+- **Whether `charPoly_transpose` should move down into the Mathlib-free
+  library.** The recursion-level argument for it is written out under "The
+  Mathlib layer" and it is short. What it costs is the transport lemmas
+  relating `mulVec` and `dotProduct` across a transpose, which the
+  Mathlib-free layer would have to grow. Decide it once those lemmas are
+  either present or clearly cheap, not before.
 - **Whether a certified dispatch to an external implementation is worth
   building.** The interpolation argument under "Verification and
   certificates" is a complete check, so the shape `hex-lll`'s `certCheck`
