@@ -186,9 +186,8 @@ requiring it means something.
 ```lean
 namespace Hex.Padic
 
-/-- `p` is prime. Every theorem below that mentions `ℤ_p` or `ℚ_p`
-takes this instance, and so does every function that creates an
-approximation out of nothing. -/
+/-- `p` is prime. Both approximation types take this instance as a
+parameter, so neither type can even be written at a composite `p`. -/
 class PrimeBase (p : Nat) : Prop where
   prime : Hex.Nat.Prime p
 
@@ -218,38 +217,42 @@ hex-mod-arith would add an edge to this library's dependency list for
 the sake of one `Prop` class, and hex-mod-arith's class is about a
 word-sized modulus.
 
-**Where the instance is required, and where it is not.** Arithmetic on
-an approximation that already exists needs no instance: the range
-invariant on the value supplies the positivity the operations need, as
-"The capped-absolute type" explains. What needs the instance is
+**The instance is a parameter of both types**, following
+`ZMod64 (p : Nat) [ZMod64.Bounds p]` in hex-mod-arith:
 
-- every function producing a first approximation from an exact value
-  (`ZpApprox.ofInt`, `QpApprox.ofRat`, `QpApprox.norm`), since at
-  `p = 0` there is no value to produce and at `p = 1` the normal form
-  does not exist,
-- every function whose *meaning* is about the valuation
-  (`valuation?`, `inv?`, `divAt?`, and all of `QpApprox`), and
-- every theorem relating an approximation to `ℤ_p` or `ℚ_p`.
+```lean
+structure ZpApprox (p N : Nat) [PrimeBase p] where ...
+inductive QpApprox (p : Nat) [PrimeBase p] where ...
+```
 
-So a caller cannot reach the interesting part of the API without the
-witness, which is the strongest enforcement available. The residual
-hole is that the structure constructor can be applied directly at a
-composite `p`; what a caller gets by doing that is arithmetic in
-`ZMod (p^N)`, which is correct as such, and no theorem below applies to
-it. Design principle 10's rule, that a datatype is used through its
-API, is what closes the gap in practice.
+So the enforcement is at the type former rather than at a convention
+about which entry points to use. `ZpApprox 6 3` is not a type, the raw
+structure constructor is unreachable at a composite `p` along with
+everything else, and no operation or theorem below needs to carry the
+instance separately, since a value of either type brings it along.
+Every code block below therefore elaborates under a `variable
+[PrimeBase p]`, and the instance brackets are not repeated on each
+declaration.
 
-**Why the witness is not a type index.** Indexing `ZpApprox` by a
-bundled prime-with-certificate instead of by a `Nat` would make the
-type uninhabited at a composite `p` and would look safer. It is not
-available: `CheckedPrimeCert p` contains a `PrimeCert` as data, two
-certificates for the same prime are different data, and so the two
-indexed types would be distinct for one prime. A caller holding values
-built from two independently produced certificates could not add them.
-Certificate non-uniqueness is the decisive argument and is worth
-recording, because indexing on the witness is the first design a reader
-reaches for. A `Prop` class has no such problem, since proof
-irrelevance makes any two instances interchangeable.
+**A `Prop` class can be a type parameter and a bundled certificate
+cannot, which is the reason for the split.** Indexing on a
+prime-with-certificate record is the design a reader reaches for first,
+and it does not work: `CheckedPrimeCert p` contains a `PrimeCert` as
+data, two certificates for the same prime are different data, and so
+two indexed types would be distinct for one prime. A caller holding
+values built from two independently produced certificates could not add
+them. `PrimeBase` has no such problem, since it is a `Prop` and proof
+irrelevance makes any two instances of it interchangeable. The
+certificate is what *produces* the instance and is not what the type
+is indexed by.
+
+**The positivity that the operations need comes from the same place.**
+`0 < p ^ N`, which every canonical residue and every `Zero` or `One`
+needs, follows from `PrimeBase.two_le`. Without the type parameter the
+operations with an argument could recover it from that argument's range
+invariant, while `Zero`, `One`, and `Pow` (through its `k = 0` base
+case) could not, since at `p = 0` and `N > 0` the type would be empty
+and they would have nothing to return.
 
 **What breaks at a composite `p`, concretely.** Both failures are in
 the arithmetic and not only in the proofs. At `p = 6`:
@@ -273,6 +276,10 @@ structure PowTable (p : Nat) where
   sq : Array Nat
   sq_eq : ∀ i, (h : i < sq.size) → sq[i] = p ^ (2 ^ i)
 
+/-- Assembles `p ^ k` from the cached squares indexed by the binary
+expansion of `k`, and computes the factors the table does not reach.
+There is no coverage invariant on `sq`, so a short or empty table gives
+correct answers and no speedup. -/
 def PowTable.powAt (t : PowTable p) (k : Nat) : Nat
 theorem PowTable.powAt_eq (t : PowTable p) (k : Nat) : t.powAt k = p ^ k
 ```
@@ -303,47 +310,39 @@ namespace Hex
 
 /-- An element of `ℤ_p` known modulo `p ^ N`: the ball of radius
 `p^(-N)` around `residue`. Canonical by construction. -/
-structure ZpApprox (p N : Nat) where
+structure ZpApprox (p N : Nat) [PrimeBase p] where
   residue : Nat
   lt : residue < p ^ N
 
 namespace ZpApprox
 
-variable {p N M K : Nat}
+variable {p N M K : Nat} [PrimeBase p] {a b : ZpApprox p N} {x y z : Int}
 
 /-- The integers this approximation does not exclude. -/
 instance : Membership Int (ZpApprox p N) where
   mem a x := ((p : Int) ^ N) ∣ (x - a.residue)
 
 /-- The canonical approximation of an integer. -/
-def ofInt [PrimeBase p] (x : Int) : ZpApprox p N
+def ofInt (x : Int) : ZpApprox p N
 
 instance : DecidableEq (ZpApprox p N)
 
-theorem mem_ofInt [PrimeBase p] (x : Int) : x ∈ (ofInt x : ZpApprox p N)
-theorem mem_iff [PrimeBase p] (a : ZpApprox p N) (x : Int) :
-    x ∈ a ↔ a = ofInt x
-theorem ext {a b : ZpApprox p N} (h : a.residue = b.residue) : a = b
+theorem mem_ofInt (x : Int) : x ∈ (ofInt x : ZpApprox p N)
+theorem mem_iff (a : ZpApprox p N) (x : Int) : x ∈ a ↔ a = ofInt x
+theorem ext (h : a.residue = b.residue) : a = b
 ```
 
 **The range invariant is a field rather than a separate predicate.**
 `lt` is a `Prop`, so it is erased at runtime and costs nothing, and it
-buys three things a predicate does not. Structural equality is equality
-of balls with no canonicality side condition, which is what `mem_iff`
-says. No caller can build a non-canonical value, so no operation has to
-defend against one. And `lt` itself proves `0 < p ^ N`, so every
-operation taking an argument of this type is total without a positivity
-hypothesis, which is why most of the interface needs no
-`[PrimeBase p]`.
+buys two things a predicate does not. Structural equality is equality of
+balls with no canonicality side condition, which is what `mem_iff` says.
+And no caller can build a non-canonical value, so no operation has to
+defend against one.
 
 The alternative, hex-hensel's `ZPoly.Canonical f m` as a separate
 predicate, is right there because a polynomial's coefficients are
 canonicalised in bulk by a reduction pass. A single residue is
 canonicalised by the operation that produced it.
-
-At `p = 0` and `N > 0` the type is empty and every operation on it is
-vacuous, which is harmless and is not a case the implementation writes
-code for.
 
 **Reduction maps, and the direction that is missing.**
 
@@ -355,10 +354,8 @@ def reduce (a : ZpApprox p N) (h : M ≤ N) : ZpApprox p M
 theorem mem_reduce (h : M ≤ N) (hx : x ∈ a) : x ∈ a.reduce h
 theorem reduce_reduce (h : M ≤ N) (h' : K ≤ M) :
     (a.reduce h).reduce h' = a.reduce (Nat.le_trans h' h)
-theorem reduce_mul (a b : ZpApprox p N) (h : M ≤ N) :
-    (mul a b).reduce h = mul (a.reduce h) (b.reduce h)
-theorem reduce_add (a b : ZpApprox p N) (h : M ≤ N) :
-    (add a b).reduce h = add (a.reduce h) (b.reduce h)
+theorem reduce_mul (h : M ≤ N) : (a * b).reduce h = a.reduce h * b.reduce h
+theorem reduce_add (h : M ≤ N) : (a + b).reduce h = a.reduce h + b.reduce h
 ```
 
 **There is no map raising the precision, and this is the sharpest
@@ -376,34 +373,37 @@ exact input, which is the only source of them.
 
 **The ring structure.**
 
+Each operation is a named definition, and the notation instance
+delegates to it, following `ZMod64.mul` and its `Mul` instance in
+hex-mod-arith. The names are what the `At` forms of "The power cache"
+and the correspondence theorems of the companion refer to.
+
 ```lean
-instance [PrimeBase p] : Zero (ZpApprox p N)
-instance [PrimeBase p] : One (ZpApprox p N)
-instance : Add (ZpApprox p N)
-instance : Neg (ZpApprox p N)
-instance : Sub (ZpApprox p N)
-instance : Mul (ZpApprox p N)
+def zero : ZpApprox p N
+def one  : ZpApprox p N
+def add  (a b : ZpApprox p N) : ZpApprox p N
+def neg  (a : ZpApprox p N) : ZpApprox p N
+def sub  (a b : ZpApprox p N) : ZpApprox p N
+def mul  (a b : ZpApprox p N) : ZpApprox p N
 /-- Square-and-multiply, per design principle 7. -/
-instance [PrimeBase p] : Pow (ZpApprox p N) Nat
+def pow  (a : ZpApprox p N) (k : Nat) : ZpApprox p N
+
+instance : Zero (ZpApprox p N) := ⟨zero⟩
+instance : One  (ZpApprox p N) := ⟨one⟩
+instance : Add  (ZpApprox p N) := ⟨add⟩
+instance : Neg  (ZpApprox p N) := ⟨neg⟩
+instance : Sub  (ZpApprox p N) := ⟨sub⟩
+instance : Mul  (ZpApprox p N) := ⟨mul⟩
+instance : Pow  (ZpApprox p N) Nat := ⟨pow⟩
 
 theorem mem_add (hx : x ∈ a) (hy : y ∈ b) : x + y ∈ a + b
 theorem mem_mul (hx : x ∈ a) (hy : y ∈ b) : x * y ∈ a * b
-theorem mem_pow (hx : x ∈ a) : x ^ k ∈ a ^ k
+theorem mem_pow (hx : x ∈ a) (k : Nat) : x ^ k ∈ a ^ k
 
 /-- At a fixed `N` the operations are exactly `ZMod (p ^ N)`
 arithmetic, so the approximations form a commutative ring. -/
-instance [PrimeBase p] : Lean.Grind.CommRing (ZpApprox p N)
+instance : Lean.Grind.CommRing (ZpApprox p N)
 ```
-
-**`Zero`, `One`, and `Pow` are the ones that need the instance, and
-they genuinely need it.** `Add`, `Neg`, `Sub`, and `Mul` each have an
-argument, and that argument's `lt` field proves `0 < p ^ N`. `Zero` and
-`One` have no argument, and at `p = 0` with `N > 0` the type is empty,
-so there is nothing for them to return and no vacuous argument to reach
-for. `Pow` inherits the requirement from its `k = 0` base case, which
-is `one`. The ring instance mentions all three. Putting `[PrimeBase p]`
-on `Add` and `Mul` as well would be harmless and would obscure where
-the requirement comes from.
 
 **`ZpApprox p N` is a ring, and that is a fact about the approximations
 and not about `ℤ_p`.** Multiplication preserves absolute precision `N`
@@ -415,9 +415,12 @@ because every element of `ℤ_p` has non-negative valuation: writing
 
 **The precision that multiplication throws away.** The true product of
 `B(x, N)` and `B(y, N)` is a ball of absolute precision
-`N + min (v x) (v y)`, which is sharper than `N` whenever either input
-has positive valuation. The capped-absolute model discards that, and
-does so on purpose: the type index is the contract, and the consumers
+`N + min N (min (v x) (v y))`, which is sharper than `N` exactly when
+**both** inputs have positive valuation, and is `2N` when both are
+approximate zeros. The cap at `N` in that formula is not decoration: an
+approximate zero has no finite valuation to put there, and the error
+term `δε` bounds the gain at `N` regardless. The capped-absolute model
+discards all of it, and does so on purpose: the type index is the contract, and the consumers
 that motivate this type (Hensel lifting to a fixed `p^k`, the Dixon
 digit loop) work at a precision fixed in advance. A caller who wants
 the sharper precision uses `QpApprox`, which is exactly the difference
@@ -429,7 +432,7 @@ between the two types.
 /-- The valuation, when the data determines it: `some k` says every
 represented integer has valuation exactly `k`, and `none` says the
 residue is `0`, so all that is known is `v ≥ N`. -/
-def valuation? [PrimeBase p] (a : ZpApprox p N) : Option Nat
+def valuation? (a : ZpApprox p N) : Option Nat
 
 theorem valuation?_lt (h : valuation? a = some k) : k < N
 theorem valuation?_eq_some (h : valuation? a = some k) (hx : x ∈ a) :
@@ -439,7 +442,7 @@ theorem valuation?_eq_none (h : valuation? a = none) (hx : x ∈ a) :
 theorem valuation?_eq_none_iff : valuation? a = none ↔ a.residue = 0
 
 /-- The base-`p` digits, low to high. -/
-def digits [PrimeBase p] (a : ZpApprox p N) : Vector Nat N
+def digits (a : ZpApprox p N) : Vector Nat N
 /-- The representative in `(-p^N/2, p^N/2]`, from hex-modular's
 `symMod`. For display and for the reconstruction bound, never the
 representation. -/
@@ -494,7 +497,7 @@ known, and `ZpApprox p 0` is precisely the type that says nothing.
 ```lean
 /-- The inverse, when the data proves every represented value is a unit
 of `ℤ_p`. Precision is preserved exactly. -/
-def inv? [PrimeBase p] (a : ZpApprox p N) : Option (ZpApprox p N)
+def inv? (a : ZpApprox p N) : Option (ZpApprox p N)
 
 theorem inv?_isSome_iff : (inv? a).isSome = true ↔ valuation? a = some 0
 theorem inv?_mul (h : inv? a = some c) : a * c = 1
@@ -504,11 +507,11 @@ theorem mem_inv? (h : inv? a = some c) (hx : x ∈ a)
 /-- `a / b` when `b` has valuation exactly `w` and the quotient is
 integral. The precision drops by `w`, stated by the caller and
 checked. -/
-def divAt? [PrimeBase p] (a b : ZpApprox p N) (w : Nat) :
+def divAt? (a b : ZpApprox p N) (w : Nat) :
     Option (ZpApprox p (N - w))
 
 /-- The same with the loss discovered rather than supplied. -/
-def div? [PrimeBase p] (a b : ZpApprox p N) :
+def div? (a b : ZpApprox p N) :
     Option ((w : Nat) × ZpApprox p (N - w))
 
 theorem divAt?_isSome_iff :
@@ -592,12 +595,14 @@ only shape that can represent a value indistinguishable from zero.
 
 `mk v u r` is the ball `p^v * (u + p^r ℤ_p)` with `u` a unit residue
 modulo `p^r`. Every element of it has valuation exactly `v`. -/
-inductive QpApprox (p : Nat) where
+inductive QpApprox (p : Nat) [PrimeBase p] where
   | zero (prec : Int)
   | mk (val : Int) (unit : Nat) (rel : Nat)
        (pos : 0 < rel) (lt : unit < p ^ rel) (ndvd : ¬ p ∣ unit)
 
 namespace QpApprox
+
+variable {p : Nat} [PrimeBase p] {a b c : QpApprox p} {x : Rat}
 
 /-- The absolute precision: the exponent below which nothing is known. -/
 def prec : QpApprox p → Int
@@ -654,7 +659,7 @@ precision because it has no relative precision to store.
 /-- The canonical approximation of the ball with centre `p ^ e * c` and
 absolute precision `m`. Strips powers of `p` from `c`, and returns
 `zero m` when the centre's valuation reaches `m`. -/
-def norm [PrimeBase p] (c : Int) (e m : Int) : QpApprox p
+def norm (c : Int) (e m : Int) : QpApprox p
 
 theorem prec_norm : (norm c e m).prec = m
 theorem norm_of_zero : norm 0 e m = zero m
@@ -679,18 +684,18 @@ driver, and for the same reason.
 
 ```lean
 /-- The p-adic valuation of a positive natural number. -/
-def natVal [PrimeBase p] (n : Nat) : Nat
+def natVal (p n : Nat) : Nat
 
 /-- The p-adic valuation of a nonzero rational; `none` at zero. -/
-def ratVal [PrimeBase p] (x : Rat) : Option Int
+def ratVal (x : Rat) : Option Int
 
 /-- `x` is within absolute precision `m` of zero: every determined
 valuation of `x` is at least `m`, and `x = 0` satisfies it. -/
-def NearZero [PrimeBase p] (m : Int) (x : Rat) : Prop :=
+def NearZero (m : Int) (x : Rat) : Prop :=
   ∀ k, ratVal p x = some k → m ≤ k
 
 /-- The rationals this approximation does not exclude. -/
-instance [PrimeBase p] : Membership Rat (QpApprox p) where
+instance : Membership Rat (QpApprox p) where
   mem a x := NearZero a.prec (x - a.centre)
 ```
 
@@ -702,11 +707,43 @@ to put `none` at the top, which is `WithTop ℤ` reinvented, and the
 Mathlib-free layer does not have `WithTop`. The companion states the
 same thing with Mathlib's `WithTop ℤ`, where it reads more directly.
 
+**The arithmetic, declared.** As on `ZpApprox`, each operation is a
+named definition and the notation instance delegates to it. There is no
+`Zero` and no `One`, for the reason under "Why `QpApprox` is not a
+ring".
+
+```lean
+def add  (a b : QpApprox p) : QpApprox p
+def neg  (a : QpApprox p) : QpApprox p
+def sub  (a b : QpApprox p) : QpApprox p
+def mul  (a b : QpApprox p) : QpApprox p
+/-- `none` exactly on an approximate zero. -/
+def inv? (a : QpApprox p) : Option (QpApprox p)
+/-- `none` exactly when the divisor is an approximate zero. -/
+def div? (a b : QpApprox p) : Option (QpApprox p)
+
+instance : Add (QpApprox p) := ⟨add⟩
+instance : Neg (QpApprox p) := ⟨neg⟩
+instance : Sub (QpApprox p) := ⟨sub⟩
+instance : Mul (QpApprox p) := ⟨mul⟩
+
+theorem mem_add (hx : x ∈ a) (hy : y ∈ b) : x + y ∈ a + b
+theorem mem_mul (hx : x ∈ a) (hy : y ∈ b) : x * y ∈ a * b
+theorem mem_inv? (h : inv? a = some c) (hx : x ∈ a) (hx0 : x ≠ 0) : x⁻¹ ∈ c
+theorem inv?_isSome_iff : (inv? a).isSome = true ↔ a.valuation?.isSome = true
+theorem div?_isSome_iff : (div? a b).isSome = true ↔ b.valuation?.isSome = true
+```
+
+Each of `add`, `sub`, and `mul` computes a raw centre and a raw
+absolute precision and ends in `norm`, so the precision formulas of
+"The two conservation laws" are read off that call rather than proved
+per operation.
+
 **Precision changes, and again only one direction.**
 
 ```lean
 /-- Lower the absolute precision. -/
-def coarsen [PrimeBase p] (a : QpApprox p) (m : Int) : QpApprox p
+def coarsen (a : QpApprox p) (m : Int) : QpApprox p
 
 theorem prec_coarsen : (a.coarsen m).prec = min m a.prec
 theorem mem_coarsen (hx : x ∈ a) : x ∈ a.coarsen m
@@ -719,12 +756,12 @@ is sound. There is no refining map, for the reason `ZpApprox` has no
 **Conversions.**
 
 ```lean
-def ofZp [PrimeBase p] (a : ZpApprox p N) : QpApprox p
-def toZp? [PrimeBase p] (a : QpApprox p) : Option (ZpApprox p N)
+def ofZp (a : ZpApprox p N) : QpApprox p
+def toZp? (a : QpApprox p) : Option (ZpApprox p N)
 
 /-- An exact rational has unbounded precision, so the caller chooses
 one. There is no default. -/
-def ofRat [PrimeBase p] (x : Rat) (prec : Int) : QpApprox p
+def ofRat (x : Rat) (prec : Int) : QpApprox p
 
 theorem toZp?_isSome_iff :
     (toZp? (N := N) a).isSome = true ↔ 0 ≤ a.valLower ∧ (N : Int) ≤ a.prec
@@ -818,17 +855,24 @@ a point in favour of putting the invariant in the constructor.
 ## Powers, and the one rule that is not the obvious one
 
 ```lean
-def pow [PrimeBase p] (a : QpApprox p) (k : Nat) : QpApprox p
+def pow (a : QpApprox p) (k : Nat) : QpApprox p
 
-/-- Lifting the exponent: a power gains `v_p k` significant digits. -/
-theorem rel?_pow (h : a.rel? = some r) (hk : 1 ≤ k) (hr : p ≠ 2 ∨ 2 ≤ r) :
-    (pow a k).rel? = some (r + natVal p k)
+/-- The relative precision of a positive power: `r + v_p k`, except at
+`p = 2` with a single significant digit and an even exponent, where it
+is one more. -/
+def powRel (p r k : Nat) : Nat :=
+  if p = 2 ∧ r = 1 ∧ 2 ∣ k then natVal 2 k + 2 else r + natVal p k
 
-/-- The one exception, at `p = 2` with a single significant digit,
-where an even power gains one digit more. -/
-theorem rel?_pow_two (hp : p = 2) (h : a.rel? = some 1) (hk : 2 ∣ k) :
-    (pow a k).rel? = some (natVal p k + 2)
+/-- Lifting the exponent: a power gains `v_p k` significant digits, and
+one more in the exceptional case. -/
+theorem rel?_pow (h : a.rel? = some r) (hk : 1 ≤ k) :
+    (pow a k).rel? = some (powRel p r k)
 ```
+
+The `1 ≤ k` hypothesis is not decoration. `pow a 0` is the exact `1`
+approximated at a precision the caller did not choose, so it is
+governed by the convention below rather than by `powRel`, and
+`powRel 2 1 0` would report two digits where the convention gives one.
 
 Square-and-multiply through `mul` would give relative precision `r`,
 which is sound and is not sharp. The gap is real: at `p = 2`, squaring
@@ -841,7 +885,7 @@ and `u'` of that unit part, `v(u' - u) ≥ r` and `p ∤ u`, so the ratio
 multiplication by `k` in the logarithm coordinate. Hence
 
 ```text
-v(u'^k - u^k) = v(u' - u) + v_p(k)          (p odd, or p = 2 and r ≥ 2)
+v(u'^k - u^k) = v(u' - u) + v_p(k)     (u' ≠ u, and p odd or r ≥ 2)
 ```
 
 so `u^k` is determined modulo `p^(r + v_p k)` by `u` modulo `p^r`, and
@@ -891,9 +935,9 @@ precision and `pow a 0` having no sharp answer, and it is why those two
 are stated the way they are.
 
 **Distributivity fails**, which is the substantive reason and does not
-depend on the first. Addition is associative and commutative,
-multiplication is associative and commutative, and the distributive law
-is false.
+depend on the first. `Add`, `Sub`, and `Mul` instances do exist, and
+under them addition is associative and commutative, multiplication is
+associative and commutative, and the distributive law is false.
 
 At `p = 5`, take
 
@@ -921,8 +965,7 @@ The law that does hold is the inclusion, stated with the membership
 predicate:
 
 ```lean
-theorem mem_mul_add [PrimeBase p] {a b c : QpApprox p} {x : Rat}
-    (hx : x ∈ mul a (add b c)) : x ∈ add (mul a b) (mul a c)
+theorem mem_mul_add (hx : x ∈ a * (b + c)) : x ∈ a * b + a * c
 ```
 
 and it holds in that direction only. Stating the ring axioms as
@@ -965,7 +1008,7 @@ theorem ne_of_ne {a b : ZpApprox p N} (h : a ≠ b) (hx : x ∈ a) (hy : y ∈ b
 /-- `true` when the two balls are disjoint, which proves the values
 distinct. `false` is an absence of information and never a proof of
 equality. -/
-def separated [PrimeBase p] (a b : QpApprox p) : Bool
+def separated (a b : QpApprox p) : Bool
 
 theorem ne_of_separated (h : separated a b = true) (hx : x ∈ a) (hy : y ∈ b) :
     x ≠ y
@@ -1007,18 +1050,24 @@ consequence of the lifting.
 ```lean
 /-- Reconstruct a rational lying in this ball with numerator and
 denominator within the given bounds, when one exists. -/
-def toRat? [PrimeBase p] (a : QpApprox p) (P Q : Int) : Option Rat
+def toRat? (a : QpApprox p) (P Q : Int) : Option Rat
 
 /-- The symmetric-bound case at relative precision `r`, taking
 `P = Q = ⌊√((p^r - 1)/2)⌋`, which satisfies `2PQ < p^r` by
 construction. -/
-def toRatSym? [PrimeBase p] (a : QpApprox p) : Option Rat
+def toRatSym? (a : QpApprox p) : Option Rat
 
 theorem mem_toRat? (h : toRat? a P Q = some q) : q ∈ a
+theorem toRat?_bounds (h : toRat? a P Q = some q) :
+    |q.num| ≤ P ∧ (q.den : Int) ≤ Q
 theorem toRat?_unique (h : toRat? a P Q = some q) (hr : a.rel? = some r)
     (hbound : 2 * P * Q < (p : Int) ^ r)
     (hq' : q' ∈ a) (hnum : |q'.num| ≤ P) (hden : (q'.den : Int) ≤ Q) :
     q' = q
+theorem toRat?_complete (hr : a.rel? = some r)
+    (hbound : 2 * P * Q < (p : Int) ^ r)
+    (hq' : q' ∈ a) (hnum : |q'.num| ≤ P) (hden : (q'.den : Int) ≤ Q) :
+    toRat? a P Q = some q'
 ```
 
 The implementation scales by `p^(-val)` to land in `ℤ_p`, reads the
@@ -1026,10 +1075,30 @@ residue, calls [hex-modular](hex-modular.md)'s `ratRecon?` at modulus
 `p^r`, and **checks that the result lies in the ball** before returning
 it. `mem_toRat?` follows from the check alone and needs no bound
 hypothesis, exactly as [hex-modular-matrix](hex-modular-matrix.md)'s
-`solve?_spec` follows from its final integer check. The bound
-hypothesis appears only in `toRat?_unique`, which is the statement
-governing whether the answer the caller wanted will be found, not what
-it means when one is.
+`solve?_spec` follows from its final integer check.
+
+**The bounds are scaled along with the value, and forgetting to scale
+them is the easy mistake.** A rational `x` of valuation `v ≥ 0` in
+lowest terms has `p^v` dividing its numerator exactly, so
+`x / p^v` has numerator `x.num / p^v` and the same denominator. Running
+`ratRecon?` at the caller's `P` on the scaled value and multiplying the
+answer back by `p^v` therefore returns a rational whose numerator is up
+to `p^v` times too large. At `p = 5` with a ball of valuation `1` and
+unit part `1`, and `P = Q = 1`, the scaled reconstruction returns `1`
+and the rescaled answer is `5`, which lies in the ball and violates the
+stated numerator bound. So `toRat?` calls `ratRecon?` at
+`P' = ⌊P / p^v⌋` and `Q' = Q` for `v ≥ 0`, and at `P' = P` and
+`Q' = ⌊Q / p^(-v)⌋` for `v < 0`. Both divisions are exact tests on
+integers, so `toRat?_bounds` holds with no side condition, and
+`2 P Q < p^r` implies `2 P' Q' < p^r`, so the completeness hypothesis
+is unchanged.
+
+`toRat?_unique` says the answer is the only one of that size in the
+ball, and `toRat?_complete` says an answer of that size is found. The
+two are separate statements and the first does not imply the second.
+`toRat?_complete` rests on hex-modular's `ratRecon?_complete`, which
+that SPEC schedules a milestone later than `ratRecon?` itself, so this
+theorem may lag the rest of the library by the same distance.
 
 **`toRat?` returning `some q` does not prove that the value being
 approximated is `q`.** It proves `q` lies in the ball, and, under the
@@ -1069,7 +1138,7 @@ conformance fixtures below are it turned into data.
 | `QpApprox.div?` | `none` when the divisor is one | total | `none` when the divisor is one | `none` |
 | `QpApprox.pow k` | `zero (k * prec)` for `k ≥ 1` | total | preserved | see "Powers" for `k = 0` |
 | `QpApprox.coarsen m` | stays `zero (min m prec)` | total | total | total |
-| `QpApprox.toZp?` | `none` unless `prec ≥ N` | **`none`** | `none` | `some` at `N = 0` |
+| `QpApprox.toZp?` | `none` unless `prec ≥ N` | **`none`** | `none` | at `N = 0`, `some` iff `0 ≤ valLower` |
 | `QpApprox.toRat?` | `some 0` when `0` is in range | total | `some 0` when in range | see below at `r = 1` |
 | `separated` | `false` against anything overlapping | total | `false` | `false` |
 
@@ -1091,9 +1160,12 @@ enough to `p^(10^6)`" is inventing a valuation the data does not carry.
 **Multiplication by an approximate zero has an exact answer, and it is
 not `zero (prec a)`.** For `x` with `v x ≥ m` and `y` with valuation
 exactly `w`, the product satisfies `v(xy) ≥ m + w`, so the result is
-`zero (m + w)` and the absolute precision *increases*. Returning
-`zero m` would be sound and would throw away `w` digits for no reason.
-The product of two approximate zeros is `zero (m + m')` by the same
+`zero (m + w)`: the absolute precision *shifts* by `w`. For `w > 0` it
+is a gain, and returning `zero m` would be sound and would throw away
+`w` digits for no reason. For `w < 0` it is a loss, and returning
+`zero m` would be **unsound**, since `m = 3` and `w = -2` gives a true
+answer only in `zero 1` and `zero 3` is a strictly smaller ball. The
+product of two approximate zeros is `zero (m + m')` by the same
 argument.
 
 **Negative valuation is ordinary in `QpApprox` and impossible in
@@ -1113,12 +1185,14 @@ library's obligation is to make that detectable rather than to decide
 what it means. A consumer that needs a guarantee restarts at a higher
 precision, which is the standard loop and is the caller's to write.
 
-**`toRatSym?` at relative precision `1`.** The modulus is `p`, the
-symmetric bound is `⌊√((p-1)/2)⌋`, which is `0` for `p ≤ 3`, so
-`toRatSym?` finds nothing and returns `none` for every input at that
-precision. That is correct and is the only sensible answer, and it is
-worth a fixture because an implementation that omits the `P, Q > 0`
-guard divides by zero there.
+**`toRatSym?` at relative precision `1`.** The modulus is `p` and the
+symmetric bound is `⌊√((p-1)/2)⌋`. That is `0` only at `p = 2`, where
+`toRatSym?` finds nothing and returns `none` for every input, which is
+correct and is worth a fixture because an implementation that omits the
+`P, Q > 0` guard divides by zero there. At `p = 3` the bound is `1`,
+and `2 · 1 · 1 < 3`, so the two unit residue classes reconstruct to `1`
+and `-1` rather than to `none`. The boundary is at `p = 2` and not at
+`p ≤ 3`.
 
 ## Complexity
 
@@ -1258,10 +1332,11 @@ explicit checks:
   checking that the relative precision *rises* by `v_p k`; the
   `p = 2`, `r = 1` exception, where it rises by one more; and
   `p = 3`, `r = 1`, `k = 9`, where the binomial bound reports two
-  digits and three are determined. A square-and-multiply
-  implementation through `mul` passes every soundness check here and
-  fails all three, and one using the binomial bound passes the first
-  and fails the third.
+  digits and three are determined. Also `k = 0` at `p = 2`, `r = 1`,
+  which the convention answers and `powRel` does not. A
+  square-and-multiply implementation through `mul` passes every
+  soundness check here and fails the first three, and one using the
+  binomial bound passes the first and fails the third.
 - **Canonicity.** `norm` on centres already divisible by `p`, on
   centres divisible by `p` to exactly the precision bound, and on `0`,
   checking the unique normal form each time. Two constructions of the
@@ -1273,14 +1348,17 @@ explicit checks:
   equality of values.
 - **Exactification.** Round trips of `ofRat` then `toRatSym?` over a
   spread of rationals including negative valuation; `toRatSym?` at
-  relative precision `1` over `p = 2` and `p = 3`, expecting `none`;
-  and a reconstruction whose bound hypothesis fails, checking that
-  `toRat?` still only ever returns a rational lying in the ball.
+  relative precision `1`, expecting `none` at `p = 2` and `±1` at
+  `p = 3`; a ball of valuation `1` at `p = 5` with `P = Q = 1`, where
+  an implementation that reconstructs at the unscaled bound returns `5`
+  and violates `toRat?_bounds`; and a reconstruction whose bound
+  hypothesis fails, checking that `toRat?` still only ever returns a
+  rational lying in the ball.
 - **The two types agreeing.** For integral values at a common
   precision, `ofZp` then arithmetic must agree with arithmetic then
   `ofZp` wherever the absolute precisions coincide, and the fixture
   records the cases where they do not, which are exactly the products
-  with a positive-valuation factor.
+  of two positive-valuation factors.
 
 `core` profile sizes: `p ∈ {2, 3, 5, 7}` and `N` up to `8`. `ci` adds
 `p` up to `10^9 + 7`, `N` up to `64`, and randomized centres.
