@@ -1977,6 +1977,17 @@ They therefore belong to the audit even though they do not spell
 `interval_decide` and `interval_auto`, so the six-module import list covers the
 tactic entry points as well as the certified-bound interfaces.
 
+Six of the sixteen exact import-site records are accepted after localized
+PNT+ rewrites. Two are the Table 10 tactic imports; the other four are the
+complete `BKLNW_a2_bounds` power/exponential family's tactic and certified-bound
+imports, the complete FKS2 Table4Ext workload's ANT import, and the complete
+`LogTables` tactic import. Ten import sites remain pending. These site-level
+decisions remove imports from the corresponding bounded source rewrites; they
+do not classify `LeanCert.Tactic.IntervalAuto` as a general compatible
+interface. At the dependency-interface level, ANT and the exercised BKLNW
+certified bounds are accepted after rewrite, while the general tactic,
+Chebyshev, Li(2), and affine-cover interfaces remain pending.
+
 The compatibility manifest records every `interval_auto` invocation, every
 direct LeanCert import, and every qualified `LeanCert.<component>` reference
 outside comments and string literals,
