@@ -72,7 +72,8 @@ it.** Berlekamp-Zassenhaus, hex-poly-z, hex-number-field, and
 hex-resultant all hold `ZPoly = DensePoly Int`. Routing them through
 `MvPoly 1 Int cmp` would mean a conversion per call, a comparator
 argument they have no opinion about, and a dependency on hex-mv-poly,
-which is a large new representation whose SPEC is still a draft.
+which is a distinct distributed representation and an unnecessary
+dependency for these univariate consumers.
 
 **The algorithm is simpler by a whole layer.** Brown's algorithm has two
 nested reconstruction schemes: primes with Chinese remaindering for the
@@ -82,15 +83,13 @@ points, no bad points, no unlucky points, no leading-coefficient
 correction per point, and no interpolation. What remains is a loop over
 primes.
 
-**The soundness theorem is unconditional here and conditional there.**
-[hex-mv-gcd](hex-mv-gcd.md) states `checkCoprime_sound` under a
-`LawfulContent` hypothesis, because its certificate recursion finishes
-with "so `d` divides both contents", and the universal property of the
-multivariate content is the multivariate gcd's own maximality one
-variable down. In one variable the content is an integer and the
-corresponding fact is `Int.dvd_gcd`, which hex-arith has. So the
-circularity that forces the multivariate statement into the companion
-does not arise, and this library's checker is unconditionally sound.
+**Both checkers are unconditional; the maximality developments differ.**
+[hex-mv-gcd](hex-mv-gcd.md) now separates certificate replay from the
+Gauss/common-factor theorem that turns coprime cofactors into gcd
+maximality. Its recursive content proof needs primitive descent at every
+arity. Here the content is an integer and the corresponding fact is
+`Int.dvd_gcd`, so the same separation is much smaller. Neither checker
+depends on the Mathlib companion.
 
 The right relationship is that hex-mv-gcd depends on this library and
 calls it for its arity-one case, which is also its recursion's base case
@@ -184,7 +183,7 @@ nonunit common divisor. -/
 inductive CoprimeWitness
   /-- Reduce at `p`, where both cofactor degrees survive, and exhibit a
   Bézout pair over `F_p[x]`. -/
-  | modular (p : Hex.ZMod64.PrimeModulus) (alpha beta : FpPoly p.m)
+  | modular (p : Hex.ZMod64.Prime) (alpha beta : FpPoly p.m)
   /-- Exhibit `u · f' + v · h' = C k` with `k ≠ 0` an integer constant.
   Needs no prime. -/
   | constant (u v : ZPoly) (k : Int)
@@ -271,7 +270,7 @@ certificate design. The "Better primality" item in
 whose checker is a handful of modular exponentiations, and once one
 exists a certificate field replaces the `Hex.Nat.Prime` field here and
 the size preference goes away. The
-`modular` case is written against `Hex.ZMod64.PrimeModulus` from
+`modular` case is written against the bundled `Hex.ZMod64.Prime` from
 hex-mod-arith so that the change is confined to how that structure
 carries its evidence.
 
@@ -288,8 +287,8 @@ divisor". Getting from one to the other means showing that a common
 divisor `d` of `f` and `h` divides `g`, which is a statement about
 `ℤ[x]` being a gcd domain.
 
-**Unlike the multivariate case, that step is within reach
-Mathlib-free.** The ingredients are all present: Gauss's lemma is
+**The univariate step is already within reach Mathlib-free.** The
+ingredients are all present: Gauss's lemma is
 `DensePoly.content_mul` (`HexPoly/Euclid.lean:675`, with the `ZPoly`
 wrapper in `HexPolyZ/Core.lean:908`), already Mathlib-free; the Euclidean
 gcd over `DensePoly Rat` with `gcd_dvd_left`, `gcd_dvd_right`, and
@@ -313,12 +312,9 @@ theorem dvd_gcd_of_coprimeCofactors (hc : CoprimeCofactors f h g)
 ```
 
 This SPEC schedules that theorem in milestone 3 rather than deferring it
-to the companion, and records it as the point where this library is
-genuinely better off than [hex-mv-gcd](hex-mv-gcd.md). If the proof turns
-out to be larger than it looks, the fallback is the multivariate
-resolution (state it in the companion from
-`UniqueFactorizationMonoid`), and the cost of that fallback is that
-Mathlib-free consumers get cofactors without maximality.
+to the companion. The multivariate library follows the same logical split
+but must build the fraction-field and primitive-descent pieces recursively;
+the companion is transport, not a fallback for either library.
 
 ## The gcd API
 
@@ -486,7 +482,7 @@ the subresultant chain when it is ready.
 
 The extended chain is the one genuinely new piece.
 `subresultantAux` keeps only the remainder of each `pseudoDivMod` and
-discards the quotient (`HexResultant/Subresultant.lean:65` and `:92`), so
+discards the quotient (`HexResultant/Subresultant.lean:609` and `:616`), so
 accumulating the transformation is a new recurrence with proofs that each
 cofactor numerator is divisible by the Brown scalar it is divided by.
 [hex-mv-gcd](hex-mv-gcd.md) specifies the same addition as
@@ -510,11 +506,11 @@ recombination loop rather than about division.
 **`subresultantChainExt` belongs in hex-resultant.** Route 4 needs the
 Bézout cofactors of the chain to produce the `constant` witness, and
 `subresultantAux` discards the quotient of each `pseudoDivMod`
-(`HexResultant/Subresultant.lean:65` and `:92`).
+(`HexResultant/Subresultant.lean:609` and `:616`).
 [hex-mv-gcd](hex-mv-gcd.md) asks for the same addition under the same
 name for its `splitBezout` constructor, so it should be written once.
 
-**`Modulus` and `PrimeModulus` belong in hex-mod-arith**, as
+**`Modulus` and the bundled `Prime` belong in hex-mod-arith**, as
 [hex-modular](hex-modular.md) sets out. The `modular` witness names one.
 
 ## Complexity
@@ -726,8 +722,8 @@ companion beyond these and one correspondence lemma per public operation.
    hard cases.
 
 3. **Maximality.** `dvd_gcd_of_coprimeCofactors`, through Gauss's lemma
-   and the rational gcd. This is the milestone that decides whether the
-   companion proves maximality or restates it.
+   and the rational gcd. It lands in the Mathlib-free core before the
+   public gcd-domain contracts; the companion only transports it.
 
 4. **Brown.** Route 3, with the `γ` scaling and the bad and unlucky prime
    handling. The route-level tests for those traps are written before the

@@ -2,19 +2,18 @@
 
 Greatest common divisors, cofactors, content, primitive part, exact
 division, and squarefree decomposition for `MvPoly n R cmp`. Mathlib-free.
-The companion `hex-mv-gcd-mathlib` discharges the gcd-domain hypothesis the
-Mathlib-free soundness theorems carry, transports the results onto
-`MvPolynomial (Fin n) R`, and supplies the decidability instances that make
-them usable from a Mathlib goal.
+The companion `hex-mv-gcd-mathlib` transports the Mathlib-free soundness
+theorems onto `MvPolynomial (Fin n) R`, proves the squarefree
+correspondence, and supplies the decidability instances that make the
+operations usable from a Mathlib goal.
 
 This SPEC expands the "Multivariate gcd and squarefree decomposition"
-entry in [future-work](../future-work.md) and depends on the
-representation fixed by [hex-mv-poly](../../HexMvPoly/SPEC/hex-mv-poly.md). Two things that
-entry says need correcting, and both are corrected below: the coprimality
-certificate it inherits from the modular-gcd item does not generalise as
-written (see "The certificate"), and the recursive view it names drops
-the arity, which costs more bookkeeping than it saves here (see "The
-recursive view").
+entry in [future-work](../future-work.md) and depends on the representation
+fixed by [hex-mv-poly](../../HexMvPoly/SPEC/hex-mv-poly.md). The coprimality
+certificate inherited from the modular-gcd item does not generalise as
+written; "The certificate" gives the complete replacement. The algorithms
+use hex-mv-poly's landed arity-dropping recursive view, so termination is
+structural and no parallel arity-preserving API is introduced.
 
 ## Why this library exists
 
@@ -45,28 +44,22 @@ division of multivariate polynomials is an algorithm, not a projection.
 Two limits on that claim, both visible in hex-resultant's source rather
 than in its SPEC, and both stated again below:
 
-- What runs unchanged is the *executable* chain. Its correctness
-  theorems additionally require `Lean.Grind.CommRing` on the coefficient
-  type (`HexResultant/Subresultant.lean:152` and following), and the
-  `DensePoly` instance tower that supplies it is built in
-  `HexResultant/ExactDiv.lean:351`, `392`, and `434`. No such tower
-  exists for `MvPoly`, and hex-mv-poly's SPEC puts `CommRing` only in
-  its Mathlib companion. Supplying a Mathlib-free
-  `Lean.Grind.CommRing (MvPoly n R cmp)` is a prerequisite, not a
-  consequence.
+- The executable chain and its correctness theorems both run over
+  `MvPoly`: the Mathlib-free `Lean.Grind.CommRing` tower is now landed in
+  `HexMvPoly/Ring.lean`. This library must still supply `Div` and prove
+  `ExactDivLaws`; neither follows from the ring structure.
 - The instances do not let a caller nest the type. The certificate below
   bottoms out in a Bézout identity in the coefficient ring, and
   `MvPoly n R cmp` is not a Bézout domain for `n ≥ 1`. Nested
   coefficients have to be flattened to `MvPoly (m+n) R` first.
 
-**Divisibility and squarefree tests from Mathlib.** The companion
-supplies `Decidable (a ∣ b)` for `MvPolynomial (Fin n) ℤ` and
-`Decidable (Squarefree p)` for `MvPolynomial (Fin n) ℚ`, in the same
-style as `hex-berlekamp-mathlib`'s `Decidable (Irreducible f)`. The
-squarefree instance is over `ℚ` rather than `ℤ` for the reason set out
-under "What squarefree means here": over `ℤ` the ring-theoretic
-predicate is a question about the integer content, and answering it
-needs integer factorization.
+**Divisibility and squarefree tests from Mathlib.** The companion supplies
+`Decidable (a ∣ b)` and `Decidable (Squarefree p)` for
+`MvPolynomial (Fin n) ℤ`, and the same squarefree instance over `ℚ`, in
+the style of `hex-berlekamp-mathlib`'s `Decidable (Irreducible f)`.
+The integer case combines the polynomial-part test here with Mathlib's
+existing decision procedure for squarefreeness of the integer content;
+integer factorization is not a dependency.
 
 **Partial fractions and CAD.** `Apart` in more than one variable and the
 projection phase of cylindrical algebraic decomposition both need
@@ -77,10 +70,12 @@ they are consumers of this library rather than drivers of its design.
 
 In scope: gcd with cofactors, gcd of a list, lcm, content and primitive
 part in a named variable, monomial content, exact division and its
-`Option` form, divisibility, squarefree decomposition, squarefree part
-and radical, and the positive-characteristic variants of the last three.
+`Option` form, divisibility, characteristic-zero squarefree decomposition
+and radical, and a squarefreeness decision over perfect fields in any
+characteristic.
 
-Not in scope: factorization into irreducibles (that is `hex-mv-factor`,
+Not in scope: full positive-characteristic squarefree decomposition,
+factorization into irreducibles (that is `hex-mv-factor`,
 and it depends on this library), Gröbner bases, resultants themselves
 (hex-resultant computes them once this library supplies the instances),
 multivariate Hensel lifting, and the sparse Hensel gcd route (see
@@ -90,15 +85,14 @@ Also not in scope: the univariate integer case, which is
 [hex-poly-z-gcd](hex-poly-z-gcd.md). That library computes gcds of
 `ZPoly` for the consumers that hold `DensePoly Int` and would otherwise
 convert, its certificate is the arity-one specialisation of the one
-below with an unconditional soundness theorem (the content recursion
-bottoms out in `Int.gcd`, so `LawfulContent` does not arise), and this
-library should call it for the base case of its recursion in the main
-variable rather than reimplement it.
+below with an unconditional soundness theorem, and this
+library's integer producer should call it for the arity-one base case
+rather than reimplement it.
 
 The coefficient rings that matter are `Int`, `Rat`, `ZMod64 p`, and
-`FpPoly p`. The algorithms are written against a coefficient interface
-rather than against those four, because the recursive `GcdOps` instance
-on `MvPoly` is what hands `MvPoly` to hex-resultant.
+`FpPoly p`. Verification is written against algebraic interfaces; candidate
+production is a separate backend because modular reduction, reconstruction,
+and random evaluation are not operations of an abstract gcd domain.
 
 ## What the coefficient ring must supply
 
@@ -114,6 +108,11 @@ class GcdOps (R : Type u) [Zero R] [One R] [Add R] [Mul R] [Dvd R] where
   isUnit   : R → Bool
   normUnit : R → R
 
+/-- The canonical associate chosen by `GcdOps`. -/
+def normalize [Zero R] [One R] [Add R] [Mul R] [Dvd R] [GcdOps R]
+    (a : R) : R :=
+  a * GcdOps.normUnit a
+
 /-- Coefficient rings in which coprimality is witnessed by a Bézout
 identity. Required of the base ring only, never of `MvPoly`. -/
 class BezoutOps (R : Type u) [Zero R] [One R] [Add R] [Mul R] [Dvd R]
@@ -123,8 +122,9 @@ class BezoutOps (R : Type u) [Zero R] [One R] [Add R] [Mul R] [Dvd R]
 /-- The algebraic hypotheses the gcd algorithms need of `R`. Separated
 from the operations so that a consumer may compute without them. -/
 class LawfulGcdOps (R : Type u) [Lean.Grind.CommRing R] [DecidableEq R]
-    [Dvd R] [GcdOps R] : Prop where
+    [BEq R] [LawfulBEq R] [Dvd R] [GcdOps R] : Prop where
   dvd_iff        : ∀ a b : R, a ∣ b ↔ ∃ c, b = a * c
+  one_ne_zero    : (1 : R) ≠ 0
   no_zero_div    : ∀ a b : R, a * b = 0 → a = 0 ∨ b = 0
   gcd_dvd_left   : ∀ a b, GcdOps.gcd a b ∣ a
   gcd_dvd_right  : ∀ a b, GcdOps.gcd a b ∣ b
@@ -135,25 +135,64 @@ class LawfulGcdOps (R : Type u) [Lean.Grind.CommRing R] [DecidableEq R]
   normUnit_unit  : ∀ a, ∃ b, GcdOps.normUnit a * b = 1
   normalize_mul  : ∀ a b, normalize (a * b) = normalize a * normalize b
   normalize_idem : ∀ a, normalize (normalize a) = normalize a
+  normalize_unit : ∀ a, GcdOps.isUnit a = true → normalize a = 1
+
+/-- Correctness of the executable extended gcd at the base ring. -/
+class LawfulBezoutOps (R : Type u) [Lean.Grind.CommRing R] [DecidableEq R]
+    [BEq R] [LawfulBEq R] [Dvd R] [BezoutOps R] [LawfulGcdOps R] : Prop where
+  xgcd_bezout : ∀ a b,
+    let uv := BezoutOps.xgcd a b
+    uv.1 * a + uv.2 * b = normalize (GcdOps.gcd a b)
+
+/-- The proof-only statement that every pair has a greatest common divisor.
+It deliberately does not select an executable operation. -/
+class GcdDomainLaws (S : Type u) [Lean.Grind.CommRing S] [Dvd S] : Prop where
+  dvd_iff : ∀ a b : S, a ∣ b ↔ ∃ c, b = a * c
+  one_ne_zero : (1 : S) ≠ 0
+  no_zero_div : ∀ a b : S, a * b = 0 → a = 0 ∨ b = 0
+  gcd_exists : ∀ a b : S, ∃ g : S,
+    g ∣ a ∧ g ∣ b ∧ ∀ d, d ∣ a → d ∣ b → d ∣ g
+
+/-- Euclid's lemma in the form certificate maximality needs. This class
+does not mention a multivariate gcd operation, so it can be established
+before that operation is defined. -/
+class CoprimeCancelLaws (S : Type u) [Lean.Grind.CommRing S] [Dvd S] : Prop where
+  cancel_coprime : ∀ g a b d : S,
+    (∀ e, e ∣ a → e ∣ b → ∃ u, e * u = 1) →
+    d ∣ g * a → d ∣ g * b → d ∣ g
 ```
 
 with `normalize a = a * GcdOps.normUnit a`, matching Mathlib's naming so
 the companion's transport lemmas do not have to rename anything.
 
-Three of these fields are load-bearing and easy to leave out.
+Five of the `LawfulGcdOps` fields are load-bearing and easy to leave out.
+`one_ne_zero` supplies the nontriviality required by `Fraction`.
 `no_zero_div` is used by every
 argument below that multiplies leading coefficients or reasons about the
 degree of a divisor. `normalize_mul` is what makes Gauss's lemma an
 equality rather than an `Associated` statement. `gcd_normalized` is what
-makes `gcd` a function rather than a choice of associate.
+makes `gcd` a function rather than a choice of associate, and
+`normalize_unit` turns a normalized unit gcd into `1`.
+
+`LawfulGcdOps R` implies `GcdDomainLaws R`, which implies
+`CoprimeCancelLaws R` by ordinary gcd-domain arithmetic. Independently of
+any multivariate candidate producer, the proof-only Gauss development
+lifts `GcdDomainLaws R` through `MvPoly`; it then derives
+`CoprimeCancelLaws (MvPoly n R cmp)`. Those lifts are named algebraic
+deliverables below rather than something hidden inside checker soundness.
 
 `normUnit` returns a unit on **every** input including zero, so the field
 instance is `normUnit a = if a = 0 then 1 else a⁻¹`, not `a⁻¹`.
 
-Instances required here: `Int` (gcd through hex-arith, `normUnit` the
-sign with `normUnit 0 = 1`, `xgcd` the extended Euclidean algorithm),
-`Rat` and any field, `ZMod64 p` for prime `p`, `FpPoly p`,
-`DensePoly Int`, and `MvPoly n R cmp` whenever `R` has one.
+Lawful instances are required alongside the executable ones. In
+particular, `BezoutOps.xgcd` is not sufficient by itself: an
+implementation returning `(0, 0)` would satisfy the operations class and
+make the arity-zero certificate impossible to prove.
+
+`GcdOps` instances required here are `Int` (gcd through hex-arith,
+`normUnit` the sign with `normUnit 0 = 1`), `Rat` and concrete fields,
+`ZMod64 p` for prime `p`, `FpPoly p`, `DensePoly Int`, and
+`MvPoly n R cmp` through this library's checked implementation.
 
 `BezoutOps` holds for `Int`, for fields, and for `FpPoly p` with `p`
 prime. It does not hold for `MvPoly n R cmp` with `n ≥ 1`, and it does
@@ -161,26 +200,32 @@ not hold for `DensePoly Int`: neither ring is a Bézout domain. That
 failure is not incidental, and it is what makes the certificate design
 below the shape it is.
 
-**Modular reduction is a separate interface.** The primary coprimality
-certificate reduces coefficients into a small field, and no operation
-above provides that. Reduction is not available for a general `R`, and
-for `Rat` it is partial (a denominator may vanish modulo `p`). The
-interface is therefore an explicit homomorphism carried by the
-certificate rather than a class field:
+**Modular reduction is a separate, total interface.** The fast
+coprimality certificate reduces coefficients into a small field, and no
+operation above provides that. The verifier accepts a homomorphism as
+certificate data rather than discovering one through typeclass search:
 
 ```lean
-/-- A ring homomorphism from the coefficient ring into a finite field,
-supplied per certificate. `toField? = none` records that this input
-cannot be reduced at this prime (a vanishing denominator over `Rat`). -/
-structure CoeffHom (R : Type u) (p : Nat) [ZMod64.Bounds p] where
-  toField? : R → Option (ZMod64 p)
-  map_zero, map_one, map_add, map_mul, map_neg   -- as partial-function laws
+/-- A total ring homomorphism from the coefficient ring into a finite
+field, supplied per certificate. -/
+structure CoeffHom (R : Type u) (p : Nat) [Zero R] [One R] [Add R]
+    [Mul R] [ZMod64.Bounds p] where
+  toField : R → ZMod64 p
+  map_zero : toField 0 = 0
+  map_one  : toField 1 = 1
+  map_add  : ∀ a b, toField (a + b) = toField a + toField b
+  map_mul  : ∀ a b, toField (a * b) = toField a * toField b
 ```
 
-`Int` supplies a total `CoeffHom` at every prime. `Rat` supplies a
-partial one. `ZMod64 p` supplies the identity at its own prime and
-nothing at others. `MvPoly` supplies none, which is another reason the
-type does not nest.
+`Int` supplies one at every bounded prime. `ZMod64 p` supplies the
+identity at its own prime, and `FpPoly p` supplies evaluation at a
+chosen field point. There is no ring homomorphism `Rat → ZMod64 p`, so
+the rational backend clears denominators to propose its candidate and
+uses the `ratLift` certificate below to transport coprimality from the
+primitive integer models. `splitBezout` remains its deterministic fallback.
+Partial maps are not accepted: knowing that a map is defined on the
+product does not by itself show that it is defined on an arbitrary divisor
+and quotient.
 
 ## Exact division
 
@@ -189,6 +234,9 @@ is specified before the gcd itself.
 
 ```lean
 namespace Hex.MvPoly
+
+variable [Lean.Grind.CommRing R] [DecidableEq R] [BEq R] [LawfulBEq R]
+  [Dvd R] [GcdOps R]
 
 /-- Division with remainder against a single divisor, in the monomial
 order `cmp`: repeatedly cancel the leading monomial of the running
@@ -201,13 +249,24 @@ def divMod [IsMonomialOrder cmp] (f g : MvPoly n R cmp) :
 def divExact? [IsMonomialOrder cmp] (f g : MvPoly n R cmp) :
     Option (MvPoly n R cmp)
 
-instance : Dvd (MvPoly n R cmp)
+instance : Dvd (MvPoly n R cmp)  -- `∃ q, f = q * g`
 instance [IsMonomialOrder cmp] (f g : MvPoly n R cmp) : Decidable (g ∣ f)
 
 /-- The total form, for hex-resultant's `[Div R]` interface. -/
 instance [IsMonomialOrder cmp] : Div (MvPoly n R cmp)
-instance [IsMonomialOrder cmp] : ExactDivLaws (MvPoly n R cmp)
+instance [IsMonomialOrder cmp] [LawfulGcdOps R] :
+    ExactDivLaws (MvPoly n R cmp)
+
+/-- No term of `r` can be cancelled by the leading term of `g`: either
+the leading monomial does not divide it or the corresponding coefficient
+quotient does not check by multiplication. -/
+def ReducedBy [IsMonomialOrder cmp] (r g : MvPoly n R cmp) : Prop
 ```
+
+The zero-divisor branch is `divMod f 0 = (0, f)`. The decidable
+divisibility instance uses equality when the proposed divisor is zero and
+`divExact?.isSome` otherwise, so it still decides the existential `Dvd`
+relation and in particular reports `0 ∣ 0`.
 
 `divMod` terminates because `IsMonomialOrder.wf` well-orders the
 monomials and each step strictly decreases the leading monomial of the
@@ -216,13 +275,20 @@ running dividend. This is the one place the `wf` field of
 operations require the full class rather than `TransCmp` plus
 `LawfulEqCmp`.
 
+When the leading monomial divides but the leading coefficient does not,
+`divMod` moves that term to the remainder and `divExact?` fails. The
+coefficient quotient is accepted only after multiplication reconstructs
+the coefficient; `GcdOps.exactDiv` is allowed to return junk off its
+lawful domain.
+
 `divExact?` is not `divMod` followed by a zero test. It fails as soon as
-a leading monomial fails to divide, which is the common case when the
-answer is "does not divide" and is what makes trial division cheap
+either leading divisibility check fails, which is the common case when
+the answer is "does not divide" and is what makes trial division cheap
 enough to run on every candidate.
 
 ```lean
 theorem divMod_spec : f = (divMod f g).1 * g + (divMod f g).2
+theorem divMod_reduced (hg : g ≠ 0) : ReducedBy (divMod f g).2 g
 theorem divExact?_zero_right : divExact? f 0 = none
 theorem divExact?_eq (hg : g ≠ 0) : divExact? f g = some q ↔ f = q * g
 theorem divExact?_isSome_of_dvd (hg : g ≠ 0) : g ∣ f → (divExact? f g).isSome
@@ -250,10 +316,11 @@ invariant that a valid Brown run proves every quotient exact.
 dominates the running time of a modular gcd whenever the gcd is large,
 so `divExact?` carries a cheap necessary-condition filter ahead of the
 division loop: `degreeOf j g ≤ degreeOf j f` for every `j`, `Mono.dvd`
-of the monomial contents, divisibility of the leading coefficients, and
-divisibility of the images under one evaluation modulo a small prime.
-Each rejects without allocating a quotient. The filter is a prefilter
-only, and the division loop remains the decision.
+of the monomial contents, and divisibility of the leading coefficients.
+A producer backend with a total `CoeffHom` may additionally test one
+small-field evaluation; the generic operation cannot assume that map
+exists. Each test rejects without allocating a quotient. The filter is a
+prefilter only, and the division loop remains the decision.
 
 ## The recursive view
 
@@ -324,7 +391,7 @@ Both are landed, in `HexMvPoly/Ring.lean` and `HexMvPoly/Structural.lean`.
 it. Every hex-resultant correctness theorem takes
 `[Lean.Grind.CommRing S]`, so without it the subresultant chain runs over
 `MvPoly` and none of its theorems apply.
-`HexResultant/ExactDiv.lean:255-434` builds the same tower for
+`HexResultant/ExactDiv.lean:333-548` builds the same tower for
 `DensePoly`. The `Semiring.npow` field uses hex-mv-poly's existing
 `npowBySq` and its proved `pow_succ` rather than a second power
 operation.
@@ -352,13 +419,17 @@ The `splitBezout` certificate constructor needs the Bézout cofactors of
 the subresultant chain. hex-resultant does not compute them, and it is
 worth saying so explicitly because the chain looks as though it must:
 `subresultantAux` calls `pseudoDivMod` and keeps only `.2`
-(`HexResultant/Subresultant.lean:65` and `:92`); the quotient is
+(`HexResultant/Subresultant.lean:609` and `:616`); the quotient is
 discarded and no transformation is accumulated.
 
 An extended chain is therefore a new recurrence that tracks the
 transformation pair through the pseudo-scaling and the exact scalar
 division at every step, with proofs that each cofactor numerator is
-divisible by the Brown scalar it is divided by:
+divisible by the Brown scalar it is divided by.
+
+The owning contract is now recorded under "Planned extended chain for gcd
+consumers" in [hex-resultant's SPEC](../../HexResultant/SPEC/hex-resultant.md);
+its signature is repeated here only to show the consumer boundary:
 
 ```lean
 /-- The subresultant chain with the cofactors producing each entry:
@@ -368,51 +439,96 @@ def subresultantChainExt [Zero R] [DecidableEq R] [One R] [Add R] [Sub R]
     Array (DensePoly R × DensePoly R × DensePoly R)
 ```
 
-That is a substantive development, not a one-line export, and it is not
-on this library's required path: the primary certificate needs no
-cofactors. It should wait until the benchmark question under "Open
-questions" says whether `splitBezout` is worth having.
+That is a substantive development, not a one-line export, and it is a
+hard prerequisite for this library's complete fallback. The modular
+constructor is intentionally primary but cannot be complete while
+`ZMod64.Bounds` caps its primes. With
+`L = lcm(1, …, 2^31 - 1)`, the coprime univariate pair `x` and `x + L`
+has identical images at every permitted prime. The extended chain
+produces the `splitBezout` constructor without a modulus and is what
+makes `gcdCert_checks` provable for every input.
 
 ## Content and primitive part
 
 ```lean
 def contentIn (i : Fin (n+1)) (cmp' : Mono n → Mono n → Ordering)
+    [IsMonomialOrder cmp']
     (p : MvPoly (n+1) R cmp) : MvPoly n R cmp'
 def primPartIn (i : Fin (n+1)) (cmp' : Mono n → Mono n → Ordering)
+    [IsMonomialOrder cmp']
     (p : MvPoly (n+1) R cmp) : MvPoly (n+1) R cmp
 def content (p : MvPoly n R cmp) : R
 def primPart (p : MvPoly n R cmp) : MvPoly n R cmp
 ```
+
+The scalar `content` is the producer-free `scalarContent` fold named
+below; only `contentIn`, whose coefficients are themselves multivariate,
+needs `ContentCert` and recursive gcd production.
 
 ```lean
 theorem contentIn_mul_primPartIn :
     constIn i cmp' (contentIn i cmp' p) * primPartIn i cmp' p = p
 theorem contentIn_dvd_coeff :
     ∀ k, contentIn i cmp' p ∣ (toUnivariate i cmp' p).coeff k
-theorem primPartIn_content : contentIn i cmp' (primPartIn i cmp' p) = 1
+theorem contentIn_zero : contentIn i cmp' 0 = 0
+theorem primPartIn_zero : primPartIn i cmp' 0 = 0
+theorem primPartIn_content (hp : p ≠ 0) :
+    contentIn i cmp' (primPartIn i cmp' p) = 1
 theorem contentIn_mul  :
     contentIn i cmp' (p * q) = contentIn i cmp' p * contentIn i cmp' q
 theorem primPartIn_mul :
     primPartIn i cmp' (p * q) = primPartIn i cmp' p * primPartIn i cmp' q
+theorem content_mul_primPart : C (content p) * primPart p = p
+theorem content_zero : content (0 : MvPoly n R cmp) = 0
+theorem primPart_zero : primPart (0 : MvPoly n R cmp) = 0
+theorem content_primPart (hp : p ≠ 0) : content (primPart p) = 1
+theorem content_mul : content (p * q) = content p * content q
+theorem primPart_mul : primPart (p * q) = primPart p * primPart q
 ```
 
-The last two are Gauss's lemma. They are stated for the normalised
-content, so they are equalities rather than `Associated` statements,
-which is what `normalize_mul` in `LawfulGcdOps` is for. Their proofs are
-the largest piece of algebra in the Mathlib-free layer.
+The four multiplicativity statements are Gauss's lemma in the named
+variable and scalar views. They are stated for normalized content, so they
+are equalities rather than association statements, which is what
+`normalize_mul` in `LawfulGcdOps` is for. Their proofs are the largest
+piece of algebra in the executable Mathlib-free layer.
 
-**The universal property of content is the hard one, and it is not on
-this list.**
+**The universal property of content is the hard one.**
 
 ```lean
 theorem dvd_contentIn (d) :
     (∀ k, d ∣ (toUnivariate i cmp' p).coeff k) → d ∣ contentIn i cmp' p
 ```
 
-`contentIn` is computed by folding this library's own multivariate
-`gcd`, so `dvd_contentIn` is that gcd's maximality one variable down.
-The checker's soundness argument needs it, which makes the Mathlib-free
-soundness theorem conditional. See "Where maximality lives".
+`contentIn` is computed by folding this library's own multivariate gcd,
+so `dvd_contentIn` is gcd maximality one arity down. The proof is a
+simultaneous induction on the arity with `checkGcd_greatest`; the
+`ContentCert` below exposes every fold step and prevents the induction
+from calling a candidate producer.
+
+The checker also needs unit and normalization operations before the
+public multivariate `GcdOps` instance exists. They are nonrecursive and
+live in `Normalize.lean` rather than behind that instance:
+
+```lean
+/-- The constant unit selected from the leading coefficient; `C 1` at
+zero. -/
+def polyNormUnit (p : MvPoly n R cmp) : MvPoly n R cmp
+def polyNormalize (p : MvPoly n R cmp) : MvPoly n R cmp :=
+  p * polyNormUnit p
+/-- True exactly for a constant polynomial whose coefficient is a unit. -/
+def polyIsUnit (p : MvPoly n R cmp) : Bool
+/-- Normalized gcd fold of the distributed scalar coefficients. This does
+not call the multivariate gcd. Public `content` delegates to it. -/
+def scalarContent (p : MvPoly n R cmp) : R
+
+theorem polyIsUnit_iff :
+    polyIsUnit p = true ↔ ∃ q, p * q = 1
+```
+
+`checkCoprime.unit` calls `polyIsUnit`, and `checkGcd` calls
+`polyNormalize`. The later `GcdOps (MvPoly n R cmp)` instance delegates
+its `isUnit`, `normUnit`, and normalization behavior to these definitions,
+so `Cert.lean` has no dependency on `Gcd.lean`.
 
 ## The certificate
 
@@ -443,91 +559,131 @@ soon as `n ≥ 2` (`x₁` and `x₂` are coprime with no Bézout identity).
 
 Two things do work, and both are supported.
 
-### The modular witness, which is primary
+### The modular witness, which is primary when available
 
 Fix a variable `i`, a comparator `cmp'` on the remaining variables, a
-prime `p`, a homomorphism
-`φ_R : CoeffHom R p`, and a point `a : Fin n → Option (ZMod64 p)`
-assigning values to the remaining variables. Write `φ` for
-`partialEval a` composed with `mapCoeffs φ_R.toField?`, followed by
-`toUnivariate i cmp'`, landing in `FpPoly p`. The evaluation point lives in the
-target field, not in `R`.
+bundled bounded prime `P : ZMod64.Prime`, a total homomorphism
+`φ_R : CoeffHom R P.m`, and an
+evaluation point `a : Fin n → ZMod64 P.m`. The checked image is a concrete
+function with no partial or residual-variable case:
 
-If `(toUnivariate i cmp' f').degree? = (φ f').degree?` and the same for `h'`,
-and `α · φ f' + β · φ h' = 1` in `FpPoly p`, then `f'` and `h'` have no
-common divisor of positive degree in `xᵢ`.
+```lean
+def imageAt (P : ZMod64.Prime)
+    (φ_R : @CoeffHom R P.m _ _ _ _ P.bounds)
+    (a : Fin n → @ZMod64 P.m P.bounds) (i : Fin (n+1))
+    (cmp' : Mono n → Mono n → Ordering) [IsMonomialOrder cmp']
+    (f : MvPoly (n+1) R cmp) : @FpPoly P.m P.bounds :=
+  letI := P.bounds
+  letI := ZMod64.primeModulusOfPrime P.prime
+  let q := toUnivariate i cmp' f
+  DensePoly.ofList <| (List.range q.size).map fun k =>
+    MvPoly.eval a (MvPoly.mapCoeffs φ_R.toField (q.coeff k))
+```
 
-The argument, with its hypotheses named because they are easy to leave
-implicit. `R` and `MvPoly n R cmp` are integral domains
-(`LawfulGcdOps.no_zero_div` and the leading-term argument below); `p` is
-prime, so `FpPoly p` is a domain; `φ` is a ring homomorphism where it is
-defined. A common divisor `d` gives `f' = d · e`, hence
-`φ f' = φ d · φ e`. Degrees add in both domains, so
-`deg φ f' ≤ deg d + deg e = deg f'` with equality exactly when neither
-image drops degree. The checked degree equality is that equality, so
-`deg φ d = deg_i d`. Then `φ d` divides `α · φ f' + β · φ h' = 1`, so
-`φ d` is a unit in `FpPoly p`, so `deg_i d = 0`.
+If the degrees of `toUnivariate i cmp' f'` and
+`imageAt P φ_R a i cmp' f'` agree, and likewise for `h'`, and
+`α · imageAt P φ_R a i cmp' f' + β · imageAt P φ_R a i cmp' h' = 1`, then
+`f'` and `h'` have no common divisor of positive degree in `xᵢ`.
 
-No separate "the point avoids the zeros of the leading coefficient"
-hypothesis is needed. The checked degree equality is that condition.
+The degree argument uses totality. A common divisor `d` gives
+`f' = d · e`, hence the image equality follows from the ring-homomorphism
+laws. Degrees cannot increase under the image and add in both domains;
+preservation of the product degree forces preservation of both factor
+degrees. The image of `d` divides the checked Bézout identity, so it is a
+unit and `d` has degree zero in `xᵢ`. The checked degree equalities already
+say that the evaluated leading coefficients do not vanish.
 
-Coprimality in `FpPoly p` is witnessed rather than asserted: `FpPoly p`
-is a Bézout domain, `HexPoly.xgcd` produces `α` and `β`, and the check
-is one polynomial identity over a small field.
-
-That leaves common divisors of degree zero in `xᵢ`, which divide
-`contentIn i f'` and `contentIn i h'`. Those are handled by recursion on
-the certificate.
+What remains is a common divisor of both coefficient contents. Those
+contents and the gcd certificates used to compute them are data in the
+certificate rather than fresh calls to `contentIn`.
 
 ### The certificate type and the checker
 
+The three certificate types are mutually inductive because a content
+certificate is a fold of gcd certificates, while a positive-arity gcd
+certificate contains two content certificates. Every occurrence is
+strictly positive and every cycle drops the arity before returning to a
+coprimality certificate.
+
 ```lean
-/-- A witness that two elements of `MvPoly n R cmp` have no nonunit
-common divisor. The recursion is structural in the arity: each `split`
-eliminates one variable and lands one arity down, so progress is a
-property of the type rather than a side condition the checker verifies. -/
-inductive CoprimeCert : (n : Nat) → (R : Type u) → (cmp : Mono n → Mono n → Ordering) → Type u
-  /-- One side is a unit. -/
-  | unit : CoprimeCert n R cmp
-  /-- Arity zero: both sides are constants, with a Bézout pair in `R`. -/
-  | base (u v : R) : CoprimeCert 0 R cmp
-  /-- Split on `xᵢ` at the prime `p` and the point `a`, with a Bézout
-  pair over `FpPoly p`, and a certificate for the contents one arity
-  down under the chosen comparator `cmp'`. -/
-  | split (i : Fin (n+1)) (cmp' : Mono n → Mono n → Ordering)
-          (p : Nat) (φ : CoeffHom R p) (a : Fin n → Option (ZMod64 p))
-          (α β : FpPoly p) (rest : CoprimeCert n R cmp') :
-      CoprimeCert (n+1) R cmp
-  /-- Split on `xᵢ` with `u · f + v · h = constIn i cmp' r`, where
-  `r ≠ 0` lives in the remaining variables. -/
-  | splitBezout (i : Fin (n+1)) (cmp' : Mono n → Mono n → Ordering)
-                (u v : MvPoly (n+1) R cmp) (r : MvPoly n R cmp')
-                (rest : CoprimeCert n R cmp') :
-      CoprimeCert (n+1) R cmp
+mutual
+  inductive CoprimeCert :
+      (n : Nat) → (R : Type u) → [Zero R] →
+      (cmp : Mono n → Mono n → Ordering) →
+      [Std.TransCmp cmp] → [Std.LawfulEqCmp cmp] → Type u
+    | unit : CoprimeCert n R cmp
+    | base (u v : R) : CoprimeCert 0 R cmp
+    | split (i : Fin (n+1)) (cmp' : Mono n → Mono n → Ordering)
+        [IsMonomialOrder cmp'] [One R] [Add R] [Mul R]
+        (P : ZMod64.Prime)
+        (φ : @CoeffHom R P.m _ _ _ _ P.bounds)
+        (a : Fin n → @ZMod64 P.m P.bounds)
+        (α β : @FpPoly P.m P.bounds)
+        (left right : ContentCert n R cmp')
+        (rest : CoprimeCert n R cmp') : CoprimeCert (n+1) R cmp
+    | splitBezout (i : Fin (n+1))
+        (cmp' : Mono n → Mono n → Ordering) [IsMonomialOrder cmp']
+        (u v : MvPoly (n+1) R cmp) (r : MvPoly n R cmp')
+        (left right : ContentCert n R cmp')
+        (rest : CoprimeCert n R cmp') : CoprimeCert (n+1) R cmp
+    | ratLift (scaleL scaleR : Rat) (left right : MvPoly n Int cmp)
+        (cert : CoprimeCert n Int cmp) : CoprimeCert n Rat cmp
 
+  inductive GcdCert :
+      (n : Nat) → (R : Type u) → [Zero R] →
+      (cmp : Mono n → Mono n → Ordering) →
+      [Std.TransCmp cmp] → [Std.LawfulEqCmp cmp] → Type u
+    | mk (gcd cofL cofR : MvPoly n R cmp) (coprime : CoprimeCert n R cmp)
+
+  /-- A checked left fold of gcd over a polynomial's coefficient list.
+  `steps[k]` certifies the gcd of the previous accumulator and coefficient
+  `k`; `value` is the final accumulator. -/
+  inductive ContentCert :
+      (n : Nat) → (R : Type u) → [Zero R] →
+      (cmp : Mono n → Mono n → Ordering) →
+      [Std.TransCmp cmp] → [Std.LawfulEqCmp cmp] → Type u
+    | mk (value : MvPoly n R cmp) (steps : List (GcdCert n R cmp))
+end
+
+def GcdCert.gcd : GcdCert n R cmp → MvPoly n R cmp
+def GcdCert.cofL : GcdCert n R cmp → MvPoly n R cmp
+def GcdCert.cofR : GcdCert n R cmp → MvPoly n R cmp
+def GcdCert.coprime : GcdCert n R cmp → CoprimeCert n R cmp
+def ContentCert.value : ContentCert n R cmp → MvPoly n R cmp
+
+def checkContent (coeffs : List (MvPoly n R cmp)) : ContentCert n R cmp → Bool
 def checkCoprime (f h : MvPoly n R cmp) : CoprimeCert n R cmp → Bool
-
-structure GcdCert (n : Nat) (R : Type u) (cmp : Mono n → Mono n → Ordering) where
-  gcd     : MvPoly n R cmp
-  cofL    : MvPoly n R cmp
-  cofR    : MvPoly n R cmp
-  coprime : CoprimeCert n R cmp
-
-def checkGcd (f h : MvPoly n R cmp) (c : GcdCert n R cmp) : Bool :=
-  c.gcd * c.cofL == f && c.gcd * c.cofR == h &&
-  checkCoprime c.cofL c.cofR c.coprime &&
-  isNormalized c.gcd
+def checkGcd (f h : MvPoly n R cmp) : GcdCert n R cmp → Bool
 ```
 
-`checkCoprime` on `split` verifies, cheapest first: that `p` is prime and
-within `ZMod64.Bounds`; that `φ` is defined on every coefficient
-involved; the two degree equalities on `toUnivariate i cmp'`; the Bézout
-identity in `FpPoly p`; and then recursively, one arity down, that
-`contentIn i cmp' f` and `contentIn i cmp' h` are coprime. On
-`splitBezout` it verifies `r ≠ 0`, `u · f + v · h = constIn i cmp' r`,
-and the same recursion. On `base` it verifies that
-`u · a + v · b = 1`. On `unit` it verifies that one side satisfies
-`GcdOps.isUnit`.
+All three declarations use the identical index telescope shown above;
+`n`, `R`, `cmp`, and the representation instances are indices rather than
+mixing parameters and indices across the mutual block. Every arity-dropping
+constructor carries `[IsMonomialOrder cmp']`, which supplies both comparator
+instances required to form its lower-arity `MvPoly` values.
+
+`checkContent` starts at zero, requires exactly one `GcdCert` per
+coefficient, checks each certificate against the current accumulator and
+coefficient, advances to its gcd, and finally compares the accumulator
+with `value`. `contentInCert` is the producer and `contentIn` projects its
+value; a checker never calls that producer.
+
+`checkCoprime` on `split` checks the two image degrees and the Bézout
+identity, checks `left` and `right` against the two coefficient lists,
+then checks `rest` against their certified values. The explicit bundled
+`P` supplies bounds before `ZMod64 P.m` is formed and installs the field
+instance from `P.prime` locally; no runtime-selected prime relies on
+typeclass search. Producers try the smallest usable prime because kernel
+replay checks its primality proof and the project-local trial proof becomes
+expensive near the 31-bit limit.
+`splitBezout` checks `r ≠ 0`, `u · f + v · h = constIn i cmp' r`, the two
+content certificates, and the same recursive check. `base` checks the
+Bézout identity in `R`, and `unit` checks that one side is a unit.
+`ratLift` checks `scaleL ≠ 0`, `scaleR ≠ 0`, that the two rational inputs
+are the stated scalar multiples of the coefficientwise `Int → Rat` images,
+that both integer models have `scalarContent = 1`, and that `cert` checks
+for those models. Gauss descent then transports integer coprimality to
+rational coprimality without a nonexistent `Rat → ZMod64` homomorphism.
 
 Indexing the certificate by the arity is what makes "each step removes a
 variable" true, and it is free: the constructor's result type says so.
@@ -538,7 +694,8 @@ recover the same guarantee.
 **Degenerate inputs are certificate completeness cases, not output
 conventions.** A coprime pair cannot contain zero unless the other side
 is a unit, so the producer must special-case them: `gcd 0 0` returns
-`⟨0, 1, 1, .unit⟩`; `gcd f 0` returns `⟨normalize f, u, 0, .unit⟩` with
+`.mk 0 1 1 .unit`; `gcd f 0` returns
+`.mk (polyNormalize f) u 0 .unit` with
 `u` the unit making the identity hold; arity zero and the
 all-variables-eliminated case go through `base`. Without these the
 modular constructor has no image Bézout identity to produce.
@@ -546,69 +703,84 @@ modular constructor has no image Bézout identity to produce.
 The `splitBezout` argument is the shorter of the two: a common divisor
 `d` divides `constIn i cmp' r`, and a divisor of something constant in
 `xᵢ` is constant in `xᵢ` in a domain, so `d` divides both contents. It
-needs no
-prime, no point, and no homomorphism. It is not primary because `u` and
+needs no prime, point, or homomorphism. It is not primary because `u` and
 `v` come from an extended subresultant computation, which suffers the
-coefficient swell the modular routes exist to avoid, and because
-hex-resultant does not compute them today.
+coefficient swell the modular routes exist to avoid. It nevertheless
+remains mandatory as the complete last route.
 
 ### Where maximality lives
 
-Both split cases finish with "so `d` divides both contents". That step is
-`dvd_contentIn`, the universal property of the content, and the content
-is computed by this library's own gcd one variable down. So the checker's
-soundness rests on gcd maximality rather than establishing it. Putting
-maximality entirely in the companion while claiming an unconditional
-Mathlib-free `checkCoprime_sound` would be circular.
+Certificate replay and gcd-domain algebra are separate obligations. The
+certificate proves exact cofactor identities and that the cofactors have
+no common nonunit divisor. Turning those facts into gcd maximality uses
+`CoprimeCancelLaws (MvPoly n R cmp)`; it does not follow from the
+certificate constructors alone.
 
-The resolution is design principle 2 applied where the dependency
-actually is. The Mathlib-free layer states the property as a class and
-proves soundness conditionally on it:
+The Mathlib-free Gauss development establishes that instance before the
+checker proof. At each arity it supplies three named pieces: the embedding
+into `Fraction (MvPoly n R cmp)`, gcd over the resulting fraction-field
+univariate polynomial, and primitive descent back to `MvPoly`. A
+proof-only finite fold chooses coefficient gcds from `GcdDomainLaws`; it
+does not call the executable `contentIn`. These pieces lift
+`GcdDomainLaws` and hence `CoprimeCancelLaws` one variable at a time. This
+work is independent of every candidate route and does not call `gcdCert`.
 
 ```lean
-/-- The one gcd-domain fact the checker rests on. Discharged for
-`Int`, `Rat`, and `ZMod64 p` coefficients in `hex-mv-gcd-mathlib`. -/
-class LawfulContent (n : Nat) (R : Type u) (cmp : Mono n → Mono n → Ordering) : Prop where
-  dvd_contentIn : ∀ (i : Fin n) (p d : MvPoly n R cmp),
-    (∀ k, d ∣ (toUnivariate i cmp' p).coeff k) → d ∣ contentIn i cmp' p
+/-- The semantic property directly witnessed by a coprimality certificate. -/
+def CoprimeCofactors (f h : MvPoly n R cmp) : Prop :=
+  ∀ d, d ∣ f → d ∣ h → ∃ u, d * u = 1
 
-theorem checkCoprime_sound [LawfulContent n R cmp] :
-    checkCoprime f h c = true → ∀ d, d ∣ f → d ∣ h → IsUnit d
+/-- What `checkGcd` establishes without gcd-domain reasoning. -/
+def CheckedGcdResult (f h g f' h' : MvPoly n R cmp) : Prop :=
+  f = g * f' ∧ h = g * h' ∧ polyNormalize g = g ∧
+  CoprimeCofactors f' h'
 
-/-- What the checker establishes: the cofactor identities, and
-coprimality of the cofactors. -/
-def CoprimeCofactors (f h g : MvPoly n R cmp) : Prop :=
-  ∃ f' h', f = g * f' ∧ h = g * h' ∧ ∀ d, d ∣ f' → d ∣ h' → IsUnit d
+/-- The checked result plus the separate greatest-divisor conclusion. -/
+def IsGcdCertResult (f h g f' h' : MvPoly n R cmp) : Prop :=
+  CheckedGcdResult f h g f' h' ∧
+  ∀ d, d ∣ f → d ∣ h → d ∣ g
 
-theorem checkGcd_sound [LawfulContent n R cmp] :
-    checkGcd f h c = true → CoprimeCofactors f h c.gcd
+theorem checkCoprime_sound [LawfulGcdOps R] :
+    checkCoprime f h c = true → CoprimeCofactors f h
+
+theorem checkContent_sound [LawfulGcdOps R] :
+    checkContent coeffs c = true →
+      (∀ q ∈ coeffs, c.value ∣ q) ∧
+      (∀ d, (∀ q ∈ coeffs, d ∣ q) → d ∣ c.value)
+
+theorem checkGcd_sound [LawfulGcdOps R] :
+    checkGcd f h c = true →
+      CheckedGcdResult f h c.gcd c.cofL c.cofR
+
+theorem CoprimeCofactors.greatest [CoprimeCancelLaws (MvPoly n R cmp)]
+    (hc : CheckedGcdResult f h g f' h') :
+    ∀ d, d ∣ f → d ∣ h → d ∣ g
+
+theorem checkGcd_greatest [LawfulGcdOps R] :
+    checkGcd f h c = true →
+      IsGcdCertResult f h c.gcd c.cofL c.cofR
 ```
 
-`hex-mv-gcd-mathlib` discharges `LawfulContent` from
-`MvPolynomial.uniqueFactorizationMonoid`, the instance Mathlib supplies
-for `MvPolynomial σ D` with `D` a unique factorization domain, and then
-proves the unconditional maximality statement
-`CoprimeCofactors f h g → ∀ d, d ∣ f → d ∣ h → d ∣ g` on the Mathlib
-side.
+The checker proof is a simultaneous arity induction: either split makes a
+common divisor constant in the main variable, the checked content folds
+and lower-arity induction show that it divides both certified contents,
+and `rest` makes it a unit. Content maximality uses lower-arity
+`checkGcd_greatest`, whose common-factor step comes from the independent
+Gauss instance. `LawfulBezoutOps` is not a soundness premise because the
+checker validates every stored base identity; it is needed by the producer
+completeness theorem that obtains those identities from `xgcd`.
 
-The consequence, stated so nobody is surprised by it: a Mathlib-free
-consumer of this library gets a theorem with a hypothesis it cannot
-discharge. Everything that wants the unconditional statement, including
-the `cancel` tactic, therefore lives in the companion, in the same way
-`factor_poly`'s `Polynomial ℤ` provider does. The alternative, proving
-`LawfulContent` Mathlib-free by induction on the arity,
-is a genuine option and amounts to proving `MvPoly n R cmp` is a gcd
-domain from scratch. It is recorded under "Open questions" rather than
-adopted, because it moves the largest proof in the project into
-milestone 2.
+The zero conventions are `contentIn 0 = 0`, `content 0 = 0`, and both
+primitive parts of zero equal zero. They preserve multiplication; the
+content-of-primitive-part theorem consequently needs `p ≠ 0`. The scalar
+API has the matching contracts
+`C (content p) * primPart p = p`, `content (primPart p) = 1` for
+nonzero `p`, and the corresponding multiplicativity theorems.
 
-Two further statements need the same hypothesis, and both look as though
-they should not. `Associated (gcd f h) (gcd h f)` does not follow from
-`CoprimeCofactors` in a general domain: two elements with coprime
-cofactors need not be associate without a gcd-domain or pre-Schreier
-argument. And `LawfulGcdOps (MvPoly n R cmp)`, the recursive instance,
-has `dvd_gcd` as a field, so it is available only where `LawfulContent`
-is.
+`checkGcd_greatest` and `gcdCert_checks` then supply
+`LawfulGcdOps (MvPoly n R cmp)`, including `dvd_gcd`. The noncircular
+order is: Gauss/common-factor algebra, checker soundness, complete
+producer, public gcd laws, then the instance.
 
 ### What `cancel` actually needs
 
@@ -625,12 +797,59 @@ than a soundness property of the rewrite.
 
 ## The gcd API
 
+Candidate production is an explicit backend, not an accidental consequence
+of whichever coefficient instances happen to be in scope. This is necessary
+because `Int` uses modular reduction and CRT, `Rat` first clears
+denominators, and finite fields use different image operations. Randomness
+and every heuristic limit are also explicit and reproducible:
+
 ```lean
 namespace Hex.MvPoly
 
-variable [IsMonomialOrder cmp] [GcdOps R] [BezoutOps R]
+structure GcdConfig where
+  rand               : Rand
+  heuristicBitBudget : Nat
+  brownPrimeFuel     : Nat
+  brownPointFuel     : Nat
 
-def gcdCert (f h : MvPoly n R cmp) : GcdCert n R cmp
+def GcdConfig.default : GcdConfig := {
+  rand := Rand.ofSeed 0
+  heuristicBitBudget := 1048576
+  brownPrimeFuel := 64
+  brownPointFuel := 4096
+}
+
+structure GcdRun (n : Nat) (R : Type u) [Zero R]
+    (cmp : Mono n → Mono n → Ordering)
+    [Std.TransCmp cmp] [Std.LawfulEqCmp cmp] where
+  cert : GcdCert n R cmp
+  rand : Rand
+
+/-- The output of an untrusted fast backend. `none` means that every
+applicable fast route declined or exhausted its budget. -/
+structure GcdProposal (n : Nat) (R : Type u) [Zero R]
+    (cmp : Mono n → Mono n → Ordering)
+    [Std.TransCmp cmp] [Std.LawfulEqCmp cmp] where
+  cert? : Option (GcdCert n R cmp)
+  rand  : Rand
+
+/-- Coefficient-specific candidate production. The public wrapper checks
+the proposal and owns the complete PRS fallback. -/
+class GcdProducer (R : Type u) [Zero R] where
+  propose : {n : Nat} → (cmp : Mono n → Mono n → Ordering) →
+    [IsMonomialOrder cmp] → GcdConfig →
+    MvPoly n R cmp → MvPoly n R cmp → GcdProposal n R cmp
+
+variable [IsMonomialOrder cmp] [DecidableEq R] [BEq R] [LawfulBEq R]
+  [BezoutOps R] [GcdProducer R]
+
+def gcdCertWith (cfg : GcdConfig) (f h : MvPoly n R cmp) : GcdRun n R cmp
+def gcdCert (f h : MvPoly n R cmp) : GcdCert n R cmp :=
+  (gcdCertWith GcdConfig.default f h).cert
+def gcdWith (cfg : GcdConfig) (f h : MvPoly n R cmp) :
+    MvPoly n R cmp × Rand :=
+  let run := gcdCertWith cfg f h
+  (run.cert.gcd, run.rand)
 def gcd (f h : MvPoly n R cmp) : MvPoly n R cmp := (gcdCert f h).gcd
 def cofactors (f h : MvPoly n R cmp) : MvPoly n R cmp × MvPoly n R cmp
 def isCoprime (f h : MvPoly n R cmp) : Bool
@@ -638,9 +857,64 @@ def gcdList (ps : List (MvPoly n R cmp)) : MvPoly n R cmp
 def lcm (f h : MvPoly n R cmp) : MvPoly n R cmp
 ```
 
-Contracts on the degenerate inputs: `gcd 0 0 = 0`, `gcd f 0 = normalize f`,
+The concrete proposal instances are `intProducer`, `ratProducer`,
+`primeProducer`, and `fpPolyProducer`. An abstract coefficient ring does
+not silently receive the integer modular algorithm; it may use
+the low-priority `noFastProducer`, which returns `none` unless a concrete
+instance overrides it. `gcdCertWith` runs the proposal,
+accepts `some c` only when `checkGcd f h c = true`, and otherwise calls
+the internal `prsCert`, which does not dispatch through `GcdProducer`
+again. Consequently a buggy or adversarial backend can affect performance
+but not the result or totality theorem. The returned `Rand` is the state
+advanced by the proposal even when it is rejected, following the
+project-wide randomness convention. `gcd`, and therefore typeclass use,
+has stable behaviour through the fixed default seed; callers that need
+independent runs use `gcdCertWith`.
+
+The public `isCoprime` is exact: it tests whether the checked `gcd` is a
+unit. The one-sided modular probe is an internal producer
+`tryCoprimeCert?`; `none` means only that this point or prime was
+inconclusive and is never exposed as a false public answer.
+
+The public operations have semantic contracts, not only degenerate-case
+examples:
+
+```lean
+theorem gcdCertWith_checks [LawfulGcdOps R] [LawfulBezoutOps R] :
+    checkGcd f h (gcdCertWith cfg f h).cert = true
+theorem gcdCert_checks [LawfulGcdOps R] [LawfulBezoutOps R] :
+    checkGcd f h (gcdCert f h) = true
+theorem gcd_dvd_left [LawfulGcdOps R] [LawfulBezoutOps R] : gcd f h ∣ f
+theorem gcd_dvd_right [LawfulGcdOps R] [LawfulBezoutOps R] : gcd f h ∣ h
+theorem dvd_gcd [LawfulGcdOps R] [LawfulBezoutOps R] :
+    d ∣ f → d ∣ h → d ∣ gcd f h
+theorem gcd_normalized [LawfulGcdOps R] [LawfulBezoutOps R] :
+    normalize (gcd f h) = gcd f h
+theorem cofactors_spec [LawfulGcdOps R] [LawfulBezoutOps R] :
+    f = gcd f h * (cofactors f h).1 ∧ h = gcd f h * (cofactors f h).2
+theorem cofactors_coprime [LawfulGcdOps R] [LawfulBezoutOps R] :
+    ∀ d, d ∣ (cofactors f h).1 → d ∣ (cofactors f h).2 → GcdOps.isUnit d = true
+theorem isCoprime_iff [LawfulGcdOps R] [LawfulBezoutOps R] :
+    isCoprime f h = true ↔ ∀ d, d ∣ f → d ∣ h → GcdOps.isUnit d = true
+theorem gcdList_dvd [LawfulGcdOps R] [LawfulBezoutOps R] :
+    p ∈ ps → gcdList ps ∣ p
+theorem dvd_gcdList [LawfulGcdOps R] [LawfulBezoutOps R] :
+    (∀ p ∈ ps, d ∣ p) → d ∣ gcdList ps
+theorem dvd_lcm_left [LawfulGcdOps R] [LawfulBezoutOps R] : f ∣ lcm f h
+theorem dvd_lcm_right [LawfulGcdOps R] [LawfulBezoutOps R] : h ∣ lcm f h
+theorem lcm_dvd [LawfulGcdOps R] [LawfulBezoutOps R] :
+    f ∣ m → h ∣ m → lcm f h ∣ m
+theorem lcm_normalized [LawfulGcdOps R] [LawfulBezoutOps R] :
+    normalize (lcm f h) = lcm f h
+```
+
+Degenerate contracts are `gcd 0 0 = 0`, `gcd f 0 = normalize f`,
 `gcd f h = 1` whenever either side is a unit, `gcdList [] = 0`, and
-`lcm f 0 = 0`. Each has a matching certificate case above.
+`lcm f 0 = lcm 0 f = 0`. Each has a matching certificate case above.
+The library installs `GcdOps (MvPoly n R cmp)` and its
+`LawfulGcdOps` instance from these theorems. The low-priority backend is
+always the deterministic fallback, so downstream generic code cannot
+accidentally select the integer modular algorithm for an abstract ring.
 
 **Normalisation depends on the monomial order, over `ℤ` as well.** `gcd`
 returns the associate whose leading coefficient in `cmp` order is
@@ -651,11 +925,13 @@ with the order, and the two leading coefficients can have different
 signs.
 For `x - y`, an order with `x` leading normalises to `x - y`, and an
 order with `y` leading sees leading coefficient `-1` and normalises to
-`y - x`. So there is one transport lemma, not two, and it is
-`Associated`:
+`y - x`. So there is one transport lemma, not two, and it states the
+coefficient-unit witness explicitly:
 
 ```lean
-theorem gcd_reorder : Associated (gcd (reorder f) (reorder h)) (reorder (gcd f h))
+theorem gcd_reorder :
+    ∃ u v : R, u * v = 1 ∧
+      gcd (reorder f) (reorder h) = reorder (gcd f h) * C u
 ```
 
 An order-independent normalisation would have to fix the sign from
@@ -666,8 +942,12 @@ having is under "Open questions"; it is not assumed anywhere above.
 **Rational coefficients.** Over `ℚ` the content is always a unit, so
 `primPart` is useless and the coefficient swell in a PRS is maximal.
 `gcdCert` on `MvPoly n Rat cmp` scales both inputs to primitive integer
-polynomials, computes there, and scales back. This is a requirement
-rather than an option, and the benchmark family named below checks it.
+polynomials, computes there, and scales back. Its cofactor certificate is
+`ratLift` with the two nonzero scales, the primitive integer models, and
+their checked integer coprimality certificate. This is a requirement
+rather than an option, and the benchmark family named below checks that
+the extended PRS is not taken merely because the input coefficients are
+rational.
 
 ## The algorithms
 
@@ -689,13 +969,14 @@ univariate image gcds the route already computed are exactly what the
 Zero and unit inputs return immediately with the certificate cases named
 above. Then, in order: divide out the monomial content of each input and
 put the monomial gcd into the answer; divide out the `R`-content of each
-input and put `GcdOps.gcd` of the two contents into the answer; and
-restrict attention to `vars f ∩ vars h`. Each is linear in
-the term count and each strictly shrinks the problem.
+input and put `GcdOps.gcd` of the two contents into the answer. Each is
+linear in the term count and strictly shrinks the problem without changing
+the certificate's arity. Restricting to `vars f ∩ vars h` is deferred until
+there is a specified certificate re-embedding operation.
 
 ### 1. Coprime detection, the case that dominates
 
-`isCoprime` runs, per variable, one evaluation and one univariate
+`tryCoprimeCert?` runs, per variable, one evaluation and one univariate
 gcd: pick a prime and a random point for all remaining variables,
 check the degrees survive, and compute `gcd` in `FpPoly p`. A result of
 `1` yields the `split` constructor and the recursion continues on the
@@ -706,7 +987,8 @@ That asymmetry is the point: the cheap test is conclusive exactly in the
 case that occurs most often. The cost is up to one image gcd per
 variable, not one in total.
 
-The requirement this places on the implementation is that `gcd f h` must
+The public `isCoprime` remains the exact wrapper specified above. The
+requirement this route places on the implementation is that `gcd f h` must
 not compute an interpolation when `f` and `h` are coprime. The benchmark
 family "coprime pairs" checks it.
 
@@ -785,14 +1067,14 @@ the main variable.
 
 **On coefficient bounds.** No multivariate Mignotte or Gelfond bound is
 needed for soundness, and none is needed for the dispatcher to be total,
-because this route carries fuel and falls through to route 5. A bound
+because this route carries fuel and falls through to route 4. A bound
 *is* what would prove that this route itself eventually succeeds:
 `checkGcd` recognises the right answer once the modulus is large enough
 and the support has stabilised, but it does not prove that either happens.
 Route 3 is therefore specified without a completeness theorem, which is
 consistent with its being one of the unverified producers.
 
-### 4. Zippel's sparse interpolation
+### Future extension: Zippel's sparse interpolation
 
 Learn the skeleton (which monomials appear in each coefficient of the
 gcd) from one dense image, then determine the coefficients at later
@@ -805,54 +1087,60 @@ criterion, diversification so that distinct terms are distinguishable,
 a field large enough (or an extension) for the random points, collision
 handling, and a normalisation strategy for the nonmonic case. Huang and
 Gao set out a modern version with those pieces at
-[arXiv:2207.13874](https://arxiv.org/abs/2207.13874). The route as
-specified here is sound whatever it produces, because `checkGcd` decides,
-but "sound because it is checked" is not the same as "fast", and the
-performance claim depends on implementing the pieces above rather than
-the sketch.
+[arXiv:2207.13874](https://arxiv.org/abs/2207.13874).
+
+The paragraph above is a research direction, not an implementable route
+contract. Zippel is therefore outside the core dispatch and milestones.
+Adding it requires a separate SPEC amendment that fixes the term bound or
+early-termination theorem, diversification, field-size policy, collision
+handling, and restart semantics before assigning it performance claims.
 
 The random point is an explicit argument rather than a monad, following
 the pattern [hex-finite-field](hex-finite-field.md) sets under
 "Randomness", and drawn from the `Hex.Rand` generator that SPEC
 introduces.
 
-### 5. The subresultant fallback
+### 4. The extended-subresultant fallback
 
 Recurse on the arity. In the main variable `xᵢ`, run
-hex-resultant's `subresultantChain` **unchanged** over the coefficient
-ring `MvPoly n R cmp'`, take the primitive part in `xᵢ` of the terminal
-nonzero entry, and multiply by the recursively computed gcd of the
-contents.
+the required `subresultantChainExt` over the coefficient ring
+`MvPoly n R cmp'`. Write its terminal nonzero identity as
+`U · f + V · h = S`, take `g = primPartIn i cmp' S` once, and obtain the
+candidate cofactors `f'` and `h'` by checked exact division. Since
+`S = constIn i cmp' c · g` for `c = contentIn i cmp' S`, substituting
+`f = g · f'` and `h = g · h'` into the identity and cancelling the
+nonzero `g` gives `U · f' + V · h' = constIn i cmp' c`. The terminal
+entry is nonzero, so `c ≠ 0`; this is exactly the mandatory
+`splitBezout` witness. Multiply the candidate by the recursively
+certified gcd of the input contents when rebuilding the structural
+reductions.
 
 Running the subresultant chain while taking the primitive part of each
 remainder is a third thing, and not a correct one. The subresultant
 recurrence's exact divisions are justified by scale
 invariants that primitive-part removal destroys, so a primitive PRS is a
 separate recurrence with its own completeness theorem, not a variant of
-Brown's chain. This SPEC takes the first option: reuse hex-resultant's
-chain as it stands and take the primitive part once, at the end. The
-cost is the coefficient swell inside the chain that a primitive PRS would
-avoid, and that is acceptable because this route exists to be proved
-rather than to be fast.
+Brown's chain. This SPEC extends Brown's chain only by tracking its
+transformation; it does not change the remainder recurrence. The cost is
+the coefficient swell inside the chain that a separately proved primitive
+PRS would avoid, and that is acceptable because this route exists to be
+complete rather than fast.
 
 It is deterministic, needs no prime, no point, and no random draw, and it
-is what makes `gcdCert` a total function with a proved postcondition:
+is what proves the `gcdCert_checks` postcondition stated with the public
+API.
 
-```lean
-theorem gcdCert_checks [LawfulContent n R cmp] : checkGcd f h (gcdCert f h) = true
-```
-
-The proof obligation is concentrated: `checkGcd_sound` (small, and stated
-above) plus completeness of route 5, which is the standard subresultant
-argument and shares its shape with hex-resultant's existing development.
-Routes 1 through 4 need no correctness proof at all, which is the whole
-reason for the architecture.
+The totality obligation is concentrated in acceptance of route 4 and the
+exact transformation invariant supplied by `subresultantChainExt`.
+Semantic gcd contracts then combine that accepted certificate with checker
+soundness and the independent Gauss/common-factor theorem. Routes 1
+through 3 need no correctness proof at all, which is the whole reason for
+the architecture.
 
 ### Routes not specified here
 
-FLINT reaches its performance on multivariate integer gcds with four
-routes, and the fourth, a sparse Hensel lifting gcd, is not specified
-here. Adding it is a later milestone. Until it exists, the performance
+Neither Zippel interpolation nor sparse Hensel lifting is specified as a
+core route. Until one receives its own complete amendment, the performance
 claim against FLINT is "competitive on the dense and coprime families",
 not "approaching FLINT in general", and the benchmark section says so.
 
@@ -864,9 +1152,9 @@ Over a field, "no square of a nonunit divides `p`" is the whole story.
 Over `ℤ` it is not, and the distinction has to be made before any
 signature is written. `12x` is not squarefree in `ℤ[x]`, because
 `4 ∣ 12`, so the ring-theoretic predicate over `ℤ[x₁, …, xₙ]` is partly a
-question about the integer content, and deciding it needs integer
-factorization, which this project does not yet have (it is its own entry
-in [future-work](../future-work.md)).
+question about the integer content. The Mathlib companion can decide that
+scalar predicate without factoring the integer; the Mathlib-free API here
+deliberately specifies only the polynomial-part convention below.
 
 This library therefore uses the standard computer-algebra convention,
 which is also what `HexPolyZ.primitiveSquareFreeDecomposition` and
@@ -882,7 +1170,22 @@ def IsConst (p : MvPoly n R cmp) : Prop := p.vars = []
 squarefree in `K[x₁, …, xₙ]` for `K` the fraction field of `R`. Over a
 field this is the ring-theoretic predicate; over `ℤ` it is weaker, and
 deliberately so. -/
-def Squarefree (p : MvPoly n R cmp) : Prop := ∀ d, d * d ∣ p → IsConst d
+def Squarefree (p : MvPoly n R cmp) : Prop :=
+  p ≠ 0 ∧ ∀ d, d * d ∣ p → IsConst d
+
+/-- Mathlib-free characteristic zero: every positive natural remains
+nonzero after casting to `R`. -/
+class NatNoZero (R : Type u) [Zero R] [NatCast R] : Prop where
+  natCast_ne_zero : ∀ m : Nat, 0 < m → (m : R) ≠ 0
+
+/-- The fraction field used to interpret the relative squarefree predicate
+is perfect. Instances cover characteristic zero fields and finite fields. -/
+class PerfectFrac (R : Type u) [Lean.Grind.CommRing R] [Div R]
+    [ExactDivLaws R] [Fraction.NonzeroOne R] : Prop where
+  charZeroOrPerfect :
+    (∀ m : Nat, 0 < m → (m : Fraction R) ≠ 0) ∨
+    ∃ p : Nat, Nat.Prime p ∧ (p : Fraction R) = 0 ∧
+      ∀ a : Fraction R, ∃ b : Fraction R, b ^ p = a
 
 structure SqfFactor (n : Nat) (R : Type u) (cmp : Mono n → Mono n → Ordering) where
   factor       : MvPoly n R cmp
@@ -892,8 +1195,8 @@ structure SqfDecomp (n : Nat) (R : Type u) (cmp : Mono n → Mono n → Ordering
   content : R
   factors : List (SqfFactor n R cmp)
 
-def sqfDecomp (p : MvPoly n R cmp) : SqfDecomp n R cmp
-def radical (p : MvPoly n R cmp) : MvPoly n R cmp
+def sqfDecomp [NatNoZero R] (p : MvPoly n R cmp) : SqfDecomp n R cmp
+def radical [NatNoZero R] (p : MvPoly n R cmp) : MvPoly n R cmp
 def isSquarefree (p : MvPoly n R cmp) : Bool
 ```
 
@@ -919,12 +1222,16 @@ p is squarefree  ↔  gcd(p, ∂₁p, …, ∂ₙp) is a unit
 
 in **both** directions and in **both** characteristics, using all `n`
 partial derivatives rather than one. The forward direction is immediate.
-For the converse, suppose an irreducible `d` divides the gcd. From
-`p = d · e` with `d ∤ e` and `d ∣ ∂ⱼp = ∂ⱼd · e + d · ∂ⱼe` it follows
-that `d ∣ ∂ⱼd`, so `∂ⱼd = 0` by degree, for every `j`. In characteristic
-zero that makes `d` constant. In characteristic `p` it makes `d` a
-polynomial in the `p`-th powers of the variables, hence a `p`-th power
-over a perfect coefficient field, contradicting irreducibility.
+For the converse, let a nonunit `d` divide both the input and all its
+derivatives, and write the input as `d · e`. If `d` and `e` have a
+nonunit common divisor `k`, then `k²` divides the input and it is not
+squarefree. Otherwise `CoprimeCancelLaws` applied to
+`d ∣ ∂ⱼd · e` gives `d ∣ ∂ⱼd`, so every `∂ⱼd` is zero by degree. In
+characteristic zero that makes `d` constant, a contradiction. In perfect
+characteristic `ℓ`, it makes `d = q^ℓ`; a nonunit `q` then has `q²`
+dividing the input. This factor-free proof uses the Gauss/common-factor
+layer already scheduled and does not assume a UFD or irreducible
+factorization API.
 
 Over `ℤ` the test is applied to the primitive part, and that is exactly
 what the CAS convention above buys. For `p = 2x`, `gcd(2x, 2) = 2` is not
@@ -943,13 +1250,15 @@ def isSquarefree p := GcdOps.isUnit (gcdList (primPart p :: derivatives (primPar
 `gcd(p, ∂₁p, …, ∂ₙp) = ∏ dᵢ^(eᵢ - 1)` requires the characteristic not to
 divide any `eᵢ`. In characteristic `3`, `p = x³` has all derivatives zero,
 so the gcd is `x³` and the formula returns `1` instead of `x`. The
-signature carries the hypothesis, and the positive-characteristic radical
-goes through the decomposition instead.
+signature carries the hypothesis. No positive-characteristic `radical`
+operation is exposed until the future decomposition is specified.
 
 ```lean
-theorem isSquarefree_iff [PerfectFrac R] : isSquarefree p = true ↔ Squarefree (primPart p)
-theorem radical_squarefree [NatNoZero R] : Squarefree (radical p)
-theorem radical_dvd : radical p ∣ p
+theorem isSquarefree_iff [PerfectFrac R] :
+    isSquarefree p = true ↔ Squarefree p
+theorem radical_squarefree [NatNoZero R] (hp : p ≠ 0) : Squarefree (radical p)
+theorem radical_dvd [NatNoZero R] : radical p ∣ p
+theorem radical_zero [NatNoZero R] : radical (0 : MvPoly n R cmp) = 0
 ```
 
 `NatNoZero R` asserts `(m : R) ≠ 0` for `0 < m`, which is characteristic
@@ -1001,55 +1310,22 @@ every other repeated factor is inside the content and is found one
 variable down. The two families are automatically coprime, so the merged
 decomposition needs no further gcd.
 
-### The decomposition in positive characteristic
+### Future extension: decomposition in positive characteristic
 
-This case is harder than the characteristic-zero one in a way that is
-not obvious, and the natural generalisation of it is wrong. Over
-`F_p[x, y]`, `f = x^p + y` has
-`∂f/∂x = 0` while `∂f/∂y = 1`. It is squarefree and it is not a `p`-th
-power, so "when every derivative vanishes take the `p`-th root" never
-fires, yet a Yun run in main variable `x` divides by a zero derivative.
-Choosing a variable whose derivative is nonzero fixes that example and
-not the general case: `(x^p + y)² · (x + y^p)²` needs `y` for the first
-factor and `x` for the second, and no single main variable finds both.
+Full positive-characteristic decomposition is deliberately not part of
+this library version. A one-variable Yun generalisation is unsound for
+multivariate input: over `F_p[x,y]`, `(x^p+y)² · (x+y^p)²` has repeated
+factors that require different derivative variables, and the recursive
+coefficient ring is not perfect even when the ground field is. The core
+therefore exposes only `isSquarefree` in perfect characteristic and keeps
+`sqfDecomp` and `radical` behind `NatNoZero`.
 
-What makes this hard is not the perfectness of the ground field. It is
-that the Yun recursion in `xᵢ` works over the coefficient ring
-`F_q[x₁, …, x̂ᵢ, …, xₙ]`, and that ring is **not** perfect, so the
-univariate characteristic-`p` fix (when the derivative vanishes, take a
-`p`-th root) does not apply level by level. The relevant primitive is
-not a `p`-th root at all:
-
-```lean
-/-- Divide every `xᵢ`-exponent by `p`, when all of them are divisible by
-`p`. This inverts the substitution `xᵢ ↦ xᵢ^p`; it is not a `p`-th root,
-since the coefficients are untouched. -/
-def pthRootIn? (i : Fin n) (p : Nat) (f : MvPoly n R cmp) : Option (MvPoly n R cmp)
-
-/-- A genuine `p`-th root, available only when the coefficients have
-`p`-th roots. -/
-class PerfectOps (R : Type u) (p : Nat) : Type u where
-  pthRoot : R → R
-
-class LawfulPerfectOps (R : Type u) (p : Nat) [PerfectOps R p] : Prop where
-  prime      : Nat.Prime p
-  pow_pthRoot : ∀ a : R, (PerfectOps.pthRoot a) ^ p = a
-  char       : ∀ a : R, p • a = 0
-```
-
-`ZMod64 p` satisfies these with `pthRoot = id` by Fermat's little
-theorem. `GFq p k` satisfies them with `a ↦ a^(p^(k-1))`, which needs the
-cardinality and so is an instance for that type rather than a formula in
-the generic class.
-
-The algorithm is scheduled for milestone 5 and should follow an
-established treatment rather than an invented one. Gianni and Trager,
-"Square-free algorithms in positive characteristic" (AAECC 7, 1996), is
-the standard reference and covers exactly the non-perfect coefficient
-ring case that the naive recursion gets wrong. Until it is implemented,
-`sqfDecomp` carries the characteristic-zero hypothesis and
-`isSquarefree`, whose correctness argument above covers perfect positive
-characteristic, is what the positive-characteristic consumers get.
+A later amendment should follow Gianni and Trager, "Square-free algorithms
+in positive characteristic" (AAECC 7, 1996), and must specify the
+multi-derivative partition, coefficient Frobenius roots, termination, and
+merge contracts before adding an API or milestone. `pthRootIn?`,
+`PerfectOps`, and positive-characteristic decomposition files are not
+reserved by this SPEC.
 
 ### Contract theorems
 
@@ -1061,7 +1337,8 @@ theorem sqfDecomp_squarefree : ∀ f ∈ (sqfDecomp p).factors, Squarefree f.fac
 theorem sqfDecomp_primitive  : ∀ f ∈ (sqfDecomp p).factors, content f.factor = 1
 theorem sqfDecomp_coprime :
     ∀ f ∈ (sqfDecomp p).factors, ∀ g ∈ (sqfDecomp p).factors,
-      f.multiplicity ≠ g.multiplicity → IsCoprime f.factor g.factor
+      f.multiplicity ≠ g.multiplicity →
+        ∀ d, d ∣ f.factor → d ∣ g.factor → GcdOps.isUnit d = true
 theorem sqfDecomp_multiplicity_pos, sqfDecomp_multiplicity_sorted
 theorem sqfDecomp_nonconstant :
     ∀ f ∈ (sqfDecomp p).factors, ¬ IsConst f.factor
@@ -1073,8 +1350,9 @@ makes the content field carry all the coefficient information. The zero
 input returns `⟨0, []⟩`.
 
 There is no `sqfDecomp_content_isUnit`. Uniqueness of the decomposition
-up to units is a companion theorem, for the same reason maximality of the
-gcd is.
+up to units is a companion theorem because it is most naturally stated
+through Mathlib's unique-factorization API; gcd maximality itself is
+already Mathlib-free.
 
 ## Complexity
 
@@ -1084,8 +1362,8 @@ they omit the cost of each probe. A full cost model would have to
 multiply through by the univariate gcd, interpolation, and CRT costs at
 every level, and this SPEC does not attempt one.
 
-Parameters: `n` variables, `t` terms in the larger input, `s` terms in
-the gcd, `d` the maximum degree in any one variable, `D = ∏(dᵢ + 1)` the
+Parameters: `n` variables, `t` terms in the larger input, `d` the maximum
+degree in any one variable, `D = ∏(dᵢ + 1)` the
 dense size, and `M` the maximum multiplicity in a squarefree
 decomposition.
 
@@ -1096,31 +1374,37 @@ decomposition.
 | `toUnivariate` | partition by the exponent of `xᵢ` | `O(n · t log t)` machine ops |
 | `contentIn` | `d` gcds on polynomials of `t/d` terms | `d` recursive gcds |
 | `divExact?` | leading-monomial cancellation, early failure | `O(n · t_q · t_g · log)` machine ops |
-| `isCoprime` | one image gcd per variable | `≤ n` image gcds |
+| `tryCoprimeCert?` | one image gcd per variable | `≤ n` image gcds |
+| `isCoprime` | exact checked gcd followed by a unit test | dispatcher-dependent |
 | heuristic gcd | one `Int.gcd`, integers of `O(t · log ξ · ∏(dⱼ+1))` bits | 1 integer gcd |
 | Brown | one image gcd per evaluation point, per prime | `O(D)` image gcds |
-| Zippel | images plus Vandermonde solves | `O(n · s · d)` image gcds, `O(s²)` per solve |
-| PRS | subresultant chain, primitive part once | no useful bound |
+| extended PRS | subresultant chain, primitive part once | no useful bound |
 | `sqfDecomp` | one gcd per level per variable | `O(n · M)` gcds |
 | `radical` | gcd of `p` and `n` derivatives | `n` gcds |
 
 The table makes the dispatch order argument: route 1 costs at most `n`
 probes and settles the most common input, route 2 costs one and settles
-small inputs, route 3 is bounded by the dense size, route 4 by the term
-count, and route 5 has no bound and settles the rest.
+small inputs, route 3 is bounded by the dense size, and route 4 has no
+useful bound and settles the rest.
 
 ## Kernel exposure
 
-The kernel replay closure is `checkGcd` and what it calls: polynomial
-multiplication and equality from hex-mv-poly, `divExact?`, `toUnivariate`,
-`contentIn`, `mapCoeffs`, `partialEval`, and `FpPoly` multiplication,
-addition, and equality. Each is `@[expose]`, and a downstream module
-carries a `decide +kernel` test that fails if any of them stops reducing.
+The kernel replay closure is `checkGcd`, `checkCoprime`, `checkContent`,
+and what they call: polynomial multiplication and equality from
+hex-mv-poly, `toUnivariate`, `imageAt`, `constIn`, `mapCoeffs`, `eval`,
+and `FpPoly` multiplication, addition, degree, and equality. It does not
+contain `contentIn`, `gcd`, any `GcdProducer`, or `divExact?`; nested
+`ContentCert` and `GcdCert` values carry all producer results needed for
+replay. The closure also includes `polyIsUnit`, `polyNormUnit`,
+`polyNormalize`, base `GcdOps.isUnit` / `normUnit`, and the coefficient
+equality decision (`BEq` with `LawfulBEq`). `ratLift` additionally reaches
+the `scalarContent` fold and coefficientwise `Int → Rat` map, neither of
+which calls a multivariate producer. Each operation in the closure is
+`@[expose]`.
 
-Nothing in routes 1 through 5 is in that closure. The modular machinery,
-the interpolation, the Vandermonde solves, and the subresultant chain are
-search, they never appear in a proof term, and they should not pay for
-exposure.
+Nothing in routes 1 through 4 is in that closure. Prime search,
+interpolation, CRT, and the extended subresultant chain are search; they
+never appear in a proof term and should not pay for exposure.
 
 The `cancel` tactic narrows the closure further: its soundness needs the
 two cofactor identities and the denominator hypothesis, so the
@@ -1147,19 +1431,21 @@ Fixtures follow [SPEC/testing.md](../testing.md). A Lean driver at
 "HexMvGcd|hexmvgcd_emit_fixtures|scripts/oracle/mvgcd_sympy.py|conformance-fixtures/HexMvGcd/mvgcd.jsonl"
 ```
 
-Two fixture kinds. `mvgcd` carries the arity, the comparator name, the
+Three fixture kinds. `mvgcd` carries the arity, the comparator name, the
 coefficient domain, and two term lists, and its result records the gcd
 and both cofactors. `mvsqf` carries one term list and its result records
-the content and the `(factor, multiplicity)` list. Both reuse the
+the content and the `(factor, multiplicity)` list. `mvsquarefree` records
+the exact Boolean decision and is the only positive-characteristic
+squarefree fixture kind. All three reuse the
 `(exponent vector, coefficient)` encoding hex-mv-poly's `mvpoly` fixture
 kind defines, so one fixture parser serves all three.
 
 **The oracle suite alone cannot catch the bugs this library is most
 likely to have.** Every route's candidate goes through `checkGcd`, and a
-rejected candidate falls through to route 5, which returns the right
+rejected candidate falls through to route 4, which returns the right
 answer. So an end-to-end fixture passes even if Brown's
-leading-coefficient correction is inverted, its bad-point test never
-fires, and Zippel is entirely broken. Oracle fixtures check the public
+leading-coefficient correction is inverted or its bad-point test never
+fires. Oracle fixtures check the public
 answer; they do not check that any route worked.
 
 The suite therefore has two halves.
@@ -1194,21 +1480,21 @@ present:
 - **Content cases over `ℤ` specifically**: `2x`, `12x`, `6`, and
   `4x² + 4x`, which are the inputs that distinguish this library's
   squarefree convention from the ring-theoretic predicate.
-- Positive characteristic: `x^p + y` (squarefree, one vanishing
-  derivative, not a `p`-th power), `(x^p + y)²`, `g^p`, and
-  `(x^p+y)² · (x+y^p)²`, which is the input no single main variable
-  handles.
+- Positive-characteristic `mvsquarefree` cases: `x^p + y` (squarefree,
+  one vanishing derivative, not a `p`-th power), `(x^p + y)²`, `g^p`,
+  and `(x^p+y)² · (x+y^p)²`. No positive-characteristic `mvsqf` fixture
+  exists until that decomposition is specified.
 - Arity zero and arity one, where the answers must agree with `Int.gcd`
   and with hex-poly's univariate `gcd`. The arity-one agreement is
   checked in Lean rather than against the oracle, since both sides are
   ours.
 
 **Oracle choice.** SymPy's `gcd`, `cofactors`, `sqf_list`, and `sqf_part`
-cover the surface over `ℤ` and `ℚ`, and its `modulus=` argument covers
-`GF(p)`, which the positive-characteristic cases above require. Extension
+cover the decomposition surface over `ℤ` and `ℚ`, and its `modulus=`
+argument covers the positive-characteristic Boolean cases above. Extension
 fields `F_q` are not covered by SymPy and are out of scope for the
-oracle; the `GFq` cases are checked in Lean against hex-poly-fp's
-univariate decomposition instead. python-flint's `fmpz_mpoly.gcd` is a
+oracle; `GFq` Boolean cases are checked in Lean, with their arity-one
+specializations compared to hex-poly-fp. python-flint's `fmpz_mpoly.gcd` is a
 stronger implementation but does not expose cofactors or squarefree
 decomposition uniformly, so it appears below as a performance comparator
 rather than as the oracle.
@@ -1221,21 +1507,25 @@ oracle's normalisation conventions.
 ## Benchmarking
 
 Per [SPEC/benchmarking.md](../benchmarking.md), with drivers at
-`bench/HexMvGcd/Bench.lean`. Native only. There is no kernel suite: the
-kernel path here is certificate checking, which hex-mv-poly's kernel
-suite already measures on the same operations.
+`bench/HexMvGcd/Bench.lean`. Native only for throughput. A separate
+`bench/HexMvGcd/Kernel.lean` suite replays valid and one-field-corrupted
+certificates through `by decide +kernel`: base, modular split,
+`splitBezout`, `ratLift`, nested content folds, zero, and unit cases. Hex-mv-poly's
+kernel suite cannot substitute for this recursive checker coverage.
 
-Families, chosen so that each isolates one route:
+Families chosen to isolate each core route and to expose the known sparse
+gap:
 
 - **Coprime pairs**, 2 to 8 variables, dense and sparse. Decides whether
   route 1 works. The required property is that the time is a small
   multiple of the time to evaluate the inputs `n` times. A regression
   means an interpolation is running when it should not.
 - **Dense gcds**, 3 to 5 variables, degree 5 to 20 in each. Route 3.
-- **Sparse gcds**, 5 to 12 variables, high degree, few terms. Route 4,
-  and the family where the dense route's `O(D)` cost is catastrophic.
+- **Sparse stress**, 5 to 12 variables, high degree, few terms. This
+  records the known gap while no sparse route is specified; it does not
+  claim to isolate a route.
 - **Swell cases**, small inputs whose subresultant remainder sequence has
-  enormous coefficients. Route 5, and the argument for having the others.
+  enormous coefficients. Route 4, and the argument for having the others.
 - **Rational coefficients**, the same inputs over `ℚ`, checking the
   clear-denominators step happens. Times should track the `ℤ` family.
 - **Squarefree decomposition**, multiplicity patterns `1`, `1..5`, `7`,
@@ -1246,8 +1536,9 @@ Families, chosen so that each isolates one route:
 
 **Comparators.** FLINT's `fmpz_mpoly_gcd` is `informational`. It selects
 among Brown, Zippel, a sparse Hensel route, and subresultants with tuned
-crossovers, and this library specifies three of those four, so a required
-ratio would be a check on a route that does not exist. The written-down
+crossovers, while this library specifies Brown and the subresultant
+fallback. A required broad ratio would therefore be a check on routes that
+do not exist. The written-down
 expectation is therefore narrow: on the **coprime**
 family the ratio should be within a small constant, since both sides do
 one evaluation and one univariate gcd per variable, and a large ratio
@@ -1258,27 +1549,24 @@ is not a performance comparator.
 
 ## The Mathlib layer
 
-`hex-mv-gcd-mathlib` discharges the hypothesis first, then transports.
-Writing `e` for hex-mv-poly's
+`hex-mv-gcd-mathlib` transports the Mathlib-free soundness and maximality
+theorems; it does not supply a missing gcd-domain hypothesis. Writing `e`
+for hex-mv-poly's
 `equiv : MvPoly n R cmp ≃+* MvPolynomial (Fin n) R`:
 
 ```lean
-instance : LawfulContent n Int cmp        -- from MvPolynomial.uniqueFactorizationMonoid
-instance : LawfulContent n Rat cmp
-
 theorem gcd_dvd_left  : e (gcd f h) ∣ e f
 theorem gcd_dvd_right : e (gcd f h) ∣ e h
 theorem dvd_gcd (d) : d ∣ e f → d ∣ e h → d ∣ e (gcd f h)
-
-theorem coprimeCofactors_greatest (hc : CoprimeCofactors f h g) (d) :
-    d ∣ e f → d ∣ e h → d ∣ e g
+theorem gcd_normalized : normalize (e (gcd f h)) = e (gcd f h)
 
 theorem contentIn_dvd_coeff (k) :
     e (contentIn i cmp' p) ∣ e ((toUnivariate i cmp' p).coeff k)
 theorem dvd_contentIn (d) :
     (∀ k, d ∣ e ((toUnivariate i cmp' p).coeff k)) → d ∣ e (contentIn i cmp' p)
 
-theorem squarefree_spec : Squarefree p ↔ _root_.Squarefree (e (primPart p))
+theorem squarefree_spec :
+    Hex.MvPoly.Squarefree p ↔ _root_.Squarefree (e (primPart p))
 theorem sqfDecomp_unique : ...   -- up to units, from unique factorization
 ```
 
@@ -1286,13 +1574,12 @@ Mathlib has `Polynomial.content` for `R[X]` over a `NormalizedGCDMonoid`
 and no multivariate counterpart, so the content correspondence is the two
 divisibility facts rather than an equation between named contents.
 
-`dvd_gcd` is the maximality statement, and its proof consumes
-`MvPolynomial.uniqueFactorizationMonoid`, the instance Mathlib supplies
-for `MvPolynomial σ D` with `D` a unique factorization domain. Mathlib
-has no `NormalizedGCDMonoid (MvPolynomial σ D)` instance, so the
-statements are in terms of divisibility, and the `Associated` version is
-derived from the three divisibility facts wherever a caller has such an
-instance in scope.
+`dvd_gcd` is proved in the core and merely mapped through `e`. Mathlib's
+`MvPolynomial.uniqueFactorizationMonoid` is used for squarefree
+correspondence and decomposition uniqueness, not to repair gcd
+maximality. Mathlib has no `NormalizedGCDMonoid (MvPolynomial σ D)`
+instance, so the transported gcd statements remain in terms of
+divisibility; an `Associated` version follows from the three facts.
 
 `squarefree_spec` relates this library's relative predicate to Mathlib's
 `Squarefree` **on the primitive part**, which is the honest statement.
@@ -1301,14 +1588,14 @@ The decidability instances follow that split:
 ```lean
 instance : Decidable (a ∣ b)          -- MvPolynomial (Fin n) ℤ
 instance : Decidable (Squarefree p)   -- MvPolynomial (Fin n) ℚ
+instance : Decidable (Squarefree p)   -- MvPolynomial (Fin n) ℤ
 ```
 
 Divisibility is decidable over `ℤ` because it is exactly `divExact?`.
-Squarefreeness is stated over `ℚ`, where the content is a unit and the
-relative and ring-theoretic predicates agree. The corresponding `ℤ`
-instance is a question about the squarefreeness of the integer content.
-Mathlib decides that (`DecidablePred (Squarefree : ℕ → Prop)`), so the
-`ℤ` instance is available here after all; what
+Over `ℚ` the content is a unit and the relative and ring-theoretic
+predicates agree. Over `ℤ`, the instance combines the checked primitive
+part with Mathlib's decision procedure for squarefreeness of the integer
+content (`DecidablePred (Squarefree : ℕ → Prop)`). What
 [hex-int-factor](hex-int-factor.md) adds is the square divisor and the
 squarefree part as witnesses, which the decision procedure does not
 produce.
@@ -1320,60 +1607,73 @@ public semantic operation: `gcd`, `cofactors`, `contentIn`, `primPartIn`,
 
 ## Milestones
 
-1. **Coefficient interface, exact division, and the recursive view.**
-   `GcdOps`, `BezoutOps`, `LawfulGcdOps`, `CoeffHom`, `divMod`,
+1. **Prerequisite and coefficient kernel.** Land
+   `Hex.Resultant.subresultantChainExt` with its transformation and exact
+   division proofs. Then implement `GcdOps`, `BezoutOps`,
+   `LawfulGcdOps`, `LawfulBezoutOps`, `CoeffHom`, `divMod`,
    `divExact?`, the `Dvd` / `Div` / `ExactDivLaws` instances, `constIn`,
-   `monoContent`, `contentIn`, `primPartIn`, and Gauss's lemma. The `Lean.Grind.CommRing` tower and `mapCoeffs` are already in
+   `polyIsUnit`, `polyNormUnit`, `polyNormalize`, `scalarContent`, and the
+   base coefficient instances. The `Lean.Grind.CommRing` tower and
+   `mapCoeffs` are already in
    hex-mv-poly, so hex-resultant's chain runs over `MvPoly` with its
    correctness theorems applying as soon as `Div` and `ExactDivLaws`
    land here.
 
-2. **The certificate and the fallback.** `CoprimeCert`, `checkCoprime`,
-   `GcdCert`, `checkGcd`, `LawfulContent`, `checkGcd_sound`, and route 5. A correct but slow `gcd`, with
-   `gcdCert_checks` proved. Squarefree decomposition in characteristic
-   zero, `radical`, and `isSquarefree` land here, since they need only a
-   working gcd.
+2. **Proof-only Gauss and common-factor algebra.** Starting from
+   `GcdDomainLaws R`, implement the finite existential coefficient-gcd
+   fold, fraction-field polynomial embedding, primitive descent, and the
+   arity lifts of `GcdDomainLaws` and `CoprimeCancelLaws`. This milestone
+   defines no executable multivariate content or gcd, contains no checker,
+   and calls no candidate route; its end theorem is exactly the
+   common-factor step maximality will consume.
 
-3. **The fast paths.** Routes 0, 1, and 2. This is where the library
-   becomes usable by `cancel`, and it needs no new proofs.
+3. **Certificates and the complete fallback.** `ContentCert`,
+   `CoprimeCert` (including `ratLift`), `GcdCert`, all three checkers, the
+   executable `monoContent` / content / primitive-part operations and
+   their Gauss laws, the simultaneous soundness induction, and route 4.
+   End with a correct deterministic producer,
+   the public gcd/cofactor/list/lcm contracts, `gcdCert_checks`, and the
+   kernel replay suite. This is the first usable core release.
 
-4. **Brown.** Route 3, with leading-coefficient correction and the point
+4. **Characteristic-zero squarefree operations.** Yun with content
+   recursion, `radical`, `isSquarefree`, their contracts, and oracle
+   fixtures. Positive-characteristic decomposition remains outside scope.
+
+5. **The fast paths.** Routes 0, 1, and 2, with explicit `GcdConfig` and
+   concrete producers. This is where `cancel` becomes practical on its
+   dominant coprime workload, and it needs no new soundness proofs.
+
+6. **Brown.** Route 3, with leading-coefficient correction and the point
    and prime handling. The route-level tests for those traps are written
    before the code.
 
-5. **Zippel and positive characteristic.** Route 4 with term bounds and
-   diversification, `pthRootIn?`, `PerfectOps`, and the Gianni-Trager
-   decomposition.
-
-6. **The companion.** `LawfulContent` instances, transport, maximality,
-   uniqueness, and the two decidability instances. Begins as soon as
-   milestone 2 is done, in parallel with 3 through 5. Anything that needs
-   the unconditional maximality theorem, including `cancel`, waits for
-   this milestone rather than for milestone 2.
+7. **The companion.** Transport, squarefree correspondence, uniqueness,
+   and the divisibility plus `ℚ` and `ℤ` squarefree decidability instances.
+   It can begin after milestone 3; gcd maximality is already available in
+   the Mathlib-free library.
 
 ## File organisation
 
 ```
 HexMvGcd/
-  Coeff.lean        -- GcdOps, BezoutOps, LawfulGcdOps, CoeffHom, base instances
-  Divide.lean       -- divMod, divExact?, Dvd/Div/ExactDivLaws, Grind ring tower
+  Coeff.lean        -- GcdOps/BezoutOps and lawful classes, CoeffHom, instances
+  Divide.lean       -- divMod, divExact?, Dvd/Div/ExactDivLaws
   View.lean         -- constIn and the degree helpers on the univariate view
-  Content.lean      -- monoContent, content, contentIn, primPartIn, Gauss
-  Cert.lean         -- CoprimeCert, checkCoprime, GcdCert, checkGcd, LawfulContent
-  Prs.lean          -- the subresultant fallback, route 5
-  Fast.lean         -- routes 0 and 1, isCoprime
+  Normalize.lean    -- polyIsUnit, polyNormUnit, polyNormalize, scalarContent
+  Gauss.lean        -- proof-only GcdDomainLaws lift and primitive descent
+  Cert.lean         -- three certificate types, ratLift, checker soundness
+  Content.lean      -- certificate-producing content/primitive parts and Gauss laws
+  Prs.lean          -- the extended-subresultant fallback, route 4
+  Fast.lean         -- routes 0 and 1, tryCoprimeCert?
   Heu.lean          -- route 2, the Kronecker substitution and its budget
   Brown.lean        -- route 3
-  Zippel.lean       -- route 4
-  Gcd.lean          -- the dispatch, gcd, cofactors, gcdList, lcm, GcdOps instance
+  Gcd.lean          -- config/backends, dispatch, public API, GcdOps instance
   Squarefree.lean   -- Yun, the content recursion, radical, isSquarefree
-  PthRoot.lean      -- PerfectOps, pthRootIn?, the positive-characteristic branch
 HexMvGcd.lean
 HexMvGcdMathlib/
-  Content.lean      -- the LawfulContent instances
-  Gcd.lean          -- divisibility, maximality, the Associated statements
+  Gcd.lean          -- transport of divisibility and Associated statements
   Squarefree.lean   -- Squarefree correspondence and uniqueness
-  Decide.lean       -- Decidable (a ∣ b), Decidable (Squarefree p)
+  Decide.lean       -- divisibility and ℚ/ℤ squarefree decisions
 HexMvGcdMathlib.lean
 ```
 
@@ -1381,29 +1681,37 @@ HexMvGcdMathlib.lean
 
 ```yaml
   HexMvGcd:
-    deps: [HexMvPoly, HexPoly, HexPolyFp, HexResultant, HexArith, HexModArith, HexPolyZGcd]
+    deps: [HexBasic, HexMvPoly, HexPoly, HexPolyFp, HexResultant, HexArith, HexModArith, HexModular, HexPolyZGcd]
     mathlib: false
     done_through: 0
-    status: draft
+    status: planned
   HexMvGcdMathlib:
-    deps: [HexMvGcd, HexMvPolyMathlib, HexResultantMathlib, HexPolyMathlib]
+    deps: [HexMvGcd, HexMvPolyMathlib]
     mathlib: true
     done_through: 0
-    status: draft
+    status: planned
 ```
 
 `HexPolyZGcd` is the arity-one case, called rather than reimplemented;
 see "Scope". `HexPolyFp` and `HexModArith` are for the univariate images
 over `F_p`.
-`HexResultant` is for route 5 and for the `ExactDivLaws` interface.
+`HexBasic` will supply the explicitly threaded `Rand` state specified in
+[hex-finite-field](hex-finite-field.md); that file is not landed yet.
+`HexModular` supplies CRT and reconstruction. `HexModArith` owns the
+bundled bounded-prime stream.
+`HexResultant` is for route 4 and for the `ExactDivLaws` interface.
 `HexArith` is for the integer gcd and the extended Euclidean algorithm.
 `HexPoly` comes in through `DensePoly`, which `toUnivariate` returns.
 
-Every dependency is `active`, `HexMvPoly` and `HexMvPolyMathlib` at
-`done_through: 7`, so nothing here waits on another library's status.
-The two new entries stay `draft` until the three additions under
-"Additions needed in hex-mv-poly" have landed, since without them
-milestone 1 cannot start.
+`HexMvPoly`, `HexMvPolyMathlib`, and `HexResultant` are active.
+`HexModular` and `HexPolyZGcd` are planned and not yet registered in
+`libraries.yml`; their entries must be added and implemented before the
+block above can be applied. Three shared additions are also unlanded:
+`HexBasic.Rand`, the bundled modulus supply in `HexModArith`, and the
+extended-chain amendment to `HexResultant`.
+The new entries are nevertheless `planned`, not `draft`, because this SPEC
+fixes their required API and milestones; registration waits until the
+dependency entries exist.
 
 ## Why gcd and squarefree decomposition are one library
 
@@ -1413,26 +1721,13 @@ out would produce a library with one algorithm, the same dependencies,
 and a second round of release plumbing.
 
 The natural seam, if one appears, is not between gcd and squarefree
-decomposition. It is between the checker and the routes: `Cert.lean`,
-`Divide.lean`, and `Content.lean` carry all the proofs and none of the
-search, and `Brown.lean` and `Zippel.lean` carry all the search and none
-of the proofs.
+decomposition. It is between verification and fast routes:
+`Normalize.lean`, `Gauss.lean`, `Cert.lean`, `Divide.lean`, and
+`Content.lean` carry the verification path and no heuristic search;
+`Heu.lean` and `Brown.lean` carry fast search and no soundness proofs.
 
 ## Open questions
 
-- **Whether `LawfulContent` should be proved Mathlib-free.** The SPEC
-  takes it as a hypothesis discharged by the companion, which keeps
-  milestone 2 small at the cost of leaving Mathlib-free consumers with an
-  undischargeable hypothesis. Proving it by induction on the
-  arity is the alternative, and it amounts to proving
-  `MvPoly n R cmp` is a gcd domain from scratch. Worth revisiting if a
-  Mathlib-free consumer appears; nothing currently on the roadmap is one.
-- **Which coprimality certificate to make primary.** The modular witness
-  is primary above, because its producer is the computation the routes
-  already run and its checker touches only small univariate polynomials.
-  `splitBezout` needs no prime and no homomorphism, so its soundness
-  proof is shorter, but its producer needs the hex-resultant amendment.
-  Both constructors are in the type so the decision can be measured.
 - **Whether an order-independent normalisation is worth defining.**
   Fixing the sign from the lex-least monomial rather than the
   `cmp`-leading one would make `gcd_reorder` an equality over `ℤ`. It
@@ -1441,11 +1736,10 @@ of the proofs.
 - **Whether `cancel` needs a reduced kernel closure.** Checking only the
   cofactor identities in the kernel shrinks the proof term. Whether it
   matters depends on certificate sizes in practice.
-- **The crossover between routes 3 and 4**, and whether a sparse Hensel
-  route should be added as route 6. Both are measurements. Until they are
-  taken, the dispatch tries route 3 first for at most four variables and
-  route 4 first above that, and the FLINT comparison is scoped to the
-  families where the routes correspond.
+- **Which sparse algorithm merits a later amendment.** Zippel and sparse
+  Hensel lifting have different prerequisites and failure policies. The
+  sparse stress benchmarks measure the gap, but this SPEC intentionally
+  does not choose an underspecified route.
 - **Sparse exponent vectors.** hex-mv-poly leaves open whether a large
   arity with few active variables wants a sparse `Mono`. The sparse gcd
   family here, at 12 variables, is one of the two measurements that would

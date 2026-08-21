@@ -421,6 +421,33 @@ quotient by `lc(f)`. This correction is essential in positive characteristic,
 where the derivative's actual degree can fall below `n - 1`; with it the
 quotient is exact over every stated exact-division domain.
 
+## Planned extended chain for gcd consumers
+
+`hex-poly-z-gcd` and `hex-mv-gcd` both need the transformation that produces
+each Brown entry, not only the entries themselves. The existing worker calls
+`pseudoDivMod` at `HexResultant/Subresultant.lean:616` and retains only the
+remainder, so this is a real extension rather than an accessor:
+
+```lean
+/-- `(uₖ, vₖ, Sₖ)` for every stored Brown entry, with
+`uₖ * f + vₖ * g = Sₖ`. -/
+def subresultantChainExt [Zero R] [DecidableEq R] [One R] [Add R] [Sub R]
+    [Mul R] [Div R] (f g : DensePoly R) :
+    Array (DensePoly R × DensePoly R × DensePoly R)
+```
+
+The extension uses the unchanged Brown remainder recurrence and accumulates
+the two transformation cofactors through every pseudo-scaling and exact
+scalar division. Its correctness theorem requires `Lean.Grind.CommRing R`
+and `ExactDivLaws R`, proves the displayed identity for every entry, and
+proves the cofactor numerators are divisible by each Brown scalar before the
+executable division. Projection of the third components equals
+`subresultantChain f g`, including input ordering and zero conventions.
+
+This API belongs here so the two gcd libraries share one recurrence and one
+proof. It is a prerequisite for their complete `splitBezout` fallback; it
+does not alter the current resultant or discriminant contracts.
+
 ## File organisation
 
 - `HexResultant/ExactDiv.lean`: `ExactDivLaws`, the total exact-division
