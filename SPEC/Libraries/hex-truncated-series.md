@@ -151,7 +151,7 @@ structure TSeries (R : Type u) (n : Nat) where
 
 namespace TSeries
 
-variable {R : Type u} {n : Nat} [Lean.Grind.CommRing R] [DecidableEq R]
+variable {R : Type u} {n : Nat} [Lean.Grind.CommRing R]
 
 /-- The `i`th coefficient, and `0` for `i ≥ n`. Every theorem below is
 stated with this total reading rather than with a `Fin n` index. -/
@@ -170,8 +170,18 @@ index below the precision. -/
 @[ext] theorem ext {a b : TSeries R n} (h : ∀ i, i < n → a.coeff i = b.coeff i) :
     a = b
 
-instance : DecidableEq (TSeries R n)
+instance [DecidableEq R] : DecidableEq (TSeries R n)
 ```
+
+**`[DecidableEq R]` is not a global variable.** `coeff`, `ofFn`, the
+ring operations, the precision changes, and every witness-taking
+algorithm (`invOfUnit`, `sqrtOfRoot`, `revOfUnit`, `exp`, `log`, `comp`)
+decide no coefficient equality and do not take it. It appears on the
+`DecidableEq (TSeries R n)` instance above and on the operations that
+test a coefficient: `valuation?`, `divXPow?`, `comp?`, and the `Option`
+forms that consult `UnitOps`. Declaring it once at the top of the
+library would be convenient and would quietly exclude coefficient rings
+without decidable equality from the whole interface.
 
 `coeff` returning `0` above the precision is a convenience for stating
 theorems, not a claim about the series. The distinction matters and is
@@ -252,9 +262,20 @@ theorem coeff_mulUpTo (m) (a b) (i) (hi : i < n) :
 ```
 
 `mulUpTo n = (· * ·)` up to the propositional equality above, and
-`mulUpTo` is the single place a later fast multiplication is installed.
-That is the reason the iterations are written against it rather than
-against `*`.
+`mulUpTo` is the single place a later fast multiplication goes. That is
+the reason the iterations are written against it rather than against
+`*`.
+
+**A later fast multiplication lands in this library, not in
+hex-poly-fast.** `mulUpTo` is a concrete definition here, and a library
+above cannot change what `invOfUnit` calls; saying otherwise would be
+wrong about how Lean works. The point is that no consumer has to change:
+Karatsuba, Toom-Cook, and an NTT on a coefficient `Vector` are
+self-contained array algorithms needing nothing from hex-poly, so they
+belong in `Ring.lean` beside the schoolbook version, behind the same
+signature and the same `coeff_mulUpTo`. hex-poly-fast is about
+polynomial division and reversal, which are facts about `DensePoly`, and
+it consumes this library's series API rather than modifying it.
 
 ## Degenerate precisions
 
@@ -365,8 +386,8 @@ computes at precision `n + k`, and the type is what tells them.
 ## What each algorithm needs
 
 The generic part of the interface is the ring structure and the
-precision changes, and it needs nothing beyond `Lean.Grind.CommRing R`
-and `DecidableEq R`. Each algorithm on top carries its own hypotheses,
+precision changes, and it needs nothing beyond `Lean.Grind.CommRing R`.
+Each algorithm on top carries its own hypotheses,
 stated separately, because they are genuinely different hypotheses
 satisfied by different coefficient rings.
 
@@ -395,16 +416,32 @@ and not beyond, which is correct: `exp(x)` truncated at precision `3` is
 `1 + x + x²/2`, and `1/2 ∉ ℤ`. A class stated as "`R` is a
 `ℚ`-algebra", or an unstated assumption that a coefficient can be
 divided by a small integer, would either exclude precision `2` over `ℤ`
-or would be false. Over `ZMod p` the instance holds exactly for
-`m < p`, which is again the true condition and is not "`p` is large".
+or would be false.
+
+Over `ZMod q` the instance holds exactly when every `k` with
+`1 ≤ k ≤ m` is coprime to `q`. **For a prime `p` that is `m < p`, and
+the primality is not decoration**: over `ZMod 4` the instance already
+fails at `m = 2`, so the clean statement needs `p` prime and the
+instance is stated for `ZMod64.PrimeModulus`. Feeding that through the
+`n - 1` index, `exp` and `log` over `ZMod p` exist for `n - 1 < p`, that
+is **through precision `p` inclusive** and not merely below it. At
+`n = p` the divisions are by `1, …, p - 1`, all invertible; at
+`n = p + 1` the division by `p` appears and there is no instance.
 
 `NatInverses R m` implies `NatInverses R m'` for `m' ≤ m`. That is
 supplied as `NatInverses.mono`, a `def` and not an `instance`, since as
 an instance it loops.
 
-Instances shipped here: `NatInverses Rat m` for every `m`,
-`NatInverses Int 0` and `NatInverses Int 1`, `UnitOps Rat`, and
-`UnitOps Int`. The `ZMod64 p` instances are **not**
+Instances shipped here: `NatInverses R 0` and `NatInverses R 1` for
+**every** `R`, since those requirements are respectively vacuous and
+discharged by `1 * 1 = 1`; `NatInverses Rat m` for every `m`, at a lower
+priority so it does not shadow the two generic ones; `UnitOps Rat`,
+`UnitOps Int`, and the matching `LawfulUnitOps` instances for both. The
+two generic instances are what make the claim "`exp` and `log` at
+precisions `0` and `1` work over any ring" a fact about instance
+resolution rather than only about the proposition being satisfiable.
+
+The `ZMod64 p` instances are **not**
 here, because `ZMod64` is hex-mod-arith's type and depending on
 hex-mod-arith would add an edge this library does not need. They belong
 in whichever library has both types in scope, which in practice is
@@ -420,6 +457,7 @@ Per-algorithm hypotheses, collected:
 | `sqrt? a r` | `[UnitOps R] [LawfulUnitOps R]`, and `r` from the caller |
 | `exp` | `a.coeff 0 = 0` and `[NatInverses R (n - 1)]` |
 | `log` | `(a - 1).coeff 0 = 0` and `[NatInverses R (n - 1)]` |
+| `comp?`, `rev?`, `inv?`, `sqrt?` | additionally `[LawfulUnitOps R]` |
 | `comp a b` | `b.coeff 0 = 0` |
 | `revOfUnit b v` | `b.coeff 0 = 0` and `b.coeff 1 * v = 1` |
 
@@ -466,13 +504,34 @@ theorem inv?_isSome_iff (a : TSeries R n) :
     (inv? a).isSome = true ↔ n = 0 ∨ ∃ u, a.coeff 0 * u = 1
 
 theorem rev?_isSome_iff (b : TSeries R n) :
-    (rev? b).isSome = true ↔ n ≤ 1 ∨ (b.coeff 0 = 0 ∧ ∃ v, b.coeff 1 * v = 1)
+    (rev? b).isSome = true ↔
+      b.coeff 0 = 0 ∧ (n ≤ 1 ∨ ∃ v, b.coeff 1 * v = 1)
+
+theorem sqrt?_isSome_iff (a : TSeries R n) (r : R) :
+    (sqrt? a r).isSome = true ↔
+      n = 0 ∨ (r * r = a.coeff 0 ∧ (n ≤ 1 ∨ ∃ v, (2 * r) * v = 1))
 ```
+
+**Where the degenerate disjunct goes is different for each of the
+three, and getting it wrong is how a hypothesis becomes false.** For
+`inv?` the whole condition collapses at `n = 0` and nowhere else. For
+`rev?` the linear-coefficient half collapses at `n ≤ 1` but the
+constant-coefficient half does **not**: `rev? (C 1 : TSeries R 1)` must
+be `none`, because `comp (C 1) y = C 1` for every `y` and `C 1 ≠ 0 = X`
+at precision one over a nontrivial `R`. For `sqrt?` the unit half
+collapses at `n ≤ 1` while the root equation `r * r = a.coeff 0` does
+not, so `sqrt? (4 + x) 2` over `ℤ` returns `some (C 2)` at precision one
+and `none` at precision two.
 
 **A caller must not read `(inv? a).isSome` as "the constant term of `a`
 is a unit".** At `n = 0` it is `true` and the constant term is `0`. The
 right reading is "`a` is a unit of `TSeries R n`", which is what the
 theorem says and what the caller almost always wants.
+
+Each of these three theorems needs `[LawfulUnitOps R]` as well as
+`[UnitOps R]`. Soundness of the `some` branch needs `inv?_eq` and the
+`none` branch needs `inv?_isSome`, so both fields are load-bearing and
+the statements name the lawful class.
 
 **`sqrt` never searches for the constant root.** Finding a square root
 in `R` is a problem in `R`: over `ZMod p` it is Tonelli-Shanks, over `ℤ`
@@ -532,10 +591,41 @@ accident.
 
 **The step is bounded, which is what makes the total cost geometric.**
 Step `j` calls `mulUpTo (2 ^ (j + 1))`, so it costs `O(M(2^j))` and the
-sum over `j < steps n` is `O(M(n))` for any `M` growing at least
-linearly. Writing every step at full precision `n` would be correct and
-would cost `O(M(n) · log n)`, which is the mistake this paragraph
-exists to prevent.
+sum over `j < steps n` is `O(M(n))` whenever `M` is monotone and
+superadditive (`M(a) + M(b) ≤ M(a + b)`). "Growing at least linearly" is
+not enough on its own, and both schoolbook `M(m) = m²` and the
+Karatsuba and FFT replacements have the stronger property. Writing every
+step at full precision `n` would be correct and would cost
+`O(M(n) · log n)`, which is the mistake this paragraph exists to
+prevent.
+
+**The bounded discipline has to propagate, not stop at `mulUpTo`.** The
+`exp` step calls `log`, and the reversion step calls `comp`. If those
+run at full precision `n` the geometric sum collapses and the totals
+become `O(M(n) log n)` and `O(comp(n) log n)`, even though every
+multiplication inside them was bounded. So each of them has an internal
+bounded form taking the target precision:
+
+```lean
+def invUpTo  (m : Nat) (a : TSeries R n) (u : R) : TSeries R n
+def logUpTo  (m : Nat) [NatInverses R (n - 1)] (a : TSeries R n) : TSeries R n
+def compUpTo (m : Nat) (a b : TSeries R n) : TSeries R n
+```
+
+each agreeing with the unbounded version below index `m` and zero above,
+each costing what the unbounded version costs at precision `m`. The
+public `exp`, `log`, `comp`, and `rev` are the `m = n` cases. An
+implementation that omits these still gets the right answers and the
+wrong complexity, which is why the bench family below compares ratios
+across the ladder rather than checking a single precision.
+
+One cost the arithmetic-operation count does not capture: each step
+writes a `TSeries R n` of full length, so there is `Ω(n)` allocation or
+copying per step and `Ω(n log n)` across the iteration. That is
+dominated by `M(n)` at schoolbook multiplication and would not be under
+a quasi-linear one, so the reusable-buffer implementation that design
+principle 3 asks for (`Hex.Vector.modify` on a uniquely owned buffer) is
+a requirement here rather than an optimisation.
 
 The correctness statement common to all four Newton algorithms, written
 schematically with `P` for the operation's defining equation:
@@ -565,8 +655,9 @@ theorem invOfUnit_unique (a b : TSeries R n) (u : R)
 The iteration is `b ↦ b * (2 - a * b)`, started from `C u`, with both
 products taken through `mulUpTo` at the step's target precision. At
 `n = 0` the answer is the unique element and `hu` is unsatisfiable over
-a nontrivial `R`, which is why `inv?` and not `invOfUnit` carries the
-`n = 0` case.
+a nontrivial `R` (the zero ring satisfies it, and
+`Lean.Grind.CommRing` permits the zero ring), which is why `inv?` and
+not `invOfUnit` carries the `n = 0` case.
 
 `invOfUnit_unique` is worth having and is short: the ring is
 commutative, `a` is a unit, and inverses of a unit are unique. It is
@@ -594,10 +685,6 @@ def sqrtOfRoot (a : TSeries R n) (r v : R) : TSeries R n
 inverse of `2 * r` and checking that `r` really is a root of the
 constant term. -/
 def sqrt? [UnitOps R] (a : TSeries R n) (r : R) : Option (TSeries R n)
-
-theorem sqrt?_isSome_iff (a : TSeries R n) (r : R) :
-    (sqrt? a r).isSome = true ↔
-      n = 0 ∨ (r * r = a.coeff 0 ∧ ∃ v, (2 * r) * v = 1)
 
 theorem sqrtOfRoot_sq (a : TSeries R n) (r v : R)
     (hr : r * r = a.coeff 0) (hv : (2 * r) * v = 1) :
@@ -630,9 +717,17 @@ square root `2 + x/4 + …` that is not integral.
 The uniqueness proof is three lines and is the reason the constant root
 is an argument. If `s² = t²` with `s` and `t` sharing the constant term
 `r`, then `(s - t)(s + t) = 0` and `s + t` has constant term `2r`, a
-unit, so `s + t` is a unit of `TSeries R n` and `s = t`. The two roots
-of a series with a unit constant term are `s` and `-s`, and they are
-distinguished exactly by which root of the constant term they carry.
+unit, so `s + t` is a unit of `TSeries R n` and `s = t`.
+
+**What that theorem says is "one lift per constant root", not "two
+square roots".** A commutative ring can have more than two square roots
+of a unit: `1` has four in `ℤ/15`, namely `1, 4, 11, 14`, and `2r` is a
+unit for each. So a series over `ℤ/15` with constant term `1` has four
+square roots, one above each of those, and the theorem separates them by
+their constant term rather than counting them. `-r` is always among the
+available roots and `sqrtOfRoot a (-r) (-v) = -sqrtOfRoot a r v`, but
+that pair need not exhaust the roots and the SPEC does not claim it
+does.
 
 The iteration is on the **inverse** square root, `z ↦ z * (3 - a * z²) *
 v'` where `v'` inverts `2`, followed by `sqrt a = a * z`. This avoids an
@@ -646,8 +741,8 @@ inverts `2`, and the starting value `C (2 * v)` is the inverse of `r`.
 /-- The integral with zero constant term. -/
 def integrate [NatInverses R n] (a : TSeries R n) : TSeries R (n + 1)
 
-def log [UnitOps R] [NatInverses R (n - 1)] (a : TSeries R n) : TSeries R n
-def exp [UnitOps R] [NatInverses R (n - 1)] (a : TSeries R n) : TSeries R n
+def log [NatInverses R (n - 1)] (a : TSeries R n) : TSeries R n
+def exp [NatInverses R (n - 1)] (a : TSeries R n) : TSeries R n
 
 theorem coeff_integrate (i) (hi : i < n + 1) :
     (integrate a).coeff i = if i = 0 then 0 else NatInverses.invNat i * a.coeff (i - 1)
@@ -672,7 +767,7 @@ theorem exp_add (a b : TSeries R n) (ha : a.coeff 0 = 0) (hb : b.coeff 0 = 0) :
 to `n`:
 
 ```lean
-def log [UnitOps R] [NatInverses R (n - 1)] (a : TSeries R n) : TSeries R n :=
+def log [NatInverses R (n - 1)] (a : TSeries R n) : TSeries R n :=
   (integrate (a.deriv * (invOfUnit a 1).truncate (n - 1) (Nat.sub_le n 1)))
     |>.truncate n (by omega)   -- `n ≤ n - 1 + 1`, and this is not `rfl`
 ```
@@ -689,6 +784,16 @@ total at precision zero.
 `exp` is Newton on `y ↦ y * (1 + a - log y)`, started from `1`. The
 iterates all have constant term `1`, which is what keeps `log y`
 applicable at every step.
+
+**Neither `exp` nor `log` takes `[UnitOps R]`, and that omission is
+load-bearing.** The only inversion either one performs is
+`invOfUnit a 1`, whose witness is the literal `1`, so nothing is
+searched for. Carrying `[UnitOps R]` would be harmless here but would
+make the companion's `[Algebra ℚ R]` correspondence theorems
+unstatable, since a general `ℚ`-algebra has no decidable unit
+operation. The rule from "Failure behaviour" is what saves it: the
+witness-taking form is primary, and `UnitOps` appears only on the forms
+that look a witness up.
 
 **The index `n - 1` in the `NatInverses` hypothesis is exact, and the
 truncated subtraction is doing real work.** `integrate` from precision
@@ -709,8 +814,8 @@ does not exclude a case the conclusion covers.
 that is a fact about Mathlib rather than about this library.**
 `PowerSeries.exp` (`Mathlib/RingTheory/PowerSeries/Exp.lean:48`) is
 defined for `[Algebra ℚ A]`, so it does not exist over `ZMod p` at any
-precision, while `exp` here exists over `ZMod p` at every precision
-below `p`. The companion therefore states the `[Algebra ℚ R]`
+precision, while `exp` here exists over `ZMod p` for prime `p` at
+every precision up to and including `p`. The companion therefore states the `[Algebra ℚ R]`
 correspondence with Mathlib's series and keeps the functional equations
 above as the general statements. This is recorded in "The Mathlib layer"
 as a candidate for upstreaming rather than as a gap here.
@@ -736,13 +841,26 @@ theorem comp_mul (a a' b) (h : b.coeff 0 = 0) : comp (a * a') b = comp a b * com
 `b.coeff 0 = c` nonzero, the constant coefficient of `a ∘ b` is
 `Σ_k a_k c^k`, an infinite sum with no meaning in a general commutative
 ring. Take `a = 1 + x + x² + …` and `b = 1`: the answer would be
-`1 + 1 + 1 + …`. Composition of formal power series is defined only when
-the inner series has zero constant term, and the case where the constant
-term is nilpotent, which does work, is refused: nilpotence is not
-decidable in a general `R`, admitting it would put a further class on
-the interface, and no consumer in this tree wants it. `comp?` returns
-`none` when `b.coeff 0 ≠ 0`, and `n = 0` succeeds because the
-coefficient is out of range there.
+`1 + 1 + 1 + …`.
+
+**The hypothesis is sufficient rather than necessary, and this SPEC
+takes the stronger one deliberately.** Two weaker conditions do work.
+For full power series the condition is that `b`'s constant term is
+nilpotent, which is what Mathlib's `PowerSeries.HasSubst` requires
+(`Mathlib/RingTheory/PowerSeries/Substitution.lean:40`, `HasSubst a :=
+IsNilpotent (constantCoeff a)`). On the truncation `R[x]/(x^n)`
+specifically, the exact condition for the sum to descend is `b ^ n = 0`,
+which is weaker still. Both are refused here: neither is decidable in a
+general `R`, admitting either would put a further class on the
+interface, and no consumer in this tree wants it. What the SPEC claims
+is that `b.coeff 0 = 0` is a clean uniform sufficient condition, not
+that composition is undefined without it.
+
+`comp?` returns `none` when `b.coeff 0 ≠ 0`, and `n = 0` succeeds
+because the coefficient is out of range there. Note that `comp?`
+accepts `b.coeff 0 = 0` even though `0` is a nonunit, so the "constant
+term a nonunit" column of the audit table below is not the relevant test
+for this row.
 
 Two algorithms, with the second the intended one:
 
@@ -776,6 +894,11 @@ theorem revOfUnit_comp (b : TSeries R n) (v : R)
 
 theorem revOfUnit_coeff_one (h0 : b.coeff 0 = 0) (hv : b.coeff 1 * v = 1)
     (h : 1 < n) : (revOfUnit b v).coeff 1 = v
+
+/-- At precision one there is no linear coefficient, and the only series
+with zero constant term is `0`, which reverts to itself. -/
+theorem rev_le_one (b : TSeries R n) (hn : n ≤ 1) (h0 : b.coeff 0 = 0) :
+    comp b 0 = X ∧ comp 0 b = X
 ```
 
 The iteration is Newton on `y ↦ y - (b ∘ y - x) / (b' ∘ y)`, started
@@ -783,30 +906,70 @@ from `C v * X`, doubling the precision each step. Both compositions run
 at the step's target precision, and the division is `invOfUnit` applied
 to `b' ∘ y`, whose constant term is `b.coeff 1`.
 
-**The route is Newton and not Lagrange inversion, and the reason is the
-whole point of this section.** Lagrange inversion computes the answer in
-closed form,
+**`deriv` drops a precision and `comp` does not mix precisions, so the
+derivative used here is the zero-padded one.** `b.deriv` has type
+`TSeries R (n - 1)` while `y` has type `TSeries R n`, so `comp b.deriv y`
+is not a well-typed call. The routine uses
+
+```lean
+/-- The derivative kept at the input precision, with the top
+coefficient set to zero because computing it would need `a.coeff n`. -/
+def derivPad (a : TSeries R n) : TSeries R n
+theorem coeff_derivPad (i) (hi : i < n) :
+    (derivPad a).coeff i = if i + 1 < n then ((i + 1 : Nat) : R) * a.coeff (i + 1) else 0
+```
+
+and the correctness proof rests on one lemma saying the missing top
+coefficient is never read:
+
+```lean
+/-- At the step from precision `k` to `2k`, the numerator has valuation
+at least `k`, so the product reads the inverted denominator only below
+precision `k`. -/
+theorem rev_numerator_valuation (i : Nat) (hi : i < k) :
+    (comp b y - X).coeff i = 0
+```
+
+Every step has `k < n`, hence `k ≤ n - 1`, so `derivPad b ∘ y` is only
+ever read below index `n - 1`, where it agrees with the true derivative.
+Writing this obligation down is the point: an implementation that
+reaches for a mixed-precision `comp` instead is solving a harder problem
+than the algorithm poses.
+
+**The route is Newton and not the direct Lagrange formula, and the
+reason is the whole point of this section.** Lagrange inversion gives
+the answer in closed form,
 
 ```text
 [x^k] rev(b) = (1/k) · [x^{k-1}] (x / b)^k,
 ```
 
-and that formula divides by `k` for every `k < n`. It therefore needs
-`NatInverses R (n - 1)` and does not exist over `ℤ` beyond precision
-`2`. But the reversion **does** exist over `ℤ`: reverting `x + x²` gives
-`x - x² + 2x³ - 5x⁴ + …`, integer coefficients throughout. So a library
-that implemented reversion by Lagrange inversion would carry a
-hypothesis its own answers do not need, and would refuse an input it can
-compute. The Newton route uses only `comp`, which needs no invertibility
-at all, and `inv` of a series whose constant term is `b.coeff 1`, which
+and evaluating that expression as written divides by `k` for every
+`k < n`. Implemented directly it therefore needs `NatInverses R (n - 1)`
+and refuses `ℤ` beyond precision `2`. But the reversion **does** exist
+over `ℤ`: reverting `x + x²` gives `x - x² + 2x³ - 5x⁴ + …`, integer
+coefficients throughout. So an implementation that evaluates the formula
+literally carries a hypothesis its own answers do not need.
+
+**The precise claim, since the loose one is false.** The reversion
+coefficients are integer polynomials in the coefficients of `b` and in
+`b₁⁻¹`, so the division by `k` in Lagrange's formula always cancels, and
+division-free rearrangements of Lagrange inversion exist. What needs
+`NatInverses` is the direct `1/k` evaluation, not the theorem. This SPEC
+does not claim that reversion is impossible without integer inverses; it
+claims that the obvious implementation of it is, and picks a route that
+is not.
+
+The Newton route uses only `comp`, which needs no invertibility at all,
+and `invOfUnit` of a series whose constant term is `b.coeff 1`, which
 the stated hypothesis already provides. It has no integer division
 anywhere.
 
 This is the concrete case behind the general rule for this library: an
 algorithm's hypotheses are the hypotheses **that algorithm** needs, and
 choosing an algorithm whose hypotheses exceed the operation's is a
-design error rather than a harmless implementation detail. Lagrange
-inversion stays available as a second route, used only when
+design error rather than a harmless implementation detail. The direct
+Lagrange evaluation stays available as a second route, used only when
 `NatInverses` is in scope, where it is a useful cross-check in the
 conformance suite.
 
@@ -830,16 +993,16 @@ implementation.
 | `valuation?` | `none` | `none` iff `coeff 0 = 0` | total | total |
 | `deriv` | precision `0` | precision `0` | total | total |
 | `integrate` | precision `1`, no inverse used | precision `2`, uses `1/1` | total | total |
-| `invOfUnit a u` | returns the unique element, `hu` unsatisfiable | `= C u` | hypothesis fails, no call | irrelevant |
+| `invOfUnit a u` | total, `hu` unsatisfiable over nontrivial `R` | `= C u` | total, but `invOfUnit_mul` does not apply | irrelevant |
 | `inv?` | `some`, unconditionally | `some` iff `coeff 0` a unit | `none` | irrelevant |
-| `sqrtOfRoot a r v` | unique element, `hv` unsatisfiable | `= C r` | `hv` fails when `2r` is a nonunit | irrelevant |
-| `sqrt? a r` | `some`, unconditionally | `some` iff `r * r = coeff 0` and `2r` a unit | `none` when `2r` is a nonunit | irrelevant |
+| `sqrtOfRoot a r v` | total, `hv` unsatisfiable over nontrivial `R` | `= C r` | `hv` fails when `2r` is a nonunit | irrelevant |
+| `sqrt? a r` | `some`, unconditionally | `some` iff `r * r = coeff 0` | `none` for `n ≥ 2` when `2r` is a nonunit | irrelevant |
 | `exp` | `= 0 = 1`, no inverse used | `= 1` | needs `coeff 0 = 0`, not unitality | irrelevant |
 | `log` | `= 0 = 1`, no inverse used | `= 0` | needs `(a-1).coeff 0 = 0` | irrelevant |
 | `comp a b` | `= 0` | `= C (a.coeff 0)` | needs `b.coeff 0 = 0` | irrelevant |
-| `comp?` | `some` | `some` iff `b.coeff 0 = 0` | `none` | irrelevant |
-| `revOfUnit b v` | unique element, `hv` unsatisfiable | `= 0`, `hv` unsatisfiable | needs `coeff 0 = 0` | hypothesis fails |
-| `rev?` | `some` | `some` | `none` when `coeff 0 ≠ 0` | `none` for `n ≥ 2` |
+| `comp?` | `some` | `some` iff `b.coeff 0 = 0` | not the relevant test: `0` is accepted | irrelevant |
+| `revOfUnit b v` | total, `hv` unsatisfiable over nontrivial `R` | `= 0`; use `rev_le_one`, not `hv` | needs `coeff 0 = 0` | hypothesis fails |
+| `rev?` | `some` | `some` iff `coeff 0 = 0` | `none` when `coeff 0 ≠ 0`, at every `n` | `none` for `n ≥ 2` |
 
 Three of those rows deserve a statement in prose, because an
 implementation gets them wrong in the same way each time.
@@ -851,10 +1014,22 @@ tests `UnitOps.inv? (a.coeff 0)` first returns `none` there over any
 nontrivial `R`, contradicting `inv?_isSome_iff`. The test is guarded by
 `0 < n`.
 
-**`rev?` succeeds at precision `1` with no test on the linear term.**
-There is no linear term, `X = 0`, and the only series with zero constant
-term is `0`, whose compositional inverse is itself. An implementation
-that tests `UnitOps.inv? (b.coeff 1)` returns `none`.
+**`rev?` drops the test on the linear term at precision `1` and keeps
+the test on the constant term.** There is no linear term, `X = 0`, and
+the only series with zero constant term is `0`, whose compositional
+inverse is itself, so an implementation that tests
+`UnitOps.inv? (b.coeff 1)` wrongly returns `none`. But the constant-term
+test survives: `rev? (C 1 : TSeries R 1)` is `none`, because
+`comp (C 1) y = C 1` for every `y` and `C 1 ≠ 0 = X` over a nontrivial
+`R`. The condition is `b.coeff 0 = 0 ∧ (n ≤ 1 ∨ …)`, with the
+disjunction inside, and writing it as `n ≤ 1 ∨ (b.coeff 0 = 0 ∧ …)`
+claims every precision-one series is reversible, which is false.
+
+`sqrt?` splits the same way and in the same place. At `n ≤ 1` the
+unitality of `2 * r` is irrelevant, since `C r` squares to `C (r * r)`
+and nothing has to be lifted, but `r * r = a.coeff 0` still has to hold.
+So `sqrt? (4 + x) 2` over `ℤ` is `some (C 2)` at precision one and
+`none` at precision two.
 
 **`exp` and `log` at precisions `0` and `1` use no integer inverse.**
 The `NatInverses R (n - 1)` hypothesis is `NatInverses R 0`, which is
@@ -968,11 +1143,16 @@ Cases that must be present:
   integer division happened. Precisions `0` and `1` must give `some`.
 - `rev?` on `2x + x²` over `Int`, expecting `none` for `n ≥ 2` (the
   linear coefficient `2` is not a unit of `ℤ`) and `some` for `n ≤ 1`.
+- `rev? (C 1 : TSeries Int 1)`, expecting `none`. Precision one drops
+  the linear-coefficient test and keeps the constant-term test, and an
+  implementation that reads the success condition as
+  `n ≤ 1 ∨ …` returns `some` here.
 - `sqrtOfRoot` over `Rat` on `1 + x` with `r = 1` and with `r = -1`,
   checking the two answers are negatives of each other.
-- `sqrt?` over `Int` on `4 + x` with `r = 2`, expecting `none` at every
-  positive precision because `2 * r = 4` is not a unit of `ℤ`, and
-  `some` at precision `0`.
+- `sqrt?` over `Int` on `4 + x` with `r = 2`, expecting `some (C 2)` at
+  precisions `0` and `1` and `none` from precision `2` on, because
+  `2 * r = 4` is not a unit of `ℤ` but nothing needs lifting below
+  precision `2`.
 - `sqrt?` over `Rat` on `1 + x` with `r = 2`, expecting `none` because
   `2 * 2 ≠ 1 = a.coeff 0`. This is the check on the other half of
   `sqrt?_isSome_iff`, which an implementation that only tests `2 * r`
@@ -1040,10 +1220,14 @@ Two required internal checks, which matter more than the external one:
   one implementation mistake that turns `O(M(n))` into `O(M(n) log n)`
   and shows up as a ratio growing with the precision rather than
   settling.
-- **Brent-Kung faster than Horner above precision 64**, by a margin that
-  grows with the precision. Composition is the one family where the fast
-  route pays before hex-poly-fast exists, so this check is the evidence
-  that Brent-Kung was implemented rather than declared.
+- **The Brent-Kung to Horner ratio improves monotonically along the
+  ladder**, and Brent-Kung wins at the top rung. Composition is the one
+  family where the fast route pays before a fast multiplication exists,
+  so this check is the evidence that Brent-Kung was implemented rather
+  than declared. It is deliberately *not* stated as "faster above
+  precision 64": this SPEC says elsewhere that it does not guess the
+  crossover, and naming one here would contradict that. The measured
+  crossover becomes the threshold once the family has run.
 
 The bench target imports `HexTruncatedSeries`, which imports `HexBasic`
 and `Std` and nothing else, so the Mathlib-free requirement of
@@ -1085,10 +1269,12 @@ The operation correspondences, each of the form "truncating commutes
 with the operation":
 
 ```lean
-theorem ofPowerSeries_invOfUnit (f : PowerSeries R) (u : Rˣ) :
+theorem ofPowerSeries_invOfUnit (f : PowerSeries R) (u : Rˣ)
+    (hu : PowerSeries.constantCoeff f = u) :
     ofPowerSeries (n := n) (f.invOfUnit u) = invOfUnit (ofPowerSeries f) u.inv
 
-theorem ofPowerSeries_subst (f g : PowerSeries R) (hg : PowerSeries.HasSubst g) :
+theorem ofPowerSeries_subst (f g : PowerSeries R)
+    (hg : PowerSeries.constantCoeff g = 0) :
     ofPowerSeries (n := n) (f.subst g) = comp (ofPowerSeries f) (ofPowerSeries g)
 
 theorem ofPowerSeries_substInvOfIsUnit (g : PowerSeries R)
@@ -1105,10 +1291,56 @@ theorem ofPowerSeries_logOf [Algebra ℚ R] (f : PowerSeries R)
     ofPowerSeries (n := n) (PowerSeries.logOf f) = log (ofPowerSeries f)
 ```
 
-`Lean.Grind.CommRing R` follows from Mathlib's `CommRing R` through
-`Mathlib/Algebra/Ring/GrindInstances.lean`, so the companion states its
-theorems with Mathlib's class and the Mathlib-free layer's instances
-apply.
+**Two hypotheses above are not optional, and dropping either makes the
+theorem false.**
+
+`hu : PowerSeries.constantCoeff f = u` is required because Mathlib's
+`invOfUnit f u` uses whatever `u` it is handed: `constantCoeff_invOfUnit`
+says the result always has constant term `↑u⁻¹`, and `mul_invOfUnit`
+(`Mathlib/RingTheory/PowerSeries/Inverse.lean:102`) carries exactly this
+hypothesis. Without it the two sides are junk in different ways. Over
+`ℚ` at `n = 2` with `f = C 2` and `u = 1`, Mathlib's result has constant
+term `1` while the Newton iteration here sends `1` to `1 * (2 - 2) = 0`.
+
+`hg : PowerSeries.constantCoeff g = 0` is required, and stating it as
+Mathlib's `HasSubst g` instead would be **false**. `HasSubst` is
+nilpotence of the constant coefficient, not vanishing
+(`Mathlib/RingTheory/PowerSeries/Substitution.lean:40`), and this
+library's `comp` is the stricter operation. Over `ZMod 4` at `n = 1`
+with `f = X` and `g = C 2`, `HasSubst g` holds because `2 ^ 2 = 0`, and
+
+```text
+ofPowerSeries (f.subst g)                 = C 2
+comp (ofPowerSeries f) (ofPowerSeries g)  = comp 0 (C 2) = 0
+```
+
+so the two sides differ. `HasSubst.of_constantCoeff_zero'` derives what
+`subst` needs from the stated hypothesis, which is the right direction.
+
+**The companion has to build Mathlib's `CommRing (TSeries R n)`
+itself.** The `Ideal`, quotient, and `≃+*` statements above all need
+Mathlib's class, and the Mathlib-free layer supplies only
+`Lean.Grind.CommRing`. `Mathlib/Algebra/Ring/GrindInstances.lean` gives
+`CommRing.toGrindCommRing` and pointedly refuses the reverse: the file
+carries the converse construction as an `example` with a comment saying
+"this direction should never be used", because it is not definitionally
+the original structure. So the instance is built from the executable
+operations here, following `HexPolyFpMathlib.commRing`
+(`HexPolyFpMathlib/Basic.lean:385`), which uses
+`CommRing.ofMinimalAxioms` and pins `sub` and `neg` to the executable
+ones. That pinning is the part worth copying: leaving Mathlib's defaults
+would put two different subtractions on the type and Mathlib's lemmas
+would not fire on the spelling callers write.
+
+`quotEquiv` is likewise two steps rather than one.
+`RingHom.quotientKerEquivOfSurjective` produces a quotient by the
+literal `RingHom.ker`, so reaching the quotient by
+`Ideal.span {X ^ n}` means transporting along `ker_ofPowerSeriesHom`
+with `Ideal.quotEquivOfEq` first and composing.
+
+The companion also supplies `NatInverses R m` from `[Algebra ℚ R]`, for
+every `m`, since nothing else constructs that class from a Mathlib
+hypothesis.
 
 **Three notes on what Mathlib has and does not have**, because they
 decide the shape of the companion.
@@ -1127,7 +1359,8 @@ than `NatInverses R (n - 1)`. The two correspondence theorems above are
 therefore stated under `[Algebra ℚ R]` and cover less than the
 Mathlib-free `exp` and `log` do. Nothing is lost: the functional
 equations `log_exp`, `exp_log`, and `exp_add` are proved Mathlib-free
-and hold over `ZMod p` at every precision below `p`, where Mathlib's
+and hold over `ZMod p` for prime `p` at every precision up to `p`,
+where Mathlib's
 `exp` does not exist. A precision-indexed `PowerSeries.expTrunc` would
 fix this upstream and is recorded in the open questions.
 
@@ -1188,17 +1421,17 @@ operation.
 HexTruncatedSeries/
   Defs.lean         -- TSeries, coeff, ofFn, ext, DecidableEq
   Ring.lean         -- convCoeff, the ring operations, mulUpTo, pow
-  Precision.lean    -- truncate, extend, mulXPow, divXPow?, deriv, integrate
+  Precision.lean    -- truncate, extend, mulXPow, divXPow?, deriv, derivPad, integrate
   Classes.lean      -- UnitOps, LawfulUnitOps, NatInverses and its instances
   Newton.lean       -- the driver, steps, two_pow_steps_ge
-  Inverse.lean      -- invOfUnit, inv?, uniqueness
+  Inverse.lean      -- invOfUnit, invUpTo, inv?, uniqueness
   Sqrt.lean         -- sqrtOfRoot, sqrt?, uniqueness
-  ExpLog.lean       -- exp, log, the functional equations
-  Comp.lean         -- Horner and Brent-Kung
+  ExpLog.lean       -- exp, log, logUpTo, the functional equations
+  Comp.lean         -- Horner, Brent-Kung, compUpTo
   Revert.lean       -- Newton reversion, and Lagrange as the second route
 HexTruncatedSeries.lean
 HexTruncatedSeriesMathlib/
-  Basic.lean        -- ofPowerSeries, the ring homomorphism, the kernel, quotEquiv
+  Basic.lean        -- the Mathlib CommRing instance, ofPowerSeries, the kernel, quotEquiv
   Ops.lean          -- the ring and precision correspondences
   Newton.lean       -- inverse, sqrt, exp, log, subst, substInv correspondences
 HexTruncatedSeriesMathlib.lean
@@ -1274,7 +1507,7 @@ release time.
 - **Whether a precision-indexed `exp` belongs upstream.** Mathlib's
   `PowerSeries.exp` needs `[Algebra ℚ A]` and so cannot speak about
   `ZMod p` at any precision, while the truncated `exp` here exists at
-  every precision below `p`. An upstream `PowerSeries.expTrunc` under a
+  every precision up to and including `p`. An upstream `PowerSeries.expTrunc` under a
   precision-indexed hypothesis would let the companion transport rather
   than restate. The same applies to the square root, where Mathlib has
   no statement at all.
