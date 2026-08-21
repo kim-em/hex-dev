@@ -20,6 +20,7 @@
 - **hex-gram-schmidt**: Gram-Schmidt orthogonalization, GS coefficients, Gram determinants, update formulas under row operations
 - **hex-mod-arith**: `ZMod64 p`, `UInt64`-backed arithmetic in `Z/pZ`
 - **hex-modular**: integer CRT, rational reconstruction, symmetric representatives, and the modulus supply
+- **hex-padics**: fixed-precision approximations to `Z_p` and `Q_p`, with the valuation reported as a bound when that is all the data supports, precision-aware arithmetic, partial inversion and division, and exactification by rational reconstruction
 - **hex-modular-matrix**: multi-modular determinant, certified rank, and Dixon p-adic linear solving over `Q`
 - **hex-finite-field**: the Mathlib-free `F_q` interface (characteristic, degree, Frobenius, indexing), the generic `q`-power Frobenius and Frobenius matrix
 - **hex-poly-fp**: polynomials over `F_p`, Frobenius map, square-free decomposition, lazy reduction for small p
@@ -48,6 +49,7 @@ Mathlib, and supplies correspondence proofs or Mathlib-facing APIs):
 
 - **hex-mod-arith-mathlib**: `ZMod64 p ≃+* ZMod p`
 - **hex-modular-mathlib**: CRT agreement with `ZMod.chineseRemainder`, and the rational-reconstruction statements over `ℚ`
+- **hex-padics-mathlib**: an approximation as a ball in `ℤ_[p]` or `ℚ_[p]`, the fibres of `PadicInt.toZModPow`, the valuation correspondence in `WithTop ℤ`, and the sharpness of each operation
 - **hex-modular-matrix-mathlib**: Hadamard's inequality discharged, `det` = `Matrix.det`, rank = `Matrix.rank`, and the solve and kernel correspondences
 - **hex-poly-z-gcd-mathlib**: gcd divisibility and maximality in `Polynomial ℤ`, and `Decidable (a ∣ b)`
 - **hex-primality-mathlib**: `Hex.Nat.Prime ↔ Nat.Prime`, the `norm_num` extension, and segment statements over `Finset.filter Nat.Prime`
@@ -105,6 +107,7 @@ Each library with its immediate dependencies:
 - **hex-poly-smith**: hex-poly, hex-matrix, hex-determinant
 - **hex-mod-arith**: hex-arith
 - **hex-modular**: hex-arith
+- **hex-padics**: hex-arith, hex-modular, hex-primality, hex-basic
 - **hex-modular-matrix**: hex-modular, hex-matrix, hex-row-reduce, hex-determinant, hex-mod-arith, hex-arith, hex-basic
 - **hex-finite-field**: hex-arith, hex-mod-arith, hex-poly, hex-poly-fp, hex-matrix, hex-basic
 - **hex-gram-schmidt**: hex-row-reduce, hex-determinant, hex-bareiss
@@ -133,6 +136,7 @@ Mathlib companion libraries (each also depends on Mathlib):
 
 - **hex-mod-arith-mathlib**: hex-mod-arith
 - **hex-modular-mathlib**: hex-modular, hex-mod-arith-mathlib
+- **hex-padics-mathlib**: hex-padics, hex-primality-mathlib
 - **hex-modular-matrix-mathlib**: hex-modular-matrix, hex-matrix-mathlib, hex-determinant-mathlib, hex-row-reduce-mathlib, hex-modular-mathlib
 - **hex-primality-mathlib**: hex-primality
 - **hex-int-factor-mathlib**: hex-int-factor, hex-primality-mathlib
@@ -377,6 +381,25 @@ hex-arith ──── hex-primality ──── hex-int-factor
       hex-primality-mathlib   hex-int-factor-mathlib
 ```
 
+`hex-padics` sits above all three of hex-arith, hex-modular, and
+hex-primality, and below hex-hensel, hex-berlekamp-zassenhaus, and
+hex-modular-matrix. It takes the extended GCD and exact division from
+hex-arith, `symMod` and `ratRecon?` from hex-modular, and a checked
+`CheckedPrimeCert p` from hex-primality. It names no polynomial type,
+so lifting a factorization stays hex-hensel's subject and the
+placement lets those consumers adopt the approximation type without a
+cycle. Its companion depends on hex-primality-mathlib because Mathlib's
+`ℤ_[p]` requires `Fact p.Prime`, which is what `prime_iff` supplies.
+The reasoning is in [hex-padics §Placement in the DAG](hex-padics.md).
+
+```text
+hex-arith ──────┐
+hex-modular ────┼── hex-padics ──┬── hex-padics-mathlib
+hex-primality ──┘                │
+                                 ├── hex-hensel (adapter)
+                                 └── hex-modular-matrix (adapter)
+```
+
 ## Index
 
 Libraries marked **(released)** are published as standalone
@@ -407,6 +430,7 @@ for developments whose source-local move has not happened yet.
 - [hex-finite-field.md](hex-finite-field.md): the Mathlib-free `F_q` interface, the generic `q`-power Frobenius, and the equal-degree stage (Cantor-Zassenhaus) it makes worthwhile, specified as hex-berlekamp amendments
 - [hex-mod-arith-mathlib](../../HexModArithMathlib/SPEC/hex-mod-arith-mathlib.md): `ZMod64 p ≃+* ZMod p`
 - [hex-modular.md](hex-modular.md): integer CRT, rational reconstruction, symmetric representatives, and the modulus supply (the Mathlib companion is specified in the same file)
+- [hex-padics.md](hex-padics.md): fixed-precision `ZpApprox` and `QpApprox` approximations, the valuation and approximate zero, precision-aware arithmetic with exact loss formulas, partial inversion and division, and exactification (the Mathlib companion is specified in the same file)
 - [hex-modular-matrix.md](hex-modular-matrix.md): multi-modular determinant, certified rank, and Dixon p-adic linear solving (the Mathlib companion is specified in the same file)
 - [hex-poly](../../HexPoly/SPEC/hex-poly.md): dense polynomial library, operations, GCD, CRT
 - [hex-poly-mathlib](../../HexPolyMathlib/SPEC/hex-poly-mathlib.md): `DensePoly R ≃+* Polynomial R`

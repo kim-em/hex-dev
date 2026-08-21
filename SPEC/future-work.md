@@ -779,12 +779,21 @@ is one instance. A larger project, worth deferring until the certificate
 checker has proved itself on the hypergeometric case.
 
 **Fixed-precision p-adic approximations (`hex-padics`,
-`hex-padics-mathlib`).** hex-hensel implements lifting as an
-algorithm. First-class `ZpApprox` and `QpApprox` values would be
+`hex-padics-mathlib`).** Specified in
+[hex-padics](Libraries/hex-padics.md). hex-hensel implements lifting as
+an algorithm. First-class `ZpApprox` and `QpApprox` values would be
 shared by consumers that each roll their own modular tower:
 Berlekamp-Zassenhaus's lifting phase, the Dixon lifting in
 [hex-modular-matrix](Libraries/hex-modular-matrix.md), and the p-adic
 route to `ℤ[x]` factoring.
+
+That SPEC qualifies the sharing claim. The Dixon solve and hex-hensel
+work on integer vectors and coefficient arrays with one shared modulus,
+so replacing an entry by a boxed approximation costs more than the
+shared bookkeeping saves. What those consumers should take is the
+modulus record, the exact division, the valuation, and the
+exactification, and the element type is for consumers that hold single
+p-adic scalars.
 
 `ZpApprox p N` is a residue modulo `p^N` together with reduction maps and a
 valuation lower bound. `QpApprox p` carries a normalized centre, valuation,
