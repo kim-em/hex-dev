@@ -118,6 +118,14 @@ and total-zero cases exactly, and deliberately returns whole for every other
 nonempty shape. No tightness converse or bounded nonsingleton quotient is
 claimed.
 
+The supported proof limits cap retained package and schema counts, certificate
+body cells, ordered dependencies, and chronology. They do not claim to
+preempt full `Program.check` or registration validation, equality on arbitrary
+caller facts, schema decoding, or package theorem callbacks. Authenticated
+search output must first pass the Mathlib-free `Search` envelope; a direct
+trusted caller of `Proof` is responsible for bounding its program and package
+assembly before replay.
+
 `HexIntervalMathlib.Experiment.PntLogRational` is a fixed-source acceptance
 provider rather than public interval arithmetic. It proves the original
 strength of seventeen pinned PNT+ direct-log declarations over fifteen

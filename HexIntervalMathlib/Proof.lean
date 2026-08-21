@@ -26,6 +26,14 @@ The final Meta boundary accepts an emitted expression only after kernel-facing
 type inference and definitional equality, restoring Meta state on failure.
 Concrete operations, packages, goal reification, tactic syntax, registries of
 declaration names, and default search policy are intentionally absent.
+
+`Limits` bounds retained package/schema counts, certificate bodies, ordered
+dependencies, and chronology.  It does not make `Program.check`, registration
+validation, equality on caller facts, schema decoding, or package theorem
+callbacks preemptible.  A search-to-proof quotation must first cross the
+supported `Search` resource boundary; direct trusted callers of this module
+remain responsible for supplying a structurally bounded program and package
+assembly.
 -/
 
 namespace Hex.Interval.Proof
@@ -275,6 +283,9 @@ structure Package (semantics : Semantics Fact) where
   instances : Array (InstanceSchema semantics) := #[]
   refuters : Array (RefuteSchema semantics) := #[]
 
+/-- Bounds on retained proof-registry and quotation data.  These bounds are
+checked after construction of the caller's Lean values; they do not preempt
+allocation inside trusted schema decoders or theorem callbacks. -/
 structure Limits where
   maxPackages : Nat
   maxSchemas : Nat

@@ -610,5 +610,11 @@
     "baseline_blob": "6dd80771ae2212333b2a9b925b52056e0037ff56",
     "current_blob": "a860987f71b25a081e9a8575048cf7a0484bed2b",
     "reason": "Additionally registers the Mathlib-free supported HexInterval search-contract conformance module on top of the current public interval and PNT registrations; it does not enter the factorization service target or change its executable dependency graph."
+  },
+  {
+    "path": "lakefile.lean",
+    "baseline_blob": "6dd80771ae2212333b2a9b925b52056e0037ff56",
+    "current_blob": "fc53186cf939d75d9e254d4fb52be6e713f0328f",
+    "reason": "Additionally registers the supported HexIntervalMathlib program-semantics and chronological proof-contract modules plus their proof-only conformance on top of the current public interval, search, and PNT registrations; they do not enter the factorization service target or change its executable dependency graph."
   }
 ]

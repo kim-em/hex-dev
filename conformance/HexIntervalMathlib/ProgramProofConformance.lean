@@ -246,6 +246,14 @@ def registry : Proof.Registry semantics :=
       built.equalities.size == 1 && built.instances.size == 1 && built.refuters.size == 1
   | .error _ => false
 
+#guard match Proof.Registry.buildWithin { limits with maxPackages := 0 } program #[package] with
+  | .error .packageLimit => true
+  | _ => false
+
+#guard match Proof.Registry.buildWithin { limits with maxSchemas := 3 } program #[package] with
+  | .error .schemaLimit => true
+  | _ => false
+
 def input : Proof.Input TestFact :=
   { scope, program, facts := #[.yes, .all], target := { node := node1, fact := .yes } }
 
@@ -286,6 +294,9 @@ def succeeds : Bool := match run with | .ok _ => true | .error _ => false
   | .ok _ => true | .error _ => false)
 #guard !(match run (events.set 1 (.fact { factStep with body := [12] })) with
   | .ok _ => true | .error _ => false)
+#guard match run (events.set 1 (.fact { factStep with body := [11, 12] })) with
+  | .error .bodyLimit => true
+  | _ => false
 #guard !(match run (events.set 1 (.fact { factStep with scope := { index := 8 } })) with
   | .ok _ => true | .error _ => false)
 #guard !(match run (events.set 1 (.fact { factStep with
@@ -295,6 +306,11 @@ def succeeds : Bool := match run with | .ok _ => true | .error _ => false
     action := { factAction with inputs := [seen node0 2] }
     assumptions := [seen node0 2] })) with
   | .ok _ => true | .error _ => false)
+#guard match run (events.set 1 (.fact { factStep with
+    action := { factAction with inputs := [seen node0 0, seen node1 0] }
+    assumptions := [seen node0 0, seen node1 0] })) with
+  | .error .dependencyLimit => true
+  | _ => false
 #guard !(match run (events.set 2 (.equality { equalityStep with right := node0 })) with
   | .ok _ => true | .error _ => false)
 #guard !(match run (events.set 2 (.equality { equalityStep with body := [23] })) with
