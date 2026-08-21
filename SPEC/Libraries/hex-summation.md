@@ -234,10 +234,13 @@ lemmas carry no case split at all; the one case analysis (relating the
 pack, and consumers of this library never see it.
 
 **Variables and parameters.** All certificate polynomials live in
-`MvPoly ν Rat cmp` at a fixed monomial order, with a fixed variable
+`MvPoly (s + 2) Rat cmp` at a fixed monomial order, with a fixed variable
 convention: variable `0` is `n` (the recurrence variable; unused by
 Gosper certificates), variable `1` is `k` (the summation variable), and
-variables `2, …, ν − 1` are free parameters. Parameters are what let
+variables `2, …, s + 1` are the `s` free parameters. The arity is
+`s + 2` *by type*, not by convention: every certificate is
+parameterized by its parameter count `s`, so a certificate cannot fail
+to have the two shifted variables. Parameters are what let
 one certificate prove Vandermonde `∑ₖ C(m,k) C(n,r−k) = C(m+n,r)` with
 `m` and `r` symbolic: the checker's polynomial identity is an identity
 in all of `n, k, m, r`, and the semantics theorems quantify over a
@@ -249,17 +252,17 @@ namespace Hex.Summation
 
 /-- A term ratio in multiplied form: the claim
 `den · t(shifted) = num · t`, with the shift direction supplied by
-context. Both entries are `ν`-variate; which variable is shifted is a
+context. Both entries are `(s + 2)`-variate; which variable is shifted is a
 property of the consuming certificate, not of the pair. -/
-structure Ratio (ν : Nat) where
-  num : MvPoly ν Rat cmp
-  den : MvPoly ν Rat cmp
+structure Ratio (s : Nat) where
+  num : MvPoly (s + 2) Rat cmp
+  den : MvPoly (s + 2) Rat cmp
 
 /-- Shift in the summation variable: substitute `X₁ + 1` for `X₁`. -/
-def shiftK (f : MvPoly ν Rat cmp) : MvPoly ν Rat cmp
+def shiftK (f : MvPoly (s + 2) Rat cmp) : MvPoly (s + 2) Rat cmp
 
 /-- Shift in the recurrence variable: substitute `X₀ + 1` for `X₀`. -/
-def shiftN (f : MvPoly ν Rat cmp) : MvPoly ν Rat cmp
+def shiftN (f : MvPoly (s + 2) Rat cmp) : MvPoly (s + 2) Rat cmp
 ```
 
 Both shifts are `MvPoly.subst` at a substitution that is the identity
@@ -293,18 +296,21 @@ another without the ratio hypothesis failing.
 ```lean
 /-- A Gosper certificate for a term with `k`-ratio `r`: the rational
 function `y = u/v` with `y(k+1) r(k) − y(k) = 1`, stored cleared. -/
-structure GosperCert (ν : Nat) where
-  r    : Ratio ν            -- the term ratio the certificate is for
-  u v  : MvPoly ν Rat cmp   -- the antidifference multiplier y = u/v
+structure GosperCert (s : Nat) where
+  r    : Ratio s            -- the term ratio the certificate is for
+  u v  : MvPoly (s + 2) Rat cmp   -- the antidifference multiplier y = u/v
 
-def checkGosper (c : GosperCert ν) : Bool
+def checkGosper (c : GosperCert s) : Bool
 ```
 
 `checkGosper` verifies, writing `p = c.r.num`, `q = c.r.den`, and `f⁺`
 for `shiftK f`:
 
-1. `q ≠ 0` and `c.v ≠ 0` (as polynomials).
-2. `u⁺ · p · v − u · q · v⁺ = q · v · v⁺` in `MvPoly ν Rat cmp`.
+1. `q ≠ 0` and `c.v ≠ 0` (as polynomials), and every field free of
+   variable `0`: a Gosper certificate is about the summation variable
+   and the parameters only, and freeness is what lets the semantics
+   theorem evaluate variable `0` at an arbitrary junk value.
+2. `u⁺ · p · v − u · q · v⁺ = q · v · v⁺` in `MvPoly (s + 2) Rat cmp`.
 
 Condition 2 is the identity `y(k+1) r(k) − y(k) = 1` after multiplying
 through by `q · v · v⁺`. Nothing else is checked; in particular no
@@ -318,14 +324,17 @@ A denominator-inflated certificate is a valid certificate.
 coefficients `a₀ … a_d` in the recurrence variable and parameters, and
 the telescoping multiplier `R = u/v` with
 `∑ⱼ aⱼ(n) F(n+j, k) = G(n, k+1) − G(n, k)` for `G = R · F`. -/
-structure ZeilbergerCert (ν : Nat) where
-  rk rn : Ratio ν                     -- k-shift and n-shift ratios of F
+structure ZeilbergerCert (s : Nat) where
+  rk rn : Ratio s                     -- k-shift and n-shift ratios of F
   d     : Nat
-  a     : Array (MvPoly ν Rat cmp)   -- size d + 1; free of variable 1
-  u v   : MvPoly ν Rat cmp
+  a     : Vector (MvPoly (s + 2) Rat cmp) (d + 1)   -- free of variable 1
+  u v   : MvPoly (s + 2) Rat cmp
 
-def checkZeilberger (c : ZeilbergerCert ν) : Bool
+def checkZeilberger (c : ZeilbergerCert s) : Bool
 ```
+
+The coefficient count is `d + 1` *by type* (`Vector`, not `Array`
+plus a size check), so a mismatched order is unrepresentable.
 
 The checker builds, from the `n`-ratio alone, the shifted products
 
@@ -337,9 +346,13 @@ so that `F(n+j, k) / F(n, k) = Nⱼ / (N-denominator)` and all `d + 1`
 quotients acquire the common denominator `D = ∏_{i<d} shiftNⁱ (rn.den)`.
 It verifies:
 
-1. `rk.den ≠ 0`, `rn.den ≠ 0`, `v ≠ 0`, `a.size = d + 1`, each `aⱼ`
-   free of variable `1`, and `a` not identically zero.
-2. The cross-multiplied identity in `MvPoly ν Rat cmp`:
+1. `rk.den ≠ 0`, `rn.den ≠ 0`, `v ≠ 0`, each `aⱼ` free of variable
+   `1`, and the top coefficient `a_d ≠ 0` (as a polynomial), so a
+   certificate cannot pad its order with zero coefficients. A
+   parameter specialization can still annihilate `a_d` at particular
+   values; that is the semantic leading-coefficient side condition of
+   `eq_of_recurrence`, not the checker's concern.
+2. The cross-multiplied identity in `MvPoly (s + 2) Rat cmp`:
 
    ```
    (∑ⱼ aⱼ · Nⱼ · Qⱼ) · rk.den · v · v⁺  =  (u⁺ · rk.num · v − u · rk.den · v⁺) · D
@@ -367,14 +380,16 @@ the form `S(n) = C(n)`.
 /-- A Hyper certificate for the recurrence `∑ⱼ cⱼ(n) y(n+j) = 0`: a
 ratio `p/q` such that any sequence with `q(n) y(n+1) = p(n) y(n)`
 satisfies the recurrence wherever the denominators clear. -/
-structure HyperCert (ν : Nat) where
-  c   : Array (MvPoly ν Rat cmp)   -- size d + 1; free of variable 1
-  p q : MvPoly ν Rat cmp           -- free of variable 1
+structure HyperCert (s : Nat) where
+  d   : Nat
+  c   : Vector (MvPoly (s + 2) Rat cmp) (d + 1)   -- free of variable 1
+  p q : MvPoly (s + 2) Rat cmp                    -- free of variable 1
 
-def checkHyper (h : HyperCert ν) : Bool
+def checkHyper (h : HyperCert s) : Bool
 ```
 
-The checker verifies `p ≠ 0`, `q ≠ 0`, and
+The checker verifies `p ≠ 0`, `q ≠ 0`, `c₀ ≠ 0` and `c_d ≠ 0` (as
+polynomials, so the recurrence's order is genuine at both ends), and
 
 ```
 ∑ⱼ cⱼ · (∏_{i<j} shiftNⁱ p) · (∏_{j≤i<d} shiftNⁱ q) = 0
@@ -404,7 +419,7 @@ def sumIco (f : Int → Rat) (a b : Int) : Rat
 
 /-- Evaluate a certificate polynomial at recurrence variable `n`,
 summation variable `k`, and parameter vector `w`. -/
-def evalAt (f : MvPoly ν Rat cmp) (n k : Int) (w : Vector Rat (ν - 2)) : Rat
+def evalAt (f : MvPoly (s + 2) Rat cmp) (n k : Int) (w : Vector Rat s) : Rat
 ```
 
 `evalAt` is `MvPoly.eval` at the assignment fixed by the variable
@@ -415,9 +430,9 @@ pointwise rational identity.
 ### Telescoping soundness (Gosper)
 
 ```lean
-theorem sumIco_eq_of_checkGosper {c : GosperCert ν}
-    (hc : checkGosper c = true) (w : Vector Rat (ν - 2))
-    (t : Int → Rat) (a b : Int)
+theorem sumIco_eq_of_checkGosper {c : GosperCert s}
+    (hc : checkGosper c = true) (w : Vector Rat s)
+    (t : Int → Rat) (a b : Int) (hab : a ≤ b)
     (hratio : ∀ k, a ≤ k → k < b → evalAt c.r.den 0 k w * t (k+1)
                                  = evalAt c.r.num 0 k w * t k)
     (hq : ∀ k, a ≤ k → k < b → evalAt c.r.den 0 k w ≠ 0)
@@ -430,19 +445,35 @@ theorem sumIco_eq_of_checkGosper {c : GosperCert ν}
 The proof shape: evaluate the checker identity at each `k ∈ [a, b)`
 (the evaluation homomorphism), divide by the three nonvanishing values
 to recover `G(k+1) − G(k) = t k` for `G(k) = (u/v)(k) · t k`, and
-telescope by induction on `(b − a).toNat`. Division here is `ℚ` field
-division;
+telescope by induction on `(b − a).toNat`. The `hab` hypothesis is
+load-bearing, not decorative: on a reversed interval every pointwise
+hypothesis is vacuous and `sumIco` is zero, while the boundary
+difference need not be (`u = X₁`, `v = q = p = 1`, `t = 1` is an
+accepted certificate whose boundary difference at `a = 1, b = 0` is
+`−1`). Division here is `ℚ` field division;
 the junk value at zero never arises because the hypotheses exclude it
 pointwise. All of this is `Rat` arithmetic and `grind`-level algebra,
 with no Mathlib tactic in reach and none needed.
+
+The Gosper theorem also gets an exceptional-edge variant of the same
+shape as the Zeilberger one below, and it is not optional: a term that
+vanishes at an interior point with a nonzero successor *forces*
+`q(k₀) = 0` in any polynomial multiplied-form ratio (from
+`q(k₀) · t(k₀+1) = p(k₀) · 0` with `t(k₀+1) ≠ 0`), so `hq` is
+unsatisfiable on any range containing `k₀`. The first worked example
+is already like this: `t k = k · k!` has `t 0 = 0`, `t 1 = 1`, so
+every ratio for it has `q(0) = 0` and the tactic sums `[1, b)` with
+the `k = 0` term split off. The recognizer performs that split; the
+variant carries the general case.
 
 ### The summed recurrence (Zeilberger)
 
 Two layers, pointwise then summed:
 
 ```lean
-theorem telescoped_of_checkZeilberger {c : ZeilbergerCert ν}
+theorem telescoped_of_checkZeilberger {c : ZeilbergerCert s}
     (hc : checkZeilberger c = true) (w) (F : Int → Int → Rat) (n a b : Int)
+    (hab : a ≤ b)
     (hk : ∀ k, a ≤ k → k < b → ∀ j ≤ c.d,   -- k-ratio at row n+j, n-ratio between rows
         ⟨multiplied ratio facts for F at the visited points⟩)
     (hnz : ⟨pointwise nonvanishing of rk.den, shiftNⁱ rn.den (i < d), v,
@@ -460,7 +491,8 @@ zero and `G n b` is zero only when the summand vanishes past its
 support; both facts belong to the consumer.
 
 On top of it, the natural-boundary corollary for
-`S n = sumIco (F n) 0 (n + 1)` takes `a = 0`, `b = n + c.d + 1`, a
+`S n = sumIco (F n) 0 (n + 1)` takes `a = 0`, `b = n + c.d + 1`, the
+hypothesis `0 ≤ n` (which orders every interval in the splitting), a
 vanishing hypothesis
 `∀ j ≤ d, ∀ k, n + j < k → k ≤ n + d → F (n+j) k = 0`, and concludes
 the pure recurrence
@@ -476,15 +508,31 @@ cutoff use it.
 A third variant is the apery `sound_telescoping` shape, and it is the
 one the pipeline uses when a certificate denominator vanishes at
 interior points of the range, which Harrison's HOL Light development
-documents as the common case rather than the pathological one. It
-takes a declared finite exceptional set (derived by the front-end from
-the integer roots of the factored denominators), assumes the pointwise
-facts only off that set, and concludes the recurrence *plus* an
-explicit correction sum over the exceptional points inside the range.
-The consumer evaluates the finitely many correction terms exactly,
-and they cancel against boundary terms or vanish; nothing about them
-is assumed. The all-points statement above is the corollary at an
-empty exceptional set.
+documents as the common case rather than the pathological one. Its
+exceptional set is **not a fixed finite set of points**: a denominator
+root such as `k = n + 1` moves with `n`. The representation is a
+declared finite list of affine lines `α·n + β·k + γ = 0` (coefficients
+over all `s + 2` variables, from the factored-denominator witness
+below), each with `β ≠ 0`, so that at each `n` a line contributes at
+most one exceptional `k` and `|E n|` is bounded by the number of
+lines; a factor with `β = 0` does not vanish at isolated `k` and is
+handled by the `n₀` threshold instead, never by the exceptional set.
+Writing `H n k = ∑ⱼ aⱼ(n) F (n+j) k` and defining `G` by total `ℚ`
+division (junk values at poles are harmless because nothing is
+assumed there), the variant assumes `H n k = G n (k+1) − G n k` only
+for `k ∉ E n` with **shifted edges included** (`k` is exceptional
+when either `k` or `k + 1` lies on a declared line, since `v(k+1)`
+occurs), and concludes
+
+```
+∑_{k ∈ [a,b)} H n k = G n b − G n a + ∑_{k ∈ E n ∩ [a,b)} (H n k − (G n (k+1) − G n k))
+```
+
+The correction terms are symbolic functions of `n`, one per line, and
+the companion's obligation is explicit: prove each vanishes or carry
+it into the forcing term of the recurrence. Nothing about them is
+assumed. The all-points statement above is the corollary at an empty
+line list.
 
 ### Equality from a shared recurrence
 
@@ -493,13 +541,24 @@ with:
 
 ```lean
 theorem eq_of_recurrence (S C : Int → Rat) (d : Nat) (n₀ : Int)
-    (a : Array (Int → Rat)) (ha : a.size = d + 1)
+    (a : Vector (Int → Rat) (d + 1)) (f : Int → Rat)
     (hlead : ∀ n ≥ n₀, a[d] n ≠ 0)
-    (hS : ∀ n ≥ n₀, ∑ⱼ a[j] n * S (n + j) = 0)
-    (hC : ∀ n ≥ n₀, ∑ⱼ a[j] n * C (n + j) = 0)
+    (hS : ∀ n ≥ n₀, ∑ⱼ a[j] n * S (n + j) = f n)
+    (hC : ∀ n ≥ n₀, ∑ⱼ a[j] n * C (n + j) = f n)
     (hinit : ∀ n, n₀ ≤ n → n < n₀ + d → S n = C n) :
     ∀ n ≥ n₀, S n = C n
 ```
+
+The recurrence is stated with a shared **forcing term** `f`, not as
+homogeneous, because the two sides arrive differently: the telescoped
+recurrence for a sum carries boundary and exceptional-correction terms
+on its right side, while `checkHyper` certifies a homogeneous
+recurrence for a closed form. The pipeline either proves the sum's
+forcing term is zero (the usual case, when the boundary values vanish
+and the corrections cancel) and uses `f = 0` on both sides, or keeps
+`f` and proves the closed form's side matches it. Matching the two
+right sides is a named obligation of the pipeline, never an implicit
+step.
 
 Strong induction on `(n − n₀).toNat`: for `n ≥ n₀ + d` the recurrence
 at `n − d` determines `S n` and `C n` from the previous `d` values
@@ -516,9 +575,9 @@ and hand-stated recurrences.
 /-- The sequence with ratio `p/q` from `y n₀ = 1`, extended upward by
 the recursion `y (n+1) = eval p n / eval q n * y n`, and `0` below
 `n₀`. -/
-def ofRatio (h : HyperCert ν) (w) (n₀ : Int) : Int → Rat
+def ofRatio (h : HyperCert s) (w) (n₀ : Int) : Int → Rat
 
-theorem ofRatio_recurrence {h : HyperCert ν} (hc : checkHyper h = true)
+theorem ofRatio_recurrence {h : HyperCert s} (hc : checkHyper h = true)
     (w) (n₀ : Int)
     (hnz : ∀ n ≥ n₀, evalAt h.p n 0 w ≠ 0 ∧ evalAt h.q n 0 w ≠ 0) :
     ∀ n ≥ n₀, ∑ⱼ evalAt (h.c[j]) n 0 w * ofRatio h w n₀ (n + j) = 0
@@ -548,33 +607,67 @@ computable rational, and the comparison `n₀ > cauchyBound f` is decided
 by `decide`. The proof is the leading-term-dominates argument in `Rat`
 absolute values, Mathlib-free.
 
-For the bivariate denominators the front-end actually produces, there
-is a sharper decidable criterion. A proper hypergeometric summand's
-shift ratios factor into integer-linear pieces `α n + β k + γ`, and
-nonvanishing of such a piece over the trapezoid
-`{(n, k) : n ≥ n₀, 0 ≤ k ≤ n + s}` reduces, because the piece is
-linear in `k`, to sign conditions on the two boundary lines `k = 0`
-and `k = n + s`, each univariate linear in `n`:
+For the denominators the front-end actually produces, there is a
+sharper decidable criterion. A proper hypergeometric summand's shift
+ratios factor into affine pieces, and the piece is where every
+pointwise side condition above ultimately lands:
 
 ```lean
-structure LinearFactor where
-  a b c : Int      -- a·n + b·k + c
+/-- An affine form `cn·n + ck·k + ⟨cw, w⟩ + c` over all `s + 2`
+variables. -/
+structure AffineFactor (s : Nat) where
+  cn ck : Int
+  cw    : Vector Int s
+  c     : Int
 
-/-- Decidable: `a n + b k + c ≠ 0` for all integer `n ≥ n₀`,
-`0 ≤ k ≤ n + s`. -/
-def LinearFactor.nonvanishingOn (ℓ : LinearFactor) (n₀ : Int) (s : Nat) : Bool
+/-- An optional side-condition witness for one certificate
+denominator: a rational constant and a multiset of affine factors
+whose product is claimed to be the stored polynomial. -/
+structure DenWitness (s : Nat) where
+  const   : Rat
+  factors : List (AffineFactor s)
 
-theorem LinearFactor.nonvanishingOn_sound ...
+def checkDenWitness (den : MvPoly (s + 2) Rat cmp) (dw : DenWitness s) : Bool
 ```
 
-Certificates produced by the front-end carry their denominators
-additionally in factored form (a rational constant and a multiset of
-`LinearFactor`s); the checker verifies the factored product equals the
-stored polynomial, and the semantics side conditions are then
-discharged factor by factor. A denominator outside the integer-linear
-class is legal in a certificate; its pointwise conditions simply
-surface as goals (see the fall-through list under "The front-end
-recognizer").
+`checkDenWitness` multiplies the factored form out and compares it to
+the stored denominator, so a witness cannot disagree with the
+polynomial the identity checker used. Witnesses are **optional and
+separate from the identity checkers**: each certificate type carries
+an optional `DenWitness` per denominator field (`r.den` and `v` for
+Gosper; `rk.den`, `rn.den`, and `v` for Zeilberger; `q` for Hyper),
+the identity checkers ignore them, and the semantics side conditions
+are discharged factor by factor from a validated witness. The
+exceptional-set lines of the summed recurrence are read off the same
+witness.
+
+For a parameter-free factor (`cw = 0`), nonvanishing over the
+trapezoid `{(n, k) : n ≥ n₀, 0 ≤ k ≤ n + e}` is decided by sign
+conditions on the two boundary lines `k = 0` and `k = n + e`, each
+univariate linear in `n`:
+
+```lean
+/-- Sufficient (not necessary) for: the factor is nonzero at every
+integer point with `n ≥ n₀`, `0 ≤ k ≤ n + e`. -/
+def AffineFactor.nonvanishingOn (ℓ : AffineFactor 0) (n₀ : Int) (e : Nat) : Bool
+
+theorem AffineFactor.nonvanishingOn_sound ...
+```
+
+The criterion is deliberately conservative: it certifies a factor that
+never changes sign on the region, and rejects factors such as
+`2k − 1` that cross zero over `ℝ` while missing every integer point.
+The exact divisibility refinement (a factor with `gcd(cn, ck) ∤ c`
+vanishes at no integer point at all) is a compatible strengthening an
+implementation may add; soundness is one-directional either way. A
+factor with parameter coefficients has no closed criterion, because
+nonvanishing then depends on the parameter values: the recognizer
+emits its condition as a goal, discharged from the goal's own
+hypotheses (`r ≤ m + n`, a variable known to be a natural, and so on)
+or left to the user. A denominator outside the affine class is legal
+in a certificate; it simply has no witness, and its pointwise
+conditions surface as goals (see the fall-through list under "The
+front-end recognizer").
 
 ## The search
 
@@ -586,13 +679,18 @@ search function re-runs the relevant checker before returning, so its
 postcondition is by construction, one line each:
 
 ```lean
-def gosper? (r : Ratio ν) : Option (GosperCert ν)
-def zeilberger? (rk rn : Ratio ν) (maxOrder : Nat := 6) :
-    Except ZeilbergerFailure (ZeilbergerCert ν)
-def hyperSolve (c : Array (MvPoly ν Rat cmp)) : List (HyperCert ν)
+def gosper? (r : Ratio s) : Option (GosperCert s)
+def zeilberger? (rk rn : Ratio s) (maxOrder : Nat := 6) :
+    Except ZeilbergerFailure (ZeilbergerCert s)
+def hyperSolve (d : Nat) (c : Vector (MvPoly 2 Rat cmp) (d + 1)) :
+    List (HyperCert 0)
 
 theorem gosper?_check {r c} (h : gosper? r = some c) :
     checkGosper c = true ∧ c.r = r
+theorem zeilberger?_check {rk rn mo c} (h : zeilberger? rk rn mo = .ok c) :
+    checkZeilberger c = true ∧ c.rk = rk ∧ c.rn = rn ∧ c.d ≤ mo
+theorem hyperSolve_mem_check {d c h} (hmem : h ∈ hyperSolve d c) :
+    checkHyper h = true ∧ h.d = d ∧ h.c = c
 
 inductive ZeilbergerStop | orderExhausted
 structure ZeilbergerFailure where
@@ -605,9 +703,13 @@ state, unlike the randomized searches in hex-primality. Failure means
 exhaustion of an explicit bound, and the bound is in the failure value.
 
 **Gosper-Petkovšek normal form.** Given the reduced ratio `p/q` (this
-is where hex-poly's field gcd runs), write
-`p/q = (a/b) · (c⁺/c)` with `gcd(a(k), b(k+j)) = 1` for every natural
-`j`. The candidate `j`s form the dispersion set: the nonnegative
+is where hex-poly's field gcd runs), write `p/q = Z · (a/b) · (c⁺/c)`
+with `b` and `c` monic, `Z` a constant, and the three coprimality
+invariants of the full normal form: `gcd(a(k), b(k+j)) = 1` for every
+natural `j`, `gcd(a(k), c(k)) = 1`, and `gcd(b(k), c(k+1)) = 1`. The
+shift-coprimality invariant is what the degree bound needs; the other
+two are what Hyper's divisor argument needs, and computing them is two
+more gcds. The candidate `j`s form the dispersion set: the nonnegative
 integer roots of `Res_k(a(k), b(k+j))`, a resultant taken over the
 coefficient ring `DensePoly Rat` through hex-resultant, or by
 evaluation and interpolation if that is faster; the choice is
@@ -618,12 +720,34 @@ search completeness, never soundness, so no factorization dependency is
 taken for it. The peeling loop is the standard one, A=B §5.3.
 
 **Degree bound and linear solve.** Solve `a(k) x(k+1) − b(k−1) x(k) =
-c(k)` for polynomial `x` by the classical two-case degree bound on
-`deg x` (A=B §5.4: the cases split on `s⁺ = a + b⁻` and `s⁻ = a − b⁻`,
-with the extra integer candidate root in the equal-degree case), then
+c(k)` for polynomial `x` by the classical case analysis (A=B §5.4).
+Writing `b⁻(k) = b(k−1)`: if `deg a ≠ deg b⁻` or `lc a ≠ lc b⁻`, then
+`deg x = deg c − max(deg a, deg b⁻)`. Otherwise, with
+`ℓ = deg a = deg b⁻`, `λ = lc a`, and `A`, `B` the coefficients of
+`k^(ℓ−1)` in `a` and `b⁻`, the candidates are `deg c − ℓ + 1` and
+`(B − A)/λ`, the second admitted only when it is a nonnegative
+integer, and `deg x` is the maximum of the admitted candidates. Then
 undetermined coefficients: a linear system over `ℚ` solved by
 hex-row-reduce at `Matrix Rat`. The output is assembled into
 `y = u/v = (b⁻/c) · x` and checked.
+
+**Parameters in the search.** The two paragraphs above are stated
+over `DensePoly Rat`, and with symbolic parameters they do not apply
+as written: gcd, dispersion, and degree bounds would live over
+`ℚ(w)[k]`, a coefficient field none of the listed dependencies
+provides. The search does not build that field. Instead it
+**specializes and lifts**: substitute random integers for the
+parameters, run the parameter-free normal form and degree analysis at
+one or more specializations to obtain the certificate's *shape* (the
+dispersion set, `deg x`, and for Zeilberger the order `d`), then
+solve for the certificate's coefficients symbolically, as the
+already-specified fraction-free elimination over `MvPoly` in which
+the parameters are just variables. An unlucky specialization (one on
+the parameter subvariety where a degree drops) produces a candidate
+the checker rejects, and the search retries with fresh points; as
+everywhere in this section, that costs retries, never soundness. This
+is the reason the searches can serve the symbolic Vandermonde example
+with no rational-function-field dependency.
 
 **The Zeilberger loop.** For `d = 0, 1, …, maxOrder`: run parametrized
 Gosper on `t_d(k) = ∑ⱼ aⱼ F(n+j, k)` with the `aⱼ` coefficients
@@ -639,8 +763,16 @@ coefficient field is generically valid and can be wrong on a
 parameter subvariety; the checker catches any resulting bad candidate,
 so genericity failures cost retries, not soundness.
 
-**Hyper.** Petkovšek's enumeration for
-`∑ⱼ cⱼ(n) y(n+j) = 0`: normalise the coefficients to `ℤ[n]`; for each
+**Hyper.** `hyperSolve` accepts parameter-free input only (`s = 0`,
+enforced by its signature): its enumeration factors the boundary
+coefficients into irreducibles, and factorization over `ℚ(w)[n]` is
+machinery no dependency provides and the specialize-and-lift device
+cannot substitute for (the *set* of factor pairs, not just their
+coefficients, changes with the parameters). The checker still accepts
+parametrized Hyper certificates, so a hand-supplied symbolic
+certificate replays; only the search is restricted, and a symbolic
+Hyper search is recorded under open questions. Petkovšek's enumeration
+for `∑ⱼ cⱼ(n) y(n+j) = 0`: normalise the coefficients to `ℤ[n]`; for each
 monic factor `A` of `c₀(n)` and monic factor `B` of `c_d(n − d + 1)`,
 obtained from hex-berlekamp-zassenhaus on the two integer-cleared
 polynomials, and for each rational root `z` of the leading-coefficient
@@ -678,16 +810,30 @@ explicit hypothesis for anything unproved:
    cross-multiplied polynomial identity, checked by `checkHyper` with
    the certificate's own coefficients. A closed form that is a sum of
    several hypergeometric terms splits into one such check per term.
-4. **Leading coefficient and thresholds.** `a_d(n) ≠ 0` for `n ≥ n₀`
-   by the Cauchy bound; `n₀` is chosen past every bound and exceptional
-   point in play.
-5. **Initial values.** `S n = C n` for `n₀ ≤ n < n₀ + d`, and directly
-   for the indices `0 ≤ n < n₀` the goal covers below the threshold,
-   by evaluation: finitely many exact `ℚ` computations, closed by
-   `decide` or `norm_num`.
-6. **Conclusion.** `eq_of_recurrence`.
+4. **The forcing term.** Prove the right side of the sum's telescoped
+   recurrence (boundary values plus exceptional corrections) is zero
+   for `n ≥ n₀`, or match it against the closed form's side; the
+   shared-`f` form of `eq_of_recurrence` is what makes this a stated
+   obligation rather than a silent assumption.
+5. **Leading coefficient and thresholds.** `a_d(n) ≠ 0` for `n ≥ n₀`.
+   Parameter-free, this is the Cauchy bound with `n₀` computed past
+   it. With symbolic parameters the Cauchy bound is unavailable as an
+   automatic device (a polynomial nonzero in `ℚ[n, w]` can specialize
+   to zero, and its root bound can grow without bound in `w`), so the
+   discharge is the affine-factor criterion when `a_d` factors that
+   way, and otherwise the condition surfaces as a goal. The tactic
+   never promises a parameter-uniform threshold it cannot compute.
+6. **Initial values.** `S n = C n` for `n₀ ≤ n < n₀ + d`, and directly
+   for the indices `0 ≤ n < n₀` the goal covers below the threshold.
+   Parameter-free, each is an exact `ℚ` computation closed by `decide`
+   or `norm_num`. With symbolic parameters each initial value is
+   itself an identity in the parameters, typically one whose sum has
+   collapsed (a `zchoose (x) 0` or empty-support instance); the
+   tactic recurses on these smaller goals through the same machinery
+   and surfaces any that do not collapse.
+7. **Conclusion.** `eq_of_recurrence`.
 
-A false identity submitted to this pipeline fails at step 5 with a
+A false identity submitted to this pipeline fails at step 6 with a
 concrete counterexample index, which is the error message the tactic
 reports.
 
@@ -861,15 +1007,15 @@ replay in seconds, the design holds.
 
 ## Complexity
 
-Operation counts; `M(δ, ν)` is the cost of multiplying `ν`-variate
+Operation counts; `M(δ, s)` is the cost of multiplying `(s + 2)`-variate
 polynomials of degree `δ`, `d` the recurrence order, `δ` the largest
 certificate degree.
 
 | operation | cost | note |
 |---|---|---|
-| `checkGosper` | `O(1)` products at `M(δ, ν)` | five multiplications and one equality |
-| `checkZeilberger` | `O(d)` products at `M(δ + d, ν)` | building `Nⱼ`, `Qⱼ` dominates |
-| `checkHyper` | `O(d)` products at `M(δ + d, ν)` | |
+| `checkGosper` | `O(1)` products at `M(δ, s)` | five multiplications and one equality |
+| `checkZeilberger` | `O(d)` products at `M(δ + d, s)` | building `Nⱼ`, `Qⱼ` dominates |
+| `checkHyper` | `O(d)` products at `M(δ + d, s)` | |
 | `sumIco` replay | `O(b − a)` evaluations | per-point `evalAt` |
 | GP normal form | one resultant + `O(|J|)` gcds | untrusted |
 | `gosper?` | linear solve, `O(δ³)` field ops | hex-row-reduce at `Rat` |
@@ -909,9 +1055,11 @@ Cases that must be present:
   test on the search, not a nonexistence proof).
 - **Rejected certificates of each kind, hand-built**: a tampered `u`;
   a `v` with a dropped factor; a Zeilberger certificate whose `aⱼ`
-  mention the summation variable; coefficients `a` all zero; a Hyper
-  certificate mentioning variable `1`; a certificate whose factored
-  denominator list disagrees with the stored polynomial. No oracle
+  mention the summation variable; a zero top coefficient `a_d` (a
+  padded order); a Gosper certificate mentioning variable `0`; a Hyper
+  certificate mentioning variable `1` or with a zero boundary
+  coefficient; a `DenWitness` whose factored product disagrees with
+  the stored denominator. No oracle
   produces negative cases, so these are constructed by hand, as
   hex-primality's rejected-certificate fixtures are.
 - Boundary-behaviour identities: a summand vanishing at interior
@@ -1012,8 +1160,9 @@ here.
    assumes it.
 
 1. **Gosper certificates.** `Ratio`, `shiftK`/`shiftN`, `GosperCert`,
-   `checkGosper`, `sumIco`, `evalAt`, `sumIco_eq_of_checkGosper`,
-   the Cauchy bound and `LinearFactor` devices, and hand-written
+   `checkGosper`, `sumIco`, `evalAt`, `sumIco_eq_of_checkGosper` and
+   its exceptional-edge variant, the Cauchy bound, `AffineFactor`,
+   and `DenWitness` with `checkDenWitness`, and hand-written
    certificate fixtures for `∑ k·k!` and `∑ 1/(k(k+1))`. The
    checker-first deliverable the future-work entry asks for.
 
@@ -1024,10 +1173,12 @@ here.
    with symbolic parameters as the fixture that pins the parameter
    design.
 
-3. **The searches.** GP normal form, dispersion, degree bounds, the
-   `Rat` linear solve, `gosper?`; the fraction-free parametrized
-   elimination and the `zeilberger?` order loop; checker-approved
-   output with the by-construction postcondition theorems; the
+3. **The searches.** GP normal form with its three invariants,
+   dispersion, degree bounds, the `Rat` linear solve, `gosper?`; the
+   fraction-free parametrized elimination, the specialize-and-lift
+   parameter handling, and the `zeilberger?` order loop;
+   checker-approved output with the by-construction postcondition
+   theorems; the
    conformance drivers and both oracles, including the CI install
    amendment for sympy.
 
@@ -1039,8 +1190,9 @@ here.
    payoff lands here.
 
 5. **Hyper.** `HyperCert`, `checkHyper`, `ofRatio` and its theorems,
-   `hyperSolve` over hex-berlekamp-zassenhaus factor pairs, the
-   `hyper` tactic, and the Hyper conformance and bench families.
+   the parameter-free `hyperSolve` over hex-berlekamp-zassenhaus
+   factor pairs, the `hyper` tactic, and the Hyper conformance and
+   bench families.
 
 ## File organisation
 
@@ -1052,7 +1204,7 @@ HexSummation/
   HyperCert.lean    -- HyperCert, checkHyper
   Telescope.lean    -- sumIco, evalAt, Gosper soundness
   Recurrence.lean   -- summed telescoping, corollaries, eq_of_recurrence
-  Bound.lean        -- cauchyBound, LinearFactor, factored denominators
+  Bound.lean        -- cauchyBound, AffineFactor, DenWitness
   OfRatio.lean      -- ofRatio and its theorems
   Normal.lean       -- GP normal form, dispersion (search)
   Solve.lean        -- degree bounds, undetermined coefficients,
@@ -1117,6 +1269,13 @@ HexSummationMathlib.lean
   bespoke `bigopz` library. They start here because this library is
   their only consumer; a second Mathlib-free consumer of ℤ-interval
   sums would argue for moving them down to hex-basic.
+- **A symbolic Hyper search.** `hyperSolve` is parameter-free because
+  its enumeration needs factorization over `ℚ(w)[n]`. If parametrized
+  recurrence solving turns out to have consumers, the options are a
+  factorization over rational-function coefficient fields (a
+  substantial library) or a partial search over parameter-free factor
+  candidates; the checker already accepts symbolic certificates
+  either way.
 - **The holonomic extension.** Closure properties for
   P-recursive sequences would subsume `eq_of_recurrence` and give
   Zeilberger a home as one closure instance; the future-work entry's
