@@ -19,6 +19,7 @@ instantiation through the generic runtime chronology and proof frontend.
 namespace Hex.IntervalMathlib.SinTenIntervalConformance
 
 open Lean Elab Tactic Meta
+open Hex.Interval
 open Hex.Interval.Experiment
 open Propagator PolicySession SemanticReplay ChronologicalReplay ProofEmitter
 open Frontend FrontendEncoder ProofFrontend ProofRegistry

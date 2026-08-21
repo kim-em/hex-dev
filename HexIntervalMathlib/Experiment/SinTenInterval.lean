@@ -23,6 +23,7 @@ ordinary real semantics.
 
 namespace Hex.IntervalMathlib.Experiment.SinTenInterval
 
+open Hex.Interval
 open Hex.Interval.Experiment
 open Propagator SemanticReplay ChronologicalReplay ProofEmitter ProofRegistry
 open GenericInstanceReconstruction OperationSemantics

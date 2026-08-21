@@ -19,6 +19,7 @@ is not an oracle used by the proof.
 
 namespace Hex.IntervalMathlib.SineProofConformance
 
+open Hex.Interval
 open Hex.Interval.Experiment
 open Propagator PayloadArena SemanticReplay ChronologicalReplay ProofEmitter
 open SineSign SineSignConformance

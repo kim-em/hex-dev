@@ -151,7 +151,7 @@ def invocationOfRequest (scope : ScopeId) (request : RuleRequest Fact) : Invocat
 /-- Internal fuelled loop.  The only action passed to the registry comes from
 {name}`Hex.Interval.Experiment.Propagator.Policy.State.select`; the driver
 merely echoes it through
-{name}`Hex.Interval.Experiment.Propagator.Action.reply`. -/
+{name}`Hex.Interval.Action.reply`. -/
 def driveFrom {Cache : Type u} (controller : Controller Fact PolicyState)
     (invoke : Cache -> RuleRequest Fact -> Outcome Fact × Cache) :
     Nat -> State Fact -> Cache -> PolicyState -> Array (Event Fact) ->

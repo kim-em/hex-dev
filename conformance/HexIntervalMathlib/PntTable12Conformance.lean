@@ -22,6 +22,7 @@ outside this fixture.
 namespace Hex.IntervalMathlib.PntTable12Conformance
 
 open Lean Elab Tactic Meta
+open Hex.Interval
 open Hex.Interval.Experiment
 open Propagator PolicySession SemanticReplay ChronologicalReplay ProofEmitter
 open Frontend ProofFrontend ProofRegistry PntTable12

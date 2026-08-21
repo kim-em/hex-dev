@@ -19,6 +19,7 @@ large-payload `ProofFrontend` fold is deliberately not part of this probe.
 
 namespace Hex.IntervalMathlib.PntFks2ShardConformance
 
+open Hex.Interval
 open Hex.Interval.Experiment
 open Propagator PolicySession SemanticReplay ChronologicalReplay
 open Frontend PntFks2Shard

@@ -20,6 +20,7 @@ frontiers differ on live pending work.
 namespace Hex.Interval.NestedBranchConformance
 
 open Lean Elab Tactic Meta
+open Hex.Interval
 open Experiment
 open Propagator PolicySession SemanticReplay TargetRun BranchStart BranchTree
 open BranchProof ExpSign
@@ -108,7 +109,7 @@ private def run? (order : Order) (fuel : Nat) : Option (State Bound Route) := do
   let .ok state := BranchTree.runFrom (config order) fuel state | none
   some state
 
-private def leafReached? (entry : Node Bound Route) : Bool :=
+private def leafReached? (entry : BranchTree.Node Bound Route) : Bool :=
   match entry with
   | .leaf source (.result result) =>
       source.input.target == target &&

@@ -20,6 +20,7 @@ Its ordinary conclusion bounds `∫ x in 0..1, exp (-x²)` to four decimals.
 namespace Hex.IntervalMathlib.IntegralCanaryConformance
 
 open Lean Elab Tactic Meta
+open Hex.Interval
 open Hex.Interval.Experiment
 open Propagator PolicySession SemanticReplay ChronologicalReplay ProofEmitter
 open Frontend ProofFrontend ProofRegistry IntegralCanary

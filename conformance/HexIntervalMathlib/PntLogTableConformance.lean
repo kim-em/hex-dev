@@ -21,6 +21,7 @@ chronology through the package schema and closes the original real theorem.
 namespace Hex.IntervalMathlib.PntLogTableConformance
 
 open Lean Elab Tactic Meta
+open Hex.Interval
 open Hex.Interval.Experiment
 open Propagator PolicySession SemanticReplay ChronologicalReplay ProofEmitter
 open Frontend ProofFrontend ProofRegistry PntLogTable

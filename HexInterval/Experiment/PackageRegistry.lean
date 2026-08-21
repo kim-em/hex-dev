@@ -377,69 +377,13 @@ def acceptsLimits (registry : Registry Fact) (program : Program)
 
 end Registry
 
-namespace Registration
-
-/-- Exact equality for immutable registration metadata. -/
-def same (left right : Registration) : Bool :=
-  left.key == right.key && left.head == right.head && left.kind == right.kind &&
-    left.watches == right.watches && left.writes == right.writes &&
-      left.binding == right.binding && left.watchesProgram == right.watchesProgram &&
-        left.matchWatch == right.matchWatch &&
-          left.initialEffort == right.initialEffort
-
-/-- Check that a routed handler sees the structural request projection
-described by its immutable registration.  Engine-produced requests satisfy
-this by construction; checking it here catches registry drift and malformed
-direct test requests before a cache update.  A local registration determines
-its exact ports from slots.  A scoped registration can check only internal
-well-formedness here because its concrete binding belongs to the engine; the
-compiled `Application` is the port authority, and the package callback must
-validate the scope's semantic shape.  Authentication of serials, fact values,
-versions, and pending-state ownership remains the engine's job. -/
-def accepts (registration : Registration) (request : RuleRequest Fact) : Bool :=
-  if request.program.programVersion != request.action.programVersion then
-    false
-  else
-    match request.program.node? request.action.node with
-    | none => false
-    | some anchor =>
-        let inputNodes := request.inputs.map (fun input => input.node)
-        let seen := request.inputs.map fun input =>
-          { node := input.node, version := input.version : SeenVersion }
-        let common := registration.key == request.action.key &&
-          registration.kind == request.action.kind &&
-          request.program.operationKey? request.action.node == some registration.head &&
-          request.action.inputs == seen &&
-          match registration.matchWatch with
-          | .none =>
-              request.action.structuralInputs.isEmpty &&
-                request.action.matcherEpoch.isNone
-          | .network =>
-              !request.action.structuralInputs.isEmpty &&
-                request.action.matcherEpoch.isSome
-        common && match registration.binding with
-          | .local =>
-              resolveSlots? request.action.node anchor registration.watches == some inputNodes &&
-                resolveSlots? request.action.node anchor registration.writes ==
-                  some request.writes
-          | .scoped =>
-              registration.watches.isEmpty && registration.writes.isEmpty &&
-                uniqueList inputNodes && uniqueList request.writes &&
-                inputNodes.all (fun node => (request.program.node? node).isSome) &&
-                request.writes.all (fun node => (request.program.node? node).isSome)
-          | .global =>
-              registration.watches.isEmpty && registration.writes.isEmpty &&
-                inputNodes.isEmpty && request.writes.isEmpty
-
-end Registration
-
 namespace Registry
 
 /-- Route a structurally valid start-time scope back to the package which owns
 its rule and ask that package to accept the semantic binding. -/
 def acceptsBinding (registry : Registry Fact) (program : Program)
     (binding : ScopeBinding) : Bool :=
-  match ruleEntry? registry.registrations binding.rule with
+  match Registration.find? registry.registrations binding.rule with
   | none => false
   | some (ruleId, registration) =>
       match registry.routes[ruleId.index]? with
@@ -453,7 +397,7 @@ def acceptsBinding (registry : Registry Fact) (program : Program)
               | some handler =>
                   registration.binding == .scoped &&
                     registration.same handler.registration &&
-                    binding.valid program registry.registrations &&
+                    ScopeBinding.check program registry.registrations binding &&
                     handler.acceptsScope program binding
 
 /-- Check a complete start-time binding table after assembling the final
@@ -462,7 +406,7 @@ package registry and program.  Passing `Registry.acceptsBinding registry` to
 repeats its independent structural validation at its own boundary. -/
 def acceptsBindings (registry : Registry Fact) (program : Program)
     (bindings : Array ScopeBinding) : Bool :=
-  scopeBindingsCheck program registry.registrations bindings &&
+  ScopeBinding.checkAll program registry.registrations bindings &&
     bindings.all (registry.acceptsBinding program)
 
 /-- A negative plan for a dispatch failure before any callback or replay
@@ -496,7 +440,7 @@ opaque invokePlanned (registry : Registry Fact) (request : RuleRequest Fact) :
               | some handler =>
                   if !registration.same handler.registration then
                     (failedInvocation request.action.key DispatchCode.registryMismatch, registry)
-                  else if !handler.registration.accepts request then
+                  else if !RuleRequest.accepts handler.registration request then
                     (failedInvocation request.action.key DispatchCode.requestMismatch, registry)
                   else
                     let program : Program :=

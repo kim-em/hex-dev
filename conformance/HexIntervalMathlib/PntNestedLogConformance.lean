@@ -22,6 +22,7 @@ Mathlib-free log package twice.  Replay first checks a positive enclosure for
 namespace Hex.IntervalMathlib.PntNestedLogConformance
 
 open Lean Elab Tactic Meta
+open Hex.Interval
 open Hex.Interval.Experiment
 open Propagator PolicySession SemanticReplay ChronologicalReplay ProofEmitter
 open Frontend ProofFrontend ProofRegistry PntNestedLog

@@ -236,7 +236,8 @@ def action (serial application rule : Nat) (key : RuleKey)
     node := target
     kind := .forward
     effort := 0
-    inputs := [{ node := input, version := 0 }] }
+    inputs := [{ node := input, version := 0 }]
+    writes := [target] }
 
 def leftAction : Action :=
   action 0 0 0 leftRuleKey (node 1) (node 0)

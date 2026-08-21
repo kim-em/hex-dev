@@ -24,6 +24,7 @@ that fact back to `sin (-x)`; and the exponential package consumes it.
 namespace Hex.IntervalMathlib.MixedInstantiationConformance
 
 open Lean Elab Tactic Meta
+open Hex.Interval
 open Hex.Interval.Experiment
 open Propagator PolicySession SemanticReplay ChronologicalReplay ProofEmitter
 open Frontend FrontendEncoder ProofFrontend ProofRegistry GoalFrontend GoalClosure

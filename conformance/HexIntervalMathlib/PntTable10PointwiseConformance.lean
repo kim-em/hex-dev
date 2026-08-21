@@ -20,6 +20,7 @@ a draft or precision retry.
 namespace Hex.IntervalMathlib.PntTable10PointwiseConformance
 
 open Lean Elab Tactic Meta
+open Hex.Interval
 open Hex.Interval.Experiment
 open Propagator PolicySession SemanticReplay ChronologicalReplay ProofEmitter
 open Frontend ProofFrontend ProofRegistry PntTable10Pointwise

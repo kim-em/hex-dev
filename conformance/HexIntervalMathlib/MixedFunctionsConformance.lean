@@ -23,6 +23,7 @@ The generic scheduler and proof frontend contain no cases for either function.
 namespace Hex.IntervalMathlib.MixedFunctionsConformance
 
 open Lean Elab Tactic Meta
+open Hex.Interval
 open Hex.Interval.Experiment
 open Propagator PolicySession SemanticReplay ChronologicalReplay ProofEmitter
 open Frontend FrontendEncoder ProofFrontend ProofRegistry GoalFrontend GoalClosure

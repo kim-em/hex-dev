@@ -209,7 +209,8 @@ def unaryRequest (rule application : Nat) (key : RuleKey) (anchor : NodeId)
         node := anchor
         kind
         effort := 0
-        inputs := [{ node := node 0, version := 0 }] }
+        inputs := [{ node := node 0, version := 0 }]
+        writes }
     program := view
     inputs := [{ node := node 0, fact := 0, version := 0 }]
     writes }

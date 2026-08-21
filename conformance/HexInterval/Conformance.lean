@@ -2148,4 +2148,158 @@ example {limit : EndpointLimit} {raw : Raw} {interval : Hex.Interval}
 example (left right : Hex.Interval) (h : left.view = right.view) : left = right :=
   Hex.Interval.ext h
 
+/-! # Supported controller contracts -/
+
+namespace Contracts
+
+def realDomain : DomainId := { index := 0 }
+def otherDomain : DomainId := { index := 1 }
+
+def sourceKey : OpKey := { name := "contracts.source", version := 1 }
+def sourceV2Key : OpKey := { name := "contracts.source", version := 2 }
+def unaryKey : OpKey := { name := "contracts.unary", version := 3 }
+
+def sourceOp : Operation := { key := sourceKey, inputs := [], output := realDomain }
+def sourceV2Op : Operation := { key := sourceV2Key, inputs := [], output := realDomain }
+def unaryOp : Operation := { key := unaryKey, inputs := [realDomain], output := realDomain }
+
+def contractNode (index : Nat) : NodeId := { index }
+
+def contractProgram : Program :=
+  { operations := #[sourceOp, unaryOp]
+    nodes :=
+      #[{ domain := realDomain, op := { index := 0 }, args := [] },
+        { domain := realDomain, op := { index := 1 }, args := [contractNode 0] }] }
+
+#guard contractProgram.check
+#guard contractProgram.depths? == some #[0, 1]
+
+-- Stable operation versions are part of uniqueness and lookup identity.
+#guard ({ contractProgram with operations := #[sourceOp, unaryOp, sourceV2Op] }).check
+#guard !({ contractProgram with operations := #[sourceOp, sourceOp, unaryOp] }).check
+
+-- Arity, output domains, operation identifiers, and strict SSA order are all
+-- checked before a controller may build dependency state.
+#guard !({ contractProgram with nodes :=
+  #[{ domain := realDomain, op := { index := 0 }, args := [contractNode 0] }] }).check
+#guard !({ contractProgram with nodes :=
+  #[{ domain := realDomain, op := { index := 9 }, args := [] }] }).check
+#guard !({ contractProgram with nodes :=
+  #[{ domain := otherDomain, op := { index := 0 }, args := [] }] }).check
+#guard !({ contractProgram with nodes :=
+  #[{ domain := realDomain, op := { index := 0 }, args := [] },
+    { domain := realDomain, op := { index := 1 }, args := [contractNode 1] }] }).check
+#guard !({ contractProgram with nodes :=
+  #[{ domain := realDomain, op := { index := 0 }, args := [] },
+    { domain := realDomain, op := { index := 1 }, args := [] }] }).check
+
+def localKey : RuleKey := { name := "contracts.local", schema := 4 }
+def scopedKey : RuleKey := { name := "contracts.scoped", schema := 2 }
+
+def localRule : Registration :=
+  { key := localKey
+    head := unaryKey
+    kind := .forward
+    watches := [.argument 0]
+    writes := [.result] }
+
+def scopeRule : Registration :=
+  { key := scopedKey
+    head := unaryKey
+    kind := .improve
+    watches := []
+    writes := []
+    binding := .scoped }
+
+def wrongHeadRule : Registration :=
+  { localRule with
+    key := { name := "contracts.local", schema := 5 }
+    head := { name := "contracts.unary", version := 2 } }
+
+#guard Registration.check contractProgram #[localRule, scopeRule]
+#guard !Registration.check contractProgram #[localRule, localRule]
+#guard !Registration.check contractProgram #[wrongHeadRule]
+#guard !Registration.check contractProgram #[{ localRule with watches := [.argument 1] }]
+#guard !Registration.check contractProgram #[{ localRule with writes := [.result, .result] }]
+#guard !Registration.check contractProgram #[{ localRule with binding := .global }]
+
+def binding : ScopeBinding :=
+  { rule := scopedKey
+    anchor := contractNode 1
+    watches := [contractNode 0]
+    writes := [contractNode 1] }
+
+#guard ScopeBinding.check contractProgram #[localRule, scopeRule] binding
+#guard ScopeBinding.checkAll contractProgram #[localRule, scopeRule] #[binding]
+#guard !ScopeBinding.checkAll contractProgram #[localRule, scopeRule] #[binding, binding]
+#guard !ScopeBinding.check contractProgram #[localRule, scopeRule]
+  { binding with rule := localKey }
+#guard !ScopeBinding.check contractProgram #[localRule, scopeRule]
+  { binding with anchor := contractNode 0 }
+#guard !ScopeBinding.check contractProgram #[localRule, scopeRule]
+  { binding with watches := [contractNode 0, contractNode 0] }
+#guard !ScopeBinding.check contractProgram #[localRule, scopeRule]
+  { binding with writes := [contractNode 2] }
+
+def view : ProgramView :=
+  { programVersion := 7
+    operations := contractProgram.operations
+    nodes := contractProgram.nodes
+    generations := #[0, 2]
+    depths := #[0, 1] }
+
+#guard view.check
+#guard !({ view with generations := #[0] }).check
+#guard !({ view with depths := #[0, 2] }).check
+
+def action : Action :=
+  { serial := 11
+    programVersion := 7
+    application := { index := 3 }
+    rule := { index := 0 }
+    key := localKey
+    node := contractNode 1
+    kind := .forward
+    effort := 0
+    generation := 2
+    inputs := [{ node := contractNode 0, version := 5 }]
+    writes := [contractNode 1] }
+
+def request : RuleRequest Nat :=
+  { action
+    program := view
+    inputs := [{ node := contractNode 0, fact := 23, version := 5 }]
+    writes := [contractNode 1] }
+
+#guard RuleRequest.accepts localRule request
+#guard request.fact? (contractNode 0) == some 23
+
+-- Compact identifiers and serials are authenticated by controller state, but
+-- every stable key, program/fact version, and ordered port is checked here.
+#guard !RuleRequest.accepts localRule
+  { request with action := { action with programVersion := 8 } }
+#guard !RuleRequest.accepts localRule
+  { request with action := { action with key := { localKey with schema := 5 } } }
+#guard !RuleRequest.accepts localRule
+  { request with action :=
+      { action with inputs := [{ node := contractNode 0, version := 6 }] } }
+#guard !RuleRequest.accepts localRule
+  { request with inputs := [{ node := contractNode 0, fact := 23, version := 6 }] }
+#guard !RuleRequest.accepts localRule { request with action := { action with writes := [] } }
+#guard !RuleRequest.accepts localRule { request with writes := [] }
+#guard !RuleRequest.accepts localRule
+  { request with program := { view with depths := #[0, 2] } }
+
+def snapshot : Snapshot Nat :=
+  { facts := #[13, 23], versions := #[4, 5], contradictory := false }
+
+#guard snapshot.check contractProgram
+#guard !({ snapshot with versions := #[4] }).check contractProgram
+#guard snapshot.fact? (contractNode 1) == some 23
+#guard snapshot.version? (contractNode 1) == some 5
+#guard ({ node := contractNode 1, version := 5 : SeenVersion }) !=
+  ({ node := contractNode 1, version := 6 : SeenVersion })
+
+end Contracts
+
 end Hex.Interval.Conformance

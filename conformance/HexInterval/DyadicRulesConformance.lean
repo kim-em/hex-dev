@@ -89,7 +89,7 @@ def exactFact (state : Engine Fact) (index : Nat) (expected : Raw) : Bool :=
 
 def registryChecks (program : Program) : Bool :=
   match registry? with
-  | some registry => registrationsCheck program registry.registrations
+  | some registry => Registration.check program registry.registrations
   | none => false
 
 /-! ## Exact backward singleton multiplication -/
@@ -410,7 +410,8 @@ def plannedRequest? (registry : ConcreteRegistry) (serial : Nat)
           node := anchor
           kind
           effort := 0
-          inputs := [] }
+          inputs := []
+          writes }
       program := payloadView
       inputs := []
       writes }

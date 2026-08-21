@@ -21,6 +21,7 @@ source `pow*_upper` declarations without importing LeanCert.
 namespace Hex.IntervalMathlib.PntBKLNWPowConformance
 
 open Lean Elab Tactic Meta
+open Hex.Interval
 open Hex.Interval.Experiment
 open Propagator PolicySession SemanticReplay ChronologicalReplay ProofEmitter
 open Frontend ProofFrontend ProofRegistry PntBKLNWPow

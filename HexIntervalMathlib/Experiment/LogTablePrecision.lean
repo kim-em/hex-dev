@@ -17,6 +17,7 @@ public import HexInterval.Experiment.OperationSemantics
 namespace Hex.IntervalMathlib.Experiment.LogTablePrecision
 
 open Finset
+open Hex.Interval
 open Hex.Interval.Experiment
 open Propagator SemanticReplay ChronologicalReplay ProofEmitter ProofRegistry
 open GenericInstanceReconstruction OperationSemantics
