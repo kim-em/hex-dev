@@ -391,7 +391,7 @@ Both are landed, in `HexMvPoly/Ring.lean` and `HexMvPoly/Structural.lean`.
 it. Every hex-resultant correctness theorem takes
 `[Lean.Grind.CommRing S]`, so without it the subresultant chain runs over
 `MvPoly` and none of its theorems apply.
-`HexResultant/ExactDiv.lean:333-548` builds the same tower for
+`HexResultant/ExactDiv.lean` builds the same tower for
 `DensePoly`. The `Semiring.npow` field uses hex-mv-poly's existing
 `npowBySq` and its proved `pow_succ` rather than a second power
 operation.

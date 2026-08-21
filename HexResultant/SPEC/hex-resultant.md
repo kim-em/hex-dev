@@ -1,4 +1,4 @@
-# hex-resultant (polynomial resultant via subresultant chain, depends on hex-poly)
+# hex-resultant (polynomial resultant via subresultant chain, depends on hex-poly and hex-basic)
 
 Polynomial resultant and discriminant for `Hex.DensePoly R` over a
 commutative exact-division domain. Computed via the **subresultant
@@ -450,8 +450,13 @@ does not alter the current resultant or discriminant contracts.
 
 ## File organisation
 
-- `HexResultant/ExactDiv.lean`: `ExactDivLaws`, the total exact-division
-  wrappers, and the `Int`, field, and recursive dense-polynomial instances.
+- `HexResultant/ExactDiv.lean`: the binary-power helpers `powNat` and `divExp`,
+  coefficientwise dense-polynomial scalar division, the lightweight
+  dense-polynomial ring tower, and the recursive `ExactDivLaws (DensePoly R)`
+  instance. `ExactDivLaws`, the total `exactDiv` wrapper, the
+  coefficient-independent cancellation lemmas, and the `Int` and field
+  instances live below this library in `HexBasic/ExactDiv.lean`, which this
+  file re-exports through a public import.
 - `HexResultant/Basic.lean`: `pseudoDivMod` and its computational properties.
 - `HexResultant/PseudoDivMod.lean`: uniqueness, nonzero scaling, and the
   left/right pseudo-division homogeneity laws.

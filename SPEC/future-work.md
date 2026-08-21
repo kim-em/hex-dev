@@ -48,20 +48,25 @@ from `IsEchelonForm.transform_inv` and `det_mul`; and it must carry the
 condition that each pivot is the leading nonzero entry of its row, which
 `IsEchelonForm` does not imply and without which uniqueness is false.
 
-**Shared exact division (`HexBasic.ExactDiv`, refactor).** The total exact
-division operation and its law package already exist in
-`HexResultant/ExactDiv.lean`, but generic Bareiss and future Euclidean-domain
-algorithms need the same contract below `hex-resultant`. Move `exactDiv`,
-`ExactDivLaws`, and the coefficient-independent cancellation lemmas into
-`HexBasic.ExactDiv`; leave polynomial-specific operations and instances with
-the polynomial consumer. This is a dependency refactor, not a new quotient
-semantics: division by zero remains deterministic, while correctness only uses
-the law that division by a nonzero known factor cancels.
+**Shared exact division is specified and built.** `exactDiv`, `ExactDivLaws`,
+the coefficient-independent cancellation lemmas, and the `Int` and field
+instances live in `HexBasic/ExactDiv.lean`, below both `hex-resultant` and
+`hex-bareiss`. `HexResultant/ExactDiv.lean` holds the binary-power helpers and
+the dense-polynomial operations and instances, and re-exports the contract
+through a public import.
+
+**Namespace hazard at the bottom of the graph.** A declaration `Hex.foo` in
+`HexBasic` is in scope for every `Hex*Mathlib` file wherever `open Hex` is in
+effect, so if Mathlib defines `_root_.foo` then a bare `foo` in that scope is
+an ambiguous term. This constrains what `HexBasic` may hold: `Hex.mul_pow`,
+`Hex.pow_mul`, and `Hex.pow_ne_zero` collide that way, which is why they sit
+with `powNat` and `divExp` in `hex-resultant`, their only consumer.
 
 **Generic Bareiss over integral domains (`hex-bareiss`, amendment).**
 Generalize the existing `Int` implementation rather than adding a matrix
 library. The executable recurrence uses the shared total exact-division
-operation; its correctness layer assumes a commutative ring, decidable
+operation from `HexBasic.ExactDiv`; its correctness layer assumes a
+commutative ring, decidable
 equality, and `ExactDivLaws`, which supplies cancellation and rules out zero
 products. Keep the current `Int` API as a specialization. The determinant
 proof reuses the public Desnanot-Jacobi and Plücker API already in
