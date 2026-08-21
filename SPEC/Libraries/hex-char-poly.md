@@ -814,12 +814,13 @@ polynomial, so nothing here needs to change to serve them. Certified
 eigenpair enclosures are a separate item in
 [future-work](../future-work.md) with a different method entirely.
 
-**The minimal polynomial.** `hex-min-poly` in
-[future-work](../future-work.md) is a separate computation. `χ_A` gives a
-useful bound and a cross-check for it, since the minimal polynomial
-divides `χ_A`, but it is not an algorithmic prerequisite and this library
-does not compute it. Certifying minimality needs a lower-bound witness,
-which annihilation plus division into `χ_A` does not supply.
+**The minimal polynomial.** [hex-min-poly](hex-min-poly.md) is a separate
+computation, from Krylov sequences. `χ_A` gives a useful bound and a
+cross-check for it, since the minimal polynomial divides `χ_A`, but it is
+not an algorithmic prerequisite and this library does not compute it.
+Certifying minimality needs a lower-bound witness, which annihilation
+plus division into `χ_A` does not supply; that SPEC states the witness
+and the counterexample the weaker test accepts.
 
 **Invariant factors.** Matrices sharing a characteristic polynomial can
 have different invariant factors, so nothing here determines that data.

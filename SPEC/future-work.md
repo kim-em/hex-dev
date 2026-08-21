@@ -103,24 +103,27 @@ Isolating the roots of `χ_A` with hex-real-roots and hex-roots would give
 certified eigenvalue enclosures. hex-number-field can name the resulting
 exact eigenvalues.
 
-**Minimal polynomial (`hex-min-poly`, `hex-min-poly-mathlib`).** A separate
-computation from the characteristic polynomial. The Krylov sequence
-`v, Av, A²v, …` yields the minimal polynomial of the vector `v`, which divides
-the matrix minimal polynomial and coincides with it for generic `v`; the lcm
-over a basis removes the genericity assumption.
+**Minimal polynomial.** This item has graduated from this file and is
+specified in [hex-min-poly](Libraries/hex-min-poly.md): the order
+polynomial of a vector from the first dependency in its Krylov sequence,
+the matrix minimal polynomial as the lcm of the order polynomials of the
+standard basis vectors, and a certificate whose independence witness is
+a right inverse of the Krylov matrix.
 
-Certifying minimality takes a lower-bound witness, since annihilation
-plus division into `χ_A` is satisfied by every multiple of the true
-minimal polynomial that divides `χ_A`. A vector whose Krylov iterates
-are independent through degree `deg m − 1` and annihilated at degree
-`deg m` supplies the missing half. Certified invariant factors supply
-it too, and give more.
+That SPEC also settles what this file previously left open. The
+lower-bound witness is stated as a matrix identity rather than as a
+degree claim, so the whole verification path is free of division and of
+row reduction. The basis-wide sweep is not an implementation detail: the
+accumulated-span shortcut that would make it `O(n³)` computes relative
+order polynomials whose lcm is *not* the minimal polynomial, and the SPEC
+carries the two-by-two counterexample. A single-vector witness always
+exists and would be smaller, and the reason version one does not use it
+is that producing it needs a failure branch that would have to be
+specified.
 
-The Krylov implementation depends on hex-matrix, hex-row-reduce, and the
-polynomial Euclidean/gcd/lcm API. [hex-char-poly](Libraries/hex-char-poly.md)
-is a useful earlier read because Cayley-Hamilton gives a bound and a
-cross-check, but it is not an algorithmic prerequisite: basis-wide Krylov
-witnesses can certify minimality directly.
+`hex-char-poly` is not an algorithmic prerequisite and not a
+computational dependency. The two facts that do go through it,
+`m_A ∣ χ_A` and `deg m_A ≤ n`, are theorems of the companion.
 
 **Polynomial Smith form.** This item has graduated from this file and is
 specified in [hex-poly-smith](Libraries/hex-poly-smith.md): an executable
@@ -156,7 +159,7 @@ canonical form out of its own scope. It must not be named `hex-rcf`:
 that name is taken by the real-closed-field decision procedure. Its
 correspondence layer
 also depends on [hex-char-poly](Libraries/hex-char-poly.md) and
-hex-min-poly so those equalities compare
+[hex-min-poly](Libraries/hex-min-poly.md) so those equalities compare
 against the independently specified computations rather than introducing
 second definitions. Factorization of `χ_A` does not determine this data:
 matrices sharing a characteristic polynomial can have different invariant
