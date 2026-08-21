@@ -52,6 +52,25 @@ lists, a DAG paragraph and diagram, index entry), pointed the
 future-work bullet at the new SPEC, and updated the cyclotomic
 cross-references in `hex-sparse-poly.md` and `hex-int-factor.md`.
 
+A second-opinion review found four substantive errors, now fixed:
+
+- `DensePoly.substPow` needs `[Add R]` for the `k = 0` collapse to
+  `p(1)`, and its degree and monicity statements need `0 < k`.
+- Composition with a monomial costs `Θ(d²k²)`, not `O(d²k)`: the
+  monomial is a dense array and the schoolbook multiplication traverses
+  its zeros. The factor the direct spread saves is the output degree.
+- The Mathlib-free exactness route cannot go through
+  `x^d - 1 ∣ x^n - 1` alone, since a product of divisors need not
+  divide. It needs squarefreeness over `ℚ` and pairwise coprimality of
+  the `Φ_d`, and there is no polynomial `lcm` API to lean on.
+- Totient multiplicativity and `Σ_{d ∣ n} φ(d) = n` are not promised by
+  hex-int-factor, so they are prerequisites rather than consequences.
+
+The review also found that `divMod_reconstruction_of_monic` and
+`divMod_eq_mul` already exist in `HexPolyZ/IntegerPolynomial.lean`, which
+is better than the generic lemma the SPEC first cited: with them,
+milestone 4 owes only cyclotomic theory and no division theory.
+
 ## Current frontier
 
 The SPEC is written; nothing is implemented. `HexIntFactor` and
