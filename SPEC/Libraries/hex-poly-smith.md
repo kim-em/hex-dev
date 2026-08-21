@@ -778,6 +778,14 @@ theorem snf_eq (A : Matrix (DensePoly F) n m) :
 theorem snfRank_eq (A : Matrix (DensePoly F) n m) : snfRank A = (snfData A).rank
 theorem snfDiagonalData_isSNF {r : Nat} (d : Vector (DensePoly F) r) :
     IsSNF (diagMatrix d r r) (snfDiagonalData d)
+theorem snfDiagonal_eq {r : Nat} (d : Vector (DensePoly F) r) :
+    snfDiagonal d = diagMatrix (snfDiagonalData d).diag r r
+
+-- The two paths agree on the diagonal. Heterogeneous because
+-- `invariantFactors` is indexed by `snfRank A` and `diag` by
+-- `(snfData A).rank`, which `snfRank_eq` identifies.
+theorem invariantFactors_eq (A : Matrix (DensePoly F) n m) :
+    HEq (invariantFactors A) (snfData A).diag
 
 -- The determinantal-divisor characterisation, which is the specification.
 -- Stated for every k, including k > S.rank, where both sides are zero.
