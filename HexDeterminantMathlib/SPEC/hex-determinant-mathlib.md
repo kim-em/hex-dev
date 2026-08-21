@@ -207,10 +207,12 @@ At `m = 0` both sides are `det A`. At `m = 1` the left-hand side is
 `b 0 0 * b 1 1 - b 0 1 * b 1 0` and the right-hand side is `det A₀ * det A`,
 which is Desnanot-Jacobi in bordered-minor form. Instantiating that case with
 `A` the `(k + 2) × (k + 2)` submatrix of `source` on rows `{0, …, k, i}` and
-columns `{0, …, k, j}` reproduces `desnanot_jacobi_borderedMinor` exactly: `A₀`
-becomes `principalSubmatrix source k`, the four `b` entries become the four
+columns `{0, …, k, j}` reproduces `desnanot_jacobi_borderedMinor`: `A₀` becomes
+`principalSubmatrix source k`, the four `b` entries become the four
 `borderedMinor source k` determinants, and `det A` becomes
-`det (borderedMinor source (k + 1) _ i j)`.
+`det (borderedMinor source (k + 1) _ i j)`. That correspondence is
+term-for-term modulo the submatrix transports already in `CoreTransport` and one
+`mul_comm` on the subtracted product.
 
 The statement above is not proved here, but it does elaborate at current `main`,
 and the formula was checked by kernel evaluation over `ℤ` at
