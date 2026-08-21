@@ -7,6 +7,7 @@
 - **hex-poly**: dense `Array`-backed polynomial representation
 - **hex-mv-poly**: canonical distributed multivariate polynomials at fixed arity with explicit monomial orders
 - **hex-mv-gcd**: multivariate gcd with cofactors, content and primitive part, exact division, squarefree decomposition
+- **hex-truncated-series**: power series truncated at a precision fixed in the type, with Newton inversion, square root, `exp`, `log`, composition, and reversion
 - **hex-matrix**: dense matrices, matrix/vector arithmetic, elementary row and column operations, submatrix slicing, the Gram matrix
 - **hex-row-reduce**: row reduction (RREF), rank, span, nullspace
 - **hex-determinant**: the Leibniz determinant and its cofactor/Cauchy-Binet/Plücker theory
@@ -53,6 +54,7 @@ Mathlib, and supplies correspondence proofs or Mathlib-facing APIs):
 - **hex-poly-mathlib**: `DensePoly R ≃+* Polynomial R`
 - **hex-mv-poly-mathlib**: `MvPoly n R cmp ≃+* MvPolynomial (Fin n) R`, `aeval`, and operation correspondence
 - **hex-mv-gcd-mathlib**: gcd maximality transported to `MvPolynomial (Fin n) R`, and decidable divisibility and squarefreeness
+- **hex-truncated-series-mathlib**: `TSeries R n ≃+* PowerSeries R ⧸ (X ^ n)`, and agreement with `PowerSeries.invOfUnit`, `subst`, `substInvOfIsUnit`, `exp`, and `logOf`
 - **hex-matrix-mathlib**: matrix equivalence, row operations as transvections, and the Mathlib algebra tower transported onto our matrix type
 - **hex-row-reduce-mathlib**: rank = `Matrix.rank`, nullspace = `LinearMap.ker`, span agreement
 - **hex-determinant-mathlib**: `det` agreement with `Matrix.det`, plus the Plücker / Desnanot-Jacobi assembly
@@ -87,6 +89,7 @@ Each library with its immediate dependencies:
 - **hex-poly**: (none)
 - **hex-mv-poly**: hex-poly, hex-basic
 - **hex-mv-gcd**: hex-mv-poly, hex-poly, hex-poly-fp, hex-resultant, hex-arith, hex-mod-arith
+- **hex-truncated-series**: hex-basic
 - **hex-matrix**: hex-basic
 - **hex-row-reduce**: hex-matrix
 - **hex-determinant**: hex-matrix
@@ -131,6 +134,7 @@ Mathlib companion libraries (each also depends on Mathlib):
 - **hex-poly-mathlib**: hex-poly
 - **hex-mv-poly-mathlib**: hex-mv-poly, hex-poly-mathlib
 - **hex-mv-gcd-mathlib**: hex-mv-gcd, hex-mv-poly-mathlib, hex-resultant-mathlib, hex-poly-mathlib
+- **hex-truncated-series-mathlib**: hex-truncated-series
 - **hex-poly-z-mathlib**: hex-poly-z, hex-poly-mathlib
 - **hex-poly-z-gcd-mathlib**: hex-poly-z-gcd, hex-poly-z-mathlib, hex-poly-mathlib
 - **hex-roots-mathlib**: hex-roots, hex-poly-z-mathlib
@@ -297,6 +301,25 @@ fallback, and `hex-arith` for the integer extended GCD.
 hex-mv-poly ──── hex-mv-gcd ──── hex-mv-gcd-mathlib
 ```
 
+`hex-truncated-series` sits directly on `hex-basic` and names no
+polynomial type. That is what keeps the fast-arithmetic corner acyclic.
+Newton inversion of a truncated series is the primitive under fast
+polynomial division, and fast polynomial division is a fact about
+`DensePoly`, so the two meet in the planned `hex-poly-fast`, which
+depends on both. Putting the `DensePoly` conversion inside
+`hex-truncated-series` instead would make hex-poly's own fast division
+depend on it and hex-truncated-series depend on hex-poly, which has no
+valid publication order in
+[`scripts/release/released.yml`](../../scripts/release/released.yml).
+
+```text
+hex-basic ── hex-truncated-series ── hex-truncated-series-mathlib
+
+hex-truncated-series ──┐
+                       ├── hex-poly-fast (planned)
+hex-poly ──────────────┘
+```
+
 `hex-primality` sits directly on `hex-arith`, which owns the
 `Hex.Nat.Prime` predicate, Fermat's little theorem, and the modular
 exponentiation its checkers replay. The predicate stays there rather
@@ -350,6 +373,7 @@ for developments whose source-local move has not happened yet.
 - [hex-mv-poly](../../HexMvPoly/SPEC/hex-mv-poly.md): canonical distributed multivariate polynomials with explicit monomial orders
 - [hex-mv-poly-mathlib](../../HexMvPolyMathlib/SPEC/hex-mv-poly-mathlib.md): `MvPoly n R cmp ≃+* MvPolynomial (Fin n) R`, `aeval`, and operation correspondence
 - [hex-mv-gcd](hex-mv-gcd.md): multivariate gcd with cofactors, content and primitive part, exact division, squarefree decomposition
+- [hex-truncated-series.md](hex-truncated-series.md): power series truncated at a precision fixed in the type, Newton inversion, square root, `exp`, `log`, composition, and reversion (the Mathlib companion is specified in the same file)
 - [hex-poly-fp](../../HexPolyFp/SPEC/hex-poly-fp.md): polynomials over `F_p`, Frobenius, square-free decomposition
 - [hex-gf2](../../HexGF2/SPEC/hex-gf2.md): packed bitwise polynomials over `F_2`, `GF(2^n)` elements
 - [hex-gf2-mathlib](../../HexGF2Mathlib/SPEC/hex-gf2-mathlib.md): `GF2Poly ≃+* FpPoly 2`, `GF2n`/`GF2nPoly ≃+* FiniteField 2 f hf hirr`, packed-field finiteness/cardinality
