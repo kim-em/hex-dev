@@ -316,7 +316,9 @@ def rejectedWith (selected : Rule.Config)
 
 #guard rejected (mutateFirst fun step => { step with schema := schemaKey subKey })
 #guard rejected (mutateFirst fun step => { step with body := [99] })
-#guard rejected (mutateFirst fun step => { step with assumptions := [seen y, seen x] })
+#guard rejected (mutateFirst fun step =>
+  let swapped := { step.action with inputs := [seen y, seen x] }
+  { { step with action := swapped } with assumptions := [seen y, seen x] })
 #guard rejected (mutateFirst fun step => { step with action := { step.action with key := subKey } })
 #guard rejected (mutateFirst fun step => { step with proposed := differenceFact })
 #guard rejected (mutateFirst fun step => { step with installed := differenceFact })
@@ -325,11 +327,20 @@ def rejectedWith (selected : Rule.Config)
 #guard rejected (mutateFirst fun step => { step with scope := { index := 99 } })
 #guard rejected (mutateInv fun step => { step with schema := schemaKey regularizeKey })
 #guard rejected (mutateInv fun step => { step with body := [99] })
-#guard rejected (mutateDiv fun step => { step with assumptions := [seen x, seen y] })
+#guard rejected (mutateDiv fun step =>
+  let swapped := { step.action with inputs := [seen x, seen y] }
+  { { step with action := swapped } with assumptions := [seen x, seen y] })
 #guard rejected (mutateDiv fun step => { step with proposed := inverseFact })
 #guard rejected (mutateRegularize fun step => { step with schema := schemaKey invKey })
 #guard rejected (mutateRegularize fun step => { step with body := [10] })
-#guard rejected (Rule.quote branch ++ Rule.quote branch)
+#guard
+  match Rule.buildWithin proofLimits config program with
+  | .error _ => false
+  | .ok registry =>
+      match Proof.replay proofLimits registry (Rule.domain config) (Rule.laws config)
+          input (Rule.quote branch ++ Rule.quote branch) 0 program (seen final 1) with
+      | .error .chronologyLimit => true
+      | _ => false
 
 def precisionShort : Rule.Config :=
   { config with precisionLimits := { config.precisionLimits with maxTemporaryBits := 0 } }
@@ -338,7 +349,7 @@ def precisionShort : Rule.Config :=
     (Hex.Interval.invWithin precisionShort.precisionLimits precisionShort.precision xFact) == none
 #guard rejectedWith precisionShort (Rule.quote branch)
 
-def oneShort : Proof.Limits := { proofLimits with maxChronology := 2 }
+def oneShort : Proof.Limits := { proofLimits with maxChronology := 7 }
 #guard
   match Rule.buildWithin proofLimits config program with
   | .error _ => false

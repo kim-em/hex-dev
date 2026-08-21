@@ -23,7 +23,12 @@ public import HexIntervalMathlib.Regularize
 # Built-in arithmetic proof rules
 
 This is the first supported arithmetic package for the generic proof replay
-boundary. A package fixes its endpoint, power, and precision resources.
+boundary. A package fixes its endpoint, power, and precision resources, one
+natural exponent, and one dyadic constant. Every built-in power node in that
+package therefore uses the same exponent, and every built-in constant node
+uses the same value. Duplicate package registration and operation keys are
+rejected, so a second copy cannot supply another exponent or constant under
+the same stable keys.
 Runtime search may propose facts and recipe bodies, but the package schemas
 recompute the public checked interval operation and prove its one-way real
 enclosure.
@@ -38,7 +43,9 @@ namespace Hex.Interval.Rule
 
 open Proof
 
-/-- Resource parameters owned by one immutable arithmetic package. -/
+/-- Resources and the single natural exponent and dyadic constant owned by one
+immutable arithmetic package. The built-in power and constant operation keys
+cannot express multiple such parameters in the same registry. -/
 structure Config where
   endpoint : EndpointLimit
   powerWork : Arithmetic.PowLimits

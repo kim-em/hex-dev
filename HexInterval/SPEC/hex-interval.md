@@ -5234,9 +5234,12 @@ their declared cost inside a scheduler bound.
   multiplication, natural power, absolute value, minimum, maximum, constants,
   reciprocal, division, and outward regularization. Every schema recomputes
   its fixed-resource public interval operation; decoded search results remain
-  untrusted. Direct registry assembly does not preempt construction or equality
-  of caller program/meaning arrays and therefore requires the supported search
-  envelope for decoded inputs.
+  untrusted. One package `Config` supplies exactly one natural exponent and
+  one dyadic constant, shared by every node at the corresponding built-in
+  operation index; duplicate package registration and operation keys cannot
+  add a second parameterization. Direct registry assembly does not preempt
+  construction or equality of caller program/meaning arrays and therefore
+  requires the supported search envelope for decoded inputs.
 - `HexIntervalMathlib/Split.lean`: exact transactional child semantics,
   containment, coverage, disjointness, and left ownership of the cut point.
 - `HexIntervalMathlib/Inverse.lean`: exact computed reciprocal-cut semantics
