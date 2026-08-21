@@ -4,7 +4,7 @@ The Smith normal form of an integer matrix: a diagonal matrix `S` with
 `S = U * A * V` for unimodular `U` and `V`, whose diagonal entries are
 positive and form a divisibility chain `d₁ ∣ d₂ ∣ ⋯ ∣ d_r`. Those
 entries are the invariant factors of `A`, and they determine the
-structure of the abelian group presented by `A`. Mathlib-free. The
+structure of the abelian group presented by `A`. Mathlib-free; the
 companion `hex-smith-mathlib` builds Mathlib's
 `Module.Basis.SmithNormalForm` from the executable output and relates
 the invariant factors to the structure theorem for finitely generated
@@ -17,9 +17,10 @@ this library extends. Read that one first.
 
 ## Why this library exists
 
-Hermite normal form answers questions about one lattice. Smith normal
-form answers questions about a lattice *inside* another, which is a
-different and larger class of question:
+Hermite normal form already decides membership, produces one solution of
+`vecMul x A = b`, gives the integer kernel, and computes the index. Smith
+normal form adds canonical invariant factors and simultaneous source/target
+coordinates. Its genuinely new uses are:
 
 - **The structure of a finitely generated abelian group.** Given
   relations as the rows of `A : Matrix Int n m`, the group
@@ -28,22 +29,24 @@ different and larger class of question:
   headline consumer and the reason the divisibility chain matters:
   without it the diagonal is not canonical and the summands are not the
   invariant factors.
-- **Integer linear systems.** `A x = b` over `ℤ` becomes a diagonal
-  system after the change of basis, so solvability is a divisibility
-  test per coordinate and the full solution set is a coset of the kernel
-  lattice.
-- **The index and the order of a quotient.** `[ℤᵐ : rowlattice A]` is
-  `∏ dᵢ` when `r = m`, and infinite otherwise.
+- **Diagonal coordinates for integer linear systems.** The existing
+  `latticeCoeffs` API remains the efficient way to obtain one solution.
+  Smith data additionally proves that solvability is a coordinatewise
+  divisibility/zero test after applying `V`, and exposes both changes of
+  basis for consumers that need the diagonal presentation itself.
+- **A canonical factorisation of the index.** Hermite already computes the
+  index. Smith proves that a finite index is `∏ dᵢ`, recording how that
+  order decomposes rather than introducing a second index algorithm.
 - **Invariant factors of a module map**, which is what the polynomial
   matrix item in [future-work](../future-work.md) wants over `F[x]`
-  rather than `ℤ`. That item is not this library. See "Why `Int`" in
+  rather than `ℤ`. That item is not this library; see "Why `Int`" in
   [hex-hermite](hex-hermite.md).
 
 The dependency on `hex-hermite` is real rather than organisational: the
 `extGcd` elimination step with its explicit inverse, the exact-division
-discipline, the certificate machinery, the conventions, and the reliance on
-`mul_eq_one_comm` are all shared. Note that the default
-algorithm below does *not* call `hnf`. The Kannan-Bachem variant under
+discipline, the certificate machinery, the conventions, and the
+`mul_eq_one_comm` obligation are all shared. Note that the default
+algorithm below does *not* call `hnf`; the Kannan-Bachem variant under
 "Open questions" would, which is the other reason to keep the two
 libraries adjacent.
 
@@ -94,7 +97,8 @@ structure SmithData (n m : Nat) where
   right : Matrix Int m m
   rightInv : Matrix Int m m
 
-/-- The `n × m` matrix carrying `d` down the leading diagonal. -/
+/-- Prerequisite API from `HexMatrix/Diagonal.lean`: the `n × m` matrix
+carrying `d` down the leading diagonal. -/
 def diagMatrix {r : Nat} (d : Vector Int r) (n m : Nat) : Matrix Int n m :=
   Matrix.ofFn fun i j => if h : i.val = j.val ∧ i.val < r then d[i.val]'h.2 else 0
 
@@ -115,27 +119,29 @@ differently.
 
 **One-sided inverse fields.** `left_inv` and `right_inv` record only
 `U * W = I` and `V * X = I`. The other side follows over a commutative
-ring through the adjugate, by `Hex.Matrix.mul_eq_one_comm` in
-`HexDeterminant/Adjugate.lean`. Carrying both
+ring through the adjugate, by the `mul_eq_one_comm` lemma
+[hex-hermite](hex-hermite.md) asks `hex-determinant` for. Carrying both
 directions as fields would make every construction discharge a
 redundant obligation.
 
-**The inverses are data, not existence.** As in the Hermite case, every
-elementary step has an explicit inverse, so accumulating `W` and `X`
-alongside `U` and `V` costs one extra update per step and removes any
-need to invert a matrix afterwards.
+**The inverses are data on the full path, not on the form-only path.** Every
+elementary step has an explicit inverse, so `snfData` accumulates `W` and `X`
+alongside `U` and `V`. For a left row step `U' = E * U`, update
+`W' = W * E⁻¹`; for a right column step `V' = V * F`, update
+`X' = F⁻¹ * X`. The public `snf` and `snfRank` paths accumulate none of
+these four matrices.
 
-**`diagMatrix` should probably move to `hex-matrix`.** It is a general
-constructor, `hex-matrix` has no `diagonal` of any kind today, and a
-second consumer would immediately want it. It is specified here because
-this is the library that needs it first.
+**`diagMatrix` moves to `hex-matrix` before this library starts.** It is a
+general constructor and is also used by the Mathlib bridge and tests. The
+signature above is the prerequisite API; `hex-smith` does not own a second
+copy.
 
 ## Algorithms
 
 **The default is the classical Euclidean pivot algorithm**, and it is
 called that rather than Kannan-Bachem. Kannan-Bachem controls growth by
 alternating row and column Hermite normal forms on trailing submatrices,
-and its entry bound comes from that repetition. The pivot loop below does
+and its entry bound comes from that repetition; the pivot loop below does
 not inherit those bounds merely by shrinking the pivot, and saying it
 does would be an unearned claim. What the loop below has is a
 straightforward correctness argument and a termination measure. What it
@@ -159,13 +165,17 @@ The pivot loop, which is where the mathematics lives:
    operations, using the same `extGcd` 2x2 step as
    [hex-hermite](hex-hermite.md). Each step replaces the pivot by
    `gcd(pivot, entry)`, so the pivot never grows.
-4. If some entry `a[i][j]` of the remaining block is not divisible by
+4. If the pivot is negative, negate its row. On the full-data path also
+   negate the matching row of `U` and column of `W`; the row-negation matrix
+   is its own inverse. Perform this inline without a recursive call; it leaves
+   both components of the termination measure below unchanged.
+5. If some entry `a[i][j]` of the remaining block is not divisible by
    the pivot `p`, add row `i` to the pivot row **and immediately run the
    column-`j` elimination against the new entry**, which replaces `p` by
    `gcd(p, a[i][j])`, then return to step 3. This is the step that
    produces the divisibility chain, and it is the step a naive
    implementation omits.
-5. Otherwise advance to the next diagonal position.
+6. Otherwise advance to the next diagonal position.
 
 **Termination measure.** The pair `(|pivot|, c)` ordered
 lexicographically, where `c` is the number of nonzero entries in the
@@ -174,7 +184,7 @@ pivot row and column other than the pivot itself. Step 3 either leaves
 the step is a plain subtraction) or strictly decreases `|pivot|` (when
 it does not).
 
-Step 4 is why it is stated as one fused step rather than two. Adding row
+Step 5 is why it is stated as one fused step rather than two. Adding row
 `i` to the pivot row on its own decreases nothing: `|pivot|` is unchanged
 and `c` rises from `0`, so the measure *increases*, and "it decreases on
 the next pass" is not a termination argument, since Lean needs the
@@ -193,35 +203,24 @@ value that a sufficiency theorem proves unreachable on public API
 inputs, and that classification is written down. Design principle 8
 allows nothing weaker.
 
-**A modular variant, for the form only.** Iliopoulos's algorithm runs
-the elimination modulo a positive multiple of the largest invariant
-factor, keeping entries bounded. Two restrictions have to be in the
-signature rather than in the prose. It applies to nonsingular square
-input, where `hex-bareiss` supplies the modulus. And it computes the
-diagonal, not the transforms: the multipliers are not a by-product of the
-modular recurrence, and recovering them is a separate algorithm (FLINT
-uses an iterated-Hermite routine for the transform case rather than its
-modular one). So the entry point is
-
-```lean
-/-- The invariant factors of a nonsingular square matrix, computed
-modulo a multiple of the largest one. Returns the diagonal only. -/
-def snfSquareDiag (A : Matrix Int n n) : Option (Vector Int n)
-```
-
-returning `none` on singular input, and it does **not** sit on the
-`SmithData` path. Putting it there would mean specifying and proving a
-multiplier-reconstruction algorithm, which is not in this SPEC. It is
-subject to the same measured decision rule as `hnfSquare` in
-[hex-hermite](hex-hermite.md) before it is kept at all.
+**The modular variant is not a v1 declaration.** Iliopoulos's algorithm
+runs elimination modulo a positive multiple of the largest invariant
+factor, applies to nonsingular square input, and computes only the diagonal;
+multiplier reconstruction is a separate algorithm. Those facts do not
+specify its recurrence, modulus invariant, singular classification, or
+agreement theorem. V1 therefore has no `snfSquareDiag` or `Modular.lean`.
+A future proposal must give the complete algorithm and prove that its `some`
+result equals `invariantFactors` and that `none` is equivalent to singularity
+before adding a public declaration.
 
 **A fast path for diagonal input.** A diagonal matrix is already almost
 in Smith normal form and needs only normalisation and the chain. The
 normalisation is not skippable, because the input diagonal may contain
-zeros and negatives: negate the row of each negative entry, move the
-nonzero entries stably before the zeros, and take the rank to be the
-number of nonzero entries. Every sign change and transposition is
-accumulated into all four transform matrices. The gcd and lcm sweep then
+zeros and negatives: negate each negative entry, move the nonzero entries
+stably before the zeros, and take the rank to be the number of nonzero
+entries. `snfDiagonalData` accumulates the corresponding row and column
+operations and their inverses; form-only `snfDiagonal` does not. The gcd
+and lcm sweep then
 runs on the positive prefix alone, which is what makes the divisions by
 `g` below defined: `[0, 0]` has no `g` to divide by, and `[0, 2]` is not
 in Smith normal form despite being diagonal.
@@ -238,8 +237,11 @@ sends `diag(a, b)` to `diag(g, l)`: adding the second row to the first
 gives `[[a, b], [0, b]]`, right-multiplying by `V` (which has
 determinant `(s·a + t·b)/g = 1`) gives `[[g, 0], [b·t, l]]`, and the
 second row operation clears the `b·t` entry, which is divisible by `g`
-because `g` divides `b`. Sweeping this over adjacent pairs until no pair
-changes yields the chain in `O(r²)` gcd steps. This is FLINT's
+because `g` divides `b`. Run a fixed bubble network of `r` full adjacent
+passes. On each prime valuation, `(gcd, lcm)` is `(min, max)`, so the same
+network sorts every valuation and yields the divisibility chain after at
+most `r · (r - 1)` pair steps. This fixed schedule makes both termination
+and the `O(r²)` bound immediate. This is FLINT's
 `snf_diagonal`, and it is the path a direct-sum presentation of an
 abelian group takes, which is the common case for the headline consumer.
 
@@ -253,71 +255,106 @@ pretending the ratio against FLINT measures the same algorithm.
 ```lean
 namespace Hex.Matrix
 
-/-- Smith normal form data for `A`. -/
-def snf (A : Matrix Int n m) : SmithData n m
+/-- Named structure-theorem data for `ℤᵐ / rowlattice A`. -/
+structure AbelianStructure where
+  freeRank : Nat
+  torsionFactors : Array Nat
+
+/-- The canonical `n × m` Smith matrix. Does not compute transforms. -/
+def snf (A : Matrix Int n m) : Matrix Int n m
+
+/-- The number of nonzero diagonal entries of `snf A`. -/
+def snfRank (A : Matrix Int n m) : Nat
+
+/-- Smith form with all four change-of-basis matrices. -/
+def snfData (A : Matrix Int n m) : SmithData n m
 
 /-- The invariant factors of `A`, positive and in a divisibility chain. -/
-def invariantFactors (A : Matrix Int n m) : Vector Int (snf A).rank
+def invariantFactors (A : Matrix Int n m) : Vector Int (snfRank A)
 
-/-- Smith normal form of a diagonal matrix, given its diagonal. -/
-def snfDiagonal {r : Nat} (d : Vector Int r) : SmithData r r
+/-- Form-only Smith normal form of a diagonal matrix. -/
+def snfDiagonal {r : Nat} (d : Vector Int r) : Matrix Int r r
+
+/-- Smith normal form data of a diagonal matrix, including transforms. -/
+def snfDiagonalData {r : Nat} (d : Vector Int r) : SmithData r r
 
 /-- The structure of `ℤᵐ / rowlattice A`: the free rank, and the
 torsion invariants in a divisibility chain with the units dropped. -/
-def abelianStructure (A : Matrix Int n m) : Nat × Array Int
+def abelianStructure (A : Matrix Int n m) : AbelianStructure
 
-/-- The order of `ℤᵐ / rowlattice A`, or `0` when it is infinite. -/
-def quotientOrder (A : Matrix Int n m) : Int
-
-/-- An integer solution of `vecMul x A = b`, or `none` when there is
-none. -/
-def solveInt (A : Matrix Int n m) (b : Vector Int m) : Option (Vector Int n)
-
-/-- The `k`-th determinantal divisor: the gcd of the determinants of all
-`k × k` submatrices of `A`, taken over every choice of `k` rows and `k`
+/-- The `k`-th determinantal divisor: the gcd of the `natAbs` values of
+the determinants of all `k × k` submatrices of `A`, taken over every
+choice of `k` rows and `k`
 columns. `detDivisor A 0 = 1`, and `detDivisor A k = 0` when
 `k > min n m` or when every such minor vanishes.
 
 This is the specification function. Its definition is the gcd above and
-mentions nothing about `snf`. `detDivisor_eq_prod` is what says the
+mentions nothing about `snf`; `IsSNF.detDivisor_eq` is what says the
 invariant factors compute it. -/
 noncomputable def detDivisor (A : Matrix Int n m) (k : Nat) : Nat
 
 end Hex.Matrix
 ```
 
-Contracts to state explicitly. `invariantFactors` drops nothing, so its
-leading entries may be `1`. `abelianStructure` drops them, because a
-`ℤ/1` summand is not part of anyone's answer, and returns the free rank
-`m - rank` separately. `quotientOrder` returns `0` when the free rank is
-positive, which is the same convention `latticeIndex` uses in
-[hex-hermite](hex-hermite.md) and is a correct value rather than a
-fallback.
+Contracts to state explicitly. `snf`, `snfRank`, `invariantFactors`, and
+`abelianStructure` use a form-only engine and allocate no transform matrix.
+`snfData` runs the same deterministic pivot choices while accumulating all
+four transforms, and its diagonal matrix and rank agree with the form-only
+results. `invariantFactors` drops nothing, so its leading entries may be `1`;
+`abelianStructure.torsionFactors` converts the entries greater than `1` to
+`Nat`, and `freeRank = m - snfRank A`.
+The form-only definitions must not be projections of `snfData`: eager
+evaluation would allocate the discarded transforms. Implement the general
+pivot loop once, parameterised by a companion accumulator that is `Unit` for
+`snf` and `(U, W, V, X)` for `snfData`; likewise parameterise the fixed
+diagonal network by `Unit` versus the four transforms. Inline the accumulator
+operations so the `Unit` instances allocate no matrices. Agreement then comes
+from accumulator-parametric step lemmas rather than duplicated correctness
+inductions.
 
-`solveInt` needs both transforms, not one. From `S = U * A * V`, the
-system `vecMul x A = b` becomes `vecMul z S = vecMul b V` with
-`z = vecMul x U⁻¹`, so the right-hand side is transformed by `V` before
-the diagonal solve, and the answer is mapped back by `x = vecMul z U`.
-Solving the diagonal system against `b` directly is wrong whenever
-`V ≠ I`, which is the usual case, and the transformed right-hand side
-gets its own lemma in the theorem list.
+There is deliberately no second integer solver or quotient-order function in
+this library. `latticeCoeffs` and `latticeIndex` in `hex-hermite` already own
+those executable operations. Smith supplies the diagonal solvability theorem
+and invariant-factor product theorem below. In particular, for
+`S = snfData A`, a transformed right-hand side `bV` is solvable exactly when
+its first `S.rank` coordinates are divisible by the corresponding diagonal
+entries and every remaining coordinate is zero. Omitting the trailing zero
+test is the Smith analogue of omitting Hermite's final residual check.
 
 `detDivisor` is `noncomputable` under design principle 11: its definition
 enumerates exponentially many minors and there is no runtime twin. It is
 **defined by that enumeration and not through `snf`**. Defining it
-through `snf` would make `detDivisor_eq_prod` circular, since the
+through `snf` would make `IsSNF.detDivisor_eq` circular, since the
 invariant used to prove that `snf`'s output is canonical would already
 contain that output. The executable route to its *value* is the product
-of the first `k` invariant factors, which is what `detDivisor_eq_prod`
+of the first `k` invariant factors, which is what `IsSNF.detDivisor_eq`
 states. It returns `Nat` so that "the gcd" needs no separate
 normalisation clause.
 
 ## Correctness theorems
 
 ```lean
-theorem snf_isSNF (A : Matrix Int n m) : IsSNF A (snf A)
-theorem snfDiagonal_isSNF {r : Nat} (d : Vector Int r) :
-    IsSNF (diagMatrix d r r) (snfDiagonal d)
+theorem snfData_isSNF (A : Matrix Int n m) : IsSNF A (snfData A)
+theorem snf_eq_data (A : Matrix Int n m) :
+    snf A = diagMatrix (snfData A).diag n m
+theorem snfRank_eq_data (A : Matrix Int n m) :
+    snfRank A = (snfData A).rank
+theorem snf_idem (A : Matrix Int n m) : snf (snf A) = snf A
+theorem snfRank_le_n (A : Matrix Int n m) : snfRank A ≤ n
+theorem snfRank_le_m (A : Matrix Int n m) : snfRank A ≤ m
+theorem invariantFactors_pos (A : Matrix Int n m) (i : Fin (snfRank A)) :
+    0 < (invariantFactors A)[i]
+theorem invariantFactors_chain (A : Matrix Int n m) (i : Nat)
+    (h : i + 1 < snfRank A) :
+    (invariantFactors A)[⟨i, by omega⟩] ∣
+      (invariantFactors A)[⟨i + 1, h⟩]
+
+theorem snfDiagonalData_isSNF {r : Nat} (d : Vector Int r) :
+    IsSNF (diagMatrix d r r) (snfDiagonalData d)
+theorem snfDiagonal_eq_data {r : Nat} (d : Vector Int r) :
+    snfDiagonal d = diagMatrix (snfDiagonalData d).diag r r
+theorem snfDiagonal_eq_snf {r : Nat} (d : Vector Int r) :
+    snfDiagonal d = snf (diagMatrix d r r)
 
 -- The determinantal-divisor characterisation, which is the specification.
 -- Stated for every k, including k > S.rank, where both sides are zero.
@@ -330,23 +367,32 @@ theorem IsSNF.detDivisor_eq {A : Matrix Int n m} {S : SmithData n m}
 theorem IsSNF.rank_eq (h : IsSNF A S) (h' : IsSNF A S') : S.rank = S'.rank
 theorem IsSNF.diag_eq (h : IsSNF A S) (h' : IsSNF A S') (i : Nat)
     (hi : i < S.rank) (hi' : i < S'.rank) : S.diag[i] = S'.diag[i]
+theorem IsSNF.form_eq (h : IsSNF A S) (h' : IsSNF A S') :
+    diagMatrix S.diag n m = diagMatrix S'.diag n m
 
 -- Agreement with the Hermite rank, and with the determinant.
 theorem IsSNF.rank_eq_hnfRank (h : IsSNF A S) : S.rank = hnfRank A
-theorem prod_invariantFactors (A : Matrix Int n n) (h : (snf A).rank = n) :
-    (invariantFactors A).foldl (· * ·) 1 = ((det A).natAbs : Int)
+theorem snfRank_eq_hnfRank (A : Matrix Int n m) : snfRank A = hnfRank A
+theorem prod_invariantFactors (A : Matrix Int n n) (h : snfRank A = n) :
+    (invariantFactors A).foldl (· * ·) 1 = Int.ofNat ((det A).natAbs)
 
 -- The consumer-facing statements.
-theorem solveInt_iff_diagonal {A : Matrix Int n m} {b} (S := snf A) :
+theorem solvable_iff_diagonal {A : Matrix Int n m} {S : SmithData n m}
+    (hS : IsSNF A S) {b : Vector Int m} :
     (∃ x, vecMul x A = b) ↔
       ∃ z, vecMul z (diagMatrix S.diag n m) = vecMul b S.right
-theorem solveInt_sound {A : Matrix Int n m} {b x} :
-    solveInt A b = some x → vecMul x A = b
-theorem solveInt_complete {A : Matrix Int n m} {b} :
-    (∃ x, vecMul x A = b) → (solveInt A b).isSome
-theorem quotientOrder_eq (A : Matrix Int n m) :
-    quotientOrder A =
-      if (snf A).rank = m then (invariantFactors A).foldl (· * ·) 1 else 0
+theorem solvable_iff_dvd {A : Matrix Int n m} {S : SmithData n m}
+    (hS : IsSNF A S) (b : Vector Int m) :
+    (∃ x, vecMul x A = b) ↔
+      (∀ i : Fin S.rank,
+          S.diag[i] ∣ (vecMul b S.right)[
+            ⟨i.val, Nat.lt_of_lt_of_le i.isLt hS.rank_le_m⟩]) ∧
+      (∀ j : Fin m, S.rank ≤ j.val → (vecMul b S.right)[j] = 0)
+theorem latticeIndex_eq_invariantFactors (A : Matrix Int n m) :
+    latticeIndex A =
+      if snfRank A = m then
+        (invariantFactors A).foldl (fun acc d => acc * d.natAbs) 1
+      else 0
 ```
 
 `IsSNF.detDivisor_eq` is the theorem to prove first, and it must be
@@ -357,6 +403,11 @@ statement does not apply. With the all-`k` form, `S.rank` is the largest
 `k` whose determinantal divisor is nonzero, which gives `rank_eq`, and
 cancelling the positive product of the preceding factors gives
 `diag_eq`. Everything the library claims about canonicity rests on it.
+`IsSNF.form_eq` packages the dependent rank and diagonal equalities into the
+fixed `n × m` matrix equality callers usually want. It also proves
+`snfDiagonal_eq_snf`: the diagonal-specific data and the general data both
+satisfy `IsSNF` for the same input, while `snfDiagonal_eq_data` and
+`snf_eq_data` connect the two form-only paths to those data.
 
 **Its prerequisite is a phase of work in `hex-determinant`, and that
 work does not exist.** The argument needs each `k × k` minor of a product
@@ -381,9 +432,17 @@ So `hex-determinant` needs, as a named prerequisite:
 - the gcd and divisibility lemmas that turn that expansion into
   invariance of `detDivisor` under unimodular multiplication.
 
-Smith implementation should not be scheduled before that lands. Nothing
-else in this SPEC depends on it, so the executable parts and the
-certificate can proceed in parallel with it.
+The same selected-minor infrastructure closes `IsSNF.rank_eq_hnfRank`
+without importing Mathlib. If `r = hnfRank A`, the HNF pivot rows and pivot
+columns select a triangular `r × r` minor with nonzero determinant, while
+every `(r + 1) × (r + 1)` minor vanishes because the remaining HNF rows are
+zero. Invariance under the HNF transform transfers those statements back to
+`A`; the all-`k` Smith characterisation then identifies `S.rank` with `r`.
+
+The executable pivot loop can be prototyped after Hermite lands, but the
+library cannot be activated or claim canonical output until this prerequisite
+and `IsSNF.detDivisor_eq` are complete. Schedule the determinant work before
+the Smith proof phase rather than treating uniqueness as optional follow-up.
 
 ## Certificates
 
@@ -393,11 +452,11 @@ The same shape as [hex-hermite](hex-hermite.md), with one more product:
 /-- Accepts `(S, U, W, V, X, T)` as a Smith normal form of `A`, where
 `T = U * A` is the intermediate product. -/
 def snfCert (A : Matrix Int n m) (S : SmithData n m) (T : Matrix Int n m) : Bool :=
-  Hex.Internal.mulEqCert S.left A T
-    && Hex.Internal.mulEqCert S.right.transpose T.transpose
+  Hex.Matrix.mulEqCert S.left A T
+    && Hex.Matrix.mulEqCert S.right.transpose T.transpose
           (diagMatrix S.diag n m).transpose
-    && Hex.Internal.mulEqCert S.left S.leftInv (Matrix.identity n)
-    && Hex.Internal.mulEqCert S.right S.rightInv (Matrix.identity m)
+    && Hex.Matrix.mulEqCert S.left S.leftInv (Matrix.identity n)
+    && Hex.Matrix.mulEqCert S.right S.rightInv (Matrix.identity m)
     && isSNFShape S
 
 theorem snfCert_sound : snfCert A S T = true → IsSNF A S
@@ -416,7 +475,7 @@ clauses with unimodular transforms has the rank and the diagonal of the
 Smith normal form, so an accepted candidate is the answer and no second
 witness for canonicity is needed. Note that this completeness is
 downstream of the uniqueness theorem, which is downstream of the
-`hex-determinant` prerequisite above. Until that chain is closed, the
+`hex-determinant` prerequisite above; until that chain is closed, the
 checker is sound but the "it is the answer" claim is not yet proved.
 That makes certified dispatch to an external implementation possible in
 the shape `hex-lll`'s `certCheck` already uses. It is not part of v1.
@@ -430,16 +489,17 @@ the shape `hex-lll`'s `certCheck` already uses. It is not part of v1.
 submodule spanned by the rows of `A`. -/
 noncomputable def smithNormalForm (A : Matrix Int n m) :
     Module.Basis.SmithNormalForm
-      (Submodule.span ℤ (Set.range (matrixEquiv A))) (Fin m) (snf A).rank
+      (Submodule.span ℤ (Set.range (matrixEquiv A))) (Fin m) (snfRank A)
 
 /-- The divisibility chain, which Mathlib's structure does not carry. -/
-theorem smithNormalForm_chain (A : Matrix Int n m) (i : Nat) (h : i + 1 < (snf A).rank) :
+theorem smithNormalForm_chain (A : Matrix Int n m) (i : Nat) (h : i + 1 < snfRank A) :
     (smithNormalForm A).a ⟨i, by omega⟩ ∣ (smithNormalForm A).a ⟨i + 1, h⟩
 
 /-- The structure theorem, instantiated at the executable output. -/
 noncomputable def quotientEquiv (A : Matrix Int n m) :
     (Fin m → ℤ) ⧸ Submodule.span ℤ (Set.range (matrixEquiv A)) ≃ₗ[ℤ]
-      (Fin (m - (snf A).rank) → ℤ) × ⨁ i, ℤ ⧸ Ideal.span {invariantFactors A i}
+      (Fin (m - snfRank A) → ℤ) ×
+        ⨁ i : Fin (snfRank A), ℤ ⧸ Ideal.span {(invariantFactors A)[i]}
 ```
 
 Two things are worth knowing about the Mathlib side before this is
@@ -460,6 +520,13 @@ transport, and the executable library is the only source of canonicity.
 existence argument over a PID. Supplying an executable witness with the
 identity proved is the same payoff `hex-hermite`'s `kernelBasisEquiv`
 delivers, one level up.
+
+The pinned Mathlib quotient helper directly covers only a full-rank
+submodule. The displayed `quotientEquiv` is rank-general: its proof must use
+the explicit Smith ambient basis, split the complement of the leading
+`Fin (snfRank A)` embedding to produce the free factor, and apply the cyclic
+quotient equivalence on the occupied coordinates. It is not merely an
+application of the existing full-rank helper.
 
 Upstreaming the chain field to Mathlib's structure, or adding invariant
 factors alongside it, is a reasonable later contribution and is out of
@@ -482,12 +549,6 @@ the route to rational canonical form and the minimal polynomial, and it
 shares the algorithm shape and none of the normalisation, growth
 control, or termination measure.
 
-**Anything Berlekamp-Zassenhaus needs.** Nothing in the existing tree
-depends on this library. Integer factoring of polynomials reaches its
-answer without a Smith normal form, so this is new capability rather than
-a missing piece of something already built, and it can be scheduled
-purely on the strength of its own consumers.
-
 **Sparse input.** Relation matrices from group presentations are often
 very sparse, and dense elimination fills them in immediately. The sparse
 matrix item in [future-work](../future-work.md) names this as one of the
@@ -499,17 +560,20 @@ revisited there rather than worked around here.
 `A` is `n × m` with rank `r`. As in [hex-hermite](hex-hermite.md), these
 are **matrix-update counts** rather than worst-case complexity, and they
 are parameterised by `P`, the number of times the pivot loop repeats at
-one diagonal position. `P` is bounded by the bit length of the entries,
-not by any matrix dimension, since each repetition strictly shrinks the
-pivot. There is no proven bound on operand size for this algorithm, which
+one diagonal position. `P` is bounded by the bit length of the pivot when
+that diagonal stage begins, not by a matrix dimension, since each strict
+replacement is by a proper divisor. There is no input-only bound on that
+bit length or on the other intermediate operands for this algorithm, which
 is the point made under "Algorithms".
 
 | operation | algorithm | matrix updates and `extGcd` calls | operand size |
 |---|---|---|---|
-| `snf` | classical Euclidean pivot loop | `O(P · r · (n + m) · max n m)` | unbounded; measured, not proved |
-| `snfDiagonal` | normalisation plus adjacent-pair sweep | `O(r²)` | bounded by the product of the input diagonal |
+| `snf` | form-only classical Euclidean pivot loop | `O(P · r · (n + m) · max n m)` | unbounded; measured, not proved |
+| `snfRank`, `invariantFactors` | projections of the form-only run | as `snf` | as `snf` |
+| `snfData` | `snf` plus accumulation of `U`, `W`, `V`, and `X` | `+ O(P · r · (n + m) · max n m)` | transforms may exceed the form substantially |
+| `snfDiagonal` | form-only normalisation plus fixed adjacent-pair network | `O(r²)` | bounded by the product of the input diagonal |
+| `snfDiagonalData` | `snfDiagonal` plus four transform updates | `O(r³)` scalar entry updates in the dense matrices | transform-dependent |
 | `abelianStructure` | `snf` plus a filter | as `snf` | as `snf` |
-| `solveInt` | `snf`, one diagonal solve, two `vecMul`s | `+ O(n · m)` | as `snf` |
 
 ## Conformance
 
@@ -531,7 +595,8 @@ identities instead.
 
 **Cases that must be present:**
 
-- the zero matrix, and a matrix of rank `1`;
+- the `0 × 0`, `0 × m`, and `n × 0` cases, the zero matrix, and a matrix
+  of rank `1`;
 - input where the first invariant factor is not the smallest entry, for
   example `[[2, 0], [0, 3]]`, whose Smith normal form is
   `diag(1, 6)`. An implementation that omits the divisibility step in
@@ -542,17 +607,24 @@ identities instead.
 - rank-deficient input, checking the trailing zeros and the rank;
 - rectangular input in both orientations;
 - negative and mixed-sign entries;
+- `[-1]` and a matrix whose final diagonal stage is negative, checking that
+  the general pivot loop normalises a pivot even when no elimination step runs;
 - a presentation of a known abelian group, checked against
-  `abelianStructure`: `[[2, 0], [0, 2]]` gives `(0, #[2, 2])` and
-  `[[1, 1], [0, 2]]` gives `(0, #[2])`;
-- input already in Smith normal form, checking idempotence;
-- diagonal input through `snfDiagonal` containing zeros and negatives,
+  `abelianStructure`: `[[2, 0], [0, 2]]` gives free rank `0` and torsion
+  `#[2, 2]`, while `[[1, 1], [0, 2]]` gives free rank `0` and torsion
+  `#[2]`;
+- input already in Smith normal form, checking `snf (snf A) = snf A`;
+- agreement of `snf`/`snfData` and `snfDiagonal`/`snfDiagonalData` on every
+  fixture, plus `snfDiagonal d = snf (diagMatrix d r r)` on every diagonal
+  fixture;
+- diagonal input through both diagonal paths containing zeros and negatives,
   including `[0, 2]`, `[-2, 0]`, and `[0, 0]`, which is where an
   implementation that skips the normalisation phase divides by zero or
   returns a non-normal form;
-- an unsolvable and a solvable integer system through `solveInt`, with
-  the solvable one chosen so that `V ≠ I`, which is what catches a
-  `solveInt` that forgets to transform the right-hand side.
+- an unsolvable and a solvable integer system checked through
+  `solvable_iff_dvd (snfData_isSNF A)`, with `V ≠ I`; the unsolvable case
+  has a zero-tail violation so it catches both failure to transform `b` and
+  failure to check coordinates after the rank.
 
 ## Benchmarking
 
@@ -575,38 +647,31 @@ specified here, so the ratio compares different algorithms and does not
 hold a required threshold. PARI `matsnf` through `cypari2`, also
 `informational`.
 
-**The decision rules written down in advance.** As in
-[hex-hermite](hex-hermite.md), each is stated over a range rather than at
-one ladder endpoint.
+**The diagonal decision rule written down in advance.** `snfDiagonal` must
+be faster than `snf` on diagonal input by a margin that grows with `r`, since
+it skips elimination entirely. A flat or shrinking margin means the fast
+path is not being taken, which is a bug rather than a benchmark result. The
+report also measures `snfData / snf` and `snfDiagonalData / snfDiagonal`
+separately so transform cost is visible rather than charged to form-only
+consumers.
 
-1. `snfSquareDiag` (modular, form only) is kept only if it wins across
-   the upper half of both the dimension and the entry-bit-size ladders on
-   `random-dense-smith`, and only if a named consumer wants the diagonal
-   without the transforms. It answers a strictly smaller question than
-   `snf`, so a win at one point does not justify carrying it.
-2. `snfDiagonal` must be faster than `snf` on diagonal input by a margin
-   that grows with `r`, since it skips the elimination entirely. A flat
-   or shrinking margin means the fast path is not being taken, which is a
-   bug rather than a benchmark result. It is not stated as a fixed
-   multiple, because at small `r` the two are legitimately comparable.
-
-**Growth instrumentation is required, not optional.** The default
-algorithm ships with no proven entry bound, so the bench records peak
-intermediate entry bit-size and time spent in big-integer arithmetic
-alongside wallclock on every family. Those numbers are the evidence for
-or against specifying Kannan-Bachem, per "Open questions".
+**Growth instrumentation is required, not optional.** A separate untimed
+diagnostic runner scans the working matrix after each elementary update and
+returns peak intermediate entry bit-size. Timed runs use the ordinary
+uninstrumented API and report wallclock. The growth curve and wallclock curve,
+not an unavailable attribution of time to individual `Int` primitives, are
+the evidence for or against specifying Kannan-Bachem.
 
 ## File organisation
 
 ```
 HexSmith/
-  Contracts.lean     -- SmithData, diagMatrix, IsSNF, isSNFShape
-  Smith.lean         -- snf, the classical Euclidean pivot loop
-  Diagonal.lean      -- snfDiagonal: normalisation and the adjacent-pair sweep
-  Modular.lean       -- snfSquareDiag, the Iliopoulos variant
+  Contracts.lean     -- SmithData, AbelianStructure, IsSNF, isSNFShape
+  Smith.lean         -- snf, snfRank, snfData, the classical pivot loop
+  Diagonal.lean      -- snfDiagonal, snfDiagonalData, fixed gcd/lcm network
   Divisor.lean       -- detDivisor and IsSNF.detDivisor_eq
   Unique.lean        -- IsSNF.rank_eq, IsSNF.diag_eq
-  Structure.lean     -- invariantFactors, abelianStructure, quotientOrder, solveInt
+  Structure.lean     -- invariantFactors, abelianStructure, solvability and index theorems
   Cert.lean          -- snfCert and its soundness
 HexSmith.lean        -- umbrella
 HexSmithMathlib/
@@ -624,6 +689,21 @@ HexSmithMathlib.lean
     mathlib: false
     done_through: 0
     status: draft
+    phase4:
+      comparators:
+        - tool: FLINT fmpz_mat_snf via python-flint
+          class: informational
+          rationale: FLINT dispatches to algorithms and crossover policies outside this SPEC
+        - tool: PARI matsnf via cypari2
+          class: informational
+          rationale: PARI uses a separately tuned implementation and is recorded for orientation
+      input_families:
+        - name: random-dense-smith
+          description: dense square nonsingular integer matrices with uniformly bounded entries
+        - name: chain-conjugate
+          description: known divisibility chains conjugated by random unimodular matrices
+        - name: presentation-smith
+          description: sparse abelian-group relation matrices run through the dense implementation
   HexSmithMathlib:
     deps: [HexSmith, HexHermiteMathlib]
     mathlib: true
@@ -651,12 +731,17 @@ Everything else arrives through `HexHermite`.
   forms on trailing submatrices and does have one, at the cost of block
   embeddings, rank-deficient handling, and accumulating the transforms
   through all of it. The growth instrumentation under "Benchmarking" is
-  what decides whether that work is called for. It should not be started
+  what decides whether that work is called for; it should not be started
   on the strength of the name.
+- **Whether to write an Iliopoulos follow-up SPEC.** A public modular path
+  needs the complete recurrence, its modulus invariant, a singularity
+  theorem for the `Option` boundary, and agreement with `invariantFactors`.
+  It is proposed only if the form-only `snf` growth curve shows a production
+  range where bounded modular operands are likely to repay that complexity.
 - **Whether `detDivisor` should be public at all.** It is the
   specification function and it has no efficient direct evaluation. The
   argument for exporting it is that the statement `d₁ ⋯ d_k = D_k` is
-  the thing a mathematician wants to cite. The argument against is that
+  the thing a mathematician wants to cite; the argument against is that
   a `noncomputable` definition with an exponential unfolding invites
   misuse. It is exported here with its docstring saying so.
 - **Sparse relation matrices**, as above. The dense algorithm is
