@@ -4032,8 +4032,13 @@ depth, aggregate tree/body cells, and structural proof work. It does not expose
 a separate checker-execution counter. The Mathlib-free `Search.Result.Limits`
 and exact caller-supplied `Measure` authenticate and bound the retained runtime
 tree first; changing that measure can make the same pure tree fail validation.
-These limits are checked independently because runtime tree records and proof
-recipes are both untrusted data.
+The callback driver additionally applies a caller-owned `Driver.Measure` to
+the complete logical encoding of every retained proof event and edge,
+including nested facts, actions, schema keys, dependency versions, body
+naturals, and seed data, then enforces independent recipe byte/work caps over
+the complete bundle on every transition. These callbacks and arbitrary-value
+equality remain non-preemptible. The limits are checked independently because
+runtime tree records and proof recipes are both untrusted data.
 
 Every split child begins at program version zero with zero fact generations
 and the exact parent snapshot plus one seed. The sealed retained-tree
@@ -5351,8 +5356,10 @@ their declared cost inside a scheduler bound.
 - `HexIntervalMathlib/Driver.lean`: supported one-step execution of an exact
   already-selected package action, atomic retained-source advancement/split/
   terminal updates, and bounded alignment of the sealed result tree with its
-  separately untrusted node recipe. It does not generate offers, choose a
-  policy, or run an autonomous search loop.
+  separately untrusted node recipe. A required logical recipe measure and
+  independent byte/work caps charge all retained event and edge payloads over
+  the complete bundle. It does not generate offers, choose a policy, or run an
+  autonomous search loop.
 - `HexIntervalMathlib/Rule.lean`: the supported stable-key arithmetic package,
   exact real operation meanings, package-owned fact schemas, checked registry
   assembly, and state-to-proof quotation for negation, addition, subtraction,

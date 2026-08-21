@@ -218,6 +218,30 @@ def resultMeasure : Search.Result.Measure Fact Nat (List Nat) Proof.Key :=
     fact := fun _ => unitCost, action := fun _ => unitCost, plan := fun _ => unitCost,
     schema := fun _ => unitCost, body := fun _ => unitCost, code := fun _ => unitCost }
 
+private def factBytes : Fact → Nat
+  | .all => 1025
+  | .yes | .empty => 1
+
+private def bodyBytes (body : List Nat) : Nat :=
+  body.foldl (init := 0) fun total value => total + value + 1
+
+def recipeMeasure : Driver.Measure Fact :=
+  { cell := unitCost
+    event := fun
+      | .fact step =>
+          { bytes := 16 + factBytes step.proposed + factBytes step.installed +
+              step.assumptions.length + bodyBytes step.body
+            work := 1 + step.assumptions.length + step.body.length }
+      | .equality step =>
+          { bytes := 14 + step.assumptions.length + bodyBytes step.body,
+            work := 1 + step.assumptions.length + step.body.length }
+      | .transport _ => unitCost
+      | .instance step =>
+          { bytes := 12 + bodyBytes step.body, work := 1 + step.body.length }
+    edge := fun edge =>
+      { bytes := 4 + match edge.seed with | none => 0 | some seed => factBytes seed.fact,
+        work := 1 } }
+
 def resultLimits : Search.Result.Limits :=
   { search := searchLimits, state := stateLimits, maxNodes := 3, maxBodyCells := 1,
     maxBytes := 128, maxWork := 128, maxCode := 8 }
@@ -225,7 +249,9 @@ def resultLimits : Search.Result.Limits :=
 def treeLimits : Proof.TreeLimits :=
   { maxNodes := 3, maxDepth := 1, maxBodyCells := 6, maxWork := 32 }
 
-def limits : Driver.Limits := { result := resultLimits, proof := proofLimits, tree := treeLimits }
+def limits : Driver.Limits :=
+  { result := resultLimits, proof := proofLimits, tree := treeLimits,
+    recipe := { maxBytes := 1024, maxWork := 128 } }
 
 def binding (rule : RuleKey) (anchor : NodeId) (watches writes : List NodeId) :
     ScopeBinding := { rule, anchor, watches, writes }
@@ -328,8 +354,41 @@ def badEchoPackage : Driver.Package Fact Nat Nat Nat (List Nat) :=
       let echo := { outcome request (Array.singleton item) with serial := request.serial + 1 }
       .continue (Driver.Echo.mk echo [factEvent request item]) }
 
+def badProgramEchoPackage : Driver.Package Fact Nat Nat Nat (List Nat) :=
+  { rule := forwardRule
+    invoke := fun request =>
+      let item := update request n2 (seen n2 0) .yes 1 1
+      let echo := { outcome request (Array.singleton item) with
+        programVersion := request.programVersion + 1 }
+      .continue (Driver.Echo.mk echo [factEvent request item]) }
+
+def shortEchoPackage : Driver.Package Fact Nat Nat Nat (List Nat) :=
+  { rule := forwardRule
+    invoke := fun request =>
+      let item := update request n2 (seen n2 0) .yes 1 1
+      .continue (Driver.Echo.mk (outcome request (Array.singleton item)) []) }
+
+def bulkyProposedPackage : Driver.Package Fact Nat Nat Nat (List Nat) :=
+  { rule := forwardRule
+    invoke := fun request =>
+      let item := update request n2 (seen n2 0) .yes 1 1
+      let event := factEvent request item
+      .continue (Driver.Echo.mk (outcome request (Array.singleton item))
+        [match event with | .fact step => .fact { step with proposed := .all } | other => other]) }
+
+def bulkyBodyPackage : Driver.Package Fact Nat Nat Nat (List Nat) :=
+  { rule := forwardRule
+    invoke := fun request =>
+      let item := update request n2 (seen n2 0) .yes 1 1
+      let event := factEvent request item
+      .continue (Driver.Echo.mk (outcome request (Array.singleton item))
+        [match event with | .fact step => .fact { step with body := [1024] } | other => other]) }
+
 def stoppingPackage : Driver.Package Fact Nat Nat Nat (List Nat) :=
   { rule := forwardRule, invoke := fun _ => .stop 7 }
+
+def oversizedStopPackage : Driver.Package Fact Nat Nat Nat (List Nat) :=
+  { rule := forwardRule, invoke := fun _ => .stop 9 }
 
 def unknownPackage : Driver.Package Fact Nat Nat Nat (List Nat) :=
   { rule := forwardRule
@@ -371,27 +430,74 @@ def makeSession (branch : State.Branch Fact Nat) (scope : Policy.ScopeId)
   Search.Session.startWithin envelope policyMeasure branch registrations bindings #[0, 0, 0, 0]
     #[] 0 scope #[selected]
 
+def firstResult (package : Driver.Package Fact Nat Nat Nat (List Nat))
+    (candidateLimits : Driver.Limits := limits) :
+    Except Driver.Error (Driver.Step Fact Nat Nat Nat (List Nat)) := do
+  let branch ← (State.Branch.startWithin stateLimits program input.facts).mapError fun _ => .mismatch
+  let bundle ← Driver.Bundle.startWithin candidateLimits resultMeasure recipeMeasure scope branch
+  let session ← (makeSession branch scope rootBindings
+    (offer 0 .forward rootAction)).mapError Driver.Error.search
+  let some decision := choose? session | throw .mismatch
+  Driver.runWithin envelope policyMeasure candidateLimits resultMeasure recipeMeasure
+    .depthFirst package bundle session decision
+
 def firstWith (package : Driver.Package Fact Nat Nat Nat (List Nat))
-    (candidateLimits : Driver.Limits := limits) : Option (Driver.Step Fact Nat Nat Nat (List Nat)) := do
-  let branch ← (State.Branch.startWithin stateLimits program input.facts).toOption
-  let bundle ← (Driver.Bundle.startWithin candidateLimits resultMeasure scope branch).toOption
-  let session ← (makeSession branch scope rootBindings (offer 0 .forward rootAction)).toOption
-  let decision ← choose? session
-  (Driver.runWithin envelope policyMeasure candidateLimits resultMeasure .depthFirst package
-    bundle session decision).toOption
+    (candidateLimits : Driver.Limits := limits) : Option (Driver.Step Fact Nat Nat Nat (List Nat)) :=
+  (firstResult package candidateLimits).toOption
+
+def generousRecipeLimits : Driver.Limits :=
+  { limits with recipe := { maxBytes := 4096, maxWork := 4096 } }
+
+def recipeCostWith (package : Driver.Package Fact Nat Nat Nat (List Nat)) :
+    Option Search.Result.Cost := do
+  let .continued bundle _ ← firstWith package generousRecipeLimits | none
+  pure bundle.recipeCost
+
+def refusesRecipeByteOneOver
+    (package : Driver.Package Fact Nat Nat Nat (List Nat)) : Bool := Id.run do
+  let some cost := recipeCostWith package | return false
+  if cost.bytes == 0 then return false
+  let candidate :=
+    { generousRecipeLimits with
+      recipe := { generousRecipeLimits.recipe with maxBytes := cost.bytes - 1 } }
+  return match firstResult package candidate with
+    | .error (.resource .bytes) => true
+    | _ => false
+
+def refusesRecipeWorkOneOver
+    (package : Driver.Package Fact Nat Nat Nat (List Nat)) : Bool := Id.run do
+  let some cost := recipeCostWith package | return false
+  if cost.work == 0 then return false
+  let candidate :=
+    { generousRecipeLimits with
+      recipe := { generousRecipeLimits.recipe with maxWork := cost.work - 1 } }
+  return match firstResult package candidate with
+    | .error (.resource .work) => true
+    | _ => false
 
 #guard match firstWith rootPackage with | some (.continued _ _) => true | _ => false
 #guard (firstWith badOwnerPackage).isNone
 #guard (firstWith badDependencyPackage).isNone
 #guard (firstWith badSchemaPackage).isNone
 #guard (firstWith badEchoPackage).isNone
+#guard (firstWith badProgramEchoPackage).isNone
+#guard (firstWith shortEchoPackage).isNone
+#guard match firstResult bulkyProposedPackage with
+  | .error (.resource .bytes) => true
+  | _ => false
+#guard match firstResult bulkyBodyPackage with
+  | .error (.resource .bytes) => true
+  | _ => false
+#guard refusesRecipeByteOneOver bulkyProposedPackage
+#guard refusesRecipeByteOneOver bulkyBodyPackage
+#guard refusesRecipeWorkOneOver rootPackage
 #guard match firstWith stoppingPackage with
   | some (.stopped (.callbackFailure 7) bundle session) =>
       session.serial == 0 && bundle.tree.pending.length == 1
   | _ => false
 #guard match firstWith unknownPackage with | some (.unknown _) => true | _ => false
+#guard (firstWith oversizedStopPackage).isNone
 #guard (firstWith rootPackage { limits with proof := { proofLimits with maxChronology := 0 } }).isNone
-#guard (firstWith rootPackage { limits with result := { resultLimits with maxNodes := 0 } }).isNone
 
 def staleAction := { rootAction with generation := 1 }
 #guard match State.Branch.startWithin stateLimits program input.facts with
@@ -401,23 +507,45 @@ def staleAction := { rootAction with generation := 1 }
     | .ok _ => false
   | .error _ => false
 
-def splitWith (package : Driver.Package Fact Nat Nat Nat (List Nat)) :
+def splitWith (package : Driver.Package Fact Nat Nat Nat (List Nat))
+    (candidateLimits : Driver.Limits := limits) :
     Option (Driver.Step Fact Nat Nat Nat (List Nat)) := do
   let branch ← (State.Branch.startWithin stateLimits program input.facts).toOption
-  let bundle ← (Driver.Bundle.startWithin limits resultMeasure scope branch).toOption
+  let bundle ← (Driver.Bundle.startWithin candidateLimits resultMeasure recipeMeasure
+    scope branch).toOption
   let session ← (makeSession branch scope rootBindings (offer 0 .forward rootAction)).toOption
   let decision ← choose? session
-  let .continued bundle session ← (Driver.runWithin envelope policyMeasure limits resultMeasure
-    .depthFirst rootPackage bundle session decision).toOption | none
+  let .continued bundle session ← (Driver.runWithin envelope policyMeasure candidateLimits resultMeasure
+    recipeMeasure .depthFirst rootPackage bundle session decision).toOption | none
   let session ← (Search.Session.refreshWithin envelope policyMeasure session
     #[offer 1 .split splitAction] {} false).toOption
   let decision ← choose? session
-  (Driver.runWithin envelope policyMeasure limits resultMeasure .depthFirst package
+  (Driver.runWithin envelope policyMeasure candidateLimits resultMeasure recipeMeasure
+    .depthFirst package
     bundle session decision).toOption
 
 #guard match splitWith splitPackage with | some (.split _) => true | _ => false
 #guard (splitWith badSplitSchemaPackage).isNone
 #guard (splitWith staleSplitSeedPackage).isNone
+#guard (splitWith splitPackage
+  { limits with result := { resultLimits with maxNodes := 2 } }).isNone
+
+def wrongHeadSession : Bool := Id.run do
+  let some branch := (State.Branch.startWithin stateLimits program input.facts).toOption
+    | return false
+  let some bundle := (Driver.Bundle.startWithin limits resultMeasure recipeMeasure
+    scope branch).toOption | return false
+  let some session := (makeSession branch scope rootBindings
+    (offer 0 .forward rootAction)).toOption | return false
+  let some decision := choose? session | return false
+  let some (.continued bundle _) := (Driver.runWithin envelope policyMeasure limits resultMeasure
+    recipeMeasure .depthFirst rootPackage bundle session decision).toOption | return false
+  return match Driver.runWithin envelope policyMeasure limits resultMeasure recipeMeasure
+      .depthFirst rootPackage bundle session decision with
+    | .error .mismatch => true
+    | _ => false
+
+#guard wrongHeadSession
 
 private def orCode (code : Nat) (result : Except ε α) : Except Nat α :=
   result.mapError fun _ => code
@@ -426,45 +554,46 @@ private def driverCode (base : Nat) : Driver.Error → Nat
   | .search _ => base + 1
   | .result _ => base + 2
   | .proof _ => base + 3
-  | .mismatch => base + 4
+  | .resource _ => base + 4
+  | .mismatch => base + 5
 
 private def runWith
     (selectedSplit : Driver.Package Fact Nat Nat Nat (List Nat)) :
     Except Nat (Driver.Bundle Fact Nat (List Nat) ×
     Search.Result.Tree Fact Nat (List Nat) Proof.Key × Proof.TreeRecipe Fact) := do
   let branch ← orCode 1 (State.Branch.startWithin stateLimits program input.facts)
-  let bundle ← orCode 2 (Driver.Bundle.startWithin limits resultMeasure scope branch)
+  let bundle ← orCode 2 (Driver.Bundle.startWithin limits resultMeasure recipeMeasure scope branch)
   let session ← orCode 3 (makeSession branch scope rootBindings
     (offer 0 .forward rootAction))
   let some decision := choose? session | throw 4
-  let step ← orCode 5 (Driver.runWithin envelope policyMeasure limits resultMeasure .depthFirst
-    rootPackage bundle session decision)
+  let step ← orCode 5 (Driver.runWithin envelope policyMeasure limits resultMeasure recipeMeasure
+    .depthFirst rootPackage bundle session decision)
   let .continued bundle session := step | throw 6
   let session ← orCode 7 (Search.Session.refreshWithin envelope policyMeasure session
     #[offer 1 .split splitAction] {} false)
   let some decision := choose? session | throw 8
-  let step ← orCode 9 (Driver.runWithin envelope policyMeasure limits resultMeasure .depthFirst
-    selectedSplit bundle session decision)
+  let step ← orCode 9 (Driver.runWithin envelope policyMeasure limits resultMeasure recipeMeasure
+    .depthFirst selectedSplit bundle session decision)
   let .split bundle := step | throw 10
   let some (_, left) := Search.Result.current? bundle.tree | throw 11
   let session ← orCode 12 (makeSession left.branch left.scope leftBindings
     (offer 2 .forward childAction))
   let some decision := choose? session | throw 13
-  let step ← (Driver.runWithin envelope policyMeasure limits resultMeasure .depthFirst
+  let step ← (Driver.runWithin envelope policyMeasure limits resultMeasure recipeMeasure .depthFirst
     childPackage bundle session decision).mapError (driverCode 140)
   let .continued bundle session := step | throw 15
   let session ← orCode 16 (Search.Session.refreshWithin envelope policyMeasure session
     #[offer 3 .forward targetAction] {} false)
   let some decision := choose? session | throw 17
-  let step ← orCode 18 (Driver.runWithin envelope policyMeasure limits resultMeasure .depthFirst
-    targetPackage bundle session decision)
+  let step ← orCode 18 (Driver.runWithin envelope policyMeasure limits resultMeasure recipeMeasure
+    .depthFirst targetPackage bundle session decision)
   let .terminal bundle := step | throw 19
   let some (_, right) := Search.Result.current? bundle.tree | throw 20
   let session ← orCode 21 (makeSession right.branch right.scope rightBindings
     (offer 4 .backward refuteAction))
   let some decision := choose? session | throw 22
-  let step ← orCode 23 (Driver.runWithin envelope policyMeasure limits resultMeasure .depthFirst
-    refutePackage bundle session decision)
+  let step ← orCode 23 (Driver.runWithin envelope policyMeasure limits resultMeasure recipeMeasure
+    .depthFirst refutePackage bundle session decision)
   let .terminal bundle := step | throw 24
   pure (bundle, bundle.tree, bundle.recipe)
 
@@ -512,6 +641,9 @@ private def replayMutated
 
 def evidence : Proof.Evidence
     (semantics.Entails input.program (Proof.initialBase input) input.target) :=
+  /- `replayRun.isOk` above makes this branch the live executable canary. The
+  fallback is separately proved only because this total definition must inhabit
+  its type even if a future malformed fixture makes executable replay reject. -/
   match replayRun with
   | .ok evidence => evidence
   | .error _ =>

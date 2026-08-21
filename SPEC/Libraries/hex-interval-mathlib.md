@@ -45,7 +45,12 @@ Arbitrary-function package discovery, a complete autonomous search loop,
 split-search tactic integration, and default package discovery remain
 experimental. The supported callback driver executes one already-selected
 authenticated package action and atomically advances a sealed result tree and
-its separately checked proof recipe; it does not choose or enumerate offers.
+its separately checked proof recipe. A caller-owned logical measure charges
+the complete encoding of every retained event and edge—including nested facts,
+actions, schema keys, dependency versions, body naturals, and seed data—and
+independent recipe byte/work caps are rechecked over the complete bundle on
+every transition. Measurement and callback execution remain non-preemptible.
+The driver does not choose or enumerate offers.
 The supported direct-forward reifier and tactic are a narrow
 client rather than that missing generic bridge. The supported proof layer can
 replay a separately supplied, bounded chronology over a checked
@@ -3173,8 +3178,9 @@ the fixed soundness and trust contracts.
 - `HexIntervalMathlib/Driver.lean`: one-step authenticated package invocation,
   atomic retained-node advancement/split/terminal updates, and bounded exact
   alignment of the sealed runtime tree with a separately untrusted proof
-  recipe. Offer generation, policy selection, and the autonomous search loop
-  remain outside this module.
+  recipe. Its explicit logical event/edge measure and independent byte/work
+  caps cover the complete retained recipe bundle. Offer generation, policy
+  selection, and the autonomous search loop remain outside this module.
 - `HexIntervalMathlib/Reify.lean`: expressions, hypotheses, targets, and folds.
 - `HexIntervalMathlib/Derivative.lean`: automatic differentiation and centered
   enclosures.

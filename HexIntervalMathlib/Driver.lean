@@ -22,22 +22,42 @@ causes, contradiction flags, or diagnostics.
 Callback execution and construction of arbitrary facts, causes, identifiers,
 plans, and bodies remain non-preemptible. Search first authenticates the exact
 selected action and package rule, then validates the echoed outcome. The
-driver bounds and aligns every retained event before atomically returning the
-replacement tree/recipe bundle. Neither the bundle nor callback data is proof
-evidence; `Proof.replayTree` still resolves every schema and constructs the
-ordinary theorem.
+driver structurally bounds and aligns every retained event, then applies a
+caller-owned logical recipe measure to every proposed/installed fact, action,
+schema, body value, and seed before atomically returning the replacement
+tree/recipe bundle. Measurement callbacks and arbitrary-value equality are
+non-preemptible and must charge complete encodings. Neither the bundle nor
+callback data is proof evidence; `Proof.replayTree` still resolves every
+schema and constructs the ordinary theorem.
 -/
 
 namespace Hex.Interval.Driver
 
 open Proof
 
+/-- Independent logical caps for the separately retained proof recipe. -/
+structure RecipeLimits where
+  maxBytes : Nat
+  maxWork : Nat
+  deriving DecidableEq, Repr
+
 /-- Combined retained runtime and proof-recipe limits. -/
 structure Limits where
   result : Search.Result.Limits
   proof : Proof.Limits
   tree : Proof.TreeLimits
+  recipe : RecipeLimits
   deriving DecidableEq, Repr
+
+/-- Caller-owned logical encoding costs for recipe values. `cell` charges each
+retained list/array cell; `event` and `edge` must charge the complete logical
+encoding of their values, including nested facts, identifiers, actions,
+schemas, dependency versions, body naturals, and seed data. Callback execution
+and construction of the measured values remain non-preemptible. -/
+structure Measure (Fact : Type) where
+  cell : Search.Result.Cost
+  event : Proof.Event Fact → Search.Result.Cost
+  edge : Proof.TreeEdge Fact → Search.Result.Cost
 
 /-- Exact callback outcome plus the proof events emitted by that same
 invocation. The events are decoded data and are checked independently. -/
@@ -83,11 +103,19 @@ structure Bundle (Fact Cause Plan : Type) where
   private mk ::
   tree : Search.Result.Tree Fact Cause Plan Proof.Key
   recipe : Proof.TreeRecipe Fact
+  /-- Cached complete logical recipe cost, rechecked on every transition. -/
+  recipeCost : Search.Result.Cost
+
+inductive Resource where
+  | bytes
+  | work
+  deriving DecidableEq, Repr
 
 inductive Error where
   | search (error : Search.Error)
   | result (error : Search.Result.Error)
   | proof (error : Proof.Error)
+  | resource (resource : Resource)
   | mismatch
   deriving DecidableEq, Repr
 
@@ -113,6 +141,31 @@ private def eventWithin (limits : Proof.Limits) : Proof.Event Fact → Except Er
   | .instance step =>
       Proof.bodyCheck limits step.schema .instance step.body |>.mapError Error.proof
 
+/-- The supported callback driver retains only fact events: one event is
+zipped with each accepted fact update. The general proof layer may replay
+other event kinds when supplied through its separate programmatic APIs. -/
+private def eventCost (measure : Measure Fact) : Proof.Event Fact → Except Error Search.Result.Cost
+  | event@(.fact _) => pure (measure.cell + measure.event event)
+  | _ => throw .mismatch
+
+private def edgeCost (measure : Measure Fact) (edge : Proof.TreeEdge Fact) :
+    Search.Result.Cost :=
+  measure.cell + measure.edge edge
+
+private def recipeCost (measure : Measure Fact) (recipe : Proof.TreeRecipe Fact) :
+    Except Error Search.Result.Cost := do
+  let mut total := measure.cell + measure.cell
+  for events in recipe.events do
+    total := total + measure.cell
+    for event in events do total := total + (← eventCost measure event)
+  for edge in recipe.edges do total := total + edgeCost measure edge
+  pure total
+
+private def recipeWithin (limits : RecipeLimits) (cost : Search.Result.Cost) :
+    Except Error Unit := do
+  if limits.maxBytes < cost.bytes then throw (.resource .bytes)
+  if limits.maxWork < cost.work then throw (.resource .work)
+
 private def edgesMatch [DecidableEq Fact]
     (tree : Search.Result.Tree Fact Cause Plan Proof.Key)
     (recipe : Proof.TreeRecipe Fact) : Bool := Id.run do
@@ -134,22 +187,45 @@ private def checkRecipe [DecidableEq Fact]
     if limits.proof.maxChronology < events.length then throw (.proof .chronologyLimit)
     for event in events do eventWithin limits.proof event
 
+private def validate [DecidableEq Fact] [DecidableEq Cause]
+    (limits : Limits)
+    (resultMeasure : Search.Result.Measure Fact Cause Plan Proof.Key)
+    (recipeMeasure : Measure Fact)
+    (tree : Search.Result.Tree Fact Cause Plan Proof.Key)
+    (recipe : Proof.TreeRecipe Fact) : Except Error Search.Result.Cost := do
+  if !tree.check limits.result resultMeasure then throw (.result .malformed)
+  checkRecipe limits tree recipe
+  let cost ← recipeCost recipeMeasure recipe
+  recipeWithin limits.recipe cost
+  pure cost
+
+private def bundleWithin [DecidableEq Fact] [DecidableEq Cause]
+    (limits : Limits)
+    (resultMeasure : Search.Result.Measure Fact Cause Plan Proof.Key)
+    (recipeMeasure : Measure Fact)
+    (tree : Search.Result.Tree Fact Cause Plan Proof.Key)
+    (recipe : Proof.TreeRecipe Fact) : Except Error (Bundle Fact Cause Plan) := do
+  let recipeCost ← validate limits resultMeasure recipeMeasure tree recipe
+  pure { tree, recipe, recipeCost }
+
 private def checked [DecidableEq Fact] [DecidableEq Cause]
     (limits : Limits)
-    (measure : Search.Result.Measure Fact Cause Plan Proof.Key)
+    (resultMeasure : Search.Result.Measure Fact Cause Plan Proof.Key)
+    (recipeMeasure : Measure Fact)
     (bundle : Bundle Fact Cause Plan) : Except Error (Bundle Fact Cause Plan) := do
-  if !bundle.tree.check limits.result measure then throw (.result .malformed)
-  checkRecipe limits bundle.tree bundle.recipe
+  let cost ← validate limits resultMeasure recipeMeasure bundle.tree bundle.recipe
+  if cost != bundle.recipeCost then throw .mismatch
   pure bundle
 
 /-- Start an exact singleton bundle. The root chronology is initially empty. -/
 opaque Bundle.startWithin [DecidableEq Fact] [DecidableEq Cause]
-    (limits : Limits) (measure : Search.Result.Measure Fact Cause Plan Proof.Key)
+    (limits : Limits) (resultMeasure : Search.Result.Measure Fact Cause Plan Proof.Key)
+    (recipeMeasure : Measure Fact)
     (scope : Policy.ScopeId) (branch : State.Branch Fact Cause) :
     Except Error (Bundle Fact Cause Plan) := do
-  let tree ← Search.Result.startWithin limits.result measure scope branch
+  let tree ← Search.Result.startWithin limits.result resultMeasure scope branch
     |>.mapError Error.result
-  checked limits measure { tree, recipe := { events := #[[]], edges := #[{}] } }
+  bundleWithin limits resultMeasure recipeMeasure tree { events := #[[]], edges := #[{}] }
 
 private def factEventMatches [DecidableEq Fact]
     (request : Search.Request Fact OfferId SemanticKey)
@@ -211,13 +287,14 @@ directly; no later cause-to-recipe reconstruction occurs. -/
 opaque runWithin [DecidableEq Fact] [DecidableEq Cause] [DecidableEq OfferId]
     [DecidableEq SemanticKey] [DecidableEq Plan]
     (envelope : Search.Envelope) (policyMeasure : Policy.Measure OfferId SemanticKey)
-    (limits : Limits) (measure : Search.Result.Measure Fact Cause Plan Proof.Key)
+    (limits : Limits) (resultMeasure : Search.Result.Measure Fact Cause Plan Proof.Key)
+    (recipeMeasure : Measure Fact)
     (order : Search.Order) (package : Package Fact Cause OfferId SemanticKey Plan)
     (bundle : Bundle Fact Cause Plan)
     (session : Search.Session Fact Cause OfferId SemanticKey)
     (decision : Policy.Decision OfferId SemanticKey) :
     Except Error (Step Fact Cause OfferId SemanticKey Plan) := do
-  let bundle ← checked limits measure bundle
+  let bundle ← checked limits resultMeasure recipeMeasure bundle
   let some (id, source) := Search.Result.current? bundle.tree | throw Error.mismatch
   if source.scope != session.scope || source.branch != session.branch then throw .mismatch
   let invocation ← Search.invokeWithWithin envelope policyMeasure package.rule
@@ -237,40 +314,40 @@ opaque runWithin [DecidableEq Fact] [DecidableEq Cause] [DecidableEq OfferId]
           echoMatches limits transition echo
           if echo.outcome.updates.isEmpty then throw .mismatch
           let some recipe := appendEvents bundle.recipe id.index echo.events | throw .mismatch
-          let tree ← Search.Result.advanceWithin limits.result measure bundle.tree transition
+          let tree ← Search.Result.advanceWithin limits.result resultMeasure bundle.tree transition
             |>.mapError Error.result
-          let next ← checked limits measure { tree, recipe }
+          let next ← bundleWithin limits resultMeasure recipeMeasure tree recipe
           pure (.continued next transition.after)
       | Command.split proposal =>
           echoMatches limits transition proposal.echo
           if !emptyEcho proposal.echo || !exactSplit transition.request proposal.runtime then
             throw .mismatch
-          let tree ← Search.Result.splitWithin limits.result measure order bundle.tree
+          let tree ← Search.Result.splitWithin limits.result resultMeasure order bundle.tree
             proposal.runtime proposal.left proposal.right |>.mapError Error.result
           let recipe := appendChildren bundle.recipe id proposal.left proposal.right
-          let next ← checked limits measure { tree, recipe }
+          let next ← bundleWithin limits resultMeasure recipeMeasure tree recipe
           pure (.split next)
       | .target echo target =>
           echoMatches limits transition echo
           if !emptyEcho echo || !exactTarget transition.request target then throw .mismatch
-          let tree ← Search.Result.settleWithin limits.result measure bundle.tree (.target target)
+          let tree ← Search.Result.settleWithin limits.result resultMeasure bundle.tree (.target target)
             |>.mapError Error.result
-          let next ← checked limits measure { tree, recipe := bundle.recipe }
+          let next ← bundleWithin limits resultMeasure recipeMeasure tree bundle.recipe
           pure (.terminal next)
       | .refute echo refute =>
           echoMatches limits transition echo
           if !emptyEcho echo || !exactRefute transition.request refute then throw .mismatch
-          let tree ← Search.Result.settleWithin limits.result measure bundle.tree (.refute refute)
+          let tree ← Search.Result.settleWithin limits.result resultMeasure bundle.tree (.refute refute)
             |>.mapError Error.result
-          let next ← checked limits measure { tree, recipe := bundle.recipe }
+          let next ← bundleWithin limits resultMeasure recipeMeasure tree bundle.recipe
           pure (.terminal next)
       | .unknown echo unknown =>
           echoMatches limits transition echo
           if !emptyEcho echo || unknown.scope != transition.request.scope ||
               unknown.programVersion != transition.request.programVersion then throw .mismatch
-          let tree ← Search.Result.settleWithin limits.result measure bundle.tree (.unknown unknown)
+          let tree ← Search.Result.settleWithin limits.result resultMeasure bundle.tree (.unknown unknown)
             |>.mapError Error.result
-          let next ← checked limits measure { tree, recipe := bundle.recipe }
+          let next ← bundleWithin limits resultMeasure recipeMeasure tree bundle.recipe
           pure (.unknown next)
 
 end Hex.Interval.Driver
