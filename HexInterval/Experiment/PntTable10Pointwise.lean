@@ -192,7 +192,7 @@ def batchPackage : Package Bound :=
 
 def packages : Array (Package Bound) := #[sourcePackage, batchPackage]
 
-def engineLimits : Propagator.Limits :=
+def engineLimits : State.Limits :=
   { maxOperations := 2
     maxNodes := 11
     maxRules := 1

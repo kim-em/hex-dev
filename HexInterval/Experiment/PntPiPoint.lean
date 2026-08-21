@@ -105,7 +105,7 @@ def checkerInput : SemanticReplay.CheckerInput Bound :=
   { baseProgram := program, initialFacts := #[.request, .all],
     target := { node := node 1, fact := .upper certificate.cut } }
 
-def engineLimits : Propagator.Limits :=
+def engineLimits : State.Limits :=
   { maxOperations := 2, maxNodes := 2, maxRules := 1, maxRegistryEntries := 8,
     maxReplayFormats := 2, maxArity := 1, maxScopeNodes := 1, maxApplications := 2,
     maxQueueEntries := 8, maxActions := 4, maxMatcherVisits := 2,
