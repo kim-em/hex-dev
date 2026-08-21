@@ -674,10 +674,39 @@ has no distinct prime divisor, the point is rejected with
 hex-mv-hensel names under "Leading coefficients", and it costs one
 point rather than a search over distributions.
 
-The integer `c` is not assigned: it is multiplied into `L_1`. V4
-constrains only `∏_j L_j` and the values `L_j(a)`, and the rescaling
-below absorbs whatever `c` does to `L_1(a)`, so any placement is as
-good as any other and a fixed one keeps the answer reproducible.
+**The integer `c` has to be distributed too, and putting it all in one
+`L_j` is wrong.** The tempting shortcut is to say that V4 constrains
+only the product `∏_j L_j` and the values `L_j(a)`, so the placement of
+`c` does not matter. It does. `check`'s condition C4 pins each lifted
+factor's leading coefficient to the `L_j` it was given, so a placement
+that differs from the true factors' own leading coefficients makes
+`IsLiftOf` uninhabited, and `lift` then reports `.reconstruct` on an
+input that has a perfectly good factorization. With main variable `x`,
+one other variable `y`, and
+`s = (2y·x + 1)(3x + y)` at `y = 5`, the images are `h_1 = 10x + 1` and
+`h_2 = 3x + 5`, `Λ = 6y`, and the truth is `(L_1, L_2) = (2y, 3)`.
+Placing all of `c = 6` in `L_1` gives `(6y, 1)`, whose second entry
+does not even admit an integer rescaling, and a variant of the same
+example where both rescalings happen to be exact fails later and more
+expensively.
+
+So the integer part is distributed under the same divisibility
+requirement that the rescaling below needs: `lc h_j ∣ L_j(a)` for every
+`j`, together with `∏_j L_j = Λ`. Wang computes it greedily, dividing
+out `gcd (lc h_j) (P_j(a))` factor by factor, where `P_j` is the
+polynomial part already assigned to `j`, and rejecting the assignment
+when an integer is left over at the end. That leftover test is
+SymPy's `ExtraneousFactors` condition, and it is what the conformance
+comparison against `dmp_zz_wang_lead_coeffs` checks.
+
+**The integer placement can be genuinely ambiguous, and the recovery is
+the ordinary one.** With `Λ = 8`, `lc h_1 = 2`, and `lc h_2 = 2`, both
+`(2, 4)` and `(4, 2)` satisfy every constraint above and at most one
+matches the truth. The greedy pass takes the first, a wrong choice
+shows up as a `.reconstruct` failure, and the response is the same as
+for an unlucky point: try another point. Enumerating the placements
+instead would sometimes save a point, and "Open questions" records that
+rather than assuming the greedy pass is complete.
 
 The assignment produces candidate leading coefficients `L_1, …, L_r`
 with `∏_j L_j = Λ`, which is V4's first condition. The second
@@ -1201,6 +1230,11 @@ present:
 - A leading coefficient with no distinct prime divisor at the first
   admissible point, so the `.leadingSplit` rejection and the move to
   another point are both exercised.
+- A leading coefficient whose integer part must be split between two
+  factors, `(2y·x + 1)(3x + y)` being the smallest, so that a
+  distribution which dumps the content into one `L_j` is caught. Its
+  ambiguous sibling, where two placements satisfy every constraint and
+  only one lifts, is present as well.
 - The unlucky point `x₁² + x₂` at `x₂ = -1`: the image splits into
   `(x₁ - 1)(x₁ + 1)` while `f` is irreducible, so the lift reaches full
   precision and fails. With `r = 2` there is no coarser two-block
@@ -1529,6 +1563,13 @@ untouched.
   reachable. It would still need a complete factorization of
   `lcIn i cmp' g` to enumerate admissible distributions, so the
   amendment is not small.
+- **Whether the integer placements should be enumerated.** The greedy
+  gcd pass picks one splitting of `Λ`'s integer content among the
+  factors, and when two placements satisfy every constraint a wrong
+  pick costs a whole point. Enumerating them is finite and usually
+  tiny, and it trades a cheap loop for a lift attempt each. No
+  measurement exists yet, and the "nonconstant leading coefficients"
+  family is where one would come from.
 - **Whether monicisation is worth a second route.** Replacing the
   target by `Λ^(d₁ - 1) · f(x_i / Λ)` makes every factor monic in the
   main variable and removes the distribution search and its failure
