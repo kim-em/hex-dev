@@ -41,9 +41,29 @@ granting runtime state evidence authority. The current package fixes one
 natural exponent and one dyadic constant, shared respectively by every node at
 the built-in power and constant operation indices; duplicate package
 registration and operation keys cannot provide another such parameterization.
-Arbitrary-function package discovery, goal reification, encoding and evidence
-folds, search-to-recipe orchestration, and tactic syntax remain experimental
-and are not re-exported by the public umbrella.
+Arbitrary-function package discovery, generic search-to-recipe orchestration,
+split-search tactic integration, and default package discovery remain
+experimental. The supported direct-forward reifier and tactic are a narrow
+client rather than that missing generic bridge. The supported proof layer can
+replay a separately supplied, bounded chronology over a checked
+retained search tree: package-owned binary-cover and refutation schemas are
+resolved by exact key, each child adds exactly one branch assumption while
+inherited parent consequences retain derived evidence, target/refutation
+leaves close, unknown leaves reject, and sibling proofs join only through the
+checked cover. The tree must pass its exact caller-supplied search limits and
+measure, and the untrusted recipe separately echoes every parent, side, and
+seed edge. Child proof states restart at program version zero; inherited facts
+are rebased as derived evidence rather than promoted to assumptions.
+`Proof.TreeLimits` independently cap proof nodes, depth, body cells, and
+structural work. Generic callback-to-recipe quotation and tactic-driven split
+search remain later integration edges. Each retained node currently freezes
+its `Source.branch` at creation; non-root snapshots restart at version zero,
+so their chronology must be empty or proof-state-only and terminals can cite
+only facts current in that creation snapshot. Recursive child propagation
+remains part of the later controller edge. Current retained-tree construction
+inherits the Mathlib-free reference cost `Θ(N² * B + N³)` from repeated branch
+validation and pairwise scope-uniqueness checking; this is not a production
+storage-complexity claim.
 The supported `Frontend` is instead a tactic-independent, flat programmatic
 client. It recursively reifies bounded `Term` values by stable operation key,
 rechecks the transparent result's exact node/term/ordered-edge correspondence,
@@ -66,8 +86,8 @@ construction or structural equality. The caller's opaque source-value
 function is also outside this preemptible envelope. It does not
 parse Lean expressions or hypotheses, extract recipes from generic Search
 trees, or expose tactic syntax.
-The user-facing tactic contract below is the release target, not a claim that
-the tactic is already supported.
+The user-facing tactic contract below remains the broader release target; the
+direct forward subset described above is the currently supported tactic.
 
 The tactic proves bounds for ordinary Lean expressions over `ℝ`. It reads
 bounds from the local context, reifies shared expressions to an immutable
@@ -3104,8 +3124,9 @@ the fixed soundness and trust contracts.
   evaluator soundness.
 - `HexIntervalMathlib/Rule.lean`: registration environment and theorem-schema
   validation.
-- `HexIntervalMathlib/Proof.lean`: derivation slicing, certificate checks, and
-  proof construction.
+- `HexIntervalMathlib/Proof.lean`: chronological and retained-tree replay,
+  package-owned fact/equality/instance/refutation/split schemas, exact child
+  seeding and cover joins, certificate checks, and proof construction.
 - `HexIntervalMathlib/Reify.lean`: expressions, hypotheses, targets, and folds.
 - `HexIntervalMathlib/Derivative.lean`: automatic differentiation and centered
   enclosures.

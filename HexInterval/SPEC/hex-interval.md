@@ -96,15 +96,24 @@ uses the dyadic grid `2⁻¹⁶`; programmatic clients may choose another precis
 within the explicit envelope. Because each computed arithmetic layer is
 followed by an internal regularization layer, its term-depth cap `32` admits
 about 16 nested arithmetic operations along one expression spine. Generic
-search-selected recipes, broader local-context parsing, and
-split replay remain experimental. The first
+search-selected recipes and broader local-context parsing remain experimental.
+The supported proof companion can separately consume a checked retained
+`Search.Result.Tree` plus caller-supplied proof chronology: its registry
+authenticates package-owned binary cover and refutation schemas, its checked
+state rebases inherited child facts without promoting them to assumptions, and
+its bounded recursive fold closes target/refutation leaves, rejects unknown
+leaves, and joins siblings only through the exact cover. Producing that proof
+recipe from generic search callbacks and invoking the fold from the public
+tactic remain later controller work. The first
 concrete supported registry is the Mathlib arithmetic package for one
 configured constant and natural exponent plus public negation, addition,
 subtraction, multiplication, power, absolute-value, min/max, reciprocal,
 division, and regularization operations. Arbitrary-function package assembly,
-callback outcomes and proposals, concrete policy algorithms, sessions, branch
-search, search-to-recipe orchestration, payload storage, tactic syntax, and the
-optimized backing store remain experimental.
+callback outcomes and proposals, concrete policy algorithms and default
+scheduling, the branch-search controller, callback-to-recipe orchestration,
+payload storage, and the optimized backing store remain experimental.
+Supported authenticated sessions and the narrow direct-forward tactic do not
+yet supply that missing controller bridge.
 In particular, the current instantiation proposal's package-supplied numeric
 policy family is not part of the supported action contract.
 
@@ -3293,8 +3302,10 @@ class, age, and score and performs the existing engine-owned freshness checks.
 The concrete `OfferId`,
 `OfferKey`, instantiation/split encodings, staged/adaptive/feature policies,
 package callbacks, semantic outcome interpretation, event history, concrete
-policy sessions, target-specific stop taxonomy, and proof replay remain under
-`HexInterval/Experiment`. The experimental `BranchTree` consumes the supported
+policy sessions, target-specific stop taxonomy, and callback-to-proof-recipe
+driver remain under `HexInterval/Experiment`. The Mathlib companion's generic
+tree replay does not make the older concrete `BranchProof` controller a
+supported API. The experimental `BranchTree` consumes the supported
 search order, limits, accounting, and frontier container, while its
 package-specific child construction remains behind `BranchStart`. The older
 sealed propagator session is not presented as a supported `Search.Session`:
@@ -3992,7 +4003,7 @@ arguments.
 
 ### Budgets and termination
 
-Every search is finite because the configuration bounds:
+Every target search is required to be finite because its configuration bounds:
 
 - reified base nodes, dynamically generated nodes and equality edges,
   instantiation actions and generation depth, and alternate forms per original
@@ -4006,6 +4017,25 @@ Every search is finite because the configuration bounds:
 - retained trace nodes, frozen payload entries and bytes, kernel-checker work,
   and estimated proof nodes;
 - optional wall-clock time.
+
+The current supported proof layer has two distinct decoded-data envelopes.
+`Proof.Limits` bounds packages, schemas, body cells, ordered dependencies, and
+flat chronology. `Proof.TreeLimits` additionally bounds retained proof nodes,
+depth, aggregate tree/body cells, and structural proof work. It does not expose
+a separate checker-execution counter. The Mathlib-free `Search.Result.Limits`
+and exact caller-supplied `Measure` authenticate and bound the retained runtime
+tree first; changing that measure can make the same pure tree fail validation.
+These limits are checked independently because runtime tree records and proof
+recipes are both untrusted data.
+
+The current retained tree freezes each node's `Source.branch` when that node is
+created. A split child restarts its program version and fact generations at
+zero and the retained-tree API does not yet advance that child snapshot.
+Consequently a non-root proof chronology must be empty or proof-state-only,
+and a target/refutation terminal can cite only facts current at node creation.
+This edge proves exact split/refutation folding, not recursive propagation in
+children; authenticated callback-to-recipe quotation plus branch advancement
+is the next controller edge.
 
 `maxEndpointHeight` is measured after canonical dyadic normalization as the bit
 length of the absolute numerator plus the magnitude of the signed binary
@@ -4069,14 +4099,16 @@ Reaching a budget returns `unknown` with the best state and diagnostics. It
 does not silently lower a target, discard a branch, or turn a failed strict
 bound into a weak one.
 
-After any solver split, a reported bound is global. For each requested node,
-the result takes the hull of its proved interval over every live, completed,
-and pending leaf. An unexplored child contributes at least its inherited
-ancestor facts, never the tighter state of its sibling. The result retains a
-partial `BranchTree` whose leaves close membership in this hull, even if they
-do not close the original goal. `interval_bound` can therefore replay a real
-theorem from an `unknown` search; diagnostics never present a branch-local cut
-as a context-wide fact.
+The target branch-search API must report only global bounds after a split. For
+each requested node, it will take the hull of the proved interval over every
+live, completed, and pending leaf; an unexplored child must contribute at least
+its inherited ancestor facts, never the tighter state of its sibling. That
+partial-tree hull and its proof are not implemented by the current public
+`interval_bound`: today that command runs only the supported direct-forward
+derivation and prints its selected cuts as diagnostics. The retained-tree
+proof fold implemented below closes a target only when every leaf is a checked
+target or refutation; it rejects unknown leaves rather than manufacturing a
+global bound from them.
 
 ## Derivation trace
 
@@ -5219,10 +5251,12 @@ candidates, and `b` the number of live branch states.
 - The current `Search.Result.Tree` reference builders validate the complete
   retained prefix before and after every split or settlement. If `N` nodes are
   retained incrementally and `B` is the bounded per-node branch/state
-  validation cost, this construction/revalidation term is `Θ(N² * B)`;
-  it is not an incremental tree-store bound. `maxNodes` therefore stays small
-  and measurement-gated until a production representation avoids repeated
-  full-prefix validation.
+  validation cost, the repeated branch-validation term is `Θ(N² * B)`.
+  The current pairwise retained-scope uniqueness scan adds `Θ(N³)` across
+  the same incremental construction, for a combined `Θ(N² * B + N³)`
+  reference cost. This is not an incremental tree-store bound. `maxNodes`
+  therefore stays small and measurement-gated until a production
+  representation avoids repeated full-prefix validation.
 - Fact comparison and contradiction checks use exact endpoint comparison. For
   the dyadic candidate, integer cost is proportional to effective endpoint
   height and the permitted exponent-alignment shift; a rational candidate must
@@ -5288,8 +5322,11 @@ their declared cost inside a scheduler bound.
   meanings, complete operation-array alignment, per-node SSA relations, and
   global model assembly over the supported decoded program.
 - `HexIntervalMathlib/Proof.lean`: supported package-owned fact, equality,
-  instance, and refutation theorem schemas; exact registry/action validation;
-  chronological typed proof state and caller-target closure; and the
+  instance, refutation, and binary-cover theorem schemas; exact
+  registry/action validation; chronological typed proof state and caller-target
+  closure; separately authenticated retained-tree recipes; exact child seeding
+  with one new branch assumption and derived inherited evidence; bounded
+  target/refutation replay with unknown-leaf rejection and cover joins; and the
   expression boundary that rejects placeholders and metavariables, restores
   emitter environment/messages/information/metavariables and clears both
   environment-dependent elaborator caches, then transactionally runs
@@ -5300,8 +5337,9 @@ their declared cost inside a scheduler bound.
   ordinary imports, only `Registry.buildWithin` can construct the theorem
   registry; `import all HexIntervalMathlib.Proof` is a trusted-internals escape
   hatch rejected outside the exact empty repository allowlist. The built-in
-  arithmetic package is supported below; arbitrary-function packages, goal
-  reification, tactic syntax, and default registries remain experimental.
+  arithmetic package and direct-forward reifier/tactic are supported below;
+  arbitrary-function packages, callback-to-tree-recipe orchestration,
+  split-search tactic integration, and default registries remain experimental.
 - `HexIntervalMathlib/Rule.lean`: the supported stable-key arithmetic package,
   exact real operation meanings, package-owned fact schemas, checked registry
   assembly, and state-to-proof quotation for negation, addition, subtraction,
@@ -5388,8 +5426,9 @@ their declared cost inside a scheduler bound.
   EmitFixtures}.lean`:
   Lean-only checks and oracle fixtures.
 - `conformance/HexIntervalMathlib/ProgramProofConformance.lean`: supported
-  program-model, registry, chronology, refutation, target-closure, mutation,
-  Meta-state restoration, and guarded ordinary-theorem canaries.
+  program-model, registry, chronology, refutation, binary-cover/tree replay,
+  target-closure, mutation, Meta-state restoration, and guarded
+  ordinary-theorem canaries.
 - `conformance/HexIntervalMathlib/RuleConformance.lean`: supported arithmetic
   package assembly, shared-DAG state quotation, chronological replay into an
   ordinary theorem, exact inv/div/regularize adapters, malformed-key/body/

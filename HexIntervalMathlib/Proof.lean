@@ -19,6 +19,11 @@ callback replies, payload arenas, and diagnostic traces are decoded data only.
 The replay cursor starts from the caller's exact program and fact array and can
 advance only through package-owned theorem schemas whose complete address,
 owner, body, action, scope, versions, dependencies, and chronology all match.
+Binary splits additionally require a package-owned cover theorem. Each child
+adds exactly one assumption; inherited facts are rebased as derived evidence.
+A bounded fold checks an exact retained `Search.Result.Tree`, rejects unknown
+leaves, closes target or checked-refutation leaves, and joins children only
+under that cover.
 
 Schema decoders and theorem builders are package callbacks, but their returned
 `Evidence` contains an ordinary Lean proof of the exact indexed proposition.
@@ -86,6 +91,15 @@ def EntailsEq (semantics : Semantics Fact) (program : Program)
     (∀ assumption, assumption ∈ assumptions →
       semantics.holds program valuation assumption) →
     valuation left = valuation right
+
+/-- A package-owned binary cover. Under the exact established inputs, every
+model satisfies at least one ordered branch fact. -/
+def Covers (semantics : Semantics Fact) (program : Program)
+    (assumptions : List (NodeFact Fact)) (left right : NodeFact Fact) : Prop :=
+  ∀ valuation, semantics.models program valuation →
+    (∀ assumption, assumption ∈ assumptions →
+      semantics.holds program valuation assumption) →
+    semantics.holds program valuation left ∨ semantics.holds program valuation right
 
 def AgreeOn (semantics : Semantics Fact) (program : Program)
     (left right : NodeId → semantics.Value) : Prop :=
@@ -194,6 +208,7 @@ inductive Role where
   | equality
   | instance
   | refute
+  | split
   deriving DecidableEq, Repr
 
 /-- Full immutable schema address. -/
@@ -246,6 +261,17 @@ structure RefuteContext (semantics : Semantics Fact) where
   node : NodeId
   fact : Fact
 
+structure SplitContext (semantics : Semantics Fact) (Plan : Type) where
+  scope : Policy.ScopeId
+  programVersion : Nat
+  program : Program
+  action : Action
+  assumptions : List (NodeFact Fact)
+  parent : NodeFact Fact
+  left : NodeFact Fact
+  right : NodeFact Fact
+  plan : Plan
+
 /-- Existentially packed package-owned fact theorem. -/
 structure FactSchema (semantics : Semantics Fact) where
   key : Key
@@ -279,14 +305,23 @@ structure RefuteSchema (semantics : Semantics Fact) where
       semantics.holds context.program valuation
         { node := context.node, fact := context.fact } → False))
 
+structure SplitSchema (semantics : Semantics Fact) (Plan : Type) where
+  key : Key
+  Certificate : Type
+  decode : List Nat → Option Certificate
+  prove : (context : SplitContext semantics Plan) → Certificate →
+    Option (Evidence (semantics.Covers context.program context.assumptions
+      context.left context.right))
+
 /-- One proof package owns registrations and every schema addressed by those
 rule keys. -/
-structure Package (semantics : Semantics Fact) where
+structure Package (semantics : Semantics Fact) (Plan : Type := List Nat) where
   registrations : Array Registration
   facts : Array (FactSchema semantics) := #[]
   equalities : Array (EqualitySchema semantics) := #[]
   instances : Array (InstanceSchema semantics) := #[]
   refuters : Array (RefuteSchema semantics) := #[]
+  splits : Array (SplitSchema semantics Plan) := #[]
 
 /-- Bounds on retained proof-registry and quotation data.  These bounds are
 checked after construction of the caller's Lean values; they do not preempt
@@ -314,13 +349,14 @@ inductive BuildError where
 /-! Under ordinary imports, only `Registry.buildWithin` can construct this
 trusted theorem registry. `import all HexIntervalMathlib.Proof` is a deliberate
 trusted-internals escape hatch guarded by the repository DAG checker. -/
-structure Registry (semantics : Semantics Fact) where
+structure Registry (semantics : Semantics Fact) (Plan : Type := List Nat) where
   private mk ::
   registrations : Array Registration
   facts : Array (FactSchema semantics)
   equalities : Array (EqualitySchema semantics)
   instances : Array (InstanceSchema semantics)
   refuters : Array (RefuteSchema semantics)
+  splits : Array (SplitSchema semantics Plan)
 
 namespace Registry
 
@@ -328,20 +364,22 @@ private def make (registrations : Array Registration)
     (facts : Array (FactSchema semantics))
     (equalities : Array (EqualitySchema semantics))
     (instances : Array (InstanceSchema semantics))
-    (refuters : Array (RefuteSchema semantics)) : Registry semantics :=
-  .mk registrations facts equalities instances refuters
+    (refuters : Array (RefuteSchema semantics))
+    (splits : Array (SplitSchema semantics Plan)) : Registry semantics Plan :=
+  .mk registrations facts equalities instances refuters splits
 
-def owns (package : Package semantics) (key : Key) : Bool :=
+def owns (package : Package semantics Plan) (key : Key) : Bool :=
   package.registrations.any fun registration => registration.key == key.rule
 
 /-- Assemble a package-local, globally unambiguous theorem registry. -/
 opaque buildWithin (limits : Limits) (program : Program)
-    (packages : Array (Package semantics)) : Except BuildError (Registry semantics) := do
+    (packages : Array (Package semantics Plan)) :
+    Except BuildError (Registry semantics Plan) := do
   if !program.check then throw .invalidProgram
   if limits.maxPackages < packages.size then throw .packageLimit
   let schemaCount := packages.foldl (fun count package =>
     count + package.facts.size + package.equalities.size + package.instances.size +
-      package.refuters.size) 0
+      package.refuters.size + package.splits.size) 0
   if limits.maxSchemas < schemaCount then throw .schemaLimit
   let registrations := packages.foldl
     (fun all package => all ++ package.registrations) #[]
@@ -355,6 +393,7 @@ opaque buildWithin (limits : Limits) (program : Program)
   let mut equalities := #[]
   let mut instances := #[]
   let mut refuters := #[]
+  let mut splits := #[]
   let mut seen : List Key := []
   for index in [0:packages.size] do
     let some package := packages[index]? | throw .invalidProgram
@@ -385,28 +424,38 @@ opaque buildWithin (limits : Limits) (program : Program)
       if seen.contains schema.key then throw (.duplicateSchema schema.key)
       seen := schema.key :: seen
       refuters := refuters.push schema
-  pure (make registrations facts equalities instances refuters)
+    for schema in package.splits do
+      if schema.key.role != .split then throw (.wrongRole schema.key)
+      if !owns package schema.key then throw (.foreignSchema index schema.key)
+      if seen.contains schema.key then throw (.duplicateSchema schema.key)
+      seen := schema.key :: seen
+      splits := splits.push schema
+  pure (make registrations facts equalities instances refuters splits)
 
-def fact? (registry : Registry semantics) (key : Key) : Option (FactSchema semantics) :=
+def fact? (registry : Registry semantics Plan) (key : Key) : Option (FactSchema semantics) :=
   registry.facts.toList.find? fun schema => schema.key == key
 
-def equality? (registry : Registry semantics) (key : Key) :
+def equality? (registry : Registry semantics Plan) (key : Key) :
     Option (EqualitySchema semantics) :=
   registry.equalities.toList.find? fun schema => schema.key == key
 
-def instance? (registry : Registry semantics) (key : Key) :
+def instance? (registry : Registry semantics Plan) (key : Key) :
     Option (InstanceSchema semantics) :=
   registry.instances.toList.find? fun schema => schema.key == key
 
-def refuter? (registry : Registry semantics) (key : Key) :
+def refuter? (registry : Registry semantics Plan) (key : Key) :
     Option (RefuteSchema semantics) :=
   registry.refuters.toList.find? fun schema => schema.key == key
+
+def split? (registry : Registry semantics Plan) (key : Key) :
+    Option (SplitSchema semantics Plan) :=
+  registry.splits.toList.find? fun schema => schema.key == key
 
 /-- Authenticate the structural portion of one quoted action against the
 exact registry and program snapshots. Serial, effort, and generation remain
 opaque chronology data visible to the package theorem; they carry no generic
 proof authority. -/
-def acceptsAction (registry : Registry semantics) (program : Program)
+def acceptsAction (registry : Registry semantics Plan) (program : Program)
     (action : Action) (inputs : List NodeId) : Bool :=
   match registry.registrations[action.rule.index]?, program.node? action.node with
   | some registration, some anchor =>
@@ -490,6 +539,20 @@ structure RefuteStep where
   body : List Nat
   deriving DecidableEq, Repr
 
+/-- Exact theorem-bearing portion of one retained split. The ordered child
+seeds are deltas, not complete child fact snapshots. -/
+structure SplitStep (Fact Plan : Type) where
+  scope : Policy.ScopeId
+  programVersion : Nat
+  action : Action
+  parent : SeenVersion
+  plan : Plan
+  left : Search.Result.Seed Fact
+  right : Search.Result.Seed Fact
+  schema : Key
+  body : List Nat
+  deriving DecidableEq, Repr
+
 inductive Event (Fact : Type)
   | fact (step : FactStep Fact)
   | equality (step : EqualityStep)
@@ -501,6 +564,12 @@ def initialBase (input : Input Fact) : List (NodeFact Fact) :=
   List.ofFn fun index : Fin input.facts.size =>
     { node := { index := index.val }, fact := input.facts[index] }
 
+/-- Exact logical assumptions visible at one replay node. Branch assumptions
+are appended one at a time and are never reconstructed from runtime facts. -/
+def replayBase (input : Input Fact) (assumptions : List (NodeFact Fact)) :
+    List (NodeFact Fact) :=
+  initialBase input ++ assumptions
+
 theorem initialWithin (input : Input Fact)
     (size : input.facts.size = input.program.nodes.size) :
     FactsWithin input.program (initialBase input) := by
@@ -508,6 +577,14 @@ theorem initialWithin (input : Input Fact)
   rw [initialBase, List.mem_ofFn] at member
   obtain ⟨index, rfl⟩ := member
   simpa [size] using index.isLt
+
+theorem replayBaseWithin (input : Input Fact) (size : input.facts.size = input.program.nodes.size)
+    (assumptions : List (NodeFact Fact))
+    (assumptionsWithin : FactsWithin input.program assumptions) :
+    FactsWithin input.program (replayBase input assumptions) := by
+  intro fact member
+  rw [replayBase, List.mem_append] at member
+  exact member.elim (initialWithin input size fact) (assumptionsWithin fact)
 
 structure Resolved (semantics : Semantics Fact) (program : Program)
     (base : List (NodeFact Fact)) (seen : SeenVersion) where
@@ -556,6 +633,16 @@ def push (facts : Facts semantics program base) (seen : SeenVersion) (fact : Fac
 
 end Facts
 
+def weakenEntails (semantics : Semantics Fact)
+    (sound : Evidence (semantics.Entails program oldBase fact))
+    (extra : NodeFact Fact) :
+    Evidence (semantics.Entails program (oldBase ++ [extra]) fact) :=
+  { proof := by
+      intro valuation model extended
+      apply sound.proof valuation model
+      intro assumption member
+      exact extended assumption (List.mem_append_left [extra] member) }
+
 structure EqualityProof (semantics : Semantics Fact) (program : Program)
     (base : List (NodeFact Fact)) where
   equality : EqualityId
@@ -585,17 +672,44 @@ def push (equalities : Equalities semantics program base)
 end Equalities
 
 /-- Complete proof state at one exact program version. Its dependent type
-indices prevent facts or equalities from being transplanted to a different
-program without also supplying the corresponding typed semantic evidence. -/
-structure State (semantics : Semantics Fact) (input : Input Fact) where
+indices and assumptions prevent facts or equalities from being transplanted to
+a different program or branch base without supplying the corresponding typed
+semantic evidence. -/
+def weakenEq (semantics : Semantics Fact)
+    (sound : Evidence (semantics.EntailsEq program oldBase left right))
+    (extra : NodeFact Fact) :
+    Evidence (semantics.EntailsEq program (oldBase ++ [extra]) left right) :=
+  { proof := by
+      intro valuation model extended
+      apply sound.proof valuation model
+      intro assumption member
+      exact extended assumption (List.mem_append_left [extra] member) }
+
+def Equalities.weaken (equalities : Equalities semantics program oldBase)
+    (extra : NodeFact Fact) : Equalities semantics program (oldBase ++ [extra]) :=
+  Equalities.make equalities.count fun equality => do
+    let proof ← equalities.resolve equality
+    pure { proof with sound := weakenEq semantics proof.sound extra }
+
+structure State (semantics : Semantics Fact) (input : Input Fact)
+    (assumptions : List (NodeFact Fact) := []) where
+  scope : Policy.ScopeId
   version : Nat
   program : Program
   baseSize : input.facts.size = input.program.nodes.size
   basePrefix : Prefix input.program program
   extension : Evidence (semantics.Extends input.program program)
   stable : Stable semantics input.program program
-  facts : Facts semantics program (initialBase input)
-  equalities : Equalities semantics program (initialBase input)
+  /-- Program at entry to this tree node. Child proofs close back to this
+  snapshot before a split join; independent child extensions cannot leak. -/
+  origin : Program
+  originFromInput : Prefix input.program origin
+  baseWithinOrigin : FactsWithin origin (replayBase input assumptions)
+  originPrefix : Prefix origin program
+  originExtension : Evidence (semantics.Extends origin program)
+  originStable : Stable semantics origin program
+  facts : Facts semantics program (replayBase input assumptions)
+  equalities : Equalities semantics program (replayBase input assumptions)
 
 theorem stableRefl (semantics : Semantics Fact) (program : Program) :
     Stable semantics program program :=
@@ -611,14 +725,150 @@ def extendsRefl (semantics : Semantics Fact) (program : Program) :
 
 def State.start (semantics : Semantics Fact) (input : Input Fact)
     (size : input.facts.size = input.program.nodes.size) : State semantics input :=
-  { version := 0
+  { scope := input.scope
+    version := 0
     program := input.program
     baseSize := size
     basePrefix := .refl input.program
     extension := extendsRefl semantics input.program
     stable := stableRefl semantics input.program
-    facts := Facts.start semantics input size
+    origin := input.program
+    originFromInput := .refl input.program
+    baseWithinOrigin := by simpa [replayBase] using initialWithin input size
+    originPrefix := .refl input.program
+    originExtension := extendsRefl semantics input.program
+    originStable := stableRefl semantics input.program
+    facts := by simpa [replayBase] using Facts.start semantics input size
     equalities := .empty }
+
+inductive Error where
+  | invalidInput
+  | chronologyLimit
+  | bodyLimit
+  | dependencyLimit
+  | wrongScope
+  | wrongProgramVersion
+  | wrongAction
+  | wrongSchema
+  | missingSchema
+  | malformedBody
+  | missingDependency (seen : SeenVersion)
+  | staleVersion
+  | unknownNode
+  | unauthorizedWrite
+  | wrongEquality
+  | wrongInstance
+  | wrongFinalProgram
+  | wrongTarget
+  | wrongSplit
+  | wrongTree
+  | unknownLeaf
+  | proofNodeLimit
+  | proofDepthLimit
+  | proofBodyLimit
+  | proofWorkLimit
+  deriving DecidableEq, Repr
+
+/-- Data-level alignment between one retained runtime snapshot and its checked
+proof state. This check never creates evidence; it only prevents a retained
+snapshot from selecting proofs for a different fact or version. -/
+def State.matchesBranch [DecidableEq Fact] [DecidableEq Cause]
+    (semantics : Semantics Fact) (checked : State semantics input assumptions)
+    (scope : Policy.ScopeId) (branch : State.Branch Fact Cause) : Bool := Id.run do
+  if checked.scope != scope || checked.version != branch.programVersion ||
+      checked.program != branch.program || !branch.check then return false
+  let some snapshot := branch.checkedSnapshot? | return false
+  for index in [0:snapshot.facts.size] do
+    let some version := branch.versions[index]? | return false
+    let seen : SeenVersion := { node := { index }, version }
+    let some resolved := checked.facts.resolve seen | return false
+    let some fact := snapshot.facts[index]? | return false
+    if resolved.fact != fact then return false
+  return true
+
+/-- Rebase every current inherited runtime fact to child-local version zero,
+while installing exactly one appended branch assumption at its node. The
+remaining child facts stay derived evidence and do not become assumptions. -/
+structure Seeded (semantics : Semantics Fact) (input : Input Fact)
+    (assumptions : List (NodeFact Fact)) (origin : Program) where
+  state : State semantics input assumptions
+  originEq : state.origin = origin
+
+def seedChild [DecidableEq Fact] [DecidableEq Cause]
+    (semantics : Semantics Fact) (input : Input Fact)
+    (parent : State semantics input assumptions)
+    (parentScope childScope : Policy.ScopeId) (runtime : State.Branch Fact Cause)
+    (seed : Search.Result.Seed Fact) : Except Error
+      (Seeded semantics input
+        (assumptions ++ [{ node := seed.node, fact := seed.fact }]) parent.program) := do
+  if !parent.matchesBranch semantics parentScope runtime then throw .wrongSplit
+  if seed.previous.node != seed.node then throw .wrongSplit
+  let some old := parent.facts.resolve seed.previous
+    | throw (.missingDependency seed.previous)
+  let some runtimeOld := runtime.factAt? seed.previous | throw .wrongSplit
+  if old.fact != runtimeOld || old.fact == seed.fact then throw .wrongSplit
+  let within : Evidence (seed.node.index < parent.program.nodes.size) ←
+    if h : seed.node.index < parent.program.nodes.size then pure ⟨h⟩ else throw .unknownNode
+  let branchFact : NodeFact Fact := { node := seed.node, fact := seed.fact }
+  let inheritedWithin : FactsWithin parent.program (replayBase input assumptions) :=
+    fun fact member => Nat.lt_of_lt_of_le (parent.baseWithinOrigin fact member)
+      parent.originPrefix.nodeSize
+  let childBaseWithin : FactsWithin parent.program
+      (replayBase input (assumptions ++ [branchFact])) := by
+    simpa [replayBase, List.append_assoc] using
+      (show FactsWithin parent.program (replayBase input assumptions ++ [branchFact]) from by
+        intro fact member
+        rw [List.mem_append, List.mem_singleton] at member
+        exact member.elim (inheritedWithin fact) (fun equal => by
+          subst fact
+          exact within.proof))
+  let childFacts : Facts semantics parent.program
+      (replayBase input (assumptions ++ [branchFact])) :=
+    Facts.make fun requested =>
+      if isLocal : requested.version = 0 then
+        if seeded : requested.node = seed.node then
+          some
+            { fact := seed.fact
+              within := by simpa [seeded] using within.proof
+              sound :=
+                { proof := by
+                    intro valuation model assumptionsHold
+                    simpa [seeded, branchFact] using
+                      assumptionsHold branchFact (by simp [replayBase, branchFact]) } }
+        else
+          match runtime.versions[requested.node.index]? with
+          | none => none
+          | some version =>
+              match parent.facts.resolve { node := requested.node, version } with
+              | none => none
+              | some resolved => some
+                  { fact := resolved.fact
+                    within := resolved.within
+                    sound := by
+                      simpa [replayBase, List.append_assoc] using
+                        weakenEntails semantics resolved.sound branchFact }
+      else none
+  let childEqualities : Equalities semantics parent.program
+      (replayBase input (assumptions ++ [branchFact])) := by
+    simpa [replayBase, List.append_assoc] using parent.equalities.weaken branchFact
+  pure
+    { state :=
+        { scope := childScope
+          version := 0
+          program := parent.program
+          baseSize := parent.baseSize
+          basePrefix := parent.basePrefix
+          extension := parent.extension
+          stable := parent.stable
+          origin := parent.program
+          originFromInput := parent.basePrefix
+          baseWithinOrigin := childBaseWithin
+          originPrefix := .refl parent.program
+          originExtension := extendsRefl semantics parent.program
+          originStable := stableRefl semantics parent.program
+          facts := childFacts
+          equalities := childEqualities }
+      originEq := rfl }
 
 structure ResolvedInputs (semantics : Semantics Fact) (program : Program)
     (base : List (NodeFact Fact)) where
@@ -660,27 +910,6 @@ def installMeet (semantics : Semantics Fact) (program : Program)
       intro input member
       exact inputsSound.proof input member valuation model baseHolds }
 
-inductive Error where
-  | invalidInput
-  | chronologyLimit
-  | bodyLimit
-  | dependencyLimit
-  | wrongScope
-  | wrongProgramVersion
-  | wrongAction
-  | wrongSchema
-  | missingSchema
-  | malformedBody
-  | missingDependency (seen : SeenVersion)
-  | staleVersion
-  | unknownNode
-  | unauthorizedWrite
-  | wrongEquality
-  | wrongInstance
-  | wrongFinalProgram
-  | wrongTarget
-  deriving DecidableEq, Repr
-
 def bodyCheck (limits : Limits) (key : Key) (role : Role)
     (body : List Nat) : Except Error Unit := do
   if key.role != role then throw .wrongSchema
@@ -690,12 +919,13 @@ def dependenciesCheck (limits : Limits) (dependencies : List SeenVersion) :
     Except Error Unit :=
   if limits.maxDependencies < dependencies.length then throw .dependencyLimit else pure ()
 
-def replayFact (limits : Limits) (registry : Registry semantics)
-    (domain : Domain semantics) (input : Input Fact) (checked : State semantics input)
-    (step : FactStep Fact) : Except Error (State semantics input) := do
+def replayFact (limits : Limits) (registry : Registry semantics Plan)
+    (domain : Domain semantics) (input : Input Fact)
+    (checked : State semantics input assumptions)
+    (step : FactStep Fact) : Except Error (State semantics input assumptions) := do
   bodyCheck limits step.schema .fact step.body
   dependenciesCheck limits step.assumptions
-  if step.scope != input.scope then throw .wrongScope
+  if step.scope != checked.scope then throw .wrongScope
   if step.programVersion != checked.version then throw .wrongProgramVersion
   if step.action.programVersion != checked.version || step.action.key != step.schema.rule ||
       step.action.inputs != step.assumptions then throw .wrongAction
@@ -725,10 +955,10 @@ def replayFact (limits : Limits) (registry : Registry semantics)
   let some rule := schema.prove context certificate | throw .malformedBody
   let some meet := domain.meet checked.program step.node previous.fact
       step.proposed step.installed | throw .malformedBody
-  have previousSound : Evidence (semantics.Entails checked.program (initialBase input)
+  have previousSound : Evidence (semantics.Entails checked.program (replayBase input assumptions)
       { node := step.node, fact := previous.fact }) := by
     simpa [nodeEq.proof] using previous.sound
-  let sound := installMeet semantics checked.program (initialBase input) resolvedInputs.facts
+  let sound := installMeet semantics checked.program (replayBase input assumptions) resolvedInputs.facts
     step.node previous.fact step.proposed step.installed rule meet previousSound
       resolvedInputs.sound
   have currentWithin : current.node.index < checked.program.nodes.size := by
@@ -736,12 +966,12 @@ def replayFact (limits : Limits) (registry : Registry semantics)
   let pushed := checked.facts.push current step.installed currentWithin sound
   pure { checked with facts := pushed }
 
-def replayEquality (limits : Limits) (registry : Registry semantics)
-    (input : Input Fact) (checked : State semantics input)
-    (step : EqualityStep) : Except Error (State semantics input) := do
+def replayEquality (limits : Limits) (registry : Registry semantics Plan)
+    (input : Input Fact) (checked : State semantics input assumptions)
+    (step : EqualityStep) : Except Error (State semantics input assumptions) := do
   bodyCheck limits step.schema .equality step.body
   dependenciesCheck limits step.assumptions
-  if step.scope != input.scope then throw .wrongScope
+  if step.scope != checked.scope then throw .wrongScope
   if step.programVersion != checked.version then throw .wrongProgramVersion
   if step.equality.index != checked.equalities.count || step.left == step.right then
     throw .wrongEquality
@@ -762,21 +992,22 @@ def replayEquality (limits : Limits) (registry : Registry semantics)
       action := step.action, equality := step.equality, left := step.left,
       right := step.right, assumptions := resolvedInputs.facts }
   let some schemaSound := schema.prove context certificate | throw .malformedBody
-  let sound : Evidence (semantics.EntailsEq checked.program (initialBase input)
+  let sound : Evidence (semantics.EntailsEq checked.program (replayBase input assumptions)
       step.left step.right) :=
     { proof := by
         intro valuation model baseHolds
         apply schemaSound.proof valuation model
         intro assumption member
         exact resolvedInputs.sound.proof assumption member valuation model baseHolds }
-  let proof : EqualityProof semantics checked.program (initialBase input) :=
+  let proof : EqualityProof semantics checked.program (replayBase input assumptions) :=
     { equality := step.equality, left := step.left, right := step.right, sound }
   pure { checked with equalities := checked.equalities.push proof }
 
 def replayTransport (_limits : Limits) (domain : Domain semantics)
-    (laws : Laws semantics) (input : Input Fact) (checked : State semantics input)
-    (step : TransportStep Fact) : Except Error (State semantics input) := do
-  if step.scope != input.scope then throw .wrongScope
+    (laws : Laws semantics) (input : Input Fact)
+    (checked : State semantics input assumptions)
+    (step : TransportStep Fact) : Except Error (State semantics input assumptions) := do
+  if step.scope != checked.scope then throw .wrongScope
   if step.programVersion != checked.version then throw .wrongProgramVersion
   let nodeEq : Evidence (step.previous.node = step.node) ←
     if h : step.previous.node = step.node then pure ⟨h⟩ else throw .staleVersion
@@ -799,11 +1030,11 @@ def replayTransport (_limits : Limits) (domain : Domain semantics)
     else throw .wrongEquality
   let some meet := domain.meet checked.program step.node previous.fact source.fact
       step.installed | throw .malformedBody
-  have previousSound : Evidence (semantics.Entails checked.program (initialBase input)
+  have previousSound : Evidence (semantics.Entails checked.program (replayBase input assumptions)
       { node := step.node, fact := previous.fact }) := by
     simpa [nodeEq.proof] using previous.sound
   let proposed : Evidence
-      (semantics.Entails checked.program (initialBase input)
+      (semantics.Entails checked.program (replayBase input assumptions)
         { node := step.node, fact := source.fact }) :=
     { proof := by
         intro valuation model baseHolds
@@ -819,7 +1050,7 @@ def replayTransport (_limits : Limits) (domain : Domain semantics)
               equality.right source.fact model equalValues).mp (by simpa [reverse.2] using sourceHolds)
           simpa [reverse.1] using transported }
   let inputSound : Evidence (InputsSound semantics checked.program
-      (initialBase input) [{ node := step.node, fact := source.fact }]) :=
+      (replayBase input assumptions) [{ node := step.node, fact := source.fact }]) :=
     { proof := by
         intro fact member
         simp only [List.mem_singleton] at member
@@ -829,7 +1060,7 @@ def replayTransport (_limits : Limits) (domain : Domain semantics)
       [{ node := step.node, fact := source.fact }]
       { node := step.node, fact := source.fact }) :=
     { proof := by intro _ _ assumptions; exact assumptions _ (by simp) }
-  let sound := installMeet semantics checked.program (initialBase input)
+  let sound := installMeet semantics checked.program (replayBase input assumptions)
     [{ node := step.node, fact := source.fact }] step.node previous.fact source.fact
     step.installed rule meet previousSound inputSound
   have currentWithin : current.node.index < checked.program.nodes.size := by
@@ -922,11 +1153,12 @@ theorem composeStable (left : Stable semantics first middle)
           (Nat.lt_of_lt_of_le within left.appendOnly.nodeSize) middleModel newModel
           (fun _ _ => rfl)) }
 
-def replayInstance (limits : Limits) (registry : Registry semantics)
-    (domain : Domain semantics) (input : Input Fact) (checked : State semantics input)
-    (step : InstanceStep) : Except Error (State semantics input) := do
+def replayInstance (limits : Limits) (registry : Registry semantics Plan)
+    (domain : Domain semantics) (input : Input Fact)
+    (checked : State semantics input assumptions)
+    (step : InstanceStep) : Except Error (State semantics input assumptions) := do
   bodyCheck limits step.schema .instance step.body
-  if step.scope != input.scope then throw .wrongScope
+  if step.scope != checked.scope then throw .wrongScope
   if step.beforeVersion != checked.version || step.afterVersion != checked.version + 1 then
     throw .wrongProgramVersion
   if step.action.programVersion != checked.version || step.action.key != step.schema.rule then
@@ -944,34 +1176,89 @@ def replayInstance (limits : Limits) (registry : Registry semantics)
       afterVersion := step.afterVersion, before := checked.program, after := step.after,
       action := step.action, newNodes := step.newNodes }
   let some proof := schema.prove context certificate | throw .malformedBody
-  let baseWithin := initialWithin input checked.baseSize
-  let currentBaseWithin : FactsWithin checked.program (initialBase input) :=
-    fun fact member => Nat.lt_of_lt_of_le (baseWithin fact member) checked.basePrefix.nodeSize
+  let currentBaseWithin : FactsWithin checked.program (replayBase input assumptions) :=
+    fun fact member => Nat.lt_of_lt_of_le (checked.baseWithinOrigin fact member)
+      checked.originPrefix.nodeSize
   pure
-    { version := step.afterVersion
+    { scope := checked.scope
+      version := step.afterVersion
       program := step.after
       baseSize := checked.baseSize
       basePrefix := checked.basePrefix.trans proof.stable.appendOnly
       extension := composeExtends semantics checked.basePrefix checked.extension proof.extension
       stable := composeStable checked.stable proof.stable
+      origin := checked.origin
+      originFromInput := checked.originFromInput
+      baseWithinOrigin := checked.baseWithinOrigin
+      originPrefix := checked.originPrefix.trans proof.stable.appendOnly
+      originExtension := composeExtends semantics checked.originPrefix checked.originExtension
+        proof.extension
+      originStable := composeStable checked.originStable proof.stable
       facts := checked.facts.lift proof.stable currentBaseWithin domain
       equalities := checked.equalities.lift proof.stable currentBaseWithin }
 
-def replayEvent (limits : Limits) (registry : Registry semantics)
+def replayEvent (limits : Limits) (registry : Registry semantics Plan)
     (domain : Domain semantics) (laws : Laws semantics) (input : Input Fact) :
-    State semantics input → Event Fact → Except Error (State semantics input)
+    State semantics input assumptions → Event Fact →
+      Except Error (State semantics input assumptions)
   | checked, .fact step => replayFact limits registry domain input checked step
   | checked, .equality step => replayEquality limits registry input checked step
   | checked, .transport step => replayTransport limits domain laws input checked step
   | checked, .instance step => replayInstance limits registry domain input checked step
 
-def replayEvents (limits : Limits) (registry : Registry semantics)
+def replayEvents (limits : Limits) (registry : Registry semantics Plan)
     (domain : Domain semantics) (laws : Laws semantics) (input : Input Fact) :
-    List (Event Fact) → State semantics input → Except Error (State semantics input)
+    List (Event Fact) → State semantics input assumptions →
+      Except Error (State semantics input assumptions)
   | [], state => pure state
   | event :: events, state => do
       let next ← replayEvent limits registry domain laws input state event
       replayEvents limits registry domain laws input events next
+
+/-- A successfully replayed chronology retains its checked proof state. It is
+the only input accepted by later target, refutation, split, and child-seed
+operations; decoded runtime state never constructs this value. -/
+structure Replay (semantics : Semantics Fact) (input : Input Fact)
+    (assumptions : List (NodeFact Fact)) (start : State semantics input assumptions) where
+  state : State semantics input assumptions
+  originEq : state.origin = start.origin := by rfl
+
+/-- Replay from an already authenticated proof state and require the exact
+final program version and structural program. Failure returns no partial
+state. -/
+def replayFrom (limits : Limits) (registry : Registry semantics Plan)
+    (domain : Domain semantics) (laws : Laws semantics) (input : Input Fact)
+    (start : State semantics input assumptions) (events : List (Event Fact))
+    (finalVersion : Nat) (finalProgram : Program) :
+    Except Error (Replay semantics input assumptions start) := do
+  if limits.maxChronology < events.length then throw .chronologyLimit
+  let checked ← replayEvents limits registry domain laws input events start
+  if checked.version != finalVersion then throw .wrongProgramVersion
+  if checked.program != finalProgram then throw .wrongFinalProgram
+  let originEq : Evidence (checked.origin = start.origin) ←
+    if h : checked.origin = start.origin then pure ⟨h⟩ else throw .wrongFinalProgram
+  pure { state := checked, originEq := originEq.proof }
+
+/-- Close a proof in the node's possibly extended program back to the exact
+program at entry to that node. Independent child extensions therefore meet at
+one common parent program before a split join. -/
+def closeOrigin (checked : State semantics input assumptions) (target : NodeFact Fact)
+    (targetWithin : target.node.index < checked.origin.nodes.size)
+    (sound : Evidence (semantics.Entails checked.program (replayBase input assumptions) target)) :
+    Evidence (semantics.Entails checked.origin (replayBase input assumptions) target) :=
+  { proof := by
+      intro valuation originModel originBase
+      obtain ⟨extended, finalModel, agreement⟩ :=
+        checked.originExtension.proof valuation originModel
+      have finalBase : ∀ fact, fact ∈ replayBase input assumptions →
+          semantics.holds checked.program extended fact := by
+        intro fact member
+        exact (checked.originStable.holdsOld valuation extended fact
+          (checked.baseWithinOrigin fact member) originModel finalModel agreement).mp
+            (originBase fact member)
+      have finalTarget := sound.proof extended finalModel finalBase
+      exact (checked.originStable.holdsOld valuation extended target targetWithin
+        originModel finalModel agreement).mpr finalTarget }
 
 /-- Replay exact chronology and close the exact target/version. -/
 def replay [DecidableEq Fact] (limits : Limits) (registry : Registry semantics)
@@ -984,11 +1271,9 @@ def replay [DecidableEq Fact] (limits : Limits) (registry : Registry semantics)
     if h : input.facts.size = input.program.nodes.size then pure ⟨h⟩ else throw .invalidInput
   let targetWithin : Evidence (input.target.node.index < input.program.nodes.size) ←
     if h : input.target.node.index < input.program.nodes.size then pure ⟨h⟩ else throw .invalidInput
-  if limits.maxChronology < events.length then throw .chronologyLimit
-  let checked ← replayEvents limits registry domain laws input events
-    (State.start semantics input size.proof)
-  if checked.version != finalVersion then throw .wrongProgramVersion
-  if checked.program != finalProgram then throw .wrongFinalProgram
+  let replayed ← replayFrom limits registry domain laws input
+    (State.start semantics input size.proof) events finalVersion finalProgram
+  let checked := replayed.state
   let nodeEq : Evidence (result.node = input.target.node) ←
     if h : result.node = input.target.node then pure ⟨h⟩ else throw .wrongTarget
   let some resolved := checked.facts.resolve result | throw (.missingDependency result)
@@ -1005,7 +1290,8 @@ def replay [DecidableEq Fact] (limits : Limits) (registry : Registry semantics)
           exact (checked.stable.holdsOld valuation extended fact
             ((initialWithin input size.proof) fact member) baseModel finalModel agreement).mp
               (baseHolds fact member)
-        have finalResult := resolved.sound.proof extended finalModel finalBase
+        have finalResult := resolved.sound.proof extended finalModel (by
+          simpa [replayBase] using finalBase)
         have finalTarget : semantics.holds checked.program extended input.target := by
           simpa [nodeEq.proof, factEq.proof] using finalResult
         exact (checked.stable.holdsOld valuation extended input.target targetWithin.proof
@@ -1013,12 +1299,12 @@ def replay [DecidableEq Fact] (limits : Limits) (registry : Registry semantics)
 
 /-- Replay one exact established impossible fact. Runtime contradiction state
 is not an argument. -/
-def replayRefute (limits : Limits) (registry : Registry semantics)
-    (input : Input Fact) (checked : State semantics input) (step : RefuteStep)
+def replayRefute (limits : Limits) (registry : Registry semantics Plan)
+    (input : Input Fact) (checked : State semantics input assumptions) (step : RefuteStep)
     (target : NodeFact Fact) : Except Error
-      (Evidence (semantics.Entails checked.program (initialBase input) target)) := do
+      (Evidence (semantics.Entails checked.program (replayBase input assumptions) target)) := do
   bodyCheck limits step.schema .refute step.body
-  if step.scope != input.scope then throw .wrongScope
+  if step.scope != checked.scope then throw .wrongScope
   if step.programVersion != checked.version then throw .wrongProgramVersion
   let some established := checked.facts.resolve step.seen
     | throw (.missingDependency step.seen)
@@ -1033,6 +1319,279 @@ def replayRefute (limits : Limits) (registry : Registry semantics)
         intro valuation model baseHolds
         exact False.elim (impossible.proof valuation model
           (established.sound.proof valuation model baseHolds)) }
+
+/-- Authenticate one package-owned binary cover against the exact checked
+parent proof state. The runtime split plan and child facts remain inert data
+until this theorem schema succeeds. -/
+def replaySplit [DecidableEq Fact] [DecidableEq Plan]
+    (limits : Limits) (registry : Registry semantics Plan)
+    (input : Input Fact) (checked : State semantics input assumptions)
+    (step : SplitStep Fact Plan) : Except Error
+      (Evidence (semantics.Covers checked.program (replayBase input assumptions)
+        { node := step.left.node, fact := step.left.fact }
+        { node := step.right.node, fact := step.right.fact })) := do
+  bodyCheck limits step.schema .split step.body
+  dependenciesCheck limits step.action.inputs
+  if step.scope != checked.scope then throw .wrongScope
+  if step.programVersion != checked.version ||
+      step.action.programVersion != checked.version then throw .wrongProgramVersion
+  if step.action.kind != .split || step.action.key != step.schema.rule ||
+      step.action.node != step.parent.node || !step.action.inputs.contains step.parent then
+    throw .wrongAction
+  if step.left.previous != step.parent || step.right.previous != step.parent ||
+      step.left.node != step.parent.node || step.right.node != step.parent.node ||
+      step.left.fact == step.right.fact then throw .wrongSplit
+  let some parent := checked.facts.resolve step.parent
+    | throw (.missingDependency step.parent)
+  let some resolvedInputs := resolveInputs checked.facts step.action.inputs
+    | throw (.missingDependency (step.action.inputs.head?.getD step.parent))
+  if !registry.acceptsAction checked.program step.action
+      (resolvedInputs.facts.map fun fact => fact.node) then throw .wrongAction
+  let some schema := registry.split? step.schema | throw .missingSchema
+  let some certificate := schema.decode step.body | throw .malformedBody
+  let context : SplitContext semantics Plan :=
+    { scope := checked.scope
+      programVersion := checked.version
+      program := checked.program
+      action := step.action
+      assumptions := resolvedInputs.facts
+      parent := { node := step.parent.node, fact := parent.fact }
+      left := { node := step.left.node, fact := step.left.fact }
+      right := { node := step.right.node, fact := step.right.fact }
+      plan := step.plan }
+  let some cover := schema.prove context certificate | throw .malformedBody
+  pure
+    { proof := by
+        intro valuation model baseHolds
+        apply cover.proof valuation model
+        intro assumption member
+        exact resolvedInputs.sound.proof assumption member valuation model baseHolds }
+
+def joinCover (semantics : Semantics Fact)
+    (cover : Evidence (semantics.Covers program baseFacts leftFact rightFact))
+    (left : Evidence (semantics.Entails program (baseFacts ++ [leftFact]) target))
+    (right : Evidence (semantics.Entails program (baseFacts ++ [rightFact]) target)) :
+    Evidence (semantics.Entails program baseFacts target) :=
+  { proof := by
+      intro valuation model baseHolds
+      rcases cover.proof valuation model baseHolds with leftHolds | rightHolds
+      · apply left.proof valuation model
+        intro assumption member
+        rw [List.mem_append, List.mem_singleton] at member
+        exact member.elim (baseHolds assumption) (fun equal => by simpa [equal] using leftHolds)
+      · apply right.proof valuation model
+        intro assumption member
+        rw [List.mem_append, List.mem_singleton] at member
+        exact member.elim (baseHolds assumption) (fun equal => by simpa [equal] using rightHolds) }
+
+/-! ## Retained-tree proof fold -/
+
+/-- Exact retained parent edge echoed by an untrusted proof recipe. Replaying
+the recipe requires this value to match the already-checked runtime tree; it is
+neither evidence nor authority to alter that tree. -/
+structure TreeEdge (Fact : Type) where
+  parent : Option Search.Result.Id := none
+  side : Option Search.Result.Side := none
+  seed : Option (Search.Result.Seed Fact) := none
+  deriving DecidableEq, Repr
+
+/-- Proof chronology aligned by retained tree node. It is decoded untrusted
+data; exact replay, parent-edge, and node-state alignment are checked before
+use. Constructing this value does not quote or trust a search callback. -/
+structure TreeRecipe (Fact : Type) where
+  events : Array (List (Event Fact))
+  edges : Array (TreeEdge Fact)
+  deriving DecidableEq, Repr
+
+/-- Independent proof-fold limits. Search has already bounded retained state;
+these limits bound theorem chronology and recursive proof construction. Work
+is the structural sum of nodes, event cells, and split/refuter body cells. -/
+structure TreeLimits where
+  maxNodes : Nat
+  maxDepth : Nat
+  maxBodyCells : Nat
+  maxWork : Nat
+  deriving DecidableEq, Repr
+
+def Event.bodyCells : Event Fact → Nat
+  | .fact step => step.body.length
+  | .equality step => step.body.length
+  | .transport _ => 0
+  | .instance step => step.body.length
+
+def nodeBodyCells : Search.Result.Node Fact Cause Plan Key → Nat
+  | .pending _ => 0
+  | .terminal _ (.target _) | .terminal _ (.unknown _) => 0
+  | .terminal _ (.refute step) => step.body.length
+  | .split _ step _ _ => step.body.length
+
+def TreeRecipe.bodyCells (recipe : TreeRecipe Fact) : Nat :=
+  recipe.events.toList.foldl (fun total events =>
+    total + events.foldl (fun subtotal event => subtotal + event.bodyCells) 0) 0
+
+def proofWork (tree : Search.Result.Tree Fact Cause Plan Key)
+    (recipe : TreeRecipe Fact) : Nat :=
+  tree.nodes.size + recipe.edges.size + recipe.events.toList.foldl
+    (fun total events => total + events.length) 0 +
+    recipe.bodyCells + tree.nodes.toList.foldl
+      (fun total node => total + nodeBodyCells node) 0
+
+def checkTreeLimits (limits : TreeLimits)
+    (tree : Search.Result.Tree Fact Cause Plan Key) (recipe : TreeRecipe Fact) :
+    Except Error Unit := do
+  if tree.nodes.size != recipe.events.size || tree.nodes.size != recipe.edges.size then
+    throw .wrongTree
+  if limits.maxNodes < tree.nodes.size then throw .proofNodeLimit
+  if tree.nodes.any (fun node => limits.maxDepth < node.source.depth) then
+    throw .proofDepthLimit
+  let bodies := recipe.bodyCells + tree.nodes.toList.foldl
+    (fun total node => total + nodeBodyCells node) 0
+  if limits.maxBodyCells < bodies then throw .proofBodyLimit
+  if limits.maxWork < proofWork tree recipe then throw .proofWorkLimit
+
+def terminalTarget [DecidableEq Fact]
+    (input : Input Fact) (checked : State semantics input assumptions)
+    (entry : Search.Result.Target) : Except Error
+      (Evidence (semantics.Entails checked.origin (replayBase input assumptions) input.target)) := do
+  if entry.scope != checked.scope then throw .wrongScope
+  if entry.programVersion != checked.version then throw .wrongProgramVersion
+  let some resolved := checked.facts.resolve entry.seen
+    | throw (.missingDependency entry.seen)
+  let nodeEq : Evidence (entry.seen.node = input.target.node) ←
+    if h : entry.seen.node = input.target.node then pure ⟨h⟩ else throw .wrongTarget
+  let factEq : Evidence (resolved.fact = input.target.fact) ←
+    if h : resolved.fact = input.target.fact then pure ⟨h⟩ else throw .wrongTarget
+  let rootWithin : Evidence (input.target.node.index < input.program.nodes.size) ←
+    if h : input.target.node.index < input.program.nodes.size then pure ⟨h⟩
+    else throw .invalidInput
+  let originWithin : input.target.node.index < checked.origin.nodes.size :=
+    Nat.lt_of_lt_of_le rootWithin.proof checked.originFromInput.nodeSize
+  let sound : Evidence
+      (semantics.Entails checked.program (replayBase input assumptions) input.target) := by
+    simpa [nodeEq.proof, factEq.proof] using resolved.sound
+  pure (closeOrigin checked input.target originWithin sound)
+
+def foldNode [DecidableEq Fact] [DecidableEq Cause] [DecidableEq Plan]
+    (limits : Limits) (treeLimits : TreeLimits)
+    (registry : Registry semantics Plan) (domain : Domain semantics) (laws : Laws semantics)
+    (input : Input Fact) (tree : Search.Result.Tree Fact Cause Plan Key)
+    (recipe : TreeRecipe Fact) (id : Search.Result.Id)
+    (assumptions : List (NodeFact Fact)) (start : State semantics input assumptions)
+    (fuel : Nat) : Except Error
+      (Evidence (semantics.Entails start.origin (replayBase input assumptions) input.target)) := do
+  let fuelPos : Evidence (0 < fuel) ←
+    if h : 0 < fuel then pure ⟨h⟩ else throw .wrongTree
+  let some node := tree.nodes[id.index]? | throw .wrongTree
+  let source := node.source
+  let some events := recipe.events[id.index]? | throw .wrongTree
+  let some edge := recipe.edges[id.index]? | throw .wrongTree
+  if edge.parent != source.parent || edge.side != source.side || edge.seed != source.seed then
+    throw .wrongTree
+  let replayed ← replayFrom limits registry domain laws input start events
+    source.branch.programVersion source.branch.program
+  let checked := replayed.state
+  have originEq : checked.origin = start.origin := replayed.originEq
+  if !checked.matchesBranch semantics source.scope source.branch then throw .wrongTree
+  match node with
+  | .pending _ => throw .unknownLeaf
+  | .terminal _ (.unknown _) => throw .unknownLeaf
+  | .terminal _ (.target entry) =>
+      let closed ← terminalTarget input checked entry
+      pure (by rw [originEq] at closed; exact closed)
+  | .terminal _ (.refute entry) =>
+      let targetWithinRoot : Evidence
+          (input.target.node.index < input.program.nodes.size) ←
+        if h : input.target.node.index < input.program.nodes.size then pure ⟨h⟩
+        else throw .invalidInput
+      let originWithin := Nat.lt_of_lt_of_le targetWithinRoot.proof
+        checked.originFromInput.nodeSize
+      let refuted ← replayRefute limits registry input checked
+        { scope := entry.scope, programVersion := entry.programVersion,
+          seen := entry.seen, schema := entry.schema, body := entry.body }
+        input.target
+      let closed := closeOrigin checked input.target originWithin refuted
+      pure (by rw [originEq] at closed; exact closed)
+  | .split _ split leftId rightId =>
+      let some leftNode := tree.nodes[leftId.index]? | throw .wrongTree
+      let some rightNode := tree.nodes[rightId.index]? | throw .wrongTree
+      let leftSource := leftNode.source
+      let rightSource := rightNode.source
+      let some leftSeed := leftSource.seed | throw .wrongTree
+      let some rightSeed := rightSource.seed | throw .wrongTree
+      if leftSource.parent != some id || leftSource.side != some .left ||
+          rightSource.parent != some id || rightSource.side != some .right then throw .wrongTree
+      let cover ← replaySplit limits registry input checked
+        { scope := split.scope
+          programVersion := split.programVersion
+          action := split.action
+          parent := split.parent
+          plan := split.plan
+          left := leftSeed
+          right := rightSeed
+          schema := split.schema
+          body := split.body }
+      let leftChild ← seedChild semantics input checked source.scope leftSource.scope
+        source.branch leftSeed
+      let rightChild ← seedChild semantics input checked source.scope rightSource.scope
+        source.branch rightSeed
+      let leftStart := leftChild.state
+      let rightStart := rightChild.state
+      let nextFuel := fuel - 1
+      let nextLt : Evidence (nextFuel < fuel) :=
+        { proof := Nat.sub_lt fuelPos.proof (by decide) }
+      let leftProof ← foldNode limits treeLimits registry domain laws input tree recipe
+        leftId (assumptions ++ [{ node := leftSeed.node, fact := leftSeed.fact }])
+        leftStart nextFuel
+      let rightProof ← foldNode limits treeLimits registry domain laws input tree recipe
+        rightId (assumptions ++ [{ node := rightSeed.node, fact := rightSeed.fact }])
+        rightStart nextFuel
+      have leftOrigin : leftStart.origin = checked.program := leftChild.originEq
+      have rightOrigin : rightStart.origin = checked.program := rightChild.originEq
+      let joined : Evidence
+          (semantics.Entails checked.program (replayBase input assumptions) input.target) := by
+        apply joinCover semantics cover
+        · rw [leftOrigin] at leftProof
+          simpa [replayBase, List.append_assoc] using leftProof
+        · rw [rightOrigin] at rightProof
+          simpa [replayBase, List.append_assoc] using rightProof
+      let rootWithin : Evidence (input.target.node.index < input.program.nodes.size) ←
+        if h : input.target.node.index < input.program.nodes.size then pure ⟨h⟩
+        else throw .invalidInput
+      let originWithin := Nat.lt_of_lt_of_le rootWithin.proof checked.originFromInput.nodeSize
+      let closed := closeOrigin checked input.target originWithin joined
+      pure (by rw [originEq] at closed; exact closed)
+termination_by fuel
+decreasing_by
+  all_goals
+    simpa [nextFuel] using nextLt.proof
+
+/-- Check an exact retained search tree, authenticate its root against the
+caller input, and replay all leaves transactionally. Unknown or pending leaves
+cannot produce a proof. The current retained `Source.branch` is frozen when
+its node is created: non-root sources restart at program version zero, so their
+chronology can only be empty or proof-state-only and their terminals can cite
+only facts already current in that creation snapshot. Recursive branch
+advancement belongs to the later search-to-recipe controller. -/
+def replayTree [DecidableEq Fact] [DecidableEq Cause] [DecidableEq Plan]
+    (searchLimits : Search.Result.Limits)
+    (measure : Search.Result.Measure Fact Cause Plan Key)
+    (limits : Limits) (treeLimits : TreeLimits)
+    (registry : Registry semantics Plan) (domain : Domain semantics) (laws : Laws semantics)
+    (input : Input Fact) (tree : Search.Result.Tree Fact Cause Plan Key)
+    (recipe : TreeRecipe Fact) : Except Error
+      (Evidence (semantics.Entails input.program (initialBase input) input.target)) := do
+  if !tree.check searchLimits measure then throw .wrongTree
+  if !tree.pending.isEmpty then throw .unknownLeaf
+  checkTreeLimits treeLimits tree recipe
+  let some root := tree.nodes[0]? | throw .wrongTree
+  let source := root.source
+  if source.scope != input.scope || source.branch.baseProgram != input.program ||
+      source.branch.initialFacts != input.facts then throw .wrongTree
+  let size : Evidence (input.facts.size = input.program.nodes.size) ←
+    if h : input.facts.size = input.program.nodes.size then pure ⟨h⟩ else throw .invalidInput
+  let folded ← foldNode limits treeLimits registry domain laws input tree recipe
+    { index := 0 } [] (State.start semantics input size.proof) (tree.nodes.size + 1)
+  pure (by simpa [State.start, replayBase] using folded)
 
 /-! ## Elaborator-facing expression boundary -/
 
