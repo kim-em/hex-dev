@@ -56,7 +56,11 @@ seed edge. Child proof states restart at program version zero; inherited facts
 are rebased as derived evidence rather than promoted to assumptions.
 `Proof.TreeLimits` independently cap proof nodes, depth, body cells, and
 structural work. Generic callback-to-recipe quotation and tactic-driven split
-search remain later integration edges. Current retained-tree construction
+search remain later integration edges. Each retained node currently freezes
+its `Source.branch` at creation; non-root snapshots restart at version zero,
+so their chronology must be empty or proof-state-only and terminals can cite
+only facts current in that creation snapshot. Recursive child propagation
+remains part of the later controller edge. Current retained-tree construction
 inherits the Mathlib-free reference cost `Θ(N² * B + N³)` from repeated branch
 validation and pairwise scope-uniqueness checking; this is not a production
 storage-complexity claim.

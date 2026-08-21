@@ -269,7 +269,11 @@ authenticate the cover and contradiction; runtime terminal tags, bodies, and
 contradiction state never become evidence. `Proof.TreeLimits` separately bound
 proof nodes, depth, body cells, and structural work. Pending and unknown leaves
 reject transactionally. Search callback quotation into this recipe and tactic
-integration remain later work. The current retained-tree builder repeatedly
+integration remain later work. Each retained node currently freezes its
+`Source.branch` at creation; non-root snapshots restart at version zero, so a
+non-root chronology must be empty or proof-state-only and its terminal can cite
+only creation-snapshot facts. Recursive child propagation is not yet supported.
+The current retained-tree builder repeatedly
 validates retained branches and pairwise scope uniqueness; incremental
 construction therefore has the documented `Θ(N² * B + N³)` reference cost,
 where `B` is branch validation work, rather than a production-local-update

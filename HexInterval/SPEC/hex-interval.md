@@ -4028,6 +4028,15 @@ tree first; changing that measure can make the same pure tree fail validation.
 These limits are checked independently because runtime tree records and proof
 recipes are both untrusted data.
 
+The current retained tree freezes each node's `Source.branch` when that node is
+created. A split child restarts its program version and fact generations at
+zero and the retained-tree API does not yet advance that child snapshot.
+Consequently a non-root proof chronology must be empty or proof-state-only,
+and a target/refutation terminal can cite only facts current at node creation.
+This edge proves exact split/refutation folding, not recursive propagation in
+children; authenticated callback-to-recipe quotation plus branch advancement
+is the next controller edge.
+
 `maxEndpointHeight` is measured after canonical dyadic normalization as the bit
 length of the absolute numerator plus the magnitude of the signed binary
 exponent. This deliberately charges dynamic range linearly: a fact near

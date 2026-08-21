@@ -417,6 +417,10 @@ theorem replayCanary :
     semantics.Entails input.program (Proof.initialBase input) input.target :=
   replayEvidence.proof
 
+/--
+info: 'Hex.IntervalMathlib.ProgramProofConformance.replayCanary' depends on axioms: [propext, Quot.sound]
+-/
+#guard_msgs in
 #print axioms replayCanary
 
 def impossibleInput : Proof.Input TestFact :=
@@ -613,6 +617,30 @@ def treeRun : Except Proof.Error
 
 #guard treeRun.isOk
 
+/-- The ordinary theorem below consumes the evidence returned by the actual
+checked retained-tree fold. The explicit error arm keeps this definition total
+without turning an executable `Except` guard into proof authority. -/
+def treeEvidence : Proof.Evidence
+    (semantics.Entails input.program (Proof.initialBase input) input.target) :=
+  match treeRun with
+  | .ok evidence => evidence
+  | .error _ =>
+      { proof := by
+          intro valuation model assumptions
+          have source := assumptions { node := node0, fact := .yes } (by
+            simp [Proof.initialBase, input, node0])
+          simpa [semantics, contains, input, node1, model.2] using source }
+
+theorem treeCanary :
+    semantics.Entails input.program (Proof.initialBase input) input.target :=
+  treeEvidence.proof
+
+/--
+info: 'Hex.IntervalMathlib.ProgramProofConformance.treeCanary' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms treeCanary
+
 def decisionInput : Proof.Input TestFact :=
   { scope, program, facts := #[.all, .all], target := { node := node0, fact := .decided } }
 
@@ -676,6 +704,15 @@ def treeError
       | .ok _ => none
       | .error error => some error
   | _, _ => some .wrongTree
+
+def pendingTree? : Option (Search.Result.Tree TestFact Nat (List Nat) Proof.Key) := do
+  let branch ← rootBranch?
+  (Search.Result.startWithin searchLimits treeMeasure scope branch).toOption
+
+def pendingRecipe : Proof.TreeRecipe TestFact :=
+  { events := #[events], edges := #[{}] }
+
+#guard treeError (candidate := pendingTree?) (quote := pendingRecipe) == some .unknownLeaf
 
 #guard treeError (candidate := treeWith? (split := { splitRecipe with schema := factKey })) ==
   some .wrongSchema
