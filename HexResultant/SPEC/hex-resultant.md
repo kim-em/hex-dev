@@ -450,10 +450,11 @@ does not alter the current resultant or discriminant contracts.
 
 ## File organisation
 
-- `HexResultant/ExactDiv.lean`: coefficientwise dense-polynomial scalar
-  division, the lightweight dense-polynomial ring tower, and the recursive
-  `ExactDivLaws (DensePoly R)` instance. `ExactDivLaws` itself, the total
-  exact-division wrappers `exactDiv`/`divExp`/`powNat`, and the `Int` and field
+- `HexResultant/ExactDiv.lean`: the binary-power helpers `powNat` and `divExp`,
+  coefficientwise dense-polynomial scalar division, the lightweight
+  dense-polynomial ring tower, and the recursive `ExactDivLaws (DensePoly R)`
+  instance. `ExactDivLaws`, the total `exactDiv` wrapper, the
+  coefficient-independent cancellation lemmas, and the `Int` and field
   instances live below this library in `HexBasic/ExactDiv.lean`, which this
   file re-exports through a public import.
 - `HexResultant/Basic.lean`: `pseudoDivMod` and its computational properties.

@@ -49,10 +49,19 @@ condition that each pivot is the leading nonzero entry of its row, which
 `IsEchelonForm` does not imply and without which uniqueness is false.
 
 **Shared exact division has graduated from this file.** `exactDiv`,
-`ExactDivLaws`, and the coefficient-independent cancellation lemmas now live in
-`HexBasic/ExactDiv.lean`, below both `hex-resultant` and `hex-bareiss`;
-`HexResultant/ExactDiv.lean` keeps only the dense-polynomial operations and
-instances and re-exports the contract through a public import.
+`ExactDivLaws`, the coefficient-independent cancellation lemmas, and the `Int`
+and field instances now live in `HexBasic/ExactDiv.lean`, below both
+`hex-resultant` and `hex-bareiss`; `HexResultant/ExactDiv.lean` keeps the
+binary-power helpers and the dense-polynomial operations and instances, and
+re-exports the contract through a public import.
+
+One boundary that move ran into is worth recording, because anything else
+placed in `HexBasic` will hit it. A declaration `Hex.foo` in `HexBasic` is in
+scope for every `Hex*Mathlib` file that says `open Hex`, so if Mathlib defines
+`_root_.foo` then every bare `foo` in those files becomes an ambiguous term.
+`Hex.mul_pow`, `Hex.pow_mul`, and `Hex.pow_ne_zero` all collide that way, so
+they stay with `powNat` and `divExp` in `hex-resultant`, which is the only
+consumer that needs them.
 
 **Generic Bareiss over integral domains (`hex-bareiss`, amendment).**
 Generalize the existing `Int` implementation rather than adding a matrix

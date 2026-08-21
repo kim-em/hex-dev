@@ -13,20 +13,116 @@ public import Init.Grind.Ring.Field
 public section
 
 /-!
-Exact scalar division for dense polynomials.
+Exact scalar division for the Brown subresultant recurrence.
 
 The coefficient-independent contract lives in `HexBasic.ExactDiv`: the total
 `exactDiv` wrapper, the `ExactDivLaws` package, and the cancellation lemmas
-that hold over every carrier. This module adds the polynomial-specific layer:
-coefficientwise scalar division on `DensePoly`, the lightweight ring tower that
-lets resultant correctness recurse into polynomial coefficient rings, and the
-recursive `ExactDivLaws (DensePoly R)` instance.
+that hold over every carrier. This module, which re-exports that contract
+through a public import, adds the two layers above it.
+
+First the binary-power helpers `powNat` and `divExp` with the lightweight
+semiring power lemmas they need. These stay here rather than in `HexBasic`
+because `mul_pow`, `pow_mul`, and `pow_ne_zero` shadow Mathlib root names, and
+a shadow introduced at the bottom of the graph turns every bare use in an
+`open Hex` Mathlib file into an ambiguous-term error; nothing below
+`hex-resultant` needs them.
+
+Then the polynomial-specific layer: coefficientwise scalar division on
+`DensePoly`, the lightweight ring tower that lets resultant correctness recurse
+into polynomial coefficient rings, and the recursive
+`ExactDivLaws (DensePoly R)` instance.
 -/
 namespace Hex
 
 universe u
 
 variable {R : Type u}
+
+/-- Natural powers by binary exponentiation, using only the executable `One`
+and `Mul` operations. The association order is part of this law-free
+computational definition; correctness consumers assume associative ring
+multiplication. -/
+@[expose]
+def powNat [One R] [Mul R] (x : R) (n : Nat) : R :=
+  if n = 0 then
+    1
+  else
+    let y := powNat (x * x) (n / 2)
+    if n % 2 = 0 then y else y * x
+termination_by n
+decreasing_by omega
+
+/-- Powers distribute over multiplication in a lightweight commutative ring. -/
+theorem mul_pow {S : Type u} [Lean.Grind.CommRing S]
+    (a b : S) : ∀ n : Nat, (a * b) ^ n = a ^ n * b ^ n
+  | 0 => by
+      rw [Lean.Grind.Semiring.pow_zero, Lean.Grind.Semiring.pow_zero,
+        Lean.Grind.Semiring.pow_zero]
+      exact (Lean.Grind.Semiring.mul_one 1).symm
+  | n + 1 => by
+      rw [Lean.Grind.Semiring.pow_succ, Lean.Grind.Semiring.pow_succ,
+        Lean.Grind.Semiring.pow_succ, mul_pow a b n]
+      grind
+
+/-- Raising a power to another power multiplies the two exponents. -/
+theorem pow_mul {S : Type u} [Lean.Grind.Semiring S]
+    (x : S) (m n : Nat) : x ^ (m * n) = (x ^ m) ^ n := by
+  symm
+  induction n with
+  | zero => simp [Lean.Grind.Semiring.pow_zero]
+  | succ n ih =>
+      rw [Lean.Grind.Semiring.pow_succ, ih,
+        ← Lean.Grind.Semiring.pow_add]
+      congr 1
+
+/-- Natural powers of a nonzero element stay nonzero in every nontrivial
+exact-division ring. -/
+theorem pow_ne_zero {S : Type u} [Lean.Grind.CommRing S] [Div S]
+    [ExactDivLaws S] (h1 : (1 : S) ≠ 0) {a : S} (ha : a ≠ 0) :
+    ∀ n : Nat, a ^ n ≠ 0
+  | 0 => by
+      simpa only [Lean.Grind.Semiring.pow_zero] using h1
+  | n + 1 => by
+      rw [Lean.Grind.Semiring.pow_succ]
+      exact ExactDivLaws.mul_ne_zero (pow_ne_zero h1 ha n) ha
+
+/-- The executable binary power agrees with the lightweight semiring power. -/
+theorem powNat_eq_pow {S : Type u} [Lean.Grind.Semiring S]
+    (x : S) (n : Nat) : powNat x n = x ^ n := by
+  induction n using Nat.strongRecOn generalizing x with
+  | ind n ih =>
+      rw [powNat]
+      by_cases hn : n = 0
+      · subst n
+        simp [Lean.Grind.Semiring.pow_zero]
+      · rw [if_neg hn]
+        have hlt : n / 2 < n :=
+          Nat.div_lt_self (Nat.pos_of_ne_zero hn) (by decide : 1 < 2)
+        rw [ih (n / 2) hlt (x * x)]
+        have hdiv := Nat.mod_add_div n 2
+        by_cases heven : n % 2 = 0
+        · rw [if_pos heven, ← Lean.Grind.Semiring.pow_two, ← pow_mul]
+          congr 1
+          omega
+        · rw [if_neg heven, ← Lean.Grind.Semiring.pow_two, ← pow_mul,
+            ← Lean.Grind.Semiring.pow_succ]
+          congr 1
+          have hmod := Nat.mod_lt n (by decide : 0 < 2)
+          omega
+
+/-- The executable natural power of a nonzero element stays nonzero. -/
+theorem powNat_ne_zero {S : Type u} [Lean.Grind.CommRing S] [Div S]
+    [ExactDivLaws S] (h1 : (1 : S) ≠ 0) {a : S} (ha : a ≠ 0) (n : Nat) :
+    powNat a n ≠ 0 := by
+  rw [powNat_eq_pow]
+  exact pow_ne_zero h1 ha n
+
+/-- Brown's scalar update `x^n / y^(n-1)`, with the same total zero behavior
+as `exactDiv`. -/
+@[expose]
+def divExp [Zero R] [DecidableEq R] [One R] [Mul R] [Div R]
+    (x y : R) (n : Nat) : R :=
+  exactDiv (powNat x n) (powNat y (n - 1))
 
 namespace DensePoly
 
@@ -402,5 +498,11 @@ exercised by the Brown regressions. -/
 example : ExactDivLaws (DensePoly Int) := inferInstance
 
 example : Lean.Grind.CommRing (DensePoly Int) := inferInstance
+
+/-! Value-level pins for the binary-power helpers. -/
+
+#guard powNat (3 : Int) 5 = 243
+
+#guard divExp (4 : Int) 2 3 = 16
 
 end Hex
