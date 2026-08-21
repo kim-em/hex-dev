@@ -310,7 +310,8 @@ explicit conversions first; reconsider a common interface only after multiple
 real consumers demonstrate which operations belong in it.
 
 **Sparse univariate polynomials (`hex-sparse-poly`,
-`hex-sparse-poly-mathlib`).** Use a canonical sorted array of
+`hex-sparse-poly-mathlib`).** Specified in
+[hex-sparse-poly](Libraries/hex-sparse-poly.md). Use a canonical sorted array of
 `(exponent, coefficient)` terms with strictly increasing exponents and no zero
 coefficients. Addition merges two arrays; multiplication combines all
 pairwise exponent sums, which wants a heap or a map

@@ -5,6 +5,7 @@
 - **hex-primality**: Miller-Rabin compositeness witnesses, Pocklington certificates, a kernel-reducible sieve and stored initial segment, the `primality` tactic
 - **hex-int-factor**: integer factorization with complete prime-exponent certificates, the divisor-function API, multiplicative order and primitive roots
 - **hex-poly**: dense `Array`-backed polynomial representation
+- **hex-sparse-poly**: canonical sparse univariate polynomials as a sorted exponent/coefficient term array, with explicit conversions to and from the dense representation
 - **hex-mv-poly**: canonical distributed multivariate polynomials at fixed arity with explicit monomial orders
 - **hex-mv-gcd**: multivariate gcd with cofactors, content and primitive part, exact division, squarefree decomposition
 - **hex-matrix**: dense matrices, matrix/vector arithmetic, elementary row and column operations, submatrix slicing, the Gram matrix
@@ -51,6 +52,7 @@ Mathlib, and supplies correspondence proofs or Mathlib-facing APIs):
 - **hex-int-factor-mathlib**: agreement with `Nat.factorization`, `Decidable (Squarefree n)`, and `orderOf` in `(ZMod n)ˣ`
 - **hex-finite-field-mathlib**: `Fintype K` and `Fintype.card K = card K` for any `LawfulFiniteField`, and `frob = frobenius`
 - **hex-poly-mathlib**: `DensePoly R ≃+* Polynomial R`
+- **hex-sparse-poly-mathlib**: `SparsePoly R ≃+* Polynomial R`, and the identification of the stored term array with `Polynomial.support`
 - **hex-mv-poly-mathlib**: `MvPoly n R cmp ≃+* MvPolynomial (Fin n) R`, `aeval`, and operation correspondence
 - **hex-mv-gcd-mathlib**: gcd maximality transported to `MvPolynomial (Fin n) R`, and decidable divisibility and squarefreeness
 - **hex-matrix-mathlib**: matrix equivalence, row operations as transvections, and the Mathlib algebra tower transported onto our matrix type
@@ -85,6 +87,7 @@ Each library with its immediate dependencies:
 - **hex-primality**: hex-arith, hex-basic
 - **hex-int-factor**: hex-primality, hex-arith, hex-basic
 - **hex-poly**: (none)
+- **hex-sparse-poly**: hex-poly, hex-basic
 - **hex-mv-poly**: hex-poly, hex-basic
 - **hex-mv-gcd**: hex-mv-poly, hex-poly, hex-poly-fp, hex-resultant, hex-arith, hex-mod-arith
 - **hex-matrix**: hex-basic
@@ -129,6 +132,7 @@ Mathlib companion libraries (each also depends on Mathlib):
 - **hex-int-factor-mathlib**: hex-int-factor, hex-primality-mathlib
 - **hex-finite-field-mathlib**: hex-finite-field, hex-mod-arith-mathlib, hex-poly-mathlib
 - **hex-poly-mathlib**: hex-poly
+- **hex-sparse-poly-mathlib**: hex-sparse-poly, hex-poly-mathlib, hex-poly
 - **hex-mv-poly-mathlib**: hex-mv-poly, hex-poly-mathlib
 - **hex-mv-gcd-mathlib**: hex-mv-gcd, hex-mv-poly-mathlib, hex-resultant-mathlib, hex-poly-mathlib
 - **hex-poly-z-mathlib**: hex-poly-z, hex-poly-mathlib
@@ -288,6 +292,23 @@ hex-poly ──────────────────┘              
      └──────────────────────── hex-poly-mathlib ─────────┘
 ```
 
+`hex-sparse-poly` is the second univariate representation. It sits on
+`hex-poly` at the `toDense` / `ofDense` conversion boundary and on
+`hex-basic` for the `List.foldl` algebra its canonicalisation proof
+uses. There is no interface over the two representations: callers name
+the one they hold and convert explicitly, for the reasons in
+[hex-sparse-poly §No swappable polynomial abstraction](hex-sparse-poly.md).
+Its companion is defined by composing `toDense` with hex-poly-mathlib's
+equivalence, so it depends on that library rather than reproving the
+ring structure.
+
+```text
+hex-basic ─────────────┐
+                       ├── hex-sparse-poly ──────┐
+hex-poly ──────────────┘                         ├── hex-sparse-poly-mathlib
+     └───────────────── hex-poly-mathlib ────────┘
+```
+
 `hex-mv-gcd` sits on `hex-mv-poly` and pulls in three further libraries:
 `hex-poly-fp` and `hex-mod-arith` for the univariate images over `F_p`
 that its modular routes compute, `hex-resultant` for the subresultant
@@ -347,6 +368,7 @@ for developments whose source-local move has not happened yet.
 - [hex-modular-matrix.md](hex-modular-matrix.md): multi-modular determinant, certified rank, and Dixon p-adic linear solving (the Mathlib companion is specified in the same file)
 - [hex-poly](../../HexPoly/SPEC/hex-poly.md): dense polynomial library, operations, GCD, CRT
 - [hex-poly-mathlib](../../HexPolyMathlib/SPEC/hex-poly-mathlib.md): `DensePoly R ≃+* Polynomial R`
+- [hex-sparse-poly.md](hex-sparse-poly.md): canonical sparse univariate polynomials, the operations that keep sparsity, and the dense conversions (the Mathlib companion is specified in the same file)
 - [hex-mv-poly](../../HexMvPoly/SPEC/hex-mv-poly.md): canonical distributed multivariate polynomials with explicit monomial orders
 - [hex-mv-poly-mathlib](../../HexMvPolyMathlib/SPEC/hex-mv-poly-mathlib.md): `MvPoly n R cmp ≃+* MvPolynomial (Fin n) R`, `aeval`, and operation correspondence
 - [hex-mv-gcd](hex-mv-gcd.md): multivariate gcd with cofactors, content and primitive part, exact division, squarefree decomposition
