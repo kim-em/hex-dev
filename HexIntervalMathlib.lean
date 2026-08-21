@@ -22,6 +22,7 @@ public import HexIntervalMathlib.Program
 public import HexIntervalMathlib.Proof
 public import HexIntervalMathlib.Rule
 public import HexIntervalMathlib.Frontend
+public import HexIntervalMathlib.Tactic
 
 public section
 
@@ -36,5 +37,9 @@ programs and the chronological, package-owned proof-replay boundary.
 `HexIntervalMathlib.Rule` supplies a checked built-in arithmetic package whose
 schemas recompute checked public operations before producing proof evidence.
 `HexIntervalMathlib.Frontend` supplies bounded recursive arithmetic reification,
-exact source binding, and flat programmatic replay/closure combinators.
+source-driven version-zero facts, and flat programmatic replay/closure
+combinators.
+`HexIntervalMathlib.Tactic` supplies the first supported Lean-expression,
+local-hypothesis, runtime-authentication, and transactional tactic bridge for
+forward arithmetic bounds. Its bare tactics use the `2⁻¹⁶` dyadic grid.
 -/

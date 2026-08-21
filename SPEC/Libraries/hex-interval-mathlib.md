@@ -49,17 +49,21 @@ client. It recursively reifies bounded `Term` values by stable operation key,
 rechecks the transparent result's exact node/term/ordered-edge correspondence,
 and authenticates that the retained root is the original target term. From a
 caller mapping of source indices to real values it derives the complete exact
-`Program.Models` witness; callers prove only that their version-zero source
-intervals contain those values, rather than reconstructing one semantic
-relation per SSA node. The frontend binds the exact selected source intervals,
+`Program.Models` witness. `Result.facts` places the selected source interval at
+each source row and `whole` at each computed row; the supplied source
+containments therefore discharge every version-zero fact through
+`Result.initial_contains`, rather than requiring one caller proof per SSA node.
+The frontend binds the exact selected source intervals,
 invokes Rule/Proof replay on an explicit caller-supplied event list, and
 eliminates the resulting evidence to lower, upper, conjunction, or
 closed-singleton equality theorems about the evaluated target `Term`. It covers
 the current Rule operations but inherits the package's one shared exponent,
 constant, and precision. Array caps and a short-circuit recursive-depth check
-precede the revalidation scans, while construction and structural equality of
-programmatic caller `Term` values and the caller's opaque source-value function
-are not preemptible. It does not
+precede revalidation. A successful depth check can still visit every
+constructor in an already-built branching `Term`: `maxDepth` limits nesting and
+`maxNodes` limits retained SSA rows, but neither preempts caller-side term
+construction or structural equality. The caller's opaque source-value
+function is also outside this preemptible envelope. It does not
 parse Lean expressions or hypotheses, extract recipes from generic Search
 trees, or expose tactic syntax.
 The user-facing tactic contract below is the release target, not a claim that
@@ -742,6 +746,35 @@ direct proposals. Success rate, useless instances, program growth, proof size,
 and deterministic work decide the production default.
 
 ## Tactic interface
+
+The current supported implementation is a deliberately smaller forward
+vertical. `HexIntervalMathlib.Tactic` provides bare `interval`, `interval?`,
+`interval_bound e`, and programmatic `Tactic.deriveBound`. It recognizes real
+local variables, integer lower/upper hypotheses, zero, and the built-in exact
+negation, addition, subtraction, multiplication, natural power, absolute
+value, minimum, maximum, reciprocal, and division rules. Every computed
+arithmetic row is followed by the configured outward-regularization rule, so
+precision resources and the regularization proof are load-bearing. The bare
+tactics use precision `16`, hence the dyadic grid `2⁻¹⁶`; programmatic
+`deriveBound` callers may supply another admitted precision. It authenticates
+and replays the exact supported runtime chronology as untrusted data, then
+independently emits the caller proof through package theorems; it does not
+perform unused Meta quotation of those runtime records. It does not yet run the supported `Search`
+controller, subdivide,
+invoke contractors, select named hypotheses, accept configuration syntax, or
+emit a recipe chosen by arbitrary-function search. `interval?` therefore
+reports the fixed forward caps after successful closure and emits no result on
+failure, while `interval_bound` elaborates and derives transactionally, reports
+one global forward enclosure with concrete selected lower/upper cuts, and
+leaves the goal unchanged. Each computed arithmetic layer also inserts an
+internal regularization layer. Thus the reported/default term-depth cap `32`
+admits about 16 nested arithmetic operations along one expression spine; it is
+not a 32-operation nesting promise. The selected cuts are diagnostics, not a
+pasteable tactic script: the backend may print noninteger dyadic endpoints,
+but this first goal parser accepts integer target cuts only.
+
+The following is the target interface once the search-to-proof recipe bridge
+and remaining package integrations are supported:
 
 The planned syntax is:
 
@@ -3121,8 +3154,10 @@ the fixed soundness and trust contracts.
   certificate, wrong-source and false-endpoint rejection, guarded axiom
   surface, and generic proof-frontend closure.
 - `HexIntervalMathlib/Contractor.lean`: backwards propagation theorems.
-- `HexIntervalMathlib/Tactic.lean`: `interval`, `interval?`, and
-  `interval_bound`.
+- `HexIntervalMathlib/Tactic.lean`: supported recursive Lean-expression and
+  local-cut parsing, exact runtime-data authentication, independently checked
+  forward proof emission, and the current bare `interval`, `interval?`, and
+  `interval_bound` subset; configurable search integration remains target work.
 - `HexIntervalMathlib/Examples.lean`: small user-facing examples.
 - `conformance/HexInterval/Conformance.lean`: Mathlib-free computational
   checks for `hex-interval` only.

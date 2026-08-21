@@ -81,12 +81,23 @@ Mathlib companion now also owns the function-agnostic program interpretation,
 package theorem registry, chronological proof fold, exact caller closure, and
 checked expression boundary. Its first programmatic frontend recursively
 reifies a bounded arithmetic term language by stable operation key, rechecks
-the transparent result's exact node/term correspondence, binds the exact
-selected source facts, replays a caller-supplied authenticated flat
+the transparent result's exact node/term correspondence, places exact caller
+facts at source rows and `whole` at computed version-zero rows, derives all
+initial containments from only the source obligations, and replays a
+caller-supplied authenticated flat
 chronology, and projects
 the result to lower, upper, conjunction, or closed-singleton equality theorems.
-Lean-expression parsing, local-hypothesis proof synthesis, tactic syntax, and
-Meta quotation of the supported records remain experimental. The first
+Its depth cap rejects over-deep descent but does not bound construction or a
+full traversal of an already-built branching term. The supported direct
+forward tactic client below parses its bounded Lean-expression and integer-cut
+subset, authenticates the exact flat runtime chronology as untrusted data, and
+independently synthesizes caller proofs. Its fixed public-tactic precision `16`
+uses the dyadic grid `2⁻¹⁶`; programmatic clients may choose another precision
+within the explicit envelope. Because each computed arithmetic layer is
+followed by an internal regularization layer, its term-depth cap `32` admits
+about 16 nested arithmetic operations along one expression spine. Generic
+search-selected recipes, broader local-context parsing, and
+split replay remain experimental. The first
 concrete supported registry is the Mathlib arithmetic package for one
 configured constant and natural exponent plus public negation, addition,
 subtraction, multiplication, power, absolute-value, min/max, reciprocal,
@@ -5270,6 +5281,15 @@ their declared cost inside a scheduler bound.
   and closed-singleton equality closure about the evaluated target term.
   Search-to-recipe integration, Lean syntax, and Meta quotation remain outside
   this module.
+- `HexIntervalMathlib/Tactic.lean`: exact runtime program/input/chronology
+  construction and authentication, recursive forward-arithmetic expression
+  and integer-cut parsing, reciprocal/division and automatic outward-
+  regularization rows, independently checked caller-proof emission, and the
+  current transactional bare `interval`, `interval?`, and `interval_bound`
+  subset. `interval_bound` renders selected cuts as diagnostics; a noninteger
+  dyadic endpoint is not pasteable into the current integer-only goal parser.
+  Search-selected recipes, arbitrary functions, subdivision, and the
+  expanded configuration syntax remain experimental or unimplemented.
 - `HexInterval/Program.lean`: supported stable operation/domain/node
   identifiers, decoded typed SSA programs, fail-closed validation, and
   structural depths.
@@ -5354,7 +5374,12 @@ their declared cost inside a scheduler bound.
   recursive shared-DAG reification, exact source binding, malformed-entry,
   root/operation-table, stable-key, and resource rejection, derived semantic
   model, flat chronological replay, and ordinary inequality, conjunction, and
-  equality theorem/axiom canaries without a caller-supplied `Program.Models`.
+  equality theorem/axiom canaries from source containment without a caller-
+  supplied `Program.Models` or per-node initial-fact premise.
+- `conformance/HexIntervalMathlib/TacticConformance.lean`: supported Meta
+  parsing, runtime authentication, emission, strict and closed cuts,
+  conjunction, equality, exact resource roles, transactional failure,
+  diagnostics, and guarded ordinary-theorem canaries.
 - `bench/HexInterval/Bench.lean`: Mathlib-free interval and scheduler
   benchmarks.
 

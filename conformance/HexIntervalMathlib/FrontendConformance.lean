@@ -71,7 +71,7 @@ def model? := Frontend.modelWithin config sourceValues result
       found.sourceCount == result.sourceCount
   | .error _ => false
 
-theorem resultChecked : result.check := by decide
+theorem resultChecked : result.check := by rfl
 
 theorem resultOperations : result.program.operations =
     (Rule.meanings config.rule).map (Program.Meaning.operation) := by
@@ -82,7 +82,8 @@ theorem resultOperations : result.program.operations =
     Rule.divMeaning, Rule.regularizeMeaning]
 
 noncomputable def semanticModel : Frontend.Model config.rule sourceValues result :=
-  { sound := result.models config.rule sourceValues resultChecked resultOperations
+  { checked := resultChecked
+    sound := result.models config.rule sourceValues resultChecked resultOperations
     target := result.target_eval config.rule sourceValues resultChecked }
 
 theorem targetValue : term.eval config.rule sourceValues = -3 := by
@@ -90,6 +91,9 @@ theorem targetValue : term.eval config.rule sourceValues = -3 := by
 
 def input? := Frontend.inputWithin config RuleConformance.scope result
   #[RuleConformance.xFact, RuleConformance.yFact] RuleConformance.productFact
+
+def sourceFacts : Array Hex.Interval :=
+  #[RuleConformance.xFact, RuleConformance.yFact]
 
 def input : Proof.Input Hex.Interval :=
   { scope := RuleConformance.scope
@@ -254,6 +258,29 @@ private theorem toReal_d (value : Int) :
   rw [show Dyadic.ofInt value = (value : Dyadic) by rfl, Dyadic.toRat_intCast]
   norm_num
 
+theorem sourceFactsContain : Frontend.SourcesContain sourceValues sourceFacts := by
+  intro index fact found
+  cases index with
+  | zero =>
+      simp [sourceFacts] at found
+      subst fact
+      have member := Rule.constant_mem RuleConformance.checkedX
+      rw [toReal_d] at member
+      simpa [sourceValues] using member
+  | succ index =>
+      cases index with
+      | zero =>
+          simp [sourceFacts] at found
+          subst fact
+          have member := Rule.constant_mem RuleConformance.checkedY
+          rw [toReal_d] at member
+          simpa [sourceValues] using member
+      | succ index => simp [sourceFacts] at found
+
+theorem inputFacts : input.facts = result.facts sourceFacts := by
+  simp [input, result, sourceFacts, Frontend.Result.facts, Frontend.Result.seed,
+    Frontend.Term.source?, term]
+
 def fallbackEvidence : Proof.Evidence
     ((Rule.semantics config.rule).Entails input.program
       (Proof.initialBase input) input.target) :=
@@ -310,31 +337,25 @@ def evidence : Proof.Evidence
   | .error _ => fallbackEvidence
 
 theorem closesConjunction
-    (assumptions : ∀ fact, fact ∈ Proof.initialBase input →
-      fact.fact.Contains (result.valuation config.rule sourceValues fact.node)) :
-    (Lower.finite (RuleConformance.d (-3)) false).Contains
+    : (Lower.finite (RuleConformance.d (-3)) false).Contains
         (term.eval config.rule sourceValues) ∧
       (Upper.finite (RuleConformance.d (-3)) false).Contains
         (term.eval config.rule sourceValues) := by
-  exact Frontend.closeTermBounds config result sourceValues semanticModel input evidence
-    (by decide) (by decide) assumptions
+  exact Frontend.closeSourcesBounds config result sourceValues semanticModel input evidence
+    rfl rfl sourceFacts rfl inputFacts sourceFactsContain
     (.finite (RuleConformance.d (-3)) false)
     (.finite (RuleConformance.d (-3)) false) productShape
 
 theorem closesLower
-    (assumptions : ∀ fact, fact ∈ Proof.initialBase input →
-      fact.fact.Contains (result.valuation config.rule sourceValues fact.node)) :
-    toReal (RuleConformance.d (-3)) ≤ term.eval config.rule sourceValues := by
-  exact Frontend.closeTermLower config result sourceValues semanticModel input evidence
-    (by decide) (by decide) assumptions
+    : toReal (RuleConformance.d (-3)) ≤ term.eval config.rule sourceValues := by
+  exact Frontend.closeSourcesLower config result sourceValues semanticModel input evidence
+    rfl rfl sourceFacts rfl inputFacts sourceFactsContain
     (RuleConformance.d (-3)) false (.finite (RuleConformance.d (-3)) false) productShape
 
 theorem closesEquality
-    (assumptions : ∀ fact, fact ∈ Proof.initialBase input →
-      fact.fact.Contains (result.valuation config.rule sourceValues fact.node)) :
-    term.eval config.rule sourceValues = toReal (RuleConformance.d (-3)) := by
-  exact Frontend.closeTermSingleton config result sourceValues semanticModel input evidence
-    (by decide) (by decide) assumptions
+    : term.eval config.rule sourceValues = toReal (RuleConformance.d (-3)) := by
+  exact Frontend.closeSourcesSingleton config result sourceValues semanticModel input evidence
+    rfl rfl sourceFacts rfl inputFacts sourceFactsContain
     (RuleConformance.d (-3)) productShape
 
 #print axioms closesConjunction
