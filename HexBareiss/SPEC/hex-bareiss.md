@@ -4,7 +4,7 @@ The executable Bareiss determinant (fraction-free Gaussian elimination), plus
 the bordered-minor support its correctness development relies on. The recurrence
 is specified over an arbitrary commutative coefficient ring carrying an exact
 quotient; `Int` is the specialization every current consumer uses, and its
-names, signatures, values and compiled code are unchanged by the generalization.
+names, signatures and values are unchanged by the generalization.
 
 ## Coefficient contract
 
@@ -12,7 +12,10 @@ Executable operations and correctness laws are kept apart, exactly as in
 [hex-resultant](https://github.com/kim-em/hex-dev/blob/main/HexResultant/SPEC/hex-resultant.md).
 
 **Operations.** Each executable definition takes only the unbundled classes it
-calls, and the exact quotient is a plain function argument rather than a class:
+calls, and the exact quotient is a plain function argument rather than a class.
+The table covers the principal algorithm operations, not every definition in
+the library: the array-storage layer, `finish`, the initial states and the
+`@[csimp]` implementation variants take the classes their own bodies call.
 
 | definition | operation classes | quotient |
 |---|---|---|
@@ -28,7 +31,7 @@ search and the loop's zero-pivot branch. No `Div R` appears in the executable
 layer at all. See [§Exact quotients](#exact-quotients-obligation-totality-and-the-int-fast-path)
 for why the quotient is an argument and not a `Div`-derived operation.
 
-**Laws.** Every correctness theorem takes
+**Laws.** Each loop-correctness and headline theorem takes
 `[Lean.Grind.CommRing R] [DecidableEq R]` plus the single hypothesis
 
 ```lean
@@ -37,12 +40,15 @@ for why the quotient is an argument and not a `Div`-derived operation.
 
 That is `Hex.ExactDivLaws.mul_div_cancel_right` in unbundled form. A carrier
 with `[Div R] [Hex.ExactDivLaws R]` discharges it by `Hex.exactDiv_mul_right`;
-`Int` discharges it for `Hex.Matrix.exactDiv` by `Int.mul_ediv_cancel`.
+`Int` discharges it for `Hex.Matrix.exactDiv` by `Int.mul_ediv_cancel`. Purely
+structural lemmas (entry formulas, fuel composition, loop equalities) and the
+`hexact`-premise update lemma need less than this and should not be given the
+full binder list.
 
-**What is deliberately not assumed.** No `IsDomain`, no `NoZeroDivisors`, no
-nontriviality class, and no divisibility hypothesis anywhere. Bareiss is an
-integral-domain algorithm, but the domain property is a *consequence* of the
-exact-quotient law rather than a separate assumption:
+**What is deliberately not assumed.** No public `IsDomain`, `NoZeroDivisors`
+or nontriviality hypothesis, and no divisibility hypothesis anywhere. Bareiss is
+an integral-domain algorithm, but the cancellation and no-zero-divisor facts are
+*consequences* of the exact-quotient law rather than separate assumptions:
 
 | fact the development needs | where it comes from |
 |---|---|
@@ -50,7 +56,20 @@ exact-quotient law rather than a separate assumption:
 | cancel a nonzero right factor | `Hex.ExactDivLaws.mul_right_cancel` |
 | `(1 : R) ≠ 0` for the `prevPivot = 1` seed | a case split on `(1 : R) = 0`, discharged through `Hex.one_ne_zero_of_nonzero` |
 
-The last row is the one place where the `Int` development uses a `decide` that
+The law package is stated over `[Div R] [Hex.ExactDivLaws R]`, so a theorem
+whose binders carry only the unbundled `quot` and `hquot` cannot invoke those
+lemmas directly. The bridge builds the package locally instead:
+
+```lean
+letI : Div R := ⟨quot⟩
+haveI : Hex.ExactDivLaws R := ⟨hquot⟩
+```
+
+The facts it then derives (`mul_ne_zero`, `mul_right_cancel`) do not mention
+`/`, so the local `Div` never escapes into a statement and never competes with a
+carrier's own `Div` instance.
+
+The `(1 : R) ≠ 0` row is the one place where the `Int` development uses a `decide` that
 does not survive generalization: the initial no-pivot invariant asserts
 `prevPivot ≠ 0` at `prevPivot = 1`. The generic form takes `(1 : R) ≠ 0` as a
 hypothesis on the *invariant* lemmas, and each public theorem opens with a case
@@ -59,6 +78,14 @@ contrapositive of `Hex.one_ne_zero_of_nonzero`), so both sides of the
 correctness statement are `0` and the theorem holds without any nontriviality
 assumption on the carrier. No new law is needed in the shared exact-division
 package for this.
+
+**One `IsDomain` instance is still required, locally.** The failed-pivot branch
+proves `det M = 0` through Mathlib's `Matrix.exists_mulVec_eq_zero_iff`, which
+is stated for `[CommRing A] [IsDomain A]`. In the nontrivial branch the instance
+is constructed rather than assumed: `Nontrivial R` from `(1 : R) ≠ 0`,
+`NoZeroDivisors R` from the derived `mul_ne_zero`, then
+`NoZeroDivisors.to_isDomain`. This is a `haveI` inside one proof, not a binder
+on any public statement.
 
 Every lemma named above lives in
 [`HexBasic/ExactDiv.lean`](https://github.com/leanprover/hex-basic/blob/main/HexBasic/ExactDiv.lean),
@@ -87,10 +114,12 @@ read the pivot out of the matrix.
 
 **State and data.** `BareissState R n` carries `step`, `matrix`, `prevPivot`,
 `rowSwaps` and `singularStep`; `BareissData R n` is the terminal `matrix`,
-`rowSwaps` and `singularStep`. Both gain the coefficient parameter `R`, so
-existing `BareissState n` / `BareissData n` occurrences become
-`BareissState Int n` / `BareissData Int n`. That is the only source-visible
-break the generalization introduces, it is mechanical, and it changes no value.
+`rowSwaps` and `singularStep`; `BareissArrayState R` is the array-storage
+counterpart. All three gain the coefficient parameter `R`, so existing
+`BareissState n`, `BareissData n` and `BareissArrayState` occurrences become
+`BareissState Int n`, `BareissData Int n` and `BareissArrayState Int`. Those
+three arity changes are the source-visible break the generalization introduces;
+they are mechanical, compile-time visible, and change no value.
 
 **Two loops.** `noPivotLoopWith` aborts at a zero diagonal pivot and records the
 step; `pivotLoopWith` first tries a row swap. Both are fuelled by `n` and are
@@ -133,9 +162,25 @@ the bridge layer. Concretely, under the bordered-minor invariant the numerator
 at step `k` equals `p₍ₖ₋₁₎ · det (borderedMinor source (k+1) hnext i j)`, and
 `hquot` returns the second factor.
 
-**Totality.** The quotient is total, and both supplied quotients agree on the
-junk branch: `Hex.Matrix.exactDiv a 0 = 0` and `Hex.exactDiv a 0 = 0`. A junk
-state therefore has deterministic behavior but carries no algebraic claim.
+**Totality, and where it stops.** Both quotients are total *as Lean
+definitions*: `Hex.exactDiv a 0 = 0` by its guard, and `Hex.Matrix.exactDiv a 0`
+reduces through `Int.ediv` to `0`. The two are equal at `Int`.
+
+They are not both total in *compiled* code, and the SPEC does not claim they
+are. `Hex.exactDiv` keeps its zero guard after compilation. `Hex.Matrix.exactDiv`
+is `@[extern "lean_int_div_exact"]`, and that entry point guards a zero
+denominator only on the small-integer path; with a multi-limb numerator and a
+zero denominator it reaches `lean_int_big_div_exact`, whose `d != 0` check is a
+`lean_assert` (compiled out in release) before it calls GMP's `mpz_divexact`,
+which has no zero-denominator contract. This is a pre-existing property of
+`Hex.Matrix.exactDiv`, which drops the `y ∣ x` argument that `Int.divExact`
+carries; the generalization neither creates nor removes it.
+
+The consequence for this SPEC is a precondition, not a value: the native exact
+quotient is specified only for a nonzero denominator dividing its numerator. A
+run never violates that, because the loop records `singularStep` and stops
+before dividing by a zero pivot. Nothing downstream may rely on a zero-denominator
+call to `Hex.Matrix.exactDiv` returning `0` in compiled code.
 
 **Why the quotient is an argument.** The natural generalization would take
 `[Div R]` and call `Hex.exactDiv`. It is value-correct, since at `Int` the two
@@ -145,16 +190,18 @@ quotients are equal,
 theorem exactDiv_int_eq (a b : Int) : Hex.exactDiv a b = Hex.Matrix.exactDiv a b
 ```
 
-but it is not code-generation-correct. `Hex.exactDiv` is
+but it discards the carrier's exact-division primitive. `Hex.exactDiv` is
 `if b = 0 then 0 else a / b`, whose `/` compiles to the `Div R` dictionary
 entry, which for `Int` is `Int.ediv` and hence `lean_int_ediv`. Today's
 `Hex.Matrix.exactDiv` is `@[extern "lean_int_div_exact"]`, matching
-`Int.divExact`, which the Lean runtime routes to `lean_int_big_div_exact` on
-multi-limb operands. Exact division of an `m`-limb numerator is linear in `m`
-where general division is not, and Bareiss entries at rung `n` are `n × n`
-minors, so the difference is not a fixed-size constant. The `[Div R]` form also
+`Int.divExact`, which the runtime routes to `lean_int_big_div_exact` and thence
+to GMP's `mpz_divexact`. GMP documents exact division as faster than general
+division when exactness is known, though it also documents the implementation as
+basecase rather than subquadratic, so the advantage is a constant factor of
+unstated size rather than a change of order. The `[Div R]` form additionally
 pays a `DecidableEq R` zero test on every one of the ~`n³/3` divisions, which
-`Hex.Matrix.exactDiv` does not.
+`Hex.Matrix.exactDiv` does not. How much either costs at the benched rungs is
+what the A/B rung below is for; this SPEC does not assert a figure.
 
 Passing `quot` as an argument keeps one algorithm and one proof while letting
 each carrier supply its best primitive. In practice `quot` is a section
@@ -173,6 +220,15 @@ No generic `Div`-derived alias for `bareissWith Hex.exactDiv` is introduced, so
 that every generic call site names the quotient it is using. `Hex.exactDiv`,
 `Hex.ExactDivLaws` and the cancellation lemmas are reused unchanged; nothing is
 added to the shared exact-division package, and nothing about it is redesigned.
+
+A function-valued parameter can compile to an indirect call through the inner
+loop, so the `Int` specialization is *not* asserted to produce byte-identical
+code to today's. What it is asserted to do is call the same primitive.
+`@[specialize]` on the loop functions is the mechanism for recovering a direct
+call at the `Hex.Matrix.exactDiv` instantiation, and the A/B rung is what
+confirms it; if neither holds up, keeping a monomorphic `Int` implementation
+behind `@[implemented_by]` (alongside the existing `@[csimp]` array path) is the
+fallback, at the cost of a second implementation to keep in step.
 
 If a measurement (see [§Benchmarks](#benchmark-changes)) shows the
 `lean_int_div_exact` advantage is inside bench noise at every rung, the simpler
@@ -204,15 +260,22 @@ multiplications, one subtraction and one exact division, so a full run performs
 ```
 
 exact divisions and subtractions and twice that many multiplications, plus at
-most `n²/2` zero tests in pivot search. The count is coefficient-independent.
+most `n²/2` zero tests in pivot search. The count is coefficient-independent, and it is the cost of a full
+non-aborted run; a run that records `singularStep` performs fewer. The `n²/2`
+figure covers pivot search only, not the loop's own diagonal zero test at each
+step.
 
-**No intermediate expression swell.** The invariant is that `a⁽ᵏ⁾_{ij}` is the
-determinant of `borderedMinor source k _ i j`, a `(k+1) × (k+1)` minor of the
-*input*. Entries are therefore bounded by whatever bounds minors of the input;
-nothing grows beyond the size of the answer's own subdeterminants. That is the
-whole point of the fraction-free recurrence and it is exactly the invariant the
-correctness proof carries, so the complexity claim and the correctness claim are
-the same statement.
+**No denominator swell, and controlled stored-entry growth.** The invariant is
+that `a⁽ᵏ⁾_{ij}` is the determinant of `borderedMinor source k _ i j`, a
+`(k+1) × (k+1)` minor of the *input*. Every stored entry is therefore a minor of
+the input, never a ratio and never an accumulated product; that is what
+"fraction-free" means, and it is exactly the invariant the correctness proof
+carries, so the complexity claim and the correctness claim are the same
+statement. Two qualifications: each step transiently builds a difference of two
+products of stored entries before dividing, so the numerator is about twice the
+size of the entry it becomes; and an intermediate minor can be larger than the
+final determinant, so this bounds growth rather than making it monotone in the
+answer.
 
 Over `Int` with `‖M‖∞ ≤ B`, Hadamard's bound gives
 `|a⁽ᵏ⁾_{ij}| ≤ (k+1)^((k+1)/2) · B^(k+1)`, i.e. bit length
@@ -231,8 +294,8 @@ directly) and is not folded into the generic layer.
 `bareiss`, `bareissData`, `bareissNoPivot` and `bareissNoPivotData` keep their
 current names and `Matrix Int n n` signatures, now *defined* as the
 `Hex.Matrix.exactDiv` instantiations of their `*With` counterparts. Every
-downstream `Int` call site, every committed conformance fixture value, and the
-compiled inner loop are unchanged.
+downstream `Int` call site and every committed conformance fixture value is
+unchanged, and the inner loop calls the same division primitive.
 
 The array-storage layer (`BareissArrayState`, `matrixToRows`, `rowsToMatrix`,
 `getEntry`) generalizes to `Array (Array R)`. One change is needed:
@@ -305,8 +368,11 @@ nonzero.
 The only determinant identity consumed is
 `HexMatrixMathlib.desnanot_jacobi_borderedMinor`, which is already stated over
 an arbitrary Mathlib `CommRing` and needs no nondegeneracy hypothesis. **No new
-determinant identity, and no change to `hex-determinant-mathlib`, is required by
-this generalization.** In particular the general Sylvester identity remains
+determinant identity is required by this generalization**, and the audited
+Desnanot-Jacobi statement itself needs no change. One declaration beside it does:
+`HexMatrixMathlib.bareissExactDiv_borderedMinor_of_mul_eq` in `CorePlucker.lean`
+is fixed to `Int` and must be generalized in place, with an `Int` corollary
+retained. In particular the general Sylvester identity remains
 absent and remains unnecessary: fraction-free elimination uses only the `2 × 2`
 bordered-minor case, which is Desnanot-Jacobi. Do not introduce a second
 determinant identity development, and do not rename anything to claim Sylvester;
@@ -339,14 +405,21 @@ the `scripts/oracle/matrix_flint.py` `bareiss` oracle tuple in
 `scripts/ci/run_oracles.sh` stay **byte-identical**: `Int` values do not change,
 so a re-emit is a regression signal, not a step.
 
-`conformance/HexBareiss/Conformance.lean` gains guards that
-`bareissWith Hex.exactDiv M = bareiss M` on the existing fixture matrices. That
-is the executable witness for `exactDiv_int_eq`, and the regression guard for
-the claim that the `Int` specialization is value-preserving. It is the only
-generic-path conformance available at this depth: `Int` is the sole carrier with
-an `ExactDivLaws` instance in scope below `hex-bareiss`, since the `DensePoly`
-instance lives in `hex-resultant` above it. Conformance for a genuinely
-different carrier belongs to the library that first instantiates it.
+`conformance/HexBareiss/Conformance.lean` gains two kinds of guard.
+
+First, `bareissWith Hex.exactDiv M = bareiss M` on the existing fixture
+matrices: the executable witness for `exactDiv_int_eq`, and the regression guard
+for the claim that the `Int` specialization is value-preserving.
+
+Second, a genuinely different carrier. `Rat` qualifies and is available at this
+depth without new dependencies: `Lean.Grind.Field Rat` is a core instance, so
+`Hex.instExactDivLawsField` supplies `ExactDivLaws Rat`, and
+`Lean.Grind.Field Rat`, `ExactDivLaws Rat`, `DecidableEq Rat` and `Div Rat` all
+resolve with only `HexBareiss` and `HexBasic.ExactDiv` imported. Cover ordinary
+elimination, a row swap, a singular input, and `n = 0` and `n = 1`. The
+`DensePoly` carrier stays out of reach here, since its `ExactDivLaws` instance
+lives in `hex-resultant` above this library; conformance for it belongs to the
+library that first instantiates it.
 
 ### Manual changes
 

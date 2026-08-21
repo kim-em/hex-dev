@@ -19,12 +19,40 @@ exactly as specified in
 (quot : R → R → R) (hquot : ∀ a b : R, b ≠ 0 → quot (a * b) b = a)
 ```
 
-There is no `IsDomain`, `NoZeroDivisors` or nontriviality hypothesis. The
-coefficient facts the development needs are all supplied by
-[`HexBasic/ExactDiv.lean`](https://github.com/leanprover/hex-basic/blob/main/HexBasic/ExactDiv.lean),
-and they apply verbatim under a Mathlib `CommRing`; the two instance paths to
-`Zero R` and `Mul R` agree, so `[CommRing R] [Div R] [Hex.ExactDivLaws R]` is a
-usable binder list with no diamond to work around.
+No public `IsDomain`, `NoZeroDivisors` or nontriviality hypothesis appears. The
+coefficient facts the development needs are supplied by
+[`HexBasic/ExactDiv.lean`](https://github.com/leanprover/hex-basic/blob/main/HexBasic/ExactDiv.lean)
+and apply under a Mathlib `CommRing`: the two instance paths to `Zero R` and
+`Mul R` agree, so `[CommRing R] [Div R] [Hex.ExactDivLaws R]` is a usable binder
+list with no diamond to work around.
+
+Those lemmas are stated over `[Div R] [Hex.ExactDivLaws R]`, though, and the
+generic theorems here carry only the unbundled `quot` and `hquot`. They do not
+apply directly; the package is built locally inside each proof that needs it:
+
+```lean
+letI : Div R := ⟨quot⟩
+haveI : Hex.ExactDivLaws R := ⟨hquot⟩
+```
+
+The derived facts (`mul_ne_zero`, `mul_right_cancel`) do not mention `/`, so the
+local `Div` never escapes into a statement.
+
+**One `IsDomain` instance is constructed, not assumed.**
+`det_eq_zero_of_bareiss_failed_column` closes the failed-pivot branch through
+Mathlib's `Matrix.exists_mulVec_eq_zero_iff`, which is stated for
+`[CommRing A] [IsDomain A]`. In the nontrivial branch:
+
+```lean
+theorem isDomain_of_quot [CommRing R] (quot : R → R → R)
+    (hquot : ∀ a b : R, b ≠ 0 → quot (a * b) b = a) (h1 : (1 : R) ≠ 0) :
+    IsDomain R
+```
+
+built from `Nontrivial R` (out of `h1`) and `NoZeroDivisors R` (out of the
+derived `mul_ne_zero`), then `NoZeroDivisors.to_isDomain`. It is a `haveI`
+inside that one proof and never a binder on a public statement, which is what
+makes "no public `IsDomain` hypothesis" true rather than a slogan.
 
 `Int.mul_eq_zero` is the only named `Int` lemma this library uses today. Three
 further places rely on `Int` being concrete, and each has a replacement:
@@ -64,8 +92,7 @@ def NonzeroBareissPivots [CommRing R] (M : Hex.Matrix R n n) : Prop :=
       (Hex.Matrix.principalSubmatrix M (k.val + 1) (Nat.succ_le_of_lt k.isLt)) ≠ 0
 
 structure BareissNoPivotInvariant [CommRing R]
-    (quot : R → R → R) (source : Hex.Matrix R n n)
-    (state : Hex.Matrix.BareissState R n) : Prop
+    (source : Hex.Matrix R n n) (state : Hex.Matrix.BareissState R n) : Prop
 
 theorem bareissNoPivotWith_eq_det [CommRing R] [DecidableEq R]
     (quot : R → R → R) (hquot : ∀ a b : R, b ≠ 0 → quot (a * b) b = a)
@@ -74,8 +101,14 @@ theorem bareissNoPivotWith_eq_det [CommRing R] [DecidableEq R]
 ```
 
 `NonzeroBareissPivots` is unchanged in content: every leading principal minor up
-to size `n` is nonzero. The invariant gains `quot` because the state it
-constrains is produced by `noPivotLoopWith quot`.
+to size `n` is nonzero.
+
+`BareissNoPivotInvariant` stays **quotient-independent**. Its five fields
+(`singular_none`, `step_le`, `prevPivot_eq`, `prevPivot_ne`, `trailing_eq`) are
+purely relational between `source` and `state`, and the state stores no
+quotient, so parameterizing the invariant by `quot` would add an argument no
+field mentions. `quot` and `hquot` belong on the step and loop *preservation*
+lemmas, which are the statements that actually run `stepMatrixWith quot`.
 
 ## Headline correspondence theorems
 
@@ -98,8 +131,10 @@ case, and the zero-pivot branch is turned into `det M = 0` rather than being
 excluded. `bareissWith_eq_mathlib_det` is `bareissWith_eq_det` composed with
 `det_eq` (from `hex-determinant-mathlib`), so it holds outright.
 
-**`Int` corollaries.** Today's four public theorems keep their names, statements
-and hypothesis-free form:
+**`Int` corollaries.** Today's four public theorems keep their names and
+statements verbatim, and gain no new coefficient hypotheses.
+`bareissNoPivot_eq_det` keeps the `NonzeroBareissPivots` premise it already has;
+the other three remain premise-free:
 
 ```lean
 theorem bareissNoPivot_eq_det (M : Hex.Matrix Int n n) (h : NonzeroBareissPivots M) :
@@ -171,6 +206,11 @@ use of the surrounding lemmas is unaffected. Renaming away from
 `bareissExactDiv…` is deliberate: the operation is no longer fixed to
 `exactDiv`, and a five-qualifier name that restates its call site is the naming
 smell the project conventions call out.
+
+Because that declaration is described by name in
+[hex-determinant-mathlib §Desnanot-Jacobi: the four public forms](https://github.com/leanprover/hex-determinant-mathlib/blob/main/SPEC/hex-determinant-mathlib.md),
+the implementation owes that SPEC a matching amendment. It is deliberately not
+amended ahead of the code: today it describes what is actually there.
 
 Both `CorePlucker.lean` consumers of `desnanot_jacobi_borderedMinor`
 (`HexBareissMathlib/Bareiss.lean` and `HexGramSchmidtMathlib/Int/Augmented.lean`)
