@@ -53,7 +53,7 @@ enumeration runs over monic factors of two coefficient polynomials, and
 that factorization is the one place this library consumes it.
 
 What the tree does not have: an executable rational-function type, any
-`Nat → ℚ` summation helper, and any statement about `Nat.choose` or
+`Int → ℚ` summation helper, and any statement about `Nat.choose` or
 `Nat.factorial` ratios. The first is deliberately not introduced here
 either (see "Corrections" below); the second lives in this library; the
 third lives in the companion.
@@ -171,9 +171,10 @@ Not in scope:
   Celine, Wegschaider), and **the continuous analogue**
   (Almkvist-Zeilberger for integrals). Each is a separate certificate
   language over a different ratio field.
-- **Bilateral and ℤ-indexed sums.** Sequences here are `Nat`-indexed
-  and sums run over `Finset.range`. Two-sided support is future work
-  and changes only the semantics layer, not the checkers.
+- **Infinite bilateral sums.** Sequences are `ℤ`-indexed and sums run
+  over finite integer intervals, so two-sided finite ranges are
+  native; a sum with infinite support is a limit statement and out of
+  scope.
 
 ## Corrections to the future-work entry
 
@@ -225,10 +226,12 @@ holds for **all** naturals `n, k`: for `k < n` it is the usual ratio,
 at `k = n` both sides are `n − k = 0` times a value, and for `k > n`
 both binomials vanish. The quotient form fails at `k = n` (division by
 `C(n, n+1) = 0`) which is precisely the boundary the definite-sum
-telescoping must cross. The companion's ratio kit proves this identity
-and its shift-in-`n` twin from Mathlib's `Nat.choose_succ_right_eq` and
-`Nat.succ_mul_choose_eq` with a case split on `k ≤ n`; consumers of
-this library never see the case split.
+telescoping must cross. With the ℤ-extended binomial of the
+companion's kit the same multiplied identity holds at *every pair of
+integers*, including negative upper argument, so the kit's ratio
+lemmas carry no case split at all; the one case analysis (relating the
+ℤ-extension to `Nat.choose` on `0 ≤ k`) is done once, inside the shim
+pack, and consumers of this library never see it.
 
 **Variables and parameters.** All certificate polynomials live in
 `MvPoly ν Rat cmp` at a fixed monomial order, with a fixed variable
@@ -385,16 +388,23 @@ certificates that mention it.
 
 ## Semantics over ℚ
 
-The Mathlib-free semantics is stated for `ℚ`-valued sequences. The
-range-sum helper matches `Finset.range`:
+The Mathlib-free semantics is stated for `ℚ`-valued sequences
+**indexed by `ℤ`**, summed over half-open integer intervals. The
+prior art is unanimous on the index type: apery built a ℤ-extended
+binomial and a bespoke ℤ-indexed bigop library because the shift
+reindexing under `n ↦ n + j`, `k ↦ k + 1` is where a ℕ-indexed
+development bleeds truncated-subtraction case splits, and Harrison
+paid in limit arguments for staying on ℕ. The checkers are indifferent
+(a polynomial identity has no index type); only this layer and the
+companion see the choice.
 
 ```lean
-/-- `sumRange f m = f 0 + f 1 + ⋯ + f (m−1)`. -/
-def sumRange (f : Nat → Rat) (m : Nat) : Rat
+/-- `∑_{a ≤ i < b} f i`; zero when `b ≤ a`. -/
+def sumIco (f : Int → Rat) (a b : Int) : Rat
 
 /-- Evaluate a certificate polynomial at recurrence variable `n`,
 summation variable `k`, and parameter vector `w`. -/
-def evalAt (f : MvPoly ν Rat cmp) (n k : Nat) (w : Vector Rat (ν - 2)) : Rat
+def evalAt (f : MvPoly ν Rat cmp) (n k : Int) (w : Vector Rat (ν - 2)) : Rat
 ```
 
 `evalAt` is `MvPoly.eval` at the assignment fixed by the variable
@@ -405,22 +415,23 @@ pointwise rational identity.
 ### Telescoping soundness (Gosper)
 
 ```lean
-theorem sumRange_eq_of_checkGosper {c : GosperCert ν}
+theorem sumIco_eq_of_checkGosper {c : GosperCert ν}
     (hc : checkGosper c = true) (w : Vector Rat (ν - 2))
-    (t : Nat → Rat) (m : Nat)
-    (hratio : ∀ k < m, evalAt c.r.den 0 k w * t (k+1)
-                     = evalAt c.r.num 0 k w * t k)
-    (hq : ∀ k < m, evalAt c.r.den 0 k w ≠ 0)
-    (hv : ∀ k ≤ m, evalAt c.v 0 k w ≠ 0) :
-    sumRange t m
-      = evalAt c.u 0 m w / evalAt c.v 0 m w * t m
-      − evalAt c.u 0 0 w / evalAt c.v 0 0 w * t 0
+    (t : Int → Rat) (a b : Int)
+    (hratio : ∀ k, a ≤ k → k < b → evalAt c.r.den 0 k w * t (k+1)
+                                 = evalAt c.r.num 0 k w * t k)
+    (hq : ∀ k, a ≤ k → k < b → evalAt c.r.den 0 k w ≠ 0)
+    (hv : ∀ k, a ≤ k → k ≤ b → evalAt c.v 0 k w ≠ 0) :
+    sumIco t a b
+      = evalAt c.u 0 b w / evalAt c.v 0 b w * t b
+      − evalAt c.u 0 a w / evalAt c.v 0 a w * t a
 ```
 
-The proof shape: evaluate the checker identity at each `k < m` (the
-evaluation homomorphism), divide by the three nonvanishing values to
-recover `G(k+1) − G(k) = t k` for `G(k) = (u/v)(k) · t k`, and
-telescope by induction on `m`. Division here is `ℚ` field division;
+The proof shape: evaluate the checker identity at each `k ∈ [a, b)`
+(the evaluation homomorphism), divide by the three nonvanishing values
+to recover `G(k+1) − G(k) = t k` for `G(k) = (u/v)(k) · t k`, and
+telescope by induction on `(b − a).toNat`. Division here is `ℚ` field
+division;
 the junk value at zero never arises because the hypotheses exclude it
 pointwise. All of this is `Rat` arithmetic and `grind`-level algebra,
 with no Mathlib tactic in reach and none needed.
@@ -431,25 +442,26 @@ Two layers, pointwise then summed:
 
 ```lean
 theorem telescoped_of_checkZeilberger {c : ZeilbergerCert ν}
-    (hc : checkZeilberger c = true) (w) (F : Nat → Nat → Rat) (n K : Nat)
-    (hk : ∀ k ≤ K, ∀ j ≤ c.d,   -- k-ratio at row n+j, and n-ratio between rows
+    (hc : checkZeilberger c = true) (w) (F : Int → Int → Rat) (n a b : Int)
+    (hk : ∀ k, a ≤ k → k < b → ∀ j ≤ c.d,   -- k-ratio at row n+j, n-ratio between rows
         ⟨multiplied ratio facts for F at the visited points⟩)
     (hnz : ⟨pointwise nonvanishing of rk.den, shiftNⁱ rn.den (i < d), v,
            at the visited points⟩) :
-    ∑ⱼ evalAt (c.a[j]) n 0 w * sumRange (F (n + j)) (K + 1)
-      = G n (K + 1) − G n 0
+    ∑ⱼ evalAt (c.a[j]) n 0 w * sumIco (F (n + j)) a b
+      = G n b − G n a
 ```
 
 with `G n k = evalAt c.u n k w / evalAt c.v n k w * F n k`. The
 hypothesis lists are abbreviated here; the SPEC commits to the exact
 visited-point sets being the minimal ones the pointwise derivation
 uses, and to the theorem being stated with explicit boundary terms.
-**No vanishing of `G` at the boundary is assumed.** `G n 0` is rarely
-zero and `G n (K+1)` is zero only when the summand vanishes past its
+**No vanishing of `G` at the boundary is assumed.** `G n a` is rarely
+zero and `G n b` is zero only when the summand vanishes past its
 support; both facts belong to the consumer.
 
-On top of it, the natural-boundary corollary for `S(n) = ∑_{k≤n} F(n,k)`
-takes `K = n + c.d`, a vanishing hypothesis
+On top of it, the natural-boundary corollary for
+`S n = sumIco (F n) 0 (n + 1)` takes `a = 0`, `b = n + c.d + 1`, a
+vanishing hypothesis
 `∀ j ≤ d, ∀ k, n + j < k → k ≤ n + d → F (n+j) k = 0`, and concludes
 the pure recurrence
 
@@ -480,30 +492,34 @@ The lemma both the definite-sum pipeline and the `hyper` tactic finish
 with:
 
 ```lean
-theorem eq_of_recurrence (S C : Nat → Rat) (d n₀ : Nat)
-    (a : Array (Nat → Rat)) (ha : a.size = d + 1)
+theorem eq_of_recurrence (S C : Int → Rat) (d : Nat) (n₀ : Int)
+    (a : Array (Int → Rat)) (ha : a.size = d + 1)
     (hlead : ∀ n ≥ n₀, a[d] n ≠ 0)
     (hS : ∀ n ≥ n₀, ∑ⱼ a[j] n * S (n + j) = 0)
     (hC : ∀ n ≥ n₀, ∑ⱼ a[j] n * C (n + j) = 0)
-    (hinit : ∀ n < n₀ + d, S n = C n) :
-    ∀ n, S n = C n
+    (hinit : ∀ n, n₀ ≤ n → n < n₀ + d → S n = C n) :
+    ∀ n ≥ n₀, S n = C n
 ```
 
-Strong induction: for `n ≥ n₀ + d` the recurrence at `n − d` determines
-`S n` and `C n` from the previous `d` values because the leading
-coefficient is nonzero. The coefficients are abstract `Nat → Rat`
-functions here so the same lemma serves certificates (coefficients are
-polynomial evaluations) and hand-stated recurrences.
+Strong induction on `(n − n₀).toNat`: for `n ≥ n₀ + d` the recurrence
+at `n − d` determines `S n` and `C n` from the previous `d` values
+because the leading coefficient is nonzero. Indices below `n₀` are not
+concluded (over `ℤ` there is no floor to induct from); the pipeline
+evaluates the finitely many indices below `n₀` a goal actually needs.
+The coefficients are abstract `Int → Rat` functions here so the same
+lemma serves certificates (coefficients are polynomial evaluations)
+and hand-stated recurrences.
 
 ### Hyper semantics
 
 ```lean
-/-- The sequence with ratio `p/q` from `y n₀ = 1`, extended by the
-recursion `y (n+1) = eval p n / eval q n * y n`. -/
-def ofRatio (h : HyperCert ν) (w) (n₀ : Nat) : Nat → Rat
+/-- The sequence with ratio `p/q` from `y n₀ = 1`, extended upward by
+the recursion `y (n+1) = eval p n / eval q n * y n`, and `0` below
+`n₀`. -/
+def ofRatio (h : HyperCert ν) (w) (n₀ : Int) : Int → Rat
 
 theorem ofRatio_recurrence {h : HyperCert ν} (hc : checkHyper h = true)
-    (w) (n₀ : Nat)
+    (w) (n₀ : Int)
     (hnz : ∀ n ≥ n₀, evalAt h.p n 0 w ≠ 0 ∧ evalAt h.q n 0 w ≠ 0) :
     ∀ n ≥ n₀, ∑ⱼ evalAt (h.c[j]) n 0 w * ofRatio h w n₀ (n + j) = 0
 
@@ -544,8 +560,9 @@ and `k = n + s`, each univariate linear in `n`:
 structure LinearFactor where
   a b c : Int      -- a·n + b·k + c
 
-/-- Decidable: `a n + b k + c ≠ 0` for all `n ≥ n₀`, `0 ≤ k ≤ n + s`. -/
-def LinearFactor.nonvanishingOn (ℓ : LinearFactor) (n₀ s : Nat) : Bool
+/-- Decidable: `a n + b k + c ≠ 0` for all integer `n ≥ n₀`,
+`0 ≤ k ≤ n + s`. -/
+def LinearFactor.nonvanishingOn (ℓ : LinearFactor) (n₀ : Int) (s : Nat) : Bool
 
 theorem LinearFactor.nonvanishingOn_sound ...
 ```
@@ -664,9 +681,10 @@ explicit hypothesis for anything unproved:
 4. **Leading coefficient and thresholds.** `a_d(n) ≠ 0` for `n ≥ n₀`
    by the Cauchy bound; `n₀` is chosen past every bound and exceptional
    point in play.
-5. **Initial values.** `S n = C n` for `n < n₀ + d` by evaluation:
-   finitely many exact `ℚ` computations, closed by `decide` or
-   `norm_num`.
+5. **Initial values.** `S n = C n` for `n₀ ≤ n < n₀ + d`, and directly
+   for the indices `0 ≤ n < n₀` the goal covers below the threshold,
+   by evaluation: finitely many exact `ℚ` computations, closed by
+   `decide` or `norm_num`.
 6. **Conclusion.** `eq_of_recurrence`.
 
 A false identity submitted to this pipeline fails at step 5 with a
@@ -677,7 +695,13 @@ reports.
 
 Companion-side, `Qq`/`Lean.Meta`, in the reifier tradition of hex-rcf:
 it produces certificate-shaped data *plus the proofs linking it to the
-goal*, here the ratio hypotheses rather than a reflected sentence.
+goal*, here the ratio hypotheses rather than a reflected sentence. Its
+interpretation step builds the ℤ-indexed sequence
+`F : Int → Int → ℚ` from the kit's atoms (`zchoose` in place of
+`Nat.choose`, and so on) and proves it agrees pointwise with the
+goal's summand on the summation range through the shim pack; the ratio
+hypotheses and the semantics theorems are then about `F`, where every
+identity is caseless.
 
 **The closed class.** A summand is accepted when it is a product of
 integer powers (positive or negative) of: rational constants and
@@ -690,23 +714,36 @@ extensible; each atom contributes its multiplied-form shift ratios in
 `n` and `k` through one kit lemma per atom per direction.
 
 **The ratio kit** is the heart of the companion and independent of
-every algorithm: for each atom, cast lemmas of the shape
+every algorithm. Its base object is the ℤ-extended binomial
 
 ```lean
-theorem cast_choose_shiftK (n k : ℕ) :
-    ((k : ℚ) + 1) * (n.choose (k+1) : ℚ) = ((n : ℚ) − k) * (n.choose k : ℚ)
-theorem cast_choose_shiftN (n k : ℕ) :
-    ((n : ℚ) + 1 − k) * ((n+1).choose k : ℚ) = ((n : ℚ) + 1) * (n.choose k : ℚ)
-theorem cast_factorial_shift (k : ℕ) :
-    ((k+1).factorial : ℚ) = ((k : ℚ) + 1) * (k.factorial : ℚ)
+/-- `zchoose x k = x (x−1) ⋯ (x−k+1) / k!` for `0 ≤ k`, and `0` for
+`k < 0`. -/
+def zchoose (x : ℚ) (k : ℤ) : ℚ
 ```
 
-each valid at **all** naturals, the truncated-subtraction case analysis
-done once inside the kit. Inverted factors flip a ratio and add a
-pointwise nonvanishing obligation for the inverted atom
-(`C(n,k) ≠ 0` needs `k ≤ n`); the recognizer emits these as domain
-conditions and discharges the standard ones (`choose` positive on
-`0 ≤ k ≤ n`, factorial positive) from Mathlib.
+with the shim pack relating it to `Nat.choose` on the lattice,
+`zchoose_natCast : 0 ≤ k → zchoose (n : ℚ) (k : ℤ) = n.choose k` for
+naturals (valid including `k > n`, where both sides vanish), the one
+place the case analysis happens. On top of it, ratio lemmas valid at
+**every** integer pair with no side condition:
+
+```lean
+theorem zchoose_shiftK (x : ℚ) (k : ℤ) :
+    ((k : ℚ) + 1) * zchoose x (k+1) = (x − k) * zchoose x k
+theorem zchoose_shiftN (x : ℚ) (k : ℤ) :
+    (x + 1 − k) * zchoose (x+1) k = (x + 1) * zchoose x k
+```
+
+Factorial atoms are rewritten by the kit into `zchoose` and Pochhammer
+form; a reciprocal factorial extends by zero across negative
+arguments, while a factorial in the numerator carries a nonnegativity
+domain condition the recognizer discharges from the range bounds.
+Inverted factors flip a ratio and add a pointwise nonvanishing
+obligation for the inverted atom (`zchoose n k ≠ 0` needs
+`0 ≤ k ≤ n`); the recognizer emits these as domain conditions and
+discharges the standard ones (`choose` positive on `0 ≤ k ≤ n`,
+factorial positive) from Mathlib.
 
 **Support facts.** A `Nat.choose (n) (k)` factor with positive `k`-slope
 supplies vanishing past `k = n` via `Nat.choose_eq_zero_of_lt`, which is
@@ -833,7 +870,7 @@ certificate degree.
 | `checkGosper` | `O(1)` products at `M(δ, ν)` | five multiplications and one equality |
 | `checkZeilberger` | `O(d)` products at `M(δ + d, ν)` | building `Nⱼ`, `Qⱼ` dominates |
 | `checkHyper` | `O(d)` products at `M(δ + d, ν)` | |
-| `sumRange` replay | `O(m)` evaluations | per-point `evalAt` |
+| `sumIco` replay | `O(b − a)` evaluations | per-point `evalAt` |
 | GP normal form | one resultant + `O(|J|)` gcds | untrusted |
 | `gosper?` | linear solve, `O(δ³)` field ops | hex-row-reduce at `Rat` |
 | `zeilberger?` | `∑_{d' ≤ d}` parametrized solves | coefficient growth in `n` is the practical bottleneck |
@@ -879,9 +916,9 @@ Cases that must be present:
   hex-primality's rejected-certificate fixtures are.
 - Boundary-behaviour identities: a summand vanishing at interior
   points of the range (binomial with an upper cutoff inside the
-  range), the empty range `m = 0`, and a sum whose closed form has a
-  removable exceptional index at small `n`, pinning the `n₀` /
-  initial-values machinery.
+  range), the empty range `b ≤ a`, a two-sided range crossing zero,
+  and a sum whose closed form has a removable exceptional index at
+  small `n`, pinning the `n₀` / initial-values machinery.
 - `identity` fixtures evaluating each accepted certificate's sum
   exactly at `n ≤ 30` including every exceptional index.
 
@@ -944,19 +981,22 @@ certificates' polynomial identities are checked on the Hex side and
 never transported to `Polynomial` or `MvPolynomial`, so no
 `*-poly-mathlib` equivalence is needed. Its content:
 
-- `sumRange_cast`: `((sumRange f m : ℚ) : K) = ∑ k ∈ Finset.range m, (f k : K)`
-  for `[DivisionRing K] [CharZero K]`, and the statements of the main
-  theorems over such `K`, obtained by casting the `ℚ` identity. Goals
-  over `ℝ` and `ℂ` cost one cast lemma, not a second proof.
+- `sumIco_cast`: `((sumIco f a b : ℚ) : K) = ∑ k ∈ Finset.Ico a b, (f k : K)`
+  for `[DivisionRing K] [CharZero K]`, the `Finset.range` transfer
+  (`∑ k ∈ Finset.range m, g k = sumIco F 0 m` given pointwise
+  agreement of `g` and `F` on `[0, m)`), and the statements of the
+  main theorems over such `K`, obtained by casting the `ℚ` identity.
+  Goals over `ℝ` and `ℂ` cost one cast lemma, not a second proof.
 - The ratio kit and the recognizer, as above.
 - The definite-sum pipeline lemmas, as above.
 - The three tactics and the two suggestion forms.
 
 Two Mathlib-facing notes, both to verify at implementation time
 against the Mathlib revision then current: `Ring.choose`
-(`Mathlib.RingTheory.Binomial`) is the ℤ-extended binomial a later
-extension of the recognizer would target, and nothing in this SPEC
-depends on its present shape; and no `norm_num` extension is
+(`Mathlib.RingTheory.Binomial`) overlaps `zchoose` where its lower
+index (a natural) is defined, and whether `zchoose` is defined on top
+of it or standalone with a compatibility lemma is an implementation
+choice, not an interface one; and no `norm_num` extension is
 registered, because a summation identity is not a numeral fact, so
 there is no analogue of hex-primality's `norm_num` interoperation
 here.
@@ -972,7 +1012,7 @@ here.
    assumes it.
 
 1. **Gosper certificates.** `Ratio`, `shiftK`/`shiftN`, `GosperCert`,
-   `checkGosper`, `sumRange`, `evalAt`, `sumRange_eq_of_checkGosper`,
+   `checkGosper`, `sumIco`, `evalAt`, `sumIco_eq_of_checkGosper`,
    the Cauchy bound and `LinearFactor` devices, and hand-written
    certificate fixtures for `∑ k·k!` and `∑ 1/(k(k+1))`. The
    checker-first deliverable the future-work entry asks for.
@@ -991,8 +1031,9 @@ here.
    conformance drivers and both oracles, including the CI install
    amendment for sympy.
 
-4. **The companion pipeline and tactics.** `sumRange_cast` and the
-   `K`-statements, the ratio kit, the recognizer with its
+4. **The companion pipeline and tactics.** `sumIco_cast`, the
+   `Finset.range` transfer, and the `K`-statements; `zchoose` with
+   its shim pack; the ratio kit; the recognizer with its
    fall-through list, the definite-sum pipeline, `gosper`,
    `zeilberger`, and the suggestion forms. The library's user-visible
    payoff lands here.
@@ -1009,7 +1050,7 @@ HexSummation/
   GosperCert.lean   -- GosperCert, checkGosper
   ZeilbergerCert.lean -- ZeilbergerCert, checkZeilberger, Nⱼ/Qⱼ assembly
   HyperCert.lean    -- HyperCert, checkHyper
-  Telescope.lean    -- sumRange, evalAt, Gosper soundness
+  Telescope.lean    -- sumIco, evalAt, Gosper soundness
   Recurrence.lean   -- summed telescoping, corollaries, eq_of_recurrence
   Bound.lean        -- cauchyBound, LinearFactor, factored denominators
   OfRatio.lean      -- ofRatio and its theorems
@@ -1020,8 +1061,8 @@ HexSummation/
   HyperSearch.lean  -- hyperSolve (search)
 HexSummation.lean
 HexSummationMathlib/
-  Semantics.lean    -- sumRange_cast, K-statements
-  RatioKit.lean     -- choose/factorial/ascPochhammer ratio lemmas
+  Semantics.lean    -- sumIco_cast, range transfer, K-statements
+  RatioKit.lean     -- zchoose and its shim pack, ratio lemmas
   Recognize.lean    -- the term-class recognizer
   DefiniteSum.lean  -- the certificate-to-identity pipeline
   Gosper.lean       -- the gosper tactic and gosper?
@@ -1071,17 +1112,11 @@ HexSummationMathlib.lean
   of the future-work "certificate serialization and caching" item is
   decided by that item, and this library is a natural second case
   study after hex-conway.
-- **Bilateral sums and ℤ-indexing.** The `Nat`-indexed,
-  `Finset.range` design covers the stated consumers, and the
-  multiplied ratio form is what makes it viable where the quotient
-  form would not be. The prior art leans the other way: apery built a
-  ℤ-extended `binomialz` and a bespoke ℤ-indexed bigop library, and
-  Harrison summed over `ℕ` only by proving limit facts he could not
-  get for `k < 0`. If the `Nat` design starts accumulating case
-  splits the kit cannot absorb, the recorded fallback is an
-  `Int`-indexed semantics twin with the ℤ-extended binomial
-  (`Ring.choose` or a Hex-side equivalent); the checkers are
-  unchanged either way.
+- **Where the ℤ-interval sum kit lives.** `sumIco` and its splitting
+  and reindexing lemmas are the Mathlib-free counterpart of apery's
+  bespoke `bigopz` library. They start here because this library is
+  their only consumer; a second Mathlib-free consumer of ℤ-interval
+  sums would argue for moving them down to hex-basic.
 - **The holonomic extension.** Closure properties for
   P-recursive sequences would subsume `eq_of_recurrence` and give
   Zeilberger a home as one closure instance; the future-work entry's
