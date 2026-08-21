@@ -417,6 +417,11 @@ private def settledRoot? : Option (Search.Leaf Nat Nat Nat × Search.LeafFrontie
       | .error _ => false
   | none => false
 
+#guard match settledRoot? with
+  | some (_, state) =>
+      searchError .invalidSession <| Search.settleWithin searchLimits state
+  | none => false
+
 private def nested? (order : Search.Order) :
     Option (Search.LeafFrontier Nat Nat Nat) := do
   let root <- leaf 0 0 0
@@ -510,6 +515,29 @@ private def wrongChildScopeError : Option Search.Error := do
   | .error error => some error
   | .ok _ => none
 
+private def wrongRightScopeError : Option Search.Error := do
+  let root <- leaf 0 0 0
+  let .ok state := Search.startFrontierWithin stateLimits searchLimits root | none
+  let parent := root.asParent
+  let left <- leaf 1 1 1 (some parent)
+  let right <- leaf 3 1 2 (some parent)
+  match Search.splitWithin stateLimits searchLimits .depthFirst state left right with
+  | .error error => some error
+  | .ok _ => none
+
+private def wrongRootDepthError : Option Search.Error := do
+  let root <- leaf 0 1 0
+  match Search.startFrontierWithin stateLimits searchLimits root with
+  | .error error => some error
+  | .ok _ => none
+
+private def parentedRootError : Option Search.Error := do
+  let parentLeaf <- leaf 9 0 9
+  let root <- leaf 0 0 0 (some parentLeaf.asParent)
+  match Search.startFrontierWithin stateLimits searchLimits root with
+  | .error error => some error
+  | .ok _ => none
+
 private def wrongChildDepthError : Option Search.Error := do
   let root <- leaf 0 0 0
   let .ok state := Search.startFrontierWithin stateLimits searchLimits root | none
@@ -560,6 +588,9 @@ private def secondSplitError (limits : Search.Limits) : Option Search.Error := d
 #guard malformedParentError == some .invalidSession
 #guard detachedParentError == some .invalidSession
 #guard wrongChildScopeError == some .invalidSession
+#guard wrongRightScopeError == some .invalidSession
+#guard wrongRootDepthError == some .invalidSession
+#guard parentedRootError == some .invalidSession
 #guard wrongChildDepthError == some .invalidSession
 #guard missingChildParentError == some .invalidSession
 #guard malformedChildBranchError == some .invalidSession

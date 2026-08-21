@@ -248,7 +248,9 @@ opaque splitHeadWithin (limits : Limits) (order : Order) (state : FrontierState 
 end FrontierState
 
 /-- An ordinary-import-sealed live search session. `startWithin` is the public
-reset point for a new run; later transitions preserve its cumulative steps. -/
+reset point for a new run; later transitions preserve its cumulative steps.
+The checked `Envelope` is supplied per call rather than retained in the value,
+so a later transition may use different, including tighter, limits. -/
 structure Session (Fact Cause OfferId SemanticKey : Type) where
   private mk ::
   branch : State.Branch Fact Cause

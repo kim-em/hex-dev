@@ -3135,6 +3135,10 @@ cap. The same preflight enforces operation/node/rule/arity/depth, matcher-batch,
 effort, generation, application, equality, and accepted-fact limits with the
 exact State resource class.
 
+The checked `Envelope` is supplied to each session transition and is not stored
+inside the session value. A later call may supply different, including tighter,
+limits while the cumulative accepted-step count remains part of the session.
+
 The current supported session retains generation stamps for compact
 `ApplicationId`s but not the concrete application table compiled by the
 experimental controller. Search therefore treats the compact identifier as an

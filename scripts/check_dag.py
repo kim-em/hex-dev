@@ -181,6 +181,31 @@ def project_lean_files(root: Path) -> list[Path]:
     return sorted(files)
 
 
+def check_sealed_import_all(root: Path, files: list[Path]) -> list[str]:
+    """Reject trusted-internals imports outside exact reviewed owning paths.
+
+    This scan deliberately covers every project Lean file, including roots such
+    as ``conformance/`` and ``bench/`` which have no library DAG owner.
+    """
+    errors = []
+    for rel_path in files:
+        path = root / rel_path
+        for line_no, line in enumerate(
+            path.read_text(encoding="utf-8").splitlines(), start=1
+        ):
+            import_all = IMPORT_ALL_RE.match(line.split("--", 1)[0].rstrip())
+            if not import_all:
+                continue
+            module = import_all.group(1)
+            allowed = SEALED_IMPORT_ALL_ALLOWLIST.get(module)
+            if allowed is not None and rel_path not in allowed:
+                errors.append(
+                    f"{rel_path}:{line_no} uses `import all {module}` outside its "
+                    "exact trusted-internals allowlist"
+                )
+    return errors
+
+
 def import_roots(line: str) -> list[str]:
     match = IMPORT_RE.match(line.split("--", 1)[0].rstrip())
     if not match:
@@ -236,21 +261,15 @@ def main() -> int:
     )
     errors.extend(check_umbrella_completeness(root, libraries, build_roots))
 
-    for rel_path in project_lean_files(root):
+    lean_files = project_lean_files(root)
+    errors.extend(check_sealed_import_all(root, lean_files))
+
+    for rel_path in lean_files:
         owner = library_owner_for_path(rel_path, libraries)
         if owner is None:
             continue
         path = root / rel_path
         for line_no, line in enumerate(path.read_text(encoding="utf-8").splitlines(), start=1):
-            import_all = IMPORT_ALL_RE.match(line.split("--", 1)[0].rstrip())
-            if import_all:
-                module = import_all.group(1)
-                allowed = SEALED_IMPORT_ALL_ALLOWLIST.get(module)
-                if allowed is not None and rel_path not in allowed:
-                    errors.append(
-                        f"{rel_path}:{line_no} uses `import all {module}` outside its "
-                        "exact trusted-internals allowlist"
-                    )
             for imported_root in import_roots(line):
                 if imported_root == owner:
                     continue
