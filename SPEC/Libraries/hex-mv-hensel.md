@@ -456,8 +456,14 @@ and preserves them exactly, which is what makes every correction equation
 solvable.
 
 ```lean
-/-- The starting factor: the univariate image with its leading
-coefficient replaced by the intended multivariate one. -/
+/-- Replace the coefficient of `x_i ^ degreeOf i p` in `p` by `L`. -/
+def setLc (i : Fin (n+1)) (cmp' : Mono n → Mono n → Ordering)
+    [IsMonomialOrder cmp'] (L : MvPoly n Int cmp')
+    (p : MvPoly (n+1) Int cmp) : MvPoly (n+1) Int cmp
+
+/-- The starting factor: the univariate image embedded as a polynomial
+constant in the non-main variables, with its leading coefficient replaced
+by `L`. -/
 def seed (i : Fin (n+1)) (cmp' : Mono n → Mono n → Ordering)
     [IsMonomialOrder cmp'] (L : MvPoly n Int cmp') (F : ZPoly) :
     MvPoly (n+1) Int cmp
@@ -468,48 +474,60 @@ polynomial whose degree-`k` coefficient is `constIn (F.coeff k)` for
 `k < F.degree` and `L` at `k = F.degree`. Under V4 it satisfies
 
 ```lean
-theorem imageAt_seed  : imageAt i cmp' a (seed i cmp' L F) = F
-theorem lcIn_seed     : lcIn i cmp' (seed i cmp' L F) = L
-theorem degreeOf_seed : degreeOf i (seed i cmp' L F) = F.degree
+theorem imageAt_seed  (h : MvPoly.eval a L = F.leadingCoeff) :
+    imageAt i cmp' a (seed i cmp' L F) = F
+theorem lcIn_seed     (h : L ≠ 0) : lcIn i cmp' (seed i cmp' L F) = L
+theorem degreeOf_seed (h : L ≠ 0) : degreeOf i (seed i cmp' L F) = F.degree
 ```
 
-and the first of these is exactly where `eval a L = F.leadingCoeff` is
-used.
+and the hypothesis on the first is exactly V4's second condition.
 
-**The invariant.** Every factor the lift ever holds satisfies
+**The invariant, and what installs it.** Write `L_j|_t` for `L_j` with
+the not-yet-introduced variables `y_{t+1}, …, y_n` set to zero. Every
+factor the lift holds during stage `t` satisfies
 
 ```text
-lcIn i cmp' F_j^{(k)} = L_j       (exactly, at every stage k)
-degreeOf i F_j^{(k)}  = deg F_j   (exactly, at every stage k)
+lcIn i cmp' F_j = L_j|_t        (exactly, at every step of stage t)
+degreeOf i F_j  = deg F_j       (exactly, at every step of stage t)
 ```
 
-because it starts true at the seeds and every correction added to `F_j`
-has degree in `x_i` strictly below `deg F_j`. That degree restriction is
-the same restriction V6 puts on `σ_j`, and it is not a coincidence: the
-corrections are the outputs of the diophantine solver, which produces
-exactly the degree-bounded solutions.
+A correction has degree in `x_i` strictly below `deg F_j`, so it can
+never change the leading coefficient. The `y_t`-dependence of the leading
+coefficient is therefore not lifted at all: it is **installed**, by one
+`setLc i cmp' (L_j|_t)` at the start of stage `t`, from the `L_j` the
+caller supplied. That assignment changes only terms carrying `y_t`, since
+`(L_j|_t)|_{y_t = 0} = L_j|_{t-1}`, so it preserves the stage-`t`
+precondition. At the start of stage `1`, `L_j|_0` is the constant
+`L_j(a) = lc F_j` and the assignment is `seed` itself. After the last
+stage `L_j|_n` is `L_j`.
+
+Leaving the leading coefficient to be produced by the corrections is not
+an option, and this is the single most common way to get multivariate
+Hensel lifting wrong: the corrections are degree-bounded below
+`deg F_j` precisely so that they cannot, and relaxing that bound breaks
+the solvability argument below.
 
 **Why this makes the correction equations solvable.** With the invariant
-in force,
+in force, at every step of stage `t`,
 
 ```text
-lcIn i cmp' (∏_j F_j^{(k)}) = ∏_j L_j = lcIn i cmp' f
+lcIn i cmp' (∏_j F_j) = ∏_j (L_j|_t) = (∏_j L_j)|_t = lcIn i cmp' f_t
 ```
 
-by V4, so the leading `x_i`-coefficients of `f` and of the current
-product cancel identically, and
+by V4, so the leading `x_i`-coefficients of `f_t` and of the current
+product cancel identically. Both have `x_i`-degree exactly `d₁`, since
+`lcIn f_t` evaluates at `a` to `lcIn(f)(a) ≠ 0` by V2, so
 
 ```text
-degreeOf i (f - ∏_j F_j^{(k)}) < d₁ = deg (∏_j F_j) .
+degreeOf i (f_t - ∏_j F_j) < d₁ = deg (∏_j F_j) .
 ```
 
-The right-hand side of every diophantine problem is a homogeneous
-component of that difference, so it inherits the strict degree bound, and
-"The correction equations" shows the degree-bounded partial-fraction map
-is a bijection onto exactly the polynomials with that bound. Drop the
-leading-coefficient contract and the error can have degree `d₁` in `x_i`,
-which is outside the image of that map, and the lift stalls on a correct
-input.
+The right-hand side of every diophantine problem is a coefficient of that
+difference, so it inherits the strict degree bound, and "The univariate
+solve" shows the degree-bounded partial-fraction map is a bijection onto
+exactly the polynomials with that bound. Drop the leading-coefficient
+contract and the error can have degree `d₁` in `x_i`, which is outside
+the image of that map, and the lift stalls on a correct input.
 
 **Where the `L_j` come from, and what to do when they cannot be found.**
 Wang's method factors `lcIn i cmp' f` multivariately, then uses the
@@ -543,8 +561,10 @@ precondition is
 ∏_j F_j ≡ f_{t-1}   (mod q),   and every F_j involves only x_i, y_1, …, y_{t-1}.
 ```
 
-Stage `t` restores the same statement one index up, running
-`k = 0, 1, …, d_t - 1`:
+Stage `t` restores the same statement one index up. It first installs the
+leading coefficients for this stage, `F_j ← setLc i cmp' (L_j|_t) F_j`,
+which changes only terms carrying `y_t` and so preserves the
+precondition. Then it runs `k = 0, 1, …, d_t - 1`:
 
 - Form the error `E = f_t - ∏_j F_j`, reduced modulo `q` and truncated to
   the degree bounds `d`.
@@ -918,9 +938,9 @@ through V6 along this chain:
    second is used again in `solveUni_unique`.
 3. V1's `deg F_j ≥ 1` makes the degree bound `deg τ_j < deg F_j`
    satisfiable, and `r ≥ 2` makes `b_j` a nontrivial product.
-4. V4 fixes `lcIn (seed …) = L_j` and `∏_j L_j = lcIn f`, so the
-   `x_i`-leading coefficients cancel identically at every stage and
-   `degreeOf i (f - ∏_j F_j) < d₁`. That is the hypothesis
+4. V4 fixes `lcIn F_j = L_j|_t` through `setLc` and `∏_j L_j = lcIn f`,
+   so the `x_i`-leading coefficients cancel identically at every stage
+   and `degreeOf i (f_t - ∏_j F_j) < d₁`. That is the hypothesis
    `solveUni_spec` needs on its right-hand side, so it is the
    leading-coefficient contract that makes the correction equations
    solvable rather than merely well-typed.
@@ -1039,6 +1059,7 @@ structure Cert (n : Nat) (cmp)
 structure Config
 inductive Failure
 def Setup.modulus : Setup n → Nat
+def setLc      (i : Fin (n+1)) (cmp') : MvPoly n Int cmp' → MvPoly (n+1) Int cmp → MvPoly (n+1) Int cmp
 def seed       (i : Fin (n+1)) (cmp') : MvPoly n Int cmp' → ZPoly → MvPoly (n+1) Int cmp
 def witnessOf? (s : Setup n) (images : List ZPoly) : Option (List ZPoly)
 def coeffBound (inp : Input n cmp cmp') : Nat
@@ -1291,7 +1312,7 @@ only the inequality it feeds crosses the boundary.
 Following the project split, no other mathematical theorem about
 `MvPoly` belongs in the companion, plus one correspondence lemma per
 public semantic operation: `shift`, `imageAt`, `lcIn`, `truncate`,
-`seed`, `solveUni`, `diophantine`, and `lift`.
+`seed`, `setLc`, `solveUni`, `diophantine`, and `lift`.
 
 ## Future extension: sparse Hensel lifting
 
@@ -1333,8 +1354,9 @@ the gap in the meantime.
    on variables, and `diophantine_spec`. The route-level tests for the
    degree bounds are written before the code.
 
-4. **The lift.** `Setup`, `Input`, `Cert`, `Failure`, `seed`, `valid`,
-   the stage loop with its truncation bookkeeping, `reconstruct`, `lift`,
+4. **The lift.** `Setup`, `Input`, `Cert`, `Failure`, `setLc`, `seed`,
+   `valid`, the stage loop with its truncation bookkeeping,
+   the per-stage leading-coefficient installation, `reconstruct`, `lift`,
    `liftWith`, `check`, `check_sound`, `lift_checks`, and
    `lift_progress`. This is the first usable release.
 
@@ -1357,7 +1379,7 @@ HexMvHensel/
   Modulus.lean      -- reduceMod, SymCanonical, CongrAt, coeffBound
   Uni.lean          -- solveUni, witnessOf?, the p-adic tuple lift
   Diophantine.lean  -- the multivariate solver and its recursion
-  Seed.lean         -- seed, Setup/Input/Failure, valid
+  Seed.lean         -- setLc, seed, Setup/Input/Failure, valid
   Lift.lean         -- the stage loop, reconstruction, lift, liftWith
   Cert.lean         -- Cert, check, soundness, uniqueness, irreducibility
 HexMvHensel.lean
