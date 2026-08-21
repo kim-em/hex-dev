@@ -58,10 +58,10 @@ Named consumers:
   dependent generators. The dependency runs from this library to
   `hex-lll`'s vocabulary rather than the other way; see "Prerequisite
   changes in other libraries".
-- The **polynomial-matrix invariant factors** item in
-  [future-work](../future-work.md), which needs the same algorithm shape
-  over `F[x]`. That is not this library; see "Why `Int` and not a
-  Euclidean domain class".
+- **hex-poly-smith**, which needs the same algorithm shape over `F[x]`.
+  That is not this library, and it does not depend on this one either;
+  see "Why `Int` and not a Euclidean domain class" below, and
+  [hex-poly-smith](hex-poly-smith.md) for the completed comparison.
 
 ## The convention this library fixes
 
@@ -655,9 +655,16 @@ A class that abstracts only the elimination step buys one function and
 costs an indirection on a path that has to reduce cheaply. The
 generalisation becomes worth doing when the `F[x]` consumer exists and
 its normalisation and growth story is written down, not before.
-[future-work](../future-work.md) says the same thing in the other
-direction: the two items "share an algorithm shape rather than a
-theorem".
+
+That story is now written down, in
+[hex-poly-smith](hex-poly-smith.md), and it closes the question rather
+than answering it in favour of the class. With both sides specified the
+shared surface is one function shape, and even that function differs:
+the polynomial step folds the monic normalisation into the same 2x2
+matrix, while the integer step gets its normalisation from `extGcd`'s
+return type. The two libraries share no theorem statement, because the
+uniqueness argument mentions `Nat` on one side and `DensePoly F` on the
+other.
 
 ## Complexity
 

@@ -37,9 +37,9 @@ coordinates. Its genuinely new uses are:
 - **A canonical factorisation of the index.** Hermite already computes the
   index. Smith proves that a finite index is `∏ dᵢ`, recording how that
   order decomposes rather than introducing a second index algorithm.
-- **Invariant factors of a module map**, which is what the polynomial
-  matrix item in [future-work](../future-work.md) wants over `F[x]`
-  rather than `ℤ`. That item is not this library; see "Why `Int`" in
+- **Invariant factors of a module map**, which
+  [hex-poly-smith](hex-poly-smith.md) wants over `F[x]` rather than `ℤ`.
+  That library is not this one; see "Why `Int`" in
   [hex-hermite](hex-hermite.md).
 
 The dependency on `hex-hermite` is real rather than organisational: the
@@ -543,11 +543,16 @@ divisibility chain. When integer factorization arrives, elementary
 divisors are a short function on top of `invariantFactors` and belong in
 whichever library owns the factorization, not here.
 
-**Smith normal form over `F[x]`.** See "Why `Int` and not a Euclidean
-domain class" in [hex-hermite](hex-hermite.md). The polynomial case is
-the route to rational canonical form and the minimal polynomial, and it
-shares the algorithm shape and none of the normalisation, growth
-control, or termination measure.
+**Smith normal form over `F[x]`.** That is
+[hex-poly-smith](hex-poly-smith.md), a separate library rather than a
+generalisation of this one. It shares the algorithm shape and none of
+the normalisation, growth control, or termination measure; its SPEC
+draws the comparison row by row, and its conclusion is that
+`mul_eq_one_comm` is the only piece that transfers verbatim. The
+Cauchy-Binet prerequisite below is the exception: it is stated over a
+commutative ring, so scheduling it for either library gets the other one
+for free. See also "Why `Int` and not a Euclidean domain class" in
+[hex-hermite](hex-hermite.md).
 
 **Sparse input.** Relation matrices from group presentations are often
 very sparse, and dense elimination fills them in immediately. The sparse

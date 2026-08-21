@@ -16,6 +16,7 @@
 - **hex-char-poly**: the characteristic polynomial by the division-free Samuelson-Berkowitz algorithm, over any commutative ring
 - **hex-hermite**: Hermite normal form over `Int`, unimodular transforms, integer lattice membership, integer kernel bases
 - **hex-smith**: Smith normal form over `Int`, invariant factors, and the structure of a finitely generated abelian group
+- **hex-poly-smith**: Smith normal form over `F[x]`, monic pivot normalization, unimodular transforms with inverses, and the structure of a finitely generated `F[x]`-module
 - **hex-gram-schmidt**: Gram-Schmidt orthogonalization, GS coefficients, Gram determinants, update formulas under row operations
 - **hex-mod-arith**: `ZMod64 p`, `UInt64`-backed arithmetic in `Z/pZ`
 - **hex-modular**: integer CRT, rational reconstruction, symmetric representatives, and the modulus supply
@@ -64,6 +65,7 @@ Mathlib, and supplies correspondence proofs or Mathlib-facing APIs):
 - **hex-char-poly-mathlib**: agreement with `Matrix.charpoly`, Cayley-Hamilton, the trace and determinant coefficients, transpose and similarity invariance
 - **hex-hermite-mathlib**: row lattice = `Submodule.span ℤ`, integer rank = `Matrix.rank`, and an executable basis of the kernel submodule
 - **hex-smith-mathlib**: the executable output as `Module.Basis.SmithNormalForm`, the divisibility chain Mathlib's structure omits, and the quotient structure theorem
+- **hex-poly-smith-mathlib**: the executable polynomial matrix over `Polynomial F`, `Module.Basis.SmithNormalForm` from the executable output, monic as Mathlib's `normalize`, and the quotient structure theorem
 - **hex-gram-schmidt-mathlib**: `GramSchmidt.Int.basis` = Mathlib's `gramSchmidt`
 - **hex-poly-z-mathlib**: `DensePoly Int ≃+* Polynomial ℤ`, Mignotte bound (via Mathlib's Mahler measure)
 - **hex-roots-mathlib**: Pellet's test on circles (built from `circleIntegral`), the Mahler separation bound, soundness of refinement and `isolate`
@@ -100,6 +102,7 @@ Each library with its immediate dependencies:
 - **hex-char-poly**: hex-matrix, hex-poly
 - **hex-hermite**: hex-row-reduce, hex-arith, hex-determinant
 - **hex-smith**: hex-hermite
+- **hex-poly-smith**: hex-poly, hex-matrix, hex-determinant
 - **hex-mod-arith**: hex-arith
 - **hex-modular**: hex-arith
 - **hex-modular-matrix**: hex-modular, hex-matrix, hex-row-reduce, hex-determinant, hex-mod-arith, hex-arith, hex-basic
@@ -154,6 +157,7 @@ Mathlib companion libraries (each also depends on Mathlib):
 - **hex-char-poly-mathlib**: hex-char-poly, hex-matrix-mathlib, hex-poly-mathlib, hex-determinant-mathlib
 - **hex-hermite-mathlib**: hex-hermite, hex-row-reduce-mathlib, hex-determinant-mathlib
 - **hex-smith-mathlib**: hex-smith, hex-hermite-mathlib
+- **hex-poly-smith-mathlib**: hex-poly-smith, hex-poly-mathlib, hex-matrix-mathlib, hex-determinant-mathlib
 - **hex-gram-schmidt-mathlib**: hex-gram-schmidt, hex-bareiss-mathlib
 - **hex-lll-mathlib**: hex-lll, hex-gram-schmidt-mathlib, hex-row-reduce-mathlib
 - **hex-poly-fp-mathlib**: hex-poly-fp, hex-poly-mathlib, hex-mod-arith-mathlib
@@ -186,10 +190,12 @@ The matrix family splits internally. `hex-matrix` is the dense base.
 `hex-row-reduce`, `hex-determinant`, and `hex-bareiss` build on it
 (`hex-bareiss` also on `hex-determinant`), `hex-gram-schmidt` uses all
 three, and `hex-lll` builds on `hex-gram-schmidt`. `hex-hermite` reuses
-the row-echelon and determinant layers and is the one member with a dependency
-outside the family, on `hex-arith` for the extended GCD; `hex-smith` sits
-on top of it. Each has a matching `*-mathlib` companion of the same shape.
-In the diagram below, `hex-matrix` stands for that whole family.
+the row-echelon and determinant layers and depends on `hex-arith` for the
+extended GCD; `hex-smith` sits on top of it. `hex-poly-smith` is the other
+member with a dependency outside the family, on `hex-poly` for the
+polynomial Euclidean operations. Each has a matching `*-mathlib` companion
+of the same shape. In the diagram below, `hex-matrix` stands for that whole
+family.
 
 The integer normal forms within it:
 
@@ -199,9 +205,9 @@ hex-arith ─────────┼── hex-hermite ── hex-smith
 hex-determinant ───┘
 ```
 
-`hex-char-poly` sits on the matrix family too, but it is the only member
-whose second dependency is `hex-poly` rather than `hex-arith` or another
-matrix library. The Samuelson-Berkowitz
+`hex-char-poly` sits on the matrix family too, with `hex-poly` rather
+than `hex-arith` as its dependency outside it, as `hex-poly-smith` below
+also does. The Samuelson-Berkowitz
 algorithm computes no determinant, so `hex-determinant` is not among its
 computational dependencies. Its companion does depend on
 `hex-determinant-mathlib`, because the correspondence with
@@ -216,6 +222,18 @@ hex-poly ────────────────┘                   �
 hex-matrix-mathlib ──────┐                   │
 hex-poly-mathlib ────────┼───────────────────┴── hex-char-poly-mathlib
 hex-determinant-mathlib ─┘
+```
+
+The polynomial normal form is a sibling rather than a descendant. It
+shares the subject with `hex-smith` and none of the code: the base ring
+is `F[x]`, the units are the nonzero constants, and there is no
+polynomial Hermite normal form underneath it. The comparison is drawn
+row by row in [hex-poly-smith.md](hex-poly-smith.md).
+
+```text
+hex-poly ────────┐
+hex-matrix ──────┼── hex-poly-smith
+hex-determinant ─┘
 ```
 
 The algebraic graph has three independent roots: hex-poly, hex-arith,
@@ -384,6 +402,7 @@ for developments whose source-local move has not happened yet.
 - [hex-char-poly.md](hex-char-poly.md): the characteristic polynomial by the division-free Samuelson-Berkowitz algorithm, with Cayley-Hamilton and the `Matrix.charpoly` correspondence (the Mathlib companion is specified in the same file)
 - [hex-hermite.md](hex-hermite.md): Hermite normal form over `Int`, unimodular transforms, integer lattice membership and kernel bases (the Mathlib companion is specified in the same file)
 - [hex-smith.md](hex-smith.md): Smith normal form over `Int`, invariant factors, and abelian group structure (the Mathlib companion is specified in the same file)
+- [hex-poly-smith.md](hex-poly-smith.md): Smith normal form over `F[x]`, monic pivot normalization, unimodular transforms with inverses, and `F[x]`-module structure (the Mathlib companion is specified in the same file)
 - [hex-mod-arith](../../HexModArith/SPEC/hex-mod-arith.md): `ZMod64 p`, `UInt64`-backed arithmetic in `Z/pZ`
 - [hex-finite-field.md](hex-finite-field.md): the Mathlib-free `F_q` interface, the generic `q`-power Frobenius, and the equal-degree stage (Cantor-Zassenhaus) it makes worthwhile, specified as hex-berlekamp amendments
 - [hex-mod-arith-mathlib](../../HexModArithMathlib/SPEC/hex-mod-arith-mathlib.md): `ZMod64 p ≃+* ZMod p`

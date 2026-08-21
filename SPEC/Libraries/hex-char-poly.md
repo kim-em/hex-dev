@@ -530,16 +530,21 @@ The classical argument multiplies the adjugate identity
 `Matrix (R[x]) n n ≃ (Matrix R n n)[x]`, and telescopes. Reproducing it
 Mathlib-free needs four things, of which the project has one:
 
-1. **A `Lean.Grind.CommRing (Hex.DensePoly R)` instance.** It does not
-   exist. The field lemmas do: `mul_comm_poly`, `mul_assoc_poly`,
-   `mul_add_right_poly`, `mul_add_left_poly`, and `mul_one_right_poly` in
-   `HexPoly/Euclid/MulRing.lean` are all proved over
-   `[Lean.Grind.CommRing S] [DecidableEq S]`, and `HexPoly/Operations.lean`
-   supplies the additive and subtraction laws. What is missing is the
-   assembled instance. Without it `Matrix (Hex.DensePoly R) n n` has no
-   determinant and no adjugate, because both are stated over
-   `Lean.Grind.CommRing`. Assembling it is a small, self-contained
-   addition to hex-poly and is worth doing on its own merits.
+1. **A `Lean.Grind.CommRing (Hex.DensePoly R)` instance reachable from
+   hex-poly.** The instance itself exists, as
+   `instGrindCommRingDensePoly` in `HexResultant/ExactDiv.lean`, which is
+   two lines on top of `mul_comm_poly`; the field lemmas it needs
+   (`mul_comm_poly`, `mul_assoc_poly`, `mul_add_right_poly`,
+   `mul_add_left_poly`, `mul_one_right_poly` in
+   `HexPoly/Euclid/MulRing.lean`, plus the additive and subtraction laws
+   in `HexPoly/Operations.lean`) are all in hex-poly already. What is
+   missing is the instance being *there*: without importing
+   hex-resultant, `Matrix (Hex.DensePoly R) n n` has no determinant and
+   no adjugate, because both are stated over `Lean.Grind.CommRing`.
+   Moving it down is a small, self-contained change to hex-poly and is
+   worth doing on its own merits. Do not write a second copy;
+   [hex-poly-smith](hex-poly-smith.md) asks for the same move under
+   "Prerequisite changes in other libraries".
 2. **The adjugate identity at `Hex.DensePoly R`.** This one the project
    has: `Hex.Matrix.adjugate_mul` in `HexDeterminant/Adjugate.lean` is
    proved for every `Lean.Grind.CommRing`, so it instantiates as soon as
@@ -555,9 +560,8 @@ Mathlib-free needs four things, of which the project has one:
 So version one proves Cayley-Hamilton in the companion and states it
 against the executable objects. Items 1 and 2 are worth revisiting
 independently: item 1 unblocks matrices over `Hex.DensePoly R` generally,
-which is what the polynomial Smith form item in
-[future-work](../future-work.md) needs, and it is the prerequisite for
-ever reconsidering item 3.
+which is what [hex-poly-smith](hex-poly-smith.md) needs, and it is the
+prerequisite for ever reconsidering item 3.
 
 ## Totality and failure-free behaviour
 
@@ -819,7 +823,7 @@ which annihilation plus division into `χ_A` does not supply.
 
 **Invariant factors.** Matrices sharing a characteristic polynomial can
 have different invariant factors, so nothing here determines that data.
-See the polynomial Smith form and invariant-factor items in
+See [hex-poly-smith](hex-poly-smith.md) and the invariant-factor item in
 [future-work](../future-work.md).
 
 **Sparse input.** Berkowitz materializes a dense trailing block at every

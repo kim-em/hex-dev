@@ -114,22 +114,24 @@ is a useful earlier read because Cayley-Hamilton gives a bound and a
 cross-check, but it is not an algorithmic prerequisite: basis-wide Krylov
 witnesses can certify minimality directly.
 
-**Polynomial Smith form (`hex-poly-smith`, `hex-poly-smith-mathlib`).**
-Matrices over `F[x]` need no new matrix representation: they are
-`Matrix (DensePoly F) n m`. What is new is an executable Smith form over the
-Euclidean domain `F[x]`, with monic pivot normalization, unimodular transforms,
-the divisibility chain, and a termination argument suited to polynomial
-degree. This reusable algorithm should be specified separately from its
-application to a characteristic matrix.
+**Polynomial Smith form.** This item has graduated from this file and is
+specified in [hex-poly-smith](Libraries/hex-poly-smith.md): an executable
+Smith form for `Matrix (DensePoly F) n m` over the Euclidean domain
+`F[x]`, with monic pivot normalization folded into the elimination step,
+unimodular transforms carrying their inverses as data, the divisibility
+chain, and a termination measure on polynomial degree.
 
-This is not the integer Smith normal form of [hex-smith](Libraries/hex-smith.md):
-the base ring is `F[x]`, the units are the nonzero constants, and the two
-items share an algorithm shape rather than a theorem. The
-[hex-hermite](Libraries/hex-hermite.md) SPEC records, under "Why `Int`
-and not a Euclidean domain class", exactly which parts transfer (the 2x2
-elimination step) and which do not (pivot normalisation, the reduction of
-entries above a pivot, the termination measure, and the growth problem
-the algorithm choice is designed around).
+That SPEC also settles what this file previously left as a prediction.
+It is not the integer Smith normal form of
+[hex-smith](Libraries/hex-smith.md), and the inventory of what transfers
+is drawn there row by row rather than in prose: the unit group, the
+pivot normalisation, the exact-division primitive, the growth problem,
+the product-certificate primitive, and the oracle all differ, and the
+one piece that transfers verbatim is `mul_eq_one_comm`. In particular
+there is no polynomial Hermite normal form underneath it, so the pairing
+that holds over `ℤ` has no analogue over `F[x]`, and the
+Euclidean-domain class that [hex-hermite](Libraries/hex-hermite.md)
+declines to write is closed rather than deferred.
 
 **Matrix invariant factors (`hex-invariant-factors`,
 `hex-invariant-factors-mathlib`).** Apply polynomial Smith form to the
@@ -139,9 +141,14 @@ rational canonical form directly, the largest is the minimal polynomial, and
 their product is the characteristic polynomial, all certified from one
 computation.
 
-The application library depends on hex-poly-smith. Its correspondence layer
-also depends on [hex-char-poly](Libraries/hex-char-poly.md) and hex-min-poly
-so those equalities compare
+The application library depends on
+[hex-poly-smith](Libraries/hex-poly-smith.md), which deliberately keeps
+characteristic matrices, matrix minimal polynomials, and rational
+canonical form out of its own scope. It must not be named `hex-rcf`:
+that name is taken by the real-closed-field decision procedure. Its
+correspondence layer
+also depends on [hex-char-poly](Libraries/hex-char-poly.md) and
+hex-min-poly so those equalities compare
 against the independently specified computations rather than introducing
 second definitions. Factorization of `χ_A` does not determine this data:
 matrices sharing a characteristic polynomial can have different invariant
