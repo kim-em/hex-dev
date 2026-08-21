@@ -65,8 +65,129 @@ private def searchError (wanted : Search.Error)
   | .error actual => decide (actual = wanted)
   | .ok _ => false
 
+private def offerFor (action : Action) : Search.Offer Nat Action :=
+  { view := { policyOffer with key := action }, action }
+
+private def startActionError (action : Action)
+    (limits : State.Limits := stateLimits) : Option Search.Error := do
+  let branch <- branch?
+  match Search.Session.startWithin { envelope with state := limits } policyMeasure branch
+      #[localRule] #[] #[0] #[0] 0 { index := 5 } #[offerFor action]
+      policyBudget false with
+  | .error error => some error
+  | .ok _ => none
+
+private def scopedAction : Action :=
+  { serial := 0
+    programVersion := 0
+    application := { index := 0 }
+    rule := { index := 0 }
+    key := scopedKey
+    node := contractNode 1
+    kind := .improve
+    effort := 0
+    generation := 0
+    inputs := [{ node := contractNode 0, version := 0 }]
+    writes := [contractNode 1] }
+
+private def startScopedError (limits : State.Limits) : Option Search.Error := do
+  let branch <- branch?
+  match Search.Session.startWithin { envelope with state := limits } policyMeasure branch
+      #[scopeRule] #[binding] #[0] #[0] 0 { index := 5 } #[offerFor scopedAction]
+      policyBudget false with
+  | .error error => some error
+  | .ok _ => none
+
+private def networkRule : Registration :=
+  { key := { name := "search.network" }
+    head := unaryKey
+    kind := .instantiate
+    watches := []
+    writes := []
+    binding := .global
+    watchesProgram := true
+    matchWatch := .network }
+
+private def startNetworkError (limits : State.Limits) : Option Search.Error := do
+  let branch <- branch?
+  match Search.Session.startWithin { envelope with state := limits } policyMeasure branch
+      #[networkRule] #[] #[] #[0] 0 { index := 5 } #[] policyBudget false with
+  | .error error => some error
+  | .ok _ => none
+
 #guard match session? with
   | some session => session.check envelope policyMeasure
+  | none => false
+
+#guard startActionError policyAction == none
+#guard startScopedError stateLimits == none
+#guard startNetworkError stateLimits == none
+
+#guard match branch? with
+  | some branch =>
+      searchError (.policy .offerLimit) <|
+        Search.Session.startWithin
+          { envelope with policy := { policyLimits with maxOffers := 0 } }
+          policyMeasure branch #[localRule] #[] #[0] #[0] 0 { index := 5 }
+          #[offer] policyBudget false
+  | none => false
+
+-- Every untrusted list and structural array is capped before semantic scans or
+-- package measurements. The resource class identifies the governing State
+-- limit rather than collapsing all oversized sessions to `invalidSession`.
+#guard startActionError
+  { policyAction with inputs := [
+      { node := contractNode 0, version := 0 },
+      { node := contractNode 1, version := 0 },
+      { node := contractNode 0, version := 1 },
+      { node := contractNode 1, version := 1 }] } ==
+    some (.resource (.state .arity))
+
+#guard startActionError
+  { policyAction with writes := [contractNode 0, contractNode 1,
+      contractNode 0, contractNode 1] } == some (.resource (.state .arity))
+
+#guard startActionError
+  { policyAction with structuralInputs := [
+      { key := .node (contractNode 0), generation := 0 },
+      { key := .node (contractNode 1), generation := 0 }] } ==
+    some (.resource (.state .matcherVisits))
+
+#guard startActionError policyAction { stateLimits with maxOperations := 1 } ==
+  some (.resource (.state .operations))
+#guard startActionError policyAction { stateLimits with maxNodes := 1 } ==
+  some (.resource (.state .nodes))
+#guard startActionError policyAction { stateLimits with maxRules := 0 } ==
+  some (.resource (.state .rules))
+#guard startActionError policyAction { stateLimits with maxArity := 0 } ==
+  some (.resource (.state .arity))
+#guard startActionError policyAction { stateLimits with maxNodeDepth := 0 } ==
+  some (.resource (.state .nodeDepth))
+#guard startActionError policyAction { stateLimits with maxEqualities := 0 } ==
+  some (.resource (.state .equalities))
+#guard startActionError { policyAction with effort := stateLimits.maxEffort + 1 } ==
+  some (.resource (.state .effort))
+
+-- Binding count and per-binding ports use independent limits. In particular,
+-- one binding cannot slip through merely because `maxScopeNodes` is nonzero.
+#guard startScopedError { stateLimits with maxApplications := 0 } ==
+  some (.resource (.state .applications))
+#guard startScopedError { stateLimits with maxScopeNodes := 0 } ==
+  some (.resource (.state .scopes))
+#guard startNetworkError { stateLimits with matcherBatchSize := 0 } ==
+  some (.resource (.state .matcherVisits))
+
+-- Search currently treats the compact application id as an opaque scheduler
+-- handle: it authenticates its generation while independently checking the
+-- rule, anchor, kind, and ports. No application table is claimed here.
+#guard match branch? with
+  | some branch =>
+      match Search.Session.startWithin envelope policyMeasure branch #[localRule] #[]
+          #[0, 0] #[0] 0 { index := 5 }
+          #[offerFor { policyAction with application := { index := 1 } }]
+          policyBudget false with
+      | .ok _ => true
+      | .error _ => false
   | none => false
 
 -- A successful batch is bound to the exact selected action and commits one
@@ -79,6 +200,29 @@ private def searchError (wanted : Search.Error)
           next.branch.snapshot.facts == #[13, 29] && next.branch.versions == #[0, 1] &&
             next.branch.history == #[firstUpdate] && next.serial == 1 &&
             next.offers.isEmpty && next.accounting.steps == 1
+      | _ => false
+  | _, _ => false
+
+private def atStepLimit? : Option (Search.Session Nat Nat Nat Action) := do
+  let session <- session?
+  pure { session with accounting := { session.accounting with steps := searchLimits.maxSteps } }
+
+-- A resource stop cannot launder a malformed decision, while `invokeWithin`
+-- refuses before evaluating a callback once the authenticated step budget is
+-- exhausted.
+#guard match atStepLimit?, decision? with
+  | some session, some decision =>
+      searchError (.policy .wrongScope) <|
+        Search.acceptWithin envelope policyMeasure session
+          { decision with scope := { index := 4 } } (.failure 0)
+  | _, _ => false
+
+#guard match atStepLimit?, decision? with
+  | some session, some decision =>
+      match Search.invokeWithin envelope policyMeasure
+          (fun _ => (.failure 9 : Search.Reply Nat Nat Nat Action))
+          session decision with
+      | .ok (.stopped (.resource .steps) _) => true
       | _ => false
   | _, _ => false
 
@@ -175,6 +319,14 @@ private def searchError (wanted : Search.Error)
           policyMeasure session decision (.outcome (outcome))
   | _, _ => false
 
+#guard match session?, decision? with
+  | some session, some decision =>
+      searchError (.resource (.state .acceptedFacts)) <|
+        Search.acceptWithin
+          { envelope with state := { stateLimits with maxAcceptedFacts := 0 } }
+          policyMeasure session decision (.outcome (outcome))
+  | _, _ => false
+
 -- A callback failure has an exact stop and cannot mutate branch facts,
 -- versions, provenance, or contradiction state.
 #guard match session?, decision? with
@@ -227,19 +379,20 @@ private def leaf (scope depth payload : Nat)
 private def nested? (order : Search.Order) :
     Option (Search.Accounting × Search.Frontier (Search.Leaf Nat Nat Nat)) := do
   let root <- leaf 0 0 0
-  let .ok (accounting, frontier) := Search.startFrontierWithin searchLimits root | none
-  let (root, rest) <- Search.pop frontier
+  let .ok (accounting, frontier) :=
+    Search.startFrontierWithin stateLimits searchLimits root | none
+  let root <- frontier.head?
   let parent := root.asParent
   let left <- leaf 1 1 1 (some parent)
   let right <- leaf 2 1 2 (some parent)
   let .ok (accounting, frontier) :=
-    Search.splitWithin searchLimits order accounting root rest left right | none
-  let (left, rest) <- Search.pop frontier
+    Search.splitWithin stateLimits searchLimits order accounting frontier left right | none
+  let left <- frontier.head?
   let parent := left.asParent
   let leftLeft <- leaf 3 2 3 (some parent)
   let leftRight <- leaf 4 2 4 (some parent)
   let .ok result :=
-    Search.splitWithin searchLimits order accounting left rest leftLeft leftRight | none
+    Search.splitWithin stateLimits searchLimits order accounting frontier leftLeft leftRight | none
   pure result
 
 -- Both stable orders retain left-to-right sibling order and differ only in
@@ -267,17 +420,18 @@ private def nested? (order : Search.Order) :
 #guard match leaf 0 0 0 with
   | some root =>
       searchError (.resource .frontier) <|
-        Search.startFrontierWithin { searchLimits with maxFrontier := 0 } root
+        Search.startFrontierWithin stateLimits { searchLimits with maxFrontier := 0 } root
   | none => false
 
 private def splitError (limits : Search.Limits) : Option Search.Error := do
   let root <- leaf 0 0 0
-  let .ok (accounting, frontier) := Search.startFrontierWithin searchLimits root | none
-  let (root, rest) <- Search.pop frontier
+  let .ok (accounting, frontier) :=
+    Search.startFrontierWithin stateLimits searchLimits root | none
+  let root <- frontier.head?
   let parent := root.asParent
   let left <- leaf 1 1 1 (some parent)
   let right <- leaf 2 1 2 (some parent)
-  match Search.splitWithin limits .depthFirst accounting root rest left right with
+  match Search.splitWithin stateLimits limits .depthFirst accounting frontier left right with
   | .error error => some error
   | .ok _ => none
 
@@ -287,5 +441,35 @@ private def splitError (limits : Search.Limits) : Option Search.Error := do
 #guard splitError { searchLimits with maxScopes := 2 } == some (.resource .scopes)
 #guard splitError { searchLimits with maxDepth := 0 } == some (.resource .depth)
 #guard splitError { searchLimits with maxFrontier := 1 } == some (.resource .frontier)
+
+private def malformedParentError : Option Search.Error := do
+  let root <- leaf 0 0 0
+  let .ok (accounting, _) :=
+    Search.startFrontierWithin stateLimits searchLimits root | none
+  let malformed := { root with branch := { root.branch with versions := #[9, 0] } }
+  let frontier : Search.Frontier (Search.Leaf Nat Nat Nat) := { pending := [malformed] }
+  let parent := malformed.asParent
+  let left <- leaf 1 1 1 (some parent)
+  let right <- leaf 2 1 2 (some parent)
+  match Search.splitWithin stateLimits searchLimits .depthFirst accounting frontier left right with
+  | .error error => some error
+  | .ok _ => none
+
+private def duplicateParentError : Option Search.Error := do
+  let root <- leaf 0 0 0
+  let .ok (accounting, _) :=
+    Search.startFrontierWithin stateLimits searchLimits root | none
+  let frontier : Search.Frontier (Search.Leaf Nat Nat Nat) := { pending := [root, root] }
+  let parent := root.asParent
+  let left <- leaf 1 1 1 (some parent)
+  let right <- leaf 2 1 2 (some parent)
+  match Search.splitWithin stateLimits searchLimits .depthFirst accounting frontier left right with
+  | .error error => some error
+  | .ok _ => none
+
+-- The split parent is derived from the authenticated frontier head. A caller
+-- can neither substitute a detached parent nor retain a duplicate occurrence.
+#guard malformedParentError == some .invalidSession
+#guard duplicateParentError == some .invalidSession
 
 end Hex.Interval.SearchConformance

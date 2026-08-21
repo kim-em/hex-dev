@@ -3116,23 +3116,57 @@ The supported Mathlib-free `HexInterval/Search.lean` layer owns the next
 generic boundary. Its decoded `Search.Session` binds one exact checked
 `State.Branch`, registration snapshot, scope, serial, complete policy view,
 controller-owned offer-to-`Action` bindings, bounded diagnostic log, and
-global accounting. `prepareWithin` revalidates the external policy decision
-and returns only the exact controller-owned action. `acceptWithin` checks an
-untrusted callback batch against that action's serial, program version, input
-versions, and write set and applies the whole batch to a local branch before
-returning a replacement session. A stale later update therefore cannot
-partially commit an earlier update. Callback failure has an exact conservative
-stop, and diagnostic truncation can change only the log, not facts, versions,
-provenance, scope, or contradiction state.
+global accounting. Before any semantic scan or package measurement, session
+authentication caps the base and current program, history and aligned branch
+arrays, registry, binding/application/equality arrays, retained actions, every
+operation/node/rule/binding port list, and every action input/write/structural
+input list against the corresponding `State.Limits`. Binding count uses
+`maxApplications`; `maxScopeNodes` independently caps each scoped read list and
+write list. The same preflight enforces operation/node/rule/arity/depth,
+matcher-batch, effort, generation, action, application, equality, and accepted-
+fact limits with the exact State resource class.
+
+The current supported session retains generation stamps for compact
+`ApplicationId`s but not the concrete application table compiled by the
+experimental controller. Search therefore treats the compact identifier as an
+opaque scheduler handle: it authenticates its bounds and generation while
+independently checking the action's rule key and local rule id, anchor,
+operation, kind, reads, writes, and structural inputs. A callback must not use
+the compact application id as authority for a rule or anchor. Retaining and
+checking the exact application table is an obligation for the supported
+controller/package assembly; the present Search contract does not claim that
+correspondence.
+
+`prepareWithin` authenticates the session once, revalidates the external policy
+decision against that already-checked immutable view, and returns only the
+exact controller-owned action. `chooseWithin`, `acceptWithin`, and
+`invokeWithin` use the same private-constructor checked artifact internally:
+each public transition reconstructs branch history and invokes policy
+measurement callbacks once, while callers cannot forge or retain the artifact.
+`invokeWithin` authenticates the decision and checks step exhaustion before
+executing the non-preemptible callback. `acceptWithin` checks an untrusted
+callback batch against that action's serial, program version, input versions,
+and write set, preflights total retained history, and folds exact successor
+updates over the once-authenticated local branch before returning a replacement
+session. A stale later update therefore cannot partially commit an earlier
+update. Callback failure has an exact conservative stop, and diagnostic
+truncation can change only the log, not facts, versions, provenance, scope, or
+contradiction state.
 
 `Search.Frontier` and `Search.Accounting` supply stable depth-first and
 breadth-first ordering plus independent step, split, retained-leaf, frontier,
 depth, and scope limits. Child records retain an exact immutable parent branch
-for restoration; the generic layer validates this binding but deliberately
-does not interpret split semantics. Callback execution, measurements, and
-equality on caller-selected Lean objects remain explicitly non-preemptible:
-packages must bound result construction before returning, after which search
-preflights returned counts, retained bytes, and declared work.
+for restoration. `splitWithin` consumes the complete bounded pre-split
+frontier, rejects duplicate pending leaves, derives the parent and remaining
+frontier by popping the stable head internally, preflights every retained
+parent/child branch against State limits, and then checks exact parent records;
+a caller cannot supply a detached parent/rest pair or keep a second scheduled
+copy of the split head. `settleWithin` likewise consumes the frontier instead
+of trusting a detached count. The generic layer deliberately does not interpret
+split semantics. Callback execution, measurements, and equality on caller-
+selected Lean objects remain explicitly non-preemptible: packages must bound
+result construction before returning, after which search preflights returned
+counts, retained bytes, and declared work.
 
 The experimental target controller now implements the supported `Interface`
 and returns the actual supported `Step`; it stamps a selected supported offer
@@ -5026,6 +5060,19 @@ candidates, and `b` the number of live branch states.
   scans its retained order. Avoiding these whole-state scans is a requirement
   for the selected production store and queue, not a property of the current
   transparent reference builders.
+- One supported `Search` transition first performs bounded prefix checks on
+  every decoded list and O(1) size checks on every retained array, then validates
+  the complete base/current branch chronology, registry, scoped bindings,
+  offers, and actions. The current transparent reference contract therefore
+  still has whole-branch/program/registry work; it does not claim local
+  asymptotics. Within one `prepareWithin`, `chooseWithin`, `acceptWithin`, or
+  `invokeWithin` call, that authentication and the package-owned policy
+  measurements run once. Accepted callback batches fold already-preflighted
+  exact successor updates without re-running `Branch.check` for every event.
+  Split admission traverses at most the bounded retained frontier and validates
+  its popped parent and both children once. Arbitrary callback execution and
+  equality on caller-selected facts, causes, identifiers, and keys
+  remain non-preemptible.
 - Fact comparison and contradiction checks use exact endpoint comparison. For
   the dyadic candidate, integer cost is proportional to effective endpoint
   height and the permitted exponent-alignment shift; a rational candidate must
