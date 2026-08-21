@@ -24,20 +24,24 @@ API.
 - `Lean.Grind.CommRing (PolyQuotient p f hf)` instance
 
 Representation choice: the stored representative is canonical, and the
-type says so — `PolyQuotient` is a subtype carrying `IsReduced`, so a raw
+type says so. `PolyQuotient` is a subtype carrying `IsReduced`, so a raw
 `FpPoly` cannot be passed where a quotient element is expected. Callers
 do not manage reduction manually; `ofPoly` and all ring operations
 normalize through `reduceMod`. Equality of quotient elements is therefore
 equality of canonical representatives, not a separate setoid-style
 relation.
 
-Canonicality requires `p` prime, and the operations require it too. The
-`PolyQuotient` type itself asks only for `ZMod64.Bounds p`, but at
-composite `p` the long-division step divides by a leading coefficient
-that need not be a unit, `reduceMod` is not a canonical form, and two
-values can represent one residue class. `isReduced_iff_degree_lt` states
-the canonicality contract under `ZMod64.PrimeModulus p`, which is the
-only regime this library supports.
+Canonicality requires `p` prime, and `PolyQuotient` says so: it takes
+`[ZMod64.PrimeModulus p]`, so a quotient element cannot be formed over a
+composite modulus at all. That restriction is real rather than
+defensive. At composite `p` the long-division step divides by a leading
+coefficient that need not be a unit, `reduceMod` is then not a canonical
+form, and two values would represent one residue class.
+`isReduced_iff_degree_lt` states the contract the hypothesis buys.
+
+`reduceMod` itself stays general, along with its degree-short-circuit
+lemmas; it is the quotient type that carries the canonicality claim, so
+it is the quotient type that is restricted.
 
 This does NOT require `f` to be irreducible — the quotient is always a
 ring. When `f` is irreducible, the same underlying representation

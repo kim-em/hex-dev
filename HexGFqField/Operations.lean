@@ -23,7 +23,9 @@ namespace Hex
 
 namespace GFqField
 
-variable {p : Nat} [ZMod64.Bounds p] {hp : Hex.Nat.Prime p}
+-- The quotient type these operations wrap is a prime-modulus type, and the
+-- extended-gcd / inverse machinery needs `ZMod64 p` to be a field besides.
+variable {p : Nat} [ZMod64.Bounds p] [ZMod64.PrimeModulus p] {hp : Hex.Nat.Prime p}
 
 /-- Natural-number literals reuse the quotient-ring cast and then rewrap the
 resulting reduced residue. -/
@@ -304,9 +306,6 @@ private theorem dvd_left_of_mul_const_right_eq
       exact (DensePoly.mul_assoc_poly g (DensePoly.C c) (DensePoly.C c⁻¹)).symm
     _ = f * DensePoly.C c⁻¹ := by
       rw [hfgC]
-
--- The extended-gcd / inverse machinery below needs `ZMod64 p` to be a field.
-variable [ZMod64.PrimeModulus p]
 
 /-- The extended-gcd output gives the unscaled Bezout identity for the reduced
 representative and the modulus. -/

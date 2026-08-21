@@ -508,7 +508,12 @@ abbrev GFq (p n : Nat) [ZMod64.Bounds p] (h : Conway.SupportedEntry p n) : Type 
 
 namespace GFq
 
-variable {p n : Nat} [ZMod64.Bounds p]
+-- The quotient underlying `GFq` is a prime-modulus type.  A `SupportedEntry`
+-- always carries `h.prime`, but it is an ordinary structure, so it cannot drive
+-- instance search; the hypothesis is taken ambiently instead.  Every committed
+-- prime has a ground instance in `HexConway.Table`, so concrete uses resolve it
+-- automatically and only generic code has to carry it.
+variable {p n : Nat} [ZMod64.Bounds p] [ZMod64.PrimeModulus p]
 
 /-- The Conway modulus selected for a committed `GFq p n` entry. -/
 abbrev modulus (h : Conway.SupportedEntry p n) : FpPoly p :=
@@ -774,7 +779,7 @@ abbrev GFqC (p n : Nat) [ZMod64.Bounds p] [h : GFq.CommittedEntry p n] : Type :=
 
 namespace GFqC
 
-variable {p n : Nat} [ZMod64.Bounds p] [h : GFq.CommittedEntry p n]
+variable {p n : Nat} [ZMod64.Bounds p] [ZMod64.PrimeModulus p] [h : GFq.CommittedEntry p n]
 
 /-- The committed Conway-table entry selected for `GFqC p n`. -/
 abbrev entry : Conway.SupportedEntry p n :=

@@ -23,15 +23,26 @@ namespace Hex
 
 namespace GFqField
 
-variable {p : Nat} [ZMod64.Bounds p] {hp : Hex.Nat.Prime p}
+-- `GFqRing.PolyQuotient` is a prime-modulus type.  Declarations whose binders
+-- mention it need the instance ambiently; `FiniteField` itself does not, since
+-- it derives one from the `_hp` it already carries.
+variable {p : Nat} [ZMod64.Bounds p] [ZMod64.PrimeModulus p] {hp : Hex.Nat.Prime p}
 
 /-- Executable finite-field elements are a thin wrapper around quotient-ring
 residues modulo an irreducible polynomial. -/
 structure FiniteField
     (f : FpPoly p) (hf : 0 < FpPoly.degree f)
     (_hp : Hex.Nat.Prime p) (_hirr : FpPoly.Irreducible f) where
-  /-- The underlying reduced quotient-ring residue backing this field element. -/
-  toQuotient : GFqRing.PolyQuotient f hf
+  /-- The underlying reduced quotient-ring residue backing this field element.
+
+  `GFqRing.PolyQuotient` is a prime-modulus type, and the witness it needs is
+  the `_hp` this structure already carries. Deriving the instance here rather
+  than demanding it from callers keeps `FiniteField`'s signature unchanged;
+  `ZMod64.PrimeModulus` is a `Prop`-valued class, so this instance and any
+  ambient one are definitionally equal. -/
+  toQuotient :
+    haveI : ZMod64.PrimeModulus p := ZMod64.primeModulusOfPrime _hp
+    GFqRing.PolyQuotient f hf
 
 /-- Field equality is decidable, and decided by comparing canonical
 representatives: elements are wrappers around reduced quotient values, so

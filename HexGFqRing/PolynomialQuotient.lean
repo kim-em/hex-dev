@@ -75,14 +75,20 @@ A value of this type is a polynomial *together with* a proof that it lies in the
 image of `reduceMod f`, so a raw `FpPoly p` cannot be supplied where one of these
 is expected.
 
-That representative is the canonical one for its residue class only when `p` is
-prime, which is what makes `reduceMod` a genuine remainder; see
-`isReduced_iff_degree_lt`. For composite `p` the division step divides by a
-leading coefficient that need not be a unit, `reduceMod` is then not a canonical
-form, and two values of this type can represent the same class. Every ring
-operation and every canonicality result below assumes `ZMod64.PrimeModulus p`. -/
-abbrev PolyQuotient (f : FpPoly p) (_hf : 0 < FpPoly.degree f) :=
+The modulus is required to be prime, and that is what makes the representative
+canonical: `reduceMod` is a genuine remainder only when the leading coefficient
+it divides by is a unit. Over a composite modulus the division step can subtract
+zero and leave the remainder untouched, so `reduceMod` is not a canonical form
+and two values would represent one residue class. `isReduced_iff_degree_lt`
+states the contract this hypothesis buys.
+
+`reduceMod` itself, and its degree-short-circuit lemmas above, stay general; it
+is the quotient *type* that is restricted, because that is what carries the
+canonicality claim. -/
+abbrev PolyQuotient [ZMod64.PrimeModulus p] (f : FpPoly p) (_hf : 0 < FpPoly.degree f) :=
   { g : FpPoly p // IsReduced f g }
+
+variable [ZMod64.PrimeModulus p]
 
 /-- Inject a polynomial into the quotient by reducing it modulo `f`. -/
 @[expose]
@@ -136,10 +142,6 @@ instance {f : FpPoly p} {hf : 0 < FpPoly.degree f} : DecidableEq (PolyQuotient f
     exact hx ((eq_zero_iff_repr_eq_zero x).2 hrepr)
   · intro hx hzero
     exact hx ((eq_zero_iff_repr_eq_zero x).1 hzero)
-
--- The remaining `reduceMod` algebra rests on `DensePoly` division laws that
--- require `ZMod64 p` to be a field, so from here the modulus must be prime.
-variable [ZMod64.PrimeModulus p]
 
 /-- Canonical representatives have degree strictly below the modulus. -/
 @[simp] theorem degree_repr_lt_degree {f : FpPoly p} {hf : 0 < FpPoly.degree f}

@@ -23,7 +23,10 @@ namespace Hex
 
 namespace GFqRing
 
-variable {p : Nat} [ZMod64.Bounds p]
+-- `PolyQuotient` is a prime-modulus type: `reduceMod` is a canonical form only
+-- when the leading coefficient it divides by is a unit.  Every declaration here
+-- mentions the quotient, so the hypothesis is in scope for the whole namespace.
+variable {p : Nat} [ZMod64.Bounds p] [ZMod64.PrimeModulus p]
 
 /-- The quotient zero element. -/
 @[expose]
@@ -558,10 +561,6 @@ theorem neg_zero_eq {f : FpPoly p} {hf : 0 < FpPoly.degree f} :
     -(0 : PolyQuotient f hf) = 0 := by
   apply ext
   rw [repr_neg, repr_zero, reduceMod_zero f hf, FpPoly.neg_zero, reduceMod_zero f hf]
-
--- From here the quotient-ring algebra rests on `reduceMod` congruence lemmas
--- that need `ZMod64 p` to be a field, so the modulus must be prime.
-variable [ZMod64.PrimeModulus p]
 
 /-- Public alias for {name}`reduceMod_mul_reduceMod_congr`: reducing both factors before quotient
 reduction preserves the canonical representative. -/
