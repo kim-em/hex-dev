@@ -597,7 +597,7 @@ theorem sqrtOfRoot_coeff_zero (hr : r * r = a.coeff 0) (hv : (2 * r) * v = 1)
     (h : 0 < n) : (sqrtOfRoot a r v).coeff 0 = r
 
 theorem sqrt_unique (s t : TSeries R n) (r v : R) (hv : (2 * r) * v = 1)
-    (hs : s * s = t * t) (h0 : 0 < n)
+    (hs : s * s = t * t)
     (hsr : s.coeff 0 = r) (htr : t.coeff 0 = r) : s = t
 ```
 
@@ -861,10 +861,12 @@ superadditive.
 
 At schoolbook multiplication the inverse, square root, `exp`, and `log`
 rows all tie the naive linear recurrence for the same operation, which
-is `O(n²)` in each case. Only composition and reversion win outright
-today. The table should therefore be read as a description of what
-happens when `M` improves rather than as a claim of a present-day win
-across the board.
+is `O(n²)` in each case, and lose on the constant: bounded Newton
+inversion does `(4/3)n²` coefficient multiplications against the
+recurrence's `n²/2`. Only composition and reversion win outright today.
+The table should therefore be read as a description of what happens when
+`M` improves rather than as a claim of a present-day win across the
+board.
 
 ## Kernel exposure
 
@@ -999,11 +1001,17 @@ the SPEC of that library is where the goal is written.
 
 Two required internal checks, which matter more than the external one:
 
-- **Newton inversion within `2x` of the linear recurrence** at every
-  precision on the ladder. Not faster: at schoolbook multiplication they
-  are both `O(n²)` and the recurrence has the smaller constant. A
-  regression past `2x` means the step is not bounded, which is the one
-  implementation mistake that turns `O(M(n))` into `O(M(n) log n)`.
+- **Newton inversion within `4x` of the linear recurrence** at every
+  precision on the ladder. Not faster, and the threshold is a counted
+  number rather than a guess. Bounded Newton does
+  `Σ_{m = 2, 4, …, n} m²` coefficient multiplications, which is
+  `(4/3)n²`, against the recurrence's `n²/2`, a ratio approaching
+  `8/3 ≈ 2.67` from above (`2.83` at precision 16, `2.67` by precision
+  1024). `4x` leaves room for the difference in memory traffic and no
+  more. A regression past it means the step is not bounded, which is the
+  one implementation mistake that turns `O(M(n))` into `O(M(n) log n)`
+  and shows up as a ratio growing with the precision rather than
+  settling.
 - **Brent-Kung faster than Horner above precision 64**, by a margin that
   grows with the precision. Composition is the one family where the fast
   route pays before hex-poly-fast exists, so this check is the evidence
