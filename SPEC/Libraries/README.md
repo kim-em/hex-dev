@@ -11,6 +11,7 @@
 - **hex-row-reduce**: row reduction (RREF), rank, span, nullspace
 - **hex-determinant**: the Leibniz determinant and its cofactor/Cauchy-Binet/Plücker theory
 - **hex-bareiss**: the fraction-free Bareiss determinant algorithm
+- **hex-char-poly**: the characteristic polynomial by the division-free Samuelson-Berkowitz algorithm, over any commutative ring
 - **hex-hermite**: Hermite normal form over `Int`, unimodular transforms, integer lattice membership, integer kernel bases
 - **hex-smith**: Smith normal form over `Int`, invariant factors, and the structure of a finitely generated abelian group
 - **hex-gram-schmidt**: Gram-Schmidt orthogonalization, GS coefficients, Gram determinants, update formulas under row operations
@@ -56,6 +57,7 @@ Mathlib, and supplies correspondence proofs or Mathlib-facing APIs):
 - **hex-row-reduce-mathlib**: rank = `Matrix.rank`, nullspace = `LinearMap.ker`, span agreement
 - **hex-determinant-mathlib**: `det` agreement with `Matrix.det`, plus the Plücker / Desnanot-Jacobi assembly
 - **hex-bareiss-mathlib**: Bareiss determinant = `Matrix.det`, via the bordered-minor invariant
+- **hex-char-poly-mathlib**: agreement with `Matrix.charpoly`, Cayley-Hamilton, the trace and determinant coefficients, transpose and similarity invariance
 - **hex-hermite-mathlib**: row lattice = `Submodule.span ℤ`, integer rank = `Matrix.rank`, and an executable basis of the kernel submodule
 - **hex-smith-mathlib**: the executable output as `Module.Basis.SmithNormalForm`, the divisibility chain Mathlib's structure omits, and the quotient structure theorem
 - **hex-gram-schmidt-mathlib**: `GramSchmidt.Int.basis` = Mathlib's `gramSchmidt`
@@ -89,6 +91,7 @@ Each library with its immediate dependencies:
 - **hex-row-reduce**: hex-matrix
 - **hex-determinant**: hex-matrix
 - **hex-bareiss**: hex-determinant, hex-matrix
+- **hex-char-poly**: hex-matrix, hex-poly
 - **hex-hermite**: hex-row-reduce, hex-arith, hex-determinant
 - **hex-smith**: hex-hermite
 - **hex-mod-arith**: hex-arith
@@ -140,6 +143,7 @@ Mathlib companion libraries (each also depends on Mathlib):
 - **hex-row-reduce-mathlib**: hex-row-reduce, hex-matrix-mathlib
 - **hex-determinant-mathlib**: hex-determinant, hex-bareiss, hex-matrix-mathlib
 - **hex-bareiss-mathlib**: hex-determinant-mathlib
+- **hex-char-poly-mathlib**: hex-char-poly, hex-matrix-mathlib, hex-poly-mathlib, hex-determinant-mathlib
 - **hex-hermite-mathlib**: hex-hermite, hex-row-reduce-mathlib, hex-determinant-mathlib
 - **hex-smith-mathlib**: hex-smith, hex-hermite-mathlib
 - **hex-gram-schmidt-mathlib**: hex-gram-schmidt, hex-bareiss-mathlib
@@ -185,6 +189,25 @@ The integer normal forms within it:
 hex-row-reduce ───┐
 hex-arith ─────────┼── hex-hermite ── hex-smith
 hex-determinant ───┘
+```
+
+`hex-char-poly` sits on the matrix family too, but it is the only member
+whose second dependency is `hex-poly` rather than `hex-arith` or another
+matrix library. The Samuelson-Berkowitz
+algorithm computes no determinant, so `hex-determinant` is not among its
+computational dependencies. Its companion does depend on
+`hex-determinant-mathlib`, because the correspondence with
+`Matrix.charpoly` is a statement about a determinant. The reasoning is in
+[hex-char-poly §What the Mathlib-free layer does not establish](hex-char-poly.md).
+
+```text
+hex-matrix ──────────────┐
+                         ├── hex-char-poly ──┐
+hex-poly ────────────────┘                   │
+                                             │
+hex-matrix-mathlib ──────┐                   │
+hex-poly-mathlib ────────┼───────────────────┴── hex-char-poly-mathlib
+hex-determinant-mathlib ─┘
 ```
 
 The algebraic graph has three independent roots: hex-poly, hex-arith,
@@ -314,6 +337,7 @@ for developments whose source-local move has not happened yet.
 - [hex-row-reduce-mathlib](https://github.com/leanprover/hex-row-reduce-mathlib/blob/main/SPEC/hex-row-reduce-mathlib.md) (released): rank/nullspace/span correspondence
 - [hex-determinant-mathlib](https://github.com/leanprover/hex-determinant-mathlib/blob/main/SPEC/hex-determinant-mathlib.md) (released): `det` agreement with `Matrix.det`
 - [hex-bareiss-mathlib](https://github.com/leanprover/hex-bareiss-mathlib/blob/main/SPEC/hex-bareiss-mathlib.md) (released): Bareiss determinant correctness
+- [hex-char-poly.md](hex-char-poly.md): the characteristic polynomial by the division-free Samuelson-Berkowitz algorithm, with Cayley-Hamilton and the `Matrix.charpoly` correspondence (the Mathlib companion is specified in the same file)
 - [hex-hermite.md](hex-hermite.md): Hermite normal form over `Int`, unimodular transforms, integer lattice membership and kernel bases (the Mathlib companion is specified in the same file)
 - [hex-smith.md](hex-smith.md): Smith normal form over `Int`, invariant factors, and abelian group structure (the Mathlib companion is specified in the same file)
 - [hex-mod-arith](../../HexModArith/SPEC/hex-mod-arith.md): `ZMod64 p`, `UInt64`-backed arithmetic in `Z/pZ`
