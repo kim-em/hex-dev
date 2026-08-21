@@ -204,9 +204,9 @@ secrets, currently fine-grained tokens named `hex-publishing` and
 `hex-publishing-2` owned by @kim-em. Each is scoped to an explicit list of
 repositories, deliberately not to every repository, and a fine-grained token
 caps how many repositories it can select — which is why there is more than
-one. The sync does not care which token carries which repository: its
-preflight probes every target against every token and routes each clone and
-push through the first token that can see that repository, so a new library
+one. The sync does not care which token carries which repository: for each
+target its preflight probes the tokens in order until one can see it, and
+routes that repository's clone and push through that token, so a new library
 goes on whichever token has room. Publishing one takes three steps in this
 order:
 
@@ -231,9 +231,9 @@ Skipping step 2 used to fail partway through a publish, after earlier
 repositories had already been pushed: a fine-grained token simply cannot see a
 repository outside its list, so the clone succeeds from public https and only
 the push returns `403 Permission to leanprover/<repo>.git denied`.
-`sync_released.py` now preflights every target repository against every token
+`sync_released.py` now preflights every target repository against the tokens
 before the first push and refuses to start, naming the repositories no token
-covers. A dry run does not preflight, having no token and pushing nothing.
+covers. A dry run does not preflight, using no token and pushing nothing.
 
 **What the preflight does not prove.** It checks that each repository is in
 some token's selection, and nothing stronger. `GET /repos` needs only

@@ -308,6 +308,48 @@ class TokenPreflightTests(unittest.TestCase):
         with patch.dict(sync_released.os.environ, env, clear=True):
             self.assertEqual(sync_released.env_tokens(), ["tok1", "tok2", "tok10"])
 
+    def test_env_tokens_ignores_noncanonical_slots(self) -> None:
+        # `_0`, `_1`, and zero-padded suffixes would sort ambiguously against
+        # the base slot, so only the base and integer suffixes >= 2 count.
+        env = {"RELEASED_SYNC_PAT": "tok1", "RELEASED_SYNC_PAT_0": "alias0",
+               "RELEASED_SYNC_PAT_1": "alias1", "RELEASED_SYNC_PAT_02": "alias02"}
+        with patch.dict(sync_released.os.environ, env, clear=True):
+            self.assertEqual(sync_released.env_tokens(), ["tok1"])
+
+    def test_empty_cli_token_is_rejected(self) -> None:
+        # An empty token probes anonymously and would win the routing for every
+        # public repository, only to fail at push time.
+        argv = ["sync_released.py", "--token", "", "--baseline",
+                str(self.repo / "baseline.json")]
+        with patch("sys.argv", argv), self.assertRaises(SystemExit) as caught:
+            sync_released.main()
+        self.assertEqual(caught.exception.code, 2)
+
+    def test_dry_run_passes_no_token_despite_env_tokens(self) -> None:
+        manifest = self.repo / "released.yml"
+        manifest.write_text("repos:\n  - repo: leanprover/hex-basic\n", encoding="utf-8")
+        baseline = self.repo / "baseline.json"
+        baseline.write_text(json.dumps({"hex-basic": "old"}), encoding="utf-8")
+        seen_tokens: list = []
+
+        def publish(entry, _source_sha, token, _dry_run, synced,
+                    _baseline, _force, _dep_owner, _pins):
+            seen_tokens.append(token)
+            return False
+
+        argv = ["sync_released.py", "--dry-run", "--baseline", str(baseline)]
+        env = {"RELEASED_SYNC_PAT": "tok1", "RELEASED_SYNC_PAT_2": "tok2"}
+        with (
+            patch.object(sync_released, "MANIFEST", manifest),
+            patch.object(sync_released, "external_pins", return_value={}),
+            patch.object(sync_released, "run", return_value="source-sha"),
+            patch.object(sync_released, "sync_repo", side_effect=publish),
+            patch.dict(sync_released.os.environ, env),
+            patch("sys.argv", argv),
+        ):
+            self.assertEqual(sync_released.main(), 0)
+        self.assertEqual(seen_tokens, [None])
+
     def _check(self, responses: list) -> str | None:
         """Run selection_check with `_api_repo` answering from `responses`,
         in call order: authenticated first, then the anonymous probe."""

@@ -21,9 +21,9 @@ Auth (non-dry-run): tokens from --token (repeatable) or the environment
 ($RELEASED_SYNC_PAT, $RELEASED_SYNC_PAT_2, ... in numeric order) are used as
 `x-access-token` basic-auth credentials for clone and push. A fine-grained
 token caps its selected-repository list, so the published set is split across
-more than one token; the preflight probes each target repository against each
-token and routes every clone and push through the first token that can see
-that repository. Dry-run clones over public https and never pushes.
+more than one token; for each target repository the preflight probes the
+tokens in order until one can see it, and routes that repository's clone and
+push through that token. Dry-run clones over public https and never pushes.
 
 Usage:
   python3 scripts/release/sync_released.py --dry-run
@@ -67,10 +67,13 @@ TOOLCHAIN = REPO_ROOT / "lean-toolchain"
 # mid-publish. The sync does not care which token carries which repository; it
 # routes per repository to the first token that can see it.
 TOKEN_HELP = (
-    "Add the repositories above to the selected repositories of one of the tokens\n"
-    "behind the RELEASED_SYNC_PAT / RELEASED_SYNC_PAT_2 secrets (Contents: Read\n"
-    "and write). Those are currently the `hex-publishing` and `hex-publishing-2`\n"
-    "fine-grained tokens, listed under\n"
+    "Follow the per-token reasons above: a repository reported as not selected\n"
+    "must be added to the selected repositories of one of the tokens behind the\n"
+    "RELEASED_SYNC_PAT / RELEASED_SYNC_PAT_2 secrets (Contents: Read and write);\n"
+    "a missing repository must be created first; an indeterminate reason (rate\n"
+    "limit, network, credentials) calls for a retry or a token repair, not a\n"
+    "selection change. The tokens are currently `hex-publishing` and\n"
+    "`hex-publishing-2`, listed under\n"
     "https://github.com/settings/personal-access-tokens . Any token with room\n"
     "works; the sync routes per repository. Each token is scoped to hex\n"
     "repositories on purpose, so each newly published library has to be added by\n"
@@ -255,8 +258,9 @@ def route_tokens(entries: list[dict], tokens: list[str]) -> tuple[dict[str, str]
     first push: each publishing token is scoped to an explicit list of
     repositories, and a fine-grained token caps that list, so the published set
     is split across more than one token. Nothing here assumes any particular
-    split; each repository is probed against each token in order and every
-    later clone and push uses the token routed here. A library released here
+    split; each repository is probed against the tokens in order until one sees
+    it, and every later clone and push uses the token routed here. A library
+    released here
     but on no token's list would otherwise fail partway through, after earlier
     repos were already published. This proves selection, not write access; see
     `selection_check`.
@@ -774,12 +778,19 @@ def sync_repo(entry: dict, source_sha: str, token: str | None, dry_run: bool,
 
 
 def env_tokens() -> list[str]:
-    """Tokens from $RELEASED_SYNC_PAT, $RELEASED_SYNC_PAT_2, ... in numeric order."""
+    """Tokens from $RELEASED_SYNC_PAT, $RELEASED_SYNC_PAT_2, ... in numeric order.
+
+    Only the canonical slot names count: the base name, then suffixes that are
+    integers >= 2 without leading zeroes, so no `_0`/`_1`/`_01` alias can sort
+    ambiguously against the base slot. Empty slots are skipped (the workflow
+    exports the secrets unconditionally, so an unset secret arrives as "").
+    """
     def order(name: str) -> int:
         suffix = name.removeprefix("RELEASED_SYNC_PAT")
         return int(suffix[1:]) if suffix else 1
     names = [name for name in os.environ
-             if re.fullmatch(r"RELEASED_SYNC_PAT(_[0-9]+)?", name) and os.environ[name]]
+             if re.fullmatch(r"RELEASED_SYNC_PAT(_(?:[2-9]|[1-9][0-9]+))?", name)
+             and os.environ[name]]
     return [os.environ[name] for name in sorted(names, key=order)]
 
 
@@ -798,6 +809,11 @@ def main() -> int:
                          "(the workflow points this at the release-sync-baseline branch's copy)")
     args = ap.parse_args()
 
+    # An empty token would probe anonymously, win the routing for every public
+    # repository, and only fail at push time — after earlier repositories were
+    # already published. Reject it loudly instead.
+    if args.token is not None and any(not token.strip() for token in args.token):
+        ap.error("--token values must be nonempty")
     tokens = args.token or env_tokens()
     if not args.dry_run and not tokens:
         ap.error("a token (--token or $RELEASED_SYNC_PAT / $RELEASED_SYNC_PAT_2 / ...) "
@@ -830,16 +846,18 @@ def main() -> int:
     if not args.dry_run:
         repo_token, blocked = route_tokens(targets, tokens)
         if blocked:
-            print(f"\nrelease sync: none of the {len(tokens)} publishing token(s) "
-                  f"can reach {len(blocked)} of {len(targets)} target repositories:",
+            print(f"\nrelease sync: could not establish token coverage for "
+                  f"{len(blocked)} of {len(targets)} target repositories:",
                   file=sys.stderr)
             for line in blocked:
                 print(f"  {line}", file=sys.stderr)
             print(f"\n{TOKEN_HELP}", file=sys.stderr)
             return 1
+        per_slot = ", ".join(
+            f"token {index + 1}: {sum(1 for t in repo_token.values() if t == token)}"
+            for index, token in enumerate(tokens))
         print(f"token preflight: all {len(targets)} target repositories are covered "
-              f"by the {len(tokens)} publishing token(s) (this does not prove write "
-              "access; see selection_check)")
+              f"({per_slot}; this does not prove write access, see selection_check)")
 
     failed_repo: str | None = None
     current_repo = "<manifest>"
@@ -848,7 +866,9 @@ def main() -> int:
             current_repo = entry["repo"]
             if args.only and entry["repo"].split("/")[-1] != args.only:
                 continue
-            token = repo_token.get(entry["repo"], tokens[0] if tokens else None)
+            # Dry runs skip routing and clone over public https; real runs index
+            # the routed map so a repository routing ever missed fails closed.
+            token = None if args.dry_run else repo_token[entry["repo"]]
             sync_repo(entry, source_sha, token, args.dry_run,
                       synced, baseline, args.force, dep_owner, pins)
     except Exception as exc:
