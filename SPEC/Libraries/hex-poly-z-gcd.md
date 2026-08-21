@@ -472,7 +472,7 @@ argument.
 **This route is a scheduling dependency, not a mathematical one.**
 hex-resultant is at `done_through: 1`, and its correctness theorems
 additionally require `Lean.Grind.CommRing` on the coefficient type, which
-`Int` has, and `ExactDivLaws Int`, which `HexResultant/ExactDiv.lean`
+`Int` has, and `ExactDivLaws Int`, which `HexBasic/ExactDiv.lean`
 supplies as `instExactDivLawsInt`. So the executable chain runs today and
 its theorems apply, and what is missing is the phases of hex-resultant
 rather than anything about this library. Milestone 2 below is written so

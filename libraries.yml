@@ -544,7 +544,7 @@ libraries:
     done_through: 0
     status: active
   HexResultant:
-    deps: [HexPoly]
+    deps: [HexPoly, HexBasic]
     mathlib: false
     done_through: 4
     status: active

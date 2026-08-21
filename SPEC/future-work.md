@@ -48,20 +48,17 @@ from `IsEchelonForm.transform_inv` and `det_mul`; and it must carry the
 condition that each pivot is the leading nonzero entry of its row, which
 `IsEchelonForm` does not imply and without which uniqueness is false.
 
-**Shared exact division (`HexBasic.ExactDiv`, refactor).** The total exact
-division operation and its law package already exist in
-`HexResultant/ExactDiv.lean`, but generic Bareiss and future Euclidean-domain
-algorithms need the same contract below `hex-resultant`. Move `exactDiv`,
-`ExactDivLaws`, and the coefficient-independent cancellation lemmas into
-`HexBasic.ExactDiv`; leave polynomial-specific operations and instances with
-the polynomial consumer. This is a dependency refactor, not a new quotient
-semantics: division by zero remains deterministic, while correctness only uses
-the law that division by a nonzero known factor cancels.
+**Shared exact division has graduated from this file.** `exactDiv`,
+`ExactDivLaws`, and the coefficient-independent cancellation lemmas now live in
+`HexBasic/ExactDiv.lean`, below both `hex-resultant` and `hex-bareiss`;
+`HexResultant/ExactDiv.lean` keeps only the dense-polynomial operations and
+instances and re-exports the contract through a public import.
 
 **Generic Bareiss over integral domains (`hex-bareiss`, amendment).**
 Generalize the existing `Int` implementation rather than adding a matrix
 library. The executable recurrence uses the shared total exact-division
-operation; its correctness layer assumes a commutative ring, decidable
+operation from `HexBasic.ExactDiv`; its correctness layer assumes a
+commutative ring, decidable
 equality, and `ExactDivLaws`, which supplies cancellation and rules out zero
 products. Keep the current `Int` API as a specialization. The determinant
 proof reuses the public Desnanot-Jacobi and Plücker API already in
