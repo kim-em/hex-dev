@@ -69,6 +69,14 @@ before array scans. A successful depth check may still traverse the complete
 already-constructed branching `Term`; construction and structural equality of
 caller terms remain an explicit non-preemptible envelope.
 
+The Mathlib-free layer now retains an authenticated `Search.Result.Tree` with
+exact parent/child seed relations and target/refute/unknown terminal data.
+Restarted child branches themselves reset versions and generations and carry
+no inherited derivation proof; the exact tree edge is what retains that
+provenance. That runtime tree is not evidence. This companion still does not
+quote it into package-owned split/refutation recipes or recursively replay and
+join it; those remain separate later proof edges.
+
 `HexIntervalMathlib.Tactic` is the first supported Meta client. It recursively
 parses real local variables and the registered forward arithmetic operations,
 selects strongest integer lower and upper hypotheses, constructs the exact
