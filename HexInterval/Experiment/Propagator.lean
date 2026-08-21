@@ -612,6 +612,10 @@ plain-data contracts; package callbacks and structural arenas remain here. -/
 structure Engine (Fact : Type) extends
     Hex.Interval.State.Branch Fact (FactCause Fact), Hex.Interval.State.Dependencies, Hex.Interval.State.Queue,
       Hex.Interval.Trace.Order where
+  /-- Eager runtime cache of the current facts. The supported branch keeps
+  seeds and history authoritative; this experimental cache never becomes
+  proof evidence. Engine transitions update both together. -/
+  facts : Array Fact
   factDomain : FactDomain Fact
   rules : Array Registration
   /-- Concrete scoped bindings in admission order.  Start-time bindings form
@@ -770,13 +774,14 @@ def Engine.start (factDomain : FactDomain Fact) (program : Program) (rules : Arr
     | .ok queue => pure queue
     | .error resource => throw (.resourceLimit resource)
   if !dependencies.check program.nodes.size applications.size 0 ||
-      !queue.check dependencies applications.size 0 limits.maxQueueEntries then
+      !queue.check dependencies program.nodes.size applications.size 0 limits.maxQueueEntries then
     throw .invalidRegistrations
   pure
     { toBranch := branch
       toDependencies := dependencies
       toQueue := queue
       toOrder := Hex.Interval.Trace.Order.empty
+      facts
       factDomain
       rules
       bindings
@@ -933,7 +938,8 @@ def enqueue (state : Engine Fact) (work : Hex.Interval.State.Work) : Except Hex.
   let suppressed := (Hex.Interval.State.Queue.dirty? state.toDependencies work).getD false
   let (dependencies, queue) <-
     match state.toQueue.enqueueWithin state.limits.maxQueueEntries
-        state.applications.size state.equalities.size state.toDependencies work with
+        state.program.nodes.size state.applications.size state.equalities.size
+          state.toDependencies work with
     | .ok result => pure result
     | .error (.resource resource) => throw resource
     | .error .malformed =>
@@ -1025,8 +1031,8 @@ def poll (state : Engine Fact) : Poll Fact :=
   else if state.contradictory then
     .contradiction state
   else
-    match state.toQueue.pop state.limits.maxQueueEntries state.applications.size
-        state.equalities.size state.toDependencies with
+    match state.toQueue.pop state.limits.maxQueueEntries state.program.nodes.size
+        state.applications.size state.equalities.size state.toDependencies with
     | .error _ => .invalidState state
     | .ok (none, dependencies, queue) =>
         .saturated { state with toDependencies := dependencies, toQueue := queue }
@@ -1428,6 +1434,7 @@ def installImprovement (action : Action) (candidate : Candidate Fact)
     pure
       { state with
         toBranch := branch
+        facts := state.facts.set! candidate.node.index fact
         toOrder := order
         metrics :=
           { state.metrics with
@@ -1626,6 +1633,7 @@ def installTransport (equality : EqualityId) (update : TransportUpdate Fact)
   pure
     { state with
       toBranch := branch
+      facts := state.facts.set! update.target.index update.fact
       toOrder := order
       metrics :=
         { state.metrics with
@@ -2072,6 +2080,7 @@ def admitRetained (state : Engine Fact)
                                                             let prospective : Engine Fact :=
                                                               { state with
                                                                 toBranch := branch
+                                                                facts := state.facts ++ freshFacts
                                                                 bindings := state.bindings ++
                                                                   scopeResolution.freshBindings.toArray
                                                                 applications
@@ -2121,7 +2130,8 @@ def admitRetained (state : Engine Fact)
                                                                   allEqualities.size ||
                                                                 !prospective.toQueue.check
                                                                   prospective.toDependencies
-                                                                  applications.size allEqualities.size
+                                                                  program.nodes.size applications.size
+                                                                    allEqualities.size
                                                                     prospective.limits.maxQueueEntries then
                                                               .invalid .invalidCompiledProgram state
                                                             else match enqueueNewEqualities

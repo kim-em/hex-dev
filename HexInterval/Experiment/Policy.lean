@@ -677,10 +677,10 @@ contract. Policy order may differ from FIFO order, so the retained entry
 becomes a tombstone rather than moving the FIFO cursor. -/
 private def clearWork? (engine : Engine Fact) (work : Hex.Interval.State.Work) :
     Option (Engine Fact) := do
-  let dependencies <-
-    (engine.toQueue.deactivate engine.limits.maxQueueEntries engine.applications.size
-      engine.equalities.size engine.toDependencies work).toOption
-  pure { engine with toDependencies := dependencies }
+  let (dependencies, queue) <-
+    (engine.toQueue.deactivate engine.limits.maxQueueEntries engine.program.nodes.size
+      engine.applications.size engine.equalities.size engine.toDependencies work).toOption
+  pure { engine with toDependencies := dependencies, toQueue := queue }
 
 private def prepareApplication (state : State Fact) (applicationId : ApplicationId)
     (effort : Option Nat) (clearDirty : Bool) (decision : DecisionClass)

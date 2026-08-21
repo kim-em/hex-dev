@@ -977,11 +977,17 @@ an explicit dependency.
 
 `State.Branch Fact Cause` is the function-independent decoded branch contract.
 It retains the exact base program and caller facts, current append-only
-program, an immutable version-zero seed for every base or generated node,
-current facts and versions, structural generations and depths, exact updates,
-and the contradiction search flag. `Cause` is opaque data at this layer.
-`Branch.check` reconstructs every current version from the ordered predecessor
-links and validates the base/program prefix and all aligned arrays. It does not
+program, immutable version-zero seeds for the generated-node suffix, current
+versions, structural generation/depth metadata, exact updates, and the
+contradiction search flag. Base facts plus generated-node seeds and ordered
+updates are authoritative: `Branch.snapshot` reconstructs current facts rather
+than trusting an independently mutable fact cache. `Cause` is opaque data at
+this layer. `Branch.check` reconstructs every current fact and version,
+validates the base/program prefix and all aligned arrays, requires base-node
+generations to be zero, and rejects an appended generation after the current
+program version. Exact dependency-derived creation generation remains the
+experimental engine transition's responsibility; the supported decoded table
+does not independently authenticate that semantic relation. It does not
 interpret a fact or provenance cause as evidence.
 
 `Branch.startWithin`, `pushWithin`, and `extendWithin` are transactional.
@@ -989,23 +995,34 @@ Structural count/arity/depth/generation caps are checked before allocating
 aligned arrays; fact-history capacity is checked before appending an update;
 and a stale node/version, wrong program version, malformed current branch, or
 non-prefix extension returns no replacement branch. Generated version-zero
-facts are retained in the seed array rather than reconstructed by a later
-callback. This makes quotation independent of mutable package state.
+facts are retained in the suffix seed array rather than reconstructed by a
+later callback. This makes quotation independent of mutable package state.
+The experimental engine separately caches current facts for scheduler speed;
+that cache is runtime data and never replaces branch history during replay.
+Checked branch mutation preflights both the decoded base and current program
+sizes before `Branch.check` traverses either program. `restoredFacts?` checks
+the base/suffix/current size relation before concatenating the two seed arrays.
 
 `State.Dependencies` retains node-aligned watcher lists and separate dirty bits
 for application and equality work. `State.Queue` is an append-only bounded work
 log plus its FIFO cursor. A policy may consume work out of FIFO order through
-`Queue.deactivate`, leaving a checked tombstone. A later wake appends a fresh
-occurrence; `Queue.pop` skips tombstones and clears exactly the next still-dirty
-item. Queue construction, enqueue, deactivation, and pop validate reference,
-array, live-bit, cursor, and retained-count alignment before returning a new
-snapshot. The append-only array is the current decoded/reference
+`Queue.deactivate`, clearing that exact occurrence's live bit and leaving a
+checked tombstone. A later wake appends a fresh live occurrence and cannot
+resurrect the earlier tombstone; `Queue.pop` skips tombstones and clears exactly
+the next live item. Initial queue construction preflights its retained count; queue
+validation, enqueue, deactivation, and pop additionally receive the exact
+program-node count and validate watcher/reference arrays, live bits, cursor,
+and retained-count alignment before returning a new snapshot. The append-only
+array is the current decoded/reference
 representation, not a decision against a compacting or persistent production
 queue with the same behavior.
 
 `Trace.Order` is the authoritative interleaving of fact updates and program
 instances. Its checked append operations require the exact next role-local
-index and independent fact/instance history caps. The role-specific histories
+index and independent fact/instance history caps. The target-role index and
+combined retained-count cap are preflighted before scanning chronology; after
+that scan the exact role-local order and separate retained counts are checked.
+The role-specific histories
 retain payload and provenance; the order alone carries no proof authority.
 `Trace.Log` is a separate diagnostic stream with exact event-count,
 already-allocated payload-byte, declared-work, and code limits. Refusal marks
@@ -4921,9 +4938,17 @@ candidates, and `b` the number of live branch states.
   revalidates the complete `ProgramView` per selected request, including depth
   reconstruction, so the current package-boundary dispatch performs this
   whole-program work before each callback.
-- One worklist update is proportional to the number of rules attached to the
-  changed node and its consumers. The scheduler does not scan all `n` nodes
-  after every fact.
+- Dependency discovery for one changed fact visits only the rules attached to
+  that node. The current decoded/reference state does **not** yet turn this
+  semantic locality into a local mutation cost: every `Queue.enqueueWithin`,
+  deactivation, and pop revalidates the complete dependency/dirty arrays and
+  retained queue, including all watcher lists and `q` entries. Every accepted
+  fact through `Branch.pushWithin` revalidates both base and current programs,
+  reconstructs current facts and versions from the retained history, and
+  checks the complete generation/depth tables; chronology append separately
+  scans its retained order. Avoiding these whole-state scans is a requirement
+  for the selected production store and queue, not a property of the current
+  transparent reference builders.
 - Fact comparison and contradiction checks use exact endpoint comparison. For
   the dyadic candidate, integer cost is proportional to effective endpoint
   height and the permitted exponent-alignment shift; a rational candidate must
@@ -5006,8 +5031,9 @@ their declared cost inside a scheduler bound.
   bounded diagnostic-log contracts. Diagnostic bytes count retained `UInt8`
   payload cells after callback construction; they do not claim to preempt
   arbitrary Lean allocation.
-- `HexInterval/State.lean`: supported immutable branch seeds, current facts,
-  exact version/provenance history, structural/generation side tables,
+- `HexInterval/State.lean`: supported immutable base and generated-node seeds,
+  reconstructed current facts, exact version/provenance history, and bounded
+  structural/generation side tables,
   dependency watchers, dirty bits, append-only work queues with policy
   tombstones, controller resources, and transactional checked builders. These
   decoded arrays do not select the optimized branch-storage implementation.

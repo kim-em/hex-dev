@@ -124,16 +124,18 @@ structure Update (Fact Cause : Type) where
   version : Nat
   cause : Cause
 
-/-- Immutable fact state for one search branch. Generations and depths are
-aligned with the exact current program; history is append-only. -/
+/-- Immutable fact state for one search branch. Base facts and appended-node
+seeds are the authoritative version-zero facts; later current facts are
+reconstructed from append-only history. Generation values are aligned bounded
+metadata supplied by the controller, not independently authenticated theorem
+provenance. -/
 structure Branch (Fact Cause : Type) where
   programVersion : Nat
   baseProgram : Program
   initialFacts : Array Fact
   program : Program
-  /-- Exact version-zero fact for every current node, including extensions. -/
+  /-- Exact version-zero facts for the appended node suffix only. -/
   seeds : Array Fact
-  facts : Array Fact
   versions : Array Nat
   generations : Array Nat
   depths : Array Nat
@@ -145,6 +147,7 @@ inductive BranchError where
   | wrongFactCount
   | staleVersion (node : NodeId)
   | wrongProgramVersion
+  | invalidGeneration
   | nonExtension
   | resource (resource : Resource)
   deriving DecidableEq, Repr
@@ -177,17 +180,30 @@ def startWithin (limits : Limits) (program : Program) (facts : Array Fact) :
       baseProgram := program
       initialFacts := facts
       program
-      seeds := facts
-      facts
+      seeds := #[]
       versions := Array.replicate facts.size 0
       generations := Array.replicate facts.size 0
       depths
       history := #[]
       contradictory := false }
 
-/-- Immutable callback-facing current fact snapshot. -/
+/-- Reconstruct current facts from the authoritative base/suffix seeds and
+ordered update history. An out-of-range retained update is malformed. -/
+def restoredFacts? (branch : Branch Fact Cause) : Option (Array Fact) := do
+  if branch.initialFacts.size != branch.baseProgram.nodes.size ||
+      branch.program.nodes.size < branch.baseProgram.nodes.size ||
+      branch.seeds.size != branch.program.nodes.size - branch.baseProgram.nodes.size then
+    none
+  let mut facts := branch.initialFacts ++ branch.seeds
+  for event in branch.history do
+    if branch.program.nodes[event.node.index]?.isNone then none
+    facts := facts.set! event.node.index event.fact
+  pure facts
+
+/-- Immutable callback-facing current fact snapshot. A malformed decoded
+branch produces an empty fact array and consequently fails `Branch.check`. -/
 def snapshot (branch : Branch Fact Cause) : Snapshot Fact :=
-  { facts := branch.facts
+  { facts := branch.restoredFacts?.getD #[]
     versions := branch.versions
     contradictory := branch.contradictory }
 
@@ -195,7 +211,10 @@ def snapshot (branch : Branch Fact Cause) : Snapshot Fact :=
 seed array; later versions come only from append-only update history. -/
 def factAt? (branch : Branch Fact Cause) (seen : SeenVersion) : Option Fact :=
   if seen.version == 0 then
-    branch.seeds[seen.node.index]?
+    if seen.node.index < branch.initialFacts.size then
+      branch.initialFacts[seen.node.index]?
+    else
+      branch.seeds[seen.node.index - branch.initialFacts.size]?
   else
     (branch.history.find? fun event =>
       event.node == seen.node && event.version == seen.version).map (·.fact)
@@ -211,15 +230,31 @@ def restoredVersions? (branch : Branch Fact Cause) : Option (Array Nat) := do
     versions := versions.set! event.node.index event.version
   pure versions
 
+/-- Validate the generation facts that this generic state layer can establish:
+base nodes are generation zero, and no appended node claims a generation after
+the current append-only program version. Exact dependency-derived generation
+is authenticated by the controller's instance transition, not by this table. -/
+def generationsCheck (branch : Branch Fact Cause) : Bool := Id.run do
+  if branch.generations.size != branch.program.nodes.size then return false
+  for index in [0:branch.generations.size] do
+    let some generation := branch.generations[index]? | return false
+    if index < branch.baseProgram.nodes.size then
+      if generation != 0 then return false
+    else if branch.programVersion < generation then
+      return false
+  return true
+
 /-- Validate all immutable array alignments, append-only program structure,
 depths, and exact per-node update chronology. -/
 def check (branch : Branch Fact Cause) : Bool :=
+  let snapshot := branch.snapshot
   branch.baseProgram.check && branch.program.check &&
     programPrefix branch.baseProgram branch.program &&
     branch.initialFacts.size == branch.baseProgram.nodes.size &&
-    branch.seeds.size == branch.program.nodes.size &&
-    branch.snapshot.check branch.program &&
-    branch.generations.size == branch.program.nodes.size &&
+    branch.seeds.size == branch.program.nodes.size - branch.baseProgram.nodes.size &&
+    snapshot.facts.size == branch.program.nodes.size &&
+    snapshot.versions.size == branch.program.nodes.size &&
+    branch.generationsCheck &&
     branch.program.depths? == some branch.depths &&
     branch.restoredVersions? == some branch.versions
 
@@ -229,6 +264,9 @@ def pushWithin (limits : Limits) (branch : Branch Fact Cause) (event : Update Fa
     (contradiction : Bool := false) : Except BranchError (Branch Fact Cause) := do
   if limits.maxAcceptedFacts <= branch.history.size then
     throw (.resource .acceptedFacts)
+  if limits.maxOperations < branch.baseProgram.operations.size then
+    throw (.resource .operations)
+  if limits.maxNodes < branch.baseProgram.nodes.size then throw (.resource .nodes)
   if limits.maxOperations < branch.program.operations.size then
     throw (.resource .operations)
   if limits.maxNodes < branch.program.nodes.size then throw (.resource .nodes)
@@ -240,7 +278,6 @@ def pushWithin (limits : Limits) (branch : Branch Fact Cause) (event : Update Fa
     throw (.staleVersion event.node)
   pure
     { branch with
-      facts := branch.facts.set! event.node.index event.fact
       versions := branch.versions.set! event.node.index event.version
       history := branch.history.push event
       contradictory := branch.contradictory || contradiction }
@@ -248,8 +285,13 @@ def pushWithin (limits : Limits) (branch : Branch Fact Cause) (event : Update Fa
 /-- Append one checked program suffix and its version-zero top facts. -/
 def extendWithin (limits : Limits) (branch : Branch Fact Cause) (program : Program)
     (freshFacts : Array Fact) (generation : Nat) : Except BranchError (Branch Fact Cause) := do
+  if limits.maxAcceptedFacts < branch.history.size then
+    throw (.resource .acceptedFacts)
   if limits.maxOperations < program.operations.size then throw (.resource .operations)
   if limits.maxNodes < program.nodes.size then throw (.resource .nodes)
+  if limits.maxOperations < branch.baseProgram.operations.size then
+    throw (.resource .operations)
+  if limits.maxNodes < branch.baseProgram.nodes.size then throw (.resource .nodes)
   if limits.maxOperations < branch.program.operations.size then
     throw (.resource .operations)
   if limits.maxNodes < branch.program.nodes.size then throw (.resource .nodes)
@@ -261,6 +303,8 @@ def extendWithin (limits : Limits) (branch : Branch Fact Cause) (program : Progr
   if !program.check || !programPrefix branch.program program then throw .nonExtension
   let added := program.nodes.size - branch.program.nodes.size
   if freshFacts.size != added then throw .wrongFactCount
+  if 0 < added && (generation == 0 || branch.programVersion + 1 < generation) then
+    throw .invalidGeneration
   let some depths := program.depths? | throw .invalidProgram
   if depths.any (fun depth => limits.maxNodeDepth < depth) then
     throw (.resource .nodeDepth)
@@ -269,7 +313,6 @@ def extendWithin (limits : Limits) (branch : Branch Fact Cause) (program : Progr
       programVersion := branch.programVersion + 1
       program
       seeds := branch.seeds ++ freshFacts
-      facts := branch.facts ++ freshFacts
       versions := branch.versions ++ Array.replicate added 0
       generations := branch.generations ++ Array.replicate added generation
       depths }
@@ -298,9 +341,12 @@ def check (dependencies : Dependencies) (nodeCount applicationCount equalityCoun
 
 end Dependencies
 
-/-- Append-only work log plus the first live position. -/
+/-- Append-only work log, per-occurrence liveness, and the first unconsumed
+position. A cleared occurrence stays a tombstone even if the same work is
+woken and appended again later. -/
 structure Queue where
   queue : Array Work
+  live : Array Bool
   queueHead : Nat
 
 namespace Queue
@@ -312,30 +358,43 @@ inductive Error where
 
 def containsAfter (queue : Queue) (work : Work) : Bool := Id.run do
   for index in [queue.queueHead:queue.queue.size] do
-    if queue.queue[index]? == some work then return true
+    if queue.live[index]? == some true && queue.queue[index]? == some work then return true
   return false
 
 def dirty? (dependencies : Dependencies) : Work -> Option Bool
   | .application application => dependencies.queued[application.index]?
   | .equality equality => dependencies.equalityQueued[equality.index]?
 
-/-- Validate the retained cap, cursor, compact references, and that every dirty
-bit has a retained suffix occurrence. A false bit may leave a policy-created
-tombstone which `pop` skips. -/
+/-- Validate the retained cap, cursor, compact references, and the bijection
+between dirty bits and live retained suffix occurrences. Per-occurrence live
+bits keep a policy-created tombstone dead after later re-enqueue. -/
 def check (queue : Queue) (dependencies : Dependencies)
-    (applicationCount equalityCount maxEntries : Nat) : Bool := Id.run do
+    (nodeCount applicationCount equalityCount maxEntries : Nat) : Bool := Id.run do
   if maxEntries < queue.queue.size || queue.queue.size < queue.queueHead ||
-      !dependencies.check dependencies.watchers.size applicationCount equalityCount then
+      queue.live.size != queue.queue.size ||
+      !dependencies.check nodeCount applicationCount equalityCount then
     return false
-  for work in queue.queue do
+  let mut seenApplications := Array.replicate applicationCount false
+  let mut seenEqualities := Array.replicate equalityCount false
+  for index in [0:queue.queue.size] do
+    let some work := queue.queue[index]? | return false
     if !Dependencies.workValid applicationCount equalityCount work then return false
-  for index in [0:applicationCount] do
-    if dependencies.queued[index]? == some true &&
-        !queue.containsAfter (.application { index }) then return false
-  for index in [0:equalityCount] do
-    if dependencies.equalityQueued[index]? == some true &&
-        !queue.containsAfter (.equality { index }) then return false
-  return true
+    let some live := queue.live[index]? | return false
+    if index < queue.queueHead && live then return false
+    if live then
+      match work with
+      | .application application =>
+          if seenApplications[application.index]? != some false ||
+              dependencies.queued[application.index]? != some true then
+            return false
+          seenApplications := seenApplications.set! application.index true
+      | .equality equality =>
+          if seenEqualities[equality.index]? != some false ||
+              dependencies.equalityQueued[equality.index]? != some true then
+            return false
+          seenEqualities := seenEqualities.set! equality.index true
+  return seenApplications == dependencies.queued &&
+    seenEqualities == dependencies.equalityQueued
 
 /-- Construct the initial application queue only after its retained-count
 limit has admitted the entire allocation. -/
@@ -344,14 +403,14 @@ def initialWithin (maxEntries applicationCount : Nat) : Except Resource Queue :=
   let mut queue := #[]
   for index in [0:applicationCount] do
     queue := queue.push (.application { index })
-  pure { queue, queueHead := 0 }
+  pure { queue, live := Array.replicate applicationCount true, queueHead := 0 }
 
 /-- Transactionally enqueue one valid work item, suppressing an already-live
 item and setting exactly its aligned dirty bit. -/
-def enqueueWithin (maxEntries applicationCount equalityCount : Nat)
+def enqueueWithin (maxEntries nodeCount applicationCount equalityCount : Nat)
     (dependencies : Dependencies) (queue : Queue) (work : Work) :
     Except Error (Dependencies × Queue) := do
-  if !queue.check dependencies applicationCount equalityCount maxEntries ||
+  if !queue.check dependencies nodeCount applicationCount equalityCount maxEntries ||
       !Dependencies.workValid applicationCount equalityCount work then
     throw Error.malformed
   let some dirty := dirty? dependencies work | throw Error.malformed
@@ -363,42 +422,50 @@ def enqueueWithin (maxEntries applicationCount equalityCount : Nat)
     | .equality equality =>
         { dependencies with
           equalityQueued := dependencies.equalityQueued.set! equality.index true }
-  pure (dependencies, { queue with queue := queue.queue.push work })
+  pure (dependencies,
+    { queue with queue := queue.queue.push work, live := queue.live.push true })
 
 /-- Transactionally clear one selected work item. Its retained queue-log entry
 may become a tombstone; a later enqueue appends a fresh occurrence. -/
-def deactivate (maxEntries applicationCount equalityCount : Nat)
+def deactivate (maxEntries nodeCount applicationCount equalityCount : Nat)
     (dependencies : Dependencies) (queue : Queue) (work : Work) :
-    Except Error Dependencies := do
-  if !queue.check dependencies applicationCount equalityCount maxEntries ||
+    Except Error (Dependencies × Queue) := do
+  if !queue.check dependencies nodeCount applicationCount equalityCount maxEntries ||
       !Dependencies.workValid applicationCount equalityCount work then
     throw Error.malformed
   let some dirty := dirty? dependencies work | throw Error.malformed
   if !dirty then throw Error.malformed
-  pure <| match work with
+  let mut liveIndex? := none
+  for index in [queue.queueHead:queue.queue.size] do
+    if queue.live[index]? == some true && queue.queue[index]? == some work then
+      liveIndex? := some index
+      break
+  let some liveIndex := liveIndex? | throw Error.malformed
+  let dependencies := match work with
     | .application application =>
         { dependencies with queued := dependencies.queued.set! application.index false }
     | .equality equality =>
         { dependencies with
           equalityQueued := dependencies.equalityQueued.set! equality.index false }
+  pure (dependencies, { queue with live := queue.live.set! liveIndex false })
 
 /-- Transactionally pop the next still-dirty work item, skipping retained
 tombstones created by policy selection. `none` denotes a checked empty suffix;
 the returned queue still commits the cursor advance across those tombstones. -/
-def pop (maxEntries applicationCount equalityCount : Nat)
+def pop (maxEntries nodeCount applicationCount equalityCount : Nat)
     (dependencies : Dependencies) (queue : Queue) :
     Except Error (Option Work × Dependencies × Queue) := do
-  if !queue.check dependencies applicationCount equalityCount maxEntries then
+  if !queue.check dependencies nodeCount applicationCount equalityCount maxEntries then
     throw Error.malformed
   let mut queue := queue
   while queue.queueHead < queue.queue.size do
     let some work := queue.queue[queue.queueHead]? | throw Error.malformed
-    let some dirty := dirty? dependencies work | throw Error.malformed
-    if dirty then
-      let dependencies <- queue.deactivate maxEntries applicationCount equalityCount
-        dependencies work
-      queue := { queue with queueHead := queue.queueHead + 1 }
-      if !queue.check dependencies applicationCount equalityCount maxEntries then
+    let some live := queue.live[queue.queueHead]? | throw Error.malformed
+    if live then
+      let (dependencies, deactivated) <-
+        queue.deactivate maxEntries nodeCount applicationCount equalityCount dependencies work
+      queue := { deactivated with queueHead := deactivated.queueHead + 1 }
+      if !queue.check dependencies nodeCount applicationCount equalityCount maxEntries then
         throw Error.malformed
       return (some work, dependencies, queue)
     queue := { queue with queueHead := queue.queueHead + 1 }

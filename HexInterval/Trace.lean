@@ -89,17 +89,22 @@ def counts? (order : Order) : Option (Nat × Nat) := do
 /-- Append the exact next fact-history position after validating the retained
 chronology and both independent count caps. -/
 def appendFact (limit : Limit) (order : Order) (index : Nat) : Except Error Order := do
+  if limit.maxFacts <= index || limit.maxFacts + limit.maxInstances <= order.chronology.size then
+    throw .facts
   let some (facts, instances) := order.counts? | throw .malformed
-  if index != facts || limit.maxInstances < instances then throw .malformed
-  if limit.maxFacts <= facts then throw .facts
+  if limit.maxFacts < facts || limit.maxInstances < instances || index != facts then
+    throw .malformed
   pure { chronology := order.chronology.push (.fact index) }
 
 /-- Append the exact next instance-history position after validating the
 retained chronology and both independent count caps. -/
 def appendInstance (limit : Limit) (order : Order) (index : Nat) : Except Error Order := do
+  if limit.maxInstances <= index ||
+      limit.maxFacts + limit.maxInstances <= order.chronology.size then
+    throw .instances
   let some (facts, instances) := order.counts? | throw .malformed
-  if index != instances || limit.maxFacts < facts then throw .malformed
-  if limit.maxInstances <= instances then throw .instances
+  if limit.maxFacts < facts || limit.maxInstances < instances || index != instances then
+    throw .malformed
   pure { chronology := order.chronology.push (.instance index) }
 
 end Order
@@ -121,8 +126,9 @@ structure Event where
   work : Nat := 0
   deriving DecidableEq, Repr
 
-/-- Bounded retained diagnostics. Cached totals make admission constant-time
-after inspecting the returned event's already-allocated payload size. -/
+/-- Bounded retained diagnostics. `append` first revalidates the complete
+retained event array; cached totals make only the subsequent accepted-event
+increment constant-time after inspecting the already-allocated payload size. -/
 structure Log where
   events : Array Event := #[]
   bytes : Nat := 0
