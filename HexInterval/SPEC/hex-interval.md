@@ -3092,7 +3092,7 @@ never the policy's copy. In the sketch below,
 engine-computed generation, proposed-operation/reference graph, and unordered
 equality-pair key. Replay-facing trigger metadata is deliberately absent;
 `PolicyFeature` is a bounded exact integer key/value; and frontier events are
-engine-issued additions, refreshes, tombstones, and observations:
+engine-issued additions, refreshes, tombstones, and observations.
 
 The current Mathlib-free `HexInterval/Policy.lean` contract implements the
 generic part of this boundary. `OfferView Id SemanticKey` retains the complete
@@ -3120,6 +3120,9 @@ The concrete `OfferId`,
 package callbacks, event history, sessions, and branch-search loop remain under
 `HexInterval/Experiment`. In particular no `balancedV1`, score model, storage
 layout, scheduler, or default policy is selected by the supported contract.
+
+The implemented generic records and current concrete experimental keys are
+sketched below:
 
 ```lean
 structure PolicyKey where
@@ -3177,11 +3180,16 @@ structure PolicyBudget where
   noteBytes : Nat
 
 structure EngineBudgetView where
-  actions       : Nat
-  acceptedFacts : Nat
-  nodes         : Nat
-  equalities    : Nat
-  branches      : Nat
+  actions             : Nat
+  matcherVisits       : Nat
+  acceptedFacts       : Nat
+  nodes               : Nat
+  applications        : Nat
+  equalities          : Nat
+  retainedSuggestions : Nat
+  instances           : Nat
+  queueEntries        : Nat
+  generation          : Nat
 
 structure FactDelta (Fact : Type) where
   node          : NodeId
@@ -3236,12 +3244,16 @@ structure PolicyView (Fact : Type) where
   goalFeatures   : Array PolicyFeature
   remaining      : EngineBudgetView
 
-structure Selection where
+structure Decision where
   scope          : ScopeId
   serial         : Nat
   programVersion : Nat
   id             : OfferId
   expected       : OfferKey
+  offerClass     : OfferClass
+  age            : Nat
+  score          : Int
+  remaining      : EngineBudgetView
 
 inductive PolicyEvent (Fact : Type)
   | frontier (added : Array OfferView) (removed : Array OfferId)
@@ -3249,7 +3261,7 @@ inductive PolicyEvent (Fact : Type)
   | equality (observation : EqualityObservation Fact)
   | instanceAdmitted (programVersion : Nat) (added : Array OfferView)
   | splitPrepared (scope : ScopeId) (node : NodeId) (point : Dyadic)
-  | choiceRejected (choice : Selection) (reason : Nat)
+  | choiceRejected (choice : Decision) (reason : Nat)
   | engineResource (resource : Resource)
 
 structure DecisionNote where
@@ -3258,8 +3270,8 @@ structure DecisionNote where
   score  : Nat
 
 inductive PolicyStep (State : Type)
-  | select  (choice : Selection) (note : DecisionNote) (next : State)
-  | dismiss (choice : Selection) (note : DecisionNote) (next : State)
+  | select  (choice : Decision) (note : DecisionNote) (next : State)
+  | dismiss (choice : Decision) (note : DecisionNote) (next : State)
   | stop    (reason : Nat) (next : State)
 
 structure Policy (Fact : Type) where

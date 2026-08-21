@@ -51,8 +51,9 @@ private def splitOffer : OfferView :=
     age := 1 }
 
 private def sameOffer (left right : OfferView) : Bool :=
-  left.id == right.id && left.key == right.key &&
-    left.offerClass == right.offerClass && left.age == right.age
+  left == right
+
+#guard !sameOffer invokeOffer { invokeOffer with score := 1 }
 
 private def sameOffers : List OfferView -> List OfferView -> Bool
   | [], [] => true

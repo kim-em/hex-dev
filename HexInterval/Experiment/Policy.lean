@@ -475,8 +475,7 @@ opaque State.view (state : State Fact) :
 
 /-! # Validated selection -/
 
-/-- A policy echoes the exact engine stamps, remaining budget, identifier,
-semantic key, class, age, and score from one particular view. -/
+/-- Fail-closed reasons why the engine rejected a selected policy offer. -/
 inductive Rejection where
   | decisionLimit
   | wrongScope

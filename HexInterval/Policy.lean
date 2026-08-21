@@ -106,21 +106,22 @@ structure View (Fact Id SemanticKey : Type) where
   programVersion : Nat
   offers : Array (OfferView Id SemanticKey)
   facts : Snapshot Fact
-  remaining : EngineBudgetView := {}
+  remaining : EngineBudgetView
   incomplete : Bool
 
-/-- One exact echoed policy choice.  `expected` includes every exposed offer
-field, so mutating its class, age, score, identifier, or semantic key is stale. -/
+/-- One exact echoed policy choice. The scope, serial, program version,
+remaining budget, identifier, semantic key, class, age, and score must all
+match the view and retained offer from which the choice was constructed. -/
 structure Decision (Id SemanticKey : Type) where
   scope : ScopeId
   serial : Nat
   programVersion : Nat
   id : Id
   expected : SemanticKey
-  offerClass : OfferClass := .invoke
-  age : Nat := 0
-  score : Int := 0
-  remaining : EngineBudgetView := {}
+  offerClass : OfferClass
+  age : Nat
+  score : Int
+  remaining : EngineBudgetView
   deriving DecidableEq
 
 /-- External policy result.  Only an exact view member can later pass
