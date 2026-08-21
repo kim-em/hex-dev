@@ -38,6 +38,7 @@
 - **hex-hensel**: Hensel lifting from `mod p` to `mod p^k`
 - **hex-lll**: LLL lattice basis reduction
 - **hex-berlekamp-zassenhaus**: complete factoring of `Z[x]`; the `Hex.ZPoly` extension for `factor_poly` / `irreducibility`
+- **hex-summation**: certificate-checked hypergeometric summation: Gosper, Zeilberger, and Petkovšek's Hyper, as untrusted searches whose certificates are verified by `MvPoly` identity checkers
 - **hex-conway**: Conway polynomial database
 - **hex-gfq-ring**: canonical quotient ring `F_p[x]/(f)` by a nonconstant modulus
 - **hex-gfq-field**: field structure on top of `hex-gfq-ring` when `f` is irreducible
@@ -81,6 +82,7 @@ Mathlib, and supplies correspondence proofs or Mathlib-facing APIs):
 - **hex-gf2-mathlib**: `GF2Poly ≃+* FpPoly 2`, `GF2n`/`GF2nPoly ≃+* FiniteField 2 f hf hirr`, packed-field finiteness/cardinality
 - **hex-gfq-mathlib**: finiteness/cardinality for quotient fields, and `GFq p n ≃+* GaloisField p n`
 - **hex-berlekamp-zassenhaus-mathlib**: unconditional factoring correctness, `Decidable (Irreducible f)` for `Polynomial ℤ`; the `Polynomial ℤ` and strong `Hex.ZPoly` extensions for `factor_poly` / `irreducibility`
+- **hex-summation-mathlib**: `Finset.sum` semantics over characteristic-zero fields, the `Nat.choose` / `Nat.factorial` / `ascPochhammer` ratio kit, the summand recognizer, and the `gosper`, `zeilberger`, and `hyper` tactics
 
 ## Implementation dependencies
 
@@ -128,6 +130,7 @@ Each library with its immediate dependencies:
 - **hex-gfq**: hex-gfq-field, hex-conway, hex-gf2
 - **hex-gf2**: hex-poly, hex-basic, hex-finite-field
 - **hex-berlekamp-zassenhaus**: hex-berlekamp, hex-hensel, hex-lll
+- **hex-summation**: hex-poly, hex-mv-poly, hex-resultant, hex-matrix, hex-row-reduce, hex-berlekamp-zassenhaus, hex-basic
 
 Mathlib companion libraries (each also depends on Mathlib):
 
@@ -166,6 +169,7 @@ Mathlib companion libraries (each also depends on Mathlib):
 - **hex-gf2-mathlib**: hex-gf2, hex-poly-fp, hex-gfq-field, hex-poly-fp-mathlib
 - **hex-gfq-mathlib**: hex-gfq
 - **hex-berlekamp-zassenhaus-mathlib**: hex-berlekamp-zassenhaus, hex-poly-z-mathlib
+- **hex-summation-mathlib**: hex-summation
 
 LLL is the recombination primitive used by Berlekamp-Zassenhaus: BZ
 encodes its lifted local factors as a lattice basis and calls
@@ -377,6 +381,23 @@ hex-arith ──── hex-primality ──── hex-int-factor
       hex-primality-mathlib   hex-int-factor-mathlib
 ```
 
+`hex-summation` sits high in the graph. Its checkers need only the
+polynomial arithmetic, but its searches use the resultant for the
+dispersion computation, row reduction over `ℚ` for undetermined
+coefficients, and complete `ℤ[x]` factoring for Hyper's candidate
+enumeration, and the searches ship in the same library as the
+checkers. Its companion depends on Mathlib alone beyond it: the
+certificate identities are checked on the Hex side and never
+transported to `Polynomial` or `MvPolynomial`.
+
+```text
+hex-poly ────────────────┐
+hex-mv-poly ─────────────┤
+hex-resultant ───────────┼── hex-summation ── hex-summation-mathlib
+hex-row-reduce ──────────┤
+hex-berlekamp-zassenhaus ┘
+```
+
 ## Index
 
 Libraries marked **(released)** are published as standalone
@@ -451,3 +472,4 @@ for developments whose source-local move has not happened yet.
 - [hex-lll-mathlib](https://github.com/leanprover/hex-lll-mathlib/blob/main/SPEC/hex-lll-mathlib.md) (released): lattice = `Submodule Z`, short vector bound
 - [hex-berlekamp-zassenhaus](../../HexBerlekampZassenhaus/SPEC/hex-berlekamp-zassenhaus.md): complete factoring of `Z[x]`, and the `Hex.ZPoly` tactic extension
 - [hex-berlekamp-zassenhaus-mathlib](../../HexBerlekampZassenhausMathlib/SPEC/hex-berlekamp-zassenhaus-mathlib.md): unconditional factoring correctness, and the `Polynomial ℤ` tactic extension
+- [hex-summation.md](hex-summation.md): certificate-checked hypergeometric summation (Gosper, Zeilberger, Hyper) and the `gosper` / `zeilberger` / `hyper` tactics (the Mathlib companion is specified in the same file)

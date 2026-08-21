@@ -743,40 +743,31 @@ with Pellet witnesses as a second certificate form and cluster handling
 for non-simple roots. Their treatment of the contraction bound is the
 part worth comparing against ours.
 
-**Symbolic summation.** Gosper's algorithm for indefinite hypergeometric
-summation, and Zeilberger's creative telescoping for the definite case.
-This has the best ratio of user-visible payoff to proof burden on the
-list. Gosper's output is a rational `y` with
-`y(k+1) t(k+1) − y(k) t(k) = t(k)`, where `y(k) t(k)` is the
-antidifference; Zeilberger's is a recurrence together with a rational
-certificate function `R(n, k)`. In both cases the identity to check is
-between rational functions, and clearing denominators turns it into a
-polynomial identity, so the verified core is small and the search that
-found the certificate runs untrusted.
+**Symbolic summation.** Graduated to
+[hex-summation](Libraries/hex-summation.md): Gosper's algorithm for
+indefinite hypergeometric summation, Zeilberger's creative telescoping
+for the definite case, and Petkovšek's Hyper for hypergeometric
+solutions of recurrences, as untrusted searches emitting certificates
+whose checkers verify cross-multiplied polynomial identities in
+`MvPoly`, with the `gosper`, `zeilberger`, and `hyper` tactics in the
+companion.
 
-Two obligations sit outside that core, and the SPEC should separate
-them. Clearing denominators introduces poles and exceptional indices, so
-the polynomial identity carries nonvanishing side conditions back to the
-rational statement. And a verified summand identity is not yet the
-definite-sum recurrence: the telescoping has to be summed over the
-range, which brings in boundary terms, the support of the summand, and
-the semantics of the binomial and factorial notation the identity is
-stated in. Splitting "replay a supplied certificate" from "search for a
-certificate and conclude the definite sum" makes the first shippable
-long before the second.
+Two corrections to what this file said before that SPEC was written.
+Neither gcd nor rational function normalisation is a prerequisite of
+the verified layer: the checkers cross-multiply and never reduce a
+fraction, so both live only in the untrusted search. And the identity
+`y(k+1) t(k+1) − y(k) t(k) = t(k)` presumes the term ratio exists,
+which fails exactly at the support boundary where the telescoping
+boundary terms live; every ratio hypothesis in the SPEC is stated in
+the multiplied form `q(k) t(k+1) = p(k) t(k)`, which holds at every
+natural argument.
 
-What this buys is a tactic proving binomial coefficient identities
-(Vandermonde, Dixon, the sums that appear constantly in combinatorics)
-rather than requiring them to exist in Mathlib. Prerequisites are
-multivariate polynomial arithmetic, gcd, and rational function
-normalisation. The checker is small enough to write first and test
-against hand-supplied certificates.
-
-The natural extension is holonomic function machinery: closure
-properties for sequences and functions satisfying linear recurrences or
-differential equations with polynomial coefficients, of which Zeilberger
-is one instance. A larger project, worth deferring until the certificate
-checker has proved itself on the hypergeometric case.
+The natural extension remains future work here: holonomic function
+machinery, closure properties for sequences and functions satisfying
+linear recurrences or differential equations with polynomial
+coefficients, of which Zeilberger is one instance. A larger project,
+worth deferring until the certificate checkers have proved themselves
+on the hypergeometric case.
 
 **Fixed-precision p-adic approximations (`hex-padics`,
 `hex-padics-mathlib`).** hex-hensel implements lifting as an
