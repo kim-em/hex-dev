@@ -329,7 +329,7 @@ def canary : Comparison := compare 4 8
 /-- Suggested logical-count corpus.  Increasing the disconnected-tree count
 leaves incremental work fixed at `depth`, while structural work grows as
 `2 * trees * depth`. -/
-def corpus : Array (Nat × Nat × Comparison) :=
+def corpus (_ : Unit) : Array (Nat × Nat × Comparison) :=
   #[(1, 64, compare 1 64),
     (8, 64, compare 8 64),
     (64, 64, compare 64 64),

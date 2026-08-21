@@ -63,14 +63,20 @@ structure Limits where
   maxOperations : Nat
   maxNodes : Nat
   maxRules : Nat
+  /-- Total package metadata cells, independent of executable program size. -/
   maxRegistryEntries : Nat
+  /-- Total cache-independent proof-replay format declarations. -/
   maxReplayFormats : Nat
   maxArity : Nat
+  /-- Maximum ordered read or write ports of one arbitrary-scope application.
+  Local operation slots remain governed by `maxArity`. -/
   maxScopeNodes : Nat := 0
   maxApplications : Nat
   maxQueueEntries : Nat
   maxActions : Nat
+  /-- Global number of engine-enumerated structural inputs. -/
   maxMatcherVisits : Nat := 0
+  /-- Maximum structural inputs exposed by one matcher invocation. -/
   matcherBatchSize : Nat := 0
   maxAcceptedFacts : Nat
   maxRetainedSuggestions : Nat
@@ -105,8 +111,11 @@ structure Metrics where
   ruleFailures : Nat := 0
   admittedInstances : Nat := 0
   duplicateInstances : Nat := 0
+  /-- Total suggestions omitted from retained policy state. -/
   droppedSuggestions : Nat := 0
+  /-- Suggestions omitted because the retained array was full. -/
   capacityDrops : Nat := 0
+  /-- Structurally valid instantiations omitted by `maxNodeDepth`. -/
   depthDrops : Nat := 0
   generatedNodes : Nat := 0
   generatedScopes : Nat := 0
