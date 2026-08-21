@@ -254,12 +254,40 @@ def reduceMod (m : Nat) (p : MvPoly (n+1) Int cmp) : MvPoly (n+1) Int cmp
 /-- Every coefficient lies in `(-m/2, m/2]`. -/
 def SymCanonical (m : Nat) (p : MvPoly (n+1) Int cmp) : Prop
 
-/-- `p` and `q` agree modulo `m` on every monomial whose degree in the
-non-main variables is at most `k`. This is congruence modulo the ideal
-`(I^(k+1), m)` in the shifted coordinates. -/
+/-- `p` and `q` agree modulo `m` on every monomial whose total degree in
+the non-main variables is at most `k`. This is congruence modulo the
+ideal `(I^(k+1), m)` in the shifted coordinates. -/
 def CongrAt (i : Fin (n+1)) (k : Nat) (m : Nat)
     (p q : MvPoly (n+1) Int cmp) : Prop
+
+/-- `p` and `q` agree modulo `m` on every monomial inside the box
+`deg_{y_j} ≤ d j`. This is congruence modulo the ideal
+`(y_1^(d 1 + 1), …, y_n^(d n + 1), m)`, which is what `truncate`
+computes with. -/
+def BoxCongr (i : Fin (n+1)) (d : Fin n → Nat) (m : Nat)
+    (p q : MvPoly (n+1) Int cmp) : Prop
 ```
+
+**The two relations are not the same, and the algorithm achieves the
+weaker one.** `truncate` bounds each variable separately, so the ring it
+computes in is the box quotient, not `MvPoly / I^(k+1)`. Every monomial
+of total degree above `Σ_j d_j` lies outside the box, by pigeonhole, so
+
+```lean
+theorem boxCongr_of_congrAt : CongrAt i (Σ_j d j) m p q → BoxCongr i d m p q
+```
+
+and the converse fails: with `n = 2` and `d = (1, 1)`, the monomial
+`y_1²` is outside the box but has total degree `2 = Σ_j d_j`, so
+`CongrAt i 2` still observes it while `BoxCongr i d` does not. Products
+of box-truncated factors routinely carry such terms. The stage invariant,
+`diophantine_spec`, and the final modular statement are therefore all in
+terms of `BoxCongr`. `CongrAt` is kept for the genuinely ideal-adic
+statements, which is where the companion's `Ideal.span` phrasing lives.
+
+Nothing is lost by the weaker relation. The true factors lie inside the
+box, by the degree argument under "Truncation is sound", and the decision
+is the exact product test over `ℤ` rather than any congruence.
 
 `truncate` is `restrictBy` with a monomial predicate, and `reduceMod` is
 `mapCoeffs` composed with hex-modular's `symMod`, which deletes cancelled
@@ -281,6 +309,7 @@ theorem congrAt_mul  : CongrAt i k m p p' → CongrAt i k m q q' →
     CongrAt i k m (p * q) (p' * q')
 theorem congrAt_reduceMod : CongrAt i k m (reduceMod m p) p
 theorem congrAt_mono (h : k' ≤ k) : CongrAt i k m p q → CongrAt i k' m p q
+theorem boxCongr_add, boxCongr_mul, boxCongr_reduceMod   -- the same laws
 theorem reduceMod_symCanonical : SymCanonical m (reduceMod m p)
 theorem reduceMod_id (h : SymCanonical m p) : reduceMod m p = p
 ```
@@ -329,7 +358,8 @@ entry of `images`, `L_j` for the `j`-th entry of `leading`, `σ_j` for the
 `valid inp` checks the following, and each check has a `Failure`
 constructor:
 
-- **V1 (nondegenerate).** `r ≥ 2`, `d₁ ≥ 1`, `l ≥ 1`, and
+- **V1 (nondegenerate).** `images.length = leading.length`,
+  `images.length = witness.length`, `r ≥ 1`, `l ≥ 1`, `d₁ ≥ 1`, and
   `(F_j).degree ≥ 1` for every `j`.
 - **V2 (no degree drop).** `(imageAt i cmp' a f).degree = d₁`.
 - **V3 (the image factors).** `∏_j F_j = imageAt i cmp' a f` in `ZPoly`.
@@ -343,15 +373,41 @@ constructor:
 V1 to V6 are the whole contract. Everything below is proved from them,
 and "Are the hypotheses sufficient?" walks the chain.
 
-Three of them are easy to state too weakly and are worth a sentence each.
-V2 is not implied by V4: `lcIn i cmp' f` could be nonzero as a polynomial
-and still vanish at `a`, and then the univariate image has the wrong
-degree and nothing downstream is meaningful. V5 is needed even though V6
-already mentions `q`, because V6 alone does not stop `p` from dividing an
-individual leading coefficient, and division by `F_j` in `(ℤ/q)[x_i]` is
-what the univariate solver does. V1's requirement that no `F_j` be
-constant is real: a constant `F_j` makes the degree bound in V6 say
-`(σ_j).degree < 0`, which no polynomial satisfies. A constant factor
+**The three list lengths are checked, not assumed.** `Input` holds three
+independent `List`s, and every indexed statement below is meaningless
+without the equalities, so V1 carries them rather than leaving them to
+the docstring.
+
+**V2 is redundant and checked anyway.** It follows from V1 and V4:
+evaluation is a ring homomorphism, so
+`eval a (lcIn i cmp' f) = ∏_j eval a L_j = ∏_j lc F_j`, and each
+`lc F_j` is nonzero because `deg F_j ≥ 1`, so the product is nonzero and
+the `x_i`-degree cannot drop. It is nevertheless checked first, because
+it is one evaluation, and because its failure names the *evaluation
+point* while a V4 failure names the *distribution*. Those are different
+things for a caller to fix, and merging them would lose the distinction
+the `Failure` type exists to carry. `d₁ ≥ 1` is redundant in the same
+way, following from V2, V3, and `deg F_j ≥ 1`.
+
+**V5 is not redundant.** V6 alone does not stop `p` from dividing an
+individual leading coefficient: `1 + 2x` has a mod-2 unit witness while
+losing its degree modulo 2. Division by `F_j` in `(ℤ/q)[x_i]` is what
+the univariate solver does, and it needs `lc F_j` invertible.
+
+**V6's degree bound is a normalisation requirement, not a correctness
+one.** `solveUni` reduces `σ_j · c` modulo `F_j` regardless, so an
+unreduced witness would still give a correct answer. The bound is
+required because it keeps the witness the size of the factors rather
+than the size of whatever produced it, and because the producer's lift
+maintains it for free.
+
+`r = 1` is admitted and degenerate: `b_1 = 1`, the witness is `[1]`, the
+solver is the identity, and the only compatible lift is `f` itself. It is
+admitted rather than excluded because a caller trying coarser groupings
+works its way down to one group.
+
+`deg F_j ≥ 1` is a real restriction. A constant `F_j` makes V6's bound
+say `(σ_j).degree < 0`, which no polynomial satisfies. A constant factor
 belongs in the content, which hex-mv-gcd's `contentIn` removes before the
 lift is called.
 
@@ -442,7 +498,14 @@ per factor, then lift the tuple from `p^k` to `p^(k+1)` by the same
 linear correction hex-hensel uses on factors: with
 `e = (1 - Σ_j σ_j b_j) / p^k mod p`, solve `Σ_j τ_j b_j ≡ e (mod p)` with
 `deg τ_j < deg F_j` using the mod-`p` tuple, and set
-`σ_j ← σ_j + p^k τ_j`, reducing degrees modulo `F_j` after each step.
+`σ_j ← σ_j + p^k τ_j`.
+
+**Do not reduce `σ_j` modulo `F_j` between steps.** That would change
+`σ_j` by a multiple of `F_j`, hence change `Σ_j σ_j b_j` by a multiple of
+`F = ∏_j F_j`, which is not a multiple of `q` and so breaks the very
+identity being lifted. No reduction is needed: each `τ_j` already
+satisfies `deg τ_j < deg F_j`, so `σ_j + p^k τ_j` does too, and the
+degree bound is maintained for free.
 
 This is a producer in the sense of [design
 principle 4](../design-principles.md): `witnessOf?` is unverified, and
@@ -575,7 +638,20 @@ precondition. Then it runs `k = 0, 1, …, d_t - 1`:
   `Σ_j Δ_j · b_j ≡ c (mod q)` with `deg_{x_i} Δ_j < deg F_j`, where
   `b_j = ∏_{m ≠ j} F_m|_{y_t = 0}` is built from the factors as they
   stood at the start of the stage.
-- Set `F_j ← F_j + y_t^(k+1) · Δ_j`, reduce modulo `q`, and truncate.
+- Set `F_j ← F_j + y_t^(k+1) · reduceMod q (truncate i d Δ_j)`.
+
+**Only the correction is reduced modulo `q`.** Reducing the whole updated
+factor would be wrong twice over. `L_j` may have a coefficient outside
+`(-q/2, q/2]`, and then `reduceMod q` changes the leading coefficient,
+breaking the invariant the solvability argument rests on. The same
+reduction applied to the `y = 0` slice would break `imageAt a F_j = F_j`,
+which is checked condition C3 and the `hb` hypothesis of
+`diophantine_spec`. Reducing only the correction keeps both exact for
+free: the correction carries `y_t^(k+1)`, so it never touches the `y = 0`
+slice, and it has `x_i`-degree below `deg F_j`, so it never touches the
+leading coefficient. What ends up canonical modulo `q` is the correction
+part of each factor, which is exactly the part the lift does not already
+know.
 
 Adding `y_t^(k+1) · Δ_j` changes the coefficient of `y_t^(k+1)` in the
 product by exactly `Σ_j Δ_j b_j`, since every cross term between two
@@ -583,7 +659,8 @@ corrections carries `y_t` to a power of at least `k + 2`. That is why the
 `b_j` are taken at `y_t = 0` and why one solve settles one power.
 
 After `d_t` steps the stage-`t` statement holds, and after the last stage
-the product agrees with `f` modulo `q` at full precision.
+`BoxCongr i d q (∏_j F_j) f` holds, which is the strongest modular
+statement the box truncation supports.
 
 Only the base-level witness is fixed data. The `b_j` used at stage `t`
 are recomputed from the current factors, because the ring the equation is
@@ -614,14 +691,30 @@ def solveUni (q : Nat) (images witness : List ZPoly) (c : ZPoly) :
 which is defined because V5 makes `lc F_j` a unit modulo `q`.
 
 ```lean
-theorem solveUni_spec (h : valid inp = true) (hc : c.degree < d₁) :
+theorem solveUni_spec (h : valid inp = true)
+    (hc : (reduceMod q c).degree < d₁) :
     Σ_j (solveUni q images witness c)[j] * b_j ≡ c  (mod q)
 theorem solveUni_degree : ((solveUni q images witness c)[j]).degree < (F j).degree
+theorem solveUni_symCanonical : SymCanonical q ((solveUni q images witness c)[j])
 theorem solveUni_unique (h : valid inp = true)
     (hτ : ∀ j, (τ j).degree < (F j).degree)
     (hsum : Σ_j τ j * b_j ≡ c (mod q)) :
-    τ = solveUni q images witness c
+    ∀ j, τ j ≡ (solveUni q images witness c)[j]  (mod q)
 ```
+
+**Uniqueness is modulo `q`, and it cannot be an equality of `ZPoly`
+values.** The solution is unique as a tuple of residue classes, not as a
+tuple of integer polynomials. At `q = 5`, `F_1 = x`, `F_2 = x + 1`,
+`σ = (1, -1)`, and `c = 0`, the solver returns `(0, 0)`, but `(5, -5)`
+satisfies both degree bounds and `5(x+1) - 5x = 5 ≡ 0`. An equality
+conclusion would be false on that input. `solveUni` returns the
+symmetric-canonical representative, so the equality *does* hold under the
+extra hypothesis `∀ j, SymCanonical q (τ j)`, and that is the form the
+lift uses.
+
+The degree hypothesis is stated on `reduceMod q c` rather than on `c`
+itself for the same reason: `q · x^(d₁)` has `ZPoly` degree `d₁` and
+reduces to zero, so raw degree is the wrong measurement.
 
 The proof is the Chinese remainder argument. Pairwise comaximality (from
 V6) gives `(ℤ/q)[x_i]/(F) ≅ ∏_j (ℤ/q)[x_i]/(F_j)` for `F = ∏_j F_j`.
@@ -629,15 +722,25 @@ Modulo `F_k` every term of `Σ_j τ_j b_j` except the `k`-th vanishes,
 and `τ_k b_k ≡ σ_k c b_k ≡ c (mod F_k)` because `F_k` divides every
 other `σ_j b_j`. So `Σ_j τ_j b_j ≡ c (mod F)`. Both sides have degree
 below `deg F = d₁`, and `lc F` is a unit, so representatives of that
-degree are unique and the congruence modulo `F` is an equality. The same
-uniqueness of low-degree representatives gives `solveUni_unique`.
+degree are unique and the congruence modulo `F` is an equality in
+`(ℤ/q)[x_i]`. The same uniqueness of low-degree representatives gives
+`solveUni_unique`.
 
-`solveUni_spec`'s hypothesis `c.degree < d₁` is not decoration. The map
+Two things about the non-field ring are worth saying, because they look
+like obstacles and are not. Division by `F_j` is well defined because
+`lc F_j` is a unit, and multiplication by a unit leading coefficient
+still adds degrees, so `deg (F h) = deg F + deg h` whenever `h ≠ 0` and
+`lc F` is a unit. And the Chinese remainder decomposition needs only
+pairwise comaximality, which holds over any commutative ring, not
+primality of the modulus.
+
+`solveUni_spec`'s degree hypothesis is not decoration. The map
 `(τ_1, …, τ_r) ↦ Σ_j τ_j b_j` on degree-bounded tuples is a bijection
 onto the polynomials of degree below `d₁` and not onto all of
-`(ℤ/q)[x_i]`, so for a right-hand side of degree `d₁` or more there is no
-degree-bounded solution at all and the conclusion is false. That is the
-hypothesis the leading-coefficient contract exists to supply.
+`(ℤ/q)[x_i]`, so for a right-hand side whose reduction has degree `d₁` or
+more there is no degree-bounded solution at all and the conclusion is
+false. That is the hypothesis the leading-coefficient contract exists to
+supply.
 
 ### The multivariate recursion
 
@@ -660,19 +763,34 @@ the coefficient of `y_m^s` in `c - Σ_j Δ_j b_j` for the partial solution
 `s = d_m`.
 
 This is the same linear scheme as the stage loop one level down, which is
-why the two share `CongrAt` and the truncation bookkeeping.
+why the two share `BoxCongr` and the truncation bookkeeping.
 
 ```lean
 theorem diophantine_spec (h : valid inp = true) (hc : degreeOf i c < d₁)
-    (hb : ∀ j, imageAt i cmp' 0 (bs[j]) = b_j) :
+    (hb    : ∀ j, imageAt i cmp' 0 (bs[j]) = b_j)
+    (hbdeg : ∀ j, degreeOf i (bs[j]) + (F j).degree ≤ d₁) :
     ∃ Δ, diophantine … c = some Δ ∧
-      CongrAt i (Σ_j d_j) q (Σ_j Δ[j] * bs[j]) c ∧
+      BoxCongr i d q (Σ_j Δ[j] * bs[j]) c ∧
       ∀ j, degreeOf i (Δ[j]) < (F j).degree
 ```
 
+**`hbdeg` is load-bearing and easy to omit.** Agreeing with `b_j` at
+`y = 0` says nothing about the higher `y`-coefficients of `bs[j]`, and
+those feed the recursion's later right-hand sides. Over `ℤ/5` with
+`F_1 = x`, `F_2 = x + 1`, so `d₁ = 2`, take
+`bs = [x + 1 + y·x³, x]` and `c = 1`. The images at `y = 0` are the
+required `b_j`, and the constant solve returns `(1, -1)`, but the next
+residual coefficient is `-x³`, which no pair of constants `δ_1, δ_2` can
+write as `δ_1(x+1) + δ_2 x`. The equation is unsolvable within the degree
+bounds even though `hb` and `hc` both hold. In the stage loop `hbdeg`
+is automatic, since `bs[j] = ∏_{m ≠ j} F_m|_{y_t = 0}` has `x_i`-degree
+exactly `d₁ - deg F_j` by the leading-coefficient invariant, but the
+public theorem has to say so.
+
 The `none` branch is not reachable from the lift: every right-hand side
 the stage loop constructs has `degreeOf i c < d₁` by the
-leading-coefficient invariant, and `hb` holds by the stage invariant. The
+leading-coefficient invariant, and `hb` and `hbdeg` hold by the stage
+invariant. The
 `Option` is nevertheless in the signature, because `diophantine` is also
 a public entry point that the conformance fixtures exercise directly, and
 a caller passing an arbitrary `c` has to be told when the equation is
@@ -691,9 +809,10 @@ becomes `.notCoprime`.
 
 ## Reconstruction and the modulus
 
-After the last stage the factors satisfy `∏_j F_j ≡ f (mod q)` at full
-ideal-adic precision, with every coefficient in `(-q/2, q/2]`. The
-reconstruction step is then just the product test:
+After the last stage the factors satisfy `BoxCongr i d q (∏_j F_j) f`,
+with every *correction* coefficient in `(-q/2, q/2]` and the `y = 0`
+slice and the leading coefficient exact. The reconstruction step is then
+just the product test:
 
 ```lean
 def reconstruct (i) (a) (fs : List (MvPoly (n+1) Int cmp)) :
@@ -707,65 +826,98 @@ bound at all to be *sound*. The bound is needed only to know when a
 failure is final.
 
 **The coefficient bound, and where it is proved.** If a compatible
-integer factorization exists, its coefficients are bounded in terms of
-`f`, and once `q` exceeds twice that bound the symmetric representatives
-are the true factors and the product test succeeds. The Mathlib-free
-layer states the bound as a hypothesis and the companion discharges it,
-which is the arrangement [design principle 2](../design-principles.md)
-prescribes and the one
+integer factorization exists, the coefficients the lift has to recover
+are bounded in terms of `f`, and once `q` exceeds twice that bound the
+symmetric representatives are the true ones and the product test
+succeeds. The Mathlib-free layer states the bound as a hypothesis and the
+companion discharges it, which is the arrangement [design
+principle 2](../design-principles.md) prescribes and the one
 [hex-poly-z](../../HexPolyZ/SPEC/hex-poly-z.md) already uses for
 Mignotte:
 
 ```lean
-/-- Every integer factorization compatible with `inp` has all
-coefficients bounded by `B` in absolute value. -/
-def BoundsFactors (inp : Input n cmp cmp') (B : Nat) : Prop
+/-- Every factorization compatible with `inp` has all coefficients of its
+*shifted* factors bounded by `B` in absolute value. -/
+def BoundsFactors (inp : Input n cmp cmp') (B : Nat) : Prop :=
+  ∀ gs, IsLiftOf inp gs → ∀ g ∈ gs, ∀ m,
+    (coeff m (shift i a g)).natAbs ≤ B
 
-/-- The computed bound. Mathlib-free arithmetic on norms and degrees;
-its correctness is a companion theorem. -/
+/-- The computed bound. Mathlib-free arithmetic on the norms and degrees
+of the *shifted* target; its correctness is a companion theorem. -/
 def coeffBound (inp : Input n cmp cmp') : Nat
 ```
+
+**The bound is on the shifted factors, and getting that wrong is not a
+technicality.** The lift computes in shifted coordinates, so what it has
+to distinguish modulo `q` are the coefficients of `shift i a g_j`, not of
+`g_j`. Shifting amplifies: with main variable `x`, one other variable
+`y`, and `a = 10`, the factors `g = x + y²` and `h = x + 1` have all
+coefficients at most `1`, while `shift g = x + y² + 20y + 100` has a
+coefficient of `20`. A bound of `1` with `q = 5` would satisfy
+`2 · B < q` and still leave `20y` indistinguishable from `0`, so a
+completeness theorem stated about the unshifted factors would be false.
+`coeffBound` is therefore computed from the *shifted* target, and the
+sharper form bounds only the correction `shift i a g_j - seed …`, which
+is the part the lift actually reconstructs.
 
 Two derivations are available and they differ enormously in quality.
 
 The one this project can already discharge is **Kronecker substitution
-plus the univariate Mignotte bound**. Substituting
-`x_{σ j} ↦ z^(∏_{k < j} (d_k + 1))` and `x_i ↦ z` is injective on the
-monomials of `f` and, because a divisor of `f` has degree at most `d_j`
-in each variable, on the monomials of every divisor of `f` as well. So a
-factorization of `f` maps to a factorization of a univariate integer
-polynomial with the same coefficients, and hex-poly-z's Mignotte bound
-applies. It is valid and it is very weak: the Kronecker image has degree
-`∏_j (d_j + 1) - 1`, so the binomial factor in Mignotte's bound is
-astronomically large as soon as there are several variables.
+plus the univariate Mignotte bound**. With `D = d₁` and `e_t` the degree
+of the shifted target in `y_t`, substitute
 
-The one worth having is **Gel'fond's inequality**, which bounds the
-product of the one-norms of the factors by `2^(d₁ + ⋯ + d_v)` times the
-one-norm of `f`, with the exponent linear in the sum of the partial
-degrees rather than in their product. The companion should prove that
-form; the exact constant must be confirmed against Mignotte's
-*Mathematics for Computer Algebra* §4.4 before the statement is
-committed, since the inequality is quoted in the literature with more
-than one constant.
+```text
+x_i ↦ z,      y_t ↦ z^((D + 1) · ∏_{s < t} (e_s + 1)) .
+```
 
-**The bound does not choose `l` in practice.** Even Gel'fond's exponent
-is linear in `Σ d_j`, so lifting to the proved bound is not something a
-caller wants to do. `liftWith` therefore starts from a heuristic
-exponent, doubles it on a reconstruction failure, and gives up after a
-configured number of doublings:
+The weights must include the main variable's radix. Omitting it sends
+both `x_i` and `y_1` to `z` and the substitution is not injective at all:
+`x_i - y_1` maps to zero. With the weights above the map is injective on
+the monomials of the shifted target and, because a divisor has degree at
+most `e_t` in each variable and at most `D` in `x_i`, on the monomials of
+every divisor as well. So a factorization maps to a factorization of a
+univariate integer polynomial with the same coefficients, and
+hex-poly-z's Mignotte bound applies. It is valid and it is very weak: the
+image has degree `(D + 1) · ∏_t (e_t + 1) - 1`, so the binomial factor in
+Mignotte's bound is astronomically large as soon as there are several
+variables.
+
+The one worth having is **Mahler's length inequality**, which bounds the
+product of the one-norms of the factors by `2^(D + Σ_t e_t)` times the
+one-norm of the shifted target, with the exponent linear in the sum of
+the partial degrees rather than in their product. The companion should
+prove that form, from
+[Mahler, "On some inequalities for polynomials in several variables"](https://ems.press/content/book-chapter-files/27423?nt=1).
+The related height inequality that Mahler attributes to Gel'fond is a
+different statement, and the two are often conflated under Gel'fond's
+name; the length form is the one this library wants.
+
+**The bound does not choose `l` in practice.** Even the length
+inequality's exponent is linear in `D + Σ e_t`, so lifting to the proved
+bound is not something a caller wants to do. `liftWith` therefore doubles
+the exponent on a reconstruction failure and gives up after a configured
+number of doublings:
 
 ```lean
 structure Config where
-  startExponent : Nat
-  doublings     : Nat
+  doublings : Nat
 
-def Config.default : Config := { startExponent := 8, doublings := 6 }
+def Config.default : Config := { doublings := 6 }
 ```
 
-The heuristic exponent is a function of the one-norm of `f` and the
-degrees, not of the proved bound. A failure after the last doubling is
-reported as `.reconstruct q` with the modulus reached, and the caller
-decides whether to keep doubling or to change the point.
+**The exponent lives in one place.** `inp.setup.exponent` is the exponent
+of the first attempt, and it is the one the supplied `witness` is checked
+against. On a `.reconstruct` failure, `liftWith` builds a fresh `Input`
+at exponent `2 * l` and re-derives the witness with `witnessOf?`, because
+a witness valid modulo `p^l` is not valid modulo `p^(2l)`. If
+`witnessOf?` declines, the escalation stops and the original
+`.reconstruct` failure is returned. A `Config` field naming a second
+starting exponent would contradict `setup.exponent` and is deliberately
+absent.
+
+A failure after the last doubling is reported as `.reconstruct q` with
+the modulus reached, and the caller decides whether to keep doubling or
+to change the point.
 
 **The two causes of a reconstruction failure are not separable in
 practice.** Either `q` is still too small, or no compatible factorization
@@ -893,16 +1045,29 @@ def Irred [One α] [Mul α] (p : α) : Prop :=
   (¬ ∃ u, p * u = 1) ∧
     ∀ g h, p = g * h → (∃ u, g * u = 1) ∨ (∃ u, h * u = 1)
 
-/-- With `f` primitive in the main variable and every univariate image
-irreducible over `ℤ`, a checked lift is a factorization into
-irreducibles. -/
+/-- With a valid input, `f` primitive in the main variable, and every
+univariate image irreducible over `ℤ`, a checked lift is a factorization
+into irreducibles. -/
 theorem irreducible_of_image_irreducible
+    (hv : valid inp = true)
     (h : check inp c = true)
     (hprim : contentIn i cmp' inp.target = 1)
-    (hirr : ∀ j, Irred (inp.images[j]))
-    (hdeg : ∀ j, 1 ≤ (inp.images[j]).degree) :
+    (hirr : ∀ j, Irred (inp.images[j])) :
     ∀ j, Irred (c.factors[j])
 ```
+
+**`valid` is not droppable here, even though `check_sound` does not need
+it.** `check` alone leaves the returned factors free to lose degree in
+the main variable at the point, and then the argument below breaks at its
+first step. Concretely, with main variable `x` and one other variable
+`y`, take `H = x + y·x²` and `K = x + 1`, so
+`f = H·K = y·x³ + (1 + y)·x² + x`. Then `f` is primitive in `x` (one
+coefficient is `1`), the images at `y = 0` are `x` and `x + 1`, both
+irreducible of positive degree, and `L = (y, 1)` makes C1 through C4 all
+true. But `H = x · (1 + y·x)` is a product of two nonunits. What fails is
+V4's second condition: `eval 0 y = 0` is not `lc x = 1`, so this input is
+not `valid`, and `valid` is what rules the case out. The `deg F_j ≥ 1`
+hypothesis is part of V1 and so does not need restating.
 
 The argument: suppose `c.factors[j] = g · h` with neither a unit.
 `imageAt i cmp' a` is a ring homomorphism, so
@@ -916,10 +1081,10 @@ of `f` that is constant in `x_i` divides every coefficient of
 `toUnivariate i cmp' f`, so hex-mv-gcd's `dvd_contentIn` makes it divide
 `contentIn i cmp' inp.target = 1`, and `g` is a unit after all.
 
-The three extra hypotheses are all data the library does not produce.
-Primitivity comes from hex-mv-gcd, univariate irreducibility from
-hex-berlekamp-zassenhaus, and both are inputs the consumer already has
-when it is doing a factorization rather than a bare lift. What this
+The two extra hypotheses beyond `valid` are data the library does not
+produce. Primitivity comes from hex-mv-gcd, univariate irreducibility
+from hex-berlekamp-zassenhaus, and both are inputs the consumer already
+has when it is doing a factorization rather than a bare lift. What this
 theorem rules out is the reverse reading: the checked certificate alone,
 without those hypotheses, certifies a decomposition and nothing more.
 
@@ -937,21 +1102,36 @@ through V6 along this chain:
    representatives unique. Both are used in `solveUni_spec`, and the
    second is used again in `solveUni_unique`.
 3. V1's `deg F_j ≥ 1` makes the degree bound `deg τ_j < deg F_j`
-   satisfiable, and `r ≥ 2` makes `b_j` a nontrivial product.
+   satisfiable, and its length equalities make every indexed statement
+   meaningful.
 4. V4 fixes `lcIn F_j = L_j|_t` through `setLc` and `∏_j L_j = lcIn f`,
    so the `x_i`-leading coefficients cancel identically at every stage
    and `degreeOf i (f_t - ∏_j F_j) < d₁`. That is the hypothesis
    `solveUni_spec` needs on its right-hand side, so it is the
    leading-coefficient contract that makes the correction equations
-   solvable rather than merely well-typed.
-5. V2 makes `d₁ = deg (imageAt i cmp' a f) = deg ∏_j F_j`, which is what
-   identifies the degree bound in step 4 with the degree of the modulus
-   `F` in step 1. Without V2 the two numbers differ and step 4's
+   solvable rather than merely well-typed. The same invariant gives
+   `hbdeg`, since `∏_{m ≠ j} F_m` then has `x_i`-degree exactly
+   `d₁ - deg F_j`.
+5. V4 with V1 also gives V2, so `d₁ = deg (imageAt i cmp' a f)`, which is
+   what identifies the degree bound in step 4 with the degree of the
+   modulus `F` in step 1. Without it the two numbers differ and step 4's
    conclusion no longer lands inside step 1's uniqueness range.
 6. V3 gives the stage-zero congruence that the loop's induction starts
    from.
 7. V5 and V6 together give coprimality over `ℚ`, which is what makes
    `lift_unique` unconditional.
+
+Two conclusions the chain does **not** support, and which earlier drafts
+of this design get wrong. Uniqueness at the base is uniqueness of residue
+classes, so `solveUni_unique` concludes congruence modulo `q` and only
+becomes an equality of `ZPoly` values under the extra
+`SymCanonical q` hypothesis. And `lift_complete` needs a bound on the
+*shifted* factors, not on the factors themselves, because shifting
+amplifies coefficients by a factor depending on the point.
+
+`irreducible_of_image_irreducible` needs `valid` on top of `check`, for
+the reason given with the theorem: `check` does not rule out a factor
+whose degree in the main variable drops at the point.
 
 Nothing in the chain uses squarefreeness of the univariate image, and the
 library deliberately does not require it. What the classical presentation
@@ -981,7 +1161,7 @@ inductive Failure
 
 | failure | detected by | what it means | who acts |
 |---|---|---|---|
-| `.arity` | V1 | fewer than two factors, degenerate degree, or a constant image | caller built the input wrongly |
+| `.arity` | V1 | mismatched list lengths, degenerate degree, or a constant image | caller built the input wrongly |
 | `.degreeDrop` | V2 | `lcIn i cmp' f` vanishes at the point | caller: new point |
 | `.imageProduct` | V3 | the images do not multiply to the image of `f` | caller: fold the content or unit into a factor |
 | `.leadingProduct` | V4 | `∏_j L_j ≠ lcIn i cmp' f` | caller: redo the distribution |
@@ -1051,6 +1231,8 @@ def truncate   (i : Fin (n+1)) (d : Fin n → Nat) : MvPoly (n+1) Int cmp → Mv
 def reduceMod  (m : Nat) : MvPoly (n+1) Int cmp → MvPoly (n+1) Int cmp
 def SymCanonical (m : Nat) (p : MvPoly (n+1) Int cmp) : Prop
 def CongrAt    (i : Fin (n+1)) (k m : Nat) (p q : MvPoly (n+1) Int cmp) : Prop
+def BoxCongr   (i : Fin (n+1)) (d : Fin n → Nat) (m : Nat)
+               (p q : MvPoly (n+1) Int cmp) : Prop
 
 -- Setting up
 structure Setup (n : Nat)
@@ -1101,7 +1283,7 @@ main variable, `d_j` the degree in non-main variable `j`, `t` terms in
 
 | operation | algorithm | probe count |
 |---|---|---|
-| `shift` | per-variable Taylor shift by synthetic division | `O(t · Σ_j d_j)` coefficient operations |
+| `shift` | per-variable Taylor shift by synthetic division | `O(Σ_j t_j · d_j)` coefficient operations, `t_j` the term count before shifting `y_j` |
 | `imageAt` | Horner per `x_i`-slice of the recursive view | `O(t · n)` coefficient operations |
 | `lcIn` | the top slice of `toUnivariate` | `O(n · t log t)` machine operations |
 | `truncate` | `restrictBy` on the exponent vector | `O(n · t)` machine operations |
@@ -1111,6 +1293,11 @@ main variable, `d_j` the degree in non-main variable `j`, `t` terms in
 | one stage-`t` step | one product update and one solve | `∏_{k < t} (d_k + 1)` univariate solves |
 | `lift` | `Σ_t d_t` steps | `O(∏_j (d_j + 1))` univariate solves |
 | `check` | `r - 1` multiplications and `r` evaluations | `O(r)` polynomial multiplications |
+
+The `shift` row is output-sensitive on purpose. `t_j` grows as variables
+are shifted, up to `t · ∏_j (d_j + 1)` in the worst case, so a bound
+written in terms of the input term count alone would understate the cost
+of a step that has to write its own output.
 
 The last two rows are the design argument. The lift costs the dense size
 of the non-main variables, which is the same bound Brown's algorithm
@@ -1133,8 +1320,8 @@ new one.
 Nothing in `shift`, `unshift`, `truncate`, `reduceMod`, `witnessOf?`,
 `solveUni`, `diophantine`, or the stage loop is in that closure. The
 whole modular apparatus is search, and it never appears in a proof term.
-`SymCanonical` and `CongrAt` are Props about the search and are likewise
-outside.
+`SymCanonical`, `CongrAt`, and `BoxCongr` are Props about the search and
+are likewise outside.
 
 Two operations that look as though they should be in the closure are
 not. `valid` is not: it is the precondition of `lift_progress` and
@@ -1208,8 +1395,20 @@ implementation gets wrong:
   modulus allows, so reconstruction fails once and succeeds after
   doubling. The fixture records both the failure at the small exponent
   and the success at the large one.
+- A point far from the origin whose shift amplifies coefficients, so that
+  a modulus adequate for the unshifted factors is not adequate for the
+  shifted ones. `g = x₁ + x₂²`, `h = x₁ + 1` at `x₂ = 10` is the smallest
+  case: `shift g` carries a coefficient of `20` while both factors have
+  coefficients at most `1`.
+- An `L_j` with a coefficient larger than the working modulus, which is
+  the case that fails if the stage loop reduces the whole factor instead
+  of only the correction.
+- A `bs` tuple satisfying the `y = 0` condition but violating the
+  main-variable degree bound, exercising `diophantine`'s `none` branch
+  directly rather than through the lift.
 - Coarse splittings: the same `f` lifted with the images grouped into two
   coprime blocks rather than into all its irreducible factors.
+- `r = 1`, the degenerate grouping, where the answer is `f` itself.
 - A sparse target whose intermediate products are dense, recording the
   known gap while no sparse route is specified.
 - Arity one (`n = 0`), where there is nothing to lift and `lift` returns
@@ -1274,9 +1473,20 @@ def evalIdeal (i : Fin (n+1)) (a : Fin n → Int) :
     Ideal (MvPolynomial (Fin (n+1)) ℤ) :=
   Ideal.span (Set.range fun j => X (i.succAbove j) - C (a j))
 
+/-- The box ideal the truncation actually computes with. -/
+def boxIdeal (i : Fin (n+1)) (a : Fin n → Int) (d : Fin n → Nat) :
+    Ideal (MvPolynomial (Fin (n+1)) ℤ) :=
+  Ideal.span (Set.range fun j => (X (i.succAbove j) - C (a j)) ^ (d j + 1))
+
 theorem congrAt_iff (k m) :
     CongrAt i k m p q ↔
       e p - e q ∈ evalIdeal i a ^ (k+1) ⊔ Ideal.span {(m : MvPolynomial _ ℤ)}
+
+theorem boxCongr_iff (d m) :
+    BoxCongr i d m p q ↔
+      e p - e q ∈ boxIdeal i a d ⊔ Ideal.span {(m : MvPolynomial _ ℤ)}
+
+theorem evalIdeal_pow_le_boxIdeal : evalIdeal i a ^ (Σ_j d j + 1) ≤ boxIdeal i a d
 
 theorem isLiftOf_iff :
     IsLiftOf inp fs ↔
@@ -1299,15 +1509,23 @@ polynomial ring, so "lift along `I`" means what it appears to mean. It is
 proved from hex-mv-poly-mathlib's `finSuccEquiv` and
 `MvPolynomial.eval` rather than reproved from scratch.
 
+`boxIdeal` is the second ideal the design needs, and naming it here is
+what stops the two being confused. The truncation bounds each variable
+separately, so it is not a power of the evaluation ideal; the containment
+runs one way only, which is `evalIdeal_pow_le_boxIdeal` and the
+Mathlib-side form of `boxCongr_of_congrAt`.
+
 `boundsFactors_coeffBound` is the one theorem here that is not transport.
 It needs a factor-coefficient inequality, which is analysis, so it is on
 this side of the boundary by [design
 principle 2](../design-principles.md). The Kronecker route reduces it to
 [hex-poly-z-mathlib](../../HexPolyZMathlib/SPEC/hex-poly-z-mathlib.md)'s
 Mignotte bound and needs, in addition, the combinatorial fact that the
-Kronecker substitution is injective on the monomials of every divisor of
-`f`. That fact is Mathlib-free and belongs in the computational library;
-only the inequality it feeds crosses the boundary.
+corrected mixed-radix substitution is injective on the monomials of every
+divisor of the shifted target. That fact is Mathlib-free and belongs in
+the computational library; only the inequality it feeds crosses the
+boundary. Whichever route is taken, the statement is about `shift i a g`
+rather than `g`, for the reason under "Reconstruction and the modulus".
 
 Following the project split, no other mathematical theorem about
 `MvPoly` belongs in the companion, plus one correspondence lemma per
@@ -1341,7 +1559,8 @@ the gap in the meantime.
 ## Milestones
 
 1. **Coordinates and modulus.** `shift`, `unshift`, `imageAt`, `lcIn`,
-   `truncate`, `reduceMod`, `SymCanonical`, `CongrAt`, and their laws.
+   `truncate`, `reduceMod`, `SymCanonical`, `CongrAt`, `BoxCongr`, and
+   their laws, including `boxCongr_of_congrAt`.
    This milestone touches no factorization concept and can be built
    against hex-mv-poly alone.
 
@@ -1376,7 +1595,7 @@ the gap in the meantime.
 ```
 HexMvHensel/
   Shift.lean        -- shift, unshift, imageAt, lcIn, truncate, degree laws
-  Modulus.lean      -- reduceMod, SymCanonical, CongrAt, coeffBound
+  Modulus.lean      -- reduceMod, SymCanonical, CongrAt, BoxCongr, coeffBound
   Uni.lean          -- solveUni, witnessOf?, the p-adic tuple lift
   Diophantine.lean  -- the multivariate solver and its recursion
   Seed.lean         -- setLc, seed, Setup/Input/Failure, valid
