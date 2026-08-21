@@ -151,6 +151,54 @@ SMALL_PRIME_SNIPPET_RE = re.compile(
     r"count_prime_(?P<count_cut>\d+)_le_(?P<count>\d+)\s+"
     r"\(by\s+interval_auto\)"
 )
+DUSART_PROVIDER = REPO_ROOT / "HexInterval/Experiment/PntDusartExp.lean"
+DUSART_ROWS = (
+    (361, "proposition_5_4a", 0, 29, 1, 4000000000000000000, "upperLe"),
+    (406, "proposition_5_4a", 1, 10, 1, 4000000000000000000, "upperLt"),
+    (458, "proposition_5_4b", 2, 1283, 100, 370261, "lowerLe"),
+    (463, "proposition_5_4b", 3, 1312, 100, 492113, "lowerLe"),
+    (468, "proposition_5_4b", 4, 1452, 100, 2010733, "lowerLe"),
+    (473, "proposition_5_4b", 5, 1666, 100, 17051707, "lowerLe"),
+    (527, "proposition_5_4b", 6, 43, 1, 4000000000000000000, "lowerLe"),
+)
+DUSART_REPLACEMENT = (
+    532, "proposition_5_4b", 22, 1, 117352333, "lowerLe",
+)
+DUSART_REPLACEMENT_NAME = (
+    "Hex.Interval.Experiment.PntExpPoint.one_e9_le_exp_22, weakened by "
+    "Hex.IntervalMathlib.PntDusartExpConformance.exp22Lower"
+)
+DUSART_SNIPPETS = (
+    "have : exp (29 : ℝ) ≤ (4e18 : ℝ) := by interval_decide",
+    "(lt_log_iff_exp_lt hx_pos).mpr (lt_of_lt_of_le (by interval_decide) hx)",
+    "have hexp : (370261 : ℝ) ≤ exp (1283/100) := by interval_decide",
+    "have hexp : (492113 : ℝ) ≤ exp (1312/100) := by interval_decide",
+    "have hexp : (2010733 : ℝ) ≤ exp (1452/100) := by interval_decide",
+    "have hexp : (17051707 : ℝ) ≤ exp (1666/100) := by interval_decide",
+    "· have hexp43 : (4e18 : ℝ) ≤ exp 43 := by interval_decide",
+    "have hexp22_lb : (117352333 : ℝ) ≤ exp 22 := by interval_decide",
+)
+DUSART_CONTEXT_SNIPPET = (
+    "(lt_log_iff_exp_lt hx_pos).mpr "
+    "(lt_of_lt_of_le (by interval_decide) hx)"
+)
+DUSART_UPPER_RE = re.compile(
+    r"^have : exp \((?P<num>\d+) : ℝ\) ≤ "
+    r"\((?P<coefficient>\d+)e(?P<exponent>\d+) : ℝ\) := by interval_decide$"
+)
+DUSART_LOWER_RATIONAL_RE = re.compile(
+    r"^have hexp : \((?P<target>\d+) : ℝ\) ≤ exp "
+    r"\((?P<num>\d+)/(?P<den>\d+)\) := by interval_decide$"
+)
+DUSART_LOWER_INTEGER_RE = re.compile(
+    r"^(?:· )?have [A-Za-z0-9_]+ : "
+    r"\((?P<target>\d+|\d+e\d+) : ℝ\) ≤ exp (?P<num>\d+) "
+    r":= by interval_decide$"
+)
+DUSART_PROVIDER_ROW_RE = re.compile(
+    r"⟨(?P<index>\d+),\s*(?P<num>\d+),\s*(?P<den>\d+),\s*"
+    r"(?P<target>\d+),\s*\.(?P<relation>upperLe|upperLt|lowerLe),\s*64,\s*12⟩"
+)
 
 
 class InventoryError(RuntimeError):
@@ -512,6 +560,78 @@ def require_small_prime_log_match(
             raise InventoryError(
                 f"local small-prime {name} differs from the committed source snippets"
             )
+
+
+def require_dusart_exp_match(
+    records: list[dict[str, Any]], provider_text: str | None = None,
+) -> None:
+    """Tie all eight committed Dusart sites to seven rows plus one replacement."""
+    source_records = [
+        row for row in records
+        if row.get("kind") == "tactic-occurrence"
+        and row.get("actual")
+        and row.get("path") == "PrimeNumberTheoremAnd/IEANTN/Dusart.lean"
+    ]
+    expected_values = tuple(row[3:] for row in DUSART_ROWS) + (DUSART_REPLACEMENT[2:],)
+    expected_sites = tuple((line, declaration) for line, declaration, *_ in DUSART_ROWS) + (
+        DUSART_REPLACEMENT[:2],
+    )
+    observed = tuple((row.get("line"), row.get("declaration")) for row in source_records)
+    if len(set(observed)) != len(observed):
+        raise InventoryError("duplicate Dusart exponential source coordinate")
+    if observed != expected_sites:
+        raise InventoryError(
+            f"Dusart exponential sites differ: {observed} != {expected_sites}"
+        )
+    if provider_text is None:
+        provider_text = DUSART_PROVIDER.read_text(encoding="utf-8")
+    provider_rows = tuple(
+        (int(match.group("index")), int(match.group("num")),
+         int(match.group("den")), int(match.group("target")),
+         match.group("relation"))
+        for match in DUSART_PROVIDER_ROW_RE.finditer(provider_text)
+    )
+    parsed_values = tuple(_parse_dusart_snippet(row.get("snippet", "")) for row in source_records)
+    if parsed_values != expected_values:
+        raise InventoryError(
+            f"Dusart exponential snippets differ: {parsed_values} != {expected_values}"
+        )
+    replacement = source_records[-1].get("migration", {})
+    if replacement.get("status") != "replaced-by-stronger-result" or \
+            replacement.get("replacement") != DUSART_REPLACEMENT_NAME:
+        raise InventoryError("Dusart exp 22 site lacks its explicit stronger replacement")
+    expected_rows = tuple(row[2:] for row in DUSART_ROWS)
+    if provider_rows != expected_rows:
+        raise InventoryError(
+            f"local Dusart sourceRows differ: {provider_rows} != {expected_rows}"
+        )
+
+
+def _scientific_value(value: str) -> int:
+    if "e" not in value:
+        return int(value)
+    coefficient, exponent = value.split("e", maxsplit=1)
+    return int(coefficient) * 10 ** int(exponent)
+
+
+def _parse_dusart_snippet(snippet: str) -> tuple[int, int, int, str]:
+    # This invocation text contains no numeric goal. Byte-pin its exact context
+    # and correlate it with the separately audited expected provider row.
+    if snippet == DUSART_CONTEXT_SNIPPET:
+        return (10, 1, 4000000000000000000, "upperLt")
+    match = DUSART_UPPER_RE.fullmatch(snippet)
+    if match:
+        target = int(match.group("coefficient")) * 10 ** int(match.group("exponent"))
+        return (int(match.group("num")), 1, target, "upperLe")
+    match = DUSART_LOWER_RATIONAL_RE.fullmatch(snippet)
+    if match:
+        return (int(match.group("num")), int(match.group("den")),
+                int(match.group("target")), "lowerLe")
+    match = DUSART_LOWER_INTEGER_RE.fullmatch(snippet)
+    if match:
+        return (int(match.group("num")), 1,
+                _scientific_value(match.group("target")), "lowerLe")
+    raise InventoryError(f"unrecognized Dusart exponential snippet: {snippet!r}")
 
 
 def source_digest(sources: Iterable[Source]) -> str:
@@ -1225,6 +1345,7 @@ def validate_inventory(
     counts = summarize(records)
     require_workload_partitions(records)
     require_small_prime_log_match(records)
+    require_dusart_exp_match(records)
     if meta.get("counts") != counts:
         raise InventoryError(f"inventory counts disagree: {meta.get('counts')} != {counts}")
     for name, expected in EXPECTED.items():

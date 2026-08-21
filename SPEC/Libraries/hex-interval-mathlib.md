@@ -1557,6 +1557,45 @@ symmetric integral. The pinned public LeanCert lower and upper declarations
 are admitted, so merely importing those names would not meet Hex's kernel-only
 contract.
 
+The Dusart exponential cluster replaces all eight executable
+`interval_decide` leaves in the pinned declarations
+
+```lean
+theorem Dusart.proposition_5_4a : HasPrimeInInterval.log_thm 4e18 3
+
+theorem Dusart.proposition_5_4b (x : ℝ)
+    (hx : x ∈ Set.Ioo 360653 4e18) :
+    HasPrimeInInterval x (x / (Real.log x) ^ (3 : ℝ))
+```
+
+The localized rewrite preserves both theorem statements and their surrounding
+number-theoretic proof. It substitutes only the exact leaves for
+`exp 29`, `exp 10`, `exp 12.83`, `exp 13.12`, `exp 14.52`, `exp 16.66`,
+`exp 43`, and `exp 22`. `PntDusartExp.sourceRows` authenticates the first seven
+rational arguments, integer targets, comparison directions, the fixed split
+`64`, and the fixed term count `12`. One package-owned checker reduces those
+arguments by 64, computes the degree-11 Taylor sum and an explicit degree-12
+remainder bound with exact rational arithmetic, and raises the resulting lower
+or upper bound by six squarings. The eighth leaf is an explicit weakening of
+the checked package theorem `PntExpPoint.one_e9_le_exp_22`, since
+`117352333 ≤ 1e9`. The offline inventory validator correlates all eight
+pinned source sites: seven with the literal local table and `exp 22` with that
+named stronger replacement. Seven invocation snippets contain their numerical
+goal text and are parsed directly. The line-406 `exp 10` invocation snippet
+contains only the enclosing logarithm proof term, so the validator byte-pins
+that exact context and correlates it with the explicitly audited expected goal
+row `exp 10 < 4e18`; it does not claim to parse those numerals from the snippet.
+Its Mathlib companion proves the shared kernel from
+`Real.sum_le_exp_of_nonneg` and `Real.exp_bound'`; it does not import a PNT+
+or LeanCert theorem.
+
+Conformance elaborates all eight exact source leaves as ordinary theorems. A
+mutation raising the `12.83` lower target from `370261` to `400000` fails at
+source coordinate `2` with no precision retry, and the same provider proves
+the proposed inequality false by producing the incompatible strict upper
+bound. This completes the numerical leaves, not the surrounding Dusart
+number-theory development and not the global `IntervalAuto` interface.
+
 The next classified acceptance probe covers the numerical leaf in
 `LogTables.exp_neg_lt_1e_neg_100` while preserving the source theorem's useful
 monotone shape. At the pinned commit, the enclosing declaration is exactly
@@ -2092,11 +2131,12 @@ They therefore belong to the audit even though they do not spell
 `interval_decide` and `interval_auto`, so the six-module import list covers the
 tactic entry points as well as the certified-bound interfaces.
 
-Six of the sixteen exact import-site records are accepted after localized
-PNT+ rewrites. Two are the Table 10 tactic imports; the other four are the
+Seven of the sixteen exact import-site records are accepted after localized
+PNT+ rewrites. Two are the Table 10 tactic imports; the other five are the
 complete `BKLNW_a2_bounds` power/exponential family's tactic and certified-bound
 imports, the complete FKS2 Table4Ext workload's ANT import, and the complete
-`LogTables` tactic import. Ten import sites remain pending. These site-level
+`LogTables` tactic import, plus the Dusart tactic import. Nine import sites
+remain pending. These site-level
 decisions remove imports from the corresponding bounded source rewrites; they
 do not classify `LeanCert.Tactic.IntervalAuto` as a general compatible
 interface. At the dependency-interface level, ANT and the exercised BKLNW
@@ -3223,6 +3263,14 @@ the fixed soundness and trust contracts.
   `PntChebyshev.lean` closes the natural and exact real source theorem shapes.
 - `conformance/HexIntervalMathlib/PntChebyshevConformance.lean`: chunk-boundary,
   false-prime, false-prime-power, source-shape, and guarded axiom checks.
+- `HexInterval/Experiment/PntDusartExp.lean`: the exact seven-row Dusart
+  exponential table and bounded rational Taylor checker; the eighth leaf uses
+  a named stronger package theorem.
+- `HexIntervalMathlib/Experiment/PntDusartExp.lean`: the shared ordinary-kernel
+  range-reduction and Taylor-remainder semantics.
+- `conformance/HexIntervalMathlib/PntDusartExpConformance.lean`: all eight
+  source-shaped leaves (seven table rows plus one stronger replacement), exact
+  coordinate failure, false-bound rejection, and guarded axiom reports.
 
 Unlike a correspondence-only companion, `hex-interval-mathlib` contains an
 executable reifier, rule registry, and tactic. Its own conformance target tests

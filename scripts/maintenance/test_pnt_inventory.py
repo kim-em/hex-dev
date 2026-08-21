@@ -179,6 +179,60 @@ class InventoryTests(unittest.TestCase):
         with self.assertRaisesRegex(inventory.InventoryError, "duplicate"):
             inventory.require_small_prime_log_match(duplicate, provider)
 
+    def test_dusart_sites_match_local_table(self) -> None:
+        sites = tuple((line, declaration) for line, declaration, *_ in inventory.DUSART_ROWS) + (
+            inventory.DUSART_REPLACEMENT[:2],
+        )
+        records = [
+            {
+                "kind": "tactic-occurrence",
+                "actual": True,
+                "path": "PrimeNumberTheoremAnd/IEANTN/Dusart.lean",
+                "line": line,
+                "declaration": declaration,
+                "snippet": snippet,
+                "migration": ({
+                    "status": "replaced-by-stronger-result",
+                    "replacement": inventory.DUSART_REPLACEMENT_NAME,
+                } if index == 7 else {"status": "accepted-after-rewrite"}),
+            }
+            for index, ((line, declaration), snippet) in enumerate(
+                zip(sites, inventory.DUSART_SNIPPETS, strict=True)
+            )
+        ]
+        provider = "def sourceRows : List Certificate := [\n" + "\n".join(
+            f"  ⟨{index}, {num}, {den}, {target}, .{relation}, 64, 12⟩,"
+            for _, _, index, num, den, target, relation in inventory.DUSART_ROWS
+        ) + "\n]"
+        inventory.require_dusart_exp_match(records, provider)
+
+        wrong_provider = provider.replace("⟨2, 1283, 100, 370261,", "⟨2, 1283, 100, 400000,")
+        with self.assertRaisesRegex(inventory.InventoryError, "sourceRows differ"):
+            inventory.require_dusart_exp_match(records, wrong_provider)
+
+        wrong_sites = copy.deepcopy(records)
+        wrong_sites[2]["line"] = 459
+        with self.assertRaisesRegex(inventory.InventoryError, "sites differ"):
+            inventory.require_dusart_exp_match(wrong_sites, provider)
+
+        wrong_number = copy.deepcopy(records)
+        wrong_number[2]["snippet"] = wrong_number[2]["snippet"].replace("370261", "370262")
+        with self.assertRaisesRegex(inventory.InventoryError, "snippets differ"):
+            inventory.require_dusart_exp_match(wrong_number, provider)
+
+        wrong_direction = copy.deepcopy(records)
+        wrong_direction[6]["snippet"] = wrong_direction[6]["snippet"].replace("≤", "≥")
+        with self.assertRaisesRegex(inventory.InventoryError, "unrecognized"):
+            inventory.require_dusart_exp_match(wrong_direction, provider)
+
+        with self.assertRaisesRegex(inventory.InventoryError, "sites differ"):
+            inventory.require_dusart_exp_match(records[:-1], provider)
+
+        duplicate = copy.deepcopy(records)
+        duplicate[-1] = copy.deepcopy(duplicate[-2])
+        with self.assertRaisesRegex(inventory.InventoryError, "duplicate"):
+            inventory.require_dusart_exp_match(duplicate, provider)
+
     def test_committed_inventory_is_valid_but_not_yet_classified(self) -> None:
         inventory.check_inventory(self.fixture, require_classified=False)
         with self.assertRaisesRegex(inventory.InventoryError, "pending decisions"):
