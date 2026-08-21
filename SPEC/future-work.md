@@ -36,10 +36,10 @@ representative of an integer row lattice with lattice membership,
 integer kernel bases, and integer rank on top of it, and Smith normal
 form as the diagonal form with the divisibility chain `d₁ ∣ d₂ ∣ ⋯ ∣ dᵣ`,
 the invariant factors, and the structure of a finitely generated abelian
-group. Both are separate libraries rather than additions to hex-matrix,
-because both need the extended GCD from hex-arith and the echelon
-contracts from hex-row-reduce, and Hermite normal form needs a
-determinant from hex-bareiss for its modular algorithm.
+group. Both are separate libraries rather than additions to hex-matrix.
+Hermite uses the extended GCD from hex-arith, the echelon contracts from
+hex-row-reduce, and determinant/adjugate theory from hex-determinant; Smith
+builds on that library and its shared elimination step.
 
 Two corrections to what this file said before those SPECs were written,
 recorded because they are easy to make again. The `IsHNF` field list

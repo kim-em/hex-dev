@@ -89,7 +89,7 @@ Each library with its immediate dependencies:
 - **hex-row-reduce**: hex-matrix
 - **hex-determinant**: hex-matrix
 - **hex-bareiss**: hex-determinant, hex-matrix
-- **hex-hermite**: hex-row-reduce, hex-arith, hex-bareiss
+- **hex-hermite**: hex-row-reduce, hex-arith, hex-determinant
 - **hex-smith**: hex-hermite
 - **hex-mod-arith**: hex-arith
 - **hex-modular**: hex-arith
@@ -140,7 +140,7 @@ Mathlib companion libraries (each also depends on Mathlib):
 - **hex-row-reduce-mathlib**: hex-row-reduce, hex-matrix-mathlib
 - **hex-determinant-mathlib**: hex-determinant, hex-bareiss, hex-matrix-mathlib
 - **hex-bareiss-mathlib**: hex-determinant-mathlib
-- **hex-hermite-mathlib**: hex-hermite, hex-row-reduce-mathlib, hex-bareiss-mathlib
+- **hex-hermite-mathlib**: hex-hermite, hex-row-reduce-mathlib, hex-determinant-mathlib
 - **hex-smith-mathlib**: hex-smith, hex-hermite-mathlib
 - **hex-gram-schmidt-mathlib**: hex-gram-schmidt, hex-bareiss-mathlib
 - **hex-lll-mathlib**: hex-lll, hex-gram-schmidt-mathlib, hex-row-reduce-mathlib
@@ -173,18 +173,18 @@ and [hex-poly-z-gcd §Why this is not hex-mv-gcd at arity one](hex-poly-z-gcd.md
 The matrix family splits internally. `hex-matrix` is the dense base.
 `hex-row-reduce`, `hex-determinant`, and `hex-bareiss` build on it
 (`hex-bareiss` also on `hex-determinant`), `hex-gram-schmidt` uses all
-three, and `hex-lll` builds on `hex-gram-schmidt`. `hex-hermite` is the
-one member with a dependency outside the family, on `hex-arith` for the
-extended GCD, and `hex-smith` sits on top of it. Each has a matching
-`*-mathlib` companion of the same shape. In the diagram below,
-`hex-matrix` stands for that whole family.
+three, and `hex-lll` builds on `hex-gram-schmidt`. `hex-hermite` reuses
+the row-echelon and determinant layers and is the one member with a dependency
+outside the family, on `hex-arith` for the extended GCD; `hex-smith` sits
+on top of it. Each has a matching `*-mathlib` companion of the same shape.
+In the diagram below, `hex-matrix` stands for that whole family.
 
 The integer normal forms within it:
 
 ```text
-hex-row-reduce ──┐
-hex-arith ───────┼── hex-hermite ── hex-smith
-hex-bareiss ─────┘
+hex-row-reduce ───┐
+hex-arith ─────────┼── hex-hermite ── hex-smith
+hex-determinant ───┘
 ```
 
 The algebraic graph has three independent roots: hex-poly, hex-arith,

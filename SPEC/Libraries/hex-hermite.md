@@ -1,8 +1,8 @@
-# hex-hermite (Hermite normal form over `Int`, depends on hex-row-reduce, hex-arith, hex-bareiss)
+# hex-hermite (Hermite normal form over `Int`, depends on hex-row-reduce, hex-arith, hex-determinant)
 
 The Hermite normal form of an integer matrix: a canonical row-echelon
-representative of the integer row lattice, together with the unimodular
-transform that produces it and the transform's inverse. Mathlib-free;
+representative of the integer row lattice, together with an optional
+unimodular transform and explicitly accumulated inverse. Mathlib-free;
 the companion `hex-hermite-mathlib` relates the executable output to
 `Submodule.span ℤ`, `Matrix.rank`, and the general linear group over `ℤ`.
 
@@ -30,7 +30,7 @@ What the library delivers, none of which is currently reachable:
   same dimensions* have the same integer row lattice exactly when their
   Hermite normal forms are equal, so lattice equality is decided by one
   comparison. Across dimensions the comparison is on `hnfBasis`, the
-  nonzero rows alone. See "Canonicity is per shape" below.
+  nonzero rows alone; see "Canonicity is per shape" below.
 - **Lattice membership with completeness.** `latticeContains A v` is
   `true` exactly when `v` is an integer combination of the rows of `A`.
   The `Field`-based `spanContains` answers the rational question and
@@ -56,11 +56,11 @@ Named consumers:
   exactly the pivot product above.
 - **hex-lll**, which can canonicalise a reduced basis and drop
   dependent generators. The dependency runs from this library to
-  `hex-lll`'s vocabulary rather than the other way. See "Prerequisite
+  `hex-lll`'s vocabulary rather than the other way; see "Prerequisite
   changes in other libraries".
 - The **polynomial-matrix invariant factors** item in
   [future-work](../future-work.md), which needs the same algorithm shape
-  over `F[x]`. That is not this library. See "Why `Int` and not a
+  over `F[x]`. That is not this library; see "Why `Int` and not a
   Euclidean domain class".
 
 ## The convention this library fixes
@@ -86,7 +86,7 @@ or HNF)".
 
 **`H` is unique; `U` is not.** Uniqueness of `H` is the property the
 whole library rests on: its nonzero rows depend only on the integer row
-lattice of `A`. `U` is determined only when `A` has full row rank. When
+lattice of `A`. `U` is determined only when `A` has full row rank; when
 `rank < n` the rows of `U` that map to zero can be changed by any
 unimodular transformation of the kernel lattice. No uniqueness theorem
 for `U` is stated or should be expected.
@@ -171,7 +171,7 @@ example : IsRowReduced cexM cexD where
 
 Every field is vacuous or immediate, yet `5` sits to the left of the
 declared pivot, so this is not a row echelon form under any standard
-definition. `rowReduce` of course produces leading pivots. The point is
+definition. `rowReduce` of course produces leading pivots; the point is
 that the *contract* does not say so, and a downstream proof may not
 assume it.
 
@@ -183,10 +183,8 @@ normal forms of `[[5, 1]]` with pivot column `1`, and they are different
 matrices. The condition is clause 2 above, and it appears as
 `pivot_leading` below.
 
-**The clause list in [future-work](../future-work.md) is wrong in both
-directions.** It proposes three HNF-specific fields, of which
-`det transform = 1 ∨ det transform = -1` is redundant, and it omits the
-leading-entry condition, which is required. Redundant because
+**Determinant unimodularity is a theorem, not a contract field.** A field
+`det transform = 1 ∨ det transform = -1` would be redundant because
 `IsEchelonForm.transform_inv` already supplies an integer matrix `Tinv`
 with `Tinv * transform = 1`, and `det_mul` (Mathlib-free, in
 `HexDeterminant/Adjugate.lean`) turns that into
@@ -211,8 +209,8 @@ structure IsHNF {n m : Nat} (M : Matrix Int n m) (D : RowEchelonData Int n m) : 
 
 This elaborates as written against the current tree. `above_nonneg` and
 `above_lt` are separate fields rather than one conjunction so that each
-can be cited on its own. Together they are the "reduced into
-`[0, pivot)`" condition. The `D.echelon[i]` access with `i : Fin D.rank` is the same
+can be cited on its own; the pair is the "reduced into `[0, pivot)`"
+condition. The `D.echelon[i]` access with `i : Fin D.rank` is the same
 shape `IsRowReduced.pivot_one` already uses.
 
 The unimodularity of `D.transform` is inherited from
@@ -247,13 +245,17 @@ is now wanted by two libraries, it should move to `hex-arith` next to
 (s * a + t * b) / g = 1`, and the displayed `E⁻¹` is its inverse by
 direct computation, so *the inverse transform is available at every step
 without a determinant or an adjugate*. Accumulating `U` and `W` together
-costs one extra row update per step and makes
+costs one additional two-column update of `W` per row update of `U` and makes
 `IsEchelonForm.transform_inv` data rather than an existence proof to be
 recovered later.
 
-`extGcd` returns `g : Nat`, so `g` is nonnegative by construction and
-the pivot-positivity clause needs no separate sign fixup except when the
-whole column is zero, where the step is skipped.
+`extGcd` returns `g : Nat`, so every 2x2 elimination step leaves a
+nonnegative pivot. That does not remove the need for explicit sign
+normalisation: the selected pivot may have no lower row, so no 2x2 step may
+run at all. After clearing the pivot column and before reducing above it, if
+the pivot is negative, negate the pivot row. On the transform path this also
+negates the corresponding row of `U`; on the inverse path it negates the
+corresponding column of `W`, since the row-negation matrix is its own inverse.
 
 Reduction above a pivot `p > 0`: for each row `k < i`, subtract
 `(H[k][jᵢ] / p)` times row `i`. Lean's `Int` division and modulus are
@@ -271,10 +273,10 @@ answer: the output is bounded (for square nonsingular `A`, every entry
 of `H` is at most `|det A|`, and the pivot product is exactly `|det A|`)
 while the intermediate matrices are not. This is the classical
 observation that makes integer elimination a different subject from
-elimination over a field, and it is the same phenomenon `hex-bareiss`
-addresses for determinants by exact division.
+elimination over a field.
 
-Three responses, all standard, and this SPEC takes the first two.
+Three responses are standard. V1 takes the first and records objective
+triggers for specifying the other two later.
 
 **The default is total, and is the one the public `hnf` runs.** Process
 the columns left to right, and after each new pivot is fixed, reduce
@@ -284,6 +286,24 @@ pivots instead of letting it accumulate across the run. The rows not yet
 consumed are not bounded by anything, which is the honest statement, and
 is why the input families under "Benchmarking" measure entry size and not
 only time.
+
+The control flow is entirely bounded. For each of the `m` columns, scan the
+rows at or below the current pivot row. If they are all zero, advance only
+the column. Otherwise move the first nonzero entry to the pivot row, then
+fold the 2x2 `extGcd` step once over each lower row. Each application clears
+that row's entry in the pivot column; later applications touch only the pivot
+row and a later row, so an entry already cleared is not reintroduced. Negate
+the pivot row if the resulting pivot is negative, then use a final fixed scan
+to reduce the entries above it and advance both the pivot row and column. Thus
+the implementation is nested structural iteration over
+the remaining columns and rows (or equivalent fuel bounded by `m` and `n`),
+with no value-dependent recursive call and no unreachable exhaustion branch.
+Implement this as one loop parameterised by a companion accumulator: `Unit`
+for `hnf`, `U` for `hnfData`, and `(U, W)` for `hnfWithInv`. The accumulator's
+row-step operation is inlined, so the `Unit` instantiation allocates no matrix.
+The shared loop makes the schedule and pivot selection identical and lets the
+agreement theorems follow from accumulator-parametric step lemmas rather than
+three independent correctness inductions.
 
 This is deliberately *not* called Kannan-Bachem. Kannan-Bachem maintains
 Hermite normal forms of leading *nonsingular* minors and reorders rows
@@ -297,11 +317,12 @@ and the transform is real work and is listed under "Open questions" as
 the optimisation to measure against the total algorithm, not smuggled in
 as the default.
 
-**A modular variant for square nonsingular input.** For square
+**The modular variant is not a v1 declaration.** For square
 nonsingular `A` with `d = |det A|`, the row lattice `L` contains `d·ℤⁿ`
 (because `d · A⁻¹` is `± adj A`, an integer matrix), so `L = L + d·ℤⁿ`
-and the Hermite normal form of `A` is the Hermite normal form of the
-`(2n) × n` matrix `[A; d·I]`. That augmented lattice is what makes
+and the `(2n) × n` matrix `[A; d·I]` has the same nonzero HNF rows as `A`
+(equivalently, the two `hnfBasis` values agree after transporting across their
+rank equality). That augmented lattice is what makes
 modular arithmetic legitimate, and the statement has to be made in that
 form rather than as "reduce every entry modulo `d`":
 
@@ -313,10 +334,12 @@ What is legitimate is to compute in `ℤ/dℤ` while the generators of
 `d·ℤⁿ` remain present, which is what the Domich-Kannan-Trotter algorithm
 does: each pivot is `gcd` of the column entries *with `d`*, and a pivot
 may equal `d` itself, so entries live in `[0, d]` rather than `[0, d)`.
-The SPEC for `hnfSquare` is the DKT recurrence on `[A; d·I]`, not
-elimination with a modulus bolted on, and the implementation must
-represent the pivot value `d` rather than reducing it to `0`. `d` comes
-from `hex-bareiss`, which is why this library depends on it.
+That observation is a prerequisite for a future DKT SPEC, not enough to
+implement one: the recurrence, state invariant, termination argument, and
+agreement theorem with `hnf` are not written here. Consequently v1 has no
+`hnfSquare` or `Modular.lean`. A later change may add them only with the
+complete algorithm and a theorem `hnfSquare_eq_hnf`; a name plus a citation
+is not an implementation specification.
 
 **LLL-based reduction is deliberately not in v1.** The
 Havas-Majewski-Matthews algorithm controls growth by LLL-reducing the
@@ -334,14 +357,21 @@ determinant while `U ≈ H · A⁻¹` is bounded by the determinant times the
 size of `A⁻¹`. FLINT's separate `fmpz_mat_hnf` and
 `fmpz_mat_hnf_transform` entry points are evidence that production
 implementations treat this as two operations, and this SPEC does the
-same: `hnf` returns the form alone and `hnfData` returns the form with
-the transform and its inverse. A caller who only wants lattice equality,
-rank, or the index must not be made to pay for `U`.
+same. `hnf` returns the form alone. `hnfData` accumulates `U` but not its
+inverse, which is enough for lattice coefficients and the kernel basis.
+`hnfWithInv` is the explicitly more expensive entry point that accumulates
+both `U` and `W`. A caller who only wants lattice equality, rank, the index,
+coefficients, or a kernel basis pays for no transform it does not consume.
 
 ## API
 
 ```lean
 namespace Hex.Matrix
+
+/-- Hermite data with the inverse transform accumulated on the value path. -/
+structure HermiteData (n m : Nat) where
+  rowData : RowEchelonData Int n m
+  inverse : Matrix Int n n
 
 /-- The Hermite normal form of `A`. Does not compute the transform. -/
 def hnf (A : Matrix Int n m) : Matrix Int n m
@@ -354,15 +384,12 @@ independent of how many generators `A` supplied. -/
 def hnfBasis (A : Matrix Int n m) : Matrix Int (hnfRank A) m
 
 /-- The Hermite normal form with the unimodular transform, the pivot
-columns, and the rank, in the shared echelon-data shape. -/
+columns, and the rank, in the shared echelon-data shape. This path
+accumulates `U` but does not compute its inverse. -/
 def hnfData (A : Matrix Int n m) : RowEchelonData Int n m
 
-/-- The inverse of `(hnfData A).transform`, accumulated alongside it. -/
-def hnfInv (A : Matrix Int n m) : Matrix Int n n
-
-/-- Hermite normal form of a square matrix, by the Domich-Kannan-Trotter
-recurrence on `[A; d·I]` when `d = |det A|` is nonzero. -/
-def hnfSquare (A : Matrix Int n n) : Matrix Int n n
+/-- Hermite data with `U` and `U⁻¹` accumulated in one traversal. -/
+def hnfWithInv (A : Matrix Int n m) : HermiteData n m
 
 /-- Integer coefficients expressing `v` as a combination of the rows of
 `A`, or `none` when `v` is not in the row lattice. -/
@@ -375,23 +402,44 @@ def latticeContains (A : Matrix Int n m) (v : Vector Int m) : Bool
 rows of an `(n - hnfRank A) × n` matrix. -/
 def kernelBasis (A : Matrix Int n m) : Matrix Int (n - hnfRank A) n
 
-/-- The pivot entries of `hnf A`, in column order. -/
-def pivots (A : Matrix Int n m) : Vector Int (hnfRank A)
+/-- The positive pivot entries of `hnf A`, in column order. -/
+def pivots (A : Matrix Int n m) : Vector Nat (hnfRank A)
 
 /-- The index `[ℤᵐ : L]` of the row lattice of `A`, or `0` when the row
 lattice does not have finite index. -/
-def latticeIndex (A : Matrix Int n m) : Int
+def latticeIndex (A : Matrix Int n m) : Nat
 
 end Hex.Matrix
 ```
 
 Contracts an implementer would otherwise have to guess. `hnf` and
 `hnfData` agree on the form. `hnfRank A` is `(hnfData A).rank` and is
-computed without building the transform. `latticeCoeffs` returns
+computed without building the transform. `hnfWithInv` runs the same
+deterministic row algorithm while also updating the inverse, and its
+`rowData` agrees with `hnfData`; callers needing both matrices call it once.
+After a left row step `U' = E * U`, the inverse update is
+`W' = W * E⁻¹`, a right multiplication (equivalently, a two-column update),
+not another row update.
+`hnfData_isHNF` proves the existential inverse fields by induction over the
+elementary steps; proof erasure keeps that witness off the value path.
+`hnfData` must not be implemented as a projection of `hnfWithInv`, because
+Lean's eager evaluation would then allocate the inverse it promises to avoid.
+`hnfBasis` is definitionally the first `hnfRank A` rows of `hnf A`, and
+`pivots` is definitionally the `natAbs` of the entries in those rows at the
+corresponding `(hnfData A).pivotCols` positions (transported along
+`hnfRank_eq`). These are definition contracts, so neither function has an
+independent choice that could satisfy only the index theorem accidentally.
+
+`latticeCoeffs` returns
 coefficients against the rows of `A`, not against the rows of `hnf A`,
-which is why it needs the transform: solve against `hnf A` by
-back-substitution with exact division at each pivot, then map the answer
-through `(hnfData A).transform`. `kernelBasis` is the last `n - r` rows
+which is why it needs the transform. Starting with residual `v`, traverse
+the pivot rows in increasing order, require exact divisibility at the current
+pivot, record the quotient, and subtract that multiple of the whole row.
+After the final pivot, return `some` only if the *entire* residual vector is
+zero; pivot divisibility alone is insufficient in a non-pivot column (for
+example `H = [[1, 0]]` and `v = [0, 1]`). Map the coefficients for `hnf A`
+through `(hnfData A).transform` to obtain coefficients for `A`.
+`kernelBasis` is the last `n - r` rows
 of `(hnfData A).transform`, and its dependent type follows `nullspace`
 in `hex-row-reduce`, which is already indexed by `rowReduce_rank M`.
 `latticeIndex` returns the pivot product when `hnfRank A = m` and `0`
@@ -401,35 +449,33 @@ already takes in the square case. Note that finite index needs
 `hnfRank A = m`, the number of *columns*, so a wide matrix never has one
 however many independent rows it has.
 
-`hnfSquare` chooses between the modular algorithm and the general one on
-the determinant returned by `hex-bareiss`. Both branches are complete
-algorithms, so this is a dispatch and not a total form of a partial
-helper in the sense of design principle 8. No fallback classification is
-required, and none should be written.
-
 ## Correctness theorems
 
 ```lean
 theorem hnfData_isHNF (A : Matrix Int n m) : IsHNF A (hnfData A)
 theorem hnf_eq_hnfData_echelon (A : Matrix Int n m) : hnf A = (hnfData A).echelon
 theorem hnfRank_eq (A : Matrix Int n m) : hnfRank A = (hnfData A).rank
-theorem hnfInv_mul (A : Matrix Int n m) :
-    hnfInv A * (hnfData A).transform = Matrix.identity n
-theorem mul_hnfInv (A : Matrix Int n m) :
-    (hnfData A).transform * hnfInv A = Matrix.identity n
+theorem hnfWithInv_data (A : Matrix Int n m) :
+    (hnfWithInv A).rowData = hnfData A
+theorem hnfWithInv_inv_mul (A : Matrix Int n m) :
+    (hnfWithInv A).inverse * (hnfWithInv A).rowData.transform = Matrix.identity n
+theorem hnfWithInv_mul_inv (A : Matrix Int n m) :
+    (hnfWithInv A).rowData.transform * (hnfWithInv A).inverse = Matrix.identity n
 
 -- Uniqueness, in the two forms callers want.
 theorem IsHNF.eq (h : IsHNF A D) (h' : IsHNF A D') :
-    D.rank = D'.rank ∧ D.echelon = D'.echelon
+    D.rank = D'.rank ∧ D.echelon = D'.echelon ∧ HEq D.pivotCols D'.pivotCols
 theorem IsHNF.eq_of_memLattice (h : IsHNF A D) (h' : IsHNF B D')
     (hL : ∀ v, A.memLattice v ↔ B.memLattice v) :
-    D.rank = D'.rank ∧ D.echelon = D'.echelon
+    D.rank = D'.rank ∧ D.echelon = D'.echelon ∧ HEq D.pivotCols D'.pivotCols
 theorem hnf_idem (A : Matrix Int n m) : hnf (hnf A) = hnf A
 
 -- Canonicity across presentations, where the shapes need not agree.
 theorem hnfBasis_eq_of_memLattice (A : Matrix Int n m) (B : Matrix Int n' m)
     (hL : ∀ v, A.memLattice v ↔ B.memLattice v) :
     hnfRank A = hnfRank B ∧ HEq (hnfBasis A) (hnfBasis B)
+theorem hnfBasis_memLattice_iff (A : Matrix Int n m) (v : Vector Int m) :
+    (hnfBasis A).memLattice v ↔ A.memLattice v
 
 -- Lattice statements.
 theorem hnf_memLattice_iff (A : Matrix Int n m) (v : Vector Int m) :
@@ -445,12 +491,15 @@ theorem latticeContains_iff {A : Matrix Int n m} {v} :
 theorem kernelBasis_mul (A : Matrix Int n m) : kernelBasis A * A = 0
 theorem kernelBasis_complete {A : Matrix Int n m} {x : Vector Int n} :
     vecMul x A = 0 → ∃ c, vecMul c (kernelBasis A) = x
+theorem kernelBasis_independent {A : Matrix Int n m}
+    {c : Vector Int (n - hnfRank A)} :
+    vecMul c (kernelBasis A) = 0 → c = 0
 
 -- Determinant and index.
 theorem latticeIndex_eq_prod_pivots (A : Matrix Int n m) (h : hnfRank A = m) :
     latticeIndex A = (pivots A).foldl (· * ·) 1
 theorem latticeIndex_eq_det (A : Matrix Int n n) :
-    latticeIndex A = ((det A).natAbs : Int)
+    latticeIndex A = (det A).natAbs
 ```
 
 `IsHNF.eq_of_memLattice` is the substantive one and `IsHNF.eq` is its
@@ -460,20 +509,23 @@ that across presentations, so those two are the theorems to prove first
 and the ones a `sorry` must not survive in.
 `kernelBasis_complete` is the saturation statement: it says the returned
 rows generate the whole kernel lattice, and it is what a rational
-nullspace computation cannot give.
+nullspace computation cannot give. `kernelBasis_independent` supplies the
+other half of the word "basis" and is the theorem the Mathlib
+`Module.Basis` construction consumes.
 
 `latticeIndex_eq_det` is the square specialisation of
 `latticeIndex_eq_prod_pivots`, and is worth stating separately because it
-gives a second determinant algorithm to cross-check `hex-bareiss`
+gives a second determinant algorithm to cross-check the determinant stack
 against.
 
 `memLattice` is `Hex.Matrix.memLattice`, currently defined in
-`HexLLL/Lattice.lean`. See the next section.
+`HexLLL/Lattice.lean`; see the next section.
 
 ## Certificates and certified dispatch
 
 `hex-lll` already has the machinery this library needs, and it should be
-reused rather than reinvented. `Hex.Internal.mulEqCert U A C` decides
+relocated and reused rather than reinvented. After the prerequisite move,
+`Hex.Matrix.mulEqCert U A C` decides
 `U * A = C` through a Kronecker-substitution digit packing, so the
 product matrix is never formed, and `mulEqCert_iff` proves it correct.
 `Hex.Matrix.sameLatticeCert` composes two of those into a same-lattice
@@ -486,18 +538,21 @@ The Hermite certificate is three checks:
 `U` and inverse transform `W`. -/
 def hnfCert (A H : Matrix Int n m) (U W : Matrix Int n n)
     (r : Nat) (piv : Vector (Fin m) r) : Bool :=
-  Hex.Internal.mulEqCert U A H
-    && Hex.Internal.mulEqCert U W (Matrix.identity n)
+  Hex.Matrix.mulEqCert U A H
+    && Hex.Matrix.mulEqCert U W (Matrix.identity n)
     && isHNFForm H r piv
 
 theorem hnfCert_sound :
     hnfCert A H U W r piv = true → IsHNF A ⟨r, H, U, piv⟩
 ```
 
-`isHNFForm` is the decidable shape test for the four clauses, written
-directly on the entries. Note what the three checks buy. `U * W = I`
+`isHNFForm` is the decidable shape test written directly on the entries. It
+checks `r ≤ n`, `r ≤ m`, that `piv` is strictly increasing, all leading and
+zero-row conditions inherited from `IsEchelonForm`, and the HNF positivity
+and residue conditions; it is not only a pivot-entry predicate. Note what the
+three certificate checks buy. `U * W = I`
 over a commutative ring gives `W * U = I` as well, through the adjugate,
-so unimodularity of `U` follows from one product check. The reverse
+so unimodularity of `U` follows from one product check; the reverse
 product need not be certified separately. The same-lattice statement
 then follows from `U * A = H` and `W * H = W * U * A = A`. So
 `sameLatticeCert`'s second check is redundant here and should not be
@@ -523,20 +578,24 @@ is designed for it now (the checker takes `W` as an argument rather than
 recomputing an inverse, which is the one decision that would be
 expensive to change later).
 
-The lemma this rests on is `Hex.Matrix.mul_eq_one_comm` in
-`HexDeterminant/Adjugate.lean`:
+One obligation that belongs in `hex-determinant` rather than here:
 
 ```lean
-theorem mul_eq_one_comm {U W : Matrix R n n} (h : U * W = Matrix.identity n) :
+theorem Matrix.mul_eq_one_comm {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
+    {U W : Matrix R n n} (h : U * W = Matrix.identity n) :
     W * U = Matrix.identity n
 ```
 
-for a commutative ring, proved by applying `adjugate_mul` twice. It
-is adjugate theory rather than Hermite theory, which is why it lives there.
+For a commutative ring this follows from determinant and adjugate theory, so it
+belongs in `hex-determinant`, not here. The current Mathlib-free file has
+`det_mul`, matrix-level `mul_adjugate` only in the `(n + 1) × (n + 1)` shape,
+and entrywise `adjugate_mul_apply`; the prerequisite change must add the
+matrix-level `adjugate_mul`, handle the `0 × 0` case (or generalise the shape),
+and then prove the displayed lemma. Two other libraries would use it.
 
 ## Prerequisite changes in other libraries
 
-Three small relocations, each with a reason independent of this library.
+Four prerequisite relocations, each with a reason independent of this library.
 
 **`memLattice` should move to `hex-matrix`.** `Hex.Matrix.memLattice b v`
 is `∃ c, vecMul c b = v`. It mentions nothing from `hex-lll` and nothing
@@ -545,32 +604,35 @@ from `hex-gram-schmidt`, but it lives in `HexLLL/Lattice.lean` alongside
 statement in this SPEC is phrased with it, and `hex-hermite` should not
 acquire a dependency on `hex-lll` (and through it `hex-gram-schmidt`,
 `hex-bareiss`, `hex-determinant`) to say "is an integer combination of
-the rows". Move `memLattice`, `vecMul_mul`, `memLattice_of_mul_eq`, and
-`memLattice_iff_of_mul_eq` into `HexMatrix/Lattice.lean`, and leave
+the rows". Move `memLattice` from `Hex.Matrix` and `vecMul_mul`,
+`memLattice_of_mul_eq`, and `memLattice_iff_of_mul_eq` from `Hex.Internal`
+into their final public namespace in `HexMatrix/Lattice.lean`; leave
 `independent` where it is.
 
-**`mulEqCert` should be public.** It is in `Hex.Internal`, so it is
+**`mulEqCert` should be public.** It is currently in `Hex.Internal`, so it is
 reachable but marked as an implementation detail. The packed product
 check is the right primitive for any certificate that asserts a matrix
 identity without forming the product, and this library plus `hex-smith`
 are two more consumers. Promote it to `Hex.Matrix` next to
 `sameLatticeCert`, and move both to `hex-matrix` with `memLattice`.
 
-**`mul_eq_one_comm`** is done: it and the matrix-level `adjugate_mul` are in
-`HexDeterminant/Adjugate.lean`, with `smul_mul` added to `hex-matrix`
-underneath them.
+**`mul_eq_one_comm` belongs in `hex-determinant`**, as above.
 
 **`exactDiv` should move to `hex-arith`.** `HexBareiss/Bareiss.lean`
 defines the proof-free `exactDiv` with its `@[extern]` binding and proves
 `exactDiv_eq_divExact` beside it. This library and `hex-smith` both want
 exactly that primitive, and copying it into two more places is how three
 slightly different versions appear. It is integer arithmetic, so it
-belongs next to `extGcd`, with `hex-bareiss` re-exporting or importing
-it.
+belongs next to `extGcd` as `HexArith.Int.exactDiv`, with a compatibility
+alias in `Hex.Matrix` while existing Bareiss and Gram--Schmidt callers are
+migrated.
 
-None of the four blocks starting work here: each can be done as a
-separate change before or alongside the first Hermite commit, and until
-they are, this library can name the existing paths.
+These are prerequisites, not work to hide in the first Hermite commit. They
+cross released-repository boundaries, so land them here in dependency order,
+rebuild the monorepo, and publish them through the normal release-sync flow
+before activating Hermite; do not delete an old public name until its released
+consumers have moved, and keep compatibility aliases where the topological sync
+requires them. The new Hermite source uses only the final public names.
 
 ## Why `Int` and not a Euclidean domain class
 
@@ -587,7 +649,7 @@ elimination step. What does not: the canonical form of a pivot is
 above a pivot is `%` into `[0, p)` over `ℤ` and remainder of lower
 degree over `F[x]`; the termination measure is absolute value in one
 case and degree in the other; and the growth problem that motivates
-the eager reduction and the modular variant is a coefficient-size problem over
+the eager reduction and a possible future modular variant is a coefficient-size problem over
 `ℤ` and a degree-growth problem over `F[x]`, with different remedies.
 A class that abstracts only the elimination step buys one function and
 costs an indirection on a path that has to reduce cheaply. The
@@ -613,11 +675,12 @@ derived. See "Benchmarking".
 | operation | algorithm | matrix updates and `extGcd` calls | operand size |
 |---|---|---|---|
 | `hnf` | column sweep with eager reduction above each pivot | `O(r · n · m)` | processed part bounded by its own pivots, unprocessed part unbounded |
-| `hnfSquare` (nonsingular) | elimination modulo the determinant `d` | `O(n³)` | `< d` throughout |
-| `hnfData` | `hnf` plus accumulation of `U` and `W` | `+ O(r · n²)` | larger than `H`; see "Entry growth" |
-| `latticeCoeffs` | back-substitution with exact division, then one `vecMul` through `U` | `O(n · m)` | bounded by the entries of `H` and `U` |
-| `kernelBasis` | row slice of `U` | none | `U`'s |
-| `latticeIndex` | pivot product | `O(m)` | bounded by the index |
+| `hnfData` | `hnf` plus accumulation of `U` only | `+ O(r · n²)` | `U` may be much larger than `H` |
+| `hnfWithInv` | `hnfData` plus right-updates of `W = U⁻¹` | `+ O(r · n²)` beyond `hnfData` | `U`'s and `W`'s |
+| `latticeCoeffs` | `hnfData`, forward pivot solve, residual check, one `vecMul` through `U` | as `hnfData`, plus `O(n · m)` | bounded by `H`, `U`, and the residual |
+| `latticeContains` | `latticeCoeffs` followed by `Option.isSome` | as `latticeCoeffs` | as `latticeCoeffs` |
+| `kernelBasis` | `hnfData` plus a row slice of `U` | as `hnfData`, plus `O((n-r) · n)` | `U`'s |
+| `latticeIndex` | `hnf` plus pivot scan and product | as `hnf`, plus `O(m)` | bounded by the form and index |
 
 ## The Mathlib layer
 
@@ -631,9 +694,9 @@ theorem span_hnf (A : Matrix Int n m) :
 
 /-- The transform is an element of the general linear group over `ℤ`. -/
 theorem isUnit_transform (A : Matrix Int n m) :
-    IsUnit (Matrix.det (matrixEquiv (hnfData A).transform))
+    IsUnit (matrixEquiv (hnfData A).transform)
 
-/-- The integer rank agrees with the rank over `ℚ`. -/
+/-- The executable integer rank agrees with Mathlib's module rank over `ℤ`. -/
 theorem hnfRank_eq_rank (A : Matrix Int n m) :
     hnfRank A = (matrixEquiv A).rank
 
@@ -647,6 +710,13 @@ noncomputable def kernelBasisEquiv (A : Matrix Int n m) :
     Module.Basis (Fin (n - hnfRank A)) ℤ
       (LinearMap.ker (Matrix.vecMulLinear (matrixEquiv A)))
 ```
+
+`hnfRank_eq_rank` needs a genuine row-rank/column-rank bridge. Mathlib's
+`Matrix.rank` is the `finrank` of the range of `mulVecLin`, while HNF counts
+nonzero rows. Since `Matrix.rank_transpose` is field-only, the proof either
+base-changes the integer matrix to `ℚ` and transports both ranks, or first
+identifies `hnfRank` with the rank of the row-span submodule and proves that it
+equals the column rank. It is not discharged merely by `span_hnf`.
 
 The last is the payoff and the reason the layer is more than a
 restatement: Mathlib's basis for a submodule of a free module over a PID
@@ -691,7 +761,7 @@ No new job, no matrix, no new workflow file, per [SPEC/CI.md](../CI.md).
 exposes `fmpz_mat_hnf` and `fmpz_mat_hnf_transform` in the row-style
 convention this SPEC fixes. The python-flint binding for the
 transform-returning form must be confirmed against the version CI
-installs before the driver is written. If it is not exposed, the
+installs before the driver is written; if it is not exposed, the
 fallback is PARI's `mathnf(M, 1)` through `cypari2`, which is already a
 CI dependency. The column-style-to-row-style conversion is then done in
 the driver, and it is not just a transpose: reversing rows or columns on
@@ -709,13 +779,16 @@ produce spurious failures.
 **Cases that must be present**, since these are what a plausible
 implementation gets wrong:
 
-- the zero matrix, and a matrix with a zero column at the left, where
+- the `0 × 0`, `0 × m`, and `n × 0` edge cases, the zero matrix, and a
+  matrix with a zero column at the left, where
   the first pivot is not in column `0`;
 - rank-deficient input, including duplicated and negated rows, checking
   that the zero rows land at the bottom and `rank` is right;
 - more rows than columns and more columns than rows;
 - negative entries in every position that feeds a pivot, since the sign
   handling of `extGcd` and of `%` is where an implementation goes wrong;
+- `[[1, 0], [0, -1]]`, whose last pivot has no lower row and therefore catches
+  an implementation that relies on an `extGcd` step to normalise every sign;
 - an input already in Hermite normal form, checking idempotence;
 - a pivot of `1`, where the reduction above it must produce zeros;
 - an input whose naive elimination blows up (a random `20 × 20` matrix
@@ -726,16 +799,24 @@ implementation gets wrong:
   checking that their `hnfBasis` values agree. This case is on
   `hnfBasis`, not on `hnf`, because `hnf` of an `n × m` and an `n' × m`
   matrix are different types and differ in their trailing zero rows;
-- for `hnfSquare`, an input whose Hermite normal form contains a pivot
-  equal to `d = |det A|` (the `1 × 1` matrix `[2]` is the smallest), which
-  is the case that catches a modular implementation reducing that pivot to
-  zero.
+- `H = [[1, 0]]` and `v = [0, 1]` as a lattice non-member, which catches
+  a solver that checks pivot divisibility but forgets the final residual.
 
 The property checks in `conformance/HexHermite/Conformance.lean` assert
-`U * A = H`, `U * W = I`, the four shape clauses, the pivot product
-against `hex-bareiss`'s determinant on square nonsingular input,
+`U * A = H`, both inverse identities from `hnfWithInv`, the four shape
+clauses, the pivot product against `hex-determinant` on square nonsingular input,
 `latticeContains` on both a member and a non-member of the lattice, and
-`kernelBasis A * A = 0`.
+`kernelBasis A * A = 0`. A small exhaustive coefficient range also checks
+that no nonzero coefficient vector annihilates `kernelBasis A`; the theorem,
+not this bounded check, supplies full independence.
+
+The direct `hex-determinant` pivot-product cross-check is restricted to
+dimensions at most `6`, because that library's public determinant is the
+Leibniz formula. The `20 × 20` growth fixture checks the HNF form against the
+external oracle and the transform identities, but does not invoke the Leibniz
+determinant. A conformance driver may instead import `HexBareiss` for larger
+determinant cross-checks; that test-only import does not become a Hermite
+library dependency.
 
 ## Benchmarking
 
@@ -746,10 +827,10 @@ Per [SPEC/benchmarking.md](../benchmarking.md), with drivers at
 a single family would hide:
 
 - `random-dense-hermite`: uniform entries in `[-B, B]`, square and
-  nonsingular, the case where the modular algorithm should win.
+  nonsingular.
 - `rank-deficient-hermite`: rows drawn as integer combinations of a
-  smaller independent set, where the determinant is zero and the modular
-  path is unavailable.
+  smaller independent set, exercising zero-row reconstruction and kernel
+  extraction.
 - `tall-hermite`: many more rows than columns, the shape a number-field
   module basis has, where most rows are redundant.
 - `unimodular-conjugate`: `V * D` for a random unimodular `V` and a
@@ -766,34 +847,23 @@ PARI is column-style and its timing includes the convention conversion.
 Both are recorded for orientation in
 `reports/hex-hermite-performance.md`.
 
-**Two decision rules written down in advance.** Both are stated over a
-range rather than at one ladder endpoint, because a single-point ratio
-mostly reports where the crossover was placed.
-
-1. `hnfSquare` (modular) is kept only if it beats the default over a
-   named production range: the crossover curve in dimension and entry
-   bit-size is measured, and the modular path must win across the whole
-   upper half of both ladders, not merely at the last rung. If the
-   crossover sits outside the sizes the named consumers produce, the
-   modular path is not carrying its complexity and should be removed
-   rather than kept as an unmeasured alternative.
-2. The LLL-based Havas-Majewski-Matthews algorithm is justified only if
-   growth rather than operation count is what limits the default. The
-   evidence is a divergence: the peak intermediate entry bit-size must
-   grow faster in the dimension than the output entry bit-size does on
-   `unimodular-conjugate`, with the time spent in big-integer arithmetic
-   rising as a share of total time. Instrument entry size and allocation
-   in the bench, not just wallclock. A time ratio alone cannot separate
-   these two causes.
+**Growth trigger written down in advance.** An LLL-based
+Havas-Majewski-Matthews follow-up is justified only if peak intermediate
+entry bit-size grows faster in the dimension than output entry bit-size on
+`unimodular-conjugate`, and wallclock follows that divergence across the
+upper half of the dimension ladder. The implementation provides a separate
+untimed diagnostic runner that scans the working matrix after every
+elementary update and returns `peakBits`; ordinary benchmark timings run the
+uninstrumented API. No claim is made about "time spent in big-integer
+arithmetic", which the benchmark harness cannot isolate.
 
 ## File organisation
 
 ```
 HexHermite/
   Contracts.lean     -- IsHNF, isHNFForm, IsHNF.det_transform
-  Step.lean          -- the 2x2 elimination step, its inverse, exact division
-  Hermite.lean       -- hnf, hnfData, hnfInv, hnfRank, hnfBasis
-  Modular.lean       -- hnfSquare, the DKT recurrence on [A; d·I]
+  Step.lean          -- 2x2 elimination, row-sign normalisation, inverses, exact division
+  Hermite.lean       -- hnf, hnfData, hnfWithInv, hnfRank, hnfBasis
   Unique.lean        -- IsHNF.eq, IsHNF.eq_of_memLattice, hnf_idem
   Lattice.lean       -- latticeCoeffs, latticeContains, kernelBasis, latticeIndex
   Cert.lean          -- hnfCert and its soundness
@@ -809,25 +879,42 @@ HexHermiteMathlib.lean
 
 ```yaml
   HexHermite:
-    deps: [HexRowReduce, HexArith, HexBareiss]
+    deps: [HexRowReduce, HexArith, HexDeterminant]
     mathlib: false
     done_through: 0
     status: draft
+    phase4:
+      comparators:
+        - tool: FLINT fmpz_mat_hnf via python-flint
+          class: informational
+          rationale: FLINT dispatches to asymptotically faster algorithms outside this SPEC
+        - tool: PARI mathnf via cypari2
+          class: informational
+          rationale: PARI is column-style and the timing includes convention conversion
+      input_families:
+        - name: random-dense-hermite
+          description: dense square nonsingular integer matrices with uniformly bounded entries
+        - name: rank-deficient-hermite
+          description: rows drawn as integer combinations of a smaller independent set
+        - name: tall-hermite
+          description: tall matrices with many redundant row generators
+        - name: unimodular-conjugate
+          description: random unimodular left factors times a known diagonal form
   HexHermiteMathlib:
-    deps: [HexHermite, HexRowReduceMathlib, HexBareissMathlib]
+    deps: [HexHermite, HexRowReduceMathlib, HexDeterminantMathlib]
     mathlib: true
     done_through: 0
     status: draft
 ```
 
 `HexRowReduce` supplies `RowEchelonData` and `IsEchelonForm`, `HexArith`
-supplies `extGcd`, and `HexBareiss` supplies the determinant for the
-modular algorithm and (through `HexDeterminant`) `det_mul` and the
-adjugate identities. `HexMatrix` arrives through all three.
+supplies `extGcd` and `exactDiv`, and `HexDeterminant` supplies `det_mul`,
+the adjugate identities, and `mul_eq_one_comm`. `HexMatrix` arrives through
+the first and third dependencies.
 
 ## Open questions
 
-- **Where the rectangular modular algorithm stops.** The modular
+- **Whether to write a modular follow-up SPEC.** The modular
   argument needs `d·ℤᵐ ⊆ L` for the row lattice `L ⊆ ℤᵐ`, which needs `L`
   to have finite index, which needs `hnfRank A = m`: full **column**
   rank, with `n ≥ m`. It is not full row rank. A wide matrix with
@@ -836,8 +923,10 @@ adjugate identities. `HexMatrix` arrives through all three.
   independent rows it has. For `n ≥ m` of full column rank, the
   determinant of any nonsingular `m × m` row submatrix is a positive
   multiple of the index and is a valid modulus. Whether that extra
-  machinery pays is a benchmark question against `tall-hermite`, and
-  until it is answered `hnfSquare` is the only modular entry point.
+  machinery pays is a benchmark question against `tall-hermite`. Any future
+  public entry point starts with a complete square DKT recurrence and
+  `hnfSquare_eq_hnf`; rectangular generalisation is a later extension, not a
+  premise hidden in that first API.
 - **Whether the rank-profile preprocessing is worth writing.** The
   default algorithm is total but its unprocessed rows are unbounded. The
   Kannan-Bachem arrangement bounds them, at the cost of rank-profile
@@ -846,13 +935,6 @@ adjugate identities. `HexMatrix` arrives through all three.
   variant of the default, and it should be specified only if the entry
   instrumentation under "Benchmarking" shows the unprocessed rows are
   what hurts.
-- **Whether `hnfData` should return `W`.** This SPEC returns the inverse
-  transform from a separate function, `hnfInv`, so that `RowEchelonData`
-  is unchanged. The alternative is a Hermite-specific data structure
-  carrying both. The existing shape is preferred because it keeps the
-  span and column-partition operations in `hex-row-reduce` usable
-  directly, but if the two are always called together the extra
-  traversal is waste and the structure should be reconsidered.
 - **Kernel reduction.** Nothing in this SPEC is on a `decide +kernel`
   path today. If the Hermite certificate is ever checked in the kernel,
   the exposure analysis in the `hex-mv-poly` SPEC applies verbatim, and
