@@ -981,9 +981,13 @@ theorems proved elsewhere.
 4. **Into `checkIrred`.** `degreeOne` and `embed` need only
    `checkContent_sound`'s maximality clause and the fact that degrees
    add in a domain, both from hex-mv-gcd. `image` additionally needs
-   Gauss's lemma at arity one, which is the same arity-one Gauss step
-   hex-mv-hensel's `coprimeRat_of_witness` uses, plus the univariate
-   obligation. `kronecker` needs unique factorization in `ℤ[z]` for the
+   Gauss's lemma on `ZPoly`, which is
+   [hex-poly-z](../../HexPolyZ/SPEC/hex-poly-z.md)'s multiplicativity of
+   `content` and `primitivePart`, plus the univariate obligation.
+   hex-mv-hensel reaches the same fact through hex-mv-gcd's arity-one
+   case in `coprimeRat_of_witness`; the two are the same lemma at two
+   types, and the image here is a `ZPoly`, so hex-poly-z's is the one
+   this library cites. `kronecker` needs unique factorization in `ℤ[z]` for the
    subset argument, and the injectivity of the mixed-radix substitution
    on the monomials of every divisor, which is the same combinatorial
    fact hex-mv-hensel's companion needs for the Kronecker route to its
