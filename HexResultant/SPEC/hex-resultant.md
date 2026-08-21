@@ -1,4 +1,4 @@
-# hex-resultant (polynomial resultant via subresultant chain, depends on hex-poly)
+# hex-resultant (polynomial resultant via subresultant chain, depends on hex-poly and hex-basic)
 
 Polynomial resultant and discriminant for `Hex.DensePoly R` over a
 commutative exact-division domain. Computed via the **subresultant

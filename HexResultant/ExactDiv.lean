@@ -8,7 +8,6 @@ module
 
 public import HexBasic.ExactDiv
 public import HexPoly
-public import Init.Grind.Ring.Field
 
 public section
 
@@ -23,9 +22,9 @@ through a public import, adds the two layers above it.
 First the binary-power helpers `powNat` and `divExp` with the lightweight
 semiring power lemmas they need. These stay here rather than in `HexBasic`
 because `mul_pow`, `pow_mul`, and `pow_ne_zero` shadow Mathlib root names, and
-a shadow introduced at the bottom of the graph turns every bare use in an
-`open Hex` Mathlib file into an ambiguous-term error; nothing below
-`hex-resultant` needs them.
+a shadow introduced at the bottom of the graph turns a bare use anywhere in the
+scope of an `open Hex` into an ambiguous term; nothing below `hex-resultant`
+needs them.
 
 Then the polynomial-specific layer: coefficientwise scalar division on
 `DensePoly`, the lightweight ring tower that lets resultant correctness recurse
