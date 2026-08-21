@@ -120,13 +120,27 @@ hypothesis.
 tag := "hex-determinant-identities"
 %%%
 
-The determinant of a Gram matrix expands as a sum over column tuples
-(the Cauchy-Binet formula), and the three-term Plücker /
-Desnanot-Jacobi identity relates the determinants of a matrix and its
-bordered minors. The triangular-determinant law gives the determinant of an upper- or
+The determinant of a Gram matrix expands as a sum over column tuples:
+the Cauchy-Binet formula.
+
+Two quadratic identities among minors follow, and their names are worth
+keeping apart. The two-row replacement identity relates the determinant
+of a square matrix, times the determinant with two rows replaced, to the
+four determinants with one row replaced; it is the `2 × 2` case of
+Jacobi's identity for minors of the adjugate, and substituting standard
+basis vectors recovers Desnanot-Jacobi. The three-term
+Grassmann-Plücker relation is a statement about the maximal minors of a
+*tall* matrix, proved here in the specialisation where the two larger of
+the three distinguished rows are the last two rows. Sylvester's
+determinant identity, the `k`-fold statement about a matrix of bordered
+minors, is not proved in this project.
+
+The triangular-determinant law gives the determinant of an upper- or
 lower-triangular matrix as the product of its diagonal entries.
 
 {docstring Hex.Matrix.det_gramMatrix_eq_sum_columnTuples}
+
+{docstring Hex.Matrix.det_setRow_setRow_mul_det}
 
 {docstring Hex.Matrix.det_plucker_three_term_consecutive_top}
 
