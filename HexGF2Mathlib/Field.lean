@@ -4,9 +4,13 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexGF2Mathlib.Basic
-import HexGFqField
-import Mathlib.Data.Fintype.Card
+module
+
+public import HexGF2Mathlib.Basic
+public import HexGFqField
+public import Mathlib.Data.Fintype.Card
+
+public section
 
 /-!
 Identification definitions between the packed `HexGF2` extension-field
@@ -25,7 +29,7 @@ open Hex
 /-- `2` is prime, the characteristic fact both packed correspondences need to
 name the generic field over `F_2`. Stated once here rather than inside each
 namespace, since the two copies were identical. -/
-private theorem prime_two : Hex.Nat.Prime 2 := by decide
+theorem prime_two : Hex.Nat.Prime 2 := by decide
 
 /-- `2` is a prime modulus, so `Hex.ZMod64 2` is a field and the generic
 quotient-field construction applies to `Hex.FpPoly 2`. -/
@@ -75,6 +79,7 @@ variable {hirr : Hex.GF2Poly.Irreducible (Hex.GF2Poly.ofUInt64Monic irr n)}
 
 /-- The packed irreducible modulus viewed inside the generic `FpPoly 2`
 representation. -/
+@[expose]
 def modulusFpPoly : Hex.FpPoly 2 :=
   HexGF2Mathlib.GF2Poly.toFpPoly (Hex.GF2Poly.ofUInt64Monic irr n)
 
@@ -476,6 +481,7 @@ def reducedPackedRepFinEquiv : ReducedPackedRep f ≃ Fin (2 ^ f.degree) where
 
 /-- The packed irreducible modulus viewed inside the generic `FpPoly 2`
 representation. -/
+@[expose]
 def modulusFpPoly : Hex.FpPoly 2 :=
   HexGF2Mathlib.GF2Poly.toFpPoly f
 

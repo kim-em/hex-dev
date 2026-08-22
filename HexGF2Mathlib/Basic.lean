@@ -4,11 +4,16 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexGF2
-import HexPolyFp
-import Mathlib.Data.Nat.Bitwise
-import Mathlib.Algebra.Ring.Equiv
-import HexPolyFpMathlib
+module
+
+public import HexBasic.OfFn
+public import HexGF2
+public import HexPolyFp
+public import Mathlib.Data.Nat.Bitwise
+public import Mathlib.Algebra.Ring.Equiv
+public import HexPolyFpMathlib
+
+public section
 
 /-!
 Correspondence definitions between packed `Hex.GF2Poly` values and the generic
@@ -71,7 +76,7 @@ private def packWord (p : Hex.FpPoly 2) (wordIdx : Nat) : UInt64 :=
 `GF2Poly` representation. -/
 def ofFpPoly (p : Hex.FpPoly 2) : Hex.GF2Poly :=
   let wordCount := (p.size + 63) / 64
-  let words := Array.ofFn fun i : Fin wordCount => packWord p i.1
+  let words := Hex.Array.ofFn' fun i : Fin wordCount => packWord p i.1
   Hex.GF2Poly.ofWords words
 
 /-- The `i`-th coefficient of `toFpPoly p` is the `ZMod64 2` lift of the packed

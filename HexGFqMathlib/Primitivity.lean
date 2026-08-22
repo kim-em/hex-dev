@@ -4,9 +4,13 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexGFqMathlib.Subfield
-import HexConway.Primitivity
-import Mathlib.GroupTheory.OrderOfElement
+module
+
+public import HexGFqMathlib.Subfield
+public import HexConway.Primitivity
+public import Mathlib.GroupTheory.OrderOfElement
+
+public section
 
 /-!
 The multiplicative order of the Conway generator.
