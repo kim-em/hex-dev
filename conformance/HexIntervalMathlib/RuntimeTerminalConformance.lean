@@ -39,6 +39,30 @@ open Hex.Interval.Experiment.SineSign
 #guard_msgs in
 #check RuntimeTerminal.Checked.mk
 
+section PrivateConstruction
+
+variable (registry : RuntimeProof.Registry Range RuntimeProofConformance.semantics Nat Nat)
+  (input : Proof.Input Range)
+  (controller : Runtime.Controller.State Range Nat Nat Proof.Key)
+  (active : RuntimeTerminal.Active Range RuntimeProofConformance.semantics Nat Nat)
+
+/-- error: invalid {...} notation, constructor for `Active` is marked as private -/
+#guard_msgs in
+example : RuntimeTerminal.Active Range RuntimeProofConformance.semantics Nat Nat :=
+  { registry := registry, input := input, controller := controller }
+
+/-- error: Invalid `⟨...⟩` notation: Constructor for `Hex.Interval.RuntimeTerminal.Active` is marked as private -/
+#guard_msgs in
+example : RuntimeTerminal.Active Range RuntimeProofConformance.semantics Nat Nat :=
+  ⟨registry, input, controller⟩
+
+/-- error: invalid {...} notation, constructor for `Active` is marked as private -/
+#guard_msgs in
+example : RuntimeTerminal.Active Range RuntimeProofConformance.semantics Nat Nat :=
+  { active with input }
+
+end PrivateConstruction
+
 def policyLimits : Policy.Limits :=
   { maxOffers := 8, maxBytes := 1024, maxPairs := 64, maxWork := 64,
     maxScore := 0 }
@@ -63,13 +87,15 @@ def policy : Policy.Interface Range (List Nat) ApplicationId RuleKey :=
 private def liftOption.{u, v} {α : Type u} (value : Option α) : Option (ULift.{v} α) :=
   value.map ULift.up
 
-private def runController
+private def runPlan (plan : List Nat)
     (state : Runtime.Controller.State Range Nat Nat Proof.Key) :
     Option (Runtime.Controller.State Range Nat Nat Proof.Key) :=
   match Runtime.Controller.runWithin controllerLimits envelope RuntimeProofConformance.measure policy
-      [0, 1, 3, 2] state with
+      plan state with
   | .ok (.stopped _ state []) => some state
   | _ => none
+
+private def runController := runPlan [0, 1, 3, 2]
 
 private def runtimeFor (branch : State.Branch Range Nat) :
     Option (Runtime.State Range Nat) :=
@@ -78,7 +104,7 @@ private def runtimeFor (branch : State.Branch Range Nat) :
       (Runtime.State.startWithin RuntimeProofConformance.runtimeLimits assembly branch).toOption
   | none => none
 
-private def startRootController :
+private def initialRootController :
     Option (Runtime.Controller.State Range Nat Nat Proof.Key) := do
   let branch := (← liftOption.{0, 1} RuntimeProofConformance.branch?).down
   let runtime ← runtimeFor branch
@@ -87,6 +113,11 @@ private def startRootController :
     RuntimeProofConformance.scope branch).toOption)).down
   let state ← (Runtime.Controller.State.startWithin controllerLimits envelope
     RuntimeProofConformance.measure runtime tree).toOption
+  pure state
+
+private def startRootController :
+    Option (Runtime.Controller.State Range Nat Nat Proof.Key) := do
+  let state ← initialRootController
   runController state
 
 def rootLineage? : Option
@@ -121,15 +152,51 @@ def rootReplay? : Option
           controller with
         | .error .mismatch => true
         | _ => false) &&
+      (match RuntimeTerminal.Active.startWithin registry
+          { RuntimeProofConformance.input with scope := { index := 1 } }
+          controller with
+        | .error .mismatch => true
+        | _ => false) &&
+      (match RuntimeTerminal.Active.startWithin registry
+          { scope := RuntimeProofConformance.scope, program := extendedProgram,
+            facts := #[.unit, .all, .all, .all, .all],
+            target := RuntimeProofConformance.input.target }
+          controller with
+        | .error .mismatch => true
+        | _ => false) &&
+      (match RuntimeTerminal.Active.startWithin registry
+          { RuntimeProofConformance.input with target :=
+            { node := node 3, fact := .nonpositive } }
+          controller with
+        | .error .mismatch => true
+        | _ => false) &&
       (match RuntimeTerminal.Active.startWithin registry RuntimeProofConformance.input
           controller with
         | .ok active =>
             match active.targetWithin RuntimeProofConformance.resultLimits
-                RuntimeProofConformance.measure { node := node 1, version := 0 } with
-            | .error .mismatch => true
-            | _ => false
+                  RuntimeProofConformance.measure { node := node 1, version := 0 } with
+              | .error .mismatch => true
+              | _ => false
         | _ => false)
   | _, _ => false
+
+def targetResourceError? : Option RuntimeTerminal.Error :=
+  match RuntimeProofConformance.registry?, startRootController with
+  | some registry, some controller =>
+      match RuntimeTerminal.Active.startWithin registry RuntimeProofConformance.input
+          controller with
+      | .ok active =>
+          match active.targetWithin
+              { RuntimeProofConformance.resultLimits with
+                search := { RuntimeProofConformance.searchLimits with
+                  maxSteps := active.controller.tree.accounting.steps } }
+              RuntimeProofConformance.measure { node := node 2, version := 1 } with
+          | .error error => some error
+          | .ok _ => none
+      | .error error => some error
+  | _, _ => none
+
+#guard targetResourceError? == some (.result (.search .steps))
 
 -- Complete quotation resources remain fail-closed at the transactional edge.
 #guard match rootLineage? with
@@ -191,6 +258,80 @@ def splitReplay? : Option
 
 #guard splitReplay?.isSome
 
+-- A runtime from the already-settled sibling or a different root lineage
+-- cannot resume the retained current child.
+#guard match settleFirstChild with
+  | some lineage =>
+      match pendingSplit? with
+      | some other =>
+        match Search.Result.current? other with
+        | some (_, left) =>
+          match runtimeFor left.branch with
+          | some leftRuntime =>
+              (match lineage.resumeWithin controllerLimits envelope
+                  RuntimeProofConformance.measure leftRuntime with
+                | .error (.controller .mismatch) => true
+                | _ => false) &&
+              (match startRootController with
+                | some root =>
+                    match lineage.resumeWithin controllerLimits envelope
+                        RuntimeProofConformance.measure root.runtime with
+                    | .error (.controller .mismatch) => true
+                    | _ => false
+                | none => false)
+          | none => false
+        | none => false
+      | none => false
+  | none => false
+
+/-! ## Inherited equality refusal -/
+
+def postEqualitySplitAction : Action :=
+  RuntimeProofConformance.action 2 1 0 4 RuntimeProofConformance.splitKey
+    (node 2) .split 1 [{ node := node 2, version := 0 }]
+
+def postEqualitySplitRecipe : Search.Result.Split Nat Proof.Key :=
+  { scope := RuntimeProofConformance.scope, programVersion := 1,
+    action := postEqualitySplitAction,
+    parent := { node := node 2, version := 0 }, plan := 1,
+    schema := RuntimeProofConformance.splitProofKey, body := [1] }
+
+def postEqualityLeft : Search.Result.Seed Range :=
+  { node := node 2, previous := postEqualitySplitRecipe.parent, fact := .nonpositive }
+
+def postEqualityRight : Search.Result.Seed Range :=
+  { node := node 2, previous := postEqualitySplitRecipe.parent, fact := .nonnegative }
+
+private def hazardousResume? : Option
+    (RuntimeTerminal.Lineage Range RuntimeProofConformance.semantics Nat Nat ×
+      Runtime.State Range Nat) := do
+  let registry ← RuntimeProofConformance.registry?
+  let parent ← initialRootController >>= runPlan [0, 1]
+  let tree := (← liftOption.{0, 1} ((Search.Result.splitWithin
+    RuntimeProofConformance.resultLimits RuntimeProofConformance.measure .depthFirst
+    parent.tree postEqualitySplitRecipe postEqualityLeft postEqualityRight).toOption)).down
+  let (_, left) := (← liftOption.{0, 1} (Search.Result.current? tree)).down
+  let leftRuntime ← (Runtime.State.startWithin RuntimeProofConformance.runtimeLimits
+    parent.runtime.assembly left.branch).toOption
+  let leftController ← (Runtime.Controller.State.startWithin controllerLimits envelope
+    RuntimeProofConformance.measure leftRuntime tree).toOption
+  let active ← (RuntimeTerminal.Active.startWithin registry RuntimeProofConformance.input
+    leftController).toOption
+  let lineage ← (active.targetWithin RuntimeProofConformance.resultLimits
+    RuntimeProofConformance.measure { node := node 2, version := 0 }).toOption
+  let (_, right) := (← liftOption.{0, 1} (Search.Result.current? lineage.tree)).down
+  let rightRuntime ← (Runtime.State.startWithin RuntimeProofConformance.runtimeLimits
+    parent.runtime.assembly right.branch).toOption
+  pure (lineage, rightRuntime)
+
+#guard match hazardousResume? with
+  | some (lineage, runtime) =>
+      match lineage.resumeWithin controllerLimits envelope
+          RuntimeProofConformance.measure runtime with
+      | .error .inheritedEqualities => true
+      | _ => false
+  | none => false
+
 /-! ## Exact refutation -/
 
 def refuteKey : Proof.Key :=
@@ -230,6 +371,12 @@ def refuteInput : Proof.Input Range :=
   { scope := RuntimeProofConformance.scope, program := baseProgram, facts := #[.unit, .empty, .all],
     target := { node := node 2, fact := .nonpositive } }
 
+private def ordinaryRefuteActive? : Option
+    (RuntimeTerminal.Active Range RuntimeProofConformance.semantics Nat Nat) := do
+  let registry ← refuteRegistry?
+  let controller ← startRootController
+  (RuntimeTerminal.Active.startWithin registry RuntimeProofConformance.input controller).toOption
+
 def refuteChecked? : Option
     (RuntimeTerminal.Checked Range RuntimeProofConformance.semantics Nat Nat) := do
   let registry ← refuteRegistry?
@@ -255,6 +402,31 @@ def refuteReplay? : Option
   | none => none
 
 #guard refuteReplay?.isSome
+
+-- Version zero at node two remains historically resolvable after transport,
+-- but is not the exact current version one and is rejected before decoding.
+#guard match ordinaryRefuteActive? with
+  | some active =>
+      (match active.refuteWithin refuteLimits RuntimeProofConformance.measure
+          { node := node 2, version := 0 } refuteKey [1] with
+        | .error .mismatch => true
+        | _ => false) &&
+      (match active.refuteWithin refuteLimits RuntimeProofConformance.measure
+          { node := node 1, version := 0 } refuteKey [0] with
+        | .error (.proof .malformedBody) => true
+        | _ => false) &&
+      (match active.refuteWithin refuteLimits RuntimeProofConformance.measure
+          { node := node 1, version := 0 } refuteKey [1] with
+        | .error (.proof .malformedBody) => true
+        | _ => false) &&
+      (match active.refuteWithin
+          { refuteLimits with result :=
+            { RuntimeProofConformance.resultLimits with maxBytes := 0 } }
+          RuntimeProofConformance.measure { node := node 1, version := 0 }
+          refuteKey [1] with
+        | .error (.result .malformed) => true
+        | _ => false)
+  | none => false
 
 #guard match rootChecked? with
   | some checked =>
@@ -299,8 +471,18 @@ def refuteReplay? : Option
                         | _ => false)
   | _, _, _ => false
 
+/-- info: 'Hex.IntervalMathlib.RuntimeTerminalConformance.rootReplay?' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
 #print axioms rootReplay?
+
+/-- info: 'Hex.IntervalMathlib.RuntimeTerminalConformance.splitReplay?' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
 #print axioms splitReplay?
+
+/-- info: 'Hex.IntervalMathlib.RuntimeTerminalConformance.refuteReplay?' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound] -/
+#guard_msgs in
 #print axioms refuteReplay?
 
 end Hex.IntervalMathlib.RuntimeTerminalConformance
