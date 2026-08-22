@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexInterval.Search
+import HexInterval.RuntimeController
 
 /-!
 Conformance for the sealed Mathlib-free typed runtime transition. The fixture
@@ -208,6 +208,27 @@ def packageWith (instanceHandler equalityHandler transportHandler factHandler :
     Handler Nat (Batch Nat Nat) Unit) : Package Nat (Batch Nat Nat) :=
   { runtimePackage with
     handlers := #[instanceHandler, equalityHandler, transportHandler, factHandler] }
+
+/-- A package scheduler may suppress an otherwise executable application. -/
+def vetoInstanceHandler : Handler Nat (Batch Nat Nat) Unit :=
+  { (handler instantiateRegistration .instance 1 11 instantiateBatch) with
+    offers := fun _ request => request.action.kind != .instantiate }
+
+def vetoPackage : Package Nat (Batch Nat Nat) :=
+  packageWith vetoInstanceHandler
+    (handler equalityRegistration .equality 2 22 equalityBatch)
+    transportHandler
+    (handler factRegistration .fact 3 33 factBatch)
+
+def splitHandler : Handler Nat (Batch Nat Nat) Unit :=
+  handler { instantiateRegistration with kind := .split }
+    .instance 1 11 instantiateBatch
+
+def splitPackage : Package Nat (Batch Nat Nat) :=
+  packageWith splitHandler
+    (handler equalityRegistration .equality 2 22 equalityBatch)
+    transportHandler
+    (handler factRegistration .fact 3 33 factBatch)
 
 def wrongInstanceBatch (request : RuleRequest Nat) : Batch Nat Nat :=
   { events := #[.instance
@@ -447,6 +468,18 @@ def instanceAction : Action :=
   action 0 0 0 0 instantiateKey 1 .instantiate 0
     [{ node := { index := 0 }, version := 0 }]
 
+-- `handler.offers` suppresses scheduling but does not grant or revoke runtime
+-- execution authority: the snapshot omits this application, while direct
+-- checked advancement still reconstructs and executes the exact current row.
+#guard runtimeWith? vetoPackage |>.any fun state =>
+  match state.offerSnapshotWithin limits 7 with
+  | .error _ => false
+  | .ok snapshot => snapshot.actions.isEmpty && !snapshot.incomplete &&
+      match state.advanceWithin limits 7 instanceAction with
+      | .error _ => false
+      | .ok advanced => advanced.transition.action == instanceAction &&
+          advanced.state.branch.program == extendedProgram
+
 def equalityAction : Action :=
   action 1 1 1 1 equalityKey 3 .rewrite 1
     [{ node := { index := 2 }, version := 0 },
@@ -685,6 +718,90 @@ def measure : Search.Result.Measure Nat Nat Nat Nat :=
     schema := fun _ => { bytes := 1, work := 1 }
     body := fun _ => { bytes := 1, work := 1 }
     code := fun _ => { bytes := 1, work := 1 } }
+
+/-! ## Repeated-argument scheduler boundary -/
+
+def repeatKey : OpKey := { name := "fixture.repeat" }
+def repeatRuleKey : RuleKey := { name := "fixture.repeat.forward" }
+
+def repeatOperation : Operation :=
+  { key := repeatKey, inputs := [real, real], output := real }
+
+/-- A genuine binary `f x x` node resolves two distinct argument slots to the
+same source node. Runtime accepts that exact application; Search deliberately
+requires distinct resolved scheduler ports. -/
+def repeatProgram : Program :=
+  { operations := #[sourceOperation, repeatOperation]
+    nodes :=
+      #[{ domain := real, op := { index := 0 }, args := [] },
+        { domain := real, op := { index := 1 }, args := [{ index := 0 }, { index := 0 }] }] }
+
+def repeatRegistration : Registration :=
+  { key := repeatRuleKey, head := repeatKey, kind := .forward,
+    watches := [.argument 0, .argument 1], writes := [.result] }
+
+def repeatBatch (request : RuleRequest Nat) : Batch Nat Nat :=
+  { events := #[.fact
+      { action := request.action
+        update :=
+          { programVersion := 0, node := { index := 1 },
+            previous := { node := { index := 1 }, version := 0 },
+            fact := 31, version := 1, cause := 103 }
+        proposed := 31
+        quote := factQuote }] }
+
+def repeatPackage : Package Nat (Batch Nat Nat) :=
+  { Cache := Unit
+    cache := ()
+    operations := #[sourceOperation, repeatOperation]
+    handlers := #[handler repeatRegistration .fact 3 33 repeatBatch]
+    measure := runtimePackage.measure }
+
+def repeatStateLimits : Hex.Interval.State.Limits :=
+  { stateLimits with
+    maxOperations := 2
+    maxNodes := 2
+    maxRules := 1
+    maxArity := 2
+    maxApplications := 1
+    maxInstances := 0
+    maxGeneration := 0
+    maxEqualities := 0 }
+
+def repeatExecutableLimits : Executable.Limits :=
+  { executableLimits with state := repeatStateLimits }
+
+def repeatLimits : Runtime.Limits :=
+  { executable := repeatExecutableLimits, maxEvents := 1 }
+
+def repeatAssembly? : Option (Assembly Nat (Batch Nat Nat)) :=
+  (Executable.buildWithin repeatExecutableLimits #[repeatPackage] repeatProgram).toOption
+
+def repeatBranch? : Option (Hex.Interval.State.Branch Nat Nat) :=
+  (Hex.Interval.State.Branch.startWithin repeatStateLimits repeatProgram #[10, 20]).toOption
+
+def repeatRuntime? : Option (Runtime.State Nat Nat) :=
+  match repeatAssembly?, repeatBranch? with
+  | some assembly, some branch =>
+      (Runtime.State.startWithin repeatLimits assembly branch).toOption
+  | _, _ => none
+
+def repeatAction : Action :=
+  action 0 0 0 0 repeatRuleKey 1 .forward 0
+    [{ node := { index := 0 }, version := 0 },
+     { node := { index := 0 }, version := 0 }] [{ index := 1 }]
+
+#guard repeatRuntime?.any fun state =>
+  match state.stepWithin repeatLimits repeatAction with
+  | .ok (_, next) => next.branch.snapshot.facts == #[10, 31]
+  | .error _ => false
+
+#guard repeatRuntime?.any fun state =>
+  match state.offerSnapshotWithin repeatLimits 1 with
+  | .ok snapshot => snapshot.actions.isEmpty && snapshot.incomplete &&
+      snapshot.remaining.actions == 8 && snapshot.remaining.nodes == 0 &&
+      snapshot.remaining.applications == 0 && snapshot.remaining.acceptedFacts == 4
+  | .error _ => false
 
 def splitAction : Action :=
   action 0 0 0 0 instantiateKey 0 .split 0
@@ -946,13 +1063,302 @@ def childRun? : Option (Search.Result.Tree Nat Nat Nat Nat × Runtime.State Nat 
       | none => false
   | _, _ => false
 
+/-! # Autonomous sealed typed controller -/
+
+def controllerPolicyLimits : Policy.Limits :=
+  { maxOffers := 7, maxBytes := 1024, maxPairs := 32, maxWork := 32,
+    maxScore := 0 }
+
+def controllerTraceLimits : Trace.Limit :=
+  { maxEvents := 0, maxBytes := 0, maxWork := 0, maxCode := 8 }
+
+def controllerEnvelope : Search.Envelope :=
+  { state := stateLimits
+    policy := controllerPolicyLimits
+    trace := controllerTraceLimits
+    search := searchLimits }
+
+def controllerLimits : Runtime.Controller.Limits :=
+  { maxChoices := 5, result := treeLimits }
+
+/-- A deterministic conformance policy names only application identities from
+the current authenticated offer view. Search returns the retained offer and
+reauthenticates its complete fields before Runtime sees its action. -/
+def plannedPolicy : Policy.Interface Nat (List Nat) ApplicationId RuleKey :=
+  { choose := fun plan view => match plan with
+    | [] => .stop []
+    | wanted :: rest => match view.offers.find? fun offer => offer.id.index == wanted with
+      | none => .stop plan
+      | some offer => .select offer rest }
+
+inductive Command where
+  | select (application : Nat)
+  | dismiss (application : Nat)
+  deriving DecidableEq, Repr
+
+/-- Deterministic conformance-only selection/dismissal script. -/
+def scriptedPolicy : Policy.Interface Nat (List Command) ApplicationId RuleKey :=
+  { choose := fun plan view => match plan with
+    | [] => .stop []
+    | command :: rest =>
+        let wanted := match command with
+          | .select application | .dismiss application => application
+        match view.offers.find? fun offer => offer.id.index == wanted with
+        | none => .stop plan
+        | some offer => match command with
+          | .select _ => .select offer rest
+          | .dismiss _ => .dismiss offer rest }
+
+private def liftOption.{u, v} {α : Type u} (value : Option α) : Option (ULift.{v} α) :=
+  value.map ULift.up
+
+def controllerState? : Option (Runtime.Controller.State Nat Nat Nat Nat) := do
+  let runtime ← runtime?
+  let tree := (← liftOption rootTree?).down
+  (Runtime.Controller.State.startWithin controllerLimits controllerEnvelope measure runtime tree).toOption
+
+def splitControllerState? : Option (Runtime.Controller.State Nat Nat Nat Nat) := do
+  let runtime ← runtimeWith? splitPackage
+  let tree := (← liftOption rootTree?).down
+  (Runtime.Controller.State.startWithin controllerLimits controllerEnvelope measure runtime tree).toOption
+
+def repeatTreeLimits : Search.Result.Limits :=
+  { treeLimits with runtime := repeatLimits }
+
+def repeatEnvelope : Search.Envelope :=
+  { controllerEnvelope with state := repeatStateLimits }
+
+def repeatControllerLimits : Runtime.Controller.Limits :=
+  { controllerLimits with result := repeatTreeLimits }
+
+def repeatTree? : Option (Search.Result.Tree Nat Nat Nat Nat) := do
+  let branch ← repeatBranch?
+  (Search.Result.startWithin repeatTreeLimits measure { index := 5 } branch).toOption
+
+def repeatControllerState? : Option (Runtime.Controller.State Nat Nat Nat Nat) := do
+  let runtime ← repeatRuntime?
+  let tree := (← liftOption repeatTree?).down
+  (Runtime.Controller.State.startWithin repeatControllerLimits repeatEnvelope measure
+    runtime tree).toOption
+
+#guard repeatControllerState?.any fun state =>
+  state.session.offers.isEmpty && state.session.incomplete &&
+    state.session.remaining.actions == 8 && state.session.remaining.nodes == 0 &&
+    match Runtime.Controller.runWithin repeatControllerLimits repeatEnvelope measure
+        plannedPolicy [] state with
+    | .ok (.stopped 0 state []) => state.session.incomplete && state.choices == 0
+    | _ => false
+
+-- Dismissing the sole ordinary offer removes exactly one live item, charges
+-- one decision, and makes the offer view incomplete.
+#guard controllerState?.any fun state =>
+  match Runtime.Controller.runWithin controllerLimits controllerEnvelope measure
+      scriptedPolicy [.dismiss 0] state with
+  | .ok (.stopped 0 state []) =>
+      state.choices == 1 && state.session.offers.isEmpty && state.session.incomplete
+  | _ => false
+
+-- Offer completeness has one meaning: dismissing a live split-class offer is
+-- incomplete just like dismissing any other live offer.
+#guard splitControllerState?.any fun state =>
+  match Runtime.Controller.runWithin controllerLimits controllerEnvelope measure
+      scriptedPolicy [.dismiss 0] state with
+  | .ok (.stopped 0 state []) =>
+      state.choices == 1 && state.session.offers.isEmpty && state.session.incomplete
+  | _ => false
+
+-- After one selection creates four live applications, dismissal removes
+-- exactly one while preserving the other three.
+#guard controllerState?.any fun state =>
+  match Runtime.Controller.runWithin controllerLimits controllerEnvelope measure
+      scriptedPolicy [.select 0, .dismiss 1] state with
+  | .ok (.stopped 3 state []) =>
+      state.choices == 2 && state.session.offers.size == 3 &&
+        state.session.incomplete &&
+        !state.session.offers.any (fun offer => offer.view.id.index == 1)
+  | _ => false
+
+-- A later accepted transition regenerates the runtime-owned snapshot, so the
+-- dismissed application can reappear; the incompleteness latch stays sticky.
+#guard controllerState?.any fun state =>
+  match Runtime.Controller.runWithin controllerLimits controllerEnvelope measure
+      scriptedPolicy [.select 0, .dismiss 1, .select 3] state with
+  | .ok (.stopped _ state []) =>
+      state.choices == 3 && state.session.incomplete &&
+        state.session.offers.any (fun offer => offer.view.id.index == 1)
+  | _ => false
+
+def controllerRun? : Option
+    (Runtime.Controller.Run Nat Nat Nat Nat (List Nat)) := do
+  let state ← controllerState?
+  (Runtime.Controller.runWithin controllerLimits controllerEnvelope measure plannedPolicy
+    [0, 1, 3, 2] state).toOption
+
+#guard controllerRun?.any fun run => match run with
+  | .stopped _ state [] =>
+      state.runtime.branch.program == extendedProgram &&
+        state.runtime.branch.programVersion == 1 &&
+        state.runtime.branch.snapshot.facts == #[10, 20, 31, 31] &&
+        state.runtime.equalities.size == 1 && state.session.serial == 4 &&
+        state.session.steps == 4 && state.tree.transitions.size == 4 &&
+        state.session.remaining.actions == 4 &&
+        state.session.remaining.acceptedFacts == 2 &&
+        state.session.remaining.nodes == 2 &&
+        state.session.remaining.applications == 3 &&
+        state.session.remaining.equalities == 0 &&
+        state.session.remaining.instances == 0 &&
+        state.session.remaining.queueEntries == 8 &&
+        state.session.remaining.generation == 1 &&
+        state.tree.check treeLimits measure &&
+        match Search.Result.current? state.tree with
+        | some ({ index := 0 }, source) => source.branch == state.runtime.branch
+        | _ => false
+  | _ => false
+
+private def controllerError (actualLimits : Runtime.Controller.Limits)
+    (actualEnvelope : Search.Envelope := controllerEnvelope) :
+    Option Runtime.Controller.Error :=
+  match controllerState? with
+  | none => none
+  | some state => match Runtime.Controller.runWithin actualLimits actualEnvelope measure
+      plannedPolicy [0, 1, 3, 2] state with
+    | .error error => some error
+    | .ok _ => none
+
+#guard match controllerState? with
+  | none => false
+  | some state =>
+      match Runtime.Controller.runWithin
+          { controllerLimits with maxChoices := 4 } controllerEnvelope measure
+          plannedPolicy [0, 1, 3, 2] state with
+      | .ok (.stopped _ state []) => state.choices == 4
+      | _ => false
+
+#guard controllerError { controllerLimits with maxChoices := 3 } ==
+  some (.resource .choices)
+
+#guard match runtime?, rootTree? with
+  | some runtime, some tree =>
+      let envelope := { controllerEnvelope with
+        policy := { controllerPolicyLimits with maxOffers := 0 } }
+      match Runtime.Controller.State.startWithin controllerLimits envelope measure runtime tree with
+      | .error (.runtime (.resource .offers)) => true
+      | _ => false
+  | _, _ => false
+
+private structure FirstControllerStep where
+  initial : Runtime.Controller.State Nat Nat Nat Nat
+  decision : Policy.Decision ApplicationId RuleKey
+  advanced : Runtime.Advanced Nat Nat
+  session : Search.Session Nat Nat ApplicationId RuleKey
+
+private def firstControllerStep? : Option FirstControllerStep := do
+  let initial ← controllerState?
+  let choice := (← liftOption ((Search.chooseWithin controllerEnvelope
+    Runtime.Controller.policyMeasure plannedPolicy [0] initial.session).toOption)).down
+  let (Search.Choice.select decision _) := choice | none
+  let request := (← liftOption ((Search.prepareWithin controllerEnvelope
+    Runtime.Controller.policyMeasure initial.session decision).toOption)).down
+  let advanced ← (initial.runtime.advanceWithin limits
+    controllerEnvelope.policy.maxOffers request.action).toOption
+  let session := (← liftOption ((Search.Session.advanceRuntimeWithin controllerEnvelope
+    Runtime.Controller.policyMeasure initial.session decision advanced).toOption)).down
+  pure { initial, decision, advanced, session }
+
+-- A consumed decision cannot be replayed at the successor serial.
+#guard firstControllerStep?.any fun step =>
+  match Search.Session.advanceRuntimeWithin controllerEnvelope
+      Runtime.Controller.policyMeasure step.session step.decision step.advanced with
+  | .error (.policy .staleSerial) => true
+  | _ => false
+
+-- A runtime advanced away from the retained tree head cannot start a new
+-- controller lineage, even though both values remain individually sealed.
+#guard match runtime?, rootTree? with
+  | some runtime, some tree => match runtime.stepWithin limits instanceAction with
+    | .error _ => false
+    | .ok (_, runtime) =>
+        match Runtime.Controller.State.startWithin controllerLimits controllerEnvelope measure
+            runtime tree with
+        | .error .mismatch => true
+        | _ => false
+  | _, _ => false
+
+def restartedControllerState? : Option (Runtime.Controller.State Nat Nat Nat Nat) := do
+  let (tree, parentRuntime) ← extendedSplit?
+  let (_, source) := (← liftOption (Search.Result.current? tree)).down
+  let runtime ← (Runtime.State.startWithin limits parentRuntime.assembly source.branch).toOption
+  (Runtime.Controller.State.startWithin controllerLimits controllerEnvelope measure runtime tree).toOption
+
+def vetoControllerState? : Option (Runtime.Controller.State Nat Nat Nat Nat) := do
+  let runtime ← runtimeWith? vetoPackage
+  let tree := (← liftOption rootTree?).down
+  (Runtime.Controller.State.startWithin controllerLimits controllerEnvelope measure runtime tree).toOption
+
+-- A decision authenticated against the ordinary package cannot select the
+-- same structurally executable application after the scheduler vetoes it.
+#guard match controllerState?, vetoControllerState? with
+  | some ordinary, some vetoed =>
+      match Search.chooseWithin controllerEnvelope Runtime.Controller.policyMeasure
+          plannedPolicy [0] ordinary.session with
+      | .ok (.select decision _) =>
+          vetoed.session.offers.isEmpty &&
+            match Search.prepareWithin controllerEnvelope Runtime.Controller.policyMeasure
+                vetoed.session decision with
+            | .error (.policy .missingOffer) => true
+            | _ => false
+      | _ => false
+  | _, _ => false
+
+-- An offer decision from the root scope cannot be transplanted into a fresh
+-- restarted child controller with the same application identity.
+#guard match controllerState?, restartedControllerState? with
+  | some root, some child =>
+      match Search.chooseWithin controllerEnvelope Runtime.Controller.policyMeasure
+          plannedPolicy [0] root.session with
+      | .ok (.select decision _) =>
+          match Search.prepareWithin controllerEnvelope Runtime.Controller.policyMeasure
+              child.session decision with
+          | .error (.policy .wrongScope) => true
+          | _ => false
+      | _ => false
+  | _, _ => false
+
+def restartedControllerRun? : Option
+    (Runtime.Controller.Run Nat Nat Nat Nat (List Nat)) := do
+  let state ← restartedControllerState?
+  (Runtime.Controller.runWithin controllerLimits controllerEnvelope measure plannedPolicy
+    [0, 4, 6, 5] state).toOption
+
+#guard restartedControllerRun?.any fun run => match run with
+  | .stopped _ state [] =>
+      state.runtime.generationBase == 1 && state.runtime.assembly.generation == 2 &&
+        state.runtime.branch.program == twiceExtendedProgram &&
+        state.runtime.branch.snapshot.facts == #[11, 20, 31, 31, 51, 51] &&
+        state.runtime.equalities.size == 1 && state.session.serial == 4 &&
+        state.tree.accounting.steps == 9 && state.tree.transitions.size == 8 &&
+        state.tree.check treeLimits measure
+  | _ => false
+
 /-- error: Unknown constant `Hex.Interval.Runtime.Applied.mk` -/
 #guard_msgs in
 #check Runtime.Applied.mk
 
+/-- error: Unknown constant `Hex.Interval.Runtime.Advanced.mk` -/
+#guard_msgs in
+#check Runtime.Advanced.mk
+
+/-- error: Unknown constant `Hex.Interval.Runtime.OfferSnapshot.mk` -/
+#guard_msgs in
+#check Runtime.OfferSnapshot.mk
+
 /-- error: Unknown constant `Hex.Interval.Runtime.State.mk` -/
 #guard_msgs in
 #check Runtime.State.mk
+
+/-- error: Unknown constant `Hex.Interval.Runtime.Controller.State.mk` -/
+#guard_msgs in
+#check Runtime.Controller.State.mk
 
 /-- error: Unknown constant `Hex.Interval.Runtime.Arena.mk` -/
 #guard_msgs in
