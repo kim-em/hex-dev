@@ -712,5 +712,11 @@
     "baseline_blob": "abbfb2327a8ee1c28a6fa20dcf5a285cd782284c",
     "current_blob": "dcb37c10309b6da8453022b47b27f680508177fe",
     "reason": "Adds the unrelated HexSparsePoly and interval experiment/conformance registrations already reviewed on main, then adds the proof-only HexIntervalMathlib typed-runtime quotation and recursive replay conformance module; none enters the factorization service target or changes its executable dependency graph."
+  },
+  {
+    "path": "lakefile.lean",
+    "baseline_blob": "abbfb2327a8ee1c28a6fa20dcf5a285cd782284c",
+    "current_blob": "71093e603b8f4b6965534ffa140cf129522c6e0b",
+    "reason": "Additionally registers the Mathlib-free HexInterval authenticated decision benchmark on top of the reviewed typed-runtime proof conformance and executable-controller targets; this benchmark does not enter the factorization service target or change its executable dependency graph."
   }
 ]

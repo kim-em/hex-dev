@@ -6005,6 +6005,48 @@ the existing single CI job. This is deterministic representation evidence,
 not scientific timing; it neither uses a custom timing loop nor freezes the
 current touch-count aggregates as performance contracts.
 
+The supported decision benchmark is a narrower production-API experiment. It
+runs FIFO, static-rank, and adaptive callbacks through `Search.chooseWithin`,
+commits one exact fact update per selected addition through
+`Search.invokeWithin`, then regenerates the complete surviving offer set against
+the advanced serial and current input versions through checked
+`Search.Session.refreshWithin`. Static-rank orders a fixed age residue; adaptive
+first ranks the live predecessor-version feedback and then the bounded offer
+score. The canonical 128-node logical-count canary pins 126 accepted updates
+for every policy and observes zero live offers after completion.
+FIFO/static-rank/adaptive respectively record
+0/7,875/7,875 callback comparisons and rolling order hashes
+13,333,310,190,265,569,661 / 9,721,628,123,875,171,393 /
+558,125,824,506,216,197. Their final position-sensitive fact/version checksum
+is the shared 8,880,463,590,880,745,567. These are content-bearing conformance
+checks, not timing thresholds, and no policy is selected as a default.
+
+Timing is deliberately a separate shared-infrastructure leg. Six
+`setup_fixed_benchmark` registrations use initial offer counts 1,024, 2,048,
+4,096, 8,192, 16,384, and 32,768. Each call reads its count from a module-level
+`IO.Ref`, constructs the arithmetic program and checked branch/session,
+authenticates the initial offers, performs one FIFO `chooseWithin` /
+`invokeWithin` transition, regenerates and authenticates one complete refresh,
+walks the checked snapshot to form the report, and includes the harness's timed
+result hash. Complete-view duplicate-ID validation scans prior offers, so a
+quadratic component is expected, but these fixed points declare no automatic
+complexity verdict. On one five-repeat warm run, medians were 7.829, 12.038,
+42.102, 155.655, 599.540, and 2,343 ms; adjacent median ratios were 1.538,
+3.497, 3.697, 3.852, and 3.908, and the log-log least-squares slope was 1.712.
+Ranges were 3.902--8.131, 11.968--12.080, 41.606--48.953,
+154.152--162.673, 593.278--616.574, and 2,303--2,460 ms. Every rung has a
+five-second per-call cap, throws if construction or any transition fails, and
+pins its full `Report` hash through `expectedHash`. This is common end-to-end
+cost evidence and yields no comparative policy signal; policy comparison
+belongs to the logical-count leg.
+
+The end-to-end `Controller.Executable` route currently lives in the Mathlib
+companion, so importing it would violate the Mathlib-free computational-bench
+boundary. This is not an absence claim about direct APIs: Mathlib-free
+`Runtime.State.stepWithin` and `Search.Result.advanceRuntimeWithin` / `splitWithin` /
+`settleWithin` exist. Mixed typed-event and split/tree workloads are simply out
+of scope for this focused policy experiment.
+
 The declared models follow the complexity section above. Scientific runs also
 record accepted actions, endpoint heights, live leaves, retained derivations,
 and cache hits so a faster time cannot conceal a weaker search.
