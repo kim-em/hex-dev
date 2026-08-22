@@ -10,15 +10,19 @@ HexGFqMathlib/Primitivity.lean.
 
 Clean on the Phase 1 prohibitions: no `sorry`, no `axiom`, no `@[extern]`, no
 placeholder or wrong-shape or wrong-complexity body. The library is
-correspondence statements in a `noncomputable section`; its only data-level
-definitions are the two transport maps and the equivalence they assemble into,
-and each computes what its name says. `scripts/check_dag.py` passes and the
-declared deps match the imports.
+correspondence statements in a `noncomputable section`. Its data-level
+declarations are, in full: the two transport maps `fpPolyToPolynomial` and
+`polynomialToFpPoly`, the `fpPolyEquiv` they assemble into,
+`toMathlibPolynomial` (the forward map under the name statements use), and the
+`commRing` instance, which carries data — its `sub` and `neg` fields are pinned
+to the executable `DensePoly` operations rather than left at the
+minimal-axioms defaults. Each computes what its name says.
+`scripts/check_dag.py` passes and the declared deps match the imports.
 
 No SPEC-promised declaration is missing. The SPEC Contents was under-describing
 the implemented surface, and is corrected in the same commit; the central index
-line in SPEC/Libraries/README.md still advertises degree transport that the
-library does not have, which is corrected by the open PR #9367.
+line in SPEC/Libraries/README.md advertised degree transport that the library
+does not have, corrected by PR #9367.
 
 Three gaps identified, with drafted follow-up issues recorded in
 progress/20260822T031132Z_poly-fp-mathlib-phase2-review.md:
