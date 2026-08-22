@@ -10,7 +10,7 @@ the `norm_num` interoperation, and is where a dependency on an external
 Lean primality library may live.
 
 This SPEC expands the "Better primality" entry in
-[future-work](../future-work.md). That entry's diagnosis is right -- the
+[future-work](../../SPEC/future-work.md). That entry's diagnosis is right -- the
 mechanism is in place and what it lacks is scale -- and two of its
 recommendations do not survive contact with the repositories they name.
 Both are corrected below, with the evidence, under "What PrimeCert
@@ -62,7 +62,7 @@ division reaches.
 
 ## What PrimeCert actually is
 
-[future-work](../future-work.md) says PrimeCert is "kernel-only (no
+[future-work](../../SPEC/future-work.md) says PrimeCert is "kernel-only (no
 `native_decide`, so compatible with the project proof policy)" and
 that "depending on it beats reimplementing Pocklington". The first is
 true. The second is not available in the form stated, and a third claim
@@ -151,7 +151,7 @@ the next order of magnitude lives and is a separate project with a
 separate certificate; deterministic Miller-Rabin as a *proof* (see
 below); primality of numbers of special form (Lucas-Lehmer, Proth,
 Pepin), which are cheap to add later and have no consumer here; and
-integer factorization, which is [hex-int-factor](hex-int-factor.md) and
+integer factorization, which is [hex-int-factor](../../SPEC/Libraries/hex-int-factor.md) and
 depends on this library.
 
 **Deterministic Miller-Rabin is out of scope as a proof technique, and
@@ -176,7 +176,7 @@ So the layering is: hex-arith owns the predicate, Fermat, Euclid's
 lemma, and trial division; hex-primality owns everything that scales
 past trial division. `hex-primality` deps:
 `[HexArith, HexBasic]` -- hex-basic for `Hex.Rand`, which
-[hex-finite-field](hex-finite-field.md) introduces and sites there.
+[hex-finite-field](../../SPEC/Libraries/hex-finite-field.md) introduces and sites there.
 This is the one authoritative dependency list; the `libraries.yml`
 block at the end repeats it and nothing else in this file states it
 again.
@@ -476,7 +476,7 @@ and none is claimed:
   `PrimeCertStop.exhausted` result in its type says so.
 - *the certificate carries no second witness obligation*. This one does
   hold, and it is what makes this item cheap relative to most of
-  [future-work](../future-work.md): primality is the whole conclusion,
+  [future-work](../../SPEC/future-work.md): primality is the whole conclusion,
   with no minimality, maximality, or completeness clause left over.
 
 The certificate is also small -- `O(k)` numbers of at most `log n` bits
@@ -549,7 +549,7 @@ higher library adds structural reductions, `p - 1`, ECM,
 complete-factorization assembly, and their dispatch.
 
 **The multiplicative order is the new development**, and it is the
-thing to build first because [hex-int-factor](hex-int-factor.md) needs
+thing to build first because [hex-int-factor](../../SPEC/Libraries/hex-int-factor.md) needs
 it too, for its primitive-root API. It belongs here, in
 `HexPrimality/Order.lean`, and hex-int-factor consumes it.
 
@@ -626,7 +626,7 @@ incremental compile cost inside the "few minutes on
 the benchmark machine" budget that
 [hex-conway](../../HexConway/SPEC/hex-conway.md) sets for its committed
 table, and the same rule applies for the same reason. The
-[future-work](../future-work.md) entry says timing targets belong in
+[future-work](../../SPEC/future-work.md) entry says timing targets belong in
 the SPEC that adopts the technique, measured in this repository, so
 this SPEC commits to the measurement and to the budget rule, and to no
 number. The bench family "table verification" below is the measurement.
@@ -651,7 +651,7 @@ lands with the migration, not before.
 what the sieve unlocks and what the table alone does not: the table
 gives a list, and the completeness direction plus a `decide +kernel`
 fold over it gives the universally quantified statement. That is the
-case [future-work](../future-work.md) calls open, and it is open only
+case [future-work](../../SPEC/future-work.md) calls open, and it is open only
 in the sense that nobody has run it.
 
 ## The API
@@ -842,7 +842,7 @@ kernel, and `primesIn` for runtime use is the array version. The
 
 ## Conformance
 
-Per [SPEC/testing.md](../testing.md). A driver at
+Per [SPEC/testing.md](../../SPEC/testing.md). A driver at
 `conformance/HexPrimality/EmitFixtures.lean` exposed as
 `lean_exe hexprimality_emit_fixtures`, a committed snapshot at
 `conformance-fixtures/HexPrimality/primality.jsonl`, an oracle at
@@ -903,7 +903,7 @@ dependency.
 
 ## Benchmarking
 
-Per [SPEC/benchmarking.md](../benchmarking.md), with drivers at
+Per [SPEC/benchmarking.md](../../SPEC/benchmarking.md), with drivers at
 `bench/HexPrimality/Bench.lean`. Both native and kernel suites, because
 the kernel side is the point of the library.
 
@@ -1001,7 +1001,7 @@ cannot see it.
    `millerRabin` with its full branch list;
    `not_prime_of_millerRabin_false`; `isProbablePrime`. The order
    development is the prerequisite for milestone 3 and for
-   [hex-int-factor](hex-int-factor.md).
+   [hex-int-factor](../../SPEC/Libraries/hex-int-factor.md).
 
 3. **Pocklington.** `PrimeCert` as one inductive, `checkPrime`,
    `prime_of_checkPrime` with `prime_pow_dvd_orderOf` and
@@ -1072,7 +1072,7 @@ may add further uses, but the dependency does not depend on them.
 - **Whether ECPP belongs on the roadmap at all.** It is the next order
   of magnitude and it is a large project with an elliptic-curve
   prerequisite this tree does not have.
-  [future-work](../future-work.md) notes that Bhavik Mehta has elliptic
+  [future-work](../../SPEC/future-work.md) notes that Bhavik Mehta has elliptic
   curve computations in flight, which is the strongest argument for
   waiting rather than starting.
 - **How the `primality` tactic and `norm_num` should divide the range.**
@@ -1083,5 +1083,5 @@ may add further uses, but the dependency does not depend on them.
   about Mathlib-side ergonomics rather than about this library.
 - **Whether `rhoFactor?` should eventually move to hex-arith.** It is
   here because its only two consumers are this library's certificate
-  search and [hex-int-factor](hex-int-factor.md), and moving it down
+  search and [hex-int-factor](../../SPEC/Libraries/hex-int-factor.md), and moving it down
   would put Pollard rho in the arithmetic root for no present gain.

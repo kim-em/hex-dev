@@ -397,6 +397,11 @@ libraries:
           description: Explicit split-degree cascade-trigger inputs `(X-1)...(X-n)` for `ZPoly.factorize`, covering prime selection and BHKS recombination together.
         - name: ho2-adversarial-recombination
           description: HO-2 adversarial recombination shapes `X^4 + 1`, `(X^2 - 2)(X^2 - 3)`, Swinnerton-Dyer SD3, and `Phi_15`, including pinned modular split profiles.
+  HexPrimality:
+    deps: [HexArith, HexBasic]
+    mathlib: false
+    done_through: 0
+    status: active
 
   # ---------- Mathlib bridges ----------
   HexPolyMathlib:

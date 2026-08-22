@@ -10,7 +10,7 @@ and relates the order API to `orderOf` in `(ZMod n)ˣ`.
 
 This SPEC expands the "Integer factorization" entry in
 [future-work](../future-work.md) and depends on
-[hex-primality](hex-primality.md), which owns the primality
+[hex-primality](../../HexPrimality/SPEC/hex-primality.md), which owns the primality
 certificates each factor carries and the multiplicative order this
 library's order API is stated with.
 
@@ -601,7 +601,7 @@ theorem coprime_of_checkOrder {c} (h : checkOrder c = true) :
     Nat.Coprime c.base c.modulus
 ```
 
-using `Hex.Nat.orderOf` from [hex-primality](hex-primality.md)'s
+using `Hex.Nat.orderOf` from [hex-primality](../../HexPrimality/SPEC/hex-primality.md)'s
 `HexPrimality/Order.lean`, which that SPEC specifies as the least
 positive `k` with `a^k % n = 1 % n` for `1 < n` and coprime `a`, and
 `0` elsewhere. The junk value is why `0 < c.order` is checked.
