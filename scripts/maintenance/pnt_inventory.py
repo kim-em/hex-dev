@@ -199,6 +199,51 @@ DUSART_PROVIDER_ROW_RE = re.compile(
     r"⟨(?P<index>\d+),\s*(?P<num>\d+),\s*(?P<den>\d+),\s*"
     r"(?P<target>\d+),\s*\.(?P<relation>upperLe|upperLt|lowerLe),\s*64,\s*12⟩"
 )
+FKS2_MU_PROVIDER = REPO_ROOT / "HexInterval/Experiment/PntFks2Mu.lean"
+FKS2_MU_ROWS = (
+    ("PrimeNumberTheoremAnd/IEANTN/FKS2.lean", 4274, "mu_asymp_num_le",
+     "fks2", "sqrtLower", 20000, 1, 1414213562, 10000000),
+    ("PrimeNumberTheoremAnd/IEANTN/FKS2.lean", 4282, "mu_asymp_num_le",
+     "fks2", "expUpper", 13689, 1000000, 10138790, 10000000),
+    ("PrimeNumberTheoremAnd/IEANTN/FKS2Cor23Cor14Tail.lean", 24,
+     "mu_asymp_num_le_cor14", "cor14", "sqrtLower", 20000, 1,
+     1414213562, 10000000),
+    ("PrimeNumberTheoremAnd/IEANTN/FKS2Cor23Cor14Tail.lean", 32,
+     "mu_asymp_num_le_cor14", "cor14", "expUpper", 13689, 1000000,
+    10138790, 10000000),
+)
+FKS2_MU_SNIPPETS = (
+    "have hs_lo : (141.4213562 : ℝ) ≤ Real.sqrt 20000 := by interval_decide",
+    "interval_decide",
+    "have hs_lo : (141.4213562 : ℝ) ≤ Real.sqrt 20000 := by interval_decide",
+    "interval_decide",
+)
+FKS2_MU_PROVIDER_ROW_RE = re.compile(
+    r"⟨⟨\.(?P<file>fks2|cor14),\s*(?P<line>\d+)⟩,\s*"
+    r"\.(?P<relation>sqrtLower|expUpper),\s*(?P<input_num>\d+),\s*"
+    r"(?P<input_den>\d+),\s*(?P<target_num>\d+),\s*(?P<target_den>\d+)⟩"
+)
+PNT_EXP_UPPER_PROVIDER = REPO_ROOT / "HexInterval/Experiment/PntExpUpper.lean"
+PNT_EXP_UPPER_ROWS = (
+    ("PrimeNumberTheoremAnd/IEANTN/FKS2Floor/Cor22Floor.lean", 11,
+     "exp10_lt", "fks2Floor", "strict", 10, 0, 22027),
+    ("PrimeNumberTheoremAnd/IEANTN/Goldbach.lean", 250,
+     "kadiri_lumley_odd_goldbach_finite", "goldbach", "weak", 59, 5,
+     113250000000000000000000000),
+    ("PrimeNumberTheoremAnd/IEANTN/Goldbach.lean", 267,
+     "kadiri_lumley_odd_goldbach_finite", "goldbach", "weak", 60, 5,
+     7785131284000000000000000004),
+)
+PNT_EXP_UPPER_SNIPPETS = (
+    "theorem exp10_lt : Real.exp 10 < 22027 := by interval_decide",
+    "have : Real.exp 59 + 4 + 1 ≤ 11325 * 10 ^ 22 := by interval_decide",
+    "have : Real.exp 60 + 4 + 1 ≤ 7785131284000000000000000004 := by interval_decide",
+)
+PNT_EXP_UPPER_PROVIDER_ROW_RE = re.compile(
+    r"⟨⟨\.(?P<file>fks2Floor|goldbach),\s*(?P<line>\d+)⟩,\s*"
+    r"\.(?P<relation>strict|weak),\s*(?P<exponent>\d+),\s*"
+    r"(?P<additive>\d+),\s*(?P<target>\d+)⟩"
+)
 
 
 class InventoryError(RuntimeError):
@@ -632,6 +677,87 @@ def _parse_dusart_snippet(snippet: str) -> tuple[int, int, int, str]:
         return (int(match.group("num")), 1,
                 _scientific_value(match.group("target")), "lowerLe")
     raise InventoryError(f"unrecognized Dusart exponential snippet: {snippet!r}")
+
+
+def require_fks2_mu_match(
+    records: list[dict[str, Any]], provider_text: str | None = None,
+) -> None:
+    """Tie both mu-asymptotic numerical pairs to the local certificate rows."""
+    expected_sites = tuple(row[:3] for row in FKS2_MU_ROWS)
+    source_records = [
+        row for row in records
+        if row.get("kind") == "tactic-occurrence" and row.get("actual")
+        and (row.get("path"), row.get("line"), row.get("declaration"))
+        in expected_sites
+    ]
+    observed_sites = tuple(
+        (row.get("path"), row.get("line"), row.get("declaration"))
+        for row in source_records
+    )
+    if observed_sites != expected_sites:
+        raise InventoryError(
+            f"FKS2 mu sites differ: {observed_sites} != {expected_sites}"
+        )
+    observed_snippets = tuple(row.get("snippet") for row in source_records)
+    if observed_snippets != FKS2_MU_SNIPPETS:
+        raise InventoryError(
+            f"FKS2 mu snippets differ: {observed_snippets} != {FKS2_MU_SNIPPETS}"
+        )
+    if provider_text is None:
+        provider_text = FKS2_MU_PROVIDER.read_text(encoding="utf-8")
+    provider_rows = tuple(
+        (match.group("file"), int(match.group("line")), match.group("relation"),
+         int(match.group("input_num")), int(match.group("input_den")),
+         int(match.group("target_num")), int(match.group("target_den")))
+        for match in FKS2_MU_PROVIDER_ROW_RE.finditer(provider_text)
+    )
+    expected_rows = tuple((row[3], row[1], *row[4:]) for row in FKS2_MU_ROWS)
+    if provider_rows != expected_rows:
+        raise InventoryError(
+            f"local FKS2 mu sourceRows differ: {provider_rows} != {expected_rows}"
+        )
+
+
+def require_pnt_exp_upper_match(
+    records: list[dict[str, Any]], provider_text: str | None = None,
+) -> None:
+    """Tie all three positive-exp snippets to the shared certificate table."""
+    expected_sites = tuple(row[:3] for row in PNT_EXP_UPPER_ROWS)
+    source_records = [
+        row for row in records
+        if row.get("kind") == "tactic-occurrence" and row.get("actual")
+        and (row.get("path"), row.get("line"), row.get("declaration"))
+        in expected_sites
+    ]
+    observed_sites = tuple(
+        (row.get("path"), row.get("line"), row.get("declaration"))
+        for row in source_records
+    )
+    if len(set(observed_sites)) != len(observed_sites):
+        raise InventoryError("duplicate positive-exp source coordinate")
+    if observed_sites != expected_sites:
+        raise InventoryError(
+            f"positive-exp sites differ: {observed_sites} != {expected_sites}"
+        )
+    observed_snippets = tuple(row.get("snippet") for row in source_records)
+    if observed_snippets != PNT_EXP_UPPER_SNIPPETS:
+        raise InventoryError(
+            "positive-exp snippets differ: "
+            f"{observed_snippets} != {PNT_EXP_UPPER_SNIPPETS}"
+        )
+    if provider_text is None:
+        provider_text = PNT_EXP_UPPER_PROVIDER.read_text(encoding="utf-8")
+    provider_rows = tuple(
+        (match.group("file"), int(match.group("line")), match.group("relation"),
+         int(match.group("exponent")), int(match.group("additive")),
+         int(match.group("target")))
+        for match in PNT_EXP_UPPER_PROVIDER_ROW_RE.finditer(provider_text)
+    )
+    expected_rows = tuple((row[3], row[1], *row[4:]) for row in PNT_EXP_UPPER_ROWS)
+    if provider_rows != expected_rows:
+        raise InventoryError(
+            f"local positive-exp sourceRows differ: {provider_rows} != {expected_rows}"
+        )
 
 
 def source_digest(sources: Iterable[Source]) -> str:
@@ -1346,6 +1472,8 @@ def validate_inventory(
     require_workload_partitions(records)
     require_small_prime_log_match(records)
     require_dusart_exp_match(records)
+    require_fks2_mu_match(records)
+    require_pnt_exp_upper_match(records)
     if meta.get("counts") != counts:
         raise InventoryError(f"inventory counts disagree: {meta.get('counts')} != {counts}")
     for name, expected in EXPECTED.items():
