@@ -37,6 +37,8 @@ import HexManual.Chapters.HexNumberField
 import HexManual.Chapters.HexNumberFieldTower
 -- Tutorials (application-first capstone pages, see SPEC/tutorials.md).
 import HexManual.Tutorials.AESField
+import HexManual.Tutorials.AESModulus
+import HexManual.Tutorials.PrimeSplitting
 import HexManual.Tutorials.Coppersmith
 
 open Verso.Genre Manual
@@ -124,6 +126,10 @@ end-to-end workflow, with every code snippet checked as part of this
 build.
 
 {include 2 HexManual.Tutorials.AESField}
+
+{include 2 HexManual.Tutorials.AESModulus}
+
+{include 2 HexManual.Tutorials.PrimeSplitting}
 
 {include 2 HexManual.Tutorials.Coppersmith}
 
