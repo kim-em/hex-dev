@@ -93,6 +93,18 @@ private def jsonOptionalInt : Option Int → String
   | none   => "null"
   | some n => jsonInt n
 
+private def jsonSparseTerms (terms : List (Nat × Int × Int)) : String := Id.run do
+  let mut out := "["
+  let mut first := true
+  for (e, num, den) in terms do
+    if first then
+      first := false
+    else
+      out := out.push ','
+    out := out ++ "[" ++ jsonInt (Int.ofNat e) ++ "," ++ jsonInt num ++ ","
+      ++ jsonInt den ++ "]"
+  out.push ']'
+
 /-- A field of a JSON object as `(key, raw-JSON-value)`. -/
 private abbrev Field := String × String
 
@@ -165,6 +177,22 @@ def emitMvPolyFixture (lib case : String) (arity : Nat) (order : String)
     ("arity", toString arity),
     ("order", jsonString order),
     ("terms", jsonMvPolyTerms terms)
+  ]
+
+/-- Emit a `sparsepoly` fixture record: a sparse univariate polynomial as
+`(exponent, numerator, denominator)` terms in ascending exponent order
+(`den = 1` outside the `"rat"` domain), over the domain `"int"`, `"rat"`,
+or `"zmod"` (with `mod` the modulus, `null` otherwise). Exponents may be
+large (`10^6`); nothing here materialises a coefficient vector. -/
+def emitSparsePolyFixture (lib case dom : String) (mod? : Option Int)
+    (terms : List (Nat × Int × Int)) : IO Unit := do
+  emitLine <| jsonObject [
+    ("kind",   jsonString "sparsepoly"),
+    ("lib",    jsonString lib),
+    ("case",   jsonString case),
+    ("domain", jsonString dom),
+    ("mod",    jsonOptionalInt mod?),
+    ("terms",  jsonSparseTerms terms)
   ]
 
 /-- Emit a `lattice` fixture record (basis as row vectors). -/
@@ -378,6 +406,11 @@ def emitResult (lib case op : String) (value : String) : IO Unit := do
 
 /-- Polynomial-shaped result value: a coefficient list. -/
 def polyValue (coeffs : List Int) : String := jsonIntList coeffs
+
+/-- Sparse-polynomial-shaped result value: ascending
+`(exponent, numerator, denominator)` terms. -/
+def sparsePolyValue (terms : List (Nat × Int × Int)) : String :=
+  jsonSparseTerms terms
 
 /-- Integer-list result value (e.g. a vector of leading determinants). -/
 def intListValue (xs : List Int) : String := jsonIntList xs
