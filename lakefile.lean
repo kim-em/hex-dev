@@ -590,7 +590,8 @@ lean_lib HexReleaseTests where
     `HexRealRootsMathlib.IsolateRootsTests,
     `HexRealRootsMathlib.IsolateRootsElabTests,
     `HexRootsMathlib.Examples,
-    `HexMvPoly.KernelTests]
+    `HexMvPoly.KernelTests,
+    `HexSparsePoly.KernelTests]
 
 -- Complete development imports for the two factorization packages. Their
 -- ordinary umbrellas deliberately expose only the supported release API.
