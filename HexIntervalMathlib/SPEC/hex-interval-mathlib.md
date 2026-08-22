@@ -229,6 +229,16 @@ callback packages and raw replay formats. Those raw quotations are not
 `Proof.Event`s and remain inert. The fact-only `Controller.Executable` adapter
 correlates an accepted request/update with an exact fact format and decoder;
 only later independent `Proof` replay invokes its theorem schema.
+`Search` never decrements its `remaining` view; executable refresh preserves
+the controller-owned value stored in the sealed session. The adapter uses a
+fixed structural `policyMeasure` for application identifiers and rule keys,
+while callers supply only the measure for their policy state. A domain
+`NarrowResult.resourceLimit budget` becomes the distinct
+`Controller.Resource.narrow budget` refusal before any update is retained;
+fixed-point `noChange` and malformed narrowing remain mismatches at this
+fact-only boundary. Its public `Run` currently contains only a resumable
+`stopped` result. Driver target, refutation, split, and unknown outcomes are
+rejected as mismatches until separate typed terminal correlation is added.
 The assembly constructors are sealed under ordinary imports; deliberate
 `import all HexInterval.Executable` is a repository-guarded trusted-source
 escape hatch, not decoded runtime or proof authority.

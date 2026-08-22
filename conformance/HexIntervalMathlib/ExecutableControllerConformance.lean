@@ -39,6 +39,10 @@ open Hex.Interval.Executable
 #guard_msgs in
 #check Hex.Interval.Executable.Assembly.mk
 
+/-- error: Unknown constant `Hex.Interval.Executable.OfferContext.mk` -/
+#guard_msgs in
+#check Hex.Interval.Executable.OfferContext.mk
+
 def d (value : Int) : Dyadic := .ofInt value
 def endpoint : EndpointLimit := { maxEndpointHeight := 64, maxAlignmentShift := 64 }
 
@@ -582,6 +586,14 @@ def formatsOneOver : Bool :=
   | .error (.resource (.state .replayFormats)) => true
   | _ => false
 
+def generateNodesOneOver : Bool :=
+  let small := { envelope with state := { stateLimits with maxNodes := 4 } }
+  match buildRegistry with
+  | .ok registry => match runFresh registry (candidateEnvelope := small) with
+    | .error (.resource (.state .nodes)) => true
+    | _ => false
+  | _ => false
+
 def quoteCellsOneOver : Bool :=
   let small := { executableLimits with maxQuoteCells := 0 }
   match buildRegistry with
@@ -621,7 +633,7 @@ def choicesOneOver : Bool :=
     | _ => false
   | _ => false
 
-#guard applicationsOneOver && formatsOneOver && quoteCellsOneOver &&
+#guard applicationsOneOver && formatsOneOver && generateNodesOneOver && quoteCellsOneOver &&
   resultBytesOneOver && offersOneOver && quotesOneOver && choicesOneOver
 
 def selectTwice : Policy.Interface Hex.Interval Nat ApplicationId RuleKey :=

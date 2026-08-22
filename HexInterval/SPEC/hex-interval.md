@@ -3208,7 +3208,9 @@ quotation/schema checks accept the transition. Assembly owns only the
 operation/node program: request
 program version and generation side tables remain controller-owned snapshot
 data and receive only the request-internal checks supplied by `ProgramView` and
-`RuleRequest`.
+`RuleRequest`. Search also never decrements its `remaining` budget view; the
+adapter preserves the controller-owned value stored in the session when it
+refreshes executable offers.
 
 As with Search, sealing is an ordinary/public-import boundary. Deliberate
 `import all HexInterval.Executable` exposes its private constructors to trusted
@@ -5454,10 +5456,15 @@ their declared cost inside a scheduler bound.
   bidirectional executable-format/proof-schema coverage, and a successful
   package decoder before Driver acceptance; later Proof replay independently
   invokes the theorem schema. Same-key registry substitution does not
-  transplant the sticky assembly cache. This adapter is deliberately
-  fact-only: typed equality and instance events, refutation, split outcomes,
-  automatic discovery, program extension, and split-search tactic syntax
-  remain later work. All offers in one immutable
+  transplant the sticky assembly cache. Its application-id and rule-key policy
+  costs are adapter-fixed; the caller supplies only policy-state measurement.
+  Domain `NarrowResult.resourceLimit budget` maps to the distinct
+  `Controller.Resource.narrow budget` refusal before retaining any update,
+  rather than collapsing into `noChange` or mismatch. This adapter is
+  deliberately fact-only, and its `Run` exposes only a resumable stopped
+  result: typed equality and instance events, target/refutation/split/unknown
+  terminal correlation, automatic discovery, program extension, and
+  split-search tactic syntax remain later work. All offers in one immutable
   snapshot share its controller-owned serial as age. A malformed generator
   draft aborts the whole regeneration transaction. Dismissing a non-split
   offer sets a controller-owned incomplete bit which survives later accepted

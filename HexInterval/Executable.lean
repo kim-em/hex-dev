@@ -739,16 +739,6 @@ opaque OfferContext.offers [DecidableEq Fact] (context : OfferContext Fact Resul
     (request : RuleRequest Fact) : Bool :=
   offersChecked context.assembly context.snapshot { request with program := context.program }
 
-/-- Authenticate a standalone snapshot/request and ask the exact routed
-handler whether it is currently applicable. Controllers enumerating a whole
-assembly should construct one `OfferContext` and reuse its checked path, so
-whole snapshot/program validation is paid once rather than once per row. -/
-opaque Assembly.offers [DecidableEq Fact] (assembly : Assembly Fact Result)
-    (snapshot : Snapshot Fact) (request : RuleRequest Fact) : Bool :=
-  match assembly.offerContext? snapshot request.program with
-  | none => false
-  | some context => context.offers request
-
 /-- Execute the exact handler selected by an authenticated application row.
 The request must repeat the assembled operation/node program and every
 application-owned action field. Program version and generation side tables in

@@ -121,6 +121,10 @@ structure Limits where
   driver : Driver.Limits
   deriving DecidableEq, Repr
 
+/-- Controller-owned resource refusals. `narrow budget` preserves the exact
+budget reported by `NarrowResult.resourceLimit`; unlike `mismatch` or a
+fixed-point `noChange`, it says the fact domain refused attempted work and no
+update was retained. -/
 inductive Resource where
   | applications
   | choices
@@ -674,6 +678,10 @@ private def generate [DecidableEq Fact] [DecidableEq Cause]
     (envelope : Search.Envelope) (registry : Registry Fact semantics Cause Plan)
     (assembly : RawAssembly Fact Cause) (branch : State.Branch Fact Cause)
     (serial : Nat) : Except Error (Array (Search.Offer ApplicationId RuleKey)) := do
+  match preflightBranch envelope.state branch with
+  | .error (.resource resource) => throw (.resource resource)
+  | .error _ => throw .mismatch
+  | .ok _ => pure ()
   let some snapshot := branch.checkedSnapshot? | throw .mismatch
   if branch.program != assembly.program ||
       assembly.program != registry.assembly.program ||
@@ -718,9 +726,9 @@ private def refresh [DecidableEq Fact] [DecidableEq Cause]
     (session : Search.Session Fact Cause ApplicationId RuleKey)
     (dismissedIncomplete : Bool) := do
   let offers ← generate envelope registry assembly session.branch session.serial
-  -- As in the sibling explicit-package controller, regeneration performs no
-  -- engine-budgeted action. The accepted Search transition has already
-  -- updated `remaining`, so refresh carries that exact value unchanged.
+  -- `Search` does not decrement `remaining`: it is a controller-owned budget
+  -- view supplied at session start/refresh. As in the sibling explicit-package
+  -- controller, this adapter deliberately carries the stored value unchanged.
   Search.Session.refreshWithin envelope measure session offers session.remaining dismissedIncomplete
     |>.mapError Error.search
 
@@ -736,6 +744,10 @@ structure State (Fact Cause Plan : Type) where
   choices : Nat
   dismissedIncomplete : Bool
 
+/-- Fixed structural measure for executable offers. Application identifiers
+cost one pair/cell through `Controller.policyMeasure`; rule keys additionally
+charge their name bytes and schema. Only policy-state measurement is supplied
+by the caller of `runWithin`. -/
 def policyMeasure : Policy.Measure ApplicationId RuleKey :=
   Controller.policyMeasure fun key =>
     { bytes := key.name.length + key.schema + 1, pairs := 1, work := 1 }
@@ -842,6 +854,10 @@ private def invoke [DecidableEq Fact] (limits : Hex.Interval.Executable.Limits)
                 | .ok command => (command, .ok next)
           else (.stop 0, .error .mismatch)
 
+/-- The current fact-only adapter exposes resumable policy/callback stops only.
+It has no typed target, refutation, split, or unknown correlation, so such
+Driver outcomes are rejected as `mismatch`; those terminal interfaces require
+their own executable quotation/schema adapters. -/
 inductive Run (Fact Cause Plan PolicyState : Type)
   | stopped (stop : Search.Stop Unit Unit) (state : State Fact Cause Plan)
       (policy : PolicyState)
