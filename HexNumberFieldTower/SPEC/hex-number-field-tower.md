@@ -341,6 +341,39 @@ the measured reference-host ceiling under the repository benchmarking policy.
 Merge-facing conformance is restricted to tower dimension at most 8 and input
 degree at most 4 until those measurements exist.
 
+## External comparators
+
+**PARI/GP nffactor via cypari2** (https://pari.math.u-bordeaux.fr/, driven
+through the cypari2 binding, the same binding the conformance oracle uses) —
+**informational**, scoped to the `factor?` bench targets. `nffactor(nfinit f,
+t)` is the callable PARI unit surface for factoring a polynomial over a
+number field, the semantic task of `factor?` at one level. It is wired as a
+persistent-subprocess process call (`scripts/oracle/pari_bench_driver.py`,
+`Hex/BenchOracle/Pari.lean`) with per-rung fixed Lean/PARI registration
+pairs on shared deterministic Selmer trinomial inputs over `ℚ(√2)`, joined
+on the sorted factor degree/multiplicity multiset hash (factor coefficients
+live in each system's own field presentation and are not a shared
+observable; the degree/multiplicity multiset of a complete factorization
+is). PARI is a mature optimized C library running over `nfinit`'s absolute
+integral-basis presentation with maximal-order machinery, so the gap is
+structural; the ratio is recorded for orientation and does not gate Phase 4.
+
+Absence declarations, all with reason
+**no-comparable-surface-in-named-comparator**:
+
+- *Tower element arithmetic* (`Elem` add/sub/neg/mul/inv/div/smul): PARI's
+  number-field element operations (`nfelt*`) act on absolute integral-basis
+  coordinates after `nfinit`, not on relative mixed-radix tower coordinates
+  with a fixed embedding; nested `t_POLMOD` towers are not a supported
+  arithmetic surface for inversion. There is no callable PARI unit matching
+  arithmetic in this representation.
+- *Adjoining, splitting, flattening* (`adjoin?`, `split?`, `flatten?`):
+  PARI's `nfsplitting`, `polcompositum`, and `rnfequation` return abstract
+  defining polynomials up to isomorphism; they do not produce the
+  fixed-embedding root selection, coordinate maps, or validated tower level
+  that constitute these results, so they compute a different semantic task
+  than these units.
+
 ## File organisation
 
 ```text
