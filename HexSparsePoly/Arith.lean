@@ -635,12 +635,15 @@ theorem coeff_mulMonomial' [Mul R] (hc0 : ∀ c : R, c * 0 = 0)
 /-- Multiply two sparse polynomials: the canonicalised pairwise product.
 Every pair of exponents contributes, exponent sums collide freely, and
 {name}`ofTerms` combines the collisions and drops what cancels. The
-`@[csimp]` implementation is selected by the Phase-4
-sparse-multiplication bench family; until then compiled code runs this
-specification through {name}`ofTerms`'s sort-and-combine twin. -/
+pairwise products are built through the term `List`s so the kernel can
+reduce this specification (`Array.flatMap` stalls kernel reduction; the
+value is unchanged). The `@[csimp]` implementation is selected by the
+Phase-4 sparse-multiplication bench family; until then compiled code
+runs this specification through {name}`ofTerms`'s sort-and-combine
+twin. -/
 def mul [Add R] [Mul R] (s t : SparsePoly R) : SparsePoly R :=
-  ofTerms (s.terms.flatMap fun a => t.terms.map fun b =>
-    (a.1 + b.1, a.2 * b.2))
+  ofTerms ((s.terms.toList.flatMap fun a =>
+    t.terms.toList.map fun b => (a.1 + b.1, a.2 * b.2)).toArray)
 
 instance [Add R] [Mul R] : Mul (SparsePoly R) where
   mul := mul

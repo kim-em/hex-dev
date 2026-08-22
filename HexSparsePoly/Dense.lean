@@ -62,13 +62,12 @@ omit [Zero R] [DecidableEq R] in
 /-- The bound is least among exponent bounds at or above its initial
 value. -/
 theorem foldl_max_le {l : List (Nat × R)} {n : Nat}
-    (hinit : ∀ init ≤ n, True) (init : Nat) (h0 : init ≤ n)
-    (h : ∀ t ∈ l, t.1 < n) :
+    (init : Nat) (h0 : init ≤ n) (h : ∀ t ∈ l, t.1 < n) :
     l.foldl (fun m t => max m (t.1 + 1)) init ≤ n := by
   induction l generalizing init with
   | nil => exact h0
   | cons a as ih =>
-      refine ih ?_ ?_ fun t ht => h t (List.mem_cons_of_mem _ ht)
+      refine ih _ ?_ fun t ht => h t (List.mem_cons_of_mem _ ht)
       exact Nat.max_le.mpr ⟨h0, h a (List.mem_cons_self ..)⟩
 
 omit [DecidableEq R] in
@@ -427,7 +426,7 @@ theorem coeffs_terms {cs : Array R} (h : DensePolyNormalized cs) :
     refine Nat.le_antisymm ?_ ?_
     · unfold termsBound
       rw [← Array.foldl_toList]
-      exact foldl_max_le (fun _ _ => trivial) 0 (Nat.zero_le _) hexp_lt
+      exact foldl_max_le 0 (Nat.zero_le _) hexp_lt
     · rcases Nat.eq_zero_or_pos cs.size with hzero | hpos
       · omega
       · have hlast : cs.getD (cs.size - 1) 0 ≠ 0 := by
@@ -657,9 +656,7 @@ theorem coeff_mul_foldl (s t : SparsePoly S) (f : Nat) :
   rw [coeff_ofTerms_addCoeff]
   have hz : ∀ c : S, (0 : S) + c = c := by grind
   simp only [addCoeff_eq_add hz]
-  rw [Array.toList_flatMap]
-  simp only [Array.toList_map]
-  rw [List.filter_flatMap, List.foldl_flatMap]
+  rw [List.toList_toArray, List.filter_flatMap, List.foldl_flatMap]
   have hstep : ∀ (x : S) (a : Nat × S),
       ((t.terms.toList.map fun b => (a.1 + b.1, a.2 * b.2)).filter
           (fun u => u.1 = f)).foldl (fun acc u => acc + u.2) x =
@@ -839,6 +836,37 @@ theorem right_distrib (s t u : SparsePoly S) :
   rw [toDense_mul, toDense_add, toDense_add, toDense_mul, toDense_mul]
   exact DensePoly.mul_add_left_poly _ _ _
 
+@[simp, grind =] theorem pow_zero (s : SparsePoly S) : s ^ 0 = 1 := by
+  show pow s 0 = 1
+  rw [pow, dif_pos rfl]
+
+private theorem pow_unfold (s : SparsePoly S) (n : Nat) (hn : ¬ n = 0) :
+    s ^ n = if n % 2 = 1 then s * (s * s) ^ (n / 2) else (s * s) ^ (n / 2) := by
+  show pow s n = _
+  rw [pow, dif_neg hn]
+  rfl
+
+/-- The power recurrence: with {name}`pow_zero` this characterises the
+binary powering completely, and together with {name}`coeff_mul` it is
+what the SPEC's `coeff_pow` obligation reduces to. -/
+theorem pow_succ (s : SparsePoly S) (n : Nat) : s ^ (n + 1) = s * s ^ n := by
+  induction n using Nat.strongRecOn generalizing s with
+  | _ n ih =>
+      match n with
+      | 0 =>
+          rw [pow_unfold s 1 (by omega), if_pos rfl, pow_zero, pow_zero]
+      | m + 1 =>
+          by_cases hodd : (m + 2) % 2 = 1
+          · rw [pow_unfold s (m + 2) (by omega), if_pos hodd,
+              pow_unfold s (m + 1) (by omega),
+              if_neg (show ¬ (m + 1) % 2 = 1 from by omega),
+              show (m + 2) / 2 = (m + 1) / 2 from by omega]
+          · rw [pow_unfold s (m + 2) (by omega), if_neg hodd,
+              pow_unfold s (m + 1) (by omega),
+              if_pos (show (m + 1) % 2 = 1 from by omega),
+              show (m + 2) / 2 = (m + 1) / 2 + 1 from by omega,
+              ih ((m + 1) / 2) (by omega) (s * s), mul_assoc]
+
 end MulRing
 
 /-- On a sorted term list the last stored exponent dominates. -/
@@ -888,7 +916,7 @@ theorem size_toDense_eq {s : SparsePoly R} {t : Nat × R}
     refine Nat.le_antisymm ?_ ?_
     · unfold termsBound
       rw [← Array.foldl_toList]
-      refine foldl_max_le (fun _ _ => trivial) 0 (Nat.zero_le _) ?_
+      refine foldl_max_le 0 (Nat.zero_le _) ?_
       intro u hu
       have := exp_le_back hback u hu
       omega
