@@ -252,7 +252,8 @@ The computational library never states this inequality directly: its
 witness compares dyadic bounds (`lo`, `hi`, and the rational `√2`
 bounds; see [hex-roots.md](../../HexRoots/SPEC/hex-roots.md)). The one-directional lemma
 "the dyadic-bound witness implies the exact Pellet inequality" lives
-in `HexRootsMathlib/Geometry.lean`, so the analytic development above
+in `HexRootsMathlib/Pellet.lean` (`pelletAt_dominates`, feeding
+`Pellet.sound`), so the analytic development above
 stays in the standard form (the form worth contributing to Mathlib)
 while the computational library stays decidable. The converse
 direction, that a sufficiently isolating disc makes the witness hold
@@ -278,8 +279,9 @@ developments above.
   `181/128 < √2 < 1449/1024` bounds, and the Mathlib geometry of a
   `DyadicSquare`: its complex centre, real half-width, closed sup-norm
   square, and open/closed circumscribed discs. Simp lemmas
-  `DyadicSquare.center_eq`, `DyadicSquare.disc_eq`. The later Pellet
-  correspondence in this module proves "witness implies Pellet".
+  `DyadicSquare.center_eq`, `DyadicSquare.disc_eq`. The
+  "witness implies Pellet" correspondence itself lives downstream in
+  `HexRootsMathlib/Pellet.lean`.
 - `HexRootsMathlib/Taylor.lean`: the shared exact-coefficient bridge
   ```lean
   theorem taylor_coeff (p : ZPoly) (z : GaussDyadic) (k : Nat) :
@@ -379,6 +381,27 @@ developments above.
   The refined-level wrapper preserves `RefinedIsolation.root` unconditionally
   by exposing the successful underlying raw refinement call; the packaged
   quotient equality remains available to Mathlib-free callers.
+- `HexRootsMathlib/IsolateTotal.lean`: the none-free consumption surface.
+  ```lean
+  noncomputable def isolate! (p : Hex.ZPoly) (h : Hex.HasOnlySimpleRoots p)
+      (hp : p ≠ 0) (atomPrec : Int)
+      (strategy : Hex.AtomStrategy := .nkThenPellet) :
+      Array (Hex.DyadicRootIsolation p)
+  ```
+  Unlike `Hex.isolate`, this proof-facing wrapper cannot return `none`:
+  its hypotheses discharge the driver's completeness conditions and the
+  result is extracted from `isolate_exists`. It is characterized by
+  `isolate!_eq` (it is exactly the successful executable output), and
+  its behaviour is packaged by `isolate!_count` (one atom per root,
+  with multiplicity), `isolate!_roots` (the selected semantic roots are
+  exactly the root finset), `isolate!_prec` (every atom meets the
+  requested precision), and `isolate!_disjoint` (distinct atoms have
+  disjoint closed circumscribed discs).
+- `HexRootsMathlib/Examples.lean`: compiled regression examples for the
+  public surface (kernel-`decide` witness checks on committed dyadic
+  fixtures and `isolate!`-based root extraction). Deliberately excluded
+  from the umbrella and built through the release-tests target so CI
+  cannot silently lose it.
 
 ## Completeness development
 
@@ -448,7 +471,7 @@ and it is the analytically hardest part:
     adjacent to the component containing that root and hence glued into it.
     The preceding NK and Pellet converses then make every component pass
     `certify?` with `k = 1` under `.nk`, `.pellet`, and `.nkThenPellet`.
-    Mahler separation makes their stored discs pairwise disjoint. An
+    Mahler separation makes their stored discs pairwise disjoint.
     Under either Pellet-bearing strategy, an all-atom worklist may instead run
     the local one-atom refinement loop independently on each atom and emit
     before that depth when every refinement succeeds and the resulting discs
@@ -529,6 +552,8 @@ Correspondence theorems (depend on hex-roots data structures):
   HexRootsMathlib/Isolate.lean
   HexRootsMathlib/SimpleRoot.lean
   HexRootsMathlib/Refinement.lean
+  HexRootsMathlib/IsolateTotal.lean
+  HexRootsMathlib/Examples.lean  (release-tests target, not the umbrella)
 
 Completeness development:
   HexRootsMathlib/Completeness/PelletTail.lean
@@ -540,6 +565,7 @@ Completeness development:
   HexRootsMathlib/Completeness/NKDepth.lean
   HexRootsMathlib/Completeness/RootFreeConverse.lean
   HexRootsMathlib/Completeness/SurvivorComponent.lean
+  HexRootsMathlib/Completeness/RefinementCompleteness.lean
   HexRootsMathlib/Completeness/DriverCompleteness.lean
 ```
 

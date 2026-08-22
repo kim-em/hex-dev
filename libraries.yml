@@ -547,7 +547,7 @@ libraries:
   HexRootsMathlib:
     deps: [HexRoots, HexPolyZMathlib]
     mathlib: true
-    done_through: 0
+    done_through: 2
     status: active
   HexResultant:
     deps: [HexPoly, HexBasic]
