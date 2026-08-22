@@ -7,6 +7,7 @@ Authors: Kim Morrison
 module
 
 public import HexSparsePoly.Basic
+public import HexSparsePoly.Arith
 
 public section
 
