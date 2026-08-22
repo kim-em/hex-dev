@@ -25,6 +25,8 @@ public import HexIntervalMathlib.Proof
 public import HexIntervalMathlib.RuntimeProof
 public import HexIntervalMathlib.RuntimeTerminal
 public import HexIntervalMathlib.RuntimeRule
+public import HexIntervalMathlib.RuntimeEmit
+public import HexIntervalMathlib.RuntimeRuleEmit
 public import HexIntervalMathlib.Rule
 public import HexIntervalMathlib.Frontend
 public import HexIntervalMathlib.Tactic
@@ -45,6 +47,12 @@ transition chains into those proof events without trusting raw quotations.
 the same sealed runtime/search lineage, theorem registry, and immutable proof
 input; general split settlement remains blocked by the runtime/proof child
 equality-arena mismatch documented by that module.
+`HexIntervalMathlib.RuntimeEmit` quotes only a sealed one-node target lineage
+into an exactly checked `Proof.Evidence` expression through package-owned
+transparent theorem handles. `HexIntervalMathlib.RuntimeRuleEmit` jointly
+assembles those handles with the executable and theorem views of the twelve
+built-in arithmetic rules. Refutation and split expression emission are not
+supported.
 `HexIntervalMathlib.Rule` supplies a checked built-in arithmetic package whose
 schemas recompute checked public operations before producing proof evidence.
 `HexIntervalMathlib.RuntimeRule` supplies the aligned executable half: its

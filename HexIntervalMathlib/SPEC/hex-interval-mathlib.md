@@ -276,6 +276,45 @@ replay independently proves it again. Search/result and proof body resources
 are checked at settlement, while complete transition/event/structural/proof-
 tree resources remain transactional at bundle quotation.
 
+`HexIntervalMathlib.RuntimeEmit` is the supported Meta boundary from that
+sealed root-target lineage to kernel syntax. Emitter packages pair exact
+`Proof.Key`s with transparent theorem-schema expressions. One joint builder
+checks package-local and global missing, extra, duplicate, and wrong-role
+coverage, builds the `Proof.Registry` and `RuntimeProof.Registry` from the same
+package array, and seals those registries with the emitter table; there is no
+post-hoc compatibility-key attachment. `Active`, `Lineage`, and `Checked`
+retain this unified registry alongside the corresponding private
+`RuntimeTerminal` token.
+
+`RuntimeEmit.Checked.emitWithin` supports only a one-node root target. It
+quotes the already authenticated program, input, registrations, and exact
+fact/equality/transport/instance chronology as ordinary data and applies the
+transparent `Proof.replayWith` fold. A decidable success proof projects the
+exact `Proof.Evidence` term. Every fact and schema callback crosses
+`Proof.emitChecked`; the final candidate is transactionally rolled back,
+checked with `Meta.check`, compared with the exact Evidence type, and rejected
+for metavariables, synthetic placeholders, temporary declarations, or retained
+Meta-state leakage. There is no refutation or split expression emitter.
+
+For `S` emitter handles, `C` retained events, `B` total body cells, `D` total
+dependency cells, and `X` cells in a checked expression, registry coverage is
+quadratic in the worst case because list membership/count checks scan the
+package and global key tables. Preparation is `O(S)` callback invocations plus
+one `O(X)` syntax traversal per returned schema expression. Chronology
+prechecking and quotation are `O(C + B + D)` apart from fact callbacks and
+construction of quoted program/action data; the transparent replay then pays
+the existing proof fold and package theorem callbacks, which are arbitrary
+pure Lean code and are not preemptible. The final expression cap performs one
+additional `O(X)` traversal. Schema, chronology, body, dependency, and
+expression limits fail without returning a partial expression.
+
+`HexIntervalMathlib.RuntimeRuleEmit` supplies the paired handles and fact
+quoter for exactly the twelve built-in arithmetic schemas. Its convenience
+builder jointly constructs the executable batch assembly, theorem registry,
+and emitter registry. Configurations with caller-owned opaque meanings require
+their own paired emitter packages and are deliberately rejected by this
+built-in-only builder.
+
 A general split terminal adapter is intentionally absent. `Proof.seedChild`
 inherits the parent proof equality table and compact identities, whereas
 `Runtime.State.startWithin` restarts a child with an empty equality arena and
@@ -505,6 +544,14 @@ over the complete retained chronology without a fallback theorem. It checks
 exact proposed/installed facts, one-cell bodies, semantic schema execution,
 sticky cache refusal and replayability, sealed rule mutation rejection, and a
 paired opaque-operation extension.
+`HexIntervalMathlib.RuntimeEmitConformance` installs target Evidence only from
+the emitted expression for all twelve built-in rules, including repeated-input
+binary applications, and separately emits the mixed `sin (-x)` instance,
+equality, fact, and transport chronology. It rejects package-local/global
+coverage errors, cross-package and input transplants, a wrong schema
+expression, ill-typed/open/placeholder/temporary emitters, Meta-state leakage,
+and exact one-under schema, chronology, body, dependency, and expression
+resources while guarding every private constructor.
 `HexIntervalMathlib.RuleConformance` replays a shared arithmetic DAG through
 the supported state quote and proof registry. Its ordinary theorem makes both
 source assumptions load-bearing through add/sub/mul and checked

@@ -481,6 +481,68 @@ def acceptsAction (registry : Registry semantics Plan) (program : Program)
 
 end Registry
 
+/-! ## Transparent schema resolution
+
+`Registry` remains the sealed runtime theorem authority. `Resolver` is the
+plain proof-syntax view used by an elaborator after a separate sealed bridge
+has authenticated exact package-local coverage. Constructing a resolver does
+not authorize a runtime action: every schema still returns an ordinary proof,
+and transparent replay rechecks the complete quoted action and chronology. -/
+
+structure Resolver (semantics : Semantics Fact) where
+  registrations : Array Registration
+  facts : Array (FactSchema semantics)
+  equalities : Array (EqualitySchema semantics)
+  instances : Array (InstanceSchema semantics)
+
+namespace Resolver
+
+def fact? (resolver : Resolver semantics) (key : Key) : Option (FactSchema semantics) :=
+  resolver.facts.toList.find? fun schema => schema.key == key
+
+def equality? (resolver : Resolver semantics) (key : Key) :
+    Option (EqualitySchema semantics) :=
+  resolver.equalities.toList.find? fun schema => schema.key == key
+
+def instance? (resolver : Resolver semantics) (key : Key) :
+    Option (InstanceSchema semantics) :=
+  resolver.instances.toList.find? fun schema => schema.key == key
+
+/-- Independently authenticate the structural portion of a quoted action.
+This is deliberately identical to `Registry.acceptsAction`; the syntax replay
+must not inherit authorization from the compiled runtime check. -/
+def acceptsAction (resolver : Resolver semantics) (program : Program)
+    (action : Action) (inputs : List NodeId) : Bool :=
+  match resolver.registrations[action.rule.index]?, program.node? action.node with
+  | some registration, some anchor =>
+      let common := registration.key == action.key && registration.kind == action.kind &&
+        (program.operation? anchor.op).any (fun operation => operation.key == registration.head) &&
+        action.inputs.map (fun seen => seen.node) == inputs &&
+        match registration.matchWatch with
+        | .none => action.structuralInputs.isEmpty && action.matcherEpoch.isNone
+        | .network => !action.structuralInputs.isEmpty && action.matcherEpoch.isSome
+      common && match registration.binding with
+      | .local =>
+          Slot.resolveAll? action.node anchor registration.watches == some inputs &&
+            Slot.resolveAll? action.node anchor registration.writes == some action.writes
+      | .scoped =>
+          registration.watches.isEmpty && registration.writes.isEmpty &&
+            allDistinct inputs && allDistinct action.writes &&
+            inputs.all (fun node => (program.node? node).isSome) &&
+            action.writes.all (fun node => (program.node? node).isSome)
+      | .global =>
+          registration.watches.isEmpty && registration.writes.isEmpty &&
+            inputs.isEmpty && action.writes.isEmpty
+  | _, _ => false
+
+end Resolver
+
+def Registry.resolver (registry : Registry semantics Plan) : Resolver semantics :=
+  { registrations := registry.registrations
+    facts := registry.facts
+    equalities := registry.equalities
+    instances := registry.instances }
+
 /-! ## Plain replay quotations -/
 
 structure FactStep (Fact : Type) where
@@ -919,7 +981,7 @@ def dependenciesCheck (limits : Limits) (dependencies : List SeenVersion) :
     Except Error Unit :=
   if limits.maxDependencies < dependencies.length then throw .dependencyLimit else pure ()
 
-def replayFact (limits : Limits) (registry : Registry semantics Plan)
+def replayFactWith (limits : Limits) (resolver : Resolver semantics)
     (domain : Domain semantics) (input : Input Fact)
     (checked : State semantics input assumptions)
     (step : FactStep Fact) : Except Error (State semantics input assumptions) := do
@@ -941,9 +1003,9 @@ def replayFact (limits : Limits) (registry : Registry semantics Plan)
     | throw (.missingDependency step.previous)
   let some resolvedInputs := resolveInputs checked.facts step.assumptions
     | throw (.missingDependency (step.assumptions.head?.getD step.previous))
-  if !registry.acceptsAction checked.program step.action
+  if !resolver.acceptsAction checked.program step.action
       (resolvedInputs.facts.map fun fact => fact.node) then throw .wrongAction
-  let some schema := registry.fact? step.schema | throw .missingSchema
+  let some schema := resolver.fact? step.schema | throw .missingSchema
   let some certificate := schema.decode step.body | throw .malformedBody
   let context : FactContext semantics :=
     { scope := step.scope
@@ -966,7 +1028,13 @@ def replayFact (limits : Limits) (registry : Registry semantics Plan)
   let pushed := checked.facts.push current step.installed currentWithin sound
   pure { checked with facts := pushed }
 
-def replayEquality (limits : Limits) (registry : Registry semantics Plan)
+def replayFact (limits : Limits) (registry : Registry semantics Plan)
+    (domain : Domain semantics) (input : Input Fact)
+    (checked : State semantics input assumptions)
+    (step : FactStep Fact) : Except Error (State semantics input assumptions) :=
+  replayFactWith limits registry.resolver domain input checked step
+
+def replayEqualityWith (limits : Limits) (resolver : Resolver semantics)
     (input : Input Fact) (checked : State semantics input assumptions)
     (step : EqualityStep) : Except Error (State semantics input assumptions) := do
   bodyCheck limits step.schema .equality step.body
@@ -983,9 +1051,9 @@ def replayEquality (limits : Limits) (registry : Registry semantics Plan)
   let some resolvedInputs := resolveInputs checked.facts step.assumptions
     | throw (.missingDependency (step.assumptions.head?.getD
         { node := step.left, version := 0 }))
-  if !registry.acceptsAction checked.program step.action
+  if !resolver.acceptsAction checked.program step.action
       (resolvedInputs.facts.map fun fact => fact.node) then throw .wrongAction
-  let some schema := registry.equality? step.schema | throw .missingSchema
+  let some schema := resolver.equality? step.schema | throw .missingSchema
   let some certificate := schema.decode step.body | throw .malformedBody
   let context : EqualityContext semantics :=
     { scope := step.scope, programVersion := checked.version, program := checked.program
@@ -1002,6 +1070,11 @@ def replayEquality (limits : Limits) (registry : Registry semantics Plan)
   let proof : EqualityProof semantics checked.program (replayBase input assumptions) :=
     { equality := step.equality, left := step.left, right := step.right, sound }
   pure { checked with equalities := checked.equalities.push proof }
+
+def replayEquality (limits : Limits) (registry : Registry semantics Plan)
+    (input : Input Fact) (checked : State semantics input assumptions)
+    (step : EqualityStep) : Except Error (State semantics input assumptions) :=
+  replayEqualityWith limits registry.resolver input checked step
 
 def replayTransport (_limits : Limits) (domain : Domain semantics)
     (laws : Laws semantics) (input : Input Fact)
@@ -1153,7 +1226,7 @@ theorem composeStable (left : Stable semantics first middle)
           (Nat.lt_of_lt_of_le within left.appendOnly.nodeSize) middleModel newModel
           (fun _ _ => rfl)) }
 
-def replayInstance (limits : Limits) (registry : Registry semantics Plan)
+def replayInstanceWith (limits : Limits) (resolver : Resolver semantics)
     (domain : Domain semantics) (input : Input Fact)
     (checked : State semantics input assumptions)
     (step : InstanceStep) : Except Error (State semantics input assumptions) := do
@@ -1163,13 +1236,13 @@ def replayInstance (limits : Limits) (registry : Registry semantics Plan)
     throw .wrongProgramVersion
   if step.action.programVersion != checked.version || step.action.key != step.schema.rule then
     throw .wrongAction
-  if !registry.acceptsAction checked.program step.action [] then throw .wrongAction
+  if !resolver.acceptsAction checked.program step.action [] then throw .wrongAction
   if !step.after.check || !Hex.Interval.State.programPrefix checked.program step.after then
     throw .wrongInstance
   let expected := (List.range (step.after.nodes.size - checked.program.nodes.size)).map
     fun offset => { index := checked.program.nodes.size + offset : NodeId }
   if step.newNodes != expected then throw .wrongInstance
-  let some schema := registry.instance? step.schema | throw .missingSchema
+  let some schema := resolver.instance? step.schema | throw .missingSchema
   let some certificate := schema.decode step.body | throw .malformedBody
   let context : InstanceContext semantics :=
     { scope := step.scope, beforeVersion := checked.version,
@@ -1197,23 +1270,41 @@ def replayInstance (limits : Limits) (registry : Registry semantics Plan)
       facts := checked.facts.lift proof.stable currentBaseWithin domain
       equalities := checked.equalities.lift proof.stable currentBaseWithin }
 
-def replayEvent (limits : Limits) (registry : Registry semantics Plan)
+def replayInstance (limits : Limits) (registry : Registry semantics Plan)
+    (domain : Domain semantics) (input : Input Fact)
+    (checked : State semantics input assumptions)
+    (step : InstanceStep) : Except Error (State semantics input assumptions) :=
+  replayInstanceWith limits registry.resolver domain input checked step
+
+def replayEventWith (limits : Limits) (resolver : Resolver semantics)
     (domain : Domain semantics) (laws : Laws semantics) (input : Input Fact) :
     State semantics input assumptions → Event Fact →
       Except Error (State semantics input assumptions)
-  | checked, .fact step => replayFact limits registry domain input checked step
-  | checked, .equality step => replayEquality limits registry input checked step
+  | checked, .fact step => replayFactWith limits resolver domain input checked step
+  | checked, .equality step => replayEqualityWith limits resolver input checked step
   | checked, .transport step => replayTransport limits domain laws input checked step
-  | checked, .instance step => replayInstance limits registry domain input checked step
+  | checked, .instance step => replayInstanceWith limits resolver domain input checked step
 
-def replayEvents (limits : Limits) (registry : Registry semantics Plan)
+def replayEvent (limits : Limits) (registry : Registry semantics Plan)
+    (domain : Domain semantics) (laws : Laws semantics) (input : Input Fact) :
+    State semantics input assumptions → Event Fact →
+      Except Error (State semantics input assumptions) :=
+  replayEventWith limits registry.resolver domain laws input
+
+def replayEventsWith (limits : Limits) (resolver : Resolver semantics)
     (domain : Domain semantics) (laws : Laws semantics) (input : Input Fact) :
     List (Event Fact) → State semantics input assumptions →
       Except Error (State semantics input assumptions)
   | [], state => pure state
   | event :: events, state => do
-      let next ← replayEvent limits registry domain laws input state event
-      replayEvents limits registry domain laws input events next
+      let next ← replayEventWith limits resolver domain laws input state event
+      replayEventsWith limits resolver domain laws input events next
+
+def replayEvents (limits : Limits) (registry : Registry semantics Plan)
+    (domain : Domain semantics) (laws : Laws semantics) (input : Input Fact) :
+    List (Event Fact) → State semantics input assumptions →
+      Except Error (State semantics input assumptions) :=
+  replayEventsWith limits registry.resolver domain laws input
 
 /-- A successfully replayed chronology retains its checked proof state. It is
 the only input accepted by later target, refutation, split, and child-seed
@@ -1226,18 +1317,25 @@ structure Replay (semantics : Semantics Fact) (input : Input Fact)
 /-- Replay from an already authenticated proof state and require the exact
 final program version and structural program. Failure returns no partial
 state. -/
-def replayFrom (limits : Limits) (registry : Registry semantics Plan)
+def replayFromWith (limits : Limits) (resolver : Resolver semantics)
     (domain : Domain semantics) (laws : Laws semantics) (input : Input Fact)
     (start : State semantics input assumptions) (events : List (Event Fact))
     (finalVersion : Nat) (finalProgram : Program) :
     Except Error (Replay semantics input assumptions start) := do
   if limits.maxChronology < events.length then throw .chronologyLimit
-  let checked ← replayEvents limits registry domain laws input events start
+  let checked ← replayEventsWith limits resolver domain laws input events start
   if checked.version != finalVersion then throw .wrongProgramVersion
   if checked.program != finalProgram then throw .wrongFinalProgram
   let originEq : Evidence (checked.origin = start.origin) ←
     if h : checked.origin = start.origin then pure ⟨h⟩ else throw .wrongFinalProgram
   pure { state := checked, originEq := originEq.proof }
+
+def replayFrom (limits : Limits) (registry : Registry semantics Plan)
+    (domain : Domain semantics) (laws : Laws semantics) (input : Input Fact)
+    (start : State semantics input assumptions) (events : List (Event Fact))
+    (finalVersion : Nat) (finalProgram : Program) :
+    Except Error (Replay semantics input assumptions start) :=
+  replayFromWith limits registry.resolver domain laws input start events finalVersion finalProgram
 
 /-- Close a proof in the node's possibly extended program back to the exact
 program at entry to that node. Independent child extensions therefore meet at
@@ -1261,7 +1359,7 @@ def closeOrigin (checked : State semantics input assumptions) (target : NodeFact
         originModel finalModel agreement).mpr finalTarget }
 
 /-- Replay exact chronology and close the exact target/version. -/
-def replay [DecidableEq Fact] (limits : Limits) (registry : Registry semantics)
+def replayWith [DecidableEq Fact] (limits : Limits) (resolver : Resolver semantics)
     (domain : Domain semantics) (laws : Laws semantics) (input : Input Fact)
     (events : List (Event Fact)) (finalVersion : Nat) (finalProgram : Program)
     (result : SeenVersion) :
@@ -1271,7 +1369,7 @@ def replay [DecidableEq Fact] (limits : Limits) (registry : Registry semantics)
     if h : input.facts.size = input.program.nodes.size then pure ⟨h⟩ else throw .invalidInput
   let targetWithin : Evidence (input.target.node.index < input.program.nodes.size) ←
     if h : input.target.node.index < input.program.nodes.size then pure ⟨h⟩ else throw .invalidInput
-  let replayed ← replayFrom limits registry domain laws input
+  let replayed ← replayFromWith limits resolver domain laws input
     (State.start semantics input size.proof) events finalVersion finalProgram
   let checked := replayed.state
   let nodeEq : Evidence (result.node = input.target.node) ←
@@ -1296,6 +1394,13 @@ def replay [DecidableEq Fact] (limits : Limits) (registry : Registry semantics)
           simpa [nodeEq.proof, factEq.proof] using finalResult
         exact (checked.stable.holdsOld valuation extended input.target targetWithin.proof
           baseModel finalModel agreement).mpr finalTarget }
+
+def replay [DecidableEq Fact] (limits : Limits) (registry : Registry semantics)
+    (domain : Domain semantics) (laws : Laws semantics) (input : Input Fact)
+    (events : List (Event Fact)) (finalVersion : Nat) (finalProgram : Program)
+    (result : SeenVersion) :
+    Except Error (Evidence (semantics.Entails input.program (initialBase input) input.target)) :=
+  replayWith limits registry.resolver domain laws input events finalVersion finalProgram result
 
 /-- Replay one exact established impossible fact. Runtime contradiction state
 is not an argument. -/
