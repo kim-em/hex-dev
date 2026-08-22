@@ -690,6 +690,18 @@
     "reason": "Adds the unrelated HexSparsePoly lean_lib, two interval experiment/conformance globs, and the interval typed-runtime and executable-controller conformance globs; the hexbz_factor_service target, BZ library targets, and build flags are unchanged."
   },
   {
+    "path": "HexBerlekamp/PolynomialTactic.lean",
+    "baseline_blob": "d8232a738edfc3735c099eba5f362a4a30fcafcd",
+    "current_blob": "2d501f2ff596cfd0ddeeaacf08bbe407a4dc8c18",
+    "reason": "Removes the meta-only factor-tactic extension version field, constant, and discovery check and updates their documentation; the benchmarked Hex.ZPoly.factorize entry does not invoke tactic elaboration or extension discovery, so its executable behavior is unchanged."
+  },
+  {
+    "path": "HexBerlekampZassenhaus/FactorTactic.lean",
+    "baseline_blob": "cdcfd422598d4c0ae7c6fa9f8f90a780cbcf57f1",
+    "current_blob": "fa093db4b7244a8c42005c479c9aa1ffcc40fa9f",
+    "reason": "Removes only the meta extension's version initializer; no executable factorization definition used by the benchmarked Hex.ZPoly.factorize entry changes."
+  },
+  {
     "path": "lakefile.lean",
     "baseline_blob": "c523b56fcf7249235b710bc86792042a57c4e26e",
     "current_blob": "dcb37c10309b6da8453022b47b27f680508177fe",

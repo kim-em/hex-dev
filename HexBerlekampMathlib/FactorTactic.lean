@@ -378,7 +378,6 @@ open Lean Elab
 `Hex.FactorTactic.extensionNames`; the registration tests fail if a rename makes
 the extension undiscoverable. -/
 public meta def extension : Hex.FactorTactic.Extension where
-  version := Hex.FactorTactic.Extension.abiVersion
   factorPoly? := fun _stx eP ty _expectedType? =>
     withZModInput "factor_poly" ty fun q inst hpt qE =>
       @elabFactorZMod "factor_poly" q inst hpt qE eP
