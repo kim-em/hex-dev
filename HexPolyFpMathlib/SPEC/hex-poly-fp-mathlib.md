@@ -11,6 +11,20 @@ Mathlib's own polynomial type.
   assemble into.
 - `toMathlibPolynomial`, the forward map named for use in statements, with its
   coefficient, monicity, and `simp` lemmas.
+- Transport lemmas naming the forward map for the operations a caller reaches
+  for directly rather than through a `RingEquiv` composition: `derivative`,
+  `mul`, `add`, `sub`, `C`, the monic monomial `monomial m 1`, `X`, and `dvd`.
+- `commRing : CommRing (FpPoly p)`, built from the ring laws hex-poly-fp proves
+  rather than transported along `fpPolyEquiv`, so that the Mathlib operations
+  are the executable ones and `sub` and `neg` are the executable ones too.
+  Without it `FpPoly p →+* R` is not a well-formed type, so this is a
+  prerequisite for every downstream ring homomorphism out of the executable
+  polynomials rather than a convenience.
+- `linearPow_eq_pow`, identifying hex-poly-fp's structural `linearPow` with the
+  monoid power that `commRing` supplies, so `map_pow` applies to executable
+  powers.
+- `primeModulus_of_fact`, deriving the executable `ZMod64.PrimeModulus p`
+  witness from Mathlib's `Fact (Nat.Prime p)`.
 
 Everything below this library is Hex's own tower: `DensePoly` over `ZMod64`,
 reached through hex-poly-mathlib and hex-mod-arith-mathlib. Everything a
@@ -28,9 +42,11 @@ hex-berlekamp-mathlib re-exports the names, so call sites spelling them
 `HexBerlekampMathlib.fpPolyEquiv` resolve unchanged.
 
 The equivalence needs only `ZMod64.Bounds p`, not primality: `FpPoly p` is a
-ring for any admissible modulus, and so is `Polynomial (ZMod p)`. Lemmas that do
-need `p` prime, such as the coprimality transports, say so in their own
-hypotheses.
+ring for any admissible modulus, and so is `Polynomial (ZMod p)`. Primality
+enters only through `primeModulus_of_fact`, which carries it as an explicit
+`Fact (Nat.Prime p)` hypothesis. The coprimality transports that consume the
+resulting witness are owned by the consumers, hex-berlekamp-mathlib in
+particular, because they name that library's predicates.
 
 The dependency on hex-poly-mathlib is narrow and worth naming, since it is not
 the obvious one: the generic `DensePoly R ≃+* Polynomial R` cannot be reused
