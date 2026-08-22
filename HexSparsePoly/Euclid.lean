@@ -180,18 +180,121 @@ theorem divModMonic_spec (s t : SparsePoly S) (ht : t.Monic) :
     t.toDense ((monic_toDense t).mpr ht)]
   exact DensePoly.divMod_spec s.toDense t.toDense
 
-/-- Exact monic division returns exactly the cofactors. Proved in the
-implementation work loop: the reverse direction needs the dense
-uniqueness of monic division. -/
+/-- Divisibility forces a zero monic remainder: the dense mod of a
+multiple is zero, and the sparse remainder is its `ofDense` image. -/
+private theorem divModMonic_snd_eq_zero_of_dvd {s t : SparsePoly S}
+    (ht : t.Monic) (h : t ∣ s) : (divModMonic s t ht).2 = 0 := by
+  unfold divModMonic
+  simp only [Prod.map_snd]
+  rw [DensePoly.DivModLaws.divModMonic_eq_divMod_of_monic s.toDense
+    t.toDense ((monic_toDense t).mpr ht)]
+  have hm : (DensePoly.divMod s.toDense t.toDense).2 = 0 :=
+    DensePoly.mod_eq_zero_of_dvd s.toDense t.toDense (toDense_dvd h)
+  rw [hm, ofDense_zero]
+
+/-- Monic factors cancel at the dense level: a product with a monic
+polynomial vanishes only if the cofactor does. The trivial-ring case is
+split off; otherwise the product's leading coefficient is the
+cofactor's, which a nonzero cofactor keeps nonzero. -/
+private theorem dense_eq_zero_of_mul_monic {u g : DensePoly S}
+    (hg : g.Monic) (h : u * g = 0) : u = 0 := by
+  by_cases h10 : (1 : S) = 0
+  · apply DensePoly.ext_coeff
+    intro n
+    rw [DensePoly.coeff_zero]
+    have h1 : u.coeff n * (1 : S) = u.coeff n := by grind
+    rw [← h1, h10]
+    grind
+  · by_cases hu : u.size = 0
+    · apply DensePoly.ext_coeff
+      intro n
+      rw [DensePoly.coeff_zero]
+      exact DensePoly.coeff_eq_zero_of_size_le u (by omega)
+    · exfalso
+      have hupos : 0 < u.size := Nat.pos_of_ne_zero hu
+      have hgpos : 0 < g.size := by
+        rcases Nat.eq_zero_or_pos g.size with h0 | h0
+        · exfalso
+          apply h10
+          have hlz : g.leadingCoeff = 0 := by
+            have : g = 0 := by
+              apply DensePoly.ext_coeff
+              intro n
+              rw [DensePoly.coeff_zero]
+              exact DensePoly.coeff_eq_zero_of_size_le g (by omega)
+            rw [this, DensePoly.leadingCoeff_zero]
+          rw [← DensePoly.leadingCoeff_eq_one_of_monic hg, hlz]
+        · exact h0
+      have hlu : u.leadingCoeff ≠ (Zero.zero : S) := by
+        rw [DensePoly.leadingCoeff_eq_coeff_last u hupos]
+        exact DensePoly.coeff_last_ne_zero_of_pos_size u hupos
+      have hprod : u.leadingCoeff * g.leadingCoeff ≠ (Zero.zero : S) := by
+        rw [DensePoly.leadingCoeff_eq_one_of_monic hg]
+        grind
+      have hlm := DensePoly.leadingCoeff_mul u g hupos hgpos hprod
+      rw [h, DensePoly.leadingCoeff_zero,
+        DensePoly.leadingCoeff_eq_one_of_monic hg] at hlm
+      apply hlu
+      show u.leadingCoeff = (0 : S)
+      grind
+
+/-- Exact monic division returns exactly the cofactors: the forward
+direction is the division identity with a zero remainder, the reverse
+is dense monic cancellation applied to the two reconstructions. -/
 theorem divExactMonic?_eq_some {s t q : SparsePoly S} (ht : t.Monic) :
     divExactMonic? s t ht = some q ↔ s = q * t := by
-  sorry
+  show (if (divModMonic s t ht).2 = 0 then some (divModMonic s t ht).1
+    else none) = some q ↔ s = q * t
+  constructor
+  · intro h
+    by_cases hr : (divModMonic s t ht).2 = 0
+    · rw [if_pos hr, Option.some.injEq] at h
+      have hspec := divModMonic_spec s t ht
+      rw [hr, add_zero, h] at hspec
+      exact hspec.symm
+    · rw [if_neg hr] at h
+      cases h
+  · intro hs
+    have hdvd : t ∣ s := ⟨q, by rw [hs, mul_comm]⟩
+    have hr := divModMonic_snd_eq_zero_of_dvd ht hdvd
+    rw [if_pos hr, Option.some.injEq]
+    have hspec := divModMonic_spec s t ht
+    rw [hr, add_zero] at hspec
+    have hqt : (divModMonic s t ht).1 * t = q * t := by rw [hspec, hs]
+    apply toDense_inj
+    have hsub : ((divModMonic s t ht).1.toDense - q.toDense) * t.toDense
+        = 0 := by
+      rw [DensePoly.sub_mul_poly, ← toDense_mul, ← toDense_mul, hqt]
+      apply DensePoly.ext_coeff
+      intro n
+      rw [DensePoly.coeff_sub_ring, DensePoly.coeff_zero]
+      grind
+    have hz := dense_eq_zero_of_mul_monic ((monic_toDense t).mpr ht) hsub
+    apply DensePoly.ext_coeff
+    intro n
+    have hc := congrArg (fun p => DensePoly.coeff p n) hz
+    rw [DensePoly.coeff_sub_ring, DensePoly.coeff_zero] at hc
+    grind
 
 /-- Exact monic division succeeds exactly on multiples. A monic divisor
 is nonzero, so no `t ≠ 0` side condition is needed. -/
 theorem divExactMonic?_isSome {s t : SparsePoly S} (ht : t.Monic) :
     (divExactMonic? s t ht).isSome = true ↔ t ∣ s := by
-  sorry
+  show (if (divModMonic s t ht).2 = 0 then some (divModMonic s t ht).1
+    else none).isSome = true ↔ t ∣ s
+  constructor
+  · intro h
+    by_cases hr : (divModMonic s t ht).2 = 0
+    · have hspec := divModMonic_spec s t ht
+      rw [hr, add_zero] at hspec
+      refine ⟨(divModMonic s t ht).1, ?_⟩
+      rw [mul_comm]
+      exact hspec.symm
+    · rw [if_neg hr] at h
+      cases h
+  · intro hdvd
+    rw [if_pos (divModMonic_snd_eq_zero_of_dvd ht hdvd)]
+    rfl
 
 end Laws
 
