@@ -29,6 +29,10 @@ class SealedImportAllTest(unittest.TestCase):
                     "HexIntervalMathlib.Proof"),
                 (Path("bench/HexIntervalMathlib/Bypass.lean"),
                     "HexIntervalMathlib.Proof"),
+                (Path("conformance/HexIntervalMathlib/BypassRuntimeProof.lean"),
+                    "HexIntervalMathlib.RuntimeProof"),
+                (Path("bench/HexIntervalMathlib/BypassRuntimeProof.lean"),
+                    "HexIntervalMathlib.RuntimeProof"),
             ]
             files = [path for path, _ in cases]
             for path, module in cases:
@@ -55,6 +59,12 @@ class SealedImportAllTest(unittest.TestCase):
                     "HexIntervalMathlib.Proof` outside its exact trusted-internals allowlist",
                     "bench/HexIntervalMathlib/Bypass.lean:1 uses `import all "
                     "HexIntervalMathlib.Proof` outside its exact trusted-internals allowlist",
+                    "conformance/HexIntervalMathlib/BypassRuntimeProof.lean:1 uses "
+                    "`import all HexIntervalMathlib.RuntimeProof` outside its exact "
+                    "trusted-internals allowlist",
+                    "bench/HexIntervalMathlib/BypassRuntimeProof.lean:1 uses "
+                    "`import all HexIntervalMathlib.RuntimeProof` outside its exact "
+                    "trusted-internals allowlist",
                 ],
             )
 

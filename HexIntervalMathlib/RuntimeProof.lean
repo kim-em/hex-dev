@@ -24,13 +24,17 @@ Instance events are wider than `Proof.InstanceStep`: before discarding the
 runtime-only fields, quotation checks the exact append-only program, binding,
 application-address, and generation suffixes. Transport has no raw quote; its
 proof event is derived only after independently checking the admitted equality
-descriptor, orientation, exact live source fact, and installed update.
+descriptor, orientation, exact live source fact, and installed update. These
+are structural runtime authorizations, not semantic entailment authority:
+only equality-schema replay proves substitution.
 
 `quoteTreeWithin` performs a full transaction over the retained typed
-transition chains and seals the resulting per-node recipe. `replayTree`
-rechecks that quotation before entering the existing recursive proof fold.
-Target, refutation, and split records remain the separately checked terminal
-schemas already owned by `Proof.replayTree`.
+transition chains and seals the exact registry with the resulting per-node
+recipe. `replayTree` consumes that checked token without quoting again.
+The underlying proof fold deliberately rechecks the retained tree and proof
+limits once at its theorem boundary; arbitrary package decoders and theorem
+callbacks remain non-preemptible. Target, refutation, and split records remain
+the separately checked terminal schemas already owned by `Proof.replayTree`.
 -/
 
 namespace Hex.Interval.RuntimeProof
@@ -58,9 +62,11 @@ structure Registry (Fact : Type) (semantics : Proof.Semantics Fact)
   proof : Proof.Registry semantics Plan
 
 /-- Quotation limits in addition to the retained search/runtime and proof
-limits. `maxEvents` is a total-tree bound, while the runtime limit remains the
-per-callback batch bound. `maxStructuralCells` charges retained bindings,
-applications, equalities, and typed-event cells before recipe construction. -/
+limits. `maxEvents` is a total retained-tree admission bound, while the
+runtime limit remains the per-callback batch bound. Neither cap preempts
+callback execution or equality on arbitrary caller facts.
+`maxStructuralCells` charges retained bindings, applications,
+equalities, and typed-event cells before recipe construction. -/
 structure Limits where
   result : Search.Result.Limits
   proof : Proof.Limits
@@ -76,6 +82,16 @@ inductive Resource where
   | structuralCells
   deriving DecidableEq, Repr
 
+inductive Malformed where
+  | quote
+  | fact
+  | equality
+  | transport
+  | instance
+  | transition
+  | tree
+  deriving DecidableEq, Repr
+
 inductive Error where
   | invalidRegistry
   | executable (error : Executable.Error)
@@ -84,7 +100,7 @@ inductive Error where
   | missingFormat (key : Executable.ReplayKey)
   | missingSchema (key : Proof.Key)
   | invalidBody (key : Proof.Key)
-  | malformed
+  | malformed (location : Malformed)
   | mismatch
   | resource (resource : Resource)
   deriving DecidableEq, Repr
@@ -212,10 +228,10 @@ private def checkQuote (limits : Proof.Limits)
     (registry : Registry Fact semantics Cause Plan) (action : Action)
     (expected : Executable.Role) (quote : Executable.Quote) :
     Except Error Proof.Key := do
-  if quote.role != expected then throw .malformed
+  if quote.role != expected then throw (.malformed .quote)
   let some (rule, formats) := registry.assembly.registry.formats? action.rule
-    | throw .malformed
-  if rule != action.key then throw .malformed
+    | throw (.malformed .quote)
+  if rule != action.key then throw (.malformed .quote)
   let replayKey : Executable.ReplayKey :=
     { rule, role := quote.role, schema := quote.schema }
   let some format := formats.find? fun format =>
@@ -233,7 +249,7 @@ private structure Cursor (Fact Cause : Type) where
   assembly : Assembly Fact Cause
   equalities : Array Runtime.Equality
   quotes : Array Executable.Quote
-  events : List (Proof.Event Fact)
+  eventsRev : List (Proof.Event Fact)
 
 private def fromBranch {α : Type} : Except State.BranchError α → Except Error α
   | .ok value => .ok value
@@ -247,7 +263,7 @@ private def pushFact [DecidableEq Fact] [DecidableEq Cause]
   if step.action != applied.action ||
       step.action.programVersion != cursor.branch.programVersion ||
       step.update.programVersion != cursor.branch.programVersion ||
-      !step.action.writes.contains step.update.node then throw .malformed
+      !step.action.writes.contains step.update.node then throw (.malformed .fact)
   let liftedKey ← promote id
     (checkQuote limits.proof registry applied.action .fact step.quote)
   let key := liftedKey.down
@@ -264,7 +280,7 @@ private def pushFact [DecidableEq Fact] [DecidableEq Cause]
       schema := key, body := step.quote.body }
   pure
     { branch := next, assembly := cursor.assembly, equalities := cursor.equalities,
-      quotes := cursor.quotes.push step.quote, events := cursor.events ++ [event] }
+      quotes := cursor.quotes.push step.quote, eventsRev := event :: cursor.eventsRev }
 
 private def pushEquality [DecidableEq Fact]
     (limits : Limits) (registry : Registry Fact semantics Cause Plan)
@@ -276,10 +292,10 @@ private def pushEquality [DecidableEq Fact]
       step.equality.index != cursor.equalities.size || step.left == step.right ||
       step.assumptions != step.action.inputs ||
       !inputsAvailable cursor.branch step.assumptions ||
-      step.generation != step.action.generation then throw .malformed
-  let some left := cursor.branch.program.node? step.left | throw .malformed
-  let some right := cursor.branch.program.node? step.right | throw .malformed
-  if left.domain != right.domain then throw .malformed
+      step.generation != step.action.generation then throw (.malformed .equality)
+  let some left := cursor.branch.program.node? step.left | throw (.malformed .equality)
+  let some right := cursor.branch.program.node? step.right | throw (.malformed .equality)
+  if left.domain != right.domain then throw (.malformed .equality)
   let liftedKey ← promote id
     (checkQuote limits.proof registry applied.action .equality step.quote)
   let key := liftedKey.down
@@ -295,7 +311,7 @@ private def pushEquality [DecidableEq Fact]
   pure
     { branch := cursor.branch, assembly := cursor.assembly,
       equalities := cursor.equalities.push equality,
-      quotes := cursor.quotes.push step.quote, events := cursor.events ++ [event] }
+      quotes := cursor.quotes.push step.quote, eventsRev := event :: cursor.eventsRev }
 
 private def pushTransport [DecidableEq Fact] [DecidableEq Cause]
     (limits : Limits) (scope : Policy.ScopeId)
@@ -306,12 +322,14 @@ private def pushTransport [DecidableEq Fact] [DecidableEq Cause]
       step.update.programVersion != cursor.branch.programVersion ||
       !step.action.writes.contains step.update.node ||
       !step.action.inputs.contains step.source || !current cursor.branch step.source ||
-      cursor.branch.factAt? step.source != some step.update.fact then throw .malformed
-  let some equality := cursor.equalities[step.equality.index]? | throw .malformed
+      cursor.branch.factAt? step.source != some step.update.fact then
+    throw (.malformed .transport)
+  let some equality := cursor.equalities[step.equality.index]?
+    | throw (.malformed .transport)
   let oriented :=
     (step.update.node == equality.left && step.source.node == equality.right) ||
       (step.update.node == equality.right && step.source.node == equality.left)
-  if !oriented then throw .malformed
+  if !oriented then throw (.malformed .transport)
   let liftedNext ← promote id (fromBranch (State.Branch.pushWithin limits.result.state
     cursor.branch step.update applied.after.contradictory))
   let next := liftedNext.down
@@ -321,7 +339,7 @@ private def pushTransport [DecidableEq Fact] [DecidableEq Cause]
       equality := step.equality, source := step.source, installed := step.update.fact }
   pure
     { branch := next, assembly := cursor.assembly, equalities := cursor.equalities,
-      quotes := cursor.quotes, events := cursor.events ++ [event] }
+      quotes := cursor.quotes, eventsRev := event :: cursor.eventsRev }
 
 private def pushInstance [DecidableEq Fact] [DecidableEq Cause]
     (limits : Limits) (registry : Registry Fact semantics Cause Plan)
@@ -335,12 +353,13 @@ private def pushInstance [DecidableEq Fact] [DecidableEq Cause]
       !Executable.bindingsPrefix cursor.assembly.bindings step.bindings ||
       step.newBindings != suffix cursor.assembly.bindings step.bindings ||
       step.newNodes != expectedNodes cursor.branch.program.nodes.size
-        (step.after.nodes.size - cursor.branch.program.nodes.size) then throw .malformed
+        (step.after.nodes.size - cursor.branch.program.nodes.size) then
+    throw (.malformed .instance)
   let nextAssembly ← cursor.assembly.extendAllWithin limits.result.runtime.executable
     step.after step.bindings step.generation |>.mapError Error.executable
   let freshApplications := nextAssembly.applications.size - cursor.assembly.applications.size
   if step.newApplications != expectedApplications cursor.assembly.applications.size
-      freshApplications then throw .malformed
+      freshApplications then throw (.malformed .instance)
   let liftedKey ← promote id
     (checkQuote limits.proof registry applied.action .instance step.quote)
   let key := liftedKey.down
@@ -354,7 +373,7 @@ private def pushInstance [DecidableEq Fact] [DecidableEq Cause]
       body := step.quote.body }
   pure
     { branch := next, assembly := nextAssembly, equalities := cursor.equalities,
-      quotes := cursor.quotes.push step.quote, events := cursor.events ++ [event] }
+      quotes := cursor.quotes.push step.quote, eventsRev := event :: cursor.eventsRev }
 
 private def pushEvent [DecidableEq Fact] [DecidableEq Cause]
     (limits : Limits) (registry : Registry Fact semantics Cause Plan)
@@ -366,9 +385,10 @@ private def pushEvent [DecidableEq Fact] [DecidableEq Cause]
   | .transport step => pushTransport limits scope applied cursor step
   | .instance step => pushInstance limits registry scope applied cursor step
 
-private def quoteAppliedFrom [DecidableEq Fact] [DecidableEq Cause]
+private def quoteAppliedRevFrom [DecidableEq Fact] [DecidableEq Cause]
     (limits : Limits) (registry : Registry Fact semantics Cause Plan)
     (scope : Policy.ScopeId) (assembly : Assembly Fact Cause)
+    (eventsRev : List (Proof.Event Fact))
     (applied : Runtime.Applied Fact Cause) :
     Except Error (List (Proof.Event Fact) × Assembly Fact Cause) := do
   if limits.result.runtime.maxEvents < applied.events.size ||
@@ -392,11 +412,11 @@ private def quoteAppliedFrom [DecidableEq Fact] [DecidableEq Cause]
       assembly.generation != applied.beforeGeneration ||
       !Registration.check applied.before.program registry.proof.registrations ||
       !Registration.check applied.after.program registry.proof.registrations then
-    throw .malformed
+    throw (.malformed .transition)
   let mut cursor : Cursor Fact Cause :=
     { branch := applied.before, assembly,
       equalities := applied.beforeEqualities,
-      quotes := #[], events := [] }
+      quotes := #[], eventsRev }
   for event in applied.events do
     cursor ← pushEvent limits registry scope applied cursor event
   if cursor.branch != applied.after || cursor.assembly.program != applied.after.program ||
@@ -406,24 +426,16 @@ private def quoteAppliedFrom [DecidableEq Fact] [DecidableEq Cause]
       cursor.assembly.generation != applied.afterGeneration ||
       cursor.equalities != applied.afterEqualities || cursor.quotes != applied.quotes then
     throw .mismatch
-  pure (cursor.events, cursor.assembly)
+  pure (cursor.eventsRev, cursor.assembly)
 
-/-- Transactionally quote a sealed typed callback batch starting from the
-registry assembly. Full retained chains use `quoteTreeWithin`, which carries
-the reconstructed assembly across every later callback at the same node. -/
-opaque quoteAppliedWithin [DecidableEq Fact] [DecidableEq Cause]
-    (limits : Limits) (registry : Registry Fact semantics Cause Plan)
-    (scope : Policy.ScopeId) (applied : Runtime.Applied Fact Cause) :
-    Except Error (List (Proof.Event Fact)) :=
-  match quoteAppliedFrom limits registry scope registry.assembly applied with
-  | .ok (events, _) => .ok events
-  | .error error => .error error
-
-/-- Sealed exact retained tree and the recipe derived from all its typed
-runtime transition chains. -/
-structure Bundle (Fact Cause Plan : Type) where
+/-- Sealed exact registry, retained tree, and recipe derived from all its typed
+runtime transition chains. Retaining the registry inside this private-
+constructor token prevents replay under a different registry which merely
+reuses the same public compatibility key. -/
+structure Bundle (Fact : Type) (semantics : Proof.Semantics Fact)
+    (Cause Plan : Type) where
   private mk ::
-  key : Key
+  registry : Registry Fact semantics Cause Plan
   tree : Search.Result.Tree Fact Cause Plan Proof.Key
   recipe : Proof.TreeRecipe Fact
 
@@ -437,45 +449,75 @@ private def structuralCells (transition : Runtime.Applied Fact Cause) : Nat :=
     transition.beforeApplications.size + transition.afterApplications.size +
     transition.beforeEqualities.size + transition.afterEqualities.size
 
-private structure NodeCursor (Fact Cause : Type) where
-  events : List (Proof.Event Fact)
-  assembly : Assembly Fact Cause
+private def groupSteps
+    (nodeCount : Nat)
+    (transitions : Array (Search.Result.Id × Runtime.Applied Fact Cause))
+    : Except Error (Array (List (Runtime.Applied Fact Cause))) := do
+  let mut reversed := Array.replicate nodeCount []
+  for entry in transitions do
+    let some steps := reversed[entry.1.index]? | throw (.malformed .tree)
+    reversed := reversed.set! entry.1.index (entry.2 :: steps)
+  pure (reversed.map List.reverse)
 
-private def quoteTransitions [DecidableEq Fact] [DecidableEq Cause]
+private def quoteSteps [DecidableEq Fact] [DecidableEq Cause]
     (limits : Limits) (registry : Registry Fact semantics Cause Plan)
-    (tree : Search.Result.Tree Fact Cause Plan Proof.Key) :
-    List (Search.Result.Id × Runtime.Applied Fact Cause) →
-      Array (NodeCursor Fact Cause) → Except Error (Array (NodeCursor Fact Cause))
-  | [], cursors => pure cursors
-  | entry :: rest, cursors => do
-      let some node := tree.nodes[entry.1.index]? | throw .malformed
-      let some cursor := cursors[entry.1.index]? | throw .malformed
-      let (quoted, nextAssembly) ←
-        quoteAppliedFrom limits registry node.source.scope cursor.assembly entry.2
-      let next := cursors.set! entry.1.index
-        { events := cursor.events ++ quoted, assembly := nextAssembly }
-      quoteTransitions limits registry tree rest next
+    (scope : Policy.ScopeId) :
+    List (Runtime.Applied Fact Cause) → List (Proof.Event Fact) →
+      Assembly Fact Cause →
+      Except Error (List (Proof.Event Fact) × Assembly Fact Cause)
+  | [], eventsRev, assembly => pure (eventsRev, assembly)
+  | transition :: rest, eventsRev, assembly => do
+      let (eventsRev, assembly) ←
+        quoteAppliedRevFrom limits registry scope assembly eventsRev transition
+      quoteSteps limits registry scope rest eventsRev assembly
+
+private structure TreeCursor (Fact Cause : Type) where
+  seeds : Array (Option (Assembly Fact Cause))
+  chronologies : Array (List (Proof.Event Fact))
+
+private def quoteNodes [DecidableEq Fact] [DecidableEq Cause]
+    (limits : Limits) (registry : Registry Fact semantics Cause Plan)
+    (tree : Search.Result.Tree Fact Cause Plan Proof.Key)
+    (steps : Array (List (Runtime.Applied Fact Cause))) :
+    Nat → TreeCursor Fact Cause → Except Error (TreeCursor Fact Cause)
+  | index, cursor => do
+      if tree.nodes.size ≤ index then return cursor
+      let some node := tree.nodes[index]? | throw (.malformed .tree)
+      let some (some seed) := cursor.seeds[index]? | throw (.malformed .tree)
+      let some nodeSteps := steps[index]? | throw (.malformed .tree)
+      let (eventsRev, assembly) ←
+        quoteSteps limits registry node.source.scope nodeSteps [] seed
+      let chronologies := cursor.chronologies.set! index eventsRev.reverse
+      let seeds := match node with
+        | .split _ _ left right =>
+            (cursor.seeds.set! left.index (some assembly)).set! right.index (some assembly)
+        | .pending _ | .terminal _ _ => cursor.seeds
+      quoteNodes limits registry tree steps (index + 1) { seeds, chronologies }
 
 private def quoteChronologies [DecidableEq Fact] [DecidableEq Cause]
     (limits : Limits) (registry : Registry Fact semantics Cause Plan)
     (tree : Search.Result.Tree Fact Cause Plan Proof.Key)
     (transitions : Array (Search.Result.Id × Runtime.Applied Fact Cause)) :
     Except Error (Array (List (Proof.Event Fact))) :=
-  let initial : Array (NodeCursor Fact Cause) :=
-    Array.replicate tree.nodes.size { events := [], assembly := registry.assembly }
-  match quoteTransitions limits registry tree transitions.toList initial with
+  match groupSteps tree.nodes.size transitions with
   | .error error => .error error
-  | .ok cursors => .ok (Array.map (fun cursor => cursor.events) cursors)
+  | .ok steps =>
+      let seeds := (Array.replicate tree.nodes.size none).set! 0 (some registry.assembly)
+      let initial : TreeCursor Fact Cause :=
+        { seeds, chronologies := Array.replicate tree.nodes.size [] }
+      -- Tree.check proves every child id is greater than its parent id and has
+      -- exactly one incoming edge. This index fold therefore sees the parent's
+      -- post-chronology assembly before it reaches either child.
+      match quoteNodes limits registry tree steps 0 initial with
+      | .error error => .error error
+      | .ok cursor => .ok cursor.chronologies
 
-/-- Quote the complete checked retained tree transactionally. No prefix recipe
-escapes if any later transition, schema, body, resource, or node-chain check
-fails. -/
-opaque quoteTreeWithin [DecidableEq Fact] [DecidableEq Cause]
+private def quoteRecipeWithin [DecidableEq Fact] [DecidableEq Cause]
     (limits : Limits) (measure : Search.Result.Measure Fact Cause Plan Proof.Key)
     (registry : Registry Fact semantics Cause Plan)
     (tree : Search.Result.Tree Fact Cause Plan Proof.Key) :
-    Except Error (Bundle Fact Cause Plan) := do
-  if !tree.check limits.result measure then throw .malformed
+    Except Error (Proof.TreeRecipe Fact) := do
+  if !tree.check limits.result measure then throw (.malformed .tree)
   let transitions := tree.transitions
   if limits.maxTransitions < transitions.size then throw (.resource .transitions)
   let mut eventCount := 0
@@ -493,21 +535,32 @@ opaque quoteTreeWithin [DecidableEq Fact] [DecidableEq Cause]
       throw (.proof .chronologyLimit)
   let recipe : Proof.TreeRecipe Fact := { events, edges }
   Proof.checkTreeLimits limits.tree tree recipe |>.mapError Error.proof
-  pure { key := registry.key, tree, recipe }
+  pure recipe
 
-/-- Recheck exact quotation and run the existing recursive proof fold. Raw
-quotes never become evidence; only independently decoded package schemas can
-construct the returned theorem. -/
+/-- Quote the complete checked retained tree transactionally. No prefix recipe
+escapes if any later transition, schema, body, resource, or node-chain check
+fails. -/
+opaque quoteTreeWithin [DecidableEq Fact] [DecidableEq Cause]
+    (limits : Limits) (measure : Search.Result.Measure Fact Cause Plan Proof.Key)
+    (registry : Registry Fact semantics Cause Plan)
+    (tree : Search.Result.Tree Fact Cause Plan Proof.Key) :
+    Except Error (Bundle Fact semantics Cause Plan) :=
+  match quoteRecipeWithin limits measure registry tree with
+  | .error error => .error error
+  | .ok recipe => .ok { registry, tree, recipe }
+
+/-- Consume one checked quotation without repeating it and run the recursive
+proof fold. The token retains the exact sealed registry, so replay neither
+accepts a registry substitute nor repeats executable-format/schema decoding.
+The proof fold still independently rechecks the retained tree and proof limits
+at its theorem boundary. Raw quotes never become evidence. -/
 def replayTree [DecidableEq Fact] [DecidableEq Cause] [DecidableEq Plan]
     (limits : Limits) (measure : Search.Result.Measure Fact Cause Plan Proof.Key)
-    (registry : Registry Fact semantics Cause Plan) (domain : Proof.Domain semantics)
-    (laws : Proof.Laws semantics) (input : Proof.Input Fact)
-    (bundle : Bundle Fact Cause Plan) : Except Error
+    (domain : Proof.Domain semantics) (laws : Proof.Laws semantics)
+    (input : Proof.Input Fact) (bundle : Bundle Fact semantics Cause Plan) :
+    Except Error
       (Proof.Evidence (semantics.Entails input.program (Proof.initialBase input) input.target)) := do
-  if bundle.key != registry.key then throw .mismatch
-  let checked ← quoteTreeWithin limits measure registry bundle.tree
-  if checked.recipe != bundle.recipe then throw .mismatch
-  Proof.replayTree limits.result measure limits.proof limits.tree registry.proof
+  Proof.replayTree limits.result measure limits.proof limits.tree bundle.registry.proof
     domain laws input bundle.tree bundle.recipe |>.mapError Error.proof
 
 end Hex.Interval.RuntimeProof

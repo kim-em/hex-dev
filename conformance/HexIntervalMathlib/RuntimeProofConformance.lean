@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexIntervalMathlib.Runtime
+import HexIntervalMathlib.RuntimeProof
 import HexIntervalMathlib.Experiment.SineSign
 
 /-!
@@ -23,6 +23,14 @@ open Hex.Interval.Executable
 open Hex.Interval.Runtime
 open Hex.Interval.RuntimeProof
 open Hex.Interval.Experiment.SineSign
+
+/-- error: Unknown constant `Hex.Interval.RuntimeProof.Registry.mk` -/
+#guard_msgs in
+#check RuntimeProof.Registry.mk
+
+/-- error: Unknown constant `Hex.Interval.RuntimeProof.Bundle.mk` -/
+#guard_msgs in
+#check RuntimeProof.Bundle.mk
 
 def scope : Policy.ScopeId := { index := 0 }
 
@@ -92,7 +100,7 @@ def factBatch (request : RuleRequest Range) : Runtime.Batch Range Nat :=
   { events := #[.fact
       { action := request.action,
         update :=
-          { programVersion := 1
+          { programVersion := request.action.programVersion
             node := node 4
             previous := { node := node 4, version := 0 }
             fact := .nonpositive
@@ -104,7 +112,7 @@ def transportBatch (request : RuleRequest Range) : Runtime.Batch Range Nat :=
   { events := #[.transport
       { action := request.action,
         update :=
-          { programVersion := 1
+          { programVersion := request.action.programVersion
             node := node 2
             previous := { node := node 2, version := 0 }
             fact := .nonpositive
@@ -211,6 +219,17 @@ def transportAction : Action :=
   action 3 1 2 2 transportKey (node 2) .rewrite 1
     [{ node := node 4, version := 1 }] [node 2]
 
+def childEqualityAction : Action :=
+  action 0 0 1 1 equalityKey (node 2) .rewrite 1 []
+
+def childFactAction : Action :=
+  action 1 0 3 3 factKey (node 4) .forward 1
+    [{ node := node 0, version := 0 }] [node 4]
+
+def childTransportAction : Action :=
+  action 2 0 2 2 transportKey (node 2) .rewrite 1
+    [{ node := node 4, version := 1 }] [node 2]
+
 /-! ## Theorem registry -/
 
 def semantics : Proof.Semantics Range :=
@@ -265,6 +284,8 @@ theorem equalityProof : semantics.EntailsEq extendedProgram [] (node 2) (node 4)
   have original := model.2.1 (by rfl)
   have positive := model.2.2.1 (by rfl)
   have negative := model.2.2.2 (by rfl)
+  -- This is genuine substitution through the four model equations and
+  -- sin(-x), not ex-falso use of an inconsistent equality context.
   calc
     valuation (node 2) = Real.sin (valuation (node 1)) := original
     _ = Real.sin (-valuation (node 0)) := congrArg Real.sin negated
@@ -367,19 +388,20 @@ def factSchema : Proof.FactSchema semantics :=
 def splitSchema : Proof.SplitSchema semantics Nat :=
   { key := splitProofKey, Certificate := Unit, decode,
     prove := fun context _ =>
-      if shape : context.program = baseProgram ∧ context.parent.node = node 1 ∧
+      if shape : (context.program = baseProgram ∨ context.program = extendedProgram) ∧
+          context.parent.node = node 1 ∧
           context.left = { node := node 1, fact := .nonnegative } ∧
           context.right = { node := node 1, fact := .nonpositive } then
         some
           { proof := by
-              rcases shape with ⟨programEq, _, leftEq, rightEq⟩
+              rcases shape with ⟨_, _, leftEq, rightEq⟩
               intro valuation _ _
               change NodeId → ℝ at valuation
               rcases le_total 0 (valuation (node 1)) with left | right
               · left
-                simpa [programEq, leftEq, semantics, Contains] using left
+                simpa [leftEq, semantics, Contains] using left
               · right
-                simpa [programEq, rightEq, semantics, Contains] using right }
+                simpa [rightEq, semantics, Contains] using right }
       else none }
 
 def proofPackage : Proof.Package semantics Nat :=
@@ -498,43 +520,112 @@ def splitTree? : Option (Search.Result.Tree Range Nat Nat Proof.Key) :=
           | .ok tree => (runCurrent tree assembly).bind fun tree => runCurrent tree assembly
   | _, _ => none
 
+def postInstanceSplitAction : Action :=
+  action 1 1 0 4 splitKey (node 1) .split 1
+    [{ node := node 1, version := 0 }]
+
+def postInstanceSplitRecipe : Search.Result.Split Nat Proof.Key :=
+  { scope, programVersion := 1, action := postInstanceSplitAction,
+    parent := { node := node 1, version := 0 }, plan := 1,
+    schema := splitProofKey, body := [1] }
+
+private def runExtendedCurrent (tree : Search.Result.Tree Range Nat Nat Proof.Key)
+    (assembly : RuntimeProof.Assembly Range Nat) :
+    Option (Search.Result.Tree Range Nat Nat Proof.Key) :=
+  match Search.Result.current? tree with
+  | none => none
+  | some (_, source) =>
+      match Runtime.State.startWithin runtimeLimits assembly source.branch with
+      | .error _ => none
+      | .ok runtime =>
+          match advance tree runtime
+              [childEqualityAction, childFactAction, childTransportAction] with
+          | none => none
+          | some (tree, _) =>
+              (Search.Result.settleWithin resultLimits measure tree (.target
+                { scope := source.scope, programVersion := 0,
+                  seen := { node := node 2, version := 1 } })).toOption
+
+/-- Root extension precedes the split; both children restart from the exact
+post-instance program and generation inherited from their parent. -/
+def postInstanceSplitTree? :
+    Option (Search.Result.Tree Range Nat Nat Proof.Key) :=
+  match branch?, assembly? with
+  | some branch, some assembly =>
+      match Search.Result.startWithin resultLimits measure scope branch,
+          Runtime.State.startWithin runtimeLimits assembly branch with
+      | .ok root, .ok runtime =>
+          match advance root runtime [instanceAction] with
+          | none => none
+          | some (root, runtime) =>
+              match Search.Result.splitWithin resultLimits measure .depthFirst root
+                  postInstanceSplitRecipe leftSeed rightSeed with
+              | .error _ => none
+              | .ok tree =>
+                  (runExtendedCurrent tree runtime.assembly).bind fun tree =>
+                    runExtendedCurrent tree runtime.assembly
+      | _, _ => none
+  | _, _ => none
+
 #guard rootTree?.any fun tree =>
   tree.check resultLimits measure && tree.transitions.size == 4 && tree.pending.isEmpty
 
 #guard splitTree?.any fun tree =>
   tree.check resultLimits measure && tree.transitions.size == 8 && tree.pending.isEmpty
 
-def rootBundle? : Option (RuntimeProof.Bundle Range Nat Nat) :=
+#guard postInstanceSplitTree?.any fun tree =>
+  tree.check resultLimits measure && tree.transitions.size == 7 && tree.pending.isEmpty
+
+def rootBundle? : Option (RuntimeProof.Bundle Range semantics Nat Nat) :=
   match registry?, rootTree? with
   | some registry, some tree =>
       (RuntimeProof.quoteTreeWithin adapterLimits measure registry tree).toOption
   | _, _ => none
 
-def splitBundle? : Option (RuntimeProof.Bundle Range Nat Nat) :=
+def splitBundle? : Option (RuntimeProof.Bundle Range semantics Nat Nat) :=
   match registry?, splitTree? with
+  | some registry, some tree =>
+      (RuntimeProof.quoteTreeWithin adapterLimits measure registry tree).toOption
+  | _, _ => none
+
+def postInstanceSplitBundle? :
+    Option (RuntimeProof.Bundle Range semantics Nat Nat) :=
+  match registry?, postInstanceSplitTree? with
   | some registry, some tree =>
       (RuntimeProof.quoteTreeWithin adapterLimits measure registry tree).toOption
   | _, _ => none
 
 def rootReplay? : Option (Proof.Evidence
     (semantics.Entails input.program (Proof.initialBase input) input.target)) :=
-  match registry?, rootBundle? with
-  | some registry, some bundle =>
-      (RuntimeProof.replayTree adapterLimits measure registry domain laws input bundle).toOption
-  | _, _ => none
+  match rootBundle? with
+  | some bundle =>
+      (RuntimeProof.replayTree adapterLimits measure domain laws input bundle).toOption
+  | none => none
 
 def splitReplay? : Option (Proof.Evidence
     (semantics.Entails input.program (Proof.initialBase input) input.target)) :=
-  match registry?, splitBundle? with
-  | some registry, some bundle =>
-      (RuntimeProof.replayTree adapterLimits measure registry domain laws input bundle).toOption
-  | _, _ => none
+  match splitBundle? with
+  | some bundle =>
+      (RuntimeProof.replayTree adapterLimits measure domain laws input bundle).toOption
+  | none => none
+
+def postInstanceSplitReplay? : Option (Proof.Evidence
+    (semantics.Entails input.program (Proof.initialBase input) input.target)) :=
+  match postInstanceSplitBundle? with
+  | some bundle =>
+      (RuntimeProof.replayTree adapterLimits measure domain laws input bundle).toOption
+  | none => none
 
 #guard rootBundle?.isSome
 #guard splitBundle?.isSome
+#guard postInstanceSplitBundle?.isSome
 #guard rootReplay?.isSome
 #guard splitReplay?.isSome
+#guard postInstanceSplitReplay?.isSome
 
+-- The fallback keeps these closed definitions total. The isSome guards above
+-- independently reduce quotation and replay, so the ordinary theorems do not
+-- serve as the canary that the adapter path actually ran.
 def fallback : Proof.Evidence
     (semantics.Entails input.program (Proof.initialBase input) input.target) :=
   { proof := by
@@ -772,7 +863,7 @@ private def packageReplayError
       match RuntimeProof.quoteTreeWithin adapterLimits measure registry tree with
       | .error _ => none
       | .ok bundle =>
-          match RuntimeProof.replayTree adapterLimits measure registry domain laws input bundle with
+          match RuntimeProof.replayTree adapterLimits measure domain laws input bundle with
           | .error error => some error
           | .ok _ => none
   | _, _ => none

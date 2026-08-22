@@ -5613,7 +5613,7 @@ their declared cost inside a scheduler bound.
   compiler does not create global structural-matcher applications; offer
   generation remains a later layer. Fact-event correlation is supplied by
   `HexIntervalMathlib.Controller.Executable`; the separate supported
-  `HexIntervalMathlib.Runtime` companion correlates sealed typed fact,
+  `HexIntervalMathlib.RuntimeProof` companion correlates sealed typed fact,
   equality, transport, and instance transitions with theorem schemas.
 - `HexInterval/Runtime.lean`: supported sealed Mathlib-free ownership of one
   executable assembly, branch, and exact equality arena; atomic typed fact,
@@ -5621,7 +5621,7 @@ their declared cost inside a scheduler bound.
   binding, node, generation, and equality authority; and sealed before/after
   transitions retained by `Search.Result.Tree`. Raw quotations remain inert
   data; theorem authority is supplied only by the separately checked
-  `HexIntervalMathlib.Runtime` proof adapter.
+  `HexIntervalMathlib.RuntimeProof` proof adapter.
 - `HexInterval/Trace.lean`: supported exact fact/instance chronology and
   bounded diagnostic-log contracts. Diagnostic bytes count retained `UInt8`
   payload cells after callback construction; they do not claim to preempt
