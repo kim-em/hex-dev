@@ -28,7 +28,6 @@ extra ingredient is that reducing modulo the modulus is invisible after it.
 namespace HexGFqMathlib
 
 open Hex
-open scoped HexPolyFpMathlib
 
 variable {p : Nat} [Hex.ZMod64.Bounds p] [Hex.ZMod64.PrimeModulus p]
 variable {f : Hex.FpPoly p} {hf : 0 < Hex.FpPoly.degree f}
