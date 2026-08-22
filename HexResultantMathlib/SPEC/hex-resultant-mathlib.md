@@ -9,6 +9,28 @@ algebraic value is a root of an eliminant, but tower norms, root-product bounds,
 specialization, and Trager factorization also depend on the value of the
 resultant, including its units, powers, and signs.
 
+## Headline correctness theorem
+
+`Hex.DensePoly.toPolynomial_resultant`: the executable subresultant
+resultant agrees with Mathlib's `Polynomial.resultant` under the
+dense-polynomial correspondence, with the executable default formal
+degrees (`f.degree?.getD 0`, `g.degree?.getD 0`) made explicit. This is
+the end-to-end post-condition of the public API: exact agreement of
+values, units, powers, and signs included, not merely simultaneous
+vanishing. It needs no monicity, coprimality, or nonzero hypotheses on
+`f` and `g`; its typeclass context is the executable algorithm's own
+(`CommRing R`, `IsDomain R`, `DecidableEq R`, `Div R`,
+`Hex.ExactDivLaws R`). It is built from
+`coeffMinor_zero_eq_resultant` through the ordered Brown-Traub chain
+correspondence.
+
+The remaining public theorems below are either load-bearing for the
+headline proof (the `SubresultantMinor` and `PseudoDivMod` transport
+lemmas) or independently justified consumer surface for number-field
+soundness (`resultant_eq_zero_iff_common_root`, `eval_resultant`, the
+specialization and discriminant facts), per the intermediate-lemma rule
+in PLAN/Conventions.md §Headline correctness theorem.
+
 ## Public theorems
 
 The exact typeclass assumptions follow the executable algorithm: `R` is a
