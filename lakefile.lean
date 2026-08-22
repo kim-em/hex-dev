@@ -749,6 +749,10 @@ lean_exe hex_interval_policy_frontier_spike where
   srcDir := "bench"
   root := `HexInterval.IntervalPolicyFrontierSpike
 
+lean_exe hexinterval_decision_bench where
+  srcDir := "bench"
+  root := `HexInterval.DecisionBench
+
 lean_exe hexbz_factor_service where
   srcDir := "bench"
   root := `HexBench.FactorService
