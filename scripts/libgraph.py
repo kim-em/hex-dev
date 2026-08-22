@@ -8,7 +8,10 @@ import re
 import tomllib
 
 
-KNOWN_EXCEPTIONS = {"Hex", "HexManual"}
+# Repo-root modules that carry a `lean_lib` but are not project libraries:
+# `Hex` is the shared test/bench helper, `HexManual` the Verso manual, and
+# `HexAggregateCheck` the mirror of the released aggregate's umbrella.
+KNOWN_EXCEPTIONS = {"Hex", "HexManual", "HexAggregateCheck"}
 # Build-only lean_libs that build the per-library bench/conformance drivers under
 # `bench/` and `conformance/`. They are not project libraries (no libraries.yml
 # entry, no repo-root file); exempt them from the Lake-config alignment check only.

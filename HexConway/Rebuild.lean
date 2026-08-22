@@ -4,7 +4,11 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import Lean
+module
+
+public import Lean
+
+public section
 
 /-!
 The `rebuild_luebeckConwayPolynomial?` command, which regenerates the committed
@@ -49,7 +53,7 @@ structure Entry where
 Fails with a readable message rather than an exception when the file is absent
 or does not have the shape `update_luebeck_conway_cache.py` writes, since the
 usual cause is running the command from outside the package root. -/
-def readCache (path : System.FilePath) : IO (Array Entry) := do
+meta def readCache (path : System.FilePath) : IO (Array Entry) := do
   unless ← path.pathExists do
     throw <| IO.userError
       s!"Lübeck Conway cache not found at '{path}'. \
@@ -74,7 +78,7 @@ them, matching the `SLICE` in `scripts/oracle/update_luebeck_conway_cache.py`.
 The proof cost of an entry grows with both the prime and the degree, so a
 uniform bound would either stop the small primes short of what the budget
 affords or push the large ones past it. -/
-def selectScope (entries : Array Entry) (scope : List (Nat × Nat)) : Array Entry :=
+meta def selectScope (entries : Array Entry) (scope : List (Nat × Nat)) : Array Entry :=
   let kept := entries.filter fun e =>
     match scope.find? (fun s => s.1 = e.p) with
     | some (_, maxDegree) => 1 ≤ e.n && e.n ≤ maxDegree
@@ -83,18 +87,19 @@ def selectScope (entries : Array Entry) (scope : List (Nat × Nat)) : Array Entr
 
 /-- Render the scope back as the command that produced it, for the commented-out
 line the replacement carries. -/
-def renderInvocation (scope : List (Nat × Nat)) (path : String) : String :=
+meta def renderInvocation (scope : List (Nat × Nat)) (path : String) : String :=
   let pairs := String.intercalate ", " (scope.map fun s => s!"{s.1}:{s.2}")
   s!"rebuild_luebeckConwayPolynomial? scope [{pairs}] from \"{path}\""
 
 /-- Render the regenerated coefficient table, including the commented-out
 invocation above it. -/
-def renderTable (entries : Array Entry) (invocation : String) : String :=
+meta def renderTable (entries : Array Entry) (invocation : String) : String :=
   let header :=
     "-- Regenerate this definition with the command on the next line, which\n\
      -- rewrites it from the committed Lübeck cache:\n\
      -- " ++ invocation ++ "\n\
      /-- Committed Lübeck Conway-table coefficients, stored ascending by degree. -/\n\
+     @[expose]\n\
      def luebeckConwayCoeffs? : Nat → Nat → Option (List Nat)\n"
   let rows := entries.foldl (init := "") fun acc e =>
     let coeffs := String.intercalate ", " (e.coeffs.map toString)
@@ -112,7 +117,7 @@ syntax (name := rebuildLuebeck)
     (&"from" str)? command : command
 
 @[command_elab rebuildLuebeck]
-def elabRebuild : CommandElab := fun stx => do
+meta def elabRebuild : CommandElab := fun stx => do
   let scope := stx[3].getSepArgs.toList.map fun s =>
     (s[0].isNatLit?.getD 0, s[2].isNatLit?.getD 0)
   let pathArg := stx[5]

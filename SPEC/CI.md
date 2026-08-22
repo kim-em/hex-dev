@@ -174,6 +174,26 @@ job, enforces two rules:
   rule diffs against the merge base, so it applies in pull-request context
   and is skipped when no base is available.
 
+## Released-aggregate mirror
+
+`leanprover/hex` is a module-system umbrella that `public import`s every
+released library. A module may not import a non-module module, so a
+library that never adopted the module system builds fine here and breaks
+the aggregate: nothing inside this monorepo imports a released umbrella
+from module code, and the non-module conformance and bench drivers may
+import anything.
+
+`HexAggregateCheck.lean` closes that hole. It is a `module` whose only
+content is the same `public import`s the aggregate carries, in the same
+order, so the failure surfaces in `lake build` here instead of after the
+publish-out sync has pushed the library.
+`scripts/release/check_released_manifest.py` compares its import list
+against the `leanprover/hex` entry's `pins:` in
+`scripts/release/released.yml` and fails on drift, so publishing a new
+library updates this file rather than silently skipping it. The target is
+a `@[default_target] lean_lib` and is listed in `HEX_LIB_TARGETS`, so both
+a bare local `lake build` and the single `build` job cover it.
+
 ## Mathlib cache is mandatory
 
 Hex depends transitively on Mathlib (see `lakefile.lean`). Every

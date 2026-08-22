@@ -4,9 +4,13 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexGF2Mathlib.Field
-import Mathlib.Algebra.Ring.MinimalAxioms
-import Mathlib.Algebra.Field.MinimalAxioms
+module
+
+public import HexGF2Mathlib.Field
+public import Mathlib.Algebra.Ring.MinimalAxioms
+public import Mathlib.Algebra.Field.MinimalAxioms
+
+public section
 
 /-!
 Mathlib algebraic structure on the packed `hex-gf2` types.

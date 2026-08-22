@@ -4,13 +4,17 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexConway.Rebuild
-import HexConway.Table
-import HexConway.Certificates
-import HexConway.Api
-import HexConway.Compatibility
-import HexConway.Primitivity
-import HexConway.EntrySource
+module
+
+public import HexConway.Rebuild
+public import HexConway.Table
+public import HexConway.Certificates
+public import HexConway.Api
+public import HexConway.Compatibility
+public import HexConway.Primitivity
+public import HexConway.EntrySource
+
+public section
 
 /-!
 `HexConway` provides the Tier 1 imported-lookup API for the Conway-polynomial
