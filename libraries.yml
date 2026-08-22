@@ -485,8 +485,13 @@ libraries:
     mathlib: true
     # Extracted from HexBerlekampMathlib, so this entry started at 0: phases are
     # recorded here as they are established for this library in its own right,
-    # not inherited from the library the code came from.
-    done_through: 4
+    # not inherited from the library the code came from. Phase 2 is attested by
+    # status/hex-poly-fp-mathlib.scaffolding-reviewed; phases 3 and 4 are the
+    # correspondence-only mathlib layer criteria of PLAN/Phase3.md and
+    # PLAN/Phase4.md, so there is no conformance module, no bench target and no
+    # phase4 block here, and the layer's performance owners are named in its
+    # SPEC rather than measured locally.
+    done_through: 5
     status: active
   HexBerlekampMathlib:
     deps: [HexBerlekamp, HexPolyMathlib, HexModArithMathlib, HexPolyFpMathlib]
