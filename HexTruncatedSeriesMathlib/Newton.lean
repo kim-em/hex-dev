@@ -40,38 +40,6 @@ private theorem coeffFold [CommRing R] (xs : List Nat)
       simp only [List.foldl_cons]
       rw [ih, Hex.TSeries.coeff_add z (f k) i hi]
 
-private theorem ofPowerSeries_X [CommRing R] :
-    ofPowerSeries (n := n) (PowerSeries.X : PowerSeries R) = Hex.TSeries.X := by
-  apply Hex.TSeries.ext
-  intro i hi
-  rw [coeff_ofPowerSeries _ i hi, Hex.TSeries.coeff_X i hi]
-  simp [PowerSeries.coeff_X]
-
-private theorem deriv_ofPowerSeries [CommRing R] (f : PowerSeries R) :
-    (ofPowerSeries (n := n) f).deriv =
-      ofPowerSeries (n := n - 1) (PowerSeries.derivative R f) := by
-  apply Hex.TSeries.ext
-  intro i hi
-  rw [coeff_ofPowerSeries _ i hi]
-  exact coeff_deriv_ofPowerSeries f i hi
-
-private theorem truncate_ofPowerSeries [CommRing R] (f : PowerSeries R) :
-    (ofPowerSeries (n := n) f).truncate (n - 1) (Nat.sub_le n 1) =
-      ofPowerSeries (n := n - 1) f := by
-  apply Hex.TSeries.ext
-  intro i hi
-  rw [Hex.TSeries.coeff_truncate _ (Nat.sub_le n 1) i hi,
-    coeff_ofPowerSeries f i (by omega), coeff_ofPowerSeries f i hi]
-
-private theorem truncate_ofPowerSeriesTo [CommRing R] (f : PowerSeries R)
-    {m k : Nat} (hkm : k ≤ m) :
-    (ofPowerSeries (n := m) f).truncate k hkm =
-      ofPowerSeries (n := k) f := by
-  apply Hex.TSeries.ext
-  intro i hi
-  rw [Hex.TSeries.coeff_truncate _ hkm i hi,
-    coeff_ofPowerSeries f i (by omega), coeff_ofPowerSeries f i hi]
-
 private theorem truncate_one [CommRing R] :
     (1 : TSeries R n).truncate (n - 1) (Nat.sub_le n 1) = 1 := by
   apply Hex.TSeries.ext
@@ -490,7 +458,7 @@ theorem exists_unique_sq [CommRing R] (f : PowerSeries R) (r : R)
       (root m).truncate k hkm = root k := by
     apply sqrt_unique _ _ r v hv
     · rw [← truncate_mul, hrootSq m hm,
-        truncate_ofPowerSeriesTo f hkm, hrootSq k hk]
+        truncate_ofPowerSeries f hkm, hrootSq k hk]
     · rw [Hex.TSeries.coeff_truncate _ hkm 0 hk, hrootConst m hm]
     · exact hrootConst k hk
   let s : PowerSeries R := PowerSeries.mk fun k => (root (k + 1)).coeff k

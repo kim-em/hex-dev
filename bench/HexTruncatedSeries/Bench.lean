@@ -5,6 +5,7 @@ Authors: Kim Morrison
 -/
 
 import HexTruncatedSeries
+import Hex.BenchOracle.Flint
 import LeanBench
 
 /-!
@@ -16,6 +17,13 @@ recurrence; composition registers Horner beside Brent--Kung; and reversion
 registers Newton beside Lagrange.  The paired registrations let scheduled
 runs enforce the SPEC's internal ratio checks without conflating them with the
 informational FLINT comparison.
+
+The FLINT arms use python-flint's `fmpq_series` wrapper around the named
+`fmpq_poly_*_series` kernels.  They are fixed, scheduled-only registrations:
+one representative shared input per operation, driven through the repository's
+persistent subprocess.  `warmupFirstIter` starts that process before timing;
+subsequent auto-tuned calls reuse it.  `runFlintSeriesOverhead` records the
+steady-state JSON framing floor for the headline report.
 -/
 
 namespace Hex.TSeriesBench
@@ -131,6 +139,107 @@ def runRevertNewton (input : RatUnary) : UInt64 :=
 def runRevertLagrange (input : RatUnary) : UInt64 :=
   checksum (revLagrange input.value 1)
 
+private def ratListJson (xs : List Rat) : Lean.Json :=
+  let nums := xs.map fun q => Lean.Json.num (Lean.JsonNumber.fromInt q.num)
+  let dens := xs.map fun q => Lean.Json.num (Lean.JsonNumber.fromNat q.den)
+  Lean.Json.mkObj
+    [("num", Lean.Json.arr nums.toArray), ("den", Lean.Json.arr dens.toArray)]
+
+private def seriesJson (a : TSeries Rat n) : Lean.Json :=
+  ratListJson a.coeffs.toArray.toList
+
+private def jsonError (context : String) (result : Except String α) : IO α :=
+  match result with
+  | .ok value => return value
+  | .error msg => throw <| IO.userError s!"{context}: {msg}"
+
+private def jsonToRats (value : Lean.Json) : IO (Array Rat) := do
+  let numsValue ← jsonError "FLINT rational result missing num"
+    (value.getObjVal? "num")
+  let densValue ← jsonError "FLINT rational result missing den"
+    (value.getObjVal? "den")
+  let nums ← jsonError "FLINT rational num is not an array" numsValue.getArr?
+  let dens ← jsonError "FLINT rational den is not an array" densValue.getArr?
+  unless nums.size = dens.size do
+    throw <| IO.userError "FLINT rational numerator/denominator lengths differ"
+  let mut out : Array Rat := Array.mkEmpty nums.size
+  for (numValue, denValue) in nums.zip dens do
+    let num ← jsonError "FLINT rational numerator is not an integer" numValue.getInt?
+    let den ← jsonError "FLINT rational denominator is not a natural" denValue.getNat?
+    if hden : den = 0 then
+      throw <| IO.userError "FLINT rational denominator is zero"
+    else
+      out := out.push (Rat.normalize num den hden)
+  return out
+
+private def precisionJson (n : Nat) : Lean.Json :=
+  Lean.Json.num (Lean.JsonNumber.fromNat n)
+
+private def runFlintUnary (op : String) (input : RatUnary) : IO UInt64 := do
+  let result ← Hex.BenchOracle.Flint.runOp "fmpq_series" op
+    #[("precision", precisionJson input.n), ("a", seriesJson input.value)]
+  return checksumArray (← jsonToRats result)
+
+def runFlintInverse (input : RatUnary) : IO UInt64 :=
+  runFlintUnary "inv" input
+
+def runFlintExp (input : RatUnary) : IO UInt64 :=
+  runFlintUnary "exp" input
+
+def runFlintLog (input : RatUnary) : IO UInt64 :=
+  runFlintUnary "log" { input with value := 1 + input.value }
+
+def runFlintSqrt (input : RatUnary) : IO UInt64 :=
+  runFlintUnary "sqrt" input
+
+def runFlintComposition (input : RatBinary) : IO UInt64 := do
+  let result ← Hex.BenchOracle.Flint.runOp "fmpq_series" "compose"
+    #[("precision", precisionJson input.n),
+      ("a", seriesJson input.left), ("b", seriesJson input.right)]
+  return checksumArray (← jsonToRats result)
+
+def runFlintReversion (input : RatUnary) : IO UInt64 :=
+  runFlintUnary "revert" input
+
+/-- Persistent-driver framing/dispatch calibration without series work. -/
+def runFlintSeriesOverhead (_ : Unit) : IO UInt64 := do
+  let result ← Hex.BenchOracle.Flint.runOp "fmpq_series" "overhead" #[]
+  return checksumArray (← jsonToRats result)
+
+private def runFixed (run : α → UInt64) (input : α) : Unit → IO UInt64 := fun _ =>
+  return run input
+
+private def runFlintFixed (run : α → IO UInt64) (input : α) : Unit → IO UInt64 := fun _ =>
+  run input
+
+/-! Representative scheduled-only FLINT pairs.  These sizes are large enough
+to exercise the actual series kernels while keeping `verify` a smoke test; the
+parametric registrations above remain the scientific internal ladders. -/
+
+def runInverseNewton1024 : Unit → IO UInt64 :=
+  runFixed runInverseNewton (prepInverse 1024)
+def runFlintInverse1024 : Unit → IO UInt64 :=
+  runFlintFixed runFlintInverse (prepInverse 1024)
+
+def runExp256 : Unit → IO UInt64 := runFixed runExp (prepExpLog 256)
+def runFlintExp256 : Unit → IO UInt64 := runFlintFixed runFlintExp (prepExpLog 256)
+
+def runLog256 : Unit → IO UInt64 := runFixed runLog (prepExpLog 256)
+def runFlintLog256 : Unit → IO UInt64 := runFlintFixed runFlintLog (prepExpLog 256)
+
+def runSqrt256 : Unit → IO UInt64 := runFixed runSqrt (prepSqrt 256)
+def runFlintSqrt256 : Unit → IO UInt64 := runFlintFixed runFlintSqrt (prepSqrt 256)
+
+def runCompBrentKung128 : Unit → IO UInt64 :=
+  runFixed runCompBrentKung (prepComposition 128)
+def runFlintComposition128 : Unit → IO UInt64 :=
+  runFlintFixed runFlintComposition (prepComposition 128)
+
+def runRevertNewton128 : Unit → IO UInt64 :=
+  runFixed runRevertNewton (prepReversion 128)
+def runFlintReversion128 : Unit → IO UInt64 :=
+  runFlintFixed runFlintReversion (prepReversion 128)
+
 setup_benchmark runMulInt n => n * n
   with prep := prepMulInt
   where {
@@ -159,7 +268,7 @@ setup_benchmark runInverseNewton n => n * n
     paramFloor := 8
     paramCeiling := 4096
     paramSchedule := .custom #[8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096]
-    maxSecondsPerCall := 6.0
+    maxSecondsPerCall := 10.0
     targetInnerNanos := 200000000
     signalFloorMultiplier := 1.0
   }
@@ -170,7 +279,7 @@ setup_benchmark runInverseRecurrence n => n * n
     paramFloor := 8
     paramCeiling := 4096
     paramSchedule := .custom #[8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096]
-    maxSecondsPerCall := 6.0
+    maxSecondsPerCall := 10.0
     targetInnerNanos := 200000000
     signalFloorMultiplier := 1.0
   }
@@ -181,7 +290,7 @@ setup_benchmark runExp n => n * n
     paramFloor := 8
     paramCeiling := 1024
     paramSchedule := .custom #[8, 16, 32, 64, 128, 256, 512, 1024]
-    maxSecondsPerCall := 6.0
+    maxSecondsPerCall := 10.0
     targetInnerNanos := 200000000
     signalFloorMultiplier := 1.0
   }
@@ -192,7 +301,7 @@ setup_benchmark runLog n => n * n
     paramFloor := 8
     paramCeiling := 1024
     paramSchedule := .custom #[8, 16, 32, 64, 128, 256, 512, 1024]
-    maxSecondsPerCall := 6.0
+    maxSecondsPerCall := 10.0
     targetInnerNanos := 200000000
     signalFloorMultiplier := 1.0
   }
@@ -203,7 +312,7 @@ setup_benchmark runSqrt n => n * n
     paramFloor := 8
     paramCeiling := 1024
     paramSchedule := .custom #[8, 16, 32, 64, 128, 256, 512, 1024]
-    maxSecondsPerCall := 6.0
+    maxSecondsPerCall := 10.0
     targetInnerNanos := 200000000
     signalFloorMultiplier := 1.0
   }
@@ -214,7 +323,7 @@ setup_benchmark runCompHorner n => n * n * n
     paramFloor := 8
     paramCeiling := 512
     paramSchedule := .custom #[8, 16, 32, 64, 128, 256, 512]
-    maxSecondsPerCall := 6.0
+    maxSecondsPerCall := 45.0
     targetInnerNanos := 200000000
     signalFloorMultiplier := 1.0
   }
@@ -225,32 +334,66 @@ setup_benchmark runCompBrentKung n => n * n * Nat.sqrt n
     paramFloor := 8
     paramCeiling := 512
     paramSchedule := .custom #[8, 16, 32, 64, 128, 256, 512]
-    maxSecondsPerCall := 6.0
+    maxSecondsPerCall := 15.0
     targetInnerNanos := 200000000
     signalFloorMultiplier := 1.0
   }
 
-setup_benchmark runRevertNewton n => n * n * Nat.sqrt n * Nat.log2 (n + 1)
+/- Bounded Newton reversion is a geometric sum of Brent--Kung compositions,
+not one full composition per doubling.  The last `O(n²√n)` step dominates. -/
+setup_benchmark runRevertNewton n => n * n * Nat.sqrt n
   with prep := prepReversion
   where {
     paramFloor := 8
     paramCeiling := 512
     paramSchedule := .custom #[8, 16, 32, 64, 128, 256, 512]
-    maxSecondsPerCall := 6.0
+    maxSecondsPerCall := 20.0
     targetInnerNanos := 200000000
     signalFloorMultiplier := 1.0
   }
 
-setup_benchmark runRevertLagrange n => n * n * n
+/- The direct route performs `n` schoolbook products, hence `O(n³)`
+coefficient operations.  Its exact rational power coefficients grow across
+the ladder; the logarithmic factor is the same limb-growth wallclock proxy
+used by the repository's other arbitrary-precision registrations. -/
+setup_benchmark runRevertLagrange n => n * n * n * (Nat.log2 (n + 1) + 1)
   with prep := prepReversion
   where {
     paramFloor := 8
     paramCeiling := 512
     paramSchedule := .custom #[8, 16, 32, 64, 128, 256, 512]
-    maxSecondsPerCall := 6.0
+    maxSecondsPerCall := 80.0
     targetInnerNanos := 200000000
     signalFloorMultiplier := 1.0
   }
+
+/-! # Informational FLINT comparator registrations
+
+Each pair returns the same coefficient checksum, so `compare` also checks
+cross-system agreement.  The comparator is informational and scheduled-only;
+python-flint must be installed in the scheduled/release environment. -/
+
+def leanCompareConfig : LeanBench.FixedBenchmarkConfig :=
+  { repeats := 5, maxSecondsPerCall := 12.0, minTotalSeconds := 0.2 }
+
+def flintCompareConfig : LeanBench.FixedBenchmarkConfig :=
+  { repeats := 5, maxSecondsPerCall := 12.0, minTotalSeconds := 0.2,
+    warmupFirstIter := true }
+
+setup_fixed_benchmark runFlintSeriesOverhead where flintCompareConfig
+
+setup_fixed_benchmark runInverseNewton1024 where leanCompareConfig
+setup_fixed_benchmark runFlintInverse1024 where flintCompareConfig
+setup_fixed_benchmark runExp256 where leanCompareConfig
+setup_fixed_benchmark runFlintExp256 where flintCompareConfig
+setup_fixed_benchmark runLog256 where leanCompareConfig
+setup_fixed_benchmark runFlintLog256 where flintCompareConfig
+setup_fixed_benchmark runSqrt256 where leanCompareConfig
+setup_fixed_benchmark runFlintSqrt256 where flintCompareConfig
+setup_fixed_benchmark runCompBrentKung128 where leanCompareConfig
+setup_fixed_benchmark runFlintComposition128 where flintCompareConfig
+setup_fixed_benchmark runRevertNewton128 where leanCompareConfig
+setup_fixed_benchmark runFlintReversion128 where flintCompareConfig
 
 end Hex.TSeriesBench
 

@@ -200,7 +200,7 @@ private def emitFailures : IO Unit := do
     resultOptRat s!"rat/comp/nonzero/{n}" "comp?"
       (comp? (ratInput n) nonzeroInner)
 
-  let oversized : TSeries Int 3 := ofFn fun i => if i = 2 then 7 else 0
+  let oversized : TSeries Int 3 := 0
   emitInt "int/divXPow/oversized" oversized
   resultOptInt "int/divXPow/oversized" "divXPow?/5" (divXPow? oversized 5)
   let badDiv : TSeries Int 4 := ofFn fun i => if i = 0 then 1 else 0

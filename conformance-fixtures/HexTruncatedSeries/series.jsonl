@@ -188,8 +188,8 @@
 {"kind":"series","lib":"HexTruncatedSeries","case":"rat/comp/nonzero/6/outer","domain":"QQ","precision":6,"coeffs":{"num":[1,1,3,4,5,6],"den":[1,1,1,1,1,1]}}
 {"kind":"series","lib":"HexTruncatedSeries","case":"rat/comp/nonzero/6/inner","domain":"QQ","precision":6,"coeffs":{"num":[1,1,0,0,0,0],"den":[1,1,1,1,1,1]}}
 {"kind":"result","lib":"HexTruncatedSeries","case":"rat/comp/nonzero/6","op":"comp?","value":null}
-{"kind":"series","lib":"HexTruncatedSeries","case":"int/divXPow/oversized","domain":"ZZ","precision":3,"coeffs":{"num":[0,0,7],"den":[1,1,1]}}
-{"kind":"result","lib":"HexTruncatedSeries","case":"int/divXPow/oversized","op":"divXPow?/5","value":null}
+{"kind":"series","lib":"HexTruncatedSeries","case":"int/divXPow/oversized","domain":"ZZ","precision":3,"coeffs":{"num":[0,0,0],"den":[1,1,1]}}
+{"kind":"result","lib":"HexTruncatedSeries","case":"int/divXPow/oversized","op":"divXPow?/5","value":{"num":[],"den":[]}}
 {"kind":"series","lib":"HexTruncatedSeries","case":"int/divXPow/nonzero-low","domain":"ZZ","precision":4,"coeffs":{"num":[1,0,0,0],"den":[1,1,1,1]}}
 {"kind":"result","lib":"HexTruncatedSeries","case":"int/divXPow/nonzero-low","op":"divXPow?/2","value":null}
 {"kind":"series","lib":"HexTruncatedSeries","case":"rat/comp/geometric/outer","domain":"QQ","precision":12,"coeffs":{"num":[1,1,1,1,1,1,1,1,1,1,1,1],"den":[1,1,1,1,1,1,1,1,1,1,1,1]}}

@@ -65,17 +65,23 @@ def rev? [Lean.Grind.CommRing R] [DecidableEq R] [UnitOps R]
     | none => none
 
 /-- Direct Lagrange inversion.  This deliberately performs the explicit
-division by `k` and therefore carries `NatInverses R (n-1)`. -/
+division by `k` and therefore carries `NatInverses R (n-1)`.  Consecutive
+powers are carried through the fold, so the schoolbook route performs `n`
+full multiplications and costs `O(n³)` rather than recomputing each power by
+square-and-multiply. -/
 def revLagrange [Lean.Grind.CommRing R] [NatInverses R (n - 1)]
     (b : TSeries R n) (v : R) : TSeries R n :=
   let quotient : TSeries R n := ofFn fun i => b.coeff (i + 1)
   let xOverB := invOfUnit quotient v
-  ofFn fun k =>
+  let initial : TSeries R n × TSeries R n := (1, 0)
+  let (_, result) := (List.range n).foldl (fun (power, result) k =>
     if k = 0 then
-      0
+      (power, result)
     else
-      NatInverses.invNat (R := R) (m := n - 1) k *
-        (xOverB.pow k).coeff (k - 1)
+      let power := mulUpTo n power xOverB
+      let c := NatInverses.invNat (R := R) (m := n - 1) k * power.coeff (k - 1)
+      (power, ⟨result.coeffs.modify k fun _ => c⟩)) initial
+  result
 
 private def tangent [Lean.Grind.CommRing R]
     (y d : TSeries R n) (k : Nat) : TSeries R n :=
