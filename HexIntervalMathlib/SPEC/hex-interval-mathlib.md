@@ -312,9 +312,12 @@ fact-event Mathlib assembly whose conformance callbacks are toy packages, not
 the missing concrete built-in arithmetic driver adapters, automatic package
 discovery, or public split-search tactic. Every immutable offer snapshot has
 one constant controller-owned serial age; any malformed draft aborts its whole
-regeneration. Dismissing a non-split offer marks the snapshot incomplete,
-whereas dismissing a split probe does not. Policy stop returns a resumable
-sealed chunk boundary, while `maxChoices` exhaustion is a resource error. The
+regeneration. Dismissing a non-split offer sets a controller-owned incomplete
+bit which survives accepted refreshes in the same scope and clears only on the
+next split/terminal scope transition; dismissing a split probe does not set it.
+Policy stop returns a resumable sealed chunk boundary, while `maxChoices`
+exhaustion is a resource error. `Run.complete` says only that no pending runtime
+frontier remains; proof closure still requires replay. The
 reference cost of up to `maxChoices` selected transitions includes complete
 retained-tree/bundle validation each time. The
 current retained-tree builder repeatedly

@@ -87,6 +87,21 @@ def targetApplication : Controller.Application Fact Nat Nat :=
             writes := [n3] }
       else none }
 
+/-- A second root offer for the same runtime rule. Its table position and
+semantic key make the simultaneous snapshot order observable. -/
+def secondForwardApplication : Controller.Application Fact Nat Nat :=
+  { binding := forwardApplication.binding
+    offer := fun selectedScope branch =>
+      if selectedScope == scope && version? branch n2 == some 0 then
+        some
+          { key := 13
+            offerClass := .invoke
+            node := n2
+            effort := 0
+            inputs := [n1]
+            writes := [n2] }
+      else none }
+
 def splitApplication : Controller.Application Fact Nat Nat :=
   { binding := fun selectedScope _ =>
       if selectedScope == scope then
@@ -192,6 +207,19 @@ def controllerRegistry? := do
   let proof ← registry?
   (Controller.Registry.buildWithin stateLimits controllerKey program proof packages).toOption
 
+def twoOfferPackages : Array (Controller.Package Fact Nat Nat (List Nat)) :=
+  #[{ runtime := forwardRuntime,
+      applications := #[forwardApplication, secondForwardApplication] },
+    { runtime := splitRuntime, applications := #[splitApplication] },
+    { runtime := refuteRuntime, applications := #[refuteApplication] }]
+
+def twoOfferRegistry? := do
+  let proof ← registry?
+  (Controller.Registry.buildWithin stateLimits controllerKey program proof twoOfferPackages).toOption
+
+def twoOfferEnvelope : Search.Envelope :=
+  { envelope with policy := { policyLimits with maxOffers := 2 } }
+
 def run := do
   let some registry := controllerRegistry? | throw 1
   let branch ← (State.Branch.startWithin stateLimits program input.facts).mapError fun _ => 2
@@ -258,9 +286,32 @@ def choiceOneOver : Bool :=
                   | .error _ => true
                   | .ok _ => false
 
+/-- The live successful canary needs all five selections; four is the exact
+one-under cap rather than a degenerate zero-step refusal. -/
+def choiceFiveNeedsCap : Bool :=
+  match controllerRegistry? with
+  | none => false
+  | some registry =>
+      match State.Branch.startWithin stateLimits program input.facts with
+      | .error _ => false
+      | .ok branch =>
+          match Driver.Bundle.startWithin limits resultMeasure recipeMeasure scope branch with
+          | .error _ => false
+          | .ok bundle =>
+              match Controller.State.startWithin envelope (Controller.policyMeasure keyCost)
+                  registry bundle with
+              | .error _ => false
+              | .ok state =>
+                  match Controller.runWithin { controllerLimits with maxChoices := 4 } envelope
+                      keyCost unitCost resultMeasure recipeMeasure .depthFirst registry firstPolicy
+                      () state with
+                  | .error (.resource .choices) => true
+                  | _ => false
+
 #guard wrongOwnerRejected
 #guard generationRejected
 #guard choiceOneOver
+#guard choiceFiveNeedsCap
 
 private def withForward
     (applications : Array (Controller.Application Fact Nat Nat)) :
@@ -376,6 +427,57 @@ def hugeBindingRejected : Bool :=
           | .error (.resource (.state .scopes)) => true
           | _ => false
 
+def hugeEffortApplication : Controller.Application Fact Nat Nat :=
+  { forwardApplication with
+    offer := fun selectedScope _ =>
+      if selectedScope == scope then
+        some
+          { key := 42
+            offerClass := .invoke
+            node := n2
+            effort := stateLimits.maxEffort + 1
+            inputs := [n1]
+            writes := [n2] }
+      else none }
+
+def effortOneOver : Bool :=
+  let changed := withForward #[hugeEffortApplication, targetApplication]
+  match registry? with
+  | none => false
+  | some proof =>
+      match Controller.Registry.buildWithin stateLimits controllerKey program proof changed with
+      | .error _ => false
+      | .ok registry =>
+          match stateStartWith envelope registry with
+          | .error (.resource (.state .effort)) => true
+          | _ => false
+
+def structuralApplication : Controller.Application Fact Nat Nat :=
+  { forwardApplication with
+    offer := fun selectedScope _ =>
+      if selectedScope == scope then
+        some
+          { key := 43
+            offerClass := .invoke
+            node := n2
+            effort := 0
+            inputs := [n1]
+            writes := [n2]
+            structuralInputs := [.node n1] }
+      else none }
+
+def structuralBatchRejected : Bool :=
+  let changed := withForward #[structuralApplication, targetApplication]
+  match registry? with
+  | none => false
+  | some proof =>
+      match Controller.Registry.buildWithin stateLimits controllerKey program proof changed with
+      | .error _ => false
+      | .ok registry =>
+          match stateStartWith envelope registry with
+          | .error (.resource (.state .matcherVisits)) => true
+          | _ => false
+
 def wrongClassApplication : Controller.Application Fact Nat Nat :=
   { forwardApplication with
     offer := fun selectedScope branch =>
@@ -442,6 +544,71 @@ def dismissThenStop : Policy.Interface Fact Bool Controller.OfferId Nat :=
         | none => .stop false }
 
 def boolCost (_ : Bool) : Policy.Cost := { bytes := 1, work := 1 }
+
+def dismissFirstSelectSecond : Policy.Interface Fact Nat Controller.OfferId Nat :=
+  { choose := fun stage view =>
+      match stage with
+      | 0 => match view.offers[0]? with
+        | some offer => .dismiss offer 1
+        | none => .stop 0
+      | 1 => match view.offers[0]? with
+        | some offer => .select offer 2
+        | none => .stop 1
+      | _ => .stop stage }
+
+def twoOffersOrdered : Bool :=
+  match twoOfferRegistry? with
+  | none => false
+  | some registry =>
+      match stateStartWith twoOfferEnvelope registry with
+      | .error _ => false
+      | .ok state =>
+          match state.session.offers[0]?, state.session.offers[1]? with
+          | some first, some second =>
+              state.session.offers.size == 2 && first.view.id.index == 0 &&
+                first.view.key == 10 && second.view.id.index == 1 && second.view.key == 13
+          | _, _ => false
+
+/-- Dismissing the first non-split offer remains sticky after accepting the
+second simultaneous offer and regenerating the current root snapshot. -/
+def dismissThenSelectSticky : Bool :=
+  match twoOfferRegistry? with
+  | none => false
+  | some registry =>
+      match stateStartWith twoOfferEnvelope registry with
+      | .error _ => false
+      | .ok state =>
+          match Controller.runWithin controllerLimits twoOfferEnvelope keyCost
+              (fun _ => { bytes := 1 }) resultMeasure recipeMeasure .depthFirst registry
+              dismissFirstSelectSecond 0 state with
+          | .ok (.stopped (.policyStop 1) stopped 2) =>
+              stopped.choices == 2 && stopped.dismissedIncomplete &&
+                stopped.session.incomplete && stopped.session.serial == 1 &&
+                version? stopped.session.branch n2 == some 1 &&
+                (match stopped.session.offers[0]? with
+                | some offer => offer.view.id.index == 2 && offer.view.offerClass == .split
+                | none => false)
+          | _ => false
+
+def stickyClearsAtSplit : Bool :=
+  match twoOfferRegistry? with
+  | none => false
+  | some registry =>
+      match stateStartWith twoOfferEnvelope registry with
+      | .error _ => false
+      | .ok state =>
+          match Controller.runWithin controllerLimits twoOfferEnvelope keyCost
+              (fun _ => { bytes := 1 }) resultMeasure recipeMeasure .depthFirst registry
+              dismissFirstSelectSecond 0 state with
+          | .ok (.stopped (.policyStop 1) sticky 2) =>
+              match Controller.runWithin controllerLimits twoOfferEnvelope keyCost
+                  (fun _ => { bytes := 1 }) resultMeasure recipeMeasure .depthFirst registry
+                  oneThenStop 0 sticky with
+              | .ok (.stopped (.policyStop 1) child 1) =>
+                  child.choices == 3 && child.session.scope == leftScope &&
+                    !child.dismissedIncomplete && !child.session.incomplete
+              | _ => false
+          | _ => false
 
 def dismissedInvokeIncomplete : Bool :=
   match controllerRegistry? with
@@ -517,11 +684,16 @@ def sameKeyReplacementChecked : Bool :=
 #guard offerOneOver
 #guard hugeDraftRejected
 #guard hugeBindingRejected
+#guard effortOneOver
+#guard structuralBatchRejected
 #guard wrongClassRejected
 #guard transplantRejected
 #guard matcherEpochRejected
 #guard dismissedInvokeIncomplete
 #guard dismissedSplitComplete
+#guard twoOffersOrdered
+#guard dismissThenSelectSticky
+#guard stickyClearsAtSplit
 #guard ageIsSerial
 #guard sameKeyReplacementChecked
 

@@ -3300,9 +3300,12 @@ the fixed soundness and trust contracts.
   the sealed session/tree bundle, including caller-measured byte/pair/work caps
   for each retained policy state. The current conformance vertical uses toy
   fact-event packages; concrete built-in arithmetic driver callbacks and
-  application generators are not yet shipped. It does not yet provide Mathlib-free raw
-  package drafts, equality/instance applications, program-extension or package
-  discovery, or public-tactic split search.
+  application generators are not yet shipped. Non-split dismissal is sticky
+  across accepted refreshes in one scope, while split dismissal is not; a new
+  split/terminal scope clears the sticky bit. `Run.complete` means an empty
+  pending runtime frontier, not proof closure. It does not yet provide
+  Mathlib-free raw package drafts, equality/instance applications,
+  program-extension or package discovery, or public-tactic split search.
 - `HexIntervalMathlib/Reify.lean`: expressions, hypotheses, targets, and folds.
 - `HexIntervalMathlib/Derivative.lean`: automatic differentiation and centered
   enclosures.

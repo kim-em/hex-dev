@@ -360,22 +360,26 @@ private def startSession [DecidableEq Fact] [DecidableEq Cause]
 private def refresh [DecidableEq Fact] [DecidableEq Cause]
     (envelope : Search.Envelope) (measure : Policy.Measure OfferId SemanticKey)
     (registry : Registry Fact semantics Cause SemanticKey Plan)
-    (session : Search.Session Fact Cause OfferId SemanticKey) :
+    (session : Search.Session Fact Cause OfferId SemanticKey)
+    (dismissedIncomplete : Bool) :
     Except Error (Search.Session Fact Cause OfferId SemanticKey) := do
   let generated ← generate envelope registry session.branch session.scope session.serial
   if generated.bindings != session.bindings then throw .mismatch
-  Search.Session.refreshWithin envelope measure session generated.offers {} false
+  Search.Session.refreshWithin envelope measure session generated.offers {}
+    dismissedIncomplete
     |>.mapError Error.search
 
 /-- Sealed live alignment of a retained runtime/proof bundle, its declared
 registry compatibility epoch, exact current session, and cumulative
-policy-choice accounting. -/
+policy-choice accounting. `dismissedIncomplete` is sticky for the current
+scope: accepting another action cannot erase an earlier non-split dismissal. -/
 structure State (Fact Cause OfferId SemanticKey Plan : Type) where
   private mk ::
   compatibility : Key
   bundle : Driver.Bundle Fact Cause Plan
   session : Search.Session Fact Cause OfferId SemanticKey
   choices : Nat
+  dismissedIncomplete : Bool
 
 /-- Start a new autonomous-controller handle at the exact current retained-tree
 head. This explicit operation starts a fresh per-lineage choice counter. -/
@@ -386,7 +390,9 @@ opaque State.startWithin [DecidableEq Fact] [DecidableEq Cause]
     Except Error (State Fact Cause OfferId SemanticKey Plan) := do
   let some (_, source) := Search.Result.current? bundle.tree | throw .mismatch
   let session ← startSession envelope measure registry source.scope source.branch
-  pure { compatibility := registry.key, bundle, session, choices := 0 }
+  pure
+    { compatibility := registry.key, bundle, session, choices := 0,
+      dismissedIncomplete := false }
 
 private def nextState [DecidableEq Fact] [DecidableEq Cause]
     (envelope : Search.Envelope) (measure : Policy.Measure OfferId SemanticKey)
@@ -397,7 +403,9 @@ private def nextState [DecidableEq Fact] [DecidableEq Cause]
   | none => pure none
   | some (_, source) =>
       let session ← startSession envelope measure registry source.scope source.branch
-      pure (some { compatibility := registry.key, bundle, session, choices })
+      pure (some
+        { compatibility := registry.key, bundle, session, choices,
+          dismissedIncomplete := false })
 
 private def runtime?
     (registry : Registry Fact semantics Cause SemanticKey Plan) (id : OfferId) :
@@ -409,6 +417,9 @@ private def runtime?
     pure package.runtime
   else none
 
+/-- Controller termination. `complete` means only that the sealed runtime tree
+has no pending frontier; it is not proof closure or evidence. The retained tree
+and recipe must still pass `Proof.replayTree`. -/
 inductive Run (Fact Cause OfferId SemanticKey Plan PolicyState : Type)
   | complete (bundle : Driver.Bundle Fact Cause Plan) (policy : PolicyState)
   | stopped (stop : Search.Stop Unit Unit)
@@ -419,9 +430,10 @@ inductive Run (Fact Cause OfferId SemanticKey Plan PolicyState : Type)
 the retained tree closes, honestly stops, reaches an unknown leaf, or exhausts
 the cumulative choice cap.  Dismissal removes exactly one offer from the
 current immutable snapshot. Dismissing a non-split offer marks that snapshot
-incomplete; dismissing a split probe does not. A later accepted transition
-regenerates the next complete snapshot. A policy stop returns a resumable sealed
-state, whereas choice-cap exhaustion is a resource error. `policyStateMeasure`
+incomplete; dismissing a split probe does not. That incompleteness survives
+accepted refreshes in the same scope and clears only when a split or terminal
+transition moves to the next retained scope. A policy stop returns a resumable
+sealed state, whereas choice-cap exhaustion is a resource error. `policyStateMeasure`
 is non-preemptible, but its declared byte, pair, and work cost must fit before
 the initial state or any callback successor is retained. In the reference
 implementation, up to `maxChoices` selected steps each repeat complete bundle
@@ -459,10 +471,12 @@ opaque runWithin [DecidableEq Fact] [DecidableEq Cause] [DecidableEq SemanticKey
           checkPolicyWithin limits.policyState policyStateMeasure next
           let offers := state.session.offers.filter fun offer => offer.view.id != decision.id
           if offers.size + 1 != state.session.offers.size then throw .mismatch
-          let incomplete := state.session.incomplete || decision.offerClass != .split
+          let dismissedIncomplete :=
+            state.dismissedIncomplete || decision.offerClass != .split
           let session ← Search.Session.refreshWithin envelope measure state.session offers
-            state.session.remaining incomplete |>.mapError Error.search
-          loop fuel { state with session, choices := state.choices + 1 } next
+            state.session.remaining dismissedIncomplete |>.mapError Error.search
+          loop fuel
+            { state with session, choices := state.choices + 1, dismissedIncomplete } next
       | .select decision next =>
           checkPolicyWithin limits.policyState policyStateMeasure next
           let some package := runtime? registry decision.id | throw .mismatch
@@ -471,8 +485,10 @@ opaque runWithin [DecidableEq Fact] [DecidableEq Cause] [DecidableEq SemanticKey
           let choices := state.choices + 1
           match step with
           | .continued bundle session =>
-              let session ← refresh envelope measure registry session
-              loop fuel { compatibility := state.compatibility, bundle, session, choices } next
+              let session ← refresh envelope measure registry session state.dismissedIncomplete
+              loop fuel
+                { compatibility := state.compatibility, bundle, session, choices,
+                  dismissedIncomplete := state.dismissedIncomplete } next
           | .split bundle | .terminal bundle =>
               match ← nextState envelope measure registry bundle choices with
               | none => pure (.complete bundle next)
@@ -480,7 +496,8 @@ opaque runWithin [DecidableEq Fact] [DecidableEq Cause] [DecidableEq SemanticKey
           | .unknown bundle => pure (.unknown bundle next)
           | .stopped stop bundle session =>
               pure (.stopped stop
-                { compatibility := state.compatibility, bundle, session, choices } next)
+                { compatibility := state.compatibility, bundle, session, choices,
+                  dismissedIncomplete := state.dismissedIncomplete } next)
   loop limits.maxChoices initial policyState
 
 end Hex.Interval.Controller

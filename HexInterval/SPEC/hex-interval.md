@@ -5414,11 +5414,14 @@ their declared cost inside a scheduler bound.
   autonomous theorem uses toy fact-event packages. All offers in one immutable
   snapshot share its controller-owned serial as age. A malformed generator
   draft aborts the whole regeneration transaction. Dismissing a non-split
-  offer marks the snapshot incomplete, while dismissing a split probe does not.
+  offer sets a controller-owned incomplete bit which survives later accepted
+  refreshes in that scope; it clears only when a split or terminal transition
+  moves to the next retained scope. Dismissing a split probe does not set it.
   Policy stop returns a resumable sealed state; exhausting `maxChoices` is a
   resource error. Up to `maxChoices` selected transitions each repeat complete
   retained-tree/bundle validation, so reference validation cost is multiplied
-  by that cap.
+  by that cap. `Run.complete` means the runtime tree has no pending frontier,
+  not that proof replay has closed the theorem.
 - `HexIntervalMathlib/Rule.lean`: the supported stable-key arithmetic package,
   exact real operation meanings, package-owned fact schemas, checked registry
   assembly, and state-to-proof quotation for negation, addition, subtraction,
