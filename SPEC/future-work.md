@@ -15,24 +15,6 @@ need their own witness or theorem.
 
 ## Matrix and linear algebra
 
-### Matrix invariant factors
-
-Proposed libraries: `hex-invariant-factors` and
-`hex-invariant-factors-mathlib`.
-
-Apply [hex-poly-smith](Libraries/hex-poly-smith.md) to the characteristic
-matrix `xI - A` and read the ordered invariant factors from its diagonal. The
-largest nonunit factor should agree with the independently computed minimal
-polynomial, and their product should agree with the independently computed
-characteristic polynomial.
-
-The computational library depends on `hex-poly-smith`. The correspondence
-layer also depends on [hex-char-poly](Libraries/hex-char-poly.md) and
-[hex-min-poly](Libraries/hex-min-poly.md). It should reuse the existing
-polynomial-matrix representation and should not duplicate any of those three
-algorithms. A rational-canonical-form API belongs here only if the SPEC gives
-an executable construction and a checkable correspondence.
-
 ### Certified eigenpair enclosures
 
 Run an untrusted numerical eigensolver and verify an approximate eigenpair
