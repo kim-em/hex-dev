@@ -325,8 +325,12 @@ private def generate [DecidableEq Fact] [DecidableEq Cause]
       throw (.resource (.state .matcherVisits))
     if envelope.state.maxEffort < draft.effort then
       throw (.resource (.state .effort))
-    if !allDistinct draft.inputs || !allDistinct draft.writes ||
-        !allDistinct draft.structuralInputs then
+    /- Draft reads are ordered occurrences. Distinct local registration slots
+    may resolve to one node, and `seenInputs?` preserves every occurrence for
+    exact Search authentication. Scoped reads and all write/structural
+    authority remain distinct. -/
+    if (registration.binding == .scoped && !allDistinct draft.inputs) ||
+        !allDistinct draft.writes || !allDistinct draft.structuralInputs then
       throw (.invalidApplication applicationId)
     if (branch.program.node? draft.node).isNone ||
         draft.writes.any (fun node => (branch.program.node? node).isNone) then

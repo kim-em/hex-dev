@@ -123,6 +123,15 @@ private def startNetworkError (limits : State.Limits) : Option Search.Error := d
 #guard startScopedError stateLimits == none
 #guard startNetworkError stateLimits == none
 
+-- The public diagnostic checks the complete supplied rule/binding tables;
+-- an unrelated scoped binding cannot be ignored merely because this action is
+-- local and does not consult it during slot reconstruction.
+#guard match branch? with
+  | some branch =>
+      !Search.actionCurrent stateLimits branch #[localRule] #[binding]
+        #[0] #[0] 0 0 policyAction
+  | none => false
+
 #guard match branch? with
   | some branch =>
       searchError (.policy .offerLimit) <|
@@ -146,6 +155,12 @@ private def startNetworkError (limits : State.Limits) : Option Search.Error := d
 #guard startActionError
   { policyAction with writes := [contractNode 0, contractNode 1,
       contractNode 0, contractNode 1] } == some (.resource (.state .arity))
+
+-- Duplicate writes fit the port cap but violate Search's intentionally
+-- distinct write-authority contract during session authentication.
+#guard startActionError
+  { policyAction with writes := [contractNode 1, contractNode 1] } ==
+    some .invalidSession
 
 #guard startActionError
   { policyAction with structuralInputs := [
