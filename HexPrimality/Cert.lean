@@ -6,6 +6,7 @@ Authors: Kim Morrison
 
 module
 
+public import HexPrimality.Cert3
 public import HexPrimality.Order
 public import HexPrimality.Table
 public import HexArith.Montgomery.Context
@@ -118,13 +119,31 @@ def checkPockArith (n : Nat) (factors : List (Nat × Nat × PrimeCert)) : Bool :
         (n - 1) % F == 0 && decide (n < F * F) &&
           factors.all fun x => checkWitness n x.2.2.subject x.1
 
-/-- The arithmetic side of the cube-root node. Milestone 4 replaces this
-stub with the Brillhart-Lehmer-Selfridge conditions; constantly `false`
-keeps the constructor rejected and its soundness case vacuous until then. -/
+/-- The arithmetic side of the cube-root node: everything the square-root
+arm verifies except the `n < F * F` bound, which the
+Brillhart-Lehmer-Selfridge conditions replace: `F` even, the cofactor
+`R = (n - 1) / F` odd (the weaker form of the classical `gcd(F, R) = 1`
+that the proof uses once `F` is even), the decomposition `R = 2Fs + r` with
+`1 ≤ r < 2F`, the cube-root size bound, and the discriminant condition on
+`r² - 8s`, with the stored witness `w` verifying non-squareness by two
+multiplications. (When `r² ≤ 8s` the truncated subtraction makes the
+witness clause `w * w < 0` unsatisfiable, so the disjunct is simply never
+taken; the middle disjunct covers that region.) -/
 @[expose]
-def checkPock3Arith (_n _r _s _w : Nat)
-    (_factors : List (Nat × Nat × PrimeCert)) : Bool :=
-  false
+def checkPock3Arith (n r s w : Nat)
+    (factors : List (Nat × Nat × PrimeCert)) : Bool :=
+  decide (2 ≤ n) && n % 2 == 1 && subjectsOk factors &&
+    match certProduct (n - 1) factors with
+    | none => false
+    | some F =>
+        (n - 1) % F == 0 && F % 2 == 0 && (n - 1) / F % 2 == 1 &&
+          (n - 1) / F == 2 * F * s + r &&
+          decide (1 ≤ r) && decide (r < 2 * F) &&
+          decide (n < (F + 1) * (2 * F * F + (r - 1) * F + 1)) &&
+          (s == 0 || decide (r * r < 8 * s) ||
+            (decide (w * w < r * r - 8 * s) &&
+              decide (r * r - 8 * s < (w + 1) * (w + 1)))) &&
+          factors.all fun x => checkWitness n x.2.2.subject x.1
 
 mutual
 
@@ -376,24 +395,19 @@ private theorem mod_ne_one_of_gcd {p n x : Nat} (hp : 2 ≤ p) (hpn : p ∣ n)
 
 /-! The Pocklington step and checker soundness -/
 
-/-- The square-root Pocklington theorem, over the checker's own data: every
-prime divisor `p` of `n` satisfies `F ∣ p - 1` (each entry contributes its
-prime power to `orderOf a_q p ∣ p - 1`, and the pairwise-coprime powers
-combine), so `p ≥ F + 1 > √n` and `n` has no prime divisor at most its
-square root. -/
-private theorem pocklington {n F : Nat}
-    {factors : List (Nat × Nat × PrimeCert)} (h2 : 2 ≤ n) (hodd : n % 2 = 1)
-    (hF : F ∣ n - 1) (hFF : n < F * F)
+/-- The per-entry witness conditions give `F ∣ p - 1` for every prime
+divisor `p` of `n`: each entry contributes its prime power to
+`orderOf a_q p ∣ p - 1`, and the pairwise-coprime powers combine. Shared by
+the square-root and cube-root soundness cases. -/
+private theorem pock_divisor_step {n F : Nat}
+    {factors : List (Nat × Nat × PrimeCert)} (h3 : 3 ≤ n)
+    (hF : F ∣ n - 1)
     (hq : ∀ x ∈ factors, Prime x.2.2.subject)
     (hsub : subjectsOk factors = true)
     (hFprod : F = certProd factors)
     (hwit : ∀ x ∈ factors, checkWitness n x.2.2.subject x.1 = true) :
-    Prime n := by
-  have h3 : 3 ≤ n := by omega
-  by_cases hp : Prime n
-  · exact hp
-  exfalso
-  obtain ⟨p, hpprime, hpn, hpsq⟩ := exists_prime_le_sqrt (by omega) hp
+    ∀ p, Prime p → p ∣ n → F ∣ p - 1 := by
+  intro p hpprime hpn
   have hp2 := hpprime.two_le
   have hnpos : 0 < n := by omega
   have hstep : ∀ x ∈ factors, x.2.2.subject ^ (x.2.1 + 1) ∣ p - 1 := by
@@ -426,9 +440,28 @@ private theorem pocklington {n F : Nat}
     have hcop : Nat.Coprime x.1 p :=
       coprime_of_pow_mod_eq_one hpprime.one_lt (by omega) hferm_p
     exact Nat.dvd_trans horder (orderOf_dvd_pred hpprime hcop)
-  have hFp : F ∣ p - 1 := by
-    rw [hFprod]
-    exact certProd_dvd hq hsub hstep
+  rw [hFprod]
+  exact certProd_dvd hq hsub hstep
+
+/-- The square-root Pocklington theorem, over the checker's own data: every
+prime divisor `p` of `n` satisfies `F ∣ p - 1`, so `p ≥ F + 1 > √n` and
+`n` has no prime divisor at most its square root. -/
+private theorem pocklington {n F : Nat}
+    {factors : List (Nat × Nat × PrimeCert)} (h2 : 2 ≤ n) (hodd : n % 2 = 1)
+    (hF : F ∣ n - 1) (hFF : n < F * F)
+    (hq : ∀ x ∈ factors, Prime x.2.2.subject)
+    (hsub : subjectsOk factors = true)
+    (hFprod : F = certProd factors)
+    (hwit : ∀ x ∈ factors, checkWitness n x.2.2.subject x.1 = true) :
+    Prime n := by
+  have h3 : 3 ≤ n := by omega
+  by_cases hp : Prime n
+  · exact hp
+  exfalso
+  obtain ⟨p, hpprime, hpn, hpsq⟩ := exists_prime_le_sqrt (by omega) hp
+  have hp2 := hpprime.two_le
+  have hFp : F ∣ p - 1 :=
+    pock_divisor_step h3 hF hq hsub hFprod hwit p hpprime hpn
   have hFle : F ≤ p - 1 := Nat.le_of_dvd (by omega) hFp
   have hsq : F * F ≤ (p - 1) * (p - 1) := Nat.mul_le_mul hFle hFle
   have hlt : (p - 1) * (p - 1) < p * p := by
@@ -465,6 +498,36 @@ private theorem checkPockArith_spec {n : Nat}
     rw [List.all_eq_true] at hall
     intro x hx
     exact hall x hx
+
+private theorem checkPock3Arith_spec {n r s w : Nat}
+    {factors : List (Nat × Nat × PrimeCert)}
+    (h : checkPock3Arith n r s w factors = true) :
+    2 ≤ n ∧ n % 2 = 1 ∧ subjectsOk factors = true ∧
+      ∃ F, F = certProd factors ∧ F ∣ n - 1 ∧ F % 2 = 0 ∧
+        (n - 1) / F % 2 = 1 ∧ (n - 1) / F = 2 * F * s + r ∧
+        1 ≤ r ∧ r < 2 * F ∧
+        n < (F + 1) * (2 * F * F + (r - 1) * F + 1) ∧
+        (s = 0 ∨ r * r < 8 * s ∨ ∀ t, t * t ≠ r * r - 8 * s) ∧
+        ∀ x ∈ factors, checkWitness n x.2.2.subject x.1 = true := by
+  unfold checkPock3Arith at h
+  rw [Bool.and_eq_true, Bool.and_eq_true] at h
+  obtain ⟨⟨h2, hodd⟩, hm⟩ := h
+  rw [Bool.and_eq_true] at h2
+  obtain ⟨h2', hodd'⟩ := h2
+  split at hm
+  · cases hm
+  next F hprod =>
+    simp only [Bool.and_eq_true, Bool.or_eq_true, decide_eq_true_iff,
+      beq_iff_eq, List.all_eq_true] at hm
+    obtain ⟨⟨⟨⟨⟨⟨⟨⟨hdvd, heven⟩, hrodd⟩, hdec⟩, hr1⟩, hr2⟩, hbound⟩,
+      hdisc⟩, hall⟩ := hm
+    refine ⟨by simpa using h2', by simpa using hodd', hodd,
+      F, certProduct_eq _ _ hprod, Nat.dvd_of_mod_eq_zero hdvd,
+      heven, hrodd, hdec, hr1, hr2, hbound, ?_, hall⟩
+    rcases hdisc with (hs0 | hlt) | ⟨hw1, hw2⟩
+    · exact Or.inl hs0
+    · exact Or.inr (Or.inl hlt)
+    · exact Or.inr (Or.inr (not_square_of_sqrt_witness hw1 hw2))
 
 private theorem prime_of_checkPrime_aux :
     ∀ N c, PrimeCert.subject c = N → checkPrime c = true → Prime N := by
@@ -506,7 +569,32 @@ private theorem prime_of_checkPrime_aux :
         subst hm
         unfold checkPrime at hcheck
         rw [Bool.and_eq_true] at hcheck
-        exact absurd hcheck.1 (by simp [checkPock3Arith])
+        obtain ⟨harith, hchildren⟩ := hcheck
+        obtain ⟨h2, hodd, hsub, F, hFprod, hFdvd, hFeven, hRodd, hdec, hr1,
+          hr2, hbound, hdisc, hwit⟩ := checkPock3Arith_spec harith
+        have hF0 : 0 < F := by
+          rcases Nat.eq_zero_or_pos F with h0 | h
+          · subst h0
+            have := Nat.eq_zero_of_zero_dvd hFdvd
+            omega
+          · exact h
+        have hchildprime : ∀ x ∈ factors, Prime x.2.2.subject := by
+          intro x hx
+          have hcheckx := checkChildren_forall hchildren x hx
+          have hq2 : 2 ≤ x.2.2.subject := subjectsOk_forall hsub x hx
+          have hqltm : x.2.2.subject < m := by
+            have hqdvd : x.2.2.subject ∣ m - 1 := by
+              refine Nat.dvd_trans ?_ hFdvd
+              rw [hFprod]
+              exact Nat.dvd_trans (dvd_pow_self'' _ (by omega))
+                (certProd_mem_dvd hx)
+            have hm3 : 3 ≤ m := by omega
+            have := Nat.le_of_dvd (by omega : 0 < m - 1) hqdvd
+            omega
+          exact ih x.2.2.subject hqltm x.2.2 rfl hcheckx
+        exact pocklington3 (by omega) hFdvd hFeven hF0 hRodd hdec hr1 hr2
+          hbound hdisc
+          (pock_divisor_step (by omega) hFdvd hchildprime hsub hFprod hwit)
 
 /-- Checker soundness: an accepted certificate proves its subject prime.
 The whole conclusion; no certificate-existence, checker-completeness, or
@@ -555,7 +643,18 @@ set_option maxRecDepth 10000   -- table walks in the guards below
 #guard checkPrime (.pock 7 [(2, 0, .small 4)]) = false       -- composite factor
 #guard checkPrime (.pock 7 [(6, 0, .small 3)]) = false       -- gcd witness fails
 #guard checkPrime (.pock 11 [(2, 0, .small 7)]) = false      -- 7 ∤ 10
-#guard checkPrime (.pock3 7 0 0 0 [(2, 0, .small 3)]) = false -- stubbed arm
+-- Cube-root arm: n = 199 with F = 6 sits squarely in the cube-root regime
+-- (F² = 36 ≤ 199 < 847 = (F+1)(2F² + (r-1)F + 1), R = 33 = 2·6·2 + 9,
+-- discriminant 9² - 8·2 = 65 with witness 8² < 65 < 9²).
+#guard checkPrime (.pock3 199 9 2 8 [(3, 0, .small 2), (2, 0, .small 3)]) = true
+#guard checkPrime (.pock3 199 9 2 7 [(3, 0, .small 2), (2, 0, .small 3)]) = false
+  -- wrong square-root witness
+#guard checkPrime (.pock3 199 33 0 0 [(3, 0, .small 2), (2, 0, .small 3)]) = false
+  -- r out of range
+#guard checkPrime (.pock3 199 9 2 8 [(2, 0, .small 3)]) = false
+  -- F = 3 odd
+#guard checkPrime (.pock 199 [(3, 0, .small 2), (2, 0, .small 3)]) = false
+  -- the same data fails the square-root arm: F² ≤ n
 
 end Nat
 
