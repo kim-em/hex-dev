@@ -331,6 +331,127 @@ class InventoryTests(unittest.TestCase):
         with self.assertRaisesRegex(inventory.InventoryError, "sites differ"):
             inventory.require_fks2_structure_match(duplicate, provider)
 
+    def test_fks2_xpow_sites_match_six_prefixes_and_bands(self) -> None:
+        records = [
+            {
+                "kind": "native-decide-occurrence",
+                "mechanism": "native_decide",
+                "path": path,
+                "line": line,
+                "declaration": declaration,
+            }
+            for path, line, declaration, _, _ in inventory.FKS2_XPOW_SOURCE_ROWS
+        ]
+        tags = {path: tag for tag, path in inventory.FKS2_XPOW_FILE_PATHS.items()}
+        provider = "def prefixes : List Prefix := [\n" + "\n".join(
+            f"  ⟨.{file}, {n}, {cells}, {boundary}⟩,"
+            for file, n, cells, boundary in inventory.FKS2_XPOW_PREFIX_ROWS
+        ) + "\n]\ndef bands : List Band := [\n" + "\n".join(
+            f"  ⟨{certificate}, {start}, {count}⟩,"
+            for certificate, start, count in inventory.FKS2_XPOW_BANDS
+        ) + "\n]\ndef sourceRows : List SourceRow := [\n" + "\n".join(
+            f'  ⟨.{tags[path]}, {line}, "{declaration}", .{fact}, {certificate}⟩,'
+            for path, line, declaration, fact, certificate
+            in inventory.FKS2_XPOW_SOURCE_ROWS
+        ) + "\n]\n"
+        inventory.require_fks2_xpow_match(records, provider)
+
+        wrong_prefix = provider.replace("⟨.row10, 50, 1348, 1358⟩",
+                                        "⟨.row10, 49, 1348, 1358⟩", 1)
+        with self.assertRaisesRegex(inventory.InventoryError, "prefixes differ"):
+            inventory.require_fks2_xpow_match(records, wrong_prefix)
+
+        wrong_band = provider.replace("⟨5, 1348, 2398⟩", "⟨5, 1348, 2397⟩", 1)
+        with self.assertRaisesRegex(inventory.InventoryError, "bands differ"):
+            inventory.require_fks2_xpow_match(records, wrong_band)
+
+        wrong_sites = copy.deepcopy(records)
+        wrong_sites[-1]["line"] = 392
+        with self.assertRaisesRegex(inventory.InventoryError, "sites differ"):
+            inventory.require_fks2_xpow_match(wrong_sites, provider)
+
+        duplicate = copy.deepcopy(records)
+        duplicate[-1] = copy.deepcopy(duplicate[-2])
+        with self.assertRaisesRegex(inventory.InventoryError, "sites differ"):
+            inventory.require_fks2_xpow_match(duplicate, provider)
+
+    def test_fks2_xpow_source_shapes_are_exact(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            texts = {key: [] for key in inventory.FKS2_XPOW_FILE_PATHS}
+            texts["row11"] = [""] * (inventory.FKS2_XPOW_SAMPLE_DEF_LINE - 1)
+            texts["row11"].append(inventory.FKS2_XPOW_SAMPLE_DEF)
+            texts["row11"].append(
+                "theorem checkXpowCell_sound (n : ℕ) (hn : 0 < n) (c : Cell) "
+                "(hc : checkXpowCell n c = true) : (c.eps : ℝ) ≤ "
+                "Real.exp (-(c.b' : ℝ) / n) := by"
+            )
+            for file_key, n, cells, _ in inventory.FKS2_XPOW_PREFIX_ROWS:
+                suffix = "" if file_key == "row11" else f"_row{file_key[3:]}"
+                texts[file_key].append(
+                    f"theorem allCells_take_checkXpow{suffix} : "
+                    f"(allCells.take {cells}).all (fun c => checkXpowCell {n} c) "
+                    "= true := by native_decide"
+                )
+                texts[file_key].append(
+                    f"theorem boundaryCell_fails{suffix} : "
+                    f"((allCells.drop {cells}).take 1).all "
+                    f"(fun c => checkXpowCell {n} c) = false := by native_decide"
+                )
+                texts[file_key].append(
+                    f"mid_xpow_of args allCells_take_checkXpow{suffix} x hmem"
+                )
+            texts["row11"].append(
+                "theorem sampleCells_checkXpow : sampleCells.all "
+                "(fun c => checkXpowCell 100 c) = true := by native_decide"
+            )
+            texts["row11"].append(
+                "have hck : checkXpowCell n c = true := "
+                "List.all_eq_true.mp hall c hcmem exact cell_Epi_le_xpow_of_check "
+                "n hn c hck"
+            )
+            texts["row11"].append(
+                "cell_Epi_le_xpow n hn c hrow "
+                "(checkXpowCell_sound n hn c hc)"
+            )
+            for key, path in inventory.FKS2_XPOW_FILE_PATHS.items():
+                target = root / path
+                target.parent.mkdir(parents=True, exist_ok=True)
+                target.write_text("\n".join(texts[key]), encoding="utf-8")
+            inventory.require_fks2_xpow_source_match(root)
+
+            row11 = root / inventory.FKS2_XPOW_FILE_PATHS["row11"]
+            row11.write_text(row11.read_text(encoding="utf-8").replace(
+                "allCells.drop 3726", "allCells.drop 3725", 1), encoding="utf-8")
+            with self.assertRaisesRegex(
+                inventory.InventoryError, "sample definition shape differs"
+            ):
+                inventory.require_fks2_xpow_source_match(root)
+            row11.write_text(row11.read_text(encoding="utf-8").replace(
+                "allCells.drop 3725", "allCells.drop 3726", 1), encoding="utf-8")
+            row11.write_text("\n" + row11.read_text(encoding="utf-8"), encoding="utf-8")
+            with self.assertRaisesRegex(
+                inventory.InventoryError, "sample definition shape differs"
+            ):
+                inventory.require_fks2_xpow_source_match(root)
+            row11.write_text(row11.read_text(encoding="utf-8")[1:], encoding="utf-8")
+            row11.write_text(row11.read_text(encoding="utf-8").replace(
+                "(checkXpowCell_sound n hn c hc)",
+                "(checkXpowCell_sound n hn c altered)", 1), encoding="utf-8")
+            with self.assertRaisesRegex(
+                inventory.InventoryError, "semantic consumer bridge differs"
+            ):
+                inventory.require_fks2_xpow_source_match(root)
+            row11.write_text(row11.read_text(encoding="utf-8").replace(
+                "(checkXpowCell_sound n hn c altered)",
+                "(checkXpowCell_sound n hn c hc)", 1), encoding="utf-8")
+
+            row10 = root / inventory.FKS2_XPOW_FILE_PATHS["row10"]
+            row10.write_text(row10.read_text(encoding="utf-8").replace(
+                "checkXpowCell 50", "checkXpowCell 49", 1), encoding="utf-8")
+            with self.assertRaisesRegex(inventory.InventoryError, "prefix shape differs"):
+                inventory.require_fks2_xpow_source_match(root)
+
     def test_positive_exp_sites_match_shared_table(self) -> None:
         records = [
             {

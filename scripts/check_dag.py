@@ -51,6 +51,7 @@ UMBRELLA_BUILD_TARGETS = {
     "HexIntervalExperiment",
     "HexIntervalMathlibExperiment",
     "HexIntervalPntFks2Local",
+    "HexIntervalPntFks2ConformanceLocal",
     "HexIntervalReplayProbe",
     "HexIntervalMathlibReplayProbe",
     "HexRealRootsMathlibReplayProbe",
