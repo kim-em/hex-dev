@@ -361,6 +361,7 @@ lean_lib HexIntervalExperiment where
     `HexInterval.Experiment.PntFks2FamilyData13,
     `HexInterval.Experiment.PntFks2FamilyData,
     `HexInterval.Experiment.PntFks2Family,
+    `HexInterval.Experiment.PntFks2Structure,
     `HexInterval.Experiment.CosBillion,
     `HexInterval.Experiment.LogTablePrecision,
     `HexInterval.Experiment.PntLogNatural,
@@ -520,6 +521,8 @@ lean_lib HexConformance where
       `HexIntervalMathlib.PntRamanujanThetaConformance].map Glob.one
 
     ++ #[`HexIntervalMathlib.PntFks2NestedConformance].map Glob.one
+
+    ++ #[`HexIntervalMathlib.PntFks2StructureConformance].map Glob.one
 
     ++ #[`HexIntervalMathlib.PntTable10ShardConformance,
       `HexIntervalMathlib.PntTable10ConvexConformance,

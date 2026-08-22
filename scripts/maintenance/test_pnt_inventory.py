@@ -279,6 +279,58 @@ class InventoryTests(unittest.TestCase):
         with self.assertRaisesRegex(inventory.InventoryError, "sites differ"):
             inventory.require_fks2_mu_match(duplicate, provider)
 
+    def test_fks2_structure_sites_match_seven_prefixes(self) -> None:
+        records = [
+            {
+                "kind": "native-decide-occurrence",
+                "mechanism": "native_decide",
+                "path": path,
+                "line": line,
+                "declaration": declaration,
+            }
+            for path, line, declaration, _, _
+            in inventory.FKS2_STRUCTURE_SOURCE_ROWS
+        ]
+        tags = {path: tag for tag, path
+                in inventory.FKS2_STRUCTURE_FILE_PATHS.items()}
+        provider = "def prefixes : List Prefix := [\n" + "\n".join(
+            f"  ⟨{line}, {cells}, {last}⟩,"
+            for line, cells, last in inventory.FKS2_STRUCTURE_PREFIX_ROWS
+        ) + "\n]\ndef certificateFiles : List SourceFile := [\n" + "\n".join(
+            f"  .{file},"
+            for file in inventory.FKS2_STRUCTURE_CERTIFICATE_FILES
+        ) + "\n]\ndef sourceRows : List SourceRow := [\n" + "\n".join(
+            f'  ⟨.{tags[path]}, {line}, "{declaration}", .{fact}, {certificate}⟩,'
+            for path, line, declaration, fact, certificate
+            in inventory.FKS2_STRUCTURE_SOURCE_ROWS
+        ) + "\n]\n"
+        inventory.require_fks2_structure_match(records, provider)
+
+        wrong_prefix = provider.replace("⟨36, 70, 80⟩", "⟨36, 70, 79⟩", 1)
+        with self.assertRaisesRegex(inventory.InventoryError, "prefixes differ"):
+            inventory.require_fks2_structure_match(records, wrong_prefix)
+
+        wrong_file = provider.replace("  .cor24Row7,", "  .cor24Row8,", 1)
+        with self.assertRaisesRegex(inventory.InventoryError, "certificateFiles differ"):
+            inventory.require_fks2_structure_match(records, wrong_file)
+
+        wrong_source = provider.replace(
+            '"midCells_chain_row6", .chain, 0',
+            '"midCells_chain_row6", .chain, 1', 1,
+        )
+        with self.assertRaisesRegex(inventory.InventoryError, "sourceRows differ"):
+            inventory.require_fks2_structure_match(records, wrong_source)
+
+        wrong_sites = copy.deepcopy(records)
+        wrong_sites[0]["line"] = 35
+        with self.assertRaisesRegex(inventory.InventoryError, "sites differ"):
+            inventory.require_fks2_structure_match(wrong_sites, provider)
+
+        duplicate = copy.deepcopy(records)
+        duplicate[-1] = copy.deepcopy(duplicate[-2])
+        with self.assertRaisesRegex(inventory.InventoryError, "sites differ"):
+            inventory.require_fks2_structure_match(duplicate, provider)
+
     def test_positive_exp_sites_match_shared_table(self) -> None:
         records = [
             {

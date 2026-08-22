@@ -136,6 +136,70 @@ FKS2_SHARD_COUNTS = tuple([1000] * 13 + [590])
 FKS2_DIGEST_RE = re.compile(
     r'⟨(?P<shard>\d+),\s*(?P<cells>\d+),\s*"(?P<digest>[0-9a-f]{64})"⟩'
 )
+FKS2_STRUCTURE_PROVIDER = (
+    REPO_ROOT / "HexInterval/Experiment/PntFks2Structure.lean"
+)
+FKS2_STRUCTURE_PREFIX_ROWS = (
+    (36, 70, 80),
+    (36, 97, 107),
+    (36, 124, 134),
+    (36, 260, 270),
+    (36, 1348, 1358),
+    (383, 3746, 3756),
+    (99, 13590, 20000),
+)
+FKS2_STRUCTURE_FILE_PATHS = {
+    "table4Ext": "PrimeNumberTheoremAnd/IEANTN/FKS2Tables/Table4Ext.lean",
+    "cor24Row6": "PrimeNumberTheoremAnd/IEANTN/FKS2Cor24Row6.lean",
+    "cor24Row7": "PrimeNumberTheoremAnd/IEANTN/FKS2Cor24Row7.lean",
+    "cor24Row8": "PrimeNumberTheoremAnd/IEANTN/FKS2Cor24Row8.lean",
+    "cor24Row9": "PrimeNumberTheoremAnd/IEANTN/FKS2Cor24Row9.lean",
+    "cor24Row10": "PrimeNumberTheoremAnd/IEANTN/FKS2Cor24Row10.lean",
+    "cor24Row11": "PrimeNumberTheoremAnd/IEANTN/FKS2Cor24Row11.lean",
+}
+FKS2_STRUCTURE_CERTIFICATE_FILES = (
+    "cor24Row6",
+    "cor24Row7",
+    "cor24Row8",
+    "cor24Row9",
+    "cor24Row10",
+    "cor24Row11",
+    "table4Ext",
+)
+FKS2_STRUCTURE_SOURCE_ROWS = (
+    (FKS2_STRUCTURE_FILE_PATHS["cor24Row6"], 36, "midCells_chain_row6", "chain", 0),
+    (FKS2_STRUCTURE_FILE_PATHS["cor24Row6"], 38, "midCells_ne_nil_row6", "nonempty", 0),
+    (FKS2_STRUCTURE_FILE_PATHS["cor24Row6"], 40, "midCells_last_row6", "last", 0),
+    (FKS2_STRUCTURE_FILE_PATHS["cor24Row7"], 36, "midCells_chain_row7", "chain", 1),
+    (FKS2_STRUCTURE_FILE_PATHS["cor24Row7"], 38, "midCells_ne_nil_row7", "nonempty", 1),
+    (FKS2_STRUCTURE_FILE_PATHS["cor24Row7"], 40, "midCells_last_row7", "last", 1),
+    (FKS2_STRUCTURE_FILE_PATHS["cor24Row8"], 36, "midCells_chain_row8", "chain", 2),
+    (FKS2_STRUCTURE_FILE_PATHS["cor24Row8"], 38, "midCells_ne_nil_row8", "nonempty", 2),
+    (FKS2_STRUCTURE_FILE_PATHS["cor24Row8"], 40, "midCells_last_row8", "last", 2),
+    (FKS2_STRUCTURE_FILE_PATHS["cor24Row9"], 36, "midCells_chain_row9", "chain", 3),
+    (FKS2_STRUCTURE_FILE_PATHS["cor24Row9"], 38, "midCells_ne_nil_row9", "nonempty", 3),
+    (FKS2_STRUCTURE_FILE_PATHS["cor24Row9"], 40, "midCells_last_row9", "last", 3),
+    (FKS2_STRUCTURE_FILE_PATHS["cor24Row10"], 36, "midCells_chain_row10", "chain", 4),
+    (FKS2_STRUCTURE_FILE_PATHS["cor24Row10"], 38, "midCells_ne_nil_row10", "nonempty", 4),
+    (FKS2_STRUCTURE_FILE_PATHS["cor24Row10"], 40, "midCells_last_row10", "last", 4),
+    (FKS2_STRUCTURE_FILE_PATHS["cor24Row11"], 383, "midCells_chain", "chain", 5),
+    (FKS2_STRUCTURE_FILE_PATHS["cor24Row11"], 385, "midCells_ne_nil", "nonempty", 5),
+    (FKS2_STRUCTURE_FILE_PATHS["cor24Row11"], 387, "midCells_last", "last", 5),
+    (FKS2_STRUCTURE_FILE_PATHS["table4Ext"], 99, "allCells_chain", "chain", 6),
+    (FKS2_STRUCTURE_FILE_PATHS["table4Ext"], 102, "allCells_last", "last", 6),
+    (FKS2_STRUCTURE_FILE_PATHS["table4Ext"], 104, "allCells_ne_nil", "nonempty", 6),
+)
+FKS2_STRUCTURE_PREFIX_RE = re.compile(
+    r"⟨(?P<line>\d+),\s*(?P<cells>\d+),\s*(?P<last>\d+)⟩"
+)
+FKS2_STRUCTURE_SOURCE_RE = re.compile(
+    r'⟨\.(?P<file>[A-Za-z0-9_]+),\s*(?P<line>\d+),\s*'
+    r'"(?P<declaration>[A-Za-z0-9_]+)",\s*\.(?P<fact>chain|nonempty|last),\s*'
+    r'(?P<certificate>\d+)⟩'
+)
+FKS2_STRUCTURE_CERTIFICATE_FILE_RE = re.compile(
+    r"^\s*\.(?P<file>[A-Za-z0-9_]+),?\s*$", re.MULTILINE
+)
 SMALL_PRIME_PROVIDER = (
     REPO_ROOT / "HexIntervalMathlib/Experiment/PntPrimeLogSmall.lean"
 )
@@ -526,6 +590,142 @@ def require_fks2_family_match(source_root: Path) -> None:
             raise InventoryError(
                 f"local FKS2 shard {shard:02} digest record does not match source"
             )
+
+
+def fks2_structure_migration() -> dict[str, Any]:
+    return {
+        "status": "accepted-after-rewrite",
+        "note": (
+            "Seven source-pinned prefix certificates replace all 21 pure list-geometry "
+            "native leaves: chain, nonemptiness, and final coordinate for six Corollary "
+            "24 prefixes and the complete extended Table 4 family. Prefix lengths are "
+            "byte-pinned audited literal mappings, not values derived from source syntax "
+            "by the matcher. Analytic cell and slab predicates remain separate pending "
+            "obligations."
+        ),
+        "rewrite": (
+            "Replace each chainOk, nonempty, or lastB native_decide leaf by the matching "
+            "field of the package-owned Prefix Holds certificate over the exact copied "
+            "allCells table."
+        ),
+        "evidence": [
+            "HexInterval/Experiment/PntFks2Structure.lean:prefixes_checked",
+            "HexInterval/Experiment/PntFks2Structure.lean:certificateHolds",
+            "HexInterval/Experiment/PntFks2Structure.lean:firstFailure?",
+            "conformance/HexIntervalMathlib/PntFks2StructureConformance.lean:fullFamily",
+            "scripts/maintenance/pnt_inventory.py:require_fks2_structure_match",
+        ],
+    }
+
+
+def require_fks2_structure_match(
+    records: list[dict[str, Any]], provider_text: str | None = None,
+) -> None:
+    """Correlate 21 structural leaves with seven audited literal prefixes.
+
+    The source identities and all local literals are exact.  This matcher does
+    not derive prefix lengths from the syntax of the pinned upstream files.
+    """
+    expected_sites = tuple((path, line, declaration)
+                           for path, line, declaration, _, _
+                           in FKS2_STRUCTURE_SOURCE_ROWS)
+    expected_set = set(expected_sites)
+    matches = [
+        record for record in records
+        if record.get("kind") == "native-decide-occurrence"
+        and record.get("mechanism") == "native_decide"
+        and (record.get("path"), record.get("line"), record.get("declaration"))
+        in expected_set
+    ]
+    observed_sites = tuple(
+        (record.get("path"), record.get("line"), record.get("declaration"))
+        for record in matches
+    )
+    if len(observed_sites) != len(expected_sites) \
+            or set(observed_sites) != expected_set:
+        raise InventoryError(
+            f"FKS2 structure sites differ: {sorted(observed_sites)} != "
+            f"{sorted(expected_sites)}"
+        )
+    if len(set(observed_sites)) != len(observed_sites):
+        raise InventoryError("duplicate FKS2 structure source site")
+
+    if provider_text is None:
+        provider_text = FKS2_STRUCTURE_PROVIDER.read_text(encoding="utf-8")
+    prefix_marker = provider_text.find("def prefixes : List Prefix := [")
+    files_marker = provider_text.find("def certificateFiles : List SourceFile := [")
+    source_marker = provider_text.find("def sourceRows : List SourceRow := [")
+    if prefix_marker < 0 or files_marker < 0 or source_marker < 0 \
+            or not prefix_marker < files_marker < source_marker:
+        raise InventoryError("cannot locate local FKS2 structure tables")
+    prefix_text = provider_text[prefix_marker:files_marker]
+    files_text = provider_text[files_marker:source_marker]
+    source_text = provider_text[source_marker:]
+    provider_prefixes = tuple(
+        tuple(map(int, match.groups()))
+        for match in FKS2_STRUCTURE_PREFIX_RE.finditer(prefix_text)
+    )
+    if provider_prefixes != FKS2_STRUCTURE_PREFIX_ROWS:
+        raise InventoryError(
+            f"local FKS2 structure prefixes differ: {provider_prefixes}"
+        )
+    provider_files = tuple(
+        match.group("file")
+        for match in FKS2_STRUCTURE_CERTIFICATE_FILE_RE.finditer(files_text)
+    )
+    if provider_files != FKS2_STRUCTURE_CERTIFICATE_FILES:
+        raise InventoryError(
+            f"local FKS2 structure certificateFiles differ: {provider_files}"
+        )
+    provider_rows = []
+    for match in FKS2_STRUCTURE_SOURCE_RE.finditer(source_text):
+        file_key, line, declaration, fact, certificate = match.groups()
+        path = FKS2_STRUCTURE_FILE_PATHS.get(file_key)
+        if path is None:
+            raise InventoryError(f"unknown local FKS2 structure file tag {file_key}")
+        provider_rows.append((path, int(line), declaration, fact, int(certificate)))
+    if tuple(provider_rows) != FKS2_STRUCTURE_SOURCE_ROWS:
+        raise InventoryError(
+            f"local FKS2 structure sourceRows differ: {tuple(provider_rows)}"
+        )
+    for certificate, file_key in enumerate(FKS2_STRUCTURE_CERTIFICATE_FILES):
+        expected_path = FKS2_STRUCTURE_FILE_PATHS[file_key]
+        row_paths = {
+            path for path, _, _, _, row_certificate in provider_rows
+            if row_certificate == certificate
+        }
+        if row_paths != {expected_path}:
+            raise InventoryError(
+                "local FKS2 structure certificate/source mapping differs: "
+                f"certificate {certificate} has {sorted(row_paths)}"
+            )
+
+
+def apply_fks2_structure_migrations(records: list[dict[str, Any]]) -> None:
+    expected = set((path, line, declaration)
+                   for path, line, declaration, _, _
+                   in FKS2_STRUCTURE_SOURCE_ROWS)
+    for record in records:
+        identity = (record.get("path"), record.get("line"),
+                    record.get("declaration"))
+        if record.get("kind") == "native-decide-occurrence" \
+                and identity in expected:
+            record["migration"] = fks2_structure_migration()
+
+
+def require_fks2_structure_migrations(records: list[dict[str, Any]]) -> None:
+    expected = set((path, line, declaration)
+                   for path, line, declaration, _, _
+                   in FKS2_STRUCTURE_SOURCE_ROWS)
+    matches = [record for record in records
+               if record.get("kind") == "native-decide-occurrence"
+               and (record.get("path"), record.get("line"),
+                    record.get("declaration")) in expected]
+    migration = fks2_structure_migration()
+    if len(matches) != len(expected) or any(
+        record.get("migration") != migration for record in matches
+    ):
+        raise InventoryError("FKS2 structure migration classifications differ")
 
 
 def small_prime_provider_rows(provider_text: str) -> tuple[list[tuple[int, int]],
@@ -1622,6 +1822,8 @@ def validate_inventory(
     require_pnt_exp_upper_match(records)
     require_fks2_nested_match(records)
     require_ramanujan_theta_match(records)
+    require_fks2_structure_match(records)
+    require_fks2_structure_migrations(records)
     if meta.get("counts") != counts:
         raise InventoryError(f"inventory counts disagree: {meta.get('counts')} != {counts}")
     for name, expected in EXPECTED.items():
@@ -1645,6 +1847,7 @@ def check_inventory(path: Path, require_classified: bool) -> None:
 
 def update_classifications(path: Path) -> None:
     meta, records = read_inventory(path)
+    apply_fks2_structure_migrations(records)
     validate_inventory(meta, records, require_classified=False, require_record_digest=False)
     meta["record_digest"] = record_digest(records)
     validate_inventory(meta, records, require_classified=False)
