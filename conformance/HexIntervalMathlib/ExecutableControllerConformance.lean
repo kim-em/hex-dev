@@ -273,7 +273,8 @@ def recipeMeasure : Driver.Measure Hex.Interval :=
 
 def driverLimits : Driver.Limits :=
   { result :=
-      { search := searchLimits, state := stateLimits, maxNodes := 1,
+      { search := searchLimits,
+        runtime := { executable := executableLimits, maxEvents := 0 }, maxNodes := 1,
         maxBodyCells := 3, maxBytes := 512, maxWork := 512, maxCode := 8 },
     proof := proofLimits,
     tree := { maxNodes := 1, maxDepth := 0, maxBodyCells := 3, maxWork := 64 },

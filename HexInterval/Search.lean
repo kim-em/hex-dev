@@ -7,6 +7,7 @@ Authors: Kim Morrison
 module
 
 public import HexInterval.Policy
+public import HexInterval.Runtime
 
 @[expose] public section
 
@@ -928,12 +929,15 @@ structure Measure (Fact Cause Plan Schema : Type) where
   body : Nat → Cost
   code : Nat → Cost
 
-/-- Retained-result limits layered over branch and search limits. `maxNodes`
-bounds the complete retained tree, while `maxBodyCells` bounds each opaque
-package body before its logical cost is measured. -/
+/-- Retained-result limits layered over runtime and search limits. `maxNodes`
+bounds the complete retained tree, `runtime.maxEvents` bounds each retained
+atomic batch, and `maxBodyCells` currently bounds both the retained quote count
+and each opaque package body before its logical cost is measured. Runtime quote
+creation remains separately bounded by `runtime.executable.maxQuotes` and
+`runtime.executable.maxQuoteCells`. -/
 structure Limits where
   search : Search.Limits
-  state : State.Limits
+  runtime : Runtime.Limits
   maxNodes : Nat
   maxBodyCells : Nat
   maxBytes : Nat
@@ -941,8 +945,12 @@ structure Limits where
   maxCode : Nat
   deriving DecidableEq, Repr
 
+def Limits.state (limits : Limits) : State.Limits :=
+  limits.runtime.executable.state
+
 inductive Resource where
   | nodes
+  | events
   | body
   | bytes
   | work
@@ -1034,14 +1042,22 @@ are supplied per transition rather than retained in this pure value: a later
 call may tighten or relax them, and reusing an old tree may create alternative
 bounded lineages but cannot duplicate a scope within either lineage. The
 reference builders revalidate the complete retained prefix before and after
-each transition; `maxNodes` therefore remains small and measurement-gated. -/
+each transition; node validation filters the complete retained runtime array
+for every node, so `maxNodes` and retained transition counts remain small and
+measurement-gated. -/
 structure Tree (Fact Cause Plan Schema : Type) where
   private mk ::
   nodes : Array (Node Fact Cause Plan Schema)
   private live : FrontierState Id
+  /-- Authenticated root branch supplied to `startWithin`, retained so the
+  first root runtime transition cannot choose its own origin. -/
+  private root : State.Branch Fact Cause
   /-- Accepted callback-update transitions retained independently of binary
   splits and terminal settlement. -/
   private advances : Nat
+  /-- Sealed typed runtime transitions, retained in exact acceptance order and
+  bound to the tree node which was current when each transition committed. -/
+  private runtime : Array (Id × Runtime.Applied Fact Cause)
   cost : Cost
 
 opaque Tree.frontier (tree : Tree Fact Cause Plan Schema) : Frontier Id :=
@@ -1056,11 +1072,19 @@ opaque Tree.pending (tree : Tree Fact Cause Plan Schema) : List Id :=
 opaque Tree.isEmpty (tree : Tree Fact Cause Plan Schema) : Bool :=
   tree.live.isEmpty
 
+/-- Opaque ordinary-import view of the exact retained typed transitions. -/
+opaque Tree.transitions (tree : Tree Fact Cause Plan Schema) :
+    Array (Id × Runtime.Applied Fact Cause) :=
+  tree.runtime
+
 def sumCost (items : List Cost) : Cost :=
   items.foldl (init := {}) (fun total item => total + item)
 
 def bodyCost (measure : Measure Fact Cause Plan Schema) (body : List Nat) : Cost :=
   sumCost (body.map measure.body)
+
+private def cellCost (measure : Measure Fact Cause Plan Schema) (count : Nat) : Cost :=
+  sumCost (List.replicate count measure.node)
 
 def sourceCost (measure : Measure Fact Cause Plan Schema)
     (source : Source Fact Cause) : Cost :=
@@ -1081,9 +1105,57 @@ def nodeCost (measure : Measure Fact Cause Plan Schema) :
       sourceCost measure source + measure.action recipe.action + measure.plan recipe.plan +
         measure.schema recipe.schema + bodyCost measure recipe.body
 
-def Tree.recomputeCost (measure : Measure Fact Cause Plan Schema)
+private def runtimeEventCost (measure : Measure Fact Cause Plan Schema) :
+    Runtime.Event Fact Cause → Cost
+  | .fact step =>
+      measure.node + measure.action step.action + measure.fact step.proposed +
+        measure.fact step.update.fact
+  | .equality step =>
+      measure.node + cellCost measure step.assumptions.length + measure.action step.action
+  | .transport step =>
+      measure.node + measure.action step.action + measure.fact step.update.fact
+  | .instance step =>
+      measure.node + cellCost measure
+        (step.bindings.size + step.newNodes.length + step.newBindings.length +
+          step.newApplications.length) + measure.action step.action +
+        sumCost (step.freshFacts.toList.map measure.fact)
+
+private def runtimeCost (measure : Measure Fact Cause Plan Schema)
+    (includeBefore : Bool) (transition : Runtime.Applied Fact Cause) : Cost :=
+  measure.node + (if includeBefore then measure.branch transition.before else {}) +
+    measure.branch transition.after +
+    cellCost measure
+      (transition.beforeBindings.size + transition.afterBindings.size +
+        transition.beforeApplications.size + transition.afterApplications.size +
+        transition.beforeEqualities.size + transition.afterEqualities.size +
+        transition.quotes.size + 2) +
+    measure.action transition.action +
+      sumCost (transition.quotes.toList.map fun quote =>
+        bodyCost measure (quote.schema :: quote.body)) +
+      sumCost (transition.events.toList.map (runtimeEventCost measure))
+
+private def runtimeCosts (measure : Measure Fact Cause Plan Schema) (nodeCount : Nat)
+    (runtime : Array (Id × Runtime.Applied Fact Cause)) : Cost := Id.run do
+  let mut total : Cost := {}
+  let mut seen := Array.replicate nodeCount false
+  for entry in runtime do
+    let includeBefore := seen[entry.1.index]? != some true
+    if includeBefore then seen := seen.set! entry.1.index true
+    total := total + runtimeCost measure includeBefore entry.2
+  return total
+
+private def Tree.computeCost (measure : Measure Fact Cause Plan Schema)
     (tree : Tree Fact Cause Plan Schema) : Cost :=
-  sumCost (tree.nodes.toList.map (nodeCost measure))
+  measure.branch tree.root + sumCost (tree.nodes.toList.map (nodeCost measure)) +
+    runtimeCosts measure tree.nodes.size tree.runtime
+
+/-- Recompute the complete caller-declared logical cost of one sealed tree.
+Runtime entries are scanned once: the first `before` branch and each `after`
+branch are charged per node-chain position, and accepted quote bodies are
+charged once from `Applied.quotes` rather than duplicated by typed events. -/
+opaque Tree.recomputeCost (measure : Measure Fact Cause Plan Schema)
+    (tree : Tree Fact Cause Plan Schema) : Cost :=
+  tree.computeCost measure
 
 def withinCost (limits : Limits) (cost : Cost) : Bool :=
   cost.bytes ≤ limits.maxBytes && cost.work ≤ limits.maxWork
@@ -1105,7 +1177,7 @@ private def actionWithin (limits : State.Limits) (action : Action) : Bool :=
   let portLimit := Nat.max (limits.maxArity + 1) limits.maxScopeNodes
   listWithin portLimit action.inputs && listWithin portLimit action.writes &&
     listWithin limits.matcherBatchSize action.structuralInputs &&
-    action.effort ≤ limits.maxEffort
+    action.effort ≤ limits.maxEffort && action.generation ≤ limits.maxGeneration
 
 private opaque Split.check (limits : Limits) (source : Source Fact Cause)
     (recipe : Split Plan Schema) : Bool :=
@@ -1148,8 +1220,133 @@ private def childBranchWithin [DecidableEq Fact] (limits : Limits)
   | .ok branch => pure branch
   | .error error => throw (.state error)
 
+private def historyPrefix [DecidableEq Fact] [DecidableEq Cause]
+    (before after : Array (State.Update Fact Cause)) : Bool := Id.run do
+  if after.size < before.size then return false
+  for index in [0:before.size] do
+    if before[index]? != after[index]? then return false
+  return true
+
+/-- Fact-only movement inside one exact program phase. Program changes are
+accepted only by an intervening sealed runtime transition. -/
+private def samePhase [DecidableEq Fact] [DecidableEq Cause]
+    (before after : State.Branch Fact Cause) : Bool :=
+  before.baseProgram == after.baseProgram && before.initialFacts == after.initialFacts &&
+    before.programVersion == after.programVersion && before.program == after.program &&
+    before.seeds == after.seeds && before.generations == after.generations &&
+    before.depths == after.depths && historyPrefix before.history after.history &&
+    (!before.contradictory || after.contradictory) && before.check && after.check
+
+private def stepsFor (runtime : Array (Id × Runtime.Applied Fact Cause)) (id : Id) :
+    List (Runtime.Applied Fact Cause) :=
+  runtime.toList.filterMap fun entry => if entry.1 == id then some entry.2 else none
+
+private def applicationsSame (before after : Array Executable.Application) : Bool :=
+  before.size == after.size && Executable.applicationsPrefix before after
+
+private def equalityPrefix (before after : Array Runtime.Equality) : Bool := Id.run do
+  if after.size < before.size then return false
+  for index in [0:before.size] do
+    if before[index]? != after[index]? then return false
+  return true
+
+private def transitionShape (transition : Runtime.Applied Fact Cause) : Bool :=
+  transition.serial == transition.action.serial &&
+    Executable.bindingsPrefix transition.beforeBindings transition.afterBindings &&
+    Executable.applicationsPrefix transition.beforeApplications transition.afterApplications &&
+    transition.beforeGeneration ≤ transition.afterGeneration &&
+    transition.beforeGeneration + transition.after.programVersion ==
+      transition.afterGeneration + transition.before.programVersion &&
+    equalityPrefix transition.beforeEqualities transition.afterEqualities
+
+private def follows (before after : Runtime.Applied Fact Cause) : Bool :=
+  after.serial == before.serial + 1 &&
+    before.afterBindings == after.beforeBindings &&
+    applicationsSame before.afterApplications after.beforeApplications &&
+    before.afterGeneration == after.beforeGeneration &&
+    before.afterEqualities == after.beforeEqualities
+
+private def runtimeChain [DecidableEq Fact] [DecidableEq Cause]
+    (runtime : Array (Id × Runtime.Applied Fact Cause)) (id : Id)
+    (origin live : State.Branch Fact Cause) : Bool := Id.run do
+  let mut current := origin
+  let mut previous? : Option (Runtime.Applied Fact Cause) := none
+  for transition in stepsFor runtime id do
+    if !transitionShape transition || !samePhase current transition.before ||
+        !transition.after.check then return false
+    match previous? with
+    | none => if transition.serial != 0 then return false
+    | some previous => if !follows previous transition then return false
+    current := transition.after
+    previous? := some transition
+  return samePhase current live
+
+private def runtimeBindingWithin (limits : State.Limits) (binding : ScopeBinding) : Bool :=
+  listWithin limits.maxScopeNodes binding.watches &&
+    listWithin limits.maxScopeNodes binding.writes
+
+private def runtimeApplicationWithin (limits : State.Limits)
+    (application : Executable.Application) : Bool :=
+  listWithin (Nat.max (limits.maxArity + 1) limits.maxScopeNodes) application.watches &&
+    listWithin (Nat.max (limits.maxArity + 1) limits.maxScopeNodes) application.writes &&
+    listWithin limits.matcherBatchSize application.structuralInputs &&
+    application.effort ≤ limits.maxEffort && application.generation ≤ limits.maxGeneration
+
+private def runtimeEqualityWithin (limits : Limits) (equality : Runtime.Equality) : Bool :=
+  equality.generation ≤ limits.state.maxGeneration &&
+    actionWithin limits.state equality.origin && bodyWithin limits equality.quote.body &&
+    listWithin (Nat.max (limits.state.maxArity + 1) limits.state.maxScopeNodes)
+      equality.assumptions
+
+private def runtimePreflight (limits : Limits) (nodeCount : Nat)
+    (entry : Id × Runtime.Applied Fact Cause) : Bool :=
+  let transition := entry.2
+  entry.1.index < nodeCount && entry.1.index < limits.maxNodes &&
+    transition.events.size ≤ limits.runtime.maxEvents && !transition.events.isEmpty &&
+    transitionShape transition &&
+    transition.beforeBindings.size ≤ limits.state.maxApplications &&
+    transition.afterBindings.size ≤ limits.state.maxApplications &&
+    transition.beforeBindings.all (runtimeBindingWithin limits.state) &&
+    transition.afterBindings.all (runtimeBindingWithin limits.state) &&
+    transition.beforeApplications.size ≤ limits.state.maxApplications &&
+    transition.afterApplications.size ≤ limits.state.maxApplications &&
+    transition.beforeApplications.all (runtimeApplicationWithin limits.state) &&
+    transition.afterApplications.all (runtimeApplicationWithin limits.state) &&
+    transition.beforeGeneration ≤ transition.afterGeneration &&
+    transition.afterGeneration ≤ limits.state.maxGeneration &&
+    transition.beforeEqualities.size ≤ limits.state.maxEqualities &&
+    transition.afterEqualities.size ≤ limits.state.maxEqualities &&
+    transition.beforeEqualities.all (runtimeEqualityWithin limits) &&
+    transition.afterEqualities.all (runtimeEqualityWithin limits) &&
+    transition.quotes.size ≤ limits.maxBodyCells &&
+    transition.quotes.all (fun quote => bodyWithin limits quote.body) &&
+    (preflightBranch limits.state transition.before).isOk &&
+    (preflightBranch limits.state transition.after).isOk &&
+    actionWithin limits.state transition.action &&
+    transition.events.all fun event => match event with
+      | .fact step => bodyWithin limits step.quote.body && actionWithin limits.state step.action
+      | .equality step =>
+          bodyWithin limits step.quote.body && actionWithin limits.state step.action &&
+            listWithin (Nat.max (limits.state.maxArity + 1) limits.state.maxScopeNodes)
+              step.assumptions
+      | .transport step => actionWithin limits.state step.action
+      | .instance step =>
+          bodyWithin limits step.quote.body && actionWithin limits.state step.action &&
+            step.freshFacts.size <= limits.state.maxNodes &&
+            step.bindings.size <= limits.state.maxApplications &&
+            step.bindings.all (fun binding =>
+              listWithin limits.state.maxScopeNodes binding.watches &&
+                listWithin limits.state.maxScopeNodes binding.writes) &&
+            listWithin limits.state.maxNodes step.newNodes &&
+            listWithin limits.state.maxApplications step.newBindings &&
+            step.newBindings.all (fun binding =>
+              listWithin limits.state.maxScopeNodes binding.watches &&
+                listWithin limits.state.maxScopeNodes binding.writes) &&
+            listWithin limits.state.maxApplications step.newApplications
+
 private opaque childMatches [DecidableEq Fact] [DecidableEq Cause]
     (limits : Limits) (parentId : Id) (parent : Source Fact Cause)
+    (runtime : Array (Id × Runtime.Applied Fact Cause)) (childId : Id)
     (side : Side) (child : Source Fact Cause) : Bool :=
   child.parent == some parentId && child.side == some side &&
     child.depth == parent.depth + 1 &&
@@ -1159,17 +1356,7 @@ private opaque childMatches [DecidableEq Fact] [DecidableEq Cause]
         match (childBranchWithin limits parent seed).toOption with
         | none => false
         | some initial =>
-            /- `child.branch` may have advanced through sealed accepted-update
-            transitions since creation. Its checked history reconstructs the
-            live snapshot; this edge pins the immutable base program, initial
-            facts, checked program, seeds, generations, depths, and program
-            version from the seeded creation branch. -/
-            initial.baseProgram == child.branch.baseProgram &&
-              initial.initialFacts == child.branch.initialFacts &&
-              initial.program == child.branch.program && initial.seeds == child.branch.seeds &&
-              initial.generations == child.branch.generations &&
-              initial.depths == child.branch.depths &&
-              initial.programVersion == child.branch.programVersion
+            runtimeChain runtime childId initial child.branch
 
 def pendingIds (tree : Tree Fact Cause Plan Schema) : List Id :=
   (List.range tree.nodes.size).filterMap fun index =>
@@ -1197,15 +1384,20 @@ private def nodePreflight (limits : Limits) (node : Node Fact Cause Plan Schema)
         bodyWithin limits split.body && actionWithin limits.state split.action
 
 /-- Validate the complete retained shape, exact parent/child seed relation,
-terminal records, cumulative search accounting, and adapter-declared cost. -/
+terminal records, cumulative search accounting, and adapter-declared cost.
+The transparent reference implementation scans the retained runtime array for
+each node and compares every selected transition branch. -/
 opaque Tree.check [DecidableEq Fact] [DecidableEq Cause]
     (limits : Limits) (measure : Measure Fact Cause Plan Schema)
     (tree : Tree Fact Cause Plan Schema) : Bool := Id.run do
-  if tree.nodes.isEmpty || limits.maxNodes < tree.nodes.size then return false
+  if tree.nodes.isEmpty || limits.maxNodes < tree.nodes.size ||
+      tree.runtime.any (fun entry => tree.nodes.size ≤ entry.1.index) then return false
   let some frontierCount := (frontierCountWithin limits.search tree.live.frontier).toOption
     | return false
   if !tree.accounting.check limits.search frontierCount ||
-      tree.nodes.any (fun node => !nodePreflight limits node) then return false
+      !(preflightBranch limits.state tree.root).isOk ||
+      tree.nodes.any (fun node => !nodePreflight limits node) ||
+      tree.runtime.any (fun entry => !runtimePreflight limits tree.nodes.size entry) then return false
   let some root := tree.nodes[0]? | return false
   let rootSource := root.source
   if rootSource.depth != 0 || rootSource.parent.isSome || rootSource.side.isSome ||
@@ -1217,6 +1409,14 @@ opaque Tree.check [DecidableEq Fact] [DecidableEq Cause]
     let source := node.source
     if !source.branch.check || limits.search.maxDepth < source.depth ||
         source.scope.index != rootSource.scope.index + index then return false
+    let id : Id := { index }
+    let nodeSteps := stepsFor tree.runtime id
+    if index == 0 then
+      if !runtimeChain tree.runtime id tree.root source.branch then return false
+    else match nodeSteps with
+      | [] => pure ()
+      | first :: _ =>
+          if !runtimeChain tree.runtime id first.before source.branch then return false
     scopes := source.scope :: scopes
     match node with
     | .pending _ => pure ()
@@ -1231,8 +1431,9 @@ opaque Tree.check [DecidableEq Fact] [DecidableEq Cause]
         if leftSeed.node != recipe.parent.node || rightSeed.node != recipe.parent.node ||
             leftSeed.previous != recipe.parent || rightSeed.previous != recipe.parent ||
             leftSeed.fact == rightSeed.fact ||
-            !childMatches limits { index } source .left leftNode.source ||
-            !childMatches limits { index } source .right rightNode.source then return false
+            !childMatches limits { index } source tree.runtime left .left leftNode.source ||
+            !childMatches limits { index } source tree.runtime right .right rightNode.source then
+          return false
         incoming := incoming.set! left.index (incoming[left.index]! + 1)
         incoming := incoming.set! right.index (incoming[right.index]! + 1)
   if !allDistinct scopes || incoming[0]? != some 0 then return false
@@ -1248,7 +1449,7 @@ opaque Tree.check [DecidableEq Fact] [DecidableEq Cause]
       tree.accounting.leaves != splits + 1 ||
       tree.accounting.scopes != tree.nodes.size ||
       tree.accounting.nextScope != rootSource.scope.index + tree.nodes.size then return false
-  let cost := tree.recomputeCost measure
+  let cost := tree.computeCost measure
   return tree.cost == cost && withinCost limits cost
 
 private def checked [DecidableEq Fact] [DecidableEq Cause]
@@ -1267,9 +1468,11 @@ opaque startWithin [DecidableEq Fact] [DecidableEq Cause]
   let source : Source Fact Cause := { scope, depth := 0, branch }
   let nodes : Array (Node Fact Cause Plan Schema) := #[.pending source]
   let live <- (FrontierState.startWithin limits.search scope ({ index := 0 } : Id)).mapError fromSearch
-  let cost := sumCost (nodes.toList.map (nodeCost measure))
+  let initial : Tree Fact Cause Plan Schema :=
+    { nodes, live, root := branch, advances := 0, runtime := #[], cost := {} }
+  let cost := initial.computeCost measure
   throwCost limits cost
-  checked limits measure { nodes, live, advances := 0, cost }
+  checked limits measure { initial with cost }
 
 opaque current? (tree : Tree Fact Cause Plan Schema) : Option (Id × Source Fact Cause) := do
   let id ← tree.live.head?
@@ -1299,9 +1502,46 @@ opaque advanceWithin [DecidableEq Fact] [DecidableEq Cause]
   if head != id then throw .malformed
   let nextSource := { source with branch := transition.after.branch }
   let nodes := tree.nodes.set! id.index (.pending nextSource)
-  let cost := sumCost (nodes.toList.map (nodeCost measure))
+  let next : Tree Fact Cause Plan Schema :=
+    { nodes, live, root := tree.root, advances := tree.advances + 1,
+      runtime := tree.runtime, cost := {} }
+  let cost := next.computeCost measure
   throwCost limits cost
-  checked limits measure { nodes, live, advances := tree.advances + 1, cost }
+  checked limits measure { next with cost }
+
+/-- Retain one sealed typed runtime transition at the exact current tree head.
+Unlike generic fact updates, an accepted program extension is remembered in
+the private transition chain used to reconstruct non-root child state. -/
+opaque advanceRuntimeWithin [DecidableEq Fact] [DecidableEq Cause]
+    (limits : Limits) (measure : Measure Fact Cause Plan Schema)
+    (tree : Tree Fact Cause Plan Schema) (transition : Runtime.Applied Fact Cause) :
+    Except Error (Tree Fact Cause Plan Schema) := do
+  let tree ← checked limits measure tree
+  let some (id, source) := current? tree | throw .terminal
+  if transition.events.size > limits.runtime.maxEvents then
+    throw (.resource .events)
+  if
+      transition.quotes.size > limits.maxBodyCells ||
+      transition.quotes.any (fun quote => !bodyWithin limits quote.body) ||
+      transition.events.any (fun event => match event with
+        | .fact step => !bodyWithin limits step.quote.body
+        | .equality step => !bodyWithin limits step.quote.body
+        | .transport _ => false
+        | .instance step => !bodyWithin limits step.quote.body) then
+    throw (.resource .body)
+  if !runtimePreflight limits tree.nodes.size (id, transition) ||
+      transition.before != source.branch ||
+      !transition.after.check then throw .malformed
+  let (head, live) ← tree.live.advanceHeadWithin limits.search |>.mapError fromSearch
+  if head != id then throw .malformed
+  let nextSource := { source with branch := transition.after }
+  let nodes := tree.nodes.set! id.index (.pending nextSource)
+  let runtime := tree.runtime.push (id, transition)
+  let next : Tree Fact Cause Plan Schema :=
+    { nodes, live, root := tree.root, advances := tree.advances + 1, runtime, cost := {} }
+  let cost := next.computeCost measure
+  throwCost limits cost
+  checked limits measure { next with cost }
 
 /-- Restore the exact retained parent source by append-only node identity. -/
 def restoreParent? (tree : Tree Fact Cause Plan Schema) (child : Id) :
@@ -1347,9 +1587,12 @@ opaque splitWithin [DecidableEq Fact] [DecidableEq Cause]
     { index := tree.accounting.nextScope + 1 } rightSeed
   let nodes := (tree.nodes.set! parentId.index (.split parent recipe leftId rightId))
     |>.push (.pending left) |>.push (.pending right)
-  let cost := sumCost (nodes.toList.map (nodeCost measure))
+  let next : Tree Fact Cause Plan Schema :=
+    { nodes, live, root := tree.root, advances := tree.advances,
+      runtime := tree.runtime, cost := {} }
+  let cost := next.computeCost measure
   throwCost limits cost
-  checked limits measure { nodes, live, advances := tree.advances, cost }
+  checked limits measure { next with cost }
 
 /-- Retain one exact terminal and remove the stable frontier head
 transactionally. Target and refutation records are authenticated runtime data,
@@ -1367,9 +1610,12 @@ opaque settleWithin [DecidableEq Fact] [DecidableEq Cause]
   let (head, live) ← tree.live.settleHeadWithin limits.search |>.mapError fromSearch
   if head != id then throw .terminal
   let nodes := tree.nodes.set! id.index (.terminal source ending)
-  let cost := sumCost (nodes.toList.map (nodeCost measure))
+  let next : Tree Fact Cause Plan Schema :=
+    { nodes, live, root := tree.root, advances := tree.advances,
+      runtime := tree.runtime, cost := {} }
+  let cost := next.computeCost measure
   throwCost limits cost
-  checked limits measure { nodes, live, advances := tree.advances, cost }
+  checked limits measure { next with cost }
 
 end Result
 

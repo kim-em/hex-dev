@@ -19,6 +19,10 @@ class SealedImportAllTest(unittest.TestCase):
                     "HexInterval.Executable"),
                 (Path("bench/HexInterval/BypassExecutable.lean"),
                     "HexInterval.Executable"),
+                (Path("conformance/HexInterval/BypassRuntime.lean"),
+                    "HexInterval.Runtime"),
+                (Path("bench/HexInterval/BypassRuntime.lean"),
+                    "HexInterval.Runtime"),
                 (Path("conformance/HexInterval/Bypass.lean"), "HexInterval.Search"),
                 (Path("bench/HexInterval/Bypass.lean"), "HexInterval.Search"),
                 (Path("conformance/HexIntervalMathlib/Bypass.lean"),
@@ -39,6 +43,10 @@ class SealedImportAllTest(unittest.TestCase):
                     "HexInterval.Executable` outside its exact trusted-internals allowlist",
                     "bench/HexInterval/BypassExecutable.lean:1 uses `import all "
                     "HexInterval.Executable` outside its exact trusted-internals allowlist",
+                    "conformance/HexInterval/BypassRuntime.lean:1 uses `import all "
+                    "HexInterval.Runtime` outside its exact trusted-internals allowlist",
+                    "bench/HexInterval/BypassRuntime.lean:1 uses `import all "
+                    "HexInterval.Runtime` outside its exact trusted-internals allowlist",
                     "conformance/HexInterval/Bypass.lean:1 uses `import all "
                     "HexInterval.Search` outside its exact trusted-internals allowlist",
                     "bench/HexInterval/Bypass.lean:1 uses `import all "
