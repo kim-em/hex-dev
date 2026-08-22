@@ -7,13 +7,13 @@ coefficients is small. Mathlib-free. The companion
 `Polynomial R` and the correspondence lemmas.
 
 This SPEC expands the "Sparse univariate polynomials" bullet of
-[future-work](../future-work.md). It sits beside
+[future-work](../../SPEC/future-work.md). It sits beside
 [hex-poly](../../HexPoly/SPEC/hex-poly.md) rather than inside it, and it
 converts to and from `DensePoly R` explicitly at a named boundary. It
 does **not** introduce a common interface over the two representations.
 The reasoning is under "No swappable polynomial abstraction" below, and
 the same decision is recorded in
-[future-work](../future-work.md) under "Swappable polynomial
+[future-work](../../SPEC/future-work.md) under "Swappable polynomial
 representations (deferred)".
 
 ## Why this library exists
@@ -41,7 +41,7 @@ cyclotomics is exactly the one this representation stores well: `Φ_p`
 has degree `p − 1` and all `p` of its coefficients are `1`, so it is
 dense, and the `p^k` members are that dense polynomial with its
 exponents scaled. The
-cyclotomic library specified in [hex-cyclotomic](hex-cyclotomic.md)
+cyclotomic library specified in [hex-cyclotomic](../../SPEC/Libraries/hex-cyclotomic.md)
 builds `ZPoly` and leaves sparse output to an adapter over this library
 at a consumer that holds both. That adapter is downstream and is not a
 dependency in either direction: nothing here knows what a cyclotomic
@@ -84,7 +84,7 @@ which is a condition on one end of the array. This library maintains
 condition on every adjacent pair and every entry. An interface that
 tried to state a shared canonical-form law would state neither.
 
-The resolution is the one [future-work](../future-work.md) already
+The resolution is the one [future-work](../../SPEC/future-work.md) already
 records: build the second representation with explicit conversions
 first, and reconsider a common interface only after several real
 consumers have shown which operations belong in it. Today there is one
@@ -782,7 +782,7 @@ The remainder-degree statements use `degree?.getD 0` because that is the
 shape `DensePoly.DivModLaws` states them in, and `degree?_toDense` is
 what moves them across. `divExactMonic?_eq_some` needs no `t ≠ 0` side
 condition, unlike the `divExact?` of
-[hex-poly-z-gcd](hex-poly-z-gcd.md): a monic divisor is nonzero.
+[hex-poly-z-gcd](../../SPEC/Libraries/hex-poly-z-gcd.md): a monic divisor is nonzero.
 
 **No claim is made that any of this stays sparse.** Sparsity survives
 in special cases and not in general, and the special cases are what make
@@ -808,7 +808,7 @@ with a two-term input of degree `10^6` should expect a gcd to cost what a
 dense gcd at degree `10^6` costs.
 
 This is a deliberate placement rather than a gap to be filled later.
-[future-work](../future-work.md) records that a sparse division
+[future-work](../../SPEC/future-work.md) records that a sparse division
 algorithm should be measured before it is committed to, and the
 "convert-gcd" bench family below is that measurement: it records the
 conversion share of the total, which is the number that says whether a
@@ -817,7 +817,7 @@ exists, this SPEC authorises the conversion route and nothing more.
 
 Exact division by an arbitrary, possibly nonmonic integer polynomial is
 not specified here. That is hex-poly-z's `divExact?`, which
-[hex-poly-z-gcd](hex-poly-z-gcd.md) schedules, and a consumer that wants
+[hex-poly-z-gcd](../../SPEC/Libraries/hex-poly-z-gcd.md) schedules, and a consumer that wants
 it already depends on hex-poly-z and can apply it to `toDense`. Adding a
 second one here would be inventing an operation this library has no
 consumer for.
@@ -904,7 +904,7 @@ not an optimisation. See the representation section.
 
 ## Conformance
 
-Fixtures follow [SPEC/testing.md](../testing.md). Two Lean drivers, as
+Fixtures follow [SPEC/testing.md](../../SPEC/testing.md). Two Lean drivers, as
 [hex-mv-poly](../../HexMvPoly/SPEC/hex-mv-poly.md) has:
 `conformance/HexSparsePoly/Conformance.lean`, holding the `#guard`
 property checks, registered in `HexConformance`; and
@@ -993,7 +993,7 @@ Euclidean algorithm.
 
 ## Benchmarking
 
-Per [SPEC/benchmarking.md](../benchmarking.md), with drivers at
+Per [SPEC/benchmarking.md](../../SPEC/benchmarking.md), with drivers at
 `bench/HexSparsePoly/Bench.lean`. Native only, plus a small kernel
 family for the `decide` closure listed under kernel exposure.
 
@@ -1114,7 +1114,7 @@ sort-by-key with a combining fold that the `@[csimp]` twin uses proves
 reusable, it belongs in hex-basic rather than here, in the same way that
 [hex-mv-poly](../../HexMvPoly/SPEC/hex-mv-poly.md) puts its reusable map
 algorithms in `HexBasic/ExtTreeMap.lean`. The sparse matrix work
-described in [future-work](../future-work.md) canonicalises coordinate
+described in [future-work](../../SPEC/future-work.md) canonicalises coordinate
 form the same way and would be the second consumer. Write it here
 first and promote it when that happens.
 
@@ -1233,7 +1233,7 @@ derivative theorems are stated against the dense operations.
   the merge and of `coeff`. `Array (Nat × R)` keeps the invariant and
   the proofs in one place and cannot desynchronise the lengths. This is
   the same choice coordinate form faces in the sparse matrix item of
-  [future-work](../future-work.md), and design principle 10 is what
+  [future-work](../../SPEC/future-work.md), and design principle 10 is what
   keeps it changeable: no consumer reads `terms`.
 - **Whether descending exponent order would suit the consumers better.**
   Leading-term algorithms want the top term first, and evaluation reads

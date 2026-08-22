@@ -87,6 +87,8 @@ lean_lib HexPoly where
 
 lean_lib HexMvPoly where
 
+lean_lib HexSparsePoly where
+
 lean_lib HexModArith where
   precompileModules := true
   -- See `HexArith`: the `hexmodarithffi` extern_lib links in automatically, so

@@ -364,7 +364,7 @@ hex-poly ──────────────────┘              
 `hex-basic` for the `List.foldl` algebra its canonicalisation proof
 uses. There is no interface over the two representations: callers name
 the one they hold and convert explicitly, for the reasons in
-[hex-sparse-poly §No swappable polynomial abstraction](hex-sparse-poly.md).
+[hex-sparse-poly §No swappable polynomial abstraction](../../HexSparsePoly/SPEC/hex-sparse-poly.md).
 Its companion is defined by composing `toDense` with hex-poly-mathlib's
 equivalence, so it depends on that library rather than reproving the
 ring structure.
@@ -558,7 +558,7 @@ for developments whose source-local move has not happened yet.
 - [hex-modular-matrix.md](hex-modular-matrix.md): multi-modular determinant, certified rank, and Dixon p-adic linear solving (the Mathlib companion is specified in the same file)
 - [hex-poly](../../HexPoly/SPEC/hex-poly.md): dense polynomial library, operations, GCD, CRT
 - [hex-poly-mathlib](../../HexPolyMathlib/SPEC/hex-poly-mathlib.md): `DensePoly R ≃+* Polynomial R`
-- [hex-sparse-poly.md](hex-sparse-poly.md): canonical sparse univariate polynomials, the operations that keep sparsity, and the dense conversions (the Mathlib companion is specified in the same file)
+- [hex-sparse-poly](../../HexSparsePoly/SPEC/hex-sparse-poly.md): canonical sparse univariate polynomials, the operations that keep sparsity, and the dense conversions (the Mathlib companion is specified in the same file)
 - [hex-mv-poly](../../HexMvPoly/SPEC/hex-mv-poly.md): canonical distributed multivariate polynomials with explicit monomial orders
 - [hex-mv-poly-mathlib](../../HexMvPolyMathlib/SPEC/hex-mv-poly-mathlib.md): `MvPoly n R cmp ≃+* MvPolynomial (Fin n) R`, `aeval`, and operation correspondence
 - [hex-mv-gcd](hex-mv-gcd.md): multivariate gcd with cofactors, content and primitive part, exact division, squarefree decomposition
