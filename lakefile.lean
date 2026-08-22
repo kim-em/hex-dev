@@ -598,6 +598,14 @@ lean_lib HexFactorizationModules where
   globs := #[`HexBerlekampZassenhaus.All,
     `HexBerlekampZassenhausMathlib.All]
 
+-- HexSparsePoly is not yet a published split repository, so its
+-- verification-only kernel probes stay separate from the
+-- release-manifest-backed target above; they join HexReleaseTests (and the
+-- release manifest's test_modules) when the split repository is published.
+@[default_target]
+lean_lib HexSparsePolyTests where
+  globs := #[`HexSparsePoly.KernelTests]
+
 -- HexRCF is not yet a published split repository, so its verification-only
 -- modules stay separate from the release-manifest-backed target above.
 @[default_target]
