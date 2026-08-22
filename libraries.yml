@@ -375,7 +375,7 @@ libraries:
         - name: packed-generic-shared-bridge
           description: Shared binary representative family exercising both packed GF2q and generic GFq constructor/projection paths on the common p = 2 API surface.
   HexBerlekampZassenhaus:
-    deps: [HexBerlekamp, HexHensel, HexLLL]
+    deps: [HexBerlekamp, HexHensel, HexLLL, HexPrimality]
     mathlib: false
     done_through: 0
     status: active
