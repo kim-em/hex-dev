@@ -6,6 +6,7 @@ Authors: Kim Morrison
 
 module
 
+public import HexPrimality.MillerRabin
 public import HexPrimality.Order
 public import HexPrimality.Table
 
