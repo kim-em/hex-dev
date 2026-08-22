@@ -33,12 +33,14 @@ def setCol {R : Type u} {n : Nat} (M : Square R n) (dst : Fin n)
     (v : Fin n → R) : Square R n :=
   fun i j => if j = dst then v i else M i j
 
+/-- Entrywise value of a column replacement. -/
 @[simp, grind =]
 theorem setCol_apply {R : Type u} {n : Nat} (M : Square R n)
     (dst : Fin n) (v : Fin n → R) (i j : Fin n) :
     setCol M dst v i j = if j = dst then v i else M i j := by
   rfl
 
+/-- Replacing a column by itself changes nothing. -/
 @[simp, grind =]
 theorem setCol_self {R : Type u} {n : Nat} (M : Square R n) (dst : Fin n) :
     setCol M dst (fun i => M i dst) = M := by
@@ -57,6 +59,7 @@ def swapAdjacent {R : Type u} {n : Nat} (M : Square R (n + 1))
     else if j = left.succ then M i left.castSucc
     else M i j
 
+/-- Entrywise value of an adjacent column swap. -/
 @[simp, grind =]
 theorem swapAdjacent_apply {R : Type u} {n : Nat}
     (M : Square R (n + 1)) (left : Fin n) (i j : Fin (n + 1)) :
@@ -66,12 +69,14 @@ theorem swapAdjacent_apply {R : Type u} {n : Nat}
       else M i j := by
   rfl
 
+/-- After an adjacent swap, the left column reads the old right column. -/
 @[simp, grind =]
 theorem swapAdjacent_left {R : Type u} {n : Nat}
     (M : Square R (n + 1)) (left : Fin n) (i : Fin (n + 1)) :
     swapAdjacent M left i left.castSucc = M i left.succ := by
   simp [swapAdjacent]
 
+/-- After an adjacent swap, the right column reads the old left column. -/
 @[simp, grind =]
 theorem swapAdjacent_right {R : Type u} {n : Nat}
     (M : Square R (n + 1)) (left : Fin n) (i : Fin (n + 1)) :
@@ -82,6 +87,7 @@ theorem swapAdjacent_right {R : Type u} {n : Nat}
     simp at hval
   simp [swapAdjacent, hne]
 
+/-- Columns away from the swapped pair are untouched. -/
 @[simp, grind =]
 theorem swapAdjacent_of_ne {R : Type u} {n : Nat}
     (M : Square R (n + 1)) (left : Fin n) (i j : Fin (n + 1))
@@ -89,6 +95,7 @@ theorem swapAdjacent_of_ne {R : Type u} {n : Nat}
     swapAdjacent M left i j = M i j := by
   simp [swapAdjacent, hl, hr]
 
+/-- Adjacent column swaps are involutive. -/
 @[simp, grind =]
 theorem swapAdjacent_swapAdjacent {R : Type u} {n : Nat}
     (M : Square R (n + 1)) (left : Fin n) :
@@ -106,12 +113,15 @@ theorem swapAdjacent_swapAdjacent {R : Type u} {n : Nat}
       simp [swapAdjacent, hne.symm]
     · simp [swapAdjacent, hl, hr]
 
+/-- Below the skipped position, the embedding preserves the numeric index. -/
 @[simp, grind =]
 theorem skipIndex_val_of_lt {n : Nat} (skip : Fin (n + 1)) (i : Fin n)
     (h : i.val < skip.val) :
     (skipIndex skip i).val = i.val := by
   simp [skipIndex, h]
 
+/-- From the skipped position on, the embedding shifts the numeric index up
+by one. -/
 @[simp, grind =]
 theorem skipIndex_val_of_not_lt {n : Nat} (skip : Fin (n + 1)) (i : Fin n)
     (h : ¬i.val < skip.val) :
@@ -160,6 +170,7 @@ def eraseIndex {n : Nat} (skip target : Fin (n + 1))
         omega
       omega⟩
 
+/-- The skipped-index embedding undoes index contraction. -/
 @[simp, grind =]
 theorem skipIndex_eraseIndex {n : Nat} (skip target : Fin (n + 1))
     (h : target ≠ skip) :
@@ -196,6 +207,8 @@ def eraseAdjacent {n : Nat} (removed : Fin (n + 2)) (left : Fin (n + 1))
         omega
       omega⟩
 
+/-- The contracted left column of an adjacent pair embeds back onto the
+original left column. -/
 @[simp, grind =]
 theorem skipIndex_eraseAdjacent_left {n : Nat} (removed : Fin (n + 2))
     (left : Fin (n + 1)) (hleft : removed ≠ left.castSucc)
@@ -218,6 +231,8 @@ theorem skipIndex_eraseAdjacent_left {n : Nat} (removed : Fin (n + 2))
       omega
     simp [eraseAdjacent, hlt, skipIndex, hkeep]
 
+/-- The contracted right column of an adjacent pair embeds back onto the
+original right column. -/
 @[simp, grind =]
 theorem skipIndex_eraseAdjacent_right {n : Nat} (removed : Fin (n + 2))
     (left : Fin (n + 1)) (hleft : removed ≠ left.castSucc)
@@ -813,11 +828,13 @@ def applySwaps {R : Type u} {n : Nat} (M : Square R (n + 1))
     (swaps : List (Fin n)) : Square R (n + 1) :=
   swaps.foldl swapAdjacent M
 
+/-- The empty swap sequence acts as the identity. -/
 @[simp, grind =]
 theorem applySwaps_nil {R : Type u} {n : Nat} (M : Square R (n + 1)) :
     applySwaps M [] = M := by
   rfl
 
+/-- A swap sequence acts head first. -/
 @[simp, grind =]
 theorem applySwaps_cons {R : Type u} {n : Nat} (M : Square R (n + 1))
     (left : Fin n) (swaps : List (Fin n)) :
@@ -847,6 +864,8 @@ theorem det_applySwaps {R : Type u} [Lean.Grind.CommRing R]
       rw [hsign]
       grind
 
+/-- Ordered form of arbitrary duplicate-column vanishing, by descending
+recursion on the column gap through one adjacent swap. -/
 private theorem det_eq_zero_of_col_eq_of_lt {R : Type u}
     [Lean.Grind.CommRing R] {n : Nat} (M : Square R (n + 1))
     (a b : Fin (n + 1)) (hab : a.val < b.val)
@@ -926,6 +945,7 @@ def addCol {R : Type u} [Add R] [Mul R] {n : Nat}
     (M : Square R n) (src dst : Fin n) (c : R) : Square R n :=
   setCol M dst (fun i => M i dst + c * M i src)
 
+/-- Entrywise value of a scaled column addition. -/
 @[simp, grind =]
 theorem addCol_apply {R : Type u} [Add R] [Mul R] {n : Nat}
     (M : Square R n) (src dst : Fin n) (c : R) (i j : Fin n) :
@@ -951,18 +971,6 @@ theorem det_addCol {R : Type u} [Lean.Grind.CommRing R]
       rw [hdup, setCol_self]
       grind
 
-/-- Adding a scalar multiple of an adjacent column to its right neighbor
-preserves the local determinant. -/
-theorem det_setCol_add_adjacent {R : Type u} [Lean.Grind.CommRing R]
-    {n : Nat} (M : Square R (n + 1)) (left : Fin n) (c : R) :
-    det (setCol M left.succ
-      (fun i => M i left.succ + c * M i left.castSucc)) = det M := by
-  have hne : left.castSucc ≠ left.succ := by
-    intro h
-    have hval := congrArg Fin.val h
-    simp at hval
-  exact det_addCol M left.castSucc left.succ c hne
-
 end SubresultantMinor
 
 namespace DensePoly
@@ -972,6 +980,7 @@ section Scale
 
 variable {R : Type u} [Lean.Grind.CommRing R] [DecidableEq R]
 
+/-- Integer-indexed coefficient lookup commutes with scalar multiplication. -/
 @[simp]
 theorem coeffInt_scale (c : R) (p : DensePoly R) (i : Int) :
     coeffInt (scale c p) i = c * coeffInt p i := by
