@@ -567,6 +567,20 @@ lean_lib HexBerlekampZassenhausMathlibProofProbeScientific where
     `HexBerlekampZassenhausMathlib.ProofProbe.Kernel4,
     `HexBerlekampZassenhausMathlib.ProofProbe.Kernel8]
 
+lean_lib HexBerlekampMathlibProofProbe where
+  srcDir := "bench"
+  globs := #[`HexBerlekampMathlib.ProofProbe.Baseline,
+    `HexBerlekampMathlib.ProofProbe.Factor4,
+    `HexBerlekampMathlib.ProofProbe.Irreducible4]
+
+lean_lib HexBerlekampMathlibProofProbeScientific where
+  srcDir := "bench"
+  globs := #[`HexBerlekampMathlib.ProofProbe.Factor8,
+    `HexBerlekampMathlib.ProofProbe.Factor12,
+    `HexBerlekampMathlib.ProofProbe.Repeated8,
+    `HexBerlekampMathlib.ProofProbe.Irreducible8,
+    `HexBerlekampMathlib.ProofProbe.Irreducible16]
+
 lean_lib HexRCFProofProbe where
   srcDir := "bench"
   globs := #[`HexRCF.BenchHash, `HexRCF.ProofProbe.Support,
