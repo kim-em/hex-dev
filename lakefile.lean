@@ -639,6 +639,13 @@ lean_lib HexRCFTests where
     `HexRCF.ReifyTests,
     `HexRCF.LintTests]
 
+-- Mirrors the released aggregate's module-system umbrella, so a library that
+-- never adopted the module system fails here instead of after the publish-out
+-- sync. `check_released_manifest.py` keeps the import list equal to the
+-- `leanprover/hex` pins in `scripts/release/released.yml`.
+@[default_target]
+lean_lib HexAggregateCheck where
+
 -- Canonical end-to-end examples are release artifacts rather than public API.
 -- Keep their target separate for the same reason as the regression tests.
 lean_lib HexReleaseExamples where
