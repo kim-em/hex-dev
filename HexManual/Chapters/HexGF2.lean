@@ -452,7 +452,7 @@ Where `HexGF2` fits in the executable DAG:
   which unpacks `GF2Poly` into the generic `FpPoly 2` representation,
   identifies both `GF2n` and `GF2nPoly` with the quotient-field
   construction from {ref "hex-gfq-field"}[`HexGFqField`], and carries the
-  finiteness and cardinality results for the packed types. Nothing in
-  this chapter depends on it: the packed arithmetic, the Euclidean
-  algorithms, and the Rabin certificates above are all executable and
-  Mathlib-free.
+  finiteness and cardinality results for the packed types. The
+  executable API documented above does not depend on it: the packed
+  arithmetic, the Euclidean algorithms, and the Rabin certificates are
+  all executable and Mathlib-free.
