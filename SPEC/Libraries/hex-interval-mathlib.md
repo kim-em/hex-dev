@@ -2316,13 +2316,29 @@ Chebyshev, Li(2), and affine-cover interfaces remain pending.
 
 All 340 executable `interval_decide` and `interval_auto` sites are classified:
 337 are accepted after localized rewrites and three are replaced by stronger
-results. Of the 83 separately inventoried native-evaluation sites, 17 are
-accepted after localized rewrites and 66 remain pending. Those residual sites
-are dependency/interface or structural campaigns: 63 belong to the FKS2
-Corollary 23/24 slab families and Table4Ext list-shape checks, and three belong
-to the FKS2-floor Chebyshev/affine-cover boundary. Together with eight pending
-import sites and four pending dependency-interface records, the manifest has
-78 pending decisions; none is an unclassified numeric tactic leaf.
+results. Of the 83 separately inventoried native-evaluation sites, 38 are
+accepted after localized rewrites and 45 remain pending. Twenty-one of the
+accepted sites are the pure FKS2 list-geometry family: `allCells` and the six
+Corollary 24 prefixes each need the same chain, nonempty, and final-coordinate
+facts. Seven source-pinned `Prefix` rows check those three facts with one
+bounded package-owned fold over the already authenticated 13,590-cell copy;
+`certificateHolds` exposes the ordinary proposition, and the source matcher
+pins every one of the 21 original declaration/line pairs. The seven prefix
+lengths and final coordinates are byte-pinned, audited literal mappings from
+the upstream prefix definitions: the matcher compares those local literals
+exactly but does not derive the lengths from upstream syntax. Typed failure
+coordinates retain the certificate index, source file, and failed
+chain/nonempty/last role, so repeated declaration lines remain unambiguous.
+
+This structural result deliberately does not classify an analytic Boolean as
+list structure. The 42 remaining Corollary 23/24 sites split into nine
+generalized whole-table cell predicates, nine Corollary 23 floor-slab
+predicates, thirteen Corollary 24 `x^{-1/n}` prefix/boundary cell predicates,
+and eleven Corollary 24 floor-slab predicates. The other three pending native
+sites belong to the FKS2-floor Chebyshev/affine-cover boundary. Together with
+eight pending import sites and four pending dependency-interface records, the
+manifest has 57 pending decisions; none is an unclassified numeric tactic
+leaf.
 
 The compatibility manifest records every `interval_auto` invocation, every
 direct LeanCert import, and every qualified `LeanCert.<component>` reference
@@ -3483,6 +3499,12 @@ the fixed soundness and trust contracts.
 - `conformance/HexIntervalMathlib/PntRamanujanThetaConformance.lean`: exact
   source rows, identity and false-bound mutations, theorem adapters, and
   guarded axiom reports.
+- `HexInterval/Experiment/PntFks2Structure.lean`: seven exact FKS2 prefix
+  certificates, the bounded chain/nonempty/last checker, all 21 source rows,
+  exact failure coordinates, and the ordinary `Holds` bridge.
+- `conformance/HexIntervalMathlib/PntFks2StructureConformance.lean`: full and
+  prefix checks, cap/data/coordinate mutations, the seven ordinary adapters,
+  and guarded axiom reports.
 - `HexInterval/Experiment/PntDusartExp.lean`: the exact seven-row Dusart
   exponential table and bounded rational Taylor checker; the eighth leaf uses
   a named stronger package theorem.
