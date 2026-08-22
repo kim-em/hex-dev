@@ -7,6 +7,7 @@ Authors: Kim Morrison
 module
 
 public import HexInterval.Executable
+public import HexInterval.Policy
 
 @[expose] public section
 
@@ -119,6 +120,7 @@ structure Limits where
 inductive Resource where
   | state (resource : Hex.Interval.State.Resource)
   | events
+  | offers
   deriving DecidableEq, Repr
 
 inductive Error where
@@ -168,6 +170,39 @@ structure Applied (Fact Cause : Type) where
   events : Array (Event Fact Cause)
   quotes : Array Executable.Quote
   serial : Nat
+
+/-- One runtime-owned offer-generation snapshot. The private constructor keeps
+the exact live branch, executable tables, equality generations, chronology,
+residual budgets, completeness, and generated actions inseparable. It is
+scheduler data only: every selected action is still reauthenticated by
+`stepWithin`. -/
+structure OfferSnapshot (Fact Cause : Type) where
+  private mk ::
+  branch : Hex.Interval.State.Branch Fact Cause
+  rules : Array Registration
+  bindings : Array ScopeBinding
+  applicationGenerations : Array Nat
+  equalityGenerations : Array Nat
+  /-- Common epoch of all matcher-owned applications. Mixed nonempty matcher
+  epochs are rejected; zero is the canonical value when no row has an epoch. -/
+  matcherEpoch : Nat
+  serial : Nat
+  remaining : Policy.EngineBudgetView
+  /-- False only when every handler-approved runtime application can be
+  represented by Search's stricter distinct-port scheduler contract. A package
+  handler's intentional `offers = false` veto does not make this incomplete. -/
+  incomplete : Bool
+  actions : Array Action
+
+/-- One inseparable successful callback transition, its exact sticky-cache
+runtime successor, and the completeness-marked offer snapshot generated from
+that same successor. The private constructor prevents cache/state or
+transition/snapshot transplants at the autonomous-controller boundary. -/
+structure Advanced (Fact Cause : Type) where
+  private mk ::
+  transition : Applied Fact Cause
+  state : State Fact Cause
+  offers : OfferSnapshot Fact Cause
 
 private def makeArena (items : Array Equality) : Arena := { items }
 
@@ -525,5 +560,148 @@ opaque State.stepWithin [DecidableEq Fact] [DecidableEq Cause]
     state.assembly.generation cursor.assembly.generation state.arena.items cursor.equalities
     action invocation.result.events invocation.quotes state.serial
   pure (applied, next)
+
+private def commonMatcherEpoch? (applications : Array Executable.Application) : Option Nat := do
+  let mut epoch : Option Nat := none
+  for application in applications do
+    match application.matcherEpoch, epoch with
+    | none, _ => pure ()
+    | some current, none => epoch := some current
+    | some current, some expected => if current != expected then failure
+  pure (epoch.getD 0)
+
+private def offerRequest? (state : State Fact Cause) (id : ApplicationId) :
+    Option (RuleRequest Fact) := do
+  let application ← state.assembly.applications[id.index]?
+  let registration ← state.assembly.registry.registrations[application.rule.index]?
+  let seen ← application.watches.mapM fun node => do
+    let version ← state.branch.versions[node.index]?
+    pure { node, version }
+  let inputs ← inputViews state.branch seen
+  let action : Action :=
+    { serial := state.serial
+      programVersion := state.branch.programVersion
+      application := id
+      rule := application.rule
+      key := registration.key
+      node := application.node
+      kind := application.kind
+      effort := application.effort
+      generation := application.generation
+      inputs := inputs.map fun input => { node := input.node, version := input.version }
+      writes := application.writes
+      structuralInputs := application.structuralInputs
+      matcherEpoch := application.matcherEpoch }
+  pure
+    { action
+      program :=
+        { programVersion := state.branch.programVersion
+          operations := state.branch.program.operations
+          nodes := state.branch.program.nodes
+          generations := state.branch.generations
+          depths := state.branch.depths }
+      inputs
+      writes := application.writes }
+
+private def remaining (limit used : Nat) : Nat := limit - used
+
+/-- Exact residual resources owned by this runtime representation. Matcher
+visits, retained suggestions, and queue entries have no accumulating store in
+this runtime layer, so their full configured capacities remain available. -/
+private def budgetView (limits : Limits) (state : State Fact Cause) :
+    Policy.EngineBudgetView :=
+  let stateLimits := limits.executable.state
+  { actions := remaining stateLimits.maxActions state.serial
+    matcherVisits := stateLimits.maxMatcherVisits
+    acceptedFacts := remaining stateLimits.maxAcceptedFacts state.branch.history.size
+    nodes := remaining stateLimits.maxNodes state.branch.program.nodes.size
+    applications := remaining stateLimits.maxApplications state.assembly.applications.size
+    equalities := remaining stateLimits.maxEqualities state.arena.items.size
+    retainedSuggestions := stateLimits.maxRetainedSuggestions
+    instances := remaining stateLimits.maxInstances state.instances
+    queueEntries := stateLimits.maxQueueEntries
+    generation := remaining stateLimits.maxGeneration state.assembly.generation }
+
+private def schedulerCompatible (action : Action) : Bool :=
+  allDistinct action.inputs && allDistinct action.writes &&
+    allDistinct action.structuralInputs
+
+/-- Regenerate the complete deterministic executable offer snapshot from the
+exact assembly, branch, equality arena, and callback serial owned by this
+runtime state. Handler applicability sees one authenticated whole-state
+context. Its Boolean is an intentional scheduling filter, not mutation
+authorization: it can suppress an offer without making the snapshot
+incomplete, while a separately supplied structurally current action is still
+decided only by `stepWithin`. Runtime-valid applications with duplicate
+resolved inputs, writes, or structural inputs cannot enter Search's stricter
+distinct-port scheduler; they are omitted and set the sealed incomplete bit.
+No mutable branch or assembly replacement is accepted from the caller, and no
+generated action bypasses the later exact `stepWithin` request reconstruction.
+Snapshot generation does not consume or reject the runtime `maxActions`
+budget; that budget is charged only when an action advances the state.
+
+The reference implementation checks the retained branch/program once, then
+scans the flat application table and its bounded ports once. Package
+applicability and equality on caller facts remain non-preemptible. -/
+opaque State.offerSnapshotWithin [DecidableEq Fact] [DecidableEq Cause]
+    (limits : Limits) (maxOffers : Nat) (state : State Fact Cause) :
+    Except Error (OfferSnapshot Fact Cause) := do
+  match state.assembly.preflightWithin limits.executable with
+  | .error error => throw (.executable error)
+  | .ok _ => pure ⟨⟩
+  match preflightBranch limits.executable.state state.branch with
+  | .error error => throw error
+  | .ok _ => pure ⟨⟩
+  if state.branch.program != state.assembly.program ||
+      state.assembly.generation != state.generationBase + state.branch.programVersion ||
+      limits.executable.state.maxEqualities < state.arena.items.size then
+    throw .malformed
+  let some snapshot := state.branch.checkedSnapshot? | throw .malformed
+  let program : ProgramView :=
+    { programVersion := state.branch.programVersion
+      operations := state.branch.program.operations
+      nodes := state.branch.program.nodes
+      generations := state.branch.generations
+      depths := state.branch.depths }
+  let some context := state.assembly.offerContext? snapshot program | throw .malformed
+  let some matcherEpoch := commonMatcherEpoch? state.assembly.applications | throw .malformed
+  let mut actions := #[]
+  let mut incomplete := false
+  for index in [0:state.assembly.applications.size] do
+    let id : ApplicationId := { index }
+    let some request := offerRequest? state id | throw .malformed
+    if context.offers request then
+      if schedulerCompatible request.action then
+        if maxOffers ≤ actions.size then throw (.resource .offers)
+        actions := actions.push request.action
+      else
+        incomplete := true
+  pure
+    { branch := state.branch
+      rules := state.assembly.registry.registrations
+      bindings := state.assembly.bindings
+      applicationGenerations := state.assembly.applications.map (fun application =>
+        application.generation)
+      equalityGenerations := state.arena.items.map (fun equality => equality.generation)
+      matcherEpoch
+      serial := state.serial
+      remaining := budgetView limits state
+      incomplete
+      actions }
+
+/-- Execute one exact structurally authenticated action once and regenerate
+offers from the returned sticky-cache successor as a single sealed value. The
+action need not have survived the package's scheduling-only `offers` filter;
+`stepWithin` reconstructs its exact request and owns execution authority. If
+successor offer generation fails, no replacement runtime state is returned. -/
+opaque State.advanceWithin [DecidableEq Fact] [DecidableEq Cause]
+    (limits : Limits) (maxOffers : Nat) (state : State Fact Cause) (action : Action) :
+    Except Error (Advanced Fact Cause) :=
+  match state.stepWithin limits action with
+  | .error error => .error error
+  | .ok (transition, next) =>
+      match next.offerSnapshotWithin limits maxOffers with
+      | .error error => .error error
+      | .ok offers => .ok { transition, state := next, offers }
 
 end Hex.Interval.Runtime

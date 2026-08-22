@@ -15,6 +15,7 @@ public import HexInterval.Policy
 public import HexInterval.Search
 public import HexInterval.Executable
 public import HexInterval.Runtime
+public import HexInterval.RuntimeController
 
 public section
 
@@ -59,9 +60,18 @@ Mathlib-free runtime transition owns that assembly together with branch state
 and an exact equality descriptor arena. It atomically admits typed fact,
 equality, transport, and append-only instance events and can retain the sealed
 transition in a result-tree child without weakening generic child validation.
-Offer generation, policy
-implementations, a complete branch-search loop, and measurement-selected
-storage remain experimental. The Mathlib companion supplies a bounded
+The sealed Mathlib-free runtime controller regenerates exact executable offers,
+authenticates replaceable policy choices, and advances typed fact, equality,
+transport, and instance batches autonomously while returning only an honest
+resumable policy stop at its unsupported terminal boundary. Only that stop
+returns an accumulated successor state. Resource, callback, Search, result,
+and alignment errors discard the entire in-call lineage; the caller retains
+the immutable initial state and can replay pure callbacks. Runtime-valid
+duplicate-port actions remain directly executable but are omitted from Search
+offers under a sticky incompleteness marker. Runtime snapshots also own the
+policy-facing residual budget view. Default policies,
+target/refutation/split correlation, proof quotation, and measurement-selected
+storage remain later layers. The Mathlib companion supplies a bounded
 authenticated callback-to-tree-recipe step driver; package callbacks and their
 recipe data remain untrusted. Exact public interval
 splitting is already supported; the Mathlib companion separately owns flat

@@ -3212,21 +3212,30 @@ generation cursor, so a node-only extension cannot lose its generation merely
 because it creates no concrete application. The supported `Runtime.State` owns that
 assembly together with the exact branch, equality arena, callback serial, and
 admitted-instance count. Its checked `stepWithin` is the Mathlib-free bridge
-from one exact application row to an atomic typed event batch; autonomous offer
-generation for typed batches still belongs to a separate controller. Assembly
+from one exact application row to an atomic typed event batch. The supported
+`Runtime.Controller` owns that separate autonomous layer: a runtime-generated
+sealed offer snapshot carries the exact branch, application/binding tables,
+equality generations, callback serial, residual engine budgets, and an honest
+completeness bit into Search; one selected action
+returns an inseparable transition, sticky-cache successor, and regenerated
+offer snapshot before the same transition advances the retained tree. Assembly
 owns only the operation/node program: request
 program version and generation side tables remain controller-owned snapshot
 data and receive only the request-internal checks supplied by `ProgramView` and
-`RuleRequest`. Search also never decrements its `remaining` budget view; the
-adapter preserves the controller-owned value stored in the session when it
-refreshes executable offers.
+`RuleRequest`. Generic Search does not decrement a caller-supplied `remaining`
+budget view. The runtime specialization instead replaces it from every sealed
+snapshot: actions, facts, nodes, applications, equalities, instances, and
+generation report exact residuals, while matcher visits, retained suggestions,
+and queue entries report their full configured capacities because this runtime
+layer retains and consumes none of those three stores.
 
 As with Search, sealing is an ordinary/public-import boundary. Deliberate
 `import all HexInterval.Executable` exposes its private constructors to trusted
 Lean source and is not part of the decoded runtime threat model. The repository
 DAG check rejects that escape hatch outside an exact reviewed allowlist,
 currently empty; both conformance and bench paths are regression-tested.
-`Runtime.State`, `Runtime.Arena`, and `Runtime.Applied` use the same
+`Runtime.State`, `Runtime.Arena`, `Runtime.Applied`, `Runtime.OfferSnapshot`,
+and `Runtime.Advanced` use the same
 ordinary-import seal. Deliberate `import all HexInterval.Runtime` is an empty-
 allowlist trusted-internals escape hatch, not decoded-runtime authority.
 
@@ -5412,6 +5421,27 @@ candidates, and `b` the number of live branch states.
   application checks, not one whole-branch/program check per application.
   Subsequent `Search.Session` start or refresh still performs its own
   independent complete session authentication.
+- One `Runtime.Controller` selection performs four complete Search
+  authentications: policy choice, explicit preparation, and the old and new
+  sessions around `Session.advanceRuntimeWithin`. If `K_i` offers are live
+  before selection and `K_(i+1)` afterward, the first three authentications
+  include the reference `Policy.checkOffersWithin` duplicate scan at
+  `O(K_i^2)`, while successor authentication incurs `O(K_(i+1)^2)`. The retained
+  result append performs two complete `Tree.check` calls and one standalone
+  `computeCost`, hence three complete retained-cost passes. Let `G_i` be the
+  successor application/offer scan, `H_i` the remainder of one complete Search
+  authentication, `T(N_i,R_i,B_i)` one full tree check, and `M(N_i,R_i)` one
+  tree cost pass for current node count `N_i`, retained typed-transition count
+  `R_i`, and branch cost `B_i`. The first check sees `R_i`; the standalone cost
+  pass and second check see the appended `R_i + 1` successor. Across selected
+  transitions the honest reference bound is
+  `O(sum_i (G_i + 3 * (H_i + K_i^2) + H_(i+1) + K_(i+1)^2 +
+  T(N_i,R_i,B_i) + M(N_i,R_i+1) + T(N_i,R_i+1,B_(i+1))))`.
+  A dismissal from `K_i` offers separately authenticates the `K_i` entry and
+  `K_i - 1` successor sessions.
+  `R_i` grows after each accepted selection, so this must not be simplified to
+  a choice cap times one fixed tree cost. Non-preemptible callback, event-fold,
+  policy, fact-equality, and measurement costs remain excluded.
 - Fact comparison and contradiction checks use exact endpoint comparison. For
   the dyadic candidate, integer cost is proportional to effective endpoint
   height and the permitted exponent-alignment shift; a rational candidate must
@@ -5607,21 +5637,58 @@ their declared cost inside a scheduler bound.
   logical measures, and bounded raw `(role, schema, body)` replay quotations.
   Package-owned, cache-independent applicability predicates receive an
   authenticated snapshot and exact reconstructed request but carry no mutation
-  or theorem authority. Invocation rechecks complete application/request
+  or theorem authority. `handler.offers` is only a scheduling filter: a false
+  result suppresses the application from the generated snapshot, but
+  `Runtime.State.advanceWithin` can still execute a separately supplied,
+  structurally current action after `stepWithin` reconstructs and authenticates
+  its request. Invocation rechecks complete application/request
   correspondence and commits
   a cache replacement only after result and quotation admission. The initial
-  compiler does not create global structural-matcher applications; offer
-  generation remains a later layer. Fact-event correlation is supplied by
-  `HexIntervalMathlib.Controller.Executable`; the separate supported
-  `HexIntervalMathlib.RuntimeProof` companion correlates sealed typed fact,
-  equality, transport, and instance transitions with theorem schemas.
+  compiler does not create global structural-matcher applications. Fact-event
+  correlation is supplied by `HexIntervalMathlib.Controller.Executable`; the
+  separate supported `HexIntervalMathlib.RuntimeProof` companion correlates
+  sealed typed fact, equality, transport, and instance transitions with theorem
+  schemas. Runtime-owned offer generation for all typed batches is supplied
+  separately by `HexInterval/RuntimeController.lean`.
 - `HexInterval/Runtime.lean`: supported sealed Mathlib-free ownership of one
   executable assembly, branch, and exact equality arena; atomic typed fact,
   equality, transport, and append-only instance events; exact application,
   binding, node, generation, and equality authority; and sealed before/after
-  transitions retained by `Search.Result.Tree`. Raw quotations remain inert
-  data; theorem authority is supplied only by the separately checked
-  `HexIntervalMathlib.RuntimeProof` proof adapter.
+  transitions retained by `Search.Result.Tree`. It also supplies sealed
+  runtime-owned offer snapshots and an inseparable transition/sticky-cache
+  successor/snapshot value. Runtime-valid duplicate resolved input, write, or
+  structural-input ports remain executable through `Runtime.State.stepWithin`
+  but cannot satisfy Search's stricter scheduler contract, so snapshot
+  generation omits them and marks the snapshot incomplete. An intentional
+  package `handler.offers = false` veto is complete and does not set that bit.
+  All matcher-owned application rows must share one
+  matcher epoch; mixed epochs are malformed and zero is the snapshot sentinel
+  when no row carries an epoch. Offer generation checks `maxOffers` but does
+  not consume `maxActions`; `maxActions` is charged only by an actual runtime
+  advance. Raw quotations remain inert data; theorem authority is supplied
+  only by the separately checked `HexIntervalMathlib.RuntimeProof` proof
+  adapter.
+- `HexInterval/RuntimeController.lean`: supported Mathlib-free autonomous
+  policy iteration over sealed typed fact, equality, transport, and instance
+  batches. Its sealed state owns the runtime, authenticated Search session,
+  retained result tree, and cumulative choice accounting. It intentionally
+  exposes only resumable policy stops carrying a live-offer count: target,
+  refutation, split,
+  unknown-terminal, and proof-schema correlation are outside this interface,
+  so offer exhaustion is not proof closure or saturation. `maxChoices` counts
+  select/dismiss decisions; after exactly the cap the policy may still stop,
+  while another decision is refused. Only a policy stop returns the accumulated
+  successor `State`. Every resource, callback, Search, result-tree, or alignment
+  error is all-or-nothing for the entire `runWithin` call and returns none of
+  its in-call lineage; the caller retains the immutable initial state and may
+  replay pure callbacks. External callback effects are outside this
+  transactional guarantee. The retained tree is validated under the supplied
+  logical measure both when the controller starts and before a run begins.
+  Any dismissal of a live offer marks the session incomplete, including a
+  split-class offer. A dismissal removes an offer only from the current
+  Search snapshot. Runtime-owned regeneration after a later selection may
+  offer the same application again; the sticky incomplete latch preserves the
+  fact that a live offer was skipped across such refreshes.
 - `HexInterval/Trace.lean`: supported exact fact/instance chronology and
   bounded diagnostic-log contracts. Diagnostic bytes count retained `UInt8`
   payload cells after callback construction; they do not claim to preempt
