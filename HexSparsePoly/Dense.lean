@@ -978,6 +978,9 @@ matching the `DensePoly` convention. -/
 def Monic [One R] (s : SparsePoly R) : Prop :=
   s.leadingCoeff = 1
 
+instance [One R] (s : SparsePoly R) : Decidable s.Monic :=
+  inferInstanceAs (Decidable (s.leadingCoeff = 1))
+
 @[simp] theorem monic_toDense [One R] (s : SparsePoly R) :
     s.toDense.Monic ↔ s.Monic := by
   unfold DensePoly.Monic Monic
