@@ -1,0 +1,393 @@
+/-
+Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Kim Morrison
+-/
+
+module
+
+public import HexArith.Nat.Prime
+public import HexBasic.ListShim
+
+public section
+
+/-!
+The multiplicative order of `a` modulo `n`, Mathlib-free.
+
+`orderOf a n` is the least `k > 0` with `a ^ k % n = 1 % n` when `1 < n` and
+`a` is coprime to `n`, and `0` on every other input. The junk value is a
+deliberate choice: `0 < orderOf a n` is the hypothesis that says "this is a
+real order", and every theorem below carries it. The order appears only in
+proofs (the Pocklington checker never computes it), so the bounded-search
+definition needs no efficiency and no kernel exposure.
+-/
+
+namespace Hex
+
+namespace Nat
+
+/-- First exponent `e` in `[k, k + fuel)` with `a ^ e % n = 1 % n`, and `0`
+if there is none. -/
+def orderOfAux (a n : Nat) : Nat → Nat → Nat
+  | 0, _ => 0
+  | fuel + 1, k => if a ^ k % n = 1 % n then k else orderOfAux a n fuel (k + 1)
+
+/-- Multiplicative order of `a` modulo `n`: the least `k > 0` with
+`a ^ k % n = 1 % n` when `1 < n` and `Nat.Coprime a n`, and `0` on every
+other input. -/
+def orderOf (a n : Nat) : Nat :=
+  if 1 < n ∧ Nat.Coprime a n then orderOfAux a n n 1 else 0
+
+private theorem orderOfAux_spec (a n : Nat) :
+    ∀ fuel k, orderOfAux a n fuel k ≠ 0 →
+      k ≤ orderOfAux a n fuel k ∧
+      a ^ orderOfAux a n fuel k % n = 1 % n ∧
+      ∀ j, k ≤ j → j < orderOfAux a n fuel k → a ^ j % n ≠ 1 % n := by
+  intro fuel
+  induction fuel with
+  | zero =>
+      intro k h
+      simp [orderOfAux] at h
+  | succ fuel ih =>
+      intro k h
+      unfold orderOfAux at h ⊢
+      by_cases hk : a ^ k % n = 1 % n
+      · rw [if_pos hk] at h ⊢
+        exact ⟨Nat.le_refl _, hk, fun j hkj hjk => by omega⟩
+      · rw [if_neg hk] at h ⊢
+        obtain ⟨hle, hpow, hmin⟩ := ih (k + 1) h
+        refine ⟨by omega, hpow, ?_⟩
+        intro j hkj hjlt
+        rcases Nat.eq_or_lt_of_le hkj with rfl | hlt
+        · exact hk
+        · exact hmin j hlt hjlt
+
+private theorem orderOfAux_ne_zero_of_witness (a n : Nat) :
+    ∀ fuel k, 0 < k → ∀ j, k ≤ j → j < k + fuel → a ^ j % n = 1 % n →
+      orderOfAux a n fuel k ≠ 0 := by
+  intro fuel
+  induction fuel with
+  | zero =>
+      intro k hk j hkj hjb _
+      omega
+  | succ fuel ih =>
+      intro k hk j hkj hjb hj
+      unfold orderOfAux
+      by_cases hcase : a ^ k % n = 1 % n
+      · rw [if_pos hcase]
+        omega
+      · rw [if_neg hcase]
+        have hne : j ≠ k := fun h => hcase (h ▸ hj)
+        exact ih (k + 1) (by omega) j (by omega) (by omega) hj
+
+private theorem dvd_pow_self' (a : Nat) {k : Nat} (hk : k ≠ 0) : a ∣ a ^ k := by
+  cases k with
+  | zero => exact absurd rfl hk
+  | succ k => exact ⟨a ^ k, by rw [Nat.pow_succ, Nat.mul_comm]⟩
+
+/-- A power congruent to `1` forces coprimality of the base: the gcd divides
+both `a ^ k` and `n`, hence their remainder `1`. -/
+theorem coprime_of_pow_mod_eq_one {a n k : Nat} (h1 : 1 < n) (hk : 0 < k)
+    (h : a ^ k % n = 1 % n) : Nat.Coprime a n := by
+  have h1n : 1 % n = 1 := Nat.mod_eq_of_lt h1
+  rw [h1n] at h
+  have hg_ak : Nat.gcd a n ∣ a ^ k :=
+    Nat.dvd_trans (Nat.gcd_dvd_left a n) (dvd_pow_self' a (by omega))
+  have hg_mod : Nat.gcd a n ∣ a ^ k % n :=
+    (Nat.dvd_mod_iff (Nat.gcd_dvd_right a n)).mpr hg_ak
+  rw [h] at hg_mod
+  exact Nat.dvd_one.mp hg_mod
+
+private theorem pow_mod_cancel_le {a n i x y : Nat} (hcop : Nat.Coprime a n)
+    (hxy : x ≤ y) (h : a ^ i * x % n = a ^ i * y % n) : x % n = y % n := by
+  have hdvd : n ∣ a ^ i * y - a ^ i * x :=
+    Nat.dvd_of_mod_eq_zero (Nat.sub_mod_eq_zero_of_mod_eq h.symm)
+  rw [← Nat.mul_sub] at hdvd
+  have hdvd' : n ∣ y - x :=
+    Nat.Coprime.dvd_of_dvd_mul_left ((hcop.pow_left i).symm) hdvd
+  obtain ⟨t, ht⟩ := hdvd'
+  have hy : y = x + n * t := by omega
+  subst hy
+  rw [Nat.add_mul_mod_self_left]
+
+/-- Coprime cancellation: a common factor `a ^ i` cancels from a congruence
+modulo `n`. -/
+private theorem pow_mod_cancel {a n : Nat} (hcop : Nat.Coprime a n) {i x y : Nat}
+    (h : a ^ i * x % n = a ^ i * y % n) : x % n = y % n := by
+  rcases Nat.le_total x y with hxy | hxy
+  · exact pow_mod_cancel_le hcop hxy h
+  · exact (pow_mod_cancel_le hcop hxy h.symm).symm
+
+/-- Fermat's little theorem in multiplicative form, from the residue form
+`pow_prime_mod` by cancelling one factor of `a`. -/
+theorem pow_pred_mod {p a : Nat} (hp : Prime p) (h : Nat.Coprime a p) :
+    a ^ (p - 1) % p = 1 % p := by
+  have hp2 := hp.two_le
+  have hfermat := pow_prime_mod hp a
+  have hsplit : a ^ p = a ^ 1 * a ^ (p - 1) := by
+    rw [← Nat.pow_add]
+    congr 1
+    omega
+  have hrhs : a % p = a ^ 1 * 1 % p := by simp
+  rw [hsplit, hrhs] at hfermat
+  exact pow_mod_cancel h hfermat
+
+private theorem orderOf_eq_aux {a n : Nat} (h1 : 1 < n) (hcop : Nat.Coprime a n) :
+    orderOf a n = orderOfAux a n n 1 := by
+  unfold orderOf
+  rw [if_pos ⟨h1, hcop⟩]
+
+/-- A positive order certifies a nontrivial modulus. -/
+theorem one_lt_of_orderOf_pos {a n : Nat} (h : 0 < orderOf a n) : 1 < n := by
+  by_cases hg : 1 < n ∧ Nat.Coprime a n
+  · exact hg.1
+  · unfold orderOf at h
+    rw [if_neg hg] at h
+    omega
+
+/-- A positive order certifies coprimality. -/
+theorem coprime_of_orderOf_pos {a n : Nat} (h : 0 < orderOf a n) :
+    Nat.Coprime a n := by
+  by_cases hg : 1 < n ∧ Nat.Coprime a n
+  · exact hg.2
+  · unfold orderOf at h
+    rw [if_neg hg] at h
+    omega
+
+/-- A positive order is an exponent sending `a` to `1` modulo `n`. -/
+theorem orderOf_pow_mod {a n : Nat} (h : 0 < orderOf a n) :
+    a ^ orderOf a n % n = 1 % n := by
+  have h1 := one_lt_of_orderOf_pos h
+  have hcop := coprime_of_orderOf_pos h
+  rw [orderOf_eq_aux h1 hcop] at h ⊢
+  exact (orderOfAux_spec a n n 1 (by omega)).2.1
+
+/-- Minimality of a positive order among positive exponents. -/
+theorem orderOf_min {a n : Nat} (h : 0 < orderOf a n) :
+    ∀ j, 0 < j → j < orderOf a n → a ^ j % n ≠ 1 % n := by
+  have h1 := one_lt_of_orderOf_pos h
+  have hcop := coprime_of_orderOf_pos h
+  rw [orderOf_eq_aux h1 hcop] at h ⊢
+  intro j hj hjlt
+  exact (orderOfAux_spec a n n 1 (by omega)).2.2 j (by omega) hjlt
+
+/-- Distinct power residues below `d` force `d ≤ n`, by pigeonhole inside
+`List.range n`. -/
+private theorem le_of_pow_residues_distinct {a n d : Nat} (h1 : 1 < n)
+    (hdist : ∀ i j, i < j → j < d → a ^ i % n ≠ a ^ j % n) : d ≤ n := by
+  have hnodup : ((List.range d).map (fun i => a ^ i % n)).Nodup := by
+    unfold List.Nodup
+    rw [List.pairwise_iff_getElem]
+    intro i j hi hj hij
+    simp only [List.length_map, List.length_range] at hi hj
+    simp only [List.getElem_map, List.getElem_range]
+    exact hdist i j hij hj
+  have hsub : ((List.range d).map (fun i => a ^ i % n)) ⊆ List.range n := by
+    intro x hx
+    rw [List.mem_map] at hx
+    obtain ⟨i, _, rfl⟩ := hx
+    rw [List.mem_range]
+    exact Nat.mod_lt _ (by omega)
+  have hlen := List.nodup_subset_length_le hnodup hsub
+  simp only [List.length_map, List.length_range] at hlen
+  exact hlen
+
+/-- A repeated power residue cancels to a witness exponent. -/
+private theorem pow_witness_of_residue_eq {a n i j : Nat}
+    (hcop : Nat.Coprime a n) (hij : i < j)
+    (heq : a ^ i % n = a ^ j % n) : a ^ (j - i) % n = 1 % n := by
+  have hstep : a ^ i * 1 % n = a ^ i * a ^ (j - i) % n := by
+    rw [Nat.mul_one, ← Nat.pow_add]
+    have hji : i + (j - i) = j := by omega
+    rw [hji]
+    exact heq
+  exact (pow_mod_cancel hcop hstep).symm
+
+/-- The least positive exponent sending `a` to `1` is at most `n`, by
+pigeonhole on the residues `a ^ 0 % n, …, a ^ (d - 1) % n`. -/
+private theorem le_of_least_pow_witness {a n d : Nat} (h1 : 1 < n)
+    (hcop : Nat.Coprime a n)
+    (hdmin : ∀ j, 1 ≤ j → j < d → a ^ j % n ≠ 1 % n) : d ≤ n := by
+  refine le_of_pow_residues_distinct (a := a) h1 ?_
+  intro i j hij hjd heq
+  exact hdmin (j - i) (by omega) (by omega)
+    (pow_witness_of_residue_eq hcop hij heq)
+
+/-- A witness exponent produces a positive order: the scan up to the witness
+finds the least one, pigeonhole bounds it by `n`, and the definitional scan
+up to `n` therefore also finds it. -/
+theorem orderOf_pos_of_pow_eq_one {a n k : Nat} (h1 : 1 < n) (hk : 0 < k)
+    (h : a ^ k % n = 1 % n) : 0 < orderOf a n := by
+  have hcop := coprime_of_pow_mod_eq_one h1 hk h
+  have hne : orderOfAux a n k 1 ≠ 0 :=
+    orderOfAux_ne_zero_of_witness a n k 1 (by omega) k (by omega) (by omega) h
+  obtain ⟨hd1, hdpow, hdmin⟩ := orderOfAux_spec a n k 1 hne
+  have hdn : orderOfAux a n k 1 ≤ n :=
+    le_of_least_pow_witness h1 hcop hdmin
+  have hne' : orderOfAux a n n 1 ≠ 0 :=
+    orderOfAux_ne_zero_of_witness a n n 1 (by omega) (orderOfAux a n k 1)
+      hd1 (by omega) hdpow
+  rw [orderOf_eq_aux h1 hcop]
+  have := (orderOfAux_spec a n n 1 hne').1
+  omega
+
+/-- The order divides every exponent sending `a` to `1` modulo `n`. -/
+theorem orderOf_dvd_of_pow_eq_one {a n k : Nat} (h1 : 1 < n) (hk : 0 < k)
+    (h : a ^ k % n = 1 % n) : orderOf a n ∣ k := by
+  have hpos := orderOf_pos_of_pow_eq_one h1 hk h
+  have hpowmod : a ^ (k % orderOf a n) % n = 1 % n := by
+    have hbig : a ^ k % n = a ^ (k % orderOf a n) % n := by
+      calc a ^ k % n
+          = a ^ (orderOf a n * (k / orderOf a n) + k % orderOf a n) % n := by
+            rw [Nat.div_add_mod]
+        _ = (a ^ (orderOf a n * (k / orderOf a n)) * a ^ (k % orderOf a n)) % n := by
+            rw [Nat.pow_add]
+        _ = ((a ^ (orderOf a n * (k / orderOf a n)) % n) *
+              (a ^ (k % orderOf a n) % n)) % n := by
+            rw [Nat.mul_mod]
+        _ = (((a ^ orderOf a n) ^ (k / orderOf a n) % n) *
+              (a ^ (k % orderOf a n) % n)) % n := by
+            rw [Nat.pow_mul]
+        _ = (((a ^ orderOf a n % n) ^ (k / orderOf a n) % n) *
+              (a ^ (k % orderOf a n) % n)) % n := by
+            rw [Nat.pow_mod]
+        _ = (((1 % n) ^ (k / orderOf a n) % n) *
+              (a ^ (k % orderOf a n) % n)) % n := by
+            rw [orderOf_pow_mod hpos]
+        _ = ((1 ^ (k / orderOf a n) % n) *
+              (a ^ (k % orderOf a n) % n)) % n := by
+            rw [← Nat.pow_mod]
+        _ = ((1 % n) * (a ^ (k % orderOf a n) % n)) % n := by
+            rw [Nat.one_pow]
+        _ = (1 * a ^ (k % orderOf a n)) % n := by
+            rw [← Nat.mul_mod]
+        _ = a ^ (k % orderOf a n) % n := by
+            rw [Nat.one_mul]
+    rw [← hbig, h]
+  by_cases hr : k % orderOf a n = 0
+  · exact Nat.dvd_of_mod_eq_zero hr
+  · exact absurd hpowmod
+      (orderOf_min hpos _ (by omega) (Nat.mod_lt _ hpos))
+
+/-- Any multiple of a positive order sends `a` to `1` modulo `n`. -/
+theorem pow_eq_one_of_orderOf_dvd {a n k : Nat} (h : 0 < orderOf a n)
+    (hd : orderOf a n ∣ k) : a ^ k % n = 1 % n := by
+  obtain ⟨t, rfl⟩ := hd
+  calc a ^ (orderOf a n * t) % n
+      = (a ^ orderOf a n) ^ t % n := by rw [Nat.pow_mul]
+    _ = (a ^ orderOf a n % n) ^ t % n := by rw [Nat.pow_mod]
+    _ = (1 % n) ^ t % n := by rw [orderOf_pow_mod h]
+    _ = 1 ^ t % n := by rw [← Nat.pow_mod]
+    _ = 1 % n := by rw [Nat.one_pow]
+
+/-- The order of a unit modulo a prime divides `p - 1`. -/
+theorem orderOf_dvd_pred {p a : Nat} (hp : Prime p) (h : Nat.Coprime a p) :
+    orderOf a p ∣ p - 1 :=
+  orderOf_dvd_of_pow_eq_one hp.one_lt
+    (by have := hp.two_le; omega) (pow_pred_mod hp h)
+
+/-- Prime-power extraction into the order: if `q ^ j ∣ m`, `a ^ m ≡ 1`, and
+`a ^ (m / q) ≢ 1` modulo `p`, then `q ^ j` divides the order of `a`. Stated
+with `q ^ j ∣ m` as a hypothesis so no valuation API is needed. -/
+theorem prime_pow_dvd_orderOf {q j m a p : Nat} (hq : Prime q) (hj : q ^ j ∣ m)
+    (h1 : 1 < p) (hm : a ^ m % p = 1 % p) (hne : a ^ (m / q) % p ≠ 1 % p) :
+    q ^ j ∣ orderOf a p := by
+  cases j with
+  | zero => simp
+  | succ j =>
+    have hm0 : m ≠ 0 := by
+      intro h0
+      subst h0
+      simp [Nat.zero_div] at hne
+    have hpos := orderOf_pos_of_pow_eq_one h1 (by omega) hm
+    have hdvd_m : orderOf a p ∣ m :=
+      orderOf_dvd_of_pow_eq_one h1 (by omega) hm
+    obtain ⟨t, ht⟩ := hdvd_m
+    have hqt : ¬ q ∣ t := by
+      rintro ⟨s, hs⟩
+      have hq0 : 0 < q := hq.pos
+      have hmq : m / q = orderOf a p * s := by
+        rw [ht, hs, Nat.mul_comm q s, ← Nat.mul_assoc]
+        exact Nat.mul_div_cancel _ hq0
+      have hcongr : a ^ (m / q) % p = 1 % p :=
+        pow_eq_one_of_orderOf_dvd hpos ⟨s, hmq⟩
+      exact hne hcongr
+    have hcop : Nat.Coprime (q ^ (j + 1)) t :=
+      Nat.Coprime.pow_left _ (hq.coprime_of_not_dvd hqt)
+    exact Nat.Coprime.dvd_of_dvd_mul_right hcop (ht ▸ hj)
+
+/-- Modulo a prime, the square roots of `1` are `1` and `p - 1`: the
+factorisation `x² - 1 = (x - 1)(x + 1)` and Euclid's lemma. -/
+theorem sq_roots_of_one {p x : Nat} (hp : Prime p) (hx : x < p)
+    (h : x * x % p = 1 % p) : x = 1 ∨ x = p - 1 := by
+  have hp2 := hp.two_le
+  have h1p : 1 % p = 1 := Nat.mod_eq_of_lt (by omega)
+  have hx0 : x ≠ 0 := by
+    intro h0
+    subst h0
+    rw [Nat.zero_mul, Nat.zero_mod, h1p] at h
+    omega
+  have hdvd : p ∣ x * x - 1 :=
+    Nat.dvd_of_mod_eq_zero (Nat.sub_mod_eq_zero_of_mod_eq h)
+  have hfactor : x * x - 1 = (x - 1) * (x + 1) := by
+    cases x with
+    | zero => simp
+    | succ y =>
+        have e1 : y + 1 - 1 = y := by omega
+        rw [e1]
+        have hexp : (y + 1) * (y + 1) = y * y + 2 * y + 1 := by
+          rw [Nat.add_mul, Nat.mul_add]
+          omega
+        have hexp2 : y * (y + 1 + 1) = y * y + 2 * y := by
+          rw [Nat.mul_add, Nat.mul_add]
+          omega
+        omega
+  rw [hfactor] at hdvd
+  rcases (hp.dvd_mul).mp hdvd with hleft | hright
+  · left
+    have := Nat.eq_zero_of_dvd_of_lt hleft (by omega : x - 1 < p)
+    omega
+  · right
+    have hle : x + 1 ≤ p := by omega
+    rcases Nat.lt_or_eq_of_le hle with hlt | heq
+    · have := Nat.eq_zero_of_dvd_of_lt hright hlt
+      omega
+    · omega
+
+/-- Every coprime base has a positive order: pigeonhole among the `n + 1`
+residues `a ^ 0 % n, …, a ^ n % n` finds a repeat, and cancellation turns the
+repeat into a witness exponent. -/
+theorem orderOf_pos {a n : Nat} (h1 : 1 < n) (h : Nat.Coprime a n) :
+    0 < orderOf a n := by
+  rw [orderOf_eq_aux h1 h]
+  rcases Nat.eq_zero_or_pos (orderOfAux a n n 1) with hzero | hpos
+  · exfalso
+    -- With no witness exponent in [1, n], all n + 1 residues
+    -- a ^ 0 % n, …, a ^ n % n are pairwise distinct inside [0, n).
+    have hnowit : ∀ j, 1 ≤ j → j < 1 + n → a ^ j % n ≠ 1 % n := by
+      intro j h1j hjb hj
+      exact orderOfAux_ne_zero_of_witness a n n 1 (by omega) j h1j hjb hj hzero
+    have hdist : ∀ i j, i < j → j < n + 1 → a ^ i % n ≠ a ^ j % n := by
+      intro i j hij hjd heq
+      exact hnowit (j - i) (by omega) (by omega)
+        (pow_witness_of_residue_eq h hij heq)
+    have := le_of_pow_residues_distinct h1 hdist
+    omega
+  · exact hpos
+
+/-! Regression coverage: orders modulo small primes and composites, and every
+junk-input branch of the definition. -/
+
+#guard orderOf 2 7 = 3
+#guard orderOf 3 7 = 6
+#guard orderOf 2 15 = 4
+#guard orderOf 4 15 = 2
+#guard orderOf 1 5 = 1
+#guard orderOf 2 8 = 0   -- not coprime
+#guard orderOf 0 5 = 0   -- not coprime
+#guard orderOf 5 1 = 0   -- trivial modulus
+#guard orderOf 5 0 = 0   -- trivial modulus
+
+end Nat
+
+end Hex
