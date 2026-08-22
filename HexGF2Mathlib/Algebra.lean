@@ -52,8 +52,8 @@ The degree hypothesis is not redundant. `Hex.GF2Poly.Irreducible` asks that `f`
 be nonzero with no factorization into two positive-degree parts, which the
 constant `1` satisfies, and `Hex.GF2nPoly 1 _` is the trivial ring where
 `0 = 1`. Carried as a `Fact` so that instance synthesis can find it: a caller
-with a genuine modulus supplies it once, and every committed
-the committed packed entries in `hex-gfq` has `degree_pos` to build it from. -/
+with a genuine modulus supplies it once, and the committed packed entries in
+`hex-gfq` carry `degree_pos` to build it from. -/
 noncomputable instance field [hdeg : Fact (0 < f.degree)] :
     Field (Hex.GF2nPoly f hirr) :=
   Field.ofMinimalAxioms (Hex.GF2nPoly f hirr)

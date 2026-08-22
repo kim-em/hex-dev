@@ -30,10 +30,7 @@ namespace HexGF2Mathlib
 
 open Hex
 
-universe u v w
-
 namespace GF2Poly
-
 
 private theorem bit_eq_one_eq_testBit (x i : Nat) :
     (x >>> i % 2 == 1) = x.testBit i := by
@@ -115,11 +112,13 @@ theorem coeff_toFpPoly (p : Hex.GF2Poly) (i : Nat) :
       rw [hcoeff]
       rfl
 
+/-- Unpacking the packed zero gives the generic zero. -/
 @[simp, grind =]
 theorem toFpPoly_zero :
     toFpPoly (0 : Hex.GF2Poly) = 0 := by
   rfl
 
+/-- Repacking the generic zero gives the packed zero. -/
 @[simp, grind =]
 theorem ofFpPoly_zero :
     ofFpPoly (0 : Hex.FpPoly 2) = 0 := by
@@ -141,6 +140,7 @@ private theorem coeff_one_eq (i : Nat) :
     have : i ≠ 0 := by omega
     simp [this]
 
+/-- Unpacking the packed unit gives the generic unit. -/
 @[simp, grind =]
 theorem toFpPoly_one :
     toFpPoly (1 : Hex.GF2Poly) = 1 := by
@@ -274,6 +274,8 @@ theorem coeff_ofFpPoly (p : Hex.FpPoly 2) (j : Nat) :
     have hz : p.coeff j = 0 := hpc
     simp [Hex.GF2Poly.coeffWords, hget, hz]
 
+/-- Unpacking then repacking recovers the packed polynomial: `ofFpPoly` is a left
+inverse of `toFpPoly`. -/
 @[simp, grind =]
 theorem ofFpPoly_toFpPoly (p : Hex.GF2Poly) :
     ofFpPoly (toFpPoly p) = p := by
@@ -284,6 +286,8 @@ theorem ofFpPoly_toFpPoly (p : Hex.GF2Poly) :
   | false => simp
   | true => simp [zmod2_one_ne_zero]
 
+/-- Repacking then unpacking recovers the generic polynomial. The generic side is
+degree-normalized, so no trailing zero coefficients are introduced. -/
 @[simp, grind =]
 theorem toFpPoly_ofFpPoly (p : Hex.FpPoly 2) :
     toFpPoly (ofFpPoly p) = p := by
@@ -294,6 +298,8 @@ theorem toFpPoly_ofFpPoly (p : Hex.FpPoly 2) :
   · simp [hz]
   · simp [ho, zmod2_one_ne_zero]
 
+/-- Unpacking is additive: packed `XOR` addition becomes generic coefficientwise
+addition. Half of the `RingEquiv` obligation for `equiv`. -/
 @[simp, grind =]
 theorem toFpPoly_add (p q : Hex.GF2Poly) :
     toFpPoly (p + q) = toFpPoly p + toFpPoly q := by
@@ -388,6 +394,10 @@ private theorem foldl_add_range_eq_of_ge (term : Nat → Hex.ZMod64 2) (A B m : 
   obtain ⟨b, rfl⟩ : ∃ b, B = m + b := ⟨B - m, by omega⟩
   rw [foldl_add_range_reduce term m hzero a, foldl_add_range_reduce term m hzero b]
 
+/-- Unpacking is multiplicative: the packed carry-less product becomes the
+generic convolution product. The other half of the `RingEquiv` obligation for
+`equiv`, and the reason the packed representation may be used as a drop-in for
+`FpPoly 2` in ring-level reasoning. -/
 @[simp, grind =]
 theorem toFpPoly_mul (p q : Hex.GF2Poly) :
     toFpPoly (p * q) = toFpPoly p * toFpPoly q := by
@@ -442,11 +452,13 @@ def equiv : Hex.GF2Poly ≃+* Hex.FpPoly 2 where
   map_mul' := toFpPoly_mul
   map_add' := toFpPoly_add
 
+/-- The forward direction of `equiv` is `toFpPoly`. -/
 @[simp, grind =]
 theorem equiv_apply (p : Hex.GF2Poly) :
     equiv p = toFpPoly p := by
   rfl
 
+/-- The inverse direction of `equiv` is `ofFpPoly`. -/
 @[simp, grind =]
 theorem equiv_symm_apply (p : Hex.FpPoly 2) :
     equiv.symm p = ofFpPoly p := by
@@ -527,14 +539,16 @@ theorem irreducible_toFpPoly {p : Hex.GF2Poly} (h : Hex.GF2Poly.Irreducible p) :
     · exact Or.inl (hupgrade a ha_ne hda)
     · exact Or.inr (hupgrade b hb_ne hdb)
 
-/-- Interpret a packed polynomial as the natural number with the same binary
-coefficient bits. This gives correspondence modules a finite index for
-bounded-degree representatives without changing the executable `HexGF2`
-representation. -/
+/-- Little-endian place-value sum of a packed word list, starting at word index
+`i`: word `k` contributes at bit offset `64 * (i + k)`. -/
 private def wordsToNatAux : List UInt64 → Nat → Nat
   | [], _ => 0
   | w :: ws, i => w.toNat * 2 ^ (64 * i) + wordsToNatAux ws (i + 1)
 
+/-- Interpret a packed polynomial as the natural number with the same binary
+coefficient bits. This gives correspondence modules a finite index for
+bounded-degree representatives without changing the executable `HexGF2`
+representation. -/
 def toNat (p : Hex.GF2Poly) : Nat :=
   wordsToNatAux p.toWords.toList 0
 
@@ -592,13 +606,6 @@ private theorem word_shift_lt_next (w : UInt64) (i : Nat) :
   have h := Nat.shiftLeft_lt (x := w.toNat) (n := 64) (m := 64 * i) hw
   simpa [Nat.shiftLeft_eq, show 64 + 64 * i = 64 * (i + 1) by omega] using h
 
-private theorem word_shift_testBit_eq_false_of_next_le
-    (w : UInt64) {i j : Nat} (hj : 64 * (i + 1) ≤ j) :
-    (w.toNat * 2 ^ (64 * i)).testBit j = false := by
-  exact Nat.testBit_eq_false_of_lt
-    (Nat.lt_of_lt_of_le (word_shift_lt_next w i)
-      (Nat.pow_le_pow_right (by decide : 0 < 2) hj))
-
 private theorem wordsToNatAux_testBit_getD :
     ∀ (ws : List UInt64) (i wordIdx bitIdx : Nat), bitIdx < 64 →
       (wordsToNatAux ws i).testBit (64 * (i + wordIdx) + bitIdx) =
@@ -633,6 +640,9 @@ private theorem wordsToNatAux_testBit_getD :
       · exact Nat.lt_of_lt_of_le (word_shift_lt_next w i) (le_rfl)
       · exact wordsToNatAux_dvd_shift ws (i + 1)
 
+/-- The binary index and the packed representation agree bit for bit: bit `j` of
+`toNat p` is the coefficient of `x ^ j`. This is the characterising lemma for
+`toNat`, and callers should use it rather than unfolding the word fold. -/
 theorem toNat_testBit_eq_coeff (p : Hex.GF2Poly) (j : Nat) :
     (toNat p).testBit j = p.coeff j := by
   unfold toNat
@@ -663,12 +673,6 @@ private theorem div_word_mod_testBit (n wordIdx bitIdx : Nat) (hbit : bitIdx < 6
   simp [hbit, Nat.testBit, Nat.shiftRight_eq_div_pow, Nat.div_div_eq_div_mul,
     Nat.pow_add]
 
-private theorem div_word_testBit (n wordIdx bitIdx : Nat) (hbit : bitIdx < 64) :
-    (UInt64.ofNat (n / 2 ^ (64 * wordIdx))).toNat.testBit bitIdx =
-      n.testBit (64 * wordIdx + bitIdx) := by
-  rw [UInt64.toNat_ofNat']
-  exact div_word_mod_testBit n wordIdx bitIdx hbit
-
 private theorem div_lt_wordCount_of_lt_degree {degree j : Nat} (hj : j < degree) :
     j / 64 < (degree + 63) / 64 := by
   rw [Nat.div_lt_iff_lt_mul (by decide : 0 < 64)]
@@ -678,6 +682,8 @@ private theorem div_lt_wordCount_of_lt_degree {degree j : Nat} (hj : j < degree)
     omega
   omega
 
+/-- Below the degree bound, `ofNatBelowDegree` reproduces the binary digits of
+its input: the characterising lemma for the decoding direction. -/
 theorem coeff_ofNatBelowDegree_of_lt (degree n j : Nat) (hj : j < degree) :
     (ofNatBelowDegree degree n).coeff j = n.testBit j := by
   unfold ofNatBelowDegree
@@ -698,6 +704,9 @@ theorem coeff_ofNatBelowDegree_of_lt (degree n j : Nat) (hj : j < degree) :
   change ((n / 2 ^ (64 * (j / 64))) % 2 ^ 64).testBit (j % 64) = n.testBit j
   rw [div_word_mod_testBit n (j / 64) (j % 64) hbit, hdecomp]
 
+/-- At or above the degree bound, a decoded index has no coefficients: together
+with `coeff_ofNatBelowDegree_of_lt` this pins down `ofNatBelowDegree` on every
+index, and it is what makes the decoded value a reduced representative. -/
 theorem coeff_ofNatBelowDegree_eq_false_of_bound
     {degree n j : Nat} (hn : n < 2 ^ degree) (hj : degree ≤ j) :
     (ofNatBelowDegree degree n).coeff j = false := by
@@ -828,8 +837,12 @@ noncomputable def equivPolynomial : Hex.GF2Poly ≃+* Polynomial (ZMod 2) :=
   equiv.trans HexPolyFpMathlib.fpPolyEquiv
 
 /-- The forward direction of `equivPolynomial` transports the packed value
-through the generic representation. -/
-@[simp, grind =]
+through the generic representation.
+
+Deliberately not `@[simp]`: `coeff_equivPolynomial` below is the coefficient
+normal form, and a `simp` set containing both would rewrite past its left-hand
+side and leave a `toZMod` applied to an `if`. -/
+@[grind =]
 theorem equivPolynomial_apply (q : Hex.GF2Poly) :
     equivPolynomial q = HexPolyFpMathlib.fpPolyEquiv (toFpPoly q) := by
   rfl
