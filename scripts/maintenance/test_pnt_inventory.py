@@ -357,6 +357,46 @@ class InventoryTests(unittest.TestCase):
         with self.assertRaisesRegex(inventory.InventoryError, "found 2"):
             inventory.require_fks2_nested_match([record, copy.deepcopy(record)], provider)
 
+    def test_ramanujan_theta_leaves_match_literal_provider_rows(self) -> None:
+        records = [
+            {
+                "kind": "native-decide-occurrence",
+                "mechanism": "native_decide",
+                "path": inventory.RAMANUJAN_THETA_SOURCE,
+                "line": line,
+                "declaration": declaration,
+            }
+            for declaration, line in inventory.RAMANUJAN_THETA_DECLARATIONS.items()
+        ]
+        provider = """def sourceRows : List Certificate := [
+  ⟨⟨505⟩, 599, 65, 1000, 20, 812, 813⟩
+]
+def rangeRows : List RangeCertificate := [
+  ⟨⟨500⟩, 3, 599, 768, 1000, 20⟩
+]
+"""
+        inventory.require_ramanujan_theta_match(records, provider)
+
+        wrong_coordinate = copy.deepcopy(records)
+        wrong_coordinate[0]["line"] = 499
+        with self.assertRaisesRegex(inventory.InventoryError, "coordinate differs"):
+            inventory.require_ramanujan_theta_match(wrong_coordinate, provider)
+
+        wrong_range = provider.replace("768, 1000", "767, 1000")
+        with self.assertRaisesRegex(inventory.InventoryError, "rangeRows differs"):
+            inventory.require_ramanujan_theta_match(records, wrong_range)
+
+        wrong_point = provider.replace("812, 813", "811, 813")
+        with self.assertRaisesRegex(inventory.InventoryError, "sourceRows differs"):
+            inventory.require_ramanujan_theta_match(records, wrong_point)
+
+        with self.assertRaisesRegex(inventory.InventoryError, "found 1"):
+            inventory.require_ramanujan_theta_match(records[:-1], provider)
+
+        duplicate = [records[0], copy.deepcopy(records[0])]
+        with self.assertRaisesRegex(inventory.InventoryError, "duplicate"):
+            inventory.require_ramanujan_theta_match(duplicate, provider)
+
     def test_committed_inventory_is_valid_but_not_yet_classified(self) -> None:
         inventory.check_inventory(self.fixture, require_classified=False)
         with self.assertRaisesRegex(inventory.InventoryError, "pending decisions"):

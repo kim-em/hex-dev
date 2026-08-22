@@ -374,6 +374,7 @@ lean_lib HexIntervalExperiment where
     `HexInterval.Experiment.PntDusartExp,
     `HexInterval.Experiment.PntFks2Mu,
     `HexInterval.Experiment.PntExpUpper,
+    `HexInterval.Experiment.PntRamanujanTheta,
     `HexInterval.Experiment.SinTen,
     `HexInterval.Experiment.SinTenInterval,
     `HexInterval.Experiment.MixedFunctions,
@@ -415,6 +416,7 @@ lean_lib HexIntervalMathlibExperiment where
     `HexIntervalMathlib.Experiment.PntDusartExp,
     `HexIntervalMathlib.Experiment.PntFks2Mu,
     `HexIntervalMathlib.Experiment.PntExpUpper,
+    `HexIntervalMathlib.Experiment.PntRamanujanTheta,
     `HexIntervalMathlib.Experiment.PntPrimeLogSmall,
     `HexIntervalMathlib.Experiment.PntChebyshev,
     `HexIntervalAlgebraic.Experiment.PolynomialDispatch,
@@ -512,7 +514,8 @@ lean_lib HexConformance where
     ++ #[`HexIntervalMathlib.PntChebyshevConformance].map Glob.one
 
     ++ #[`HexIntervalMathlib.PntFks2MuConformance,
-      `HexIntervalMathlib.PntExpUpperConformance].map Glob.one
+      `HexIntervalMathlib.PntExpUpperConformance,
+      `HexIntervalMathlib.PntRamanujanThetaConformance].map Glob.one
 
     ++ #[`HexIntervalMathlib.PntFks2NestedConformance].map Glob.one
 
