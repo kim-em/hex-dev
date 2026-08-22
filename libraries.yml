@@ -937,6 +937,22 @@ libraries:
     mathlib: false
     done_through: 3
     status: active
+    phase4:
+      comparators:
+        - tool: "PARI/GP via cypari2"
+          class: informational
+          rationale: "PARI is a mature optimized C library; its t_POLMOD arithmetic (Mod(a, m) * Mod(b, m), Mod(a, m)^(-1)) is the callable unit surface matching QAdjoin multiplication and extended-gcd inversion, and the constant-factor gap against Hex's verified rational implementation is structural rather than algorithmic, so the ratio is recorded for orientation and does not gate Phase 4. Wired via the persistent-subprocess driver scripts/oracle/pari_bench_driver.py per SPEC/benchmarking.md §External comparators §Process call, paired per rung with the QAdjoin multiplication and inversion fixed registrations on identical inputs. Lazy certified arithmetic, exactification, and the certified root-set APIs have no comparable PARI unit surface; the per-library SPEC declares those absences."
+      input_families:
+        - name: qadjoin-arithmetic
+          description: Degree-n fixed-field arithmetic over the Eisenstein modulus X^n - 2 with dense all-nonzero rational elements, plus the SPEC's canonical degree-10 fixed cases and the minimal-relation search.
+        - name: lazy-arithmetic
+          description: Sum-eliminant construction and end-to-end lazy addition pairing the first root of X^n - 2 with sqrt(3), degree products up to the merge-facing ceiling 20, plus the fixed isolation and operation-ball selection components.
+        - name: exactification
+          description: Factorization-lazy roots of (X^n - 2)(X + 3), so canonicalization always selects among at least two irreducible candidate factors.
+        - name: fixed-field-roots
+          description: Fixed-field root extraction over Q(sqrt(2)) of g^2 * (X - 1) with dense sqrt(2)-dependent g, exercising Yun multiplicity separation and the degree-2n norm eliminant.
+        - name: algebraic-poly-roots
+          description: Canonical-coefficient root extraction and the separated common-field presentation for dense polynomials with one sqrt(2) coefficient among nonzero rationals.
   HexNumberFieldMathlib:
     deps: [HexNumberField, HexResultantMathlib, HexBerlekampZassenhausMathlib, HexRootsMathlib, HexPolyZMathlib]
     mathlib: true
@@ -947,6 +963,20 @@ libraries:
     mathlib: false
     done_through: 3
     status: active
+    phase4:
+      comparators:
+        - tool: "PARI/GP nffactor via cypari2"
+          class: informational
+          rationale: "PARI is a mature optimized C library whose nffactor runs over nfinit's absolute integral-basis presentation with maximal-order machinery, a structurally different pipeline from Hex's relative one-level Trager norms, so the ratio is recorded for orientation and does not gate Phase 4. Wired via the persistent-subprocess driver scripts/oracle/pari_bench_driver.py per SPEC/benchmarking.md §External comparators §Process call, paired per rung with the factor? fixed registrations on shared Selmer trinomial inputs over Q(sqrt(2)), joined on the sorted factor degree/multiplicity multiset hash. Tower element arithmetic, adjoining, splitting, and flattening have no comparable PARI unit surface; the per-library SPEC declares those absences."
+      input_families:
+        - name: tower-coordinate-arithmetic
+          description: Dimension-2m height-two towers Q(sqrt(2), 3^(1/m)) with dense all-nonzero mixed-radix elements for addition, subtraction, negation, multiplication, recursive inversion, division, and rational scalar action.
+        - name: trager-factorization
+          description: Selmer trinomials X^n - X - 1 over Q(sqrt(2)) whose rational coefficients force a genuine shift retry, plus the fixed rational, one-level retry, recursive two-level, and checked-replay cases.
+        - name: adjoin-extend
+          description: Fixed adjoining of a fourth root of two to Q(sqrt(2)), the identity re-adjoining case, and the one-level presentation constructor.
+        - name: split-flatten
+          description: Fixed quartic splitting, two-level flattening, candidate, certification, and coordinate-map components, and the degree-six recovery adversary.
   HexNumberFieldTowerMathlib:
     deps: [HexNumberFieldTower, HexNumberFieldMathlib, HexResultantMathlib, HexBerlekampZassenhausMathlib, HexRowReduceMathlib]
     mathlib: true

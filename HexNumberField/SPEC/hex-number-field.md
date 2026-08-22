@@ -521,6 +521,39 @@ oracle's independently computed decomposition with Lean's finite output.
 Phase 4 records separate timings for eliminant construction, isolation,
 disambiguation, and exactification so regressions are attributable.
 
+## External comparators
+
+**PARI/GP via cypari2** (https://pari.math.u-bordeaux.fr/, driven through
+the cypari2 binding, the same binding the conformance oracles use) —
+**informational**, scoped to the fixed-field arithmetic bench targets.
+PARI's t_POLMOD arithmetic (`Mod(a, m) * Mod(b, m)` and `Mod(a, m)^(-1)`)
+is the callable unit surface computing exactly `QAdjoin` multiplication and
+extended-gcd inversion in `ℚ[x]/(m)`. It is wired as a persistent-subprocess
+process call (`scripts/oracle/pari_bench_driver.py`,
+`Hex/BenchOracle/Pari.lean`) with per-rung fixed Lean/PARI registration
+pairs on identical deterministic inputs, joined on the identical reduced
+rational coefficient hash. PARI is a mature optimized C library, so the
+constant-factor gap is structural rather than algorithmic; the ratio is
+recorded for orientation and does not gate Phase 4.
+
+Absence declarations, all with reason
+**no-comparable-surface-in-named-comparator**:
+
+- *Factorization-lazy and canonical arithmetic* (`AlgebraicRoot.add?` and
+  friends, `AlgebraicNumber` arithmetic): PARI has no certified lazy
+  algebraic-number type; its floating `t_COMPLEX`/`algdep` workflow does not
+  expose "combine two isolated algebraic numbers into a certified isolated
+  result" as a callable unit.
+- *Exactification* (`AlgebraicRoot.exact?`): PARI exposes rational
+  polynomial factorization (already the BZ dependency's comparator surface)
+  but no unit function selecting and certifying the minimal polynomial of a
+  root given an isolating region.
+- *Root APIs* (`QAdjoin.roots?`, `AlgebraicPoly.roots?`): PARI's
+  `nfroots`/`nffactor` return only the roots lying inside the number field,
+  and `polroots` returns uncertified floating approximations; no PARI unit
+  surface produces the certified complete complex root multiset with
+  isolation data that these APIs return.
+
 ## References
 
 - Cohen, H. *A Course in Computational Algebraic Number Theory.* Springer,
