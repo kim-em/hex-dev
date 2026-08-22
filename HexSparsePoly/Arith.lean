@@ -696,37 +696,11 @@ theorem add_assoc (s t u : SparsePoly S) : s + t + u = s + (t + u) := by
   simp only [coeff_add, coeff_zero]
   grind
 
-/-- `mul_comm`, `mul_assoc`, `mul_one`, `mul_zero`, and the two
-distributive laws are stated here and proved in the conversions
-milestone, where `coeff_mul` becomes available by transport through
-`toDense` (see SPEC §Conversion): redoing the convolution over the
-sparse term arrays would duplicate the dense proof. -/
-theorem mul_assoc (s t u : SparsePoly S) : s * t * u = s * (t * u) := by
-  sorry
-
-@[simp, grind =] theorem mul_one (s : SparsePoly S) : s * 1 = s := by
-  sorry
-
-@[simp, grind =] theorem one_mul (s : SparsePoly S) : 1 * s = s := by
-  sorry
-
-@[simp, grind =] theorem mul_zero (s : SparsePoly S) : s * 0 = 0 := by
-  sorry
-
-@[simp, grind =] theorem zero_mul (s : SparsePoly S) : 0 * s = 0 := by
-  sorry
-
-theorem left_distrib (s t u : SparsePoly S) :
-    s * (t + u) = s * t + s * u := by
-  sorry
-
-theorem right_distrib (s t u : SparsePoly S) :
-    (s + t) * u = s * u + t * u := by
-  sorry
-
-theorem mul_comm {C : Type u} [Lean.Grind.CommRing C] [DecidableEq C]
-    (s t : SparsePoly C) : s * t = t * s := by
-  sorry
+/- The multiplicative ring laws (`mul_assoc`, `mul_comm`, `mul_one`,
+`one_mul`, `mul_zero`, `zero_mul`, and the two distributive laws) live
+in `HexSparsePoly/Dense.lean`: the SPEC proves them by transport through
+`toDense`, so their proofs need the conversion layer this file precedes.
+`coeff_mul` likewise. -/
 
 end Laws
 
