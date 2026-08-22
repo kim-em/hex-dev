@@ -625,7 +625,7 @@ with the nonvanishing proof, for use inside larger computations rather
 than as a goal-closing tactic.
 
 **Better primality.** Specified in
-[hex-primality](Libraries/hex-primality.md). The diagnosis this file
+[hex-primality](../HexPrimality/SPEC/hex-primality.md). The diagnosis this file
 made -- the mechanism is in place in `HexArith/Nat/Prime.lean` and in
 hex-berlekamp-zassenhaus's 94 stored candidate primes, and what it
 lacks is scale -- is what that SPEC starts from. Mathlib's baseline is
