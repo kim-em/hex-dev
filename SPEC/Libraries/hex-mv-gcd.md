@@ -428,9 +428,11 @@ transformation pair through the pseudo-scaling and the exact scalar
 division at every step, with proofs that each cofactor numerator is
 divisible by the Brown scalar it is divided by.
 
-The owning contract is now recorded under "Planned extended chain for gcd
-consumers" in [hex-resultant's SPEC](../../HexResultant/SPEC/hex-resultant.md);
-its signature is repeated here only to show the consumer boundary:
+The owning contract is now recorded under "Extended subresultant chain for
+gcd consumers" in [SPEC/future-work.md](../future-work.md), with a pointer
+from the Downstream contracts section of
+[hex-resultant's SPEC](../../HexResultant/SPEC/hex-resultant.md); its
+signature is repeated here only to show the consumer boundary:
 
 ```lean
 /-- The subresultant chain with the cofactors producing each entry:
