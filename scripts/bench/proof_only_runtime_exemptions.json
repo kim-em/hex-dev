@@ -682,5 +682,11 @@
     "baseline_blob": "6dd80771ae2212333b2a9b925b52056e0037ff56",
     "current_blob": "c523b56fcf7249235b710bc86792042a57c4e26e",
     "reason": "Additionally registers the supported fact-only executable-assembly controller conformance, including independent theorem replay for built-in arithmetic and an explicit arbitrary-function package, and the Mathlib-free typed-runtime conformance module on top of the retained source-pinned FKS2 prefix-structure checker and its proof-only conformance module. These acceptance-only modules do not enter the factorization service target or change its executable dependency graph."
+  },
+  {
+    "path": "lakefile.lean",
+    "baseline_blob": "abbfb2327a8ee1c28a6fa20dcf5a285cd782284c",
+    "current_blob": "c523b56fcf7249235b710bc86792042a57c4e26e",
+    "reason": "Adds the unrelated HexSparsePoly lean_lib, two interval experiment/conformance globs, and the interval typed-runtime and executable-controller conformance globs; the hexbz_factor_service target, BZ library targets, and build flags are unchanged."
   }
 ]
