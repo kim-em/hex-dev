@@ -27,11 +27,13 @@ dream (`add_pow_prime_mod`), and Fermat's little theorem
 `Hex.Nat.isPrimeTrial` (`:702`) is bounded trial division with a
 balanced binary recursion, so kernel reduction depth is logarithmic in
 the candidate count while the number of remainder tests stays
-`O(√n)`. It has soundness (`isPrimeTrial_isPrime`, `:786`) **and**
-completeness (`isPrimeTrial_of_prime`, `:843`), so the pair is a
-decision procedure in everything but name -- there is no
-`Decidable (Hex.Nat.Prime n)` instance in the tree, and adding one is
-two lines.
+`O(√n)`. It has soundness (`isPrimeTrial_isPrime`) **and**
+completeness (`isPrimeTrial_of_prime`), and `instDecidablePrime`
+routes `decide` through the pair. (An earlier draft of this SPEC said
+no `Decidable` instance existed and adding one was two lines; an
+instance did exist, built on the linear `prime_iff_forall_lt`, and
+the amendment below *replaced its body* rather than adding a second
+instance, which would have risked instance-selection churn.)
 
 `HexArith.powMod` (`HexArith/Montgomery/Context.lean:1002`) is modular
 exponentiation by repeated squaring, dispatching to Montgomery
@@ -179,12 +181,12 @@ This is the one authoritative dependency list; the `libraries.yml`
 block at the end repeats it and nothing else in this file states it
 again.
 
-Three additions hex-arith should take, all of which its own theorems
-nearly earn already:
+Three amendments hex-arith has taken, all of which its own theorems
+nearly earned already:
 
 ```lean
-instance : DecidablePred Hex.Nat.Prime :=
-  fun n => decidable_of_iff (isPrimeTrial n = true)
+instance instDecidablePrime (p : Nat) : Decidable (Prime p) :=
+  decidable_of_iff (isPrimeTrial p = true)
     ⟨isPrimeTrial_isPrime, isPrimeTrial_of_prime⟩
 
 theorem exists_prime_dvd (h : 2 ≤ d) : ∃ q, Prime q ∧ q ∣ d
@@ -192,12 +194,11 @@ theorem exists_prime_le_sqrt (h : 2 ≤ n) (hcomp : ¬ Prime n) :
     ∃ p, Prime p ∧ p ∣ n ∧ p * p ≤ n
 ```
 
-The instance belongs next to the two theorems that prove it, and makes
+The instance sits next to the two theorems that prove it, and makes
 `decide` available on small `n` without importing this library. The two
-existence lemmas are what the Pocklington argument finishes with;
-hex-arith has `exists_trial_divisor` (`HexArith/Nat/Prime.lean:750`),
-which is `private` and produces a divisor rather than a *prime*
-divisor, so it can be neither imported nor used as it stands.
+existence lemmas are what the Pocklington argument finishes with, and
+`exists_trial_divisor` (a nontrivial divisor yields one at most the
+square root) is exported alongside them.
 
 There is also a **kernel-facing modular exponentiation** amendment,
 under "Kernel exposure" below, which is where the real work in this
@@ -268,7 +269,8 @@ lemma (`Prime.dvd_mul`, already in hex-arith) `n ∣ x - 1` or
 `x ≠ 0`, which is what licenses the factorisation of `x² - 1` in `Nat`
 without truncated subtraction.
 
-Prerequisite lemmas, none of which the tree has:
+Prerequisite lemmas (the last two are the hex-arith amendments above;
+the rest are new here):
 
 ```lean
 theorem pow_pred_mod (hp : Prime p) (h : Nat.Coprime a p) : a ^ (p - 1) % p = 1 % p
@@ -279,18 +281,14 @@ theorem orderOf_dvd_of_pow_eq_one (h1 : 1 < n) (hk : 0 < k)
     (h : a ^ k % n = 1 % n) :
     orderOf a n ∣ k
 theorem orderOf_dvd_pred (hp : Prime p) (h : Nat.Coprime a p) : orderOf a p ∣ p - 1
-theorem prime_dvd_of_two_le (h : 2 ≤ d) : ∃ q, Prime q ∧ q ∣ d
+theorem exists_prime_dvd (h : 2 ≤ d) : ∃ q, Prime q ∧ q ∣ d
 theorem exists_prime_le_sqrt (h : 2 ≤ n) (hcomp : ¬ Prime n) :
     ∃ p, Prime p ∧ p ∣ n ∧ p * p ≤ n
 ```
 
 The last is the composite-witness lemma the Pocklington argument
-finishes with. hex-arith has a version of it, but
-`exists_trial_divisor` (`HexArith/Nat/Prime.lean:750`) is `private`
-and returns a divisor rather than a *prime* divisor, so it can be
-neither imported nor used as it stands. Exporting a prime-divisor form
-from hex-arith is a prerequisite amendment, and it is the same
-statement `isPrimeTrial_isPrime` already needs internally.
+finishes with; it lives in hex-arith with `exists_prime_dvd` and the
+exported `exists_trial_divisor` beneath it.
 
 **No completeness theorem accompanies `isProbablePrime`**, and none
 should be attempted. `isProbablePrime n = true` proves nothing about
@@ -772,29 +770,26 @@ The replay closure is `checkPrime` and what it calls: a kernel-facing
 modular exponentiation, `Nat.gcd`, `Nat.sqrt`, `Nat.mod`, and the
 table's binary search.
 
-**hex-arith needs an amendment before that closure exists**, and this
-is the largest prerequisite in this SPEC. `HexArith.powMod`
-(`HexArith/Montgomery/Context.lean:1002`) branches on whether the
-modulus fits a `UInt64` and whether it is odd, taking a Montgomery path
-in the good case, so the kernel has to be sent down the `Nat` route
-instead. But:
+**The hex-arith amendment that creates that closure** is the largest
+prerequisite in this SPEC, and it is landed. `HexArith.powMod`
+branches on whether the modulus fits a `UInt64` and whether it is odd,
+taking a Montgomery path in the good case, so the kernel is sent down
+the `Nat` route instead:
 
-- `HexArith.powModNat` (`:694`) is `@[expose]`, while its worker
-  `powModNatGo` (`:685`) and `bitLength` (`:645`) are not, so kernel
-  reduction stalls at the module boundary;
-- `powModNat_eq` (`:795`) is `private`, so a downstream checker cannot
-  use its correctness theorem at all;
-- there is no `@[csimp]` relating `powMod` to `powModNat`, so the
-  dispatching form and the kernel form are two unrelated functions.
+- `HexArith.powModNat`, its worker `powModNatGo`, and `bitLength` are
+  all `@[expose]`, so kernel reduction no longer stalls at the module
+  boundary;
+- `powModNat_eq` is exported (with `0 < p`), alongside
+  `powModNat_modulus_zero`;
+- `powModNat` guards `p = 0` to `0`, matching `powMod`, which is what
+  makes the `@[csimp]` equality `powModNat_eq_powMod` unconditional:
+  `powModNat` is the kernel-facing specification and `powMod` the
+  runtime twin (principle 11's pattern; the earlier state had
+  `powModNat a n 0 = a ^ n`, a full unreduced power).
 
-The amendment: expose the recursion (an `@[expose]` parent with a
-`where` helper is the cleanest shape), export the correctness theorem,
-make the `p = 0` behaviour agree between the two forms, and register a
-proved unconditional `@[csimp]` equality naming which is the
-kernel-facing specification and which is the runtime twin. That is
-principle 11's pattern, and until it lands `checkPrime` has no
-kernel-reducible exponentiation to call. The bench family "kernel
-replay" below is what confirms the choice was the right one.
+`checkPrime` is therefore written against `powModNat`. The bench
+family "kernel replay" below is what confirms the choice was the
+right one.
 
 An earlier draft of this SPEC also said every member of the closure is
 `@[expose]`. That is not literally true -- core `Nat.gcd` is
@@ -900,12 +895,11 @@ even when PARI chooses another certificate form. python-flint's
 `fmpz.is_prime` is the second opinion on the large cases and is likewise
 already installed.
 
-sympy is **not installed**: `.github/workflows/ci.yml` installs
-`python-flint`, `cypari2`, and `conway-polynomials` and nothing else, so
-an oracle importing sympy would fail. Adding it would mean amending that
-step and the `HEX_REQUIRE_ORACLES` preflight in
-`scripts/ci/run_oracles.sh`; this SPEC uses the installed pair
-instead.
+sympy is installed by CI alongside `python-flint`, `cypari2`, and
+`conway-polynomials` (an earlier draft of this SPEC said otherwise),
+but PARI plus python-flint already cover the verdict surface and the
+second opinion, so this SPEC uses that pair and adds no third
+dependency.
 
 ## Benchmarking
 
