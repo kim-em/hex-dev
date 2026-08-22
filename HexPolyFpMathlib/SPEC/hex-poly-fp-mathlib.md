@@ -50,7 +50,9 @@ than about the representation.
 
 No external comparator is required.
 
-**Justification:** `proof-only-layer` per
+**Justification:** `correspondence-only-layer` per
 `SPEC/benchmarking.md §"Comparator naming"`. The library introduces no
-arithmetic algorithm; it transports values between two representations whose
-performance is measured in hex-poly-fp and in Mathlib respectively.
+arithmetic algorithm; it transports values between two representations. The
+computational performance owner is hex-poly-fp, which implements and measures
+the executable side of the correspondence; the other side is Mathlib's own
+`Polynomial`.

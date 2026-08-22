@@ -194,7 +194,7 @@ libraries:
         - name: adjacent-swap-scalars
           description: Adjacent-swap denominator, pivot coefficient, Gram-determinant quotient, and scaled-coefficient numerator helper formulas.
   HexGF2:
-    deps: [HexPoly, HexBasic]
+    deps: [HexBasic]
     mathlib: false
     done_through: 7
     status: active
@@ -490,6 +490,12 @@ libraries:
     # phases it has not completed is the drift these phases exist to prevent.
     # HexBerlekampMathlib is unaffected in practice: at done_through 3 it is
     # already blocked from Phase 4 by HexBerlekamp, also at 3.
+    # HexGF2Mathlib picked up the same new dependency edge (its
+    # equivPolynomial routes through fpPolyEquiv), and it too is unaffected in
+    # practice, for the opposite reason: it was at done_through 4 when the edge
+    # was added and is now at 5, so it is past every phase status.py gates on
+    # dependencies (1, 3, and 4). Its recorded 1/3/4 predate the extraction and
+    # are not re-derived against this entry.
     done_through: 0
     status: active
   HexBerlekampMathlib:
