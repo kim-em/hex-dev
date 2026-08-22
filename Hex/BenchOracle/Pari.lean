@@ -23,7 +23,7 @@ Environment overrides:
 
 namespace Hex.BenchOracle.Pari
 
-open Lean (Json)
+open Lean (Json JsonNumber)
 
 private abbrev PersistentComparator :=
   Hex.BenchOracle.Flint.PersistentComparator
