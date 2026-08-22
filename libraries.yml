@@ -552,7 +552,7 @@ libraries:
   HexResultant:
     deps: [HexPoly, HexBasic]
     mathlib: false
-    done_through: 4
+    done_through: 5
     status: active
     phase4:
       comparators:
@@ -633,7 +633,7 @@ libraries:
   HexRCF:
     deps: [HexRealRoots, HexRealRootsMathlib, HexPolyZ, HexPolyZMathlib]
     mathlib: true
-    done_through: 4
+    done_through: 5
     status: active
     proof_probes: [bench/HexRCF/ProofProbe]
     phase4:
