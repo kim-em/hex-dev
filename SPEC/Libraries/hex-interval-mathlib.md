@@ -1576,6 +1576,48 @@ grossly low cut `20` is false at `n = 31`; exact endpoint fidelity comes from
 the offline mechanical comparison of all sixty committed source snippets with
 both local source tables, not from that theorem or a precision retry.
 
+The complete bounded Ramanujan theta family replaces both native-evaluated
+leaves in `Ramanujan/Ramanujan.lean` after a localized predicate-eliminating
+rewrite. Their exact pinned source types are
+
+```lean
+private theorem allThetaChecks_3_599 :
+    checkAllThetaRelErrorReal 3 599 (768 / 1000) 20 = true := by native_decide
+
+private theorem thetaCheck599 :
+    checkThetaRelErrorReal 599 (65 / 1000) 20 = true := by native_decide
+```
+
+The first consumer needs the ordinary real statement
+`|theta x - x| ≤ (768 / 1000) * x` for every `x` in `[3, 599)`; the second
+needs `|theta 599 - 599| ≤ (65 / 1000) * 599`. Hex preserves these semantic
+statements, not the LeanCert predicates or namespace. `rangeRows` pins source
+coordinate 500, endpoints 3 and 599, tolerance `768/1000`, and precision 20.
+Its Mathlib-free checker runs 596 bounded coordinates. At each natural floor
+it multiplies the committed prime prefix and checks the exact integer
+inequality needed to derive a logarithmic lower bound from `Nat.log2`.
+The ordinary proof correlates every prefix with Mathlib `primorial`, combines
+the checked lower bound with the package-owned 20-digit enclosure of `log 2`,
+and uses `Chebyshev.theta_le_log4_mul_x` for the upper side.
+
+The point row pins source coordinate 505, all 109 primes through 599, their
+exact primorial, and `2^812 < primorial 599 < 2^813`. The ordinary proof again
+uses the checked `log 2` enclosure. Tightening the point tolerance to
+`49/1000` is proved false from the same upper primorial bracket. Shifted range,
+changed tolerance, point exponent, and source-coordinate mutations reject at
+the authoritative source row with no precision retry. The offline validator
+requires exactly the two native inventory identities and both literal local
+tables; missing, duplicate, wrong-coordinate, and wrong-row mutations fail.
+
+This accepts the two file-local native leaves and removes the file-local
+`LeanCert.CertifiedBounds.Chebyshev` import after a localized PNT+ rewrite. It
+does not implement that shared interface, prove the surrounding `pi_bound_1`
+or `pi_bound_2` declarations inside Hex, or provide arbitrary theta inputs,
+generated prime tables, or a general Chebyshev API. Runtime work is bounded by
+596 prefix checks over the fixed 109-prime table; the largest retained integer
+is the 813-bit primorial. The remaining FKS2-floor consumer through 22027 and
+the separate top-level Chebyshev dependency remain pending.
+
 The medium-range Chebyshev vertical closes the exact pinned theorem
 
 ```lean
@@ -1597,9 +1639,9 @@ theorem, or LeanCert declaration is kernel evidence.
 This accepts only the pinned `allChecks_11723` native-evaluation site after a
 localized rewrite to the package-owned checker. It does not claim a generic
 runtime `ProofFrontend` action or LeanCert API compatibility. The shared
-`LeanCert.CertifiedBounds.Chebyshev` dependency/import records remain pending:
-PNT+ also consumes theta bounds through `22027` in the FKS2-floor development
-and through `599` in the Ramanujan development. `LeanCert.CertifiedBounds.Li2`
+`LeanCert.CertifiedBounds.Chebyshev` dependency record remains pending: PNT+
+still consumes theta bounds through `22027` in the FKS2-floor development and
+through its separate top-level Chebyshev development. `LeanCert.CertifiedBounds.Li2`
 likewise still needs subdivision and reciprocal-log range machinery for its
 symmetric integral. The pinned public LeanCert lower and upper declarations
 are admitted, so merely importing those names would not meet Hex's kernel-only
@@ -2259,17 +2301,28 @@ They therefore belong to the audit even though they do not spell
 `interval_decide` and `interval_auto`, so the six-module import list covers the
 tactic entry points as well as the certified-bound interfaces.
 
-Seven of the sixteen exact import-site records are accepted after localized
-PNT+ rewrites. Two are the Table 10 tactic imports; the other five are the
+Eight of the sixteen exact import-site records are accepted after localized
+PNT+ rewrites. Two are the Table 10 tactic imports; the other six are the
 complete `BKLNW_a2_bounds` power/exponential family's tactic and certified-bound
 imports, the complete FKS2 Table4Ext workload's ANT import, and the complete
-`LogTables` tactic import, plus the Dusart tactic import. Nine import sites
+`LogTables` tactic import, the Dusart tactic import, and the Ramanujan
+certified-Chebyshev import after its two-consumer rewrite. Eight import sites
 remain pending. These site-level
 decisions remove imports from the corresponding bounded source rewrites; they
 do not classify `LeanCert.Tactic.IntervalAuto` as a general compatible
 interface. At the dependency-interface level, ANT and the exercised BKLNW
 certified bounds are accepted after rewrite, while the general tactic,
 Chebyshev, Li(2), and affine-cover interfaces remain pending.
+
+All 340 executable `interval_decide` and `interval_auto` sites are classified:
+337 are accepted after localized rewrites and three are replaced by stronger
+results. Of the 83 separately inventoried native-evaluation sites, 17 are
+accepted after localized rewrites and 66 remain pending. Those residual sites
+are dependency/interface or structural campaigns: 63 belong to the FKS2
+Corollary 23/24 slab families and Table4Ext list-shape checks, and three belong
+to the FKS2-floor Chebyshev/affine-cover boundary. Together with eight pending
+import sites and four pending dependency-interface records, the manifest has
+78 pending decisions; none is an unclassified numeric tactic leaf.
 
 The compatibility manifest records every `interval_auto` invocation, every
 direct LeanCert import, and every qualified `LeanCert.<component>` reference
@@ -3422,6 +3475,14 @@ the fixed soundness and trust contracts.
   `PntChebyshev.lean` closes the natural and exact real source theorem shapes.
 - `conformance/HexIntervalMathlib/PntChebyshevConformance.lean`: chunk-boundary,
   false-prime, false-prime-power, source-shape, and guarded axiom checks.
+- `HexInterval/Experiment/PntRamanujanTheta.lean`: the two exact Ramanujan
+  source rows, fixed prime table, bounded prefix-product checks, and point
+  primorial bracket.
+- `HexIntervalMathlib/Experiment/PntRamanujanTheta.lean`: direct ordinary
+  theta-error semantics for the complete `[3, 599)` range and point 599.
+- `conformance/HexIntervalMathlib/PntRamanujanThetaConformance.lean`: exact
+  source rows, identity and false-bound mutations, theorem adapters, and
+  guarded axiom reports.
 - `HexInterval/Experiment/PntDusartExp.lean`: the exact seven-row Dusart
   exponential table and bounded rational Taylor checker; the eighth leaf uses
   a named stronger package theorem.

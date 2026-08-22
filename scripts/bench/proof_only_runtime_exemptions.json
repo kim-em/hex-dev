@@ -662,7 +662,7 @@
   {
     "path": "lakefile.lean",
     "baseline_blob": "6dd80771ae2212333b2a9b925b52056e0037ff56",
-    "current_blob": "c1b4237b4c1ba380a09cc31d1d3e5467a669431f",
-    "reason": "Additionally registers the Mathlib-free supported HexInterval executable package/application assembly conformance module on top of the retained autonomous controller, PNT, and public interval registrations; it does not enter the factorization service target or change its executable dependency graph."
+    "current_blob": "abbfb2327a8ee1c28a6fa20dcf5a285cd782284c",
+    "reason": "Additionally registers the bounded Mathlib-free Ramanujan theta range and point checkers, their proof-only direct Chebyshev semantics, and conformance module on top of the retained supported HexInterval executable package/application assembly, autonomous controller, PNT, and public interval registrations; these acceptance-only modules do not enter the factorization service target or change its executable dependency graph."
   }
 ]

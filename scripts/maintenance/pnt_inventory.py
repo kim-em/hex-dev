@@ -253,6 +253,16 @@ FKS2_NESTED_ROW = (3605, 14, 3, 3, 11, 8, 2, 3, 1)
 FKS2_NESTED_SNIPPET = (
     "show (0 : ℝ) < log 14 + log (log 14) - 1 from by interval_decide]"
 )
+RAMANUJAN_THETA_SOURCE = "PrimeNumberTheoremAnd/IEANTN/Ramanujan/Ramanujan.lean"
+RAMANUJAN_THETA_PROVIDER = (
+    REPO_ROOT / "HexInterval/Experiment/PntRamanujanTheta.lean"
+)
+RAMANUJAN_THETA_RANGE_ROW = (500, 3, 599, 768, 1000, 20)
+RAMANUJAN_THETA_POINT_ROW = (505, 599, 65, 1000, 20, 812, 813)
+RAMANUJAN_THETA_DECLARATIONS = {
+    "allThetaChecks_3_599": RAMANUJAN_THETA_RANGE_ROW[0],
+    "thetaCheck599": RAMANUJAN_THETA_POINT_ROW[0],
+}
 
 
 class InventoryError(RuntimeError):
@@ -818,6 +828,81 @@ def require_fks2_nested_match(
     if fks2_nested_provider_row(provider_text) != FKS2_NESTED_ROW:
         raise InventoryError(
             "local FKS2 nested sourceRows differs from the committed source snippet"
+        )
+
+
+def ramanujan_theta_provider_rows(
+    provider_text: str,
+) -> tuple[tuple[int, ...], tuple[int, ...]]:
+    """Read the exact range and point rows from the local provider."""
+    range_table = re.search(
+        r"\bdef\s+rangeRows\s*:\s*List\s+RangeCertificate\s*:=\s*\["
+        r"(?P<body>.*?)\]",
+        provider_text,
+        re.DOTALL,
+    )
+    point_table = re.search(
+        r"\bdef\s+sourceRows\s*:\s*List\s+Certificate\s*:=\s*\["
+        r"(?P<body>.*?)\]",
+        provider_text,
+        re.DOTALL,
+    )
+    if range_table is None or point_table is None:
+        raise InventoryError("cannot locate both local Ramanujan theta source tables")
+    range_match = re.fullmatch(
+        r"\s*⟨⟨(?P<line>\d+)⟩,\s*(?P<start>\d+),\s*(?P<limit>\d+),\s*"
+        r"(?P<numerator>\d+),\s*(?P<denominator>\d+),\s*"
+        r"(?P<precision>\d+)⟩\s*",
+        range_table.group("body"),
+    )
+    point_match = re.fullmatch(
+        r"\s*⟨⟨(?P<line>\d+)⟩,\s*(?P<input>\d+),\s*"
+        r"(?P<numerator>\d+),\s*(?P<denominator>\d+),\s*"
+        r"(?P<precision>\d+),\s*(?P<lower>\d+),\s*(?P<upper>\d+)⟩\s*",
+        point_table.group("body"),
+    )
+    if range_match is None or point_match is None:
+        raise InventoryError("cannot parse the local Ramanujan theta source tables")
+    return (
+        tuple(map(int, range_match.groups())),
+        tuple(map(int, point_match.groups())),
+    )
+
+
+def require_ramanujan_theta_match(
+    records: list[dict[str, Any]], provider_text: str | None = None,
+) -> None:
+    """Correlate both pinned Ramanujan native leaves with local literal rows."""
+    matches = [
+        record for record in records
+        if record.get("path") == RAMANUJAN_THETA_SOURCE
+        and record.get("kind") == "native-decide-occurrence"
+        and record.get("mechanism") == "native_decide"
+        and record.get("declaration") in RAMANUJAN_THETA_DECLARATIONS
+    ]
+    if len(matches) != 2:
+        raise InventoryError(
+            f"expected two Ramanujan theta native leaves, found {len(matches)}"
+        )
+    declarations = [record["declaration"] for record in matches]
+    if len(set(declarations)) != 2:
+        raise InventoryError("duplicate Ramanujan theta native declaration")
+    for record in matches:
+        expected_line = RAMANUJAN_THETA_DECLARATIONS[record["declaration"]]
+        if record.get("line") != expected_line:
+            raise InventoryError(
+                f"Ramanujan theta source coordinate differs for {record['declaration']}"
+            )
+    if provider_text is None:
+        provider_text = RAMANUJAN_THETA_PROVIDER.read_text(encoding="utf-8")
+    range_row, point_row = ramanujan_theta_provider_rows(provider_text)
+    if range_row != RAMANUJAN_THETA_RANGE_ROW:
+        raise InventoryError(
+            f"local Ramanujan theta rangeRows differs: {range_row}"
+        )
+    if point_row != RAMANUJAN_THETA_POINT_ROW:
+        raise InventoryError(
+            f"local Ramanujan theta sourceRows differs: {point_row}"
         )
 
 
@@ -1536,6 +1621,7 @@ def validate_inventory(
     require_fks2_mu_match(records)
     require_pnt_exp_upper_match(records)
     require_fks2_nested_match(records)
+    require_ramanujan_theta_match(records)
     if meta.get("counts") != counts:
         raise InventoryError(f"inventory counts disagree: {meta.get('counts')} != {counts}")
     for name, expected in EXPECTED.items():
