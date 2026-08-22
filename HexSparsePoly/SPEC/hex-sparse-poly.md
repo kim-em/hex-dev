@@ -446,6 +446,17 @@ The heap is the one with the better bound and the worse constant. The
 results of the "sparse-multiplication" bench family below determine which
 one is implemented, and the specification does not change whichever wins.
 
+*Measured (Phase 4, see
+[reports/hex-sparse-poly-performance.md](../../reports/hex-sparse-poly-performance.md)):*
+the `Std.ExtTreeMap` accumulation wins both collision shapes by about
+3× over sort-and-combine (6.0 ms vs 18.0 ms at 256 low-collision terms;
+2.7 ms vs 8.4 ms at 256 high-collision terms), and the heap merge's
+constant loses it every measured size (75.6 ms and 42.2 ms at the same
+points), exactly the outcome the paragraph above anticipated. The
+tree accumulation is therefore the selected `@[csimp]` implementation;
+all three candidates agreed on result hashes at every common
+parameter.
+
 `pow` is binary powering over `mul`. A caller wanting `f(x^k)` should
 call `substPow` rather than powering, and the SPEC says so because
 getting this wrong is the whole cost difference the library exists for.
@@ -461,7 +472,13 @@ theorem add_comm, add_assoc, add_zero, mul_comm, mul_assoc, mul_one, mul_zero,
   left_distrib, right_distrib
 ```
 
-with `mul_comm` under `Lean.Grind.CommRing`. Every public operation
+with `mul_comm` under `Lean.Grind.CommRing`. As implemented, the
+multiplicative laws (and `coeff_mul`) all sit at `Lean.Grind.CommRing`:
+they are proved by transport through `toDense`, and the dense layer
+proves its own multiplication laws at that class. Every consumer type
+in the project is a `CommRing`, and if the dense laws are ever weakened
+to `Semiring` the sparse statements follow at no cost, exactly as with
+`divModMonic_spec` below. Every public operation
 carries its own coefficient lemma in the same shape (`coeff_zero`,
 `coeff_one`, `coeff_C`, `coeff_X`, `coeff_monomial`, `coeff_neg`,
 `coeff_sub`, `coeff_scale`, `coeff_pow`), since the coefficient function
@@ -874,7 +891,18 @@ Multiplication does not: sort-and-combine compares `s·t·log(s·t)` with
 `n²`, which crosses at a different and coefficient-dependent point. The
 crossover is therefore measured per operation, and the "crossover" bench
 family below reports one number per operation rather than one for the
-library. Everything in the left column that is `O(s)` against an `O(n)`
+library.
+
+*Measured (Phase 4, on the reference host in
+[reports/hex-sparse-poly-performance.md](../../reports/hex-sparse-poly-performance.md)):*
+addition crosses at `t ≈ n/8` (degree 4096, `Int`); multiplication at
+`t ≈ n/4` on the sort route (degree 1024, `Int`), shifting toward
+`n/3` with the selected tree twin; gap-Horner evaluation is still 20×
+ahead of dense Horner at `t = n/128` (degree 65536, `ZMod64 7`) with
+parity extrapolating to `t ≈ n/6`. In the convert-gcd family the
+conversions are only ≈ 5% of the sparse-remainder pair's total, so a
+future sparse division algorithm could recover essentially the whole
+dense cost there. Everything in the left column that is `O(s)` against an `O(n)`
 right column is the reason the library exists. `coeff` and
 multiplication's logarithmic factor are the price.
 
