@@ -556,9 +556,9 @@ theorem ofDense_neg {S : Type u} [Lean.Grind.Ring S] [DecidableEq S]
   rw [show (0 : DensePoly S).coeff e = 0 from
     DensePoly.coeff_eq_zero_of_size_le 0 (by simp)]
 
-section Mul
+section MulSemiring
 
-variable {S : Type u} [Lean.Grind.CommRing S] [DecidableEq S]
+variable {S : Type u} [Lean.Grind.Semiring S] [DecidableEq S]
 
 private theorem zero_add_zero : (Zero.zero : S) + Zero.zero = Zero.zero := by
   show (0 : S) + 0 = 0
@@ -678,27 +678,6 @@ theorem mul_eq_foldl (s t : SparsePoly S) :
   intro f
   rw [coeff_mul_foldl, coeff_foldl_add, coeff_zero]
 
-/-- The dense image of a monomial multiple is the dense monomial
-product. -/
-theorem toDense_mulMonomial (e : Nat) (c : S) (t : SparsePoly S) :
-    (mulMonomial e c t).toDense = DensePoly.monomial e c * t.toDense := by
-  have hmono : DensePoly.monomial e c =
-      DensePoly.scale c (DensePoly.monomial e 1) := by
-    apply DensePoly.ext_coeff
-    intro f
-    rw [DensePoly.coeff_scale_semiring, DensePoly.coeff_monomial,
-      DensePoly.coeff_monomial]
-    simp only [show (Zero.zero : S) = 0 from rfl]
-    grind
-  rw [hmono, ← DensePoly.scale_mul,
-    DensePoly.monomial_one_mul_poly_eq_shift]
-  apply DensePoly.ext_coeff
-  intro f
-  rw [coeff_toDense, coeff_mulMonomial, DensePoly.coeff_scale_semiring,
-    DensePoly.coeff_shift, coeff_toDense]
-  simp only [show (Zero.zero : S) = 0 from rfl]
-  grind
-
 /-- The dense image of a fold of sums. -/
 private theorem toDense_foldl_add {α : Type _} (l : List α)
     (g : α → SparsePoly S) (init : SparsePoly S) :
@@ -712,7 +691,7 @@ private theorem toDense_foldl_add {α : Type _} (l : List α)
 
 /-- A fold of dense monomials at the stored terms rebuilds the dense
 image. -/
-private theorem toDense_foldl_monomial (s : SparsePoly S) :
+theorem toDense_foldl_monomial (s : SparsePoly S) :
     s.toDense =
       s.terms.toList.foldl
         (fun acc a => acc + DensePoly.monomial a.1 a.2) 0 := by
@@ -748,6 +727,33 @@ private theorem toDense_foldl_monomial (s : SparsePoly S) :
       DensePoly.coeff_eq_zero_of_size_le 0 (by simp),
     coeff_toDense]
   show coeff s f = 0 + coeff s f
+  grind
+
+end MulSemiring
+
+section MulRing
+
+variable {S : Type u} [Lean.Grind.CommRing S] [DecidableEq S]
+
+/-- The dense image of a monomial multiple is the dense monomial
+product. -/
+theorem toDense_mulMonomial (e : Nat) (c : S) (t : SparsePoly S) :
+    (mulMonomial e c t).toDense = DensePoly.monomial e c * t.toDense := by
+  have hmono : DensePoly.monomial e c =
+      DensePoly.scale c (DensePoly.monomial e 1) := by
+    apply DensePoly.ext_coeff
+    intro f
+    rw [DensePoly.coeff_scale_semiring, DensePoly.coeff_monomial,
+      DensePoly.coeff_monomial]
+    simp only [show (Zero.zero : S) = 0 from rfl]
+    grind
+  rw [hmono, ← DensePoly.scale_mul,
+    DensePoly.monomial_one_mul_poly_eq_shift]
+  apply DensePoly.ext_coeff
+  intro f
+  rw [coeff_toDense, coeff_mulMonomial, DensePoly.coeff_scale_semiring,
+    DensePoly.coeff_shift, coeff_toDense]
+  simp only [show (Zero.zero : S) = 0 from rfl]
   grind
 
 /-- Multiplying a fold of sums on the right distributes. -/
@@ -833,7 +839,7 @@ theorem right_distrib (s t u : SparsePoly S) :
   rw [toDense_mul, toDense_add, toDense_add, toDense_mul, toDense_mul]
   exact DensePoly.mul_add_left_poly _ _ _
 
-end Mul
+end MulRing
 
 /-- On a sorted term list the last stored exponent dominates. -/
 theorem exp_le_back {s : SparsePoly R} {t : Nat × R}
@@ -971,6 +977,9 @@ where the degree is. -/
 matching the `DensePoly` convention. -/
 def Monic [One R] (s : SparsePoly R) : Prop :=
   s.leadingCoeff = 1
+
+instance [One R] (s : SparsePoly R) : Decidable s.Monic :=
+  inferInstanceAs (Decidable (s.leadingCoeff = 1))
 
 @[simp] theorem monic_toDense [One R] (s : SparsePoly R) :
     s.toDense.Monic ↔ s.Monic := by
