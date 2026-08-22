@@ -8,8 +8,8 @@ A database of Conway polynomials for Lean 4, without Mathlib. Conway
 polynomials are the canonical irreducible polynomials `C(p, n)` used to present
 `GF(p^n)` so that the subfield embeddings agree with each other. This package
 commits a slice of Frank Lübeck's table as ordinary Lean data and proves that
-each committed entry is irreducible, primitive, and compatible with its
-divisor-degree entries. It builds on
+every committed entry is irreducible, every nontrivial entry is primitive, and
+every proper divisor-degree pair is compatible. It builds on
 [`hex-berlekamp`](https://github.com/leanprover/hex-berlekamp) for
 irreducibility certificates and
 [`hex-gfq-ring`](https://github.com/leanprover/hex-gfq-ring) for the quotient

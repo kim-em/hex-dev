@@ -20,6 +20,10 @@ import HexManual.Chapters.HexRealRoots
 import HexManual.Chapters.HexMatrix
 import HexManual.Chapters.HexRowReduce
 import HexManual.Chapters.HexBerlekamp
+import HexManual.Chapters.HexGF2
+import HexManual.Chapters.HexGFqField
+import HexManual.Chapters.HexConway
+import HexManual.Chapters.HexGFq
 import HexManual.Chapters.HexDeterminant
 import HexManual.Chapters.HexBareiss
 import HexManual.Chapters.HexGramSchmidt
@@ -28,10 +32,6 @@ import HexManual.Chapters.HexBerlekampZassenhaus
 import HexManual.Chapters.FactorTactics
 -- Unreleased libraries (dependency order).
 import HexManual.Chapters.HexResultant
-import HexManual.Chapters.HexGF2
-import HexManual.Chapters.HexGFqField
-import HexManual.Chapters.HexConway
-import HexManual.Chapters.HexGFq
 import HexManual.Chapters.HexRCF
 import HexManual.Chapters.HexNumberField
 import HexManual.Chapters.HexNumberFieldTower
@@ -92,6 +92,14 @@ contracts and, for mature libraries, supply their proofs.
 
 {include 0 HexManual.Chapters.HexBerlekamp}
 
+{include 0 HexManual.Chapters.HexGF2}
+
+{include 0 HexManual.Chapters.HexGFqField}
+
+{include 0 HexManual.Chapters.HexConway}
+
+{include 0 HexManual.Chapters.HexGFq}
+
 {include 0 HexManual.Chapters.HexDeterminant}
 
 {include 0 HexManual.Chapters.HexBareiss}
@@ -130,14 +138,6 @@ split out for release yet, so their APIs may still change. They are grouped
 here to keep the reference chapters above focused on the released libraries.
 
 {include 2 HexManual.Chapters.HexResultant}
-
-{include 2 HexManual.Chapters.HexGF2}
-
-{include 2 HexManual.Chapters.HexGFqField}
-
-{include 2 HexManual.Chapters.HexConway}
-
-{include 2 HexManual.Chapters.HexGFq}
 
 {include 2 HexManual.Chapters.HexRCF}
 
