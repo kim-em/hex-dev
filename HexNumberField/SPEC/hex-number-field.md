@@ -144,8 +144,10 @@ Structural equality on factorization-lazy `AlgebraicRoot` is finer than equality
 of represented complex values. `AlgebraicPoly` owns the required semantic
 trimming without exporting an unjustified `DecidableEq`. That Boolean
 operation is `AlgebraicPoly.beq` (with its `BEq` instance): coefficientwise
-canonical equality over the trimmed data, faithful on canonical coefficients
-because `AlgebraicNumber` equality is canonical. `coeff n` is the canonical
+canonical equality over the trimmed data. Its faithfulness on canonical
+coefficients follows from the companion's `LawfulBEq AlgebraicNumber`
+plus trimming; packaging that as an `AlgebraicPoly.beq_iff` is Phase-6
+work (#9418). `coeff n` is the canonical
 coefficient (`0` beyond the degree) and `size` is the trimmed length backing
 `degree?`; all three are exercised by the module's compiled regressions.
 
