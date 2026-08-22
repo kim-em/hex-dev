@@ -63,6 +63,24 @@ example : (#sp[(0, 5), (1000000, 3)] : P).coeff 1000000 = 3 := by
 example : (#sp[(0, 5), (1000000, 3)] : P).coeff 999999 = 0 := by
   decide +kernel
 
+-- `add` and `mul` reduce as specified: the linear merge and the
+-- canonicalised pairwise product.
+example : (#sp[(0, 1), (3, 4)] : P) + #sp[(3, -4), (9, 2)] =
+    #sp[(0, 1), (9, 2)] := by
+  decide +kernel
+
+example : (#sp[(0, 1), (1, 1)] : P) * #sp[(0, -1), (1, 1)] =
+    #sp[(0, -1), (2, 1)] := by
+  decide +kernel
+
+-- `ofDense` reduces.
+example : SparsePoly.ofDense (#p[5, 0, 0, 1] : DensePoly Int) =
+    #sp[(0, 5), (3, 1)] := by
+  decide +kernel
+
+example : SparsePoly.ofDense ((0 : P).toDense) = 0 := by
+  decide +kernel
+
 -- The `DecidableEq` instance reduces across the module boundary.
 example : (0 : P) ≠ #sp[(0, 1)] := by
   decide +kernel
