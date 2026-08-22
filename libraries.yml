@@ -127,6 +127,32 @@ libraries:
           description: Sparse rename, partial-evaluation, and substitution cases where distinct source terms collide.
         - name: sum-of-squares-arithmetic
           description: Representative sum-of-squares-shaped identities measured as compiled Mathlib-free arithmetic.
+  HexSparsePoly:
+    deps: [HexPoly, HexBasic]
+    mathlib: false
+    done_through: 0
+    status: active
+    phase4:
+      comparators:
+        - tool: SymPy sparse ring elements (sympy.polys.rings)
+          class: informational
+          rationale: "SymPy is the conformance oracle and is Python, so the ratio is reported for context and does not determine acceptance."
+        - tool: FLINT fmpz_poly via python-flint
+          class: informational
+          rationale: "fmpz_poly is dense, so above the crossover the comparison measures the choice of representation rather than the quality of either implementation. Recorded on the crossover family only."
+      input_families:
+        - name: sparse-arithmetic
+          description: addition and multiplication of 2 to 64 term inputs at degrees 10^3 to 10^6
+        - name: sparse-multiplication
+          description: low-collision and high-collision products across the three candidate implementations
+        - name: crossover
+          description: the same operations against DensePoly with the term count swept from 2 to the degree, locating one crossover per operation
+        - name: evaluation
+          description: gap Horner against dense Horner across the same sweep
+        - name: substitution-power
+          description: substPow on the cyclotomic shapes against the dense route
+        - name: convert-gcd
+          description: gcd and divMod through the conversions on the sparse-remainder x^n-1 pair and on generic sparse pairs, recording the conversion share separately
   HexMatrix:
     deps: [HexBasic]
     mathlib: false
@@ -432,6 +458,11 @@ libraries:
           description: Rename and substitution identities whose distinct source terms collide in the destination support.
         - name: kernel-sos-certificates
           description: Representative sum-of-squares certificate identities checked from a downstream module with decide +kernel.
+  HexSparsePolyMathlib:
+    deps: [HexSparsePoly, HexPolyMathlib, HexPoly]
+    mathlib: true
+    done_through: 0
+    status: planned
   HexMatrixMathlib:
     deps: [HexMatrix]
     mathlib: true
