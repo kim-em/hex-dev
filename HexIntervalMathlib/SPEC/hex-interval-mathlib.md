@@ -256,6 +256,25 @@ rechecks the retained tree and proof limits once at its theorem boundary.
 Target, refutation, and split remain the separately authenticated
 terminal schemas owned by `Proof.replayTree`; they are not synthesized from a
 runtime callback batch.
+`HexIntervalMathlib.RuntimeTerminal` supplies the sealed target/refutation
+edge. Its private tokens bind the live `Runtime.Controller.State`, retained
+tree, exact `RuntimeProof.Registry`, and immutable `Proof.Input`; sibling
+restart consumes the retained token's tree, and final quotation seals the input
+into the checked bundle. Target settlement resolves the exact current target
+fact. Refutation resolves and decodes the exact package schema and invokes it
+against the current runtime program/fact before retaining the inert terminal;
+recursive proof replay independently proves it again. Search/result and proof
+body resources are checked at settlement, while complete transition/event/
+structural/proof-tree resources remain transactional at bundle quotation.
+
+A general split terminal adapter is intentionally absent. `Proof.seedChild`
+inherits the parent proof equality table and compact identities, whereas
+`Runtime.State.startWithin` restarts a child with an empty equality arena and
+identity zero. If the parent has `n > 0` equalities, the first child equality is
+runtime identity zero but proof identity `n`. Supporting only the empty-parent
+case under a general-looking API would weaken this invariant; the split edge
+therefore remains blocked until the Mathlib-free restart contract imports an
+authenticated equality arena or proof replay changes its identity model.
 `Search` never decrements its `remaining` view; executable refresh preserves
 the controller-owned value stored in the sealed session. The adapter uses a
 fixed structural `policyMeasure` for application identifiers and rule keys,
@@ -452,6 +471,10 @@ program and generation. It mutates every typed event role, executable/proof
 package ownership, schema, body, order, and child splice; checks exact one-under
 retained-transition, event, structural-cell, and proof-chronology resources;
 and guards the ordinary root/recursive axiom surfaces.
+`HexIntervalMathlib.RuntimeTerminalConformance` pins exact target settlement
+after the ordinary typed chronology at the root and in both restarted split
+children, exact package-owned refutation, cross-schema/current-fact/input and
+resource refusals, private constructors, and the ordinary replay axiom surface.
 `HexIntervalMathlib.RuleConformance` replays a shared arithmetic DAG through
 the supported state quote and proof registry. Its ordinary theorem makes both
 source assumptions load-bearing through add/sub/mul and checked
