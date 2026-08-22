@@ -83,9 +83,10 @@ resource-first deterministic offers from the authenticated current head, and
 runs bounded repeated policy selection over the sealed tree/session bundle.
 Its current vertical uses toy fact-event packages; concrete built-in arithmetic
 `Driver.Package` callbacks and application generators remain to be implemented.
-Mathlib-free raw packages, automatic discovery/program extension,
-equality/instance runtime events, and public-tactic split search remain later
-edges.
+The separate Mathlib-free `Executable.Assembly` accepts explicit raw callback
+packages, but wiring it to this controller and correlating its inert quotations
+with theorem events, automatic discovery/program extension, equality/instance
+runtime events, and public-tactic split search remain later edges.
 
 `HexIntervalMathlib.Tactic` is the first supported Meta client. It recursively
 parses real local variables and the registered forward arithmetic operations,
@@ -221,8 +222,14 @@ performs the final check when the caller installs the expression.
 Runtime search state, callbacks, payload bytes, and traces are untrusted and
 cannot enter `Proof.Evidence`. The built-in arithmetic package registry and
 its supported branch/session `Cause`-to-`Proof.Event` quotation ship below.
-Automatic arbitrary-function package discovery, Mathlib-free raw packages,
-equality/instance runtime recipes, and default registries remain experimental.
+The Mathlib-free `Executable.Assembly` supports explicit arbitrary-operation
+callback packages and raw replay formats, but those raw quotations are not
+`Proof.Event`s and are not yet correlated with this theorem registry.
+The assembly constructors are sealed under ordinary imports; deliberate
+`import all HexInterval.Executable` is a repository-guarded trusted-source
+escape hatch, not decoded runtime or proof authority.
+Automatic arbitrary-function theorem-package discovery, equality/instance
+runtime recipes, and default registries remain experimental.
 The supported explicit fact-event controller can produce and replay
 search-selected recipes, while the tactic below remains a deliberately narrow
 direct forward client rather than that generic search bridge.

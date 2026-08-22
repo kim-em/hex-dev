@@ -15,6 +15,10 @@ class SealedImportAllTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             cases = [
+                (Path("conformance/HexInterval/BypassExecutable.lean"),
+                    "HexInterval.Executable"),
+                (Path("bench/HexInterval/BypassExecutable.lean"),
+                    "HexInterval.Executable"),
                 (Path("conformance/HexInterval/Bypass.lean"), "HexInterval.Search"),
                 (Path("bench/HexInterval/Bypass.lean"), "HexInterval.Search"),
                 (Path("conformance/HexIntervalMathlib/Bypass.lean"),
@@ -31,6 +35,10 @@ class SealedImportAllTest(unittest.TestCase):
             self.assertEqual(
                 check_sealed_import_all(root, files),
                 [
+                    "conformance/HexInterval/BypassExecutable.lean:1 uses `import all "
+                    "HexInterval.Executable` outside its exact trusted-internals allowlist",
+                    "bench/HexInterval/BypassExecutable.lean:1 uses `import all "
+                    "HexInterval.Executable` outside its exact trusted-internals allowlist",
                     "conformance/HexInterval/Bypass.lean:1 uses `import all "
                     "HexInterval.Search` outside its exact trusted-internals allowlist",
                     "bench/HexInterval/Bypass.lean:1 uses `import all "

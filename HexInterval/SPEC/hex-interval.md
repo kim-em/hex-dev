@@ -113,12 +113,16 @@ regenerates bounded deterministic offer snapshots, and iterates a replaceable
 policy over the sealed tree/session bundle. Its current end-to-end conformance
 uses toy fact-event callbacks: concrete built-in arithmetic `Driver.Package`
 callbacks and application generators have not yet been supplied. Invoking this
-path from the public tactic remains later controller work. The first
-concrete supported registry is the Mathlib arithmetic package for one
+path from the public tactic remains later controller work. The Mathlib-free
+executable layer separately supports explicit stable-key package assembly,
+private caches, exact routes and concrete local/scoped application rows, with
+bounded raw replay-format declarations that do not embed a Mathlib proof event.
+The first concrete supported theorem registry is the Mathlib arithmetic package for one
 configured constant and natural exponent plus public negation, addition,
 subtraction, multiplication, power, absolute-value, min/max, reciprocal,
 division, and regularization operations. Automatic arbitrary-function package
-discovery, Mathlib-free package drafts, equality/instance runtime events,
+discovery and theorem assembly, concrete built-in arithmetic callback packages
+and application generators, equality/instance runtime events, executable
 program extension, concrete policy algorithms and default scheduling, payload
 storage, and the optimized backing store remain experimental. The narrow
 direct-forward tactic does not yet invoke the supported controller.
@@ -140,7 +144,7 @@ it exercises the existing research experiment, but the exact function and
 certificate shape remain open to evidence from implementation.
 
 Exact-rational planning, projection, replay, and optimization therefore remain
-deferred while package assembly, cache ownership, payload freezing, structural
+deferred while semantic package/replay assembly, payload freezing, structural
 matching, policy traces, and non-polynomial replay are still being tested; no
 registry, scheduler, instantiation, or policy interface may depend on the
 eventual rational representation. The checked dyadic interval domain is
@@ -3181,16 +3185,30 @@ The checked `Envelope` is supplied to each session transition and is not stored
 inside the session value. A later call may supply different, including tighter,
 limits while the cumulative accepted-step count remains part of the session.
 
-The current supported session retains generation stamps for compact
-`ApplicationId`s but not the concrete application table compiled by the
-experimental controller. Search therefore treats the compact identifier as an
+The supported `Search.Session` retains generation stamps for compact
+`ApplicationId`s but not a concrete application table. Search therefore treats
+the compact identifier as an
 opaque scheduler handle: it authenticates its bounds and generation while
 independently checking the action's rule key and local rule id, anchor,
 operation, kind, reads, writes, and structural inputs. A callback must not use
 the compact application id as authority for a rule or anchor. Retaining and
-checking the exact application table is an obligation for the supported
-controller/package assembly; the present Search contract does not claim that
-correspondence.
+checking the exact application table is not part of the Search contract. The
+separate supported `Executable.Assembly` now seals a checked program, exact
+package routes/caches, bindings, and concrete application rows, and its
+`invokeWithin` rechecks the selected identifier against the row's rule, anchor,
+kind, reads, writes, structural inputs, matcher epoch, effort, and creation
+generation before routing a callback. The current one-step Driver does not yet
+own that assembly, so autonomous Search-to-package correspondence remains the
+next controller edge. Assembly owns only the operation/node program: request
+program version and generation side tables remain controller-owned snapshot
+data and receive only the request-internal checks supplied by `ProgramView` and
+`RuleRequest`.
+
+As with Search, sealing is an ordinary/public-import boundary. Deliberate
+`import all HexInterval.Executable` exposes its private constructors to trusted
+Lean source and is not part of the decoded runtime threat model. The repository
+DAG check rejects that escape hatch outside an exact reviewed allowlist,
+currently empty; both conformance and bench paths are regression-tested.
 
 `prepareWithin` authenticates the session once, revalidates the external policy
 decision against that already-checked immutable view, and returns only the
@@ -5383,7 +5401,7 @@ their declared cost inside a scheduler bound.
   registry; `import all HexIntervalMathlib.Proof` is a trusted-internals escape
   hatch rejected outside the exact empty repository allowlist. The built-in
   arithmetic package and direct-forward reifier/tactic are supported below;
-  arbitrary-function package discovery, Mathlib-free runtime packages,
+  arbitrary-function theorem packages, executable-to-proof quotation,
   split-search tactic integration, and default registries remain experimental.
 - `HexIntervalMathlib/Driver.lean`: supported one-step execution of an exact
   already-selected package action, atomic retained-source advancement/split/
@@ -5411,9 +5429,10 @@ their declared cost inside a scheduler bound.
   trusted compatibility epoch, not callback-object identity: same-key
   assemblies deliberately declare replaceable implementations whose results
   still cross the runtime and proof checks. Automatic discovery,
-  program extension, equality/instance runtime events, Mathlib-free raw
-  packages, concrete built-in arithmetic driver callbacks/application
-  generators, and split-search tactic syntax remain later work; the current
+  program extension, equality/instance runtime events, wiring the supported
+  Mathlib-free executable assembly into this controller, concrete built-in
+  arithmetic driver callbacks/application generators, and split-search tactic
+  syntax remain later work; the current
   autonomous theorem uses toy fact-event packages. All offers in one immutable
   snapshot share its controller-owned serial as age. A malformed generator
   draft aborts the whole regeneration transaction. Dismissing a non-split
@@ -5474,6 +5493,14 @@ their declared cost inside a scheduler bound.
   registrations, scope bindings, validated immutable program/request views,
   and exact read/write projections. It has no callbacks, outcomes, policy, or
   proof evidence.
+- `HexInterval/Executable.lean`: supported sealed Mathlib-free assembly of
+  explicit stable-key operations, registrations, heterogeneous private package
+  caches, exact handler routes, scoped/local application rows, package-owned
+  logical measures, and bounded raw `(role, schema, body)` replay quotations.
+  Invocation rechecks complete application/request correspondence and commits
+  a cache replacement only after result and quotation admission. The initial
+  compiler does not create global structural-matcher applications; offer
+  generation and theorem-event correlation remain later layers.
 - `HexInterval/Trace.lean`: supported exact fact/instance chronology and
   bounded diagnostic-log contracts. Diagnostic bytes count retained `UInt8`
   payload cells after callback construction; they do not claim to preempt
@@ -5500,21 +5527,26 @@ their declared cost inside a scheduler bound.
   target/refute/unknown terminals. It contains no concrete callback, offer
   generator, semantic split/refutation theorem,
   policy algorithm, storage choice, proof recipe, or proof replay.
-- `HexInterval/Experiment/Propagator.lean`: current experimental concrete
-  applications, callbacks, outcomes, untrusted proposals and replies, and
+- `HexInterval/Experiment/Propagator.lean`: current experimental callbacks,
+  outcomes, untrusted proposals and replies, matcher applications, and full
   extension admission. Its engine extends and mutates only through the
   supported state/trace contracts, while its public record remains an
   inspectable experimental storage candidate.
 - `HexInterval/Experiment/{PackageRegistry,PolicyDriver,PolicySession,
   StagedPolicy,AdaptivePolicy,FeaturePolicy,BranchTree}.lean`: current
-   provisional package callback, policy implementation, semantic session,
+   earlier package/payload callback, policy implementation, semantic session,
    target driver, and split-construction designs. Optimized storage, concrete
-   automatic package discovery/program extension, Mathlib-free package
-   protocols, and a default policy will be selected from measurements; none is
+   automatic package discovery/program extension, executable-to-proof
+   quotation, and a default policy will be selected from measurements; none is
    frozen by the decoded supported snapshots.
-- `conformance/HexInterval/{Conformance,SearchConformance,MinMaxConformance,
+- `conformance/HexInterval/{Conformance,ExecutableConformance,SearchConformance,
+  MinMaxConformance,
   EmitFixtures}.lean`:
-  Lean-only checks and oracle fixtures.
+  Lean-only checks and oracle fixtures. Executable conformance includes
+  heterogeneous arithmetic/arbitrary-operation routes, scoped acceptance and
+  default refusal, exact application-field and replay-format mutations,
+  append-prefix stability, resource-first program/binding admission, and
+  exact resource one-overs.
 - `conformance/HexIntervalMathlib/ProgramProofConformance.lean`: supported
   program-model, registry, chronology, refutation, binary-cover/tree replay,
   target-closure, mutation, Meta-state restoration, and guarded

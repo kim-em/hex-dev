@@ -534,6 +534,7 @@ lean_lib HexConformance where
     ++ #[`HexInterval.PolicyFeatureConformance,
       `HexInterval.FeaturePolicyConformance,
       `HexInterval.SearchConformance,
+      `HexInterval.ExecutableConformance,
       `HexIntervalMathlib.ProgramProofConformance,
       `HexIntervalMathlib.DriverConformance,
       `HexIntervalMathlib.ControllerConformance,

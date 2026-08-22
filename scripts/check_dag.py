@@ -32,6 +32,7 @@ IMPORT_ALL_RE = re.compile(
 # every owning exception must be an exact reviewed path rather than a suffix or
 # directory convention. There are currently no required exceptions.
 SEALED_IMPORT_ALL_ALLOWLIST: dict[str, frozenset[Path]] = {
+    "HexInterval.Executable": frozenset(),
     "HexInterval.Search": frozenset(),
     "HexIntervalMathlib.Driver": frozenset(),
     "HexIntervalMathlib.Controller": frozenset(),
