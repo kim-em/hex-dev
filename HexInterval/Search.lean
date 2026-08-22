@@ -439,6 +439,12 @@ private def actionCurrentChecked (limits : State.Limits) (branch : State.Branch 
     | .network => action.matcherEpoch == some matcherEpoch && !action.structuralInputs.isEmpty
   if !bindingValid || !matcherValid then throw .invalidSession
 
+/-- Diagnostic structural/freshness predicate for one explicitly supplied
+action and its explicitly supplied tables. This is not an authorization
+boundary: the tables are ordinary caller values. Supported scheduling must
+authenticate a sealed `Session` through `chooseWithin`, `prepareWithin`, or a
+session transition, all of which additionally correlate the complete retained
+session. -/
 opaque actionCurrent (limits : State.Limits) (branch : State.Branch Fact Cause)
     (rules : Array Registration) (bindings : Array ScopeBinding)
     (applicationGenerations equalityGenerations : Array Nat)

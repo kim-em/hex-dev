@@ -3199,8 +3199,13 @@ independently checking the action's rule key and local rule id, anchor,
 operation, kind, reads, writes, and structural inputs. A callback must not use
 the compact application id as authority for a rule or anchor. Retaining and
 checking the exact application table is not part of the Search contract. The
-separate supported `Executable.Assembly` seals a checked program, exact
-package routes/caches, bindings, and concrete application rows, and its
+public `Search.actionCurrent` predicate is likewise only a diagnostic over
+explicit caller-supplied branch and side tables; it does not seal those tables
+or authorize execution. Supported authority crosses complete `Session`
+authentication through `chooseWithin`, `prepareWithin`, or a checked session
+transition. The separate supported `Executable.Assembly` seals a checked
+program, exact package routes/caches, bindings, and concrete application rows,
+and its
 `invokeWithin` rechecks the selected identifier against the row's rule, anchor,
 kind, reads, writes, structural inputs, matcher epoch, effort, and creation
 generation before routing a callback. `Controller.Executable` now retains that
@@ -3235,12 +3240,19 @@ slots may resolve to the same node, as in `x + x`. Such occurrences retain the
 same exact current `SeenVersion` twice; authentication freshness-checks each
 occurrence and preserves the duplicate list through policy selection, request
 reconstruction, executable invocation, and runtime transition correlation.
+The explicit Mathlib `Controller.Draft` generator follows the same rule for
+local registrations: it preserves duplicate read occurrences when deriving
+versions and Search authenticates the exact local slot projection. Scoped
+binding reads remain distinct authority under `ScopeBinding.check`.
 This does not weaken mutation or structural authority: resolved writes and
-structural inputs remain duplicate-free, and scoped binding reads remain
-duplicate-free under `ScopeBinding.check`. A runtime-owned snapshot containing
-only repeated reads is therefore complete. A handler-approved application with
-duplicate resolved writes or structural inputs is still omitted and sets the
-sticky incomplete bit.
+structural inputs remain duplicate-free. A runtime-owned snapshot containing
+only repeated reads is therefore complete. A handler-approved local
+application with duplicate resolved writes is omitted and sets the sticky
+incomplete bit, although direct Runtime execution still checks its exact row
+and events. The current sealed Executable compiler creates no structural
+matcher application rows; the structural-input distinctness check is retained
+for such rows when that compiler support is added, not presented as a
+currently constructible Runtime case.
 
 As with Search, sealing is an ordinary/public-import boundary. Deliberate
 `import all HexInterval.Executable` exposes its private constructors to trusted
@@ -5551,8 +5563,13 @@ their declared cost inside a scheduler bound.
   and proof registrations. It resource-first regenerates deterministic offers,
   derives age from sealed session chronology, revalidates exact
   `ApplicationId` routing, and iterates a replaceable policy over the sealed
-  session/tree bundle under a cumulative choice cap. A caller-owned logical
-  measure bounds the initial policy state and every callback successor against
+  session/tree bundle under a cumulative choice cap.
+  Local draft reads are ordered occurrences, so distinct local slots which
+  resolve to the same node retain duplicate exact versions through the
+  callback request; scoped binding reads, writes, and structural inputs remain
+  duplicate-free authority.
+  A caller-owned logical measure bounds the initial policy state and every
+  callback successor against
   independent byte/pair/work caps before retention; constructing and measuring
   the arbitrary state remains non-preemptible. The choice cap is per sealed
   `Controller.State` lineage: explicit `State.startWithin` starts a new handle
@@ -5672,9 +5689,11 @@ their declared cost inside a scheduler bound.
   successor/snapshot value. Repeated resolved read occurrences retain their
   exact ordered node/version entries and are schedulable, including distinct
   local slots that resolve to the same node. Runtime-valid duplicate resolved
-  writes or structural-input ports remain executable through
-  `Runtime.State.stepWithin` but cannot satisfy Search's authority contract, so
-  snapshot generation omits them and marks the snapshot incomplete. An
+  writes remain executable through `Runtime.State.stepWithin` but cannot
+  satisfy Search's authority contract, so snapshot generation omits them and
+  marks the snapshot incomplete. The current sealed Executable compiler emits
+  no structural matcher rows; Runtime retains the structural-input
+  distinctness gate for a later supported producer. An
   intentional package `handler.offers = false` veto is complete and does not
   set that bit.
   All matcher-owned application rows must share one

@@ -635,8 +635,10 @@ authorization: it can suppress an offer without making the snapshot
 incomplete, while a separately supplied structurally current action is still
 decided only by `stepWithin`. Repeated ordered reads can enter Search: every
 occurrence retains its exact node/version and later request reconstruction
-preserves the list. Runtime-valid applications with duplicate writes or
-structural inputs remain omitted and set the sealed incomplete bit.
+preserves the list. Runtime-valid applications with duplicate writes remain
+omitted and set the sealed incomplete bit. The current sealed Executable
+compiler produces no structural matcher rows; the same omission applies to a
+future retained row with duplicate structural inputs.
 No mutable branch or assembly replacement is accepted from the caller, and no
 generated action bypasses the later exact `stepWithin` request reconstruction.
 Snapshot generation does not consume or reject the runtime `maxActions`

@@ -814,6 +814,59 @@ def repeatAction : Action :=
       snapshot.remaining.applications == 0 && snapshot.remaining.acceptedFacts == 4
   | .error _ => false
 
+/- Distinct declared write slots can also resolve to the same node on `f x x`.
+Runtime execution keeps the exact duplicate list and remains sound because the
+single emitted fact update is independently checked. Search does not admit
+duplicate mutation authority, so offer generation omits the row and reports
+the loss through `incomplete`. -/
+def repeatWriteRuleKey : RuleKey := { name := "fixture.repeat.write" }
+
+def repeatWriteRegistration : Registration :=
+  { key := repeatWriteRuleKey, head := repeatKey, kind := .forward,
+    watches := [.result], writes := [.argument 0, .argument 1] }
+
+def repeatWriteBatch (request : RuleRequest Nat) : Batch Nat Nat :=
+  let exactWrites := request.writes ==
+    [({ index := 0 } : NodeId), ({ index := 0 } : NodeId)]
+  let value := if exactWrites then 11 else 12
+  { events := #[.fact
+      { action := request.action
+        update :=
+          { programVersion := 0, node := { index := 0 },
+            previous := { node := { index := 0 }, version := 0 },
+            fact := value, version := 1, cause := 104 }
+        proposed := value
+        quote := factQuote }] }
+
+def repeatWritePackage : Package Nat (Batch Nat Nat) :=
+  { Cache := Unit
+    cache := ()
+    operations := #[sourceOperation, repeatOperation]
+    handlers := #[handler repeatWriteRegistration .fact 3 33 repeatWriteBatch]
+    measure := runtimePackage.measure }
+
+def repeatWriteRuntime? : Option (Runtime.State Nat Nat) :=
+  match (Executable.buildWithin repeatExecutableLimits #[repeatWritePackage]
+      repeatProgram).toOption, repeatBranch? with
+  | some assembly, some branch =>
+      (Runtime.State.startWithin repeatLimits assembly branch).toOption
+  | _, _ => none
+
+def repeatWriteAction : Action :=
+  action 0 0 0 0 repeatWriteRuleKey 1 .forward 0
+    [{ node := { index := 1 }, version := 0 }] [{ index := 0 }, { index := 0 }]
+
+#guard repeatWriteRuntime?.any fun state =>
+  match state.offerSnapshotWithin repeatLimits 1 with
+  | .ok snapshot => snapshot.actions.isEmpty && snapshot.incomplete
+  | .error _ => false
+
+#guard repeatWriteRuntime?.any fun state =>
+  match state.stepWithin repeatLimits repeatWriteAction with
+  | .ok (applied, next) =>
+      applied.action == repeatWriteAction && next.branch.snapshot.facts == #[11, 20]
+  | .error _ => false
+
 def repeatStaleVersion : Action :=
   { repeatAction with inputs :=
       [{ node := { index := 0 }, version := 0 },
@@ -1187,6 +1240,17 @@ def repeatControllerState? : Option (Runtime.Controller.State Nat Nat Nat Nat) :
           | some ({ index := 0 }, source) => source.branch == state.runtime.branch
           | _ => false
     | _ => false
+
+-- Session authentication reaches `actionCurrentChecked` for every retained
+-- offer. Replacing only the second repeated occurrence by a stale version
+-- invalidates the session before policy selection.
+#guard repeatControllerState?.any fun state =>
+  let offers := state.session.offers.map fun offer =>
+    { offer with action := { offer.action with inputs := repeatStaleVersion.inputs } }
+  match Search.Session.refreshWithin repeatEnvelope Runtime.Controller.policyMeasure
+      state.session offers state.session.remaining state.session.incomplete with
+  | .error .invalidSession => true
+  | _ => false
 
 -- The policy echo cannot reuse the repeated-read offer at another callback
 -- serial; Search validates chronology before exposing the exact action.
