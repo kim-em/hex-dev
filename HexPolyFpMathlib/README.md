@@ -24,6 +24,10 @@ rev = "main"
 
 ```lean
 import HexPolyFpMathlib
+
+noncomputable example {p : Nat} [Hex.ZMod64.Bounds p] :
+    Hex.FpPoly p ≃+* Polynomial (ZMod p) :=
+  HexPolyFpMathlib.fpPolyEquiv
 ```
 
 # Functionality
@@ -37,7 +41,8 @@ polynomials and Mathlib's:
   `toMathlibPolynomial_monic`).
 - Transport lemmas for addition, multiplication, subtraction, derivatives,
   constants, `X`, monomials, and divisibility.
-- A `CommRing (Hex.FpPoly p)` instance derived from the equivalence.
+- A `CommRing (Hex.FpPoly p)` instance whose operations are the executable
+  ones, proved from the ring laws `HexPolyFp` establishes.
 
 # Verification
 
@@ -47,9 +52,11 @@ The headline result is the ring equivalence:
 def fpPolyEquiv : Hex.FpPoly p ≃+* Polynomial (ZMod p)
 ```
 
-Everything is stated under the executable bounds hypothesis
-`Hex.ZMod64.Bounds p`; lemmas that need `p` prime say so in their own
-hypotheses. Runtime-only clients should depend on
+The equivalence and transport lemmas are stated under the executable bounds
+hypothesis `Hex.ZMod64.Bounds p`; lemmas that need `p` prime say so in their
+own hypotheses, and `primeModulus_of_fact` derives the executable
+prime-modulus witness from `Fact (Nat.Prime p)`. Runtime-only clients should
+depend on
 [`hex-poly-fp`](https://github.com/leanprover/hex-poly-fp); this package is
 for theorem statements and interoperability involving Mathlib. See the
 [SPEC](SPEC/hex-poly-fp-mathlib.md) for the correspondence contract and
