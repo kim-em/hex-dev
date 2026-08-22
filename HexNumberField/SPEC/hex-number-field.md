@@ -105,8 +105,12 @@ inductive RootSet where
 opaque AlgebraicPoly
 def AlgebraicPoly.ofArray (coeffs : Array AlgebraicNumber) : AlgebraicPoly
 def AlgebraicPoly.coeffs (f : AlgebraicPoly) : Array AlgebraicNumber
+def AlgebraicPoly.coeff (f : AlgebraicPoly) (n : Nat) : AlgebraicNumber
+def AlgebraicPoly.size (f : AlgebraicPoly) : Nat
 def AlgebraicPoly.degree? (f : AlgebraicPoly) : Option Nat
 def AlgebraicPoly.isZero (f : AlgebraicPoly) : Bool
+def AlgebraicPoly.beq (f g : AlgebraicPoly) : Bool
+instance : BEq AlgebraicPoly
 
 end Hex
 ```
@@ -138,7 +142,12 @@ normalization is semantic, while canonical algebraic-number equality is exposed
 here as a Boolean operation whose correctness is proved only in the companion.
 Structural equality on factorization-lazy `AlgebraicRoot` is finer than equality
 of represented complex values. `AlgebraicPoly` owns the required semantic
-trimming without exporting an unjustified `DecidableEq`.
+trimming without exporting an unjustified `DecidableEq`. That Boolean
+operation is `AlgebraicPoly.beq` (with its `BEq` instance): coefficientwise
+canonical equality over the trimmed data, faithful on canonical coefficients
+because `AlgebraicNumber` equality is canonical. `coeff n` is the canonical
+coefficient (`0` beyond the degree) and `size` is the trimmed length backing
+`degree?`; all three are exercised by the module's compiled regressions.
 
 ## Equality and zero
 
@@ -360,9 +369,10 @@ For `QAdjoin.roots?`:
 5. Return the surviving `AlgebraicRoot` values with the Yun multiplicity.
 
 `AlgebraicPoly.roots?` first embeds all nonzero coefficients into one computed
-primitive `QAdjoin`, then invokes the fixed-field algorithm. This internal
-common-field construction is deterministic and bounded but is not used for
-binary arithmetic.
+primitive `QAdjoin`, then invokes the fixed-field algorithm. This common-field
+construction is deterministic and bounded, is not used for binary arithmetic,
+and is a public surface in its own right (the tower library builds on it); its
+contract is the next section.
 
 For a candidate evaluation, construct its integer eliminant `q`, remove its
 maximal `X` power, and take the primitive part. If the evaluation is nonzero,
@@ -382,6 +392,72 @@ centre norm. The displayed search endpoint still has sufficient slack.
 The displayed endpoint proves that the bounded search succeeds. The same
 construction, with the eliminant for each generator/factor evaluation, is used
 by tower adjoining. No API performs unbounded refinement.
+
+## Common-field construction
+
+The `Hex.AlgebraicPoly.Common` namespace is the public bounded
+primitive-element machinery behind `AlgebraicPoly.roots?`, consumed directly
+by hex-number-field-tower (raw evaluation, flattening recovery) and its
+Mathlib companion. Everything is option-valued and checked: a `none` records
+a failed certification, never a wrong value.
+
+```lean
+structure Presentation where
+  generator : AlgebraicNumber
+  coefficients : Array (QAdjoin generator.p generator.x)
+
+def signedShift : Nat → Int
+def rational? (q : Rat) : Option AlgebraicNumber
+def add? (a b : AlgebraicNumber) : Option AlgebraicNumber
+def mul? (a b : AlgebraicNumber) : Option AlgebraicNumber
+def scale? (c : Int) (a : AlgebraicNumber) : Option AlgebraicNumber
+def shift? (theta alpha : AlgebraicNumber) (c : Int) : Option AlgebraicNumber
+def degree (a : AlgebraicNumber) : Nat
+
+structure ShiftCandidate where
+  shift : Int
+  value : AlgebraicNumber
+
+def extendShiftStep (theta alpha : AlgebraicNumber) :
+    Option ShiftCandidate → Nat → Option (Option ShiftCandidate)
+def extendShift? (theta alpha : AlgebraicNumber) : Option ShiftCandidate
+def extend? (theta alpha : AlgebraicNumber) : Option AlgebraicNumber
+def primitive? (coefficients : Array AlgebraicNumber) : Option AlgebraicNumber
+def powers? (gamma : AlgebraicNumber) (last : Nat) :
+    Option (Array AlgebraicNumber)
+def trace? (ambient : Nat) (a : AlgebraicNumber) : Option Rat
+def coordinates? (gamma a : AlgebraicNumber)
+    (powers : Array AlgebraicNumber) : Option (QAdjoin gamma.p gamma.x)
+def presentation? (coefficients : Array AlgebraicNumber) :
+    Option Presentation
+```
+
+`signedShift` is the deterministic shift order `0, 1, -1, 2, -2, ...`.
+`rational?`, `add?`, `mul?`, `scale?`, and `shift?` are the checked canonical
+constructions the search composes: `shift? theta alpha c` is the
+primitive-element candidate `theta + c * alpha`, with `c = 0` returning
+`theta` unchanged.
+
+`extend? theta alpha` is the bounded primitive-element search: it tests
+`choose(degree theta * degree alpha, 2) + 1` signed shifts and keeps a
+maximum-degree candidate, which generates the compositum even when the two
+fields overlap. `extendShift?` is the same search retaining the producing
+shift (the form the tower's flattening recovery needs), and
+`extendShiftStep` is its single fold step, exposed so consumers can interleave
+the search with their own early exits. `primitive?` folds `extend?` over the
+nonzero entries of a coefficient array.
+
+`powers? gamma last` returns the checked canonical powers
+`1, gamma, ..., gamma^last`. `trace? ambient a` is the field trace of `a`
+from a known ambient degree: with `m = degree a` it requires `m ∣ ambient`
+and returns `(ambient / m)` times the conjugate sum
+`-coeff (m-1) / leadingCoeff`. `coordinates? gamma a powers` recovers the
+power-basis coordinate of `a` through the nondegenerate trace pairing (Gram
+matrix of power traces against the traces of `a * gamma^k`), then validates
+the recovered coordinate by canonical algebraic equality before returning it.
+`presentation?` composes the above: find a primitive generator, take its
+powers up to `2 * degree - 2`, embed every coefficient, and return the
+validated fixed-field `Presentation`.
 
 ## Totalization
 
