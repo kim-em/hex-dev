@@ -483,20 +483,15 @@ libraries:
   HexPolyFpMathlib:
     deps: [HexPolyFp, HexPolyMathlib, HexModArithMathlib]
     mathlib: true
-    # Starts at 0 rather than inheriting the phase state of the library the code
-    # was extracted from. The declarations are sorry-free and were exercised as
-    # part of HexBerlekampMathlib, but this library has not been through Phase 2
-    # scaffolding review or Phase 3 conformance in its own right, and recording
-    # phases it has not completed is the drift these phases exist to prevent.
-    # HexBerlekampMathlib is unaffected in practice: at done_through 3 it is
-    # already blocked from Phase 4 by HexBerlekamp, also at 3.
-    # HexGF2Mathlib picked up the same new dependency edge (its
-    # equivPolynomial routes through fpPolyEquiv), and it too is unaffected in
-    # practice, for the opposite reason: it was at done_through 4 when the edge
-    # was added and is now at 5, so it is past every phase status.py gates on
-    # dependencies (1, 3, and 4). Its recorded 1/3/4 predate the extraction and
-    # are not re-derived against this entry.
-    done_through: 0
+    # Extracted from HexBerlekampMathlib, so this entry started at 0: phases are
+    # recorded here as they are established for this library in its own right,
+    # not inherited from the library the code came from. Phase 2 is attested by
+    # status/hex-poly-fp-mathlib.scaffolding-reviewed; phases 3 and 4 are the
+    # correspondence-only mathlib layer criteria of PLAN/Phase3.md and
+    # PLAN/Phase4.md, so there is no conformance module, no bench target and no
+    # phase4 block here, and the layer's performance owners are named in its
+    # SPEC rather than measured locally.
+    done_through: 5
     status: active
   HexBerlekampMathlib:
     deps: [HexBerlekamp, HexPolyMathlib, HexModArithMathlib, HexPolyFpMathlib]

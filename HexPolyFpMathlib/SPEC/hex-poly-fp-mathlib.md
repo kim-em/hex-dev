@@ -11,6 +11,20 @@ Mathlib's own polynomial type.
   assemble into.
 - `toMathlibPolynomial`, the forward map named for use in statements, with its
   coefficient, monicity, and `simp` lemmas.
+- Transport lemmas naming the forward map for the operations a caller reaches
+  for directly rather than through a `RingEquiv` composition: `derivative`,
+  `mul`, `add`, `sub`, `C`, the monic monomial `monomial m 1`, `X`, and `dvd`.
+- `commRing : CommRing (FpPoly p)`, built from the ring laws hex-poly-fp proves
+  rather than transported along `fpPolyEquiv`, so that the Mathlib operations
+  are the executable ones and `sub` and `neg` are the executable ones too.
+  Without it `FpPoly p →+* R` is not a well-formed type, so this is a
+  prerequisite for every downstream ring homomorphism out of the executable
+  polynomials rather than a convenience.
+- `linearPow_eq_pow`, identifying hex-poly-fp's structural `linearPow` with the
+  monoid power that `commRing` supplies, so `map_pow` applies to executable
+  powers.
+- `primeModulus_of_fact`, deriving the executable `ZMod64.PrimeModulus p`
+  witness from Mathlib's `Fact (Nat.Prime p)`.
 
 Everything below this library is Hex's own tower: `DensePoly` over `ZMod64`,
 reached through hex-poly-mathlib and hex-mod-arith-mathlib. Everything a
@@ -28,9 +42,11 @@ hex-berlekamp-mathlib re-exports the names, so call sites spelling them
 `HexBerlekampMathlib.fpPolyEquiv` resolve unchanged.
 
 The equivalence needs only `ZMod64.Bounds p`, not primality: `FpPoly p` is a
-ring for any admissible modulus, and so is `Polynomial (ZMod p)`. Lemmas that do
-need `p` prime, such as the coprimality transports, say so in their own
-hypotheses.
+ring for any admissible modulus, and so is `Polynomial (ZMod p)`. Primality
+enters only through `primeModulus_of_fact`, which carries it as an explicit
+`Fact (Nat.Prime p)` hypothesis. The coprimality transports that consume the
+resulting witness are owned by the consumers, hex-berlekamp-mathlib in
+particular, because they name that library's predicates.
 
 The dependency on hex-poly-mathlib is narrow and worth naming, since it is not
 the obvious one: the generic `DensePoly R ≃+* Polynomial R` cannot be reused
@@ -52,7 +68,31 @@ No external comparator is required.
 
 **Justification:** `correspondence-only-layer` per
 `SPEC/benchmarking.md §"Comparator naming"`. The library introduces no
-arithmetic algorithm; it transports values between two representations. The
-computational performance owner is hex-poly-fp, which implements and measures
-the executable side of the correspondence; the other side is Mathlib's own
-`Polynomial`.
+arithmetic algorithm; it transports values between two representations, and the
+far side is Mathlib's own `Polynomial`. Two computational performance owners
+carry the evidence, split by which library owns the operation being
+transported. `FpPoly p` is `DensePoly (ZMod64 p)`, so the split is not the one
+the library name suggests.
+
+**hex-poly** owns the dense ring surface. `+`, `-`, `neg`, `*`, `derivative`,
+`C` and `monomial` on `FpPoly p` are hex-poly's `DensePoly` operations at the
+`ZMod64 p` coefficient ring, and the transport lemmas name them as such:
+`toMathlibPolynomial_{add, sub, mul, derivative, C, monomial_one}` are stated
+about `Hex.DensePoly.*`, and `toMathlibPolynomial_X` about `Hex.FpPoly.X`,
+which is `DensePoly.monomial 1 1`. `toMathlibPolynomial_dvd` belongs here too:
+it is proved from a multiplication witness and `toMathlibPolynomial_mul`, not
+from any division or gcd. So does `commRing`, whose `sub` and `neg` fields are
+pinned to the executable `DensePoly` operations. The relevant multiplication is
+the generic schoolbook convolution; hex-poly-fp's packed `mulPacked` is an
+optional value-equal kernel, not the registered implementation of `*`.
+
+**hex-poly-fp** owns the prime-field surface above it: `linearPow`, and the
+Frobenius, modular-composition, quotient-ring, square-free and monic-gcd
+operations, together with the field-dependent gcd and modular division that
+`primeModulus_of_fact` unlocks. Of these the layer transports `linearPow`, via
+`linearPow_eq_pow`. `linearPow` has no bench target of its own, and correctly
+so: it is a structural recursion defined for kernel reduction, its call
+sites are theorems and private proof-side helpers, and the compiled
+square-free path uses `pow` instead. The
+value it denotes is `n` right-multiplications by the base, so its cost is
+hex-poly's multiplication ladder iterated a declared number of times.
