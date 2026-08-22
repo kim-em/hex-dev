@@ -319,8 +319,11 @@ inductive PrimeCert where
   base `a` and a certificate for a prime `q`, with exponent `e + 1`, so
   the exponent is positive by construction. -/
   | pock  (n : Nat) (factors : List (Nat × Nat × PrimeCert))   -- a, e, cert for q
-  /-- The cube-root variant; see below. -/
-  | pock3 (n : Nat) (r s : Nat) (factors : List (Nat × Nat × PrimeCert))
+  /-- The cube-root variant; see below. `w` is the integer-square-root
+  witness for the discriminant test: `Nat.sqrt` is well-founded recursion
+  and does not kernel-reduce, so the checker verifies `w` with two
+  multiplications instead of computing a root. -/
+  | pock3 (n r s w : Nat) (factors : List (Nat × Nat × PrimeCert))
 
 /-- The number a certificate is about. -/
 def PrimeCert.subject : PrimeCert → Nat
@@ -435,7 +438,12 @@ discriminant condition vacuous. The quantity being decomposed is the
 
 `checkPrime` on `pock3 n r s factors` verifies, with `F` as above:
 
-1. Everything the `pock` arm verifies except step 5.
+1. Everything the `pock` arm verifies except step 4 (the `n < F * F`
+   bound, which the size condition below replaces). The per-factor
+   witness conditions of step 5 are retained: they are the only route
+   to "every prime divisor of `n` is `≡ 1 (mod F)`", which this
+   variant needs exactly as the square-root one does. (An earlier
+   draft said "except step 5", which would have been unsound.)
 2. `F` is even.
 3. `R = (n-1)/F` is odd. (The classical hypothesis is
    `gcd(F, R) = 1`; `R` odd is the weaker condition the proof actually
@@ -448,7 +456,12 @@ discriminant condition vacuous. The quantity being decomposed is the
 Condition 6's middle disjunct is not redundant: `r² < 8s` makes
 `r² - 8s` negative, hence automatically a non-square, and writing it out
 avoids encoding a negative quantity with truncated `Nat` subtraction.
-The integer square test is `let t := Nat.sqrt m; t * t == m`.
+The non-square test verifies the stored witness:
+`w * w < r * r - 8 * s && r * r - 8 * s < (w + 1) * (w + 1)`. An earlier
+draft prescribed `let t := Nat.sqrt m; t * t == m`, but core `Nat.sqrt`
+is defined by well-founded recursion and does not reduce in the kernel;
+certificate search computes `w` with `Nat.sqrt` at runtime, where that
+is harmless.
 
 The hypothesis set above is the `m = 1` specialization of the
 Brillhart-Lehmer-Selfridge theorem formalised in
@@ -767,8 +780,10 @@ measured, not assumed.
 ## Kernel exposure
 
 The replay closure is `checkPrime` and what it calls: a kernel-facing
-modular exponentiation, `Nat.gcd`, `Nat.sqrt`, `Nat.mod`, and the
-table's binary search.
+modular exponentiation, `Nat.gcd`, `Nat.mod`, and the table's binary
+search. `Nat.sqrt` is deliberately absent: it is well-founded recursion
+and does not kernel-reduce, which is why the square bound is checked as
+`n < F * F` and the cube-root discriminant through the stored witness.
 
 **The hex-arith amendment that creates that closure** is the largest
 prerequisite in this SPEC, and it is landed. `HexArith.powMod`
@@ -1013,7 +1028,8 @@ cannot see it.
    The `primality` tactic lands here.
 
 4. **The cube-root variant.** The `PrimeCert.pock3` checker arm and its
-   soundness case, with the exact integer square root it needs.
+   soundness case, with the stored square-root witness replacing any
+   in-checker integer square root.
 
 5. **The companion.** `prime_iff`, the transports, the `norm_num`
    extension, and the segment statements. Begins after milestone 1.
