@@ -491,7 +491,7 @@ libraries:
     # PLAN/Phase4.md, so there is no conformance module, no bench target and no
     # phase4 block here, and the layer's performance owners are named in its
     # SPEC rather than measured locally.
-    done_through: 6
+    done_through: 7
     status: active
   HexBerlekampMathlib:
     deps: [HexBerlekamp, HexPolyMathlib, HexModArithMathlib, HexPolyFpMathlib]
