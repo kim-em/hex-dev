@@ -172,6 +172,9 @@ lean_lib HexGFqMathlib where
 @[default_target]
 lean_lib HexBerlekampZassenhausMathlib where
 
+@[default_target]
+lean_lib HexPrimalityMathlib where
+
 lean_lib HexMatrix where
   precompileModules := true
 
