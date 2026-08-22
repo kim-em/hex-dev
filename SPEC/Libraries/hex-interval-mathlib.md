@@ -45,6 +45,11 @@ The Mathlib-free `Executable.Assembly` now supports explicit stable-key
 arbitrary-operation callback packages, private caches, exact concrete
 application rows, and bounded raw replay formats. Those raw quotations are not
 Mathlib proof events and are not yet correlated with this theorem registry.
+The supported Mathlib-free typed runtime now authenticates atomic
+fact/equality/transport/instance batches, exact equality descriptors, and
+append-only application/binding/node suffixes, and retains their sealed
+before/after transition in the result tree. A later checked adapter must still
+resolve those inert quotations through this theorem registry.
 Its constructors are sealed under ordinary imports; deliberate `import all
 HexInterval.Executable` is a repository-guarded trusted-source escape hatch,
 not decoded runtime authority.
@@ -3346,6 +3351,10 @@ the fixed soundness and trust contracts.
   handler routes and concrete application tables, package-owned cache/result
   measures, append-stable local program extension, and inert bounded raw replay
   quotations. It does not generate offers or construct proof events.
+- `HexInterval/Runtime.lean`: sealed Mathlib-free atomic typed callback events,
+  exact equality descriptors and append-only instance suffixes, and retained
+  before/after runtime provenance. It deliberately contains no Mathlib proof
+  event or evidence.
 - `HexIntervalMathlib/Interval.lean`: real membership, cut lemmas, and exact
   semantics for construction, intersection, hull, and negation.
 - `HexIntervalMathlib/Addition.lean` and

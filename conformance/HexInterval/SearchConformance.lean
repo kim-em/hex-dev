@@ -612,9 +612,17 @@ open Search.Result
 #guard_msgs in
 #check Search.Applied.mk
 
+private def runtimeLimits : Runtime.Limits :=
+  { executable :=
+      { state := stateLimits, maxPackages := 0, maxMetadataBytes := 0,
+        maxMetadataWork := 0, maxCacheBytes := 0, maxCacheWork := 0,
+        maxResultBytes := 0, maxResultWork := 0, maxQuotes := 0,
+        maxQuoteCells := 0, maxAtom := 0, maxSchema := 0 }
+    maxEvents := 0 }
+
 private def limits : Search.Result.Limits :=
   { search := { searchLimits with maxSteps := 6 }
-    state := stateLimits
+    runtime := runtimeLimits
     maxNodes := 3
     maxBodyCells := 2
     maxBytes := 96
@@ -864,7 +872,10 @@ private def unknown? : Option (Tree Nat Nat Nat Nat) := do
 #guard match refinedBranch? with
   | some branch =>
       resultError (.search (.state .nodes)) <|
-        Search.Result.startWithin { limits with state := { stateLimits with maxNodes := 1 } }
+        Search.Result.startWithin
+          { limits with runtime :=
+            { runtimeLimits with executable :=
+              { runtimeLimits.executable with state := { stateLimits with maxNodes := 1 } } } }
           measure { index := 5 } branch
   | none => false
 

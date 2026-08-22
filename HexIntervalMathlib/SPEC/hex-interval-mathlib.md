@@ -86,9 +86,14 @@ and application generators; it has no concrete built-in arithmetic
 `Driver.Package`. Concrete built-in arithmetic reaches the controller only
 through the separate `Controller.Executable` adapter, which consumes a sealed
 Mathlib-free `Executable.Assembly` and correlates accepted fact quotations with
-independently replayed theorem schemas. Automatic discovery/program extension,
-equality/instance runtime events, and public-tactic split search remain later
-edges.
+independently replayed theorem schemas. The Mathlib-free `Runtime.State`
+separately owns an executable assembly and
+atomically validates typed fact/equality/transport/instance batches, including
+an exact equality descriptor arena and append-only application/binding/node
+suffixes; `Search.Result.Tree` retains its sealed transition in a child.
+Wiring those typed batches to this controller and correlating their inert
+quotations with theorem events, automatic discovery/program extension, and
+public-tactic split search remain later edges.
 
 `HexIntervalMathlib.Tactic` is the first supported Meta client. It recursively
 parses real local variables and the registered forward arithmetic operations,
@@ -239,6 +244,10 @@ fixed-point `noChange` and malformed narrowing remain mismatches at this
 fact-only boundary. Its public `Run` currently contains only a resumable
 `stopped` result. Driver target, refutation, split, and unknown outcomes are
 rejected as mismatches until separate typed terminal correlation is added.
+The separate Mathlib-free typed runtime authenticates and retains raw
+fact/equality/transport/instance chronology without importing this proof
+module; conversion of those typed events to package-owned proof schemas remains
+a later edge.
 The assembly constructors are sealed under ordinary imports; deliberate
 `import all HexInterval.Executable` is a repository-guarded trusted-source
 escape hatch, not decoded runtime or proof authority.

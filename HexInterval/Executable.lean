@@ -193,6 +193,13 @@ def applicationsPrefix (before after : Array Application) : Bool := Id.run do
     if !old.same new then return false
   return true
 
+/-- Every old scoped binding remains at the same compact address. -/
+def bindingsPrefix (before after : Array ScopeBinding) : Bool := Id.run do
+  if after.size < before.size then return false
+  for index in [0:before.size] do
+    if before[index]? != after[index]? then return false
+  return true
+
 /-- Independent assembly and invocation caps. `state` owns structural table
 dimensions; the remaining fields bound package-owned logical measurements and
 raw quotation encodings. -/
@@ -264,6 +271,9 @@ structure Assembly (Fact Result : Type) where
   bindings : Array ScopeBinding
   registry : Registry Fact Result
   applications : Array Application
+  /-- Global creation generation, retained even when an extension appends no
+  concrete application row. -/
+  generation : Nat
 
 /-- A successful callback result retains the exact selected route, owner, and
 validated raw quotations. No field is theorem evidence. -/
@@ -280,9 +290,10 @@ private def makeRegistry (packages : Array (Package Fact Result))
   { packages, operations, registrations, routes, metadataCost, cacheCost }
 
 private def makeAssembly (program : Program) (bindings : Array ScopeBinding)
-    (registry : Registry Fact Result) (applications : Array Application) :
+    (registry : Registry Fact Result) (applications : Array Application)
+    (generation : Nat) :
     Assembly Fact Result :=
-  { program, bindings, registry, applications }
+  { program, bindings, registry, applications, generation }
 
 private def makeInvocation (route : Route) (rule : RuleKey)
     (result : Result) (quotes : Array Quote) : Invocation Result :=
@@ -518,6 +529,21 @@ private def compileSuffixWithin (limit start generation : Nat) (program : Progra
             watches, writes, effort := rule.initialEffort, generation }
   pure applications
 
+private def compileBindingSuffixWithin (limit start generation : Nat)
+    (rules : Array Registration) (bindings : Array ScopeBinding) :
+    Except Error (Array Application) := do
+  let mut applications := #[]
+  for index in [start:bindings.size] do
+    if limit ≤ applications.size then throw (.resource (.state .applications))
+    let some binding := bindings[index]? | throw .invalidBindings
+    let some (ruleId, rule) := Registration.find? rules binding.rule
+      | throw .invalidBindings
+    applications := applications.push
+      { rule := ruleId, node := binding.anchor, kind := rule.kind
+        watches := binding.watches, writes := binding.writes
+        effort := rule.initialEffort, generation }
+  pure applications
+
 private def applicationCost (registry : Registry Fact Result)
     (applications : Array Application) : Except Error Cost := do
   let mut cost : Cost := {}
@@ -564,38 +590,96 @@ opaque buildWithin (limits : Limits) (packages : Array (Package Fact Result))
                       .error (.resource .metadataBytes)
                     else .error (.resource .metadataWork)
                   else
-                    .ok (makeAssembly program bindings { registry with metadataCost } applications)
+                    .ok (makeAssembly program bindings { registry with metadataCost } applications 0)
 
-/-- Extend only the program-node suffix and its local applications. Existing
-bindings, registry routes, caches, and application rows are retained exactly.
-The fresh generation must strictly exceed every retained application
-generation. -/
-opaque Assembly.extendWithin (limits : Limits) (assembly : Assembly Fact Result)
-    (program : Program) (generation : Nat) : Except Error (Assembly Fact Result) :=
+/-- Re-admit every retained executable resource under a possibly tighter
+limit before a higher layer invokes a callback. The assembly is already
+structurally sealed; this pass rechecks package/cache metadata, program and
+application dimensions, and the complete application cost without rebuilding
+routes or callback caches. -/
+opaque Assembly.preflightWithin (limits : Limits) (assembly : Assembly Fact Result) :
+    Except Error Unit := do
+  match checkProgramLimits limits.state assembly.program with
+  | .error error => throw error
+  | .ok _ => pure ⟨⟩
+  if limits.state.maxApplications < assembly.bindings.size ||
+      limits.state.maxApplications < assembly.applications.size then
+    throw (.resource (.state .applications))
+  if assembly.bindings.any (fun binding =>
+      !listWithin limits.state.maxScopeNodes binding.watches ||
+        !listWithin limits.state.maxScopeNodes binding.writes) then
+    throw (.resource (.state .scopes))
+  let portLimit := Nat.max (limits.state.maxArity + 1) limits.state.maxScopeNodes
+  if assembly.applications.any (fun application =>
+      !listWithin portLimit application.watches ||
+        !listWithin portLimit application.writes) then
+    throw (.resource (.state .arity))
+  if assembly.applications.any (fun application =>
+      !listWithin limits.state.matcherBatchSize application.structuralInputs) then
+    throw (.resource (.state .matcherVisits))
+  if assembly.applications.any (fun application =>
+      limits.state.maxEffort < application.effort) then
+    throw (.resource (.state .effort))
+  if assembly.applications.any (fun application =>
+      limits.state.maxGeneration < application.generation) then
+    throw (.resource (.state .generation))
+  if limits.state.maxGeneration < assembly.generation then
+    throw (.resource (.state .generation))
+  let (packageCost, _) ← packagePreflight limits assembly.registry.packages
+  let applicationCost ← applicationCost assembly.registry assembly.applications
+  let metadataCost := packageCost + applicationCost
+  if !metadataCost.allowed limits.maxMetadataBytes limits.maxMetadataWork then
+    if limits.maxMetadataBytes < metadataCost.bytes then
+      throw (.resource .metadataBytes)
+    else throw (.resource .metadataWork)
+  pure ()
+
+/-- Extend an assembly by exact append-only program and scoped-binding
+suffixes. Old bindings, applications, routes, and caches remain at their
+original compact addresses. Fresh scoped applications precede fresh local
+node applications in the appended table; their generation must strictly
+exceed the retained global assembly generation, including after an extension
+which creates no application row. -/
+opaque Assembly.extendAllWithin (limits : Limits) (assembly : Assembly Fact Result)
+    (program : Program) (bindings : Array ScopeBinding) (generation : Nat) :
+    Except Error (Assembly Fact Result) := do
+  match assembly.preflightWithin limits with
+  | .error error => throw error
+  | .ok _ => pure ⟨⟩
   match checkProgramLimits limits.state program with
   | .error error => .error error
   | .ok _ =>
       if !program.check then .error .invalidProgram
       else
-        if limits.state.maxApplications < assembly.bindings.size ||
+        if limits.state.maxApplications < bindings.size ||
             limits.state.maxApplications < assembly.applications.size then
           .error (.resource (.state .applications))
+        else if bindings.any (fun binding =>
+            !listWithin limits.state.maxScopeNodes binding.watches ||
+              !listWithin limits.state.maxScopeNodes binding.writes) then
+          .error (.resource (.state .scopes))
         else if !State.programPrefix assembly.program program then .error .nonExtension
-        else if limits.state.maxGeneration < generation ||
+        else if !bindingsPrefix assembly.bindings bindings then .error .nonExtension
+        else if limits.state.maxGeneration < generation || generation ≤ assembly.generation ||
             assembly.applications.any (fun application => generation ≤ application.generation) then
           .error .staleGeneration
         else if !assembly.registry.acceptsProgram program then .error .programRejected
         else if !Registration.check program assembly.registry.registrations then
           .error .invalidRegistrations
-        else if !assembly.registry.acceptsBindings program assembly.bindings then
+        else if !assembly.registry.acceptsBindings program bindings then
           .error .invalidBindings
         else
           let room := limits.state.maxApplications - assembly.applications.size
-          match compileSuffixWithin room assembly.program.nodes.size generation program
-              assembly.registry.registrations with
+          match compileBindingSuffixWithin room assembly.bindings.size generation
+              assembly.registry.registrations bindings with
           | .error error => .error error
-          | .ok suffix =>
-              let applications := assembly.applications ++ suffix
+          | .ok bindingSuffix =>
+            let room := room - bindingSuffix.size
+            match compileSuffixWithin room assembly.program.nodes.size generation program
+                assembly.registry.registrations with
+            | .error error => .error error
+            | .ok nodeSuffix =>
+              let applications := assembly.applications ++ bindingSuffix ++ nodeSuffix
               if !applicationsPrefix assembly.applications applications then .error .nonExtension
               else match applicationCost assembly.registry applications with
                 | .error error => .error error
@@ -608,8 +692,14 @@ opaque Assembly.extendWithin (limits : Limits) (assembly : Assembly Fact Result)
                         .error (.resource .metadataBytes)
                       else .error (.resource .metadataWork)
                     else
-                      .ok (makeAssembly program assembly.bindings
-                        { assembly.registry with metadataCost } applications)
+                      .ok (makeAssembly program bindings
+                        { assembly.registry with metadataCost } applications generation)
+
+/-- Extend only the program-node suffix and its local applications. Existing
+bindings, registry routes, caches, and application rows are retained exactly. -/
+opaque Assembly.extendWithin (limits : Limits) (assembly : Assembly Fact Result)
+    (program : Program) (generation : Nat) : Except Error (Assembly Fact Result) :=
+  assembly.extendAllWithin limits program assembly.bindings generation
 
 private def quoteCells (quotes : Array Quote) : Nat :=
   quotes.foldl (fun total quote => total + quote.body.length) 0
@@ -747,7 +837,10 @@ checks their internal request validity but does not claim to own them. Callback
 and measure execution are non-preemptible; failure returns no replacement
 assembly, so a rejected cache/result/quotation cannot partially commit. -/
 opaque Assembly.invokeWithin (limits : Limits) (assembly : Assembly Fact Result)
-    (request : RuleRequest Fact) : Except Error (Invocation Result × Assembly Fact Result) :=
+    (request : RuleRequest Fact) : Except Error (Invocation Result × Assembly Fact Result) := do
+  match assembly.preflightWithin limits with
+  | .error error => throw error
+  | .ok _ => pure ⟨⟩
   if request.program.operations != assembly.program.operations ||
       request.program.nodes != assembly.program.nodes then .error .invalidRequest
   else
@@ -796,6 +889,6 @@ opaque Assembly.invokeWithin (limits : Limits) (assembly : Assembly Fact Result)
                                   let registry := replacePackage assembly.registry route.package package cacheCost
                                   .ok (makeInvocation route registration.key plan.result plan.quotes,
                                     makeAssembly assembly.program assembly.bindings registry
-                                      assembly.applications)
+                                      assembly.applications assembly.generation)
 
 end Hex.Interval.Executable

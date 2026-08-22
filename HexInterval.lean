@@ -14,6 +14,7 @@ public import HexInterval.Trace
 public import HexInterval.Policy
 public import HexInterval.Search
 public import HexInterval.Executable
+public import HexInterval.Runtime
 
 public section
 
@@ -53,7 +54,12 @@ not decoded-runtime authority, and repository checks reject accidental uses.
 The supported executable assembly now joins explicit stable-key package
 declarations, private caches, checked callback routes, bounded raw replay
 formats, and an exact concrete application table for one program. Its raw
-quotations are not Mathlib proof events or evidence. Offer generation, policy
+quotations are not Mathlib proof events or evidence. A separate sealed
+Mathlib-free runtime transition owns that assembly together with branch state
+and an exact equality descriptor arena. It atomically admits typed fact,
+equality, transport, and append-only instance events and can retain the sealed
+transition in a result-tree child without weakening generic child validation.
+Offer generation, policy
 implementations, a complete branch-search loop, and measurement-selected
 storage remain experimental. The Mathlib companion supplies a bounded
 authenticated callback-to-tree-recipe step driver; package callbacks and their
