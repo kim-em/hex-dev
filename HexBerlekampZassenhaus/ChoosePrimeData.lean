@@ -1196,6 +1196,10 @@ theorem choosePrimeDataAdaptive?_form
   obtain ⟨_, hzero, heq⟩ := hform
   exact ⟨hzero, heq⟩
 
+-- The candidate lists are windows into the 1229-entry committed prime table,
+-- so incidental reductions that peer into them need headroom over the
+-- default 512 ceiling.
+set_option maxRecDepth 10000 in
 /--
 When `choosePrimeData? f` succeeds, the stored modular factor array is exactly
 the Berlekamp factor output for the monic modular image of the selected
