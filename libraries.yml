@@ -191,6 +191,11 @@ libraries:
       input_families:
         - name: structured-bareiss-determinant
           description: Deterministic tridiagonal integer matrices for row-pivoted Bareiss determinant scaling without arbitrary coefficient blow-up.
+  HexCharPoly:
+    deps: [HexMatrix, HexPoly]
+    mathlib: false
+    done_through: 0
+    status: active
 
   # ---------- Depth 1 ----------
   HexModArith:
@@ -485,6 +490,11 @@ libraries:
     deps: [HexBareiss, HexDeterminant, HexMatrixMathlib]
     mathlib: true
     done_through: 5
+    status: active
+  HexCharPolyMathlib:
+    deps: [HexCharPoly, HexMatrixMathlib, HexPolyMathlib, HexDeterminantMathlib]
+    mathlib: true
+    done_through: 0
     status: active
   HexBareissMathlib:
     deps: [HexDeterminantMathlib]
