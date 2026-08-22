@@ -26,26 +26,6 @@ namespace HexRootsMathlib
 
 noncomputable section
 
-/-- Writing an omitted summand as an erased range or as an `if` gives the
-same finite sum. -/
-private theorem sum_erase_range {M : Type*} [AddCommMonoid M]
-    (f : ℕ → M) (n k : ℕ) :
-    (∑ i ∈ (Finset.range n).erase k, f i) =
-      ∑ i ∈ Finset.range n, if i = k then 0 else f i := by
-  classical
-  calc
-    (∑ i ∈ (Finset.range n).erase k, f i) =
-        ∑ i ∈ (Finset.range n).filter (fun i => i ≠ k), f i := by
-      congr 1
-      ext i
-      simp [and_comm]
-    _ = ∑ i ∈ Finset.range n, if i ≠ k then f i else 0 := by
-      rw [Finset.sum_filter]
-    _ = ∑ i ∈ Finset.range n, if i = k then 0 else f i := by
-      apply Finset.sum_congr rfl
-      intro i hi
-      by_cases hik : i = k <;> simp [hik]
-
 /-- The coefficient-dominance hypothesis is exactly the boundary inequality
 needed by Rouché's theorem. -/
 private theorem pellet_norm_sub_lt {p : ℂ[X]} {n k : ℕ} {r : ℝ}
