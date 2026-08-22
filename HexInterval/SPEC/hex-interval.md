@@ -3229,6 +3229,19 @@ generation report exact residuals, while matcher visits, retained suggestions,
 and queue entries report their full configured capacities because this runtime
 layer retains and consumes none of those three stores.
 
+Search read ports are ordered occurrences, not a set of node identities. Local
+registrations still require distinct declared slots, but distinct argument
+slots may resolve to the same node, as in `x + x`. Such occurrences retain the
+same exact current `SeenVersion` twice; authentication freshness-checks each
+occurrence and preserves the duplicate list through policy selection, request
+reconstruction, executable invocation, and runtime transition correlation.
+This does not weaken mutation or structural authority: resolved writes and
+structural inputs remain duplicate-free, and scoped binding reads remain
+duplicate-free under `ScopeBinding.check`. A runtime-owned snapshot containing
+only repeated reads is therefore complete. A handler-approved application with
+duplicate resolved writes or structural inputs is still omitted and sets the
+sticky incomplete bit.
+
 As with Search, sealing is an ordinary/public-import boundary. Deliberate
 `import all HexInterval.Executable` exposes its private constructors to trusted
 Lean source and is not part of the decoded runtime threat model. The repository
@@ -5656,11 +5669,14 @@ their declared cost inside a scheduler bound.
   binding, node, generation, and equality authority; and sealed before/after
   transitions retained by `Search.Result.Tree`. It also supplies sealed
   runtime-owned offer snapshots and an inseparable transition/sticky-cache
-  successor/snapshot value. Runtime-valid duplicate resolved input, write, or
-  structural-input ports remain executable through `Runtime.State.stepWithin`
-  but cannot satisfy Search's stricter scheduler contract, so snapshot
-  generation omits them and marks the snapshot incomplete. An intentional
-  package `handler.offers = false` veto is complete and does not set that bit.
+  successor/snapshot value. Repeated resolved read occurrences retain their
+  exact ordered node/version entries and are schedulable, including distinct
+  local slots that resolve to the same node. Runtime-valid duplicate resolved
+  writes or structural-input ports remain executable through
+  `Runtime.State.stepWithin` but cannot satisfy Search's authority contract, so
+  snapshot generation omits them and marks the snapshot incomplete. An
+  intentional package `handler.offers = false` veto is complete and does not
+  set that bit.
   All matcher-owned application rows must share one
   matcher epoch; mixed epochs are malformed and zero is the snapshot sentinel
   when no row carries an epoch. Offer generation checks `maxOffers` but does

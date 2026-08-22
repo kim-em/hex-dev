@@ -401,8 +401,12 @@ private def actionCurrentChecked (limits : State.Limits) (branch : State.Branch 
     throw .invalidSession
   let some instruction := branch.program.node? action.node | throw .invalidSession
   let some operation := branch.program.operation? instruction.op | throw .invalidSession
-  if operation.key != registration.head || !allDistinct action.inputs ||
-      !allDistinct action.writes || !allDistinct action.structuralInputs then
+  /- Read occurrences stay ordered and are checked independently below. A
+  local rule may watch distinct argument slots which resolve to the same node
+  (for example `x + x`); exact duplicate `SeenVersion`s are therefore valid.
+  Writes and structural dependencies remain duplicate-free authority. -/
+  if operation.key != registration.head || !allDistinct action.writes ||
+      !allDistinct action.structuralInputs then
     throw .invalidSession
   for seen in action.inputs do
     let some version := branch.versions[seen.node.index]? | throw .invalidSession

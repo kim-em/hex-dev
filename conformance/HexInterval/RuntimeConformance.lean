@@ -15,6 +15,10 @@ that fact at the second node. The complete chain runs at a root and in a fresh
 split child. A second split after root extension restarts over nonzero assembly
 generation, admits the next strict instance, and completes a fresh
 equality/fact/transport chain on the new local generation-one suffix.
+It also checks that a genuine binary repeated read such as `f x x` remains an
+ordered two-slot request across runtime offer generation, Search selection,
+and autonomous-controller advancement without admitting stale or spliced
+chronology.
 -/
 
 namespace Hex.Interval.RuntimeConformance
@@ -728,8 +732,8 @@ def repeatOperation : Operation :=
   { key := repeatKey, inputs := [real, real], output := real }
 
 /-- A genuine binary `f x x` node resolves two distinct argument slots to the
-same source node. Runtime accepts that exact application; Search deliberately
-requires distinct resolved scheduler ports. -/
+same source node. Runtime and Search preserve both ordered occurrences with
+their exact shared current version. -/
 def repeatProgram : Program :=
   { operations := #[sourceOperation, repeatOperation]
     nodes :=
@@ -740,14 +744,21 @@ def repeatRegistration : Registration :=
   { key := repeatRuleKey, head := repeatKey, kind := .forward,
     watches := [.argument 0, .argument 1], writes := [.result] }
 
+private def repeatInputExact (input : FactView Nat) : Bool :=
+  input.node == ({ index := 0 } : NodeId) && input.fact == 10 && input.version == 0
+
 def repeatBatch (request : RuleRequest Nat) : Batch Nat Nat :=
+  let exactInputs := match request.inputs with
+    | [left, right] => repeatInputExact left && repeatInputExact right
+    | _ => false
+  let value := if exactInputs then 31 else 32
   { events := #[.fact
       { action := request.action
         update :=
           { programVersion := 0, node := { index := 1 },
             previous := { node := { index := 1 }, version := 0 },
-            fact := 31, version := 1, cause := 103 }
-        proposed := 31
+            fact := value, version := 1, cause := 103 }
+        proposed := value
         quote := factQuote }] }
 
 def repeatPackage : Package Nat (Batch Nat Nat) :=
@@ -798,10 +809,30 @@ def repeatAction : Action :=
 
 #guard repeatRuntime?.any fun state =>
   match state.offerSnapshotWithin repeatLimits 1 with
-  | .ok snapshot => snapshot.actions.isEmpty && snapshot.incomplete &&
+  | .ok snapshot => snapshot.actions == #[repeatAction] && !snapshot.incomplete &&
       snapshot.remaining.actions == 8 && snapshot.remaining.nodes == 0 &&
       snapshot.remaining.applications == 0 && snapshot.remaining.acceptedFacts == 4
   | .error _ => false
+
+def repeatStaleVersion : Action :=
+  { repeatAction with inputs :=
+      [{ node := { index := 0 }, version := 0 },
+       { node := { index := 0 }, version := 1 }] }
+
+def repeatStaleSerial : Action := { repeatAction with serial := 1 }
+
+-- Every repeated read occurrence is checked: one stale version cannot hide
+-- behind the current occurrence for the same node.
+#guard repeatRuntime?.any fun state =>
+  match state.stepWithin repeatLimits repeatStaleVersion with
+  | .error .stale => true
+  | _ => false
+
+-- Callback chronology remains exact for the newly schedulable action.
+#guard repeatRuntime?.any fun state =>
+  match state.stepWithin repeatLimits repeatStaleSerial with
+  | .error .stale => true
+  | _ => false
 
 def splitAction : Action :=
   action 0 0 0 0 instantiateKey 0 .split 0
@@ -1142,12 +1173,32 @@ def repeatControllerState? : Option (Runtime.Controller.State Nat Nat Nat Nat) :
     runtime tree).toOption
 
 #guard repeatControllerState?.any fun state =>
-  state.session.offers.isEmpty && state.session.incomplete &&
+  state.session.offers.size == 1 && !state.session.incomplete &&
+    state.session.offers[0]?.any (fun offer => offer.action == repeatAction) &&
     state.session.remaining.actions == 8 && state.session.remaining.nodes == 0 &&
     match Runtime.Controller.runWithin repeatControllerLimits repeatEnvelope measure
-        plannedPolicy [] state with
-    | .ok (.stopped 0 state []) => state.session.incomplete && state.choices == 0
+        plannedPolicy [0] state with
+    | .ok (.stopped 1 state []) =>
+        state.choices == 1 && !state.session.incomplete && state.session.serial == 1 &&
+          state.session.offers.size == 1 && state.tree.transitions.size == 1 &&
+          state.runtime.branch.snapshot.facts == #[10, 31] &&
+          state.session.branch == state.runtime.branch &&
+          match Search.Result.current? state.tree with
+          | some ({ index := 0 }, source) => source.branch == state.runtime.branch
+          | _ => false
     | _ => false
+
+-- The policy echo cannot reuse the repeated-read offer at another callback
+-- serial; Search validates chronology before exposing the exact action.
+#guard repeatControllerState?.any fun state =>
+  match Search.chooseWithin repeatEnvelope Runtime.Controller.policyMeasure
+      plannedPolicy [0] state.session with
+  | .ok (.select decision _) =>
+      match Search.prepareWithin repeatEnvelope Runtime.Controller.policyMeasure
+          state.session { decision with serial := 1 } with
+      | .error (.policy .staleSerial) => true
+      | _ => false
+  | _ => false
 
 -- Dismissing the sole ordinary offer removes exactly one live item, charges
 -- one decision, and makes the offer view incomplete.
@@ -1271,6 +1322,21 @@ private def firstControllerStep? : Option FirstControllerStep := do
       Runtime.Controller.policyMeasure step.session step.decision step.advanced with
   | .error (.policy .staleSerial) => true
   | _ => false
+
+-- A sealed transition from another runtime lineage cannot be spliced behind
+-- a valid repeated-read decision, even though both use the same public
+-- application-id type.
+#guard match repeatControllerState?, firstControllerStep? with
+  | some repeated, some ordinary =>
+      match Search.chooseWithin repeatEnvelope Runtime.Controller.policyMeasure
+          plannedPolicy [0] repeated.session with
+      | .ok (.select decision _) =>
+          match Search.Session.advanceRuntimeWithin repeatEnvelope
+              Runtime.Controller.policyMeasure repeated.session decision ordinary.advanced with
+          | .error .invalidSession => true
+          | _ => false
+      | _ => false
+  | _, _ => false
 
 -- A runtime advanced away from the retained tree head cannot start a new
 -- controller lineage, even though both values remain individually sealed.
