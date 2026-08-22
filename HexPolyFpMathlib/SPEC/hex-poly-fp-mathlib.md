@@ -68,7 +68,31 @@ No external comparator is required.
 
 **Justification:** `correspondence-only-layer` per
 `SPEC/benchmarking.md §"Comparator naming"`. The library introduces no
-arithmetic algorithm; it transports values between two representations. The
-computational performance owner is hex-poly-fp, which implements and measures
-the executable side of the correspondence; the other side is Mathlib's own
-`Polynomial`.
+arithmetic algorithm; it transports values between two representations, and the
+far side is Mathlib's own `Polynomial`. Two computational performance owners
+carry the evidence, split by which library owns the operation being
+transported. `FpPoly p` is `DensePoly (ZMod64 p)`, so the split is not the one
+the library name suggests.
+
+**hex-poly** owns the dense ring surface. `+`, `-`, `neg`, `*`, `derivative`,
+`C` and `monomial` on `FpPoly p` are hex-poly's `DensePoly` operations at the
+`ZMod64 p` coefficient ring, and the transport lemmas name them as such:
+`toMathlibPolynomial_{add, sub, mul, derivative, C, monomial_one}` are stated
+about `Hex.DensePoly.*`, and `toMathlibPolynomial_X` about `Hex.FpPoly.X`,
+which is `DensePoly.monomial 1 1`. `toMathlibPolynomial_dvd` belongs here too:
+it is proved from a multiplication witness and `toMathlibPolynomial_mul`, not
+from any division or gcd. So does `commRing`, whose `sub` and `neg` fields are
+pinned to the executable `DensePoly` operations. The relevant multiplication is
+the generic schoolbook convolution; hex-poly-fp's packed `mulPacked` is an
+optional value-equal kernel, not the registered implementation of `*`.
+
+**hex-poly-fp** owns the prime-field surface above it: `linearPow`, and the
+Frobenius, modular-composition, quotient-ring, square-free and monic-gcd
+operations, together with the field-dependent gcd and modular division that
+`primeModulus_of_fact` unlocks. Of these the layer transports `linearPow`, via
+`linearPow_eq_pow`. `linearPow` has no bench target of its own, and correctly
+so: it is a structural recursion defined for kernel reduction, its call
+sites are theorems and private proof-side helpers, and the compiled
+square-free path uses `pow` instead. The
+value it denotes is `n` right-multiplications by the base, so its cost is
+hex-poly's multiplication ladder iterated a declared number of times.
