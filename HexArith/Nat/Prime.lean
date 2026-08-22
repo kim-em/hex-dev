@@ -243,10 +243,9 @@ caller supplies `b` with `p < (b + 1) ^ 2`, which `decide` checks in one
 multiplication, and then only `b + 1` divisors have to be ruled out rather
 than `p` of them.
 
-For a five-digit prime that is the difference between a couple of hundred
-steps and tens of thousands: `decide (Prime 3221)` through
-the linear instance below takes about fourteen seconds, and the primes
-appearing in `p ^ n - 1` for the committed Conway table are larger still.
+The `Decidable` instance now routes through `isPrimeTrial` (defined below), so
+`decide` is `O (√p)` remainder tests; this lemma remains for callers that
+already hold an explicit bound and want the divisor obligations alone.
 -/
 theorem prime_of_bounded (p b : Nat) (hp : 2 ≤ p)
     (hb : p < (b + 1) * (b + 1))
@@ -266,12 +265,6 @@ theorem prime_of_bounded (p b : Nat) (hp : 2 ≤ p)
   · exact absurd hmsq (by
       have := Nat.mul_le_mul hge hge
       omega)
-
-/-- Primality is decidable by trial division below `p`. Correct for any `p`,
-but linear: use {name}`Hex.Nat.prime_of_bounded` for anything beyond a few
-thousand. -/
-instance instDecidablePrime (p : Nat) : Decidable (Prime p) :=
-  decidable_of_iff _ (prime_iff_forall_lt p).symm
 
 private theorem not_dvd_of_pos_lt {p k : Nat} (hk : 0 < k) (hk' : k < p) :
     ¬ p ∣ k := by
@@ -747,7 +740,9 @@ private theorem no_divisor_of_isPrimeTrialAux {n fuel k : Nat}
           rw [hpow] at hd
           omega
 
-private theorem exists_trial_divisor {n m : Nat} (hn : 0 < n) (hm : m ∣ n)
+/-- A nontrivial divisor yields a divisor at most the square root: of `m` and
+its cofactor, the smaller one squares to at most `n`. -/
+theorem exists_trial_divisor {n m : Nat} (hn : 0 < n) (hm : m ∣ n)
     (hm1 : m ≠ 1) (hmn : m ≠ n) :
     ∃ d, 2 ≤ d ∧ d * d ≤ n ∧ d ∣ n := by
   rcases hm with ⟨c, hc⟩
@@ -846,6 +841,51 @@ theorem isPrimeTrial_of_prime {n : Nat} (h : Prime n) :
   rw [Bool.and_eq_true]
   exact ⟨decide_eq_true h.two_le,
     isPrimeTrialAux_of_prime h (n.log2 + 1) 2 (by decide)⟩
+
+/-- Primality is decidable through {name}`isPrimeTrial`, so `decide` costs
+`O (√p)` remainder tests with kernel reduction depth logarithmic in the
+candidate count. -/
+instance instDecidablePrime (p : Nat) : Decidable (Prime p) :=
+  decidable_of_iff (isPrimeTrial p = true)
+    ⟨isPrimeTrial_isPrime, isPrimeTrial_of_prime⟩
+
+private theorem exists_small_divisor_of_not_prime {d : Nat} (h2 : 2 ≤ d)
+    (hnp : ¬ Prime d) : ∃ m, 2 ≤ m ∧ m < d ∧ m ∣ d := by
+  have hfail : ¬ ∀ m, m < d → 2 ≤ m → ¬ m ∣ d := by
+    intro hall
+    exact hnp ((prime_iff_forall_lt d).mpr ⟨h2, hall⟩)
+  rcases Classical.not_forall.mp hfail with ⟨m, hm⟩
+  by_cases hmlt : m < d
+  · by_cases hm2 : 2 ≤ m
+    · by_cases hdvd : m ∣ d
+      · exact ⟨m, hm2, hmlt, hdvd⟩
+      · exact absurd (fun _ _ => hdvd) hm
+    · exact absurd (fun _ h2m => absurd h2m hm2) hm
+  · exact absurd (fun hlt => absurd hlt hmlt) hm
+
+/-- Every natural number at least `2` has a prime divisor. -/
+theorem exists_prime_dvd {d : Nat} (h : 2 ≤ d) : ∃ q, Prime q ∧ q ∣ d := by
+  induction d using Nat.strongRecOn with
+  | ind d ih =>
+    by_cases hp : Prime d
+    · exact ⟨d, hp, Nat.dvd_refl d⟩
+    · obtain ⟨m, hm2, hmlt, hmdvd⟩ := exists_small_divisor_of_not_prime h hp
+      obtain ⟨q, hq, hqm⟩ := ih m hmlt hm2
+      exact ⟨q, hq, Nat.dvd_trans hqm hmdvd⟩
+
+/-- A composite number has a prime divisor whose square is at most the
+number. This is the small-divisor witness the Pocklington argument finishes
+with. -/
+theorem exists_prime_le_sqrt {n : Nat} (h : 2 ≤ n) (hcomp : ¬ Prime n) :
+    ∃ p, Prime p ∧ p ∣ n ∧ p * p ≤ n := by
+  obtain ⟨m, hm2, hmlt, hmdvd⟩ := exists_small_divisor_of_not_prime h hcomp
+  obtain ⟨d, hd2, hdsq, hddvd⟩ :=
+    exists_trial_divisor (by omega : 0 < n) hmdvd (by omega) (by omega)
+  obtain ⟨q, hq, hqd⟩ := exists_prime_dvd hd2
+  refine ⟨q, hq, Nat.dvd_trans hqd hddvd, ?_⟩
+  have hqle : q ≤ d := Nat.le_of_dvd (by omega) hqd
+  have := Nat.mul_le_mul hqle hqle
+  omega
 
 /-! Regression coverage for the bounded checker: small inputs, primes, perfect
 squares, and semiprimes whose least factor is close to the square root. -/
