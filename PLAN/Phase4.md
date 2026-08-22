@@ -172,9 +172,10 @@ For library `hex-foo`, Phase 4 is done when:
   [SPEC/benchmarking.md §"Comparator naming"](../SPEC/benchmarking.md#comparator-naming):
   every required comparator is named with its class (optionally
   scoped per bench target), or the absence is declared with exactly
-  one of the five enumerated reasons (`implementation-is-extern`,
+  one of the six enumerated reasons (`implementation-is-extern`,
   `structural-layer`, `input-source-only`, `mathlib-bridge`,
-  `no-comparable-surface-in-named-comparator`). Missing declarations
+  `no-comparable-surface-in-named-comparator`,
+  `correspondence-only-layer`). Missing declarations
   block Phase-4 completion;
 - the [Attribution rule](../SPEC/benchmarking.md#the-attribution-rule)
   is satisfied: every dominant profiled cost maps to a registered
@@ -200,6 +201,44 @@ For library `hex-foo`, Phase 4 is done when:
 If any of these fail, the right action is rollback per
 [Conventions.md](Conventions.md), not a SPEC-text edit weakening
 the criterion.
+
+### Correspondence-only mathlib layers
+
+The criteria above presuppose that the library advertises at least one
+operation in one of the two evidence tracks. A **correspondence-only
+mathlib layer** advertises zero: it is a `mathlib: true` library whose
+API is correspondence statements alone, with no compiled operation and
+no proof or tactic operation of its own.
+[SPEC/benchmarking.md §Mathlib-free benches](../SPEC/benchmarking.md#mathlib-free-benches)
+forbids it a `HexFooMathlib/Bench.lean`, a `HexFooMathlib/Bench/`
+directory, and a `lean_exe *mathlib*_bench` entry, so it has no
+compiled track, and owning no proof surface it has no proof track
+either. For such a library Phase 4 is done when:
+
+- the library's SPEC declares the external-comparator absence with the
+  `correspondence-only-layer` reason from
+  [SPEC/benchmarking.md §"Comparator naming"](../SPEC/benchmarking.md#comparator-naming),
+  naming the computational performance owner or owners whose bench
+  targets carry the evidence for the operations this layer transports;
+- `libraries.yml[L]` declares no `phase4` block, and no headline report
+  at `reports/<lib>-performance.md` is required, per
+  [SPEC/benchmarking.md §Headline reports](../SPEC/benchmarking.md#headline-reports).
+  A report committed before the layer was classified may stay as a
+  historical artefact.
+
+The deliverables, the compiled-track exit criteria, and the
+empty-Concerns criterion do not apply; there is no track for them to
+attach to.
+
+The exemption is narrow, and every other `mathlib: true` library takes
+ordinary track assignment per [§Evidence tracks](#evidence-tracks) in
+whichever shape its SPEC declares: compiled-only, proof-only (an
+elaboration or tactic surface evidenced by fresh-module probes, as with
+HexRealRootsMathlib's `isolate_roots` term elaborator), or mixed. A
+library declaring a `libraries.yml` `proof_probes` root is normally
+outside the exemption, since those probes measure a proof surface it
+owns; so is a library owning an executable reifier, certificate
+checker, or tactic.
 
 ### Audit reset
 
