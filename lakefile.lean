@@ -673,6 +673,10 @@ lean_exe hexresultant_emit_fixtures where
   srcDir := "conformance"
   root := `HexResultant.EmitFixtures
 
+lean_exe hexsparsepoly_bench where
+  srcDir := "bench"
+  root := `HexSparsePoly.Bench
+
 lean_exe hexsparsepoly_emit_fixtures where
   srcDir := "conformance"
   root := `HexSparsePoly.EmitFixtures
