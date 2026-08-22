@@ -1452,6 +1452,31 @@ lookup, persistent table storage, or measured batch performance. The separate
 20/50-digit `log 2` experiment supplies precision-indexed series evidence but
 is not silently combined with this fixed six-decimal runtime schema.
 
+The same ordinary-kernel natural-log provider closes the complete one-site
+nested-log family in pinned `FKS2.theorem_6_2`. At `FKS2.lean:3605`, the exact
+source premise is
+`0 < log 14 + log (log 14) - 1`. A literal certificate authenticates that
+coordinate together with input 14, power-of-two shift 3, reduced atanh
+parameter `3/11`, eight terms, the auxiliary window `(2, 3)`, and threshold
+1. The finite series and geometric tail prove `2 < log 14 < 3`; the strict
+lower cut is then load-bearing in `Real.log_pos` for the second logarithm.
+The source-shaped wrapper preserves the exact premise after a localized PNT+
+rewrite. Raising the threshold to 5 fails the structural shape check at
+coordinate 3605 and is separately proved false from the same upper window.
+The runtime `checkShape` checks only the arithmetic consistency of those
+payload fields; it does not prove the semantic logarithm window. The
+package-owned `certificateHolds` theorem independently proves that window for
+the one identity-authenticated source literal. The payload fields are pinned
+constants rather than general checked parameters. This fixture does not claim
+the surrounding theorem-6.2 proof, arbitrary nested-log evaluation, or
+LeanCert tactic/API compatibility.
+The enclosing pinned declaration quantifies `{x₁ : ℝ}` with `x₁ ≥ 14` and
+`x ≥ x₁`, and concludes the original strict integral bound by the reciprocal
+of `log x₁ + log (log x₁) - 1`. That signature is transcribed source context;
+the offline matcher byte-pins the declaration name, line-3605 invocation, and
+literal provider row, while the inventory's whole-source digest detects wider
+source drift.
+
 The complete direct Table-10 negative-exponential block contributes 79 more
 source-shaped declarations, from `exp_neg_10_lt` through `exp_neg_200_lt`.
 All source arguments have denominator dividing six. The Mathlib-free
@@ -1639,8 +1664,9 @@ to `142` fails at the exact `FKS2.lean:4274` coordinate without a precision
 retry, and an ordinary theorem proves that proposed inequality false. The
 localized PNT+ rewrite substitutes only these four leaves; both enclosing
 theorem statements, their log-table premises, and all number-theoretic
-arguments are unchanged. The separate `FKS2.theorem_6_2` nested-log leaf and
-the global `IntervalAuto` interface remain pending.
+arguments are unchanged. The separate `FKS2.theorem_6_2` nested-log leaf is
+classified by the exact bounded source adapter above. The global
+`IntervalAuto` interface remains pending.
 
 The shared positive-exponential family covers the three remaining integer
 exponential leaves outside that nested-log proof. It preserves the exact
@@ -1679,8 +1705,9 @@ precision. Ordinary theorems prove both lowered endpoints incompatible.
 This localized rewrite changes only the three numerical leaves. The other
 LeanCert and `native_decide` obligations in `Cor22Floor.lean` remain pending,
 and no general `IntervalAuto` compatibility is claimed. Among the five
-file-local numerical clusters audited here, only the independent
-`FKS2.theorem_6_2` nested-log leaf remains pending.
+file-local numerical clusters audited here, all five are now classified by
+localized ordinary-kernel rewrites. This does not classify the shared global
+`IntervalAuto` interface or the remaining nonnumerical obligations.
 
 The next classified acceptance probe covers the numerical leaf in
 `LogTables.exp_neg_lt_1e_neg_100` while preserving the source theorem's useful
@@ -3300,6 +3327,12 @@ the fixed soundness and trust contracts.
 - `conformance/HexIntervalMathlib/PntNestedLogTwoConformance.lean`: exact
   dependency chronology, zero-domain and bypass rejection, source wrappers,
   and stronger two-sided proof-frontend closure.
+- `HexInterval/Experiment/PntFks2Nested.lean` and
+  `HexIntervalMathlib/Experiment/PntFks2Nested.lean`: the source-pinned
+  theorem-6.2 row and ordinary-kernel natural/nested-log proof.
+- `conformance/HexIntervalMathlib/PntFks2NestedConformance.lean`: exact source
+  premise adapter, threshold mutation, false-bound proof, and guarded axiom
+  reports.
 - `HexInterval/Experiment/PntPiPoint.lean` and
   `HexIntervalMathlib/Experiment/PntPiPoint.lean`: the provider-agnostic π
   operation, exact rational cut, and `Real.pi_lt_d2` semantic boundary.

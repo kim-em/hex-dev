@@ -652,5 +652,11 @@
     "baseline_blob": "6dd80771ae2212333b2a9b925b52056e0037ff56",
     "current_blob": "6459c4e64f38f814264dfe51f4d6539d3eb9e557",
     "reason": "Additionally registers the bounded Mathlib-free FKS2 mu-asymptotic and shared positive-exponential checkers, their proof-only real-semantics companions, and conformance modules on top of the retained Dusart, supported driver, Chebyshev, LogTables, FKS2, BKLNW, and public interval registrations; these acceptance-only modules do not enter the factorization service target or change its executable dependency graph."
+  },
+  {
+    "path": "lakefile.lean",
+    "baseline_blob": "6dd80771ae2212333b2a9b925b52056e0037ff56",
+    "current_blob": "6c284c54c8f55ac42b1150b3b279a84b5361aca9",
+    "reason": "Additionally registers the Mathlib-free source-correlated FKS2 theorem-6.2 nested-log checker, its proof-only real-semantics companion, and conformance module on top of the retained mu, positive-exp, supported driver, Dusart, Chebyshev, LogTables, FKS2, and public interval registrations; these acceptance-only modules do not enter the factorization service target or change its executable dependency graph."
   }
 ]
