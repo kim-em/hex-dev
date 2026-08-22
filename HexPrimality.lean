@@ -7,6 +7,7 @@ Authors: Kim Morrison
 module
 
 public import HexPrimality.Cert
+public import HexPrimality.Cert3
 public import HexPrimality.Elab
 public import HexPrimality.MillerRabin
 public import HexPrimality.Order
