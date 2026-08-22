@@ -156,6 +156,12 @@ structure Measure (Cache Result : Type) where
 /-- One registration and the only callback allowed to interpret its rule key. -/
 structure Handler (Fact Result Cache : Type) where
   registration : Registration
+  /-- Cache-independent applicability check for one exact reconstructed
+  application request and its authenticated whole-state snapshot. It may veto
+  an offer but cannot choose the compact application identity, route, ports,
+  ordering, or theorem schema. The whole snapshot is scheduler data only; the
+  invocation callback still receives just its declared fact inputs. -/
+  offers : Snapshot Fact → RuleRequest Fact → Bool := fun _ _ => true
   invoke : Cache → RuleRequest Fact → Plan Result × Cache
   /-- Package-owned semantic veto for a structurally valid scoped binding.
   Local registrations do not call this hook. -/
@@ -608,6 +614,32 @@ opaque Assembly.extendWithin (limits : Limits) (assembly : Assembly Fact Result)
 private def quoteCells (quotes : Array Quote) : Nat :=
   quotes.foldl (fun total quote => total + quote.body.length) 0
 
+/-- Resolve the immutable replay formats owned by one exact flattened rule.
+This projection preserves the sealed route/package/handler correspondence while
+letting a theorem companion check format coverage without eliminating the
+package's private cache type. -/
+opaque Registry.formats? (registry : Registry Fact Result) (rule : RuleId) :
+    Option (RuleKey × Array ReplayFormat) :=
+  match registry.registrations[rule.index]?, registry.routes[rule.index]? with
+  | some registration, some route => match registry.packages[route.package]? with
+    | none => none
+    | some package => match package.handlers[route.handler]? with
+      | none => none
+      | some handler =>
+          if registration.same handler.registration then
+            some (registration.key, handler.formats)
+          else none
+  | _, _ => none
+
+/-- Count the exact routed replay-format table, failing closed if a supposedly
+sealed route can no longer be resolved. -/
+opaque Registry.formatCount? (registry : Registry Fact Result) : Option Nat := do
+  let mut count := 0
+  for index in [0:registry.registrations.size] do
+    let (_, formats) ← registry.formats? { index }
+    count := count + formats.size
+  pure count
+
 private def validateQuotes (limits : Limits) (rule : RuleKey)
     (formats : Array ReplayFormat) (quotes : Array Quote) : Except Error Unit := do
   if limits.maxQuotes < quotes.size then throw (.resource .quotes)
@@ -620,6 +652,37 @@ private def validateQuotes (limits : Limits) (rule : RuleKey)
       | throw (.undeclaredFormat { rule, role := quote.role, schema := quote.schema })
     if !format.accepts quote then
       throw (.invalidBody { rule, role := quote.role, schema := quote.schema })
+
+/-- Ask the exact routed handler whether a controller-reconstructed request is
+currently applicable. Every application, program, registration, and route
+field is authenticated before the package-owned predicate is entered. The
+predicate is scheduler data only and carries no mutation or theorem authority. -/
+opaque Assembly.offers [DecidableEq Fact] (assembly : Assembly Fact Result)
+    (snapshot : Snapshot Fact) (request : RuleRequest Fact) : Bool :=
+  if !snapshot.check assembly.program ||
+      request.program.operations != assembly.program.operations ||
+      request.program.nodes != assembly.program.nodes then false
+  else
+    let id := request.action.application
+    match assembly.applications[id.index]? with
+    | none => false
+    | some application =>
+        if request.action.rule != application.rule || !application.accepts id request.action then
+          false
+        else match assembly.registry.registrations[application.rule.index]? with
+          | none => false
+          | some registration =>
+              if !RuleRequest.accepts registration request || request.inputs.any (fun input =>
+                  snapshot.fact? input.node != some input.fact ||
+                    snapshot.version? input.node != some input.version) then false
+              else match assembly.registry.routes[application.rule.index]? with
+                | none => false
+                | some route => match assembly.registry.packages[route.package]? with
+                  | none => false
+                  | some package => match package.handlers[route.handler]? with
+                    | none => false
+                    | some handler =>
+                        registration.same handler.registration && handler.offers snapshot request
 
 /-- Execute the exact handler selected by an authenticated application row.
 The request must repeat the assembled operation/node program and every

@@ -7,6 +7,7 @@ Authors: Kim Morrison
 module
 
 public import HexIntervalMathlib.Driver
+public import HexInterval.Executable
 
 @[expose] public section
 
@@ -39,14 +40,14 @@ head and scope are unchanged. Pure Lean values may be reused to explore
 alternative bounded successors. This is not a global or process-persistent
 budget, nor does restarting inherit any proof-closure or saturation claim.
 
-This is the supported autonomous programmatic loop.  Goal reification and the
+This is the supported autonomous programmatic loop. Goal reification and the
 public tactic currently use the separate flat forward path; split-search tactic
-integration remains a later edge.  The current runtime driver accepts fact
-events only.  The shipped vertical uses toy fact-event callbacks; concrete
-built-in arithmetic `Driver.Package` callbacks and application generators are
-not yet supplied. Mathlib-free raw package drafts, equality/instance actions,
-program-extension discovery, and automatic package discovery remain later
-interfaces; this module assembles an explicit Mathlib runtime/proof registry.
+integration remains a later edge. The current runtime driver accepts fact
+events only. In addition to the earlier explicit runtime table, the
+`Executable` namespace below adapts a sealed Mathlib-free executable assembly
+directly, including built-in arithmetic and independently owned arbitrary
+function packages. Equality/instance actions, program-extension discovery,
+and automatic package discovery remain later interfaces.
 -/
 
 namespace Hex.Interval.Controller
@@ -522,5 +523,386 @@ opaque runWithin [DecidableEq Fact] [DecidableEq Cause] [DecidableEq SemanticKey
                 { compatibility := state.compatibility, bundle, session, choices,
                   dismissedIncomplete := state.dismissedIncomplete } next)
   loop limits.maxChoices initial policyState
+
+/-! ## Sealed executable-assembly adapter -/
+
+namespace Executable
+
+/-- One package proposal. All chronology, current facts, installed meets, and
+action data are deliberately absent: the adapter derives them from the
+authenticated search request and its checked runtime fact domain. -/
+structure Proposal (Fact Cause : Type) where
+  node : NodeId
+  proposed : Fact
+  cause : Cause
+
+/-- The only callback result admitted by the current executable adapter.
+Every update must have exactly one separately returned raw quotation. -/
+structure FactOutcome (Fact Cause : Type) where
+  proposals : Array (Proposal Fact Cause)
+  diagnostic : Option Trace.Event := none
+
+abbrev RawAssembly (Fact Cause : Type) :=
+  Hex.Interval.Executable.Assembly Fact (FactOutcome Fact Cause)
+
+/-- Exact executable/theorem alignment. The executable assembly supplies the
+program, flattened registrations, routes, applications, callbacks, and private
+caches; callers cannot provide a second application or runtime table. -/
+structure Registry (Fact : Type) (semantics : Proof.Semantics Fact)
+    (Cause Plan : Type) where
+  private mk ::
+  key : Controller.Key
+  assembly : RawAssembly Fact Cause
+  domain : FactDomain Fact
+  proof : Proof.Registry semantics Plan
+  applicationGenerations : Array Nat
+  matcherEpoch : Nat
+
+inductive Error where
+  | invalidRegistry
+  | invalidApplication (application : ApplicationId)
+  | invalidQuote
+  | missingSchema (key : Proof.Key)
+  | invalidBody (key : Proof.Key)
+  | resource (resource : Controller.Resource)
+  | search (error : Search.Error)
+  | driver (error : Driver.Error)
+  | executable (error : Hex.Interval.Executable.Error)
+  | mismatch
+  deriving DecidableEq, Repr
+
+private def sameRegistrations (left right : Array Registration) : Bool := Id.run do
+  if left.size != right.size then return false
+  for index in [0:left.size] do
+    let some a := left[index]? | return false
+    let some b := right[index]? | return false
+    if !a.same b then return false
+  return true
+
+private def proofKey (rule : RuleKey) (schema : Nat) : Proof.Key :=
+  { rule, role := .fact, bodySchema := schema }
+
+private def routeFormats? (assembly : RawAssembly Fact Cause) (rule : RuleId) :
+    Option (RuleKey × Array Hex.Interval.Executable.ReplayFormat) :=
+  assembly.registry.formats? rule
+
+private def formatCoverage
+    (assembly : RawAssembly Fact Cause) (proof : Proof.Registry semantics Plan) : Bool := Id.run do
+  for ruleIndex in [0:assembly.registry.registrations.size] do
+    let some (rule, formats) := routeFormats? assembly { index := ruleIndex } | return false
+    for format in formats do
+      if format.role != .fact then return false
+      let key := proofKey rule format.schema
+      if (proof.fact? key).isNone then return false
+  for schema in proof.facts do
+    let some (ruleId, _) := Registration.find? assembly.registry.registrations schema.key.rule
+      | return false
+    let some (_, formats) := routeFormats? assembly ruleId | return false
+    if !(formats.any fun format =>
+        format.role == .fact && format.schema == schema.key.bodySchema) then return false
+  return proof.equalities.isEmpty && proof.instances.isEmpty &&
+    proof.refuters.isEmpty && proof.splits.isEmpty
+
+private def commonMatcherEpoch? (applications : Array Hex.Interval.Executable.Application) :
+    Option Nat := Id.run do
+  let mut epoch := none
+  for application in applications do
+    match application.matcherEpoch, epoch with
+    | none, _ => pure ()
+    | some current, none => epoch := some current
+    | some current, some expected => if current != expected then return none
+  return some (epoch.getD 0)
+
+/-- Seal exact bidirectional fact-format coverage between one executable
+assembly and one theorem registry. Equality, instance, refutation, and split
+schemas are intentionally rejected at this fact-only boundary. -/
+opaque Registry.buildWithin (stateLimits : State.Limits) (key : Controller.Key)
+    (assembly : RawAssembly Fact Cause) (domain : FactDomain Fact)
+    (proof : Proof.Registry semantics Plan) :
+    Except Error (Registry Fact semantics Cause Plan) := do
+  if stateLimits.maxApplications < assembly.applications.size then
+    throw (.resource .applications)
+  if stateLimits.maxRules < assembly.registry.registrations.size ||
+      stateLimits.maxRules < proof.registrations.size then
+    throw (.resource (.state .rules))
+  let some formatCount := assembly.registry.formatCount? | throw .invalidRegistry
+  if stateLimits.maxReplayFormats < formatCount then
+    throw (.resource (.state .replayFormats))
+  if !assembly.program.check ||
+      !Registration.check assembly.program proof.registrations ||
+      !sameRegistrations assembly.registry.registrations proof.registrations ||
+      !formatCoverage assembly proof then
+    throw .invalidRegistry
+  let some matcherEpoch := commonMatcherEpoch? assembly.applications
+    | throw .invalidRegistry
+  let generations := assembly.applications.map (·.generation)
+  if stateLimits.maxGeneration < matcherEpoch ||
+      generations.any (fun generation => stateLimits.maxGeneration < generation) then
+    throw (.resource (.state .generation))
+  pure { key, assembly, domain, proof, applicationGenerations := generations, matcherEpoch }
+
+private def request? (assembly : RawAssembly Fact Cause)
+    (branch : State.Branch Fact Cause) (serial : Nat)
+    (applicationId : ApplicationId) : Option (RuleRequest Fact) := do
+  let application ← assembly.applications[applicationId.index]?
+  let registration ← assembly.registry.registrations[application.rule.index]?
+  let inputs ← application.watches.mapM fun node => do
+    let fact ← branch.snapshot.fact? node
+    let version ← branch.versions[node.index]?
+    pure { node, fact, version }
+  let action : Action :=
+    { serial, programVersion := branch.programVersion, application := applicationId,
+      rule := application.rule, key := registration.key, node := application.node,
+      kind := application.kind, effort := application.effort,
+      generation := application.generation, inputs := inputs.map fun input =>
+        { node := input.node, version := input.version },
+      writes := application.writes, structuralInputs := application.structuralInputs,
+      matcherEpoch := application.matcherEpoch }
+  pure
+    { action
+      program :=
+        { programVersion := branch.programVersion,
+          operations := branch.program.operations, nodes := branch.program.nodes,
+          generations := branch.generations, depths := branch.depths }
+      inputs
+      writes := application.writes }
+
+private def offerClass : ActionKind → Policy.OfferClass
+  | .split => .split
+  | .instantiate => .instantiate
+  | .improve | .shave | .regularize => .retry
+  | _ => .invoke
+
+private def generate [DecidableEq Fact] [DecidableEq Cause]
+    (envelope : Search.Envelope) (registry : Registry Fact semantics Cause Plan)
+    (assembly : RawAssembly Fact Cause) (branch : State.Branch Fact Cause)
+    (serial : Nat) : Except Error (Array (Search.Offer ApplicationId RuleKey)) := do
+  if !branch.check || branch.program != assembly.program ||
+      assembly.program != registry.assembly.program ||
+      assembly.bindings != registry.assembly.bindings ||
+      !sameRegistrations assembly.registry.registrations
+        registry.assembly.registry.registrations ||
+      assembly.applications.size != registry.applicationGenerations.size then
+    throw .mismatch
+  if envelope.state.maxApplications < assembly.applications.size then
+    throw (.resource .applications)
+  let mut offers := #[]
+  for index in [0:assembly.applications.size] do
+    let id : ApplicationId := { index }
+    let some request := request? assembly branch serial id
+      | throw (.invalidApplication id)
+    if request.action.generation != registry.applicationGenerations[index]? then
+      throw (.invalidApplication id)
+    if assembly.offers branch.snapshot request then
+      if envelope.policy.maxOffers ≤ offers.size then
+        throw (.search (.policy .offerLimit))
+      offers := offers.push
+        { view :=
+            { id, key := request.action.key, offerClass := offerClass request.action.kind,
+              age := serial, score := 0 }
+          action := request.action }
+  pure offers
+
+private def startSession [DecidableEq Fact] [DecidableEq Cause]
+    (envelope : Search.Envelope) (measure : Policy.Measure ApplicationId RuleKey)
+    (registry : Registry Fact semantics Cause Plan) (assembly : RawAssembly Fact Cause)
+    (scope : Policy.ScopeId) (branch : State.Branch Fact Cause) := do
+  let offers ← generate envelope registry assembly branch 0
+  Search.Session.startWithin envelope measure branch assembly.registry.registrations
+    assembly.bindings registry.applicationGenerations #[] registry.matcherEpoch scope offers
+    |>.mapError Error.search
+
+private def refresh [DecidableEq Fact] [DecidableEq Cause]
+    (envelope : Search.Envelope) (measure : Policy.Measure ApplicationId RuleKey)
+    (registry : Registry Fact semantics Cause Plan) (assembly : RawAssembly Fact Cause)
+    (session : Search.Session Fact Cause ApplicationId RuleKey)
+    (dismissedIncomplete : Bool) := do
+  let offers ← generate envelope registry assembly session.branch session.serial
+  Search.Session.refreshWithin envelope measure session offers session.remaining dismissedIncomplete
+    |>.mapError Error.search
+
+/-- Sticky executable handle paired with the sealed controller lineage. The
+assembly stored here, including its private package caches, is authoritative;
+passing another same-key registry never transplants its cache value. -/
+structure State (Fact Cause Plan : Type) where
+  private mk ::
+  compatibility : Controller.Key
+  assembly : RawAssembly Fact Cause
+  bundle : Driver.Bundle Fact Cause Plan
+  session : Search.Session Fact Cause ApplicationId RuleKey
+  choices : Nat
+  dismissedIncomplete : Bool
+
+def policyMeasure : Policy.Measure ApplicationId RuleKey :=
+  Controller.policyMeasure fun key =>
+    { bytes := key.name.length + key.schema + 1, pairs := 1, work := 1 }
+
+opaque State.startWithin [DecidableEq Fact] [DecidableEq Cause]
+    (envelope : Search.Envelope) (registry : Registry Fact semantics Cause Plan)
+    (bundle : Driver.Bundle Fact Cause Plan) : Except Error (State Fact Cause Plan) :=
+  match Search.Result.current? bundle.tree with
+  | none => .error .mismatch
+  | some (_, source) =>
+      match startSession envelope policyMeasure registry registry.assembly
+          source.scope source.branch with
+      | .error error => .error error
+      | .ok session => .ok
+          { compatibility := registry.key, assembly := registry.assembly, bundle, session,
+            choices := 0, dismissedIncomplete := false }
+
+private def checkPolicy (limit : Controller.PolicyLimit)
+    (measure : PolicyState → Policy.Cost) (state : PolicyState) : Except Error Unit := do
+  let cost := measure state
+  if limit.bytes < cost.bytes || limit.pairs < cost.pairs || limit.work < cost.work then
+    throw (.resource .policyState)
+
+private def liftExcept.{u, v} {ε : Type u} {α : Type v} (result : Except ε α) :
+    Except ε (ULift α) :=
+  match result with
+  | .error error => .error error
+  | .ok value => .ok (ULift.up value)
+
+private def makeCommand (program : Program) (domain : FactDomain Fact)
+    (proof : Proof.Registry semantics Plan)
+    (request : Search.Request Fact ApplicationId RuleKey)
+    (invocation : Hex.Interval.Executable.Invocation (FactOutcome Fact Cause)) :
+    Except Error (Driver.Command Fact Cause ApplicationId RuleKey Plan) := do
+  if invocation.rule != request.action.key ||
+      invocation.quotes.size != invocation.result.proposals.size then
+    throw .invalidQuote
+  let mut updates := #[]
+  let mut events := []
+  let mut facts := request.facts.facts
+  let mut versions := request.facts.versions
+  let mut contradiction := false
+  for index in [0:invocation.result.proposals.size] do
+    let some proposal := invocation.result.proposals[index]? | throw .invalidQuote
+    let some quote := invocation.quotes[index]? | throw .invalidQuote
+    if quote.role != .fact then throw .invalidQuote
+    let key := proofKey invocation.rule quote.schema
+    let some schema := proof.fact? key | throw (.missingSchema key)
+    if (schema.decode quote.body).isNone then throw (.invalidBody key)
+    if !request.action.writes.contains proposal.node then throw .mismatch
+    let some instruction := program.node? proposal.node | throw .mismatch
+    let some previous := facts[proposal.node.index]? | throw .mismatch
+    let some version := versions[proposal.node.index]? | throw .mismatch
+    let (installed, refuted) ← match domain.narrow instruction.domain previous proposal.proposed with
+      | .improved fact => pure (fact, false)
+      | .contradiction fact => pure (fact, true)
+      | _ => throw .mismatch
+    let update : State.Update Fact Cause :=
+      { programVersion := request.programVersion, node := proposal.node,
+        previous := { node := proposal.node, version }, fact := installed,
+        version := version + 1, cause := proposal.cause }
+    updates := updates.push update
+    facts := facts.set! proposal.node.index installed
+    versions := versions.set! proposal.node.index (version + 1)
+    contradiction := contradiction || refuted
+    events := events ++ [.fact
+      { scope := request.scope, programVersion := request.programVersion,
+        action := request.action, node := proposal.node,
+        previous := update.previous, version := update.version,
+        proposed := proposal.proposed, installed,
+        assumptions := request.action.inputs, schema := key, body := quote.body }]
+  let outcome : Search.Outcome Fact Cause ApplicationId RuleKey :=
+    { scope := request.scope, serial := request.serial,
+      programVersion := request.programVersion, offer := request.offer,
+      action := request.action, updates,
+      contradiction,
+      diagnostic := invocation.result.diagnostic }
+  pure (.continue { outcome, events })
+
+private def invoke [DecidableEq Fact] (limits : Hex.Interval.Executable.Limits)
+    (domain : FactDomain Fact) (proof : Proof.Registry semantics Plan)
+    (assembly : RawAssembly Fact Cause)
+    (branch : State.Branch Fact Cause)
+    (request : Search.Request Fact ApplicationId RuleKey) :
+    Driver.Command Fact Cause ApplicationId RuleKey Plan ×
+      Except Error (RawAssembly Fact Cause) :=
+  match request? assembly branch request.serial request.action.application with
+  | none => (.stop 0, .error (.invalidApplication request.action.application))
+  | some exact =>
+      let requestedFacts := request.action.inputs.mapM fun seen => request.facts.fact? seen.node
+      if exact.action != request.action then
+        (.stop 0, .error .mismatch)
+      else match requestedFacts with
+        | none => (.stop 0, .error .mismatch)
+        | some facts =>
+          if _ : facts = exact.inputs.map fun input => input.fact then
+            match assembly.invokeWithin limits exact with
+            | .error error => (.stop 0, .error (.executable error))
+            | .ok (invocation, next) =>
+                match makeCommand assembly.program domain proof request invocation with
+                | .error error => (.stop 0, .error error)
+                | .ok command => (command, .ok next)
+          else (.stop 0, .error .mismatch)
+
+inductive Run (Fact Cause Plan PolicyState : Type)
+  | stopped (stop : Search.Stop Unit Unit) (state : State Fact Cause Plan)
+      (policy : PolicyState)
+
+/-- Run the fact-only executable adapter until the policy stops or a resource
+cap is exhausted. Every accepted invocation updates the sticky assembly cache,
+then regenerates offers from that exact replacement assembly. -/
+opaque runWithin [DecidableEq Fact] [DecidableEq Cause] [DecidableEq Plan]
+    (limits : Controller.Limits) (executableLimits : Hex.Interval.Executable.Limits)
+    (envelope : Search.Envelope) (policyStateMeasure : PolicyState → Policy.Cost)
+    (resultMeasure : Search.Result.Measure Fact Cause Plan Proof.Key)
+    (recipeMeasure : Driver.Measure Fact)
+    (registry : Registry Fact semantics Cause Plan)
+    (policy : Policy.Interface Fact PolicyState ApplicationId RuleKey)
+    (policyState : PolicyState) (initial : State Fact Cause Plan) :
+    Except Error (Run Fact Cause Plan PolicyState) := do
+  if initial.compatibility != registry.key then throw .mismatch
+  let _ ← liftExcept (checkPolicy limits.policyState policyStateMeasure policyState)
+  let rec loop (fuel : Nat) (state : State Fact Cause Plan) (policyState : PolicyState) := do
+    if state.choices >= limits.maxChoices then throw (.resource .choices)
+    match fuel with
+    | 0 => throw (.resource .choices)
+    | fuel + 1 =>
+      let choice := (← liftExcept (Search.chooseWithin envelope policyMeasure policy policyState
+        state.session |>.mapError Error.search)).down
+      match choice with
+      | .stopped stop next =>
+          let _ ← liftExcept (checkPolicy limits.policyState policyStateMeasure next)
+          pure (.stopped stop state next)
+      | .dismiss decision next =>
+          let _ ← liftExcept (checkPolicy limits.policyState policyStateMeasure next)
+          let offers := state.session.offers.filter fun offer => offer.view.id != decision.id
+          if offers.size + 1 != state.session.offers.size then throw .mismatch
+          let dismissedIncomplete := state.dismissedIncomplete || decision.offerClass != .split
+          let session := (← liftExcept (Search.Session.refreshWithin envelope policyMeasure
+            state.session offers state.session.remaining dismissedIncomplete
+              |>.mapError Error.search)).down
+          loop fuel { state with session, choices := state.choices + 1, dismissedIncomplete } next
+      | .select decision next =>
+          let _ ← liftExcept (checkPolicy limits.policyState policyStateMeasure next)
+          let callback : Search.Request Fact ApplicationId RuleKey →
+              Driver.Command Fact Cause ApplicationId RuleKey Plan ×
+                Except Error (RawAssembly Fact Cause) :=
+            invoke executableLimits registry.domain registry.proof state.assembly state.session.branch
+          let produced : Driver.Produced Fact Cause ApplicationId RuleKey Plan
+              (Except Error (RawAssembly Fact Cause)) ←
+            Driver.runWithWithin envelope policyMeasure limits.driver resultMeasure
+            recipeMeasure .depthFirst decision.expected callback
+            state.bundle state.session decision |>.mapError Error.driver
+          let choices := state.choices + 1
+          match produced.payload with
+          | none => match produced.step with
+            | .stopped stop bundle session => pure (.stopped stop
+                { state with bundle, session, choices } next)
+            | _ => throw .mismatch
+          | some (.error error) => throw error
+          | some (.ok assembly) => match produced.step with
+            | .continued bundle session =>
+                let session := (← liftExcept (refresh envelope policyMeasure registry assembly
+                  session state.dismissedIncomplete)).down
+                loop fuel
+                  { compatibility := state.compatibility, assembly, bundle, session, choices,
+                    dismissedIncomplete := state.dismissedIncomplete } next
+            | _ => throw .mismatch
+  loop limits.maxChoices initial policyState
+
+end Executable
 
 end Hex.Interval.Controller
