@@ -763,7 +763,10 @@ theorem graeffe_enclosePoly {cs : Array Hex.CoeffBall} {q : ℂ[X]}
 
 /-! # Soundness of a soft coefficient comparison -/
 
-private theorem sum_erase_range {M : Type*} [AddCommMonoid M]
+/-- Writing an omitted summand as an erased range or as an `if` gives the
+same finite sum.  Shared by the Pellet-style dominance arguments downstream
+(`RootFree`, `Pellet`, `Completeness.PelletDyadic`). -/
+theorem sum_erase_range {M : Type*} [AddCommMonoid M]
     (f : ℕ → M) (n k : ℕ) :
     (∑ i ∈ (Finset.range n).erase k, f i) =
       ∑ i ∈ Finset.range n, if i = k then 0 else f i := by

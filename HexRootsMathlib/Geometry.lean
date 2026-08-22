@@ -108,9 +108,12 @@ namespace SquareBounds
   Dyadic.toReal b.ymin ≤ Dyadic.toReal (s.im - s.halfWidth) ∧
   Dyadic.toReal (s.im + s.halfWidth) ≤ Dyadic.toReal b.ymax
 
+/-- A square's own bounds contain it. -/
 theorem bounds_contains (s : Hex.DyadicSquare) : Contains s.bounds s := by
   simp [Contains, Hex.DyadicSquare.bounds]
 
+/-- Merging another square into a bounding box keeps everything it already
+contained. -/
 theorem contains_merge_left {b : Hex.SquareBounds} {s t : Hex.DyadicSquare}
     (h : Contains b s) : Contains (b.merge t) s := by
   rcases h with ⟨hxlo, hxhi, hylo, hyhi⟩
@@ -119,18 +122,22 @@ theorem contains_merge_left {b : Hex.SquareBounds} {s t : Hex.DyadicSquare}
   exact ⟨min_le_left _ _ |>.trans hxlo, hxhi.trans (le_max_left _ _),
     min_le_left _ _ |>.trans hylo, hyhi.trans (le_max_left _ _)⟩
 
+/-- A merged bounding box contains the newly merged square. -/
 theorem contains_merge_right (b : Hex.SquareBounds) (s : Hex.DyadicSquare) :
     Contains (b.merge s) s := by
   simp only [Contains, Hex.SquareBounds.merge, Hex.DyadicSquare.bounds,
     Dyadic.toReal_min, Dyadic.toReal_max]
   exact ⟨min_le_right _ _, le_max_right _ _, min_le_right _ _, le_max_right _ _⟩
 
+/-- Extending an optional bounding box keeps every previously contained
+square. -/
 theorem contains_extend_old {b : Option Hex.SquareBounds} {s t : Hex.DyadicSquare}
     (h : ∃ box, b = some box ∧ Contains box s) :
     ∃ box, Hex.SquareBounds.extend b t = some box ∧ Contains box s := by
   obtain ⟨box, rfl, hs⟩ := h
   exact ⟨box.merge t, rfl, contains_merge_left hs⟩
 
+/-- Extending an optional bounding box contains the newly added square. -/
 theorem contains_extend_new (b : Option Hex.SquareBounds) (s : Hex.DyadicSquare) :
     ∃ box, Hex.SquareBounds.extend b s = some box ∧ Contains box s := by
   cases b with
@@ -244,6 +251,9 @@ the Mathlib interpretations use the explicit `DyadicSquare.*` prefix.
     disc s = Metric.ball (center s) ((2 : ℝ) ^ (-s.prec) * √2) := by
   simp [disc]
 
+/-- The closed square is the sup-norm closed ball of half-width radius about
+the centre.  Characterising lemma recording what is otherwise a definitional
+equality, so consumers need not unfold `closedSquare`. -/
 theorem closedSquare_eq_supClosedBall (s : Hex.DyadicSquare) :
     closedSquare s = supClosedBall (center s) (halfWidth s) := rfl
 
