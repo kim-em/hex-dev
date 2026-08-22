@@ -43,11 +43,14 @@ budget, nor does restarting inherit any proof-closure or saturation claim.
 This is the supported autonomous programmatic loop. Goal reification and the
 public tactic currently use the separate flat forward path; split-search tactic
 integration remains a later edge. The current runtime driver accepts fact
-events only. In addition to the earlier explicit runtime table, the
-`Executable` namespace below adapts a sealed Mathlib-free executable assembly
-directly, including built-in arithmetic and independently owned arbitrary
-function packages. Equality/instance actions, program-extension discovery,
-and automatic package discovery remain later interfaces.
+events only. The explicit `Controller.Package` route above still uses toy
+fact-event callbacks and application generators in conformance; it has no
+concrete built-in arithmetic driver package. The `Executable` namespace below
+is the distinct route by which built-in arithmetic and independently owned
+arbitrary-function fact packages reach this controller: it adapts a sealed
+Mathlib-free executable assembly without a caller application table.
+Equality/instance actions, program-extension discovery, and automatic package
+discovery remain later interfaces.
 -/
 
 namespace Hex.Interval.Controller
@@ -123,6 +126,7 @@ inductive Resource where
   | choices
   | policyState
   | state (resource : State.Resource)
+  | narrow (budget : Nat)
   deriving DecidableEq, Repr
 
 inductive Error where
@@ -641,17 +645,22 @@ opaque Registry.buildWithin (stateLimits : State.Limits) (key : Controller.Key)
     throw (.resource (.state .generation))
   pure { key, assembly, domain, proof, applicationGenerations := generations, matcherEpoch }
 
-private def request? (assembly : RawAssembly Fact Cause)
-    (branch : State.Branch Fact Cause) (serial : Nat)
+private def branchView (branch : State.Branch Fact Cause) : ProgramView :=
+  { programVersion := branch.programVersion,
+    operations := branch.program.operations, nodes := branch.program.nodes,
+    generations := branch.generations, depths := branch.depths }
+
+private def request? (assembly : RawAssembly Fact Cause) (snapshot : Snapshot Fact)
+    (program : ProgramView) (serial : Nat)
     (applicationId : ApplicationId) : Option (RuleRequest Fact) := do
   let application ← assembly.applications[applicationId.index]?
   let registration ← assembly.registry.registrations[application.rule.index]?
   let inputs ← application.watches.mapM fun node => do
-    let fact ← branch.snapshot.fact? node
-    let version ← branch.versions[node.index]?
+    let fact ← snapshot.fact? node
+    let version ← snapshot.version? node
     pure { node, fact, version }
   let action : Action :=
-    { serial, programVersion := branch.programVersion, application := applicationId,
+    { serial, programVersion := program.programVersion, application := applicationId,
       rule := application.rule, key := registration.key, node := application.node,
       kind := application.kind, effort := application.effort,
       generation := application.generation, inputs := inputs.map fun input =>
@@ -659,25 +668,14 @@ private def request? (assembly : RawAssembly Fact Cause)
       writes := application.writes, structuralInputs := application.structuralInputs,
       matcherEpoch := application.matcherEpoch }
   pure
-    { action
-      program :=
-        { programVersion := branch.programVersion,
-          operations := branch.program.operations, nodes := branch.program.nodes,
-          generations := branch.generations, depths := branch.depths }
-      inputs
-      writes := application.writes }
-
-private def offerClass : ActionKind → Policy.OfferClass
-  | .split => .split
-  | .instantiate => .instantiate
-  | .improve | .shave | .regularize => .retry
-  | _ => .invoke
+    { action, program, inputs, writes := application.writes }
 
 private def generate [DecidableEq Fact] [DecidableEq Cause]
     (envelope : Search.Envelope) (registry : Registry Fact semantics Cause Plan)
     (assembly : RawAssembly Fact Cause) (branch : State.Branch Fact Cause)
     (serial : Nat) : Except Error (Array (Search.Offer ApplicationId RuleKey)) := do
-  if !branch.check || branch.program != assembly.program ||
+  let some snapshot := branch.checkedSnapshot? | throw .mismatch
+  if branch.program != assembly.program ||
       assembly.program != registry.assembly.program ||
       assembly.bindings != registry.assembly.bindings ||
       !sameRegistrations assembly.registry.registrations
@@ -686,14 +684,16 @@ private def generate [DecidableEq Fact] [DecidableEq Cause]
     throw .mismatch
   if envelope.state.maxApplications < assembly.applications.size then
     throw (.resource .applications)
+  let program := branchView branch
+  let some context := assembly.offerContext? snapshot program | throw .mismatch
   let mut offers := #[]
   for index in [0:assembly.applications.size] do
     let id : ApplicationId := { index }
-    let some request := request? assembly branch serial id
+    let some request := request? assembly snapshot program serial id
       | throw (.invalidApplication id)
-    if request.action.generation != registry.applicationGenerations[index]? then
+    if registry.applicationGenerations[index]? != some request.action.generation then
       throw (.invalidApplication id)
-    if assembly.offers branch.snapshot request then
+    if context.offers request then
       if envelope.policy.maxOffers ≤ offers.size then
         throw (.search (.policy .offerLimit))
       offers := offers.push
@@ -718,6 +718,9 @@ private def refresh [DecidableEq Fact] [DecidableEq Cause]
     (session : Search.Session Fact Cause ApplicationId RuleKey)
     (dismissedIncomplete : Bool) := do
   let offers ← generate envelope registry assembly session.branch session.serial
+  -- As in the sibling explicit-package controller, regeneration performs no
+  -- engine-budgeted action. The accepted Search transition has already
+  -- updated `remaining`, so refresh carries that exact value unchanged.
   Search.Session.refreshWithin envelope measure session offers session.remaining dismissedIncomplete
     |>.mapError Error.search
 
@@ -789,6 +792,7 @@ private def makeCommand (program : Program) (domain : FactDomain Fact)
     let (installed, refuted) ← match domain.narrow instruction.domain previous proposal.proposed with
       | .improved fact => pure (fact, false)
       | .contradiction fact => pure (fact, true)
+      | .resourceLimit budget => throw (.resource (.narrow budget))
       | _ => throw .mismatch
     let update : State.Update Fact Cause :=
       { programVersion := request.programVersion, node := proposal.node,
@@ -819,7 +823,8 @@ private def invoke [DecidableEq Fact] (limits : Hex.Interval.Executable.Limits)
     (request : Search.Request Fact ApplicationId RuleKey) :
     Driver.Command Fact Cause ApplicationId RuleKey Plan ×
       Except Error (RawAssembly Fact Cause) :=
-  match request? assembly branch request.serial request.action.application with
+  match request? assembly branch.snapshot (branchView branch) request.serial
+      request.action.application with
   | none => (.stop 0, .error (.invalidApplication request.action.application))
   | some exact =>
       let requestedFacts := request.action.inputs.mapM fun seen => request.facts.fact? seen.node

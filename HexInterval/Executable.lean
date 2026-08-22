@@ -653,36 +653,101 @@ private def validateQuotes (limits : Limits) (rule : RuleKey)
     if !format.accepts quote then
       throw (.invalidBody { rule, role := quote.role, schema := quote.schema })
 
-/-- Ask the exact routed handler whether a controller-reconstructed request is
-currently applicable. Every application, program, registration, and route
-field is authenticated before the package-owned predicate is entered. The
-predicate is scheduler data only and carries no mutation or theorem authority. -/
+private def requestAcceptsChecked (registration : Registration)
+    (request : RuleRequest Fact) : Bool :=
+  if request.program.programVersion != request.action.programVersion then false
+  else match request.program.node? request.action.node with
+    | none => false
+    | some anchor =>
+        let inputNodes := request.inputs.map (fun input => input.node)
+        let seen := request.inputs.map fun input =>
+          { node := input.node, version := input.version : SeenVersion }
+        let common := registration.key == request.action.key &&
+          registration.kind == request.action.kind &&
+          request.program.operationKey? request.action.node == some registration.head &&
+          request.action.inputs == seen && request.action.writes == request.writes &&
+          match registration.matchWatch with
+          | .none =>
+              request.action.structuralInputs.isEmpty && request.action.matcherEpoch.isNone
+          | .network =>
+              !request.action.structuralInputs.isEmpty && request.action.matcherEpoch.isSome
+        common && match registration.binding with
+          | .local =>
+              Slot.resolveAll? request.action.node anchor registration.watches ==
+                  some inputNodes &&
+                Slot.resolveAll? request.action.node anchor registration.writes ==
+                  some request.writes
+          | .scoped =>
+              registration.watches.isEmpty && registration.writes.isEmpty &&
+                allDistinct inputNodes && allDistinct request.writes &&
+                inputNodes.all (fun node => (request.program.node? node).isSome) &&
+                request.writes.all (fun node => (request.program.node? node).isSome)
+          | .global =>
+              registration.watches.isEmpty && registration.writes.isEmpty &&
+                inputNodes.isEmpty && request.writes.isEmpty
+
+private def offersChecked [DecidableEq Fact] (assembly : Assembly Fact Result)
+    (snapshot : Snapshot Fact) (request : RuleRequest Fact) : Bool :=
+  let id := request.action.application
+  match assembly.applications[id.index]? with
+  | none => false
+  | some application =>
+      if request.action.rule != application.rule || !application.accepts id request.action then
+        false
+      else match assembly.registry.registrations[application.rule.index]? with
+        | none => false
+        | some registration =>
+            if !requestAcceptsChecked registration request || request.inputs.any (fun input =>
+                snapshot.fact? input.node != some input.fact ||
+                  snapshot.version? input.node != some input.version) then false
+            else match assembly.registry.routes[application.rule.index]? with
+              | none => false
+              | some route => match assembly.registry.packages[route.package]? with
+                | none => false
+                | some package => match package.handlers[route.handler]? with
+                  | none => false
+                  | some handler =>
+                      registration.same handler.registration && handler.offers snapshot request
+
+/-- One sealed, checked snapshot/program context for a complete offer-generation
+pass. Its constructor is private so package predicates can be entered through
+the cheaper per-application path only after the shared whole-state checks. -/
+structure OfferContext (Fact Result : Type) where
+  private mk ::
+  assembly : Assembly Fact Result
+  snapshot : Snapshot Fact
+  program : ProgramView
+
+/-- Authenticate the common snapshot and program view once before enumerating
+an assembly's applications. Program version remains controller-owned; the
+per-request check requires it to agree with each reconstructed action. -/
+opaque Assembly.offerContext? [DecidableEq Fact] (assembly : Assembly Fact Result)
+    (snapshot : Snapshot Fact) (program : ProgramView) : Option (OfferContext Fact Result) :=
+  if !snapshot.check assembly.program ||
+      program.operations != assembly.program.operations ||
+      program.nodes != assembly.program.nodes ||
+      program.generations.size != program.nodes.size ||
+      assembly.program.depths? != some program.depths then none
+  else some { assembly, snapshot, program }
+
+/-- Ask the exact routed handler whether one reconstructed application is
+currently applicable inside an already checked generation pass. The handler
+receives the context's authenticated program rather than caller-supplied
+program arrays. The predicate is scheduler data only and carries no mutation
+or theorem authority. -/
+opaque OfferContext.offers [DecidableEq Fact] (context : OfferContext Fact Result)
+    (request : RuleRequest Fact) : Bool :=
+  offersChecked context.assembly context.snapshot { request with program := context.program }
+
+/-- Authenticate a standalone snapshot/request and ask the exact routed
+handler whether it is currently applicable. Controllers enumerating a whole
+assembly should construct one `OfferContext` and reuse its checked path, so
+whole snapshot/program validation is paid once rather than once per row. -/
 opaque Assembly.offers [DecidableEq Fact] (assembly : Assembly Fact Result)
     (snapshot : Snapshot Fact) (request : RuleRequest Fact) : Bool :=
-  if !snapshot.check assembly.program ||
-      request.program.operations != assembly.program.operations ||
-      request.program.nodes != assembly.program.nodes then false
-  else
-    let id := request.action.application
-    match assembly.applications[id.index]? with
-    | none => false
-    | some application =>
-        if request.action.rule != application.rule || !application.accepts id request.action then
-          false
-        else match assembly.registry.registrations[application.rule.index]? with
-          | none => false
-          | some registration =>
-              if !RuleRequest.accepts registration request || request.inputs.any (fun input =>
-                  snapshot.fact? input.node != some input.fact ||
-                    snapshot.version? input.node != some input.version) then false
-              else match assembly.registry.routes[application.rule.index]? with
-                | none => false
-                | some route => match assembly.registry.packages[route.package]? with
-                  | none => false
-                  | some package => match package.handlers[route.handler]? with
-                    | none => false
-                    | some handler =>
-                        registration.same handler.registration && handler.offers snapshot request
+  match assembly.offerContext? snapshot request.program with
+  | none => false
+  | some context => context.offers request
 
 /-- Execute the exact handler selected by an authenticated application row.
 The request must repeat the assembled operation/node program and every

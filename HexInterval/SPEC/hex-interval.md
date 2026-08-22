@@ -110,8 +110,11 @@ recipe data together. It can advance root and child-local fact histories before
 splitting or settling. The supported explicit controller aligns fact-event
 runtime and proof registries, regenerates bounded deterministic offer
 snapshots, and iterates a replaceable policy over the sealed tree/session
-bundle. Its executable adapter consumes the sealed Mathlib-free package
-assembly directly: package predicates decide applicability, while the
+bundle. Its explicit `Controller.Package` conformance route still uses toy
+fact-event callbacks and autonomous application generators; it has no concrete
+built-in arithmetic package. Built-in arithmetic reaches the controller only
+through its executable adapter. That route consumes the sealed Mathlib-free
+package assembly directly: package predicates decide applicability, while the
 assembly/controller derives exact flat application identity, routes, ports,
 order, and action chronology. It derives accepted updates and fact events from
 the authenticated Search request and current snapshot; raw
@@ -5323,6 +5326,14 @@ candidates, and `b` the number of live branch states.
   reference cost. This is not an incremental tree-store bound. `maxNodes`
   therefore stays small and measurement-gated until a production
   representation avoids repeated full-prefix validation.
+- One `Controller.Executable` offer regeneration reconstructs and validates
+  the retained branch snapshot and executable program context once. It then
+  scans the flat applications with per-row identity, port, registration,
+  route, fact/version, and package-predicate work. Its local generation cost
+  is therefore one whole-branch/program check plus the sum of bounded
+  application checks, not one whole-branch/program check per application.
+  Subsequent `Search.Session` start or refresh still performs its own
+  independent complete session authentication.
 - Fact comparison and contradiction checks use exact endpoint comparison. For
   the dyadic candidate, integer cost is proportional to effective endpoint
   height and the permitted exponent-alignment shift; a rational candidate must
@@ -5432,7 +5443,10 @@ their declared cost inside a scheduler bound.
   registry key is a
   trusted compatibility epoch, not callback-object identity: same-key
   assemblies deliberately declare replaceable implementations whose results
-  still cross the runtime and proof checks. `Controller.Executable` additionally
+  still cross the runtime and proof checks. This explicit `Controller.Package`
+  route still has toy fact-event callbacks and autonomous generators in its
+  conformance; concrete built-in arithmetic enters only through
+  `Controller.Executable`. That adapter additionally
   consumes a sealed `Executable.Assembly` without a caller-supplied application
   table. It derives action fields, fact versions, installed meets, assumptions,
   event scope, and `Proof.Key` addresses from the authenticated request and

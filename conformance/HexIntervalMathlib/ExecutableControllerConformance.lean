@@ -133,6 +133,8 @@ def proofLimits : Proof.Limits :=
 def proofRegistry? : Option (Proof.Registry (Rule.semantics config)) :=
   (Rule.buildWithWithin proofLimits config program #[copyProofPackage]).toOption
 
+#guard proofRegistry?.isSome
+
 def runtimeDomain : FactDomain Hex.Interval :=
   { top := fun _ => Hex.Interval.whole,
     narrow := fun _ previous proposed =>
@@ -386,6 +388,14 @@ theorem executableArithmeticAndArbitraryFunction :
     (Rule.semantics config).Entails program (Proof.initialBase input) input.target :=
   replayEvidence.proof
 
+/--
+info: 'Hex.IntervalMathlib.ExecutableControllerConformance.executableArithmeticAndArbitraryFunction' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound]
+-/
+#guard_msgs in
+#print axioms executableArithmeticAndArbitraryFunction
+
 /-! ## Mutation and exact-boundary checks -/
 
 def arithmeticWith
@@ -412,7 +422,8 @@ def buildRegistry
     (copy : Package Hex.Interval (Controller.Executable.FactOutcome Hex.Interval Nat) :=
       copyPackage)
     (key : Controller.Key := controllerKey)
-    (limits : State.Limits := stateLimits) :
+    (limits : State.Limits := stateLimits)
+    (domain : FactDomain Hex.Interval := runtimeDomain) :
     Except Controller.Executable.Error
       (Controller.Executable.Registry Hex.Interval (Rule.semantics config) Nat (List Nat)) :=
   match buildAssembly arithmetic copy with
@@ -420,7 +431,7 @@ def buildRegistry
   | .ok assembly => match proofRegistry? with
     | none => .error .invalidRegistry
     | some proof =>
-      Controller.Executable.Registry.buildWithin limits key assembly runtimeDomain proof
+      Controller.Executable.Registry.buildWithin limits key assembly domain proof
 
 def runFresh
     (registry : Controller.Executable.Registry Hex.Interval (Rule.semantics config)
@@ -538,6 +549,26 @@ def callbackMutationRejected : Bool :=
     | _ => false)
 
 #guard callbackMutationRejected
+
+def resourceDomain : FactDomain Hex.Interval :=
+  { runtimeDomain with narrow := fun _ _ _ => .resourceLimit 7 }
+
+def noChangeDomain : FactDomain Hex.Interval :=
+  { runtimeDomain with narrow := fun _ _ _ => .noChange }
+
+def narrowDiagnosticDistinct : Bool :=
+  (match buildRegistry (domain := resourceDomain) with
+    | .ok registry => match runFresh registry with
+      | .error (.resource (.narrow 7)) => true
+      | _ => false
+    | _ => false) &&
+  (match buildRegistry (domain := noChangeDomain) with
+    | .ok registry => match runFresh registry with
+      | .error .mismatch => true
+      | _ => false
+    | _ => false)
+
+#guard narrowDiagnosticDistinct
 
 def applicationsOneOver : Bool :=
   let small := { stateLimits with maxApplications := 2 }
