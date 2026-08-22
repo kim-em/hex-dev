@@ -41,7 +41,14 @@ granting runtime state evidence authority. The current package fixes one
 natural exponent and one dyadic constant, shared respectively by every node at
 the built-in power and constant operation indices; duplicate package
 registration and operation keys cannot provide another such parameterization.
-Arbitrary-function package discovery, Mathlib-free runtime packages,
+The Mathlib-free `Executable.Assembly` now supports explicit stable-key
+arbitrary-operation callback packages, private caches, exact concrete
+application rows, and bounded raw replay formats. Those raw quotations are not
+Mathlib proof events and are not yet correlated with this theorem registry.
+Its constructors are sealed under ordinary imports; deliberate `import all
+HexInterval.Executable` is a repository-guarded trusted-source escape hatch,
+not decoded runtime authority.
+Arbitrary-function theorem-package discovery, executable-to-proof quotation,
 split-search tactic integration, and default package discovery remain
 experimental. The supported callback driver executes one already-selected
 authenticated package action and atomically advances a sealed result tree and
@@ -3266,6 +3273,10 @@ the fixed soundness and trust contracts.
 
 ## File organization
 
+- `HexInterval/Executable.lean`: sealed explicit executable packages, checked
+  handler routes and concrete application tables, package-owned cache/result
+  measures, append-stable local program extension, and inert bounded raw replay
+  quotations. It does not generate offers or construct proof events.
 - `HexIntervalMathlib/Interval.lean`: real membership, cut lemmas, and exact
   semantics for construction, intersection, hull, and negation.
 - `HexIntervalMathlib/Addition.lean` and

@@ -13,6 +13,7 @@ public import HexInterval.State
 public import HexInterval.Trace
 public import HexInterval.Policy
 public import HexInterval.Search
+public import HexInterval.Executable
 
 public section
 
@@ -49,10 +50,14 @@ checked current parent snapshot and one exact seed delta, retains explicit
 target/refutation/unknown terminals, and carries no theorem authority. A
 deliberate `import all HexInterval.Search` is trusted implementation access,
 not decoded-runtime authority, and repository checks reject accidental uses.
-Concrete callbacks and offer generation, policy implementations, a complete
-branch-search loop, and measurement-selected storage remain experimental. The
-Mathlib companion supplies a bounded authenticated callback-to-tree-recipe
-step driver; package callbacks and their recipe data remain untrusted. Exact public interval
+The supported executable assembly now joins explicit stable-key package
+declarations, private caches, checked callback routes, bounded raw replay
+formats, and an exact concrete application table for one program. Its raw
+quotations are not Mathlib proof events or evidence. Offer generation, policy
+implementations, a complete branch-search loop, and measurement-selected
+storage remain experimental. The Mathlib companion supplies a bounded
+authenticated callback-to-tree-recipe step driver; package callbacks and their
+recipe data remain untrusted. Exact public interval
 splitting is already supported; the Mathlib companion separately owns flat
 forward replay and checked retained-tree proof folding.
 -/
