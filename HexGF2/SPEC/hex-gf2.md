@@ -1,11 +1,14 @@
-# hex-gf2 (GF(2) packed arithmetic, depends on hex-poly)
+# hex-gf2 (GF(2) packed arithmetic, depends on hex-basic)
 
 Packed bitwise representation of polynomials over F_2. Addition is
 XOR, multiplication uses carry-less multiply. Substantially faster
 than the generic `FpPoly 2` path (up to 64x for addition-heavy
-workloads). Actual speedups depend on workload; benchmarks comparing
-`GF2Poly` vs `FpPoly 2` for Berlekamp matrix construction and
-polynomial GCD are planned.
+workloads). Actual speedups depend on workload. Benchmarks comparing
+`GF2Poly` vs `FpPoly 2` for polynomial GCD and Berlekamp matrix
+construction exist, but they are cross-library, so their
+registrations live in `bench/HexGF2Bench.lean` at the executable
+root, outside the per-library `bench/HexGF2/` tree. The per-library
+suite covers the packed core and the NTL comparator registrations.
 
 **Contents:**
 

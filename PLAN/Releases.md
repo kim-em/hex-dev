@@ -31,8 +31,7 @@ example that exercises the advertised user story end-to-end.
   using `hex-berlekamp`'s Rabin test or `hex-conway`'s tabulated
   polynomials.
 - **Tutorials:** AES modulus irreducibility (anchored to
-  `hex-berlekamp`); prime splitting via Kummer-Dedekind (anchored to
-  `hex-gfq`).
+  `hex-berlekamp`).
 
 ### Release 3: Certified integer factorization
 
@@ -45,6 +44,9 @@ example that exercises the advertised user story end-to-end.
 - **Integration example:** `Examples/Release3.lean` — factor a handful
   of integer polynomials end-to-end, including at least one case that
   benefits from Hensel lifting beyond the baseline `mod p` step.
+- **Tutorials:** prime splitting via Kummer-Dedekind (anchored to
+  `hex-berlekamp-zassenhaus`, per the anchor table in
+  [Phase7.md](Phase7.md)).
 
 ### Release 4: Conditional lattice factorization
 

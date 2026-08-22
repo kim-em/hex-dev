@@ -67,9 +67,10 @@ side stays executable.
 
 No external comparator is required.
 
-**Justification:** `proof-only-layer` per
+**Justification:** `correspondence-only-layer` per
 `SPEC/benchmarking.md §"Comparator naming"`. This library introduces no new
 arithmetic algorithm: it states correspondences between representations that
-hex-gf2 and hex-gfq-field implement, and their performance is measured in those
-libraries. The encoding and decoding functions it does define exist to state
-those correspondences, not as a computational surface anyone races.
+hex-gf2 and hex-gfq-field implement, and those two are the computational
+performance owners, where the arithmetic is measured. The encoding and decoding
+functions it does define exist to state those correspondences, not as a
+computational surface anyone races.
