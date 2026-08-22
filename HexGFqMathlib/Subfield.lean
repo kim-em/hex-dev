@@ -29,7 +29,6 @@ monomial data.
 namespace HexGFqMathlib
 
 open Hex
-open scoped HexPolyFpMathlib
 
 variable {p : Nat} [Hex.ZMod64.Bounds p] [Hex.ZMod64.PrimeModulus p]
 

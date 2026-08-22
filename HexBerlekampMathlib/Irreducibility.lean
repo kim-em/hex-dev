@@ -37,7 +37,7 @@ open Polynomial
 -- sites spelling these `HexBerlekampMathlib.foo` keep resolving.
 export HexPolyFpMathlib (fpPolyToPolynomial polynomialToFpPoly
   coeff_fpPolyToPolynomial fpPolyEquiv toMathlibPolynomial fpPolyEquiv_apply
-  fpPolyEquiv_symm_apply coeff_toMathlibPolynomial coeff_toMathlibPolynomial_equiv
+  fpPolyEquiv_symm_apply coeff_toMathlibPolynomial
   toMathlibPolynomial_monic toMathlibPolynomial_derivative toMathlibPolynomial_mul
   toMathlibPolynomial_add toMathlibPolynomial_sub toMathlibPolynomial_C
   toMathlibPolynomial_monomial_one toMathlibPolynomial_X toMathlibPolynomial_dvd
