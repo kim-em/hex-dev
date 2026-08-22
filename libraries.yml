@@ -609,7 +609,7 @@ libraries:
   HexResultantMathlib:
     deps: [HexResultant, HexPolyMathlib]
     mathlib: true
-    done_through: 3
+    done_through: 5
     status: active
   HexNumberField:
     deps: [HexPolyZ, HexRoots, HexResultant, HexBerlekampZassenhaus, HexMatrix, HexRowReduce]
