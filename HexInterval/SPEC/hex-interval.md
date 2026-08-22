@@ -5610,16 +5610,18 @@ their declared cost inside a scheduler bound.
   or theorem authority. Invocation rechecks complete application/request
   correspondence and commits
   a cache replacement only after result and quotation admission. The initial
-  compiler does not create global structural-matcher applications. Fact-event
-  correlation is supplied by `HexIntervalMathlib.Controller.Executable`; typed
-  equality/instance correlation and offer generation for typed batches remain
-  later layers.
+  compiler does not create global structural-matcher applications; offer
+  generation remains a later layer. Fact-event correlation is supplied by
+  `HexIntervalMathlib.Controller.Executable`; the separate supported
+  `HexIntervalMathlib.Runtime` companion correlates sealed typed fact,
+  equality, transport, and instance transitions with theorem schemas.
 - `HexInterval/Runtime.lean`: supported sealed Mathlib-free ownership of one
   executable assembly, branch, and exact equality arena; atomic typed fact,
   equality, transport, and append-only instance events; exact application,
   binding, node, generation, and equality authority; and sealed before/after
   transitions retained by `Search.Result.Tree`. Raw quotations remain inert
-  data pending a separately checked Mathlib proof adapter.
+  data; theorem authority is supplied only by the separately checked
+  `HexIntervalMathlib.Runtime` proof adapter.
 - `HexInterval/Trace.lean`: supported exact fact/instance chronology and
   bounded diagnostic-log contracts. Diagnostic bytes count retained `UInt8`
   payload cells after callback construction; they do not claim to preempt
