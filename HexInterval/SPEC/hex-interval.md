@@ -3205,29 +3205,28 @@ or authorize execution. Supported authority crosses complete `Session`
 authentication through `chooseWithin`, `prepareWithin`, or a checked session
 transition. The separate supported `Executable.Assembly` seals a checked
 program, exact package routes/caches, bindings, and concrete application rows,
-and its
-`invokeWithin` rechecks the selected identifier against the row's rule, anchor,
-kind, reads, writes, structural inputs, matcher epoch, effort, and creation
-generation before routing a callback. `Controller.Executable` now retains that
-assembly as a sticky handle, generates offers from its exact row order, and
-passes a replacement private cache onward only after Search, Driver, and
-quotation/schema checks accept the fact-only transition. Assembly separately
-retains the global
-generation cursor, so a node-only extension cannot lose its generation merely
-because it creates no concrete application. The supported `Runtime.State` owns that
-assembly together with the exact branch, equality arena, callback serial, and
-admitted-instance count. Its checked `stepWithin` is the Mathlib-free bridge
-from one exact application row to an atomic typed event batch. The supported
-`Runtime.Controller` owns that separate autonomous layer: a runtime-generated
+and its `invokeWithin` rechecks the selected identifier against the row's
+rule, anchor, kind, reads, writes, structural inputs, matcher epoch, effort,
+and creation generation before routing a callback. `Controller.Executable`
+now retains that assembly as a sticky handle, generates offers from its exact
+row order, and passes a replacement private cache onward only after Search,
+Driver, and quotation/schema checks accept the fact-only transition. The
+assembly separately retains the global generation cursor, so a node-only extension cannot lose its
+generation merely because it creates no concrete application. The supported
+`Runtime.State` owns that assembly together with the exact branch, equality
+arena, callback serial, and admitted-instance count. Its checked `stepWithin`
+is the Mathlib-free bridge from one exact application row to an atomic typed
+event batch. The supported `Runtime.Controller` owns that separate autonomous
+layer: a runtime-generated
 sealed offer snapshot carries the exact branch, application/binding tables,
 equality generations, callback serial, residual engine budgets, and an honest
-completeness bit into Search; one selected action
-returns an inseparable transition, sticky-cache successor, and regenerated
-offer snapshot before the same transition advances the retained tree. Assembly
-owns only the operation/node program: request
-program version and generation side tables remain controller-owned snapshot
-data and receive only the request-internal checks supplied by `ProgramView` and
-`RuleRequest`. Generic Search does not decrement a caller-supplied `remaining`
+completeness bit into Search; one selected action returns an inseparable
+transition, sticky-cache successor, and regenerated offer snapshot before the
+same transition advances the retained tree. The assembly owns only the
+operation/node program: request program version and generation
+side tables remain controller-owned snapshot data and receive only the
+request-internal checks supplied by `ProgramView` and `RuleRequest`. Generic
+Search does not decrement a caller-supplied `remaining`
 budget view. The runtime specialization instead replaces it from every sealed
 snapshot: actions, facts, nodes, applications, equalities, instances, and
 generation report exact residuals, while matcher visits, retained suggestions,
@@ -3249,10 +3248,16 @@ structural inputs remain duplicate-free. A runtime-owned snapshot containing
 only repeated reads is therefore complete. A handler-approved local
 application with duplicate resolved writes is omitted and sets the sticky
 incomplete bit, although direct Runtime execution still checks its exact row
-and events. The current sealed Executable compiler creates no structural
-matcher application rows; the structural-input distinctness check is retained
-for such rows when that compiler support is added, not presented as a
-currently constructible Runtime case.
+and events. Repeating a write node does not amplify the set-membership
+authority used by event admission, but Search intentionally keeps write and
+structural lists canonical and distinct instead of normalizing
+authority-bearing input. Consequently a contraction or backward rule on
+`f x x` whose distinct declared write slots resolve to the same node can remain
+directly executable yet unschedulable, with sticky snapshot incompleteness.
+This bridge does not broaden that contract. The current sealed Executable
+compiler creates no structural matcher application rows. The structural-input
+distinctness check is retained for such rows when that compiler support is
+added, not presented as a currently constructible Runtime case.
 
 As with Search, sealing is an ordinary/public-import boundary. Deliberate
 `import all HexInterval.Executable` exposes its private constructors to trusted
@@ -5569,10 +5574,10 @@ their declared cost inside a scheduler bound.
   callback request; scoped binding reads, writes, and structural inputs remain
   duplicate-free authority.
   A caller-owned logical measure bounds the initial policy state and every
-  callback successor against
-  independent byte/pair/work caps before retention; constructing and measuring
-  the arbitrary state remains non-preemptible. The choice cap is per sealed
-  `Controller.State` lineage: explicit `State.startWithin` starts a new handle
+  callback successor against independent byte/pair/work caps before retention;
+  constructing and measuring the arbitrary state remains non-preemptible. The
+  choice cap is per sealed `Controller.State` lineage: explicit
+  `State.startWithin` starts a new handle
   from a sealed current bundle and resets choices, the dismissal latch, and the
   search session's serial, steps, and diagnostic trace even when the retained
   head/scope is unchanged. Pure states can be reused to explore separately
@@ -5693,13 +5698,12 @@ their declared cost inside a scheduler bound.
   satisfy Search's authority contract, so snapshot generation omits them and
   marks the snapshot incomplete. The current sealed Executable compiler emits
   no structural matcher rows; Runtime retains the structural-input
-  distinctness gate for a later supported producer. An
-  intentional package `handler.offers = false` veto is complete and does not
-  set that bit.
-  All matcher-owned application rows must share one
-  matcher epoch; mixed epochs are malformed and zero is the snapshot sentinel
-  when no row carries an epoch. Offer generation checks `maxOffers` but does
-  not consume `maxActions`; `maxActions` is charged only by an actual runtime
+  distinctness gate for a later supported producer. An intentional package
+  `handler.offers = false` veto is complete and does not set that bit.
+  All matcher-owned application rows must share one matcher epoch; mixed epochs
+  are malformed, and zero is the snapshot sentinel when no row carries an
+  epoch. Offer generation checks `maxOffers` but does not consume `maxActions`;
+  `maxActions` is charged only by an actual runtime
   advance. Raw quotations remain inert data; theorem authority is supplied
   only by the separately checked `HexIntervalMathlib.RuntimeProof` proof
   adapter.
@@ -5833,8 +5837,11 @@ typical, boundary, and adversarial inputs. In particular it includes:
 - malformed structural programs, including duplicate operation keys, wrong
   arity/domain, unknown operations, and self/forward SSA references;
 - malformed registration, scope, and request snapshots, including wrong
-  operation/rule versions, duplicate or out-of-range ports, misaligned side
-  tables, changed fact versions, and changed ordered write authority;
+  operation/rule versions, duplicate declared registration slots, duplicate
+  scoped reads/writes, duplicate action writes/structural inputs, out-of-range
+  ports, misaligned side tables, changed fact versions, and changed ordered
+  write authority, while accepting repeated local read occurrences resolved
+  from distinct declared slots;
 - malformed or over-budget state snapshots, including stale/cross-node update
   predecessors, wrong program versions, non-prefix extensions, exact generated
   version-zero seed restoration, dependency/watcher misalignment, stale dirty

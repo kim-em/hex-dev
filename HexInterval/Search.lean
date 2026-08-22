@@ -440,16 +440,20 @@ private def actionCurrentChecked (limits : State.Limits) (branch : State.Branch 
   if !bindingValid || !matcherValid then throw .invalidSession
 
 /-- Diagnostic structural/freshness predicate for one explicitly supplied
-action and its explicitly supplied tables. This is not an authorization
-boundary: the tables are ordinary caller values. Supported scheduling must
-authenticate a sealed `Session` through `chooseWithin`, `prepareWithin`, or a
-session transition, all of which additionally correlate the complete retained
-session. -/
+action and its explicitly supplied tables. It first validates the complete
+registration and binding tables against the branch program. This is not an
+authorization boundary: the tables are ordinary caller values. Supported
+scheduling must authenticate a sealed `Session` through `chooseWithin`,
+`prepareWithin`, or a session transition, all of which additionally correlate
+the complete retained session. -/
 opaque actionCurrent (limits : State.Limits) (branch : State.Branch Fact Cause)
     (rules : Array Registration) (bindings : Array ScopeBinding)
     (applicationGenerations equalityGenerations : Array Nat)
     (matcherEpoch serial : Nat) (action : Action) : Bool :=
   (do
+    if !Registration.check branch.program rules ||
+        !ScopeBinding.checkAll branch.program rules bindings then
+      throw Error.invalidSession
     preflightAction limits rules action
     actionCurrentChecked limits branch rules bindings applicationGenerations
       equalityGenerations matcherEpoch serial action).isOk
