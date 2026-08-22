@@ -567,8 +567,10 @@ inductive AppliedStep (Fact Cause OfferId SemanticKey : Type)
   | stopped (stop : Stop Unit Unit) (session : Session Fact Cause OfferId SemanticKey)
 
 /-- A payload callback is not executed when the authenticated session has
-already exhausted its step budget. -/
-inductive Invocation (Fact Cause OfferId SemanticKey Payload : Type)
+already exhausted its step budget. The payload universe is unrestricted so a
+sealed heterogeneous package handle can be returned without exposing its
+private component type. -/
+inductive Invocation.{u} (Fact Cause OfferId SemanticKey : Type) (Payload : Type u)
   | produced (step : AppliedStep Fact Cause OfferId SemanticKey) (payload : Payload)
   | stopped (stop : Stop Unit Unit) (session : Session Fact Cause OfferId SemanticKey)
 
@@ -731,7 +733,7 @@ selected request, then validate its reply while retaining the caller payload
 returned by that same invocation. Callback and payload construction remain
 non-preemptible; no returned value has mutation or proof authority before the
 checks complete. -/
-opaque invokeWithWithin [DecidableEq Fact] [DecidableEq Cause]
+opaque invokeWithWithin.{u} {Payload : Type u} [DecidableEq Fact] [DecidableEq Cause]
     [DecidableEq OfferId] [DecidableEq SemanticKey] (envelope : Envelope)
     (measure : Policy.Measure OfferId SemanticKey)
     (owner : RuleKey)
@@ -739,15 +741,20 @@ opaque invokeWithWithin [DecidableEq Fact] [DecidableEq Cause]
       Reply Fact Cause OfferId SemanticKey × Payload)
     (session : Session Fact Cause OfferId SemanticKey)
     (decision : Policy.Decision OfferId SemanticKey) :
-    Except Error (Invocation Fact Cause OfferId SemanticKey Payload) := do
-  let checked <- authenticate envelope measure session
-  let request <- prepareChecked session checked decision
-  if request.action.key != owner then throw .invalidSession
-  if session.steps >= envelope.search.maxSteps then
-    return .stopped (.resource .steps) session
-  let (reply, payload) := callback request
-  let step <- acceptAppliedChecked envelope session request reply
-  pure (.produced step payload)
+    Except Error (Invocation Fact Cause OfferId SemanticKey Payload) :=
+  match authenticate envelope measure session with
+  | .error error => .error error
+  | .ok checked => match prepareChecked session checked decision with
+    | .error error => .error error
+    | .ok request =>
+      if request.action.key != owner then .error .invalidSession
+      else if session.steps >= envelope.search.maxSteps then
+        .ok (.stopped (.resource .steps) session)
+      else
+        let (reply, payload) := callback request
+        match acceptAppliedChecked envelope session request reply with
+        | .error error => .error error
+        | .ok step => .ok (.produced step payload)
 
 /-- Invoke an arbitrary callback and then pass its decoded result through
 `acceptWithin`. Callback execution itself is deliberately non-preemptible and

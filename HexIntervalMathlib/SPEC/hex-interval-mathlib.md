@@ -81,12 +81,14 @@ transaction. Its supported `Controller` explicitly aligns stable application
 generators with the same-order runtime and proof registries, regenerates
 resource-first deterministic offers from the authenticated current head, and
 runs bounded repeated policy selection over the sealed tree/session bundle.
-Its current vertical uses toy fact-event packages; concrete built-in arithmetic
-`Driver.Package` callbacks and application generators remain to be implemented.
-The separate Mathlib-free `Executable.Assembly` accepts explicit raw callback
-packages, but wiring it to this controller and correlating its inert quotations
-with theorem events, automatic discovery/program extension, equality/instance
-runtime events, and public-tactic split search remain later edges.
+The explicit `Controller.Package` vertical still uses toy fact-event callbacks
+and application generators; it has no concrete built-in arithmetic
+`Driver.Package`. Concrete built-in arithmetic reaches the controller only
+through the separate `Controller.Executable` adapter, which consumes a sealed
+Mathlib-free `Executable.Assembly` and correlates accepted fact quotations with
+independently replayed theorem schemas. Automatic discovery/program extension,
+equality/instance runtime events, and public-tactic split search remain later
+edges.
 
 `HexIntervalMathlib.Tactic` is the first supported Meta client. It recursively
 parses real local variables and the registered forward arithmetic operations,
@@ -223,8 +225,20 @@ Runtime search state, callbacks, payload bytes, and traces are untrusted and
 cannot enter `Proof.Evidence`. The built-in arithmetic package registry and
 its supported branch/session `Cause`-to-`Proof.Event` quotation ship below.
 The Mathlib-free `Executable.Assembly` supports explicit arbitrary-operation
-callback packages and raw replay formats, but those raw quotations are not
-`Proof.Event`s and are not yet correlated with this theorem registry.
+callback packages and raw replay formats. Those raw quotations are not
+`Proof.Event`s and remain inert. The fact-only `Controller.Executable` adapter
+correlates an accepted request/update with an exact fact format and decoder;
+only later independent `Proof` replay invokes its theorem schema.
+`Search` never decrements its `remaining` view; executable refresh preserves
+the controller-owned value stored in the sealed session. The adapter uses a
+fixed structural `policyMeasure` for application identifiers and rule keys,
+while callers supply only the measure for their policy state. A domain
+`NarrowResult.resourceLimit budget` becomes the distinct
+`Controller.Resource.narrow budget` refusal before any update is retained;
+fixed-point `noChange` and malformed narrowing remain mismatches at this
+fact-only boundary. Its public `Run` currently contains only a resumable
+`stopped` result. Driver target, refutation, split, and unknown outcomes are
+rejected as mismatches until separate typed terminal correlation is added.
 The assembly constructors are sealed under ordinary imports; deliberate
 `import all HexInterval.Executable` is a repository-guarded trusted-source
 escape hatch, not decoded runtime or proof authority.
@@ -316,10 +330,12 @@ per returned sealed state lineage; explicit `State.startWithin` creates a new
 handle from a sealed bundle and resets choices, the dismissal latch, and the
 search session's serial, steps, and trace even at the same retained head/scope.
 Pure state reuse creates separately bounded successors rather than a global
-budget, and a new handle does not inherit proof closure or saturation. This current controller is a
-fact-event Mathlib assembly whose conformance callbacks are toy packages, not
-the missing concrete built-in arithmetic driver adapters, automatic package
-discovery, or public split-search tactic. Every immutable offer snapshot has
+budget, and a new handle does not inherit proof closure or saturation. This
+explicit `Controller.Package` route is a fact-event Mathlib assembly whose
+conformance callbacks are toy packages, not concrete built-in arithmetic
+driver adapters. Built-in arithmetic reaches this controller only through the
+separate sealed `Controller.Executable` route. Automatic package discovery and
+the public split-search tactic remain absent. Every immutable offer snapshot has
 one constant controller-owned serial age; any malformed draft aborts its whole
 regeneration. Dismissing a non-split offer sets a controller-owned incomplete
 bit which survives accepted refreshes in the same scope within one returned

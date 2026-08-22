@@ -680,7 +680,7 @@
   {
     "path": "lakefile.lean",
     "baseline_blob": "6dd80771ae2212333b2a9b925b52056e0037ff56",
-    "current_blob": "bd7af525b37598ac25642e5703d273c6f32d80cf",
-    "reason": "Additionally registers the Mathlib-free source-pinned FKS2 prefix-structure checker and its proof-only conformance module on top of the retained Ramanujan, nested-log, controller, PNT, public interval, and HexSparsePoly library registrations; these acceptance-only modules do not enter the factorization service target or change its executable dependency graph."
+    "current_blob": "e2c8d787eedb211050b9a5f4dd97a8d48b874cf0",
+    "reason": "Additionally registers the supported fact-only executable-assembly controller conformance, including independent theorem replay for built-in arithmetic and an explicit arbitrary-function package, on top of the retained source-pinned FKS2 prefix-structure checker and its proof-only conformance module; these acceptance-only modules do not enter the factorization service target or change its executable dependency graph."
   }
 ]

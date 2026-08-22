@@ -107,22 +107,26 @@ leaves, and joins siblings only through the exact cover. The supported
 one-step driver now invokes an already-selected authenticated package callback
 and transactionally retains its exact runtime command and separately checked
 recipe data together. It can advance root and child-local fact histories before
-splitting or settling. The supported explicit controller aligns a stable
-fact-event application table with same-order runtime and proof registries,
-regenerates bounded deterministic offer snapshots, and iterates a replaceable
-policy over the sealed tree/session bundle. Its current end-to-end conformance
-uses toy fact-event callbacks: concrete built-in arithmetic `Driver.Package`
-callbacks and application generators have not yet been supplied. Invoking this
-path from the public tactic remains later controller work. The Mathlib-free
-executable layer separately supports explicit stable-key package assembly,
-private caches, exact routes and concrete local/scoped application rows, with
-bounded raw replay-format declarations that do not embed a Mathlib proof event.
+splitting or settling. The supported explicit controller aligns fact-event
+runtime and proof registries, regenerates bounded deterministic offer
+snapshots, and iterates a replaceable policy over the sealed tree/session
+bundle. Its explicit `Controller.Package` conformance route still uses toy
+fact-event callbacks and autonomous application generators; it has no concrete
+built-in arithmetic package. Built-in arithmetic reaches the controller only
+through its executable adapter. That route consumes the sealed Mathlib-free
+package assembly directly: package predicates decide applicability, while the
+assembly/controller derives exact flat application identity, routes, ports,
+order, and action chronology. It derives accepted updates and fact events from
+the authenticated Search request and current snapshot; raw
+`(role, schema, body)` quotations remain inert and receive no theorem
+authority. Built-in addition and an independently owned arbitrary-function
+package exercise this path through separate Proof replay. Invoking it from the
+public tactic remains later controller work.
 The first concrete supported theorem registry is the Mathlib arithmetic package for one
 configured constant and natural exponent plus public negation, addition,
 subtraction, multiplication, power, absolute-value, min/max, reciprocal,
 division, and regularization operations. Automatic arbitrary-function package
-discovery and theorem assembly, concrete built-in arithmetic callback packages
-and application generators, equality/instance runtime events, executable
+discovery and theorem assembly, equality/instance runtime events, executable
 program extension, concrete policy algorithms and default scheduling, payload
 storage, and the optimized backing store remain experimental. The narrow
 direct-forward tactic does not yet invoke the supported controller.
@@ -3193,16 +3197,20 @@ independently checking the action's rule key and local rule id, anchor,
 operation, kind, reads, writes, and structural inputs. A callback must not use
 the compact application id as authority for a rule or anchor. Retaining and
 checking the exact application table is not part of the Search contract. The
-separate supported `Executable.Assembly` now seals a checked program, exact
+separate supported `Executable.Assembly` seals a checked program, exact
 package routes/caches, bindings, and concrete application rows, and its
 `invokeWithin` rechecks the selected identifier against the row's rule, anchor,
 kind, reads, writes, structural inputs, matcher epoch, effort, and creation
-generation before routing a callback. The current one-step Driver does not yet
-own that assembly, so autonomous Search-to-package correspondence remains the
-next controller edge. Assembly owns only the operation/node program: request
+generation before routing a callback. `Controller.Executable` now retains that
+assembly as a sticky handle, generates offers from its exact row order, and
+passes a replacement private cache onward only after Search, Driver, and
+quotation/schema checks accept the transition. Assembly owns only the
+operation/node program: request
 program version and generation side tables remain controller-owned snapshot
 data and receive only the request-internal checks supplied by `ProgramView` and
-`RuleRequest`.
+`RuleRequest`. Search also never decrements its `remaining` budget view; the
+adapter preserves the controller-owned value stored in the session when it
+refreshes executable offers.
 
 As with Search, sealing is an ordinary/public-import boundary. Deliberate
 `import all HexInterval.Executable` exposes its private constructors to trusted
@@ -5320,6 +5328,14 @@ candidates, and `b` the number of live branch states.
   reference cost. This is not an incremental tree-store bound. `maxNodes`
   therefore stays small and measurement-gated until a production
   representation avoids repeated full-prefix validation.
+- One `Controller.Executable` offer regeneration reconstructs and validates
+  the retained branch snapshot and executable program context once. It then
+  scans the flat applications with per-row identity, port, registration,
+  route, fact/version, and package-predicate work. Its local generation cost
+  is therefore one whole-branch/program check plus the sum of bounded
+  application checks, not one whole-branch/program check per application.
+  Subsequent `Search.Session` start or refresh still performs its own
+  independent complete session authentication.
 - Fact comparison and contradiction checks use exact endpoint comparison. For
   the dyadic candidate, integer cost is proportional to effective endpoint
   height and the permitted exponent-alignment shift; a rational candidate must
@@ -5401,7 +5417,8 @@ their declared cost inside a scheduler bound.
   registry; `import all HexIntervalMathlib.Proof` is a trusted-internals escape
   hatch rejected outside the exact empty repository allowlist. The built-in
   arithmetic package and direct-forward reifier/tactic are supported below;
-  arbitrary-function theorem packages, executable-to-proof quotation,
+  explicit arbitrary-function fact packages can join the executable adapter,
+  while automatic discovery, equality/instance executable correlation,
   split-search tactic integration, and default registries remain experimental.
 - `HexIntervalMathlib/Driver.lean`: supported one-step execution of an exact
   already-selected package action, atomic retained-source advancement/split/
@@ -5428,12 +5445,26 @@ their declared cost inside a scheduler bound.
   registry key is a
   trusted compatibility epoch, not callback-object identity: same-key
   assemblies deliberately declare replaceable implementations whose results
-  still cross the runtime and proof checks. Automatic discovery,
-  program extension, equality/instance runtime events, wiring the supported
-  Mathlib-free executable assembly into this controller, concrete built-in
-  arithmetic driver callbacks/application generators, and split-search tactic
-  syntax remain later work; the current
-  autonomous theorem uses toy fact-event packages. All offers in one immutable
+  still cross the runtime and proof checks. This explicit `Controller.Package`
+  route still has toy fact-event callbacks and autonomous generators in its
+  conformance; concrete built-in arithmetic enters only through
+  `Controller.Executable`. That adapter additionally
+  consumes a sealed `Executable.Assembly` without a caller-supplied application
+  table. It derives action fields, fact versions, installed meets, assumptions,
+  event scope, and `Proof.Key` addresses from the authenticated request and
+  exact invocation route. It requires one fact quote per proposal, exact
+  bidirectional executable-format/proof-schema coverage, and a successful
+  package decoder before Driver acceptance; later Proof replay independently
+  invokes the theorem schema. Same-key registry substitution does not
+  transplant the sticky assembly cache. Its application-id and rule-key policy
+  costs are adapter-fixed; the caller supplies only policy-state measurement.
+  Domain `NarrowResult.resourceLimit budget` maps to the distinct
+  `Controller.Resource.narrow budget` refusal before retaining any update,
+  rather than collapsing into `noChange` or mismatch. This adapter is
+  deliberately fact-only, and its `Run` exposes only a resumable stopped
+  result: typed equality and instance events, target/refutation/split/unknown
+  terminal correlation, automatic discovery, program extension, and
+  split-search tactic syntax remain later work. All offers in one immutable
   snapshot share its controller-owned serial as age. A malformed generator
   draft aborts the whole regeneration transaction. Dismissing a non-split
   offer sets a controller-owned incomplete bit which survives later accepted
@@ -5497,10 +5528,14 @@ their declared cost inside a scheduler bound.
   explicit stable-key operations, registrations, heterogeneous private package
   caches, exact handler routes, scoped/local application rows, package-owned
   logical measures, and bounded raw `(role, schema, body)` replay quotations.
-  Invocation rechecks complete application/request correspondence and commits
+  Package-owned, cache-independent applicability predicates receive an
+  authenticated snapshot and exact reconstructed request but carry no mutation
+  or theorem authority. Invocation rechecks complete application/request
+  correspondence and commits
   a cache replacement only after result and quotation admission. The initial
-  compiler does not create global structural-matcher applications; offer
-  generation and theorem-event correlation remain later layers.
+  compiler does not create global structural-matcher applications. Fact-event
+  correlation is supplied by `HexIntervalMathlib.Controller.Executable`; typed
+  equality/instance correlation remains later work.
 - `HexInterval/Trace.lean`: supported exact fact/instance chronology and
   bounded diagnostic-log contracts. Diagnostic bytes count retained `UInt8`
   payload cells after callback construction; they do not claim to preempt
