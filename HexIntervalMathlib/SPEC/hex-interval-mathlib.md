@@ -306,20 +306,25 @@ callback successor must fit explicit byte/pair/work caps before retention.
 Offer age is the bounded
 sealed session serial rather than package data. The choice cap is cumulative
 per returned sealed state lineage; explicit `State.startWithin` creates a new
-zeroed handle from a sealed bundle, and pure state reuse creates separately
-bounded successors rather than a global budget. This current controller is a
+handle from a sealed bundle and resets choices, the dismissal latch, and the
+search session's serial, steps, and trace even at the same retained head/scope.
+Pure state reuse creates separately bounded successors rather than a global
+budget, and a new handle does not inherit proof closure or saturation. This current controller is a
 fact-event Mathlib assembly whose conformance callbacks are toy packages, not
 the missing concrete built-in arithmetic driver adapters, automatic package
 discovery, or public split-search tactic. Every immutable offer snapshot has
 one constant controller-owned serial age; any malformed draft aborts its whole
 regeneration. Dismissing a non-split offer sets a controller-owned incomplete
-bit which survives accepted refreshes in the same scope and clears only on the
-next split/terminal scope transition; dismissing a split probe does not set it.
+bit which survives accepted refreshes in the same scope within one returned
+handle lineage. The next split/terminal scope transition clears it, and an
+explicit new `State.startWithin` lineage resets it even at the same scope;
+dismissing a split probe does not set it.
 Policy stop returns a resumable sealed chunk boundary, while `maxChoices`
 exhaustion is a resource error. `Run.complete` says only that no pending runtime
 frontier remains; proof closure still requires replay. The
-reference cost of up to `maxChoices` selected transitions includes complete
-retained-tree/bundle validation each time. The
+reference cost of up to `maxChoices` selected transitions includes entry
+session authentication, current and replacement retained-tree/bundle
+validation, and regenerated-session authentication each time. The
 current retained-tree builder repeatedly
 validates retained branches and pairwise scope uniqueness; incremental
 construction therefore has the documented `Θ(N² * B + N³)` reference cost,

@@ -283,8 +283,8 @@ def choiceOneOver : Bool :=
                   match Controller.runWithin { controllerLimits with maxChoices := 0 } envelope
                       keyCost unitCost resultMeasure recipeMeasure .depthFirst registry firstPolicy ()
                       state with
-                  | .error _ => true
-                  | .ok _ => false
+                  | .error (.resource .choices) => true
+                  | _ => false
 
 /-- The live successful canary needs all five selections; four is the exact
 one-under cap rather than a degenerate zero-step refusal. -/
@@ -478,6 +478,113 @@ def structuralBatchRejected : Bool :=
           | .error (.resource (.state .matcherVisits)) => true
           | _ => false
 
+def networkRegistration : Registration :=
+  { key := forwardRule
+    head := sourceKey
+    kind := .instantiate
+    watches := []
+    writes := []
+    binding := .global
+    matchWatch := .network
+    watchesProgram := true }
+
+def networkProof? : Option (Proof.Registry semantics (List Nat)) :=
+  let changed : Proof.Package semantics (List Nat) :=
+    { package with registrations := registrations.set! 0 networkRegistration }
+  (Proof.Registry.buildWithin proofLimits program #[changed]).toOption
+
+private def networkApplication
+    (structuralInputs : List StructuralKey) : Controller.Application Fact Nat Nat :=
+  { offer := fun selectedScope _ =>
+      if selectedScope == scope then
+        some
+          { key := 45
+            offerClass := .instantiate
+            node := n2
+            effort := 0
+            inputs := []
+            writes := []
+            structuralInputs }
+      else none }
+
+private def networkRegistry?
+    (structuralInputs : List StructuralKey) := do
+  let proof ← networkProof?
+  let changed := withForward #[networkApplication structuralInputs]
+  (Controller.Registry.buildWithin stateLimits controllerKey program proof changed).toOption
+
+def networkEnvelope : Search.Envelope :=
+  { envelope with state := { stateLimits with matcherBatchSize := 1 } }
+
+def emptyNetworkRejected : Bool :=
+  match networkRegistry? [] with
+  | none => false
+  | some registry =>
+      match stateStartWith networkEnvelope registry with
+      | .error (.invalidApplication ⟨0⟩) => true
+      | _ => false
+
+def networkStructuralAccepted : Bool :=
+  match networkRegistry? [.node n1] with
+  | none => false
+  | some registry =>
+      match stateStartWith networkEnvelope registry with
+      | .error _ => false
+      | .ok state =>
+          match state.session.offers[0]? with
+          | none => false
+          | some offer =>
+              offer.action.kind == .instantiate && offer.action.inputs.isEmpty &&
+                offer.action.writes.isEmpty && offer.action.matcherEpoch == some 0 &&
+                offer.action.structuralInputs ==
+                  [{ key := .node n1, generation := 0 }]
+
+private def malformedDraftApplication
+    (inputs writes : List NodeId) (structuralInputs : List StructuralKey)
+    (node : NodeId := n2) : Controller.Application Fact Nat Nat :=
+  { forwardApplication with
+    offer := fun selectedScope _ =>
+      if selectedScope == scope then
+        some
+          { key := 44
+            offerClass := .invoke
+            node
+            effort := 0
+            inputs
+            writes
+            structuralInputs }
+      else none }
+
+private def malformedDraftRejected
+    (application : Controller.Application Fact Nat Nat)
+    (candidateEnvelope : Search.Envelope := envelope) : Bool :=
+  let changed := withForward #[application, targetApplication]
+  match registry? with
+  | none => false
+  | some proof =>
+      match Controller.Registry.buildWithin stateLimits controllerKey program proof changed with
+      | .error _ => false
+      | .ok registry =>
+          match stateStartWith candidateEnvelope registry with
+          | .error (.invalidApplication ⟨0⟩) => true
+          | _ => false
+
+def duplicateInputsRejected : Bool :=
+  malformedDraftRejected (malformedDraftApplication [n1, n1] [n2] [])
+
+def duplicateWritesRejected : Bool :=
+  malformedDraftRejected (malformedDraftApplication [n1] [n2, n2] [])
+
+def duplicateStructuralRejected : Bool :=
+  let structuralEnvelope : Search.Envelope :=
+    { envelope with state := { stateLimits with matcherBatchSize := 2 } }
+  malformedDraftRejected
+    (malformedDraftApplication [n1] [n2] [.node n1, .node n1]) structuralEnvelope
+
+def missingNodeRejected : Bool :=
+  malformedDraftRejected
+    (malformedDraftApplication [n1] [n2] [] { index := program.nodes.size })
+
 def wrongClassApplication : Controller.Application Fact Nat Nat :=
   { forwardApplication with
     offer := fun selectedScope branch =>
@@ -556,6 +663,14 @@ def dismissFirstSelectSecond : Policy.Interface Fact Nat Controller.OfferId Nat 
         | none => .stop 1
       | _ => .stop stage }
 
+private def retainedFactApplication
+    (bundle : Driver.Bundle Fact Nat (List Nat)) (application : Nat) : Bool :=
+  match bundle.recipe.events[0]? with
+  | none => false
+  | some events => events.any fun
+      | .fact step => step.action.application.index == application
+      | _ => false
+
 def twoOffersOrdered : Bool :=
   match twoOfferRegistry? with
   | none => false
@@ -585,9 +700,40 @@ def dismissThenSelectSticky : Bool :=
               stopped.choices == 2 && stopped.dismissedIncomplete &&
                 stopped.session.incomplete && stopped.session.serial == 1 &&
                 version? stopped.session.branch n2 == some 1 &&
+                retainedFactApplication stopped.bundle 1 &&
                 (match stopped.session.offers[0]? with
                 | some offer => offer.view.id.index == 2 && offer.view.offerClass == .split
                 | none => false)
+          | _ => false
+
+/-- Starting explicitly from the same stopped bundle creates a new run handle:
+the retained pending head remains, while controller and search chronology reset
+without inheriting the old handle's incompleteness or any closure claim. -/
+def restartResetsHandle : Bool :=
+  match twoOfferRegistry? with
+  | none => false
+  | some registry =>
+      match stateStartWith twoOfferEnvelope registry with
+      | .error _ => false
+      | .ok state =>
+          match Controller.runWithin controllerLimits twoOfferEnvelope keyCost
+              (fun _ => { bytes := 1 }) resultMeasure recipeMeasure .depthFirst registry
+              dismissFirstSelectSecond 0 state with
+          | .ok (.stopped (.policyStop 1) sticky 2) =>
+              match Controller.State.startWithin twoOfferEnvelope
+                  (Controller.policyMeasure keyCost) registry sticky.bundle with
+              | .error _ => false
+              | .ok restarted =>
+                  sticky.choices == 2 && sticky.dismissedIncomplete &&
+                    sticky.session.serial == 1 && sticky.session.steps == 1 &&
+                    restarted.session.scope == sticky.session.scope &&
+                    restarted.choices == 0 && !restarted.dismissedIncomplete &&
+                    restarted.session.serial == 0 && restarted.session.steps == 0 &&
+                    restarted.session.trace.events.isEmpty &&
+                    restarted.session.trace.bytes == 0 && restarted.session.trace.work == 0 &&
+                    !restarted.session.trace.truncated && !restarted.session.incomplete &&
+                    (Search.Result.current? restarted.bundle.tree).isSome &&
+                    restarted.session.offers.size == 1
           | _ => false
 
 def stickyClearsAtSplit : Bool :=
@@ -686,6 +832,12 @@ def sameKeyReplacementChecked : Bool :=
 #guard hugeBindingRejected
 #guard effortOneOver
 #guard structuralBatchRejected
+#guard emptyNetworkRejected
+#guard networkStructuralAccepted
+#guard duplicateInputsRejected
+#guard duplicateWritesRejected
+#guard duplicateStructuralRejected
+#guard missingNodeRejected
 #guard wrongClassRejected
 #guard transplantRejected
 #guard matcherEpochRejected
@@ -693,6 +845,7 @@ def sameKeyReplacementChecked : Bool :=
 #guard dismissedSplitComplete
 #guard twoOffersOrdered
 #guard dismissThenSelectSticky
+#guard restartResetsHandle
 #guard stickyClearsAtSplit
 #guard ageIsSerial
 #guard sameKeyReplacementChecked

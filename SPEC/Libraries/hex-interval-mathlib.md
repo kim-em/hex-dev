@@ -3301,8 +3301,11 @@ the fixed soundness and trust contracts.
   for each retained policy state. The current conformance vertical uses toy
   fact-event packages; concrete built-in arithmetic driver callbacks and
   application generators are not yet shipped. Non-split dismissal is sticky
-  across accepted refreshes in one scope, while split dismissal is not; a new
-  split/terminal scope clears the sticky bit. `Run.complete` means an empty
+  across accepted refreshes in one scope within a returned sealed state
+  lineage, while split dismissal is not; a new split/terminal scope clears the
+  sticky bit. Explicit `State.startWithin` creates a new handle and resets that
+  bit, choices, serial, steps, and trace even at the same retained head/scope;
+  it carries no proof-closure or saturation claim. `Run.complete` means an empty
   pending runtime frontier, not proof closure. It does not yet provide
   Mathlib-free raw package drafts, equality/instance applications,
   program-extension or package discovery, or public-tactic split search.

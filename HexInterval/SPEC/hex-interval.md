@@ -5402,8 +5402,11 @@ their declared cost inside a scheduler bound.
   independent byte/pair/work caps before retention; constructing and measuring
   the arbitrary state remains non-preemptible. The choice cap is per sealed
   `Controller.State` lineage: explicit `State.startWithin` starts a new handle
-  at zero from a sealed current bundle, and pure states can be reused to explore
-  separately bounded successors. It is not a process-global budget. Its
+  from a sealed current bundle and resets choices, the dismissal latch, and the
+  search session's serial, steps, and diagnostic trace even when the retained
+  head/scope is unchanged. Pure states can be reused to explore separately
+  bounded successors. It is not a process-global budget, and the new handle
+  inherits no proof-closure or saturation claim from an older handle. Its
   registry key is a
   trusted compatibility epoch, not callback-object identity: same-key
   assemblies deliberately declare replaceable implementations whose results
@@ -5415,12 +5418,15 @@ their declared cost inside a scheduler bound.
   snapshot share its controller-owned serial as age. A malformed generator
   draft aborts the whole regeneration transaction. Dismissing a non-split
   offer sets a controller-owned incomplete bit which survives later accepted
-  refreshes in that scope; it clears only when a split or terminal transition
-  moves to the next retained scope. Dismissing a split probe does not set it.
+  refreshes in that scope within the returned handle lineage; a split or
+  terminal transition to the next retained scope clears it. Explicit
+  `State.startWithin` also resets it by creating a new lineage, including at the
+  same retained scope. Dismissing a split probe does not set it.
   Policy stop returns a resumable sealed state; exhausting `maxChoices` is a
-  resource error. Up to `maxChoices` selected transitions each repeat complete
-  retained-tree/bundle validation, so reference validation cost is multiplied
-  by that cap. `Run.complete` means the runtime tree has no pending frontier,
+  resource error. Each selected reference transition authenticates the entry
+  session, validates the current and replacement retained bundle/tree in the
+  driver, then authenticates the regenerated session, so those repeated costs
+  are multiplied by the choice cap. `Run.complete` means the runtime tree has no pending frontier,
   not that proof replay has closed the theorem.
 - `HexIntervalMathlib/Rule.lean`: the supported stable-key arithmetic package,
   exact real operation meanings, package-owned fact schemas, checked registry

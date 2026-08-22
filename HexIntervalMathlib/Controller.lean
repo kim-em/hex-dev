@@ -31,10 +31,13 @@ construction.  The controller never creates proof evidence; its untrusted bundle
 `Proof.replayTree` with an independently checked proof registry from the same
 trusted compatibility epoch. Runtime registry object identity is not required.
 
-`maxChoices` is cumulative only within one returned sealed `State` lineage.
-`State.startWithin` deliberately starts a new handle at zero from any sealed
-current bundle, and pure Lean values may be reused to explore alternative
-bounded successors. This is not a global or process-persistent budget.
+`maxChoices` and non-split dismissal incompleteness are cumulative only within
+one returned sealed `State` lineage. `State.startWithin` deliberately starts a
+new handle from any sealed current bundle: it resets choices, the dismissal
+latch, and the search session's serial, steps, and trace even when the retained
+head and scope are unchanged. Pure Lean values may be reused to explore
+alternative bounded successors. This is not a global or process-persistent
+budget, nor does restarting inherit any proof-closure or saturation claim.
 
 This is the supported autonomous programmatic loop.  Goal reification and the
 public tactic currently use the separate flat forward path; split-search tactic
@@ -106,7 +109,8 @@ structure PolicyLimit where
 /-- Bounds specific to application enumeration and autonomous policy choices.
 All state, policy, search, result-tree, proof, and recipe bounds remain in the
 supported envelopes passed to the transitions. `maxChoices` applies to one
-sealed `State` lineage and resets only through explicit `State.startWithin`. -/
+sealed `State` lineage; explicit `State.startWithin` creates a new lineage and
+resets it together with the dismissal latch and search-session chronology. -/
 structure Limits where
   maxChoices : Nat
   policyState : PolicyLimit
@@ -128,6 +132,11 @@ inductive Error where
   | driver (error : Driver.Error)
   | mismatch
   deriving DecidableEq, Repr
+
+private def liftCheck.{u} (result : Except Error Unit) : Except Error PUnit.{u + 1} :=
+  match result with
+  | .error error => .error error
+  | .ok _ => .ok PUnit.unit
 
 /-- Ordinary-import-sealed alignment of one program, theorem registry, runtime
 packages, and deterministic application table. -/
@@ -207,14 +216,8 @@ opaque Registry.buildWithin
     throw (.resource (.state .registryEntries))
   if stateLimits.maxEqualities < equalityGenerations.size then
     throw (.resource (.state .equalities))
-  let programError := match preflightProgram stateLimits program with
-    | .error error => some error
-    | .ok _ => none
-  if let some error := programError then throw error
-  let registrationError := match preflightRegistrations stateLimits proof.registrations with
-    | .error error => some error
-    | .ok _ => none
-  if let some error := registrationError then throw error
+  liftCheck (preflightProgram stateLimits program)
+  liftCheck (preflightRegistrations stateLimits proof.registrations)
   if proof.registrations.size != packages.size then
     throw .invalidRegistry
   if stateLimits.maxGeneration < matcherEpoch ||
@@ -313,6 +316,16 @@ private def generate [DecidableEq Fact] [DecidableEq Cause]
       throw (.resource (.state .matcherVisits))
     if envelope.state.maxEffort < draft.effort then
       throw (.resource (.state .effort))
+    if !allDistinct draft.inputs || !allDistinct draft.writes ||
+        !allDistinct draft.structuralInputs then
+      throw (.invalidApplication applicationId)
+    if (branch.program.node? draft.node).isNone ||
+        draft.writes.any (fun node => (branch.program.node? node).isNone) then
+      throw (.invalidApplication applicationId)
+    let matcherValid := match registration.matchWatch with
+      | .none => draft.structuralInputs.isEmpty
+      | .network => !draft.structuralInputs.isEmpty
+    if !matcherValid then throw (.invalidApplication applicationId)
     let some inputs := seenInputs? branch draft.inputs
       | throw (.invalidApplication applicationId)
     let some structuralInputs := structuralInputs? registry branch draft.structuralInputs
@@ -372,7 +385,9 @@ private def refresh [DecidableEq Fact] [DecidableEq Cause]
 /-- Sealed live alignment of a retained runtime/proof bundle, its declared
 registry compatibility epoch, exact current session, and cumulative
 policy-choice accounting. `dismissedIncomplete` is sticky for the current
-scope: accepting another action cannot erase an earlier non-split dismissal. -/
+scope within this returned state lineage: accepting another action cannot erase
+an earlier non-split dismissal. Explicit `State.startWithin` creates a new
+lineage and resets it even when it starts from the same retained head. -/
 structure State (Fact Cause OfferId SemanticKey Plan : Type) where
   private mk ::
   compatibility : Key
@@ -382,7 +397,11 @@ structure State (Fact Cause OfferId SemanticKey Plan : Type) where
   dismissedIncomplete : Bool
 
 /-- Start a new autonomous-controller handle at the exact current retained-tree
-head. This explicit operation starts a fresh per-lineage choice counter. -/
+head. This explicit operation resets the per-lineage choice counter and
+dismissal latch and rebuilds a search session with serial zero, zero accepted
+steps, and an empty diagnostic trace. The retained bundle head and scope may be
+the same as an older handle; the new handle does not inherit that handle's
+incompleteness, proof-closure, or saturation status. -/
 opaque State.startWithin [DecidableEq Fact] [DecidableEq Cause]
     (envelope : Search.Envelope) (measure : Policy.Measure OfferId SemanticKey)
     (registry : Registry Fact semantics Cause SemanticKey Plan)
@@ -430,15 +449,19 @@ inductive Run (Fact Cause OfferId SemanticKey Plan PolicyState : Type)
 the retained tree closes, honestly stops, reaches an unknown leaf, or exhausts
 the cumulative choice cap.  Dismissal removes exactly one offer from the
 current immutable snapshot. Dismissing a non-split offer marks that snapshot
-incomplete; dismissing a split probe does not. That incompleteness survives
-accepted refreshes in the same scope and clears only when a split or terminal
-transition moves to the next retained scope. A policy stop returns a resumable
-sealed state, whereas choice-cap exhaustion is a resource error. `policyStateMeasure`
+incomplete; dismissing a split probe does not. Within one returned state
+lineage, that incompleteness survives accepted refreshes in the same scope and
+clears when a split or terminal transition moves to the next retained scope.
+Explicit `State.startWithin` creates a new lineage and resets the latch even at
+the same retained head. A policy stop returns a resumable sealed state, whereas
+choice-cap exhaustion is a resource error. `policyStateMeasure`
 is non-preemptible, but its declared byte, pair, and work cost must fit before
 the initial state or any callback successor is retained. In the reference
-implementation, up to `maxChoices` selected steps each repeat complete bundle
-and retained-tree validation, so total validation cost scales linearly with the
-choice cap as well as with the retained-tree validation cost. -/
+implementation, choice authenticates the entry session; each selected driver
+step validates the current and replacement retained bundles/trees, and the
+regenerated session is authenticated again. Thus total reference validation
+cost scales linearly with the choice cap as well as with these repeated
+session and retained-tree validation passes. -/
 opaque runWithin [DecidableEq Fact] [DecidableEq Cause] [DecidableEq SemanticKey]
     [DecidableEq Plan]
     (limits : Limits) (envelope : Search.Envelope)
