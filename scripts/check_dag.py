@@ -38,6 +38,7 @@ SEALED_IMPORT_ALL_ALLOWLIST: dict[str, frozenset[Path]] = {
     "HexIntervalMathlib.Driver": frozenset(),
     "HexIntervalMathlib.Controller": frozenset(),
     "HexIntervalMathlib.Proof": frozenset(),
+    "HexIntervalMathlib.RuntimeProof": frozenset(),
 }
 
 UMBRELLA_BUILD_TARGETS = {

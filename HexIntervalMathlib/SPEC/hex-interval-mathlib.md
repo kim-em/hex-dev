@@ -234,6 +234,28 @@ callback packages and raw replay formats. Those raw quotations are not
 `Proof.Event`s and remain inert. The fact-only `Controller.Executable` adapter
 correlates an accepted request/update with an exact fact format and decoder;
 only later independent `Proof` replay invokes its theorem schema.
+The separate Mathlib-free typed runtime authenticates and retains the raw
+fact/equality/transport/instance event chronology without importing this proof
+module. `HexIntervalMathlib.RuntimeProof` is the supported conversion edge: its
+sealed registry checks bidirectional executable-format/proof-schema coverage,
+then reconstructs fact, equality, transport, and instance `Proof.Event`s from
+the sealed `Runtime.Applied` fields. It reruns append-only executable extension
+to pin the exact program, registration, binding, concrete application, and
+generation suffix before narrowing an instance record to `Proof.InstanceStep`.
+Fact quotation preserves proposed/installed meet correlation; equality pins
+the exact endpoints, origin, assumptions, and schema; transport carries no
+quotation and replays only through the independently admitted equality and
+exact live source fact; these checks authorize structural substitution but the
+equality schema alone supplies semantic entailment. Complete retained
+transition chains are quoted as one transaction into a sealed token containing
+the exact registry and per-node recipe. Node-id order propagates each split
+parent's post-chronology executable assembly to both restarted children, so an
+instance before a split is retained exactly. Recursive replay consumes the
+token without repeating quotation; the underlying proof fold independently
+rechecks the retained tree and proof limits once at its theorem boundary.
+Target, refutation, and split remain the separately authenticated
+terminal schemas owned by `Proof.replayTree`; they are not synthesized from a
+runtime callback batch.
 `Search` never decrements its `remaining` view; executable refresh preserves
 the controller-owned value stored in the sealed session. The adapter uses a
 fixed structural `policyMeasure` for application identifiers and rule keys,
@@ -244,15 +266,15 @@ fixed-point `noChange` and malformed narrowing remain mismatches at this
 fact-only boundary. Its public `Run` currently contains only a resumable
 `stopped` result. Driver target, refutation, split, and unknown outcomes are
 rejected as mismatches until separate typed terminal correlation is added.
-The separate Mathlib-free typed runtime authenticates and retains raw
-fact/equality/transport/instance chronology without importing this proof
-module; conversion of those typed events to package-owned proof schemas remains
-a later edge.
 The assembly constructors are sealed under ordinary imports; deliberate
 `import all HexInterval.Executable` is a repository-guarded trusted-source
 escape hatch, not decoded runtime or proof authority.
-Automatic arbitrary-function theorem-package discovery, equality/instance
-runtime recipes, and default registries remain experimental.
+The typed-proof registry and bundle constructors are likewise sealed;
+`import all HexIntervalMathlib.RuntimeProof` is rejected outside an
+exact reviewed allowlist, currently empty.
+Automatic arbitrary-function theorem-package discovery and default registries
+remain experimental; supported typed-runtime replay requires an explicit
+sealed executable/proof registry pair.
 The supported explicit fact-event controller can produce and replay
 search-selected recipes, while the tactic below remains a deliberately narrow
 direct forward client rather than that generic search bridge.
@@ -422,6 +444,14 @@ alignment and a live instance → fact → equality → transport chronology,
 including body/source/version/final-state mutations, refuter ownership, a
 nonvacuous ordinary theorem with a guarded axiom report, and transactional
 Meta-state restoration after a wrongly typed emitter.
+`HexIntervalMathlib.RuntimeProofConformance` pins the supported typed-runtime
+adapter with a real `sin (-x)` instance → equality → fact → transport theorem
+at the root and after both split children restart. A second split canary extends
+the root first and proves both children restart from the inherited extended
+program and generation. It mutates every typed event role, executable/proof
+package ownership, schema, body, order, and child splice; checks exact one-under
+retained-transition, event, structural-cell, and proof-chronology resources;
+and guards the ordinary root/recursive axiom surfaces.
 `HexIntervalMathlib.RuleConformance` replays a shared arithmetic DAG through
 the supported state quote and proof registry. Its ordinary theorem makes both
 source assumptions load-bearing through add/sub/mul and checked
