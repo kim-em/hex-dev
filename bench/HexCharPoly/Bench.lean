@@ -13,11 +13,13 @@ import LeanBench
 Benchmark registrations for Samuelson--Berkowitz characteristic polynomials.
 
 The headline random family has separate dimension and entry-bit-width ladders.
-Its return value records the peak bit size among every Berkowitz Toeplitz
-column and every intermediate coefficient vector.  The structured family
-checks companion matrices and Jordan blocks against closed-form answers inside
-the benchmark.  FLINT and PARI are fixed-rung informational comparators; PARI
-uses flag `3`, its division-free Berkowitz implementation.
+The `growth` command times the public computation and separately observes the
+peak bit size among every Berkowitz Toeplitz column and every intermediate
+coefficient vector, reporting both measurements for both ladders as JSONL.
+The structured family checks companion matrices and Jordan blocks against
+closed-form answers inside the benchmark.  FLINT and PARI are fixed-rung
+informational comparators; PARI uses flag `3`, its division-free Berkowitz
+implementation.
 -/
 
 namespace Hex.CharPolyBench
@@ -52,6 +54,9 @@ def randomInput (n bits : Nat) : Input :=
 def prepRandomDimension (n : Nat) : Input := randomInput n 12
 def prepRandomBits (bits : Nat) : Input := randomInput 10 bits
 
+private def randomDimensionSchedule : Array Nat := #[4, 6, 8, 10, 12, 14, 16]
+private def randomBitSchedule : Array Nat := #[4, 8, 12, 16, 24, 32, 40, 48]
+
 /-- Deterministic tridiagonal entries in `{-1, 0, 1, 2}`. -/
 def prepSmallEntry (n : Nat) : Input :=
   { n
@@ -79,15 +84,54 @@ private def berkowitzGrowth (A : Hex.Matrix Int n n) :
   | k + 1, hk =>
       let prior := berkowitzGrowth A k (by omega)
       let column := Hex.Matrix.berkowitzColumn A k hk
-      let coefficients := Hex.Matrix.berkowitzStep A k hk prior.coefficients
+      let coefficients := Hex.Matrix.toeplitzMulVec column prior.coefficients
       { coefficients
         peakBits := max prior.peakBits (max (peakVector column) (peakVector coefficients)) }
 
-/-- Timed Berkowitz computation with coefficient-growth observation. -/
-def runRandomDense (input : Input) : UInt64 × Nat :=
+/-- Timed public characteristic-polynomial computation for random input. -/
+def runRandomDense (input : Input) : UInt64 :=
+  hash (Hex.Matrix.charPoly (matrixOfInput input)).toArray
+
+private def randomGrowth (input : Input) : UInt64 × Nat :=
   let matrix := matrixOfInput input
   let result := berkowitzGrowth matrix input.n (Nat.le_refl input.n)
   (hash result.coefficients.reverse.toArray, result.peakBits)
+
+private def natJson (value : Nat) : Lean.Json :=
+  Lean.Json.num (Lean.JsonNumber.fromNat value)
+
+/-- Time the public computation, independently instrument the same input, and
+emit both observations as one JSONL record.  The checksum equality makes the
+instrumented recurrence accountable to the public result without charging its
+extra peak-bit folds to the wallclock measurement. -/
+private def emitGrowth (axis : String) (parameter dimension bits : Nat)
+    (input : Input) : IO Unit := do
+  let start ← IO.monoNanosNow
+  let checksum := runRandomDense input
+  LeanBench.blackBox checksum
+  let stop ← IO.monoNanosNow
+  let growth := randomGrowth input
+  LeanBench.blackBox (hash growth)
+  if growth.1 != checksum then
+    throw <| IO.userError "growth instrumentation disagrees with public charPoly"
+  IO.println <| (Lean.Json.mkObj [
+    ("family", Lean.Json.str "random-dense-charpoly"),
+    ("axis", Lean.Json.str axis),
+    ("parameter", natJson parameter),
+    ("dimension", natJson dimension),
+    ("entry_bits", natJson bits),
+    ("elapsed_nanos", natJson (stop - start)),
+    ("peak_bits", natJson growth.2),
+    ("checksum", natJson checksum.toNat)]).compress
+
+/-- Emit measured intermediate-growth rows for the random dimension and
+entry-bit-width ladders. -/
+def growthReport : IO UInt32 := do
+  for n in randomDimensionSchedule do
+    emitGrowth "dimension" n n 12 (prepRandomDimension n)
+  for bits in randomBitSchedule do
+    emitGrowth "entry-bits" bits 10 bits (prepRandomBits bits)
+  return 0
 
 /-- Timed public characteristic polynomial on the small-entry tridiagonal family. -/
 def runSmallEntry (input : Input) : UInt64 :=
@@ -140,13 +184,13 @@ setup_benchmark runRandomDense n => n * n * n * n
   where {
     paramFloor := 4
     paramCeiling := 16
-    paramSchedule := .custom #[4, 6, 8, 10, 12, 14, 16]
+    paramSchedule := .custom randomDimensionSchedule
     maxSecondsPerCall := 5.0
     targetInnerNanos := 300000000
     slopeTolerance := 0.35
   }
 
-def runRandomBitWidth (bits : Nat) : UInt64 × Nat :=
+def runRandomBitWidth (bits : Nat) : UInt64 :=
   runRandomDense (prepRandomBits bits)
 
 -- Cost model: dimension is fixed at ten, while the input operand width grows
@@ -155,7 +199,7 @@ setup_benchmark runRandomBitWidth bits => bits + 1
   where {
     paramFloor := 4
     paramCeiling := 48
-    paramSchedule := .custom #[4, 8, 12, 16, 24, 32, 40, 48]
+    paramSchedule := .custom randomBitSchedule
     maxSecondsPerCall := 5.0
     targetInnerNanos := 300000000
     slopeTolerance := 0.5
@@ -238,4 +282,6 @@ setup_fixed_benchmark runPari14 where externalComparisonConfig
 end Hex.CharPolyBench
 
 def main (args : List String) : IO UInt32 :=
-  LeanBench.Cli.dispatch args
+  match args with
+  | ["growth"] => Hex.CharPolyBench.growthReport
+  | _ => LeanBench.Cli.dispatch args

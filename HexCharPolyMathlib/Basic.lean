@@ -234,21 +234,21 @@ private theorem charpoly_border {k : Nat}
   rw [ha, hr, hc]
   simpa [mul_comm, mul_left_comm, mul_assoc] using h
 
-private theorem berkowitzMoments_get {k fuel : Nat}
-    (B : Hex.Matrix R k k) (row w : Vector R k) (j : Nat) (hj : j < fuel) :
-    (Hex.Matrix.berkowitzMoments B row fuel w).getD j 0 =
+private theorem berkowitzMoments_get {k count : Nat}
+    (B : Hex.Matrix R k k) (row w : Vector R k) (j : Nat) (hj : j < count) :
+    (Hex.Matrix.berkowitzMoments B row count w).getD j 0 =
       -dotProduct (vectorEquiv row)
         (((matrixEquiv B) ^ j).mulVec (vectorEquiv w)) := by
-  induction fuel generalizing w j with
+  induction count generalizing w j with
   | zero => omega
-  | succ fuel ih =>
-      cases fuel with
+  | succ count ih =>
+      cases count with
       | zero =>
           have hj0 : j = 0 := by omega
           subst j
           rw [Hex.Matrix.berkowitzMoments.eq_def, List.getD_cons_zero, dotProduct_eq]
           simp
-      | succ fuel =>
+      | succ count =>
           cases j with
           | zero =>
               rw [Hex.Matrix.berkowitzMoments.eq_def, List.getD_cons_zero, dotProduct_eq]

@@ -55,22 +55,22 @@ theorem trailingBlock_self (A : Matrix R n n) :
 omitted because its result would not be consumed. -/
 @[expose]
 def berkowitzMoments {k : Nat} (B : Matrix R k k) (row : Vector R k) :
-    (fuel : Nat) -> Vector R k -> List R
+    (count : Nat) -> Vector R k -> List R
   | 0, _ => []
   | 1, w => [-row.dotProduct w]
   | j + 2, w => -row.dotProduct w :: berkowitzMoments B row (j + 1) (B * w)
 
-/-- The moment loop records exactly one scalar for each unit of fuel. -/
+/-- The moment loop records exactly the requested number of scalars. -/
 @[simp, grind =]
 theorem length_berkowitzMoments {k : Nat} (B : Matrix R k k) (row : Vector R k)
-    (fuel : Nat) (w : Vector R k) :
-    (berkowitzMoments B row fuel w).length = fuel := by
-  induction fuel generalizing w with
+    (count : Nat) (w : Vector R k) :
+    (berkowitzMoments B row count w).length = count := by
+  induction count generalizing w with
   | zero => rfl
-  | succ fuel ih =>
-      cases fuel with
+  | succ count ih =>
+      cases count with
       | zero => rfl
-      | succ fuel =>
+      | succ count =>
           simp [berkowitzMoments, ih]
 
 /-- The Toeplitz first column for the Berkowitz step at trailing block size
@@ -87,12 +87,14 @@ def berkowitzColumn (A : Matrix R n n) (k : Nat) (hk : k + 1 <= n) :
   let block := trailingBlock A k (by omega)
   let moments := (berkowitzMoments block row k col).toArray
   Vector.ofFn fun i =>
-    if i.val = 0 then
+    if h0 : i.val = 0 then
       1
-    else if i.val = 1 then
+    else if h1 : i.val = 1 then
       -a
     else
-      moments.getD (i.val - 2) 0
+      moments[i.val - 2]'(by
+        simp only [moments, List.size_toArray, length_berkowitzMoments]
+        omega)
 
 /-- The leading entry of every Berkowitz column is one. -/
 @[simp, grind =]
@@ -119,7 +121,7 @@ theorem getElem_berkowitzColumn_add_two (A : Matrix R n n) (k : Nat)
           A[(n - k + p.val, n - k - 1)]'(by omega)))[j.val]'(by
             rw [length_berkowitzMoments]
             exact j.isLt) := by
-  simp [berkowitzColumn, Array.getD, j.isLt]
+  simp [berkowitzColumn]
 
 /-- One Berkowitz step, growing the descending coefficient vector from length
 `k + 1` to length `k + 2`. -/

@@ -65,6 +65,8 @@ need not be the characteristic polynomial.
 
 Benchmarks cover dense random dimension and bit-width ladders, small-entry
 tridiagonal matrices, and self-checking companion/Jordan families.  Random
-runs report the peak bit size among Toeplitz columns and intermediate
-coefficient vectors.  FLINT's selected characteristic-polynomial routine and
+runs observe the peak bit size among Toeplitz columns and intermediate
+coefficient vectors.  `lake exe hexcharpoly_bench growth` emits a JSONL row for
+every dimension and bit-width rung with elapsed nanoseconds and the observed
+peak side by side.  FLINT's selected characteristic-polynomial routine and
 PARI's flag-3 Berkowitz routine are informational external comparators.
