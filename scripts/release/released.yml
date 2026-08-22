@@ -431,6 +431,19 @@ repos:
     pins: [hex-basic, hex-determinant, hex-matrix]
     lakefile: toml
 
+  - repo: leanprover/hex-char-poly
+    component: Characteristic polynomials
+    lib: HexCharPoly
+    test_modules: [HexCharPoly.CharPolyElabTests]
+    umbrella: true
+    spec: hex-char-poly
+    bench: true
+    conformance: true
+    fixtures: [HexCharPoly]
+    oracles: [matrix_flint.py, common.py, flint_bench_driver.py, pari_bench_driver.py]
+    pins: [hex-basic, hex-poly, hex-matrix]
+    lakefile: toml
+
   - repo: leanprover/hex-matrix-mathlib
     lib: HexMatrixMathlib
     umbrella: true
@@ -462,6 +475,18 @@ repos:
     fixtures: []
     oracles: []
     pins: [hex-basic, hex-determinant, hex-bareiss, hex-matrix-mathlib, hex-matrix]
+    lakefile: toml
+
+  - repo: leanprover/hex-char-poly-mathlib
+    lib: HexCharPolyMathlib
+    test_modules: [HexCharPolyMathlib.CharPolyElabTests]
+    umbrella: true
+    spec: hex-char-poly-mathlib
+    bench: false
+    conformance: false
+    fixtures: []
+    oracles: []
+    pins: [hex-basic, hex-poly, hex-matrix, hex-determinant, hex-bareiss, hex-char-poly, hex-poly-mathlib, hex-matrix-mathlib, hex-determinant-mathlib]
     lakefile: toml
 
   - repo: leanprover/hex-bareiss-mathlib
@@ -591,5 +616,5 @@ repos:
   - repo: leanprover/hex
     pins_only: true
     readme_template: scripts/release/hex-README.md
-    pins: [hex-basic, hex-arith, hex-poly, hex-mv-poly, hex-mod-arith, hex-poly-mathlib, hex-mv-poly-mathlib, hex-poly-fp, hex-poly-z, hex-mod-arith-mathlib, hex-poly-fp-mathlib, hex-gfq-ring, hex-hensel, hex-poly-z-mathlib, hex-hensel-mathlib, hex-roots, hex-real-roots, hex-roots-mathlib, hex-real-roots-mathlib, hex-matrix, hex-row-reduce, hex-berlekamp, hex-conway, hex-gfq-field, hex-gf2, hex-gf2-mathlib, hex-gfq, hex-gfq-mathlib, hex-determinant, hex-bareiss, hex-matrix-mathlib, hex-row-reduce-mathlib, hex-determinant-mathlib, hex-bareiss-mathlib, hex-berlekamp-mathlib, hex-gram-schmidt, hex-gram-schmidt-mathlib, hex-lll, hex-berlekamp-zassenhaus, hex-lll-mathlib, hex-berlekamp-zassenhaus-mathlib]
+    pins: [hex-basic, hex-arith, hex-poly, hex-mv-poly, hex-mod-arith, hex-poly-mathlib, hex-mv-poly-mathlib, hex-poly-fp, hex-poly-z, hex-mod-arith-mathlib, hex-poly-fp-mathlib, hex-gfq-ring, hex-hensel, hex-poly-z-mathlib, hex-hensel-mathlib, hex-roots, hex-real-roots, hex-roots-mathlib, hex-real-roots-mathlib, hex-matrix, hex-row-reduce, hex-berlekamp, hex-conway, hex-gfq-field, hex-gf2, hex-gf2-mathlib, hex-gfq, hex-gfq-mathlib, hex-determinant, hex-bareiss, hex-char-poly, hex-matrix-mathlib, hex-row-reduce-mathlib, hex-determinant-mathlib, hex-char-poly-mathlib, hex-bareiss-mathlib, hex-berlekamp-mathlib, hex-gram-schmidt, hex-gram-schmidt-mathlib, hex-lll, hex-berlekamp-zassenhaus, hex-lll-mathlib, hex-berlekamp-zassenhaus-mathlib]
     lakefile: toml

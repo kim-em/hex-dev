@@ -70,6 +70,14 @@ def index (D : Region N M rows cols) (i : Fin rows) (j : Fin cols) : Fin (N * M)
 def get (D : Region N M rows cols) (A : Matrix R N M) (i : Fin rows) (j : Fin cols) : R :=
   A[(row D i, col D j)]
 
+/-- A region read is the source entry obtained by adding the region offsets. -/
+@[simp, grind =]
+theorem get_apply (D : Region N M rows cols) (A : Matrix R N M)
+    (i : Fin rows) (j : Fin cols) :
+    get D A i j = A[(D.r0 + i.val, D.c0 + j.val)]'(by
+      exact ⟨by have := D.rows_le; omega, by have := D.cols_le; omega⟩) := by
+  rfl
+
 /-- A region read is a read at its flat `index`. -/
 theorem get_eq_data (D : Region N M rows cols) (A : Matrix R N M)
     (i : Fin rows) (j : Fin cols) :

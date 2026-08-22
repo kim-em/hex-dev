@@ -26,6 +26,7 @@ import HexManual.Chapters.HexConway
 import HexManual.Chapters.HexGFq
 import HexManual.Chapters.HexDeterminant
 import HexManual.Chapters.HexBareiss
+import HexManual.Chapters.HexCharPoly
 import HexManual.Chapters.HexGramSchmidt
 import HexManual.Chapters.HexLLL
 import HexManual.Chapters.HexBerlekampZassenhaus
@@ -105,6 +106,8 @@ contracts and, for mature libraries, supply their proofs.
 {include 0 HexManual.Chapters.HexDeterminant}
 
 {include 0 HexManual.Chapters.HexBareiss}
+
+{include 0 HexManual.Chapters.HexCharPoly}
 
 {include 0 HexManual.Chapters.HexGramSchmidt}
 
