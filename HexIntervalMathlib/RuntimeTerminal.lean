@@ -46,6 +46,7 @@ inductive Error where
   | result (error : Search.Result.Error)
   | controller (error : Runtime.Controller.Error)
   | runtimeProof (error : RuntimeProof.Error)
+  | inheritedEqualities
   | mismatch
   deriving DecidableEq, Repr
 
@@ -79,8 +80,11 @@ structure Lineage (Fact : Type) (semantics : Proof.Semantics Fact)
   input : Proof.Input Fact
   tree : Search.Result.Tree Fact Cause Plan Proof.Key
 
-/-- A full transactional runtime quotation bound to its immutable proof input.
-The constructor is private, so replay cannot be redirected to another input. -/
+/-- A full transactional runtime quotation carrying the admitted proof input.
+Ordinary imports cannot fabricate the record directly. `replayWithin` performs
+the exact input equality check exposed in its result type, while the nested
+`RuntimeProof.Bundle` independently retains the exact theorem registry used by
+quotation. -/
 structure Checked (Fact : Type) (semantics : Proof.Semantics Fact)
     (Cause Plan : Type) where
   private mk ::
@@ -101,6 +105,12 @@ private def rootMatches [DecidableEq Fact]
         source.scope == input.scope && source.branch.baseProgram == input.program &&
         source.branch.initialFacts == input.facts
 
+/-- Public `Runtime.Controller.State.startWithin` and `runWithin` already
+preserve these equalities, and their private state constructor makes individual
+projection-splice counterexamples unconstructible under ordinary imports. This
+defensive repetition binds the visible controller projections at this separate
+theorem adapter edge; conformance tests the constructible whole-runtime and
+whole-input transplant paths instead of fabricating impossible field updates. -/
 private def liveMatches [DecidableEq Fact] [DecidableEq Cause]
     (controller : Runtime.Controller.State Fact Cause Plan Proof.Key) : Bool :=
   match Search.Result.current? controller.tree with
@@ -111,6 +121,32 @@ private def liveMatches [DecidableEq Fact] [DecidableEq Cause]
         controller.runtime.serial == controller.session.serial &&
         controller.runtime.assembly.program == source.branch.program &&
         controller.session.scope == source.scope
+
+private def hasEquality (applied : Runtime.Applied Fact Cause) : Bool :=
+  applied.events.any fun event => match event with
+    | .equality _ => true
+    | .fact _ | .transport _ | .instance _ => false
+
+/-- Whether an exact ancestor of `current` retained an equality event. The
+current node and sibling chronologies are deliberately excluded. A checked
+tree has one acyclic parent edge per non-root node, so `nodes.size` is a total
+structural bound for this walk. -/
+private def inheritsEquality
+    (tree : Search.Result.Tree Fact Cause Plan Proof.Key)
+    (current : Search.Result.Id) : Bool :=
+  let transitions := tree.transitions
+  let rec walk : Nat → Search.Result.Id → Bool
+    | 0, _ => false
+    | fuel + 1, child =>
+        match tree.nodes[child.index]? with
+        | none => false
+        | some node => match node.source.parent with
+          | none => false
+          | some parent =>
+              if transitions.any fun entry => entry.1 == parent && hasEquality entry.2 then
+                true
+              else walk fuel parent
+  walk tree.nodes.size current
 
 /-- Admit an already sealed live controller only when its root belongs to the
 exact registry/input pair and its current typed runtime remains aligned with
@@ -157,16 +193,20 @@ opaque Active.refuteWithin [DecidableEq Fact] [DecidableEq Cause]
     Except Error (Lineage Fact semantics Cause Plan) := do
   let _ := (← liftExcept Error.proof
     (Proof.bodyCheck limits.proof key .refute body)).down
+  if !active.controller.tree.check limits.result measure then
+    throw (Error.result .malformed)
   let some current := liftOption.{0, 1} (Search.Result.current? active.controller.tree)
     | throw Error.mismatch
   let source := current.down.2
+  if source.branch.versions[seen.node.index]? != some seen.version then
+    throw Error.mismatch
   let some fact := source.branch.factAt? seen | throw Error.mismatch
   let some schema := active.registry.proof.refuter? key
     | throw (Error.proof .missingSchema)
   let some certificate := schema.decode body | throw (Error.proof .malformedBody)
   let context : Proof.RefuteContext semantics :=
     { scope := source.scope, programVersion := source.branch.programVersion,
-      program := active.controller.runtime.assembly.program,
+      program := source.branch.program,
       node := seen.node, fact }
   let some _ := schema.prove context certificate | throw (Error.proof .malformedBody)
   let entry : Search.Result.Refute Proof.Key :=
@@ -177,15 +217,30 @@ opaque Active.refuteWithin [DecidableEq Fact] [DecidableEq Cause]
   pure { registry := active.registry, input := active.input, tree }
 
 /-- Restart the next retained child using a runtime already created from that
-child's exact version-zero branch. The controller constructor authenticates its
+child's exact version-zero branch. Before consulting the runtime, this rejects
+an ancestor equality chronology which `Proof.seedChild` would inherit but the
+runtime restart would reset. The controller constructor then authenticates the
 branch and reset serial against this token's tree; using the retained tree here
-prevents cross-lineage splicing. -/
+prevents cross-lineage splicing.
+
+Assembly generation is not a second inherited-proof identity: runtime restart
+authenticates its supplied assembly as the child's generation base, and full
+`RuntimeProof` quotation reconstructs the parent's post-chronology assembly and
+checks every child's exact before/after generation, bindings, and applications.
+A wrong same-program assembly can therefore produce no checked event bundle;
+with no child events, no proof evidence depends on that assembly metadata. -/
 opaque Lineage.resumeWithin [DecidableEq Fact] [DecidableEq Cause]
     (controllerLimits : Runtime.Controller.Limits) (envelope : Search.Envelope)
     (measure : Search.Result.Measure Fact Cause Plan Proof.Key)
     (lineage : Lineage Fact semantics Cause Plan)
     (runtime : Runtime.State Fact Cause) :
     Except Error (Active Fact semantics Cause Plan) := do
+  if !lineage.tree.check controllerLimits.result measure then
+    throw (Error.result .malformed)
+  let some current := liftOption.{0, 1} (Search.Result.current? lineage.tree)
+    | throw Error.mismatch
+  if inheritsEquality lineage.tree current.down.1 then
+    throw Error.inheritedEqualities
   let controller ← Runtime.Controller.State.startWithin controllerLimits envelope measure
     runtime lineage.tree |>.mapError Error.controller
   if !rootMatches lineage.registry lineage.input lineage.tree || !liveMatches controller then
