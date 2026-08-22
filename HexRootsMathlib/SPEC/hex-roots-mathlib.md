@@ -582,6 +582,33 @@ showing the approximate inverse is surjective and hence injective in equal
 dimensions. Polynomial and executable-witness specialization belongs in
 `KantorovichPoly.lean`, not in the generic module.
 
+## Headline correctness theorem
+
+`HexRootsMathlib.isolate_sound`: a successful run of the executable
+isolator on a nonzero polynomial with only simple roots returns atoms
+whose semantic roots enumerate the root finset of the polynomial
+exactly, every atom meeting the requested precision. This is the
+end-to-end post-condition of the public API. Totality under the same
+hypotheses is `isolate_isSome` (the completeness development's
+terminal theorem), packaged for consumers as the none-free `isolate!`
+wrapper with its characterisation family (`isolate!_eq`, `_count`,
+`_roots`, `_prec`, `_disjoint`); the general-multiplicity count
+identity is `isolateAll_count`. Those are independently justified
+public API, and the correspondence and completeness theorems above are
+load-bearing clauses of the headline proof, per the intermediate-lemma
+rule in PLAN/Conventions.md §Headline correctness theorem.
+
+## External comparators
+
+No external comparator is required.
+
+**Justification:** `correspondence-only-layer` per
+`SPEC/benchmarking.md §"Comparator naming"`. The library introduces no
+root-isolation algorithm; it verifies the executable isolator
+implemented elsewhere. The computational performance owner is
+hex-roots, where the isolator's bench targets and the python-flint
+comparator are measured.
+
 ## References
 
 See [hex-roots.md](../../HexRoots/SPEC/hex-roots.md) for the BSSY, Pellet, Mahler, and
