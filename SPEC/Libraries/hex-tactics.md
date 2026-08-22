@@ -194,6 +194,9 @@ unchanged and caches conversions from its public result types.
 The Lean work has a strict order. Its first milestone is entirely about
 current Grind behavior:
 
+- exact copying of Grind's classifier into `Sym.Arith`, including
+  semiring-envelope setup, registered instances, characteristic and
+  no-zero-divisor handling, and `PowIdentity`, before Grind switches to it;
 - migration of Grind's duplicate ring and semiring reifier to `Sym.Arith`;
 - copying all selected reusable normalization and proof construction into
   `Sym.Arith` while Grind still uses its originals;
@@ -204,6 +207,10 @@ current Grind behavior:
 Hex does not add requirements to that milestone. In particular, the migration
 does not need batching, a default standalone variable session, Hex result
 types, provider hooks, matrix clients, or new expression languages.
+Compatibility runs over
+[`leanprover/downstream-lean4`](https://github.com/leanprover/downstream-lean4)
+and Hex are part of validating existing numeral and canonicalization behavior,
+not downstream feature work. Exact diagnostic wording need not be preserved.
 
 Only after the Grind migration is complete does Hex request:
 
@@ -1025,9 +1032,11 @@ umbrella benchmark alone.
 The upstream sequence in the
 [`Sym.Arith` proposal](../lean4-sym-arith.md#proposed-work-sequence) takes
 priority over every downstream-facing Lean request in this section. Lean first
-copies the selected current machinery into `Sym.Arith`, switches Grind to it,
-and deletes the old Grind implementations. No Hex batch API, provider
-interface, matrix client, or new expression view is part of that work.
+copies the current classifier exactly and then copies the remaining selected
+machinery into `Sym.Arith`, switches Grind to it, and deletes the old Grind
+implementations. Policy flags for a cleaner standalone classifier come only
+after the exact copy is established. No Hex batch API, provider interface,
+matrix client, or new expression view is part of that work.
 
 Hex-only implementation can proceed against the current public API or against
 explicit Hex data. Such work must not constrain the upstream migration. Any

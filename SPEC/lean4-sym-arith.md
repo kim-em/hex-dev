@@ -435,6 +435,12 @@ The shared recognizer does not know that these steps exist. After the
 migration, a standalone session can implement the same `MonadMkVar` request
 with a local map.
 
+The e-graph generation used when Grind internalizes an atom is adapter state,
+not an input to algebraic recognition. A Grind-local reader or equivalent
+context carries it to `MonadMkVar`; the shared `MonadMkVar` interface does not
+need a generation parameter. A transitional adapter may project Grind's ring
+state into the shared ring state and copy updated operation caches back.
+
 ### Classification state
 
 `Sym.Arith.State` in the underlying `SymM` should be the authoritative cache
@@ -445,6 +451,17 @@ classification identity or another stable domain identifier.
 During migration, an adapter may project the shared classification into the
 existing Grind structure. The final state must not keep two independently
 updated copies of structure instances and cached operation functions.
+
+The present `Sym.Arith` classifier is not yet a behavioral replacement for
+Grind's classifier. Before any classifier call site moves, copy Grind's exact
+classification behavior into `Sym.Arith`, including its fast path and instance
+registration for semiring envelopes, conditional characteristic and
+no-natural-zero-divisor evidence, and `PowIdentity` discovery. Leave Grind on
+its original classifier while the two paths are compared.
+
+Do not make this initial copy configurable. After Grind uses the shared
+classifier and the duplicate has been deleted, a later change may factor
+these choices behind explicit flags whose defaults preserve Grind's behavior.
 
 ### Behavioral parity
 
@@ -464,10 +481,21 @@ Parity covers:
 - wrong operation instances;
 - power limits and power-identity handling;
 - variable numbering and denotation;
-- issue reporting and resource limits.
+- the conditions which report issues, and resource limits.
 
 The first migration change should not intentionally change Grind's accepted
-language or generated facts.
+language or generated facts. Diagnostic wording may adopt shared,
+caller-neutral terminology; exact message text is not a parity requirement.
+
+Core tests are not sufficient evidence for the numeral-recognition boundary.
+The shared recognizer assumes canonical literal forms, while the old Meta
+recognizer accepts additional raw and wrapped forms. Test the migration against
+the package corpus in
+[`leanprover/downstream-lean4`](https://github.com/leanprover/downstream-lean4),
+as well as focused differential cases for raw literals, metadata wrappers,
+nested `OfNat` forms, casts, and generated powers. Downstream testing here is
+compatibility validation for existing behavior, not permission to add a
+downstream-facing feature to Part I.
 
 ## Fixed follow-up views
 
@@ -550,8 +578,9 @@ Before changing call sites, inventory every declaration or coherent group
 which should leave Grind. For each, record its current location,
 `Sym.Arith` destination or counterpart, Grind callers, excluded
 solver-specific data, and deletion test. Cover the reifiers, safe-polynomial
-conversion, normalized equality comparison and proofs, reusable proof caches,
-noncommutative normalization proofs, and semiring-envelope interpretation.
+conversion, algebraic classification and operation caches, normalized equality
+comparison and proofs, reusable proof caches, noncommutative normalization
+proofs, and semiring-envelope interpretation.
 
 Add a harness which runs both implementations on the same canonical input
 with matched variable allocation. Compare success, decline, issues, reflected
@@ -571,10 +600,17 @@ Where a counterpart already exists, including ring and semiring reification,
 fill its parity gaps instead of creating a third implementation. Both paths
 must remain independently testable.
 
-Preserve the current grammar, inputs, normal forms, proof strategy,
-diagnostics, and resource behavior. Abstract a signature only to remove Grind
-state which the computation does not use semantically. Do not add modes,
-accepted inputs, or a polished standalone result API.
+The classifier is the first S1 slice. Copy the current Grind implementation
+exactly, including semiring-envelope setup, registered instances,
+characteristic and no-zero-divisor handling, and `PowIdentity`. Do not add
+flags, clean up its policy, or switch Grind during this copy. Switch only after
+focused differential classification tests pass.
+
+Preserve the current grammar, inputs, normal forms, proof strategy, issue
+conditions, and resource behavior. Diagnostic wording may become
+caller-neutral. Abstract a signature only to remove Grind state which the
+computation does not use semantically. Do not add modes, accepted inputs, or a
+polished standalone result API.
 
 Do not copy constraint bases, hypothesis-derived polynomial derivations,
 inverse case reasoning, e-graph propagation, or solver scheduling. Narrow
@@ -596,10 +632,13 @@ its test-only entry point. Remove state fields, imports, and adapters used only
 by the duplicate path, while retaining the listed solver-specific code.
 
 Run the Grind test suite and compare runtime, allocation, proof size, and
-kernel checking with the S0 baseline. Resolve regressions without adding a new
-feature. Part I ends only when every inventory row reaches S3, Grind uses the
-`Sym.Arith` implementation, all duplicates are gone, and every current
-behavioral difference is accounted for. Part II cannot begin earlier.
+kernel checking with the S0 baseline. Before deleting a recognizer whose
+literal handling differs, run the relevant `downstream-lean4` package builds
+and tests against the change and investigate any new failure as a possible
+canonicalization or numeral-shape regression. Resolve regressions without
+adding a new feature. Part I ends only when every inventory row reaches S3,
+Grind uses the `Sym.Arith` implementation, all duplicates are gone, and every
+current behavioral difference is accounted for. Part II cannot begin earlier.
 
 ### Part II: extend the shared service
 
@@ -654,7 +693,10 @@ Part I is complete when:
 - Grind retains its existing accepted language, e-graph behavior, and solver
   results;
 - current classification, characteristic, semiring-envelope,
-  noncommutative, proof, diagnostic, and resource-limit cases have parity;
+  noncommutative, proof, issue-triggering, and resource-limit cases have
+  parity, without requiring identical diagnostic wording;
+- focused literal-shape tests and the relevant `downstream-lean4` package
+  builds and tests show no unexplained compatibility regression;
 - Grind's performance has no unexplained regression;
 - no standalone-session, batch, rational, additive, module, or
   symbolic-exponent feature is required to complete the migration.
