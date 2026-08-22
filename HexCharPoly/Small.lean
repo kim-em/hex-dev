@@ -34,7 +34,7 @@ theorem charPoly_one_by_one (A : Matrix R 1 1) :
     have hcases : i = 0 ∨ i = 1 := by omega
     rcases hcases with rfl | rfl <;>
       simp [berkowitz, berkowitzAux, berkowitzStep, toeplitzMulVec,
-        berkowitzColumn, List.finRange_succ] <;>
+        berkowitzColumn, berkowitzRow, berkowitzCol, List.finRange_succ] <;>
       grind
   apply DensePoly.ext_coeff
   intro i
@@ -64,7 +64,8 @@ theorem charPoly_two_by_two (A : Matrix R 2 2) :
     have hcases : i = 0 ∨ i = 1 ∨ i = 2 := by omega
     rcases hcases with rfl | rfl | rfl <;>
       simp [berkowitz, berkowitzAux, berkowitzStep, toeplitzMulVec,
-        berkowitzColumn, berkowitzMoments, Vector.dotProduct,
+        berkowitzColumn, berkowitzRow, berkowitzCol, berkowitzMoments,
+        Vector.dotProduct,
         List.finRange_succ] <;>
       grind
   apply DensePoly.ext_coeff

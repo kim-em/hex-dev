@@ -27,7 +27,7 @@ column is `t` by `v`.  The entry in row `i` and column `l` is `t[i-l]` when
 @[expose]
 def toeplitzMulVec {k : Nat} (t : Vector R (k + 2)) (v : Vector R (k + 1)) :
     Vector R (k + 2) :=
-  Vector.ofFn fun i =>
+  Hex.Vector.ofFn' fun i =>
     (List.finRange (k + 1)).foldl (fun acc l =>
       if h : l.val ≤ i.val then
         acc + t[(⟨i.val - l.val, by omega⟩ : Fin (k + 2))] * v[l]

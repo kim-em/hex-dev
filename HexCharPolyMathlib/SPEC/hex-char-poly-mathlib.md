@@ -18,6 +18,34 @@ theorem equiv_charPoly (A : Hex.Matrix R n n) :
 end HexCharPolyMathlib
 ```
 
+Importing the umbrella extends `char_poly` to closed
+`Matrix (Fin n) (Fin n) Int` terms:
+
+```lean
+open Matrix Polynomial
+
+def A : Matrix (Fin 2) (Fin 2) Int := !![1, 2; 3, 4]
+
+#check char_poly A
+
+example : A.charpoly = X ^ 2 - 5 * X - 2 := by
+  char_poly
+
+example : True := by
+  char_poly A
+  -- poly : Polynomial Int
+  -- charPoly_eq : A.charpoly = poly
+  trivial
+```
+
+Direct equality goals accept ordinary `Polynomial Int` expressions built from
+`X`, `C`, integer numerals, addition, subtraction, multiplication, negation,
+and natural-literal powers.  Transparent named definitions made from those
+forms are unfolded.  The elaborator materializes the finite Mathlib matrix,
+certifies every entry, reuses the executable Berkowitz certificate, and then
+transports the result through `equiv_charPoly`; it does not evaluate Mathlib's
+noncomputable `Matrix.charpoly`.
+
 The proof follows the executable recursion on trailing principal blocks.  Its
 step theorem proves the bordered determinant identity through the adjugate
 coefficient recurrence, identifies the row--block--column moments with the

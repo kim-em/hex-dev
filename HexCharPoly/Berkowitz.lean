@@ -73,6 +73,20 @@ theorem length_berkowitzMoments {k : Nat} (B : Matrix R k k) (row : Vector R k)
       | succ count =>
           simp [berkowitzMoments, ih]
 
+/-- The border row used by the Berkowitz step at trailing size `k`. -/
+@[expose]
+def berkowitzRow (A : Matrix R n n) (k : Nat) (hk : k + 1 <= n) : Vector R k :=
+  let s := n - k - 1
+  Hex.Vector.ofFn' fun j =>
+    A[((s : Nat), n - k + j.val)]'(by simp only [s]; omega)
+
+/-- The border column used by the Berkowitz step at trailing size `k`. -/
+@[expose]
+def berkowitzCol (A : Matrix R n n) (k : Nat) (hk : k + 1 <= n) : Vector R k :=
+  let s := n - k - 1
+  Hex.Vector.ofFn' fun i =>
+    A[(n - k + i.val, (s : Nat))]'(by simp only [s]; omega)
+
 /-- The Toeplitz first column for the Berkowitz step at trailing block size
 `k + 1`: `1`, `-a`, and `-(row dot B^j col)` for `0 <= j < k`. -/
 @[expose]
@@ -80,13 +94,11 @@ def berkowitzColumn (A : Matrix R n n) (k : Nat) (hk : k + 1 <= n) :
     Vector R (k + 2) :=
   let s := n - k - 1
   let a := A[((s : Nat), (s : Nat))]'(by simp only [s]; omega)
-  let row : Vector R k := Vector.ofFn fun j =>
-    A[((s : Nat), n - k + j.val)]'(by simp only [s]; omega)
-  let col : Vector R k := Vector.ofFn fun i =>
-    A[(n - k + i.val, (s : Nat))]'(by simp only [s]; omega)
+  let row := berkowitzRow A k hk
+  let col := berkowitzCol A k hk
   let block := trailingBlock A k (by omega)
   let moments := (berkowitzMoments block row k col).toArray
-  Vector.ofFn fun i =>
+  Hex.Vector.ofFn' fun i =>
     if h0 : i.val = 0 then
       1
     else if h1 : i.val = 1 then
@@ -115,10 +127,8 @@ theorem getElem_berkowitzColumn_add_two (A : Matrix R n n) (k : Nat)
     (hk : k + 1 <= n) (j : Fin k) :
     (berkowitzColumn A k hk)[(⟨j.val + 2, by omega⟩ : Fin (k + 2))] =
       (berkowitzMoments (trailingBlock A k (by omega))
-        (Vector.ofFn fun q =>
-          A[(n - k - 1, n - k + q.val)]'(by omega)) k
-        (Vector.ofFn fun p =>
-          A[(n - k + p.val, n - k - 1)]'(by omega)))[j.val]'(by
+        (berkowitzRow A k hk) k
+        (berkowitzCol A k hk))[j.val]'(by
             rw [length_berkowitzMoments]
             exact j.isLt) := by
   simp [berkowitzColumn]

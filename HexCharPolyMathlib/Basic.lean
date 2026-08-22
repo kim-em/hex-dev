@@ -613,17 +613,17 @@ private theorem berkowitzStep_correct {n k : Nat} (A : Hex.Matrix R n n)
       rw [Hex.Matrix.length_berkowitzMoments]
       exact j.isLt)]
     have hrow : vectorEquiv
-        (Vector.ofFn fun q => A[(n - k - 1, n - k + q.val)]'(by omega)) = r := by
-      change vectorEquiv (vectorEquiv.symm r) = r
-      exact vectorEquiv.apply_symm_apply r
+        (Hex.Matrix.berkowitzRow A k hk) = r := by
+      funext q
+      simp [Hex.Matrix.berkowitzRow, r]
     have hcol : vectorEquiv
-        (Vector.ofFn fun p => A[(n - k + p.val, n - k - 1)]'(by omega)) = c := by
-      change vectorEquiv (vectorEquiv.symm c) = c
-      exact vectorEquiv.apply_symm_apply c
+        (Hex.Matrix.berkowitzCol A k hk) = c := by
+      funext p
+      simp [Hex.Matrix.berkowitzCol, c]
     have hmoment := berkowitzMoments_get
         (Hex.Matrix.trailingBlock A k (by omega))
-        (Vector.ofFn fun q => A[(n - k - 1, n - k + q.val)]'(by omega))
-        (Vector.ofFn fun p => A[(n - k + p.val, n - k - 1)]'(by omega))
+        (Hex.Matrix.berkowitzRow A k hk)
+        (Hex.Matrix.berkowitzCol A k hk)
         j.val j.isLt
     rw [hrow, hcol] at hmoment
     simpa only [B] using hmoment

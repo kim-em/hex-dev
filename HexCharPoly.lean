@@ -12,6 +12,8 @@ public import HexCharPoly.CharPoly
 public import HexCharPoly.Trace
 public import HexCharPoly.EvalMatrix
 public import HexCharPoly.Small
+public meta import HexCharPoly.CharPolyElab
+public import HexCharPoly.CharPolyElab
 
 public section
 

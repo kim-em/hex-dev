@@ -9,5 +9,7 @@ module
 public import HexCharPolyMathlib.CayleyHamilton
 public import HexCharPolyMathlib.Coeff
 public import HexCharPolyMathlib.Invariance
+public meta import HexCharPolyMathlib.CharPolyElab
+public import HexCharPolyMathlib.CharPolyElab
 
 public section

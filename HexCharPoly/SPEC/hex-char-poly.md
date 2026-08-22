@@ -45,6 +45,35 @@ noncomputable def evalMatrix (p : DensePoly R) (A : Matrix R n n) : Matrix R n n
 end Hex.Matrix
 ```
 
+For closed integer matrices, importing the umbrella also provides the
+`char_poly` elaborator and tactic:
+
+```lean
+def A : Hex.Matrix Int 2 2 := #m[1, 2; 3, 4]
+
+#check char_poly A
+-- (char_poly A).poly : Hex.DensePoly Int
+-- (char_poly A).charPoly_eq : Hex.Matrix.charPoly A = (char_poly A).poly
+
+example : Hex.Matrix.charPoly A = #p[-2, -5, 1] := by
+  char_poly
+
+example : True := by
+  char_poly A
+  -- poly : Hex.DensePoly Int
+  -- charPoly_eq : Hex.Matrix.charPoly A = poly
+  trivial
+```
+
+`char_poly A` computes with compiled code and emits a fine-grained certificate
+that the kernel rechecks.  Bare `char_poly` closes a direct characteristic-
+polynomial equality in either orientation, while the tactic form with an
+argument introduces a `poly` let and `charPoly_eq` hypothesis.  The input,
+dimension, and any polynomial in a direct equality must be closed and
+definitionally transparent.  This interface currently supports only
+`Hex.Matrix Int n n`; the underlying characteristic-polynomial API remains
+generic over commutative rings.
+
 The library proves the entry formula for Toeplitz multiplication, the leading
 coefficient invariant, coefficient reversal, size, degree, monicity, the trace
 coefficient, and the closed forms in dimensions zero, one, and two.  The
