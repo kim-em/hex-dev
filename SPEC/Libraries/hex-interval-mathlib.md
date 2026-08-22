@@ -2321,8 +2321,8 @@ Chebyshev, Li(2), and affine-cover interfaces remain pending.
 
 All 340 executable `interval_decide` and `interval_auto` sites are classified:
 337 are accepted after localized rewrites and three are replaced by stronger
-results. Of the 83 separately inventoried native-evaluation sites, 38 are
-accepted after localized rewrites and 45 remain pending. Twenty-one of the
+results. Of the 83 separately inventoried native-evaluation sites, 51 are
+accepted after localized rewrites and 32 remain pending. Twenty-one of the
 accepted sites are the pure FKS2 list-geometry family: `allCells` and the six
 Corollary 24 prefixes each need the same chain, nonempty, and final-coordinate
 facts. Seven source-pinned `Prefix` rows check those three facts with one
@@ -2335,14 +2335,31 @@ exactly but does not derive the lengths from upstream syntax. Typed failure
 coordinates retain the certificate index, source file, and failed
 chain/nonempty/last role, so repeated declaration lines remain unambiguous.
 
-This structural result deliberately does not classify an analytic Boolean as
-list structure. The 42 remaining Corollary 23/24 sites split into nine
-generalized whole-table cell predicates, nine Corollary 23 floor-slab
-predicates, thirteen Corollary 24 `x^{-1/n}` prefix/boundary cell predicates,
-and eleven Corollary 24 floor-slab predicates. The other three pending native
-sites belong to the FKS2-floor Chebyshev/affine-cover boundary. Together with
-eight pending import sites and four pending dependency-interface records, the
-manifest has 57 pending decisions; none is an unclassified numeric tactic
+The thirteen Corollary 24 `x^{-1/n}` sites are a separate analytic family.
+Their exact source propositions comprise six nested passing prefixes, six
+first-excluded cells, and the row-11 forty-cell sample. A package-owned checker
+reduces each cell to the rational `b'/(128*n)`, applies the shared degree-11
+Taylor sum with a degree-12 upper remainder, and raises the result to the 128th
+power by seven squarings. Six disjoint bands authenticate all 3,746 cells once
+at denominators `3, 4, 5, 10, 50, 100`; exponential monotonicity reconstructs
+the nested prefixes. At each boundary a strict lower Taylor sum proves the
+actual negation of `eps ≤ exp (-b'/n)`, stronger than failure of the upstream
+dyadic checker. This is deliberately a semantic replacement rather than a
+reproof of the thirteen Boolean equalities. In the pinned source, the six true
+prefix folds are consumed only by `mid_xpow_of`; it extracts each per-cell
+Boolean and reaches the analytic inequality through `checkXpowCell_sound`.
+The sample and false-boundary declarations have no downstream uses. The source
+matcher pins that consumer bridge, the thirteen Boolean theorem headers, the
+exact `checkXpowCell_sound` result type, and the row-11 `sampleCells`
+definition at its exact source line and shape.
+
+This analytic result does not classify the generalized whole-table or slab
+engines. The 29 remaining Corollary 23/24 sites split into nine generalized
+whole-table cell predicates, nine Corollary 23 floor-slab predicates, and
+eleven Corollary 24 floor-slab predicates. The other three pending native sites
+belong to the FKS2-floor Chebyshev/affine-cover boundary. Together with eight
+pending import sites and four pending dependency-interface records, the
+manifest has 44 pending decisions; none is an unclassified numeric tactic
 leaf.
 
 The compatibility manifest records every `interval_auto` invocation, every
@@ -3514,6 +3531,17 @@ the fixed soundness and trust contracts.
 - `conformance/HexIntervalMathlib/PntFks2StructureConformance.lean`: full and
   prefix checks, cap/data/coordinate mutations, the seven ordinary adapters,
   and guarded axiom reports.
+- `HexInterval/Experiment/PntFks2Xpow.lean`: six exact Corollary 24 prefix rows,
+  six disjoint bounded bands, thirteen source sites, the rational upper/lower
+  Taylor checkers, and typed mutation failures.
+- `HexIntervalMathlib/Experiment/PntFks2Xpow*.lean`: the shared exponential
+  semantics, six generated ordinary-kernel band certificates, monotonic prefix
+  reconstruction, strict boundary failures, and the row-11 sample theorem.
+- `conformance/HexIntervalMathlib/PntFks2XpowConformance.lean`: exact source
+  coordinates, identity/cap/prefix/boundary mutations, source-shaped adapters,
+  and guarded axiom reports in the explicit non-default FKS2 target.
+- `scripts/maintenance/generate_fks2_xpow.py`: deterministic regeneration of
+  the six split ordinary-kernel proof modules from the pinned family chunks.
 - `HexInterval/Experiment/PntDusartExp.lean`: the exact seven-row Dusart
   exponential table and bounded rational Taylor checker; the eighth leaf uses
   a named stronger package theorem.

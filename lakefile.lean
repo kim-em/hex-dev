@@ -362,6 +362,7 @@ lean_lib HexIntervalExperiment where
     `HexInterval.Experiment.PntFks2FamilyData,
     `HexInterval.Experiment.PntFks2Family,
     `HexInterval.Experiment.PntFks2Structure,
+    `HexInterval.Experiment.PntFks2Xpow,
     `HexInterval.Experiment.CosBillion,
     `HexInterval.Experiment.LogTablePrecision,
     `HexInterval.Experiment.PntLogNatural,
@@ -404,6 +405,7 @@ lean_lib HexIntervalMathlibExperiment where
     `HexIntervalMathlib.Experiment.PntTable10Exact,
     `HexIntervalMathlib.Experiment.PntTable12Log,
     `HexIntervalMathlib.Experiment.PntFks2Shard,
+    `HexIntervalMathlib.Experiment.PntFks2Xpow,
     `HexIntervalMathlib.Experiment.CosBillion,
     `HexIntervalMathlib.Experiment.LogTablePrecision,
     `HexIntervalMathlib.Experiment.PntLogNatural,
@@ -560,7 +562,14 @@ lean_lib HexConformance where
 -- non-default library. They are excluded from both merge-gating
 -- `HexIntervalMathlibExperiment` and `HexConformance`.
 lean_lib HexIntervalPntFks2Local where
-  globs := #[`HexIntervalMathlib.Experiment.PntFks2FamilyProof00,
+  globs := #[`HexIntervalMathlib.Experiment.PntFks2XpowProof00,
+    `HexIntervalMathlib.Experiment.PntFks2XpowProof01,
+    `HexIntervalMathlib.Experiment.PntFks2XpowProof02,
+    `HexIntervalMathlib.Experiment.PntFks2XpowProof03,
+    `HexIntervalMathlib.Experiment.PntFks2XpowProof04,
+    `HexIntervalMathlib.Experiment.PntFks2XpowProof05,
+    `HexIntervalMathlib.Experiment.PntFks2XpowResults,
+    `HexIntervalMathlib.Experiment.PntFks2FamilyProof00,
     `HexIntervalMathlib.Experiment.PntFks2FamilyProof01,
     `HexIntervalMathlib.Experiment.PntFks2FamilyProof02,
     `HexIntervalMathlib.Experiment.PntFks2FamilyProof03,
@@ -574,6 +583,10 @@ lean_lib HexIntervalPntFks2Local where
     `HexIntervalMathlib.Experiment.PntFks2FamilyProof12,
     `HexIntervalMathlib.Experiment.PntFks2FamilyProof13,
     `HexIntervalMathlib.Experiment.PntFks2Family].map Glob.one
+
+lean_lib HexIntervalPntFks2ConformanceLocal where
+  srcDir := "conformance"
+  globs := #[`HexIntervalMathlib.PntFks2XpowConformance].map Glob.one
 
 -- The local executable owns the complete runtime and guarded-axiom driver.
 lean_exe hex_interval_pnt_fks2_local where
