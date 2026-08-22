@@ -434,6 +434,7 @@ repos:
   - repo: leanprover/hex-char-poly
     component: Characteristic polynomials
     lib: HexCharPoly
+    test_modules: [HexCharPoly.CharPolyElabTests]
     umbrella: true
     spec: hex-char-poly
     bench: true
@@ -478,6 +479,7 @@ repos:
 
   - repo: leanprover/hex-char-poly-mathlib
     lib: HexCharPolyMathlib
+    test_modules: [HexCharPolyMathlib.CharPolyElabTests]
     umbrella: true
     spec: hex-char-poly-mathlib
     bench: false

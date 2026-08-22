@@ -607,6 +607,8 @@ lean_lib HexReleaseTests where
     `HexBerlekampZassenhaus.FactorTacticTests,
     `HexBerlekampZassenhausMathlib.FactorPolyTests,
     `HexBerlekampZassenhausMathlib.IrreducibilityTests,
+    `HexCharPoly.CharPolyElabTests,
+    `HexCharPolyMathlib.CharPolyElabTests,
     `HexRealRoots.ReplayTest,
     `HexRealRootsMathlib.IsolateRootsTests,
     `HexRealRootsMathlib.IsolateRootsElabTests,
