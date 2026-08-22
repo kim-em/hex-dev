@@ -34,6 +34,7 @@ IMPORT_ALL_RE = re.compile(
 SEALED_IMPORT_ALL_ALLOWLIST: dict[str, frozenset[Path]] = {
     "HexInterval.Search": frozenset(),
     "HexIntervalMathlib.Driver": frozenset(),
+    "HexIntervalMathlib.Controller": frozenset(),
     "HexIntervalMathlib.Proof": frozenset(),
 }
 

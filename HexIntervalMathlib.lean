@@ -18,6 +18,7 @@ public import HexIntervalMathlib.Split
 public import HexIntervalMathlib.Inverse
 public import HexIntervalMathlib.Division
 public import HexIntervalMathlib.Driver
+public import HexIntervalMathlib.Controller
 public import HexIntervalMathlib.Regularize
 public import HexIntervalMathlib.Program
 public import HexIntervalMathlib.Proof
@@ -37,6 +38,12 @@ enclosures. It also supplies the function-agnostic semantics of supported
 programs and the chronological, package-owned proof-replay boundary.
 `HexIntervalMathlib.Rule` supplies a checked built-in arithmetic package whose
 schemas recompute checked public operations before producing proof evidence.
+`HexIntervalMathlib.Controller` supplies explicit stable application-table,
+runtime/proof-registry alignment and bounded deterministic policy iteration
+over the sealed retained tree, including caller-measured caps on each retained
+policy state. Its current conformance callbacks are toy packages; concrete
+built-in arithmetic driver adapters, package discovery, and public split-search
+tactic integration remain separate.
 `HexIntervalMathlib.Frontend` supplies bounded recursive arithmetic reification,
 source-driven version-zero facts, and flat programmatic replay/closure
 combinators.

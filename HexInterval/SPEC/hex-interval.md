@@ -96,7 +96,8 @@ uses the dyadic grid `2⁻¹⁶`; programmatic clients may choose another precis
 within the explicit envelope. Because each computed arithmetic layer is
 followed by an internal regularization layer, its term-depth cap `32` admits
 about 16 nested arithmetic operations along one expression spine. Generic
-search-selected recipes and broader local-context parsing remain experimental.
+public-tactic search-selected recipes and broader local-context parsing remain
+experimental.
 The supported proof companion can separately consume a checked retained
 `Search.Result.Tree` plus caller-supplied proof chronology: its registry
 authenticates package-owned binary cover and refutation schemas, its checked
@@ -106,17 +107,21 @@ leaves, and joins siblings only through the exact cover. The supported
 one-step driver now invokes an already-selected authenticated package callback
 and transactionally retains its exact runtime command and separately checked
 recipe data together. It can advance root and child-local fact histories before
-splitting or settling. Offer generation, autonomous search iteration, and
-invoking this path from the public tactic remain later controller work. The first
+splitting or settling. The supported explicit controller aligns a stable
+fact-event application table with same-order runtime and proof registries,
+regenerates bounded deterministic offer snapshots, and iterates a replaceable
+policy over the sealed tree/session bundle. Its current end-to-end conformance
+uses toy fact-event callbacks: concrete built-in arithmetic `Driver.Package`
+callbacks and application generators have not yet been supplied. Invoking this
+path from the public tactic remains later controller work. The first
 concrete supported registry is the Mathlib arithmetic package for one
 configured constant and natural exponent plus public negation, addition,
 subtraction, multiplication, power, absolute-value, min/max, reciprocal,
-division, and regularization operations. Arbitrary-function package assembly,
-concrete callback implementations and offer generation, concrete policy
-algorithms and default scheduling, the complete branch-search loop,
-payload storage, and the optimized backing store remain experimental.
-Supported authenticated sessions and the narrow direct-forward tactic do not
-yet supply that missing controller bridge.
+division, and regularization operations. Automatic arbitrary-function package
+discovery, Mathlib-free package drafts, equality/instance runtime events,
+program extension, concrete policy algorithms and default scheduling, payload
+storage, and the optimized backing store remain experimental. The narrow
+direct-forward tactic does not yet invoke the supported controller.
 In particular, the current instantiation proposal's package-supplied numeric
 policy family is not part of the supported action contract.
 
@@ -4071,9 +4076,11 @@ transition can then replace the current node's source only with the after-state
 of an accepted callback tied to that exact source branch. The supported
 one-step driver appends the same callback's fact events to that node's recipe
 in the same transaction. Non-root target/refutation leaves and later splits
-may therefore consume child-local fact history after exact replay. This is not
-yet an autonomous controller: offer generation, repeated policy-driven
-iteration, and public-tactic split search remain separate work.
+may therefore consume child-local fact history after exact replay. The
+supported explicit controller now regenerates deterministic authenticated
+fact-event offers and repeats policy-driven iteration over that sealed bundle.
+Automatic package discovery, equality/instance runtime events, program
+extension, and public-tactic split search remain separate work.
 
 `maxEndpointHeight` is measured after canonical dyadic normalization as the bit
 length of the absolute numerator plus the magnitude of the signed binary
@@ -5376,8 +5383,8 @@ their declared cost inside a scheduler bound.
   registry; `import all HexIntervalMathlib.Proof` is a trusted-internals escape
   hatch rejected outside the exact empty repository allowlist. The built-in
   arithmetic package and direct-forward reifier/tactic are supported below;
-  arbitrary-function packages, autonomous search orchestration, split-search
-  tactic integration, and default registries remain experimental.
+  arbitrary-function package discovery, Mathlib-free runtime packages,
+  split-search tactic integration, and default registries remain experimental.
 - `HexIntervalMathlib/Driver.lean`: supported one-step execution of an exact
   already-selected package action, atomic retained-source advancement/split/
   terminal updates, and bounded alignment of the sealed result tree with its
@@ -5385,6 +5392,42 @@ their declared cost inside a scheduler bound.
   independent byte/work caps charge all retained event and edge payloads over
   the complete bundle. It does not generate offers, choose a policy, or run an
   autonomous search loop.
+- `HexIntervalMathlib/Controller.lean`: supported explicit assembly of one
+  stable fact-event application table with exactly aligned runtime callbacks
+  and proof registrations. It resource-first regenerates deterministic offers,
+  derives age from sealed session chronology, revalidates exact
+  `ApplicationId` routing, and iterates a replaceable policy over the sealed
+  session/tree bundle under a cumulative choice cap. A caller-owned logical
+  measure bounds the initial policy state and every callback successor against
+  independent byte/pair/work caps before retention; constructing and measuring
+  the arbitrary state remains non-preemptible. The choice cap is per sealed
+  `Controller.State` lineage: explicit `State.startWithin` starts a new handle
+  from a sealed current bundle and resets choices, the dismissal latch, and the
+  search session's serial, steps, and diagnostic trace even when the retained
+  head/scope is unchanged. Pure states can be reused to explore separately
+  bounded successors. It is not a process-global budget, and the new handle
+  inherits no proof-closure or saturation claim from an older handle. Its
+  registry key is a
+  trusted compatibility epoch, not callback-object identity: same-key
+  assemblies deliberately declare replaceable implementations whose results
+  still cross the runtime and proof checks. Automatic discovery,
+  program extension, equality/instance runtime events, Mathlib-free raw
+  packages, concrete built-in arithmetic driver callbacks/application
+  generators, and split-search tactic syntax remain later work; the current
+  autonomous theorem uses toy fact-event packages. All offers in one immutable
+  snapshot share its controller-owned serial as age. A malformed generator
+  draft aborts the whole regeneration transaction. Dismissing a non-split
+  offer sets a controller-owned incomplete bit which survives later accepted
+  refreshes in that scope within the returned handle lineage; a split or
+  terminal transition to the next retained scope clears it. Explicit
+  `State.startWithin` also resets it by creating a new lineage, including at the
+  same retained scope. Dismissing a split probe does not set it.
+  Policy stop returns a resumable sealed state; exhausting `maxChoices` is a
+  resource error. Each selected reference transition authenticates the entry
+  session, validates the current and replacement retained bundle/tree in the
+  driver, then authenticates the regenerated session, so those repeated costs
+  are multiplied by the choice cap. `Run.complete` means the runtime tree has no pending frontier,
+  not that proof replay has closed the theorem.
 - `HexIntervalMathlib/Rule.lean`: the supported stable-key arithmetic package,
   exact real operation meanings, package-owned fact schemas, checked registry
   assembly, and state-to-proof quotation for negation, addition, subtraction,
@@ -5466,8 +5509,9 @@ their declared cost inside a scheduler bound.
   StagedPolicy,AdaptivePolicy,FeaturePolicy,BranchTree}.lean`: current
    provisional package callback, policy implementation, semantic session,
    target driver, and split-construction designs. Optimized storage, concrete
-   offer generation, package protocols, and a default policy will be selected
-   from measurements; none is frozen by the decoded supported snapshots.
+   automatic package discovery/program extension, Mathlib-free package
+   protocols, and a default policy will be selected from measurements; none is
+   frozen by the decoded supported snapshots.
 - `conformance/HexInterval/{Conformance,SearchConformance,MinMaxConformance,
   EmitFixtures}.lean`:
   Lean-only checks and oracle fixtures.
