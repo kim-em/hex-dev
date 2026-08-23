@@ -406,20 +406,25 @@ with the powers of `t` obtained by binary powering from the exponent
 gaps. The cost is the sum of the multiplication costs over this
 schedule, not a function of the output size. A caller wanting `f(x^k)`
 must use {name}`substPow`, never this. -/
-def compose [Add R] [Mul R] (s t : SparsePoly R) : SparsePoly R :=
-  (s.terms.foldl
-    (fun st term =>
-      let tp : Option (SparsePoly R) :=
-        if term.1 - st.2.1 = 0 then st.2.2
-        else
-          match st.2.2 with
-          | none => some (polyPow1 t (term.1 - st.2.1))
-          | some p => some (p * polyPow1 t (term.1 - st.2.1))
-      let contrib : SparsePoly R :=
-        match tp with
+def composeStep [Add R] [Mul R] (t : SparsePoly R)
+    (st : SparsePoly R × Nat × Option (SparsePoly R)) (term : Nat × R) :
+    SparsePoly R × Nat × Option (SparsePoly R) :=
+  match term.1 - st.2.1 with
+  | 0 =>
+      (st.1 + (match st.2.2 with
         | none => C term.2
-        | some p => scale term.2 p
-      (st.1 + contrib, (term.1, tp)))
+        | some p => scale term.2 p), term.1, st.2.2)
+  | g + 1 =>
+      match st.2.2 with
+      | none =>
+          (st.1 + scale term.2 (polyPow1 t (g + 1)), term.1,
+            some (polyPow1 t (g + 1)))
+      | some p =>
+          (st.1 + scale term.2 (p * polyPow1 t (g + 1)), term.1,
+            some (p * polyPow1 t (g + 1)))
+
+def compose [Add R] [Mul R] (s t : SparsePoly R) : SparsePoly R :=
+  (s.terms.foldl (composeStep t)
     ((0 : SparsePoly R), (0, (none : Option (SparsePoly R))))).1
 
 section Agreements
@@ -452,41 +457,563 @@ theorem derivative_mul {C : Type u} [Lean.Grind.CommRing C]
     toDense_mul, derivative_toDense, derivative_toDense]
   exact DensePoly.derivative_mul _ _
 
-/-- The fast path and the general path agree: what lets the cyclotomic
-adapter use {name}`substPow` and reason with {name}`compose`. Proved in
-the implementation work loop together with the `compose`
-characterisations. -/
-theorem substPow_eq_compose {C : Type u} [Lean.Grind.CommRing C]
-    [DecidableEq C] (s : SparsePoly C) (k : Nat) :
-    s.substPow k = s.compose (monomial k 1) := by
-  sorry
+section ComposeAlgebra
 
-theorem eval_substPow {C : Type u} [Lean.Grind.CommRing C]
-    [DecidableEq C] (s : SparsePoly C) (k : Nat) (x : C) :
-    (s.substPow k).eval x = s.eval (x ^ k) := by
-  sorry
+variable {K : Type u} [Lean.Grind.CommRing K] [DecidableEq K]
 
-theorem eval_compose {C : Type u} [Lean.Grind.CommRing C]
-    [DecidableEq C] (s t : SparsePoly C) (x : C) :
-    (s.compose t).eval x = s.eval (t.eval x) := by
-  sorry
+/-- Powers at added exponents multiply, on the polynomials themselves. -/
+theorem poly_pow_add (p : SparsePoly K) (a b : Nat) :
+    p ^ (a + b) = p ^ a * p ^ b := by
+  induction b with
+  | zero => rw [Nat.add_zero, pow_zero, mul_one]
+  | succ b ih =>
+      rw [show a + (b + 1) = (a + b) + 1 from by omega, pow_succ, ih,
+        pow_succ, ← mul_assoc, mul_comm p (p ^ a), mul_assoc]
 
-theorem compose_toDense {C : Type u} [Lean.Grind.CommRing C]
-    [DecidableEq C] (s t : SparsePoly C) :
+/-- Powers of the square are even powers, on the polynomials
+themselves. -/
+theorem poly_sq_pow (p : SparsePoly K) (n : Nat) :
+    (p * p) ^ n = p ^ (2 * n) := by
+  induction n with
+  | zero => rw [pow_zero, pow_zero]
+  | succ n ih =>
+      rw [pow_succ, ih, show 2 * (n + 1) = 2 * n + 1 + 1 from by omega,
+        pow_succ, pow_succ, mul_assoc]
+
+/-- The positive binary powering over `mul` computes the power. -/
+theorem polyPow1_eq (p : SparsePoly K) (g : Nat) (hg : 1 ≤ g) :
+    polyPow1 p g = p ^ g := by
+  induction p, g using polyPow1.induct with
+  | case1 p => omega
+  | case2 p =>
+      rw [polyPow1, pow_succ, pow_zero, mul_one]
+  | case3 p g hodd ih =>
+      rw [polyPow1, if_pos hodd, ih (by omega), poly_sq_pow]
+      show p ^ (2 * ((g + 2) / 2)) * p = p ^ (g + 2)
+      rw [mul_comm, ← pow_succ,
+        show 2 * ((g + 2) / 2) + 1 = g + 2 from by omega]
+  | case4 p g hodd ih =>
+      rw [polyPow1, if_neg hodd, ih (by omega), poly_sq_pow,
+        show 2 * ((g + 2) / 2) = g + 2 from by omega]
+
+/-- Evaluation is additive, by transport. -/
+theorem eval_add (s t : SparsePoly K) (x : K) :
+    (s + t).eval x = s.eval x + t.eval x := by
+  rw [eval_toDense, toDense_add, DensePoly.eval_add_semiring,
+    ← eval_toDense, ← eval_toDense]
+
+/-- Evaluation is multiplicative, by transport. -/
+theorem eval_mul (s t : SparsePoly K) (x : K) :
+    (s * t).eval x = s.eval x * t.eval x := by
+  rw [eval_toDense, toDense_mul, DensePoly.eval_mul_commring,
+    ← eval_toDense, ← eval_toDense]
+
+@[simp, grind =] theorem eval_monomial (e : Nat) (c : K) (x : K) :
+    (monomial e c).eval x = c * x ^ e := by
+  rw [eval_toDense, toDense_monomial, DensePoly.eval_monomial_semiring]
+
+@[simp, grind =] theorem eval_C (c : K) (x : K) : (C c).eval x = c := by
+  show (monomial 0 c).eval x = c
+  rw [eval_monomial]
+  grind
+
+@[simp, grind =] theorem eval_one (x : K) : (1 : SparsePoly K).eval x = 1 := by
+  show (SparsePoly.C 1).eval x = 1
+  rw [eval_C]
+
+@[simp, grind =] theorem eval_zero (x : K) :
+    (0 : SparsePoly K).eval x = 0 :=
+  rfl
+
+/-- Evaluation respects powers. -/
+theorem eval_pow (s : SparsePoly K) (n : Nat) (x : K) :
+    (s ^ n).eval x = s.eval x ^ n := by
+  induction n with
+  | zero =>
+      rw [pow_zero, eval_one]
+      grind
+  | succ n ih =>
+      rw [pow_succ, eval_mul, ih]
+      grind
+
+/-- The value the `compose` walk carries for `t^prev` (`none` encodes
+`t^0` so that no identity element is needed at the `[Add R] [Mul R]`
+signature). -/
+def tpVal : Option (SparsePoly K) → SparsePoly K
+  | none => 1
+  | some p => p
+
+/-- The stateful gap-powered walk of {name}`compose` computes the plain
+power-sum fold. -/
+private theorem compose_go (t : SparsePoly K) (l : List (Nat × K)) :
+    ∀ (acc : SparsePoly K) (prev : Nat) (tp : Option (SparsePoly K)),
+    l.Pairwise (fun a b => a.1 < b.1) → (∀ u ∈ l, prev ≤ u.1) →
+    (tp = none → prev = 0) → tpVal tp = t ^ prev →
+    (l.foldl (composeStep t) (acc, (prev, tp))).1 =
+      l.foldl (fun a u => a + SparsePoly.C u.2 * t ^ u.1) acc := by
+  induction l with
+  | nil =>
+      intro acc prev tp _ _ _ _
+      rfl
+  | cons u rest ih =>
+      intro acc prev tp hs hge hnone htpv
+      rw [List.pairwise_cons] at hs
+      rw [List.foldl_cons, List.foldl_cons]
+      have hple : prev ≤ u.1 := hge u (List.mem_cons_self ..)
+      have hnext : ∃ tp', composeStep t (acc, (prev, tp)) u =
+          (acc + SparsePoly.C u.2 * t ^ u.1, u.1, tp') ∧
+          (tp' = none → u.1 = 0) ∧ tpVal tp' = t ^ u.1 := by
+        unfold composeStep
+        cases hgap : u.1 - prev with
+        | zero =>
+            simp only [hgap]
+            have hpe : prev = u.1 := by omega
+            refine ⟨tp, ?_, ?_, ?_⟩
+            · cases tp with
+              | none =>
+                  have h0 : u.1 = 0 := by
+                    have := hnone rfl
+                    omega
+                  show (acc + SparsePoly.C u.2, u.1, none) = _
+                  rw [h0, pow_zero, mul_one]
+              | some p =>
+                  show (acc + scale u.2 p, u.1, some p) = _
+                  have hp : p = t ^ prev := htpv
+                  rw [scale_eq_C_mul, hp, hpe]
+            · intro h
+              subst h
+              have := hnone rfl
+              omega
+            · rw [htpv, hpe]
+        | succ g =>
+            have hg1 : g + 1 = u.1 - prev := hgap.symm
+            simp only [hgap]
+            cases tp with
+            | none =>
+                have h0 : prev = 0 := hnone rfl
+                refine ⟨some (polyPow1 t (g + 1)), ?_, by simp, ?_⟩
+                · show (acc + scale u.2 (polyPow1 t (g + 1)), u.1, _) = _
+                  rw [scale_eq_C_mul, polyPow1_eq t _ (by omega),
+                    show g + 1 = u.1 from by omega]
+                · show polyPow1 t (g + 1) = t ^ u.1
+                  rw [polyPow1_eq t _ (by omega),
+                    show g + 1 = u.1 from by omega]
+            | some p =>
+                have hp : p = t ^ prev := htpv
+                refine ⟨some (p * polyPow1 t (g + 1)), ?_, by simp, ?_⟩
+                · show (acc + scale u.2 (p * polyPow1 t (g + 1)), u.1, _)
+                      = _
+                  rw [scale_eq_C_mul, polyPow1_eq t _ (by omega), hp,
+                    ← poly_pow_add,
+                    show prev + (g + 1) = u.1 from by omega]
+                · show p * polyPow1 t (g + 1) = t ^ u.1
+                  rw [polyPow1_eq t _ (by omega), hp, ← poly_pow_add,
+                    show prev + (g + 1) = u.1 from by omega]
+      obtain ⟨tp', hstep, hn', hv'⟩ := hnext
+      rw [hstep]
+      exact ih _ _ _ hs.2
+        (fun v hv => Nat.le_of_lt (hs.1 v hv)) hn' hv'
+
+end ComposeAlgebra
+
+section Agreements
+
+variable {K : Type u} [Lean.Grind.CommRing K] [DecidableEq K]
+
+/-- {name}`compose` as the plain power-sum fold over the stored terms:
+the characterisation everything below transports through. -/
+theorem compose_eq_foldl (s t : SparsePoly K) :
+    s.compose t =
+      s.terms.toList.foldl
+        (fun a u => a + SparsePoly.C u.2 * t ^ u.1) 0 := by
+  show (s.terms.foldl (composeStep t) (0, 0, none)).1 = _
+  rw [← Array.foldl_toList]
+  exact compose_go t s.terms.toList 0 0 none s.pairwise_toList
+    (fun u _ => Nat.zero_le _) (fun _ => rfl)
+    (by show (1 : SparsePoly K) = t ^ 0; rw [pow_zero])
+
+private theorem dense_C_zero : (DensePoly.C (0 : K)) = 0 := by
+  apply DensePoly.ext_coeff
+  intro f
+  rw [DensePoly.coeff_C]
+  rw [show (0 : DensePoly K).coeff f = 0 from
+    DensePoly.coeff_eq_zero_of_size_le 0 (by simp)]
+  split <;> rfl
+
+private theorem q_mul_psf (q : DensePoly K) (cs : List K) :
+    ∀ base, q * DensePoly.composeCoeffPowerSumFrom cs base q =
+      DensePoly.composeCoeffPowerSumFrom cs (base + 1) q := by
+  induction cs with
+  | nil =>
+      intro base
+      show q * 0 = 0
+      rw [DensePoly.mul_comm_poly]
+      exact DensePoly.zero_mul q
+  | cons c cs ih =>
+      intro base
+      show q * (DensePoly.C c * DensePoly.composePower q base + _) =
+        DensePoly.C c * DensePoly.composePower q (base + 1) + _
+      rw [DensePoly.mul_add_right_poly, ih,
+        show DensePoly.composePower q (base + 1) =
+          q * DensePoly.composePower q base from rfl,
+        ← DensePoly.mul_assoc_poly, DensePoly.mul_comm_poly q (DensePoly.C c),
+        DensePoly.mul_assoc_poly]
+
+private theorem scl_eq_psf (q : DensePoly K) (cs : List K) :
+    DensePoly.composeScalarCoeffList cs q =
+      DensePoly.composeCoeffPowerSumFrom cs 0 q := by
+  induction cs with
+  | nil => rfl
+  | cons c cs ih =>
+      show DensePoly.C c + q * DensePoly.composeScalarCoeffList cs q = _
+      rw [ih, q_mul_psf]
+      show _ = DensePoly.C c * DensePoly.composePower q 0 + _
+      rw [show DensePoly.composePower q 0 = DensePoly.C 1 from rfl,
+        show DensePoly.C (1 : K) = (1 : DensePoly K) from rfl,
+        DensePoly.mul_one_right_poly]
+
+private theorem dense_foldl_add_init {α : Type _} (l : List α)
+    (g : α → DensePoly K) :
+    ∀ init, l.foldl (fun a u => a + g u) init =
+      init + l.foldl (fun a u => a + g u) 0 := by
+  induction l with
+  | nil =>
+      intro init
+      rw [List.foldl_nil, List.foldl_nil, DensePoly.add_zero_poly]
+  | cons u us ih =>
+      intro init
+      rw [List.foldl_cons, List.foldl_cons, ih, ih ((0 : DensePoly K) + g u),
+        DensePoly.zero_add, DensePoly.add_assoc_poly]
+
+private theorem psf_eq_terms_sum (q : DensePoly K) (cs : List K) :
+    ∀ base, DensePoly.composeCoeffPowerSumFrom cs base q =
+      (termsOfCoeffsList base cs).foldl
+        (fun a u => a + DensePoly.C u.2 * DensePoly.composePower q u.1)
+        0 := by
+  induction cs with
+  | nil => intro base; rfl
+  | cons c cs ih =>
+      intro base
+      show DensePoly.C c * DensePoly.composePower q base + _ = _
+      rw [ih (base + 1)]
+      by_cases hc : c = 0
+      · rw [show termsOfCoeffsList base (c :: cs) =
+            termsOfCoeffsList (base + 1) cs from by
+          rw [termsOfCoeffsList, if_pos hc]]
+        rw [hc, dense_C_zero, DensePoly.zero_mul, DensePoly.zero_add]
+      · rw [show termsOfCoeffsList base (c :: cs) =
+            (base, c) :: termsOfCoeffsList (base + 1) cs from by
+          rw [termsOfCoeffsList, if_neg hc]]
+        rw [List.foldl_cons]
+        conv => rhs; rw [dense_foldl_add_init, DensePoly.zero_add]
+
+/-- The dense image's stored coefficients walk back to exactly the
+sparse terms. -/
+private theorem termsOfCoeffsList_toDense (s : SparsePoly K) :
+    termsOfCoeffsList 0 s.toDense.toList = s.terms.toList := by
+  refine coeffList_ext (termsOfCoeffsList_canonical _ 0).1
+    s.pairwise_toList (termsOfCoeffsList_canonical _ 0).2
+    s.nonzero_toList ?_
+  intro e
+  have h := coeffList_termsOfCoeffsList s.toDense.toList 0 e
+  rw [Nat.zero_add] at h
+  rw [h]
+  have h2 : s.toDense.toList.getD e (Zero.zero : K) = s.toDense.coeff e :=
+    DensePoly.toList_getD_eq_coeff s.toDense e
+  rw [show s.toDense.toList.getD e (0 : K) =
+      s.toDense.toList.getD e (Zero.zero : K) from rfl, h2, coeff_toDense]
+  rfl
+
+/-- Powers transport to the dense iterated product. -/
+theorem toDense_composePower (t : SparsePoly K) (n : Nat) :
+    (t ^ n).toDense = DensePoly.composePower t.toDense n := by
+  induction n with
+  | zero =>
+      rw [pow_zero, toDense_one]
+      rfl
+  | succ n ih =>
+      rw [pow_succ, toDense_mul, ih]
+      rfl
+
+/-- The substitution transports: composing then converting is
+converting then composing. -/
+theorem compose_toDense (s t : SparsePoly K) :
     (s.compose t).toDense = s.toDense.compose t.toDense := by
-  sorry
+  have hstep : ∀ (acc : DensePoly K) (c : K),
+      acc * t.toDense + DensePoly.C c = DensePoly.C c + t.toDense * acc := by
+    intro acc c
+    rw [DensePoly.mul_comm_poly acc t.toDense, DensePoly.add_comm_poly]
+  rw [DensePoly.compose_eq_composeScalarCoeffList_of_step _ _ hstep,
+    scl_eq_psf, psf_eq_terms_sum, termsOfCoeffsList_toDense,
+    compose_eq_foldl, toDense_foldl_add]
+  rw [show (0 : SparsePoly K).toDense = 0 from toDense_zero]
+  refine foldl_congr' rfl fun b u _ => ?_
+  rw [toDense_mul, toDense_C, toDense_composePower]
 
-theorem substPow_toDense {C : Type u} [Lean.Grind.CommRing C]
-    [DecidableEq C] (s : SparsePoly C) (k : Nat) :
+/-- Powers of a unit monomial are unit monomials. -/
+theorem monomial_one_pow (k : Nat) (e : Nat) :
+    (monomial k (1 : K)) ^ e = monomial (k * e) 1 := by
+  induction e with
+  | zero =>
+      rw [pow_zero, Nat.mul_zero]
+      rfl
+  | succ e ih =>
+      rw [pow_succ, ih, monomial_mul_monomial,
+        show k + k * e = k * (e + 1) from by
+          rw [Nat.mul_succ, Nat.add_comm],
+        show (1 : K) * 1 = 1 from by grind]
+
+/-- Constants scale unit monomials into monomials. -/
+theorem C_mul_monomial (c : K) (m : Nat) :
+    SparsePoly.C c * monomial m 1 = monomial m c := by
+  show monomial 0 c * monomial m 1 = monomial m c
+  rw [monomial_mul_monomial, Nat.zero_add,
+    show c * 1 = c from by grind]
+
+private theorem coeff_monomial_foldl (l : List (Nat × K)) (k : Nat)
+    (f : Nat) :
+    ∀ init : SparsePoly K,
+    (l.foldl (fun a u => a + monomial (k * u.1) u.2) init).coeff f =
+      l.foldl
+        (fun a u => a + (if f = k * u.1 then u.2 else 0))
+        (init.coeff f) := by
+  induction l with
+  | nil => intro init; rfl
+  | cons u us ih =>
+      intro init
+      rw [List.foldl_cons, List.foldl_cons, ih, coeff_add, coeff_monomial]
+
+private theorem foldl_add_ifs_zero {l : List (Nat × K)}
+    {g : Nat × K → K} (h : ∀ u ∈ l, g u = 0) :
+    ∀ x : K, l.foldl (fun a u => a + g u) x = x := by
+  induction l with
+  | nil => intro x; rfl
+  | cons u us ih =>
+      intro x
+      rw [List.foldl_cons, h u (List.mem_cons_self ..),
+        show x + (0 : K) = x from by grind]
+      exact ih (fun v hv => h v (List.mem_cons_of_mem _ hv)) x
+
+private theorem foldl_single_match {l : List (Nat × K)}
+    (hs : l.Pairwise (fun a b => a.1 < b.1)) {k : Nat} (hk : ¬ k = 0)
+    (e : Nat) :
+    l.foldl (fun a u => a + (if k * e = k * u.1 then u.2 else 0)) 0 =
+      coeffList l e := by
+  induction l with
+  | nil => rfl
+  | cons u us ih =>
+      rw [List.pairwise_cons] at hs
+      rw [List.foldl_cons]
+      by_cases hue : u.1 = e
+      · rw [if_pos (by rw [hue]),
+          show (0 : K) + u.2 = u.2 from by grind,
+          foldl_add_ifs_zero (fun v hv => by
+            rw [if_neg (fun h => by
+              have hev : e = v.1 := Nat.eq_of_mul_eq_mul_left
+                (by omega) h
+              have := hs.1 v hv
+              omega)])]
+        simp only [coeffList, if_pos hue]
+      · rw [if_neg (fun h => hue (Nat.eq_of_mul_eq_mul_left
+            (by omega) h).symm),
+          show (0 : K) + 0 = 0 from by grind, ih hs.2]
+        simp only [coeffList, if_neg (fun h : u.1 = e => hue h)]
+
+/-- The fast path and the general path agree: what lets the cyclotomic
+adapter use {name}`substPow` and reason with {name}`compose`. -/
+theorem substPow_eq_compose (s : SparsePoly K) (k : Nat) :
+    s.substPow k = s.compose (monomial k 1) := by
+  rw [compose_eq_foldl]
+  have hfold : s.terms.toList.foldl
+      (fun a u => a + SparsePoly.C u.2 * monomial k 1 ^ u.1) 0 =
+      s.terms.toList.foldl
+        (fun a u => a + monomial (k * u.1) u.2) 0 := by
+    refine foldl_congr' rfl fun b u _ => ?_
+    rw [monomial_one_pow, C_mul_monomial]
+  rw [hfold]
+  apply ext_coeff
+  intro f
+  rw [coeff_monomial_foldl, coeff_zero]
+  by_cases hk : k = 0
+  · subst hk
+    show (s.substPow 0).coeff f = _
+    unfold substPow
+    rw [dif_pos rfl, coeff_ofTerms_addCoeff]
+    have hz : ∀ c : K, (0 : K) + c = c := by grind
+    simp only [addCoeff_eq_add hz, Array.toList_map]
+    by_cases hf : f = 0
+    · subst hf
+      rw [show ((s.terms.toList.map fun t => ((0 : Nat), t.2)).filter
+          (fun t => t.1 = 0)) = s.terms.toList.map fun t => ((0 : Nat), t.2)
+        from List.filter_eq_self.mpr (fun a ha => by
+          obtain ⟨u, hu, rfl⟩ := List.mem_map.mp ha
+          simp)]
+      rw [List.foldl_map]
+      refine foldl_congr' rfl fun b u _ => ?_
+      rw [if_pos (by omega)]
+    · rw [show ((s.terms.toList.map fun t => ((0 : Nat), t.2)).filter
+          (fun t => t.1 = f)) = [] from List.filter_eq_nil_iff.mpr (fun a ha => by
+          obtain ⟨u, hu, rfl⟩ := List.mem_map.mp ha
+          simpa using fun h : (0 : Nat) = f => hf h.symm)]
+      rw [List.foldl_nil]
+      exact ((foldl_add_ifs_zero (fun u _ => by
+        rw [if_neg (by omega)])) 0).symm
+  · by_cases hmul : ∃ e, f = k * e
+    · obtain ⟨e, rfl⟩ := hmul
+      rw [coeff_substPow_mul s hk]
+      exact (foldl_single_match s.pairwise_toList hk e).symm
+    · rw [coeff_substPow_of_ne s hk (fun e h => hmul ⟨e, h⟩)]
+      exact ((foldl_add_ifs_zero (fun u _ => by
+        rw [if_neg (fun h => hmul ⟨u.1, h⟩)])) 0).symm
+
+private theorem eval_foldl_add {α : Type _} (l : List α)
+    (g : α → SparsePoly K) (x : K) :
+    ∀ init : SparsePoly K,
+    (l.foldl (fun a u => a + g u) init).eval x =
+      l.foldl (fun a u => a + (g u).eval x) (init.eval x) := by
+  induction l with
+  | nil => intro init; rfl
+  | cons u us ih =>
+      intro init
+      rw [List.foldl_cons, List.foldl_cons, ih, eval_add]
+
+/-- Substitution then evaluation is evaluation at the evaluation. -/
+theorem eval_compose (s t : SparsePoly K) (x : K) :
+    (s.compose t).eval x = s.eval (t.eval x) := by
+  rw [compose_eq_foldl, eval_foldl_add, eval_zero]
+  have hterm : ∀ (b : K) (u : Nat × K),
+      b + (SparsePoly.C u.2 * t ^ u.1).eval x =
+        b + u.2 * (t.eval x) ^ u.1 := by
+    intro b u
+    rw [eval_mul, eval_C, eval_pow]
+  rw [foldl_congr' rfl (fun b u _ => hterm b u)]
+  have hsub : ∀ (y : K) (l : List (Nat × K)),
+      l.foldr (fun u acc => u.2 * y ^ (u.1 - 0) + acc) 0 =
+        l.foldr (fun u acc => u.2 * y ^ u.1 + acc) 0 := by
+    intro y l
+    induction l with
+    | nil => rfl
+    | cons u us ih =>
+        rw [List.foldr_cons, List.foldr_cons, ih, Nat.sub_zero]
+  rw [show s.eval (t.eval x) =
+      evalShifted (t.eval x) s.terms.toList 0 from rfl,
+    evalShifted_eq s.pairwise_toList _ 0 (fun u _ => Nat.zero_le _),
+    hsub (t.eval x) s.terms.toList, foldl_add_eval_monomials]
+  grind
+
+/-- Evaluating the exponent substitution is evaluating at the power. -/
+theorem eval_substPow (s : SparsePoly K) (k : Nat) (x : K) :
+    (s.substPow k).eval x = s.eval (x ^ k) := by
+  rw [substPow_eq_compose, eval_compose, eval_monomial,
+    show (1 : K) * x ^ k = x ^ k from by grind]
+
+/-- The exponent substitution transports to dense composition with the
+unit monomial. -/
+theorem substPow_toDense (s : SparsePoly K) (k : Nat) :
     (s.substPow k).toDense = s.toDense.compose (DensePoly.monomial k 1) := by
-  sorry
+  rw [substPow_eq_compose, compose_toDense, toDense_monomial]
 
-/-- Coefficient law for {name}`substScale`: proved in the implementation
-work loop together with the `compose` characterisations. -/
-theorem coeff_substScale {C : Type u} [Lean.Grind.CommRing C]
-    [DecidableEq C] (s : SparsePoly C) (a : C) (e : Nat) :
+/-- The power of `a` the `substScale` walk carries (`none` encodes
+`a^0`). -/
+private def pwVal : Option K → K
+  | none => 1
+  | some p => p
+
+private theorem coeffList_substScaleGo (a : K) (l : List (Nat × K)) :
+    ∀ (prev : Nat) (pw : Option K),
+    l.Pairwise (fun x y => x.1 < y.1) → (∀ u ∈ l, prev ≤ u.1) →
+    (pw = none → prev = 0) → pwVal pw = a ^ prev →
+    ∀ f, coeffList (substScaleGo a prev pw l) f =
+      coeffList l f * a ^ f := by
+  induction l with
+  | nil =>
+      intro prev pw _ _ _ _ f
+      show (0 : K) = 0 * a ^ f
+      grind
+  | cons u rest ih =>
+      intro prev pw hs hge hnone hval f
+      rw [List.pairwise_cons] at hs
+      have hple : prev ≤ u.1 := hge u (List.mem_cons_self ..)
+      have hnext : ∃ pw', substScaleGo a prev pw (u :: rest) =
+          (if u.2 * pwVal pw' = 0 then substScaleGo a u.1 pw' rest
+           else (u.1, u.2 * pwVal pw') :: substScaleGo a u.1 pw' rest) ∧
+          (pw' = none → u.1 = 0) ∧ pwVal pw' = a ^ u.1 := by
+        rw [substScaleGo]
+        unfold substScaleStep
+        by_cases hgap : u.1 - prev = 0
+        · rw [if_pos hgap]
+          have hpe : prev = u.1 := by omega
+          refine ⟨pw, ?_, ?_, ?_⟩
+          · cases pw with
+            | none =>
+                show (if u.2 = 0 then _ else u :: _) = _
+                rw [show pwVal (none : Option K) = 1 from rfl]
+                by_cases hu2 : u.2 = 0
+                · rw [if_pos hu2, if_pos (by rw [hu2]; grind)]
+                · rw [if_neg hu2, if_neg (by
+                    intro h
+                    exact hu2 (by grind))]
+                  rw [show (u.1, u.2 * (1 : K)) =
+                    u from by rw [show u.2 * (1 : K) = u.2 from by grind]]
+            | some p =>
+                rfl
+          · intro h
+            rw [h] at hnone
+            have := hnone rfl
+            omega
+          · rw [hval, hpe]
+        · rw [if_neg hgap]
+          cases pw with
+          | none =>
+              have h0 : prev = 0 := hnone rfl
+              refine ⟨some (pow1 a (u.1 - prev)), rfl, by simp, ?_⟩
+              show pow1 a (u.1 - prev) = a ^ u.1
+              rw [pow1_eq a _ (by omega),
+                show u.1 - prev = u.1 from by omega]
+          | some p =>
+              have hp : p = a ^ prev := hval
+              refine ⟨some (p * pow1 a (u.1 - prev)), rfl, by simp, ?_⟩
+              show p * pow1 a (u.1 - prev) = a ^ u.1
+              rw [pow1_eq a _ (by omega), hp]
+              have : prev + (u.1 - prev) = u.1 := by omega
+              rw [← this]
+              grind
+      obtain ⟨pw', hstep, hn', hv'⟩ := hnext
+      rw [hstep]
+      have hrest := ih u.1 pw' hs.2
+        (fun v hv => Nat.le_of_lt (hs.1 v hv)) hn' hv'
+      have htail_zero : coeffList (substScaleGo a u.1 pw' rest) u.1 = 0 := by
+        rw [hrest u.1]
+        rw [coeffList_eq_zero (l := rest) (fun v hv hveq => by
+          have := hs.1 v hv
+          omega)]
+        grind
+      by_cases hzero : u.2 * pwVal pw' = 0
+      · rw [if_pos hzero]
+        by_cases hf : u.1 = f
+        · rw [← hf, htail_zero]
+          simp only [coeffList, if_true]
+          rw [← hv', ← hzero]
+        · rw [hrest f]
+          simp only [coeffList, if_neg hf]
+      · rw [if_neg hzero]
+        by_cases hf : u.1 = f
+        · simp only [coeffList, if_pos hf]
+          rw [← hf, hv']
+        · simp only [coeffList, if_neg hf]
+          exact hrest f
+
+/-- Coefficient law for {name}`substScale`: each coefficient is scaled
+by the power of the argument at its exponent. -/
+theorem coeff_substScale (s : SparsePoly K) (a : K) (e : Nat) :
     (s.substScale a).coeff e = s.coeff e * a ^ e := by
-  sorry
+  unfold substScale
+  rw [coeff_ofCanonicalList]
+  exact coeffList_substScaleGo a s.terms.toList 0 none
+    s.pairwise_toList (fun u _ => Nat.zero_le _) (fun _ => rfl)
+    (by show (1 : K) = a ^ 0; grind) e
+
+end Agreements
 
 end Agreements
 

@@ -563,7 +563,7 @@ private theorem zero_add_zero : (Zero.zero : S) + Zero.zero = Zero.zero := by
   show (0 : S) + 0 = 0
   grind
 
-private theorem foldl_congr' {α β : Type _} {l : List α} {f g : β → α → β}
+theorem foldl_congr' {α β : Type _} {l : List α} {f g : β → α → β}
     {i j : β} (hij : i = j) (hfg : ∀ b : β, ∀ a ∈ l, f b a = g b a) :
     l.foldl f i = l.foldl g j := by
   subst hij
@@ -676,7 +676,7 @@ theorem mul_eq_foldl (s t : SparsePoly S) :
   rw [coeff_mul_foldl, coeff_foldl_add, coeff_zero]
 
 /-- The dense image of a fold of sums. -/
-private theorem toDense_foldl_add {α : Type _} (l : List α)
+theorem toDense_foldl_add {α : Type _} (l : List α)
     (g : α → SparsePoly S) (init : SparsePoly S) :
     (l.foldl (fun acc a => acc + g a) init).toDense =
       l.foldl (fun acc a => acc + (g a).toDense) init.toDense := by
@@ -845,6 +845,52 @@ private theorem pow_unfold (s : SparsePoly S) (n : Nat) (hn : ¬ n = 0) :
   show pow s n = _
   rw [pow, dif_neg hn]
   rfl
+
+/-- The conversion respects scalar multiplication. -/
+theorem toDense_scale (c : S) (s : SparsePoly S) :
+    (scale c s).toDense = DensePoly.scale c s.toDense := by
+  apply DensePoly.ext_coeff
+  intro f
+  rw [coeff_toDense, coeff_scale, DensePoly.coeff_scale_semiring,
+    coeff_toDense]
+
+/-- The conversion sends constants to constants. -/
+@[simp, grind =] theorem toDense_C (c : S) :
+    (C c).toDense = DensePoly.C c := by
+  apply DensePoly.ext_coeff
+  intro f
+  rw [coeff_toDense, coeff_C, DensePoly.coeff_C]
+  rfl
+
+/-- Scalar multiplication is multiplication by the constant. -/
+theorem scale_eq_C_mul (c : S) (s : SparsePoly S) :
+    scale c s = C c * s := by
+  apply toDense_inj
+  rw [toDense_scale, toDense_mul, toDense_C]
+  have hshift0 : DensePoly.shift 0 s.toDense = s.toDense := by
+    apply DensePoly.ext_coeff
+    intro f
+    rw [DensePoly.coeff_shift]
+    simp
+  have hmono : DensePoly.C c = DensePoly.scale c (DensePoly.C (1 : S)) := by
+    apply DensePoly.ext_coeff
+    intro f
+    rw [DensePoly.coeff_scale_semiring, DensePoly.coeff_C, DensePoly.coeff_C]
+    simp only [show (Zero.zero : S) = 0 from rfl]
+    grind
+  have hC1 : DensePoly.C (1 : S) = DensePoly.monomial 0 1 := by
+    apply DensePoly.ext_coeff
+    intro f
+    rw [DensePoly.coeff_C, DensePoly.coeff_monomial]
+  rw [hmono, hC1, ← DensePoly.scale_mul,
+    DensePoly.monomial_one_mul_poly_eq_shift, hshift0]
+
+/-- Sparse monomials multiply exponentwise, by transport. -/
+theorem monomial_mul_monomial (a b : Nat) (c d : S) :
+    monomial a c * monomial b d = monomial (a + b) (c * d) := by
+  apply toDense_inj
+  rw [toDense_mul, toDense_monomial, toDense_monomial, toDense_monomial]
+  exact DensePoly.monomial_mul_monomial a b c d
 
 /-- The power recurrence: with {name}`pow_zero` this characterises the
 binary powering completely, and together with {name}`coeff_mul` it is

@@ -648,6 +648,141 @@ def mul [Add R] [Mul R] (s t : SparsePoly R) : SparsePoly R :=
 instance [Add R] [Mul R] : Mul (SparsePoly R) where
   mul := mul
 
+/-- Tree accumulator for `mulImpl`: fold every pairwise product into an
+`Std.ExtTreeMap` keyed on the exponent sum, replaying {name}`addCoeff`
+per key so the accumulated value is exactly the specification's
+input-order fold. A stored `0` encodes an exponent whose partial sum
+cancelled and is dropped at read-out. -/
+def mulTree [Add R] [Mul R] (s t : SparsePoly R) :
+    Std.ExtTreeMap Nat R compare :=
+  s.terms.foldl (init := ∅) fun acc a =>
+    t.terms.foldl (init := acc) fun acc b =>
+      acc.insert (a.1 + b.1)
+        (addCoeff (acc.getD (a.1 + b.1) 0) (a.2 * b.2))
+
+/-- One product list folded into the tree reads back as the per-key
+{name}`addCoeff` fold. -/
+private theorem getD_foldl_insert [Add R] (ps : List (Nat × R))
+    (acc : Std.ExtTreeMap Nat R compare) (f : Nat) :
+    (ps.foldl
+        (fun acc t => acc.insert t.1 (addCoeff (acc.getD t.1 0) t.2))
+        acc).getD f 0 =
+      (ps.filter (fun t => t.1 = f)).foldl
+        (fun a t => addCoeff a t.2) (acc.getD f 0) := by
+  induction ps generalizing acc with
+  | nil => rfl
+  | cons p ps ih =>
+      rw [List.foldl_cons, ih]
+      by_cases hpf : p.1 = f
+      · rw [List.filter_cons_of_pos (by simpa using hpf), List.foldl_cons,
+          Std.ExtTreeMap.getD_insert,
+          if_pos (Std.LawfulEqCmp.compare_eq_iff_eq.mpr hpf), hpf]
+      · rw [List.filter_cons_of_neg (by simpa using hpf),
+          Std.ExtTreeMap.getD_insert,
+          if_neg (fun h => hpf (Std.LawfulEqCmp.compare_eq_iff_eq.mp h))]
+
+/-- The tree reads back the whole pairwise-product fold. -/
+private theorem getD_mulTree [Add R] [Mul R] (s t : SparsePoly R)
+    (f : Nat) :
+    (mulTree s t).getD f 0 =
+      ((s.terms.toList.flatMap fun a =>
+          t.terms.toList.map fun b => (a.1 + b.1, a.2 * b.2)).filter
+        (fun u => u.1 = f)).foldl (fun a u => addCoeff a u.2) 0 := by
+  unfold mulTree
+  rw [← Array.foldl_toList]
+  have hnested : ∀ (l : List (Nat × R)) (acc : Std.ExtTreeMap Nat R compare),
+      l.foldl (fun acc a => t.terms.foldl
+        (fun acc b => acc.insert (a.1 + b.1)
+          (addCoeff (acc.getD (a.1 + b.1) 0) (a.2 * b.2))) acc) acc =
+      (l.flatMap fun a => t.terms.toList.map fun b =>
+        (a.1 + b.1, a.2 * b.2)).foldl
+        (fun acc u => acc.insert u.1 (addCoeff (acc.getD u.1 0) u.2)) acc := by
+    intro l acc
+    rw [List.foldl_flatMap]
+    induction l generalizing acc with
+    | nil => rfl
+    | cons a as ihl =>
+        rw [List.foldl_cons, List.foldl_cons, List.foldl_map,
+          ← Array.foldl_toList, ihl]
+  rw [hnested, getD_foldl_insert, Std.ExtTreeMap.getD_empty]
+
+/-- Runtime implementation of {name}`mul`, selected by the Phase-4
+sparse-multiplication bench family (see the SPEC's measured note): the
+`ExtTreeMap` accumulation, which beat sort-and-combine on both
+collision shapes and the Johnson heap merge everywhere (value-equal to
+{name}`mul` by `mul_eq_impl`, registered `@[csimp]`). -/
+def mulImpl [Add R] [Mul R] (s t : SparsePoly R) : SparsePoly R where
+  terms := ((mulTree s t).toList.filter (fun u => u.2 ≠ 0)).toArray
+  canonical := by
+    constructor
+    · rw [List.toList_toArray]
+      refine List.Pairwise.imp ?_
+        (List.Pairwise.filter _ Std.ExtTreeMap.ordered_keys_toList)
+      intro a b hab
+      exact Nat.compare_eq_lt.mp hab
+    · intro u hu
+      have := Array.mem_def.mp hu
+      rw [List.toList_toArray] at this
+      have := (List.mem_filter.mp this).2
+      simpa using this
+
+/-- The filtered ordered read-out has the tree's coefficients. -/
+private theorem coeffList_mulImpl [Add R] [Mul R] (s t : SparsePoly R)
+    (f : Nat) :
+    coeffList ((mulTree s t).toList.filter (fun u => u.2 ≠ 0)) f =
+      (mulTree s t).getD f 0 := by
+  cases hf : (mulTree s t)[f]? with
+  | none =>
+      rw [Std.ExtTreeMap.getD_eq_getD_getElem?, hf, Option.getD_none]
+      refine coeffList_eq_zero ?_
+      intro u hu huf
+      have hmem := (List.mem_filter.mp hu).1
+      have hsome : (mulTree s t)[u.1]? = some u.2 :=
+        Std.ExtTreeMap.mem_toList_iff_getElem?_eq_some.mp hmem
+      rw [huf, hf] at hsome
+      cases hsome
+  | some v =>
+      rw [Std.ExtTreeMap.getD_eq_getD_getElem?, hf, Option.getD_some]
+      by_cases hv : v = 0
+      · subst hv
+        refine coeffList_eq_zero ?_
+        intro u hu huf
+        obtain ⟨hmem, hnz⟩ := List.mem_filter.mp hu
+        have hsome : (mulTree s t)[u.1]? = some u.2 :=
+          Std.ExtTreeMap.mem_toList_iff_getElem?_eq_some.mp hmem
+        rw [huf, hf] at hsome
+        have h20 := Option.some.inj hsome
+        simp [← h20] at hnz
+      · have hval : coeffList ((mulTree s t).toList.filter
+            (fun u => u.2 ≠ 0)) (f, v).1 = (f, v).2 := by
+          refine coeffList_eq_of_mem ?_ ?_ rfl
+          · refine List.Pairwise.imp ?_
+              (List.Pairwise.filter _ Std.ExtTreeMap.ordered_keys_toList)
+            intro a b hab
+            exact Nat.compare_eq_lt.mp hab
+          · refine List.mem_filter.mpr ⟨?_, by simpa using hv⟩
+            exact Std.ExtTreeMap.mem_toList_iff_getElem?_eq_some.mpr hf
+        exact hval
+
+/-- The specification and the tree accumulation compute the same
+polynomial, with no algebra assumed: the tree replays the
+{name}`addCoeff` steps per key in the specification's input order. -/
+theorem mul_eq_mulImpl [Add R] [Mul R] (s t : SparsePoly R) :
+    mul s t = mulImpl s t := by
+  apply ext_coeff
+  intro f
+  show (mul s t).coeff f = coeffList _ f
+  unfold mul mulImpl
+  rw [coeff_ofTerms_addCoeff, List.toList_toArray, List.toList_toArray,
+    coeffList_mulImpl, getD_mulTree]
+
+/-- Register the tree accumulation as the compiled implementation of
+{name}`mul`. -/
+@[csimp]
+theorem mul_eq_impl : @mul = @mulImpl := by
+  funext R _ _ _ _ s t
+  exact mul_eq_mulImpl s t
+
 /-- Raise to a power by binary powering over {name}`mul`. A caller
 wanting `f(x^k)` should use `substPow`, never `pow`: the cost
 difference is the whole reason this library exists. -/
