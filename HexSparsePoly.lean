@@ -8,6 +8,7 @@ module
 
 public import HexSparsePoly.Basic
 public import HexSparsePoly.Arith
+public import HexSparsePoly.Dense
 
 public section
 
