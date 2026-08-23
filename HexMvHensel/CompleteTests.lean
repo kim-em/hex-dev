@@ -51,6 +51,24 @@ def dummyInput (point : Fin 1 → Int) (target : P) :
 #guard kroneckerWeight 1 (fun _ : Fin 1 => 2) 0 == 2
 #guard kroneckerWeight 1 (fun j : Fin 2 => if j.val = 0 then 2 else 3) 1 == 6
 
+/- The upper corner of the full degree box maps to one below its radix size. -/
+#guard kroneckerExponent 0 2
+    (fun j : Fin 2 => if j.val = 0 then 1 else 2) #v[2, 1, 2] == 17
+
+def noDegrees : Fin 0 → Nat := fun j => nomatch j
+
+/- With no side variables, the weight table is empty and the main exponent is
+unchanged. -/
+#guard kroneckerWeights 4 noDegrees == [1]
+#guard kroneckerExponent 0 4 noDegrees #v[4] == 4
+
+example (a b : Mono 1) (ha : Mono.degreeOf 0 a ≤ 4)
+    (hb : Mono.degreeOf 0 b ≤ 4)
+    (h : kroneckerExponent 0 4 noDegrees a =
+      kroneckerExponent 0 4 noDegrees b) : a = b :=
+  kroneckerExponent_inj 0 4 noDegrees
+    ⟨ha, fun j => nomatch j⟩ ⟨hb, fun j => nomatch j⟩ h
+
 /- Hence `x` and the first side variable receive distinct exponents. -/
 #guard kroneckerExponent 0 1 (fun _ : Fin 1 => 1) #v[1, 0] == 1
 #guard kroneckerExponent 0 1 (fun _ : Fin 1 => 1) #v[0, 1] == 2

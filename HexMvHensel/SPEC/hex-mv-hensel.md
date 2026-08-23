@@ -926,6 +926,21 @@ image has degree `(D + 1) · ∏_t (e_t + 1) - 1`, so the binomial factor in
 Mignotte's bound is astronomically large as soon as there are several
 variables.
 
+The executable computes the whole weight list in one prefix-product scan and
+passes it to `kroneckerExponentWith` for every sparse term; no term recomputes
+the earlier-radix product for each coordinate. The Mathlib-free fact used by
+the companion's coefficient-bound proof is:
+
+```lean
+def InDegreeBox (i : Fin (n+1)) (D : Nat) (e : Fin n → Nat)
+    (m : Mono (n+1)) : Prop
+
+theorem kroneckerExponent_inj (i : Fin (n+1)) (D : Nat)
+    (e : Fin n → Nat) {a b : Mono (n+1)}
+    (ha : InDegreeBox i D e a) (hb : InDegreeBox i D e b)
+    (h : kroneckerExponent i D e a = kroneckerExponent i D e b) : a = b
+```
+
 The one worth having is **Mahler's length inequality**, which bounds the
 product of the one-norms of the factors by `2^(D + Σ_t e_t)` times the
 one-norm of the shifted target, with the exponent linear in the sum of
@@ -1294,6 +1309,7 @@ def setLc      (i : Fin (n+1)) (cmp') : MvPoly n Int cmp' → MvPoly (n+1) Int c
 def seed       (i : Fin (n+1)) (cmp') : MvPoly n Int cmp' → ZPoly → MvPoly (n+1) Int cmp
 def witnessOf? (s : Setup n) (images : List ZPoly) : Option (List ZPoly)
 def coeffBound (inp : Input n cmp cmp') : Nat
+def InDegreeBox (i : Fin (n+1)) (D : Nat) (e : Fin n → Nat) (m : Mono (n+1)) : Prop
 
 -- Solving
 def solveUni     (q : Nat) (images witness : List ZPoly) (c : ZPoly) : List ZPoly
@@ -1336,6 +1352,7 @@ main variable, `d_j` the degree in non-main variable `j`, `t` terms in
 | `imageAt` | Horner per `x_i`-slice of the recursive view | `O(t · n)` coefficient operations |
 | `lcIn` | the top slice of `toUnivariate` | `O(n · t log t)` machine operations |
 | `truncate` | `restrictBy` on the exponent vector | `O(n · t)` machine operations |
+| `coeffBound` | one coordinate-degree pass, one mixed-radix weight scan shared across the sparse support, then one encoded-degree pass | `O(n · t)` exponent operations, plus arithmetic in the encoded degree and norm |
 | `witnessOf?` | one prefix/suffix complement pass, one `FpPoly` xgcd per factor, then `l` linear steps carrying their modulus | `O(r)` complement multiplications, `r` xgcds, and `r · l` divisions |
 | `solveUni` | `r` multiplications and remainders modulo `F_j` | `r` divisions of degree `d₁` |
 | `diophantine` at `m` variables | recursion, `d_m + 1` right-hand sides per level | `∏_{k ≤ m} (d_k + 1)` univariate solves |
