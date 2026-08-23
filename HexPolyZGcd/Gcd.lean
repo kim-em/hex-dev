@@ -83,6 +83,75 @@ def zeroGcdCert : GcdCert :=
     cofR := 1
     coprime := .constant 1 0 1 }
 
+/-- Accept a structural certificate only through the public checker. -/
+private def acceptStructural? (f h : ZPoly) (cert : GcdCert) : Option GcdCert :=
+  if checkGcd f h cert then some cert else none
+
+/-- Structural certificate when the left input is zero and the right input is
+nonzero.  Normalizing the right input changes it only by a unit, and exact
+division recovers that unit as the right cofactor. -/
+private def zeroLeftCert? (h : ZPoly) : Option GcdCert := do
+  let g := normalizePrimitiveSign h
+  let cofR ← divExact? h g
+  acceptStructural? 0 h
+    { gcd := g
+      cofL := 0
+      cofR
+      coprime := .constant 0 1 (cofR.coeff 0) }
+
+/-- Structural certificate when the right input is zero and the left input is
+nonzero. -/
+private def zeroRightCert? (f : ZPoly) : Option GcdCert := do
+  let g := normalizePrimitiveSign f
+  let cofL ← divExact? f g
+  acceptStructural? f 0
+    { gcd := g
+      cofL
+      cofR := 0
+      coprime := .constant 1 0 (cofL.coeff 0) }
+
+/-- Structural certificate when the left input is a nonzero constant.  The
+canonical gcd is the positive gcd of that constant and the content of the
+right input. -/
+private def constantLeftCert? (f h : ZPoly) : Option GcdCert := do
+  let d : Int := Int.ofNat (Int.gcd (f.coeff 0) (content h))
+  let g : ZPoly := DensePoly.C d
+  let cofL ← divExact? f g
+  let cofR ← divExact? h g
+  acceptStructural? f h
+    { gcd := g
+      cofL
+      cofR
+      coprime := .constant 1 0 (cofL.coeff 0) }
+
+/-- Structural certificate when the right input is a nonzero constant. -/
+private def constantRightCert? (f h : ZPoly) : Option GcdCert := do
+  let d : Int := Int.ofNat (Int.gcd (content f) (h.coeff 0))
+  let g : ZPoly := DensePoly.C d
+  let cofL ← divExact? f g
+  let cofR ← divExact? h g
+  acceptStructural? f h
+    { gcd := g
+      cofL
+      cofR
+      coprime := .constant 0 1 (cofR.coeff 0) }
+
+/-- Mandatory route 0 certificates for zero and nonzero-constant inputs.
+Every returned certificate has already passed `checkGcd`; `none` means that
+the pair is genuinely nonstructural or a checked arithmetic invariant
+regressed. -/
+private def structuralGcdCert? (f h : ZPoly) : Option GcdCert :=
+  if f.isZero then
+    if h.isZero then acceptStructural? f h zeroGcdCert else zeroLeftCert? h
+  else if h.isZero then
+    zeroRightCert? f
+  else if f.size = 1 then
+    constantLeftCert? f h
+  else if h.size = 1 then
+    constantRightCert? f h
+  else
+    none
+
 /-- Deterministic rational fallback certificate.
 
 The cofactors are the concrete long-division quotients.  Their exactness is
@@ -171,20 +240,34 @@ def reducedGcdCert (f h : ZPoly) : GcdCert :=
           | some cert => cert
           | none => prsCert f h
 
-/-- Produce a checked gcd certificate.  Route 0 runs first; rejected fast
-candidates and any failed structural restoration fall through to total,
-data-only extended-subresultant route 4. -/
+/-- Internal route tag used by executable dispatch guards. -/
+private inductive GcdRoute where
+  | structural
+  | reduced
+  | fallback
+deriving BEq
+
+/-- Dispatch together with the selected route.  Keeping this private avoids
+expanding the public API while allowing regression guards to assert that
+mandatory structural inputs never enter the generic producers. -/
+private def dispatchGcdCert (f h : ZPoly) : GcdCert × GcdRoute :=
+  match structuralGcdCert? f h with
+  | some cert => (cert, .structural)
+  | none =>
+      match structuralReduction? f h with
+      | none => (prsCert f h, .fallback)
+      | some reduced =>
+          match restoreStructural? f h reduced
+              (reducedGcdCert reduced.left reduced.right) with
+          | some cert => (cert, .reduced)
+          | none => (prsCert f h, .fallback)
+
+/-- Produce a checked gcd certificate.  Mandatory zero and constant
+certificates run before content or `x` extraction.  Remaining route-0
+reduction runs next; rejected fast candidates and failed restoration fall
+through to total, data-only extended-subresultant route 4. -/
 def gcdCert (f h : ZPoly) : GcdCert :=
-  if f.isZero || h.isZero then
-    prsCert f h
-  else
-    match structuralReduction? f h with
-    | none => prsCert f h
-    | some reduced =>
-        match restoreStructural? f h reduced
-            (reducedGcdCert reduced.left reduced.right) with
-        | some cert => cert
-        | none => prsCert f h
+  (dispatchGcdCert f h).1
 
 /-- Every public certificate has passed the checker. -/
 theorem gcdCert_checks (f h : ZPoly) :
@@ -230,6 +313,98 @@ def ratGcd (f h : DensePoly Rat) : DensePoly Rat :=
   if g.isZero then 0 else DensePoly.scale g.leadingCoeff⁻¹ g
 
 /-! Small executable pins for the degenerate contracts and content handling. -/
+
+-- Mandatory structural inputs are tagged before generic dispatch.  These
+-- guards also inspect the concrete constant witnesses rather than checking
+-- only the resulting gcd.
+
+#guard
+  match dispatchGcdCert (0 : ZPoly) 0 with
+  | (cert, .structural) =>
+      cert.gcd == 0 && cert.cofL == 1 && cert.cofR == 1 &&
+        match cert.coprime with
+        | .constant u v k =>
+            u == 1 && v == 0 && k == 1 && checkGcd 0 0 cert
+        | .modular .. => false
+  | _ => false
+
+#guard
+  let h : ZPoly := DensePoly.ofList [6, -3]
+  match dispatchGcdCert 0 h with
+  | (cert, .structural) =>
+      cert.gcd == DensePoly.ofList [-6, 3] && cert.cofL == 0 &&
+        cert.cofR == DensePoly.C (-1) &&
+          match cert.coprime with
+          | .constant u v k =>
+              u == 0 && v == 1 && k == -1 && checkGcd 0 h cert
+          | .modular .. => false
+  | _ => false
+
+#guard
+  let f : ZPoly := DensePoly.ofList [6, -3]
+  match dispatchGcdCert f 0 with
+  | (cert, .structural) =>
+      cert.gcd == DensePoly.ofList [-6, 3] &&
+        cert.cofL == DensePoly.C (-1) && cert.cofR == 0 &&
+          match cert.coprime with
+          | .constant u v k =>
+              u == 1 && v == 0 && k == -1 && checkGcd f 0 cert
+          | .modular .. => false
+  | _ => false
+
+#guard
+  let f : ZPoly := DensePoly.C (-12)
+  let h : ZPoly := DensePoly.ofList [0, 18]
+  match dispatchGcdCert f h with
+  | (cert, .structural) =>
+      cert.gcd == DensePoly.C 6 && cert.cofL == DensePoly.C (-2) &&
+        cert.cofR == DensePoly.ofList [0, 3] &&
+          match cert.coprime with
+          | .constant u v k =>
+              u == 1 && v == 0 && k == -2 && checkGcd f h cert
+          | .modular .. => false
+  | _ => false
+
+#guard
+  let f : ZPoly := DensePoly.ofList [0, -18]
+  let h : ZPoly := DensePoly.C (-12)
+  match dispatchGcdCert f h with
+  | (cert, .structural) =>
+      cert.gcd == DensePoly.C 6 &&
+        cert.cofL == DensePoly.ofList [0, -3] &&
+          cert.cofR == DensePoly.C (-2) &&
+            match cert.coprime with
+            | .constant u v k =>
+                u == 0 && v == 1 && k == -2 && checkGcd f h cert
+            | .modular .. => false
+  | _ => false
+
+#guard
+  let f : ZPoly := DensePoly.C (-1)
+  let h : ZPoly := DensePoly.ofList [4, 6, 8]
+  match dispatchGcdCert f h with
+  | (cert, .structural) =>
+      cert.gcd == 1 && cert.cofL == DensePoly.C (-1) &&
+        cert.cofR == h && checkGcd f h cert
+  | _ => false
+
+#guard
+  let f : ZPoly := DensePoly.C (-12)
+  let h : ZPoly := DensePoly.C 18
+  match dispatchGcdCert f h with
+  | (cert, .structural) =>
+      cert.gcd == DensePoly.C 6 && cert.cofL == DensePoly.C (-2) &&
+        cert.cofR == DensePoly.C 3 && checkGcd f h cert
+  | _ => false
+
+-- A genuinely nonstructural pair must continue to route-0 reduction and the
+-- ordinary producers rather than being accepted by the mandatory prepass.
+#guard
+  let f : ZPoly := DensePoly.ofList [1, 1]
+  let h : ZPoly := DensePoly.ofList [2, 1]
+  match structuralGcdCert? f h, dispatchGcdCert f h with
+  | none, (cert, .reduced) => checkGcd f h cert
+  | _, _ => false
 
 -- Direct reference canaries.  These deliberately bypass dispatch so the
 -- retained rational implementation remains useful as an independent oracle.
