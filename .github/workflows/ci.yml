@@ -197,7 +197,14 @@ jobs:
       - name: Check README Lean snippets
         run: |
           for readme in Hex*/README.md; do
-            lake exe lean-readme "$readme"
+            case "$readme" in
+              HexBareiss/README.md|HexBerlekampZassenhaus/README.md|HexBerlekampZassenhausMathlib/README.md)
+                lake exe lean-readme --prefix .lean-readme/Native.lean "$readme"
+                ;;
+              *)
+                lake exe lean-readme "$readme"
+                ;;
+            esac
           done
           lake exe lean-readme --prefix .lean-readme/Aggregate.lean \
             scripts/release/hex-README.md

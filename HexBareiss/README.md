@@ -30,12 +30,12 @@ open Hex
 -- A 3×3 integer matrix with a zero leading pivot, forcing a row swap.
 def M : Matrix Int 3 3 := Matrix.ofFn fun i j => (i + 2 * j : Int)
 
-#check Matrix.bareiss M
-#check Matrix.bareiss (Matrix.identity (R := Int) 4)
+#eval Matrix.bareiss M                       -- fraction-free determinant
+#eval Matrix.bareiss (Matrix.identity (R := Int) 4)    -- 1
 
 -- bareissData also records the row-swap count alongside the determinant.
-#check (Matrix.bareissData M).det
-#check (Matrix.bareissData M).rowSwaps
+#eval (Matrix.bareissData M).det
+#eval (Matrix.bareissData M).rowSwaps
 ```
 
 # Functionality

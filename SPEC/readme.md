@@ -55,6 +55,11 @@ Use these five level-1 headings, in this order.
    Executable examples must remain checked. Point at the sibling library where
    the rest of the theory lives.
 
+Examples whose elaboration or evaluation uses a native implementation are
+checked with `.lean-readme/Native.lean`. This hidden prefix loads the same
+precompiled libraries that Lean loads when compiling an ordinary source file;
+do not weaken such examples to API-name-only `#check` blocks.
+
 5. **`# Contributing`**. State that development happens in the
    [`hex-dev`](https://github.com/kim-em/hex-dev) monorepo, not in the
    published mirror, and that contributions are welcome as pull requests to
