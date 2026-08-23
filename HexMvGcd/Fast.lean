@@ -6,6 +6,7 @@ Authors: Kim Morrison
 
 module
 
+public meta import HexBasic.Rand
 public import HexBasic.Rand
 public import HexMvGcd.Prs
 
@@ -34,6 +35,23 @@ The whole window is enumerated before reversing; asking the downward scanner
 for only `fuel` entries would instead select the largest primes in it. -/
 def smallPrimeSupply (bound fuel : Nat) : List ZMod64.Prime :=
   (ZMod64.primesBelow bound bound).toList.reverse.take fuel
+
+/-- State carried by a failed bounded draw.  `zeroBound` consumes nothing;
+rejection exhaustion reports the already-advanced state. -/
+def randErrorState (initial : Rand) : RandError → Rand
+  | .zeroBound => initial
+  | .exhausted _ advanced => advanced
+
+/-- Draw one separately sampled field element for each coordinate.  Every
+coordinate performs its own bounded rejection-sampling call and the returned
+state is threaded into the next draw. -/
+def samplePoints {p : Nat} [ZMod64.Bounds p] (sampleFuel : Nat) :
+    (n : Nat) → Rand → Except RandError ((Fin n → ZMod64 p) × Rand)
+  | 0, rand => .ok (Fin.elim0, rand)
+  | n + 1, rand => do
+      let (value, rand') ← rand.nat p sampleFuel
+      let (rest, rand'') ← samplePoints sampleFuel n rand'
+      .ok (Fin.cases (ZMod64.ofNat p value) rest, rand'')
 
 structure GcdRun (n : Nat) (R : Type u) [Zero R]
     (cmp : Mono n → Mono n → Ordering)
@@ -178,39 +196,39 @@ def coprimeStep {n : Nat} {R : Type u}
     letI : ZMod64.Bounds prime.m := prime.bounds
     letI : ZMod64.PrimeModulus prime.m :=
       ZMod64.primeModulusOfPrime prime.prime
-    let next := rand.next
-    let points : Fin n → ZMod64 prime.m := fun j =>
-      ZMod64.ofNat prime.m (next.1.toNat + j.val)
-    let main : Fin (n + 1) := ⟨0, by omega⟩
-    let fView := toUnivariate main Mono.lex f
-    let hView := toUnivariate main Mono.lex h
-    let fImage := imageAtRaw prime φ.toField points main Mono.lex f
-    let hImage := imageAtRaw prime φ.toField points main Mono.lex h
-    if fImage.degree? != fView.degree? || hImage.degree? != hView.degree? then
-      (none, next.2)
-    else
-      let xg := DensePoly.xgcd fImage hImage
-      if xg.gcd.size != 1 then
-        (none, next.2)
+    match samplePoints 8 n rand with
+    | .error error => (none, randErrorState rand error)
+    | .ok (points, rand') =>
+      let main : Fin (n + 1) := ⟨0, by omega⟩
+      let fView := toUnivariate main Mono.lex f
+      let hView := toUnivariate main Mono.lex h
+      let fImage := imageAtRaw prime φ.toField points main Mono.lex f
+      let hImage := imageAtRaw prime φ.toField points main Mono.lex h
+      if fImage.degree? != fView.degree? || hImage.degree? != hView.degree? then
+        (none, rand')
       else
-        let scalar := xg.gcd.coeff 0
-        if scalar == 0 then
-          (none, next.2)
+        let xg := DensePoly.xgcd fImage hImage
+        if xg.gcd.size != 1 then
+          (none, rand')
         else
-          let alpha := DensePoly.scaleImpl scalar⁻¹ xg.left
-          let beta := DensePoly.scaleImpl scalar⁻¹ xg.right
-          let left := contentCertWith (fun a b => rawPrsCert a b)
-            fView.toArray.toList
-          let right := contentCertWith (fun a b => rawPrsCert a b)
-            hView.toArray.toList
-          let restRun := lower.tryAt Mono.lex prime φ next.2
-            left.value right.value
-          match restRun.1 with
-          | none => (none, restRun.2)
-          | some rest =>
-              let cert := CoprimeCert.split main Mono.lex prime φ points
-                alpha beta left right rest
-              (if checkCoprime f h cert then some cert else none, restRun.2)
+          let scalar := xg.gcd.coeff 0
+          if scalar == 0 then
+            (none, rand')
+          else
+            let alpha := DensePoly.scaleImpl scalar⁻¹ xg.left
+            let beta := DensePoly.scaleImpl scalar⁻¹ xg.right
+            let left := contentCertWith (fun a b => rawPrsCert a b)
+              fView.toArray.toList
+            let right := contentCertWith (fun a b => rawPrsCert a b)
+              hView.toArray.toList
+            let restRun := lower.tryAt Mono.lex prime φ rand'
+              left.value right.value
+            match restRun.1 with
+            | none => (none, restRun.2)
+            | some rest =>
+                let cert := CoprimeCert.split main Mono.lex prime φ points
+                  alpha beta left right rest
+                (if checkCoprime f h cert then some cert else none, restRun.2)
 
 /-- Construct the per-variable modular coprimality route. -/
 def coprimeOps {R : Type u}
@@ -339,11 +357,25 @@ def fpFastProposal {n p : Nat} [hp : ZMod64.Bounds p]
       | some reduced =>
           let P : ZMod64.Prime :=
             { m := p, bounds := hp, prime := ZMod64.PrimeModulus.prime }
-          let draw := cfg.rand.next
-          let point := ZMod64.ofNat p draw.1.toNat
-          let run := tryCoprimeCert? P (fpCoeffHom point) draw.2
-            reduced.left reduced.right
-          ⟨run.1.bind (restoreStructural? f h reduced), run.2⟩
+          match cfg.rand.nat p 8 with
+          | .error error => ⟨none, randErrorState cfg.rand error⟩
+          | .ok (value, rand') =>
+              let point := ZMod64.ofNat p value
+              let run := tryCoprimeCert? P (fpCoeffHom point) rand'
+                reduced.left reduced.right
+              ⟨run.1.bind (restoreStructural? f h reduced), run.2⟩
+
+/-! Sampling pins: a non-power-of-two modulus gets one bounded draw per
+coordinate, with deterministic values and exactly the corresponding advanced
+state. -/
+
+#guard
+  letI : ZMod64.Bounds 5 := ⟨by decide, by decide⟩
+  match samplePoints (p := 5) 8 3 (Rand.ofSeed 17) with
+  | .error _ => false
+  | .ok (points, rand) =>
+      [points 0 |>.toNat, points 1 |>.toNat, points 2 |>.toNat] == [4, 3, 1] &&
+        rand.state == (Rand.ofSeed 17).next.2.next.2.next.2.state
 
 /-- Coefficient-generic structural proposal.  Route 1 needs an explicit
 total `CoeffHom`, so concrete coefficient backends add it after this common
