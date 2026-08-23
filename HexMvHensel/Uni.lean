@@ -79,14 +79,22 @@ def UniSymCanonical (q : Nat) (f : ZPoly) : Prop :=
 def uniProduct (fs : List ZPoly) : ZPoly :=
   fs.foldl zMul 1
 
+/-- Products omitting each list entry, built with one prefix and one suffix
+pass.  The order of the retained entries is preserved. -/
+def complementProducts {α : Type} (mul : α → α → α) (one : α)
+    (xs : List α) : List α :=
+  let prefixes := xs.scanl mul one
+  let suffixes :=
+    (xs.reverse.scanl (fun suffix x => mul x suffix) one).reverse.drop 1
+  List.zipWith mul prefixes suffixes
+
 /-- The product of every image other than the one at position `j`. -/
 def productExcept (images : List ZPoly) (j : Nat) : ZPoly :=
-  (List.range images.length).foldl
-    (fun acc k => if k = j then acc else zMul acc (images.getD k 1)) 1
+  (complementProducts zMul 1 images).getD j 1
 
 /-- Complementary products `b_j = ∏_{m ≠ j} F_m`, in image order. -/
 def complements (images : List ZPoly) : List ZPoly :=
-  (List.range images.length).map (productExcept images)
+  complementProducts zMul 1 images
 
 /-- The partial-fraction linear combination `Σ_j σ_j b_j`. -/
 def uniCombination (coeffs bases : List ZPoly) : ZPoly :=
@@ -171,13 +179,14 @@ def solveUni (q : Nat) (images witness : List ZPoly) (c : ZPoly) :
 /-- Compute the inverse of the complementary product modulo image `j` over
 the residue prime. -/
 def baseWitnessAt? (p : Nat) [ZMod64.Bounds p]
-    [ZMod64.PrimeModulus p] (images : List ZPoly) (j : Nat) : Option ZPoly :=
+    [ZMod64.PrimeModulus p] (images bases : List ZPoly)
+    (j : Nat) : Option ZPoly :=
   let F := images.getD j 0
   let Fp := toFp p F
   if F.size < 2 || Fp.size != F.size then
     none
   else
-    let bp := toFp p (productExcept images j)
+    let bp := toFp p (bases.getD j 1)
     let raw := DensePoly.xgcd bp Fp
     if raw.gcd.size != 1 || raw.gcd.leadingCoeff = 0 then
       none
@@ -188,15 +197,15 @@ def baseWitnessAt? (p : Nat) [ZMod64.Bounds p]
 
 /-- Compute the partial-fraction tuple modulo the residue prime. -/
 def baseWitness? (prime : ZMod64.Prime)
-    (images : List ZPoly) : Option (List ZPoly) :=
+    (images bases : List ZPoly) : Option (List ZPoly) :=
   letI : ZMod64.Bounds prime.m := prime.bounds
   letI : ZMod64.PrimeModulus prime.m :=
     ZMod64.primeModulusOfPrime prime.prime
   if images.isEmpty then none
   else do
     let tuple ← (List.range images.length).mapM
-      (baseWitnessAt? prime.m images)
-    let identity := uniCombination tuple (complements images)
+      (baseWitnessAt? prime.m images bases)
+    let identity := uniCombination tuple bases
     if coeffsDivisible prime.m (zSub identity 1) then
       some tuple
     else none
@@ -228,21 +237,29 @@ def addScaled (scale : Nat) : List ZPoly → List ZPoly → List ZPoly
   | [], [] => []
   | _, _ => []
 
+/-- The changing part of a partial-fraction witness lift. -/
+structure WitnessState where
+  /-- The prime power at which `tuple` is currently valid. -/
+  modulus : Nat
+  /-- The current lifted partial-fraction tuple. -/
+  tuple : List ZPoly
+
 /-- Lift an already valid mod-`p` tuple through `steps` further powers. -/
-def liftWitness (prime : ZMod64.Prime) (images base : List ZPoly) :
-    (steps k : Nat) → List ZPoly → Option (List ZPoly)
-  | 0, _, current => some current
-  | steps + 1, k, current => do
-      let pk := prime.m ^ k
+def liftWitness (prime : ZMod64.Prime)
+    (images bases base : List ZPoly) :
+    Nat → WitnessState → Option WitnessState
+  | 0, state => some state
+  | steps + 1, state => do
       let residual := zSub (1 : ZPoly)
-        (uniCombination current (complements images))
-      let error ← divCoeffs? pk residual
+        (uniCombination state.tuple bases)
+      let error ← divCoeffs? state.modulus residual
       let correction ← solveBase? prime images base error
-      let next := addScaled pk current correction
-      let nextModulus := pk * prime.m
+      let next := addScaled state.modulus state.tuple correction
+      let nextModulus := state.modulus * prime.m
       if coeffsDivisible nextModulus
-          (zSub (uniCombination next (complements images)) 1) then
-        liftWitness prime images base steps (k + 1) next
+          (zSub (uniCombination next bases) 1) then
+        liftWitness prime images bases base steps
+          { modulus := nextModulus, tuple := next }
       else none
 
 /-- Produce the partial-fraction tuple modulo `p ^ l`, or `none` if an image
@@ -250,11 +267,13 @@ loses degree modulo `p`, the images are not pairwise coprime there, or the
 requested exponent is zero. -/
 def witnessOf? (s : Setup n) (images : List ZPoly) : Option (List ZPoly) := do
   if s.exponent = 0 then none else pure ()
-  let base ← baseWitness? s.prime images
-  let lifted ← liftWitness s.prime images base (s.exponent - 1) 1 base
-  if coeffsDivisible s.modulus
-      (zSub (uniCombination lifted (complements images)) 1) then
-    some lifted
+  let bases := complements images
+  let base ← baseWitness? s.prime images bases
+  let lifted ← liftWitness s.prime images bases base (s.exponent - 1)
+    { modulus := s.prime.m, tuple := base }
+  if coeffsDivisible lifted.modulus
+      (zSub (uniCombination lifted.tuple bases) 1) then
+    some lifted.tuple
   else none
 
 /-! # The checked mathematical contract -/

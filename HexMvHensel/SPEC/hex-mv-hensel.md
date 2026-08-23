@@ -512,6 +512,13 @@ linear correction hex-hensel uses on factors: with
 `deg τ_j < deg F_j` using the mod-`p` tuple, and set
 `σ_j ← σ_j + p^k τ_j`.
 
+Build all `b_j` together with prefix and suffix products, so their
+construction takes `O(r)` polynomial multiplications rather than multiplying
+all but one factor separately for each `j`. The producer retains that list and
+the mod-`p` tuple throughout the lift. Its loop state also carries the current
+modulus, advancing it by one multiplication by `p`; it does not recompute
+`p^k` at each step.
+
 **Do not reduce `σ_j` modulo `F_j` between steps.** That would change
 `σ_j` by a multiple of `F_j`, hence change `Σ_j σ_j b_j` by a multiple of
 `F = ∏_j F_j`, which is not a multiple of `q` and so breaks the very
@@ -680,7 +687,8 @@ statement the box truncation supports.
 
 Only the base-level witness is fixed data. The `b_j` used at stage `t`
 are recomputed from the current factors, because the ring the equation is
-solved in changes from stage to stage.
+solved in changes from stage to stage. Within one stage they are again built
+by one prefix/suffix pass and retained for every power of `y_t`.
 
 **Truncation is sound, not an approximation.** Any integer factor `g` of
 `f` satisfies `deg_{y_j} g ≤ deg_{y_j} f = d_j`, because degrees are
@@ -1308,7 +1316,7 @@ main variable, `d_j` the degree in non-main variable `j`, `t` terms in
 | `imageAt` | Horner per `x_i`-slice of the recursive view | `O(t · n)` coefficient operations |
 | `lcIn` | the top slice of `toUnivariate` | `O(n · t log t)` machine operations |
 | `truncate` | `restrictBy` on the exponent vector | `O(n · t)` machine operations |
-| `witnessOf?` | one `FpPoly` xgcd per factor, then `l` linear steps | `r` xgcds plus `r · l` divisions |
+| `witnessOf?` | one prefix/suffix complement pass, one `FpPoly` xgcd per factor, then `l` linear steps carrying their modulus | `O(r)` complement multiplications, `r` xgcds, and `r · l` divisions |
 | `solveUni` | `r` multiplications and remainders modulo `F_j` | `r` divisions of degree `d₁` |
 | `diophantine` at `m` variables | recursion, `d_m + 1` right-hand sides per level | `∏_{k ≤ m} (d_k + 1)` univariate solves |
 | one stage-`t` step | one product update and one solve | `∏_{k < t} (d_k + 1)` univariate solves |
