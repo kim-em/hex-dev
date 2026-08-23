@@ -76,8 +76,8 @@ end GaussDyadic
 /-- The executable lower approximation `181/128` is strictly below `√2`. -/
 theorem sqrt2Lo_lt_sqrt_two : Dyadic.toReal Hex.sqrt2Lo < √2 := by
   rw [← sq_lt_sq₀ (by
-    simp [Hex.sqrt2Lo, Dyadic.toReal_ofIntWithPrec]
-    positivity) (Real.sqrt_nonneg _), Real.sq_sqrt (by norm_num)]
+    simp [Hex.sqrt2Lo, Dyadic.toReal_ofIntWithPrec])
+    (Real.sqrt_nonneg _), Real.sq_sqrt (by norm_num)]
   have h := Dyadic.toReal_lt_toReal_iff.mpr Hex.sqrt2Lo_sq_lt_two
   have htwo : Dyadic.toReal (2 : _root_.Dyadic) = (2 : ℝ) := by
     change Dyadic.toReal (.ofInt 2) = (2 : ℝ)
@@ -88,8 +88,8 @@ theorem sqrt2Lo_lt_sqrt_two : Dyadic.toReal Hex.sqrt2Lo < √2 := by
 /-- The executable upper approximation `1449/1024` is strictly above `√2`. -/
 theorem sqrt_two_lt_sqrt2Hi : √2 < Dyadic.toReal Hex.sqrt2Hi := by
   rw [← sq_lt_sq₀ (Real.sqrt_nonneg _) (by
-    simp [Hex.sqrt2Hi, Dyadic.toReal_ofIntWithPrec]
-    positivity), Real.sq_sqrt (by norm_num)]
+    simp [Hex.sqrt2Hi, Dyadic.toReal_ofIntWithPrec]),
+    Real.sq_sqrt (by norm_num)]
   have h := Dyadic.toReal_lt_toReal_iff.mpr Hex.two_lt_sqrt2Hi_sq
   have htwo : Dyadic.toReal (2 : _root_.Dyadic) = (2 : ℝ) := by
     change Dyadic.toReal (.ofInt 2) = (2 : ℝ)
