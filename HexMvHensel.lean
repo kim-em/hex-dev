@@ -16,6 +16,7 @@ public import HexMvHensel.Cert
 public import HexMvHensel.Lift
 public import HexMvHensel.Complete
 public import HexMvHensel.KernelTests
+public import HexMvHensel.ShiftTests
 public import HexMvHensel.UniTests
 public import HexMvHensel.DiophantineTests
 public import HexMvHensel.SeedTests
