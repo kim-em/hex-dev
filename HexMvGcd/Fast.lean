@@ -78,6 +78,24 @@ class GcdProducer (R : Type u) [Zero R] where
 instance (priority := 10) instNoFastProducer {R : Type u} [Zero R] :
     GcdProducer R := noFastProducer
 
+/-- Complete checked dispatch. Proposals affect performance and random state,
+but rejection always falls through to the deterministic PRS route.  This
+plumbing lives below the concrete producers so one coefficient backend can
+invoke another without creating an import cycle. -/
+def gcdCertWith (cfg : GcdConfig)
+    {n : Nat} {R : Type u} {cmp : Mono n → Mono n → Ordering}
+    [IsMonomialOrder cmp]
+    [Lean.Grind.CommRing R] [DecidableEq R] [BEq R] [LawfulBEq R]
+    [Dvd R] [BezoutOps R] [LawfulGcdOps R] [LawfulBezoutOps R]
+    [GcdProducer R]
+    (f h : MvPoly n R cmp) : GcdRun n R cmp :=
+  let proposal := GcdProducer.propose cmp cfg f h
+  match proposal.cert? with
+  | some candidate =>
+      if checkGcd f h candidate then ⟨candidate, proposal.rand⟩
+      else ⟨prsCert f h, proposal.rand⟩
+  | none => ⟨prsCert f h, proposal.rand⟩
+
 /-- Route 0: zero and unit cases, all represented by genuine replayable
 certificates. -/
 def structuralCert? {n : Nat} {R : Type u}
