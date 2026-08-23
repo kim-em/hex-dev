@@ -78,6 +78,18 @@ coefficient. -/
       (1 + y2 * x2 + z2 * (x2 + 1) + y2 * z2) ==
   some ([1 + z2 + y2 * z2, -1 + y2 - y2 * z2] : List P2)
 
+/- Omitting future variables is computationally equivalent when the bases and
+right-hand side contain only the declared active prefix. -/
+#guard diophantinePrefix 5 (0 : Fin 3) Mono.lex 0 d2
+    [x2 + 1, x2] images witness 1 ==
+  diophantine 5 (0 : Fin 3) Mono.lex d2
+    [x2 + 1, x2] images witness 1
+
+#guard diophantinePrefix 5 (0 : Fin 3) Mono.lex 1 d2
+    [x2 + 1, x2] images witness (1 + y2 * x2) ==
+  diophantine 5 (0 : Fin 3) Mono.lex d2
+    [x2 + 1, x2] images witness (1 + y2 * x2)
+
 /-! # Required failures -/
 
 /- The image product has main degree two, so a nonzero `x^2` right-hand side
