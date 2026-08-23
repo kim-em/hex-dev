@@ -782,7 +782,7 @@ The remainder-degree statements use `degree?.getD 0` because that is the
 shape `DensePoly.DivModLaws` states them in, and `degree?_toDense` is
 what moves them across. `divExactMonic?_eq_some` needs no `t ≠ 0` side
 condition, unlike the `divExact?` of
-[hex-poly-z-gcd](../../SPEC/Libraries/hex-poly-z-gcd.md): a monic divisor is nonzero.
+[hex-poly-z-gcd](../../HexPolyZGcd/SPEC/hex-poly-z-gcd.md): a monic divisor is nonzero.
 
 **No claim is made that any of this stays sparse.** Sparsity survives
 in special cases and not in general, and the special cases are what make
@@ -817,7 +817,7 @@ exists, this SPEC authorises the conversion route and nothing more.
 
 Exact division by an arbitrary, possibly nonmonic integer polynomial is
 not specified here. That is hex-poly-z's `divExact?`, which
-[hex-poly-z-gcd](../../SPEC/Libraries/hex-poly-z-gcd.md) schedules, and a consumer that wants
+[hex-poly-z-gcd](../../HexPolyZGcd/SPEC/hex-poly-z-gcd.md) schedules, and a consumer that wants
 it already depends on hex-poly-z and can apply it to `toDense`. Adding a
 second one here would be inventing an operation this library has no
 consumer for.

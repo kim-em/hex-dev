@@ -8,7 +8,7 @@ correspondence, and supplies the decidability instances that make the
 operations usable from a Mathlib goal.
 
 This SPEC expands the "Multivariate gcd and squarefree decomposition"
-entry in [future-work](../future-work.md) and depends on the representation
+entry in [future-work](../../SPEC/future-work.md) and depends on the representation
 fixed by [hex-mv-poly](../../HexMvPoly/SPEC/hex-mv-poly.md). The coprimality
 certificate inherited from the modular-gcd item does not generalise as
 written; "The certificate" gives the complete replacement. The algorithms
@@ -19,7 +19,7 @@ structural and no parallel arity-preserving API is introduced.
 
 **Rational expression simplification.** `cancel`, the second of the three
 pieces of the `Together` / `Apart` item in
-[future-work](../future-work.md), reduces `p / q` to lowest terms. That
+[future-work](../../SPEC/future-work.md), reduces `p / q` to lowest terms. That
 is a multivariate gcd plus its cofactors, and nothing else. It is the
 consumer with the highest call volume, and it is dominated by the case
 `gcd = 1`, which is why coprime detection gets its own fast path below
@@ -79,11 +79,11 @@ factorization into irreducibles (that is `hex-mv-factor`,
 and it depends on this library), Gröbner bases, resultants themselves
 (hex-resultant computes them once this library supplies the instances),
 multivariate Hensel lifting (that is
-[hex-mv-hensel](hex-mv-hensel.md), which depends on this library), and
+[hex-mv-hensel](../../HexMvHensel/SPEC/hex-mv-hensel.md), which depends on this library), and
 the sparse Hensel gcd route (see "Routes not specified here").
 
 Also not in scope: the univariate integer case, which is
-[hex-poly-z-gcd](hex-poly-z-gcd.md). That library computes gcds of
+[hex-poly-z-gcd](../../HexPolyZGcd/SPEC/hex-poly-z-gcd.md). That library computes gcds of
 `ZPoly` for the consumers that hold `DensePoly Int` and would otherwise
 convert, its certificate is the arity-one specialisation of the one
 below with an unconditional soundness theorem, and this
@@ -103,21 +103,20 @@ namespace Hex
 /-- Executable operations a coefficient ring must supply. `exactDiv a b`
 is required to be correct only when `b ∣ a` and `b ≠ 0`; other inputs
 return a stable junk value. -/
-class GcdOps (R : Type u) [Zero R] [One R] [Add R] [Mul R] [Dvd R] where
+class GcdOps (R : Type u) where
   gcd      : R → R → R
   exactDiv : R → R → R
   isUnit   : R → Bool
   normUnit : R → R
 
 /-- The canonical associate chosen by `GcdOps`. -/
-def normalize [Zero R] [One R] [Add R] [Mul R] [Dvd R] [GcdOps R]
+def normalize [Mul R] [GcdOps R]
     (a : R) : R :=
   a * GcdOps.normUnit a
 
 /-- Coefficient rings in which coprimality is witnessed by a Bézout
 identity. Required of the base ring only, never of `MvPoly`. -/
-class BezoutOps (R : Type u) [Zero R] [One R] [Add R] [Mul R] [Dvd R]
-    extends GcdOps R where
+class BezoutOps (R : Type u) extends GcdOps R where
   xgcd : R → R → R × R
 
 /-- The algebraic hypotheses the gcd algorithms need of `R`. Separated
@@ -165,6 +164,15 @@ class CoprimeCancelLaws (S : Type u) [Lean.Grind.CommRing S] [Dvd S] : Prop wher
 
 with `normalize a = a * GcdOps.normUnit a`, matching Mathlib's naming so
 the companion's transport lemmas do not have to rename anything.
+
+The executable structures do not carry `Zero`, `One`, `Add`, or `Mul`
+dictionaries as class parameters: none of their stored operations needs
+those dictionaries.  Algebraic structure is required only by `normalize`
+and the law packages.  Besides keeping the operation classes minimal, this
+avoids an instance diamond for dependent carriers such as `ZMod64 p` and
+`FpPoly p`, where forming `LawfulGcdOps` after the ring dictionaries have
+already been fixed otherwise prevents Lean from synthesizing the canonical
+`GcdOps` instance.
 
 Five of the `LawfulGcdOps` fields are load-bearing and easy to leave out.
 `one_ne_zero` supplies the nontriviality required by `Fraction`.
@@ -251,7 +259,8 @@ def divExact? [IsMonomialOrder cmp] (f g : MvPoly n R cmp) :
     Option (MvPoly n R cmp)
 
 instance : Dvd (MvPoly n R cmp)  -- `∃ q, f = q * g`
-instance [IsMonomialOrder cmp] (f g : MvPoly n R cmp) : Decidable (g ∣ f)
+instance [IsMonomialOrder cmp] [LawfulGcdOps R]
+    (f g : MvPoly n R cmp) : Decidable (g ∣ f)
 
 /-- The total form, for hex-resultant's `[Div R]` interface. -/
 instance [IsMonomialOrder cmp] : Div (MvPoly n R cmp)
@@ -291,9 +300,18 @@ enough to run on every candidate.
 theorem divMod_spec : f = (divMod f g).1 * g + (divMod f g).2
 theorem divMod_reduced (hg : g ≠ 0) : ReducedBy (divMod f g).2 g
 theorem divExact?_zero_right : divExact? f 0 = none
-theorem divExact?_eq (hg : g ≠ 0) : divExact? f g = some q ↔ f = q * g
-theorem divExact?_isSome_of_dvd (hg : g ≠ 0) : g ∣ f → (divExact? f g).isSome
+theorem divExact?_eq [LawfulGcdOps R] (hg : g ≠ 0) :
+    divExact? f g = some q ↔ f = q * g
+theorem divExact?_isSome_of_dvd [LawfulGcdOps R] (hg : g ≠ 0) :
+    g ∣ f → (divExact? f g).isSome
 ```
+
+The lawful hypotheses on completeness and decidable divisibility are
+load-bearing. `GcdOps.exactDiv` is deliberately unconstrained away from exact
+inputs; without `LawfulGcdOps.exactDiv_cancel`, an implementation that always
+returns zero is a valid `GcdOps` and misses even the exact division `1 / 1`.
+Forward soundness of a returned quotient needs only the executable checker,
+but the reverse implication needs the cancellation law.
 
 The `g ≠ 0` hypothesis on `divExact?_eq` is not decoration. At `f = 0`
 and `g = 0` the right-hand side holds for every `q`, and a deterministic
@@ -429,7 +447,7 @@ division at every step, with proofs that each cofactor numerator is
 divisible by the Brown scalar it is divided by.
 
 The owning contract is now recorded under "Extended subresultant chain for
-gcd consumers" in [SPEC/future-work.md](../future-work.md), with a pointer
+gcd consumers" in [SPEC/future-work.md](../../SPEC/future-work.md), with a pointer
 from the Downstream contracts section of
 [hex-resultant's SPEC](../../HexResultant/SPEC/hex-resultant.md); its
 signature is repeated here only to show the consumer boundary:
@@ -547,12 +565,12 @@ they establish `g ∣ f` and `g ∣ h`, nothing more. Any common divisor
 whatever, `1` included, satisfies them. Maximality is a separate
 obligation, and the usable form of it is that the cofactors `f'` and `h'`
 have no nonunit common divisor. This is the case
-[future-work](../future-work.md) makes in its own preamble, and the
+[future-work](../../SPEC/future-work.md) makes in its own preamble, and the
 whole point of the certificate is to carry the second witness.
 
 ### Bézout does not witness coprimality here
 
-[future-work](../future-work.md) said of the modular gcd for `ℤ[x]` that
+[future-work](../../SPEC/future-work.md) said of the modular gcd for `ℤ[x]` that
 the certificate carries cofactors "together with a Bézout witness that
 `f'` and `h'` are coprime", and now records the correction instead. That
 witness does not exist, in one variable or in several. `ℤ[x]` is not a Bézout domain: `x` and `2` are coprime
@@ -793,7 +811,7 @@ rewriting `0 / 0` to `1 / 1` is false under Lean's total division. The
 tactic's obligation is the cofactor identities **plus** `h ≠ 0`, plus
 the cancellation law of the target field, which is the same
 denominator-nonvanishing side condition
-[future-work](../future-work.md) identifies for `Together` and `Apart`
+[future-work](../../SPEC/future-work.md) identifies for `Together` and `Apart`
 and resolves by matching `field_simp`. Coprimality is what makes the
 output fully reduced, which is a quality property of the answer rather
 than a soundness property of the rewrite.
@@ -1099,7 +1117,7 @@ early-termination theorem, diversification, field-size policy, collision
 handling, and restart semantics before assigning it performance claims.
 
 The random point is an explicit argument rather than a monad, following
-the pattern [hex-finite-field](hex-finite-field.md) sets under
+the pattern [hex-finite-field](../../SPEC/Libraries/hex-finite-field.md) sets under
 "Randomness", and drawn from the `Hex.Rand` generator that SPEC
 introduces.
 
@@ -1423,7 +1441,7 @@ rather than acquiring a new one.
 
 ## Conformance
 
-Fixtures follow [SPEC/testing.md](../testing.md). A Lean driver at
+Fixtures follow [SPEC/testing.md](../../SPEC/testing.md). A Lean driver at
 `conformance/HexMvGcd/EmitFixtures.lean` exposed as
 `lean_exe hexmvgcd_emit_fixtures`, a committed snapshot at
 `conformance-fixtures/HexMvGcd/mvgcd.jsonl`, and an oracle driver at
@@ -1509,7 +1527,7 @@ oracle's normalisation conventions.
 
 ## Benchmarking
 
-Per [SPEC/benchmarking.md](../benchmarking.md), with drivers at
+Per [SPEC/benchmarking.md](../../SPEC/benchmarking.md), with drivers at
 `bench/HexMvGcd/Bench.lean`. Native only for throughput. A separate
 `bench/HexMvGcd/Kernel.lean` suite replays valid and one-field-corrupted
 certificates through `by decide +kernel`: base, modular split,
@@ -1599,7 +1617,7 @@ Over `ℚ` the content is a unit and the relative and ring-theoretic
 predicates agree. Over `ℤ`, the instance combines the checked primitive
 part with Mathlib's decision procedure for squarefreeness of the integer
 content (`DecidablePred (Squarefree : ℕ → Prop)`). What
-[hex-int-factor](hex-int-factor.md) adds is the square divisor and the
+[hex-int-factor](../../SPEC/Libraries/hex-int-factor.md) adds is the square divisor and the
 squarefree part as witnesses, which the decision procedure does not
 produce.
 
@@ -1680,14 +1698,14 @@ HexMvGcdMathlib/
 HexMvGcdMathlib.lean
 ```
 
-`libraries.yml` gains:
+`libraries.yml` records the active core library and the planned companion:
 
 ```yaml
   HexMvGcd:
     deps: [HexBasic, HexMvPoly, HexPoly, HexPolyFp, HexResultant, HexArith, HexModArith, HexModular, HexPolyZGcd]
     mathlib: false
-    done_through: 0
-    status: planned
+    done_through: 1
+    status: active
   HexMvGcdMathlib:
     deps: [HexMvGcd, HexMvPolyMathlib]
     mathlib: true
@@ -1698,23 +1716,18 @@ HexMvGcdMathlib.lean
 `HexPolyZGcd` is the arity-one case, called rather than reimplemented;
 see "Scope". `HexPolyFp` and `HexModArith` are for the univariate images
 over `F_p`.
-`HexBasic` will supply the explicitly threaded `Rand` state specified in
-[hex-finite-field](hex-finite-field.md); that file is not landed yet.
+`HexBasic` supplies the explicitly threaded `Rand` state specified in
+[hex-finite-field](../../SPEC/Libraries/hex-finite-field.md).
 `HexModular` supplies CRT and reconstruction. `HexModArith` owns the
 bundled bounded-prime stream.
 `HexResultant` is for route 4 and for the `ExactDivLaws` interface.
 `HexArith` is for the integer gcd and the extended Euclidean algorithm.
 `HexPoly` comes in through `DensePoly`, which `toUnivariate` returns.
 
-`HexMvPoly`, `HexMvPolyMathlib`, and `HexResultant` are active.
-`HexModular` and `HexPolyZGcd` are planned and not yet registered in
-`libraries.yml`; their entries must be added and implemented before the
-block above can be applied. Three shared additions are also unlanded:
-`HexBasic.Rand`, the bundled modulus supply in `HexModArith`, and the
-extended-chain amendment to `HexResultant`.
-The new entries are nevertheless `planned`, not `draft`, because this SPEC
-fixes their required API and milestones; registration waits until the
-dependency entries exist.
+All dependencies named above are active. `HexMvGcd` is registered as active
+at `done_through: 1`; the prerequisite and coefficient-kernel milestone is
+complete. `HexMvGcdMathlib` remains a planned companion and is not yet
+registered in `libraries.yml`.
 
 ## Why gcd and squarefree decomposition are one library
 
@@ -1743,7 +1756,7 @@ decomposition. It is between verification and fast routes:
   Hensel lifting have different prerequisites and failure policies. The
   sparse stress benchmarks measure the gap, but this SPEC intentionally
   does not choose an underspecified route.
-  [hex-mv-hensel](hex-mv-hensel.md) has the same open question about its
+  [hex-mv-hensel](../../HexMvHensel/SPEC/hex-mv-hensel.md) has the same open question about its
   own dense diophantine recursion, and the two should be decided
   together: one sparse interpolation layer could serve both.
 - **Sparse exponent vectors.** hex-mv-poly leaves open whether a large

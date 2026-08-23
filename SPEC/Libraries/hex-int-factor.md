@@ -43,7 +43,7 @@ rather than the whole verification story.
 **Squarefree content over `ℤ`, but not for the reason hex-mv-gcd
 gives.** `12x` is not squarefree in `ℤ[x]` because `4 ∣ 12`, so the
 ring-theoretic predicate over `ℤ` is partly a question about an
-integer. [hex-mv-gcd](hex-mv-gcd.md) says the `ℤ` instance of
+integer. [hex-mv-gcd](../../HexMvGcd/SPEC/hex-mv-gcd.md) says the `ℤ` instance of
 `Decidable (Squarefree p)` "waits on the integer factorization item".
 It does not: Mathlib already has
 `instance : DecidablePred (Squarefree : ℕ → Prop)`
@@ -875,7 +875,7 @@ found the factor within the expected iteration count for a fixed seed,
 that ECM stage 1 distinguished its three gcd outcomes, and that
 `cyclotomicSplit?` ran before the generic dispatch on a `b^n − 1`
 input. This is the same division
-[hex-mv-gcd](hex-mv-gcd.md) makes, and it is worth more than the oracle
+[hex-mv-gcd](../../HexMvGcd/SPEC/hex-mv-gcd.md) makes, and it is worth more than the oracle
 half.
 
 ## Benchmarking

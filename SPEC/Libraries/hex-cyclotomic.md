@@ -438,7 +438,7 @@ checked route.
 normalization step. `ZPoly.primitivePart` and `ZPoly.content` are
 hex-poly-z's, and nothing here calls them. The statement is recorded
 because a caller who reaches this library from
-[hex-poly-z-gcd](hex-poly-z-gcd.md) or from Berlekamp-Zassenhaus is used
+[hex-poly-z-gcd](../../HexPolyZGcd/SPEC/hex-poly-z-gcd.md) or from Berlekamp-Zassenhaus is used
 to content-normalising every integer polynomial it holds, and here that
 is a no-op.
 
@@ -947,7 +947,7 @@ the largest polynomial this library ever writes, which is why the factor
 matters here and not elsewhere.
 
 **hex-poly-z** must have `divExact?`, which
-[hex-poly-z-gcd](hex-poly-z-gcd.md) already schedules as its first
+[hex-poly-z-gcd](../../HexPolyZGcd/SPEC/hex-poly-z-gcd.md) already schedules as its first
 prerequisite and sites in hex-poly-z. This library needs only the monic
 case. No new primitive is requested, and in particular no second copy of
 exact integer-polynomial division: the count of those in the tree is

@@ -127,6 +127,11 @@ libraries:
           description: Sparse rename, partial-evaluation, and substitution cases where distinct source terms collide.
         - name: sum-of-squares-arithmetic
           description: Representative sum-of-squares-shaped identities measured as compiled Mathlib-free arithmetic.
+  HexMvGcd:
+    deps: [HexBasic, HexMvPoly, HexPoly, HexPolyFp, HexResultant, HexArith, HexModArith, HexModular, HexPolyZGcd]
+    mathlib: false
+    done_through: 1
+    status: active
   HexSparsePoly:
     deps: [HexPoly, HexBasic]
     mathlib: false
@@ -211,6 +216,11 @@ libraries:
           description: Barrett-context multiplication chains over the UInt64 residue wrapper on the shared small odd prime modulus.
         - name: montgomery-hot-loop
           description: Montgomery conversion, Montgomery-form multiplication chains, and conversion back on the shared small odd prime modulus.
+  HexModular:
+    deps: [HexArith]
+    mathlib: false
+    done_through: 1
+    status: active
   HexGramSchmidt:
     deps: [HexRowReduce, HexDeterminant, HexBareiss]
     mathlib: false
@@ -260,6 +270,11 @@ libraries:
           description: Dense integer polynomials with nontrivial coefficient content for content and primitive-part normalization.
         - name: mignotte-helpers
           description: Central binomial, square-root, coefficient-norm, and Mignotte coefficient-bound helper computations over deterministic integer-polynomial fixtures.
+  HexPolyZGcd:
+    deps: [HexPolyZ, HexPolyFp, HexPoly, HexModular, HexModArith, HexArith, HexResultant]
+    mathlib: false
+    done_through: 1
+    status: active
 
   # ---------- Depth 2 ----------
   HexLLL:
@@ -600,6 +615,16 @@ libraries:
           description: Seed-0xC0FFEE bounded-coefficient equal-degree dense integer polynomial pairs with nonzero leading coefficients; drives Brown chains, resultants, and discriminants on the shared 4-through-32 ladder.
         - name: bounded-dense-pseudo-division
           description: Seed-0xC0FFEE bounded-coefficient dense integer polynomials with both leading coefficients fixed at two; drives degree-n by degree-n/2 pseudo-division on the 24-through-128 ladder.
+  HexMvHensel:
+    deps: [HexBasic, HexMvPoly, HexMvGcd, HexPoly, HexPolyZ, HexPolyFp, HexModArith, HexModular, HexArith]
+    mathlib: false
+    done_through: 1
+    status: active
+  HexMvFactor:
+    deps: [HexBasic, HexMvPoly, HexMvGcd, HexMvHensel, HexPoly, HexPolyZ, HexPolyZGcd, HexBerlekampZassenhaus, HexPolyFp, HexModArith, HexModular, HexArith]
+    mathlib: false
+    done_through: 1
+    status: active
   HexInterval:
     deps: []
     mathlib: false

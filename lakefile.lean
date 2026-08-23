@@ -87,6 +87,8 @@ lean_lib HexPoly where
 
 lean_lib HexMvPoly where
 
+lean_lib HexMvGcd where
+
 lean_lib HexSparsePoly where
 
 lean_lib HexModArith where
@@ -95,10 +97,14 @@ lean_lib HexModArith where
   -- we pass only the system GMP library rather than an explicit static-lib path.
   moreLinkArgs := #["-lgmp"]
 
+lean_lib HexModular where
+
 lean_lib HexGF2 where
   precompileModules := true
 
 lean_lib HexPolyZ where
+
+lean_lib HexPolyZGcd where
 
 lean_lib HexRoots where
 
@@ -120,6 +126,10 @@ lean_lib HexHensel where
   -- `WordPoly.mul` has a native convolution extern used by downstream
   -- interpreter-time guards, so its module dynlib must export the stub.
   precompileModules := true
+
+lean_lib HexMvHensel where
+
+lean_lib HexMvFactor where
 
 lean_lib HexConway where
 

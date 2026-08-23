@@ -100,7 +100,7 @@ theorem vars_eq [Zero R] (p : MvPoly n R cmp) :
   simp
 
 /-- Greatest supported term in the polynomial's monomial order. -/
-def leadingTerm [Zero R] [IsMonomialOrder cmp]
+@[expose] def leadingTerm [Zero R] [IsMonomialOrder cmp]
     (p : MvPoly n R cmp) : Option (Mono n × R) :=
   p.maxTerm?
 
