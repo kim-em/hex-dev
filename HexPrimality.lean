@@ -12,6 +12,7 @@ public import HexPrimality.Elab
 public import HexPrimality.MillerRabin
 public import HexPrimality.Order
 public import HexPrimality.Search
+public import HexPrimality.Sieve
 public import HexPrimality.Table
 
 public section

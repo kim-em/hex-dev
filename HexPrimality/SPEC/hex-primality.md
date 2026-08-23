@@ -609,11 +609,18 @@ residues coprime to `6`: `0 ↦ 1, 1 ↦ 5, 2 ↦ 7, 3 ↦ 11, …`. -/
 def numOfIndex (t : Nat) : Nat
 
 theorem sieve_testBit_iff {bound sqrtBound t : Nat}
-    (hmask : (bound - 1) / 3 < 2 ^ 32)
+    (hmask : indexWidth bound ≤ 2 ^ 32)
     (hsqrt : bound ≤ sqrtBound * sqrtBound) (ht : 0 < t)
     (hrange : numOfIndex t < bound) :
     (sieve bound sqrtBound).testBit t = true ↔ Hex.Nat.Prime (numOfIndex t)
 ```
+
+(`indexWidth bound` is the exact index count for values below `bound`;
+an earlier draft wrote the mask hypothesis as `(bound - 1) / 3 < 2^32`,
+tied to a width formula that over-counts at `bound ≡ 5 (mod 6)`. Each
+doubling round also truncates to the width and skips shifts that alone
+exceed it: an untruncated round at the 32-round budget would materialise
+numbers of `step · 2^31` bits.)
 
 The four hypotheses are all load-bearing. `hmask` is the range promised
 by the fixed 32 doubling rounds; without it the marking masks no longer
