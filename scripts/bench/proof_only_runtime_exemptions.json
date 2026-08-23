@@ -820,5 +820,17 @@
     "baseline_blob": "ff87edbbbf7524190b536ae4ce92a57968275aa9",
     "current_blob": "60046912cf60fdf062e11b8c9b7a8c83ebf92067",
     "reason": "Adds the HexSparsePoly conformance/bench executables and glob entries on top of the kernel-probe registration; no factorization module, executable, or build-flag changes."
+  },
+  {
+    "path": "lakefile.lean",
+    "baseline_blob": "ff87edbbbf7524190b536ae4ce92a57968275aa9",
+    "current_blob": "bf922af667c8719a11622b73acbccd5767e1fbe5",
+    "reason": "Adds the HexSparsePolyMathlib lean_lib on top of the sparse-poly conformance/bench registrations; no factorization module, executable, or build-flag changes."
+  },
+  {
+    "path": "lakefile.lean",
+    "baseline_blob": "ff87edbbbf7524190b536ae4ce92a57968275aa9",
+    "current_blob": "08583d0e78edfe858267ffa07fde97ce95d5460a",
+    "reason": "Adds the HexSparsePolyMathlib.Conformance glob on top of the HexSparsePolyMathlib lean_lib registration; no factorization module, executable, or build-flag changes."
   }
 ]

@@ -1080,8 +1080,8 @@ Two required internal checks, which matter more than the external ones:
 `hex-sparse-poly-mathlib` identifies the type with `Polynomial R`:
 
 ```lean
-def denseEquiv [Semiring R] [DecidableEq R] : SparsePoly R ≃+* DensePoly R
-def equiv [Semiring R] [DecidableEq R] : SparsePoly R ≃+* Polynomial R :=
+def denseEquiv [CommRing R] [DecidableEq R] : SparsePoly R ≃+* DensePoly R
+def equiv [CommRing R] [DecidableEq R] : SparsePoly R ≃+* Polynomial R :=
   denseEquiv.trans HexPolyMathlib.equiv
 
 theorem coeff_equiv (s : SparsePoly R) (e : Nat) : (equiv s).coeff e = s.coeff e
@@ -1099,18 +1099,25 @@ theorem equiv_substPow (s : SparsePoly R) (k : Nat) :
 composition available is `denseEquiv`. `toDense` is a function, not an
 equivalence, so it cannot be handed to `RingEquiv.trans` directly:
 `denseEquiv` packages `toDense` with `ofDense` as its inverse, the two
-round trips as `left_inv` and `right_inv`, and `toDense_add`,
-`toDense_mul`, `toDense_zero`, and `toDense_one` as the homomorphism
-fields. That is the reason the Mathlib-free layer proves those four in
+round trips as `left_inv` and `right_inv`, and `toDense_add` and
+`toDense_mul` as the `map_add'`/`map_mul'` fields, which is all
+`RingEquiv` carries; the zero and one images then follow from the
+equivalence structure, with `toDense_zero` and `toDense_one` remaining
+the core's direct statements of the same facts. That is the reason the
+Mathlib-free layer proves the additive and multiplicative transports in
 the first place, and `denseEquiv` is where they are used.
 
-`denseEquiv` needs no Mathlib beyond `RingEquiv` itself, and both it and
-`equiv` are stated at `[Semiring R]`, matching
+`denseEquiv` needs no Mathlib beyond `RingEquiv` itself. Both it and
+`equiv` are stated at Mathlib's `[CommRing R]`, because
+`denseEquiv.map_mul'` reuses `toDense_mul`, which sits at
+`Lean.Grind.CommRing` per the law-placement note above; if the dense
+multiplication laws are ever weakened to semirings, both statements
+drop to `[Semiring R]` at no cost, matching
 [hex-poly-mathlib](../../HexPolyMathlib/SPEC/hex-poly-mathlib.md)'s
-`equiv` (`HexPolyMathlib/PolynomialEquivalence.lean:510`). Individual
-correspondence lemmas take stronger hypotheses only where they need
-them: `equiv_derivative` and `equiv_compose` are ring statements, and
-nothing here needs commutativity to state the equivalence itself.
+`equiv` (`HexPolyMathlib/PolynomialEquivalence.lean:510`). The
+individual correspondence lemmas mention `equiv` and therefore share
+its class; only helpers that never mention it (the dense
+`eval_toPolynomial`, in hex-poly-mathlib) sit at `[Semiring R]`.
 
 `equiv_support` is the one statement that is genuinely about this
 representation rather than transported through the dense one: it says

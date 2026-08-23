@@ -367,6 +367,25 @@ theorem nonzero_toList (s : SparsePoly R) :
     ∀ t ∈ s.terms.toList, t.2 ≠ 0 :=
   fun t ht => s.canonical.2 t (Array.mem_def.mpr ht)
 
+/-- The stored exponents are exactly the exponents with a nonzero
+coefficient. Uses both canonical-form invariants: strict increase makes
+the stored coefficient the coefficient, and zero-freedom makes it
+nonzero. -/
+theorem mem_support_iff (s : SparsePoly R) (e : Nat) :
+    e ∈ s.support.toList ↔ s.coeff e ≠ 0 := by
+  show e ∈ (s.terms.map (·.1)).toList ↔ coeffList s.terms.toList e ≠ 0
+  rw [Array.toList_map, List.mem_map]
+  constructor
+  · intro h hzero
+    obtain ⟨t, ht, hte⟩ := h
+    rw [coeffList_eq_of_mem s.pairwise_toList ht hte] at hzero
+    exact s.nonzero_toList t ht hzero
+  · intro h
+    cases Decidable.em (∃ t, t ∈ s.terms.toList ∧ t.1 = e) with
+    | inl hex => exact hex
+    | inr hnot =>
+        exact absurd (coeffList_eq_zero fun t ht hte => hnot ⟨t, ht, hte⟩) h
+
 /-- Package a canonical term list as a polynomial. -/
 def ofCanonicalList (l : List (Nat × R))
     (hs : l.Pairwise (fun a b => a.1 < b.1)) (hnz : ∀ t ∈ l, t.2 ≠ 0) :
