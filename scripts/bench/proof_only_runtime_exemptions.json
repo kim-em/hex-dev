@@ -844,5 +844,11 @@
     "baseline_blob": "a1b87406682dbf908d990f01676f326499b906e5",
     "current_blob": "5d2ddd13644831ed8daf314cda768232ed045a0c",
     "reason": "Registers the HexSparsePolyMathlib library and the sparse-poly conformance globs on top of the toolchain-bump measurement commit; no factorization module, executable, or build-flag changes."
+  },
+  {
+    "path": "lakefile.lean",
+    "baseline_blob": "5d2ddd13644831ed8daf314cda768232ed045a0c",
+    "current_blob": "1f1dfc2c1ac92caf6b0d12142399a3756a1ec336",
+    "reason": "Registers only the build-only HexMvFactorizationTests verification umbrella; it adds no imports to hexbz_factor_service or any runtime library target and changes no executable definition or build flag."
   }
 ]
