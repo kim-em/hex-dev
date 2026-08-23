@@ -120,7 +120,7 @@ def baseGcd {R : Type u}
 and recursively certified coefficient contents. -/
 def succCoprime {n : Nat} {R : Type u}
     [Lean.Grind.CommRing R] [DecidableEq R] [BEq R] [LawfulBEq R]
-    [Dvd R] [BezoutOps R] [LawfulGcdOps R]
+    [Dvd R] [BezoutOps R]
     (lower : PrsOpsAt R n)
     (cmp : Mono (n + 1) → Mono (n + 1) → Ordering)
     [IsMonomialOrder cmp]
@@ -144,7 +144,7 @@ def succCoprime {n : Nat} {R : Type u}
 of the terminal extended subresultant. -/
 def succGcd {n : Nat} {R : Type u}
     [Lean.Grind.CommRing R] [DecidableEq R] [BEq R] [LawfulBEq R]
-    [Dvd R] [BezoutOps R] [LawfulGcdOps R]
+    [Dvd R] [BezoutOps R]
     (lower : PrsOpsAt R n)
     (cmp : Mono (n + 1) → Mono (n + 1) → Ordering)
     [IsMonomialOrder cmp]
@@ -186,7 +186,7 @@ def succGcd {n : Nat} {R : Type u}
 /-- Construct deterministic gcd and coprimality operations by arity. -/
 def prsOps {R : Type u}
     [Lean.Grind.CommRing R] [DecidableEq R] [BEq R] [LawfulBEq R]
-    [Dvd R] [BezoutOps R] [LawfulGcdOps R] :
+    [Dvd R] [BezoutOps R] :
     (n : Nat) → PrsOpsAt R n
   | 0 =>
       { gcdCert := baseGcd
@@ -196,37 +196,19 @@ def prsOps {R : Type u}
       { gcdCert := succGcd lower
         coprimeCert := succCoprime lower }
 
-/-- Raw deterministic route-4 certificate. -/
-def rawPrsCert {n : Nat} {R : Type u}
+/-- Deterministic route-4 certificate. Runtime construction uses only the
+coefficient operations; their laws enter separately in `prsCert_checks`. -/
+def prsCert {n : Nat} {R : Type u}
     {cmp : Mono n → Mono n → Ordering}
     [IsMonomialOrder cmp]
     [Lean.Grind.CommRing R] [DecidableEq R] [BEq R] [LawfulBEq R]
-    [Dvd R] [BezoutOps R] [LawfulGcdOps R]
+    [Dvd R] [BezoutOps R]
     (f h : MvPoly n R cmp) : GcdCert n R cmp :=
   (prsOps (R := R) n).gcdCert cmp f h
 
 /-- Route 4 always constructs an accepted certificate. The proof combines
 the extended-chain transformation law, exact divisions, and the recursive
 content checker. -/
-theorem rawPrsCert_checks {n : Nat} {R : Type u}
-    {cmp : Mono n → Mono n → Ordering}
-    [IsMonomialOrder cmp]
-    [Lean.Grind.CommRing R] [DecidableEq R] [BEq R] [LawfulBEq R]
-    [Dvd R] [BezoutOps R] [LawfulGcdOps R] [LawfulBezoutOps R]
-    (f h : MvPoly n R cmp) :
-    checkGcd f h (rawPrsCert f h) = true := by
-  sorry
-
-/-- Deterministic route-4 certificate.  Runtime construction is entirely
-data-level; acceptance is established separately by `prsCert_checks`. -/
-def prsCert {n : Nat} {R : Type u}
-    {cmp : Mono n → Mono n → Ordering}
-    [IsMonomialOrder cmp]
-    [Lean.Grind.CommRing R] [DecidableEq R] [BEq R] [LawfulBEq R]
-    [Dvd R] [BezoutOps R] [LawfulGcdOps R] [LawfulBezoutOps R]
-    (f h : MvPoly n R cmp) : GcdCert n R cmp :=
-  rawPrsCert f h
-
 theorem prsCert_checks {n : Nat} {R : Type u}
     {cmp : Mono n → Mono n → Ordering}
     [IsMonomialOrder cmp]
