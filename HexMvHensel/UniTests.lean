@@ -34,6 +34,13 @@ open scoped Hex
 
 def x : ZPoly := DensePoly.ofCoeffs #[0, 1]
 def xPlusOne : ZPoly := DensePoly.ofCoeffs #[1, 1]
+def xPlusTwo : ZPoly := DensePoly.ofCoeffs #[2, 1]
+
+/- Prefix/suffix complements handle the unit edge case and preserve tuple
+order for more than two factors. -/
+#guard complements [x] == [1]
+#guard complements [x, xPlusOne, xPlusTwo] ==
+  [zMul xPlusOne xPlusTwo, zMul x xPlusTwo, zMul x xPlusOne]
 
 /- The tuple `(1,-1)` solves `1*(x+1) + (-1)*x = 1`.  For right-hand side
 `x`, the two degree-bounded residues are `(0,1)`. -/

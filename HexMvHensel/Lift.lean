@@ -32,9 +32,8 @@ variable {n : Nat}
 /-- Multivariate complementary products, in tuple order. -/
 def mvComplements {k : Nat} {order : Mono k → Mono k → Ordering}
     [IsMonomialOrder order] :
-    List (MvPoly k Int order) → List (MvPoly k Int order)
-  | [] => []
-  | f :: fs => mvProduct fs :: (mvComplements fs).map (fun b => f * b)
+    List (MvPoly k Int order) → List (MvPoly k Int order) :=
+  complementProducts (· * ·) 1
 
 /-- Install one prefix of the prescribed shifted leading coefficients. -/
 def installLeading? (i : Fin (n + 1))
