@@ -838,5 +838,11 @@
     "baseline_blob": "ff87edbbbf7524190b536ae4ce92a57968275aa9",
     "current_blob": "8f5ad6feadc9b8448e9fd7ebc12f62bf28ecebc7",
     "reason": "Adds the HexSparsePolyMathlib.LintTests glob to the HexSparsePolyTests verification target; no factorization module, executable, or build-flag changes."
+  },
+  {
+    "path": "lakefile.lean",
+    "baseline_blob": "a1b87406682dbf908d990f01676f326499b906e5",
+    "current_blob": "5d2ddd13644831ed8daf314cda768232ed045a0c",
+    "reason": "Registers the completed sparse-poly libraries, tests, conformance modules, and bench/fixture executables that reached main while the Lean v4.34 factor sweep was running; no factorization module, executable, or build-flag changes."
   }
 ]
