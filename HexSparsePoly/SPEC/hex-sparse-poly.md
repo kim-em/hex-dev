@@ -571,6 +571,8 @@ The specification is the coefficient identity and the agreement with
 ```lean
 theorem coeff_derivative, derivative_add, derivative_mul
 theorem substPow_eq_compose (s) (k) : s.substPow k = s.compose (monomial k 1)
+theorem substScale_eq_compose (s) (a) : s.substScale a = s.compose (monomial 1 a)
+theorem coeff_substScale (s) (a) (e) : (s.substScale a).coeff e = s.coeff e * a ^ e
 theorem eval_substPow (s) (k) (x) : (s.substPow k).eval x = s.eval (x ^ k)
 theorem eval_compose (s t) (x) : (s.compose t).eval x = s.eval (t.eval x)
 ```
@@ -582,7 +584,9 @@ themselves.
 
 `substPow_eq_compose` is the statement that the fast path and the
 general path agree, and it is what lets the cyclotomic adapter use
-`substPow` and reason with `compose`.
+`substPow` and reason with `compose`. `substScale_eq_compose` is the
+same statement for argument scaling, with the degree-one monomial
+`a · x` in place of `x^k`.
 
 ## Conversion to and from the dense representation
 
@@ -624,6 +628,8 @@ theorem toDense_zero, toDense_one, toDense_add, toDense_neg, toDense_mul
 theorem ofDense_zero, ofDense_one, ofDense_add, ofDense_neg, ofDense_mul
 theorem toDense_monomial (e c) : (monomial e c).toDense = DensePoly.monomial e c
 theorem eval_toDense, derivative_toDense, compose_toDense, substPow_toDense
+theorem substScale_toDense (s : SparsePoly R) (a : R) :
+    (s.substScale a).toDense = s.toDense.compose (DensePoly.monomial 1 a)
 ```
 
 The degree boundary transports too, and the Euclidean section needs it
@@ -1093,6 +1099,8 @@ theorem equiv_derivative (s : SparsePoly R) :
 theorem equiv_compose (s t : SparsePoly R) : (equiv s).comp (equiv t) = equiv (s.compose t)
 theorem equiv_substPow (s : SparsePoly R) (k : Nat) :
     (equiv s).comp (Polynomial.X ^ k) = equiv (s.substPow k)
+theorem equiv_substScale (s : SparsePoly R) (a : R) :
+    (equiv s).comp (Polynomial.C a * Polynomial.X) = equiv (s.substScale a)
 ```
 
 `equiv` is **defined** by composition, and the step that makes the

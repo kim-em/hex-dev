@@ -761,7 +761,7 @@ theorem monomial_pow (k : Nat) (c : K) (e : Nat) :
     (monomial k c) ^ e = monomial (k * e) (c ^ e) := by
   induction e with
   | zero =>
-      rw [pow_zero, Nat.mul_zero, show c ^ 0 = 1 from by grind]
+      rw [pow_zero, Nat.mul_zero, Lean.Grind.Semiring.pow_zero]
       rfl
   | succ e ih =>
       rw [pow_succ, ih, monomial_mul_monomial,
@@ -836,9 +836,8 @@ theorem substPow_eq_compose (s : SparsePoly K) (k : Nat) :
       s.terms.toList.foldl
         (fun a u => a + monomial (k * u.1) u.2) 0 := by
     refine foldl_congr' rfl fun b u _ => ?_
-    rw [monomial_pow, C_mul_monomial,
-      show u.2 * (1 : K) ^ u.1 = u.2 from by
-        rw [Lean.Grind.Semiring.one_pow]; grind]
+    rw [monomial_pow, C_mul_monomial, Lean.Grind.Semiring.one_pow,
+      Lean.Grind.Semiring.mul_one]
   rw [hfold]
   apply ext_coeff
   intro f
