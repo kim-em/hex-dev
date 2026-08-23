@@ -7,9 +7,9 @@ that make them fast. Mathlib-free. The companion
 `Polynomial ℤ` and supplies the decidability instances.
 
 This SPEC expands the "Modular gcd for `ℤ[x]`" bullet of the "Modular
-techniques" entry in [future-work](../future-work.md). It uses the
-reconstruction operations of [hex-modular](hex-modular.md), and it is the
-one-variable case of [hex-mv-gcd](hex-mv-gcd.md), which is written
+techniques" entry in [future-work](../../SPEC/future-work.md). It uses the
+reconstruction operations of [hex-modular](../../HexModular/SPEC/hex-modular.md), and it is the
+one-variable case of [hex-mv-gcd](../../HexMvGcd/SPEC/hex-mv-gcd.md), which is written
 against a different polynomial representation and should call this
 library rather than reimplement it. The relationship is set out under
 "Why this is not hex-mv-gcd at arity one".
@@ -17,7 +17,7 @@ library rather than reimplement it. The relationship is set out under
 The future-work bullet says the certificate carries "a Bézout witness
 that `f'` and `h'` are coprime". No such witness exists: `ℤ[x]` is not a
 Bézout domain, since `x` and `2` are coprime and `u·x + v·2 = 1` has no
-solution there. [hex-mv-gcd](hex-mv-gcd.md) already records the
+solution there. [hex-mv-gcd](../../HexMvGcd/SPEC/hex-mv-gcd.md) already records the
 correction for the multivariate case. The univariate replacement is
 smaller and better than the multivariate one, and it is specified below
 under "The certificate".
@@ -57,13 +57,13 @@ route below and is much slower than the modular one.
 
 **Rational function simplification wants the cofactors.** `cancel`, the
 second piece of the `Together` and `Apart` item in
-[future-work](../future-work.md), reduces `p/q` to lowest terms. In one
+[future-work](../../SPEC/future-work.md), reduces `p/q` to lowest terms. In one
 variable over `ℚ` that is this library plus clearing denominators, and it
 is reachable long before the multivariate machinery lands.
 
 ## Why this is not hex-mv-gcd at arity one
 
-[hex-mv-gcd](hex-mv-gcd.md) computes gcds of `MvPoly n R cmp`, and at
+[hex-mv-gcd](../../HexMvGcd/SPEC/hex-mv-gcd.md) computes gcds of `MvPoly n R cmp`, and at
 `n = 1` the mathematics is the same. Three things make a separate library
 right anyway.
 
@@ -84,7 +84,7 @@ correction per point, and no interpolation. What remains is a loop over
 primes.
 
 **Both checkers are unconditional; the maximality developments differ.**
-[hex-mv-gcd](hex-mv-gcd.md) now separates certificate replay from the
+[hex-mv-gcd](../../HexMvGcd/SPEC/hex-mv-gcd.md) now separates certificate replay from the
 Gauss/common-factor theorem that turns coprime cofactors into gcd
 maximality. Its recursive content proof needs primitive descent at every
 arity. Here the content is an integer and the corresponding fact is
@@ -146,7 +146,7 @@ check. That is the first prerequisite below.
 The `g ≠ 0` hypothesis on `divExact?_eq` is not decoration: at `f = 0`
 and `g = 0` the right-hand side holds for every `q`, and a deterministic
 `Option` returns at most one, so the unconditional biconditional is
-false. This is the same statement [hex-mv-gcd](hex-mv-gcd.md) makes about
+false. This is the same statement [hex-mv-gcd](../../HexMvGcd/SPEC/hex-mv-gcd.md) makes about
 its own `divExact?`, and the two should be provable by the same argument
 in different representations.
 
@@ -256,7 +256,7 @@ computes the image gcd, and a result other than `1` means "try another
 prime".
 
 **The prime should be the smallest usable one.**
-[hex-modular](hex-modular.md) measures the cost of a kernel-replayed
+[hex-modular](../../HexModular/SPEC/hex-modular.md) measures the cost of a kernel-replayed
 primality proof: 0.04 s at 16 bits and 6.2 s at 31 bits. A certificate
 replayed by `decide +kernel` pays that, and the `modular` case names a
 prime, so the producer tries small primes first. Most small primes work,
@@ -266,7 +266,7 @@ prime is still valid and merely more expensive to replay, and the
 
 The rule is a consequence of trial division rather than of the
 certificate design. The "Better primality" item in
-[future-work](../future-work.md) points at Pocklington certificates,
+[future-work](../../SPEC/future-work.md) points at Pocklington certificates,
 whose checker is a handful of modular exponentiations, and once one
 exists a certificate field replaces the `Hex.Nat.Prime` field here and
 the size preference goes away. The
@@ -431,7 +431,7 @@ coefficient divides. For each prime `p` in turn:
   the accumulated state and restart from this prime. Both cases occur,
   and the second is the one an implementation forgets.
 - Fold the coefficient vector into a `CrtVec` from
-  [hex-modular](hex-modular.md).
+  [hex-modular](../../HexModular/SPEC/hex-modular.md).
 - Take the primitive part of the symmetric reconstruction, multiply back
   the content gcd from route 0, and offer the result to `checkGcd`.
   Accept on success.
@@ -469,25 +469,12 @@ The proof obligation is concentrated: `checkGcd_sound` (short, and given
 above) plus completeness of route 4, which is the standard subresultant
 argument.
 
-**This route is a scheduling dependency, not a mathematical one.**
-hex-resultant is at `done_through: 1`, and its correctness theorems
-additionally require `Lean.Grind.CommRing` on the coefficient type, which
-`Int` has, and `ExactDivLaws Int`, which `HexBasic/ExactDiv.lean`
-supplies as `instExactDivLawsInt`. So the executable chain runs today and
-its theorems apply, and what is missing is the phases of hex-resultant
-rather than anything about this library. Milestone 2 below is written so
-that a working `gcd` exists before that dependency matters, by using the
-`DensePoly Rat` Euclidean route as the initial fallback and swapping in
-the subresultant chain when it is ready.
-
-The extended chain is the one genuinely new piece.
-`subresultantAux` keeps only the remainder of each `pseudoDivMod` and
-discards the quotient (`HexResultant/Subresultant.lean:609` and `:616`), so
-accumulating the transformation is a new recurrence with proofs that each
-cofactor numerator is divisible by the Brown scalar it is divided by.
-[hex-mv-gcd](hex-mv-gcd.md) specifies the same addition as
-`subresultantChainExt` for its own `splitBezout` constructor, and it
-should be written once, in hex-resultant, for both.
+The shared `subresultantChainExt` implementation is now available from
+hex-resultant. Its recurrence tracks the transformation pair through the
+pseudo-scalings and is used here and by
+[hex-mv-gcd](../../HexMvGcd/SPEC/hex-mv-gcd.md). The preserved
+`DensePoly Rat` Euclidean implementation is a named reference and test
+oracle only; it is not a dispatch fallback.
 
 ## Prerequisite changes in other libraries
 
@@ -507,11 +494,11 @@ recombination loop rather than about division.
 Bézout cofactors of the chain to produce the `constant` witness, and
 `subresultantAux` discards the quotient of each `pseudoDivMod`
 (`HexResultant/Subresultant.lean:609` and `:616`).
-[hex-mv-gcd](hex-mv-gcd.md) asks for the same addition under the same
+[hex-mv-gcd](../../HexMvGcd/SPEC/hex-mv-gcd.md) asks for the same addition under the same
 name for its `splitBezout` constructor, so it should be written once.
 
 **`Modulus` and the bundled `Prime` belong in hex-mod-arith**, as
-[hex-modular](hex-modular.md) sets out. The `modular` witness names one.
+[hex-modular](../../HexModular/SPEC/hex-modular.md) sets out. The `modular` witness names one.
 
 ## Complexity
 
@@ -529,7 +516,7 @@ evaluation, or a trial division, not machine operations.
 | heuristic | one evaluation and one `Int.gcd` at `O(n·(b + log ξ))` bits | 1 integer gcd |
 | Brown | one image gcd per prime, plus one trial division per candidate | `O(B/w)` image gcds |
 | subresultant | the chain over `Int` | `O(n)` pseudo-divisions, coefficients to `O(n·b)` bits |
-| rational Euclid (today's route) | Euclid over `ℚ` | `O(n)` divisions, coefficients growing exponentially |
+| rational Euclid (reference) | Euclid over `ℚ` | `O(n)` divisions, coefficients growing exponentially |
 
 The last two rows are the comparison, and the last row is what the
 library replaces. An image gcd is `O(n²)` word operations, so Brown costs
@@ -553,14 +540,14 @@ subresultant chain are search, they never appear in a proof term, and
 they should not pay for exposure.
 
 The primality proof is the one expensive element, and the size table in
-[hex-modular](hex-modular.md) is why the producer prefers a small prime.
+[hex-modular](../../HexModular/SPEC/hex-modular.md) is why the producer prefers a small prime.
 A certificate over a 16-bit prime replays in about a fortieth of a second
 and one over a 31-bit prime in about six seconds, for a witness that is
 equally valid either way.
 
 ## Conformance
 
-Fixtures follow [SPEC/testing.md](../testing.md). A Lean driver at
+Fixtures follow [SPEC/testing.md](../../SPEC/testing.md). A Lean driver at
 `conformance/HexPolyZGcd/EmitFixtures.lean` exposed as
 `lean_exe hexpolyzgcd_emit_fixtures`, a committed snapshot at
 `conformance-fixtures/HexPolyZGcd/zgcd.jsonl`, and an oracle driver at
@@ -629,7 +616,7 @@ search for one.
 
 ## Benchmarking
 
-Per [SPEC/benchmarking.md](../benchmarking.md), with drivers at
+Per [SPEC/benchmarking.md](../../SPEC/benchmarking.md), with drivers at
 `bench/HexPolyZGcd/Bench.lean`. Native and kernel: the kernel suite
 measures `checkGcd` replay at a small prime, since that is what a
 downstream certificate consumer pays.
@@ -699,7 +686,7 @@ Mathlib has no `NormalizedGCDMonoid (Polynomial ℤ)` instance in the
 elaborator's path, so the statements above are in terms of divisibility
 rather than an equation between named gcds, and an `Associated` version
 is derived where a caller has such an instance in scope. This matches
-what [hex-mv-gcd](hex-mv-gcd.md) does for the multivariate case, and for
+what [hex-mv-gcd](../../HexMvGcd/SPEC/hex-mv-gcd.md) does for the multivariate case, and for
 the same reason.
 
 Following the project split, no theorem about `ZPoly` belongs in the
@@ -762,8 +749,8 @@ HexPolyZGcdMathlib.lean
   HexPolyZGcd:
     deps: [HexPolyZ, HexPolyFp, HexPoly, HexModular, HexModArith, HexArith, HexResultant]
     mathlib: false
-    done_through: 0
-    status: planned
+    done_through: 1
+    status: active
     phase4:
       comparators:
         - tool: FLINT fmpz_poly_gcd via python-flint
@@ -787,9 +774,9 @@ HexPolyZGcdMathlib.lean
     status: planned
 ```
 
-`HexResultant` is a dependency for route 4 only, and it is the one
-dependency at `done_through: 1`. Milestone 2 is arranged so that nothing
-before milestone 5 needs it.
+`HexResultant` supplies the extended-chain API used by route 4. The
+rational implementation remains available as the reference and
+benchmark baseline, not as a dispatch fallback.
 
 ## Open questions
 
@@ -807,7 +794,7 @@ before milestone 5 needs it.
   recompute it.** Carrying it makes the certificate self-contained and
   makes its size depend on the proof term. Recomputing it makes the
   checker run `isPrimeTrial`, priced in the table in
-  [hex-modular](hex-modular.md). The measurement that settles this is
+  [hex-modular](../../HexModular/SPEC/hex-modular.md). The measurement that settles this is
   the kernel bench family.
 - **Whether to use a prime power rather than several primes.** Lifting a
   single image modulo `p^k` by Hensel's lemma is an alternative to

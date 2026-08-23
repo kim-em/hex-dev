@@ -10,10 +10,10 @@ checker leaves open, proves uniqueness against Mathlib's unique
 factorization, and supplies `Decidable (Irreducible p)`.
 
 This SPEC expands the "Multivariate factorization" entry in
-[future-work](../future-work.md). It consumes the lifting contract
-accepted in [hex-mv-hensel](hex-mv-hensel.md), the content, exact
+[future-work](../../SPEC/future-work.md). It consumes the lifting contract
+accepted in [hex-mv-hensel](../../HexMvHensel/SPEC/hex-mv-hensel.md), the content, exact
 division, and squarefree decomposition accepted in
-[hex-mv-gcd](hex-mv-gcd.md), the representation fixed by
+[hex-mv-gcd](../../HexMvGcd/SPEC/hex-mv-gcd.md), the representation fixed by
 [hex-mv-poly](../../HexMvPoly/SPEC/hex-mv-poly.md), and univariate
 integer factorization from
 [hex-berlekamp-zassenhaus](../../HexBerlekampZassenhaus/SPEC/hex-berlekamp-zassenhaus.md).
@@ -72,7 +72,7 @@ factorization of the content.
 Also not in scope: coefficient rings other than `Int`, absolute
 factorization (factoring over `ℚ̄` or a number field), factorization
 over `F_q[x₁, …, x_v]`, and sparse Hensel lifting (see
-[hex-mv-hensel §Future extension: sparse Hensel lifting](hex-mv-hensel.md)).
+[hex-mv-hensel §Future extension: sparse Hensel lifting](../../HexMvHensel/SPEC/hex-mv-hensel.md)).
 
 **Why `Int` and not a general coefficient domain.** The four
 ingredients this library composes are all integer-specific. Univariate
@@ -157,7 +157,7 @@ distinctness makes the multiplicities unambiguous. Without D5, the same
 polynomial could appear twice and `multiplicity` would mean nothing.
 
 **Normalization depends on the monomial order, and over `ℤ` as well.**
-This is the same trap [hex-mv-gcd](hex-mv-gcd.md) records for `gcd`:
+This is the same trap [hex-mv-gcd](../../HexMvGcd/SPEC/hex-mv-gcd.md) records for `gcd`:
 negation flips every coefficient at once, but *which* monomial is
 leading changes with `cmp`, so `x - y` normalizes to `x - y` under an
 order with `x` leading and to `y - x` under an order with `y` leading.
@@ -178,7 +178,7 @@ structure Complete (n : Nat) (cmp : Mono n → Mono n → Ordering) where
 def checkComplete (f : MvPoly n Int cmp) (K : Complete n cmp) : Bool
 
 /-- Mathlib-free irreducibility, reused from
-[hex-mv-hensel](hex-mv-hensel.md) rather than restated: no
+[hex-mv-hensel](../../HexMvHensel/SPEC/hex-mv-hensel.md) rather than restated: no
 factorization into two nonunits. The companion identifies it with
 Mathlib's `Irreducible`. -/
 -- Hex.MvHensel.Irred
@@ -218,7 +218,7 @@ reader from adding a redundant sixth condition to `checkDecomp`.
 **Why the content is not factored.** `Factorization` in
 [hex-berlekamp-zassenhaus](../../HexBerlekampZassenhaus/SPEC/hex-berlekamp-zassenhaus.md)
 carries a signed integer `scalar` and does not split it into constant
-prime polynomials, `sqfDecomp` in [hex-mv-gcd](hex-mv-gcd.md) carries a
+prime polynomials, `sqfDecomp` in [hex-mv-gcd](../../HexMvGcd/SPEC/hex-mv-gcd.md) carries a
 `content : R` and does not factor it, and SymPy's `factor_list` does
 the same. This library follows that convention: `C p` for prime `p` is
 genuinely irreducible in `ℤ[x₁, …, x_v]`, so the ring-theoretic
@@ -232,7 +232,7 @@ up to the integer content", and never drops the qualifier.
 
 ## What a checked decomposition does not prove
 
-[hex-mv-hensel §What a checked lift does not prove](hex-mv-hensel.md)
+[hex-mv-hensel §What a checked lift does not prove](../../HexMvHensel/SPEC/hex-mv-hensel.md)
 makes this point about one lift; it is worth making again about the
 whole pipeline, because the pipeline has more places to lose it.
 
@@ -261,7 +261,7 @@ of univariate irreducibility obligations that the checker cannot
 discharge Mathlib-free. -/
 inductive IrredCert :
     (n : Nat) → (cmp : Mono n → Mono n → Ordering) →
-    [Std.TransCmp cmp] → [Std.LawfulEqCmp cmp] → Type
+    [Std.TransCmp cmp] → [Std.LawfulEqCmp cmp] → Type 1
   | degreeOne (i : Fin (n+1)) (cmp' : Mono n → Mono n → Ordering)
       [IsMonomialOrder cmp'] (prim : ContentCert n Int cmp') :
       IrredCert (n+1) cmp
@@ -292,6 +292,11 @@ theorem checkComplete_sound
     IsFactorizationOf f K.decomp
 ```
 
+`IrredCert` lives in `Type 1` because its `degreeOne` and `image`
+constructors store `ContentCert n Int cmp'`, whose coefficient type is an
+index and therefore already places that certificate in `Type 1`.  This is a
+universe requirement only; it does not change the stored evidence or checker.
+
 **The obligations are the honest part of this design.** Irreducibility
 of a univariate integer polynomial is not something the Mathlib-free
 tree decides: `ZPoly.factorize` is total and returns factors it calls
@@ -303,7 +308,7 @@ and names them. The companion discharges the list, either from the
 factorizer's own theorem or from
 `Decidable (Irreducible f)` for `Polynomial ℤ`, and only then is the
 conclusion unconditional. This is [design
-principle 2](../design-principles.md) applied to a hypothesis about
+principle 2](../../SPEC/design-principles.md) applied to a hypothesis about
 irreducibility rather than about analysis, and it has the same shape as
 hex-mv-hensel stating `BoundsFactors` and letting its companion
 discharge it.
@@ -375,7 +380,7 @@ irreducible primitive `g`, Gauss's lemma makes `g` irreducible in
 the integer points at which that irreducibility fails to specialize
 form a thin set. So a small random point usually gives an irreducible
 image and a certificate with one univariate obligation. Nothing is
-proved from that, in exactly the way [hex-mv-gcd](hex-mv-gcd.md) proves
+proved from that, in exactly the way [hex-mv-gcd](../../HexMvGcd/SPEC/hex-mv-gcd.md) proves
 nothing from the success rate of its heuristic gcd: it is why the cheap
 route is worth trying first, and the fuel makes the producer partial
 regardless.
@@ -461,7 +466,7 @@ at dense-size degree, and the enumeration is `∏_k (e_k + 1)` exact
 divisions. Neither has a useful bound in terms of the input, and both
 are astronomically worse than the `image` route on inputs where the
 `image` route fires. It is specified for the same reason
-[hex-mv-gcd](hex-mv-gcd.md)'s extended-subresultant route and
+[hex-mv-gcd](../../HexMvGcd/SPEC/hex-mv-gcd.md)'s extended-subresultant route and
 [hex-berlekamp-zassenhaus](../../HexBerlekampZassenhaus/SPEC/hex-berlekamp-zassenhaus.md)'s
 `factorTrial` are: it is unconditional, it needs no bound anybody has to
 prove, and it is what makes the companion's `Decidable` instance total.
@@ -508,6 +513,8 @@ it finds one, and returns it. -/
 def kronDecide (g : MvPoly n Int cmp) : Verdict n cmp
 
 theorem kronDecide_irreducible
+    (hprim : MvPoly.content g = 1)
+    (hnonconst : ¬ MvPoly.IsConst g)
     (h : kronDecide g = .irreducible c)
     (ho : ∀ F ∈ obligations g c, MvHensel.Irred F) :
     MvHensel.Irred g
@@ -569,7 +576,7 @@ with its prerequisite named.
 Everything below is untrusted. It produces `Decomp` and `IrredCert`
 values, and `checkDecomp` and `checkIrred` decide whether they are
 accepted, in the sense of [design
-principle 4](../design-principles.md).
+principle 4](../../SPEC/design-principles.md).
 
 **Termination.** The pipeline enters itself twice, at step 2 on
 `contentIn i cmp' s` and at step 4 on `lcIn i cmp' s`, and both are at
@@ -577,7 +584,7 @@ arity `n` when the caller was at arity `n + 1`, so the recursion is
 structural on the arity and bottoms out at the constants. Everything
 else in a single call is bounded by the configured fuel. The arity drop
 is free rather than an invariant to maintain, for the reason
-[hex-mv-gcd](hex-mv-gcd.md) gives about its own certificate: the types
+[hex-mv-gcd](../../HexMvGcd/SPEC/hex-mv-gcd.md) gives about its own certificate: the types
 of `contentIn` and `lcIn` say so.
 
 ### 0. Structural reductions, always applied
@@ -597,7 +604,7 @@ In order, each of which shrinks the problem without any search:
   factors gets a `degreeOne` certificate, so the monomial part of the
   answer is complete with no obligations at all.
 - **Integer content.** Divide out `content f` from
-  [hex-mv-gcd](hex-mv-gcd.md), which is the producer-free scalar fold,
+  [hex-mv-gcd](../../HexMvGcd/SPEC/hex-mv-gcd.md), which is the producer-free scalar fold,
   and put it in `Decomp.content` together with the sign that
   `polyNormalize` extracts.
 
@@ -606,7 +613,7 @@ variable.
 
 ### 1. Squarefree decomposition
 
-Call `sqfDecomp` from [hex-mv-gcd](hex-mv-gcd.md). It returns
+Call `sqfDecomp` from [hex-mv-gcd](../../HexMvGcd/SPEC/hex-mv-gcd.md). It returns
 `⟨c, [(s_k, k)]⟩` with the `s_k` squarefree, primitive, nonconstant,
 pairwise coprime, and of distinct multiplicities; `c` is `±1` here,
 because step 0 already removed the content, and it multiplies into
@@ -634,7 +641,7 @@ pipeline, and wrap each factor found there in `embed`.
 The content and the primitive part are coprime: a common divisor would
 have its square dividing `s`, contradicting squarefreeness. So the two
 factor lists concatenate without a merge step, which is the same
-argument [hex-mv-gcd](hex-mv-gcd.md) makes for Yun's content recursion.
+argument [hex-mv-gcd](../../HexMvGcd/SPEC/hex-mv-gcd.md) makes for Yun's content recursion.
 
 Steps 3 to 7 work on `primPartIn i cmp' s`, and `s` denotes it from
 here on, so `contentIn i cmp' s = 1` throughout them. That primitivity
@@ -673,7 +680,12 @@ inductive PointReject
 /-- What an accepted point yields. The point loop returns this, so the
 univariate factorization and the assignment are computed once and not
 recomputed by the caller. -/
-structure Probe (n : Nat) (cmp) (cmp') where
+/- Here `n` is the number of non-main variables, so the target has arity
+`n + 1`.  Indexing `Probe` by the target arity would not determine the
+`Fin n` point or the inner comparator at arity zero. -/
+structure Probe (n : Nat)
+    (cmp : Mono (n + 1) → Mono (n + 1) → Ordering)
+    (cmp' : Mono n → Mono n → Ordering) where
   point   : Fin n → Int
   images  : List ZPoly                 -- rescaled, so V3 and V4 hold
   leading : List (MvPoly n Int cmp')
@@ -689,7 +701,7 @@ A candidate `a : Fin n → Int` is admissible when:
    [hex-poly-z](../../HexPolyZ/SPEC/hex-poly-z.md)'s relative predicate
    and already carries a `Decidable` instance; the underlying test is
    the gcd of the *primitive part* with its derivative, through
-   [hex-poly-z-gcd](hex-poly-z-gcd.md).
+   [hex-poly-z-gcd](../../HexPolyZGcd/SPEC/hex-poly-z-gcd.md).
 
    The relative predicate is the right one and the ring-theoretic one
    would be wrong here. Evaluation routinely gives the image a nonunit
@@ -697,7 +709,7 @@ A candidate `a : Fin n → Int` is admissible when:
    while its polynomial part is and its factorization is
    multiplicity-free. Testing `F` itself would reject good points for a
    property the algorithm does not need. This is the same convention
-   [hex-mv-gcd](hex-mv-gcd.md) fixes under "What squarefree means
+   [hex-mv-gcd](../../HexMvGcd/SPEC/hex-mv-gcd.md) fixes under "What squarefree means
    here".
 3. **A usable leading-coefficient distribution exists**, in the sense
    of the next section.
@@ -1010,7 +1022,7 @@ points with few image factors, and it is why `cfg.recombLevels`
 defaults to a small number rather than to `r`.
 
 **Bad, unlucky, and fatal.** The vocabulary matches
-[hex-mv-gcd](hex-mv-gcd.md)'s for Brown's algorithm, and the analogy is
+[hex-mv-gcd](../../HexMvGcd/SPEC/hex-mv-gcd.md)'s for Brown's algorithm, and the analogy is
 exact. A *bad* point is one the admissibility tests reject, before any
 work. An *unlucky* point is one whose image splits too finely, and it
 is detected only by a failed lift and repaired by recombination. A
@@ -1086,7 +1098,7 @@ anything.
 **Every failure carries the decomposition found so far.** `Partial`
 holds a `CheckedDecomp`, so a caller that runs out of budget keeps the
 coarser answer instead of nothing, and can resume with a larger budget.
-This is the structure [future-work](../future-work.md) anticipates for
+This is the structure [future-work](../../SPEC/future-work.md) anticipates for
 the number-field consumers under `PartialFactorization`, and it is the
 reason the public entry point returns `Except (Partial f) _` rather
 than `Option`: the distinctions in the middle column are what a caller
@@ -1095,7 +1107,7 @@ them.
 
 There is no total `factor : MvPoly n Int cmp → Decomp n cmp`. A finite
 fuel does not make a partial search total, and [design
-principle 8](../design-principles.md) does not admit "the default is
+principle 8](../../SPEC/design-principles.md) does not admit "the default is
 generous" as a classification. The one total form in the library is
 `checkDecomp`, which is a decision procedure rather than a search.
 
@@ -1197,7 +1209,9 @@ structure Complete (n : Nat) (cmp)
 inductive IrredCert (n : Nat) (cmp)
 inductive Failure (n : Nat) (cmp)
 inductive PointReject
-structure Probe (n : Nat) (cmp) (cmp')
+structure Probe (n : Nat)
+    (cmp : Mono (n + 1) → Mono (n + 1) → Ordering)
+    (cmp' : Mono n → Mono n → Ordering)
 structure Partial (f : MvPoly n Int cmp)
 
 structure CheckedDecomp (f : MvPoly n Int cmp)
@@ -1266,7 +1280,7 @@ def irredCert?   (cfg : Config) (g : MvPoly n Int cmp) :
 -- Pieces the conformance drivers exercise directly
 def probe (cfg : Config) (i : Fin (n+1)) (cmp') (a : Fin n → Int)
     (s : MvPoly (n+1) Int cmp) (lc : Decomp n cmp') (r : Rand) :
-    Except PointReject (Probe (n+1) cmp cmp' × Rand)
+    Except PointReject (Probe n cmp cmp' × Rand)
 def distribute?  (i : Fin (n+1)) (cmp') (a : Fin n → Int)
     (lc : Decomp n cmp') (uni : List ZPoly) (scalar : Int) :
     Option (List (MvPoly n Int cmp') × List ZPoly)
@@ -1327,7 +1341,7 @@ the same subject need not correspond at all.
 ## Complexity
 
 These are **probe counts** in the sense
-[hex-mv-gcd](hex-mv-gcd.md) and [hex-mv-hensel](hex-mv-hensel.md) use:
+[hex-mv-gcd](../../HexMvGcd/SPEC/hex-mv-gcd.md) and [hex-mv-hensel](../../HexMvHensel/SPEC/hex-mv-hensel.md) use:
 they count evaluations, univariate factorizations, lifts, and
 divisions, and they omit the cost of each probe. Multiplying through
 would need a cost model for arithmetic modulo `q` at `l` words, which
@@ -1405,13 +1419,13 @@ claim it is one artefact.
 
 ## Conformance
 
-Fixtures follow [SPEC/testing.md](../testing.md). A Lean driver at
+Fixtures follow [SPEC/testing.md](../../SPEC/testing.md). A Lean driver at
 `conformance/HexMvFactor/EmitFixtures.lean` exposed as
 `lean_exe hexmvfactor_emit_fixtures`, a committed snapshot at
 `conformance-fixtures/HexMvFactor/mvfactor.jsonl`, and an oracle driver
 at `scripts/oracle/mvfactor_sympy.py`. One tuple appended to `ORACLES`
 in `scripts/ci/run_oracles.sh`, not a new job, per
-[SPEC/CI.md](../CI.md):
+[SPEC/CI.md](../../SPEC/CI.md):
 
 ```
 "HexMvFactor|hexmvfactor_emit_fixtures|scripts/oracle/mvfactor_sympy.py|conformance-fixtures/HexMvFactor/mvfactor.jsonl"
@@ -1429,7 +1443,7 @@ fixture kind defines, so one parser serves them, hex-mv-gcd's three
 kinds, and hex-mv-hensel's two.
 
 **The oracle suite alone cannot catch the bugs this library is most
-likely to have**, for the reason [hex-mv-gcd](hex-mv-gcd.md) gives
+likely to have**, for the reason [hex-mv-gcd](../../HexMvGcd/SPEC/hex-mv-gcd.md) gives
 about its own routes. Every answer goes through `checkDecomp`, and a
 rejected candidate falls through to another point or another grouping,
 so an end-to-end fixture passes even when the non-divisor
@@ -1543,7 +1557,7 @@ SymPy's normalisation conventions.
 
 ## Benchmarking
 
-Per [SPEC/benchmarking.md](../benchmarking.md), with drivers at
+Per [SPEC/benchmarking.md](../../SPEC/benchmarking.md), with drivers at
 `bench/HexMvFactor/Bench.lean`. Native only for throughput. A separate
 `bench/HexMvFactor/Kernel.lean` suite replays valid and
 one-field-corrupted data through `by decide +kernel`: a decomposition
@@ -1585,7 +1599,7 @@ Families, chosen to isolate the costs the complexity table separates:
 **dense EEZ** bench target, with the goal that this library solve every
 rung the comparator solves under the declared cap and stay within a
 stated constant of it there. That is the required ratio
-[hex-mv-hensel](hex-mv-hensel.md) defers to this library, on the one
+[hex-mv-hensel](../../HexMvHensel/SPEC/hex-mv-hensel.md) defers to this library, on the one
 family where the two implementations are doing the same work. On every
 other family FLINT is `informational`: its sparse Hensel lifting and
 Zippel interpolation have no counterpart here while hex-mv-hensel
@@ -1755,13 +1769,14 @@ semantic operation: `checkDecomp`, `checkIrred`, `factor?`,
 ```
 HexMvFactor/
   Decomp.lean     -- Factor, Decomp, checkDecomp, soundness, structural reductions
-  Irred.lean      -- IrredCert, checkIrred, obligations, Split, soundness of each constructor
-  Point.lean      -- probe, Probe, PointReject, the shell enumeration
+  IrredData.lean  -- IrredCert, Split, Complete, and Verdict shared data
+  Irred.lean      -- checkIrred, obligations, checkSplit, Complete replay, soundness
+  Point.lean      -- Config, probe, Probe, PointReject, the shell enumeration
   Leading.lean    -- lc factorization, distribute?, the rescaling to V3 and V4
   Input.lean      -- building MvHensel.Input, prime selection, the modulus schedule
   Eez.lean        -- the per-squarefree driver, retries, recombination, normalization
   Kronecker.lean  -- kron, unKron?, kronDecide, the complete route
-  Factor.lean     -- Config, the top-level recursion, the public API
+  Factor.lean     -- the top-level recursion and public API
 HexMvFactor.lean
 HexMvFactorMathlib/
   Correspondence.lean -- transport of checkDecomp and checkIrred
@@ -1776,8 +1791,8 @@ HexMvFactorMathlib.lean
   HexMvFactor:
     deps: [HexBasic, HexMvPoly, HexMvGcd, HexMvHensel, HexPoly, HexPolyZ, HexPolyZGcd, HexBerlekampZassenhaus, HexPolyFp, HexModArith, HexModular, HexArith]
     mathlib: false
-    done_through: 0
-    status: planned
+    done_through: 1
+    status: active
     phase4:
       comparators:
         - tool: "FLINT fmpz_mpoly_factor (dense EEZ bench target)"
@@ -1805,15 +1820,10 @@ supply and the symmetric representatives, and `HexArith` through the
 integer gcd behind the non-divisor test. `HexPoly` comes in
 through `DensePoly`.
 
-`HexMvPoly`, `HexMvPolyMathlib`, `HexPoly`, `HexPolyZ`, `HexPolyFp`,
-`HexModArith`, `HexArith`, `HexBerlekampZassenhaus`, and
-`HexBerlekampZassenhausMathlib` are active. `HexMvGcd`, `HexMvHensel`,
-`HexModular`, and `HexPolyZGcd` are planned and not yet registered in
-`libraries.yml`; their entries must be added and implemented before the
-block above can be applied. The new entries are `planned` rather than
-`draft` because this SPEC fixes their required API and milestones,
-which is the same position [hex-mv-gcd](hex-mv-gcd.md) and
-[hex-mv-hensel](hex-mv-hensel.md) record for themselves.
+The computational dependency chain through `HexModular`, `HexPolyZGcd`,
+`HexMvGcd`, and `HexMvHensel` is active and registered in `libraries.yml`.
+The Mathlib companion remains planned: it starts only after the
+Mathlib-facing bridge libraries in its dependency list are available.
 
 `HexIntFactor` is deliberately absent; "The two claims" gives the
 reason and "Open questions" records the flag that would add it.
@@ -1870,8 +1880,8 @@ untouched.
   three lines. If a third one appears, the flag is cheaper than the
   repetition.
 - **Which sparse route merits an amendment.** Shared with
-  [hex-mv-gcd](hex-mv-gcd.md) and
-  [hex-mv-hensel](hex-mv-hensel.md), whose open questions of the same
+  [hex-mv-gcd](../../HexMvGcd/SPEC/hex-mv-gcd.md) and
+  [hex-mv-hensel](../../HexMvHensel/SPEC/hex-mv-hensel.md), whose open questions of the same
   name should be decided together. The dense diophantine recursion is
   the dominant cost of this library on sparse inputs, and the
   "sparse targets" family measures it in the meantime.

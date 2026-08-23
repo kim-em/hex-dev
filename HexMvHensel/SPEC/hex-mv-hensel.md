@@ -9,9 +9,9 @@ congruences in Mathlib's language, transports the checked identities onto
 the Mathlib-free completeness theorem takes as a hypothesis.
 
 This SPEC expands the "Multivariate Hensel lifting" entry in
-[future-work](../future-work.md). It depends on the representation fixed
+[future-work](../../SPEC/future-work.md). It depends on the representation fixed
 by [hex-mv-poly](../../HexMvPoly/SPEC/hex-mv-poly.md) and on the exact
-division and gcd contract accepted in [hex-mv-gcd](hex-mv-gcd.md). It
+division and gcd contract accepted in [hex-mv-gcd](../../HexMvGcd/SPEC/hex-mv-gcd.md). It
 does not depend on [hex-hensel](../../HexHensel/SPEC/hex-hensel.md).
 "Why hex-hensel is a design model" says exactly why.
 
@@ -24,7 +24,7 @@ resulting univariate polynomial over `ℤ`, and then reconstruct the
 multivariate factors from that univariate splitting. The last step is
 this library, and it is the only step of the four that has no existing
 Hex implementation. Squarefree decomposition, content, and primitive part
-are in [hex-mv-gcd](hex-mv-gcd.md). Univariate factorization over `ℤ` is
+are in [hex-mv-gcd](../../HexMvGcd/SPEC/hex-mv-gcd.md). Univariate factorization over `ℤ` is
 in
 [hex-berlekamp-zassenhaus](../../HexBerlekampZassenhaus/SPEC/hex-berlekamp-zassenhaus.md).
 
@@ -310,9 +310,14 @@ theorem congrAt_mul  : CongrAt i k m p p' → CongrAt i k m q q' →
 theorem congrAt_reduceMod : CongrAt i k m (reduceMod m p) p
 theorem congrAt_mono (h : k' ≤ k) : CongrAt i k m p q → CongrAt i k' m p q
 theorem boxCongr_add, boxCongr_mul, boxCongr_reduceMod   -- the same laws
-theorem reduceMod_symCanonical : SymCanonical m (reduceMod m p)
+theorem reduceMod_symCanonical (hm : 0 < m) : SymCanonical m (reduceMod m p)
 theorem reduceMod_id (h : SymCanonical m p) : reduceMod m p = p
 ```
+
+Positivity in `reduceMod_symCanonical` is necessary: at `m = 0` the exact
+interval `(-m/2, m/2]` is empty even for the zero coefficient. Every working
+modulus below is a positive prime power, so the hypothesis is already present
+at all algorithmic call sites.
 
 The working modulus is `q = p^l` for a bounded prime `p` and an exponent
 `l ≥ 1`, held as `Nat` and applied to `Int` coefficients. `ZMod64 q` is
@@ -439,7 +444,7 @@ modulo `F_k` and hence each `F_m` with `m ≠ k` a unit modulo `F_k`.
 
 **Why a modulus appears at all.** `ℤ[x_i]` is not a Bézout domain, which
 is the same fact
-[hex-mv-gcd](hex-mv-gcd.md) records under "Bézout does not witness
+[hex-mv-gcd](../../HexMvGcd/SPEC/hex-mv-gcd.md) records under "Bézout does not witness
 coprimality here": `x` and `2` are coprime in `ℤ[x]` and
 `u · x + v · 2 = 1` has no solution. Over `ℤ/q` with `p` not dividing the
 relevant leading coefficients, the identity does have a solution, which
@@ -468,10 +473,17 @@ contradiction. So:
 Writing `ratOf` for the coefficientwise `Int → Rat` map on `DensePoly`:
 
 ```lean
-theorem coprimeRat_of_witness (h : valid inp = true) (j k) (hjk : j ≠ k) :
+theorem coprimeRat_of_witness (h : valid inp = true) (j k : Nat)
+    (hj : j < inp.images.length) (hk : k < inp.images.length)
+    (hjk : j ≠ k) :
     ∃ u v : DensePoly Rat,
       u * ratOf inp.images[j] + v * ratOf inp.images[k] = 1
 ```
+
+The two range hypotheses are logically necessary for list-backed images.
+Without them, a valid input with two images and `j = 2`, `k = 3` would read
+both out-of-range entries as the `getD` default zero while still satisfying
+`j ≠ k`, and would falsely assert `u · 0 + v · 0 = 1`.
 
 No resultant is needed for this, which is why hex-resultant is not a
 dependency. The Gauss's-lemma step is hex-mv-gcd's, at arity one.
@@ -508,7 +520,7 @@ satisfies `deg τ_j < deg F_j`, so `σ_j + p^k τ_j` does too, and the
 degree bound is maintained for free.
 
 This is a producer in the sense of [design
-principle 4](../design-principles.md): `witnessOf?` is unverified, and
+principle 4](../../SPEC/design-principles.md): `witnessOf?` is unverified, and
 `valid` checks its output on every call. A caller that already has the
 tuple supplies it directly.
 
@@ -539,11 +551,15 @@ polynomial whose degree-`k` coefficient is `constIn (F.coeff k)` for
 ```lean
 theorem imageAt_seed  (h : MvPoly.eval a L = F.leadingCoeff) :
     imageAt i cmp' a (seed i cmp' L F) = F
-theorem lcIn_seed     (h : L ≠ 0) : lcIn i cmp' (seed i cmp' L F) = L
+theorem lcIn_seed     (hF : F.size ≠ 0) (h : L ≠ 0) :
+    lcIn i cmp' (seed i cmp' L F) = L
 theorem degreeOf_seed (h : L ≠ 0) : degreeOf i (seed i cmp' L F) = F.degree
 ```
 
-and the hypothesis on the first is exactly V4's second condition.
+The hypothesis on the first is exactly V4's second condition.  The nonzero
+image hypothesis on `lcIn_seed` is essential: `seed` deliberately returns
+zero at `F = 0`, so `F = 0` and `L = 1` would refute the version without it.
+V1 gives the stronger positive-degree fact at every lifting call site.
 
 **The invariant, and what installs it.** Write `L_j|_t` for `L_j` with
 the not-yet-introduced variables `y_{t+1}, …, y_n` set to zero. Every
@@ -797,7 +813,7 @@ a caller passing an arbitrary `c` has to be told when the equation is
 unsolvable rather than handed a junk value.
 
 **There is no total form to classify.** [Design
-principle 8](../design-principles.md) requires a total form of a partial
+principle 8](../../SPEC/design-principles.md) requires a total form of a partial
 helper to be classified as unreachable or audited, and offers as a third
 remedy propagating the `Option` upward until the public API takes
 responsibility. This library takes that third route everywhere: no
@@ -831,7 +847,7 @@ are bounded in terms of `f`, and once `q` exceeds twice that bound the
 symmetric representatives are the true ones and the product test
 succeeds. The Mathlib-free layer states the bound as a hypothesis and the
 companion discharges it, which is the arrangement [design
-principle 2](../design-principles.md) prescribes and the one
+principle 2](../../SPEC/design-principles.md) prescribes and the one
 [hex-poly-z](../../HexPolyZ/SPEC/hex-poly-z.md) already uses for
 Mignotte:
 
@@ -958,8 +974,8 @@ were found, and it plays no part in the statement that they are correct.
 def IsLiftOf (inp : Input n cmp cmp') (fs : List (MvPoly (n+1) Int cmp)) : Prop :=
   fs.length = inp.images.length ∧
   fs.foldl (· * ·) 1 = inp.target ∧
-  (∀ j, imageAt i cmp' a fs[j] = inp.images[j]) ∧
-  (∀ j, lcIn i cmp' fs[j] = inp.leading[j])
+  (∀ j, j < inp.images.length → imageAt i cmp' a fs[j] = inp.images[j]) ∧
+  (∀ j, j < inp.images.length → lcIn i cmp' fs[j] = inp.leading[j])
 
 theorem check_sound : check inp c = true → IsLiftOf inp c.factors
 theorem lift_checks : lift inp = .ok c → check inp c = true
@@ -1052,9 +1068,14 @@ theorem irreducible_of_image_irreducible
     (hv : valid inp = true)
     (h : check inp c = true)
     (hprim : contentIn i cmp' inp.target = 1)
-    (hirr : ∀ j, Irred (inp.images[j])) :
-    ∀ j, Irred (c.factors[j])
+    (hirr : ∀ j, j < inp.images.length → Irred (inp.images[j])) :
+    ∀ j, j < c.factors.length → Irred (c.factors[j])
 ```
+
+The range hypotheses here serve the same purpose as those on
+`coprimeRat_of_witness`: neither irreducibility premise nor conclusion is
+intended to make a claim about the default value returned by an out-of-range
+list lookup.
 
 **`valid` is not droppable here, even though `check_sound` does not need
 it.** `check` alone leaves the returned factors free to lose degree in
@@ -1271,7 +1292,7 @@ the asymptotic argument for `Array` does not apply.
 ## Complexity
 
 These are **probe counts** in the sense
-[hex-mv-gcd](hex-mv-gcd.md) uses: they count univariate diophantine
+[hex-mv-gcd](../../HexMvGcd/SPEC/hex-mv-gcd.md) uses: they count univariate diophantine
 solves and coefficient operations rather than machine operations, and
 they omit the cost of each probe. Multiplying through would require the
 cost of arithmetic modulo `q` at `l` words, which depends on the modulus
@@ -1332,13 +1353,13 @@ certificate is sound at any modulus.
 
 ## Conformance
 
-Fixtures follow [SPEC/testing.md](../testing.md). A Lean driver at
+Fixtures follow [SPEC/testing.md](../../SPEC/testing.md). A Lean driver at
 `conformance/HexMvHensel/EmitFixtures.lean` exposed as
 `lean_exe hexmvhensel_emit_fixtures`, a committed snapshot at
 `conformance-fixtures/HexMvHensel/mvhensel.jsonl`, and an oracle driver
 at `scripts/oracle/mvhensel_sympy.py`. One tuple appended to `ORACLES` in
 `scripts/ci/run_oracles.sh`, not a new job, per
-[SPEC/CI.md](../CI.md):
+[SPEC/CI.md](../../SPEC/CI.md):
 
 ```
 "HexMvHensel|hexmvhensel_emit_fixtures|scripts/oracle/mvhensel_sympy.py|conformance-fixtures/HexMvHensel/mvhensel.jsonl"
@@ -1422,7 +1443,7 @@ SymPy's normalisation conventions.
 
 ## Benchmarking
 
-Per [SPEC/benchmarking.md](../benchmarking.md), with drivers at
+Per [SPEC/benchmarking.md](../../SPEC/benchmarking.md), with drivers at
 `bench/HexMvHensel/Bench.lean`. Native only for throughput. A separate
 `bench/HexMvHensel/Kernel.lean` suite replays valid and
 one-field-corrupted certificates through `by decide +kernel`: two
@@ -1458,7 +1479,7 @@ multivariate-Hensel entry point, so any ratio against them compares this
 library against a whole factorizer. A required ratio therefore waits for
 `hex-mv-factor`, where an end-to-end comparison is meaningful, and this
 SPEC assigns none. That is the same reasoning
-[hex-mv-gcd](hex-mv-gcd.md) applies to FLINT's `fmpz_mpoly_gcd`.
+[hex-mv-gcd](../../HexMvGcd/SPEC/hex-mv-gcd.md) applies to FLINT's `fmpz_mpoly_gcd`.
 
 ## The Mathlib layer
 
@@ -1518,7 +1539,7 @@ Mathlib-side form of `boxCongr_of_congrAt`.
 `boundsFactors_coeffBound` is the one theorem here that is not transport.
 It needs a factor-coefficient inequality, which is analysis, so it is on
 this side of the boundary by [design
-principle 2](../design-principles.md). The Kronecker route reduces it to
+principle 2](../../SPEC/design-principles.md). The Kronecker route reduces it to
 [hex-poly-z-mathlib](../../HexPolyZMathlib/SPEC/hex-poly-z-mathlib.md)'s
 Mignotte bound and needs, in addition, the combinatorial fact that the
 corrected mixed-radix substitution is injective on the monomials of every
@@ -1537,7 +1558,7 @@ public semantic operation: `shift`, `imageAt`, `lcIn`, `truncate`,
 The dense recursion in `diophantine` costs `∏_j (d_j + 1)` univariate
 solves regardless of how many terms the answer has, which is the same
 shape of gap
-[hex-mv-gcd](hex-mv-gcd.md) records for Zippel interpolation. The known
+[hex-mv-gcd](../../HexMvGcd/SPEC/hex-mv-gcd.md) records for Zippel interpolation. The known
 improvement is to solve each multivariate diophantine problem by sparse
 interpolation: learn the support of each `Δ_j` from one solve, then
 determine coefficients at later points by solving transposed Vandermonde
@@ -1609,14 +1630,14 @@ HexMvHenselMathlib/
 HexMvHenselMathlib.lean
 ```
 
-`libraries.yml` gains:
+`libraries.yml` records the active core library and the planned companion:
 
 ```yaml
   HexMvHensel:
     deps: [HexBasic, HexMvPoly, HexMvGcd, HexPoly, HexPolyZ, HexPolyFp, HexModArith, HexModular, HexArith]
     mathlib: false
-    done_through: 0
-    status: planned
+    done_through: 1
+    status: active
   HexMvHenselMathlib:
     deps: [HexMvHensel, HexMvPolyMathlib, HexPolyMathlib, HexPolyZMathlib]
     mathlib: true
@@ -1639,14 +1660,10 @@ the integer extended gcd underneath the `ZMod64` inverses.
 gives the reasons and "Open questions" records the amendment that would
 add it.
 
-`HexMvPoly`, `HexMvPolyMathlib`, `HexPoly`, `HexPolyZ`, `HexPolyFp`,
-`HexModArith`, and `HexArith` are active. `HexMvGcd` and `HexModular` are
-planned and not yet registered in `libraries.yml`; their entries must be
-added and implemented before the block above can be applied. The new
-entries are `planned` rather than `draft`, because this SPEC fixes their
-required API and milestones. Registration waits until the dependency
-entries exist, which is the same position
-[hex-mv-gcd](hex-mv-gcd.md) records for itself.
+All dependencies named above are active. `HexMvHensel` is registered as
+active at `done_through: 1`; the coordinates-and-modulus milestone is
+complete. `HexMvHenselMathlib` remains a planned companion and is not yet
+registered in `libraries.yml`.
 
 ## Why the lift and the diophantine solver are one library
 

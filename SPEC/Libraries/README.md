@@ -209,8 +209,8 @@ polynomial consumer both need, so it sits below both. `hex-modular-matrix`
 and `hex-poly-z-gcd` each sit above it beside the type they compute with,
 and neither depends on the other. `hex-mv-gcd` gains a dependency on
 `hex-poly-z-gcd`, which is its arity-one case, once that library exists.
-The reasoning is in [hex-modular §Why not inside hex-arith](hex-modular.md)
-and [hex-poly-z-gcd §Why this is not hex-mv-gcd at arity one](hex-poly-z-gcd.md).
+The reasoning is in [hex-modular §Why not inside hex-arith](../../HexModular/SPEC/hex-modular.md)
+and [hex-poly-z-gcd §Why this is not hex-mv-gcd at arity one](../../HexPolyZGcd/SPEC/hex-poly-z-gcd.md).
 
 ## Library DAG
 
@@ -416,7 +416,7 @@ lifting direction is the evaluation ideal and the prime only makes the
 univariate coefficient arithmetic invertible, so no hex-hensel entry
 point has a parameter in the position this library needs one. The
 reasoning is in
-[hex-mv-hensel §Why hex-hensel is a design model](hex-mv-hensel.md).
+[hex-mv-hensel §Why hex-hensel is a design model](../../HexMvHensel/SPEC/hex-mv-hensel.md).
 
 ```text
 hex-mv-gcd ────┐
@@ -437,9 +437,9 @@ returned unfactored, following the same convention as
 `hex-berlekamp-zassenhaus` and `sqfDecomp`, and a caller who wants the
 constant primes composes the two answers. The boundary with the lifting
 engine is drawn in
-[hex-mv-hensel §What stays in the downstream consumer](hex-mv-hensel.md),
+[hex-mv-hensel §What stays in the downstream consumer](../../HexMvHensel/SPEC/hex-mv-hensel.md),
 and what the product check does and does not prove is in
-[hex-mv-factor §The two claims, and why they have separate types](hex-mv-factor.md).
+[hex-mv-factor §The two claims, and why they have separate types](../../HexMvFactor/SPEC/hex-mv-factor.md#the-two-claims-and-why-they-have-separate-types).
 
 ```text
 hex-mv-hensel ─────────────┐
@@ -575,7 +575,7 @@ for developments whose source-local move has not happened yet.
 - [hex-mod-arith](../../HexModArith/SPEC/hex-mod-arith.md): `ZMod64 p`, `UInt64`-backed arithmetic in `Z/pZ`
 - [hex-finite-field.md](hex-finite-field.md): the Mathlib-free `F_q` interface, the generic `q`-power Frobenius, and the equal-degree stage (Cantor-Zassenhaus) it makes worthwhile, specified as hex-berlekamp amendments
 - [hex-mod-arith-mathlib](../../HexModArithMathlib/SPEC/hex-mod-arith-mathlib.md): `ZMod64 p ≃+* ZMod p`
-- [hex-modular.md](hex-modular.md): integer CRT, rational reconstruction, symmetric representatives, and the modulus supply (the Mathlib companion is specified in the same file)
+- [hex-modular.md](../../HexModular/SPEC/hex-modular.md): integer CRT, rational reconstruction, symmetric representatives, and the modulus supply (the Mathlib companion is specified in the same file)
 - [hex-padics.md](hex-padics.md): fixed-precision `ZpApprox` and `QpApprox` approximations, the valuation and approximate zero, precision-aware arithmetic with exact loss formulas, partial inversion and division, and exactification (the Mathlib companion is specified in the same file)
 - [hex-modular-matrix.md](hex-modular-matrix.md): multi-modular determinant, certified rank, and Dixon p-adic linear solving (the Mathlib companion is specified in the same file)
 - [hex-poly](../../HexPoly/SPEC/hex-poly.md): dense polynomial library, operations, GCD, CRT
@@ -583,9 +583,9 @@ for developments whose source-local move has not happened yet.
 - [hex-sparse-poly](../../HexSparsePoly/SPEC/hex-sparse-poly.md): canonical sparse univariate polynomials, the operations that keep sparsity, and the dense conversions (the Mathlib companion is specified in the same file)
 - [hex-mv-poly](../../HexMvPoly/SPEC/hex-mv-poly.md): canonical distributed multivariate polynomials with explicit monomial orders
 - [hex-mv-poly-mathlib](../../HexMvPolyMathlib/SPEC/hex-mv-poly-mathlib.md): `MvPoly n R cmp ≃+* MvPolynomial (Fin n) R`, `aeval`, and operation correspondence
-- [hex-mv-gcd](hex-mv-gcd.md): multivariate gcd with cofactors, content and primitive part, exact division, squarefree decomposition
-- [hex-mv-hensel.md](hex-mv-hensel.md): multivariate Hensel lifting against an evaluation ideal, its coprimality witness and leading-coefficient contract, reconstruction, and the checked-decomposition certificate (the Mathlib companion is specified in the same file)
-- [hex-mv-factor.md](hex-mv-factor.md): factorization of `Z[x_1, ..., x_n]` by Wang's EEZ algorithm, the evaluation-point and leading-coefficient search, the checked product decomposition, and the separate irreducibility certificate (the Mathlib companion is specified in the same file)
+- [hex-mv-gcd](../../HexMvGcd/SPEC/hex-mv-gcd.md): multivariate gcd with cofactors, content and primitive part, exact division, squarefree decomposition
+- [hex-mv-hensel.md](../../HexMvHensel/SPEC/hex-mv-hensel.md): multivariate Hensel lifting against an evaluation ideal, its coprimality witness and leading-coefficient contract, reconstruction, and the checked-decomposition certificate (the Mathlib companion is specified in the same file)
+- [hex-mv-factor.md](../../HexMvFactor/SPEC/hex-mv-factor.md): factorization of `Z[x_1, ..., x_n]` by Wang's EEZ algorithm, the evaluation-point and leading-coefficient search, the checked product decomposition, and the separate irreducibility certificate (the Mathlib companion is specified in the same file)
 - [hex-truncated-series.md](hex-truncated-series.md): power series truncated at a precision fixed in the type, Newton inversion, square root, `exp`, `log`, composition, and reversion (the Mathlib companion is specified in the same file)
 - [hex-poly-fp](../../HexPolyFp/SPEC/hex-poly-fp.md): polynomials over `F_p`, Frobenius, square-free decomposition
 - [hex-gf2](../../HexGF2/SPEC/hex-gf2.md): packed bitwise polynomials over `F_2`, `GF(2^n)` elements
@@ -593,7 +593,7 @@ for developments whose source-local move has not happened yet.
 - [hex-poly-fp-mathlib](../../HexPolyFpMathlib/SPEC/hex-poly-fp-mathlib.md): `FpPoly p ≃+* Polynomial (ZMod p)`, the crossing point to Mathlib's polynomial type
 - [hex-poly-z](../../HexPolyZ/SPEC/hex-poly-z.md): polynomials over `Z`, content/primitive part, Mignotte bound
 - [hex-poly-z-mathlib](../../HexPolyZMathlib/SPEC/hex-poly-z-mathlib.md): Mignotte bound proof via Mathlib's Mahler measure
-- [hex-poly-z-gcd.md](hex-poly-z-gcd.md): modular gcd for `Z[x]` with cofactors, a coprimality witness, and exact division (the Mathlib companion is specified in the same file)
+- [hex-poly-z-gcd.md](../../HexPolyZGcd/SPEC/hex-poly-z-gcd.md): modular gcd for `Z[x]` with cofactors, a coprimality witness, and exact division (the Mathlib companion is specified in the same file)
 - [hex-cyclotomic.md](hex-cyclotomic.md): dense integer cyclotomic polynomials indexed by a checked factorization, the squarefree-kernel and divisor-recursion routes, the divisor family, and the factorization of `x^n - 1` (the Mathlib companion is specified in the same file)
 - [hex-roots.md](../../HexRoots/SPEC/hex-roots.md): certified complex root isolation for `Z[x]`
 - [hex-roots-mathlib](../../HexRootsMathlib/SPEC/hex-roots-mathlib.md): Pellet's test on circles, the Mahler separation bound, soundness of refinement and `isolate`
