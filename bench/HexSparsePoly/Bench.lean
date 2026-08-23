@@ -6,6 +6,7 @@ Authors: Kim Morrison
 
 import HexSparsePoly
 import HexModArith
+import HexPolyFp
 import LeanBench
 
 /-!
@@ -103,6 +104,14 @@ pairwise sums of two spread supports are almost all distinct). -/
 def spreadPoly (t deg salt : Nat) : PZ :=
   ofTerms ((Array.range t).map fun i =>
     (i * (deg / (t + 1)) + i + salt % 3, coeffAt salt i))
+
+/-- `t` terms at pseudo-random exponents below `10^6` (genuinely low
+collision: pairwise sums of two such supports are almost all
+distinct — the evenly-spread generator would collide, since equal steps
+make the sums coincide). -/
+def scatterPoly (t salt : Nat) : PZ :=
+  ofTerms ((Array.range t).map fun i =>
+    ((i * 999983 + salt * 7919) % 1000003, coeffAt salt i))
 
 /-- `t` terms in arithmetic progression (high collision: the `t²`
 pairwise sums of two such supports land on `2t − 1` keys). -/
@@ -251,8 +260,8 @@ structure MulSelectInput where
   deriving Hashable
 
 def prepMulSelect (t : Nat) : MulSelectInput :=
-  { lowLeft := spreadPoly t 1000000 13
-    lowRight := spreadPoly t 999983 17
+  { lowLeft := scatterPoly t 13
+    lowRight := scatterPoly t 17
     highLeft := apPoly t 64 19
     highRight := apPoly t 64 23 }
 
@@ -337,58 +346,57 @@ def phi3 : PZ := ofTerms #[(0, 1), (1, 1), (2, 1)]
 
 structure SubstPowInput where
   k : Nat
-  dense : DensePoly Int
   deriving Hashable
 
 def prepSubstPow (k : Nat) : SubstPowInput :=
-  { k := k, dense := phi3.toDense }
+  { k := k }
 
 def runSubstPowSparse (input : SubstPowInput) : UInt64 :=
   checksum (phi3.substPow input.k)
 
-/-- The dense route to the same output: compose with `x^k` on the dense
-representation, whose cost is the output degree `2k`. -/
+/-- The dense route to the same output: materialise the `2k + 1`
+coefficients of `Φ_3(x^k)` as the cyclotomic adapter's dense
+construction would. -/
 def runSubstPowDense (input : SubstPowInput) : UInt64 :=
-  checksumDense (input.dense.compose (DensePoly.monomial input.k 1))
+  checksumDense (phi3.substPow input.k).toDense
 
 /-! **convert-gcd** -/
 
 structure ConvertGcdInput where
-  binomLeft : SparsePoly Rat
-  binomRight : SparsePoly Rat
-  genericLeft : SparsePoly Rat
-  genericRight : SparsePoly Rat
+  binomLeft : P7
+  binomRight : P7
+  genericLeft : P7
+  genericRight : P7
   deriving Hashable
 
-/-- The two contrasting shapes: the `x^n − 1, x^m − 1` pair whose
-remainder sequence stays two-term, and a generic sparse pair whose
-remainders fill in. -/
+/-- The two contrasting shapes over the field `ZMod64 7` (constant-size
+coefficients keep time proportional to coefficient operations): the
+`x^n − 1, x^m − 1` pair whose remainder sequence stays two-term, and a
+generic sparse pair whose remainders fill in. -/
 def prepConvertGcd (n : Nat) : ConvertGcdInput :=
-  { binomLeft := ofTerms #[(0, (-1 : Rat)), (n, 1)]
-    binomRight := ofTerms #[(0, (-1 : Rat)), (n - 7, 1)]
-    genericLeft := ofTerms #[(0, (-1 : Rat)), (n, 1)]
-    genericRight := ofTerms #[(0, (1 : Rat)), (1, 1), (7, 1)] }
-
-def checksumRat (s : SparsePoly Rat) : UInt64 :=
-  s.terms.foldl
-    (fun acc t => mixHash (mixHash acc (hash t.1)) (hash t.2)) 0
+  let one := ZMod64.ofNat 7 1
+  let negOne := ZMod64.ofNat 7 6
+  { binomLeft := ofTerms #[(0, negOne), (n, one)]
+    binomRight := ofTerms #[(0, negOne), (n - 7, one)]
+    genericLeft := ofTerms #[(0, negOne), (n, one)]
+    genericRight := ofTerms #[(0, one), (1, one), (7, one)] }
 
 def runConvertGcdBinomPair (input : ConvertGcdInput) : UInt64 :=
-  checksumRat (gcd input.binomLeft input.binomRight)
+  checksumMod (gcd input.binomLeft input.binomRight)
 
 def runConvertGcdGeneric (input : ConvertGcdInput) : UInt64 :=
-  checksumRat (gcd input.genericLeft input.genericRight)
+  checksumMod (gcd input.genericLeft input.genericRight)
 
 def runConvertDivModBinomPair (input : ConvertGcdInput) : UInt64 :=
   let qr := divMod input.binomLeft input.binomRight
-  mixHash (checksumRat qr.1) (checksumRat qr.2)
+  mixHash (checksumMod qr.1) (checksumMod qr.2)
 
 /-- The conversion share alone: `toDense` both inputs and `ofDense` one
 of them back, with no dense algorithm in between. -/
 def runGcdConversionShare (input : ConvertGcdInput) : UInt64 :=
   let l := input.binomLeft.toDense
   let r := input.binomRight.toDense
-  mixHash (checksumRat (ofDense l)) (hash r.size)
+  mixHash (checksumMod (ofDense l)) (hash r.size)
 
 /-! **Registrations** -/
 
@@ -445,7 +453,7 @@ the sort dominates at `O(t² log t²)`. -/
 setup_benchmark runMulSortLow n => n * n * Nat.log2 (n * n + 1)
   with prep := prepMulSelect
   where {
-    paramSchedule := .custom #[2, 4, 8, 16, 32, 64, 128, 256]
+    paramSchedule := .custom #[8, 16, 32, 64, 128, 256, 384, 512]
     maxSecondsPerCall := 4.0
     targetInnerNanos := 200000000
     signalFloorMultiplier := 1.0
@@ -457,7 +465,7 @@ up to `t²` keys. -/
 setup_benchmark runMulTreeLow n => n * n * Nat.log2 (n * n + 1)
   with prep := prepMulSelect
   where {
-    paramSchedule := .custom #[2, 4, 8, 16, 32, 64, 128, 256]
+    paramSchedule := .custom #[8, 16, 32, 64, 128, 256, 384, 512]
     maxSecondsPerCall := 4.0
     targetInnerNanos := 200000000
     signalFloorMultiplier := 1.0
@@ -481,7 +489,7 @@ the output to `2t − 1` keys but not the product set. -/
 setup_benchmark runMulSortHigh n => n * n * Nat.log2 (n * n + 1)
   with prep := prepMulSelect
   where {
-    paramSchedule := .custom #[2, 4, 8, 16, 32, 64, 128, 256]
+    paramSchedule := .custom #[8, 16, 32, 64, 128, 256, 384, 512]
     maxSecondsPerCall := 4.0
     targetInnerNanos := 200000000
     signalFloorMultiplier := 1.0
@@ -493,7 +501,7 @@ setup_benchmark runMulSortHigh n => n * n * Nat.log2 (n * n + 1)
 setup_benchmark runMulTreeHigh n => n * n * Nat.log2 (n + 1)
   with prep := prepMulSelect
   where {
-    paramSchedule := .custom #[2, 4, 8, 16, 32, 64, 128, 256]
+    paramSchedule := .custom #[8, 16, 32, 64, 128, 256, 384, 512]
     maxSecondsPerCall := 4.0
     targetInnerNanos := 200000000
     signalFloorMultiplier := 1.0
@@ -600,21 +608,24 @@ setup_benchmark runSubstPowSparse n => 1
   }
 
 /- Cost model: the dense route materialises the output's `2k + 1`
-coefficients: linear in `k`. -/
+coefficients (three writes into a `2k + 1` array): linear in `k`. -/
 setup_benchmark runSubstPowDense n => n
   with prep := prepSubstPow
   where {
-    paramSchedule := .custom #[2, 8, 32, 128, 512, 2048, 8192, 32768]
+    paramSchedule := .custom #[512, 2048, 8192, 32768, 65536, 131072]
     maxSecondsPerCall := 4.0
     targetInnerNanos := 200000000
     signalFloorMultiplier := 1.0
     outerTrials := 3
   }
 
-/- Cost model: the `x^n − 1, x^m − 1` remainder sequence stays two-term,
-so the dense Euclid does `O(n)` passes of `O(n)` dense work between two
-`O(n)` conversions; `O(n²)` bounds the ladder. -/
-setup_benchmark runConvertGcdBinomPair n => n * n
+/- Cost model: the `x^n − 1, x^m − 1` remainder sequence stays two-term:
+a constant number of divisions whose quotients have bounded degree, each
+`O(n)` dense coefficient operations, plus the `O(n)` conversions. This
+linear model is the family's whole point: it is the case a sparse
+division algorithm would win enormously, and the conversion share below
+is the number that says what the convert route pays. -/
+setup_benchmark runConvertGcdBinomPair n => n
   with prep := prepConvertGcd
   where {
     paramSchedule := .custom #[64, 128, 256, 384, 512, 768, 1024]
@@ -624,14 +635,16 @@ setup_benchmark runConvertGcdBinomPair n => n * n
     outerTrials := 3
   }
 
-/- Cost model: the generic pair's remainders fill in and their rational
-coefficients grow with the degree, so the dense gcd dominates; `O(n²)`
-in coefficient operations at degree `n` (the coefficient growth is the
-honest extra cost the report discusses). -/
-setup_benchmark runConvertGcdGeneric n => n * n
+/- Cost model: dividing `x^n − 1` by the fixed degree-7 generic divisor
+produces a quotient of degree `n − 7` with a bounded number of
+coefficient updates per step, and the remaining remainder sequence has
+bounded degrees: `O(n)` coefficient operations plus the `O(n)`
+conversions. Over the field `ZMod64 7` each coefficient operation is
+`O(1)`, so time tracks the model. -/
+setup_benchmark runConvertGcdGeneric n => n
   with prep := prepConvertGcd
   where {
-    paramSchedule := .custom #[16, 24, 32, 48, 64, 96, 128]
+    paramSchedule := .custom #[64, 128, 256, 384, 512, 768, 1024]
     maxSecondsPerCall := 6.0
     targetInnerNanos := 200000000
     signalFloorMultiplier := 1.0
@@ -656,7 +669,7 @@ convert-gcd number. -/
 setup_benchmark runGcdConversionShare n => n
   with prep := prepConvertGcd
   where {
-    paramSchedule := .custom #[64, 128, 256, 512, 1024, 2048]
+    paramSchedule := .custom #[256, 512, 1024, 2048, 4096, 8192]
     maxSecondsPerCall := 4.0
     targetInnerNanos := 200000000
     signalFloorMultiplier := 1.0
