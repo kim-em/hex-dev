@@ -75,7 +75,7 @@ that the kernel replays; `native_decide` is not used anywhere. The aggregate
 dispatch theorem is `luebeckConwayPolynomial?_irreducible`, and the API-facing
 form is
 
-```lean
+```lean nocheck
 theorem conwayPoly_irreducible
     (p n : Nat) [ZMod64.Bounds p] (h : SupportedEntry p n) :
     FpPoly.Irreducible (conwayPoly p n h)
@@ -87,7 +87,7 @@ as a negative control so the check is visibly not vacuous. The `Bool` is
 promoted to a statement about field elements, which is the well-definedness
 input a subfield embedding needs:
 
-```lean
+```lean nocheck
 theorem eval_conwayPoly_subfieldGen_eq_zero
     {p m n : Nat} [ZMod64.Bounds p] [ZMod64.PrimeModulus p]
     (hm : SupportedEntry p m) (hn : SupportedEntry p n)

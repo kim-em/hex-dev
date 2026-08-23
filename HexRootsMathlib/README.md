@@ -31,6 +31,8 @@ import HexRootsMathlib
 the hypotheses required by completeness:
 
 ```lean
+import HexRootsMathlib
+
 open Hex HexRootsMathlib
 
 def p : ZPoly := DensePoly.ofCoeffs #[-1, -1, 0, 1]
@@ -45,11 +47,13 @@ noncomputable def roots : Array (DyadicRootIsolation p) :=
 The associated theorems are the main consumption surface:
 
 ```lean
-isolate!_eq     -- the array is the successful Hex.isolate result
-isolate!_count  -- one atom per complex root
-isolate!_roots  -- selected semantic roots equal p.roots.toFinset
-isolate!_prec   -- every square meets the requested precision
-isolate!_disjoint -- distinct squares have disjoint circumscribed discs
+import HexRootsMathlib
+
+#check HexRootsMathlib.isolate!_eq       -- the successful Hex.isolate result
+#check HexRootsMathlib.isolate!_count    -- one atom per complex root
+#check HexRootsMathlib.isolate!_roots    -- selected roots equal p.roots.toFinset
+#check HexRootsMathlib.isolate!_prec     -- every square meets the requested precision
+#check HexRootsMathlib.isolate!_disjoint -- distinct squares have disjoint discs
 ```
 
 Clients that already have a successful `Hex.isolate` call can instead use

@@ -29,6 +29,8 @@ import HexRoots
 # Functionality
 
 ```lean
+import HexRoots
+
 open Hex
 
 def p : ZPoly := DensePoly.ofCoeffs #[-1, -1, 0, 1]

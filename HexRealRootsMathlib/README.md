@@ -28,6 +28,8 @@ import HexRealRootsMathlib
 # Functionality
 
 ```lean
+import HexRealRootsMathlib
+
 open Hex Polynomial
 
 noncomputable def roots :=
@@ -46,6 +48,10 @@ real roots.
 An optional exact width refines every interval:
 
 ```lean
+import HexRealRootsMathlib
+
+open Hex Polynomial
+
 noncomputable def tight :=
   isolate_roots (width := 2 ^ (-20 : ℤ))
     (X ^ 4 - 2 : Polynomial ℝ)

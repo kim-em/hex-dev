@@ -64,7 +64,7 @@ recursive-view laws.
 
 A product coefficient is the convolution over every monomial split:
 
-```lean
+```lean nocheck
 theorem coeff_mul [Lean.Grind.Semiring R] [DecidableEq R]
     (m : Mono n) (p q : MvPoly n R cmp) :
     coeff m (p * q) =
@@ -74,7 +74,7 @@ theorem coeff_mul [Lean.Grind.Semiring R] [DecidableEq R]
 
 Sparse Horner evaluation agrees with direct evaluation:
 
-```lean
+```lean nocheck
 theorem evalHorner_eq [Lean.Grind.CommSemiring R]
     (x : Fin n → R) (p : MvPoly n R cmp) :
     evalHorner x p = eval x p

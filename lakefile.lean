@@ -14,6 +14,10 @@ package Hex where
 require verso from git
   "https://github.com/leanprover/verso.git" @ "v4.33.0-rc1"
 
+require «lean-readme» from git
+  "https://github.com/david-christiansen/lean-readme.git" @
+    "cccf47290b379d39972b659dd3ede88ebe3c1018"
+
 require «lean-bench» from git
   "https://github.com/kim-em/lean-bench.git" @ "master"
 

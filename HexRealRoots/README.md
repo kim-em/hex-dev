@@ -28,6 +28,8 @@ import HexRealRoots
 # Functionality
 
 ```lean
+import HexRealRoots
+
 open Hex
 
 def p : ZPoly := DensePoly.ofCoeffs #[-2, 0, 0, 0, 1]
@@ -38,11 +40,13 @@ def p : ZPoly := DensePoly.ofCoeffs #[-2, 0, 0, 0, 1]
 The stable executable API is:
 
 ```lean
-Hex.isolate?          -- Descartes search, certified by Sturm; Sturm fallback
-Hex.isolateSturm?     -- direct Sturm bisection
-Hex.isolateDescartes? -- Descartes-only search, still Sturm-certified
-Hex.rootCount         -- exact total real-root count
-Hex.sturmCount        -- exact count in one half-open interval
+import HexRealRoots
+
+#check Hex.isolate?          -- Descartes search, certified by Sturm; Sturm fallback
+#check Hex.isolateSturm?     -- direct Sturm bisection
+#check Hex.isolateDescartes? -- Descartes-only search, still Sturm-certified
+#check Hex.rootCount         -- exact total real-root count
+#check Hex.sturmCount        -- exact count in one half-open interval
 ```
 
 `isolate?` rejects the zero polynomial and, at the core level, expects a

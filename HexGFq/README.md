@@ -72,7 +72,7 @@ def d := GF2q.toGFq c
 The field type is built directly from the Conway table's proofs, so a `GFq`
 that elaborates is a field:
 
-```lean
+```lean nocheck
 abbrev GFq (p n : Nat) [ZMod64.Bounds p] (h : Conway.SupportedEntry p n) : Type :=
   GFqField.FiniteField (Conway.conwayPoly p n h)
     (Conway.conwayPoly_nonconstant p n h)
@@ -91,7 +91,7 @@ The packed binary constructor is the part with its own proof obligation. Each
 modulus, replayed from a Rabin certificate by the kernel, and a proof that the
 packed word denotes the same polynomial as the committed Conway entry:
 
-```lean
+```lean nocheck
 class PackedGF2Entry (n : Nat) where
   entry : SupportedEntry 2 n
   lower : UInt64

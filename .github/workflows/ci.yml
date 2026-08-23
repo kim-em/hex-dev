@@ -194,6 +194,13 @@ jobs:
             hexnumberfieldtower_emit_fixtures
       - name: Build HexManual
         run: lake build HexManual
+      - name: Check README Lean snippets
+        run: |
+          # lean-readme's initial release cannot process a second file after a
+          # file that imports modules, so use one process per README source.
+          for readme in Hex*/README.md scripts/release/hex-README.md; do
+            lake exe lean-readme "$readme"
+          done
       # Publish hex-dev's oleans on a trusted main push so later builds (and any
       # consumer) restore them. Skips silently without the upload key.
       - name: Publish hex-dev oleans to the Lake cache (main only)

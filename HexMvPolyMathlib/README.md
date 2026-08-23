@@ -57,14 +57,14 @@ example (p q : P) :
 
 The correspondence is fully proven in both directions:
 
-```lean
+```lean nocheck
 def equiv [CommSemiring R] [DecidableEq R] :
     MvPoly n R cmp ≃+* MvPolynomial (Fin n) R
 ```
 
 It preserves every coefficient:
 
-```lean
+```lean nocheck
 theorem coeff_toMvPolynomial [CommSemiring R] [DecidableEq R]
     (m : Mono n) (p : MvPoly n R cmp) :
     MvPolynomial.coeff (monoEquiv m) (toMvPolynomial p) =
@@ -73,7 +73,7 @@ theorem coeff_toMvPolynomial [CommSemiring R] [DecidableEq R]
 
 Executable evaluation is Mathlib algebra evaluation after conversion:
 
-```lean
+```lean nocheck
 theorem aeval_apply [CommSemiring R] [DecidableEq R]
     [CommSemiring S] [Algebra R S]
     (x : Fin n → S) (p : MvPoly n R cmp) :

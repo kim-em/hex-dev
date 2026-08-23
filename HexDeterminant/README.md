@@ -59,7 +59,7 @@ The headline theorem for each of the remaining results (with
 
 Column linearity, `det_setCol_add`:
 
-```lean
+```lean nocheck
 theorem det_setCol_add (M : Matrix R n n) (dst : Fin n) (v w : Fin n → R) :
     det (setCol M dst (fun r => v r + w r)) =
       det (setCol M dst v) + det (setCol M dst w)
@@ -67,7 +67,7 @@ theorem det_setCol_add (M : Matrix R n n) (dst : Fin n) (v w : Fin n → R) :
 
 Laplace cofactor expansion along a row, `det_eq_finFoldl_laplace_row`:
 
-```lean
+```lean nocheck
 theorem det_eq_finFoldl_laplace_row (M : Matrix R (n + 1) (n + 1)) (row : Fin (n + 1)) :
     det M =
       Fin.foldl (n + 1)
@@ -86,7 +86,7 @@ their names apart. `det_setRow_setRow_mul_det` is the two-row replacement
 identity, the `2 × 2` case of Jacobi's adjugate-minor identity: for distinct
 rows `a`, `b` and arbitrary vectors `u`, `v`,
 
-```lean
+```lean nocheck
 theorem det_setRow_setRow_mul_det
     (M : Matrix R (n + 1) (n + 1)) (a b : Fin (n + 1)) (hab : a ≠ b)
     (u v : Vector R (n + 1)) :

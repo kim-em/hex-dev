@@ -29,10 +29,11 @@ Use these five level-1 headings, in this order.
 2. **`# Quickstart`**. The `lakefile.toml` `[[require]]` block for the
    released repo, followed by a single code block of at most 20 lines that
    shows off the executable surface. The code must compile; build-check it
-   against the monorepo before committing (a throwaway file run through
-   `lake env lean`, or as a temporary module). For a `*-mathlib` library
-   with no executable surface of its own, show the correspondence instead:
-   import the bridge and state the headline equivalence or transfer lemma.
+   against the monorepo before committing. CI checks every executable Lean
+   block with `lean-readme`; make each block self-contained, including its
+   imports. For a `*-mathlib` library with no executable surface of its own,
+   show the correspondence instead: import the bridge and state the headline
+   equivalence or transfer lemma.
 
 3. **`# Functionality`**. A brief, non-exhaustive description of the
    executable operations the library provides. Bullets, naming the real
@@ -44,8 +45,9 @@ Use these five level-1 headings, in this order.
    for executable use only. Where it helps the reader, quote the headline
    theorem for each significant result as a Lean signature (name plus
    statement, proof elided) in a `lean` code block, copied verbatim from
-   the source so it stays accurate. Point at the sibling library where the
-   rest of the theory lives.
+   the source so it stays accurate. Mark these intentionally incomplete
+   signature blocks as `lean nocheck`; executable examples must remain checked.
+   Point at the sibling library where the rest of the theory lives.
 
 5. **`# Contributing`**. State that development happens in the
    [`hex-dev`](https://github.com/kim-em/hex-dev) monorepo, not in the

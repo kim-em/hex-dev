@@ -64,7 +64,7 @@ row span, and nullspace are computable witnesses for Mathlib's noncomputable
 
 Rank, `rank_eq`:
 
-```lean
+```lean nocheck
 theorem rank_eq [Field R]
     {M : Hex.Matrix R n m} {D : Hex.Matrix.RowEchelonData R n m}
     (E : Hex.Matrix.IsRowReduced M D) :
@@ -73,7 +73,7 @@ theorem rank_eq [Field R]
 
 Nullspace, `nullspace_span_eq_ker`:
 
-```lean
+```lean nocheck
 theorem nullspace_span_eq_ker [Field R]
     {M : Hex.Matrix R n m} {D : Hex.Matrix.RowEchelonData R n m}
     (E : Hex.Matrix.IsRowReduced M D) :
@@ -83,7 +83,7 @@ theorem nullspace_span_eq_ker [Field R]
 
 Span, `spanContains_iff_mem_span`:
 
-```lean
+```lean nocheck
 theorem spanContains_iff_mem_span [Field R] [DecidableEq R]
     {M : Hex.Matrix R n m} {D : Hex.Matrix.RowEchelonData R n m}
     (E : Hex.Matrix.IsRowReduced M D) (v : Vector R m) :

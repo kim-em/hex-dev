@@ -71,7 +71,7 @@ example : frob α = α ^ 5 := frob_eq_pow α
 The field laws are proved, not asserted. Inverse cancellation is the result the
 rest rests on:
 
-```lean
+```lean nocheck
 theorem mul_inv_cancel
     {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f}
     {x : FiniteField f hf hp hirr} (hx : x ≠ 0) :
@@ -84,7 +84,7 @@ instances, which hold for every modulus the type admits, because the type
 already carries both the irreducibility proof and the positive-degree
 hypothesis:
 
-```lean
+```lean nocheck
 instance {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f} :
     Lean.Grind.Field (FiniteField f hf hp hirr)
 

@@ -48,7 +48,7 @@ polynomials and Mathlib's:
 
 The headline result is the ring equivalence:
 
-```lean
+```lean nocheck
 def fpPolyEquiv : Hex.FpPoly p ≃+* Polynomial (ZMod p)
 ```
 
