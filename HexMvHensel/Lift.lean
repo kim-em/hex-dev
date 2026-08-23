@@ -78,7 +78,8 @@ def liftStage (q : Nat) (i : Fin (n + 1))
       let error := reduceMod q
         (truncate i d (stageTarget - mvProduct current))
       let rhs := sliceVar selected (k + 1) error
-      let deltas ← diophantine q i cmp' d bases images witness rhs
+      let deltas ←
+        diophantinePrefix q i cmp' y.val d bases images witness rhs
       applyCorrections? q i d selected (k + 1) current deltas)
     installed
 

@@ -778,6 +778,18 @@ def diophantine (q : Nat) (i : Fin (n+1)) (cmp' : Mono n → Mono n → Ordering
     Option (List (MvPoly (n+1) Int cmp))
 ```
 
+The stage loop uses the checked prefix form:
+
+```lean
+/-- As `diophantine`, but recurse through only the first `count` non-main
+variables before checking the result against the full degree box. -/
+def diophantinePrefix (q : Nat) (i : Fin (n+1))
+    (cmp' : Mono n → Mono n → Ordering) (count : Nat)
+    (d : Fin n → Nat) (bs : List (MvPoly (n+1) Int cmp))
+    (images witness : List ZPoly) (c : MvPoly (n+1) Int cmp) :
+    Option (List (MvPoly (n+1) Int cmp))
+```
+
 Recursion on the number of non-main variables actually present in the
 current stage. With none present the problem is `solveUni`. With `m`
 present, set `y_m = 0` to get a problem in `m - 1` variables, solve it,
@@ -785,6 +797,14 @@ and then correct in powers of `y_m`: at power `s`, the right-hand side is
 the coefficient of `y_m^s` in `c - Σ_j Δ_j b_j` for the partial solution
 `Δ` so far, and the correction is another `(m-1)`-variable solve. Stop at
 `s = d_m`.
+
+At stage `t`, the zero slice of every base and every recursive right-hand
+side contains only the prefix `y_1, …, y_(t-1)`, so the stage passes
+`count = t - 1`. The unrestricted entry point passes `count = n`. Both forms
+run the same full-box equation and degree checks after producing a tuple;
+omitting a variable that is actually needed can therefore cause `none`, but
+cannot produce an unchecked answer. In particular, later degree bounds do
+not create vacuous recursive correction loops in an earlier stage.
 
 This is the same linear scheme as the stage loop one level down, which is
 why the two share `BoxCongr` and the truncation bookkeeping.

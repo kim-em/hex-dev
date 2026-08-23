@@ -153,6 +153,24 @@ def checkDiophantine (q : Nat) (i : Fin (n + 1)) (d : Fin n → Nat)
   | none => false
   | some sum => reduceMod q (truncate i d (sum - c)) == 0
 
+/-- Solve `Σ_j Δ_j b_j ≡ c (mod q)` by recursing through the first `count`
+non-main variables, then check the result inside the full degree box `d`.
+Callers may omit a future-variable suffix known not to occur in the bases or
+right-hand side; the unchanged final checker rejects an incorrect omission. -/
+def diophantinePrefix (q : Nat) (i : Fin (n + 1))
+    (cmp' : Mono n → Mono n → Ordering) [IsMonomialOrder cmp']
+    (count : Nat) (d : Fin n → Nat)
+    (bs : List (MvPoly (n + 1) Int cmp))
+    (images witness : List ZPoly) (c : MvPoly (n + 1) Int cmp) :
+    Option (List (MvPoly (n + 1) Int cmp)) := do
+  if q ≤ 1 || images.isEmpty || images.length != witness.length ||
+      images.length != bs.length then none else pure ()
+  let answer ← diophantineAux q i cmp' d images witness
+    ((List.finRange n).take count) bs c
+  if !mvDegreeBounded i images answer then none
+  else if !checkDiophantine q i d bs answer c then none
+  else some answer
+
 /-- Solve `Σ_j Δ_j b_j ≡ c (mod q)` inside the non-main degree box `d`,
 with `deg_i Δ_j < deg images[j]`.  A malformed tuple, an out-of-range
 recursive right-hand side, or a failed final equation returns `none`. -/
@@ -160,14 +178,8 @@ def diophantine (q : Nat) (i : Fin (n + 1))
     (cmp' : Mono n → Mono n → Ordering) [IsMonomialOrder cmp']
     (d : Fin n → Nat) (bs : List (MvPoly (n + 1) Int cmp))
     (images witness : List ZPoly) (c : MvPoly (n + 1) Int cmp) :
-    Option (List (MvPoly (n + 1) Int cmp)) := do
-  if q ≤ 1 || images.isEmpty || images.length != witness.length ||
-      images.length != bs.length then none else pure ()
-  let answer ← diophantineAux q i cmp' d images witness
-    (List.finRange n) bs c
-  if !mvDegreeBounded i images answer then none
-  else if !checkDiophantine q i d bs answer c then none
-  else some answer
+    Option (List (MvPoly (n + 1) Int cmp)) :=
+  diophantinePrefix q i cmp' n d bs images witness c
 
 /-! # Mathematical contract -/
 
