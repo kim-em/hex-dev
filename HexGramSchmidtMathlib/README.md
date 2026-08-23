@@ -61,7 +61,11 @@ The proof-facing API splits into two parts.
 The rowwise correspondence with Mathlib's orthogonalization is fully
 proven. Over the rationals:
 
-```lean nocheck
+```lean recall
+import HexGramSchmidtMathlib
+
+open Hex
+
 theorem rat_basis_row_eq_gramSchmidt (b : Matrix Rat n m) (i : Fin n) :
     rowToEuclidean ((Hex.GramSchmidt.Rat.basis b).row i) =
       InnerProductSpace.gramSchmidt ℝ (ratRowFamily b) i
@@ -69,7 +73,11 @@ theorem rat_basis_row_eq_gramSchmidt (b : Matrix Rat n m) (i : Fin n) :
 
 and the integer version, casting the integer rows first:
 
-```lean nocheck
+```lean recall
+import HexGramSchmidtMathlib
+
+open Hex
+
 theorem int_basis_row_eq_gramSchmidt (b : Matrix Int n m) (i : Fin n) :
     rowToEuclidean ((Hex.GramSchmidt.Int.basis b).row i) =
       InnerProductSpace.gramSchmidt ℝ (intRowFamily b) i
@@ -78,7 +86,11 @@ theorem int_basis_row_eq_gramSchmidt (b : Matrix Int n m) (i : Fin n) :
 The fraction-free integer surface is identified with Bareiss
 determinants. Below the diagonal the scaled coefficients are exactly:
 
-```lean nocheck
+```lean recall
+import HexGramSchmidtMathlib
+
+open Hex
+
 theorem scaledCoeffs_eq_scaledCoeffMatrix_bareiss
     (b : Matrix Int n m) (i j : Fin n) (hji : j.val < i.val) :
     GramSchmidt.entry (scaledCoeffs b) i j =
@@ -88,7 +100,11 @@ theorem scaledCoeffs_eq_scaledCoeffMatrix_bareiss
 and for an independent matrix the leading Gram determinant is the product
 of squared Gram-Schmidt norms:
 
-```lean nocheck
+```lean recall
+import HexGramSchmidtMathlib
+
+open Hex
+
 theorem gramDet_eq_prod_normSq (b : Matrix Int n m)
     (hli : independent b) (k : Nat) (hk : k ≤ n) :
     (gramDet b k hk : Rat) = gramSchmidtNormProduct b k hk

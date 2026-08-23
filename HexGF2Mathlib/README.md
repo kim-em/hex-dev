@@ -65,7 +65,11 @@ compose with other `RingEquiv`s and are accepted by Mathlib's equivalence APIs.
 The equivalences are the content. The packed polynomial representation
 corresponds to the generic one, and composing reaches Mathlib:
 
-```lean nocheck
+```lean
+import HexGF2Mathlib
+
+open Hex
+
 def equiv : Hex.GF2Poly ≃+* Hex.FpPoly 2
 
 noncomputable def equivPolynomial : Hex.GF2Poly ≃+* Polynomial (ZMod 2)
@@ -78,7 +82,11 @@ keep the executable operations rather than transported copies, so
 
 The single-word wrapper, in namespace `HexGF2Mathlib.GF2n`:
 
-```lean nocheck
+```lean recall
+import HexGF2Mathlib
+
+open Hex
+
 def equiv : Hex.GF2n n irr hn hn64 hirr ≃+*
     GenericFiniteField (n := n) (irr := irr) (hn := hn) (hn64 := hn64) (hirr := hirr)
 
@@ -88,7 +96,11 @@ theorem fintype_card :
 
 The arbitrary-degree wrapper, in namespace `HexGF2Mathlib.GF2nPoly`:
 
-```lean nocheck
+```lean recall
+import HexGF2Mathlib
+
+open Hex
+
 def equiv : Hex.GF2nPoly f hirr ≃+* GenericFiniteField (f := f) (hirr := hirr) (hdeg := hdeg)
 
 theorem fintype_card :

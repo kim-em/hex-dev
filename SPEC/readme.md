@@ -45,9 +45,13 @@ Use these five level-1 headings, in this order.
    for executable use only. Where it helps the reader, quote the headline
    theorem for each significant result as a Lean signature (name plus
    statement, proof elided) in a `lean` code block, copied verbatim from
-   the source so it stays accurate. Mark these intentionally incomplete
-   signature blocks as `lean nocheck`; executable examples must remain checked.
-   Point at the sibling library where the rest of the theory lives.
+   the source so it stays accurate. Mark theorem blocks as `lean recall`:
+   `lean-readme` then checks each displayed `theorem` statement directly against
+   the declaration in the imported library, without changing the rendered
+   Markdown or depending on Mathlib's `recall` command. Other quoted declaration
+   kinds remain ordinary `lean` blocks.
+   Executable examples must remain checked. Point at the sibling library where
+   the rest of the theory lives.
 
 5. **`# Contributing`**. State that development happens in the
    [`hex-dev`](https://github.com/kim-em/hex-dev) monorepo, not in the

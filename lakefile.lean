@@ -15,8 +15,8 @@ require verso from git
   "https://github.com/leanprover/verso.git" @ "v4.33.0-rc1"
 
 require «lean-readme» from git
-  "https://github.com/david-christiansen/lean-readme.git" @
-    "cccf47290b379d39972b659dd3ede88ebe3c1018"
+  "https://github.com/kim-em/lean-readme.git" @
+    "135c926eb9539434eef0a952faf91098d7bf2fec"
 
 require «lean-bench» from git
   "https://github.com/kim-em/lean-bench.git" @ "master"

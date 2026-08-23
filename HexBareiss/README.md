@@ -62,7 +62,11 @@ determinant encoded by `bareissData`.
 
 The public determinant agrees with the encoded data, `bareiss_eq_bareissData_det`:
 
-```lean nocheck
+```lean recall
+import HexBareiss
+
+open Hex
+
 theorem bareiss_eq_bareissData_det (M : Matrix Int n n) :
     bareiss M = (bareissData M).det
 ```
@@ -70,7 +74,11 @@ theorem bareiss_eq_bareissData_det (M : Matrix Int n n) :
 The no-pivot run, when it reaches the final pivot without a singular step,
 reads off the last diagonal entry, `bareiss_eq_noPivotLoop_last_of_no_singular`:
 
-```lean nocheck
+```lean recall
+import HexBareiss
+
+open Hex
+
 theorem bareiss_eq_noPivotLoop_last_of_no_singular {k : Nat}
     (M : Matrix Int (k + 1) (k + 1))
     (h_no_sing :

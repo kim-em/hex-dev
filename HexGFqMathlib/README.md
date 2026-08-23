@@ -69,7 +69,11 @@ example {p n : Nat} [ZMod64.Bounds p] [ZMod64.PrimeModulus p]
 The executable field carries Mathlib's `Field` structure, and the carrier is
 finite with the cardinality its construction promises:
 
-```lean nocheck
+```lean recall
+import HexGFqMathlib
+
+open Hex
+
 noncomputable instance field :
     Field (Hex.GFqField.FiniteField f hf hp hirr)
 
@@ -86,7 +90,11 @@ Cardinality is the whole input to the Mathlib correspondence.
 that the two counts agree, so it needs `Fact p.Prime` and `n ≠ 0` as
 hypotheses, neither of which the executable side carries:
 
-```lean nocheck
+```lean
+import HexGFqMathlib
+
+open Hex
+
 noncomputable def equivGaloisField [Fact p.Prime]
     (h : Hex.Conway.SupportedEntry p n) (hn : n ≠ 0) :
     _root_.RingEquiv (Hex.GFq p n h) (GaloisField p n)
@@ -96,7 +104,11 @@ The packed binary constructor reaches the same place in two legs, the first
 built on hex-gf2-mathlib's `GF2n.equiv` and computable, the second inheriting
 the choice `ringEquivOfCardEq` makes:
 
-```lean nocheck
+```lean
+import HexGFqMathlib
+
+open Hex
+
 def equivGFq : RingEquiv (GF2q n) (GFq 2 n h.entry)
 
 noncomputable def equivGaloisField : RingEquiv (GF2q n) (GaloisField 2 n)
@@ -105,7 +117,11 @@ noncomputable def equivGaloisField : RingEquiv (GF2q n) (GaloisField 2 n)
 The subfield embedding is a genuine ring homomorphism, on a committed divisor
 pair carrying a `Conway.Compatible` witness rather than a bare `m ∣ n` proof:
 
-```lean nocheck
+```lean
+import HexGFqMathlib
+
+open Hex
+
 noncomputable def conwayEmbed (p m n : Nat) [Hex.ZMod64.Bounds p]
     [Hex.ZMod64.PrimeModulus p]
     (hm : Hex.Conway.SupportedEntry p m) (hn : Hex.Conway.SupportedEntry p n)
