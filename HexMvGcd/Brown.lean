@@ -357,6 +357,17 @@ def brownMainIndex {n : Nat} {R : Type u}
           if degree < max (degreeOf j f) (degreeOf j h) then some i
           else best) none
 
+/-- Degree of a modular gcd image in Brown's selected main variable.  When
+both inputs are constant there is no selected variable and the degree is
+zero. -/
+def brownImageDegree {n : Nat} {R : Type u}
+    {cmp : Mono n → Mono n → Ordering}
+    [Std.TransCmp cmp] [Std.LawfulEqCmp cmp] [Zero R]
+    (main : Option (Fin n)) (image : MvPoly n R cmp) : Nat :=
+  match main with
+  | none => 0
+  | some i => degreeOf i image
+
 /-- Involutive variable permutation which moves `main` to coordinate zero. -/
 def brownSwapToZero {n : Nat} (main : Fin n) : Fin n → Fin n :=
   let zero : Fin n := ⟨0, Nat.zero_lt_of_lt main.isLt⟩
@@ -397,9 +408,13 @@ def brownFieldCert? {n : Nat} {R : Type u}
 
 /-- A nondependent modular image, ready for prime classification and CRT. -/
 structure BrownModImage (n : Nat) where
+  /-- Prime modulus used for this image. -/
   modulus : Nat
-  degree : Nat
+  /-- Gcd degree in the main variable selected before modular reduction. -/
+  mainDegree : Nat
+  /-- Canonically ordered support used to align CRT coordinates. -/
   support : List (Mono n)
+  /-- Coefficients in the same order as `support`. -/
   residues : List Int
 deriving BEq, Repr
 
@@ -410,6 +425,7 @@ def intBrownImage? {n : Nat}
     {cmp : Mono n → Mono n → Ordering} [IsMonomialOrder cmp]
     (pointFuel : Nat) (f h : MvPoly n Int cmp)
     (prime : ZMod64.Prime) : Option (BrownModImage n) :=
+  let main := brownMainIndex f h
   letI : ZMod64.Bounds prime.m := prime.bounds
   letI : ZMod64.PrimeModulus prime.m :=
     ZMod64.primeModulusOfPrime prime.prime
@@ -439,7 +455,7 @@ def intBrownImage? {n : Nat}
             -- but would destroy the cross-prime normalization needed by CRT.
             some
               { modulus := prime.m
-                degree := corrected.totalDegree
+                mainDegree := brownImageDegree main corrected
                 support := corrected.monomials
                 residues := corrected.termsList.map
                   (fun term => Int.ofNat term.2.toNat) }
@@ -502,7 +518,7 @@ def intBrownLoop {n : Nat}
       | none => intBrownLoop pointFuel f h primes fuel state
       | some image =>
           let oldPrime := state.map (fun s => s.prime) |>.getD {}
-          let offered := oldPrime.offer true true image.degree image.support
+          let offered := oldPrime.offer true true image.mainDegree image.support
           match offered.1 with
           | .bad | .unlucky =>
               intBrownLoop pointFuel f h primes fuel state

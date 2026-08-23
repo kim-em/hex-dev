@@ -146,6 +146,26 @@ private def brownPrimeAt? (p : Nat) : Option ZMod64.Prime :=
   same.1 == .stable && same.2.stableRounds == 1 &&
     changed.1 == .restart && changed.2.stableRounds == 0
 #guard
+  let x : P2 := X 0
+  let y : P2 := X 1
+  let integral := x + C 2 * y ^ 3 + y ^ 2
+  match brownPrimeAt? 2, brownPrimeAt? 3 with
+  | some p2, some p3 =>
+      let low := mapCoeffs (@ZMod64.intCast p2.m p2.bounds) integral
+      let high := mapCoeffs (@ZMod64.intCast p3.m p3.bounds) integral
+      let main := brownMainIndex integral integral
+      let lowDegree := brownImageDegree main low
+      let highDegree := brownImageDegree main high
+      let first := ({} : BrownPrimeState 2).offer
+        true true highDegree high.monomials
+      let second := first.2.offer true true lowDegree low.monomials
+      let third := second.2.offer true true highDegree high.monomials
+      high.totalDegree == 3 && low.totalDegree == 2 &&
+        highDegree == 1 && lowDegree == 1 &&
+        first.1 == .accumulate && second.1 == .restart &&
+        third.1 == .restart && third.2.bestDegree? == some 1
+  | _, _ => false
+#guard
   match brownCorrectImage? (2 : Rat) (DensePoly.ofList [1, 1]) with
   | some image => image == DensePoly.ofList [2, 2]
   | none => false
@@ -222,9 +242,9 @@ private def brownPrimeAt? (p : Nat) : Option ZMod64.Prime :=
       match intBrownImage? 4 f h p2, intBrownImage? 4 f h p3 with
       | some image2, some image3 =>
           let first := ({} : BrownPrimeState 2).offer
-            true true image2.degree image2.support
+            true true image2.mainDegree image2.support
           let second := first.2.offer
-            true true image3.degree image3.support
+            true true image3.mainDegree image3.support
           first.1 == .accumulate && second.1 == .restart
       | _, _ => false
   | _, _ => false
