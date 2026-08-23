@@ -186,6 +186,40 @@ def emitPrimeFixture (lib case : String) (p n : Int) : IO Unit := do
     ("n",    jsonInt n)
   ]
 
+/-- Emit an `isprime` fixture record: a single number whose primality
+verdict the oracle recomputes. -/
+def emitIsPrimeFixture (lib case : String) (n : Int) : IO Unit := do
+  emitLine <| jsonObject [
+    ("kind", jsonString "isprime"),
+    ("lib",  jsonString lib),
+    ("case", jsonString case),
+    ("n",    jsonInt n)
+  ]
+
+/-- Emit a `certcheck` fixture record: a primality certificate for the
+claimed subject `n`, serialized by the emitting driver as a raw JSON
+object (this shared library cannot depend on the certificate type). -/
+def emitCertCheckFixture (lib case : String) (n : Int) (cert : String) :
+    IO Unit := do
+  emitLine <| jsonObject [
+    ("kind", jsonString "certcheck"),
+    ("lib",  jsonString lib),
+    ("case", jsonString case),
+    ("n",    jsonInt n),
+    ("cert", cert)
+  ]
+
+/-- Emit a `segment` fixture record: a half-open range whose ascending
+prime list the oracle recomputes. -/
+def emitSegmentFixture (lib case : String) (lo hi : Int) : IO Unit := do
+  emitLine <| jsonObject [
+    ("kind", jsonString "segment"),
+    ("lib",  jsonString lib),
+    ("case", jsonString case),
+    ("lo",   jsonInt lo),
+    ("hi",   jsonInt hi)
+  ]
+
 /-- Emit a `conway` fixture record identifying a committed `C(p, n)` entry. -/
 def emitConwayFixture (lib case : String) (p n : Int) : IO Unit := do
   emitLine <| jsonObject [
@@ -375,6 +409,9 @@ def emitResult (lib case op : String) (value : String) : IO Unit := do
     ("op",    jsonString op),
     ("value", value)
   ]
+
+/-- Boolean result value. -/
+def boolValue (b : Bool) : String := if b then "true" else "false"
 
 /-- Polynomial-shaped result value: a coefficient list. -/
 def polyValue (coeffs : List Int) : String := jsonIntList coeffs

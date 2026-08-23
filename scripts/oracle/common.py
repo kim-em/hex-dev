@@ -89,6 +89,9 @@ VALID_FIXTURE_KINDS = frozenset(
         "lattice",
         "prime",
         "conway",
+        "isprime",
+        "certcheck",
+        "segment",
         "gfq_bridge",
         "gfqring",
         "gfqfield",
@@ -201,6 +204,36 @@ def _validate_rcf_sentence(record: dict[str, Any]) -> None:
     _validate_rcf_formula(sentence["formula"])
 
 
+def _validate_prime_cert(cert: Any, path: str) -> None:
+    if not isinstance(cert, dict):
+        raise FixtureError(f"{path} must be an object: {cert!r}")
+    t = cert.get("t")
+    if t == "small":
+        if not _is_int(cert.get("n")):
+            raise FixtureError(f"{path}.n must be int: {cert!r}")
+        return
+    if t not in {"pock", "pock3"}:
+        raise FixtureError(f"{path}.t must be small/pock/pock3: {cert!r}")
+    if not _is_int(cert.get("n")):
+        raise FixtureError(f"{path}.n must be int: {cert!r}")
+    if t == "pock3":
+        for key in ("r", "s", "w"):
+            if not _is_int(cert.get(key)):
+                raise FixtureError(f"{path}.{key} must be int: {cert!r}")
+    factors = cert.get("f")
+    if not isinstance(factors, list):
+        raise FixtureError(f"{path}.f must be a list: {cert!r}")
+    for i, entry in enumerate(factors):
+        if (
+            not isinstance(entry, list)
+            or len(entry) != 3
+            or not _is_int(entry[0])
+            or not _is_int(entry[1])
+        ):
+            raise FixtureError(f"{path}.f[{i}] must be [a, e, cert]: {entry!r}")
+        _validate_prime_cert(entry[2], f"{path}.f[{i}][2]")
+
+
 def _validate_fixture(record: dict[str, Any]) -> None:
     kind = record.get("kind")
     if kind not in VALID_FIXTURE_KINDS and kind != "result":
@@ -269,6 +302,19 @@ def _validate_fixture(record: dict[str, Any]) -> None:
             for row in basis
         ):
             raise FixtureError(f"lattice.basis must be List[List[int]]: {record!r}")
+    elif kind == "isprime":
+        if not _is_int(record.get("n")) or record["n"] < 0:
+            raise FixtureError(f"isprime.n must be a nonnegative int: {record!r}")
+    elif kind == "segment":
+        for key in ("lo", "hi"):
+            if not _is_int(record.get(key)) or record[key] < 0:
+                raise FixtureError(
+                    f"segment.{key} must be a nonnegative int: {record!r}"
+                )
+    elif kind == "certcheck":
+        if not _is_int(record.get("n")) or record["n"] < 0:
+            raise FixtureError(f"certcheck.n must be a nonnegative int: {record!r}")
+        _validate_prime_cert(record.get("cert"), "certcheck.cert")
     elif kind == "prime":
         for key in ("p", "n"):
             if not isinstance(record.get(key), int):
