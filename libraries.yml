@@ -219,7 +219,7 @@ libraries:
   HexModular:
     deps: [HexArith]
     mathlib: false
-    done_through: 2
+    done_through: 3
     status: active
   HexGramSchmidt:
     deps: [HexRowReduce, HexDeterminant, HexBareiss]
