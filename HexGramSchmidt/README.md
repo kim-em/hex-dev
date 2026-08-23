@@ -72,10 +72,6 @@ The orthogonalization theory is proven over the Mathlib-free integer and
 rational cores. The orthogonal basis, `basis_orthogonal`:
 
 ```lean recall
-import HexGramSchmidt
-
-open Hex
-
 theorem basis_orthogonal (b : Matrix Int n m)
     (i j : Nat) (hi : i < n) (hj : j < n) (hij : i ≠ j) :
     ((basis b).row ⟨i, hi⟩).dotProduct ((basis b).row ⟨j, hj⟩) = 0
@@ -87,10 +83,6 @@ coefficient laws `coeffs_diag` and `coeffs_upper`, the span equality
 key lattice estimate, `normSq_latticeVec_ge_min_basis_normSq`:
 
 ```lean recall
-import HexGramSchmidt
-
-open Hex
-
 theorem normSq_latticeVec_ge_min_basis_normSq
     (b : Matrix Int n m) (_hli : independent b)
     (v : Vector Int m) (hv : memLattice b v) (hv' : v ≠ 0) :

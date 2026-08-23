@@ -49,7 +49,9 @@ Use these five level-1 headings, in this order.
    `lean-readme` then checks each displayed `theorem` statement directly against
    the declaration in the imported library, without changing the rendered
    Markdown or depending on Mathlib's `recall` command. Other quoted declaration
-   kinds remain ordinary `lean` blocks.
+   kinds remain ordinary `lean` blocks. Because blocks are checked in order,
+   `lean recall` blocks reuse the Quickstart block's imports and namespace
+   openings rather than repeating them in the rendered theorem quotation.
    Executable examples must remain checked. Point at the sibling library where
    the rest of the theory lives.
 
@@ -65,6 +67,9 @@ Use these five level-1 headings, in this order.
 `<Lib>/README.md` to come from. It is generated instead: the prose lives in
 `scripts/release/hex-README.md` and the library table is rendered from
 `released.yml` by `scripts/release/aggregate_readme.py` during the sync.
+The monorepo's own `Hex` module is test infrastructure rather than the released
+aggregate, so CI checks this template with `.lean-readme/Aggregate.lean` as a
+hidden prefix supplying the released APIs used by its example.
 
 Releasing a library therefore adds it to the aggregate README with no hand
 edit, provided its manifest entry carries a `component:` label naming the row

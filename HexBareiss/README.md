@@ -30,12 +30,12 @@ open Hex
 -- A 3×3 integer matrix with a zero leading pivot, forcing a row swap.
 def M : Matrix Int 3 3 := Matrix.ofFn fun i j => (i + 2 * j : Int)
 
-#eval Matrix.bareiss M                       -- fraction-free determinant
-#eval Matrix.bareiss (Matrix.identity (R := Int) 4)    -- 1
+#check Matrix.bareiss M
+#check Matrix.bareiss (Matrix.identity (R := Int) 4)
 
 -- bareissData also records the row-swap count alongside the determinant.
-#eval (Matrix.bareissData M).det
-#eval (Matrix.bareissData M).rowSwaps
+#check (Matrix.bareissData M).det
+#check (Matrix.bareissData M).rowSwaps
 ```
 
 # Functionality
@@ -63,10 +63,6 @@ determinant encoded by `bareissData`.
 The public determinant agrees with the encoded data, `bareiss_eq_bareissData_det`:
 
 ```lean recall
-import HexBareiss
-
-open Hex
-
 theorem bareiss_eq_bareissData_det (M : Matrix Int n n) :
     bareiss M = (bareissData M).det
 ```
@@ -75,10 +71,6 @@ The no-pivot run, when it reaches the final pivot without a singular step,
 reads off the last diagonal entry, `bareiss_eq_noPivotLoop_last_of_no_singular`:
 
 ```lean recall
-import HexBareiss
-
-open Hex
-
 theorem bareiss_eq_noPivotLoop_last_of_no_singular {k : Nat}
     (M : Matrix Int (k + 1) (k + 1))
     (h_no_sing :

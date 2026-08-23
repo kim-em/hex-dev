@@ -47,7 +47,7 @@ def M : Matrix Rat 2 3 := Matrix.ofFn fun i j => (i + 1) * (j + 1 : Rat)
 - `rowReduce_rank`: the rank read off the reduction;
 - `spanCoeffs` and `spanContains`: solve for row-combination coefficients of a
   vector, or test row-span membership;
-- `rowCombination`: the linear combination of the rows of a matrix;
+- `vecMul`: the linear combination of the rows of a matrix;
 - `nullspace` and `nullspaceBasisMatrix`: a basis for the nullspace, one vector
   per free column, as a vector of vectors or as a matrix of columns.
 
@@ -59,38 +59,33 @@ sorted and equal to 1, all other pivot-column entries zero, trailing rows zero,
 and an invertible transform with `transform * M = echelon`):
 
 ```lean recall
-import HexRowReduce
-
-open Hex
-
-theorem rowReduce_isRowReduced (M : Matrix R n m) : IsRowReduced M (rowReduce M)
+theorem rowReduce_isRowReduced
+    {R : Type u} {n m : Nat} [Lean.Grind.Field R] [DecidableEq R]
+    (M : Matrix R n m) : IsRowReduced M (rowReduce M)
 ```
 
 The row-span wrappers are sound, with `spanCoeffs_sound`:
 
 ```lean recall
-import HexRowReduce
-
-open Hex
-
-theorem spanCoeffs_sound [Lean.Grind.Field R] [DecidableEq R]
+theorem spanCoeffs_sound
+    {R : Type u} {n m : Nat} [Lean.Grind.Field R] [DecidableEq R]
     (M : Matrix R n m) (v : Vector R m) (c : Vector R n) :
-    spanCoeffs M v = some c → rowCombination M c = v
+    spanCoeffs M v = some c → vecMul c M = v
 ```
 
 The nullspace basis is both sound and complete, `nullspace_sound` and
 `nullspace_complete`:
 
 ```lean recall
-import HexRowReduce
-
-open Hex
-
-theorem nullspace_sound [Lean.Grind.Field R] [DecidableEq R] (M : Matrix R n m)
+theorem nullspace_sound
+    {R : Type u} {n m : Nat} [Lean.Grind.Field R] [DecidableEq R]
+    (M : Matrix R n m)
     (k : Fin (m - rowReduce_rank M)) :
     M * (nullspace M).get k = 0
 
-theorem nullspace_complete [Lean.Grind.Field R] [DecidableEq R] (M : Matrix R n m)
+theorem nullspace_complete
+    {R : Type u} {n m : Nat} [Lean.Grind.Field R] [DecidableEq R]
+    (M : Matrix R n m)
     (v : Vector R m) :
     M * v = 0 → ∃ c : Vector R (m - rowReduce_rank M), nullspaceBasisMatrix M * c = v
 ```

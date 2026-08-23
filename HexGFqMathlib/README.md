@@ -70,14 +70,8 @@ The executable field carries Mathlib's `Field` structure, and the carrier is
 finite with the cardinality its construction promises:
 
 ```lean recall
-import HexGFqMathlib
-
-open Hex
-
-noncomputable instance field :
-    Field (Hex.GFqField.FiniteField f hf hp hirr)
-
-theorem fintype_card_eq_pow (h : Hex.Conway.SupportedEntry p n) :
+theorem fintype_card_eq_pow {p n : Nat} [Hex.ZMod64.Bounds p]
+    (h : Hex.Conway.SupportedEntry p n) :
     Fintype.card (Hex.GFq p n h) = p ^ n
 ```
 
@@ -95,7 +89,8 @@ import HexGFqMathlib
 
 open Hex
 
-noncomputable def equivGaloisField [Fact p.Prime]
+noncomputable def equivGaloisField {p n : Nat} [Hex.ZMod64.Bounds p]
+    [Hex.ZMod64.PrimeModulus p] [Fact p.Prime]
     (h : Hex.Conway.SupportedEntry p n) (hn : n ≠ 0) :
     _root_.RingEquiv (Hex.GFq p n h) (GaloisField p n)
 ```

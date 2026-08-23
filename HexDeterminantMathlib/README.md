@@ -68,10 +68,6 @@ The determinant correspondence is fully proven over a `CommRing`. The
 headline theorem identifies the two determinants:
 
 ```lean recall
-import HexDeterminantMathlib
-
-open Hex HexMatrixMathlib
-
 theorem det_eq [CommRing R] (M : Hex.Matrix R n n) :
     Hex.Matrix.det M = Matrix.det (matrixEquiv M)
 ```
@@ -81,10 +77,6 @@ rows `p1 < p2 < p3` (`hex-determinant` proves the Mathlib-free specialisation
 where `p2` and `p3` are the last two rows):
 
 ```lean recall
-import HexDeterminantMathlib
-
-open Hex HexMatrixMathlib
-
 theorem det_plucker_three_term
     {R : Type u} [CommRing R] {n : Nat}
     (B : Hex.Matrix R (n + 3) (n + 1)) (v : Vector R (n + 3))
@@ -98,10 +90,6 @@ theorem det_plucker_three_term
 The Desnanot-Jacobi identity over Mathlib matrices:
 
 ```lean recall
-import HexDeterminantMathlib
-
-open Hex HexMatrixMathlib
-
 theorem desnanot_jacobi {R : Type*} [CommRing R] {n : ℕ}
     (M : Matrix (Fin (n + 2)) (Fin (n + 2)) R) :
     M.det * (M.submatrix (Fin.succAbove 0 ∘ (Fin.last n).succAbove)

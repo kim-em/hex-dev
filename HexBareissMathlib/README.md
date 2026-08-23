@@ -58,10 +58,6 @@ The executable Bareiss determinant equals the Leibniz determinant,
 `bareiss_eq_det`:
 
 ```lean recall
-import HexBareissMathlib
-
-open HexMatrixMathlib
-
 theorem bareiss_eq_det (M : Hex.Matrix Int n n) :
     Hex.Matrix.bareiss M = Hex.Matrix.det M
 ```
@@ -69,10 +65,6 @@ theorem bareiss_eq_det (M : Hex.Matrix Int n n) :
 It also equals Mathlib's determinant, `bareissDet_eq_det`:
 
 ```lean recall
-import HexBareissMathlib
-
-open HexMatrixMathlib
-
 theorem bareissDet_eq_det (M : Hex.Matrix Int n n) :
     Hex.Matrix.bareiss M = Matrix.det (matrixEquiv M)
 ```
@@ -81,10 +73,6 @@ The Mathlib statement is proven directly by running the Bareiss loop and
 tracking the bordered-minor invariant step by step, `bareiss_eq_mathlib_det`:
 
 ```lean recall
-import HexBareissMathlib
-
-open HexMatrixMathlib
-
 theorem bareiss_eq_mathlib_det (M : Hex.Matrix Int n n) :
     Hex.Matrix.bareiss M = Matrix.det (matrixEquiv M)
 ```

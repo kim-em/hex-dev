@@ -51,7 +51,8 @@ The headline result is the ring equivalence:
 ```lean
 import HexPolyFpMathlib
 
-def fpPolyEquiv : Hex.FpPoly p ≃+* Polynomial (ZMod p)
+def fpPolyEquiv {p : Nat} [Hex.ZMod64.Bounds p] :
+    Hex.FpPoly p ≃+* Polynomial (ZMod p)
 ```
 
 The equivalence and transport lemmas are stated under the executable bounds

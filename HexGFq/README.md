@@ -98,7 +98,7 @@ packed word denotes the same polynomial as the committed Conway entry:
 ```lean
 import HexGFq
 
-open Hex
+open Hex Hex.GFq Hex.Conway
 
 class PackedGF2Entry (n : Nat) where
   entry : SupportedEntry 2 n

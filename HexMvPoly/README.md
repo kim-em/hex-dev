@@ -65,11 +65,9 @@ recursive-view laws.
 A product coefficient is the convolution over every monomial split:
 
 ```lean recall
-import HexMvPoly
-
-open Hex Hex.MvPoly
-
-theorem coeff_mul [Lean.Grind.Semiring R] [DecidableEq R]
+theorem coeff_mul {n : Nat} {R : Type u} {cmp : Mono n → Mono n → Ordering}
+    [Std.TransCmp cmp] [Std.LawfulEqCmp cmp] [BEq R] [LawfulBEq R]
+    [Lean.Grind.Semiring R] [DecidableEq R]
     (m : Mono n) (p q : MvPoly n R cmp) :
     coeff m (p * q) =
       (Mono.splits m).foldl
@@ -79,11 +77,8 @@ theorem coeff_mul [Lean.Grind.Semiring R] [DecidableEq R]
 Sparse Horner evaluation agrees with direct evaluation:
 
 ```lean recall
-import HexMvPoly
-
-open Hex Hex.MvPoly
-
-theorem evalHorner_eq [Lean.Grind.CommSemiring R]
+theorem evalHorner_eq {n : Nat} {R : Type u} {cmp : Mono n → Mono n → Ordering}
+    [Std.TransCmp cmp] [Std.LawfulEqCmp cmp] [Lean.Grind.CommSemiring R]
     (x : Fin n → R) (p : MvPoly n R cmp) :
     evalHorner x p = eval x p
 ```

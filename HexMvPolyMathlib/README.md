@@ -63,19 +63,18 @@ import HexMvPolyMathlib
 open Hex Hex.MvPoly HexMvPolyMathlib
 open scoped HexMvPolyMathlib
 
-def equiv [CommSemiring R] [DecidableEq R] :
+def equiv {n : Nat} {R : Type u} {cmp : Mono n → Mono n → Ordering}
+    [Std.TransCmp cmp] [Std.LawfulEqCmp cmp] [BEq R] [LawfulBEq R]
+    [CommSemiring R] [DecidableEq R] :
     MvPoly n R cmp ≃+* MvPolynomial (Fin n) R
 ```
 
 It preserves every coefficient:
 
 ```lean recall
-import HexMvPolyMathlib
-
-open Hex Hex.MvPoly HexMvPolyMathlib
-open scoped HexMvPolyMathlib
-
-theorem coeff_toMvPolynomial [CommSemiring R] [DecidableEq R]
+theorem coeff_toMvPolynomial
+    {n : Nat} {R : Type u} {cmp : Mono n → Mono n → Ordering}
+    [Std.TransCmp cmp] [Std.LawfulEqCmp cmp] [CommSemiring R] [DecidableEq R]
     (m : Mono n) (p : MvPoly n R cmp) :
     MvPolynomial.coeff (monoEquiv m) (toMvPolynomial p) =
       coeff m p
@@ -84,12 +83,10 @@ theorem coeff_toMvPolynomial [CommSemiring R] [DecidableEq R]
 Executable evaluation is Mathlib algebra evaluation after conversion:
 
 ```lean recall
-import HexMvPolyMathlib
-
-open Hex Hex.MvPoly HexMvPolyMathlib
-open scoped HexMvPolyMathlib
-
-theorem aeval_apply [CommSemiring R] [DecidableEq R]
+theorem aeval_apply
+    {n : Nat} {R : Type u} {S : Type v} {cmp : Mono n → Mono n → Ordering}
+    [Std.TransCmp cmp] [Std.LawfulEqCmp cmp] [BEq R] [LawfulBEq R]
+    [CommSemiring R] [DecidableEq R]
     [CommSemiring S] [Algebra R S]
     (x : Fin n → S) (p : MvPoly n R cmp) :
     aeval x p = MvPolynomial.aeval x (toMvPolynomial p)

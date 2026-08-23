@@ -83,27 +83,15 @@ keep the executable operations rather than transported copies, so
 The single-word wrapper, in namespace `HexGF2Mathlib.GF2n`:
 
 ```lean recall
-import HexGF2Mathlib
-
-open Hex
-
-def equiv : Hex.GF2n n irr hn hn64 hirr ≃+*
-    GenericFiniteField (n := n) (irr := irr) (hn := hn) (hn64 := hn64) (hirr := hirr)
-
-theorem fintype_card :
+theorem fintype_card {n : Nat} {irr : UInt64} {hn : 0 < n} {hn64 : n < 64}
+    {hirr : Hex.GF2Poly.Irreducible (Hex.GF2Poly.ofUInt64Monic irr n)} :
     Fintype.card (Hex.GF2n n irr hn hn64 hirr) = 2 ^ n
 ```
 
 The arbitrary-degree wrapper, in namespace `HexGF2Mathlib.GF2nPoly`:
 
 ```lean recall
-import HexGF2Mathlib
-
-open Hex
-
-def equiv : Hex.GF2nPoly f hirr ≃+* GenericFiniteField (f := f) (hirr := hirr) (hdeg := hdeg)
-
-theorem fintype_card :
+theorem fintype_card {f : Hex.GF2Poly} {hirr : Hex.GF2Poly.Irreducible f} :
     Fintype.card (Hex.GF2nPoly f hirr) = 2 ^ f.degree
 ```
 

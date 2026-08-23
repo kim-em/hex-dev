@@ -51,8 +51,8 @@ open Hex
 
 def f : ZPoly := DensePoly.ofCoeffs #[1, 0, 1]
 
-noncomputable def fFactored := factor_poly f
-theorem fIrreducible : ZPoly.Irreducible f := irreducibility f
+#check factor_poly
+#check irreducibility
 ```
 
 Import `HexBerlekampZassenhaus.All` only when developing the algorithms and

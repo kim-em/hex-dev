@@ -72,11 +72,8 @@ The field laws are proved, not asserted. Inverse cancellation is the result the
 rest rests on:
 
 ```lean recall
-import HexGFqField
-
-open Hex Hex.GFqField
-
 theorem mul_inv_cancel
+    {p : Nat} [ZMod64.Bounds p] [ZMod64.PrimeModulus p] {hp : Hex.Nat.Prime p}
     {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f}
     {x : FiniteField f hf hp hirr} (hx : x ≠ 0) :
     x * x⁻¹ = 1

@@ -70,10 +70,6 @@ is certificate replay, which is what lets a committed modulus be checked by the
 kernel without `native_decide`:
 
 ```lean recall
-import HexGF2
-
-open Hex
-
 theorem rabinTest_imp_irreducible (f : GF2Poly) (hrabin : rabinTest f = true) :
     GF2Poly.Irreducible f
 
@@ -90,13 +86,8 @@ quotient by a constant is trivial, so nonconstancy is a separate hypothesis and
 the field laws are functions rather than instances.
 
 ```lean recall
-import HexGF2
-
-open Hex
-
-def fieldOfDegreePos (hdeg : 0 < f.degree) : Lean.Grind.Field (GF2nPoly f hirr)
-
-theorem isCharPOfDegreePos (hdeg : 0 < f.degree) :
+theorem isCharPOfDegreePos {f : GF2Poly} {hirr : GF2Poly.Irreducible f}
+    (hdeg : 0 < f.degree) :
     Lean.Grind.IsCharP (GF2nPoly f hirr) 2
 ```
 
