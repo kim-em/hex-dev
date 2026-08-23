@@ -66,10 +66,53 @@ def remainingVar (i : Fin (n + 1)) (j : Fin n) : Fin (n + 1) :=
     simp
     omega
 
+/-- One descending synthetic-division pass over low-to-high coefficients.
+The prefix below `k` is already final.  A right fold keeps the newly updated
+higher coefficient at the head of its accumulator, so every remaining
+coefficient is visited exactly once. -/
+def shiftPass {R : Type} [Lean.Grind.Semiring R]
+    (z : R) (coeffs : List R) (k : Nat) : List R :=
+  let finalized := coeffs.take k
+  let suffix := coeffs.drop k
+  finalized ++ suffix.foldr
+    (fun coefficient shifted =>
+      match shifted with
+      | [] => [coefficient]
+      | next :: _ => (coefficient + z * next) :: shifted)
+    []
+
+/-- Translate one dense univariate polynomial by repeated synthetic division,
+without materialising powers of the binomial `X + z`. -/
+def shiftDense {R : Type} [Lean.Grind.Semiring R] [DecidableEq R]
+    (z : R) (p : DensePoly R) : DensePoly R :=
+  let coeffs := (List.range p.size).foldl (shiftPass z) p.toArray.toList
+  DensePoly.ofList coeffs
+
+/-- Arity-indexed Taylor translation.  The recursive view shifts every
+coefficient in the remaining variables, then applies the dense synthetic
+division loop in variable zero. -/
+structure ShiftOpsAt (n : Nat) where
+  run : (cmp : Mono n → Mono n → Ordering) → [IsMonomialOrder cmp] →
+    (Fin n → Int) → MvPoly n Int cmp → MvPoly n Int cmp
+
+def shiftOps : (n : Nat) → ShiftOpsAt n
+  | 0 =>
+      { run := fun _ _ _ p => p }
+  | n + 1 =>
+      let lower := shiftOps n
+      { run := fun cmp _ a p =>
+          let view := MvPoly.toUnivariate (0 : Fin (n + 1)) Mono.lex p
+          let coeffs := view.toArray.toList.map fun coefficient =>
+            lower.run Mono.lex (fun j => a j.succ) coefficient
+          let translated :=
+            if a 0 = 0 then DensePoly.ofList coeffs
+            else shiftDense (C (a 0)) (DensePoly.ofList coeffs)
+          MvPoly.ofUnivariate (cmp := cmp) (0 : Fin (n + 1)) Mono.lex translated }
+
 /-- Translate every variable by the corresponding component of `a`. -/
 def shiftAll [IsMonomialOrder cmp'] (a : Fin n → Int) (p : MvPoly n Int cmp') :
     MvPoly n Int cmp' :=
-  MvPoly.subst (fun j => X j + C (a j)) p
+  (shiftOps n).run cmp' a p
 
 /-- Translate every variable by the negative of the corresponding component. -/
 def unshiftAll [IsMonomialOrder cmp'] (a : Fin n → Int) (p : MvPoly n Int cmp') :
@@ -88,20 +131,20 @@ def shiftVar (i : Fin (n + 1)) (a : Fin n → Int)
 main variable `x_i`. -/
 def shift (i : Fin (n + 1)) (a : Fin n → Int)
     (p : MvPoly (n + 1) Int cmp) : MvPoly (n + 1) Int cmp :=
-  MvPoly.subst (shiftVar i a) p
+  shiftAll (fun j => if h : j = i then 0 else a (remainingIndex i j h)) p
 
 /-- Undo `shift i a`. -/
 def unshift (i : Fin (n + 1)) (a : Fin n → Int)
     (p : MvPoly (n + 1) Int cmp) : MvPoly (n + 1) Int cmp :=
   shift i (fun j => -a j) p
 
-/-- The univariate image at `a`, obtained by evaluating every coefficient in
-the recursive view in the non-main variables. -/
+/-- The univariate image at `a`, obtained by sparse Horner evaluation of every
+coefficient in the recursive view in the non-main variables. -/
 def imageAt (i : Fin (n + 1))
     (cmp' : Mono n → Mono n → Ordering) [IsMonomialOrder cmp']
     (a : Fin n → Int) (p : MvPoly (n + 1) Int cmp) : DensePoly Int :=
   let q := MvPoly.toUnivariate i cmp' p
-  DensePoly.ofCoeffs (q.toArray.map fun c => MvPoly.eval a c)
+  DensePoly.ofCoeffs (q.toArray.map fun c => MvPoly.evalHorner a c)
 
 /-- Leading coefficient in the chosen main variable, as a polynomial in the
 remaining variables. -/
