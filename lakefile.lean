@@ -626,7 +626,8 @@ lean_lib HexReleaseTests where
     `HexRealRootsMathlib.IsolateRootsTests,
     `HexRealRootsMathlib.IsolateRootsElabTests,
     `HexRootsMathlib.Examples,
-    `HexMvPoly.KernelTests]
+    `HexMvPoly.KernelTests,
+    `HexSparsePoly.KernelTests]
 
 -- Verification-only modules for the incubating multivariate factorization
 -- stack. Keep this separate from the released-test target, whose module list
@@ -661,13 +662,12 @@ lean_lib HexFactorizationModules where
   globs := #[`HexBerlekampZassenhaus.All,
     `HexBerlekampZassenhausMathlib.All]
 
--- HexSparsePoly is not yet a published split repository, so its
--- verification-only kernel probes stay separate from the
--- release-manifest-backed target above; they join HexReleaseTests (and the
--- release manifest's test_modules) when the split repository is published.
+-- Monorepo-only lint regression for the sparse-poly pair; the kernel
+-- probes live in HexReleaseTests alongside the release manifest's
+-- test_modules entry.
 @[default_target]
 lean_lib HexSparsePolyTests where
-  globs := #[`HexSparsePoly.KernelTests, `HexSparsePolyMathlib.LintTests]
+  globs := #[`HexSparsePolyMathlib.LintTests]
 
 -- HexRCF is not yet a published split repository, so its verification-only
 -- modules stay separate from the release-manifest-backed target above.

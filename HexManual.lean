@@ -76,6 +76,8 @@ contracts and, for mature libraries, supply their proofs.
 
 {include 0 HexManual.Chapters.HexMvPoly}
 
+{include 0 HexManual.Chapters.HexSparsePoly}
+
 {include 0 HexManual.Chapters.HexModArith}
 
 {include 0 HexManual.Chapters.HexPolyFp}
@@ -148,8 +150,6 @@ split out for release yet, so their APIs may still change. They are grouped
 here to keep the reference chapters above focused on the released libraries.
 
 {include 2 HexManual.Chapters.HexResultant}
-
-{include 2 HexManual.Chapters.HexSparsePoly}
 
 {include 2 HexManual.Chapters.HexRCF}
 
