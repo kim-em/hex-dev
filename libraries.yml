@@ -135,7 +135,7 @@ libraries:
   HexSparsePoly:
     deps: [HexPoly, HexBasic]
     mathlib: false
-    done_through: 5
+    done_through: 6
     status: active
     phase4:
       comparators:
@@ -481,7 +481,7 @@ libraries:
   HexSparsePolyMathlib:
     deps: [HexSparsePoly, HexPolyMathlib, HexPoly]
     mathlib: true
-    done_through: 5
+    done_through: 6
     status: active
   HexMatrixMathlib:
     deps: [HexMatrix]

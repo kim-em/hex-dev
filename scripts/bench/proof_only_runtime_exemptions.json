@@ -832,5 +832,11 @@
     "baseline_blob": "ff87edbbbf7524190b536ae4ce92a57968275aa9",
     "current_blob": "08583d0e78edfe858267ffa07fde97ce95d5460a",
     "reason": "Adds the HexSparsePolyMathlib.Conformance glob on top of the HexSparsePolyMathlib lean_lib registration; no factorization module, executable, or build-flag changes."
+  },
+  {
+    "path": "lakefile.lean",
+    "baseline_blob": "ff87edbbbf7524190b536ae4ce92a57968275aa9",
+    "current_blob": "8f5ad6feadc9b8448e9fd7ebc12f62bf28ecebc7",
+    "reason": "Adds the HexSparsePolyMathlib.LintTests glob to the HexSparsePolyTests verification target; no factorization module, executable, or build-flag changes."
   }
 ]

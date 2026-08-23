@@ -65,6 +65,7 @@ section EvalLaws
 
 variable {S : Type u} [Lean.Grind.Semiring S] [DecidableEq S]
 
+omit [DecidableEq S] in
 /-- Powers of the square are even powers. -/
 theorem sq_pow (x : S) (n : Nat) : (x * x) ^ n = x ^ (2 * n) := by
   induction n with
@@ -94,6 +95,7 @@ theorem pow1_eq (x : S) (g : Nat) (hg : 1 ≤ g) : pow1 x g = x ^ g := by
       have hexp : 2 * ((g + 2) / 2) = g + 2 := by omega
       rw [hexp]
 
+omit [DecidableEq S] in
 /-- Powers at added exponents multiply. -/
 theorem pow_add' (x : S) (a b : Nat) : x ^ a * x ^ b = x ^ (a + b) := by
   grind
@@ -144,6 +146,7 @@ theorem evalShifted_eq {l : List (Nat × S)}
       rw [← hshift rest (fun u hu => Nat.le_of_lt (hs.1 u hu))]
       grind
 
+omit [DecidableEq S] in
 /-- Every term sum over the stored terms evaluates the polynomial: the
 bridge between the gap form and the dense fold-of-monomials form. -/
 private theorem foldl_add_eval_monomials {l : List (Nat × S)} (x : S) :
@@ -269,10 +272,10 @@ def substPow [Add R] (s : SparsePoly R) (k : Nat) : SparsePoly R :=
     ofCanonicalList
       (mapTerms (fun e => k * e) (fun _ c => c) s.terms.toList)
       (mapTerms_canonical s.pairwise_toList
-        (fun a _ b _ hab =>
+        (fun _ _ _ _ hab =>
           (Nat.mul_lt_mul_left (Nat.pos_of_ne_zero hk)).mpr hab)).1
       (mapTerms_canonical s.pairwise_toList
-        (fun a _ b _ hab =>
+        (fun _ _ _ _ hab =>
           (Nat.mul_lt_mul_left (Nat.pos_of_ne_zero hk)).mpr hab)).2
 
 /-- Coefficient law for the sparse substitution, positive case: the
@@ -423,6 +426,7 @@ def composeStep [Add R] [Mul R] (t : SparsePoly R)
           (st.1 + scale term.2 (p * polyPow1 t (g + 1)), term.1,
             some (p * polyPow1 t (g + 1)))
 
+/-- Substitute `t` for the variable of `s`: one fold of `composeStep` over the terms, carrying the running power of `t` across each exponent gap. -/
 def compose [Add R] [Mul R] (s t : SparsePoly R) : SparsePoly R :=
   (s.terms.foldl (composeStep t)
     ((0 : SparsePoly R), (0, (none : Option (SparsePoly R))))).1
@@ -508,19 +512,23 @@ theorem eval_mul (s t : SparsePoly K) (x : K) :
   rw [eval_toDense, toDense_mul, DensePoly.eval_mul_commring,
     ← eval_toDense, ← eval_toDense]
 
+/-- Evaluating a monomial multiplies its coefficient by the power. -/
 @[simp, grind =] theorem eval_monomial (e : Nat) (c : K) (x : K) :
     (monomial e c).eval x = c * x ^ e := by
   rw [eval_toDense, toDense_monomial, DensePoly.eval_monomial_semiring]
 
+/-- Constants evaluate to their value. -/
 @[simp, grind =] theorem eval_C (c : K) (x : K) : (C c).eval x = c := by
   show (monomial 0 c).eval x = c
   rw [eval_monomial]
   grind
 
+/-- One evaluates to `1`. -/
 @[simp, grind =] theorem eval_one (x : K) : (1 : SparsePoly K).eval x = 1 := by
   show (SparsePoly.C 1).eval x = 1
   rw [eval_C]
 
+/-- Zero evaluates to `0`. -/
 @[simp, grind =] theorem eval_zero (x : K) :
     (0 : SparsePoly K).eval x = 0 :=
   rfl
@@ -566,7 +574,6 @@ private theorem compose_go (t : SparsePoly K) (l : List (Nat × K)) :
         unfold composeStep
         cases hgap : u.1 - prev with
         | zero =>
-            simp only [hgap]
             have hpe : prev = u.1 := by omega
             refine ⟨tp, ?_, ?_, ?_⟩
             · cases tp with
@@ -587,7 +594,6 @@ private theorem compose_go (t : SparsePoly K) (l : List (Nat × K)) :
             · rw [htpv, hpe]
         | succ g =>
             have hg1 : g + 1 = u.1 - prev := hgap.symm
-            simp only [hgap]
             cases tp with
             | none =>
                 have h0 : prev = 0 := hnone rfl
@@ -783,6 +789,7 @@ private theorem coeff_monomial_foldl (l : List (Nat × K)) (k : Nat)
       intro init
       rw [List.foldl_cons, List.foldl_cons, ih, coeff_add, coeff_monomial]
 
+omit [DecidableEq K] in
 private theorem foldl_add_ifs_zero {l : List (Nat × K)}
     {g : Nat × K → K} (h : ∀ u ∈ l, g u = 0) :
     ∀ x : K, l.foldl (fun a u => a + g u) x = x := by
@@ -794,6 +801,7 @@ private theorem foldl_add_ifs_zero {l : List (Nat × K)}
         show x + (0 : K) = x from by grind]
       exact ih (fun v hv => h v (List.mem_cons_of_mem _ hv)) x
 
+omit [DecidableEq K] in
 private theorem foldl_single_match {l : List (Nat × K)}
     (hs : l.Pairwise (fun a b => a.1 < b.1)) {k : Nat} (hk : ¬ k = 0)
     (e : Nat) :

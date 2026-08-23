@@ -68,7 +68,7 @@ instance [One R] [Add R] [Sub R] [Mul R] [Div R] : Mod (SparsePoly R) where
 /-- Divide by the monomial `x^e`, the one division that stays sparse:
 `none` unless every stored exponent is at least `e`, and otherwise a
 subtraction on each exponent, `O(s)` with no filtering. -/
-def divMonomial? [Mul R] (s : SparsePoly R) (e : Nat) :
+def divMonomial? (s : SparsePoly R) (e : Nat) :
     Option (SparsePoly R) :=
   if h : ∀ t ∈ s.terms.toList, e ≤ t.1 then
     some (ofCanonicalList
@@ -123,6 +123,7 @@ section Laws
 
 variable {S : Type u} [Lean.Grind.CommRing S] [DecidableEq S] [Div S]
 
+omit [Div S] in
 /-- Divisibility transports back from the dense representation. -/
 theorem dvd_of_toDense_dvd {s t : SparsePoly S}
     (h : s.toDense ∣ t.toDense) : s ∣ t := by
@@ -130,12 +131,14 @@ theorem dvd_of_toDense_dvd {s t : SparsePoly S}
   exact ⟨ofDense r, toDense_inj (by
     rw [toDense_mul, toDense_ofDense, hr])⟩
 
+omit [Div S] in
 /-- Divisibility transports to the dense representation. -/
 theorem toDense_dvd {s t : SparsePoly S} (h : s ∣ t) :
     s.toDense ∣ t.toDense := by
   obtain ⟨r, hr⟩ := h
   exact ⟨r.toDense, by rw [← toDense_mul, ← hr]⟩
 
+omit [Div S] in
 /-- The degree transports through `ofDense`. -/
 theorem degree?_ofDense (p : DensePoly S) :
     (ofDense p).degree? = p.degree? := by
@@ -192,6 +195,7 @@ private theorem divModMonic_snd_eq_zero_of_dvd {s t : SparsePoly S}
     DensePoly.mod_eq_zero_of_dvd s.toDense t.toDense (toDense_dvd h)
   rw [hm, ofDense_zero]
 
+omit [Div S] [DensePoly.DivModLaws S] in
 /-- Monic factors cancel at the dense level: a product with a monic
 polynomial vanishes only if the cofactor does. The trivial-ring case is
 split off; otherwise the product's leading coefficient is the

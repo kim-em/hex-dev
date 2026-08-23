@@ -26,7 +26,7 @@ universe u v
 
 /-- A term array is canonical when its exponents are strictly increasing
 and no stored coefficient is zero. -/
-def SparsePolyCanonical {R : Type u} [Zero R] [DecidableEq R]
+def SparsePolyCanonical {R : Type u} [Zero R]
     (terms : Array (Nat × R)) : Prop :=
   terms.toList.Pairwise (fun a b => a.1 < b.1) ∧ ∀ t ∈ terms, t.2 ≠ 0
 
@@ -574,12 +574,12 @@ theorem coeffList_addTermList [Add R] {l : List (Nat × R)}
       · by_cases hf : f = e
         · subst hf
           simp [addTermList, coeffList, addCoeff, hc]
-        · simp [addTermList, coeffList, addCoeff, hc, hf]
+        · simp [addTermList, coeffList, hc, hf]
       · by_cases hf : f = e
         · subst hf
           simp [addTermList, coeffList, addCoeff, hc]
         · have hef : ¬e = f := fun h => hf h.symm
-          simp [addTermList, coeffList, addCoeff, hc, hef, hf]
+          simp [addTermList, coeffList, hc, hef, hf]
   | cons a as ih =>
       rw [List.pairwise_cons] at hs
       have hnza : a.2 ≠ 0 := hnz a (List.mem_cons_self ..)
@@ -600,7 +600,7 @@ theorem coeffList_addTermList [Add R] {l : List (Nat × R)}
           by_cases hf : f = e
           · subst hf
             rw [if_pos rfl, hcoeff_e, addCoeff]
-            simp only [coeffList, if_pos rfl]
+            simp only [coeffList]
             simp [hc]
           · rw [if_neg hf]
             simp only [coeffList]
@@ -654,7 +654,6 @@ theorem coeff_addTerm [Add R] (s : SparsePoly R) (e : Nat) (c : R)
     (s.addTerm e c).coeff f =
       if f = e then addCoeff (s.coeff e) c else s.coeff f := by
   unfold coeff addTerm
-  simp only [List.toList_toArray]
   exact coeffList_addTermList s.canonical.1
     (fun t ht => s.canonical.2 t (Array.mem_def.mpr ht)) e c f
 
@@ -673,6 +672,7 @@ termination_by hi - lo
 decreasing_by all_goals omega
 
 omit [DecidableEq R] in
+omit [Zero R] in
 /-- On a sorted range, {name}`lowerBound` splits the indices: every
 exponent below the returned position is below `e`, every exponent at or
 beyond it is at least `e`. -/
@@ -733,6 +733,7 @@ termination_by hi - lo
 decreasing_by all_goals omega
 
 omit [DecidableEq R] in
+omit [Zero R] in
 /-- {name}`lowerBound` never exceeds `hi`, with no sortedness needed:
 this is what makes the insertion index valid. -/
 theorem lowerBound_le (ts : Array (Nat × R)) (e : Nat) (lo hi : Nat)
@@ -777,7 +778,7 @@ theorem addTermList_splice [Add R] {l : List (Nat × R)} {e : Nat}
           simp only [List.getElem?_cons_zero]
           by_cases heq : a.1 = e
           · have hnotlt : ¬ e < a.1 := by omega
-            simp only [addTermList, if_neg hnotlt, if_pos heq, if_pos heq]
+            simp only [addTermList, if_neg hnotlt, if_pos heq]
             rw [heq]
             simp
           · have hlt : e < a.1 := by omega
@@ -850,7 +851,7 @@ theorem addTermArray_eq [Add R] {ts : Array (Nat × R)}
     (fun i h hip => hbelow i (by simpa using h) hip)
     (fun i h hpi => habove i (by simpa using h) hpi) c
   rw [← Array.toList_inj]
-  simp only [List.toList_toArray, hsplice]
+  simp only [hsplice]
   unfold addTermArray
   split
   · rename_i t hp
@@ -907,6 +908,7 @@ combining pass selected by `Hex.SparsePoly.ofTerms_eq_impl`. -/
 noncomputable def ofTerms [Add R] (ts : Array (Nat × R)) : SparsePoly R :=
   ts.foldl (fun s t => s.addTerm t.1 t.2) 0
 
+/-- The zero polynomial has zero coefficients. -/
 @[simp, grind =] theorem coeff_zero (e : Nat) :
     (0 : SparsePoly R).coeff e = 0 :=
   rfl
@@ -1283,14 +1285,17 @@ elsewhere, even when `c = 0`. -/
     · rw [if_pos (hf ▸ rfl), if_pos hf]
     · rw [if_neg (fun h : e = f => hf h.symm), if_neg hf]
 
+/-- A constant stores its value at exponent `0`. -/
 @[simp, grind =] theorem coeff_C (c : R) (f : Nat) :
     (C c).coeff f = if f = 0 then c else 0 :=
   coeff_monomial 0 c f
 
+/-- The one polynomial is the constant `1`. -/
 @[simp, grind =] theorem coeff_one [One R] (f : Nat) :
     (1 : SparsePoly R).coeff f = if f = 0 then 1 else 0 :=
   coeff_C 1 f
 
+/-- The variable has coefficient `1` at exponent `1`. -/
 @[simp, grind =] theorem coeff_X [One R] (f : Nat) :
     (X : SparsePoly R).coeff f = if f = 1 then 1 else 0 :=
   coeff_monomial 1 1 f
