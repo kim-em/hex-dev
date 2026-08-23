@@ -7,7 +7,11 @@ into irreducibles. Mathlib-free. The companion `hex-mv-factor-mathlib`
 identifies the checked statements with `MvPolynomial (Fin n) ℤ`,
 discharges the univariate irreducibility obligations the Mathlib-free
 checker leaves open, proves uniqueness against Mathlib's unique
-factorization, and supplies `Decidable (Irreducible p)`.
+factorization, supplies `Decidable (Irreducible p)`, and extends
+`factor_poly` and `irreducibility` to multivariate inputs. The tactic
+surface also accepts an open commutative-ring expression, reifies its
+polynomial atoms as formal variables, and returns a certified formal
+factorization together with its denoted product identity.
 
 This SPEC expands the "Multivariate factorization" entry in
 [future-work](../../SPEC/future-work.md). It consumes the lifting contract
@@ -69,10 +73,20 @@ coefficient bound and its proof, gcd, content, exact division, and
 squarefree decomposition, univariate integer factorization, and integer
 factorization of the content.
 
-Also not in scope: coefficient rings other than `Int`, absolute
+The Mathlib companion also owns the multivariate extensions to the shared
+`factor_poly` / `irreducibility` elaborators: direct support for the two
+multivariate polynomial representations and atom reification for open ring
+expressions. The computational search and checkers remain in this library;
+the companion owns only the expression-facing reifier and tactic assembly,
+plus the transport into Mathlib propositions.
+
+Also not in scope: factorization coefficient rings other than `Int`, absolute
 factorization (factoring over `ℚ̄` or a number field), factorization
 over `F_q[x₁, …, x_v]`, and sparse Hensel lifting (see
 [hex-mv-hensel §Future extension: sparse Hensel lifting](../../HexMvHensel/SPEC/hex-mv-hensel.md)).
+The arbitrary commutative ring accepted by the expression tactic is only the
+target of evaluation of an integer polynomial; the factorizer still runs over
+`Int` coefficients.
 
 **Why `Int` and not a general coefficient domain.** The four
 ingredients this library composes are all integer-specific. Univariate
@@ -1612,9 +1626,10 @@ would measure the language and not the algorithm.
 
 ## The Mathlib layer
 
-`hex-mv-factor-mathlib` does three things the Mathlib-free layer
+`hex-mv-factor-mathlib` does four things the Mathlib-free layer
 cannot: it discharges the univariate obligations, it identifies the
-checked statements with Mathlib's, and it proves uniqueness. Writing
+checked statements with Mathlib's, it proves uniqueness, and it provides
+the proof-producing multivariate tactic surface. Writing
 `e` for hex-mv-poly's
 `equiv : MvPoly n Int cmp ≃+* MvPolynomial (Fin n) ℤ` and `eZ` for
 hex-poly-mathlib's `equiv : DensePoly Int ≃+* Polynomial ℤ`:
@@ -1711,6 +1726,143 @@ kernel closure on purpose. The route for a proof term is
 evaluation and one content check for the `image` constructor. Saying
 which of the two a consumer wants is the point of having both.
 
+### Multivariate `factor_poly` and `irreducibility`
+
+The ordinary `HexMvFactorMathlib` umbrella registers
+`HexMvFactorMathlib.FactorTactic.extension` for closed executable
+`MvPoly n Int cmp` values, structurally reifiable
+`MvPolynomial (Fin n) ℤ` expressions, and open commutative-ring expressions.
+It is found through `Hex.FactorTactic.extensionNames`; its generic expression
+arm is last within the extension, and the extension itself is last in global
+dispatch order, so it cannot capture a more specific univariate or
+multivariate polynomial representation.
+
+For the two actual polynomial representations, the tactics have the same
+meaning as their univariate counterparts:
+
+- `factor_poly p` returns a scalar, normalized irreducible factors with
+  multiplicities, their product identity, and irreducibility proofs in the
+  input polynomial ring;
+- `irreducibility p` proves `MvHensel.Irred p` for an `MvPoly` input and
+  Mathlib's `Irreducible p` for an `MvPolynomial` input; and
+- a search decline produces a diagnostic and no proof. The factor search and
+  certificate construction run as untrusted elaborator code, while the
+  emitted term contains only literal data, checker replays, obligation
+  discharge, and representation/evaluation lemmas.
+
+The expression arm exists for uses such as
+
+```lean
+factor_poly 1 + x + y + x * y
+```
+
+where `x` and `y` are local values in a commutative ring rather than fields of
+an already constructed polynomial value. It recognizes integer constants,
+`0`, `1`, addition, subtraction, multiplication, negation, and powers by
+literal natural exponents. Every maximal unrecognized ring-valued
+subexpression is an atom. Definitionally equal atoms share one index, and new
+atoms receive indices in deterministic left-to-right first-occurrence order;
+the example therefore reifies to
+`1 + X 0 + X 1 + X 0 * X 1` with the atom table `#[x, y]`. The internal
+representation uses `MvPoly n Int Mono.grevlex`.
+
+The reifier does **not** zeta-reduce a local `let` before the atom fallback.
+The expression supplied by the user is the abstraction boundary: in
+
+```lean
+let p := 1 + x + y + x * y
+factor_poly p
+```
+
+`p` is one atom, so the formal input is `X 0` with atom table `#[p]` and its
+formal factorization is the single factor `X 0`. This is intentionally not the
+factorization of `p`'s assigned value. A caller who wants the latter supplies
+the expanded expression. Operation-head normalization may expose the declared
+ring operations, but it must not unfold a local definition merely to discover
+more polynomial structure.
+
+The result records the formal polynomial and its interpretation, not a false
+claim about the ambient ring. Its public contract has this shape (field names
+and projections are part of the API even if the constructor is assembled by
+a helper theorem):
+
+```lean
+structure FactoredExpr {R : Type u} [CommRing R] (subject : R) where
+  n             : Nat
+  atoms         : Fin n → R
+  input         : MvPoly n Int Mono.grevlex
+  decomp        : MvFactor.Decomp n Mono.grevlex
+  reified       : MvPoly.eval₂ (fun z => (z : R)) atoms input = subject
+  formal_mul    : decomp.product = input
+  factors_mul   :
+    MvPoly.eval₂ (fun z => (z : R)) atoms decomp.product = subject
+  factors_irred :
+    ∀ q ∈ decomp.factors, MvHensel.Irred q.factor
+```
+
+Thus the example exposes formal factors `1 + X 0` and `1 + X 1`, proves
+their formal irreducibility, and proves that their denotations multiply to the
+original expression, hence `(1 + x) * (1 + y) = 1 + x + y + x * y` in the
+ambient ring. Zero and constant inputs use the scalar/empty-factor convention;
+they do not manufacture an `IsFactorizationOf 0` witness.
+
+Formal irreducibility must not be transported through the atom substitution.
+That implication is false: the formally irreducible polynomial `1 + X 0`
+becomes the unit `1` when its atom is interpreted as `0`. Consequently the
+generic expression arm of `factor_poly` exposes only
+`MvHensel.Irred q.factor`, never `Irreducible` of the denoted ambient value,
+and the generic arm of `irreducibility` must decline with a diagnostic that
+explains this distinction. Ambient irreducibility is available only on the
+direct `MvPoly` and `MvPolynomial (Fin n) ℤ` paths, where the correspondence
+is a ring equivalence rather than an arbitrary evaluation homomorphism.
+
+The existing shared front end currently rejects free variables before it
+offers an input to extensions and parses only `term:max`. It is amended so
+that:
+
+- open inputs reach the generic multivariate extension, while the existing
+  executable-literal extensions retain their own closed-input checks;
+- both term and tactic forms accept an unparenthesized compound argument, so
+  the exact example above parses as one `factor_poly` invocation; and
+- the tactic form introduces the atom table, scalar/decomposition data,
+  `factors_mul`, and formal `factors_irred` hypotheses. Existing univariate
+  result shapes and introduction names remain compatible.
+
+The hand-written expression reifier is temporary and isolated in
+`HexMvFactorMathlib/Reify.lean`. Its module documentation must contain this
+warning prominently and verbatim in substance:
+
+> **WARNING: TEMPORARY REIFIER — REPLACE, DO NOT GROW.** This entire parser
+> must be replaced by Lean 4's built-in `Lean.Meta.Sym.Arith` reification once
+> that API is ready for this proof-producing use. Do not add consumers of its
+> internal syntax tree or duplicate its recursion elsewhere.
+
+The reifier exposes only the atom table, the `MvPoly` literal, and the proof
+of its evaluation equation. Its regression tests specify the supported
+syntax and atom-order contract, so replacing the implementation wholesale
+does not change tactic behavior.
+
+Required tactic regressions cover:
+
+- the exact unparenthesized `1 + x + y + x * y` example, including the two
+  deduplicated atoms and the denoted product identity;
+- the same expression behind `let p := ...`, where `factor_poly p` preserves
+  the abstraction boundary and produces exactly the single atom `#[p]`;
+- repeated and compound atoms, subtraction, negation, and literal powers;
+- closed `MvPoly` and structural `MvPolynomial (Fin n) ℤ` factorization and
+  irreducibility;
+- a negative generic-`irreducibility` case whose diagnostic names the
+  substitution soundness boundary;
+- extension discovery and precedence over the generic expression fallback;
+- preservation of every existing univariate tactic regression; and
+- inspection of emitted declarations showing that factor search, point
+  search, lifting, and certificate generation do not occur in proof terms.
+
+The ordinary forms are required here. Extending the `factor_poly!` and
+`irreducibility!` kernel-evaluation fallbacks is not: multivariate search is
+deliberately outside the kernel closure, and those forms may be added only
+with a separate replay budget and SPEC amendment.
+
 `factorization_unique` uses `MvPolynomial.uniqueFactorizationMonoid`.
 Uniqueness is genuinely a companion statement: the Mathlib-free layer
 proves that its answer *is* a factorization into irreducibles, and that
@@ -1764,6 +1916,13 @@ semantic operation: `checkDecomp`, `checkIrred`, `factor?`,
    uniqueness, and the `Decidable` instance. It can begin after
    milestone 4; the instance needs milestone 5.
 
+8. **The tactic surface.** The direct `MvPoly` and `MvPolynomial` extensions,
+   `FactoredExpr`, the isolated atom reifier, the shared-front-end amendments,
+   registration, emitted-term audit, and tactic regressions. It needs
+   milestone 7's obligation discharge and irreducibility transport; the
+   reifier and result type can be developed independently once the
+   `MvPoly.eval₂` API is available.
+
 ## File organisation
 
 ```
@@ -1782,6 +1941,10 @@ HexMvFactorMathlib/
   Correspondence.lean -- transport of checkDecomp and checkIrred
   Irreducible.lean    -- obligation discharge, irreducibility, the Decidable instance
   Unique.lean         -- uniqueness against UniqueFactorizationMonoid
+  FactoredExpr.lean   -- certified result for an atom-reified ring expression
+  Reify.lean          -- temporary parser-with-proof; replace by Lean.Meta.Sym.Arith
+  FactorTactic.lean   -- MvPoly, MvPolynomial, and expression tactic extension
+  FactorTacticTests.lean -- syntax, dispatch, soundness-boundary, and replay tests
 HexMvFactorMathlib.lean
 ```
 
