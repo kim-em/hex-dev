@@ -148,6 +148,9 @@ lean_lib HexPolyMathlib where
 lean_lib HexMvPolyMathlib where
 
 @[default_target]
+lean_lib HexSparsePolyMathlib where
+
+@[default_target]
 lean_lib HexModArithMathlib where
 
 @[default_target]

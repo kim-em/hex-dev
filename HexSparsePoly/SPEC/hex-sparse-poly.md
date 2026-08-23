@@ -1080,8 +1080,8 @@ Two required internal checks, which matter more than the external ones:
 `hex-sparse-poly-mathlib` identifies the type with `Polynomial R`:
 
 ```lean
-def denseEquiv [Semiring R] [DecidableEq R] : SparsePoly R ≃+* DensePoly R
-def equiv [Semiring R] [DecidableEq R] : SparsePoly R ≃+* Polynomial R :=
+def denseEquiv [CommRing R] [DecidableEq R] : SparsePoly R ≃+* DensePoly R
+def equiv [CommRing R] [DecidableEq R] : SparsePoly R ≃+* Polynomial R :=
   denseEquiv.trans HexPolyMathlib.equiv
 
 theorem coeff_equiv (s : SparsePoly R) (e : Nat) : (equiv s).coeff e = s.coeff e
@@ -1104,8 +1104,12 @@ round trips as `left_inv` and `right_inv`, and `toDense_add`,
 fields. That is the reason the Mathlib-free layer proves those four in
 the first place, and `denseEquiv` is where they are used.
 
-`denseEquiv` needs no Mathlib beyond `RingEquiv` itself, and both it and
-`equiv` are stated at `[Semiring R]`, matching
+`denseEquiv` needs no Mathlib beyond `RingEquiv` itself. Both it and
+`equiv` are stated at Mathlib's `[CommRing R]`, because
+`denseEquiv.map_mul'` reuses `toDense_mul`, which sits at
+`Lean.Grind.CommRing` per the law-placement note above; if the dense
+multiplication laws are ever weakened to semirings, both statements
+drop to `[Semiring R]` at no cost, matching
 [hex-poly-mathlib](../../HexPolyMathlib/SPEC/hex-poly-mathlib.md)'s
 `equiv` (`HexPolyMathlib/PolynomialEquivalence.lean:510`). Individual
 correspondence lemmas take stronger hypotheses only where they need

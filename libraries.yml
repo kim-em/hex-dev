@@ -481,8 +481,8 @@ libraries:
   HexSparsePolyMathlib:
     deps: [HexSparsePoly, HexPolyMathlib, HexPoly]
     mathlib: true
-    done_through: 0
-    status: planned
+    done_through: 1
+    status: active
   HexMatrixMathlib:
     deps: [HexMatrix]
     mathlib: true
