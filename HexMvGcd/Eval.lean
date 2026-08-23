@@ -20,9 +20,22 @@ private abbrev Q2 := MvPoly 2 Rat Mono.lex
 private def brownPrimeAt? (p : Nat) : Option ZMod64.Prime :=
   (ZMod64.primesBelow p 1)[0]?
 #guard (smallPrimeSupply 47 5).map (fun P => P.m) == [2, 3, 5, 7, 11]
+/-- State marker proving that a backend received the route-0-reduced pair used
+by the fallback reconstruction guards below. -/
+private def observedRand {n : Nat} {cmp : Mono n → Mono n → Ordering}
+    [IsMonomialOrder cmp] (f h : MvPoly n Int cmp) : Rand :=
+  if content f == 2 && content h == 3 &&
+      monoContent f == Mono.zero && monoContent h == Mono.zero then
+    Rand.ofSeed 9457
+  else
+    Rand.ofSeed 1
+
+@[instance_reducible] private def decliningProducer : GcdProducer Int where
+  propose := fun _ _ _ f h => ⟨none, observedRand f h⟩
+
 @[instance_reducible] private def rejectingProducer : GcdProducer Int where
   propose := fun _ _ _ f h =>
-    ⟨some (.mk 1 f h .unit), Rand.ofSeed 99⟩
+    ⟨some (.mk 1 f h .unit), observedRand f h⟩
 #guard checkGcd (0 : P0) 0 (rawPrsCert 0 0)
 #guard
   let f : P0 := C 12
@@ -52,7 +65,12 @@ private def brownPrimeAt? (p : Nat) : Option ZMod64.Prime :=
   let f := common * (x + 2)
   let h := common * (y + 3)
   checkGcd f h (rawPrsCert f h)
-#guard (fastProposal GcdConfig.default (0 : P1) 0).cert?.isSome
+#guard (structuralCert? (0 : P1) 0).isSome
+#guard
+  letI : GcdProducer Int := rejectingProducer
+  let cfg := { GcdConfig.default with rand := Rand.ofSeed 17 }
+  let run := gcdCertWith cfg (0 : P1) 0
+  checkGcd 0 0 run.cert && run.rand == cfg.rand
 #guard
   let x : P1 := X 0
   (intTryCoprimeCert? 8 (Rand.ofSeed 0) (x + 1) (x + 2)).1.isSome
@@ -70,10 +88,13 @@ private def brownPrimeAt? (p : Nat) : Option ZMod64.Prime :=
   let y : P2 := X 1
   let f := C 6 * x * y * (x + 1)
   let h := C 9 * x * y * (y + 1)
-  let run := intFastProposal GcdConfig.default f h
-  match run.cert? with
-  | some cert => checkGcd f h cert && cert.gcd == C 3 * x * y
+  match structuralReduction? f h with
   | none => false
+  | some reduced =>
+      let run := intFastProposal GcdConfig.default reduced.left reduced.right
+      match run.cert?.bind (restoreStructural? f h reduced) with
+      | some cert => checkGcd f h cert && cert.gcd == C 3 * x * y
+      | none => false
 #guard
   let x : P1 := X 0
   let common := x + 1
@@ -108,13 +129,27 @@ private def brownPrimeAt? (p : Nat) : Option ZMod64.Prime :=
   let h := x + 5
   (checkedCandidate? f h (intHeuristicCandidateAt f h 5)).isNone
 #guard
-  letI : GcdProducer Int := rejectingProducer
-  let x : P1 := X 0
+  letI : GcdProducer Int := decliningProducer
+  let x : P2 := X 0
+  let y : P2 := X 1
   let common := x + 1
-  let f := common * (x + 2)
-  let h := common * (x + 3)
+  let f := C 6 * x * y * common * (x + 2)
+  let h := C 9 * x * y * common * (y + 3)
   let run := gcdCertWith GcdConfig.default f h
-  checkGcd f h run.cert && run.rand == Rand.ofSeed 99
+  checkGcd f h run.cert &&
+    run.cert.gcd == C 3 * x * y * common &&
+    run.rand == Rand.ofSeed 9457
+#guard
+  letI : GcdProducer Int := rejectingProducer
+  let x : P2 := X 0
+  let y : P2 := X 1
+  let common := x + 1
+  let f := C 6 * x * y * common * (x + 2)
+  let h := C 9 * x * y * common * (y + 3)
+  let run := gcdCertWith GcdConfig.default f h
+  checkGcd f h run.cert &&
+    run.cert.gcd == C 3 * x * y * common &&
+    run.rand == Rand.ofSeed 9457
 #guard
   let state : BrownPointState :=
     { bestDegree? := some 2, accepted := 3 }

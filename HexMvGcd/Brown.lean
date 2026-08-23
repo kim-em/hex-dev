@@ -608,8 +608,8 @@ def intBrownCert? {n : Nat} (cmp : Mono n → Mono n → Ordering)
         | some cert => brownCheckedCandidate? f h (brownOfZPoly cert.gcd)
   | _ + 2, _, _, f, h => intBrownModularCert? cfg f h
 
-/-- Generic routes 0--3 for integer coefficients above the delegated
-arity-one case. -/
+/-- Generic routes 1--3 for route-0-reduced integer coefficients above the
+delegated arity-one case. -/
 def intConcreteProposalGeneric {n : Nat}
     (cmp : Mono n → Mono n → Ordering) [IsMonomialOrder cmp]
     (cfg : GcdConfig) (f h : MvPoly n Int cmp) : GcdProposal n Int cmp :=
@@ -617,15 +617,9 @@ def intConcreteProposalGeneric {n : Nat}
   match fast.cert? with
   | some _ => fast
   | none =>
-      match structuralReduction? f h with
-      | none => ⟨none, fast.rand⟩
-      | some reduced =>
-          match intHeuristicCert? cfg reduced.left reduced.right with
-          | some cert =>
-              ⟨restoreStructural? f h reduced cert, fast.rand⟩
-          | none =>
-              let cert? := intBrownCert? cmp cfg reduced.left reduced.right
-              ⟨cert?.bind (restoreStructural? f h reduced), fast.rand⟩
+      match intHeuristicCert? cfg f h with
+      | some cert => ⟨some cert, fast.rand⟩
+      | none => ⟨intBrownCert? cmp cfg f h, fast.rand⟩
 
 /-- Concrete integer producer.  Arity one delegates immediately to the
 released dense integer kernel; other arities use the multivariate routes. -/
@@ -741,23 +735,16 @@ def ratIntegerLiftCert? {n : Nat}
     let nextCfg := { cfg with rand := run.rand }
     ratCheckedCandidate? nextCfg f h (intModelToRat run.cert.gcd)
 
-/-- Routes 0--3 for rational coefficients. -/
+/-- Rational routes on an already route-0-reduced problem. -/
 def ratConcreteProposal {n : Nat}
     (cmp : Mono n → Mono n → Ordering) [IsMonomialOrder cmp]
     (cfg : GcdConfig) (f h : MvPoly n Rat cmp) : GcdProposal n Rat cmp :=
-  match structuralCert? f h with
-  | some cert => ⟨some cert, cfg.rand⟩
+  let lifted := ratIntegerLiftCert? cfg f h
+  match lifted.cert? with
+  | some _ => lifted
   | none =>
-      match structuralReduction? f h with
-      | none => ⟨none, cfg.rand⟩
-      | some reduced =>
-          let lifted := ratIntegerLiftCert? cfg reduced.left reduced.right
-          match lifted.cert? with
-          | some cert => ⟨restoreStructural? f h reduced cert, lifted.rand⟩
-          | none =>
-              let nextCfg := { cfg with rand := lifted.rand }
-              let cert? := ratBrownCert? nextCfg reduced.left reduced.right
-              ⟨cert?.bind (restoreStructural? f h reduced), lifted.rand⟩
+      let nextCfg := { cfg with rand := lifted.rand }
+      ⟨ratBrownCert? nextCfg f h, lifted.rand⟩
 
 /-- Dense Brown route over an already-prime coefficient field. -/
 def primeFieldBrownCert? {n p : Nat} [hp : ZMod64.Bounds p]
@@ -769,7 +756,8 @@ def primeFieldBrownCert? {n p : Nat} [hp : ZMod64.Bounds p]
     ZMod64.ofNat p point
   brownFieldCert? cfg.brownPointFuel points f h
 
-/-- Routes 0--3 over a bundled prime field. -/
+/-- Routes 1 and 3 over a bundled prime field on an already route-0-reduced
+problem. -/
 def primeConcreteProposal {n p : Nat} [hp : ZMod64.Bounds p]
     [ZMod64.PrimeModulus p]
     (cmp : Mono n → Mono n → Ordering) [IsMonomialOrder cmp]
@@ -778,12 +766,7 @@ def primeConcreteProposal {n p : Nat} [hp : ZMod64.Bounds p]
   let earlier := primeFastProposal cmp cfg f h
   match earlier.cert? with
   | some _ => earlier
-  | none =>
-      match structuralReduction? f h with
-      | none => ⟨none, earlier.rand⟩
-      | some reduced =>
-          let cert? := primeFieldBrownCert? cfg reduced.left reduced.right
-          ⟨cert?.bind (restoreStructural? f h reduced), earlier.rand⟩
+  | none => ⟨primeFieldBrownCert? cfg f h, earlier.rand⟩
 
 instance ratProducer : GcdProducer Rat where
   propose := fun cmp _ cfg f h => ratConcreteProposal cmp cfg f h
