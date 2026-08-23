@@ -4,17 +4,22 @@ Where the build cache lives, who owns it, and which knob feeds which workflow.
 
 ## Cloudflare account
 
+This table records the required destination. During the 2026 account migration,
+the live cache and repository variables remain on the older personal account
+until the destination copy has passed verification and both the upload and
+newly allocated `r2.dev` endpoints are changed together.
+
 | | |
 |---|---|
-| Account | `kim@lean-fro.org` |
-| Account ID | `d789bf36d237e0cb313be59b927c82bd` |
-| Dashboard | https://dash.cloudflare.com/d789bf36d237e0cb313be59b927c82bd |
+| Account | `hex` (accessible to `kim@lean-fro.org`) |
+| Account ID | `5acf032f740d48aa656788e28cabcf2e` |
+| Dashboard | https://dash.cloudflare.com/5acf032f740d48aa656788e28cabcf2e |
 | R2 bucket | `hex-cache` |
 
 The account ID is not a secret: it is the subdomain of the S3 endpoint below. If the dashboard
 link 404s, the login you used is not a member of that account.
 
-The account holds other buckets unrelated to this project. Only `hex-cache` is ours.
+This account is the Hex boundary. It should contain no TauCeti or Palomar resources.
 
 ## Endpoints
 
@@ -25,8 +30,8 @@ to sign them, so the read host must be public; only uploads use a key.
 |---|---|---|
 | `LAKE_CACHE_ARTIFACT_ENDPOINT_PUBLIC` | `https://pub-b2d516317e7041aebd324550ac6cd1fa.r2.dev/artifacts` | `ci.yml` read |
 | `LAKE_CACHE_REVISION_ENDPOINT_PUBLIC` | `https://pub-b2d516317e7041aebd324550ac6cd1fa.r2.dev/revisions` | `ci.yml` read |
-| `LAKE_CACHE_ARTIFACT_ENDPOINT` | `https://d789bf36….r2.cloudflarestorage.com/hex-cache/artifacts` | `ci.yml` upload |
-| `LAKE_CACHE_REVISION_ENDPOINT` | `https://d789bf36….r2.cloudflarestorage.com/hex-cache/revisions` | `ci.yml` upload |
+| `LAKE_CACHE_ARTIFACT_ENDPOINT` | `https://5acf032f740d48aa656788e28cabcf2e.r2.cloudflarestorage.com/hex-cache/artifacts` | `ci.yml` upload |
+| `LAKE_CACHE_REVISION_ENDPOINT` | `https://5acf032f740d48aa656788e28cabcf2e.r2.cloudflarestorage.com/hex-cache/revisions` | `ci.yml` upload |
 | `LAKE_CACHE_KEY` (secret) | `<ACCESS_KEY_ID>:<SECRET>`, read-write | `ci.yml` upload only |
 
 Lake service names: `hex-public` for reads, `hex-r2` for uploads.
