@@ -32,6 +32,9 @@ namespace Hex.MvHensel.UniTests
 open Hex
 open scoped Hex
 
+#check UniSymCanonical.eq_of_congr
+#check solveUni_eq
+
 def x : ZPoly := DensePoly.ofCoeffs #[0, 1]
 def xPlusOne : ZPoly := DensePoly.ofCoeffs #[1, 1]
 def xPlusTwo : ZPoly := DensePoly.ofCoeffs #[2, 1]
