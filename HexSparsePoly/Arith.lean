@@ -395,6 +395,7 @@ def ofCanonicalList (l : List (Nat × R))
     ⟨by simpa using hs,
      fun t ht => hnz t (by simpa using Array.mem_def.mp ht)⟩
 
+/-- Packaging a canonical term list keeps its list coefficients. -/
 @[simp] theorem coeff_ofCanonicalList (l : List (Nat × R))
     (hs : l.Pairwise (fun a b => a.1 < b.1)) (hnz : ∀ t ∈ l, t.2 ≠ 0)
     (e : Nat) : (ofCanonicalList l hs hnz).coeff e = coeffList l e := by
@@ -530,6 +531,7 @@ theorem coeff_add' [Add R] (h00 : (0 : R) + 0 = 0)
   rw [h]
   rfl
 
+/-- Grind-classes form of `coeff_add'`: addition is coefficientwise. -/
 @[simp, grind =] theorem coeff_add {S : Type u} [Lean.Grind.Semiring S]
     [DecidableEq S] (s t : SparsePoly S) (e : Nat) :
     (s + t).coeff e = s.coeff e + t.coeff e :=
@@ -559,6 +561,7 @@ theorem coeff_sub' [Sub R] (h00 : (0 : R) - 0 = 0)
   rw [h]
   rfl
 
+/-- Grind-classes form of `coeff_sub'`: subtraction is coefficientwise. -/
 @[simp, grind =] theorem coeff_sub {S : Type u} [Lean.Grind.Ring S]
     [DecidableEq S] (s t : SparsePoly S) (e : Nat) :
     (s - t).coeff e = s.coeff e - t.coeff e :=
@@ -586,6 +589,7 @@ theorem coeff_neg' [Sub R] (h00 : (0 : R) - 0 = 0) (s : SparsePoly R)
   exact coeffList_mapTerms_apply (g := id) s.pairwise_toList
     (fun u _ h => h) h00
 
+/-- Grind-classes form of `coeff_neg'`: negation is coefficientwise. -/
 @[simp, grind =] theorem coeff_neg {S : Type u} [Lean.Grind.Ring S]
     [DecidableEq S] (s : SparsePoly S) (e : Nat) :
     (-s).coeff e = 0 - s.coeff e :=
@@ -608,6 +612,7 @@ theorem coeff_scale' [Mul R] (hc0 : ∀ c : R, c * 0 = 0) (c : R)
   exact coeffList_mapTerms_apply (g := id) s.pairwise_toList
     (fun u _ h => h) (hc0 c)
 
+/-- Grind-classes form of `coeff_scale'`: scaling multiplies each coefficient. -/
 @[simp, grind =] theorem coeff_scale {S : Type u} [Lean.Grind.Semiring S]
     [DecidableEq S] (c : S) (s : SparsePoly S) (e : Nat) :
     (scale c s).coeff e = c * s.coeff e :=
@@ -644,6 +649,7 @@ theorem coeff_mulMonomial' [Mul R] (hc0 : ∀ c : R, c * 0 = 0)
   · rw [if_neg hef]
     exact coeffList_mapTerms_of_ne fun u _ h => by omega
 
+/-- Grind-classes form of `coeff_mulMonomial'`: a monomial multiple shifts and scales the coefficients. -/
 @[simp, grind =] theorem coeff_mulMonomial {S : Type u}
     [Lean.Grind.Semiring S] [DecidableEq S] (s : SparsePoly S) (e : Nat)
     (c : S) (f : Nat) :
@@ -821,6 +827,7 @@ convention. -/
 instance [Add R] [Mul R] : Dvd (SparsePoly R) where
   dvd p q := ∃ r, q = p * r
 
+/-- Divisibility unfolds to a cofactor witness. -/
 theorem dvd_def [Add R] [Mul R] (p q : SparsePoly R) :
     p ∣ q ↔ ∃ r, q = p * r :=
   Iff.rfl
@@ -829,24 +836,28 @@ section Laws
 
 variable {S : Type u} [Lean.Grind.Semiring S] [DecidableEq S]
 
+/-- Addition is commutative. -/
 theorem add_comm (s t : SparsePoly S) : s + t = t + s := by
   apply ext_coeff
   intro e
   simp only [coeff_add]
   grind
 
+/-- Addition is associative. -/
 theorem add_assoc (s t u : SparsePoly S) : s + t + u = s + (t + u) := by
   apply ext_coeff
   intro e
   simp only [coeff_add]
   grind
 
+/-- Zero is a right identity for addition. -/
 @[simp, grind =] theorem add_zero (s : SparsePoly S) : s + 0 = s := by
   apply ext_coeff
   intro e
   simp only [coeff_add, coeff_zero]
   grind
 
+/-- Zero is a left identity for addition. -/
 @[simp, grind =] theorem zero_add (s : SparsePoly S) : 0 + s = s := by
   apply ext_coeff
   intro e

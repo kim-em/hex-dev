@@ -71,6 +71,7 @@ theorem foldl_max_le {l : List (Nat × R)} {n : Nat}
       exact Nat.max_le.mpr ⟨h0, h a (List.mem_cons_self ..)⟩
 
 omit [DecidableEq R] in
+omit [Zero R] in
 /-- Writing a term list into an array does not change its size. -/
 theorem size_foldl_set (l : List (Nat × R)) (base : Array R) :
     (l.foldl (fun acc t => acc.setIfInBounds t.1 t.2) base).size =
@@ -79,6 +80,7 @@ theorem size_foldl_set (l : List (Nat × R)) (base : Array R) :
   | nil => rfl
   | cons a as ih => rw [List.foldl_cons, ih, Array.size_setIfInBounds]
 
+omit [DecidableEq R] in
 /-- Writing a sorted, in-bounds term list into an array puts each
 coefficient at its exponent and touches nothing else. -/
 theorem getD_foldl_set {l : List (Nat × R)}
@@ -344,12 +346,14 @@ theorem ofDense_eq_impl : @ofDense = @ofDenseImpl := by
   exact DensePoly.toList_getD_eq_coeff p e
 
 omit [DecidableEq R] in
+omit [Zero R] in
 /-- `getD` on an array agrees with `getD` on its list. -/
 theorem toList_getD (a : Array R) (i : Nat) (d : R) :
     a.toList.getD i d = a.getD i d := by
   rw [Array.getD_eq_getD_getElem?, List.getD_eq_getElem?_getD,
     Array.getElem?_toList]
 
+omit [DecidableEq R] in
 /-- The dense image of a sorted term array stores exactly its
 coefficients. -/
 theorem getD_coeffsOfTerms {ts : Array (Nat × R)}
@@ -481,6 +485,7 @@ theorem toDense_inj {s t : SparsePoly R} (h : s.toDense = t.toDense) :
     s = t := by
   rw [← ofDense_toDense s, ← ofDense_toDense t, h]
 
+/-- The conversion sends zero to zero. -/
 @[simp, grind =] theorem toDense_zero :
     (0 : SparsePoly R).toDense = 0 := by
   apply DensePoly.ext_coeff
@@ -488,6 +493,7 @@ theorem toDense_inj {s t : SparsePoly R} (h : s.toDense = t.toDense) :
   rw [coeff_toDense, coeff_zero]
   exact (DensePoly.coeff_eq_zero_of_size_le 0 (by simp)).symm
 
+/-- The conversion sends one to one. -/
 @[simp, grind =] theorem toDense_one [One R] :
     (1 : SparsePoly R).toDense = 1 := by
   apply DensePoly.ext_coeff
@@ -497,6 +503,7 @@ theorem toDense_inj {s t : SparsePoly R} (h : s.toDense = t.toDense) :
   rw [coeff_one, DensePoly.coeff_C]
   rfl
 
+/-- The conversion sends monomials to dense monomials. -/
 @[simp, grind =] theorem toDense_monomial (e : Nat) (c : R) :
     (monomial e c).toDense = DensePoly.monomial e c := by
   apply DensePoly.ext_coeff
@@ -504,6 +511,7 @@ theorem toDense_inj {s t : SparsePoly R} (h : s.toDense = t.toDense) :
   rw [coeff_toDense, coeff_monomial, DensePoly.coeff_monomial]
   rfl
 
+/-- The conversion is additive. -/
 theorem toDense_add {S : Type u} [Lean.Grind.Semiring S] [DecidableEq S]
     (s t : SparsePoly S) : (s + t).toDense = s.toDense + t.toDense := by
   apply DensePoly.ext_coeff
@@ -511,6 +519,7 @@ theorem toDense_add {S : Type u} [Lean.Grind.Semiring S] [DecidableEq S]
   rw [coeff_toDense, coeff_add,
     DensePoly.coeff_add _ _ _ (by grind), coeff_toDense, coeff_toDense]
 
+/-- The conversion commutes with negation. -/
 theorem toDense_neg {S : Type u} [Lean.Grind.Ring S] [DecidableEq S]
     (s : SparsePoly S) : (-s).toDense = -s.toDense := by
   apply DensePoly.ext_coeff
@@ -523,12 +532,14 @@ theorem toDense_neg {S : Type u} [Lean.Grind.Ring S] [DecidableEq S]
   rw [show (0 : DensePoly S).coeff e = 0 from
     DensePoly.coeff_eq_zero_of_size_le 0 (by simp)]
 
+/-- The reverse conversion sends zero to zero. -/
 theorem ofDense_zero : ofDense (0 : DensePoly R) = 0 := by
   apply ext_coeff
   intro e
   rw [coeff_ofDense, coeff_zero]
   exact DensePoly.coeff_eq_zero_of_size_le 0 (by simp)
 
+/-- The reverse conversion sends one to one. -/
 theorem ofDense_one [One R] : ofDense (1 : DensePoly R) = 1 := by
   apply ext_coeff
   intro e
@@ -537,6 +548,7 @@ theorem ofDense_one [One R] : ofDense (1 : DensePoly R) = 1 := by
   rw [DensePoly.coeff_C]
   rfl
 
+/-- The reverse conversion is additive. -/
 theorem ofDense_add {S : Type u} [Lean.Grind.Semiring S] [DecidableEq S]
     (p q : DensePoly S) : ofDense (p + q) = ofDense p + ofDense q := by
   apply ext_coeff
@@ -544,6 +556,7 @@ theorem ofDense_add {S : Type u} [Lean.Grind.Semiring S] [DecidableEq S]
   rw [coeff_ofDense, coeff_add, DensePoly.coeff_add _ _ _ (by grind),
     coeff_ofDense, coeff_ofDense]
 
+/-- The reverse conversion commutes with negation. -/
 theorem ofDense_neg {S : Type u} [Lean.Grind.Ring S] [DecidableEq S]
     (p : DensePoly S) : ofDense (-p) = -(ofDense p) := by
   apply ext_coeff
@@ -559,10 +572,12 @@ section MulSemiring
 
 variable {S : Type u} [Lean.Grind.Semiring S] [DecidableEq S]
 
+omit [DecidableEq S] in
 private theorem zero_add_zero : (Zero.zero : S) + Zero.zero = Zero.zero := by
   show (0 : S) + 0 = 0
   grind
 
+/-- Fold congruence pointwise on the folded function and initial value. -/
 theorem foldl_congr' {α β : Type _} {l : List α} {f g : β → α → β}
     {i j : β} (hij : i = j) (hfg : ∀ b : β, ∀ a ∈ l, f b a = g b a) :
     l.foldl f i = l.foldl g j := by
@@ -605,6 +620,7 @@ private theorem dense_coeff_foldl_add {α : Type _} (l : List α)
       simp only [List.foldl_cons]
       rw [ih, DensePoly.coeff_add _ _ _ zero_add_zero]
 
+omit [DecidableEq S] in
 /-- One block of the pairwise product, folded at a target exponent: at
 most one product of a term of `s` with the sorted terms of `t` lands on
 any exponent, and its value is the {name}`mulMonomial` coefficient. -/
@@ -792,50 +808,59 @@ theorem coeff_mul (s t : SparsePoly S) (n : Nat) :
 {name}`toDense`. The dense side proves them at `Lean.Grind.CommRing`,
 so that is where they live here too. -/
 
+/-- Multiplication is associative. -/
 theorem mul_assoc (s t u : SparsePoly S) : s * t * u = s * (t * u) := by
   apply toDense_inj
   rw [toDense_mul, toDense_mul, toDense_mul, toDense_mul]
   exact DensePoly.mul_assoc_poly _ _ _
 
+/-- Multiplication is commutative. -/
 theorem mul_comm (s t : SparsePoly S) : s * t = t * s := by
   apply toDense_inj
   rw [toDense_mul, toDense_mul]
   exact DensePoly.mul_comm_poly _ _
 
+/-- One is a right identity for multiplication. -/
 @[simp, grind =] theorem mul_one (s : SparsePoly S) :
     s * 1 = s := by
   apply toDense_inj
   rw [toDense_mul, toDense_one]
   exact DensePoly.mul_one_right_poly _
 
+/-- One is a left identity for multiplication. -/
 @[simp, grind =] theorem one_mul (s : SparsePoly S) :
     1 * s = s := by
   rw [mul_comm]
   exact mul_one s
 
+/-- Zero absorbs on the right of multiplication. -/
 @[simp, grind =] theorem mul_zero (s : SparsePoly S) : s * 0 = 0 := by
   apply toDense_inj
   rw [toDense_mul, toDense_zero]
   rw [DensePoly.mul_comm_poly]
   exact DensePoly.zero_mul _
 
+/-- Zero absorbs on the left of multiplication. -/
 @[simp, grind =] theorem zero_mul (s : SparsePoly S) : 0 * s = 0 := by
   apply toDense_inj
   rw [toDense_mul, toDense_zero]
   exact DensePoly.zero_mul _
 
+/-- Multiplication distributes over addition on the left. -/
 theorem left_distrib (s t u : SparsePoly S) :
     s * (t + u) = s * t + s * u := by
   apply toDense_inj
   rw [toDense_mul, toDense_add, toDense_add, toDense_mul, toDense_mul]
   exact DensePoly.mul_add_right_poly _ _ _
 
+/-- Multiplication distributes over addition on the right. -/
 theorem right_distrib (s t u : SparsePoly S) :
     (s + t) * u = s * u + t * u := by
   apply toDense_inj
   rw [toDense_mul, toDense_add, toDense_add, toDense_mul, toDense_mul]
   exact DensePoly.mul_add_left_poly _ _ _
 
+/-- The zeroth power is one. -/
 @[simp, grind =] theorem pow_zero (s : SparsePoly S) : s ^ 0 = 1 := by
   show pow s 0 = 1
   rw [pow, dif_pos rfl]
@@ -1024,6 +1049,7 @@ where the degree is. -/
       congr 1
       omega
 
+/-- The leading coefficient transports through the dense conversion. -/
 @[simp, grind =] theorem leadingCoeff_toDense (s : SparsePoly R) :
     s.toDense.leadingCoeff = s.leadingCoeff := by
   cases hback : s.terms.back? with
@@ -1055,6 +1081,7 @@ def Monic [One R] (s : SparsePoly R) : Prop :=
 instance [One R] (s : SparsePoly R) : Decidable s.Monic :=
   inferInstanceAs (Decidable (s.leadingCoeff = 1))
 
+/-- Monicity transports through the dense conversion. -/
 @[simp] theorem monic_toDense [One R] (s : SparsePoly R) :
     s.toDense.Monic ↔ s.Monic := by
   unfold DensePoly.Monic Monic
