@@ -4,23 +4,26 @@
 
 - Updated the cache ownership documentation to name the dedicated Hex
   Cloudflare account and destination S3 endpoint.
-- Made the staged state explicit: the live bucket, public `r2.dev` hostname and
-  GitHub variables remain unchanged until the destination copy is verified.
+- Switched both public-read and S3 upload endpoints to the dedicated Hex
+  account, together with a non-expiring account-owned credential restricted to
+  objects in `hex-cache`.
 
 ## Current frontier
 
-R2 is enabled in the destination Hex account. The `hex-cache` bucket was copied
-there in ENAM on 2026-08-23: all 21,508 objects and 7,416,377,295 bytes matched
-the source by key, size and available checksum. Representative artifact and
-revision downloads from the new `r2.dev` hostname also matched the source
-byte-for-byte. Live repository variables and the upload credential still point
-to the source account pending the coordinated cutover.
+The final incremental copy followed a successful trusted main publication on
+2026-08-23. Source and destination then matched at 21,509 objects and
+7,416,429,539 bytes, with zero differences in the recursive comparison. The
+repository variables now use account `5acf032f740d48aa656788e28cabcf2e`
+and public host `pub-1ad7cebeb89e49d5afe6887b57e7956a.r2.dev`; the upload
+secret was rotated in the same maintenance window. The source bucket remains
+temporarily intact for acceptance only and is no longer an endpoint.
 
 ## Next step
 
-Pause cache publication, make a final incremental copy, then rotate the upload
-key and both endpoint variable pairs in one cutover.
+Let this pull request's unprivileged build prove reads from the destination,
+then let its trusted post-merge build prove publication with the new key. Delete
+the source bucket only after both checks succeed.
 
 ## Blockers
 
-None before the coordinated cache cutover.
+None.
