@@ -68,14 +68,16 @@ def equiv [CommRing R] [DecidableEq R] :
   denseEquiv.trans HexPolyMathlib.equiv
 
 /-- The ring isomorphism {name}`equiv` is computed by converting to the
-dense representation and reading it as a Mathlib polynomial. -/
-@[simp, grind =]
+dense representation and reading it as a Mathlib polynomial. Not `simp`:
+the correspondence lemmas below are keyed on `equiv s` directly, and
+unfolding first would preempt them. -/
+@[grind =]
 theorem equiv_apply [CommRing R] [DecidableEq R] (s : Hex.SparsePoly R) :
     equiv s = HexPolyMathlib.toPolynomial s.toDense := rfl
 
 /-- The inverse of {name}`equiv` rebuilds the dense representation and
 converts it to canonical sparse form. -/
-@[simp, grind =]
+@[grind =]
 theorem equiv_symm_apply [CommRing R] [DecidableEq R] (p : Polynomial R) :
     equiv.symm p = Hex.SparsePoly.ofDense (HexPolyMathlib.ofPolynomial p) :=
   rfl
@@ -101,42 +103,12 @@ theorem equiv_support [CommRing R] [DecidableEq R] (s : Hex.SparsePoly R) :
   rw [Polynomial.mem_support_iff, coeff_equiv, List.mem_toFinset]
   exact (Hex.SparsePoly.mem_support_iff s e).symm
 
-/-- Horner list evaluation as a range sum, the shape Mathlib's
-`Polynomial.eval` lemmas produce. -/
-private theorem evalCoeffList_eq_sum [Semiring R] (l : List R) (x : R) :
-    Hex.DensePoly.evalCoeffList l x
-      = ∑ i ∈ Finset.range l.length, l.getD i 0 * x ^ i := by
-  induction l with
-  | nil =>
-      rw [show Hex.DensePoly.evalCoeffList ([] : List R) x = (0 : R)
-        from rfl]
-      simp
-  | cons c cs ih =>
-      rw [show Hex.DensePoly.evalCoeffList (c :: cs) x
-          = Hex.DensePoly.evalCoeffList cs x * x + c from rfl, ih,
-        List.length_cons, Finset.sum_range_succ', Finset.sum_mul]
-      simp [pow_succ, mul_assoc]
-
-/-- Mathlib evaluation of a converted dense polynomial is the
-executable dense Horner evaluation. -/
-theorem eval_toPolynomial [Semiring R] [DecidableEq R]
-    (p : Hex.DensePoly R) (x : R) :
-    (HexPolyMathlib.toPolynomial p).eval x = p.eval x := by
-  show (∑ i ∈ Finset.range p.size,
-    Polynomial.monomial i (p.coeff i)).eval x
-      = Hex.DensePoly.evalCoeffList p.toList x
-  rw [Polynomial.eval_finsetSum, evalCoeffList_eq_sum,
-    Hex.DensePoly.length_toList]
-  refine Finset.sum_congr rfl fun i _ => ?_
-  rw [Polynomial.eval_monomial]
-  exact congrArg (· * x ^ i) (Hex.DensePoly.toList_getD_eq_coeff p i).symm
-
 /-- Evaluation corresponds: Mathlib evaluation of the image is the
 executable gap-Horner evaluation. -/
 @[simp, grind =]
 theorem equiv_eval [CommRing R] [DecidableEq R]
     (s : Hex.SparsePoly R) (x : R) : (equiv s).eval x = s.eval x := by
-  rw [equiv_apply, eval_toPolynomial]
+  rw [equiv_apply, HexPolyMathlib.eval_toPolynomial]
   exact (Hex.SparsePoly.eval_toDense s x).symm
 
 /-- Differentiation corresponds: Mathlib's derivative of the image is
@@ -162,6 +134,50 @@ theorem equiv_substPow [CommRing R] [DecidableEq R]
   rw [equiv_apply, equiv_apply, Hex.SparsePoly.substPow_toDense,
     HexPolyMathlib.toPolynomial_compose,
     HexPolyMathlib.toPolynomial_monomial, Polynomial.X_pow_eq_monomial]
+
+/-- Monomials correspond. -/
+@[simp, grind =]
+theorem equiv_monomial [CommRing R] [DecidableEq R] (e : Nat) (c : R) :
+    equiv (Hex.SparsePoly.monomial e c) = Polynomial.monomial e c := by
+  rw [equiv_apply, Hex.SparsePoly.toDense_monomial,
+    HexPolyMathlib.toPolynomial_monomial]
+
+/-- Constants correspond. -/
+@[simp, grind =]
+theorem equiv_C [CommRing R] [DecidableEq R] (c : R) :
+    equiv (Hex.SparsePoly.C c) = Polynomial.C c := by
+  rw [equiv_apply, Hex.SparsePoly.toDense_C, HexPolyMathlib.toPolynomial_C]
+
+/-- The variable corresponds. -/
+@[simp, grind =]
+theorem equiv_X [CommRing R] [DecidableEq R] :
+    equiv (Hex.SparsePoly.X : Hex.SparsePoly R) = Polynomial.X := by
+  rw [show (Hex.SparsePoly.X : Hex.SparsePoly R)
+      = Hex.SparsePoly.monomial 1 1 from rfl, equiv_monomial,
+    Polynomial.monomial_one_one_eq_X]
+
+/-- The executable degree corresponds to Mathlib's `natDegree`, with
+the zero polynomial mapping to `0`. -/
+@[simp, grind =]
+theorem equiv_natDegree [CommRing R] [DecidableEq R]
+    (s : Hex.SparsePoly R) :
+    (equiv s).natDegree = s.degree?.getD 0 := by
+  rw [equiv_apply, HexPolyMathlib.natDegree_toPolynomial,
+    Hex.SparsePoly.degree?_toDense]
+
+/-- The leading coefficient corresponds. -/
+@[simp, grind =]
+theorem equiv_leadingCoeff [CommRing R] [DecidableEq R]
+    (s : Hex.SparsePoly R) :
+    (equiv s).leadingCoeff = s.leadingCoeff := by
+  rw [equiv_apply, HexPolyMathlib.leadingCoeff_toPolynomial,
+    Hex.SparsePoly.leadingCoeff_toDense]
+
+/-- Monicity corresponds. -/
+theorem equiv_monic [CommRing R] [DecidableEq R] (s : Hex.SparsePoly R) :
+    (equiv s).Monic ↔ s.Monic := by
+  rw [Polynomial.Monic, equiv_leadingCoeff]
+  exact Iff.rfl
 
 end
 

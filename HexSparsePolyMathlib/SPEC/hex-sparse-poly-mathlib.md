@@ -17,7 +17,13 @@ The layer owns correspondence only:
   `denseEquiv.trans HexPolyMathlib.equiv`;
 - one correspondence lemma per public core operation: `coeff_equiv`,
   `equiv_toDense`, `equiv_support`, `equiv_eval`, `equiv_derivative`,
-  `equiv_compose`, and `equiv_substPow`.
+  `equiv_compose`, `equiv_substPow`, `equiv_monomial`, `equiv_C`,
+  `equiv_X`, `equiv_natDegree`, `equiv_leadingCoeff`, and
+  `equiv_monic`. Ring-structural images (zero, one, addition,
+  multiplication, negation, powers, divisibility) are free from the
+  `RingEquiv` via `map_*` and are deliberately not restated.
+  `substScale` transport is scheduled: it needs a core
+  `substScale_toDense` first.
 
 Following the project split, no theorem about `SparsePoly` itself
 belongs here: representation facts (including `mem_support_iff`, which
