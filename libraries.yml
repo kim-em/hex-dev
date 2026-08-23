@@ -219,7 +219,7 @@ libraries:
   HexModular:
     deps: [HexArith]
     mathlib: false
-    done_through: 1
+    done_through: 2
     status: active
   HexGramSchmidt:
     deps: [HexRowReduce, HexDeterminant, HexBareiss]
@@ -623,7 +623,7 @@ libraries:
   HexMvFactor:
     deps: [HexBasic, HexMvPoly, HexMvGcd, HexMvHensel, HexPoly, HexPolyZ, HexPolyZGcd, HexBerlekampZassenhaus, HexPolyFp, HexModArith, HexModular, HexArith]
     mathlib: false
-    done_through: 1
+    done_through: 2
     status: active
   HexInterval:
     deps: []

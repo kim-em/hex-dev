@@ -15,7 +15,6 @@ public import HexPolyZGcd.Prs
 public import HexPolyZGcd.Gcd
 public import HexPolyZGcd.Maximal
 public import HexPolyZGcd.SquareFree
-public import HexPolyZGcd.Kernel
 
 public section
 

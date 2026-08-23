@@ -12,7 +12,6 @@ public import HexMvGcd.View
 public import HexMvGcd.Normalize
 public import HexMvGcd.Instances
 public import HexMvGcd.Gauss
-public import HexMvGcd.KernelTests
 public import HexMvGcd.Cert
 public import HexMvGcd.Content
 public import HexMvGcd.Prs
@@ -21,9 +20,6 @@ public import HexMvGcd.Heu
 public import HexMvGcd.Brown
 public import HexMvGcd.Gcd
 public import HexMvGcd.Squarefree
-public import HexMvGcd.SquarefreeTests
-public import HexMvGcd.Kernel
-public import HexMvGcd.Eval
 
 public section
 
