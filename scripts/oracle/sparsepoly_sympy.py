@@ -76,7 +76,11 @@ def _element(R, record: dict[str, Any]):
 
 def _wire_coefficient(record: dict[str, Any], coefficient) -> list[int]:
     if record["domain"] == "rat":
-        rational = Fraction(coefficient.numerator, coefficient.denominator)
+        # `int(...)` because with python-flint installed SymPy's QQ ground
+        # type is flint's `fmpq`, whose numerator/denominator are `fmpz`,
+        # not `numbers.Rational`, and `Fraction` rejects those.
+        rational = Fraction(int(coefficient.numerator),
+                            int(coefficient.denominator))
         return [rational.numerator, rational.denominator]
     if record["domain"] == "zmod":
         return [int(coefficient) % record["mod"], 1]
