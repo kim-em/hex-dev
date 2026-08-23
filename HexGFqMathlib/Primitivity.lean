@@ -131,6 +131,7 @@ theorem ofPolyHom_eq_one_iff {y : Hex.FpPoly p}
     subst h
     exact map_one _
 
+set_option maxHeartbeats 400000 in
 /-- The Horner power returns a reduced representative on a nonempty digit
 list: its last step is a reduction. -/
 theorem reduceMod_digitPowMod (hm : Hex.DensePoly.Monic f) (q : Nat)

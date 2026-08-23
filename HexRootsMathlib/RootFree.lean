@@ -316,7 +316,6 @@ private theorem rootFreeLoop_ne_zero {p : Hex.ZPoly} {s : Hex.DyadicSquare}
   let R := Dyadic.toReal Hex.softSqrt2Hi
   have hrlo : 0 ≤ Dyadic.toReal Hex.softSqrt2Lo := by
     simp [Hex.softSqrt2Lo, Dyadic.toReal_ofIntWithPrec]
-    positivity
   have hlo : Dyadic.toReal Hex.softSqrt2Lo ≤ R := by
     change Dyadic.toReal Hex.sqrt2Lo ≤ Dyadic.toReal Hex.sqrt2Hi
     exact sqrt2Lo_lt_sqrt_two.le.trans sqrt_two_lt_sqrt2Hi.le

@@ -12,13 +12,13 @@ package Hex where
   leanOptions := #[⟨`doc.verso, true⟩, ⟨`doc.verso.suggestions, false⟩]
 
 require verso from git
-  "https://github.com/leanprover/verso.git" @ "v4.33.0-rc1"
+  "https://github.com/leanprover/verso.git" @ "v4.34.0-rc2"
 
 require «lean-bench» from git
   "https://github.com/kim-em/lean-bench.git" @ "master"
 
 require mathlib from git
-  "https://github.com/leanprover-community/mathlib4.git" @ "v4.33.0-rc1"
+  "https://github.com/leanprover-community/mathlib4.git" @ "v4.34.0-rc2"
 
 private def clmulOTarget (pkg : Package) : FetchM (Job FilePath) := do
   let oFile := pkg.dir / defaultBuildDir / "HexGF2" / "ffi" / "clmul.o"
