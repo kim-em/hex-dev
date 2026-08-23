@@ -6,6 +6,7 @@ Authors: Kim Morrison
 
 module
 
+public meta import HexBasic.Rand
 public import HexBasic.Rand
 public import HexMvGcd.Prs
 
@@ -35,6 +36,23 @@ for only `fuel` entries would instead select the largest primes in it. -/
 def smallPrimeSupply (bound fuel : Nat) : List ZMod64.Prime :=
   (ZMod64.primesBelow bound bound).toList.reverse.take fuel
 
+/-- State carried by a failed bounded draw.  `zeroBound` consumes nothing;
+rejection exhaustion reports the already-advanced state. -/
+def randErrorState (initial : Rand) : RandError → Rand
+  | .zeroBound => initial
+  | .exhausted _ advanced => advanced
+
+/-- Draw one separately sampled field element for each coordinate.  Every
+coordinate performs its own bounded rejection-sampling call and the returned
+state is threaded into the next draw. -/
+def samplePoints {p : Nat} [ZMod64.Bounds p] (sampleFuel : Nat) :
+    (n : Nat) → Rand → Except RandError ((Fin n → ZMod64 p) × Rand)
+  | 0, rand => .ok (Fin.elim0, rand)
+  | n + 1, rand => do
+      let (value, rand') ← rand.nat p sampleFuel
+      let (rest, rand'') ← samplePoints sampleFuel n rand'
+      .ok (Fin.cases (ZMod64.ofNat p value) rest, rand'')
+
 structure GcdRun (n : Nat) (R : Type u) [Zero R]
     (cmp : Mono n → Mono n → Ordering)
     [Std.TransCmp cmp] [Std.LawfulEqCmp cmp] where
@@ -48,6 +66,10 @@ structure GcdProposal (n : Nat) (R : Type u) [Zero R]
   cert? : Option (GcdCert n R cmp)
   rand : Rand
 
+/-- Coefficient-specific routes after the public dispatcher has removed the
+mandatory route-0 factor.  Implementations must treat their two polynomial
+arguments as the already-reduced problem and must not repeat structural
+reduction. -/
 class GcdProducer (R : Type u) [Zero R] where
   propose : {n : Nat} → (cmp : Mono n → Mono n → Ordering) →
     [IsMonomialOrder cmp] → GcdConfig →
@@ -118,6 +140,44 @@ def restoreStructural? {n : Nat} {R : Type u}
     cert.cofL cert.cofR cert.coprime
   if checkGcd f h restored then some restored else none
 
+/-- Complete checked dispatch. Route 0 is computed once before coefficient
+dispatch. Proposals affect performance and random state, but rejection always
+falls through to route 4 on the reduced problem and is reconstructed through
+the same checker gate.  This plumbing lives below the concrete producers so
+one coefficient backend can invoke another without creating an import cycle. -/
+def gcdCertWith (cfg : GcdConfig)
+    {n : Nat} {R : Type u} {cmp : Mono n → Mono n → Ordering}
+    [IsMonomialOrder cmp]
+    [Lean.Grind.CommRing R] [DecidableEq R] [BEq R] [LawfulBEq R]
+    [Dvd R] [BezoutOps R] [LawfulGcdOps R] [LawfulBezoutOps R]
+    [GcdProducer R]
+    (f h : MvPoly n R cmp) : GcdRun n R cmp :=
+  match structuralCert? f h with
+  | some cert =>
+      if checkGcd f h cert then ⟨cert, cfg.rand⟩
+      else ⟨prsCert f h, cfg.rand⟩
+  | none =>
+      match structuralReduction? f h with
+      | none => ⟨prsCert f h, cfg.rand⟩
+      | some reduced =>
+          -- The unreduced PRS arm is a fail-closed response to a violated
+          -- reduction/restoration invariant, not an ordinary fallback route.
+          let fallback (rand : Rand) : GcdRun n R cmp :=
+            let cert := prsCert reduced.left reduced.right
+            match restoreStructural? f h reduced cert with
+            | some restored => ⟨restored, rand⟩
+            | none => ⟨prsCert f h, rand⟩
+          let proposal := GcdProducer.propose cmp cfg reduced.left reduced.right
+          match proposal.cert? with
+          | some candidate =>
+              if checkGcd reduced.left reduced.right candidate then
+                match restoreStructural? f h reduced candidate with
+                | some restored => ⟨restored, proposal.rand⟩
+                | none => fallback proposal.rand
+              else
+                fallback proposal.rand
+          | none => fallback proposal.rand
+
 /-- Offer an arbitrary nonzero polynomial candidate to the full multivariate
 checker.  Exact division builds cofactors and route 4 supplies their
 coprimality witness; no producer may bypass this function's final replay. -/
@@ -178,39 +238,39 @@ def coprimeStep {n : Nat} {R : Type u}
     letI : ZMod64.Bounds prime.m := prime.bounds
     letI : ZMod64.PrimeModulus prime.m :=
       ZMod64.primeModulusOfPrime prime.prime
-    let next := rand.next
-    let points : Fin n → ZMod64 prime.m := fun j =>
-      ZMod64.ofNat prime.m (next.1.toNat + j.val)
-    let main : Fin (n + 1) := ⟨0, by omega⟩
-    let fView := toUnivariate main Mono.lex f
-    let hView := toUnivariate main Mono.lex h
-    let fImage := imageAtRaw prime φ.toField points main Mono.lex f
-    let hImage := imageAtRaw prime φ.toField points main Mono.lex h
-    if fImage.degree? != fView.degree? || hImage.degree? != hView.degree? then
-      (none, next.2)
-    else
-      let xg := DensePoly.xgcd fImage hImage
-      if xg.gcd.size != 1 then
-        (none, next.2)
+    match samplePoints 8 n rand with
+    | .error error => (none, randErrorState rand error)
+    | .ok (points, rand') =>
+      let main : Fin (n + 1) := ⟨0, by omega⟩
+      let fView := toUnivariate main Mono.lex f
+      let hView := toUnivariate main Mono.lex h
+      let fImage := imageAtRaw prime φ.toField points main Mono.lex f
+      let hImage := imageAtRaw prime φ.toField points main Mono.lex h
+      if fImage.degree? != fView.degree? || hImage.degree? != hView.degree? then
+        (none, rand')
       else
-        let scalar := xg.gcd.coeff 0
-        if scalar == 0 then
-          (none, next.2)
+        let xg := DensePoly.xgcd fImage hImage
+        if xg.gcd.size != 1 then
+          (none, rand')
         else
-          let alpha := DensePoly.scaleImpl scalar⁻¹ xg.left
-          let beta := DensePoly.scaleImpl scalar⁻¹ xg.right
-          let left := contentCertWith (fun a b => rawPrsCert a b)
-            fView.toArray.toList
-          let right := contentCertWith (fun a b => rawPrsCert a b)
-            hView.toArray.toList
-          let restRun := lower.tryAt Mono.lex prime φ next.2
-            left.value right.value
-          match restRun.1 with
-          | none => (none, restRun.2)
-          | some rest =>
-              let cert := CoprimeCert.split main Mono.lex prime φ points
-                alpha beta left right rest
-              (if checkCoprime f h cert then some cert else none, restRun.2)
+          let scalar := xg.gcd.coeff 0
+          if scalar == 0 then
+            (none, rand')
+          else
+            let alpha := DensePoly.scaleImpl scalar⁻¹ xg.left
+            let beta := DensePoly.scaleImpl scalar⁻¹ xg.right
+            let left := contentCertWith (fun a b => rawPrsCert a b)
+              fView.toArray.toList
+            let right := contentCertWith (fun a b => rawPrsCert a b)
+              hView.toArray.toList
+            let restRun := lower.tryAt Mono.lex prime φ rand'
+              left.value right.value
+            match restRun.1 with
+            | none => (none, restRun.2)
+            | some rest =>
+                let cert := CoprimeCert.split main Mono.lex prime φ points
+                  alpha beta left right rest
+                (if checkCoprime f h cert then some cert else none, restRun.2)
 
 /-- Construct the per-variable modular coprimality route. -/
 def coprimeOps {R : Type u}
@@ -261,19 +321,12 @@ def intTryCoprimeCert? {n : Nat}
   let supply := smallPrimeSupply 47 primeFuel
   intCoprimeLoop f h supply primeFuel rand
 
-/-- Integer routes 0--1. -/
+/-- Integer route 1 on an already route-0-reduced problem. -/
 def intFastProposal {n : Nat}
     {cmp : Mono n → Mono n → Ordering} [IsMonomialOrder cmp]
     (cfg : GcdConfig) (f h : MvPoly n Int cmp) : GcdProposal n Int cmp :=
-  match structuralCert? f h with
-  | some cert => ⟨some cert, cfg.rand⟩
-  | none =>
-      match structuralReduction? f h with
-      | none => ⟨none, cfg.rand⟩
-      | some reduced =>
-          let run := intTryCoprimeCert? cfg.brownPrimeFuel cfg.rand
-            reduced.left reduced.right
-          ⟨run.1.bind (restoreStructural? f h reduced), run.2⟩
+  let run := intTryCoprimeCert? cfg.brownPrimeFuel cfg.rand f h
+  ⟨run.1, run.2⟩
 
 /-! # Concrete finite-field coefficient homomorphisms -/
 
@@ -305,57 +358,57 @@ def fpCoeffHom {p : Nat} [hp : ZMod64.Bounds p]
       intro f h
       simpa only [← DensePoly.eval_eq_evalImpl] using FpPoly.eval_mul f h point }
 
-/-- Routes 0--1 over a fixed bounded prime field. -/
+/-- Route 1 over a fixed bounded prime field on an already route-0-reduced
+problem. -/
 def primeFastProposal {n p : Nat} [hp : ZMod64.Bounds p]
     [ZMod64.PrimeModulus p]
     (cmp : Mono n → Mono n → Ordering) [IsMonomialOrder cmp]
     (cfg : GcdConfig) (f h : MvPoly n (@ZMod64 p hp) cmp) :
     GcdProposal n (@ZMod64 p hp) cmp :=
-  match structuralCert? f h with
-  | some cert => ⟨some cert, cfg.rand⟩
-  | none =>
-      match structuralReduction? f h with
-      | none => ⟨none, cfg.rand⟩
-      | some reduced =>
-          let P : ZMod64.Prime :=
-            { m := p, bounds := hp, prime := ZMod64.PrimeModulus.prime }
-          let run := tryCoprimeCert? P primeCoeffHom cfg.rand
-            reduced.left reduced.right
-          ⟨run.1.bind (restoreStructural? f h reduced), run.2⟩
+  let P : ZMod64.Prime :=
+    { m := p, bounds := hp, prime := ZMod64.PrimeModulus.prime }
+  let run := tryCoprimeCert? P primeCoeffHom cfg.rand f h
+  ⟨run.1, run.2⟩
 
-/-- Routes 0--1 for `FpPoly` coefficients.  One random field point defines
-the total evaluation homomorphism carried by the certificate; subsequent
-draws are used for the multivariate image points. -/
+/-- Route 1 for `FpPoly` coefficients on an already route-0-reduced problem.
+One random field point defines the total evaluation homomorphism carried by
+the certificate; subsequent draws are used for the multivariate image
+points. -/
 def fpFastProposal {n p : Nat} [hp : ZMod64.Bounds p]
     [ZMod64.PrimeModulus p]
     (cmp : Mono n → Mono n → Ordering) [IsMonomialOrder cmp]
     (cfg : GcdConfig) (f h : MvPoly n (@FpPoly p hp) cmp) :
     GcdProposal n (@FpPoly p hp) cmp :=
-  match structuralCert? f h with
-  | some cert => ⟨some cert, cfg.rand⟩
-  | none =>
-      match structuralReduction? f h with
-      | none => ⟨none, cfg.rand⟩
-      | some reduced =>
-          let P : ZMod64.Prime :=
-            { m := p, bounds := hp, prime := ZMod64.PrimeModulus.prime }
-          let draw := cfg.rand.next
-          let point := ZMod64.ofNat p draw.1.toNat
-          let run := tryCoprimeCert? P (fpCoeffHom point) draw.2
-            reduced.left reduced.right
-          ⟨run.1.bind (restoreStructural? f h reduced), run.2⟩
+  let P : ZMod64.Prime :=
+    { m := p, bounds := hp, prime := ZMod64.PrimeModulus.prime }
+  match cfg.rand.nat p 8 with
+  | .error error => ⟨none, randErrorState cfg.rand error⟩
+  | .ok (value, rand') =>
+      let point := ZMod64.ofNat p value
+      let run := tryCoprimeCert? P (fpCoeffHom point) rand' f h
+      ⟨run.1, run.2⟩
 
-/-- Coefficient-generic structural proposal.  Route 1 needs an explicit
-total `CoeffHom`, so concrete coefficient backends add it after this common
-route-0 pass. -/
+/-! Sampling pins: a non-power-of-two modulus gets one bounded draw per
+coordinate, with deterministic values and exactly the corresponding advanced
+state. -/
+
+#guard
+  letI : ZMod64.Bounds 5 := ⟨by decide, by decide⟩
+  match samplePoints (p := 5) 8 3 (Rand.ofSeed 17) with
+  | .error _ => false
+  | .ok (points, rand) =>
+      [points 0 |>.toNat, points 1 |>.toNat, points 2 |>.toNat] == [4, 3, 1] &&
+        rand.state == (Rand.ofSeed 17).next.2.next.2.next.2.state
+
+/-- Coefficient-generic post-structural proposal.  Route 1 needs an explicit
+total `CoeffHom`, so an abstract coefficient backend has no candidate after
+the public route-0 pass. -/
 def fastProposal {n : Nat} {R : Type u}
     {cmp : Mono n → Mono n → Ordering}
     [IsMonomialOrder cmp]
     [Lean.Grind.CommRing R] [DecidableEq R] [BEq R] [LawfulBEq R]
     [Dvd R] [BezoutOps R] [LawfulGcdOps R]
-    (cfg : GcdConfig) (f h : MvPoly n R cmp) : GcdProposal n R cmp :=
-  match structuralCert? f h with
-  | some cert => ⟨some cert, cfg.rand⟩
-  | none => ⟨none, cfg.rand⟩
+    (cfg : GcdConfig) (_f _h : MvPoly n R cmp) : GcdProposal n R cmp :=
+  ⟨none, cfg.rand⟩
 
 end Hex.MvPoly

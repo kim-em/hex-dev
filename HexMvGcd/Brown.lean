@@ -357,6 +357,17 @@ def brownMainIndex {n : Nat} {R : Type u}
           if degree < max (degreeOf j f) (degreeOf j h) then some i
           else best) none
 
+/-- Degree of a modular gcd image in Brown's selected main variable.  When
+both inputs are constant there is no selected variable and the degree is
+zero. -/
+def brownImageDegree {n : Nat} {R : Type u}
+    {cmp : Mono n → Mono n → Ordering}
+    [Std.TransCmp cmp] [Std.LawfulEqCmp cmp] [Zero R]
+    (main : Option (Fin n)) (image : MvPoly n R cmp) : Nat :=
+  match main with
+  | none => 0
+  | some i => degreeOf i image
+
 /-- Involutive variable permutation which moves `main` to coordinate zero. -/
 def brownSwapToZero {n : Nat} (main : Fin n) : Fin n → Fin n :=
   let zero : Fin n := ⟨0, Nat.zero_lt_of_lt main.isLt⟩
@@ -397,9 +408,13 @@ def brownFieldCert? {n : Nat} {R : Type u}
 
 /-- A nondependent modular image, ready for prime classification and CRT. -/
 structure BrownModImage (n : Nat) where
+  /-- Prime modulus used for this image. -/
   modulus : Nat
-  degree : Nat
+  /-- Gcd degree in the main variable selected before modular reduction. -/
+  mainDegree : Nat
+  /-- Canonically ordered support used to align CRT coordinates. -/
   support : List (Mono n)
+  /-- Coefficients in the same order as `support`. -/
   residues : List Int
 deriving BEq, Repr
 
@@ -410,6 +425,7 @@ def intBrownImage? {n : Nat}
     {cmp : Mono n → Mono n → Ordering} [IsMonomialOrder cmp]
     (pointFuel : Nat) (f h : MvPoly n Int cmp)
     (prime : ZMod64.Prime) : Option (BrownModImage n) :=
+  let main := brownMainIndex f h
   letI : ZMod64.Bounds prime.m := prime.bounds
   letI : ZMod64.PrimeModulus prime.m :=
     ZMod64.primeModulusOfPrime prime.prime
@@ -439,7 +455,7 @@ def intBrownImage? {n : Nat}
             -- but would destroy the cross-prime normalization needed by CRT.
             some
               { modulus := prime.m
-                degree := corrected.totalDegree
+                mainDegree := brownImageDegree main corrected
                 support := corrected.monomials
                 residues := corrected.termsList.map
                   (fun term => Int.ofNat term.2.toNat) }
@@ -502,7 +518,7 @@ def intBrownLoop {n : Nat}
       | none => intBrownLoop pointFuel f h primes fuel state
       | some image =>
           let oldPrime := state.map (fun s => s.prime) |>.getD {}
-          let offered := oldPrime.offer true true image.degree image.support
+          let offered := oldPrime.offer true true image.mainDegree image.support
           match offered.1 with
           | .bad | .unlucky =>
               intBrownLoop pointFuel f h primes fuel state
@@ -592,8 +608,8 @@ def intBrownCert? {n : Nat} (cmp : Mono n → Mono n → Ordering)
         | some cert => brownCheckedCandidate? f h (brownOfZPoly cert.gcd)
   | _ + 2, _, _, f, h => intBrownModularCert? cfg f h
 
-/-- Generic routes 0--3 for integer coefficients above the delegated
-arity-one case. -/
+/-- Generic routes 1--3 for route-0-reduced integer coefficients above the
+delegated arity-one case. -/
 def intConcreteProposalGeneric {n : Nat}
     (cmp : Mono n → Mono n → Ordering) [IsMonomialOrder cmp]
     (cfg : GcdConfig) (f h : MvPoly n Int cmp) : GcdProposal n Int cmp :=
@@ -601,15 +617,9 @@ def intConcreteProposalGeneric {n : Nat}
   match fast.cert? with
   | some _ => fast
   | none =>
-      match structuralReduction? f h with
-      | none => ⟨none, fast.rand⟩
-      | some reduced =>
-          match intHeuristicCert? cfg reduced.left reduced.right with
-          | some cert =>
-              ⟨restoreStructural? f h reduced cert, fast.rand⟩
-          | none =>
-              let cert? := intBrownCert? cmp cfg reduced.left reduced.right
-              ⟨cert?.bind (restoreStructural? f h reduced), fast.rand⟩
+      match intHeuristicCert? cfg f h with
+      | some cert => ⟨some cert, fast.rand⟩
+      | none => ⟨intBrownCert? cmp cfg f h, fast.rand⟩
 
 /-- Concrete integer producer.  Arity one delegates immediately to the
 released dense integer kernel; other arities use the multivariate routes. -/
@@ -620,6 +630,11 @@ def intConcreteProposal {n : Nat}
   | 0, cmp, _, f, h => intConcreteProposalGeneric cmp cfg f h
   | 1, _, _, f, h => ⟨some (intArityOneCert f h), cfg.rand⟩
   | _ + 2, cmp, _, f, h => intConcreteProposalGeneric cmp cfg f h
+
+/-- Register the concrete integer backend before rational lifting so that the
+latter can invoke checked integer dispatch without selecting itself. -/
+instance intProducer : GcdProducer Int where
+  propose := fun cmp _ cfg f h => intConcreteProposal cmp cfg f h
 
 /-- Dense Brown route over rationals.  Rational points are unbounded, so the
 caller-provided point fuel is the only point-supply limit. -/
@@ -668,65 +683,68 @@ def ratPrimitiveModel {n : Nat}
   ⟨scale, model⟩
 
 /-- Build the required rational cofactor witness from primitive integer
-models.  The integer PRS is run only on those models; both the nested integer
-certificate and the final rational transport are executable checker gates. -/
+models.  The checked integer dispatcher runs only on those models; both the
+nested integer certificate and the final rational transport are executable
+checker gates.  Its advanced random state is retained even when transport
+checking rejects the witness. -/
 def ratLiftCoprime? {n : Nat}
     {cmp : Mono n → Mono n → Ordering} [IsMonomialOrder cmp]
-    (f h : MvPoly n Rat cmp) : Option (CoprimeCert n Rat cmp) :=
+    (cfg : GcdConfig) (f h : MvPoly n Rat cmp) :
+    Option (CoprimeCert n Rat cmp) × Rand :=
   let left := ratPrimitiveModel f
   let right := ratPrimitiveModel h
-  if left.scale == 0 || right.scale == 0 then none
+  if left.scale == 0 || right.scale == 0 then (none, cfg.rand)
   else
-    let intCert := rawPrsCert left.poly right.poly
+    let run := gcdCertWith cfg left.poly right.poly
     let cert := CoprimeCert.ratLift left.scale right.scale
-      left.poly right.poly intCert.coprime
-    if checkCoprime f h cert then some cert else none
+      left.poly right.poly run.cert.coprime
+    (if checkCoprime f h cert then some cert else none, run.rand)
 
 /-- Offer a rational gcd candidate using exact divisions and a `ratLift`
-cofactor certificate. -/
+cofactor certificate, threading the integer dispatcher's random state. -/
 def ratCheckedCandidate? {n : Nat}
     {cmp : Mono n → Mono n → Ordering} [IsMonomialOrder cmp]
-    (f h candidate : MvPoly n Rat cmp) : Option (GcdCert n Rat cmp) :=
-  if candidate == 0 then none
+    (cfg : GcdConfig) (f h candidate : MvPoly n Rat cmp) :
+    GcdProposal n Rat cmp :=
+  if candidate == 0 then ⟨none, cfg.rand⟩
   else
     let normalized := polyNormalize candidate
     match divExact? f normalized, divExact? h normalized with
     | some cofL, some cofR =>
-        match ratLiftCoprime? cofL cofR with
-        | none => none
+        let run := ratLiftCoprime? cfg cofL cofR
+        match run.1 with
+        | none => ⟨none, run.2⟩
         | some coprime =>
             let cert := GcdCert.mk normalized cofL cofR coprime
-            if checkGcd f h cert then some cert else none
-    | _, _ => none
+            ⟨if checkGcd f h cert then some cert else none, run.2⟩
+    | _, _ => ⟨none, cfg.rand⟩
 
 /-- Rational gcd through primitive integer models.  Scaling either input by a
 nonzero rational unit does not change the monic gcd; candidate acceptance and
-cofactor transport are both checked concretely. -/
+cofactor transport are both checked concretely.  Both the gcd models and the
+resulting cofactor models go through checked integer dispatch, never rational
+dispatch. -/
 def ratIntegerLiftCert? {n : Nat}
     {cmp : Mono n → Mono n → Ordering} [IsMonomialOrder cmp]
-    (f h : MvPoly n Rat cmp) : Option (GcdCert n Rat cmp) :=
+    (cfg : GcdConfig) (f h : MvPoly n Rat cmp) : GcdProposal n Rat cmp :=
   let left := ratPrimitiveModel f
   let right := ratPrimitiveModel h
-  if left.scale == 0 || right.scale == 0 then none
+  if left.scale == 0 || right.scale == 0 then ⟨none, cfg.rand⟩
   else
-    let intCert := rawPrsCert left.poly right.poly
-    ratCheckedCandidate? f h (intModelToRat intCert.gcd)
+    let run := gcdCertWith cfg left.poly right.poly
+    let nextCfg := { cfg with rand := run.rand }
+    ratCheckedCandidate? nextCfg f h (intModelToRat run.cert.gcd)
 
-/-- Routes 0--3 for rational coefficients. -/
+/-- Rational routes on an already route-0-reduced problem. -/
 def ratConcreteProposal {n : Nat}
     (cmp : Mono n → Mono n → Ordering) [IsMonomialOrder cmp]
     (cfg : GcdConfig) (f h : MvPoly n Rat cmp) : GcdProposal n Rat cmp :=
-  match structuralCert? f h with
-  | some cert => ⟨some cert, cfg.rand⟩
+  let lifted := ratIntegerLiftCert? cfg f h
+  match lifted.cert? with
+  | some _ => lifted
   | none =>
-      match structuralReduction? f h with
-      | none => ⟨none, cfg.rand⟩
-      | some reduced =>
-          match ratIntegerLiftCert? reduced.left reduced.right with
-          | some cert => ⟨restoreStructural? f h reduced cert, cfg.rand⟩
-          | none =>
-              let cert? := ratBrownCert? cfg reduced.left reduced.right
-              ⟨cert?.bind (restoreStructural? f h reduced), cfg.rand⟩
+      let nextCfg := { cfg with rand := lifted.rand }
+      ⟨ratBrownCert? nextCfg f h, lifted.rand⟩
 
 /-- Dense Brown route over an already-prime coefficient field. -/
 def primeFieldBrownCert? {n p : Nat} [hp : ZMod64.Bounds p]
@@ -738,7 +756,8 @@ def primeFieldBrownCert? {n p : Nat} [hp : ZMod64.Bounds p]
     ZMod64.ofNat p point
   brownFieldCert? cfg.brownPointFuel points f h
 
-/-- Routes 0--3 over a bundled prime field. -/
+/-- Routes 1 and 3 over a bundled prime field on an already route-0-reduced
+problem. -/
 def primeConcreteProposal {n p : Nat} [hp : ZMod64.Bounds p]
     [ZMod64.PrimeModulus p]
     (cmp : Mono n → Mono n → Ordering) [IsMonomialOrder cmp]
@@ -747,15 +766,7 @@ def primeConcreteProposal {n p : Nat} [hp : ZMod64.Bounds p]
   let earlier := primeFastProposal cmp cfg f h
   match earlier.cert? with
   | some _ => earlier
-  | none =>
-      match structuralReduction? f h with
-      | none => ⟨none, earlier.rand⟩
-      | some reduced =>
-          let cert? := primeFieldBrownCert? cfg reduced.left reduced.right
-          ⟨cert?.bind (restoreStructural? f h reduced), earlier.rand⟩
-
-instance intProducer : GcdProducer Int where
-  propose := fun cmp _ cfg f h => intConcreteProposal cmp cfg f h
+  | none => ⟨primeFieldBrownCert? cfg f h, earlier.rand⟩
 
 instance ratProducer : GcdProducer Rat where
   propose := fun cmp _ cfg f h => ratConcreteProposal cmp cfg f h

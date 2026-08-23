@@ -59,6 +59,16 @@ private def contentCert : ContentCert 0 Int Mono.lex :=
 example : checkContent ([C 2, C 4] : List P0) contentCert = true := by
   decide +kernel
 
+private def orderedProducer (_ q : P0) : GcdCert 0 Int Mono.lex :=
+  .mk q 0 0 .unit
+
+private def orderedContent : ContentCert 0 Int Mono.lex :=
+  contentCertWith orderedProducer [C 2, C 3, C 5]
+
+/-- Producer accumulation preserves coefficient order in the public step list. -/
+example : orderedContent.steps.map GcdCert.gcd = [C 2, C 3, C 5] := by
+  decide +kernel
+
 private def badBaseCert : GcdCert 0 Int Mono.lex :=
   .mk (C 6) (C 2) (C 2) (.base (-1) 1)
 

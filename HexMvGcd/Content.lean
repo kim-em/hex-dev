@@ -46,7 +46,8 @@ def primPart (p : MvPoly n R cmp) : MvPoly n R cmp :=
   if c = 0 then 0 else mapCoeffs (fun a => GcdOps.exactDiv a c) p
 
 /-- Fold a concrete lower-arity gcd-certificate producer over coefficients.
-The returned certificate stores every step that the checker replays. -/
+The returned certificate stores every step that the checker replays. Steps are
+consed into a reversed accumulator and reversed once after the fold. -/
 def contentCertWith {R : Type u} {cmp : Mono n → Mono n → Ordering}
     [Std.TransCmp cmp] [Std.LawfulEqCmp cmp] [Zero R]
     (produce : MvPoly n R cmp → MvPoly n R cmp → GcdCert n R cmp)
@@ -54,9 +55,9 @@ def contentCertWith {R : Type u} {cmp : Mono n → Mono n → Ordering}
   let pair := coeffs.foldl
     (fun state q =>
       let step := produce state.1 q
-      (step.gcd, state.2 ++ [step]))
+      (step.gcd, step :: state.2))
     (0, [])
-  .ofSteps pair.1 pair.2
+  .ofSteps pair.1 pair.2.reverse
 
 /-- A producer-built fold has exactly one step per coefficient. -/
 theorem contentCertWith_length {R : Type u}

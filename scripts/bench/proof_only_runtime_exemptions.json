@@ -778,5 +778,11 @@
     "baseline_blob": "5f5b01e430fb8241d938d392298d786b38f67104",
     "current_blob": "20f3377876c8d17e4c711d0e7edc452011913b28",
     "reason": "Updates only the pinned lean-readme documentation checker revision; every factorization dependency remains unchanged."
+  },
+  {
+    "path": "HexBasic/Rand.lean",
+    "baseline_blob": null,
+    "current_blob": "aa8588a6a6a6db3e4393346d885e1f81ccd2aaff",
+    "reason": "Adds the standalone SplitMix64 and unbiased bounded-sampling API for future randomized consumers. Existing factorization code does not reference its declarations, so the measured factorization service runtime is unchanged."
   }
 ]

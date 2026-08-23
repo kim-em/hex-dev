@@ -28,21 +28,6 @@ universe u
 
 variable {n : Nat} {R : Type u} {cmp : Mono n → Mono n → Ordering}
 
-/-- Complete checked dispatch. Proposals affect performance and random state,
-but rejection always falls through to the deterministic PRS route. -/
-def gcdCertWith (cfg : GcdConfig)
-    [IsMonomialOrder cmp]
-    [Lean.Grind.CommRing R] [DecidableEq R] [BEq R] [LawfulBEq R]
-    [Dvd R] [BezoutOps R] [LawfulGcdOps R] [LawfulBezoutOps R]
-    [GcdProducer R]
-    (f h : MvPoly n R cmp) : GcdRun n R cmp :=
-  let proposal := GcdProducer.propose cmp cfg f h
-  match proposal.cert? with
-  | some candidate =>
-      if checkGcd f h candidate then ⟨candidate, proposal.rand⟩
-      else ⟨prsCert f h, proposal.rand⟩
-  | none => ⟨prsCert f h, proposal.rand⟩
-
 /-- Canonical checked gcd certificate. -/
 def gcdCert [IsMonomialOrder cmp]
     [Lean.Grind.CommRing R] [DecidableEq R] [BEq R] [LawfulBEq R]

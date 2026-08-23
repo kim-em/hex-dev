@@ -512,6 +512,13 @@ linear correction hex-hensel uses on factors: with
 `deg τ_j < deg F_j` using the mod-`p` tuple, and set
 `σ_j ← σ_j + p^k τ_j`.
 
+Build all `b_j` together with prefix and suffix products, so their
+construction takes `O(r)` polynomial multiplications rather than multiplying
+all but one factor separately for each `j`. The producer retains that list and
+the mod-`p` tuple throughout the lift. Its loop state also carries the current
+modulus, advancing it by one multiplication by `p`; it does not recompute
+`p^k` at each step.
+
 **Do not reduce `σ_j` modulo `F_j` between steps.** That would change
 `σ_j` by a multiple of `F_j`, hence change `Σ_j σ_j b_j` by a multiple of
 `F = ∏_j F_j`, which is not a multiple of `q` and so breaks the very
@@ -680,7 +687,8 @@ statement the box truncation supports.
 
 Only the base-level witness is fixed data. The `b_j` used at stage `t`
 are recomputed from the current factors, because the ring the equation is
-solved in changes from stage to stage.
+solved in changes from stage to stage. Within one stage they are again built
+by one prefix/suffix pass and retained for every power of `y_t`.
 
 **Truncation is sound, not an approximation.** Any integer factor `g` of
 `f` satisfies `deg_{y_j} g ≤ deg_{y_j} f = d_j`, because degrees are
@@ -770,6 +778,18 @@ def diophantine (q : Nat) (i : Fin (n+1)) (cmp' : Mono n → Mono n → Ordering
     Option (List (MvPoly (n+1) Int cmp))
 ```
 
+The stage loop uses the checked prefix form:
+
+```lean
+/-- As `diophantine`, but recurse through only the first `count` non-main
+variables before checking the result against the full degree box. -/
+def diophantinePrefix (q : Nat) (i : Fin (n+1))
+    (cmp' : Mono n → Mono n → Ordering) (count : Nat)
+    (d : Fin n → Nat) (bs : List (MvPoly (n+1) Int cmp))
+    (images witness : List ZPoly) (c : MvPoly (n+1) Int cmp) :
+    Option (List (MvPoly (n+1) Int cmp))
+```
+
 Recursion on the number of non-main variables actually present in the
 current stage. With none present the problem is `solveUni`. With `m`
 present, set `y_m = 0` to get a problem in `m - 1` variables, solve it,
@@ -777,6 +797,14 @@ and then correct in powers of `y_m`: at power `s`, the right-hand side is
 the coefficient of `y_m^s` in `c - Σ_j Δ_j b_j` for the partial solution
 `Δ` so far, and the correction is another `(m-1)`-variable solve. Stop at
 `s = d_m`.
+
+At stage `t`, the zero slice of every base and every recursive right-hand
+side contains only the prefix `y_1, …, y_(t-1)`, so the stage passes
+`count = t - 1`. The unrestricted entry point passes `count = n`. Both forms
+run the same full-box equation and degree checks after producing a tuple;
+omitting a variable that is actually needed can therefore cause `none`, but
+cannot produce an unchecked answer. In particular, later degree bounds do
+not create vacuous recursive correction loops in an earlier stage.
 
 This is the same linear scheme as the stage loop one level down, which is
 why the two share `BoxCongr` and the truncation bookkeeping.
@@ -897,6 +925,21 @@ hex-poly-z's Mignotte bound applies. It is valid and it is very weak: the
 image has degree `(D + 1) · ∏_t (e_t + 1) - 1`, so the binomial factor in
 Mignotte's bound is astronomically large as soon as there are several
 variables.
+
+The executable computes the whole weight list in one prefix-product scan and
+passes it to `kroneckerExponentWith` for every sparse term; no term recomputes
+the earlier-radix product for each coordinate. The Mathlib-free fact used by
+the companion's coefficient-bound proof is:
+
+```lean
+def InDegreeBox (i : Fin (n+1)) (D : Nat) (e : Fin n → Nat)
+    (m : Mono (n+1)) : Prop
+
+theorem kroneckerExponent_inj (i : Fin (n+1)) (D : Nat)
+    (e : Fin n → Nat) {a b : Mono (n+1)}
+    (ha : InDegreeBox i D e a) (hb : InDegreeBox i D e b)
+    (h : kroneckerExponent i D e a = kroneckerExponent i D e b) : a = b
+```
 
 The one worth having is **Mahler's length inequality**, which bounds the
 product of the one-norms of the factors by `2^(D + Σ_t e_t)` times the
@@ -1266,6 +1309,7 @@ def setLc      (i : Fin (n+1)) (cmp') : MvPoly n Int cmp' → MvPoly (n+1) Int c
 def seed       (i : Fin (n+1)) (cmp') : MvPoly n Int cmp' → ZPoly → MvPoly (n+1) Int cmp
 def witnessOf? (s : Setup n) (images : List ZPoly) : Option (List ZPoly)
 def coeffBound (inp : Input n cmp cmp') : Nat
+def InDegreeBox (i : Fin (n+1)) (D : Nat) (e : Fin n → Nat) (m : Mono (n+1)) : Prop
 
 -- Solving
 def solveUni     (q : Nat) (images witness : List ZPoly) (c : ZPoly) : List ZPoly
@@ -1308,7 +1352,8 @@ main variable, `d_j` the degree in non-main variable `j`, `t` terms in
 | `imageAt` | Horner per `x_i`-slice of the recursive view | `O(t · n)` coefficient operations |
 | `lcIn` | the top slice of `toUnivariate` | `O(n · t log t)` machine operations |
 | `truncate` | `restrictBy` on the exponent vector | `O(n · t)` machine operations |
-| `witnessOf?` | one `FpPoly` xgcd per factor, then `l` linear steps | `r` xgcds plus `r · l` divisions |
+| `coeffBound` | one coordinate-degree pass, one mixed-radix weight scan shared across the sparse support, then one encoded-degree pass | `O(n · t)` exponent operations, plus arithmetic in the encoded degree and norm |
+| `witnessOf?` | one prefix/suffix complement pass, one `FpPoly` xgcd per factor, then `l` linear steps carrying their modulus | `O(r)` complement multiplications, `r` xgcds, and `r · l` divisions |
 | `solveUni` | `r` multiplications and remainders modulo `F_j` | `r` divisions of degree `d₁` |
 | `diophantine` at `m` variables | recursion, `d_m + 1` right-hand sides per level | `∏_{k ≤ m} (d_k + 1)` univariate solves |
 | one stage-`t` step | one product update and one solve | `∏_{k < t} (d_k + 1)` univariate solves |

@@ -52,6 +52,11 @@ def ux : ZPoly := DensePoly.ofCoeffs #[0, 1]
 def pointTwo : Fin 1 → Int := fun _ => 2
 def pointZero : Fin 1 → Int := fun _ => 0
 
+/- Multivariate complements use the same linear prefix/suffix construction. -/
+#guard mvComplements [x] == [1]
+#guard mvComplements [x, y, x + y] ==
+  [y * (x + y), x * (x + y), x * y]
+
 /- A nonzero evaluation point exercises both coordinate transforms. -/
 def successInput : Input 1 Mono.lex Mono.lex :=
   { setup :=

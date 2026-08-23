@@ -12,13 +12,15 @@ public import HexMvGcd.Gcd
 set_option backward.proofsInPublic true
 
 /-!
-Characteristic-zero squarefree operations.
+Squarefree decision and characteristic-zero decomposition.
 
-The executable decomposition follows the named-variable recursive form of
-Yun's algorithm.  Coefficient content is decomposed one arity down; the
-primitive part is split into its multiplicity layers using one selected main
-variable, and equal-multiplicity factors are merged.  Scalar content is kept
-separately, matching the computer-algebra convention over `Int`.
+The exact Boolean decision works over perfect coefficient fraction fields,
+including bounded prime fields.  The executable decomposition remains
+characteristic-zero: it follows the named-variable recursive form of Yun's
+algorithm.  Coefficient content is decomposed one arity down; the primitive
+part is split into its multiplicity layers using one selected main variable,
+and equal-multiplicity factors are merged.  Scalar content is kept separately,
+matching the computer-algebra convention over `Int`.
 -/
 
 namespace Hex.MvPoly
@@ -45,6 +47,21 @@ instance instFractionNonzeroOneInt : Hex.Fraction.NonzeroOne Int :=
 instance instFractionNonzeroOneRat : Hex.Fraction.NonzeroOne Rat :=
   ⟨by decide⟩
 
+/-- Bounded prime residues are nontrivial.  The lower priority retains a
+coherent instance for the carrier's direct ring operations while allowing the
+generic field bridge below to serve inherited field-operation diamonds. -/
+instance (priority := 50) instFractionNonzeroOneZMod64 {p : Nat}
+    [hp : ZMod64.Bounds p] [ZMod64.PrimeModulus p] :
+    Hex.Fraction.NonzeroOne (@ZMod64 p hp) :=
+  ⟨ZMod64.one_ne_zero_of_prime (ZMod64.PrimeModulus.prime (p := p))⟩
+
+/-- Every lightweight field supplies the nontriviality needed by the fraction
+construction.  Keeping this bridge generic also makes the inherited field
+operations coherent when a carrier has a separately declared ring instance. -/
+instance instFractionNonzeroOneField {K : Type u} [Lean.Grind.Field K] :
+    Hex.Fraction.NonzeroOne K :=
+  ⟨fun h => Lean.Grind.Field.zero_ne_one h.symm⟩
+
 /-- The coefficient fraction field is perfect.  This is used only by the
 semantic decision theorem; the Boolean checker itself uses gcd replay. -/
 class PerfectFrac (R : Type u) [Lean.Grind.CommRing R] [Div R]
@@ -65,6 +82,31 @@ instance instPerfectFracRat : PerfectFrac Rat := by
   left
   intro m hm
   sorry
+
+/-- The fraction field of a bounded prime field is perfect.  Every fraction is
+represented by a coefficient because its denominator is invertible, and
+Fermat's theorem makes the `p`th-power map the identity on those coefficients.
+-/
+instance instPerfectFracZMod64 {p : Nat} [hp : ZMod64.Bounds p]
+    [ZMod64.PrimeModulus p] :
+    PerfectFrac (@ZMod64 p hp) := by
+  constructor
+  right
+  refine ⟨p, ZMod64.PrimeModulus.prime (p := p), ?_, ?_⟩
+  · change Hex.Fraction.ofCoeff (p : ZMod64 p) = 0
+    rw [ZMod64.natCast_self]
+    exact Hex.Fraction.ofCoeff_zero
+  · intro a
+    induction a using Quotient.inductionOn with
+    | _ a =>
+        let q := a.num / a.den
+        refine ⟨Hex.Fraction.ofCoeff q, ?_⟩
+        rw [← Hex.Fraction.ofCoeff_pow, ZMod64.pow_prime_of_prime_modulus]
+        apply Quotient.sound
+        change (a.num / a.den) * a.den = a.num * 1
+        rw [Lean.Grind.Field.div_eq_mul_inv, Lean.Grind.Semiring.mul_assoc,
+          Lean.Grind.Field.inv_mul_cancel a.den_ne,
+          Lean.Grind.Semiring.mul_one]
 
 /-- A polynomial has no variable in its support. -/
 def IsConst {n : Nat} {R : Type u} [Zero R]

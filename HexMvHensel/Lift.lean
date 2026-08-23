@@ -32,9 +32,8 @@ variable {n : Nat}
 /-- Multivariate complementary products, in tuple order. -/
 def mvComplements {k : Nat} {order : Mono k → Mono k → Ordering}
     [IsMonomialOrder order] :
-    List (MvPoly k Int order) → List (MvPoly k Int order)
-  | [] => []
-  | f :: fs => mvProduct fs :: (mvComplements fs).map (fun b => f * b)
+    List (MvPoly k Int order) → List (MvPoly k Int order) :=
+  complementProducts (· * ·) 1
 
 /-- Install one prefix of the prescribed shifted leading coefficients. -/
 def installLeading? (i : Fin (n + 1))
@@ -79,7 +78,8 @@ def liftStage (q : Nat) (i : Fin (n + 1))
       let error := reduceMod q
         (truncate i d (stageTarget - mvProduct current))
       let rhs := sliceVar selected (k + 1) error
-      let deltas ← diophantine q i cmp' d bases images witness rhs
+      let deltas ←
+        diophantinePrefix q i cmp' y.val d bases images witness rhs
       applyCorrections? q i d selected (k + 1) current deltas)
     installed
 
