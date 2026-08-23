@@ -1766,19 +1766,20 @@ the example therefore reifies to
 `1 + X 0 + X 1 + X 0 * X 1` with the atom table `#[x, y]`. The internal
 representation uses `MvPoly n Int Mono.grevlex`.
 
-Transparent local `let` declarations are zeta-reduced before the atom
-fallback, recursively and under the same elaborator fuel guard as the rest of
-the reifier. Hence
+The reifier does **not** zeta-reduce a local `let` before the atom fallback.
+The expression supplied by the user is the abstraction boundary: in
 
 ```lean
 let p := 1 + x + y + x * y
 factor_poly p
 ```
 
-has exactly the same formal polynomial and atom table as the expanded call;
-`p` must not become a third atom or a single atom standing for the entire
-subject. A local variable with no assigned value, or an opaque subexpression
-encountered after unfolding the local `let`, remains an atom as usual.
+`p` is one atom, so the formal input is `X 0` with atom table `#[p]` and its
+formal factorization is the single factor `X 0`. This is intentionally not the
+factorization of `p`'s assigned value. A caller who wants the latter supplies
+the expanded expression. Operation-head normalization may expose the declared
+ring operations, but it must not unfold a local definition merely to discover
+more polynomial structure.
 
 The result records the formal polynomial and its interpretation, not a false
 claim about the ambient ring. Its public contract has this shape (field names
@@ -1845,8 +1846,8 @@ Required tactic regressions cover:
 
 - the exact unparenthesized `1 + x + y + x * y` example, including the two
   deduplicated atoms and the denoted product identity;
-- the same example behind a local `let p := ...`, with `p` zeta-reduced and
-  the atom table still exactly `#[x, y]`;
+- the same expression behind `let p := ...`, where `factor_poly p` preserves
+  the abstraction boundary and produces exactly the single atom `#[p]`;
 - repeated and compound atoms, subtraction, negation, and literal powers;
 - closed `MvPoly` and structural `MvPolynomial (Fin n) ℤ` factorization and
   irreducibility;
