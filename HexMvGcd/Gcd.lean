@@ -31,7 +31,7 @@ variable {n : Nat} {R : Type u} {cmp : Mono n → Mono n → Ordering}
 /-- Canonical checked gcd certificate. -/
 def gcdCert [IsMonomialOrder cmp]
     [Lean.Grind.CommRing R] [DecidableEq R] [BEq R] [LawfulBEq R]
-    [Dvd R] [BezoutOps R] [LawfulGcdOps R] [LawfulBezoutOps R]
+    [Dvd R] [BezoutOps R]
     [GcdProducer R]
     (f h : MvPoly n R cmp) : GcdCert n R cmp :=
   (gcdCertWith GcdConfig.default f h).cert
@@ -56,7 +56,7 @@ theorem gcdCertWith_checks [IsMonomialOrder cmp]
 def contentInCert {cmp : Mono (n + 1) → Mono (n + 1) → Ordering}
     [IsMonomialOrder cmp]
     [Lean.Grind.CommRing R] [DecidableEq R] [BEq R] [LawfulBEq R]
-    [Dvd R] [BezoutOps R] [LawfulGcdOps R] [LawfulBezoutOps R]
+    [Dvd R] [BezoutOps R]
     [GcdProducer R]
     (i : Fin (n + 1)) (cmp' : Mono n → Mono n → Ordering)
     [IsMonomialOrder cmp'] (p : MvPoly (n + 1) R cmp) :
@@ -68,7 +68,7 @@ def contentInCert {cmp : Mono (n + 1) → Mono (n + 1) → Ordering}
 def contentIn {cmp : Mono (n + 1) → Mono (n + 1) → Ordering}
     [IsMonomialOrder cmp]
     [Lean.Grind.CommRing R] [DecidableEq R] [BEq R] [LawfulBEq R]
-    [Dvd R] [BezoutOps R] [LawfulGcdOps R] [LawfulBezoutOps R]
+    [Dvd R] [BezoutOps R]
     [GcdProducer R]
     (i : Fin (n + 1)) (cmp' : Mono n → Mono n → Ordering)
     [IsMonomialOrder cmp'] (p : MvPoly (n + 1) R cmp) :
@@ -79,7 +79,7 @@ def contentIn {cmp : Mono (n + 1) → Mono (n + 1) → Ordering}
 def primPartIn {cmp : Mono (n + 1) → Mono (n + 1) → Ordering}
     [IsMonomialOrder cmp]
     [Lean.Grind.CommRing R] [DecidableEq R] [BEq R] [LawfulBEq R]
-    [Dvd R] [BezoutOps R] [LawfulGcdOps R] [LawfulBezoutOps R]
+    [Dvd R] [BezoutOps R]
     [GcdProducer R]
     (i : Fin (n + 1)) (cmp' : Mono n → Mono n → Ordering)
     [IsMonomialOrder cmp'] (p : MvPoly (n + 1) R cmp) :
@@ -192,14 +192,14 @@ theorem primPartIn_mul
 /-- Canonically normalized gcd. -/
 def gcd [IsMonomialOrder cmp]
     [Lean.Grind.CommRing R] [DecidableEq R] [BEq R] [LawfulBEq R]
-    [Dvd R] [BezoutOps R] [LawfulGcdOps R] [LawfulBezoutOps R]
+    [Dvd R] [BezoutOps R]
     [GcdProducer R]
     (f h : MvPoly n R cmp) : MvPoly n R cmp :=
   (gcdCert f h).gcd
 
 def cofactors [IsMonomialOrder cmp]
     [Lean.Grind.CommRing R] [DecidableEq R] [BEq R] [LawfulBEq R]
-    [Dvd R] [BezoutOps R] [LawfulGcdOps R] [LawfulBezoutOps R]
+    [Dvd R] [BezoutOps R]
     [GcdProducer R]
     (f h : MvPoly n R cmp) : MvPoly n R cmp × MvPoly n R cmp :=
   let cert := gcdCert f h
@@ -207,7 +207,7 @@ def cofactors [IsMonomialOrder cmp]
 
 def gcdWith [IsMonomialOrder cmp]
     [Lean.Grind.CommRing R] [DecidableEq R] [BEq R] [LawfulBEq R]
-    [Dvd R] [BezoutOps R] [LawfulGcdOps R] [LawfulBezoutOps R]
+    [Dvd R] [BezoutOps R]
     [GcdProducer R]
     (cfg : GcdConfig) (f h : MvPoly n R cmp) : MvPoly n R cmp × Rand :=
   let run := gcdCertWith cfg f h
@@ -215,21 +215,21 @@ def gcdWith [IsMonomialOrder cmp]
 
 def isCoprime [IsMonomialOrder cmp]
     [Lean.Grind.CommRing R] [DecidableEq R] [BEq R] [LawfulBEq R]
-    [Dvd R] [BezoutOps R] [LawfulGcdOps R] [LawfulBezoutOps R]
+    [Dvd R] [BezoutOps R]
     [GcdProducer R]
     (f h : MvPoly n R cmp) : Bool :=
   polyIsUnit (gcd f h)
 
 def gcdList [IsMonomialOrder cmp]
     [Lean.Grind.CommRing R] [DecidableEq R] [BEq R] [LawfulBEq R]
-    [Dvd R] [BezoutOps R] [LawfulGcdOps R] [LawfulBezoutOps R]
+    [Dvd R] [BezoutOps R]
     [GcdProducer R]
     (ps : List (MvPoly n R cmp)) : MvPoly n R cmp :=
   ps.foldl gcd 0
 
 def lcm [IsMonomialOrder cmp]
     [Lean.Grind.CommRing R] [DecidableEq R] [BEq R] [LawfulBEq R]
-    [Dvd R] [BezoutOps R] [LawfulGcdOps R] [LawfulBezoutOps R]
+    [Dvd R] [BezoutOps R]
     [GcdProducer R]
     (f h : MvPoly n R cmp) : MvPoly n R cmp :=
   let cert := gcdCert f h
@@ -241,7 +241,7 @@ those contracts below. -/
 
 instance instGcdOpsMvPoly [IsMonomialOrder cmp]
     [Lean.Grind.CommRing R] [DecidableEq R] [BEq R] [LawfulBEq R]
-    [Dvd R] [BezoutOps R] [LawfulGcdOps R] [LawfulBezoutOps R]
+    [Dvd R] [BezoutOps R]
     [GcdProducer R] :
     GcdOps (MvPoly n R cmp) where
   gcd := gcd

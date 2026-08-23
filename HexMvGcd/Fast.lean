@@ -88,7 +88,7 @@ def structuralCert? {n : Nat} {R : Type u}
     {cmp : Mono n → Mono n → Ordering}
     [IsMonomialOrder cmp]
     [Lean.Grind.CommRing R] [DecidableEq R] [BEq R] [LawfulBEq R]
-    [Dvd R] [BezoutOps R] [LawfulGcdOps R]
+    [Dvd R] [BezoutOps R]
     (f h : MvPoly n R cmp) : Option (GcdCert n R cmp) :=
   if f == 0 && h == 0 then some (.mk 0 1 1 .unit)
   else if f == 0 then
@@ -117,7 +117,7 @@ def structuralReduction? {n : Nat} {R : Type u}
     {cmp : Mono n → Mono n → Ordering}
     [IsMonomialOrder cmp]
     [Lean.Grind.CommRing R] [DecidableEq R] [BEq R] [LawfulBEq R]
-    [Dvd R] [GcdOps R] [LawfulGcdOps R]
+    [Dvd R] [GcdOps R]
     (f h : MvPoly n R cmp) : Option (StructuralReduction n R cmp) := do
   let commonMono := Mono.gcd (monoContent f) (monoContent h)
   let commonCoeff := GcdOps.gcd (content f) (content h)
@@ -149,7 +149,7 @@ def gcdCertWith (cfg : GcdConfig)
     {n : Nat} {R : Type u} {cmp : Mono n → Mono n → Ordering}
     [IsMonomialOrder cmp]
     [Lean.Grind.CommRing R] [DecidableEq R] [BEq R] [LawfulBEq R]
-    [Dvd R] [BezoutOps R] [LawfulGcdOps R] [LawfulBezoutOps R]
+    [Dvd R] [BezoutOps R]
     [GcdProducer R]
     (f h : MvPoly n R cmp) : GcdRun n R cmp :=
   match structuralCert? f h with
@@ -185,14 +185,14 @@ def checkedCandidate? {n : Nat} {R : Type u}
     {cmp : Mono n → Mono n → Ordering}
     [IsMonomialOrder cmp]
     [Lean.Grind.CommRing R] [DecidableEq R] [BEq R] [LawfulBEq R]
-    [Dvd R] [BezoutOps R] [LawfulGcdOps R]
+    [Dvd R] [BezoutOps R]
     (f h candidate : MvPoly n R cmp) : Option (GcdCert n R cmp) :=
   if candidate == 0 then none
   else
     let normalized := polyNormalize candidate
     let cofL := quotient f normalized
     let cofR := quotient h normalized
-    let cofactorCert := rawPrsCert cofL cofR
+    let cofactorCert := prsCert cofL cofR
     let cert := GcdCert.mk normalized cofL cofR cofactorCert.coprime
     if checkGcd f h cert then some cert else none
 
@@ -224,7 +224,7 @@ structure CoprimeOpsAt (R : Type u) [Zero R] [One R] [Add R] [Mul R]
 /-- Arity-zero modular-coprimality leaf. -/
 def coprimeBase {R : Type u}
     [Lean.Grind.CommRing R] [DecidableEq R] [BEq R] [LawfulBEq R]
-    [Dvd R] [BezoutOps R] [LawfulGcdOps R] : CoprimeOpsAt R 0 where
+    [Dvd R] [BezoutOps R] : CoprimeOpsAt R 0 where
   tryAt := fun cmp _ _ _ rand f h =>
     let cert := baseCoprime cmp f h
     (if checkCoprime f h cert then some cert else none, rand)
@@ -232,7 +232,7 @@ def coprimeBase {R : Type u}
 /-- One recursive modular image and coefficient-content descent. -/
 def coprimeStep {n : Nat} {R : Type u}
     [Lean.Grind.CommRing R] [DecidableEq R] [BEq R] [LawfulBEq R]
-    [Dvd R] [BezoutOps R] [LawfulGcdOps R]
+    [Dvd R] [BezoutOps R]
     (lower : CoprimeOpsAt R n) : CoprimeOpsAt R (n + 1) where
   tryAt := fun cmp _ prime φ rand f h =>
     letI : ZMod64.Bounds prime.m := prime.bounds
@@ -259,9 +259,9 @@ def coprimeStep {n : Nat} {R : Type u}
           else
             let alpha := DensePoly.scaleImpl scalar⁻¹ xg.left
             let beta := DensePoly.scaleImpl scalar⁻¹ xg.right
-            let left := contentCertWith (fun a b => rawPrsCert a b)
+            let left := contentCertWith (fun a b => prsCert a b)
               fView.toArray.toList
-            let right := contentCertWith (fun a b => rawPrsCert a b)
+            let right := contentCertWith (fun a b => prsCert a b)
               hView.toArray.toList
             let restRun := lower.tryAt Mono.lex prime φ rand'
               left.value right.value
@@ -275,7 +275,7 @@ def coprimeStep {n : Nat} {R : Type u}
 /-- Construct the per-variable modular coprimality route. -/
 def coprimeOps {R : Type u}
     [Lean.Grind.CommRing R] [DecidableEq R] [BEq R] [LawfulBEq R]
-    [Dvd R] [BezoutOps R] [LawfulGcdOps R] :
+    [Dvd R] [BezoutOps R] :
     (n : Nat) → CoprimeOpsAt R n
   | 0 => coprimeBase
   | n + 1 => coprimeStep (coprimeOps n)
@@ -286,7 +286,7 @@ recursive checker. -/
 def tryCoprimeCert? {n : Nat} {R : Type u}
     {cmp : Mono n → Mono n → Ordering} [IsMonomialOrder cmp]
     [Lean.Grind.CommRing R] [DecidableEq R] [BEq R] [LawfulBEq R]
-    [Dvd R] [BezoutOps R] [LawfulGcdOps R]
+    [Dvd R] [BezoutOps R]
     (P : ZMod64.Prime) (φ : @CoeffHom R P.m _ _ _ _ P.bounds)
     (rand : Rand) (f h : MvPoly n R cmp) :
     Option (GcdCert n R cmp) × Rand :=
@@ -407,7 +407,7 @@ def fastProposal {n : Nat} {R : Type u}
     {cmp : Mono n → Mono n → Ordering}
     [IsMonomialOrder cmp]
     [Lean.Grind.CommRing R] [DecidableEq R] [BEq R] [LawfulBEq R]
-    [Dvd R] [BezoutOps R] [LawfulGcdOps R]
+    [Dvd R] [BezoutOps R]
     (cfg : GcdConfig) (_f _h : MvPoly n R cmp) : GcdProposal n R cmp :=
   ⟨none, cfg.rand⟩
 
