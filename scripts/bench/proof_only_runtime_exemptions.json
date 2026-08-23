@@ -766,5 +766,11 @@
     "baseline_blob": "1063ee045056aabe060a319d7dbe48460e6fdd75",
     "current_blob": "635c202971d2276a498505da9842deac1c833c9f",
     "reason": "Updates diagnostic-service projections from the duplicate small-prime record to the representation-identical bundled ZMod64.Prime record; every measured operation and branch is unchanged."
+  },
+  {
+    "path": "HexBasic/Rand.lean",
+    "baseline_blob": null,
+    "current_blob": "aa8588a6a6a6db3e4393346d885e1f81ccd2aaff",
+    "reason": "Adds the standalone SplitMix64 and unbiased bounded-sampling API for future randomized consumers. Existing factorization code does not reference its declarations, so the measured factorization service runtime is unchanged."
   }
 ]
