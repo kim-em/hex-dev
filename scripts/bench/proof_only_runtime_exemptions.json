@@ -730,5 +730,41 @@
     "baseline_blob": "1e8bbe3030db68a2b6753de8bf5ff2326d02813e",
     "current_blob": "072030c70a339c8965bff552de0e7673f3e3da76",
     "reason": "Registers the HexAggregateCheck released-aggregate mirror library only; the factorization service target and its executable dependency graph are unchanged."
+  },
+  {
+    "path": "HexBerlekampZassenhaus/Certificate.lean",
+    "baseline_blob": "3a97b9385574e3ddf48da545df6a157a2f96e8b4",
+    "current_blob": "5e102c460b63bbf2b79470b81189f25cbb92e021",
+    "reason": "Updates projections from the duplicate small-prime record to the representation-identical bundled ZMod64.Prime record; certificate checks, arithmetic, and control flow are unchanged."
+  },
+  {
+    "path": "HexBerlekampZassenhaus/ChoosePrimeData.lean",
+    "baseline_blob": "9194dae7dc8cf4d433a7adbd8ce01a7133b3900c",
+    "current_blob": "4a0c3dba62c7c3c607545daff10ba4bf70351681",
+    "reason": "Updates projections from the duplicate small-prime record to the representation-identical bundled ZMod64.Prime record; prime selection, arithmetic, and control flow are unchanged."
+  },
+  {
+    "path": "HexBerlekampZassenhaus/Factorization.lean",
+    "baseline_blob": "2d08c80028bc54024965a5c0f114bba51d18523e",
+    "current_blob": "8d796854822562cd7883e2308d444f9e07702b36",
+    "reason": "Updates one projection from the duplicate small-prime record to the representation-identical bundled ZMod64.Prime record; factorization arithmetic and control flow are unchanged."
+  },
+  {
+    "path": "HexBerlekampZassenhaus/Modular/PrimePlan.lean",
+    "baseline_blob": "23dc012088d8513f1d8c1748c5367c9a33f4120c",
+    "current_blob": "bc4d2026af3dda89e2928c572570e4fb3866f8e8",
+    "reason": "Updates projections from the duplicate small-prime record to the representation-identical bundled ZMod64.Prime record; modular planning arithmetic and control flow are unchanged."
+  },
+  {
+    "path": "HexBerlekampZassenhaus/PrimeSelection.lean",
+    "baseline_blob": "6d9fc0f2d2b6612450968694557bca925ce7522b",
+    "current_blob": "c5ab3913c20b4497962ed20851da5c54af208f04",
+    "reason": "Replaces a duplicate three-field prime record with an abbreviation of the representation-identical bundled ZMod64.Prime record and renames its modulus projection; the candidate list, proofs, arithmetic, and control flow are unchanged."
+  },
+  {
+    "path": "bench/HexBench/FactorService.lean",
+    "baseline_blob": "1063ee045056aabe060a319d7dbe48460e6fdd75",
+    "current_blob": "635c202971d2276a498505da9842deac1c833c9f",
+    "reason": "Updates diagnostic-service projections from the duplicate small-prime record to the representation-identical bundled ZMod64.Prime record; every measured operation and branch is unchanged."
   }
 ]
