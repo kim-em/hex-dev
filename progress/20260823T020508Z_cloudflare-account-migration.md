@@ -9,15 +9,18 @@
 
 ## Current frontier
 
-The destination Hex account exists and Wrangler can select it, but R2 has not
-yet been enabled there. Cloudflare returns API error 10042, so the destination
-bucket and its public hostname do not exist yet.
+R2 is enabled in the destination Hex account. The `hex-cache` bucket was copied
+there in ENAM on 2026-08-23: all 21,508 objects and 7,416,377,295 bytes matched
+the source by key, size and available checksum. Representative artifact and
+revision downloads from the new `r2.dev` hostname also matched the source
+byte-for-byte. Live repository variables and the upload credential still point
+to the source account pending the coordinated cutover.
 
 ## Next step
 
-Enable R2 in the Hex dashboard, copy and verify `hex-cache`, then rotate the
-upload key and both endpoint variable pairs in one cutover.
+Pause cache publication, make a final incremental copy, then rotate the upload
+key and both endpoint variable pairs in one cutover.
 
 ## Blockers
 
-R2 checkout must be completed once in the Hex Cloudflare dashboard.
+None before the coordinated cache cutover.

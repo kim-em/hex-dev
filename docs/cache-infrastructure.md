@@ -28,8 +28,8 @@ to sign them, so the read host must be public; only uploads use a key.
 
 | Purpose | Value | Used by |
 |---|---|---|
-| `LAKE_CACHE_ARTIFACT_ENDPOINT_PUBLIC` | `https://pub-b2d516317e7041aebd324550ac6cd1fa.r2.dev/artifacts` | `ci.yml` read |
-| `LAKE_CACHE_REVISION_ENDPOINT_PUBLIC` | `https://pub-b2d516317e7041aebd324550ac6cd1fa.r2.dev/revisions` | `ci.yml` read |
+| `LAKE_CACHE_ARTIFACT_ENDPOINT_PUBLIC` | `https://pub-1ad7cebeb89e49d5afe6887b57e7956a.r2.dev/artifacts` | `ci.yml` read |
+| `LAKE_CACHE_REVISION_ENDPOINT_PUBLIC` | `https://pub-1ad7cebeb89e49d5afe6887b57e7956a.r2.dev/revisions` | `ci.yml` read |
 | `LAKE_CACHE_ARTIFACT_ENDPOINT` | `https://5acf032f740d48aa656788e28cabcf2e.r2.cloudflarestorage.com/hex-cache/artifacts` | `ci.yml` upload |
 | `LAKE_CACHE_REVISION_ENDPOINT` | `https://5acf032f740d48aa656788e28cabcf2e.r2.cloudflarestorage.com/hex-cache/revisions` | `ci.yml` upload |
 | `LAKE_CACHE_KEY` (secret) | `<ACCESS_KEY_ID>:<SECRET>`, read-write | `ci.yml` upload only |
