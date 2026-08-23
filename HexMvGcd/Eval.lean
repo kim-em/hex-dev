@@ -178,7 +178,7 @@ private def brownPrimeAt? (p : Nat) : Option ZMod64.Prime :=
   let y : Q2 := X 1
   let left := C ((1 : Rat) / 2) * x + C ((1 : Rat) / 3) * y + 1
   let right := C ((1 : Rat) / 5) * x * y + x + 2
-  match ratLiftCoprime? left right with
+  match (ratLiftCoprime? GcdConfig.default left right).1 with
   | some cert => checkCoprime left right cert
   | none => false
 #guard
@@ -192,8 +192,30 @@ private def brownPrimeAt? (p : Nat) : Option ZMod64.Prime :=
   let common := C ((1 : Rat) / 2) * x + C ((1 : Rat) / 3) * y + 1
   let f := common * (x + C ((1 : Rat) / 5))
   let h := common * (y + C ((1 : Rat) / 7))
-  match ratIntegerLiftCert? f h with
+  match (ratIntegerLiftCert? GcdConfig.default f h).cert? with
   | some cert => checkGcd f h cert
+  | none => false
+#guard
+  let x : Q2 := X 0
+  let y : Q2 := X 1
+  let f := C ((1 : Rat) / 2) * x + C ((1 : Rat) / 3) * y + 1
+  let h := C ((1 : Rat) / 5) * x * y + x + 2
+  let cfg := { GcdConfig.default with rand := Rand.ofSeed 23 }
+  let left := ratPrimitiveModel f
+  let right := ratPrimitiveModel h
+  let proposal := intConcreteProposal Mono.lex cfg left.poly right.poly
+  let first := gcdCertWith cfg left.poly right.poly
+  let nextCfg := { cfg with rand := first.rand }
+  let second := gcdCertWith nextCfg left.poly right.poly
+  let lifted := ratIntegerLiftCert? cfg f h
+  match proposal.cert? with
+  | some proposed =>
+      checkGcd left.poly right.poly proposed &&
+        first.cert.gcd == proposed.gcd &&
+        lifted.rand == second.rand && lifted.rand != cfg.rand &&
+        match lifted.cert? with
+        | some cert => checkGcd f h cert
+        | none => false
   | none => false
 #guard
   let x : P2 := X 0
