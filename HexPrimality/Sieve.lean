@@ -69,12 +69,12 @@ private theorem numOfIndex_mod6 (t : Nat) :
   unfold numOfIndex
   omega
 
-private theorem numOfIndex_indexOfNum {n : Nat}
+theorem numOfIndex_indexOfNum {n : Nat}
     (h : n % 6 = 1 ∨ n % 6 = 5) : numOfIndex (indexOfNum n) = n := by
   unfold numOfIndex indexOfNum
   omega
 
-private theorem indexOfNum_numOfIndex (t : Nat) :
+theorem indexOfNum_numOfIndex (t : Nat) :
     indexOfNum (numOfIndex t) = t := by
   unfold numOfIndex indexOfNum
   omega
@@ -566,6 +566,116 @@ theorem sieve_testBit_iff {bound sqrtBound t : Nat}
       have h5 : numOfIndex t * 5 ≤ numOfIndex t * numOfIndex t := by
         exact Nat.mul_le_mul_left _ (by omega)
       omega
+
+/-! Reading the final state back into a value list. -/
+
+/-- Collect the represented values with set bits over `fuel` indices
+starting at `t0`, ascending. -/
+@[expose]
+def bitsToListGo (state : Nat) : Nat → Nat → List Nat
+  | _, 0 => []
+  | t, fuel + 1 =>
+      if state.testBit t then
+        numOfIndex t :: bitsToListGo state (t + 1) fuel
+      else bitsToListGo state (t + 1) fuel
+
+/-- The represented values with set bits below `bound`, ascending,
+starting from index `1` (index `0` names the non-prime `1`). -/
+@[expose]
+def bitsToList (state bound : Nat) : List Nat :=
+  bitsToListGo state 1 (indexWidth bound - 1)
+
+private theorem mem_bitsToListGo {state : Nat} :
+    ∀ (fuel t0 n : Nat),
+      n ∈ bitsToListGo state t0 fuel ↔
+        ∃ t, t0 ≤ t ∧ t < t0 + fuel ∧ state.testBit t = true ∧
+          numOfIndex t = n := by
+  intro fuel
+  induction fuel with
+  | zero =>
+      intro t0 n
+      constructor
+      · intro h
+        cases h
+      · rintro ⟨t, h1, h2, _, _⟩
+        omega
+  | succ fuel ih =>
+      intro t0 n
+      unfold bitsToListGo
+      by_cases hbit : state.testBit t0 = true
+      · rw [if_pos hbit]
+        constructor
+        · intro h
+          rcases List.mem_cons.mp h with rfl | h'
+          · exact ⟨t0, Nat.le_refl _, by omega, hbit, rfl⟩
+          · obtain ⟨t, h1, h2, h3, h4⟩ := (ih (t0 + 1) n).mp h'
+            exact ⟨t, by omega, by omega, h3, h4⟩
+        · rintro ⟨t, h1, h2, h3, h4⟩
+          rcases Nat.eq_or_lt_of_le h1 with rfl | h1'
+          · subst h4
+            exact List.mem_cons_self ..
+          · exact List.mem_cons_of_mem _
+              ((ih (t0 + 1) n).mpr ⟨t, by omega, by omega, h3, h4⟩)
+      · rw [if_neg hbit]
+        rw [ih (t0 + 1) n]
+        constructor
+        · rintro ⟨t, h1, h2, h3, h4⟩
+          exact ⟨t, by omega, by omega, h3, h4⟩
+        · rintro ⟨t, h1, h2, h3, h4⟩
+          rcases Nat.eq_or_lt_of_le h1 with rfl | h1'
+          · exact absurd h3 hbit
+          · exact ⟨t, by omega, by omega, h3, h4⟩
+
+/-- Membership in the read-back list is a set bit on a represented index
+above `0`. -/
+theorem mem_bitsToList {state bound n : Nat} (hw : 1 ≤ indexWidth bound) :
+    n ∈ bitsToList state bound ↔
+      ∃ t, 1 ≤ t ∧ t < indexWidth bound ∧ state.testBit t = true ∧
+        numOfIndex t = n := by
+  unfold bitsToList
+  rw [mem_bitsToListGo]
+  constructor
+  · rintro ⟨t, h1, h2, h3, h4⟩
+    exact ⟨t, h1, by omega, h3, h4⟩
+  · rintro ⟨t, h1, h2, h3, h4⟩
+    exact ⟨t, h1, by omega, h3, h4⟩
+
+private theorem bitsToListGo_pairwise {state : Nat} :
+    ∀ (fuel t0 : Nat), (bitsToListGo state t0 fuel).Pairwise (· < ·) := by
+  intro fuel
+  induction fuel with
+  | zero =>
+      intro t0
+      exact List.Pairwise.nil
+  | succ fuel ih =>
+      intro t0
+      unfold bitsToListGo
+      by_cases hbit : state.testBit t0 = true
+      · rw [if_pos hbit]
+        rw [List.pairwise_cons]
+        refine ⟨?_, ih (t0 + 1)⟩
+        intro x hx
+        obtain ⟨t, h1, _, _, rfl⟩ := (mem_bitsToListGo fuel (t0 + 1) x).mp hx
+        exact numOfIndex_lt_numOfIndex.mpr (by omega)
+      · rw [if_neg hbit]
+        exact ih (t0 + 1)
+
+/-- The read-back list is strictly ascending. -/
+theorem bitsToList_pairwise_lt (state bound : Nat) :
+    (bitsToList state bound).Pairwise (· < ·) :=
+  bitsToListGo_pairwise _ _
+
+/-- A prime of at least `5` is coprime to `6`: the residue fact that puts
+primes onto sieve indices. -/
+theorem prime_mod_six {n : Nat} (hp : Prime n) (h5 : 5 ≤ n) :
+    n % 6 = 1 ∨ n % 6 = 5 := by
+  have h2 : n % 2 ≠ 0 := by
+    intro h
+    rcases hp.2 2 (Nat.dvd_of_mod_eq_zero h) with h' | h' <;> omega
+  have h3 : n % 3 ≠ 0 := by
+    intro h
+    rcases hp.2 3 (Nat.dvd_of_mod_eq_zero h) with h' | h' <;> omega
+  omega
 
 /-! Regression coverage: the value map, the mask, and the sieve at a
 small bound against trial division. -/

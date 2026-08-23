@@ -7,6 +7,12 @@ Authors: Kim Morrison
 module
 
 public import HexArith.Nat.Prime
+public import HexPrimality.Sieve
+-- Kernel-reducible `Array` equality for the sieve-backed table check; see
+-- `HexBasic.ArrayDecEq`.
+public import HexBasic.ArrayDecEq
+
+open scoped Hex
 
 public section
 
@@ -15,13 +21,12 @@ The committed prime table: every prime below `primeTableBound`, ascending,
 with membership decided by binary search and both membership directions
 proved against `Hex.Nat.Prime`.
 
-The table literal is generated once (currently by an external sieve run) and
-its correctness is machine-checked below, so the generator carries no
-soundness claim: soundness replays `isPrimeTrial` over the committed entries,
-and completeness replays a balanced checker over every number below the
-bound. The planned kernel-reducible bitset sieve (see the SPEC's "Initial
-segments") will replace the internals of those two proofs without changing
-any public statement.
+The table literal and the batched sieve states below are generated
+(`#rebuild_primeTable` in `HexPrimality.SieveElab`), and their correctness
+is machine-checked here, so the generator carries no soundness claim: the
+membership directions come from one verified sieve run replayed by the
+kernel in fixed-size chunks and chained to the committed literal, and
+sortedness from a structural adjacent-ascent check.
 -/
 
 namespace Hex
@@ -303,80 +308,111 @@ theorem isTablePrime_iff {n : Nat} : isTablePrime n = true ↔ n ∈ primeTable 
       omega
     exact hgen _
 
-private theorem primeTable_all_trial :
-    primeTable.toList.all isPrimeTrial = true := by decide +kernel
+/-! The sieve-backed verification of the committed literal.
 
-/-- Every table entry is prime: soundness of the committed literal. -/
+The block below is generated: the batched intermediate states are one
+sieve run split into kernel-replayed chunks, chained by
+`sieveGoRange_add` to the full run, and the table literal is tied to the
+final state's read-back by one cheap kernel comparison. Regenerate with
+`#rebuild_primeTable 10000 100 4` (`HexPrimality.SieveElab`) after any
+change to the sieve or the bound; the generator is untrusted, since a
+wrong state or literal fails the kernel checks below. -/
+
+-- #rebuild_primeTable 10000 100 4
+
+private def sieveState1 : Nat :=
+  3080292615959739964204484627571240058109023344876904136670066404714457643420220685313930459391025032880942212071706666506233064134106640092752850382696999010127135677239034590579934415311303670306939956512482118437455886815663169599809598771790928697752146843281290990233739742078125423778626894701558321912306824958977746503541588957007771071497680780085365203621989994826433338813736584322130524865068608253328345348929603079809551185296279515351540324503254159236216334786996080393854729767413230286513181874477261687618266711145588467196156452676011727185826270120889273426543424043539995844350320694497274394592012186155628180856952522517197796465582204220495612034285632721377253184628623742750839281709556311485248379272410821501598325775628515580593374670921802878231898785556532289456306832759793237976037341749209755146836602688662115974028462024729078107927985004447983038394181942599069762291902578956020747780921381500857400384661318109283049954027534099211149327354007674661105199648274174
+
+private def sieveState2 : Nat :=
+  3079964065817684060434902880381761654547261924990830458473128600185624189145456663211266024686028346610852021422929846097793481735473533177867295057753103679751335535849323515914308157427883736811606555564724579336492331370886219255650657463483341884330953956285122533471813239709498918939449169214496835214282442050086395574537642625152600644702110552699449679550755756474856128808789219031757697365368789155172001469175884281667446975186803309959052106130094989846582966275779041020541774410317690931048645872739711739595823670450280640216383584397646076032249789976483278467876292078461890255843094768386449803152522112592748473857229952115027154998894124583174220563052773077564908224903426878504528991762527701220875764847638042980762475965932497442569973566979586095713656687508976233967191240097902266835987328709248674608699146386390603852111408189282924704724946361880148433737870285706967978319092701557268485730409839238176534809049240977293008474827046702738516165728987860390335385953826558
+
+private def sieveState3 : Nat :=
+  2743569799150457740567117867529305710737286404975487885816421920831007151935623494201071190905527885762344033559330561210746670076679222736991895702072237554169262563099055179759821680250277279264064730532589012306700701119199884147752271498898435770350844560967116714087815994103518859161772048921139390811737067421903089407267113508247467922260065019716361051934508028515803775457111616521622097166727138949685086516458251860803208089185959029516085704718584640305851785038349379033007521710927260154627735038092608716077088116354864118416573865177325707380176719589224755511618899220758525247493791981098132462127060240030612213462228616220679840808541757660192076058919459176316153293833679819700198462081693181611673085127963862563607594444061037441733115786629750989183984758449594431174404608868007951740286929939044798726375726613140906127048593862602300814876669108047208044711897626232332307361809822926628769700480677621751230848429062180970736590450139238366134144937299691562679374995715838
+
+private def sieveState4 : Nat :=
+  52744135752356285805936049398430563853758494609160225796514743786617123787620821399859121188119528101218220704463160359020095888945827635244508551010264497147167328698916098549052770734386406558041136130951220102097589450036487889862513102237711001722261432163007766193243016959423550658809307427773430294686683256681071210928838628543230569721425513953798750330765562118972569850882871190532603134328126767999785051707298755561378421812626158609156306647472120885083908582702272771219708333402279408395106681754643926429383297469258864876040886224701339896630672022302096628438499126987700336836567734457421391999963402097693015614183764830163944020476605413722530296274936433158534311607292874987555134543420113288105285420780192126190733639406080137861321897321781112012330763582464554593728659183893472014340227531384209118011000733524518182848382804666019367121594964961391550350451044259814842469661079561979434448449143257563380571818704504412933327123869610585710153823488183849678548714059518
+
+private theorem sieveChunk1 :
+    sieveGoRange 3333 1 8 (sieveInit 3333) = sieveState1 := by
+  decide +kernel
+
+private theorem sieveChunk2 :
+    sieveGoRange 3333 9 8 sieveState1 = sieveState2 := by
+  decide +kernel
+
+private theorem sieveChunk3 :
+    sieveGoRange 3333 17 8 sieveState2 = sieveState3 := by
+  decide +kernel
+
+private theorem sieveChunk4 :
+    sieveGoRange 3333 25 8 sieveState3 = sieveState4 := by
+  decide +kernel
+
+private theorem sieve_eq_final : sieve 10000 100 = sieveState4 := by
+  show sieveGoRange 3333 1 32 (sieveInit 3333) = _
+  rw [show (32 : Nat) = 8 + 24 from rfl, sieveGoRange_add, sieveChunk1,
+    show (1 + 8 : Nat) = 9 from rfl,
+    show (24 : Nat) = 8 + 16 from rfl, sieveGoRange_add, sieveChunk2,
+    show (9 + 8 : Nat) = 17 from rfl,
+    show (16 : Nat) = 8 + 8 from rfl, sieveGoRange_add, sieveChunk3,
+    show (17 + 8 : Nat) = 25 from rfl, sieveChunk4]
+
+private theorem primeTable_eq_bits :
+    primeTable = (2 :: 3 :: bitsToList sieveState4 10000).toArray := by
+  decide +kernel
+
+private theorem mem_primeTable_iff_bits {n : Nat} :
+    n ∈ primeTable ↔
+      n = 2 ∨ n = 3 ∨ n ∈ bitsToList sieveState4 10000 := by
+  rw [primeTable_eq_bits, List.mem_toArray, List.mem_cons, List.mem_cons]
+
+/-- Every table entry is prime: the committed literal read back through
+the verified sieve run. -/
 theorem mem_primeTable_prime {n : Nat} (h : n ∈ primeTable) : Prime n := by
-  have hall := primeTable_all_trial
-  rw [List.all_eq_true] at hall
-  exact isPrimeTrial_isPrime (hall n (Array.mem_def.mp h))
+  rw [mem_primeTable_iff_bits] at h
+  rcases h with rfl | rfl | h
+  · decide
+  · decide
+  · obtain ⟨t, ht1, htw, hbit, rfl⟩ := (mem_bitsToList (by decide)).mp h
+    have hbit' : (sieve 10000 100).testBit t = true := by
+      rw [sieve_eq_final]
+      exact hbit
+    exact (sieve_testBit_iff (by decide) (by decide) ht1
+      (numOfIndex_lt_iff.mpr htw)).mp hbit'
 
-/-- Balanced completeness checker: over `[lo, lo + 2 ^ fuel)`, every number
-below `primeTableBound` that passes `isPrimeTrial` is in the table. Balanced
-splitting keeps kernel reduction depth logarithmic in the span. -/
-@[expose]
-def coverOk (lo : Nat) : Nat → Bool
-  | 0 => decide (primeTableBound ≤ lo) || !(isPrimeTrial lo) || isTablePrime lo
-  | fuel + 1 => coverOk lo fuel && coverOk (lo + 2 ^ fuel) fuel
-
-private theorem coverOk_spec :
-    ∀ (fuel lo : Nat), coverOk lo fuel = true →
-      ∀ n, lo ≤ n → n < lo + 2 ^ fuel → n < primeTableBound →
-        isPrimeTrial n = true → isTablePrime n = true := by
-  intro fuel
-  induction fuel with
-  | zero =>
-      intro lo h n hln hup hbound htrial
-      have h1 : (2 : Nat) ^ 0 = 1 := by decide
-      have hn : n = lo := by omega
-      subst hn
-      unfold coverOk at h
-      rw [Bool.or_eq_true, Bool.or_eq_true] at h
-      rcases h with (hge | hnot) | htab
-      · rw [decide_eq_true_iff] at hge
-        omega
-      · rw [Bool.not_eq_true', htrial] at hnot
-        cases hnot
-      · exact htab
-  | succ fuel ih =>
-      intro lo h n hln hup hbound htrial
-      unfold coverOk at h
-      rw [Bool.and_eq_true] at h
-      have hp2 : (2 : Nat) ^ (fuel + 1) = 2 ^ fuel + 2 ^ fuel := by
-        rw [Nat.pow_succ]; omega
-      by_cases hcase : n < lo + 2 ^ fuel
-      · exact ih lo h.1 n hln hcase hbound htrial
-      · exact ih (lo + 2 ^ fuel) h.2 n (by omega) (by omega) hbound htrial
-
-/- Five spans of `2 ^ 11 = 2048` cover `[0, 10240) ⊇ [0, primeTableBound)`.
-Separate lemmas keep each `decide` bounded and incremental. -/
-
-private theorem coverOk_chunk0 : coverOk 0 11 = true := by decide +kernel
-private theorem coverOk_chunk1 : coverOk 2048 11 = true := by decide +kernel
-private theorem coverOk_chunk2 : coverOk 4096 11 = true := by decide +kernel
-private theorem coverOk_chunk3 : coverOk 6144 11 = true := by decide +kernel
-private theorem coverOk_chunk4 : coverOk 8192 11 = true := by decide +kernel
-
-/-- Every prime below the bound is a table entry: completeness of the
-committed literal, which is what lets a caller conclude anything from a
-*failed* lookup. -/
+/-- Every prime below the bound is a table entry: completeness through
+the sieve's completeness direction, which is what lets a caller conclude
+anything from a *failed* lookup. -/
 theorem mem_primeTable_of_prime {n : Nat} (hp : Prime n)
     (hlt : n < primeTableBound) : n ∈ primeTable := by
-  have htrial := isPrimeTrial_of_prime hp
-  have hpow : (2 : Nat) ^ 11 = 2048 := by decide
-  have hbound : primeTableBound = 10000 := rfl
-  have htab : isTablePrime n = true := by
-    rcases Nat.lt_or_ge n 2048 with h | h
-    · exact coverOk_spec 11 0 coverOk_chunk0 n (by omega) (by omega) hlt htrial
-    rcases Nat.lt_or_ge n 4096 with h' | h'
-    · exact coverOk_spec 11 2048 coverOk_chunk1 n (by omega) (by omega) hlt htrial
-    rcases Nat.lt_or_ge n 6144 with h'' | h''
-    · exact coverOk_spec 11 4096 coverOk_chunk2 n (by omega) (by omega) hlt htrial
-    rcases Nat.lt_or_ge n 8192 with h''' | h'''
-    · exact coverOk_spec 11 6144 coverOk_chunk3 n (by omega) (by omega) hlt htrial
-    · exact coverOk_spec 11 8192 coverOk_chunk4 n (by omega) (by omega) hlt htrial
-  exact isTablePrime_iff.mp htab
+  have hb : primeTableBound = 10000 := rfl
+  rw [mem_primeTable_iff_bits]
+  rcases Nat.lt_or_ge n 5 with h5 | h5
+  · have h2 := hp.two_le
+    have : n = 2 ∨ n = 3 ∨ n = 4 := by omega
+    rcases this with rfl | rfl | rfl
+    · exact Or.inl rfl
+    · exact Or.inr (Or.inl rfl)
+    · exfalso
+      rcases hp.2 2 (by decide) with h | h <;> omega
+  · right
+    right
+    have hmod := prime_mod_six hp h5
+    have hval : numOfIndex (indexOfNum n) = n := numOfIndex_indexOfNum hmod
+    have ht1 : 1 ≤ indexOfNum n := by
+      unfold indexOfNum
+      omega
+    have htw : indexOfNum n < indexWidth 10000 := by
+      refine numOfIndex_lt_iff.mp ?_
+      rw [hval]
+      omega
+    refine (mem_bitsToList (by decide)).mpr
+      ⟨indexOfNum n, ht1, htw, ?_, hval⟩
+    rw [← sieve_eq_final]
+    refine (sieve_testBit_iff (by decide) (by decide) ht1
+      (numOfIndex_lt_iff.mpr htw)).mpr ?_
+    rw [hval]
+    exact hp
 
 /-- The primes in `[lo, hi)`, ascending. Runtime decision through the
 `isPrimeTrial`-backed `Decidable` instance; the committed table plays no
