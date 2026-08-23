@@ -21,6 +21,7 @@ public import HexMvGcd.Heu
 public import HexMvGcd.Brown
 public import HexMvGcd.Gcd
 public import HexMvGcd.Squarefree
+public import HexMvGcd.SquarefreeTests
 public import HexMvGcd.Kernel
 public import HexMvGcd.Eval
 
