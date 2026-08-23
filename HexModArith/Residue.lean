@@ -87,6 +87,21 @@ def toNat (a : ZMod64 p) : Nat :=
 def toUInt64 (a : ZMod64 p) : UInt64 :=
   a.val
 
+/-- Equality of residues is equality of the stored words: the reduction
+proof is irrelevant. -/
+instance : DecidableEq (ZMod64 p) := fun a b =>
+  if h : a.val = b.val then
+    isTrue (by
+      cases a
+      cases b
+      cases h
+      rfl)
+  else
+    isFalse (by
+      intro hab
+      cases hab
+      exact h rfl)
+
 instance : CoeOut (ZMod64 p) UInt64 where
   coe := toUInt64
 

@@ -18,6 +18,10 @@ JSONL fixture record shape (one record per line):
                      modulo the pinned prime.
 * ``matrix``     — ``{"kind": "matrix",     "lib": str, "case": str,
                       "rows": [[int...]...]}``
+* ``sparsepoly`` — ``{"kind": "sparsepoly", "lib": str, "case": str,
+                     "domain": "int"|"rat"|"zmod", "mod": int|None,
+                     "terms": List[[exp, num, den]]}`` — ascending
+                     exponents; ``den`` is 1 outside the ``rat`` domain.
 * ``mvpoly``     — ``{"kind": "mvpoly",     "lib": str, "case": str,
                       "arity": int, "order": "lex"|"grlex"|"grevlex",
                       "terms": [[[exponent...], coefficient]...]}``
@@ -86,6 +90,7 @@ VALID_FIXTURE_KINDS = frozenset(
         "poly",
         "matrix",
         "mvpoly",
+        "sparsepoly",
         "lattice",
         "prime",
         "conway",
@@ -238,6 +243,43 @@ def _validate_fixture(record: dict[str, Any]) -> None:
             for row in rows
         ):
             raise FixtureError(f"matrix.rows must be List[List[int]]: {record!r}")
+    elif kind == "sparsepoly":
+        domain = record.get("domain")
+        if domain not in {"int", "rat", "zmod"}:
+            raise FixtureError(
+                f"sparsepoly.domain must be int/rat/zmod: {record!r}"
+            )
+        modulus = record.get("mod", None)
+        if domain == "zmod":
+            if not _is_int(modulus) or modulus < 2:
+                raise FixtureError(
+                    f"sparsepoly.mod must be an int >= 2 for zmod: {record!r}"
+                )
+        elif modulus is not None:
+            raise FixtureError(
+                f"sparsepoly.mod must be null outside zmod: {record!r}"
+            )
+        terms = record.get("terms")
+        if not isinstance(terms, list):
+            raise FixtureError(f"sparsepoly.terms must be a list: {record!r}")
+        previous = -1
+        for term in terms:
+            if (
+                not isinstance(term, list)
+                or len(term) != 3
+                or not all(_is_int(x) for x in term)
+                or term[0] < 0
+                or term[2] <= 0
+            ):
+                raise FixtureError(
+                    f"sparsepoly term must be [exp, num, den>0]: {record!r}"
+                )
+            if term[0] <= previous:
+                raise FixtureError(
+                    f"sparsepoly.terms must have strictly increasing "
+                    f"exponents: {record!r}"
+                )
+            previous = term[0]
     elif kind == "mvpoly":
         arity = record.get("arity")
         if not _is_int(arity) or arity < 0:

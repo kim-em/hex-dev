@@ -678,6 +678,24 @@
     "reason": "Adds HexSparsePoly.KernelTests to the HexReleaseTests globs on top of the HexSparsePoly lean_lib registration; no factorization module, executable, or build-flag changes."
   },
   {
+    "path": "Hex/Conformance/Emit.lean",
+    "baseline_blob": "21481a92862c6a9f8c8d538c4815d2bc4557453a",
+    "current_blob": "683278f7a8270484bc67e30317237ebae0d2ef3f",
+    "reason": "Adds the sparsepoly fixture serializer to the shared conformance emit helper; no factorization module imports it at runtime."
+  },
+  {
+    "path": "HexModArith/Residue.lean",
+    "baseline_blob": "91a08cda3853a3dd24432e2124fc24e48a189484",
+    "current_blob": "26e8b637086e9493ad19930d9b9aa5ce1dda4c24",
+    "reason": "Adds the DecidableEq (ZMod64 p) instance previously supplied by HexPolyFp/Field.lean, with the same stored-word comparison; the compiled factorization call graph is unchanged."
+  },
+  {
+    "path": "HexPolyFp/Field.lean",
+    "baseline_blob": "4ff528c7940c6e385c7ca83bbe6a6e8158d9e4a2",
+    "current_blob": "42dd2bbf8c328cf81416effa08e6163f0ee7dbea",
+    "reason": "Removes the DecidableEq (ZMod64 p) instance now supplied upstream by HexModArith/Residue.lean; no other change."
+  },
+  {
     "path": "lakefile.lean",
     "baseline_blob": "6dd80771ae2212333b2a9b925b52056e0037ff56",
     "current_blob": "c523b56fcf7249235b710bc86792042a57c4e26e",
@@ -778,5 +796,29 @@
     "baseline_blob": "ff87edbbbf7524190b536ae4ce92a57968275aa9",
     "current_blob": "c5d22d5cbafc71a28f5c47536cdd1d06bf16f7e6",
     "reason": "Adds the HexSparsePolyTests kernel-probe lean_lib on top of the reviewed main registrations; no factorization module, executable, or build-flag changes."
+  },
+  {
+    "path": "Hex/Conformance/Emit.lean",
+    "baseline_blob": "21481a92862c6a9f8c8d538c4815d2bc4557453a",
+    "current_blob": "683278f7a8270484bc67e30317237ebae0d2ef3f",
+    "reason": "Adds the sparsepoly fixture serializer to the shared conformance emit helper; no factorization module imports it at runtime."
+  },
+  {
+    "path": "HexModArith/Residue.lean",
+    "baseline_blob": "91a08cda3853a3dd24432e2124fc24e48a189484",
+    "current_blob": "26e8b637086e9493ad19930d9b9aa5ce1dda4c24",
+    "reason": "Adds the DecidableEq (ZMod64 p) instance previously supplied by HexPolyFp/Field.lean, with the same stored-word comparison; the compiled factorization call graph is unchanged."
+  },
+  {
+    "path": "HexPolyFp/Field.lean",
+    "baseline_blob": "4ff528c7940c6e385c7ca83bbe6a6e8158d9e4a2",
+    "current_blob": "42dd2bbf8c328cf81416effa08e6163f0ee7dbea",
+    "reason": "Removes the DecidableEq (ZMod64 p) instance now supplied upstream by HexModArith/Residue.lean; no other change."
+  },
+  {
+    "path": "lakefile.lean",
+    "baseline_blob": "ff87edbbbf7524190b536ae4ce92a57968275aa9",
+    "current_blob": "60046912cf60fdf062e11b8c9b7a8c83ebf92067",
+    "reason": "Adds the HexSparsePoly conformance/bench executables and glob entries on top of the kernel-probe registration; no factorization module, executable, or build-flag changes."
   }
 ]
