@@ -177,13 +177,6 @@ theorem rationalGcdCert_checks (f h : ZPoly) :
     checkGcd f h (rationalGcdCert f h) = true := by
   sorry
 
-/-- The total deterministic fallback.  The name is retained for producer API
-compatibility; unlike the previous implementation, this definition does not
-use a theorem to manufacture data from a rejected checker branch.  Its
-checker contract is `rationalGcdCert_checks`. -/
-def checkedRationalGcdCert (f h : ZPoly) : GcdCert :=
-  rationalGcdCert f h
-
 /-- Scan the low coefficients for the exponent of the first nonzero term. -/
 private def xOrder.go (f : ZPoly) : Nat → Nat → Nat
   | index, 0 => index
@@ -204,6 +197,14 @@ structure StructuralReduction where
   factor : ZPoly
   left : ZPoly
   right : ZPoly
+
+/-- Prefer the deterministic extended-subresultant certificate, with the
+rational implementation as the classified fallback if no actual terminal
+row exists. -/
+private def fallbackGcdCert (f h : ZPoly) : GcdCert :=
+  match prsCert? f h with
+  | some cert => cert
+  | none => rationalGcdCert f h
 
 /-- Route 0: extract the common integer content and common power of `x`.
 Both divisions are explicit checked operations, so a representation or
@@ -238,7 +239,7 @@ def reducedGcdCert (f h : ZPoly) : GcdCert :=
       | none =>
           match brownCert? f h with
           | some cert => cert
-          | none => prsCert f h
+          | none => fallbackGcdCert f h
 
 /-- Internal route tag used by executable dispatch guards. -/
 private inductive GcdRoute where
@@ -255,12 +256,12 @@ private def dispatchGcdCert (f h : ZPoly) : GcdCert × GcdRoute :=
   | some cert => (cert, .structural)
   | none =>
       match structuralReduction? f h with
-      | none => (prsCert f h, .fallback)
+      | none => (fallbackGcdCert f h, .fallback)
       | some reduced =>
           match restoreStructural? f h reduced
               (reducedGcdCert reduced.left reduced.right) with
           | some cert => (cert, .reduced)
-          | none => (prsCert f h, .fallback)
+          | none => (fallbackGcdCert f h, .fallback)
 
 /-- Produce a checked gcd certificate.  Mandatory zero and constant
 certificates run before content or `x` extraction.  Remaining route-0
@@ -274,7 +275,9 @@ theorem gcdCert_checks (f h : ZPoly) :
     checkGcd f h (gcdCert f h) = true := by
   sorry
 
-/-- Canonically normalized gcd of two integer polynomials. -/
+/-- Canonically normalized gcd of two integer polynomials.  Exposure is
+limited to the projection equation `gcd_eq_cert`; `gcdCert` and its route
+search remain opaque to kernel replay. -/
 @[expose]
 def gcd (f h : ZPoly) : ZPoly :=
   (gcdCert f h).gcd
@@ -412,33 +415,33 @@ def ratGcd (f h : DensePoly Rat) : DensePoly Rat :=
 #guard
   let f : ZPoly := 0
   let h : ZPoly := 0
-  let cert := checkedRationalGcdCert f h
+  let cert := rationalGcdCert f h
   cert.gcd == 0 && checkGcd f h cert
 
 -- The degenerate direct fallback and its checker also remain reducible in the
 -- ordinary kernel while the definition is in scope.  Larger rational
 -- Euclidean searches intentionally stay outside the replay closure.
 example :
-    checkGcd (0 : ZPoly) 0 (checkedRationalGcdCert 0 0) = true := by
+    checkGcd (0 : ZPoly) 0 (rationalGcdCert 0 0) = true := by
   decide +kernel
 
 #guard
   let f : ZPoly := DensePoly.ofList [2, 4, 2]
   let h : ZPoly := 0
-  let cert := checkedRationalGcdCert f h
+  let cert := rationalGcdCert f h
   cert.gcd == f && checkGcd f h cert
 
 #guard
   let f : ZPoly := DensePoly.ofList [0, 12]
   let h : ZPoly := DensePoly.ofList [0, 18]
-  let cert := checkedRationalGcdCert f h
+  let cert := rationalGcdCert f h
   cert.gcd == DensePoly.ofList [0, 6] && checkGcd f h cert
 
 #guard
   let common : ZPoly := DensePoly.ofList [1, 1]
   let f := common * DensePoly.ofList [2, 1]
   let h := common * DensePoly.ofList [3, 1]
-  let cert := checkedRationalGcdCert f h
+  let cert := rationalGcdCert f h
   cert.gcd == common && checkGcd f h cert
 
 #guard gcd (0 : ZPoly) 0 == 0
@@ -460,11 +463,13 @@ example :
   | none => false
   | some reduced =>
       reduced.factor == DensePoly.ofList [0, 0, 6] &&
-        match restoreStructural? f h reduced
-            (prsCert reduced.left reduced.right) with
-        | some cert =>
-            cert.gcd == DensePoly.ofList [0, 0, 6] && checkGcd f h cert
+        match prsCert? reduced.left reduced.right with
         | none => false
+        | some reducedCert =>
+            match restoreStructural? f h reduced reducedCert with
+            | some cert =>
+                cert.gcd == DensePoly.ofList [0, 0, 6] && checkGcd f h cert
+            | none => false
 
 #guard
   let f : ZPoly := DensePoly.ofList [1, 1]

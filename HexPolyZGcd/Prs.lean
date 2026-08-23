@@ -27,68 +27,52 @@ namespace Hex
 
 namespace ZPoly
 
-/-- The first caller-order-sensitive row of the extended chain.  This is a
-genuine Bézout row even when one input is zero; it also gives a data-level
-initializer from which `prsTerminal` can fold a known-nonempty route without
-an option projection or a dummy default. -/
-def prsInitial (f h : ZPoly) : DensePoly.SubresultantExt.Entry Int :=
-  if f.isZero then (0, 1, h)
-  else if h.isZero then (1, 0, f)
-  else if f.size < h.size then (0, 1, h)
-  else (1, 0, f)
-
-/-- Last extended-subresultant row, computed as a fold from the actual first
-row.  The doubly-zero input is handled before this helper is used by
-`prsCert`; on every other input `prsInitial` is exactly the chain's first row.
--/
-def prsTerminal (f h : ZPoly) : DensePoly.SubresultantExt.Entry Int :=
-  (DensePoly.subresultantChainExt f h).foldl (fun _ entry => entry)
-    (prsInitial f h)
+/-- Last extended-subresultant row.  The doubly-zero chain is empty and has no
+synthetic terminal row. -/
+def prsTerminal? (f h : ZPoly) :
+    Option (DensePoly.SubresultantExt.Entry Int) :=
+  (DensePoly.subresultantChainExt f h).back?
 
 /-- Primitive-normalized PRS gcd candidate with common integer content
 restored. -/
-def prsCandidate (f h : ZPoly) : ZPoly :=
-  let terminal := prsTerminal (primitivePart f) (primitivePart h)
+def prsCandidate? (f h : ZPoly) : Option ZPoly := do
+  let terminal ← prsTerminal? (primitivePart f) (primitivePart h)
   let primitive := normalizePrimitiveSign (primitivePart terminal.2.2)
   let commonContent : Int := Int.ofNat (Int.gcd (content f) (content h))
-  normalizePrimitiveSign (DensePoly.scale commonContent primitive)
+  pure (normalizePrimitiveSign (DensePoly.scale commonContent primitive))
 
 /-- Extract and replay a constant Bezout identity from the terminal extended
 chain of two candidate cofactors. -/
-def prsCoprimeWitness (f h : ZPoly) : CoprimeWitness :=
-  let terminal := prsTerminal f h
+def prsCoprimeWitness? (f h : ZPoly) : Option CoprimeWitness := do
+  let terminal ← prsTerminal? f h
   let k := terminal.2.2.coeff 0
-  CoprimeWitness.constant terminal.1 terminal.2.1 k
+  pure (CoprimeWitness.constant terminal.1 terminal.2.1 k)
 
-/-- Route 4: a total, deterministic extended-subresultant certificate.  The
-only special case is the mathematically degenerate pair `(0, 0)`.  Every
-other field is computed directly from the Brown chain and ordinary long
-division; correctness is the separate theorem `prsCert_checks` and no proof
-is inspected to manufacture runtime data. -/
-def prsCert (f h : ZPoly) : GcdCert :=
+/-- Route 4: a deterministic extended-subresultant certificate.  Absence of
+an actual terminal row is propagated to the dispatcher, which classifies the
+rational implementation as the audited fallback. -/
+def prsCert? (f h : ZPoly) : Option GcdCert :=
   if f.isZero && h.isZero then
-    { gcd := 0
-      cofL := 1
-      cofR := 1
-      coprime := .constant 1 0 1 }
-  else
-    let candidate := prsCandidate f h
+    some
+      { gcd := 0
+        cofL := 1
+        cofR := 1
+        coprime := .constant 1 0 1 }
+  else do
+    let candidate ← prsCandidate? f h
     let cofL := (DensePoly.divMod f candidate).1
     let cofR := (DensePoly.divMod h candidate).1
-    { gcd := candidate
-      cofL
-      cofR
-      coprime := prsCoprimeWitness cofL cofR }
+    let coprime ← prsCoprimeWitness? cofL cofR
+    pure
+      { gcd := candidate
+        cofL := cofL
+        cofR := cofR
+        coprime := coprime }
 
 /-- Completeness of the deterministic extended-subresultant fallback. -/
-theorem prsCert_checks (f h : ZPoly) : checkGcd f h (prsCert f h) = true := by
+theorem prsCert_checks {f h : ZPoly} {cert : GcdCert}
+    (hcert : prsCert? f h = some cert) : checkGcd f h cert = true := by
   sorry
-
-/-- Checked optional view retained for route-level diagnostics.  Public
-dispatch uses total `prsCert` directly. -/
-def prsCert? (f h : ZPoly) : Option GcdCert :=
-  let cert := prsCert f h
-  if checkGcd f h cert then some cert else none
 
 /-! Executable pin for the extended-chain route, including rationally
 nonmonic cofactors. -/
@@ -97,10 +81,17 @@ nonmonic cofactors. -/
   let common : ZPoly := DensePoly.ofList [2, 1]
   let f := common * DensePoly.ofList [1, 2]
   let h := common * DensePoly.ofList [1, 3]
-  let cert := prsCert f h
-  cert.gcd == common && checkGcd f h cert
+  match prsCert? f h with
+  | some cert => cert.gcd == common && checkGcd f h cert
+  | none => false
 
-#guard checkGcd (0 : ZPoly) 0 (prsCert 0 0)
+#guard
+  match prsCert? (0 : ZPoly) 0 with
+  | some cert => checkGcd 0 0 cert
+  | none => false
+
+-- The raw extended chain for `(0, 0)` is genuinely empty.
+#guard (prsTerminal? (0 : ZPoly) 0).isNone
 
 end ZPoly
 
