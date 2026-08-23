@@ -93,10 +93,13 @@ modular multiplications, and beyond this size certificate search itself is
 the bottleneck to fix first. -/
 meta def primalityBitBudget : Nat := 8192
 
-/-- Run the certificate search and emit the checked proof term for
-`Hex.Nat.Prime n`. The search result is self-checked with the same compiled
+/-- Run the certificate search and emit the checked proof term with `head`
+applied to the subject, the reified certificate, and the `Eq.refl true`
+slot: `prime_of_checkPrimeAt` here, the companion's `Nat.Prime`-flavoured
+wrapper there. The search result is self-checked with the same compiled
 `checkPrime` the kernel will replay before anything is emitted. -/
-meta def provePrime (tactic : String) (n : Nat) (nE : Expr) : MetaM Expr := do
+meta def provePrimeWith (head : Name) (tactic : String) (n : Nat)
+    (nE : Expr) : MetaM Expr := do
   unless ← isDefEq (mkNatLit n) nE do
     throwError "{tactic}: the argument{indentExpr nE}\
         \nevaluates to {n} but is not definitionally transparent to the \
@@ -126,8 +129,12 @@ meta def provePrime (tactic : String) (n : Nat) (nE : Expr) : MetaM Expr := do
       unless c.raw.subject == n && Hex.Nat.checkPrime c.raw do
         throwError "{tactic}: internal error: the found certificate fails \
             its own check; please report this"
-      return mkApp3 (mkConst ``Hex.Nat.prime_of_checkPrimeAt) nE
-        (reifyPrimeCert c.raw) reflTrue
+      return mkApp3 (mkConst head) nE (reifyPrimeCert c.raw) reflTrue
+
+/-- `provePrimeWith` at the Mathlib-free wrapper: the proof term for
+`Hex.Nat.Prime n`. -/
+meta def provePrime (tactic : String) (n : Nat) (nE : Expr) : MetaM Expr :=
+  provePrimeWith ``Hex.Nat.prime_of_checkPrimeAt tactic n nE
 
 /-- Elaborate a `primality` argument to its numeral and proof. -/
 meta def elabPrimalityArgument (t : Syntax) : Term.TermElabM Expr := do
@@ -182,6 +189,11 @@ syntax (name := primalityTac)
         let goal ← Tactic.getMainGoal
         if ← goalPrime goal then
           return
+        -- Defer `Nat.Prime` goal shapes to the companion's handler on the
+        -- same syntax kind rather than erroring here.
+        let tgt ← instantiateMVars (← goal.getType)
+        if tgt.getAppFn.isConstOf `Nat.Prime then
+          Elab.throwUnsupportedSyntax
         throwError "primality: expected a goal of the form \
             `Hex.Nat.Prime n` for a numeral `n` (the companion library \
             extends this to `Nat.Prime`)"
