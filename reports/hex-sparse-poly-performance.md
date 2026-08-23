@@ -105,13 +105,13 @@ back into the SPEC's crossover paragraph.
 Both declared comparators are `informational`
 (`libraries.yml: phase4.comparators`); neither gates.
 
-- **SymPy sparse ring elements** (`sympy.polys.rings`, the conformance
+- **SymPy sparse ring elements (sympy.polys.rings)** (the conformance
   oracle): on the shared low-collision `t = 256` inputs of
   `prepMulSelect`, SymPy multiplies in 15.6 ms against Lean's 6.0 ms
   (tree candidate) — Lean ≈ 2.6× faster; sparse addition at `t = 256`
   is 16.4 µs in SymPy against 15.2 µs in Lean (parity). Measured with
   `sympy_ratio.py` mirroring the bench generators, best of 5.
-- **python-flint `fmpz_poly`** (dense; crossover family only): recorded
+- **FLINT fmpz_poly via python-flint** (dense; crossover family only): recorded
   as scheduled-only for the release benchmarking environment, per the
   informational classification — the dense side of the crossover family
   already measures the representation choice in-process, which is the
