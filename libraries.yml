@@ -247,6 +247,28 @@ libraries:
     mathlib: false
     done_through: 0
     status: active
+  HexMinPoly:
+    deps: [HexMatrix, HexRowReduce, HexPoly]
+    mathlib: false
+    done_through: 0
+    status: active
+    phase4:
+      comparators:
+        - tool: "FLINT fmpz_mat_minpoly and fmpq_mat.minpoly via python-flint"
+          class: informational
+          rationale: "FLINT uses a small-vector candidate-and-annihilation strategy rather than Hex's deterministic basis sweep with a minimality certificate. The ratio is useful orientation but does not gate the verified algorithm. Wired through the shared persistent-subprocess Python driver."
+        - tool: "PARI minpoly via cypari2"
+          class: informational
+          rationale: "PARI's matrix minimal-polynomial implementation is algorithmically independent of Hex's certificate-producing basis sweep, so its ratio is recorded for orientation rather than used as a release threshold. Wired through the shared persistent-subprocess Python driver."
+      input_families:
+        - name: random-dense-minpoly
+          description: Dense bounded-entry integer matrices read over Rat, usually with full-degree minimal polynomial.
+        - name: modular-minpoly
+          description: Full-degree companion matrices over a fixed-width prime field, isolating operation count from rational coefficient growth.
+        - name: derogatory-minpoly
+          description: Repeated nilpotent blocks whose minimal-polynomial degree stays bounded while dimension grows.
+        - name: companion-minpoly
+          description: Companion matrices with known full-degree minimal polynomials used as an in-benchmark correctness check.
 
   # ---------- Depth 1 ----------
   HexModArith:
@@ -614,6 +636,11 @@ libraries:
     status: active
   HexCharPolyMathlib:
     deps: [HexCharPoly, HexMatrixMathlib, HexPolyMathlib, HexDeterminantMathlib]
+    mathlib: true
+    done_through: 0
+    status: active
+  HexMinPolyMathlib:
+    deps: [HexMinPoly, HexMatrixMathlib, HexPolyMathlib, HexCharPolyMathlib]
     mathlib: true
     done_through: 0
     status: active
