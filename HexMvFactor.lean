@@ -14,14 +14,6 @@ public import HexMvFactor.Point
 public import HexMvFactor.Input
 public import HexMvFactor.Eez
 public import HexMvFactor.Factor
-public import HexMvFactor.KernelTests
-public import HexMvFactor.KroneckerTests
-public import HexMvFactor.LeadingTests
-public import HexMvFactor.PointTests
-public import HexMvFactor.InputTests
-public import HexMvFactor.EezTests
-public import HexMvFactor.FactorTests
-public import HexMvFactor.CompleteTests
 
 public section
 

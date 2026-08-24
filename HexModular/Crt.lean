@@ -189,12 +189,10 @@ def pushImpl (c : Crt) (r : Int) (m : Nat) : Option Crt :=
     none
 
 /-- The compiled CRT step agrees with its kernel-reducible reference. -/
-theorem push_eq_impl : @push = @pushImpl := by
+@[csimp] theorem push_eq_impl : @push = @pushImpl := by
   funext c r m
   simp only [push, pushImpl, HexArith.Int.extGcd]
   rfl
-
-@[csimp] theorem push_csimp : @push = @pushImpl := push_eq_impl
 
 /-- A successful scalar push multiplies the accumulated modulus by the new
 one. -/
@@ -326,12 +324,10 @@ def pushImpl (c : CrtVec k) (r : Vector Int k) (m : Nat) : Option (CrtVec k) :=
     none
 
 /-- The compiled vector CRT step agrees with its kernel-reducible reference. -/
-theorem push_eq_impl : @push = @pushImpl := by
+@[csimp] theorem push_eq_impl : @push = @pushImpl := by
   funext k c r m
   simp only [push, pushImpl, HexArith.Int.extGcd]
   rfl
-
-@[csimp] theorem push_csimp : @push = @pushImpl := push_eq_impl
 
 /-- A successful vector push multiplies the accumulated modulus by the new
 one. -/

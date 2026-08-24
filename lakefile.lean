@@ -628,6 +628,33 @@ lean_lib HexReleaseTests where
     `HexRootsMathlib.Examples,
     `HexMvPoly.KernelTests]
 
+-- Verification-only modules for the incubating multivariate factorization
+-- stack. Keep this separate from the released-test target, whose module list
+-- must exactly mirror the repositories already present in the release manifest.
+lean_lib HexMvFactorizationTests where
+  globs := #[`HexModular.KernelTests,
+    `HexPolyZGcd.Kernel,
+    `HexMvGcd.KernelTests,
+    `HexMvGcd.Kernel,
+    `HexMvGcd.Eval,
+    `HexMvGcd.SquarefreeTests,
+    `HexMvHensel.KernelTests,
+    `HexMvHensel.ShiftTests,
+    `HexMvHensel.UniTests,
+    `HexMvHensel.DiophantineTests,
+    `HexMvHensel.SeedTests,
+    `HexMvHensel.CertTests,
+    `HexMvHensel.LiftTests,
+    `HexMvHensel.CompleteTests,
+    `HexMvFactor.KernelTests,
+    `HexMvFactor.KroneckerTests,
+    `HexMvFactor.LeadingTests,
+    `HexMvFactor.PointTests,
+    `HexMvFactor.InputTests,
+    `HexMvFactor.EezTests,
+    `HexMvFactor.FactorTests,
+    `HexMvFactor.CompleteTests]
+
 -- Complete development imports for the two factorization packages. Their
 -- ordinary umbrellas deliberately expose only the supported release API.
 lean_lib HexFactorizationModules where
