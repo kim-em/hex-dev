@@ -41,22 +41,6 @@ namespace Worklist
 
 end Worklist
 
-private theorem worklist_covers_iff_region {p : Hex.ZPoly}
-    {work : Array Hex.Component} :
-    Worklist.Covers p work ↔
-      ∀ z, (toPolyℂ p).IsRoot z → z ∈ Worklist.region work := by
-  constructor
-  · intro hcover z hzroot
-    obtain ⟨s, hs, hzs⟩ := hcover z hzroot
-    rw [Worklist.squares, Array.toList_flatMap, List.mem_flatMap] at hs
-    obtain ⟨c, hc, hsc⟩ := hs
-    exact ⟨c, hc, s, hsc, hzs⟩
-  · intro hregion z hzroot
-    obtain ⟨c, hc, s, hs, hzs⟩ := hregion z hzroot
-    refine ⟨s, ?_, hzs⟩
-    rw [Worklist.squares, Array.toList_flatMap, List.mem_flatMap]
-    exact ⟨c, hc, hs⟩
-
 @[simp] private theorem encSquare_singleton (s : Hex.DyadicSquare) :
     Hex.encSquare #[s] = s := by
   cases s with

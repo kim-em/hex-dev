@@ -7,8 +7,6 @@ Authors: Kim Morrison
 module
 
 public import Mathlib.RingTheory.Polynomial.Resultant.Basic
-public import Mathlib.FieldTheory.IsAlgClosed.Basic
-public import Mathlib.Data.Complex.Basic
 public import HexResultant
 public import HexPolyMathlib
 
@@ -28,6 +26,8 @@ universe u
 
 variable {R : Type u}
 
+/-- Horner evaluation of a coefficient list is the finite monomial sum over
+its positions. -/
 private theorem evalCoeffList_eq_sum_fin [CommSemiring R]
     (xs : List R) (x : R) :
     evalCoeffList xs x =

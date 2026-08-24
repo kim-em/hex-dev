@@ -148,7 +148,7 @@ valid tower.
 
 {docstring Hex.NumberTower.flatten?}
 
-# Companion contracts
+# The Mathlib correspondence
 %%%
 tag := "hex-number-field-tower-correspondence"
 %%%

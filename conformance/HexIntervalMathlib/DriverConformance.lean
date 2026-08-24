@@ -246,8 +246,16 @@ def recipeMeasure : Driver.Measure Fact :=
       { bytes := 4 + match edge.seed with | none => 0 | some seed => factBytes seed.fact,
         work := 1 } }
 
+def runtimeLimits : Runtime.Limits :=
+  { executable :=
+      { state := stateLimits, maxPackages := 0, maxMetadataBytes := 0,
+        maxMetadataWork := 0, maxCacheBytes := 0, maxCacheWork := 0,
+        maxResultBytes := 0, maxResultWork := 0, maxQuotes := 0,
+        maxQuoteCells := 0, maxAtom := 0, maxSchema := 0 }
+    maxEvents := 0 }
+
 def resultLimits : Search.Result.Limits :=
-  { search := searchLimits, state := stateLimits, maxNodes := 3, maxBodyCells := 1,
+  { search := searchLimits, runtime := runtimeLimits, maxNodes := 3, maxBodyCells := 1,
     maxBytes := 128, maxWork := 128, maxCode := 8 }
 
 def treeLimits : Proof.TreeLimits :=

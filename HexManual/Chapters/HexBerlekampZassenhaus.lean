@@ -174,14 +174,49 @@ For a nonzero input, the result has signed content as its scalar;
 positive multiplicities; primitive, irreducible factors with positive
 leading coefficients; and no two associated factor entries. Its
 product is the input, and this normalized factorization is unique.
-
-{docstring HexBerlekampZassenhausMathlib.factorize_normalized}
+The next section states those guarantees as theorems.
 
 {name}`Hex.factorTraced` returns the same factorization together with
 the selected {name}`Hex.FactorMethod`, a possible classical decline,
 and measurements of the classical search. The trace is observational:
 all methods are checked by the same product and irreducibility
 theorems.
+
+# The Mathlib correspondence
+%%%
+tag := "hex-berlekamp-zassenhaus-mathlib"
+%%%
+
+Everything above is executable and Mathlib-free.
+`HexBerlekampZassenhausMathlib` is the companion that restates the
+guarantees of {name}`Hex.ZPoly.factorize` against Mathlib's
+`Polynomial ℤ`, transported through `HexPolyZMathlib.toPolynomial`.
+
+The product identity holds unconditionally and is re-exported as a
+`simp` lemma:
+
+{docstring HexBerlekampZassenhausMathlib.factorize_product}
+
+Every emitted factor is irreducible, with no hypothesis on the input:
+
+{docstring HexBerlekampZassenhausMathlib.factorize_irreducible_of_nonUnit}
+
+The headline theorem bundles the full normal form of a nonzero input's
+factorization:
+
+{docstring HexBerlekampZassenhausMathlib.factorize_normalized}
+
+That normal form is canonical. Any two factorizations satisfying it
+with the same product agree up to the packing of multiplicities:
+
+{docstring HexBerlekampZassenhausMathlib.factorize_unique}
+
+The companion also carries the tactic surface across the boundary.
+The base library's `factor_poly` and `irreducibility` elaborators work
+on {name}`Hex.ZPoly` goals; importing `HexBerlekampZassenhausMathlib`
+upgrades them to accept `Polynomial ℤ` as well, and adds the
+kernel-checked `factor_poly!` and `irreducibility!` variants whose
+certificate checks reduce inside the kernel.
 
 # Relationship to the tactics
 

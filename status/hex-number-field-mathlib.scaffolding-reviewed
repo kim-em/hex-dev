@@ -1,0 +1,44 @@
+Phase-2 scaffolding review of HexNumberFieldMathlib, 2026-08-22,
+performed by a non-author reviewer agent against
+HexNumberFieldMathlib/SPEC/hex-number-field-mathlib.md at origin/main
+after the #9393 SPEC reconciliation (review basis 93ac1edbf).
+
+Audit lenses: SPEC-declaration coverage against the refreshed
+16-module table, statement-weakening comparison for every declared
+theorem, banned-marker sweep, trust-surface verification, instance
+coherence, module reachability, CI reachability.
+
+Results. The 16-module table matches the tree exactly and every module
+is reachable from the umbrella (traced edge by edge; the lean_lib has
+no globs, so an orphan would silently not build). Every SPEC-declared
+theorem exists unweakened: the semantic maps and injectivity, the
+equality/zero/approximation family (refineTo?_isSome carrying the
+SPEC's explicit nkThenPellet strategy), canonicalization and
+exactification, the full five-operation lazy soundness/completeness/
+correspondence families plus unconditional negation, the root API with
+the four finite-output obligations proved at both the
+algebraic-coefficient and fixed-field levels, and both an _isSome and
+a _sound for every option-valued Common-field declaration. Banned
+markers are zero. The trust surface is build-enforced: 23
+guard_msgs-pinned #print axioms checks, each exactly
+[propext, Classical.choice, Quot.sound], covering the headline
+results. Instance coherence is exemplary: the Field instance pins
+every data field, an OperationRegression section disables the
+standalone executable instances and re-derives all twelve operations
+by rfl plus the numeral normal form, the QAdjoin side carries eleven
+more rfl pins including the SPEC-required rational action, the
+noncomputable dictionary is scoped, and a canary example fails
+elaboration if Mathlib derivation ever displaces the executable
+operations (24 rfl pinning regressions in total).
+
+Trust-surface note: scripts/release/check_trust_surface.py does not
+yet cover this library (unpublished); the operative evidence is the
+direct sweep and the 23 build-enforced axiom guards above.
+
+Findings and dispositions. No blocking gap. Hygiene findings (the
+verbatim rename re-export refineTo?_isSome, Common.extendStep declared
+into the executable namespace from this layer, fromAdjoinRoot's single
+call site, two missing nsmul/zsmul rfl pins, SPEC-surface omissions
+for consumed proof infrastructure) are filed as issue #9418 for the
+Phase-6 pass. Phase 1 was complete but never recorded; the counter
+advances with this token per the wave bump queue.

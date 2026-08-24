@@ -517,25 +517,6 @@ theorem exists_root_le_radius_of_not_rootFree {p : Hex.ZPoly}
   exact ⟨z, hz, root_near_of_simple hp hsize hzroot
     hsimple hprec hkeep hzc⟩
 
-/-- Convenient looser strict form of the sharp `65/32` survivor bound. -/
-theorem exists_root_lt_three_radius_of_not_rootFree {p : Hex.ZPoly}
-    {s : Hex.DyadicSquare} (hp : toPolyℂ p ≠ 0) (hsize : 1 < p.size)
-    (hsep : (HexPolyZMathlib.toPolyℚ p).Separable)
-    (hprec : (Hex.separationDepth p : Int) ≤ s.prec)
-    (hkeep : Hex.rootFree p s ≠ true) :
-    ∃ z ∈ (toPolyℂ p).roots,
-      ‖z - DyadicSquare.center s‖ < 3 * Dyadic.toReal s.radiusHi := by
-  obtain ⟨z, hz, hnear⟩ :=
-    exists_root_le_radius_of_not_rootFree
-      hp hsize hsep hprec hkeep
-  refine ⟨z, hz, hnear.trans_lt ?_⟩
-  have hR : 0 < Dyadic.toReal s.radiusHi := by
-    rw [DyadicSquare.radiusHi_eq]
-    have : 0 < Dyadic.toReal Hex.sqrt2Hi := by
-      norm_num [Hex.sqrt2Hi, Dyadic.toReal_ofIntWithPrec]
-    exact mul_pos (by rw [DyadicSquare.halfWidth_eq]; positivity) this
-  nlinarith
-
 namespace DyadicSquare
 
 /-- Executable edge-or-corner adjacency is strictly less than four

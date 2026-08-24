@@ -7,7 +7,6 @@ Authors: Kim Morrison
 module
 
 public import HexResultant.Subresultant
-public meta import HexResultant.Subresultant
 public meta import HexPoly.Dense
 public meta import HexPoly.Euclid.DivGcd
 public meta import HexPoly.Operations
@@ -62,35 +61,12 @@ def disc [One R] [Add R] [Sub R] [Mul R] [Div R] [NatCast R]
       disc nonmonic = -8 &&
       disc cubic = -27
 
-/- A tiny executable characteristic-five field regression. This specifically
-guards the formal-degree correction: for `2X¹⁰ + 3X`, the derivative is the
-constant `3`, nine degrees below its formal derivative degree. -/
-private structure F5 where
-  val : Fin 5
-deriving DecidableEq
+/- The characteristic-five formal-degree regression (a `2X¹⁰ + 3X` fixture
+whose derivative degree drops by nine) lives in
+`conformance/HexResultant/Conformance.lean`. -/
 
-private instance : Zero F5 := ⟨⟨0⟩⟩
-private instance : One F5 := ⟨⟨1⟩⟩
-private instance (n : Nat) : OfNat F5 n :=
-  ⟨{ val := ⟨n % 5, Nat.mod_lt n (by decide)⟩ }⟩
-private instance : NatCast F5 :=
-  ⟨fun n => { val := ⟨n % 5, Nat.mod_lt n (by decide)⟩ }⟩
-private instance : Add F5 := ⟨fun a b => ⟨a.val + b.val⟩⟩
-private instance : Sub F5 := ⟨fun a b => ⟨a.val - b.val⟩⟩
-private instance : Mul F5 := ⟨fun a b => ⟨a.val * b.val⟩⟩
-private instance : Div F5 where
-  div a b :=
-    let inv : Fin 5 :=
-      match b.val.val with
-      | 1 => 1
-      | 2 => 3
-      | 3 => 2
-      | 4 => 4
-      | _ => 0
-    ⟨a.val * inv⟩
-
-#guard
-    let f : DensePoly F5 := ofList [0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 2]
-    disc f = 1
+/-- info: 'Hex.DensePoly.disc' depends on axioms: [propext, Quot.sound] -/
+#guard_msgs in
+#print axioms disc
 
 end Hex.DensePoly
