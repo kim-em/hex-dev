@@ -756,32 +756,31 @@ theorem compose_toDense (s t : SparsePoly K) :
   refine foldl_congr' rfl fun b u _ => ?_
   rw [toDense_mul, toDense_C, toDense_composePower]
 
-/-- Powers of a unit monomial are unit monomials. -/
-theorem monomial_one_pow (k : Nat) (e : Nat) :
-    (monomial k (1 : K)) ^ e = monomial (k * e) 1 := by
+/-- Powers of a monomial are monomials. -/
+theorem monomial_pow (k : Nat) (c : K) (e : Nat) :
+    (monomial k c) ^ e = monomial (k * e) (c ^ e) := by
   induction e with
   | zero =>
-      rw [pow_zero, Nat.mul_zero]
+      rw [pow_zero, Nat.mul_zero, Lean.Grind.Semiring.pow_zero]
       rfl
   | succ e ih =>
       rw [pow_succ, ih, monomial_mul_monomial,
         show k + k * e = k * (e + 1) from by
           rw [Nat.mul_succ, Nat.add_comm],
-        show (1 : K) * 1 = 1 from by grind]
+        show c * c ^ e = c ^ (e + 1) from by grind]
 
-/-- Constants scale unit monomials into monomials. -/
-theorem C_mul_monomial (c : K) (m : Nat) :
-    SparsePoly.C c * monomial m 1 = monomial m c := by
-  show monomial 0 c * monomial m 1 = monomial m c
-  rw [monomial_mul_monomial, Nat.zero_add,
-    show c * 1 = c from by grind]
+/-- Constants scale monomials by scaling their coefficient. -/
+theorem C_mul_monomial (c : K) (m : Nat) (d : K) :
+    SparsePoly.C c * monomial m d = monomial m (c * d) := by
+  show monomial 0 c * monomial m d = monomial m (c * d)
+  rw [monomial_mul_monomial, Nat.zero_add]
 
-private theorem coeff_monomial_foldl (l : List (Nat × K)) (k : Nat)
-    (f : Nat) :
+private theorem coeff_monomial_foldl (l : List (Nat × K))
+    (ex : Nat × K → Nat) (co : Nat × K → K) (f : Nat) :
     ∀ init : SparsePoly K,
-    (l.foldl (fun a u => a + monomial (k * u.1) u.2) init).coeff f =
+    (l.foldl (fun a u => a + monomial (ex u) (co u)) init).coeff f =
       l.foldl
-        (fun a u => a + (if f = k * u.1 then u.2 else 0))
+        (fun a u => a + (if f = ex u then co u else 0))
         (init.coeff f) := by
   induction l with
   | nil => intro init; rfl
@@ -837,7 +836,8 @@ theorem substPow_eq_compose (s : SparsePoly K) (k : Nat) :
       s.terms.toList.foldl
         (fun a u => a + monomial (k * u.1) u.2) 0 := by
     refine foldl_congr' rfl fun b u _ => ?_
-    rw [monomial_one_pow, C_mul_monomial]
+    rw [monomial_pow, C_mul_monomial, Lean.Grind.Semiring.one_pow,
+      Lean.Grind.Semiring.mul_one]
   rw [hfold]
   apply ext_coeff
   intro f
@@ -1020,6 +1020,53 @@ theorem coeff_substScale (s : SparsePoly K) (a : K) (e : Nat) :
   exact coeffList_substScaleGo a s.terms.toList 0 none
     s.pairwise_toList (fun u _ => Nat.zero_le _) (fun _ => rfl)
     (by show (1 : K) = a ^ 0; grind) e
+
+omit [DecidableEq K] in
+private theorem foldl_scale_match {l : List (Nat × K)}
+    (hs : l.Pairwise (fun x y => x.1 < y.1)) (a : K) (f : Nat) :
+    l.foldl (fun acc u => acc + (if f = u.1 then u.2 * a ^ u.1 else 0)) 0 =
+      coeffList l f * a ^ f := by
+  induction l with
+  | nil =>
+      show (0 : K) = 0 * a ^ f
+      grind
+  | cons u us ih =>
+      rw [List.pairwise_cons] at hs
+      rw [List.foldl_cons]
+      by_cases huf : f = u.1
+      · rw [if_pos huf,
+          show (0 : K) + u.2 * a ^ u.1 = u.2 * a ^ u.1 from by grind,
+          foldl_add_ifs_zero (fun v hv => by
+            rw [if_neg (fun h => by
+              have := hs.1 v hv
+              omega)])]
+        simp only [coeffList, if_pos huf.symm]
+        rw [huf]
+      · rw [if_neg huf, show (0 : K) + 0 = 0 from by grind, ih hs.2]
+        simp only [coeffList, if_neg (fun h : u.1 = f => huf h.symm)]
+
+/-- Argument scaling is composition with the degree-one monomial
+`a · x`: the sparse fast path and the general path agree. -/
+theorem substScale_eq_compose (s : SparsePoly K) (a : K) :
+    s.substScale a = s.compose (monomial 1 a) := by
+  rw [compose_eq_foldl]
+  have hfold : s.terms.toList.foldl
+      (fun b u => b + SparsePoly.C u.2 * monomial 1 a ^ u.1) 0 =
+      s.terms.toList.foldl
+        (fun b u => b + monomial u.1 (u.2 * a ^ u.1)) 0 := by
+    refine foldl_congr' rfl fun b u _ => ?_
+    rw [monomial_pow, C_mul_monomial, Nat.one_mul]
+  rw [hfold]
+  apply ext_coeff
+  intro f
+  rw [coeff_substScale, coeff_monomial_foldl, coeff_zero]
+  exact (foldl_scale_match s.pairwise_toList a f).symm
+
+/-- The scaling substitution transports to dense composition with the
+degree-one monomial. -/
+theorem substScale_toDense (s : SparsePoly K) (a : K) :
+    (s.substScale a).toDense = s.toDense.compose (DensePoly.monomial 1 a) := by
+  rw [substScale_eq_compose, compose_toDense, toDense_monomial]
 
 end Agreements
 

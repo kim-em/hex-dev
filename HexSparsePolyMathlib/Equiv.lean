@@ -135,6 +135,15 @@ theorem equiv_substPow [CommRing R] [DecidableEq R]
     HexPolyMathlib.toPolynomial_compose,
     HexPolyMathlib.toPolynomial_monomial, Polynomial.X_pow_eq_monomial]
 
+/-- Argument scaling corresponds to composition with `C a * X`. -/
+theorem equiv_substScale [CommRing R] [DecidableEq R]
+    (s : Hex.SparsePoly R) (a : R) :
+    (equiv s).comp (Polynomial.C a * Polynomial.X) =
+      equiv (s.substScale a) := by
+  rw [equiv_apply, equiv_apply, Hex.SparsePoly.substScale_toDense,
+    HexPolyMathlib.toPolynomial_compose,
+    HexPolyMathlib.toPolynomial_monomial, Polynomial.C_mul_X_eq_monomial]
+
 /-- Monomials correspond. -/
 @[simp, grind =]
 theorem equiv_monomial [CommRing R] [DecidableEq R] (e : Nat) (c : R) :

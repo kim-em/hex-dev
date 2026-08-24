@@ -179,8 +179,8 @@ the representation is sparse.
 {docstring HexSparsePolyMathlib.equiv_support}
 
 One correspondence lemma per public operation transports evaluation,
-differentiation, composition, and exponent substitution, alongside the
-constructor and observer images.
+differentiation, composition, exponent substitution, and argument
+scaling, alongside the constructor and observer images.
 
 {docstring HexSparsePolyMathlib.equiv_eval}
 
@@ -189,6 +189,8 @@ constructor and observer images.
 {docstring HexSparsePolyMathlib.equiv_compose}
 
 {docstring HexSparsePolyMathlib.equiv_substPow}
+
+{docstring HexSparsePolyMathlib.equiv_substScale}
 
 # Cross-references
 %%%

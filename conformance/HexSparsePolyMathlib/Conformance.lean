@@ -47,7 +47,7 @@ instances selected, for two ordinary coefficient types. -/
 #guard Hex.SparsePoly.ofDense rq.toDense == rq
 
 private theorem transportSurface {R : Type} [CommRing R] [DecidableEq R]
-    (a b : SparsePoly R) (x : R) (k e : Nat) :
+    (a b : SparsePoly R) (x c : R) (k e : Nat) :
     equiv (a + b) = equiv a + equiv b ∧
       equiv (a * b) = equiv a * equiv b ∧
       equiv.symm (equiv a) = a ∧
@@ -56,8 +56,10 @@ private theorem transportSurface {R : Type} [CommRing R] [DecidableEq R]
       (equiv a).eval x = a.eval x ∧
       Polynomial.derivative (equiv a) = equiv a.derivative ∧
       (equiv a).comp (equiv b) = equiv (a.compose b) ∧
-      (equiv a).comp (Polynomial.X ^ k) = equiv (a.substPow k) := by
-  refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩
+      (equiv a).comp (Polynomial.X ^ k) = equiv (a.substPow k) ∧
+      (equiv a).comp (Polynomial.C c * Polynomial.X) =
+        equiv (a.substScale c) := by
+  refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩
   · exact map_add equiv a b
   · exact map_mul equiv a b
   · exact equiv.symm_apply_apply a
@@ -67,13 +69,14 @@ private theorem transportSurface {R : Type} [CommRing R] [DecidableEq R]
   · exact equiv_derivative a
   · exact equiv_compose a b
   · exact equiv_substPow a k
+  · exact equiv_substScale a c
 
 example (a b : P) (x : Int) : True := by
-  have _ := transportSurface a b x 3 5
+  have _ := transportSurface a b x 2 3 5
   trivial
 
 example (a b : Q) (x : Rat) : True := by
-  have _ := transportSurface a b x 3 5
+  have _ := transportSurface a b x 2 3 5
   trivial
 
 end HexSparsePolyMathlib.Conformance
