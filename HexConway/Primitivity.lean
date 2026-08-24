@@ -4,8 +4,12 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexConway.Api
-import HexArith.Nat.Prime
+module
+
+public import HexConway.Api
+public import HexArith.Nat.Prime
+
+public section
 
 /-!
 Tier 2: primitivity of the committed Conway entries.
@@ -59,6 +63,7 @@ variable {p : Nat} [ZMod64.Bounds p] [ZMod64.PrimeModulus p]
 
 /-- Structural modular power: `k` multiplications, each followed by reduction.
 Linear in `k`, and only ever called with `k ≤ p`. -/
+@[expose]
 def linPowMod (f : FpPoly p) (hm : DensePoly.Monic f) (x : FpPoly p) :
     Nat → FpPoly p
   | 0 => 1
@@ -66,6 +71,7 @@ def linPowMod (f : FpPoly p) (hm : DensePoly.Monic f) (x : FpPoly p) :
 
 /-- Horner over base-`q` digits, most significant first: raises the accumulator
 to the `q`-th power and multiplies in `x ^ d` at each digit. -/
+@[expose]
 def digitPowMod (f : FpPoly p) (hm : DensePoly.Monic f) (q : Nat) (x : FpPoly p)
     (acc : FpPoly p) : List Nat → FpPoly p
   | [] => acc
@@ -74,6 +80,7 @@ def digitPowMod (f : FpPoly p) (hm : DensePoly.Monic f) (q : Nat) (x : FpPoly p)
         (FpPoly.modByMonic f (linPowMod f hm acc q * linPowMod f hm x d) hm) ds
 
 /-- The product of `qs` raised to the matching multiplicities in `es`. -/
+@[expose]
 def primePowerProduct : List Nat → List Nat → Nat
   | [], _ => 1
   | _, [] => 1
@@ -81,6 +88,7 @@ def primePowerProduct : List Nat → List Nat → Nat
 
 /-- The value of a base-`q` digit list, most significant first. This is what
 ties a digit list to the exponent it is supposed to encode. -/
+@[expose]
 def digitsValue (q : Nat) : List Nat → Nat
   | [] => 0
   | d :: ds => d * q ^ ds.length + digitsValue q ds
@@ -102,6 +110,7 @@ unique factorization. The digit lists are checked to decode to `p^n - 1` and to 
 `(p^n - 1) / q`, so a caller cannot pass exponents that are easy to satisfy.
 Only then are the two power conditions run.
 -/
+@[expose]
 def primitiveCheck (f : FpPoly p) (hm : DensePoly.Monic f) (n : Nat)
     (qs es : List Nat) (fullDigits : List Nat)
     (perPrimeDigits : List (List Nat)) : Bool :=

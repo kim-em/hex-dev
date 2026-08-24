@@ -7,7 +7,7 @@ Authors: Kim Morrison
 module
 
 public import HexResultantMathlib.Sylvester
-public import Mathlib.Algebra.Polynomial.Splits
+public import Mathlib.FieldTheory.IsAlgClosed.Basic
 
 public section
 

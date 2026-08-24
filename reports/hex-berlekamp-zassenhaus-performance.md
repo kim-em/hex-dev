@@ -4,172 +4,186 @@ This report describes the supported public integer-polynomial factorization
 entry point. Standalone classical and lattice entries remain development
 diagnostics, not alternative public implementations.
 
-## Current measurement
+The parametric and profile evidence is current at revision
+`f396965d439aeaffcb3f843d85998b23765a22b2`, measured 2026-08-22 on `chungus2`
+(AMD EPYC 9455, NixOS 26.11, Linux x86-64) on verified-idle core 17 selected
+by `scripts/bench/idle_core.py`. The cross-system Hex record was refreshed at
+clean revision `39cc3126` on verified-idle core 2 selected by the same script;
+the external systems retain their 2026-08-01 same-protocol record on the same
+host. The committed 392-row corpus has SHA-256
+`619913904240834c912489e6cc23ba136e8cc5ebf0ea95f83397e0682387284d`. Services
+were persistent and warmed; each call had a ten-second cutoff; rows below one
+second used the median of five calls, and slower rows one call.
 
-The current Hex record measures clean source revision
-`58c873ca` with
-`leanprover/lean4:v4.33.0-rc1`.
+## Bench Targets
 
-Hex was measured on 2026-08-10 and the external systems on 2026-08-01 on
-`chungus2`, an AMD EPYC 9455 Linux x86-64 host. The harness and service were
-pinned to verified-idle CPU 1 for Hex and CPU 0 for the external record. New
-measurements must use `scripts/bench/idle_core.py`, because other work shares
-the host, and must record the selected core alongside the artifact. The CPU
-0/70 control in [hexbz-support-traversal.md](hexbz-support-traversal.md) checks
-that an idle core is interchangeable with CPU 0 on this host. The committed
-392-row corpus has SHA-256
-`619913904240834c912489e6cc23ba136e8cc5ebf0ea95f83397e0682387284d`.
-Services were persistent and warmed. Each call had a ten-second cutoff; rows
-below one second used the median of five calls, and slower rows used one call.
-The external record attempted every row. The Hex record stops a monotonic
-family after three consecutive timeouts; this skipped only `hoeij_F630`, whose
-recorded timeout is unchanged by the shortcut.
+The eight parametric registrations in
+`bench/HexBerlekampZassenhaus/Bench.lean` and the fixed adversarial ladder
+cover the six declared `phase4.input_families`, which are the coverage
+contract for this report:
 
-The current artifacts are:
+- `public-factor-combinator`: `runFactorChecksum` and `runFactorCompareChecksum`
+  (model `bzClassicalSmokeComplexity n`), the public `ZPoly.factorize`
+  cascade on deterministic split inputs.
+- `fallback-probe`: `runFactorFallbackProbeChecksum` (same model), the
+  explicit `(X-1)...(X-n)` cascade-trigger ladder.
+- `exhaustive-slow-backstop`: `runFactorSlowChecksum` and
+  `runFactorSlowCompareChecksum` (model `2 ^ n * bzClassicalSmokeComplexity n`),
+  the unconditional exact `factorTrial` backstop.
+- `degree-height-matrix`: `runFactorDegreeHeightChecksum` and
+  `runFactorSlowDegreeHeightChecksum` (encoded degree/height parameters).
+- `cld-fast-path`: `runFastPathPrecisionLocalChecksum` (model
+  `bzPrecisionLocalComplexity param`), the option-valued CLD `factorLattice`
+  precision/local-factor surfaces.
+- `ho2-adversarial-recombination`: the fixed `runFactorAdv*` ladder
+  (`X^4 + 1`, `(X^2-2)(X^2-3)`, Swinnerton-Dyer SD3 with its pinned modular
+  split, `Phi_15`) plus the fixed lattice entries
+  `runFactorLatticeAdvSwinnertonDyerSD3/SD4Checksum`.
 
-- `reports/bench-results/hexbz-factor-sweep-58c873ca-hex-chungus2-cpu1.json`
-  for Hex, SHA-256
-  `3c96905dae847e634de7e20934a9074e582ce7d545294471adebf945b6c1efe9`;
-- `reports/bench-results/hexbz-factor-sweep-aa68c920-chungus2.json`
-  for FLINT, NTL, PARI, and both Isabelle implementations, SHA-256
-  `4de27e389d738abc1e878f0be273485c3723216211a101c3eba55860e7b8a242`.
+The `runIsabelle*` fixed registrations are the scheduled-hardware pairing
+harness for the external comparator and carry the `[scheduled-hardware]` tag.
+The 392-row corpus sweep (`scripts/bench/factor_sweep.py`) is the source of
+record for cross-system evidence; `list` and `verify` run in CI on every PR.
 
-The second artifact contains an older same-run Hex row too, but the clean Lean
-4.33 Hex record supersedes it. The plotting and freshness tools select the
-newest valid record independently for each system.
+## Verdicts
 
-The prior PARI comparator artifact used PARI/GP 2.17.3; the current Nix closure
-provided 2.17.2. No cross-record PARI change is attributed to Hex. All current
-ratios and curves use the fresh same-protocol 2.17.2 measurement above.
+Parametric export at clean `f396965d`:
+`reports/bench-results/hex-berlekamp-zassenhaus-parametric-f396965d-chungus2.json`
+(SHA-256
+`bf00fb6620902317bdb7a7bd070db99f0807ed240ed6c68b177fc2ebc28b52d0`),
+command `taskset -c 17 lake exe hexbz_bench run <eight parametric targets>
+--export-file ...`.
 
-## Cross-system result
+All eight ladders report `inconclusive: looks faster than declared`, the same
+status as the previous committed export
+(`hex-berlekamp-zassenhaus-parametric-0b95505b-gcd-hensel-chungus2.json`):
+the declared models are deliberately conservative upper envelopes over
+encoded degree/height/precision parameters (the smoke models bound the
+classical tier's worst dispatch, the `2^n` factor bounds the exact backstop),
+so observed cost growing strictly more slowly than the declared envelope is
+the expected direction. Representative top rungs: `runFactorChecksum`
+3.595 ms at n=24, `runFactorFallbackProbeChecksum` 3.370 ms at n=24,
+`runFastPathPrecisionLocalChecksum` 899 µs at the 8_032_128_008 encoding.
+No ladder shows the slower-than-declared direction.
+
+## Comparator Ratios
+
+The declared comparator is the
+**verified Isabelle BZ (AFP Berlekamp_Zassenhaus; Haskell extraction of factor_int_poly via Factorization_External_Interface)**,
+class `gating`. Current Hex record:
+`reports/bench-results/hexbz-factor-sweep-39cc3126-hex-chungus2-cpu2.json`
+(SHA-256
+`2043b223de4d1243e97fa79f09e143091669273c78ae1b859509f48b19cd37f3`);
+external record:
+`reports/bench-results/hexbz-factor-sweep-aa68c920-chungus2.json`. Tables
+regenerated by `python3 scripts/bench/factor_sweep_table.py` (newest record
+per system). Every answering system agreed with the committed factor-degree
+oracle or with the other systems on rows without one; the sweep's
+cross-check reports no mismatches.
 
 | System | Answered | Timed out | Median | p90 | Slowest answer |
 |---|---:|---:|---:|---:|---:|
-| Hex public factorization | 383 | 9 | 273.175 us | 6.693 ms | 3.972 s |
+| Hex public factorization | 383 | 9 | 272.153 us | 6.651 ms | 3.970 s |
 | FLINT 0.9.0 | 391 | 1 | 60.089 us | 1.139 ms | 1.241 s |
 | PARI/GP 2.17.2 | 391 | 1 | 65.687 us | 1.008 ms | 960.815 ms |
 | NTL 11.6.0 | 391 | 1 | 88.160 us | 2.365 ms | 1.305 s |
 | Verified Isabelle BZ | 371 | 21 | 439.591 us | 5.072 ms | 8.179 s |
 | Verified Isabelle LLL | 314 | 78 | 6.036 ms | 1.210 s | 9.474 s |
 
-Every answering system agreed with the committed factor-degree oracle or with
-the other systems on rows without one.
-
-For paired comparisons, both measurements must exceed ten times their own
-protocol overhead. On 189 eligible common rows, Hex divided by verified
-Isabelle BZ has median `0.506x`, p10-p90 `0.316x-1.525x`, and a 153-36 win
-split. Hex therefore has a substantial aggregate lead over verified Isabelle
-BZ, though individual rows still go both ways.
-
-The optimized unverified libraries remain substantially faster. Median Hex
-ratios are `6.493x` against FLINT, `6.316x` against PARI, and `3.020x`
-against NTL on 80, 86, and 142 eligible pairs respectively.
-
-## Effect of the divisibility obstruction
-
-Between constructing a recombination candidate and dividing by it, the search
-now reduces both modulo a fixed word-sized prime and rejects the candidate when
-the finite-field remainder is nonzero. The filter can only reject; exact
-integer division is still the only accepting test.
-
-Across the probed corpus, 4,204 of the 4,302 candidates reaching the filter
-were rejected, and all 98 that passed were genuine divisors. `xpow120_minus1`
-moves to 0.306x, `cyclo_phi275` to 0.234x, and `cyclo_phi1031` changes from a
-ten-second timeout to 4.176 s; the aggregate of `xpow48/105/120` is 0.361x and
-the whole corpus is 0.704x. The median over rows above one millisecond is
-0.994x against a measured noise floor of 0.8%. The cost side is `wilkinson` at
-1.022x, where the unforced sweep peels one linear factor at a time and the
-filter rejects none of its candidates.
-
-Those ratios are measured against `main` with this branch merged out, built and
-swept in the same session with four fully interleaved repeats per side, not
-against an earlier committed record: `main` moves under a branch, and against a
-stale record rows this change cannot touch move more than rows it can.
-[hexbz-modular-obstruction.md](hexbz-modular-obstruction.md) is the measurement
-record, and it also states what the change does not fix.
-
-## Effect of the support-traversal change
-
-The head-forced recombination leaf now runs its metadata-only filters before
-it materializes anything, and the lift modulus and per-factor degree and
-trailing coefficient are precomputed once per subset-cardinality level. The
-Swinnerton-Dyer family moves from 0.684x to 0.850x against the preceding
-record, and at that revision its median against verified Isabelle BZ improved
-from `2.799x` to `2.116x`. The quadratic-norm certificate has since taken the
-current median to `0.611x`, as tabulated below. No other family moved more than
-3% in the support-traversal comparison.
-[hexbz-support-traversal.md](hexbz-support-traversal.md) is the measurement
-record.
-
-## Effect of the earlier proposal-path optimization
-
-The proposal path now has two general rules:
-
-1. search support sizes one through three once, then repeatedly peel support
-   sizes one or two from the exact quotient while reusing the same Hensel
-   lift;
-2. build a selected-coordinate proposal lattice only after peeling has made
-   exact progress. With no peel, go directly to the exact full-CLD fallback.
-
-These rules contain no family or benchmark names. They retain repeated cheap
-progress on Wilkinson inputs and avoid speculative lattice work on inputs such
-as `sd6` where the cheap search found nothing.
-
-The current record solves `hoeij_F190` in 3.287 seconds after peeling a
-degree-10 factor and partitioning the degree-180 residual into two degree-90
-pieces. It solves `sd6` in 27.044 milliseconds after the no-progress proposal
-skips its futile selected-coordinate lattice. Under the declared repetition
-policy F190 uses one timed call, while `sd6` is the median of five.
-
-Current representative Wilkinson timings are 3.480 ms at degree 24, 9.431 ms
-at degree 40, and 21.266 ms at degree 56. These values and the hard-row values
-are coverage snapshots, not a new optimization A/B.
-
-## Relative to verified Isabelle BZ
+On eligible common rows (both sides above ten times their protocol
+overhead), Hex divided by verified Isabelle BZ has median `0.512x`,
+p10-p90 `0.317x-1.527x`, and a 154-36 win split. The optimized unverified
+libraries remain substantially faster: median Hex ratios are `6.738x`
+against FLINT, `6.484x` against PARI, and `3.042x` against NTL on 80, 86,
+and 141 eligible pairs.
 
 | Family | Eligible pairs | Median Hex / Isabelle | Hex wins |
 |---|---:|---:|---:|
-| Chebyshev | 7 | 0.388x | 7 |
-| Conway | 70 | 0.453x | 51 |
-| Cyclotomic | 23 | 0.462x | 19 |
-| Cyclotomic products | 18 | 0.601x | 16 |
-| Laguerre | 11 | 0.601x | 11 |
-| Legendre | 12 | 0.503x | 11 |
-| Random products | 23 | 0.452x | 22 |
-| Swinnerton-Dyer products | 7 | 0.651x | 5 |
-| Swinnerton-Dyer | 6 | 0.611x | 6 |
-| Wilkinson | 12 | 1.106x | 5 |
+| Chebyshev | 7 | 0.393x | 7 |
+| Conway | 72 | 0.447x | 53 |
+| Cyclotomic | 23 | 0.480x | 19 |
+| Cyclotomic products | 18 | 0.598x | 16 |
+| Laguerre | 11 | 0.603x | 11 |
+| Legendre | 12 | 0.502x | 11 |
+| Random products | 22 | 0.453x | 21 |
+| Swinnerton-Dyer products | 7 | 0.658x | 5 |
+| Swinnerton-Dyer | 6 | 0.628x | 6 |
+| Wilkinson | 12 | 1.110x | 5 |
 
-There is no common answered Hoeij-Zimmermann row with verified Isabelle BZ.
-The certificate turns Swinnerton-Dyer from the largest family-level gap into a
-lead on all six eligible pairs. Wilkinson is now the only family in this table
-whose median remains slower than verified Isabelle BZ.
+**The gating goal is met.** Small/medium-r classical-tier rows sit well
+within a small constant of the verified reference (aggregate median
+`0.512x`, i.e. Hex ahead), and the lattice-backed tail strictly beats it:
+Hex wins all six eligible Swinnerton-Dyer pairs, and on the 160-row combined
+mixture Hex solves 151 rows against Isabelle BZ's 141 with the worst
+cumulative Hex/Isabelle ratio over ranks 125-140 at `0.694x` (rank 133),
+below the `0.85x` acceptance bound at every rank
+(`python3 scripts/bench/cactus_rank_table.py --lo 125 --hi 140`).
 
-## Remaining long tail
+**Across the classical/lattice seam.** The committed dispatch baseline
+(`conformance-fixtures/HexBerlekampZassenhaus/bz-trace-baseline.json`,
+enforced by `scripts/oracle/bz_trace_gate.py` on every PR) records the
+production tier per Swinnerton-Dyer rung: the last classical rung is the
+SD3 family (`adv/swinnerton_dyer_sd3`, `method: classical`, r = 4), and the
+first lattice-backed rung is the SD5 pair (`adv/swinnerton_dyer_sd5_pair`,
+`method: lattice`, r = 32), with SD6 carried by the quadratic-norm
+certificate tier of the lattice-backed tail (`method: quadraticNorm`,
+r = 32). Scheduled-hardware wall-clock across that seam, from the current
+record: `sd4` 865 µs, `sd5` 6.843 ms, `sd6` 27.585 ms, `sd7` 196.073 ms,
+all solved under the cap, while verified Isabelle BZ times out on all three
+`sd6` variants (recorded as solved-under-cap versus timeout, not a finite
+ratio). Per the SPEC's algorithm-class caveat, Isabelle's classical
+exhaustive recombination is asymptotically weaker than the BHKS van Hoeij
+CLD tier, and the wall-clock advantage above is that asymptotic difference
+made measurable.
 
-The nine Hex timeouts are three Swinnerton-Dyer products:
-`sd5_x_sd5shift1`, `sd6_x_phi105`, and `sd6_x_sd6shift1` -- and six
-Hoeij-Zimmermann rows: `hoeij_F192`, `hoeij_F256`, `hoeij_F351`,
-`hoeij_F630`, `hoeij_P7`, and `hoeij_S9`.
+The nine Hex timeouts are three Swinnerton-Dyer products
+(`sd5_x_sd5shift1`, `sd6_x_phi105`, `sd6_x_sd6shift1`) and six
+Hoeij-Zimmermann rows (`hoeij_F192`, `hoeij_F256`, `hoeij_F351`,
+`hoeij_F630`, `hoeij_P7`, `hoeij_S9`); there is no common answered
+Hoeij-Zimmermann row with verified Isabelle BZ, so those record as
+timeout-versus-timeout, not ratios. Open recombination proposals (#9151,
+#9152, #9153) remain measurement-gated future work on that tail; their
+motivating profiles predate the quadratic-norm certificate, so the rows
+that still reach recombination must be re-profiled before any of the three
+changes production.
 
-The remaining open recombination work is deliberately measurement-gated.
-Issues #9151 and #9152 propose reusing the lift modulus, support data, and target
-image at their mathematical lifetimes; #9153 then asks whether the retained
-other-prime degree-reachability bitsets reject enough leaves to pay for a
-production filter. Their motivating profiles predate the quadratic-norm
-certificate, so the current rows that actually reach recombination must be
-remeasured before any of the three changes production.
+## Profile
 
-## Where the mid-tail time goes
+Sampling profiles were captured at clean `f396965d` for one representative
+compiled case of each parametric family with samply 0.13.1 at interval
+1.001 ms (~999 Hz), through `scripts/profile/run_profile.sh`
+(lean-bench-samply orchestrator, timed-region filtered, target 3 s). The
+leaf-cost categorisation is committed as
+`reports/bench-results/hexbz-leafcost-f396965d-chungus2.txt` (SHA-256
+`869bc76d71c02d1b1522b07e841669727acf5f113b21f680d56b3f47a8f811e0`); raw
+`*.json.gz` profiles are developer-local per SPEC/profiling.md.
 
-[`hexbz-cactus-elbow.md`](hexbz-cactus-elbow.md) preserves the phase-attributed
-record of the former solved-rank 125-140 crossover. The quadratic-norm
-certificate removes it: on the current 160-row combined mixture Hex solves 151
-rows against Isabelle BZ's 141, and the worst cumulative Hex/Isabelle ratio
-over ranks 125-140 is `0.689x` at rank 133, below the `0.85x` acceptance bound
-at every rank in that window. The cumulative times from which that ratio is
-computed are reproduced by `python3 scripts/bench/cactus_rank_table.py --lo
-125 --hi 140`; full
-before/after attribution is in
-[`hexbz-quadratic-norm-certificate.md`](hexbz-quadratic-norm-certificate.md).
+| Capture | own code | Lean runtime | allocator | GMP | libc |
+|---|---:|---:|---:|---:|---:|
+| `public-factor-combinator`, n=8 (2100 samples) | 23.7% | 29.3% | 32.0% | 6.0% | 8.5% |
+| `cld-fast-path`, 4_004_016_004 (2321 samples) | 26.4% | 27.6% | 26.1% | 8.2% | 11.2% |
+| `exhaustive-slow-backstop`, n=8 (2019 samples) | 19.3% | 29.4% | 49.9% | 0.2% | 0.0% |
+| `degree-height-matrix`, 4x2 encoding (2087 samples) | 12.9% | 34.2% | 34.5% | 7.5% | 10.6% |
+| `fallback-probe`, n=8 (2989 samples) | 30.0% | 30.0% | 34.0% | 2.5% | 3.0% |
+
+The shape matches the algorithms: the cascade families are
+allocation-and-refcount dominated (the dispatcher builds and discards
+candidate structures; `mi_free`/`mi_malloc_small` lead every capture), GMP
+appears exactly where big-integer lift moduli and CLD bounds are computed
+(the cld-fast-path and degree-height captures), and the exact backstop is
+the most allocator-bound (49.9%), consistent with its subset-enumeration
+churn. No capture shows a dominant cost in a function the SPEC does not
+name as hot; no audit-found issue was filed from these captures.
+
+The `ho2-adversarial-recombination` family's registered cases are all fixed
+micro-checks (0.2 s timed floors over µs-ms bodies); the lean-bench child
+emits no timed-region sidecar for fixed dispatch, so the orchestrator cannot
+capture them. Its shape coverage is carried by the `public-factor-combinator`
+capture, which exercises the same production cascade code path, and its
+timing evidence by the fixed adversarial ladder in Verdicts and the
+committed dispatch baseline above. This is the declared scope of profile
+coverage for that family, not an omission.
+
+## Concerns
+
+None.

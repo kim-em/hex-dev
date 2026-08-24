@@ -569,7 +569,9 @@ private def malformedDraftRejected
           | .error (.invalidApplication ⟨0⟩) => true
           | _ => false
 
-def duplicateInputsRejected : Bool :=
+-- Scoped bindings remain sets of authority-bearing nodes, so a duplicate
+-- draft cannot be correlated with the separately validated binding table.
+def scopedDuplicateInputsRejected : Bool :=
   malformedDraftRejected (malformedDraftApplication [n1, n1] [n2] [])
 
 def duplicateWritesRejected : Bool :=
@@ -580,6 +582,103 @@ def duplicateStructuralRejected : Bool :=
     { envelope with state := { stateLimits with matcherBatchSize := 2 } }
   malformedDraftRejected
     (malformedDraftApplication [n1] [n2] [.node n1, .node n1]) structuralEnvelope
+
+/-! ## Local repeated-read occurrences -/
+
+def repeatOperationKey : OpKey := { name := "controller-repeat" }
+def repeatControllerRule : RuleKey := { name := "controller-repeat-forward", schema := 1 }
+
+def repeatOperation : Operation :=
+  { key := repeatOperationKey, inputs := [domain, domain], output := domain }
+
+def repeatProgram : Program :=
+  { operations := #[operation, repeatOperation]
+    nodes :=
+      #[sourceNode,
+        { domain, op := { index := 1 }, args := [n0, n0] }] }
+
+def repeatRegistration : Registration :=
+  { key := repeatControllerRule, head := repeatOperationKey, kind := .forward,
+    watches := [.argument 0, .argument 1], writes := [] }
+
+def repeatProofPackage : Proof.Package semantics (List Nat) :=
+  { registrations := #[repeatRegistration] }
+
+def repeatStateLimits : State.Limits :=
+  { stateLimits with
+    maxOperations := 2
+    maxNodes := 2
+    maxRules := 1
+    maxRegistryEntries := 1
+    maxApplications := 1
+    maxNodeDepth := 1 }
+
+def repeatProofRegistry? : Option (Proof.Registry semantics (List Nat)) :=
+  (Proof.Registry.buildWithin proofLimits repeatProgram #[repeatProofPackage]).toOption
+
+def repeatApplication : Controller.Application Fact Nat Nat :=
+  { offer := fun selectedScope branch =>
+      if selectedScope == scope && version? branch n1 == some 0 then
+        some
+          { key := 45
+            offerClass := .invoke
+            node := n1
+            effort := 0
+            inputs := [n0, n0] }
+      else none }
+
+def repeatRuntime : Driver.Package Fact Nat Controller.OfferId Nat (List Nat) :=
+  { rule := repeatControllerRule
+    invoke := fun request =>
+      if request.action.inputs == [seen n0 0, seen n0 0] then .stop 7 else .stop 8 }
+
+def repeatPackages : Array (Controller.Package Fact Nat Nat (List Nat)) :=
+  #[{ runtime := repeatRuntime, applications := #[repeatApplication] }]
+
+def repeatControllerRegistry? := do
+  let proof ← repeatProofRegistry?
+  (Controller.Registry.buildWithin repeatStateLimits controllerKey repeatProgram proof
+    repeatPackages).toOption
+
+def repeatRuntimeLimits : Runtime.Limits :=
+  { runtimeLimits with executable :=
+      { runtimeLimits.executable with state := repeatStateLimits } }
+
+def repeatResultLimits : Search.Result.Limits :=
+  { resultLimits with runtime := repeatRuntimeLimits }
+
+def repeatDriverLimits : Driver.Limits :=
+  { limits with result := repeatResultLimits }
+
+def repeatControllerLimits : Controller.Limits :=
+  { controllerLimits with maxChoices := 1, driver := repeatDriverLimits }
+
+def repeatEnvelope : Search.Envelope :=
+  { envelope with state := repeatStateLimits }
+
+def repeatControllerAccepted : Bool :=
+  match repeatControllerRegistry? with
+  | none => false
+  | some registry =>
+      match State.Branch.startWithin repeatStateLimits repeatProgram
+          #[Fact.yes, Fact.all] with
+      | .error _ => false
+      | .ok branch =>
+          match Driver.Bundle.startWithin repeatDriverLimits resultMeasure
+              recipeMeasure scope branch with
+          | .error _ => false
+          | .ok bundle =>
+              match Controller.State.startWithin repeatEnvelope
+                  (Controller.policyMeasure keyCost) registry bundle with
+              | .error _ => false
+              | .ok state =>
+                  state.session.offers[0]?.any (fun offer =>
+                    offer.action.inputs == [seen n0 0, seen n0 0]) &&
+                    match Controller.runWithin repeatControllerLimits repeatEnvelope keyCost
+                        unitCost resultMeasure recipeMeasure .depthFirst registry firstPolicy () state with
+                    | .ok (.stopped (.callbackFailure 7) stopped ()) =>
+                        stopped.choices == 1
+                    | _ => false
 
 def missingNodeRejected : Bool :=
   malformedDraftRejected
@@ -834,9 +933,10 @@ def sameKeyReplacementChecked : Bool :=
 #guard structuralBatchRejected
 #guard emptyNetworkRejected
 #guard networkStructuralAccepted
-#guard duplicateInputsRejected
+#guard scopedDuplicateInputsRejected
 #guard duplicateWritesRejected
 #guard duplicateStructuralRejected
+#guard repeatControllerAccepted
 #guard missingNodeRejected
 #guard wrongClassRejected
 #guard transplantRejected
