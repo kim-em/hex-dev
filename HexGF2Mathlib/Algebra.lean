@@ -54,16 +54,18 @@ nonzero polynomial has rank one greater than its degree. -/
 def euclideanRank (p : Hex.GF2Poly) : Nat :=
   if p = 0 then 0 else p.degree + 1
 
+@[simp] theorem euclideanRank_zero : euclideanRank 0 = 0 := by
+  simp [euclideanRank]
+
+@[simp] theorem euclideanRank_of_ne_zero {p : Hex.GF2Poly} (hp : p ≠ 0) :
+    euclideanRank p = p.degree + 1 := by
+  simp [euclideanRank, hp]
+
 /-- The packed `F₂[x]` representation is a Euclidean domain whose quotient and
 remainder are the executable long-division operations from `hex-gf2`. -/
 instance euclideanDomain : EuclideanDomain Hex.GF2Poly where
   toCommRing := commRing
-  toNontrivial := ⟨0, 1, by
-    intro h
-    have hwords := congrArg Hex.GF2Poly.toWords h
-    exact (by decide :
-      Hex.GF2Poly.toWords (0 : Hex.GF2Poly) ≠
-        Hex.GF2Poly.toWords (1 : Hex.GF2Poly)) hwords⟩
+  toNontrivial := ⟨0, 1, fun h => Hex.GF2Poly.one_ne_zero h.symm⟩
   quotient := Hex.GF2Poly.div
   quotient_zero := Hex.GF2Poly.div_zero_right
   remainder := Hex.GF2Poly.mod
@@ -73,23 +75,21 @@ instance euclideanDomain : EuclideanDomain Hex.GF2Poly where
   r := fun p q => euclideanRank p < euclideanRank q
   r_wellFounded := (measure euclideanRank).wf
   remainder_lt := fun p q hq => by
-    unfold euclideanRank
-    rw [_root_.ite_eq_right hq]
+    rw [euclideanRank_of_ne_zero hq]
     rcases Hex.GF2Poly.mod_degree_lt p q hq with hzero | hdegree
     · change (Hex.GF2Poly.mod p q).isZero = true at hzero
-      rw [(Hex.GF2Poly.isZero_iff_eq_zero _).mp hzero, _root_.ite_eq_left rfl]
+      rw [(Hex.GF2Poly.isZero_iff_eq_zero _).mp hzero, euclideanRank_zero]
       omega
     · change (Hex.GF2Poly.mod p q).degree < q.degree at hdegree
       by_cases hrem : Hex.GF2Poly.mod p q = 0
-      · rw [_root_.ite_eq_left hrem]
+      · rw [hrem, euclideanRank_zero]
         omega
-      · rw [_root_.ite_eq_right hrem]
+      · rw [euclideanRank_of_ne_zero hrem]
         omega
   mul_left_not_lt := fun p q hq => by
-    unfold euclideanRank
     by_cases hp : p = 0
     · simp [hp]
-    · rw [_root_.ite_eq_right hp]
+    · rw [euclideanRank_of_ne_zero hp]
       have hpzero : p.isZero = false :=
         (Hex.GF2Poly.isZero_eq_false_iff_ne_zero p).mpr hp
       have hqzero : q.isZero = false :=
@@ -104,7 +104,7 @@ instance euclideanDomain : EuclideanDomain Hex.GF2Poly where
         intro hpq
         rw [hpq] at hpqdeg
         simp [Hex.GF2Poly.degree?] at hpqdeg
-      rw [_root_.ite_eq_right hpq,
+      rw [euclideanRank_of_ne_zero hpq,
         Hex.GF2Poly.degree_eq_of_degree?_eq_some hdp,
         Hex.GF2Poly.degree_eq_of_degree?_eq_some hpqdeg]
       omega
@@ -122,6 +122,19 @@ executable `hex-gf2` gcd. -/
 theorem gcd_eq_packed (p q : Hex.GF2Poly) :
     GCDMonoid.gcd p q = Hex.GF2Poly.gcd p q :=
   rfl
+
+/-- Mathlib's recursive Euclidean gcd agrees with the executable packed gcd.
+Over `F₂[x]`, mutual divisibility determines equality because `1` is the only
+unit. -/
+theorem euclidean_gcd_eq_packed (p q : Hex.GF2Poly) :
+    EuclideanDomain.gcd p q = Hex.GF2Poly.gcd p q := by
+  apply Hex.GF2Poly.dvd_antisymm
+  · exact Hex.GF2Poly.dvd_gcd _ _ _
+      (EuclideanDomain.gcd_dvd_left p q)
+      (EuclideanDomain.gcd_dvd_right p q)
+  · exact EuclideanDomain.dvd_gcd
+      (Hex.GF2Poly.gcd_dvd_left p q)
+      (Hex.GF2Poly.gcd_dvd_right p q)
 
 end GF2Poly
 
@@ -179,11 +192,21 @@ example (p q : Hex.GF2Poly) :
 interface. -/
 example (p q : Hex.GF2Poly) :
     GCDMonoid.gcd p q = Hex.GF2Poly.gcd p q :=
-  rfl
+  GF2Poly.gcd_eq_packed p q
+
+/-- Mathlib's recursive Euclidean gcd is the packed gcd as well. -/
+example (p q : Hex.GF2Poly) :
+    EuclideanDomain.gcd p q = Hex.GF2Poly.gcd p q :=
+  GF2Poly.euclidean_gcd_eq_packed p q
 
 /-- The Euclidean-domain instance reaches Mathlib's unique-factorization
 interface. -/
 example : UniqueFactorizationMonoid Hex.GF2Poly := inferInstance
+
+/-- Principal-ideal and Bezout interfaces are also synthesized from the
+Euclidean-domain instance. -/
+example : IsPrincipalIdealRing Hex.GF2Poly := inferInstance
+example : IsBezout Hex.GF2Poly := inferInstance
 
 /-- The field instance is found by synthesis given the degree fact, and its
 inverse is still the executable one. -/

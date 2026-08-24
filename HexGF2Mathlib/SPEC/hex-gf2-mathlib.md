@@ -47,7 +47,12 @@ of nonzero polynomials cannot lower the measure. The `GCDMonoid` instance is
 built directly from `GF2Poly.gcd_dvd_left`, `gcd_dvd_right`, and `dvd_gcd`, so
 `GCDMonoid.gcd p q = GF2Poly.gcd p q` holds definitionally. Mathlib's Bezout,
 principal-ideal, and unique-factorization interfaces are consequently available
-without replacing the packed arithmetic.
+without replacing the packed arithmetic. The separately recursive
+`EuclideanDomain.gcd` is proved equal to `GF2Poly.gcd` by
+`GF2Poly.euclidean_gcd_eq_packed`, using antisymmetry of divisibility over
+`F₂[x]`, so Mathlib's explicit Euclidean Bezout theorem has the same gcd value.
+The `GCDMonoid` class also requires an `lcm`; that projection is supplied
+noncomputably by Mathlib's constructor and is not a packed executable API.
 
 The field instance takes `Fact (0 < f.degree)`. The degree hypothesis is not
 redundant: `GF2Poly.Irreducible` admits the constant `1`, and `GF2nPoly 1 _` is

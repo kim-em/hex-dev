@@ -34,6 +34,9 @@ noncomputable example : GF2Poly ≃+* Polynomial (ZMod 2) :=
 example (p q : GF2Poly) : p * q = GF2Poly.mul p q := rfl
 example (p q : GF2Poly) : p / q = GF2Poly.div p q := rfl
 example (p q : GF2Poly) : GCDMonoid.gcd p q = GF2Poly.gcd p q := rfl
+example (p q : GF2Poly) :
+    EuclideanDomain.gcd p q = GF2Poly.gcd p q :=
+  HexGF2Mathlib.GF2Poly.euclidean_gcd_eq_packed p q
 
 -- A single-word `GF(2^n)` is the generic quotient field, and has `2 ^ n` elements.
 example {n : Nat} {irr : UInt64} {hn : 0 < n} {hn64 : n < 64}
@@ -80,7 +83,9 @@ keep the executable operations rather than transported copies, so
 `p * q = GF2Poly.mul p q`, `p / q = GF2Poly.div p q`, and
 `GCDMonoid.gcd p q = GF2Poly.gcd p q` close by `rfl`. The Euclidean instance
 also makes Mathlib's Bezout, principal-ideal, and unique-factorization
-interfaces available on the packed type.
+interfaces available on the packed type. The stated
+`GF2Poly.euclidean_gcd_eq_packed` lemma identifies the gcd in Mathlib's
+recursive Bezout theorem with the executable packed gcd.
 
 The single-word wrapper, in namespace `HexGF2Mathlib.GF2n`:
 
