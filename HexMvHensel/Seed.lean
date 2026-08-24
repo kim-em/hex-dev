@@ -145,14 +145,55 @@ theorem prefixVars_min {k : Nat}
     {order : Mono k → Mono k → Ordering} [IsMonomialOrder order]
     (a b : Nat) (p : MvPoly k Int order) :
     prefixVars a (prefixVars b p) = prefixVars (min a b) p := by
-  sorry
+  apply MvPoly.ext
+  intro m
+  let P : Nat → Prop := fun count =>
+    ∀ j : Fin k, count ≤ j.val → Mono.degreeOf j m = 0
+  have hP : P (min a b) ↔ P a ∧ P b := by
+    constructor
+    · intro h
+      exact ⟨fun j hj => h j (Nat.le_trans (Nat.min_le_left ..) hj),
+        fun j hj => h j (Nat.le_trans (Nat.min_le_right ..) hj)⟩
+    · rintro ⟨ha, hb⟩ j hj
+      by_cases hab : a ≤ b
+      · exact ha j (by simpa [Nat.min_eq_left hab] using hj)
+      · have hba : b ≤ a := Nat.le_of_not_ge hab
+        exact hb j (by simpa [Nat.min_eq_right hba] using hj)
+  unfold prefixVars
+  rw [MvPoly.coeff_restrictBy, MvPoly.coeff_restrictBy,
+    MvPoly.coeff_restrictBy]
+  change (if decide (P a) then (if decide (P b) then _ else 0) else 0) =
+    if decide (P (min a b)) then _ else 0
+  simp only [decide_eq_true_eq, hP]
+  by_cases ha : P a <;> by_cases hb : P b <;> simp_all
 
 /-- Repeated non-main prefixes retain exactly the smaller prefix. -/
 theorem prefixNonMain_min (i : Fin (n + 1)) (a b : Nat)
     (p : MvPoly (n + 1) Int cmp) :
     prefixNonMain i a (prefixNonMain i b p) =
       prefixNonMain i (min a b) p := by
-  sorry
+  apply MvPoly.ext
+  intro m
+  let P : Nat → Prop := fun count =>
+    ∀ j : Fin n, count ≤ j.val →
+      Mono.degreeOf (remainingVar i j) m = 0
+  have hP : P (min a b) ↔ P a ∧ P b := by
+    constructor
+    · intro h
+      exact ⟨fun j hj => h j (Nat.le_trans (Nat.min_le_left ..) hj),
+        fun j hj => h j (Nat.le_trans (Nat.min_le_right ..) hj)⟩
+    · rintro ⟨ha, hb⟩ j hj
+      by_cases hab : a ≤ b
+      · exact ha j (by simpa [Nat.min_eq_left hab] using hj)
+      · have hba : b ≤ a := Nat.le_of_not_ge hab
+        exact hb j (by simpa [Nat.min_eq_right hba] using hj)
+  unfold prefixNonMain
+  rw [MvPoly.coeff_restrictBy, MvPoly.coeff_restrictBy,
+    MvPoly.coeff_restrictBy]
+  change (if decide (P a) then (if decide (P b) then _ else 0) else 0) =
+    if decide (P (min a b)) then _ else 0
+  simp only [decide_eq_true_eq, hP]
+  by_cases ha : P a <;> by_cases hb : P b <;> simp_all
 
 /-- Build all seeds without any default indexing or prefix truncation. -/
 def seedTuple? (i : Fin (n + 1))

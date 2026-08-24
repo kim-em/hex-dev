@@ -128,6 +128,9 @@ def check (inp : Input n cmp cmp') (cert : Cert n cmp) : Bool :=
 /-- The executable checker implies the semantic certificate predicate. -/
 theorem check_sound {inp : Input n cmp cmp'} {cert : Cert n cmp}
     (h : check inp cert = true) : IsLiftOf inp cert.factors := by
-  sorry
+  simp only [check, Bool.and_eq_true, beq_iff_eq, List.all_eq_true,
+    List.mem_range] at h
+  rcases h with ⟨⟨⟨hlen, hproduct⟩, himages⟩, hleading⟩
+  exact ⟨hlen, hproduct, himages, hleading⟩
 
 end Hex.MvHensel
