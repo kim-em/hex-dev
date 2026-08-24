@@ -60,8 +60,8 @@ example {n : Nat} {irr : UInt64} {hn : 0 < n} {hn64 : n < 64}
 - `Fintype` instances for both wrappers, their cardinality theorems, and the
   computable `finEquiv` indexings they are built from.
 - `CommRing Hex.GF2Poly`, `EuclideanDomain Hex.GF2Poly`, a `GCDMonoid` whose
-  gcd is definitionally `GF2Poly.gcd`, and `Field (Hex.GF2nPoly f hirr)` for a
-  nonconstant modulus.
+  gcd is definitionally `GF2Poly.gcd`, `Field (Hex.GF2n n irr hn hn64 hirr)`,
+  and `Field (Hex.GF2nPoly f hirr)` for a nonconstant modulus.
 
 The equivalences are Mathlib's `≃+*`, not a project-local record, so they
 compose with other `RingEquiv`s and are accepted by Mathlib's equivalence APIs.
@@ -112,14 +112,11 @@ transported across the ring equivalence. The `Fintype` instances are
 deliberately `noncomputable`: the carriers have `2 ^ n` elements, so a compiled
 `Finset.univ` over one is a footgun. The `Equiv`s underneath stay computable.
 
-The `Field` instance on `GF2nPoly` takes `Fact (0 < f.degree)`, and the
-hypothesis is not redundant: `GF2Poly.Irreducible` admits the constant `1`, and
-the quotient by a constant is the trivial ring where `0 = 1`.
-
-One thing is absent. `GF2n` has no Mathlib `Field` instance, because hex-gf2
-does not prove its ring laws as bare theorems the way it does for `GF2Poly` and
-`GF2nPoly`, so reaching Mathlib from a `GF2n` today means going through
-`GF2n.equiv`.
+The `GF2n` field instance needs no additional hypothesis because its type
+already carries `0 < n`. The `Field` instance on `GF2nPoly` takes
+`Fact (0 < f.degree)`, and the hypothesis is not redundant:
+`GF2Poly.Irreducible` admits the constant `1`, and the quotient by a constant
+is the trivial ring where `0 = 1`.
 
 Use [`hex-gf2`](https://github.com/leanprover/hex-gf2) alone for computation;
 this package is for theorem statements and interoperability involving Mathlib.
