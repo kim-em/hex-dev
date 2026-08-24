@@ -6,11 +6,14 @@ Authors: Kim Morrison
 
 module
 
+public import HexPrimality.Cert
 public import HexPrimality.MillerRabin
 public import HexPrimality.Table
 public import HexBasic.Rand
 -- For the `#guard` regression block only.
 meta import HexPrimality.Table
+meta import HexPrimality.Cert
+meta import HexPrimality.MillerRabin
 meta import HexArith.Montgomery.Context
 meta import HexBasic.Rand
 
@@ -370,6 +373,388 @@ set_option maxRecDepth 10000 in
 #guard (let pf := (partialFactor (97 * 101 * 101) (Rand.ofSeed 2) 32).1
         pf.factors.foldl (fun a x => a * x.1 ^ x.2) 1 * pf.residual ==
           97 * 101 * 101)
+
+/-! Certificate search and the decision API. -/
+
+/-- Why certificate search stopped without a certificate. -/
+inductive PrimeCertStop where
+  /-- The input is provably composite (trial, table completeness, or a
+  Miller-Rabin witness); the failure is a verdict. -/
+  | composite
+  /-- The search budget ran out; no primality claim either way. -/
+  | exhausted
+deriving Repr, DecidableEq
+
+/-- A resumable certificate-search failure. -/
+structure PrimeCertFailure where
+  /-- Why the search stopped. -/
+  stop : PrimeCertStop
+  /-- Attempts consumed by the subsearch that failed; earlier successful
+  subsearches (witnesses found, factors split) are not accumulated. -/
+  attempts : Nat
+  /-- The advanced generator state. -/
+  rand : Rand
+deriving Repr
+
+/-- A resumable bounded-decision failure. -/
+structure PrimeDecisionFailure where
+  /-- Attempts consumed by the failing certificate subsearch (see
+  `PrimeCertFailure.attempts`). -/
+  attempts : Nat
+  /-- The advanced generator state. -/
+  rand : Rand
+deriving Repr
+
+/-- A resumable next-prime-search failure. -/
+structure NextPrimeFailure where
+  /-- Candidates conclusively rejected before the failure; the candidate
+  whose decision failed is not counted. -/
+  attempts : Nat
+  /-- The advanced generator state. -/
+  rand : Rand
+deriving Repr
+
+/-- Default fuel for the bounded decision path: recursion depth scales with
+the bit length. A starting point, to be revisited by the bench. -/
+def defaultPrimeFuel (n : Nat) : Nat := 2 * n.log2 + 16
+
+/-- Witness-search budget per factor entry. -/
+private def witnessBudget : Nat := 32
+
+/-- Search a base for one factor entry, checking with the same compiled
+`checkWitness` the certificate checker replays. -/
+private def witnessGo (n q : Nat) :
+    Nat → Nat → Rand → Except PrimeCertFailure (Nat × Rand)
+  | 0, attempts, r => .error ⟨.exhausted, attempts, r⟩
+  | t + 1, attempts, r =>
+      if checkWitness n q (r.next.1.toNat % (n - 3) + 2) then
+        .ok (r.next.1.toNat % (n - 3) + 2, r.next.2)
+      else witnessGo n q t (attempts + 1) r.next.2
+
+mutual
+
+/-- One level of certificate search: verdict tiers first (size, table with
+its completeness, a Miller-Rabin witness scan), then `n - 1` is partially
+factored and every claimed prime-power entry becomes a certified child with
+a searched witness. The assembled node is validated by the public wrapper,
+never trusted from here. -/
+private def primeCertGo (fuel n : Nat) (r : Rand) :
+    Except PrimeCertFailure (PrimeCert × Rand) :=
+  match fuel with
+  | 0 => .error ⟨.exhausted, 0, r⟩
+  | fuel + 1 =>
+      if n < 2 then .error ⟨.composite, 0, r⟩
+      else if n < primeTableBound then
+        if isTablePrime n then .ok (.small n, r)
+        else .error ⟨.composite, 0, r⟩
+      else
+        match defaultBases.find? (fun a => !(millerRabin n a)) with
+        | some _ => .error ⟨.composite, 0, r⟩
+        | none =>
+            match assembleGo fuel n
+                (partialFactor (n - 1) r (2 * n.log2 + 8)).1.factors []
+                (partialFactor (n - 1) r (2 * n.log2 + 8)).2 with
+            | .error f => .error f
+            | .ok (entries, r') => .ok (.pock n entries, r')
+termination_by (fuel, 0)
+
+/-- Certify every claimed factor entry: a recursive child certificate and a
+witness base per entry. A child failure is reported as exhaustion: the
+child's compositeness would only mean the untrusted factorization guessed
+wrong, never that `n` is composite. -/
+private def assembleGo (fuel n : Nat) :
+    List (Nat × Nat) → List (Nat × Nat × PrimeCert) → Rand →
+      Except PrimeCertFailure (List (Nat × Nat × PrimeCert) × Rand)
+  | [], acc, r => .ok (acc.reverse, r)
+  | (q, e) :: rest, acc, r =>
+      if e = 0 then assembleGo fuel n rest acc r
+      else
+        match primeCertGo fuel q r with
+        | .error f => .error ⟨.exhausted, f.attempts, f.rand⟩
+        | .ok (cq, r1) =>
+            match witnessGo n q witnessBudget 0 r1 with
+            | .error f => .error f
+            | .ok (a, r2) => assembleGo fuel n rest ((a, e - 1, cq) :: acc) r2
+termination_by l => (fuel, l.length + 1)
+
+end
+
+/-- Bounded certificate search. A success is a `CheckedPrimeCert`, so a
+certificate for one number can never answer a request about another; a
+`.composite` failure is a verdict (see `primeCert?_composite`); an
+`.exhausted` failure makes no claim and carries the advanced state. -/
+def primeCert? (n : Nat) (r : Rand) (fuel : Nat) :
+    Except PrimeCertFailure (CheckedPrimeCert n × Rand) :=
+  match primeCertGo fuel n r with
+  | .error f => .error f
+  | .ok (c, r') =>
+      if hs : c.subject = n then
+        if hv : checkPrime c = true then .ok (⟨c, hs, hv⟩, r')
+        else .error ⟨.exhausted, 0, r'⟩
+      else .error ⟨.exhausted, 0, r'⟩
+
+private theorem witnessGo_error_stop {n q : Nat} :
+    ∀ (t attempts : Nat) (r : Rand) {f : PrimeCertFailure},
+      witnessGo n q t attempts r = .error f → f.stop = .exhausted := by
+  intro t
+  induction t with
+  | zero =>
+      intro attempts r f h
+      injection h with h
+      subst h
+      rfl
+  | succ t ih =>
+      intro attempts r f h
+      unfold witnessGo at h
+      split at h
+      · cases h
+      · exact ih _ _ h
+
+private theorem assembleGo_error_stop {fuel n : Nat} :
+    ∀ (l : List (Nat × Nat)) (acc : List (Nat × Nat × PrimeCert)) (r : Rand)
+      {f : PrimeCertFailure},
+      assembleGo fuel n l acc r = .error f → f.stop = .exhausted := by
+  intro l
+  induction l with
+  | nil =>
+      intro acc r f h
+      simp [assembleGo] at h
+  | cons a rest ih =>
+      intro acc r f h
+      obtain ⟨q, e⟩ := a
+      unfold assembleGo at h
+      split at h
+      · exact ih _ _ h
+      · split at h
+        · injection h with h
+          subst h
+          rfl
+        · split at h
+          next f' hwit =>
+            injection h with h
+            subst h
+            exact witnessGo_error_stop _ _ _ hwit
+          next => exact ih _ _ h
+
+private theorem primeCertGo_composite {fuel n : Nat} {r : Rand}
+    {f : PrimeCertFailure} (h : primeCertGo fuel n r = .error f)
+    (hstop : f.stop = .composite) : ¬ Prime n := by
+  match fuel with
+  | 0 =>
+      unfold primeCertGo at h
+      injection h with h
+      subst h
+      cases hstop
+  | fuel + 1 =>
+      unfold primeCertGo at h
+      by_cases h2 : n < 2
+      · rw [if_pos h2] at h
+        intro hp
+        have := hp.two_le
+        omega
+      · rw [if_neg h2] at h
+        by_cases htab : n < primeTableBound
+        · rw [if_pos htab] at h
+          by_cases hhit : isTablePrime n = true
+          · rw [if_pos hhit] at h
+            cases h
+          · rw [if_neg hhit] at h
+            intro hp
+            exact hhit (isTablePrime_iff.mpr (mem_primeTable_of_prime hp htab))
+        · rw [if_neg htab] at h
+          split at h
+          · rename_i a hfind
+            intro hp
+            have := List.find?_some hfind
+            rw [Bool.not_eq_true'] at this
+            exact absurd (millerRabin_eq_true_of_prime hp) (by
+              rw [this]
+              exact Bool.false_ne_true)
+          · split at h
+            · rename_i f' herr
+              injection h with h
+              subst h
+              rw [assembleGo_error_stop _ _ _ herr] at hstop
+              cases hstop
+            · cases h
+
+/-- A `.composite` failure is a verdict: the input is not prime. Justified
+by size, table completeness, or a failed Miller-Rabin base; never by
+anything the untrusted search merely failed to do. -/
+theorem primeCert?_composite {n : Nat} {r : Rand} {fuel : Nat}
+    {f : PrimeCertFailure} (hresult : primeCert? n r fuel = .error f)
+    (hstop : f.stop = .composite) : ¬ Prime n := by
+  unfold primeCert? at hresult
+  split at hresult
+  · rename_i f' herr
+    injection hresult with h
+    subst h
+    exact primeCertGo_composite herr hstop
+  · split at hresult
+    · split at hresult
+      · cases hresult
+      · injection hresult with h
+        subst h
+        cases hstop
+    · injection hresult with h
+      subst h
+      cases hstop
+
+/-- Exact trial division handles everything below this; a placeholder until
+the bench measures the crossover with the certificate path. -/
+def isPrimeTrialThreshold : Nat := 100000000
+
+/-- The bounded decision: table below `primeTableBound`, exact trial
+division below `isPrimeTrialThreshold`, then certificate search. A failed
+base or a table/trial miss returns a certified `false`; an accepted
+certificate returns `true`; an exhausted search is an error rather than an
+unbounded computation. -/
+def isPrime? (n : Nat) (r : Rand) (fuel : Nat) :
+    Except PrimeDecisionFailure (Bool × Rand) :=
+  if n < primeTableBound then .ok (isTablePrime n, r)
+  else if n < isPrimeTrialThreshold then .ok (isPrimeTrial n, r)
+  else
+    match primeCert? n r fuel with
+    | .ok (_, r') => .ok (true, r')
+    | .error f =>
+        match f.stop with
+        | .composite => .ok (false, f.rand)
+        | .exhausted => .error ⟨f.attempts, f.rand⟩
+
+/-- Every successful bounded decision is exact. -/
+theorem isPrime?_spec {n : Nat} {r : Rand} {fuel : Nat} {b : Bool}
+    {r' : Rand} (h : isPrime? n r fuel = .ok (b, r')) :
+    b = true ↔ Prime n := by
+  unfold isPrime? at h
+  by_cases ht : n < primeTableBound
+  · rw [if_pos ht] at h
+    injection h with h
+    injection h with hb hr
+    subst hb
+    constructor
+    · intro hb'
+      exact mem_primeTable_prime (isTablePrime_iff.mp hb')
+    · intro hp
+      exact isTablePrime_iff.mpr (mem_primeTable_of_prime hp ht)
+  · rw [if_neg ht] at h
+    by_cases htrial : n < isPrimeTrialThreshold
+    · rw [if_pos htrial] at h
+      injection h with h
+      injection h with hb hr
+      subst hb
+      exact ⟨isPrimeTrial_isPrime, isPrimeTrial_of_prime⟩
+    · rw [if_neg htrial] at h
+      split at h
+      · rename_i cert r2 hok
+        injection h with h
+        injection h with hb hr
+        subst hb
+        exact ⟨fun _ => cert.prime, fun _ => rfl⟩
+      · rename_i f herr
+        split at h
+        · rename_i hstop
+          injection h with h
+          injection h with hb hr
+          subst hb
+          constructor
+          · intro hfalse
+            cases hfalse
+          · intro hp
+            exact absurd hp (primeCert?_composite herr hstop)
+        · cases h
+
+/-- The pure total convenience decision: the bounded path from the
+reproducible seed, with exact trial division as the fallback if that path
+exhausts its fuel, which is what makes the iff unconditional. Callers that
+need a real time bound and resumable state use `isPrime?`. -/
+def isPrime (n : Nat) : Bool :=
+  match isPrime? n (Rand.ofSeed n) (defaultPrimeFuel n) with
+  | .ok (b, _) => b
+  | .error _ => isPrimeTrial n
+
+/-- The total decision is exact. -/
+theorem isPrime_iff {n : Nat} : isPrime n = true ↔ Prime n := by
+  unfold isPrime
+  split
+  · rename_i b r' hok
+    exact isPrime?_spec hok
+  · exact ⟨isPrimeTrial_isPrime, isPrimeTrial_of_prime⟩
+
+private def nextPrimeGo (certFuel : Nat) :
+    Nat → Nat → Nat → Rand → Except NextPrimeFailure (Nat × Rand)
+  | 0, _, attempts, r => .error ⟨attempts, r⟩
+  | steps + 1, m, attempts, r =>
+      match isPrime? m r certFuel with
+      | .error f => .error ⟨attempts, f.rand⟩
+      | .ok (true, r') => .ok (m, r')
+      | .ok (false, r') => nextPrimeGo certFuel steps (m + 1) (attempts + 1) r'
+
+private theorem nextPrimeGo_spec (certFuel : Nat) :
+    ∀ (steps m attempts : Nat) (r : Rand) {p : Nat} {r' : Rand},
+      nextPrimeGo certFuel steps m attempts r = .ok (p, r') →
+      m ≤ p ∧ Prime p ∧ ∀ q, m ≤ q → q < p → ¬ Prime q := by
+  intro steps
+  induction steps with
+  | zero =>
+      intro m attempts r p r' h
+      simp [nextPrimeGo] at h
+  | succ steps ih =>
+      intro m attempts r p r' h
+      unfold nextPrimeGo at h
+      split at h
+      · cases h
+      · -- the candidate is prime: it is the answer
+        rename_i r2 heq
+        injection h with h
+        injection h with hp hr
+        subst hp
+        refine ⟨Nat.le_refl _, (isPrime?_spec heq).mp rfl, ?_⟩
+        intro q hq1 hq2
+        omega
+      · -- the candidate is certified composite: extend the window
+        rename_i r2 heq
+        obtain ⟨hle, hprime, hmin⟩ := ih _ _ _ h
+        refine ⟨by omega, hprime, ?_⟩
+        intro q hq1 hq2
+        rcases Nat.eq_or_lt_of_le hq1 with rfl | hlt
+        · intro hp'
+          have hb := (isPrime?_spec heq).mpr hp'
+          cases hb
+        · exact hmin q (by omega) hq2
+
+/-- Fuel-bounded least-prime-above search: a total form needs Euclid's
+theorem, which this tree does not carry Mathlib-free, so exhaustion is
+reported with the attempt count and advanced state. -/
+def nextPrime? (n : Nat) (r : Rand) (fuel : Nat) :
+    Except NextPrimeFailure (Nat × Rand) :=
+  nextPrimeGo fuel fuel (n + 1) 0 r
+
+/-- A successful search returns the least prime above `n`. -/
+theorem nextPrime?_spec {n : Nat} {r : Rand} {fuel : Nat} {p : Nat}
+    {r' : Rand} (h : nextPrime? n r fuel = .ok (p, r')) :
+    n < p ∧ Prime p ∧ ∀ q, n < q → q < p → ¬ Prime q := by
+  obtain ⟨hle, hprime, hmin⟩ := nextPrimeGo_spec fuel fuel (n + 1) 0 r h
+  exact ⟨by omega, hprime, fun q h1 h2 => hmin q (by omega) h2⟩
+
+/-! Regression coverage: the decision surface across the table, trial, and
+certificate tiers, and the next-prime search. `2^31 - 1` exercises the
+certificate tier with a fully table-factorable `n - 1`, so the path is
+deterministic. -/
+
+#guard isPrime 0 = false
+#guard isPrime 1 = false
+#guard isPrime 2 = true
+#guard isPrime 9973 = true
+#guard isPrime 10007 = true          -- trial tier
+#guard isPrime 99999989 = true       -- just below the trial threshold
+#guard isPrime 2147483647 = true     -- certificate tier (Mersenne 2^31 - 1)
+#guard isPrime 2147483649 = false    -- certificate tier, MR verdict
+#guard (match nextPrime? 90 (Rand.ofSeed 0) 8 with
+        | .ok (p, _) => p == 97
+        | .error _ => false)
+#guard (match primeCert? 2147483647 (Rand.ofSeed 0) 8 with
+        | .ok (c, _) => checkPrime c.raw
+        | .error _ => false)
 
 end Nat
 
