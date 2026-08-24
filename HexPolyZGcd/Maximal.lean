@@ -425,6 +425,101 @@ theorem dvd_gcd (d f h : ZPoly) (hf : d ∣ f) (hh : d ∣ h) :
     d ∣ gcd f h :=
   dvd_gcd_of_coprimeCofactors (gcdCert_coprimeCofactors f h) d hf hh
 
+/-- Two mutually dividing gcd candidates satisfying the public normalization
+convention are equal. -/
+theorem eq_of_normalized_of_dvd_dvd {p q : ZPoly}
+    (hpNorm : NormalizedGcd p = true) (hqNorm : NormalizedGcd q = true)
+    (hpq : p ∣ q) (hqp : q ∣ p) : p = q := by
+  have hpCases : p = 0 ∨
+      (0 < DensePoly.leadingCoeff p ∧ 0 < content p) := by
+    simpa [NormalizedGcd, Bool.or_eq_true, Bool.and_eq_true,
+      decide_eq_true_eq, beq_iff_eq] using hpNorm
+  have hqCases : q = 0 ∨
+      (0 < DensePoly.leadingCoeff q ∧ 0 < content q) := by
+    simpa [NormalizedGcd, Bool.or_eq_true, Bool.and_eq_true,
+      decide_eq_true_eq, beq_iff_eq] using hqNorm
+  rcases hpCases with hpZero | hpPos
+  · rcases hpq with ⟨a, ha⟩
+    rw [hpZero, DensePoly.zero_mul] at ha
+    exact hpZero.trans ha.symm
+  · have hpNe : p ≠ 0 := by
+      intro hpZero
+      subst p
+      have hleadZero : DensePoly.leadingCoeff (0 : ZPoly) = 0 := rfl
+      omega
+    rcases hqCases with hqZero | hqPos
+    · subst q
+      rcases hqp with ⟨a, ha⟩
+      rw [DensePoly.zero_mul] at ha
+      exact False.elim (hpNe ha)
+    · have hqNe : q ≠ 0 := by
+        intro hqZero'
+        subst q
+        have hleadZero : DensePoly.leadingCoeff (0 : ZPoly) = 0 := rfl
+        omega
+      rcases hpq with ⟨a, ha⟩
+      rcases hqp with ⟨b, hb⟩
+      have haNe : a ≠ 0 := by
+        intro haZero
+        apply hqNe
+        rw [ha, haZero]
+        exact (DensePoly.mul_comm_poly p 0).trans (DensePoly.zero_mul p)
+      have hbNe : b ≠ 0 := by
+        intro hbZero
+        apply hpNe
+        rw [hb, hbZero]
+        exact (DensePoly.mul_comm_poly q 0).trans (DensePoly.zero_mul q)
+      have hpab : p = p * (a * b) := by
+        calc
+          p = q * b := hb
+          _ = (p * a) * b := by rw [ha]
+          _ = p * (a * b) := DensePoly.mul_assoc_poly p a b
+      have hab : a * b = 1 := by
+        apply mul_right_cancel_of_ne_zero hpNe
+        calc
+          (a * b) * p = p * (a * b) := DensePoly.mul_comm_poly _ _
+          _ = p := hpab.symm
+          _ = 1 * p := by
+            rw [DensePoly.mul_comm_poly (1 : ZPoly) p,
+              DensePoly.mul_one_right_poly]
+      have haSizePos : 0 < a.size := size_pos_of_ne_zero a haNe
+      have hbSizePos : 0 < b.size := size_pos_of_ne_zero b hbNe
+      have hsize := mul_size_eq_top_succ_of_nonzero a b haSizePos hbSizePos
+      have habSize : (a * b).size = 1 := by rw [hab]; rfl
+      have hsizeEq : 1 = a.size + b.size - 1 := habSize.symm.trans hsize
+      have haSize : a.size = 1 := by omega
+      have haC : a = DensePoly.C (a.coeff 0) := by
+        apply DensePoly.ext_coeff
+        intro n
+        rw [DensePoly.coeff_C]
+        cases n with
+        | zero => simp
+        | succ n =>
+            rw [DensePoly.coeff_eq_zero_of_size_le a (by omega)]
+            rfl
+      have hleadA : 0 < DensePoly.leadingCoeff a := by
+        have hlead := leadingCoeff_mul_of_nonzero p a hpNe haNe
+        rw [← ha] at hlead
+        have hprodPos :
+            0 < DensePoly.leadingCoeff p * DensePoly.leadingCoeff a := by
+          rw [← hlead]
+          exact hqPos.1
+        exact Int.pos_of_mul_pos_right hprodPos hpPos.1
+      have hleadAB := leadingCoeff_mul_of_nonzero a b haNe hbNe
+      rw [hab] at hleadAB
+      have hleadOne : DensePoly.leadingCoeff (1 : ZPoly) = 1 := by rfl
+      rw [hleadOne] at hleadAB
+      have hleadAOne : DensePoly.leadingCoeff a = 1 :=
+        Int.eq_one_of_mul_eq_one_right (Int.le_of_lt hleadA) hleadAB.symm
+      have hcoeffA : a.coeff 0 = 1 := by
+        rw [DensePoly.leadingCoeff_eq_coeff_last a haSizePos,
+          haSize] at hleadAOne
+        exact hleadAOne
+      have haOne : a = 1 := by
+        rw [haC, hcoeffA]
+        rfl
+      rw [ha, haOne, DensePoly.mul_one_right_poly]
+
 end ZPoly
 
 end Hex

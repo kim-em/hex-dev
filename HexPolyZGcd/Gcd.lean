@@ -200,6 +200,31 @@ def rationalGcdCandidate (f h : ZPoly) : ZPoly :=
   let commonContent : Int := Int.ofNat (Int.gcd (content f) (content h))
   normalizePrimitiveSign (DensePoly.scale commonContent primitive)
 
+/-- On a primitive left input, rational candidate construction is exactly the
+positive primitive representative of the rational gcd. -/
+theorem rationalGcdCandidate_of_primitive {f h : ZPoly} (hf : Primitive f) :
+    rationalGcdCandidate f h =
+      ratPolyPrimitivePart (DensePoly.gcd (toRatPoly f) (toRatPoly h)) := by
+  let primitive :=
+    ratPolyPrimitivePart (DensePoly.gcd (toRatPoly f) (toRatPoly h))
+  have hscaleOne : DensePoly.scale (1 : Int) primitive = primitive := by
+    apply DensePoly.ext_coeff
+    intro n
+    rw [DensePoly.coeff_scale_semiring, Int.one_mul]
+  unfold rationalGcdCandidate
+  rw [show Int.gcd (content f) (content h) = 1 by
+    rw [show content f = 1 from hf]
+    exact Nat.gcd_eq_left_iff_dvd.mpr (Nat.one_dvd _)]
+  change normalizePrimitiveSign (DensePoly.scale (1 : Int) primitive) = primitive
+  rw [hscaleOne]
+  unfold normalizePrimitiveSign
+  rw [if_neg (by
+    have hlead := leadingCoeff_ratPolyPrimitivePart_nonneg
+      (DensePoly.gcd (toRatPoly f) (toRatPoly h))
+    have hleadPrimitive : 0 ≤ DensePoly.leadingCoeff primitive := by
+      simpa only [primitive] using hlead
+    omega)]
+
 /-- A nontrivial input pair has a nonzero rational gcd. -/
 private theorem ratGcdNe {f h : ZPoly} (hnz : f ≠ 0 ∨ h ≠ 0) :
     DensePoly.gcd (toRatPoly f) (toRatPoly h) ≠ 0 := by
@@ -947,6 +972,14 @@ private theorem divModProduct {f g : ZPoly} (hg : g ≠ 0) (hdvd : g ∣ f) :
   rw [hquot]
   exact hq.symm
 
+/-- Long division by the nonzero rational candidate reconstructs the left
+input exactly. -/
+theorem rationalGcdCandidate_mul_quotient {f h : ZPoly}
+    (hnz : f ≠ 0 ∨ h ≠ 0) :
+    rationalGcdCandidate f h *
+        (DensePoly.divMod f (rationalGcdCandidate f h)).1 = f :=
+  divModProduct (rationalGcdCandidate_ne_zero hnz) candidateDvdLeft
+
 /-- Deterministic rational fallback certificate.
 
 The cofactors are the concrete long-division quotients.  Their exactness is
@@ -1018,6 +1051,17 @@ theorem rationalGcdCert_checks (f h : ZPoly) :
       simpa only [g] using candidateNormalized hnz
     rw [hnorm]
     simp [hcontents, hcop]
+
+/-- The nondegenerate rational fallback stores the canonical rational gcd
+candidate in its gcd field. -/
+theorem rationalGcdCert_gcd {f h : ZPoly} (hnz : f ≠ 0 ∨ h ≠ 0) :
+    (rationalGcdCert f h).gcd = rationalGcdCandidate f h := by
+  unfold rationalGcdCert
+  rw [if_neg (by
+    intro hzero
+    rcases hnz with hf | hh
+    · exact hf hzero.1
+    · exact hh hzero.2)]
 
 /-- Scan the low coefficients for the exponent of the first nonzero term. -/
 private def xOrder.go (f : ZPoly) : Nat → Nat → Nat
