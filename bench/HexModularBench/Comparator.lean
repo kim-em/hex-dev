@@ -13,10 +13,11 @@ import LeanBench
 # HexModular external-comparator registrations
 
 The fixed pairs below cover every rung of the corresponding scientific
-schedule. Input construction and request compression happen during module
-initialization, outside LeanBench's timed region. External calls use the
-persistent service in `scripts/oracle/modular_bench_driver.py`; the discarded
-first call starts Python and imports `gmpy2` and python-flint before timing.
+schedule. Input construction and request compression happen lazily during the
+discarded first iteration, outside LeanBench's timed region. External calls
+use the persistent service in `scripts/oracle/modular_bench_driver.py`; that
+discarded iteration also starts Python and imports `gmpy2` and python-flint
+before timing.
 
 * `gmpy2.gcdext` is paired with a complete Fibonacci-shaped
   `euclidUntil` run.
@@ -95,7 +96,7 @@ def runGmpy2Gcd (input : GcdCase) : IO UInt64 := do
   return hashRow gcd coefficient
 
 def smallPrimes (count : Nat) : Array Nat :=
-  ((List.range 50_000).drop 2).filter Hex.Nat.isPrimeTrial
+  ((List.range (32 * count + 100)).drop 2).filter Hex.Nat.isPrimeTrial
     |>.take count |>.toArray
 
 def wordPrimePower (prime : Nat) : Nat :=
@@ -182,7 +183,10 @@ def runFlintVector (input : VectorCase) : IO UInt64 := do
   return hashCrtVec modulus values
 
 def leanConfig : LeanBench.FixedBenchmarkConfig :=
-  { repeats := 5, minTotalSeconds := 0.2, maxSecondsPerCall := 6.0,
+  -- The parent watchdog covers the discarded lazy-fixture warmup as well as
+  -- the measured call. The report's 10-second eligibility ceiling is applied
+  -- to the exported per-call medians, not to this process-lifetime guard.
+  { repeats := 5, minTotalSeconds := 0.2, maxSecondsPerCall := 60.0,
     warmupFirstIter := true }
 
 def externalConfig : LeanBench.FixedBenchmarkConfig :=
@@ -216,6 +220,9 @@ initialize gcd16384 : IO.Ref (Option GcdCase) ← IO.mkRef none
 initialize gcd32768 : IO.Ref (Option GcdCase) ← IO.mkRef none
 initialize gcd65536 : IO.Ref (Option GcdCase) ← IO.mkRef none
 initialize gcd100000 : IO.Ref (Option GcdCase) ← IO.mkRef none
+initialize gcd131072 : IO.Ref (Option GcdCase) ← IO.mkRef none
+initialize gcd196608 : IO.Ref (Option GcdCase) ← IO.mkRef none
+initialize gcd262144 : IO.Ref (Option GcdCase) ← IO.mkRef none
 
 def leanGcd (input : IO.Ref (Option GcdCase)) (bits : Nat) : Unit → IO UInt64 := fun _ =>
   return runLeanGcd (← cached input fun _ => makeGcdCase bits)
@@ -246,6 +253,12 @@ def runLeanGcd65536 := leanGcd gcd65536 65536
 def runGmpy2Gcd65536 := externalGcd gcd65536 65536
 def runLeanGcd100000 := leanGcd gcd100000 100000
 def runGmpy2Gcd100000 := externalGcd gcd100000 100000
+def runLeanGcd131072 := leanGcd gcd131072 131072
+def runGmpy2Gcd131072 := externalGcd gcd131072 131072
+def runLeanGcd196608 := leanGcd gcd196608 196608
+def runGmpy2Gcd196608 := externalGcd gcd196608 196608
+def runLeanGcd262144 := leanGcd gcd262144 262144
+def runGmpy2Gcd262144 := externalGcd gcd262144 262144
 
 initialize scalar4 : IO.Ref (Option ScalarCase) ← IO.mkRef none
 initialize scalar8 : IO.Ref (Option ScalarCase) ← IO.mkRef none
@@ -258,6 +271,7 @@ initialize scalar512 : IO.Ref (Option ScalarCase) ← IO.mkRef none
 initialize scalar1024 : IO.Ref (Option ScalarCase) ← IO.mkRef none
 initialize scalar2048 : IO.Ref (Option ScalarCase) ← IO.mkRef none
 initialize scalar4096 : IO.Ref (Option ScalarCase) ← IO.mkRef none
+initialize scalar8192 : IO.Ref (Option ScalarCase) ← IO.mkRef none
 
 def leanScalar (input : IO.Ref (Option ScalarCase)) (depth : Nat) : Unit → IO UInt64 := fun _ =>
   return runLeanScalar (← cached input fun _ => makeScalarCase depth)
@@ -286,6 +300,8 @@ def runLeanScalar2048 := leanScalar scalar2048 2048
 def runFlintScalar2048 := externalScalar scalar2048 2048
 def runLeanScalar4096 := leanScalar scalar4096 4096
 def runFlintScalar4096 := externalScalar scalar4096 4096
+def runLeanScalar8192 := leanScalar scalar8192 8192
+def runFlintScalar8192 := externalScalar scalar8192 8192
 
 initialize vector1 : IO.Ref (Option VectorCase) ← IO.mkRef none
 initialize vector4 : IO.Ref (Option VectorCase) ← IO.mkRef none
@@ -346,6 +362,12 @@ setup_fixed_benchmark runLeanGcd65536 where leanConfig
 setup_fixed_benchmark runGmpy2Gcd65536 where externalConfig
 setup_fixed_benchmark runLeanGcd100000 where leanConfig
 setup_fixed_benchmark runGmpy2Gcd100000 where externalConfig
+setup_fixed_benchmark runLeanGcd131072 where leanConfig
+setup_fixed_benchmark runGmpy2Gcd131072 where externalConfig
+setup_fixed_benchmark runLeanGcd196608 where leanConfig
+setup_fixed_benchmark runGmpy2Gcd196608 where externalConfig
+setup_fixed_benchmark runLeanGcd262144 where leanConfig
+setup_fixed_benchmark runGmpy2Gcd262144 where externalConfig
 
 setup_fixed_benchmark runLeanScalar4 where leanConfig
 setup_fixed_benchmark runFlintScalar4 where externalConfig
@@ -369,6 +391,8 @@ setup_fixed_benchmark runLeanScalar2048 where leanConfig
 setup_fixed_benchmark runFlintScalar2048 where externalConfig
 setup_fixed_benchmark runLeanScalar4096 where leanConfig
 setup_fixed_benchmark runFlintScalar4096 where externalConfig
+setup_fixed_benchmark runLeanScalar8192 where leanConfig
+setup_fixed_benchmark runFlintScalar8192 where externalConfig
 
 setup_fixed_benchmark runLeanVector1 where leanConfig
 setup_fixed_benchmark runFlintVector1 where externalConfig

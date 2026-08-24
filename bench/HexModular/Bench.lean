@@ -408,8 +408,8 @@ setup_benchmark runCrtLoop k => k * k
   with prep := prepLoop
   where {
     paramSchedule := .custom #[4, 8, 16, 32, 64, 128, 256, 512, 1024,
-      2048, 4096]
-    maxSecondsPerCall := 6.0
+      2048, 4096, 8192]
+    maxSecondsPerCall := 12.0
     targetInnerNanos := 200000000
     signalFloorMultiplier := 1.0
     verdictWarmupFraction := 0.8
