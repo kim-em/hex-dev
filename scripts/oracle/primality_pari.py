@@ -113,11 +113,16 @@ def _check_cert(pari, cert: dict[str, Any]) -> bool:
         return False
     if n < 2 or n % 2 == 0:
         return False
+    # Mirror `Hex.Nat.boundedPowMul`: accumulate one multiplication at a
+    # time and abort as soon as the running product exceeds `n - 1`, so an
+    # adversarial exponent is rejected without constructing a huge power.
     F = 1
     for (_, e, ch) in factors:
-        F *= int(ch["n"]) ** (e + 1)
-        if F > n - 1:
-            return False
+        q = int(ch["n"])
+        for _ in range(e + 1):
+            F *= q
+            if F > n - 1:
+                return False
     if F == 0 or (n - 1) % F != 0:
         return False
     if not all(_check_witness(n, int(ch["n"]), a) for a, _, ch in factors):

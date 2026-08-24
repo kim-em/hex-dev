@@ -63,14 +63,32 @@ open Hex.Nat
 -- Agreement with trial division on an initial segment.
 #guard (List.range 2000).all fun n => isPrime n == isPrimeTrial n
 
--- Certificate checker: accepted shapes and every rejection reason.
+-- Certificate checker: accepted shapes and one rejection per clause.
 #guard checkPrime (.pock 7 [(2, 0, .small 3)]) = true
 #guard checkPrime (.pock 31 [(3, 0, .small 3), (3, 0, .small 5)]) = true
 #guard checkPrime (.pock3 199 9 2 8 [(3, 0, .small 2), (2, 0, .small 3)]) = true
-#guard checkPrime (.pock 13 [(2, 0, .small 3)]) = false
-#guard checkPrime (.pock 7 [(2, 0, .small 4)]) = false
-#guard checkPrime (.pock 7 [(6, 0, .small 3)]) = false
-#guard checkPrime (.pock 11 [(2, 0, .small 7)]) = false
+#guard checkPrime (.pock 13 [(2, 0, .small 3)]) = false      -- F² ≤ n
+#guard checkPrime (.pock 7 [(2, 0, .small 4)]) = false       -- composite factor
+#guard checkPrime (.pock 7 [(6, 0, .small 3)]) = false       -- gcd witness fails
+#guard checkPrime (.pock 11 [(2, 0, .small 7)]) = false      -- 7 ∤ 10
+#guard checkPrime (.pock 1 []) = false                       -- n < 2
+#guard checkPrime (.pock 8 [(3, 0, .small 7)]) = false       -- even n
+#guard checkPrime (.pock 17 [(3, 1, .small 2), (3, 1, .small 2)]) = false
+  -- duplicate subjects: each entry alone passes its witness check
+#guard checkPrime (.pock 97 [(5, 1048576, .small 2)]) = false
+  -- bounded-product abort on a huge exponent
+#guard checkPrime (.pock3 193 8 2 0 [(5, 0, .small 2), (5, 0, .small 3)]) = false
+  -- cofactor R = 32 is even
+#guard checkPrime (.pock3 199 8 2 8 [(3, 0, .small 2), (2, 0, .small 3)]) = false
+  -- decomposition 33 ≠ 2·6·2 + 8
+#guard checkPrime (.pock3 199 33 0 0 [(3, 0, .small 2), (2, 0, .small 3)]) = false
+  -- r = 33 outside [1, 2F)
+#guard checkPrime (.pock3 199 9 2 7 [(3, 0, .small 2), (2, 0, .small 3)]) = false
+  -- witness window upper side: 65 < 64 fails
+#guard checkPrime (.pock3 199 9 2 9 [(3, 0, .small 2), (2, 0, .small 3)]) = false
+  -- witness window lower side: 81 < 65 fails
+#guard checkPrime (.pock3 43 1 5 0 [(3, 0, .small 2)]) = false
+  -- cube-size bound: 43 ≥ (F+1)(2F² + (r-1)F + 1) = 27
 
 -- Certificate search round-trips through the checker.
 #guard (match primeCert? 2147483647 (Hex.Rand.ofSeed 0) 8 with

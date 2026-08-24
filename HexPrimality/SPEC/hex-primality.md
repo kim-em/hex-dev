@@ -680,7 +680,9 @@ table, and the same rule applies for the same reason. The
 [future-work](../../SPEC/future-work.md) entry says timing targets belong in
 the SPEC that adopts the technique, measured in this repository, so
 this SPEC commits to the measurement and to the budget rule, and to no
-number. The bench family "table verification" below is the measurement.
+number. The bench family "table verification" below is the measurement;
+its multi-bound sweep is still pending, so the committed `10^4` stands
+on the budget rule alone.
 
 `hotPathCandidates` in hex-berlekamp-zassenhaus becomes a view of
 `primeTable` restricted to `[3, 500]`, keeping its two existing
@@ -963,23 +965,26 @@ the kernel side is the point of the library.
 Families:
 
 - **Table verification**, the batched kernel-replay cost and generated
-  artifact size of the committed table at bounds `10^4`, `10^5`,
-  `10^6`, `10^7`. This family sets
-  `primeTableBound`: the largest bound whose verification stays inside
-  the few-minutes budget wins, and the number is committed only after
-  it is measured here.
-- **Kernel replay**, `checkPrime` on certificates for primes of `32`,
-  `64`, `128`, `256`, and `512` bits. Decides the `powModNat`-versus-
-  Montgomery question under "Kernel exposure".
-- **Native decision**, bounded `isPrime?` and total `isPrime` across the
-  same bit lengths. Their separate rows expose both the normal
-  certificate path and any exact trial-division fallback.
+  artifact size of the committed table. Measured today only at the
+  committed `10^4` (2.2 s of module elaboration after the sieve swap);
+  the `10^5`-to-`10^7` sweep that would justify raising
+  `primeTableBound` is a pending `scripts/bench` fresh-module family,
+  and until it runs the committed bound is a floor chosen for safety,
+  not the sweep's output.
+- **Kernel replay**, `checkPrime` on certificates for primes of `31`,
+  `61`, `123`, `256`, and `511` bits (the table-smooth ladder). Decides
+  the `powModNat`-versus-Montgomery question under "Kernel exposure".
+- **Native decision**, bounded `isPrime?` across the same bit lengths.
+  The total `isPrime` gets no separate row: it differs only on the
+  exhausted-search path, where its exact trial-division fallback is
+  deliberately unbounded and would time out any row at these sizes.
 - **Certificate search**, `primeCert?` at the same sizes, reported
   separately because its cost is dominated by `partialFactor` and is
   therefore the family whose variance is largest and whose numbers say
   the least about this library.
-- **Segment generation**, `primesIn` over ranges of `10^4` to `10^7`,
-  native only.
+- **Segment generation**, `primesIn` over ranges of `10^3` to
+  `3.2 * 10^4`, native only, capped by the CI bench-verify wallclock
+  budget rather than by the API.
 
 **Comparators.** PARI `isprime` via cypari2 is **informational**: PARI
 uses BPSW plus APRCL and a Pocklington-style certificate only on
