@@ -64,6 +64,16 @@ def sourceValues : Nat → ℝ
 def model? := Frontend.modelWithin config sourceValues result
 
 #guard match model? with | .ok _ => true | .error _ => false
+
+theorem modelReady : model?.toOption.isSome = true := by decide +kernel
+
+noncomputable def projectedModel : Frontend.Model config.rule sourceValues result :=
+  Frontend.modelOfCheck model? modelReady
+
+theorem projectedTarget :
+    result.valuation config.rule sourceValues result.target =
+      result.term.eval config.rule sourceValues :=
+  projectedModel.target
 #guard
   match result? with
   | .ok found => found.program == result.program && found.target == result.target &&
@@ -277,6 +287,24 @@ theorem sourceFactsContain : Frontend.SourcesContain sourceValues sourceFacts :=
           simpa [sourceValues] using member
       | succ index => simp [sourceFacts] at found
 
+theorem sourceListHolds : List.Forall₂
+    (fun value source => source.Contains value)
+    ([1, 2] : List ℝ) [RuleConformance.xFact, RuleConformance.yFact] := by
+  constructor
+  · have member := Rule.constant_mem RuleConformance.checkedX
+    rw [toReal_d] at member
+    simpa using member
+  · constructor
+    · have member := Rule.constant_mem RuleConformance.checkedY
+      rw [toReal_d] at member
+      simpa using member
+    · constructor
+
+theorem sourceListContains : Frontend.SourcesContain
+    (Frontend.valuesAt ([1, 2] : List ℝ))
+    [RuleConformance.xFact, RuleConformance.yFact].toArray :=
+  Frontend.SourcesContain.ofForall₂ sourceListHolds
+
 theorem inputFacts : input.facts = result.facts sourceFacts := by
   simp [input, result, sourceFacts, Frontend.Result.facts, Frontend.Result.seed,
     Frontend.Term.source?, term]
@@ -362,5 +390,12 @@ theorem closesEquality
 #print axioms closesLower
 #print axioms closesEquality
 #print axioms targetValue
+/-- info: 'Hex.IntervalMathlib.FrontendConformance.projectedTarget' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms projectedTarget
+
+/-- info: 'Hex.IntervalMathlib.FrontendConformance.sourceListContains' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms sourceListContains
 
 end Hex.IntervalMathlib.FrontendConformance

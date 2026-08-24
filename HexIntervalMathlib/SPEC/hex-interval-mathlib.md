@@ -62,6 +62,12 @@ interval exactly once, proves computed domain-top seeds automatically, and requi
 constants and every improvement to enter through package-owned chronology.
 Successful replay can be eliminated to a target membership theorem, either
 endpoint inequality, their conjunction, or equality for a closed singleton.
+For Meta clients, `modelOfCheck` transparently projects the exact `Model` from
+a kernel-reduced successful `modelWithin` call. `valuesAt` quotes a finite list
+as the total source valuation used by the frontend, and
+`SourcesContain.ofForall₂` converts one membership proof per list entry into
+the exact array-indexed source obligation; indices beyond the list are never
+observed. These helpers add no proof schema and do not replay chronology.
 These are ordinary theorem combinators over a flat caller-supplied event
 chronology: the module does not turn a generic search tree into proof recipes,
 parse Lean expressions or hypotheses, or contain tactic syntax. The caps run
@@ -275,6 +281,57 @@ schema and invokes it against the retained source program/fact; recursive proof
 replay independently proves it again. Search/result and proof body resources
 are checked at settlement, while complete transition/event/structural/proof-
 tree resources remain transactional at bundle quotation.
+
+`HexIntervalMathlib.RuntimeEmit` is the supported Meta boundary from that
+sealed root-target lineage to kernel syntax. Emitter packages pair exact
+`Proof.Key`s with transparent theorem-schema expressions. One joint builder
+checks package-local and global missing, extra, duplicate, and wrong-role
+coverage. Preparation also projects each emitted schema's key and requires it
+to be definitionally equal to the handle's declared key. The builder constructs
+the `Proof.Registry` and `RuntimeProof.Registry` from the same package array and
+seals those registries with the emitter table; there is no post-hoc
+compatibility-key attachment. `Active`, `Lineage`, and `Checked` retain this
+unified registry alongside the corresponding private `RuntimeTerminal` token.
+
+`RuntimeEmit.Checked.emitResultWithin` supports only a one-node root target. It
+quotes the already authenticated program, input, registrations, and exact
+fact/equality/transport/instance chronology as ordinary data and applies the
+transparent `Proof.replayWith` fold. A decidable success proof projects an
+exact `Proof.Evidence` term. The sealed result contains both the quoted
+`Proof.Input` expression and Evidence whose claim projects that same expression;
+its private constructor prevents callers from pairing independently emitted
+terms. Every fact and schema callback crosses `Proof.emitChecked`, and the input
+and final evidence separately cross it against their exact types. Both are
+independently charged against the expression cap in the same saved-state
+transaction before rollback; metavariables, synthetic placeholders, temporary
+declarations, or retained Meta-state leakage therefore cannot escape.
+`Checked.emitWithin` remains the evidence-only compatibility projection of that
+operation. There is no refutation or split expression emitter.
+`Quoter` and `Handle` callbacks are trusted reflection code: the kernel checks
+the theorem in the world they quote, but a generic registry cannot prove that a
+caller callback faithfully reifies an arbitrary runtime `Fact`. Supported
+public builders must therefore own those callbacks and compare the emitted
+claim with the caller's exact goal before installation.
+
+For `S` emitter handles, `C` retained events, `B` total body cells, `D` total
+dependency cells, and `X` cells in a checked expression, registry coverage is
+quadratic in the worst case because list membership/count checks scan the
+package and global key tables. Preparation is `O(S)` callback invocations plus
+one `O(X)` syntax traversal per returned schema expression. Chronology
+prechecking and quotation are `O(C + B + D)` apart from fact callbacks and
+construction of quoted program/action data; the transparent replay then pays
+the existing proof fold and package theorem callbacks, which are arbitrary
+pure Lean code and are not preemptible. The two final expression caps perform
+one `O(X)` traversal for the quoted input and one for its correlated evidence.
+Schema, chronology, body, dependency, and
+expression limits fail without returning a partial expression.
+
+`HexIntervalMathlib.RuntimeRuleEmit` supplies the paired handles and fact
+quoter for exactly the twelve built-in arithmetic schemas. Its convenience
+builder jointly constructs the executable batch assembly, theorem registry,
+and emitter registry. Configurations with caller-owned opaque meanings require
+their own paired emitter packages and are deliberately rejected by this
+built-in-only builder.
 
 A general split terminal adapter is intentionally absent. `Proof.seedChild`
 inherits the parent proof equality table and compact identities, whereas
@@ -505,6 +562,17 @@ over the complete retained chronology without a fallback theorem. It checks
 exact proposed/installed facts, one-cell bodies, semantic schema execution,
 sticky cache refusal and replayability, sealed rule mutation rejection, and a
 paired opaque-operation extension.
+`HexIntervalMathlib.RuntimeEmitConformance` installs target Evidence only from
+the sealed input/evidence pair for all twelve built-in rules, including repeated-input
+binary applications, and separately emits the mixed `sin (-x)` instance,
+equality, fact, and transport chronology. It rejects package-local/global
+coverage errors, cross-package and input transplants, a wrong schema
+expression, ill-typed/open/placeholder/temporary emitters, Meta-state leakage,
+and exact one-under schema, chronology, body, dependency, input-expression, and
+evidence-expression resources while guarding every private constructor and the
+ordinary theorem axiom surface. `FrontendConformance` additionally pins
+transparent model projection and conversion from per-source list membership to
+the indexed containment obligation.
 `HexIntervalMathlib.RuleConformance` replays a shared arithmetic DAG through
 the supported state quote and proof registry. Its ordinary theorem makes both
 source assumptions load-bearing through add/sub/mul and checked
