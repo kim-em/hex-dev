@@ -123,6 +123,8 @@ Request fields: ``rows`` (list of list of int).
   determinant).
 * ``charpoly`` — returns the complete characteristic-polynomial coefficient
   list in ascending degree order via ``flint.fmpz_mat(rows).charpoly()``.
+* ``minpoly`` — returns the minimal-polynomial coefficient list in ascending
+  degree order via ``flint.fmpz_mat(rows).minpoly()``.
 
 ### `fq_default` (finite field F_q = F_p[x] / m(x))
 
@@ -549,9 +551,16 @@ def _fmpz_mat_charpoly(req: dict[str, Any]) -> list[int]:
     return [int(polynomial[i]) for i in range(m.nrows() + 1)]
 
 
+def _fmpz_mat_minpoly(req: dict[str, Any]) -> list[int]:
+    rows = req["rows"]
+    m = flint.fmpz_mat([[int(c) for c in r] for r in rows])  # type: ignore[union-attr]
+    return [int(c) for c in m.minpoly().coeffs()]
+
+
 _FMPZ_MAT_OPS: dict[str, Callable[[dict[str, Any]], Any]] = {
     "det": _fmpz_mat_det,
     "charpoly": _fmpz_mat_charpoly,
+    "minpoly": _fmpz_mat_minpoly,
 }
 
 
