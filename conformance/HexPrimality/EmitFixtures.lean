@@ -6,7 +6,6 @@ Authors: Kim Morrison
 
 import Hex.Conformance.Emit
 import HexPrimality
-import HexBerlekampZassenhaus.PrimeSelection
 
 /-!
 Deterministic fixture emission for `hex-primality`.
@@ -50,8 +49,8 @@ end
 
 /-- The `isprime` verdict surface: zero/one/small edges, prime squares and
 near-square-root semiprimes (the inputs that break a trial-division bound
-off by one), every SPEC Carmichael number (where a Fermat test fails and
-Miller-Rabin must not), the base-specific strong pseudoprimes (which catch
+off by one), every SPEC Carmichael number (where Fermat tests pass on
+coprime bases and Miller-Rabin must not), the base-specific strong pseudoprimes (which catch
 a quietly truncated base list), Fermat primes `2^k + 1`, and
 certificate-tier inputs whose `n - 1` factors over the committed table. -/
 private def isPrimeCases : List (String × Nat) :=
@@ -73,8 +72,12 @@ private def isPrimeCases : List (String × Nat) :=
 
 /-- The `certcheck` surface: accepted certificates one, two, and three
 levels deep plus the accepted cube-root node, and one rejected certificate
-per checker condition. No oracle produces the negatives, so they are
-constructed by hand. -/
+per checker clause: the F-squared bound, composite and non-dividing
+factors, failed gcd witnesses, table misses, subjects below two and even
+subjects, duplicate subjects, the bounded-product abort, and for the
+cube-root arm the even-cofactor, decomposition, r-range, size-bound, and
+both strict witness-window conditions. No oracle produces the negatives,
+so they are constructed by hand. -/
 private def certCases : List (String × Nat × PrimeCert) :=
   [ ("accept/small", 97, .small 97),
     ("accept/pock1", 7, .pock 7 [(2, 0, .small 3)]),
@@ -88,7 +91,21 @@ private def certCases : List (String × Nat × PrimeCert) :=
     ("reject/table-miss", 10007, .small 10007),
     ("reject/pock3-witness", 199,
       .pock3 199 9 2 7 [(3, 0, .small 2), (2, 0, .small 3)]),
-    ("reject/pock3-odd-F", 199, .pock3 199 9 2 8 [(2, 0, .small 3)]) ]
+    ("reject/pock3-odd-F", 199, .pock3 199 9 2 8 [(2, 0, .small 3)]),
+    ("reject/one", 1, .pock 1 []),
+    ("reject/even", 8, .pock 8 [(3, 0, .small 7)]),
+    ("reject/duplicate-subject", 17,
+      .pock 17 [(3, 1, .small 2), (3, 1, .small 2)]),
+    ("reject/product-abort", 97, .pock 97 [(5, 1048576, .small 2)]),
+    ("reject/pock3-even-R", 193,
+      .pock3 193 8 2 0 [(5, 0, .small 2), (5, 0, .small 3)]),
+    ("reject/pock3-decomp", 199,
+      .pock3 199 8 2 8 [(3, 0, .small 2), (2, 0, .small 3)]),
+    ("reject/pock3-r-range", 199,
+      .pock3 199 33 0 0 [(3, 0, .small 2), (2, 0, .small 3)]),
+    ("reject/pock3-witness-high", 199,
+      .pock3 199 9 2 9 [(3, 0, .small 2), (2, 0, .small 3)]),
+    ("reject/pock3-size", 43, .pock3 43 1 5 0 [(3, 0, .small 2)]) ]
 
 /-- The `segment` surface: the SPEC's `[1, 100]` and `[1, 10^4]`, one
 segment straddling `primeTableBound` (checking the table and the fallback
@@ -112,10 +129,5 @@ private def emitCase : IO Unit := do
     emitSegmentFixture lib s!"segment/{case}" (Int.ofNat lo) (Int.ofNat hi)
     emitResult lib s!"segment/{case}" "segment"
       (intListValue ((Hex.Nat.primesIn lo hi).toList.map Int.ofNat))
-  -- The migrated hot-path view: contents and order against the same
-  -- oracle listing.
-  emitSegmentFixture lib "segment/hotpath/3-501" 3 501
-  emitResult lib "segment/hotpath/3-501" "segment"
-    (intListValue (List.map (fun c => Int.ofNat c.p) Hex.hotPathCandidates))
 
 def main : IO Unit := emitCase
