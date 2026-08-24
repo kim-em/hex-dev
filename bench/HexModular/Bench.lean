@@ -349,8 +349,8 @@ setup_benchmark runRatReconWide b => b * Nat.sqrt b
   with prep := prepReconEarly
   where {
     paramSchedule := .custom #[64, 128, 256, 512, 1024, 2048, 4096, 8192,
-      16384, 32768, 65536, 100000]
-    maxSecondsPerCall := 5.0
+      16384, 32768, 65536, 100000, 131072, 196608, 262144]
+    maxSecondsPerCall := 12.0
     targetInnerNanos := 200000000
     signalFloorMultiplier := 1.0
     verdictWarmupFraction := 0.5

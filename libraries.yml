@@ -231,11 +231,11 @@ libraries:
           rationale: "python-flint exposes FLINT's fmpz and fmpz_mod_ctx arithmetic for the same incremental Garner recurrence. The ratio chiefly measures Python framing and arithmetic binding costs, not a choice between interchangeable Hex algorithms, and therefore remains informational."
       input_families:
         - name: incremental-crt
-          description: Scalar accumulation over 4 to 4096 pairwise-coprime word-size prime-power moduli.
+          description: Scalar accumulation over 4 to 8192 pairwise-coprime word-size prime-power moduli.
         - name: vector-crt
           description: Fixed-depth width ladders and fixed-width depth ladders that expose reuse of one extended GCD across coordinates.
         - name: rational-reconstruction
-          description: Fibonacci-shaped late Euclidean runs and early-success cases over 64- to 100000-bit moduli.
+          description: Fibonacci-shaped late Euclidean runs through 262144 bits and early-success cases through 100000 bits.
         - name: failure-cost
           description: Full Euclidean runs whose impossible numerator bound forces reconstruction failure through the final checks.
   HexGramSchmidt:
