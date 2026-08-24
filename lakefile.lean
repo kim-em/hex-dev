@@ -948,6 +948,10 @@ lean_exe hexpolyz_bench where
   srcDir := "bench"
   root := `HexPolyZ.Bench
 
+lean_exe hexpolyzgcd_bench where
+  srcDir := "bench"
+  root := `HexPolyZGcd.Bench
+
 lean_exe hexpolyz_kronecker_crossover where
   srcDir := "bench"
   root := `HexPolyZ.KroneckerCrossover
