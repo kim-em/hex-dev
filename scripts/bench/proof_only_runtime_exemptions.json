@@ -894,10 +894,28 @@
     "reason": "Registers the HexModular benchmark executable and its bench-only support library on top of the sparse-release and conformance registrations; no factorization runtime target, definition, build flag, or dependency changes."
   },
   {
+    "path": "Hex/Conformance/Emit.lean",
+    "baseline_blob": "21481a92862c6a9f8c8d538c4815d2bc4557453a",
+    "current_blob": "238dc3cdf53f2db9c5fb4bd1fbc08dc7b92bf956",
+    "reason": "Adds JSON serializers used only by truncated-series, sparse-polynomial, modular, and polynomial-gcd conformance fixture emitters; no factorization runtime module imports the conformance helper."
+  },
+  {
+    "path": "lakefile.lean",
+    "baseline_blob": "a1b87406682dbf908d990f01676f326499b906e5",
+    "current_blob": "f5d725684c68d391cc576640d3850865959138a5",
+    "reason": "Registers only new libraries, verification globs, fixture emitters, and benchmark executables accumulated on current main plus HexTruncatedSeries; the hexbz_factor_service target, its imports, build flags, and factorization dependency graph are unchanged."
+  },
+  {
     "path": "lakefile.lean",
     "baseline_blob": "a1b87406682dbf908d990f01676f326499b906e5",
     "current_blob": "2cea1c0addfba1a78d74b905e0297eb1f3441778",
     "reason": "Moves the existing HexModular.LoopTests module from the public library umbrella into the build-only HexMvFactorizationTests verification target; no factorization runtime definition, executable, build flag, or dependency changes."
+  },
+  {
+    "path": "lakefile.lean",
+    "baseline_blob": "a1b87406682dbf908d990f01676f326499b906e5",
+    "current_blob": "2da2b745b964a6ad278865fc872ff1198c0555ad",
+    "reason": "Combines the current-main build-only HexModular.LoopTests move with the HexTruncatedSeries library, conformance, fixture-emitter, and benchmark registrations; the hexbz_factor_service target, its imports, build flags, and factorization dependency graph are unchanged."
   },
   {
     "path": "HexPolyFp/Compose.lean",

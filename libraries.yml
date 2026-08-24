@@ -71,6 +71,29 @@ libraries:
     mathlib: false
     done_through: 6
     status: active
+  HexTruncatedSeries:
+    deps: [HexBasic]
+    mathlib: false
+    done_through: 0
+    status: active
+    phase4:
+      comparators:
+        - tool: FLINT fmpq_poly truncated series routines via python-flint
+          class: informational
+          rationale: "FLINT's series routines run on a tuned Karatsuba/Toom-Cook/FFT multiplication while this library multiplies schoolbook until hex-poly-fast exists, so the measured ratio reports the multiplication gap rather than the Newton iterations. Reclassified to gating when hex-poly-fast lands."
+      input_families:
+        - name: multiplication
+          description: truncated products at precisions 8 to 4096 over Int and Rat
+        - name: inverse
+          description: Newton inversion against the linear recurrence on the same ladder
+        - name: exp-log
+          description: exp and log at precisions 8 to 1024 over Rat
+        - name: sqrt
+          description: square root at a supplied constant root over Rat
+        - name: composition
+          description: Horner against Brent-Kung at precisions 8 to 512
+        - name: reversion
+          description: Newton reversion against Lagrange inversion over Rat
   HexArith:
     deps: []
     mathlib: false
@@ -606,6 +629,11 @@ libraries:
     deps: [HexBerlekampZassenhaus, HexBerlekampMathlib, HexHenselMathlib, HexPolyZMathlib, HexMatrixMathlib, HexLLLMathlib]
     mathlib: true
     done_through: 2
+    status: active
+  HexTruncatedSeriesMathlib:
+    deps: [HexTruncatedSeries]
+    mathlib: true
+    done_through: 0
     status: active
 
   # ---------- Planned (status: planned; SPEC ready, implementation deferred) ----------
