@@ -28,6 +28,53 @@ universe u
 
 variable {n : Nat} {R : Type u} {cmp : Mono n → Mono n → Ordering}
 
+private theorem restore_checks [IsMonomialOrder cmp]
+    [Lean.Grind.CommRing R] [DecidableEq R] [BEq R] [LawfulBEq R]
+    [Dvd R] [GcdOps R]
+    {f h : MvPoly n R cmp} {reduced : StructuralReduction n R cmp}
+    {cert restored : GcdCert n R cmp}
+    (hr : restoreStructural? f h reduced cert = some restored) :
+    checkGcd f h restored = true := by
+  unfold restoreStructural? at hr
+  dsimp only at hr
+  split at hr
+  · next hc =>
+      cases hr
+      exact hc
+  · contradiction
+
+private theorem gcdCertWith_checksCore [IsMonomialOrder cmp]
+    [Lean.Grind.CommRing R] [DecidableEq R] [BEq R] [LawfulBEq R]
+    [Dvd R] [BezoutOps R] [LawfulGcdOps R] [LawfulBezoutOps R]
+    [GcdProducer R]
+    (cfg : GcdConfig) (f h : MvPoly n R cmp) :
+    checkGcd f h (gcdCertWith cfg f h).cert = true := by
+  unfold gcdCertWith
+  split
+  · split
+    · assumption
+    · exact prsCert_checks f h
+  · split
+    · exact prsCert_checks f h
+    · dsimp only
+      split
+      · split
+        · split
+          · apply restore_checks
+            assumption
+          · split
+            · apply restore_checks
+              assumption
+            · exact prsCert_checks f h
+        · split
+          · apply restore_checks
+            assumption
+          · exact prsCert_checks f h
+      · split
+        · apply restore_checks
+          assumption
+        · exact prsCert_checks f h
+
 /-- Canonical checked gcd certificate. -/
 def gcdCert [IsMonomialOrder cmp]
     [Lean.Grind.CommRing R] [DecidableEq R] [BEq R] [LawfulBEq R]
@@ -42,7 +89,7 @@ theorem gcdCert_checks [IsMonomialOrder cmp]
     [Dvd R] [BezoutOps R] [LawfulGcdOps R] [LawfulBezoutOps R]
     [GcdProducer R]
     (f h : MvPoly n R cmp) : checkGcd f h (gcdCert f h) = true := by
-  sorry
+  exact gcdCertWith_checksCore GcdConfig.default f h
 
 theorem gcdCertWith_checks [IsMonomialOrder cmp]
     [Lean.Grind.CommRing R] [DecidableEq R] [BEq R] [LawfulBEq R]
@@ -50,7 +97,7 @@ theorem gcdCertWith_checks [IsMonomialOrder cmp]
     [GcdProducer R]
     (cfg : GcdConfig) (f h : MvPoly n R cmp) :
     checkGcd f h (gcdCertWith cfg f h).cert = true := by
-  sorry
+  exact gcdCertWith_checksCore cfg f h
 
 /-- Certified coefficient content in a named main variable. -/
 def contentInCert {cmp : Mono (n + 1) → Mono (n + 1) → Ordering}
