@@ -192,7 +192,15 @@ theorem kronDecide_irreducible {n : Nat}
     (h : kronDecide g = .irreducible cert)
     (ho : ∀ F ∈ obligations g cert, MvHensel.Irred F) :
     MvHensel.Irred g := by
-  sorry
+  rcases kronDecide_checks hprim hnonconst h with
+    ⟨scalar, uni, hcert, hcheck⟩
+  cases hcert
+  refine checkIrred_sound (cert := .kronecker scalar uni) ?_ ?_
+  · have heq : checkIrred g (.kronecker scalar uni) =
+        checkKronecker g scalar uni := by
+        cases n <;> rfl
+    exact heq.trans hcheck
+  · exact ho
 
 /-- Reducible verdicts retain the exact divisor found by the sweep. -/
 theorem kronDecide_reducible {n : Nat}
