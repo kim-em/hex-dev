@@ -892,5 +892,11 @@
     "baseline_blob": "a1b87406682dbf908d990f01676f326499b906e5",
     "current_blob": "f429150001cdfe913842fd157f5546c8772a0823",
     "reason": "Registers the HexModular benchmark executable and its bench-only support library on top of the sparse-release and conformance registrations; no factorization runtime target, definition, build flag, or dependency changes."
+  },
+  {
+    "path": "lakefile.lean",
+    "baseline_blob": "a1b87406682dbf908d990f01676f326499b906e5",
+    "current_blob": "2cea1c0addfba1a78d74b905e0297eb1f3441778",
+    "reason": "Moves the existing HexModular.LoopTests module from the public library umbrella into the build-only HexMvFactorizationTests verification target; no factorization runtime definition, executable, build flag, or dependency changes."
   }
 ]
