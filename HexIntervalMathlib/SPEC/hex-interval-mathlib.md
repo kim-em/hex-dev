@@ -97,9 +97,8 @@ The built-in offers are deliberately one-shot: only a version-zero result node
 whose current fact is domain top is scheduled, so the callback installs its
 recomputed proposal as version one without raw access to the previous branch.
 Direct repeats fail the runtime predecessor check. Runtime-to-proof quotation
-is supported, but automatic discovery, typed terminal correlation,
-repeated-port controller scheduling, and public-tactic search remain later
-edges.
+and exact target/refutation correlation are supported; automatic discovery and
+the public-tactic search route remain later edges.
 
 `HexIntervalMathlib.Tactic` is the first supported Meta client. It recursively
 parses real local variables and the registered forward arithmetic operations,
@@ -501,10 +500,11 @@ resource refusals, private constructors, and the ordinary replay axiom surface.
 `HexIntervalMathlib.RuntimeRuleConformance` assembles every built-in arithmetic
 handler, starts `Runtime.State` from frontend-shaped version-zero facts,
 executes all unary and binary operations (including repeated argument slots),
-and quotes the pending retained chronology through `RuntimeProof` without a
-terminal or fallback theorem. It checks exact proposed/installed facts,
-one-cell bodies, schema ownership, sticky cache refusal and replayability,
-sealed rule mutation rejection, and a paired opaque-operation extension.
+settles the exact final target, and consumes `RuntimeTerminal.Checked.replay`
+over the complete retained chronology without a fallback theorem. It checks
+exact proposed/installed facts, one-cell bodies, semantic schema execution,
+sticky cache refusal and replayability, sealed rule mutation rejection, and a
+paired opaque-operation extension.
 `HexIntervalMathlib.RuleConformance` replays a shared arithmetic DAG through
 the supported state quote and proof registry. Its ordinary theorem makes both
 source assumptions load-bearing through add/sub/mul and checked

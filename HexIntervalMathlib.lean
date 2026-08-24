@@ -54,9 +54,8 @@ paired packages for configured opaque operations.
 `HexIntervalMathlib.Controller` supplies explicit stable application-table,
 runtime/proof-registry alignment and bounded deterministic policy iteration
 over the sealed retained tree, including caller-measured caps on each retained
-policy state. Automatic package discovery, typed terminal correlation,
-repeated-port controller scheduling, and public split-search tactic integration
-remain separate.
+policy state. Automatic package discovery and public split-search tactic
+integration remain separate.
 `HexIntervalMathlib.Frontend` supplies bounded recursive arithmetic reification,
 source-driven version-zero facts, and flat programmatic replay/closure
 combinators.

@@ -5,14 +5,16 @@ Authors: Kim Morrison
 -/
 
 import HexIntervalMathlib.RuntimeRule
+import HexIntervalMathlib.RuntimeTerminal
 
 /-!
 # Executable arithmetic-rule conformance
 
 The canary assembles every public arithmetic handler, starts a sealed typed
 runtime from the frontend-shaped version-zero facts, directly executes unary
-and repeated-input binary rules, and quotes the complete retained chronology
-through `RuntimeProof`. No target terminal or fallback theorem is used.
+and repeated-input binary rules, settles the exact final target, and replays
+the complete retained chronology through `RuntimeTerminal`. No fallback theorem
+or independently reconstructed arithmetic proof is used.
 -/
 
 namespace Hex.IntervalMathlib.RuntimeRuleConformance
@@ -168,7 +170,7 @@ private def exactFact (index : Nat)
 /-! ## Retained quotation without a terminal -/
 
 def searchLimits : Search.Limits :=
-  { maxSteps := 12, maxSplits := 0, maxLeaves := 1, maxFrontier := 1,
+  { maxSteps := 13, maxSplits := 0, maxLeaves := 1, maxFrontier := 1,
     maxDepth := 0, maxScopes := 1, leafFuel := 12 }
 
 def resultLimits : Search.Result.Limits :=
@@ -236,6 +238,54 @@ def bundle? : Option
               step.schema == Rule.schemaKey action.key &&
                 step.body == [index + 1] && step.proposed == step.installed
         | _ => false
+
+/-! ## Exact target settlement and semantic replay -/
+
+def input : Proof.Input Hex.Interval :=
+  { scope := { index := 0 }, program, facts,
+    target := { node := { index := 12 }, fact := point 1 } }
+
+def policyLimits : Policy.Limits :=
+  { maxOffers := 12, maxBytes := 4096, maxPairs := 64, maxWork := 64,
+    maxScore := 0 }
+
+def traceLimits : Trace.Limit :=
+  { maxEvents := 0, maxBytes := 0, maxWork := 0, maxCode := 16 }
+
+def envelope : Search.Envelope :=
+  { state := stateLimits, policy := policyLimits, trace := traceLimits,
+    search := searchLimits }
+
+def controllerLimits : Hex.Interval.Runtime.Controller.Limits :=
+  { maxChoices := 0, result := resultLimits }
+
+def checked? : Option (RuntimeTerminal.Checked Hex.Interval
+    (Rule.semantics config) Rule.Runtime.Cause (List Nat)) := do
+  let registry ← registry?
+  let (tree, runtime) ← treeRun?
+  let controller ← (Hex.Interval.Runtime.Controller.State.startWithin
+    controllerLimits envelope measure runtime tree).toOption
+  let active ← (RuntimeTerminal.Active.startWithin registry input controller).toOption
+  let lineage ← (active.targetWithin resultLimits measure (seen 12 1)).toOption
+  (lineage.quoteWithin adapterLimits measure).toOption
+
+/-- This calls the theorem fold owned by the checked token, then transports its
+dependent result only after confirming the token retained this exact input. -/
+def replay? : Option (Proof.Evidence ((Rule.semantics config).Entails input.program
+    (Proof.initialBase input) input.target)) :=
+  match checked? with
+  | none => none
+  | some checked =>
+      match RuntimeTerminal.Checked.replay adapterLimits measure
+          (Rule.domain config) (Rule.laws config) checked with
+      | .error _ => none
+      | .ok evidence =>
+          if h : RuntimeTerminal.Checked.input checked = input then
+            some (h ▸ evidence)
+          else none
+
+#guard checked?.isSome
+#guard replay?.isSome
 
 /-! ## Cache, resource, and seal failures -/
 
