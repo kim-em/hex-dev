@@ -147,7 +147,7 @@ instance : GetElem (Matrix R n m) (Nat × Nat) R (fun _ p => p.1 < n ∧ p.2 < m
 `m` contiguous entries of row `i`; it is the computable row accessor compiled code
 uses (single entries go through `M[(i, j)]`, which does not materialize a row). -/
 @[inline, expose] def getRow (M : Matrix R n m) (i : Fin n) : Vector R m :=
-  Vector.ofFn fun j => M.data[i.val * m + j.val]'(flatIdx_lt i.isLt j.isLt)
+  Hex.Vector.ofFn' fun j => M.data[i.val * m + j.val]'(flatIdx_lt i.isLt j.isLt)
 
 /-- Row access `M[i]` for `i : Fin n`. **Deliberately `noncomputable`**: with the
 flat (`Vector R (n*m)`) representation, materializing a whole row just to read it
@@ -176,7 +176,8 @@ backing buffer. -/
 /-- Build a matrix from an entry function, filling the flat backing buffer. -/
 @[expose]
 def ofFn (f : Fin n → Fin m → R) : Matrix R n m :=
-  ⟨Vector.ofFn fun p : Fin (n * m) => f ⟨p.val / m, row_of_lt p⟩ ⟨p.val % m, col_of_lt p⟩⟩
+  ⟨Hex.Vector.ofFn' fun p : Fin (n * m) =>
+    f ⟨p.val / m, row_of_lt p⟩ ⟨p.val % m, col_of_lt p⟩⟩
 
 /-! # Core reduction lemmas -/
 
@@ -240,7 +241,7 @@ theorem ext_getElem {M N : Matrix R n m}
 @[grind =] theorem getElem_ofFn (f : Fin n → Fin m → R) (i : Fin n) (j : Fin m) :
     (ofFn f)[i][j] = f i j := by
   rw [getElem_eq_getRow, getElem_getRow]
-  simp only [ofFn, Vector.getElem_ofFn]
+  simp only [ofFn, Hex.Vector.getElem_ofFn']
   exact congr (congrArg f (Fin.ext (flatIdx_div j.isLt))) (Fin.ext (flatIdx_mod j.isLt))
 
 /-- `getRow` on `ofRows` reduces to the underlying vector. -/
@@ -323,7 +324,8 @@ def modifyRow (M : Matrix R n m) (i : Nat) (f : Vector R m → Vector R m) : Mat
   if h : i < n then
     match M with
     | ⟨d⟩ =>
-      let cur : Vector R m := Vector.ofFn fun t : Fin m => d[i * m + t.val]'(flatIdx_lt h t.isLt)
+      let cur : Vector R m := Hex.Vector.ofFn' fun t : Fin m =>
+        d[i * m + t.val]'(flatIdx_lt h t.isLt)
       ⟨writeRow d i h (f cur)⟩
   else M
 

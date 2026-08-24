@@ -93,7 +93,9 @@ reified certificate, emitted through the `Nat.Prime`-flavoured wrapper. -/
             Elab.throwUnsupportedSyntax
           let nE := tgt.appArg!
           checkClosed "primality" nE
-          let some n ← getNatValue? nE | Elab.throwUnsupportedSyntax
+          let some n ← getNatValue? nE
+            | throwError "primality: the goal{indentExpr tgt}\
+                \nis not about a natural-number numeral"
           let proof ← provePrimeWith ``Hex.Nat.natPrime_of_checkPrimeAt
             "primality" n nE
           goal.assign proof

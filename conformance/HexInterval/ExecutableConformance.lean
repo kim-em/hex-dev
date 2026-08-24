@@ -427,9 +427,25 @@ def duplicateFormatLimits : Limits :=
       | .error _ => false
       | .ok extended =>
           applicationsPrefix assembly.applications extended.applications &&
+            assembly.generation == 0 && extended.generation == 1 &&
             extended.applications.size == 4 &&
               extended.applications[2]?.map (·.generation) == some 1 &&
                 extended.applications[3]?.map (·.generation) == some 1
+
+-- A version-only extension still advances the sealed global generation even
+-- when no application row exists to carry it, so restart cannot reuse it.
+#guard
+  match assembly? with
+  | none => false
+  | some assembly =>
+      match assembly.extendWithin limits program 1 with
+      | .error _ => false
+      | .ok extended =>
+          extended.generation == 1 &&
+            applicationsPrefix assembly.applications extended.applications &&
+            match extended.extendWithin limits program 1 with
+            | .error .staleGeneration => true
+            | _ => false
 
 #guard
   match assembly? with

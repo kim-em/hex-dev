@@ -39,6 +39,8 @@ namespace NewtonKantorovich
 namespace ContractingWith
 
 omit [CompleteSpace α] in
+/-- A map that contracts on a forward-invariant set has at most one fixed
+point in that set. -/
 theorem eq_of_fixedPoints {s : Set α} (hsf : MapsTo f s s)
     (hf : ContractingWith K <| hsf.restrict f s s)
     {x y : α} (hxs : x ∈ s) (hys : y ∈ s) (hx : IsFixedPt f x) (hy : IsFixedPt f y) :
@@ -58,18 +60,21 @@ noncomputable def fixedPoint' {s : Set α} (hsc : IsClosed s) (hs' : s.Nonempty)
   _root_.ContractingWith.efixedPoint' f hsc.isComplete hsf hf
     (Exists.choose hs') (Exists.choose_spec hs') (edist_ne_top (Exists.choose hs') _)
 
+/-- The constructed fixed point lies in the invariant set. -/
 theorem fixedPoint'_mem {s : Set α} (hsc : IsClosed s) (hs' : s.Nonempty)
     (hsf : MapsTo f s s) (hf : ContractingWith K <| hsf.restrict f s s) :
     fixedPoint' f hsc hs' hsf hf ∈ s :=
   _root_.ContractingWith.efixedPoint_mem' hsc.isComplete hsf hf
     (Exists.choose_spec hs') (edist_ne_top (Exists.choose hs') _)
 
+/-- The constructed point is genuinely fixed by `f`. -/
 theorem fixedPoint'_isFixedPt {s : Set α} (hsc : IsClosed s) (hs' : s.Nonempty)
     (hsf : MapsTo f s s) (hf : ContractingWith K <| hsf.restrict f s s) :
     IsFixedPt f (fixedPoint' f hsc hs' hsf hf) :=
   _root_.ContractingWith.efixedPoint_isFixedPt' hsc.isComplete hsf hf
     (Exists.choose_spec hs') (edist_ne_top (Exists.choose hs') _)
 
+/-- Any fixed point of `f` in the invariant set is the constructed one. -/
 theorem fixedPoint'_unique {s : Set α} (hsc : IsClosed s) (hs' : s.Nonempty)
     (hsf : MapsTo f s s) (hf : ContractingWith K <| hsf.restrict f s s)
     {x : α} (hxs : x ∈ s) (hx : IsFixedPt f x) :

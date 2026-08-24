@@ -22,3 +22,11 @@ example : ¬ Nat.Prime 100 := by norm_num
 example : Nat.Prime 999983 := by norm_num         -- just below the threshold
 example : ¬ Nat.Prime 0 := by norm_num
 example : ¬ Nat.Prime 1 := by norm_num
+
+/--
+error: primality: the goal
+  Nat.Prime (2 + 2)
+is not about a natural-number numeral
+-/
+#guard_msgs in
+example : Nat.Prime (2 + 2) := by primality

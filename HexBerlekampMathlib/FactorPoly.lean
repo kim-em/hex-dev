@@ -51,28 +51,6 @@ variable {p : Nat} [Hex.ZMod64.Bounds p]
 theorem nat_prime_of_hex {p : Nat} (hp : Hex.Nat.Prime p) : Nat.Prime p :=
   Nat.prime_def.mpr ⟨hp.1, hp.2⟩
 
-/-- The executable constant `1` transports to the Mathlib constant `1`.
-(`map_one` through `fpPolyEquiv` needs a `MulOneClass` instance `FpPoly` does
-not carry, so this is proved through `DensePoly.C`.) -/
-theorem toMathlibPolynomial_one :
-    toMathlibPolynomial (1 : Hex.FpPoly p) = 1 := by
-  have h : (1 : Hex.FpPoly p) = Hex.DensePoly.C 1 := rfl
-  rw [h, toMathlibPolynomial_C, HexModArithMathlib.ZMod64.toZMod_one, Polynomial.C_1]
-
-/-- Negation commutes with the finite-field polynomial transport. -/
-theorem toMathlibPolynomial_neg (f : Hex.FpPoly p) :
-    toMathlibPolynomial (-f) = -toMathlibPolynomial f := by
-  apply Polynomial.ext
-  intro n
-  rw [Polynomial.coeff_neg, coeff_toMathlibPolynomial, coeff_toMathlibPolynomial,
-    Hex.DensePoly.coeff_neg f n (by show (0 : Hex.ZMod64 p) - 0 = 0; grind),
-    HexModArithMathlib.ZMod64.toZMod_sub]
-  calc HexModArithMathlib.ZMod64.toZMod (0 : Hex.ZMod64 p) -
-        HexModArithMathlib.ZMod64.toZMod (Hex.DensePoly.coeff f n)
-      = 0 - HexModArithMathlib.ZMod64.toZMod (Hex.DensePoly.coeff f n) := by
-        rw [HexModArithMathlib.ZMod64.toZMod_zero]
-    _ = -HexModArithMathlib.ZMod64.toZMod (Hex.DensePoly.coeff f n) := zero_sub _
-
 /-- List products commute with the finite-field polynomial transport. -/
 theorem toMathlibPolynomial_listProd (l : List (Hex.FpPoly p)) :
     toMathlibPolynomial l.prod = (l.map toMathlibPolynomial).prod := by

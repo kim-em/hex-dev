@@ -127,6 +127,10 @@ theorem toPolynomial_disc [CommRing R] [IsDomain R] [DecidableEq R]
           (n * (n - 1) / 2))
     rw [← mul_assoc, hsign, one_mul]
 
+/-- Mathlib's discriminant of a positive-degree product is the product of the
+factor discriminants times the squared cross-resultant. The proof runs both
+resultant multiplicativity laws through `resultant_deriv` and cancels the
+common sign and leading-coefficient factors. -/
 private theorem discr_mul [CommRing R] [IsDomain R]
     [IsAddTorsionFree R] (f g : Polynomial R)
     (hf : 0 < f.natDegree) (hg : 0 < g.natDegree) :
@@ -371,6 +375,12 @@ theorem disc_ne_zero_iff_separable [Field R] [IsAddTorsionFree R]
     exact (hzero.mp hdisc) hcoprime
 
 /-! Trust-surface regression checks for the headline discriminant contracts. -/
+
+/--
+info: 'Hex.DensePoly.toPolynomial_disc' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms toPolynomial_disc
 
 /--
 info: 'Hex.DensePoly.disc_mul' depends on axioms: [propext, Classical.choice, Quot.sound]

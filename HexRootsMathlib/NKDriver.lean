@@ -23,59 +23,6 @@ namespace HexRootsMathlib
 
 noncomputable section
 
-/-- An option-valued list map that succeeds preserves length and maps
-corresponding entries. -/
-private theorem list_mapM_some_get {α β : Type*} {f : α → Option β}
-    {xs : List α} {ys : List β} (hmap : xs.mapM f = some ys) :
-    xs.length = ys.length ∧
-      ∀ (i : Nat) (hi : i < xs.length) (hj : i < ys.length),
-        f xs[i] = some ys[i] := by
-  induction xs generalizing ys with
-  | nil =>
-      simp at hmap
-      subst ys
-      simp
-  | cons x xs ih =>
-      cases hfx : f x with
-      | none => simp [hfx] at hmap
-      | some y =>
-          cases htail : xs.mapM f with
-          | none => simp [hfx, htail] at hmap
-          | some ys' =>
-              have heq : some (y :: ys') = some ys := by
-                simpa [hfx, htail] using hmap
-              have hys : ys = y :: ys' := by
-                exact (Option.some.inj heq).symm
-              subst ys
-              obtain ⟨hlen, hget⟩ := ih htail
-              constructor
-              · simp [hlen]
-              · intro i hi hj
-                cases i with
-                | zero => simpa using hfx
-                | succ i =>
-                    simp only [List.getElem_cons_succ]
-                    exact hget i (by simpa using hi) (by simpa using hj)
-
-/-- An option-valued array map that succeeds preserves size and maps
-corresponding entries. -/
-private theorem array_mapM_some_get {α β : Type*} {f : α → Option β}
-    {xs : Array α} {ys : Array β} (hmap : xs.mapM f = some ys) :
-    xs.size = ys.size ∧
-      ∀ (i : Nat) (hi : i < xs.size) (hj : i < ys.size),
-        f xs[i] = some ys[i] := by
-  have hlist : xs.toList.mapM f = some ys.toList := by
-    calc
-      xs.toList.mapM f = Array.toList <$> xs.mapM f :=
-        Array.toList_mapM.symm
-      _ = some ys.toList := by rw [hmap]; rfl
-  obtain ⟨hlen, hget⟩ := list_mapM_some_get hlist
-  constructor
-  · simpa using hlen
-  · intro i hi hj
-    simpa only [← Array.getElem_toList] using hget i (by simpa using hi)
-      (by simpa using hj)
-
 /-- Every successful NK-only loop result is an NK atom. -/
 theorem isolateLoop_nk_atoms {p : Hex.ZPoly} {target : Int} {fuel : Nat}
     {work : Array Hex.Component} {rs : Array (Hex.Certified p)}

@@ -1,0 +1,44 @@
+Phase-2 scaffolding review of HexNumberFieldTowerMathlib, 2026-08-22,
+performed by a non-author reviewer agent against
+HexNumberFieldTowerMathlib/SPEC/hex-number-field-tower-mathlib.md at
+origin/main after #9393 and the #9403 correspondence surface (review
+basis 93ac1edbf).
+
+Audit lenses: SPEC-declaration coverage including the newly landed
+items; Sound-predicate strength comparison against the SPEC's claims;
+banned-marker sweep; instance-coherence audit over the scoped
+dictionary; DAG and file-organisation verification.
+
+Results. Every SPEC-declared item exists as the SPEC now words it:
+eval?/toComplex with injectivity, the map_add/map_mul/map_inv family,
+coordEquiv with all four LinearEquiv fields, toField and
+dim_eq_finrank via coordEquiv.finrank_eq, the scoped
+Lean.Grind.Field delegation to Field.toGrindField beside the field
+instance, and the embedAlgHom family under
+Extension.PreservesEmbedding with both the algebra-hom packaging and
+injectivity. All four Sound/isSome pairs plus flatten_toComplex are
+present and strong: Factorization.Sound includes scalar-bearing
+reconstruction, monicity, positive multiplicity, PolynomialIrreducible
+(proved equivalent to Mathlib Irreducible over the scoped field), and
+strict ordering; Extension.Sound carries the identity-extension
+biconditional; Splitting.Sound the zero-polynomial iff and GeneratedBy
+minimality; Flattening.Sound both round trips, both complex-value
+agreements, and the arithmetic laws including inverses. The Trager
+step rewrites with HexResultantMathlib's Stage-2 toPolynomial_resultant
+and the root-product formula at six sites, not the vanishing-only
+Stage 1 the SPEC calls insufficient. Exactly three instances exist in
+the library, all scoped in TowerField (Field, CharZero, Grind.Field);
+consumers opt in explicitly, and the qsmul slot resolves to the
+executable rational action with the coherence stated by rfl. Banned
+markers are zero; imports match the declared dependency line exactly;
+the 13-entry file table matches the tree with every module reachable.
+
+Trust-surface note: scripts/release/check_trust_surface.py does not
+yet cover this library (unpublished); the operative evidence is the
+direct zero-hit sweep and the axiom checks recorded with #9403.
+
+Findings and dispositions. No blocking gap. Hygiene findings (six
+unreferenced non-simp lemmas, the no-associates derivation note) are
+filed as issue #9419 for the Phase-6 pass. Phase 1 was complete but
+never recorded; the counter advances with this token per the wave
+bump queue.

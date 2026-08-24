@@ -34,6 +34,10 @@ def build_root(
     tutorial_import: bool = True,
     tutorial_include: bool = True,
     chapter: bool = True,
+    integrated: bool = False,
+    integrated_chapter: bool = True,
+    companion: bool = False,
+    companion_heading: bool = True,
 ) -> Path:
     (tmp / "PLAN").mkdir(parents=True, exist_ok=True)
     (tmp / "HexManual" / "Chapters").mkdir(parents=True, exist_ok=True)
@@ -41,22 +45,47 @@ def build_root(
     (tmp / "HexGF2" / "SPEC").mkdir(parents=True, exist_ok=True)
 
     (tmp / "HexGF2" / "SPEC" / "hex-gf2.md").write_text("# hex-gf2\n", encoding="utf-8")
-    (tmp / "libraries.yml").write_text(
+    libraries = (
         "libraries:\n"
         "  HexGF2:\n"
         "    deps: []\n"
         "    mathlib: false\n"
         f"    done_through: {done_through}\n"
-        "    status: active\n",
-        encoding="utf-8",
+        "    status: active\n"
     )
+    if integrated:
+        # A `mathlib: true` library without the `Mathlib` suffix (HexRCF): no
+        # computational partner; it carries its own chapter.
+        libraries += (
+            "  HexRCF:\n"
+            "    deps: []\n"
+            "    mathlib: true\n"
+            "    done_through: 7\n"
+            "    status: active\n"
+        )
+    if companion:
+        libraries += (
+            "  HexGF2Mathlib:\n"
+            "    deps: [HexGF2]\n"
+            "    mathlib: true\n"
+            "    done_through: 7\n"
+            "    status: active\n"
+        )
+    (tmp / "libraries.yml").write_text(libraries, encoding="utf-8")
     (tmp / "PLAN" / "Phase7.md").write_text(table, encoding="utf-8")
+    heading = "# The Mathlib correspondence\n" if companion_heading else ""
     if chapter:
-        (tmp / "HexManual" / "Chapters" / "HexGF2.lean").write_text("chapter\n", encoding="utf-8")
+        (tmp / "HexManual" / "Chapters" / "HexGF2.lean").write_text(
+            "chapter\n" + heading, encoding="utf-8"
+        )
+    if integrated and integrated_chapter:
+        (tmp / "HexManual" / "Chapters" / "HexRCF.lean").write_text("chapter\n", encoding="utf-8")
     if tutorial:
         (tmp / "HexManual" / "Tutorials" / "AESField.lean").write_text("tut\n", encoding="utf-8")
 
     manual = ["import HexManual.Chapters.HexGF2"]
+    if integrated:
+        manual.append("import HexManual.Chapters.HexRCF")
     if tutorial_import:
         manual.append("import HexManual.Tutorials.AESField")
     if tutorial_include:
@@ -149,6 +178,26 @@ class CheckTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as raw:
             errors = check(build_root(Path(raw), table=table))
         self.assertTrue(any("matches no library SPEC slug" in error for error in errors))
+
+    def test_integrated_mathlib_library_carries_its_own_chapter(self) -> None:
+        """A `mathlib: true` library without the `Mathlib` suffix (HexRCF) has
+        no computational partner; its own chapter satisfies Phase 7."""
+        with tempfile.TemporaryDirectory() as raw:
+            errors = check(build_root(Path(raw), integrated=True))
+        self.assertEqual(errors, [])
+
+    def test_integrated_mathlib_library_missing_chapter_fails(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            errors = check(build_root(Path(raw), integrated=True, integrated_chapter=False))
+        self.assertTrue(any("HexRCF: done_through 7, but no HexManual/Chapters" in error
+                            for error in errors))
+
+    def test_companion_needs_correspondence_heading_in_partner_chapter(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            self.assertEqual(check(build_root(Path(raw), companion=True)), [])
+        with tempfile.TemporaryDirectory() as raw:
+            errors = check(build_root(Path(raw), companion=True, companion_heading=False))
+        self.assertTrue(any("has no '# The Mathlib correspondence'" in error for error in errors))
 
     def test_misspelled_slug_does_not_resolve(self) -> None:
         """Hyphen-insensitive matching would resolve `hex-g-f2`; exact slugs do not."""

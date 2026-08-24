@@ -510,7 +510,6 @@ open Lean Elab
 the extension undiscoverable. Checked after the free `Hex.ZPoly`
 extension, so its `ZPoly` arms only see inputs the free layer declined. -/
 public meta def extension : Hex.FactorTactic.Extension where
-  version := Hex.FactorTactic.Extension.abiVersion
   factorPoly? := fun _stx eP ty _expectedType? => do
     match ← Hex.FactorTactic.classify ty with
     | .zpoly _ _ _ => factorZPolyStrong eP

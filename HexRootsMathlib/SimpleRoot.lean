@@ -44,6 +44,7 @@ theorem root_spec {p : Hex.ZPoly} (i : Hex.RefinedIsolation p) :
         w ∈ DyadicRootIsolation.region i.1 → w = root i :=
   (DyadicRootIsolation.sound i.1).choose_spec
 
+/-- The selected value is a root. -/
 theorem isRoot {p : Hex.ZPoly} (i : Hex.RefinedIsolation p) :
     (toPolyℂ p).IsRoot (root i) :=
   (root_spec i).1
@@ -200,14 +201,6 @@ theorem intersects_equivalence {p : Hex.ZPoly} :
     exact (intersects_iff_root_eq i k).mpr <|
       (intersects_iff_root_eq i j).mp hij |>.trans
         ((intersects_iff_root_eq j k).mp hjk)
-
-/-- Executable simple-root input supplies the separation hypothesis needed by
-the intersection semantics. -/
-theorem intersects_iff_root_eq_of_simple {p : Hex.ZPoly}
-    (_h : Hex.HasOnlySimpleRoots p) (_hp : p ≠ 0)
-    (i₁ i₂ : Hex.RefinedIsolation p) :
-    Hex.Intersects i₁ i₂ ↔ root i₁ = root i₂ :=
-  intersects_iff_root_eq i₁ i₂
 
 end RefinedIsolation
 
