@@ -58,16 +58,19 @@ coefficient rather than relying on an unstated `gcd 0 a` law. -/
   | (_, c) :: terms =>
       normalize (terms.foldl (fun g term => GcdOps.gcd g term.2) c)
 
+omit [Dvd R] in
 /-- The normalization unit at zero is the constant one polynomial. -/
 @[simp] theorem polyNormUnit_zero [IsMonomialOrder cmp] :
     polyNormUnit (0 : MvPoly n R cmp) = 1 := by
-  sorry
+  rfl
 
+omit [Dvd R] in
 /-- Polynomial normalization preserves zero. -/
 @[simp] theorem polyNormalize_zero [IsMonomialOrder cmp] :
     polyNormalize (0 : MvPoly n R cmp) = 0 := by
   rw [polyNormalize, polyNormUnit_zero, Lean.Grind.Semiring.zero_mul]
 
+omit [Dvd R] in
 /-- Scalar content uses the explicit zero convention. -/
 @[simp] theorem scalarContent_zero :
     scalarContent (0 : MvPoly n R cmp) = 0 := by

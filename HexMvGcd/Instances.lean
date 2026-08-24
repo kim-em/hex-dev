@@ -9,6 +9,7 @@ module
 public import HexArith.ExtGcd
 public import HexMvGcd.Normalize
 public import HexPolyFp.Field
+public import HexPolyFp.PrimeField
 public import HexResultant.ExactDiv
 
 @[expose] public section
@@ -47,7 +48,7 @@ instance instLawfulGcdOpsInt : LawfulGcdOps Int := by
 instance instLawfulBezoutOpsInt : LawfulBezoutOps Int := by
   constructor
   intro a b
-  simp only [BezoutOps.xgcd, instBezoutOpsInt]
+  simp only [BezoutOps.xgcd]
   rw [HexArith.Int.extGcd_bezout_gcd]
   sorry
 
@@ -78,12 +79,108 @@ instance instBezoutOpsRat : BezoutOps Rat where
   xgcd := ratXgcd
 
 instance instLawfulGcdOpsRat : LawfulGcdOps Rat := by
-  constructor <;> intros <;> sorry
+  constructor
+  · intro a b
+    rfl
+  · decide
+  · intro a b h
+    exact Rat.mul_eq_zero.mp h
+  · intro a b
+    change ∃ c, a = (if a = 0 ∧ b = 0 then 0 else 1) * c
+    by_cases h : a = 0 ∧ b = 0
+    · exact ⟨0, by simp [h]⟩
+    · exact ⟨a, by simp [h]⟩
+  · intro a b
+    change ∃ c, b = (if a = 0 ∧ b = 0 then 0 else 1) * c
+    by_cases h : a = 0 ∧ b = 0
+    · exact ⟨0, by simp [h]⟩
+    · exact ⟨b, by simp [h]⟩
+  · intro a b d hda hdb
+    change ∃ c, (if a = 0 ∧ b = 0 then 0 else 1) = d * c
+    by_cases hab : a = 0 ∧ b = 0
+    · exact ⟨0, by simp [hab]⟩
+    · have hd : d ≠ 0 := by
+        intro hd
+        rcases hda with ⟨ca, ha⟩
+        rcases hdb with ⟨cb, hb⟩
+        apply hab
+        simp [hd] at ha hb
+        exact ⟨ha, hb⟩
+      exact ⟨d⁻¹, by rw [Hex.ite_eq_right hab, Rat.mul_inv_cancel d hd]⟩
+  · intro a b
+    change
+      (if a = 0 ∧ b = 0 then 0 else 1) *
+          (if (if a = 0 ∧ b = 0 then 0 else 1) = 0 then 1
+            else (if a = 0 ∧ b = 0 then 0 else 1)⁻¹) =
+        (if a = 0 ∧ b = 0 then 0 else 1)
+    by_cases h : a = 0 ∧ b = 0
+    · simp [h]
+    · simp only [h, ite_false]
+      change (1 : Rat) * (if (1 : Rat) = 0 then 1 else 1⁻¹) = 1
+      rw [Hex.ite_eq_right (by decide)]
+      exact Rat.mul_inv_cancel 1 (by decide)
+  · intro a b hb
+    exact Rat.mul_div_cancel hb
+  · intro a
+    change decide (a ≠ 0) = true ↔ ∃ b, a * b = 1
+    rw [decide_eq_true_eq]
+    constructor
+    · intro ha
+      exact ⟨a⁻¹, Rat.mul_inv_cancel a ha⟩
+    · rintro ⟨b, hab⟩ ha
+      subst a
+      simp at hab
+  · intro a
+    change ∃ b, (if a = 0 then 1 else a⁻¹) * b = 1
+    by_cases ha : a = 0
+    · exact ⟨1, by simp [ha]⟩
+    · exact ⟨a, by rw [Hex.ite_eq_right ha, Rat.inv_mul_cancel a ha]⟩
+  · intro a b
+    change
+      a * b * (if a * b = 0 then 1 else (a * b)⁻¹) =
+        (a * (if a = 0 then 1 else a⁻¹)) *
+          (b * (if b = 0 then 1 else b⁻¹))
+    by_cases ha : a = 0
+    · simp [ha]
+    · by_cases hb : b = 0
+      · simp [hb]
+      · have hab : a * b ≠ 0 := fun h =>
+          ha ((Rat.mul_eq_zero.mp h).resolve_right hb)
+        simp [ha, hb, hab, Rat.mul_inv_cancel]
+  · intro a
+    change
+      (a * (if a = 0 then 1 else a⁻¹)) *
+          (if a * (if a = 0 then 1 else a⁻¹) = 0 then 1
+            else (a * (if a = 0 then 1 else a⁻¹))⁻¹) =
+        a * (if a = 0 then 1 else a⁻¹)
+    by_cases ha : a = 0 <;> simp [ha, Rat.mul_inv_cancel]
+  · intro a ha
+    change a * (if a = 0 then 1 else a⁻¹) = 1
+    change decide (a ≠ 0) = true at ha
+    have hne : a ≠ 0 := by simpa only [decide_eq_true_eq] using ha
+    rw [Hex.ite_eq_right hne, Rat.mul_inv_cancel a hne]
 
 instance instLawfulBezoutOpsRat : LawfulBezoutOps Rat := by
   constructor
   intro a b
-  sorry
+  change
+    let uv := ratXgcd a b
+    uv.1 * a + uv.2 * b =
+      (if a = 0 ∧ b = 0 then 0 else 1) *
+        (if (if a = 0 ∧ b = 0 then 0 else 1) = 0 then 1
+          else (if a = 0 ∧ b = 0 then 0 else 1)⁻¹)
+  have inv_one : (1 : Rat)⁻¹ = 1 := by
+    have h := Rat.mul_inv_cancel (1 : Rat) (by decide)
+    rw [Lean.Grind.Semiring.one_mul] at h
+    exact h
+  by_cases ha : a = 0
+  · by_cases hb : b = 0
+    · simp [ratXgcd, ha, hb]
+      grind
+    · simp [ratXgcd, ha, hb, Rat.inv_mul_cancel, inv_one]
+      grind
+  · simp [ratXgcd, ha, Rat.inv_mul_cancel, inv_one]
+    grind
 
 /-! # Bounded prime fields -/
 
@@ -122,13 +219,167 @@ instance instBezoutOpsZMod64 {p : Nat} [hp : ZMod64.Bounds p] :
 instance instLawfulGcdOpsZMod64 {p : Nat} [hp : ZMod64.Bounds p]
     [ZMod64.PrimeModulus p] :
     @LawfulGcdOps (@ZMod64 p hp) _ _ _ _ instDvdZMod64 instGcdOpsZMod64 := by
-  sorry
+  constructor
+  · intro a b
+    rfl
+  · exact fun h =>
+      ZMod64.one_ne_zero_of_prime (ZMod64.PrimeModulus.prime (p := p)) h
+  · intro a b h
+    exact ZMod64.eq_zero_or_eq_zero_of_mul_eq_zero_of_prime_modulus h
+  · intro a b
+    change ∃ c, a = (if a = 0 ∧ b = 0 then 0 else 1) * c
+    by_cases h : a = 0 ∧ b = 0
+    · exact ⟨0, by simp [h]⟩
+    · exact ⟨a, by simp [h]⟩
+  · intro a b
+    change ∃ c, b = (if a = 0 ∧ b = 0 then 0 else 1) * c
+    by_cases h : a = 0 ∧ b = 0
+    · exact ⟨0, by simp [h]⟩
+    · exact ⟨b, by simp [h]⟩
+  · intro a b d hda hdb
+    change ∃ c, (if a = 0 ∧ b = 0 then 0 else 1) = d * c
+    by_cases hab : a = 0 ∧ b = 0
+    · exact ⟨0, by simp [hab]⟩
+    · have hd : d ≠ 0 := by
+        intro hd
+        rcases hda with ⟨ca, ha⟩
+        rcases hdb with ⟨cb, hb⟩
+        apply hab
+        simp [hd] at ha hb
+        exact ⟨ha, hb⟩
+      exact ⟨d⁻¹, by
+        rw [Hex.ite_eq_right hab]
+        have hdinv : d * d⁻¹ = 1 := by
+          change d * ZMod64.inv d = 1
+          exact ZMod64.mul_inv_eq_one_of_ne_zero hd
+        exact hdinv.symm⟩
+  · intro a b
+    change
+      (if a = 0 ∧ b = 0 then 0 else 1) *
+          (if (if a = 0 ∧ b = 0 then 0 else 1) = 0 then 1
+            else (if a = 0 ∧ b = 0 then 0 else 1)⁻¹) =
+        (if a = 0 ∧ b = 0 then 0 else 1)
+    by_cases h : a = 0 ∧ b = 0
+    · simp [h]
+    · simp only [h, ite_false]
+      change (1 : ZMod64 p) * (if (1 : ZMod64 p) = 0 then 1 else 1⁻¹) = 1
+      have hone : (1 : ZMod64 p) ≠ 0 := fun h =>
+        ZMod64.one_ne_zero_of_prime (ZMod64.PrimeModulus.prime (p := p)) h
+      rw [Hex.ite_eq_right hone]
+      change (1 : ZMod64 p) * ZMod64.inv 1 = 1
+      exact ZMod64.mul_inv_eq_one_of_ne_zero hone
+  · intro a b hb
+    change a * b * b⁻¹ = a
+    have hbinv : b * b⁻¹ = 1 := by
+      change b * ZMod64.inv b = 1
+      exact ZMod64.mul_inv_eq_one_of_ne_zero hb
+    rw [Lean.Grind.Semiring.mul_assoc, hbinv,
+      Lean.Grind.Semiring.mul_one]
+  · intro a
+    change decide (a ≠ 0) = true ↔ ∃ b, a * b = 1
+    rw [decide_eq_true_eq]
+    constructor
+    · intro ha
+      refine ⟨a⁻¹, ?_⟩
+      change a * ZMod64.inv a = 1
+      exact ZMod64.mul_inv_eq_one_of_ne_zero ha
+    · rintro ⟨b, hab⟩ ha
+      subst a
+      rw [Lean.Grind.Semiring.zero_mul] at hab
+      exact ZMod64.one_ne_zero_of_prime
+        (ZMod64.PrimeModulus.prime (p := p)) hab.symm
+  · intro a
+    change ∃ b, (if a = 0 then 1 else a⁻¹) * b = 1
+    by_cases ha : a = 0
+    · exact ⟨1, by simp [ha]⟩
+    · exact ⟨a, by
+        rw [Hex.ite_eq_right ha]
+        change ZMod64.inv a * a = 1
+        exact ZMod64.inv_mul_eq_one_of_ne_zero ha⟩
+  · intro a b
+    change
+      a * b * (if a * b = 0 then 1 else (a * b)⁻¹) =
+        (a * (if a = 0 then 1 else a⁻¹)) *
+          (b * (if b = 0 then 1 else b⁻¹))
+    by_cases ha : a = 0
+    · simp [ha]
+    · by_cases hb : b = 0
+      · simp [hb]
+      · have hab : a * b ≠ 0 := by
+          intro h
+          rcases ZMod64.eq_zero_or_eq_zero_of_mul_eq_zero_of_prime_modulus h with
+            h | h
+          · exact ha h
+          · exact hb h
+        have habInv : a * b * (a * b)⁻¹ = 1 := by
+          change a * b * ZMod64.inv (a * b) = 1
+          exact ZMod64.mul_inv_eq_one_of_ne_zero hab
+        have haInv : a * a⁻¹ = 1 := by
+          change a * ZMod64.inv a = 1
+          exact ZMod64.mul_inv_eq_one_of_ne_zero ha
+        have hbInv : b * b⁻¹ = 1 := by
+          change b * ZMod64.inv b = 1
+          exact ZMod64.mul_inv_eq_one_of_ne_zero hb
+        rw [Hex.ite_eq_right ha, Hex.ite_eq_right hb,
+          Hex.ite_eq_right hab, habInv, haInv, hbInv]
+        exact (Lean.Grind.Semiring.one_mul 1).symm
+  · intro a
+    change
+      (a * (if a = 0 then 1 else a⁻¹)) *
+          (if a * (if a = 0 then 1 else a⁻¹) = 0 then 1
+            else (a * (if a = 0 then 1 else a⁻¹))⁻¹) =
+        a * (if a = 0 then 1 else a⁻¹)
+    by_cases ha : a = 0
+    · simp [ha]
+    · have haInv : a * a⁻¹ = 1 := by
+        change a * ZMod64.inv a = 1
+        exact ZMod64.mul_inv_eq_one_of_ne_zero ha
+      rw [Hex.ite_eq_right ha, haInv]
+      have hone : (1 : ZMod64 p) ≠ 0 := fun h =>
+        ZMod64.one_ne_zero_of_prime (ZMod64.PrimeModulus.prime (p := p)) h
+      have honeInv : (1 : ZMod64 p) * (1 : ZMod64 p)⁻¹ = 1 := by
+        change (1 : ZMod64 p) * ZMod64.inv 1 = 1
+        exact ZMod64.mul_inv_eq_one_of_ne_zero hone
+      rw [Hex.ite_eq_right hone, honeInv]
+  · intro a ha
+    change decide (a ≠ 0) = true at ha
+    have hne : a ≠ 0 := by simpa only [decide_eq_true_eq] using ha
+    change a * (if a = 0 then 1 else a⁻¹) = 1
+    rw [Hex.ite_eq_right hne]
+    change a * ZMod64.inv a = 1
+    exact ZMod64.mul_inv_eq_one_of_ne_zero hne
 
 instance instLawfulBezoutOpsZMod64 {p : Nat} [hp : ZMod64.Bounds p]
     [ZMod64.PrimeModulus p] :
     @LawfulBezoutOps (@ZMod64 p hp) _ _ _ _ instDvdZMod64 instBezoutOpsZMod64
       instLawfulGcdOpsZMod64 := by
-  sorry
+  constructor
+  intro a b
+  change
+    let uv := ZMod64.fieldXgcd a b
+    uv.1 * a + uv.2 * b =
+      (if a = 0 ∧ b = 0 then 0 else 1) *
+        (if (if a = 0 ∧ b = 0 then 0 else 1) = 0 then 1
+          else (if a = 0 ∧ b = 0 then 0 else 1)⁻¹)
+  have one_ne : (1 : ZMod64 p) ≠ 0 := fun h =>
+    ZMod64.one_ne_zero_of_prime (ZMod64.PrimeModulus.prime (p := p)) h
+  have inv_one : (1 : ZMod64 p)⁻¹ = 1 := by
+    have h : (1 : ZMod64 p) * (1 : ZMod64 p)⁻¹ = 1 := by
+      change (1 : ZMod64 p) * ZMod64.inv 1 = 1
+      exact ZMod64.mul_inv_eq_one_of_ne_zero one_ne
+    rw [Lean.Grind.Semiring.one_mul] at h
+    exact h
+  by_cases ha : a = 0
+  · by_cases hb : b = 0
+    · simp [ZMod64.fieldXgcd, ha, hb]
+    · have hbinv : b⁻¹ * b = 1 := by
+        change ZMod64.inv b * b = 1
+        exact ZMod64.inv_mul_eq_one_of_ne_zero hb
+      simp [ZMod64.fieldXgcd, ha, hb, hbinv, inv_one]
+  · have hainv : a⁻¹ * a = 1 := by
+      change ZMod64.inv a * a = 1
+      exact ZMod64.inv_mul_eq_one_of_ne_zero ha
+    simp [ZMod64.fieldXgcd, ha, hainv, inv_one]
 
 /-! # Univariate prime-field polynomials -/
 
