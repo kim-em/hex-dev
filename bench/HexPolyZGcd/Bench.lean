@@ -255,24 +255,15 @@ def runFlintOverhead (_ : Unit) : IO Int := do
   | .error message =>
       throw <| IO.userError s!"FLINT overhead result not integer: {message}"
 
-initialize coprime8Ref : IO.Ref (Option PairInput) ← IO.mkRef none
-initialize coprime16Ref : IO.Ref (Option PairInput) ← IO.mkRef none
-initialize coprime32Ref : IO.Ref (Option PairInput) ← IO.mkRef none
 initialize coprime64Ref : IO.Ref (Option PairInput) ← IO.mkRef none
 initialize coprime128Ref : IO.Ref (Option PairInput) ← IO.mkRef none
 initialize coprime256Ref : IO.Ref (Option PairInput) ← IO.mkRef none
 initialize coprime512Ref : IO.Ref (Option PairInput) ← IO.mkRef none
 
-initialize genericCoprime8Ref : IO.Ref (Option PairInput) ← IO.mkRef none
 initialize genericCoprime16Ref : IO.Ref (Option PairInput) ← IO.mkRef none
 initialize genericCoprime32Ref : IO.Ref (Option PairInput) ← IO.mkRef none
 initialize genericCoprime64Ref : IO.Ref (Option PairInput) ← IO.mkRef none
-initialize genericCoprime128Ref : IO.Ref (Option PairInput) ← IO.mkRef none
-initialize genericCoprime256Ref : IO.Ref (Option PairInput) ← IO.mkRef none
-initialize genericCoprime512Ref : IO.Ref (Option PairInput) ← IO.mkRef none
 
-initialize dense8_16Ref : IO.Ref (Option PairInput) ← IO.mkRef none
-initialize dense8_32Ref : IO.Ref (Option PairInput) ← IO.mkRef none
 initialize dense8_64Ref : IO.Ref (Option PairInput) ← IO.mkRef none
 initialize dense8_128Ref : IO.Ref (Option PairInput) ← IO.mkRef none
 initialize dense8_256Ref : IO.Ref (Option PairInput) ← IO.mkRef none
@@ -282,11 +273,7 @@ initialize genericDense8_16Ref : IO.Ref (Option PairInput) ← IO.mkRef none
 initialize genericDense8_32Ref : IO.Ref (Option PairInput) ← IO.mkRef none
 initialize genericDense8_64Ref : IO.Ref (Option PairInput) ← IO.mkRef none
 initialize genericDense8_128Ref : IO.Ref (Option PairInput) ← IO.mkRef none
-initialize genericDense8_256Ref : IO.Ref (Option PairInput) ← IO.mkRef none
-initialize genericDense8_512Ref : IO.Ref (Option PairInput) ← IO.mkRef none
 
-initialize dense256_16Ref : IO.Ref (Option PairInput) ← IO.mkRef none
-initialize dense256_32Ref : IO.Ref (Option PairInput) ← IO.mkRef none
 initialize dense256_64Ref : IO.Ref (Option PairInput) ← IO.mkRef none
 initialize dense256_128Ref : IO.Ref (Option PairInput) ← IO.mkRef none
 initialize dense256_256Ref : IO.Ref (Option PairInput) ← IO.mkRef none
@@ -294,10 +281,6 @@ initialize dense256_512Ref : IO.Ref (Option PairInput) ← IO.mkRef none
 
 initialize genericDense256_16Ref : IO.Ref (Option PairInput) ← IO.mkRef none
 initialize genericDense256_32Ref : IO.Ref (Option PairInput) ← IO.mkRef none
-initialize genericDense256_64Ref : IO.Ref (Option PairInput) ← IO.mkRef none
-initialize genericDense256_128Ref : IO.Ref (Option PairInput) ← IO.mkRef none
-initialize genericDense256_256Ref : IO.Ref (Option PairInput) ← IO.mkRef none
-initialize genericDense256_512Ref : IO.Ref (Option PairInput) ← IO.mkRef none
 
 initialize swell512Ref : IO.Ref (Option PairInput) ← IO.mkRef none
 
@@ -309,26 +292,10 @@ initialize sqf32Ref : IO.Ref (Option ZPoly) ← IO.mkRef none
 initialize sqf64Ref : IO.Ref (Option ZPoly) ← IO.mkRef none
 initialize sqf128Ref : IO.Ref (Option ZPoly) ← IO.mkRef none
 
-def runLeanCoprime8 : Unit → IO (List Int) :=
-  runLeanFixed coprime8Ref fun _ => prepCoprimeCompare 8
-def runFlintCoprime8 : Unit → IO (List Int) :=
-  runFlintFixed coprime8Ref fun _ => prepCoprimeCompare 8
-def runLeanGenericCoprime8 : Unit → IO (List Int) :=
-  runLeanFixed genericCoprime8Ref fun _ => prepCoprime 8
-def runRationalCoprime8 : Unit → IO (List Int) :=
-  runRationalFixed genericCoprime8Ref fun _ => prepCoprime 8
-def runLeanCoprime16 : Unit → IO (List Int) :=
-  runLeanFixed coprime16Ref fun _ => prepCoprimeCompare 16
-def runFlintCoprime16 : Unit → IO (List Int) :=
-  runFlintFixed coprime16Ref fun _ => prepCoprimeCompare 16
 def runLeanGenericCoprime16 : Unit → IO (List Int) :=
   runLeanFixed genericCoprime16Ref fun _ => prepCoprime 16
 def runRationalCoprime16 : Unit → IO (List Int) :=
   runRationalFixed genericCoprime16Ref fun _ => prepCoprime 16
-def runLeanCoprime32 : Unit → IO (List Int) :=
-  runLeanFixed coprime32Ref fun _ => prepCoprimeCompare 32
-def runFlintCoprime32 : Unit → IO (List Int) :=
-  runFlintFixed coprime32Ref fun _ => prepCoprimeCompare 32
 def runLeanGenericCoprime32 : Unit → IO (List Int) :=
   runLeanFixed genericCoprime32Ref fun _ => prepCoprime 32
 def runRationalCoprime32 : Unit → IO (List Int) :=
@@ -345,39 +312,19 @@ def runLeanCoprime128 : Unit → IO (List Int) :=
   runLeanFixed coprime128Ref fun _ => prepCoprimeCompare 128
 def runFlintCoprime128 : Unit → IO (List Int) :=
   runFlintFixed coprime128Ref fun _ => prepCoprimeCompare 128
-def runLeanGenericCoprime128 : Unit → IO (List Int) :=
-  runLeanFixed genericCoprime128Ref fun _ => prepCoprime 128
-def runRationalCoprime128 : Unit → IO (List Int) :=
-  runRationalFixed genericCoprime128Ref fun _ => prepCoprime 128
 def runLeanCoprime256 : Unit → IO (List Int) :=
   runLeanFixed coprime256Ref fun _ => prepCoprimeCompare 256
 def runFlintCoprime256 : Unit → IO (List Int) :=
   runFlintFixed coprime256Ref fun _ => prepCoprimeCompare 256
-def runLeanGenericCoprime256 : Unit → IO (List Int) :=
-  runLeanFixed genericCoprime256Ref fun _ => prepCoprime 256
-def runRationalCoprime256 : Unit → IO (List Int) :=
-  runRationalFixed genericCoprime256Ref fun _ => prepCoprime 256
 def runLeanCoprime512 : Unit → IO (List Int) :=
   runLeanFixed coprime512Ref fun _ => prepCoprimeCompare 512
 def runFlintCoprime512 : Unit → IO (List Int) :=
   runFlintFixed coprime512Ref fun _ => prepCoprimeCompare 512
-def runLeanGenericCoprime512 : Unit → IO (List Int) :=
-  runLeanFixed genericCoprime512Ref fun _ => prepCoprime 512
-def runRationalCoprime512 : Unit → IO (List Int) :=
-  runRationalFixed genericCoprime512Ref fun _ => prepCoprime 512
 
-def runLeanDense8_16 : Unit → IO (List Int) :=
-  runLeanFixed dense8_16Ref fun _ => prepDense8Compare 16
-def runFlintDense8_16 : Unit → IO (List Int) :=
-  runFlintFixed dense8_16Ref fun _ => prepDense8Compare 16
 def runLeanGenericDense8_16 : Unit → IO (List Int) :=
   runLeanFixed genericDense8_16Ref fun _ => prepDense8 16
 def runRationalDense8_16 : Unit → IO (List Int) :=
   runRationalFixed genericDense8_16Ref fun _ => prepDense8 16
-def runLeanDense8_32 : Unit → IO (List Int) :=
-  runLeanFixed dense8_32Ref fun _ => prepDense8Compare 32
-def runFlintDense8_32 : Unit → IO (List Int) :=
-  runFlintFixed dense8_32Ref fun _ => prepDense8Compare 32
 def runLeanGenericDense8_32 : Unit → IO (List Int) :=
   runLeanFixed genericDense8_32Ref fun _ => prepDense8 32
 def runRationalDense8_32 : Unit → IO (List Int) :=
@@ -402,31 +349,15 @@ def runLeanDense8_256 : Unit → IO (List Int) :=
   runLeanFixed dense8_256Ref fun _ => prepDense8Compare 256
 def runFlintDense8_256 : Unit → IO (List Int) :=
   runFlintFixed dense8_256Ref fun _ => prepDense8Compare 256
-def runLeanGenericDense8_256 : Unit → IO (List Int) :=
-  runLeanFixed genericDense8_256Ref fun _ => prepDense8 256
-def runRationalDense8_256 : Unit → IO (List Int) :=
-  runRationalFixed genericDense8_256Ref fun _ => prepDense8 256
 def runLeanDense8_512 : Unit → IO (List Int) :=
   runLeanFixed dense8_512Ref fun _ => prepDense8Compare 512
 def runFlintDense8_512 : Unit → IO (List Int) :=
   runFlintFixed dense8_512Ref fun _ => prepDense8Compare 512
-def runLeanGenericDense8_512 : Unit → IO (List Int) :=
-  runLeanFixed genericDense8_512Ref fun _ => prepDense8 512
-def runRationalDense8_512 : Unit → IO (List Int) :=
-  runRationalFixed genericDense8_512Ref fun _ => prepDense8 512
 
-def runLeanDense256_16 : Unit → IO (List Int) :=
-  runLeanFixed dense256_16Ref fun _ => prepDense256Compare 16
-def runFlintDense256_16 : Unit → IO (List Int) :=
-  runFlintFixed dense256_16Ref fun _ => prepDense256Compare 16
 def runLeanGenericDense256_16 : Unit → IO (List Int) :=
   runLeanFixed genericDense256_16Ref fun _ => prepDense256 16
 def runRationalDense256_16 : Unit → IO (List Int) :=
   runRationalFixed genericDense256_16Ref fun _ => prepDense256 16
-def runLeanDense256_32 : Unit → IO (List Int) :=
-  runLeanFixed dense256_32Ref fun _ => prepDense256Compare 32
-def runFlintDense256_32 : Unit → IO (List Int) :=
-  runFlintFixed dense256_32Ref fun _ => prepDense256Compare 32
 def runLeanGenericDense256_32 : Unit → IO (List Int) :=
   runLeanFixed genericDense256_32Ref fun _ => prepDense256 32
 def runRationalDense256_32 : Unit → IO (List Int) :=
@@ -435,34 +366,18 @@ def runLeanDense256_64 : Unit → IO (List Int) :=
   runLeanFixed dense256_64Ref fun _ => prepDense256Compare 64
 def runFlintDense256_64 : Unit → IO (List Int) :=
   runFlintFixed dense256_64Ref fun _ => prepDense256Compare 64
-def runLeanGenericDense256_64 : Unit → IO (List Int) :=
-  runLeanFixed genericDense256_64Ref fun _ => prepDense256 64
-def runRationalDense256_64 : Unit → IO (List Int) :=
-  runRationalFixed genericDense256_64Ref fun _ => prepDense256 64
 def runLeanDense256_128 : Unit → IO (List Int) :=
   runLeanFixed dense256_128Ref fun _ => prepDense256Compare 128
 def runFlintDense256_128 : Unit → IO (List Int) :=
   runFlintFixed dense256_128Ref fun _ => prepDense256Compare 128
-def runLeanGenericDense256_128 : Unit → IO (List Int) :=
-  runLeanFixed genericDense256_128Ref fun _ => prepDense256 128
-def runRationalDense256_128 : Unit → IO (List Int) :=
-  runRationalFixed genericDense256_128Ref fun _ => prepDense256 128
 def runLeanDense256_256 : Unit → IO (List Int) :=
   runLeanFixed dense256_256Ref fun _ => prepDense256Compare 256
 def runFlintDense256_256 : Unit → IO (List Int) :=
   runFlintFixed dense256_256Ref fun _ => prepDense256Compare 256
-def runLeanGenericDense256_256 : Unit → IO (List Int) :=
-  runLeanFixed genericDense256_256Ref fun _ => prepDense256 256
-def runRationalDense256_256 : Unit → IO (List Int) :=
-  runRationalFixed genericDense256_256Ref fun _ => prepDense256 256
 def runLeanDense256_512 : Unit → IO (List Int) :=
   runLeanFixed dense256_512Ref fun _ => prepDense256Compare 512
 def runFlintDense256_512 : Unit → IO (List Int) :=
   runFlintFixed dense256_512Ref fun _ => prepDense256Compare 512
-def runLeanGenericDense256_512 : Unit → IO (List Int) :=
-  runLeanFixed genericDense256_512Ref fun _ => prepDense256 512
-def runRationalDense256_512 : Unit → IO (List Int) :=
-  runRationalFixed genericDense256_512Ref fun _ => prepDense256 512
 
 def runLeanSwell512 : Unit → IO (List Int) :=
   runLeanFixed swell512Ref fun _ => prepSwell 512
@@ -602,16 +517,8 @@ def flintCompareConfig : LeanBench.FixedBenchmarkConfig :=
 
 setup_fixed_benchmark runFlintOverhead where flintCompareConfig
 
-setup_fixed_benchmark runLeanCoprime8 where leanCompareConfig
-setup_fixed_benchmark runFlintCoprime8 where flintCompareConfig
-setup_fixed_benchmark runLeanGenericCoprime8 where leanCompareConfig
-setup_fixed_benchmark runRationalCoprime8 where leanCompareConfig
-setup_fixed_benchmark runLeanCoprime16 where leanCompareConfig
-setup_fixed_benchmark runFlintCoprime16 where flintCompareConfig
 setup_fixed_benchmark runLeanGenericCoprime16 where leanCompareConfig
 setup_fixed_benchmark runRationalCoprime16 where leanCompareConfig
-setup_fixed_benchmark runLeanCoprime32 where leanCompareConfig
-setup_fixed_benchmark runFlintCoprime32 where flintCompareConfig
 setup_fixed_benchmark runLeanGenericCoprime32 where leanCompareConfig
 setup_fixed_benchmark runRationalCoprime32 where leanCompareConfig
 setup_fixed_benchmark runLeanCoprime64 where leanCompareConfig
@@ -620,23 +527,13 @@ setup_fixed_benchmark runLeanGenericCoprime64 where leanCompareConfig
 setup_fixed_benchmark runRationalCoprime64 where leanCompareConfig
 setup_fixed_benchmark runLeanCoprime128 where leanCompareConfig
 setup_fixed_benchmark runFlintCoprime128 where flintCompareConfig
-setup_fixed_benchmark runLeanGenericCoprime128 where leanCompareConfig
-setup_fixed_benchmark runRationalCoprime128 where leanCompareConfig
 setup_fixed_benchmark runLeanCoprime256 where leanCompareConfig
 setup_fixed_benchmark runFlintCoprime256 where flintCompareConfig
-setup_fixed_benchmark runLeanGenericCoprime256 where leanCompareConfig
-setup_fixed_benchmark runRationalCoprime256 where leanCompareConfig
 setup_fixed_benchmark runLeanCoprime512 where leanCompareConfig
 setup_fixed_benchmark runFlintCoprime512 where flintCompareConfig
-setup_fixed_benchmark runLeanGenericCoprime512 where leanCompareConfig
-setup_fixed_benchmark runRationalCoprime512 where leanCompareConfig
 
-setup_fixed_benchmark runLeanDense8_16 where leanCompareConfig
-setup_fixed_benchmark runFlintDense8_16 where flintCompareConfig
 setup_fixed_benchmark runLeanGenericDense8_16 where leanCompareConfig
 setup_fixed_benchmark runRationalDense8_16 where leanCompareConfig
-setup_fixed_benchmark runLeanDense8_32 where leanCompareConfig
-setup_fixed_benchmark runFlintDense8_32 where flintCompareConfig
 setup_fixed_benchmark runLeanGenericDense8_32 where leanCompareConfig
 setup_fixed_benchmark runRationalDense8_32 where leanCompareConfig
 setup_fixed_benchmark runLeanDense8_64 where leanCompareConfig
@@ -649,37 +546,21 @@ setup_fixed_benchmark runLeanGenericDense8_128 where leanCompareConfig
 setup_fixed_benchmark runRationalDense8_128 where leanCompareConfig
 setup_fixed_benchmark runLeanDense8_256 where leanCompareConfig
 setup_fixed_benchmark runFlintDense8_256 where flintCompareConfig
-setup_fixed_benchmark runLeanGenericDense8_256 where leanCompareConfig
-setup_fixed_benchmark runRationalDense8_256 where leanCompareConfig
 setup_fixed_benchmark runLeanDense8_512 where leanCompareConfig
 setup_fixed_benchmark runFlintDense8_512 where flintCompareConfig
-setup_fixed_benchmark runLeanGenericDense8_512 where leanCompareConfig
-setup_fixed_benchmark runRationalDense8_512 where leanCompareConfig
 
-setup_fixed_benchmark runLeanDense256_16 where leanCompareConfig
-setup_fixed_benchmark runFlintDense256_16 where flintCompareConfig
 setup_fixed_benchmark runLeanGenericDense256_16 where leanCompareConfig
 setup_fixed_benchmark runRationalDense256_16 where leanCompareConfig
-setup_fixed_benchmark runLeanDense256_32 where leanCompareConfig
-setup_fixed_benchmark runFlintDense256_32 where flintCompareConfig
 setup_fixed_benchmark runLeanGenericDense256_32 where leanCompareConfig
 setup_fixed_benchmark runRationalDense256_32 where leanCompareConfig
 setup_fixed_benchmark runLeanDense256_64 where leanCompareConfig
 setup_fixed_benchmark runFlintDense256_64 where flintCompareConfig
-setup_fixed_benchmark runLeanGenericDense256_64 where leanCompareConfig
-setup_fixed_benchmark runRationalDense256_64 where leanCompareConfig
 setup_fixed_benchmark runLeanDense256_128 where leanCompareConfig
 setup_fixed_benchmark runFlintDense256_128 where flintCompareConfig
-setup_fixed_benchmark runLeanGenericDense256_128 where leanCompareConfig
-setup_fixed_benchmark runRationalDense256_128 where leanCompareConfig
 setup_fixed_benchmark runLeanDense256_256 where leanCompareConfig
 setup_fixed_benchmark runFlintDense256_256 where flintCompareConfig
-setup_fixed_benchmark runLeanGenericDense256_256 where leanCompareConfig
-setup_fixed_benchmark runRationalDense256_256 where leanCompareConfig
 setup_fixed_benchmark runLeanDense256_512 where leanCompareConfig
 setup_fixed_benchmark runFlintDense256_512 where flintCompareConfig
-setup_fixed_benchmark runLeanGenericDense256_512 where leanCompareConfig
-setup_fixed_benchmark runRationalDense256_512 where leanCompareConfig
 
 setup_fixed_benchmark runLeanSwell512 where leanCompareConfig
 setup_fixed_benchmark runRationalSwell512 where leanCompareConfig
