@@ -90,13 +90,13 @@ private theorem checkCertAtFactor_of_checkFactorCerts
   exact hall _ hmem
 
 /--
-The Mathlib transport of an executable monic factor recorded in a
+The Mathlib transport of an executable factor recorded in a
 `PrimeFactorData` block has natural degree equal to the recorded factor
-degree. Uses the executable `degree?` slot, the recorded monicity, and the
-Mathlib basisSize identification.
+degree. This follows directly from the executable `degree?` slot and the
+Mathlib basis-size identification.
 -/
 private theorem natDegree_toMathlibPolynomial_factorPolys_eq
-    (primeData : Hex.PrimeFactorData) [Nontrivial (ZMod primeData.p)]
+    (primeData : Hex.PrimeFactorData)
     (hcheck : primeData.checkFactorCerts = true)
     (i : Nat) (hi_polys : i < primeData.factorPolys.size)
     (hi_deg : i < primeData.factorDegrees.size)

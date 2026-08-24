@@ -41,11 +41,12 @@ export HexPolyFpMathlib (fpPolyToPolynomial polynomialToFpPoly
   natDegree_toMathlibPolynomial leadingCoeff_toMathlibPolynomial
   toMathlibPolynomial_monic toMathlibPolynomial_derivative toMathlibPolynomial_mul
   toMathlibPolynomial_add toMathlibPolynomial_sub toMathlibPolynomial_neg
+  toMathlibPolynomial_zero toMathlibPolynomial_one toMathlibPolynomial_pow
   toMathlibPolynomial_C toMathlibPolynomial_monomial
   toMathlibPolynomial_monomial_one toMathlibPolynomial_X toMathlibPolynomial_dvd
   toMathlibPolynomial_dvd_iff eval₂_toMathlibPolynomial
   polynomialToFpPoly_zero polynomialToFpPoly_one polynomialToFpPoly_C
-  polynomialToFpPoly_neg polynomialToFpPoly_sub polynomialToFpPoly_add
+  polynomialToFpPoly_neg polynomialToFpPoly_sub polynomialToFpPoly_add polynomialToFpPoly_mul
   polynomialToFpPoly_monomial toMathlibPolynomial_compose primeModulus_of_fact)
 
 variable {p : Nat} [Hex.ZMod64.Bounds p]

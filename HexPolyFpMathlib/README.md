@@ -8,8 +8,9 @@ The Mathlib correspondence layer for
 [`hex-poly-fp`](https://github.com/leanprover/hex-poly-fp). It relates the
 executable prime-field polynomials `Hex.FpPoly p` to Mathlib's
 `Polynomial (ZMod p)` through a ring equivalence, and transports
-coefficients, degree, leading coefficients, arithmetic, evaluation,
-composition, and divisibility in both directions. It builds on
+coefficients and ring operations in both directions. It also identifies
+degree, leading coefficients, Mathlib's coefficient-sum evaluation,
+composition, and divisibility across the equivalence. It builds on
 [`hex-poly-mathlib`](https://github.com/leanprover/hex-poly-mathlib) and
 [`hex-mod-arith-mathlib`](https://github.com/leanprover/hex-mod-arith-mathlib).
 
@@ -40,10 +41,10 @@ polynomials and Mathlib's:
 - Coefficient transport in both directions, plus monicity, natural degree,
   and leading-coefficient correspondence.
 - Forward transport for arithmetic, derivatives, constants, `X`, general
-  monomials, evaluation, and composition.
+  monomials, coefficient-sum evaluation, and composition.
 - Inverse transport for zero, one, constants, addition, subtraction,
-  negation, and monomials, together with preservation and reflection of
-  divisibility.
+  negation, multiplication, and monomials, together with preservation and
+  reflection of divisibility.
 - A `CommRing (Hex.FpPoly p)` instance whose operations are the executable
   ones, proved from the ring laws `HexPolyFp` establishes.
 

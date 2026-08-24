@@ -14,9 +14,9 @@ Mathlib's own polynomial type.
   lemmas; `coeff_polynomialToFpPoly` supplies the inverse coefficient rule.
 - Transport lemmas naming the forward map for the operations a caller reaches
   for directly rather than through a `RingEquiv` composition: `derivative`,
-  `mul`, `add`, `sub`, `neg`, `C`, general monomials, `X`, evaluation, and
-  composition. The inverse family covers zero, one, constants, negation,
-  subtraction, addition, and monomials.
+  `mul`, `add`, `sub`, `neg`, `C`, general monomials, `X`, coefficient-sum
+  evaluation, and composition. The inverse family covers zero, one, constants,
+  negation, subtraction, addition, multiplication, and monomials.
 - `toMathlibPolynomial_dvd_iff`, which both preserves executable divisibility
   and reflects a Mathlib divisibility witness back to the executable
   representation.
@@ -132,7 +132,10 @@ equivalence, not division or gcd. So does `commRing`, whose `sub` and `neg`
 fields are pinned to the executable `DensePoly` operations. The relevant
 multiplication is the generic schoolbook convolution; hex-poly-fp's packed
 `mulPacked` is an optional value-equal kernel, not the registered
-implementation of `*`.
+implementation of `*`. Unreduced Horner composition is likewise hex-poly's
+`DensePoly.compose`; this layer only proves its representation correspondence.
+The `eval₂` coefficient-sum formula is proof-side normalization and introduces
+no executable kernel to benchmark.
 
 **hex-poly-fp** owns the prime-field surface above it: `linearPow`, and the
 Frobenius, modular-composition, quotient-ring, square-free and monic-gcd

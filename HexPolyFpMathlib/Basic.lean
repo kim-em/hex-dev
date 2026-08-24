@@ -282,16 +282,14 @@ theorem toMathlibPolynomial_monic (f : Hex.FpPoly p) :
     exact HexModArithMathlib.ZMod64.toZMod_one
 
 /-- The executable degree transports to Mathlib's `natDegree`, with the zero
-polynomial mapping to degree `0`. -/
+polynomial mapping to degree `0`. No nontriviality hypothesis is needed: in the
+trivial ring every transported polynomial is zero and every executable
+coefficient is zero as well. -/
 @[simp, grind =]
 theorem natDegree_toMathlibPolynomial (f : Hex.FpPoly p) :
     (toMathlibPolynomial f).natDegree = f.degree?.getD 0 := by
   by_cases hsize : f.size = 0
-  · have hf_zero : f = 0 := by
-      apply Hex.DensePoly.ext_coeff
-      intro n
-      rw [Hex.DensePoly.coeff_zero]
-      exact Hex.DensePoly.coeff_eq_zero_of_size_le f (by omega)
+  · have hf_zero : f = 0 := (Hex.DensePoly.size_eq_zero_iff f).mp hsize
     rw [hf_zero]
     change (toMathlibPolynomial (0 : Hex.FpPoly p)).natDegree = 0
     have hzero : toMathlibPolynomial (0 : Hex.FpPoly p) = 0 := by
@@ -328,11 +326,7 @@ theorem leadingCoeff_toMathlibPolynomial (f : Hex.FpPoly p) :
   rw [Polynomial.leadingCoeff, natDegree_toMathlibPolynomial,
     coeff_toMathlibPolynomial]
   by_cases hsize : f.size = 0
-  · have hf_zero : f = 0 := by
-      apply Hex.DensePoly.ext_coeff
-      intro n
-      rw [Hex.DensePoly.coeff_zero]
-      exact Hex.DensePoly.coeff_eq_zero_of_size_le f (by omega)
+  · have hf_zero : f = 0 := (Hex.DensePoly.size_eq_zero_iff f).mp hsize
     rw [hf_zero, Hex.DensePoly.leadingCoeff_zero, Hex.DensePoly.coeff_zero]
   · have hpos : 0 < f.size := Nat.pos_of_ne_zero hsize
     rw [Hex.DensePoly.degree?_eq_some_of_pos_size f hpos, Option.getD_some,
@@ -417,6 +411,7 @@ theorem toMathlibPolynomial_monomial (m : Nat) (c : Hex.ZMod64 p) :
     exact HexModArithMathlib.ZMod64.toZMod_zero
 
 /-- The monic monomial `X^m` transports to `X^m` over `ZMod p`. -/
+@[simp, grind =]
 theorem toMathlibPolynomial_monomial_one (m : Nat) :
     toMathlibPolynomial (Hex.DensePoly.monomial m (1 : Hex.ZMod64 p)) =
       (Polynomial.X : Polynomial (ZMod p)) ^ m := by
@@ -505,6 +500,24 @@ instance commRing : CommRing (Hex.FpPoly p) :=
     neg := fun a => Hex.DensePoly.neg a
     sub_eq_add_neg := Hex.FpPoly.sub_eq_add_neg }
 
+/-- The executable zero polynomial transports to Mathlib's zero polynomial. -/
+@[simp, grind =]
+theorem toMathlibPolynomial_zero :
+    toMathlibPolynomial (0 : Hex.FpPoly p) = 0 :=
+  map_zero fpPolyEquiv
+
+/-- The executable unit polynomial transports to Mathlib's unit polynomial. -/
+@[simp, grind =]
+theorem toMathlibPolynomial_one :
+    toMathlibPolynomial (1 : Hex.FpPoly p) = 1 :=
+  map_one fpPolyEquiv
+
+/-- Powers commute with the finite-field polynomial transport. -/
+@[simp, grind =]
+theorem toMathlibPolynomial_pow (f : Hex.FpPoly p) (n : Nat) :
+    toMathlibPolynomial (f ^ n) = toMathlibPolynomial f ^ n :=
+  map_pow fpPolyEquiv f n
+
 /-! # Inverse transport and composition
 
 The executable polynomial ring instance makes the standard `RingEquiv.symm`
@@ -564,6 +577,14 @@ theorem polynomialToFpPoly_add (f g : Polynomial (ZMod p)) :
       polynomialToFpPoly f + polynomialToFpPoly g := by
   change fpPolyEquiv.symm (f + g) = fpPolyEquiv.symm f + fpPolyEquiv.symm g
   exact map_add fpPolyEquiv.symm f g
+
+/-- The inverse transport commutes with polynomial multiplication. -/
+@[simp, grind =]
+theorem polynomialToFpPoly_mul (f g : Polynomial (ZMod p)) :
+    polynomialToFpPoly (f * g) =
+      polynomialToFpPoly f * polynomialToFpPoly g := by
+  change fpPolyEquiv.symm (f * g) = fpPolyEquiv.symm f * fpPolyEquiv.symm g
+  exact map_mul fpPolyEquiv.symm f g
 
 /-- The inverse transport sends a Mathlib monomial to the corresponding
 executable monomial. -/

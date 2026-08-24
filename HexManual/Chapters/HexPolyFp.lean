@@ -326,14 +326,14 @@ without unfolding either representation.
 
 {docstring HexPolyFpMathlib.toMathlibPolynomial_monic}
 
-{docstring HexPolyFpMathlib.natDegree_toMathlibPolynomial}
-
-{docstring HexPolyFpMathlib.leadingCoeff_toMathlibPolynomial}
-
 Monicity is the hypothesis the executable Euclidean operations carry, so
 transporting it is what lets a Mathlib-side argument apply
 `Polynomial.Monic` lemmas to a polynomial that came out of
 {name}`Hex.FpPoly.modByMonic` or out of the square-free decomposition.
+
+{docstring HexPolyFpMathlib.natDegree_toMathlibPolynomial}
+
+{docstring HexPolyFpMathlib.leadingCoeff_toMathlibPolynomial}
 
 ## The transport family
 %%%
@@ -371,9 +371,10 @@ rewritten all the way down to `X` and constants.
 
 {docstring HexPolyFpMathlib.toMathlibPolynomial_monomial_one}
 
-Evaluation and Horner composition have direct correspondence theorems,
-so consumers can move a computation to Mathlib without re-running a
-polynomial induction.
+The `eval₂` theorem exposes Mathlib evaluation as the finite coefficient sum
+represented by the executable polynomial. Horner composition has a direct
+operation-correspondence theorem, so consumers need not repeat its polynomial
+induction.
 
 {docstring HexPolyFpMathlib.eval₂_toMathlibPolynomial}
 
@@ -400,13 +401,15 @@ forward coefficient proof.
 
 {docstring HexPolyFpMathlib.polynomialToFpPoly_add}
 
+{docstring HexPolyFpMathlib.polynomialToFpPoly_mul}
+
 {docstring HexPolyFpMathlib.polynomialToFpPoly_monomial}
 
-The correspondence layer stops at representation-level facts. A
-statement mentioning Berlekamp's basis size or Rabin's test, even when
-its conclusion is about
-{name}`HexPolyFpMathlib.toMathlibPolynomial`: that is a fact about a
-factoring algorithm rather than about the representation, and it lives in
+The correspondence layer stops at representation-level facts. A statement
+mentioning Berlekamp's basis size or Rabin's test does not belong here even
+when its conclusion is about
+{name}`HexPolyFpMathlib.toMathlibPolynomial`: that is a fact about a factoring
+algorithm rather than about the representation, and it lives in
 `HexBerlekampMathlib`.
 
 ## Mathlib algebraic structure
