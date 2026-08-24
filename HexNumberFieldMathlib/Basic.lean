@@ -372,13 +372,9 @@ theorem AlgebraicNumber.ofNormalized?_toComplex
     have haroot : arep.root = a.rep.root := by
       cases hp
       rfl
-    have hpne : p ≠ 0 := by
-      intro hp0
-      rw [hp0] at pos_degree
-      simp at pos_degree
     have hroot :=
-      (HexRootsMathlib.RefinedIsolation.intersects_iff_root_eq_of_simple
-        squarefree hpne arep rep).mp hinter
+      (HexRootsMathlib.RefinedIsolation.intersects_iff_root_eq
+        arep rep).mp hinter
     change a.rep.root = rep.root
     rw [← haroot]
     exact hroot

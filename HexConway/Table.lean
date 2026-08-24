@@ -4,9 +4,13 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexBerlekamp.RabinSoundness
-import HexGFqRing.PolynomialQuotient
-import HexConway.Rebuild
+module
+
+public import HexBerlekamp.RabinSoundness
+public import HexGFqRing.PolynomialQuotient
+public meta import HexConway.Rebuild
+
+public section
 
 /-!
 Tier 1 Conway-polynomial table and dispatcher: the imported coefficient
@@ -39,6 +43,7 @@ instance boundsThirteen : ZMod64.Bounds 13 := ⟨by decide, by decide⟩
 -- rewrites it from the committed Lübeck cache:
 -- rebuild_luebeckConwayPolynomial? scope [2:8, 3:6, 5:6, 7:6, 11:6, 13:6] from "scripts/oracle/luebeck_conway_cache.json"
 /-- Committed Lübeck Conway-table coefficients, stored ascending by degree. -/
+@[expose]
 def luebeckConwayCoeffs? : Nat → Nat → Option (List Nat)
   | 2, 1 => some [1, 1]
   | 2, 2 => some [1, 1, 1]
@@ -81,6 +86,7 @@ def luebeckConwayCoeffs? : Nat → Nat → Option (List Nat)
   | _, _ => none
 
 /-- Build an `FpPoly p` from ascending natural-number coefficients. -/
+@[expose]
 def luebeckConwayPolynomialOfCoeffs
     (p : Nat) [ZMod64.Bounds p] (coeffs : List Nat) : FpPoly p :=
   FpPoly.ofCoeffs (coeffs.toArray.map (fun n => ZMod64.ofNat p n))
@@ -99,6 +105,7 @@ Defined directly as a record literal (rather than via
 `luebeckConwayPolynomialOfCoeffs`) so that `Monic` reduces to `rfl`
 and `degree` reduces to `decide`; the Bench file uses the same idiom
 for the higher-degree entries. -/
+@[expose]
 def luebeckConwayPolynomial_2_1 : FpPoly 2 :=
   { coeffs := #[(1 : ZMod64 2), 1]
     normalized := by
@@ -109,6 +116,7 @@ def luebeckConwayPolynomial_2_1 : FpPoly 2 :=
 
 This is only the imported-table surface: unsupported pairs return `none`
 rather than triggering Tier 2 compatibility checks or Tier 3 search. -/
+@[expose]
 def luebeckConwayPolynomial? (p n : Nat) [ZMod64.Bounds p] : Option (FpPoly p) :=
   (luebeckConwayCoeffs? p n).map (luebeckConwayPolynomialOfCoeffs p)
 
@@ -237,6 +245,7 @@ private theorem cert_2_1_linear_check :
       cert_2_1_linear_check)
 
 /-- The committed `C(2, 2)` Luebeck entry, stored ascending by degree. -/
+@[expose]
 def luebeckConwayPolynomial_2_2 : FpPoly 2 :=
   { coeffs := #[(1 : ZMod64 2), 1, 1]
     normalized := by
@@ -273,6 +282,7 @@ rewriting the table lookup to the direct `luebeckConwayPolynomial_2_2` form. -/
   | _ + 3 => rfl
 
 /-- The committed `C(2, 3)` Luebeck entry, stored ascending by degree. -/
+@[expose]
 def luebeckConwayPolynomial_2_3 : FpPoly 2 :=
   { coeffs := #[(1 : ZMod64 2), 1, 0, 1]
     normalized := by
@@ -310,6 +320,7 @@ rewriting the table lookup to the direct `luebeckConwayPolynomial_2_3` form. -/
   | _ + 4 => rfl
 
 /-- The committed `C(2, 4)` Luebeck entry, stored ascending by degree. -/
+@[expose]
 def luebeckConwayPolynomial_2_4 : FpPoly 2 :=
   { coeffs := #[(1 : ZMod64 2), 1, 0, 0, 1]
     normalized := by
@@ -348,6 +359,7 @@ rewriting the table lookup to the direct `luebeckConwayPolynomial_2_4` form. -/
   | _ + 5 => rfl
 
 /-- The committed `C(2, 5)` Luebeck entry, stored ascending by degree. -/
+@[expose]
 def luebeckConwayPolynomial_2_5 : FpPoly 2 :=
   { coeffs := #[(1 : ZMod64 2), 0, 1, 0, 0, 1]
     normalized := by
@@ -387,6 +399,7 @@ rewriting the table lookup to the direct `luebeckConwayPolynomial_2_5` form. -/
   | _ + 6 => rfl
 
 /-- The committed `C(2, 6)` Luebeck entry, stored ascending by degree. -/
+@[expose]
 def luebeckConwayPolynomial_2_6 : FpPoly 2 :=
   { coeffs := #[(1 : ZMod64 2), 1, 0, 1, 1, 0, 1]
     normalized := by
@@ -427,6 +440,7 @@ rewriting the table lookup to the direct `luebeckConwayPolynomial_2_6` form. -/
   | _ + 7 => rfl
 
 /-- The committed `C(3, 1)` Luebeck entry, stored ascending by degree. -/
+@[expose]
 def luebeckConwayPolynomial_3_1 : FpPoly 3 :=
   { coeffs := #[(1 : ZMod64 3), 1]
     normalized := by
@@ -457,6 +471,7 @@ rewriting the table lookup to the direct `luebeckConwayPolynomial_3_1` form. -/
   | _ + 2 => rfl
 
 /-- The committed `C(3, 2)` Luebeck entry, stored ascending by degree. -/
+@[expose]
 def luebeckConwayPolynomial_3_2 : FpPoly 3 :=
   { coeffs := #[(2 : ZMod64 3), 2, 1]
     normalized := by
@@ -488,6 +503,7 @@ rewriting the table lookup to the direct `luebeckConwayPolynomial_3_2` form. -/
   | _ + 3 => rfl
 
 /-- The committed `C(3, 3)` Luebeck entry, stored ascending by degree. -/
+@[expose]
 def luebeckConwayPolynomial_3_3 : FpPoly 3 :=
   { coeffs := #[(1 : ZMod64 3), 2, 0, 1]
     normalized := by
@@ -520,6 +536,7 @@ rewriting the table lookup to the direct `luebeckConwayPolynomial_3_3` form. -/
   | _ + 4 => rfl
 
 /-- The committed `C(3, 4)` Luebeck entry, stored ascending by degree. -/
+@[expose]
 def luebeckConwayPolynomial_3_4 : FpPoly 3 :=
   { coeffs := #[(2 : ZMod64 3), 0, 0, 2, 1]
     normalized := by
@@ -553,6 +570,7 @@ rewriting the table lookup to the direct `luebeckConwayPolynomial_3_4` form. -/
   | _ + 5 => rfl
 
 /-- The committed `C(3, 5)` Luebeck entry, stored ascending by degree. -/
+@[expose]
 def luebeckConwayPolynomial_3_5 : FpPoly 3 :=
   { coeffs := #[(1 : ZMod64 3), 2, 0, 0, 0, 1]
     normalized := by
@@ -587,6 +605,7 @@ rewriting the table lookup to the direct `luebeckConwayPolynomial_3_5` form. -/
   | _ + 6 => rfl
 
 /-- The committed `C(3, 6)` Luebeck entry, stored ascending by degree. -/
+@[expose]
 def luebeckConwayPolynomial_3_6 : FpPoly 3 :=
   { coeffs := #[(2 : ZMod64 3), 2, 1, 0, 2, 0, 1]
     normalized := by
@@ -622,6 +641,7 @@ rewriting the table lookup to the direct `luebeckConwayPolynomial_3_6` form. -/
   | _ + 7 => rfl
 
 /-- The committed `C(5, 1)` Luebeck entry, stored ascending by degree. -/
+@[expose]
 def luebeckConwayPolynomial_5_1 : FpPoly 5 :=
   { coeffs := #[(3 : ZMod64 5), 1]
     normalized := by
@@ -652,6 +672,7 @@ rewriting the table lookup to the direct `luebeckConwayPolynomial_5_1` form. -/
   | _ + 2 => rfl
 
 /-- The committed `C(5, 2)` Luebeck entry, stored ascending by degree. -/
+@[expose]
 def luebeckConwayPolynomial_5_2 : FpPoly 5 :=
   { coeffs := #[(2 : ZMod64 5), 4, 1]
     normalized := by
@@ -683,6 +704,7 @@ rewriting the table lookup to the direct `luebeckConwayPolynomial_5_2` form. -/
   | _ + 3 => rfl
 
 /-- The committed `C(5, 3)` Luebeck entry, stored ascending by degree. -/
+@[expose]
 def luebeckConwayPolynomial_5_3 : FpPoly 5 :=
   { coeffs := #[(3 : ZMod64 5), 3, 0, 1]
     normalized := by
@@ -715,6 +737,7 @@ rewriting the table lookup to the direct `luebeckConwayPolynomial_5_3` form. -/
   | _ + 4 => rfl
 
 /-- The committed `C(5, 4)` Luebeck entry, stored ascending by degree. -/
+@[expose]
 def luebeckConwayPolynomial_5_4 : FpPoly 5 :=
   { coeffs := #[(2 : ZMod64 5), 4, 4, 0, 1]
     normalized := by
@@ -748,6 +771,7 @@ rewriting the table lookup to the direct `luebeckConwayPolynomial_5_4` form. -/
   | _ + 5 => rfl
 
 /-- The committed `C(5, 5)` Luebeck entry, stored ascending by degree. -/
+@[expose]
 def luebeckConwayPolynomial_5_5 : FpPoly 5 :=
   { coeffs := #[(3 : ZMod64 5), 4, 0, 0, 0, 1]
     normalized := by
@@ -782,6 +806,7 @@ rewriting the table lookup to the direct `luebeckConwayPolynomial_5_5` form. -/
   | _ + 6 => rfl
 
 /-- The committed `C(5, 6)` Luebeck entry, stored ascending by degree. -/
+@[expose]
 def luebeckConwayPolynomial_5_6 : FpPoly 5 :=
   { coeffs := #[(2 : ZMod64 5), 0, 1, 4, 1, 0, 1]
     normalized := by
@@ -817,6 +842,7 @@ rewriting the table lookup to the direct `luebeckConwayPolynomial_5_6` form. -/
   | _ + 7 => rfl
 
 /-- The committed `C(7, 1)` Luebeck entry, stored ascending by degree. -/
+@[expose]
 def luebeckConwayPolynomial_7_1 : FpPoly 7 :=
   { coeffs := #[(4 : ZMod64 7), 1]
     normalized := by
@@ -847,6 +873,7 @@ rewriting the table lookup to the direct `luebeckConwayPolynomial_7_1` form. -/
   | _ + 2 => rfl
 
 /-- The committed `C(7, 2)` Luebeck entry, stored ascending by degree. -/
+@[expose]
 def luebeckConwayPolynomial_7_2 : FpPoly 7 :=
   { coeffs := #[(3 : ZMod64 7), 6, 1]
     normalized := by
@@ -878,6 +905,7 @@ rewriting the table lookup to the direct `luebeckConwayPolynomial_7_2` form. -/
   | _ + 3 => rfl
 
 /-- The committed `C(7, 3)` Luebeck entry, stored ascending by degree. -/
+@[expose]
 def luebeckConwayPolynomial_7_3 : FpPoly 7 :=
   { coeffs := #[(4 : ZMod64 7), 0, 6, 1]
     normalized := by
@@ -910,6 +938,7 @@ rewriting the table lookup to the direct `luebeckConwayPolynomial_7_3` form. -/
   | _ + 4 => rfl
 
 /-- The committed `C(7, 4)` Luebeck entry, stored ascending by degree. -/
+@[expose]
 def luebeckConwayPolynomial_7_4 : FpPoly 7 :=
   { coeffs := #[(3 : ZMod64 7), 4, 5, 0, 1]
     normalized := by
@@ -943,6 +972,7 @@ rewriting the table lookup to the direct `luebeckConwayPolynomial_7_4` form. -/
   | _ + 5 => rfl
 
 /-- The committed `C(7, 5)` Luebeck entry, stored ascending by degree. -/
+@[expose]
 def luebeckConwayPolynomial_7_5 : FpPoly 7 :=
   { coeffs := #[(4 : ZMod64 7), 1, 0, 0, 0, 1]
     normalized := by
@@ -977,6 +1007,7 @@ rewriting the table lookup to the direct `luebeckConwayPolynomial_7_5` form. -/
   | _ + 6 => rfl
 
 /-- The committed `C(7, 6)` Luebeck entry, stored ascending by degree. -/
+@[expose]
 def luebeckConwayPolynomial_7_6 : FpPoly 7 :=
   { coeffs := #[(3 : ZMod64 7), 6, 4, 5, 1, 0, 1]
     normalized := by
@@ -1012,6 +1043,7 @@ rewriting the table lookup to the direct `luebeckConwayPolynomial_7_6` form. -/
   | _ + 7 => rfl
 
 /-- The committed `C(11, 1)` Luebeck entry, stored ascending by degree. -/
+@[expose]
 def luebeckConwayPolynomial_11_1 : FpPoly 11 :=
   { coeffs := #[(9 : ZMod64 11), 1]
     normalized := by
@@ -1042,6 +1074,7 @@ rewriting the table lookup to the direct `luebeckConwayPolynomial_11_1` form. -/
   | _ + 2 => rfl
 
 /-- The committed `C(11, 2)` Luebeck entry, stored ascending by degree. -/
+@[expose]
 def luebeckConwayPolynomial_11_2 : FpPoly 11 :=
   { coeffs := #[(2 : ZMod64 11), 7, 1]
     normalized := by
@@ -1073,6 +1106,7 @@ rewriting the table lookup to the direct `luebeckConwayPolynomial_11_2` form. -/
   | _ + 3 => rfl
 
 /-- The committed `C(11, 3)` Luebeck entry, stored ascending by degree. -/
+@[expose]
 def luebeckConwayPolynomial_11_3 : FpPoly 11 :=
   { coeffs := #[(9 : ZMod64 11), 2, 0, 1]
     normalized := by
@@ -1105,6 +1139,7 @@ rewriting the table lookup to the direct `luebeckConwayPolynomial_11_3` form. -/
   | _ + 4 => rfl
 
 /-- The committed `C(11, 4)` Luebeck entry, stored ascending by degree. -/
+@[expose]
 def luebeckConwayPolynomial_11_4 : FpPoly 11 :=
   { coeffs := #[(2 : ZMod64 11), 10, 8, 0, 1]
     normalized := by
@@ -1138,6 +1173,7 @@ rewriting the table lookup to the direct `luebeckConwayPolynomial_11_4` form. -/
   | _ + 5 => rfl
 
 /-- The committed `C(11, 5)` Luebeck entry, stored ascending by degree. -/
+@[expose]
 def luebeckConwayPolynomial_11_5 : FpPoly 11 :=
   { coeffs := #[(9 : ZMod64 11), 0, 10, 0, 0, 1]
     normalized := by
@@ -1172,6 +1208,7 @@ rewriting the table lookup to the direct `luebeckConwayPolynomial_11_5` form. -/
   | _ + 6 => rfl
 
 /-- The committed `C(11, 6)` Luebeck entry, stored ascending by degree. -/
+@[expose]
 def luebeckConwayPolynomial_11_6 : FpPoly 11 :=
   { coeffs := #[(2 : ZMod64 11), 7, 6, 4, 3, 0, 1]
     normalized := by
@@ -1207,6 +1244,7 @@ rewriting the table lookup to the direct `luebeckConwayPolynomial_11_6` form. -/
   | _ + 7 => rfl
 
 /-- The committed `C(13, 1)` Luebeck entry, stored ascending by degree. -/
+@[expose]
 def luebeckConwayPolynomial_13_1 : FpPoly 13 :=
   { coeffs := #[(11 : ZMod64 13), 1]
     normalized := by
@@ -1237,6 +1275,7 @@ rewriting the table lookup to the direct `luebeckConwayPolynomial_13_1` form. -/
   | _ + 2 => rfl
 
 /-- The committed `C(13, 2)` Luebeck entry, stored ascending by degree. -/
+@[expose]
 def luebeckConwayPolynomial_13_2 : FpPoly 13 :=
   { coeffs := #[(2 : ZMod64 13), 12, 1]
     normalized := by
@@ -1268,6 +1307,7 @@ rewriting the table lookup to the direct `luebeckConwayPolynomial_13_2` form. -/
   | _ + 3 => rfl
 
 /-- The committed `C(13, 3)` Luebeck entry, stored ascending by degree. -/
+@[expose]
 def luebeckConwayPolynomial_13_3 : FpPoly 13 :=
   { coeffs := #[(11 : ZMod64 13), 2, 0, 1]
     normalized := by
@@ -1300,6 +1340,7 @@ rewriting the table lookup to the direct `luebeckConwayPolynomial_13_3` form. -/
   | _ + 4 => rfl
 
 /-- The committed `C(13, 4)` Luebeck entry, stored ascending by degree. -/
+@[expose]
 def luebeckConwayPolynomial_13_4 : FpPoly 13 :=
   { coeffs := #[(2 : ZMod64 13), 12, 3, 0, 1]
     normalized := by
@@ -1333,6 +1374,7 @@ rewriting the table lookup to the direct `luebeckConwayPolynomial_13_4` form. -/
   | _ + 5 => rfl
 
 /-- The committed `C(13, 5)` Luebeck entry, stored ascending by degree. -/
+@[expose]
 def luebeckConwayPolynomial_13_5 : FpPoly 13 :=
   { coeffs := #[(11 : ZMod64 13), 4, 0, 0, 0, 1]
     normalized := by
@@ -1367,6 +1409,7 @@ rewriting the table lookup to the direct `luebeckConwayPolynomial_13_5` form. -/
   | _ + 6 => rfl
 
 /-- The committed `C(13, 6)` Luebeck entry, stored ascending by degree. -/
+@[expose]
 def luebeckConwayPolynomial_13_6 : FpPoly 13 :=
   { coeffs := #[(2 : ZMod64 13), 11, 11, 10, 0, 0, 1]
     normalized := by
@@ -1403,6 +1446,7 @@ rewriting the table lookup to the direct `luebeckConwayPolynomial_13_6` form. -/
 
 
 /-- The committed `C(2, 7)` Luebeck entry, stored ascending by degree. -/
+@[expose]
 def luebeckConwayPolynomial_2_7 : FpPoly 2 :=
   { coeffs := #[(1 : ZMod64 2), 1, 0, 0, 0, 0, 0, 1]
     normalized := by
@@ -1420,6 +1464,7 @@ def luebeckConwayPolynomial_2_7 : FpPoly 2 :=
   decide
 
 /-- The committed `C(2, 8)` Luebeck entry, stored ascending by degree. -/
+@[expose]
 def luebeckConwayPolynomial_2_8 : FpPoly 2 :=
   { coeffs := #[(1 : ZMod64 2), 0, 1, 1, 1, 0, 0, 0, 1]
     normalized := by

@@ -762,7 +762,7 @@ gets a conformance fixture.
 - **No randomness.** Unlike a generic-vector or Wiedemann approach, the
   basis sweep is deterministic, so this library takes no `Rand` state
   and its answer does not depend on a seed. The contrast with
-  [hex-mv-gcd](hex-mv-gcd.md), which does carry `Rand`, is deliberate.
+  [hex-mv-gcd](../../HexMvGcd/SPEC/hex-mv-gcd.md), which does carry `Rand`, is deliberate.
 
 ## Complexity
 
@@ -1033,7 +1033,7 @@ with contracts `lcm p 0 = lcm 0 q = 0`, `lcm 0 0 = 0`, `lcmList [] = 1`,
   `gcd 0 0 = 0` and `monicize 0 = 0`, so without the guard the definition
   would divide by zero. The chosen values match Mathlib's
   `GCDMonoid` convention (`lcm a 0 = 0`) and the conventions
-  [hex-poly-z-gcd](hex-poly-z-gcd.md) and [hex-mv-gcd](hex-mv-gcd.md)
+  [hex-poly-z-gcd](../../HexPolyZGcd/SPEC/hex-poly-z-gcd.md) and [hex-mv-gcd](../../HexMvGcd/SPEC/hex-mv-gcd.md)
   already fix for their types.
 - **`lcmList [] = 1`, not `0`.** The empty family has every polynomial as
   a common multiple, so the least one is the unit. This is the value

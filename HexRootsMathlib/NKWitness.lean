@@ -194,6 +194,7 @@ theorem toComplex_residual (p : Hex.ZPoly) (s : Hex.DyadicSquare) (k : Nat) :
     NewtonKantorovich.ComplexSup →L[ℝ] NewtonKantorovich.ComplexSup :=
   NewtonKantorovich.ComplexSup.mul (inverseComplex p s)
 
+/-- Evaluation at the centre is the zeroth executable Taylor coefficient. -/
 theorem eval_center (p : Hex.ZPoly) (s : Hex.DyadicSquare) :
     NewtonKantorovich.ComplexSup.eval (toPolyℂ p) (centerSup s) =
       NewtonKantorovich.ComplexSup.equiv
@@ -201,6 +202,8 @@ theorem eval_center (p : Hex.ZPoly) (s : Hex.DyadicSquare) :
   rw [NewtonKantorovich.ComplexSup.eval, centerSup,
     ContinuousLinearEquiv.symm_apply_apply, coeff_zero]
 
+/-- Multiplying an executable Taylor coefficient by the approximate inverse
+gives the executable residual. -/
 theorem apply_residual (p : Hex.ZPoly) (s : Hex.DyadicSquare) (k : Nat) :
     NewtonKantorovich.ComplexSup.mul (inverseComplex p s)
         (NewtonKantorovich.ComplexSup.equiv
@@ -224,6 +227,8 @@ theorem norm_residual (p : Hex.ZPoly) (s : Hex.DyadicSquare) :
     ← GaussDyadic.toReal_lo]
   rfl
 
+/-- The approximate inverse composed with the frozen centre derivative is
+multiplication by the first executable residual. -/
 theorem comp_deriv_center (p : Hex.ZPoly) (s : Hex.DyadicSquare) :
     (approxInverse p s).comp
         (NewtonKantorovich.ComplexSup.evalDeriv (toPolyℂ p) (centerSup s)) =
@@ -256,12 +261,16 @@ theorem natDegree_lt_size (p : Hex.ZPoly) (hp : 0 < p.size) :
 @[expose] def shifted (p : Hex.ZPoly) (s : Hex.DyadicSquare) : Polynomial ℂ :=
   Polynomial.taylor (DyadicSquare.center s) (toPolyℂ p)
 
+/-- Coefficients of the recentred polynomial are the executable Taylor
+coefficients. -/
 theorem shifted_coeff (p : Hex.ZPoly) (s : Hex.DyadicSquare) (k : Nat) :
     (shifted p s).coeff k =
       GaussDyadic.toComplex ((coeffs p s).getD k (0, 0)) := by
   rw [shifted, Polynomial.taylor_apply, DyadicSquare.center_eq, coeffs]
   exact (taylor_coeff p s.center k).symm
 
+/-- The recentred derivative evaluates the original derivative at the
+translated point. -/
 theorem shifted_deriv (p : Hex.ZPoly) (s : Hex.DyadicSquare) (δ : ℂ) :
     (shifted p s).derivative.eval δ =
       (toPolyℂ p).derivative.eval (DyadicSquare.center s + δ) := by
@@ -373,6 +382,8 @@ theorem norm_term_le (d : Hex.GaussDyadic) (δ : ℂ) (k : Nat)
     NewtonKantorovich.ComplexSup.equiv (delta s x) = x - centerSup s := by
   simp [delta, centerSup, map_sub]
 
+/-- The complex displacement is at most `√2` times the sup-norm
+displacement from the centre. -/
 theorem norm_delta_le (s : Hex.DyadicSquare)
     (x : NewtonKantorovich.ComplexSup) :
     ‖delta s x‖ ≤ √2 * ‖x - centerSup s‖ := by
@@ -383,6 +394,8 @@ theorem norm_delta_le (s : Hex.DyadicSquare)
       rw [NewtonKantorovich.ComplexSup.norm_equiv]
     _ = _ := by rw [equiv_delta]
 
+/-- Inside the half-width sup ball, the complex displacement stays below
+the executable upper radius bound. -/
 theorem norm_delta_le_radiusHi (s : Hex.DyadicSquare)
     (x : NewtonKantorovich.ComplexSup)
     (hx : ‖x - centerSup s‖ ≤ DyadicSquare.halfWidth s) :
@@ -465,6 +478,7 @@ theorem deriv_lipschitz (p : Hex.ZPoly) (s : Hex.DyadicSquare)
   norm_num [pow_two]
   ring
 
+/-- The executable Lipschitz bound `z2` is nonnegative. -/
 theorem toReal_z2_nonneg (p : Hex.ZPoly) (s : Hex.DyadicSquare) :
     0 ≤ Dyadic.toReal (z2 p s) := by
   rw [z2, Dyadic.toReal_mul, Dyadic.toReal_two, toReal_z2Sum]
@@ -489,14 +503,17 @@ theorem. -/
     rw [← norm_residual]
     positivity⟩
 
+/-- The executable derivative-defect bound `z1` as a nonnegative real. -/
 @[expose] def z1NN (p : Hex.ZPoly) (s : Hex.DyadicSquare) : NNReal :=
   ⟨Dyadic.toReal (z1 p s), by
     rw [← norm_defect]
     positivity⟩
 
+/-- The executable Lipschitz bound `z2` as a nonnegative real. -/
 @[expose] def z2NN (p : Hex.ZPoly) (s : Hex.DyadicSquare) : NNReal :=
   ⟨Dyadic.toReal (z2 p s), toReal_z2_nonneg p s⟩
 
+/-- The square's half-width as a nonnegative real. -/
 @[expose] def radiusNN (s : Hex.DyadicSquare) : NNReal :=
   ⟨DyadicSquare.halfWidth s, by
     rw [DyadicSquare.halfWidth_eq]
@@ -563,6 +580,8 @@ theorem existsUnique_root_sup {p : Hex.ZPoly} {s : Hex.DyadicSquare}
   · exact hyr.le
   · exact hzr
 
+/-- Closed-square membership is the sup-norm closed-ball inequality in the
+two-coordinate model. -/
 theorem mem_closedSquare_iff (s : Hex.DyadicSquare) (z : ℂ) :
     z ∈ DyadicSquare.closedSquare s ↔
       ‖NewtonKantorovich.ComplexSup.equiv z - centerSup s‖ ≤
@@ -572,6 +591,8 @@ theorem mem_closedSquare_iff (s : Hex.DyadicSquare) (z : ℂ) :
   rw [← NewtonKantorovich.ComplexSup.norm_equiv, map_sub]
   rfl
 
+/-- Open-square membership is the strict sup-norm ball inequality in the
+two-coordinate model. -/
 theorem mem_openSquare_iff (s : Hex.DyadicSquare) (z : ℂ) :
     z ∈ DyadicSquare.openSquare s ↔
       ‖NewtonKantorovich.ComplexSup.equiv z - centerSup s‖ <

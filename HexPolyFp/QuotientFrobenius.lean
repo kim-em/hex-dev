@@ -7,6 +7,7 @@ Authors: Kim Morrison
 module
 
 public import HexPolyFp.Quotient
+public import HexPolyFp.Frobenius
 public import HexPolyFp.SquareFree
 
 public section
@@ -75,6 +76,22 @@ theorem pow_eq_reduce_linearPow (a : Quotient g hmonic hg_pos) (n : Nat) :
       reduce (g := g) (hmonic := hmonic) (hg_pos := hg_pos)
         (FpPoly.linearPow a.val n) := by
   rw [reduce_linearPow_eq_pow, reduce_val_self]
+
+/-- Structural modular exponentiation represents ordinary powering in the
+quotient.
+
+The executable loop reduces after every multiplication; quotient reduction
+forgets those intermediate choices and returns the power of the base class. -/
+theorem reduce_powModMonicLinear_eq_pow (base : FpPoly p) (n : Nat) :
+    reduce (g := g) (hmonic := hmonic) (hg_pos := hg_pos)
+        (FpPoly.powModMonicLinear base g hmonic n) =
+      (reduce (g := g) (hmonic := hmonic) (hg_pos := hg_pos) base) ^ n := by
+  rw [← reduce_linearPow_eq_pow]
+  apply ext
+  rw [reduce_val, reduce_val, FpPoly.modByMonic, FpPoly.modByMonic,
+    DensePoly.modByMonic_eq_mod, DensePoly.modByMonic_eq_mod,
+    FpPoly.powModMonicLinear_eq_powModMonic,
+    FpPoly.powModMonic_mod_eq_linearPow]
 
 /-- Freshman's dream on the quotient (prime case): raising a sum to the
 characteristic distributes additively. -/

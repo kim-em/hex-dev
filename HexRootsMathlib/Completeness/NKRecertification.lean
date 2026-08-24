@@ -60,6 +60,8 @@ radius power replaced by one. -/
     (k : ℝ) * exactCoeffNorm (toPolyℂ p) k x
   else 0
 
+/-- The tail majorant is continuous wherever the derivative does not
+vanish. -/
 theorem continuousAt_tailMajorant {p : Hex.ZPoly}
     {x : NewtonKantorovich.ComplexSup}
     (hx : (toPolyℂ p).derivative.eval
@@ -85,6 +87,7 @@ theorem continuousAt_tailMajorant {p : Hex.ZPoly}
         simp [Finset.sum_insert hk]]
       exact hterm.add ih
 
+/-- The tail majorant is nonnegative. -/
 theorem tailMajorant_nonneg (p : Hex.ZPoly)
     (x : NewtonKantorovich.ComplexSup) : 0 ≤ tailMajorant p x := by
   unfold tailMajorant
@@ -329,6 +332,8 @@ theorem norm_approxInverse_le (p : Hex.ZPoly) (s : Hex.DyadicSquare)
     (norm_nonneg (NewtonKantorovich.ComplexSup.inverseAt (toPolyℂ p)
       (DyadicSquare.center s) v₀)) hθ1
 
+/-- The operator norm of the scaled executable Taylor-coefficient multiplier
+is the exact coefficient norm at the square's centre. -/
 theorem norm_exactCoeff (p : Hex.ZPoly) (s : Hex.DyadicSquare) (k : Nat) :
     ‖(NewtonKantorovich.ComplexSup.inverseAt (toPolyℂ p)
       (DyadicSquare.center s)).comp

@@ -1,0 +1,73 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="560" viewBox="0 0 900 560">
+<style>
+text { font-family: sans-serif; fill: #202124; }
+.grid { stroke: #cfd4da; stroke-width: 1; opacity: 0.65; }
+.axis { stroke: #202124; stroke-width: 1.4; }
+.series { fill: none; stroke-width: 2.5; }
+</style>
+<text x="450.0" y="28" text-anchor="middle" font-size="19" font-weight="600">Failed rational reconstruction</text>
+<text x="450.0" y="50" text-anchor="middle" font-size="12">eligible range; persistent-call overhead 9.6 µs</text>
+<rect x="92" y="76" width="780" height="408" fill="#ffffff"/>
+<line class="grid" x1="92.00" y1="76" x2="92.00" y2="484"/>
+<text x="92.00" y="507" text-anchor="middle" font-size="11">512</text>
+<line class="grid" x1="265.33" y1="76" x2="265.33" y2="484"/>
+<text x="265.33" y="507" text-anchor="middle" font-size="11">2048</text>
+<line class="grid" x1="438.67" y1="76" x2="438.67" y2="484"/>
+<text x="438.67" y="507" text-anchor="middle" font-size="11">8192</text>
+<line class="grid" x1="612.00" y1="76" x2="612.00" y2="484"/>
+<text x="612.00" y="507" text-anchor="middle" font-size="11">32768</text>
+<line class="grid" x1="698.67" y1="76" x2="698.67" y2="484"/>
+<text x="698.67" y="507" text-anchor="middle" font-size="11">65536</text>
+<line class="grid" x1="785.33" y1="76" x2="785.33" y2="484"/>
+<text x="785.33" y="507" text-anchor="middle" font-size="11">131072</text>
+<line class="grid" x1="872.00" y1="76" x2="872.00" y2="484"/>
+<text x="872.00" y="507" text-anchor="middle" font-size="11">262144</text>
+<line class="grid" x1="92" y1="484.00" x2="872" y2="484.00"/>
+<text x="80" y="488.00" text-anchor="end" font-size="12">10^-5</text>
+<line class="grid" x1="92" y1="416.00" x2="872" y2="416.00"/>
+<text x="80" y="420.00" text-anchor="end" font-size="12">10^-4</text>
+<line class="grid" x1="92" y1="348.00" x2="872" y2="348.00"/>
+<text x="80" y="352.00" text-anchor="end" font-size="12">10^-3</text>
+<line class="grid" x1="92" y1="280.00" x2="872" y2="280.00"/>
+<text x="80" y="284.00" text-anchor="end" font-size="12">10^-2</text>
+<line class="grid" x1="92" y1="212.00" x2="872" y2="212.00"/>
+<text x="80" y="216.00" text-anchor="end" font-size="12">10^-1</text>
+<line class="grid" x1="92" y1="144.00" x2="872" y2="144.00"/>
+<text x="80" y="148.00" text-anchor="end" font-size="12">10^0</text>
+<line class="grid" x1="92" y1="76.00" x2="872" y2="76.00"/>
+<text x="80" y="80.00" text-anchor="end" font-size="12">10^1</text>
+<line class="axis" x1="92" y1="484" x2="872" y2="484"/>
+<line class="axis" x1="92" y1="76" x2="92" y2="484"/>
+<text x="482.0" y="540" text-anchor="middle" font-size="14">benchmark parameter</text>
+<text x="22" y="280.0" text-anchor="middle" font-size="14" transform="rotate(-90 22 280.0)">wall time per call (s)</text>
+<polyline class="series" stroke="#2468b4" points="92.00,401.17 178.67,377.30 265.33,353.16 352.00,327.20 438.67,297.99 525.33,261.40 612.00,227.02 698.67,189.40 751.50,166.68 785.33,151.85 836.03,128.95 872.00,112.40"/>
+<circle cx="92.00" cy="401.17" r="4" fill="#2468b4"/>
+<circle cx="178.67" cy="377.30" r="4" fill="#2468b4"/>
+<circle cx="265.33" cy="353.16" r="4" fill="#2468b4"/>
+<circle cx="352.00" cy="327.20" r="4" fill="#2468b4"/>
+<circle cx="438.67" cy="297.99" r="4" fill="#2468b4"/>
+<circle cx="525.33" cy="261.40" r="4" fill="#2468b4"/>
+<circle cx="612.00" cy="227.02" r="4" fill="#2468b4"/>
+<circle cx="698.67" cy="189.40" r="4" fill="#2468b4"/>
+<circle cx="751.50" cy="166.68" r="4" fill="#2468b4"/>
+<circle cx="785.33" cy="151.85" r="4" fill="#2468b4"/>
+<circle cx="836.03" cy="128.95" r="4" fill="#2468b4"/>
+<circle cx="872.00" cy="112.40" r="4" fill="#2468b4"/>
+<line x1="110" y1="96" x2="138" y2="96" stroke="#2468b4" stroke-width="2.5"/>
+<text x="148" y="100" font-size="12">HexModular</text>
+<polyline class="series" stroke="#d95f02" points="92.00,429.56 178.67,415.68 265.33,401.92 352.00,380.71 438.67,349.29 525.33,317.17 612.00,285.65 698.67,246.64 751.50,231.65 785.33,218.09 836.03,190.45 872.00,180.42"/>
+<rect x="88.00" y="425.56" width="8" height="8" fill="#d95f02"/>
+<rect x="174.67" y="411.68" width="8" height="8" fill="#d95f02"/>
+<rect x="261.33" y="397.92" width="8" height="8" fill="#d95f02"/>
+<rect x="348.00" y="376.71" width="8" height="8" fill="#d95f02"/>
+<rect x="434.67" y="345.29" width="8" height="8" fill="#d95f02"/>
+<rect x="521.33" y="313.17" width="8" height="8" fill="#d95f02"/>
+<rect x="608.00" y="281.65" width="8" height="8" fill="#d95f02"/>
+<rect x="694.67" y="242.64" width="8" height="8" fill="#d95f02"/>
+<rect x="747.50" y="227.65" width="8" height="8" fill="#d95f02"/>
+<rect x="781.33" y="214.09" width="8" height="8" fill="#d95f02"/>
+<rect x="832.03" y="186.45" width="8" height="8" fill="#d95f02"/>
+<rect x="868.00" y="176.42" width="8" height="8" fill="#d95f02"/>
+<line x1="110" y1="120" x2="138" y2="120" stroke="#d95f02" stroke-width="2.5"/>
+<text x="148" y="124" font-size="12">gmpy2.gcdext</text>
+</svg>

@@ -17,7 +17,7 @@ in "The index is a checked factorization" below.
 **Cyclotomic polynomials are already in the tree as literals.** They
 appear as hard-coded factorisation fixtures, as benchmark inputs for
 `hex-berlekamp-zassenhaus`, and as the shape the sparse representation
-of [hex-sparse-poly](hex-sparse-poly.md) is designed around. Nothing
+of [hex-sparse-poly](../../HexSparsePoly/SPEC/hex-sparse-poly.md) is designed around. Nothing
 constructs them. A fixture that spells out all 49 coefficients of the
 degree-48 `Φ₁₀₅`
 is a fixture nobody can extend, and an irreducibility benchmark whose
@@ -438,7 +438,7 @@ checked route.
 normalization step. `ZPoly.primitivePart` and `ZPoly.content` are
 hex-poly-z's, and nothing here calls them. The statement is recorded
 because a caller who reaches this library from
-[hex-poly-z-gcd](hex-poly-z-gcd.md) or from Berlekamp-Zassenhaus is used
+[hex-poly-z-gcd](../../HexPolyZGcd/SPEC/hex-poly-z-gcd.md) or from Berlekamp-Zassenhaus is used
 to content-normalising every integer polynomial it holds, and here that
 is a no-op.
 
@@ -562,7 +562,7 @@ two are nonzero.
 ## Sparse output is an adapter, not a dependency
 
 `hex-cyclotomic` does not depend on
-[hex-sparse-poly](hex-sparse-poly.md). Dense `ZPoly` is the default
+[hex-sparse-poly](../../HexSparsePoly/SPEC/hex-sparse-poly.md). Dense `ZPoly` is the default
 output because every consumer in the tree today (Berlekamp-Zassenhaus
 inputs, the evaluation the factorization split wants, the conformance
 fixtures) holds dense polynomials, and because the sparse library's own
@@ -767,7 +767,7 @@ The irreducibility check pulls in `hex-berlekamp-zassenhaus`, which
 runs the other way for the benchmark inputs. The monorepo hides this;
 the released split repository would not, so the manifest entry records
 the conformance-only pin. This is the same arrangement
-[hex-sparse-poly](hex-sparse-poly.md) makes for `ZMod64`.
+[hex-sparse-poly](../../HexSparsePoly/SPEC/hex-sparse-poly.md) makes for `ZMod64`.
 
 ## Benchmarking
 
@@ -927,7 +927,7 @@ theorem degree_substPow (hk : 0 < k), monic_substPow (hk : 0 < k)
 `[Add R]` is there for `k = 0`, which sums the coefficients. That case
 is not reachable from this library, since the kernel exponent
 `n / rad n` is at least `1`, but it is reachable from
-[hex-sparse-poly](hex-sparse-poly.md), whose `substPow` takes `[Add R]`
+[hex-sparse-poly](../../HexSparsePoly/SPEC/hex-sparse-poly.md), whose `substPow` takes `[Add R]`
 for exactly this reason and whose SPEC lists the collapse as a
 canonicalisation case. Mathlib agrees: `Polynomial.expand R 0 f` is
 `C (f.eval 1)`. The degree and monicity statements carry `0 < k`, since
@@ -947,7 +947,7 @@ the largest polynomial this library ever writes, which is why the factor
 matters here and not elsewhere.
 
 **hex-poly-z** must have `divExact?`, which
-[hex-poly-z-gcd](hex-poly-z-gcd.md) already schedules as its first
+[hex-poly-z-gcd](../../HexPolyZGcd/SPEC/hex-poly-z-gcd.md) already schedules as its first
 prerequisite and sites in hex-poly-z. This library needs only the monic
 case. No new primitive is requested, and in particular no second copy of
 exact integer-polynomial division: the count of those in the tree is

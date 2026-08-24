@@ -20,24 +20,30 @@ import HexManual.Chapters.HexRealRoots
 import HexManual.Chapters.HexMatrix
 import HexManual.Chapters.HexRowReduce
 import HexManual.Chapters.HexBerlekamp
+import HexManual.Chapters.HexGF2
+import HexManual.Chapters.HexGFqField
+import HexManual.Chapters.HexConway
+import HexManual.Chapters.HexGFq
 import HexManual.Chapters.HexDeterminant
 import HexManual.Chapters.HexBareiss
+import HexManual.Chapters.HexCharPoly
 import HexManual.Chapters.HexGramSchmidt
 import HexManual.Chapters.HexLLL
 import HexManual.Chapters.HexBerlekampZassenhaus
 import HexManual.Chapters.FactorTactics
 -- Unreleased libraries (dependency order).
 import HexManual.Chapters.HexPrimality
+import HexManual.Chapters.HexModular
 import HexManual.Chapters.HexResultant
-import HexManual.Chapters.HexGF2
-import HexManual.Chapters.HexGFqField
-import HexManual.Chapters.HexConway
-import HexManual.Chapters.HexGFq
+import HexManual.Chapters.HexPolyZGcd
+import HexManual.Chapters.HexSparsePoly
 import HexManual.Chapters.HexRCF
 import HexManual.Chapters.HexNumberField
 import HexManual.Chapters.HexNumberFieldTower
 -- Tutorials (application-first capstone pages, see SPEC/tutorials.md).
 import HexManual.Tutorials.AESField
+import HexManual.Tutorials.AESModulus
+import HexManual.Tutorials.PrimeSplitting
 import HexManual.Tutorials.Coppersmith
 
 open Verso.Genre Manual
@@ -73,6 +79,8 @@ contracts and, for mature libraries, supply their proofs.
 
 {include 0 HexManual.Chapters.HexMvPoly}
 
+{include 0 HexManual.Chapters.HexSparsePoly}
+
 {include 0 HexManual.Chapters.HexModArith}
 
 {include 0 HexManual.Chapters.HexPolyFp}
@@ -93,9 +101,19 @@ contracts and, for mature libraries, supply their proofs.
 
 {include 0 HexManual.Chapters.HexBerlekamp}
 
+{include 0 HexManual.Chapters.HexGF2}
+
+{include 0 HexManual.Chapters.HexGFqField}
+
+{include 0 HexManual.Chapters.HexConway}
+
+{include 0 HexManual.Chapters.HexGFq}
+
 {include 0 HexManual.Chapters.HexDeterminant}
 
 {include 0 HexManual.Chapters.HexBareiss}
+
+{include 0 HexManual.Chapters.HexCharPoly}
 
 {include 0 HexManual.Chapters.HexGramSchmidt}
 
@@ -118,6 +136,10 @@ build.
 
 {include 2 HexManual.Tutorials.AESField}
 
+{include 2 HexManual.Tutorials.AESModulus}
+
+{include 2 HexManual.Tutorials.PrimeSplitting}
+
 {include 2 HexManual.Tutorials.Coppersmith}
 
 # Draft sections for unreleased libraries
@@ -132,15 +154,11 @@ here to keep the reference chapters above focused on the released libraries.
 
 {include 2 HexManual.Chapters.HexPrimality}
 
+{include 2 HexManual.Chapters.HexModular}
+
 {include 2 HexManual.Chapters.HexResultant}
 
-{include 2 HexManual.Chapters.HexGF2}
-
-{include 2 HexManual.Chapters.HexGFqField}
-
-{include 2 HexManual.Chapters.HexConway}
-
-{include 2 HexManual.Chapters.HexGFq}
+{include 2 HexManual.Chapters.HexPolyZGcd}
 
 {include 2 HexManual.Chapters.HexRCF}
 
