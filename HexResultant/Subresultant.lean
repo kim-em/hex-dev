@@ -89,7 +89,8 @@ def BrownLaw [One R] [Add R] [Sub R] [Mul R] [Div R]
 
 /-- Integral subresultant-family invariant for one recursive Brown state. It
 keeps all accumulated factors cross-multiplied in the coefficient ring. -/
-private def BrownInv [Lean.Grind.CommRing R] [DecidableEq R]
+@[expose]
+def BrownInv [Lean.Grind.CommRing R] [DecidableEq R]
     (f g prev curr : DensePoly R) (hPrev : R) : Prop :=
   prev ≠ 0 ∧ curr ≠ 0 ∧ curr.size < prev.size ∧ hPrev ≠ 0 ∧
     ∀ J, J < curr.size →
@@ -135,7 +136,7 @@ private theorem sign_prem_cancel {S : Type u} [Lean.Grind.CommRing S]
 /-- The invariant identifies the next Brown scale with the leading principal
 coefficient of the original-pair subresultant and proves its exact quotient
 law inside the base ring. -/
-private theorem BrownInv.nextScale {S : Type u}
+theorem BrownInv.nextScale {S : Type u}
     [Lean.Grind.CommRing S] [DecidableEq S] [Div S] [ExactDivLaws S]
     (f g prev curr : DensePoly S) (hPrev : S)
     (hinv : BrownInv f g prev curr hPrev) :
@@ -215,7 +216,7 @@ private theorem BrownInv.nextScale {S : Type u}
 
 /-- The signed first pseudo-remainder establishes the integral invariant for
 the first recursive Brown state. -/
-private theorem brownInv_init {S : Type u}
+theorem brownInv_init {S : Type u}
     [Lean.Grind.CommRing S] [DecidableEq S] [Div S] [ExactDivLaws S]
     (f g : DensePoly S) (hg : g ≠ 0) (hgf : g.size ≤ f.size)
     (hp : (pseudoDivMod f g).2 ≠ 0) :
@@ -322,7 +323,7 @@ private theorem brownInv_init {S : Type u}
 
 /-- At a nonterminal invariant state, the pseudo-remainder has the exact Brown
 factor and its quotient is the adjacent original-pair subresultant. -/
-private theorem BrownInv.factor {S : Type u}
+theorem BrownInv.factor {S : Type u}
     [Lean.Grind.CommRing S] [DecidableEq S] [Div S] [ExactDivLaws S]
     (f g prev curr : DensePoly S) (hPrev : S)
     (hinv : BrownInv f g prev curr hPrev)
@@ -417,7 +418,7 @@ private theorem BrownInv.factor {S : Type u}
 
 /-- One nonterminal Brown step preserves the integral original-pair
 subresultant invariant. -/
-private theorem BrownInv.step {S : Type u}
+theorem BrownInv.step {S : Type u}
     [Lean.Grind.CommRing S] [DecidableEq S] [Div S] [ExactDivLaws S]
     (f g prev curr : DensePoly S) (hPrev : S)
     (hinv : BrownInv f g prev curr hPrev)
