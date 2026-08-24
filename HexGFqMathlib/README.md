@@ -118,13 +118,14 @@ noncomputable def conwayEmbed (p m n : Nat) [Hex.ZMod64.Bounds p]
 `Conway.normX` reduces to zero, and `substHom_conwayPoly_eq_zero` promotes that
 `Bool` to the well-definedness input the embedding needs.
 
-Be clear about what `normX` is not. It is a computed representative, the
-product of `n / m` successive Frobenius images of the residue of `x`, reduced
-at each step. Reading it as the field norm `α ^ ((p^n - 1) / (p^m - 1))` is the
-design rationale for the definition, not a theorem proved here or in hex-conway,
-which is explicit that two evaluation and Frobenius bridges are missing first.
-Nothing in this package depends on that reading; the root property is what the
-embedding uses.
+`normX` is a computed representative: the product of `n / m` successive
+Frobenius images of the residue of `x`, reduced at each step. Hex-conway's
+`subfieldGen_eq_norm` proves that its quotient class is the field norm
+`α ^ ((p^n - 1) / (p^m - 1))`. Here, `conwayEmbed_X` proves that the
+embedding sends the source generator to `conwayGen`, and
+`conwayGen_eq_norm` identifies that target with the same explicit power. Thus
+the canonicality claim is visible in theorem statements as well as in the
+committed compatibility checks.
 
 The primitivity transport is assembled from `ofPolyHom_linPowMod`,
 `ofPolyHom_digitPowMod`, `ofPolyHom_eq_one_iff`, `mathlibPrime_of_hexPrime` and
