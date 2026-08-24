@@ -331,19 +331,21 @@ def main() -> int:
             for dependency in closure[lib]
             if dependency in repo_by_library
         }
-        # A repo's conformance project may import libraries its published
-        # library does not (declared per entry as `conformance_pins`); the
-        # SPEC of the owning library records why. These are sanctioned
-        # additions to the closure, never replacements.
-        conformance_extra = set(entry.get("conformance_pins", []))
-        undeclared = conformance_extra & expected
-        if undeclared:
-            fail(
-                f"{entry['repo']}: conformance_pins {sorted(undeclared)} are "
-                "already in the library dependency closure; list only the "
-                "conformance-only additions"
-            )
-        expected |= conformance_extra
+        # A repo's conformance or bench sidecar may import libraries its
+        # published library does not (declared per entry as
+        # `conformance_pins` / `bench_pins`); the SPEC of the owning library
+        # records why. These are sanctioned additions to the closure, never
+        # replacements.
+        for field in ("conformance_pins", "bench_pins"):
+            extra = set(entry.get(field, []))
+            undeclared = extra & expected
+            if undeclared:
+                fail(
+                    f"{entry['repo']}: {field} {sorted(undeclared)} are "
+                    "already in the library dependency closure; list only "
+                    "the sidecar-only additions"
+                )
+            expected |= extra
         actual = set(entry["pins"])
         if actual != expected:
             fail(
