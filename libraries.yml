@@ -598,7 +598,7 @@ libraries:
   HexRootsMathlib:
     deps: [HexRoots, HexPolyZMathlib]
     mathlib: true
-    done_through: 4
+    done_through: 7
     status: active
   HexResultant:
     deps: [HexPoly, HexBasic]
@@ -644,7 +644,7 @@ libraries:
   HexResultantMathlib:
     deps: [HexResultant, HexPolyMathlib]
     mathlib: true
-    done_through: 5
+    done_through: 7
     status: active
   HexNumberField:
     deps: [HexPolyZ, HexRoots, HexResultant, HexBerlekampZassenhaus, HexMatrix, HexRowReduce]
@@ -694,7 +694,7 @@ libraries:
   HexRCF:
     deps: [HexRealRoots, HexRealRootsMathlib, HexPolyZ, HexPolyZMathlib]
     mathlib: true
-    done_through: 5
+    done_through: 7
     status: active
     proof_probes: [bench/HexRCF/ProofProbe]
     phase4:
