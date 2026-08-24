@@ -42,15 +42,85 @@ instance instBezoutOpsInt : BezoutOps Int where
     let r := HexArith.Int.extGcd a b
     (r.2.1, r.2.2)
 
+private theorem int_normalize_eq_natAbs (a : Int) :
+    a * (if a < 0 then -1 else 1) = (a.natAbs : Int) := by
+  by_cases h : a < 0
+  · rw [Hex.ite_eq_left h,
+      Int.ofNat_natAbs_of_nonpos (Int.le_of_lt h)]
+    omega
+  · rw [Hex.ite_eq_right h,
+      Int.ofNat_natAbs_of_nonneg (Int.le_of_not_gt h)]
+    omega
+
 instance instLawfulGcdOpsInt : LawfulGcdOps Int := by
-  constructor <;> intros <;> sorry
+  constructor
+  · intro a b
+    rfl
+  · decide
+  · intro a b h
+    exact Int.mul_eq_zero.mp h
+  · intro a b
+    exact Int.gcd_dvd_left a b
+  · intro a b
+    exact Int.gcd_dvd_right a b
+  · intro a b d hda hdb
+    exact Int.dvd_coe_gcd hda hdb
+  · intro a b
+    change
+      (Int.gcd a b : Int) *
+          (if (Int.gcd a b : Int) < 0 then -1 else 1) =
+        (Int.gcd a b : Int)
+    rw [int_normalize_eq_natAbs, Int.natAbs_natCast]
+  · intro a b hb
+    exact Int.mul_ediv_cancel a hb
+  · intro a
+    change decide (a = 1 ∨ a = -1) = true ↔ ∃ b, a * b = 1
+    rw [decide_eq_true_eq]
+    constructor
+    · rintro (rfl | rfl)
+      · exact ⟨1, by decide⟩
+      · exact ⟨-1, by decide⟩
+    · rintro ⟨b, hab⟩
+      have habAbs := congrArg Int.natAbs hab
+      rw [Int.natAbs_mul] at habAbs
+      have haAbs : a.natAbs = 1 :=
+        Nat.eq_one_of_mul_eq_one_right (by simpa using habAbs)
+      exact Int.natAbs_eq_iff.mp haAbs
+  · intro a
+    change ∃ b, (if a < 0 then -1 else 1) * b = 1
+    by_cases h : a < 0
+    · exact ⟨-1, by simp [h]⟩
+    · exact ⟨1, by simp [h]⟩
+  · intro a b
+    change
+      a * b * (if a * b < 0 then -1 else 1) =
+        (a * (if a < 0 then -1 else 1)) *
+          (b * (if b < 0 then -1 else 1))
+    rw [int_normalize_eq_natAbs, int_normalize_eq_natAbs,
+      int_normalize_eq_natAbs, Int.natAbs_mul, Int.natCast_mul]
+  · intro a
+    change
+      (a * (if a < 0 then -1 else 1)) *
+          (if a * (if a < 0 then -1 else 1) < 0 then -1 else 1) =
+        a * (if a < 0 then -1 else 1)
+    rw [int_normalize_eq_natAbs, int_normalize_eq_natAbs,
+      Int.natAbs_natCast]
+  · intro a ha
+    change decide (a = 1 ∨ a = -1) = true at ha
+    rw [decide_eq_true_eq] at ha
+    rcases ha with rfl | rfl <;> decide
 
 instance instLawfulBezoutOpsInt : LawfulBezoutOps Int := by
   constructor
   intro a b
   simp only [BezoutOps.xgcd]
   rw [HexArith.Int.extGcd_bezout_gcd]
-  sorry
+  symm
+  change
+    (Int.gcd a b : Int) *
+        (if (Int.gcd a b : Int) < 0 then -1 else 1) =
+      (Int.gcd a b : Int)
+  rw [int_normalize_eq_natAbs, Int.natAbs_natCast]
 
 /-! # Rationals -/
 
