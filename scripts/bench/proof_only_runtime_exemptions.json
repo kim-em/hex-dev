@@ -770,13 +770,13 @@
   {
     "path": "lakefile.lean",
     "baseline_blob": "ff87edbbbf7524190b536ae4ce92a57968275aa9",
-    "current_blob": "b00574f4e87aeacd2b07598d3e8c6bd4b9a8dc82",
+    "current_blob": "598fe521d5ced1dfef712ae8b0162029d67d56f2",
     "reason": "Adds and pins the lean-readme documentation checker only; the factorization service target and its executable dependency graph are unchanged."
   },
   {
     "path": "lake-manifest.json",
     "baseline_blob": "5f5b01e430fb8241d938d392298d786b38f67104",
-    "current_blob": "20f3377876c8d17e4c711d0e7edc452011913b28",
+    "current_blob": "5354544164736bfa1c724e2cca77be0a8c96f0a0",
     "reason": "Updates only the pinned lean-readme documentation checker revision; every factorization dependency remains unchanged."
   },
   {
