@@ -12,6 +12,18 @@
     "reason": "Guards powModNat at modulus zero, exposes its worker and bitLength for kernel reduction, and adds a csimp routing powModNat to the unchanged powMod; no executable factorization code calls powModNat (the service uses powMod directly)."
   },
   {
+    "path": "Hex/Conformance/Emit.lean",
+    "baseline_blob": "21481a92862c6a9f8c8d538c4815d2bc4557453a",
+    "current_blob": "03de42764424c31c1ec4060cf874f54087592e9e",
+    "reason": "Adds the primality fixture emitters and boolValue beside main's modular and series emitters; emission helpers only, the factorization service does not call them."
+  },
+  {
+    "path": "lakefile.lean",
+    "baseline_blob": "a1b87406682dbf908d990f01676f326499b906e5",
+    "current_blob": "08d5ffea8fca7ebc9510bc39f874edddb69ca6ee",
+    "reason": "Additionally registers the HexPrimality conformance driver targets on top of main's current registrations; the factorization service targets are unchanged."
+  },
+  {
     "path": "lakefile.lean",
     "baseline_blob": "a1b87406682dbf908d990f01676f326499b906e5",
     "current_blob": "275a0bcb4d851c651cba908480ace7ca79aee513",
@@ -1144,5 +1156,17 @@
     "baseline_blob": "a1b87406682dbf908d990f01676f326499b906e5",
     "current_blob": "2ee25b83b3f4a3c9610b64a4f8f31731e9aafe73",
     "reason": "Additionally registers the HexPrimalityMathlib companion on top of main's current registrations; the factorization service targets are unchanged."
+  },
+  {
+    "path": "Hex/Conformance/Emit.lean",
+    "baseline_blob": "21481a92862c6a9f8c8d538c4815d2bc4557453a",
+    "current_blob": "82e46fd361f98c10e536e6fea47f8329fb9f1964",
+    "reason": "Adds the primality fixture emitters beside main's modular-arithmetic ones; emission helpers only, the factorization service does not call them."
+  },
+  {
+    "path": "lakefile.lean",
+    "baseline_blob": "a1b87406682dbf908d990f01676f326499b906e5",
+    "current_blob": "5105530122b1afc9a176fad03ce4b92076644715",
+    "reason": "Additionally registers the HexPrimality conformance driver targets on top of main's current registrations; the factorization service targets are unchanged."
   }
 ]
