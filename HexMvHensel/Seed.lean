@@ -26,23 +26,37 @@ structure Input (n : Nat)
     (cmp : Mono (n + 1) → Mono (n + 1) → Ordering)
     (cmp' : Mono n → Mono n → Ordering)
     [IsMonomialOrder cmp] [IsMonomialOrder cmp'] where
+  /-- Selected main variable, evaluation point, prime, and exponent. -/
   setup : Setup n
+  /-- Multivariate polynomial whose factors are to be lifted. -/
   target : MvPoly (n + 1) Int cmp
+  /-- Univariate factors of the target at the evaluation point. -/
   images : List ZPoly
+  /-- Prescribed leading coefficients for the lifted factors. -/
   leading : List (MvPoly n Int cmp')
+  /-- Univariate partial-fraction witnesses for the image factors. -/
   witness : List ZPoly
 
 /-- Failures retain the distinction between malformed input, an unsuitable
 point or prime, and failure to reconstruct at the available modulus. -/
 inductive Failure where
+  /-- Tuple arities, degrees, or setup parameters are malformed. -/
   | arity
+  /-- Evaluation lowers the target's main-variable degree. -/
   | degreeDrop
+  /-- The univariate images do not multiply to the evaluated target. -/
   | imageProduct
+  /-- The prescribed leading coefficients do not multiply correctly. -/
   | leadingProduct
+  /-- A leading coefficient has the wrong image at the selected point. -/
   | leadingImage (j : Nat)
+  /-- The working prime divides an image leading coefficient. -/
   | primeDividesLc (j : Nat)
+  /-- The univariate images are not pairwise coprime modulo the prime. -/
   | notCoprime
+  /-- A partial-fraction witness exceeds its permitted degree. -/
   | witnessDegree (j : Nat)
+  /-- Integer reconstruction failed at the reported modulus. -/
   | reconstruct (modulus : Nat)
   deriving BEq, DecidableEq, Repr
 

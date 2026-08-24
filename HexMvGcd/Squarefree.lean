@@ -138,10 +138,13 @@ structure SqfFactor (n : Nat) (R : Type u) [Zero R]
   factor : MvPoly n R cmp
   multiplicity : Nat
 
+/-- Scalar content and the multiplicity-tagged square-free polynomial factors. -/
 structure SqfDecomp (n : Nat) (R : Type u) [Zero R]
     (cmp : Mono n → Mono n → Ordering)
     [Std.TransCmp cmp] [Std.LawfulEqCmp cmp] where
+  /-- Scalar content separated from the polynomial factors. -/
   content : R
+  /-- Distinct square-free factors paired with their multiplicities. -/
   factors : List (SqfFactor n R cmp)
 
 variable {n : Nat} {R : Type u} {cmp : Mono n → Mono n → Ordering}
@@ -281,6 +284,7 @@ omit [LawfulGcdOps R] [LawfulBezoutOps R] in
     radical (0 : MvPoly n R cmp) = 0 := by
   simp [radical]
 
+/-- Multiplying the scalar and factor powers reconstructs the input. -/
 theorem sqfDecomp_prod [IsMonomialOrder cmp] [NatCast R] [NatNoZero R]
     (p : MvPoly n R cmp) :
     (sqfDecomp p).factors.foldl
@@ -288,6 +292,7 @@ theorem sqfDecomp_prod [IsMonomialOrder cmp] [NatCast R] [NatNoZero R]
       (C (sqfDecomp p).content) = p := by
   sorry
 
+/-- Every polynomial returned by square-free decomposition is square-free. -/
 theorem sqfDecomp_squarefree [IsMonomialOrder cmp] [NatCast R] [NatNoZero R]
     (p : MvPoly n R cmp) :
     ∀ f ∈ (sqfDecomp p).factors, Squarefree f.factor := by

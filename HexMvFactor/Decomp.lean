@@ -27,13 +27,17 @@ open Hex.MvPoly
 /-- One nonconstant entry in a product decomposition. -/
 structure Factor (n : Nat) (cmp : Mono n → Mono n → Ordering)
     [Std.TransCmp cmp] [Std.LawfulEqCmp cmp] where
+  /-- Primitive normalized nonconstant polynomial. -/
   factor : MvPoly n Int cmp
+  /-- Positive exponent of the factor in the decomposition. -/
   multiplicity : Nat
 
 /-- An integer scalar and a list of polynomial powers. -/
 structure Decomp (n : Nat) (cmp : Mono n → Mono n → Ordering)
     [Std.TransCmp cmp] [Std.LawfulEqCmp cmp] where
+  /-- Integer scalar separated from the polynomial factors. -/
   content : Int
+  /-- Pairwise-distinct polynomial factors with their multiplicities. -/
   factors : List (Factor n cmp)
 
 namespace Decomp
@@ -83,7 +87,9 @@ def IsDecompOf (f : MvPoly n Int cmp) (D : Decomp n cmp) : Prop :=
 
 /-- Accepted decomposition data tied to the subject checked by its caller. -/
 structure CheckedDecomp (f : MvPoly n Int cmp) where
+  /-- Raw decomposition data accepted by the checker. -/
   raw : Decomp n cmp
+  /-- Evidence that replay accepts the decomposition for `f`. -/
   valid : checkDecomp f raw = true
 
 /-- Executable replay implies the semantic decomposition payload. -/

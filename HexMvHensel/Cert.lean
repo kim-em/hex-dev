@@ -25,6 +25,7 @@ open Hex.MvPoly
 structure Cert (n : Nat)
     (cmp : Mono (n + 1) → Mono (n + 1) → Ordering)
     [IsMonomialOrder cmp] where
+  /-- Reconstructed multivariate factors in image-factor order. -/
   factors : List (MvPoly (n + 1) Int cmp)
   deriving BEq, DecidableEq
 
