@@ -415,7 +415,7 @@ def runRationalSqf128 : Unit → IO UInt64 :=
 
 /- Cost-model derivation: a dense image gcd uses quadratic long division over
 the fixed word-sized field. The result hash is linear and therefore lower order. -/
-setup_benchmark runCoprimeImage n => n * n
+setup_benchmark runCoprimeImage n => (n * n)
   with prep := prepCoprime
   where {
     paramSchedule := .custom #[8, 16, 32, 64, 128, 256, 512, 1024, 2048,
@@ -429,7 +429,7 @@ setup_benchmark runCoprimeImage n => n * n
 /- Cost-model derivation: route 1 performs the dense image gcd above, normalizes
 its Bezout identity, and replays products of degree `n`; all use quadratic dense
 arithmetic. -/
-setup_benchmark runCoprimeGcd n => n * n
+setup_benchmark runCoprimeGcd n => (n * n)
   with prep := prepCoprime
   where {
     paramSchedule := .custom #[8, 16, 32, 64, 128, 256, 512, 1024, 2048,
@@ -442,7 +442,7 @@ setup_benchmark runCoprimeGcd n => n * n
 
 /- Cost-model derivation: Brown image gcds and candidate divisions are quadratic
 in ambient degree; the 8-bit family varies only degree. -/
-setup_benchmark runDense8 n => n * n
+setup_benchmark runDense8 n => (n * n)
   with prep := prepDense8
   where {
     paramSchedule := .custom #[16, 32, 64, 128, 256, 512, 1024, 2048,
@@ -455,7 +455,7 @@ setup_benchmark runDense8 n => n * n
 
 /- Cost-model derivation: the coefficient width is fixed at 256 bits, so the
 scientific scaling axis remains the quadratic polynomial degree. -/
-setup_benchmark runDense256 n => n * n
+setup_benchmark runDense256 n => (n * n)
   with prep := prepDense256
   where {
     paramSchedule := .custom #[16, 32, 64, 128, 256, 512, 1024, 2048,
@@ -471,7 +471,7 @@ setup_benchmark runDense256 n => n * n
 width. The integral PRS recurrence performs a fixed number of big-integer
 operations whose limb cost is represented by `b * sqrt b` on the GMP
 Karatsuba-range ladder. -/
-setup_benchmark runSwellPrs bits => bits * Nat.sqrt bits
+setup_benchmark runSwellPrs bits => (bits * Nat.sqrt bits)
   with prep := prepSwell
   where {
     paramSchedule := .custom #[8, 16, 32, 64, 128, 256, 512, 1024, 2048,
@@ -485,7 +485,7 @@ setup_benchmark runSwellPrs bits => bits * Nat.sqrt bits
 /- Cost-model derivation: the squarefree input has `n + 2` linear factors.
 Polynomial multiplication and the derivative gcd are quadratic in the resulting
 degree. -/
-setup_benchmark runSqfFast n => n * n
+setup_benchmark runSqfFast n => (n * n)
   with prep := prepSquarefree
   where {
     paramSchedule := .custom #[2, 4, 8, 16, 32, 64, 128, 256, 512,
@@ -499,7 +499,7 @@ setup_benchmark runSqfFast n => n * n
 
 /- Cost-model derivation: denominator clearing is linear and the integer gcd
 dominates at quadratic degree cost for the fixed 101/103 denominators. -/
-setup_benchmark runRatGcd n => n * n
+setup_benchmark runRatGcd n => (n * n)
   with prep := prepRational
   where {
     paramSchedule := .custom #[8, 16, 32, 64, 128, 256, 512, 1024, 2048,

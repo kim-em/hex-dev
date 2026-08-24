@@ -9,13 +9,13 @@ the complete result inside the benchmark harness.
 
 | target | input family | declared model |
 |---|---|---|
-| `runCoprimeImage` | `coprime-pairs` | `n * n` |
-| `runCoprimeGcd` | `coprime-pairs` | `n * n` |
-| `runDense8` | `dense-gcds` | `n * n` |
-| `runDense256` | `dense-gcds` | `n * n` |
-| `runSwellPrs` | `swell` | `bits * Nat.sqrt bits` |
-| `runSqfFast` | `squarefree` | `n * n` |
-| `runRatGcd` | `rational` | `n * n` |
+| `runCoprimeImage` | `coprime-pairs` | `(n * n)` |
+| `runCoprimeGcd` | `coprime-pairs` | `(n * n)` |
+| `runDense8` | `dense-gcds` | `(n * n)` |
+| `runDense256` | `dense-gcds` | `(n * n)` |
+| `runSwellPrs` | `swell` | `(bits * Nat.sqrt bits)` |
+| `runSqfFast` | `squarefree` | `(n * n)` |
+| `runRatGcd` | `rational` | `(n * n)` |
 
 The coefficient generator is deterministic SplitMix (`HexBasic.Rand`) keyed by
 degree, coefficient index, bit width, and salt; there is no ambient random seed.
