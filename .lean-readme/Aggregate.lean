@@ -6,7 +6,7 @@ Authors: Kim Morrison
 
 module
 
-import Lean
+public import Lean
 public meta import HexLLL
 
 public section
