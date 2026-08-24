@@ -9,6 +9,7 @@ module
 public import HexPrimality.Cert
 public import HexPrimality.MillerRabin
 public import HexPrimality.Order
+public import HexPrimality.Search
 public import HexPrimality.Table
 
 public section
