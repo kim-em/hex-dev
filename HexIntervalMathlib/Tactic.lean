@@ -7,7 +7,9 @@ Authors: Kim Morrison
 module
 
 public import HexIntervalMathlib.Frontend
+public import HexIntervalMathlib.RuntimeRuleEmit
 public meta import HexIntervalMathlib.Frontend
+public meta import HexIntervalMathlib.RuntimeRuleEmit
 public import Mathlib.Lean.Elab.Tactic.Basic
 public meta import Mathlib.Tactic.NormNum
 
@@ -17,10 +19,10 @@ public meta import Mathlib.Tactic.NormNum
 # Supported arithmetic tactic frontend
 
 This module is the first supported Meta client of `Frontend`, `Rule`, and
-`Proof`. Runtime replay authenticates the exact plain chronology. The emitted
-ordinary theorem is independently reconstructed from the same arithmetic
-recipe and crosses `Proof.emitChecked`, so neither replay data nor a successful
-runtime check is reflected into proof syntax.
+`Proof`. The tactic runs the reified program through the typed controller,
+settles the retained target lineage, and passes that sealed chronology through
+`RuntimeEmit`. The resulting ordinary theorem crosses `Proof.emitChecked`;
+runtime success is never reflected into proof syntax.
 
 The current production subset is forward arithmetic over real local variables,
 the configured constant, natural power, precision, reciprocal, and division.
@@ -61,24 +63,114 @@ theorem BuildResult.eq_ready (result : BuildResult)
   | resourceLimit _ =>
       simp [Hex.Interval.Tactic.BuildResult.isReady] at success
 
-def Arithmetic.Result.isReady (result : Arithmetic.Result) : Bool :=
-  match result with
-  | .ready _ => true
-  | .resourceLimit _ => false
+/-- Extract the exact transparent reification result after kernel-checked
+success. -/
+def checkedResult (result : Except Frontend.Error Frontend.Result)
+    (success : result.toOption.isSome = true) : Frontend.Result :=
+  result.toOption.get success
 
-def Arithmetic.Result.getValue (result : Arithmetic.Result)
-    (success : Arithmetic.Result.isReady result = true) : Hex.Interval :=
-  match result with
-  | .ready interval => interval
-  | .resourceLimit _ => False.elim (by simp [Arithmetic.Result.isReady] at success)
+namespace Sources
 
-theorem Arithmetic.Result.eq_ready (result : Arithmetic.Result)
-    (success : Arithmetic.Result.isReady result = true) :
-    result = .ready (Arithmetic.Result.getValue result success) := by
-  cases result with
-  | ready _ => rfl
-  | resourceLimit _ =>
-      simp [Hex.Interval.Tactic.Arithmetic.Result.isReady] at success
+theorem nil : List.Forall₂
+    (fun value : ℝ => fun source : Hex.Interval => source.Contains value) [] [] :=
+  .nil
+
+theorem cons {value : ℝ} {source : Hex.Interval} {values : List ℝ}
+    {sources : List Hex.Interval} (member : source.Contains value)
+    (tail : List.Forall₂
+      (fun value : ℝ => fun source : Hex.Interval => source.Contains value)
+      values sources) :
+    List.Forall₂
+      (fun value : ℝ => fun source : Hex.Interval => source.Contains value)
+      (value :: values) (source :: sources) :=
+  .cons member tail
+
+end Sources
+
+namespace Eval
+
+theorem source {config : Rule.Config} {values : Nat → ℝ} {index : Nat} {value : ℝ}
+    (equal : values index = value) :
+    (Frontend.Term.source index).eval config values = value := equal
+
+theorem constantMk {endpoint : EndpointLimit} {powerWork : Arithmetic.PowLimits}
+    {exponent : Nat} {precisionLimits : Arithmetic.PrecisionLimits}
+    {precision : Precision} {constant : Dyadic}
+    {extraMeanings : Array (Program.Meaning ℝ)} {values : Nat → ℝ} {value : ℝ}
+    (equal : toReal constant = value) :
+    Frontend.Term.constant.eval
+      { endpoint, powerWork, exponent, precisionLimits, precision, constant,
+        extraMeanings } values = value := by
+  simpa [Frontend.Term.eval] using equal
+
+theorem neg {config : Rule.Config} {values : Nat → ℝ} {input : Frontend.Term}
+    {value : ℝ} (equal : input.eval config values = value) :
+    (Frontend.Term.neg input).eval config values = -value := by
+  simp [Frontend.Term.eval, equal]
+
+theorem add {config : Rule.Config} {values : Nat → ℝ} {left right : Frontend.Term}
+    {leftValue rightValue : ℝ} (leftEq : left.eval config values = leftValue)
+    (rightEq : right.eval config values = rightValue) :
+    (Frontend.Term.add left right).eval config values = leftValue + rightValue := by
+  simp [Frontend.Term.eval, leftEq, rightEq]
+
+theorem sub {config : Rule.Config} {values : Nat → ℝ} {left right : Frontend.Term}
+    {leftValue rightValue : ℝ} (leftEq : left.eval config values = leftValue)
+    (rightEq : right.eval config values = rightValue) :
+    (Frontend.Term.sub left right).eval config values = leftValue - rightValue := by
+  simp [Frontend.Term.eval, leftEq, rightEq]
+
+theorem mul {config : Rule.Config} {values : Nat → ℝ} {left right : Frontend.Term}
+    {leftValue rightValue : ℝ} (leftEq : left.eval config values = leftValue)
+    (rightEq : right.eval config values = rightValue) :
+    (Frontend.Term.mul left right).eval config values = leftValue * rightValue := by
+  simp [Frontend.Term.eval, leftEq, rightEq]
+
+theorem pow {config : Rule.Config} {values : Nat → ℝ} {input : Frontend.Term}
+    {value : ℝ} (equal : input.eval config values = value) :
+    (Frontend.Term.pow input).eval config values = value ^ config.exponent := by
+  simp [Frontend.Term.eval, equal]
+
+theorem abs {config : Rule.Config} {values : Nat → ℝ} {input : Frontend.Term}
+    {value : ℝ} (equal : input.eval config values = value) :
+    (Frontend.Term.abs input).eval config values = |value| := by
+  simp [Frontend.Term.eval, equal]
+
+theorem min {config : Rule.Config} {values : Nat → ℝ} {left right : Frontend.Term}
+    {leftValue rightValue : ℝ} (leftEq : left.eval config values = leftValue)
+    (rightEq : right.eval config values = rightValue) :
+    (Frontend.Term.min left right).eval config values = min leftValue rightValue := by
+  simp [Frontend.Term.eval, leftEq, rightEq, min_def]
+
+theorem max {config : Rule.Config} {values : Nat → ℝ} {left right : Frontend.Term}
+    {leftValue rightValue : ℝ} (leftEq : left.eval config values = leftValue)
+    (rightEq : right.eval config values = rightValue) :
+    (Frontend.Term.max left right).eval config values = max leftValue rightValue := by
+  simp [Frontend.Term.eval, leftEq, rightEq, max_def]
+
+theorem inv {config : Rule.Config} {values : Nat → ℝ} {input : Frontend.Term}
+    {value : ℝ} (equal : input.eval config values = value) :
+    (Frontend.Term.inv input).eval config values = value⁻¹ := by
+  simp [Frontend.Term.eval, equal]
+
+theorem div {config : Rule.Config} {values : Nat → ℝ} {left right : Frontend.Term}
+    {leftValue rightValue : ℝ} (leftEq : left.eval config values = leftValue)
+    (rightEq : right.eval config values = rightValue) :
+    (Frontend.Term.div left right).eval config values = leftValue / rightValue := by
+  simp [Frontend.Term.eval, leftEq, rightEq]
+
+theorem regularize {config : Rule.Config} {values : Nat → ℝ} {input : Frontend.Term}
+    {value : ℝ} (equal : input.eval config values = value) :
+    (Frontend.Term.regularize input).eval config values = value := by
+  simpa [Frontend.Term.eval] using equal
+
+theorem contains {config : Rule.Config} {values : Nat → ℝ} {term : Frontend.Term}
+    {interval : Hex.Interval} {value : ℝ}
+    (member : interval.Contains (term.eval config values))
+    (equal : term.eval config values = value) : interval.Contains value := by
+  rwa [equal] at member
+
+end Eval
 
 theorem memRaw {limit : EndpointLimit} {raw : Raw} {x : ℝ}
     (success : BuildResult.isReady (ofRawWithin limit raw) = true)
@@ -122,10 +214,6 @@ theorem upperOfMem {interval : Hex.Interval} {x : ℝ} {lower : Lower}
   change interval.view.Contains x at member
   rw [shape] at member
   exact member.2
-
-theorem contains_of_eq {left right : Hex.Interval} {x : ℝ}
-    (equal : left = right) (member : left.Contains x) : right.Contains x := by
-  simpa [equal] using member
 
 theorem intCastLeDyadic {value : Int} {endpoint : Dyadic}
     (h : (value : Rat) ≤ endpoint.toRat) :
@@ -206,17 +294,6 @@ theorem equalityOfMem {interval : Hex.Interval} {endpoint : Dyadic}
   have bounds := And.intro
     (lowerOfMem shape member) (upperOfMem shape member)
   exact (le_antisymm bounds.2 bounds.1).trans endpointEq
-
-theorem neg_mem_negWithin {limit : EndpointLimit} {input result : Hex.Interval}
-    {x : ℝ} (checked : negWithin limit input = .ready result)
-    (member : input.Contains x) : result.Contains (-x) := by
-  exact (contains_negWithin checked (-x)).2 (by simpa using member)
-
-theorem zero_mem {limit : EndpointLimit} {result : Hex.Interval}
-    (checked : singletonWithin limit (.ofInt 0) = .ready result) :
-    result.Contains (0 : ℝ) := by
-  rw [← toReal_zero]
-  exact Rule.constant_mem checked
 
 theorem castLowerLe {actual x : ℝ} {value : Int}
     (endpoint : actual = (value : ℝ)) :
@@ -303,6 +380,65 @@ meta def intervalExpr (limit : EndpointLimit) (interval : Hex.Interval) : MetaM 
   | .resourceLimit _ =>
       throwError "interval quotation exceeded the endpoint envelope"
 
+meta def listExpr (type : Expr) (items : List Expr) : MetaM Expr := do
+  let nil := mkApp (mkConst ``List.nil [.zero]) type
+  return items.foldr (fun item tail =>
+    mkAppN (mkConst ``List.cons [.zero]) #[type, item, tail]) nil
+
+meta def arrayExpr (type : Expr) (items : List Expr) : MetaM Expr := do
+  mkAppM ``Array.mk #[← listExpr type items]
+
+meta def proofLimitsExpr (limits : Proof.Limits) : MetaM Expr := do
+  mkAppM ``Proof.Limits.mk
+    #[mkNatLit limits.maxPackages, mkNatLit limits.maxSchemas,
+      mkNatLit limits.maxBodyCells, mkNatLit limits.maxDependencies,
+      mkNatLit limits.maxChronology]
+
+meta def reifyLimitsExpr (limits : Frontend.Limits) : MetaM Expr := do
+  mkAppM ``Frontend.Limits.mk
+    #[mkNatLit limits.maxSources, mkNatLit limits.maxOperations,
+      mkNatLit limits.maxNodes, mkNatLit limits.maxDepth]
+
+meta def frontendConfigExpr (config : Frontend.Config) : MetaM Expr := do
+  mkAppM ``Frontend.Config.mk
+    #[← Rule.Runtime.Quote.configExpr config.rule,
+      ← reifyLimitsExpr config.reify, ← proofLimitsExpr config.proof]
+
+meta def termExpr : Frontend.Term → MetaM Expr
+  | .source index => mkAppM ``Frontend.Term.source #[mkNatLit index]
+  | .constant => pure (mkConst ``Frontend.Term.constant)
+  | .neg input => do mkAppM ``Frontend.Term.neg #[← termExpr input]
+  | .add left right => do
+      mkAppM ``Frontend.Term.add #[← termExpr left, ← termExpr right]
+  | .sub left right => do
+      mkAppM ``Frontend.Term.sub #[← termExpr left, ← termExpr right]
+  | .mul left right => do
+      mkAppM ``Frontend.Term.mul #[← termExpr left, ← termExpr right]
+  | .pow input => do mkAppM ``Frontend.Term.pow #[← termExpr input]
+  | .abs input => do mkAppM ``Frontend.Term.abs #[← termExpr input]
+  | .min left right => do
+      mkAppM ``Frontend.Term.min #[← termExpr left, ← termExpr right]
+  | .max left right => do
+      mkAppM ``Frontend.Term.max #[← termExpr left, ← termExpr right]
+  | .inv input => do mkAppM ``Frontend.Term.inv #[← termExpr input]
+  | .div left right => do
+      mkAppM ``Frontend.Term.div #[← termExpr left, ← termExpr right]
+  | .regularize input => do mkAppM ``Frontend.Term.regularize #[← termExpr input]
+
+meta def resultExpr (config : Frontend.Config) (sourceCount : Nat)
+    (term : Frontend.Term) : MetaM Expr := do
+  let checked ← mkAppM ``Frontend.reifyWithin
+    #[← frontendConfigExpr config, mkNatLit sourceCount, ← termExpr term]
+  let option ← mkAppM ``Except.toOption #[checked]
+  let ready ← mkAppM ``Option.isSome #[option]
+  let success ← mkDecideProof (← mkAppM ``Eq #[ready, toExpr true])
+  let result ← mkAppM ``checkedResult #[checked, success]
+  mkAppM ``Frontend.Result.mk
+    #[← mkAppM ``Frontend.Result.program #[result],
+      ← mkAppM ``Frontend.Result.target #[result], ← termExpr term,
+      ← mkAppM ``Frontend.Result.entries #[result],
+      ← mkAppM ``Frontend.Result.sourceCount #[result]]
+
 end Quote
 
 /-! ## Recursive bound derivation -/
@@ -324,6 +460,80 @@ meta def defaultConfig : Frontend.Config :=
     proof :=
       { maxPackages := 1, maxSchemas := 12, maxBodyCells := 1
         maxDependencies := 2, maxChronology := 256 } }
+
+structure RuntimeLimits where
+  executable : Executable.Limits
+  runtime : Runtime.Limits
+  search : Search.Limits
+  result : Search.Result.Limits
+  envelope : Search.Envelope
+  controller : Runtime.Controller.Limits
+  adapter : RuntimeProof.Limits
+  emit : RuntimeEmit.Limits
+
+meta def runtimeLimits (config : Frontend.Config) : RuntimeLimits :=
+  let chronology := config.proof.maxChronology
+  let nodes := config.reify.maxNodes
+  let structural := 64 + 8 * nodes + 16 * chronology
+  let state : State.Limits :=
+    { maxOperations := config.reify.maxOperations, maxNodes := nodes,
+      maxRules := 12, maxRegistryEntries := nodes + 32, maxReplayFormats := 12,
+      maxArity := 2, maxScopeNodes := 0, maxApplications := nodes,
+      maxQueueEntries := nodes, maxActions := chronology,
+      maxMatcherVisits := 0, matcherBatchSize := 0,
+      maxAcceptedFacts := chronology, maxRetainedSuggestions := 0, maxEffort := 0,
+      maxObservationValue := nodes, maxDiagnosticValue := nodes,
+      maxOutcomeCandidates := 1, maxOutcomeSuggestions := 0,
+      maxProposalItems := 1, maxInstances := 0, maxGeneration := 0,
+      maxNodeDepth := config.reify.maxDepth, maxEqualities := 0,
+      splitEndpointLimit := config.rule.endpoint }
+  let executable : Executable.Limits :=
+    { state, maxPackages := 1, maxMetadataBytes := 64, maxMetadataWork := 64,
+      maxCacheBytes := chronology, maxCacheWork := chronology,
+      maxResultBytes := 1, maxResultWork := 1, maxQuotes := 1,
+      maxQuoteCells := 1, maxAtom := 12, maxSchema := 1 }
+  let runtime : Runtime.Limits := { executable, maxEvents := 1 }
+  let search : Search.Limits :=
+    { maxSteps := chronology + 1, maxSplits := 0, maxLeaves := 1, maxFrontier := 1,
+      maxDepth := 0, maxScopes := 1, leafFuel := chronology + 1 }
+  let result : Search.Result.Limits :=
+    { search, runtime, maxNodes := 1, maxBodyCells := chronology,
+      maxBytes := structural, maxWork := structural, maxCode := 16 }
+  let policy : Policy.Limits :=
+    { maxOffers := nodes, maxBytes := structural,
+      maxPairs := nodes * nodes, maxWork := structural, maxScore := 0 }
+  let trace : Trace.Limit :=
+    { maxEvents := 0, maxBytes := 0, maxWork := 0, maxCode := 16 }
+  let envelope : Search.Envelope := { state, policy, trace, search }
+  let controller : Runtime.Controller.Limits := { maxChoices := chronology, result }
+  let tree : Proof.TreeLimits :=
+    { maxNodes := 1, maxDepth := 0, maxBodyCells := chronology,
+      maxWork := structural }
+  let adapter : RuntimeProof.Limits :=
+    { result := result, proof := config.proof, tree := tree,
+      maxTransitions := chronology, maxEvents := chronology,
+      maxStructuralCells := structural }
+  let emit : RuntimeEmit.Limits :=
+    { proof := config.proof, maxSchemas := 12, maxChronology := chronology,
+      maxExpressionCells := structural * 1024 }
+  { executable, runtime, search, result, envelope, controller, adapter, emit }
+
+meta def runtimeMeasure : Search.Result.Measure Hex.Interval Rule.Runtime.Cause
+    (List Nat) Proof.Key :=
+  let unit : Search.Result.Cost := { bytes := 1, work := 1 }
+  { node := unit
+    branch := fun branch =>
+      { bytes := branch.program.nodes.size + branch.history.size,
+        work := branch.program.nodes.size + branch.history.size }
+    fact := fun _ => unit, action := fun _ => unit, plan := fun _ => unit,
+    schema := fun _ => unit, body := fun _ => unit, code := fun _ => unit }
+
+meta def runtimePolicy : Policy.Interface Hex.Interval (List Nat) ApplicationId RuleKey :=
+  { choose := fun plan view => match plan with
+    | [] => .stop []
+    | wanted :: rest => match view.offers.find? fun offer => offer.id.index == wanted with
+      | none => .stop plan
+      | some offer => .select offer rest }
 
 structure ParseState where
   sources : Array Expr := #[]
@@ -530,22 +740,13 @@ meta def collectCuts (source : Expr) : MetaM SourceCuts := do
                 upper := strongerUpper cuts.upper ⟨value, left, false, upperProof⟩ }
   pure cuts
 
-structure Derived where
-  expression : Expr
-  interval : Hex.Interval
-  intervalExpr : Expr
-  proof : Expr
-  node : NodeId
-  seen : SeenVersion
-
 structure Bound where
   expression : Expr
   interval : Hex.Interval
   intervalExpr : Expr
   proof : Expr
   reified : Frontend.Result
-  input : Proof.Input Hex.Interval
-  events : List (Proof.Event Hex.Interval)
+  chronology : Nat
 
 meta def rawOfCuts (cuts : SourceCuts) : Raw :=
   .bounds
@@ -612,145 +813,351 @@ meta def sourceProof (config : Frontend.Config) (expression : Expr)
   let proof ← Proof.emitChecked emitter proof expected
   pure (interval, intervalTerm, proof)
 
-meta def getDerived (derived : Array Derived) (node : NodeId) : MetaM Derived :=
-  match derived[node.index]? with
-  | some value => pure value
-  | none => throwError "interval: arithmetic dependency escaped the derived table"
-
-meta def buildValueExpr (result : Expr) : MetaM (Expr × Expr) := do
-  let ready ← mkAppM ``BuildResult.isReady #[result]
-  let success ← mkDecideProof (← mkAppM ``Eq #[ready, toExpr true])
-  let value ← mkAppM ``BuildResult.getValue #[result, success]
-  let checked ← mkAppM ``BuildResult.eq_ready #[result, success]
-  pure (value, checked)
-
-meta def arithmeticValueExpr (result : Expr) : MetaM (Expr × Expr) := do
-  let ready ← mkAppM ``Arithmetic.Result.isReady #[result]
-  let success ← mkDecideProof (← mkAppM ``Eq #[ready, toExpr true])
-  let value ← mkAppM ``Arithmetic.Result.getValue #[result, success]
-  let checked ← mkAppM ``Arithmetic.Result.eq_ready #[result, success]
-  pure (value, checked)
-
-meta def actionFor (serial ruleIndex : Nat) (key : RuleKey) (node : NodeId)
-    (inputs : List SeenVersion) : Action :=
-  { serial, programVersion := 0, application := { index := serial }
-    rule := { index := ruleIndex }, key, node, kind := .forward, effort := 0
-    inputs, writes := [node] }
-
-structure OperationResult where
-  interval : Hex.Interval
-  intervalExpr : Expr
+/-! The evaluator proof is a DAG even though `Frontend.Term` is a tree: the
+same reified term can occur at several parents.  Keep memoization local to one
+top-level proof construction.  Besides avoiding mutable state across
+`Proof.emitChecked`'s transactional `MetaM` boundaries, the stored expression
+guards the exact `Frontend.Term`/caller-expression correlation on every hit. -/
+private structure EvalProofEntry where
+  term : Frontend.Term
+  expression : Expr
   proof : Expr
-  ruleIndex : Nat
-  key : RuleKey
-  tag : Nat
 
-meta def deriveOperation (config : Frontend.Config) (term : Frontend.Term)
-    (expression : Expr) (arguments : List Derived) : MetaM OperationResult := do
-  let endpoint ← Quote.endpointExpr config.rule.endpoint
-  let finishBuild (runtime : BuildResult) (resultTerm : Expr) (theoremName : Name)
-      (ruleIndex tag : Nat) (key : RuleKey) : MetaM OperationResult := do
-    let interval ← match runtime with
-      | .ready interval => pure interval
-      | .resourceLimit cost =>
-          throwError "interval: {key.name} resource refusal: {repr cost}"
-    let (intervalExpr, checked) ← buildValueExpr resultTerm
-    let proof ← mkAppM theoremName (#[checked] ++ arguments.toArray.map (·.proof))
-    let expected ← mkAppM ``Hex.Interval.Contains #[intervalExpr, expression]
-    let emitter : Proof.Emitter Expr := { emit := pure }
-    let proof ← Proof.emitChecked emitter proof expected
-    pure { interval, intervalExpr, proof, ruleIndex, key, tag }
-  let finishArithmetic (runtime : Arithmetic.Result) (resultTerm : Expr)
-      (theoremName : Name) (ruleIndex tag : Nat) (key : RuleKey) :
-      MetaM OperationResult := do
-    let interval ← match runtime with
-      | .ready interval => pure interval
-      | .resourceLimit cost =>
-          throwError "interval: {key.name} resource refusal: {repr cost}"
-    let (intervalExpr, checked) ← arithmeticValueExpr resultTerm
-    let proof ← mkAppM theoremName (#[checked] ++ arguments.toArray.map (·.proof))
-    let expected ← mkAppM ``Hex.Interval.Contains #[intervalExpr, expression]
-    let emitter : Proof.Emitter Expr := { emit := pure }
-    let proof ← Proof.emitChecked emitter proof expected
-    pure { interval, intervalExpr, proof, ruleIndex, key, tag }
-  match term, arguments with
-  | .constant, [] =>
-      unless config.rule.constant == .ofInt 0 do
-        throwError "interval: the production tactic currently quotes only zero"
-      let runtime := singletonWithin config.rule.endpoint config.rule.constant
-      let resultTerm ← mkAppM ``singletonWithin
-        #[endpoint, ← Quote.dyadicExpr config.rule.constant]
-      let interval ← match runtime with
-        | .ready interval => pure interval
-        | .resourceLimit cost =>
-            throwError "interval: {Rule.constantKey.name} resource refusal: {repr cost}"
-      let (intervalExpr, checked) ← buildValueExpr resultTerm
-      let proof ← mkAppM ``zero_mem #[checked]
-      let expected ← mkAppM ``Hex.Interval.Contains #[intervalExpr, expression]
-      let emitter : Proof.Emitter Expr := { emit := pure }
-      let proof ← Proof.emitChecked emitter proof expected
-      return ⟨interval, intervalExpr, proof, 8, Rule.constantKey, 9⟩
-  | .neg _, [input] =>
-      let runtime := negWithin config.rule.endpoint input.interval
-      let resultTerm ← mkAppM ``negWithin #[endpoint, input.intervalExpr]
-      finishBuild runtime resultTerm ``neg_mem_negWithin 0 1 Rule.negKey
-  | .add _ _, [left, right] =>
-      let runtime := addWithin config.rule.endpoint left.interval right.interval
-      let resultTerm ← mkAppM ``addWithin #[endpoint, left.intervalExpr, right.intervalExpr]
-      finishBuild runtime resultTerm ``add_mem_addWithin 1 2 Rule.addKey
-  | .sub _ _, [left, right] =>
-      let runtime := subWithin config.rule.endpoint left.interval right.interval
-      let resultTerm ← mkAppM ``subWithin #[endpoint, left.intervalExpr, right.intervalExpr]
-      finishBuild runtime resultTerm ``sub_mem_subWithin 2 3 Rule.subKey
-  | .mul _ _, [left, right] =>
-      let runtime := mulWithin config.rule.endpoint left.interval right.interval
-      let resultTerm ← mkAppM ``mulWithin #[endpoint, left.intervalExpr, right.intervalExpr]
-      finishArithmetic runtime resultTerm ``mul_mem_mulWithin 3 4 Rule.mulKey
-  | .pow _, [input] =>
-      let runtime := powWithin config.rule.endpoint config.rule.powerWork
-        input.interval config.rule.exponent
-      let work ← mkAppM ``Arithmetic.PowLimits.mk
-        #[mkNatLit config.rule.powerWork.maxExponent]
-      let resultTerm ← mkAppM ``powWithin
-        #[endpoint, work, input.intervalExpr, mkNatLit config.rule.exponent]
-      finishArithmetic runtime resultTerm ``pow_mem_powWithin 4 5 Rule.powKey
-  | .abs _, [input] =>
-      let runtime := absWithin config.rule.endpoint input.interval
-      let resultTerm ← mkAppM ``absWithin #[endpoint, input.intervalExpr]
-      finishBuild runtime resultTerm ``abs_mem_absWithin 5 6 Rule.absKey
-  | .min _ _, [left, right] =>
-      let runtime := minWithin config.rule.endpoint left.interval right.interval
-      let resultTerm ← mkAppM ``minWithin #[endpoint, left.intervalExpr, right.intervalExpr]
-      finishBuild runtime resultTerm ``min_mem_minWithin 6 7 Rule.minKey
-  | .max _ _, [left, right] =>
-      let runtime := maxWithin config.rule.endpoint left.interval right.interval
-      let resultTerm ← mkAppM ``maxWithin #[endpoint, left.intervalExpr, right.intervalExpr]
-      finishBuild runtime resultTerm ``max_mem_maxWithin 7 8 Rule.maxKey
-  | .inv _, [input] =>
-      let runtime := invWithin config.rule.precisionLimits config.rule.precision input.interval
-      let resultTerm ← mkAppM ``invWithin
-        #[← Quote.precisionLimitsExpr config.rule.precisionLimits,
-          mkIntLit config.rule.precision, input.intervalExpr]
-      finishArithmetic runtime resultTerm ``inv_mem_invWithin 9 10 Rule.invKey
-  | .div _ _, [left, right] =>
-      let runtime := divWithin config.rule.precisionLimits config.rule.precision
-        left.interval right.interval
-      let resultTerm ← mkAppM ``divWithin
-        #[← Quote.precisionLimitsExpr config.rule.precisionLimits,
-          mkIntLit config.rule.precision, left.intervalExpr, right.intervalExpr]
-      finishArithmetic runtime resultTerm ``div_mem_divWithin 10 11 Rule.divKey
-  | .regularize _, [input] =>
-      let runtime := regularizeWithin config.rule.precisionLimits config.rule.precision
-        input.interval
-      let resultTerm ← mkAppM ``regularizeWithin
-        #[← Quote.precisionLimitsExpr config.rule.precisionLimits,
-          mkIntLit config.rule.precision, input.intervalExpr]
-      finishArithmetic runtime resultTerm ``mem_regularizeWithin 11 12 Rule.regularizeKey
-  | _, _ => throwError "interval: malformed reified operation"
+private structure EvalProofCache where
+  entries : Array EvalProofEntry := #[]
 
-/-- Derive one exact forward interval and its ordinary membership proof.
-Runtime chronology is authenticated by supported replay before the independently
-emitted proof is returned. -/
+private meta def EvalProofCache.findTerm? (cache : EvalProofCache)
+    (term : Frontend.Term) : Option EvalProofEntry :=
+  cache.entries.toList.find? fun entry => entry.term == term
+
+private meta def evalProofCached (config : Frontend.Config) (parsed : ParseState)
+    (values ruleConfig : Expr) (cache : EvalProofCache)
+    (term : Frontend.Term) : MetaM (Expr × EvalProofCache) := do
+  let some expression := parsed.expression? term
+    | throwError "interval: reified term has no Lean expression"
+  let quotedTerm ← Quote.termExpr term
+  let evaluated ← mkAppM ``Frontend.Term.eval #[ruleConfig, values, quotedTerm]
+  let expected ← mkAppM ``Eq #[evaluated, expression]
+  if let some entry := cache.findTerm? term then
+    unless entry.expression == expression do
+      throwError "interval: memoized term changed its exact Lean expression"
+    let emitter : Proof.Emitter Expr := { emit := pure }
+    let proof ← Proof.emitChecked emitter entry.proof expected
+    return (proof, cache)
+  let mut cache := cache
+  let candidate ← match term with
+    | .source index => do
+        let some source := parsed.sources[index]?
+          | throwError "interval: source evaluation escaped the source table"
+        let lookup := mkApp values (mkNatLit index)
+        let lookupExpected ← mkAppM ``Eq #[lookup, source]
+        let reflexive ← mkAppM ``Eq.refl #[source]
+        let emitter : Proof.Emitter Expr := { emit := pure }
+        let lookupProof ← Proof.emitChecked emitter reflexive lookupExpected
+        mkAppOptM ``Eval.source
+          #[some ruleConfig, some values, some (mkNatLit index), some source,
+            some lookupProof]
+    | .constant => do
+        let some value := intLiteral? expression
+          | throwError "interval: configured constant is not an integer literal"
+        let quotedConstant ← Rule.Runtime.Quote.dyadicExpr config.rule.constant
+        let rationalEq ← mkDecideProof (← mkAppM ``Eq
+          #[toExpr config.rule.constant.toRat, toExpr (value : Rat)])
+        let castEqual ← mkAppOptM ``toRealEqIntCast
+          #[some quotedConstant, some (mkIntLit value), some rationalEq]
+        let realCast ← realIntCast value
+        let literalEqual ← normNumProof (← mkAppM ``Eq #[realCast, expression])
+        let equal ← mkAppM ``Eq.trans #[castEqual, literalEqual]
+        mkAppOptM ``Eval.constantMk
+          #[some (← Rule.Runtime.Quote.endpointExpr config.rule.endpoint),
+            some (← Rule.Runtime.Quote.powLimitsExpr config.rule.powerWork),
+            some (mkNatLit config.rule.exponent),
+            some (← Rule.Runtime.Quote.precisionLimitsExpr config.rule.precisionLimits),
+            some (mkIntLit config.rule.precision), some quotedConstant,
+            some (← Rule.Runtime.Quote.emptyMeaningsExpr), some values, some expression,
+            some equal]
+    | .neg input => do
+        let some inputValue := parsed.expression? input
+          | throwError "interval: negated term has no Lean expression"
+        let (inputProof, nextCache) ←
+          evalProofCached config parsed values ruleConfig cache input
+        cache := nextCache
+        mkAppOptM ``Eval.neg
+          #[some ruleConfig, some values, some (← Quote.termExpr input),
+            some inputValue, some inputProof]
+    | .add left right => do
+        let some leftValue := parsed.expression? left
+          | throwError "interval: left addend has no Lean expression"
+        let some rightValue := parsed.expression? right
+          | throwError "interval: right addend has no Lean expression"
+        let (leftProof, nextCache) ←
+          evalProofCached config parsed values ruleConfig cache left
+        cache := nextCache
+        let (rightProof, nextCache) ←
+          evalProofCached config parsed values ruleConfig cache right
+        cache := nextCache
+        mkAppOptM ``Eval.add
+          #[some ruleConfig, some values, some (← Quote.termExpr left),
+            some (← Quote.termExpr right), some leftValue, some rightValue,
+            some leftProof, some rightProof]
+    | .sub left right => do
+        let some leftValue := parsed.expression? left
+          | throwError "interval: minuend has no Lean expression"
+        let some rightValue := parsed.expression? right
+          | throwError "interval: subtrahend has no Lean expression"
+        let (leftProof, nextCache) ←
+          evalProofCached config parsed values ruleConfig cache left
+        cache := nextCache
+        let (rightProof, nextCache) ←
+          evalProofCached config parsed values ruleConfig cache right
+        cache := nextCache
+        mkAppOptM ``Eval.sub
+          #[some ruleConfig, some values, some (← Quote.termExpr left),
+            some (← Quote.termExpr right), some leftValue, some rightValue,
+            some leftProof, some rightProof]
+    | .mul left right => do
+        let some leftValue := parsed.expression? left
+          | throwError "interval: left factor has no Lean expression"
+        let some rightValue := parsed.expression? right
+          | throwError "interval: right factor has no Lean expression"
+        let (leftProof, nextCache) ←
+          evalProofCached config parsed values ruleConfig cache left
+        cache := nextCache
+        let (rightProof, nextCache) ←
+          evalProofCached config parsed values ruleConfig cache right
+        cache := nextCache
+        mkAppOptM ``Eval.mul
+          #[some ruleConfig, some values, some (← Quote.termExpr left),
+            some (← Quote.termExpr right), some leftValue, some rightValue,
+            some leftProof, some rightProof]
+    | .pow input => do
+        let some inputValue := parsed.expression? input
+          | throwError "interval: powered term has no Lean expression"
+        let (inputProof, nextCache) ←
+          evalProofCached config parsed values ruleConfig cache input
+        cache := nextCache
+        mkAppOptM ``Eval.pow
+          #[some ruleConfig, some values, some (← Quote.termExpr input),
+            some inputValue, some inputProof]
+    | .abs input => do
+        let some inputValue := parsed.expression? input
+          | throwError "interval: absolute-value term has no Lean expression"
+        let (inputProof, nextCache) ←
+          evalProofCached config parsed values ruleConfig cache input
+        cache := nextCache
+        mkAppOptM ``Eval.abs
+          #[some ruleConfig, some values, some (← Quote.termExpr input),
+            some inputValue, some inputProof]
+    | .min left right => do
+        let some leftValue := parsed.expression? left
+          | throwError "interval: left minimum input has no Lean expression"
+        let some rightValue := parsed.expression? right
+          | throwError "interval: right minimum input has no Lean expression"
+        let (leftProof, nextCache) ←
+          evalProofCached config parsed values ruleConfig cache left
+        cache := nextCache
+        let (rightProof, nextCache) ←
+          evalProofCached config parsed values ruleConfig cache right
+        cache := nextCache
+        mkAppOptM ``Eval.min
+          #[some ruleConfig, some values, some (← Quote.termExpr left),
+            some (← Quote.termExpr right), some leftValue, some rightValue,
+            some leftProof, some rightProof]
+    | .max left right => do
+        let some leftValue := parsed.expression? left
+          | throwError "interval: left maximum input has no Lean expression"
+        let some rightValue := parsed.expression? right
+          | throwError "interval: right maximum input has no Lean expression"
+        let (leftProof, nextCache) ←
+          evalProofCached config parsed values ruleConfig cache left
+        cache := nextCache
+        let (rightProof, nextCache) ←
+          evalProofCached config parsed values ruleConfig cache right
+        cache := nextCache
+        mkAppOptM ``Eval.max
+          #[some ruleConfig, some values, some (← Quote.termExpr left),
+            some (← Quote.termExpr right), some leftValue, some rightValue,
+            some leftProof, some rightProof]
+    | .inv input => do
+        let some inputValue := parsed.expression? input
+          | throwError "interval: reciprocal term has no Lean expression"
+        let (inputProof, nextCache) ←
+          evalProofCached config parsed values ruleConfig cache input
+        cache := nextCache
+        mkAppOptM ``Eval.inv
+          #[some ruleConfig, some values, some (← Quote.termExpr input),
+            some inputValue, some inputProof]
+    | .div left right => do
+        let some leftValue := parsed.expression? left
+          | throwError "interval: dividend has no Lean expression"
+        let some rightValue := parsed.expression? right
+          | throwError "interval: divisor has no Lean expression"
+        let (leftProof, nextCache) ←
+          evalProofCached config parsed values ruleConfig cache left
+        cache := nextCache
+        let (rightProof, nextCache) ←
+          evalProofCached config parsed values ruleConfig cache right
+        cache := nextCache
+        mkAppOptM ``Eval.div
+          #[some ruleConfig, some values, some (← Quote.termExpr left),
+            some (← Quote.termExpr right), some leftValue, some rightValue,
+            some leftProof, some rightProof]
+    | .regularize input => do
+        let some inputValue := parsed.expression? input
+          | throwError "interval: regularized term has no Lean expression"
+        let (inputProof, nextCache) ←
+          evalProofCached config parsed values ruleConfig cache input
+        cache := nextCache
+        mkAppOptM ``Eval.regularize
+          #[some ruleConfig, some values, some (← Quote.termExpr input),
+            some inputValue, some inputProof]
+  let emitter : Proof.Emitter Expr := { emit := pure }
+  let proof ← Proof.emitChecked emitter candidate expected
+  cache := { cache with entries := cache.entries.push { term, expression, proof } }
+  pure (proof, cache)
+
+meta def evalProof (config : Frontend.Config) (parsed : ParseState)
+    (term : Frontend.Term) : MetaM Expr := do
+  let valuesList ← Quote.listExpr (mkConst ``Real) parsed.sources.toList
+  let values ← mkAppM ``Frontend.valuesAt #[valuesList]
+  let ruleConfig ← Rule.Runtime.Quote.configExpr config.rule
+  return (← evalProofCached config parsed values ruleConfig {} term).1
+
+meta def runtimeKey : RuntimeProof.Key := { name := "interval-tactic", version := 1 }
+
+meta def checkedValue (checked : Expr) : MetaM (Expr × Expr) := do
+  let option ← mkAppM ``Except.toOption #[checked]
+  let ready ← mkAppM ``Option.isSome #[option]
+  let success ← mkDecideProof (← mkAppM ``Eq #[ready, toExpr true])
+  pure (option, success)
+
+structure RuntimeResult (config : Rule.Config) where
+  checked : RuntimeEmit.Checked Hex.Interval (Rule.semantics config)
+    Rule.Runtime.Cause (List Nat)
+  output : Hex.Interval
+  chronology : Nat
+
+private meta def liftRuntimeExcept {ε α : Type} : Except ε α → Except ε (ULift.{1, 0} α)
+  | .error error => .error error
+  | .ok value => .ok ⟨value⟩
+
+/-- Resolve the first policy-pending application through the exact sealed
+runtime registry. Handler applicability is only a Boolean in the executable
+contract, so its discarded package-specific cost cannot be reconstructed here
+without running the arithmetic proposal a second time. -/
+private meta def pendingRule?
+    {ruleConfig : Rule.Config} (registry : Rule.Runtime.EmitRegistry ruleConfig)
+    (remaining : List Nat) :
+    Option RuleKey := do
+  let index ← remaining.head?
+  let application ← registry.runtime.assembly.applications[index]?
+  let registration ←
+    registry.runtime.assembly.registry.registrations[application.rule.index]?
+  pure registration.key
+
+private meta def stoppedMessage
+    {ruleConfig : Rule.Config} (registry : Rule.Runtime.EmitRegistry ruleConfig) (live : Nat)
+    (remaining : List Nat) : String :=
+  let residual := if live == 1 then "1 live offer remains" else s!"{live} live offers remain"
+  match pendingRule? registry remaining with
+  | some rule =>
+      s!"rule {rule.name} declined its application under the configured resource envelope; " ++
+        residual
+  | none =>
+      s!"controller stopped with {live} live offers and {remaining.length} pending actions"
+
+/-! Execute and settle the exact typed runtime chronology. Keeping this phase
+in `Except` permits its sealed `Type 1` handles to remain outside `MetaM`. -/
+meta def prepareRuntime (config : Frontend.Config) (reified : Frontend.Result)
+    (sourceFacts : Array Hex.Interval) : Except String (RuntimeResult config.rule) := do
+  let limits := runtimeLimits config
+  let registry ← Rule.Runtime.buildEmitWithin limits.executable limits.emit runtimeKey
+      config.rule reified.program |>.mapError fun error =>
+        s!"runtime registry failed: {repr error}"
+  let facts := reified.facts sourceFacts
+  let branch := (← liftRuntimeExcept <|
+    (State.Branch.startWithin limits.executable.state reified.program facts
+      |>.mapError fun error => s!"runtime branch failed: {repr error}")).down
+  let runtime ← Runtime.State.startWithin limits.runtime registry.runtime.assembly branch
+    |>.mapError fun error => s!"runtime start failed: {repr error}"
+  let scope : Policy.ScopeId := { index := 0 }
+  let tree := (← liftRuntimeExcept <|
+    (Search.Result.startWithin limits.result runtimeMeasure scope branch
+      |>.mapError fun error => s!"retained tree start failed: {repr error}")).down
+  let initialController ← Runtime.Controller.State.startWithin limits.controller
+      limits.envelope runtimeMeasure runtime tree
+    |>.mapError fun error => s!"controller start failed: {repr error}"
+  let plan := List.range registry.runtime.assembly.applications.size
+  let controller ← match Runtime.Controller.runWithin limits.controller limits.envelope
+      runtimeMeasure runtimePolicy plan initialController with
+    | .ok (.stopped 0 controller []) => pure controller
+    | .ok (.stopped live _ remaining) => throw (stoppedMessage registry live remaining)
+    | .error error => throw s!"controller run failed: {repr error}"
+  let some version := controller.runtime.branch.versions[reified.target.index]?
+    | throw "target version escaped the runtime branch"
+  let seen : SeenVersion := { node := reified.target, version }
+  let some outputInterval := controller.runtime.branch.factAt? seen
+    | throw "target fact escaped the runtime branch"
+  let input := (← liftRuntimeExcept <|
+    (Frontend.inputWithin config scope reified sourceFacts outputInterval
+      |>.mapError fun error => s!"input construction failed: {repr error}")).down
+  let active ← RuntimeEmit.Active.startWithin registry input controller
+    |>.mapError fun error => s!"emitter start failed: {repr error}"
+  let lineage ← RuntimeEmit.Active.targetWithin limits.result runtimeMeasure active seen
+    |>.mapError fun error => s!"target settlement failed: {repr error}"
+  let checked ← RuntimeEmit.Lineage.quoteWithin limits.adapter runtimeMeasure lineage
+    |>.mapError fun error => s!"retained quotation failed: {repr error}"
+  pure { checked, output := outputInterval, chronology := plan.length }
+
+/-! Emit the checked runtime result and close its exact quoted input against
+the caller's source proofs. -/
+meta def emitBoundWith (config : Frontend.Config) (expression : Expr)
+    (term : Frontend.Term) (parsed : ParseState) (reified : Frontend.Result)
+    (sourceIntervals sourceProofs : Array Expr) (runtime : RuntimeResult config.rule) :
+    MetaM Bound := do
+  let limits := runtimeLimits config
+  let emitted : RuntimeEmit.Emitted ←
+    match ← RuntimeEmit.Checked.emitResultWithin limits.emit runtime.checked with
+    | .ok emitted => pure emitted
+    | .error error => throwError "interval: proof emission failed: {repr error}"
+
+  let configExpr ← Quote.frontendConfigExpr config
+  let resultExpr ← Quote.resultExpr config parsed.sources.size term
+  let valuesListExpr ← Quote.listExpr (mkConst ``Real) parsed.sources.toList
+  let valuesExpr ← mkAppM ``Frontend.valuesAt #[valuesListExpr]
+  let sourceFactsExpr ← Quote.arrayExpr (mkConst ``Hex.Interval) sourceIntervals.toList
+  let modelCheck ← mkAppM ``Frontend.modelWithin #[configExpr, valuesExpr, resultExpr]
+  let (_, modelSuccess) ← checkedValue modelCheck
+  let model ← mkAppM ``Frontend.modelOfCheck #[modelCheck, modelSuccess]
+  let inputProgram ← mkAppM ``Proof.Input.program #[emitted.input]
+  let resultProgram ← mkAppM ``Frontend.Result.program #[resultExpr]
+  let programEq ← mkDecideProof (← mkAppM ``Eq #[inputProgram, resultProgram])
+  let inputTarget ← mkAppM ``Proof.Input.target #[emitted.input]
+  let inputTargetNode ← mkAppM ``Proof.NodeFact.node #[inputTarget]
+  let resultTarget ← mkAppM ``Frontend.Result.target #[resultExpr]
+  let targetEq ← mkDecideProof (← mkAppM ``Eq #[inputTargetNode, resultTarget])
+  let sourceSizeExpr ← mkAppM ``Array.size #[sourceFactsExpr]
+  let resultSourceCount ← mkAppM ``Frontend.Result.sourceCount #[resultExpr]
+  let sourceSize ← mkDecideProof (← mkAppM ``Eq #[sourceSizeExpr, resultSourceCount])
+  let inputFacts ← mkAppM ``Proof.Input.facts #[emitted.input]
+  let resultFacts ← mkAppM ``Frontend.Result.facts #[resultExpr, sourceFactsExpr]
+  let factsEq ← mkDecideProof (← mkAppM ``Eq #[inputFacts, resultFacts])
+  let mut holds := mkConst ``Sources.nil
+  for proof in sourceProofs.toList.reverse do
+    holds ← mkAppM ``Sources.cons #[proof, holds]
+  let sourceHolds ← mkAppM ``Frontend.SourcesContain.ofForall₂ #[holds]
+  let candidate ← mkAppM ``Frontend.closeSources
+    #[configExpr, resultExpr, valuesExpr, model, emitted.input, emitted.evidence,
+      programEq, targetEq, sourceFactsExpr, sourceSize, factsEq, sourceHolds]
+  let candidate ← mkAppM ``Eval.contains #[candidate, ← evalProof config parsed term]
+  let canonicalExpr ← Quote.intervalExpr config.rule.endpoint runtime.output
+  let canonicalExpected ← mkAppM ``Hex.Interval.Contains #[canonicalExpr, expression]
+  let emitter : Proof.Emitter Expr := { emit := pure }
+  let canonicalProof ← Proof.emitChecked emitter candidate canonicalExpected
+  pure
+    { expression, interval := runtime.output, intervalExpr := canonicalExpr
+      proof := canonicalProof, reified, chronology := runtime.chronology }
+
 meta def deriveBound (config : Frontend.Config) (expression : Expr) : MetaM Bound := do
   let expression ← instantiateMVars expression
   let (term, parsed) ← parseTerm config expression
@@ -758,73 +1165,23 @@ meta def deriveBound (config : Frontend.Config) (expression : Expr) : MetaM Boun
     match Frontend.reifyWithin config parsed.sources.size term with
     | .ok result => pure result
     | .error error => throwError "interval: reification failed: {repr error}"
-  let mut sourceValues : Array Derived := #[]
   let mut sourceFacts : Array Hex.Interval := #[]
+  let mut sourceIntervals : Array Expr := #[]
+  let mut sourceProofs : Array Expr := #[]
   for index in [0:parsed.sources.size] do
     let some source := parsed.sources[index]?
       | throwError "interval: source index escaped the parsed source table"
-    let some node := reified.sourceNode? index
+    let some _ := reified.sourceNode? index
       | throwError "interval: selected source is absent from the target graph"
     let cuts ← collectCuts source
     let (interval, intervalExpr, proof) ← sourceProof config source cuts
     sourceFacts := sourceFacts.push interval
-    sourceValues := sourceValues.push
-      { expression := source, interval, intervalExpr, proof, node
-        seen := { node, version := 0 } }
-  let mut derived : Array Derived := #[]
-  let mut events : List (Proof.Event Hex.Interval) := []
-  let scope : Policy.ScopeId := { index := 0 }
-  let mut serial := 0
-  for entry in reified.entries do
-    unless entry.node.index == derived.size do
-      throwError "interval: reifier entry table is not in node order"
-    let some nodeExpression := parsed.expression? entry.term
-      | throwError "interval: reified term has no Lean expression"
-    match entry.term with
-    | .source index =>
-        let some source := sourceValues[index]?
-          | throwError "interval: source node escaped the source proof table"
-        unless source.node == entry.node do
-          throwError "interval: source node differs from its reified address"
-        derived := derived.push source
-    | _ =>
-        let some instruction := reified.program.node? entry.node
-          | throwError "interval: reified node escaped its program"
-        let mut arguments : List Derived := []
-        for argument in instruction.args do
-          arguments := arguments.concat (← getDerived derived argument)
-        let result ← deriveOperation config entry.term nodeExpression arguments
-        let inputs := arguments.map (·.seen)
-        let action := actionFor serial result.ruleIndex result.key entry.node inputs
-        let step : Proof.FactStep Hex.Interval :=
-          { scope, programVersion := 0, action, node := entry.node
-            previous := { node := entry.node, version := 0 }
-            version := 1, proposed := result.interval, installed := result.interval
-            assumptions := inputs, schema := Rule.schemaKey result.key
-            body := [result.tag] }
-        events := events.concat (.fact step)
-        derived := derived.push
-          { expression := nodeExpression, interval := result.interval
-            intervalExpr := result.intervalExpr, proof := result.proof
-            node := entry.node, seen := { node := entry.node, version := 1 } }
-        serial := serial + 1
-  let output ← getDerived derived reified.target
-  let input ←
-    match Frontend.inputWithin config scope reified sourceFacts output.interval with
-    | .ok input => pure input
-    | .error error => throwError "interval: input construction failed: {repr error}"
-  match Frontend.replay config input events 0 reified.program output.seen with
-  | .error error => throwError "interval: supported replay rejected the recipe: {repr error}"
-  | .ok _ => pure ()
-  let canonicalExpr ← Quote.intervalExpr config.rule.endpoint output.interval
-  let canonicalExpected ← mkAppM ``Hex.Interval.Contains #[canonicalExpr, expression]
-  let intervalEq ← mkDecideProof (← mkAppM ``Eq #[output.intervalExpr, canonicalExpr])
-  let candidate ← mkAppM ``contains_of_eq #[intervalEq, output.proof]
-  let emitter : Proof.Emitter Expr := { emit := pure }
-  let canonicalProof ← Proof.emitChecked emitter candidate canonicalExpected
-  pure
-    { expression, interval := output.interval, intervalExpr := canonicalExpr
-      proof := canonicalProof, reified, input, events }
+    sourceIntervals := sourceIntervals.push intervalExpr
+    sourceProofs := sourceProofs.push proof
+  match prepareRuntime config reified sourceFacts with
+  | .error error => throwError "interval: {error}"
+  | .ok runtime =>
+      emitBoundWith config expression term parsed reified sourceIntervals sourceProofs runtime
 
 inductive GoalKind where
   | lower (value : Int) (endpoint : Expr) (strict : Bool)
@@ -1038,7 +1395,7 @@ meta def describeSelectedCuts : Raw → String
         let report ← withoutModifyingState do
           let value ← Lean.Elab.Term.elabTerm expression (some (mkConst ``Real))
           let bound ← deriveBound defaultConfig value
-          pure m!"interval_bound: {describeRaw bound.interval.view}; {describeSelectedCuts bound.interval.view}, where e = {expression}; proved by a {bound.reified.program.nodes.size}-node recipe with {bound.events.length} replay events"
+          pure m!"interval_bound: {describeRaw bound.interval.view}; {describeSelectedCuts bound.interval.view}, where e = {expression}; proved by a {bound.reified.program.nodes.size}-node recipe with {bound.chronology} replay events"
         logInfo report
   | _ => throwUnsupportedSyntax
 

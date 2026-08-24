@@ -1,0 +1,12 @@
+Reviewed by an independent agent session against
+HexSparsePolyMathlib/SPEC/hex-sparse-poly-mathlib.md and the
+PLAN/Phase2.md checklist. Verdict: pass-with-gaps, token committable.
+No data-level placeholders; all nine SPEC'd declarations present,
+faithful, and proven. Findings fixed in the commit carrying this token:
+the dense-side eval helpers moved to HexPolyMathlib (F1), six missing
+constructor/observer correspondences added (equiv_monomial, equiv_C,
+equiv_X, equiv_natDegree, equiv_leadingCoeff, equiv_monic; F2), simp
+preemption of the correspondence lemmas by equiv_apply removed (F4),
+and the parent SPEC's RingEquiv field description corrected (F5). The
+substScale transport (F3) is
+https://github.com/kim-em/hex-dev/issues/9482.

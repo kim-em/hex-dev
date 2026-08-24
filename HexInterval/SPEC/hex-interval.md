@@ -88,16 +88,21 @@ caller-supplied authenticated flat
 chronology, and projects
 the result to lower, upper, conjunction, or closed-singleton equality theorems.
 Its depth cap rejects over-deep descent but does not bound construction or a
-full traversal of an already-built branching term. The supported direct
-forward tactic client below parses its bounded Lean-expression and integer-cut
-subset, authenticates the exact flat runtime chronology as untrusted data, and
-independently synthesizes caller proofs. Its fixed public-tactic precision `16`
-uses the dyadic grid `2⁻¹⁶`; programmatic clients may choose another precision
-within the explicit envelope. Because each computed arithmetic layer is
-followed by an internal regularization layer, its term-depth cap `32` admits
-about 16 nested arithmetic operations along one expression spine. Generic
-public-tactic search-selected recipes and broader local-context parsing remain
-experimental.
+full traversal of an already-built branching term. The supported forward
+tactic client below parses its bounded Lean-expression and integer-cut subset,
+constructs the typed runtime, and runs `Runtime.Controller.runWithin` over the
+`RuntimeRule`-owned applications in topological order. It requires an honest
+zero-live-offer, empty-plan stop, settles the exact current root target through
+`RuntimeTerminal`, quotes the sealed lineage through `RuntimeEmit`, and closes
+that correlated input/evidence pair against the exact source proofs and an
+explicit `Frontend.Term.eval` equality to the original expression. Its fixed
+public-tactic precision `16` uses the dyadic grid `2⁻¹⁶`; programmatic clients
+may choose another precision within the explicit envelope. Because each
+computed arithmetic layer is followed by an internal regularization layer,
+its term-depth cap `32` admits about 16 nested arithmetic operations along one
+expression spine. Arbitrary-function discovery, split search, generic policy
+selection, and broader local-context parsing remain experimental.
+
 The supported proof companion can separately consume a checked retained
 `Search.Result.Tree` plus caller-supplied proof chronology: its registry
 authenticates package-owned binary cover and refutation schemas, its checked
@@ -107,25 +112,31 @@ leaves, and joins siblings only through the exact cover. The supported
 one-step driver now invokes an already-selected authenticated package callback
 and transactionally retains its exact runtime command and separately checked
 recipe data together. It can advance root and child-local fact histories before
-splitting or settling. The supported explicit controller aligns a stable
-fact-event application table with same-order runtime and proof registries,
-regenerates bounded deterministic offer snapshots, and iterates a replaceable
-policy over the sealed tree/session bundle. Its current end-to-end conformance
-uses toy fact-event callbacks: concrete built-in arithmetic `Driver.Package`
-callbacks and application generators have not yet been supplied. Invoking this
-path from the public tactic remains later controller work. The Mathlib-free
-executable layer separately supports explicit stable-key package assembly,
-private caches, exact routes and concrete local/scoped application rows, with
-bounded raw replay-format declarations that do not embed a Mathlib proof event.
+splitting or settling. The supported explicit controller aligns fact-event
+runtime and proof registries, regenerates bounded deterministic offer
+snapshots, and iterates a replaceable policy over the sealed tree/session
+bundle. Its explicit `Controller.Package` conformance route still uses toy
+fact-event callbacks and autonomous application generators. Concrete built-in
+arithmetic is instead supplied by `HexIntervalMathlib.RuntimeRule`: its twelve
+exact handlers generate runtime-owned applications and offers, execute under
+`HexInterval.RuntimeController`, and are jointly sealed against the `Rule`
+schemas by `RuntimeProof`. Raw `(role, schema, body)` quotations remain inert
+until that proof adapter resolves and replays them. `Controller.Executable`
+remains a separate supported fact-only adapter and is not the public tactic's
+typed path.
+
 The first concrete supported theorem registry is the Mathlib arithmetic package for one
 configured constant and natural exponent plus public negation, addition,
 subtraction, multiplication, power, absolute-value, min/max, reciprocal,
-division, and regularization operations. Automatic arbitrary-function package
-discovery and theorem assembly, concrete built-in arithmetic callback packages
-and application generators, equality/instance runtime events, executable
-program extension, concrete policy algorithms and default scheduling, payload
-storage, and the optimized backing store remain experimental. The narrow
-direct-forward tactic does not yet invoke the supported controller.
+division, and regularization operations. `RuntimeProof` supports exact fact,
+equality, transport, and instance correlation, and `RuntimeController`
+schedules all of those typed batches. The public arithmetic tactic currently
+exercises the built-in `RuntimeRule` fact batches only. Automatic
+arbitrary-function package discovery and theorem assembly, public
+equality/instance-generating packages, production structural matchers,
+concrete default policies, payload storage, optimized backing stores, and
+split-search remain experimental.
+
 In particular, the current instantiation proposal's package-supplied numeric
 policy family is not part of the supported action contract.
 
@@ -3193,22 +3204,75 @@ independently checking the action's rule key and local rule id, anchor,
 operation, kind, reads, writes, and structural inputs. A callback must not use
 the compact application id as authority for a rule or anchor. Retaining and
 checking the exact application table is not part of the Search contract. The
-separate supported `Executable.Assembly` now seals a checked program, exact
-package routes/caches, bindings, and concrete application rows, and its
-`invokeWithin` rechecks the selected identifier against the row's rule, anchor,
-kind, reads, writes, structural inputs, matcher epoch, effort, and creation
-generation before routing a callback. The current one-step Driver does not yet
-own that assembly, so autonomous Search-to-package correspondence remains the
-next controller edge. Assembly owns only the operation/node program: request
-program version and generation side tables remain controller-owned snapshot
-data and receive only the request-internal checks supplied by `ProgramView` and
-`RuleRequest`.
+public `Search.actionCurrent` predicate is likewise only a diagnostic over
+explicit caller-supplied branch and side tables; it does not seal those tables
+or authorize execution. Supported authority crosses complete `Session`
+authentication through `chooseWithin`, `prepareWithin`, or a checked session
+transition. The separate supported `Executable.Assembly` seals a checked
+program, exact package routes/caches, bindings, and concrete application rows,
+and its `invokeWithin` rechecks the selected identifier against the row's
+rule, anchor, kind, reads, writes, structural inputs, matcher epoch, effort,
+and creation generation before routing a callback. `Controller.Executable`
+now retains that assembly as a sticky handle, generates offers from its exact
+row order, and passes a replacement private cache onward only after Search,
+Driver, and quotation/schema checks accept the fact-only transition. The
+assembly separately retains the global generation cursor, so a node-only extension cannot lose its
+generation merely because it creates no concrete application. The supported
+`Runtime.State` owns that assembly together with the exact branch, equality
+arena, callback serial, and admitted-instance count. Its checked `stepWithin`
+is the Mathlib-free bridge from one exact application row to an atomic typed
+event batch. The supported `Runtime.Controller` owns that separate autonomous
+layer: a runtime-generated
+sealed offer snapshot carries the exact branch, application/binding tables,
+equality generations, callback serial, residual engine budgets, and an honest
+completeness bit into Search; one selected action returns an inseparable
+transition, sticky-cache successor, and regenerated offer snapshot before the
+same transition advances the retained tree. The assembly owns only the
+operation/node program: request program version and generation
+side tables remain controller-owned snapshot data and receive only the
+request-internal checks supplied by `ProgramView` and `RuleRequest`. Generic
+Search does not decrement a caller-supplied `remaining`
+budget view. The runtime specialization instead replaces it from every sealed
+snapshot: actions, facts, nodes, applications, equalities, instances, and
+generation report exact residuals, while matcher visits, retained suggestions,
+and queue entries report their full configured capacities because this runtime
+layer retains and consumes none of those three stores.
+
+Search read ports are ordered occurrences, not a set of node identities. Local
+registrations still require distinct declared slots, but distinct argument
+slots may resolve to the same node, as in `x + x`. Such occurrences retain the
+same exact current `SeenVersion` twice; authentication freshness-checks each
+occurrence and preserves the duplicate list through policy selection, request
+reconstruction, executable invocation, and runtime transition correlation.
+The explicit Mathlib `Controller.Draft` generator follows the same rule for
+local registrations: it preserves duplicate read occurrences when deriving
+versions and Search authenticates the exact local slot projection. Scoped
+binding reads remain distinct authority under `ScopeBinding.check`.
+This does not weaken mutation or structural authority: resolved writes and
+structural inputs remain duplicate-free. A runtime-owned snapshot containing
+only repeated reads is therefore complete. A handler-approved local
+application with duplicate resolved writes is omitted and sets the sticky
+incomplete bit, although direct Runtime execution still checks its exact row
+and events. Repeating a write node does not amplify the set-membership
+authority used by event admission, but Search intentionally keeps write and
+structural lists canonical and distinct instead of normalizing
+authority-bearing input. Consequently a contraction or backward rule on
+`f x x` whose distinct declared write slots resolve to the same node can remain
+directly executable yet unschedulable, with sticky snapshot incompleteness.
+This bridge does not broaden that contract. The current sealed Executable
+compiler creates no structural matcher application rows. The structural-input
+distinctness check is retained for such rows when that compiler support is
+added, not presented as a currently constructible Runtime case.
 
 As with Search, sealing is an ordinary/public-import boundary. Deliberate
 `import all HexInterval.Executable` exposes its private constructors to trusted
 Lean source and is not part of the decoded runtime threat model. The repository
 DAG check rejects that escape hatch outside an exact reviewed allowlist,
 currently empty; both conformance and bench paths are regression-tested.
+`Runtime.State`, `Runtime.Arena`, `Runtime.Applied`, `Runtime.OfferSnapshot`,
+and `Runtime.Advanced` use the same
+ordinary-import seal. Deliberate `import all HexInterval.Runtime` is an empty-
+allowlist trusted-internals escape hatch, not decoded-runtime authority.
 
 `prepareWithin` authenticates the session once, revalidates the external policy
 decision against that already-checked immutable view, and returns only the
@@ -3262,7 +3326,8 @@ the stronger leaf protocol for public-import clients.
 
 `Search.Result.Tree` is the supported retained-result prerequisite for a later
 proof-tree fold. Its private constructor keeps the exact node array, sealed
-`FrontierState Result.Id`, cumulative advance count, accounting, and logical
+`FrontierState Result.Id`, cumulative advance count, sealed typed-runtime
+transition chain, accounting, and logical
 cost together; callers cannot transplant a raw frontier, reset counters, or
 supply a complete child snapshot. `Result.startWithin` admits one checked root.
 `Result.advanceWithin` consumes a sealed `Applied` transition whose before
@@ -3298,10 +3363,53 @@ pass `Branch.check`. Its cumulative equation is exactly
 `steps = advances + splits + terminals`, rather than equality between a live
 advanced child and its creation-time versions or history.
 
+`Runtime.Applied` is the only supported program-changing retained transition.
+It binds the exact before/after branches, before/after binding and application
+tables, before/after equality arenas, selected action, typed events, accepted
+raw quotations, and serial. The typed vocabulary covers fact proposals, exact
+equality descriptors (endpoints, generation, origin action, ordered
+assumptions, and raw quote), transport through an admitted equality, and
+instance events with exact program, fact, binding, node, and application
+suffixes. `Runtime.State.stepWithin` invokes the assembled callback exactly
+once and commits its returned cache and complete batch only after every event
+and suffix validates. The equality table grows only at its next compact
+address; generation arrays alone are never equality authority. These values
+remain runtime provenance, not theorem evidence, and contain no Mathlib
+`Proof.Event`. `Result.advanceRuntimeWithin` retains a sealed transition at the
+exact current head. For a split child, validation reconstructs the exact
+creation branch and reaches its live branch only through that retained runtime
+chain. Consecutive transitions at one node must chain the exact binding,
+application, global-generation, and equality tables plus the next callback
+serial; independently sealed same-branch transitions cannot be spliced.
+An admitted raw equality authenticates exact existing same-domain endpoint
+identities and their creation record; it does not itself establish a semantic
+equality theorem. A transport event carries no quote. It must orient its write
+and source across those exact endpoints, name an exact currently live source
+version already owned by the selected action, and install precisely that
+source fact. The later package-owned equality schema remains the only theorem
+authority for the substitution.
+Generic child validation is not weakened to accept arbitrary program
+extensions. Fact-only accepted history may still advance within one pinned
+program phase. Branch program version, callback serial, admitted-instance
+count, and the equality arena restart at zero for a new child. Application
+creation generations remain global to the inherited sealed assembly. Runtime
+restart authenticates that inherited assembly generation as the fixed base for
+branch-local program version zero. Each accepted instance advances both
+chronologies once: its global generation is `base + localProgramVersion + 1`,
+while `Branch.extendWithin` stores the corresponding next local generation.
+Thus a child split after an extension can reuse the inherited exact rows and
+still admit the next strict global extension without assigning an impossible
+generation to its restarted local branch.
+
 Result limits independently bound retained nodes, each package body, declared
-logical bytes and work, plus the existing search and state resources. Count
-caps are checked before retained arrays and body lists are traversed. Adapter
-measurement, equality, and construction of arbitrary facts, causes, plans,
+logical bytes and work, plus the existing search and runtime resources. The
+runtime envelope's `maxEvents` bounds each retained typed batch. Runtime
+creation separately bounds quotation count by `Executable.Limits.maxQuotes`
+and the aggregate cell count across all quotation bodies by `maxQuoteCells`;
+the retained-tree layer currently re-caps the retained quotation count with
+`Result.Limits.maxBodyCells` and uses that same limit for every retained body.
+Count caps are checked before retained arrays and body lists are traversed.
+Adapter measurement, equality, and construction of arbitrary facts, causes, plans,
 schemas, and bodies remain explicitly non-preemptible; packages must bound
 those values before return. The split plan, schema, refutation record, target
 record, and runtime contradiction state are untrusted data, never evidence.
@@ -4097,8 +4205,9 @@ in the same transaction. Non-root target/refutation leaves and later splits
 may therefore consume child-local fact history after exact replay. The
 supported explicit controller now regenerates deterministic authenticated
 fact-event offers and repeats policy-driven iteration over that sealed bundle.
-Automatic package discovery, equality/instance runtime events, program
-extension, and public-tactic split search remain separate work.
+Automatic package discovery, proof quotation/controller scheduling of the
+supported equality/instance/program-extension runtime events, and public-tactic
+split search remain separate work.
 
 `maxEndpointHeight` is measured after canonical dyadic normalization as the bit
 length of the absolute numerator plus the magnitude of the signed binary
@@ -5312,14 +5421,62 @@ candidates, and `b` the number of live branch states.
   equality on caller-selected facts, causes, identifiers, and keys
   remain non-preemptible.
 - The current `Search.Result.Tree` reference builders validate the complete
-  retained prefix before and after every split or settlement. If `N` nodes are
-  retained incrementally and `B` is the bounded per-node branch/state
-  validation cost, the repeated branch-validation term is `Θ(N² * B)`.
-  The current pairwise retained-scope uniqueness scan adds `Θ(N³)` across
-  the same incremental construction, for a combined `Θ(N² * B + N³)`
-  reference cost. This is not an incremental tree-store bound. `maxNodes`
-  therefore stays small and measurement-gated until a production
-  representation avoids repeated full-prefix validation.
+  retained prefix before and after every split, settlement, or runtime
+  transition. Let `N` be the retained node count, `R` the retained typed-runtime
+  transition count, and `B` the bounded branch/state validation and comparison
+  cost. One complete check includes the existing node branch work, an `N * R`
+  scan because each node filters the full retained transition array, and
+  `R * B` transition-branch comparisons. The retained root branch is also
+  measured once as a distinct authenticated cost, in addition to node sources
+  and runtime-chain branches. If nodes are retained incrementally, the repeated
+  branch-validation term remains `Θ(N² * B)` and pairwise scope uniqueness adds
+  `Θ(N³)`. If `R` runtime transitions are retained incrementally, repeated
+  transition comparison contributes the conservative `O(R² * B)` term, while
+  repeated per-node filtering contributes `O(N * R²)` at the final node cap.
+  Thus a conservative combined reference upper bound is
+  `O(N² * B + N³ + N * R² + R² * B)`. This is not an incremental tree-store
+  bound. Node and runtime limits therefore stay small and measurement-gated
+  until a production representation avoids repeated full-prefix validation.
+  Retained typed-runtime transitions add caller-measured branch states,
+  actions, facts, and quotation cells to this complete-tree scan. Cost
+  recomputation makes one linear pass over the retained runtime array and its
+  bounded suffix/event cells: it charges the first `before` branch once per
+  node and each successive `after` branch once, so an adjacent
+  `after`/`before` boundary is not duplicated. Each accepted quote is charged
+  once from the sealed transition quote array, not again from its typed event;
+  it also charges the separately retained authenticated root branch once.
+  These cost-accounting scans do not remove the `N * R`, `R * B`, or repeated
+  `R² * B` validation terms above. Arbitrary fact/cause equality and caller
+  measurement remain non-preemptible.
+- One `Controller.Executable` offer regeneration reconstructs and validates
+  the retained branch snapshot and executable program context once. It then
+  scans the flat applications with per-row identity, port, registration,
+  route, fact/version, and package-predicate work. Its local generation cost
+  is therefore one whole-branch/program check plus the sum of bounded
+  application checks, not one whole-branch/program check per application.
+  Subsequent `Search.Session` start or refresh still performs its own
+  independent complete session authentication.
+- One `Runtime.Controller` selection performs four complete Search
+  authentications: policy choice, explicit preparation, and the old and new
+  sessions around `Session.advanceRuntimeWithin`. If `K_i` offers are live
+  before selection and `K_(i+1)` afterward, the first three authentications
+  include the reference `Policy.checkOffersWithin` duplicate scan at
+  `O(K_i^2)`, while successor authentication incurs `O(K_(i+1)^2)`. The retained
+  result append performs two complete `Tree.check` calls and one standalone
+  `computeCost`, hence three complete retained-cost passes. Let `G_i` be the
+  successor application/offer scan, `H_i` the remainder of one complete Search
+  authentication, `T(N_i,R_i,B_i)` one full tree check, and `M(N_i,R_i)` one
+  tree cost pass for current node count `N_i`, retained typed-transition count
+  `R_i`, and branch cost `B_i`. The first check sees `R_i`; the standalone cost
+  pass and second check see the appended `R_i + 1` successor. Across selected
+  transitions the honest reference bound is
+  `O(sum_i (G_i + 3 * (H_i + K_i^2) + H_(i+1) + K_(i+1)^2 +
+  T(N_i,R_i,B_i) + M(N_i,R_i+1) + T(N_i,R_i+1,B_(i+1))))`.
+  A dismissal from `K_i` offers separately authenticates the `K_i` entry and
+  `K_i - 1` successor sessions.
+  `R_i` grows after each accepted selection, so this must not be simplified to
+  a choice cap times one fixed tree cost. Non-preemptible callback, event-fold,
+  policy, fact-equality, and measurement costs remain excluded.
 - Fact comparison and contradiction checks use exact endpoint comparison. For
   the dyadic candidate, integer cost is proportional to effective endpoint
   height and the permitted exponent-alignment shift; a rational candidate must
@@ -5400,9 +5557,12 @@ their declared cost inside a scheduler bound.
   ordinary imports, only `Registry.buildWithin` can construct the theorem
   registry; `import all HexIntervalMathlib.Proof` is a trusted-internals escape
   hatch rejected outside the exact empty repository allowlist. The built-in
-  arithmetic package and direct-forward reifier/tactic are supported below;
-  arbitrary-function theorem packages, executable-to-proof quotation,
-  split-search tactic integration, and default registries remain experimental.
+  arithmetic package and forward reifier/tactic are supported below; typed
+  fact/equality/transport/instance correlation is supplied by `RuntimeProof`.
+  Explicit arbitrary-function packages can join the executable and proof
+  adapters, while automatic discovery, public-tactic equality/instance
+  packages, split-search integration, and default registries remain
+  experimental.
 - `HexIntervalMathlib/Driver.lean`: supported one-step execution of an exact
   already-selected package action, atomic retained-source advancement/split/
   terminal updates, and bounded alignment of the sealed result tree with its
@@ -5415,11 +5575,16 @@ their declared cost inside a scheduler bound.
   and proof registrations. It resource-first regenerates deterministic offers,
   derives age from sealed session chronology, revalidates exact
   `ApplicationId` routing, and iterates a replaceable policy over the sealed
-  session/tree bundle under a cumulative choice cap. A caller-owned logical
-  measure bounds the initial policy state and every callback successor against
-  independent byte/pair/work caps before retention; constructing and measuring
-  the arbitrary state remains non-preemptible. The choice cap is per sealed
-  `Controller.State` lineage: explicit `State.startWithin` starts a new handle
+  session/tree bundle under a cumulative choice cap.
+  Local draft reads are ordered occurrences, so distinct local slots which
+  resolve to the same node retain duplicate exact versions through the
+  callback request; scoped binding reads, writes, and structural inputs remain
+  duplicate-free authority.
+  A caller-owned logical measure bounds the initial policy state and every
+  callback successor against independent byte/pair/work caps before retention;
+  constructing and measuring the arbitrary state remains non-preemptible. The
+  choice cap is per sealed `Controller.State` lineage: explicit
+  `State.startWithin` starts a new handle
   from a sealed current bundle and resets choices, the dismissal latch, and the
   search session's serial, steps, and diagnostic trace even when the retained
   head/scope is unchanged. Pure states can be reused to explore separately
@@ -5428,12 +5593,27 @@ their declared cost inside a scheduler bound.
   registry key is a
   trusted compatibility epoch, not callback-object identity: same-key
   assemblies deliberately declare replaceable implementations whose results
-  still cross the runtime and proof checks. Automatic discovery,
-  program extension, equality/instance runtime events, wiring the supported
-  Mathlib-free executable assembly into this controller, concrete built-in
-  arithmetic driver callbacks/application generators, and split-search tactic
-  syntax remain later work; the current
-  autonomous theorem uses toy fact-event packages. All offers in one immutable
+  still cross the runtime and proof checks. This explicit `Controller.Package`
+  route still has toy fact-event callbacks and autonomous generators in its
+  conformance; concrete built-in arithmetic enters only through
+  `Controller.Executable`. That adapter additionally
+  consumes a sealed `Executable.Assembly` without a caller-supplied application
+  table. It derives action fields, fact versions, installed meets, assumptions,
+  event scope, and `Proof.Key` addresses from the authenticated request and
+  exact invocation route. It requires one fact quote per proposal, exact
+  bidirectional executable-format/proof-schema coverage, and a successful
+  package decoder before Driver acceptance; later Proof replay independently
+  invokes the theorem schema. Same-key registry substitution does not
+  transplant the sticky assembly cache. Its application-id and rule-key policy
+  costs are adapter-fixed; the caller supplies only policy-state measurement.
+  Domain `NarrowResult.resourceLimit budget` maps to the distinct
+  `Controller.Resource.narrow budget` refusal before retaining any update,
+  rather than collapsing into `noChange` or mismatch. This adapter is
+  deliberately fact-only, and its `Run` exposes only a resumable stopped
+  result: quotation and controller scheduling of the separately supported typed
+  equality, instance, and program-extension runtime events,
+  target/refutation/split/unknown terminal correlation, automatic discovery,
+  and split-search tactic syntax remain later work. All offers in one immutable
   snapshot share its controller-owned serial as age. A malformed generator
   draft aborts the whole regeneration transaction. Dismissing a non-split
   offer sets a controller-owned incomplete bit which survives later accepted
@@ -5475,15 +5655,17 @@ their declared cost inside a scheduler bound.
   and closed-singleton equality closure about the evaluated target term.
   Search-to-recipe integration, Lean syntax, and Meta quotation remain outside
   this module.
-- `HexIntervalMathlib/Tactic.lean`: exact runtime program/input/chronology
-  construction and authentication, recursive forward-arithmetic expression
-  and integer-cut parsing, reciprocal/division and automatic outward-
-  regularization rows, independently checked caller-proof emission, and the
-  current transactional bare `interval`, `interval?`, and `interval_bound`
-  subset. `interval_bound` renders selected cuts as diagnostics; a noninteger
-  dyadic endpoint is not pasteable into the current integer-only goal parser.
-  Search-selected recipes, arbitrary functions, subdivision, and the
-  expanded configuration syntax remain experimental or unimplemented.
+- `HexIntervalMathlib/Tactic.lean`: recursive forward-arithmetic expression and
+  integer-cut parsing; exact `RuntimeRule` registry, branch, runtime, retained
+  tree, and controller construction; deterministic topological execution;
+  exact target settlement through `RuntimeTerminal`; sealed chronology
+  emission through `RuntimeEmit`; and caller-source/expression closure through
+  `Frontend.closeSources` and `Proof.emitChecked`. It supplies the current
+  transactional bare `interval`, `interval?`, and `interval_bound` subset.
+  `interval_bound` renders selected cuts as diagnostics; a noninteger dyadic
+  endpoint is not pasteable into the current integer-only goal parser. Generic
+  search-selected policies, arbitrary functions, subdivision, and the expanded
+  configuration syntax remain experimental or unimplemented.
 - `HexInterval/Program.lean`: supported stable operation/domain/node
   identifiers, decoded typed SSA programs, fail-closed validation, and
   structural depths.
@@ -5497,10 +5679,64 @@ their declared cost inside a scheduler bound.
   explicit stable-key operations, registrations, heterogeneous private package
   caches, exact handler routes, scoped/local application rows, package-owned
   logical measures, and bounded raw `(role, schema, body)` replay quotations.
-  Invocation rechecks complete application/request correspondence and commits
+  Package-owned, cache-independent applicability predicates receive an
+  authenticated snapshot and exact reconstructed request but carry no mutation
+  or theorem authority. `handler.offers` is only a scheduling filter: a false
+  result suppresses the application from the generated snapshot, but
+  `Runtime.State.advanceWithin` can still execute a separately supplied,
+  structurally current action after `stepWithin` reconstructs and authenticates
+  its request. Invocation rechecks complete application/request
+  correspondence and commits
   a cache replacement only after result and quotation admission. The initial
-  compiler does not create global structural-matcher applications; offer
-  generation and theorem-event correlation remain later layers.
+  compiler does not create global structural-matcher applications. Fact-event
+  correlation is supplied by `HexIntervalMathlib.Controller.Executable`; the
+  separate supported `HexIntervalMathlib.RuntimeProof` companion correlates
+  sealed typed fact, equality, transport, and instance transitions with theorem
+  schemas. Runtime-owned offer generation for all typed batches is supplied
+  separately by `HexInterval/RuntimeController.lean`.
+- `HexInterval/Runtime.lean`: supported sealed Mathlib-free ownership of one
+  executable assembly, branch, and exact equality arena; atomic typed fact,
+  equality, transport, and append-only instance events; exact application,
+  binding, node, generation, and equality authority; and sealed before/after
+  transitions retained by `Search.Result.Tree`. It also supplies sealed
+  runtime-owned offer snapshots and an inseparable transition/sticky-cache
+  successor/snapshot value. Repeated resolved read occurrences retain their
+  exact ordered node/version entries and are schedulable, including distinct
+  local slots that resolve to the same node. Runtime-valid duplicate resolved
+  writes remain executable through `Runtime.State.stepWithin` but cannot
+  satisfy Search's authority contract, so snapshot generation omits them and
+  marks the snapshot incomplete. The current sealed Executable compiler emits
+  no structural matcher rows; Runtime retains the structural-input
+  distinctness gate for a later supported producer. An intentional package
+  `handler.offers = false` veto is complete and does not set that bit.
+  All matcher-owned application rows must share one matcher epoch; mixed epochs
+  are malformed, and zero is the snapshot sentinel when no row carries an
+  epoch. Offer generation checks `maxOffers` but does not consume `maxActions`;
+  `maxActions` is charged only by an actual runtime
+  advance. Raw quotations remain inert data; theorem authority is supplied
+  only by the separately checked `HexIntervalMathlib.RuntimeProof` proof
+  adapter.
+- `HexInterval/RuntimeController.lean`: supported Mathlib-free autonomous
+  policy iteration over sealed typed fact, equality, transport, and instance
+  batches. Its sealed state owns the runtime, authenticated Search session,
+  retained result tree, and cumulative choice accounting. It intentionally
+  exposes only resumable policy stops carrying a live-offer count: target,
+  refutation, split,
+  unknown-terminal, and proof-schema correlation are outside this interface,
+  so offer exhaustion is not proof closure or saturation. `maxChoices` counts
+  select/dismiss decisions; after exactly the cap the policy may still stop,
+  while another decision is refused. Only a policy stop returns the accumulated
+  successor `State`. Every resource, callback, Search, result-tree, or alignment
+  error is all-or-nothing for the entire `runWithin` call and returns none of
+  its in-call lineage; the caller retains the immutable initial state and may
+  replay pure callbacks. External callback effects are outside this
+  transactional guarantee. The retained tree is validated under the supplied
+  logical measure both when the controller starts and before a run begins.
+  Any dismissal of a live offer marks the session incomplete, including a
+  split-class offer. A dismissal removes an offer only from the current
+  Search snapshot. Runtime-owned regeneration after a later selection may
+  offer the same application again; the sticky incomplete latch preserves the
+  fact that a live offer was skipped across such refreshes.
 - `HexInterval/Trace.lean`: supported exact fact/instance chronology and
   bounded diagnostic-log contracts. Diagnostic bytes count retained `UInt8`
   payload cells after callback construction; they do not claim to preempt
@@ -5523,7 +5759,8 @@ their declared cost inside a scheduler bound.
   a separately sealed parent/depth/scope-checked leaf frontier, immutable parent
   restoration, sealed cumulative step/split/leaf/frontier/depth/scope
   accounting, and a sealed bounded retained result tree with exact single-delta
-  child reconstruction, authenticated fact-history advancement, and
+  child reconstruction, authenticated fact-history advancement, sealed
+  typed-runtime program-extension chains, and
   target/refute/unknown terminals. It contains no concrete callback, offer
   generator, semantic split/refutation theorem,
   policy algorithm, storage choice, proof recipe, or proof replay.
@@ -5539,7 +5776,7 @@ their declared cost inside a scheduler bound.
    automatic package discovery/program extension, executable-to-proof
    quotation, and a default policy will be selected from measurements; none is
    frozen by the decoded supported snapshots.
-- `conformance/HexInterval/{Conformance,ExecutableConformance,SearchConformance,
+- `conformance/HexInterval/{Conformance,ExecutableConformance,RuntimeConformance,SearchConformance,
   MinMaxConformance,
   EmitFixtures}.lean`:
   Lean-only checks and oracle fixtures. Executable conformance includes
@@ -5547,6 +5784,11 @@ their declared cost inside a scheduler bound.
   default refusal, exact application-field and replay-format mutations,
   append-prefix stability, resource-first program/binding admission, and
   exact resource one-overs.
+  Runtime conformance pins an instance-to-equality-to-fact-to-transport chain,
+  exact compact descriptor/suffix mutations, and the same chain retained in a
+  restarted split child. A post-extension split separately proves that restart
+  preserves nonzero assembly generations while resetting branch-local version,
+  serial, equality, and instance state.
 - `conformance/HexIntervalMathlib/ProgramProofConformance.lean`: supported
   program-model, registry, chronology, refutation, binary-cover/tree replay,
   target-closure, mutation, Meta-state restoration, and guarded
@@ -5604,8 +5846,11 @@ typical, boundary, and adversarial inputs. In particular it includes:
 - malformed structural programs, including duplicate operation keys, wrong
   arity/domain, unknown operations, and self/forward SSA references;
 - malformed registration, scope, and request snapshots, including wrong
-  operation/rule versions, duplicate or out-of-range ports, misaligned side
-  tables, changed fact versions, and changed ordered write authority;
+  operation/rule versions, duplicate declared registration slots, duplicate
+  scoped reads/writes, duplicate action writes/structural inputs, out-of-range
+  ports, misaligned side tables, changed fact versions, and changed ordered
+  write authority, while accepting repeated local read occurrences resolved
+  from distinct declared slots;
 - malformed or over-budget state snapshots, including stale/cross-node update
   predecessors, wrong program versions, non-prefix extensions, exact generated
   version-zero seed restoration, dependency/watcher misalignment, stale dirty
@@ -5810,6 +6055,48 @@ merge-gated twice: ordinary `#guard` equivalence checks build with
 the existing single CI job. This is deterministic representation evidence,
 not scientific timing; it neither uses a custom timing loop nor freezes the
 current touch-count aggregates as performance contracts.
+
+The supported decision benchmark is a narrower production-API experiment. It
+runs FIFO, static-rank, and adaptive callbacks through `Search.chooseWithin`,
+commits one exact fact update per selected addition through
+`Search.invokeWithin`, then regenerates the complete surviving offer set against
+the advanced serial and current input versions through checked
+`Search.Session.refreshWithin`. Static-rank orders a fixed age residue; adaptive
+first ranks the live predecessor-version feedback and then the bounded offer
+score. The canonical 128-node logical-count canary pins 126 accepted updates
+for every policy and observes zero live offers after completion.
+FIFO/static-rank/adaptive respectively record
+0/7,875/7,875 callback comparisons and rolling order hashes
+13,333,310,190,265,569,661 / 9,721,628,123,875,171,393 /
+558,125,824,506,216,197. Their final position-sensitive fact/version checksum
+is the shared 8,880,463,590,880,745,567. These are content-bearing conformance
+checks, not timing thresholds, and no policy is selected as a default.
+
+Timing is deliberately a separate shared-infrastructure leg. Six
+`setup_fixed_benchmark` registrations use initial offer counts 1,024, 2,048,
+4,096, 8,192, 16,384, and 32,768. Each call reads its count from a module-level
+`IO.Ref`, constructs the arithmetic program and checked branch/session,
+authenticates the initial offers, performs one FIFO `chooseWithin` /
+`invokeWithin` transition, regenerates and authenticates one complete refresh,
+walks the checked snapshot to form the report, and includes the harness's timed
+result hash. Complete-view duplicate-ID validation scans prior offers, so a
+quadratic component is expected, but these fixed points declare no automatic
+complexity verdict. On one five-repeat warm run, medians were 7.829, 12.038,
+42.102, 155.655, 599.540, and 2,343 ms; adjacent median ratios were 1.538,
+3.497, 3.697, 3.852, and 3.908, and the log-log least-squares slope was 1.712.
+Ranges were 3.902--8.131, 11.968--12.080, 41.606--48.953,
+154.152--162.673, 593.278--616.574, and 2,303--2,460 ms. Every rung has a
+five-second per-call cap, throws if construction or any transition fails, and
+pins its full `Report` hash through `expectedHash`. This is common end-to-end
+cost evidence and yields no comparative policy signal; policy comparison
+belongs to the logical-count leg.
+
+The end-to-end `Controller.Executable` route currently lives in the Mathlib
+companion, so importing it would violate the Mathlib-free computational-bench
+boundary. This is not an absence claim about direct APIs: Mathlib-free
+`Runtime.State.stepWithin` and `Search.Result.advanceRuntimeWithin` / `splitWithin` /
+`settleWithin` exist. Mixed typed-event and split/tree workloads are simply out
+of scope for this focused policy experiment.
 
 The declared models follow the complexity section above. Scientific runs also
 record accepted actions, endpoint heights, live leaves, retained derivations,

@@ -324,8 +324,8 @@ which is all a wider candidate needs to be discarded. -/
 def probeDegreePattern? (f : ZPoly) (c : SmallPrimeCandidate) (target : Nat) :
     Option Berlekamp.DegreePattern :=
   letI := c.bounds
-  if isGoodPrime f c.p then
-    let fModP := ZPoly.modP c.p f
+  if isGoodPrime f c.m then
+    let fModP := ZPoly.modP c.m f
     if hzero : fModP.isZero = false then
       some (Berlekamp.scoutDegreePattern (monicModularImage fModP)
         (monicModularImage_monic c.prime fModP hzero) target)
@@ -352,16 +352,16 @@ def scoutBetterPattern (core : SquareFreeInput) :
   | 0, _, _, best => best
   | _, [], _, best => best
   | fuel + 1, candidate :: candidates, inc, best =>
-      if scoutPays core inc candidate.p (fuel + 1) then
+      if scoutPays core inc candidate.m (fuel + 1) then
         match probeDegreePattern? core.poly candidate inc.degrees.size with
         | none => scoutBetterPattern core (fuel + 1) candidates inc best
         | some pattern =>
             if pattern.complete then
               let candidateScore :=
-                directDegreeScore core candidate.p pattern.separated
+                directDegreeScore core candidate.m pattern.separated
               if scoreBetter inc.score candidateScore then
                 scoutBetterPattern core fuel candidates
-                  ⟨candidate.p, pattern.separated, candidateScore⟩
+                  ⟨candidate.m, pattern.separated, candidateScore⟩
                   (some ⟨candidate, pattern.separated⟩)
               else
                 scoutBetterPattern core fuel candidates inc best
@@ -398,7 +398,7 @@ def firstDirectPlan?
           let first := DirectPrimeProbe.ofData core candidate data
           some (planOfScout core first
             (scoutBetterPattern core scoutFuel candidates
-              ⟨candidate.p, first.factorDegrees, directProbeScore core first⟩
+              ⟨candidate.m, first.factorDegrees, directProbeScore core first⟩
               none))
 
 /-- Plan and cache a good direct-coordinate modular factorization. -/
@@ -564,7 +564,7 @@ private theorem scoutBetterPattern_mem
           exact Or.inl ⟨scouted, by simpa [scoutBetterPattern] using h, rfl⟩
       | succ fuel =>
           simp only [scoutBetterPattern] at h
-          by_cases hpays : scoutPays core inc candidate.p (fuel + 1) = true
+          by_cases hpays : scoutPays core inc candidate.m (fuel + 1) = true
           · rw [if_pos hpays] at h
             cases hpat :
                 probeDegreePattern? core.poly candidate inc.degrees.size with
@@ -580,11 +580,11 @@ private theorem scoutBetterPattern_mem
                 · rw [if_pos hcomplete] at h
                   by_cases hbetter :
                       scoreBetter inc.score
-                        (directDegreeScore core candidate.p pattern.separated) = true
+                        (directDegreeScore core candidate.m pattern.separated) = true
                   · rw [if_pos hbetter] at h
                     rcases ih fuel
-                        ⟨candidate.p, pattern.separated,
-                          directDegreeScore core candidate.p pattern.separated⟩
+                        ⟨candidate.m, pattern.separated,
+                          directDegreeScore core candidate.m pattern.separated⟩
                         (some ⟨candidate, pattern.separated⟩) scouted h with
                       ⟨b, hb, hc⟩ | hm
                     · exact Or.inr (by
@@ -660,14 +660,14 @@ private theorem firstDirectPlan?_probes_mem
           rcases planOfScout_probes_mem core
               (DirectPrimeProbe.ofData core candidate data)
               (scoutBetterPattern core scoutFuel candidates
-                ⟨candidate.p,
+                ⟨candidate.m,
                   (DirectPrimeProbe.ofData core candidate data).factorDegrees,
                   directProbeScore core (DirectPrimeProbe.ofData core candidate data)⟩
                 none) probe hmem with hfirst | ⟨s, hs, hsel⟩
           · rw [hfirst]
             exact List.mem_cons_self
           · rcases scoutBetterPattern_mem core scoutFuel candidates
-                ⟨candidate.p,
+                ⟨candidate.m,
                   (DirectPrimeProbe.ofData core candidate data).factorDegrees,
                   directProbeScore core (DirectPrimeProbe.ofData core candidate data)⟩
                 none s hs with ⟨b, hb, _⟩ | hm
@@ -694,7 +694,7 @@ theorem directPrimePlan?_probes_p_le_500
       (by simpa [directPrimePlan?] using h) probe hmem
   have hhot : probe.candidate ∈ hotPathCandidates := by
     simpa only [hotPathCandidates] using hmem'
-  have hc : probe.candidate.p ≤ 500 := (mem_hotPathCandidates_prime hhot).2.2
+  have hc : probe.candidate.m ≤ 500 := (mem_hotPathCandidates_prime hhot).2.2
   exact probePrimeData?_p_le core.poly probe.candidate probe.data hc
     ((directPrimePlan?_probes_trial core plan h probe hmem).1)
 

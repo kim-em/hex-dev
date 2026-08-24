@@ -25,16 +25,6 @@ namespace HexRootsMathlib
 
 noncomputable section
 
-/-- Difference of two reciprocal linear factors, with both poles excluded. -/
-theorem reciprocal_sub {z a b : ℂ} (hza : z ≠ a) (hzb : z ≠ b) :
-    (z - a)⁻¹ - (z - b)⁻¹ =
-      (a - b) / ((z - a) * (z - b)) := by
-  calc
-    (z - a)⁻¹ - (z - b)⁻¹ =
-        ((z - b) - (z - a)) / ((z - a) * (z - b)) :=
-      inv_sub_inv (sub_ne_zero.mpr hza) (sub_ne_zero.mpr hzb)
-    _ = (a - b) / ((z - a) * (z - b)) := by ring
-
 /-- The logarithmic derivative of a complex polynomial is the sum of its
 reciprocal linear factors, counted over the root multiset. -/
 theorem logDeriv_eq_sum (p : ℂ[X]) {z : ℂ} (hz : p.eval z ≠ 0) :

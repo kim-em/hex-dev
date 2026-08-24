@@ -130,6 +130,14 @@ inductive Step (Fact Cause OfferId SemanticKey Plan : Type)
   | stopped (stop : Search.Stop Unit Unit) (bundle : Bundle Fact Cause Plan)
       (session : Search.Session Fact Cause OfferId SemanticKey)
 
+/-- Result of the payload-preserving driver entry point. `payload = none`
+means the authenticated step limit stopped the request before the callback was
+entered. A present payload was produced by the same single callback execution
+whose command crossed the complete driver checks. -/
+structure Produced.{u} (Fact Cause OfferId SemanticKey Plan : Type) (Payload : Type u) where
+  step : Step Fact Cause OfferId SemanticKey Plan
+  payload : Option Payload
+
 private def eventWithin (limits : Proof.Limits) : Proof.Event Fact → Except Error Unit
   | .fact step => do
       Proof.bodyCheck limits step.schema .fact step.body |>.mapError Error.proof
@@ -281,9 +289,92 @@ private def exactTarget (request : Search.Request Fact OfferId SemanticKey)
   entry.scope == request.scope && entry.programVersion == request.programVersion &&
     entry.seen.node == request.action.node && request.action.inputs.contains entry.seen
 
-/-- Execute exactly one selected package callback and atomically return its
-checked retained-tree/recipe replacement. The callback result is retained
-directly; no later cause-to-recipe reconstruction occurs. -/
+private def liftWithin.{u} {α : Type} (result : Except Error α) :
+    Except Error (ULift.{u} α) :=
+  match result with
+  | .error error => .error error
+  | .ok value => .ok (ULift.up value)
+
+/-- Execute exactly one selected callback and atomically return its checked
+retained-tree/recipe replacement together with the opaque payload produced by
+that same callback execution. A resource stop before callback entry returns no
+payload. The payload gains no authority from retention. -/
+opaque runWithWithin.{u} {Payload : Type u}
+    [DecidableEq Fact] [DecidableEq Cause] [DecidableEq OfferId]
+    [DecidableEq SemanticKey] [DecidableEq Plan]
+    (envelope : Search.Envelope) (policyMeasure : Policy.Measure OfferId SemanticKey)
+    (limits : Limits) (resultMeasure : Search.Result.Measure Fact Cause Plan Proof.Key)
+    (recipeMeasure : Measure Fact)
+    (order : Search.Order) (owner : RuleKey)
+    (callback : Search.Request Fact OfferId SemanticKey →
+      Command Fact Cause OfferId SemanticKey Plan × Payload)
+    (bundle : Bundle Fact Cause Plan)
+    (session : Search.Session Fact Cause OfferId SemanticKey)
+    (decision : Policy.Decision OfferId SemanticKey) :
+    Except Error (Produced Fact Cause OfferId SemanticKey Plan Payload) := do
+  let bundle := (← liftWithin.{u} (checked limits resultMeasure recipeMeasure bundle)).down
+  let some (id, source) := Search.Result.current? bundle.tree | throw Error.mismatch
+  if source.scope != session.scope || source.branch != session.branch then throw .mismatch
+  let invocation ← Search.invokeWithWithin envelope policyMeasure owner
+      (fun request =>
+        let (command, payload) := callback request
+        (command.reply, (command, payload))) session decision |>.mapError Error.search
+  match invocation with
+  | .stopped stop next => pure { step := .stopped stop bundle next, payload := none }
+  | .produced (.stopped stop next) (command, payload) =>
+      match command with
+      | .stop _ _ => pure { step := .stopped stop bundle next, payload := some payload }
+      | _ => throw .mismatch
+  | .produced (.applied transition) (command, payload) =>
+      match command with
+      | .stop _ _ => throw .mismatch
+      | .continue echo =>
+          let _ ← liftWithin.{u} (echoMatches limits transition echo)
+          if echo.outcome.updates.isEmpty then throw .mismatch
+          let some recipe := appendEvents bundle.recipe id.index echo.events | throw .mismatch
+          let tree := (← liftWithin.{u} (Search.Result.advanceWithin limits.result resultMeasure
+            bundle.tree transition |>.mapError Error.result)).down
+          let next := (← liftWithin.{u}
+            (bundleWithin limits resultMeasure recipeMeasure tree recipe)).down
+          pure { step := .continued next transition.after, payload := some payload }
+      | Command.split proposal =>
+          let _ ← liftWithin.{u} (echoMatches limits transition proposal.echo)
+          if !emptyEcho proposal.echo || !exactSplit transition.request proposal.runtime then
+            throw .mismatch
+          let tree := (← liftWithin.{u} (Search.Result.splitWithin limits.result resultMeasure
+            order bundle.tree proposal.runtime proposal.left proposal.right
+              |>.mapError Error.result)).down
+          let recipe := appendChildren bundle.recipe id proposal.left proposal.right
+          let next := (← liftWithin.{u}
+            (bundleWithin limits resultMeasure recipeMeasure tree recipe)).down
+          pure { step := .split next, payload := some payload }
+      | .target echo target =>
+          let _ ← liftWithin.{u} (echoMatches limits transition echo)
+          if !emptyEcho echo || !exactTarget transition.request target then throw .mismatch
+          let tree := (← liftWithin.{u} (Search.Result.settleWithin limits.result resultMeasure
+            bundle.tree (.target target) |>.mapError Error.result)).down
+          let next := (← liftWithin.{u}
+            (bundleWithin limits resultMeasure recipeMeasure tree bundle.recipe)).down
+          pure { step := .terminal next, payload := some payload }
+      | .refute echo refute =>
+          let _ ← liftWithin.{u} (echoMatches limits transition echo)
+          if !emptyEcho echo || !exactRefute transition.request refute then throw .mismatch
+          let tree := (← liftWithin.{u} (Search.Result.settleWithin limits.result resultMeasure
+            bundle.tree (.refute refute) |>.mapError Error.result)).down
+          let next := (← liftWithin.{u}
+            (bundleWithin limits resultMeasure recipeMeasure tree bundle.recipe)).down
+          pure { step := .terminal next, payload := some payload }
+      | .unknown echo unknown =>
+          let _ ← liftWithin.{u} (echoMatches limits transition echo)
+          if !emptyEcho echo || unknown.scope != transition.request.scope ||
+              unknown.programVersion != transition.request.programVersion then throw .mismatch
+          let tree := (← liftWithin.{u} (Search.Result.settleWithin limits.result resultMeasure
+            bundle.tree (.unknown unknown) |>.mapError Error.result)).down
+          let next := (← liftWithin.{u}
+            (bundleWithin limits resultMeasure recipeMeasure tree bundle.recipe)).down
+          pure { step := .unknown next, payload := some payload }
+
+/-- Compatibility entry point for a stateless package callback. -/
 opaque runWithin [DecidableEq Fact] [DecidableEq Cause] [DecidableEq OfferId]
     [DecidableEq SemanticKey] [DecidableEq Plan]
     (envelope : Search.Envelope) (policyMeasure : Policy.Measure OfferId SemanticKey)
@@ -294,60 +385,8 @@ opaque runWithin [DecidableEq Fact] [DecidableEq Cause] [DecidableEq OfferId]
     (session : Search.Session Fact Cause OfferId SemanticKey)
     (decision : Policy.Decision OfferId SemanticKey) :
     Except Error (Step Fact Cause OfferId SemanticKey Plan) := do
-  let bundle ← checked limits resultMeasure recipeMeasure bundle
-  let some (id, source) := Search.Result.current? bundle.tree | throw Error.mismatch
-  if source.scope != session.scope || source.branch != session.branch then throw .mismatch
-  let invocation ← Search.invokeWithWithin envelope policyMeasure package.rule
-      (fun request =>
-        let command := package.invoke request
-        (command.reply, command)) session decision |>.mapError Error.search
-  match invocation with
-  | .stopped stop next => pure (.stopped stop bundle next)
-  | .produced (.stopped stop next) command =>
-      match command with
-      | .stop _ _ => pure (.stopped stop bundle next)
-      | _ => throw .mismatch
-  | .produced (.applied transition) command =>
-      match command with
-      | .stop _ _ => throw .mismatch
-      | .continue echo =>
-          echoMatches limits transition echo
-          if echo.outcome.updates.isEmpty then throw .mismatch
-          let some recipe := appendEvents bundle.recipe id.index echo.events | throw .mismatch
-          let tree ← Search.Result.advanceWithin limits.result resultMeasure bundle.tree transition
-            |>.mapError Error.result
-          let next ← bundleWithin limits resultMeasure recipeMeasure tree recipe
-          pure (.continued next transition.after)
-      | Command.split proposal =>
-          echoMatches limits transition proposal.echo
-          if !emptyEcho proposal.echo || !exactSplit transition.request proposal.runtime then
-            throw .mismatch
-          let tree ← Search.Result.splitWithin limits.result resultMeasure order bundle.tree
-            proposal.runtime proposal.left proposal.right |>.mapError Error.result
-          let recipe := appendChildren bundle.recipe id proposal.left proposal.right
-          let next ← bundleWithin limits resultMeasure recipeMeasure tree recipe
-          pure (.split next)
-      | .target echo target =>
-          echoMatches limits transition echo
-          if !emptyEcho echo || !exactTarget transition.request target then throw .mismatch
-          let tree ← Search.Result.settleWithin limits.result resultMeasure bundle.tree (.target target)
-            |>.mapError Error.result
-          let next ← bundleWithin limits resultMeasure recipeMeasure tree bundle.recipe
-          pure (.terminal next)
-      | .refute echo refute =>
-          echoMatches limits transition echo
-          if !emptyEcho echo || !exactRefute transition.request refute then throw .mismatch
-          let tree ← Search.Result.settleWithin limits.result resultMeasure bundle.tree (.refute refute)
-            |>.mapError Error.result
-          let next ← bundleWithin limits resultMeasure recipeMeasure tree bundle.recipe
-          pure (.terminal next)
-      | .unknown echo unknown =>
-          echoMatches limits transition echo
-          if !emptyEcho echo || unknown.scope != transition.request.scope ||
-              unknown.programVersion != transition.request.programVersion then throw .mismatch
-          let tree ← Search.Result.settleWithin limits.result resultMeasure bundle.tree (.unknown unknown)
-            |>.mapError Error.result
-          let next ← bundleWithin limits resultMeasure recipeMeasure tree bundle.recipe
-          pure (.unknown next)
+  let produced ← runWithWithin envelope policyMeasure limits resultMeasure recipeMeasure order
+    package.rule (fun request => (package.invoke request, ())) bundle session decision
+  pure produced.step
 
 end Hex.Interval.Driver

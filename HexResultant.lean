@@ -15,6 +15,7 @@ public import HexResultant.DeterminantAlgebra
 public import HexResultant.BlockDeterminant
 public import HexResultant.BrownTraub
 public import HexResultant.Subresultant
+public import HexResultant.SubresultantExt
 public import HexResultant.Discriminant
 
 public section

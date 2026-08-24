@@ -135,6 +135,21 @@ repos:
     pins: [hex-arith]
     lakefile: lean
 
+  - repo: leanprover/hex-sparse-poly
+    component: Sparse univariate polynomials
+    lib: HexSparsePoly
+    test_modules: [HexSparsePoly.KernelTests]
+    umbrella: true
+    spec: hex-sparse-poly
+    bench: true
+    conformance: true
+    conformance_files: [HexSparsePolyFixtures.lean]
+    fixtures: [HexSparsePoly]
+    oracles: [sparsepoly_sympy.py, common.py]
+    pins: [hex-basic, hex-poly, hex-arith, hex-mod-arith]
+    conformance_pins: [hex-arith, hex-mod-arith]
+    lakefile: toml
+
   - repo: leanprover/hex-poly-mathlib
     lib: HexPolyMathlib
     umbrella: true
@@ -144,6 +159,17 @@ repos:
     fixtures: []
     oracles: []
     pins: [hex-poly]
+    lakefile: toml
+
+  - repo: leanprover/hex-sparse-poly-mathlib
+    lib: HexSparsePolyMathlib
+    umbrella: true
+    spec: hex-sparse-poly-mathlib
+    bench: false
+    conformance: true
+    fixtures: []
+    oracles: []
+    pins: [hex-basic, hex-poly, hex-sparse-poly, hex-poly-mathlib]
     lakefile: toml
 
   - repo: leanprover/hex-mv-poly-mathlib
@@ -336,6 +362,77 @@ repos:
     pins: [hex-basic, hex-arith, hex-poly, hex-matrix, hex-row-reduce, hex-mod-arith, hex-poly-fp, hex-gfq-ring]
     lakefile: toml
 
+  - repo: leanprover/hex-conway
+    component: Conway polynomials
+    lib: HexConway
+    umbrella: true
+    spec: hex-conway
+    bench: true
+    conformance: true
+    fixtures: [HexConway]
+    oracles: [conway_luebeck.py, conway_polynomials_table.py, common.py, luebeck_conway_cache.json, update_luebeck_conway_cache.py]
+    pins: [hex-basic, hex-arith, hex-poly, hex-matrix, hex-row-reduce, hex-mod-arith, hex-poly-fp, hex-gfq-ring, hex-berlekamp]
+    lakefile: toml
+
+  - repo: leanprover/hex-gfq-field
+    component: Finite fields `F_p[x]/(f)`
+    lib: HexGFqField
+    umbrella: true
+    spec: hex-gfq-field
+    bench: true
+    conformance: true
+    fixtures: [HexGFqField]
+    oracles: [gfqfield_flint.py, common.py, flint_bench_driver.py]
+    pins: [hex-basic, hex-arith, hex-poly, hex-matrix, hex-row-reduce, hex-mod-arith, hex-poly-fp, hex-gfq-ring, hex-berlekamp]
+    lakefile: toml
+
+  - repo: leanprover/hex-gf2
+    component: Packed GF(2) polynomials
+    lib: HexGF2
+    precompile_modules: true
+    umbrella: true
+    spec: hex-gf2
+    bench: true
+    conformance: true
+    fixtures: [HexGF2]
+    oracles: [gf2_flint.py, common.py, gf2_ntl_bench_driver.cc, setup_gf2_ntl_driver.sh]
+    pins: [hex-basic]
+    lakefile: lean
+
+  - repo: leanprover/hex-gf2-mathlib
+    lib: HexGF2Mathlib
+    umbrella: true
+    spec: hex-gf2-mathlib
+    bench: false
+    conformance: false
+    fixtures: []
+    oracles: []
+    pins: [hex-basic, hex-arith, hex-poly, hex-matrix, hex-row-reduce, hex-mod-arith, hex-poly-fp, hex-gfq-ring, hex-berlekamp, hex-gfq-field, hex-gf2, hex-poly-mathlib, hex-mod-arith-mathlib, hex-poly-fp-mathlib]
+    lakefile: toml
+
+  - repo: leanprover/hex-gfq
+    component: Canonical finite fields
+    lib: HexGFq
+    umbrella: true
+    spec: hex-gfq
+    bench: true
+    conformance: true
+    fixtures: [HexGFq]
+    oracles: [gfq_flint.py, common.py]
+    pins: [hex-basic, hex-arith, hex-poly, hex-matrix, hex-row-reduce, hex-mod-arith, hex-poly-fp, hex-gfq-ring, hex-berlekamp, hex-conway, hex-gfq-field, hex-gf2]
+    lakefile: toml
+
+  - repo: leanprover/hex-gfq-mathlib
+    lib: HexGFqMathlib
+    umbrella: true
+    spec: hex-gfq-mathlib
+    bench: false
+    conformance: false
+    fixtures: []
+    oracles: []
+    pins: [hex-basic, hex-arith, hex-poly, hex-matrix, hex-row-reduce, hex-mod-arith, hex-poly-fp, hex-gfq-ring, hex-berlekamp, hex-conway, hex-gfq-field, hex-gf2, hex-gfq, hex-poly-mathlib, hex-mod-arith-mathlib, hex-poly-fp-mathlib, hex-gf2-mathlib]
+    lakefile: toml
+
   - repo: leanprover/hex-determinant
     component: Determinants
     lib: HexDeterminant
@@ -358,6 +455,19 @@ repos:
     fixtures: [HexBareiss]
     oracles: [matrix_flint.py, common.py, flint_bench_driver.py]
     pins: [hex-basic, hex-determinant, hex-matrix]
+    lakefile: toml
+
+  - repo: leanprover/hex-char-poly
+    component: Characteristic polynomials
+    lib: HexCharPoly
+    test_modules: [HexCharPoly.CharPolyElabTests]
+    umbrella: true
+    spec: hex-char-poly
+    bench: true
+    conformance: true
+    fixtures: [HexCharPoly]
+    oracles: [matrix_flint.py, common.py, flint_bench_driver.py, pari_bench_driver.py]
+    pins: [hex-basic, hex-poly, hex-matrix]
     lakefile: toml
 
   - repo: leanprover/hex-matrix-mathlib
@@ -391,6 +501,18 @@ repos:
     fixtures: []
     oracles: []
     pins: [hex-basic, hex-determinant, hex-bareiss, hex-matrix-mathlib, hex-matrix]
+    lakefile: toml
+
+  - repo: leanprover/hex-char-poly-mathlib
+    lib: HexCharPolyMathlib
+    test_modules: [HexCharPolyMathlib.CharPolyElabTests]
+    umbrella: true
+    spec: hex-char-poly-mathlib
+    bench: false
+    conformance: false
+    fixtures: []
+    oracles: []
+    pins: [hex-basic, hex-poly, hex-matrix, hex-determinant, hex-bareiss, hex-char-poly, hex-poly-mathlib, hex-matrix-mathlib, hex-determinant-mathlib]
     lakefile: toml
 
   - repo: leanprover/hex-bareiss-mathlib
@@ -520,5 +642,5 @@ repos:
   - repo: leanprover/hex
     pins_only: true
     readme_template: scripts/release/hex-README.md
-    pins: [hex-basic, hex-arith, hex-poly, hex-mv-poly, hex-mod-arith, hex-poly-mathlib, hex-mv-poly-mathlib, hex-poly-fp, hex-poly-z, hex-mod-arith-mathlib, hex-poly-fp-mathlib, hex-gfq-ring, hex-hensel, hex-poly-z-mathlib, hex-hensel-mathlib, hex-roots, hex-real-roots, hex-roots-mathlib, hex-real-roots-mathlib, hex-matrix, hex-row-reduce, hex-berlekamp, hex-determinant, hex-bareiss, hex-matrix-mathlib, hex-row-reduce-mathlib, hex-determinant-mathlib, hex-bareiss-mathlib, hex-berlekamp-mathlib, hex-gram-schmidt, hex-gram-schmidt-mathlib, hex-lll, hex-berlekamp-zassenhaus, hex-lll-mathlib, hex-berlekamp-zassenhaus-mathlib]
+    pins: [hex-basic, hex-arith, hex-poly, hex-mv-poly, hex-mod-arith, hex-sparse-poly, hex-poly-mathlib, hex-sparse-poly-mathlib, hex-mv-poly-mathlib, hex-poly-fp, hex-poly-z, hex-mod-arith-mathlib, hex-poly-fp-mathlib, hex-gfq-ring, hex-hensel, hex-poly-z-mathlib, hex-hensel-mathlib, hex-roots, hex-real-roots, hex-roots-mathlib, hex-real-roots-mathlib, hex-matrix, hex-row-reduce, hex-berlekamp, hex-conway, hex-gfq-field, hex-gf2, hex-gf2-mathlib, hex-gfq, hex-gfq-mathlib, hex-determinant, hex-bareiss, hex-char-poly, hex-matrix-mathlib, hex-row-reduce-mathlib, hex-determinant-mathlib, hex-char-poly-mathlib, hex-bareiss-mathlib, hex-berlekamp-mathlib, hex-gram-schmidt, hex-gram-schmidt-mathlib, hex-lll, hex-berlekamp-zassenhaus, hex-lll-mathlib, hex-berlekamp-zassenhaus-mathlib]
     lakefile: toml

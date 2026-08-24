@@ -438,7 +438,9 @@ theorem refineFastLoop_ready_disjoint {p : Hex.ZPoly} {target : Int}
             simpa [Hex.IsolationLoop.disjoint] using hemit.1.1.2⟩
         · exact ih hloop
 
-private theorem list_mapM_some_get { α β : Type* } {f : α → Option β}
+/-- An option-valued list map that succeeds preserves length and maps
+corresponding entries. -/
+private theorem list_mapM_some_get {α β : Type*} {f : α → Option β}
     {xs : List α} {ys : List β} (hmap : xs.mapM f = some ys) :
     xs.length = ys.length ∧
       ∀ (i : Nat) (hi : i < xs.length) (hj : i < ys.length),
@@ -469,7 +471,10 @@ private theorem list_mapM_some_get { α β : Type* } {f : α → Option β}
                     simp only [List.getElem_cons_succ]
                     exact hget i (by simpa using hi) (by simpa using hj)
 
-private theorem array_mapM_some_get { α β : Type* } {f : α → Option β}
+/-- An option-valued array map that succeeds preserves size and maps
+corresponding entries.  Shared plumbing for the isolation-loop soundness
+proofs here and in `NKDriver`, `Isolate`, and `HexNumberFieldMathlib`. -/
+theorem array_mapM_some_get {α β : Type*} {f : α → Option β}
     {xs : Array α} {ys : Array β} (hmap : xs.mapM f = some ys) :
     xs.size = ys.size ∧
       ∀ (i : Nat) (hi : i < xs.size) (hj : i < ys.size),
@@ -781,6 +786,7 @@ theorem finishAllAtoms_covers {p : Hex.ZPoly} {target : Int}
                 · simp at hfinish
   · simp at hfinish
 
+/-- A successful atom-only finish emits only atom certificates. -/
 theorem finishAtoms_atoms {p : Hex.ZPoly} {target : Int}
     {strategy : Hex.AtomStrategy}
     {tried : Array (Hex.Component × Option (Hex.Certified p))}
@@ -796,6 +802,8 @@ theorem finishAtoms_atoms {p : Hex.ZPoly} {target : Int}
       apply finishAllAtoms_atoms
       simpa [Hex.IsolationLoop.finishAtoms?] using hfinish
 
+/-- A successful atom-only finish meets the target precision and emits
+pairwise-disjoint squares. -/
 theorem finishAtoms_ready_disjoint {p : Hex.ZPoly} {target : Int}
     {strategy : Hex.AtomStrategy}
     {tried : Array (Hex.Component × Option (Hex.Certified p))}
@@ -812,6 +820,8 @@ theorem finishAtoms_ready_disjoint {p : Hex.ZPoly} {target : Int}
       apply finishAllAtoms_ready_disjoint
       simpa [Hex.IsolationLoop.finishAtoms?] using hfinish
 
+/-- With a preserving certifier, a successful atom-only finish covers every
+root covered by the input worklist. -/
 theorem finishAtoms_covers {p : Hex.ZPoly} {target : Int}
     {strategy : Hex.AtomStrategy} (hcert : Certifier.Preserves p strategy)
     {work : Array Hex.Component} {rs : Array (Hex.Certified p)}

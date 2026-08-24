@@ -90,4 +90,12 @@ theorem resultant_eq_zero_iff_common_root
     rw [hdf, hdg]
     exact Int.cast_eq_zero.mp hcast
 
+/-! Trust-surface regression check for the common-root characterization. -/
+
+/--
+info: 'Hex.DensePoly.resultant_eq_zero_iff_common_root' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms resultant_eq_zero_iff_common_root
+
 end Hex.DensePoly

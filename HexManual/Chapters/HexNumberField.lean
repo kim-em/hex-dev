@@ -201,7 +201,7 @@ finite root array carrying positive multiplicities.
 
 {docstring Hex.AlgebraicPoly.roots?}
 
-# Companion contracts
+# The Mathlib correspondence
 %%%
 tag := "hex-number-field-correspondence"
 %%%

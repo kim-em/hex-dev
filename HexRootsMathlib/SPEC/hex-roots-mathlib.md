@@ -252,7 +252,8 @@ The computational library never states this inequality directly: its
 witness compares dyadic bounds (`lo`, `hi`, and the rational `√2`
 bounds; see [hex-roots.md](../../HexRoots/SPEC/hex-roots.md)). The one-directional lemma
 "the dyadic-bound witness implies the exact Pellet inequality" lives
-in `HexRootsMathlib/Geometry.lean`, so the analytic development above
+in `HexRootsMathlib/Pellet.lean` (`pelletAt_dominates`, feeding
+`Pellet.sound`), so the analytic development above
 stays in the standard form (the form worth contributing to Mathlib)
 while the computational library stays decidable. The converse
 direction, that a sufficiently isolating disc makes the witness hold
@@ -278,8 +279,9 @@ developments above.
   `181/128 < √2 < 1449/1024` bounds, and the Mathlib geometry of a
   `DyadicSquare`: its complex centre, real half-width, closed sup-norm
   square, and open/closed circumscribed discs. Simp lemmas
-  `DyadicSquare.center_eq`, `DyadicSquare.disc_eq`. The later Pellet
-  correspondence in this module proves "witness implies Pellet".
+  `DyadicSquare.center_eq`, `DyadicSquare.disc_eq`. The
+  "witness implies Pellet" correspondence itself lives downstream in
+  `HexRootsMathlib/Pellet.lean`.
 - `HexRootsMathlib/Taylor.lean`: the shared exact-coefficient bridge
   ```lean
   theorem taylor_coeff (p : ZPoly) (z : GaussDyadic) (k : Nat) :
@@ -379,6 +381,27 @@ developments above.
   The refined-level wrapper preserves `RefinedIsolation.root` unconditionally
   by exposing the successful underlying raw refinement call; the packaged
   quotient equality remains available to Mathlib-free callers.
+- `HexRootsMathlib/IsolateTotal.lean`: the none-free consumption surface.
+  ```lean
+  noncomputable def isolate! (p : Hex.ZPoly) (h : Hex.HasOnlySimpleRoots p)
+      (hp : p ≠ 0) (atomPrec : Int)
+      (strategy : Hex.AtomStrategy := .nkThenPellet) :
+      Array (Hex.DyadicRootIsolation p)
+  ```
+  Unlike `Hex.isolate`, this proof-facing wrapper cannot return `none`:
+  its hypotheses discharge the driver's completeness conditions and the
+  result is extracted from `isolate_exists`. It is characterized by
+  `isolate!_eq` (it is exactly the successful executable output), and
+  its behaviour is packaged by `isolate!_count` (one atom per root,
+  with multiplicity), `isolate!_roots` (the selected semantic roots are
+  exactly the root finset), `isolate!_prec` (every atom meets the
+  requested precision), and `isolate!_disjoint` (distinct atoms have
+  disjoint closed circumscribed discs).
+- `HexRootsMathlib/Examples.lean`: compiled regression examples for the
+  public surface (kernel-`decide` witness checks on committed dyadic
+  fixtures and `isolate!`-based root extraction). Deliberately excluded
+  from the umbrella and built through the release-tests target so CI
+  cannot silently lose it.
 
 ## Completeness development
 
@@ -448,7 +471,7 @@ and it is the analytically hardest part:
     adjacent to the component containing that root and hence glued into it.
     The preceding NK and Pellet converses then make every component pass
     `certify?` with `k = 1` under `.nk`, `.pellet`, and `.nkThenPellet`.
-    Mahler separation makes their stored discs pairwise disjoint. An
+    Mahler separation makes their stored discs pairwise disjoint.
     Under either Pellet-bearing strategy, an all-atom worklist may instead run
     the local one-atom refinement loop independently on each atom and emit
     before that depth when every refinement succeeds and the resulting discs
@@ -529,6 +552,8 @@ Correspondence theorems (depend on hex-roots data structures):
   HexRootsMathlib/Isolate.lean
   HexRootsMathlib/SimpleRoot.lean
   HexRootsMathlib/Refinement.lean
+  HexRootsMathlib/IsolateTotal.lean
+  HexRootsMathlib/Examples.lean  (release-tests target, not the umbrella)
 
 Completeness development:
   HexRootsMathlib/Completeness/PelletTail.lean
@@ -540,6 +565,7 @@ Completeness development:
   HexRootsMathlib/Completeness/NKDepth.lean
   HexRootsMathlib/Completeness/RootFreeConverse.lean
   HexRootsMathlib/Completeness/SurvivorComponent.lean
+  HexRootsMathlib/Completeness/RefinementCompleteness.lean
   HexRootsMathlib/Completeness/DriverCompleteness.lean
 ```
 
@@ -555,6 +581,33 @@ general Newton--Kantorovich result, and obtains the finite-dimensional form by
 showing the approximate inverse is surjective and hence injective in equal
 dimensions. Polynomial and executable-witness specialization belongs in
 `KantorovichPoly.lean`, not in the generic module.
+
+## Headline correctness theorem
+
+`HexRootsMathlib.isolate_sound`: a successful run of the executable
+isolator on a nonzero polynomial with only simple roots returns atoms
+whose semantic roots enumerate the root finset of the polynomial
+exactly, every atom meeting the requested precision. This is the
+end-to-end post-condition of the public API. Totality under the same
+hypotheses is `isolate_isSome` (the completeness development's
+terminal theorem), packaged for consumers as the none-free `isolate!`
+wrapper with its characterisation family (`isolate!_eq`, `_count`,
+`_roots`, `_prec`, `_disjoint`); the general-multiplicity count
+identity is `isolateAll_count`. Those are independently justified
+public API, and the correspondence and completeness theorems above are
+load-bearing clauses of the headline proof, per the intermediate-lemma
+rule in PLAN/Conventions.md §Headline correctness theorem.
+
+## External comparators
+
+No external comparator is required.
+
+**Justification:** `correspondence-only-layer` per
+`SPEC/benchmarking.md §"Comparator naming"`. The library introduces no
+root-isolation algorithm; it verifies the executable isolator
+implemented elsewhere. The computational performance owner is
+hex-roots, where the isolator's bench targets and the python-flint
+comparator are measured.
 
 ## References
 
