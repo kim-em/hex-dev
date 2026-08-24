@@ -62,10 +62,100 @@ def coarseDecomp (f : MvPoly n Int cmp) : Decomp n cmp :=
   else
     ⟨split.1, [⟨split.2, 1⟩]⟩
 
+/-- A normalized primitive constant over the integers is the polynomial one. -/
+private theorem normalizedPrimitive_eq_one (q : MvPoly n Int cmp)
+    (hq : q ≠ 0) (hvars : q.vars = [])
+    (hnormalized : polyNormalize q = q) (hprimitive : content q = 1) :
+    q = 1 := by
+  let c := coeff Mono.zero q
+  have hqC : q = C c := eq_C_of_vars_eq_nil q hvars
+  have hc : c ≠ 0 := by
+    intro hzero
+    apply hq
+    rw [hqC, hzero, C_zero]
+  have hnormalizedC : polyNormalize (C c : MvPoly n Int cmp) = C c := by
+    rw [← hqC]
+    exact hnormalized
+  have hcontent : normalize c = 1 := by
+    rw [hqC] at hprimitive
+    unfold content scalarContent at hprimitive
+    rw [termsList_C, ite_eq_right hc] at hprimitive
+    exact hprimitive
+  change c * (if c < 0 then -1 else 1) = 1 at hcontent
+  by_cases hneg : c < 0
+  · rw [ite_eq_left hneg] at hcontent
+    have hcneg : c = -1 := by omega
+    exfalso
+    rw [hcneg] at hnormalizedC
+    unfold polyNormalize polyNormUnit at hnormalizedC
+    rw [leadingTerm_C (by decide : (-1 : Int) ≠ 0)] at hnormalizedC
+    change monomial Mono.zero (-1 : Int) * monomial Mono.zero (-1 : Int) =
+      monomial Mono.zero (-1 : Int) at hnormalizedC
+    rw [monomial_mul_monomial, Mono.zero_mul] at hnormalizedC
+    have hcoefficient := congrArg (coeff (Mono.zero : Mono n)) hnormalizedC
+    rw [coeff_monomial, coeff_monomial,
+      ite_eq_left rfl, ite_eq_left rfl] at hcoefficient
+    omega
+  · rw [ite_eq_right hneg] at hcontent
+    have hcOne : c = 1 := by omega
+    rw [hqC, hcOne]
+    rfl
+
 /-- The coarse fallback is a genuine D1--D5 decomposition. -/
 theorem coarse_checks (f : MvPoly n Int cmp) :
     checkDecomp f (coarseDecomp f) = true := by
-  sorry
+  let split := MvPoly.sqfPrimitiveSplit f
+  unfold coarseDecomp
+  change checkDecomp f
+    (if split.2.vars.isEmpty then ⟨split.1, []⟩
+      else ⟨split.1, [⟨split.2, 1⟩]⟩) = true
+  by_cases hempty : split.2.vars.isEmpty = true
+  · rw [ite_eq_left hempty]
+    have hvars : split.2.vars = [] := List.isEmpty_iff.mp hempty
+    by_cases hzero : split.2 = 0
+    · have hproduct := MvPoly.sqfPrimitiveSplit_product f
+      change C split.1 * split.2 = f at hproduct
+      rw [hzero, MvPoly.mul_zero] at hproduct
+      have hf : f = 0 := hproduct.symm
+      have hscalar : split.1 = 0 := by
+        subst f
+        simp only [split, MvPoly.sqfPrimitiveSplit, content_zero,
+          primPart_zero, leadingCoeff_zero, Lean.Grind.Semiring.zero_mul]
+      simp only [checkDecomp, Decomp.product, List.foldl_nil,
+        distinctFactors, Bool.and_eq_true, beq_iff_eq]
+      rw [hscalar, C_zero]
+      exact ⟨⟨hf.symm, rfl⟩, True.intro⟩
+    · have hone : split.2 = 1 := normalizedPrimitive_eq_one split.2 hzero
+        hvars (MvPoly.sqfPrimitiveSplit_normalized f)
+        (MvPoly.sqfPrimitiveSplit_primitive f hzero)
+      have hproduct := MvPoly.sqfPrimitiveSplit_product f
+      change C split.1 * split.2 = f at hproduct
+      rw [hone, MvPoly.mul_one] at hproduct
+      simp only [checkDecomp, Decomp.product, List.foldl_nil,
+        distinctFactors, Bool.and_eq_true, beq_iff_eq]
+      exact ⟨⟨hproduct, rfl⟩, True.intro⟩
+  · rw [ite_eq_right hempty]
+    have hvars : split.2.vars ≠ [] := by
+      intro hnil
+      apply hempty
+      exact List.isEmpty_iff.mpr hnil
+    have hzero : split.2 ≠ 0 := by
+      intro hzero
+      rw [hzero, vars_zero] at hvars
+      contradiction
+    have hfactor : checkFactor (⟨split.2, 1⟩ : Factor n cmp) = true := by
+      simp only [checkFactor, Bool.and_eq_true, decide_eq_true_eq,
+        beq_iff_eq]
+      exact ⟨⟨⟨by decide, hvars⟩,
+        MvPoly.sqfPrimitiveSplit_normalized f⟩,
+        MvPoly.sqfPrimitiveSplit_primitive f hzero⟩
+    have hproduct := MvPoly.sqfPrimitiveSplit_product f
+    change C split.1 * split.2 = f at hproduct
+    simp only [checkDecomp, Decomp.product, List.foldl_cons,
+      List.foldl_nil, distinctFactors, Bool.and_eq_true, beq_iff_eq]
+    rw [MvPoly.pow_succ split.2 0, MvPoly.pow_zero, MvPoly.one_mul]
+    refine ⟨⟨hproduct, ?_⟩, ⟨rfl, True.intro⟩⟩
+    simpa only [List.all_cons, List.all_nil, Bool.and_true] using hfactor
 
 def coarseChecked (f : MvPoly n Int cmp) : CheckedDecomp f :=
   ⟨coarseDecomp f, coarse_checks f⟩
