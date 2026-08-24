@@ -12,6 +12,12 @@
     "reason": "Guards powModNat at modulus zero, exposes its worker and bitLength for kernel reduction, and adds a csimp routing powModNat to the unchanged powMod; no executable factorization code calls powModNat (the service uses powMod directly)."
   },
   {
+    "path": "Hex/Conformance/Emit.lean",
+    "baseline_blob": "21481a92862c6a9f8c8d538c4815d2bc4557453a",
+    "current_blob": "03de42764424c31c1ec4060cf874f54087592e9e",
+    "reason": "Adds the primality fixture emitters and boolValue beside main's modular and series emitters; emission helpers only, the factorization service does not call them."
+  },
+  {
     "path": "lakefile.lean",
     "baseline_blob": "a1b87406682dbf908d990f01676f326499b906e5",
     "current_blob": "343ecbc8696f64bbba513cb7ee4d4a55e50712a5",
