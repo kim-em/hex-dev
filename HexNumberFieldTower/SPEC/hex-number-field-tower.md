@@ -40,6 +40,7 @@ instance : Neg (Elem T)
 instance : Mul (Elem T)
 instance : Inv (Elem T)
 instance : Div (Elem T)
+instance : SMul Rat (Elem T)
 
 def dim (T : NumberTower) : Nat
 def coeffs (a : Elem T) : Array Rat
@@ -61,7 +62,9 @@ in the mixed-radix basis
 This flattened representation avoids a runtime-dependent Lean carrier while the
 index `Elem T` still supplies the per-tower arithmetic operations required by
 `DensePoly` gcd and resultant algorithms. Coordinate equality is exact within a
-fixed checked tower. Inversion is totalized by `0⁻¹ = 0`.
+fixed checked tower. Inversion is totalized by `0⁻¹ = 0`. Rational scalar
+multiplication acts coordinatewise; the Mathlib companion pins this executable
+action as the `qsmul` field of its law-bearing `Field (Elem T)` structure.
 
 Raw constructors are private. Only the smart constructors below may create a
 `NumberTower`. Each level stores a successful executable factorization check and
