@@ -604,8 +604,14 @@ theorem closesEquality
     rfl rfl sourceFacts rfl inputFacts sourceFactsContain
     (RuleConformance.d (-3)) productShape
 
+/-- info: 'Hex.IntervalMathlib.FrontendConformance.closesConjunction' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
 #print axioms closesConjunction
+/-- info: 'Hex.IntervalMathlib.FrontendConformance.closesLower' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
 #print axioms closesLower
+/-- info: 'Hex.IntervalMathlib.FrontendConformance.closesEquality' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
 #print axioms closesEquality
 /-- info: 'Hex.IntervalMathlib.FrontendConformance.closesComputedInitial' depends on axioms: [propext,
  Classical.choice,
@@ -622,6 +628,8 @@ theorem closesEquality
  Quot.sound] -/
 #guard_msgs in
 #print axioms rejectsProofPermutation
+/-- info: 'Hex.IntervalMathlib.FrontendConformance.targetValue' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
 #print axioms targetValue
 /-- info: 'Hex.IntervalMathlib.FrontendConformance.projectedTarget' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in

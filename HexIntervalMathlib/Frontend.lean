@@ -669,13 +669,10 @@ def modelOfCheck {config : Config} {sources : Nat → ℝ} {result : Result}
     (success : checked.toOption.isSome = true) : Model config.rule sources result :=
   checked.toOption.get success
 
-/-- Revalidate every resource cap and structural binding before materializing
-one authenticated version-zero fact per reifier node. Caller-selected facts
-remain plain data; only `InitialContext.Contains` supplies semantic authority.
-Failure returns no partially constructed input. -/
-def inputInitialWithin (config : Config) (scope : Policy.ScopeId) (result : Result)
-    (initial : InitialContext) (target : Hex.Interval) :
-    Except Error (Proof.Input Hex.Interval) := do
+/-- Shared bounded validation for proof-input constructors. `initialSize` is
+the caller's version-zero row count and is charged before any row scan. -/
+def inputCheckWithin (config : Config) (result : Result) (initialSize : Nat) :
+    Except Error Unit := do
   if config.reify.maxSources < result.sourceCount then throw .sourceLimit
   let meanings := Rule.meanings config.rule
   if config.reify.maxOperations < meanings.size ||
@@ -683,44 +680,48 @@ def inputInitialWithin (config : Config) (scope : Policy.ScopeId) (result : Resu
     throw .operationLimit
   if config.reify.maxNodes < result.program.nodes.size ||
       config.reify.maxNodes < result.entries.size ||
-      config.reify.maxNodes < initial.rows.size then throw .nodeLimit
+      config.reify.maxNodes < initialSize then throw .nodeLimit
   if !result.depthCheck config.reify.maxDepth then throw .depthLimit
   if result.target.index ≥ result.program.nodes.size || !result.program.check then
     throw .malformedProgram
   if result.program.operations != meanings.map (Program.Meaning.operation) then
     throw .malformedProgram
   if !result.check then throw .malformedResult
+  pure ()
+
+/-- Revalidate every resource cap and structural binding before materializing
+one authenticated version-zero fact per reifier node. Caller-selected facts
+remain plain data; only `InitialContext.Contains` supplies semantic authority.
+Failure returns no partially constructed input. -/
+def inputInitialWithin (config : Config) (scope : Policy.ScopeId) (result : Result)
+    (initial : InitialContext) (target : Hex.Interval) :
+    Except Error (Proof.Input Hex.Interval) := do
+  inputCheckWithin config result initial.rows.size
   if initial.rows.size != result.entries.size then throw .wrongInitialCount
   if !initial.check result then throw .malformedInitial
-  let input : Proof.Input Hex.Interval :=
-    { scope
-      program := result.program
-      facts := initial.facts
-      target := { node := result.target, fact := target } }
-  pure input
+  pure {
+    scope
+    program := result.program
+    facts := initial.facts
+    target := { node := result.target, fact := target } }
 
 /-- Source-only convenience wrapper for the original frontend API. It binds
 every selected source exactly once and leaves computed rows at domain top. -/
 def inputWithin (config : Config) (scope : Policy.ScopeId) (result : Result)
     (sources : Array Hex.Interval) (target : Hex.Interval) :
     Except Error (Proof.Input Hex.Interval) := do
-  if config.reify.maxSources < result.sourceCount then throw .sourceLimit
-  let meanings := Rule.meanings config.rule
-  if config.reify.maxOperations < meanings.size ||
-      config.reify.maxOperations < result.program.operations.size then
-    throw .operationLimit
-  if config.reify.maxNodes < result.program.nodes.size ||
-      config.reify.maxNodes < result.entries.size then throw .nodeLimit
-  if !result.depthCheck config.reify.maxDepth then throw .depthLimit
-  if result.target.index ≥ result.program.nodes.size || !result.program.check then
-    throw .malformedProgram
-  if result.program.operations != meanings.map (Program.Meaning.operation) then
-    throw .malformedProgram
-  if !result.check then throw .malformedResult
+  inputCheckWithin config result result.entries.size
   if sources.size != result.sourceCount then throw .wrongSourceCount
   for index in [0:result.sourceCount] do
     let some _ := result.sourceNode? index | throw (.missingSource index)
-  inputInitialWithin config scope result (result.sourceInitial sources) target
+  let initial := result.sourceInitial sources
+  if initial.rows.size != result.entries.size then throw .wrongInitialCount
+  if !initial.check result then throw .malformedInitial
+  pure {
+    scope
+    program := result.program
+    facts := initial.facts
+    target := { node := result.target, fact := target } }
 
 /-- The exact `Result.facts` seed array discharges every computed top fact;
 only caller source containment remains. -/
