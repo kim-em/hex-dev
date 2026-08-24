@@ -136,6 +136,25 @@ private def far : Dyadic := .ofOdd 1 1000000000 (by decide)
 #guard Hex.Interval.whole.view == .bounds .unbounded .unbounded
 #guard decide (Hex.Interval.empty ≠ Hex.Interval.whole)
 
+-- A proof-producing boundary can construct exact closed bounds without a
+-- second comparison. The view theorem works from this importing module, so a
+-- kernel proof does not depend on reducing the sealed constructor body.
+example (lower upper : Dyadic) (ordered : lower ≤ upper) :
+    (Hex.Interval.ofOrderedBounds lower upper ordered).view =
+      .bounds (.finite lower false) (.finite upper false) :=
+  Hex.Interval.view_ofOrderedBounds lower upper ordered
+
+#guard
+  (Hex.Interval.ofOrderedBounds (d 0) (d 1) (by decide)).view ==
+    finite 0 false 1 false
+
+-- The ordered constructor does not repeat endpoint-height or alignment work.
+-- Even a compact endpoint beyond ordinary planner caps is admitted when the
+-- caller already owns its ordering proof.
+#guard
+  (Hex.Interval.ofOrderedBounds far far (Dyadic.le_refl far)).view ==
+    .bounds (.finite far false) (.finite far false)
+
 #guard
   match Hex.Interval.betweenWithin smallLimit (d 0) false (d 1) true with
   | .ready interval => interval.view == finite 0 false 1 true

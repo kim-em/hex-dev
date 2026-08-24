@@ -86,6 +86,30 @@ def empty : Hex.Interval := .mk .empty (by rfl)
 def whole : Hex.Interval :=
   .mk (.bounds .unbounded .unbounded) (by rfl)
 
+/-- Construct a closed interval from endpoints whose order is already proved.
+
+This constructor performs no endpoint comparison. It is intended for trusted
+proof-producing boundaries that have already enforced their own resource
+limits and can supply `lower ≤ upper` without asking interval construction to
+recompute it. Untrusted endpoints must still enter through `betweenWithin` or
+`ofRawWithin`. -/
+def ofOrderedBounds (lower upper : Dyadic) (ordered : lower ≤ upper) :
+    Hex.Interval :=
+  .mk (.bounds (.finite lower false) (.finite upper false)) (by
+    simp only [Raw.CutConsistent, Raw.consistent]
+    by_cases less : lower < upper
+    · simp [less]
+    · have equal : lower = upper :=
+        Dyadic.le_antisymm ordered (Dyadic.not_le.mp less)
+      simp [equal])
+
+/-- An ordered-endpoint construction exposes exactly its closed finite cuts. -/
+@[simp]
+theorem view_ofOrderedBounds (lower upper : Dyadic) (ordered : lower ≤ upper) :
+    (ofOrderedBounds lower upper ordered).view =
+      .bounds (.finite lower false) (.finite upper false) := by
+  rfl
+
 /-- Construct a singleton after endpoint-cost preflight. -/
 def singletonWithin (limit : EndpointLimit) (value : Dyadic) : BuildResult :=
   ofRawWithin limit (.bounds (.finite value false) (.finite value false))

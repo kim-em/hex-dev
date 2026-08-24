@@ -256,9 +256,10 @@ Internal planners and certificates may still use plain data when their own
 checked boundary authenticates it; proof traces do not inherit the public
 value's proof field.
 
-The initial supported slice exposes `view`, `empty`, `whole`, and endpoint-cost
-preflighted raw, singleton, one-sided, and finite constructors. The first
-supported operations are resource-checked intersection, hull, negation,
+The initial supported slice exposes `view`, `empty`, `whole`, endpoint-cost
+preflighted raw, singleton, one-sided, and finite constructors, and a
+proof-ordered comparison-free closed constructor. The first supported
+operations are resource-checked intersection, hull, negation,
 addition, subtraction, multiplication, minimum, maximum, absolute value,
 natural power, outward regularization, and transactional splitting at a dyadic
 point.
@@ -269,6 +270,24 @@ examples use the fully qualified `Hex.Interval`, because Mathlib also has a
 root `Interval` type; the public namespace is itself revisitable before release
 if qualification proves awkward. Unless a block explicitly says otherwise,
 unqualified API sketches below are declarations inside `Hex.Interval`.
+
+Proof-producing boundaries that already hold ordered dyadic endpoints also
+have a comparison-free closed constructor:
+
+```lean
+def ofOrderedBounds (lower upper : Dyadic) (ordered : lower ≤ upper) : Interval
+
+theorem view_ofOrderedBounds (lower upper : Dyadic) (ordered : lower ≤ upper) :
+  (ofOrderedBounds lower upper ordered).view =
+    .bounds (.finite lower false) (.finite upper false)
+```
+
+This is a kernel-friendly bridge, not an untrusted decoder: it neither checks
+endpoint height nor recomputes the comparison. A projection, replay, or proof
+emitter must enforce its own resource caps before producing `ordered`.
+Untrusted cuts still cross `ofRawWithin` or the corresponding `*Within` smart
+constructor. The exact view theorem lets an importing proof consume the
+closed cuts without reducing the sealed constructor across a module boundary.
 
 The public Mathlib companion interprets every canonical interval as a subset
 of `ℝ`. It proves that a successful executable `intersectWithin` denotes
