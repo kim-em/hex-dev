@@ -177,9 +177,15 @@ theorem fractionMap_mul (f g : MvPoly n R cmp) :
   exact mapCoeffs_mul Hex.Fraction.ofCoeff_zero Hex.Fraction.ofCoeff_add
     Hex.Fraction.ofCoeff_mul f g
 
+omit [BEq R] [LawfulBEq R] [Dvd R] in
 theorem fractionMap_injective :
     Function.Injective (fractionMap (n := n) (R := R) (cmp := cmp)) := by
-  sorry
+  intro p q hpq
+  apply ext
+  intro m
+  apply Hex.Fraction.ofCoeff_injective
+  have hcoeff := congrArg (coeff m) hpq
+  simpa [fractionMap, Hex.Fraction.ofCoeff_zero] using hcoeff
 
 /-- Coprimality after embedding the coefficients into the fraction field. -/
 def CoprimeOverFraction (f g : MvPoly n R cmp) : Prop :=

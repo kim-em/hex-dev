@@ -53,7 +53,10 @@ theorem quotient_mul_of_dvd {n : Nat} {R : Type u}
     [Dvd R] [GcdOps R] [LawfulGcdOps R] [IsMonomialOrder cmp]
     {f g : MvPoly n R cmp} (hg : g ≠ 0) (hd : g ∣ f) :
     quotient f g * g = f := by
-  sorry
+  rcases hd with ⟨q, hq⟩
+  have hdiv : divExact? f g = some q := (divExact?_eq hg).mpr hq
+  rw [quotient, hdiv]
+  exact hq.symm
 
 /-- Direct computational form used when a producer already has the checked
 division result in hand. -/
@@ -74,13 +77,115 @@ def terminal {S : Type u} [Lean.Grind.CommRing S] [DecidableEq S]
   let chain := DensePoly.subresultantChainExt f h
   chain.getD (chain.size - 1) (0, 0, 0)
 
+/-- The extended Brown worker only appends to its supplied chain. -/
+private theorem auxExt_size_le {S : Type u} [Lean.Grind.CommRing S]
+    [DecidableEq S] [Div S]
+    (prev curr : DensePoly S) (hPrev : S)
+    (prevU prevV currU currV : DensePoly S)
+    (chain : Array (DensePoly.SubresultantExt.Entry S)) (fuel : Nat) :
+    chain.size ≤
+      (DensePoly.subresultantAuxExt prev curr hPrev prevU prevV currU currV
+        chain fuel).size := by
+  induction fuel generalizing prev curr hPrev prevU prevV currU currV chain with
+  | zero => exact Nat.le_refl _
+  | succ fuel ih =>
+      let delta := prev.size - curr.size
+      let hCurr := divExp curr.leadingCoeff hPrev delta
+      let qr := DensePoly.pseudoDivMod prev curr
+      let q := qr.1
+      let p := qr.2
+      cases hp : p.isZero with
+      | true => simp [DensePoly.subresultantAuxExt, qr, p, hp]
+      | false =>
+          let divisor := DensePoly.negOnePow (delta + 1) *
+            prev.leadingCoeff * powNat hPrev delta
+          let next := DensePoly.divScalarImpl p divisor
+          cases hnext : next.isZero with
+          | true =>
+              simp [DensePoly.subresultantAuxExt, delta, qr, p, hp,
+                divisor, next, hnext]
+          | false =>
+              let a := powNat curr.leadingCoeff (delta + 1)
+              let nextU := DensePoly.divScalarImpl
+                (DensePoly.SubresultantExt.numerator a q prevU currU) divisor
+              let nextV := DensePoly.divScalarImpl
+                (DensePoly.SubresultantExt.numerator a q prevV currV) divisor
+              have hrec := ih curr next hCurr currU currV nextU nextV
+                (chain.push (nextU, nextV, next))
+              have hbound : chain.size ≤
+                  (DensePoly.subresultantAuxExt curr next hCurr currU currV
+                    nextU nextV (chain.push (nextU, nextV, next)) fuel).size :=
+                Nat.le_trans (Nat.le_succ chain.size) (by
+                  simpa only [Array.size_push] using hrec)
+              simpa [DensePoly.subresultantAuxExt, delta, hCurr, qr, q, p, hp,
+                divisor, next, hnext, a, nextU, nextV] using hbound
+
+/-- A degree-ordered extended Brown run retains its two input entries. -/
+private theorem orderedExt_nonempty {S : Type u} [Lean.Grind.CommRing S]
+    [DecidableEq S] [Div S]
+    (f g fU fV gU gV : DensePoly S) :
+    0 < (DensePoly.subresultantOrderedExt f g fU fV gU gV).size := by
+  let delta := f.size - g.size
+  let h₂ := powNat g.leadingCoeff delta
+  let qr := DensePoly.pseudoDivMod f g
+  let q := qr.1
+  let p := qr.2
+  let seed : Array (DensePoly.SubresultantExt.Entry S) :=
+    #[(fU, fV, f), (gU, gV, g)]
+  cases hp : p.isZero with
+  | true => simp [DensePoly.subresultantOrderedExt, qr, p, hp]
+  | false =>
+      let sign := DensePoly.negOnePow (R := S) (delta + 1)
+      let g₃ := DensePoly.scaleImpl sign p
+      cases hg₃ : g₃.isZero with
+      | true => simp [DensePoly.subresultantOrderedExt, delta, qr, p, hp,
+          sign, g₃, hg₃]
+      | false =>
+          let a := powNat g.leadingCoeff (delta + 1)
+          let g₃U := DensePoly.scaleImpl sign
+            (DensePoly.SubresultantExt.numerator a q fU gU)
+          let g₃V := DensePoly.scaleImpl sign
+            (DensePoly.SubresultantExt.numerator a q fV gV)
+          have h := auxExt_size_le g g₃ h₂ gU gV g₃U g₃V
+            (seed.push (g₃U, g₃V, g₃)) (g.size + 1)
+          have hpos : 0 <
+              (DensePoly.subresultantAuxExt g g₃ h₂ gU gV g₃U g₃V
+                (seed.push (g₃U, g₃V, g₃)) (g.size + 1)).size := by
+            apply Nat.lt_of_lt_of_le (by simp [seed]) h
+          simpa [DensePoly.subresultantOrderedExt, delta, h₂, qr, q, p,
+            seed, hp, sign, g₃, hg₃, a, g₃U, g₃V] using hpos
+
 /-- Nonzero input pairs give a nonempty extended chain, so `terminal` never
 observes its stable default on the PRS route. -/
 theorem chainExt_nonempty {S : Type u} [Lean.Grind.CommRing S]
     [DecidableEq S] [Div S] (f h : DensePoly S)
     (hn : f ≠ 0 ∨ h ≠ 0) :
     0 < (DensePoly.subresultantChainExt f h).size := by
-  sorry
+  rcases hn with hf | hh
+  · have hfz : f.isZero = false := by
+      rw [DensePoly.isZero_eq_false_iff]
+      by_cases hsize : 0 < f.size
+      · exact hsize
+      · exact (hf ((DensePoly.size_eq_zero_iff f).mp (by omega))).elim
+    unfold DensePoly.subresultantChainExt
+    simp only [hfz, Bool.false_eq_true, ↓reduceIte]
+    split
+    · simp
+    · split
+      · exact orderedExt_nonempty h f 0 1 1 0
+      · exact orderedExt_nonempty f h 1 0 0 1
+  · have hhz : h.isZero = false := by
+      rw [DensePoly.isZero_eq_false_iff]
+      by_cases hsize : 0 < h.size
+      · exact hsize
+      · exact (hh ((DensePoly.size_eq_zero_iff h).mp (by omega))).elim
+    unfold DensePoly.subresultantChainExt
+    split
+    · simp [hhz]
+    · simp only [hhz, Bool.false_eq_true, ↓reduceIte]
+      split
+      · exact orderedExt_nonempty h f 0 1 1 0
+      · exact orderedExt_nonempty f h 1 0 0 1
 
 /-- The selected terminal triple is an actual extended-chain entry whenever
 the route's nonzero-input invariant holds. -/
@@ -89,7 +194,13 @@ theorem terminal_mem {S : Type u} [Lean.Grind.CommRing S]
     (hn : f ≠ 0 ∨ h ≠ 0) :
     ∃ k, ∃ hk : k < (DensePoly.subresultantChainExt f h).size,
       terminal f h = (DensePoly.subresultantChainExt f h)[k]'hk := by
-  sorry
+  let chain := DensePoly.subresultantChainExt f h
+  have hpos : 0 < chain.size := chainExt_nonempty f h hn
+  let k := chain.size - 1
+  have hk : k < chain.size := by omega
+  refine ⟨k, hk, ?_⟩
+  simpa [terminal, chain, k] using
+    (Array.getElem_eq_getD (0, 0, 0) (h := hk)).symm
 
 /-- Arity-zero coprimality witness from the base extended gcd. -/
 def baseCoprime {R : Type u}
