@@ -35,6 +35,11 @@ open Hex
 open Hex.MvPoly
 open scoped Hex
 
+#check applyCorrections_frame
+#check seedTuple_stage
+#check liftStage_spec
+#check liftShifted_some
+
 def prime5 : ZMod64.Prime where
   m := 5
   bounds := { pPos := by omega, pLtR := by decide }
