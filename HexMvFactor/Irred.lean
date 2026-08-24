@@ -105,7 +105,15 @@ theorem checkSplit_sound {n : Nat}
     {cmp : Mono n → Mono n → Ordering} [IsMonomialOrder cmp]
     {g : MvPoly n Int cmp} {split : Split n cmp}
     (h : checkSplit g split = true) : ¬ MvHensel.Irred g := by
-  sorry
+  simp only [checkSplit, checkSplitCore, Bool.and_eq_true, beq_iff_eq] at h
+  intro hirred
+  rcases hirred.2 split.left split.right h.1.1.symm with hleft | hright
+  · have hnot := h.1.2
+    rw [(MvPoly.polyIsUnit_iff split.left).2 hleft] at hnot
+    contradiction
+  · have hnot := h.2
+    rw [(MvPoly.polyIsUnit_iff split.right).2 hright] at hnot
+    contradiction
 
 /-! # Complete decompositions -/
 

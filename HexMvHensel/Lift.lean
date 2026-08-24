@@ -254,12 +254,36 @@ def liftWith (cfg : Config) (inp : Input n cmp cmp') :
 /-- Every certificate returned by `lift` passes the independent checker. -/
 theorem lift_checks {inp : Input n cmp cmp'} {cert : Cert n cmp}
     (h : lift inp = .ok cert) : check inp cert = true := by
-  sorry
+  unfold lift at h
+  split at h
+  · contradiction
+  · split at h
+    · contradiction
+    · dsimp only at h
+      split at h
+      · cases h
+        assumption
+      · contradiction
 
 /-- Once V1--V6 hold, reconstruction is the only possible failure. -/
 theorem lift_progress {inp : Input n cmp cmp'} (h : valid inp = true) :
     (∃ cert, lift inp = .ok cert) ∨
       (∃ modulus, lift inp = .error (.reconstruct modulus)) := by
-  sorry
+  cases hfailure : failure? inp with
+  | some failure =>
+      simp [valid, hfailure] at h
+  | none =>
+      cases hshift : liftShifted? inp with
+      | none =>
+          exact Or.inr ⟨inp.setup.modulus, by
+            simp [lift, hfailure, hshift]⟩
+      | some shifted =>
+          let cert : Cert n cmp :=
+            { factors := reconstruct inp.setup.main inp.setup.point shifted }
+          by_cases hc : check inp cert = true
+          · exact Or.inl ⟨cert, by
+              simp [lift, hfailure, hshift, cert, hc]⟩
+          · exact Or.inr ⟨inp.setup.modulus, by
+              simp [lift, hfailure, hshift, cert, hc]⟩
 
 end Hex.MvHensel
