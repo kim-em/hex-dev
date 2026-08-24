@@ -68,6 +68,91 @@ def reduceStep (ops : Accumulator α n) (col : Fin m) (pivot row : Fin n)
       matrix := Matrix.rowAdd s.matrix pivot row (-q)
       accumulator := ops.add s.accumulator pivot row (-q) }
 
+/-- A nontrivial extended-GCD step makes the pivot positive and clears the
+selected lower entry. -/
+theorem gcdStep_column (ops : Accumulator α n) (s : Result α n m)
+    (col : Fin m) (i k : Fin n) (hik : i ≠ k) (hb : s.matrix[(k, col)] ≠ 0) :
+    0 < (gcdStep ops col i k s).matrix[(i, col)] ∧
+      (gcdStep ops col i k s).matrix[(k, col)] = 0 := by
+  have hspec := gcdCoeffs_apply (a := s.matrix[(i, col)])
+    (b := s.matrix[(k, col)]) hb
+  rcases hc : gcdCoeffs s.matrix[(i, col)] s.matrix[(k, col)] with ⟨x, y, z, w⟩
+  rw [hc] at hspec
+  dsimp only at hspec
+  rw [gcdStep, if_neg hb]
+  dsimp only
+  rw [hc]
+  dsimp only [Prod.fst, Prod.snd]
+  change 0 < (combineRows s.matrix i k x y z w)[(i, col)] ∧
+    (combineRows s.matrix i k x y z w)[(k, col)] = 0
+  unfold combineRows
+  simp only [Matrix.getElem_ofFn, Matrix.getElem_pair_eq_nested]
+  simp only [Matrix.getElem_pair_eq_nested] at hspec
+  simpa [hik.symm] using hspec
+
+/-- Sign normalization makes every nonzero selected pivot positive. -/
+theorem signStep_column (ops : Accumulator α n) (s : Result α n m)
+    (col : Fin m) (i : Fin n) (hne : s.matrix[(i, col)] ≠ 0) :
+    0 < (signStep ops col i s).matrix[(i, col)] := by
+  rw [signStep]
+  split
+  · rename_i hneg
+    dsimp only
+    rw [Matrix.getElem_pair_eq_nested, Matrix.getElem_rowScale]
+    simp only [if_pos]
+    simp only [Matrix.getElem_pair_eq_nested] at hneg hne ⊢
+    omega
+  · rename_i hnneg
+    simp only [Matrix.getElem_pair_eq_nested] at hnneg hne ⊢
+    omega
+
+/-- Reduction above a positive pivot replaces the selected entry by its
+Euclidean remainder. -/
+theorem reduceStep_column (ops : Accumulator α n) (s : Result α n m)
+    (col : Fin m) (pivot row : Fin n) :
+    (reduceStep ops col pivot row s).matrix[(row, col)] =
+      s.matrix[(row, col)] % s.matrix[(pivot, col)] := by
+  let p := s.matrix[(pivot, col)]
+  let x := s.matrix[(row, col)]
+  let q := x / p
+  have hdiv : q * p + x % p = x := by
+    exact Int.ediv_mul_add_emod x p
+  rw [reduceStep]
+  change (if q = 0 then s else
+    { s with
+      matrix := Matrix.rowAdd s.matrix pivot row (-q)
+      accumulator := ops.add s.accumulator pivot row (-q) }).matrix[(row, col)] =
+      x % p
+  split
+  · rename_i hq
+    change x = x % p
+    rw [hq, Int.zero_mul, Int.zero_add] at hdiv
+    exact hdiv.symm
+  · dsimp only
+    rw [Matrix.getElem_pair_eq_nested, Matrix.getElem_rowAdd]
+    simp only [if_pos]
+    simp only [q, p, x, Matrix.getElem_pair_eq_nested] at hdiv ⊢
+    calc
+      s.matrix[row][col] +
+          -(s.matrix[row][col] / s.matrix[pivot][col]) * s.matrix[pivot][col] =
+          (s.matrix[row][col] / s.matrix[pivot][col] * s.matrix[pivot][col] +
+            s.matrix[row][col] % s.matrix[pivot][col]) +
+            -(s.matrix[row][col] / s.matrix[pivot][col]) * s.matrix[pivot][col] := by
+              rw [hdiv]
+      _ = s.matrix[row][col] % s.matrix[pivot][col] := by
+        rw [Int.neg_mul]
+        omega
+
+/-- Entries reduced above a positive pivot lie in its canonical residue
+interval. -/
+theorem reduceStep_bounds (ops : Accumulator α n) (s : Result α n m)
+    (col : Fin m) (pivot row : Fin n) (hp : 0 < s.matrix[(pivot, col)]) :
+    0 ≤ (reduceStep ops col pivot row s).matrix[(row, col)] ∧
+      (reduceStep ops col pivot row s).matrix[(row, col)] <
+        s.matrix[(pivot, col)] := by
+  rw [reduceStep_column ops s col pivot row]
+  exact ⟨Int.emod_nonneg _ (Int.ne_of_gt hp), Int.emod_lt_of_pos _ hp⟩
+
 @[simp] theorem swapStep_pivots (ops : Accumulator α n) (s : Result α n m)
     (i k : Fin n) : (swapStep ops s i k).pivots = s.pivots := by
   rw [swapStep]

@@ -315,4 +315,50 @@ theorem gcdCoeffs_det {a b : Int} (hb : b ≠ 0) :
     _ = Int.ofNat g := by simpa [hg] using hbez
     _ = 1 * Int.ofNat g := by rw [Int.one_mul]
 
+/-- The extended-GCD row update replaces `(a,b)` by a positive gcd and zero. -/
+theorem gcdCoeffs_apply {a b : Int} (hb : b ≠ 0) :
+    let (x, y, z, w) := gcdCoeffs a b
+    0 < x * a + y * b ∧ z * a + w * b = 0 := by
+  rcases he : HexArith.Int.extGcd a b with ⟨g, s, t⟩
+  have hspec := HexArith.Int.extGcd_spec a b
+  rw [he] at hspec
+  simp only at hspec
+  rcases hspec with ⟨hg, hbez⟩
+  have hga : (Int.ofNat g) ∣ a := by
+    rw [hg]
+    exact Int.gcd_dvd_left a b
+  have hgb : (Int.ofNat g) ∣ b := by
+    rw [hg]
+    exact Int.gcd_dvd_right a b
+  have hgpos : 0 < Int.ofNat g := by
+    apply Int.ofNat_lt.mpr
+    rw [hg]
+    exact Int.gcd_pos_of_ne_zero_right a hb
+  have hqa : HexArith.Int.exactDiv a (Int.ofNat g) * Int.ofNat g = a := by
+    simpa [HexArith.Int.exactDiv] using Int.ediv_mul_cancel hga
+  have hqb : HexArith.Int.exactDiv b (Int.ofNat g) * Int.ofNat g = b := by
+    simpa [HexArith.Int.exactDiv] using Int.ediv_mul_cancel hgb
+  unfold gcdCoeffs
+  rw [he]
+  dsimp only
+  constructor
+  · rw [hbez]
+    exact hgpos
+  · rw [Int.neg_mul]
+    apply Int.eq_of_mul_eq_mul_right (Int.ne_of_gt hgpos)
+    rw [Int.add_mul]
+    have hleft :
+        (-(HexArith.Int.exactDiv b (Int.ofNat g) * a)) * Int.ofNat g =
+          -(HexArith.Int.exactDiv b (Int.ofNat g) * Int.ofNat g) * a := by
+      simp only [Int.neg_mul]
+      ac_rfl
+    have hright :
+        (HexArith.Int.exactDiv a (Int.ofNat g) * b) * Int.ofNat g =
+          (HexArith.Int.exactDiv a (Int.ofNat g) * Int.ofNat g) * b := by
+      ac_rfl
+    rw [hleft, hright, hqb, hqa]
+    rw [show -b * a = a * -b by simp [Int.mul_comm]]
+    simp only [Int.zero_mul, Int.mul_neg]
+    omega
+
 end Hex.Matrix.Hermite

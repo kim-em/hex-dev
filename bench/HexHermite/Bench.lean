@@ -60,6 +60,64 @@ private def matrix (input : Input) : Matrix Int input.rows input.cols :=
 private def checksum (M : Matrix Int n m) : Int :=
   M.data.foldl (fun acc x => acc * 65537 + x) 0
 
+private def bitLength (z : Int) : Nat :=
+  let n := z.natAbs
+  if n = 0 then 0 else n.log2 + 1
+
+private def matrixBits (M : Matrix Int n m) : Nat :=
+  M.data.foldl (fun largest z => max largest (bitLength z)) 0
+
+/-- Diagnostic state for the deliberately untimed entry-growth runner. -/
+private structure GrowthState (n m : Nat) where
+  result : Matrix.Hermite.Result Unit n m
+  peak : Nat
+
+private def observe (s : Matrix.Hermite.Result Unit n m) (peak : Nat) :
+    GrowthState n m :=
+  ⟨s, max peak (matrixBits s.matrix)⟩
+
+private def growthClear (s : GrowthState n m) (col : Fin m)
+    (pivot found : Fin n) : GrowthState n m :=
+  let ops := Matrix.Hermite.formAccumulator n
+  let s := observe (Matrix.Hermite.swapStep ops s.result pivot found) s.peak
+  let s := (List.finRange n).foldl (fun s k =>
+    if pivot.val < k.val then
+      observe (Matrix.Hermite.gcdStep ops col pivot k s.result) s.peak
+    else s) s
+  let s := observe (Matrix.Hermite.signStep ops col pivot s.result) s.peak
+  (List.finRange n).foldl (fun s k =>
+    if k.val < pivot.val then
+      observe (Matrix.Hermite.reduceStep ops col pivot k s.result) s.peak
+    else s) s
+
+private def growthColumn (s : GrowthState n m) (col : Fin m) : GrowthState n m :=
+  if hr : s.result.pivots.length < n then
+    let pivot : Fin n := ⟨s.result.pivots.length, hr⟩
+    match Matrix.Hermite.findPivot? s.result.matrix col s.result.pivots.length with
+    | none => s
+    | some found =>
+        let next := growthClear s col pivot found
+        { next with result := { next.result with pivots := next.result.pivots ++ [col] } }
+  else s
+
+/-- Scan the working matrix after every elementary update and return the peak
+coefficient bit-size. This runner is intentionally separate from timed
+benchmarks so instrumentation does not perturb ordinary timings. -/
+def peakBits (input : Input) : Nat :=
+  let A := matrix input
+  let initial : GrowthState input.rows input.cols :=
+    { result :=
+        { matrix := A, pivots := []
+          accumulator := (Matrix.Hermite.formAccumulator input.rows).init }
+      peak := matrixBits A }
+  ((List.finRange input.cols).foldl growthColumn initial).peak
+
+/-- Peak-versus-output growth data for the predeclared badly-conditioned
+family. -/
+def conjugateGrowth (n : Nat) : Nat × Nat :=
+  let input := conjugate n
+  (peakBits input, matrixBits (Matrix.hnf (matrix input)))
+
 def runDense (input : Input) : Int := checksum (Matrix.hnf (matrix input))
 def runDeficient (input : Input) : Int := checksum (Matrix.hnf (matrix input))
 def runTall (input : Input) : Int := checksum (Matrix.hnf (matrix input))
