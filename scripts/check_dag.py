@@ -33,10 +33,14 @@ IMPORT_ALL_RE = re.compile(
 # directory convention. There are currently no required exceptions.
 SEALED_IMPORT_ALL_ALLOWLIST: dict[str, frozenset[Path]] = {
     "HexInterval.Executable": frozenset(),
+    "HexInterval.Runtime": frozenset(),
+    "HexInterval.RuntimeController": frozenset(),
     "HexInterval.Search": frozenset(),
     "HexIntervalMathlib.Driver": frozenset(),
     "HexIntervalMathlib.Controller": frozenset(),
     "HexIntervalMathlib.Proof": frozenset(),
+    "HexIntervalMathlib.RuntimeProof": frozenset(),
+    "HexIntervalMathlib.RuntimeTerminal": frozenset(),
 }
 
 UMBRELLA_BUILD_TARGETS = {
@@ -48,6 +52,7 @@ UMBRELLA_BUILD_TARGETS = {
     "HexIntervalExperiment",
     "HexIntervalMathlibExperiment",
     "HexIntervalPntFks2Local",
+    "HexIntervalPntFks2ConformanceLocal",
     "HexIntervalReplayProbe",
     "HexIntervalMathlibReplayProbe",
     "HexRealRootsMathlibReplayProbe",
@@ -56,8 +61,10 @@ UMBRELLA_BUILD_TARGETS = {
     "HexRCFProofProbeScientific",
     "HexConformance",
     "HexFactorizationModules",
+    "HexMvFactorizationTests",
     "HexReleaseTests",
     "HexRCFTests",
+    "HexSparsePolyTests",
     "HexReleaseExamples",
 }
 

@@ -80,6 +80,40 @@ Reviewer checklist for Phase 3 PRs:
   issue for any deliberately uncovered op (with the conformance
   docstring not claiming it as covered).
 
+### Correspondence-only mathlib layers
+
+The criteria and checklist above presuppose an executable surface to
+conform to. A `mathlib: true` library whose API is correspondence
+statements alone, with no executable reifier, certificate checker, or
+tactic of its own, has no conformance module at all:
+`conformance/HexFooMathlib/Conformance.lean` must not exist, per
+[SPEC/testing.md §Banned anti-patterns](../SPEC/testing.md#banned-anti-patterns).
+For such a library Phase 3 is done when all of:
+
+1. `conformance/HexFooMathlib/Conformance.lean` is absent, and no
+   `HexConformance` glob in `lakefile.lean` names it.
+   `scripts/conformance_targets.py` discovers targets by that
+   filename, so the library is absent from the conformance CI list.
+
+2. The PR audits whatever checks the layer carried and cites, for each
+   operation the layer transports, the coverage that lives in the
+   named computational owner or owners (more than one owner is normal,
+   since a layer may transport operations from several Mathlib-free
+   libraries). A check that exercises only the layer's own conversion
+   or index helpers has no executable destination to migrate to and is
+   deleted rather than moved; it is ceremonial, not coverage.
+
+3. `lake build HexFooMathlib` is green on the PR and remains green on
+   `main`.
+
+4. Record completion by bumping `libraries.yml[L].done_through` to
+   `3` in the same PR.
+
+A Mathlib-importing library that owns an executable reifier,
+certificate checker, or tactic is not correspondence-only. It takes the
+ordinary criteria, with its library SPEC defining that runtime contract
+and its CI reachability.
+
 ## Oracle wiring (forward reference)
 
 Default oracle assignments live in

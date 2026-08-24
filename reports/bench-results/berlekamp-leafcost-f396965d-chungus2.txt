@@ -1,0 +1,80 @@
+# /tmp/hex-profile-runBerlekampMatrixChecksum-192.json.gz: 4057 leaf samples
+## categories
+  lean-runtime               1525   37.6%
+  own-code                   1372   33.8%
+  allocation                 1132   27.9%
+  other                        27    0.7%
+  libc                          1    0.0%
+## top symbols
+   15.7%     638  lean_apply_2  [hexberlekamp_bench]
+   13.0%     528  mi_free  [hexberlekamp_bench]
+   11.9%     484  mi_malloc_small  [hexberlekamp_bench]
+    7.2%     292  lp_Hex_Hex_DensePoly_mulImpl___redArg___lam__0  [hexberlekamp_bench]
+    5.9%     241  lean_dec_ref_cold  [hexberlekamp_bench]
+    4.8%     193  lp_Hex_Hex_ZMod64_mul___boxed  [hexberlekamp_bench]
+    4.5%     182  l_List_foldl___redArg  [hexberlekamp_bench]
+    4.1%     167  lp_Hex_Hex_DensePoly_subtractScaledShiftStep___redArg  [hexberlekamp_bench]
+    3.3%     133  lp_Hex_Hex_ZMod64_addImpl___boxed  [hexberlekamp_bench]
+    3.2%     129  lp_Hex_Hex_DensePoly_coeff___redArg  [hexberlekamp_bench]
+    3.1%     124  lean_hex_zmod64_mul  [hexberlekamp_bench]
+    2.7%     108  lp_Hex_Hex_ZMod64_subImpl___boxed  [hexberlekamp_bench]
+# /tmp/hex-profile-runRabinTestChecksum-64.json.gz: 2547 leaf samples
+## categories
+  lean-runtime                959   37.7%
+  own-code                    846   33.2%
+  allocation                  731   28.7%
+  other                         7    0.3%
+  libc                          3    0.1%
+  gmp                           1    0.0%
+## top symbols
+   19.9%     507  lean_apply_2  [hexberlekamp_bench]
+   14.2%     362  mi_malloc_small  [hexberlekamp_bench]
+   13.3%     340  mi_free  [hexberlekamp_bench]
+    8.8%     225  lp_Hex_Hex_DensePoly_mulImpl___redArg___lam__0  [hexberlekamp_bench]
+    5.8%     148  lp_Hex_Hex_ZMod64_mul___boxed  [hexberlekamp_bench]
+    5.7%     145  lp_Hex_Hex_DensePoly_subtractScaledShiftStep___redArg  [hexberlekamp_bench]
+    5.6%     143  lean_dec_ref_cold  [hexberlekamp_bench]
+    4.1%     104  lean_hex_zmod64_mul  [hexberlekamp_bench]
+    3.8%      96  lp_Hex_Hex_ZMod64_subImpl___boxed  [hexberlekamp_bench]
+    3.6%      91  l_List_foldl___redArg  [hexberlekamp_bench]
+    2.8%      72  lp_Hex_Hex_DensePoly_mulImpl___redArg___lam__0___boxed  [hexberlekamp_bench]
+    2.6%      67  lp_Hex_Hex_ZMod64_addImpl___boxed  [hexberlekamp_bench]
+# /tmp/hex-profile-runBerlekampFactorChecksum-256.json.gz: 1926 leaf samples
+## categories
+  own-code                    877   45.5%
+  lean-runtime                526   27.3%
+  allocation                  521   27.1%
+  other                         2    0.1%
+## top symbols
+   20.9%     402  lp_Hex_Hex_DensePoly_subtractScaledShiftStep___redArg  [hexberlekamp_bench]
+   15.6%     301  mi_free  [hexberlekamp_bench]
+   12.7%     244  lean_apply_2  [hexberlekamp_bench]
+   11.2%     216  mi_malloc_small  [hexberlekamp_bench]
+   10.5%     203  lp_Hex_Hex_ZMod64_mul___boxed  [hexberlekamp_bench]
+    6.2%     120  lean_dec_ref_cold  [hexberlekamp_bench]
+    6.1%     118  lp_Hex___private_HexPoly_Euclid_DivGcd_0__Hex_DensePoly_subtractScaledShiftImpl___redArg  [hexberlekamp_bench]
+    5.5%     105  lp_Hex_Hex_ZMod64_subImpl___boxed  [hexberlekamp_bench]
+    4.2%      80  lean_inc_heartbeat  [hexberlekamp_bench]
+    3.2%      62  lean_hex_zmod64_mul  [hexberlekamp_bench]
+    0.6%      11  lp_Hex_Hex_DensePoly_arrayDegreeAux___redArg  [hexberlekamp_bench]
+    0.5%       9  lp_Hex_Hex_DensePoly_trimTrailingZerosGo___redArg  [hexberlekamp_bench]
+# /tmp/hex-profile-runDistinctDegreeChecksum-96.json.gz: 1921 leaf samples
+## categories
+  own-code                    687   35.8%
+  lean-runtime                667   34.7%
+  allocation                  561   29.2%
+  libc                          3    0.2%
+  other                         3    0.2%
+## top symbols
+   18.7%     360  lean_apply_2  [hexberlekamp_bench]
+   17.1%     328  mi_free  [hexberlekamp_bench]
+   11.6%     222  mi_malloc_small  [hexberlekamp_bench]
+    8.6%     165  lp_Hex_Hex_DensePoly_mulImpl___redArg___lam__0  [hexberlekamp_bench]
+    7.9%     151  lp_Hex_Hex_DensePoly_subtractScaledShiftStep___redArg  [hexberlekamp_bench]
+    6.2%     120  lean_dec_ref_cold  [hexberlekamp_bench]
+    5.5%     105  lp_Hex_Hex_ZMod64_mul___boxed  [hexberlekamp_bench]
+    3.4%      65  lean_hex_zmod64_mul  [hexberlekamp_bench]
+    3.2%      62  l_List_foldl___redArg  [hexberlekamp_bench]
+    3.1%      60  lp_Hex_Hex_ZMod64_subImpl___boxed  [hexberlekamp_bench]
+    2.9%      55  lp_Hex_Hex_ZMod64_addImpl___boxed  [hexberlekamp_bench]
+    2.9%      55  lp_Hex___private_HexPoly_Euclid_DivGcd_0__Hex_DensePoly_subtractScaledShiftImpl___redArg  [hexberlekamp_bench]

@@ -31,11 +31,7 @@ those consumers do not depend on a factoring library to reach Mathlib.
 
 namespace HexPolyFpMathlib
 
-universe u
-
 noncomputable section
-
-open Polynomial
 
 variable {p : Nat} [Hex.ZMod64.Bounds p]
 
@@ -219,11 +215,17 @@ def fpPolyEquiv : Hex.FpPoly p ≃+* Polynomial (ZMod p) where
 def toMathlibPolynomial (f : Hex.FpPoly p) : Polynomial (ZMod p) :=
   fpPolyEquiv f
 
+/-- Applying the ring equivalence is the forward transport. The named forward
+map is the normal form: statements about an executable polynomial's Mathlib
+image read better without a `RingEquiv` coercion in the way. -/
 @[simp, grind =]
 theorem fpPolyEquiv_apply (f : Hex.FpPoly p) :
     fpPolyEquiv f = toMathlibPolynomial f := by
   rfl
 
+/-- Applying the inverse of the ring equivalence is `polynomialToFpPoly`, the
+partner of {name}`HexPolyFpMathlib.fpPolyEquiv_apply` for the backward
+direction. -/
 @[simp, grind =]
 theorem fpPolyEquiv_symm_apply (f : Polynomial (ZMod p)) :
     fpPolyEquiv.symm f = polynomialToFpPoly f := by
@@ -232,22 +234,8 @@ theorem fpPolyEquiv_symm_apply (f : Polynomial (ZMod p)) :
 /-- Coefficients are preserved by the equivalence with Mathlib polynomials. -/
 @[simp, grind =]
 theorem coeff_toMathlibPolynomial (f : Hex.FpPoly p) (n : Nat) :
-    (toMathlibPolynomial f).coeff n = HexModArithMathlib.ZMod64.toZMod (f.coeff n) := by
-  show (fpPolyToPolynomial f).coeff n = HexModArithMathlib.ZMod64.toZMod (f.coeff n)
-  rw [fpPolyToPolynomial, Polynomial.finsetSum_coeff]
-  simp only [Polynomial.coeff_monomial]
-  rw [Finset.sum_ite_eq' (Finset.range f.size) n
-    (fun i => HexModArithMathlib.ZMod64.toZMod (f.coeff i))]
-  by_cases hn : n ∈ Finset.range f.size
-  · rw [if_pos hn]
-  · rw [if_neg hn, Hex.DensePoly.coeff_eq_zero_of_size_le f
-      (Nat.le_of_not_lt (Finset.mem_range.not.mp hn))]
-    exact HexModArithMathlib.ZMod64.toZMod_zero.symm
-
-@[simp, grind =]
-theorem coeff_toMathlibPolynomial_equiv (f : Hex.FpPoly p) (n : Nat) :
-    (toMathlibPolynomial f).coeff n = HexModArithMathlib.ZMod64.equiv (f.coeff n) := by
-  rw [coeff_toMathlibPolynomial, HexModArithMathlib.ZMod64.equiv_apply]
+    (toMathlibPolynomial f).coeff n = HexModArithMathlib.ZMod64.toZMod (f.coeff n) :=
+  coeff_fpPolyToPolynomial f n
 
 /-- Monicity of executable finite-field polynomials transfers to Mathlib.
 

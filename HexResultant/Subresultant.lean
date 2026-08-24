@@ -1491,6 +1491,10 @@ def resultant [One R] [Add R] [Sub R] [Mul R] [Div R]
     let ySubT : DensePoly (DensePoly Int) := ofList [0 - t, one]
     resultant ySqSubT ySubT = t * t - t
 
+/-- info: 'Hex.DensePoly.resultant' depends on axioms: [propext, Quot.sound] -/
+#guard_msgs in
+#print axioms resultant
+
 /-- Both zero inputs produce the empty nonzero chain. -/
 @[simp, grind =]
 theorem subresultantChain_zero_zero [One R] [Add R] [Sub R] [Mul R] [Div R] :

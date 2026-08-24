@@ -664,5 +664,221 @@
     "baseline_blob": "6dd80771ae2212333b2a9b925b52056e0037ff56",
     "current_blob": "abbfb2327a8ee1c28a6fa20dcf5a285cd782284c",
     "reason": "Additionally registers the bounded Mathlib-free Ramanujan theta range and point checkers, their proof-only direct Chebyshev semantics, and conformance module on top of the retained supported HexInterval executable package/application assembly, autonomous controller, PNT, and public interval registrations; these acceptance-only modules do not enter the factorization service target or change its executable dependency graph."
+  },
+  {
+    "path": "lakefile.lean",
+    "baseline_blob": "6dd80771ae2212333b2a9b925b52056e0037ff56",
+    "current_blob": "4ce3130da10d9cefc0ba753006e63cede695d423",
+    "reason": "Registers the new HexSparsePoly lean_lib; no factorization module, executable, or build-flag changes."
+  },
+  {
+    "path": "lakefile.lean",
+    "baseline_blob": "6dd80771ae2212333b2a9b925b52056e0037ff56",
+    "current_blob": "840c7e2481a6fa5ca2f77e43a666ec010feeb70b",
+    "reason": "Adds HexSparsePoly.KernelTests to the HexReleaseTests globs on top of the HexSparsePoly lean_lib registration; no factorization module, executable, or build-flag changes."
+  },
+  {
+    "path": "Hex/Conformance/Emit.lean",
+    "baseline_blob": "21481a92862c6a9f8c8d538c4815d2bc4557453a",
+    "current_blob": "683278f7a8270484bc67e30317237ebae0d2ef3f",
+    "reason": "Adds the sparsepoly fixture serializer to the shared conformance emit helper; no factorization module imports it at runtime."
+  },
+  {
+    "path": "HexModArith/Residue.lean",
+    "baseline_blob": "91a08cda3853a3dd24432e2124fc24e48a189484",
+    "current_blob": "26e8b637086e9493ad19930d9b9aa5ce1dda4c24",
+    "reason": "Adds the DecidableEq (ZMod64 p) instance previously supplied by HexPolyFp/Field.lean, with the same stored-word comparison; the compiled factorization call graph is unchanged."
+  },
+  {
+    "path": "HexPolyFp/Field.lean",
+    "baseline_blob": "4ff528c7940c6e385c7ca83bbe6a6e8158d9e4a2",
+    "current_blob": "42dd2bbf8c328cf81416effa08e6163f0ee7dbea",
+    "reason": "Removes the DecidableEq (ZMod64 p) instance now supplied upstream by HexModArith/Residue.lean; no other change."
+  },
+  {
+    "path": "lakefile.lean",
+    "baseline_blob": "6dd80771ae2212333b2a9b925b52056e0037ff56",
+    "current_blob": "c523b56fcf7249235b710bc86792042a57c4e26e",
+    "reason": "Additionally registers the supported fact-only executable-assembly controller conformance, including independent theorem replay for built-in arithmetic and an explicit arbitrary-function package, and the Mathlib-free typed-runtime conformance module on top of the retained source-pinned FKS2 prefix-structure checker and its proof-only conformance module. These acceptance-only modules do not enter the factorization service target or change its executable dependency graph."
+  },
+  {
+    "path": "lakefile.lean",
+    "baseline_blob": "abbfb2327a8ee1c28a6fa20dcf5a285cd782284c",
+    "current_blob": "c523b56fcf7249235b710bc86792042a57c4e26e",
+    "reason": "Adds the unrelated HexSparsePoly lean_lib, two interval experiment/conformance globs, and the interval typed-runtime and executable-controller conformance globs; the hexbz_factor_service target, BZ library targets, and build flags are unchanged."
+  },
+  {
+    "path": "HexBerlekamp/PolynomialTactic.lean",
+    "baseline_blob": "d8232a738edfc3735c099eba5f362a4a30fcafcd",
+    "current_blob": "2d501f2ff596cfd0ddeeaacf08bbe407a4dc8c18",
+    "reason": "Removes the meta-only factor-tactic extension version field, constant, and discovery check and updates their documentation; the benchmarked Hex.ZPoly.factorize entry does not invoke tactic elaboration or extension discovery, so its executable behavior is unchanged."
+  },
+  {
+    "path": "HexBerlekampZassenhaus/FactorTactic.lean",
+    "baseline_blob": "cdcfd422598d4c0ae7c6fa9f8f90a780cbcf57f1",
+    "current_blob": "fa093db4b7244a8c42005c479c9aa1ffcc40fa9f",
+    "reason": "Removes only the meta extension's version initializer; no executable factorization definition used by the benchmarked Hex.ZPoly.factorize entry changes."
+  },
+  {
+    "path": "lakefile.lean",
+    "baseline_blob": "c523b56fcf7249235b710bc86792042a57c4e26e",
+    "current_blob": "dcb37c10309b6da8453022b47b27f680508177fe",
+    "reason": "Additionally registers the proof-only HexIntervalMathlib typed-runtime quotation and recursive replay conformance module on top of the retained typed runtime and executable controller registrations; this theorem-side target does not enter the factorization service target or change its executable dependency graph."
+  },
+  {
+    "path": "lakefile.lean",
+    "baseline_blob": "abbfb2327a8ee1c28a6fa20dcf5a285cd782284c",
+    "current_blob": "dcb37c10309b6da8453022b47b27f680508177fe",
+    "reason": "Adds the unrelated HexSparsePoly and interval experiment/conformance registrations already reviewed on main, then adds the proof-only HexIntervalMathlib typed-runtime quotation and recursive replay conformance module; none enters the factorization service target or changes its executable dependency graph."
+  },
+  {
+    "path": "lakefile.lean",
+    "baseline_blob": "abbfb2327a8ee1c28a6fa20dcf5a285cd782284c",
+    "current_blob": "71093e603b8f4b6965534ffa140cf129522c6e0b",
+    "reason": "Additionally registers the Mathlib-free HexInterval authenticated decision benchmark on top of the reviewed typed-runtime proof conformance and executable-controller targets; this benchmark does not enter the factorization service target or change its executable dependency graph."
+  },
+  {
+    "path": "lakefile.lean",
+    "baseline_blob": "abbfb2327a8ee1c28a6fa20dcf5a285cd782284c",
+    "current_blob": "4e3ee8c8e9836847eaa5af68d7b143b2ca3e1cc5",
+    "reason": "Adds the reviewed interval proof/controller and authenticated decision-benchmark registrations now on main, then registers the proof-only FKS2 inverse-power experiment and its dedicated non-default conformance library; none enters the factorization service target or changes its executable dependency graph."
+  },
+  {
+    "path": "lakefile.lean",
+    "baseline_blob": "1e8bbe3030db68a2b6753de8bf5ff2326d02813e",
+    "current_blob": "072030c70a339c8965bff552de0e7673f3e3da76",
+    "reason": "Registers the HexAggregateCheck released-aggregate mirror library only; the factorization service target and its executable dependency graph are unchanged."
+  },
+  {
+    "path": "HexBerlekampZassenhaus/Certificate.lean",
+    "baseline_blob": "3a97b9385574e3ddf48da545df6a157a2f96e8b4",
+    "current_blob": "5e102c460b63bbf2b79470b81189f25cbb92e021",
+    "reason": "Updates projections from the duplicate small-prime record to the representation-identical bundled ZMod64.Prime record; certificate checks, arithmetic, and control flow are unchanged."
+  },
+  {
+    "path": "HexBerlekampZassenhaus/ChoosePrimeData.lean",
+    "baseline_blob": "9194dae7dc8cf4d433a7adbd8ce01a7133b3900c",
+    "current_blob": "4a0c3dba62c7c3c607545daff10ba4bf70351681",
+    "reason": "Updates projections from the duplicate small-prime record to the representation-identical bundled ZMod64.Prime record; prime selection, arithmetic, and control flow are unchanged."
+  },
+  {
+    "path": "HexBerlekampZassenhaus/Factorization.lean",
+    "baseline_blob": "2d08c80028bc54024965a5c0f114bba51d18523e",
+    "current_blob": "8d796854822562cd7883e2308d444f9e07702b36",
+    "reason": "Updates one projection from the duplicate small-prime record to the representation-identical bundled ZMod64.Prime record; factorization arithmetic and control flow are unchanged."
+  },
+  {
+    "path": "HexBerlekampZassenhaus/Modular/PrimePlan.lean",
+    "baseline_blob": "23dc012088d8513f1d8c1748c5367c9a33f4120c",
+    "current_blob": "bc4d2026af3dda89e2928c572570e4fb3866f8e8",
+    "reason": "Updates projections from the duplicate small-prime record to the representation-identical bundled ZMod64.Prime record; modular planning arithmetic and control flow are unchanged."
+  },
+  {
+    "path": "HexBerlekampZassenhaus/PrimeSelection.lean",
+    "baseline_blob": "6d9fc0f2d2b6612450968694557bca925ce7522b",
+    "current_blob": "c5ab3913c20b4497962ed20851da5c54af208f04",
+    "reason": "Replaces a duplicate three-field prime record with an abbreviation of the representation-identical bundled ZMod64.Prime record and renames its modulus projection; the candidate list, proofs, arithmetic, and control flow are unchanged."
+  },
+  {
+    "path": "bench/HexBench/FactorService.lean",
+    "baseline_blob": "1063ee045056aabe060a319d7dbe48460e6fdd75",
+    "current_blob": "635c202971d2276a498505da9842deac1c833c9f",
+    "reason": "Updates diagnostic-service projections from the duplicate small-prime record to the representation-identical bundled ZMod64.Prime record; every measured operation and branch is unchanged."
+  },
+  {
+    "path": "HexBasic/Rand.lean",
+    "baseline_blob": null,
+    "current_blob": "aa8588a6a6a6db3e4393346d885e1f81ccd2aaff",
+    "reason": "Adds the standalone SplitMix64 and unbiased bounded-sampling API for future randomized consumers. Existing factorization code does not reference its declarations, so the measured factorization service runtime is unchanged."
+  },
+  {
+    "path": "lakefile.lean",
+    "baseline_blob": "ff87edbbbf7524190b536ae4ce92a57968275aa9",
+    "current_blob": "c5d22d5cbafc71a28f5c47536cdd1d06bf16f7e6",
+    "reason": "Adds the HexSparsePolyTests kernel-probe lean_lib on top of the reviewed main registrations; no factorization module, executable, or build-flag changes."
+  },
+  {
+    "path": "Hex/Conformance/Emit.lean",
+    "baseline_blob": "21481a92862c6a9f8c8d538c4815d2bc4557453a",
+    "current_blob": "683278f7a8270484bc67e30317237ebae0d2ef3f",
+    "reason": "Adds the sparsepoly fixture serializer to the shared conformance emit helper; no factorization module imports it at runtime."
+  },
+  {
+    "path": "HexModArith/Residue.lean",
+    "baseline_blob": "91a08cda3853a3dd24432e2124fc24e48a189484",
+    "current_blob": "26e8b637086e9493ad19930d9b9aa5ce1dda4c24",
+    "reason": "Adds the DecidableEq (ZMod64 p) instance previously supplied by HexPolyFp/Field.lean, with the same stored-word comparison; the compiled factorization call graph is unchanged."
+  },
+  {
+    "path": "HexPolyFp/Field.lean",
+    "baseline_blob": "4ff528c7940c6e385c7ca83bbe6a6e8158d9e4a2",
+    "current_blob": "42dd2bbf8c328cf81416effa08e6163f0ee7dbea",
+    "reason": "Removes the DecidableEq (ZMod64 p) instance now supplied upstream by HexModArith/Residue.lean; no other change."
+  },
+  {
+    "path": "lakefile.lean",
+    "baseline_blob": "ff87edbbbf7524190b536ae4ce92a57968275aa9",
+    "current_blob": "60046912cf60fdf062e11b8c9b7a8c83ebf92067",
+    "reason": "Adds the HexSparsePoly conformance/bench executables and glob entries on top of the kernel-probe registration; no factorization module, executable, or build-flag changes."
+  },
+  {
+    "path": "lakefile.lean",
+    "baseline_blob": "ff87edbbbf7524190b536ae4ce92a57968275aa9",
+    "current_blob": "bf922af667c8719a11622b73acbccd5767e1fbe5",
+    "reason": "Adds the HexSparsePolyMathlib lean_lib on top of the sparse-poly conformance/bench registrations; no factorization module, executable, or build-flag changes."
+  },
+  {
+    "path": "lakefile.lean",
+    "baseline_blob": "ff87edbbbf7524190b536ae4ce92a57968275aa9",
+    "current_blob": "08583d0e78edfe858267ffa07fde97ce95d5460a",
+    "reason": "Adds the HexSparsePolyMathlib.Conformance glob on top of the HexSparsePolyMathlib lean_lib registration; no factorization module, executable, or build-flag changes."
+  },
+  {
+    "path": "lakefile.lean",
+    "baseline_blob": "ff87edbbbf7524190b536ae4ce92a57968275aa9",
+    "current_blob": "8f5ad6feadc9b8448e9fd7ebc12f62bf28ecebc7",
+    "reason": "Adds the HexSparsePolyMathlib.LintTests glob to the HexSparsePolyTests verification target; no factorization module, executable, or build-flag changes."
+  },
+  {
+    "path": "lakefile.lean",
+    "baseline_blob": "a1b87406682dbf908d990f01676f326499b906e5",
+    "current_blob": "5d2ddd13644831ed8daf314cda768232ed045a0c",
+    "reason": "Registers the HexSparsePolyMathlib library and the sparse-poly conformance globs on top of the toolchain-bump measurement commit; no factorization module, executable, or build-flag changes."
+  },
+  {
+    "path": "lakefile.lean",
+    "baseline_blob": "a1b87406682dbf908d990f01676f326499b906e5",
+    "current_blob": "1f1dfc2c1ac92caf6b0d12142399a3756a1ec336",
+    "reason": "Registers only the build-only HexMvFactorizationTests verification umbrella; it adds no imports to hexbz_factor_service or any runtime library target and changes no executable definition or build flag."
+  },
+  {
+    "path": "lakefile.lean",
+    "baseline_blob": "a1b87406682dbf908d990f01676f326499b906e5",
+    "current_blob": "cb8f437dbc9ed9ea5dc5c7e2794295ab16774099",
+    "reason": "Moves HexSparsePoly.KernelTests into the HexReleaseTests globs for the split publication, leaving HexSparsePolyTests as the monorepo-only lint target; no factorization module, executable, or build-flag changes."
+  },
+  {
+    "path": "Hex/Conformance/Emit.lean",
+    "baseline_blob": "21481a92862c6a9f8c8d538c4815d2bc4557453a",
+    "current_blob": "873aec7387d46c7864913c43e9f9c25b25b33ffc",
+    "reason": "Adds JSON serializers used only by modular conformance fixture emitters; no factorization runtime module imports the conformance helper."
+  },
+  {
+    "path": "lakefile.lean",
+    "baseline_blob": "a1b87406682dbf908d990f01676f326499b906e5",
+    "current_blob": "c973b09972fdea92dd362ebd997535fb9fe61a5b",
+    "reason": "Registers only the HexModular conformance module and fixture emitter on top of the sparse-poly release registrations; no factorization runtime target, definition, build flag, or dependency changes."
+  },
+  {
+    "path": "lakefile.lean",
+    "baseline_blob": "a1b87406682dbf908d990f01676f326499b906e5",
+    "current_blob": "3508e63c162bdc9b9ca9d62662297a8c6501a504",
+    "reason": "Registers only the proof-side HexIntervalMathlib.RuntimeTerminalConformance glob; it does not enter hexbz_factor_service or change any factorization library, executable definition, or build flag."
+  },
+  {
+    "path": "lakefile.lean",
+    "baseline_blob": "a1b87406682dbf908d990f01676f326499b906e5",
+    "current_blob": "6450f2f84d526a74345c1c9eda6bda7ba5c8bb42",
+    "reason": "Registers only the HexPolyZGcd conformance module and fixture emitter; no factorization runtime target, definition, build flag, or dependency changes."
   }
 ]

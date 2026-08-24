@@ -142,7 +142,9 @@ Each library has up to three conformance-tree modules:
 
 - `conformance/HexFoo/Conformance.lean` (module `HexFoo.Conformance`) —
   the `core` profile, specified above. Every library at
-  `done_through ≥ 2` has one.
+  `done_through ≥ 2` has one, except a correspondence-only
+  `mathlib: true` layer, which must not (see §Banned anti-patterns and
+  [PLAN/Phase3.md §Correspondence-only mathlib layers](../PLAN/Phase3.md)).
 - `conformance/HexFoo/CrossCheck.lean` (module `HexFoo.CrossCheck`) —
   the heavier cross-check sweeps: representation-correspondence
   campaigns, fast-vs-fast agreement over deterministic input streams,
@@ -427,12 +429,16 @@ subsection. Default oracle assignments:
   Lübeck flat-file cache for triple-source independence
   (Lean ≡ PARI ≡ Lübeck). No random generation.
 
-The `-mathlib` bridge libraries are not the primary target of
-external conformance testing. They rely mainly on internal
-equivalence / property tests plus the coverage of the computational
-libraries they bridge. Their `core` profile is a set of `#guard`
-assertions that the bridge theorems hold on committed small
-instances.
+The `-mathlib` libraries are not the primary target of external
+conformance testing. A correspondence-only layer among them has no
+`core` profile at all: its coverage is the coverage of the
+computational owners it transports from, and a conformance module of
+its own is banned (see §Banned anti-patterns and
+[PLAN/Phase3.md §Correspondence-only mathlib layers](../PLAN/Phase3.md)).
+A Mathlib-importing library that owns a runtime of its own, an
+executable reifier, certificate checker, or tactic, does have a `core`
+profile, exercising that runtime against the contract its library SPEC
+states rather than restating bridge theorems.
 
 ## Profile sizes
 

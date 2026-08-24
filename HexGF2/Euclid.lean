@@ -373,6 +373,12 @@ remainder. -/
     (0 : GF2Poly) % q = 0 := by
   rw [← divMod_snd, divMod_zero_left]
 
+/-- The packed zero and one polynomials are distinct. -/
+theorem one_ne_zero : (1 : GF2Poly) ≠ 0 := by
+  intro h
+  have hwords := congrArg toWords h
+  exact (by decide : toWords (1 : GF2Poly) ≠ toWords (0 : GF2Poly)) hwords
+
 /-- Quotient/remainder reconstruction through the public `/` and `%`
 operations. -/
 @[grind =]
@@ -617,7 +623,7 @@ theorem dvd_gcd (d p q : GF2Poly) :
 
 /-- A nonzero packed polynomial of degree `0` equals `1`, the only degree-`0`
 GF(2) polynomial. -/
-private theorem nonzero_degree_zero_eq_one {p : GF2Poly}
+theorem eq_one_of_degree_zero {p : GF2Poly}
     (hp : p ≠ 0) (hdegree : p.degree = 0) :
     p = 1 := by
   have hpzeroFalse : p.isZero = false := by
@@ -667,6 +673,43 @@ theorem degree_le_of_dvd_nonzero {p q : GF2Poly}
   rw [degree_eq_of_degree?_eq_some hdp,
     degree_eq_of_degree?_eq_some hq_degree?]
   omega
+
+/-- Divisibility is antisymmetric for packed `GF(2)` polynomials. There is no
+unit ambiguity because `1` is the only nonzero degree-zero polynomial. -/
+theorem dvd_antisymm {p q : GF2Poly} (hpq : p ∣ q) (hqp : q ∣ p) :
+    p = q := by
+  by_cases hp : p = 0
+  · subst p
+    rcases hpq with ⟨r, hr⟩
+    simpa using hr.symm
+  · have hq : q ≠ 0 := by
+      intro hq
+      subst q
+      rcases hqp with ⟨r, hr⟩
+      apply hp
+      simpa using hr
+    rcases hpq with ⟨r, hr⟩
+    have hrne : r ≠ 0 := by
+      intro hrzero
+      apply hq
+      rw [hr, hrzero, mul_zero]
+    have hpzero : p.isZero = false :=
+      (isZero_eq_false_iff_ne_zero p).mpr hp
+    have hrzero : r.isZero = false :=
+      (isZero_eq_false_iff_ne_zero r).mpr hrne
+    obtain ⟨dp, hdp⟩ := degree?_isSome_of_isZero_false hpzero
+    obtain ⟨dr, hdr⟩ := degree?_isSome_of_isZero_false hrzero
+    have hqdegree : q.degree? = some (dp + dr) := by
+      rw [hr]
+      exact degree?_mul_of_degree?_eq_some hdp hdr
+    have hdegree := degree_le_of_dvd_nonzero hq hp hqp
+    rw [degree_eq_of_degree?_eq_some hqdegree,
+      degree_eq_of_degree?_eq_some hdp] at hdegree
+    have hdrzero : r.degree = 0 := by
+      rw [degree_eq_of_degree?_eq_some hdr]
+      omega
+    have hrone := eq_one_of_degree_zero hrne hdrzero
+    simpa [hrone] using hr.symm
 
 /-- A polynomial reduced below `bound` (either zero, or of degree `< bound`)
 has `coeff n = false` at every index `n ≥ bound`. -/
@@ -919,12 +962,12 @@ private theorem irreducible_common_divisor_eq_one_of_reduced
     apply ha
     rw [hs, hd, zero_mul]
   rcases hf.2 d r hr.symm with hd_degree | hr_degree
-  · exact nonzero_degree_zero_eq_one hdne hd_degree
+  · exact eq_one_of_degree_zero hdne hd_degree
   · have hrne : r ≠ 0 := by
       intro hzero
       apply hf.1
       rw [hr, hzero, mul_zero]
-    have hr_one : r = 1 := nonzero_degree_zero_eq_one hrne hr_degree
+    have hr_one : r = 1 := eq_one_of_degree_zero hrne hr_degree
     have hdf : d = f := by
       calc
         d = d * 1 := by rw [mul_one]

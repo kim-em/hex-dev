@@ -151,13 +151,19 @@ Not in scope:
 
 - **Zeilberger's theorem** (every proper hypergeometric term satisfies
   a `k`-free recurrence). This is the one substantial piece of
-  hypergeometric theory in the area, resting on the Ore-Sato
-  characterization of proper terms, and it buys only a completeness
+  hypergeometric theory in the area, and it buys only a completeness
   statement about the search: that the order loop terminates before
   `maxOrder` on proper input. No consumer-facing theorem needs it. The
   search is capped and reports exhaustion, exactly as hex-rcf states no
   completeness theorem for its `decide`. Formalising it later would
-  change no API in this SPEC.
+  change no API in this SPEC. A note for whoever does: the statement
+  quantifies over *proper* terms as syntactic objects (products of
+  `Γ`-factors at integer-linear arguments), a syntactic term class
+  this library deliberately does not define, and the tractable proof
+  is not the Ore-Sato characterization but Sister Celine's dimension
+  count (the fundamental theorem of Wilf-Zeilberger theory, A=B §4.4),
+  which belongs to the holonomic extension's closure properties. So
+  the theorem is future work *there*, not a deferred milestone here.
 - **Completeness of Gosper and Hyper** as nonexistence proofs. Gosper's
   theorem (no rational certificate implies no hypergeometric
   antidifference) and Petkovšek's completeness (the enumeration finds
@@ -1278,9 +1284,12 @@ HexSummationMathlib.lean
   either way.
 - **The holonomic extension.** Closure properties for
   P-recursive sequences would subsume `eq_of_recurrence` and give
-  Zeilberger a home as one closure instance; the future-work entry's
-  deferral stands until the certificate checkers have carried real
-  identities for a while.
+  Zeilberger a home as one closure instance. It is also the natural
+  home of Zeilberger's theorem, per the scope note: Sister Celine's
+  dimension count is a closure-property argument with computable
+  order bounds, where Ore-Sato is a characterization with no
+  consumer. The future-work entry's deferral stands until the
+  certificate checkers have carried real identities for a while.
 
 ## References
 

@@ -32,11 +32,13 @@ def castSquare {R : Type u} {n m : Nat} (h : n = m)
     (M : Square R n) : Square R m :=
   fun i j => M (Fin.cast h.symm i) (Fin.cast h.symm j)
 
+/-- Reindexing along a reflexive dimension equality changes nothing. -/
 @[simp, grind =]
 theorem castSquare_rfl {R : Type u} {n : Nat} (M : Square R n) :
     castSquare rfl M = M := by
   rfl
 
+/-- Entrywise value of a dimension reindexing. -/
 @[simp, grind =]
 theorem castSquare_apply {R : Type u} {n m : Nat} (h : n = m)
     (M : Square R n) (i j : Fin m) :
@@ -60,6 +62,7 @@ def swapAt {R : Type u} {n : Nat} (M : Square R n) (left : Nat)
     else if j.val = left + 1 then M i ⟨left, by omega⟩
     else M i j
 
+/-- Entrywise value of a numeric adjacent-column swap. -/
 @[simp, grind =]
 theorem swapAt_apply {R : Type u} {n : Nat} (M : Square R n)
     (left : Nat) (h : left + 1 < n) (i j : Fin n) :

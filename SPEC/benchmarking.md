@@ -634,9 +634,9 @@ which bench target each comparator covers. This is the common shape
 when an external tool exposes some of a library's surfaces as
 user-callable functions but not others.
 
-Where a bench target has no external comparator, the per-library
-SPEC declares the absence with a library-specific reason identifying
-exactly one of:
+Where a bench target has no external comparator, or where the library
+has no bench target at all, the per-library SPEC declares the absence
+with a library-specific reason identifying exactly one of:
 
 - **implementation-is-extern** — the surface is an external library
   via `@[extern]`; there is nothing algorithmically distinct to
@@ -654,6 +654,14 @@ exactly one of:
   declares a comparator for some surfaces but the named comparator
   tool does not expose this specific surface as a callable function
   (the tool builds it internally but doesn't surface it as user API).
+- **correspondence-only-layer** — the library is a correspondence-only
+  mathlib layer and therefore has zero bench targets (see
+  [§Mathlib-free benches](#mathlib-free-benches)), so there is no
+  surface of its own to compare. The declaration names the
+  computational performance owner or owners whose bench targets carry
+  the evidence for the operations it transports; more than one owner is
+  normal, since a layer may transport operations from several
+  Mathlib-free libraries.
 
 Generic "not applicable" is not a valid declaration. Unwired-but-
 required comparators are declared with the `blocked` state per
@@ -961,6 +969,14 @@ report at `reports/<lib>-performance.md`. The report is the
 single, scannable place a reviewer can land on to see whether
 Phase-4 coverage is real and what is known about the library's
 performance shape.
+
+A correspondence-only mathlib layer is the one exception: it has zero
+bench targets and no proof-track probes of its own, so it has nothing
+to report, and no headline report is required of it. Its performance
+evidence lives in the computational owners named by its
+`correspondence-only-layer` declaration ([§Comparator
+naming](#comparator-naming)). A report already committed for such a
+library is a historical artefact and need not be deleted.
 
 The report contains five subsections:
 

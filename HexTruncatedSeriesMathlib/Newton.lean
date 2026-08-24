@@ -259,7 +259,7 @@ theorem ofPowerSeries_exp [CommRing R] [Algebra ℚ R]
       PowerSeries.derivative R ((PowerSeries.exp R).subst f) =
           (PowerSeries.derivative R (PowerSeries.exp R)).subst f *
             PowerSeries.derivative R f :=
-        PowerSeries.derivative_subst R
+        PowerSeries.derivative_subst
           (PowerSeries.HasSubst.of_constantCoeff_zero' h)
       _ = (PowerSeries.exp R).subst f * PowerSeries.derivative R f := by
         rw [PowerSeries.derivative_exp]
@@ -366,7 +366,7 @@ theorem ofPowerSeries_logOf [CommRing R] [Algebra ℚ R]
       PowerSeries.derivative R ((PowerSeries.log R).subst q) =
           (PowerSeries.derivative R (PowerSeries.log R)).subst q *
             PowerSeries.derivative R q :=
-        PowerSeries.derivative_subst R hqSub
+        PowerSeries.derivative_subst hqSub
       _ = g * PowerSeries.derivative R q := by
         rw [PowerSeries.deriv_log]
       _ = g * PowerSeries.derivative R f := by

@@ -14,6 +14,7 @@ public import HexBasic.Fold
 public import HexBasic.List
 public import HexBasic.ModuleBoundaryTests
 public import HexBasic.OfFn
+public import HexBasic.Rand
 public import HexBasic.Vector.Modify
 
 public section

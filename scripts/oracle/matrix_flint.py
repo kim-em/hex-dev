@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""python-flint oracle driver for `hex-matrix`.
+"""python-flint oracle driver for the Hex matrix libraries.
 
 Reads a JSONL stream produced by `lake exe hexmatrix_emit_fixtures`
 (or the committed sample at
@@ -30,6 +30,10 @@ Operations cross-checked
   (b) each Lean basis vector is annihilated by `M` over `Q`,
   (c) the Lean basis vectors are linearly independent
       (rank of the basis matrix equals the nullity).
+* `charpoly`  — Lean's Samuelson--Berkowitz characteristic polynomial.
+  python-flint's `fmpz_mat.charpoly()` returns an `fmpz_poly`; both sides
+  are compared as the complete ascending coefficient list, without trimming
+  or otherwise normalising it.
 
 Usage::
 
@@ -44,10 +48,11 @@ Usage::
     python3 scripts/oracle/matrix_flint.py path/to/file.jsonl
 
 The same driver serves the `hex-row-reduce` (`rank`/`rref`/`nullspace`),
-`hex-determinant` (`det`), and `hex-bareiss` (`bareiss`) fixture streams; the
-op dispatch is keyed per result record, so each per-library fixture file is
-self-contained. `--check` reads the `hex-determinant` stream as a representative
-default; `scripts/ci/run_oracles.sh` passes each library's path explicitly.
+`hex-determinant` (`det`), `hex-bareiss` (`bareiss`), and `hex-char-poly`
+(`charpoly`) fixture streams; the op dispatch is keyed per result record, so
+each per-library fixture file is self-contained. `--check` reads the
+`hex-determinant` stream as a representative default;
+`scripts/ci/run_oracles.sh` passes each library's path explicitly.
 """
 from __future__ import annotations
 
@@ -167,6 +172,43 @@ def _check_bareiss(
         profile=profile,
         seed=seed,
         oracle_version=oracle_version,
+    )
+
+
+def _check_charpoly(
+    *,
+    case_id: str,
+    lib: str,
+    matrix_record: dict[str, Any],
+    lean_value: list[int],
+    failure_dir: Path,
+    profile: str,
+    seed: int,
+    oracle_version: str,
+) -> None:
+    rows = _rows(matrix_record)
+    n = len(rows)
+    if any(len(row) != n for row in rows):
+        raise OracleMismatch(
+            f"{lib}/{case_id}: charpoly requires a square matrix, "
+            f"got row lengths {[len(row) for row in rows]}"
+        )
+    polynomial = _fmpz_mat(rows).charpoly()
+    # FLINT and DensePoly both index coefficients by ascending exponent.
+    # Read exactly n + 1 coefficients: do not trim, reverse, or normalise.
+    oracle_value = [int(polynomial[i]) for i in range(n + 1)]
+    assert_equal(
+        lean_value,
+        oracle_value,
+        library=lib,
+        case_id=f"{case_id}:charpoly",
+        kind="charpoly",
+        input_record=matrix_record,
+        oracle_name="python-flint",
+        oracle_version=oracle_version,
+        failure_dir=failure_dir,
+        profile=profile,
+        seed=seed,
     )
 
 
@@ -390,6 +432,7 @@ def check(
     handlers = {
         "det":       _check_det,
         "bareiss":   _check_bareiss,
+        "charpoly":  _check_charpoly,
         "rank":      _check_rank,
         "rref":      _check_rref,
         "nullspace": _check_nullspace,

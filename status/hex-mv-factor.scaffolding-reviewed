@@ -1,0 +1,14 @@
+Independently reviewed against HexMvFactor/SPEC/hex-mv-factor.md.
+
+The review covered the executable decomposition, point search, EEZ input,
+recombination, Kronecker fallback, irreducibility, and completion surfaces.
+The identified construction-order and search-space gaps were resolved by
+checking the Kronecker budget before dense image construction, generating
+only the requested recombination levels, retaining lower-arity progress, and
+precomputing mixed-radix data.  The public irreducibility statement includes
+the primitive and nonconstant hypotheses required by the implementation.
+
+No Phase 2 blocking data placeholder, wrong-shape implementation, fake
+extern, native-type detour, or unreviewed verification import remains in the
+public umbrella.  The remaining `sorry` declarations are theorem-level proof
+obligations for Phase 5.

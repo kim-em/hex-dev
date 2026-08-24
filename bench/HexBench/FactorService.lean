@@ -803,13 +803,13 @@ there is no distinct-degree stage to attribute. -/
 private def modularSubPhases (sink : IO.Ref Nat) (core : ZPoly)
     (c : SmallPrimeCandidate) : IO Json :=
   letI := c.bounds
-  letI : ZMod64.PrimeModulus c.p := ZMod64.primeModulusOfPrime c.prime
+  letI : ZMod64.PrimeModulus c.m := ZMod64.primeModulusOfPrime c.prime
   do
   let m0 ← mark
-  let fModP := ZPoly.modP c.p core
+  let fModP := ZPoly.modP c.m core
   observeNat sink fModP.size
   let m1 ← mark
-  let good := isGoodPrime core c.p
+  let good := isGoodPrime core c.m
   observeNat sink (if good then 1 else 0)
   let m2 ← mark
   if hzero : fModP.isZero = false then
@@ -842,7 +842,7 @@ private def modularSubPhases (sink : IO.Ref Nat) (core : ZPoly)
     let factorNanos := m6.nanos - m5.nanos
     return Json.mkObj
       [ ("measurement", Json.str "repeat-at-selected-prime"),
-        ("prime", natJson c.p),
+        ("prime", natJson c.m),
         ("modularDegree", natJson (fModP.degree?.getD 0)),
         ("kernelDimension", natJson kernel.size),
         ("distinctDegree", Json.str "not-applicable"),
@@ -858,7 +858,7 @@ private def modularSubPhases (sink : IO.Ref Nat) (core : ZPoly)
   else
     return Json.mkObj
       [ ("measurement", Json.str "repeat-at-selected-prime"),
-        ("prime", natJson c.p),
+        ("prime", natJson c.m),
         ("modularImage", spanJson m0 m1),
         ("goodPrimeTest", spanJson m1 m2),
         ("zeroModularImage", Json.bool true) ]
@@ -1648,19 +1648,19 @@ private def scoutHorizon : Nat := 6
 private def kernelProfileAt (core : ZPoly) (c : SmallPrimeCandidate) :
     IO (List (String × Json)) :=
   letI := c.bounds
-  letI : ZMod64.PrimeModulus c.p := ZMod64.primeModulusOfPrime c.prime
+  letI : ZMod64.PrimeModulus c.m := ZMod64.primeModulusOfPrime c.prime
   do
-  let fModP := ZPoly.modP c.p core
+  let fModP := ZPoly.modP c.m core
   if hzero : fModP.isZero = false then
     let monic := monicModularImage fModP
     let hmonic := monicModularImage_monic c.prime fModP hzero
     let kernel ← HexBench.BerlekampKernel.kernelPhases monic hmonic
     return [ ("status", Json.str "ok"),
-             ("prime", natJson c.p),
+             ("prime", natJson c.m),
              ("modularDegree", natJson (fModP.degree?.getD 0)),
              ("kernel", kernel) ]
   else
-    return [ ("status", Json.str "zeroModularImage"), ("prime", natJson c.p) ]
+    return [ ("status", Json.str "zeroModularImage"), ("prime", natJson c.m) ]
 
 /-- Stage-by-stage attribution of the Berlekamp fixed-space kernel at the
 production-selected prime, together with the price of a packed contiguous
@@ -1701,15 +1701,15 @@ is what the split is checked against. -/
 private def scoutRow (sink : IO.Ref Nat) (core : SquareFreeInput) (target : Nat)
     (c : SmallPrimeCandidate) : IO (Option Json) :=
   letI := c.bounds
-  letI : ZMod64.PrimeModulus c.p := ZMod64.primeModulusOfPrime c.prime
+  letI : ZMod64.PrimeModulus c.m := ZMod64.primeModulusOfPrime c.prime
   do
   let m0 ← mark
-  let good := isGoodPrime core.poly c.p
+  let good := isGoodPrime core.poly c.m
   observeNat sink (if good then 1 else 0)
   let m1 ← mark
   if !good then
     return none
-  let fModP := ZPoly.modP c.p core.poly
+  let fModP := ZPoly.modP c.m core.poly
   if hzero : fModP.isZero = false then
     let n := fModP.degree?.getD 0
     let monic := monicModularImage fModP
@@ -1736,16 +1736,16 @@ private def scoutRow (sink : IO.Ref Nat) (core : SquareFreeInput) (target : Nat)
     let splitDegrees := (factors.map fun g => g.degree?.getD 0).toArray
     let scoutDegrees := pattern.getD #[]
     return some <| Json.mkObj
-      [ ("prime", natJson c.p),
+      [ ("prime", natJson c.m),
         ("modularDegree", natJson n),
         ("kernelDimension", natJson kernel.size),
         ("scoutTarget", natJson target),
         -- The two shape quantities `Hex.scoutPays` prices a plan at this prime
         -- by: the machine words of its Hensel modulus, and the recombination
         -- candidates a complete head-forced search over its factors visits.
-        ("liftWords", natJson (liftWords core c.p)),
+        ("liftWords", natJson (liftWords core c.m)),
         ("recombUnits",
-          natJson (directSubsetCost splitDegrees.size * liftWords core c.p)),
+          natJson (directSubsetCost splitDegrees.size * liftWords core c.m)),
         ("splitMaxDegree", natJson (splitDegrees.foldl max 0)),
         ("boundedScout", spanJson boundedStart boundedStop),
         ("boundedSeparated", natArrayJson bounded.separated),
@@ -1767,7 +1767,7 @@ private def scoutRow (sink : IO.Ref Nat) (core : SquareFreeInput) (target : Nat)
         ("fullSplit", spanJson splitStart splitStop) ]
   else
     return some <| Json.mkObj
-      [ ("prime", natJson c.p),
+      [ ("prime", natJson c.m),
         ("goodPrimeTest", spanJson m0 m1),
         ("zeroModularImage", Json.bool true) ]
 
