@@ -40,9 +40,10 @@ private theorem row_memLattice (H : Matrix Int n m) (i : Fin n) :
   refine ⟨Vector.ofFn fun k : Fin n => if i = k then 1 else 0, ?_⟩
   exact IsRowReduced.vecMul_single H i
 
-private theorem row_coeffs {A B : Matrix Int n m}
-    {D E : RowEchelonData Int n m} (h : IsHNF A D) (h' : IsHNF B E)
-    (hL : ∀ v, A.memLattice v ↔ B.memLattice v) (i : Fin n) :
+private theorem row_coeffs {A : Matrix Int n m} {B : Matrix Int n' m}
+    {D : RowEchelonData Int n m} {E : RowEchelonData Int n' m}
+    (h : IsHNF A D) (h' : IsHNF B E)
+    (hL : ∀ v, A.memLattice v ↔ B.memLattice v) (i : Fin n') :
     ∃ c : Vector Int n, vecMul c D.echelon = E.echelon[i] := by
   have hi : E.echelon.memLattice E.echelon[i] := row_memLattice E.echelon i
   have hiB : B.memLattice E.echelon[i] := (h'.memLattice_iff _).2 hi
@@ -224,8 +225,9 @@ private theorem pivot_of_leading {A : Matrix Int n m}
   · exact Fin.ext heq
   · exact absurd (vecMul_before h c q hqzero col hgt) hat
 
-private theorem pivot_exists {A B : Matrix Int n m}
-    {D E : RowEchelonData Int n m} (h : IsHNF A D) (h' : IsHNF B E)
+private theorem pivot_exists {A : Matrix Int n m} {B : Matrix Int n' m}
+    {D : RowEchelonData Int n m} {E : RowEchelonData Int n' m}
+    (h : IsHNF A D) (h' : IsHNF B E)
     (hL : ∀ v, A.memLattice v ↔ B.memLattice v) (i : Fin E.rank) :
     ∃ q : Fin D.rank, D.pivotCols.get q = E.pivotCols.get i := by
   let row := h'.toIsEchelonForm.pivotRow i
@@ -302,8 +304,9 @@ private theorem pairwise_eq_of_mem {xs ys : List (Fin m)}
               exact absurd ((List.pairwise_cons.mp hy).1 x hz) (Fin.lt_irrefl _)
             · exact hzxs
 
-private theorem pivotLists_eq {A B : Matrix Int n m}
-    {D E : RowEchelonData Int n m} (h : IsHNF A D) (h' : IsHNF B E)
+private theorem pivotLists_eq {A : Matrix Int n m} {B : Matrix Int n' m}
+    {D : RowEchelonData Int n m} {E : RowEchelonData Int n' m}
+    (h : IsHNF A D) (h' : IsHNF B E)
     (hL : ∀ v, A.memLattice v ↔ B.memLattice v) :
     D.pivotCols.toList = E.pivotCols.toList := by
   apply pairwise_eq_of_mem (pairwisePivots h) (pairwisePivots h')
@@ -351,7 +354,8 @@ private theorem positive_associates_eq {a b x y : Int}
   have hxone : x = 1 := by omega
   rw [hba, hxone, Int.one_mul]
 
-private theorem pivotGet_of_lists {D E : RowEchelonData Int n m}
+private theorem pivotGet_of_lists {D : RowEchelonData Int n m}
+    {E : RowEchelonData Int n' m}
     (hp : D.pivotCols.toList = E.pivotCols.toList)
     {i : Nat} (hiD : i < D.rank) (hiE : i < E.rank) :
     D.pivotCols.get ⟨i, hiD⟩ = E.pivotCols.get ⟨i, hiE⟩ := by
@@ -360,8 +364,9 @@ private theorem pivotGet_of_lists {D E : RowEchelonData Int n m}
     List.getElem?_eq_getElem (by simpa using hiE)] at hget
   injection hget
 
-private theorem rowCoeffLeading {A B : Matrix Int n m}
-    {D E : RowEchelonData Int n m} (h : IsHNF A D) (h' : IsHNF B E)
+private theorem rowCoeffLeading {A : Matrix Int n m} {B : Matrix Int n' m}
+    {D : RowEchelonData Int n m} {E : RowEchelonData Int n' m}
+    (h : IsHNF A D) (h' : IsHNF B E)
     (hL : ∀ v, A.memLattice v ↔ B.memLattice v)
     (hp : D.pivotCols.toList = E.pivotCols.toList)
     {i : Nat} (hiD : i < D.rank) (hiE : i < E.rank) :
@@ -420,8 +425,9 @@ private theorem rowCoeffLeading {A B : Matrix Int n m}
   intro k hk
   exact hqzero k hk
 
-private theorem pivotValue_eq {A B : Matrix Int n m}
-    {D E : RowEchelonData Int n m} (h : IsHNF A D) (h' : IsHNF B E)
+private theorem pivotValue_eq {A : Matrix Int n m} {B : Matrix Int n' m}
+    {D : RowEchelonData Int n m} {E : RowEchelonData Int n' m}
+    (h : IsHNF A D) (h' : IsHNF B E)
     (hL : ∀ v, A.memLattice v ↔ B.memLattice v)
     (hp : D.pivotCols.toList = E.pivotCols.toList)
     {i : Nat} (hiD : i < D.rank) (hiE : i < E.rank) :
@@ -433,6 +439,9 @@ private theorem pivotValue_eq {A B : Matrix Int n m}
   let ei : Fin E.rank := ⟨i, hiE⟩
   let drow := h.toIsEchelonForm.pivotRow di
   let erow := h'.toIsEchelonForm.pivotRow ei
+  have hrank : D.rank = E.rank := by
+    have hlen := congrArg List.length hp
+    simpa using hlen
   have hcol : D.pivotCols.get di = E.pivotCols.get ei :=
     pivotGet_of_lists hp hiD hiE
   rcases rowCoeffLeading h h' hL hp hiD hiE with ⟨c, hc, hcne, hczero⟩
@@ -503,6 +512,142 @@ private theorem vector_get_sub (u v : Vector Int n) (i : Fin n) :
     (u - v).get i = u.get i - v.get i := by
   change (u - v)[i.val]'i.isLt = u[i.val]'i.isLt - v[i.val]'i.isLt
   rw [Vector.getElem_sub]
+
+private theorem pivotRow_eq {A : Matrix Int n m} {B : Matrix Int n' m}
+    {D : RowEchelonData Int n m} {E : RowEchelonData Int n' m}
+    (h : IsHNF A D) (h' : IsHNF B E)
+    (hL : ∀ v, A.memLattice v ↔ B.memLattice v)
+    (hp : D.pivotCols.toList = E.pivotCols.toList)
+    {i : Nat} (hiD : i < D.rank) (hiE : i < E.rank) :
+    D.echelon[h.toIsEchelonForm.pivotRow ⟨i, hiD⟩] =
+      E.echelon[h'.toIsEchelonForm.pivotRow ⟨i, hiE⟩] := by
+  let di : Fin D.rank := ⟨i, hiD⟩
+  let ei : Fin E.rank := ⟨i, hiE⟩
+  let drow := h.toIsEchelonForm.pivotRow di
+  let erow := h'.toIsEchelonForm.pivotRow ei
+  have hrank : D.rank = E.rank := by
+    have hlen := congrArg List.length hp
+    simpa using hlen
+  rcases row_coeffs h h' hL erow with ⟨c, hc⟩
+  rcases row_memLattice D.echelon drow with ⟨d, hd⟩
+  have hw : vecMul (c - d) D.echelon = E.echelon[erow] - D.echelon[drow] := by
+    rw [vecMul_sub, hc, hd]
+  apply Classical.byContradiction
+  intro hne
+  have hrows : E.echelon[erow] ≠ D.echelon[drow] :=
+    fun heq => hne heq.symm
+  have hwne : vecMul (c - d) D.echelon ≠ 0 := by
+    rw [hw]
+    exact fun hz => hrows (vector_sub_eq_zero_iff _ _ |>.mp hz)
+  rcases firstCoeff h (c - d) hwne with ⟨q, hqne, hqzero⟩
+  have hqmul : (vecMul (c - d) D.echelon)[D.pivotCols.get q] =
+      (c - d)[h.toIsEchelonForm.pivotRow q] *
+        D.echelon[h.toIsEchelonForm.pivotRow q][D.pivotCols.get q] :=
+    vecMul_pivot h (c - d) q hqzero
+  have hqentryNe : (vecMul (c - d) D.echelon)[D.pivotCols.get q] ≠ 0 := by
+    rw [hqmul]
+    have hpq := h.pivot_pos q
+    change 0 < D.echelon[h.toIsEchelonForm.pivotRow q][D.pivotCols.get q] at hpq
+    exact Int.mul_ne_zero hqne (Int.ne_of_gt hpq)
+  have hiq : i < q.val := by
+    apply Classical.byContradiction
+    intro hnlt
+    have hqi : q.val ≤ i := Nat.le_of_not_gt hnlt
+    rcases Nat.lt_or_eq_of_le hqi with hlt | heq
+    · have hcolLt := h.toIsEchelonForm.pivotCols_sorted q di hlt
+      have hDzero := h.pivot_leading di (D.pivotCols.get q) hcolLt
+      change (D.echelon[drow]).get (D.pivotCols.get q) = 0 at hDzero
+      have hcolI := pivotGet_of_lists hp hiD hiE
+      have hcolE : D.pivotCols.get q < E.pivotCols.get ei := by
+        calc
+          D.pivotCols.get q < D.pivotCols.get di := hcolLt
+          _ = E.pivotCols.get ei := hcolI
+      have hEzero := h'.pivot_leading ei (D.pivotCols.get q) hcolE
+      change (E.echelon[erow]).get (D.pivotCols.get q) = 0 at hEzero
+      have hdiff := congrArg
+        (fun v : Vector Int m => v.get (D.pivotCols.get q)) hw
+      rw [vector_get_sub, hDzero, hEzero] at hdiff
+      apply hqentryNe
+      change (vecMul (c - d) D.echelon).get (D.pivotCols.get q) = 0
+      exact hdiff.trans (Int.sub_self 0)
+    · have hqdi : q = di := Fin.ext heq
+      subst q
+      have hpv := pivotValue_eq h h' hL hp hiD hiE
+      have hpv' : (D.echelon[drow]).get (D.pivotCols.get di) =
+          (E.echelon[erow]).get (E.pivotCols.get ei) := by
+        simpa only [di, ei, drow, erow] using hpv
+      have hcol := pivotGet_of_lists hp hiD hiE
+      have hEentry : (E.echelon[erow]).get (D.pivotCols.get di) =
+          (E.echelon[erow]).get (E.pivotCols.get ei) := by
+        exact congrArg (fun col : Fin m => (E.echelon[erow]).get col) hcol
+      have hdiff := congrArg
+        (fun v : Vector Int m => v.get (D.pivotCols.get di)) hw
+      rw [vector_get_sub] at hdiff
+      rw [hEentry, ← hpv'] at hdiff
+      apply hqentryNe
+      change (vecMul (c - d) D.echelon).get (D.pivotCols.get di) = 0
+      exact hdiff.trans (Int.sub_self _)
+  have hqE : q.val < E.rank := by omega
+  let qe : Fin E.rank := ⟨q.val, hqE⟩
+  have hcolq : D.pivotCols.get q = E.pivotCols.get qe :=
+    pivotGet_of_lists hp q.isLt hqE
+  have hpval := pivotValue_eq h h' hL hp q.isLt hqE
+  have hDnonneg := h.above_nonneg q drow hiq
+  have hDltRaw := h.above_lt q drow hiq
+  have hEnonnegRaw := h'.above_nonneg qe erow hiq
+  have hEltRaw := h'.above_lt qe erow hiq
+  have hDpos := h.pivot_pos q
+  change 0 < D.echelon[h.toIsEchelonForm.pivotRow q][D.pivotCols.get q] at hDpos
+  let p := (D.echelon[h.toIsEchelonForm.pivotRow q]).get (D.pivotCols.get q)
+  change 0 < p at hDpos
+  change 0 ≤ (D.echelon[drow]).get (D.pivotCols.get q) at hDnonneg
+  have hDlt : (D.echelon[drow]).get (D.pivotCols.get q) < p := by
+    change (D.echelon[drow]).get (D.pivotCols.get q) < p at hDltRaw
+    exact hDltRaw
+  have hElt : (E.echelon[erow]).get (D.pivotCols.get q) < p := by
+    have hEcol : (E.echelon[erow]).get (D.pivotCols.get q) =
+        (E.echelon[erow]).get (E.pivotCols.get qe) := by
+      exact congrArg (fun col : Fin m => (E.echelon[erow]).get col) hcolq
+    rw [hEcol]
+    have hpval' : p =
+        (E.echelon[h'.toIsEchelonForm.pivotRow qe]).get
+          (E.pivotCols.get qe) := by
+      simpa only [p] using hpval
+    rw [hpval']
+    change (E.echelon[erow]).get (E.pivotCols.get qe) <
+      (E.echelon[h'.toIsEchelonForm.pivotRow qe]).get
+        (E.pivotCols.get qe) at hEltRaw
+    exact hEltRaw
+  have hEnonneg : 0 ≤ (E.echelon[erow]).get (D.pivotCols.get q) := by
+    have hEcol : (E.echelon[erow]).get (D.pivotCols.get q) =
+        (E.echelon[erow]).get (E.pivotCols.get qe) := by
+      exact congrArg (fun col : Fin m => (E.echelon[erow]).get col) hcolq
+    rw [hEcol]
+    change 0 ≤ (E.echelon[erow]).get (E.pivotCols.get qe) at hEnonnegRaw
+    exact hEnonnegRaw
+  have hdiff := congrArg (fun v : Vector Int m => v.get (D.pivotCols.get q)) hw
+  rw [vector_get_sub] at hdiff
+  change (vecMul (c - d) D.echelon).get (D.pivotCols.get q) =
+    (c - d)[h.toIsEchelonForm.pivotRow q] * p at hqmul
+  rw [hqmul] at hdiff
+  have hlower : -p < (c - d)[h.toIsEchelonForm.pivotRow q] * p := by
+    rw [hdiff]
+    omega
+  have hupper : (c - d)[h.toIsEchelonForm.pivotRow q] * p < p := by
+    rw [hdiff]
+    omega
+  by_cases hcoeff : 0 < (c - d)[h.toIsEchelonForm.pivotRow q]
+  · have hmul := Int.mul_le_mul_of_nonneg_right
+      (show (1 : Int) ≤ (c - d)[h.toIsEchelonForm.pivotRow q] by omega)
+      (Int.le_of_lt hDpos)
+    have : p ≤ (c - d)[h.toIsEchelonForm.pivotRow q] * p := by
+      simpa only [Int.one_mul] using hmul
+    omega
+  · have hcoeffNeg : (c - d)[h.toIsEchelonForm.pivotRow q] ≤ -1 := by omega
+    have hmul := Int.mul_le_mul_of_nonneg_right hcoeffNeg (Int.le_of_lt hDpos)
+    have : (c - d)[h.toIsEchelonForm.pivotRow q] * p ≤ -p := by
+      simpa only [Int.neg_mul, Int.one_mul] using hmul
+    omega
 
 private theorem echelon_row_eq {A B : Matrix Int n m}
     {D E : RowEchelonData Int n m} (h : IsHNF A D) (h' : IsHNF B E)
@@ -717,5 +862,60 @@ theorem hnf_idem (A : Matrix Int n m) : hnf (hnf A) = hnf A := by
   have hechelon := heq.2.1
   rw [← hnf_eq_hnfData_echelon A, ← hnf_eq_hnfData_echelon (hnf A)] at hechelon
   exact hechelon.symm
+
+private theorem matrix_heq_of_entries {r s : Nat} (hrs : r = s)
+    {M : Matrix Int r m} {N : Matrix Int s m}
+    (h : ∀ (i : Fin r) (j : Fin m), M[i][j] = N[Fin.cast hrs i][j]) :
+    HEq M N := by
+  subst s
+  apply heq_of_eq
+  apply Matrix.ext_getElem
+  intro i j
+  simpa using h i j
+
+/-- The nonzero HNF rows are canonical across presentations with different
+numbers of generators. -/
+theorem hnfBasis_eq_of_memLattice (A : Matrix Int n m) (B : Matrix Int n' m)
+    (hL : ∀ v, A.memLattice v ↔ B.memLattice v) :
+    hnfRank A = hnfRank B ∧ HEq (hnfBasis A) (hnfBasis B) := by
+  let D := hnfData A
+  let E := hnfData B
+  have hA : IsHNF A D := hnfData_isHNF A
+  have hB : IsHNF B E := hnfData_isHNF B
+  have hp := IsHNF.pivotLists_eq hA hB hL
+  have hrankData : D.rank = E.rank := by
+    have hlen := congrArg List.length hp
+    simpa using hlen
+  have hrank : hnfRank A = hnfRank B := by
+    rw [hnfRank_eq A, hnfRank_eq B]
+    exact hrankData
+  refine ⟨hrank, ?_⟩
+  apply matrix_heq_of_entries hrank
+  intro i j
+  let ib : Fin (hnfRank B) := Fin.cast hrank i
+  have hiD : i.val < D.rank := by
+    rw [← hnfRank_eq A]
+    exact i.isLt
+  have hiE : ib.val < E.rank := by
+    rw [← hnfRank_eq B]
+    exact ib.isLt
+  have hrow := IsHNF.pivotRow_eq hA hB hL hp hiD hiE
+  have hentry := congrArg (fun row : Vector Int m => row[j.val]'j.isLt) hrow
+  simp only [hnfBasis, Matrix.getElem_ofFn, Matrix.getElem_pair_eq_nested]
+  rw [hnf_eq_hnfData_echelon A, hnf_eq_hnfData_echelon B]
+  let rowA : Fin n := Fin.castLE
+    (Hermite.run_rank_le (Hermite.formAccumulator n) A) i
+  let rowB : Fin n' := Fin.castLE
+    (Hermite.run_rank_le (Hermite.formAccumulator n') B) ib
+  have hrowA : rowA = hA.toIsEchelonForm.pivotRow ⟨i.val, hiD⟩ := Fin.ext rfl
+  have hrowB : rowB = hB.toIsEchelonForm.pivotRow ⟨ib.val, hiE⟩ := Fin.ext rfl
+  change D.echelon[rowA][j] = E.echelon[rowB][j]
+  calc
+    D.echelon[rowA][j] =
+        D.echelon[hA.toIsEchelonForm.pivotRow ⟨i.val, hiD⟩][j] := by
+      rw [hrowA]
+    _ = E.echelon[hB.toIsEchelonForm.pivotRow ⟨ib.val, hiE⟩][j] := by
+      simpa only [ib, Fin.cast, Fin.getElem_fin] using hentry
+    _ = E.echelon[rowB][j] := by rw [hrowB]
 
 end Hex.Matrix
