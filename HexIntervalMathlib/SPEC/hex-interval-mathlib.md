@@ -57,11 +57,25 @@ structural sharing, checks the completed SSA program, and enforces explicit
 source, operation, node, and depth caps separately from registry and replay
 caps. Before seeding facts it rechecks the transparent result's one-entry-per-
 node correspondence, structural sharing, stable operation key, ordered child
-edges, and source-index range. It then binds every caller-selected source
-interval exactly once, proves computed domain-top seeds automatically, and requires
-constants and every improvement to enter through package-owned chronology.
-Successful replay can be eliminated to a target membership theorem, either
-endpoint inequality, their conjunction, or equality for a closed singleton.
+edges, and source-index range. Its generalized `InitialContext` has exactly one
+node-indexed version-zero row per retained reifier entry. An absent selection
+materializes as `whole`; a present interval is plain caller data and gains no
+authority until a separate positional `InitialContext.Contains` proof relates
+that exact row to the entry's retained term evaluation. This permits an
+authenticated fact on a computed node without treating the data or the row
+label as proof. Exact row count and order are checked only after source,
+operation, node, and depth caps; `setFact` refuses out-of-range or mistargeted
+writes transactionally.
+
+The original `inputWithin` remains a source-only convenience wrapper: it binds
+every caller-selected source interval exactly once, leaves computed rows at
+domain top, and proves those top seeds automatically. Both constructors share
+one common bounded reifier preflight, so the wrapper preserves its source-error
+precedence without repeating the structural scan. Constants and later
+improvements still enter through package-owned chronology. Successful replay
+can be eliminated from either source containment or generalized initial-row
+containment to a target membership theorem, either endpoint inequality, their
+conjunction, or equality for a closed singleton.
 For Meta clients, `modelOfCheck` transparently projects the exact `Model` from
 a kernel-reduced successful `modelWithin` call. `valuesAt` quotes a finite list
 as the total source valuation used by the frontend, and
@@ -613,8 +627,12 @@ DAG recursively, pins exact source and configured-constant node binding,
 rejects malformed result entries, duplicate stable keys, and one-over
 source/operation/node/depth limits, replays a flat supported chronology, and
 closes fully discharged lower inequality, two-sided conjunction, and equality
-theorems from source containment alone, with guarded ordinary-theorem axiom
-reports.
+theorems from source containment alone. It additionally pins transactional
+initial-row writes, structural and semantic anti-permutation, every generalized
+input refusal, and a real zero-event replay of a computed target fact, with
+guarded ordinary-theorem axiom reports. This first computed-row canary targets
+version zero directly; an interior computed assumption feeding later rule
+chronology is a distinct coverage target.
 `HexIntervalMathlib.TacticConformance` exercises supported Meta parsing and
 caller-proof emission over closed, strict, negative, shared-expression, power,
 absolute-value, minimum, maximum, reciprocal, and division examples. It pins

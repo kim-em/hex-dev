@@ -93,6 +93,21 @@ structure Result where
   sourceCount : Nat
   deriving DecidableEq, Repr
 
+/-- One node-indexed version-zero fact selection. `none` means that the row
+starts at domain top; `some fact` is caller-selected data whose semantic
+containment must be proved separately through `InitialContext.Contains`. -/
+structure InitialRow where
+  node : NodeId
+  fact : Option Hex.Interval := none
+  deriving DecidableEq
+
+/-- Plain node-indexed initial-fact data. The runtime builder revalidates one
+row per checked reifier entry and exact node order before materializing absent
+facts as `whole`. This record carries no theorem authority. -/
+structure InitialContext where
+  rows : Array InitialRow
+  deriving DecidableEq
+
 inductive Error where
   | sourceLimit
   | operationLimit
@@ -102,6 +117,8 @@ inductive Error where
   | missingOperation (key : OpKey)
   | malformedProgram
   | malformedResult
+  | wrongInitialCount
+  | malformedInitial
   | wrongSourceCount
   | missingSource (index : Nat)
   | rule (error : Rule.BuildError)
@@ -273,6 +290,54 @@ def reifyWithin (config : Config) (sourceCount : Nat) (target : Term) :
 def Result.sourceNode? (result : Result) (index : Nat) : Option NodeId :=
   (result.entries.toList.find? fun entry => entry.term == .source index).map (·.node)
 
+/-- Default node-indexed initial context: every checked reifier row starts at
+domain top. -/
+def Result.initialContext (result : Result) : InitialContext :=
+  { rows := result.entries.map fun entry => { node := entry.node } }
+
+/-- Replace one node-indexed selection only when the requested node is present
+at its exact slot. A mistargeted or out-of-range write refuses rather than
+silently leaving a `whole` fact in place. `inputInitialWithin` remains the
+authoritative full-context validator. -/
+def InitialContext.setFact (initial : InitialContext) (node : NodeId)
+    (fact : Hex.Interval) : Except Error InitialContext :=
+  match initial.rows[node.index]? with
+  | none => throw .malformedInitial
+  | some row =>
+      if row.node != node then
+        throw .malformedInitial
+      else
+        pure { rows := initial.rows.set! node.index { row with fact := some fact } }
+
+/-- Materialize absent selections as domain top in exact row order. -/
+def InitialContext.facts (initial : InitialContext) : Array Hex.Interval :=
+  initial.rows.map fun row => row.fact.getD Hex.Interval.whole
+
+/-- One initial row must name the exact reifier node at the same array slot. -/
+protected def InitialContext.slotCheck (initial : InitialContext)
+    (result : Result) (index : Nat) : Bool :=
+  match initial.rows[index]?, result.entries[index]? with
+  | some row, some entry => row.node == entry.node
+  | _, _ => false
+
+/-- Authenticate exact row count and node order. The caller checks array caps
+before invoking this bounded scan. -/
+def InitialContext.check (initial : InitialContext) (result : Result) : Bool :=
+  initial.rows.size == result.entries.size &&
+    (List.range initial.rows.size).all (initial.slotCheck result)
+
+/-- Exact semantic authority for node-indexed initial facts. The relation is
+position-for-position with the checked reifier table, pins the named node, and
+relates every selected fact to that row's exact `Term.eval`. An absent fact is
+the public `whole` value and therefore has a trivial caller proof. -/
+def InitialContext.Contains (initial : InitialContext) (config : Rule.Config)
+    (values : Nat → ℝ) (result : Result) : Prop :=
+  List.Forall₂
+    (fun row entry =>
+      row.node = entry.node ∧
+        (row.fact.getD Hex.Interval.whole).Contains (entry.term.eval config values))
+    initial.rows.toList result.entries.toList
+
 protected def Result.inputsMatch (entries : Array Entry) : List Term → List NodeId → Bool
   | [], [] => true
   | term :: terms, node :: nodes =>
@@ -334,9 +399,32 @@ def Result.seed (sources : Array Hex.Interval) (entry : Entry) : Hex.Interval :=
   | some index => sources[index]?.getD Hex.Interval.whole
   | none => Hex.Interval.whole
 
+/-- Source-only convenience context retained for the original frontend API.
+Source rows select their caller facts and every computed row defaults to
+`whole`. -/
+def Result.sourceInitial (result : Result)
+    (sources : Array Hex.Interval) : InitialContext :=
+  { rows := result.entries.map fun entry =>
+      { node := entry.node
+        fact := entry.term.source?.bind fun index => sources[index]? } }
+
 /-- Exact version-zero fact array determined by the retained node/term rows. -/
 def Result.facts (result : Result) (sources : Array Hex.Interval) : Array Hex.Interval :=
   result.entries.map (Result.seed sources)
+
+theorem Result.sourceInitial_facts (result : Result) (sources : Array Hex.Interval) :
+    (result.sourceInitial sources).facts = result.facts sources := by
+  simp only [Result.sourceInitial, InitialContext.facts, Result.facts, Array.map_map]
+  have fnEq :
+      ((fun row : InitialRow => row.fact.getD Hex.Interval.whole) ∘
+          fun entry : Entry =>
+            { node := entry.node
+              fact := entry.term.source?.bind fun index => sources[index]? }) =
+        Result.seed sources := by
+    funext entry
+    cases found : entry.term.source? <;>
+      simp [Result.seed, Function.comp_apply, found]
+  rw [fnEq]
 
 private theorem Result.slot_of_check (result : Result) (checked : result.check)
     {index : Nat} (within : index < result.entries.size) : result.slotCheck index := by
@@ -393,6 +481,44 @@ theorem SourcesContain.ofForall₂ {values : List ℝ} {sources : List Hex.Inter
           simpa [valuesAt] using member
       | succ index =>
           exact ih index fact (by simpa using found)
+
+/-- Meta-facing bridge: one quoted row/entry containment proof per position is
+exactly the generalized initial-context authority. -/
+theorem InitialContext.Contains.ofForall₂
+    {initial : InitialContext} {config : Rule.Config} {values : Nat → ℝ}
+    {result : Result}
+    (holds : List.Forall₂
+      (fun row entry =>
+        row.node = entry.node ∧
+          (row.fact.getD Hex.Interval.whole).Contains (entry.term.eval config values))
+      initial.rows.toList result.entries.toList) :
+    initial.Contains config values result :=
+  holds
+
+/-- Every materialized initial fact contains the exact value of its node in
+the checked reifier valuation. The proof authority is positional
+`InitialContext.Contains`; the plain context alone proves nothing. -/
+theorem InitialContext.fact_contains
+    (initial : InitialContext) (config : Rule.Config) (values : Nat → ℝ)
+    (result : Result) (holds : initial.Contains config values result)
+    (index : Nat) (within : index < initial.rows.size) :
+    initial.facts[index]'(by simpa [InitialContext.facts] using within) |>.Contains
+      (result.valuation config values { index }) := by
+  let row := initial.rows[index]'within
+  have lengths : initial.rows.size = result.entries.size := by
+    simpa [InitialContext.Contains] using List.Forall₂.length_eq holds
+  have entryWithin : index < result.entries.size := by simpa [lengths] using within
+  let entry := result.entries[index]'entryWithin
+  have entryFound : result.entries[index]? = some entry := by simp [entry]
+  have related := List.Forall₂.get holds (by simpa using within) (by simpa using entryWithin)
+  have factEq :
+      initial.facts[index]'(by simpa [InitialContext.facts] using within) =
+        row.fact.getD Hex.Interval.whole := by
+    simp [InitialContext.facts, row]
+  have valueEq : result.valuation config values { index } = entry.term.eval config values := by
+    simp [Result.valuation, Result.valueAt, entryFound]
+  rw [factEq, valueEq]
+  simpa [row, entry] using related.2
 
 theorem Result.seed_contains (config : Rule.Config) (values : Nat → ℝ)
     (result : Result) (sources : Array Hex.Interval) (checked : result.check)
@@ -543,36 +669,59 @@ def modelOfCheck {config : Config} {sources : Nat → ℝ} {result : Result}
     (success : checked.toOption.isSome = true) : Model config.rule sources result :=
   checked.toOption.get success
 
-/-- Revalidate the bounded reification result, including its exact node/term
-correspondence, bind every selected source exactly once, and seed all computed
-nodes with domain top. Constants are proved by the constant rule rather than
-trusted as assumptions. -/
-def inputWithin (config : Config) (scope : Policy.ScopeId) (result : Result)
-    (sources : Array Hex.Interval) (target : Hex.Interval) :
-    Except Error (Proof.Input Hex.Interval) := do
+/-- Shared bounded validation for proof-input constructors. `initialSize` is
+the caller's version-zero row count and is charged before any row scan. -/
+def inputCheckWithin (config : Config) (result : Result) (initialSize : Nat) :
+    Except Error Unit := do
   if config.reify.maxSources < result.sourceCount then throw .sourceLimit
   let meanings := Rule.meanings config.rule
   if config.reify.maxOperations < meanings.size ||
       config.reify.maxOperations < result.program.operations.size then
     throw .operationLimit
   if config.reify.maxNodes < result.program.nodes.size ||
-      config.reify.maxNodes < result.entries.size then throw .nodeLimit
+      config.reify.maxNodes < result.entries.size ||
+      config.reify.maxNodes < initialSize then throw .nodeLimit
   if !result.depthCheck config.reify.maxDepth then throw .depthLimit
   if result.target.index ≥ result.program.nodes.size || !result.program.check then
     throw .malformedProgram
   if result.program.operations != meanings.map (Program.Meaning.operation) then
     throw .malformedProgram
   if !result.check then throw .malformedResult
+  pure ()
+
+/-- Revalidate every resource cap and structural binding before materializing
+one authenticated version-zero fact per reifier node. Caller-selected facts
+remain plain data; only `InitialContext.Contains` supplies semantic authority.
+Failure returns no partially constructed input. -/
+def inputInitialWithin (config : Config) (scope : Policy.ScopeId) (result : Result)
+    (initial : InitialContext) (target : Hex.Interval) :
+    Except Error (Proof.Input Hex.Interval) := do
+  inputCheckWithin config result initial.rows.size
+  if initial.rows.size != result.entries.size then throw .wrongInitialCount
+  if !initial.check result then throw .malformedInitial
+  pure {
+    scope
+    program := result.program
+    facts := initial.facts
+    target := { node := result.target, fact := target } }
+
+/-- Source-only convenience wrapper for the original frontend API. It binds
+every selected source exactly once and leaves computed rows at domain top. -/
+def inputWithin (config : Config) (scope : Policy.ScopeId) (result : Result)
+    (sources : Array Hex.Interval) (target : Hex.Interval) :
+    Except Error (Proof.Input Hex.Interval) := do
+  inputCheckWithin config result result.entries.size
   if sources.size != result.sourceCount then throw .wrongSourceCount
   for index in [0:result.sourceCount] do
     let some _ := result.sourceNode? index | throw (.missingSource index)
-  let facts := result.facts sources
-  let input : Proof.Input Hex.Interval :=
-    { scope
-      program := result.program
-      facts
-      target := { node := result.target, fact := target } }
-  pure input
+  let initial := result.sourceInitial sources
+  if initial.rows.size != result.entries.size then throw .wrongInitialCount
+  if !initial.check result then throw .malformedInitial
+  pure {
+    scope
+    program := result.program
+    facts := initial.facts
+    target := { node := result.target, fact := target } }
 
 /-- The exact `Result.facts` seed array discharges every computed top fact;
 only caller source containment remains. -/
@@ -595,6 +744,25 @@ theorem Result.initial_contains (config : Rule.Config) (values : Nat → ℝ)
   have seeded := result.seed_contains config values sourceFacts checked sourceSize
     sourceHolds index.val within
   simpa [facts] using seeded
+
+/-- Positional containment authority discharges every caller-selected initial
+fact, including facts installed on computed nodes. -/
+theorem InitialContext.initial_contains (initial : InitialContext)
+    (config : Rule.Config) (values : Nat → ℝ) (result : Result)
+    (holds : initial.Contains config values result)
+    (input : Proof.Input Hex.Interval) (facts : input.facts = initial.facts) :
+    ∀ fact, fact ∈ Proof.initialBase input →
+      fact.fact.Contains (result.valuation config values fact.node) := by
+  intro fact member
+  rw [Proof.initialBase, List.mem_ofFn] at member
+  obtain ⟨index, rfl⟩ := member
+  have within : index.val < initial.rows.size := by
+    have sizeEq : input.facts.size = initial.rows.size := by
+      rw [facts]
+      simp [InitialContext.facts]
+    exact sizeEq ▸ index.isLt
+  have selected := initial.fact_contains config values result holds index.val within
+  simpa [facts] using selected
 
 /-- Bounded supported registry assembly followed by exact chronological replay.
 Neither the reifier nor the caller-supplied event list has proof authority. The
@@ -715,6 +883,92 @@ theorem closeTermSingleton (config : Config) (result : Result) (sources : Nat �
     result.term.eval config.rule sources = toReal value := by
   rcases closeTermBounds config result sources model input evidence program target assumptions
     _ _ shape with ⟨lower, upper⟩
+  exact le_antisymm upper lower
+
+/-- Close the target from an exact node-indexed initial context. The context's
+plain data is authenticated structurally by `inputInitialWithin`; `holds` is
+the separate kernel-checked containment authority consumed here. -/
+theorem closeInitial (config : Config) (result : Result) (values : Nat → ℝ)
+    (model : Model config.rule values result) (input : Proof.Input Hex.Interval)
+    (evidence : Proof.Evidence
+      ((Rule.semantics config.rule).Entails input.program
+        (Proof.initialBase input) input.target))
+    (program : input.program = result.program)
+    (target : input.target.node = result.target)
+    (initial : InitialContext)
+    (facts : input.facts = initial.facts)
+    (holds : initial.Contains config.rule values result) :
+    input.target.fact.Contains (result.term.eval config.rule values) :=
+  closeTerm config result values model input evidence program target
+    (initial.initial_contains config.rule values result holds input facts)
+
+theorem closeInitialBounds (config : Config) (result : Result) (values : Nat → ℝ)
+    (model : Model config.rule values result) (input : Proof.Input Hex.Interval)
+    (evidence : Proof.Evidence
+      ((Rule.semantics config.rule).Entails input.program
+        (Proof.initialBase input) input.target))
+    (program : input.program = result.program)
+    (target : input.target.node = result.target)
+    (initial : InitialContext)
+    (facts : input.facts = initial.facts)
+    (holds : initial.Contains config.rule values result)
+    (lower : Lower) (upper : Upper)
+    (shape : input.target.fact.view = .bounds lower upper) :
+    lower.Contains (result.term.eval config.rule values) ∧
+      upper.Contains (result.term.eval config.rule values) := by
+  have member := closeInitial config result values model input evidence program target initial
+    facts holds
+  change input.target.fact.view.Contains (result.term.eval config.rule values) at member
+  simpa [shape, Raw.Contains] using member
+
+theorem closeInitialLower (config : Config) (result : Result) (values : Nat → ℝ)
+    (model : Model config.rule values result) (input : Proof.Input Hex.Interval)
+    (evidence : Proof.Evidence
+      ((Rule.semantics config.rule).Entails input.program
+        (Proof.initialBase input) input.target))
+    (program : input.program = result.program)
+    (target : input.target.node = result.target)
+    (initial : InitialContext)
+    (facts : input.facts = initial.facts)
+    (holds : initial.Contains config.rule values result)
+    (value : Dyadic) (strict : Bool) (upper : Upper)
+    (shape : input.target.fact.view = .bounds (.finite value strict) upper) :
+    (Lower.finite value strict).Contains (result.term.eval config.rule values) :=
+  (closeInitialBounds config result values model input evidence program target initial facts holds
+    _ _ shape).1
+
+theorem closeInitialUpper (config : Config) (result : Result) (values : Nat → ℝ)
+    (model : Model config.rule values result) (input : Proof.Input Hex.Interval)
+    (evidence : Proof.Evidence
+      ((Rule.semantics config.rule).Entails input.program
+        (Proof.initialBase input) input.target))
+    (program : input.program = result.program)
+    (target : input.target.node = result.target)
+    (initial : InitialContext)
+    (facts : input.facts = initial.facts)
+    (holds : initial.Contains config.rule values result)
+    (lower : Lower) (value : Dyadic) (strict : Bool)
+    (shape : input.target.fact.view = .bounds lower (.finite value strict)) :
+    (Upper.finite value strict).Contains (result.term.eval config.rule values) :=
+  (closeInitialBounds config result values model input evidence program target initial facts holds
+    _ _ shape).2
+
+theorem closeInitialSingleton (config : Config) (result : Result) (values : Nat → ℝ)
+    (model : Model config.rule values result) (input : Proof.Input Hex.Interval)
+    (evidence : Proof.Evidence
+      ((Rule.semantics config.rule).Entails input.program
+        (Proof.initialBase input) input.target))
+    (program : input.program = result.program)
+    (target : input.target.node = result.target)
+    (initial : InitialContext)
+    (facts : input.facts = initial.facts)
+    (holds : initial.Contains config.rule values result)
+    (value : Dyadic)
+    (shape : input.target.fact.view =
+      .bounds (.finite value false) (.finite value false)) :
+    result.term.eval config.rule values = toReal value := by
+  rcases closeInitialBounds config result values model input evidence program target initial facts
+    holds _ _ shape with ⟨lower, upper⟩
   exact le_antisymm upper lower
 
 /-- Close the target from caller source facts. Computed version-zero nodes are
