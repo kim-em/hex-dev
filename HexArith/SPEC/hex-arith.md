@@ -441,7 +441,7 @@ dispatch when the same checker runs compiled. Both return `0` at
 `p = 0` (the modulus-zero convention `powMod` always had); the
 agreement at every input is what makes the `@[csimp]` registration
 unconditional. Downstream consumer: hex-primality's `checkPrime`
-(see [SPEC/Libraries/hex-primality.md](../../SPEC/Libraries/hex-primality.md)
+(see [HexPrimality/SPEC/hex-primality.md](../../HexPrimality/SPEC/hex-primality.md)
 §Kernel exposure).
 
 **Binomial coefficients and Fermat's little theorem:**

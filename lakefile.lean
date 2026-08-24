@@ -140,6 +140,8 @@ lean_lib HexConway where
 
 lean_lib HexGFq where
 
+lean_lib HexPrimality where
+
 lean_lib HexBerlekampZassenhaus where
 
 lean_lib HexRealRoots where
