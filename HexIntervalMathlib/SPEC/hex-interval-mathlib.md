@@ -103,17 +103,29 @@ The built-in offers are deliberately one-shot: only a version-zero result node
 whose current fact is domain top is scheduled, so the callback installs its
 recomputed proposal as version one without raw access to the previous branch.
 Direct repeats fail the runtime predecessor check. Runtime-to-proof quotation
-and exact target/refutation correlation are supported; automatic discovery and
-the public-tactic search route remain later edges.
+and exact target/refutation correlation are supported. The public tactic uses
+that route with a fixed topological application plan; automatic package
+discovery and a general search-selected tactic policy remain later edges.
 
 `HexIntervalMathlib.Tactic` is the first supported Meta client. It recursively
 parses real local variables and the registered forward arithmetic operations,
 selects strongest integer lower and upper hypotheses, constructs the exact
-runtime `Program`, `Proof.Input`, and chronology as plain checked data, reruns
-`Frontend.replay`, and independently reconstructs a caller proof
-through package-owned image theorems and `Proof.emitChecked`. It does not emit
-those discarded runtime records as Lean expressions. The bare `interval`
-tactic currently closes
+runtime program and source facts, starts the sealed branch/runtime/retained
+tree/controller bundle, and selects each authenticated arithmetic application
+in topological order. It requires a stopped controller with no live offers or
+residual plan, resolves the exact final target version and fact, and settles
+that lineage through `RuntimeEmit`. The emitter quotes the authenticated
+`Proof.Input` and chronology into a transparent `Proof.replayWith` proof term;
+the tactic then kernel-checks the input/program/target/fact/model correlations,
+closes the exact caller source proofs, and proves that the reified term
+evaluates to the original Lean expression. Every emitted boundary crosses
+`Proof.emitChecked`; runtime success is never reflected into proof syntax. The
+first residual application is resolved back through the same sealed assembly
+and registration table for diagnostics, so a resource-starved built-in names
+the responsible stable rule rather than exposing a brittle aggregate pending
+count. Handler applicability currently retains only a Boolean; the tactic does
+not rerun arithmetic to manufacture a more specific discarded refusal cost.
+The bare `interval` tactic currently closes
 strict or non-strict lower and upper goals, closed-singleton equality, and
 conjunctions. `interval?` reports the fixed forward configuration only after
 the same transaction succeeds; failure emits no misleading query result.
@@ -134,10 +146,10 @@ programmatic `deriveBound` may instead receive another precision admitted by
 the explicit resource envelope. Automatic regularization adds one internal
 `Term` layer after every computed arithmetic layer, so the reported/default
 term-depth cap `32` permits about 16 nested arithmetic operations on a source
-spine. Noninteger hypotheses are not authenticated
-as integer cuts. It has no subdivision, contractors, arbitrary-function discovery, named-
-hypothesis selection, or search-selected recipe emitter. All parse, resource,
-replay, and emission failures leave the tactic state unchanged.
+spine. Noninteger hypotheses are not authenticated as integer cuts. It has no
+subdivision, contractors, arbitrary-function discovery, named-hypothesis
+selection, or general search-selected policy. All parse, resource, controller,
+settlement, replay, and emission failures leave the tactic state unchanged.
 
 The proof contract treats runtime states, callback replies, payload bytes,
 search decisions, contradiction flags, and diagnostic traces as untrusted
@@ -374,8 +386,9 @@ bounded by executable cache resources. Checked arithmetic refusal yields no
 fact batch and is rejected transactionally by the runtime rather than gaining
 theorem authority.
 The supported explicit fact-event controller can produce and replay
-search-selected recipes, while the tactic below remains a deliberately narrow
-direct forward client rather than that generic search bridge.
+search-selected recipes. The tactic below now crosses the typed controller and
+emitter boundary, but remains a deliberately narrow deterministic topological
+client rather than the generic discovery/policy bridge.
 Further arithmetic images and useful bounded nonsingleton division require their own
 operation-specific semantic theorems before promotion. An image operation must
 at least prove successful-result cut semantics and sound real-image enclosure;
