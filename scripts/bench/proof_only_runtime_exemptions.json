@@ -20,12 +20,6 @@
   {
     "path": "lakefile.lean",
     "baseline_blob": "a1b87406682dbf908d990f01676f326499b906e5",
-    "current_blob": "343ecbc8696f64bbba513cb7ee4d4a55e50712a5",
-    "reason": "Additionally registers the HexPrimality bench targets and kernel-replay probe on top of main's current registrations; the factorization service targets are unchanged."
-  },
-  {
-    "path": "lakefile.lean",
-    "baseline_blob": "a1b87406682dbf908d990f01676f326499b906e5",
     "current_blob": "08d5ffea8fca7ebc9510bc39f874edddb69ca6ee",
     "reason": "Additionally registers the HexPrimality conformance driver targets on top of main's current registrations; the factorization service targets are unchanged."
   },
@@ -1174,6 +1168,12 @@
     "baseline_blob": "a1b87406682dbf908d990f01676f326499b906e5",
     "current_blob": "5105530122b1afc9a176fad03ce4b92076644715",
     "reason": "Additionally registers the HexPrimality conformance driver targets on top of main's current registrations; the factorization service targets are unchanged."
+  },
+  {
+    "path": "lakefile.lean",
+    "baseline_blob": "a1b87406682dbf908d990f01676f326499b906e5",
+    "current_blob": "343ecbc8696f64bbba513cb7ee4d4a55e50712a5",
+    "reason": "Additionally registers the HexPrimality bench targets and kernel-replay probe on top of main's current registrations; the factorization service targets are unchanged."
   },
   {
     "path": "lakefile.lean",
