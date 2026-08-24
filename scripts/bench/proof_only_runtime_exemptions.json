@@ -880,5 +880,17 @@
     "baseline_blob": "a1b87406682dbf908d990f01676f326499b906e5",
     "current_blob": "6450f2f84d526a74345c1c9eda6bda7ba5c8bb42",
     "reason": "Registers only the HexPolyZGcd conformance module and fixture emitter; no factorization runtime target, definition, build flag, or dependency changes."
+  },
+  {
+    "path": "Hex/BenchOracle/Modular.lean",
+    "baseline_blob": null,
+    "current_blob": "b40ff92191f6d955b4a5fcde35cc1eb03ebc5b3c",
+    "reason": "Adds a persistent external-comparator driver used only by HexModularBench; no factorization runtime module imports it."
+  },
+  {
+    "path": "lakefile.lean",
+    "baseline_blob": "a1b87406682dbf908d990f01676f326499b906e5",
+    "current_blob": "8e4343c2bed818b7f3e8aef9f478a2a55bd69394",
+    "reason": "Registers the HexModular benchmark executable and its bench-only support library on top of the sparse-release and conformance registrations; no factorization runtime target, definition, build flag, or dependency changes."
   }
 ]
