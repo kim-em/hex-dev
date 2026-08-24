@@ -10,10 +10,16 @@ Mathlib's own polynomial type.
 - `fpPolyEquiv : FpPoly p ≃+* Polynomial (ZMod p)`, the ring equivalence they
   assemble into.
 - `toMathlibPolynomial`, the forward map named for use in statements, with its
-  coefficient, monicity, and `simp` lemmas.
+  coefficient, monicity, natural-degree, leading-coefficient, and `simp`
+  lemmas; `coeff_polynomialToFpPoly` supplies the inverse coefficient rule.
 - Transport lemmas naming the forward map for the operations a caller reaches
   for directly rather than through a `RingEquiv` composition: `derivative`,
-  `mul`, `add`, `sub`, `C`, the monic monomial `monomial m 1`, `X`, and `dvd`.
+  `mul`, `add`, `sub`, `neg`, `C`, general monomials, `X`, coefficient-sum
+  evaluation, and composition. The inverse family covers zero, one, constants,
+  negation, subtraction, addition, multiplication, and monomials.
+- `toMathlibPolynomial_dvd_iff`, which both preserves executable divisibility
+  and reflects a Mathlib divisibility witness back to the executable
+  representation.
 - `commRing : CommRing (FpPoly p)`, built from the ring laws hex-poly-fp proves
   rather than transported along `fpPolyEquiv`, so that the Mathlib operations
   are the executable ones and `sub` and `neg` are the executable ones too.
@@ -118,14 +124,18 @@ the library name suggests.
 **hex-poly** owns the dense ring surface. `+`, `-`, `neg`, `*`, `derivative`,
 `C` and `monomial` on `FpPoly p` are hex-poly's `DensePoly` operations at the
 `ZMod64 p` coefficient ring, and the transport lemmas name them as such:
-`toMathlibPolynomial_{add, sub, mul, derivative, C, monomial_one}` are stated
+`toMathlibPolynomial_{add, sub, neg, mul, derivative, C, monomial}` are stated
 about `Hex.DensePoly.*`, and `toMathlibPolynomial_X` about `Hex.FpPoly.X`,
-which is `DensePoly.monomial 1 1`. `toMathlibPolynomial_dvd` belongs here too:
-it is proved from a multiplication witness and `toMathlibPolynomial_mul`, not
-from any division or gcd. So does `commRing`, whose `sub` and `neg` fields are
-pinned to the executable `DensePoly` operations. The relevant multiplication is
-the generic schoolbook convolution; hex-poly-fp's packed `mulPacked` is an
-optional value-equal kernel, not the registered implementation of `*`.
+which is `DensePoly.monomial 1 1`. `toMathlibPolynomial_dvd_iff` belongs here
+too: both directions transport a multiplication witness and use the ring
+equivalence, not division or gcd. So does `commRing`, whose `sub` and `neg`
+fields are pinned to the executable `DensePoly` operations. The relevant
+multiplication is the generic schoolbook convolution; hex-poly-fp's packed
+`mulPacked` is an optional value-equal kernel, not the registered
+implementation of `*`. Unreduced Horner composition is likewise hex-poly's
+`DensePoly.compose`; this layer only proves its representation correspondence.
+The `eval₂` coefficient-sum formula is proof-side normalization and introduces
+no executable kernel to benchmark.
 
 **hex-poly-fp** owns the prime-field surface above it: `linearPow`, and the
 Frobenius, modular-composition, quotient-ring, square-free and monic-gcd

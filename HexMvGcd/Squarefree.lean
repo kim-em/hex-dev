@@ -39,7 +39,10 @@ instance instNatNoZeroInt : NatNoZero Int := by
 instance instNatNoZeroRat : NatNoZero Rat := by
   constructor
   intro m hm
-  sorry
+  change ((m : Int) : Rat) ≠ 0
+  intro h
+  have : (m : Int) = 0 := Rat.intCast_eq_zero_iff.mp h
+  omega
 
 instance instFractionNonzeroOneInt : Hex.Fraction.NonzeroOne Int :=
   ⟨by decide⟩
@@ -75,13 +78,19 @@ instance instPerfectFracInt : PerfectFrac Int := by
   constructor
   left
   intro m hm
-  sorry
+  change Hex.Fraction.ofCoeff (m : Int) ≠ 0
+  intro h
+  have : (m : Int) = 0 := (Hex.Fraction.ofCoeff_eq_zero_iff _).mp h
+  omega
 
 instance instPerfectFracRat : PerfectFrac Rat := by
   constructor
   left
   intro m hm
-  sorry
+  change Hex.Fraction.ofCoeff (m : Rat) ≠ 0
+  intro h
+  have hrat : (m : Rat) = 0 := (Hex.Fraction.ofCoeff_eq_zero_iff _).mp h
+  exact NatNoZero.natCast_ne_zero m hm hrat
 
 /-- The fraction field of a bounded prime field is perfect.  Every fraction is
 represented by a coefficient because its denominator is invertible, and
@@ -267,9 +276,10 @@ theorem radical_dvd [IsMonomialOrder cmp] [NatCast R] [NatNoZero R]
     (p : MvPoly n R cmp) : radical p ∣ p := by
   sorry
 
+omit [LawfulGcdOps R] [LawfulBezoutOps R] in
 @[simp] theorem radical_zero [IsMonomialOrder cmp] [NatCast R] [NatNoZero R] :
     radical (0 : MvPoly n R cmp) = 0 := by
-  sorry
+  simp [radical]
 
 theorem sqfDecomp_prod [IsMonomialOrder cmp] [NatCast R] [NatNoZero R]
     (p : MvPoly n R cmp) :

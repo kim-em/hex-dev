@@ -75,15 +75,6 @@ theorem weightedProduct_eq_prod (factors : List (Hex.FpPoly.SquareFreeFactor p))
   simp only [pow_eq_pow]
   rw [List.prod_eq_foldl, List.foldl_map]
 
-/-- The unit executable polynomial transports to the unit Mathlib polynomial. -/
-theorem toMathlibPolynomial_one : toMathlibPolynomial (1 : Hex.FpPoly p) = 1 :=
-  map_one fpPolyEquiv
-
-/-- Powers commute with the finite-field polynomial transport. -/
-theorem toMathlibPolynomial_pow (f : Hex.FpPoly p) (n : Nat) :
-    toMathlibPolynomial (f ^ n) = toMathlibPolynomial f ^ n :=
-  map_pow fpPolyEquiv f n
-
 /-- The weighted factor product transports to the Mathlib list product of the
 transported factors raised to their multiplicities. -/
 theorem toMathlibPolynomial_weightedProduct

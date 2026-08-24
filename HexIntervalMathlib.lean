@@ -24,6 +24,9 @@ public import HexIntervalMathlib.Program
 public import HexIntervalMathlib.Proof
 public import HexIntervalMathlib.RuntimeProof
 public import HexIntervalMathlib.RuntimeTerminal
+public import HexIntervalMathlib.RuntimeRule
+public import HexIntervalMathlib.RuntimeEmit
+public import HexIntervalMathlib.RuntimeRuleEmit
 public import HexIntervalMathlib.Rule
 public import HexIntervalMathlib.Frontend
 public import HexIntervalMathlib.Tactic
@@ -44,14 +47,23 @@ transition chains into those proof events without trusting raw quotations.
 the same sealed runtime/search lineage, theorem registry, and immutable proof
 input; general split settlement remains blocked by the runtime/proof child
 equality-arena mismatch documented by that module.
+`HexIntervalMathlib.RuntimeEmit` quotes only a sealed one-node target lineage
+into an exactly checked `Proof.Evidence` expression through package-owned
+transparent theorem handles. `HexIntervalMathlib.RuntimeRuleEmit` jointly
+assembles those handles with the executable and theorem views of the twelve
+built-in arithmetic rules. Refutation and split expression emission are not
+supported.
 `HexIntervalMathlib.Rule` supplies a checked built-in arithmetic package whose
 schemas recompute checked public operations before producing proof evidence.
+`HexIntervalMathlib.RuntimeRule` supplies the aligned executable half: its
+callbacks recompute those operations into typed fact batches, and its combined
+builder seals exact replay-format/schema coverage while admitting explicitly
+paired packages for configured opaque operations.
 `HexIntervalMathlib.Controller` supplies explicit stable application-table,
 runtime/proof-registry alignment and bounded deterministic policy iteration
 over the sealed retained tree, including caller-measured caps on each retained
-policy state. Its current conformance callbacks are toy packages; concrete
-built-in arithmetic driver adapters, package discovery, and public split-search
-tactic integration remain separate.
+policy state. Automatic package discovery and public split-search tactic
+integration remain separate.
 `HexIntervalMathlib.Frontend` supplies bounded recursive arithmetic reification,
 source-driven version-zero facts, and flat programmatic replay/closure
 combinators.

@@ -37,7 +37,7 @@ positive modulus. -/
 theorem symMod_emod {a : Int} {m : Nat} (h : 0 < m) :
     (symMod a m) % (m : Int) = a % (m : Int) := by
   unfold symMod
-  rw [if_neg (Nat.ne_of_gt h)]
+  rw [ite_eq_right (Nat.ne_of_gt h)]
   simp only
   split
   · rw [Int.sub_emod, Int.emod_self, Int.sub_zero]
@@ -54,7 +54,7 @@ theorem symMod_le {a : Int} {m : Nat} (h : 0 < m) :
   have hrm : a % (m : Int) < (m : Int) :=
     Int.emod_lt_of_pos _ hm
   unfold symMod
-  rw [if_neg (Nat.ne_of_gt h)]
+  rw [ite_eq_right (Nat.ne_of_gt h)]
   simp only
   split
   · rename_i hlarge
