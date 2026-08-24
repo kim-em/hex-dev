@@ -7,6 +7,10 @@ same-algorithm comparator required by hex-char-poly:
 ``fmpz_mat/charpoly_berkowitz``
     Accept square integer ``rows`` and return PARI ``charpoly(..., flag=3)``
     as a complete ascending coefficient list.
+
+``fmpz_mat/minpoly``
+    Accept square integer ``rows`` and return PARI's matrix minimal
+    polynomial as an ascending coefficient list.
 """
 from __future__ import annotations
 
@@ -47,11 +51,23 @@ def _charpoly_berkowitz(request: dict[str, Any]) -> list[int]:
     return coefficients
 
 
+def _minpoly(request: dict[str, Any]) -> list[int]:
+    pari = _require_pari()
+    rows = [[int(value) for value in row] for row in request["rows"]]
+    n = len(rows)
+    if any(len(row) != n for row in rows):
+        raise ValueError("minpoly requires a square matrix")
+    matrix = pari.matrix(n, n, [value for row in rows for value in row])
+    return [int(value) for value in matrix.minpoly("x").list()]
+
+
 def _dispatch(request: dict[str, Any]) -> Any:
     family = request.get("family")
     operation = request.get("op")
     if family == "fmpz_mat" and operation == "charpoly_berkowitz":
         return _charpoly_berkowitz(request)
+    if family == "fmpz_mat" and operation == "minpoly":
+        return _minpoly(request)
     raise ValueError(f"unknown PARI benchmark operation {family!r}/{operation!r}")
 
 
