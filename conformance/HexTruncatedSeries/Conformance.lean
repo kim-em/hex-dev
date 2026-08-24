@@ -106,8 +106,28 @@ private def xRat (n : Nat) : TSeries Rat n :=
 
 #guard coeffList (exp (xRat 6)) = [1, 1, 1 / 2, 1 / 6, 1 / 24, 1 / 120]
 #guard coeffList (log (onePlusXRat 6)) = [0, 1, -1 / 2, 1 / 3, -1 / 4, 1 / 5]
-#guard log (exp (xRat 6)) = xRat 6
-#guard exp (xRat 6 + xRat 6) = exp (xRat 6) * exp (xRat 6)
+
+private def expLogLaws (n : Nat) : Bool :=
+  decide (log (exp (xRat n)) = xRat n ∧
+    exp (xRat n + xRat n) = exp (xRat n) * exp (xRat n))
+
+#guard expLogLaws 1
+#guard expLogLaws 2
+#guard expLogLaws 3
+#guard expLogLaws 4
+#guard expLogLaws 5
+#guard expLogLaws 6
+#guard expLogLaws 7
+#guard expLogLaws 8
+#guard expLogLaws 9
+#guard expLogLaws 10
+#guard expLogLaws 11
+#guard expLogLaws 12
+#guard expLogLaws 13
+#guard expLogLaws 14
+#guard expLogLaws 15
+#guard expLogLaws 16
+
 #guard coeffList (exp (0 : TSeries Int 0)) = []
 #guard coeffList (exp (0 : TSeries Int 1)) = [1]
 #guard coeffList (log (1 : TSeries Int 1)) = [0]

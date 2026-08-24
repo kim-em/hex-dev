@@ -68,7 +68,9 @@ def rev? [Lean.Grind.CommRing R] [DecidableEq R] [UnitOps R]
 division by `k` and therefore carries `NatInverses R (n-1)`.  Consecutive
 powers are carried through the fold, so the schoolbook route performs `n`
 full multiplications and costs `O(n³)` rather than recomputing each power by
-square-and-multiply. -/
+square-and-multiply.  The top coefficient of `quotient` is zero padding rather
+than information from `b`, but truncated multiplication is lower triangular
+and the formula only reads its powers through coefficient `n - 2`. -/
 def revLagrange [Lean.Grind.CommRing R] [NatInverses R (n - 1)]
     (b : TSeries R n) (v : R) : TSeries R n :=
   let quotient : TSeries R n := ofFn fun i => b.coeff (i + 1)

@@ -45,7 +45,7 @@ def invOfUnit [Lean.Grind.CommRing R] (a : TSeries R n) (u : R) : TSeries R n :=
   invUpTo n a u
 
 /-- Look up a constant-coefficient inverse and invert the series. -/
-def inv? [Lean.Grind.CommRing R] [DecidableEq R] [UnitOps R]
+def inv? [Lean.Grind.CommRing R] [UnitOps R]
     (a : TSeries R n) : Option (TSeries R n) :=
   if n = 0 then
     some 0
@@ -207,7 +207,7 @@ theorem invOfUnit_unique [Lean.Grind.CommRing R] (a b : TSeries R n) (u : R)
 
 /-- Optional inversion succeeds exactly for units of the truncated-series
 ring, including the unconditional precision-zero case. -/
-theorem inv?_isSome_iff [Lean.Grind.CommRing R] [DecidableEq R]
+theorem inv?_isSome_iff [Lean.Grind.CommRing R]
     [UnitOps R] [LawfulUnitOps R] (a : TSeries R n) :
     (inv? a).isSome = true ↔ n = 0 ∨ ∃ u, a.coeff 0 * u = 1 := by
   by_cases hn : n = 0

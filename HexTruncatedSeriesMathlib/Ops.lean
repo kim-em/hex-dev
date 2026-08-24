@@ -27,6 +27,44 @@ universe u
 
 variable {R : Type u} {n : Nat}
 
+/-- The executable square-and-multiply power agrees with Mathlib's recursive
+monoid power.  This bridges the standalone `Pow` instance in the Mathlib-free
+layer with the `npow` field supplied by `commRing`. -/
+theorem pow_eq_mathlib [CommRing R] (a : TSeries R n) :
+    ∀ k : Nat,
+      Hex.TSeries.pow a k = (commRing (R := R) (n := n)).npow k a
+  | 0 =>
+      calc
+        Hex.TSeries.pow a 0 = 1 := Hex.TSeries.pow_zero' a
+        _ = (commRing (R := R) (n := n)).npow 0 a :=
+          ((commRing (R := R) (n := n)).npow_zero a).symm
+  | k + 1 =>
+      calc
+        Hex.TSeries.pow a (k + 1) = Hex.TSeries.pow a k * a :=
+          Hex.TSeries.pow_succ' a k
+        _ = (commRing (R := R) (n := n)).npow k a * a := by
+          rw [pow_eq_mathlib a k]
+        _ = (commRing (R := R) (n := n)).npow (k + 1) a :=
+          ((commRing (R := R) (n := n)).npow_succ k a).symm
+
+/-- Truncation carries Mathlib powers to the executable square-and-multiply
+power. -/
+@[simp]
+theorem ofPowerSeries_pow [CommRing R] (f : PowerSeries R) (k : Nat) :
+    ofPowerSeries (n := n) (f ^ k) =
+      Hex.TSeries.pow (ofPowerSeries (n := n) f) k := by
+  calc
+    ofPowerSeries (n := n) (f ^ k) =
+        (commRing (R := R) (n := n)).npow k
+          (ofPowerSeries (n := n) f) := by
+      have h := (ofPowerSeriesHom (R := R) (n := n)).map_pow f k
+      change ofPowerSeries (n := n) (f ^ k) =
+        (commRing (R := R) (n := n)).npow k
+          (ofPowerSeries (n := n) f) at h
+      exact h
+    _ = Hex.TSeries.pow (ofPowerSeries (n := n) f) k :=
+      (pow_eq_mathlib _ k).symm
+
 /-- Truncating Mathlib's constant series gives the executable constant
 series. -/
 @[simp]

@@ -55,6 +55,19 @@ def mono {R : Type u} [Lean.Grind.CommRing R] {m m' : Nat}
   invNat_eq k hk hk' :=
     NatInverses.invNat_eq (R := R) (m := m) k hk (Nat.le_trans hk' h)
 
+/-- Any two lawful choices of the inverse of a required natural agree. -/
+theorem invNat_unique {R : Type u} [Lean.Grind.CommRing R] {m : Nat}
+    (a b : NatInverses R m) (k : Nat) (hk : 1 ≤ k) (hkm : k ≤ m) :
+    a.invNat k = b.invNat k := by
+  have ha := a.invNat_eq k hk hkm
+  have hb := b.invNat_eq k hk hkm
+  calc
+    a.invNat k = 1 * a.invNat k := by grind
+    _ = ((k : R) * b.invNat k) * a.invNat k := by rw [hb]
+    _ = ((k : R) * a.invNat k) * b.invNat k := by grind
+    _ = 1 * b.invNat k := by rw [ha]
+    _ = b.invNat k := by grind
+
 end NatInverses
 
 /-- No natural inverses are required at bound zero. -/
@@ -77,6 +90,18 @@ instance (priority := 1200) [Lean.Grind.CommRing R] (k : Nat) :
     NatInverses R (k - k) where
   invNat := fun _ => 0
   invNat_eq := by omega
+
+/-- The precision-two algorithm spelling requests `NatInverses R (2 - 1)`.
+Keep that syntactic form available across module boundaries rather than relying
+on typeclass search to reduce the subtraction to one. -/
+instance (priority := 1200) [Lean.Grind.CommRing R] :
+    NatInverses R (2 - 1) where
+  invNat := fun _ => 1
+  invNat_eq := by
+    intro k hk hk'
+    have : k = 1 := by omega
+    subst k
+    rw [Lean.Grind.Semiring.natCast_one, Lean.Grind.Semiring.one_mul]
 
 /-- At bound one, the only required inverse is `1`. -/
 instance (priority := 1100) [Lean.Grind.CommRing R] : NatInverses R 1 where

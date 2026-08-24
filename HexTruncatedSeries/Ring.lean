@@ -814,6 +814,17 @@ theorem pow_succ [Lean.Grind.CommRing R] (a : TSeries R n) (k : Nat) :
   rw [pow_eq_linearPow, pow_eq_linearPow]
   rfl
 
+/-- Direct-definition form of `pow_zero`, for bridges that also install a
+second lawful power operation. -/
+theorem pow_zero' [Lean.Grind.CommRing R] (a : TSeries R n) : pow a 0 = 1 := by
+  exact pow_zero a
+
+/-- Direct-definition form of `pow_succ`, for bridges that also install a
+second lawful power operation. -/
+theorem pow_succ' [Lean.Grind.CommRing R] (a : TSeries R n) (k : Nat) :
+    pow a (k + 1) = pow a k * a := by
+  exact pow_succ a k
+
 theorem pow_add [Lean.Grind.CommRing R] (a : TSeries R n) (j k : Nat) :
     a ^ (j + k) = a ^ j * a ^ k := by
   change pow a (j + k) = pow a j * pow a k

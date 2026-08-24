@@ -50,6 +50,10 @@ example : Nat.log2 8 = 3 := by decide +kernel
 
 example : steps 8 = 3 := by decide +kernel
 
+/-- Precision two uses only the universally available inverse of one, even
+when the subtraction in the class index remains visible downstream. -/
+example : NatInverses Int (2 - 1) := inferInstance
+
 private def oneMinusX : TSeries Int 8 :=
   ofFn fun i => if i = 0 then 1 else if i = 1 then -1 else 0
 

@@ -62,15 +62,7 @@ private def xPlusSqInt (n : Nat) : TSeries Int n :=
 private def xPlusSqRat (n : Nat) : TSeries Rat n :=
   ofFn fun i => if i = 1 ∨ i = 2 then 1 else 0
 
-private instance intPrecisionTwoInverses : NatInverses Int (2 - 1) :=
-  { invNat := fun _ => 1
-    invNat_eq := by
-      intro k hk hle
-      have hk1 : k = 1 := by omega
-      subst k
-      decide }
-
-private def emitIntSurface (n : Nat) [NatInverses Int n] : IO Unit := do
+private def emitIntSurface (n : Nat) : IO Unit := do
   let a := intInput n
   let stem := s!"int/{n}"
   emitInt (stem ++ "/input") a
@@ -86,7 +78,6 @@ private def emitIntSurface (n : Nat) [NatInverses Int n] : IO Unit := do
   emitResult lib (stem ++ "/input") "valuation?"
     (match valuation? a with | none => "null" | some k => toString k)
   resultInt (stem ++ "/input") "deriv" a.deriv
-  resultInt (stem ++ "/input") "integrate" (integrate a)
   resultInt (stem ++ "/input") "invOfUnit/1" (invOfUnit a 1)
   resultOptInt (stem ++ "/input") "inv?" (inv? a)
   resultOptInt (stem ++ "/input") "sqrt?/1" (sqrt? a 1)
@@ -102,6 +93,9 @@ private def emitIntSurface (n : Nat) [NatInverses Int n] : IO Unit := do
   emitInt (stem ++ "/rev") revInput
   resultInt (stem ++ "/rev") "revOfUnit/1" (revOfUnit revInput 1)
   resultOptInt (stem ++ "/rev") "rev?" (rev? revInput)
+
+private def emitIntIntegrate (n : Nat) [NatInverses Int n] : IO Unit :=
+  resultInt s!"int/{n}/input" "integrate" (integrate (intInput n))
 
 private def emitRatSurface (n : Nat) : IO Unit := do
   let a := ratInput n
@@ -237,9 +231,13 @@ private def emitLarge : IO Unit := do
 
 private def emitAll : IO Unit := do
   emitIntSurface 0
+  emitIntIntegrate 0
   emitIntSurface 1
+  emitIntIntegrate 1
+  emitIntSurface 4
   emitRatSurface 0
   emitRatSurface 1
+  emitRatSurface 8
   emitLowExpLog
   emitFailures
   emitLarge

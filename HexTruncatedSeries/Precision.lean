@@ -141,6 +141,20 @@ theorem coeff_integrate [Lean.Grind.CommRing R] [NatInverses R n]
         NatInverses.invNat (R := R) (m := n) i * a.coeff (i - 1) :=
   coeff_ofFn _ i hi
 
+/-- Integration is independent of which lawful natural-inverse dictionary is
+in scope. -/
+theorem integrate_congr [Lean.Grind.CommRing R] (a : TSeries R n)
+    (h₁ h₂ : NatInverses R n) :
+    @integrate R n _ h₁ a = @integrate R n _ h₂ a := by
+  apply ext
+  intro i hi
+  rw [@coeff_integrate R n _ h₁ a i hi,
+    @coeff_integrate R n _ h₂ a i hi]
+  by_cases hi0 : i = 0
+  · simp [hi0]
+  · rw [if_neg hi0, if_neg hi0,
+      NatInverses.invNat_unique h₁ h₂ i (by omega) (by omega)]
+
 /-- Differentiation cancels zero-constant integration at every represented
 coefficient. -/
 @[simp]

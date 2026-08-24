@@ -540,13 +540,13 @@ libraries:
     mathlib: true
     done_through: 2
     status: active
-
-  # ---------- Planned (status: planned; SPEC ready, implementation deferred) ----------
   HexTruncatedSeriesMathlib:
     deps: [HexTruncatedSeries]
     mathlib: true
     done_through: 0
     status: active
+
+  # ---------- Planned (status: planned; SPEC ready, implementation deferred) ----------
   HexRoots:
     deps: [HexPolyZ]
     mathlib: false

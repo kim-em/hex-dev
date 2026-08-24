@@ -228,7 +228,8 @@ theorem ofPowerSeries_substInvOfIsUnit [CommRing R] (g : PowerSeries R)
       rw [revOfUnit_le_one (ofPowerSeries g) _ (by omega),
         Hex.TSeries.coeff_zero]
 
-theorem ofPowerSeries_exp [CommRing R] [Algebra ℚ R] (f : PowerSeries R)
+theorem ofPowerSeries_exp [CommRing R] [Algebra ℚ R]
+    [NatInverses R (n - 1)] (f : PowerSeries R)
     (h : PowerSeries.constantCoeff f = 0) :
     ofPowerSeries (n := n) ((PowerSeries.exp R).subst f) =
       exp (ofPowerSeries f) := by
@@ -298,7 +299,8 @@ theorem ofPowerSeries_exp [CommRing R] [Algebra ℚ R] (f : PowerSeries R)
   rw [hlog] at hexplog
   exact hexplog.symm
 
-theorem ofPowerSeries_logOf [CommRing R] [Algebra ℚ R] (f : PowerSeries R)
+theorem ofPowerSeries_logOf [CommRing R] [Algebra ℚ R]
+    [NatInverses R (n - 1)] (f : PowerSeries R)
     (h : PowerSeries.constantCoeff f = 1) :
     ofPowerSeries (n := n) (PowerSeries.logOf f) =
       log (ofPowerSeries f) := by

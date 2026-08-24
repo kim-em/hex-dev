@@ -364,11 +364,7 @@ def _encode_fmpq_series(series, precision: int) -> dict[str, list[int]]:
     }
 
 
-def _fmpq_series(req: dict[str, Any], field: str = "a"):
-    precision = int(req["precision"])
-    if precision < 0:
-        raise ValueError("precision must be nonnegative")
-    flint.ctx.cap = precision  # type: ignore[union-attr]
+def _fmpq_series(req: dict[str, Any], precision: int, field: str = "a"):
     return flint.fmpq_series(  # type: ignore[union-attr]
         _decode_fmpq_coeffs(req[field]), prec=precision
     )
@@ -376,8 +372,15 @@ def _fmpq_series(req: dict[str, Any], field: str = "a"):
 
 def _fmpq_series_unary(req: dict[str, Any], method: str) -> dict[str, list[int]]:
     precision = int(req["precision"])
-    answer = getattr(_fmpq_series(req), method)()
-    return _encode_fmpq_series(answer, precision)
+    if precision < 0:
+        raise ValueError("precision must be nonnegative")
+    old_cap = flint.ctx.cap  # type: ignore[union-attr]
+    try:
+        flint.ctx.cap = precision  # type: ignore[union-attr]
+        answer = getattr(_fmpq_series(req, precision), method)()
+        return _encode_fmpq_series(answer, precision)
+    finally:
+        flint.ctx.cap = old_cap  # type: ignore[union-attr]
 
 
 def _fmpq_series_inv(req: dict[str, Any]) -> dict[str, list[int]]:
@@ -398,8 +401,17 @@ def _fmpq_series_sqrt(req: dict[str, Any]) -> dict[str, list[int]]:
 
 def _fmpq_series_compose(req: dict[str, Any]) -> dict[str, list[int]]:
     precision = int(req["precision"])
-    answer = _fmpq_series(req, "a")(_fmpq_series(req, "b"))
-    return _encode_fmpq_series(answer, precision)
+    if precision < 0:
+        raise ValueError("precision must be nonnegative")
+    old_cap = flint.ctx.cap  # type: ignore[union-attr]
+    try:
+        flint.ctx.cap = precision  # type: ignore[union-attr]
+        answer = _fmpq_series(req, precision, "a")(
+            _fmpq_series(req, precision, "b")
+        )
+        return _encode_fmpq_series(answer, precision)
+    finally:
+        flint.ctx.cap = old_cap  # type: ignore[union-attr]
 
 
 def _fmpq_series_revert(req: dict[str, Any]) -> dict[str, list[int]]:
