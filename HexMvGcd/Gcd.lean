@@ -249,40 +249,57 @@ instance instGcdOpsMvPoly [IsMonomialOrder cmp]
   isUnit := polyIsUnit
   normUnit := polyNormUnit
 
+private theorem checkedResult [IsMonomialOrder cmp]
+    [Lean.Grind.CommRing R] [DecidableEq R] [BEq R] [LawfulBEq R]
+    [Dvd R] [BezoutOps R] [LawfulGcdOps R] [LawfulBezoutOps R]
+    [GcdProducer R]
+    (f h : MvPoly n R cmp) :
+    CheckedGcdResult f h (gcd f h) (cofactors f h).1 (cofactors f h).2 := by
+  simpa [gcd, cofactors] using
+    (checkGcd_sound (gcdCert_checks f h))
+
 theorem gcd_dvd_left [IsMonomialOrder cmp]
     [Lean.Grind.CommRing R] [DecidableEq R] [BEq R] [LawfulBEq R]
     [Dvd R] [BezoutOps R] [LawfulGcdOps R] [LawfulBezoutOps R]
     [GcdProducer R]
     (f h : MvPoly n R cmp) : gcd f h ∣ f := by
-  sorry
+  rcases checkedResult f h with ⟨hf, _, _, _⟩
+  refine ⟨(cofactors f h).1, ?_⟩
+  exact hf.trans (MvPoly.mul_comm (gcd f h) (cofactors f h).1)
 
 theorem gcd_dvd_right [IsMonomialOrder cmp]
     [Lean.Grind.CommRing R] [DecidableEq R] [BEq R] [LawfulBEq R]
     [Dvd R] [BezoutOps R] [LawfulGcdOps R] [LawfulBezoutOps R]
     [GcdProducer R]
     (f h : MvPoly n R cmp) : gcd f h ∣ h := by
-  sorry
+  rcases checkedResult f h with ⟨_, hh, _, _⟩
+  refine ⟨(cofactors f h).2, ?_⟩
+  exact hh.trans (MvPoly.mul_comm (gcd f h) (cofactors f h).2)
 
 theorem dvd_gcd [IsMonomialOrder cmp]
     [Lean.Grind.CommRing R] [DecidableEq R] [BEq R] [LawfulBEq R]
     [Dvd R] [BezoutOps R] [LawfulGcdOps R] [LawfulBezoutOps R]
     [GcdProducer R]
     (f h d : MvPoly n R cmp) (hf : d ∣ f) (hh : d ∣ h) : d ∣ gcd f h := by
-  sorry
+  exact (checkedResult f h).greatest d hf hh
 
 theorem gcd_normalized [IsMonomialOrder cmp]
     [Lean.Grind.CommRing R] [DecidableEq R] [BEq R] [LawfulBEq R]
     [Dvd R] [BezoutOps R] [LawfulGcdOps R] [LawfulBezoutOps R]
     [GcdProducer R]
     (f h : MvPoly n R cmp) : polyNormalize (gcd f h) = gcd f h := by
-  sorry
+  exact (checkedResult f h).2.2.1
 
 @[simp] theorem gcd_zero_zero [IsMonomialOrder cmp]
     [Lean.Grind.CommRing R] [DecidableEq R] [BEq R] [LawfulBEq R]
     [Dvd R] [BezoutOps R] [LawfulGcdOps R] [LawfulBezoutOps R]
     [GcdProducer R] :
     gcd (0 : MvPoly n R cmp) 0 = 0 := by
-  sorry
+  have hzero : (0 : MvPoly n R cmp) ∣ 0 := by
+    refine ⟨0, ?_⟩
+    exact (MvPoly.mul_zero 0).symm
+  rcases dvd_gcd 0 0 0 hzero hzero with ⟨q, hq⟩
+  exact hq.trans (MvPoly.mul_zero q)
 
 @[simp] theorem gcd_zero_right [IsMonomialOrder cmp]
     [Lean.Grind.CommRing R] [DecidableEq R] [BEq R] [LawfulBEq R]
@@ -318,7 +335,7 @@ theorem gcd_mul_cofactor_left [IsMonomialOrder cmp]
     [GcdProducer R]
     (f h : MvPoly n R cmp) :
     gcd f h * (cofactors f h).1 = f := by
-  sorry
+  exact (checkedResult f h).1.symm
 
 theorem gcd_mul_cofactor_right [IsMonomialOrder cmp]
     [Lean.Grind.CommRing R] [DecidableEq R] [BEq R] [LawfulBEq R]
@@ -326,7 +343,7 @@ theorem gcd_mul_cofactor_right [IsMonomialOrder cmp]
     [GcdProducer R]
     (f h : MvPoly n R cmp) :
     gcd f h * (cofactors f h).2 = h := by
-  sorry
+  exact (checkedResult f h).2.1.symm
 
 theorem cofactors_spec [IsMonomialOrder cmp]
     [Lean.Grind.CommRing R] [DecidableEq R] [BEq R] [LawfulBEq R]
@@ -335,7 +352,7 @@ theorem cofactors_spec [IsMonomialOrder cmp]
     (f h : MvPoly n R cmp) :
     f = gcd f h * (cofactors f h).1 ∧
       h = gcd f h * (cofactors f h).2 := by
-  sorry
+  exact ⟨(checkedResult f h).1, (checkedResult f h).2.1⟩
 
 theorem cofactors_coprime [IsMonomialOrder cmp]
     [Lean.Grind.CommRing R] [DecidableEq R] [BEq R] [LawfulBEq R]
@@ -344,7 +361,9 @@ theorem cofactors_coprime [IsMonomialOrder cmp]
     (f h : MvPoly n R cmp) :
     ∀ d, d ∣ (cofactors f h).1 → d ∣ (cofactors f h).2 →
       GcdOps.isUnit d = true := by
-  sorry
+  intro d hdL hdR
+  apply (polyIsUnit_iff d).mpr
+  exact (checkedResult f h).2.2.2 d hdL hdR
 
 theorem isCoprime_iff [IsMonomialOrder cmp]
     [Lean.Grind.CommRing R] [DecidableEq R] [BEq R] [LawfulBEq R]
@@ -353,7 +372,22 @@ theorem isCoprime_iff [IsMonomialOrder cmp]
     (f h : MvPoly n R cmp) :
     isCoprime f h = true ↔
       ∀ d, d ∣ f → d ∣ h → GcdOps.isUnit d = true := by
-  sorry
+  unfold isCoprime
+  rw [polyIsUnit_iff]
+  constructor
+  · rintro ⟨u, hu⟩ d hdf hdh
+    rcases dvd_gcd f h d hdf hdh with ⟨q, hq⟩
+    apply (polyIsUnit_iff d).mpr
+    refine ⟨q * u, ?_⟩
+    calc
+      d * (q * u) = (d * q) * u := (mul_assoc d q u).symm
+      _ = (q * d) * u := congrArg (fun p => p * u)
+        (Lean.Grind.CommSemiring.mul_comm d q)
+      _ = gcd f h * u := by rw [← hq]
+      _ = 1 := hu
+  · intro hcop
+    exact (polyIsUnit_iff (gcd f h)).mp
+      (hcop (gcd f h) (gcd_dvd_left f h) (gcd_dvd_right f h))
 
 @[simp] theorem gcdList_nil [IsMonomialOrder cmp]
     [Lean.Grind.CommRing R] [DecidableEq R] [BEq R] [LawfulBEq R]
@@ -367,7 +401,36 @@ theorem gcdList_dvd [IsMonomialOrder cmp]
     [GcdProducer R]
     {p : MvPoly n R cmp} {ps : List (MvPoly n R cmp)} (hp : p ∈ ps) :
     gcdList ps ∣ p := by
-  sorry
+  have dvdRefl (q : MvPoly n R cmp) : q ∣ q := by
+    refine ⟨1, ?_⟩
+    exact (MvPoly.one_mul q).symm
+  have dvdTrans {a b c : MvPoly n R cmp}
+      (hab : a ∣ b) (hbc : b ∣ c) : a ∣ c := by
+    rcases hab with ⟨q, hq⟩
+    rcases hbc with ⟨r, hr⟩
+    refine ⟨r * q, ?_⟩
+    calc
+      c = r * b := hr
+      _ = r * (q * a) := congrArg (fun x => r * x) hq
+      _ = (r * q) * a := (MvPoly.mul_assoc r q a).symm
+  have foldDvdAcc (xs : List (MvPoly n R cmp)) (acc : MvPoly n R cmp) :
+      xs.foldl gcd acc ∣ acc := by
+    induction xs generalizing acc with
+    | nil => exact dvdRefl acc
+    | cons a xs ih =>
+        exact dvdTrans (ih (acc := gcd acc a)) (gcd_dvd_left acc a)
+  have foldDvdMem (xs : List (MvPoly n R cmp)) (acc q : MvPoly n R cmp)
+      (hq : q ∈ xs) : xs.foldl gcd acc ∣ q := by
+    induction xs generalizing acc with
+    | nil => simp at hq
+    | cons a xs ih =>
+        simp only [List.foldl_cons]
+        rcases List.mem_cons.mp hq with hqa | hq
+        · subst q
+          exact dvdTrans (foldDvdAcc xs (gcd acc a))
+            (gcd_dvd_right acc a)
+        · exact ih (acc := gcd acc a) hq
+  exact foldDvdMem ps 0 p hp
 
 theorem dvd_gcdList [IsMonomialOrder cmp]
     [Lean.Grind.CommRing R] [DecidableEq R] [BEq R] [LawfulBEq R]
@@ -375,35 +438,109 @@ theorem dvd_gcdList [IsMonomialOrder cmp]
     [GcdProducer R]
     {d : MvPoly n R cmp} {ps : List (MvPoly n R cmp)}
     (hd : ∀ p ∈ ps, d ∣ p) : d ∣ gcdList ps := by
-  sorry
+  have foldGreatest (xs : List (MvPoly n R cmp)) (acc : MvPoly n R cmp)
+      (hacc : d ∣ acc) (hxs : ∀ p ∈ xs, d ∣ p) :
+      d ∣ xs.foldl gcd acc := by
+    induction xs generalizing acc with
+    | nil => exact hacc
+    | cons a xs ih =>
+        apply ih (acc := gcd acc a)
+        · exact dvd_gcd acc a d hacc (hxs a (by simp))
+        · intro p hp
+          exact hxs p (by simp [hp])
+  unfold gcdList
+  apply foldGreatest ps 0
+  · refine ⟨0, ?_⟩
+    exact (MvPoly.zero_mul d).symm
+  · exact hd
 
 @[simp] theorem lcm_zero_left [IsMonomialOrder cmp]
     [Lean.Grind.CommRing R] [DecidableEq R] [BEq R] [LawfulBEq R]
     [Dvd R] [BezoutOps R] [LawfulGcdOps R] [LawfulBezoutOps R]
     [GcdProducer R]
     (f : MvPoly n R cmp) : lcm 0 f = 0 := by
-  sorry
+  change polyNormalize
+    (gcd 0 f * (cofactors 0 f).1 * (cofactors 0 f).2) = 0
+  rw [← (checkedResult 0 f).1]
+  rw [MvPoly.zero_mul, polyNormalize_zero]
 
 @[simp] theorem lcm_zero_right [IsMonomialOrder cmp]
     [Lean.Grind.CommRing R] [DecidableEq R] [BEq R] [LawfulBEq R]
     [Dvd R] [BezoutOps R] [LawfulGcdOps R] [LawfulBezoutOps R]
     [GcdProducer R]
     (f : MvPoly n R cmp) : lcm f 0 = 0 := by
-  sorry
+  change polyNormalize
+    (gcd f 0 * (cofactors f 0).1 * (cofactors f 0).2) = 0
+  have hswap :
+      gcd f 0 * (cofactors f 0).1 * (cofactors f 0).2 =
+        (gcd f 0 * (cofactors f 0).2) * (cofactors f 0).1 := by
+    calc
+      gcd f 0 * (cofactors f 0).1 * (cofactors f 0).2 =
+          gcd f 0 * ((cofactors f 0).1 * (cofactors f 0).2) :=
+        MvPoly.mul_assoc _ _ _
+      _ = gcd f 0 * ((cofactors f 0).2 * (cofactors f 0).1) :=
+        congrArg (fun p => gcd f 0 * p)
+          (MvPoly.mul_comm (cofactors f 0).1 (cofactors f 0).2)
+      _ = (gcd f 0 * (cofactors f 0).2) * (cofactors f 0).1 :=
+        (MvPoly.mul_assoc _ _ _).symm
+  rw [hswap, ← (checkedResult f 0).2.1]
+  rw [MvPoly.zero_mul, polyNormalize_zero]
 
 theorem dvd_lcm_left [IsMonomialOrder cmp]
     [Lean.Grind.CommRing R] [DecidableEq R] [BEq R] [LawfulBEq R]
     [Dvd R] [BezoutOps R] [LawfulGcdOps R] [LawfulBezoutOps R]
     [GcdProducer R]
     (f h : MvPoly n R cmp) : f ∣ lcm f h := by
-  sorry
+  change f ∣ polyNormalize
+    (gcd f h * (cofactors f h).1 * (cofactors f h).2)
+  let raw := gcd f h * (cofactors f h).1 * (cofactors f h).2
+  refine ⟨(cofactors f h).2 * polyNormUnit raw, ?_⟩
+  change raw * polyNormUnit raw =
+    ((cofactors f h).2 * polyNormUnit raw) * f
+  calc
+    raw * polyNormUnit raw =
+        (gcd f h * (cofactors f h).1) *
+          ((cofactors f h).2 * polyNormUnit raw) :=
+      MvPoly.mul_assoc _ _ _
+    _ = ((cofactors f h).2 * polyNormUnit raw) *
+          (gcd f h * (cofactors f h).1) := MvPoly.mul_comm _ _
+    _ = ((cofactors f h).2 * polyNormUnit raw) * f :=
+      congrArg (fun p => ((cofactors f h).2 * polyNormUnit raw) * p)
+        (checkedResult f h).1.symm
 
 theorem dvd_lcm_right [IsMonomialOrder cmp]
     [Lean.Grind.CommRing R] [DecidableEq R] [BEq R] [LawfulBEq R]
     [Dvd R] [BezoutOps R] [LawfulGcdOps R] [LawfulBezoutOps R]
     [GcdProducer R]
     (f h : MvPoly n R cmp) : h ∣ lcm f h := by
-  sorry
+  change h ∣ polyNormalize
+    (gcd f h * (cofactors f h).1 * (cofactors f h).2)
+  let raw := gcd f h * (cofactors f h).1 * (cofactors f h).2
+  refine ⟨(cofactors f h).1 * polyNormUnit raw, ?_⟩
+  change raw * polyNormUnit raw =
+    ((cofactors f h).1 * polyNormUnit raw) * h
+  calc
+    raw * polyNormUnit raw =
+        (gcd f h * (cofactors f h).2 * (cofactors f h).1) *
+          polyNormUnit raw := by
+      congr 2
+      calc
+        gcd f h * (cofactors f h).1 * (cofactors f h).2 =
+            gcd f h * ((cofactors f h).1 * (cofactors f h).2) :=
+          MvPoly.mul_assoc _ _ _
+        _ = gcd f h * ((cofactors f h).2 * (cofactors f h).1) :=
+          congrArg (fun p => gcd f h * p)
+            (MvPoly.mul_comm (cofactors f h).1 (cofactors f h).2)
+        _ = gcd f h * (cofactors f h).2 * (cofactors f h).1 :=
+          (MvPoly.mul_assoc _ _ _).symm
+    _ = (gcd f h * (cofactors f h).2) *
+          ((cofactors f h).1 * polyNormUnit raw) :=
+      MvPoly.mul_assoc _ _ _
+    _ = ((cofactors f h).1 * polyNormUnit raw) *
+          (gcd f h * (cofactors f h).2) := MvPoly.mul_comm _ _
+    _ = ((cofactors f h).1 * polyNormUnit raw) * h :=
+      congrArg (fun p => ((cofactors f h).1 * polyNormUnit raw) * p)
+        (checkedResult f h).2.1.symm
 
 theorem lcm_dvd [IsMonomialOrder cmp]
     [Lean.Grind.CommRing R] [DecidableEq R] [BEq R] [LawfulBEq R]
@@ -418,7 +555,7 @@ theorem lcm_normalized [IsMonomialOrder cmp]
     [Dvd R] [BezoutOps R] [LawfulGcdOps R] [LawfulBezoutOps R]
     [GcdProducer R]
     (f h : MvPoly n R cmp) : polyNormalize (lcm f h) = lcm f h := by
-  sorry
+  exact polyNormalize_idem _
 
 theorem gcd_reorder
     {cmp' : Mono n → Mono n → Ordering}
