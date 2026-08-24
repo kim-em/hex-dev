@@ -135,7 +135,7 @@ theorem bhksRecoveryCoreWithBound_ne_none_of_recovery_on_schedule
 private def bhksRecoveryGuardPrimeData : PrimeChoiceData :=
   letI := bounds_five
   let c : SmallPrimeCandidate :=
-    { p := 5, bounds := bounds_five, prime := prime_five }
+    { m := 5, bounds := bounds_five, prime := prime_five }
   { p := 5
     fModP := ZPoly.modP 5 cldGuardF
     factorsModP := berlekampFactorsModP cldGuardF c }

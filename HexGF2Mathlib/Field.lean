@@ -4,9 +4,13 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexGF2Mathlib.Basic
-import HexGFqField
-import Mathlib.Data.Fintype.Card
+module
+
+public import HexGF2Mathlib.Basic
+public import HexGFqField
+public import Mathlib.Data.Fintype.Card
+
+public section
 
 /-!
 Identification definitions between the packed `HexGF2` extension-field
@@ -25,11 +29,49 @@ open Hex
 /-- `2` is prime, the characteristic fact both packed correspondences need to
 name the generic field over `F_2`. Stated once here rather than inside each
 namespace, since the two copies were identical. -/
-private theorem prime_two : Hex.Nat.Prime 2 := by decide
+theorem prime_two : Hex.Nat.Prime 2 := by decide
+
+/-- `2` is a prime modulus, so `Hex.ZMod64 2` is a field and the generic
+quotient-field construction applies to `Hex.FpPoly 2`. -/
+instance instPrimeModulusTwo : Hex.ZMod64.PrimeModulus 2 :=
+  Hex.ZMod64.primeModulusOfPrime prime_two
+
+/-- Degree is preserved across the `GF2Poly → FpPoly 2` bridge. -/
+private theorem degree_toFpPoly (p : Hex.GF2Poly) :
+    Hex.FpPoly.degree (HexGF2Mathlib.GF2Poly.toFpPoly p) = p.degree := by
+  unfold Hex.FpPoly.degree Hex.GF2Poly.degree
+  rw [HexGF2Mathlib.GF2Poly.degree?_toFpPoly]
+
+/-- Packed remainder reduction transports across the `GF2Poly ≃+* FpPoly 2`
+conversion layer to the generic quotient-ring reduction `GFqRing.reduceMod`.
+Shared by the single-word and arbitrary-degree correspondences below. -/
+private theorem toFpPoly_reduceMod (p g : Hex.GF2Poly) (hgdeg : 0 < g.degree) :
+    HexGF2Mathlib.GF2Poly.toFpPoly (p % g) =
+      Hex.GFqRing.reduceMod (HexGF2Mathlib.GF2Poly.toFpPoly g)
+        (HexGF2Mathlib.GF2Poly.toFpPoly p) := by
+  have hgne : g ≠ 0 := by
+    intro h; rw [h] at hgdeg; simp [Hex.GF2Poly.degree, Hex.GF2Poly.degree?] at hgdeg
+  have hgdeg' : 0 < Hex.FpPoly.degree (HexGF2Mathlib.GF2Poly.toFpPoly g) := by
+    rw [degree_toFpPoly]; exact hgdeg
+  have hdeglt :
+      Hex.FpPoly.degree (HexGF2Mathlib.GF2Poly.toFpPoly (p % g)) <
+        Hex.FpPoly.degree (HexGF2Mathlib.GF2Poly.toFpPoly g) := by
+    rw [degree_toFpPoly, degree_toFpPoly]
+    rcases Hex.GF2Poly.mod_degree_lt p g hgne with hz | hlt
+    · rw [Hex.GF2Poly.eq_zero_of_isZero hz]
+      simpa [Hex.GF2Poly.degree, Hex.GF2Poly.degree?] using hgdeg
+    · exact hlt
+  have heucl :
+      HexGF2Mathlib.GF2Poly.toFpPoly p =
+        HexGF2Mathlib.GF2Poly.toFpPoly (p % g) +
+          HexGF2Mathlib.GF2Poly.toFpPoly (p / g) * HexGF2Mathlib.GF2Poly.toFpPoly g := by
+    conv_lhs => rw [← Hex.GF2Poly.div_mul_add_mod p g]
+    rw [HexGF2Mathlib.GF2Poly.toFpPoly_add, HexGF2Mathlib.GF2Poly.toFpPoly_mul,
+      Hex.FpPoly.add_comm]
+  rw [heucl, Hex.GFqRing.reduceMod_add_mul_self_right _ hgdeg']
+  exact (Hex.GFqRing.reduceMod_eq_self_of_degree_lt _ _ hdeglt).symm
 
 namespace GF2n
-
-instance : Hex.ZMod64.PrimeModulus 2 := Hex.ZMod64.primeModulusOfPrime prime_two
 
 variable {n : Nat} {irr : UInt64}
 variable {hn : 0 < n} {hn64 : n < 64}
@@ -37,6 +79,7 @@ variable {hirr : Hex.GF2Poly.Irreducible (Hex.GF2Poly.ofUInt64Monic irr n)}
 
 /-- The packed irreducible modulus viewed inside the generic `FpPoly 2`
 representation. -/
+@[expose]
 def modulusFpPoly : Hex.FpPoly 2 :=
   HexGF2Mathlib.GF2Poly.toFpPoly (Hex.GF2Poly.ofUInt64Monic irr n)
 
@@ -92,12 +135,6 @@ polynomial remainder, and the packed conversions round-trip on reduced
 representatives. These let the four `≃+*` obligations follow by composing the
 `GF2Poly ≃+* FpPoly 2` bridge with the `GFqField` quotient layer. -/
 
-/-- Degree is preserved across the `GF2Poly → FpPoly 2` bridge. -/
-private theorem degree_toFpPoly (p : Hex.GF2Poly) :
-    Hex.FpPoly.degree (HexGF2Mathlib.GF2Poly.toFpPoly p) = p.degree := by
-  unfold Hex.FpPoly.degree Hex.GF2Poly.degree
-  rw [HexGF2Mathlib.GF2Poly.degree?_toFpPoly]
-
 /-- Degree is preserved across the `FpPoly 2 → GF2Poly` bridge. -/
 private theorem degree_ofFpPoly (P : Hex.FpPoly 2) :
     (HexGF2Mathlib.GF2Poly.ofFpPoly P).degree = Hex.FpPoly.degree P := by
@@ -145,34 +182,6 @@ private theorem ofUInt64_reduceWide_val (hi lo : UInt64) :
       = Hex.GF2Poly.ofWords #[lo, hi] % Hex.GF2Poly.ofUInt64Monic irr n :=
   ofUInt64_canonicalWordLT_packedReduceWord (n := n) (irr := irr) (hn64 := hn64) (hirr := hirr)
     (Hex.GF2Poly.ofWords #[lo, hi])
-
-/-- `toFpPoly` commutes with the polynomial remainder: the bridge carries the
-`GF2Poly` modulus reduction to the `FpPoly` quotient reduction. -/
-private theorem toFpPoly_mod (p q : Hex.GF2Poly) (hq : 0 < q.degree) :
-    HexGF2Mathlib.GF2Poly.toFpPoly (p % q)
-      = Hex.GFqRing.reduceMod (HexGF2Mathlib.GF2Poly.toFpPoly q)
-          (HexGF2Mathlib.GF2Poly.toFpPoly p) := by
-  have hqne : q ≠ 0 := by
-    intro h; rw [h] at hq; simp [Hex.GF2Poly.degree] at hq
-  have hfdeg : 0 < Hex.FpPoly.degree (HexGF2Mathlib.GF2Poly.toFpPoly q) := by
-    rw [degree_toFpPoly]; exact hq
-  have hdecomp : (p / q) * q + p % q = p := Hex.GF2Poly.div_mul_add_mod p q
-  have e1 :
-      HexGF2Mathlib.GF2Poly.toFpPoly (p % q)
-          + HexGF2Mathlib.GF2Poly.toFpPoly (p / q) * HexGF2Mathlib.GF2Poly.toFpPoly q
-        = HexGF2Mathlib.GF2Poly.toFpPoly p := by
-    rw [← HexGF2Mathlib.GF2Poly.toFpPoly_mul, ← HexGF2Mathlib.GF2Poly.toFpPoly_add,
-      Hex.GF2Poly.add_comm, hdecomp]
-  have hdeg :
-      Hex.FpPoly.degree (HexGF2Mathlib.GF2Poly.toFpPoly (p % q))
-        < Hex.FpPoly.degree (HexGF2Mathlib.GF2Poly.toFpPoly q) := by
-    rw [degree_toFpPoly, degree_toFpPoly]
-    rcases Hex.GF2Poly.mod_degree_lt p q hqne with h | h
-    · rw [Hex.GF2Poly.eq_zero_of_isZero h, Hex.GF2Poly.degree_zero]; exact hq
-    · exact h
-  rw [← e1, Hex.GFqRing.reduceMod_add_mul_self_right (HexGF2Mathlib.GF2Poly.toFpPoly q) hfdeg
-      (HexGF2Mathlib.GF2Poly.toFpPoly (p % q)) (HexGF2Mathlib.GF2Poly.toFpPoly (p / q)),
-    Hex.GFqRing.reduceMod_eq_self_of_degree_lt _ _ hdeg]
 
 /-- Reading back the low word of a reduced packed polynomial round-trips. -/
 private theorem ofUInt64_toWords_getD_of_reduced (p : Hex.GF2Poly)
@@ -267,7 +276,7 @@ private theorem toFpPoly_mod_modulus (p : Hex.GF2Poly) :
     HexGF2Mathlib.GF2Poly.toFpPoly (p % Hex.GF2Poly.ofUInt64Monic irr n)
       = Hex.GFqRing.reduceMod (modulusFpPoly (n := n) (irr := irr))
           (HexGF2Mathlib.GF2Poly.toFpPoly p) := by
-  rw [toFpPoly_mod p (Hex.GF2Poly.ofUInt64Monic irr n)
+  rw [toFpPoly_reduceMod p (Hex.GF2Poly.ofUInt64Monic irr n)
     (by rw [Hex.GF2Poly.degree_ofUInt64Monic_of_lt_64 irr hn64]; exact hn)]
   rfl
 
@@ -285,6 +294,8 @@ private theorem reduceMod_modulusFpPoly_toFpPoly_of_reduced (p : Hex.GF2Poly)
   · rw [Hex.GF2Poly.eq_zero_of_isZero h, Hex.GF2Poly.degree_zero]; exact hn
   · exact h
 
+/-- Embedding a single-word element in the generic model and repacking recovers
+it: the packed `val` is already the canonical representative. -/
 @[simp, grind =]
 theorem ofGeneric_toGeneric (x : Hex.GF2n n irr hn hn64 hirr) :
     ofGeneric (n := n) (irr := irr) (hn := hn) (hn64 := hn64) (hirr := hirr)
@@ -308,6 +319,8 @@ theorem ofGeneric_toGeneric (x : Hex.GF2n n irr hn hn64 hirr) :
     (hxred.imp_right
       (fun h => by rw [Hex.GF2Poly.degree_ofUInt64Monic_of_lt_64 irr hn64]; exact h))
 
+/-- Repacking a generic element and re-embedding recovers it: the round trip
+loses nothing because both sides store the same reduced residue. -/
 @[simp, grind =]
 theorem toGeneric_ofGeneric
     (x : GenericFiniteField (n := n) (irr := irr) (hn := hn) (hn64 := hn64) (hirr := hirr)) :
@@ -333,6 +346,8 @@ theorem toGeneric_ofGeneric
     ofUInt64_toWords_getD_of_reduced _ hofred, HexGF2Mathlib.GF2Poly.toFpPoly_ofFpPoly,
     Hex.GFqRing.reduceMod_eq_self_of_degree_lt _ _ (Hex.GFqField.degree_repr_lt_degree x)]
 
+/-- The single-word embedding is additive: packed `XOR`-then-reduce agrees with
+addition in the generic quotient field. -/
 @[simp, grind =]
 theorem toGeneric_add (x y : Hex.GF2n n irr hn hn64 hirr) :
     toGeneric (n := n) (irr := irr) (hn := hn) (hn64 := hn64) (hirr := hirr) (x + y) =
@@ -345,6 +360,8 @@ theorem toGeneric_add (x y : Hex.GF2n n irr hn hn64 hirr) :
   rw [ofUInt64_add_val, toFpPoly_mod_modulus (hn := hn) (hn64 := hn64),
     HexGF2Mathlib.GF2Poly.toFpPoly_add, Hex.GFqRing.reduceMod_idem]
 
+/-- The single-word embedding is multiplicative: the packed carry-less
+multiply-then-reduce agrees with multiplication in the generic quotient field. -/
 @[simp, grind =]
 theorem toGeneric_mul (x y : Hex.GF2n n irr hn hn64 hirr) :
     toGeneric (n := n) (irr := irr) (hn := hn) (hn64 := hn64) (hirr := hirr) (x * y) =
@@ -389,7 +406,7 @@ def finEquiv : Hex.GF2n n irr hn hn64 hirr ≃ Fin (2 ^ n) where
 -- Deliberately `noncomputable`: the field has `2 ^ n` elements for `n < 64`,
 -- so a compiled `Finset.univ` over it is a footgun rather than a feature.
 -- `finEquiv` above stays computable, which is what callers actually want.
-noncomputable instance : Fintype (Hex.GF2n n irr hn hn64 hirr) :=
+noncomputable instance instFintype : Fintype (Hex.GF2n n irr hn hn64 hirr) :=
   Fintype.ofEquiv (Fin (2 ^ n)) (finEquiv (n := n) (irr := irr)
     (hn := hn) (hn64 := hn64) (hirr := hirr)).symm
 
@@ -437,12 +454,15 @@ def reducedPackedRepOfIndex (i : Fin (2 ^ f.degree)) : ReducedPackedRep f :=
   ⟨HexGF2Mathlib.GF2Poly.ofNatBelowDegree f.degree i.1,
     HexGF2Mathlib.GF2Poly.ofNatBelowDegree_reduced f.degree i⟩
 
+/-- Decoding a bounded index and re-encoding it returns the index. -/
 @[simp, grind =]
 theorem reducedPackedRepIndex_ofIndex (i : Fin (2 ^ f.degree)) :
     reducedPackedRepIndex (f := f) (reducedPackedRepOfIndex (f := f) i) = i := by
   apply Fin.ext
   exact HexGF2Mathlib.GF2Poly.toNat_ofNatBelowDegree f.degree i
 
+/-- Encoding a reduced representative and decoding it returns the
+representative. -/
 @[simp, grind =]
 theorem reducedPackedRepOfIndex_index (x : ReducedPackedRep f) :
     reducedPackedRepOfIndex (f := f) (reducedPackedRepIndex (f := f) x) = x := by
@@ -461,6 +481,7 @@ def reducedPackedRepFinEquiv : ReducedPackedRep f ≃ Fin (2 ^ f.degree) where
 
 /-- The packed irreducible modulus viewed inside the generic `FpPoly 2`
 representation. -/
+@[expose]
 def modulusFpPoly : Hex.FpPoly 2 :=
   HexGF2Mathlib.GF2Poly.toFpPoly f
 
@@ -517,9 +538,8 @@ def ofGeneric (x : GenericFiniteField (f := f) (hirr := hirr) (hdeg := hdeg)) :
 
 /-- `FpPoly.degree` of a transported packed polynomial equals its packed degree. -/
 theorem degree_toFpPoly (q : Hex.GF2Poly) :
-    Hex.FpPoly.degree (HexGF2Mathlib.GF2Poly.toFpPoly q) = q.degree := by
-  unfold Hex.FpPoly.degree Hex.GF2Poly.degree
-  rw [HexGF2Mathlib.GF2Poly.degree?_toFpPoly]
+    Hex.FpPoly.degree (HexGF2Mathlib.GF2Poly.toFpPoly q) = q.degree :=
+  _root_.HexGF2Mathlib.degree_toFpPoly q
 
 /-- **Reduction-compatibility bridge.** Packed remainder reduction modulo `f`
 transports across the `GF2Poly ≃+* FpPoly 2` conversion layer to the generic
@@ -529,29 +549,8 @@ already-proved packed-level ring equivalence. -/
 theorem toFpPoly_reduceMod (p g : Hex.GF2Poly) (hgdeg : 0 < g.degree) :
     HexGF2Mathlib.GF2Poly.toFpPoly (p % g) =
       Hex.GFqRing.reduceMod (HexGF2Mathlib.GF2Poly.toFpPoly g)
-        (HexGF2Mathlib.GF2Poly.toFpPoly p) := by
-  letI : Hex.ZMod64.PrimeModulus 2 := Hex.ZMod64.primeModulusOfPrime prime_two
-  have hgne : g ≠ 0 := by
-    intro h; rw [h] at hgdeg; simp [Hex.GF2Poly.degree, Hex.GF2Poly.degree?] at hgdeg
-  have hgdeg' : 0 < Hex.FpPoly.degree (HexGF2Mathlib.GF2Poly.toFpPoly g) := by
-    rw [degree_toFpPoly]; exact hgdeg
-  have hdeglt :
-      Hex.FpPoly.degree (HexGF2Mathlib.GF2Poly.toFpPoly (p % g)) <
-        Hex.FpPoly.degree (HexGF2Mathlib.GF2Poly.toFpPoly g) := by
-    rw [degree_toFpPoly, degree_toFpPoly]
-    rcases Hex.GF2Poly.mod_degree_lt p g hgne with hz | hlt
-    · rw [Hex.GF2Poly.eq_zero_of_isZero hz]
-      simpa [Hex.GF2Poly.degree, Hex.GF2Poly.degree?] using hgdeg
-    · exact hlt
-  have heucl :
-      HexGF2Mathlib.GF2Poly.toFpPoly p =
-        HexGF2Mathlib.GF2Poly.toFpPoly (p % g) +
-          HexGF2Mathlib.GF2Poly.toFpPoly (p / g) * HexGF2Mathlib.GF2Poly.toFpPoly g := by
-    conv_lhs => rw [← Hex.GF2Poly.div_mul_add_mod p g]
-    rw [HexGF2Mathlib.GF2Poly.toFpPoly_add, HexGF2Mathlib.GF2Poly.toFpPoly_mul,
-      Hex.FpPoly.add_comm]
-  rw [heucl, Hex.GFqRing.reduceMod_add_mul_self_right _ hgdeg']
-  exact (Hex.GFqRing.reduceMod_eq_self_of_degree_lt _ _ hdeglt).symm
+        (HexGF2Mathlib.GF2Poly.toFpPoly p) :=
+  _root_.HexGF2Mathlib.toFpPoly_reduceMod p g hgdeg
 
 /-- Equality of generic finite-field elements from equality of canonical
 representatives. -/
@@ -566,7 +565,6 @@ model is simply its packed value, transported to `FpPoly 2`. -/
 theorem repr_toGeneric (x : Hex.GF2nPoly f hirr) :
     Hex.GFqField.repr (toGeneric (f := f) (hirr := hirr) (hdeg := hdeg) x) =
       HexGF2Mathlib.GF2Poly.toFpPoly x.val := by
-  letI : Hex.ZMod64.PrimeModulus 2 := Hex.ZMod64.primeModulusOfPrime prime_two
   unfold toGeneric
   rw [Hex.GFqField.repr_ofPoly]
   apply Hex.GFqRing.reduceMod_eq_self_of_degree_lt
@@ -578,6 +576,8 @@ theorem repr_toGeneric (x : Hex.GF2nPoly f hirr) :
     simpa [Hex.GF2Poly.degree, Hex.GF2Poly.degree?] using hdeg
   · exact hlt
 
+/-- Embedding a packed residue in the generic model and repacking recovers it:
+the packed value is already reduced modulo `f`. -/
 @[simp, grind =]
 theorem ofGeneric_toGeneric (x : Hex.GF2nPoly f hirr) :
     ofGeneric (f := f) (hirr := hirr) (hdeg := hdeg)
@@ -588,11 +588,11 @@ theorem ofGeneric_toGeneric (x : Hex.GF2nPoly f hirr) :
   rw [Hex.GF2nPoly.reducePoly_val_eq_mod]
   exact Hex.GF2Poly.mod_eq_self_of_reduced x.val f x.val_reduced
 
+/-- Repacking a generic element and re-embedding recovers it. -/
 @[simp, grind =]
 theorem toGeneric_ofGeneric (x : GenericFiniteField (f := f) (hirr := hirr) (hdeg := hdeg)) :
     toGeneric (f := f) (hirr := hirr) (hdeg := hdeg)
       (ofGeneric (f := f) (hirr := hirr) (hdeg := hdeg) x) = x := by
-  letI : Hex.ZMod64.PrimeModulus 2 := Hex.ZMod64.primeModulusOfPrime prime_two
   apply eq_of_repr_eq
   rw [repr_toGeneric]
   unfold ofGeneric
@@ -601,6 +601,7 @@ theorem toGeneric_ofGeneric (x : GenericFiniteField (f := f) (hirr := hirr) (hde
   exact Hex.GFqRing.reduceMod_eq_self_of_degree_lt _ _
     (Hex.GFqField.degree_repr_lt_degree x)
 
+/-- The packed-quotient embedding is additive. -/
 @[simp, grind =]
 theorem toGeneric_add (x y : Hex.GF2nPoly f hirr) :
     toGeneric (f := f) (hirr := hirr) (hdeg := hdeg) (x + y) =
@@ -611,6 +612,7 @@ theorem toGeneric_add (x y : Hex.GF2nPoly f hirr) :
     Hex.GF2nPoly.add_val, toFpPoly_reduceMod _ _ hdeg, HexGF2Mathlib.GF2Poly.toFpPoly_add,
     show modulusFpPoly (f := f) = HexGF2Mathlib.GF2Poly.toFpPoly f from rfl]
 
+/-- The packed-quotient embedding is multiplicative. -/
 @[simp, grind =]
 theorem toGeneric_mul (x y : Hex.GF2nPoly f hirr) :
     toGeneric (f := f) (hirr := hirr) (hdeg := hdeg) (x * y) =
@@ -640,7 +642,7 @@ def finEquiv : Hex.GF2nPoly f hirr ≃ Fin (2 ^ f.degree) :=
 
 -- `noncomputable` for the same reason, and more sharply: a GHASH-sized
 -- modulus puts `2 ^ 128` elements behind `Finset.univ`.
-noncomputable instance : Fintype (Hex.GF2nPoly f hirr) :=
+noncomputable instance instFintype : Fintype (Hex.GF2nPoly f hirr) :=
   Fintype.ofEquiv (Fin (2 ^ f.degree)) (finEquiv (f := f) (hirr := hirr)).symm
 
 /-- The packed quotient by `f` has `2 ^ deg f` elements, counted through its

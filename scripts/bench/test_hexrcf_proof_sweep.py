@@ -86,7 +86,7 @@ class ManifestTests(unittest.TestCase):
         )
 
     def test_shared_host_recipe_requests_retry_headroom(self) -> None:
-        source = (sweep.ROOT / "SPEC/Libraries/hex-rcf.md").read_text(
+        source = (sweep.ROOT / "HexRCF/SPEC/hex-rcf.md").read_text(
             encoding="utf-8"
         )
         match = re.search(
@@ -151,7 +151,7 @@ class ManifestTests(unittest.TestCase):
         )
 
     def test_spec_budgets_match_manifest(self) -> None:
-        source = (sweep.ROOT / "SPEC/Libraries/hex-rcf.md").read_text(
+        source = (sweep.ROOT / "HexRCF/SPEC/hex-rcf.md").read_text(
             encoding="utf-8"
         )
         labels = {

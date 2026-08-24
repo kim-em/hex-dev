@@ -264,6 +264,7 @@ lemmas as the lightweight `Lean.Grind` hierarchy.
 
 attribute [local instance] Lean.Grind.Semiring.natCast Lean.Grind.Ring.intCast
 
+/-- Dense-polynomial negation is involutive. -/
 theorem DensePoly.neg_neg_poly [Lean.Grind.CommRing R] [DecidableEq R]
     (p : DensePoly R) : -(-p) = p := by
   apply DensePoly.ext_coeff
@@ -283,6 +284,8 @@ def natPow [Lean.Grind.CommRing R] [DecidableEq R]
   | 0 => 1
   | n + 1 => natPow p n * p
 
+/-- Natural-number casts are constant polynomials, reusing the canonical zero
+and one. -/
 instance instNatCast [Lean.Grind.CommRing R] [DecidableEq R] :
     NatCast (DensePoly R) :=
   ⟨fun n =>
@@ -291,6 +294,7 @@ instance instNatCast [Lean.Grind.CommRing R] [DecidableEq R] :
     | 1 => One.one
     | n + 2 => C (Nat.cast (n + 2))⟩
 
+/-- Numerals are constant polynomials, reusing the canonical zero and one. -/
 instance instOfNat [Lean.Grind.CommRing R] [DecidableEq R] (n : Nat) :
     OfNat (DensePoly R) n :=
   ⟨match n with
@@ -298,14 +302,17 @@ instance instOfNat [Lean.Grind.CommRing R] [DecidableEq R] (n : Nat) :
     | 1 => One.one
     | n + 2 => C (OfNat.ofNat (n + 2))⟩
 
+/-- Natural scalar multiplication is multiplication by the cast constant. -/
 instance instNSMul [Lean.Grind.CommRing R] [DecidableEq R] :
     SMul Nat (DensePoly R) :=
   ⟨fun n p => (Nat.cast n : DensePoly R) * p⟩
 
+/-- Natural powers of dense polynomials via `natPow`. -/
 instance instNPow [Lean.Grind.CommRing R] [DecidableEq R] :
     HPow (DensePoly R) Nat (DensePoly R) :=
   ⟨natPow⟩
 
+/-- Integer casts are signed constant polynomials through the natural cast. -/
 instance instIntCast [Lean.Grind.CommRing R] [DecidableEq R] :
     IntCast (DensePoly R) :=
   ⟨fun i =>
@@ -313,6 +320,7 @@ instance instIntCast [Lean.Grind.CommRing R] [DecidableEq R] :
     | .ofNat n => (Nat.cast n : DensePoly R)
     | .negSucc n => -(Nat.cast (n + 1) : DensePoly R)⟩
 
+/-- Integer scalar multiplication is signed natural scalar multiplication. -/
 instance instZSMul [Lean.Grind.CommRing R] [DecidableEq R] :
     SMul Int (DensePoly R) :=
   ⟨fun i p =>
@@ -320,6 +328,7 @@ instance instZSMul [Lean.Grind.CommRing R] [DecidableEq R] :
     | .ofNat n => n • p
     | .negSucc n => -((n + 1) • p)⟩
 
+/-- A numeral polynomial stores its value in coefficient zero only. -/
 @[simp]
 theorem coeff_ofNat [Lean.Grind.CommRing R] [DecidableEq R]
     (n i : Nat) :
@@ -347,6 +356,7 @@ theorem coeff_ofNat [Lean.Grind.CommRing R] [DecidableEq R]
           · simp only [hi, if_true]
           · simpa only [hi, if_false] using (coeffZero_eq (R := R))
 
+/-- A cast-natural polynomial stores its value in coefficient zero only. -/
 @[simp]
 theorem coeff_natCast [Lean.Grind.CommRing R] [DecidableEq R]
     (n i : Nat) :
