@@ -263,6 +263,19 @@ implementation detail of Lean's mutual-inductive positivity checker. -/
     ContentCert n R cmp :=
   .mk value (GcdCerts.ofList steps)
 
+@[simp] theorem value_ofSteps (value : MvPoly n R cmp)
+    (steps : List (GcdCert n R cmp)) :
+    (ofSteps value steps).value = value := by
+  rfl
+
+@[simp] theorem steps_ofSteps (value : MvPoly n R cmp)
+    (steps : List (GcdCert n R cmp)) :
+    (ofSteps value steps).steps = steps := by
+  induction steps with
+  | nil => rfl
+  | cons step steps ih =>
+      simp only [ContentCert.steps, GcdCerts.toList, ih]
+
 end ContentCert
 
 /-- Coefficientwise cast from the integer model used by `ratLift`. -/
@@ -296,6 +309,23 @@ structure CheckOpsAt (R : Type u) [Zero R] (n : Nat) : Type (u + 1) where
     (polyNormalize cert.gcd == cert.gcd) &&
     coprime cert.cofL cert.cofR cert.coprime
 
+/-! `checkContentSteps` exposes the accumulator used by content replay.  The
+public checker fixes that accumulator to zero; keeping the general recursion
+named lets producer proofs state the natural induction invariant. -/
+
+@[reducible] def checkContentSteps {n : Nat} {R : Type u}
+    {cmp : Mono n → Mono n → Ordering}
+    [Std.TransCmp cmp] [Std.LawfulEqCmp cmp]
+    [Lean.Grind.CommRing R] [DecidableEq R] [BEq R] [LawfulBEq R]
+    [Dvd R] [GcdOps R] [IsMonomialOrder cmp]
+    (gcd : MvPoly n R cmp → MvPoly n R cmp → GcdCert n R cmp → Bool)
+    (value acc : MvPoly n R cmp) :
+    List (MvPoly n R cmp) → List (GcdCert n R cmp) → Bool
+  | [], [] => acc == value
+  | q :: qs, step :: steps =>
+      gcd acc q step && checkContentSteps gcd value step.gcd qs steps
+  | _, _ => false
+
 @[reducible] def checkContentUsing {n : Nat} {R : Type u}
     {cmp : Mono n → Mono n → Ordering}
     [Std.TransCmp cmp] [Std.LawfulEqCmp cmp]
@@ -303,12 +333,7 @@ structure CheckOpsAt (R : Type u) [Zero R] (n : Nat) : Type (u + 1) where
     [Dvd R] [GcdOps R] [IsMonomialOrder cmp]
     (gcd : MvPoly n R cmp → MvPoly n R cmp → GcdCert n R cmp → Bool)
     (coeffs : List (MvPoly n R cmp)) (cert : ContentCert n R cmp) : Bool :=
-  let rec go (acc : MvPoly n R cmp) :
-      List (MvPoly n R cmp) → List (GcdCert n R cmp) → Bool
-    | [], [] => acc == cert.value
-    | q :: qs, step :: steps => gcd acc q step && go step.gcd qs steps
-    | _, _ => false
-  go 0 coeffs cert.steps
+  checkContentSteps gcd cert.value 0 coeffs cert.steps
 
 /-! The rational-lift branch contains an embedded coefficient certificate at
 the same arity.  Its replay therefore uses this independent structural

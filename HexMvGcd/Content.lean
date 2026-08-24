@@ -59,6 +59,70 @@ def contentCertWith {R : Type u} {cmp : Mono n → Mono n → Ordering}
     (0, [])
   .ofSteps pair.1 pair.2.reverse
 
+/-- Forward-order specification of the reverse-accumulator content fold. -/
+private def contentTrace {R : Type u} {cmp : Mono n → Mono n → Ordering}
+    [Std.TransCmp cmp] [Std.LawfulEqCmp cmp] [Zero R]
+    (produce : MvPoly n R cmp → MvPoly n R cmp → GcdCert n R cmp) :
+    MvPoly n R cmp → List (MvPoly n R cmp) →
+      MvPoly n R cmp × List (GcdCert n R cmp)
+  | acc, [] => (acc, [])
+  | acc, q :: qs =>
+      let step := produce acc q
+      let tail := contentTrace produce step.gcd qs
+      (tail.1, step :: tail.2)
+
+private theorem contentFold_eq_trace {R : Type u}
+    {cmp : Mono n → Mono n → Ordering}
+    [Std.TransCmp cmp] [Std.LawfulEqCmp cmp] [Zero R]
+    (produce : MvPoly n R cmp → MvPoly n R cmp → GcdCert n R cmp)
+    (coeffs : List (MvPoly n R cmp)) (acc : MvPoly n R cmp)
+    (done : List (GcdCert n R cmp)) :
+    let pair := coeffs.foldl
+      (fun state q =>
+        let step := produce state.1 q
+        (step.gcd, step :: state.2))
+      (acc, done)
+    (pair.1, pair.2.reverse) =
+      let trace := contentTrace produce acc coeffs
+      (trace.1, done.reverse ++ trace.2) := by
+  induction coeffs generalizing acc done with
+  | nil => simp [contentTrace]
+  | cons q qs ih =>
+      simp only [List.foldl_cons, contentTrace]
+      rw [ih]
+      simp [List.append_assoc]
+
+private theorem contentCertWith_eq_trace {R : Type u}
+    {cmp : Mono n → Mono n → Ordering}
+    [Std.TransCmp cmp] [Std.LawfulEqCmp cmp] [Zero R]
+    (produce : MvPoly n R cmp → MvPoly n R cmp → GcdCert n R cmp)
+    (coeffs : List (MvPoly n R cmp)) :
+    contentCertWith produce coeffs =
+      let trace := contentTrace produce 0 coeffs
+      ContentCert.ofSteps trace.1 trace.2 := by
+  unfold contentCertWith
+  simpa using congrArg
+    (fun pair => ContentCert.ofSteps pair.1 pair.2)
+    (contentFold_eq_trace produce coeffs 0 [])
+
+private theorem contentTrace_checks {R : Type u}
+    {cmp : Mono n → Mono n → Ordering}
+    [Std.TransCmp cmp] [Std.LawfulEqCmp cmp]
+    [Lean.Grind.CommRing R] [DecidableEq R] [BEq R] [LawfulBEq R]
+    [Dvd R] [GcdOps R] [IsMonomialOrder cmp]
+    (check : MvPoly n R cmp → MvPoly n R cmp → GcdCert n R cmp → Bool)
+    (produce : MvPoly n R cmp → MvPoly n R cmp → GcdCert n R cmp)
+    (hproduce : ∀ f h, check f h (produce f h) = true)
+    (coeffs : List (MvPoly n R cmp)) (acc : MvPoly n R cmp) :
+    let trace := contentTrace produce acc coeffs
+    checkContentSteps check trace.1 acc coeffs trace.2 = true := by
+  induction coeffs generalizing acc with
+  | nil => simp [contentTrace]
+  | cons q qs ih =>
+      simp only [contentTrace, checkContentSteps]
+      rw [hproduce, Bool.true_and]
+      exact ih (produce acc q).gcd
+
 /-- A producer-built fold has exactly one step per coefficient. -/
 theorem contentCertWith_length {R : Type u}
     {cmp : Mono n → Mono n → Ordering}
@@ -105,7 +169,29 @@ theorem contentCertWith_checks {R : Type u}
     (hproduce : ∀ f h, checkGcd f h (produce f h) = true)
     (coeffs : List (MvPoly n R cmp)) :
     checkContent coeffs (contentCertWith produce coeffs) = true := by
-  sorry
+  rw [contentCertWith_eq_trace]
+  cases n with
+  | zero =>
+      have hp : ∀ f h,
+          checkGcdUsing (baseCheckCoprime (cmp := cmp)) f h
+            (produce f h) = true := by
+        simpa [checkGcd, checkOps] using hproduce
+      simp only [checkContent, checkContentUsing]
+      rw [ContentCert.value_ofSteps, ContentCert.steps_ofSteps]
+      exact contentTrace_checks
+        (checkGcdUsing (baseCheckCoprime (cmp := cmp))) produce hp coeffs
+        (0 : MvPoly 0 R cmp)
+  | succ n =>
+      have hp : ∀ f h,
+          checkGcdUsing (succCheckCoprime (checkOps (R := R) n) (cmp := cmp))
+            f h (produce f h) = true := by
+        simpa [checkGcd, checkOps] using hproduce
+      simp only [checkContent, checkContentUsing]
+      rw [ContentCert.value_ofSteps, ContentCert.steps_ofSteps]
+      exact contentTrace_checks
+        (checkGcdUsing
+          (succCheckCoprime (checkOps (R := R) n) (cmp := cmp)))
+        produce hp coeffs (0 : MvPoly (n + 1) R cmp)
 
 /-- Scalar content and primitive part reconstruct the input. -/
 theorem content_mul_primPart [LawfulGcdOps R] (p : MvPoly n R cmp) :
