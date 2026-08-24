@@ -35,24 +35,24 @@ namespace Hex.Interval.Frontend
 
 open Proof
 
-/-- Function-generic arithmetic syntax. One package-configured constant,
-natural exponent, and precision keep semantic identity in `Rule.Config`, not
-in an untrusted term payload. -/
+/-- Function-generic arithmetic syntax. Literal values and power exponents are
+explicit authenticated rows rather than package-global configuration. -/
 inductive Term where
   | source (index : Nat)
-  | constant
+  | dyadic (value : Dyadic)
+  | natural (value : Nat)
   | neg (input : Term)
   | add (left right : Term)
   | sub (left right : Term)
   | mul (left right : Term)
-  | pow (input : Term)
+  | pow (input : Term) (exponent : Nat)
   | abs (input : Term)
   | min (left right : Term)
   | max (left right : Term)
   | inv (input : Term)
   | div (left right : Term)
   | regularize (input : Term)
-  deriving DecidableEq, Repr
+  deriving DecidableEq
 
 /-- Reification caps are independent of interval arithmetic and proof replay
 caps. `maxSources` also bounds caller fact-array traversal. `maxOperations`
@@ -78,12 +78,12 @@ structure Config where
 structure Entry where
   term : Term
   node : NodeId
-  deriving DecidableEq, Repr
+  deriving DecidableEq
 
 structure State where
   nodes : Array Node := #[]
   entries : Array Entry := #[]
-  deriving DecidableEq, Repr
+  deriving DecidableEq
 
 structure Result where
   program : Program
@@ -91,7 +91,7 @@ structure Result where
   term : Term
   entries : Array Entry
   sourceCount : Nat
-  deriving DecidableEq, Repr
+  deriving DecidableEq
 
 /-- One node-indexed version-zero fact selection. `none` means that the row
 starts at domain top; `some fact` is caller-selected data whose semantic
@@ -119,6 +119,7 @@ inductive Error where
   | malformedResult
   | wrongInitialCount
   | malformedInitial
+  | literalResource (node : NodeId)
   | wrongSourceCount
   | missingSource (index : Nat)
   | rule (error : Rule.BuildError)
@@ -130,12 +131,13 @@ def State.find? (state : State) (term : Term) : Option NodeId :=
 
 def operationKey : Term → OpKey
   | .source _ => Rule.sourceOp.key
-  | .constant => Rule.constantOp.key
+  | .dyadic _ => Rule.dyadicLiteralOp.key
+  | .natural _ => Rule.natLiteralOp.key
   | .neg _ => Rule.negOp.key
   | .add _ _ => Rule.addOp.key
   | .sub _ _ => Rule.subOp.key
   | .mul _ _ => Rule.mulOp.key
-  | .pow _ => Rule.powOp.key
+  | .pow _ _ => Rule.powOp.key
   | .abs _ => Rule.absOp.key
   | .min _ _ => Rule.minOp.key
   | .max _ _ => Rule.maxOp.key
@@ -152,18 +154,24 @@ protected def Term.opIndex : Term → Nat
   | .add _ _ => 2
   | .sub _ _ => 3
   | .mul _ _ => 4
-  | .pow _ => 5
+  | .pow _ _ => 5
   | .abs _ => 6
   | .min _ _ => 7
   | .max _ _ => 8
-  | .constant => 9
+  | .dyadic _ => 9
   | .inv _ => 10
   | .div _ _ => 11
   | .regularize _ => 12
+  | .natural _ => 13
+
+protected def Term.domain : Term → DomainId
+  | .natural _ => Rule.natDomain
+  | _ => Rule.realDomain
 
 protected def Term.inputs : Term → List Term
-  | .source _ | .constant => []
-  | .neg input | .pow input | .abs input | .inv input | .regularize input => [input]
+  | .source _ | .dyadic _ | .natural _ => []
+  | .neg input | .abs input | .inv input | .regularize input => [input]
+  | .pow input exponent => [input, .natural exponent]
   | .add left right | .sub left right | .mul left right | .div left right |
       .min left right | .max left right => [left, right]
 
@@ -177,9 +185,9 @@ root-at-depth-zero convention while constructing them. A successful check may
 visit the whole already-constructed tree; depth is not a constructor-count
 cap. -/
 protected def Term.depthWithin : Nat → Term → Bool
-  | _, .source _ | _, .constant => true
+  | _, .source _ | _, .dyadic _ | _, .natural _ => true
   | 0, _ => false
-  | depth + 1, .neg input | depth + 1, .pow input | depth + 1, .abs input |
+  | depth + 1, .neg input | depth + 1, .pow input _ | depth + 1, .abs input |
       depth + 1, .inv input | depth + 1, .regularize input =>
       input.depthWithin depth
   | depth + 1, .add left right | depth + 1, .sub left right |
@@ -187,16 +195,16 @@ protected def Term.depthWithin : Nat → Term → Bool
       depth + 1, .min left right | depth + 1, .max left right =>
       left.depthWithin depth && right.depthWithin depth
 
-/-- Real evaluation of a frontend term under exact caller source values and
-the package-owned constant and natural exponent. -/
+/-- Real evaluation of a frontend term under exact caller source values. -/
 noncomputable def Term.eval (config : Rule.Config) (sources : Nat → ℝ) : Term → ℝ
   | .source index => sources index
-  | .constant => toReal config.constant
+  | .dyadic value => toReal value
+  | .natural value => (value : ℝ)
   | .neg input => -(input.eval config sources)
   | .add left right => left.eval config sources + right.eval config sources
   | .sub left right => left.eval config sources - right.eval config sources
   | .mul left right => left.eval config sources * right.eval config sources
-  | .pow input => input.eval config sources ^ config.exponent
+  | .pow input exponent => input.eval config sources ^ exponent
   | .abs input => |input.eval config sources|
   | .min left right => if left.eval config sources ≤ right.eval config sources then
       left.eval config sources else right.eval config sources
@@ -209,12 +217,13 @@ noncomputable def Term.eval (config : Rule.Config) (sources : Nat → ℝ) : Ter
 /-- Exact built-in semantic meaning selected by a frontend term. -/
 protected def Term.meaning (config : Rule.Config) : Term → Program.Meaning ℝ
   | .source _ => Rule.sourceMeaning
-  | .constant => Rule.constantMeaning config.constant
+  | .dyadic _ => Rule.dyadicLiteralMeaning
+  | .natural _ => Rule.natLiteralMeaning
   | .neg _ => Rule.negMeaning
   | .add _ _ => Rule.addMeaning
   | .sub _ _ => Rule.subMeaning
   | .mul _ _ => Rule.mulMeaning
-  | .pow _ => Rule.powMeaning config.exponent
+  | .pow _ _ => Rule.powMeaning
   | .abs _ => Rule.absMeaning
   | .min _ _ => Rule.minMeaning
   | .max _ _ => Rule.maxMeaning
@@ -234,8 +243,8 @@ theorem Term.related (config : Rule.Config) (sources : Nat → ℝ) (term : Term
   cases term <;>
     simp [Term.inputs, Term.eval, Term.meaning, Rule.sourceMeaning, Rule.negMeaning,
       Rule.addMeaning, Rule.subMeaning, Rule.mulMeaning, Rule.powMeaning, Rule.absMeaning,
-      Rule.minMeaning, Rule.maxMeaning, Rule.constantMeaning, Rule.invMeaning,
-      Rule.divMeaning, Rule.regularizeMeaning, min_def, max_def]
+      Rule.minMeaning, Rule.maxMeaning, Rule.dyadicLiteralMeaning, Rule.natLiteralMeaning,
+      Rule.invMeaning, Rule.divMeaning, Rule.regularizeMeaning, min_def, max_def]
 
 def install (config : Config) (term : Term) (reified : List NodeId)
     (state : State) : Except Error (NodeId × State) := do
@@ -250,7 +259,7 @@ def install (config : Config) (term : Term) (reified : List NodeId)
   if signature.inputs.length != reified.length then throw .malformedProgram
   let node : NodeId := { index := state.nodes.size }
   let instruction : Node :=
-    { domain := Rule.realDomain, op := operation, args := reified }
+    { domain := term.domain, op := operation, args := reified }
   pure (node,
     { nodes := state.nodes.push instruction
       entries := state.entries.push { term, node } })
@@ -263,8 +272,16 @@ def reifyTerm (config : Config) (sourceCount depth : Nat)
   | .source index =>
       if sourceCount ≤ index then throw (.sourceIndex index)
       install config term [] state
-  | .constant => install config term [] state
-  | .neg input | .pow input | .abs input | .inv input | .regularize input =>
+  | .dyadic _ | .natural _ => install config term [] state
+  | .pow input exponent =>
+      let (inputNode, state) ← reifyTerm config sourceCount (depth + 1) input state
+      if config.reify.maxDepth < depth + 1 then throw .depthLimit
+      let exponentTerm := .natural exponent
+      let (exponentNode, state) ← match state.find? exponentTerm with
+        | some node => pure (node, state)
+        | none => install config exponentTerm [] state
+      install config term [inputNode, exponentNode] state
+  | .neg input | .abs input | .inv input | .regularize input =>
       let (node, state) ← reifyTerm config sourceCount (depth + 1) input state
       install config term [node] state
   | .add left right | .sub left right | .mul left right | .div left right |
@@ -407,6 +424,45 @@ def Result.sourceInitial (result : Result)
   { rows := result.entries.map fun entry =>
       { node := entry.node
         fact := entry.term.source?.bind fun index => sources[index]? } }
+
+/-- Checked mixed initial context. Source rows use caller facts; literal rows
+use exact singletons; every arithmetic row stays at domain top. Literal
+construction failure is transactional. -/
+def Result.seedInitialWithin (config : Rule.Config) (result : Result)
+    (sources : Array Hex.Interval) : Except Error InitialContext := do
+  let mut rows : Array InitialRow := #[]
+  for entry in result.entries do
+    let fact ← match entry.term with
+      | .source index => pure sources[index]?
+      | .dyadic value =>
+          match Rule.ready? (singletonWithin config.endpoint value) with
+          | some fact => pure (some fact)
+          | none => throw (.literalResource entry.node)
+      | .natural value =>
+          match Rule.ready? (singletonWithin config.endpoint (Dyadic.ofInt value)) with
+          | some fact => pure (some fact)
+          | none => throw (.literalResource entry.node)
+      | _ => pure none
+    rows := rows.push { node := entry.node, fact }
+  pure { rows }
+
+theorem whole_contains (value : ℝ) : Hex.Interval.whole.Contains value := by
+  change Raw.Contains Hex.Interval.whole.view value
+  rw [Hex.Interval.view_whole]
+  exact ⟨trivial, trivial⟩
+
+theorem dyadic_contains {config : Rule.Config} {values : Nat → ℝ} {value : Dyadic}
+    {fact : Hex.Interval} (checked : Rule.ready?
+      (singletonWithin config.endpoint value) = some fact) :
+    fact.Contains ((Term.dyadic value).eval config values) := by
+  simpa [Term.eval] using Rule.constant_mem (Rule.ready?_eq checked)
+
+theorem natural_contains {config : Rule.Config} {values : Nat → ℝ} {value : Nat}
+    {fact : Hex.Interval} (checked : Rule.ready?
+      (singletonWithin config.endpoint (Dyadic.ofInt value)) = some fact) :
+    fact.Contains ((Term.natural value).eval config values) := by
+  have member := Rule.constant_mem (Rule.ready?_eq checked)
+  simpa [Term.eval, Rule.toReal_ofInt] using member
 
 /-- Exact version-zero fact array determined by the retained node/term rows. -/
 def Result.facts (result : Result) (sources : Array Hex.Interval) : Array Hex.Interval :=

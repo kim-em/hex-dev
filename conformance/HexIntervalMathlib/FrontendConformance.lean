@@ -22,7 +22,7 @@ open Hex.Interval
 open Hex.Interval.Proof
 
 def limits : Frontend.Limits :=
-  { maxSources := 2, maxOperations := 13, maxNodes := 5, maxDepth := 3 }
+  { maxSources := 2, maxOperations := 14, maxNodes := 5, maxDepth := 3 }
 def config : Frontend.Config :=
   { rule := RuleConformance.config, reify := limits, proof := RuleConformance.proofLimits }
 
@@ -88,8 +88,8 @@ theorem resultOperations : result.program.operations =
   simp [result, expectedProgram, RuleConformance.program, config, RuleConformance.config,
     Rule.meanings, Rule.builtinMeanings, Rule.operations, Rule.sourceMeaning,
     Rule.negMeaning, Rule.addMeaning, Rule.subMeaning, Rule.mulMeaning, Rule.powMeaning,
-    Rule.absMeaning, Rule.minMeaning, Rule.maxMeaning, Rule.constantMeaning, Rule.invMeaning,
-    Rule.divMeaning, Rule.regularizeMeaning]
+    Rule.absMeaning, Rule.minMeaning, Rule.maxMeaning, Rule.dyadicLiteralMeaning,
+    Rule.invMeaning, Rule.divMeaning, Rule.regularizeMeaning, Rule.natLiteralMeaning]
 
 noncomputable def semanticModel : Frontend.Model config.rule sourceValues result :=
   { checked := resultChecked
@@ -177,7 +177,7 @@ def shallow : Frontend.Config := { config with reify := { limits with maxDepth :
 def fewNodes : Frontend.Config := { config with reify := { limits with maxNodes := 4 } }
 def fewSources : Frontend.Config := { config with reify := { limits with maxSources := 1 } }
 def fewOperations : Frontend.Config :=
-  { config with reify := { limits with maxOperations := 12 } }
+  { config with reify := { limits with maxOperations := 13 } }
 
 def wrongInitialRow : Frontend.InitialContext :=
   { rows := computedInitial.rows.set! 0 { node := RuleConformance.y } }
@@ -272,7 +272,7 @@ def wrongOperations : Frontend.Result :=
       { result.program with operations := result.program.operations.push RuleConformance.opaqueOp } }
 
 def roomy : Frontend.Config :=
-  { config with reify := { limits with maxOperations := 14 } }
+  { config with reify := { limits with maxOperations := 15 } }
 
 #guard
   match Frontend.inputWithin config RuleConformance.scope wrongEntryNode
@@ -335,7 +335,8 @@ def roomy : Frontend.Config :=
   | _ => false
 
 #guard
-  match Frontend.reifyWithin config 1 (.add .constant (.source 0)) with
+  match Frontend.reifyWithin config 1
+      (.add (.dyadic (RuleConformance.d 5)) (.source 0)) with
   | .ok result => result.program.nodes ==
       #[RuleConformance.node 9 [], RuleConformance.node 0 [], RuleConformance.node 2 [0, 1]]
   | .error _ => false
@@ -351,7 +352,7 @@ def roomy : Frontend.Config :=
 
 def duplicateKey : Frontend.Config :=
   { rule := { config.rule with extraMeanings := #[Rule.sourceMeaning] }
-    reify := { limits with maxOperations := 14 }
+    reify := { limits with maxOperations := 15 }
     proof := config.proof }
 
 #guard

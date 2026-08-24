@@ -73,15 +73,10 @@ private def arithmeticValue? : Arithmetic.Result → Option Hex.Interval :=
 private def proposal? (config : Rule.Config) (rule : RuleKey)
     (inputs : List (FactView Hex.Interval)) : Option Hex.Interval :=
   match rule, inputs with
-  | key, [] =>
-      if key == Rule.constantKey then
-        buildValue? (singletonWithin config.endpoint config.constant)
-      else none
+  | _, [] => none
   | key, [input] =>
       if key == Rule.negKey then
         buildValue? (negWithin config.endpoint input.fact)
-      else if key == Rule.powKey then
-        arithmeticValue? (powWithin config.endpoint config.powerWork input.fact config.exponent)
       else if key == Rule.absKey then
         buildValue? (absWithin config.endpoint input.fact)
       else if key == Rule.invKey then
@@ -91,7 +86,12 @@ private def proposal? (config : Rule.Config) (rule : RuleKey)
           (regularizeWithin config.precisionLimits config.precision input.fact)
       else none
   | key, [left, right] =>
-      if key == Rule.addKey then
+      if key == Rule.powKey then
+        match Rule.closedNat? right.fact with
+        | some exponent =>
+            arithmeticValue? (powWithin config.endpoint config.powerWork left.fact exponent)
+        | none => none
+      else if key == Rule.addKey then
         buildValue? (addWithin config.endpoint left.fact right.fact)
       else if key == Rule.subKey then
         buildValue? (subWithin config.endpoint left.fact right.fact)
@@ -162,18 +162,15 @@ opaque package (config : Rule.Config) :
         handler config (Rule.binaryRegistration Rule.addKey Rule.addOp) 2,
         handler config (Rule.binaryRegistration Rule.subKey Rule.subOp) 3,
         handler config (Rule.binaryRegistration Rule.mulKey Rule.mulOp) 4,
-        handler config (Rule.unaryRegistration Rule.powKey Rule.powOp) 5,
+        handler config (Rule.binaryRegistration Rule.powKey Rule.powOp) 5,
         handler config (Rule.unaryRegistration Rule.absKey Rule.absOp) 6,
         handler config (Rule.binaryRegistration Rule.minKey Rule.minOp) 7,
         handler config (Rule.binaryRegistration Rule.maxKey Rule.maxOp) 8,
-        handler config
-          { key := Rule.constantKey, head := Rule.constantOp.key, kind := .forward,
-            watches := [], writes := [.result] } 9,
         handler config (Rule.unaryRegistration Rule.invKey Rule.invOp) 10,
         handler config (Rule.binaryRegistration Rule.divKey Rule.divOp) 11,
         handler config (Rule.unaryRegistration Rule.regularizeKey Rule.regularizeOp) 12]
     measure :=
-      { metadata := { bytes := 12, work := 12 }
+      { metadata := { bytes := 11, work := 11 }
         application := fun _ => { bytes := 1, work := 1 }
         cache := fun cache => { bytes := cache.calls, work := cache.calls }
         result := fun batch => { bytes := batch.events.size, work := batch.events.size } } }

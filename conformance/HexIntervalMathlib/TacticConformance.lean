@@ -64,6 +64,10 @@ example : (0 : ℝ) = 0 := by
 example : 0 = (0 : ℝ) := by
   interval
 
+theorem dyadicPowers :
+    ((1 / 2 : ℝ) ^ 2 + (3 / 4 : ℝ) ^ 3) = 43 / 64 := by
+  interval
+
 example {x : ℝ} (singleton : x = 1) : x = 1 := by
   interval
 
