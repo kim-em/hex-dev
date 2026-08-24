@@ -25,6 +25,9 @@ JSONL fixture record shape (one record per line):
 * ``mvpoly``     — ``{"kind": "mvpoly",     "lib": str, "case": str,
                       "arity": int, "order": "lex"|"grlex"|"grevlex",
                       "terms": [[[exponent...], coefficient]...]}``
+* ``mvgcd``      — two multivariate term lists plus coefficient-domain data
+* ``mvsqf``      — one characteristic-zero multivariate term list
+* ``mvsquarefree`` — one modular multivariate term list and its modulus
 * ``lattice``    — ``{"kind": "lattice",    "lib": str, "case": str,
                       "basis": [[int...]...]}``
 * ``prime``      — ``{"kind": "prime",      "lib": str, "case": str,
@@ -96,6 +99,9 @@ VALID_FIXTURE_KINDS = frozenset(
         "poly",
         "matrix",
         "mvpoly",
+        "mvgcd",
+        "mvsqf",
+        "mvsquarefree",
         "sparsepoly",
         "lattice",
         "prime",
@@ -215,6 +221,35 @@ def _validate_rcf_sentence(record: dict[str, Any]) -> None:
     _validate_rcf_formula(sentence["formula"])
 
 
+def _validate_mv_header(record: dict[str, Any], kind: str) -> int:
+    arity = record.get("arity")
+    if not _is_int(arity) or arity < 0:
+        raise FixtureError(f"{kind}.arity must be a nonnegative int: {record!r}")
+    if record.get("order") not in {"lex", "grlex", "grevlex"}:
+        raise FixtureError(
+            f"{kind}.order must be lex/grlex/grevlex: {record!r}"
+        )
+    return arity
+
+
+def _validate_mv_terms(terms: Any, arity: int, context: str) -> None:
+    if not isinstance(terms, list):
+        raise FixtureError(f"{context} must be a list: {terms!r}")
+    for term in terms:
+        if (
+            not isinstance(term, list)
+            or len(term) != 2
+            or not isinstance(term[0], list)
+            or len(term[0]) != arity
+            or not all(_is_int(e) and e >= 0 for e in term[0])
+            or not _is_int(term[1])
+        ):
+            raise FixtureError(
+                f"{context} terms must be [[nonnegative exponent...], int] "
+                f"with exponent length arity: {term!r}"
+            )
+
+
 def _validate_fixture(record: dict[str, Any]) -> None:
     kind = record.get("kind")
     if kind not in VALID_FIXTURE_KINDS and kind != "result":
@@ -290,29 +325,51 @@ def _validate_fixture(record: dict[str, Any]) -> None:
                 )
             previous = term[0]
     elif kind == "mvpoly":
-        arity = record.get("arity")
-        if not _is_int(arity) or arity < 0:
-            raise FixtureError(f"mvpoly.arity must be a nonnegative int: {record!r}")
-        if record.get("order") not in {"lex", "grlex", "grevlex"}:
+        arity = _validate_mv_header(record, kind)
+        _validate_mv_terms(record.get("terms"), arity, "mvpoly.terms")
+    elif kind == "mvgcd":
+        _exact_keys(
+            record,
+            {"kind", "lib", "case", "arity", "order", "domain", "mod", "left", "right"},
+            kind,
+        )
+        arity = _validate_mv_header(record, kind)
+        domain = record.get("domain")
+        if domain not in {"int", "zmod"}:
+            raise FixtureError(f"mvgcd.domain must be int/zmod: {record!r}")
+        modulus = record.get("mod")
+        if domain == "zmod":
+            if not _is_int(modulus) or modulus < 2:
+                raise FixtureError(f"mvgcd.mod must be an int >= 2: {record!r}")
+        elif modulus is not None:
+            raise FixtureError(f"mvgcd.mod must be null over int: {record!r}")
+        _validate_mv_terms(record.get("left"), arity, "mvgcd.left")
+        _validate_mv_terms(record.get("right"), arity, "mvgcd.right")
+    elif kind == "mvsqf":
+        _exact_keys(
+            record,
+            {"kind", "lib", "case", "arity", "order", "domain", "terms"},
+            kind,
+        )
+        arity = _validate_mv_header(record, kind)
+        if record.get("domain") != "int":
+            raise FixtureError(f"mvsqf.domain must be int: {record!r}")
+        _validate_mv_terms(record.get("terms"), arity, "mvsqf.terms")
+    elif kind == "mvsquarefree":
+        _exact_keys(
+            record,
+            {"kind", "lib", "case", "arity", "order", "domain", "mod", "terms"},
+            kind,
+        )
+        arity = _validate_mv_header(record, kind)
+        if record.get("domain") != "zmod":
+            raise FixtureError(f"mvsquarefree.domain must be zmod: {record!r}")
+        modulus = record.get("mod")
+        if not _is_int(modulus) or modulus < 2:
             raise FixtureError(
-                f"mvpoly.order must be lex/grlex/grevlex: {record!r}"
+                f"mvsquarefree.mod must be an int >= 2: {record!r}"
             )
-        terms = record.get("terms")
-        if not isinstance(terms, list):
-            raise FixtureError(f"mvpoly.terms must be a list: {record!r}")
-        for term in terms:
-            if (
-                not isinstance(term, list)
-                or len(term) != 2
-                or not isinstance(term[0], list)
-                or len(term[0]) != arity
-                or not all(_is_int(e) and e >= 0 for e in term[0])
-                or not _is_int(term[1])
-            ):
-                raise FixtureError(
-                    "mvpoly terms must be [[nonnegative exponent...], int] "
-                    f"with exponent length arity: {record!r}"
-                )
+        _validate_mv_terms(record.get("terms"), arity, "mvsquarefree.terms")
     elif kind == "lattice":
         basis = record.get("basis")
         if not isinstance(basis, list) or not all(

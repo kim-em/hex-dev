@@ -199,6 +199,48 @@ def emitSeriesFixture (lib case domain : String) (precision : Nat)
     ("coeffs", jsonRatList coeffs)
   ]
 
+/-- Emit a multivariate-gcd fixture over the named coefficient domain. -/
+def emitMvGcdFixture (lib case : String) (arity : Nat) (order domain : String)
+    (modulus : Option Int) (left right : List (List Nat × Int)) : IO Unit := do
+  emitLine <| jsonObject [
+    ("kind", jsonString "mvgcd"),
+    ("lib", jsonString lib),
+    ("case", jsonString case),
+    ("arity", toString arity),
+    ("order", jsonString order),
+    ("domain", jsonString domain),
+    ("mod", jsonOptionalInt modulus),
+    ("left", jsonMvPolyTerms left),
+    ("right", jsonMvPolyTerms right)
+  ]
+
+/-- Emit a characteristic-zero multivariate squarefree-decomposition fixture. -/
+def emitMvSqfFixture (lib case : String) (arity : Nat) (order domain : String)
+    (terms : List (List Nat × Int)) : IO Unit := do
+  emitLine <| jsonObject [
+    ("kind", jsonString "mvsqf"),
+    ("lib", jsonString lib),
+    ("case", jsonString case),
+    ("arity", toString arity),
+    ("order", jsonString order),
+    ("domain", jsonString domain),
+    ("terms", jsonMvPolyTerms terms)
+  ]
+
+/-- Emit a finite-characteristic multivariate squarefree-decision fixture. -/
+def emitMvSquarefreeFixture (lib case : String) (arity : Nat) (order : String)
+    (modulus : Nat) (terms : List (List Nat × Int)) : IO Unit := do
+  emitLine <| jsonObject [
+    ("kind", jsonString "mvsquarefree"),
+    ("lib", jsonString lib),
+    ("case", jsonString case),
+    ("arity", toString arity),
+    ("order", jsonString order),
+    ("domain", jsonString "zmod"),
+    ("mod", toString modulus),
+    ("terms", jsonMvPolyTerms terms)
+  ]
+
 /-- Emit a `sparsepoly` fixture record: a sparse univariate polynomial as
 `(exponent, numerator, denominator)` terms in ascending exponent order
 (`den = 1` outside the `"rat"` domain), over the domain `"int"`, `"rat"`,
