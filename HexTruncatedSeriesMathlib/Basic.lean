@@ -175,6 +175,14 @@ noncomputable def quotEquiv [CommRing R] :
     (RingHom.quotientKerEquivOfSurjective
       (ofPowerSeriesHom_surjective (R := R) (n := n)))
 
+/-- The quotient equivalence sends a power-series representative to its
+coefficient truncation. -/
+@[simp]
+theorem quotEquiv_mk [CommRing R] (f : PowerSeries R) :
+    quotEquiv (R := R) (n := n) (Ideal.Quotient.mk _ f) =
+      ofPowerSeries (n := n) f := by
+  rfl
+
 /-- A rational algebra contains every natural inverse required by the
 Mathlib-free algorithms. -/
 instance (priority := 800) natInversesOfAlgebra [CommRing R] [Algebra ℚ R]
