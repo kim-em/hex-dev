@@ -58,8 +58,7 @@ theorem combineRows_mul (A : Matrix Int n p) (B : Matrix Int p m)
       rw [Matrix.getElem_ofFn]
       simp only [if_pos]
       rw [Matrix.getElem_pair_eq_nested, Matrix.getElem_pair_eq_nested]
-      simp only [Fin.getElem_fin, Vector.getElem_add, Vector.getElem_smul,
-        Matrix.getElem_row]
+      simp only [Fin.getElem_fin, Vector.getElem_add, Vector.getElem_smul]
       rfl
       ]
     rw [Vector.dotProduct_add_left, Vector.dotProduct_smul_left,
@@ -80,8 +79,7 @@ theorem combineRows_mul (A : Matrix Int n p) (B : Matrix Int p m)
         rw [Matrix.getElem_ofFn]
         simp only [if_neg hri, if_pos]
         rw [Matrix.getElem_pair_eq_nested, Matrix.getElem_pair_eq_nested]
-        simp only [Fin.getElem_fin, Vector.getElem_add, Vector.getElem_smul,
-          Matrix.getElem_row]
+        simp only [Fin.getElem_fin, Vector.getElem_add, Vector.getElem_smul]
         rfl]
       rw [Vector.dotProduct_add_left, Vector.dotProduct_smul_left,
         Vector.dotProduct_smul_left]
@@ -100,6 +98,126 @@ theorem combineRows_mul (A : Matrix Int n p) (B : Matrix Int p m)
       rw [Matrix.getElem_ofFn]
       simp only [if_neg hri, if_neg hrk, Matrix.getElem_pair_eq_nested]
       exact (Matrix.getElem_mul A B r j).symm
+
+/-- Transposition exchanges a simultaneous two-column replacement with the
+same two-row replacement. -/
+theorem transpose_combineCols (M : Matrix Int n n) (i k : Fin n)
+    (a b c d : Int) :
+    Matrix.transpose (combineCols M i k a b c d) =
+      combineRows (Matrix.transpose M) i k a b c d := by
+  apply Matrix.ext_getElem
+  intro r j
+  rw [Matrix.getElem_transpose]
+  unfold combineCols combineRows
+  rw [Matrix.getElem_ofFn, Matrix.getElem_ofFn]
+  simp only [Matrix.getElem_pair_eq_nested, Matrix.getElem_transpose]
+
+/-- Simultaneous two-column replacement commutes with multiplication on the
+left. -/
+theorem mul_combineCols (A B : Matrix Int n n) (i k : Fin n)
+    (a b c d : Int) :
+    A * combineCols B i k a b c d = combineCols (A * B) i k a b c d := by
+  have ht :
+      Matrix.transpose (A * combineCols B i k a b c d) =
+        Matrix.transpose (combineCols (A * B) i k a b c d) := by
+    calc
+      Matrix.transpose (A * combineCols B i k a b c d) =
+          Matrix.transpose (combineCols B i k a b c d) * Matrix.transpose A := by
+            rw [Matrix.transpose_mul_of_mul_comm]
+      _ = combineRows (Matrix.transpose B) i k a b c d * Matrix.transpose A := by
+            rw [transpose_combineCols]
+      _ = combineRows (Matrix.transpose B * Matrix.transpose A) i k a b c d := by
+            rw [combineRows_mul]
+      _ = combineRows (Matrix.transpose (A * B)) i k a b c d := by
+            rw [Matrix.transpose_mul_of_mul_comm]
+      _ = Matrix.transpose (combineCols (A * B) i k a b c d) := by
+            rw [transpose_combineCols]
+  have := congrArg Matrix.transpose ht
+  simpa using this
+
+theorem mul_colSwap (A B : Matrix Int n n) (i k : Fin n) :
+    A * Matrix.colSwap B i k = Matrix.colSwap (A * B) i k := by
+  have ht : Matrix.transpose (A * Matrix.colSwap B i k) =
+      Matrix.transpose (Matrix.colSwap (A * B) i k) := by
+    calc
+      Matrix.transpose (A * Matrix.colSwap B i k) =
+          Matrix.transpose (Matrix.colSwap B i k) * Matrix.transpose A := by
+            rw [Matrix.transpose_mul_of_mul_comm]
+      _ = Matrix.rowSwap (Matrix.transpose B) i k * Matrix.transpose A := by
+            rw [Matrix.transpose_colSwap]
+      _ = Matrix.rowSwap (Matrix.transpose B * Matrix.transpose A) i k := by
+            rw [Matrix.rowSwap_mul]
+      _ = Matrix.rowSwap (Matrix.transpose (A * B)) i k := by
+            rw [Matrix.transpose_mul_of_mul_comm]
+      _ = Matrix.transpose (Matrix.colSwap (A * B) i k) := by
+            rw [Matrix.transpose_colSwap]
+  have := congrArg Matrix.transpose ht
+  simpa using this
+
+theorem mul_colScale (A B : Matrix Int n n) (i : Fin n) (c : Int) :
+    A * Matrix.colScale B i c = Matrix.colScale (A * B) i c := by
+  have ht : Matrix.transpose (A * Matrix.colScale B i c) =
+      Matrix.transpose (Matrix.colScale (A * B) i c) := by
+    calc
+      Matrix.transpose (A * Matrix.colScale B i c) =
+          Matrix.transpose (Matrix.colScale B i c) * Matrix.transpose A := by
+            rw [Matrix.transpose_mul_of_mul_comm]
+      _ = Matrix.rowScale (Matrix.transpose B) i c * Matrix.transpose A := by
+            rw [Matrix.transpose_colScale]
+      _ = Matrix.rowScale (Matrix.transpose B * Matrix.transpose A) i c := by
+            rw [Matrix.rowScale_mul]
+      _ = Matrix.rowScale (Matrix.transpose (A * B)) i c := by
+            rw [Matrix.transpose_mul_of_mul_comm]
+      _ = Matrix.transpose (Matrix.colScale (A * B) i c) := by
+            rw [Matrix.transpose_colScale]
+  have := congrArg Matrix.transpose ht
+  simpa using this
+
+theorem swap_inverse_identity (i k : Fin n) :
+    Matrix.rowSwap (Matrix.colSwap (Matrix.identity (R := Int) n) i k) i k =
+      Matrix.identity n := by
+  apply Matrix.ext_getElem
+  intro r j
+  simp only [Matrix.getElem_rowSwap, Matrix.getElem_colSwap,
+    Matrix.getElem_identity]
+  by_cases hri : r = i <;> by_cases hrk : r = k <;>
+    by_cases hji : j = i <;> by_cases hjk : j = k <;> simp_all [eq_comm]
+
+theorem negate_inverse_identity (i : Fin n) :
+    Matrix.rowScale (Matrix.colScale (Matrix.identity (R := Int) n) i (-1))
+      i (-1) = Matrix.identity n := by
+  apply Matrix.ext_getElem
+  intro r j
+  simp only [Matrix.getElem_rowScale, Matrix.getElem_colScale,
+    Matrix.getElem_identity]
+  by_cases hri : r = i <;> by_cases hji : j = i <;> simp_all [eq_comm]
+
+theorem add_inverse_identity (src dst : Fin n) (h : src ≠ dst) (c : Int) :
+    Matrix.rowAdd (Matrix.colAdd (Matrix.identity (R := Int) n)
+      dst src (-c)) src dst c = Matrix.identity n := by
+  apply Matrix.ext_getElem
+  intro r j
+  simp only [Matrix.getElem_rowAdd, Matrix.getElem_colAdd,
+    Matrix.getElem_identity]
+  by_cases hrd : r = dst <;> by_cases hrs : r = src <;>
+    by_cases hjs : j = src <;> by_cases hjd : j = dst <;>
+    simp_all <;> grind
+
+/-- A determinant-one two-row replacement followed on the right by its
+two-column inverse fixes the identity matrix. -/
+theorem combine_inverse_identity (i k : Fin n) (hik : i ≠ k)
+    (a b c d : Int) (hdet : a * d - b * c = 1) :
+    combineRows (combineCols (Matrix.identity (R := Int) n)
+      i k d (-c) (-b) a) i k a b c d = Matrix.identity n := by
+  apply Matrix.ext_getElem
+  intro r j
+  unfold combineRows combineCols
+  rw [Matrix.getElem_ofFn]
+  simp only [Matrix.getElem_pair_eq_nested, Matrix.getElem_ofFn,
+    Matrix.getElem_identity]
+  by_cases hri : r = i <;> by_cases hrk : r = k <;>
+    by_cases hji : j = i <;> by_cases hjk : j = k <;>
+    simp_all <;> grind
 
 /-- Operations performed on a companion accumulator by the Hermite sweep. -/
 structure Accumulator (α : Type) (n : Nat) where
@@ -158,5 +276,43 @@ def gcdCoeffs (a b : Int) : Int × Int × Int × Int :=
   let qa := HexArith.Int.exactDiv a g'
   let qb := HexArith.Int.exactDiv b g'
   (s, t, -qb, qa)
+
+/-- When the eliminated entry is nonzero, `gcdCoeffs` returns a
+determinant-one update. -/
+theorem gcdCoeffs_det {a b : Int} (hb : b ≠ 0) :
+    let (x, y, z, w) := gcdCoeffs a b
+    x * w - y * z = 1 := by
+  rcases he : HexArith.Int.extGcd a b with ⟨g, s, t⟩
+  have hspec := HexArith.Int.extGcd_spec a b
+  rw [he] at hspec
+  simp only at hspec
+  rcases hspec with ⟨hg, hbez⟩
+  have hga : (Int.ofNat g) ∣ a := by
+    rw [hg]
+    exact Int.gcd_dvd_left a b
+  have hgb : (Int.ofNat g) ∣ b := by
+    rw [hg]
+    exact Int.gcd_dvd_right a b
+  have hg0 : Int.ofNat g ≠ 0 := by
+    intro hzero
+    rcases hgb with ⟨q, hq⟩
+    rw [hzero, Int.zero_mul] at hq
+    exact hb hq
+  have hqa : HexArith.Int.exactDiv a (Int.ofNat g) * Int.ofNat g = a := by
+    simpa [HexArith.Int.exactDiv] using Int.ediv_mul_cancel hga
+  have hqb : HexArith.Int.exactDiv b (Int.ofNat g) * Int.ofNat g = b := by
+    simpa [HexArith.Int.exactDiv] using Int.ediv_mul_cancel hgb
+  unfold gcdCoeffs
+  rw [he]
+  dsimp only
+  simp only [Int.mul_neg, Int.sub_neg]
+  apply Int.eq_of_mul_eq_mul_right hg0
+  calc
+    (s * HexArith.Int.exactDiv a (Int.ofNat g) +
+        t * HexArith.Int.exactDiv b (Int.ofNat g)) * Int.ofNat g =
+        s * a + t * b := by rw [Int.add_mul, Int.mul_assoc, hqa,
+          Int.mul_assoc, hqb]
+    _ = Int.ofNat g := by simpa [hg] using hbez
+    _ = 1 * Int.ofNat g := by rw [Int.one_mul]
 
 end Hex.Matrix.Hermite

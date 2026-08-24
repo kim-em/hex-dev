@@ -521,6 +521,109 @@ private theorem run_transform (A : Matrix Int n m) :
     intro state col h
     exact column_preserves h col)
 
+set_option maxHeartbeats 800000 in
+/-- The explicit inverse accumulator remains a right inverse of its transform. -/
+private theorem run_inverse_mul (A : Matrix Int n m) :
+    (run (inverseAccumulator n) A).accumulator.transform *
+        (run (inverseAccumulator n) A).accumulator.inverse =
+      Matrix.identity n := by
+  let ops := inverseAccumulator n
+  let Valid (s : Result (TransformPair n) n m) : Prop :=
+    s.accumulator.transform * s.accumulator.inverse = Matrix.identity n
+  have swap_preserves {s : Result (TransformPair n) n m}
+      (h : Valid s) (i k : Fin n) : Valid (swapStep ops s i k) := by
+    rw [swapStep]
+    split
+    · exact h
+    · change Matrix.rowSwap s.accumulator.transform i k *
+          Matrix.colSwap s.accumulator.inverse i k = Matrix.identity n
+      rw [Matrix.rowSwap_mul, mul_colSwap, h, swap_inverse_identity]
+  have gcd_preserves {s : Result (TransformPair n) n m}
+      (h : Valid s) (col : Fin m) (i k : Fin n) (hik : i ≠ k) :
+      Valid (gcdStep ops col i k s) := by
+    rw [gcdStep]
+    split
+    · exact h
+    · rename_i hb
+      let a := s.matrix[(i, col)]
+      let b := s.matrix[(k, col)]
+      rcases hc : gcdCoeffs a b with ⟨x, y, z, w⟩
+      have hdet := gcdCoeffs_det (a := a) (b := b) hb
+      rw [hc] at hdet
+      dsimp only at hdet
+      dsimp [a, b] at hc
+      dsimp only
+      rw [hc]
+      change combineRows s.accumulator.transform i k x y z w *
+          combineCols s.accumulator.inverse i k w (-z) (-y) x =
+        Matrix.identity n
+      rw [combineRows_mul, mul_combineCols, h,
+        combine_inverse_identity i k hik x y z w hdet]
+  have sign_preserves {s : Result (TransformPair n) n m}
+      (h : Valid s) (col : Fin m) (i : Fin n) : Valid (signStep ops col i s) := by
+    rw [signStep]
+    split
+    · change Matrix.rowScale s.accumulator.transform i (-1) *
+          Matrix.colScale s.accumulator.inverse i (-1) = Matrix.identity n
+      rw [Matrix.rowScale_mul, mul_colScale, h, negate_inverse_identity]
+    · exact h
+  have reduce_preserves {s : Result (TransformPair n) n m}
+      (h : Valid s) (col : Fin m) (i k : Fin n) (hik : i ≠ k) :
+      Valid (reduceStep ops col i k s) := by
+    rw [reduceStep]
+    split
+    · exact h
+    · change Matrix.rowAdd s.accumulator.transform i k _ *
+          Matrix.colAdd s.accumulator.inverse k i (-_) = Matrix.identity n
+      rw [Matrix.rowAdd_mul, Matrix.mul_colAdd, h]
+      exact add_inverse_identity i k hik _
+  have fold_preserves {γ : Type}
+      (step : Result (TransformPair n) n m → γ → Result (TransformPair n) n m)
+      (xs : List γ) {s : Result (TransformPair n) n m} (h : Valid s)
+      (hstep : ∀ {s} x, Valid s → Valid (step s x)) :
+      Valid (xs.foldl step s) := by
+    induction xs generalizing s with
+    | nil => exact h
+    | cons x xs ih =>
+        rw [List.foldl_cons]
+        exact ih (hstep x h)
+  have clear_preserves {s : Result (TransformPair n) n m}
+      (h : Valid s) (col : Fin m) (pivot found : Fin n) :
+      Valid (clearColumn ops s col pivot found) := by
+    rw [clearColumn]
+    exact fold_preserves
+      (fun state (k : Fin n) => if k.val < pivot.val then
+        reduceStep ops col pivot k state else state)
+      (List.finRange n)
+      (sign_preserves
+        (fold_preserves
+          (fun state (k : Fin n) => if pivot.val < k.val then
+            gcdStep ops col pivot k state else state)
+          (List.finRange n) (swap_preserves h pivot found) (by
+            intro state k hk
+            split
+            · exact gcd_preserves hk col pivot k (by omega)
+            · exact hk)) col pivot) (by
+        intro state k hk
+        split
+        · exact reduce_preserves hk col pivot k (by omega)
+        · exact hk)
+  have column_preserves {s : Result (TransformPair n) n m}
+      (h : Valid s) (col : Fin m) : Valid (columnStep ops s col) := by
+    rw [columnStep]
+    split
+    · split
+      · exact h
+      · exact clear_preserves h col _ _
+    · exact h
+  change Valid (run ops A)
+  rw [run]
+  exact fold_preserves (columnStep ops) (List.finRange m) (by
+    change Matrix.identity (R := Int) n * Matrix.identity n = Matrix.identity n
+    exact Matrix.identity_mul _) (by
+    intro state col h
+    exact column_preserves h col)
+
 end Hermite
 
 /-- Hermite data with the inverse transform accumulated on the value path. -/
@@ -605,5 +708,17 @@ theorem hnfWithInv_data (A : Matrix Int n m) :
   subst pt
   subst ut
   rfl
+
+/-- The explicitly accumulated inverse is a right inverse of the transform. -/
+theorem hnfWithInv_mul_inv (A : Matrix Int n m) :
+    (hnfWithInv A).rowData.transform * (hnfWithInv A).inverse =
+      Matrix.identity n := by
+  exact Hermite.run_inverse_mul A
+
+/-- The explicitly accumulated inverse is also a left inverse of the transform. -/
+theorem hnfWithInv_inv_mul (A : Matrix Int n m) :
+    (hnfWithInv A).inverse * (hnfWithInv A).rowData.transform =
+      Matrix.identity n := by
+  exact mul_eq_one_comm (hnfWithInv_mul_inv A)
 
 end Hex.Matrix
