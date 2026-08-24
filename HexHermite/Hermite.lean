@@ -661,6 +661,288 @@ def run (ops : Accumulator α n) (A : Matrix Int n m) : Result α n m :=
   (List.finRange m).foldl (columnStep ops)
     { matrix := A, pivots := [], accumulator := ops.init }
 
+/-- Shape invariant after processing the first `bound` columns. -/
+private structure PrefixForm (s : Result α n m) (bound : Nat) : Prop where
+  rank_le_n : s.pivots.length ≤ n
+  rank_le_bound : s.pivots.length ≤ bound
+  pivot_lt_bound : ∀ i : Fin s.pivots.length, (s.pivots.get i).val < bound
+  pivots_sorted : ∀ i j : Fin s.pivots.length, i < j → s.pivots.get i < s.pivots.get j
+  leading : ∀ (i : Fin s.pivots.length) (row : Fin n), row.val = i.val →
+    ∀ j : Fin m, j < s.pivots.get i → s.matrix[(row, j)] = 0
+  pivot_pos : ∀ (i : Fin s.pivots.length) (row : Fin n), row.val = i.val →
+    0 < s.matrix[(row, s.pivots.get i)]
+  below_zero : ∀ (i : Fin s.pivots.length) (row : Fin n), i.val < row.val →
+    s.matrix[(row, s.pivots.get i)] = 0
+  above_bounds : ∀ (i : Fin s.pivots.length) (row : Fin n), row.val < i.val →
+    0 ≤ s.matrix[(row, s.pivots.get i)] ∧
+      ∀ pivotRow : Fin n, pivotRow.val = i.val →
+        s.matrix[(row, s.pivots.get i)] < s.matrix[(pivotRow, s.pivots.get i)]
+  zero_prefix : ∀ row : Fin n, s.pivots.length ≤ row.val →
+    ∀ j : Fin m, j.val < bound → s.matrix[(row, j)] = 0
+
+private def prefixRun (ops : Accumulator α n) (A : Matrix Int n m) (bound : Nat) :
+    Result α n m :=
+  ((List.finRange m).take bound).foldl (columnStep ops)
+    { matrix := A, pivots := [], accumulator := ops.init }
+
+private theorem prefixRun_zero (ops : Accumulator α n) (A : Matrix Int n m) :
+    PrefixForm (prefixRun ops A 0) 0 := by
+  refine { rank_le_n := by simp [prefixRun]
+           rank_le_bound := by simp [prefixRun]
+           pivot_lt_bound := ?_
+           pivots_sorted := ?_
+           leading := ?_
+           pivot_pos := ?_
+           below_zero := ?_
+           above_bounds := ?_
+           zero_prefix := ?_ }
+  all_goals simp [prefixRun]
+
+private theorem prefixRun_succ (ops : Accumulator α n) (A : Matrix Int n m)
+    {bound : Nat} (hbound : bound < m) :
+    prefixRun ops A (bound + 1) =
+      columnStep ops (prefixRun ops A bound) ⟨bound, hbound⟩ := by
+  unfold prefixRun
+  rw [List.take_succ_eq_append_getElem]
+  · rw [List.foldl_append]
+    simp only [List.foldl_cons, List.foldl_nil]
+    congr 1
+    apply Fin.ext
+    rw [List.getElem_finRange]
+    rfl
+  · simpa using hbound
+
+private theorem PrefixForm.extend {s : Result α n m} {bound : Nat}
+    (h : PrefixForm s bound) (col : Fin m) (hcol : col.val = bound)
+    (hz : ∀ row : Fin n, s.pivots.length ≤ row.val → s.matrix[(row, col)] = 0) :
+    PrefixForm s (bound + 1) := by
+  refine
+    { rank_le_n := h.rank_le_n
+      rank_le_bound := by
+        have hr := h.rank_le_bound
+        omega
+      pivot_lt_bound := fun i => by have := h.pivot_lt_bound i; omega
+      pivots_sorted := h.pivots_sorted
+      leading := h.leading
+      pivot_pos := h.pivot_pos
+      below_zero := h.below_zero
+      above_bounds := h.above_bounds
+      zero_prefix := ?_ }
+  intro row hr j hj
+  by_cases hjb : j.val < bound
+  · exact h.zero_prefix row hr j hjb
+  · have hjc : j = col := by
+      apply Fin.ext
+      omega
+    subst j
+    exact hz row hr
+
+private theorem get_append_old (ps : List (Fin m)) (col : Fin m)
+    (i : Fin ps.length) :
+    (ps ++ [col]).get ⟨i.val, by simp; omega⟩ = ps.get i := by
+  simp [List.get_eq_getElem]
+
+private theorem get_append_last (ps : List (Fin m)) (col : Fin m) :
+    (ps ++ [col]).get ⟨ps.length, by simp⟩ = col := by
+  simp [List.get_eq_getElem]
+
+private theorem PrefixForm.appendClear {s : Result α n m} {bound : Nat}
+    (h : PrefixForm s bound) (ops : Accumulator α n) (col : Fin m)
+    (hcol : col.val = bound) (hr : s.pivots.length < n) (found : Fin n)
+    (hfoundGe : s.pivots.length ≤ found.val)
+    (hfound : s.matrix[(found, col)] ≠ 0) :
+    let pivot : Fin n := ⟨s.pivots.length, hr⟩
+    let t := clearColumn ops s col pivot found
+    PrefixForm { t with pivots := s.pivots ++ [col] } (bound + 1) := by
+  let pivot : Fin n := ⟨s.pivots.length, hr⟩
+  let t := clearColumn ops s col pivot found
+  have hcurrent := clearColumn_column ops s col pivot found hfound
+  have prior (row : Fin n) (j : Fin m) (hj : j.val < bound) :
+      t.matrix[(row, j)] = s.matrix[(row, j)] := by
+    exact clearColumn_prior ops s col j pivot found hfoundGe
+      (fun active ha => h.zero_prefix active ha j hj) row
+  dsimp only [t, pivot] at prior hcurrent
+  have oldGet (i : Fin s.pivots.length) :
+      (s.pivots ++ [col]).get ⟨i.val, by simp; omega⟩ = s.pivots.get i :=
+    get_append_old s.pivots col i
+  have lastGet :
+      (s.pivots ++ [col]).get ⟨s.pivots.length, by simp⟩ = col :=
+    get_append_last s.pivots col
+  refine
+    { rank_le_n := by simp; omega
+      rank_le_bound := by simp; have := h.rank_le_bound; omega
+      pivot_lt_bound := ?_
+      pivots_sorted := ?_
+      leading := ?_
+      pivot_pos := ?_
+      below_zero := ?_
+      above_bounds := ?_
+      zero_prefix := ?_ }
+  · intro i
+    by_cases hi : i.val < s.pivots.length
+    · let old : Fin s.pivots.length := ⟨i.val, hi⟩
+      have hei : i = ⟨old.val, by simp; omega⟩ := Fin.ext rfl
+      have hget : (s.pivots ++ [col]).get i = s.pivots.get old := by
+        rw [hei]
+        exact oldGet old
+      rw [hget]
+      have := h.pivot_lt_bound old
+      omega
+    · have hiBound : i.val < s.pivots.length + 1 := by simpa using i.isLt
+      have hilast : i.val = s.pivots.length := by omega
+      have hei : i = ⟨s.pivots.length, by simp⟩ := Fin.ext hilast
+      have hget : (s.pivots ++ [col]).get i = col := by
+        rw [hei]
+        exact lastGet
+      rw [hget]
+      omega
+  · intro i j hij
+    by_cases hj : j.val < s.pivots.length
+    · have hi : i.val < s.pivots.length := by omega
+      let oi : Fin s.pivots.length := ⟨i.val, hi⟩
+      let oj : Fin s.pivots.length := ⟨j.val, hj⟩
+      have hei : i = ⟨oi.val, by simp; omega⟩ := Fin.ext rfl
+      have hej : j = ⟨oj.val, by simp; omega⟩ := Fin.ext rfl
+      have hgeti : (s.pivots ++ [col]).get i = s.pivots.get oi := by
+        rw [hei]; exact oldGet oi
+      have hgetj : (s.pivots ++ [col]).get j = s.pivots.get oj := by
+        rw [hej]; exact oldGet oj
+      rw [hgeti, hgetj]
+      exact h.pivots_sorted oi oj (by omega)
+    · have hjBound : j.val < s.pivots.length + 1 := by simpa using j.isLt
+      have hjlast : j.val = s.pivots.length := by omega
+      have hi : i.val < s.pivots.length := by omega
+      let oi : Fin s.pivots.length := ⟨i.val, hi⟩
+      have hei : i = ⟨oi.val, by simp; omega⟩ := Fin.ext rfl
+      have hej : j = ⟨s.pivots.length, by simp⟩ := Fin.ext hjlast
+      have hgeti : (s.pivots ++ [col]).get i = s.pivots.get oi := by
+        rw [hei]; exact oldGet oi
+      have hgetj : (s.pivots ++ [col]).get j = col := by
+        rw [hej]; exact lastGet
+      rw [hgeti, hgetj]
+      have := h.pivot_lt_bound oi
+      omega
+  · intro i row hrow j hj
+    by_cases hi : i.val < s.pivots.length
+    · let old : Fin s.pivots.length := ⟨i.val, hi⟩
+      have hei : i = ⟨old.val, by simp; omega⟩ := Fin.ext rfl
+      have hget : (s.pivots ++ [col]).get i = s.pivots.get old := by
+        rw [hei]; exact oldGet old
+      rw [hget] at hj
+      rw [prior row j (by have := h.pivot_lt_bound old; omega)]
+      exact h.leading old row (by omega) j hj
+    · have hiBound : i.val < s.pivots.length + 1 := by simpa using i.isLt
+      have hilast : i.val = s.pivots.length := by omega
+      have hei : i = ⟨s.pivots.length, by simp⟩ := Fin.ext hilast
+      have hget : (s.pivots ++ [col]).get i = col := by
+        rw [hei]; exact lastGet
+      rw [hget] at hj
+      rw [prior row j (by omega)]
+      exact h.zero_prefix row (by omega) j (by omega)
+  · intro i row hrow
+    by_cases hi : i.val < s.pivots.length
+    · let old : Fin s.pivots.length := ⟨i.val, hi⟩
+      have hei : i = ⟨old.val, by simp; omega⟩ := Fin.ext rfl
+      have hget : (s.pivots ++ [col]).get i = s.pivots.get old := by
+        rw [hei]; exact oldGet old
+      rw [hget]
+      rw [prior row (s.pivots.get old) (h.pivot_lt_bound old)]
+      exact h.pivot_pos old row (by omega)
+    · have hiBound : i.val < s.pivots.length + 1 := by simpa using i.isLt
+      have hilast : i.val = s.pivots.length := by omega
+      have hei : i = ⟨s.pivots.length, by simp⟩ := Fin.ext hilast
+      have hget : (s.pivots ++ [col]).get i = col := by
+        rw [hei]; exact lastGet
+      rw [hget]
+      have hroweq : row = pivot := Fin.ext (by omega)
+      subst row
+      exact hcurrent.1
+  · intro i row hbelow
+    by_cases hi : i.val < s.pivots.length
+    · let old : Fin s.pivots.length := ⟨i.val, hi⟩
+      have hei : i = ⟨old.val, by simp; omega⟩ := Fin.ext rfl
+      have hget : (s.pivots ++ [col]).get i = s.pivots.get old := by
+        rw [hei]; exact oldGet old
+      rw [hget]
+      rw [prior row (s.pivots.get old) (h.pivot_lt_bound old)]
+      exact h.below_zero old row (by omega)
+    · have hiBound : i.val < s.pivots.length + 1 := by simpa using i.isLt
+      have hilast : i.val = s.pivots.length := by omega
+      have hei : i = ⟨s.pivots.length, by simp⟩ := Fin.ext hilast
+      have hget : (s.pivots ++ [col]).get i = col := by
+        rw [hei]; exact lastGet
+      rw [hget]
+      exact hcurrent.2.1 row (by omega)
+
+  · intro i row habove
+    by_cases hi : i.val < s.pivots.length
+    · let old : Fin s.pivots.length := ⟨i.val, hi⟩
+      have hei : i = ⟨old.val, by simp; omega⟩ := Fin.ext rfl
+      have hget : (s.pivots ++ [col]).get i = s.pivots.get old := by
+        rw [hei]; exact oldGet old
+      rw [hget]
+      have hold := h.above_bounds old row (by omega)
+      rw [prior row (s.pivots.get old) (h.pivot_lt_bound old)]
+      refine ⟨hold.1, ?_⟩
+      intro pivotRow hpivotRow
+      rw [prior pivotRow (s.pivots.get old) (h.pivot_lt_bound old)]
+      exact hold.2 pivotRow hpivotRow
+    · have hiBound : i.val < s.pivots.length + 1 := by simpa using i.isLt
+      have hilast : i.val = s.pivots.length := by omega
+      have hei : i = ⟨s.pivots.length, by simp⟩ := Fin.ext hilast
+      have hget : (s.pivots ++ [col]).get i = col := by
+        rw [hei]; exact lastGet
+      rw [hget]
+      have hb := hcurrent.2.2 row (by omega)
+      refine ⟨hb.1, ?_⟩
+      intro pivotRow hpivotRow
+      have heq : pivotRow = pivot := Fin.ext (by omega)
+      subst pivotRow
+      exact hb.2
+  · intro row hzero j hj
+    simp only [List.length_append, List.length_singleton] at hzero
+    by_cases hjb : j.val < bound
+    · rw [prior row j hjb]
+      exact h.zero_prefix row (by omega) j hjb
+    · have hjc : j = col := by apply Fin.ext; omega
+      subst j
+      exact hcurrent.2.1 row (by omega)
+
+private theorem columnStep_prefix (ops : Accumulator α n) {s : Result α n m}
+    {bound : Nat} (h : PrefixForm s bound) (col : Fin m) (hcol : col.val = bound) :
+    PrefixForm (columnStep ops s col) (bound + 1) := by
+  by_cases hr : s.pivots.length < n
+  · rw [columnStep, dif_pos hr]
+    cases hp : findPivot? s.matrix col s.pivots.length with
+    | none =>
+        exact h.extend col hcol (fun row hrow => findPivot?_none hp row hrow)
+    | some found =>
+        have hf := findPivot?_some hp
+        have ha := h.appendClear ops col hcol hr found hf.1 hf.2
+        simp only
+        have hpiv := clearColumn_pivots ops s col ⟨s.pivots.length, hr⟩ found
+        simpa [hpiv] using ha
+  · rw [columnStep, dif_neg hr]
+    exact h.extend col hcol (fun row hrow => by
+      have hn := h.rank_le_n
+      omega)
+
+private theorem prefixRun_form (ops : Accumulator α n) (A : Matrix Int n m)
+    (bound : Nat) (hbound : bound ≤ m) : PrefixForm (prefixRun ops A bound) bound := by
+  induction bound with
+  | zero => exact prefixRun_zero ops A
+  | succ bound ih =>
+      have hlt : bound < m := by omega
+      rw [prefixRun_succ ops A hlt]
+      exact columnStep_prefix ops (ih (by omega)) ⟨bound, hlt⟩ rfl
+
+private theorem run_form (ops : Accumulator α n) (A : Matrix Int n m) :
+    PrefixForm (run ops A) m := by
+  have h := prefixRun_form ops A m (Nat.le_refl m)
+  have ht : (List.finRange m).take m = List.finRange m := by
+    simpa using (@List.take_length (Fin m) (List.finRange m))
+  simpa [prefixRun, run, ht] using h
+
 /-- Two accumulator runs agree on the computational form and pivot schedule. -/
 def Result.Same (s : Result α n m) (t : Result β n m) : Prop :=
   s.matrix = t.matrix ∧ s.pivots = t.pivots
@@ -916,6 +1198,11 @@ theorem run_inverse_transform (A : Matrix Int n m) :
 @[expose]
 def Result.pivotVector (s : Result α n m) : Vector (Fin m) s.pivots.length :=
   ⟨s.pivots.toArray, by simp⟩
+
+@[simp] theorem Result.pivotVector_get (s : Result α n m)
+    (i : Fin s.pivots.length) : s.pivotVector.get i = s.pivots.get i := by
+  change s.pivots.toArray[i.val] = s.pivots[i.val]
+  apply List.getElem_toArray
 
 /-- The bounded sweep creates no more than one pivot per row. -/
 theorem run_rank_le (ops : Accumulator α n) (A : Matrix Int n m) :
@@ -1223,5 +1510,77 @@ theorem hnfWithInv_inv_mul (A : Matrix Int n m) :
     (hnfWithInv A).inverse * (hnfWithInv A).rowData.transform =
       Matrix.identity n := by
   exact mul_eq_one_comm (hnfWithInv_mul_inv A)
+
+/-- The executable Hermite sweep satisfies the complete row-HNF contract. -/
+theorem hnfData_isHNF (A : Matrix Int n m) : IsHNF A (hnfData A) := by
+  let s := Hermite.run (Hermite.transformAccumulator n) A
+  have hs : Hermite.PrefixForm s m :=
+    Hermite.run_form (Hermite.transformAccumulator n) A
+  have hleft : (hnfWithInv A).inverse * (hnfData A).transform =
+      Matrix.identity n := by
+    rw [← hnfWithInv_data A]
+    exact hnfWithInv_inv_mul A
+  have hright : (hnfData A).transform * (hnfWithInv A).inverse =
+      Matrix.identity n := by
+    rw [← hnfWithInv_data A]
+    exact hnfWithInv_mul_inv A
+  change IsHNF A
+    { rank := s.pivots.length
+      echelon := s.matrix
+      transform := s.accumulator
+      pivotCols := s.pivotVector }
+  let pivotRow : Fin s.pivots.length → Fin n := fun i =>
+    ⟨i.val, Nat.lt_of_lt_of_le i.isLt hs.rank_le_n⟩
+  have pivotGet (i : Fin s.pivots.length) :
+      s.pivotVector.get i = s.pivots.get i :=
+    Hermite.Result.pivotVector_get s i
+  refine
+    { toIsEchelonForm :=
+        { transform_mul := hnfData_transform_mul A
+          transform_inv := ⟨(hnfWithInv A).inverse, ?_⟩
+          transform_right_inv := ⟨(hnfWithInv A).inverse, ?_⟩
+          rank_le_n := hs.rank_le_n
+          rank_le_m := hs.rank_le_bound
+          pivotCols_sorted := ?_
+          below_pivot_zero := ?_
+          zero_row := ?_ }
+      pivot_leading := ?_
+      pivot_pos := ?_
+      above_nonneg := ?_
+      above_lt := ?_ }
+  · exact hleft
+  · exact hright
+  · intro i j hij
+    change s.pivotVector.get i < s.pivotVector.get j
+    rw [Hermite.Result.pivotVector_get, Hermite.Result.pivotVector_get]
+    exact hs.pivots_sorted i j hij
+  · intro i row hir
+    change s.matrix[row][s.pivotVector.get i] = 0
+    rw [← Matrix.getElem_pair_eq_nested, pivotGet]
+    exact hs.below_zero i row hir
+  · intro row hr
+    apply Vector.ext
+    intro j hj
+    simp only [Vector.getElem_zero]
+    change s.matrix[row][(⟨j, hj⟩ : Fin m)] = 0
+    simpa only [Matrix.getElem_pair_eq_nested] using
+      hs.zero_prefix row hr ⟨j, hj⟩ (by omega)
+  · intro i j hj
+    change s.matrix[pivotRow i][j] = 0
+    simpa only [Hermite.Result.pivotVector_get, Matrix.getElem_pair_eq_nested] using
+      hs.leading i (pivotRow i) rfl j hj
+  · intro i
+    change 0 < s.matrix[pivotRow i][s.pivotVector.get i]
+    rw [← Matrix.getElem_pair_eq_nested, pivotGet]
+    exact hs.pivot_pos i (pivotRow i) rfl
+  · intro i row hir
+    change 0 ≤ s.matrix[row][s.pivotVector.get i]
+    rw [← Matrix.getElem_pair_eq_nested, pivotGet]
+    exact (hs.above_bounds i row hir).1
+  · intro i row hir
+    change s.matrix[row][s.pivotVector.get i] <
+      s.matrix[pivotRow i][s.pivotVector.get i]
+    rw [← Matrix.getElem_pair_eq_nested, ← Matrix.getElem_pair_eq_nested, pivotGet]
+    exact (hs.above_bounds i row hir).2 (pivotRow i) rfl
 
 end Hex.Matrix
