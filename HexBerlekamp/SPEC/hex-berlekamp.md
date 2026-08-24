@@ -171,6 +171,31 @@ input-output relation. They record the exact source revision,
 toolchain, prime, degree, input family, machine, and repetition
 protocol.
 
+## External comparators
+
+Two comparators are declared, both `informational`
+(see `libraries.yml` for the machine-readable form):
+
+- **FLINT `nmod_poly.is_irreducible` via python-flint**, paired with
+  the Lean `runRabinTestChecksum` ladder.
+- **FLINT `nmod_poly.factor_distinct_deg` via python-flint**, paired
+  with the Lean `runDistinctDegreeChecksum` ladder.
+
+Both are wired as persistent-subprocess calls through the shared
+python-flint driver per SPEC/benchmarking.md §External comparators
+§Process call, with the driver spawned outside the timed region and
+steady-state medians amortised over inner repeats. The measured gap is
+structural: FLINT's hand-tuned C word-level kernels (nmod arithmetic
+with precomputed inverses, tuned modular composition and Frobenius
+strategies) against Hex's verified generic `FpPoly` arithmetic, at
+10x-373x (Rabin) and 44x-749x (DDF) across the eligible ladders in the
+2026-08-22 paired refresh. These comparators were originally declared
+`gating` with a parity goal; that goal was an aspiration the library's
+algorithm class does not support at comparable engineering effort, and
+the reclassification to `informational` records the structural nature
+of the gap rather than a harness artefact. The ratios are reported for
+orientation and do not gate Phase 4.
+
 ## References
 
 - E. R. Berlekamp, “Factoring Polynomials Over Large Finite Fields,”

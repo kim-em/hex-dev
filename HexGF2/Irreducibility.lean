@@ -282,12 +282,6 @@ This file proves the checker-to-`rabinTest` bridge; `HexGF2/RabinSoundness.lean`
 contains `rabinTest_imp_irreducible` and the certificate-to-irreducible
 corollaries. -/
 
-private theorem one_ne_zero_gf2poly : (1 : GF2Poly) ≠ 0 := by
-  intro h
-  have hwords := congrArg toWords h
-  have hbad : toWords (1 : GF2Poly) ≠ toWords (0 : GF2Poly) := by decide
-  exact hbad hwords
-
 private theorem one_degree_eq_zero : (1 : GF2Poly).degree = 0 := degree_one
 
 private theorem one_degree?_eq_some_zero : (1 : GF2Poly).degree? = some 0 := degree?_one
@@ -299,8 +293,8 @@ private theorem isUnitPolynomial_of_dvd_one {g : GF2Poly}
     rcases hdiv with ⟨r, hr⟩
     intro hg
     rw [hg, zero_mul] at hr
-    exact one_ne_zero_gf2poly hr
-  have hgle := degree_le_of_dvd_nonzero hg_ne one_ne_zero_gf2poly hdiv
+    exact one_ne_zero hr
+  have hgle := degree_le_of_dvd_nonzero hg_ne one_ne_zero hdiv
   rw [one_degree_eq_zero] at hgle
   have hgdeg : g.degree = 0 := Nat.eq_zero_of_le_zero hgle
   have hgzeroFalse : g.isZero = false := by

@@ -56,7 +56,8 @@ than accidentally reuse the same failed stream. -/
 structure RhoFailure where
   /-- Why the search stopped. -/
   stop : RhoStop
-  /-- How many restart attempts were consumed. -/
+  /-- Restart attempts consumed by this failing search alone; callers
+  running several searches accumulate their own totals. -/
   attempts : Nat
   /-- The advanced generator state. -/
   rand : Rand
@@ -75,11 +76,14 @@ private def brentGo (n c : Nat) : Nat → Nat → Nat → Nat → Nat → Option
       else if k + 1 < r then brentGo n c fuel x y' r (k + 1)
       else brentGo n c fuel y' y' (r * 2) 0
 
-/-- Inner iteration budget for one Brent restart, scaled past the expected
-`n^(1/4)` cycle length; restarts absorb the variance. Runtime only, so
-`Nat.sqrt` is fine here. -/
+/-- Inner iteration budget for one Brent restart: scaled past the expected
+`n^(1/4)` cycle length for small `n`, capped at `2^22` so one restart is
+bounded wall-clock at every input size. The cap still covers factors to
+about `2^44`, past rho's documented remit of roughly `10^12`; beyond it
+the honest outcome is a clean `exhausted`, not an inner loop whose budget
+outlives the caller. Runtime only, so `Nat.sqrt` is fine here. -/
 private def rhoInnerFuel (n : Nat) : Nat :=
-  16 * (Nat.sqrt (Nat.sqrt n) + 2)
+  min (16 * (Nat.sqrt (Nat.sqrt n) + 2)) (1 <<< 22)
 
 /-- Draw the restart parameters: a polynomial offset in `[1, n - 3]`, a
 starting point below `n`, and the advanced state. Search seeding, so the
@@ -105,7 +109,9 @@ private def rhoTry (n : Nat) : Nat → Nat → Rand → Except RhoFailure (Nat �
 
 /-- A dynamically validated proper-factor candidate by Brent rho. `fuel`
 bounds the restart attempts; each restart draws a fresh polynomial offset
-and starting point and runs a cycle budget scaled to `n^(1/4)`. Every
+and starting point and runs a cycle budget scaled to `n^(1/4)` and capped
+at `2^22` (see `rhoInnerFuel`), so exhaustion arrives rather than hangs
+when the smallest factor is out of rho's reach. Every
 success is validated (`1 < d < n` and `d ∣ n`) before it is returned, so
 randomness and fuel affect only whether a factor is found. -/
 def rhoFactor? (n : Nat) (r : Rand) (fuel : Nat) :
@@ -383,7 +389,8 @@ deriving Repr, DecidableEq
 structure PrimeCertFailure where
   /-- Why the search stopped. -/
   stop : PrimeCertStop
-  /-- How many attempts were consumed. -/
+  /-- Attempts consumed by the subsearch that failed; earlier successful
+  subsearches (witnesses found, factors split) are not accumulated. -/
   attempts : Nat
   /-- The advanced generator state. -/
   rand : Rand
@@ -391,7 +398,8 @@ deriving Repr
 
 /-- A resumable bounded-decision failure. -/
 structure PrimeDecisionFailure where
-  /-- How many attempts were consumed. -/
+  /-- Attempts consumed by the failing certificate subsearch (see
+  `PrimeCertFailure.attempts`). -/
   attempts : Nat
   /-- The advanced generator state. -/
   rand : Rand
@@ -399,7 +407,8 @@ deriving Repr
 
 /-- A resumable next-prime-search failure. -/
 structure NextPrimeFailure where
-  /-- How many candidates were examined. -/
+  /-- Candidates conclusively rejected before the failure; the candidate
+  whose decision failed is not counted. -/
   attempts : Nat
   /-- The advanced generator state. -/
   rand : Rand

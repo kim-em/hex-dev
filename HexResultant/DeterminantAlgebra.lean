@@ -7,6 +7,7 @@ Authors: Kim Morrison
 module
 
 public import HexResultant.SubresultantMinor
+public import HexDeterminant.Adjugate
 import all HexResultant.SubresultantMinor
 
 public section
@@ -33,12 +34,14 @@ def setCol {R : Type u} {n : Nat} (M : Square R n) (dst : Fin n)
     (v : Fin n → R) : Square R n :=
   fun i j => if j = dst then v i else M i j
 
+/-- Entrywise value of a column replacement. -/
 @[simp, grind =]
 theorem setCol_apply {R : Type u} {n : Nat} (M : Square R n)
     (dst : Fin n) (v : Fin n → R) (i j : Fin n) :
     setCol M dst v i j = if j = dst then v i else M i j := by
   rfl
 
+/-- Replacing a column by itself changes nothing. -/
 @[simp, grind =]
 theorem setCol_self {R : Type u} {n : Nat} (M : Square R n) (dst : Fin n) :
     setCol M dst (fun i => M i dst) = M := by
@@ -57,6 +60,7 @@ def swapAdjacent {R : Type u} {n : Nat} (M : Square R (n + 1))
     else if j = left.succ then M i left.castSucc
     else M i j
 
+/-- Entrywise value of an adjacent column swap. -/
 @[simp, grind =]
 theorem swapAdjacent_apply {R : Type u} {n : Nat}
     (M : Square R (n + 1)) (left : Fin n) (i j : Fin (n + 1)) :
@@ -66,12 +70,14 @@ theorem swapAdjacent_apply {R : Type u} {n : Nat}
       else M i j := by
   rfl
 
+/-- After an adjacent swap, the left column reads the old right column. -/
 @[simp, grind =]
 theorem swapAdjacent_left {R : Type u} {n : Nat}
     (M : Square R (n + 1)) (left : Fin n) (i : Fin (n + 1)) :
     swapAdjacent M left i left.castSucc = M i left.succ := by
   simp [swapAdjacent]
 
+/-- After an adjacent swap, the right column reads the old left column. -/
 @[simp, grind =]
 theorem swapAdjacent_right {R : Type u} {n : Nat}
     (M : Square R (n + 1)) (left : Fin n) (i : Fin (n + 1)) :
@@ -82,6 +88,7 @@ theorem swapAdjacent_right {R : Type u} {n : Nat}
     simp at hval
   simp [swapAdjacent, hne]
 
+/-- Columns away from the swapped pair are untouched. -/
 @[simp, grind =]
 theorem swapAdjacent_of_ne {R : Type u} {n : Nat}
     (M : Square R (n + 1)) (left : Fin n) (i j : Fin (n + 1))
@@ -89,6 +96,7 @@ theorem swapAdjacent_of_ne {R : Type u} {n : Nat}
     swapAdjacent M left i j = M i j := by
   simp [swapAdjacent, hl, hr]
 
+/-- Adjacent column swaps are involutive. -/
 @[simp, grind =]
 theorem swapAdjacent_swapAdjacent {R : Type u} {n : Nat}
     (M : Square R (n + 1)) (left : Fin n) :
@@ -106,12 +114,15 @@ theorem swapAdjacent_swapAdjacent {R : Type u} {n : Nat}
       simp [swapAdjacent, hne.symm]
     · simp [swapAdjacent, hl, hr]
 
+/-- Below the skipped position, the embedding preserves the numeric index. -/
 @[simp, grind =]
 theorem skipIndex_val_of_lt {n : Nat} (skip : Fin (n + 1)) (i : Fin n)
     (h : i.val < skip.val) :
     (skipIndex skip i).val = i.val := by
   simp [skipIndex, h]
 
+/-- From the skipped position on, the embedding shifts the numeric index up
+by one. -/
 @[simp, grind =]
 theorem skipIndex_val_of_not_lt {n : Nat} (skip : Fin (n + 1)) (i : Fin n)
     (h : ¬i.val < skip.val) :
@@ -160,6 +171,7 @@ def eraseIndex {n : Nat} (skip target : Fin (n + 1))
         omega
       omega⟩
 
+/-- The skipped-index embedding undoes index contraction. -/
 @[simp, grind =]
 theorem skipIndex_eraseIndex {n : Nat} (skip target : Fin (n + 1))
     (h : target ≠ skip) :
@@ -196,6 +208,8 @@ def eraseAdjacent {n : Nat} (removed : Fin (n + 2)) (left : Fin (n + 1))
         omega
       omega⟩
 
+/-- The contracted left column of an adjacent pair embeds back onto the
+original left column. -/
 @[simp, grind =]
 theorem skipIndex_eraseAdjacent_left {n : Nat} (removed : Fin (n + 2))
     (left : Fin (n + 1)) (hleft : removed ≠ left.castSucc)
@@ -218,6 +232,8 @@ theorem skipIndex_eraseAdjacent_left {n : Nat} (removed : Fin (n + 2))
       omega
     simp [eraseAdjacent, hlt, skipIndex, hkeep]
 
+/-- The contracted right column of an adjacent pair embeds back onto the
+original right column. -/
 @[simp, grind =]
 theorem skipIndex_eraseAdjacent_right {n : Nat} (removed : Fin (n + 2))
     (left : Fin (n + 1)) (hleft : removed ≠ left.castSucc)
@@ -574,6 +590,491 @@ theorem det_setCol_zero {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
   rw [hcol]
   exact h.trans (by grind)
 
+/-! # Bridge to the reusable matrix determinant
+
+The finite-function determinant remains the definition used by the resultant
+development.  This bridge lets later proof-only cofactor arguments reuse the
+row and adjugate algebra of `HexDeterminant` without changing that definition.
+-/
+
+/-- Regard a proof-only square coefficient family as a `Hex.Matrix`. -/
+@[expose]
+def toMatrix {R : Type u} {n : Nat} (M : Square R n) : Matrix R n n :=
+  Matrix.ofFn M
+
+/-- Entries are unchanged by the matrix view. -/
+@[simp, grind =]
+theorem toMatrix_get {R : Type u} {n : Nat} (M : Square R n)
+    (i j : Fin n) : (toMatrix M)[i][j] = M i j := by
+  rw [toMatrix, Matrix.getElem_ofFn]
+
+/-- The local first-row Laplace determinant agrees with the reusable Leibniz
+matrix determinant. -/
+theorem det_toMatrix {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
+    (M : Square R n) : det M = Matrix.det (toMatrix M) := by
+  induction n with
+  | zero =>
+      rw [det_zero]
+      have h := Matrix.det_principalSubmatrix_zero (toMatrix M)
+      have hmatrix :
+          Matrix.principalSubmatrix (toMatrix M) 0 (Nat.zero_le 0) =
+            toMatrix M := by
+        apply Matrix.ext_getElem
+        intro i
+        exact Fin.elim0 i
+      rw [hmatrix] at h
+      exact h.symm
+  | succ n ih =>
+      let row : Fin (n + 1) := ⟨0, by omega⟩
+      change
+        (List.finRange (n + 1)).foldl
+            (fun acc j =>
+              acc + sign j.val * M row j * det (deleteFirst M j)) 0 =
+          Matrix.det (toMatrix M)
+      rw [Matrix.det_eq_foldl_laplace_row (toMatrix M) row]
+      simp only [toMatrix_get]
+      change
+        (List.finRange (n + 1)).foldl
+            (fun acc j =>
+              acc + sign j.val * M row j * det (deleteFirst M j)) 0 =
+          (List.finRange (n + 1)).foldl
+            (fun acc j =>
+              acc + M row j * Matrix.cofactor (toMatrix M) row j) 0
+      apply foldl_congr
+      · rfl
+      · intro acc j _hj
+        have hminor :
+            Matrix.deleteRowCol (toMatrix M) row j =
+              toMatrix (deleteFirst M j) := by
+          apply Matrix.ext_getElem
+          intro i k
+          rw [Matrix.getElem_deleteRowCol, toMatrix_get, toMatrix_get]
+          rfl
+        have hsign : sign (R := R) j.val =
+            Matrix.cofactorSign (R := R) row j := by
+          unfold sign Matrix.cofactorSign
+          by_cases h : j.val % 2 = 0
+          · rw [if_pos h, if_pos (by simpa [row] using h)]
+          · rw [if_neg h, if_neg (by simpa [row] using h)]
+            grind
+        unfold Matrix.cofactor
+        rw [hminor, ← ih, ← hsign]
+        grind
+
+/-- A local determinant with two equal rows vanishes. -/
+theorem det_eq_zero_of_row_eq {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
+    (M : Square R n) (src dst : Fin n) (h : src ≠ dst)
+    (hrow : ∀ j, M src j = M dst j) :
+    det M = 0 := by
+  rw [det_toMatrix]
+  apply Matrix.det_eq_zero_of_row_eq (toMatrix M) src dst h
+  apply Vector.ext
+  intro j hj
+  change (toMatrix M)[src][(⟨j, hj⟩ : Fin n)] =
+    (toMatrix M)[dst][(⟨j, hj⟩ : Fin n)]
+  rw [toMatrix_get, toMatrix_get]
+  exact hrow _
+
+/-- A square matrix with nonzero determinant has trivial right kernel over an
+exact-division domain. -/
+theorem vector_eq_zero_of_mul_eq_zero {R : Type u}
+    [Lean.Grind.CommRing R] [Div R] [ExactDivLaws R] {n : Nat}
+    (M : Square R n) (hn : 0 < n) (hdet : det M ≠ 0) (v : Vector R n)
+    (hmul : toMatrix M * v = 0) : ∀ j : Fin n, v[j] = 0 := by
+  cases n with
+  | zero => omega
+  | succ n =>
+      have hassoc := Matrix.mul_assoc_vec
+        (Matrix.adjugate (toMatrix M)) (toMatrix M) v
+      have hscale :
+          ((Matrix.det (toMatrix M)) • Matrix.identity (R := R) (n + 1)) * v =
+            (Matrix.det (toMatrix M)) • v := by
+        apply Vector.ext
+        intro i hi
+        let ii : Fin (n + 1) := ⟨i, hi⟩
+        change
+          (((Matrix.det (toMatrix M)) • Matrix.identity (R := R) (n + 1)) * v)[ii] =
+            ((Matrix.det (toMatrix M)) • v)[ii]
+        rw [Matrix.getElem_mulVec, Matrix.row_smul,
+          Vector.dotProduct_smul_left]
+        have hid := congrArg (fun w : Vector R (n + 1) => w[ii])
+          (Matrix.identity_mulVec v)
+        rw [Matrix.getElem_mulVec] at hid
+        change ((Matrix.identity (R := R) (n + 1)).row ii).dotProduct v =
+          v[ii] at hid
+        have hentry : ((Matrix.det (toMatrix M)) • v)[ii] =
+            Matrix.det (toMatrix M) * v[ii] := by
+          simp only [Fin.getElem_fin, Vector.getElem_smul]
+          rfl
+        rw [hid, hentry]
+      rw [Matrix.adjugate_mul, hscale, hmul, Matrix.mulVec_zero] at hassoc
+      intro j
+      have hj := congrArg (fun w : Vector R (n + 1) => w[j]) hassoc
+      have hsmul : ((Matrix.det (toMatrix M)) • v)[j] =
+          Matrix.det (toMatrix M) * v[j] := by
+        simp only [Fin.getElem_fin, Vector.getElem_smul]
+        rfl
+      have hzero : (0 : Vector R (n + 1))[j] = 0 := by
+        simp only [Fin.getElem_fin, Vector.getElem_zero]
+      rw [hsmul, hzero] at hj
+      rw [← det_toMatrix] at hj
+      apply ExactDivLaws.mul_right_cancel hdet
+      grind
+
+/-- The signed cofactor of a column along the final row. -/
+@[expose]
+def lastCofactor {R : Type u} [Lean.Grind.CommRing R] :
+    {n : Nat} → Square R n → Fin n → R
+  | 0, _, j => Fin.elim0 j
+  | n + 1, M, j => Matrix.cofactor (toMatrix M) (Fin.last n) j
+
+/-- A final-row cofactor is independent of the entries in that final row. -/
+theorem lastCofactor_congr {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
+    (M N : Square R n) (j : Fin n)
+    (h : ∀ i k, i.val < n - 1 → M i k = N i k) :
+    lastCofactor M j = lastCofactor N j := by
+  cases n with
+  | zero => exact Fin.elim0 j
+  | succ n =>
+      simp only [lastCofactor]
+      unfold Matrix.cofactor
+      congr 1
+      apply congrArg Matrix.det
+      apply Matrix.ext_getElem
+      intro i k
+      rw [Matrix.getElem_deleteRowCol, Matrix.getElem_deleteRowCol,
+        toMatrix_get, toMatrix_get]
+      apply h
+      simp [Matrix.skipIndex_last]
+
+/-- Laplace expansion along the final row using `lastCofactor`. -/
+theorem det_lastCofactor {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
+    (M : Square R (n + 1)) :
+    det M = (List.finRange (n + 1)).foldl
+      (fun acc j => acc + M (Fin.last n) j * lastCofactor M j) 0 := by
+  rw [det_toMatrix, Matrix.det_eq_foldl_laplace_row (toMatrix M) (Fin.last n)]
+  apply foldl_congr
+  · rfl
+  · intro acc j _hj
+    simp only [toMatrix_get, lastCofactor]
+
+/-- Laplace expansion along the final row, stated for an arbitrary positive
+dimension. -/
+theorem det_lastCofactor_of_pos {R : Type u} [Lean.Grind.CommRing R]
+    {n : Nat} (M : Square R n) (hn : 0 < n) :
+    det M = (List.finRange n).foldl
+      (fun acc j => acc + M ⟨n - 1, by omega⟩ j * lastCofactor M j) 0 := by
+  cases n with
+  | zero => omega
+  | succ n =>
+      rw [det_lastCofactor M]
+      apply foldl_congr
+      · rfl
+      · intro acc j _hj
+        congr 2
+
+/-! # Expansion along the last row
+
+The coefficient row in a generalized Sylvester minor is the last row.  The
+local determinant recurses on the first row, so the following lemmas derive
+the one piece of row algebra needed by the cofactor development solely from
+the column multilinearity above. -/
+
+/-- The column vector supported by one at the final row. -/
+@[expose]
+def lastUnit {R : Type u} [Zero R] [One R] {n : Nat} : Fin (n + 1) → R :=
+  fun i => if i = Fin.last n then 1 else 0
+
+/-- Clear the final entry of one column. -/
+@[expose]
+def clearLast {R : Type u} [Zero R] {n : Nat} (M : Square R (n + 1))
+    (dst : Fin (n + 1)) : Square R (n + 1) :=
+  setCol M dst (fun i => if i = Fin.last n then 0 else M i dst)
+
+/-- Clear the final entries of a list of columns. -/
+@[expose]
+def clearLastCols {R : Type u} [Zero R] {n : Nat} :
+    Square R (n + 1) → List (Fin (n + 1)) → Square R (n + 1)
+  | M, [] => M
+  | M, dst :: cols => clearLastCols (clearLast M dst) cols
+
+/-- The cofactor terms contributed by a list of columns in a final-row
+Laplace expansion. -/
+@[expose]
+def lastRowTerms {R : Type u} [Zero R] [One R] [Add R] [Sub R] [Mul R]
+    {n : Nat} (M : Square R (n + 1)) : List (Fin (n + 1)) → R
+  | [] => 0
+  | dst :: cols =>
+      M (Fin.last n) dst * det (setCol M dst lastUnit) +
+        lastRowTerms M cols
+
+/-- A square family with zero final row has zero determinant. -/
+theorem det_lastRow_zero {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
+    (M : Square R (n + 1)) (hzero : ∀ j, M (Fin.last n) j = 0) :
+    det M = 0 := by
+  induction n with
+  | zero =>
+      change 0 + sign 0 * M 0 0 * 1 = 0
+      have hentry : M 0 0 = 0 := by
+        apply hzero
+      rw [hentry]
+      grind
+  | succ n ih =>
+      have hminor (j : Fin (n + 2)) : det (deleteFirst M j) = 0 := by
+        apply ih
+        intro k
+        change M (Fin.last n).succ (skipIndex j k) = 0
+        have hlast : (Fin.last n).succ = Fin.last (n + 1) := by
+          apply Fin.ext
+          simp
+        rw [hlast]
+        exact hzero _
+      change (List.finRange (n + 2)).foldl
+        (fun acc j => acc + sign j.val * M 0 j * det (deleteFirst M j)) 0 = 0
+      apply foldl_add_zero
+      intro j _hj
+      rw [hminor]
+      grind
+
+/-- A positive-dimensional square family with zero final row has zero
+determinant. -/
+theorem det_lastRow_zero_of_pos {R : Type u} [Lean.Grind.CommRing R]
+    {n : Nat} (M : Square R n) (hn : 0 < n)
+    (hzero : ∀ j, M ⟨n - 1, by omega⟩ j = 0) :
+    det M = 0 := by
+  cases n with
+  | zero => omega
+  | succ n =>
+      apply det_lastRow_zero M
+      intro j
+      have hlast : Fin.last n = ⟨n + 1 - 1, by omega⟩ := by
+        apply Fin.ext
+        simp
+      rw [hlast]
+      exact hzero j
+
+/-- Replacing a column by `lastUnit` makes the determinant independent of
+all other entries in the final row. -/
+theorem det_lastUnit_congr {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
+    (M N : Square R (n + 1)) (dst : Fin (n + 1))
+    (hM : ∀ i, M i dst = lastUnit i)
+    (hN : ∀ i, N i dst = lastUnit i)
+    (hoff : ∀ i j, i ≠ Fin.last n → M i j = N i j) :
+    det M = det N := by
+  induction n with
+  | zero =>
+      have hentry : M (Fin.last 0) dst = N (Fin.last 0) dst :=
+        (hM _).trans (hN _).symm
+      have hdst : dst = Fin.last 0 := Fin.ext (by omega)
+      subst dst
+      have hentry' : M (0 : Fin 1) 0 = N 0 0 := by
+        simpa using hentry
+      change 0 + sign 0 * M 0 0 * 1 = 0 + sign 0 * N 0 0 * 1
+      rw [hentry']
+  | succ n ih =>
+      let row : Fin (n + 2) := ⟨0, by omega⟩
+      have hrow : row ≠ Fin.last (n + 1) := by
+        intro h
+        have := congrArg Fin.val h
+        simp [row] at this
+      have hentry (j : Fin (n + 2)) : M row j = N row j :=
+        hoff row j hrow
+      have hterm (j : Fin (n + 2)) :
+          sign j.val * M row j * det (deleteFirst M j) =
+            sign j.val * N row j * det (deleteFirst N j) := by
+        by_cases hj : j = dst
+        · subst j
+          rw [hM row, hN row]
+          have hunit : lastUnit (R := R) row = 0 := by
+            simp [lastUnit, row]
+          rw [hunit]
+          grind
+        · have hdst : dst ≠ j := fun h => hj h.symm
+          let dst' := eraseIndex j dst hdst
+          have hM' (i : Fin (n + 1)) :
+              deleteFirst M j i dst' = lastUnit i := by
+            unfold deleteFirst
+            rw [skipIndex_eraseIndex]
+            rw [hM]
+            unfold lastUnit
+            by_cases hi : i = Fin.last n
+            · subst i
+              simp
+            · have hisucc : i.succ ≠ Fin.last (n + 1) := by
+                intro h
+                apply hi
+                apply Fin.ext
+                have := congrArg Fin.val h
+                simp at this ⊢
+                omega
+              rw [if_neg hi, if_neg hisucc]
+          have hN' (i : Fin (n + 1)) :
+              deleteFirst N j i dst' = lastUnit i := by
+            unfold deleteFirst
+            rw [skipIndex_eraseIndex]
+            rw [hN]
+            unfold lastUnit
+            by_cases hi : i = Fin.last n
+            · subst i
+              simp
+            · have hisucc : i.succ ≠ Fin.last (n + 1) := by
+                intro h
+                apply hi
+                apply Fin.ext
+                have := congrArg Fin.val h
+                simp at this ⊢
+                omega
+              rw [if_neg hi, if_neg hisucc]
+          have hoff' (i k : Fin (n + 1)) (hi : i ≠ Fin.last n) :
+              deleteFirst M j i k = deleteFirst N j i k := by
+            unfold deleteFirst
+            apply hoff
+            intro hlast
+            apply hi
+            apply Fin.ext
+            have := congrArg Fin.val hlast
+            simp at this ⊢
+            omega
+          have hdet := ih (deleteFirst M j) (deleteFirst N j) dst'
+            hM' hN' hoff'
+          rw [hentry, hdet]
+      change (List.finRange (n + 2)).foldl
+          (fun acc j => acc + sign j.val * M 0 j * det (deleteFirst M j)) 0 =
+        (List.finRange (n + 2)).foldl
+          (fun acc j => acc + sign j.val * N 0 j * det (deleteFirst N j)) 0
+      apply foldl_congr
+      · rfl
+      · intro acc j _hj
+        have := hterm j
+        change acc + sign j.val * M row j * det (deleteFirst M j) =
+          acc + sign j.val * N row j * det (deleteFirst N j)
+        exact congrArg (fun x => acc + x) this
+
+/-- Clearing one column splits off its final-row cofactor term. -/
+theorem det_clearLast {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
+    (M : Square R (n + 1)) (dst : Fin (n + 1)) :
+    det M = det (clearLast M dst) +
+      M (Fin.last n) dst * det (setCol M dst lastUnit) := by
+  let top : Fin (n + 1) → R :=
+    fun i => if i = Fin.last n then 0 else M i dst
+  let bottom : Fin (n + 1) → R :=
+    fun i => M (Fin.last n) dst * lastUnit i
+  have hcol : (fun i => top i + bottom i) = fun i => M i dst := by
+    funext i
+    by_cases hi : i = Fin.last n
+    · subst i
+      simp [top, bottom, lastUnit]
+      grind
+    · simp [top, bottom, lastUnit, hi]
+      grind
+  have hself : setCol M dst (fun i => top i + bottom i) = M := by
+    rw [hcol, setCol_self]
+  have hadd := det_setCol_add M dst top bottom
+  have htop : setCol M dst top = clearLast M dst := rfl
+  have hbottom := det_setCol_smul M dst (M (Fin.last n) dst) lastUnit
+  rw [hself, htop, hbottom] at hadd
+  exact hadd
+
+/-- Clearing a duplicate-free list of columns expands the determinant into
+the remaining matrix plus the corresponding final-row cofactor terms. -/
+theorem det_clearLastCols {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
+    (M : Square R (n + 1)) (cols : List (Fin (n + 1)))
+    (hnodup : cols.Nodup) :
+    det M = det (clearLastCols M cols) + lastRowTerms M cols := by
+  induction cols generalizing M with
+  | nil =>
+      simp [clearLastCols, lastRowTerms]
+      grind
+  | cons dst cols ih =>
+      simp only [List.nodup_cons] at hnodup
+      rw [det_clearLast]
+      rw [ih (clearLast M dst) hnodup.2]
+      have hentry (j : Fin (n + 1)) (hj : j ∈ cols) :
+          clearLast M dst (Fin.last n) j = M (Fin.last n) j := by
+        have hne : j ≠ dst := by
+          intro h
+          subst j
+          exact hnodup.1 hj
+        simp [clearLast, setCol, hne]
+      have hcofactor (j : Fin (n + 1)) (hj : j ∈ cols) :
+          det (setCol (clearLast M dst) j lastUnit) =
+            det (setCol M j lastUnit) := by
+        apply det_lastUnit_congr (dst := j)
+        · intro i
+          simp [setCol]
+        · intro i
+          simp [setCol]
+        · intro i k hi
+          by_cases hkj : k = j
+          · subst k
+            simp [setCol]
+          · by_cases hkd : k = dst
+            · subst k
+              simp [setCol, hkj, clearLast, hi]
+            · simp [setCol, hkj, clearLast, hkd]
+      have hterms : lastRowTerms (clearLast M dst) cols =
+          lastRowTerms M cols := by
+        have terms_congr (A B : Square R (n + 1))
+            (xs : List (Fin (n + 1)))
+            (he : ∀ j, j ∈ xs → A (Fin.last n) j = B (Fin.last n) j)
+            (hc : ∀ j, j ∈ xs →
+              det (setCol A j lastUnit) = det (setCol B j lastUnit)) :
+            lastRowTerms A xs = lastRowTerms B xs := by
+          induction xs with
+          | nil => rfl
+          | cons j js hjs =>
+              simp only [lastRowTerms]
+              rw [he j List.mem_cons_self, hc j List.mem_cons_self]
+              rw [hjs]
+              · intro k hk
+                exact he k (List.mem_cons_of_mem j hk)
+              · intro k hk
+                exact hc k (List.mem_cons_of_mem j hk)
+        exact terms_congr (clearLast M dst) M cols hentry hcofactor
+      rw [hterms]
+      simp only [clearLastCols, lastRowTerms]
+      grind
+
+/-- Laplace expansion of the local determinant along its final row, expressed
+using column replacements by `lastUnit`. -/
+theorem det_lastRow {R : Type u} [Lean.Grind.CommRing R] {n : Nat}
+    (M : Square R (n + 1)) :
+    det M = lastRowTerms M (List.finRange (n + 1)) := by
+  have hexpand := det_clearLastCols M (List.finRange (n + 1))
+    (nodup_finRange (n + 1))
+  have hpreserve (N : Square R (n + 1))
+      (cols : List (Fin (n + 1))) (j : Fin (n + 1))
+      (hz : N (Fin.last n) j = 0) :
+      clearLastCols N cols (Fin.last n) j = 0 := by
+    induction cols generalizing N with
+    | nil => exact hz
+    | cons k ks ih =>
+        apply ih
+        by_cases hjk : j = k
+        · subst j
+          simp [clearLast, setCol]
+        · simp [clearLast, setCol, hjk, hz]
+  have hmember (N : Square R (n + 1))
+      (cols : List (Fin (n + 1))) (j : Fin (n + 1))
+      (hj : j ∈ cols) :
+      clearLastCols N cols (Fin.last n) j = 0 := by
+    induction cols generalizing N with
+    | nil => simp at hj
+    | cons k ks ih =>
+        simp only [clearLastCols]
+        rw [List.mem_cons] at hj
+        rcases hj with rfl | hj
+        · apply hpreserve
+          simp [clearLast, setCol]
+        · exact ih (clearLast N k) hj
+  have hclear : ∀ j,
+      clearLastCols M (List.finRange (n + 1)) (Fin.last n) j = 0 := by
+    intro j
+    exact hmember M (List.finRange (n + 1)) j (List.mem_finRange j)
+  have hzero := det_lastRow_zero (clearLastCols M (List.finRange (n + 1))) hclear
+  rw [hzero] at hexpand
+  grind
+
 /-- Scale a consecutive range of columns. -/
 @[expose]
 def scaleRange {R : Type u} [Mul R] {n : Nat} (M : Square R n)
@@ -813,11 +1314,13 @@ def applySwaps {R : Type u} {n : Nat} (M : Square R (n + 1))
     (swaps : List (Fin n)) : Square R (n + 1) :=
   swaps.foldl swapAdjacent M
 
+/-- The empty swap sequence acts as the identity. -/
 @[simp, grind =]
 theorem applySwaps_nil {R : Type u} {n : Nat} (M : Square R (n + 1)) :
     applySwaps M [] = M := by
   rfl
 
+/-- A swap sequence acts head first. -/
 @[simp, grind =]
 theorem applySwaps_cons {R : Type u} {n : Nat} (M : Square R (n + 1))
     (left : Fin n) (swaps : List (Fin n)) :
@@ -847,6 +1350,8 @@ theorem det_applySwaps {R : Type u} [Lean.Grind.CommRing R]
       rw [hsign]
       grind
 
+/-- Ordered form of arbitrary duplicate-column vanishing, by descending
+recursion on the column gap through one adjacent swap. -/
 private theorem det_eq_zero_of_col_eq_of_lt {R : Type u}
     [Lean.Grind.CommRing R] {n : Nat} (M : Square R (n + 1))
     (a b : Fin (n + 1)) (hab : a.val < b.val)
@@ -926,6 +1431,7 @@ def addCol {R : Type u} [Add R] [Mul R] {n : Nat}
     (M : Square R n) (src dst : Fin n) (c : R) : Square R n :=
   setCol M dst (fun i => M i dst + c * M i src)
 
+/-- Entrywise value of a scaled column addition. -/
 @[simp, grind =]
 theorem addCol_apply {R : Type u} [Add R] [Mul R] {n : Nat}
     (M : Square R n) (src dst : Fin n) (c : R) (i j : Fin n) :
@@ -951,18 +1457,6 @@ theorem det_addCol {R : Type u} [Lean.Grind.CommRing R]
       rw [hdup, setCol_self]
       grind
 
-/-- Adding a scalar multiple of an adjacent column to its right neighbor
-preserves the local determinant. -/
-theorem det_setCol_add_adjacent {R : Type u} [Lean.Grind.CommRing R]
-    {n : Nat} (M : Square R (n + 1)) (left : Fin n) (c : R) :
-    det (setCol M left.succ
-      (fun i => M i left.succ + c * M i left.castSucc)) = det M := by
-  have hne : left.castSucc ≠ left.succ := by
-    intro h
-    have hval := congrArg Fin.val h
-    simp at hval
-  exact det_addCol M left.castSucc left.succ c hne
-
 end SubresultantMinor
 
 namespace DensePoly
@@ -972,6 +1466,7 @@ section Scale
 
 variable {R : Type u} [Lean.Grind.CommRing R] [DecidableEq R]
 
+/-- Integer-indexed coefficient lookup commutes with scalar multiplication. -/
 @[simp]
 theorem coeffInt_scale (c : R) (p : DensePoly R) (i : Int) :
     coeffInt (scale c p) i = c * coeffInt p i := by
