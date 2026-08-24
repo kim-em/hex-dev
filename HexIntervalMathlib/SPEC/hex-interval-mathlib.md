@@ -344,10 +344,17 @@ that input through the ordinary fact quoter, constructs the target-node and
 target-fact correlations as reflexivity terms, checks both exact equality
 types through `Proof.emitChecked`, and applies `Proof.initialTarget`. This
 theorem merely selects an existing `initialBase` assumption; neither the
-runtime token nor the fact representation supplies semantic authority. The
-fast path revalidates the complete proof package/program registry under the
-caller's `Proof.Limits`, prepares and typechecks all quotation callbacks, and
-charges the input and final Evidence expressions independently.
+runtime token nor the fact representation supplies semantic authority.
+`Proof.initialTarget` is consequently a public tautological theorem with no
+resource limits: any caller that supplies its exact index, node, and fact
+equalities may use it directly. The emitter's limits bound only the checked
+reflection work needed to quote and correlate those terms. They do not grant,
+restrict, or otherwise contribute logical authority. The fast path revalidates
+the complete proof package/program registry under the caller's `Proof.Limits`,
+prepares and typechecks all quotation callbacks, and charges the input and
+final Evidence expressions independently. Its explicit program- and
+fact-version checks are defensive invariants currently implied by admission
+of a sole root with an empty chronology.
 
 For the built-in interval quoter, the same version-zero token also succeeds
 through `emitResultWithin`: its `getValue (ofRawWithin ...)` representation is
@@ -637,8 +644,9 @@ equality, fact, and transport chronology. Its version-zero canary quotes a
 checked opaque interval directly from the initial base with no chronology; it
 also compares ordinary empty replay against the same token, requiring exact
 input/claim agreement and a strictly smaller direct Evidence expression. It
-pins computed-version refusal, the exact singleton tree/depth minimum,
-result-node, proof-node, edge-inclusive work, proof-package, emitter-schema,
+pins computed-chronology refusal, the exact singleton tree/depth minimum,
+an exact mismatched-target-fact lineage refusal, result-node, proof-node,
+edge-inclusive work, proof-package, emitter-schema,
 input-expression, and evidence-expression limits, plus transactional rollback.
 It rejects package-local/global
 coverage errors, cross-package and input transplants, a wrong schema

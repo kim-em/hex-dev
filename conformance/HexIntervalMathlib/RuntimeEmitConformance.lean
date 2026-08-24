@@ -275,13 +275,14 @@ meta def checkedFor
 
 meta def initialLineageFor
     (registry : RuntimeEmit.Registry Hex.Interval
-      (Rule.semantics RuntimeRuleConformance.config) Rule.Runtime.Cause (List Nat)) :
+      (Rule.semantics RuntimeRuleConformance.config) Rule.Runtime.Cause (List Nat))
+    (input : Proof.Input Hex.Interval := initialInput) :
     Except RuntimeEmit.Error
       (RuntimeEmit.Lineage Hex.Interval (Rule.semantics RuntimeRuleConformance.config)
         Rule.Runtime.Cause (List Nat)) := do
   let some controller := initialControllerFor registry.runtime.assembly
     | throw .malformed
-  let active ← RuntimeEmit.Active.startWithin registry initialInput controller
+  let active ← RuntimeEmit.Active.startWithin registry input controller
   active.targetWithin terminalResultLimits RuntimeRuleConformance.measure
     { node := { index := 0 }, version := 0 }
 
@@ -298,6 +299,21 @@ meta def initialCheckedWith (limits : RuntimeProof.Limits) :
     #[Rule.Runtime.emitPackage RuntimeRuleConformance.config]
   let lineage ← initialLineageFor registry
   lineage.quoteWithin limits RuntimeRuleConformance.measure
+
+meta def initialTargetError (changed : Proof.Input Hex.Interval) :
+    Option RuntimeEmit.Error :=
+  match Rule.Runtime.assemblyWithin RuntimeRuleConformance.executableLimits
+      RuntimeRuleConformance.config RuntimeRuleConformance.program with
+  | .error _ => some .malformed
+  | .ok assembly =>
+      match RuntimeEmit.Registry.buildWithin RuntimeRuleConformance.executableLimits
+          emitLimits RuntimeRuleConformance.key assembly
+          (Rule.Runtime.quoter RuntimeRuleConformance.config)
+          #[Rule.Runtime.emitPackage RuntimeRuleConformance.config] with
+      | .error error => some error
+      | .ok registry => match initialLineageFor registry changed with
+        | .error error => some error
+        | .ok _ => none
 
 meta def registryError
     (packages : Array
@@ -537,7 +553,12 @@ elab "runtime_emit_initial_guards" : tactic => do
       { terminalAdapterLimits with
         tree := { terminalAdapterLimits.tree with maxWork := 1 } })
     (.terminal (.runtimeProof (.proof .proofWorkLimit)))
-  expectEmitError "computed chronology/version refusal"
+  let changedTarget :=
+    { initialInput with
+      target := { initialInput.target with fact := Hex.Interval.empty } }
+  unless initialTargetError changedTarget == some (.terminal .mismatch) do
+    throwError "mismatched version-zero target fact escaped public lineage correlation"
+  expectEmitError "computed chronology refusal"
     (← emitComputedAsInitial emitLimits) .malformed
   expectEmitError "emitter schema one-under"
     (← emitInitialWith { emitLimits with maxSchemas := 10 }) (.resource .schemas)

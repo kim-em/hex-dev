@@ -615,7 +615,9 @@ opaque Checked.emitResultWithin [DecidableEq Fact] [DecidableEq Cause]
 /-- Emit Evidence for an empty-chronology, version-zero target that is already
 the corresponding fact in `Proof.initialBase`. No runtime event or theorem
 schema supplies authority: exact node and fact equalities against the quoted
-input are constructed as reflexivity terms and checked by the kernel.
+input are constructed as reflexivity terms and cross `Meta.check` plus exact
+definitional type comparison through `Proof.emitChecked`. The kernel rechecks
+the resulting term when the caller installs it in a proof or declaration.
 
 The retained terminal still gates this fast path. It must be the sole root,
 carry no edge seed or chronology, name program and fact version zero, and
@@ -637,6 +639,8 @@ opaque Checked.emitInitialTargetWithin [DecidableEq Fact] [DecidableEq Cause]
     | .terminal source (.target target) => pure (source, target.seen)
     | .pending _ | .terminal _ (.unknown _) | .terminal _ (.refute _) | .split .. =>
         return .error .malformed
+  -- A sole root with no chronology is currently admitted only at program and
+  -- fact version zero. Keep both checks as defensive reflection invariants.
   if source.branch.programVersion != 0 || result.version != 0 then
     return .error .malformed
   if limits.maxChronology < events.length then return .error (.resource .chronology)
