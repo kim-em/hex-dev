@@ -30,6 +30,9 @@ JSONL fixture record shape (one record per line):
 * ``mvsquarefree`` — one modular multivariate term list and its modulus
 * ``mvhensel``   — one checked multivariate Hensel-lift input
 * ``mvdioph``    — one recursive multivariate diophantine input
+* ``mvfactor``   — one multivariate integer factorization input
+* ``mvirred``    — one multivariate irreducibility-decision input
+* ``mvpoint``    — one caller-selected Wang evaluation point
 * ``lattice``    — ``{"kind": "lattice",    "lib": str, "case": str,
                       "basis": [[int...]...]}``
 * ``prime``      — ``{"kind": "prime",      "lib": str, "case": str,
@@ -87,6 +90,7 @@ caller-supplied directory):
    "lean_output": <serialised>, "oracle_output": <serialised>,
    "oracle_name": str, "oracle_version": str, "diff": str}``
 """
+
 from __future__ import annotations
 
 import json
@@ -106,6 +110,9 @@ VALID_FIXTURE_KINDS = frozenset(
         "mvsquarefree",
         "mvhensel",
         "mvdioph",
+        "mvfactor",
+        "mvirred",
+        "mvpoint",
         "sparsepoly",
         "lattice",
         "prime",
@@ -143,8 +150,7 @@ def _exact_keys(value: dict[str, Any], expected: set[str], context: str) -> None
         missing = sorted(expected - actual)
         extra = sorted(actual - expected)
         raise FixtureError(
-            f"{context} has wrong fields (missing={missing}, extra={extra}): "
-            f"{value!r}"
+            f"{context} has wrong fields (missing={missing}, extra={extra}): {value!r}"
         )
 
 
@@ -154,8 +160,10 @@ def _is_int(value: Any) -> bool:
 
 
 def _validate_rcf_dyadic(value: Any, context: str) -> None:
-    if not isinstance(value, list) or len(value) != 2 or not all(
-        _is_int(component) for component in value
+    if (
+        not isinstance(value, list)
+        or len(value) != 2
+        or not all(_is_int(component) for component in value)
     ):
         raise FixtureError(f"{context} must be [int, int]: {value!r}")
     numerator, exponent = value
@@ -270,9 +278,7 @@ def _validate_mv_header(record: dict[str, Any], kind: str) -> int:
     if not _is_int(arity) or arity < 0:
         raise FixtureError(f"{kind}.arity must be a nonnegative int: {record!r}")
     if record.get("order") not in {"lex", "grlex", "grevlex"}:
-        raise FixtureError(
-            f"{kind}.order must be lex/grlex/grevlex: {record!r}"
-        )
+        raise FixtureError(f"{kind}.order must be lex/grlex/grevlex: {record!r}")
     return arity
 
 
@@ -334,9 +340,7 @@ def _validate_fixture(record: dict[str, Any]) -> None:
             raise FixtureError(f"poly.modulus must be int or null: {record!r}")
         if "modFactorPrime" in record:
             if not isinstance(record.get("modFactorPrime"), int):
-                raise FixtureError(
-                    f"poly.modFactorPrime must be int: {record!r}"
-                )
+                raise FixtureError(f"poly.modFactorPrime must be int: {record!r}")
             degrees = record.get("modFactorDegrees")
             if not isinstance(degrees, list) or not all(
                 isinstance(d, int) and d > 0 for d in degrees
@@ -358,9 +362,7 @@ def _validate_fixture(record: dict[str, Any]) -> None:
     elif kind == "sparsepoly":
         domain = record.get("domain")
         if domain not in {"int", "rat", "zmod"}:
-            raise FixtureError(
-                f"sparsepoly.domain must be int/rat/zmod: {record!r}"
-            )
+            raise FixtureError(f"sparsepoly.domain must be int/rat/zmod: {record!r}")
         modulus = record.get("mod", None)
         if domain == "zmod":
             if not _is_int(modulus) or modulus < 2:
@@ -368,9 +370,7 @@ def _validate_fixture(record: dict[str, Any]) -> None:
                     f"sparsepoly.mod must be an int >= 2 for zmod: {record!r}"
                 )
         elif modulus is not None:
-            raise FixtureError(
-                f"sparsepoly.mod must be null outside zmod: {record!r}"
-            )
+            raise FixtureError(f"sparsepoly.mod must be null outside zmod: {record!r}")
         terms = record.get("terms")
         if not isinstance(terms, list):
             raise FixtureError(f"sparsepoly.terms must be a list: {record!r}")
@@ -434,16 +434,24 @@ def _validate_fixture(record: dict[str, Any]) -> None:
             raise FixtureError(f"mvsquarefree.domain must be zmod: {record!r}")
         modulus = record.get("mod")
         if not _is_int(modulus) or modulus < 2:
-            raise FixtureError(
-                f"mvsquarefree.mod must be an int >= 2: {record!r}"
-            )
+            raise FixtureError(f"mvsquarefree.mod must be an int >= 2: {record!r}")
         _validate_mv_terms(record.get("terms"), arity, "mvsquarefree.terms")
     elif kind == "mvhensel":
         _exact_keys(
             record,
             {
-                "kind", "lib", "case", "arity", "order", "main", "point",
-                "prime", "exponent", "target", "images", "leading",
+                "kind",
+                "lib",
+                "case",
+                "arity",
+                "order",
+                "main",
+                "point",
+                "prime",
+                "exponent",
+                "target",
+                "images",
+                "leading",
             },
             kind,
         )
@@ -452,8 +460,10 @@ def _validate_fixture(record: dict[str, Any]) -> None:
         if arity < 1 or not _is_int(main) or not 0 <= main < arity:
             raise FixtureError(f"mvhensel.main must index a positive arity: {record!r}")
         point = record.get("point")
-        if not isinstance(point, list) or len(point) != arity - 1 or not all(
-            _is_int(coordinate) for coordinate in point
+        if (
+            not isinstance(point, list)
+            or len(point) != arity - 1
+            or not all(_is_int(coordinate) for coordinate in point)
         ):
             raise FixtureError(f"mvhensel.point must contain arity-1 ints: {record!r}")
         if not _is_int(record.get("prime")) or record["prime"] < 2:
@@ -471,8 +481,18 @@ def _validate_fixture(record: dict[str, Any]) -> None:
         _exact_keys(
             record,
             {
-                "kind", "lib", "case", "arity", "order", "main", "modulus",
-                "degrees", "bases", "images", "witness", "rhs",
+                "kind",
+                "lib",
+                "case",
+                "arity",
+                "order",
+                "main",
+                "modulus",
+                "degrees",
+                "bases",
+                "images",
+                "witness",
+                "rhs",
             },
             kind,
         )
@@ -483,10 +503,14 @@ def _validate_fixture(record: dict[str, Any]) -> None:
         if not _is_int(record.get("modulus")) or record["modulus"] < 2:
             raise FixtureError(f"mvdioph.modulus must be an int >= 2: {record!r}")
         degrees = record.get("degrees")
-        if not isinstance(degrees, list) or len(degrees) != arity - 1 or not all(
-            _is_int(degree) and degree >= 0 for degree in degrees
+        if (
+            not isinstance(degrees, list)
+            or len(degrees) != arity - 1
+            or not all(_is_int(degree) and degree >= 0 for degree in degrees)
         ):
-            raise FixtureError(f"mvdioph.degrees must contain arity-1 naturals: {record!r}")
+            raise FixtureError(
+                f"mvdioph.degrees must contain arity-1 naturals: {record!r}"
+            )
         _validate_mv_poly_list(record.get("bases"), arity, "mvdioph.bases")
         _validate_dense_polys(record.get("images"), "mvdioph.images")
         _validate_dense_polys(record.get("witness"), "mvdioph.witness")
@@ -496,6 +520,32 @@ def _validate_fixture(record: dict[str, Any]) -> None:
             raise FixtureError(
                 f"mvdioph bases/images/witness must have the same positive length: {record!r}"
             )
+    elif kind in {"mvfactor", "mvirred"}:
+        _exact_keys(
+            record,
+            {"kind", "lib", "case", "arity", "order", "terms"},
+            kind,
+        )
+        arity = _validate_mv_header(record, kind)
+        _validate_mv_terms(record.get("terms"), arity, f"{kind}.terms")
+    elif kind == "mvpoint":
+        _exact_keys(
+            record,
+            {"kind", "lib", "case", "arity", "order", "terms", "main", "point"},
+            kind,
+        )
+        arity = _validate_mv_header(record, kind)
+        main = record.get("main")
+        if arity < 1 or not _is_int(main) or not 0 <= main < arity:
+            raise FixtureError(f"mvpoint.main must index a positive arity: {record!r}")
+        point = record.get("point")
+        if (
+            not isinstance(point, list)
+            or len(point) != arity - 1
+            or not all(_is_int(coordinate) for coordinate in point)
+        ):
+            raise FixtureError(f"mvpoint.point must contain arity-1 ints: {record!r}")
+        _validate_mv_terms(record.get("terms"), arity, "mvpoint.terms")
     elif kind == "lattice":
         basis = record.get("basis")
         if not isinstance(basis, list) or not all(
@@ -533,9 +583,7 @@ def _validate_fixture(record: dict[str, Any]) -> None:
         if not isinstance(moduli, list) or not all(
             _is_int(x) and x >= 0 for x in moduli
         ):
-            raise FixtureError(
-                f"crt.moduli must be List[nonnegative int]: {record!r}"
-            )
+            raise FixtureError(f"crt.moduli must be List[nonnegative int]: {record!r}")
         if len(residues) != len(moduli):
             raise FixtureError(
                 f"crt residue and modulus lists must have equal length: {record!r}"
@@ -545,9 +593,7 @@ def _validate_fixture(record: dict[str, Any]) -> None:
             if not _is_int(record.get(key)):
                 raise FixtureError(f"ratrecon.{key} must be int: {record!r}")
         if record["m"] < 0:
-            raise FixtureError(
-                f"ratrecon.m must be a nonnegative int: {record!r}"
-            )
+            raise FixtureError(f"ratrecon.m must be a nonnegative int: {record!r}")
     elif kind == "conway":
         for key in ("p", "n"):
             if not isinstance(record.get(key), int):
@@ -560,18 +606,16 @@ def _validate_fixture(record: dict[str, Any]) -> None:
         for key in ("modulus", "a", "b", "c"):
             seq = record.get(key)
             if not isinstance(seq, list) or not all(isinstance(x, int) for x in seq):
-                raise FixtureError(
-                    f"gfqring.{key} must be List[int]: {record!r}"
-                )
+                raise FixtureError(f"gfqring.{key} must be List[int]: {record!r}")
     elif kind == "gfq_bridge":
         if not isinstance(record.get("p"), int):
             raise FixtureError(f"gfq_bridge.p must be int: {record!r}")
         for key in ("modulus", "a", "b"):
             value = record.get(key)
-            if not isinstance(value, list) or not all(isinstance(c, int) for c in value):
-                raise FixtureError(
-                    f"gfq_bridge.{key} must be List[int]: {record!r}"
-                )
+            if not isinstance(value, list) or not all(
+                isinstance(c, int) for c in value
+            ):
+                raise FixtureError(f"gfq_bridge.{key} must be List[int]: {record!r}")
     elif kind == "gfqfield":
         if not isinstance(record.get("p"), int):
             raise FixtureError(f"gfqfield.p must be int: {record!r}")
@@ -580,9 +624,7 @@ def _validate_fixture(record: dict[str, Any]) -> None:
         for key in ("modulus", "a", "b"):
             seq = record.get(key)
             if not isinstance(seq, list) or not all(isinstance(x, int) for x in seq):
-                raise FixtureError(
-                    f"gfqfield.{key} must be List[int]: {record!r}"
-                )
+                raise FixtureError(f"gfqfield.{key} must be List[int]: {record!r}")
     elif kind == "rcf_sentence":
         _validate_rcf_sentence(record)
     elif kind == "result":
