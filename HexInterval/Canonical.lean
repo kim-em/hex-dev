@@ -103,7 +103,7 @@ theorem ordered_of_consistent {lower upper : Dyadic}
 
 /-- Construct a closed interval from independently preflighted ordered bounds.
 
-This is an explicitly unchecked bridge for trusted representation decoders.
+This is an explicitly unchecked constructor for trusted representation decoders.
 It performs no endpoint-height or comparison-cost preflight. Callers must
 preflight both costs before producing `ordered`, and must not manufacture that
 proof with an unbounded `decide`: deciding dyadic order can itself perform the

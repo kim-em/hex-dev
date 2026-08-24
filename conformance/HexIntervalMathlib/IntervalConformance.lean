@@ -16,7 +16,7 @@ regularization, transactional split, reciprocal, and division.
 
 namespace Hex.IntervalMathlib.Conformance
 
-/-- The trusted-decoder bridge has the exact closed real membership promised
+/-- The trusted-decoder constructor has the exact closed real membership promised
 by its raw view theorem. -/
 theorem orderedBoundsUncheckedExact
     (lower upper : Dyadic) (ordered : lower ≤ upper) (x : ℝ) :

@@ -173,7 +173,7 @@ example {limit : EndpointLimit} {lower upper : Dyadic} {interval : Hex.Interval}
     (Hex.Interval.ordered_of_consistent (by decide))).view ==
     finite 0 false 1 false
 
--- On admitted inputs, the unchecked trusted-decoder bridge agrees exactly
+-- On admitted inputs, the unchecked trusted-decoder constructor agrees exactly
 -- with both capped public construction routes.
 #guard
   match Hex.Interval.ofRawWithin smallLimit (finite 0 false 1 false) with

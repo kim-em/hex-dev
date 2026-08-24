@@ -258,7 +258,7 @@ value's proof field.
 
 The initial supported slice exposes `view`, `empty`, `whole`, endpoint-cost
 preflighted raw, singleton, one-sided, and finite constructors, and a
-trusted-decoder-only unchecked closed bridge. The first supported
+trusted-decoder-only unchecked closed constructor. The first supported
 operations are resource-checked intersection, hull, negation,
 addition, subtraction, multiplication, minimum, maximum, absolute value,
 natural power, outward regularization, and transactional splitting at a dyadic
@@ -272,7 +272,7 @@ if qualification proves awkward. Unless a block explicitly says otherwise,
 unqualified API sketches below are declarations inside `Hex.Interval`.
 
 Trusted representation decoders that already hold independently preflighted
-ordered dyadic endpoints also have a comparison-free closed bridge:
+ordered dyadic endpoints also have a comparison-free closed constructor:
 
 ```lean
 def ofOrderedBoundsUnchecked
@@ -282,9 +282,28 @@ theorem view_ofOrderedBoundsUnchecked
     (lower upper : Dyadic) (ordered : lower ≤ upper) :
   (ofOrderedBoundsUnchecked lower upper ordered).view =
     .bounds (.finite lower false) (.finite upper false)
+
+theorem ordered_of_consistent
+    {lower upper : Dyadic}
+    (h : (Raw.bounds (.finite lower false)
+      (.finite upper false)).CutConsistent) :
+  lower ≤ upper
+
+theorem eq_ordered_ofRawWithin
+    {limit : EndpointLimit} {lower upper : Dyadic} {interval : Interval}
+    (ordered : lower ≤ upper)
+    (h : ofRawWithin limit
+      (.bounds (.finite lower false) (.finite upper false)) = .ready interval) :
+  interval = ofOrderedBoundsUnchecked lower upper ordered
+
+theorem eq_ordered_of_betweenWithin
+    {limit : EndpointLimit} {lower upper : Dyadic} {interval : Interval}
+    (ordered : lower ≤ upper)
+    (h : betweenWithin limit lower false upper false = .ready interval) :
+  interval = ofOrderedBoundsUnchecked lower upper ordered
 ```
 
-The `Unchecked` suffix is deliberate. This bridge neither checks endpoint
+The `Unchecked` suffix is deliberate. This constructor neither checks endpoint
 height nor recomputes the comparison. Its trusted decoder must enforce both
 resource caps before producing `ordered`; in particular, it must not use an
 unbounded `decide` to manufacture that proof, because the decision itself may
@@ -377,7 +396,7 @@ empty interval or as consistent cuts. Every ordinary untrusted public reifier,
 certificate decoder, and planner input path must use this resource-safe entry
 point. The sole exception is a trusted representation decoder that has already
 performed the same independent endpoint-height and comparison-cost preflight;
-it may then cross an explicitly named `*Unchecked` bridge such as
+it may then cross an explicitly named `*Unchecked` entry point such as
 `ofOrderedBoundsUnchecked`.
 
 The representation differs from IEEE 1788 set-based intervals in one
