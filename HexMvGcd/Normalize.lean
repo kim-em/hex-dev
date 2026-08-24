@@ -537,4 +537,101 @@ theorem polyNormalize_idem [IsMonomialOrder cmp] [LawfulGcdOps R]
       rw [hnext]
       exact mul_one _
 
+/-- Polynomial normalization sends every polynomial unit to one. -/
+theorem polyNormalize_unit [IsMonomialOrder cmp] [LawfulGcdOps R]
+    (p : MvPoly n R cmp) (hp : polyIsUnit p = true) :
+    polyNormalize p = 1 := by
+  cases hterms : p.termsList with
+  | nil => simp [polyIsUnit, hterms] at hp
+  | cons term terms =>
+      cases terms with
+      | nil =>
+          rcases term with ⟨m, c⟩
+          rw [polyIsUnit, hterms] at hp
+          change (decide (m = Mono.zero) && GcdOps.isUnit c) = true at hp
+          rcases Bool.and_eq_true_iff.mp hp with ⟨hm, hc⟩
+          have hmzero : m = Mono.zero := by
+            simpa only [decide_eq_true_eq] using hm
+          subst m
+          rcases (LawfulGcdOps.isUnit_iff c).mp hc with ⟨d, hd⟩
+          have hcne : c ≠ 0 := by
+            intro hzero
+            rw [hzero, Lean.Grind.Semiring.zero_mul] at hd
+            exact LawfulGcdOps.one_ne_zero hd.symm
+          have hpC : p = C c := by
+            apply termsList_inj
+            rw [hterms, termsList_C, Hex.ite_eq_right hcne]
+          have hnorm : c * GcdOps.normUnit c = 1 := by
+            exact LawfulGcdOps.normalize_unit c hc
+          rw [hpC]
+          unfold polyNormalize polyNormUnit
+          rw [leadingTerm_C hcne]
+          change monomial Mono.zero c *
+              monomial Mono.zero (GcdOps.normUnit c) = 1
+          rw [monomial_mul_monomial, Mono.zero_mul, hnorm]
+          rfl
+      | cons next rest => simp [polyIsUnit, hterms] at hp
+
+/-- Polynomial normalization is multiplicative. -/
+theorem polyNormalize_mul [IsMonomialOrder cmp] [LawfulGcdOps R]
+    (p q : MvPoly n R cmp) :
+    polyNormalize (p * q) = polyNormalize p * polyNormalize q := by
+  cases hp : p.leadingTerm with
+  | none =>
+      have hpzero : p = 0 := (leadingTerm_eq_none_iff p).mp hp
+      subst p
+      rw [MvPoly.zero_mul, polyNormalize_zero]
+      exact (MvPoly.zero_mul _).symm
+  | some pterm =>
+      rcases pterm with ⟨mp, cp⟩
+      cases hq : q.leadingTerm with
+      | none =>
+          have hqzero : q = 0 := (leadingTerm_eq_none_iff q).mp hq
+          subst q
+          rw [MvPoly.mul_zero, polyNormalize_zero]
+          exact (MvPoly.mul_zero _).symm
+      | some qterm =>
+          rcases qterm with ⟨mq, cq⟩
+          have hcp : cp ≠ 0 := by
+            intro hzero
+            have hcoeff := (leadingTerm_eq_some_iff p mp cp).mp hp |>.1
+            exact p.coeff?_ne_zero mp (hcoeff.trans (congrArg some hzero))
+          have hcq : cq ≠ 0 := by
+            intro hzero
+            have hcoeff := (leadingTerm_eq_some_iff q mq cq).mp hq |>.1
+            exact q.coeff?_ne_zero mq (hcoeff.trans (congrArg some hzero))
+          have hcprod : cp * cq ≠ 0 := by
+            intro hzero
+            rcases LawfulGcdOps.no_zero_div cp cq hzero with hzero | hzero
+            · exact hcp hzero
+            · exact hcq hzero
+          have hunit : GcdOps.normUnit (cp * cq) =
+              GcdOps.normUnit cp * GcdOps.normUnit cq := by
+            have hnorm := LawfulGcdOps.normalize_mul cp cq
+            have hzero : (cp * cq) *
+                (GcdOps.normUnit (cp * cq) -
+                  GcdOps.normUnit cp * GcdOps.normUnit cq) = 0 := by
+              unfold normalize at hnorm
+              grind
+            rcases LawfulGcdOps.no_zero_div (cp * cq) _ hzero with
+              hzero | hrest
+            · exact False.elim (hcprod hzero)
+            · grind
+          have hlead := leadingTerm_mul hp hq
+          unfold polyNormalize polyNormUnit
+          rw [hp, hq, hlead]
+          simp only
+          rw [hunit]
+          have hC :
+              (C (GcdOps.normUnit cp * GcdOps.normUnit cq) :
+                  MvPoly n R cmp) =
+                C (GcdOps.normUnit cp) * C (GcdOps.normUnit cq) := by
+            change monomial Mono.zero
+                (GcdOps.normUnit cp * GcdOps.normUnit cq) =
+              monomial Mono.zero (GcdOps.normUnit cp) *
+                monomial Mono.zero (GcdOps.normUnit cq)
+            rw [monomial_mul_monomial, Mono.zero_mul]
+          rw [hC]
+          grind
+
 end Hex.MvPoly
