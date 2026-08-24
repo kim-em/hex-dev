@@ -191,9 +191,10 @@ example {limit : EndpointLimit} {lower upper : Dyadic} {interval : Hex.Interval}
           (Hex.Interval.ordered_of_consistent (by decide))
   | .resourceLimit _ => false
 
--- This pins only that a trusted decoder may admit a compact endpoint beyond
--- an ordinary planner's dynamic-range cap after independent preflight. Equal
--- endpoints make no claim about avoiding nonzero alignment work.
+-- This pins only that the constructor itself accepts a compact endpoint beyond
+-- an ordinary planner's dynamic-range cap. The trusted caller's independent
+-- preflight is a separate obligation. Equal endpoints make no claim about
+-- avoiding nonzero alignment work.
 #guard
   (Hex.Interval.ofOrderedBoundsUnchecked far far (Dyadic.le_refl far)).view ==
     .bounds (.finite far false) (.finite far false)
