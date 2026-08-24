@@ -597,7 +597,17 @@ theorem checkGcd_sound {n : Nat} {R : Type u}
     {f h : MvPoly n R cmp} {cert : GcdCert n R cmp}
     (hc : checkGcd f h cert = true) :
     CheckedGcdResult f h cert.gcd cert.cofL cert.cofR := by
-  sorry
+  cases n with
+  | zero =>
+      simp only [checkGcd, checkGcdUsing, Bool.and_eq_true,
+        beq_iff_eq] at hc
+      exact ⟨hc.1.1.1.symm, hc.1.1.2.symm, hc.1.2,
+        checkCoprime_sound hc.2⟩
+  | succ n =>
+      simp only [checkGcd, checkGcdUsing, Bool.and_eq_true,
+        beq_iff_eq] at hc
+      exact ⟨hc.1.1.1.symm, hc.1.1.2.symm, hc.1.2,
+        checkCoprime_sound hc.2⟩
 
 /-- Separate gcd-domain cancellation turns checked coprime cofactors into
 maximality. -/

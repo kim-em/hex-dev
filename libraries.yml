@@ -69,12 +69,12 @@ libraries:
   HexBasic:
     deps: []
     mathlib: false
-    done_through: 6
+    done_through: 7
     status: active
   HexTruncatedSeries:
     deps: [HexBasic]
     mathlib: false
-    done_through: 0
+    done_through: 1
     status: active
     phase4:
       comparators:
@@ -230,7 +230,7 @@ libraries:
         - name: leibniz-small-determinant
           description: Small structured integer matrices where the generic Leibniz determinant remains practical, cross-checked against the row-pivoted Bareiss determinant.
   HexBareiss:
-    deps: [HexDeterminant, HexMatrix]
+    deps: [HexArith, HexDeterminant, HexMatrix]
     mathlib: false
     done_through: 7
     status: active
@@ -247,6 +247,28 @@ libraries:
     mathlib: false
     done_through: 0
     status: active
+  HexMinPoly:
+    deps: [HexMatrix, HexRowReduce, HexPoly]
+    mathlib: false
+    done_through: 0
+    status: active
+    phase4:
+      comparators:
+        - tool: "FLINT fmpz_mat_minpoly and fmpq_mat.minpoly via python-flint"
+          class: informational
+          rationale: "FLINT uses a small-vector candidate-and-annihilation strategy rather than Hex's deterministic basis sweep with a minimality certificate. The ratio is useful orientation but does not gate the verified algorithm. Wired through the shared persistent-subprocess Python driver."
+        - tool: "PARI minpoly via cypari2"
+          class: informational
+          rationale: "PARI's matrix minimal-polynomial implementation is algorithmically independent of Hex's certificate-producing basis sweep, so its ratio is recorded for orientation rather than used as a release threshold. Wired through the shared persistent-subprocess Python driver."
+      input_families:
+        - name: random-dense-minpoly
+          description: Dense bounded-entry integer matrices read over Rat, usually with full-degree minimal polynomial.
+        - name: modular-minpoly
+          description: Full-degree companion matrices over a fixed-width prime field, isolating operation count from rational coefficient growth.
+        - name: derogatory-minpoly
+          description: Repeated nilpotent blocks whose minimal-polynomial degree stays bounded while dimension grows.
+        - name: companion-minpoly
+          description: Companion matrices with known full-degree minimal polynomials used as an in-benchmark correctness check.
 
   # ---------- Depth 1 ----------
   HexModArith:
@@ -356,6 +378,28 @@ libraries:
           description: The same inputs over the rationals through ratGcd.
 
   # ---------- Depth 2 ----------
+  HexHermite:
+    deps: [HexRowReduce, HexArith, HexDeterminant]
+    mathlib: false
+    done_through: 0
+    status: active
+    phase4:
+      comparators:
+        - tool: FLINT fmpz_mat_hnf via python-flint
+          class: informational
+          rationale: FLINT dispatches to asymptotically faster algorithms outside this SPEC
+        - tool: PARI mathnf via cypari2
+          class: informational
+          rationale: PARI is column-style and the timing includes convention conversion
+      input_families:
+        - name: random-dense-hermite
+          description: dense square nonsingular integer matrices with uniformly bounded entries
+        - name: rank-deficient-hermite
+          description: rows drawn as integer combinations of a smaller independent set
+        - name: tall-hermite
+          description: tall matrices with many redundant row generators
+        - name: unimodular-conjugate
+          description: random unimodular left factors times a known diagonal form
   HexLLL:
     deps: [HexGramSchmidt, HexMatrix, HexBasic]
     mathlib: false
@@ -605,6 +649,11 @@ libraries:
     mathlib: true
     done_through: 0
     status: active
+  HexMinPolyMathlib:
+    deps: [HexMinPoly, HexMatrixMathlib, HexPolyMathlib, HexCharPolyMathlib]
+    mathlib: true
+    done_through: 0
+    status: active
   HexBareissMathlib:
     deps: [HexDeterminantMathlib]
     mathlib: true
@@ -634,6 +683,11 @@ libraries:
     deps: [HexLLL, HexGramSchmidtMathlib, HexRowReduceMathlib]
     mathlib: true
     done_through: 4
+    status: active
+  HexHermiteMathlib:
+    deps: [HexHermite, HexRowReduceMathlib, HexDeterminantMathlib]
+    mathlib: true
+    done_through: 0
     status: active
   HexPolyFpMathlib:
     deps: [HexPolyFp, HexPolyMathlib, HexModArithMathlib]
@@ -681,7 +735,7 @@ libraries:
   HexTruncatedSeriesMathlib:
     deps: [HexTruncatedSeries]
     mathlib: true
-    done_through: 0
+    done_through: 1
     status: active
 
   # ---------- Planned (status: planned; SPEC ready, implementation deferred) ----------
