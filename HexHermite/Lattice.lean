@@ -119,6 +119,128 @@ theorem hnf_memLattice_iff (A : Matrix Int n m) (v : Vector Int m) :
   rw [hform]
   exact memLattice_iff_of_mul_eq hforward hback v
 
+private theorem row_mul_eq_vecMul (M : Matrix Int n' n) (N : Matrix Int n m)
+    (i : Fin n') : Matrix.row (M * N) i = vecMul (Matrix.row M i) N := by
+  apply Vector.ext
+  intro j hj
+  let jj : Fin m := ⟨j, hj⟩
+  change (M * N)[i][jj] = (Matrix.row M i * N)[jj]
+  rw [Matrix.getElem_mul, Matrix.getElem_vecMul]
+  exact Vector.dotProduct_comm _ _
+
+private theorem basis_mul_form (A : Matrix Int n m) :
+    let P : Matrix Int (hnfRank A) n := Matrix.ofFn fun i j =>
+      if Fin.castLE (Hermite.run_rank_le (Hermite.formAccumulator n) A) i = j
+        then 1 else 0
+    P * hnf A = hnfBasis A := by
+  dsimp only
+  let P : Matrix Int (hnfRank A) n := Matrix.ofFn fun i j =>
+    if Fin.castLE (Hermite.run_rank_le (Hermite.formAccumulator n) A) i = j
+      then 1 else 0
+  apply Matrix.ext_getElem
+  intro i j
+  have hrow : Matrix.row P i = Vector.ofFn fun k : Fin n =>
+      if Fin.castLE (Hermite.run_rank_le (Hermite.formAccumulator n) A) i = k
+        then 1 else 0 := by
+    apply Vector.ext
+    intro k hk
+    let kk : Fin n := ⟨k, hk⟩
+    have hp : (Matrix.row P i)[kk] =
+        (if Fin.castLE (Hermite.run_rank_le (Hermite.formAccumulator n) A) i = kk
+          then 1 else 0) := by
+      rw [Matrix.getElem_row]
+      simp only [P, Matrix.getElem_ofFn]
+    simpa only [Fin.getElem_fin, Vector.getElem_ofFn] using hp
+  have hmul := row_mul_eq_vecMul P (hnf A) i
+  rw [hrow, IsRowReduced.vecMul_single] at hmul
+  have hentry := congrArg (fun row : Vector Int m => row.get j) hmul
+  calc
+    (P * hnf A)[i][j] =
+        (hnf A)[Fin.castLE
+          (Hermite.run_rank_le (Hermite.formAccumulator n) A) i][j] := hentry
+    _ = (hnfBasis A)[i][j] := by
+      simp only [hnfBasis, Matrix.getElem_ofFn,
+        Matrix.getElem_pair_eq_nested]
+
+private theorem form_mul_basis (A : Matrix Int n m) :
+    let Q : Matrix Int n (hnfRank A) := Matrix.ofFn fun i j =>
+      if i.val = j.val then 1 else 0
+    Q * hnfBasis A = hnf A := by
+  dsimp only
+  let Q : Matrix Int n (hnfRank A) := Matrix.ofFn fun i j =>
+    if i.val = j.val then 1 else 0
+  have hform := hnfData_isHNF A
+  have hrank := hnfRank_eq A
+  apply Matrix.ext_getElem
+  intro i j
+  by_cases hir : i.val < hnfRank A
+  · let ii : Fin (hnfRank A) := ⟨i.val, hir⟩
+    have hrow : Matrix.row Q i = Vector.ofFn fun k : Fin (hnfRank A) =>
+        if ii = k then 1 else 0 := by
+      apply Vector.ext
+      intro k hk
+      let kk : Fin (hnfRank A) := ⟨k, hk⟩
+      have hq : (Matrix.row Q i)[kk] =
+          (if ii = kk then 1 else 0) := by
+        rw [Matrix.getElem_row]
+        simp only [Q, Matrix.getElem_ofFn]
+        congr 1
+        exact propext ⟨fun h => Fin.ext h, fun h => congrArg Fin.val h⟩
+      simpa only [Fin.getElem_fin, Vector.getElem_ofFn] using hq
+    have hmul := row_mul_eq_vecMul Q (hnfBasis A) i
+    rw [hrow, IsRowReduced.vecMul_single] at hmul
+    have hentry := congrArg (fun row : Vector Int m => row.get j) hmul
+    calc
+      (Q * hnfBasis A)[i][j] = (hnfBasis A)[ii][j] := hentry
+      _ = (hnf A)[i][j] := by
+        simp only [hnfBasis, Matrix.getElem_ofFn,
+          Matrix.getElem_pair_eq_nested]
+        congr 2
+  · have hrow : Matrix.row Q i = 0 := by
+      apply Vector.ext
+      intro k hk
+      let kk : Fin (hnfRank A) := ⟨k, hk⟩
+      have hq : (Matrix.row Q i)[kk] = 0 := by
+        rw [Matrix.getElem_row]
+        simp only [Q, Matrix.getElem_ofFn]
+        rw [if_neg]
+        omega
+      have hz : (0 : Vector Int (hnfRank A))[kk.val] = 0 :=
+        Vector.getElem_zero kk.val kk.isLt
+      calc
+        (Matrix.row Q i)[k] = 0 := by
+          simpa only [Fin.getElem_fin] using hq
+        _ = (0 : Vector Int (hnfRank A))[k] := hz.symm
+    have hmul := row_mul_eq_vecMul Q (hnfBasis A) i
+    have hzero : vecMul (0 : Vector Int (hnfRank A)) (hnfBasis A) = 0 :=
+      Matrix.mulVec_zero (Matrix.transpose (hnfBasis A))
+    rw [hrow, hzero] at hmul
+    have hentry := congrArg (fun row : Vector Int m => row.get j) hmul
+    have hiD : (hnfData A).rank ≤ i.val := by omega
+    have hz := hform.toIsEchelonForm.zero_row i hiD
+    have hzentry := congrArg (fun row : Vector Int m => row.get j) hz
+    rw [← hnf_eq_hnfData_echelon A] at hzentry
+    calc
+      (Q * hnfBasis A)[i][j] = (0 : Vector Int m)[j] := hentry
+      _ = (hnf A)[i][j] := hzentry.symm
+
+/-- Discarding the trailing zero rows of HNF does not change its integer row
+lattice. -/
+theorem hnfBasis_memLattice_iff (A : Matrix Int n m) (v : Vector Int m) :
+    (hnfBasis A).memLattice v ↔ A.memLattice v := by
+  let P : Matrix Int (hnfRank A) n := Matrix.ofFn fun i j =>
+    if Fin.castLE (Hermite.run_rank_le (Hermite.formAccumulator n) A) i = j
+      then 1 else 0
+  let Q : Matrix Int n (hnfRank A) := Matrix.ofFn fun i j =>
+    if i.val = j.val then 1 else 0
+  have hP : P * hnf A = hnfBasis A := basis_mul_form A
+  have hQ : Q * hnfBasis A = hnf A := form_mul_basis A
+  constructor
+  · intro hv
+    exact (hnf_memLattice_iff A v).2 (memLattice_of_mul_eq hP hv)
+  · intro hv
+    exact memLattice_of_mul_eq hQ ((hnf_memLattice_iff A v).1 hv)
+
 /-- Every returned lattice coefficient vector satisfies its advertised
 row-combination equation. -/
 theorem latticeCoeffs_sound {A : Matrix Int n m} {v : Vector Int m}
