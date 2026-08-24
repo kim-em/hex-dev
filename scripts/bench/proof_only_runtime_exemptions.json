@@ -952,5 +952,17 @@
     "baseline_blob": "a1b87406682dbf908d990f01676f326499b906e5",
     "current_blob": "ce28c059fd9412e7f82e0dd5a482911ccd29b0ef",
     "reason": "Combines current main's build-only, conformance, fixture, benchmark, and proof-side interval registrations with the HexMvGcd conformance executables; none changes a factorization runtime target, definition, build flag, or dependency."
+  },
+  {
+    "path": "HexPolyZ/Rational.lean",
+    "baseline_blob": "ba568b38f9482f906439858ac72b823d2b933be7",
+    "current_blob": "5495375e8339591996f2607e4a858f48e09a80b2",
+    "reason": "Exports two already-proved rational-polynomial size laws for proof reuse by HexPolyZGcd; no executable definition or factorization runtime call path changes."
+  },
+  {
+    "path": "lakefile.lean",
+    "baseline_blob": "a1b87406682dbf908d990f01676f326499b906e5",
+    "current_blob": "63a35adbd5c123b4fccd97b7a53e0316abad5fee",
+    "reason": "Combines current main's build-only, conformance, fixture, benchmark, and proof-side interval registrations with the HexPolyZGcd benchmark executable and proof-only HexPolyZGcdMathlib library; neither enters the factorization service target or changes its runtime dependency graph."
   }
 ]
