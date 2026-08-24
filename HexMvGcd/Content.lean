@@ -66,7 +66,34 @@ theorem contentCertWith_length {R : Type u}
     (produce : MvPoly n R cmp → MvPoly n R cmp → GcdCert n R cmp)
     (coeffs : List (MvPoly n R cmp)) :
     (contentCertWith produce coeffs).steps.length = coeffs.length := by
-  sorry
+  have aux : ∀ (xs : List (MvPoly n R cmp))
+      (state : MvPoly n R cmp × List (GcdCert n R cmp)),
+      (xs.foldl
+          (fun state q =>
+            let step := produce state.1 q
+            (step.gcd, step :: state.2))
+          state).2.length = state.2.length + xs.length := by
+    intro xs
+    induction xs with
+    | nil =>
+        intro state
+        simp
+    | cons q qs ih =>
+        intro state
+        rw [List.foldl_cons, ih]
+        simp only [List.length_cons]
+        omega
+  have ofList_length : ∀ (steps : List (GcdCert n R cmp)),
+      (GcdCerts.ofList steps).toList.length = steps.length := by
+    intro steps
+    induction steps with
+    | nil => rfl
+    | cons step steps ih =>
+        simp only [GcdCerts.toList, List.length_cons, ih]
+  unfold contentCertWith ContentCert.steps ContentCert.ofSteps
+  rw [ofList_length, List.length_reverse]
+  rw [aux]
+  simp
 
 /-- A producer-built fold checks when every supplied gcd certificate checks. -/
 theorem contentCertWith_checks {R : Type u}
