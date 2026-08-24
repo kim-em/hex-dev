@@ -63,16 +63,48 @@ def prsCert? (f h : ZPoly) : Option GcdCert :=
     let cofL := (DensePoly.divMod f candidate).1
     let cofR := (DensePoly.divMod h candidate).1
     let coprime ← prsCoprimeWitness? cofL cofR
-    pure
+    let cert : GcdCert :=
       { gcd := candidate
         cofL := cofL
         cofR := cofR
         coprime := coprime }
+    if checkGcd f h cert then some cert else none
 
 /-- Completeness of the deterministic extended-subresultant fallback. -/
 theorem prsCert_checks {f h : ZPoly} {cert : GcdCert}
     (hcert : prsCert? f h = some cert) : checkGcd f h cert = true := by
-  sorry
+  unfold prsCert? at hcert
+  by_cases hzero : f.isZero && h.isZero
+  · simp only [hzero, ite_true] at hcert
+    cases hcert
+    have hzero' : f.isZero = true ∧ h.isZero = true := by
+      simpa using hzero
+    have hfzero : f = 0 :=
+      (DensePoly.size_eq_zero_iff f).1 <|
+        (DensePoly.isZero_eq_true_iff f).1 hzero'.1
+    have hhzero : h = 0 :=
+      (DensePoly.size_eq_zero_iff h).1 <|
+        (DensePoly.isZero_eq_true_iff h).1 hzero'.2
+    subst f
+    subst h
+    decide
+  · simp only [hzero, Bool.false_eq_true, ite_false] at hcert
+    generalize hcandidate : prsCandidate? f h = candidate? at hcert
+    cases candidate? with
+    | none => simp [bind, Option.bind] at hcert
+    | some candidate =>
+        simp only [bind, Option.bind] at hcert
+        generalize hwitness :
+          prsCoprimeWitness? (DensePoly.divMod f candidate).1
+            (DensePoly.divMod h candidate).1 = witness? at hcert
+        cases witness? with
+        | none => simp at hcert
+        | some witness =>
+            simp only [] at hcert
+            split at hcert
+            · cases hcert
+              assumption
+            · contradiction
 
 /-! Executable pin for the extended-chain route, including rationally
 nonmonic cofactors. -/

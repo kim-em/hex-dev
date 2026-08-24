@@ -268,6 +268,112 @@ def brownCert? (f h : ZPoly) : Option GcdCert :=
         let nextStart := 2 ^ 31 - 1
         brownBatches f h (budget - brownBundledSupply.size) nextStart state
 
+/-- A certificate returned by one Brown supply traversal has passed the
+shared candidate checker. -/
+private theorem brownLoop_checks (f h : ZPoly)
+    (supply : Array ZMod64.Prime) (index fuel : Nat)
+    (state : Option BrownState) {cert : GcdCert}
+    (hfound : brownLoop f h supply index fuel state = .found cert) :
+    checkGcd f h cert = true := by
+  unfold brownLoop at hfound
+  by_cases hfuel : fuel = 0
+  · rw [if_pos hfuel] at hfound
+    contradiction
+  · rw [if_neg hfuel] at hfound
+    by_cases hi : index < supply.size
+    · rw [dif_pos hi] at hfound
+      dsimp only at hfound
+      generalize hoffer : brownOffer f h state supply[index] = offer at hfound
+      cases offer with
+      | bad =>
+          exact brownLoop_checks f h supply (index + 1) (fuel - 1) state hfound
+      | unlucky =>
+          exact brownLoop_checks f h supply (index + 1) (fuel - 1) state hfound
+      | restarted next =>
+          simp only at hfound
+          generalize hcand : checkedCandidate? f h (next.candidate f h) =
+            candidate? at hfound
+          cases candidate? with
+          | some candidate =>
+              cases hfound
+              exact checkedCandidate?_checks hcand
+          | none =>
+              exact brownLoop_checks f h supply (index + 1) (fuel - 1)
+                (some next) hfound
+      | accumulated next =>
+          simp only at hfound
+          generalize hcand : checkedCandidate? f h (next.candidate f h) =
+            candidate? at hfound
+          cases candidate? with
+          | some candidate =>
+              cases hfound
+              exact checkedCandidate?_checks hcand
+          | none =>
+              exact brownLoop_checks f h supply (index + 1) (fuel - 1)
+                (some next) hfound
+    · rw [dif_neg hi] at hfound
+      contradiction
+termination_by fuel
+decreasing_by all_goals omega
+
+/-- A certificate returned by the dynamically generated Brown batches has
+passed the shared checker. -/
+private theorem brownBatches_checks (f h : ZPoly) (remaining start : Nat)
+    (state : Option BrownState) {cert : GcdCert}
+    (hcert : brownBatches f h remaining start state = some cert) :
+    checkGcd f h cert = true := by
+  unfold brownBatches at hcert
+  by_cases hremaining : remaining = 0
+  · rw [if_pos hremaining] at hcert
+    contradiction
+  · rw [if_neg hremaining] at hcert
+    dsimp only at hcert
+    let supply := (ZMod64.primesBelow start (min brownBatchSize remaining)).filter
+      (fun p => 2 ^ 30 < p.m)
+    change (match brownLoop f h supply 0 supply.size state with
+      | .found found => some found
+      | .pending next =>
+          brownBatches f h (remaining - min brownBatchSize remaining)
+            (supply.back?.map (fun p => p.m - 1) |>.getD 0) next) =
+        some cert at hcert
+    generalize hloop : brownLoop f h supply 0 supply.size state = progress at hcert
+    cases progress with
+    | found found =>
+        cases hcert
+        exact brownLoop_checks f h supply 0 supply.size state hloop
+    | pending next =>
+        exact brownBatches_checks f h (remaining - min brownBatchSize remaining)
+          (supply.back?.map (fun p => p.m - 1) |>.getD 0) next hcert
+termination_by remaining
+decreasing_by
+  have hcount : 0 < min brownBatchSize remaining := by
+    simp [brownBatchSize]
+    omega
+  exact Nat.sub_lt (Nat.zero_lt_of_ne_zero hremaining) hcount
+
+/-- Every certificate returned by Brown reconstruction has passed the full
+checker. -/
+theorem brownCert?_checks {f h : ZPoly} {cert : GcdCert}
+    (hcert : brownCert? f h = some cert) :
+    checkGcd f h cert = true := by
+  unfold brownCert? at hcert
+  generalize hloop : brownLoop f h brownBundledSupply 0
+      brownBundledSupply.size none = progress at hcert
+  cases progress with
+  | found found =>
+      cases hcert
+      exact brownLoop_checks f h brownBundledSupply 0
+        brownBundledSupply.size none hloop
+  | pending state =>
+      dsimp only at hcert
+      by_cases hbudget : brownPrimeBudget f h ≤ brownBundledSupply.size
+      · rw [if_pos hbudget] at hcert
+        contradiction
+      · rw [if_neg hbudget] at hcert
+        exact brownBatches_checks f h
+          (brownPrimeBudget f h - brownBundledSupply.size) (2 ^ 31 - 1)
+          state hcert
+
 /-! Route-level executable pins for the three easy-to-miss Brown rules. -/
 
 -- Every small witness probe is unlucky when the constant offset is the

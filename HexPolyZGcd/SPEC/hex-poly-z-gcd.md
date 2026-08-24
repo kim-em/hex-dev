@@ -680,7 +680,8 @@ theorem dvd_gcd (d) : d ∣ e f → d ∣ e h → d ∣ e (gcd f h)
 theorem coprimeCofactors_greatest (hc : CoprimeCofactors f h g) (d) :
     d ∣ e f → d ∣ e h → d ∣ e g
 
-theorem divExact?_eq_dvd : (divExact? f g).isSome = true ↔ e g ∣ e f
+theorem divExact?_eq_dvd :
+    (divExact? f g).isSome = true ↔ g ≠ 0 ∧ e g ∣ e f
 
 instance : Decidable (a ∣ b)          -- Polynomial ℤ
 instance : DecidableEq (Polynomial ℤ) -- through the equivalence, for the above

@@ -158,6 +158,51 @@ def checkedCandidate? (f h candidate : ZPoly) : Option GcdCert := do
   let cert : GcdCert := { gcd := candidate, cofL, cofR, coprime := witness }
   if checkGcd f h cert then some cert else none
 
+/-- Every certificate returned by the difference route passed the full
+checker. -/
+theorem differenceCert?_checks {f h : ZPoly} {cert : GcdCert}
+    (hc : differenceCert? f h = some cert) :
+    checkGcd f h cert = true := by
+  unfold differenceCert? at hc
+  simp only [bind, Option.bind] at hc
+  split at hc
+  · contradiction
+  · split at hc
+    · contradiction
+    · split at hc
+      · split at hc
+        · rename_i hcheck
+          cases hc
+          exact hcheck
+        · contradiction
+      · split at hc
+        · rename_i hcheck
+          cases hc
+          exact hcheck
+        · contradiction
+
+/-- Every arbitrary candidate exposed by the shared acceptance gate passed
+the full checker. -/
+theorem checkedCandidate?_checks {f h candidate : ZPoly} {cert : GcdCert}
+    (hc : checkedCandidate? f h candidate = some cert) :
+    checkGcd f h cert = true := by
+  unfold checkedCandidate? at hc
+  simp only [bind, Option.bind] at hc
+  split at hc
+  · contradiction
+  · generalize hw : candidateWitness
+        (DensePoly.divMod f candidate).1 (DensePoly.divMod h candidate).1 =
+      witness? at hc
+    cases witness? with
+    | none => simp at hc
+    | some witness =>
+        simp only at hc
+        split at hc
+        · rename_i hcheck
+          cases hc
+          exact hcheck
+        · contradiction
+
 /-- Every certificate returned by the coprime fast route was accepted by the
 full checker. -/
 theorem coprimeCert?_checks {f h : ZPoly} {cert : GcdCert}
