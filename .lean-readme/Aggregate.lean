@@ -6,10 +6,8 @@ Authors: Kim Morrison
 
 module
 
-public import Lean
+import Lean
 public meta import HexLLL
-
-public section
 
 private def loadReadmeDynlib (dir stem : String) : IO Unit := do
   let ext := if System.Platform.isOSX then "dylib" else "so"
