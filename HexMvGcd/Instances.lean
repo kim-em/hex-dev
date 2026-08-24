@@ -472,6 +472,215 @@ def normalizedXgcd (f g : @FpPoly p hp) : @FpPoly p hp × @FpPoly p hp :=
   let u := normUnit r.gcd
   (r.left * u, r.right * u)
 
+private theorem coeffOne_ne_zero :
+    (1 : ZMod64 p) ≠ 0 := fun h =>
+  ZMod64.one_ne_zero_of_prime (ZMod64.PrimeModulus.prime (p := p)) h
+
+private theorem one_ne_zero : (1 : FpPoly p) ≠ 0 := by
+  intro h
+  have hcoeff := congrArg (fun f : FpPoly p => f.coeff 0) h
+  change (DensePoly.C (1 : ZMod64 p)).coeff 0 =
+    (0 : FpPoly p).coeff 0 at hcoeff
+  rw [DensePoly.coeff_C, DensePoly.coeff_zero] at hcoeff
+  exact coeffOne_ne_zero hcoeff
+
+private theorem inv_ne_zero {c : ZMod64 p} (hc : c ≠ 0) : c⁻¹ ≠ 0 := by
+  intro hinv
+  change ZMod64.inv c = 0 at hinv
+  have hone := ZMod64.inv_mul_eq_one_of_ne_zero hc
+  rw [hinv, Lean.Grind.Semiring.zero_mul] at hone
+  exact coeffOne_ne_zero hone.symm
+
+omit [ZMod64.PrimeModulus p] in
+private theorem C_mul_C_eq (a b : ZMod64 p) :
+    (DensePoly.C a * DensePoly.C b : FpPoly p) = DensePoly.C (a * b) := by
+  rw [C_mul_eq_scale]
+  apply DensePoly.ext_coeff
+  intro n
+  have hzero : a * (0 : ZMod64 p) = 0 := Lean.Grind.Semiring.mul_zero a
+  rw [DensePoly.coeff_scale _ _ _ hzero, DensePoly.coeff_C,
+    DensePoly.coeff_C]
+  cases n <;> rfl
+
+omit [ZMod64.PrimeModulus p] in
+private theorem scale_mul_scale (a b : ZMod64 p) (f g : FpPoly p) :
+    DensePoly.scale a f * DensePoly.scale b g =
+      DensePoly.scale (a * b) (f * g) := by
+  rw [← C_mul_eq_scale, ← C_mul_eq_scale, ← C_mul_eq_scale,
+    ← C_mul_C_eq]
+  calc
+    (DensePoly.C a * f) * (DensePoly.C b * g) =
+        ((DensePoly.C a * f) * DensePoly.C b) * g :=
+      (DensePoly.mul_assoc_poly _ _ _).symm
+    _ = (DensePoly.C a * (f * DensePoly.C b)) * g := by
+      exact congrArg (fun x : FpPoly p => x * g)
+        (DensePoly.mul_assoc_poly _ _ _)
+    _ = (DensePoly.C a * (DensePoly.C b * f)) * g := by
+      exact congrArg (fun x : FpPoly p => x * g)
+        (congrArg (fun x : FpPoly p => DensePoly.C a * x)
+          (DensePoly.mul_comm_poly f (DensePoly.C b)))
+    _ = ((DensePoly.C a * DensePoly.C b) * f) * g := by
+      exact congrArg (fun x : FpPoly p => x * g)
+        (DensePoly.mul_assoc_poly _ _ _).symm
+    _ = (DensePoly.C a * DensePoly.C b) * (f * g) :=
+      DensePoly.mul_assoc_poly _ _ _
+
+omit [ZMod64.PrimeModulus p] in
+private theorem eq_C_of_size_one {f : FpPoly p} (hsize : f.size = 1) :
+    f = DensePoly.C (f.coeff 0) := by
+  apply DensePoly.ext_coeff
+  intro n
+  cases n with
+  | zero =>
+      rw [DensePoly.coeff_C]
+      simp
+  | succ n =>
+      rw [DensePoly.coeff_eq_zero_of_size_le f (by omega),
+        DensePoly.coeff_C]
+      simp
+
+omit [ZMod64.PrimeModulus p] in
+private theorem coeff_zero_ne_zero_of_size_one {f : FpPoly p}
+    (hsize : f.size = 1) : f.coeff 0 ≠ 0 := by
+  have hlast := DensePoly.coeff_last_ne_zero_of_pos_size f (by omega)
+  rwa [hsize] at hlast
+
+omit [ZMod64.PrimeModulus p] in
+private theorem canonical_eq_scale {f : FpPoly p} (hf : f ≠ 0) :
+    f * normUnit f = DensePoly.scale f.leadingCoeff⁻¹ f := by
+  rw [normUnit, Hex.ite_eq_right hf]
+  calc
+    f * DensePoly.C f.leadingCoeff⁻¹ =
+        DensePoly.C f.leadingCoeff⁻¹ * f :=
+      DensePoly.mul_comm_poly _ _
+    _ = DensePoly.scale f.leadingCoeff⁻¹ f :=
+      C_mul_eq_scale _ _
+
+private theorem canonical_monic {f : FpPoly p} (hf : f ≠ 0) :
+    DensePoly.Monic (f * normUnit f) := by
+  rw [canonical_eq_scale hf]
+  have hsize : f.size ≠ 0 := Nat.ne_of_gt (size_pos_of_ne_zero hf)
+  have hlead : f.leadingCoeff ≠ 0 :=
+    DensePoly.leadingCoeff_ne_zero_of_pos_size f (Nat.pos_of_ne_zero hsize)
+  unfold DensePoly.Monic
+  rw [leadingCoeff_scale_of_ne_zero_of_nonzero (inv_ne_zero hlead) f hsize]
+  exact ZMod64.inv_mul_eq_one_of_ne_zero hlead
+
+private theorem canonical_fixed_of_monic {f : FpPoly p}
+    (hf : DensePoly.Monic f) : f * normUnit f = f := by
+  have hf0 : f ≠ 0 := by
+    intro hzero
+    subst f
+    exact coeffOne_ne_zero hf.symm
+  have hinvOne : ZMod64.inv (1 : ZMod64 p) = 1 := by
+    have h := ZMod64.inv_mul_eq_one_of_ne_zero (p := p) coeffOne_ne_zero
+    rw [Lean.Grind.Semiring.mul_one] at h
+    exact h
+  rw [canonical_eq_scale hf0, hf]
+  change DensePoly.scale (ZMod64.inv (1 : ZMod64 p)) f = f
+  rw [hinvOne, scale_one_left]
+
+private theorem canonical_idem (f : FpPoly p) :
+    (f * normUnit f) * normUnit (f * normUnit f) = f * normUnit f := by
+  by_cases hf : f = 0
+  · subst f
+    simp [normUnit]
+  · exact canonical_fixed_of_monic (canonical_monic hf)
+
+private theorem canonical_mul (f g : FpPoly p) :
+    f * g * normUnit (f * g) =
+      (f * normUnit f) * (g * normUnit g) := by
+  by_cases hf : f = 0
+  · subst f
+    simp [normUnit]
+  · by_cases hg : g = 0
+    · subst g
+      simp [normUnit]
+    · have hfg : f * g ≠ 0 := mul_ne_zero_of_ne_zero hf hg
+      rw [canonical_eq_scale hfg, canonical_eq_scale hf,
+        canonical_eq_scale hg, leadingCoeff_mul f g hf hg,
+        Lean.Grind.Field.inv_mul]
+      exact (scale_mul_scale _ _ f g).symm
+
+private theorem canonical_eq_one_of_size_one {f : FpPoly p}
+    (hsize : f.size = 1) : f * normUnit f = 1 := by
+  have hf : f ≠ 0 := by
+    intro hzero
+    rw [hzero] at hsize
+    contradiction
+  have hc : f.coeff 0 ≠ 0 := coeff_zero_ne_zero_of_size_one hsize
+  have hcancel : (f.coeff 0)⁻¹ * f.coeff 0 = 1 := by
+    change ZMod64.inv (f.coeff 0) * f.coeff 0 = 1
+    exact ZMod64.inv_mul_eq_one_of_ne_zero hc
+  rw [canonical_eq_scale hf, eq_C_of_size_one hsize,
+    DensePoly.leadingCoeff_C, ← C_mul_eq_scale, C_mul_C_eq, hcancel]
+  rfl
+
+private theorem normUnit_is_unit (f : FpPoly p) :
+    ∃ g, normUnit f * g = 1 := by
+  by_cases hf : f = 0
+  · exact ⟨1, by simp [normUnit, hf]⟩
+  · have hlead : f.leadingCoeff ≠ 0 :=
+      DensePoly.leadingCoeff_ne_zero_of_pos_size f (size_pos_of_ne_zero hf)
+    have hcancel : f.leadingCoeff⁻¹ * f.leadingCoeff = 1 := by
+      change ZMod64.inv f.leadingCoeff * f.leadingCoeff = 1
+      exact ZMod64.inv_mul_eq_one_of_ne_zero hlead
+    refine ⟨DensePoly.C f.leadingCoeff, ?_⟩
+    rw [normUnit, Hex.ite_eq_right hf, C_mul_C_eq, hcancel]
+    rfl
+
+private theorem canonical_dvd_self (f : FpPoly p) :
+    f * normUnit f ∣ f := by
+  by_cases hf : f = 0
+  · subst f
+    exact ⟨0, by simp [normUnit]⟩
+  · have hlead : f.leadingCoeff ≠ 0 :=
+      DensePoly.leadingCoeff_ne_zero_of_pos_size f (size_pos_of_ne_zero hf)
+    have hcancel : f.leadingCoeff⁻¹ * f.leadingCoeff = 1 := by
+      change ZMod64.inv f.leadingCoeff * f.leadingCoeff = 1
+      exact ZMod64.inv_mul_eq_one_of_ne_zero hlead
+    refine ⟨DensePoly.C f.leadingCoeff, ?_⟩
+    symm
+    calc
+      (f * normUnit f) * DensePoly.C f.leadingCoeff =
+          (f * DensePoly.C f.leadingCoeff⁻¹) *
+            DensePoly.C f.leadingCoeff := by
+              rw [normUnit, Hex.ite_eq_right hf]
+      _ = f * (DensePoly.C f.leadingCoeff⁻¹ *
+            DensePoly.C f.leadingCoeff) :=
+          DensePoly.mul_assoc_poly _ _ _
+      _ = f * DensePoly.C (f.leadingCoeff⁻¹ * f.leadingCoeff) := by
+          rw [C_mul_C_eq]
+      _ = f * DensePoly.C (1 : ZMod64 p) := by rw [hcancel]
+      _ = f := DensePoly.mul_one_right_poly f
+
+omit [ZMod64.PrimeModulus p] in
+private theorem self_dvd_canonical (f : FpPoly p) :
+    f ∣ f * normUnit f := ⟨normUnit f, rfl⟩
+
+omit [ZMod64.PrimeModulus p] in
+private theorem dvd_trans {a b c : FpPoly p} (hab : a ∣ b) (hbc : b ∣ c) :
+    a ∣ c := by
+  rcases hab with ⟨x, hx⟩
+  rcases hbc with ⟨y, hy⟩
+  exact ⟨x * y, hy.trans (hx ▸ DensePoly.mul_assoc_poly a x y)⟩
+
+private theorem size_one_of_mul_eq_one {a b : FpPoly p}
+    (h : a * b = 1) : a.size = 1 ∧ b.size = 1 := by
+  have ha : a ≠ 0 := by
+    intro ha
+    exact one_ne_zero (by rw [← h, ha, FpPoly.zero_mul])
+  have hb : b ≠ 0 := by
+    intro hb
+    exact one_ne_zero (by rw [← h, hb, FpPoly.mul_zero])
+  have hsize := size_mul_eq_add_sub_one a b ha hb
+  have hone : (1 : FpPoly p).size = 1 :=
+    DensePoly.size_one coeffOne_ne_zero
+  rw [h, hone] at hsize
+  have hapos := size_pos_of_ne_zero ha
+  have hbpos := size_pos_of_ne_zero hb
+  omega
+
 end FpPoly
 
 /-- Canonical dense-polynomial ring instance exposed for `FpPoly`. -/
@@ -497,13 +706,109 @@ instance instBezoutOpsFpPoly {p : Nat} [hp : ZMod64.Bounds p] :
 instance instLawfulGcdOpsFpPoly {p : Nat} [hp : ZMod64.Bounds p]
     [ZMod64.PrimeModulus p] :
     @LawfulGcdOps (@FpPoly p hp) instCommRingFpPoly _ _ _ _ instGcdOpsFpPoly := by
-  sorry
+  constructor
+  · intro a b
+    rfl
+  · exact FpPoly.one_ne_zero
+  · intro a b h
+    by_cases ha : a = 0
+    · exact Or.inl ha
+    · by_cases hb : b = 0
+      · exact Or.inr hb
+      · exact False.elim (FpPoly.mul_ne_zero_of_ne_zero ha hb h)
+  · intro a b
+    exact FpPoly.dvd_trans
+      (FpPoly.canonical_dvd_self (DensePoly.gcd a b))
+      (DensePoly.gcd_dvd_left a b)
+  · intro a b
+    exact FpPoly.dvd_trans
+      (FpPoly.canonical_dvd_self (DensePoly.gcd a b))
+      (DensePoly.gcd_dvd_right a b)
+  · intro a b d hda hdb
+    exact FpPoly.dvd_trans (DensePoly.dvd_gcd d a b hda hdb)
+      (FpPoly.self_dvd_canonical (DensePoly.gcd a b))
+  · intro a b
+    exact FpPoly.canonical_idem (DensePoly.gcd a b)
+  · intro a b hb
+    letI : ExactDivLaws (FpPoly p) :=
+      instExactDivLawsDensePoly (R := ZMod64 p)
+    exact ExactDivLaws.mul_div_cancel_right a b hb
+  · intro a
+    change decide (a.size = 1) = true ↔ ∃ b, a * b = 1
+    rw [decide_eq_true_eq]
+    constructor
+    · intro ha
+      refine ⟨FpPoly.normUnit a, ?_⟩
+      exact FpPoly.canonical_eq_one_of_size_one ha
+    · rintro ⟨b, hab⟩
+      exact (FpPoly.size_one_of_mul_eq_one hab).1
+  · exact FpPoly.normUnit_is_unit
+  · exact FpPoly.canonical_mul
+  · exact FpPoly.canonical_idem
+  · intro a ha
+    change decide (a.size = 1) = true at ha
+    rw [decide_eq_true_eq] at ha
+    exact FpPoly.canonical_eq_one_of_size_one ha
 
 instance instLawfulBezoutOpsFpPoly {p : Nat} [hp : ZMod64.Bounds p]
     [ZMod64.PrimeModulus p] :
     @LawfulBezoutOps (@FpPoly p hp) instCommRingFpPoly _ _ _ _ instBezoutOpsFpPoly
       instLawfulGcdOpsFpPoly := by
-  sorry
+  constructor
+  intro f g
+  change
+    let r := DensePoly.xgcd f g
+    let u := FpPoly.normUnit r.gcd
+    (r.left * u) * f + (r.right * u) * g =
+      FpPoly.normalizedGcd f g *
+        FpPoly.normUnit (FpPoly.normalizedGcd f g)
+  dsimp only
+  have hfixed :
+      FpPoly.normalizedGcd f g *
+          FpPoly.normUnit (FpPoly.normalizedGcd f g) =
+        FpPoly.normalizedGcd f g :=
+    FpPoly.canonical_idem (DensePoly.gcd f g)
+  rw [hfixed]
+  change
+    ((DensePoly.xgcd f g).left *
+          FpPoly.normUnit (DensePoly.xgcd f g).gcd) * f +
+        ((DensePoly.xgcd f g).right *
+          FpPoly.normUnit (DensePoly.xgcd f g).gcd) * g =
+      DensePoly.gcd f g * FpPoly.normUnit (DensePoly.gcd f g)
+  let r := DensePoly.xgcd f g
+  let u := FpPoly.normUnit r.gcd
+  have hbez : r.left * f + r.right * g = r.gcd := by
+    dsimp [r]
+    exact DensePoly.xgcd_bezout f g
+  have hleft : (r.left * u) * f = (r.left * f) * u := by
+    calc
+      (r.left * u) * f = r.left * (u * f) :=
+        DensePoly.mul_assoc_poly _ _ _
+      _ = r.left * (f * u) := by
+        exact congrArg (fun x : FpPoly p => r.left * x)
+          (DensePoly.mul_comm_poly u f)
+      _ = (r.left * f) * u :=
+        (DensePoly.mul_assoc_poly _ _ _).symm
+  have hright : (r.right * u) * g = (r.right * g) * u := by
+    calc
+      (r.right * u) * g = r.right * (u * g) :=
+        DensePoly.mul_assoc_poly _ _ _
+      _ = r.right * (g * u) := by
+        exact congrArg (fun x : FpPoly p => r.right * x)
+          (DensePoly.mul_comm_poly u g)
+      _ = (r.right * g) * u :=
+        (DensePoly.mul_assoc_poly _ _ _).symm
+  change (r.left * u) * f + (r.right * u) * g = _
+  calc
+    (r.left * u) * f + (r.right * u) * g =
+        (r.left * f) * u + (r.right * g) * u := by
+      rw [hleft, hright]
+    _ = (r.left * f + r.right * g) * u :=
+      (DensePoly.mul_add_left_poly _ _ _).symm
+    _ = r.gcd * u := by rw [hbez]
+    _ = DensePoly.gcd f g * FpPoly.normUnit (DensePoly.gcd f g) := by
+      dsimp [r, u]
+      rw [DensePoly.xgcd_gcd_eq_gcd]
 
 /-! Instance-graph checks for every base coefficient family. -/
 
