@@ -107,18 +107,12 @@ private theorem natDegree_toMathlibPolynomial_factorPolys_eq
   letI := primeData.bounds
   have hpair :=
     checkCertAtFactor_of_checkFactorCerts primeData hcheck i hi_deg hi_polys hi_certs
-  -- factor.leadingCoeff = 1, factor.degree? = some primeData.factorDegrees[i]
-  have hmonic : Hex.DensePoly.Monic primeData.factorPolys[i] := by
-    by_cases hmon : primeData.factorPolys[i].leadingCoeff = 1
-    · exact hmon
-    · exfalso
-      simp [Hex.PrimeFactorData.checkCertAtFactor, hmon] at hpair
   have hdegree :
       primeData.factorPolys[i].degree? = some primeData.factorDegrees[i] := by
     simp only [Hex.PrimeFactorData.checkCertAtFactor, Bool.and_eq_true, beq_iff_eq,
       decide_eq_true_eq] at hpair
     exact hpair.1.2
-  rw [HexBerlekampMathlib.natDegree_toMathlibPolynomial_eq_basisSize _ hmonic]
+  rw [HexBerlekampMathlib.natDegree_toMathlibPolynomial_eq_basisSize]
   show primeData.factorPolys[i].degree?.getD 0 = _
   rw [hdegree]
   rfl

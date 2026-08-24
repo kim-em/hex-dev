@@ -318,12 +318,17 @@ polynomial's Mathlib image carries no `RingEquiv` coercion.
 
 {docstring HexPolyFpMathlib.coeff_toMathlibPolynomial}
 
-The coefficient lemma is the normal form for the whole layer. Nearly
-every transport below is proved by taking coefficients on both sides and
-rewriting with it, and it is the `simp` rule a downstream proof reaches
-for first.
+{docstring HexPolyFpMathlib.coeff_polynomialToFpPoly}
+
+These coefficient lemmas are the normal forms for the two directions of
+the correspondence. They let downstream proofs cross the equivalence
+without unfolding either representation.
 
 {docstring HexPolyFpMathlib.toMathlibPolynomial_monic}
+
+{docstring HexPolyFpMathlib.natDegree_toMathlibPolynomial}
+
+{docstring HexPolyFpMathlib.leadingCoeff_toMathlibPolynomial}
 
 Monicity is the hypothesis the executable Euclidean operations carry, so
 transporting it is what lets a Mathlib-side argument apply
@@ -344,6 +349,8 @@ the rewrite-friendly form is what the finite-field proofs actually use.
 
 {docstring HexPolyFpMathlib.toMathlibPolynomial_sub}
 
+{docstring HexPolyFpMathlib.toMathlibPolynomial_neg}
+
 {docstring HexPolyFpMathlib.toMathlibPolynomial_mul}
 
 {docstring HexPolyFpMathlib.toMathlibPolynomial_derivative}
@@ -360,19 +367,42 @@ rewritten all the way down to `X` and constants.
 
 {docstring HexPolyFpMathlib.toMathlibPolynomial_X}
 
+{docstring HexPolyFpMathlib.toMathlibPolynomial_monomial}
+
 {docstring HexPolyFpMathlib.toMathlibPolynomial_monomial_one}
+
+Evaluation and Horner composition have direct correspondence theorems,
+so consumers can move a computation to Mathlib without re-running a
+polynomial induction.
+
+{docstring HexPolyFpMathlib.eval₂_toMathlibPolynomial}
+
+{docstring HexPolyFpMathlib.toMathlibPolynomial_compose}
 
 {docstring HexPolyFpMathlib.toMathlibPolynomial_dvd}
 
-That last one is the forward direction only: it is proved from a
-multiplication witness and
-{name}`HexPolyFpMathlib.toMathlibPolynomial_mul`, with no division and no
-gcd. The equivalence can reflect such a witness backward just as well, so
-the two-sided `dvd_iff` is a gap in the current API rather than a
-property of the correspondence. It is tracked as
-[hex-dev issue 9370](https://github.com/kim-em/hex-dev/issues/9370),
-along with the rest of the inverse transport family. What genuinely does
-not belong here is a
+{docstring HexPolyFpMathlib.toMathlibPolynomial_dvd_iff}
+
+The inverse map also has named rules for the basic constructors and ring
+operations. In particular, a caller going backward across the
+equivalence does not need to combine `RingEquiv.symm_apply_eq` with a
+forward coefficient proof.
+
+{docstring HexPolyFpMathlib.polynomialToFpPoly_zero}
+
+{docstring HexPolyFpMathlib.polynomialToFpPoly_one}
+
+{docstring HexPolyFpMathlib.polynomialToFpPoly_C}
+
+{docstring HexPolyFpMathlib.polynomialToFpPoly_neg}
+
+{docstring HexPolyFpMathlib.polynomialToFpPoly_sub}
+
+{docstring HexPolyFpMathlib.polynomialToFpPoly_add}
+
+{docstring HexPolyFpMathlib.polynomialToFpPoly_monomial}
+
+The correspondence layer stops at representation-level facts. A
 statement mentioning Berlekamp's basis size or Rabin's test, even when
 its conclusion is about
 {name}`HexPolyFpMathlib.toMathlibPolynomial`: that is a fact about a

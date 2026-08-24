@@ -174,19 +174,18 @@ private theorem modP_dvd_monicModularImage
 transported modular factors. -/
 private theorem map_natDegree_factorsModP
     {core : Hex.ZPoly} {data : Hex.PrimeChoiceData}
-    (hval : ModPFactorization core data) :
+    (_hval : ModPFactorization core data) :
     letI := data.bounds
     data.factorsModP.toList.map
         (fun g => (HexBerlekampMathlib.toMathlibPolynomial g).natDegree) =
       (Hex.directFactorDegrees data).toList := by
   letI := data.bounds
-  haveI : Fact (_root_.Nat.Prime data.p) := ⟨natPrime_of_hexNatPrime hval.prime⟩
+  haveI : Fact (_root_.Nat.Prime data.p) := ⟨natPrime_of_hexNatPrime _hval.prime⟩
   haveI : Nontrivial (ZMod data.p) := inferInstance
   simp only [Hex.directFactorDegrees, Array.toList_map]
   refine List.map_congr_left ?_
-  intro g hg
-  have hmonic : Hex.DensePoly.Monic g := hval.monic g (by simpa using hg)
-  rw [HexBerlekampMathlib.natDegree_toMathlibPolynomial_eq_basisSize g hmonic]
+  intro g _
+  rw [HexBerlekampMathlib.natDegree_toMathlibPolynomial_eq_basisSize g]
   rfl
 
 /-- Reduction at a good prime sends an integer divisor of the input to a
