@@ -175,6 +175,24 @@ theorem leadingCoeff_eq [Zero R] [IsMonomialOrder cmp]
   unfold leadingCoeff
   cases p.leadingTerm <;> rfl
 
+/-- A nonzero constant has its defining coefficient as leading term. -/
+theorem leadingTerm_C [Zero R] [BEq R] [LawfulBEq R] [DecidableEq R]
+    [IsMonomialOrder cmp] {c : R} (hc : c ≠ 0) :
+    leadingTerm (C c : MvPoly n R cmp) = some (Mono.zero, c) := by
+  apply (leadingTerm_eq_some_iff (C c : MvPoly n R cmp) Mono.zero c).mpr
+  constructor
+  · unfold coeff? C monomial
+    rw [Hex.dite_eq_right hc, Std.ExtTreeMap.getElem?_insert_self]
+  · intro m hm
+    have hcoeff := (mem_monomials_iff m (C c : MvPoly n R cmp)).mp hm
+    rw [coeff_C] at hcoeff
+    by_cases hmzero : m = Mono.zero
+    · subst m
+      rw [show cmp Mono.zero Mono.zero = .eq from Std.ReflCmp.compare_self]
+      trivial
+    · rw [Hex.ite_eq_right hmzero] at hcoeff
+      contradiction
+
 /-- A polynomial has no leading term exactly when it is zero. -/
 @[simp] theorem leadingTerm_eq_none_iff [Zero R] [IsMonomialOrder cmp]
     (p : MvPoly n R cmp) : p.leadingTerm = none ↔ p = 0 := by

@@ -33,7 +33,7 @@ variable {n : Nat} {R : Type u} {cmp : Mono n → Mono n → Ordering}
 zero. -/
 @[reducible] def polyNormUnit [IsMonomialOrder cmp]
     (p : MvPoly n R cmp) : MvPoly n R cmp :=
-  match p.termsList.getLast? with
+  match p.leadingTerm with
   | none => 1
   | some (_, c) => C (GcdOps.normUnit c)
 
@@ -63,7 +63,7 @@ omit [Dvd R] in
 /-- The normalization unit at zero is the constant one polynomial. -/
 @[simp] theorem polyNormUnit_zero [IsMonomialOrder cmp] :
     polyNormUnit (0 : MvPoly n R cmp) = 1 := by
-  rfl
+  rw [polyNormUnit, leadingTerm_zero]
 
 omit [Dvd R] in
 /-- Polynomial normalization preserves zero. -/
@@ -466,12 +466,75 @@ theorem polyIsUnit_iff [IsMonomialOrder cmp] [LawfulGcdOps R]
 theorem polyNormUnit_isUnit [IsMonomialOrder cmp] [LawfulGcdOps R]
     (p : MvPoly n R cmp) :
     polyIsUnit (polyNormUnit p) = true := by
-  sorry
+  rw [polyIsUnit_iff]
+  unfold polyNormUnit
+  cases hlead : p.leadingTerm with
+  | none =>
+      refine ⟨1, ?_⟩
+      exact one_mul _
+  | some term =>
+      rcases term with ⟨m, c⟩
+      rcases LawfulGcdOps.normUnit_unit c with ⟨d, hd⟩
+      refine ⟨C d, ?_⟩
+      change monomial Mono.zero (GcdOps.normUnit c) *
+          monomial Mono.zero d = 1
+      rw [monomial_mul_monomial, Mono.zero_mul, hd]
+      rfl
 
 /-- Polynomial normalization is idempotent. -/
 theorem polyNormalize_idem [IsMonomialOrder cmp] [LawfulGcdOps R]
     (p : MvPoly n R cmp) :
     polyNormalize (polyNormalize p) = polyNormalize p := by
-  sorry
+  cases hlead : p.leadingTerm with
+  | none =>
+      have hpzero : p = 0 := (leadingTerm_eq_none_iff p).mp hlead
+      subst p
+      simp
+  | some term =>
+      rcases term with ⟨m, c⟩
+      have hc : c ≠ 0 := by
+        intro hzero
+        have hcoeff := (leadingTerm_eq_some_iff p m c).mp hlead |>.1
+        exact p.coeff?_ne_zero m (hcoeff.trans (congrArg some hzero))
+      rcases LawfulGcdOps.normUnit_unit c with ⟨d, hd⟩
+      have hu : GcdOps.normUnit c ≠ 0 := by
+        intro hzero
+        rw [hzero, Lean.Grind.Semiring.zero_mul] at hd
+        exact LawfulGcdOps.one_ne_zero hd.symm
+      have hunitLead :
+          (C (GcdOps.normUnit c) : MvPoly n R cmp).leadingTerm =
+            some (Mono.zero, GcdOps.normUnit c) :=
+        leadingTerm_C hu
+      have hnormLead : (polyNormalize p).leadingTerm =
+          some (m, normalize c) := by
+        unfold polyNormalize polyNormUnit
+        rw [hlead]
+        simpa [normalize] using leadingTerm_mul hlead hunitLead
+      have hnormNe : normalize c ≠ 0 := by
+        intro hzero
+        unfold normalize at hzero
+        rcases LawfulGcdOps.no_zero_div c (GcdOps.normUnit c) hzero with
+          hczero | huzero
+        · exact hc hczero
+        · exact hu huzero
+      have hnext : GcdOps.normUnit (normalize c) = 1 := by
+        have hzero :
+            normalize c * (GcdOps.normUnit (normalize c) - 1) = 0 := by
+          calc
+            normalize c * (GcdOps.normUnit (normalize c) - 1) =
+                normalize (normalize c) - normalize c := by
+                  unfold normalize
+                  grind
+            _ = 0 := by rw [LawfulGcdOps.normalize_idem]; grind
+        rcases LawfulGcdOps.no_zero_div (normalize c)
+            (GcdOps.normUnit (normalize c) - 1) hzero with hzero | hrest
+        · exact False.elim (hnormNe hzero)
+        · grind
+      change polyNormalize p * polyNormUnit (polyNormalize p) = polyNormalize p
+      unfold polyNormUnit
+      rw [hnormLead]
+      simp only
+      rw [hnext]
+      exact mul_one _
 
 end Hex.MvPoly
