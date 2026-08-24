@@ -541,12 +541,20 @@ private def restoreClean (saved : Lean.Meta.SavedState) : MetaM Unit := do
   Lean.Meta.resetCache
   modifyThe Lean.Core.State fun state => { state with cache := {} }
 
-/-- Emit one exact Evidence expression from a sealed one-node target lineage.
-No expression is returned until every callback, resource check, transparent
-reduction, `Meta.check`, and exact type comparison has succeeded. -/
-opaque Checked.emitWithin [DecidableEq Fact] [DecidableEq Cause]
+/-- The exact quoted proof input and its correlated evidence expression. The
+private constructor prevents callers from pairing independently emitted terms. -/
+structure Emitted where
+  private mk ::
+  input : Lean.Expr
+  evidence : Lean.Expr
+
+/-- Emit one exact input/evidence pair from a sealed one-node target lineage.
+Neither expression is returned until every callback, resource check,
+transparent reduction, `Meta.check`, and exact type comparison has succeeded.
+Both expressions are bounded independently by `maxExpressionCells`. -/
+opaque Checked.emitResultWithin [DecidableEq Fact] [DecidableEq Cause]
     (limits : Limits) (checked : Checked Fact semantics Cause Plan) :
-    MetaM (Except Error Lean.Expr) := do
+    MetaM (Except Error Emitted) := do
   let tree := checked.terminal.bundle.tree
   let recipe := checked.terminal.bundle.recipe
   if tree.nodes.size != 1 || recipe.events.size != 1 || recipe.edges.size != 1 then
@@ -564,11 +572,16 @@ opaque Checked.emitWithin [DecidableEq Fact] [DecidableEq Cause]
     match eventWithin limits event with
     | .error error => return .error error
     | .ok _ => pure ()
-  let run (_ : Unit) : MetaM (Except Error Lean.Expr) := do
+  let run (_ : Unit) : MetaM (Except Error Emitted) := do
     let prepared ← match ← prepareRegistry limits checked.registry with
       | .error error => return .error error
       | .ok prepared => pure prepared
     let inputExpr ← qInput prepared checked.terminal.input
+    if limits.maxExpressionCells < expressionCells inputExpr then
+      return .error (.resource .expression)
+    let inputType ← mkAppM ``Proof.Input #[prepared.factType]
+    let emitter : Proof.Emitter Lean.Expr := { emit := pure }
+    let inputExpr ← Proof.emitChecked emitter inputExpr inputType
     let resolverExpr ← qResolver checked.registry.runtime prepared
     let mut eventExprs := []
     for event in events do eventExprs := eventExprs.concat (← qEvent prepared event)
@@ -589,8 +602,8 @@ opaque Checked.emitWithin [DecidableEq Fact] [DecidableEq Cause]
     let claim ← mkAppM ``Proof.Semantics.Entails
       #[prepared.semanticsExpr, program, base, target]
     let expected ← mkAppM ``Proof.Evidence #[claim]
-    let emitter : Proof.Emitter Lean.Expr := { emit := pure }
-    return .ok (← Proof.emitChecked emitter candidate expected)
+    let evidence ← Proof.emitChecked emitter candidate expected
+    return .ok { input := inputExpr, evidence }
   let saved ← Lean.Meta.saveState
   let result ← try
     run ()
@@ -598,5 +611,13 @@ opaque Checked.emitWithin [DecidableEq Fact] [DecidableEq Cause]
     pure (.error .replay)
   restoreClean saved
   return result
+
+/-- Compatibility projection for callers which need only the evidence term. -/
+def Checked.emitWithin [DecidableEq Fact] [DecidableEq Cause]
+    (limits : Limits) (checked : Checked Fact semantics Cause Plan) :
+    MetaM (Except Error Lean.Expr) := do
+  match ← checked.emitResultWithin limits with
+  | .error error => return .error error
+  | .ok emitted => return .ok emitted.evidence
 
 end Hex.Interval.RuntimeEmit

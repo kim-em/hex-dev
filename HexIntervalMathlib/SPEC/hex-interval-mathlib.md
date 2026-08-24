@@ -62,6 +62,12 @@ interval exactly once, proves computed domain-top seeds automatically, and requi
 constants and every improvement to enter through package-owned chronology.
 Successful replay can be eliminated to a target membership theorem, either
 endpoint inequality, their conjunction, or equality for a closed singleton.
+For Meta clients, `modelOfCheck` transparently projects the exact `Model` from
+a kernel-reduced successful `modelWithin` call. `valuesAt` quotes a finite list
+as the total source valuation used by the frontend, and
+`SourcesContain.ofForall₂` converts one membership proof per list entry into
+the exact array-indexed source obligation; indices beyond the list are never
+observed. These helpers add no proof schema and do not replay chronology.
 These are ordinary theorem combinators over a flat caller-supplied event
 chronology: the module does not turn a generic search tree into proof recipes,
 parse Lean expressions or hypotheses, or contain tactic syntax. The caps run
@@ -287,15 +293,20 @@ seals those registries with the emitter table; there is no post-hoc
 compatibility-key attachment. `Active`, `Lineage`, and `Checked` retain this
 unified registry alongside the corresponding private `RuntimeTerminal` token.
 
-`RuntimeEmit.Checked.emitWithin` supports only a one-node root target. It
+`RuntimeEmit.Checked.emitResultWithin` supports only a one-node root target. It
 quotes the already authenticated program, input, registrations, and exact
 fact/equality/transport/instance chronology as ordinary data and applies the
-transparent `Proof.replayWith` fold. A decidable success proof projects the
-exact `Proof.Evidence` term. Every fact and schema callback crosses
-`Proof.emitChecked`; the final candidate is transactionally rolled back,
-checked with `Meta.check`, compared with the exact Evidence type, and rejected
-for metavariables, synthetic placeholders, temporary declarations, or retained
-Meta-state leakage. There is no refutation or split expression emitter.
+transparent `Proof.replayWith` fold. A decidable success proof projects an
+exact `Proof.Evidence` term. The sealed result contains both the quoted
+`Proof.Input` expression and Evidence whose claim projects that same expression;
+its private constructor prevents callers from pairing independently emitted
+terms. Every fact and schema callback crosses `Proof.emitChecked`, and the input
+and final evidence separately cross it against their exact types. Both are
+independently charged against the expression cap in the same saved-state
+transaction before rollback; metavariables, synthetic placeholders, temporary
+declarations, or retained Meta-state leakage therefore cannot escape.
+`Checked.emitWithin` remains the evidence-only compatibility projection of that
+operation. There is no refutation or split expression emitter.
 `Quoter` and `Handle` callbacks are trusted reflection code: the kernel checks
 the theorem in the world they quote, but a generic registry cannot prove that a
 caller callback faithfully reifies an arbitrary runtime `Fact`. Supported
@@ -310,8 +321,9 @@ one `O(X)` syntax traversal per returned schema expression. Chronology
 prechecking and quotation are `O(C + B + D)` apart from fact callbacks and
 construction of quoted program/action data; the transparent replay then pays
 the existing proof fold and package theorem callbacks, which are arbitrary
-pure Lean code and are not preemptible. The final expression cap performs one
-additional `O(X)` traversal. Schema, chronology, body, dependency, and
+pure Lean code and are not preemptible. The two final expression caps perform
+one `O(X)` traversal for the quoted input and one for its correlated evidence.
+Schema, chronology, body, dependency, and
 expression limits fail without returning a partial expression.
 
 `HexIntervalMathlib.RuntimeRuleEmit` supplies the paired handles and fact
@@ -551,13 +563,16 @@ exact proposed/installed facts, one-cell bodies, semantic schema execution,
 sticky cache refusal and replayability, sealed rule mutation rejection, and a
 paired opaque-operation extension.
 `HexIntervalMathlib.RuntimeEmitConformance` installs target Evidence only from
-the emitted expression for all twelve built-in rules, including repeated-input
+the sealed input/evidence pair for all twelve built-in rules, including repeated-input
 binary applications, and separately emits the mixed `sin (-x)` instance,
 equality, fact, and transport chronology. It rejects package-local/global
 coverage errors, cross-package and input transplants, a wrong schema
 expression, ill-typed/open/placeholder/temporary emitters, Meta-state leakage,
-and exact one-under schema, chronology, body, dependency, and expression
-resources while guarding every private constructor.
+and exact one-under schema, chronology, body, dependency, input-expression, and
+evidence-expression resources while guarding every private constructor and the
+ordinary theorem axiom surface. `FrontendConformance` additionally pins
+transparent model projection and conversion from per-source list membership to
+the indexed containment obligation.
 `HexIntervalMathlib.RuleConformance` replays a shared arithmetic DAG through
 the supported state quote and proof registry. Its ordinary theorem makes both
 source assumptions load-bearing through add/sub/mul and checked

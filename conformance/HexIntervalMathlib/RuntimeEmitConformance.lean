@@ -44,6 +44,10 @@ open Hex.Interval.Rule.Runtime
 #guard_msgs in
 #check RuntimeEmit.Checked.mk
 
+/-- error: Unknown constant `Hex.Interval.RuntimeEmit.Emitted.mk` -/
+#guard_msgs in
+#check RuntimeEmit.Emitted.mk
+
 def emitLimits : RuntimeEmit.Limits :=
   { proof := RuntimeRuleConformance.proofLimits, maxSchemas := 12, maxChronology := 12,
     maxExpressionCells := 1000000 }
@@ -90,6 +94,9 @@ def input : Proof.Input Hex.Interval :=
   { scope := { index := 0 }, program := RuntimeRuleConformance.program,
     facts := quotedFacts,
     target := { node := { index := 12 }, fact := quotedPoint } }
+
+def changedInput : Proof.Input Hex.Interval :=
+  { input with target := { input.target with node := { index := 11 } } }
 
 private def liftOption {α : Type} : Option α → Option (ULift.{1, 0} α)
   | some value => some ⟨value⟩
@@ -148,10 +155,10 @@ meta def registryError
       | .error error => some error
       | .ok _ => none
 
-meta def emitWith (limits : RuntimeEmit.Limits)
+meta def emitResultWith (limits : RuntimeEmit.Limits)
     (package : RuntimeEmit.Package
       (Rule.semantics RuntimeRuleConformance.config) (List Nat)) :
-    MetaM (Except RuntimeEmit.Error Expr) :=
+    MetaM (Except RuntimeEmit.Error RuntimeEmit.Emitted) :=
   match Rule.Runtime.assemblyWithin RuntimeRuleConformance.executableLimits
       RuntimeRuleConformance.config RuntimeRuleConformance.program with
   | .error _ => pure (.error .malformed)
@@ -162,7 +169,15 @@ meta def emitWith (limits : RuntimeEmit.Limits)
       | .error error => pure (.error error)
       | .ok registry => match checkedFor registry with
         | .error error => pure (.error error)
-        | .ok checked => RuntimeEmit.Checked.emitWithin limits checked
+        | .ok checked => RuntimeEmit.Checked.emitResultWithin limits checked
+
+meta def emitWith (limits : RuntimeEmit.Limits)
+    (package : RuntimeEmit.Package
+      (Rule.semantics RuntimeRuleConformance.config) (List Nat)) :
+    MetaM (Except RuntimeEmit.Error Expr) := do
+  match ← emitResultWith limits package with
+  | .error error => return .error error
+  | .ok emitted => return .ok emitted.evidence
 
 meta def activeError (changed : Proof.Input Hex.Interval) : Option RuntimeEmit.Error :=
   match Rule.Runtime.buildEmitWithin RuntimeRuleConformance.executableLimits
@@ -204,15 +219,32 @@ elab "runtime_emit_canary" : tactic => do
     | .error error => throwError "unified runtime emitter registry failed: {repr error}"
     | .ok registry => match checkedFor registry with
       | .error error => throwError "runtime emitter lineage failed: {repr error}"
-      | .ok checked => RuntimeEmit.Checked.emitWithin emitLimits checked
-  let candidate ← match emitted with
+      | .ok checked => RuntimeEmit.Checked.emitResultWithin emitLimits checked
+  let emitted ← match emitted with
     | .error error => throwError "runtime expression emission failed: {repr error}"
-    | .ok candidate => pure candidate
+    | .ok emitted => pure emitted
+  let inputType ← mkAppM ``Proof.Input #[mkConst ``Hex.Interval]
+  unless ← isDefEq (← inferType emitted.input) inputType do
+    throwError "runtime emitter returned an ill-typed proof input"
+  unless ← isDefEq emitted.input (mkConst ``input) do
+    throwError "runtime emitter input differs from its sealed input"
+  let semantics ← mkAppM ``Rule.semantics
+    #[← Rule.Runtime.Quote.configExpr RuntimeRuleConformance.config]
+  let evidenceType (input : Expr) : MetaM Expr := do
+    let program ← mkAppM ``Proof.Input.program #[input]
+    let base ← mkAppM ``Proof.initialBase #[input]
+    let target ← mkAppM ``Proof.Input.target #[input]
+    let claim ← mkAppM ``Proof.Semantics.Entails #[semantics, program, base, target]
+    mkAppM ``Proof.Evidence #[claim]
+  let actual ← inferType emitted.evidence
+  unless ← isDefEq actual (← evidenceType emitted.input) do
+    throwError "runtime emitter evidence is not correlated with its emitted input"
+  if ← isDefEq actual (← evidenceType (mkConst ``changedInput)) then
+    throwError "runtime emitter evidence admitted a changed input"
   let expected ← goal.getType
-  let actual ← inferType candidate
   unless ← isDefEq actual expected do
     throwError "runtime emitter returned the wrong theorem type\nactual: {actual}\nexpected: {expected}"
-  goal.assign candidate
+  goal.assign emitted.evidence
   replaceMainGoal []
 
 /-- All twelve built-in runtime actions are load-bearing in this evidence. -/
@@ -358,14 +390,21 @@ elab "runtime_emit_failure_guards" : tactic => do
     (← emitWith { emitLimits with proof :=
       { RuntimeRuleConformance.proofLimits with maxDependencies := 1 } } package)
     (.proof .dependencyLimit)
-  let accepted ← emitWith emitLimits package
-  let expression ← match accepted with
+  let accepted ← emitResultWith emitLimits package
+  let emitted ← match accepted with
     | .error error => throwError "expression-size baseline failed: {repr error}"
-    | .ok expression => pure expression
-  let cells := RuntimeEmit.expressionCells expression
-  if cells == 0 then throwError "runtime emitter reported a zero-sized expression"
-  expect "expression count one-under"
-    (← emitWith { emitLimits with maxExpressionCells := cells - 1 } package)
+    | .ok emitted => pure emitted
+  let inputCells := RuntimeEmit.expressionCells emitted.input
+  let evidenceCells := RuntimeEmit.expressionCells emitted.evidence
+  if inputCells == 0 || evidenceCells == 0 then
+    throwError "runtime emitter reported a zero-sized expression"
+  expect "input expression count one-under"
+    (← emitWith { emitLimits with maxExpressionCells := inputCells - 1 } package)
+    (.resource .expression)
+  if evidenceCells ≤ inputCells then
+    throwError "evidence-size guard did not reach the second emitted expression"
+  expect "evidence expression count one-under"
+    (← emitWith { emitLimits with maxExpressionCells := evidenceCells - 1 } package)
     (.resource .expression)
   let goal ← getMainGoal
   goal.assign (mkConst ``True.intro)

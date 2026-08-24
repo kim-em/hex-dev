@@ -370,6 +370,30 @@ version-zero facts constructed by `Result.facts`. -/
 def SourcesContain (values : Nat → ℝ) (sources : Array Hex.Interval) : Prop :=
   ∀ index (fact : Hex.Interval), sources[index]? = some fact → fact.Contains (values index)
 
+/-- Total lookup used when a Meta caller quotes a finite source-expression
+list. Indices outside the list are irrelevant to `SourcesContain`. -/
+def valuesAt (values : List ℝ) (index : Nat) : ℝ :=
+  values[index]?.getD 0
+
+/-- Convert one membership proof per quoted source into the frontend's exact
+array-indexed source obligation. -/
+theorem SourcesContain.ofForall₂ {values : List ℝ} {sources : List Hex.Interval}
+    (holds : List.Forall₂ (fun value source => source.Contains value) values sources) :
+    SourcesContain (valuesAt values) sources.toArray := by
+  induction holds with
+  | nil =>
+      intro index fact found
+      simp at found
+  | @cons value source values sources member _ ih =>
+      intro index fact found
+      cases index with
+      | zero =>
+          simp at found
+          subst fact
+          simpa [valuesAt] using member
+      | succ index =>
+          exact ih index fact (by simpa using found)
+
 theorem Result.seed_contains (config : Rule.Config) (values : Nat → ℝ)
     (result : Result) (sources : Array Hex.Interval) (checked : result.check)
     (sourceSize : sources.size = result.sourceCount)
@@ -510,6 +534,14 @@ def modelWithin (config : Config) (sources : Nat → ℝ) (result : Result) :
         target := result.target_eval config.rule sources checked }
     else throw .malformedResult
   else throw .malformedProgram
+
+/-- Project the exact semantic model from a transparently successful checked
+frontend result. Meta callers construct `success` by kernel reduction of the
+quoted configuration and reifier data. -/
+def modelOfCheck {config : Config} {sources : Nat → ℝ} {result : Result}
+    (checked : Except Error (Model config.rule sources result))
+    (success : checked.toOption.isSome = true) : Model config.rule sources result :=
+  checked.toOption.get success
 
 /-- Revalidate the bounded reification result, including its exact node/term
 correspondence, bind every selected source exactly once, and seed all computed
