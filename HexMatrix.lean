@@ -19,6 +19,8 @@ public import HexMatrix.Pad
 public import HexMatrix.Region
 public import HexMatrix.Strassen
 public import HexMatrix.Gram
+public import HexMatrix.Lattice
+public import HexMatrix.Certificate
 
 public section
 
