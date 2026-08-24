@@ -125,6 +125,79 @@ theorem checkSplit_sound {n : Nat}
       checkIrred entry.factor cert && checkCerts entries certs
   | _, _ => false
 
+/-- Positional certificate replay proves irreducibility of every paired
+decomposition entry. -/
+private theorem checkCerts_sound {n : Nat}
+    {cmp : Mono n → Mono n → Ordering} [IsMonomialOrder cmp] :
+    ∀ {factors : List (Factor n cmp)} {certs : List (IrredCert n cmp)},
+      checkCerts factors certs = true →
+      (∀ pair ∈ factors.zip certs,
+        ∀ F ∈ obligations pair.1.factor pair.2, MvHensel.Irred F) →
+      ∀ entry ∈ factors, MvHensel.Irred entry.factor
+  | [], [], _, _, _, hentry => by contradiction
+  | [], _ :: _, h, _, _, _ => by contradiction
+  | _ :: _, [], h, _, _, _ => by contradiction
+  | entry :: entries, cert :: certs, h, ho, factor, hfactor => by
+      simp only [checkCerts, Bool.and_eq_true] at h
+      rcases List.mem_cons.mp hfactor with heq | hfactor
+      · subst factor
+        apply checkIrred_sound h.1
+        intro F hF
+        exact ho (entry, cert) (List.mem_cons_self ..) F hF
+      · apply checkCerts_sound h.2
+        · intro pair hpair F hF
+          exact ho pair (by simp [hpair]) F hF
+        · exact hfactor
+
+/-- Structural distinctness replay yields pairwise-distinct factor keys. -/
+private theorem distinctFactors_sound {n : Nat}
+    {cmp : Mono n → Mono n → Ordering} [IsMonomialOrder cmp] :
+    ∀ {factors : List (Factor n cmp)}, distinctFactors factors = true →
+      factors.Pairwise fun left right => left.factor ≠ right.factor
+  | [], _ => .nil
+  | entry :: entries, h => by
+      simp only [distinctFactors, Bool.and_eq_true, List.all_eq_true,
+        decide_eq_true_eq] at h
+      exact .cons h.1 (distinctFactors_sound h.2)
+
+/-- Normalized distinct factors cannot differ by an integer unit. -/
+private theorem normalizedDistinct_nonassociate {n : Nat}
+    {cmp : Mono n → Mono n → Ordering} [IsMonomialOrder cmp] :
+    ∀ {factors : List (Factor n cmp)},
+      (∀ entry ∈ factors, checkFactor entry = true) →
+      (factors.Pairwise fun left right => left.factor ≠ right.factor) →
+      factors.Pairwise fun left right =>
+        ∀ u : Int, u * u = 1 → left.factor ≠ right.factor * C u
+  | [], _, _ => .nil
+  | entry :: entries, hcheck, .cons head tail => by
+      apply List.Pairwise.cons
+      · intro right hright u hu heq
+        have hleftCheck := hcheck entry (List.mem_cons_self ..)
+        have hrightCheck := hcheck right (List.mem_cons_of_mem _ hright)
+        simp only [checkFactor, Bool.and_eq_true, beq_iff_eq,
+          decide_eq_true_eq] at hleftCheck hrightCheck
+        have huPoly : polyIsUnit (C u : MvPoly n Int cmp) = true := by
+          apply (polyIsUnit_iff _).mpr
+          refine ⟨C u, ?_⟩
+          change monomial Mono.zero u * monomial Mono.zero u = 1
+          rw [monomial_mul_monomial, Mono.zero_mul, hu]
+          rfl
+        apply head right hright
+        calc
+          entry.factor = polyNormalize entry.factor :=
+            hleftCheck.1.2.symm
+          _ = polyNormalize (right.factor * C u) :=
+            congrArg polyNormalize heq
+          _ = polyNormalize right.factor * polyNormalize (C u) :=
+            polyNormalize_mul _ _
+          _ = right.factor * 1 := by
+            rw [hrightCheck.1.2, polyNormalize_unit _ huPoly]
+          _ = right.factor := MvPoly.mul_one _
+      · apply normalizedDistinct_nonassociate
+        · intro factor hfactor
+          exact hcheck factor (List.mem_cons_of_mem _ hfactor)
+        · exact tail
+
 /-- Reject zero, replay the decomposition, and pair every factor with exactly
 one irreducibility certificate. -/
 @[reducible] def checkComplete {n : Nat}
@@ -179,7 +252,24 @@ theorem checkComplete_sound {n : Nat}
     (ho : ∀ pair ∈ complete.decomp.factors.zip complete.certs,
       ∀ F ∈ obligations pair.1.factor pair.2, MvHensel.Irred F) :
     IsFactorizationOf f complete.decomp := by
-  sorry
+  simp only [checkComplete, Bool.and_eq_true, decide_eq_true_eq] at h
+  have hdecomp := checkDecomp_sound (f := f) (D := complete.decomp) (by
+    simp only [checkDecomp, Bool.and_eq_true]
+    exact h.1.1.2)
+  have hcheckDecomp := h.1.1.2
+  have hcheck := h.2
+  simp only [Bool.and_eq_true, List.all_eq_true] at hcheckDecomp
+  have hcheckFactor : ∀ entry ∈ complete.decomp.factors,
+      checkFactor entry = true := by
+    intro entry hentry
+    have hentryCheck := hcheckDecomp.1.2 entry hentry
+    simp only [checkFactor, Bool.and_eq_true, beq_iff_eq,
+      decide_eq_true_eq]
+    simpa only [beq_iff_eq, decide_eq_true_eq] using hentryCheck
+  refine ⟨h.1.1.1, hdecomp,
+    checkCerts_sound hcheck ho, ?_⟩
+  exact normalizedDistinct_nonassociate hcheckFactor
+    (distinctFactors_sound hcheckDecomp.2)
 
 /-! # Kronecker decision contracts -/
 
