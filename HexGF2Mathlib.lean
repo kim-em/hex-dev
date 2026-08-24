@@ -4,9 +4,13 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexGF2Mathlib.Basic
-import HexGF2Mathlib.Field
-import HexGF2Mathlib.Algebra
+module
+
+public import HexGF2Mathlib.Basic
+public import HexGF2Mathlib.Field
+public import HexGF2Mathlib.Algebra
+
+public section
 
 /-!
 The `HexGF2Mathlib` library connects the packed `HexGF2` execution path to the

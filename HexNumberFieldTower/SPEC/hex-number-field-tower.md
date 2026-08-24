@@ -12,6 +12,11 @@ chosen as its generator.
 
 ## Representation
 
+`opaque` below marks the public abstraction boundary, not the implementing
+keyword, per the hex-number-field SPEC's representation convention; the
+implementation seals `NumberTower` and `Elem` with `structure ... private
+mk ::` so that `Internal.extend?` remains the only level admitter.
+
 ```lean
 namespace Hex
 
@@ -340,14 +345,22 @@ degree at most 4 until those measurements exist.
 
 ```text
 HexNumberFieldTower/
-  Basic.lean       : private level data, NumberTower, Elem, coordinates
-  Arithmetic.lean  : field operations
-  Embed.lean       : Extension and smart constructors
-  Norm.lean        : recursive resultants
-  Factor.lean      : Yun and Trager factorization
-  Split.lean       : root adjoining and splitting fields
-  Flatten.lean     : primitive-element conversion
+  Data.lean           : raw number-tower level data
+  RawArithmetic.lean  : runtime-indexed mixed-radix tower arithmetic
+  RawEvaluation.lean  : fixed-embedding evaluation for raw coordinates
+  Basic.lean          : NumberTower, Elem, Extension, smart constructors
+  Arithmetic.lean     : field operations
+  Embed.lean          : compiled extension regressions (#guard fixtures)
+  Norm.lean           : recursive resultants
+  FactorRaw.lean      : raw tower polynomial factorization
+  Factor.lean         : Yun and Trager factorization, checked replay
+  Split.lean          : root adjoining and splitting fields
+  Flatten.lean        : primitive-element conversion
 ```
+
+`Extension` and `ofQAdjoin` live in `Basic.lean` beside the sealed types
+whose invariants they establish; `Embed.lean` retains the compiled
+extension regressions exercising them.
 
 ## References
 

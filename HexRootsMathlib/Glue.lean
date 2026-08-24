@@ -30,8 +30,10 @@ namespace Glue
 /-- Undirected executable edge adjacency. -/
 @[expose] def Linked (s t : Hex.DyadicSquare) : Prop := Edge s t ∨ Edge t s
 
+/-- Undirected adjacency is symmetric. -/
 theorem linked_symm {s t : Hex.DyadicSquare} : Linked s t → Linked t s := Or.symm
 
+/-- Executable adjacency is reflexive: a square is adjacent to itself. -/
 theorem edge_refl (s : Hex.DyadicSquare) : Edge s s := by
   rw [Edge, Hex.DyadicSquare.adjacent, if_pos rfl]
   have hpos : (0 : _root_.Dyadic) < .ofIntWithPrec 1 (s.prec - 2) := by
@@ -97,10 +99,12 @@ direction. Together with coverage and connectedness this is maximality. -/
   ∀ c ∈ components, ∀ d ∈ components, c ≠ d →
     ∀ s ∈ c, ∀ t ∈ d, ¬Edge s t ∧ ¬Edge t s
 
+/-- The executable `touches` test is adjacency to some member. -/
 theorem touches_iff {s : Hex.DyadicSquare} {component : List Hex.DyadicSquare} :
     s.touches component = true ↔ ∃ t ∈ component, Linked s t := by
   simp [Hex.DyadicSquare.touches, Linked, Edge]
 
+/-- A failed `touches` test is two-sided non-adjacency to every member. -/
 theorem not_touches_iff {s : Hex.DyadicSquare}
     {component : List Hex.DyadicSquare} :
     s.touches component = false ↔

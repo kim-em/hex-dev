@@ -4,11 +4,15 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexGFqMathlib.Basic
-import HexPolyFpMathlib.Basic
-import HexModArithMathlib.ZMod64Equiv
-import HexConway.Compatibility
-import Mathlib.Algebra.Polynomial.Eval.Defs
+module
+
+public import HexGFqMathlib.Basic
+public import HexPolyFpMathlib.Basic
+public import HexModArithMathlib.ZMod64Equiv
+public import HexConway.Compatibility
+public import Mathlib.Algebra.Polynomial.Eval.Defs
+
+public section
 
 /-!
 Ring homomorphisms into the executable finite field, and the canonical subfield
@@ -29,7 +33,6 @@ monomial data.
 namespace HexGFqMathlib
 
 open Hex
-open scoped HexPolyFpMathlib
 
 variable {p : Nat} [Hex.ZMod64.Bounds p] [Hex.ZMod64.PrimeModulus p]
 
@@ -38,6 +41,7 @@ variable {p : Nat} [Hex.ZMod64.Bounds p] [Hex.ZMod64.PrimeModulus p]
 The component facts live on the quotient-ring layer; this bundles them so that
 Mathlib constructions needing a `RingHom` can be pointed at the executable
 field. -/
+@[expose]
 def ofPolyHom (f : Hex.FpPoly p) (hf : 0 < Hex.FpPoly.degree f)
     (hp : Hex.Nat.Prime p) (hirr : Hex.FpPoly.Irreducible f) :
     Hex.FpPoly p →+* Hex.GFqField.FiniteField f hf hp hirr where

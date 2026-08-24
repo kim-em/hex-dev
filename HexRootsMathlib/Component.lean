@@ -140,6 +140,7 @@ namespace Certified
   | .atom _ => 1
   | .cluster cl => cl.k
 
+/-- Every certificate claims at least one root. -/
 theorem count_pos {p : Hex.ZPoly} (r : Hex.Certified p) : 0 < count r := by
   cases r with
   | atom => simp [count]
@@ -169,6 +170,8 @@ theorem toComponent_wellFormed {p : Hex.ZPoly} (r : Hex.Certified p) :
     Component.WellFormed r.toComponent := by
   simp [Component.WellFormed, Hex.Component.prec]
 
+/-- Re-entry preserves candidate-count positivity; together with
+`toComponent_wellFormed` this is the loop kernel's re-entry contract. -/
 theorem toComponent_count_pos {p : Hex.ZPoly} (r : Hex.Certified p) :
     0 < r.toComponent.candidateK := by
   rw [toComponent_count]

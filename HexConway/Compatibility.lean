@@ -4,10 +4,14 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexConway.Api
-import HexPolyFp.ModCompose
-import HexPolyFp.Frobenius
-import HexPolyFp.QuotientCompose
+module
+
+public import HexConway.Api
+public import HexPolyFp.ModCompose
+public import HexPolyFp.Frobenius
+public import HexPolyFp.QuotientCompose
+
+public section
 
 /-!
 Tier 2: compatibility of the committed Conway entries across the subfield
@@ -81,6 +85,7 @@ variable {p : Nat} [ZMod64.Bounds p] [ZMod64.PrimeModulus p]
 /-- `x ^ p` reduced modulo a monic `f`, computed by the structurally recursive
 modular exponentiation so the kernel can replay it. Linear in `p`, which is at
 most `13` for the committed entries. -/
+@[expose]
 def frobeniusBase (f : FpPoly p) (hmonic : DensePoly.Monic f) : FpPoly p :=
   FpPoly.powModMonicLinear FpPoly.X f hmonic p
 
@@ -90,6 +95,7 @@ compositions with `xp = x ^ p mod f`.
 Composition rather than exponentiation is the point: `g(x) ^ p = g(x ^ p)` in
 characteristic `p`, so one Frobenius step costs a Horner walk over `g`'s
 coefficients instead of `p` modular multiplications. -/
+@[expose]
 def frobeniusIter (f xp : FpPoly p) (hmonic : DensePoly.Monic f) :
     Nat → FpPoly p → FpPoly p
   | 0, g => g
@@ -100,6 +106,7 @@ the residue of `x`, reducing modulo `f` at each step.
 
 `cur` is `α ^ (p ^ (i m))` on entry to the `i`-th step, and advances by `m`
 Frobenius applications. -/
+@[expose]
 def normAux (f xp : FpPoly p) (hmonic : DensePoly.Monic f) (m : Nat) :
     Nat → FpPoly p → FpPoly p → FpPoly p
   | 0, acc, _ => acc
@@ -113,6 +120,7 @@ representative modulo `f`.
 
 `f` is the degree-`n` modulus and `m` divides `n`; `k = n / m` is passed
 explicitly so that the recursion is structural. -/
+@[expose]
 def normX (f : FpPoly p) (hmonic : DensePoly.Monic f) (m k : Nat) :
     FpPoly p :=
   normAux f (frobeniusBase f hmonic) hmonic m k 1 FpPoly.X
@@ -122,6 +130,7 @@ of `α` down to the degree-`m` subfield a root of `C(p, m)`?
 
 `fm` is the smaller modulus, `fn` the larger, and `k = n / m`. Evaluating `fm`
 at the norm is exactly a modular composition. -/
+@[expose]
 def compatCheck (fm fn : FpPoly p) (hmonic : DensePoly.Monic fn)
     (m k : Nat) : Bool :=
   FpPoly.composeModMonicImpl fm (normX fn hmonic m k) fn hmonic == 0
@@ -163,6 +172,7 @@ vanishes on it.
 /-- The generator of the canonical degree-`m` subfield of
 `F_p[x] / (C(p, n))`, as an element of the quotient rather than as a
 representative: the class of the norm of `x`. -/
+@[expose]
 def subfieldGen (p m n : Nat) [ZMod64.Bounds p] [ZMod64.PrimeModulus p]
     (hn : SupportedEntry p n) :
     FpPoly.Quotient (conwayPoly p n hn) (conwayPoly_monic p n hn)

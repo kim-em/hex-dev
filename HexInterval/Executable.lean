@@ -156,6 +156,12 @@ structure Measure (Cache Result : Type) where
 /-- One registration and the only callback allowed to interpret its rule key. -/
 structure Handler (Fact Result Cache : Type) where
   registration : Registration
+  /-- Cache-independent applicability check for one exact reconstructed
+  application request and its authenticated whole-state snapshot. It may veto
+  an offer but cannot choose the compact application identity, route, ports,
+  ordering, or theorem schema. The whole snapshot is scheduler data only; the
+  invocation callback still receives just its declared fact inputs. -/
+  offers : Snapshot Fact → RuleRequest Fact → Bool := fun _ _ => true
   invoke : Cache → RuleRequest Fact → Plan Result × Cache
   /-- Package-owned semantic veto for a structurally valid scoped binding.
   Local registrations do not call this hook. -/
@@ -185,6 +191,13 @@ def applicationsPrefix (before after : Array Application) : Bool := Id.run do
     let some old := before[index]? | return false
     let some new := after[index]? | return false
     if !old.same new then return false
+  return true
+
+/-- Every old scoped binding remains at the same compact address. -/
+def bindingsPrefix (before after : Array ScopeBinding) : Bool := Id.run do
+  if after.size < before.size then return false
+  for index in [0:before.size] do
+    if before[index]? != after[index]? then return false
   return true
 
 /-- Independent assembly and invocation caps. `state` owns structural table
@@ -258,6 +271,9 @@ structure Assembly (Fact Result : Type) where
   bindings : Array ScopeBinding
   registry : Registry Fact Result
   applications : Array Application
+  /-- Global creation generation, retained even when an extension appends no
+  concrete application row. -/
+  generation : Nat
 
 /-- A successful callback result retains the exact selected route, owner, and
 validated raw quotations. No field is theorem evidence. -/
@@ -274,9 +290,10 @@ private def makeRegistry (packages : Array (Package Fact Result))
   { packages, operations, registrations, routes, metadataCost, cacheCost }
 
 private def makeAssembly (program : Program) (bindings : Array ScopeBinding)
-    (registry : Registry Fact Result) (applications : Array Application) :
+    (registry : Registry Fact Result) (applications : Array Application)
+    (generation : Nat) :
     Assembly Fact Result :=
-  { program, bindings, registry, applications }
+  { program, bindings, registry, applications, generation }
 
 private def makeInvocation (route : Route) (rule : RuleKey)
     (result : Result) (quotes : Array Quote) : Invocation Result :=
@@ -512,6 +529,21 @@ private def compileSuffixWithin (limit start generation : Nat) (program : Progra
             watches, writes, effort := rule.initialEffort, generation }
   pure applications
 
+private def compileBindingSuffixWithin (limit start generation : Nat)
+    (rules : Array Registration) (bindings : Array ScopeBinding) :
+    Except Error (Array Application) := do
+  let mut applications := #[]
+  for index in [start:bindings.size] do
+    if limit ≤ applications.size then throw (.resource (.state .applications))
+    let some binding := bindings[index]? | throw .invalidBindings
+    let some (ruleId, rule) := Registration.find? rules binding.rule
+      | throw .invalidBindings
+    applications := applications.push
+      { rule := ruleId, node := binding.anchor, kind := rule.kind
+        watches := binding.watches, writes := binding.writes
+        effort := rule.initialEffort, generation }
+  pure applications
+
 private def applicationCost (registry : Registry Fact Result)
     (applications : Array Application) : Except Error Cost := do
   let mut cost : Cost := {}
@@ -558,38 +590,96 @@ opaque buildWithin (limits : Limits) (packages : Array (Package Fact Result))
                       .error (.resource .metadataBytes)
                     else .error (.resource .metadataWork)
                   else
-                    .ok (makeAssembly program bindings { registry with metadataCost } applications)
+                    .ok (makeAssembly program bindings { registry with metadataCost } applications 0)
 
-/-- Extend only the program-node suffix and its local applications. Existing
-bindings, registry routes, caches, and application rows are retained exactly.
-The fresh generation must strictly exceed every retained application
-generation. -/
-opaque Assembly.extendWithin (limits : Limits) (assembly : Assembly Fact Result)
-    (program : Program) (generation : Nat) : Except Error (Assembly Fact Result) :=
+/-- Re-admit every retained executable resource under a possibly tighter
+limit before a higher layer invokes a callback. The assembly is already
+structurally sealed; this pass rechecks package/cache metadata, program and
+application dimensions, and the complete application cost without rebuilding
+routes or callback caches. -/
+opaque Assembly.preflightWithin (limits : Limits) (assembly : Assembly Fact Result) :
+    Except Error Unit := do
+  match checkProgramLimits limits.state assembly.program with
+  | .error error => throw error
+  | .ok _ => pure ⟨⟩
+  if limits.state.maxApplications < assembly.bindings.size ||
+      limits.state.maxApplications < assembly.applications.size then
+    throw (.resource (.state .applications))
+  if assembly.bindings.any (fun binding =>
+      !listWithin limits.state.maxScopeNodes binding.watches ||
+        !listWithin limits.state.maxScopeNodes binding.writes) then
+    throw (.resource (.state .scopes))
+  let portLimit := Nat.max (limits.state.maxArity + 1) limits.state.maxScopeNodes
+  if assembly.applications.any (fun application =>
+      !listWithin portLimit application.watches ||
+        !listWithin portLimit application.writes) then
+    throw (.resource (.state .arity))
+  if assembly.applications.any (fun application =>
+      !listWithin limits.state.matcherBatchSize application.structuralInputs) then
+    throw (.resource (.state .matcherVisits))
+  if assembly.applications.any (fun application =>
+      limits.state.maxEffort < application.effort) then
+    throw (.resource (.state .effort))
+  if assembly.applications.any (fun application =>
+      limits.state.maxGeneration < application.generation) then
+    throw (.resource (.state .generation))
+  if limits.state.maxGeneration < assembly.generation then
+    throw (.resource (.state .generation))
+  let (packageCost, _) ← packagePreflight limits assembly.registry.packages
+  let applicationCost ← applicationCost assembly.registry assembly.applications
+  let metadataCost := packageCost + applicationCost
+  if !metadataCost.allowed limits.maxMetadataBytes limits.maxMetadataWork then
+    if limits.maxMetadataBytes < metadataCost.bytes then
+      throw (.resource .metadataBytes)
+    else throw (.resource .metadataWork)
+  pure ()
+
+/-- Extend an assembly by exact append-only program and scoped-binding
+suffixes. Old bindings, applications, routes, and caches remain at their
+original compact addresses. Fresh scoped applications precede fresh local
+node applications in the appended table; their generation must strictly
+exceed the retained global assembly generation, including after an extension
+which creates no application row. -/
+opaque Assembly.extendAllWithin (limits : Limits) (assembly : Assembly Fact Result)
+    (program : Program) (bindings : Array ScopeBinding) (generation : Nat) :
+    Except Error (Assembly Fact Result) := do
+  match assembly.preflightWithin limits with
+  | .error error => throw error
+  | .ok _ => pure ⟨⟩
   match checkProgramLimits limits.state program with
   | .error error => .error error
   | .ok _ =>
       if !program.check then .error .invalidProgram
       else
-        if limits.state.maxApplications < assembly.bindings.size ||
+        if limits.state.maxApplications < bindings.size ||
             limits.state.maxApplications < assembly.applications.size then
           .error (.resource (.state .applications))
+        else if bindings.any (fun binding =>
+            !listWithin limits.state.maxScopeNodes binding.watches ||
+              !listWithin limits.state.maxScopeNodes binding.writes) then
+          .error (.resource (.state .scopes))
         else if !State.programPrefix assembly.program program then .error .nonExtension
-        else if limits.state.maxGeneration < generation ||
+        else if !bindingsPrefix assembly.bindings bindings then .error .nonExtension
+        else if limits.state.maxGeneration < generation || generation ≤ assembly.generation ||
             assembly.applications.any (fun application => generation ≤ application.generation) then
           .error .staleGeneration
         else if !assembly.registry.acceptsProgram program then .error .programRejected
         else if !Registration.check program assembly.registry.registrations then
           .error .invalidRegistrations
-        else if !assembly.registry.acceptsBindings program assembly.bindings then
+        else if !assembly.registry.acceptsBindings program bindings then
           .error .invalidBindings
         else
           let room := limits.state.maxApplications - assembly.applications.size
-          match compileSuffixWithin room assembly.program.nodes.size generation program
-              assembly.registry.registrations with
+          match compileBindingSuffixWithin room assembly.bindings.size generation
+              assembly.registry.registrations bindings with
           | .error error => .error error
-          | .ok suffix =>
-              let applications := assembly.applications ++ suffix
+          | .ok bindingSuffix =>
+            let room := room - bindingSuffix.size
+            match compileSuffixWithin room assembly.program.nodes.size generation program
+                assembly.registry.registrations with
+            | .error error => .error error
+            | .ok nodeSuffix =>
+              let applications := assembly.applications ++ bindingSuffix ++ nodeSuffix
               if !applicationsPrefix assembly.applications applications then .error .nonExtension
               else match applicationCost assembly.registry applications with
                 | .error error => .error error
@@ -602,11 +692,43 @@ opaque Assembly.extendWithin (limits : Limits) (assembly : Assembly Fact Result)
                         .error (.resource .metadataBytes)
                       else .error (.resource .metadataWork)
                     else
-                      .ok (makeAssembly program assembly.bindings
-                        { assembly.registry with metadataCost } applications)
+                      .ok (makeAssembly program bindings
+                        { assembly.registry with metadataCost } applications generation)
+
+/-- Extend only the program-node suffix and its local applications. Existing
+bindings, registry routes, caches, and application rows are retained exactly. -/
+opaque Assembly.extendWithin (limits : Limits) (assembly : Assembly Fact Result)
+    (program : Program) (generation : Nat) : Except Error (Assembly Fact Result) :=
+  assembly.extendAllWithin limits program assembly.bindings generation
 
 private def quoteCells (quotes : Array Quote) : Nat :=
   quotes.foldl (fun total quote => total + quote.body.length) 0
+
+/-- Resolve the immutable replay formats owned by one exact flattened rule.
+This projection preserves the sealed route/package/handler correspondence while
+letting a theorem companion check format coverage without eliminating the
+package's private cache type. -/
+opaque Registry.formats? (registry : Registry Fact Result) (rule : RuleId) :
+    Option (RuleKey × Array ReplayFormat) :=
+  match registry.registrations[rule.index]?, registry.routes[rule.index]? with
+  | some registration, some route => match registry.packages[route.package]? with
+    | none => none
+    | some package => match package.handlers[route.handler]? with
+      | none => none
+      | some handler =>
+          if registration.same handler.registration then
+            some (registration.key, handler.formats)
+          else none
+  | _, _ => none
+
+/-- Count the exact routed replay-format table, failing closed if a supposedly
+sealed route can no longer be resolved. -/
+opaque Registry.formatCount? (registry : Registry Fact Result) : Option Nat := do
+  let mut count := 0
+  for index in [0:registry.registrations.size] do
+    let (_, formats) ← registry.formats? { index }
+    count := count + formats.size
+  pure count
 
 private def validateQuotes (limits : Limits) (rule : RuleKey)
     (formats : Array ReplayFormat) (quotes : Array Quote) : Except Error Unit := do
@@ -621,6 +743,92 @@ private def validateQuotes (limits : Limits) (rule : RuleKey)
     if !format.accepts quote then
       throw (.invalidBody { rule, role := quote.role, schema := quote.schema })
 
+private def requestAcceptsChecked (registration : Registration)
+    (request : RuleRequest Fact) : Bool :=
+  if request.program.programVersion != request.action.programVersion then false
+  else match request.program.node? request.action.node with
+    | none => false
+    | some anchor =>
+        let inputNodes := request.inputs.map (fun input => input.node)
+        let seen := request.inputs.map fun input =>
+          { node := input.node, version := input.version : SeenVersion }
+        let common := registration.key == request.action.key &&
+          registration.kind == request.action.kind &&
+          request.program.operationKey? request.action.node == some registration.head &&
+          request.action.inputs == seen && request.action.writes == request.writes &&
+          match registration.matchWatch with
+          | .none =>
+              request.action.structuralInputs.isEmpty && request.action.matcherEpoch.isNone
+          | .network =>
+              !request.action.structuralInputs.isEmpty && request.action.matcherEpoch.isSome
+        common && match registration.binding with
+          | .local =>
+              Slot.resolveAll? request.action.node anchor registration.watches ==
+                  some inputNodes &&
+                Slot.resolveAll? request.action.node anchor registration.writes ==
+                  some request.writes
+          | .scoped =>
+              registration.watches.isEmpty && registration.writes.isEmpty &&
+                allDistinct inputNodes && allDistinct request.writes &&
+                inputNodes.all (fun node => (request.program.node? node).isSome) &&
+                request.writes.all (fun node => (request.program.node? node).isSome)
+          | .global =>
+              registration.watches.isEmpty && registration.writes.isEmpty &&
+                inputNodes.isEmpty && request.writes.isEmpty
+
+private def offersChecked [DecidableEq Fact] (assembly : Assembly Fact Result)
+    (snapshot : Snapshot Fact) (request : RuleRequest Fact) : Bool :=
+  let id := request.action.application
+  match assembly.applications[id.index]? with
+  | none => false
+  | some application =>
+      if request.action.rule != application.rule || !application.accepts id request.action then
+        false
+      else match assembly.registry.registrations[application.rule.index]? with
+        | none => false
+        | some registration =>
+            if !requestAcceptsChecked registration request || request.inputs.any (fun input =>
+                snapshot.fact? input.node != some input.fact ||
+                  snapshot.version? input.node != some input.version) then false
+            else match assembly.registry.routes[application.rule.index]? with
+              | none => false
+              | some route => match assembly.registry.packages[route.package]? with
+                | none => false
+                | some package => match package.handlers[route.handler]? with
+                  | none => false
+                  | some handler =>
+                      registration.same handler.registration && handler.offers snapshot request
+
+/-- One sealed, checked snapshot/program context for a complete offer-generation
+pass. Its constructor is private so package predicates can be entered through
+the cheaper per-application path only after the shared whole-state checks. -/
+structure OfferContext (Fact Result : Type) where
+  private mk ::
+  assembly : Assembly Fact Result
+  snapshot : Snapshot Fact
+  program : ProgramView
+
+/-- Authenticate the common snapshot and program view once before enumerating
+an assembly's applications. Program version remains controller-owned; the
+per-request check requires it to agree with each reconstructed action. -/
+opaque Assembly.offerContext? [DecidableEq Fact] (assembly : Assembly Fact Result)
+    (snapshot : Snapshot Fact) (program : ProgramView) : Option (OfferContext Fact Result) :=
+  if !snapshot.check assembly.program ||
+      program.operations != assembly.program.operations ||
+      program.nodes != assembly.program.nodes ||
+      program.generations.size != program.nodes.size ||
+      assembly.program.depths? != some program.depths then none
+  else some { assembly, snapshot, program }
+
+/-- Ask the exact routed handler whether one reconstructed application is
+currently applicable inside an already checked generation pass. The handler
+receives the context's authenticated program rather than caller-supplied
+program arrays. The predicate is scheduler data only and carries no mutation
+or theorem authority. -/
+opaque OfferContext.offers [DecidableEq Fact] (context : OfferContext Fact Result)
+    (request : RuleRequest Fact) : Bool :=
+  offersChecked context.assembly context.snapshot { request with program := context.program }
+
 /-- Execute the exact handler selected by an authenticated application row.
 The request must repeat the assembled operation/node program and every
 application-owned action field. Program version and generation side tables in
@@ -629,7 +837,10 @@ checks their internal request validity but does not claim to own them. Callback
 and measure execution are non-preemptible; failure returns no replacement
 assembly, so a rejected cache/result/quotation cannot partially commit. -/
 opaque Assembly.invokeWithin (limits : Limits) (assembly : Assembly Fact Result)
-    (request : RuleRequest Fact) : Except Error (Invocation Result × Assembly Fact Result) :=
+    (request : RuleRequest Fact) : Except Error (Invocation Result × Assembly Fact Result) := do
+  match assembly.preflightWithin limits with
+  | .error error => throw error
+  | .ok _ => pure ⟨⟩
   if request.program.operations != assembly.program.operations ||
       request.program.nodes != assembly.program.nodes then .error .invalidRequest
   else
@@ -678,6 +889,6 @@ opaque Assembly.invokeWithin (limits : Limits) (assembly : Assembly Fact Result)
                                   let registry := replacePackage assembly.registry route.package package cacheCost
                                   .ok (makeInvocation route registration.key plan.result plan.quotes,
                                     makeAssembly assembly.program assembly.bindings registry
-                                      assembly.applications)
+                                      assembly.applications assembly.generation)
 
 end Hex.Interval.Executable

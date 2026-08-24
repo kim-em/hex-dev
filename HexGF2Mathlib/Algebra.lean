@@ -4,9 +4,13 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexGF2Mathlib.Field
-import Mathlib.Algebra.Ring.MinimalAxioms
-import Mathlib.Algebra.Field.MinimalAxioms
+module
+
+public import HexGF2Mathlib.Field
+public import Mathlib.Algebra.Ring.MinimalAxioms
+public import Mathlib.Algebra.Field.MinimalAxioms
+
+public section
 
 /-!
 Mathlib algebraic structure on the packed `hex-gf2` types.
@@ -52,8 +56,8 @@ The degree hypothesis is not redundant. `Hex.GF2Poly.Irreducible` asks that `f`
 be nonzero with no factorization into two positive-degree parts, which the
 constant `1` satisfies, and `Hex.GF2nPoly 1 _` is the trivial ring where
 `0 = 1`. Carried as a `Fact` so that instance synthesis can find it: a caller
-with a genuine modulus supplies it once, and every committed
-the committed packed entries in `hex-gfq` has `degree_pos` to build it from. -/
+with a genuine modulus supplies it once, and the committed packed entries in
+`hex-gfq` carry `degree_pos` to build it from. -/
 noncomputable instance field [hdeg : Fact (0 < f.degree)] :
     Field (Hex.GF2nPoly f hirr) :=
   Field.ofMinimalAxioms (Hex.GF2nPoly f hirr)

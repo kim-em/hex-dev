@@ -37,7 +37,7 @@ open Polynomial
 -- sites spelling these `HexBerlekampMathlib.foo` keep resolving.
 export HexPolyFpMathlib (fpPolyToPolynomial polynomialToFpPoly
   coeff_fpPolyToPolynomial fpPolyEquiv toMathlibPolynomial fpPolyEquiv_apply
-  fpPolyEquiv_symm_apply coeff_toMathlibPolynomial coeff_toMathlibPolynomial_equiv
+  fpPolyEquiv_symm_apply coeff_toMathlibPolynomial
   toMathlibPolynomial_monic toMathlibPolynomial_derivative toMathlibPolynomial_mul
   toMathlibPolynomial_add toMathlibPolynomial_sub toMathlibPolynomial_C
   toMathlibPolynomial_monomial_one toMathlibPolynomial_X toMathlibPolynomial_dvd
@@ -229,7 +229,7 @@ theorem exists_algHom_adjoinRoot_to_galoisField
   have hdegree_dvd : g.natDegree ∣ n := by
     exact
       (Irreducible.natDegree_dvd_of_dvd_X_pow_card_pow_sub_X
-        (K := ZMod p) (n := n) (f := g) hg_irreducible hg_dvd')
+        (n := n) (f := g) hg_irreducible hg_dvd')
   have hfinrank_dvd :
       Module.finrank (ZMod p) (AdjoinRoot g) ∣
         Module.finrank (ZMod p) (GaloisField p n) := by
@@ -262,7 +262,7 @@ theorem natDegree_dvd_of_irreducible_dvd_frobeniusPolynomial
     simpa [frobeniusPolynomial, Nat.card_zmod] using hg_dvd
   exact
     (Irreducible.natDegree_dvd_of_dvd_X_pow_card_pow_sub_X
-      (K := ZMod p) (n := n) (f := g) hg_irreducible hg_dvd')
+      (n := n) (f := g) hg_irreducible hg_dvd')
 
 /-
 For an irreducible polynomial, any nontrivial gcd/coprimality failure with

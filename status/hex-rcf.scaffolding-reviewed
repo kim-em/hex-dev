@@ -1,0 +1,30 @@
+Backfill: this token was authored during the Phase-6 polishing pass with
+the library already at done_through 5, applying the Phase-2 scaffolding
+lens retroactively; no Phase-2-era gap remained to fix.
+SPEC-declaration coverage against SPEC/Libraries/hex-rcf.md: all 172
+backticked identifiers resolve. The HexRCF-owned surface (Sentence,
+Formula, Cmp, Atom, the toProp family, SturmReplay.check, CarrierCert /
+IsolationCert / CommonRootCert / SignMatrixCert and their checkers,
+classify?, separate?, Cells.all/rank/rootModel, Certificate.replay? with
+its emptyIoc/constants/noRoots/cells branches, check_sound, decide,
+decide_sound, buildCarrier?, buildCommonRoot(s)?, build?, replay_build,
+reifySentence, and the rcf tactic) exists across the 24 implementation
+modules; dependency-owned names (Sturm.sturmVar, sturm_line,
+sturm_half_open, SturmChainCert, ZPoly.sturmChain, isolate?_isSome,
+RealRootIsolation.refine1With, refineTo, the ChainCorrespond lemma set)
+resolve in HexRealRoots / HexRealRootsMathlib; the remainder are Mathlib
+tactic names (polyrith, nlinarith), file or lake-target names, and the
+explicit negative mention "No executable gcdZ API is assumed".
+Banned-marker sweep: 0 occurrences of sorry / axiom / native_decide /
+admit and 0 of TODO / FIXME / placeholder / stub / dummy across
+HexRCF/, bench/HexRCF/, and conformance/HexRCF/.
+Data-level placeholder audit: conformance-fixtures/HexRCF/rcf.jsonl
+carries 30 paired rcf_sentence/result records with concrete coefficient
+payloads spanning both quantifiers, Ioc bounds, and true/false verdicts;
+the failure channel is builder-refusal, not a stubbed value.
+CI reachability: HexRCF, HexRCFTests, and HexRCFProofProbe are in
+ci.yml's HEX_LIB_TARGETS build list; HexRCF.Conformance is in the
+HexConformance globs (lakefile.lean); and the oracle path is wired as
+the run_oracles.sh tuple
+HexRCF|hexrcf_emit_fixtures|scripts/oracle/rcf_flint.py|conformance-fixtures/HexRCF/rcf.jsonl
+with both oracle scripts present.

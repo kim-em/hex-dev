@@ -22,6 +22,8 @@ public import HexIntervalMathlib.Controller
 public import HexIntervalMathlib.Regularize
 public import HexIntervalMathlib.Program
 public import HexIntervalMathlib.Proof
+public import HexIntervalMathlib.RuntimeProof
+public import HexIntervalMathlib.RuntimeTerminal
 public import HexIntervalMathlib.Rule
 public import HexIntervalMathlib.Frontend
 public import HexIntervalMathlib.Tactic
@@ -36,6 +38,12 @@ natural power, outward regularization, and closed-left/strict-right
 transactional splitting, plus precision-indexed reciprocal and division
 enclosures. It also supplies the function-agnostic semantics of supported
 programs and the chronological, package-owned proof-replay boundary.
+`HexIntervalMathlib.RuntimeProof` transactionally converts sealed typed runtime
+transition chains into those proof events without trusting raw quotations.
+`HexIntervalMathlib.RuntimeTerminal` binds target and refutation settlement to
+the same sealed runtime/search lineage, theorem registry, and immutable proof
+input; general split settlement remains blocked by the runtime/proof child
+equality-arena mismatch documented by that module.
 `HexIntervalMathlib.Rule` supplies a checked built-in arithmetic package whose
 schemas recompute checked public operations before producing proof evidence.
 `HexIntervalMathlib.Controller` supplies explicit stable application-table,

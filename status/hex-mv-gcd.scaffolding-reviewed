@@ -1,0 +1,19 @@
+Independently reviewed against HexMvGcd/SPEC/hex-mv-gcd.md.
+
+The executable audit covered multivariate division, normalization, content,
+checked certificates, the extended-subresultant route, heuristic and Brown
+producers, structural reduction and restoration, coefficient instances,
+public gcd/cofactor/lcm operations, and squarefree decomposition.  Fast
+proposals cannot bypass replay, the generic producer's deliberate decline
+falls through to the complete PRS route, and no data-level placeholder,
+wrong-shape algorithm, fake extern, or native-type detour remains.
+
+Issues #9455--#9461 record the review findings and their fixes: linear content
+accumulation, independent random coordinates, structural fallback,
+integer-backed rational dispatch, main-degree image filtering, removal of
+executable proof constraints and adjacent aliases, and finite-field
+squarefree support.  Verification modules live in the explicit
+development-test target rather than the public umbrella.
+
+The remaining `sorry` declarations are theorem-level proof obligations for
+Phase 5.
