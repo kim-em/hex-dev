@@ -99,6 +99,17 @@ def takeCols (M : Matrix R n m) (k : Nat) (hk : k ≤ m) : Matrix R n k :=
   unfold takeRows
   rw [getElem_ofFn, getElem_pair_eq_nested]
 
+/-- A row of a first-row slice is the corresponding source row. -/
+@[simp, grind =]
+theorem row_takeRows (M : Matrix R n m) (k : Nat) (hk : k ≤ n) (i : Fin k) :
+    row (takeRows M k hk) i =
+      row M ⟨i.val, Nat.lt_of_lt_of_le i.isLt hk⟩ := by
+  ext j hj
+  let jj : Fin m := ⟨j, hj⟩
+  show (row (takeRows M k hk) i)[jj] =
+    (row M ⟨i.val, Nat.lt_of_lt_of_le i.isLt hk⟩)[jj]
+  rw [getElem_row, getElem_takeRows, getElem_row]
+
 /-- Entry formula for the first-`k`-columns slice. -/
 @[grind =] theorem getElem_takeCols (M : Matrix R n m) (k : Nat) (hk : k ≤ m)
     (i : Fin n) (j : Fin k) :

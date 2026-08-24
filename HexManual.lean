@@ -7,6 +7,7 @@ Authors: Kim Morrison
 import VersoManual
 
 -- Released libraries (dependency order).
+import HexManual.Chapters.HexBasic
 import HexManual.Chapters.HexArith
 import HexManual.Chapters.HexPoly
 import HexManual.Chapters.HexMvPoly
@@ -40,6 +41,7 @@ import HexManual.Chapters.HexSparsePoly
 import HexManual.Chapters.HexRCF
 import HexManual.Chapters.HexNumberField
 import HexManual.Chapters.HexNumberFieldTower
+import HexManual.Chapters.HexMinPoly
 -- Tutorials (application-first capstone pages, see SPEC/tutorials.md).
 import HexManual.Tutorials.AESField
 import HexManual.Tutorials.AESModulus
@@ -72,6 +74,8 @@ shortTitle := "hex"
 polynomial factorization, root isolation, and lattice reduction. The
 computational core is Mathlib-free; Mathlib companions state correspondence
 contracts and, for mature libraries, supply their proofs.
+
+{include 0 HexManual.Chapters.HexBasic}
 
 {include 0 HexManual.Chapters.HexArith}
 
@@ -112,8 +116,6 @@ contracts and, for mature libraries, supply their proofs.
 {include 0 HexManual.Chapters.HexDeterminant}
 
 {include 0 HexManual.Chapters.HexBareiss}
-
-{include 0 HexManual.Chapters.HexCharPoly}
 
 {include 0 HexManual.Chapters.HexGramSchmidt}
 
@@ -156,6 +158,8 @@ here to keep the reference chapters above focused on the released libraries.
 
 {include 2 HexManual.Chapters.HexModular}
 
+{include 2 HexManual.Chapters.HexCharPoly}
+
 {include 2 HexManual.Chapters.HexResultant}
 
 {include 2 HexManual.Chapters.HexPolyZGcd}
@@ -165,3 +169,5 @@ here to keep the reference chapters above focused on the released libraries.
 {include 2 HexManual.Chapters.HexNumberField}
 
 {include 2 HexManual.Chapters.HexNumberFieldTower}
+
+{include 2 HexManual.Chapters.HexMinPoly}

@@ -14,32 +14,20 @@
   {
     "path": "lakefile.lean",
     "baseline_blob": "a1b87406682dbf908d990f01676f326499b906e5",
-    "current_blob": "9766abcedfe60727d868ae16900b51eae15c7e1d",
+    "current_blob": "343ecbc8696f64bbba513cb7ee4d4a55e50712a5",
     "reason": "Additionally registers the HexPrimality bench targets and kernel-replay probe on top of main's current registrations; the factorization service targets are unchanged."
-  },
-  {
-    "path": "Hex/Conformance/Emit.lean",
-    "baseline_blob": "21481a92862c6a9f8c8d538c4815d2bc4557453a",
-    "current_blob": "82e46fd361f98c10e536e6fea47f8329fb9f1964",
-    "reason": "Adds the primality fixture emitters beside main's modular-arithmetic ones; emission helpers only, the factorization service does not call them."
   },
   {
     "path": "lakefile.lean",
     "baseline_blob": "a1b87406682dbf908d990f01676f326499b906e5",
-    "current_blob": "5105530122b1afc9a176fad03ce4b92076644715",
+    "current_blob": "08d5ffea8fca7ebc9510bc39f874edddb69ca6ee",
     "reason": "Additionally registers the HexPrimality conformance driver targets on top of main's current registrations; the factorization service targets are unchanged."
   },
   {
     "path": "lakefile.lean",
     "baseline_blob": "a1b87406682dbf908d990f01676f326499b906e5",
-    "current_blob": "2ee25b83b3f4a3c9610b64a4f8f31731e9aafe73",
+    "current_blob": "275a0bcb4d851c651cba908480ace7ca79aee513",
     "reason": "Additionally registers the HexPrimalityMathlib companion on top of main's current registrations; the factorization service targets are unchanged."
-  },
-  {
-    "path": "lakefile.lean",
-    "baseline_blob": "a1b87406682dbf908d990f01676f326499b906e5",
-    "current_blob": "75002db9efb691acb9f469fd036dd5f28a249811",
-    "reason": "Registers the HexPrimality library on top of main's current registrations; the factorization service targets are unchanged."
   },
   {
     "path": "HexArith/Nat/Prime.lean",
@@ -88,12 +76,6 @@
     "baseline_blob": "5fbaa75456c2217771a4f7a27e7f2ff40417fe3a",
     "current_blob": "3c739ff40939977910ea64afd72b1db3142c5444",
     "reason": "Reroutes the Decidable (Prime p) instance through the existing isPrimeTrial pair and adds prime-divisor existence theorems (merged with main's prime_iff_forall_le_sqrt addition); the factorization service never evaluates the instance at runtime."
-  },
-  {
-    "path": "lakefile.lean",
-    "baseline_blob": "a1b87406682dbf908d990f01676f326499b906e5",
-    "current_blob": "791e5727779c8d07cbd2e7080bb2bbd245b82a6b",
-    "reason": "Registers the HexPrimality library on top of main's current registrations; the factorization service targets are unchanged."
   },
   {
     "path": "HexPolyZ/Decomposition.lean",
@@ -1060,5 +1042,137 @@
     "baseline_blob": "6dd80771ae2212333b2a9b925b52056e0037ff56",
     "current_blob": "2cd1a32cf3b269140e8ddbc35accb907c49ee79b",
     "reason": "Additionally registers the HexPrimalityMathlib companion on top of the already-attested HexPolyFpMathlib and interval experiment registrations; the factorization service targets are unchanged."
+  },
+  {
+    "path": "lakefile.lean",
+    "baseline_blob": "a1b87406682dbf908d990f01676f326499b906e5",
+    "current_blob": "75002db9efb691acb9f469fd036dd5f28a249811",
+    "reason": "Registers the HexPrimality library on top of main's current registrations; the factorization service targets are unchanged."
+  },
+  {
+    "path": "lakefile.lean",
+    "baseline_blob": "a1b87406682dbf908d990f01676f326499b906e5",
+    "current_blob": "791e5727779c8d07cbd2e7080bb2bbd245b82a6b",
+    "reason": "Registers the HexPrimality library on top of main's current registrations; the factorization service targets are unchanged."
+  },
+  {
+    "path": "HexArith/ExactDiv.lean",
+    "baseline_blob": null,
+    "current_blob": "28f3b16ef5ab02837d08c48e921db253e3a8ccaf",
+    "reason": "Moves the existing GMP-backed exact-division primitive from HexBareiss into HexArith with the same Lean definition and lean_int_div_exact attachment; its zero law is simp-only, and the factorization service's executable operation is unchanged."
+  },
+  {
+    "path": "HexBareiss/Bareiss.lean",
+    "baseline_blob": "c3f982cc5d0f9b0b551b3d203c5f060aaeb0a6d1",
+    "current_blob": "43793ec86e4870abeda7effe3ca8f6c7cf1a5ba4",
+    "reason": "Replaces the local exact-division definition with a compatibility alias to the identical primitive moved to HexArith; Bareiss and the factorization runtime retain the same lean_int_div_exact operation."
+  },
+  {
+    "path": "HexLLL/Certificate.lean",
+    "baseline_blob": "76c3a939fa7f85f336e67218b879485c0fa759f5",
+    "current_blob": "0030ff8748a9cce918ab64ed0fe4127483b1d95e",
+    "reason": "Turns HexLLL.Certificate into a compatibility import after moving its packed certificate declarations unchanged to HexMatrix.Certificate; existing consumers receive the same executable definitions."
+  },
+  {
+    "path": "HexLLL/Lattice.lean",
+    "baseline_blob": "673c8893b5a6f36ff606a9dd0648ffac4380765b",
+    "current_blob": "b82aa0eb2ae3c57f9069c6fe080462a9d88ccb8d",
+    "reason": "Imports the relocated lattice propositions and proofs from HexMatrix.Lattice and removes their former copies; no executable factorization definition changes."
+  },
+  {
+    "path": "HexMatrix/Certificate.lean",
+    "baseline_blob": null,
+    "current_blob": "d4bafd32cf66130696292b73a9386d481cc2d9e1",
+    "reason": "Relocates the existing packed matrix certificate declarations from HexLLL.Certificate so Hermite can reuse them without depending on LLL; their definitions are unchanged and existing factorization consumers retain the same behavior."
+  },
+  {
+    "path": "HexMatrix/Lattice.lean",
+    "baseline_blob": null,
+    "current_blob": "fea764d500a54f533220026f03796e9e5f9ba3f1",
+    "reason": "Relocates the existing lattice proposition and transport proofs from HexLLL.Lattice and adds proof lemmas used by Hermite; it adds no executable factorization operation."
+  },
+  {
+    "path": "lakefile.lean",
+    "baseline_blob": "a1b87406682dbf908d990f01676f326499b906e5",
+    "current_blob": "c513d61bc5722221227dd3f126a96b9cc8a178a1",
+    "reason": "Combines current main's registrations with Hermite libraries, conformance, fixture, and benchmark targets; none enters hexbz_factor_service or changes its executable dependency graph or build flags."
+  },
+  {
+    "path": "lakefile.lean",
+    "baseline_blob": "a1b87406682dbf908d990f01676f326499b906e5",
+    "current_blob": "cad4aea1536cb1036d865f540132b84e295bdbbd",
+    "reason": "Moves the CharPoly elaborator regressions out of HexReleaseTests into the monorepo-only HexCharPolyTests target on top of the Hermite registrations, while the char-poly and hermite released.yml entries are withdrawn; no factorization module, executable, or build-flag changes."
+  },
+  {
+    "path": "HexMatrix/Lattice.lean",
+    "baseline_blob": null,
+    "current_blob": "14f093c3941384cbf0bb826a9936ff354f41e3ee",
+    "reason": "Relocates lattice propositions and proof lemmas for Hermite, then reconciles their names with generic matrix laws used by HexMinPoly; propositions and theorems are erased, and no factorization operation changes."
+  },
+  {
+    "path": "HexMatrix/MatrixAlgebra.lean",
+    "baseline_blob": "461006d810f79d065f6e179497407449788d895a",
+    "current_blob": "702cb10dbb32083c99837d2632e662bc4a3d6150",
+    "reason": "Adds matrix and vector algebra theorems used by HexMinPoly proofs; it adds no executable definition and cannot alter the factorization runtime."
+  },
+  {
+    "path": "HexMatrix/Submatrix.lean",
+    "baseline_blob": "798e76a63cbdfdb611dc656ac7a8bfa2addfdc08",
+    "current_blob": "b21fd7f027b3ecf38eeb39db7f5773c94bafe8e1",
+    "reason": "Adds the row_takeRows theorem for HexMinPoly proofs; the existing takeRows implementation and every factorization runtime definition are unchanged."
+  },
+  {
+    "path": "HexPoly/Dense.lean",
+    "baseline_blob": "919dec4f5be58dd40ef9285b372e3379dc5dfec5",
+    "current_blob": "69aa5b861c0942cd4aa469205504415e9686608e",
+    "reason": "Adds coeffVec and its accessor theorem for matrix minimal-polynomial evaluation; the factorization service never calls coeffVec, and existing polynomial operations are unchanged."
+  },
+  {
+    "path": "HexPoly/Euclid/Reconstruction.lean",
+    "baseline_blob": "0fbecb1b24baea8c9b765d808a1ae47ff6f6204a",
+    "current_blob": "a410f839de939bb5dc4a35b6bf2366a54ddbdb94",
+    "reason": "Adds reconstruction, divisibility, size, and leading-coefficient theorems supporting the verified LCM API; executable Euclidean definitions and the factorization call path are unchanged."
+  },
+  {
+    "path": "HexPoly/Lcm.lean",
+    "baseline_blob": null,
+    "current_blob": "30fe4e90c0b4ad1efd395214bdbbbe3108e68837",
+    "reason": "Adds the polynomial LCM API used only by HexMinPoly; although reachable through the HexPoly umbrella, none of its definitions is called by hexbz_factor_service's factor entry."
+  },
+  {
+    "path": "lakefile.lean",
+    "baseline_blob": "a1b87406682dbf908d990f01676f326499b906e5",
+    "current_blob": "4cd596315206896eea5d93fae5051a20bf4e16d5",
+    "reason": "Combines current main's registrations and withdrawn release entries with HexMinPoly libraries, conformance, fixture, manual, and benchmark targets; hexbz_factor_service and its build flags are unchanged."
+  },
+  {
+    "path": "lakefile.lean",
+    "baseline_blob": "a1b87406682dbf908d990f01676f326499b906e5",
+    "current_blob": "8d72afd2241be192611ea15f53b2ada3ff97361e",
+    "reason": "Additionally registers the HexPrimalityMathlib companion on top of main's current registrations; the factorization service targets are unchanged."
+  },
+  {
+    "path": "lakefile.lean",
+    "baseline_blob": "a1b87406682dbf908d990f01676f326499b906e5",
+    "current_blob": "2ee25b83b3f4a3c9610b64a4f8f31731e9aafe73",
+    "reason": "Additionally registers the HexPrimalityMathlib companion on top of main's current registrations; the factorization service targets are unchanged."
+  },
+  {
+    "path": "Hex/Conformance/Emit.lean",
+    "baseline_blob": "21481a92862c6a9f8c8d538c4815d2bc4557453a",
+    "current_blob": "82e46fd361f98c10e536e6fea47f8329fb9f1964",
+    "reason": "Adds the primality fixture emitters beside main's modular-arithmetic ones; emission helpers only, the factorization service does not call them."
+  },
+  {
+    "path": "lakefile.lean",
+    "baseline_blob": "a1b87406682dbf908d990f01676f326499b906e5",
+    "current_blob": "5105530122b1afc9a176fad03ce4b92076644715",
+    "reason": "Additionally registers the HexPrimality conformance driver targets on top of main's current registrations; the factorization service targets are unchanged."
+  },
+  {
+    "path": "lakefile.lean",
+    "baseline_blob": "a1b87406682dbf908d990f01676f326499b906e5",
+    "current_blob": "9766abcedfe60727d868ae16900b51eae15c7e1d",
+    "reason": "Additionally registers the HexPrimality bench targets and kernel-replay probe on top of main's current registrations; the factorization service targets are unchanged."
   }
 ]

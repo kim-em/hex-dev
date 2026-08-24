@@ -1177,7 +1177,8 @@ private theorem schurSigma_foldl_eq
       intro f r jj hjj
       rw [← Hex.Matrix.getElem_eq_getRow]
       exact Hex.Matrix.getElem_ofFn f r ⟨jj, hjj⟩
-    simp [Matrix.stepMatrix_eq_ofFn, Matrix.exactDiv, hofFn, h0a, hp_out_pos,
+    simp [Matrix.stepMatrix_eq_ofFn, Matrix.exactDiv, HexArith.Int.exactDiv,
+      hofFn, h0a, hp_out_pos,
       h_rows_a0, h_rows_p0]
     grind
   | succ q' ih =>
