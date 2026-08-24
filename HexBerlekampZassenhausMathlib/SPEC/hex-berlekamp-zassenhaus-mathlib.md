@@ -189,6 +189,27 @@ evaluation of the decidable factorization theorem on small inputs.
 They require all executable definitions to be visible and cannot
 evaluate native LLL code.
 
+## Conformance
+
+The library owns an executable runtime: the `factor_poly` /
+`irreducibility` elaborators (with their `factor_poly!` /
+`irreducibility!` kernel-decide fallbacks) and the reified certificate
+checks their emitted terms replay. It is therefore not a
+correspondence-only bridge:
+`conformance/HexBerlekampZassenhausMathlib/Conformance.lean` is the
+`core` conformance profile, built by the `HexConformance` library on
+every CI run. It exercises the tactic entry points on committed
+`Polynomial ℤ` and `Hex.ZPoly` fixtures across the certificate languages
+(single-prime witness, Eisenstein handover, multi-prime degree
+obstruction, kernel fallback), pins hand-derived factor lists and factor
+counts, checks the decline diagnostics on reducible, zero, unit, and
+over-budget inputs, and `#print axioms`-checks the emitted proofs. There
+is no external oracle for the tactic surface (mode `always`): every
+accepted invocation is kernel-certified, and the compiled factorizer the
+tactics run as untrusted search is oracle-checked against python-flint
+in the computational sibling's profile
+(`conformance/HexBerlekampZassenhaus/`).
+
 ## Verification
 
 Changes must pass:
