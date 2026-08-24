@@ -6,9 +6,11 @@ Authors: Kim Morrison
 
 module
 
+public meta import HexPolyZ.Kronecker
 public meta import HexPolyZGcd.Brown
 public meta import HexPolyZGcd.Heu
 public meta import HexPolyZGcd.Prs
+public import HexPolyZ.Kronecker
 public import HexPolyZGcd.Brown
 public import HexPolyZGcd.Heu
 public import HexPolyZGcd.Prs
@@ -229,17 +231,43 @@ def restoreStructural? (f h : ZPoly) (reduced : StructuralReduction)
       coprime := cert.coprime }
   if checkGcd f h restored then some restored else none
 
+/-- Largest reduced input size at which the evaluation heuristic runs before
+Brown reconstruction. Above this point dense evaluation builds integers whose
+bit width grows with the whole polynomial, while Brown can offer and check an
+image candidate directly. -/
+private def heuSizeLimit : Nat :=
+  32
+
+/-- Above this coefficient height, a full coprime image gcd on the unreduced
+ambient degree costs more than reconstructing the smaller common factor. -/
+private def brownBitCutoff : Nat :=
+  16
+
+private def brownOrFallback (f h : ZPoly) : GcdCert :=
+  match brownCert? f h with
+  | some cert => cert
+  | none => fallbackGcdCert f h
+
+private def afterCoprime (f h : ZPoly) : GcdCert :=
+  if max f.size h.size <= heuSizeLimit then
+    match heuCert? f h with
+    | some cert => cert
+    | none => brownOrFallback f h
+  else
+    brownOrFallback f h
+
 /-- Routes 1--4 on inputs after structural content and `x`-power removal. -/
 def reducedGcdCert (f h : ZPoly) : GcdCert :=
-  match coprimeCert? f h with
+  let coefficientBits := max (maxAbs f).log2 (maxAbs h).log2
+  match differenceCert? f h with
   | some cert => cert
   | none =>
-      match heuCert? f h with
-      | some cert => cert
-      | none =>
-          match brownCert? f h with
-          | some cert => cert
-          | none => fallbackGcdCert f h
+      if brownBitCutoff < coefficientBits then
+        brownOrFallback f h
+      else
+        match coprimeCert? f h with
+        | some cert => cert
+        | none => afterCoprime f h
 
 /-- Internal route tag used by executable dispatch guards. -/
 private inductive GcdRoute where
@@ -258,10 +286,16 @@ private def dispatchGcdCert (f h : ZPoly) : GcdCert × GcdRoute :=
       match structuralReduction? f h with
       | none => (fallbackGcdCert f h, .fallback)
       | some reduced =>
-          match restoreStructural? f h reduced
-              (reducedGcdCert reduced.left reduced.right) with
-          | some cert => (cert, .reduced)
-          | none => (fallbackGcdCert f h, .fallback)
+          let cert := reducedGcdCert reduced.left reduced.right
+          if reduced.factor == 1 then
+            -- Primitive inputs with no common `x` power are already the
+            -- reduced problem. Replaying the complete certificate again in
+            -- `restoreStructural?` would duplicate both dense product checks.
+            (cert, .reduced)
+          else
+            match restoreStructural? f h reduced cert with
+            | some restored => (restored, .reduced)
+            | none => (fallbackGcdCert f h, .fallback)
 
 /-- Produce a checked gcd certificate.  Mandatory zero and constant
 certificates run before content or `x` extraction.  Remaining route-0

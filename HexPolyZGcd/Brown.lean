@@ -65,7 +65,7 @@ def brownImage? (f h : ZPoly) (p : ZMod64.Prime) : Option BrownImage :=
   if fp.size != f0.size || hp.size != h0.size then
     none
   else
-    let raw := DensePoly.gcd fp hp
+    let raw := FpPoly.gcdCached fp hp
     if raw.isZero then
       none
     else
@@ -157,11 +157,13 @@ def brownCoeffBound (f h : ZPoly) : Nat :=
   let gamma := Int.gcd f0.leadingCoeff h0.leadingCoeff
   gamma * factorBound
 
-/-- Number of moduli contributing at least 30 bits that suffice to make the
-CRT product strictly larger than twice the reconstruction bound. -/
+/-- Number of moduli contributing at least 23 bits that suffice to make the
+CRT product strictly larger than twice the reconstruction bound. The bundled
+hot-path supply below uses 24-bit primes; any dynamically generated tail uses
+larger 31-bit primes, so 23 is a conservative common floor. -/
 def brownModuliNeeded (f h : ZPoly) : Nat :=
   let bits := (2 * brownCoeffBound f h).log2 + 1
-  (bits + 29) / 30
+  (bits + 22) / 23
 
 /-- Finite Brown prime budget derived from the reconstruction bound.  Doubling
 the required good-modulus count and adding a small floor leaves room for bad
@@ -169,38 +171,112 @@ and unlucky images; exhaustion remains a benign fall-through to PRS. -/
 def brownPrimeBudget (f h : ZPoly) : Nat :=
   2 * brownModuliNeeded f h + 8
 
-/-- Word-sized primes whose moduli each contribute more than 30 bits. -/
-private def brownSupply (f h : ZPoly) : Array ZMod64.Prime :=
-  (ZMod64.primesBelow (2 ^ 31 - 1) (brownPrimeBudget f h)).filter
-    (fun p => 2 ^ 30 < p.m)
+/-- Result of consuming one lazily generated batch of Brown primes. -/
+private inductive BrownProgress where
+  | found (cert : GcdCert)
+  | pending (state : Option BrownState)
+
+/-- Four primes amortize supply construction while keeping the usual early
+acceptance path far below the pessimistic Landau--Mignotte budget. -/
+private def brownBatchSize : Nat :=
+  4
+
+/-- Construct a bundled prime from compile-time checked evidence. Both proof
+arguments are erased from compiled code, so consuming the supply does not
+repeat trial division at runtime. -/
+private def bundledPrime (m : Nat) (hbound : m < 2 ^ 31)
+    (hprime : Hex.Nat.isPrimeTrial m = true) : ZMod64.Prime :=
+  let prime := Hex.Nat.isPrimeTrial_isPrime hprime
+  { m, bounds := { pPos := prime.pos, pLtR := hbound }, prime }
+
+/-- Descending 24-bit primes for the ordinary early-acceptance path. Sixteen
+entries reconstruct more than 368 bits; a larger pessimistic budget continues
+from the top of the dynamically generated 31-bit supply. -/
+private def brownBundledSupply : Array ZMod64.Prime :=
+  #[
+    bundledPrime 16777213 (by decide) (by decide),
+    bundledPrime 16777199 (by decide) (by decide),
+    bundledPrime 16777183 (by decide) (by decide),
+    bundledPrime 16777153 (by decide) (by decide),
+    bundledPrime 16777141 (by decide) (by decide),
+    bundledPrime 16777139 (by decide) (by decide),
+    bundledPrime 16777127 (by decide) (by decide),
+    bundledPrime 16777121 (by decide) (by decide),
+    bundledPrime 16777099 (by decide) (by decide),
+    bundledPrime 16777049 (by decide) (by decide),
+    bundledPrime 16777027 (by decide) (by decide),
+    bundledPrime 16776989 (by decide) (by decide),
+    bundledPrime 16776973 (by decide) (by decide),
+    bundledPrime 16776971 (by decide) (by decide),
+    bundledPrime 16776967 (by decide) (by decide),
+    bundledPrime 16776961 (by decide) (by decide)
+  ]
 
 /-- Fuel-bounded Brown loop.  Every successfully accumulated or restarted
 state is offered immediately to the exact certificate checker. -/
 private def brownLoop (f h : ZPoly) (supply : Array ZMod64.Prime)
-    (index fuel : Nat) (state : Option BrownState) : Option GcdCert :=
+    (index fuel : Nat) (state : Option BrownState) : BrownProgress :=
   if fuel = 0 then
-    none
+    .pending state
   else if hi : index < supply.size then
     let p := supply[index]
     match brownOffer f h state p with
     | .bad | .unlucky => brownLoop f h supply (index + 1) (fuel - 1) state
     | .restarted next | .accumulated next =>
         match checkedCandidate? f h (next.candidate f h) with
-        | some cert => some cert
+        | some cert => .found cert
         | none => brownLoop f h supply (index + 1) (fuel - 1) (some next)
   else
-    none
+    .pending state
 termination_by fuel
 decreasing_by all_goals omega
 
-/-- Brown's modular gcd route with a finite modulus budget sized from the
-gamma-scaled Landau--Mignotte reconstruction bound.  Failure is benign: the
-dispatcher continues to its deterministic checked fallback. -/
+/-- Generate the prime budget in small descending batches, retaining the CRT
+state between batches and stopping as soon as the exact checker accepts. -/
+private def brownBatches (f h : ZPoly) (remaining start : Nat)
+    (state : Option BrownState) : Option GcdCert :=
+  if remaining = 0 then
+    none
+  else
+    let count := min brownBatchSize remaining
+    let supply := (ZMod64.primesBelow start count).filter
+      (fun p => 2 ^ 30 < p.m)
+    match brownLoop f h supply 0 supply.size state with
+    | .found cert => some cert
+    | .pending next =>
+        let nextStart := supply.back?.map (fun p => p.m - 1) |>.getD 0
+        brownBatches f h (remaining - count) nextStart next
+termination_by remaining
+decreasing_by
+  have hcount : 0 < min brownBatchSize remaining := by
+    simp [brownBatchSize]
+    omega
+  omega
+
+/-- Brown's modular gcd route. The bundled supply is tried before computing the
+pessimistic gamma-scaled Landau--Mignotte budget; if it is exhausted, the
+remaining finite budget comes from the dynamic 31-bit supply. Failure is
+benign: the dispatcher continues to its deterministic checked fallback. -/
 def brownCert? (f h : ZPoly) : Option GcdCert :=
-  let supply := brownSupply f h
-  brownLoop f h supply 0 supply.size none
+  match brownLoop f h brownBundledSupply 0 brownBundledSupply.size none with
+  | .found cert => some cert
+  | .pending state =>
+      let budget := brownPrimeBudget f h
+      if budget <= brownBundledSupply.size then
+        none
+      else
+        let nextStart := 2 ^ 31 - 1
+        brownBatches f h (budget - brownBundledSupply.size) nextStart state
 
 /-! Route-level executable pins for the three easy-to-miss Brown rules. -/
+
+-- Every small witness probe is unlucky when the constant offset is the
+-- product of the primes through 47. A bundled large probe still succeeds.
+#guard
+  let smallPrimorial : Int := 614889782588491410
+  let f : ZPoly := DensePoly.ofList [0, 1]
+  let h : ZPoly := DensePoly.ofList [smallPrimorial, 1]
+  (modularWitness f h).isSome
 
 private def primeAt? (p : Nat) : Option ZMod64.Prime :=
   (ZMod64.primesBelow p 1)[0]?

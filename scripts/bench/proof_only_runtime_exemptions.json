@@ -914,8 +914,8 @@
   {
     "path": "lakefile.lean",
     "baseline_blob": "a1b87406682dbf908d990f01676f326499b906e5",
-    "current_blob": "2da2b745b964a6ad278865fc872ff1198c0555ad",
-    "reason": "Combines the current-main build-only HexModular.LoopTests move with the HexTruncatedSeries library, conformance, fixture-emitter, and benchmark registrations; the hexbz_factor_service target, its imports, build flags, and factorization dependency graph are unchanged."
+    "current_blob": "a1d63b6f0c7c7fb8cc80526172106d95b916f848",
+    "reason": "Combines the current-main build-only and HexTruncatedSeries registrations with the HexPolyZGcd benchmark executable and its bench-only support library; none enters hexbz_factor_service or changes its executable dependency graph."
   },
   {
     "path": "HexPolyFp/Compose.lean",

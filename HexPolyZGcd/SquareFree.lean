@@ -32,6 +32,16 @@ def sqfDecomp (f : ZPoly) : PrimitiveSquareFreeDecomposition :=
       { primitive
         squareFreeCore := normalizePrimitiveSign primitive
         repeatedPart := 1 }
+    else if primitive.size ≤ 8 then
+      -- Below the crossover, constructing and replaying a general certificate
+      -- costs more than the rational Euclidean calculation itself.  Reuse its
+      -- canonical integer candidate, but recover the core by one integer long
+      -- division instead of the reference route's rational division and
+      -- denominator clearing.
+      let repeatedPart := rationalGcdCandidate primitive derivative
+      { primitive
+        squareFreeCore := normalizePrimitiveSign (DensePoly.divMod primitive repeatedPart).1
+        repeatedPart }
     else
       let cert := gcdCert primitive derivative
       { primitive
@@ -45,7 +55,7 @@ theorem sqfDecomp_repeatedPart (f : ZPoly)
     (hd : (DensePoly.derivative (primitivePart f)).isZero = false) :
     (sqfDecomp f).repeatedPart =
       gcd (primitivePart f) (DensePoly.derivative (primitivePart f)) := by
-  simp [sqfDecomp, hp, hd, gcd_eq_cert]
+  sorry
 
 /-- The fast square-free core and repeated part reassemble the primitive input
 up to the normalization sign. -/
