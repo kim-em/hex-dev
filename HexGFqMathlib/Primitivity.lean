@@ -18,15 +18,16 @@ The multiplicative order of the Conway generator.
 `HexConway.Primitivity` checks, for each committed entry, that the residue of
 `x` satisfies `α ^ N = 1` and `α ^ (N / q) ≠ 1` for every prime `q` of
 `N = p ^ n - 1`. Those are the hypotheses of Mathlib's
-`orderOf_eq_of_pow_and_pow_div_prime`, so the conclusion `orderOf α = N` is
-one transport away — but the transport is the work, because the check runs on
-`FpPoly` representatives with structural powers, while `orderOf` is about
-Mathlib's `^` in the field.
+`orderOf_eq_of_pow_and_pow_div_prime`. The transport is the work, because the
+check runs on `FpPoly` representatives with structural powers, while `orderOf`
+is about Mathlib's `^` in the field.
 
-This file supplies that transport. The bridge is
+`orderOf_gen_of_primitive` supplies that transport. The bridge is
 {name}`HexGFqMathlib.ofPolyHom`, which is a ring homomorphism, so it carries
-the executable powers to Mathlib powers by `map_mul` and `map_pow`; the only
-extra ingredient is that reducing modulo the modulus is invisible after it.
+the executable powers to Mathlib powers by `map_mul` and `map_pow`; reduced
+representatives reflect equality with one, and the validated factorization
+makes the supplied prime list exhaustive. The final section specializes the
+result to all thirty-seven committed entries with `p ^ n > 2`.
 -/
 
 namespace HexGFqMathlib
@@ -190,7 +191,7 @@ theorem mem_of_prime_dvd_primePowerProduct :
 /-! # The order of the Conway generator -/
 
 /-- A verified executable primitivity certificate proves that the Conway
-generator has the full multiplicative order `p ^ n - 1`.
+generator has multiplicative order `p ^ n - 1`.
 
 This is the assembly point for the component transport lemmas above. The
 factorization check makes `qs` exhaustive, while the two digit-power checks
@@ -202,13 +203,14 @@ theorem orderOf_gen_of_primitive {n : Nat} (h : Hex.Conway.SupportedEntry p n)
   have hcheck := hprimitive.check
   simp only [Hex.Conway.primitiveCheck, Bool.and_eq_true, beq_iff_eq,
     List.all_eq_true] at hcheck
+  -- Factorization, full digits, list length, per-prime digits, full power,
+  -- and per-prime powers, in `primitiveCheck` order.
   rcases hcheck with
     ⟨⟨⟨⟨⟨hfactor, hfullDigits⟩, hlength⟩, hperDigits⟩, hfullPower⟩, hperPower⟩
   apply orderOf_eq_of_pow_and_pow_div_prime
   · have hn : 0 < n := by
-      rw [← Hex.Conway.luebeckConwayPolynomial?_degree_eq
-        (Hex.Conway.luebeckConwayPolynomial?_conwayPoly h)]
-      exact Hex.Conway.conwayPoly_nonconstant p n h
+      simpa only [HexGFqMathlib.GFq.conwayPoly_degree h] using
+        Hex.Conway.conwayPoly_nonconstant p n h
     exact Nat.sub_pos_of_lt (Nat.one_lt_pow (Nat.ne_of_gt hn) h.prime.one_lt)
   · rw [← hfullDigits]
     change (ofPolyHom (Hex.Conway.conwayPoly p n h)
@@ -227,7 +229,7 @@ theorem orderOf_gen_of_primitive {n : Nat} (h : Hex.Conway.SupportedEntry p n)
       rw [List.map_fst_zip (Nat.le_of_eq hlength.symm)]
       exact hqmem
     obtain ⟨⟨r, ds⟩, hrds, hr⟩ := List.mem_map.mp hqmap
-    simp only at hr
+    change r = q at hr
     subst r
     have hds : ds ∈ perPrimeDigits := (List.of_mem_zip hrds).2
     have hdigits : Hex.Conway.digitsValue p ds = (p ^ n - 1) / q :=
