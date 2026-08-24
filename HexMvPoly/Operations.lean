@@ -355,6 +355,37 @@ theorem coeff_mul [Lean.Grind.Semiring R] [DecidableEq R]
       (Mono.splits m).foldl (fun acc ab => acc + value ab) 0
   rw [hkeyFilter, List.foldl_add_perm value hactivePerm 0, hsplitFilter]
 
+/-- Every monomial occurring in a product is a product of monomials from the
+two input supports. Cancellation may make the converse false. -/
+theorem exists_mul_of_mem [Lean.Grind.Semiring R] [DecidableEq R]
+    {p q : MvPoly n R cmp} {m : Mono n} (hm : m ∈ (p * q).monomials) :
+    ∃ a ∈ p.monomials, ∃ b ∈ q.monomials, Mono.mul a b = m := by
+  letI : Decidable (∃ a ∈ p.monomials, ∃ b ∈ q.monomials,
+      Mono.mul a b = m) := Classical.propDecidable _
+  by_cases hexists : ∃ a ∈ p.monomials, ∃ b ∈ q.monomials,
+      Mono.mul a b = m
+  · exact hexists
+  · have hzero : coeff m (p * q) = 0 := by
+      rw [coeff_mul]
+      calc
+        (Mono.splits m).foldl
+            (fun acc ab => acc + coeff ab.1 p * coeff ab.2 q) 0 =
+            (Mono.splits m).foldl (fun acc _ => acc + 0) 0 := by
+              apply List.foldl_congr
+              intro acc ab hab
+              by_cases ha : ab.1 ∈ p.monomials
+              · have hb : ab.2 ∉ q.monomials := by
+                  intro hb
+                  apply hexists
+                  exact ⟨ab.1, ha, ab.2, hb,
+                    (Mono.splits_mem_iff ..).mp hab⟩
+                rw [coeff_eq_zero_of_not_mem ab.2 q hb,
+                  Lean.Grind.Semiring.mul_zero]
+              · rw [coeff_eq_zero_of_not_mem ab.1 p ha,
+                  Lean.Grind.Semiring.zero_mul]
+        _ = 0 := List.foldl_add_zero _ _
+    exact False.elim (((mem_monomials_iff m (p * q)).mp hm) hzero)
+
 /-- Zero is absorbing on the right for polynomial multiplication. -/
 theorem mul_zero [Lean.Grind.Semiring R] [DecidableEq R]
     (p : MvPoly n R cmp) : p * 0 = 0 := by
