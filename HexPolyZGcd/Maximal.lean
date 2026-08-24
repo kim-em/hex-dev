@@ -427,7 +427,7 @@ theorem dvd_gcd (d f h : ZPoly) (hf : d ∣ f) (hh : d ∣ h) :
 
 /-- Two mutually dividing gcd candidates satisfying the public normalization
 convention are equal. -/
-theorem eq_of_normalized_of_dvd_dvd {p q : ZPoly}
+theorem eq_of_normalized_dvd {p q : ZPoly}
     (hpNorm : NormalizedGcd p = true) (hqNorm : NormalizedGcd q = true)
     (hpq : p ∣ q) (hqp : q ∣ p) : p = q := by
   have hpCases : p = 0 ∨

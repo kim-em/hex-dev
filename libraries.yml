@@ -336,7 +336,7 @@ libraries:
   HexPolyZGcd:
     deps: [HexPolyZ, HexPolyFp, HexPoly, HexModular, HexModArith, HexArith, HexResultant]
     mathlib: false
-    done_through: 4
+    done_through: 7
     status: active
     phase4:
       comparators:
@@ -609,6 +609,11 @@ libraries:
     deps: [HexPolyZ, HexHensel, HexPolyMathlib, HexModArithMathlib]
     mathlib: true
     done_through: 6
+    status: active
+  HexPolyZGcdMathlib:
+    deps: [HexPolyZGcd, HexPolyZMathlib, HexPolyMathlib]
+    mathlib: true
+    done_through: 7
     status: active
   HexLLLMathlib:
     deps: [HexLLL, HexGramSchmidtMathlib, HexRowReduceMathlib]

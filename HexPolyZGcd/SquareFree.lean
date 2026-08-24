@@ -104,7 +104,7 @@ private theorem gcd_eq_rationalCandidate {f h : ZPoly}
     rw [gcd_eq_cert]
     exact normalizedOfCheck (gcdCert_checks f h)
   have heq : reference.gcd = gcd f h :=
-    eq_of_normalized_of_dvd_dvd (normalizedOfCheck hreference) hpublicNorm
+    eq_of_normalized_dvd (normalizedOfCheck hreference) hpublicNorm
       hreferenceDvdPublic hpublicDvdReference
   exact heq.symm.trans hreferenceGcd
 
@@ -149,9 +149,11 @@ theorem sqfDecomp_repeatedPart (f : ZPoly)
   · rw [if_neg hsmall]
     exact (gcd_eq_cert p derivative).symm
 
+namespace Repeated
+
 /-- The fast and rational reference decompositions choose the same repeated
 factor whenever the primitive input and its derivative are nonzero. -/
-private theorem repeatedPart_eq_reference (f : ZPoly)
+private theorem nondegenerate (f : ZPoly)
     (hp : (primitivePart f).isZero = false)
     (hd : (DensePoly.derivative (primitivePart f)).isZero = false) :
     (sqfDecomp f).repeatedPart =
@@ -200,7 +202,7 @@ private theorem repeatedPart_eq_reference (f : ZPoly)
   rw [toRatPoly_derivative]
 
 /-- The repeated factors also agree in the derivative-zero branch. -/
-private theorem repeatedPart_eq_reference_of_nonzero (f : ZPoly)
+private theorem eqReference (f : ZPoly)
     (hp : (primitivePart f).isZero = false) :
     (sqfDecomp f).repeatedPart =
       (primitiveSquareFreeDecomposition f).repeatedPart := by
@@ -226,7 +228,9 @@ private theorem repeatedPart_eq_reference_of_nonzero (f : ZPoly)
       cases hvalue : (DensePoly.derivative (primitivePart f)).isZero with
       | false => rfl
       | true => exact (hd hvalue).elim
-    exact repeatedPart_eq_reference f hp hdFalse
+    exact nondegenerate f hp hdFalse
+
+end Repeated
 
 /-- The fast decomposition retains the input's primitive part verbatim. -/
 private theorem sqfDecomp_primitive (f : ZPoly) :
@@ -342,7 +346,7 @@ theorem sqfDecomp_squareFreeCore (f : ZPoly)
           ((DensePoly.isZero_eq_true_iff _).mp hp)
   have hrepeated : fast.repeatedPart = reference.repeatedPart := by
     simpa only [fast, reference] using
-      repeatedPart_eq_reference_of_nonzero f hpFalse
+      Repeated.eqReference f hpFalse
   rcases sqfDecomp_reassembly_signed f with ⟨ε, hε, hfastProduct⟩
   have hfastProduct' :
       DensePoly.scale ε (fast.squareFreeCore * fast.repeatedPart) =

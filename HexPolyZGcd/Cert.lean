@@ -156,9 +156,13 @@ inductive CoprimeWitness
 
 /-- A gcd candidate, its two exact cofactors, and checked coprimality data. -/
 structure GcdCert where
+  /-- The proposed normalized greatest common divisor. -/
   gcd : ZPoly
+  /-- The exact cofactor of the left input. -/
   cofL : ZPoly
+  /-- The exact cofactor of the right input. -/
   cofR : ZPoly
+  /-- Replayable evidence that the two cofactors have no common nonunit. -/
   coprime : CoprimeWitness
 
 /-- The normalization convention for integer gcds.  Zero is admitted for the

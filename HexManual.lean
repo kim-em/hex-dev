@@ -34,6 +34,7 @@ import HexManual.Chapters.FactorTactics
 -- Unreleased libraries (dependency order).
 import HexManual.Chapters.HexModular
 import HexManual.Chapters.HexResultant
+import HexManual.Chapters.HexPolyZGcd
 import HexManual.Chapters.HexSparsePoly
 import HexManual.Chapters.HexRCF
 import HexManual.Chapters.HexNumberField
@@ -153,6 +154,8 @@ here to keep the reference chapters above focused on the released libraries.
 {include 2 HexManual.Chapters.HexModular}
 
 {include 2 HexManual.Chapters.HexResultant}
+
+{include 2 HexManual.Chapters.HexPolyZGcd}
 
 {include 2 HexManual.Chapters.HexRCF}
 
