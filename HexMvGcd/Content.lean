@@ -224,15 +224,58 @@ theorem content_mul_primPart [LawfulGcdOps R] (p : MvPoly n R cmp) :
       LawfulGcdOps.exactDiv_cancel q (content p) hc,
       Lean.Grind.CommSemiring.mul_comm]
 
+omit [Dvd R] in
 @[simp] theorem content_zero : content (0 : MvPoly n R cmp) = 0 := by
   rfl
 
+omit [Dvd R] in
 @[simp] theorem primPart_zero : primPart (0 : MvPoly n R cmp) = 0 := by
   simp [primPart, content]
 
 theorem content_primPart [LawfulGcdOps R] {p : MvPoly n R cmp} (hp : p ≠ 0) :
     content (primPart p) = 1 := by
-  sorry
+  let c := content p
+  let q := primPart p
+  let d := content q
+  have hc : c ≠ 0 := by
+    intro hc
+    apply hp
+    rw [← content_mul_primPart p]
+    change C c * q = 0
+    rw [hc, C_zero, zero_mul]
+  have hcoeff : ∀ m, coeff m p = c * coeff m q := by
+    intro m
+    rw [← content_mul_primPart p]
+    exact coeff_C_mul c q m
+  have hcd : c * d ∣ c := by
+    have hcommon : ∀ m, c * d ∣ coeff m p := by
+      intro m
+      have hd := scalarContent_dvd_coeff q m
+      change d ∣ coeff m q at hd
+      rcases (LawfulGcdOps.dvd_iff d (coeff m q)).mp hd with ⟨a, ha⟩
+      apply (LawfulGcdOps.dvd_iff (c * d) (coeff m p)).mpr
+      refine ⟨a, ?_⟩
+      rw [hcoeff, ha, Lean.Grind.Semiring.mul_assoc]
+    have := dvd_scalarContent p (c * d) hcommon
+    change c * d ∣ c at this
+    exact this
+  rcases (LawfulGcdOps.dvd_iff (c * d) c).mp hcd with ⟨u, hu⟩
+  have hunit : d * u = 1 := by
+    have hzero : c * (1 - d * u) = 0 := by
+      calc
+        c * (1 - d * u) = c - (c * d) * u := by grind
+        _ = 0 := by rw [← hu]; grind
+    rcases LawfulGcdOps.no_zero_div c (1 - d * u) hzero with hczero | hrest
+    · exact False.elim (hc hczero)
+    · grind
+  have hisUnit : GcdOps.isUnit d = true :=
+    (LawfulGcdOps.isUnit_iff d).mpr ⟨u, hunit⟩
+  have hnorm : normalize d = d := by
+    exact normalize_scalarContent q
+  calc
+    content (primPart p) = d := rfl
+    _ = normalize d := hnorm.symm
+    _ = 1 := LawfulGcdOps.normalize_unit d hisUnit
 
 theorem content_mul [LawfulGcdOps R] (p q : MvPoly n R cmp) :
     content (p * q) = content p * content q := by
