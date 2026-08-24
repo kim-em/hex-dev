@@ -431,6 +431,18 @@ private def witnessGo (n q : Nat) :
         .ok (r.next.1.toNat % (n - 3) + 2, r.next.2)
       else witnessGo n q t (attempts + 1) r.next.2
 
+/-- Assemble the cube-root node for the factored part `F`: the cofactor
+decomposition `R = 2Fs + r` and the square-root witness for the
+discriminant. Runtime only, so `Nat.sqrt` is fine here (it never enters a
+proof term); the public wrapper's `checkPrime` validation decides
+acceptance. -/
+private def mkPock3 (n F : Nat) (entries : List (Nat × Nat × PrimeCert)) :
+    PrimeCert :=
+  .pock3 n ((n - 1) / F % (2 * F)) ((n - 1) / F / (2 * F))
+    (Nat.sqrt ((n - 1) / F % (2 * F) * ((n - 1) / F % (2 * F)) -
+      8 * ((n - 1) / F / (2 * F))))
+    entries
+
 mutual
 
 /-- One level of certificate search: verdict tiers first (size, table with
@@ -455,7 +467,12 @@ private def primeCertGo (fuel n : Nat) (r : Rand) :
                 (partialFactor (n - 1) r (2 * n.log2 + 8)).1.factors []
                 (partialFactor (n - 1) r (2 * n.log2 + 8)).2 with
             | .error f => .error f
-            | .ok (entries, r') => .ok (.pock n entries, r')
+            | .ok (entries, r') =>
+                match certProduct (n - 1) entries with
+                | none => .error ⟨.exhausted, 0, r'⟩
+                | some F =>
+                    if n < F * F then .ok (.pock n entries, r')
+                    else .ok (mkPock3 n F entries, r')
 termination_by (fuel, 0)
 
 /-- Certify every claimed factor entry: a recursive child certificate and a
@@ -576,7 +593,11 @@ private theorem primeCertGo_composite {fuel n : Nat} {r : Rand}
               subst h
               rw [assembleGo_error_stop _ _ _ herr] at hstop
               cases hstop
-            · cases h
+            · split at h
+              · injection h with h
+                subst h
+                cases hstop
+              · split at h <;> cases h
 
 /-- A `.composite` failure is a verdict: the input is not prime. Justified
 by size, table completeness, or a failed Miller-Rabin base; never by
@@ -755,6 +776,8 @@ deterministic. -/
 #guard (match primeCert? 2147483647 (Rand.ofSeed 0) 8 with
         | .ok (c, _) => checkPrime c.raw
         | .error _ => false)
+set_option maxRecDepth 10000 in
+#guard checkPrime (mkPock3 199 6 [(3, 0, .small 2), (2, 0, .small 3)])
 
 end Nat
 
