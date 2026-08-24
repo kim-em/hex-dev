@@ -168,23 +168,9 @@ theorem ofPolyHom_compose_eq_eval₂ (b : Hex.FpPoly p) (g : Hex.FpPoly p) :
         rw [map_add, Hex.FpPoly.compose_add, map_add, hP, hQ, Polynomial.eval₂_add]
     | monomial k c =>
         rw [Polynomial.eval₂_monomial]
-        have hsym : HexPolyFpMathlib.fpPolyEquiv.symm (Polynomial.monomial k c) =
-            (Hex.DensePoly.monomial k (HexModArithMathlib.ZMod64.ofZMod c) :
-              Hex.FpPoly p) := by
-          rw [RingEquiv.symm_apply_eq]
-          apply Polynomial.ext
-          intro i
-          rw [HexPolyFpMathlib.fpPolyEquiv_apply,
-            HexPolyFpMathlib.coeff_toMathlibPolynomial,
-            Hex.DensePoly.coeff_monomial, Polynomial.coeff_monomial]
-          by_cases hik : k = i
-          · subst hik
-            rw [if_pos rfl, if_pos rfl, HexModArithMathlib.ZMod64.toZMod_ofZMod]
-          · rw [if_neg hik, if_neg (fun h : i = k => hik h.symm),
-              show (0 : ZMod p) = HexModArithMathlib.ZMod64.toZMod 0 from
-                (HexModArithMathlib.ZMod64.toZMod_zero).symm]
-            rfl
-        rw [hsym, Hex.FpPoly.compose_monomial, HexPolyFpMathlib.linearPow_eq_pow,
+        rw [HexPolyFpMathlib.fpPolyEquiv_symm_apply,
+          HexPolyFpMathlib.polynomialToFpPoly_monomial,
+          Hex.FpPoly.compose_monomial, HexPolyFpMathlib.linearPow_eq_pow,
           map_mul, map_pow]
         rfl
   have := key (HexPolyFpMathlib.fpPolyEquiv g)
