@@ -230,6 +230,12 @@ section Conway
 
 variable {m n : Nat}
 
+/-- The class of `X` in the Conway presentation of `GFq p n`. -/
+noncomputable def conwayX (p n : Nat) [Hex.ZMod64.Bounds p]
+    [Hex.ZMod64.PrimeModulus p] (hn : Hex.Conway.SupportedEntry p n) :
+    Hex.GFq p n hn :=
+  ofPolyHom _ _ _ _ Hex.FpPoly.X
+
 /-- The norm element of `GFq p n`, as a field element rather than a
 representative: where the generator of the degree-`m` subfield goes. -/
 noncomputable def conwayGen (p m n : Nat) [Hex.ZMod64.Bounds p]
@@ -238,6 +244,34 @@ noncomputable def conwayGen (p m n : Nat) [Hex.ZMod64.Bounds p]
   ofPolyHom _ _ _ _
     (Hex.Conway.normX (Hex.Conway.conwayPoly p n hn)
       (Hex.Conway.conwayPoly_monic p n hn) m (n / m))
+
+/-- The computed Conway subfield generator is the explicit finite-field norm
+power of the ambient class of `X`. -/
+theorem conwayGen_eq_norm (p : Nat) [Hex.ZMod64.Bounds p]
+    [Hex.ZMod64.PrimeModulus p] (hn : Hex.Conway.SupportedEntry p n)
+    (hm_pos : 0 < m) (hmn : m ∣ n) :
+    conwayGen p m n hn =
+      (conwayX p n hn) ^ ((p ^ n - 1) / (p ^ m - 1)) := by
+  unfold conwayGen conwayX
+  rw [← map_pow, ← HexPolyFpMathlib.linearPow_eq_pow]
+  apply (Hex.GFq.ofPoly_eq_ofPoly_iff_reduceMod_eq hn _ _).2
+  have hnorm := Hex.Conway.subfieldGen_eq_norm hn hm_pos hmn
+  unfold Hex.Conway.subfieldGen at hnorm
+  have hpow := Hex.FpPoly.Quotient.reduce_linearPow_eq_pow
+    (g := Hex.Conway.conwayPoly p n hn)
+    (hmonic := Hex.Conway.conwayPoly_monic p n hn)
+    (hg_pos := Hex.Conway.conwayPoly_degree_pos p n hn)
+    Hex.FpPoly.X ((p ^ n - 1) / (p ^ m - 1))
+  have hval := congrArg Hex.FpPoly.Quotient.val (hnorm.trans hpow.symm)
+  simp only [Hex.FpPoly.Quotient.reduce_val] at hval
+  have hred (g : Hex.FpPoly p) :
+      Hex.GFqRing.reduceMod (Hex.Conway.conwayPoly p n hn) g =
+        Hex.FpPoly.modByMonic (Hex.Conway.conwayPoly p n hn) g
+          (Hex.Conway.conwayPoly_monic p n hn) := by
+    rw [Hex.FpPoly.modByMonic, Hex.DensePoly.modByMonic_eq_mod]
+    rfl
+  rw [hred, hred]
+  exact hval
 
 /-- Substituting the norm element kills the smaller Conway polynomial.
 
@@ -328,6 +362,34 @@ noncomputable def conwayEmbed (p m n : Nat) [Hex.ZMod64.Bounds p]
     show substHom _ _ _ _ _ (Hex.GFqField.repr (a * b)) = _
     rw [Hex.GFqField.repr_mul, substHom_reduceMod _ _
       (substHom_conwayPoly_eq_zero p hm hn hcompat), map_mul]
+
+/-- The Conway embedding sends the source class of `X` to the computed subfield
+generator. Together with {name}`conwayGen_eq_norm`, this identifies its image
+with the finite-field norm power in the target. -/
+theorem conwayEmbed_X (p : Nat) [Hex.ZMod64.Bounds p]
+    [Hex.ZMod64.PrimeModulus p]
+    (hm : Hex.Conway.SupportedEntry p m) (hn : Hex.Conway.SupportedEntry p n)
+    (hcompat : Hex.Conway.Compatible p m n hm hn) :
+    conwayEmbed p m n hm hn hcompat (conwayX p m hm) = conwayGen p m n hn := by
+  unfold conwayEmbed conwayX conwayGen
+  change substHom _ _ _ _ _ (Hex.GFqField.repr (ofPolyHom _ _ _ _ Hex.FpPoly.X)) =
+    ofPolyHom _ _ _ _ _
+  rw [ofPolyHom_apply, Hex.GFqField.repr_ofPoly, substHom_reduceMod _ _
+    (substHom_conwayPoly_eq_zero p hm hn hcompat), substHom_apply,
+    Hex.FpPoly.compose_X]
+
+/-- The Conway embedding sends the source class of `X` directly to the
+explicit finite-field norm power of the target class of `X`. -/
+theorem conwayEmbed_X_eq_norm (p : Nat) [Hex.ZMod64.Bounds p]
+    [Hex.ZMod64.PrimeModulus p]
+    (hm : Hex.Conway.SupportedEntry p m) (hn : Hex.Conway.SupportedEntry p n)
+    (hcompat : Hex.Conway.Compatible p m n hm hn) (hmn : m ∣ n) :
+    conwayEmbed p m n hm hn hcompat (conwayX p m hm) =
+      (conwayX p n hn) ^ ((p ^ n - 1) / (p ^ m - 1)) := by
+  have hm_pos : 0 < m := by
+    rw [← GFq.conwayPoly_degree hm]
+    exact Hex.Conway.conwayPoly_nonconstant p m hm
+  exact (conwayEmbed_X p hm hn hcompat).trans (conwayGen_eq_norm p hn hm_pos hmn)
 
 /-! # The embedding on committed entries
 

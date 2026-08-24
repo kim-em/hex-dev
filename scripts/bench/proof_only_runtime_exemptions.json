@@ -898,5 +898,23 @@
     "baseline_blob": "a1b87406682dbf908d990f01676f326499b906e5",
     "current_blob": "2cea1c0addfba1a78d74b905e0297eb1f3441778",
     "reason": "Moves the existing HexModular.LoopTests module from the public library umbrella into the build-only HexMvFactorizationTests verification target; no factorization runtime definition, executable, build flag, or dependency changes."
+  },
+  {
+    "path": "HexPolyFp/Compose.lean",
+    "baseline_blob": "5f2ddb7456186793f29a6187c490c3e7dea90686",
+    "current_blob": "79fe5d281f3009f42744ff252d82ec2d47ee2ccf",
+    "reason": "Adds only a theorem that X is the right identity for polynomial composition; no executable definition or factorization runtime call path changes."
+  },
+  {
+    "path": "HexPolyFp/QuotientCompose.lean",
+    "baseline_blob": "48cd72f73100465311303e0a6ab1e34f6fcfdf63",
+    "current_blob": "9641f1d1c9b112dcdcff9cf9c999b721982729e6",
+    "reason": "Adds an import and a quotient-evaluation theorem only; no executable definition or factorization runtime call path changes."
+  },
+  {
+    "path": "HexPolyFp/QuotientFrobenius.lean",
+    "baseline_blob": "dc13ffdd544ac3037114ffba1000eddd09ecde90",
+    "current_blob": "cbef5cd34b581e312d21c2f76da11d6989b2aa6a",
+    "reason": "Adds an import and a quotient-power theorem only; no executable definition or factorization runtime call path changes."
   }
 ]

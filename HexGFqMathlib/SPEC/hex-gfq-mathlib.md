@@ -60,14 +60,11 @@ hypotheses on the equivalence rather than on the field type.
 `Subfield.lean` defines the map hex-conway's Tier 2 evidence licenses.
 `Conway.normX` is a computed representative: the product of `k = n / m`
 successive Frobenius images of the residue of `x`, reduced modulo `C(p, n)` at
-each step, structured that way so the kernel can replay it. Reading it as the
-field norm `α ^ ((p^n - 1) / (p^m - 1))` is the design rationale for the
-definition, not a theorem; hex-conway is explicit that two evaluation and
-Frobenius bridges are missing before that identity can be proved, so this SPEC
-does not lean on it. What compatibility does prove, in
-`eval_conwayPoly_subfieldGen_eq_zero`, is that `C(p, m)` vanishes at the class
-of `normX`, and that root property is the well-definedness input the embedding
-needs.
+each step, structured that way so the kernel can replay it.
+`Conway.subfieldGen_eq_norm` proves that its quotient class is the explicit
+finite-field norm power `α ^ ((p^n - 1) / (p^m - 1))`;
+`eval_conwayPoly_subfieldGen_eq_zero` proves that `C(p, m)` vanishes there,
+which is the well-definedness input the embedding needs.
 
 `conwayEmbed` is the resulting ring homomorphism `GFq p m →+* GFq p n`. Its
 domain is a committed divisor pair carrying a `Conway.Compatible` witness
@@ -79,6 +76,13 @@ Hex side has to supply is that the executable substitution agrees with it,
 which is additive and monomial data. `GF(2^2)` and `GF(2^3)` inside `GF(2^6)`,
 `GF(13)` inside `GF(13^6)`, and `GF(2^4)` inside `GF(2^8)` are checked here as
 examples.
+
+The canonicality statement is exposed directly. `conwayEmbed_X` says that
+`conwayEmbed` sends the source class of `X` to `conwayGen`, while
+`conwayGen_eq_norm` identifies `conwayGen` with the explicit finite-field norm
+power of the target class of `X`. `conwayEmbed_X_eq_norm` combines these into
+one theorem for a divisor pair; positivity of `m` follows from the source's
+committed entry.
 
 ## Primitivity transport
 
