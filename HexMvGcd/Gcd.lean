@@ -9,7 +9,7 @@ module
 
 public import HexMvGcd.Gauss
 public import HexMvGcd.Brown
-public import HexPolyZGcd
+public import HexMvGcd.ZPoly
 
 @[expose] public section
 set_option backward.proofsInPublic true
@@ -960,19 +960,3 @@ instance instLawfulGcdOpsMvPoly [IsMonomialOrder cmp]
       (polyNormUnit_isUnit a)
 
 end Hex.MvPoly
-
-namespace Hex
-
-/-! The actual `HexPolyZGcd` kernel supplies the required `DensePoly Int`
-coefficient instance. -/
-
-instance instGcdOpsZPoly : GcdOps ZPoly where
-  gcd := ZPoly.gcd
-  exactDiv f g := (ZPoly.divExact? f g).getD 0
-  isUnit f := decide (f.size = 1 ∧ (f.coeff 0 = 1 ∨ f.coeff 0 = -1))
-  normUnit f := if f = 0 ∨ 0 < f.leadingCoeff then 1 else -1
-
-instance instLawfulGcdOpsZPoly : LawfulGcdOps ZPoly := by
-  constructor <;> intros <;> sorry
-
-end Hex
