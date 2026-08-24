@@ -488,6 +488,10 @@ theorem coeff_zero      : coeff m 0 = 0
 theorem coeff_C         : coeff m (C c) = if m = Mono.zero then c else 0
 theorem coeff_X         : coeff m (X i) = if m = Mono.unit i then 1 else 0
 theorem coeff_monomial  : coeff m (monomial m' c) = if m = m' then c else 0
+theorem degreeOf_monomial : degreeOf i (monomial m c) =
+    if c = 0 then 0 else m[i]
+theorem leadingTerm_monomial (hc : c ≠ 0) :
+    leadingTerm (monomial m c) = some (m, c)
 theorem coeff_one       : coeff m 1 = if m = Mono.zero then 1 else 0
 theorem coeff_ofTerms   : coeff m (ofTerms ts) =
     ((ts.filter fun t => t.1 == m).map fun t => t.2).sum
