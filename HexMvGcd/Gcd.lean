@@ -143,7 +143,10 @@ theorem contentInCert_checks
     [IsMonomialOrder cmp'] (p : MvPoly (n + 1) R cmp) :
     checkContent (toUnivariate i cmp' p).toArray.toList
       (contentInCert i cmp' p) = true := by
-  sorry
+  unfold contentInCert
+  apply contentCertWith_checks
+  intro f h
+  exact gcdCert_checks f h
 
 theorem contentIn_mul_primPartIn
     {cmp : Mono (n + 1) → Mono (n + 1) → Ordering}
@@ -165,7 +168,23 @@ theorem contentIn_dvd_coeff
     (i : Fin (n + 1)) (cmp' : Mono n → Mono n → Ordering)
     [IsMonomialOrder cmp'] (p : MvPoly (n + 1) R cmp) (k : Nat) :
     contentIn i cmp' p ∣ (toUnivariate i cmp' p).coeff k := by
-  sorry
+  let view := toUnivariate i cmp' p
+  let cert := contentInCert i cmp' p
+  have hs := checkContent_sound (contentInCert_checks i cmp' p)
+  change cert.value ∣ view.coeff k
+  by_cases hk : k < view.toList.length
+  · have hmem : view.toList[k] ∈ view.toList := List.getElem_mem _
+    have hd := hs.1 view.toList[k] hmem
+    have hcoeff : view.toList[k] = view.coeff k := by
+      have hget := DensePoly.toList_getD_eq_coeff view k
+      exact (List.getElem_eq_getD (h := hk) 0).trans hget
+    exact hcoeff ▸ hd
+  · have hsize : view.size ≤ k := by
+      rw [DensePoly.length_toList] at hk
+      omega
+    rw [DensePoly.coeff_eq_zero_of_size_le view hsize]
+    refine ⟨0, ?_⟩
+    exact (MvPoly.zero_mul cert.value).symm
 
 /-- Universal property of named-variable content. -/
 theorem dvd_contentIn
@@ -179,7 +198,16 @@ theorem dvd_contentIn
     (d : MvPoly n R cmp')
     (hd : ∀ k, d ∣ (toUnivariate i cmp' p).coeff k) :
     d ∣ contentIn i cmp' p := by
-  sorry
+  let view := toUnivariate i cmp' p
+  let cert := contentInCert i cmp' p
+  have hs := checkContent_sound (contentInCert_checks i cmp' p)
+  change d ∣ cert.value
+  apply hs.2 d
+  intro q hq
+  change q ∈ view.toList at hq
+  rw [DensePoly.toList_eq_coeff_range] at hq
+  rcases List.mem_map.mp hq with ⟨k, _, rfl⟩
+  exact hd k
 
 @[simp] theorem contentIn_zero
     {cmp : Mono (n + 1) → Mono (n + 1) → Ordering}
@@ -190,7 +218,18 @@ theorem dvd_contentIn
     (i : Fin (n + 1)) (cmp' : Mono n → Mono n → Ordering)
     [IsMonomialOrder cmp'] :
     contentIn (R := R) (cmp := cmp) i cmp' 0 = 0 := by
-  sorry
+  have hd : ∀ k, (0 : MvPoly n R cmp') ∣
+      (toUnivariate i cmp' (0 : MvPoly (n + 1) R cmp)).coeff k := by
+    intro k
+    have hcoeff :
+        (toUnivariate i cmp' (0 : MvPoly (n + 1) R cmp)).coeff k = 0 := by
+      apply ext
+      intro m
+      rw [toUnivariate_coeff, coeff_zero, coeff_zero]
+    refine ⟨0, ?_⟩
+    exact hcoeff.trans (MvPoly.zero_mul 0).symm
+  rcases dvd_contentIn i cmp' 0 0 hd with ⟨q, hq⟩
+  exact hq.trans (MvPoly.mul_zero q)
 
 @[simp] theorem primPartIn_zero
     {cmp : Mono (n + 1) → Mono (n + 1) → Ordering}
@@ -201,7 +240,9 @@ theorem dvd_contentIn
     (i : Fin (n + 1)) (cmp' : Mono n → Mono n → Ordering)
     [IsMonomialOrder cmp'] :
     primPartIn (R := R) (cmp := cmp) i cmp' 0 = 0 := by
-  sorry
+  unfold primPartIn quotient
+  rw [contentIn_zero, constIn_zero]
+  simp [divExact?]
 
 theorem primPartIn_content
     {cmp : Mono (n + 1) → Mono (n + 1) → Ordering}
