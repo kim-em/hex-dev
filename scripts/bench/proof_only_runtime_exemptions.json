@@ -788,8 +788,8 @@
   {
     "path": "lakefile.lean",
     "baseline_blob": "a1b87406682dbf908d990f01676f326499b906e5",
-    "current_blob": "204a091e087f8da8f227e6adc5dc2d8f85c862e4",
-    "reason": "Registers the upstream sparse-poly and modular conformance targets together with the pinned lean-readme documentation checker; the factorization service target, executable dependency graph, definitions, and build flags are unchanged."
+    "current_blob": "2765df3feaa834e1241686e49445edf1d8b186d8",
+    "reason": "Registers the upstream sparse-poly, modular, and interval runtime conformance targets together with the pinned lean-readme documentation checker; the factorization service target, executable dependency graph, definitions, and build flags are unchanged."
   },
   {
     "path": "lake-manifest.json",
