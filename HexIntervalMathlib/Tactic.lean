@@ -1254,7 +1254,7 @@ meta def prepareRuntime (config : Frontend.Config) (reified : Frontend.Result)
 the caller's source proofs. -/
 meta def emitBoundWith (config : Frontend.Config) (expression : Expr)
     (term : Frontend.Term) (parsed : ParseState) (reified : Frontend.Result)
-    (sourceIntervals sourceProofs : Array Expr) (runtime : RuntimeResult config.rule) :
+    (sourceProofs : Array Expr) (runtime : RuntimeResult config.rule) :
     MetaM Bound := do
   let limits := runtimeLimits config
   let emitted : RuntimeEmit.Emitted ←
@@ -1316,7 +1316,6 @@ meta def deriveBound (config : Frontend.Config) (expression : Expr) : MetaM Boun
     | .ok result => pure result
     | .error error => throwError "interval: reification failed: {repr error}"
   let mut sourceFacts : Array Hex.Interval := #[]
-  let mut sourceIntervals : Array Expr := #[]
   let mut sourceProofs : Array Expr := #[]
   for index in [0:parsed.sources.size] do
     let some source := parsed.sources[index]?
@@ -1324,9 +1323,8 @@ meta def deriveBound (config : Frontend.Config) (expression : Expr) : MetaM Boun
     let some _ := reified.sourceNode? index
       | throwError "interval: selected source is absent from the target graph"
     let cuts ← collectCuts source
-    let (interval, intervalExpr, proof) ← sourceProof config source cuts
+    let (interval, _, proof) ← sourceProof config source cuts
     sourceFacts := sourceFacts.push interval
-    sourceIntervals := sourceIntervals.push intervalExpr
     sourceProofs := sourceProofs.push proof
   let initial ← match reified.seedInitialWithin config.rule sourceFacts with
     | .ok initial => pure initial
@@ -1334,7 +1332,7 @@ meta def deriveBound (config : Frontend.Config) (expression : Expr) : MetaM Boun
   match prepareRuntime config reified initial with
   | .error error => throwError "interval: {error}"
   | .ok runtime =>
-      emitBoundWith config expression term parsed reified sourceIntervals sourceProofs runtime
+      emitBoundWith config expression term parsed reified sourceProofs runtime
 
 inductive GoalKind where
   | lower (value : Int) (endpoint : Expr) (strict : Bool)
