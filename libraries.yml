@@ -402,6 +402,16 @@ libraries:
     mathlib: false
     done_through: 0
     status: active
+    phase4:
+      comparators:
+        - tool: "PrimeCert (b-mehta/PrimeCert kernel-replay primality certificates)"
+          class: informational
+          rationale: "The closest prior art and the one number a reader wants, but its toolchain pin (stable Lean) differs from this repository's release candidate, so the figure is obtained in a separate checkout on scheduled hardware rather than wired as a CI comparator; PARI is the conformance oracle, not a performance comparator, since BPSW+APRCL answers a different question by a different method."
+      input_families:
+        - name: table-smooth-certificates
+          description: Primes of 31 to 511 bits with n - 1 = k * 2^m and k factoring over the committed table, so decision, certificate-search, and checker rows share a deterministic rho-free certificate shape.
+        - name: segment-enumeration
+          description: Prime enumeration over [0, n) for n from 10^3 to 3.2 * 10^4 through the trial-division-backed primesIn.
 
   # ---------- Mathlib bridges ----------
   HexPolyMathlib:
