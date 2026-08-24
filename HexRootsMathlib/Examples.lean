@@ -31,18 +31,22 @@ noncomputable section
 def pisot : ZPoly :=
   DensePoly.monomial 3 1 - DensePoly.monomial 1 1 - DensePoly.C 1
 
+/-- The complex interpretation of the Pisot cubic. -/
 theorem toPolyℂ_pisot : toPolyℂ pisot = X ^ 3 - X - 1 := by
   simp [pisot, toPolyℂ, monomial_one_right_eq_X_pow]
 
+/-- The rational interpretation of the Pisot cubic. -/
 theorem toPolyℚ_pisot : HexPolyZMathlib.toPolyℚ pisot = X ^ 3 - X - 1 := by
   simp [pisot, HexPolyZMathlib.toPolyℚ, monomial_one_right_eq_X_pow]
 
+/-- The Pisot cubic has degree three. -/
 theorem natDegree_pisot : (toPolyℂ pisot).natDegree = 3 := by
   rw [toPolyℂ_pisot,
     natDegree_sub_eq_left_of_natDegree_lt (by
       rw [natDegree_sub_eq_left_of_natDegree_lt] <;> norm_num),
     natDegree_sub_eq_left_of_natDegree_lt] <;> norm_num
 
+/-- The Pisot cubic is nonzero. -/
 theorem pisot_ne_zero : pisot ≠ 0 := by
   intro h
   have hcoeff := congrArg (fun p : ZPoly => p.coeff 3) h
@@ -69,51 +73,66 @@ theorem pisot_simple : HasOnlySimpleRoots pisot := by
     _ = C (23⁻¹ * 23) := by rw [map_mul]
     _ = 1 := by norm_num
 
+/-- Certified square around the lower complex root of `x³ - x - 1`. -/
 def pisotLowerSquare : DyadicSquare where
   re := .ofIntWithPrec (-91033924845) 37
   im := .ofIntWithPrec (-77279107697) 37
   prec := 33
 
+/-- Certified square around the upper complex root of `x³ - x - 1`. -/
 def pisotUpperSquare : DyadicSquare where
   re := .ofIntWithPrec (-91033924845) 37
   im := .ofIntWithPrec 4829944231 33
   prec := 33
 
+/-- Certified square around the real root of `x³ - x - 1` (the smallest
+Pisot number). -/
 def pisotRealSquare : DyadicSquare where
   re := .ofIntWithPrec 182067849689 37
   im := 0
   prec := 33
 
+/-- The lower square passes the executable Newton-Kantorovich test. -/
 theorem pisotLower_witness : nkWitness pisot pisotLowerSquare := by decide
 
+/-- The upper square passes the executable Newton-Kantorovich test. -/
 theorem pisotUpper_witness : nkWitness pisot pisotUpperSquare := by decide
 
+/-- The real-centred square passes the executable Newton-Kantorovich test. -/
 theorem pisotReal_witness : nkWitness pisot pisotRealSquare := by decide
 
+/-- The unique root of the Pisot cubic in the lower certified square. -/
 noncomputable def pisotLowerRoot : ℂ :=
   (NKData.existsUnique_root pisotLower_witness).exists.choose
 
+/-- The unique root of the Pisot cubic in the upper certified square. -/
 noncomputable def pisotUpperRoot : ℂ :=
   (NKData.existsUnique_root pisotUpper_witness).exists.choose
 
+/-- The unique root of the Pisot cubic in the real-centred certified
+square: the smallest Pisot number. -/
 noncomputable def pisotRealRoot : ℂ :=
   (NKData.existsUnique_root pisotReal_witness).exists.choose
 
+/-- The lower root satisfies the cubic and lies in its certified square. -/
 theorem pisotLowerRoot_spec :
     (toPolyℂ pisot).eval pisotLowerRoot = 0 ∧
       pisotLowerRoot ∈ DyadicSquare.closedSquare pisotLowerSquare :=
   (NKData.existsUnique_root pisotLower_witness).exists.choose_spec
 
+/-- The upper root satisfies the cubic and lies in its certified square. -/
 theorem pisotUpperRoot_spec :
     (toPolyℂ pisot).eval pisotUpperRoot = 0 ∧
       pisotUpperRoot ∈ DyadicSquare.closedSquare pisotUpperSquare :=
   (NKData.existsUnique_root pisotUpper_witness).exists.choose_spec
 
+/-- The real root satisfies the cubic and lies in its certified square. -/
 theorem pisotRealRoot_spec :
     (toPolyℂ pisot).eval pisotRealRoot = 0 ∧
       pisotRealRoot ∈ DyadicSquare.closedSquare pisotRealSquare :=
   (NKData.existsUnique_root pisotReal_witness).exists.choose_spec
 
+/-- Eight-decimal rational enclosures for the lower root's coordinates. -/
 theorem pisotLowerRoot_bounds :
     (-66235899 / 100000000 : ℝ) < pisotLowerRoot.re ∧
       pisotLowerRoot.re < (-66235897 / 100000000 : ℝ) ∧
@@ -131,6 +150,7 @@ theorem pisotLowerRoot_bounds :
   · linarith
   constructor <;> linarith
 
+/-- Eight-decimal rational enclosures for the upper root's coordinates. -/
 theorem pisotUpperRoot_bounds :
     (-66235899 / 100000000 : ℝ) < pisotUpperRoot.re ∧
       pisotUpperRoot.re < (-66235897 / 100000000 : ℝ) ∧
@@ -148,6 +168,7 @@ theorem pisotUpperRoot_bounds :
   · linarith
   constructor <;> linarith
 
+/-- Eight-decimal rational enclosure for the real root. -/
 theorem pisotRealRoot_bounds :
     (132471795 / 100000000 : ℝ) < pisotRealRoot.re ∧
       pisotRealRoot.re < (132471796 / 100000000 : ℝ) := by
@@ -181,6 +202,8 @@ theorem pisotRealRoot_im : pisotRealRoot.im = 0 := by
       ⟨hconjRoot, hconjMem⟩ pisotRealRoot_spec
   exact Complex.conj_eq_iff_im.mp hfixed
 
+/-- The lower complex root lies strictly inside the unit circle, as the
+Pisot property demands. -/
 theorem pisotLowerRoot_norm : ‖pisotLowerRoot‖ < 1 := by
   have hb := pisotLowerRoot_bounds
   have hre : |pisotLowerRoot.re| < (663 / 1000 : ℝ) := by
@@ -197,6 +220,8 @@ theorem pisotLowerRoot_norm : ‖pisotLowerRoot‖ < 1 := by
   rw [Complex.sq_norm, Complex.normSq_apply]
   nlinarith
 
+/-- The upper complex root lies strictly inside the unit circle, as the
+Pisot property demands. -/
 theorem pisotUpperRoot_norm : ‖pisotUpperRoot‖ < 1 := by
   have hb := pisotUpperRoot_bounds
   have hre : |pisotUpperRoot.re| < (663 / 1000 : ℝ) := by

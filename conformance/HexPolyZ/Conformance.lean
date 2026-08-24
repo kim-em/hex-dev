@@ -6,6 +6,7 @@ Authors: Kim Morrison
 
 import HexPolyZ.Kronecker
 import HexPolyZ.Mignotte
+import HexPolyZ.ExactDivision
 
 /-!
 Core conformance checks for the `hex-poly-z` integer-polynomial surface.
@@ -19,6 +20,7 @@ Covered operations:
 - Bezout-style modular coprimality via `ZPoly.coprimeModP`
 - `content`, `primitivePart`, `Primitive`, and primitive square-free
   decomposition
+- checked exact division and its ordered rejection prefilters
 - the Kronecker-substitution product kernel against the schoolbook loop
 - Mignotte helpers: `Nat.binom`, `floorSqrt`, `ceilSqrt`, `coeffNormSq`,
   `coeffL2NormBound`, and `mignotteCoeffBound`
@@ -33,12 +35,15 @@ Covered properties:
 - primitive-part fixtures with nonzero content have content `1`
 - primitive square-free decomposition removes repeated rational factors after
   primitive-part extraction
+- exact divisors survive every prefilter, while degree, leading-coefficient,
+  content, and evaluation obstructions reject before dense division
 - Mignotte coefficient bounds equal `Nat.binom k j * coeffL2NormBound f`
 Covered edge cases:
 - zero polynomials and all-zero coefficient arrays
 - trailing-zero and internal-zero polynomial representations
 - modulus `1` congruence and out-of-support coefficient checks
 - already primitive and nontrivial-content integer polynomials
+- zero divisor, zero dividend, and an inexact pair that passes every prefilter
 - powers of `X`, repeated factors, and nontrivial content before square-free
   normalization
 - square-root inputs `0`, nonsquares, and one-below-square adversarial values
@@ -119,6 +124,18 @@ private def contentNontrivialPrimitive : ZPoly :=
 -- Sparse adversarial: gcd is `gcd(14, 21, 7, 35) = 7`.
 private def contentAdversarial : ZPoly :=
   DensePoly.ofCoeffs #[-14, 21, 0, -7, 0, 0, 0, 0, 0, 0, 35]
+
+-- Exact-division prefilter fixtures.  Every rejection case passes all earlier
+-- gates, so the reported constructor pins the required evaluation order.
+private def divDegreeDividend : ZPoly := DensePoly.ofCoeffs #[1, 1]
+private def divDegreeDivisor : ZPoly := DensePoly.ofCoeffs #[1, 0, 1]
+private def divLeadingDividend : ZPoly := DensePoly.ofCoeffs #[1, 0, 3]
+private def divLeadingDivisor : ZPoly := DensePoly.ofCoeffs #[1, 2]
+private def divContentDividend : ZPoly := DensePoly.ofCoeffs #[1, 0, 2]
+private def divContentDivisor : ZPoly := DensePoly.ofCoeffs #[2, 2]
+private def divEvaluationDividend : ZPoly := DensePoly.ofCoeffs #[1, 1, 1]
+private def divEvaluationDivisor : ZPoly := DensePoly.ofCoeffs #[1, 1]
+private def divFallthroughDividend : ZPoly := DensePoly.ofCoeffs #[1, 0, 1]
 -- `(x - 1)^10`, exercising Q[x] gcd of a perfect tenth power with its
 -- derivative `10·(x-1)^9` in the square-free decomposition.
 private def squareFreeRepeated : ZPoly :=
@@ -167,6 +184,24 @@ example : coprimeModP coprimeEdgeF coprimeEdgeG 7 :=
 #guard content contentPrimitive = 1
 #guard content contentNontrivial = 6
 #guard content contentAdversarial = 7
+
+#guard DivExact.reject? divDegreeDividend 0 = some .zeroDivisor
+#guard DivExact.reject? divDegreeDividend divDegreeDivisor = some .degree
+#guard DivExact.reject? divLeadingDividend divLeadingDivisor = some .leadingCoeff
+#guard DivExact.reject? divContentDividend divContentDivisor = some .content
+#guard DivExact.reject? divEvaluationDividend divEvaluationDivisor = some .evaluation
+
+#guard divExact? divDegreeDividend divDegreeDivisor = none
+#guard divExact? divLeadingDividend divLeadingDivisor = none
+#guard divExact? divContentDividend divContentDivisor = none
+#guard divExact? divEvaluationDividend divEvaluationDivisor = none
+-- `x² + 1` passes all cheap gates for `x + 1` at the point one, but is not
+-- accepted: only dense exact division can produce `some quotient`.
+#guard DivExact.reject? divFallthroughDividend divEvaluationDivisor = none
+#guard divExact? divFallthroughDividend divEvaluationDivisor = none
+#guard divExact? 0 divEvaluationDivisor = some 0
+#guard divExact? (DensePoly.ofCoeffs #[2, 4, 2]) divEvaluationDivisor =
+  some (DensePoly.ofCoeffs #[2, 2])
 
 #guard primitivePart contentZero = (0 : ZPoly)
 #guard primitivePart contentPrimitive = contentPrimitive

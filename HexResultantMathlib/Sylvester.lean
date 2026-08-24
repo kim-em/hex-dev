@@ -37,7 +37,7 @@ theorem sign_eq_pow [CommRing R] (j : Nat) :
 with Mathlib's determinant on the same finite square matrix. -/
 theorem det_eq_matrixDet [CommRing R] {n : Nat}
     (M : Hex.SubresultantMinor.Square R n) :
-    Hex.SubresultantMinor.det M = Matrix.det (Matrix.of M) := by
+    Hex.SubresultantMinor.det M = _root_.Matrix.det (_root_.Matrix.of M) := by
   induction n with
   | zero => simp [Hex.SubresultantMinor.det]
   | succ n ih =>
@@ -64,10 +64,10 @@ theorem det_eq_matrixDet [CommRing R] {n : Nat}
       rw [Hex.SubresultantMinor.det]
       change (List.finRange (n + 1)).foldl (fun a j => a + term j) 0 = _
       rw [hfold0]
-      rw [Matrix.det_succ_row_zero]
+      rw [_root_.Matrix.det_succ_row_zero]
       apply Finset.sum_congr rfl
       intro j _
-      simp only [term, Matrix.of_apply]
+      simp only [term, _root_.Matrix.of_apply]
       rw [sign_eq_pow, ih]
       congr 3
 
@@ -78,8 +78,8 @@ namespace Subresultant
 
 /-- A value-indexed presentation of Mathlib's Sylvester matrix. -/
 private def sylvesterByVal [CommRing R] (f g : Polynomial R) (df dg : Nat) :
-    Matrix (Fin (df + dg)) (Fin (df + dg)) R :=
-  Matrix.of fun i j =>
+    _root_.Matrix (Fin (df + dg)) (Fin (df + dg)) R :=
+  _root_.Matrix.of fun i j =>
     if _ : j.val < df then
       if j.val ≤ i.val ∧ i.val ≤ j.val + dg then
         g.coeff (i.val - j.val)
@@ -90,6 +90,9 @@ private def sylvesterByVal [CommRing R] (f g : Polynomial R) (df dg : Nat) :
         f.coeff (i.val - jj)
       else 0
 
+/-- Mathlib's `Fin.addCases`-defined Sylvester matrix agrees with its
+value-indexed presentation, which rewrites cleanly against the numeric
+indexing of `coeffMatrixAt`. -/
 private theorem sylvester_eq_byVal [CommRing R] (f g : Polynomial R)
     (df dg : Nat) :
     Polynomial.sylvester f g df dg = sylvesterByVal f g df dg := by
@@ -129,15 +132,15 @@ Sylvester matrix with both axes reversed. -/
 private theorem coeffMatrixAt_zero_eq_sylvester [CommRing R] [DecidableEq R]
     (df dg : Nat) (f g : DensePoly R) (hf : f.size ≤ df + 1)
     (hg : g.size ≤ dg + 1) :
-    Matrix.of (coeffMatrixAt df dg 0 0 f g) =
+    _root_.Matrix.of (coeffMatrixAt df dg 0 0 f g) =
       (Polynomial.sylvester (HexPolyMathlib.toPolynomial f)
         (HexPolyMathlib.toPolynomial g) df dg).submatrix
           Fin.revPerm Fin.revPerm := by
   rw [sylvester_eq_byVal]
   ext i j
-  simp only [Matrix.of_apply, Matrix.submatrix_apply, Fin.revPerm_apply]
+  simp only [_root_.Matrix.of_apply, _root_.Matrix.submatrix_apply, Fin.revPerm_apply]
   unfold coeffMatrixAt sylvesterByVal
-  simp only [Nat.sub_zero, Matrix.of_apply, HexPolyMathlib.coeff_toPolynomial,
+  simp only [Nat.sub_zero, _root_.Matrix.of_apply, HexPolyMathlib.coeff_toPolynomial,
     Int.ofNat_eq_natCast, Int.natCast_zero]
   by_cases hj : j.val < dg
   · rw [if_pos hj]
@@ -220,7 +223,7 @@ theorem coeffMinorAt_zero_eq_resultant [CommRing R] [DecidableEq R]
   unfold coeffMinorAt Polynomial.resultant
   rw [Hex.SubresultantMinor.det_eq_matrixDet]
   rw [coeffMatrixAt_zero_eq_sylvester _ _ f g hf hg]
-  exact Matrix.det_submatrix_equiv_self Fin.revPerm _
+  exact _root_.Matrix.det_submatrix_equiv_self Fin.revPerm _
 
 /-- The zeroth generalized coefficient minor is Mathlib's Sylvester
 determinant at the same formal degrees. -/
@@ -339,6 +342,14 @@ theorem toPolynomial_resultant [CommRing R] [IsDomain R] [DecidableEq R]
       · rw [if_neg hfg]
         rw [resultantOrdered_eq_coeffMinor f g hf hg (by omega)]
         rw [Subresultant.coeffMinor_zero_eq_resultant, hdf, hdg]
+
+/-! Trust-surface regression check for the headline resultant correspondence. -/
+
+/--
+info: 'Hex.DensePoly.toPolynomial_resultant' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms toPolynomial_resultant
 
 end DensePoly
 end Hex

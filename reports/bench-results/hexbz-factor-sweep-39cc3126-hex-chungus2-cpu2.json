@@ -1,0 +1,6037 @@
+{
+  "env": {
+    "lean_version": null,
+    "lean_toolchain": "leanprover/lean4:v4.33.0-rc1",
+    "platform_target": null,
+    "os": "linux",
+    "arch": "x86_64",
+    "cpu_model": null,
+    "cpu_cores": 96,
+    "hostname": "chungus2",
+    "exe_name": "factor_sweep",
+    "lean_bench_version": null,
+    "git_commit": "39cc3126f21a0917f4c32505bd8010c773cef87d",
+    "git_dirty": false,
+    "timestamp_unix_ms": 1787391217959,
+    "timestamp_iso": "2026-08-22T09:33:37Z"
+  },
+  "config": {
+    "cutoff_seconds": 10.0,
+    "repeats_policy": "median-of-5 when first call < 1s, else single call",
+    "overhead_repeats": 21,
+    "corpus_path": "bench/corpus/hexbz-factor-corpus.jsonl",
+    "corpus_sha256": "619913904240834c912489e6cc23ba136e8cc5ebf0ea95f83397e0682387284d",
+    "early_terminate_run": 3,
+    "early_terminate_families": [
+      "conway",
+      "hoeij-zimmermann",
+      "sd-products",
+      "swinnerton-dyer"
+    ],
+    "systems": [
+      "hex-factor"
+    ],
+    "system_versions": {
+      "hex-factor": "leanprover/lean4:v4.33.0-rc1"
+    },
+    "per_system_overhead_nanos": {
+      "hex-factor": 22914
+    }
+  },
+  "results": [
+    {
+      "system": "hex-factor",
+      "family": "cyclotomic",
+      "name": "cyclo_phi5",
+      "degree": 4,
+      "status": "ok",
+      "median_nanos": 38396,
+      "min_nanos": 37395,
+      "max_nanos": 50044,
+      "factor_count": 1,
+      "factor_degrees": [
+        4
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "cyclotomic",
+      "name": "cyclo_phi7",
+      "degree": 6,
+      "status": "ok",
+      "median_nanos": 45448,
+      "min_nanos": 44486,
+      "max_nanos": 55863,
+      "factor_count": 1,
+      "factor_degrees": [
+        6
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "cyclotomic",
+      "name": "cyclo_phi15",
+      "degree": 8,
+      "status": "ok",
+      "median_nanos": 112377,
+      "min_nanos": 107219,
+      "max_nanos": 140438,
+      "factor_count": 1,
+      "factor_degrees": [
+        8
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "cyclotomic",
+      "name": "cyclo_phi11",
+      "degree": 10,
+      "status": "ok",
+      "median_nanos": 103764,
+      "min_nanos": 99588,
+      "max_nanos": 116873,
+      "factor_count": 1,
+      "factor_degrees": [
+        10
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "cyclotomic",
+      "name": "cyclo_phi13",
+      "degree": 12,
+      "status": "ok",
+      "median_nanos": 226806,
+      "min_nanos": 214118,
+      "max_nanos": 255568,
+      "factor_count": 1,
+      "factor_degrees": [
+        12
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "cyclotomic",
+      "name": "cyclo_phi17",
+      "degree": 16,
+      "status": "ok",
+      "median_nanos": 106989,
+      "min_nanos": 104205,
+      "max_nanos": 110444,
+      "factor_count": 1,
+      "factor_degrees": [
+        16
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "cyclotomic",
+      "name": "cyclo_phi19",
+      "degree": 18,
+      "status": "ok",
+      "median_nanos": 119107,
+      "min_nanos": 116252,
+      "max_nanos": 122252,
+      "factor_count": 1,
+      "factor_degrees": [
+        18
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "cyclotomic",
+      "name": "cyclo_phi25",
+      "degree": 20,
+      "status": "ok",
+      "median_nanos": 131244,
+      "min_nanos": 126367,
+      "max_nanos": 135351,
+      "factor_count": 1,
+      "factor_degrees": [
+        20
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "cyclotomic",
+      "name": "cyclo_phi23",
+      "degree": 22,
+      "status": "ok",
+      "median_nanos": 262750,
+      "min_nanos": 251633,
+      "max_nanos": 283110,
+      "factor_count": 1,
+      "factor_degrees": [
+        22
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "cyclotomic",
+      "name": "cyclo_phi35",
+      "degree": 24,
+      "status": "ok",
+      "median_nanos": 376308,
+      "min_nanos": 356800,
+      "max_nanos": 408736,
+      "factor_count": 1,
+      "factor_degrees": [
+        24
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "cyclotomic",
+      "name": "cyclo_phi29",
+      "degree": 28,
+      "status": "ok",
+      "median_nanos": 207067,
+      "min_nanos": 203822,
+      "max_nanos": 216691,
+      "factor_count": 1,
+      "factor_degrees": [
+        28
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "cyclotomic",
+      "name": "cyclo_phi64",
+      "degree": 32,
+      "status": "ok",
+      "median_nanos": 332473,
+      "min_nanos": 328347,
+      "max_nanos": 345844,
+      "factor_count": 1,
+      "factor_degrees": [
+        32
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "cyclotomic",
+      "name": "cyclo_phi37",
+      "degree": 36,
+      "status": "ok",
+      "median_nanos": 665557,
+      "min_nanos": 647741,
+      "max_nanos": 834237,
+      "factor_count": 1,
+      "factor_degrees": [
+        36
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "cyclotomic",
+      "name": "cyclo_phi41",
+      "degree": 40,
+      "status": "ok",
+      "median_nanos": 2041799,
+      "min_nanos": 2025344,
+      "max_nanos": 2053055,
+      "factor_count": 1,
+      "factor_degrees": [
+        40
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "cyclotomic",
+      "name": "cyclo_phi49",
+      "degree": 42,
+      "status": "ok",
+      "median_nanos": 382377,
+      "min_nanos": 376318,
+      "max_nanos": 395687,
+      "factor_count": 1,
+      "factor_degrees": [
+        42
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "cyclotomic",
+      "name": "cyclo_phi105",
+      "degree": 48,
+      "status": "ok",
+      "median_nanos": 5368293,
+      "min_nanos": 5352910,
+      "max_nanos": 5441292,
+      "factor_count": 1,
+      "factor_degrees": [
+        48
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "cyclotomic",
+      "name": "cyclo_phi53",
+      "degree": 52,
+      "status": "ok",
+      "median_nanos": 554012,
+      "min_nanos": 549275,
+      "max_nanos": 570265,
+      "factor_count": 1,
+      "factor_degrees": [
+        52
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "cyclotomic",
+      "name": "cyclo_phi81",
+      "degree": 54,
+      "status": "ok",
+      "median_nanos": 678326,
+      "min_nanos": 675242,
+      "max_nanos": 685757,
+      "factor_count": 1,
+      "factor_degrees": [
+        54
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "cyclotomic",
+      "name": "cyclo_phi61",
+      "degree": 60,
+      "status": "ok",
+      "median_nanos": 6546421,
+      "min_nanos": 6486361,
+      "max_nanos": 6651467,
+      "factor_count": 1,
+      "factor_degrees": [
+        60
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "cyclotomic",
+      "name": "cyclo_phi128",
+      "degree": 64,
+      "status": "ok",
+      "median_nanos": 1029707,
+      "min_nanos": 998792,
+      "max_nanos": 1046031,
+      "factor_count": 1,
+      "factor_degrees": [
+        64
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "cyclotomic",
+      "name": "cyclo_phi165",
+      "degree": 80,
+      "status": "ok",
+      "median_nanos": 8106755,
+      "min_nanos": 8090902,
+      "max_nanos": 8150359,
+      "factor_count": 1,
+      "factor_degrees": [
+        80
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "cyclotomic",
+      "name": "cyclo_phi89",
+      "degree": 88,
+      "status": "ok",
+      "median_nanos": 1353427,
+      "min_nanos": 1337604,
+      "max_nanos": 1367118,
+      "factor_count": 1,
+      "factor_degrees": [
+        88
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "cyclotomic",
+      "name": "cyclo_phi121",
+      "degree": 110,
+      "status": "ok",
+      "median_nanos": 43732970,
+      "min_nanos": 43278445,
+      "max_nanos": 44208595,
+      "factor_count": 1,
+      "factor_degrees": [
+        110
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "cyclotomic",
+      "name": "cyclo_phi256",
+      "degree": 128,
+      "status": "ok",
+      "median_nanos": 3870752,
+      "min_nanos": 3844934,
+      "max_nanos": 3877521,
+      "factor_count": 1,
+      "factor_degrees": [
+        128
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "cyclotomic",
+      "name": "cyclo_phi151",
+      "degree": 150,
+      "status": "ok",
+      "median_nanos": 31537140,
+      "min_nanos": 31308310,
+      "max_nanos": 31966697,
+      "factor_count": 1,
+      "factor_degrees": [
+        150
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "cyclotomic",
+      "name": "cyclo_phi243",
+      "degree": 162,
+      "status": "ok",
+      "median_nanos": 5338739,
+      "min_nanos": 5256477,
+      "max_nanos": 5515722,
+      "factor_count": 1,
+      "factor_degrees": [
+        162
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "cyclotomic",
+      "name": "cyclo_phi179",
+      "degree": 178,
+      "status": "ok",
+      "median_nanos": 34556518,
+      "min_nanos": 34448077,
+      "max_nanos": 34731438,
+      "factor_count": 1,
+      "factor_degrees": [
+        178
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "cyclotomic",
+      "name": "cyclo_phi275",
+      "degree": 200,
+      "status": "ok",
+      "median_nanos": 650193453,
+      "min_nanos": 647406309,
+      "max_nanos": 652150757,
+      "factor_count": 1,
+      "factor_degrees": [
+        200
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "cyclotomic",
+      "name": "cyclo_phi385",
+      "degree": 240,
+      "status": "ok",
+      "median_nanos": 115540794,
+      "min_nanos": 114813765,
+      "max_nanos": 115825977,
+      "factor_count": 1,
+      "factor_degrees": [
+        240
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "cyclotomic",
+      "name": "cyclo_phi257",
+      "degree": 256,
+      "status": "ok",
+      "median_nanos": 9863932,
+      "min_nanos": 9772225,
+      "max_nanos": 9940866,
+      "factor_count": 1,
+      "factor_degrees": [
+        256
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "cyclotomic",
+      "name": "cyclo_phi331",
+      "degree": 330,
+      "status": "ok",
+      "median_nanos": 16424432,
+      "min_nanos": 16240560,
+      "max_nanos": 16885527,
+      "factor_count": 1,
+      "factor_degrees": [
+        330
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "cyclotomic",
+      "name": "cyclo_phi625",
+      "degree": 500,
+      "status": "ok",
+      "median_nanos": 41785421,
+      "min_nanos": 41232851,
+      "max_nanos": 41874563,
+      "factor_count": 1,
+      "factor_degrees": [
+        500
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "cyclotomic",
+      "name": "cyclo_phi509",
+      "degree": 508,
+      "status": "ok",
+      "median_nanos": 38461601,
+      "min_nanos": 37715244,
+      "max_nanos": 39144283,
+      "factor_count": 1,
+      "factor_degrees": [
+        508
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "cyclotomic",
+      "name": "cyclo_phi1031",
+      "degree": 1030,
+      "status": "ok",
+      "median_nanos": 2590529387,
+      "min_nanos": 2590529387,
+      "max_nanos": 2590529387,
+      "factor_count": 1,
+      "factor_degrees": [
+        1030
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "cyclotomic-products",
+      "name": "xpow6_minus1",
+      "degree": 6,
+      "status": "ok",
+      "median_nanos": 102612,
+      "min_nanos": 94640,
+      "max_nanos": 225925,
+      "factor_count": 4,
+      "factor_degrees": [
+        1,
+        1,
+        2,
+        2
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "cyclotomic-products",
+      "name": "xpow12_minus1",
+      "degree": 12,
+      "status": "ok",
+      "median_nanos": 236731,
+      "min_nanos": 229040,
+      "max_nanos": 257732,
+      "factor_count": 6,
+      "factor_degrees": [
+        1,
+        1,
+        2,
+        2,
+        2,
+        4
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "cyclotomic-products",
+      "name": "xpow15_minus1",
+      "degree": 15,
+      "status": "ok",
+      "median_nanos": 284072,
+      "min_nanos": 277642,
+      "max_nanos": 327165,
+      "factor_count": 4,
+      "factor_degrees": [
+        1,
+        2,
+        4,
+        8
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "cyclotomic-products",
+      "name": "cyclo_phi12_x_phi13",
+      "degree": 16,
+      "status": "ok",
+      "median_nanos": 375617,
+      "min_nanos": 368647,
+      "max_nanos": 404060,
+      "factor_count": 2,
+      "factor_degrees": [
+        4,
+        12
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "cyclotomic-products",
+      "name": "cyclo_phi7_x_phi11",
+      "degree": 16,
+      "status": "ok",
+      "median_nanos": 250512,
+      "min_nanos": 243701,
+      "max_nanos": 269169,
+      "factor_count": 2,
+      "factor_degrees": [
+        6,
+        10
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "cyclotomic-products",
+      "name": "xpow20_minus1",
+      "degree": 20,
+      "status": "ok",
+      "median_nanos": 458209,
+      "min_nanos": 438120,
+      "max_nanos": 496377,
+      "factor_count": 6,
+      "factor_degrees": [
+        1,
+        1,
+        2,
+        4,
+        4,
+        8
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "cyclotomic-products",
+      "name": "cyclo_phi15_x_phi17",
+      "degree": 24,
+      "status": "ok",
+      "median_nanos": 634892,
+      "min_nanos": 608502,
+      "max_nanos": 662423,
+      "factor_count": 2,
+      "factor_degrees": [
+        8,
+        16
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "cyclotomic-products",
+      "name": "xpow24_minus1",
+      "degree": 24,
+      "status": "ok",
+      "median_nanos": 2360050,
+      "min_nanos": 2342544,
+      "max_nanos": 2478677,
+      "factor_count": 8,
+      "factor_degrees": [
+        1,
+        1,
+        2,
+        2,
+        2,
+        4,
+        4,
+        8
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "cyclotomic-products",
+      "name": "xpow30_minus1",
+      "degree": 30,
+      "status": "ok",
+      "median_nanos": 1751378,
+      "min_nanos": 1731378,
+      "max_nanos": 1796014,
+      "factor_count": 8,
+      "factor_degrees": [
+        1,
+        1,
+        2,
+        2,
+        4,
+        4,
+        8,
+        8
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "cyclotomic-products",
+      "name": "cyclo_phi24_x_phi35",
+      "degree": 32,
+      "status": "ok",
+      "median_nanos": 6571016,
+      "min_nanos": 6515895,
+      "max_nanos": 6753568,
+      "factor_count": 2,
+      "factor_degrees": [
+        8,
+        24
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "cyclotomic-products",
+      "name": "xpow36_minus1",
+      "degree": 36,
+      "status": "ok",
+      "median_nanos": 2752953,
+      "min_nanos": 2698633,
+      "max_nanos": 2792132,
+      "factor_count": 9,
+      "factor_degrees": [
+        1,
+        1,
+        2,
+        2,
+        2,
+        4,
+        6,
+        6,
+        12
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "cyclotomic-products",
+      "name": "cyclo_phi32_x_phi45",
+      "degree": 40,
+      "status": "ok",
+      "median_nanos": 2485166,
+      "min_nanos": 2460780,
+      "max_nanos": 2526247,
+      "factor_count": 2,
+      "factor_degrees": [
+        16,
+        24
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "cyclotomic-products",
+      "name": "xpow48_minus1",
+      "degree": 48,
+      "status": "ok",
+      "median_nanos": 10824356,
+      "min_nanos": 10752760,
+      "max_nanos": 11171601,
+      "factor_count": 10,
+      "factor_degrees": [
+        1,
+        1,
+        2,
+        2,
+        2,
+        4,
+        4,
+        8,
+        8,
+        16
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "cyclotomic-products",
+      "name": "xpow60_minus1",
+      "degree": 60,
+      "status": "ok",
+      "median_nanos": 5711412,
+      "min_nanos": 5656350,
+      "max_nanos": 5756960,
+      "factor_count": 12,
+      "factor_degrees": [
+        1,
+        1,
+        2,
+        2,
+        2,
+        4,
+        4,
+        4,
+        8,
+        8,
+        8,
+        16
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "cyclotomic-products",
+      "name": "cyclo_phi64_x_phi105",
+      "degree": 80,
+      "status": "ok",
+      "median_nanos": 16537791,
+      "min_nanos": 16483560,
+      "max_nanos": 16788202,
+      "factor_count": 2,
+      "factor_degrees": [
+        32,
+        48
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "cyclotomic-products",
+      "name": "xpow105_minus1",
+      "degree": 105,
+      "status": "ok",
+      "median_nanos": 45427774,
+      "min_nanos": 45011926,
+      "max_nanos": 46267509,
+      "factor_count": 8,
+      "factor_degrees": [
+        1,
+        2,
+        4,
+        6,
+        8,
+        12,
+        24,
+        48
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "cyclotomic-products",
+      "name": "cyclo_phi105_x_phi128",
+      "degree": 112,
+      "status": "ok",
+      "median_nanos": 29278329,
+      "min_nanos": 28967288,
+      "max_nanos": 29773073,
+      "factor_count": 2,
+      "factor_degrees": [
+        48,
+        64
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "cyclotomic-products",
+      "name": "xpow120_minus1",
+      "degree": 120,
+      "status": "ok",
+      "median_nanos": 149546083,
+      "min_nanos": 149009568,
+      "max_nanos": 149912948,
+      "factor_count": 16,
+      "factor_degrees": [
+        1,
+        1,
+        2,
+        2,
+        2,
+        4,
+        4,
+        4,
+        4,
+        8,
+        8,
+        8,
+        8,
+        16,
+        16,
+        32
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "cyclotomic-products",
+      "name": "cyclo_phi128_x_phi165",
+      "degree": 144,
+      "status": "ok",
+      "median_nanos": 63104824,
+      "min_nanos": 62913821,
+      "max_nanos": 63867395,
+      "factor_count": 2,
+      "factor_degrees": [
+        64,
+        80
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "swinnerton-dyer",
+      "name": "sd2",
+      "degree": 4,
+      "status": "ok",
+      "median_nanos": 52979,
+      "min_nanos": 48762,
+      "max_nanos": 101961,
+      "factor_count": 1,
+      "factor_degrees": [
+        4
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "swinnerton-dyer",
+      "name": "sd2_shift1",
+      "degree": 4,
+      "status": "ok",
+      "median_nanos": 51296,
+      "min_nanos": 50916,
+      "max_nanos": 55592,
+      "factor_count": 1,
+      "factor_degrees": [
+        4
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "swinnerton-dyer",
+      "name": "sd3",
+      "degree": 8,
+      "status": "ok",
+      "median_nanos": 173086,
+      "min_nanos": 164364,
+      "max_nanos": 193917,
+      "factor_count": 1,
+      "factor_degrees": [
+        8
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "swinnerton-dyer",
+      "name": "sd3_shift1",
+      "degree": 8,
+      "status": "ok",
+      "median_nanos": 166797,
+      "min_nanos": 163733,
+      "max_nanos": 174358,
+      "factor_count": 1,
+      "factor_degrees": [
+        8
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "swinnerton-dyer",
+      "name": "sd3_shift2",
+      "degree": 8,
+      "status": "ok",
+      "median_nanos": 164724,
+      "min_nanos": 162841,
+      "max_nanos": 169311,
+      "factor_count": 1,
+      "factor_degrees": [
+        8
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "swinnerton-dyer",
+      "name": "sd4",
+      "degree": 16,
+      "status": "ok",
+      "median_nanos": 864993,
+      "min_nanos": 853366,
+      "max_nanos": 906524,
+      "factor_count": 1,
+      "factor_degrees": [
+        16
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "swinnerton-dyer",
+      "name": "sd4_shift1",
+      "degree": 16,
+      "status": "ok",
+      "median_nanos": 801889,
+      "min_nanos": 778665,
+      "max_nanos": 835339,
+      "factor_count": 1,
+      "factor_degrees": [
+        16
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "swinnerton-dyer",
+      "name": "sd4_shift3",
+      "degree": 16,
+      "status": "ok",
+      "median_nanos": 875308,
+      "min_nanos": 864292,
+      "max_nanos": 927746,
+      "factor_count": 1,
+      "factor_degrees": [
+        16
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "swinnerton-dyer",
+      "name": "sd5",
+      "degree": 32,
+      "status": "ok",
+      "median_nanos": 6842971,
+      "min_nanos": 6808219,
+      "max_nanos": 6977360,
+      "factor_count": 1,
+      "factor_degrees": [
+        32
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "swinnerton-dyer",
+      "name": "sd5_shift1",
+      "degree": 32,
+      "status": "ok",
+      "median_nanos": 7288021,
+      "min_nanos": 7221512,
+      "max_nanos": 7306017,
+      "factor_count": 1,
+      "factor_degrees": [
+        32
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "swinnerton-dyer",
+      "name": "sd5_shift2",
+      "degree": 32,
+      "status": "ok",
+      "median_nanos": 8916657,
+      "min_nanos": 8835135,
+      "max_nanos": 8974192,
+      "factor_count": 1,
+      "factor_degrees": [
+        32
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "swinnerton-dyer",
+      "name": "sd6",
+      "degree": 64,
+      "status": "ok",
+      "median_nanos": 27585488,
+      "min_nanos": 27551147,
+      "max_nanos": 27875237,
+      "factor_count": 1,
+      "factor_degrees": [
+        64
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "swinnerton-dyer",
+      "name": "sd6_shift1",
+      "degree": 64,
+      "status": "ok",
+      "median_nanos": 32194544,
+      "min_nanos": 31980397,
+      "max_nanos": 32298278,
+      "factor_count": 1,
+      "factor_degrees": [
+        64
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "swinnerton-dyer",
+      "name": "sd6_shift5",
+      "degree": 64,
+      "status": "ok",
+      "median_nanos": 31350683,
+      "min_nanos": 31254430,
+      "max_nanos": 31649667,
+      "factor_count": 1,
+      "factor_degrees": [
+        64
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "swinnerton-dyer",
+      "name": "sd7",
+      "degree": 128,
+      "status": "ok",
+      "median_nanos": 196072957,
+      "min_nanos": 194032300,
+      "max_nanos": 198572795,
+      "factor_count": 1,
+      "factor_degrees": [
+        128
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "sd-products",
+      "name": "sd2_x_phi12",
+      "degree": 8,
+      "status": "ok",
+      "median_nanos": 137995,
+      "min_nanos": 132396,
+      "max_nanos": 238544,
+      "factor_count": 2,
+      "factor_degrees": [
+        4,
+        4
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "sd-products",
+      "name": "sd2_x_sd2shift1",
+      "degree": 8,
+      "status": "ok",
+      "median_nanos": 136592,
+      "min_nanos": 133829,
+      "max_nanos": 149272,
+      "factor_count": 2,
+      "factor_degrees": [
+        4,
+        4
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "sd-products",
+      "name": "sd3_x_phi15",
+      "degree": 16,
+      "status": "ok",
+      "median_nanos": 495075,
+      "min_nanos": 481735,
+      "max_nanos": 576094,
+      "factor_count": 2,
+      "factor_degrees": [
+        8,
+        8
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "sd-products",
+      "name": "sd3_x_phi24",
+      "degree": 16,
+      "status": "ok",
+      "median_nanos": 574963,
+      "min_nanos": 567212,
+      "max_nanos": 607812,
+      "factor_count": 2,
+      "factor_degrees": [
+        8,
+        8
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "sd-products",
+      "name": "sd3_x_sd3shift1",
+      "degree": 16,
+      "status": "ok",
+      "median_nanos": 866926,
+      "min_nanos": 852144,
+      "max_nanos": 898162,
+      "factor_count": 2,
+      "factor_degrees": [
+        8,
+        8
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "sd-products",
+      "name": "sd4_x_phi17",
+      "degree": 32,
+      "status": "ok",
+      "median_nanos": 2839522,
+      "min_nanos": 2807354,
+      "max_nanos": 2864670,
+      "factor_count": 2,
+      "factor_degrees": [
+        16,
+        16
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "sd-products",
+      "name": "sd4_x_sd4shift1",
+      "degree": 32,
+      "status": "ok",
+      "median_nanos": 17169879,
+      "min_nanos": 17090450,
+      "max_nanos": 17312400,
+      "factor_count": 2,
+      "factor_degrees": [
+        16,
+        16
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "sd-products",
+      "name": "sd4_x_phi35",
+      "degree": 40,
+      "status": "ok",
+      "median_nanos": 17677862,
+      "min_nanos": 17608188,
+      "max_nanos": 17741706,
+      "factor_count": 2,
+      "factor_degrees": [
+        16,
+        24
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "sd-products",
+      "name": "sd5_x_phi11",
+      "degree": 42,
+      "status": "ok",
+      "median_nanos": 137337424,
+      "min_nanos": 136489546,
+      "max_nanos": 137895451,
+      "factor_count": 2,
+      "factor_degrees": [
+        10,
+        32
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "sd-products",
+      "name": "sd5_x_phi45",
+      "degree": 56,
+      "status": "ok",
+      "median_nanos": 314560319,
+      "min_nanos": 313515560,
+      "max_nanos": 315757586,
+      "factor_count": 2,
+      "factor_degrees": [
+        24,
+        32
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "sd-products",
+      "name": "sd5_x_sd5shift1",
+      "degree": 64,
+      "status": "timeout",
+      "median_nanos": null,
+      "min_nanos": null,
+      "max_nanos": null,
+      "factor_count": null,
+      "factor_degrees": null
+    },
+    {
+      "system": "hex-factor",
+      "family": "sd-products",
+      "name": "sd6_x_phi13",
+      "degree": 76,
+      "status": "ok",
+      "median_nanos": 2953736788,
+      "min_nanos": 2953736788,
+      "max_nanos": 2953736788,
+      "factor_count": 2,
+      "factor_degrees": [
+        12,
+        64
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "sd-products",
+      "name": "sd6_x_phi105",
+      "degree": 112,
+      "status": "timeout",
+      "median_nanos": null,
+      "min_nanos": null,
+      "max_nanos": null,
+      "factor_count": null,
+      "factor_degrees": null
+    },
+    {
+      "system": "hex-factor",
+      "family": "sd-products",
+      "name": "sd6_x_sd6shift1",
+      "degree": 128,
+      "status": "timeout",
+      "median_nanos": null,
+      "min_nanos": null,
+      "max_nanos": null,
+      "factor_count": null,
+      "factor_degrees": null
+    },
+    {
+      "system": "hex-factor",
+      "family": "chebyshev",
+      "name": "chebyshev_T3",
+      "degree": 3,
+      "status": "ok",
+      "median_nanos": 41282,
+      "min_nanos": 30906,
+      "max_nanos": 18917961,
+      "factor_count": 2,
+      "factor_degrees": [
+        1,
+        2
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "chebyshev",
+      "name": "chebyshev_U3",
+      "degree": 3,
+      "status": "ok",
+      "median_nanos": 29344,
+      "min_nanos": 28702,
+      "max_nanos": 31236,
+      "factor_count": 2,
+      "factor_degrees": [
+        1,
+        2
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "chebyshev",
+      "name": "chebyshev_T4",
+      "degree": 4,
+      "status": "ok",
+      "median_nanos": 36984,
+      "min_nanos": 35963,
+      "max_nanos": 45037,
+      "factor_count": 1,
+      "factor_degrees": [
+        4
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "chebyshev",
+      "name": "chebyshev_U4",
+      "degree": 4,
+      "status": "ok",
+      "median_nanos": 63794,
+      "min_nanos": 54711,
+      "max_nanos": 101891,
+      "factor_count": 2,
+      "factor_degrees": [
+        2,
+        2
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "chebyshev",
+      "name": "chebyshev_T5",
+      "degree": 5,
+      "status": "ok",
+      "median_nanos": 38067,
+      "min_nanos": 36935,
+      "max_nanos": 43134,
+      "factor_count": 2,
+      "factor_degrees": [
+        1,
+        4
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "chebyshev",
+      "name": "chebyshev_U5",
+      "degree": 5,
+      "status": "ok",
+      "median_nanos": 66609,
+      "min_nanos": 64335,
+      "max_nanos": 76914,
+      "factor_count": 4,
+      "factor_degrees": [
+        1,
+        1,
+        1,
+        2
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "chebyshev",
+      "name": "chebyshev_T6",
+      "degree": 6,
+      "status": "ok",
+      "median_nanos": 97154,
+      "min_nanos": 90264,
+      "max_nanos": 105786,
+      "factor_count": 2,
+      "factor_degrees": [
+        2,
+        4
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "chebyshev",
+      "name": "chebyshev_U6",
+      "degree": 6,
+      "status": "ok",
+      "median_nanos": 70013,
+      "min_nanos": 69172,
+      "max_nanos": 77705,
+      "factor_count": 2,
+      "factor_degrees": [
+        3,
+        3
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "chebyshev",
+      "name": "chebyshev_T7",
+      "degree": 7,
+      "status": "ok",
+      "median_nanos": 64846,
+      "min_nanos": 62523,
+      "max_nanos": 74370,
+      "factor_count": 2,
+      "factor_degrees": [
+        1,
+        6
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "chebyshev",
+      "name": "chebyshev_U7",
+      "degree": 7,
+      "status": "ok",
+      "median_nanos": 63154,
+      "min_nanos": 60630,
+      "max_nanos": 70654,
+      "factor_count": 3,
+      "factor_degrees": [
+        1,
+        2,
+        4
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "chebyshev",
+      "name": "chebyshev_T8",
+      "degree": 8,
+      "status": "ok",
+      "median_nanos": 58106,
+      "min_nanos": 56584,
+      "max_nanos": 65056,
+      "factor_count": 1,
+      "factor_degrees": [
+        8
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "chebyshev",
+      "name": "chebyshev_U8",
+      "degree": 8,
+      "status": "ok",
+      "median_nanos": 143153,
+      "min_nanos": 135881,
+      "max_nanos": 155631,
+      "factor_count": 4,
+      "factor_degrees": [
+        1,
+        1,
+        3,
+        3
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "chebyshev",
+      "name": "chebyshev_T9",
+      "degree": 9,
+      "status": "ok",
+      "median_nanos": 92527,
+      "min_nanos": 89323,
+      "max_nanos": 98165,
+      "factor_count": 3,
+      "factor_degrees": [
+        1,
+        2,
+        6
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "chebyshev",
+      "name": "chebyshev_U9",
+      "degree": 9,
+      "status": "ok",
+      "median_nanos": 109032,
+      "min_nanos": 105767,
+      "max_nanos": 119567,
+      "factor_count": 4,
+      "factor_degrees": [
+        1,
+        2,
+        2,
+        4
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "chebyshev",
+      "name": "chebyshev_T10",
+      "degree": 10,
+      "status": "ok",
+      "median_nanos": 144474,
+      "min_nanos": 138926,
+      "max_nanos": 167929,
+      "factor_count": 2,
+      "factor_degrees": [
+        2,
+        8
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "chebyshev",
+      "name": "chebyshev_U10",
+      "degree": 10,
+      "status": "ok",
+      "median_nanos": 114510,
+      "min_nanos": 111526,
+      "max_nanos": 122422,
+      "factor_count": 2,
+      "factor_degrees": [
+        5,
+        5
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "chebyshev",
+      "name": "chebyshev_T12",
+      "degree": 12,
+      "status": "ok",
+      "median_nanos": 160038,
+      "min_nanos": 154559,
+      "max_nanos": 176232,
+      "factor_count": 2,
+      "factor_degrees": [
+        4,
+        8
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "chebyshev",
+      "name": "chebyshev_U12",
+      "degree": 12,
+      "status": "ok",
+      "median_nanos": 182010,
+      "min_nanos": 179497,
+      "max_nanos": 194098,
+      "factor_count": 2,
+      "factor_degrees": [
+        6,
+        6
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "chebyshev",
+      "name": "chebyshev_T15",
+      "degree": 15,
+      "status": "ok",
+      "median_nanos": 278834,
+      "min_nanos": 271483,
+      "max_nanos": 305563,
+      "factor_count": 4,
+      "factor_degrees": [
+        1,
+        2,
+        4,
+        8
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "chebyshev",
+      "name": "chebyshev_U15",
+      "degree": 15,
+      "status": "ok",
+      "median_nanos": 200487,
+      "min_nanos": 197203,
+      "max_nanos": 216351,
+      "factor_count": 4,
+      "factor_degrees": [
+        1,
+        2,
+        4,
+        8
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "chebyshev",
+      "name": "chebyshev_T16",
+      "degree": 16,
+      "status": "ok",
+      "median_nanos": 129613,
+      "min_nanos": 128611,
+      "max_nanos": 140749,
+      "factor_count": 1,
+      "factor_degrees": [
+        16
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "chebyshev",
+      "name": "chebyshev_U16",
+      "degree": 16,
+      "status": "ok",
+      "median_nanos": 222420,
+      "min_nanos": 221679,
+      "max_nanos": 252714,
+      "factor_count": 2,
+      "factor_degrees": [
+        8,
+        8
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "chebyshev",
+      "name": "chebyshev_T18",
+      "degree": 18,
+      "status": "ok",
+      "median_nanos": 488084,
+      "min_nanos": 470769,
+      "max_nanos": 520542,
+      "factor_count": 3,
+      "factor_degrees": [
+        2,
+        4,
+        12
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "chebyshev",
+      "name": "chebyshev_U18",
+      "degree": 18,
+      "status": "ok",
+      "median_nanos": 266165,
+      "min_nanos": 260296,
+      "max_nanos": 291773,
+      "factor_count": 2,
+      "factor_degrees": [
+        9,
+        9
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "chebyshev",
+      "name": "chebyshev_T20",
+      "degree": 20,
+      "status": "ok",
+      "median_nanos": 525259,
+      "min_nanos": 507443,
+      "max_nanos": 557827,
+      "factor_count": 2,
+      "factor_degrees": [
+        4,
+        16
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "chebyshev",
+      "name": "chebyshev_U20",
+      "degree": 20,
+      "status": "ok",
+      "median_nanos": 698927,
+      "min_nanos": 679497,
+      "max_nanos": 737324,
+      "factor_count": 6,
+      "factor_degrees": [
+        1,
+        1,
+        3,
+        3,
+        6,
+        6
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "chebyshev",
+      "name": "chebyshev_T24",
+      "degree": 24,
+      "status": "ok",
+      "median_nanos": 417740,
+      "min_nanos": 407194,
+      "max_nanos": 443318,
+      "factor_count": 2,
+      "factor_degrees": [
+        8,
+        16
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "chebyshev",
+      "name": "chebyshev_U24",
+      "degree": 24,
+      "status": "ok",
+      "median_nanos": 574913,
+      "min_nanos": 569174,
+      "max_nanos": 607672,
+      "factor_count": 4,
+      "factor_degrees": [
+        2,
+        2,
+        10,
+        10
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "legendre",
+      "name": "legendre_P3",
+      "degree": 3,
+      "status": "ok",
+      "median_nanos": 39298,
+      "min_nanos": 38297,
+      "max_nanos": 49703,
+      "factor_count": 2,
+      "factor_degrees": [
+        1,
+        2
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "legendre",
+      "name": "legendre_P4",
+      "degree": 4,
+      "status": "ok",
+      "median_nanos": 39990,
+      "min_nanos": 39058,
+      "max_nanos": 45788,
+      "factor_count": 1,
+      "factor_degrees": [
+        4
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "legendre",
+      "name": "legendre_P5",
+      "degree": 5,
+      "status": "ok",
+      "median_nanos": 67761,
+      "min_nanos": 66249,
+      "max_nanos": 79368,
+      "factor_count": 2,
+      "factor_degrees": [
+        1,
+        4
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "legendre",
+      "name": "legendre_P6",
+      "degree": 6,
+      "status": "ok",
+      "median_nanos": 95542,
+      "min_nanos": 93519,
+      "max_nanos": 104365,
+      "factor_count": 1,
+      "factor_degrees": [
+        6
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "legendre",
+      "name": "legendre_P7",
+      "degree": 7,
+      "status": "ok",
+      "median_nanos": 77284,
+      "min_nanos": 74050,
+      "max_nanos": 84716,
+      "factor_count": 2,
+      "factor_degrees": [
+        1,
+        6
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "legendre",
+      "name": "legendre_P8",
+      "degree": 8,
+      "status": "ok",
+      "median_nanos": 165355,
+      "min_nanos": 160217,
+      "max_nanos": 177814,
+      "factor_count": 1,
+      "factor_degrees": [
+        8
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "legendre",
+      "name": "legendre_P9",
+      "degree": 9,
+      "status": "ok",
+      "median_nanos": 179236,
+      "min_nanos": 177653,
+      "max_nanos": 186126,
+      "factor_count": 2,
+      "factor_degrees": [
+        1,
+        8
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "legendre",
+      "name": "legendre_P10",
+      "degree": 10,
+      "status": "ok",
+      "median_nanos": 288268,
+      "min_nanos": 278753,
+      "max_nanos": 303811,
+      "factor_count": 1,
+      "factor_degrees": [
+        10
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "legendre",
+      "name": "legendre_P12",
+      "degree": 12,
+      "status": "ok",
+      "median_nanos": 228469,
+      "min_nanos": 224544,
+      "max_nanos": 239466,
+      "factor_count": 1,
+      "factor_degrees": [
+        12
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "legendre",
+      "name": "legendre_P14",
+      "degree": 14,
+      "status": "ok",
+      "median_nanos": 622182,
+      "min_nanos": 611297,
+      "max_nanos": 655262,
+      "factor_count": 1,
+      "factor_degrees": [
+        14
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "legendre",
+      "name": "legendre_P16",
+      "degree": 16,
+      "status": "ok",
+      "median_nanos": 542985,
+      "min_nanos": 527402,
+      "max_nanos": 582825,
+      "factor_count": 1,
+      "factor_degrees": [
+        16
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "legendre",
+      "name": "legendre_P18",
+      "degree": 18,
+      "status": "ok",
+      "median_nanos": 1288772,
+      "min_nanos": 1269393,
+      "max_nanos": 1346657,
+      "factor_count": 1,
+      "factor_degrees": [
+        18
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "legendre",
+      "name": "legendre_P20",
+      "degree": 20,
+      "status": "ok",
+      "median_nanos": 1849533,
+      "min_nanos": 1835272,
+      "max_nanos": 1872548,
+      "factor_count": 1,
+      "factor_degrees": [
+        20
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "legendre",
+      "name": "legendre_P22",
+      "degree": 22,
+      "status": "ok",
+      "median_nanos": 959113,
+      "min_nanos": 955677,
+      "max_nanos": 991540,
+      "factor_count": 1,
+      "factor_degrees": [
+        22
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "legendre",
+      "name": "legendre_P24",
+      "degree": 24,
+      "status": "ok",
+      "median_nanos": 1700773,
+      "min_nanos": 1697658,
+      "max_nanos": 1723617,
+      "factor_count": 1,
+      "factor_degrees": [
+        24
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "legendre",
+      "name": "legendre_P26",
+      "degree": 26,
+      "status": "ok",
+      "median_nanos": 6872464,
+      "min_nanos": 6837201,
+      "max_nanos": 6931942,
+      "factor_count": 1,
+      "factor_degrees": [
+        26
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "legendre",
+      "name": "legendre_P28",
+      "degree": 28,
+      "status": "ok",
+      "median_nanos": 1819319,
+      "min_nanos": 1798287,
+      "max_nanos": 1845898,
+      "factor_count": 1,
+      "factor_degrees": [
+        28
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "legendre",
+      "name": "legendre_P30",
+      "degree": 30,
+      "status": "ok",
+      "median_nanos": 8241645,
+      "min_nanos": 8236006,
+      "max_nanos": 8255896,
+      "factor_count": 1,
+      "factor_degrees": [
+        30
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "legendre",
+      "name": "legendre_P34",
+      "degree": 34,
+      "status": "ok",
+      "median_nanos": 2949124,
+      "min_nanos": 2931548,
+      "max_nanos": 2973611,
+      "factor_count": 1,
+      "factor_degrees": [
+        34
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "legendre",
+      "name": "legendre_P38",
+      "degree": 38,
+      "status": "ok",
+      "median_nanos": 3651696,
+      "min_nanos": 3628993,
+      "max_nanos": 3677234,
+      "factor_count": 1,
+      "factor_degrees": [
+        38
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "laguerre",
+      "name": "laguerre_L3",
+      "degree": 3,
+      "status": "ok",
+      "median_nanos": 36615,
+      "min_nanos": 34461,
+      "max_nanos": 55983,
+      "factor_count": 1,
+      "factor_degrees": [
+        3
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "laguerre",
+      "name": "laguerre_L4",
+      "degree": 4,
+      "status": "ok",
+      "median_nanos": 61331,
+      "min_nanos": 59679,
+      "max_nanos": 73409,
+      "factor_count": 1,
+      "factor_degrees": [
+        4
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "laguerre",
+      "name": "laguerre_L5",
+      "degree": 5,
+      "status": "ok",
+      "median_nanos": 89233,
+      "min_nanos": 86518,
+      "max_nanos": 100439,
+      "factor_count": 1,
+      "factor_degrees": [
+        5
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "laguerre",
+      "name": "laguerre_L6",
+      "degree": 6,
+      "status": "ok",
+      "median_nanos": 102662,
+      "min_nanos": 100659,
+      "max_nanos": 113709,
+      "factor_count": 1,
+      "factor_degrees": [
+        6
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "laguerre",
+      "name": "laguerre_L7",
+      "degree": 7,
+      "status": "ok",
+      "median_nanos": 148230,
+      "min_nanos": 146217,
+      "max_nanos": 165726,
+      "factor_count": 1,
+      "factor_degrees": [
+        7
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "laguerre",
+      "name": "laguerre_L8",
+      "degree": 8,
+      "status": "ok",
+      "median_nanos": 121710,
+      "min_nanos": 118596,
+      "max_nanos": 128651,
+      "factor_count": 1,
+      "factor_degrees": [
+        8
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "laguerre",
+      "name": "laguerre_L9",
+      "degree": 9,
+      "status": "ok",
+      "median_nanos": 119908,
+      "min_nanos": 118115,
+      "max_nanos": 127680,
+      "factor_count": 1,
+      "factor_degrees": [
+        9
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "laguerre",
+      "name": "laguerre_L10",
+      "degree": 10,
+      "status": "ok",
+      "median_nanos": 228048,
+      "min_nanos": 225674,
+      "max_nanos": 253146,
+      "factor_count": 1,
+      "factor_degrees": [
+        10
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "laguerre",
+      "name": "laguerre_L11",
+      "degree": 11,
+      "status": "ok",
+      "median_nanos": 171995,
+      "min_nanos": 167949,
+      "max_nanos": 290691,
+      "factor_count": 1,
+      "factor_degrees": [
+        11
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "laguerre",
+      "name": "laguerre_L12",
+      "degree": 12,
+      "status": "ok",
+      "median_nanos": 368597,
+      "min_nanos": 357150,
+      "max_nanos": 398271,
+      "factor_count": 1,
+      "factor_degrees": [
+        12
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "laguerre",
+      "name": "laguerre_L13",
+      "degree": 13,
+      "status": "ok",
+      "median_nanos": 393133,
+      "min_nanos": 386253,
+      "max_nanos": 405882,
+      "factor_count": 1,
+      "factor_degrees": [
+        13
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "laguerre",
+      "name": "laguerre_L14",
+      "degree": 14,
+      "status": "ok",
+      "median_nanos": 553171,
+      "min_nanos": 544318,
+      "max_nanos": 580621,
+      "factor_count": 1,
+      "factor_degrees": [
+        14
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "laguerre",
+      "name": "laguerre_L15",
+      "degree": 15,
+      "status": "ok",
+      "median_nanos": 700529,
+      "min_nanos": 686638,
+      "max_nanos": 728391,
+      "factor_count": 1,
+      "factor_degrees": [
+        15
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "laguerre",
+      "name": "laguerre_L16",
+      "degree": 16,
+      "status": "ok",
+      "median_nanos": 929498,
+      "min_nanos": 914466,
+      "max_nanos": 956289,
+      "factor_count": 1,
+      "factor_degrees": [
+        16
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "laguerre",
+      "name": "laguerre_L18",
+      "degree": 18,
+      "status": "ok",
+      "median_nanos": 1023408,
+      "min_nanos": 1018851,
+      "max_nanos": 1062757,
+      "factor_count": 1,
+      "factor_degrees": [
+        18
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "laguerre",
+      "name": "laguerre_L20",
+      "degree": 20,
+      "status": "ok",
+      "median_nanos": 1696026,
+      "min_nanos": 1683007,
+      "max_nanos": 1721454,
+      "factor_count": 1,
+      "factor_degrees": [
+        20
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "laguerre",
+      "name": "laguerre_L22",
+      "degree": 22,
+      "status": "ok",
+      "median_nanos": 943459,
+      "min_nanos": 936619,
+      "max_nanos": 972153,
+      "factor_count": 1,
+      "factor_degrees": [
+        22
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "laguerre",
+      "name": "laguerre_L24",
+      "degree": 24,
+      "status": "ok",
+      "median_nanos": 1650988,
+      "min_nanos": 1646132,
+      "max_nanos": 1686081,
+      "factor_count": 1,
+      "factor_degrees": [
+        24
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "laguerre",
+      "name": "laguerre_L28",
+      "degree": 28,
+      "status": "ok",
+      "median_nanos": 2653686,
+      "min_nanos": 2631503,
+      "max_nanos": 2678172,
+      "factor_count": 1,
+      "factor_degrees": [
+        28
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "laguerre",
+      "name": "laguerre_L32",
+      "degree": 32,
+      "status": "ok",
+      "median_nanos": 5081648,
+      "min_nanos": 5051773,
+      "max_nanos": 5115167,
+      "factor_count": 1,
+      "factor_degrees": [
+        32
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "wilkinson",
+      "name": "wilkinson_4",
+      "degree": 4,
+      "status": "ok",
+      "median_nanos": 83154,
+      "min_nanos": 79117,
+      "max_nanos": 110044,
+      "factor_count": 4,
+      "factor_degrees": [
+        1,
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "wilkinson",
+      "name": "wilkinson_6",
+      "degree": 6,
+      "status": "ok",
+      "median_nanos": 137194,
+      "min_nanos": 131996,
+      "max_nanos": 146217,
+      "factor_count": 6,
+      "factor_degrees": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "wilkinson",
+      "name": "wilkinson_8",
+      "degree": 8,
+      "status": "ok",
+      "median_nanos": 202991,
+      "min_nanos": 198274,
+      "max_nanos": 217463,
+      "factor_count": 8,
+      "factor_degrees": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "wilkinson",
+      "name": "wilkinson_10",
+      "degree": 10,
+      "status": "ok",
+      "median_nanos": 457539,
+      "min_nanos": 449747,
+      "max_nanos": 484499,
+      "factor_count": 10,
+      "factor_degrees": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "wilkinson",
+      "name": "wilkinson_12",
+      "degree": 12,
+      "status": "ok",
+      "median_nanos": 606409,
+      "min_nanos": 603094,
+      "max_nanos": 631947,
+      "factor_count": 12,
+      "factor_degrees": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "wilkinson",
+      "name": "wilkinson_14",
+      "degree": 14,
+      "status": "ok",
+      "median_nanos": 859825,
+      "min_nanos": 854738,
+      "max_nanos": 905463,
+      "factor_count": 14,
+      "factor_degrees": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "wilkinson",
+      "name": "wilkinson_16",
+      "degree": 16,
+      "status": "ok",
+      "median_nanos": 1162635,
+      "min_nanos": 1161142,
+      "max_nanos": 1199148,
+      "factor_count": 16,
+      "factor_degrees": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "wilkinson",
+      "name": "wilkinson_18",
+      "degree": 18,
+      "status": "ok",
+      "median_nanos": 1683637,
+      "min_nanos": 1663337,
+      "max_nanos": 1724939,
+      "factor_count": 18,
+      "factor_degrees": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "wilkinson",
+      "name": "wilkinson_20",
+      "degree": 20,
+      "status": "ok",
+      "median_nanos": 2217739,
+      "min_nanos": 2211200,
+      "max_nanos": 2243948,
+      "factor_count": 20,
+      "factor_degrees": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "wilkinson",
+      "name": "wilkinson_24",
+      "degree": 24,
+      "status": "ok",
+      "median_nanos": 3469666,
+      "min_nanos": 3456387,
+      "max_nanos": 3489606,
+      "factor_count": 24,
+      "factor_degrees": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "wilkinson",
+      "name": "wilkinson_28",
+      "degree": 28,
+      "status": "ok",
+      "median_nanos": 5272340,
+      "min_nanos": 5264019,
+      "max_nanos": 5283477,
+      "factor_count": 28,
+      "factor_degrees": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "wilkinson",
+      "name": "wilkinson_32",
+      "degree": 32,
+      "status": "ok",
+      "median_nanos": 6650715,
+      "min_nanos": 6637586,
+      "max_nanos": 6703073,
+      "factor_count": 32,
+      "factor_degrees": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "wilkinson",
+      "name": "wilkinson_40",
+      "degree": 40,
+      "status": "ok",
+      "median_nanos": 9251683,
+      "min_nanos": 9242739,
+      "max_nanos": 9277491,
+      "factor_count": 40,
+      "factor_degrees": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "wilkinson",
+      "name": "wilkinson_48",
+      "degree": 48,
+      "status": "ok",
+      "median_nanos": 16339025,
+      "min_nanos": 16316953,
+      "max_nanos": 16378935,
+      "factor_count": 48,
+      "factor_degrees": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "wilkinson",
+      "name": "wilkinson_56",
+      "degree": 56,
+      "status": "ok",
+      "median_nanos": 21242368,
+      "min_nanos": 21225813,
+      "max_nanos": 21276619,
+      "factor_count": 56,
+      "factor_degrees": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "random-products",
+      "name": "randprod_26",
+      "degree": 6,
+      "status": "ok",
+      "median_nanos": 105055,
+      "min_nanos": 99488,
+      "max_nanos": 150864,
+      "factor_count": 2,
+      "factor_degrees": [
+        3,
+        3
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "random-products",
+      "name": "randprod_22",
+      "degree": 9,
+      "status": "ok",
+      "median_nanos": 204213,
+      "min_nanos": 201449,
+      "max_nanos": 224834,
+      "factor_count": 2,
+      "factor_degrees": [
+        4,
+        5
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "random-products",
+      "name": "randprod_23",
+      "degree": 9,
+      "status": "ok",
+      "median_nanos": 175420,
+      "min_nanos": 172336,
+      "max_nanos": 188740,
+      "factor_count": 2,
+      "factor_degrees": [
+        3,
+        6
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "random-products",
+      "name": "randprod_25",
+      "degree": 9,
+      "status": "ok",
+      "median_nanos": 172776,
+      "min_nanos": 170973,
+      "max_nanos": 186196,
+      "factor_count": 2,
+      "factor_degrees": [
+        4,
+        5
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "random-products",
+      "name": "randprod_07",
+      "degree": 10,
+      "status": "ok",
+      "median_nanos": 151054,
+      "min_nanos": 149642,
+      "max_nanos": 163923,
+      "factor_count": 2,
+      "factor_degrees": [
+        5,
+        5
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "random-products",
+      "name": "randprod_13",
+      "degree": 11,
+      "status": "ok",
+      "median_nanos": 211824,
+      "min_nanos": 205074,
+      "max_nanos": 237472,
+      "factor_count": 3,
+      "factor_degrees": [
+        1,
+        4,
+        6
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "random-products",
+      "name": "randprod_09",
+      "degree": 12,
+      "status": "ok",
+      "median_nanos": 304371,
+      "min_nanos": 295609,
+      "max_nanos": 326164,
+      "factor_count": 3,
+      "factor_degrees": [
+        3,
+        4,
+        5
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "random-products",
+      "name": "randprod_14",
+      "degree": 12,
+      "status": "ok",
+      "median_nanos": 204634,
+      "min_nanos": 198985,
+      "max_nanos": 223883,
+      "factor_count": 2,
+      "factor_degrees": [
+        5,
+        7
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "random-products",
+      "name": "randprod_04",
+      "degree": 13,
+      "status": "ok",
+      "median_nanos": 335317,
+      "min_nanos": 331302,
+      "max_nanos": 357190,
+      "factor_count": 2,
+      "factor_degrees": [
+        4,
+        9
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "random-products",
+      "name": "randprod_08",
+      "degree": 13,
+      "status": "ok",
+      "median_nanos": 349419,
+      "min_nanos": 346754,
+      "max_nanos": 370199,
+      "factor_count": 2,
+      "factor_degrees": [
+        5,
+        8
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "random-products",
+      "name": "randprod_16",
+      "degree": 13,
+      "status": "ok",
+      "median_nanos": 222601,
+      "min_nanos": 217082,
+      "max_nanos": 237422,
+      "factor_count": 2,
+      "factor_degrees": [
+        5,
+        8
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "random-products",
+      "name": "randprod_20",
+      "degree": 13,
+      "status": "ok",
+      "median_nanos": 312754,
+      "min_nanos": 309459,
+      "max_nanos": 326474,
+      "factor_count": 2,
+      "factor_degrees": [
+        5,
+        8
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "random-products",
+      "name": "randprod_28",
+      "degree": 13,
+      "status": "ok",
+      "median_nanos": 589354,
+      "min_nanos": 568583,
+      "max_nanos": 660339,
+      "factor_count": 5,
+      "factor_degrees": [
+        1,
+        1,
+        1,
+        1,
+        9
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "random-products",
+      "name": "randprod_29",
+      "degree": 13,
+      "status": "ok",
+      "median_nanos": 324731,
+      "min_nanos": 317531,
+      "max_nanos": 344881,
+      "factor_count": 2,
+      "factor_degrees": [
+        5,
+        8
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "random-products",
+      "name": "randprod_06",
+      "degree": 14,
+      "status": "ok",
+      "median_nanos": 361766,
+      "min_nanos": 354927,
+      "max_nanos": 390889,
+      "factor_count": 3,
+      "factor_degrees": [
+        4,
+        4,
+        6
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "random-products",
+      "name": "randprod_17",
+      "degree": 14,
+      "status": "ok",
+      "median_nanos": 247436,
+      "min_nanos": 242400,
+      "max_nanos": 271223,
+      "factor_count": 2,
+      "factor_degrees": [
+        4,
+        10
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "random-products",
+      "name": "randprod_01",
+      "degree": 15,
+      "status": "ok",
+      "median_nanos": 272214,
+      "min_nanos": 264783,
+      "max_nanos": 311392,
+      "factor_count": 2,
+      "factor_degrees": [
+        6,
+        9
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "random-products",
+      "name": "randprod_05",
+      "degree": 15,
+      "status": "ok",
+      "median_nanos": 325182,
+      "min_nanos": 320766,
+      "max_nanos": 357360,
+      "factor_count": 2,
+      "factor_degrees": [
+        5,
+        10
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "random-products",
+      "name": "randprod_19",
+      "degree": 15,
+      "status": "ok",
+      "median_nanos": 246806,
+      "min_nanos": 237222,
+      "max_nanos": 272444,
+      "factor_count": 2,
+      "factor_degrees": [
+        7,
+        8
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "random-products",
+      "name": "randprod_27",
+      "degree": 16,
+      "status": "ok",
+      "median_nanos": 436758,
+      "min_nanos": 429577,
+      "max_nanos": 457078,
+      "factor_count": 4,
+      "factor_degrees": [
+        1,
+        2,
+        4,
+        9
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "random-products",
+      "name": "randprod_11",
+      "degree": 17,
+      "status": "ok",
+      "median_nanos": 382327,
+      "min_nanos": 375938,
+      "max_nanos": 419802,
+      "factor_count": 3,
+      "factor_degrees": [
+        1,
+        7,
+        9
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "random-products",
+      "name": "randprod_00",
+      "degree": 18,
+      "status": "ok",
+      "median_nanos": 802049,
+      "min_nanos": 781369,
+      "max_nanos": 844262,
+      "factor_count": 3,
+      "factor_degrees": [
+        5,
+        5,
+        8
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "random-products",
+      "name": "randprod_03",
+      "degree": 18,
+      "status": "ok",
+      "median_nanos": 733849,
+      "min_nanos": 726057,
+      "max_nanos": 758415,
+      "factor_count": 4,
+      "factor_degrees": [
+        2,
+        2,
+        4,
+        10
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "random-products",
+      "name": "randprod_12",
+      "degree": 18,
+      "status": "ok",
+      "median_nanos": 421665,
+      "min_nanos": 410379,
+      "max_nanos": 460012,
+      "factor_count": 4,
+      "factor_degrees": [
+        1,
+        3,
+        7,
+        7
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "random-products",
+      "name": "randprod_24",
+      "degree": 18,
+      "status": "ok",
+      "median_nanos": 474684,
+      "min_nanos": 465270,
+      "max_nanos": 509706,
+      "factor_count": 3,
+      "factor_degrees": [
+        3,
+        5,
+        10
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "random-products",
+      "name": "randprod_02",
+      "degree": 19,
+      "status": "ok",
+      "median_nanos": 758876,
+      "min_nanos": 742662,
+      "max_nanos": 781580,
+      "factor_count": 2,
+      "factor_degrees": [
+        9,
+        10
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "random-products",
+      "name": "randprod_10",
+      "degree": 20,
+      "status": "ok",
+      "median_nanos": 585509,
+      "min_nanos": 570025,
+      "max_nanos": 644987,
+      "factor_count": 2,
+      "factor_degrees": [
+        10,
+        10
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "random-products",
+      "name": "randprod_15",
+      "degree": 21,
+      "status": "ok",
+      "median_nanos": 665297,
+      "min_nanos": 650525,
+      "max_nanos": 702352,
+      "factor_count": 4,
+      "factor_degrees": [
+        1,
+        5,
+        7,
+        8
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "random-products",
+      "name": "randprod_18",
+      "degree": 22,
+      "status": "ok",
+      "median_nanos": 979213,
+      "min_nanos": 963619,
+      "max_nanos": 1017810,
+      "factor_count": 3,
+      "factor_degrees": [
+        6,
+        6,
+        10
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "random-products",
+      "name": "randprod_21",
+      "degree": 24,
+      "status": "ok",
+      "median_nanos": 1347599,
+      "min_nanos": 1337794,
+      "max_nanos": 1373577,
+      "factor_count": 3,
+      "factor_degrees": [
+        7,
+        8,
+        9
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "hoeij-zimmermann",
+      "name": "hoeij_S7",
+      "degree": 128,
+      "status": "ok",
+      "median_nanos": 197612031,
+      "min_nanos": 196818494,
+      "max_nanos": 199497119,
+      "factor_count": 1,
+      "factor_degrees": [
+        128
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "hoeij-zimmermann",
+      "name": "hoeij_M12_f132",
+      "degree": 132,
+      "status": "ok",
+      "median_nanos": 960579837,
+      "min_nanos": 957304549,
+      "max_nanos": 965262781,
+      "factor_count": 1,
+      "factor_degrees": [
+        132
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "hoeij-zimmermann",
+      "name": "hoeij_F190",
+      "degree": 190,
+      "status": "ok",
+      "median_nanos": 3274386553,
+      "min_nanos": 3274386553,
+      "max_nanos": 3274386553,
+      "factor_count": 3,
+      "factor_degrees": [
+        10,
+        90,
+        90
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "hoeij-zimmermann",
+      "name": "hoeij_F192",
+      "degree": 192,
+      "status": "timeout",
+      "median_nanos": null,
+      "min_nanos": null,
+      "max_nanos": null,
+      "factor_count": null,
+      "factor_degrees": null
+    },
+    {
+      "system": "hex-factor",
+      "family": "hoeij-zimmermann",
+      "name": "hoeij_F256",
+      "degree": 256,
+      "status": "timeout",
+      "median_nanos": null,
+      "min_nanos": null,
+      "max_nanos": null,
+      "factor_count": null,
+      "factor_degrees": null
+    },
+    {
+      "system": "hex-factor",
+      "family": "hoeij-zimmermann",
+      "name": "hoeij_S8",
+      "degree": 256,
+      "status": "ok",
+      "median_nanos": 3969668785,
+      "min_nanos": 3969668785,
+      "max_nanos": 3969668785,
+      "factor_count": 1,
+      "factor_degrees": [
+        256
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "hoeij-zimmermann",
+      "name": "hoeij_F351",
+      "degree": 351,
+      "status": "timeout",
+      "median_nanos": null,
+      "min_nanos": null,
+      "max_nanos": null,
+      "factor_count": null,
+      "factor_degrees": null
+    },
+    {
+      "system": "hex-factor",
+      "family": "hoeij-zimmermann",
+      "name": "hoeij_P7",
+      "degree": 384,
+      "status": "timeout",
+      "median_nanos": null,
+      "min_nanos": null,
+      "max_nanos": null,
+      "factor_count": null,
+      "factor_degrees": null
+    },
+    {
+      "system": "hex-factor",
+      "family": "hoeij-zimmermann",
+      "name": "hoeij_S9",
+      "degree": 512,
+      "status": "timeout",
+      "median_nanos": null,
+      "min_nanos": null,
+      "max_nanos": null,
+      "factor_count": null,
+      "factor_degrees": null
+    },
+    {
+      "system": "hex-factor",
+      "family": "hoeij-zimmermann",
+      "name": "hoeij_F630",
+      "degree": 630,
+      "status": "timeout",
+      "median_nanos": null,
+      "min_nanos": null,
+      "max_nanos": null,
+      "factor_count": null,
+      "early_terminated": true,
+      "factor_degrees": null
+    },
+    {
+      "system": "hex-factor",
+      "family": "conway",
+      "name": "conway_p11_n1",
+      "degree": 1,
+      "status": "ok",
+      "median_nanos": 30516,
+      "min_nanos": 22644,
+      "max_nanos": 19778065,
+      "factor_count": 1,
+      "factor_degrees": [
+        1
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "conway",
+      "name": "conway_p13_n1",
+      "degree": 1,
+      "status": "ok",
+      "median_nanos": 22944,
+      "min_nanos": 22493,
+      "max_nanos": 25197,
+      "factor_count": 1,
+      "factor_degrees": [
+        1
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "conway",
+      "name": "conway_p2_n1",
+      "degree": 1,
+      "status": "ok",
+      "median_nanos": 22313,
+      "min_nanos": 22103,
+      "max_nanos": 22834,
+      "factor_count": 1,
+      "factor_degrees": [
+        1
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "conway",
+      "name": "conway_p3_n1",
+      "degree": 1,
+      "status": "ok",
+      "median_nanos": 21903,
+      "min_nanos": 21792,
+      "max_nanos": 23394,
+      "factor_count": 1,
+      "factor_degrees": [
+        1
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "conway",
+      "name": "conway_p521_n1",
+      "degree": 1,
+      "status": "ok",
+      "median_nanos": 24676,
+      "min_nanos": 22123,
+      "max_nanos": 69683,
+      "factor_count": 1,
+      "factor_degrees": [
+        1
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "conway",
+      "name": "conway_p5_n1",
+      "degree": 1,
+      "status": "ok",
+      "median_nanos": 21421,
+      "min_nanos": 20881,
+      "max_nanos": 22865,
+      "factor_count": 1,
+      "factor_degrees": [
+        1
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "conway",
+      "name": "conway_p65537_n1",
+      "degree": 1,
+      "status": "ok",
+      "median_nanos": 23164,
+      "min_nanos": 22513,
+      "max_nanos": 23856,
+      "factor_count": 1,
+      "factor_degrees": [
+        1
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "conway",
+      "name": "conway_p7_n1",
+      "degree": 1,
+      "status": "ok",
+      "median_nanos": 22053,
+      "min_nanos": 21842,
+      "max_nanos": 24717,
+      "factor_count": 1,
+      "factor_degrees": [
+        1
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "conway",
+      "name": "conway_p97_n1",
+      "degree": 1,
+      "status": "ok",
+      "median_nanos": 21842,
+      "min_nanos": 21632,
+      "max_nanos": 22273,
+      "factor_count": 1,
+      "factor_degrees": [
+        1
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "conway",
+      "name": "conway_p11_n2",
+      "degree": 2,
+      "status": "ok",
+      "median_nanos": 29955,
+      "min_nanos": 28732,
+      "max_nanos": 38577,
+      "factor_count": 1,
+      "factor_degrees": [
+        2
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "conway",
+      "name": "conway_p13_n2",
+      "degree": 2,
+      "status": "ok",
+      "median_nanos": 40670,
+      "min_nanos": 35753,
+      "max_nanos": 57235,
+      "factor_count": 1,
+      "factor_degrees": [
+        2
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "conway",
+      "name": "conway_p2_n2",
+      "degree": 2,
+      "status": "ok",
+      "median_nanos": 28963,
+      "min_nanos": 28552,
+      "max_nanos": 30845,
+      "factor_count": 1,
+      "factor_degrees": [
+        2
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "conway",
+      "name": "conway_p3_n2",
+      "degree": 2,
+      "status": "ok",
+      "median_nanos": 28442,
+      "min_nanos": 27952,
+      "max_nanos": 29123,
+      "factor_count": 1,
+      "factor_degrees": [
+        2
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "conway",
+      "name": "conway_p521_n2",
+      "degree": 2,
+      "status": "ok",
+      "median_nanos": 38477,
+      "min_nanos": 37736,
+      "max_nanos": 40450,
+      "factor_count": 1,
+      "factor_degrees": [
+        2
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "conway",
+      "name": "conway_p5_n2",
+      "degree": 2,
+      "status": "ok",
+      "median_nanos": 28302,
+      "min_nanos": 27671,
+      "max_nanos": 31557,
+      "factor_count": 1,
+      "factor_degrees": [
+        2
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "conway",
+      "name": "conway_p65537_n2",
+      "degree": 2,
+      "status": "ok",
+      "median_nanos": 41612,
+      "min_nanos": 38097,
+      "max_nanos": 47290,
+      "factor_count": 1,
+      "factor_degrees": [
+        2
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "conway",
+      "name": "conway_p7_n2",
+      "degree": 2,
+      "status": "ok",
+      "median_nanos": 34210,
+      "min_nanos": 33981,
+      "max_nanos": 35823,
+      "factor_count": 1,
+      "factor_degrees": [
+        2
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "conway",
+      "name": "conway_p97_n2",
+      "degree": 2,
+      "status": "ok",
+      "median_nanos": 35944,
+      "min_nanos": 34912,
+      "max_nanos": 38116,
+      "factor_count": 1,
+      "factor_degrees": [
+        2
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "conway",
+      "name": "conway_p11_n3",
+      "degree": 3,
+      "status": "ok",
+      "median_nanos": 44706,
+      "min_nanos": 43133,
+      "max_nanos": 52457,
+      "factor_count": 1,
+      "factor_degrees": [
+        3
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "conway",
+      "name": "conway_p13_n3",
+      "degree": 3,
+      "status": "ok",
+      "median_nanos": 29874,
+      "min_nanos": 27050,
+      "max_nanos": 31827,
+      "factor_count": 1,
+      "factor_degrees": [
+        3
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "conway",
+      "name": "conway_p2_n3",
+      "degree": 3,
+      "status": "ok",
+      "median_nanos": 39278,
+      "min_nanos": 38127,
+      "max_nanos": 43294,
+      "factor_count": 1,
+      "factor_degrees": [
+        3
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "conway",
+      "name": "conway_p3_n3",
+      "degree": 3,
+      "status": "ok",
+      "median_nanos": 27110,
+      "min_nanos": 26920,
+      "max_nanos": 28412,
+      "factor_count": 1,
+      "factor_degrees": [
+        3
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "conway",
+      "name": "conway_p521_n3",
+      "degree": 3,
+      "status": "ok",
+      "median_nanos": 40059,
+      "min_nanos": 39589,
+      "max_nanos": 42232,
+      "factor_count": 1,
+      "factor_degrees": [
+        3
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "conway",
+      "name": "conway_p5_n3",
+      "degree": 3,
+      "status": "ok",
+      "median_nanos": 31417,
+      "min_nanos": 29844,
+      "max_nanos": 32428,
+      "factor_count": 1,
+      "factor_degrees": [
+        3
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "conway",
+      "name": "conway_p65537_n3",
+      "degree": 3,
+      "status": "ok",
+      "median_nanos": 30635,
+      "min_nanos": 30154,
+      "max_nanos": 32568,
+      "factor_count": 1,
+      "factor_degrees": [
+        3
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "conway",
+      "name": "conway_p7_n3",
+      "degree": 3,
+      "status": "ok",
+      "median_nanos": 42292,
+      "min_nanos": 40850,
+      "max_nanos": 45387,
+      "factor_count": 1,
+      "factor_degrees": [
+        3
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "conway",
+      "name": "conway_p97_n3",
+      "degree": 3,
+      "status": "ok",
+      "median_nanos": 30185,
+      "min_nanos": 28963,
+      "max_nanos": 31566,
+      "factor_count": 1,
+      "factor_degrees": [
+        3
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "conway",
+      "name": "conway_p11_n4",
+      "degree": 4,
+      "status": "ok",
+      "median_nanos": 57946,
+      "min_nanos": 56354,
+      "max_nanos": 66008,
+      "factor_count": 1,
+      "factor_degrees": [
+        4
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "conway",
+      "name": "conway_p13_n4",
+      "degree": 4,
+      "status": "ok",
+      "median_nanos": 59698,
+      "min_nanos": 57916,
+      "max_nanos": 65017,
+      "factor_count": 1,
+      "factor_degrees": [
+        4
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "conway",
+      "name": "conway_p2_n4",
+      "degree": 4,
+      "status": "ok",
+      "median_nanos": 44336,
+      "min_nanos": 43504,
+      "max_nanos": 50876,
+      "factor_count": 1,
+      "factor_degrees": [
+        4
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "conway",
+      "name": "conway_p3_n4",
+      "degree": 4,
+      "status": "ok",
+      "median_nanos": 36194,
+      "min_nanos": 34661,
+      "max_nanos": 37115,
+      "factor_count": 1,
+      "factor_degrees": [
+        4
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "conway",
+      "name": "conway_p521_n4",
+      "degree": 4,
+      "status": "ok",
+      "median_nanos": 36854,
+      "min_nanos": 35843,
+      "max_nanos": 39479,
+      "factor_count": 1,
+      "factor_degrees": [
+        4
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "conway",
+      "name": "conway_p5_n4",
+      "degree": 4,
+      "status": "ok",
+      "median_nanos": 51426,
+      "min_nanos": 49162,
+      "max_nanos": 53830,
+      "factor_count": 1,
+      "factor_degrees": [
+        4
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "conway",
+      "name": "conway_p65537_n4",
+      "degree": 4,
+      "status": "ok",
+      "median_nanos": 70344,
+      "min_nanos": 68751,
+      "max_nanos": 74751,
+      "factor_count": 1,
+      "factor_degrees": [
+        4
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "conway",
+      "name": "conway_p7_n4",
+      "degree": 4,
+      "status": "ok",
+      "median_nanos": 49954,
+      "min_nanos": 47571,
+      "max_nanos": 51346,
+      "factor_count": 1,
+      "factor_degrees": [
+        4
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "conway",
+      "name": "conway_p97_n4",
+      "degree": 4,
+      "status": "ok",
+      "median_nanos": 34050,
+      "min_nanos": 33190,
+      "max_nanos": 38327,
+      "factor_count": 1,
+      "factor_degrees": [
+        4
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "conway",
+      "name": "conway_p11_n5",
+      "degree": 5,
+      "status": "ok",
+      "median_nanos": 45537,
+      "min_nanos": 44155,
+      "max_nanos": 47871,
+      "factor_count": 1,
+      "factor_degrees": [
+        5
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "conway",
+      "name": "conway_p13_n5",
+      "degree": 5,
+      "status": "ok",
+      "median_nanos": 37005,
+      "min_nanos": 36835,
+      "max_nanos": 38277,
+      "factor_count": 1,
+      "factor_degrees": [
+        5
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "conway",
+      "name": "conway_p2_n5",
+      "degree": 5,
+      "status": "ok",
+      "median_nanos": 51106,
+      "min_nanos": 50365,
+      "max_nanos": 56534,
+      "factor_count": 1,
+      "factor_degrees": [
+        5
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "conway",
+      "name": "conway_p3_n5",
+      "degree": 5,
+      "status": "ok",
+      "median_nanos": 36965,
+      "min_nanos": 36213,
+      "max_nanos": 38057,
+      "factor_count": 1,
+      "factor_degrees": [
+        5
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "conway",
+      "name": "conway_p521_n5",
+      "degree": 5,
+      "status": "ok",
+      "median_nanos": 58526,
+      "min_nanos": 56694,
+      "max_nanos": 60941,
+      "factor_count": 1,
+      "factor_degrees": [
+        5
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "conway",
+      "name": "conway_p5_n5",
+      "degree": 5,
+      "status": "ok",
+      "median_nanos": 69593,
+      "min_nanos": 68021,
+      "max_nanos": 78777,
+      "factor_count": 1,
+      "factor_degrees": [
+        5
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "conway",
+      "name": "conway_p7_n5",
+      "degree": 5,
+      "status": "ok",
+      "median_nanos": 66649,
+      "min_nanos": 64306,
+      "max_nanos": 71306,
+      "factor_count": 1,
+      "factor_degrees": [
+        5
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "conway",
+      "name": "conway_p97_n5",
+      "degree": 5,
+      "status": "ok",
+      "median_nanos": 53859,
+      "min_nanos": 51336,
+      "max_nanos": 55813,
+      "factor_count": 1,
+      "factor_degrees": [
+        5
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "conway",
+      "name": "conway_p11_n6",
+      "degree": 6,
+      "status": "ok",
+      "median_nanos": 43444,
+      "min_nanos": 42823,
+      "max_nanos": 48262,
+      "factor_count": 1,
+      "factor_degrees": [
+        6
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "conway",
+      "name": "conway_p13_n6",
+      "degree": 6,
+      "status": "ok",
+      "median_nanos": 63815,
+      "min_nanos": 62583,
+      "max_nanos": 69453,
+      "factor_count": 1,
+      "factor_degrees": [
+        6
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "conway",
+      "name": "conway_p2_n6",
+      "degree": 6,
+      "status": "ok",
+      "median_nanos": 44536,
+      "min_nanos": 44086,
+      "max_nanos": 46339,
+      "factor_count": 1,
+      "factor_degrees": [
+        6
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "conway",
+      "name": "conway_p3_n6",
+      "degree": 6,
+      "status": "ok",
+      "median_nanos": 43424,
+      "min_nanos": 43144,
+      "max_nanos": 47560,
+      "factor_count": 1,
+      "factor_degrees": [
+        6
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "conway",
+      "name": "conway_p521_n6",
+      "degree": 6,
+      "status": "ok",
+      "median_nanos": 81671,
+      "min_nanos": 80199,
+      "max_nanos": 91175,
+      "factor_count": 1,
+      "factor_degrees": [
+        6
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "conway",
+      "name": "conway_p5_n6",
+      "degree": 6,
+      "status": "ok",
+      "median_nanos": 55542,
+      "min_nanos": 52428,
+      "max_nanos": 57085,
+      "factor_count": 1,
+      "factor_degrees": [
+        6
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "conway",
+      "name": "conway_p7_n6",
+      "degree": 6,
+      "status": "ok",
+      "median_nanos": 72838,
+      "min_nanos": 69864,
+      "max_nanos": 79318,
+      "factor_count": 1,
+      "factor_degrees": [
+        6
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "conway",
+      "name": "conway_p97_n6",
+      "degree": 6,
+      "status": "ok",
+      "median_nanos": 44436,
+      "min_nanos": 43694,
+      "max_nanos": 46749,
+      "factor_count": 1,
+      "factor_degrees": [
+        6
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "conway",
+      "name": "conway_p11_n7",
+      "degree": 7,
+      "status": "ok",
+      "median_nanos": 80850,
+      "min_nanos": 78216,
+      "max_nanos": 86558,
+      "factor_count": 1,
+      "factor_degrees": [
+        7
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "conway",
+      "name": "conway_p13_n7",
+      "degree": 7,
+      "status": "ok",
+      "median_nanos": 64286,
+      "min_nanos": 62453,
+      "max_nanos": 69823,
+      "factor_count": 1,
+      "factor_degrees": [
+        7
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "conway",
+      "name": "conway_p2_n7",
+      "degree": 7,
+      "status": "ok",
+      "median_nanos": 65858,
+      "min_nanos": 63875,
+      "max_nanos": 69754,
+      "factor_count": 1,
+      "factor_degrees": [
+        7
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "conway",
+      "name": "conway_p3_n7",
+      "degree": 7,
+      "status": "ok",
+      "median_nanos": 46639,
+      "min_nanos": 46408,
+      "max_nanos": 50295,
+      "factor_count": 1,
+      "factor_degrees": [
+        7
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "conway",
+      "name": "conway_p521_n7",
+      "degree": 7,
+      "status": "ok",
+      "median_nanos": 68822,
+      "min_nanos": 67530,
+      "max_nanos": 73870,
+      "factor_count": 1,
+      "factor_degrees": [
+        7
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "conway",
+      "name": "conway_p5_n7",
+      "degree": 7,
+      "status": "ok",
+      "median_nanos": 53930,
+      "min_nanos": 53279,
+      "max_nanos": 58317,
+      "factor_count": 1,
+      "factor_degrees": [
+        7
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "conway",
+      "name": "conway_p7_n7",
+      "degree": 7,
+      "status": "ok",
+      "median_nanos": 63664,
+      "min_nanos": 62373,
+      "max_nanos": 69904,
+      "factor_count": 1,
+      "factor_degrees": [
+        7
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "conway",
+      "name": "conway_p97_n7",
+      "degree": 7,
+      "status": "ok",
+      "median_nanos": 69503,
+      "min_nanos": 68271,
+      "max_nanos": 77986,
+      "factor_count": 1,
+      "factor_degrees": [
+        7
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "conway",
+      "name": "conway_p11_n8",
+      "degree": 8,
+      "status": "ok",
+      "median_nanos": 98766,
+      "min_nanos": 96073,
+      "max_nanos": 111836,
+      "factor_count": 1,
+      "factor_degrees": [
+        8
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "conway",
+      "name": "conway_p13_n8",
+      "degree": 8,
+      "status": "ok",
+      "median_nanos": 71005,
+      "min_nanos": 68362,
+      "max_nanos": 79478,
+      "factor_count": 1,
+      "factor_degrees": [
+        8
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "conway",
+      "name": "conway_p2_n8",
+      "degree": 8,
+      "status": "ok",
+      "median_nanos": 100990,
+      "min_nanos": 98836,
+      "max_nanos": 113509,
+      "factor_count": 1,
+      "factor_degrees": [
+        8
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "conway",
+      "name": "conway_p3_n8",
+      "degree": 8,
+      "status": "ok",
+      "median_nanos": 60760,
+      "min_nanos": 57375,
+      "max_nanos": 68982,
+      "factor_count": 1,
+      "factor_degrees": [
+        8
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "conway",
+      "name": "conway_p521_n8",
+      "degree": 8,
+      "status": "ok",
+      "median_nanos": 100288,
+      "min_nanos": 98637,
+      "max_nanos": 112567,
+      "factor_count": 1,
+      "factor_degrees": [
+        8
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "conway",
+      "name": "conway_p5_n8",
+      "degree": 8,
+      "status": "ok",
+      "median_nanos": 81441,
+      "min_nanos": 78797,
+      "max_nanos": 88441,
+      "factor_count": 1,
+      "factor_degrees": [
+        8
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "conway",
+      "name": "conway_p7_n8",
+      "degree": 8,
+      "status": "ok",
+      "median_nanos": 74451,
+      "min_nanos": 73890,
+      "max_nanos": 82462,
+      "factor_count": 1,
+      "factor_degrees": [
+        8
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "conway",
+      "name": "conway_p97_n8",
+      "degree": 8,
+      "status": "ok",
+      "median_nanos": 88571,
+      "min_nanos": 86668,
+      "max_nanos": 89163,
+      "factor_count": 1,
+      "factor_degrees": [
+        8
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "conway",
+      "name": "conway_p2_n9",
+      "degree": 9,
+      "status": "ok",
+      "median_nanos": 83464,
+      "min_nanos": 81031,
+      "max_nanos": 90724,
+      "factor_count": 1,
+      "factor_degrees": [
+        9
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "conway",
+      "name": "conway_p3_n9",
+      "degree": 9,
+      "status": "ok",
+      "median_nanos": 60219,
+      "min_nanos": 59558,
+      "max_nanos": 63163,
+      "factor_count": 1,
+      "factor_degrees": [
+        9
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "conway",
+      "name": "conway_p5_n9",
+      "degree": 9,
+      "status": "ok",
+      "median_nanos": 96173,
+      "min_nanos": 93629,
+      "max_nanos": 102773,
+      "factor_count": 1,
+      "factor_degrees": [
+        9
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "conway",
+      "name": "conway_p7_n9",
+      "degree": 9,
+      "status": "ok",
+      "median_nanos": 102162,
+      "min_nanos": 99036,
+      "max_nanos": 111886,
+      "factor_count": 1,
+      "factor_degrees": [
+        9
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "conway",
+      "name": "conway_p2_n10",
+      "degree": 10,
+      "status": "ok",
+      "median_nanos": 109172,
+      "min_nanos": 106988,
+      "max_nanos": 119968,
+      "factor_count": 1,
+      "factor_degrees": [
+        10
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "conway",
+      "name": "conway_p3_n10",
+      "degree": 10,
+      "status": "ok",
+      "median_nanos": 73750,
+      "min_nanos": 72267,
+      "max_nanos": 76744,
+      "factor_count": 1,
+      "factor_degrees": [
+        10
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "conway",
+      "name": "conway_p5_n10",
+      "degree": 10,
+      "status": "ok",
+      "median_nanos": 69963,
+      "min_nanos": 68922,
+      "max_nanos": 73880,
+      "factor_count": 1,
+      "factor_degrees": [
+        10
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "conway",
+      "name": "conway_p7_n10",
+      "degree": 10,
+      "status": "ok",
+      "median_nanos": 161259,
+      "min_nanos": 157714,
+      "max_nanos": 172977,
+      "factor_count": 1,
+      "factor_degrees": [
+        10
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "conway",
+      "name": "conway_p2_n11",
+      "degree": 11,
+      "status": "ok",
+      "median_nanos": 124845,
+      "min_nanos": 116002,
+      "max_nanos": 136703,
+      "factor_count": 1,
+      "factor_degrees": [
+        11
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "conway",
+      "name": "conway_p3_n11",
+      "degree": 11,
+      "status": "ok",
+      "median_nanos": 68863,
+      "min_nanos": 68251,
+      "max_nanos": 72637,
+      "factor_count": 1,
+      "factor_degrees": [
+        11
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "conway",
+      "name": "conway_p5_n11",
+      "degree": 11,
+      "status": "ok",
+      "median_nanos": 78406,
+      "min_nanos": 76574,
+      "max_nanos": 80459,
+      "factor_count": 1,
+      "factor_degrees": [
+        11
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "conway",
+      "name": "conway_p7_n11",
+      "degree": 11,
+      "status": "ok",
+      "median_nanos": 152727,
+      "min_nanos": 146878,
+      "max_nanos": 163172,
+      "factor_count": 1,
+      "factor_degrees": [
+        11
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "conway",
+      "name": "conway_p2_n12",
+      "degree": 12,
+      "status": "ok",
+      "median_nanos": 128330,
+      "min_nanos": 127068,
+      "max_nanos": 143392,
+      "factor_count": 1,
+      "factor_degrees": [
+        12
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "conway",
+      "name": "conway_p3_n12",
+      "degree": 12,
+      "status": "ok",
+      "median_nanos": 87209,
+      "min_nanos": 85397,
+      "max_nanos": 92277,
+      "factor_count": 1,
+      "factor_degrees": [
+        12
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "conway",
+      "name": "conway_p5_n12",
+      "degree": 12,
+      "status": "ok",
+      "median_nanos": 205726,
+      "min_nanos": 197864,
+      "max_nanos": 230452,
+      "factor_count": 1,
+      "factor_degrees": [
+        12
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "conway",
+      "name": "conway_p7_n12",
+      "degree": 12,
+      "status": "ok",
+      "median_nanos": 173487,
+      "min_nanos": 168449,
+      "max_nanos": 181579,
+      "factor_count": 1,
+      "factor_degrees": [
+        12
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "conway",
+      "name": "conway_p2_n13",
+      "degree": 13,
+      "status": "ok",
+      "median_nanos": 91295,
+      "min_nanos": 89282,
+      "max_nanos": 95692,
+      "factor_count": 1,
+      "factor_degrees": [
+        13
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "conway",
+      "name": "conway_p3_n13",
+      "degree": 13,
+      "status": "ok",
+      "median_nanos": 77976,
+      "min_nanos": 76223,
+      "max_nanos": 80630,
+      "factor_count": 1,
+      "factor_degrees": [
+        13
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "conway",
+      "name": "conway_p5_n13",
+      "degree": 13,
+      "status": "ok",
+      "median_nanos": 104475,
+      "min_nanos": 103324,
+      "max_nanos": 105297,
+      "factor_count": 1,
+      "factor_degrees": [
+        13
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "conway",
+      "name": "conway_p7_n13",
+      "degree": 13,
+      "status": "ok",
+      "median_nanos": 219065,
+      "min_nanos": 214568,
+      "max_nanos": 248759,
+      "factor_count": 1,
+      "factor_degrees": [
+        13
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "conway",
+      "name": "conway_p2_n14",
+      "degree": 14,
+      "status": "ok",
+      "median_nanos": 153648,
+      "min_nanos": 150474,
+      "max_nanos": 171083,
+      "factor_count": 1,
+      "factor_degrees": [
+        14
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "conway",
+      "name": "conway_p3_n14",
+      "degree": 14,
+      "status": "ok",
+      "median_nanos": 115491,
+      "min_nanos": 113719,
+      "max_nanos": 119747,
+      "factor_count": 1,
+      "factor_degrees": [
+        14
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "conway",
+      "name": "conway_p5_n14",
+      "degree": 14,
+      "status": "ok",
+      "median_nanos": 138886,
+      "min_nanos": 134290,
+      "max_nanos": 141870,
+      "factor_count": 1,
+      "factor_degrees": [
+        14
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "conway",
+      "name": "conway_p7_n14",
+      "degree": 14,
+      "status": "ok",
+      "median_nanos": 161109,
+      "min_nanos": 158636,
+      "max_nanos": 165815,
+      "factor_count": 1,
+      "factor_degrees": [
+        14
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "conway",
+      "name": "conway_p2_n15",
+      "degree": 15,
+      "status": "ok",
+      "median_nanos": 217492,
+      "min_nanos": 209461,
+      "max_nanos": 244563,
+      "factor_count": 1,
+      "factor_degrees": [
+        15
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "conway",
+      "name": "conway_p3_n15",
+      "degree": 15,
+      "status": "ok",
+      "median_nanos": 113569,
+      "min_nanos": 111936,
+      "max_nanos": 114770,
+      "factor_count": 1,
+      "factor_degrees": [
+        15
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "conway",
+      "name": "conway_p5_n15",
+      "degree": 15,
+      "status": "ok",
+      "median_nanos": 145556,
+      "min_nanos": 143823,
+      "max_nanos": 162591,
+      "factor_count": 1,
+      "factor_degrees": [
+        15
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "conway",
+      "name": "conway_p7_n15",
+      "degree": 15,
+      "status": "ok",
+      "median_nanos": 189892,
+      "min_nanos": 185245,
+      "max_nanos": 199816,
+      "factor_count": 1,
+      "factor_degrees": [
+        15
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "conway",
+      "name": "conway_p2_n16",
+      "degree": 16,
+      "status": "ok",
+      "median_nanos": 119286,
+      "min_nanos": 117975,
+      "max_nanos": 122492,
+      "factor_count": 1,
+      "factor_degrees": [
+        16
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "conway",
+      "name": "conway_p3_n16",
+      "degree": 16,
+      "status": "ok",
+      "median_nanos": 128620,
+      "min_nanos": 125807,
+      "max_nanos": 129532,
+      "factor_count": 1,
+      "factor_degrees": [
+        16
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "conway",
+      "name": "conway_p5_n16",
+      "degree": 16,
+      "status": "ok",
+      "median_nanos": 287496,
+      "min_nanos": 285493,
+      "max_nanos": 320786,
+      "factor_count": 1,
+      "factor_degrees": [
+        16
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "conway",
+      "name": "conway_p7_n16",
+      "degree": 16,
+      "status": "ok",
+      "median_nanos": 272153,
+      "min_nanos": 264302,
+      "max_nanos": 303040,
+      "factor_count": 1,
+      "factor_degrees": [
+        16
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "conway",
+      "name": "conway_p2_n17",
+      "degree": 17,
+      "status": "ok",
+      "median_nanos": 257973,
+      "min_nanos": 255889,
+      "max_nanos": 289600,
+      "factor_count": 1,
+      "factor_degrees": [
+        17
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "conway",
+      "name": "conway_p3_n17",
+      "degree": 17,
+      "status": "ok",
+      "median_nanos": 110103,
+      "min_nanos": 108762,
+      "max_nanos": 113399,
+      "factor_count": 1,
+      "factor_degrees": [
+        17
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "conway",
+      "name": "conway_p5_n17",
+      "degree": 17,
+      "status": "ok",
+      "median_nanos": 429767,
+      "min_nanos": 417890,
+      "max_nanos": 464539,
+      "factor_count": 1,
+      "factor_degrees": [
+        17
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "conway",
+      "name": "conway_p7_n17",
+      "degree": 17,
+      "status": "ok",
+      "median_nanos": 301898,
+      "min_nanos": 291613,
+      "max_nanos": 327175,
+      "factor_count": 1,
+      "factor_degrees": [
+        17
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "conway",
+      "name": "conway_p2_n18",
+      "degree": 18,
+      "status": "ok",
+      "median_nanos": 329038,
+      "min_nanos": 325894,
+      "max_nanos": 355137,
+      "factor_count": 1,
+      "factor_degrees": [
+        18
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "conway",
+      "name": "conway_p3_n18",
+      "degree": 18,
+      "status": "ok",
+      "median_nanos": 151575,
+      "min_nanos": 150103,
+      "max_nanos": 157263,
+      "factor_count": 1,
+      "factor_degrees": [
+        18
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "conway",
+      "name": "conway_p5_n18",
+      "degree": 18,
+      "status": "ok",
+      "median_nanos": 227538,
+      "min_nanos": 222870,
+      "max_nanos": 238694,
+      "factor_count": 1,
+      "factor_degrees": [
+        18
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "conway",
+      "name": "conway_p7_n18",
+      "degree": 18,
+      "status": "ok",
+      "median_nanos": 286906,
+      "min_nanos": 278623,
+      "max_nanos": 308938,
+      "factor_count": 1,
+      "factor_degrees": [
+        18
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "conway",
+      "name": "conway_p2_n19",
+      "degree": 19,
+      "status": "ok",
+      "median_nanos": 269660,
+      "min_nanos": 265755,
+      "max_nanos": 288037,
+      "factor_count": 1,
+      "factor_degrees": [
+        19
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "conway",
+      "name": "conway_p3_n19",
+      "degree": 19,
+      "status": "ok",
+      "median_nanos": 126388,
+      "min_nanos": 124144,
+      "max_nanos": 128241,
+      "factor_count": 1,
+      "factor_degrees": [
+        19
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "conway",
+      "name": "conway_p5_n19",
+      "degree": 19,
+      "status": "ok",
+      "median_nanos": 351351,
+      "min_nanos": 341056,
+      "max_nanos": 418731,
+      "factor_count": 1,
+      "factor_degrees": [
+        19
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "conway",
+      "name": "conway_p7_n19",
+      "degree": 19,
+      "status": "ok",
+      "median_nanos": 128019,
+      "min_nanos": 126918,
+      "max_nanos": 131636,
+      "factor_count": 1,
+      "factor_degrees": [
+        19
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "conway",
+      "name": "conway_p2_n20",
+      "degree": 20,
+      "status": "ok",
+      "median_nanos": 331922,
+      "min_nanos": 326424,
+      "max_nanos": 362999,
+      "factor_count": 1,
+      "factor_degrees": [
+        20
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "conway",
+      "name": "conway_p3_n20",
+      "degree": 20,
+      "status": "ok",
+      "median_nanos": 191804,
+      "min_nanos": 189962,
+      "max_nanos": 193558,
+      "factor_count": 1,
+      "factor_degrees": [
+        20
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "conway",
+      "name": "conway_p5_n20",
+      "degree": 20,
+      "status": "ok",
+      "median_nanos": 261608,
+      "min_nanos": 256370,
+      "max_nanos": 283210,
+      "factor_count": 1,
+      "factor_degrees": [
+        20
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "conway",
+      "name": "conway_p7_n20",
+      "degree": 20,
+      "status": "ok",
+      "median_nanos": 246866,
+      "min_nanos": 240407,
+      "max_nanos": 265534,
+      "factor_count": 1,
+      "factor_degrees": [
+        20
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "conway",
+      "name": "conway_p2_n21",
+      "degree": 21,
+      "status": "ok",
+      "median_nanos": 277741,
+      "min_nanos": 274447,
+      "max_nanos": 305904,
+      "factor_count": 1,
+      "factor_degrees": [
+        21
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "conway",
+      "name": "conway_p3_n21",
+      "degree": 21,
+      "status": "ok",
+      "median_nanos": 190793,
+      "min_nanos": 187859,
+      "max_nanos": 192926,
+      "factor_count": 1,
+      "factor_degrees": [
+        21
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "conway",
+      "name": "conway_p5_n21",
+      "degree": 21,
+      "status": "ok",
+      "median_nanos": 288788,
+      "min_nanos": 280886,
+      "max_nanos": 317821,
+      "factor_count": 1,
+      "factor_degrees": [
+        21
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "conway",
+      "name": "conway_p7_n21",
+      "degree": 21,
+      "status": "ok",
+      "median_nanos": 264743,
+      "min_nanos": 261067,
+      "max_nanos": 296791,
+      "factor_count": 1,
+      "factor_degrees": [
+        21
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "conway",
+      "name": "conway_p2_n22",
+      "degree": 22,
+      "status": "ok",
+      "median_nanos": 476677,
+      "min_nanos": 462135,
+      "max_nanos": 511549,
+      "factor_count": 1,
+      "factor_degrees": [
+        22
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "conway",
+      "name": "conway_p3_n22",
+      "degree": 22,
+      "status": "ok",
+      "median_nanos": 207778,
+      "min_nanos": 206626,
+      "max_nanos": 212535,
+      "factor_count": 1,
+      "factor_degrees": [
+        22
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "conway",
+      "name": "conway_p5_n22",
+      "degree": 22,
+      "status": "ok",
+      "median_nanos": 385020,
+      "min_nanos": 376248,
+      "max_nanos": 428415,
+      "factor_count": 1,
+      "factor_degrees": [
+        22
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "conway",
+      "name": "conway_p7_n22",
+      "degree": 22,
+      "status": "ok",
+      "median_nanos": 423748,
+      "min_nanos": 412482,
+      "max_nanos": 458961,
+      "factor_count": 1,
+      "factor_degrees": [
+        22
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "conway",
+      "name": "conway_p2_n23",
+      "degree": 23,
+      "status": "ok",
+      "median_nanos": 471790,
+      "min_nanos": 450539,
+      "max_nanos": 508854,
+      "factor_count": 1,
+      "factor_degrees": [
+        23
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "conway",
+      "name": "conway_p3_n23",
+      "degree": 23,
+      "status": "ok",
+      "median_nanos": 174729,
+      "min_nanos": 174328,
+      "max_nanos": 178635,
+      "factor_count": 1,
+      "factor_degrees": [
+        23
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "conway",
+      "name": "conway_p5_n23",
+      "degree": 23,
+      "status": "ok",
+      "median_nanos": 201398,
+      "min_nanos": 200186,
+      "max_nanos": 208379,
+      "factor_count": 1,
+      "factor_degrees": [
+        23
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "conway",
+      "name": "conway_p7_n23",
+      "degree": 23,
+      "status": "ok",
+      "median_nanos": 292734,
+      "min_nanos": 285614,
+      "max_nanos": 317120,
+      "factor_count": 1,
+      "factor_degrees": [
+        23
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "conway",
+      "name": "conway_p2_n24",
+      "degree": 24,
+      "status": "ok",
+      "median_nanos": 370249,
+      "min_nanos": 368236,
+      "max_nanos": 407885,
+      "factor_count": 1,
+      "factor_degrees": [
+        24
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "conway",
+      "name": "conway_p3_n24",
+      "degree": 24,
+      "status": "ok",
+      "median_nanos": 233447,
+      "min_nanos": 228098,
+      "max_nanos": 235419,
+      "factor_count": 1,
+      "factor_degrees": [
+        24
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "conway",
+      "name": "conway_p5_n24",
+      "degree": 24,
+      "status": "ok",
+      "median_nanos": 467594,
+      "min_nanos": 448655,
+      "max_nanos": 510006,
+      "factor_count": 1,
+      "factor_degrees": [
+        24
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "conway",
+      "name": "conway_p7_n24",
+      "degree": 24,
+      "status": "ok",
+      "median_nanos": 443307,
+      "min_nanos": 439341,
+      "max_nanos": 465300,
+      "factor_count": 1,
+      "factor_degrees": [
+        24
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "conway",
+      "name": "conway_p2_n25",
+      "degree": 25,
+      "status": "ok",
+      "median_nanos": 594302,
+      "min_nanos": 577006,
+      "max_nanos": 628121,
+      "factor_count": 1,
+      "factor_degrees": [
+        25
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "conway",
+      "name": "conway_p3_n25",
+      "degree": 25,
+      "status": "ok",
+      "median_nanos": 221099,
+      "min_nanos": 219175,
+      "max_nanos": 225895,
+      "factor_count": 1,
+      "factor_degrees": [
+        25
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "conway",
+      "name": "conway_p5_n25",
+      "degree": 25,
+      "status": "ok",
+      "median_nanos": 510247,
+      "min_nanos": 487573,
+      "max_nanos": 548123,
+      "factor_count": 1,
+      "factor_degrees": [
+        25
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "conway",
+      "name": "conway_p7_n25",
+      "degree": 25,
+      "status": "ok",
+      "median_nanos": 446522,
+      "min_nanos": 430459,
+      "max_nanos": 471250,
+      "factor_count": 1,
+      "factor_degrees": [
+        25
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "conway",
+      "name": "conway_p2_n26",
+      "degree": 26,
+      "status": "ok",
+      "median_nanos": 490728,
+      "min_nanos": 474774,
+      "max_nanos": 531358,
+      "factor_count": 1,
+      "factor_degrees": [
+        26
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "conway",
+      "name": "conway_p3_n26",
+      "degree": 26,
+      "status": "ok",
+      "median_nanos": 269760,
+      "min_nanos": 268879,
+      "max_nanos": 271904,
+      "factor_count": 1,
+      "factor_degrees": [
+        26
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "conway",
+      "name": "conway_p5_n26",
+      "degree": 26,
+      "status": "ok",
+      "median_nanos": 499792,
+      "min_nanos": 479501,
+      "max_nanos": 528694,
+      "factor_count": 1,
+      "factor_degrees": [
+        26
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "conway",
+      "name": "conway_p7_n26",
+      "degree": 26,
+      "status": "ok",
+      "median_nanos": 529045,
+      "min_nanos": 508374,
+      "max_nanos": 562925,
+      "factor_count": 1,
+      "factor_degrees": [
+        26
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "conway",
+      "name": "conway_p2_n27",
+      "degree": 27,
+      "status": "ok",
+      "median_nanos": 739597,
+      "min_nanos": 558929,
+      "max_nanos": 919834,
+      "factor_count": 1,
+      "factor_degrees": [
+        27
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "conway",
+      "name": "conway_p3_n27",
+      "degree": 27,
+      "status": "ok",
+      "median_nanos": 213577,
+      "min_nanos": 209982,
+      "max_nanos": 239124,
+      "factor_count": 1,
+      "factor_degrees": [
+        27
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "conway",
+      "name": "conway_p5_n27",
+      "degree": 27,
+      "status": "ok",
+      "median_nanos": 358331,
+      "min_nanos": 351541,
+      "max_nanos": 360084,
+      "factor_count": 1,
+      "factor_degrees": [
+        27
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "conway",
+      "name": "conway_p7_n27",
+      "degree": 27,
+      "status": "ok",
+      "median_nanos": 589805,
+      "min_nanos": 567351,
+      "max_nanos": 633189,
+      "factor_count": 1,
+      "factor_degrees": [
+        27
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "conway",
+      "name": "conway_p2_n28",
+      "degree": 28,
+      "status": "ok",
+      "median_nanos": 283271,
+      "min_nanos": 280066,
+      "max_nanos": 288078,
+      "factor_count": 1,
+      "factor_degrees": [
+        28
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "conway",
+      "name": "conway_p3_n28",
+      "degree": 28,
+      "status": "ok",
+      "median_nanos": 299274,
+      "min_nanos": 297802,
+      "max_nanos": 305864,
+      "factor_count": 1,
+      "factor_degrees": [
+        28
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "conway",
+      "name": "conway_p5_n28",
+      "degree": 28,
+      "status": "ok",
+      "median_nanos": 837302,
+      "min_nanos": 824523,
+      "max_nanos": 867537,
+      "factor_count": 1,
+      "factor_degrees": [
+        28
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "conway",
+      "name": "conway_p7_n28",
+      "degree": 28,
+      "status": "ok",
+      "median_nanos": 665747,
+      "min_nanos": 642203,
+      "max_nanos": 702222,
+      "factor_count": 1,
+      "factor_degrees": [
+        28
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "conway",
+      "name": "conway_p2_n29",
+      "degree": 29,
+      "status": "ok",
+      "median_nanos": 379383,
+      "min_nanos": 377010,
+      "max_nanos": 412291,
+      "factor_count": 1,
+      "factor_degrees": [
+        29
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "conway",
+      "name": "conway_p3_n29",
+      "degree": 29,
+      "status": "ok",
+      "median_nanos": 231443,
+      "min_nanos": 230953,
+      "max_nanos": 235760,
+      "factor_count": 1,
+      "factor_degrees": [
+        29
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "conway",
+      "name": "conway_p5_n29",
+      "degree": 29,
+      "status": "ok",
+      "median_nanos": 323720,
+      "min_nanos": 318292,
+      "max_nanos": 325172,
+      "factor_count": 1,
+      "factor_degrees": [
+        29
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "conway",
+      "name": "conway_p7_n29",
+      "degree": 29,
+      "status": "ok",
+      "median_nanos": 343059,
+      "min_nanos": 331011,
+      "max_nanos": 392683,
+      "factor_count": 1,
+      "factor_degrees": [
+        29
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "conway",
+      "name": "conway_p2_n30",
+      "degree": 30,
+      "status": "ok",
+      "median_nanos": 676594,
+      "min_nanos": 662243,
+      "max_nanos": 727279,
+      "factor_count": 1,
+      "factor_degrees": [
+        30
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "conway",
+      "name": "conway_p3_n30",
+      "degree": 30,
+      "status": "ok",
+      "median_nanos": 359273,
+      "min_nanos": 353164,
+      "max_nanos": 362798,
+      "factor_count": 1,
+      "factor_degrees": [
+        30
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "conway",
+      "name": "conway_p5_n30",
+      "degree": 30,
+      "status": "ok",
+      "median_nanos": 881487,
+      "min_nanos": 870081,
+      "max_nanos": 904902,
+      "factor_count": 1,
+      "factor_degrees": [
+        30
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "conway",
+      "name": "conway_p7_n30",
+      "degree": 30,
+      "status": "ok",
+      "median_nanos": 946123,
+      "min_nanos": 918443,
+      "max_nanos": 977941,
+      "factor_count": 1,
+      "factor_degrees": [
+        30
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "conway",
+      "name": "conway_p2_n31",
+      "degree": 31,
+      "status": "ok",
+      "median_nanos": 732346,
+      "min_nanos": 715511,
+      "max_nanos": 753597,
+      "factor_count": 1,
+      "factor_degrees": [
+        31
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "conway",
+      "name": "conway_p3_n31",
+      "degree": 31,
+      "status": "ok",
+      "median_nanos": 272915,
+      "min_nanos": 271152,
+      "max_nanos": 279084,
+      "factor_count": 1,
+      "factor_degrees": [
+        31
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "conway",
+      "name": "conway_p5_n31",
+      "degree": 31,
+      "status": "ok",
+      "median_nanos": 296990,
+      "min_nanos": 295127,
+      "max_nanos": 300215,
+      "factor_count": 1,
+      "factor_degrees": [
+        31
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "conway",
+      "name": "conway_p7_n31",
+      "degree": 31,
+      "status": "ok",
+      "median_nanos": 659198,
+      "min_nanos": 643304,
+      "max_nanos": 693859,
+      "factor_count": 1,
+      "factor_degrees": [
+        31
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "conway",
+      "name": "conway_p2_n32",
+      "degree": 32,
+      "status": "ok",
+      "median_nanos": 588543,
+      "min_nanos": 560441,
+      "max_nanos": 624947,
+      "factor_count": 1,
+      "factor_degrees": [
+        32
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "conway",
+      "name": "conway_p3_n32",
+      "degree": 32,
+      "status": "ok",
+      "median_nanos": 357280,
+      "min_nanos": 353955,
+      "max_nanos": 359173,
+      "factor_count": 1,
+      "factor_degrees": [
+        32
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "conway",
+      "name": "conway_p2_n33",
+      "degree": 33,
+      "status": "ok",
+      "median_nanos": 1138309,
+      "min_nanos": 1116617,
+      "max_nanos": 1159220,
+      "factor_count": 1,
+      "factor_degrees": [
+        33
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "conway",
+      "name": "conway_p3_n33",
+      "degree": 33,
+      "status": "ok",
+      "median_nanos": 371671,
+      "min_nanos": 368026,
+      "max_nanos": 378442,
+      "factor_count": 1,
+      "factor_degrees": [
+        33
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "conway",
+      "name": "conway_p5_n33",
+      "degree": 33,
+      "status": "ok",
+      "median_nanos": 511799,
+      "min_nanos": 507663,
+      "max_nanos": 515845,
+      "factor_count": 1,
+      "factor_degrees": [
+        33
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "conway",
+      "name": "conway_p2_n34",
+      "degree": 34,
+      "status": "ok",
+      "median_nanos": 869089,
+      "min_nanos": 853696,
+      "max_nanos": 896270,
+      "factor_count": 1,
+      "factor_degrees": [
+        34
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "conway",
+      "name": "conway_p3_n34",
+      "degree": 34,
+      "status": "ok",
+      "median_nanos": 431750,
+      "min_nanos": 428326,
+      "max_nanos": 437839,
+      "factor_count": 1,
+      "factor_degrees": [
+        34
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "conway",
+      "name": "conway_p2_n35",
+      "degree": 35,
+      "status": "ok",
+      "median_nanos": 949227,
+      "min_nanos": 938102,
+      "max_nanos": 972973,
+      "factor_count": 1,
+      "factor_degrees": [
+        35
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "conway",
+      "name": "conway_p3_n35",
+      "degree": 35,
+      "status": "ok",
+      "median_nanos": 388216,
+      "min_nanos": 385942,
+      "max_nanos": 393414,
+      "factor_count": 1,
+      "factor_degrees": [
+        35
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "conway",
+      "name": "conway_p5_n35",
+      "degree": 35,
+      "status": "ok",
+      "median_nanos": 539089,
+      "min_nanos": 538358,
+      "max_nanos": 542525,
+      "factor_count": 1,
+      "factor_degrees": [
+        35
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "conway",
+      "name": "conway_p7_n35",
+      "degree": 35,
+      "status": "ok",
+      "median_nanos": 1443972,
+      "min_nanos": 1432385,
+      "max_nanos": 1479113,
+      "factor_count": 1,
+      "factor_degrees": [
+        35
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "conway",
+      "name": "conway_p2_n36",
+      "degree": 36,
+      "status": "ok",
+      "median_nanos": 934236,
+      "min_nanos": 913414,
+      "max_nanos": 957981,
+      "factor_count": 1,
+      "factor_degrees": [
+        36
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "conway",
+      "name": "conway_p3_n36",
+      "degree": 36,
+      "status": "ok",
+      "median_nanos": 490217,
+      "min_nanos": 485640,
+      "max_nanos": 516516,
+      "factor_count": 1,
+      "factor_degrees": [
+        36
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "conway",
+      "name": "conway_p5_n36",
+      "degree": 36,
+      "status": "ok",
+      "median_nanos": 973164,
+      "min_nanos": 959763,
+      "max_nanos": 999943,
+      "factor_count": 1,
+      "factor_degrees": [
+        36
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "conway",
+      "name": "conway_p7_n36",
+      "degree": 36,
+      "status": "ok",
+      "median_nanos": 1339496,
+      "min_nanos": 1328330,
+      "max_nanos": 1379807,
+      "factor_count": 1,
+      "factor_degrees": [
+        36
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "conway",
+      "name": "conway_p2_n37",
+      "degree": 37,
+      "status": "ok",
+      "median_nanos": 1247820,
+      "min_nanos": 1243364,
+      "max_nanos": 1264555,
+      "factor_count": 1,
+      "factor_degrees": [
+        37
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "conway",
+      "name": "conway_p3_n37",
+      "degree": 37,
+      "status": "ok",
+      "median_nanos": 378291,
+      "min_nanos": 374075,
+      "max_nanos": 386934,
+      "factor_count": 1,
+      "factor_degrees": [
+        37
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "conway",
+      "name": "conway_p5_n37",
+      "degree": 37,
+      "status": "ok",
+      "median_nanos": 437498,
+      "min_nanos": 434314,
+      "max_nanos": 440553,
+      "factor_count": 1,
+      "factor_degrees": [
+        37
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "conway",
+      "name": "conway_p7_n37",
+      "degree": 37,
+      "status": "ok",
+      "median_nanos": 917911,
+      "min_nanos": 912473,
+      "max_nanos": 946314,
+      "factor_count": 1,
+      "factor_degrees": [
+        37
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "conway",
+      "name": "conway_p2_n38",
+      "degree": 38,
+      "status": "ok",
+      "median_nanos": 1573984,
+      "min_nanos": 1568386,
+      "max_nanos": 1589057,
+      "factor_count": 1,
+      "factor_degrees": [
+        38
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "conway",
+      "name": "conway_p3_n38",
+      "degree": 38,
+      "status": "ok",
+      "median_nanos": 536957,
+      "min_nanos": 533752,
+      "max_nanos": 553241,
+      "factor_count": 1,
+      "factor_degrees": [
+        38
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "conway",
+      "name": "conway_p2_n39",
+      "degree": 39,
+      "status": "ok",
+      "median_nanos": 508114,
+      "min_nanos": 504638,
+      "max_nanos": 510748,
+      "factor_count": 1,
+      "factor_degrees": [
+        39
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "conway",
+      "name": "conway_p3_n39",
+      "degree": 39,
+      "status": "ok",
+      "median_nanos": 479942,
+      "min_nanos": 475275,
+      "max_nanos": 481194,
+      "factor_count": 1,
+      "factor_degrees": [
+        39
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "conway",
+      "name": "conway_p5_n39",
+      "degree": 39,
+      "status": "ok",
+      "median_nanos": 1231206,
+      "min_nanos": 1220651,
+      "max_nanos": 1260490,
+      "factor_count": 1,
+      "factor_degrees": [
+        39
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "conway",
+      "name": "conway_p2_n40",
+      "degree": 40,
+      "status": "ok",
+      "median_nanos": 1335161,
+      "min_nanos": 1316753,
+      "max_nanos": 1343653,
+      "factor_count": 1,
+      "factor_degrees": [
+        40
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "conway",
+      "name": "conway_p3_n40",
+      "degree": 40,
+      "status": "ok",
+      "median_nanos": 574391,
+      "min_nanos": 571056,
+      "max_nanos": 605037,
+      "factor_count": 1,
+      "factor_degrees": [
+        40
+      ]
+    },
+    {
+      "system": "hex-factor",
+      "family": "certificate-boundary",
+      "name": "quartic_a4",
+      "degree": 4,
+      "status": "ok",
+      "median_nanos": 51797,
+      "min_nanos": 50204,
+      "max_nanos": 65958,
+      "factor_count": 1,
+      "factor_degrees": [
+        4
+      ]
+    }
+  ],
+  "cross_check": {
+    "mismatches": [],
+    "ok": true
+  }
+}

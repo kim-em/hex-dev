@@ -105,7 +105,7 @@ Each dependency is used for a named thing and none is decorative.
   used in display and in the reconstruction bound, and `ratRecon?` for
   the exactification described under "Exactification". Reimplementing
   the truncated Euclidean run here would duplicate the one piece of
-  [hex-modular](hex-modular.md) that costs real work.
+  [hex-modular](../../HexModular/SPEC/hex-modular.md) that costs real work.
 - **hex-primality** supplies `CheckedPrimeCert p`. "The checked prime"
   explains what requires it and how the requirement is enforced.
 
@@ -1074,7 +1074,7 @@ theorem toRat?_complete (hr : a.rel? = some r)
 ```
 
 The implementation scales by `p^(-val)` to land in `ℤ_p`, reads the
-residue, calls [hex-modular](hex-modular.md)'s `ratRecon?` at modulus
+residue, calls [hex-modular](../../HexModular/SPEC/hex-modular.md)'s `ratRecon?` at modulus
 `p^r`, and **checks that the result lies in the ball** before returning
 it. `mem_toRat?` follows from the check alone and needs no bound
 hypothesis, exactly as [hex-modular-matrix](hex-modular-matrix.md)'s

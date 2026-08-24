@@ -14,6 +14,11 @@ public section
 /-!
 Coefficient embedding from dense polynomials over an exact-division domain to
 dense polynomials over its fraction field.
+
+This module is retained as proof infrastructure: `SubresultantMinor` maps
+generalized Sylvester minors through `Fraction.map` for its image
+certificates, and the manual embeds the pseudo-division transport and
+scalar-quotient pullback theorems.
 -/
 
 namespace Hex

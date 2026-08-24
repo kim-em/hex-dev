@@ -89,24 +89,6 @@ private theorem eval_ne_zero_of_dominates {q : Polynomial ℂ} {z : ℂ} {n : Na
         rw [norm_mul, norm_pow]
   exact (hcoeff.trans_lt hdom).false
 
-private theorem sum_erase_range {M : Type*} [AddCommMonoid M]
-    (f : ℕ → M) (n k : ℕ) :
-    (∑ i ∈ (Finset.range n).erase k, f i) =
-      ∑ i ∈ Finset.range n, if i = k then 0 else f i := by
-  classical
-  calc
-    (∑ i ∈ (Finset.range n).erase k, f i) =
-        ∑ i ∈ (Finset.range n).filter (fun i => i ≠ k), f i := by
-      congr 1
-      ext i
-      simp [and_comm]
-    _ = ∑ i ∈ Finset.range n, if i ≠ k then f i else 0 := by
-      rw [Finset.sum_filter]
-    _ = ∑ i ∈ Finset.range n, if i = k then 0 else f i := by
-      apply Finset.sum_congr rfl
-      intro i _
-      by_cases hik : i = k <;> simp [hik]
-
 /-- A successful root-exclusion test can only occur for a nonempty stored
 polynomial. -/
 theorem exactRootFree_size_pos {p : Hex.ZPoly} {s : Hex.DyadicSquare}
@@ -334,7 +316,6 @@ private theorem rootFreeLoop_ne_zero {p : Hex.ZPoly} {s : Hex.DyadicSquare}
   let R := Dyadic.toReal Hex.softSqrt2Hi
   have hrlo : 0 ≤ Dyadic.toReal Hex.softSqrt2Lo := by
     simp [Hex.softSqrt2Lo, Dyadic.toReal_ofIntWithPrec]
-    positivity
   have hlo : Dyadic.toReal Hex.softSqrt2Lo ≤ R := by
     change Dyadic.toReal Hex.sqrt2Lo ≤ Dyadic.toReal Hex.sqrt2Hi
     exact sqrt2Lo_lt_sqrt_two.le.trans sqrt_two_lt_sqrt2Hi.le

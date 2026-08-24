@@ -4,11 +4,15 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexBerlekamp.Irreducibility
-import HexBerlekamp.CertificateSyntax
-import HexPolyFp.Field
-import HexConway.Table
-import HexConway.Rebuild
+module
+
+public meta import HexBerlekamp.Irreducibility
+public meta import HexBerlekamp.CertificateSyntax
+public meta import HexPolyFp.Field
+public meta import HexConway.Table
+public meta import HexConway.Rebuild
+
+public section
 
 /-!
 Source generation for a single committed Conway-table entry.
@@ -52,7 +56,7 @@ open Lean Elab Command
 
 /-- Serialized Rabin certificate: the prime, the degree, the Frobenius pow
 chain, and the Bezout witness pairs, all as canonical `Nat` representatives. -/
-abbrev CertData := Nat × Nat × List (List Nat) × List (List Nat × List Nat)
+meta abbrev CertData := Nat × Nat × List (List Nat) × List (List Nat × List Nat)
 
 /-- Compute the Rabin irreducibility certificate for `C(p, n)` from its
 coefficient list, serialized to plain `Nat` data.
@@ -60,7 +64,7 @@ coefficient list, serialized to plain `Nat` data.
 Returns `none` when the modulus is out of `ZMod64` range, when the coefficient
 list is not monic, or when the polynomial fails Rabin's test, which for a
 correctly transcribed Conway entry means the transcription is wrong. -/
-def entryCertData (p : Nat) (coeffs : List Nat) : Option CertData :=
+meta def entryCertData (p : Nat) (coeffs : List Nat) : Option CertData :=
   if h0 : 0 < p then
     if h1 : p < 2 ^ 31 then
       haveI : Hex.ZMod64.Bounds p := ⟨h0, h1⟩
@@ -82,7 +86,7 @@ def entryCertData (p : Nat) (coeffs : List Nat) : Option CertData :=
 
 This is the same predicate the emitted kernel check uses, so a `true` here means
 the emitted entry will elaborate, and a `false` means it will not. -/
-def entryCertValidates (p : Nat) (coeffs : List Nat) (cert : CertData) : Bool :=
+meta def entryCertValidates (p : Nat) (coeffs : List Nat) (cert : CertData) : Bool :=
   if h0 : 0 < p then
     if h1 : p < 2 ^ 31 then
       haveI : Hex.ZMod64.Bounds p := ⟨h0, h1⟩
@@ -109,7 +113,7 @@ def entryCertValidates (p : Nat) (coeffs : List Nat) (cert : CertData) : Bool :=
 /-- Render a coefficient list as the `FpPoly` literal the committed entries use:
 the first residue carries the type ascription that fixes `p`, and the empty list
 needs the ascription on the array instead. -/
-def renderCoeffs (p : Nat) (coeffs : List Nat) : String :=
+meta def renderCoeffs (p : Nat) (coeffs : List Nat) : String :=
   match coeffs with
   | [] => s!"FpPoly.ofCoeffs (#[] : Array (ZMod64 {p}))"
   | c :: rest =>
@@ -118,14 +122,14 @@ def renderCoeffs (p : Nat) (coeffs : List Nat) : String :=
 
 /-- An opening brace, kept as a binding so the templates below can mention one
 without colliding with string interpolation. -/
-private def lb : String := "{"
+private meta def lb : String := "{"
 
 /-- A closing brace, the counterpart of {name}`Hex.Conway.EntrySource.lb`. -/
-private def rb : String := "}"
+private meta def rb : String := "}"
 
 /-- Render the table-hit lemma, whose closing `match` needs one `rfl` arm per
 stored coefficient plus a catch-all for the positions above the degree. -/
-def hitLemma (p n : Nat) (coeffs : List Nat) (name : String) : String :=
+meta def hitLemma (p n : Nat) (coeffs : List Nat) (name : String) : String :=
   let listLit := "[" ++ String.intercalate ", " (coeffs.map toString) ++ "]"
   let arms := (List.range coeffs.length).map fun i => s!"  | {i} => rfl"
   String.intercalate "\n"
@@ -148,7 +152,7 @@ def hitLemma (p n : Nat) (coeffs : List Nat) (name : String) : String :=
 
 /-- Render the coefficient-list transports and the `SupportedEntry` witness that
 `HexConway.Api` carries for each committed entry. -/
-def apiBlock (p n : Nat) (coeffs : List Nat) (name : String) : String :=
+meta def apiBlock (p n : Nat) (coeffs : List Nat) (name : String) : String :=
   let listLit := "[" ++ String.intercalate ", " (coeffs.map toString) ++ "]"
   let ofCoeffs := s!"luebeckConwayPolynomialOfCoeffs {p} {listLit}"
   String.intercalate "\n"
@@ -182,6 +186,7 @@ def apiBlock (p n : Nat) (coeffs : List Nat) (name : String) : String :=
       s!"  exact {name}_monic",
       "",
       s!"/-- The current committed table supports `C({p}, {n})`. -/",
+      "@[expose]",
       s!"def supportedEntry_{p}_{n} : SupportedEntry {p} {n} :=",
       s!"  ⟨{name},",
       s!"    supportedEntry_{p}_1.prime,",
@@ -196,7 +201,7 @@ def apiBlock (p n : Nat) (coeffs : List Nat) (name : String) : String :=
 /-- Render the per-entry source block for `(p, n)`: the table-side literal with
 its monic and degree lemmas, then the certificate side with its kernel check and
 the irreducibility theorem. -/
-def entryBlock (p n : Nat) (coeffs : List Nat) (cert : CertData) : String :=
+meta def entryBlock (p n : Nat) (coeffs : List Nat) (cert : CertData) : String :=
   let name := s!"luebeckConwayPolynomial_{p}_{n}"
   let cert_ := s!"cert_{p}_{n}"
   let coeffLit :=
@@ -212,6 +217,7 @@ def entryBlock (p n : Nat) (coeffs : List Nat) (cert : CertData) : String :=
     [ "-- Add to HexConway/Table.lean:",
       "",
       s!"/-- The committed `C({p}, {n})` Luebeck entry, stored ascending by degree. -/",
+      "@[expose]",
       s!"def {name} : FpPoly {p} :=",
       s!"  {lb} coeffs := {coeffLit}",
       "    normalized := by",
@@ -272,7 +278,7 @@ syntax (name := conwayEntrySource)
   "#conway_entry_source" num num (&"from" str)? : command
 
 @[command_elab conwayEntrySource]
-def elabEntrySource : CommandElab := fun stx => do
+meta def elabEntrySource : CommandElab := fun stx => do
   let p := stx[1].isNatLit?.getD 0
   let n := stx[2].isNatLit?.getD 0
   let pathArg := stx[3]

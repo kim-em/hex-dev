@@ -1,0 +1,17 @@
+Independently reviewed against HexPolyZGcd/SPEC/hex-poly-z-gcd.md.
+
+The executable audit covered exact division, checked gcd certificates,
+modular coprimality witnesses, heuristic reconstruction, Brown CRT
+reconstruction, the extended-subresultant fallback, structural reduction,
+public gcd/cofactor/lcm operations, and squarefree decomposition.  Every
+producer is checked before acceptance, the deterministic fallback constructs
+real certificate data, and no data-level placeholder, wrong-shape algorithm,
+fake extern, or native-type detour remains.
+
+Issues #9446--#9449 record the review findings: bounded Brown reconstruction,
+exact-division prefilters, structural certificates, and dummy totalizations.
+Their fixes are present in the reviewed tree.  Verification modules live in
+the explicit development-test target rather than the public umbrella.
+
+The remaining `sorry` declarations are theorem-level proof obligations for
+Phase 5.
