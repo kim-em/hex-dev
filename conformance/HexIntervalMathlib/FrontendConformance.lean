@@ -410,8 +410,9 @@ def computedEvidence? :=
 
 #guard match computedEvidence? with | .ok _ => true | .error _ => false
 
-/-- Actual zero-event replay resolves the selected computed-node version-zero
-fact through `Proof.initialBase`; no hand-constructed evidence bypasses replay. -/
+/-- The replay guard above accepts the selected computed-node version-zero fact.
+The kernel evidence below resolves the same fact through `Proof.initialBase`,
+without a caller-constructed assumption list. -/
 private theorem computedSize : computedInput.facts.size = computedInput.program.nodes.size := by
   decide +kernel
 
