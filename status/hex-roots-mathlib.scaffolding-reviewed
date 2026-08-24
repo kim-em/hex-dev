@@ -1,0 +1,40 @@
+Phase-2 scaffolding review of HexRootsMathlib, 2026-08-22, performed by
+a non-author reviewer agent against HexRootsMathlib/SPEC/hex-roots-mathlib.md
+at origin/main (review basis 8049b20d5; token lands with the 0->2 bump).
+
+Audit lenses applied: placeholder-body audit over all 95 public
+def/abbrevs, banned-marker sweep (sorry, axiom, native_decide, TODO,
+FIXME, stub, placeholder, set_option escapes, commented-out
+declarations, @[extern]) over all 41 modules, wrong-shape/native-type
+audit, SPEC-vs-source signature comparison for every SPEC-named
+declaration, naming-convention pass, instance-coherence pass, and CI
+reachability of the regression surface.
+
+Results. Every banned-marker count is zero. All 38 SPEC-declared
+modules exist; every SPEC-named theorem exists with a matching
+statement, including exact reproduction of the completeness constants
+(PelletDyadic 2|a| + (2R+5|a|)((1+R/d)^m - 1) < r; PelletConverse
+|a| + (rho+3|a|)E < rho; NKConverse (1+4R/d)^m - 1 <= 1/32; PelletTail
+remote-tail bound). The noncomputable Classical.choice extractions
+(RefinedIsolation.root, isolate!) are correct proof-facing selections,
+each paired with a characterisation theorem; the SPEC promises no
+executability from this layer. Zero typeclass instances by documented
+design, so no coherence risk. The Examples regression surface is
+CI-reachable through four independent paths (default_target lib,
+HexReleaseTests, HEX_LIB_TARGETS, and the release-manifest test_modules
+equality check).
+
+Findings and dispositions. SPEC drift was one-directional (source
+ahead of SPEC) and is fixed with this review: the isolate! total
+consumption surface (IsolateTotal.lean) and Examples.lean are now
+declared, Completeness/RefinementCompleteness.lean is in the file
+table, the witness-implies-Pellet attribution moved from Geometry.lean
+to Pellet.lean (pelletAt_dominates), and a dangling sentence fragment
+in the DriverCompleteness clause is repaired. Code-level hygiene items
+(triplicated private helpers sum_erase_range and the mapM extraction
+lemmas; the vacuously-hypothesised same-file alias
+intersects_iff_root_eq_of_simple whose one call site is
+HexNumberFieldMathlib/Basic.lean:380; six unreferenced
+ArgumentTopology.lean declarations; dead-declaration candidates) are
+filed as issue #9384 for the scheduled Phase-6 pass. No data-level
+placeholder, no weakened SPEC theorem, and no blocking gap was found.

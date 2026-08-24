@@ -278,6 +278,37 @@ theorem eval₂_toPolynomial {S : Type*} [Semiring R] [DecidableEq R] [Semiring 
   rw [Polynomial.eval₂_finsetSum]
   exact Finset.sum_congr rfl fun i _ => Polynomial.eval₂_monomial f x
 
+/-- Horner list evaluation as a range sum, the shape Mathlib's
+`Polynomial.eval` lemmas produce. -/
+private theorem evalCoeffList_eq_sum [Semiring R] (l : List R) (x : R) :
+    Hex.DensePoly.evalCoeffList l x
+      = ∑ i ∈ Finset.range l.length, l.getD i 0 * x ^ i := by
+  induction l with
+  | nil =>
+      rw [show Hex.DensePoly.evalCoeffList ([] : List R) x = (0 : R)
+        from rfl]
+      simp
+  | cons c cs ih =>
+      rw [show Hex.DensePoly.evalCoeffList (c :: cs) x
+          = Hex.DensePoly.evalCoeffList cs x * x + c from rfl, ih,
+        List.length_cons, Finset.sum_range_succ', Finset.sum_mul]
+      simp [pow_succ, mul_assoc]
+
+/-- Mathlib evaluation of a converted dense polynomial is the
+executable dense Horner evaluation. -/
+@[simp]
+theorem eval_toPolynomial [Semiring R] [DecidableEq R]
+    (p : Hex.DensePoly R) (x : R) :
+    (toPolynomial p).eval x = p.eval x := by
+  show (∑ i ∈ Finset.range p.size,
+    Polynomial.monomial i (p.coeff i)).eval x
+      = Hex.DensePoly.evalCoeffList p.toList x
+  rw [Polynomial.eval_finsetSum, evalCoeffList_eq_sum,
+    Hex.DensePoly.length_toList]
+  refine Finset.sum_congr rfl fun i _ => ?_
+  rw [Polynomial.eval_monomial]
+  exact congrArg (· * x ^ i) (Hex.DensePoly.toList_getD_eq_coeff p i).symm
+
 /-- {name}`ofPolynomial` sends Mathlib's zero polynomial to the executable zero. -/
 @[simp, grind =]
 theorem ofPolynomial_zero [Semiring R] [DecidableEq R] :

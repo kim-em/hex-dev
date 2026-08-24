@@ -8,7 +8,10 @@ import re
 import tomllib
 
 
-KNOWN_EXCEPTIONS = {"Hex", "HexManual"}
+# Repo-root modules that carry a `lean_lib` but are not project libraries:
+# `Hex` is the shared test/bench helper, `HexManual` the Verso manual, and
+# `HexAggregateCheck` the mirror of the released aggregate's umbrella.
+KNOWN_EXCEPTIONS = {"Hex", "HexManual", "HexAggregateCheck"}
 # Build-only lean_libs that build the per-library bench/conformance drivers under
 # `bench/` and `conformance/`. They are not project libraries (no libraries.yml
 # entry, no repo-root file); exempt them from the Lake-config alignment check only.
@@ -18,10 +21,12 @@ BUILD_ONLY_LIBS = {
     "HexBerlekampKernelProbe",
     "HexPrimalityKernelProbe",
     "HexMvPolyBenchSupport",
+    "HexModularBenchSupport",
     "HexMvPolyMathlibProofProbe",
     "HexIntervalExperiment",
     "HexIntervalMathlibExperiment",
     "HexIntervalPntFks2Local",
+    "HexIntervalPntFks2ConformanceLocal",
     "HexIntervalReplayProbe",
     "HexIntervalMathlibReplayProbe",
     "HexRealRootsMathlibReplayProbe",
@@ -30,8 +35,10 @@ BUILD_ONLY_LIBS = {
     "HexRCFProofProbeScientific",
     "HexConformance",
     "HexFactorizationModules",
+    "HexMvFactorizationTests",
     "HexReleaseTests",
     "HexRCFTests",
+    "HexSparsePolyTests",
     "HexReleaseExamples",
 }
 EXTERNAL_IMPORT_ROOTS = {"Mathlib", "Verso"}

@@ -1496,7 +1496,7 @@ operators. `hex-invariant-factors` depends on this library, supplies
 above.
 
 A naming warning for whoever writes that library: **it must not be
-called `hex-rcf`.** [hex-rcf](hex-rcf.md) in this project is the
+called `hex-rcf`.** [hex-rcf](../../HexRCF/SPEC/hex-rcf.md) in this project is the
 real-closed-field decision procedure and the `rcf` tactic, and the
 abbreviation collides exactly.
 

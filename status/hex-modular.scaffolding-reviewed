@@ -1,0 +1,17 @@
+Independently reviewed against HexModular/SPEC/hex-modular.md.
+
+The executable audit covered symmetric representatives, scalar and vector
+Garner updates, truncated Euclid, scalar and vector rational reconstruction,
+and the fuelled modular loop.  The algorithms use the required outer
+reduction, share the vector extended-gcd work, validate reconstruction
+candidates before returning them, and contain no data-level placeholder or
+wrong-shape implementation.
+
+Issue #9445 records the missing loop-state provenance theorem needed by
+downstream formal clients.  It is a theorem/API follow-up rather than a
+data-level scaffolding defect.  Verification canaries are kept outside the
+public umbrella through the explicit development-test target, and the
+adjacent csimp aliases found by the review have been removed.
+
+The remaining `sorry` declarations are theorem-level proof obligations for
+Phase 5.

@@ -32,26 +32,36 @@ The `Equiv`s are computable, the `Fintype` instances deliberately are not: the
 carriers have `2 ^ n` elements, so a compiled `Finset.univ` over one is a
 footgun rather than a feature.
 
-**Algebraic structure.** `CommRing GF2Poly` and, for a nonconstant modulus,
-`Field (GF2nPoly f hirr)` are built with Mathlib's minimal-axioms constructors
-from the laws hex-gf2 already proves, so the operations stay the executable
-ones: `*` on the `CommRing` is packed carry-less multiplication, and `p * q =
-GF2Poly.mul p q` closes by `rfl`. Building them by transport along the ring
-equivalence instead would attach the right laws to the wrong operations.
+**Algebraic structure.** `CommRing GF2Poly`, `EuclideanDomain GF2Poly`, `Field
+(GF2n n irr hn hn64 hirr)`, and, for a nonconstant modulus, `Field (GF2nPoly f
+hirr)` are built from laws hex-gf2 already proves. The `GF2Poly` multiplication,
+division, and remainder stay the executable packed operations. The primitive
+operations accepted by the field constructor stay executable too; for `GF2n`,
+the default subtraction and division also agree definitionally with the packed
+API. Thus both `p * q = GF2Poly.mul p q` and `a * b = GF2n.mul a b` close by
+`rfl`. The remaining derived hierarchy operations use Mathlib's constructor
+defaults. Building the structures by transport along the ring equivalences
+instead would attach the right laws to the wrong operations.
+
+The Euclidean relation measures zero at `0` and a nonzero polynomial at one
+greater than its degree. The remainder-decrease proof is therefore exactly
+`GF2Poly.mod_degree_lt`, including the zero-remainder case, while multiplication
+of nonzero polynomials cannot lower the measure. The `GCDMonoid` instance is
+built directly from `GF2Poly.gcd_dvd_left`, `gcd_dvd_right`, and `dvd_gcd`, so
+`GCDMonoid.gcd p q = GF2Poly.gcd p q` holds definitionally. Mathlib's Bezout,
+principal-ideal, and unique-factorization interfaces are consequently available
+without replacing the packed arithmetic. The separately recursive
+`EuclideanDomain.gcd` is proved equal to `GF2Poly.gcd` by
+`GF2Poly.euclidean_gcd_eq_packed`, using antisymmetry of divisibility over
+`F₂[x]`, so Mathlib's explicit Euclidean Bezout theorem has the same gcd value.
+The `GCDMonoid` class also requires an `lcm`; that projection is supplied
+noncomputably by Mathlib's constructor and is not a packed executable API.
 
 The field instance takes `Fact (0 < f.degree)`. The degree hypothesis is not
 redundant: `GF2Poly.Irreducible` admits the constant `1`, and `GF2nPoly 1 _` is
 the trivial ring where `0 = 1`, so neither `zero_ne_one` nor characteristic two
 holds for every modulus the type accepts. hex-gfq-field avoids the same trap by
 carrying the degree bound as a type parameter.
-
-`GF2n` has no Mathlib `Field` instance yet, because hex-gf2 does not prove its
-ring laws as bare theorems the way it does for `GF2Poly` and `GF2nPoly`;
-reaching Mathlib from a `GF2n` today means going through
-`GF2n.equiv`. `EuclideanDomain GF2Poly` is also outstanding, and is not simply
-more of the same: hex-gf2 already defines `Div` and `Mod` on `GF2Poly`, and
-`EuclideanDomain` supplies its own, so the two have to be reconciled rather
-than stacked.
 
 The computational hex-gf2 library stays Mathlib-free.
 

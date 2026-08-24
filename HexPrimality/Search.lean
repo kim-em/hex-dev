@@ -56,7 +56,8 @@ than accidentally reuse the same failed stream. -/
 structure RhoFailure where
   /-- Why the search stopped. -/
   stop : RhoStop
-  /-- How many restart attempts were consumed. -/
+  /-- Restart attempts consumed by this failing search alone; callers
+  running several searches accumulate their own totals. -/
   attempts : Nat
   /-- The advanced generator state. -/
   rand : Rand
@@ -388,7 +389,8 @@ deriving Repr, DecidableEq
 structure PrimeCertFailure where
   /-- Why the search stopped. -/
   stop : PrimeCertStop
-  /-- How many attempts were consumed. -/
+  /-- Attempts consumed by the subsearch that failed; earlier successful
+  subsearches (witnesses found, factors split) are not accumulated. -/
   attempts : Nat
   /-- The advanced generator state. -/
   rand : Rand
@@ -396,7 +398,8 @@ deriving Repr
 
 /-- A resumable bounded-decision failure. -/
 structure PrimeDecisionFailure where
-  /-- How many attempts were consumed. -/
+  /-- Attempts consumed by the failing certificate subsearch (see
+  `PrimeCertFailure.attempts`). -/
   attempts : Nat
   /-- The advanced generator state. -/
   rand : Rand
@@ -404,7 +407,8 @@ deriving Repr
 
 /-- A resumable next-prime-search failure. -/
 structure NextPrimeFailure where
-  /-- How many candidates were examined. -/
+  /-- Candidates conclusively rejected before the failure; the candidate
+  whose decision failed is not counted. -/
   attempts : Nat
   /-- The advanced generator state. -/
   rand : Rand
