@@ -712,6 +712,11 @@ libraries:
     mathlib: true
     done_through: 7
     status: active
+  HexPrimalityMathlib:
+    deps: [HexPrimality]
+    mathlib: true
+    done_through: 0
+    status: active
   HexBerlekampZassenhausMathlib:
     deps: [HexBerlekampZassenhaus, HexBerlekampMathlib, HexHenselMathlib, HexPolyZMathlib, HexMatrixMathlib, HexLLLMathlib]
     mathlib: true

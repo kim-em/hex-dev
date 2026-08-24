@@ -1062,12 +1062,12 @@ HexPrimalityMathlib.lean
     deps: [HexArith, HexBasic]
     mathlib: false
     done_through: 0
-    status: draft
+    status: active
   HexPrimalityMathlib:
     deps: [HexPrimality]
     mathlib: true
     done_through: 0
-    status: draft
+    status: active
 ```
 
 `HexBasic` is required for `Hex.Rand`; array and bit-manipulation shims
