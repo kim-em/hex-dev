@@ -196,7 +196,33 @@ theorem contentCertWith_checks {R : Type u}
 /-- Scalar content and primitive part reconstruct the input. -/
 theorem content_mul_primPart [LawfulGcdOps R] (p : MvPoly n R cmp) :
     C (content p) * primPart p = p := by
-  sorry
+  by_cases hc : content p = 0
+  · have hp : p = 0 := by
+      apply ext
+      intro m
+      have hdiv := scalarContent_dvd_coeff p m
+      rw [← content, hc] at hdiv
+      rcases (LawfulGcdOps.dvd_iff 0 (coeff m p)).mp hdiv with ⟨q, hq⟩
+      rw [hq, Lean.Grind.Semiring.zero_mul, coeff_zero]
+    subst p
+    have hcontent : content (0 : MvPoly n R cmp) = 0 := rfl
+    rw [hcontent, primPart, hcontent, Hex.ite_eq_left rfl]
+    rw [C_zero]
+    exact zero_mul _
+  · apply ext
+    intro m
+    have hzero : GcdOps.exactDiv (0 : R) (content p) = 0 := by
+      simpa only [Lean.Grind.Semiring.zero_mul] using
+        LawfulGcdOps.exactDiv_cancel (0 : R) (content p) hc
+    rw [coeff_C_mul, primPart, Hex.ite_eq_right hc,
+      coeff_mapCoeffs hzero]
+    have hdiv := scalarContent_dvd_coeff p m
+    rw [← content] at hdiv
+    rcases (LawfulGcdOps.dvd_iff (content p) (coeff m p)).mp hdiv with
+      ⟨q, hq⟩
+    rw [hq, Lean.Grind.CommSemiring.mul_comm (content p) q,
+      LawfulGcdOps.exactDiv_cancel q (content p) hc,
+      Lean.Grind.CommSemiring.mul_comm]
 
 @[simp] theorem content_zero : content (0 : MvPoly n R cmp) = 0 := by
   rfl
