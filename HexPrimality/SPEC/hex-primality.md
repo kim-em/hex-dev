@@ -558,13 +558,44 @@ private theorem partialFactor_prod (n r fuel) (hn : 0 < n) :
 
 hex-int-factor reuses `rhoFactor?` rather than introducing a second rho.
 Brent's cycle detection is already part of the lower primitive; the
-higher library adds structural reductions, `p - 1`, ECM,
-complete-factorization assembly, and their dispatch.
+higher library adds structural reductions, ECM, complete-factorization
+assembly, and their dispatch. The routes by which its advances flow
+back into this library's search are fixed below.
 
 **The multiplicative order is the new development**, and it is the
 thing to build first because [hex-int-factor](../../SPEC/Libraries/hex-int-factor.md) needs
 it too, for its primitive-root API. It belongs here, in
 `HexPrimality/Order.lean`, and hex-int-factor consumes it.
+
+### Taking up downstream factoring advances
+
+hex-int-factor's stronger factorization reaches this library's search
+without inverting the proof dependency, in three ways:
+
+1. **Certificate hand-off** (works today). `PrimeCert` is plain data
+   and `checkPrime` accepts a certificate from any producer, so a
+   caller that factors `n - 1` better than `partialFactor` assembles
+   the node itself and lets the checker decide. hex-int-factor needs
+   exactly this to prove its own certificate's factors prime.
+2. **Shared stage-1 primitives sit here.** `rhoFactor?` does, and
+   Pollard `p − 1` stage 1 joins it beside rho when hex-int-factor
+   lands, under the same dynamically validated proper-factor contract
+   and resumable-failure shape: both libraries want it, and it widens
+   `partialFactor`'s reach cheaply. ECM stays downstream; curve
+   arithmetic is a real dependency, not a shared primitive.
+3. **An optional search hook**, deferred until hex-int-factor exists to
+   consume it. A `primeCert?With
+   (factor : Nat → Rand → Nat → PartialFactors × Rand)` variant
+   parameterizes the untrusted search (defaulting to `partialFactor`),
+   and the `primality` tactic and companion `norm_num` extension may
+   additionally consult an elaboration-time provider that downstream
+   libraries register by well-known name (the
+   `Hex.FactorTactic.Provider` pattern), so importing hex-int-factor
+   transparently strengthens the tactic. This is the one route that
+   adds public API surface, which is why it waits for its consumer.
+
+Soundness is indifferent to all three: whatever finds the factors, the
+kernel replays `checkPrime`.
 
 ## Initial segments
 
@@ -1108,3 +1139,6 @@ may add further uses, but the dependency does not depend on them.
   here because its only two consumers are this library's certificate
   search and [hex-int-factor](../../SPEC/Libraries/hex-int-factor.md), and moving it down
   would put Pollard rho in the arithmetic root for no present gain.
+  Pollard `p − 1` stage 1 will join it here for the same two consumers
+  (see "Taking up downstream factoring advances"), which sharpens the
+  question rather than settling it.
