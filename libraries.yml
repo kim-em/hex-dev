@@ -153,8 +153,31 @@ libraries:
   HexMvGcd:
     deps: [HexBasic, HexMvPoly, HexPoly, HexPolyFp, HexResultant, HexArith, HexModArith, HexModular, HexPolyZGcd]
     mathlib: false
-    done_through: 2
+    done_through: 3
     status: active
+    phase4:
+      comparators:
+        - tool: FLINT fmpz_mpoly_gcd via python-flint
+          class: informational
+          rationale: FLINT also dispatches to Zippel and sparse Hensel routes that this library does not implement; the coprime family is the like-for-like comparison.
+        - tool: Singular
+          class: informational
+          rationale: Singular likewise has sparse routes outside this SPEC, so its ratios diagnose representation and route coverage rather than gate release.
+      input_families:
+        - name: coprime-pairs
+          description: Dense and sparse coprime inputs in 2 to 8 variables, isolating the modular coprimality route.
+        - name: dense-gcds
+          description: Dense inputs in 3 to 5 variables with degree 5 to 20 in each variable, isolating Brown interpolation.
+        - name: sparse-stress
+          description: High-degree, few-term inputs in 5 to 12 variables recording the known absence of a sparse route.
+        - name: swell
+          description: Small inputs whose extended subresultant remainder sequence develops large coefficients.
+        - name: rational
+          description: Integer-family shapes over rationals, exercising denominator clearing and integer lifting.
+        - name: squarefree
+          description: Multiplicity patterns 1, 1-through-5, 7, and 2-3-5-7 in 2 to 5 variables.
+        - name: cofactor-heavy
+          description: Small gcds with large cofactors, isolating checked multivariate exact division.
   HexSparsePoly:
     deps: [HexPoly, HexBasic]
     mathlib: false

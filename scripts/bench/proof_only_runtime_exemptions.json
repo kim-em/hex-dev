@@ -888,10 +888,10 @@
     "reason": "Adds a persistent external-comparator driver used only by HexModularBench; no factorization runtime module imports it."
   },
   {
-    "path": "lakefile.lean",
-    "baseline_blob": "a1b87406682dbf908d990f01676f326499b906e5",
-    "current_blob": "f429150001cdfe913842fd157f5546c8772a0823",
-    "reason": "Registers the HexModular benchmark executable and its bench-only support library on top of the sparse-release and conformance registrations; no factorization runtime target, definition, build flag, or dependency changes."
+    "path": "Hex/Conformance/Emit.lean",
+    "baseline_blob": "21481a92862c6a9f8c8d538c4815d2bc4557453a",
+    "current_blob": "64d83363de132e0b02be9beae25d28b3f377636a",
+    "reason": "Combines the current conformance JSON serializers with the multivariate-gcd fixture emitters; no factorization runtime module imports the conformance helper."
   },
   {
     "path": "Hex/Conformance/Emit.lean",
@@ -946,5 +946,11 @@
     "baseline_blob": "a1b87406682dbf908d990f01676f326499b906e5",
     "current_blob": "d7a6b7f5c4576d3435ffa5f39cb8bee459abd555",
     "reason": "Combines current main's build-only registrations with the proof-side HexIntervalMathlib.RuntimeRuleConformance and RuntimeEmitConformance registrations; none enters hexbz_factor_service or changes a factorization runtime library, executable definition, or build flag."
+  },
+  {
+    "path": "lakefile.lean",
+    "baseline_blob": "a1b87406682dbf908d990f01676f326499b906e5",
+    "current_blob": "ce28c059fd9412e7f82e0dd5a482911ccd29b0ef",
+    "reason": "Combines current main's build-only, conformance, fixture, benchmark, and proof-side interval registrations with the HexMvGcd conformance executables; none changes a factorization runtime target, definition, build flag, or dependency."
   }
 ]
