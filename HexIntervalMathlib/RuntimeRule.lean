@@ -48,7 +48,7 @@ structure Cause where
   body : List Nat
   deriving DecidableEq, Repr
 
-/-- The private executable cache records committed callback count. Its logical
+/-- The executable cache records committed callback count. Its logical
 measure makes retained callback history independently resource-bounded. -/
 structure Cache where
   calls : Nat := 0

@@ -938,7 +938,7 @@
   {
     "path": "lakefile.lean",
     "baseline_blob": "a1b87406682dbf908d990f01676f326499b906e5",
-    "current_blob": "f6e849c9cda52a76d1b4a111545755726e6dad06",
-    "reason": "Registers the build-only sparse, modular, and multivariate verification/conformance/fixture/benchmark targets, moves HexModular.LoopTests into the build-only test umbrella, and adds the proof-side HexIntervalMathlib.RuntimeTerminalConformance and RuntimeRuleConformance globs; none enters hexbz_factor_service or changes a factorization runtime library, executable definition, or build flag."
+    "current_blob": "b6feee43b834c71a5531fd02fb527756bd4a7a3d",
+    "reason": "Combines current main's build-only verification, conformance, fixture, benchmark, and truncated-series registrations with the proof-side HexIntervalMathlib.RuntimeRuleConformance registration; none enters hexbz_factor_service or changes a factorization runtime library, executable definition, or build flag."
   }
 ]

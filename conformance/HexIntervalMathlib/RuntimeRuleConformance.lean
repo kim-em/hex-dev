@@ -28,9 +28,9 @@ private def liftOption {α : Type} : Option α → Option (ULift.{1, 0} α)
   | some value => some ⟨value⟩
   | none => none
 
-/-- error: Unknown constant `Hex.Interval.Rule.Runtime.Registry.mk` -/
+/-- error: Unknown constant `Hex.Interval.RuntimeProof.Registry.mk` -/
 #guard_msgs in
-#check Rule.Runtime.Registry.mk
+#check RuntimeProof.Registry.mk
 
 def d (value : Int) : Dyadic := .ofInt value
 
@@ -167,6 +167,58 @@ private def exactFact (index : Nat)
     (List.range 12).all fun index =>
       transitions[index]?.any (exactFact index)
 
+/-! ## Distinct operand order -/
+
+def distinctProgram : Program :=
+  { operations := Rule.operations
+    nodes :=
+      #[node 0 [], node 0 [], node 3 [0, 1], node 11 [0, 1]] }
+
+def distinctFacts : Array Hex.Interval :=
+  #[point 1, point 2, Hex.Interval.whole, Hex.Interval.whole]
+
+def distinctRegistry? : Option (Rule.Runtime.Registry config) :=
+  (Rule.Runtime.buildWithin executableLimits proofLimits
+    { name := "arithmetic-runtime-distinct", version := 1 }
+    config distinctProgram).toOption
+
+def distinctRuntime? : Option
+    (Hex.Interval.Runtime.State Hex.Interval Rule.Runtime.Cause) :=
+  match distinctRegistry?,
+      State.Branch.startWithin stateLimits distinctProgram distinctFacts with
+  | some registry, .ok branch =>
+      (Hex.Interval.Runtime.State.startWithin runtimeLimits
+        registry.assembly branch).toOption
+  | _, _ => none
+
+def distinctAction (serial application rule node : Nat) (key : RuleKey) : Action :=
+  { serial, programVersion := 0, application := { index := application },
+    rule := { index := rule }, key, node := { index := node },
+    kind := .forward, effort := 0, inputs := [seen 0 0, seen 1 0],
+    writes := [{ index := node }] }
+
+def distinctActions : List Action :=
+  [distinctAction 0 0 2 2 Rule.subKey,
+   distinctAction 1 1 10 3 Rule.divKey]
+
+def distinctRun? := distinctRuntime?.bind fun state => run state distinctActions
+
+private def proposedAt (index : Nat)
+    (transitions : Array (Hex.Interval.Runtime.Applied Hex.Interval Rule.Runtime.Cause)) :
+    Option Hex.Interval := do
+  let transition ← transitions[index]?
+  let event ← transition.events[0]?
+  match event with
+  | .fact step => some step.proposed
+  | _ => none
+
+#guard distinctProgram.check
+#guard distinctRun?.any fun (transitions, state) =>
+  transitions.size == 2 && state.serial == 2 &&
+    proposedAt 0 transitions == Rule.ready? (subWithin endpoint (point 1) (point 2)) &&
+    proposedAt 1 transitions == Rule.arithmeticReady?
+      (divWithin config.precisionLimits config.precision (point 1) (point 2))
+
 /-! ## Retained quotation without a terminal -/
 
 def searchLimits : Search.Limits :=
@@ -269,23 +321,20 @@ def checked? : Option (RuntimeTerminal.Checked Hex.Interval
   let lineage ← (active.targetWithin resultLimits measure (seen 12 1)).toOption
   (lineage.quoteWithin adapterLimits measure).toOption
 
-/-- This calls the theorem fold owned by the checked token, then transports its
-dependent result only after confirming the token retained this exact input. -/
+/-- This calls the theorem fold owned by the checked token through its exact
+anti-transplant entry point. -/
 def replay? : Option (Proof.Evidence ((Rule.semantics config).Entails input.program
     (Proof.initialBase input) input.target)) :=
-  match checked? with
-  | none => none
-  | some checked =>
-      match RuntimeTerminal.Checked.replay adapterLimits measure
-          (Rule.domain config) (Rule.laws config) checked with
-      | .error _ => none
-      | .ok evidence =>
-          if h : RuntimeTerminal.Checked.input checked = input then
-            some (h ▸ evidence)
-          else none
+  checked?.bind fun checked =>
+    (RuntimeTerminal.Checked.replayWithin adapterLimits measure
+      (Rule.domain config) (Rule.laws config) input checked).toOption
 
 #guard checked?.isSome
 #guard replay?.isSome
+
+/-- info: 'Hex.IntervalMathlib.RuntimeRuleConformance.replay?' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms replay?
 
 /-! ## Cache, resource, and seal failures -/
 
@@ -365,6 +414,16 @@ def opaqueExecutable : Executable.Package Hex.Interval
         application := fun _ => { bytes := 1, work := 1 }
         cache := fun _ => {}
         result := fun batch => { bytes := batch.events.size, work := batch.events.size } } }
+
+def wrongFormatHandler : Handler Hex.Interval
+    (Hex.Interval.Runtime.Batch Hex.Interval Rule.Runtime.Cause) Unit :=
+  { opaqueHandler with
+    formats :=
+      #[{ role := .equality, schema := 1, validateBody := fun body => body == [13] }] }
+
+def wrongFormatExecutable : Executable.Package Hex.Interval
+    (Hex.Interval.Runtime.Batch Hex.Interval Rule.Runtime.Cause) :=
+  { opaqueExecutable with handlers := #[wrongFormatHandler] }
 
 def opaqueSchema : Proof.FactSchema (Rule.semantics
     { config with extraMeanings := #[opaqueMeaning] }) :=
@@ -456,6 +515,12 @@ def opaqueAction : Action :=
   match Rule.Runtime.buildWithWithin extendedExecutableLimits extendedProofLimits
       { name := "missing-opaque-runtime", version := 1 } extendedConfig extendedProgram
       #[] #[opaqueProof] with
+  | .error (.registry .invalidRegistry) => true
+  | _ => false
+#guard
+  match Rule.Runtime.buildWithWithin extendedExecutableLimits extendedProofLimits
+      { name := "mismatched-opaque-format", version := 1 } extendedConfig extendedProgram
+      #[wrongFormatExecutable] #[opaqueProof] with
   | .error (.registry .invalidRegistry) => true
   | _ => false
 #guard
