@@ -647,6 +647,7 @@ lean_lib HexReleaseTests where
 -- must exactly mirror the repositories already present in the release manifest.
 lean_lib HexMvFactorizationTests where
   globs := #[`HexModular.KernelTests,
+    `HexModular.LoopTests,
     `HexPolyZGcd.Kernel,
     `HexMvGcd.KernelTests,
     `HexMvGcd.Kernel,
