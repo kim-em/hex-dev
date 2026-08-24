@@ -1040,8 +1040,8 @@
   {
     "path": "HexArith/ExactDiv.lean",
     "baseline_blob": null,
-    "current_blob": "1574d415d5dce37af376d0109a1267bc0f75be5c",
-    "reason": "Moves the existing GMP-backed exact-division primitive from HexBareiss into HexArith with the same Lean definition and lean_int_div_exact attachment; the factorization service's executable operation is unchanged."
+    "current_blob": "28f3b16ef5ab02837d08c48e921db253e3a8ccaf",
+    "reason": "Moves the existing GMP-backed exact-division primitive from HexBareiss into HexArith with the same Lean definition and lean_int_div_exact attachment; its zero law is simp-only, and the factorization service's executable operation is unchanged."
   },
   {
     "path": "HexBareiss/Bareiss.lean",

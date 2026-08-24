@@ -23,7 +23,7 @@ namespace HexArith.Int
 @[expose, extern "lean_int_div_exact"]
 def exactDiv (num denom : @& Int) : Int := num / denom
 
-@[simp, grind =] theorem exactDiv_zero (denom : Int) : exactDiv 0 denom = 0 := by
+@[simp] theorem exactDiv_zero (denom : Int) : exactDiv 0 denom = 0 := by
   simp [exactDiv]
 
 /-- Under the divisibility invariant, `exactDiv` agrees with `Int.divExact`. -/
