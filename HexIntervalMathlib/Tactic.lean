@@ -813,16 +813,38 @@ meta def sourceProof (config : Frontend.Config) (expression : Expr)
   let proof ← Proof.emitChecked emitter proof expected
   pure (interval, intervalTerm, proof)
 
-meta def evalProof (config : Frontend.Config) (parsed : ParseState)
-    (term : Frontend.Term) : MetaM Expr := do
+/-! The evaluator proof is a DAG even though `Frontend.Term` is a tree: the
+same reified term can occur at several parents.  Keep memoization local to one
+top-level proof construction.  Besides avoiding mutable state across
+`Proof.emitChecked`'s transactional `MetaM` boundaries, the stored expression
+guards the exact `Frontend.Term`/caller-expression correlation on every hit. -/
+private structure EvalProofEntry where
+  term : Frontend.Term
+  expression : Expr
+  proof : Expr
+
+private structure EvalProofCache where
+  entries : Array EvalProofEntry := #[]
+
+private meta def EvalProofCache.findTerm? (cache : EvalProofCache)
+    (term : Frontend.Term) : Option EvalProofEntry :=
+  cache.entries.toList.find? fun entry => entry.term == term
+
+private meta def evalProofCached (config : Frontend.Config) (parsed : ParseState)
+    (values ruleConfig : Expr) (cache : EvalProofCache)
+    (term : Frontend.Term) : MetaM (Expr × EvalProofCache) := do
   let some expression := parsed.expression? term
     | throwError "interval: reified term has no Lean expression"
-  let valuesList ← Quote.listExpr (mkConst ``Real) parsed.sources.toList
-  let values ← mkAppM ``Frontend.valuesAt #[valuesList]
-  let ruleConfig ← Rule.Runtime.Quote.configExpr config.rule
   let quotedTerm ← Quote.termExpr term
   let evaluated ← mkAppM ``Frontend.Term.eval #[ruleConfig, values, quotedTerm]
   let expected ← mkAppM ``Eq #[evaluated, expression]
+  if let some entry := cache.findTerm? term then
+    unless entry.expression == expression do
+      throwError "interval: memoized term changed its exact Lean expression"
+    let emitter : Proof.Emitter Expr := { emit := pure }
+    let proof ← Proof.emitChecked emitter entry.proof expected
+    return (proof, cache)
+  let mut cache := cache
   let candidate ← match term with
     | .source index => do
         let some source := parsed.sources[index]?
@@ -857,89 +879,149 @@ meta def evalProof (config : Frontend.Config) (parsed : ParseState)
     | .neg input => do
         let some inputValue := parsed.expression? input
           | throwError "interval: negated term has no Lean expression"
+        let (inputProof, nextCache) ←
+          evalProofCached config parsed values ruleConfig cache input
+        cache := nextCache
         mkAppOptM ``Eval.neg
           #[some ruleConfig, some values, some (← Quote.termExpr input),
-            some inputValue, some (← evalProof config parsed input)]
+            some inputValue, some inputProof]
     | .add left right => do
         let some leftValue := parsed.expression? left
           | throwError "interval: left addend has no Lean expression"
         let some rightValue := parsed.expression? right
           | throwError "interval: right addend has no Lean expression"
+        let (leftProof, nextCache) ←
+          evalProofCached config parsed values ruleConfig cache left
+        cache := nextCache
+        let (rightProof, nextCache) ←
+          evalProofCached config parsed values ruleConfig cache right
+        cache := nextCache
         mkAppOptM ``Eval.add
           #[some ruleConfig, some values, some (← Quote.termExpr left),
             some (← Quote.termExpr right), some leftValue, some rightValue,
-            some (← evalProof config parsed left), some (← evalProof config parsed right)]
+            some leftProof, some rightProof]
     | .sub left right => do
         let some leftValue := parsed.expression? left
           | throwError "interval: minuend has no Lean expression"
         let some rightValue := parsed.expression? right
           | throwError "interval: subtrahend has no Lean expression"
+        let (leftProof, nextCache) ←
+          evalProofCached config parsed values ruleConfig cache left
+        cache := nextCache
+        let (rightProof, nextCache) ←
+          evalProofCached config parsed values ruleConfig cache right
+        cache := nextCache
         mkAppOptM ``Eval.sub
           #[some ruleConfig, some values, some (← Quote.termExpr left),
             some (← Quote.termExpr right), some leftValue, some rightValue,
-            some (← evalProof config parsed left), some (← evalProof config parsed right)]
+            some leftProof, some rightProof]
     | .mul left right => do
         let some leftValue := parsed.expression? left
           | throwError "interval: left factor has no Lean expression"
         let some rightValue := parsed.expression? right
           | throwError "interval: right factor has no Lean expression"
+        let (leftProof, nextCache) ←
+          evalProofCached config parsed values ruleConfig cache left
+        cache := nextCache
+        let (rightProof, nextCache) ←
+          evalProofCached config parsed values ruleConfig cache right
+        cache := nextCache
         mkAppOptM ``Eval.mul
           #[some ruleConfig, some values, some (← Quote.termExpr left),
             some (← Quote.termExpr right), some leftValue, some rightValue,
-            some (← evalProof config parsed left), some (← evalProof config parsed right)]
+            some leftProof, some rightProof]
     | .pow input => do
         let some inputValue := parsed.expression? input
           | throwError "interval: powered term has no Lean expression"
+        let (inputProof, nextCache) ←
+          evalProofCached config parsed values ruleConfig cache input
+        cache := nextCache
         mkAppOptM ``Eval.pow
           #[some ruleConfig, some values, some (← Quote.termExpr input),
-            some inputValue, some (← evalProof config parsed input)]
+            some inputValue, some inputProof]
     | .abs input => do
         let some inputValue := parsed.expression? input
           | throwError "interval: absolute-value term has no Lean expression"
+        let (inputProof, nextCache) ←
+          evalProofCached config parsed values ruleConfig cache input
+        cache := nextCache
         mkAppOptM ``Eval.abs
           #[some ruleConfig, some values, some (← Quote.termExpr input),
-            some inputValue, some (← evalProof config parsed input)]
+            some inputValue, some inputProof]
     | .min left right => do
         let some leftValue := parsed.expression? left
           | throwError "interval: left minimum input has no Lean expression"
         let some rightValue := parsed.expression? right
           | throwError "interval: right minimum input has no Lean expression"
+        let (leftProof, nextCache) ←
+          evalProofCached config parsed values ruleConfig cache left
+        cache := nextCache
+        let (rightProof, nextCache) ←
+          evalProofCached config parsed values ruleConfig cache right
+        cache := nextCache
         mkAppOptM ``Eval.min
           #[some ruleConfig, some values, some (← Quote.termExpr left),
             some (← Quote.termExpr right), some leftValue, some rightValue,
-            some (← evalProof config parsed left), some (← evalProof config parsed right)]
+            some leftProof, some rightProof]
     | .max left right => do
         let some leftValue := parsed.expression? left
           | throwError "interval: left maximum input has no Lean expression"
         let some rightValue := parsed.expression? right
           | throwError "interval: right maximum input has no Lean expression"
+        let (leftProof, nextCache) ←
+          evalProofCached config parsed values ruleConfig cache left
+        cache := nextCache
+        let (rightProof, nextCache) ←
+          evalProofCached config parsed values ruleConfig cache right
+        cache := nextCache
         mkAppOptM ``Eval.max
           #[some ruleConfig, some values, some (← Quote.termExpr left),
             some (← Quote.termExpr right), some leftValue, some rightValue,
-            some (← evalProof config parsed left), some (← evalProof config parsed right)]
+            some leftProof, some rightProof]
     | .inv input => do
         let some inputValue := parsed.expression? input
           | throwError "interval: reciprocal term has no Lean expression"
+        let (inputProof, nextCache) ←
+          evalProofCached config parsed values ruleConfig cache input
+        cache := nextCache
         mkAppOptM ``Eval.inv
           #[some ruleConfig, some values, some (← Quote.termExpr input),
-            some inputValue, some (← evalProof config parsed input)]
+            some inputValue, some inputProof]
     | .div left right => do
         let some leftValue := parsed.expression? left
           | throwError "interval: dividend has no Lean expression"
         let some rightValue := parsed.expression? right
           | throwError "interval: divisor has no Lean expression"
+        let (leftProof, nextCache) ←
+          evalProofCached config parsed values ruleConfig cache left
+        cache := nextCache
+        let (rightProof, nextCache) ←
+          evalProofCached config parsed values ruleConfig cache right
+        cache := nextCache
         mkAppOptM ``Eval.div
           #[some ruleConfig, some values, some (← Quote.termExpr left),
             some (← Quote.termExpr right), some leftValue, some rightValue,
-            some (← evalProof config parsed left), some (← evalProof config parsed right)]
+            some leftProof, some rightProof]
     | .regularize input => do
         let some inputValue := parsed.expression? input
           | throwError "interval: regularized term has no Lean expression"
+        let (inputProof, nextCache) ←
+          evalProofCached config parsed values ruleConfig cache input
+        cache := nextCache
         mkAppOptM ``Eval.regularize
           #[some ruleConfig, some values, some (← Quote.termExpr input),
-            some inputValue, some (← evalProof config parsed input)]
+            some inputValue, some inputProof]
   let emitter : Proof.Emitter Expr := { emit := pure }
-  Proof.emitChecked emitter candidate expected
+  let proof ← Proof.emitChecked emitter candidate expected
+  cache := { cache with entries := cache.entries.push { term, expression, proof } }
+  pure (proof, cache)
+
+meta def evalProof (config : Frontend.Config) (parsed : ParseState)
+    (term : Frontend.Term) : MetaM Expr := do
+  let valuesList ← Quote.listExpr (mkConst ``Real) parsed.sources.toList
+  let values ← mkAppM ``Frontend.valuesAt #[valuesList]
+  let ruleConfig ← Rule.Runtime.Quote.configExpr config.rule
+  return (← evalProofCached config parsed values ruleConfig {} term).1
 
 meta def runtimeKey : RuntimeProof.Key := { name := "interval-tactic", version := 1 }
 

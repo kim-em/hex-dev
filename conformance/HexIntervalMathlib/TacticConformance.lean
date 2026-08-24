@@ -80,6 +80,8 @@ example {x y : ℝ} (hx₀ : 1 ≤ x) (hx₁ : x ≤ 2) (hy₀ : 3 ≤ y) (hy₁
 example {x : ℝ} (singleton : x = 2) : 0 ≤ x⁻¹ := by
   interval
 
+-- The repeated reciprocal is one exact shared reified subtree (including its
+-- automatic regularization row), so this exercises an `evalProof` cache hit.
 theorem reciprocalSum {x : ℝ} (singleton : x = 2) : x⁻¹ + x⁻¹ = 1 := by
   interval
 
