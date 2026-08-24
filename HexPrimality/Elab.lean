@@ -102,7 +102,7 @@ meta def provePrime (tactic : String) (n : Nat) (nE : Expr) : MetaM Expr := do
         \nevaluates to {n} but is not definitionally transparent to the \
         elaborator (an imported definition without `@[expose]`?); the kernel \
         could not check the emitted certificate against it"
-  if n.log2 > primalityBitBudget then
+  if n.log2 + 1 > primalityBitBudget then
     throwError "{tactic}: {n} has more than {primalityBitBudget} bits; \
         raising `primalityBitBudget` is a separate, benchmarked change"
   match Hex.Nat.primeCert? n (Hex.Rand.ofSeed n) (Hex.Nat.defaultPrimeFuel n) with
