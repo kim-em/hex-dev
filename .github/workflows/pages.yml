@@ -43,6 +43,7 @@ jobs:
         with:
           auto-config: false
           build: false
+          use-github-cache: false
           use-mathlib-cache: false
       - name: Fetch Mathlib cache
         run: lake exe cache get
@@ -53,6 +54,15 @@ jobs:
           toolchain="$(sed 's|/|--|; s|:|---|' lean-toolchain)"
           echo "LD_LIBRARY_PATH=$HOME/.elan/toolchains/$toolchain/lib/lean:${LD_LIBRARY_PATH:-}" \
             >> "$GITHUB_ENV"
+      - name: Restore .lake/build (Hex modules only)
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            .lake/build/lib/lean/Hex*
+            .lake/build/ir/Hex*
+          key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.sha }}
+          restore-keys: |
+            lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-
       - name: Render the manual
         run: lake exe hexmanual --output _out
       - name: Upload Pages artifact

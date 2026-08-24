@@ -56,6 +56,19 @@ variable [Zero R]
 def termsList (p : MvPoly n R cmp) : List (Mono n × R) :=
   p.termsInternal.toList
 
+/-- The canonical term list determines a polynomial. -/
+theorem termsList_inj {p q : MvPoly n R cmp}
+    (h : p.termsList = q.termsList) : p = q := by
+  have ht : p.termsInternal = q.termsInternal :=
+    Std.ExtTreeMap.toList_inj.mp h
+  cases p with
+  | mk pt hp =>
+      cases q with
+      | mk qt hq =>
+          simp only at ht
+          subst qt
+          rfl
+
 /-- Compatibility spelling for consumers that iterate over all terms. -/
 def toList (p : MvPoly n R cmp) : List (Mono n × R) :=
   termsList p
@@ -358,6 +371,59 @@ theorem coeff_C [Zero R] [BEq R] [LawfulBEq R] [DecidableEq R]
     coeff m (C c : MvPoly n R cmp) =
       if m = Mono.zero then c else 0 := by
   simp [C, coeff_monomial]
+
+/-- The constant polynomial with zero coefficient is the zero polynomial. -/
+@[simp] theorem C_zero [Zero R] [BEq R] [LawfulBEq R] [DecidableEq R] :
+    C (0 : R) = (0 : MvPoly n R cmp) := by
+  apply ext
+  intro m
+  rw [coeff_C, coeff_zero]
+  split <;> rfl
+
+/-- A nonzero monomial polynomial has exactly its defining stored term. -/
+theorem termsList_monomial [Zero R] [BEq R] [LawfulBEq R] [DecidableEq R]
+    (m : Mono n) (c : R) :
+    (monomial m c : MvPoly n R cmp).termsList =
+      if c = 0 then [] else [(m, c)] := by
+  by_cases hc : c = 0
+  · rw [Hex.ite_eq_left hc, monomial, Hex.dite_eq_left hc]
+    rfl
+  · rw [Hex.ite_eq_right hc, monomial, Hex.dite_eq_right hc]
+    change ((∅ : Std.ExtTreeMap (Mono n) R cmp).insert m c).toList = [(m, c)]
+    apply List.Perm.eq_singleton
+    have hnodup :
+        ((∅ : Std.ExtTreeMap (Mono n) R cmp).insert m c).toList.Nodup := by
+      have hkeys := Std.ExtTreeMap.distinct_keys_toList
+        (t := (∅ : Std.ExtTreeMap (Mono n) R cmp).insert m c)
+      exact hkeys.imp fun hcmp hab => by
+        cases hab
+        simp at hcmp
+    rw [List.perm_ext_iff_of_nodup hnodup (by simp)]
+    intro term
+    rcases term with ⟨k, v⟩
+    rw [Std.ExtTreeMap.mem_toList_iff_getElem?_eq_some]
+    constructor
+    · intro hget
+      rw [Std.ExtTreeMap.getElem?_insert,
+        Std.ExtTreeMap.getElem?_empty] at hget
+      split at hget
+      · rename_i hcmp
+        have hmk : m = k := Std.LawfulEqCmp.eq_of_compare hcmp
+        subst k
+        simp at hget
+        subst v
+        simp
+      · contradiction
+    · intro hmem
+      simp only [List.mem_singleton] at hmem
+      cases hmem
+      exact Std.ExtTreeMap.getElem?_insert_self
+
+/-- A nonzero constant polynomial has one stored term at the zero monomial. -/
+theorem termsList_C [Zero R] [BEq R] [LawfulBEq R] [DecidableEq R] (c : R) :
+    (C c : MvPoly n R cmp).termsList =
+      if c = 0 then [] else [(Mono.zero, c)] := by
+  exact termsList_monomial Mono.zero c
 
 /-- A variable polynomial is supported at its unit monomial. -/
 theorem coeff_X [Zero R] [One R] [BEq R] [LawfulBEq R] [DecidableEq R]

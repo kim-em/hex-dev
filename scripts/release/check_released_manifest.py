@@ -46,6 +46,14 @@ def release_build_modules() -> set[str]:
     return set(re.findall(r"`([A-Z][A-Za-z0-9_.]+)", match.group("body")))
 
 
+def aggregate_umbrella_imports() -> list[str]:
+    """Read the umbrellas imported by the monorepo's aggregate mirror."""
+    source = (REPO_ROOT / "HexAggregateCheck.lean").read_text(encoding="utf-8")
+    if not re.search(r"(?m)^module$", source):
+        fail("HexAggregateCheck.lean must be a module, like the released aggregate")
+    return re.findall(r"(?m)^public import ([A-Z][A-Za-z0-9_.]+)$", source)
+
+
 def release_executables() -> dict[str, str]:
     """Read monorepo executable names and root modules."""
     lakefile = (REPO_ROOT / "lakefile.lean").read_text(encoding="utf-8")
@@ -219,6 +227,22 @@ def main() -> int:
             f"extra={sorted(aggregate_pins - split_repos)}"
         )
 
+    # `leanprover/hex`'s umbrella is a module and so may only import modules.
+    # `HexAggregateCheck` reproduces that constraint inside this monorepo, which
+    # only works while it imports the same umbrellas in the same order.
+    lib_by_repo = {
+        entry["repo"].split("/", 1)[1]: entry["lib"]
+        for entry in entries
+        if entry.get("lib")
+    }
+    expected_imports = [lib_by_repo[pin] for pin in aggregate["pins"]]
+    actual_imports = aggregate_umbrella_imports()
+    if actual_imports != expected_imports:
+        fail(
+            "HexAggregateCheck.lean does not mirror the leanprover/hex pins; "
+            f"expected {expected_imports}, found {actual_imports}"
+        )
+
     # The aggregate's README is generated, so a released library reaches it
     # without a hand edit. That only holds if every row's label is present and
     # no entry off the table carries one.
@@ -307,6 +331,19 @@ def main() -> int:
             for dependency in closure[lib]
             if dependency in repo_by_library
         }
+        # A repo's conformance project may import libraries its published
+        # library does not (declared per entry as `conformance_pins`); the
+        # SPEC of the owning library records why. These are sanctioned
+        # additions to the closure, never replacements.
+        conformance_extra = set(entry.get("conformance_pins", []))
+        undeclared = conformance_extra & expected
+        if undeclared:
+            fail(
+                f"{entry['repo']}: conformance_pins {sorted(undeclared)} are "
+                "already in the library dependency closure; list only the "
+                "conformance-only additions"
+            )
+        expected |= conformance_extra
         actual = set(entry["pins"])
         if actual != expected:
             fail(

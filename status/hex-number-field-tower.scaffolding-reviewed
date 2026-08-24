@@ -1,0 +1,47 @@
+Phase-2 scaffolding review of HexNumberFieldTower, 2026-08-22,
+performed by a non-author reviewer agent against
+HexNumberFieldTower/SPEC/hex-number-field-tower.md at origin/main
+after the #9393 SPEC reconciliation (review basis 93ac1edbf).
+
+Audit lenses: SPEC-declaration coverage over the sealed types,
+instances, and the four option-valued public operations; banned-marker
+sweep including the extern and scaffold-language greps; data-level
+placeholder audit over the raw layer; panicWith discharge
+verification; CI reachability; naming and instance checks.
+
+Results. Every SPEC-declared item exists with a matching signature:
+the sealed NumberTower and Elem (structure with private mk, the SPEC's
+opaque-as-boundary convention), all nine instances, Extension with its
+four fields, ofQAdjoin with all four hypotheses including the explicit
+HasOnlySimpleRoots, the Factorization/Roots/Splitting/Flattening
+records, and option-valued adjoin?/factor?/split?/flatten?. The raw
+layer is genuine throughout: mixed-radix convolve/reduce with
+descending monic reduction and proved width invariants, Yun-first
+factorRaw? with per-component tail recursion honouring the SPEC's
+mandatory no-whole-norm rule, and the exact
+choose(d*m,2)+1 Trager shift fuel. The two panicWith branches in
+RawArithmetic are genuinely eliminated, not annotated: the companion's
+xgcdLeft_size_one and the leading-coefficient nonvanishing argument
+let denote_invCoords rewrite past both branches
+(HexNumberFieldTowerMathlib/ArithmeticCore/Field.lean). Banned markers
+are zero; there is no extern surface and no Mathlib import. The type
+system enforces the embedding invariant: Level.Certificate carries the
+irreducibility and fixed-embedding checks, and Internal.extend? is the
+only admitter of the private constructor. CI reachability holds
+through HEX_LIB_TARGETS, 47 in-library #guards (including the
+declaration-free Embed regression module with its adversarial
+negative-conjugate and non-unit-leading cases), the 27-guard
+conformance driver with the SPEC's intermediate-field adversarial
+case, and the cypari2 nfinit/nffactor oracle under
+HEX_REQUIRE_ORACLES.
+
+Trust-surface note: scripts/release/check_trust_surface.py does not
+yet cover this library (unpublished); the operative evidence is the
+direct zero-hit sweep above.
+
+Findings and dispositions. No blocking gap. Hygiene findings (the
+dead elemMajorant, Factor.yun?'s guard-only status, the SMul Rat
+instance missing from the SPEC list, the derived-not-stated
+no-associates clause) are filed as issue #9419 for the Phase-6 pass.
+Phase 1 was complete but never recorded; the counter advances with
+this token per the wave bump queue.

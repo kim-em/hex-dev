@@ -77,6 +77,26 @@ degree (the same convention `Hex.DensePoly` uses in
 * ``overhead`` — returns ``0`` without constructing a polynomial; this is the
   steady-state JSON framing / dispatch calibration used by headline reports.
 
+### `fmpq_series` (fixed-precision rational power series)
+
+Request fields: ``a`` and, for composition, ``b`` are rational coefficient
+objects ``{"num": [...], "den": [...]}``; ``precision`` is the truncation
+bound.  Results use the same parallel numerator/denominator encoding, padded
+to exactly ``precision`` coefficients.
+
+* ``inv`` — multiplicative inverse through the requested precision.
+* ``exp`` — exponential of a series with zero constant coefficient.
+* ``log`` — logarithm of a series with constant coefficient one.
+* ``sqrt`` — the square root branch with positive supplied constant root.
+* ``compose`` — truncated substitution ``a(b)``.
+* ``revert`` — compositional inverse of a valuation-one series.
+* ``overhead`` — protocol calibration with an empty rational result.
+
+python-flint exposes these FLINT ``fmpq_poly_*_series`` kernels through its
+``fmpq_series`` wrapper.  Every request sets the wrapper's process-global
+context cap to its explicit precision before constructing operands, so a
+preceding request cannot silently truncate a later result.
+
 ### `nmod_poly` (F_p[x] for prime p that fits in a word)
 
 Request fields: ``p`` (modulus), ``a``, ``b`` (coefficient lists).
@@ -101,6 +121,8 @@ Request fields: ``rows`` (list of list of int).
 * ``det`` — returns the determinant as an integer. Computed via
   ``flint.fmpz_mat(rows).det()`` (FLINT's multimodular-CRT
   determinant).
+* ``charpoly`` — returns the complete characteristic-polynomial coefficient
+  list in ascending degree order via ``flint.fmpz_mat(rows).charpoly()``.
 
 ### `fq_default` (finite field F_q = F_p[x] / m(x))
 
@@ -312,6 +334,108 @@ _FMPZ_POLY_OPS: dict[str, Callable[[dict[str, Any]], Any]] = {
 
 
 # ---------------------------------------------------------------------
+# `fmpq_series` (Q[[x]] / (x^precision))
+# ---------------------------------------------------------------------
+
+
+def _decode_fmpq_coeffs(value: Any) -> list[Any]:
+    if not isinstance(value, dict):
+        raise ValueError("rational coefficients must be an object")
+    nums = value.get("num")
+    dens = value.get("den")
+    if not isinstance(nums, list) or not isinstance(dens, list):
+        raise ValueError("rational coefficients require list fields 'num' and 'den'")
+    if len(nums) != len(dens):
+        raise ValueError("rational numerator/denominator lengths differ")
+    out = []
+    for num, den in zip(nums, dens, strict=True):
+        den = int(den)
+        if den == 0:
+            raise ValueError("rational coefficient denominator is zero")
+        out.append(flint.fmpq(int(num), den))  # type: ignore[union-attr]
+    return out
+
+
+def _encode_fmpq_series(series, precision: int) -> dict[str, list[int]]:
+    coeffs = list(series.coeffs())
+    coeffs.extend([flint.fmpq(0)] * (precision - len(coeffs)))  # type: ignore[union-attr]
+    coeffs = coeffs[:precision]
+    return {
+        "num": [int(q.p) for q in coeffs],
+        "den": [int(q.q) for q in coeffs],
+    }
+
+
+def _fmpq_series(req: dict[str, Any], precision: int, field: str = "a"):
+    return flint.fmpq_series(  # type: ignore[union-attr]
+        _decode_fmpq_coeffs(req[field]), prec=precision
+    )
+
+
+def _fmpq_series_unary(req: dict[str, Any], method: str) -> dict[str, list[int]]:
+    precision = int(req["precision"])
+    if precision < 0:
+        raise ValueError("precision must be nonnegative")
+    old_cap = flint.ctx.cap  # type: ignore[union-attr]
+    try:
+        flint.ctx.cap = precision  # type: ignore[union-attr]
+        answer = getattr(_fmpq_series(req, precision), method)()
+        return _encode_fmpq_series(answer, precision)
+    finally:
+        flint.ctx.cap = old_cap  # type: ignore[union-attr]
+
+
+def _fmpq_series_inv(req: dict[str, Any]) -> dict[str, list[int]]:
+    return _fmpq_series_unary(req, "inv")
+
+
+def _fmpq_series_exp(req: dict[str, Any]) -> dict[str, list[int]]:
+    return _fmpq_series_unary(req, "exp")
+
+
+def _fmpq_series_log(req: dict[str, Any]) -> dict[str, list[int]]:
+    return _fmpq_series_unary(req, "log")
+
+
+def _fmpq_series_sqrt(req: dict[str, Any]) -> dict[str, list[int]]:
+    return _fmpq_series_unary(req, "sqrt")
+
+
+def _fmpq_series_compose(req: dict[str, Any]) -> dict[str, list[int]]:
+    precision = int(req["precision"])
+    if precision < 0:
+        raise ValueError("precision must be nonnegative")
+    old_cap = flint.ctx.cap  # type: ignore[union-attr]
+    try:
+        flint.ctx.cap = precision  # type: ignore[union-attr]
+        answer = _fmpq_series(req, precision, "a")(
+            _fmpq_series(req, precision, "b")
+        )
+        return _encode_fmpq_series(answer, precision)
+    finally:
+        flint.ctx.cap = old_cap  # type: ignore[union-attr]
+
+
+def _fmpq_series_revert(req: dict[str, Any]) -> dict[str, list[int]]:
+    return _fmpq_series_unary(req, "reversion")
+
+
+def _fmpq_series_overhead(_req: dict[str, Any]) -> dict[str, list[int]]:
+    return {"num": [], "den": []}
+
+
+_FMPQ_SERIES_OPS: dict[str, Callable[[dict[str, Any]], Any]] = {
+    "inv": _fmpq_series_inv,
+    "exp": _fmpq_series_exp,
+    "log": _fmpq_series_log,
+    "sqrt": _fmpq_series_sqrt,
+    "compose": _fmpq_series_compose,
+    "revert": _fmpq_series_revert,
+    "overhead": _fmpq_series_overhead,
+}
+
+
+# ---------------------------------------------------------------------
 # `nmod_poly` (F_p[x])
 # ---------------------------------------------------------------------
 
@@ -418,8 +542,16 @@ def _fmpz_mat_det(req: dict[str, Any]) -> int:
     return int(m.det())
 
 
+def _fmpz_mat_charpoly(req: dict[str, Any]) -> list[int]:
+    rows = req["rows"]
+    m = flint.fmpz_mat([[int(c) for c in r] for r in rows])  # type: ignore[union-attr]
+    polynomial = m.charpoly()
+    return [int(polynomial[i]) for i in range(m.nrows() + 1)]
+
+
 _FMPZ_MAT_OPS: dict[str, Callable[[dict[str, Any]], Any]] = {
     "det": _fmpz_mat_det,
+    "charpoly": _fmpz_mat_charpoly,
 }
 
 
@@ -644,6 +776,7 @@ _RCF_OPS: dict[str, Callable[[dict[str, Any]], Any]] = {
 
 _FAMILIES: dict[str, dict[str, Callable[[dict[str, Any]], Any]]] = {
     "fmpz_poly": _FMPZ_POLY_OPS,
+    "fmpq_series": _FMPQ_SERIES_OPS,
     "nmod_poly": _NMOD_POLY_OPS,
     "fmpz_mat": _FMPZ_MAT_OPS,
     "fq_default": _FQ_DEFAULT_OPS,

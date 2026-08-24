@@ -42,20 +42,6 @@ instance : Mul (ZMod64 p) where
 instance : Div (ZMod64 p) where
   div a b := ZMod64.mul a (ZMod64.inv b)
 
-instance : DecidableEq (ZMod64 p) := by
-  intro a b
-  if h : a.val = b.val then
-    exact isTrue (by
-      cases a
-      cases b
-      cases h
-      simp)
-  else
-    exact isFalse (by
-      intro hab
-      apply h
-      exact congrArg ZMod64.val hab)
-
 instance : DensePoly.AddZeroLaw (ZMod64 p) where
   add_zero_zero := by
     rw [eq_iff_toNat_eq]

@@ -269,14 +269,27 @@ staged resultant theorems specified by `hex-resultant-mathlib`.
 
 ```text
 HexNumberFieldMathlib/
-  Basic.lean          : semantic maps and canonical forms
-  AdjoinRoot.lean     : fixed-field correspondence
-  Approx.lean         : ball semantics
-  Exact.lean          : canonicalization and exactification
-  Lazy.lean           : arithmetic soundness and completeness
-  AlgebraicPoly.lean  : semantic coefficient polynomials
-  Roots.lean          : root completeness and multiplicity
+  Basic.lean                 : semantic maps and canonical forms
+  AdjoinRoot.lean            : fixed-field correspondence
+  Approx.lean                : ball semantics
+  Exact.lean                 : canonicalization and exactification
+  Lazy.lean                  : arithmetic soundness and completeness
+  Field.lean                 : the Field instances pinned to executable data
+  AlgebraicPoly.lean         : semantic coefficient polynomials
+  Roots.lean                 : root completeness and multiplicity
+  AlgebraicRoots.lean        : finite-output root-set obligations
+  ComponentRoots.lean        : per-component root soundness
+  RootDisambiguation.lean    : candidate rejection soundness
+  Yun.lean                   : Yun multiplicity correspondence
+  Primitive.lean             : bounded primitive-element search soundness
+  Presentation.lean          : checked common-field arithmetic totality
+  PresentationSemantics.lean : assembly of total primitive presentations
+  Coordinates.lean           : trace-pairing coordinate recovery
 ```
+
+The last four verify the `Hex.AlgebraicPoly.Common` surface (see the
+hex-number-field SPEC §Common-field construction), which the tower
+libraries consume.
 
 The library is verified by building it. Executable conformance belongs to
 `hex-number-field`.

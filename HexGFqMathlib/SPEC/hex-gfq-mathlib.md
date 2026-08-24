@@ -27,9 +27,10 @@ vocabulary.
 - `conwayEmbed : GFq p m →+* GFq p n`, the embedding of the degree-`m` Conway
   field into the degree-`n` one for a committed divisor pair carrying a
   `Conway.Compatible` witness, instantiated at four such pairs.
-- The component lemmas needed to transport hex-conway's executable primitivity
-  check to the hypotheses of Mathlib's
-  `orderOf_eq_of_pow_and_pow_div_prime`.
+- `orderOf_gen_of_primitive`, which transports a hex-conway executable
+  primitivity certificate to the Mathlib statement that the Conway generator
+  has order `p ^ n - 1`, plus named specializations for all thirty-seven
+  committed nontrivial entries.
 
 The `Fintype` instances are deliberately `noncomputable`. The carriers have
 `p ^ degree f` elements, so a compiled `Finset.univ` over one is a footgun
@@ -59,14 +60,11 @@ hypotheses on the equivalence rather than on the field type.
 `Subfield.lean` defines the map hex-conway's Tier 2 evidence licenses.
 `Conway.normX` is a computed representative: the product of `k = n / m`
 successive Frobenius images of the residue of `x`, reduced modulo `C(p, n)` at
-each step, structured that way so the kernel can replay it. Reading it as the
-field norm `α ^ ((p^n - 1) / (p^m - 1))` is the design rationale for the
-definition, not a theorem; hex-conway is explicit that two evaluation and
-Frobenius bridges are missing before that identity can be proved, so this SPEC
-does not lean on it. What compatibility does prove, in
-`eval_conwayPoly_subfieldGen_eq_zero`, is that `C(p, m)` vanishes at the class
-of `normX`, and that root property is the well-definedness input the embedding
-needs.
+each step, structured that way so the kernel can replay it.
+`Conway.subfieldGen_eq_norm` proves that its quotient class is the explicit
+finite-field norm power `α ^ ((p^n - 1) / (p^m - 1))`;
+`eval_conwayPoly_subfieldGen_eq_zero` proves that `C(p, m)` vanishes there,
+which is the well-definedness input the embedding needs.
 
 `conwayEmbed` is the resulting ring homomorphism `GFq p m →+* GFq p n`. Its
 domain is a committed divisor pair carrying a `Conway.Compatible` witness
@@ -79,10 +77,17 @@ which is additive and monomial data. `GF(2^2)` and `GF(2^3)` inside `GF(2^6)`,
 `GF(13)` inside `GF(13^6)`, and `GF(2^4)` inside `GF(2^8)` are checked here as
 examples.
 
+The canonicality statement is exposed directly. `conwayEmbed_X` says that
+`conwayEmbed` sends the source class of `X` to `conwayGen`, while
+`conwayGen_eq_norm` identifies `conwayGen` with the explicit finite-field norm
+power of the target class of `X`. `conwayEmbed_X_eq_norm` combines these into
+one theorem for a divisor pair; positivity of `m` follows from the source's
+committed entry.
+
 ## Primitivity transport
 
-`Primitivity.lean` supplies the lemmas needed to transport hex-conway's
-executable order check across `ofPolyHom`. The check runs on `FpPoly`
+`Primitivity.lean` transports hex-conway's executable order check across
+`ofPolyHom`. The check runs on `FpPoly`
 representatives with structural powers, while `orderOf` is about Mathlib's `^`
 in the field, so each ingredient travels separately: `ofPolyHom_linPowMod` and
 `ofPolyHom_digitPowMod` move the powers through `map_mul` and `map_pow`,
@@ -92,11 +97,11 @@ primality predicate, and `mem_of_prime_dvd_primePowerProduct` shows that a
 validated prime-power product lists every prime dividing it, so a short prime
 list cannot weaken the test.
 
-Two things are deliberately recorded as absent. No declaration here consumes a
-`Conway.Primitive` witness or produces the per-prime hypothesis function
-Mathlib's `orderOf_eq_of_pow_and_pow_div_prime` quantifies over, so the glue
-from `Primitive.check` to those hypotheses does not exist yet; and the
-per-entry `orderOf α = p ^ n - 1` conclusion is correspondingly not assembled.
+`orderOf_gen_of_primitive` unpacks the validated Boolean conjunctions, aligns
+each listed prime with its digit witness, transports both power conditions,
+and applies Mathlib's `orderOf_eq_of_pow_and_pow_div_prime`. The named
+`orderOf_gen_p_n` corollaries expose the resulting `orderOf α = p ^ n - 1`
+statement for every committed entry with `p ^ n > 2`.
 
 ## Namespaces
 

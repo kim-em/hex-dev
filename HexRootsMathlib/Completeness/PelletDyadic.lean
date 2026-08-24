@@ -25,24 +25,6 @@ namespace HexRootsMathlib
 
 noncomputable section
 
-private theorem sum_erase_range {M : Type*} [AddCommMonoid M]
-    (f : ℕ → M) (n k : ℕ) :
-    (∑ i ∈ (Finset.range n).erase k, f i) =
-      ∑ i ∈ Finset.range n, if i = k then 0 else f i := by
-  classical
-  calc
-    (∑ i ∈ (Finset.range n).erase k, f i) =
-        ∑ i ∈ (Finset.range n).filter (fun i => i ≠ k), f i := by
-      congr 1
-      ext i
-      simp [and_comm]
-    _ = ∑ i ∈ Finset.range n, if i ≠ k then f i else 0 := by
-      rw [Finset.sum_filter]
-    _ = ∑ i ∈ Finset.range n, if i = k then 0 else f i := by
-      apply Finset.sum_congr rfl
-      intro i hi
-      by_cases hik : i = k <;> simp [hik]
-
 /-- Converse to `pelletAt_bound`: a strict inequality between the exact real
 casts of the dyadic bounds makes the executable Boolean check succeed. -/
 theorem pelletAt_of_bound {cs : Array Hex.GaussDyadic} {k : ℕ}

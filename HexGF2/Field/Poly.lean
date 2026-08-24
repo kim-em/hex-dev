@@ -271,6 +271,14 @@ def zero : GF2nPoly f hirr :=
 instance : Zero (GF2nPoly f hirr) where
   zero := zero
 
+/-- Reducing the zero polynomial gives the quotient zero. -/
+@[simp, grind =] theorem reducePoly_zero :
+    reducePoly (f := f) (hirr := hirr) 0 = 0 := by
+  apply eq_of_val_eq
+  rw [reducePoly_val_eq_mod]
+  change 0 % f = 0
+  exact GF2Poly.mod_eq_self_of_reduced 0 f (Or.inl rfl)
+
 /-- A polynomial reduces to the zero quotient element exactly when the modulus
 divides it in `GF(2)[X]`. -/
 theorem reducePoly_eq_zero_iff_dvd {p : GF2Poly} (hf : f ≠ 0) :
@@ -889,6 +897,22 @@ theorem mul_assoc (a b c : GF2nPoly f hirr) :
     exact h
   rw [hca, hcb, GF2Poly.mul_assoc]
 
+/-- The multiplicative identity is a left identity. -/
+@[simp, grind =] theorem one_mul (a : GF2nPoly f hirr) :
+    (1 : GF2nPoly f hirr) * a = a := by
+  apply eq_of_val_eq
+  rw [mul_val, one_val]
+  have h : ((1 : GF2Poly) % f * a.val) % f = ((1 : GF2Poly) * a.val) % f := by
+    have hh := mod_mul_mod_eq_mod_mul 1 a.val f
+    rw [val_mod_eq a] at hh
+    exact hh
+  rw [h, GF2Poly.one_mul, val_mod_eq]
+
+/-- The multiplicative identity is a right identity. -/
+@[simp, grind =] theorem mul_one (a : GF2nPoly f hirr) :
+    a * (1 : GF2nPoly f hirr) = a := by
+  rw [mul_comm, one_mul]
+
 /-- Multiplication distributes over addition on the left in the packed
 quotient. -/
 theorem left_distrib (a b c : GF2nPoly f hirr) :
@@ -925,6 +949,25 @@ theorem add_sq (a b : GF2nPoly f hirr) :
       rw [mul_comm b a]
     _ = a * a + b * b := by
       rw [add_self, add_zero]
+
+/-- The quotient identity is not zero under a positive-degree modulus. -/
+theorem one_ne_zero (hf_pos : 0 < f.degree) :
+    (1 : GF2nPoly f hirr) ≠ 0 := by
+  intro h
+  have hval := congrArg GF2nPoly.val h
+  have hone_val : (1 : GF2nPoly f hirr).val = (1 : GF2Poly) := by
+    rw [one_val]
+    exact GF2Poly.mod_eq_self_of_reduced (1 : GF2Poly) f
+      (Or.inr (by
+        change (GF2Poly.monomial 0).degree < f.degree
+        rw [show (GF2Poly.monomial 0).degree = 0 from by
+          exact GF2Poly.degree_eq_of_degree?_eq_some (GF2Poly.degree?_monomial 0)]
+        exact hf_pos))
+  rw [hone_val, zero_val] at hval
+  have hcoeff := congrArg (fun p : GF2Poly => p.coeff 0) hval
+  change (GF2Poly.monomial 0).coeff 0 = (0 : GF2Poly).coeff 0 at hcoeff
+  rw [GF2Poly.coeff_monomial_self, GF2Poly.coeff_zero] at hcoeff
+  contradiction
 
 end GF2nPoly
 
