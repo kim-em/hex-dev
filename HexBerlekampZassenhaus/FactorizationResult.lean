@@ -1690,8 +1690,8 @@ theorem exactQuotient?_eq_some_of_mul_eq_monic_of_pos_degree
   unfold exactQuotient?
   rw [hisZero_false]
   simp only [Bool.false_or, decide_eq_true_eq]
-  rw [if_neg hcandidate_ne_one, hdivMod_eq]
-  simp [hmul]
+  rw [if_neg hcandidate_ne_one]
+  exact (ZPoly.divExact?_eq hcandidate_ne).2 hmul.symm
 
 /--
 Non-monic packaging companion for `exactQuotient?_product`.
@@ -1707,7 +1707,7 @@ quotient.
 theorem exactQuotient?_eq_some_of_divMod_eq_of_shouldRecord
     {target candidate quotient : ZPoly}
     (hrecord : shouldRecordPolynomialFactor candidate = true)
-    (hdivMod : DensePoly.divMod target candidate = (quotient, 0))
+    (_hdivMod : DensePoly.divMod target candidate = (quotient, 0))
     (hmul : quotient * candidate = target) :
     exactQuotient? target candidate = some quotient := by
   have hrecord_props :
@@ -1740,7 +1740,7 @@ theorem exactQuotient?_eq_some_of_divMod_eq_of_shouldRecord
   unfold exactQuotient?
   rw [hisZero_false]
   simp only [Bool.false_or, decide_eq_true_eq]
-  rw [if_neg hcandidate_ne_one, hdivMod]
-  simp [hmul]
+  rw [if_neg hcandidate_ne_one]
+  exact (ZPoly.divExact?_eq hcandidate_ne).2 hmul.symm
 
 end Hex

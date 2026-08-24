@@ -18,6 +18,10 @@ JSONL fixture record shape (one record per line):
                      modulo the pinned prime.
 * ``matrix``     — ``{"kind": "matrix",     "lib": str, "case": str,
                       "rows": [[int...]...]}``
+* ``sparsepoly`` — ``{"kind": "sparsepoly", "lib": str, "case": str,
+                     "domain": "int"|"rat"|"zmod", "mod": int|None,
+                     "terms": List[[exp, num, den]]}`` — ascending
+                     exponents; ``den`` is 1 outside the ``rat`` domain.
 * ``mvpoly``     — ``{"kind": "mvpoly",     "lib": str, "case": str,
                       "arity": int, "order": "lex"|"grlex"|"grevlex",
                       "terms": [[[exponent...], coefficient]...]}``
@@ -25,6 +29,12 @@ JSONL fixture record shape (one record per line):
                       "basis": [[int...]...]}``
 * ``prime``      — ``{"kind": "prime",      "lib": str, "case": str,
                       "p": int, "n": int}``
+* ``symmod``     — ``{"kind": "symmod",     "lib": str, "case": str,
+                      "a": int, "m": nonnegative int}``
+* ``crt``        — ``{"kind": "crt",        "lib": str, "case": str,
+                      "residues": [int...], "moduli": [nonnegative int...]}``
+* ``ratrecon``   — ``{"kind": "ratrecon",   "lib": str, "case": str,
+                      "a": int, "m": nonnegative int, "p": int, "q": int}``
 * ``conway``     — ``{"kind": "conway",     "lib": str, "case": str,
                       "p": int, "n": int}``
 * ``gfq_bridge`` — ``{"kind": "gfq_bridge", "lib": str, "case": str,
@@ -86,8 +96,12 @@ VALID_FIXTURE_KINDS = frozenset(
         "poly",
         "matrix",
         "mvpoly",
+        "sparsepoly",
         "lattice",
         "prime",
+        "symmod",
+        "crt",
+        "ratrecon",
         "conway",
         "gfq_bridge",
         "gfqring",
@@ -238,6 +252,43 @@ def _validate_fixture(record: dict[str, Any]) -> None:
             for row in rows
         ):
             raise FixtureError(f"matrix.rows must be List[List[int]]: {record!r}")
+    elif kind == "sparsepoly":
+        domain = record.get("domain")
+        if domain not in {"int", "rat", "zmod"}:
+            raise FixtureError(
+                f"sparsepoly.domain must be int/rat/zmod: {record!r}"
+            )
+        modulus = record.get("mod", None)
+        if domain == "zmod":
+            if not _is_int(modulus) or modulus < 2:
+                raise FixtureError(
+                    f"sparsepoly.mod must be an int >= 2 for zmod: {record!r}"
+                )
+        elif modulus is not None:
+            raise FixtureError(
+                f"sparsepoly.mod must be null outside zmod: {record!r}"
+            )
+        terms = record.get("terms")
+        if not isinstance(terms, list):
+            raise FixtureError(f"sparsepoly.terms must be a list: {record!r}")
+        previous = -1
+        for term in terms:
+            if (
+                not isinstance(term, list)
+                or len(term) != 3
+                or not all(_is_int(x) for x in term)
+                or term[0] < 0
+                or term[2] <= 0
+            ):
+                raise FixtureError(
+                    f"sparsepoly term must be [exp, num, den>0]: {record!r}"
+                )
+            if term[0] <= previous:
+                raise FixtureError(
+                    f"sparsepoly.terms must have strictly increasing "
+                    f"exponents: {record!r}"
+                )
+            previous = term[0]
     elif kind == "mvpoly":
         arity = record.get("arity")
         if not _is_int(arity) or arity < 0:
@@ -273,6 +324,34 @@ def _validate_fixture(record: dict[str, Any]) -> None:
         for key in ("p", "n"):
             if not isinstance(record.get(key), int):
                 raise FixtureError(f"prime.{key} must be int: {record!r}")
+    elif kind == "symmod":
+        if not _is_int(record.get("a")):
+            raise FixtureError(f"symmod.a must be int: {record!r}")
+        if not _is_int(record.get("m")) or record["m"] < 0:
+            raise FixtureError(f"symmod.m must be a nonnegative int: {record!r}")
+    elif kind == "crt":
+        residues = record.get("residues")
+        moduli = record.get("moduli")
+        if not isinstance(residues, list) or not all(_is_int(x) for x in residues):
+            raise FixtureError(f"crt.residues must be List[int]: {record!r}")
+        if not isinstance(moduli, list) or not all(
+            _is_int(x) and x >= 0 for x in moduli
+        ):
+            raise FixtureError(
+                f"crt.moduli must be List[nonnegative int]: {record!r}"
+            )
+        if len(residues) != len(moduli):
+            raise FixtureError(
+                f"crt residue and modulus lists must have equal length: {record!r}"
+            )
+    elif kind == "ratrecon":
+        for key in ("a", "m", "p", "q"):
+            if not _is_int(record.get(key)):
+                raise FixtureError(f"ratrecon.{key} must be int: {record!r}")
+        if record["m"] < 0:
+            raise FixtureError(
+                f"ratrecon.m must be a nonnegative int: {record!r}"
+            )
     elif kind == "conway":
         for key in ("p", "n"):
             if not isinstance(record.get(key), int):

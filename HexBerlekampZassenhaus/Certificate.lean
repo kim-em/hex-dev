@@ -441,20 +441,20 @@ The block is returned only when the prime is admissible, every modular factor
 is Rabin-certified, and the assembled block self-verifies against `f` through
 `PrimeFactorData.checkForPolynomial` (so a block that survives here is exactly
 one the kernel checker will accept). This requires the modular image of `f` to
-be monic at `c.p`, i.e. `leadingCoeff f ≡ 1 (mod c.p)`; otherwise the recorded
-monic factors cannot multiply back to `ZPoly.modP c.p f` and the block is
+be monic at `c.m`, i.e. `leadingCoeff f ≡ 1 (mod c.m)`; otherwise the recorded
+monic factors cannot multiply back to `ZPoly.modP c.m f` and the block is
 rejected.
 -/
 private def buildPrimeFactorData? (f : ZPoly) (c : SmallPrimeCandidate) :
     Option PrimeFactorData :=
   letI := c.bounds
-  if isGoodPrime f c.p then
+  if isGoodPrime f c.m then
     let factors := berlekampFactorsModP f c
     match buildFactorCerts? factors with
     | none => none
     | some certs =>
       let data : PrimeFactorData :=
-        { p := c.p
+        { p := c.m
           factorDegrees := factors.map fun g => g.degree?.getD 0
           factorPolys := factors
           factorCerts := certs }

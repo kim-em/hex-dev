@@ -1028,18 +1028,6 @@ def Sound {T : NumberTower} {f : Poly T} (S : Splitting T f) : Prop :=
 
 end Splitting
 
-private theorem embed_add {T : NumberTower} (E : Extension T)
-    (hE : E.PreservesEmbedding) (a b : Elem T) :
-    E.embed (a + b) = E.embed a + E.embed b := by
-  apply toComplex_injective E.tower
-  rw [hE, map_add E.tower, hE, hE, map_add T]
-
-private theorem embed_mul {T : NumberTower} (E : Extension T)
-    (hE : E.PreservesEmbedding) (a b : Elem T) :
-    E.embed (a * b) = E.embed a * E.embed b := by
-  apply toComplex_injective E.tower
-  rw [hE, map_mul E.tower, hE, hE, map_mul T]
-
 private theorem mem_roots_of_isRoot {T : NumberTower} {f : Poly T}
     (S : Splitting T f) (hS : S.Sound) (hf : T.toPolynomial f ≠ 0)
     (a : Elem T)
@@ -1135,8 +1123,8 @@ private theorem generated_evalPoly {T : NumberTower} {f : Poly T}
       rwa [hbaseZero] at hbase
   | cons coefficient coefficients ih =>
       rw [List.foldr_cons,
-        embed_add inner.extension hinner,
-        embed_mul inner.extension hinner]
+        Extension.embed_add inner.extension hinner,
+        Extension.embed_mul inner.extension hinner]
       apply Splitting.GeneratedBy.add
       · exact Splitting.GeneratedBy.base
           (S := S) coefficient

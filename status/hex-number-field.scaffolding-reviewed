@@ -1,0 +1,43 @@
+Phase-2 scaffolding review of HexNumberField, 2026-08-22, performed by
+a non-author reviewer agent against HexNumberField/SPEC/hex-number-field.md
+at origin/main after the #9393 SPEC reconciliation (review basis
+93ac1edbf).
+
+Audit lenses: SPEC-declaration coverage (including the new
+Common-field construction section and the specified beq/coeff/size
+surface), banned-marker sweep, data-level placeholder audit over every
+Option-returning def, native-numeric wrong-shape check, CI
+reachability, instance coherence, naming.
+
+Results. Every SPEC-declared declaration exists with a matching
+signature: the sealed AlgebraicNumber with all eight projections, the
+QAdjoin arithmetic and approx surfaces, the conversion and lazy
+layers, the disambiguation bound stack, both root APIs, and all
+seventeen Common-field declarations with the exact shift counts and
+trace formulas. Every guard-bit and precision constant was checked
+against the SPEC arithmetic (approxGuardBits, add/mul/inv guard bits,
+evalDisambiguationLimit, the sqrt-2-slack radius bound); every
+Option-returning def returns none only on genuine certification
+branches. Banned markers are zero across all modules; there is no
+extern surface and no native-numeric type. CI reachability holds four
+ways: HEX_LIB_TARGETS build, 37 in-module #guards, the 20-guard
+conformance driver in the HexConformance glob, and the
+cypari2/python-flint oracle path under HEX_REQUIRE_ORACLES with the
+SPEC's core cases all present by name. No deriving clause exists, so
+no structural equality leaks onto the sealed types; the checked
+instances carry their CheckedIrreducible hypotheses; the OfNat
+priority demotion is documented and companion-pinned.
+
+Trust-surface note: scripts/release/check_trust_surface.py walks only
+released repos and does not yet cover this library; the operative
+evidence is the direct zero-hit sweep above plus the companion's
+build-enforced axiom guards.
+
+Findings and dispositions. No blocking gap. Hygiene findings (the
+linear-time QAdjoin.natPow against repo precedent, the dead
+QAdjoin.mulMatrix, the extend?/extendShiftStep duplicated search and
+the companion-declared Common.extendStep it forces, the beq
+faithfulness packaging, minor SPEC-surface omissions for consumed
+public helpers) are filed as issue #9418 for the scheduled Phase-6
+pass. Phase 1 was complete but never recorded; the counter advances
+with this token per the wave bump queue.

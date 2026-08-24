@@ -4,9 +4,13 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexGFqMathlib.Subfield
-import HexConway.Primitivity
-import Mathlib.GroupTheory.OrderOfElement
+module
+
+public import HexGFqMathlib.Subfield
+public import HexConway.Primitivity
+public import Mathlib.GroupTheory.OrderOfElement
+
+public section
 
 /-!
 The multiplicative order of the Conway generator.
@@ -28,7 +32,6 @@ extra ingredient is that reducing modulo the modulus is invisible after it.
 namespace HexGFqMathlib
 
 open Hex
-open scoped HexPolyFpMathlib
 
 variable {p : Nat} [Hex.ZMod64.Bounds p] [Hex.ZMod64.PrimeModulus p]
 variable {f : Hex.FpPoly p} {hf : 0 < Hex.FpPoly.degree f}
@@ -128,6 +131,7 @@ theorem ofPolyHom_eq_one_iff {y : Hex.FpPoly p}
     subst h
     exact map_one _
 
+set_option maxHeartbeats 400000 in
 /-- The Horner power returns a reduced representative on a nonempty digit
 list: its last step is a reduction. -/
 theorem reduceMod_digitPowMod (hm : Hex.DensePoly.Monic f) (q : Nat)
