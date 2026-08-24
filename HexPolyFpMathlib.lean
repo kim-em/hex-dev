@@ -7,6 +7,7 @@ Authors: Kim Morrison
 module
 
 public import HexPolyFpMathlib.Basic
+public import HexPolyFpMathlib.SquareFree
 
 /-!
 `HexPolyFpMathlib` relates the executable prime-field polynomial representation

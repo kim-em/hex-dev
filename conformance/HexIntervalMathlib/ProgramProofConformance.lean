@@ -532,11 +532,19 @@ def rootBranch? : Option (State.Branch TestFact Nat) := do
     { programVersion := 1, node := node1, previous := seen node1 0,
       fact := .yes, version := 1, cause := 2 }).toOption
 
+def runtimeLimits : Runtime.Limits :=
+  { executable :=
+      { state := stateLimits, maxPackages := 0, maxMetadataBytes := 0,
+        maxMetadataWork := 0, maxCacheBytes := 0, maxCacheWork := 0,
+        maxResultBytes := 0, maxResultWork := 0, maxQuotes := 0,
+        maxQuoteCells := 0, maxAtom := 0, maxSchema := 0 }
+    maxEvents := 0 }
+
 def searchLimits : Search.Result.Limits :=
   { search :=
       { maxSteps := 3, maxSplits := 1, maxLeaves := 2, maxFrontier := 2,
         maxDepth := 1, maxScopes := 3, leafFuel := 4 }
-    state := stateLimits
+    runtime := runtimeLimits
     maxNodes := 3
     maxBodyCells := 1
     maxBytes := 64

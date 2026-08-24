@@ -278,7 +278,7 @@ private def g : DensePoly Int := DensePoly.ofList [-3, 1]
 end HexResultantChapter
 ```
 
-# Companion contracts
+# The Mathlib correspondence
 %%%
 tag := "hex-resultant-correspondence"
 %%%

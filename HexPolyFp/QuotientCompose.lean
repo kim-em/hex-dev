@@ -6,6 +6,7 @@ Authors: Kim Morrison
 
 module
 
+public import HexPolyFp.Compose
 public import HexPolyFp.ModCompose
 public import HexPolyFp.Quotient
 
@@ -115,6 +116,22 @@ theorem eval_reduce_eq_reduce_composeModMonicImpl (f b : FpPoly p) :
       reduce (g := g) (hmonic := hmonic) (hg_pos := hg_pos)
         (composeModMonicImpl f b g hmonic) := by
   rw [eval_reduce_eq_reduce_composeModMonic, composeModMonic_eq_composeModMonicImpl]
+
+/-- Evaluating a polynomial at the quotient class of `X` returns its quotient
+class.
+
+This is the quotient evaluation map's defining property, stated for the
+project-side evaluator and executable reduction used by Conway compatibility. -/
+theorem Internal.eval_X_eq_reduce (f : FpPoly p) :
+    Internal.eval (g := g) (hmonic := hmonic) (hg_pos := hg_pos) f
+        (X (g := g) (hmonic := hmonic) (hg_pos := hg_pos)) =
+      reduce (g := g) (hmonic := hmonic) (hg_pos := hg_pos) f := by
+  rw [show X (g := g) (hmonic := hmonic) (hg_pos := hg_pos) =
+      reduce (g := g) (hmonic := hmonic) (hg_pos := hg_pos) FpPoly.X from rfl,
+    eval_reduce_eq_reduce_composeModMonic,
+    composeModMonic_eq_modByMonic_compose, FpPoly.compose_X_right]
+  apply ext
+  simp [reduce_val, FpPoly.modByMonic, DensePoly.modByMonic_eq_mod]
 
 /--
 A vanishing modular composition says the polynomial has the class of `b` as a

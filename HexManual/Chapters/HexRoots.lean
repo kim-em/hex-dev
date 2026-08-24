@@ -218,6 +218,42 @@ in general, never enter the kernel: each is replaced by an exact dyadic bound
 on the correct side, so soundness is preserved at the cost of a factor-2 margin
 in how well-separated a root must be before its witness fires.
 
+# The Mathlib correspondence
+%%%
+tag := "hex-roots-mathlib"
+%%%
+
+Everything the driver computes is executable and Mathlib-free.
+`HexRootsMathlib` is the companion that interprets it: a {name}`Hex.ZPoly`
+input becomes a complex polynomial through {name}`HexRootsMathlib.toPolyℂ`,
+and the executable certificates become statements about its root set in
+`Polynomial ℂ`. The correspondence has two halves. Soundness is
+{name}`HexRootsMathlib.isolate_sound` from
+{ref "hex-roots-soundness"}[the certificate section]: a successful run
+enumerates exactly the distinct complex roots, at the requested precision.
+Completeness is the converse guarantee, that on a nonzero polynomial with
+only simple roots the search cannot fail, for every strategy and every
+requested precision:
+
+{docstring HexRootsMathlib.isolate_isSome}
+
+Completeness is what lets the total wrapper {name}`HexRootsMathlib.isolate!`
+from {ref "hex-roots-isolate"}[the entry-point section] drop the `Option`
+and return the atom array directly, with its run equation, root count,
+root set, and precision exposed by the `isolate!_*` theorems shown there.
+One further guarantee is stated on the wrapper: distinct atoms have
+disjoint closed circumscribed discs, so the certified enclosures never
+overlap and each root is separated from every other by exact dyadic data.
+
+{docstring HexRootsMathlib.isolate!_disjoint}
+
+Behind these statements the companion develops the analysis the
+certificates rely on: a ported Newton-Kantorovich contraction theorem, the
+argument principle and Rouché's theorem for counting roots in discs, and
+the Mahler separation bound that keeps subdivision terminating. None of
+that analysis runs; it justifies, once and for all, the fixed dyadic
+comparisons the kernel re-checks.
+
 # Cross-references
 %%%
 tag := "hex-roots-cross-references"
