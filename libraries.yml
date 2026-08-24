@@ -228,7 +228,7 @@ libraries:
           rationale: "gmpy2 exposes GMP's tuned extended GCD, while HexModular reaches the same arithmetic through HexArith's GMP-backed compiled path. The ratio isolates binding and orchestration overhead rather than an algorithm choice, so it is recorded for orientation and does not gate Phase 4."
         - tool: "python-flint fmpz CRT"
           class: informational
-          rationale: "python-flint exposes FLINT's tuned fmpz Chinese remaindering. Its batch-oriented implementation is architecturally useful context for HexModular's deliberately incremental Garner path, but the comparison does not select between interchangeable Hex algorithms and therefore remains informational."
+          rationale: "python-flint exposes FLINT's fmpz and fmpz_mod_ctx arithmetic for the same incremental Garner recurrence. The ratio chiefly measures Python framing and arithmetic binding costs, not a choice between interchangeable Hex algorithms, and therefore remains informational."
       input_families:
         - name: incremental-crt
           description: Scalar accumulation over 4 to 4096 pairwise-coprime word-size prime-power moduli.

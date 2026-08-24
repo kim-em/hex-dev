@@ -5,6 +5,7 @@ Authors: Kim Morrison
 -/
 
 import HexModular
+import HexModularBench.Comparator
 import LeanBench
 
 /-!

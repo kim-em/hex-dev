@@ -260,6 +260,10 @@ lean_lib HexMvPolyBenchSupport where
   srcDir := "bench"
   globs := #[`HexMvPolyCorpus]
 
+lean_lib HexModularBenchSupport where
+  srcDir := "bench"
+  globs := #[`HexModularBench.Comparator]
+
 lean_lib HexMvPolyMathlibProofProbe where
   srcDir := "bench"
   globs := #[`HexMvPolyMathlib.ProofProbe.Support,
@@ -772,6 +776,7 @@ lean_exe hexpolyzgcd_emit_fixtures where
 lean_exe hexmodular_bench where
   srcDir := "bench"
   root := `HexModular.Bench
+  extraDepTargets := #[`HexModularBenchSupport]
 
 lean_exe hexroots_bench where
   srcDir := "bench"

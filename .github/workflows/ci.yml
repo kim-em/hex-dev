@@ -77,7 +77,7 @@ jobs:
       - name: Install Python dependencies (bench comparator + oracles)
         run: |
           python3 -m pip install --user \
-            python-flint cypari2 conway-polynomials sympy matplotlib==3.11.1
+            python-flint gmpy2 cypari2 conway-polynomials sympy matplotlib==3.11.1
       - name: Verify factorization measurements and figures are current
         run: |
           python3 scripts/bench/check_factor_sweep_freshness.py
