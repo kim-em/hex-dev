@@ -91,33 +91,234 @@ private theorem det_eq_zero_of_zero_row (M : Matrix Int n n) (i : Fin n)
 
 namespace Hermite
 
+@[expose]
+def solveStep (H : Matrix Int n m) (r : Nat) (piv : Vector (Fin m) r)
+    (state : Vector Int m × Vector Int n) (row : Fin n) :
+    Option (Vector Int m × Vector Int n) :=
+  if hr : row.val < r then
+    let i : Fin r := ⟨row.val, hr⟩
+    let col := piv.get i
+    let p : Int := H[(row, col)]
+    if p = 0 then
+      none
+    else
+      let value := state.1.get col
+      if value % p = 0 then
+        let q := value / p
+        let residual := Vector.ofFn fun j => state.1.get j - q * H[(row, j)]
+        some (residual, state.2 + q • Vector.unit Int row)
+      else
+        none
+  else
+    some state
+
+@[expose]
+def solveLoop (H : Matrix Int n m) (r : Nat) (piv : Vector (Fin m) r)
+    (row : Nat) (hrow : row ≤ n) (state : Vector Int m × Vector Int n) :
+    Option (Vector Int m × Vector Int n) :=
+  if hend : row = n then
+    some state
+  else
+    have hlt : row < n := by omega
+    match solveStep H r piv state ⟨row, hlt⟩ with
+    | none => none
+    | some next => solveLoop H r piv (row + 1) (by omega) next
+termination_by n - row
+decreasing_by all_goals exact Nat.sub_lt_sub_left hlt (Nat.lt_succ_self row)
+
 /-- Solve against the nonzero HNF rows by forward pivot substitution. -/
 @[expose]
 def solve (H : Matrix Int n m) (r : Nat) (piv : Vector (Fin m) r)
     (v : Vector Int m) : Option (Vector Int n) :=
   let initial : Vector Int m × Vector Int n := (v, 0)
-  let result := (List.finRange n).foldlM (m := Option)
-    (fun (state : Vector Int m × Vector Int n) (row : Fin n) =>
-      if hr : row.val < r then
-        let i : Fin r := ⟨row.val, hr⟩
-        let col := piv.get i
-        let p : Int := H[(row, col)]
-        if p = 0 then
-          none
-        else
-          let value := state.1.get col
-          if value % p = 0 then
-            let q := value / p
-            let residual := Vector.ofFn fun j => state.1.get j - q * H[(row, j)]
-            some (residual, state.2.set row.val q row.isLt)
-          else
-            none
-      else
-        some state) initial
+  let result := solveLoop H r piv 0 (Nat.zero_le n) initial
   match result with
   | none => none
   | some (residual, coeffs) =>
       if residual = 0 then some coeffs else none
+
+/-- The forward solver keeps a lattice residual, clears pivots in order, and
+records exactly the row combination removed from the input. -/
+def SolveInvariant (D : RowEchelonData Int n m) (v : Vector Int m)
+    (row : Nat) (state : Vector Int m × Vector Int n) : Prop :=
+  D.echelon.memLattice state.1 ∧
+  (∀ q : Fin D.rank, q.val < row →
+    state.1[D.pivotCols.get q] = 0) ∧
+  vecMul state.2 D.echelon + state.1 = v
+
+private theorem solveStep_complete {A : Matrix Int n m}
+    {D : RowEchelonData Int n m} (h : IsHNF A D)
+    (v : Vector Int m) (state : Vector Int m × Vector Int n) (row : Fin n)
+    (hinv : SolveInvariant D v row.val state) :
+    ∃ next, solveStep D.echelon D.rank D.pivotCols state row = some next ∧
+      SolveInvariant D v (row.val + 1) next := by
+  by_cases hr : row.val < D.rank
+  · let q : Fin D.rank := ⟨row.val, hr⟩
+    let col := D.pivotCols.get q
+    let p : Int := D.echelon[row][col]
+    have hrow : h.toIsEchelonForm.pivotRow q = row := Fin.ext rfl
+    have hp : 0 < p := by
+      have := h.pivot_pos q
+      change 0 < D.echelon[h.toIsEchelonForm.pivotRow q][D.pivotCols.get q] at this
+      rw [hrow] at this
+      exact this
+    have hpne : p ≠ 0 := Int.ne_of_gt hp
+    rcases h.pivot_factor hinv.1 q (by
+      intro i hi
+      exact hinv.2.1 i hi) with ⟨a, ha⟩
+    have hvalue : state.1[col] = a * p := by
+      simpa only [col, p, hrow] using ha
+    have hmod : state.1[col] % p = 0 := by
+      rw [hvalue]
+      exact Int.mul_emod_left a p
+    have hdiv : state.1[col] / p = a := by
+      rw [hvalue]
+      exact Int.mul_ediv_cancel a hpne
+    let residual : Vector Int m :=
+      Vector.ofFn fun j => state.1.get j - a * D.echelon[row][j]
+    let coeffs : Vector Int n := state.2 + a • Vector.unit Int row
+    have hresidual_get (j : Fin m) : residual.get j =
+        state.1.get j - a * D.echelon[row][j] := by
+      change residual[j.val]'j.isLt = _
+      simp only [residual, Vector.getElem_ofFn]
+    have hresidual : residual = state.1 - a • D.echelon[row] := by
+      apply Vector.ext
+      intro j hj
+      let jj : Fin m := ⟨j, hj⟩
+      simp only [residual, Vector.getElem_ofFn]
+      change state.1[jj] - a * D.echelon[row][jj] =
+        (state.1 - a • D.echelon[row])[j]
+      rw [Vector.getElem_sub, Vector.getElem_smul]
+      rfl
+    have hmem : D.echelon.memLattice residual := by
+      rw [hresidual]
+      exact memLattice_sub hinv.1
+        (memLattice_smul a (row_memLattice D.echelon row))
+    have hpivots : ∀ i : Fin D.rank, i.val < row.val + 1 →
+        residual[D.pivotCols.get i] = 0 := by
+      intro i hi
+      by_cases hir : i.val < row.val
+      · have hzero := hinv.2.1 i hir
+        have hcolLt : D.pivotCols.get i < col :=
+          h.toIsEchelonForm.pivotCols_sorted i q (Fin.mk_lt_mk.mpr hir)
+        have hlead := h.pivot_leading q (D.pivotCols.get i) hcolLt
+        change D.echelon[row][D.pivotCols.get i] = 0 at hlead
+        have hget : residual[D.pivotCols.get i] =
+            state.1[D.pivotCols.get i] -
+              a * D.echelon[row][D.pivotCols.get i] := by
+          change residual.get (D.pivotCols.get i) = _
+          exact hresidual_get _
+        rw [hget]
+        change state.1[D.pivotCols.get i] -
+          a * D.echelon[row][D.pivotCols.get i] = 0
+        rw [hzero, hlead]
+        omega
+      · have hiq : i = q := Fin.ext (by
+          change i.val = row.val
+          omega)
+        subst i
+        have hget : residual[col] =
+            state.1[col] - a * D.echelon[row][col] := by
+          change residual.get col = _
+          exact hresidual_get _
+        rw [hget]
+        change state.1[col] - a * D.echelon[row][col] = 0
+        rw [hvalue]
+        change a * p - a * p = 0
+        omega
+    have hrecord : vecMul coeffs D.echelon + residual = v := by
+      simp only [coeffs]
+      rw [vecMul_add, vecMul_smul, vecMul_unit, hresidual]
+      apply Vector.ext
+      intro j hj
+      have hold := congrArg (fun w : Vector Int m => w[j]) hinv.2.2
+      simp only [Vector.getElem_add, Vector.getElem_sub,
+        Vector.getElem_smul] at hold ⊢
+      omega
+    refine ⟨(residual, coeffs), ?_, hmem, hpivots, hrecord⟩
+    unfold solveStep
+    rw [dif_pos hr]
+    simp only [Matrix.getElem_pair_eq_nested]
+    change (if p = 0 then none else
+      if state.1[col] % p = 0 then
+        some
+          (Vector.ofFn fun j => state.1.get j - state.1[col] / p * D.echelon[row][j],
+            state.2 + (state.1[col] / p) • Vector.unit Int row)
+      else none) = some (residual, coeffs)
+    rw [if_neg hpne, if_pos hmod]
+    congr 2
+    · apply Vector.ext
+      intro j hj
+      simp only [Vector.getElem_ofFn, residual, hdiv]
+    · exact congrArg (fun b => state.2 + b • Vector.unit Int row) hdiv
+  · refine ⟨state, ?_, hinv.1, ?_, hinv.2.2⟩
+    · unfold solveStep
+      rw [dif_neg hr]
+    · intro q hq
+      exact hinv.2.1 q (by omega)
+
+private theorem solveLoop_complete {A : Matrix Int n m}
+    {D : RowEchelonData Int n m} (h : IsHNF A D)
+    (v : Vector Int m) (row : Nat) (hrow : row ≤ n)
+    (state : Vector Int m × Vector Int n)
+    (hinv : SolveInvariant D v row state) :
+    ∃ coeffs, solveLoop D.echelon D.rank D.pivotCols row hrow state =
+        some (0, coeffs) ∧ vecMul coeffs D.echelon = v := by
+  unfold solveLoop
+  by_cases hend : row = n
+  · rw [dif_pos hend]
+    subst row
+    have hzero : state.1 = 0 := h.eq_zero_of_pivots hinv.1 (by
+      intro q
+      exact hinv.2.1 q (Nat.lt_of_lt_of_le q.isLt
+        h.toIsEchelonForm.rank_le_n))
+    refine ⟨state.2, ?_, ?_⟩
+    · apply congrArg some
+      apply Prod.ext
+      · exact hzero
+      · rfl
+    · have hrecord := hinv.2.2
+      rw [hzero] at hrecord
+      apply Vector.ext
+      intro j hj
+      have hentry := congrArg (fun w : Vector Int m => w[j]) hrecord
+      simp only [Vector.getElem_add, Vector.getElem_zero] at hentry
+      omega
+  · rw [dif_neg hend]
+    have hlt : row < n := by omega
+    rcases solveStep_complete h v state ⟨row, hlt⟩ hinv with
+      ⟨next, hstep, hnext⟩
+    simp only [hstep]
+    exact solveLoop_complete h v (row + 1) (by omega) next hnext
+termination_by n - row
+decreasing_by exact Nat.sub_lt_sub_left hlt (Nat.lt_succ_self row)
+
+/-- Forward pivot substitution succeeds on every vector in an HNF row
+lattice and returns coefficients for it. -/
+theorem solve_complete {A : Matrix Int n m} {D : RowEchelonData Int n m}
+    (h : IsHNF A D) {v : Vector Int m} (hv : D.echelon.memLattice v) :
+    ∃ coeffs, solve D.echelon D.rank D.pivotCols v = some coeffs ∧
+      vecMul coeffs D.echelon = v := by
+  let initial : Vector Int m × Vector Int n := (v, 0)
+  have hinitial : SolveInvariant D v 0 initial := by
+    refine ⟨hv, ?_, ?_⟩
+    · intro q hq
+      omega
+    · dsimp only [initial]
+      have hzero : vecMul (0 : Vector Int n) D.echelon = 0 :=
+        Matrix.mulVec_zero (Matrix.transpose D.echelon)
+      rw [hzero]
+      apply Vector.ext
+      intro j hj
+      simp only [Vector.getElem_add, Vector.getElem_zero]
+      omega
+  rcases solveLoop_complete h v 0 (Nat.zero_le n) initial hinitial with
+    ⟨coeffs, hloop, hcoeffs⟩
+  refine ⟨coeffs, ?_, hcoeffs⟩
+  unfold solve
+  dsimp only
+  rw [hloop]
+  simp
 
 end Hermite
 
@@ -332,6 +533,42 @@ theorem latticeCoeffs_sound {A : Matrix Int n m} {v : Vector Int m}
       subst c
       exact hverify
     · contradiction
+
+/-- Every vector in the integer row lattice receives a coefficient
+certificate. -/
+theorem latticeCoeffs_complete {A : Matrix Int n m} {v : Vector Int m} :
+    (∃ c, vecMul c A = v) → (latticeCoeffs A v).isSome := by
+  intro hv
+  let D := hnfData A
+  have hvH : D.echelon.memLattice v :=
+    ((hnfData_isHNF A).memLattice_iff v).1 hv
+  rcases Hermite.solve_complete (hnfData_isHNF A) hvH with
+    ⟨d, hsolve, hd⟩
+  let c : Vector Int n := Matrix.transpose D.transform * d
+  have hc : vecMul c A = v := by
+    change vecMul (Matrix.transpose D.transform * d) A = v
+    rw [vecMul_mul, (hnfData_isHNF A).transform_mul, hd]
+  unfold latticeCoeffs
+  dsimp only
+  rw [hsolve]
+  dsimp only
+  rw [if_pos hc]
+  rfl
+
+/-- The executable lattice predicate is equivalent to integer row-lattice
+membership. -/
+theorem latticeContains_iff {A : Matrix Int n m} {v : Vector Int m} :
+    latticeContains A v = true ↔ ∃ c, vecMul c A = v := by
+  constructor
+  · intro hv
+    unfold latticeContains at hv
+    generalize hcoeffs : latticeCoeffs A v = result at hv
+    cases result with
+    | none => contradiction
+    | some c => exact ⟨c, latticeCoeffs_sound hcoeffs⟩
+  · intro hv
+    unfold latticeContains
+    exact latticeCoeffs_complete hv
 
 private theorem take_append_drop {R : Type} (v : Vector R n) (r : Nat)
     (hr : r ≤ n) :

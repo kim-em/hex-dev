@@ -19,6 +19,99 @@ namespace Hex.Matrix
 def memLattice (b : Matrix Int n m) (v : Vector Int m) : Prop :=
   ∃ c : Vector Int n, vecMul c b = v
 
+/-- Row combinations are additive in their coefficient vector. -/
+theorem vecMul_add (c d : Vector Int n) (B : Matrix Int n m) :
+    vecMul (c + d) B = vecMul c B + vecMul d B := by
+  unfold vecMul
+  apply Vector.ext
+  intro j hj
+  let col : Fin m := ⟨j, hj⟩
+  change (Matrix.transpose B * (c + d))[col] =
+    (Matrix.transpose B * c + Matrix.transpose B * d)[j]
+  rw [Vector.getElem_add]
+  change (Matrix.transpose B * (c + d))[col] =
+    (Matrix.transpose B * c)[col] + (Matrix.transpose B * d)[col]
+  rw [Matrix.getElem_mulVec, Matrix.getElem_mulVec,
+    Matrix.getElem_mulVec, Vector.dotProduct_add_right]
+
+/-- Row combinations preserve subtraction of coefficient vectors. -/
+theorem vecMul_sub (c d : Vector Int n) (B : Matrix Int n m) :
+    vecMul (c - d) B = vecMul c B - vecMul d B := by
+  unfold vecMul
+  apply Vector.ext
+  intro j hj
+  let col : Fin m := ⟨j, hj⟩
+  change (Matrix.transpose B * (c - d))[col] =
+    (Matrix.transpose B * c - Matrix.transpose B * d)[j]
+  rw [Vector.getElem_sub]
+  change (Matrix.transpose B * (c - d))[col] =
+    (Matrix.transpose B * c)[col] - (Matrix.transpose B * d)[col]
+  rw [Matrix.getElem_mulVec, Matrix.getElem_mulVec,
+    Matrix.getElem_mulVec, Vector.dotProduct_sub_right]
+
+/-- Row combinations commute with integer scalar multiplication. -/
+theorem vecMul_smul (a : Int) (c : Vector Int n) (B : Matrix Int n m) :
+    vecMul (a • c) B = a • vecMul c B := by
+  unfold vecMul
+  apply Vector.ext
+  intro j hj
+  let col : Fin m := ⟨j, hj⟩
+  change (Matrix.transpose B * (a • c))[col] =
+    (a • (Matrix.transpose B * c))[j]
+  rw [Vector.getElem_smul]
+  change (Matrix.transpose B * (a • c))[col] =
+    a * (Matrix.transpose B * c)[col]
+  rw [Matrix.getElem_mulVec, Matrix.getElem_mulVec,
+    Vector.dotProduct_smul_right]
+
+/-- A unit coefficient vector selects the corresponding matrix row. -/
+theorem vecMul_unit (B : Matrix Int n m) (i : Fin n) :
+    vecMul (Vector.unit Int i) B = B[i] := by
+  apply Vector.ext
+  intro j hj
+  let col : Fin m := ⟨j, hj⟩
+  change (Vector.unit Int i * B)[col] = B[i][j]
+  rw [getElem_vecMul]
+  unfold Vector.dotProduct
+  calc
+    (List.finRange n).foldl
+        (fun acc k => acc + (Matrix.col B col)[k] * (Vector.unit Int i)[k]) 0 =
+      (List.finRange n).foldl
+        (fun acc k => acc + if k = i then B[i][col] else 0) 0 := by
+          apply List.foldl_add_congr
+          intro k _hk
+          rw [Vector.getElem_unit, Matrix.getElem_col]
+          change B[k][col] * (if i = k then (1 : Int) else 0) =
+            (if k = i then B[i][col] else 0)
+          by_cases hki : k = i
+          · subst k
+            rw [if_pos rfl, Int.mul_one]
+            rw [if_pos rfl]
+          · rw [if_neg hki, if_neg (Ne.symm hki), Int.mul_zero]
+    _ = B[i][col] := by
+      rw [List.foldl_add_single (List.finRange n) 0 i
+        (fun _ => B[i][col]) (List.mem_finRange _) (List.nodup_finRange n)]
+      omega
+
+/-- Every row of a matrix belongs to its integer row lattice. -/
+theorem row_memLattice (B : Matrix Int n m) (i : Fin n) :
+    B.memLattice B[i] := by
+  refine ⟨Vector.unit Int i, ?_⟩
+  exact vecMul_unit B i
+
+/-- Integer row lattices are closed under subtraction. -/
+theorem memLattice_sub {B : Matrix Int n m} {u v : Vector Int m}
+    (hu : B.memLattice u) (hv : B.memLattice v) : B.memLattice (u - v) := by
+  rcases hu with ⟨c, rfl⟩
+  rcases hv with ⟨d, rfl⟩
+  exact ⟨c - d, vecMul_sub c d B⟩
+
+/-- Integer row lattices are closed under integer scalar multiplication. -/
+theorem memLattice_smul {B : Matrix Int n m} {v : Vector Int m}
+    (a : Int) (hv : B.memLattice v) : B.memLattice (a • v) := by
+  rcases hv with ⟨c, rfl⟩
+  exact ⟨a • c, vecMul_smul a c B⟩
+
 /-- Row combinations transport across an explicit integer row transform. -/
 theorem vecMul_mul (U : Matrix Int n' n) (B : Matrix Int n m)
     (c : Vector Int n') :

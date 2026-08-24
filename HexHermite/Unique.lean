@@ -35,11 +35,6 @@ theorem memLattice_iff {A : Matrix Int n m} {D : RowEchelonData Int n m}
   exact memLattice_iff_of_mul_eq h.transform_mul
     (recover h.transform_mul hWU) v
 
-private theorem row_memLattice (H : Matrix Int n m) (i : Fin n) :
-    H.memLattice H[i] := by
-  refine ⟨Vector.ofFn fun k : Fin n => if i = k then 1 else 0, ?_⟩
-  exact IsRowReduced.vecMul_single H i
-
 private theorem row_coeffs {A : Matrix Int n m} {B : Matrix Int n' m}
     {D : RowEchelonData Int n m} {E : RowEchelonData Int n' m}
     (h : IsHNF A D) (h' : IsHNF B E)
@@ -848,6 +843,85 @@ theorem coeff_eq_zero {A : Matrix Int n m} {D : RowEchelonData Int n m}
       · exact hzero
       · exact absurd hzero (Int.ne_of_gt hp)
   exact aux i.val i.isLt
+
+/-- If a combination of HNF rows vanishes at every earlier pivot coordinate,
+then all coefficients before the selected pivot row vanish. -/
+theorem coeff_eq_zero_before {A : Matrix Int n m} {D : RowEchelonData Int n m}
+    (h : IsHNF A D) (c : Vector Int n) (q : Fin D.rank)
+    (hz : ∀ p : Fin D.rank, p.val < q.val →
+      (vecMul c D.echelon)[D.pivotCols.get p] = 0)
+    (k : Fin n) (hk : k.val < q.val) : c[k] = 0 := by
+  have aux : ∀ value : Nat, (hv : value < q.val) →
+      c[(⟨value, by
+        exact Nat.lt_of_lt_of_le (Nat.lt_trans hv q.isLt)
+          h.toIsEchelonForm.rank_le_n⟩ : Fin n)] = 0 := by
+    intro value
+    induction value using Nat.strongRecOn with
+    | ind value ih =>
+      intro hv
+      have hvRank : value < D.rank := Nat.lt_trans hv q.isLt
+      let p : Fin D.rank := ⟨value, hvRank⟩
+      have hbefore : ∀ row : Fin n, row.val < value → c[row] = 0 := by
+        intro row hrow
+        have hi := ih row.val hrow (Nat.lt_trans hrow hv)
+        have hidx : (⟨row.val, by
+            exact Nat.lt_of_lt_of_le
+              (Nat.lt_trans (Nat.lt_trans hrow hv) q.isLt)
+              h.toIsEchelonForm.rank_le_n⟩ : Fin n) = row := Fin.ext rfl
+        simpa only [hidx] using hi
+      have hmul := vecMul_pivot h c p hbefore
+      have hzero := hz p hv
+      rw [hmul] at hzero
+      have hp := h.pivot_pos p
+      change 0 < D.echelon[h.toIsEchelonForm.pivotRow p][D.pivotCols.get p] at hp
+      rcases Int.mul_eq_zero.mp hzero with hcoeff | hpzero
+      · simpa only [p, IsEchelonForm.pivotRow] using hcoeff
+      · exact absurd hpzero (Int.ne_of_gt hp)
+  have hkzero := aux k.val hk
+  have hidx : (⟨k.val, by
+      exact Nat.lt_of_lt_of_le (Nat.lt_trans hk q.isLt)
+        h.toIsEchelonForm.rank_le_n⟩ : Fin n) = k := Fin.ext rfl
+  simpa only [hidx] using hkzero
+
+/-- At the next HNF pivot, a lattice vector whose earlier pivot entries vanish
+is an integer multiple of that pivot. -/
+theorem pivot_factor {A : Matrix Int n m}
+    {D : RowEchelonData Int n m} (h : IsHNF A D)
+    {v : Vector Int m} (hv : D.echelon.memLattice v) (q : Fin D.rank)
+    (hz : ∀ p : Fin D.rank, p.val < q.val →
+      v[D.pivotCols.get p] = 0) :
+    ∃ a : Int, v[D.pivotCols.get q] =
+      a * D.echelon[h.toIsEchelonForm.pivotRow q][D.pivotCols.get q] := by
+  rcases hv with ⟨c, hc⟩
+  refine ⟨c[h.toIsEchelonForm.pivotRow q], ?_⟩
+  rw [← hc]
+  exact vecMul_pivot h c q (h.coeff_eq_zero_before c q (by
+    intro p hp
+    rw [hc]
+    exact hz p hp))
+
+/-- A vector in an HNF row lattice is zero when all its pivot coordinates are
+zero. -/
+theorem eq_zero_of_pivots {A : Matrix Int n m}
+    {D : RowEchelonData Int n m} (h : IsHNF A D)
+    {v : Vector Int m} (hv : D.echelon.memLattice v)
+    (hz : ∀ q : Fin D.rank, v[D.pivotCols.get q] = 0) : v = 0 := by
+  rcases hv with ⟨c, hc⟩
+  have hcoeff : ∀ q : Fin D.rank,
+      c[h.toIsEchelonForm.pivotRow q] = 0 := by
+    intro q
+    have hbefore := h.coeff_eq_zero_before c q (by
+      intro p _hp
+      rw [hc]
+      exact hz p)
+    have hpivot := vecMul_pivot h c q hbefore
+    rw [hc, hz q] at hpivot
+    have hp := h.pivot_pos q
+    change 0 < D.echelon[h.toIsEchelonForm.pivotRow q][D.pivotCols.get q] at hp
+    rcases Int.mul_eq_zero.mp hpivot.symm with hzero | hzero
+    · exact hzero
+    · exact absurd hzero (Int.ne_of_gt hp)
+  exact hc.symm.trans (vecMul_zero h c hcoeff)
 
 end IsHNF
 

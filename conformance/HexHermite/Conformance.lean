@@ -23,9 +23,9 @@ private def empty30 : Matrix Int 3 0 := 0
 #guard hnf empty03 = empty03
 #guard hnf empty30 = empty30
 #guard hnf negativeLast = Matrix.identity 2
-#guard (hnf rankDeficient).rows.toList = [[#v[2, 4]], [#v[0, 0]], [#v[0, 0]]]
-#guard (hnf rectangular).rows.toList = [[#v[2, 2]], [#v[0, 3]], [#v[0, 0]]]
-#guard (hnf zeroLeft).rows.toList = [[#v[0, 2, 14]], [#v[0, 0, 22]]]
+#guard (hnf rankDeficient).rows.toList = [#v[2, 4], #v[0, 0], #v[0, 0]]
+#guard (hnf rectangular).rows.toList = [#v[2, 2], #v[0, 3], #v[0, 0]]
+#guard (hnf zeroLeft).rows.toList = [#v[0, 2, 14], #v[0, 0, 22]]
 #guard hnfRank rankDeficient = 1
 #guard hnf (hnf rectangular) = hnf rectangular
 
@@ -45,4 +45,3 @@ private def empty30 : Matrix Int 3 0 := 0
 #guard latticeIndex (#m[2, 0; 0, 3] : Matrix Int 2 2) = 6
 
 end Hex.Matrix.Hermite.Conformance
-
