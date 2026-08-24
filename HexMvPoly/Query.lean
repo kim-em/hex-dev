@@ -43,6 +43,19 @@ theorem degreeOf_eq [Zero R] (i : Fin n) (p : MvPoly n R cmp) :
       p.foldTerms (fun d m _ => max d (Mono.degreeOf i m)) 0 := by
   rfl
 
+/-- A one-term polynomial carries its monomial exponent when its coefficient
+is nonzero. -/
+theorem degreeOf_monomial [Zero R] [BEq R] [LawfulBEq R]
+    [DecidableEq R] (i : Fin n) (m : Mono n) (c : R) :
+    degreeOf i (monomial m c : MvPoly n R cmp) =
+      if c = 0 then 0 else m[i] := by
+  unfold degreeOf foldTerms
+  rw [Std.ExtTreeMap.foldl_eq_foldl_toList]
+  change (monomial m c : MvPoly n R cmp).termsList.foldl
+      (fun d term => max d (Mono.degreeOf i term.1)) 0 = _
+  rw [termsList_monomial]
+  by_cases hc : c = 0 <;> simp [hc, Mono.degreeOf]
+
 /-- Coordinatewise maximum of all supported exponent vectors. -/
 def degrees [Zero R] (p : MvPoly n R cmp) : Mono n :=
   p.foldTerms (fun d m _ => Mono.lcm d m) Mono.zero
@@ -191,6 +204,27 @@ theorem leadingTerm_C [Zero R] [BEq R] [LawfulBEq R] [DecidableEq R]
       rw [show cmp Mono.zero Mono.zero = .eq from Std.ReflCmp.compare_self]
       trivial
     · rw [Hex.ite_eq_right hmzero] at hcoeff
+      contradiction
+
+/-- A nonzero one-term polynomial has its defining term as leading term. -/
+theorem leadingTerm_monomial [Zero R] [BEq R] [LawfulBEq R]
+    [DecidableEq R] [IsMonomialOrder cmp] {m : Mono n} {c : R}
+    (hc : c ≠ 0) :
+    leadingTerm (monomial m c : MvPoly n R cmp) = some (m, c) := by
+  apply (leadingTerm_eq_some_iff
+    (monomial m c : MvPoly n R cmp) m c).mpr
+  constructor
+  · unfold coeff? monomial
+    rw [Hex.dite_eq_right hc, Std.ExtTreeMap.getElem?_insert_self]
+  · intro k hk
+    have hcoeff :=
+      (mem_monomials_iff k (monomial m c : MvPoly n R cmp)).mp hk
+    rw [coeff_monomial] at hcoeff
+    by_cases hkm : k = m
+    · subst k
+      rw [show cmp m m = .eq from Std.ReflCmp.compare_self]
+      trivial
+    · rw [Hex.ite_eq_right hkm] at hcoeff
       contradiction
 
 /-- A polynomial has no leading term exactly when it is zero. -/
