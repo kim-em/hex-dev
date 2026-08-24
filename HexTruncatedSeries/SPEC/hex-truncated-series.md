@@ -8,7 +8,7 @@ identifies the type with `PowerSeries R` modulo `X ^ n` and identifies
 each operation with its Mathlib counterpart where one exists.
 
 This SPEC expands the "Truncated power series" entry of
-[future-work](../future-work.md). It does not specify fast polynomial
+[future-work](../../SPEC/future-work.md). It does not specify fast polynomial
 division, fast polynomial remainder, or any conversion to `DensePoly`.
 Those belong to the planned `hex-poly-fast`, which depends on both this
 library and hex-poly. The reason is given under "Placement in the DAG".
@@ -1104,7 +1104,7 @@ benefit.
 
 ## Conformance
 
-Fixtures follow [SPEC/testing.md](../testing.md). A Lean driver at
+Fixtures follow [SPEC/testing.md](../../SPEC/testing.md). A Lean driver at
 `conformance/HexTruncatedSeries/EmitFixtures.lean` exposed as
 `lean_exe hextruncatedseries_emit_fixtures`, a committed snapshot at
 `conformance-fixtures/HexTruncatedSeries/series.jsonl`, and an oracle
@@ -1183,7 +1183,7 @@ Cases that must be present:
 
 ## Benchmarking
 
-Per [SPEC/benchmarking.md](../benchmarking.md), with drivers at
+Per [SPEC/benchmarking.md](../../SPEC/benchmarking.md), with drivers at
 `bench/HexTruncatedSeries/Bench.lean`. Native and kernel: the kernel
 suite measures `decide +kernel` on a `TSeries Int 8` product, which is
 what a downstream proof pays.
@@ -1236,7 +1236,7 @@ Two required internal checks, which matter more than the external one:
 
 The bench target imports `HexTruncatedSeries`, which imports `HexBasic`
 and `Std` and nothing else, so the Mathlib-free requirement of
-[SPEC/benchmarking.md](../benchmarking.md) is met without further
+[SPEC/benchmarking.md](../../SPEC/benchmarking.md) is met without further
 argument.
 
 ## The Mathlib layer
@@ -1244,6 +1244,11 @@ argument.
 `hex-truncated-series-mathlib` identifies the type with `PowerSeries R`
 modulo `X ^ n` and identifies each operation with its Mathlib
 counterpart.
+
+Its authoritative source-local specification is
+[hex-truncated-series-mathlib](../../HexTruncatedSeriesMathlib/SPEC/hex-truncated-series-mathlib.md).
+The declarations below summarize the boundary from the computational
+library's point of view.
 
 ```lean
 /-- Truncation of a power series to precision `n`. -/
