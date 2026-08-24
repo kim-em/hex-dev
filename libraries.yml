@@ -634,9 +634,9 @@ libraries:
     done_through: 7
     status: active
   HexResultant:
-    deps: [HexPoly, HexBasic]
+    deps: [HexPoly, HexBasic, HexDeterminant]
     mathlib: false
-    done_through: 4
+    done_through: 5
     status: active
     phase4:
       comparators:
