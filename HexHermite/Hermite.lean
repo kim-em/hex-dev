@@ -30,6 +30,25 @@ def findPivot? (M : Matrix Int n m) (col : Fin m) (start : Nat) : Option (Fin n)
   (List.finRange n).find? fun i =>
     decide (start ≤ i.val) && decide (M[(i, col)] ≠ 0)
 
+/-- A successful pivot search returns an eligible nonzero row. -/
+theorem findPivot?_some {M : Matrix Int n m} {col : Fin m} {start : Nat}
+    {found : Fin n} (h : findPivot? M col start = some found) :
+    start ≤ found.val ∧ M[(found, col)] ≠ 0 := by
+  have hp := List.find?_some h
+  simpa [findPivot?, Bool.and_eq_true, decide_eq_true_eq] using hp
+
+/-- A failed pivot search means every eligible row is zero in that column. -/
+theorem findPivot?_none {M : Matrix Int n m} {col : Fin m} {start : Nat}
+    (h : findPivot? M col start = none) (row : Fin n) (hr : start ≤ row.val) :
+    M[(row, col)] = 0 := by
+  have hp := List.find?_eq_none.mp h row (List.mem_finRange row)
+  have hnn : ¬M[(row, col)] ≠ 0 := by
+    intro hne
+    apply hp
+    simp only [Bool.and_eq_true, decide_eq_true_eq]
+    exact ⟨hr, hne⟩
+  exact Classical.not_not.mp hnn
+
 @[expose]
 def swapStep (ops : Accumulator α n) (s : Result α n m) (i k : Fin n) :
     Result α n m :=
@@ -68,6 +87,22 @@ def reduceStep (ops : Accumulator α n) (col : Fin m) (pivot row : Fin n)
       matrix := Matrix.rowAdd s.matrix pivot row (-q)
       accumulator := ops.add s.accumulator pivot row (-q) }
 
+/-- Swapping a selected nonzero row into the pivot position leaves a nonzero
+pivot entry. -/
+theorem swapStep_pivot_ne (ops : Accumulator α n) (s : Result α n m)
+    (col : Fin m) (pivot found : Fin n) (hfound : s.matrix[(found, col)] ≠ 0) :
+    (swapStep ops s pivot found).matrix[(pivot, col)] ≠ 0 := by
+  rw [swapStep]
+  split
+  · rename_i h
+    subst found
+    exact hfound
+  · rename_i hne
+    dsimp only
+    rw [Matrix.getElem_pair_eq_nested, Matrix.getElem_rowSwap]
+    simp only [if_neg hne, if_pos]
+    simpa only [Matrix.getElem_pair_eq_nested] using hfound
+
 /-- A nontrivial extended-GCD step makes the pivot positive and clears the
 selected lower entry. -/
 theorem gcdStep_column (ops : Accumulator α n) (s : Result α n m)
@@ -89,6 +124,31 @@ theorem gcdStep_column (ops : Accumulator α n) (s : Result α n m)
   simp only [Matrix.getElem_ofFn, Matrix.getElem_pair_eq_nested]
   simp only [Matrix.getElem_pair_eq_nested] at hspec
   simpa [hik.symm] using hspec
+
+/-- An extended-GCD step preserves a nonzero pivot and clears its target row. -/
+theorem gcdStep_ne_zero (ops : Accumulator α n) (s : Result α n m)
+    (col : Fin m) (i k : Fin n) (hik : i ≠ k)
+    (hi : s.matrix[(i, col)] ≠ 0) :
+    (gcdStep ops col i k s).matrix[(i, col)] ≠ 0 ∧
+      (gcdStep ops col i k s).matrix[(k, col)] = 0 := by
+  by_cases hb : s.matrix[(k, col)] = 0
+  · rw [gcdStep, if_pos hb]
+    exact ⟨hi, hb⟩
+  · have h := gcdStep_column ops s col i k hik hb
+    exact ⟨Int.ne_of_gt h.1, h.2⟩
+
+/-- A two-row gcd update does not alter any third row. -/
+theorem gcdStep_other (ops : Accumulator α n) (s : Result α n m)
+    (col j : Fin m) (i k row : Fin n) (hri : row ≠ i) (hrk : row ≠ k) :
+    (gcdStep ops col i k s).matrix[(row, j)] = s.matrix[(row, j)] := by
+  rw [gcdStep]
+  split
+  · rfl
+  · dsimp only
+    rw [Matrix.getElem_pair_eq_nested]
+    unfold combineRows
+    rw [Matrix.getElem_ofFn]
+    simp [hri, hrk, Matrix.getElem_pair_eq_nested]
 
 /-- Sign normalization makes every nonzero selected pivot positive. -/
 theorem signStep_column (ops : Accumulator α n) (s : Result α n m)
