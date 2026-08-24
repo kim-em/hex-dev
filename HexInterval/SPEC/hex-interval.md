@@ -88,16 +88,21 @@ caller-supplied authenticated flat
 chronology, and projects
 the result to lower, upper, conjunction, or closed-singleton equality theorems.
 Its depth cap rejects over-deep descent but does not bound construction or a
-full traversal of an already-built branching term. The supported direct
-forward tactic client below parses its bounded Lean-expression and integer-cut
-subset, authenticates the exact flat runtime chronology as untrusted data, and
-independently synthesizes caller proofs. Its fixed public-tactic precision `16`
-uses the dyadic grid `2⁻¹⁶`; programmatic clients may choose another precision
-within the explicit envelope. Because each computed arithmetic layer is
-followed by an internal regularization layer, its term-depth cap `32` admits
-about 16 nested arithmetic operations along one expression spine. Generic
-public-tactic search-selected recipes and broader local-context parsing remain
-experimental.
+full traversal of an already-built branching term. The supported forward
+tactic client below parses its bounded Lean-expression and integer-cut subset,
+constructs the typed runtime, and runs `Runtime.Controller.runWithin` over the
+`RuntimeRule`-owned applications in topological order. It requires an honest
+zero-live-offer, empty-plan stop, settles the exact current root target through
+`RuntimeTerminal`, quotes the sealed lineage through `RuntimeEmit`, and closes
+that correlated input/evidence pair against the exact source proofs and an
+explicit `Frontend.Term.eval` equality to the original expression. Its fixed
+public-tactic precision `16` uses the dyadic grid `2⁻¹⁶`; programmatic clients
+may choose another precision within the explicit envelope. Because each
+computed arithmetic layer is followed by an internal regularization layer,
+its term-depth cap `32` admits about 16 nested arithmetic operations along one
+expression spine. Arbitrary-function discovery, split search, generic policy
+selection, and broader local-context parsing remain experimental.
+
 The supported proof companion can separately consume a checked retained
 `Search.Result.Tree` plus caller-supplied proof chronology: its registry
 authenticates package-owned binary cover and refutation schemas, its checked
@@ -111,27 +116,27 @@ splitting or settling. The supported explicit controller aligns fact-event
 runtime and proof registries, regenerates bounded deterministic offer
 snapshots, and iterates a replaceable policy over the sealed tree/session
 bundle. Its explicit `Controller.Package` conformance route still uses toy
-fact-event callbacks and autonomous application generators; it has no concrete
-built-in arithmetic package. Built-in arithmetic reaches the controller only
-through its executable adapter. That route consumes the sealed Mathlib-free
-package assembly directly: package predicates decide applicability, while the
-assembly/controller derives exact flat application identity, routes, ports,
-order, and action chronology. It derives accepted updates and fact events from
-the authenticated Search request and current snapshot; raw
-`(role, schema, body)` quotations remain inert and receive no theorem
-authority. Built-in addition and an independently owned arbitrary-function
-package exercise this path through separate Proof replay. Invoking it from the
-public tactic remains later controller work.
+fact-event callbacks and autonomous application generators. Concrete built-in
+arithmetic is instead supplied by `HexIntervalMathlib.RuntimeRule`: its twelve
+exact handlers generate runtime-owned applications and offers, execute under
+`HexInterval.RuntimeController`, and are jointly sealed against the `Rule`
+schemas by `RuntimeProof`. Raw `(role, schema, body)` quotations remain inert
+until that proof adapter resolves and replays them. `Controller.Executable`
+remains a separate supported fact-only adapter and is not the public tactic's
+typed path.
+
 The first concrete supported theorem registry is the Mathlib arithmetic package for one
 configured constant and natural exponent plus public negation, addition,
 subtraction, multiplication, power, absolute-value, min/max, reciprocal,
-division, and regularization operations. Automatic arbitrary-function package
-discovery and theorem assembly, quotation of the supported typed
-equality/instance/program-extension runtime events into proof schemas, wiring
-those events into the autonomous controller, concrete policy algorithms and
-default scheduling, payload
-storage, and the optimized backing store remain experimental. The narrow
-direct-forward tactic does not yet invoke the supported controller.
+division, and regularization operations. `RuntimeProof` supports exact fact,
+equality, transport, and instance correlation, and `RuntimeController`
+schedules all of those typed batches. The public arithmetic tactic currently
+exercises the built-in `RuntimeRule` fact batches only. Automatic
+arbitrary-function package discovery and theorem assembly, public
+equality/instance-generating packages, production structural matchers,
+concrete default policies, payload storage, optimized backing stores, and
+split-search remain experimental.
+
 In particular, the current instantiation proposal's package-supplied numeric
 policy family is not part of the supported action contract.
 
@@ -5552,10 +5557,12 @@ their declared cost inside a scheduler bound.
   ordinary imports, only `Registry.buildWithin` can construct the theorem
   registry; `import all HexIntervalMathlib.Proof` is a trusted-internals escape
   hatch rejected outside the exact empty repository allowlist. The built-in
-  arithmetic package and direct-forward reifier/tactic are supported below;
-  explicit arbitrary-function fact packages can join the executable adapter,
-  while automatic discovery, equality/instance executable correlation,
-  split-search tactic integration, and default registries remain experimental.
+  arithmetic package and forward reifier/tactic are supported below; typed
+  fact/equality/transport/instance correlation is supplied by `RuntimeProof`.
+  Explicit arbitrary-function packages can join the executable and proof
+  adapters, while automatic discovery, public-tactic equality/instance
+  packages, split-search integration, and default registries remain
+  experimental.
 - `HexIntervalMathlib/Driver.lean`: supported one-step execution of an exact
   already-selected package action, atomic retained-source advancement/split/
   terminal updates, and bounded alignment of the sealed result tree with its
@@ -5648,15 +5655,17 @@ their declared cost inside a scheduler bound.
   and closed-singleton equality closure about the evaluated target term.
   Search-to-recipe integration, Lean syntax, and Meta quotation remain outside
   this module.
-- `HexIntervalMathlib/Tactic.lean`: exact runtime program/input/chronology
-  construction and authentication, recursive forward-arithmetic expression
-  and integer-cut parsing, reciprocal/division and automatic outward-
-  regularization rows, independently checked caller-proof emission, and the
-  current transactional bare `interval`, `interval?`, and `interval_bound`
-  subset. `interval_bound` renders selected cuts as diagnostics; a noninteger
-  dyadic endpoint is not pasteable into the current integer-only goal parser.
-  Search-selected recipes, arbitrary functions, subdivision, and the
-  expanded configuration syntax remain experimental or unimplemented.
+- `HexIntervalMathlib/Tactic.lean`: recursive forward-arithmetic expression and
+  integer-cut parsing; exact `RuntimeRule` registry, branch, runtime, retained
+  tree, and controller construction; deterministic topological execution;
+  exact target settlement through `RuntimeTerminal`; sealed chronology
+  emission through `RuntimeEmit`; and caller-source/expression closure through
+  `Frontend.closeSources` and `Proof.emitChecked`. It supplies the current
+  transactional bare `interval`, `interval?`, and `interval_bound` subset.
+  `interval_bound` renders selected cuts as diagnostics; a noninteger dyadic
+  endpoint is not pasteable into the current integer-only goal parser. Generic
+  search-selected policies, arbitrary functions, subdivision, and the expanded
+  configuration syntax remain experimental or unimplemented.
 - `HexInterval/Program.lean`: supported stable operation/domain/node
   identifiers, decoded typed SSA programs, fail-closed validation, and
   structural depths.

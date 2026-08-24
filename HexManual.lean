@@ -32,7 +32,9 @@ import HexManual.Chapters.HexLLL
 import HexManual.Chapters.HexBerlekampZassenhaus
 import HexManual.Chapters.FactorTactics
 -- Unreleased libraries (dependency order).
+import HexManual.Chapters.HexModular
 import HexManual.Chapters.HexResultant
+import HexManual.Chapters.HexPolyZGcd
 import HexManual.Chapters.HexSparsePoly
 import HexManual.Chapters.HexRCF
 import HexManual.Chapters.HexNumberField
@@ -149,7 +151,11 @@ These libraries are still incubating in the
 split out for release yet, so their APIs may still change. They are grouped
 here to keep the reference chapters above focused on the released libraries.
 
+{include 2 HexManual.Chapters.HexModular}
+
 {include 2 HexManual.Chapters.HexResultant}
+
+{include 2 HexManual.Chapters.HexPolyZGcd}
 
 {include 2 HexManual.Chapters.HexRCF}
 

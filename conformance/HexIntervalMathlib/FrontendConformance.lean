@@ -64,6 +64,16 @@ def sourceValues : Nat → ℝ
 def model? := Frontend.modelWithin config sourceValues result
 
 #guard match model? with | .ok _ => true | .error _ => false
+
+theorem modelReady : model?.toOption.isSome = true := by decide +kernel
+
+noncomputable def projectedModel : Frontend.Model config.rule sourceValues result :=
+  Frontend.modelOfCheck model? modelReady
+
+theorem projectedTarget :
+    result.valuation config.rule sourceValues result.target =
+      result.term.eval config.rule sourceValues :=
+  projectedModel.target
 #guard
   match result? with
   | .ok found => found.program == result.program && found.target == result.target &&
@@ -107,6 +117,51 @@ def input : Proof.Input Hex.Interval :=
   | .ok found => found == input
   | .error _ => false
 
+def defaultInitial : Frontend.InitialContext := result.initialContext
+
+def computedInitial : Frontend.InitialContext :=
+  { rows :=
+      #[{ node := RuleConformance.x }, { node := RuleConformance.y },
+        { node := RuleConformance.sum }, { node := RuleConformance.difference },
+        { node := RuleConformance.product, fact := some RuleConformance.productFact }] }
+
+def permutedFactInitial : Frontend.InitialContext :=
+  { rows :=
+      #[{ node := RuleConformance.x, fact := some RuleConformance.yFact },
+        { node := RuleConformance.y, fact := some RuleConformance.xFact },
+        { node := RuleConformance.sum }, { node := RuleConformance.difference },
+        { node := RuleConformance.product }] }
+
+def computedInput : Proof.Input Hex.Interval :=
+  { scope := RuleConformance.scope
+    program := expectedProgram
+    facts := #[Hex.Interval.whole, Hex.Interval.whole, Hex.Interval.whole,
+      Hex.Interval.whole, RuleConformance.productFact]
+    target := { node := RuleConformance.product, fact := RuleConformance.productFact } }
+
+#guard defaultInitial.facts == #[Hex.Interval.whole, Hex.Interval.whole, Hex.Interval.whole,
+  Hex.Interval.whole, Hex.Interval.whole]
+#guard defaultInitial.check result
+#guard
+  match result.initialContext.setFact RuleConformance.product RuleConformance.productFact with
+  | .ok found => found == computedInitial
+  | .error _ => false
+#guard
+  match result.initialContext.setFact { index := 5 } RuleConformance.productFact with
+  | .error .malformedInitial => true
+  | _ => false
+#guard computedInitial.check result
+#guard
+  match Frontend.inputInitialWithin config RuleConformance.scope result computedInitial
+      RuleConformance.productFact with
+  | .ok found => found == computedInput
+  | .error _ => false
+#guard
+  match Frontend.inputInitialWithin config RuleConformance.scope result permutedFactInitial
+      RuleConformance.productFact with
+  | .ok _ => true
+  | .error _ => false
+
 def events : List (Proof.Event Hex.Interval) :=
   (Rule.quote RuleConformance.branch).take 3
 
@@ -124,6 +179,19 @@ def fewSources : Frontend.Config := { config with reify := { limits with maxSour
 def fewOperations : Frontend.Config :=
   { config with reify := { limits with maxOperations := 12 } }
 
+def wrongInitialRow : Frontend.InitialContext :=
+  { rows := computedInitial.rows.set! 0 { node := RuleConformance.y } }
+
+#guard
+  match wrongInitialRow.setFact RuleConformance.x RuleConformance.productFact with
+  | .error .malformedInitial => true
+  | _ => false
+
+def shortInitial : Frontend.InitialContext := { rows := computedInitial.rows.pop }
+
+def longInitial : Frontend.InitialContext :=
+  { rows := computedInitial.rows.push { node := { index := 5 } } }
+
 #guard match Frontend.reifyWithin shallow 2 term with | .error .depthLimit => true | _ => false
 #guard match Frontend.reifyWithin fewNodes 2 term with | .error .nodeLimit => true | _ => false
 #guard match Frontend.reifyWithin fewSources 2 term with | .error .sourceLimit => true | _ => false
@@ -140,6 +208,41 @@ def fewOperations : Frontend.Config :=
       RuleConformance.productFact with
   | .error .wrongSourceCount => true
   | _ => false
+#guard
+  match Frontend.inputInitialWithin config RuleConformance.scope result wrongInitialRow
+      RuleConformance.productFact with
+  | .error .malformedInitial => true
+  | _ => false
+#guard
+  match Frontend.inputInitialWithin config RuleConformance.scope result shortInitial
+      RuleConformance.productFact with
+  | .error .wrongInitialCount => true
+  | _ => false
+#guard
+  match Frontend.inputInitialWithin config RuleConformance.scope result longInitial
+      RuleConformance.productFact with
+  | .error .nodeLimit => true
+  | _ => false
+#guard
+  match Frontend.inputInitialWithin fewNodes RuleConformance.scope result computedInitial
+      RuleConformance.productFact with
+  | .error .nodeLimit => true
+  | _ => false
+#guard
+  match Frontend.inputInitialWithin shallow RuleConformance.scope result computedInitial
+      RuleConformance.productFact with
+  | .error .depthLimit => true
+  | _ => false
+#guard
+  match Frontend.inputInitialWithin fewSources RuleConformance.scope result computedInitial
+      RuleConformance.productFact with
+  | .error .sourceLimit => true
+  | _ => false
+#guard
+  match Frontend.inputInitialWithin fewOperations RuleConformance.scope result computedInitial
+      RuleConformance.productFact with
+  | .error .operationLimit => true
+  | _ => false
 
 def wrongEntryNode : Frontend.Result :=
   let bad : Frontend.Entry := { term := .source 0, node := { index := 1 } }
@@ -155,6 +258,14 @@ def duplicateEntry : Frontend.Result :=
   { result with entries := result.entries.set! 1 bad }
 
 def wrongRoot : Frontend.Result := { result with term := .source 0 }
+
+def permutedSourceExpressions : Frontend.Result :=
+  { result with entries :=
+      #[{ term := .source 1, node := RuleConformance.x },
+        { term := .source 0, node := RuleConformance.y },
+        { term := .add (.source 0) (.source 1), node := RuleConformance.sum },
+        { term := .sub (.source 0) (.source 1), node := RuleConformance.difference },
+        { term, node := RuleConformance.product }] }
 
 def wrongOperations : Frontend.Result :=
   { result with program :=
@@ -182,6 +293,21 @@ def roomy : Frontend.Config :=
   match Frontend.inputWithin config RuleConformance.scope wrongRoot
       #[RuleConformance.xFact, RuleConformance.yFact] RuleConformance.productFact with
   | .error .malformedResult => true
+  | _ => false
+#guard
+  match Frontend.inputInitialWithin config RuleConformance.scope wrongEntryNode computedInitial
+      RuleConformance.productFact with
+  | .error .malformedResult => true
+  | _ => false
+#guard
+  match Frontend.inputInitialWithin config RuleConformance.scope permutedSourceExpressions
+      computedInitial RuleConformance.productFact with
+  | .error .malformedResult => true
+  | _ => false
+#guard
+  match Frontend.inputInitialWithin roomy RuleConformance.scope wrongOperations computedInitial
+      RuleConformance.productFact with
+  | .error .malformedProgram => true
   | _ => false
 #guard
   match Frontend.modelWithin config sourceValues wrongRoot with
@@ -233,6 +359,12 @@ def duplicateKey : Frontend.Config :=
   | .error .malformedProgram => true
   | _ => false
 
+private theorem toReal_d (value : Int) :
+    Hex.Interval.toReal (RuleConformance.d value) = value := by
+  change ((Dyadic.ofInt value).toRat : ℝ) = value
+  rw [show Dyadic.ofInt value = (value : Dyadic) by rfl, Dyadic.toRat_intCast]
+  norm_num
+
 theorem productReady :
     singletonWithin RuleConformance.endpoint (RuleConformance.d (-3)) =
       .ready RuleConformance.productFact :=
@@ -244,6 +376,71 @@ theorem productShape : RuleConformance.productFact.view =
   simpa [Raw.normalizeUnchecked, Raw.consistent] using
     view_singletonWithin_ready productReady
 
+private theorem wholeContains (value : ℝ) : Hex.Interval.whole.Contains value := by
+  change Raw.Contains Hex.Interval.whole.view value
+  rw [Hex.Interval.view_whole]
+  exact ⟨trivial, trivial⟩
+
+/-- A computed node may carry a bounded version-zero fact, but only with an
+exact positional containment proof for its retained source expression. -/
+theorem computedInitialHolds :
+    computedInitial.Contains config.rule sourceValues result := by
+  apply Frontend.InitialContext.Contains.ofForall₂
+  simp only [computedInitial, result]
+  constructor
+  · exact ⟨rfl, wholeContains _⟩
+  · constructor
+    · exact ⟨rfl, wholeContains _⟩
+    · constructor
+      · exact ⟨rfl, wholeContains _⟩
+      · constructor
+        · exact ⟨rfl, wholeContains _⟩
+        · constructor
+          · constructor
+            · rfl
+            · rw [targetValue]
+              have member := Rule.constant_mem productReady
+              rw [toReal_d] at member
+              simpa using member
+          · constructor
+
+def computedEvidence? :=
+  Frontend.replay config computedInput [] 0 expectedProgram
+    { node := RuleConformance.product, version := 0 }
+
+#guard match computedEvidence? with | .ok _ => true | .error _ => false
+
+/-- The replay guard above accepts the selected computed-node version-zero fact.
+The kernel evidence below resolves the same fact through `Proof.initialBase`,
+without a caller-constructed assumption list. -/
+private theorem computedSize : computedInput.facts.size = computedInput.program.nodes.size := by
+  decide +kernel
+
+private def computedResolved :=
+  ((Proof.Facts.start (Rule.semantics config.rule) computedInput computedSize).resolve
+    { node := RuleConformance.product, version := 0 }).get (by decide +kernel)
+
+private theorem computedResolved_fact :
+    computedResolved.fact = RuleConformance.productFact := by
+  rfl
+
+def computedEvidence : Proof.Evidence
+    ((Rule.semantics config.rule).Entails computedInput.program
+      (Proof.initialBase computedInput) computedInput.target) :=
+  by
+    have sound := computedResolved.sound
+    rw [computedResolved_fact] at sound
+    simpa [computedInput, RuleConformance.product] using sound
+
+theorem computedFacts : computedInput.facts = computedInitial.facts := by
+  decide +kernel
+
+theorem closesComputedInitial :
+    term.eval config.rule sourceValues = toReal (RuleConformance.d (-3)) := by
+  exact Frontend.closeInitialSingleton config result sourceValues semanticModel computedInput
+    computedEvidence rfl rfl computedInitial computedFacts computedInitialHolds
+    (RuleConformance.d (-3)) productShape
+
 private theorem eq_of_mem_singleton {value : Dyadic} {result : Hex.Interval} {z : ℝ}
     (checked : Hex.Interval.singletonWithin RuleConformance.endpoint value = .ready result)
     (member : result.Contains z) : z = Hex.Interval.toReal value := by
@@ -252,11 +449,43 @@ private theorem eq_of_mem_singleton {value : Dyadic} {result : Hex.Interval} {z 
     Hex.Interval.contains_normalize] at member
   exact le_antisymm member.2 member.1
 
-private theorem toReal_d (value : Int) :
-    Hex.Interval.toReal (RuleConformance.d value) = value := by
-  change ((Dyadic.ofInt value).toRat : ℝ) = value
-  rw [show Dyadic.ofInt value = (value : Dyadic) by rfl, Dyadic.toRat_intCast]
-  norm_num
+/-- Swapping facts leaves structurally valid plain data, but its positional
+semantic proof cannot be transplanted. -/
+theorem rejectsFactPermutation :
+    ¬permutedFactInitial.Contains config.rule sourceValues result := by
+  intro holds
+  have member := permutedFactInitial.fact_contains config.rule sourceValues result holds 0 (by
+    decide)
+  have yMember : RuleConformance.yFact.Contains (1 : ℝ) := by
+    simpa [permutedFactInitial, Frontend.InitialContext.facts, result,
+      Frontend.Result.valuation, Frontend.Result.valueAt, Frontend.Term.eval, sourceValues]
+      using member
+  have falseEq := eq_of_mem_singleton RuleConformance.checkedY yMember
+  rw [toReal_d] at falseEq
+  norm_num at falseEq
+
+def permutedSourceValues : Nat → ℝ
+  | 0 => 2
+  | 1 => 1
+  | _ => 0
+
+/-- A proof for the original retained source expressions cannot authenticate
+the same computed fact after the source valuation is permuted. -/
+theorem rejectsProofPermutation :
+    ¬computedInitial.Contains config.rule permutedSourceValues result := by
+  intro holds
+  have member := computedInitial.fact_contains config.rule permutedSourceValues result holds 4 (by
+    decide)
+  have simplified : RuleConformance.productFact.Contains (((2 : ℝ) + 1) * (2 - 1)) := by
+    simpa [computedInitial, Frontend.InitialContext.facts, result,
+      Frontend.Result.valuation, Frontend.Result.valueAt, term, Frontend.Term.eval,
+      permutedSourceValues, config, RuleConformance.config]
+      using member
+  have productMember : RuleConformance.productFact.Contains (3 : ℝ) := by
+    simpa only [show (((2 : ℝ) + 1) * (2 - 1)) = 3 by norm_num] using simplified
+  have falseEq := eq_of_mem_singleton productReady productMember
+  rw [toReal_d] at falseEq
+  norm_num at falseEq
 
 theorem sourceFactsContain : Frontend.SourcesContain sourceValues sourceFacts := by
   intro index fact found
@@ -276,6 +505,24 @@ theorem sourceFactsContain : Frontend.SourcesContain sourceValues sourceFacts :=
           rw [toReal_d] at member
           simpa [sourceValues] using member
       | succ index => simp [sourceFacts] at found
+
+theorem sourceListHolds : List.Forall₂
+    (fun value source => source.Contains value)
+    ([1, 2] : List ℝ) [RuleConformance.xFact, RuleConformance.yFact] := by
+  constructor
+  · have member := Rule.constant_mem RuleConformance.checkedX
+    rw [toReal_d] at member
+    simpa using member
+  · constructor
+    · have member := Rule.constant_mem RuleConformance.checkedY
+      rw [toReal_d] at member
+      simpa using member
+    · constructor
+
+theorem sourceListContains : Frontend.SourcesContain
+    (Frontend.valuesAt ([1, 2] : List ℝ))
+    [RuleConformance.xFact, RuleConformance.yFact].toArray :=
+  Frontend.SourcesContain.ofForall₂ sourceListHolds
 
 theorem inputFacts : input.facts = result.facts sourceFacts := by
   simp [input, result, sourceFacts, Frontend.Result.facts, Frontend.Result.seed,
@@ -358,9 +605,39 @@ theorem closesEquality
     rfl rfl sourceFacts rfl inputFacts sourceFactsContain
     (RuleConformance.d (-3)) productShape
 
+/-- info: 'Hex.IntervalMathlib.FrontendConformance.closesConjunction' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
 #print axioms closesConjunction
+/-- info: 'Hex.IntervalMathlib.FrontendConformance.closesLower' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
 #print axioms closesLower
+/-- info: 'Hex.IntervalMathlib.FrontendConformance.closesEquality' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
 #print axioms closesEquality
+/-- info: 'Hex.IntervalMathlib.FrontendConformance.closesComputedInitial' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound] -/
+#guard_msgs in
+#print axioms closesComputedInitial
+/-- info: 'Hex.IntervalMathlib.FrontendConformance.rejectsFactPermutation' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound] -/
+#guard_msgs in
+#print axioms rejectsFactPermutation
+/-- info: 'Hex.IntervalMathlib.FrontendConformance.rejectsProofPermutation' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound] -/
+#guard_msgs in
+#print axioms rejectsProofPermutation
+/-- info: 'Hex.IntervalMathlib.FrontendConformance.targetValue' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
 #print axioms targetValue
+/-- info: 'Hex.IntervalMathlib.FrontendConformance.projectedTarget' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms projectedTarget
+
+/-- info: 'Hex.IntervalMathlib.FrontendConformance.sourceListContains' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms sourceListContains
 
 end Hex.IntervalMathlib.FrontendConformance
