@@ -130,7 +130,7 @@ libraries:
   HexMvGcd:
     deps: [HexBasic, HexMvPoly, HexPoly, HexPolyFp, HexResultant, HexArith, HexModArith, HexModular, HexPolyZGcd]
     mathlib: false
-    done_through: 1
+    done_through: 2
     status: active
   HexSparsePoly:
     deps: [HexPoly, HexBasic]
@@ -273,7 +273,7 @@ libraries:
   HexPolyZGcd:
     deps: [HexPolyZ, HexPolyFp, HexPoly, HexModular, HexModArith, HexArith, HexResultant]
     mathlib: false
-    done_through: 1
+    done_through: 2
     status: active
 
   # ---------- Depth 2 ----------
@@ -618,7 +618,7 @@ libraries:
   HexMvHensel:
     deps: [HexBasic, HexMvPoly, HexMvGcd, HexPoly, HexPolyZ, HexPolyFp, HexModArith, HexModular, HexArith]
     mathlib: false
-    done_through: 1
+    done_through: 2
     status: active
   HexMvFactor:
     deps: [HexBasic, HexMvPoly, HexMvGcd, HexMvHensel, HexPoly, HexPolyZ, HexPolyZGcd, HexBerlekampZassenhaus, HexPolyFp, HexModArith, HexModular, HexArith]
