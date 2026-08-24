@@ -6,6 +6,7 @@ Authors: Kim Morrison
 
 import HexPolyZGcd
 import Hex.BenchOracle.Flint
+import HexBasic.Rand
 import LeanBench
 
 /-!
@@ -47,14 +48,23 @@ def hashDecomp (d : PrimitiveSquareFreeDecomposition) : UInt64 :=
     (mixWord (hashPoly d.squareFreeCore) (hashPoly d.repeatedPart))
 
 /-- A deterministic nonzero coefficient with the requested approximate bit
-width. The small bounded perturbation prevents the dense fixtures from having
-an accidental common scalar content. -/
+width. Two mixed words replace the earlier affine coefficient stream: affine
+streams make successive dense remainders live in a tiny linear span and turn
+the generic Euclidean fixture into a short-quotient special case. -/
 def coefficient (bits degree index salt : Nat) : Int :=
-  let low := Int.ofNat (((index + 3) * (salt + 17) + degree * 29) % 251 + 1)
+  let seed := degree * 0x9E3779B9 + index * 0x85EBCA6B + salt * 0xC2B2AE35
+  let first := (Rand.ofSeed seed).next
+  let word := first.1
+  let extra := first.2.next.1
+  let payload : Nat :=
+    if bits <= 65 then
+      word.toNat % (2 ^ (bits - 1))
+    else
+      word.toNat * 2 ^ (bits - 65) +
+        extra.toNat % (2 ^ (bits - 65))
   let magnitude :=
-    if bits <= 8 then low
-    else (2 : Int) ^ (bits - 1) + low
-  if (index + salt) % 2 = 0 then magnitude else -magnitude
+    (2 : Int) ^ (bits - 1) + Int.ofNat payload
+  if word.toNat % 2 = 0 then magnitude else -magnitude
 
 /-- Deterministic exact-degree dense integer polynomial. -/
 def densePoly (degree bits salt : Nat) : ZPoly :=
@@ -493,10 +503,12 @@ field. The result hash is linear and therefore lower order. -/
 setup_benchmark runCoprimeImage n => n * n
   with prep := prepCoprime
   where {
-    paramSchedule := .custom #[8, 16, 32, 64, 128, 256, 512, 1024, 2048]
+    paramSchedule := .custom #[8, 16, 32, 64, 128, 256, 512, 1024, 2048,
+      4096, 8192, 16384]
     maxSecondsPerCall := 10.0
     targetInnerNanos := 200000000
     signalFloorMultiplier := 1.0
+    verdictWarmupFraction := 0.5
   }
 
 /- Route 1 performs the dense image gcd above, normalizes its Bezout identity,
@@ -504,10 +516,12 @@ and replays products of degree `n`; all use quadratic dense arithmetic. -/
 setup_benchmark runCoprimeGcd n => n * n
   with prep := prepCoprime
   where {
-    paramSchedule := .custom #[8, 16, 32, 64, 128, 256, 512, 1024, 2048]
+    paramSchedule := .custom #[8, 16, 32, 64, 128, 256, 512, 1024, 2048,
+      4096, 8192, 16384]
     maxSecondsPerCall := 10.0
     targetInnerNanos := 200000000
     signalFloorMultiplier := 1.0
+    verdictWarmupFraction := 0.5
   }
 
 /- Brown image gcds and candidate divisions are quadratic in ambient degree;
