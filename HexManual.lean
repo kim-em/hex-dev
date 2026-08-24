@@ -7,6 +7,7 @@ Authors: Kim Morrison
 import VersoManual
 
 -- Released libraries (dependency order).
+import HexManual.Chapters.HexBasic
 import HexManual.Chapters.HexArith
 import HexManual.Chapters.HexPoly
 import HexManual.Chapters.HexMvPoly
@@ -72,6 +73,8 @@ polynomial factorization, root isolation, and lattice reduction. The
 computational core is Mathlib-free; Mathlib companions state correspondence
 contracts and, for mature libraries, supply their proofs.
 
+{include 0 HexManual.Chapters.HexBasic}
+
 {include 0 HexManual.Chapters.HexArith}
 
 {include 0 HexManual.Chapters.HexPoly}
@@ -112,8 +115,6 @@ contracts and, for mature libraries, supply their proofs.
 
 {include 0 HexManual.Chapters.HexBareiss}
 
-{include 0 HexManual.Chapters.HexCharPoly}
-
 {include 0 HexManual.Chapters.HexGramSchmidt}
 
 {include 0 HexManual.Chapters.HexLLL}
@@ -152,6 +153,8 @@ split out for release yet, so their APIs may still change. They are grouped
 here to keep the reference chapters above focused on the released libraries.
 
 {include 2 HexManual.Chapters.HexModular}
+
+{include 2 HexManual.Chapters.HexCharPoly}
 
 {include 2 HexManual.Chapters.HexResultant}
 

@@ -12,7 +12,7 @@ This SPEC expands the "Fixed-precision p-adic approximations" entry of
 [future-work](../future-work.md). It does not specify an exact
 inverse-limit or lazy `ℤ_p` / `ℚ_p` type, and it does not specify a
 precision typeclass shared with
-[hex-truncated-series](hex-truncated-series.md). Both are deferred, for
+[hex-truncated-series](../../HexTruncatedSeries/SPEC/hex-truncated-series.md). Both are deferred, for
 reasons given under "Scope" and in the open questions.
 
 ## Why this library exists
@@ -359,7 +359,7 @@ theorem reduce_add (h : M ≤ N) : (a + b).reduce h = a.reduce h + b.reduce h
 ```
 
 **There is no map raising the precision, and this is the sharpest
-contrast with [hex-truncated-series](hex-truncated-series.md).** That
+contrast with [hex-truncated-series](../../HexTruncatedSeries/SPEC/hex-truncated-series.md).** That
 library has `extend`, which pads with zeros, is documented as valid
 only for inputs known to be polynomials, and carries no
 multiplicativity lemma. The analogue here would send the ball
@@ -482,7 +482,7 @@ theorem divPow?_isSome_iff : (divPow? a k).isSome = true ↔ (p ^ k) ∣ a.resid
 every iteration, and its type is where the precision loss is recorded.
 A caller who wants `N` digits out of a division by `p^k` computes at
 precision `N + k`, and the type is what tells them. This is the same
-device [hex-truncated-series](hex-truncated-series.md) uses for
+device [hex-truncated-series](../../HexTruncatedSeries/SPEC/hex-truncated-series.md) uses for
 `divXPow?`, and for the same reason: a docstring saying "the caller
 should remember to ask for more" is not a contract.
 
@@ -531,7 +531,7 @@ residue is a unit modulo `p^N` exactly when `p` does not divide it. At
 all of `ℤ_p`, which contains `0` and has no inverse.
 
 This is where this library and
-[hex-truncated-series](hex-truncated-series.md) point in opposite
+[hex-truncated-series](../../HexTruncatedSeries/SPEC/hex-truncated-series.md) point in opposite
 directions, and the difference is worth stating because the two SPECs
 otherwise look alike. There, `TSeries R n` **is** the ring
 `R[[x]] / (x^n)`, so a success condition stated inside the type is a
@@ -572,7 +572,7 @@ from the inverse modulo `p`, doubling the known precision each step,
 with the intermediate products reduced modulo `p^(2^j)` rather than
 modulo `p^N`. The bounded step is what makes the total cost `O(M(b))`
 rather than `O(M(b) log b)`, by the same geometric-sum argument
-[hex-truncated-series](hex-truncated-series.md) makes for `invOfUnit`,
+[hex-truncated-series](../../HexTruncatedSeries/SPEC/hex-truncated-series.md) makes for `invOfUnit`,
 and the same mistake is available: running every step at full precision
 is correct and asymptotically worse. The extended GCD route is the
 alternative, is `O(M(b) log b)`, and is kept as the comparison in the
@@ -677,7 +677,7 @@ valuation reaches `m - e` after scaling is an approximate zero and the
 loop stops. So `norm` is structurally recursive on that bound, needs no
 fuel argument, and has no exhaustion branch to classify under design
 principle 8. This is the same device
-[hex-truncated-series](hex-truncated-series.md) uses for its Newton
+[hex-truncated-series](../../HexTruncatedSeries/SPEC/hex-truncated-series.md) uses for its Newton
 driver, and for the same reason.
 
 **The semantics is stated over `Rat`, and the companion upgrades it.**
@@ -1667,7 +1667,7 @@ fails there rather than at release time.
 ## Open questions
 
 - **Whether a precision typeclass shared with
-  [hex-truncated-series](hex-truncated-series.md) is worth having.**
+  [hex-truncated-series](../../HexTruncatedSeries/SPEC/hex-truncated-series.md) is worth having.**
   Not now, because `QpApprox` is not a ring and its degenerate cases
   are the opposite of `TSeries`'s, so the class would abstract little
   more than the existence of a precision. What would change the answer

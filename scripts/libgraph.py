@@ -38,6 +38,7 @@ BUILD_ONLY_LIBS = {
     "HexReleaseTests",
     "HexRCFTests",
     "HexSparsePolyTests",
+    "HexCharPolyTests",
     "HexReleaseExamples",
 }
 EXTERNAL_IMPORT_ROOTS = {"Mathlib", "Verso"}
