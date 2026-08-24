@@ -645,8 +645,6 @@ lean_lib HexReleaseTests where
     `HexBerlekampZassenhaus.FactorTacticTests,
     `HexBerlekampZassenhausMathlib.FactorPolyTests,
     `HexBerlekampZassenhausMathlib.IrreducibilityTests,
-    `HexCharPoly.CharPolyElabTests,
-    `HexCharPolyMathlib.CharPolyElabTests,
     `HexRealRoots.ReplayTest,
     `HexRealRootsMathlib.IsolateRootsTests,
     `HexRealRootsMathlib.IsolateRootsElabTests,
@@ -694,6 +692,16 @@ lean_lib HexFactorizationModules where
 @[default_target]
 lean_lib HexSparsePolyTests where
   globs := #[`HexSparsePolyMathlib.LintTests]
+
+-- HexCharPoly is not yet a published split repository (its released.yml
+-- entries were withdrawn until the phase pipeline completes), so its
+-- verification-only elaborator regressions stay separate from the
+-- release-manifest-backed target above; they rejoin HexReleaseTests (and
+-- the manifest's test_modules) at publication.
+@[default_target]
+lean_lib HexCharPolyTests where
+  globs := #[`HexCharPoly.CharPolyElabTests,
+    `HexCharPolyMathlib.CharPolyElabTests]
 
 -- HexRCF is not yet a published split repository, so its verification-only
 -- modules stay separate from the release-manifest-backed target above.
