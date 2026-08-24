@@ -453,7 +453,9 @@ Write the certificate's univariate data as `uni = [(P_1, e_1), …]`.
   distinct;
 - for every exponent vector `b` with `b ≤ e` and `b ∉ {0, e}`: either
   `unKron? d (∏_k P_k ^ b_k)` is `none`, or the polynomial it returns is
-  constant, or exact division of `g` by that polynomial fails.
+  constant, or exact division of `g` by that polynomial fails, or the
+  resulting quotient is a unit. Equivalently, the candidate does not give a
+  checked nontrivial split of `g`.
 
 Its obligations are `uni.map Prod.fst`.
 
@@ -488,10 +490,11 @@ prove, and it is what makes the companion's `Decidable` instance total.
 **The checker does not refactor.** The certificate carries the
 univariate factorization, so `checkIrred` verifies a product identity
 in `ZPoly` rather than re-running Berlekamp-Zassenhaus. The
-enumeration, which the checker does re-run, is exact division and
-nothing else. That is the smallest checker this route admits: a
+enumeration, which the checker does re-run, is exact division followed
+by the cheap nontrivial-split check and nothing else. That is the
+smallest checker this route admits: a
 negative statement about every subset has no shorter witness than the
-list of refutations, and each refutation is one division.
+list of refutations, and each refutation is one checked division.
 
 ### The other side: reducibility
 
