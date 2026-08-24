@@ -69,7 +69,7 @@ example {p n : Nat} [ZMod64.Bounds p] [ZMod64.PrimeModulus p]
 The executable field carries Mathlib's `Field` structure, and the carrier is
 finite with the cardinality its construction promises:
 
-```lean recall
+```lean recall HexGFqMathlib.GFq.fintype_card_eq_pow
 theorem fintype_card_eq_pow {p n : Nat} [Hex.ZMod64.Bounds p]
     (h : Hex.Conway.SupportedEntry p n) :
     Fintype.card (Hex.GFq p n h) = p ^ n

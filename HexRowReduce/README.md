@@ -58,7 +58,7 @@ Over a field the reduction is fully proven. The headline theorem states that
 sorted and equal to 1, all other pivot-column entries zero, trailing rows zero,
 and an invertible transform with `transform * M = echelon`):
 
-```lean recall
+```lean recall Hex.Matrix.rowReduce_isRowReduced
 theorem rowReduce_isRowReduced
     {R : Type u} {n m : Nat} [Lean.Grind.Field R] [DecidableEq R]
     (M : Matrix R n m) : IsRowReduced M (rowReduce M)
@@ -66,7 +66,7 @@ theorem rowReduce_isRowReduced
 
 The row-span wrappers are sound, with `spanCoeffs_sound`:
 
-```lean recall
+```lean recall Hex.Matrix.spanCoeffs_sound
 theorem spanCoeffs_sound
     {R : Type u} {n m : Nat} [Lean.Grind.Field R] [DecidableEq R]
     (M : Matrix R n m) (v : Vector R m) (c : Vector R n) :
@@ -76,13 +76,15 @@ theorem spanCoeffs_sound
 The nullspace basis is both sound and complete, `nullspace_sound` and
 `nullspace_complete`:
 
-```lean recall
+```lean recall Hex.Matrix.nullspace_sound
 theorem nullspace_sound
     {R : Type u} {n m : Nat} [Lean.Grind.Field R] [DecidableEq R]
     (M : Matrix R n m)
     (k : Fin (m - rowReduce_rank M)) :
     M * (nullspace M).get k = 0
+```
 
+```lean recall Hex.Matrix.nullspace_complete
 theorem nullspace_complete
     {R : Type u} {n m : Nat} [Lean.Grind.Field R] [DecidableEq R]
     (M : Matrix R n m)

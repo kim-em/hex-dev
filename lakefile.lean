@@ -16,7 +16,7 @@ require verso from git
 
 require «lean-readme» from git
   "https://github.com/kim-em/lean-readme.git" @
-    "4ef92a1dcaedc189ab41b59ba04fe40ac6afd4b9"
+    "2a286f42701c22dffafc9d2ff3222f8d3ac4994a"
 
 require «lean-bench» from git
   "https://github.com/kim-em/lean-bench.git" @ "master"

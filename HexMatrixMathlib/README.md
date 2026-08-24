@@ -76,7 +76,7 @@ open Hex HexMatrixMathlib
 def matrixEquiv : Hex.Matrix R n m ≃ Matrix (Fin n) (Fin m) R
 ```
 
-```lean recall
+```lean recall HexMatrixMathlib.matrixEquiv_apply
 theorem matrixEquiv_apply (M : Hex.Matrix R n m) (i : Fin n) (j : Fin m) :
     matrixEquiv M i j = M[i][j]
 ```
@@ -84,7 +84,7 @@ theorem matrixEquiv_apply (M : Hex.Matrix R n m) (i : Fin n) (j : Fin m) :
 The elementary row operations correspond to Mathlib's elementary matrices.
 A swap is left multiplication by the permutation matrix `Matrix.swap`:
 
-```lean recall
+```lean recall HexMatrixMathlib.matrixEquiv_rowSwap
 theorem matrixEquiv_rowSwap {R : Type u} [Semiring R] {n m : Nat}
     (M : Hex.Matrix R n m) (i j : Fin n) :
     matrixEquiv (Hex.Matrix.rowSwap M i j) = Matrix.swap R i j * matrixEquiv M
@@ -92,7 +92,7 @@ theorem matrixEquiv_rowSwap {R : Type u} [Semiring R] {n m : Nat}
 
 A row addition is left multiplication by `Matrix.transvection`:
 
-```lean recall
+```lean recall HexMatrixMathlib.matrixEquiv_rowAdd
 theorem matrixEquiv_rowAdd {R : Type u} [CommRing R] {n m : Nat}
     (M : Hex.Matrix R n m) (src dst : Fin n) (c : R) :
     matrixEquiv (Hex.Matrix.rowAdd M src dst c) =
@@ -101,7 +101,7 @@ theorem matrixEquiv_rowAdd {R : Type u} [CommRing R] {n m : Nat}
 
 The matrix-vector product transports to Mathlib's `Matrix.mulVec`:
 
-```lean recall
+```lean recall HexMatrixMathlib.vectorEquiv_mulVec
 theorem vectorEquiv_mulVec [Semiring R] (M : Hex.Matrix R n m) (v : Vector R m) :
     vectorEquiv (M * v) = (matrixEquiv M).mulVec (vectorEquiv v)
 ```

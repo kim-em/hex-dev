@@ -71,7 +71,7 @@ lower-unitriangular coefficient matrix) are available over both rings.
 The orthogonalization theory is proven over the Mathlib-free integer and
 rational cores. The orthogonal basis, `basis_orthogonal`:
 
-```lean recall
+```lean recall Hex.GramSchmidt.Int.basis_orthogonal
 theorem basis_orthogonal (b : Matrix Int n m)
     (i j : Nat) (hi : i < n) (hj : j < n) (hij : i ≠ j) :
     ((basis b).row ⟨i, hi⟩).dotProduct ((basis b).row ⟨j, hj⟩) = 0
@@ -82,7 +82,7 @@ coefficient laws `coeffs_diag` and `coeffs_upper`, the span equality
 `basis_span`, and the update laws for `sizeReduce` and `adjacentSwap`. The
 key lattice estimate, `normSq_latticeVec_ge_min_basis_normSq`:
 
-```lean recall
+```lean recall Hex.GramSchmidt.Int.normSq_latticeVec_ge_min_basis_normSq
 theorem normSq_latticeVec_ge_min_basis_normSq
     (b : Matrix Int n m) (_hli : independent b)
     (v : Vector Int m) (hv : memLattice b v) (hv' : v ≠ 0) :

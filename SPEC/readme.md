@@ -45,13 +45,15 @@ Use these five level-1 headings, in this order.
    for executable use only. Where it helps the reader, quote the headline
    theorem for each significant result as a Lean signature (name plus
    statement, proof elided) in a `lean` code block, copied verbatim from
-   the source so it stays accurate. Mark theorem blocks as `lean recall`:
-   `lean-readme` then checks each displayed `theorem` statement directly against
-   the declaration in the imported library, without changing the rendered
-   Markdown or depending on Mathlib's `recall` command. Other quoted declaration
-   kinds remain ordinary `lean` blocks. Because blocks are checked in order,
-   `lean recall` blocks reuse the Quickstart block's imports and namespace
-   openings rather than repeating them in the rendered theorem quotation.
+   the source so it stays accurate. Mark theorem blocks as
+   `lean recall Fully.Qualified.theoremName`: `lean-readme` then checks each
+   displayed `theorem` statement directly against that declaration in the
+   imported library, without changing the rendered Markdown or depending on
+   Mathlib's `recall` command. The explicit target makes the check independent
+   of namespace openings and unambiguous when declarations share a short name.
+   Other quoted declaration kinds remain ordinary `lean` blocks. Because blocks
+   are checked in order, recall blocks reuse the Quickstart block's imports
+   rather than repeating them in the rendered theorem quotation.
    Executable examples must remain checked. Point at the sibling library where
    the rest of the theory lives.
 

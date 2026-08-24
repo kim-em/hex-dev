@@ -71,7 +71,7 @@ def equiv {n : Nat} {R : Type u} {cmp : Mono n → Mono n → Ordering}
 
 It preserves every coefficient:
 
-```lean recall
+```lean recall HexMvPolyMathlib.coeff_toMvPolynomial
 theorem coeff_toMvPolynomial
     {n : Nat} {R : Type u} {cmp : Mono n → Mono n → Ordering}
     [Std.TransCmp cmp] [Std.LawfulEqCmp cmp] [CommSemiring R] [DecidableEq R]
@@ -82,7 +82,7 @@ theorem coeff_toMvPolynomial
 
 Executable evaluation is Mathlib algebra evaluation after conversion:
 
-```lean recall
+```lean recall HexMvPolyMathlib.aeval_apply
 theorem aeval_apply
     {n : Nat} {R : Type u} {S : Type v} {cmp : Mono n → Mono n → Ordering}
     [Std.TransCmp cmp] [Std.LawfulEqCmp cmp] [BEq R] [LawfulBEq R]

@@ -6,5 +6,20 @@ Authors: Kim Morrison
 
 module
 
-import HexLLL
+import Lean
+public meta import HexLLL
 
+public section
+
+private def loadReadmeDynlib (dir stem : String) : IO Unit := do
+  let ext := if System.Platform.isOSX then "dylib" else "so"
+  Lean.loadDynlib s!".lake/build/lib/{dir}{stem}.{ext}"
+
+run_cmd loadReadmeDynlib "" "libhexarithffi"
+run_cmd loadReadmeDynlib "" "libHex_HexArith"
+run_cmd loadReadmeDynlib "" "libhexmodarithffi"
+run_cmd loadReadmeDynlib "" "libHex_HexModArith"
+run_cmd loadReadmeDynlib "lean/" "Hex_HexHensel_WordMul"
+run_cmd loadReadmeDynlib "" "libHex_HexBasic"
+run_cmd loadReadmeDynlib "" "libHex_HexMatrix"
+run_cmd loadReadmeDynlib "" "libHex_HexBareiss"

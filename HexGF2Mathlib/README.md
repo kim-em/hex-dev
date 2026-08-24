@@ -82,7 +82,7 @@ keep the executable operations rather than transported copies, so
 
 The single-word wrapper, in namespace `HexGF2Mathlib.GF2n`:
 
-```lean recall
+```lean recall HexGF2Mathlib.GF2n.fintype_card
 theorem fintype_card {n : Nat} {irr : UInt64} {hn : 0 < n} {hn64 : n < 64}
     {hirr : Hex.GF2Poly.Irreducible (Hex.GF2Poly.ofUInt64Monic irr n)} :
     Fintype.card (Hex.GF2n n irr hn hn64 hirr) = 2 ^ n
@@ -90,7 +90,7 @@ theorem fintype_card {n : Nat} {irr : UInt64} {hn : 0 < n} {hn64 : n < 64}
 
 The arbitrary-degree wrapper, in namespace `HexGF2Mathlib.GF2nPoly`:
 
-```lean recall
+```lean recall HexGF2Mathlib.GF2nPoly.fintype_card
 theorem fintype_card {f : Hex.GF2Poly} {hirr : Hex.GF2Poly.Irreducible f} :
     Fintype.card (Hex.GF2nPoly f hirr) = 2 ^ f.degree
 ```

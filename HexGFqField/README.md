@@ -71,7 +71,7 @@ example : frob α = α ^ 5 := frob_eq_pow α
 The field laws are proved, not asserted. Inverse cancellation is the result the
 rest rests on:
 
-```lean recall
+```lean recall Hex.GFqField.mul_inv_cancel
 theorem mul_inv_cancel
     {p : Nat} [ZMod64.Bounds p] [ZMod64.PrimeModulus p] {hp : Hex.Nat.Prime p}
     {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f}

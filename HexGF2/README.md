@@ -69,10 +69,12 @@ Irreducibility is proved rather than tabulated. The Rabin test is sound, and so
 is certificate replay, which is what lets a committed modulus be checked by the
 kernel without `native_decide`:
 
-```lean recall
+```lean recall Hex.GF2Poly.rabinTest_imp_irreducible
 theorem rabinTest_imp_irreducible (f : GF2Poly) (hrabin : rabinTest f = true) :
     GF2Poly.Irreducible f
+```
 
+```lean recall Hex.GF2Poly.checkIrreducibilityCertificate_imp_irreducible
 theorem checkIrreducibilityCertificate_imp_irreducible
     (f : GF2Poly) (cert : IrreducibilityCertificate)
     (hcheck : checkIrreducibilityCertificate f cert = true) :
@@ -85,7 +87,7 @@ laws need more: `GF2Poly.Irreducible` is satisfied by the constant `1`, and the
 quotient by a constant is trivial, so nonconstancy is a separate hypothesis and
 the field laws are functions rather than instances.
 
-```lean recall
+```lean recall Hex.GF2nPoly.isCharPOfDegreePos
 theorem isCharPOfDegreePos {f : GF2Poly} {hirr : GF2Poly.Irreducible f}
     (hdeg : 0 < f.degree) :
     Lean.Grind.IsCharP (GF2nPoly f hirr) 2
