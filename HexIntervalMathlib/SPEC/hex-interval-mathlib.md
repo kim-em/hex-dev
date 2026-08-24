@@ -349,6 +349,17 @@ fast path revalidates the complete proof package/program registry under the
 caller's `Proof.Limits`, prepares and typechecks all quotation callbacks, and
 charges the input and final Evidence expressions independently.
 
+For the built-in interval quoter, the same version-zero token also succeeds
+through `emitResultWithin`: its `getValue (ofRawWithin ...)` representation is
+reducible enough for the empty `Proof.replayWith` check. Conformance requires
+both emitters to quote definitionally equal inputs and Evidence claims. The
+initial-target path is therefore not a correctness workaround for the current
+built-in encoding. It is the smaller direct proof and does not require the
+fact domain's `DecidableEq` to reduce an opaque representation merely to
+rediscover that the exact target expression is the exact indexed initial fact.
+This distinction matters for checked quoters whose fact constructors expose
+semantic view theorems but deliberately keep their constructor bodies opaque.
+
 Retained result and proof-tree admission remains owned by
 `RuntimeEmit.Lineage.quoteWithin`, which constructs `Checked` only after
 `RuntimeProof.Limits.result` and `.tree` have accepted the entire tree and
@@ -624,6 +635,8 @@ the sealed input/evidence pair for all eleven built-in rules, including repeated
 binary applications, and separately emits the mixed `sin (-x)` instance,
 equality, fact, and transport chronology. Its version-zero canary quotes a
 checked opaque interval directly from the initial base with no chronology; it
+also compares ordinary empty replay against the same token, requiring exact
+input/claim agreement and a strictly smaller direct Evidence expression. It
 pins computed-version refusal, the exact singleton tree/depth minimum,
 result-node, proof-node, edge-inclusive work, proof-package, emitter-schema,
 input-expression, and evidence-expression limits, plus transactional rollback.

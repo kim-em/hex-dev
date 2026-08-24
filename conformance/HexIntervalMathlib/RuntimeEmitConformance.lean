@@ -343,6 +343,12 @@ meta def emitInitialWith (limits : RuntimeEmit.Limits) :
   | .error error => pure (.error error)
   | .ok checked => checked.emitInitialTargetWithin limits
 
+meta def emitInitialReplayWith (limits : RuntimeEmit.Limits) :
+    MetaM (Except RuntimeEmit.Error RuntimeEmit.Emitted) :=
+  match initialCheckedWith terminalAdapterLimits with
+  | .error error => pure (.error error)
+  | .ok checked => checked.emitResultWithin limits
+
 meta def emitComputedAsInitial (limits : RuntimeEmit.Limits) :
     MetaM (Except RuntimeEmit.Error RuntimeEmit.Emitted) :=
   match Rule.Runtime.assemblyWithin RuntimeRuleConformance.executableLimits
@@ -549,10 +555,19 @@ elab "runtime_emit_initial_guards" : tactic => do
   let emitted ← match ← emitInitialWith minimalEmit with
     | .error error => throwError "empty chronology minimum refused: {repr error}"
     | .ok emitted => pure emitted
+  let replayed ← match ← emitInitialReplayWith emitLimits with
+    | .error error => throwError "ordinary empty replay refused: {repr error}"
+    | .ok emitted => pure emitted
+  unless ← isDefEq emitted.input replayed.input do
+    throwError "initial-target and ordinary replay quoted different inputs"
+  unless ← isDefEq (← inferType emitted.evidence) (← inferType replayed.evidence) do
+    throwError "initial-target and ordinary replay emitted different claims"
   let inputCells := RuntimeEmit.expressionCells emitted.input
   let evidenceCells := RuntimeEmit.expressionCells emitted.evidence
   if inputCells == 0 || evidenceCells ≤ inputCells then
     throwError "initial-target expression accounting lost its two-stage boundary"
+  if RuntimeEmit.expressionCells replayed.evidence ≤ evidenceCells then
+    throwError "initial-target evidence did not stay smaller than empty replay"
   expectEmitError "input expression one-under"
     (← emitInitialWith { emitLimits with maxExpressionCells := inputCells - 1 })
     (.resource .expression)
