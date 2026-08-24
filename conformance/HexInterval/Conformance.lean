@@ -146,7 +146,8 @@ example (lower upper : Dyadic) (ordered : lower ≤ upper) :
   Hex.Interval.view_ofOrderedBoundsUnchecked lower upper ordered
 
 #guard
-  (Hex.Interval.ofOrderedBoundsUnchecked (d 0) (d 1) (by decide)).view ==
+  (Hex.Interval.ofOrderedBoundsUnchecked (d 0) (d 1)
+    (Hex.Interval.ordered_of_consistent (by decide))).view ==
     finite 0 false 1 false
 
 -- On admitted inputs, the unchecked trusted-decoder bridge agrees exactly
@@ -155,14 +156,16 @@ example (lower upper : Dyadic) (ordered : lower ≤ upper) :
   match Hex.Interval.ofRawWithin smallLimit (finite 0 false 1 false) with
   | .ready interval =>
       interval ==
-        Hex.Interval.ofOrderedBoundsUnchecked (d 0) (d 1) (by decide)
+        Hex.Interval.ofOrderedBoundsUnchecked (d 0) (d 1)
+          (Hex.Interval.ordered_of_consistent (by decide))
   | .resourceLimit _ => false
 
 #guard
   match Hex.Interval.betweenWithin smallLimit (d 0) false (d 1) false with
   | .ready interval =>
       interval ==
-        Hex.Interval.ofOrderedBoundsUnchecked (d 0) (d 1) (by decide)
+        Hex.Interval.ofOrderedBoundsUnchecked (d 0) (d 1)
+          (Hex.Interval.ordered_of_consistent (by decide))
   | .resourceLimit _ => false
 
 -- This pins only that a trusted decoder may admit a compact endpoint beyond

@@ -9,6 +9,7 @@ module
 public import Mathlib.Data.Rat.Cast.Order
 public import Mathlib.Data.Real.Basic
 public import Mathlib.Tactic.Linarith
+public import HexInterval.Canonical
 public import HexInterval.Interval
 
 @[expose] public section

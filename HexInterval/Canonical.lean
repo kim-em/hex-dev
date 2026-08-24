@@ -86,6 +86,19 @@ def empty : Hex.Interval := .mk .empty (by rfl)
 def whole : Hex.Interval :=
   .mk (.bounds .unbounded .unbounded) (by rfl)
 
+/-- Closed consistent finite cuts recover the endpoint order needed by trusted
+representation decoders. This consumes an existing kernel proof; it performs
+no executable dyadic comparison. -/
+theorem ordered_of_consistent {lower upper : Dyadic}
+    (h : (Raw.bounds (.finite lower false) (.finite upper false)).CutConsistent) :
+    lower ≤ upper := by
+  by_cases less : lower < upper
+  · rw [← Dyadic.toRat_le_toRat_iff]
+    exact Rat.le_of_lt (Dyadic.toRat_lt_toRat_iff.mpr less)
+  · by_cases equal : lower = upper
+    · exact equal ▸ Dyadic.le_refl lower
+    · simp [Raw.CutConsistent, Raw.consistent, less, equal] at h
+
 /-- Construct a closed interval from independently preflighted ordered bounds.
 
 This is an explicitly unchecked bridge for trusted representation decoders.
@@ -115,6 +128,18 @@ theorem view_ofOrderedBoundsUnchecked
     (ofOrderedBoundsUnchecked lower upper ordered).view =
       .bounds (.finite lower false) (.finite upper false) := by
   rfl
+
+/-- Whenever the checked raw constructor admits already-consistent closed
+bounds, it returns exactly the unchecked trusted-decoder construction. -/
+theorem eq_ordered_ofRawWithin {limit : EndpointLimit} {lower upper : Dyadic}
+    {interval : Hex.Interval} (ordered : lower ≤ upper)
+    (h : ofRawWithin limit
+      (.bounds (.finite lower false) (.finite upper false)) = .ready interval) :
+    interval = ofOrderedBoundsUnchecked lower upper ordered := by
+  apply ext
+  rw [view_ofRawWithin_ready h, view_ofOrderedBoundsUnchecked]
+  apply Raw.normalizeUnchecked_eq_self
+  exact view_consistent (ofOrderedBoundsUnchecked lower upper ordered)
 
 /-- Construct a singleton after endpoint-cost preflight. -/
 def singletonWithin (limit : EndpointLimit) (value : Dyadic) : BuildResult :=
