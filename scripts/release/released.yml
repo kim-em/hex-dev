@@ -135,21 +135,6 @@ repos:
     pins: [hex-arith]
     lakefile: lean
 
-  - repo: leanprover/hex-sparse-poly
-    component: Sparse univariate polynomials
-    lib: HexSparsePoly
-    test_modules: [HexSparsePoly.KernelTests]
-    umbrella: true
-    spec: hex-sparse-poly
-    bench: true
-    conformance: true
-    conformance_files: [HexSparsePolyFixtures.lean]
-    fixtures: [HexSparsePoly]
-    oracles: [sparsepoly_sympy.py, common.py]
-    pins: [hex-basic, hex-poly, hex-arith, hex-mod-arith]
-    conformance_pins: [hex-arith, hex-mod-arith]
-    lakefile: toml
-
   - repo: leanprover/hex-poly-mathlib
     lib: HexPolyMathlib
     umbrella: true
@@ -159,17 +144,6 @@ repos:
     fixtures: []
     oracles: []
     pins: [hex-poly]
-    lakefile: toml
-
-  - repo: leanprover/hex-sparse-poly-mathlib
-    lib: HexSparsePolyMathlib
-    umbrella: true
-    spec: hex-sparse-poly-mathlib
-    bench: false
-    conformance: true
-    fixtures: []
-    oracles: []
-    pins: [hex-basic, hex-poly, hex-sparse-poly, hex-poly-mathlib]
     lakefile: toml
 
   - repo: leanprover/hex-mv-poly-mathlib
@@ -193,6 +167,33 @@ repos:
     fixtures: [HexPolyFp]
     oracles: [polyfp_flint.py, common.py]
     pins: [hex-arith, hex-poly, hex-mod-arith]
+    lakefile: toml
+
+  - repo: leanprover/hex-sparse-poly
+    component: Sparse univariate polynomials
+    lib: HexSparsePoly
+    test_modules: [HexSparsePoly.KernelTests]
+    umbrella: true
+    spec: hex-sparse-poly
+    bench: true
+    conformance: true
+    conformance_files: [HexSparsePolyFixtures.lean]
+    fixtures: [HexSparsePoly]
+    oracles: [sparsepoly_sympy.py, common.py]
+    pins: [hex-basic, hex-poly, hex-arith, hex-mod-arith, hex-poly-fp]
+    conformance_pins: [hex-arith, hex-mod-arith]
+    bench_pins: [hex-poly-fp]
+    lakefile: toml
+
+  - repo: leanprover/hex-sparse-poly-mathlib
+    lib: HexSparsePolyMathlib
+    umbrella: true
+    spec: hex-sparse-poly-mathlib
+    bench: false
+    conformance: true
+    fixtures: []
+    oracles: []
+    pins: [hex-basic, hex-poly, hex-sparse-poly, hex-poly-mathlib]
     lakefile: toml
 
   - repo: leanprover/hex-poly-z
