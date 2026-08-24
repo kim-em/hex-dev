@@ -734,7 +734,41 @@ instance instLawfulGcdOpsMvPoly [IsMonomialOrder cmp]
     [Dvd R] [BezoutOps R] [LawfulGcdOps R] [LawfulBezoutOps R]
     [GcdProducer R] :
     LawfulGcdOps (MvPoly n R cmp) := by
-  constructor <;> intros <;> sorry
+  refine {
+    dvd_iff := ?_
+    one_ne_zero := ?_
+    no_zero_div := ?_
+    gcd_dvd_left := gcd_dvd_left
+    gcd_dvd_right := gcd_dvd_right
+    dvd_gcd := dvd_gcd
+    gcd_normalized := gcd_normalized
+    exactDiv_cancel := ?_
+    isUnit_iff := polyIsUnit_iff
+    normUnit_unit := ?_
+    normalize_mul := polyNormalize_mul
+    normalize_idem := polyNormalize_idem
+    normalize_unit := polyNormalize_unit }
+  · intro a b
+    constructor
+    · rintro ⟨q, hq⟩
+      exact ⟨q, hq.trans (MvPoly.mul_comm q a)⟩
+    · rintro ⟨q, hq⟩
+      exact ⟨q, hq.trans (MvPoly.mul_comm a q)⟩
+  · intro hone
+    have hcoeff := congrArg (coeff (Mono.zero : Mono n)) hone
+    rw [coeff_one, coeff_zero, Hex.ite_eq_left rfl] at hcoeff
+    exact LawfulGcdOps.one_ne_zero hcoeff
+  · intro a b hab
+    exact GcdDomainLaws.no_zero_div a b hab
+  · intro a b hb
+    change quotient (a * b) b = a
+    unfold quotient
+    have hdiv : divExact? (a * b) b = some a :=
+      (divExact?_eq hb).mpr rfl
+    simp [hdiv]
+  · intro a
+    exact (polyIsUnit_iff (polyNormUnit a)).mp
+      (polyNormUnit_isUnit a)
 
 end Hex.MvPoly
 
