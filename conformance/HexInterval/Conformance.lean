@@ -145,6 +145,29 @@ example (lower upper : Dyadic) (ordered : lower ≤ upper) :
       .bounds (.finite lower false) (.finite upper false) :=
   Hex.Interval.view_ofOrderedBoundsUnchecked lower upper ordered
 
+-- A decoder that already proved the corresponding rational inequality can
+-- transport that proof to dyadics without executing another comparison.
+example (lower upper : Dyadic) (orderedRat : lower.toRat ≤ upper.toRat) :
+    lower ≤ upper :=
+  Dyadic.toRat_le_toRat_iff.mp orderedRat
+
+-- Pin both general checked/unchecked agreement contracts at the importing
+-- boundary, independently of the concrete executable canaries below.
+example {limit : EndpointLimit} {lower upper : Dyadic} {interval : Hex.Interval}
+    (ordered : lower ≤ upper)
+    (checked : Hex.Interval.ofRawWithin limit
+      (.bounds (.finite lower false) (.finite upper false)) = .ready interval) :
+    interval = Hex.Interval.ofOrderedBoundsUnchecked lower upper ordered :=
+  Hex.Interval.eq_ordered_ofRawWithin ordered checked
+
+example {limit : EndpointLimit} {lower upper : Dyadic} {interval : Hex.Interval}
+    (ordered : lower ≤ upper)
+    (checked : Hex.Interval.betweenWithin limit lower false upper false = .ready interval) :
+    interval = Hex.Interval.ofOrderedBoundsUnchecked lower upper ordered :=
+  Hex.Interval.eq_ordered_of_betweenWithin ordered checked
+
+-- The following decisions are deliberately tiny literal canaries, not the
+-- trusted-decoder pattern for arbitrary endpoints.
 #guard
   (Hex.Interval.ofOrderedBoundsUnchecked (d 0) (d 1)
     (Hex.Interval.ordered_of_consistent (by decide))).view ==

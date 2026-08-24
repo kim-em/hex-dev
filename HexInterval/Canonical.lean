@@ -88,7 +88,9 @@ def whole : Hex.Interval :=
 
 /-- Closed consistent finite cuts recover the endpoint order needed by trusted
 representation decoders. This consumes an existing kernel proof; it performs
-no executable dyadic comparison. -/
+no executable dyadic comparison. The theorem does not make construction of
+`h` cost-free: untrusted decoders must obtain it from their independently
+bounded comparison proof, not from an unbounded decision procedure. -/
 theorem ordered_of_consistent {lower upper : Dyadic}
     (h : (Raw.bounds (.finite lower false) (.finite upper false)).CutConsistent) :
     lower ≤ upper := by
@@ -167,6 +169,14 @@ def betweenWithin (limit : EndpointLimit)
     (upper : Dyadic) (upperStrict : Bool) : BuildResult :=
   ofRawWithin limit
     (.bounds (.finite lower lowerStrict) (.finite upper upperStrict))
+
+/-- A successful checked closed finite constructor agrees with the unchecked
+trusted-decoder construction on the same independently proved order. -/
+theorem eq_ordered_of_betweenWithin {limit : EndpointLimit} {lower upper : Dyadic}
+    {interval : Hex.Interval} (ordered : lower ≤ upper)
+    (h : betweenWithin limit lower false upper false = .ready interval) :
+    interval = ofOrderedBoundsUnchecked lower upper ordered :=
+  eq_ordered_ofRawWithin ordered h
 
 @[simp]
 theorem view_empty : empty.view = .empty := by rfl
