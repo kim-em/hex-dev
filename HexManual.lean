@@ -115,8 +115,6 @@ contracts and, for mature libraries, supply their proofs.
 
 {include 0 HexManual.Chapters.HexBareiss}
 
-{include 0 HexManual.Chapters.HexCharPoly}
-
 {include 0 HexManual.Chapters.HexGramSchmidt}
 
 {include 0 HexManual.Chapters.HexLLL}
@@ -155,6 +153,8 @@ split out for release yet, so their APIs may still change. They are grouped
 here to keep the reference chapters above focused on the released libraries.
 
 {include 2 HexManual.Chapters.HexModular}
+
+{include 2 HexManual.Chapters.HexCharPoly}
 
 {include 2 HexManual.Chapters.HexResultant}
 

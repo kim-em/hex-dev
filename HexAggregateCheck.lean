@@ -38,12 +38,9 @@ public import HexGFq
 public import HexGFqMathlib
 public import HexDeterminant
 public import HexBareiss
-public import HexHermite
-public import HexCharPoly
 public import HexMatrixMathlib
 public import HexRowReduceMathlib
 public import HexDeterminantMathlib
-public import HexCharPolyMathlib
 public import HexBareissMathlib
 public import HexBerlekampMathlib
 public import HexGramSchmidt
