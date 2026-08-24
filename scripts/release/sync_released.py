@@ -22,7 +22,7 @@ Auth (non-dry-run): tokens from --token (repeatable) or the environment
 `x-access-token` basic-auth credentials for clone and push. A fine-grained
 token caps its selected-repository list, so the published set is split across
 more than one token; for each target repository the preflight probes the
-tokens in order until one can see it, and routes that repository's clone and
+tokens in order until one can push to it, and routes that repository's clone and
 push through that token. Dry-run clones over public https and never pushes.
 
 Usage:
@@ -32,6 +32,7 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import base64
 import json
 import os
 import re
@@ -65,10 +66,11 @@ TOOLCHAIN = REPO_ROOT / "lean-toolchain"
 # of a token with room. The second part needs an organization owner's
 # approval, so start it before the release rather than discovering it
 # mid-publish. The sync does not care which token carries which repository; it
-# routes per repository to the first token that can see it.
+# routes per repository to the first token that can push to it.
 TOKEN_HELP = (
-    "Follow the per-token reasons above: a repository reported as not selected\n"
-    "must be added to the selected repositories of one of the tokens behind the\n"
+    "Follow the per-token reasons above: a repository reported without a\n"
+    "write grant must be added to the selected repositories of one of the\n"
+    "tokens behind the\n"
     "RELEASED_SYNC_PAT / RELEASED_SYNC_PAT_2 secrets (Contents: Read and write);\n"
     "a missing repository must be created first; an indeterminate reason (rate\n"
     "limit, network, credentials) calls for a retry or a token repair, not a\n"
@@ -212,39 +214,61 @@ def _api_repo(repo: str, token: str | None) -> dict | int:
         return exc.code
 
 
+def _receive_pack_status(repo: str, token: str) -> int:
+    """HTTP status of the smart-HTTP receive-pack advertisement.
+
+    `GET <repo>.git/info/refs?service=git-receive-pack` is the handshake `git
+    push` performs before sending anything, so it is authorized exactly like a
+    push (`Contents: write`) and has no side effects: 200 means this token can
+    push, 401/403 mean it cannot, 404 means the repository is not there.
+    """
+    auth = base64.b64encode(f"x-access-token:{token}".encode()).decode()
+    request = urllib.request.Request(
+        f"https://github.com/{repo}.git/info/refs?service=git-receive-pack",
+        headers={"Authorization": f"Basic {auth}",
+                 "User-Agent": "hex-dev-release-sync"})
+    try:
+        with urllib.request.urlopen(request, timeout=30) as response:
+            return response.status
+    except urllib.error.HTTPError as exc:
+        return exc.code
+
+
 def selection_check(repo: str, token: str) -> str | None:
-    """None if `repo` is in the token's selected repositories, else why not.
+    """None if `token` can push to `repo`, else why not.
 
-    This is a *selection* check, not an authorization check. `GET /repos` needs
-    only `Metadata: read`, and the `permissions` it reports describe the
-    authenticated user's role on the repository, not the grants of this
-    particular token, so a token holding only `Contents: read` on a selected
-    repository still reports `push: true`. What it does catch, and what has
-    actually bitten a release, is a repository missing from the token's
-    selection: a fine-grained token cannot see one at all, so it answers 404.
+    Probes the receive-pack advertisement rather than `GET /repos`: a
+    fine-grained token reads any *public* repository whether or not it is in
+    the token's selection, so a metadata probe routes a repository to the
+    first token even when only a later token holds the write grant, and the
+    failure then surfaces at push time, after earlier repositories were
+    already published (this has actually bitten a first publish). The
+    receive-pack handshake is authorized exactly like the push itself.
 
-    A repository that does not exist answers 404 too, so an anonymous probe
-    separates the two; released repositories are public and are created by hand
-    before they enter the manifest (see scripts/release/BOOTSTRAP.md). Any other
-    status is reported as indeterminate rather than guessed at, so a rate limit
-    or an outage never reads as a missing repository.
+    A repository that does not exist answers 404; an anonymous metadata probe
+    separates "missing" from anything odder. Any other status is reported as
+    indeterminate rather than guessed at, so a rate limit or an outage never
+    reads as a missing grant.
     """
     try:
-        result = _api_repo(repo, token)
+        status = _receive_pack_status(repo, token)
     except (urllib.error.URLError, OSError, ValueError) as exc:
         return f"could not be checked ({exc})"
-    if not isinstance(result, int):
+    if status == 200:
         return None
-    if result in (403, 429):
-        return f"could not be checked (HTTP {result}; rate limited or forbidden)"
-    if result != 404:
-        return f"could not be checked (HTTP {result})"
+    if status in (401, 403):
+        return ("not granted Contents: write (repository unselected on this "
+                "token, or selected read-only)")
+    if status == 429:
+        return f"could not be checked (HTTP {status}; rate limited)"
+    if status != 404:
+        return f"could not be checked (HTTP {status})"
     try:
         anonymous = _api_repo(repo, None)
     except (urllib.error.URLError, OSError, ValueError) as exc:
         return f"HTTP 404, and could not be checked anonymously ({exc})"
     if not isinstance(anonymous, int):
-        return "not in the token's selected repositories"
+        return "HTTP 404 with the token yet publicly visible; undetermined"
     if anonymous == 404:
         return "no such repository (create it before publishing)"
     return (f"HTTP 404, and anonymously HTTP {anonymous}, so whether it is "
@@ -262,8 +286,8 @@ def route_tokens(entries: list[dict], tokens: list[str]) -> tuple[dict[str, str]
     it, and every later clone and push uses the token routed here. A library
     released here
     but on no token's list would otherwise fail partway through, after earlier
-    repos were already published. This proves selection, not write access; see
-    `selection_check`.
+    repos were already published. The probe authorizes like the push itself;
+    see `selection_check`.
     """
     routed: dict[str, str] = {}
     blocked: list[str] = []
@@ -857,7 +881,7 @@ def main() -> int:
             f"token {index + 1}: {sum(1 for t in repo_token.values() if t == token)}"
             for index, token in enumerate(tokens))
         print(f"token preflight: all {len(targets)} target repositories are covered "
-              f"({per_slot}; this does not prove write access, see selection_check)")
+              f"({per_slot}; the probe authorizes like the push itself, see selection_check)")
 
     failed_repo: str | None = None
     current_repo = "<manifest>"
