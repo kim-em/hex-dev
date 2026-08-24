@@ -88,6 +88,47 @@ certificate-backed `factor_poly` and `irreducibility` syntax for
 `FpPoly p`. Importing `HexBerlekampMathlib` adds the corresponding
 surface for `Polynomial (ZMod p)`.
 
+# The Mathlib correspondence
+%%%
+tag := "hex-berlekamp-mathlib"
+%%%
+
+Everything above is executable and Mathlib-free. `HexBerlekampMathlib`
+is the companion that transports it: `toMathlibPolynomial` maps a
+{name}`Hex.FpPoly` to `Polynomial (ZMod p)`, and the executable checks
+become statements about Mathlib's `Irreducible` predicate on the
+transported polynomial.
+
+The headline equivalence takes an arbitrary input. The computable test
+{name}`HexBerlekampMathlib.fpIsIrreducible` normalizes to a monic
+polynomial, runs Rabin's test on it, and agrees exactly with Mathlib
+irreducibility:
+
+{docstring HexBerlekampMathlib.fpIsIrreducible_iff}
+
+For a monic input the equivalence is Rabin's criterion itself, in both
+directions: the test succeeds exactly on the irreducible polynomials.
+The forward direction is what certificate checking uses; the reverse
+direction says the test never misses.
+
+{docstring HexBerlekampMathlib.rabin_irreducible}
+
+Factorization transports factor by factor. On a monic square-free input
+of positive degree, every entry of the list returned by
+{name}`Hex.Berlekamp.berlekampFactor` is irreducible in Mathlib's sense.
+Together with the Mathlib-free product theorem
+{name}`Hex.Berlekamp.prod_berlekampFactor` above, the returned list is a
+complete factorization into Mathlib irreducibles.
+
+{docstring HexBerlekampMathlib.irreducible_of_mem_berlekampFactor}
+
+The proof boundary follows the import boundary. The executable library
+proves what is statable without Mathlib: the product identity, degree
+accounting, and the loop invariants of the factor loop. The companion
+supplies the finite-field theory, such as the existence and subfield
+structure of `𝔽_(p^n)` behind Rabin's criterion, that reads those checks
+as irreducibility.
+
 # Verification
 
 The executable library proves product reconstruction and the algebra
