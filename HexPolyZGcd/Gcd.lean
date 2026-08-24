@@ -241,7 +241,7 @@ private def heuSizeLimit : Nat :=
 /-- Above this coefficient height, a full coprime image gcd on the unreduced
 ambient degree costs more than reconstructing the smaller common factor. -/
 private def brownBitCutoff : Nat :=
-  64
+  16
 
 private def brownOrFallback (f h : ZPoly) : GcdCert :=
   match brownCert? f h with

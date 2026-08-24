@@ -84,24 +84,48 @@ for structured inputs on which every small image is unlucky. -/
 def modularWitness (f h : ZPoly) : Option CoprimeWitness :=
   modularWitness.go f h witnessSupply 0 witnessSupply.size
 
-/-- Route 1: offer `1` as the gcd and accept it only when the full checker
-validates the modular coprimality witness. -/
+/-- The single small-prime probe used by route 1. A nonconstant image gcd is
+inconclusive and hands control to reconstruction immediately; exhausting the
+full witness supply here would turn the SPEC's one-image fast path into one
+image per available prime on every genuinely noncoprime input. -/
+private def coprimeSupply : Array ZMod64.Prime :=
+  ZMod64.primesBelow 47 1
+
+/-- Route 1: offer `1` after one modular image and accept it only when the full
+checker validates the resulting coprimality witness. -/
 def coprimeCert? (f h : ZPoly) : Option GcdCert := do
-  match modularWitness f h with
+  match modularWitness.go f h coprimeSupply 0 coprimeSupply.size with
   | none => none
   | some witness =>
       let candidate : GcdCert :=
         { gcd := 1, cofL := f, cofR := h, coprime := witness }
       if checkGcd f h candidate then some candidate else none
 
-/-- Offer an arbitrary nonzero gcd candidate to the checker.  Exact division
-builds its cofactors; a modular Bezout search supplies coprimality evidence.
-Failure at any stage rejects the candidate without exposing it. -/
+/-- A nonzero constant difference is already an integral Bezout identity.
+This avoids a modular xgcd when reconstruction leaves adjacent cofactors. -/
+private def differenceWitness? (f h : ZPoly) : Option CoprimeWitness :=
+  let difference := f - h
+  if difference.size = 1 && difference.coeff 0 != 0 then
+    let witness := CoprimeWitness.constant 1 (-1) (difference.coeff 0)
+    if checkCoprime f h witness then some witness else none
+  else
+    none
+
+/-- Prefer a direct integral identity before searching modular images. -/
+private def candidateWitness (f h : ZPoly) : Option CoprimeWitness :=
+  match differenceWitness? f h with
+  | some witness => some witness
+  | none => modularWitness f h
+
+/-- Offer an arbitrary nonzero gcd candidate to the checker. Exact division
+builds its cofactors; a direct constant identity or modular search supplies
+coprimality evidence. Failure at any stage rejects the candidate without
+exposing it. -/
 def checkedCandidate? (f h candidate : ZPoly) : Option GcdCert := do
   if candidate == 0 then none else pure ()
   let cofL ← divExact? f candidate
   let cofR ← divExact? h candidate
-  let witness ← modularWitness cofL cofR
+  let witness ← candidateWitness cofL cofR
   let cert : GcdCert := { gcd := candidate, cofL, cofR, coprime := witness }
   if checkGcd f h cert then some cert else none
 
@@ -111,7 +135,8 @@ theorem coprimeCert?_checks {f h : ZPoly} {cert : GcdCert}
     (hc : coprimeCert? f h = some cert) :
     checkGcd f h cert = true := by
   unfold coprimeCert? at hc
-  generalize hw : modularWitness f h = witness? at hc
+  generalize hw : modularWitness.go f h coprimeSupply 0 coprimeSupply.size =
+    witness? at hc
   cases witness? with
   | none => simp at hc
   | some witness =>
