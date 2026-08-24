@@ -878,6 +878,12 @@ def gcdList (ps : List (MvPoly n R cmp)) : MvPoly n R cmp
 def lcm (f h : MvPoly n R cmp) : MvPoly n R cmp
 ```
 
+The executable API deliberately requires only `BezoutOps` (and hence its
+parent `GcdOps`), not `LawfulGcdOps` or `LawfulBezoutOps`.  The deterministic
+fallback is the single `prsCert` definition and follows the same rule.  Law
+packages occur only on the acceptance and semantic theorems below; they are
+proof obligations, not runtime dictionaries.
+
 The concrete proposal instances are `intProducer`, `ratProducer`,
 `primeProducer`, and `fpPolyProducer`. An abstract coefficient ring does
 not silently receive the integer modular algorithm; it may use

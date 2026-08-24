@@ -203,7 +203,7 @@ def brownCheckedCandidate? {n : Nat} {R : Type u}
     {cmp : Mono n → Mono n → Ordering}
     [IsMonomialOrder cmp]
     [Lean.Grind.CommRing R] [DecidableEq R] [BEq R] [LawfulBEq R]
-    [Dvd R] [BezoutOps R] [LawfulGcdOps R]
+    [Dvd R] [BezoutOps R]
     (f h candidate : MvPoly n R cmp) : Option (GcdCert n R cmp) :=
   checkedCandidate? f h candidate
 
@@ -220,16 +220,16 @@ structure BrownOpsAt (R : Type u) [Zero R] (n : Nat) : Type (u + 1) where
 /-- Exact base image at arity zero. -/
 def brownBaseOps {R : Type u}
     [Lean.Grind.CommRing R] [DecidableEq R] [BEq R] [LawfulBEq R]
-    [Dvd R] [BezoutOps R] [LawfulGcdOps R] : BrownOpsAt R 0 where
-  candidate? := fun _ _ _ _ f h => some (rawPrsCert f h).gcd
+    [Dvd R] [BezoutOps R] : BrownOpsAt R 0 where
+  candidate? := fun _ _ _ _ f h => some (prsCert f h).gcd
 
 /-- Exact univariate image.  This is the leaf reached after evaluating all
 outer variables and is intentionally the existing checked PRS kernel rather
 than a second polynomial Euclidean implementation. -/
 def brownUnaryOps {R : Type u}
     [Lean.Grind.CommRing R] [DecidableEq R] [BEq R] [LawfulBEq R]
-    [Dvd R] [BezoutOps R] [LawfulGcdOps R] : BrownOpsAt R 1 where
-  candidate? := fun _ _ _ _ f h => some (rawPrsCert f h).gcd
+    [Dvd R] [BezoutOps R] : BrownOpsAt R 1 where
+  candidate? := fun _ _ _ _ f h => some (prsCert f h).gcd
 
 /-- Exact bad-point predicate used by the interpolation loop and by
 route-level tests. -/
@@ -249,25 +249,25 @@ def brownPointBad {n : Nat} {R : Type u}
 variable; the last variable is evaluated and reconstructed. -/
 def brownStepOps {n : Nat} {R : Type u}
     [Lean.Grind.CommRing R] [DecidableEq R] [BEq R] [LawfulBEq R] [Inv R]
-    [Dvd R] [BezoutOps R] [LawfulGcdOps R]
+    [Dvd R] [BezoutOps R]
     (lower : BrownOpsAt R (n + 1)) : BrownOpsAt R (n + 2) where
   candidate? := fun cmp _ pointFuel points f h =>
     if f == 0 || h == 0 || polyIsUnit f || polyIsUnit h then
-      some (rawPrsCert f h).gcd
+      some (prsCert f h).gcd
     else
       let main : Fin (n + 2) := ⟨0, by omega⟩
       let outer : Fin (n + 2) := Fin.last (n + 1)
       let fView := toUnivariate main Mono.lex f
       let hView := toUnivariate main Mono.lex h
-      let fContent := contentCertWith (fun a b => rawPrsCert a b)
+      let fContent := contentCertWith (fun a b => prsCert a b)
         fView.toArray.toList
-      let hContent := contentCertWith (fun a b => rawPrsCert a b)
+      let hContent := contentCertWith (fun a b => prsCert a b)
         hView.toArray.toList
-      let common := rawPrsCert fContent.value hContent.value
+      let common := prsCert fContent.value hContent.value
       let fPrimitive := quotient f (constIn main Mono.lex fContent.value)
       let hPrimitive := quotient h (constIn main Mono.lex hContent.value)
       let gamma :=
-        (rawPrsCert (brownMainLeadingCoeff fPrimitive)
+        (prsCert (brownMainLeadingCoeff fPrimitive)
           (brownMainLeadingCoeff hPrimitive)).gcd
       let sampleTarget :=
         max (degreeOf outer fPrimitive) (degreeOf outer hPrimitive) + 1
@@ -308,7 +308,7 @@ def brownStepOps {n : Nat} {R : Type u}
                                 ofUnivariate (cmp := cmp) outer Mono.lex interpolation
                               let reconstructedView := toUnivariate main Mono.lex reconstructed
                               let reconstructedContent := contentCertWith
-                                (fun a b => rawPrsCert a b)
+                                (fun a b => prsCert a b)
                                 reconstructedView.toArray.toList
                               let primitive := quotient reconstructed
                                 (constIn main Mono.lex reconstructedContent.value)
@@ -323,7 +323,7 @@ def brownStepOps {n : Nat} {R : Type u}
                                 ofUnivariate (cmp := cmp) outer Mono.lex interpolation
                               let reconstructedView := toUnivariate main Mono.lex reconstructed
                               let reconstructedContent := contentCertWith
-                                (fun a b => rawPrsCert a b)
+                                (fun a b => prsCert a b)
                                 reconstructedView.toArray.toList
                               let primitive := quotient reconstructed
                                 (constIn main Mono.lex reconstructedContent.value)
@@ -335,7 +335,7 @@ def brownStepOps {n : Nat} {R : Type u}
 /-- Construct all recursive point layers by arity. -/
 def brownOps {R : Type u}
     [Lean.Grind.CommRing R] [DecidableEq R] [BEq R] [LawfulBEq R] [Inv R]
-    [Dvd R] [BezoutOps R] [LawfulGcdOps R] :
+    [Dvd R] [BezoutOps R] :
     (n : Nat) → BrownOpsAt R n
   | 0 => brownBaseOps
   | 1 => brownUnaryOps
@@ -379,7 +379,7 @@ def brownCandidate? {n : Nat} {R : Type u}
     {cmp : Mono n → Mono n → Ordering}
     [IsMonomialOrder cmp]
     [Lean.Grind.CommRing R] [DecidableEq R] [BEq R] [LawfulBEq R] [Inv R]
-    [Dvd R] [BezoutOps R] [LawfulGcdOps R]
+    [Dvd R] [BezoutOps R]
     (pointFuel : Nat) (points : List R)
     (f h : MvPoly n R cmp) : Option (MvPoly n R cmp) :=
   match brownMainIndex f h with
@@ -397,7 +397,7 @@ def brownFieldCert? {n : Nat} {R : Type u}
     {cmp : Mono n → Mono n → Ordering}
     [IsMonomialOrder cmp]
     [Lean.Grind.CommRing R] [DecidableEq R] [BEq R] [LawfulBEq R] [Inv R]
-    [Dvd R] [BezoutOps R] [LawfulGcdOps R]
+    [Dvd R] [BezoutOps R]
     (pointFuel : Nat) (points : List R)
     (f h : MvPoly n R cmp) : Option (GcdCert n R cmp) :=
   match brownCandidate? pointFuel points f h with
@@ -574,7 +574,7 @@ def brownOfZPoly {cmp : Mono 1 → Mono 1 → Ordering}
 dense kernel supplies the gcd and cofactors; the multivariate checker receives
 a freshly constructed arity-one coprimality witness over those exact
 cofactors. -/
-def intArityOneRaw {cmp : Mono 1 → Mono 1 → Ordering}
+def intArityOneCert {cmp : Mono 1 → Mono 1 → Ordering}
     [IsMonomialOrder cmp] (f h : MvPoly 1 Int cmp) : GcdCert 1 Int cmp :=
   let z := ZPoly.gcdCert (brownToZPoly f) (brownToZPoly h)
   let g := brownOfZPoly z.gcd
@@ -583,14 +583,10 @@ def intArityOneRaw {cmp : Mono 1 → Mono 1 → Ordering}
   let lower := prsOps (R := Int) 0
   .mk g cofL cofR (succCoprime lower cmp cofL cofR)
 
-theorem intArityOneRaw_checks {cmp : Mono 1 → Mono 1 → Ordering}
+theorem intArityOneCert_checks {cmp : Mono 1 → Mono 1 → Ordering}
     [IsMonomialOrder cmp] (f h : MvPoly 1 Int cmp) :
-    checkGcd f h (intArityOneRaw f h) = true := by
+    checkGcd f h (intArityOneCert f h) = true := by
   sorry
-
-def intArityOneCert {cmp : Mono 1 → Mono 1 → Ordering}
-    [IsMonomialOrder cmp] (f h : MvPoly 1 Int cmp) : GcdCert 1 Int cmp :=
-  intArityOneRaw f h
 
 /-- Arity-indexed integer Brown producer.  The arity-one branch calls the
 actual `HexPolyZGcd` Brown route and then builds a fresh multivariate

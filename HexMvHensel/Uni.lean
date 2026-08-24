@@ -333,4 +333,46 @@ theorem solveUni_unique {q : Nat} {images witness tau : List ZPoly}
         ((solveUni q images witness c).getD j 0) := by
   sorry
 
+/-- Two symmetric-canonical representatives of the same coefficientwise
+residue class are equal. -/
+theorem UniSymCanonical.eq_of_congr {q : Nat} {f g : ZPoly}
+    (hf : UniSymCanonical q f) (hg : UniSymCanonical q g)
+    (hfg : UniCongr q f g) : f = g := by
+  apply DensePoly.ext_coeff
+  intro k
+  have hf' := hf k
+  have hg' := hg k
+  have hq : 0 < q := by omega
+  have hdvd : (q : Int) ∣ f.coeff k - g.coeff k :=
+    Int.dvd_of_emod_eq_zero (hfg k)
+  have hlt : (f.coeff k - g.coeff k).natAbs < q := by
+    by_cases hnonneg : 0 ≤ f.coeff k - g.coeff k
+    · rw [← Int.ofNat_lt, Int.natAbs_of_nonneg hnonneg]
+      omega
+    · have hnonpos : f.coeff k - g.coeff k ≤ 0 := by omega
+      rw [← Int.ofNat_lt, Int.ofNat_natAbs_of_nonpos hnonpos]
+      omega
+  have hzero : f.coeff k - g.coeff k = 0 := by
+    apply Int.eq_zero_of_dvd_of_natAbs_lt_natAbs hdvd
+    simpa using hlt
+  omega
+
+/-- A symmetric-canonical degree-bounded solution is the exact tuple
+component selected by `solveUni`, not merely a congruent representative. -/
+theorem solveUni_eq {q : Nat} {images witness tau : List ZPoly}
+    {c : ZPoly} (h : UniValid q images witness)
+    (hlen : tau.length = images.length)
+    (hdegree : ∀ j, j < images.length →
+      (tau.getD j 0).degree?.getD 0 <
+        (images.getD j 0).degree?.getD 0)
+    (hsum : UniCongr q (uniCombination tau (complements images)) c)
+    (hcanonical : ∀ j, j < images.length →
+      UniSymCanonical q (tau.getD j 0)) :
+    ∀ j, j < images.length →
+      tau.getD j 0 = (solveUni q images witness c).getD j 0 := by
+  intro j hj
+  apply UniSymCanonical.eq_of_congr (hcanonical j hj)
+    (solveUni_symCanonical h j hj)
+  exact solveUni_unique h hlen hdegree hsum j hj
+
 end Hex.MvHensel

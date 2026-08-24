@@ -20,6 +20,26 @@ namespace Hex.MvPoly
 private abbrev P0 := MvPoly 0 Int Mono.lex
 private abbrev P1 := MvPoly 1 Int Mono.lex
 
+section OpsOnly
+
+universe u
+
+variable {n : Nat} {R : Type u} {cmp : Mono n → Mono n → Ordering}
+  [IsMonomialOrder cmp]
+  [Lean.Grind.CommRing R] [DecidableEq R] [BEq R] [LawfulBEq R]
+  [Dvd R] [BezoutOps R] [GcdProducer R]
+
+/-- Executable construction must not require either proof-law package. -/
+example (f h : MvPoly n R cmp) : GcdCert n R cmp :=
+  prsCert f h
+
+example (cfg : GcdConfig) (f h : MvPoly n R cmp) : GcdRun n R cmp :=
+  gcdCertWith cfg f h
+
+example : GcdOps (MvPoly n R cmp) := inferInstance
+
+end OpsOnly
+
 private def zeroCert : GcdCert 0 Int Mono.lex :=
   .mk 0 1 1 .unit
 

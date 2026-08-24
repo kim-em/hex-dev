@@ -520,7 +520,6 @@ private theorem softWitnessAt_local_base {p : Hex.ZPoly}
   apply softWitnessAt_local SoftRadiusChoice.base h
   · simp [SoftRadiusChoice.lo, Hex.SoftRadii.initial, Hex.softSqrt2Lo,
       Dyadic.toReal_ofIntWithPrec]
-    positivity
   · change Dyadic.toReal Hex.sqrt2Lo ≤ √2
     exact sqrt2Lo_lt_sqrt_two.le
   · change √2 ≤ Dyadic.toReal Hex.sqrt2Hi
@@ -533,7 +532,6 @@ private theorem softWitnessAt_local_two {p : Hex.ZPoly}
   apply softWitnessAt_local SoftRadiusChoice.two h
   · simp [SoftRadiusChoice.lo, Hex.SoftRadii.initial, Hex.softSqrt2Lo,
       Dyadic.toReal_shiftLeft, Dyadic.toReal_ofIntWithPrec]
-    positivity
   · change Dyadic.toReal (Hex.sqrt2Lo <<< (1 : Int)) ≤ 2 * √2
     rw [Dyadic.toReal_shiftLeft]
     norm_num
@@ -550,7 +548,6 @@ private theorem softWitnessAt_local_four {p : Hex.ZPoly}
   apply softWitnessAt_local SoftRadiusChoice.four h
   · simp [SoftRadiusChoice.lo, Hex.SoftRadii.initial, Hex.softSqrt2Lo,
       Dyadic.toReal_shiftLeft, Dyadic.toReal_ofIntWithPrec]
-    positivity
   · change Dyadic.toReal (Hex.sqrt2Lo <<< (2 : Int)) ≤ 4 * √2
     rw [Dyadic.toReal_shiftLeft]
     norm_num
@@ -567,7 +564,6 @@ private theorem softSeededWitness_local_base {p : Hex.ZPoly}
   apply softSeededWitness_local SoftRadiusChoice.base h
   · simp [SoftRadiusChoice.lo, Hex.SoftRadii.initial, Hex.softSqrt2Lo,
       Dyadic.toReal_ofIntWithPrec]
-    positivity
   · change Dyadic.toReal Hex.sqrt2Lo ≤ √2
     exact sqrt2Lo_lt_sqrt_two.le
   · change √2 ≤ Dyadic.toReal Hex.sqrt2Hi
@@ -580,7 +576,6 @@ private theorem softSeededWitness_local_two {p : Hex.ZPoly}
   apply softSeededWitness_local SoftRadiusChoice.two h
   · simp [SoftRadiusChoice.lo, Hex.SoftRadii.initial, Hex.softSqrt2Lo,
       Dyadic.toReal_shiftLeft, Dyadic.toReal_ofIntWithPrec]
-    positivity
   · change Dyadic.toReal (Hex.sqrt2Lo <<< (1 : Int)) ≤ 2 * √2
     rw [Dyadic.toReal_shiftLeft]
     norm_num
@@ -597,7 +592,6 @@ private theorem softSeededWitness_local_four {p : Hex.ZPoly}
   apply softSeededWitness_local SoftRadiusChoice.four h
   · simp [SoftRadiusChoice.lo, Hex.SoftRadii.initial, Hex.softSqrt2Lo,
       Dyadic.toReal_shiftLeft, Dyadic.toReal_ofIntWithPrec]
-    positivity
   · change Dyadic.toReal (Hex.sqrt2Lo <<< (2 : Int)) ≤ 4 * √2
     rw [Dyadic.toReal_shiftLeft]
     norm_num
@@ -654,7 +648,6 @@ private theorem softWitnessAt_boundary_base {p : Hex.ZPoly}
   apply softWitnessAt_local_boundary SoftRadiusChoice.base h _ _ _ hz
   · simp [SoftRadiusChoice.lo, Hex.SoftRadii.initial, Hex.softSqrt2Lo,
       Dyadic.toReal_ofIntWithPrec]
-    positivity
   · change Dyadic.toReal Hex.sqrt2Lo ≤ √2
     exact sqrt2Lo_lt_sqrt_two.le
   · change √2 ≤ Dyadic.toReal Hex.sqrt2Hi
@@ -667,7 +660,6 @@ private theorem softWitnessAt_boundary_two {p : Hex.ZPoly}
   apply softWitnessAt_local_boundary SoftRadiusChoice.two h _ _ _ hz
   · simp [SoftRadiusChoice.lo, Hex.SoftRadii.initial, Hex.softSqrt2Lo,
       Dyadic.toReal_shiftLeft, Dyadic.toReal_ofIntWithPrec]
-    positivity
   · change Dyadic.toReal (Hex.sqrt2Lo <<< (1 : Int)) ≤ 2 * √2
     rw [Dyadic.toReal_shiftLeft]
     norm_num
@@ -684,7 +676,6 @@ private theorem softWitnessAt_boundary_four {p : Hex.ZPoly}
   apply softWitnessAt_local_boundary SoftRadiusChoice.four h _ _ _ hz
   · simp [SoftRadiusChoice.lo, Hex.SoftRadii.initial, Hex.softSqrt2Lo,
       Dyadic.toReal_shiftLeft, Dyadic.toReal_ofIntWithPrec]
-    positivity
   · change Dyadic.toReal (Hex.sqrt2Lo <<< (2 : Int)) ≤ 4 * √2
     rw [Dyadic.toReal_shiftLeft]
     norm_num
@@ -701,7 +692,6 @@ private theorem softSeededWitness_boundary_base {p : Hex.ZPoly}
   apply softSeededWitness_local_boundary SoftRadiusChoice.base h _ _ _ hz
   · simp [SoftRadiusChoice.lo, Hex.SoftRadii.initial, Hex.softSqrt2Lo,
       Dyadic.toReal_ofIntWithPrec]
-    positivity
   · change Dyadic.toReal Hex.sqrt2Lo ≤ √2
     exact sqrt2Lo_lt_sqrt_two.le
   · change √2 ≤ Dyadic.toReal Hex.sqrt2Hi
@@ -714,7 +704,6 @@ private theorem softSeededWitness_boundary_two {p : Hex.ZPoly}
   apply softSeededWitness_local_boundary SoftRadiusChoice.two h _ _ _ hz
   · simp [SoftRadiusChoice.lo, Hex.SoftRadii.initial, Hex.softSqrt2Lo,
       Dyadic.toReal_shiftLeft, Dyadic.toReal_ofIntWithPrec]
-    positivity
   · change Dyadic.toReal (Hex.sqrt2Lo <<< (1 : Int)) ≤ 2 * √2
     rw [Dyadic.toReal_shiftLeft]
     norm_num
@@ -731,7 +720,6 @@ private theorem softSeededWitness_boundary_four {p : Hex.ZPoly}
   apply softSeededWitness_local_boundary SoftRadiusChoice.four h _ _ _ hz
   · simp [SoftRadiusChoice.lo, Hex.SoftRadii.initial, Hex.softSqrt2Lo,
       Dyadic.toReal_shiftLeft, Dyadic.toReal_ofIntWithPrec]
-    positivity
   · change Dyadic.toReal (Hex.sqrt2Lo <<< (2 : Int)) ≤ 4 * √2
     rw [Dyadic.toReal_shiftLeft]
     norm_num

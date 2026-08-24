@@ -7,6 +7,10 @@ Authors: Kim Morrison
 module
 
 public import HexSparsePoly.Basic
+public import HexSparsePoly.Arith
+public import HexSparsePoly.Dense
+public import HexSparsePoly.Eval
+public import HexSparsePoly.Euclid
 
 public section
 

@@ -11,7 +11,9 @@ public import HexArith
 public import HexPoly
 public import HexMvPoly
 public import HexModArith
+public import HexSparsePoly
 public import HexPolyMathlib
+public import HexSparsePolyMathlib
 public import HexMvPolyMathlib
 public import HexPolyFp
 public import HexPolyZ

@@ -36,35 +36,35 @@ private def observedRand {n : Nat} {cmp : Mono n → Mono n → Ordering}
 @[instance_reducible] private def rejectingProducer : GcdProducer Int where
   propose := fun _ _ _ f h =>
     ⟨some (.mk 1 f h .unit), observedRand f h⟩
-#guard checkGcd (0 : P0) 0 (rawPrsCert 0 0)
+#guard checkGcd (0 : P0) 0 (prsCert 0 0)
 #guard
   let f : P0 := C 12
   let h : P0 := C 18
-  checkGcd f h (rawPrsCert f h)
+  checkGcd f h (prsCert f h)
 #guard
   let x : P1 := X 0
   let f := C 12 * x
   let h := C 18 * x
-  checkGcd f h (rawPrsCert f h)
+  checkGcd f h (prsCert f h)
 #guard
   let x : P1 := X 0
   let common := x + 1
   let f := common * (x + 2)
   let h := common * (x + 3)
-  checkGcd f h (rawPrsCert f h)
+  checkGcd f h (prsCert f h)
 #guard
   let x : P1 := X 0
   let common := x + 1
   let f := common * (x + 2)
   let h := common * (x + 3)
-  checkGcd f h (intArityOneRaw f h)
+  checkGcd f h (intArityOneCert f h)
 #guard
   let x : P2 := X 0
   let y : P2 := X 1
   let common := x + y + 1
   let f := common * (x + 2)
   let h := common * (y + 3)
-  checkGcd f h (rawPrsCert f h)
+  checkGcd f h (prsCert f h)
 #guard (structuralCert? (0 : P1) 0).isSome
 #guard
   letI : GcdProducer Int := rejectingProducer

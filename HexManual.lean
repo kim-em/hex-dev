@@ -33,6 +33,7 @@ import HexManual.Chapters.HexBerlekampZassenhaus
 import HexManual.Chapters.FactorTactics
 -- Unreleased libraries (dependency order).
 import HexManual.Chapters.HexResultant
+import HexManual.Chapters.HexSparsePoly
 import HexManual.Chapters.HexRCF
 import HexManual.Chapters.HexNumberField
 import HexManual.Chapters.HexNumberFieldTower
@@ -74,6 +75,8 @@ contracts and, for mature libraries, supply their proofs.
 {include 0 HexManual.Chapters.HexPoly}
 
 {include 0 HexManual.Chapters.HexMvPoly}
+
+{include 0 HexManual.Chapters.HexSparsePoly}
 
 {include 0 HexManual.Chapters.HexModArith}
 

@@ -33,8 +33,10 @@ BUILD_ONLY_LIBS = {
     "HexRCFProofProbeScientific",
     "HexConformance",
     "HexFactorizationModules",
+    "HexMvFactorizationTests",
     "HexReleaseTests",
     "HexRCFTests",
+    "HexSparsePolyTests",
     "HexReleaseExamples",
 }
 EXTERNAL_IMPORT_ROOTS = {"Mathlib", "Verso"}

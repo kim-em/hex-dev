@@ -446,6 +446,17 @@ The heap is the one with the better bound and the worse constant. The
 results of the "sparse-multiplication" bench family below determine which
 one is implemented, and the specification does not change whichever wins.
 
+*Measured (Phase 4, see
+[reports/hex-sparse-poly-performance.md](../../reports/hex-sparse-poly-performance.md)):*
+the `Std.ExtTreeMap` accumulation wins both collision shapes by about
+3× over sort-and-combine (6.0 ms vs 18.0 ms at 256 low-collision terms;
+2.7 ms vs 8.4 ms at 256 high-collision terms), and the heap merge's
+constant loses it every measured size (75.6 ms and 42.2 ms at the same
+points), exactly the outcome the paragraph above anticipated. The
+tree accumulation is therefore the selected `@[csimp]` implementation;
+all three candidates agreed on result hashes at every common
+parameter.
+
 `pow` is binary powering over `mul`. A caller wanting `f(x^k)` should
 call `substPow` rather than powering, and the SPEC says so because
 getting this wrong is the whole cost difference the library exists for.
@@ -461,7 +472,13 @@ theorem add_comm, add_assoc, add_zero, mul_comm, mul_assoc, mul_one, mul_zero,
   left_distrib, right_distrib
 ```
 
-with `mul_comm` under `Lean.Grind.CommRing`. Every public operation
+with `mul_comm` under `Lean.Grind.CommRing`. As implemented, the
+multiplicative laws (and `coeff_mul`) all sit at `Lean.Grind.CommRing`:
+they are proved by transport through `toDense`, and the dense layer
+proves its own multiplication laws at that class. Every consumer type
+in the project is a `CommRing`, and if the dense laws are ever weakened
+to `Semiring` the sparse statements follow at no cost, exactly as with
+`divModMonic_spec` below. Every public operation
 carries its own coefficient lemma in the same shape (`coeff_zero`,
 `coeff_one`, `coeff_C`, `coeff_X`, `coeff_monomial`, `coeff_neg`,
 `coeff_sub`, `coeff_scale`, `coeff_pow`), since the coefficient function
@@ -554,6 +571,8 @@ The specification is the coefficient identity and the agreement with
 ```lean
 theorem coeff_derivative, derivative_add, derivative_mul
 theorem substPow_eq_compose (s) (k) : s.substPow k = s.compose (monomial k 1)
+theorem substScale_eq_compose (s) (a) : s.substScale a = s.compose (monomial 1 a)
+theorem coeff_substScale (s) (a) (e) : (s.substScale a).coeff e = s.coeff e * a ^ e
 theorem eval_substPow (s) (k) (x) : (s.substPow k).eval x = s.eval (x ^ k)
 theorem eval_compose (s t) (x) : (s.compose t).eval x = s.eval (t.eval x)
 ```
@@ -565,7 +584,9 @@ themselves.
 
 `substPow_eq_compose` is the statement that the fast path and the
 general path agree, and it is what lets the cyclotomic adapter use
-`substPow` and reason with `compose`.
+`substPow` and reason with `compose`. `substScale_eq_compose` is the
+same statement for argument scaling, with the degree-one monomial
+`a · x` in place of `x^k`.
 
 ## Conversion to and from the dense representation
 
@@ -607,6 +628,8 @@ theorem toDense_zero, toDense_one, toDense_add, toDense_neg, toDense_mul
 theorem ofDense_zero, ofDense_one, ofDense_add, ofDense_neg, ofDense_mul
 theorem toDense_monomial (e c) : (monomial e c).toDense = DensePoly.monomial e c
 theorem eval_toDense, derivative_toDense, compose_toDense, substPow_toDense
+theorem substScale_toDense (s : SparsePoly R) (a : R) :
+    (s.substScale a).toDense = s.toDense.compose (DensePoly.monomial 1 a)
 ```
 
 The degree boundary transports too, and the Euclidean section needs it
@@ -874,7 +897,18 @@ Multiplication does not: sort-and-combine compares `s·t·log(s·t)` with
 `n²`, which crosses at a different and coefficient-dependent point. The
 crossover is therefore measured per operation, and the "crossover" bench
 family below reports one number per operation rather than one for the
-library. Everything in the left column that is `O(s)` against an `O(n)`
+library.
+
+*Measured (Phase 4, on the reference host in
+[reports/hex-sparse-poly-performance.md](../../reports/hex-sparse-poly-performance.md)):*
+addition crosses at `t ≈ n/8` (degree 4096, `Int`); multiplication at
+`t ≈ n/4` on the sort route (degree 1024, `Int`), shifting toward
+`n/3` with the selected tree twin; gap-Horner evaluation is still 20×
+ahead of dense Horner at `t = n/128` (degree 65536, `ZMod64 7`) with
+parity extrapolating to `t ≈ n/6`. In the convert-gcd family the
+conversions are only ≈ 5% of the sparse-remainder pair's total, so a
+future sparse division algorithm could recover essentially the whole
+dense cost there. Everything in the left column that is `O(s)` against an `O(n)`
 right column is the reason the library exists. `coeff` and
 multiplication's logarithmic factor are the price.
 
@@ -1052,8 +1086,8 @@ Two required internal checks, which matter more than the external ones:
 `hex-sparse-poly-mathlib` identifies the type with `Polynomial R`:
 
 ```lean
-def denseEquiv [Semiring R] [DecidableEq R] : SparsePoly R ≃+* DensePoly R
-def equiv [Semiring R] [DecidableEq R] : SparsePoly R ≃+* Polynomial R :=
+def denseEquiv [CommRing R] [DecidableEq R] : SparsePoly R ≃+* DensePoly R
+def equiv [CommRing R] [DecidableEq R] : SparsePoly R ≃+* Polynomial R :=
   denseEquiv.trans HexPolyMathlib.equiv
 
 theorem coeff_equiv (s : SparsePoly R) (e : Nat) : (equiv s).coeff e = s.coeff e
@@ -1065,24 +1099,33 @@ theorem equiv_derivative (s : SparsePoly R) :
 theorem equiv_compose (s t : SparsePoly R) : (equiv s).comp (equiv t) = equiv (s.compose t)
 theorem equiv_substPow (s : SparsePoly R) (k : Nat) :
     (equiv s).comp (Polynomial.X ^ k) = equiv (s.substPow k)
+theorem equiv_substScale (s : SparsePoly R) (a : R) :
+    (equiv s).comp (Polynomial.C a * Polynomial.X) = equiv (s.substScale a)
 ```
 
 `equiv` is **defined** by composition, and the step that makes the
 composition available is `denseEquiv`. `toDense` is a function, not an
 equivalence, so it cannot be handed to `RingEquiv.trans` directly:
 `denseEquiv` packages `toDense` with `ofDense` as its inverse, the two
-round trips as `left_inv` and `right_inv`, and `toDense_add`,
-`toDense_mul`, `toDense_zero`, and `toDense_one` as the homomorphism
-fields. That is the reason the Mathlib-free layer proves those four in
+round trips as `left_inv` and `right_inv`, and `toDense_add` and
+`toDense_mul` as the `map_add'`/`map_mul'` fields, which is all
+`RingEquiv` carries; the zero and one images then follow from the
+equivalence structure, with `toDense_zero` and `toDense_one` remaining
+the core's direct statements of the same facts. That is the reason the
+Mathlib-free layer proves the additive and multiplicative transports in
 the first place, and `denseEquiv` is where they are used.
 
-`denseEquiv` needs no Mathlib beyond `RingEquiv` itself, and both it and
-`equiv` are stated at `[Semiring R]`, matching
+`denseEquiv` needs no Mathlib beyond `RingEquiv` itself. Both it and
+`equiv` are stated at Mathlib's `[CommRing R]`, because
+`denseEquiv.map_mul'` reuses `toDense_mul`, which sits at
+`Lean.Grind.CommRing` per the law-placement note above; if the dense
+multiplication laws are ever weakened to semirings, both statements
+drop to `[Semiring R]` at no cost, matching
 [hex-poly-mathlib](../../HexPolyMathlib/SPEC/hex-poly-mathlib.md)'s
-`equiv` (`HexPolyMathlib/PolynomialEquivalence.lean:510`). Individual
-correspondence lemmas take stronger hypotheses only where they need
-them: `equiv_derivative` and `equiv_compose` are ring statements, and
-nothing here needs commutativity to state the equivalence itself.
+`equiv` (`HexPolyMathlib/PolynomialEquivalence.lean:510`). The
+individual correspondence lemmas mention `equiv` and therefore share
+its class; only helpers that never mention it (the dense
+`eval_toPolynomial`, in hex-poly-mathlib) sit at `[Semiring R]`.
 
 `equiv_support` is the one statement that is genuinely about this
 representation rather than transported through the dense one: it says

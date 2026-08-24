@@ -396,6 +396,12 @@ two values, and reconstruct a polynomial from the symmetric `ξ`-adic
 digits. In one variable the Kronecker substitution the multivariate
 version needs is just this evaluation, so the route is a few lines.
 
+The symmetric digit base must satisfy `1 < ξ`. The route carries that proof
+internally; the diagnostic entry point `heuCandidateAt?` returns `none` at
+bases zero and one. Those invalid inputs do not denote the zero polynomial,
+since zero would be a plausible but false gcd candidate rather than a
+totalization of the digit algorithm.
+
 Two things are worth stating because the multivariate version of this
 SPEC got them wrong first. Reconstruction being exact does not follow
 from the input coefficient sizes: the integer gcd can carry accidental
@@ -454,7 +460,9 @@ in practice it stops enormously earlier.
 
 Run hex-resultant's `subresultantChain` over `Int` unchanged, take the
 primitive part of the terminal nonzero entry, and multiply by the content
-gcd. The **extended** chain, which tracks the transformation pair through
+gcd. `prsTerminal?` projects the actual last array entry and returns `none`
+for the empty `(0, 0)` chain; it never invents a Bézout row. The
+**extended** chain, which tracks the transformation pair through
 the pseudo-scalings, supplies the `constant` witness for the cofactors:
 the resultant of two coprime polynomials is a nonzero integer in the
 ideal they generate, and the extended chain returns it with its
@@ -473,8 +481,12 @@ The shared `subresultantChainExt` implementation is now available from
 hex-resultant. Its recurrence tracks the transformation pair through the
 pseudo-scalings and is used here and by
 [hex-mv-gcd](../../HexMvGcd/SPEC/hex-mv-gcd.md). The preserved
-`DensePoly Rat` Euclidean implementation is a named reference and test
-oracle only; it is not a dispatch fallback.
+`DensePoly Rat` Euclidean implementation is the audited fallback when the
+optional PRS producer has no actual terminal row. Mandatory zero inputs are
+settled structurally before dispatch and every nonzero Brown chain is
+nonempty, so this arm is defensive rather than a competing ordinary route;
+unlike a synthetic row, it still computes and checks a mathematically valid
+certificate.
 
 ## Prerequisite changes in other libraries
 
@@ -717,8 +729,9 @@ companion beyond these and one correspondence lemma per public operation.
    code.
 
 5. **The heuristic and the subresultant fallback.** Route 2, and route 4
-   replacing the rational fallback once hex-resultant is far enough
-   along.
+   becoming the primary deterministic fallback once hex-resultant is far
+   enough along, with the rational implementation retained for an absent
+   extended-chain terminal.
 
 6. **The companion**, and the fast squarefree decomposition. The
    squarefree entry point is the benchmark that justifies the library, so
