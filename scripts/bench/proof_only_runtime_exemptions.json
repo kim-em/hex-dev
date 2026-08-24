@@ -928,5 +928,11 @@
     "baseline_blob": "6dd80771ae2212333b2a9b925b52056e0037ff56",
     "current_blob": "719821e7ca29eda1440ea688bb9dbaf64dda8880",
     "reason": "Additionally registers the HexPrimality bench targets and kernel-replay probe on top of the already-attested HexPolyFpMathlib and interval experiment registrations; the factorization service targets are unchanged."
+  },
+  {
+    "path": "HexArith/Nat/Prime.lean",
+    "baseline_blob": "5fbaa75456c2217771a4f7a27e7f2ff40417fe3a",
+    "current_blob": "3c739ff40939977910ea64afd72b1db3142c5444",
+    "reason": "Reroutes the Decidable (Prime p) instance through the existing isPrimeTrial pair and adds prime-divisor existence theorems (merged with main's prime_iff_forall_le_sqrt addition); the factorization service never evaluates the instance at runtime."
   }
 ]
