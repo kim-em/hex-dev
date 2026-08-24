@@ -182,8 +182,8 @@ with the proof that it is about the requested number:
 
 The search factors `n - 1` with trial division against the table
 followed by Brent's variant of Pollard rho; the rho primitive is
-public (hex-int-factor reuses it) and validates every factor it
-returns:
+public (the planned hex-int-factor library will reuse it) and
+validates every factor it returns:
 
 {docstring Hex.Nat.rhoFactor?}
 
@@ -227,5 +227,7 @@ untrusted search can factor:
 * Random primes certify reliably to roughly 192 bits with the default
   fuel; past 256 bits the rho factorization of `n - 1` dominates and
   the search becomes hit-or-miss.
-* Negative answers are cheap at every size Miller-Rabin can reach,
-  since a single failed base refutes primality.
+* Negative answers are cheap whenever one of the thirteen fixed
+  Miller-Rabin bases refutes primality, which covers essentially every
+  composite in practice; a composite that survived all of them would
+  fall through to certificate search and fail slowly.
