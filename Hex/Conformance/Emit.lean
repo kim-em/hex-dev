@@ -77,6 +77,12 @@ private def jsonIntMatrix (rows : List (List Int)) : String := Id.run do
     out := out ++ jsonIntList row
   out.push ']'
 
+private def jsonRatList (xs : List Rat) : String :=
+  let nums := xs.map (·.num)
+  let dens := xs.map fun r => (r.den : Int)
+  "{" ++ jsonString "num" ++ ":" ++ jsonIntList nums ++
+  "," ++ jsonString "den" ++ ":" ++ jsonIntList dens ++ "}"
+
 private def jsonMvPolyTerms (terms : List (List Nat × Int)) : String := Id.run do
   let mut out := "["
   let mut first := true
@@ -176,6 +182,62 @@ def emitMvPolyFixture (lib case : String) (arity : Nat) (order : String)
     ("case",  jsonString case),
     ("arity", toString arity),
     ("order", jsonString order),
+    ("terms", jsonMvPolyTerms terms)
+  ]
+
+/-- Emit a fixed-precision univariate-series fixture. Coefficients use a
+parallel numerator/denominator encoding for both `ZZ` and `QQ`; the domain
+field tells the oracle which coefficient ring contract applies. -/
+def emitSeriesFixture (lib case domain : String) (precision : Nat)
+    (coeffs : List Rat) : IO Unit := do
+  emitLine <| jsonObject [
+    ("kind", jsonString "series"),
+    ("lib", jsonString lib),
+    ("case", jsonString case),
+    ("domain", jsonString domain),
+    ("precision", toString precision),
+    ("coeffs", jsonRatList coeffs)
+  ]
+
+/-- Emit a multivariate-gcd fixture over the named coefficient domain. -/
+def emitMvGcdFixture (lib case : String) (arity : Nat) (order domain : String)
+    (modulus : Option Int) (left right : List (List Nat × Int)) : IO Unit := do
+  emitLine <| jsonObject [
+    ("kind", jsonString "mvgcd"),
+    ("lib", jsonString lib),
+    ("case", jsonString case),
+    ("arity", toString arity),
+    ("order", jsonString order),
+    ("domain", jsonString domain),
+    ("mod", jsonOptionalInt modulus),
+    ("left", jsonMvPolyTerms left),
+    ("right", jsonMvPolyTerms right)
+  ]
+
+/-- Emit a characteristic-zero multivariate squarefree-decomposition fixture. -/
+def emitMvSqfFixture (lib case : String) (arity : Nat) (order domain : String)
+    (terms : List (List Nat × Int)) : IO Unit := do
+  emitLine <| jsonObject [
+    ("kind", jsonString "mvsqf"),
+    ("lib", jsonString lib),
+    ("case", jsonString case),
+    ("arity", toString arity),
+    ("order", jsonString order),
+    ("domain", jsonString domain),
+    ("terms", jsonMvPolyTerms terms)
+  ]
+
+/-- Emit a finite-characteristic multivariate squarefree-decision fixture. -/
+def emitMvSquarefreeFixture (lib case : String) (arity : Nat) (order : String)
+    (modulus : Nat) (terms : List (List Nat × Int)) : IO Unit := do
+  emitLine <| jsonObject [
+    ("kind", jsonString "mvsquarefree"),
+    ("lib", jsonString lib),
+    ("case", jsonString case),
+    ("arity", toString arity),
+    ("order", jsonString order),
+    ("domain", jsonString "zmod"),
+    ("mod", toString modulus),
     ("terms", jsonMvPolyTerms terms)
   ]
 
@@ -502,10 +564,18 @@ The oracle compares Lean's gcd to `flint.fmpq_poly`'s gcd by normalising
 both to the monic associate, which is meaningful because `Hex.DensePoly`
 gcd over `Rat` is only determined up to a (rational) scalar associate. -/
 def polyRatValue (coeffs : List Rat) : String :=
-  let nums := coeffs.map (·.num)
-  let dens := coeffs.map fun r => (r.den : Int)
-  "{" ++ jsonString "num" ++ ":" ++ jsonIntList nums ++
-  "," ++ jsonString "den" ++ ":" ++ jsonIntList dens ++ "}"
+  jsonRatList coeffs
+
+/-- Rational coefficient-list value used by truncated-series results. -/
+def seriesValue (coeffs : List Rat) : String :=
+  jsonRatList coeffs
+
+/-- Optional rational coefficient-list value used by partial series
+operations. -/
+def optionSeriesValue (coeffs : Option (List Rat)) : String :=
+  match coeffs with
+  | none => "null"
+  | some xs => jsonRatList xs
 
 /-- Lattice-shaped result value: a basis as a list of integer rows. -/
 def latticeValue (basis : List (List Int)) : String := jsonIntMatrix basis
