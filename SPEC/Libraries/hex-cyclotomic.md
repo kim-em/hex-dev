@@ -276,7 +276,7 @@ described under "Prerequisite changes in other libraries".
 can be evaluated as a truncated power series quotient at precision
 `φ(n) + 1`, which is the method the fast external implementations use.
 It needs a truncated series division, which is
-[hex-truncated-series](hex-truncated-series.md), and adding that
+[hex-truncated-series](../../HexTruncatedSeries/SPEC/hex-truncated-series.md), and adding that
 dependency for a route whose advantage over the ladder has not been
 measured is premature. The bench families below are what decide it. Note
 that the term-by-term form is only valid as a single final quotient, the
