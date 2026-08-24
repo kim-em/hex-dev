@@ -6,8 +6,7 @@ Authors: Kim Morrison
 
 module
 
-public import HexHermite.Hermite
-public import HexMatrix.Lattice
+public import HexHermite.Unique
 
 public section
 
@@ -137,6 +136,97 @@ theorem latticeCoeffs_sound {A : Matrix Int n m} {v : Vector Int m}
       exact hverify
     · contradiction
 
+private theorem take_append_drop {R : Type} (v : Vector R n) (r : Nat)
+    (hr : r ≤ n) :
+    (((v.take r).cast (Nat.min_eq_left hr)) ++ v.drop r).cast
+      (Nat.add_sub_of_le hr) = v := by
+  apply Vector.ext
+  intro i hi
+  simp only [Vector.getElem_cast]
+  by_cases hir : i < r
+  · rw [Vector.getElem_append_left hir, Vector.getElem_cast,
+      Vector.getElem_take]
+  · have hri : r ≤ i := Nat.le_of_not_gt hir
+    rw [Vector.getElem_append_right]
+    · rw [Vector.getElem_drop]
+      congr 1
+      omega
+    · simpa [Nat.min_eq_left hr] using hri
+
+private theorem dotProduct_cast {R : Type} [Mul R] [Add R] [OfNat R 0]
+    (u v : Vector R n) (h : n = n') :
+    (u.cast h).dotProduct (v.cast h) = u.dotProduct v := by
+  subst n'
+  rfl
+
+private theorem dotProduct_drop_of_head_zero {R : Type} [Lean.Grind.Ring R]
+    (u v : Vector R n) (r : Nat) (hr : r ≤ n)
+    (hz : ∀ i : Fin r, u[Fin.castLE hr i] = 0) :
+    (u.drop r).dotProduct (v.drop r) = u.dotProduct v := by
+  let hu : Vector R r := (u.take r).cast (Nat.min_eq_left hr)
+  let hv : Vector R r := (v.take r).cast (Nat.min_eq_left hr)
+  have huz : hu = 0 := by
+    apply Vector.ext
+    intro i hi
+    simp only [hu, Vector.getElem_cast, Vector.getElem_take,
+      Vector.getElem_zero]
+    exact hz ⟨i, hi⟩
+  have husplit := take_append_drop u r hr
+  have hvsplit := take_append_drop v r hr
+  calc
+    (u.drop r).dotProduct (v.drop r) =
+        hu.dotProduct hv + (u.drop r).dotProduct (v.drop r) := by
+          have hdot : (0 : Vector R r).dotProduct hv = 0 := by
+            unfold Vector.dotProduct
+            apply List.foldl_add_eq_self
+            intro i _hi
+            rw [show (0 : Vector R r)[i] = 0 by
+              exact Vector.getElem_zero i.val i.isLt]
+            grind
+          rw [huz, hdot]
+          grind
+    _ = (hu ++ u.drop r).dotProduct (hv ++ v.drop r) :=
+      (Vector.dotProduct_append hu (u.drop r) hv (v.drop r)).symm
+    _ = (((hu ++ u.drop r).cast (Nat.add_sub_of_le hr)).dotProduct
+        ((hv ++ v.drop r).cast (Nat.add_sub_of_le hr))) := by
+          exact (dotProduct_cast (hu ++ u.drop r) (hv ++ v.drop r)
+            (Nat.add_sub_of_le hr)).symm
+    _ = u.dotProduct v := by rw [husplit, hvsplit]
+
+private theorem vecMul_kernelBasis (A : Matrix Int n m) (d : Vector Int n)
+    (hz : ∀ i : Fin (hnfRank A),
+      d[Fin.castLE (Hermite.run_rank_le (Hermite.formAccumulator n) A) i] = 0) :
+    vecMul (d.drop (hnfRank A)) (kernelBasis A) =
+      vecMul d (hnfData A).transform := by
+  let r := hnfRank A
+  have hr : r ≤ n := Hermite.run_rank_le (Hermite.formAccumulator n) A
+  apply Vector.ext
+  intro j hj
+  let col : Fin n := ⟨j, hj⟩
+  change ((d.drop r) * kernelBasis A)[col] =
+    (d * (hnfData A).transform)[col]
+  rw [getElem_vecMul, getElem_vecMul]
+  have hcol : Matrix.col (kernelBasis A) col =
+      (Matrix.col (hnfData A).transform col).drop r := by
+    apply Vector.ext
+    intro i hi
+    unfold Matrix.col
+    rw [Vector.getElem_ofFn]
+    rw [Vector.getElem_drop, Vector.getElem_ofFn]
+    simp only [kernelBasis, Matrix.getElem_ofFn,
+      Matrix.getElem_pair_eq_nested, r]
+  rw [hcol]
+  calc
+    ((Matrix.col (hnfData A).transform col).drop r).dotProduct (d.drop r) =
+        (d.drop r).dotProduct
+          ((Matrix.col (hnfData A).transform col).drop r) :=
+      Vector.dotProduct_comm _ _
+    _ = d.dotProduct (Matrix.col (hnfData A).transform col) :=
+      dotProduct_drop_of_head_zero d
+        (Matrix.col (hnfData A).transform col) r hr hz
+    _ = (Matrix.col (hnfData A).transform col).dotProduct d :=
+      Vector.dotProduct_comm _ _
+
 /-- The returned kernel rows are annihilated by the input matrix. -/
 theorem kernelBasis_mul (A : Matrix Int n m) : kernelBasis A * A = 0 := by
   let D := hnfData A
@@ -158,6 +248,119 @@ theorem kernelBasis_mul (A : Matrix Int n m) : kernelBasis A * A = 0 := by
     _ = 0 := by rw [hzero]; simp
     _ = (0 : Matrix Int (n - hnfRank A) m)[i][j] :=
       (Matrix.getElem_zero i j).symm
+
+set_option maxHeartbeats 400000 in
+/-- Every integer left-kernel vector is an integer combination of the returned
+kernel rows. -/
+theorem kernelBasis_complete {A : Matrix Int n m} {x : Vector Int n} :
+    vecMul x A = 0 → ∃ c, vecMul c (kernelBasis A) = x := by
+  intro hx
+  let D := hnfData A
+  let W := (hnfWithInv A).inverse
+  let d : Vector Int n := Matrix.transpose W * x
+  have hform : IsHNF A D := hnfData_isHNF A
+  have hinv : W * D.transform = Matrix.identity (R := Int) n := by
+    simp only [W, D]
+    rw [← hnfWithInv_data A]
+    exact hnfWithInv_inv_mul A
+  have hd : vecMul d D.echelon = 0 := by
+    calc
+      vecMul d D.echelon = vecMul x A :=
+        hform.toIsEchelonForm.vecMul_transformInv_transpose hinv x
+      _ = 0 := hx
+  have hr : hnfRank A ≤ n :=
+    Hermite.run_rank_le (Hermite.formAccumulator n) A
+  have hz : ∀ i : Fin (hnfRank A), d[Fin.castLE hr i] = 0 := by
+    intro i
+    have hi : i.val < D.rank := by
+      rw [← hnfRank_eq A]
+      exact i.isLt
+    let ii : Fin D.rank := ⟨i.val, hi⟩
+    have hcoeff := hform.coeff_eq_zero d hd ii
+    have hrow : hform.toIsEchelonForm.pivotRow ii = Fin.castLE hr i := Fin.ext rfl
+    change d.get (Fin.castLE hr i) = 0
+    calc
+      d.get (Fin.castLE hr i) =
+          d.get (hform.toIsEchelonForm.pivotRow ii) :=
+        congrArg d.get hrow.symm
+      _ = 0 := hcoeff
+  have hrecover : Matrix.transpose D.transform * d = x := by
+    calc
+      Matrix.transpose D.transform * d =
+          Matrix.transpose D.transform * (Matrix.transpose W * x) := rfl
+      _ = (Matrix.transpose D.transform * Matrix.transpose W) * x :=
+        (Matrix.mul_assoc_vec D.transform.transpose W.transpose x).symm
+      _ = Matrix.transpose (W * D.transform) * x := by
+        rw [← Matrix.transpose_mul_of_mul_comm]
+      _ = Matrix.transpose (Matrix.identity (R := Int) n) * x := by rw [hinv]
+      _ = Matrix.identity (R := Int) n * x := by rw [Matrix.transpose_identity]
+      _ = x := Matrix.identity_mulVec x
+  refine ⟨d.drop (hnfRank A), ?_⟩
+  calc
+    vecMul (d.drop (hnfRank A)) (kernelBasis A) =
+        vecMul d D.transform := vecMul_kernelBasis A d hz
+    _ = x := hrecover
+
+set_option maxHeartbeats 400000 in
+/-- The returned kernel rows are linearly independent over the integers. -/
+theorem kernelBasis_independent {A : Matrix Int n m}
+    {c : Vector Int (n - hnfRank A)} :
+    vecMul c (kernelBasis A) = 0 → c = 0 := by
+  intro hc
+  let r := hnfRank A
+  have hr : r ≤ n := Hermite.run_rank_le (Hermite.formAccumulator n) A
+  let d : Vector Int n := Vector.ofFn fun i =>
+    if h : i.val < r then 0 else c[i.val - r]'(by omega)
+  have hz : ∀ i : Fin r, d[Fin.castLE hr i] = 0 := by
+    intro i
+    simp [d, i.isLt]
+  have hdrop : d.drop r = c := by
+    apply Vector.ext
+    intro i hi
+    simp only [d, Vector.getElem_drop, Vector.getElem_ofFn]
+    rw [dite_eq_right (by omega)]
+    congr 1
+    omega
+  have hdU : vecMul d (hnfData A).transform = 0 := by
+    rw [← vecMul_kernelBasis A d hz, hdrop, hc]
+  let W := (hnfWithInv A).inverse
+  have hinv : (hnfData A).transform * W = Matrix.identity (R := Int) n := by
+    simp only [W]
+    rw [← hnfWithInv_data A]
+    exact hnfWithInv_mul_inv A
+  have hd : d = 0 := by
+    have hrecover : Matrix.transpose W *
+        (Matrix.transpose (hnfData A).transform * d) = d := by
+      calc
+        Matrix.transpose W * (Matrix.transpose (hnfData A).transform * d) =
+            (Matrix.transpose W * Matrix.transpose (hnfData A).transform) * d :=
+          (Matrix.mul_assoc_vec W.transpose (hnfData A).transform.transpose d).symm
+        _ = Matrix.transpose ((hnfData A).transform * W) * d := by
+          rw [← Matrix.transpose_mul_of_mul_comm]
+        _ = Matrix.transpose (Matrix.identity (R := Int) n) * d := by rw [hinv]
+        _ = Matrix.identity (R := Int) n * d := by rw [Matrix.transpose_identity]
+        _ = d := Matrix.identity_mulVec d
+    have hzero : Matrix.transpose W *
+        (Matrix.transpose (hnfData A).transform * d) = 0 := by
+      change Matrix.transpose W * vecMul d (hnfData A).transform = 0
+      rw [hdU]
+      exact Matrix.mulVec_zero _
+    exact hrecover.symm.trans hzero
+  have hdropzero : (0 : Vector Int n).drop r = 0 := by
+    apply Vector.ext
+    intro i hi
+    rw [Vector.getElem_drop]
+    calc
+      (0 : Vector Int n)[r + i] = (0 : Int) :=
+        Vector.getElem_zero (α := Int) (n := n) (r + i) (by
+          simp only [r] at hi ⊢
+          omega)
+      _ = (0 : Vector Int (n - r))[i] :=
+        (Vector.getElem_zero (α := Int) (n := n - r) i hi).symm
+  calc
+    c = d.drop r := hdrop.symm
+    _ = (0 : Vector Int n).drop r := congrArg (fun v : Vector Int n => v.drop r) hd
+    _ = 0 := hdropzero
 
 @[simp] theorem latticeContains_eq_isSome (A : Matrix Int n m) (v : Vector Int m) :
     latticeContains A v = (latticeCoeffs A v).isSome := rfl

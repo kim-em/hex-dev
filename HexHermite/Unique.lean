@@ -670,6 +670,40 @@ theorem eq {A : Matrix Int n m} {D E : RowEchelonData Int n m}
     D.rank = E.rank ∧ D.echelon = E.echelon ∧ HEq D.pivotCols E.pivotCols := by
   exact h.eq_of_memLattice h' (fun _ => Iff.rfl)
 
+/-- A zero combination of HNF rows has zero coefficients on every nonzero row. -/
+theorem coeff_eq_zero {A : Matrix Int n m} {D : RowEchelonData Int n m}
+    (h : IsHNF A D) (c : Vector Int n) (hc : vecMul c D.echelon = 0)
+    (i : Fin D.rank) : c[h.toIsEchelonForm.pivotRow i] = 0 := by
+  have aux : ∀ value : Nat, (hv : value < D.rank) →
+      c[h.toIsEchelonForm.pivotRow ⟨value, hv⟩] = 0 := by
+    intro value
+    induction value using Nat.strongRecOn with
+    | ind value ih =>
+      intro hv
+      have hz : ∀ k : Fin n, k.val < value → c[k] = 0 := by
+        intro k hk
+        have hkRank : k.val < D.rank := Nat.lt_trans hk hv
+        let q : Fin D.rank := ⟨k.val, hkRank⟩
+        have hq := ih k.val hk hkRank
+        have hrow : h.toIsEchelonForm.pivotRow q = k := Fin.ext rfl
+        change c.get k = 0
+        calc
+          c.get k = c.get (h.toIsEchelonForm.pivotRow q) :=
+            congrArg (fun row : Fin n => c.get row) hrow.symm
+          _ = 0 := hq
+      let q : Fin D.rank := ⟨value, hv⟩
+      have hpivot := vecMul_pivot h c q hz
+      rw [hc] at hpivot
+      change (0 : Vector Int m)[(D.pivotCols.get q).val]'
+        (D.pivotCols.get q).isLt = _ at hpivot
+      rw [Vector.getElem_zero] at hpivot
+      have hp := h.pivot_pos q
+      change 0 < D.echelon[h.toIsEchelonForm.pivotRow q][D.pivotCols.get q] at hp
+      rcases Int.mul_eq_zero.mp hpivot.symm with hzero | hzero
+      · exact hzero
+      · exact absurd hzero (Int.ne_of_gt hp)
+  exact aux i.val i.isLt
+
 end IsHNF
 
 /-- Hermite normalization is idempotent. -/
