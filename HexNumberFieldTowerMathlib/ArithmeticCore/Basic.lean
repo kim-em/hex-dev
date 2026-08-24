@@ -70,41 +70,6 @@ theorem getD_set! (blocks : Array (Array Rat)) (k i : Nat)
     simp [Array.getD_eq_getD_getElem?, Array.set!_eq_setIfInBounds, hk]
   · simp [Array.getD_eq_getD_getElem?, Array.set!_eq_setIfInBounds, hki]
 
-/-- Updating one in-bounds block changes its power-sum value by exactly the
-corresponding monomial delta. -/
-theorem evalBlocks_set (lower : List Level) (x : ℂ)
-    (blocks : Array (Array Rat)) (k : Nat) (value : Array Rat)
-    (hk : k < blocks.size) :
-    evalBlocks lower x (blocks.set! k value) =
-      evalBlocks lower x blocks +
-        (denote lower value - denote lower (blocks.getD k #[])) * x ^ k := by
-  unfold evalBlocks
-  rw [Array.size_set!]
-  let indices := Finset.range blocks.size
-  have hmem : k ∈ indices := Finset.mem_range.mpr hk
-  calc
-    _ = (∑ i ∈ indices.erase k,
-          denote lower ((blocks.set! k value).getD i #[]) * x ^ i) +
-        denote lower ((blocks.set! k value).getD k #[]) * x ^ k := by
-          exact (Finset.sum_erase_add _ _ hmem).symm
-    _ = (∑ i ∈ indices.erase k,
-          denote lower (blocks.getD i #[]) * x ^ i) +
-        denote lower value * x ^ k := by
-          congr 1
-          · apply Finset.sum_congr rfl
-            intro i hi
-            have hki : k ≠ i := by
-              exact fun h => (Finset.mem_erase.mp hi).1 h.symm
-            rw [getD_set! blocks k i value #[] hk]
-            simp [hki]
-          · rw [getD_set! blocks k k value #[] hk]
-            simp
-    _ = (∑ i ∈ indices,
-          denote lower (blocks.getD i #[]) * x ^ i) +
-        (denote lower value - denote lower (blocks.getD k #[])) * x ^ k := by
-          rw [← Finset.sum_erase_add _ _ hmem]
-          ring
-
 /-- Updating one block inside the evaluated range changes its value by the
 corresponding monomial delta. -/
 theorem evalUpTo_set (lower : List Level) (x : ℂ) (count : Nat)

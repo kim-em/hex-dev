@@ -911,13 +911,6 @@ theorem findSquarefreeShift_norm (level : Level)
   exact findSquarefreeShiftAux_norm level lower f 0
     (Norm.tragerShiftCount level.degree (f.size - 1)) h
 
-theorem oneLevel_size (level : Level) (lower : List Level)
-    (f : Array (Array Rat)) (shift : Int) :
-    (Norm.oneLevel level lower f shift).size =
-      (Factor.rawPoly lower (Norm.oneLevel level lower f shift)).size := by
-  rw [Norm.rawPoly_oneLevel]
-  simp [Norm.oneLevel]
-
 theorem array_degree_pos_of_raw_degree_pos (levels : List Level)
     (f : Array (Array Rat))
     (hdegree : 0 < (Factor.rawPoly levels f).degree?.getD 0) :
