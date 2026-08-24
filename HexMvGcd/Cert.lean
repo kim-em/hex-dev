@@ -144,6 +144,8 @@ mutual
       (n : Nat) → (R : Type u) → [Zero R] →
       (cmp : Mono n → Mono n → Ordering) →
       [Std.TransCmp cmp] → [Std.LawfulEqCmp cmp] → Type (u + 1)
+    /-- Package a gcd, its two exact cofactors, and evidence that the
+    cofactors are coprime. -/
     | mk {n : Nat} {R : Type u} [Zero R]
         {cmp : Mono n → Mono n → Ordering}
         [Std.TransCmp cmp] [Std.LawfulEqCmp cmp]

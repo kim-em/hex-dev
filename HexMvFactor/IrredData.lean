@@ -20,8 +20,9 @@ open Hex.MvPoly
 /-- A checkable irreducibility witness, modulo the univariate obligations
 reported by `obligations`. -/
 inductive IrredCert :
-    (n : Nat) → (cmp : Mono n → Mono n → Ordering) →
-    [Std.TransCmp cmp] → [Std.LawfulEqCmp cmp] → Type 1
+      (n : Nat) → (cmp : Mono n → Mono n → Ordering) →
+      [Std.TransCmp cmp] → [Std.LawfulEqCmp cmp] → Type 1
+  /-- Certify irreducibility from degree one in a selected variable. -/
   | degreeOne {n : Nat}
       {cmp : Mono (n + 1) → Mono (n + 1) → Ordering}
       [outerTrans : Std.TransCmp cmp] [outerEq : Std.LawfulEqCmp cmp]
@@ -29,6 +30,7 @@ inductive IrredCert :
       [order : IsMonomialOrder cmp']
       (prim : ContentCert n Int cmp') :
       @IrredCert (n + 1) cmp outerTrans outerEq
+  /-- Certify irreducibility from an irreducible degree-preserving image. -/
   | image {n : Nat}
       {cmp : Mono (n + 1) → Mono (n + 1) → Ordering}
       [outerTrans : Std.TransCmp cmp] [outerEq : Std.LawfulEqCmp cmp]
@@ -36,6 +38,7 @@ inductive IrredCert :
       [order : IsMonomialOrder cmp'] (point : Fin n → Int)
       (prim : ContentCert n Int cmp') :
       @IrredCert (n + 1) cmp outerTrans outerEq
+  /-- Transport a lower-arity irreducibility certificate through embedding. -/
   | embed {n : Nat}
       {cmp : Mono (n + 1) → Mono (n + 1) → Ordering}
       [outerTrans : Std.TransCmp cmp] [outerEq : Std.LawfulEqCmp cmp]
@@ -43,6 +46,7 @@ inductive IrredCert :
       [order : IsMonomialOrder cmp'] (sub : MvPoly n Int cmp')
       (cert : IrredCert n cmp') :
       @IrredCert (n + 1) cmp outerTrans outerEq
+  /-- Certify irreducibility by complete bounded Kronecker factorization. -/
   | kronecker {n : Nat} {cmp : Mono n → Mono n → Ordering}
       [outerTrans : Std.TransCmp cmp] [outerEq : Std.LawfulEqCmp cmp]
       (scalar : Int) (uni : List (ZPoly × Nat)) :
@@ -57,7 +61,9 @@ structure Split (n : Nat) (cmp : Mono n → Mono n → Ordering)
 /-- A decomposition paired positionally with irreducibility certificates. -/
 structure Complete (n : Nat) (cmp : Mono n → Mono n → Ordering)
     [Std.TransCmp cmp] [Std.LawfulEqCmp cmp] where
+  /-- Checked product decomposition whose factors are certified below. -/
   decomp : Decomp n cmp
+  /-- Irreducibility certificates aligned with the decomposition factors. -/
   certs : List (IrredCert n cmp)
 
 /-- The total outcome of the Kronecker sweep. -/

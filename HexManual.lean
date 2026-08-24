@@ -37,6 +37,9 @@ import HexManual.Chapters.HexPrimality
 import HexManual.Chapters.HexModular
 import HexManual.Chapters.HexResultant
 import HexManual.Chapters.HexPolyZGcd
+import HexManual.Chapters.HexMvGcd
+import HexManual.Chapters.HexMvHensel
+import HexManual.Chapters.HexMvFactor
 import HexManual.Chapters.HexSparsePoly
 import HexManual.Chapters.HexRCF
 import HexManual.Chapters.HexNumberField
@@ -163,6 +166,12 @@ here to keep the reference chapters above focused on the released libraries.
 {include 2 HexManual.Chapters.HexResultant}
 
 {include 2 HexManual.Chapters.HexPolyZGcd}
+
+{include 2 HexManual.Chapters.HexMvGcd}
+
+{include 2 HexManual.Chapters.HexMvHensel}
+
+{include 2 HexManual.Chapters.HexMvFactor}
 
 {include 2 HexManual.Chapters.HexRCF}
 

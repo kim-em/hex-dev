@@ -31,11 +31,17 @@ open Hex.MvPoly
 /-- Public, stable failure distinctions for bounded factorization. -/
 inductive Failure (n : Nat) (cmp : Mono n → Mono n → Ordering)
     [Std.TransCmp cmp] [Std.LawfulEqCmp cmp] where
+  /-- The input is the zero polynomial. -/
   | zero
+  /-- Evaluation-point search exhausted its budget. -/
   | point (attempts : Nat) (last : Option PointReject)
+  /-- Multivariate Hensel lifting rejected the constructed input or stopped. -/
   | lift (inner : MvHensel.Failure)
+  /-- Grouped recombination exhausted its level budget. -/
   | recombine (levels : Nat)
+  /-- No available certificate proved the reported factor irreducible. -/
   | irreducible (factor : MvPoly n Int cmp)
+  /-- Random-word generation failed. -/
   | random (error : RandError)
 
 /-- A checked coarse answer together with the reason bounded search stopped
@@ -43,8 +49,11 @@ and the generator state reached at that point. -/
 structure Partial {n : Nat} {cmp : Mono n → Mono n → Ordering}
     [IsMonomialOrder cmp]
     (f : MvPoly n Int cmp) where
+  /-- Checked decomposition accumulated before the search stopped. -/
   found : CheckedDecomp f
+  /-- Exact reason why the bounded search stopped. -/
   reason : Failure n cmp
+  /-- Random-generator state reached when the search stopped. -/
   rand : Rand
 
 variable {n : Nat} {cmp : Mono n → Mono n → Ordering}

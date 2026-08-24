@@ -148,6 +148,7 @@ theorem contentInCert_checks
   intro f h
   exact gcdCert_checks f h
 
+/-- Named-variable content times primitive part reconstructs the input. -/
 theorem contentIn_mul_primPartIn
     {cmp : Mono (n + 1) → Mono (n + 1) → Ordering}
     [IsMonomialOrder cmp]
@@ -285,6 +286,7 @@ def gcd [IsMonomialOrder cmp]
     (f h : MvPoly n R cmp) : MvPoly n R cmp :=
   (gcdCert f h).gcd
 
+/-- The exact left and right cofactors accompanying the canonical gcd. -/
 def cofactors [IsMonomialOrder cmp]
     [Lean.Grind.CommRing R] [DecidableEq R] [BEq R] [LawfulBEq R]
     [Dvd R] [BezoutOps R]
@@ -346,6 +348,7 @@ private theorem checkedResult [IsMonomialOrder cmp]
   simpa [gcd, cofactors] using
     (checkGcd_sound (gcdCert_checks f h))
 
+/-- The canonical gcd divides its left input. -/
 theorem gcd_dvd_left [IsMonomialOrder cmp]
     [Lean.Grind.CommRing R] [DecidableEq R] [BEq R] [LawfulBEq R]
     [Dvd R] [BezoutOps R] [LawfulGcdOps R] [LawfulBezoutOps R]
@@ -355,6 +358,7 @@ theorem gcd_dvd_left [IsMonomialOrder cmp]
   refine ⟨(cofactors f h).1, ?_⟩
   exact hf.trans (MvPoly.mul_comm (gcd f h) (cofactors f h).1)
 
+/-- The canonical gcd divides its right input. -/
 theorem gcd_dvd_right [IsMonomialOrder cmp]
     [Lean.Grind.CommRing R] [DecidableEq R] [BEq R] [LawfulBEq R]
     [Dvd R] [BezoutOps R] [LawfulGcdOps R] [LawfulBezoutOps R]
@@ -364,6 +368,7 @@ theorem gcd_dvd_right [IsMonomialOrder cmp]
   refine ⟨(cofactors f h).2, ?_⟩
   exact hh.trans (MvPoly.mul_comm (gcd f h) (cofactors f h).2)
 
+/-- Every common divisor divides the canonical gcd. -/
 theorem dvd_gcd [IsMonomialOrder cmp]
     [Lean.Grind.CommRing R] [DecidableEq R] [BEq R] [LawfulBEq R]
     [Dvd R] [BezoutOps R] [LawfulGcdOps R] [LawfulBezoutOps R]

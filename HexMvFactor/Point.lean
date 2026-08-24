@@ -30,14 +30,23 @@ open Hex.MvPoly
 
 /-- Search budgets shared by the point layer and the downstream EEZ driver. -/
 structure Config where
+  /-- Initial deterministic random-generator state. -/
   rand : Rand
+  /-- Maximum number of evaluation points examined. -/
   pointFuel : Nat
+  /-- Maximum number of admissible probes retained. -/
   pointScouts : Nat
+  /-- Maximum infinity-norm shell enumerated for evaluation points. -/
   pointShell : Nat
+  /-- Maximum number of candidate primes examined. -/
   primeFuel : Nat
+  /-- Maximum number of reconstruction-modulus doublings. -/
   doublings : Nat
+  /-- Number of grouped recombination levels attempted. -/
   recombLevels : Nat
+  /-- Whether the Kronecker route may be used. -/
   kronecker : Bool
+  /-- Maximum encoded univariate degree accepted by Kronecker substitution. -/
   kroneckerDeg : Nat
   deriving Repr, DecidableEq
 
@@ -309,6 +318,7 @@ def insertProbe (candidate : Probe n cmp cmp') :
         candidate :: probe :: probes
       else probe :: insertProbe candidate probes
 
+/-- Enumerate bounded evaluation-point shells and retain the best probes. -/
 def scoutPoints (cfg : Config) (i : Fin (n + 1))
     (cmp' : Mono n → Mono n → Ordering) [IsMonomialOrder cmp']
     (s : MvPoly (n + 1) Int cmp) (lc : Decomp n cmp') (r : Rand) :
