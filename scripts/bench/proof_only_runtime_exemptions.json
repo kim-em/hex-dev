@@ -12,12 +12,6 @@
     "reason": "Guards powModNat at modulus zero, exposes its worker and bitLength for kernel reduction, and adds a csimp routing powModNat to the unchanged powMod; no executable factorization code calls powModNat (the service uses powMod directly)."
   },
   {
-    "path": "lakefile.lean",
-    "baseline_blob": "a1b87406682dbf908d990f01676f326499b906e5",
-    "current_blob": "75002db9efb691acb9f469fd036dd5f28a249811",
-    "reason": "Registers the HexPrimality library on top of main's current registrations; the factorization service targets are unchanged."
-  },
-  {
     "path": "HexArith/Nat/Prime.lean",
     "baseline_blob": "8b5cf744140acde03da1c72c50482410e0c65029",
     "current_blob": "3c739ff40939977910ea64afd72b1db3142c5444",
@@ -64,12 +58,6 @@
     "baseline_blob": "5fbaa75456c2217771a4f7a27e7f2ff40417fe3a",
     "current_blob": "3c739ff40939977910ea64afd72b1db3142c5444",
     "reason": "Reroutes the Decidable (Prime p) instance through the existing isPrimeTrial pair and adds prime-divisor existence theorems (merged with main's prime_iff_forall_le_sqrt addition); the factorization service never evaluates the instance at runtime."
-  },
-  {
-    "path": "lakefile.lean",
-    "baseline_blob": "a1b87406682dbf908d990f01676f326499b906e5",
-    "current_blob": "791e5727779c8d07cbd2e7080bb2bbd245b82a6b",
-    "reason": "Registers the HexPrimality library on top of main's current registrations; the factorization service targets are unchanged."
   },
   {
     "path": "HexPolyZ/Decomposition.lean",
@@ -1036,5 +1024,17 @@
     "baseline_blob": "6dd80771ae2212333b2a9b925b52056e0037ff56",
     "current_blob": "2cd1a32cf3b269140e8ddbc35accb907c49ee79b",
     "reason": "Additionally registers the HexPrimalityMathlib companion on top of the already-attested HexPolyFpMathlib and interval experiment registrations; the factorization service targets are unchanged."
+  },
+  {
+    "path": "lakefile.lean",
+    "baseline_blob": "a1b87406682dbf908d990f01676f326499b906e5",
+    "current_blob": "75002db9efb691acb9f469fd036dd5f28a249811",
+    "reason": "Registers the HexPrimality library on top of main's current registrations; the factorization service targets are unchanged."
+  },
+  {
+    "path": "lakefile.lean",
+    "baseline_blob": "a1b87406682dbf908d990f01676f326499b906e5",
+    "current_blob": "791e5727779c8d07cbd2e7080bb2bbd245b82a6b",
+    "reason": "Registers the HexPrimality library on top of main's current registrations; the factorization service targets are unchanged."
   }
 ]
