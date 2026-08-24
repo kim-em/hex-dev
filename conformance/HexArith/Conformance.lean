@@ -74,6 +74,12 @@ private def maxWord : UInt64 := UInt64.ofNat (wordBase - 1)
 /-- info: (6, 1, -2) -/
 #guard_msgs in #eval HexArith.Int.extGcd 30 12
 
+/-- info: (2, 0, -1) -/
+#guard_msgs in #eval HexArith.Int.extGcd 2 (-2)
+
+/-- info: (2, 0, 1) -/
+#guard_msgs in #eval HexArith.Int.extGcd (-2) 2
+
 #guard let (g, _, _) := HexArith.Int.extGcd 30 12
   g = Int.gcd 30 12
 #guard let (g, s, t) := HexArith.Int.extGcd 30 12

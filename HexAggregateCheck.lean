@@ -38,6 +38,7 @@ public import HexGFq
 public import HexGFqMathlib
 public import HexDeterminant
 public import HexBareiss
+public import HexHermite
 public import HexCharPoly
 public import HexMatrixMathlib
 public import HexRowReduceMathlib
