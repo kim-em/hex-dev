@@ -166,7 +166,7 @@ def runCoprimeImage (input : PairInput) : UInt64 :=
       letI : ZMod64.PrimeModulus p.m := ZMod64.primeModulusOfPrime p.prime
       let left := reduceModP p.m input.left
       let right := reduceModP p.m input.right
-      let image := DensePoly.gcd left right
+      let image := FpPoly.gcdCached left right
       image.toArray.foldl
         (fun acc coefficient => mixWord acc coefficient.toUInt64) 0
   else

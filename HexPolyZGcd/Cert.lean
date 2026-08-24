@@ -8,6 +8,7 @@ module
 
 public import HexModArith.Modulus
 public import HexPolyFp
+public import HexPolyZ.Kronecker
 public import HexPolyZGcd.Divide
 
 public section
@@ -56,6 +57,27 @@ def NormalizedGcd (g : ZPoly) : Bool :=
   g == 0 ||
     (decide (0 < DensePoly.leadingCoeff g) && decide (0 < content g))
 
+/-- Check a dense integer-polynomial product by one Kronecker evaluation.
+
+The slot width covers both the convolution bound and every target coefficient,
+so equality of the packed integers is equality coefficient by coefficient.
+Unlike materialising `p * q` through either schoolbook convolution or
+Kronecker unpacking, the checker needs no result polynomial: it packs the
+target once and compares the two integers directly. -/
+@[expose]
+def mulEqPacked (p q target : ZPoly) : Bool :=
+  if p.isZero || q.isZero then
+    target == 0
+  else
+    let slots := p.size + q.size - 1
+    let width := bitLen (max (max (maxAbs p) (maxAbs q)) (maxAbs target))
+    let b := 2 * width + ceilLog2 (min p.size q.size) + 1
+    let bias : Int := Int.ofNat (2 ^ (b - 1))
+    decide (target.size ≤ slots) &&
+      (packAux b p.coeff 0 p.size * packAux b q.coeff 0 q.size +
+          constPack b bias slots ==
+        packAux b (fun i => target.coeff i + bias) 0 slots)
+
 /-- Replay the coprimality half of a gcd certificate. -/
 @[expose]
 def checkCoprime (f h : ZPoly) : CoprimeWitness → Bool
@@ -74,8 +96,8 @@ def checkCoprime (f h : ZPoly) : CoprimeWitness → Bool
 fallbacks, must pass through this function before its candidate is exposed. -/
 @[expose]
 def checkGcd (f h : ZPoly) (c : GcdCert) : Bool :=
-  (c.gcd * c.cofL == f) &&
-    (c.gcd * c.cofR == h) &&
+  mulEqPacked c.gcd c.cofL f &&
+    mulEqPacked c.gcd c.cofR h &&
     NormalizedGcd c.gcd &&
     decide (Int.gcd (content c.cofL) (content c.cofR) = 1) &&
     checkCoprime c.cofL c.cofR c.coprime

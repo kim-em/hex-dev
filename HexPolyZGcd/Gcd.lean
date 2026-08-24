@@ -259,12 +259,15 @@ private def afterCoprime (f h : ZPoly) : GcdCert :=
 /-- Routes 1--4 on inputs after structural content and `x`-power removal. -/
 def reducedGcdCert (f h : ZPoly) : GcdCert :=
   let coefficientBits := max (maxAbs f).log2 (maxAbs h).log2
-  if brownBitCutoff < coefficientBits then
-    brownOrFallback f h
-  else
-    match coprimeCert? f h with
-    | some cert => cert
-    | none => afterCoprime f h
+  match differenceCert? f h with
+  | some cert => cert
+  | none =>
+      if brownBitCutoff < coefficientBits then
+        brownOrFallback f h
+      else
+        match coprimeCert? f h with
+        | some cert => cert
+        | none => afterCoprime f h
 
 /-- Internal route tag used by executable dispatch guards. -/
 private inductive GcdRoute where
@@ -283,10 +286,16 @@ private def dispatchGcdCert (f h : ZPoly) : GcdCert × GcdRoute :=
       match structuralReduction? f h with
       | none => (fallbackGcdCert f h, .fallback)
       | some reduced =>
-          match restoreStructural? f h reduced
-              (reducedGcdCert reduced.left reduced.right) with
-          | some cert => (cert, .reduced)
-          | none => (fallbackGcdCert f h, .fallback)
+          let cert := reducedGcdCert reduced.left reduced.right
+          if reduced.factor == 1 then
+            -- Primitive inputs with no common `x` power are already the
+            -- reduced problem. Replaying the complete certificate again in
+            -- `restoreStructural?` would duplicate both dense product checks.
+            (cert, .reduced)
+          else
+            match restoreStructural? f h reduced cert with
+            | some restored => (restored, .reduced)
+            | none => (fallbackGcdCert f h, .fallback)
 
 /-- Produce a checked gcd certificate.  Mandatory zero and constant
 certificates run before content or `x` extraction.  Remaining route-0

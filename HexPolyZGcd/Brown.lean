@@ -65,7 +65,7 @@ def brownImage? (f h : ZPoly) (p : ZMod64.Prime) : Option BrownImage :=
   if fp.size != f0.size || hp.size != h0.size then
     none
   else
-    let raw := DensePoly.gcd fp hp
+    let raw := FpPoly.gcdCached fp hp
     if raw.isZero then
       none
     else
