@@ -192,7 +192,7 @@ list at the end reflects them.
 
 ## The interface
 
-Two classes, split the way [hex-mv-gcd](hex-mv-gcd.md) splits `GcdOps`
+Two classes, split the way [hex-mv-gcd](../../HexMvGcd/SPEC/hex-mv-gcd.md) splits `GcdOps`
 from `LawfulGcdOps`: operations a consumer may compute with, and laws a
 consumer may prove with.
 
@@ -598,7 +598,7 @@ a separate ideal model of independent uniform coefficient draws. It
 motivates the retry budget but is not a theorem about splitmix64.
 
 `Rand` belongs in **hex-basic**, not here. It has no dependencies, and
-it has a second consumer already specified: [hex-mv-gcd](hex-mv-gcd.md)
+it has a second consumer already specified: [hex-mv-gcd](../../HexMvGcd/SPEC/hex-mv-gcd.md)
 route 4 draws random evaluation points for Zippel's interpolation, and
 says so. Two consumers in different subtrees is the argument for a root
 library.
@@ -1256,7 +1256,7 @@ route-level tests in Lean (in hex-berlekamp for prime fields and
 hex-gfq for concrete extensions) asserting that EDF produced the split, that
 the sweep did not run, and that the attempt count was within the
 expected range for the seed. This is the same split
-[hex-mv-gcd](hex-mv-gcd.md) makes between route-level tests and oracle
+[hex-mv-gcd](../../HexMvGcd/SPEC/hex-mv-gcd.md) makes between route-level tests and oracle
 fixtures, and for the same reason.
 
 ## Benchmarking

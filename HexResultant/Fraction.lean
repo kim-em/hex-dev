@@ -16,6 +16,9 @@ The fraction field used internally by the Mathlib-free subresultant proof.
 The executable resultant never constructs these values.  They provide the
 classical quotient-field setting in which the Brown--Traub scale identities
 can be proved before exact quotients are pulled back to the coefficient ring.
+This module is retained as proof infrastructure: `SubresultantMinor` consumes
+`ofCoeff` for its fraction-embedding image certificates, and the manual embeds
+the quotient-pullback theorems (`div_pullback`, `divExp_exact`).
 -/
 
 namespace Hex
@@ -62,13 +65,17 @@ def Rel (a b : Fraction.Rep R) : Prop :=
   a.num * b.den = b.num * a.den
 
 omit [Div R] [ExactDivLaws R] in
+/-- Cross-multiplication is reflexive. -/
 theorem rel_refl (a : Fraction.Rep R) : Rel a a := by
   exact rfl
 
 omit [Div R] [ExactDivLaws R] in
+/-- Cross-multiplication is symmetric. -/
 theorem rel_symm {a b : Fraction.Rep R} (h : Rel a b) : Rel b a := by
   exact h.symm
 
+/-- Cross-multiplication is transitive; cancellation by the nonzero middle
+denominator is where `ExactDivLaws` enters. -/
 theorem rel_trans {a b c : Fraction.Rep R}
     (hab : Rel a b) (hbc : Rel b c) : Rel a c := by
   apply ExactDivLaws.mul_right_cancel b.den_ne
@@ -80,10 +87,13 @@ theorem rel_trans {a b c : Fraction.Rep R}
     _ = (c.num * b.den) * a.den := by rw [hbc]
     _ = c.num * a.den * b.den := by grind
 
+/-- Fraction representatives form a setoid under cross multiplication. -/
 instance : Setoid (Fraction.Rep R) where
   r := Rel
   iseqv := ⟨rel_refl, rel_symm, rel_trans⟩
 
+/-- Cross-multiplication equivalence is decidable when coefficient equality
+is. -/
 instance [DecidableEq R] (a b : Fraction.Rep R) : Decidable (Rel a b) :=
   by
     unfold Rel
@@ -103,6 +113,7 @@ def add (a b : Fraction.Rep R) : Fraction.Rep R :=
 def neg (a : Fraction.Rep R) : Fraction.Rep R :=
   ⟨-a.num, a.den, a.den_ne⟩
 
+/-- Representative products respect cross-multiplication equivalence. -/
 theorem mul_rel {a b c d : Fraction.Rep R}
     (hac : Rel a c) (hbd : Rel b d) : Rel (mul a b) (mul c d) := by
   unfold Rel at hac hbd
@@ -113,6 +124,7 @@ theorem mul_rel {a b c d : Fraction.Rep R}
     _ = (c.num * a.den) * (d.num * b.den) := by rw [hac, hbd]
     _ = c.num * d.num * (a.den * b.den) := by grind
 
+/-- Representative sums respect cross-multiplication equivalence. -/
 theorem add_rel {a b c d : Fraction.Rep R}
     (hac : Rel a c) (hbd : Rel b d) : Rel (add a b) (add c d) := by
   unfold Rel at hac hbd
@@ -126,6 +138,7 @@ theorem add_rel {a b c d : Fraction.Rep R}
     _ = (c.num * d.den + d.num * c.den) * (a.den * b.den) := by grind
 
 omit [Div R] [ExactDivLaws R] in
+/-- Representative negation respects cross-multiplication equivalence. -/
 theorem neg_rel {a b : Fraction.Rep R} (hab : Rel a b) :
     Rel (neg a) (neg b) := by
   unfold Rel at hab
@@ -196,11 +209,17 @@ protected def neg : Fraction R → Fraction R :=
     intro a b hab
     exact ofRep_eq (Fraction.Rep.neg_rel hab))
 
+/-- Zero is the embedded coefficient zero. -/
 instance : Zero (Fraction R) := ⟨ofCoeff 0⟩
+/-- One is the embedded coefficient one. -/
 instance : One (Fraction R) := ⟨ofCoeff 1⟩
+/-- Addition of fractions. -/
 instance : Add (Fraction R) := ⟨Fraction.add⟩
+/-- Multiplication of fractions. -/
 instance : Mul (Fraction R) := ⟨Fraction.mul⟩
+/-- Negation of fractions. -/
 instance : Neg (Fraction R) := ⟨Fraction.neg⟩
+/-- Subtraction of fractions, defined as addition of the negation. -/
 instance : Sub (Fraction R) := ⟨fun a b => a + -b⟩
 
 omit [NonzeroOne R] in
@@ -208,6 +227,7 @@ private theorem rep_eq (a b : Fraction.Rep R) (h : Fraction.Rep.Rel a b) :
     (ofRep a : Fraction R) = ofRep b :=
   Quotient.sound h
 
+/-- Zero is a right additive identity. -/
 theorem add_zero (a : Fraction R) : a + 0 = a := by
   induction a using Quotient.inductionOn with
   | _ a =>
@@ -217,6 +237,7 @@ theorem add_zero (a : Fraction R) : a + 0 = a := by
         Lean.Grind.Semiring.mul_one]
 
 omit [NonzeroOne R] in
+/-- Fraction addition is commutative. -/
 theorem add_comm (a b : Fraction R) : a + b = b + a := by
   induction a, b using Quotient.inductionOn₂ with
   | _ a b =>
@@ -225,6 +246,7 @@ theorem add_comm (a b : Fraction R) : a + b = b + a := by
       grind
 
 omit [NonzeroOne R] in
+/-- Fraction addition is associative. -/
 theorem add_assoc (a b c : Fraction R) : a + b + c = a + (b + c) := by
   induction a, b, c using Quotient.inductionOn₃ with
   | _ a b c =>
@@ -233,6 +255,7 @@ theorem add_assoc (a b c : Fraction R) : a + b + c = a + (b + c) := by
       grind
 
 omit [NonzeroOne R] in
+/-- Fraction multiplication is associative. -/
 theorem mul_assoc (a b c : Fraction R) : a * b * c = a * (b * c) := by
   induction a, b, c using Quotient.inductionOn₃ with
   | _ a b c =>
@@ -240,6 +263,7 @@ theorem mul_assoc (a b c : Fraction R) : a * b * c = a * (b * c) := by
       unfold Fraction.Rep.Rel Fraction.Rep.mul
       grind
 
+/-- One is a right multiplicative identity. -/
 theorem mul_one (a : Fraction R) : a * 1 = a := by
   induction a using Quotient.inductionOn with
   | _ a =>
@@ -247,6 +271,7 @@ theorem mul_one (a : Fraction R) : a * 1 = a := by
       unfold Fraction.Rep.Rel Fraction.Rep.mul
       simp only [Lean.Grind.Semiring.mul_one]
 
+/-- One is a left multiplicative identity. -/
 theorem one_mul (a : Fraction R) : 1 * a = a := by
   induction a using Quotient.inductionOn with
   | _ a =>
@@ -255,6 +280,7 @@ theorem one_mul (a : Fraction R) : 1 * a = a := by
       simp only [Lean.Grind.Semiring.one_mul]
 
 omit [NonzeroOne R] in
+/-- Fraction multiplication distributes over addition on the left. -/
 theorem left_distrib (a b c : Fraction R) : a * (b + c) = a * b + a * c := by
   induction a, b, c using Quotient.inductionOn₃ with
   | _ a b c =>
@@ -263,6 +289,7 @@ theorem left_distrib (a b c : Fraction R) : a * (b + c) = a * b + a * c := by
       grind
 
 omit [NonzeroOne R] in
+/-- Fraction multiplication distributes over addition on the right. -/
 theorem right_distrib (a b c : Fraction R) : (a + b) * c = a * c + b * c := by
   induction a, b, c using Quotient.inductionOn₃ with
   | _ a b c =>
@@ -270,6 +297,7 @@ theorem right_distrib (a b c : Fraction R) : (a + b) * c = a * c + b * c := by
       unfold Fraction.Rep.Rel Fraction.Rep.mul Fraction.Rep.add
       grind
 
+/-- Zero is a left multiplicative absorber. -/
 theorem zero_mul (a : Fraction R) : 0 * a = 0 := by
   induction a using Quotient.inductionOn with
   | _ a =>
@@ -277,6 +305,7 @@ theorem zero_mul (a : Fraction R) : 0 * a = 0 := by
       unfold Fraction.Rep.Rel Fraction.Rep.mul
       simp only [Lean.Grind.Semiring.zero_mul]
 
+/-- Zero is a right multiplicative absorber. -/
 theorem mul_zero (a : Fraction R) : a * 0 = 0 := by
   induction a using Quotient.inductionOn with
   | _ a =>
@@ -284,6 +313,7 @@ theorem mul_zero (a : Fraction R) : a * 0 = 0 := by
       unfold Fraction.Rep.Rel Fraction.Rep.mul
       simp only [Lean.Grind.Semiring.mul_zero, Lean.Grind.Semiring.zero_mul]
 
+/-- Every fraction cancels with its negation. -/
 theorem neg_add_cancel (a : Fraction R) : -a + a = 0 := by
   induction a using Quotient.inductionOn with
   | _ a =>
@@ -292,6 +322,7 @@ theorem neg_add_cancel (a : Fraction R) : -a + a = 0 := by
       grind
 
 omit [NonzeroOne R] in
+/-- Fraction negation is involutive. -/
 theorem neg_neg (a : Fraction R) : -(-a) = a := by
   induction a using Quotient.inductionOn with
   | _ a =>
@@ -300,6 +331,7 @@ theorem neg_neg (a : Fraction R) : -(-a) = a := by
       rw [Lean.Grind.AddCommGroup.neg_neg]
 
 omit [NonzeroOne R] in
+/-- Fraction multiplication is commutative. -/
 theorem mul_comm (a b : Fraction R) : a * b = b * a := by
   induction a, b using Quotient.inductionOn₂ with
   | _ a b =>
@@ -308,6 +340,7 @@ theorem mul_comm (a b : Fraction R) : a * b = b * a := by
       grind
 
 omit [NonzeroOne R] in
+/-- Negation moves out of the left factor of a product. -/
 theorem neg_mul (a b : Fraction R) : (-a) * b = -(a * b) := by
   induction a, b using Quotient.inductionOn₂ with
   | _ a b =>
@@ -364,9 +397,12 @@ def natPow (a : Fraction R) : Nat → Fraction R
   | 0 => 1
   | n + 1 => natPow a n * a
 
+/-- Natural-number casts factor through the coefficient embedding. -/
 instance : NatCast (Fraction R) :=
   ⟨fun n => ofCoeff (Nat.cast n)⟩
 
+/-- Numerals factor through the coefficient embedding, reusing the canonical
+zero and one. -/
 instance (n : Nat) : OfNat (Fraction R) n :=
   ⟨match n with
     | 0 => Zero.zero
@@ -383,18 +419,23 @@ theorem ofNat_eq_ofCoeff (n : Nat) :
       | zero => rfl
       | succ n => rfl
 
+/-- Natural scalar multiplication is multiplication by the cast scalar. -/
 instance : SMul Nat (Fraction R) :=
   ⟨fun n a => (Nat.cast n : Fraction R) * a⟩
 
+/-- Natural powers of fractions via `natPow`. -/
 instance : HPow (Fraction R) Nat (Fraction R) :=
   ⟨natPow⟩
 
+/-- Integer casts factor through the coefficient embedding. -/
 instance : IntCast (Fraction R) :=
   ⟨fun i => ofCoeff (Int.cast i)⟩
 
+/-- Integer scalar multiplication is multiplication by the cast scalar. -/
 instance : SMul Int (Fraction R) :=
   ⟨fun i a => (Int.cast i : Fraction R) * a⟩
 
+/-- The quotient construction is a lightweight semiring. -/
 instance : Lean.Grind.Semiring (Fraction R) := by
   refine Lean.Grind.Semiring.mk ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_
   · exact add_zero
@@ -425,6 +466,7 @@ instance : Lean.Grind.Semiring (Fraction R) := by
   · intro _ _
     rfl
 
+/-- The quotient construction is a lightweight ring. -/
 instance : Lean.Grind.Ring (Fraction R) := by
   refine Lean.Grind.Ring.mk ?_ ?_ ?_ ?_ ?_ ?_
   · exact neg_add_cancel
@@ -450,6 +492,7 @@ instance : Lean.Grind.Ring (Fraction R) := by
       -ofCoeff (R := R) (Int.cast i)
     rw [Lean.Grind.Ring.intCast_neg, ofCoeff_neg]
 
+/-- The quotient construction is a lightweight commutative ring. -/
 instance : Lean.Grind.CommRing (Fraction R) := by
   refine Lean.Grind.CommRing.mk ?_
   exact mul_comm
@@ -500,14 +543,18 @@ protected def inv : Fraction R → Fraction R :=
     intro a b hab
     exact invRep_rel hab)
 
+/-- Total inversion of fractions, with zero sent to zero. -/
 instance : Inv (Fraction R) := ⟨Fraction.inv⟩
+/-- Division of fractions is multiplication by the total inverse. -/
 instance : Div (Fraction R) := ⟨fun a b => a * b⁻¹⟩
 
 omit [NonzeroOne R] [DecidableEq R] in
+/-- Products of embedded representatives multiply representatives. -/
 @[simp]
 theorem mul_ofRep (a b : Fraction.Rep R) :
     ofRep a * ofRep b = ofRep (Fraction.Rep.mul a b) := rfl
 
+/-- Inverting an embedded representative applies `invRep`. -/
 @[simp]
 theorem inv_ofRep (a : Fraction.Rep R) : (ofRep a)⁻¹ = invRep a := rfl
 
@@ -585,6 +632,7 @@ def intPow (a : Fraction R) : Int → Fraction R
   | .ofNat n => a ^ n
   | .negSucc n => (a ^ (n + 1))⁻¹
 
+/-- Integer powers of fractions via `intPow`. -/
 instance : HPow (Fraction R) Int (Fraction R) := ⟨intPow⟩
 
 /-- Division is multiplication by the fraction inverse. -/

@@ -456,6 +456,7 @@ private def expectedRender : String :=
     ++ "-- rewrites it from the committed Lübeck cache:\n"
     ++ "-- INVOCATION\n"
     ++ "/-- Committed Lübeck Conway-table coefficients, stored ascending by degree. -/\n"
+    ++ "@[expose]\n"
     ++ "def luebeckConwayCoeffs? : Nat → Nat → Option (List Nat)\n"
     ++ "  | 5, 1 => some [3, 1]\n"
     ++ "  | _, _ => none"

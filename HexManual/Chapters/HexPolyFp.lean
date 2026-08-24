@@ -8,6 +8,8 @@ import VersoManual
 
 import HexPolyFp
 
+import HexPolyFpMathlib
+
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean
 
@@ -270,6 +272,198 @@ reducible modulus (where a nonzero zero-divisor has no inverse).
 
 {docstring Hex.FpPoly.Quotient.inv_mul_cancel}
 
+# The Mathlib correspondence
+%%%
+tag := "hex-poly-fp-mathlib"
+%%%
+
+Everything above is executable and Mathlib-free. `HexPolyFpMathlib` is
+the companion that connects it to Mathlib, and this section is where
+that library is documented. It is the crossing point for the whole
+executable polynomial tower, not only for this chapter's library:
+below it a reader is in Hex's own {name}`Hex.DensePoly` over
+{name}`Hex.ZMod64`, and on the far side of it in Mathlib's
+`Polynomial (ZMod p)`.
+
+{docstring HexPolyFpMathlib.fpPolyEquiv}
+
+The equivalence asks only for {name}`Hex.ZMod64.Bounds`, not for
+primality. `FpPoly p` is a commutative ring for every admissible modulus,
+meaning every `p` with `0 < p` and `p < 2 ^ 31`, which is what that class
+requires; `Polynomial (ZMod p)` is one for any `p` at all; and nothing in
+the correspondence divides. So there is no reason to demand more of `p`
+than the representation itself does. Primality enters at exactly one
+declaration, and as an explicit hypothesis.
+
+{docstring HexPolyFpMathlib.primeModulus_of_fact}
+
+That is the door from Mathlib's `Fact (Nat.Prime p)` to the executable
+{name}`Hex.ZMod64.PrimeModulus` witness that the field-dependent
+operations require: coefficient inversion, the Bezout gcd, and modular
+division, and everything in
+{ref "hex-poly-fp-quotient"}[The quotient by a modulus] built on them. A
+caller who is already working in Mathlib supplies the `Fact` and gets the
+witness; a caller staying on the executable side never needs the `Fact`.
+
+## The forward map
+%%%
+tag := "hex-poly-fp-mathlib-forward"
+%%%
+
+Downstream statements are written against a named forward map rather
+than against the equivalence, so that a goal about an executable
+polynomial's Mathlib image carries no `RingEquiv` coercion.
+
+{docstring HexPolyFpMathlib.toMathlibPolynomial}
+
+{docstring HexPolyFpMathlib.coeff_toMathlibPolynomial}
+
+{docstring HexPolyFpMathlib.coeff_polynomialToFpPoly}
+
+These coefficient lemmas are the normal forms for the two directions of
+the correspondence. They let downstream proofs cross the equivalence
+without unfolding either representation.
+
+{docstring HexPolyFpMathlib.toMathlibPolynomial_monic}
+
+Monicity is the hypothesis the executable Euclidean operations carry, so
+transporting it is what lets a Mathlib-side argument apply
+`Polynomial.Monic` lemmas to a polynomial that came out of
+{name}`Hex.FpPoly.modByMonic` or out of the square-free decomposition.
+
+{docstring HexPolyFpMathlib.natDegree_toMathlibPolynomial}
+
+{docstring HexPolyFpMathlib.leadingCoeff_toMathlibPolynomial}
+
+## The transport family
+%%%
+tag := "hex-poly-fp-mathlib-transport"
+%%%
+
+The forward map is a ring equivalence, so each of the following follows
+from it. They are stated anyway: a caller reaching for one of them
+should not have to rediscover which `RingEquiv` lemma to compose, and
+the rewrite-friendly form is what the finite-field proofs actually use.
+
+{docstring HexPolyFpMathlib.toMathlibPolynomial_add}
+
+{docstring HexPolyFpMathlib.toMathlibPolynomial_sub}
+
+{docstring HexPolyFpMathlib.toMathlibPolynomial_neg}
+
+{docstring HexPolyFpMathlib.toMathlibPolynomial_mul}
+
+{docstring HexPolyFpMathlib.toMathlibPolynomial_derivative}
+
+The derivative is the one that does not come free from the ring
+structure; it is proved coefficientwise. It is also the one the
+square-free correctness arguments need, since Yun's algorithm is stated
+in terms of the gcd of a polynomial with its derivative.
+
+The generators transport too, so a Mathlib-side computation can be
+rewritten all the way down to `X` and constants.
+
+{docstring HexPolyFpMathlib.toMathlibPolynomial_C}
+
+{docstring HexPolyFpMathlib.toMathlibPolynomial_X}
+
+{docstring HexPolyFpMathlib.toMathlibPolynomial_monomial}
+
+{docstring HexPolyFpMathlib.toMathlibPolynomial_monomial_one}
+
+The `eval₂` theorem exposes Mathlib evaluation as the finite coefficient sum
+represented by the executable polynomial. Horner composition has a direct
+operation-correspondence theorem, so consumers need not repeat its polynomial
+induction.
+
+{docstring HexPolyFpMathlib.eval₂_toMathlibPolynomial}
+
+{docstring HexPolyFpMathlib.toMathlibPolynomial_compose}
+
+{docstring HexPolyFpMathlib.toMathlibPolynomial_dvd}
+
+{docstring HexPolyFpMathlib.toMathlibPolynomial_dvd_iff}
+
+The inverse map also has named rules for the basic constructors and ring
+operations. In particular, a caller going backward across the
+equivalence does not need to combine `RingEquiv.symm_apply_eq` with a
+forward coefficient proof.
+
+{docstring HexPolyFpMathlib.polynomialToFpPoly_zero}
+
+{docstring HexPolyFpMathlib.polynomialToFpPoly_one}
+
+{docstring HexPolyFpMathlib.polynomialToFpPoly_C}
+
+{docstring HexPolyFpMathlib.polynomialToFpPoly_neg}
+
+{docstring HexPolyFpMathlib.polynomialToFpPoly_sub}
+
+{docstring HexPolyFpMathlib.polynomialToFpPoly_add}
+
+{docstring HexPolyFpMathlib.polynomialToFpPoly_mul}
+
+{docstring HexPolyFpMathlib.polynomialToFpPoly_monomial}
+
+The correspondence layer stops at representation-level facts. A statement
+mentioning Berlekamp's basis size or Rabin's test does not belong here even
+when its conclusion is about
+{name}`HexPolyFpMathlib.toMathlibPolynomial`: that is a fact about a factoring
+algorithm rather than about the representation, and it lives in
+`HexBerlekampMathlib`.
+
+## Mathlib algebraic structure
+%%%
+tag := "hex-poly-fp-mathlib-instances"
+%%%
+
+A `RingEquiv` does not install a `CommRing`. Without one,
+`Hex.FpPoly p →+* R` is not a well-formed type, so the instance is a
+prerequisite for every ring homomorphism out of the executable
+polynomials rather than a convenience.
+
+{docstring HexPolyFpMathlib.commRing}
+
+The design point is worth restating, because the obvious alternative is
+the wrong one. Transporting a `CommRing` along
+{name}`HexPolyFpMathlib.fpPolyEquiv` would produce a correct instance
+whose operations are Mathlib's: `f * g` would mean "map both sides into
+`Polynomial (ZMod p)`, multiply there, map back", and none of the
+executable convolution would run. Building the instance from the laws
+`HexPolyFp` proves keeps the operations the executable ones, so
+multiplication under it is still the schoolbook loop.
+
+```lean
+open Hex in
+example {p : Nat} [ZMod64.Bounds p]
+    (f g : FpPoly p) :
+    f * g = DensePoly.mul f g := rfl
+```
+
+Mathlib's ring automation therefore applies directly to the fast
+representation:
+
+```lean
+open Hex in
+example {p : Nat} [ZMod64.Bounds p]
+    (f g : FpPoly p) :
+    (f + g) ^ 2 = f ^ 2 + 2 * (f * g) + g ^ 2 := by
+  ring
+```
+
+One executable operation needs to be identified with its Mathlib
+counterpart by hand, because `HexPolyFp` defines it by structural
+recursion for kernel reduction while the `CommRing` above supplies
+`npowRec`.
+
+{docstring HexPolyFpMathlib.linearPow_eq_pow}
+
+Finally, a naming note for readers of older code. The equivalence and
+its transports lived in `HexBerlekampMathlib` while Berlekamp factoring
+was their only consumer, and that library still re-exports the
+correspondence names, so a call site spelling one of them
+`HexBerlekampMathlib.toMathlibPolynomial` keeps resolving.
+
 # Cross-references
 %%%
 tag := "hex-poly-fp-cross-references"
@@ -297,3 +491,12 @@ Downstream, the finite-field libraries consume `HexPolyFp` directly:
 inverse laws documented above, each conditioned on irreducibility of the
 modulus, with the {name}`Hex.FpPoly.Irreducible` witness produced by a
 checkable Rabin certificate from `HexBerlekamp`.
+
+`HexPolyFp` is Mathlib-free. Its Mathlib correspondence is
+`HexPolyFpMathlib`, documented in
+{ref "hex-poly-fp-mathlib"}[The Mathlib correspondence] above, which
+identifies {name}`Hex.FpPoly` with `Polynomial (ZMod p)` and carries the
+`CommRing` instance that every ring homomorphism out of the executable
+polynomials needs. Nothing in this chapter depends on it: the modular
+exponentiation, the Frobenius maps, the square-free decomposition, and
+the quotient are all executable and Mathlib-free.

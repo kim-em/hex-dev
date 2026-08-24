@@ -10,7 +10,8 @@ import HexPolyFp.SquareFree
 
 /-!
 Core conformance checks for the `HexPolyFp` Frobenius, modular-composition,
-and square-free decomposition surface.
+and square-free decomposition surface, together with the structural power and
+negation that the `hex-poly-fp-mathlib` correspondence transports.
 
 Oracle: none
 Mode: always
@@ -21,6 +22,8 @@ Covered operations:
 - `composeModMonic`
 - `squareFreeDecomposition`
 - `weightedProduct`
+- `linearPow`
+- `neg` (the `Neg (FpPoly p)` instance, at `p = 5`)
 Covered properties:
 - modular exponentiation by exponent zero returns the quotient-ring identity
 - Frobenius-power exponent zero agrees with reduction of `X`
@@ -28,6 +31,9 @@ Covered properties:
 - composition of the zero polynomial is zero
 - square-free decompositions reconstruct the input from the unit and weighted factors
 - weighted products respect positive multiplicities
+- `linearPow` is exponent-additive, and exponent one is the base
+- negation is the additive inverse and an involution, and subtraction agrees
+  with adding the negation
 Covered edge cases:
 - constant monic modulus `1`
 - the indeterminate `X` and constant polynomial inputs
@@ -42,6 +48,11 @@ Covered edge cases:
 - square-free decomposition with mixed multiplicities `(2, 3)` from a
   product of four distinct linear factors
 - square-free, repeated-factor, derivative-zero, zero, and scalar square-free inputs
+- exponent zero and a zero base for `linearPow`, and the zero polynomial for
+  `neg`
+- `(x + 1)^5` over `F_5`, whose interior binomial coefficients all vanish, so
+  the result carries internal zeros
+- a degree-10 sparse input to `neg`, checking normalisation keeps the degree
 -/
 
 namespace Hex
@@ -172,6 +183,68 @@ private theorem quadModulus_monic : DensePoly.Monic quadModulus := by
   let f := polyFive #[3]
   sfSummary (squareFreeDecomposition prime_five f) = (3, []) ∧
     coeffNats (sfReconstruction (squareFreeDecomposition prime_five f)) = coeffNats f
+
+/-!
+`linearPow` and `neg` on `FpPoly 5`. Both are advertised on the executable
+side of the `hex-poly-fp-mathlib` correspondence — `linearPow` through
+`linearPow_eq_pow` and `neg` through the `neg` field that layer's `CommRing`
+instance pins to the executable operation — and neither had a check here.
+
+Expected values are binomial expansions reduced mod 5, derivable without
+running the operation.
+-/
+
+-- Typical: `(x + 1)^3 = x^3 + 3x^2 + 3x + 1`, no coefficient wrapping.
+#guard coeffNats (linearPow (polyFive #[1, 1]) 3) = [1, 3, 3, 1]
+
+-- Edge: exponent zero is `1` for any base, including the zero polynomial.
+#guard coeffNats (linearPow (polyFive #[2, 3]) 0) = [1]
+#guard coeffNats (linearPow (0 : FpPoly 5) 0) = [1]
+#guard coeffNats (linearPow (0 : FpPoly 5) 3) = []
+
+-- Adversarial: `(x + 2)^4 = x^4 + 8x^3 + 24x^2 + 32x + 16`, where every
+-- non-leading coefficient wraps mod 5 (8, 24, 32, 16 -> 3, 4, 2, 1), so a
+-- kernel that deferred reduction to the end would still have to carry the
+-- unreduced intermediates.
+#guard coeffNats (linearPow (polyFive #[2, 1]) 4) = [1, 2, 4, 3, 1]
+
+-- Adversarial: `(x + 1)^5 = x^5 + 1` over `F_5`, since `5 ∣ C(5, k)` for
+-- `0 < k < 5`. Every interior coefficient reduces to zero, so the result has
+-- internal zeros that normalisation must not trim.
+#guard coeffNats (linearPow (polyFive #[1, 1]) 5) = [1, 0, 0, 0, 0, 1]
+
+-- `linearPow` is the exponent-additive power: committed base, committed split.
+#guard
+  let b := polyFive #[2, 1]
+  linearPow b 7 = linearPow b 3 * linearPow b 4
+
+#guard linearPow (polyFive #[3, 0, 4]) 1 = polyFive #[3, 0, 4]
+
+-- Typical: negation is coefficientwise, `-3 = 2`, `-2 = 3`, `-1 = 4` mod 5.
+#guard coeffNats (-polyFive #[3, 0, 2, 1]) = [2, 0, 3, 4]
+
+-- Edge: the zero polynomial is its own negation.
+#guard coeffNats (-(0 : FpPoly 5)) = []
+
+-- Adversarial: internal zeros, and a leading coefficient whose negation is
+-- also nonzero, so normalisation must keep the degree.
+#guard coeffNats (-polyFive #[0, 1, 0, 0, 3, 0, 0, 0, 0, 0, 2]) =
+  [0, 4, 0, 0, 2, 0, 0, 0, 0, 0, 3]
+
+-- Negation is the additive inverse, and an involution, on committed inputs.
+#guard
+  let f := polyFive #[3, 0, 2, 1]
+  (f + (-f)) = 0
+
+#guard
+  let f := polyFive #[0, 1, 0, 0, 3, 0, 0, 0, 0, 0, 2]
+  (-(-f)) = f
+
+-- Subtraction agrees with adding the negation on a committed pair.
+#guard
+  let f := polyFive #[3, 0, 2, 1]
+  let g := polyFive #[1, 4, 4]
+  (f - g) = (f + (-g))
 
 /-!
 Degree-10 / extension-degree-6 fixtures matching the SPEC `core`
