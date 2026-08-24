@@ -61,7 +61,10 @@ example {n : Nat} {irr : UInt64} {hn : 0 < n} {hn64 : n < 64}
   computable `finEquiv` indexings they are built from.
 - `CommRing Hex.GF2Poly`, `EuclideanDomain Hex.GF2Poly`, a `GCDMonoid` whose
   gcd is definitionally `GF2Poly.gcd`, `Field (Hex.GF2n n irr hn hn64 hirr)`,
-  and `Field (Hex.GF2nPoly f hirr)` for a nonconstant modulus.
+  and `Field (Hex.GF2nPoly f hirr)` for a nonconstant modulus. The `GF2n`
+  instance keeps its packed multiplication, negation, inversion, subtraction,
+  and division definitions; the constructor supplies the remaining derived
+  hierarchy operations.
 
 The equivalences are Mathlib's `≃+*`, not a project-local record, so they
 compose with other `RingEquiv`s and are accepted by Mathlib's equivalence APIs.

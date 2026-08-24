@@ -32,28 +32,35 @@ private def toPoly (a : GF2n n irr hn hn64 hirr) :
     GF2nPoly (GF2Poly.ofUInt64Monic irr n) hirr :=
   GF2nPoly.reducePoly (GF2Poly.ofUInt64 a.val)
 
-/-- Reading back a reduced word gives its polynomial remainder modulo the
-packed field modulus. -/
-private theorem ofUInt64_reduce_val (w : UInt64) :
+/-- Reading back a packed polynomial reduction gives the corresponding
+polynomial remainder. -/
+private theorem ofUInt64_packedReduce_val
+    (hirr : GF2Poly.Irreducible (GF2Poly.ofUInt64Monic irr n)) (p : GF2Poly) :
     GF2Poly.ofUInt64
-        (reduce (n := n) (irr := irr) (hn := hn) (hn64 := hn64) (hirr := hirr) w).val =
-      GF2Poly.ofUInt64 w % GF2Poly.ofUInt64Monic irr n := by
-  change GF2Poly.ofUInt64
       (GF2Poly.canonicalWordLT n hn64
-        (GF2Poly.packedReduceWord n irr (GF2Poly.ofUInt64 w))) = _
+        (GF2Poly.packedReduceWord n irr p)) =
+      p % GF2Poly.ofUInt64Monic irr n := by
   have hcanonical :
       GF2Poly.canonicalWordLT n hn64
-          (GF2Poly.packedReduceWord n irr (GF2Poly.ofUInt64 w)) =
-        GF2Poly.packedReduceWord n irr (GF2Poly.ofUInt64 w) := by
+          (GF2Poly.packedReduceWord n irr p) =
+        GF2Poly.packedReduceWord n irr p := by
     apply UInt64.toNat_inj.mp
     simp [GF2Poly.canonicalWordLT,
       Nat.mod_eq_of_lt (GF2Poly.packedReduceWord_toNat_lt hn64 _)]
   rw [hcanonical]
   apply GF2Poly.ofUInt64_packedReduceWord_eq_of_degree_lt hn64
   have hred :=
-    GF2Poly.mod_degree_lt (GF2Poly.ofUInt64 w) (GF2Poly.ofUInt64Monic irr n) hirr.1
+    GF2Poly.mod_degree_lt p (GF2Poly.ofUInt64Monic irr n) hirr.1
   rw [GF2Poly.degree_ofUInt64Monic_of_lt_64 irr hn64] at hred
   exact hred
+
+/-- Reading back a reduced word gives its polynomial remainder modulo the
+packed field modulus. -/
+private theorem ofUInt64_reduce_val (w : UInt64) :
+    GF2Poly.ofUInt64
+        (reduce (n := n) (irr := irr) (hn := hn) (hn64 := hn64) (hirr := hirr) w).val =
+      GF2Poly.ofUInt64 w % GF2Poly.ofUInt64Monic irr n := by
+  exact ofUInt64_packedReduce_val (hn64 := hn64) hirr (GF2Poly.ofUInt64 w)
 
 /-- Reading back a reduced wide carry-less product gives its polynomial
 remainder modulo the packed field modulus. -/
@@ -62,32 +69,7 @@ private theorem ofUInt64_reduceWide_val (hi lo : UInt64) :
         (reduceWide (n := n) (irr := irr) (hn := hn) (hn64 := hn64) (hirr := hirr)
           hi lo).val =
       GF2Poly.ofWords #[lo, hi] % GF2Poly.ofUInt64Monic irr n := by
-  change GF2Poly.ofUInt64
-      (GF2Poly.canonicalWordLT n hn64
-        (GF2Poly.packedReduceWord n irr (GF2Poly.ofWords #[lo, hi]))) = _
-  have hcanonical :
-      GF2Poly.canonicalWordLT n hn64
-          (GF2Poly.packedReduceWord n irr (GF2Poly.ofWords #[lo, hi])) =
-        GF2Poly.packedReduceWord n irr (GF2Poly.ofWords #[lo, hi]) := by
-    apply UInt64.toNat_inj.mp
-    simp [GF2Poly.canonicalWordLT,
-      Nat.mod_eq_of_lt (GF2Poly.packedReduceWord_toNat_lt hn64 _)]
-  rw [hcanonical]
-  apply GF2Poly.ofUInt64_packedReduceWord_eq_of_degree_lt hn64
-  have hred := GF2Poly.mod_degree_lt (GF2Poly.ofWords #[lo, hi])
-    (GF2Poly.ofUInt64Monic irr n) hirr.1
-  rw [GF2Poly.degree_ofUInt64Monic_of_lt_64 irr hn64] at hred
-  exact hred
-
-/-- Bits at or above `k` vanish in a natural number below `2 ^ k`. -/
-private theorem testBit_eq_false_of_lt {x k i : Nat}
-    (hx : x < 2 ^ k) (hki : k ≤ i) : x.testBit i = false := by
-  have hbit : (x % 2 ^ k).testBit i = x.testBit i := by
-    rw [Nat.mod_eq_of_lt hx]
-  rw [Nat.testBit_mod_two_pow] at hbit
-  have hnot : ¬ i < k := Nat.not_lt_of_ge hki
-  simp [hnot] at hbit
-  exact hbit
+  exact ofUInt64_packedReduce_val (hn64 := hn64) hirr (GF2Poly.ofWords #[lo, hi])
 
 /-- A canonical single-word representative unpacks to a polynomial reduced
 below the extension degree. -/
@@ -107,7 +89,8 @@ private theorem val_reduced (a : GF2n n irr hn hn64 hirr) :
       have hfalse : (GF2Poly.ofUInt64 a.val).coeff d = false := by
         by_cases hd64 : d < 64
         · rw [GF2Poly.coeff_ofUInt64_eq_testBit a.val hd64]
-          exact testBit_eq_false_of_lt (k := n) a.val_lt hnd
+          exact Nat.testBit_lt_two_pow
+            (Nat.lt_of_lt_of_le a.val_lt (Nat.pow_le_pow_right (by decide) hnd))
         · exact GF2Poly.coeff_ofUInt64_eq_false_of_ge_64 a.val
             (Nat.le_of_not_lt hd64)
       rw [htrue] at hfalse

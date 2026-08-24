@@ -145,8 +145,8 @@ variable {hn : 0 < n} {hn64 : n < 64}
 variable {hirr : Hex.GF2Poly.Irreducible (Hex.GF2Poly.ofUInt64Monic irr n)}
 
 /-- The packed single-word quotient is a Mathlib field, with its executable
-operations retained. Its positive extension degree is part of the type, so
-unlike `GF2nPoly` it needs no extra nontriviality hypothesis. -/
+core operations retained. Its positive extension degree is part of the type,
+so unlike `GF2nPoly` it needs no extra nontriviality hypothesis. -/
 noncomputable instance field : Field (Hex.GF2n n irr hn hn64 hirr) :=
   Field.ofMinimalAxioms (Hex.GF2n n irr hn hn64 hirr)
     Hex.GF2n.add_assoc
@@ -159,6 +159,24 @@ noncomputable instance field : Field (Hex.GF2n n irr hn hn64 hirr) :=
     Hex.GF2n.inv_zero
     Hex.GF2n.left_distrib
     ⟨1, 0, Hex.GF2n.one_ne_zero⟩
+
+/-! # The instance is usable, and keeps the executable core operations -/
+
+section Checks
+
+/-- The single-word field instance keeps the executable operations named by
+the computational API. -/
+example (a b : Hex.GF2n n irr hn hn64 hirr) :
+    a * b = Hex.GF2n.mul a b ∧ -a = Hex.GF2n.neg a ∧
+      a - b = Hex.GF2n.sub a b ∧ a⁻¹ = Hex.GF2n.inv a ∧
+      a / b = Hex.GF2n.div a b := by
+  exact ⟨rfl, rfl, rfl, rfl, rfl⟩
+
+/-- The single-word instance reaches Mathlib's field lemmas directly. -/
+example (a : Hex.GF2n n irr hn hn64 hirr) (ha : a ≠ 0) : a * a⁻¹ = 1 :=
+  mul_inv_cancel₀ ha
+
+end Checks
 
 end GF2n
 
@@ -190,7 +208,7 @@ noncomputable instance field [hdeg : Fact (0 < f.degree)] :
     Hex.GF2nPoly.left_distrib
     ⟨1, 0, Hex.GF2nPoly.one_ne_zero hdeg.out⟩
 
-/-! # The instances are usable, and keep the executable operations -/
+/-! # The instances are usable -/
 
 section Checks
 
@@ -231,20 +249,6 @@ example : UniqueFactorizationMonoid Hex.GF2Poly := inferInstance
 Euclidean-domain instance. -/
 example : IsPrincipalIdealRing Hex.GF2Poly := inferInstance
 example : IsBezout Hex.GF2Poly := inferInstance
-
-/-- The single-word field instance keeps the executable operations, including
-the characteristic-two spellings of negation and subtraction. -/
-example {n : Nat} {irr : UInt64} {hn : 0 < n} {hn64 : n < 64}
-    {hirr : Hex.GF2Poly.Irreducible (Hex.GF2Poly.ofUInt64Monic irr n)}
-    (a b : Hex.GF2n n irr hn hn64 hirr) :
-    a * b = Hex.GF2n.mul a b ∧ -a = Hex.GF2n.neg a ∧ a - b = Hex.GF2n.sub a b := by
-  exact ⟨rfl, rfl, rfl⟩
-
-/-- The single-word instance reaches Mathlib's field lemmas directly. -/
-example {n : Nat} {irr : UInt64} {hn : 0 < n} {hn64 : n < 64}
-    {hirr : Hex.GF2Poly.Irreducible (Hex.GF2Poly.ofUInt64Monic irr n)}
-    (a : Hex.GF2n n irr hn hn64 hirr) (ha : a ≠ 0) : a * a⁻¹ = 1 :=
-  mul_inv_cancel₀ ha
 
 /-- The field instance is found by synthesis given the degree fact, and its
 inverse is still the executable one. -/

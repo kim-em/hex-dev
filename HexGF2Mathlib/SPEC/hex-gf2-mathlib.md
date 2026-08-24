@@ -34,10 +34,13 @@ footgun rather than a feature.
 
 **Algebraic structure.** `CommRing GF2Poly`, `EuclideanDomain GF2Poly`, `Field
 (GF2n n irr hn hn64 hirr)`, and, for a nonconstant modulus, `Field (GF2nPoly f
-hirr)` are built from laws hex-gf2 already proves, so the operations stay the
-executable ones: `*` is packed carry-less multiplication, `/` and `%` are
-packed long division, and each agrees with its `GF2Poly` implementation by
-`rfl`. Building these structures by transport along the ring equivalence
+hirr)` are built from laws hex-gf2 already proves. The `GF2Poly` multiplication,
+division, and remainder stay the executable packed operations. The primitive
+operations accepted by the field constructor stay executable too; for `GF2n`,
+the default subtraction and division also agree definitionally with the packed
+API. Thus both `p * q = GF2Poly.mul p q` and `a * b = GF2n.mul a b` close by
+`rfl`. The remaining derived hierarchy operations use Mathlib's constructor
+defaults. Building the structures by transport along the ring equivalences
 instead would attach the right laws to the wrong operations.
 
 The Euclidean relation measures zero at `0` and a nonzero polynomial at one
