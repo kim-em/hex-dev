@@ -37,9 +37,8 @@ An extension module must `public meta import HexBerlekamp.PolynomialTactic`
 because the constructor of `Extension` is meta code, and must declare its
 extension as a `public meta def`. Its registration comment names
 `extensionNames`, and regression tests ensure that the declaration remains
-discoverable after renaming. The `version` field is checked against
-`Extension.abiVersion` before use, so an extension compiled against an
-incompatible interface fails with an explicit error.
+discoverable after renaming. The driver checks that every discovered
+declaration has type `Extension` before evaluating it.
 -/
 
 namespace Hex.FactorTactic
@@ -62,17 +61,12 @@ term hooks are the original syntax, the elaborated polynomial, its
 `whnfR`-normalized type, and the expected type of the surrounding
 elaboration. -/
 meta structure Extension where
-  /-- ABI guard, checked against `Extension.abiVersion` at trial time. -/
-  version : Nat
   /-- Handle a `factor_poly p` term elaboration. -/
   factorPoly? : Syntax → Expr → Expr → Option Expr → Term.TermElabM ExtensionResult
   /-- Handle an `irreducibility p` term elaboration. -/
   irreducibility? : Syntax → Expr → Expr → Option Expr → Term.TermElabM ExtensionResult
   /-- Handle goal-closing `irreducibility` on the given goal. -/
   goalIrred? : MVarId → Tactic.TacticM ExtensionResult
-
-/-- Interface version expected by the tactic driver. -/
-meta def Extension.abiVersion : Nat := 2
 
 /-- Well-known extension constants, checked in order. Downstream libraries
 declare a `public meta def` of type `Extension` under one of these names;
@@ -89,7 +83,7 @@ private meta unsafe def evalExtensionUnsafe (n : Name) : MetaM Extension :=
 private meta opaque evalExtensionCore (n : Name) : MetaM Extension
 
 /-- All extensions present in the current environment, in lookup order, with
-the declared type and ABI version checked before use. -/
+the declared type checked before use. -/
 meta def extensions : MetaM (List Extension) := do
   let env ← getEnv
   let mut found := []
@@ -99,10 +93,6 @@ meta def extensions : MetaM (List Extension) := do
         throwError "factor_poly/irreducibility: extension {n} has unexpected \
             type{indentExpr info.type}"
       let ext ← evalExtensionCore n
-      unless ext.version == Extension.abiVersion do
-        throwError "factor_poly/irreducibility: extension {n} has ABI version \
-            {ext.version}, but this driver expects {Extension.abiVersion}; \
-            rebuild the extension library against the current HexBerlekamp"
       found := found ++ [ext]
   return found
 

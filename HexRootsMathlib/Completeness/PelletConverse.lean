@@ -425,7 +425,11 @@ theorem pellet_one_of_roots {q : ℂ[X]} {a : ℂ} {s : Multiset ℂ} {d ρ : �
 /-- Translation form of `pellet_one_of_roots`. Here `z` is the designated
 root of `p`, `s` is the multiset of every other root (with multiplicity), and
 the conclusion is stated directly for the Taylor polynomial about an
-arbitrary centre `c`. -/
+arbitrary centre `c`.
+
+This is the clean-margin terminus of the Pellet converse; the executable
+completeness chain in `Completeness.PelletDyadic` uses the slack variant
+`pellet_one_comp_slack` instead, which absorbs the dyadic rounding gap. -/
 theorem pellet_one_comp_dominates {p : ℂ[X]} {c z : ℂ} {s : Multiset ℂ}
     {d ρ : ℝ} (hp : p ≠ 0) (hroots : p.roots = z ::ₘ s) (hd : 0 < d)
     (hρ : 0 ≤ ρ) (hremote : ∀ w ∈ s, d ≤ ‖w - c‖)

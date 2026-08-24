@@ -396,6 +396,10 @@ they keep the executable operations, and they do.
 
 {docstring HexGF2Mathlib.commRing}
 
+{docstring HexGF2Mathlib.GF2Poly.euclideanDomain}
+
+{docstring HexGF2Mathlib.GF2Poly.gcdMonoid}
+
 That instance is built from the laws `HexGF2` proves, not by copying
 Mathlib's operations across the equivalence, so multiplication under it
 is still packed carry-less multiplication.
@@ -404,7 +408,23 @@ is still packed carry-less multiplication.
 open Hex in
 example (p q : GF2Poly) :
     p * q = GF2Poly.mul p q := rfl
+
+example (p q : GF2Poly) :
+    p / q = GF2Poly.div p q ∧ p % q = GF2Poly.mod p q :=
+  ⟨rfl, rfl⟩
+
+example (p q : GF2Poly) :
+    GCDMonoid.gcd p q = GF2Poly.gcd p q := rfl
 ```
+
+Mathlib's recursive Euclidean gcd is a separate definition. Over `F₂[x]`
+the only unit is `1`, so mutual divisibility fixes the representative and the
+two gcd algorithms agree exactly:
+
+{docstring HexGF2Mathlib.GF2Poly.euclidean_gcd_eq_packed}
+
+The instance supplies Mathlib's Bezout, principal-ideal, and
+unique-factorization interfaces directly on the packed type.
 
 So Mathlib's ring automation applies directly to packed polynomials:
 
@@ -452,7 +472,7 @@ Where `HexGF2` fits in the executable DAG:
   which unpacks `GF2Poly` into the generic `FpPoly 2` representation,
   identifies both `GF2n` and `GF2nPoly` with the quotient-field
   construction from {ref "hex-gfq-field"}[`HexGFqField`], and carries the
-  finiteness and cardinality results for the packed types. Nothing in
-  this chapter depends on it: the packed arithmetic, the Euclidean
-  algorithms, and the Rabin certificates above are all executable and
-  Mathlib-free.
+  finiteness and cardinality results for the packed types. The
+  executable API documented above does not depend on it: the packed
+  arithmetic, the Euclidean algorithms, and the Rabin certificates are
+  all executable and Mathlib-free.

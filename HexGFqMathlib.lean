@@ -4,10 +4,14 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexGFqMathlib.Basic
-import HexGFqMathlib.GF2q
-import HexGFqMathlib.Subfield
-import HexGFqMathlib.Primitivity
+module
+
+public import HexGFqMathlib.Basic
+public import HexGFqMathlib.GF2q
+public import HexGFqMathlib.Subfield
+public import HexGFqMathlib.Primitivity
+
+public section
 
 /-!
 Mathlib-side correspondence lemmas for the canonical finite-field convenience

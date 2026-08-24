@@ -41,6 +41,7 @@ theorem root_spec {p : Hex.ZPoly} (iso : Hex.DyadicRootIsolation p) :
       ∀ w, (toPolyℂ p).eval w = 0 → w ∈ region iso → w = root iso :=
   (sound iso).choose_spec
 
+/-- The selected value is a root. -/
 theorem isRoot {p : Hex.ZPoly} (iso : Hex.DyadicRootIsolation p) :
     (toPolyℂ p).IsRoot (root iso) :=
   (root_spec iso).1
@@ -58,57 +59,6 @@ theorem root_refined {p : Hex.ZPoly} (iso : Hex.DyadicRootIsolation p)
 
 end DyadicRootIsolation
 
-/-- An option-valued list map that succeeds preserves length and corresponding
-entries. -/
-private theorem list_mapM_some_get {α β : Type*} {f : α → Option β}
-    {xs : List α} {ys : List β} (hmap : xs.mapM f = some ys) :
-    xs.length = ys.length ∧
-      ∀ (i : Nat) (hi : i < xs.length) (hj : i < ys.length),
-        f xs[i] = some ys[i] := by
-  induction xs generalizing ys with
-  | nil =>
-      simp at hmap
-      subst ys
-      simp
-  | cons x xs ih =>
-      cases hfx : f x with
-      | none => simp [hfx] at hmap
-      | some y =>
-          cases htail : xs.mapM f with
-          | none => simp [hfx, htail] at hmap
-          | some ys' =>
-              have heq : some (y :: ys') = some ys := by
-                simpa [hfx, htail] using hmap
-              have hys : ys = y :: ys' := (Option.some.inj heq).symm
-              subst ys
-              obtain ⟨hlen, hget⟩ := ih htail
-              constructor
-              · simp [hlen]
-              · intro i hi hj
-                cases i with
-                | zero => simpa using hfx
-                | succ i =>
-                    simp only [List.getElem_cons_succ]
-                    exact hget i (by simpa using hi) (by simpa using hj)
-
-/-- An option-valued array map that succeeds preserves size and corresponding
-entries. -/
-theorem array_mapM_some_get {α β : Type*} {f : α → Option β}
-    {xs : Array α} {ys : Array β} (hmap : xs.mapM f = some ys) :
-    xs.size = ys.size ∧
-      ∀ (i : Nat) (hi : i < xs.size) (hj : i < ys.size),
-        f xs[i] = some ys[i] := by
-  have hlist : xs.toList.mapM f = some ys.toList := by
-    calc
-      xs.toList.mapM f = Array.toList <$> xs.mapM f :=
-        Array.toList_mapM.symm
-      _ = some ys.toList := by rw [hmap]; rfl
-  obtain ⟨hlen, hget⟩ := list_mapM_some_get hlist
-  refine ⟨by simpa using hlen, ?_⟩
-  intro i hi hj
-  simpa only [← Array.getElem_toList] using hget i (by simpa using hi)
-    (by simpa using hj)
-
 private theorem list_mapM_isSome {α β : Type*} {f : α → Option β}
     {xs : List α} (h : ∀ x ∈ xs, (f x).isSome) :
     (xs.mapM f).isSome := by
@@ -125,7 +75,8 @@ private theorem list_mapM_isSome {α β : Type*} {f : α → Option β}
       exact ⟨y :: ys, by simp [hy, hys]⟩
 
 /-- An option-valued array map succeeds when its function succeeds on every
-input entry. -/
+input entry.  Public because `HexNumberFieldMathlib` uses it to discharge
+success of the embedding and refinement `mapM` pipelines. -/
 theorem array_mapM_isSome {α β : Type*} {f : α → Option β}
     {xs : Array α} (h : ∀ x ∈ xs.toList, (f x).isSome) :
     (xs.mapM f).isSome := by

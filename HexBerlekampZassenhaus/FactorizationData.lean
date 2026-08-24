@@ -14,6 +14,7 @@ public meta import HexHensel.Multifactor
 public meta import HexHensel.QuadraticMultifactor
 public meta import HexMatrix.Basic
 public meta import HexPolyZ.Mignotte
+public meta import HexPolyZ.ExactDivision
 public meta import HexLLL
 public import HexArith.Nat.Prime
 public import HexBerlekamp.Factor
@@ -21,6 +22,7 @@ public import HexBerlekamp.Irreducibility
 public import HexHensel.Multifactor
 public import HexHensel.QuadraticMultifactor
 public import HexLLL
+public import HexPolyZ.ExactDivision
 -- Kernel-reducible `Array`/`Vector` equality; see `HexBasic.ArrayDecEq`.
 -- Drop once leanprover/lean4#14270 lands and the toolchain is bumped past it.
 public import HexBasic.ArrayDecEq
@@ -535,11 +537,7 @@ def exactQuotient? (target candidate : ZPoly) : Option ZPoly :=
   if candidate.isZero || candidate = 1 then
     none
   else
-    let qr := DensePoly.divMod target candidate
-    if qr.2 = 0 && qr.1 * candidate == target then
-      some qr.1
-    else
-      none
+    ZPoly.divExact? target candidate
 
 /-- Successful exact-division extracts a multiplication witness:
 `exactQuotient? target candidate = some quotient` implies
@@ -552,17 +550,7 @@ theorem exactQuotient?_product
   unfold exactQuotient? at hquot
   split at hquot
   · contradiction
-  · rename_i hnontrivial
-    generalize hqr : DensePoly.divMod target candidate = qr at hquot
-    cases qr with
-    | mk q r =>
-        simp only at hquot
-        split at hquot
-        · rename_i hcheck
-          cases hquot
-          exact (by
-            simpa [Bool.and_eq_true, beq_iff_eq] using hcheck : r = 0 ∧ quotient * candidate = target).2
-        · contradiction
+  · exact ZPoly.divExact?_product hquot
 
 /--
 Greedy peel of `candidate^?` out of `target` via repeated exact division.
