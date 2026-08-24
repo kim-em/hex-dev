@@ -226,6 +226,8 @@ theorem allBuiltins :
       (Proof.initialBase input) input.target := by
   exact allBuiltinsEvidence.proof
 
+/-- info: 'Hex.IntervalMathlib.RuntimeEmitConformance.allBuiltins' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
 #print axioms allBuiltins
 
 elab "runtime_emit_registry_guards" : tactic => do
@@ -343,7 +345,7 @@ elab "runtime_emit_failure_guards" : tactic => do
         mkAppM ``Rule.addSchema
           #[← Rule.Runtime.Quote.configExpr RuntimeRuleConformance.config] } }
   expect "schema expression transplant"
-    (← emitWith emitLimits (replaceFirst package wrongSchema)) .replay
+    (← emitWith emitLimits (replaceFirst package wrongSchema)) (.handleKey first.key)
   expect "schema count one-under"
     (← emitWith { emitLimits with maxSchemas := 11 } package) (.resource .schemas)
   expect "chronology count one-under"
@@ -448,26 +450,31 @@ private def controllerFor (assembly : RuntimeProof.Assembly Range Nat) :
     [RuntimeProofConformance.instanceAction, RuntimeProofConformance.equalityAction, RuntimeProofConformance.factAction, RuntimeProofConformance.transportAction]
   (Runtime.Controller.State.startWithin controllerLimits envelope RuntimeProofConformance.measure runtime tree).toOption
 
-elab "runtime_emit_mixed_canary" : tactic => do
-  let goal ← getMainGoal
-  let emitted ← match RuntimeProofConformance.assembly? with
-    | none => throwError "mixed runtime emitter assembly failed"
-    | some assembly =>
-      match RuntimeEmit.Registry.buildWithin RuntimeProofConformance.executableLimits emitLimits RuntimeProofConformance.adapterKey
-          assembly quoter #[package] with
-      | .error error => throwError "mixed runtime emitter registry failed: {repr error}"
+meta def emitWith (limits : RuntimeEmit.Limits) :
+    MetaM (Except RuntimeEmit.Error Expr) :=
+  match RuntimeProofConformance.assembly? with
+  | none => pure (.error .malformed)
+  | some assembly =>
+      match RuntimeEmit.Registry.buildWithin RuntimeProofConformance.executableLimits limits
+          RuntimeProofConformance.adapterKey assembly quoter #[package] with
+      | .error error => pure (.error error)
       | .ok registry => match controllerFor registry.runtime.assembly with
-        | none => throwError "mixed runtime emitter controller failed"
+        | none => pure (.error .malformed)
         | some controller =>
           match RuntimeEmit.Active.startWithin registry RuntimeProofConformance.input controller with
-          | .error error => throwError "mixed runtime emitter start failed: {repr error}"
+          | .error error => pure (.error error)
           | .ok active => match (RuntimeEmit.Active.targetWithin
               RuntimeProofConformance.resultLimits RuntimeProofConformance.measure active
               { node := node 2, version := 1 }) with
-            | .error error => throwError "mixed runtime target failed: {repr error}"
-            | .ok lineage => match lineage.quoteWithin RuntimeProofConformance.adapterLimits RuntimeProofConformance.measure with
-              | .error error => throwError "mixed runtime quotation failed: {repr error}"
-              | .ok checked => RuntimeEmit.Checked.emitWithin emitLimits checked
+            | .error error => pure (.error error)
+            | .ok lineage => match lineage.quoteWithin RuntimeProofConformance.adapterLimits
+                RuntimeProofConformance.measure with
+              | .error error => pure (.error error)
+              | .ok checked => RuntimeEmit.Checked.emitWithin limits checked
+
+elab "runtime_emit_mixed_canary" : tactic => do
+  let goal ← getMainGoal
+  let emitted ← emitWith emitLimits
   let candidate ← match emitted with
     | .error error => throwError "mixed runtime expression failed: {repr error}"
     | .ok candidate => pure candidate
@@ -477,6 +484,19 @@ elab "runtime_emit_mixed_canary" : tactic => do
   goal.assign candidate
   replaceMainGoal []
 
+elab "runtime_emit_mixed_guards" : tactic => do
+  match ← emitWith { emitLimits with maxSchemas := 2 } with
+  | .error (.resource .schemas) => pure ()
+  | .error error =>
+      throwError "mixed schema limit returned the wrong error: {repr error}"
+  | .ok _ =>
+      throwError "mixed fact/equality/instance handles exceeded the global schema limit"
+  let goal ← getMainGoal
+  goal.assign (mkConst ``True.intro)
+  replaceMainGoal []
+
+example : True := by runtime_emit_mixed_guards
+
 def evidence : Proof.Evidence
     (RuntimeProofConformance.semantics.Entails RuntimeProofConformance.input.program (Proof.initialBase RuntimeProofConformance.input) RuntimeProofConformance.input.target) := by
   runtime_emit_mixed_canary
@@ -485,6 +505,8 @@ theorem target :
     RuntimeProofConformance.semantics.Entails RuntimeProofConformance.input.program (Proof.initialBase RuntimeProofConformance.input) RuntimeProofConformance.input.target :=
   evidence.proof
 
+/-- info: 'Hex.IntervalMathlib.RuntimeEmitConformance.Mixed.target' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
 #print axioms target
 
 end Mixed

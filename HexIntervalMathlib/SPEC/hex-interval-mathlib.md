@@ -280,11 +280,12 @@ tree resources remain transactional at bundle quotation.
 sealed root-target lineage to kernel syntax. Emitter packages pair exact
 `Proof.Key`s with transparent theorem-schema expressions. One joint builder
 checks package-local and global missing, extra, duplicate, and wrong-role
-coverage, builds the `Proof.Registry` and `RuntimeProof.Registry` from the same
-package array, and seals those registries with the emitter table; there is no
-post-hoc compatibility-key attachment. `Active`, `Lineage`, and `Checked`
-retain this unified registry alongside the corresponding private
-`RuntimeTerminal` token.
+coverage. Preparation also projects each emitted schema's key and requires it
+to be definitionally equal to the handle's declared key. The builder constructs
+the `Proof.Registry` and `RuntimeProof.Registry` from the same package array and
+seals those registries with the emitter table; there is no post-hoc
+compatibility-key attachment. `Active`, `Lineage`, and `Checked` retain this
+unified registry alongside the corresponding private `RuntimeTerminal` token.
 
 `RuntimeEmit.Checked.emitWithin` supports only a one-node root target. It
 quotes the already authenticated program, input, registrations, and exact
@@ -295,6 +296,11 @@ exact `Proof.Evidence` term. Every fact and schema callback crosses
 checked with `Meta.check`, compared with the exact Evidence type, and rejected
 for metavariables, synthetic placeholders, temporary declarations, or retained
 Meta-state leakage. There is no refutation or split expression emitter.
+`Quoter` and `Handle` callbacks are trusted reflection code: the kernel checks
+the theorem in the world they quote, but a generic registry cannot prove that a
+caller callback faithfully reifies an arbitrary runtime `Fact`. Supported
+public builders must therefore own those callbacks and compare the emitted
+claim with the caller's exact goal before installation.
 
 For `S` emitter handles, `C` retained events, `B` total body cells, `D` total
 dependency cells, and `X` cells in a checked expression, registry coverage is

@@ -76,6 +76,7 @@ inductive Error where
   | extraHandle (key : Proof.Key)
   | duplicateHandle (key : Proof.Key)
   | wrongRole (key : Proof.Key)
+  | handleKey (key : Proof.Key)
   | proof (error : Proof.Error)
   | malformed
   | emitter
@@ -139,6 +140,24 @@ private def checkPackages (packages : Array (Package semantics Plan)) : Except E
         if seen.contains handle.key then throw (.duplicateHandle handle.key)
         seen := handle.key :: seen
 
+private def schemaCount (packages : Array (Package semantics Plan)) : Nat :=
+  packages.foldl (init := 0) fun count package =>
+    count + package.facts.size + package.equalities.size + package.instances.size
+
+private def qRuleKey (value : RuleKey) : MetaM Lean.Expr :=
+  mkAppM ``RuleKey.mk #[toExpr value.name, mkNatLit value.schema]
+
+private def qRole : Proof.Role → Lean.Expr
+  | .fact => mkConst ``Proof.Role.fact
+  | .equality => mkConst ``Proof.Role.equality
+  | .instance => mkConst ``Proof.Role.instance
+  | .refute => mkConst ``Proof.Role.refute
+  | .split => mkConst ``Proof.Role.split
+
+private def qProofKey (value : Proof.Key) : MetaM Lean.Expr := do
+  mkAppM ``Proof.Key.mk
+    #[← qRuleKey value.rule, qRole value.role, mkNatLit value.bodySchema]
+
 /-- Deterministic syntax-tree size used by `Limits.maxExpressionCells`. -/
 def expressionCells : Lean.Expr → Nat
   | .bvar _ | .fvar _ | .mvar _ | .sort _ | .const _ _ | .lit _ => 1
@@ -162,6 +181,13 @@ private def schemaType (role : Proof.Role) (semanticsExpr : Lean.Expr) : MetaM L
   | .instance => mkAppM ``Proof.InstanceSchema #[semanticsExpr]
   | .refute | .split => throwError "runtime emitter has no terminal schema role"
 
+private def schemaKey (role : Proof.Role) (schema : Lean.Expr) : MetaM Lean.Expr :=
+  match role with
+  | .fact => mkAppM ``Proof.FactSchema.key #[schema]
+  | .equality => mkAppM ``Proof.EqualitySchema.key #[schema]
+  | .instance => mkAppM ``Proof.InstanceSchema.key #[schema]
+  | .refute | .split => throwError "runtime emitter has no terminal schema role"
+
 private def prepareHandles (limits : Limits) (semanticsExpr : Lean.Expr)
     (packages : Array (Package semantics Plan)) (role : Proof.Role) :
     MetaM (Except Error (Array Entry)) := do
@@ -169,13 +195,18 @@ private def prepareHandles (limits : Limits) (semanticsExpr : Lean.Expr)
   let mut entries := #[]
   for package in packages do
     for handle in handles package role do
-      if limits.maxSchemas ≤ entries.size then return .error (.resource .schemas)
       let prepared ← prepare handle.schema expected
       match prepared with
       | .error error => return .error error
       | .ok expr =>
           if limits.maxExpressionCells < expressionCells expr then
             return .error (.resource .expression)
+          let actualKey ← try
+            schemaKey role expr
+          catch _ =>
+            return .error .emitter
+          unless ← isDefEq actualKey (← qProofKey handle.key) do
+            return .error (.handleKey handle.key)
           entries := entries.push { key := handle.key, expr }
   return .ok entries
 
@@ -205,6 +236,8 @@ private def prepareRegistry (limits : Limits)
     MetaM (Except Error (Prepared Fact)) := do
   let quoter := registry.quoter
   let packages := registry.packages
+  if limits.maxSchemas < schemaCount packages then
+    return .error (.resource .schemas)
   let factType ← match ← prepare quoter.factType (mkSort (.succ .zero)) with
     | .error error => return .error error
     | .ok expr => pure expr
@@ -320,9 +353,6 @@ private def qOpId (value : OpId) : MetaM Lean.Expr :=
 private def qNodeId (value : NodeId) : MetaM Lean.Expr :=
   mkAppM ``NodeId.mk #[mkNatLit value.index]
 
-private def qRuleKey (value : RuleKey) : MetaM Lean.Expr :=
-  mkAppM ``RuleKey.mk #[toExpr value.name, mkNatLit value.schema]
-
 private def qRuleId (value : RuleId) : MetaM Lean.Expr :=
   mkAppM ``RuleId.mk #[mkNatLit value.index]
 
@@ -385,17 +415,6 @@ private def qAction (value : Action) : MetaM Lean.Expr := do
       mkNatLit value.generation, ← listExpr seenType (← value.inputs.mapM qSeen),
       ← listExpr nodeType (← value.writes.mapM qNodeId),
       ← listExpr structuralType (← value.structuralInputs.mapM qStructuralInput), epoch]
-
-private def qRole : Proof.Role → Lean.Expr
-  | .fact => mkConst ``Proof.Role.fact
-  | .equality => mkConst ``Proof.Role.equality
-  | .instance => mkConst ``Proof.Role.instance
-  | .refute => mkConst ``Proof.Role.refute
-  | .split => mkConst ``Proof.Role.split
-
-private def qProofKey (value : Proof.Key) : MetaM Lean.Expr := do
-  mkAppM ``Proof.Key.mk
-    #[← qRuleKey value.rule, qRole value.role, mkNatLit value.bodySchema]
 
 private def qNodeFact (registry : Prepared Fact)
     (value : Proof.NodeFact Fact) : MetaM Lean.Expr := do
