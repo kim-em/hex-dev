@@ -240,7 +240,10 @@ def runRevertNewton128 : Unit → IO UInt64 :=
 def runFlintReversion128 : Unit → IO UInt64 :=
   runFlintFixed runFlintReversion (prepReversion 128)
 
-setup_benchmark runMulInt n => n * n
+/- Cost model: schoolbook truncation computes coefficient `k` from `k + 1`
+products, so summing over `k < n` gives `n(n + 1)/2 = O(n²)` integer
+coefficient operations. -/
+setup_benchmark runMulInt n => n ^ 2
   with prep := prepMulInt
   where {
     paramFloor := 8
@@ -251,7 +254,10 @@ setup_benchmark runMulInt n => n * n
     signalFloorMultiplier := 1.0
   }
 
-setup_benchmark runMulRat n => n * n
+/- Cost model: the rational implementation has the same triangular
+schoolbook convolution as the integer arm, hence `O(n²)` coefficient
+operations; coefficient-size growth is measured rather than hidden here. -/
+setup_benchmark runMulRat n => n ^ 2
   with prep := prepMulRat
   where {
     paramFloor := 8
@@ -262,7 +268,10 @@ setup_benchmark runMulRat n => n * n
     signalFloorMultiplier := 1.0
   }
 
-setup_benchmark runInverseNewton n => n * n
+/- Cost model: Newton inversion doubles precision and performs a constant
+number of schoolbook products at each precision.  The geometric sum
+`1² + 2² + 4² + ... + n²` is `O(n²)`, dominated by the final step. -/
+setup_benchmark runInverseNewton n => n ^ 2
   with prep := prepInverse
   where {
     paramFloor := 8
@@ -273,7 +282,9 @@ setup_benchmark runInverseNewton n => n * n
     signalFloorMultiplier := 1.0
   }
 
-setup_benchmark runInverseRecurrence n => n * n
+/- Cost model: coefficient `i` folds over the preceding `i` coefficients;
+the sum `1 + ... + (n - 1)` is `O(n²)` rational operations. -/
+setup_benchmark runInverseRecurrence n => n ^ 2
   with prep := prepInverse
   where {
     paramFloor := 8
@@ -284,7 +295,10 @@ setup_benchmark runInverseRecurrence n => n * n
     signalFloorMultiplier := 1.0
   }
 
-setup_benchmark runExp n => n * n
+/- Cost model: exponential Newton refinement doubles precision and each step
+uses a constant number of bounded schoolbook products plus linear derivative
+and integration passes, so the geometric sum is `O(n²)`. -/
+setup_benchmark runExp n => n ^ 2
   with prep := prepExpLog
   where {
     paramFloor := 8
@@ -295,7 +309,10 @@ setup_benchmark runExp n => n * n
     signalFloorMultiplier := 1.0
   }
 
-setup_benchmark runLog n => n * n
+/- Cost model: logarithm computes a derivative, one Newton inverse, one
+schoolbook product, and an integration.  The inverse and product dominate at
+`O(n²)` coefficient operations. -/
+setup_benchmark runLog n => n ^ 2
   with prep := prepExpLog
   where {
     paramFloor := 8
@@ -306,7 +323,10 @@ setup_benchmark runLog n => n * n
     signalFloorMultiplier := 1.0
   }
 
-setup_benchmark runSqrt n => n * n
+/- Cost model: square-root Newton refinement doubles precision and performs a
+constant number of schoolbook products/inversions per step; the final
+precision dominates the geometric sum at `O(n²)`. -/
+setup_benchmark runSqrt n => n ^ 2
   with prep := prepSqrt
   where {
     paramFloor := 8
@@ -317,7 +337,9 @@ setup_benchmark runSqrt n => n * n
     signalFloorMultiplier := 1.0
   }
 
-setup_benchmark runCompHorner n => n * n * n
+/- Cost model: Horner performs `n` truncated schoolbook multiplications, each
+with `O(n²)` coefficient operations, for `O(n³)` overall. -/
+setup_benchmark runCompHorner n => n ^ 3
   with prep := prepComposition
   where {
     paramFloor := 8
@@ -328,7 +350,10 @@ setup_benchmark runCompHorner n => n * n * n
     signalFloorMultiplier := 1.0
   }
 
-setup_benchmark runCompBrentKung n => n * n * Nat.sqrt n
+/- Cost model: Brent--Kung uses blocks of width `√n`; precomputing inner
+powers and combining the `√n` outer blocks takes `O(√n)` truncated
+schoolbook products, hence `O(n²√n)` coefficient operations. -/
+setup_benchmark runCompBrentKung n => n ^ 2 * Nat.sqrt n
   with prep := prepComposition
   where {
     paramFloor := 8
@@ -341,7 +366,7 @@ setup_benchmark runCompBrentKung n => n * n * Nat.sqrt n
 
 /- Bounded Newton reversion is a geometric sum of Brent--Kung compositions,
 not one full composition per doubling.  The last `O(n²√n)` step dominates. -/
-setup_benchmark runRevertNewton n => n * n * Nat.sqrt n
+setup_benchmark runRevertNewton n => n ^ 2 * Nat.sqrt n
   with prep := prepReversion
   where {
     paramFloor := 8
@@ -356,7 +381,7 @@ setup_benchmark runRevertNewton n => n * n * Nat.sqrt n
 coefficient operations.  Its exact rational power coefficients grow across
 the ladder; the logarithmic factor is the same limb-growth wallclock proxy
 used by the repository's other arbitrary-precision registrations. -/
-setup_benchmark runRevertLagrange n => n * n * n * (Nat.log2 (n + 1) + 1)
+setup_benchmark runRevertLagrange n => n ^ 3 * (Nat.log2 (n + 1) + 1)
   with prep := prepReversion
   where {
     paramFloor := 8
