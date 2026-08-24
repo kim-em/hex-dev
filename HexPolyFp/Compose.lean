@@ -1009,6 +1009,15 @@ private theorem composeCoeffPowerSumUpTo_self_X_eq_self
     rw [if_neg (by intro ⟨_, h⟩; omega : ¬ (0 ≤ k ∧ k < 0 + w.size))]
     exact (DensePoly.coeff_eq_zero_of_size_le w hk').symm
 
+/-- Substituting the polynomial indeterminate into `w` returns `w`.
+
+Together with {name}`Hex.FpPoly.compose_X`, this says that `FpPoly.X` is the
+two-sided identity for polynomial composition. -/
+@[simp, grind =] theorem compose_X_right [ZMod64.PrimeModulus p] (w : FpPoly p) :
+    DensePoly.compose w FpPoly.X = w := by
+  rw [compose_eq_coeff_power_sum_upTo_size w FpPoly.X,
+    composeCoeffPowerSumUpTo_self_X_eq_self]
+
 /-- Compose-form Frobenius: substituting `linearPow X p` for {name}`X` in `w`
 yields `linearPow w p`, over `F_p`. This is Freshman's dream packaged
 through the polynomial composition surface: viewed as

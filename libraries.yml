@@ -71,6 +71,29 @@ libraries:
     mathlib: false
     done_through: 6
     status: active
+  HexTruncatedSeries:
+    deps: [HexBasic]
+    mathlib: false
+    done_through: 0
+    status: active
+    phase4:
+      comparators:
+        - tool: FLINT fmpq_poly truncated series routines via python-flint
+          class: informational
+          rationale: "FLINT's series routines run on a tuned Karatsuba/Toom-Cook/FFT multiplication while this library multiplies schoolbook until hex-poly-fast exists, so the measured ratio reports the multiplication gap rather than the Newton iterations. Reclassified to gating when hex-poly-fast lands."
+      input_families:
+        - name: multiplication
+          description: truncated products at precisions 8 to 4096 over Int and Rat
+        - name: inverse
+          description: Newton inversion against the linear recurrence on the same ladder
+        - name: exp-log
+          description: exp and log at precisions 8 to 1024 over Rat
+        - name: sqrt
+          description: square root at a supplied constant root over Rat
+        - name: composition
+          description: Horner against Brent-Kung at precisions 8 to 512
+        - name: reversion
+          description: Newton reversion against Lagrange inversion over Rat
   HexArith:
     deps: []
     mathlib: false
@@ -130,8 +153,31 @@ libraries:
   HexMvGcd:
     deps: [HexBasic, HexMvPoly, HexPoly, HexPolyFp, HexResultant, HexArith, HexModArith, HexModular, HexPolyZGcd]
     mathlib: false
-    done_through: 2
+    done_through: 3
     status: active
+    phase4:
+      comparators:
+        - tool: FLINT fmpz_mpoly_gcd via python-flint
+          class: informational
+          rationale: FLINT also dispatches to Zippel and sparse Hensel routes that this library does not implement; the coprime family is the like-for-like comparison.
+        - tool: Singular
+          class: informational
+          rationale: Singular likewise has sparse routes outside this SPEC, so its ratios diagnose representation and route coverage rather than gate release.
+      input_families:
+        - name: coprime-pairs
+          description: Dense and sparse coprime inputs in 2 to 8 variables, isolating the modular coprimality route.
+        - name: dense-gcds
+          description: Dense inputs in 3 to 5 variables with degree 5 to 20 in each variable, isolating Brown interpolation.
+        - name: sparse-stress
+          description: High-degree, few-term inputs in 5 to 12 variables recording the known absence of a sparse route.
+        - name: swell
+          description: Small inputs whose extended subresultant remainder sequence develops large coefficients.
+        - name: rational
+          description: Integer-family shapes over rationals, exercising denominator clearing and integer lifting.
+        - name: squarefree
+          description: Multiplicity patterns 1, 1-through-5, 7, and 2-3-5-7 in 2 to 5 variables.
+        - name: cofactor-heavy
+          description: Small gcds with large cofactors, isolating checked multivariate exact division.
   HexSparsePoly:
     deps: [HexPoly, HexBasic]
     mathlib: false
@@ -219,8 +265,25 @@ libraries:
   HexModular:
     deps: [HexArith]
     mathlib: false
-    done_through: 3
+    done_through: 7
     status: active
+    phase4:
+      comparators:
+        - tool: "gmpy2.gcdext"
+          class: informational
+          rationale: "gmpy2 exposes GMP's tuned extended GCD, while HexModular reaches the same arithmetic through HexArith's GMP-backed compiled path. The ratio isolates binding and orchestration overhead rather than an algorithm choice, so it is recorded for orientation and does not gate Phase 4."
+        - tool: "python-flint fmpz CRT"
+          class: informational
+          rationale: "python-flint exposes FLINT's fmpz and fmpz_mod_ctx arithmetic for the same incremental Garner recurrence. The ratio chiefly measures Python framing and arithmetic binding costs, not a choice between interchangeable Hex algorithms, and therefore remains informational."
+      input_families:
+        - name: incremental-crt
+          description: Scalar accumulation over 4 to 8192 pairwise-coprime word-size prime-power moduli.
+        - name: vector-crt
+          description: Fixed-depth width ladders and fixed-width depth ladders that expose reuse of one extended GCD across coordinates.
+        - name: rational-reconstruction
+          description: Fibonacci-shaped late Euclidean runs through 262144 bits and early-success cases through 100000 bits.
+        - name: failure-cost
+          description: Full Euclidean runs whose impossible numerator bound forces reconstruction failure through the final checks.
   HexGramSchmidt:
     deps: [HexRowReduce, HexDeterminant, HexBareiss]
     mathlib: false
@@ -273,7 +336,7 @@ libraries:
   HexPolyZGcd:
     deps: [HexPolyZ, HexPolyFp, HexPoly, HexModular, HexModArith, HexArith, HexResultant]
     mathlib: false
-    done_through: 3
+    done_through: 7
     status: active
     phase4:
       comparators:
@@ -547,6 +610,11 @@ libraries:
     mathlib: true
     done_through: 6
     status: active
+  HexPolyZGcdMathlib:
+    deps: [HexPolyZGcd, HexPolyZMathlib, HexPolyMathlib]
+    mathlib: true
+    done_through: 7
+    status: active
   HexLLLMathlib:
     deps: [HexLLL, HexGramSchmidtMathlib, HexRowReduceMathlib]
     mathlib: true
@@ -590,6 +658,11 @@ libraries:
     mathlib: true
     done_through: 2
     status: active
+  HexTruncatedSeriesMathlib:
+    deps: [HexTruncatedSeries]
+    mathlib: true
+    done_through: 0
+    status: active
 
   # ---------- Planned (status: planned; SPEC ready, implementation deferred) ----------
   HexRoots:
@@ -614,12 +687,12 @@ libraries:
   HexRootsMathlib:
     deps: [HexRoots, HexPolyZMathlib]
     mathlib: true
-    done_through: 4
+    done_through: 7
     status: active
   HexResultant:
-    deps: [HexPoly, HexBasic]
+    deps: [HexPoly, HexBasic, HexDeterminant]
     mathlib: false
-    done_through: 4
+    done_through: 5
     status: active
     phase4:
       comparators:
@@ -660,7 +733,7 @@ libraries:
   HexResultantMathlib:
     deps: [HexResultant, HexPolyMathlib]
     mathlib: true
-    done_through: 5
+    done_through: 7
     status: active
   HexNumberField:
     deps: [HexPolyZ, HexRoots, HexResultant, HexBerlekampZassenhaus, HexMatrix, HexRowReduce]
@@ -710,7 +783,7 @@ libraries:
   HexRCF:
     deps: [HexRealRoots, HexRealRootsMathlib, HexPolyZ, HexPolyZMathlib]
     mathlib: true
-    done_through: 5
+    done_through: 7
     status: active
     proof_probes: [bench/HexRCF/ProofProbe]
     phase4:

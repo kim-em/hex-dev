@@ -10,6 +10,7 @@ public import HexConway.Api
 public import HexPolyFp.ModCompose
 public import HexPolyFp.Frobenius
 public import HexPolyFp.QuotientCompose
+public import HexPolyFp.QuotientFrobenius
 
 public section
 
@@ -53,27 +54,20 @@ modular multiplications, with `n ≤ 8` and `k ≤ 8`, rather than a modular
 exponentiation with a six-digit exponent. Everything below is structurally
 recursive for the same reason: the kernel has to run it.
 
-# What is proved, and what is design rationale
+# What is proved
 
-The two displayed identities above are why `normX` is defined
-the way it is. Neither is a theorem in this file. What is proved is that
-`C(p, m)` vanishes at the class of `normX`
-(`eval_conwayPoly_subfieldGen_eq_zero`), which is what a
-subfield embedding needs and what makes the degree-`m` subfield canonical.
+The norm and geometric-exponent identities in the first two displays are
+theorems below. The reusable bridges are
+`FpPoly.Quotient.reduce_powModMonicLinear_eq_pow`, which identifies the
+structural modular power in the quotient, and
+`FpPoly.Quotient.Internal.eval_X_eq_reduce`, which says evaluation at the class
+of `x` is quotient reduction. Together with
+`FpPoly.Quotient.Internal.eval_pow_prime`, they show that every modular
+composition in `frobeniusIter` is a Frobenius step.
 
-Proving `normX = α ^ ((p^n - 1) / (p^m - 1))` outright needs the step this file
-takes on faith: that composing with `x^p mod f` computes the `p`-th power on
-residues. The heart of that step is now available as
-`FpPoly.Quotient.Internal.eval_pow_prime`, which says evaluation
-commutes with the Frobenius (`g(β^p) = g(β)^p`, by freshman's dream over the
-Horner sum with Fermat fixing each coefficient).
-
-Two mechanical bridges are still missing before it can be applied here: that
-`powModMonicLinear X f p` reduces to `X^p` in the quotient, and that evaluating
-a polynomial at the class of `x` returns the class of the polynomial. Both are
-list inductions of the same shape as `eval_pow_prime` itself. The same two
-bridges are what would let `HexConway.Primitivity`'s committed facts become a
-statement about `orderOf`.
+Consequently `normX_eq_pow` identifies the computed norm representative with
+the geometric-sum power in any quotient, and `subfieldGen_eq_norm` rewrites
+that exponent as `(p^n - 1) / (p^m - 1)` for `0 < m` and `m ∣ n`.
 -/
 
 namespace Hex
@@ -124,6 +118,136 @@ explicitly so that the recursion is structural. -/
 def normX (f : FpPoly p) (hmonic : DensePoly.Monic f) (m k : Nat) :
     FpPoly p :=
   normAux f (frobeniusBase f hmonic) hmonic m k 1 FpPoly.X
+
+/-! # The computed norm is the field norm -/
+
+/-- The exponent `1 + q + ⋯ + q^(k-1)`, in a structural-recursion spelling
+that follows the norm accumulator. -/
+def normExponent (q : Nat) : Nat → Nat
+  | 0 => 0
+  | k + 1 => 1 + q * normExponent q k
+
+/-- The executable Frobenius base represents the `p`-th power of the quotient
+indeterminate. -/
+theorem reduce_frobeniusBase_eq_pow
+    {f : FpPoly p} {hmonic : DensePoly.Monic f} {hf_pos : 0 < f.degree?.getD 0} :
+    FpPoly.Quotient.reduce (g := f) (hmonic := hmonic) (hg_pos := hf_pos)
+        (frobeniusBase f hmonic) =
+      (FpPoly.Quotient.X (g := f) (hmonic := hmonic) (hg_pos := hf_pos)) ^ p := by
+  exact FpPoly.Quotient.reduce_powModMonicLinear_eq_pow FpPoly.X p
+
+/-- Iterating executable modular composition `k` times represents raising a
+quotient element to `p^k`. -/
+theorem reduce_frobeniusIter_eq_pow
+    {f xp : FpPoly p} {hmonic : DensePoly.Monic f} {hf_pos : 0 < f.degree?.getD 0}
+    (hxp : FpPoly.Quotient.reduce (g := f) (hmonic := hmonic) (hg_pos := hf_pos) xp =
+      (FpPoly.Quotient.X (g := f) (hmonic := hmonic) (hg_pos := hf_pos)) ^ p) :
+    ∀ (k : Nat) (a : FpPoly p),
+      FpPoly.Quotient.reduce (g := f) (hmonic := hmonic) (hg_pos := hf_pos)
+          (frobeniusIter f xp hmonic k a) =
+        (FpPoly.Quotient.reduce (g := f) (hmonic := hmonic) (hg_pos := hf_pos) a) ^
+          (p ^ k)
+  | 0, a => by
+      change FpPoly.Quotient.reduce (g := f) (hmonic := hmonic) (hg_pos := hf_pos) a =
+        FpPoly.Quotient.reduce (g := f) (hmonic := hmonic) (hg_pos := hf_pos) a ^ 1
+      rw [show (1 : Nat) = 0 + 1 from rfl, FpPoly.Quotient.pow_succ,
+        FpPoly.Quotient.pow_zero,
+        FpPoly.Quotient.one_mul]
+  | k + 1, a => by
+      rw [frobeniusIter, reduce_frobeniusIter_eq_pow hxp k]
+      have hstep :
+          FpPoly.Quotient.reduce (g := f) (hmonic := hmonic) (hg_pos := hf_pos)
+              (FpPoly.composeModMonicImpl a xp f hmonic) =
+            (FpPoly.Quotient.reduce (g := f) (hmonic := hmonic) (hg_pos := hf_pos) a) ^ p := by
+        rw [← FpPoly.Quotient.eval_reduce_eq_reduce_composeModMonicImpl, hxp,
+          FpPoly.Quotient.Internal.eval_pow_prime,
+          FpPoly.Quotient.Internal.eval_X_eq_reduce]
+      rw [hstep, FpPoly.Quotient.pow_mul, Nat.pow_succ, Nat.mul_comm p]
+
+/-- The norm accumulator represents its initial accumulator multiplied by the
+geometric sequence of Frobenius powers of its initial current value. -/
+theorem reduce_normAux_eq_pow
+    {f : FpPoly p} {hmonic : DensePoly.Monic f} {hf_pos : 0 < f.degree?.getD 0}
+    (m : Nat) : ∀ (k : Nat) (acc cur : FpPoly p),
+      FpPoly.Quotient.reduce (g := f) (hmonic := hmonic) (hg_pos := hf_pos)
+          (normAux f (frobeniusBase f hmonic) hmonic m k acc cur) =
+        FpPoly.Quotient.reduce (g := f) (hmonic := hmonic) (hg_pos := hf_pos) acc *
+          (FpPoly.Quotient.reduce (g := f) (hmonic := hmonic) (hg_pos := hf_pos) cur) ^
+            normExponent (p ^ m) k
+  | 0, acc, cur => by
+      rw [normAux, normExponent, FpPoly.Quotient.pow_zero, FpPoly.Quotient.mul_one]
+  | k + 1, acc, cur => by
+      rw [normAux, reduce_normAux_eq_pow m k]
+      have hacc :
+          FpPoly.Quotient.reduce (g := f) (hmonic := hmonic) (hg_pos := hf_pos)
+              (FpPoly.modByMonic f (acc * cur) hmonic) =
+            FpPoly.Quotient.reduce (g := f) (hmonic := hmonic) (hg_pos := hf_pos)
+              (acc * cur) := by
+        apply FpPoly.Quotient.ext
+        simp [FpPoly.Quotient.reduce_val, FpPoly.modByMonic,
+          DensePoly.modByMonic_eq_mod]
+      rw [hacc, FpPoly.Quotient.reduce_mul,
+        reduce_frobeniusIter_eq_pow reduce_frobeniusBase_eq_pow,
+        FpPoly.Quotient.pow_mul]
+      change (_ * _) * _ = _ * _ ^ (1 + p ^ m * normExponent (p ^ m) k)
+      rw [FpPoly.Quotient.mul_assoc]
+      apply congrArg (fun z =>
+        FpPoly.Quotient.reduce (g := f) (hmonic := hmonic) (hg_pos := hf_pos) acc * z)
+      calc
+        FpPoly.Quotient.reduce cur *
+              FpPoly.Quotient.reduce cur ^ (p ^ m * normExponent (p ^ m) k) =
+            FpPoly.Quotient.reduce cur ^ 1 *
+              FpPoly.Quotient.reduce cur ^ (p ^ m * normExponent (p ^ m) k) := by
+                congr 1
+                change _ = _ ^ (0 + 1)
+                rw [FpPoly.Quotient.pow_succ, FpPoly.Quotient.pow_zero,
+                  FpPoly.Quotient.one_mul]
+        _ = FpPoly.Quotient.reduce cur ^
+              (1 + p ^ m * normExponent (p ^ m) k) :=
+            (FpPoly.Quotient.pow_add _ _ _).symm
+
+/-- The quotient class of `normX` is the geometric-sum power of the quotient
+indeterminate. -/
+theorem normX_eq_pow
+    {f : FpPoly p} {hmonic : DensePoly.Monic f} {hf_pos : 0 < f.degree?.getD 0}
+    (m k : Nat) :
+    FpPoly.Quotient.reduce (g := f) (hmonic := hmonic) (hg_pos := hf_pos)
+        (normX f hmonic m k) =
+      (FpPoly.Quotient.X (g := f) (hmonic := hmonic) (hg_pos := hf_pos)) ^
+        normExponent (p ^ m) k := by
+  rw [normX, reduce_normAux_eq_pow]
+  change (1 : FpPoly.Quotient f hmonic hf_pos) * _ = _
+  rw [FpPoly.Quotient.one_mul,
+    show FpPoly.Quotient.reduce (g := f) (hmonic := hmonic) (hg_pos := hf_pos)
+        FpPoly.X = FpPoly.Quotient.X from rfl]
+
+/-- The structural geometric exponent is the usual geometric-series quotient. -/
+theorem normExponent_eq_div {q : Nat} (hq : 1 < q) (k : Nat) :
+    normExponent q k = (q ^ k - 1) / (q - 1) := by
+  have hpow : ∀ j : Nat, q ^ j = (q - 1) * normExponent q j + 1 := by
+    intro j
+    induction j with
+    | zero => simp [normExponent]
+    | succ j ih =>
+        rw [Nat.pow_succ, ih, normExponent]
+        have hqsub : q - 1 + 1 = q := Nat.sub_add_cancel (by omega)
+        calc
+          ((q - 1) * normExponent q j + 1) * q =
+              (q - 1) * (normExponent q j * q) + q := by
+                rw [Nat.add_mul, Nat.one_mul, Nat.mul_assoc]
+          _ = (q - 1) * (normExponent q j * q) + ((q - 1) + 1) := by rw [hqsub]
+          _ = (q - 1) * (normExponent q j * q) + (q - 1) + 1 := by
+                rw [Nat.add_assoc]
+          _ = (q - 1) * (normExponent q j * q) + (q - 1) * 1 + 1 := by
+                rw [Nat.mul_one]
+          _ = (q - 1) * (normExponent q j * q + 1) + 1 := by rw [Nat.mul_add]
+          _ = (q - 1) * (1 + q * normExponent q j) + 1 := by
+                rw [Nat.add_comm (normExponent q j * q) 1,
+                  Nat.mul_comm (normExponent q j) q]
+  have hsub : q ^ k - 1 = (q - 1) * normExponent q k := by
+    rw [hpow k, Nat.add_sub_cancel]
+  rw [hsub]
+  exact (Nat.mul_div_cancel_left (normExponent q k) (by omega)).symm
 
 /-- The Tier 2 compatibility check for a committed pair of entries: is the norm
 of `α` down to the degree-`m` subfield a root of `C(p, m)`?
@@ -180,6 +304,29 @@ def subfieldGen (p m n : Nat) [ZMod64.Bounds p] [ZMod64.PrimeModulus p]
   FpPoly.Quotient.reduce
     (normX (conwayPoly p n hn) (conwayPoly_monic p n hn) m (n / m))
 
+/-- The canonical subfield generator is the field norm of the ambient Conway
+generator.
+
+The positivity assumption excludes the meaningless degree-zero denominator;
+divisibility identifies `p ^ (m * (n / m))` with `p ^ n`. -/
+theorem subfieldGen_eq_norm
+    {p m n : Nat} [ZMod64.Bounds p] [ZMod64.PrimeModulus p]
+    (hn : SupportedEntry p n) (hm_pos : 0 < m) (hmn : m ∣ n) :
+    subfieldGen p m n hn =
+      (FpPoly.Quotient.X
+        (g := conwayPoly p n hn) (hmonic := conwayPoly_monic p n hn)
+        (hg_pos := conwayPoly_degree_pos p n hn)) ^
+          ((p ^ n - 1) / (p ^ m - 1)) := by
+  unfold subfieldGen
+  rw [normX_eq_pow]
+  have hp : 1 < p := by
+    have hp_two := (ZMod64.PrimeModulus.prime (p := p)).two_le
+    omega
+  rw [normExponent_eq_div (Nat.one_lt_pow (Nat.ne_of_gt hm_pos) hp)]
+  have hpow : (p ^ m) ^ (n / m) = p ^ n := by
+    rw [← Nat.pow_mul, Nat.mul_comm m, Nat.div_mul_cancel hmn]
+  rw [hpow]
+
 /--
 The subfield generator is a root of the smaller Conway polynomial.
 
@@ -202,6 +349,26 @@ theorem eval_conwayPoly_subfieldGen_eq_zero
         (hg_pos := conwayPoly_degree_pos p n hn) := by
   apply FpPoly.Quotient.eval_reduce_eq_zero_of_composeModMonicImpl_eq_zero
   exact beq_iff_eq.mp hcompat
+
+/-- The explicit finite-field norm power is a root of the smaller Conway
+polynomial. -/
+theorem eval_norm_eq_zero
+    {p m n : Nat} [ZMod64.Bounds p] [ZMod64.PrimeModulus p]
+    (hm : SupportedEntry p m) (hn : SupportedEntry p n)
+    (hcompat : Compatible p m n hm hn) (hm_pos : 0 < m) (hmn : m ∣ n) :
+    FpPoly.Quotient.Internal.eval
+        (g := conwayPoly p n hn) (hmonic := conwayPoly_monic p n hn)
+        (hg_pos := conwayPoly_degree_pos p n hn)
+        (conwayPoly p m hm)
+        ((FpPoly.Quotient.X
+          (g := conwayPoly p n hn) (hmonic := conwayPoly_monic p n hn)
+          (hg_pos := conwayPoly_degree_pos p n hn)) ^
+            ((p ^ n - 1) / (p ^ m - 1))) =
+      FpPoly.Quotient.zero (g := conwayPoly p n hn)
+        (hmonic := conwayPoly_monic p n hn)
+        (hg_pos := conwayPoly_degree_pos p n hn) := by
+  rw [← subfieldGen_eq_norm hn hm_pos hmn]
+  exact eval_conwayPoly_subfieldGen_eq_zero hm hn hcompat
 
 /-! # Towards the subfield embedding
 

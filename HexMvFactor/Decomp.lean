@@ -89,7 +89,13 @@ structure CheckedDecomp (f : MvPoly n Int cmp) where
 /-- Executable replay implies the semantic decomposition payload. -/
 theorem checkDecomp_sound {f : MvPoly n Int cmp} {D : Decomp n cmp}
     (h : checkDecomp f D = true) : IsDecompOf f D := by
-  sorry
+  simp only [checkDecomp, Bool.and_eq_true, beq_iff_eq,
+    List.all_eq_true] at h
+  refine ⟨h.1.1, ?_⟩
+  intro entry hentry
+  have hfactor := h.1.2 entry hentry
+  simp only [decide_eq_true_eq] at hfactor
+  exact ⟨hfactor.1.1.1, hfactor.1.1.2⟩
 
 /-! # Structural answers
 

@@ -73,6 +73,11 @@ lean_lib Hex where
 
 lean_lib HexBasic where
 
+lean_lib HexTruncatedSeries where
+
+@[default_target]
+lean_lib HexTruncatedSeriesMathlib where
+
 lean_lib HexArith where
   precompileModules := true
   -- The `hexarithffi` extern_lib is linked into this precompiled library's
@@ -155,6 +160,9 @@ lean_lib HexModArithMathlib where
 
 @[default_target]
 lean_lib HexPolyZMathlib where
+
+@[default_target]
+lean_lib HexPolyZGcdMathlib where
 
 @[default_target]
 lean_lib HexRootsMathlib where
@@ -259,6 +267,10 @@ lean_lib HexBerlekampKernelProbe where
 lean_lib HexMvPolyBenchSupport where
   srcDir := "bench"
   globs := #[`HexMvPolyCorpus]
+
+lean_lib HexModularBenchSupport where
+  srcDir := "bench"
+  globs := #[`HexModularBench.Comparator]
 
 lean_lib HexMvPolyMathlibProofProbe where
   srcDir := "bench"
@@ -524,8 +536,10 @@ lean_lib HexRCFProofProbeScientific where
 -- `*_emit_fixtures` exes below, carrying `srcDir := "conformance"`.
 lean_lib HexConformance where
   srcDir := "conformance"
-  globs := #[`HexArith.Conformance, `HexArith.CrossCheck, `HexBerlekamp.Conformance, `HexBerlekampZassenhaus.Conformance, `HexBerlekampZassenhaus.CrossCheck, `HexConway.Conformance, `HexGF2.Conformance, `HexGF2.CrossCheck, `HexGF2.FastCheck, `HexGFq.Conformance, `HexGFq.CrossCheck, `HexGFqField.Conformance, `HexGFqRing.Conformance, `HexGramSchmidt.Conformance, `HexHensel.Conformance, `HexHensel.CrossCheck, `HexInterval.Conformance, `HexIntervalMathlib.IntervalConformance, `HexInterval.CenterConformance, `HexInterval.ScaleConformance, `HexInterval.PropagatorConformance, `HexInterval.ScopeConformance, `HexInterval.StructuralMatcherConformance, `HexInterval.MatcherSchedulerConformance, `HexInterval.NestedBranchConformance, `HexInterval.StructureViewConformance, `HexInterval.PolicyConformance, `HexInterval.PolicyFrontierConformance, `HexInterval.PolicyDriverConformance, `HexInterval.PackageRegistryConformance, `HexInterval.DyadicIntervalConformance, `HexInterval.DyadicRulesConformance, `HexInterval.PayloadArenaConformance, `HexInterval.PayloadSessionConformance, `HexInterval.PolicySessionConformance, `HexInterval.PolicyFunctionConformance, `HexInterval.SemanticReplayConformance, `HexInterval.ChronologicalReplayConformance, `HexInterval.GenericInstanceReconstructionConformance, `HexInterval.ProofEmitterConformance, `HexInterval.TraceReplayConformance, `HexInterval.SinTenIntervalConformance, `HexIntervalMathlib.DyadicIntervalConformance, `HexIntervalMathlib.CenteredConformance, `HexIntervalMathlib.SineSignConformance, `HexIntervalMathlib.SineProofConformance, `HexIntervalMathlib.SineTacticConformance, `HexIntervalMathlib.ProofRegistryConformance, `HexIntervalMathlib.ExpSignConformance, `HexIntervalMathlib.ReluConformance, `HexIntervalMathlib.RefuteConformance, `HexIntervalMathlib.PntLogTableConformance, `HexIntervalMathlib.PntNestedLogConformance, `HexIntervalMathlib.PntExpTailConformance, `HexIntervalMathlib.PntTable12Conformance, `HexIntervalMathlib.PntTable12OrdinaryConformance, `HexIntervalAlgebraic.PolynomialDispatchConformance, `HexIntervalMathlib.PntTable12LogConformance, `HexIntervalMathlib.PntFks2ShardConformance, `HexIntervalMathlib.LogTablePrecisionConformance, `HexIntervalMathlib.IntegralCanaryConformance, `HexIntervalMathlib.PntBKLNWExpConformance, `HexIntervalMathlib.PntBKLNWPowConformance, `HexIntervalMathlib.PntPrimeLogSmallConformance, `HexIntervalMathlib.PntDusartExpConformance, `HexIntervalMathlib.SinTenConformance, `HexIntervalMathlib.SinTenIntervalConformance, `HexIntervalMathlib.CosBillionConformance, `HexLLL.Conformance, `HexMatrix.Conformance, `HexMvPolyFixtures, `HexMvPoly.Conformance, `HexMvPolyMathlib.Conformance, `HexSparsePolyFixtures, `HexSparsePoly.Conformance, `HexSparsePolyMathlib.Conformance, `HexRowReduce.Conformance, `HexDeterminant.Conformance, `HexBareiss.Conformance, `HexCharPoly.Fixtures, `HexCharPoly.Conformance, `HexModArith.Conformance, `HexModArith.FastCheck, `HexModular.Conformance, `HexPolyZGcd.Conformance, `HexNumberField.Conformance, `HexNumberFieldTower.Conformance, `HexPoly.Conformance, `HexPolyFp.Conformance, `HexPolyZ.Conformance, `HexRCF.Conformance, `HexRealRoots.Conformance, `HexRealRootsMathlib.Conformance, `HexResultant.Conformance, `HexRoots.Conformance].map Glob.one
+  globs := #[`HexArith.Conformance, `HexArith.CrossCheck, `HexBerlekamp.Conformance, `HexBerlekampZassenhaus.Conformance, `HexBerlekampZassenhaus.CrossCheck, `HexConway.Conformance, `HexGF2.Conformance, `HexGF2.CrossCheck, `HexGF2.FastCheck, `HexGFq.Conformance, `HexGFq.CrossCheck, `HexGFqField.Conformance, `HexGFqRing.Conformance, `HexGramSchmidt.Conformance, `HexHensel.Conformance, `HexHensel.CrossCheck, `HexInterval.Conformance, `HexIntervalMathlib.IntervalConformance, `HexInterval.CenterConformance, `HexInterval.ScaleConformance, `HexInterval.PropagatorConformance, `HexInterval.ScopeConformance, `HexInterval.StructuralMatcherConformance, `HexInterval.MatcherSchedulerConformance, `HexInterval.NestedBranchConformance, `HexInterval.StructureViewConformance, `HexInterval.PolicyConformance, `HexInterval.PolicyFrontierConformance, `HexInterval.PolicyDriverConformance, `HexInterval.PackageRegistryConformance, `HexInterval.DyadicIntervalConformance, `HexInterval.DyadicRulesConformance, `HexInterval.PayloadArenaConformance, `HexInterval.PayloadSessionConformance, `HexInterval.PolicySessionConformance, `HexInterval.PolicyFunctionConformance, `HexInterval.SemanticReplayConformance, `HexInterval.ChronologicalReplayConformance, `HexInterval.GenericInstanceReconstructionConformance, `HexInterval.ProofEmitterConformance, `HexInterval.TraceReplayConformance, `HexInterval.SinTenIntervalConformance, `HexIntervalMathlib.DyadicIntervalConformance, `HexIntervalMathlib.CenteredConformance, `HexIntervalMathlib.SineSignConformance, `HexIntervalMathlib.SineProofConformance, `HexIntervalMathlib.SineTacticConformance, `HexIntervalMathlib.ProofRegistryConformance, `HexIntervalMathlib.ExpSignConformance, `HexIntervalMathlib.ReluConformance, `HexIntervalMathlib.RefuteConformance, `HexIntervalMathlib.PntLogTableConformance, `HexIntervalMathlib.PntNestedLogConformance, `HexIntervalMathlib.PntExpTailConformance, `HexIntervalMathlib.PntTable12Conformance, `HexIntervalMathlib.PntTable12OrdinaryConformance, `HexIntervalAlgebraic.PolynomialDispatchConformance, `HexIntervalMathlib.PntTable12LogConformance, `HexIntervalMathlib.PntFks2ShardConformance, `HexIntervalMathlib.LogTablePrecisionConformance, `HexIntervalMathlib.IntegralCanaryConformance, `HexIntervalMathlib.PntBKLNWExpConformance, `HexIntervalMathlib.PntBKLNWPowConformance, `HexIntervalMathlib.PntPrimeLogSmallConformance, `HexIntervalMathlib.PntDusartExpConformance, `HexIntervalMathlib.SinTenConformance, `HexIntervalMathlib.SinTenIntervalConformance, `HexIntervalMathlib.CosBillionConformance, `HexLLL.Conformance, `HexMatrix.Conformance, `HexMvPolyFixtures, `HexMvPoly.Conformance, `HexMvPolyMathlib.Conformance, `HexSparsePolyFixtures, `HexSparsePoly.Conformance, `HexSparsePolyMathlib.Conformance, `HexRowReduce.Conformance, `HexDeterminant.Conformance, `HexBareiss.Conformance, `HexCharPoly.Fixtures, `HexCharPoly.Conformance, `HexModArith.Conformance, `HexModArith.FastCheck, `HexModular.Conformance, `HexPolyZGcd.Conformance, `HexMvGcd.Conformance, `HexNumberField.Conformance, `HexNumberFieldTower.Conformance, `HexPoly.Conformance, `HexPolyFp.Conformance, `HexPolyZ.Conformance, `HexRCF.Conformance, `HexRealRoots.Conformance, `HexRealRootsMathlib.Conformance, `HexResultant.Conformance, `HexRoots.Conformance].map Glob.one
 
+
+    ++ #[`HexTruncatedSeries.Conformance].map Glob.one
 
     ++ #[`HexIntervalMathlib.PntLogNaturalConformance,
       `HexIntervalMathlib.PntLogRationalConformance,
@@ -567,6 +581,8 @@ lean_lib HexConformance where
       `HexInterval.RuntimeConformance,
       `HexIntervalMathlib.RuntimeProofConformance,
       `HexIntervalMathlib.RuntimeTerminalConformance,
+      `HexIntervalMathlib.RuntimeRuleConformance,
+      `HexIntervalMathlib.RuntimeEmitConformance,
       `HexIntervalMathlib.ProgramProofConformance,
       `HexIntervalMathlib.DriverConformance,
       `HexIntervalMathlib.ControllerConformance,
@@ -636,6 +652,7 @@ lean_lib HexReleaseTests where
 -- must exactly mirror the repositories already present in the release manifest.
 lean_lib HexMvFactorizationTests where
   globs := #[`HexModular.KernelTests,
+    `HexModular.LoopTests,
     `HexPolyZGcd.Kernel,
     `HexMvGcd.KernelTests,
     `HexMvGcd.Kernel,
@@ -761,6 +778,10 @@ lean_exe hexmvpoly_emit_fixtures where
   srcDir := "conformance"
   root := `HexMvPoly.EmitFixtures
 
+lean_exe hextruncatedseries_emit_fixtures where
+  srcDir := "conformance"
+  root := `HexTruncatedSeries.EmitFixtures
+
 lean_exe hexmodular_emit_fixtures where
   srcDir := "conformance"
   root := `HexModular.EmitFixtures
@@ -768,6 +789,15 @@ lean_exe hexmodular_emit_fixtures where
 lean_exe hexpolyzgcd_emit_fixtures where
   srcDir := "conformance"
   root := `HexPolyZGcd.EmitFixtures
+
+lean_exe hexmodular_bench where
+  srcDir := "bench"
+  root := `HexModular.Bench
+  extraDepTargets := #[`HexModularBenchSupport]
+
+lean_exe hexmvgcd_emit_fixtures where
+  srcDir := "conformance"
+  root := `HexMvGcd.EmitFixtures
 
 lean_exe hexroots_bench where
   srcDir := "bench"
@@ -874,6 +904,10 @@ lean_exe hexmvpoly_bench where
   srcDir := "bench"
   root := `HexMvPoly.Bench
 
+lean_exe hextruncatedseries_bench where
+  srcDir := "bench"
+  root := `HexTruncatedSeries.Bench
+
 lean_exe hexpoly_emit_fixtures where
   srcDir := "conformance"
   root := `HexPoly.EmitFixtures
@@ -921,6 +955,10 @@ lean_exe hexgfqfield_emit_fixtures where
 lean_exe hexpolyz_bench where
   srcDir := "bench"
   root := `HexPolyZ.Bench
+
+lean_exe hexpolyzgcd_bench where
+  srcDir := "bench"
+  root := `HexPolyZGcd.Bench
 
 lean_exe hexpolyz_kronecker_crossover where
   srcDir := "bench"
