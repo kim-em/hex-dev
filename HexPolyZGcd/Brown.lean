@@ -270,6 +270,14 @@ def brownCert? (f h : ZPoly) : Option GcdCert :=
 
 /-! Route-level executable pins for the three easy-to-miss Brown rules. -/
 
+-- Every small witness probe is unlucky when the constant offset is the
+-- product of the primes through 47. A bundled large probe still succeeds.
+#guard
+  let smallPrimorial : Int := 614889782588491410
+  let f : ZPoly := DensePoly.ofList [0, 1]
+  let h : ZPoly := DensePoly.ofList [smallPrimorial, 1]
+  (modularWitness f h).isSome
+
 private def primeAt? (p : Nat) : Option ZMod64.Prime :=
   (ZMod64.primesBelow p 1)[0]?
 

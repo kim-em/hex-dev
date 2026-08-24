@@ -62,11 +62,27 @@ private def modularWitness.go (f h : ZPoly) (supply : Array ZMod64.Prime)
 termination_by fuel
 decreasing_by all_goals omega
 
-/-- Search the small primes in ascending order, so a replayed certificate pays
-for the cheapest available primality proof. -/
+/-- Construct a prime whose compile-time primality check is erased from the
+compiled witness search. -/
+private def witnessPrime (m : Nat) (hbound : m < 2 ^ 31)
+    (hprime : Hex.Nat.isPrimeTrial m = true) : ZMod64.Prime :=
+  let prime := Hex.Nat.isPrimeTrial_isPrime hprime
+  { m, bounds := { pPos := prime.pos, pLtR := hbound }, prime }
+
+/-- Small ascending primes followed by large prechecked probes. The large
+probes handle inputs whose reductions collide at every small prime, such as a
+product of many consecutive linear factors. -/
+private def witnessSupply : Array ZMod64.Prime :=
+  (ZMod64.primesBelow 47 15).toList.reverse.toArray ++ #[
+    witnessPrime 16777213 (by decide) (by decide),
+    witnessPrime 16777199 (by decide) (by decide),
+    witnessPrime 16777183 (by decide) (by decide)
+  ]
+
+/-- Search small primes first for cheap replay, then the bundled large probes
+for structured inputs on which every small image is unlucky. -/
 def modularWitness (f h : ZPoly) : Option CoprimeWitness :=
-  let supply := (ZMod64.primesBelow 47 15).toList.reverse.toArray
-  modularWitness.go f h supply 0 supply.size
+  modularWitness.go f h witnessSupply 0 witnessSupply.size
 
 /-- Route 1: offer `1` as the gcd and accept it only when the full checker
 validates the modular coprimality witness. -/
