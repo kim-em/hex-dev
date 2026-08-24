@@ -413,8 +413,8 @@ def runFastSqf128 : Unit → IO UInt64 :=
 def runRationalSqf128 : Unit → IO UInt64 :=
   runRationalSqfFixed sqf128Ref fun _ => prepSquarefree 128
 
-/- A dense image gcd uses quadratic long division over the fixed word-sized
-field. The result hash is linear and therefore lower order. -/
+/- Cost-model derivation: a dense image gcd uses quadratic long division over
+the fixed word-sized field. The result hash is linear and therefore lower order. -/
 setup_benchmark runCoprimeImage n => n * n
   with prep := prepCoprime
   where {
@@ -426,8 +426,9 @@ setup_benchmark runCoprimeImage n => n * n
     verdictWarmupFraction := 0.5
   }
 
-/- Route 1 performs the dense image gcd above, normalizes its Bezout identity,
-and replays products of degree `n`; all use quadratic dense arithmetic. -/
+/- Cost-model derivation: route 1 performs the dense image gcd above, normalizes
+its Bezout identity, and replays products of degree `n`; all use quadratic dense
+arithmetic. -/
 setup_benchmark runCoprimeGcd n => n * n
   with prep := prepCoprime
   where {
@@ -439,8 +440,8 @@ setup_benchmark runCoprimeGcd n => n * n
     verdictWarmupFraction := 0.5
   }
 
-/- Brown image gcds and candidate divisions are quadratic in ambient degree;
-the 8-bit family varies only degree. -/
+/- Cost-model derivation: Brown image gcds and candidate divisions are quadratic
+in ambient degree; the 8-bit family varies only degree. -/
 setup_benchmark runDense8 n => n * n
   with prep := prepDense8
   where {
@@ -452,8 +453,8 @@ setup_benchmark runDense8 n => n * n
     verdictWarmupFraction := 0.5
   }
 
-/- The coefficient width is fixed at 256 bits, so the scientific scaling axis
-remains the quadratic polynomial degree. -/
+/- Cost-model derivation: the coefficient width is fixed at 256 bits, so the
+scientific scaling axis remains the quadratic polynomial degree. -/
 setup_benchmark runDense256 n => n * n
   with prep := prepDense256
   where {
@@ -466,9 +467,10 @@ setup_benchmark runDense256 n => n * n
     slopeTolerance := 0.3
   }
 
-/- Degree is fixed and the parameter is coefficient bit width. The integral
-PRS recurrence performs a fixed number of big-integer operations whose limb
-cost is represented by `b * sqrt b` on the GMP Karatsuba-range ladder. -/
+/- Cost-model derivation: degree is fixed and the parameter is coefficient bit
+width. The integral PRS recurrence performs a fixed number of big-integer
+operations whose limb cost is represented by `b * sqrt b` on the GMP
+Karatsuba-range ladder. -/
 setup_benchmark runSwellPrs bits => bits * Nat.sqrt bits
   with prep := prepSwell
   where {
@@ -480,8 +482,9 @@ setup_benchmark runSwellPrs bits => bits * Nat.sqrt bits
     slopeTolerance := 0.25
   }
 
-/- The squarefree input has `n + 2` linear factors. Polynomial multiplication
-and the derivative gcd are quadratic in the resulting degree. -/
+/- Cost-model derivation: the squarefree input has `n + 2` linear factors.
+Polynomial multiplication and the derivative gcd are quadratic in the resulting
+degree. -/
 setup_benchmark runSqfFast n => n * n
   with prep := prepSquarefree
   where {
@@ -494,8 +497,8 @@ setup_benchmark runSqfFast n => n * n
     slopeTolerance := 0.2
   }
 
-/- Denominator clearing is linear and the integer gcd dominates at quadratic
-degree cost for the fixed 101/103 denominators. -/
+/- Cost-model derivation: denominator clearing is linear and the integer gcd
+dominates at quadratic degree cost for the fixed 101/103 denominators. -/
 setup_benchmark runRatGcd n => n * n
   with prep := prepRational
   where {
