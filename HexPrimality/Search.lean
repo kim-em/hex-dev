@@ -53,7 +53,8 @@ than accidentally reuse the same failed stream. -/
 structure RhoFailure where
   /-- Why the search stopped. -/
   stop : RhoStop
-  /-- How many restart attempts were consumed. -/
+  /-- Restart attempts consumed by this failing search alone; callers
+  running several searches accumulate their own totals. -/
   attempts : Nat
   /-- The advanced generator state. -/
   rand : Rand
