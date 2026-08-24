@@ -703,6 +703,71 @@ theorem lcm_normalized [IsMonomialOrder cmp]
     (f h : MvPoly n R cmp) : polyNormalize (lcm f h) = lcm f h := by
   exact polyNormalize_idem _
 
+private theorem reorder_mul
+    {cmp' : Mono n → Mono n → Ordering}
+    [IsMonomialOrder cmp] [IsMonomialOrder cmp']
+    [Lean.Grind.CommRing R] [DecidableEq R] [BEq R] [LawfulBEq R]
+    (p q : MvPoly n R cmp) :
+    reorder cmp' (p * q) = reorder cmp' p * reorder cmp' q := by
+  apply ext
+  intro m
+  rw [coeff_reorder, coeff_mul, coeff_mul]
+  apply List.foldl_add_congr (Mono.splits m)
+  intro ab _
+  rw [coeff_reorder, coeff_reorder]
+
+private theorem reorder_reorder
+    {cmp' : Mono n → Mono n → Ordering}
+    [IsMonomialOrder cmp] [IsMonomialOrder cmp']
+    [Lean.Grind.CommRing R] [DecidableEq R] [BEq R] [LawfulBEq R]
+    (p : MvPoly n R cmp) : reorder cmp (reorder cmp' p) = p := by
+  apply ext
+  intro m
+  rw [coeff_reorder, coeff_reorder]
+
+private theorem reorder_dvd
+    {cmp' : Mono n → Mono n → Ordering}
+    [IsMonomialOrder cmp] [IsMonomialOrder cmp']
+    [Lean.Grind.CommRing R] [DecidableEq R] [BEq R] [LawfulBEq R]
+    {p q : MvPoly n R cmp} (hpq : p ∣ q) :
+    reorder cmp' p ∣ reorder cmp' q := by
+  rcases hpq with ⟨a, ha⟩
+  refine ⟨reorder cmp' a, ?_⟩
+  calc
+    reorder cmp' q = reorder cmp' (a * p) := congrArg (reorder cmp') ha
+    _ = reorder cmp' a * reorder cmp' p := reorder_mul a p
+
+private theorem eq_normalize_of_dvd [IsMonomialOrder cmp]
+    [Lean.Grind.CommRing R] [DecidableEq R] [BEq R] [LawfulBEq R]
+    [Dvd R] [GcdOps R] [LawfulGcdOps R]
+    (a b : MvPoly n R cmp) (ha : polyNormalize a = a)
+    (hab : a ∣ b) (hba : b ∣ a) : a = polyNormalize b := by
+  rcases hab with ⟨q, hbq⟩
+  by_cases hazero : a = 0
+  · have hbzero : b = 0 := by
+      calc
+        b = q * a := hbq
+        _ = 0 := by rw [hazero, MvPoly.mul_zero]
+    rw [hazero, hbzero, polyNormalize_zero]
+  · rcases hba with ⟨r, har⟩
+    have hqr : q * r = 1 := by
+      have hzero : (q * r - 1) * a = 0 := by
+        rw [har, hbq]
+        grind
+      rcases GcdDomainLaws.no_zero_div (q * r - 1) a hzero with
+        hrest | haz
+      · grind
+      · exact False.elim (hazero haz)
+    have hqunit : polyIsUnit q = true :=
+      (polyIsUnit_iff q).mpr ⟨r, hqr⟩
+    symm
+    calc
+      polyNormalize b = polyNormalize (q * a) :=
+        congrArg polyNormalize hbq
+      _ = polyNormalize q * polyNormalize a := polyNormalize_mul q a
+      _ = 1 * a := by rw [polyNormalize_unit q hqunit, ha]
+      _ = a := MvPoly.one_mul a
+
 theorem gcd_reorder
     {cmp' : Mono n → Mono n → Ordering}
     [IsMonomialOrder cmp] [IsMonomialOrder cmp']
@@ -713,7 +778,43 @@ theorem gcd_reorder
     ∃ u v : R, u * v = 1 ∧
       gcd (reorder cmp' f) (reorder cmp' h) =
         reorder cmp' (gcd f h) * C u := by
-  sorry
+  let g := gcd f h
+  let g' := gcd (reorder cmp' f) (reorder cmp' h)
+  let r := reorder cmp' g
+  have hrdvd : r ∣ g' := by
+    apply dvd_gcd
+    · exact reorder_dvd (gcd_dvd_left f h)
+    · exact reorder_dvd (gcd_dvd_right f h)
+  have hg'dvd : g' ∣ r := by
+    have hleft : reorder cmp g' ∣ f := by
+      have := reorder_dvd (cmp := cmp') (cmp' := cmp)
+        (gcd_dvd_left (reorder cmp' f) (reorder cmp' h))
+      simpa [reorder_reorder] using this
+    have hright : reorder cmp g' ∣ h := by
+      have := reorder_dvd (cmp := cmp') (cmp' := cmp)
+        (gcd_dvd_right (reorder cmp' f) (reorder cmp' h))
+      simpa [reorder_reorder] using this
+    have hback : reorder cmp g' ∣ g := dvd_gcd f h _ hleft hright
+    have := reorder_dvd (cmp := cmp) (cmp' := cmp') hback
+    simpa [reorder_reorder] using this
+  have hcanon : g' = polyNormalize r :=
+    eq_normalize_of_dvd g' r (gcd_normalized _ _) hg'dvd hrdvd
+  cases hlead : r.leadingTerm with
+  | none =>
+      refine ⟨1, 1, Lean.Grind.Semiring.mul_one 1, ?_⟩
+      change g' = r * C 1
+      rw [hcanon]
+      unfold polyNormalize polyNormUnit
+      rw [hlead]
+      rfl
+  | some term =>
+      rcases term with ⟨m, c⟩
+      rcases LawfulGcdOps.normUnit_unit c with ⟨v, hv⟩
+      refine ⟨GcdOps.normUnit c, v, hv, ?_⟩
+      change g' = r * C (GcdOps.normUnit c)
+      rw [hcanon]
+      unfold polyNormalize polyNormUnit
+      rw [hlead]
 
 /-- Convert an arity-one integer polynomial to the actual `ZPoly` kernel. -/
 def toZPoly {cmp : Mono 1 → Mono 1 → Ordering}
