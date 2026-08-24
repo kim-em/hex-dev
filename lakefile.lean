@@ -769,6 +769,10 @@ lean_exe hexpolyzgcd_emit_fixtures where
   srcDir := "conformance"
   root := `HexPolyZGcd.EmitFixtures
 
+lean_exe hexmodular_bench where
+  srcDir := "bench"
+  root := `HexModular.Bench
+
 lean_exe hexroots_bench where
   srcDir := "bench"
   root := `HexRoots.Bench
