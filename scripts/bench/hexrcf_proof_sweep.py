@@ -128,7 +128,7 @@ SPEC = SweepSpec(
         Path("libraries.yml"),
         Path("PLAN/Phase4.md"),
         Path("SPEC/benchmarking.md"),
-        Path("SPEC/Libraries/hex-rcf.md"),
+        Path("HexRCF/SPEC/hex-rcf.md"),
     ),
     required_samples=6,
     max_pair_retries=32,
