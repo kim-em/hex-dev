@@ -295,14 +295,19 @@ domain top. -/
 def Result.initialContext (result : Result) : InitialContext :=
   { rows := result.entries.map fun entry => { node := entry.node } }
 
-/-- Replace one node-indexed selection. Out-of-range writes leave the plain
-context unchanged; `inputInitialWithin` remains the authoritative structural
-validator. -/
+/-- Replace one node-indexed selection only when the requested node is present
+at its exact slot. A mistargeted or out-of-range write refuses rather than
+silently leaving a `whole` fact in place. `inputInitialWithin` remains the
+authoritative full-context validator. -/
 def InitialContext.setFact (initial : InitialContext) (node : NodeId)
-    (fact : Hex.Interval) : InitialContext :=
+    (fact : Hex.Interval) : Except Error InitialContext :=
   match initial.rows[node.index]? with
-  | none => initial
-  | some row => { rows := initial.rows.set! node.index { row with fact := some fact } }
+  | none => throw .malformedInitial
+  | some row =>
+      if row.node != node then
+        throw .malformedInitial
+      else
+        pure { rows := initial.rows.set! node.index { row with fact := some fact } }
 
 /-- Materialize absent selections as domain top in exact row order. -/
 def InitialContext.facts (initial : InitialContext) : Array Hex.Interval :=

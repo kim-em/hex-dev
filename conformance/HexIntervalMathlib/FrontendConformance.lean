@@ -142,8 +142,14 @@ def computedInput : Proof.Input Hex.Interval :=
 #guard defaultInitial.facts == #[Hex.Interval.whole, Hex.Interval.whole, Hex.Interval.whole,
   Hex.Interval.whole, Hex.Interval.whole]
 #guard defaultInitial.check result
-#guard computedInitial ==
-  result.initialContext.setFact RuleConformance.product RuleConformance.productFact
+#guard
+  match result.initialContext.setFact RuleConformance.product RuleConformance.productFact with
+  | .ok found => found == computedInitial
+  | .error _ => false
+#guard
+  match result.initialContext.setFact { index := 5 } RuleConformance.productFact with
+  | .error .malformedInitial => true
+  | _ => false
 #guard computedInitial.check result
 #guard
   match Frontend.inputInitialWithin config RuleConformance.scope result computedInitial
@@ -175,6 +181,11 @@ def fewOperations : Frontend.Config :=
 
 def wrongInitialRow : Frontend.InitialContext :=
   { rows := computedInitial.rows.set! 0 { node := RuleConformance.y } }
+
+#guard
+  match wrongInitialRow.setFact RuleConformance.x RuleConformance.productFact with
+  | .error .malformedInitial => true
+  | _ => false
 
 def shortInitial : Frontend.InitialContext := { rows := computedInitial.rows.pop }
 
@@ -393,14 +404,32 @@ theorem computedInitialHolds :
               simpa using member
           · constructor
 
+def computedEvidence? :=
+  Frontend.replay config computedInput [] 0 expectedProgram
+    { node := RuleConformance.product, version := 0 }
+
+#guard match computedEvidence? with | .ok _ => true | .error _ => false
+
+/-- Actual zero-event replay resolves the selected computed-node version-zero
+fact through `Proof.initialBase`; no hand-constructed evidence bypasses replay. -/
+private theorem computedSize : computedInput.facts.size = computedInput.program.nodes.size := by
+  decide +kernel
+
+private def computedResolved :=
+  ((Proof.Facts.start (Rule.semantics config.rule) computedInput computedSize).resolve
+    { node := RuleConformance.product, version := 0 }).get (by decide +kernel)
+
+private theorem computedResolved_fact :
+    computedResolved.fact = RuleConformance.productFact := by
+  rfl
+
 def computedEvidence : Proof.Evidence
     ((Rule.semantics config.rule).Entails computedInput.program
       (Proof.initialBase computedInput) computedInput.target) :=
-  { proof := by
-      intro valuation _ assumptions
-      exact assumptions
-        { node := RuleConformance.product, fact := RuleConformance.productFact } (by
-          simp [Proof.initialBase, computedInput, RuleConformance.product]) }
+  by
+    have sound := computedResolved.sound
+    rw [computedResolved_fact] at sound
+    simpa [computedInput, RuleConformance.product] using sound
 
 theorem computedFacts : computedInput.facts = computedInitial.facts := by
   decide +kernel
@@ -578,8 +607,20 @@ theorem closesEquality
 #print axioms closesConjunction
 #print axioms closesLower
 #print axioms closesEquality
+/-- info: 'Hex.IntervalMathlib.FrontendConformance.closesComputedInitial' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound] -/
+#guard_msgs in
 #print axioms closesComputedInitial
+/-- info: 'Hex.IntervalMathlib.FrontendConformance.rejectsFactPermutation' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound] -/
+#guard_msgs in
 #print axioms rejectsFactPermutation
+/-- info: 'Hex.IntervalMathlib.FrontendConformance.rejectsProofPermutation' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound] -/
+#guard_msgs in
 #print axioms rejectsProofPermutation
 #print axioms targetValue
 /-- info: 'Hex.IntervalMathlib.FrontendConformance.projectedTarget' depends on axioms: [propext, Classical.choice, Quot.sound] -/
