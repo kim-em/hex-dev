@@ -123,19 +123,31 @@ def runDeficient (input : Input) : Int := checksum (Matrix.hnf (matrix input))
 def runTall (input : Input) : Int := checksum (Matrix.hnf (matrix input))
 def runConjugate (input : Input) : Int := checksum (Matrix.hnf (matrix input))
 
-setup_benchmark runDense n => n * n * n with prep := dense where {
+/- Cost-model derivation: the square dense family scans `n` columns, clears
+`O(n)` rows per pivot, and each elementary row update touches `O(n)` entries,
+giving `O(n³)` integer operations. -/
+setup_benchmark runDense n => n ^ 3 with prep := dense where {
   paramFloor := 4, paramCeiling := 20, paramSchedule := .custom #[4, 8, 12, 16, 20]
   maxSecondsPerCall := 10.0
 }
-setup_benchmark runDeficient n => n * n * n with prep := deficient where {
+/- Cost-model derivation: rank deficiency changes which pivots are found but
+not the worst-case column, row-clear, and row-width loops, so the square
+family remains `O(n³)` integer operations. -/
+setup_benchmark runDeficient n => n ^ 3 with prep := deficient where {
   paramFloor := 4, paramCeiling := 20, paramSchedule := .custom #[4, 8, 12, 16, 20]
   maxSecondsPerCall := 10.0
 }
-setup_benchmark runTall n => n * n * n with prep := tall where {
+/- Cost-model derivation: the tall family has `4n` rows and `n` columns;
+clearing `O(n)` rows with `O(n)`-wide updates for each of `n` columns is still
+`O(n³)` integer operations because the aspect ratio is fixed. -/
+setup_benchmark runTall n => n ^ 3 with prep := tall where {
   paramFloor := 2, paramCeiling := 12, paramSchedule := .custom #[2, 4, 6, 8, 12]
   maxSecondsPerCall := 10.0
 }
-setup_benchmark runConjugate n => n * n * n with prep := conjugate where {
+/- Cost-model derivation: conjugation changes coefficient growth but retains
+the square `n`-column by `n`-row clearing structure with `n`-wide updates, so
+the declared operation-count model is `O(n³)`. -/
+setup_benchmark runConjugate n => n ^ 3 with prep := conjugate where {
   paramFloor := 4, paramCeiling := 20, paramSchedule := .custom #[4, 8, 12, 16, 20]
   maxSecondsPerCall := 10.0
 }
