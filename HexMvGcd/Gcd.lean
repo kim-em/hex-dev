@@ -548,7 +548,71 @@ theorem lcm_dvd [IsMonomialOrder cmp]
     [GcdProducer R]
     (f h m : MvPoly n R cmp) (hf : f ∣ m) (hh : h ∣ m) :
     lcm f h ∣ m := by
-  sorry
+  let g := gcd f h
+  let a := (cofactors f h).1
+  let b := (cofactors f h).2
+  let raw := g * a * b
+  change polyNormalize raw ∣ m
+  have hfa : f = g * a := (checkedResult f h).1
+  have hhb : h = g * b := (checkedResult f h).2.1
+  by_cases hg : g = 0
+  · have hfzero : f = 0 := by
+      calc
+        f = g * a := hfa
+        _ = 0 := by rw [hg, MvPoly.zero_mul]
+    rcases hf with ⟨q, hqm⟩
+    have hm : m = 0 := by
+      calc
+        m = q * f := hqm
+        _ = 0 := by rw [hfzero, MvPoly.mul_zero]
+    refine ⟨0, ?_⟩
+    calc
+      m = 0 := hm
+      _ = 0 * polyNormalize raw := (MvPoly.zero_mul _).symm
+  · rcases hf with ⟨x, hxm⟩
+    rcases hh with ⟨y, hym⟩
+    have hcancel : x * a = y * b := by
+      have heq : g * (x * a) = g * (y * b) := by
+        calc
+          g * (x * a) = (g * x) * a := (MvPoly.mul_assoc g x a).symm
+          _ = (x * g) * a :=
+            congrArg (fun p => p * a) (MvPoly.mul_comm g x)
+          _ = x * (g * a) := MvPoly.mul_assoc x g a
+          _ = m := (hxm.trans (congrArg (fun p => x * p) hfa)).symm
+          _ = y * (g * b) := hym.trans (congrArg (fun p => y * p) hhb)
+          _ = (y * g) * b := (MvPoly.mul_assoc y g b).symm
+          _ = (g * y) * b :=
+            congrArg (fun p => p * b) (MvPoly.mul_comm y g)
+          _ = g * (y * b) := MvPoly.mul_assoc g y b
+      have hzero : g * (x * a - y * b) = 0 := by grind
+      rcases GcdDomainLaws.no_zero_div g (x * a - y * b) hzero with
+        hgz | hrest
+      · exact False.elim (hg hgz)
+      · grind
+    have hcop : CoprimeCofactors a b := by
+      exact (checkedResult f h).2.2.2
+    have hbxa : b ∣ x * a := ⟨y, hcancel⟩
+    have hbxb : b ∣ x * b := ⟨x, rfl⟩
+    have hbx : b ∣ x :=
+      CoprimeCancelLaws.cancel_coprime x a b b hcop hbxa hbxb
+    rcases hbx with ⟨z, hx⟩
+    have hraw : raw ∣ m := by
+      refine ⟨z, ?_⟩
+      calc
+        m = x * f := hxm
+        _ = (z * b) * (g * a) := by rw [hx, hfa]
+        _ = z * (b * (g * a)) := MvPoly.mul_assoc _ _ _
+        _ = z * ((g * a) * b) :=
+          congrArg (fun p => z * p) (MvPoly.mul_comm b (g * a))
+        _ = z * raw := rfl
+    rcases hraw with ⟨z, hzm⟩
+    rcases (polyIsUnit_iff (polyNormUnit raw)).mp
+        (polyNormUnit_isUnit raw) with ⟨v, hv⟩
+    refine ⟨z * v, ?_⟩
+    change m = (z * v) * (raw * polyNormUnit raw)
+    calc
+      m = z * raw := hzm
+      _ = (z * v) * (raw * polyNormUnit raw) := by grind
 
 theorem lcm_normalized [IsMonomialOrder cmp]
     [Lean.Grind.CommRing R] [DecidableEq R] [BEq R] [LawfulBEq R]
