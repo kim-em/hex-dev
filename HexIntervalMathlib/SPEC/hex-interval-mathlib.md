@@ -256,6 +256,37 @@ rechecks the retained tree and proof limits once at its theorem boundary.
 Target, refutation, and split remain the separately authenticated
 terminal schemas owned by `Proof.replayTree`; they are not synthesized from a
 runtime callback batch.
+`HexIntervalMathlib.RuntimeTerminal` supplies the sealed target/refutation
+edge. Its ordinary-import-private constructors prevent direct token
+fabrication. `Active` and `Lineage` carry the live controller/retained tree,
+`RuntimeProof.Registry`, and admitted `Proof.Input`; `Checked` carries that
+input while its nested `RuntimeProof.Bundle` independently retains the exact
+registry used by quotation. `replayWithin` checks exact input equality rather
+than claiming that constructor privacy alone prevents redirection. Sibling
+restart consumes the retained token's tree. Target settlement resolves the
+exact current target fact. Refutation first revalidates the retained tree,
+requires the exact current version, then resolves and decodes the exact package
+schema and invokes it against the retained source program/fact; recursive proof
+replay independently proves it again. Search/result and proof body resources
+are checked at settlement, while complete transition/event/structural/proof-
+tree resources remain transactional at bundle quotation.
+
+A general split terminal adapter is intentionally absent. `Proof.seedChild`
+inherits the parent proof equality table and compact identities, whereas
+`Runtime.State.startWithin` restarts a child with an empty equality arena and
+identity zero. If the parent has `n > 0` equalities, the first child equality is
+runtime identity zero but proof identity `n`. Supporting only the empty-parent
+case under a general-looking API would weaken this invariant; the split edge
+therefore remains blocked until the Mathlib-free restart contract imports an
+authenticated equality arena or proof replay changes its identity model.
+`Lineage.resumeWithin` detects this condition along the current node's exact
+ancestor chain, excluding current-node and sibling events, and refuses before
+starting the supplied runtime. Assembly generation is not a parallel semantic
+identity gap: runtime restart authenticates the supplied generation base, and
+transactional `RuntimeProof` quotation reconstructs the parent's post-event
+assembly and checks each child's exact generation, bindings, applications, and
+program. A wrong same-program assembly cannot yield a checked child event; if
+there are no child events, no proof evidence depends on its assembly metadata.
 `Search` never decrements its `remaining` view; executable refresh preserves
 the controller-owned value stored in the sealed session. The adapter uses a
 fixed structural `policyMeasure` for application identifiers and rule keys,
@@ -452,6 +483,10 @@ program and generation. It mutates every typed event role, executable/proof
 package ownership, schema, body, order, and child splice; checks exact one-under
 retained-transition, event, structural-cell, and proof-chronology resources;
 and guards the ordinary root/recursive axiom surfaces.
+`HexIntervalMathlib.RuntimeTerminalConformance` pins exact target settlement
+after the ordinary typed chronology at the root and in both restarted split
+children, exact package-owned refutation, cross-schema/current-fact/input and
+resource refusals, private constructors, and the ordinary replay axiom surface.
 `HexIntervalMathlib.RuleConformance` replays a shared arithmetic DAG through
 the supported state quote and proof registry. Its ordinary theorem makes both
 source assumptions load-bearing through add/sub/mul and checked

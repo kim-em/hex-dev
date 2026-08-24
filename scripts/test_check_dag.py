@@ -37,6 +37,10 @@ class SealedImportAllTest(unittest.TestCase):
                     "HexIntervalMathlib.RuntimeProof"),
                 (Path("bench/HexIntervalMathlib/BypassRuntimeProof.lean"),
                     "HexIntervalMathlib.RuntimeProof"),
+                (Path("conformance/HexIntervalMathlib/BypassRuntimeTerminal.lean"),
+                    "HexIntervalMathlib.RuntimeTerminal"),
+                (Path("bench/HexIntervalMathlib/BypassRuntimeTerminal.lean"),
+                    "HexIntervalMathlib.RuntimeTerminal"),
             ]
             files = [path for path, _ in cases]
             for path, module in cases:
@@ -74,6 +78,12 @@ class SealedImportAllTest(unittest.TestCase):
                     "trusted-internals allowlist",
                     "bench/HexIntervalMathlib/BypassRuntimeProof.lean:1 uses "
                     "`import all HexIntervalMathlib.RuntimeProof` outside its exact "
+                    "trusted-internals allowlist",
+                    "conformance/HexIntervalMathlib/BypassRuntimeTerminal.lean:1 uses "
+                    "`import all HexIntervalMathlib.RuntimeTerminal` outside its exact "
+                    "trusted-internals allowlist",
+                    "bench/HexIntervalMathlib/BypassRuntimeTerminal.lean:1 uses "
+                    "`import all HexIntervalMathlib.RuntimeTerminal` outside its exact "
                     "trusted-internals allowlist",
                 ],
             )
