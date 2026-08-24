@@ -1036,5 +1036,47 @@
     "baseline_blob": "a1b87406682dbf908d990f01676f326499b906e5",
     "current_blob": "791e5727779c8d07cbd2e7080bb2bbd245b82a6b",
     "reason": "Registers the HexPrimality library on top of main's current registrations; the factorization service targets are unchanged."
+  },
+  {
+    "path": "HexArith/ExactDiv.lean",
+    "baseline_blob": null,
+    "current_blob": "1574d415d5dce37af376d0109a1267bc0f75be5c",
+    "reason": "Moves the existing GMP-backed exact-division primitive from HexBareiss into HexArith with the same Lean definition and lean_int_div_exact attachment; the factorization service's executable operation is unchanged."
+  },
+  {
+    "path": "HexBareiss/Bareiss.lean",
+    "baseline_blob": "c3f982cc5d0f9b0b551b3d203c5f060aaeb0a6d1",
+    "current_blob": "43793ec86e4870abeda7effe3ca8f6c7cf1a5ba4",
+    "reason": "Replaces the local exact-division definition with a compatibility alias to the identical primitive moved to HexArith; Bareiss and the factorization runtime retain the same lean_int_div_exact operation."
+  },
+  {
+    "path": "HexLLL/Certificate.lean",
+    "baseline_blob": "76c3a939fa7f85f336e67218b879485c0fa759f5",
+    "current_blob": "0030ff8748a9cce918ab64ed0fe4127483b1d95e",
+    "reason": "Turns HexLLL.Certificate into a compatibility import after moving its packed certificate declarations unchanged to HexMatrix.Certificate; existing consumers receive the same executable definitions."
+  },
+  {
+    "path": "HexLLL/Lattice.lean",
+    "baseline_blob": "673c8893b5a6f36ff606a9dd0648ffac4380765b",
+    "current_blob": "b82aa0eb2ae3c57f9069c6fe080462a9d88ccb8d",
+    "reason": "Imports the relocated lattice propositions and proofs from HexMatrix.Lattice and removes their former copies; no executable factorization definition changes."
+  },
+  {
+    "path": "HexMatrix/Certificate.lean",
+    "baseline_blob": null,
+    "current_blob": "d4bafd32cf66130696292b73a9386d481cc2d9e1",
+    "reason": "Relocates the existing packed matrix certificate declarations from HexLLL.Certificate so Hermite can reuse them without depending on LLL; their definitions are unchanged and existing factorization consumers retain the same behavior."
+  },
+  {
+    "path": "HexMatrix/Lattice.lean",
+    "baseline_blob": null,
+    "current_blob": "fea764d500a54f533220026f03796e9e5f9ba3f1",
+    "reason": "Relocates the existing lattice proposition and transport proofs from HexLLL.Lattice and adds proof lemmas used by Hermite; it adds no executable factorization operation."
+  },
+  {
+    "path": "lakefile.lean",
+    "baseline_blob": "a1b87406682dbf908d990f01676f326499b906e5",
+    "current_blob": "c513d61bc5722221227dd3f126a96b9cc8a178a1",
+    "reason": "Combines current main's registrations with Hermite libraries, conformance, fixture, and benchmark targets; none enters hexbz_factor_service or changes its executable dependency graph or build flags."
   }
 ]
