@@ -326,6 +326,70 @@ theorem mulEqPacked_sound {p q target : ZPoly}
     rw [DensePoly.mul_one_right_poly] at htarget
     exact hproduct.symm.trans htarget
 
+/-- Every exact polynomial product passes the packed multiplication checker. -/
+theorem mulEqPacked_complete {p q target : ZPoly}
+    (hproduct : p * q = target) :
+    mulEqPacked p q target = true := by
+  unfold mulEqPacked
+  by_cases hz : p.isZero || q.isZero
+  · rw [if_pos hz]
+    rw [beq_iff_eq]
+    rw [← hproduct]
+    have hz' : p.isZero = true ∨ q.isZero = true := by
+      simpa only [Bool.or_eq_true] using hz
+    rcases hz' with hp | hq
+    · have hp0 : p = 0 :=
+        (DensePoly.size_eq_zero_iff p).mp
+          ((DensePoly.isZero_eq_true_iff p).mp hp)
+      rw [hp0]
+      exact DensePoly.zero_mul q
+    · have hq0 : q = 0 :=
+        (DensePoly.size_eq_zero_iff q).mp
+          ((DensePoly.isZero_eq_true_iff q).mp hq)
+      rw [hq0, DensePoly.mul_comm_poly]
+      exact DensePoly.zero_mul p
+  · rw [if_neg hz]
+    dsimp only
+    rw [Bool.and_eq_true, decide_eq_true_eq, beq_iff_eq]
+    let A := max (max (maxAbs p) (maxAbs q)) (maxAbs target)
+    let width := bitLen A
+    let b := 2 * width + ceilLog2 (min p.size q.size) + 1
+    let slots := p.size + q.size - 1
+    have hsize : target.size ≤ slots := by
+      rw [← hproduct]
+      simpa only [slots] using DensePoly.size_mul_le p q
+    refine ⟨by simpa only [slots] using hsize, ?_⟩
+    have hpPack :
+        packAux b p.coeff 0 p.size = DensePoly.eval p ((2 : Int) ^ b) := by
+      rw [packAux_eq]
+      simpa using packSpec_eq_eval b p p.size (Nat.le_refl _)
+    have hqPack :
+        packAux b q.coeff 0 q.size = DensePoly.eval q ((2 : Int) ^ b) := by
+      rw [packAux_eq]
+      simpa using packSpec_eq_eval b q q.size (Nat.le_refl _)
+    have htPack :
+        packAux b target.coeff 0 target.size =
+          DensePoly.eval target ((2 : Int) ^ b) := by
+      rw [packAux_eq]
+      simpa using packSpec_eq_eval b target target.size (Nat.le_refl _)
+    have hOnePack :
+        packAux b (1 : ZPoly).coeff 0 (1 : ZPoly).size = 1 := by
+      rw [packAux_eq]
+      simp only [Nat.zero_add]
+      have heval := packSpec_eq_eval b (1 : ZPoly) (1 : ZPoly).size
+        (Nat.le_refl _)
+      rw [heval]
+      exact DensePoly.eval_C_semiring 1 ((2 : Int) ^ b)
+    have hpacked :
+        packAux b p.coeff 0 p.size * packAux b q.coeff 0 q.size +
+            constPack b (((2 ^ (b - 1) : Nat) : Int)) slots =
+          packAux b (fun i => target.coeff i +
+            ((2 ^ (b - 1) : Nat) : Int)) 0 slots := by
+      rw [packTarget target b slots hsize]
+      rw [hpPack, hqPack, htPack, hOnePack, Int.mul_one,
+        ← DensePoly.eval_mul_commring, hproduct]
+    simpa only [A, width, b, slots, Int.ofNat_eq_natCast] using hpacked
+
 /-- A common divisor of two polynomials with coprime contents is primitive. -/
 private theorem primitiveCommon {f h d : ZPoly}
     (hcontent : Int.gcd (content f) (content h) = 1)
