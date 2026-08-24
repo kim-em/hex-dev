@@ -286,7 +286,7 @@ def metricsReport : IO UInt32 := do
 
 /- Cost model: Horner evaluation performs `n + 1` dense matrix-vector
 products, each quadratic in the dimension; hashing the output is linear. -/
-setup_benchmark runEvalVec n => n * n * n
+setup_benchmark runEvalVec n => (n * n * n)
   with prep := prepWorkInput
   where {
     paramFloor := 2
@@ -300,7 +300,7 @@ setup_benchmark runEvalVec n => n * n * n
 /- Cost model: the shared Krylov recurrence performs `n` dense
 matrix-vector products of quadratic cost. Hashing all `(n + 1) * n` entries
 is lower-order quadratic work. -/
-setup_benchmark runKrylovRows n => n * n * n
+setup_benchmark runKrylovRows n => (n * n * n)
   with prep := prepWorkInput
   where {
     paramFloor := 2
@@ -313,7 +313,7 @@ setup_benchmark runKrylovRows n => n * n * n
 
 /- Cost model: one vector order builds a cubic Krylov workspace and performs
 dense row reduction on an `(n + 1) × n` matrix, also cubic. -/
-setup_benchmark runVecMinPoly n => n * n * n
+setup_benchmark runVecMinPoly n => (n * n * n)
   with prep := prepWorkInput
   where {
     paramFloor := 2
@@ -326,7 +326,7 @@ setup_benchmark runVecMinPoly n => n * n * n
 
 /- Cost model: the deterministic standard-basis sweep computes `n` vector
 orders of cubic cost; polynomial LCM and result hashing are lower order. -/
-setup_benchmark runMinPoly n => n * n * n * n
+setup_benchmark runMinPoly n => (n * n * n * n)
   with prep := prepWorkInput
   where {
     paramFloor := 2
@@ -341,7 +341,7 @@ setup_benchmark runMinPoly n => n * n * n * n
 and right-inverse computations in the basis sweep. Walking every witness for
 the result hash costs at most cubic time and does not change the quartic
 bound. -/
-setup_benchmark runMinPolyCert n => n * n * n * n
+setup_benchmark runMinPolyCert n => (n * n * n * n)
   with prep := prepWorkInput
   where {
     paramFloor := 2
@@ -355,7 +355,7 @@ setup_benchmark runMinPolyCert n => n * n * n * n
 /- Cost model: checking each of `n` order witnesses rebuilds a cubic Krylov
 prefix/right-inverse product in the worst case. Polynomial identity checks
 are lower order, giving a quartic checker bound. -/
-setup_benchmark runCertCheck n => n * n * n * n
+setup_benchmark runCertCheck n => (n * n * n * n)
   with prep := prepCertInput
   where {
     paramFloor := 2
@@ -369,7 +369,7 @@ setup_benchmark runCertCheck n => n * n * n * n
 /- Cost model: the basis sweep computes up to `n` vector orders; each order
 uses up to `n` dense matrix-vector products of quadratic cost, while polynomial
 gcd/lcm work is lower order here, giving the conservative quartic bound. -/
-setup_benchmark runRandomDense n => n * n * n * n
+setup_benchmark runRandomDense n => (n * n * n * n)
   where {
     paramFloor := 2
     paramCeiling := 12
@@ -382,7 +382,7 @@ setup_benchmark runRandomDense n => n * n * n * n
 /- Cost model: the basis sweep computes up to `n` vector orders; each order
 uses up to `n` dense matrix-vector products of quadratic cost, so the declared
 worst-case complexity is quartic in the dimension. -/
-setup_benchmark runModular n => n * n * n * n
+setup_benchmark runModular n => (n * n * n * n)
   where {
     paramFloor := 2
     paramCeiling := 32
@@ -395,7 +395,7 @@ setup_benchmark runModular n => n * n * n * n
 /- Cost model: even though repeated blocks can shorten individual Krylov
 sequences, the generic algorithm sweeps `n` basis vectors with at most `n`
 quadratic matrix-vector steps each, hence a quartic worst-case bound. -/
-setup_benchmark runDerogatory n => n * n * n * n
+setup_benchmark runDerogatory n => (n * n * n * n)
   where {
     paramFloor := 2
     paramCeiling := 20
@@ -408,7 +408,7 @@ setup_benchmark runDerogatory n => n * n * n * n
 /- Cost model: companion structure is not exploited by the dense algorithm;
 the `n` vector orders can each take `n` quadratic matrix-vector steps, which
 derives the conservative quartic model. -/
-setup_benchmark runCompanion n => n * n * n * n
+setup_benchmark runCompanion n => (n * n * n * n)
   where {
     paramFloor := 2
     paramCeiling := 12
