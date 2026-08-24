@@ -36,17 +36,11 @@ namespace Hex
 
 universe u
 
-/-- Law required of the coefficient quotient used by Brown's exact divisions.
-    It also implies cancellation by every nonzero right factor. -/
-class ExactDivLaws (R : Type u) [Zero R] [Mul R] [Div R] : Prop where
-  mul_div_cancel_right : ∀ a b : R, b ≠ 0 → (a * b) / b = a
+/- The `ExactDivLaws` law class and the total `exactDiv` wrapper
+   (`exactDiv a 0 = 0`, otherwise `a / b`) are declared below this library in
+   `HexBasic/ExactDiv.lean` and re-exported here through a public import. -/
 
 variable {R : Type u}
-
-/-- Total exact quotient wrapper. A zero denominator returns zero; on a
-    nonzero exact division this is the underlying lawful quotient. -/
-def exactDiv [Zero R] [DecidableEq R] [Div R] (a b : R) : R :=
-  if b = 0 then 0 else a / b
 
 /-- Natural powers by binary exponentiation, using only the executable `One`
     and `Mul` operations. -/
@@ -71,7 +65,19 @@ def det [Zero R] [One R] [Add R] [Sub R] [Mul R] :
 
 end SubresultantMinor
 
+/-- Executable result of a degree-ordered Brown PRS run. `chain` stores
+    Brown's nonzero `G₁, …, Gₖ`, excluding the generated terminal zero;
+    `scale` is the corrected terminal principal-subresultant scalar `hₖ`. -/
+structure PRSResult (R : Type u) [Zero R] [DecidableEq R] where
+  chain : Array (DensePoly R)
+  scale : R
+
 namespace DensePoly
+
+/-- The ring element `(-1)^n`, expressed using only `Zero`, `One`, and
+    `Sub`. -/
+def negOnePow [Zero R] [One R] [Sub R] (n : Nat) : R :=
+  if n % 2 = 0 then 1 else 0 - 1
 
 /-- Divide every coefficient by the same scalar through `exactDiv`. -/
 noncomputable def divScalar [Zero R] [DecidableEq R] [Div R]
@@ -116,16 +122,36 @@ def pseudoDivMod [Zero R] [DecidableEq R] [One R] [Add R] [Sub R] [Mul R]
    than `f`, then `pseudoDivMod f g = (0, f)`. Both have corresponding rewrite
    lemmas. -/
 
-/-- Brown's nonzero subresultant pseudo-remainder sequence. For two nonzero
-    inputs it orders them by decreasing degree, stores both ordered inputs,
-    and stops before the generated terminal zero. Zero inputs are omitted. -/
-def subresultantChain [Zero R] [DecidableEq R] [One R] [Add R] [Sub R]
-    [Mul R] [Div R] (f g : DensePoly R) : Array (DensePoly R) := ...
+/-- Brown's recurrence for two nonzero inputs already ordered by decreasing
+    dense degree, with an explicit proof-audit fuel parameter. -/
+def subresultantOrderedFuel [Zero R] [DecidableEq R] [One R] [Add R] [Sub R]
+    [Mul R] [Div R] (f g : DensePoly R) (fuel : Nat) : PRSResult R := ...
 
-/-- Resultant with Mathlib's default-formal-degree conventions. For ordered
-    nonzero inputs the Brown worker returns `(chain, hFinal)`; the value is
-    `hFinal` exactly when the last chain element is constant and zero
-    otherwise. Reversed inputs receive the standard degree-product sign. -/
+/-- The ordered Brown run at the sufficient public fuel budget
+    `g.size + 1`. -/
+def subresultantOrdered [Zero R] [DecidableEq R] [One R] [Add R] [Sub R]
+    [Mul R] [Div R] (f g : DensePoly R) : PRSResult R :=
+  subresultantOrderedFuel f g (g.size + 1)
+
+/-- Total Brown run. Zero inputs are omitted; two nonzero inputs are ordered
+    by decreasing dense degree before entering `subresultantOrdered`. -/
+def subresultantRun [Zero R] [DecidableEq R] [One R] [Add R] [Sub R]
+    [Mul R] [Div R] (f g : DensePoly R) : PRSResult R := ...
+
+/-- Brown's nonzero subresultant pseudo-remainder sequence: the chain stored
+    by `subresultantRun`. -/
+def subresultantChain [Zero R] [DecidableEq R] [One R] [Add R] [Sub R]
+    [Mul R] [Div R] (f g : DensePoly R) : Array (DensePoly R) :=
+  (subresultantRun f g).chain
+
+/-- The resultant of an ordered nonzero Brown run: the corrected terminal
+    scale when the last stored term is a nonzero constant, zero otherwise. -/
+def resultantOrdered [Zero R] [DecidableEq R] [One R] [Add R] [Sub R]
+    [Mul R] [Div R] (f g : DensePoly R) : R := ...
+
+/-- Resultant with Mathlib's default-formal-degree conventions. Zero inputs
+    are handled by the total conventions below; reversed nonzero inputs
+    receive the standard degree-product sign before `resultantOrdered`. -/
 def resultant [Zero R] [DecidableEq R] [One R] [Add R] [Sub R] [Mul R]
     [Div R] (f g : DensePoly R) : R := ...
 
@@ -421,32 +447,12 @@ quotient by `lc(f)`. This correction is essential in positive characteristic,
 where the derivative's actual degree can fall below `n - 1`; with it the
 quotient is exact over every stated exact-division domain.
 
-## Planned extended chain for gcd consumers
+## Downstream contracts
 
-`hex-poly-z-gcd` and `hex-mv-gcd` both need the transformation that produces
-each Brown entry, not only the entries themselves. The existing worker calls
-`pseudoDivMod` at `HexResultant/Subresultant.lean:616` and retains only the
-remainder, so this is a real extension rather than an accessor:
-
-```lean
-/-- `(uₖ, vₖ, Sₖ)` for every stored Brown entry, with
-`uₖ * f + vₖ * g = Sₖ`. -/
-def subresultantChainExt [Zero R] [DecidableEq R] [One R] [Add R] [Sub R]
-    [Mul R] [Div R] (f g : DensePoly R) :
-    Array (DensePoly R × DensePoly R × DensePoly R)
-```
-
-The extension uses the unchanged Brown remainder recurrence and accumulates
-the two transformation cofactors through every pseudo-scaling and exact
-scalar division. Its correctness theorem requires `Lean.Grind.CommRing R`
-and `ExactDivLaws R`, proves the displayed identity for every entry, and
-proves the cofactor numerators are divisible by each Brown scalar before the
-executable division. Projection of the third components equals
-`subresultantChain f g`, including input ordering and zero conventions.
-
-This API belongs here so the two gcd libraries share one recurrence and one
-proof. It is a prerequisite for their complete `splitBezout` fallback; it
-does not alter the current resultant or discriminant contracts.
+The extended chain `subresultantChainExt` (Bezout cofactors for every stored
+Brown entry) is a `hex-poly-z-gcd`/`hex-mv-gcd` prerequisite, sketched in
+[SPEC/future-work.md](../../SPEC/future-work.md); it does not alter the
+current resultant or discriminant contracts.
 
 ## File organisation
 

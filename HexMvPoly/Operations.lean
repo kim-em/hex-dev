@@ -355,6 +355,37 @@ theorem coeff_mul [Lean.Grind.Semiring R] [DecidableEq R]
       (Mono.splits m).foldl (fun acc ab => acc + value ab) 0
   rw [hkeyFilter, List.foldl_add_perm value hactivePerm 0, hsplitFilter]
 
+/-- Every monomial occurring in a product is a product of monomials from the
+two input supports. Cancellation may make the converse false. -/
+theorem exists_mul_of_mem [Lean.Grind.Semiring R] [DecidableEq R]
+    {p q : MvPoly n R cmp} {m : Mono n} (hm : m ∈ (p * q).monomials) :
+    ∃ a ∈ p.monomials, ∃ b ∈ q.monomials, Mono.mul a b = m := by
+  letI : Decidable (∃ a ∈ p.monomials, ∃ b ∈ q.monomials,
+      Mono.mul a b = m) := Classical.propDecidable _
+  by_cases hexists : ∃ a ∈ p.monomials, ∃ b ∈ q.monomials,
+      Mono.mul a b = m
+  · exact hexists
+  · have hzero : coeff m (p * q) = 0 := by
+      rw [coeff_mul]
+      calc
+        (Mono.splits m).foldl
+            (fun acc ab => acc + coeff ab.1 p * coeff ab.2 q) 0 =
+            (Mono.splits m).foldl (fun acc _ => acc + 0) 0 := by
+              apply List.foldl_congr
+              intro acc ab hab
+              by_cases ha : ab.1 ∈ p.monomials
+              · have hb : ab.2 ∉ q.monomials := by
+                  intro hb
+                  apply hexists
+                  exact ⟨ab.1, ha, ab.2, hb,
+                    (Mono.splits_mem_iff ..).mp hab⟩
+                rw [coeff_eq_zero_of_not_mem ab.2 q hb,
+                  Lean.Grind.Semiring.mul_zero]
+              · rw [coeff_eq_zero_of_not_mem ab.1 p ha,
+                  Lean.Grind.Semiring.zero_mul]
+        _ = 0 := List.foldl_add_zero _ _
+    exact False.elim (((mem_monomials_iff m (p * q)).mp hm) hzero)
+
 /-- Zero is absorbing on the right for polynomial multiplication. -/
 theorem mul_zero [Lean.Grind.Semiring R] [DecidableEq R]
     (p : MvPoly n R cmp) : p * 0 = 0 := by
@@ -592,6 +623,41 @@ theorem one_mul [Lean.Grind.Semiring R] [DecidableEq R]
     _ = 0 + coeff m p :=
       List.foldl_add_single _ _ _ _ hmem (Mono.splits_nodup _)
     _ = coeff m p := by grind
+
+/-- Multiplication by a constant polynomial scales every coefficient. -/
+theorem coeff_C_mul [Lean.Grind.Semiring R] [DecidableEq R]
+    (c : R) (p : MvPoly n R cmp) (m : Mono n) :
+    coeff m (C c * p) = c * coeff m p := by
+  rw [coeff_mul]
+  simp only [coeff_C]
+  have hmem : (Mono.zero, m) ∈ Mono.splits m :=
+    (Mono.splits_mem_iff ..).mpr (Mono.zero_mul m)
+  calc
+    (Mono.splits m).foldl
+        (fun acc ab =>
+          acc + (if ab.1 = Mono.zero then c else 0) * coeff ab.2 p)
+        0 =
+        (Mono.splits m).foldl
+          (fun acc ab =>
+            acc + if ab = (Mono.zero, m) then c * coeff ab.2 p else 0)
+          0 := by
+            apply List.foldl_congr
+            intro acc ab hab
+            have hmul := (Mono.splits_mem_iff ..).mp hab
+            by_cases ha : ab.1 = Mono.zero
+            · have hb : ab.2 = m := by
+                rw [ha, Mono.zero_mul] at hmul
+                exact hmul
+              have hab' : ab = (Mono.zero, m) := Prod.ext ha hb
+              rw [Hex.ite_eq_left ha, Hex.ite_eq_left hab', hb]
+            · have hab' : ab ≠ (Mono.zero, m) := by
+                intro h
+                exact ha (congrArg Prod.fst h)
+              rw [Hex.ite_eq_right ha, Lean.Grind.Semiring.zero_mul,
+                Hex.ite_eq_right hab']
+    _ = 0 + c * coeff m p :=
+      List.foldl_add_single _ _ _ _ hmem (Mono.splits_nodup _)
+    _ = c * coeff m p := by grind
 
 /-- A three-factor monomial split. -/
 private abbrev MonoTriple (n : Nat) :=

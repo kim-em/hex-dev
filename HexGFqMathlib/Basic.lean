@@ -4,10 +4,14 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexGFq
-import HexGF2Mathlib.Field
-import Mathlib.Algebra.Field.MinimalAxioms
-import Mathlib.FieldTheory.Finite.GaloisField
+module
+
+public import HexGFq
+public import HexGF2Mathlib.Field
+public import Mathlib.Algebra.Field.MinimalAxioms
+public import Mathlib.FieldTheory.Finite.GaloisField
+
+public section
 
 /-!
 Generic Mathlib-side definitions for the executable `GFq` model.

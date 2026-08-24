@@ -210,7 +210,7 @@ example : LawfulBEq (QAdjoin sqrtTwoPoly sqrtTwoRoot) := inferInstance
 
 -- Construct the checked instance through the executable decision so this
 -- regression reaches the shipped inverse and division implementations without
--- adding a proof axiom or a test-only `sorry`.
+-- adding anything to the trust surface.
 #guard
     if hirred : ZPoly.isIrreducible sqrtTwoPoly = true then
       letI : ZPoly.CheckedIrreducible sqrtTwoPoly :=

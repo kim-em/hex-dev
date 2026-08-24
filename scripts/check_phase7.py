@@ -7,9 +7,11 @@ anchored to it exists. Nothing checked either, so both drifted.
 
 Three rules, applied to every library with `done_through >= 7`:
 
-* **Chapter.** A `mathlib: true` companion needs a
-  `# The Mathlib correspondence` section in its computational partner's
-  chapter; every other library needs `HexManual/Chapters/<Lib>.lean`.
+* **Chapter.** A `mathlib: true` companion named `<X>Mathlib` needs a
+  `# The Mathlib correspondence` section in `<X>`'s chapter. A `mathlib: true`
+  library without that suffix is integrated (HexRCF): it has no computational
+  partner and carries its own chapter like any other library. Every other
+  library needs `HexManual/Chapters/<Lib>.lean`.
 * **Reachable.** `HexManual.lean` imports the chapter, so `lake build
   HexManual` elaborates it.
 * **Tutorials.** Every tutorial anchored to the library exists, is imported by
@@ -141,7 +143,10 @@ def check(root: Path) -> list[str]:
 
         chapter = root / "HexManual" / "Chapters" / f"{name}.lean"
         partner = partner_chapter(root, name)
-        if library.mathlib:
+        # An integrated `mathlib: true` library (no `Mathlib` suffix, e.g.
+        # HexRCF) has no computational partner; it carries its own chapter and
+        # falls through to the plain-library branch.
+        if library.mathlib and name.endswith("Mathlib"):
             if partner is None:
                 errors.append(
                     f"{name}: done_through 7, but no computational partner chapter exists to "
