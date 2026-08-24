@@ -65,15 +65,17 @@ theorem BuildResult.eq_ready (result : BuildResult)
 
 /-- Extract the exact transparent reification result after kernel-checked
 success. -/
-def Frontend.resultOfCheck (result : Except Frontend.Error Frontend.Result)
+def checkedResult (result : Except Frontend.Error Frontend.Result)
     (success : result.toOption.isSome = true) : Frontend.Result :=
   result.toOption.get success
 
-theorem sourceNil : List.Forall₂
+namespace Sources
+
+theorem nil : List.Forall₂
     (fun value : ℝ => fun source : Hex.Interval => source.Contains value) [] [] :=
   .nil
 
-theorem sourceCons {value : ℝ} {source : Hex.Interval} {values : List ℝ}
+theorem cons {value : ℝ} {source : Hex.Interval} {values : List ℝ}
     {sources : List Hex.Interval} (member : source.Contains value)
     (tail : List.Forall₂
       (fun value : ℝ => fun source : Hex.Interval => source.Contains value)
@@ -82,6 +84,8 @@ theorem sourceCons {value : ℝ} {source : Hex.Interval} {values : List ℝ}
       (fun value : ℝ => fun source : Hex.Interval => source.Contains value)
       (value :: values) (source :: sources) :=
   .cons member tail
+
+end Sources
 
 namespace Eval
 
@@ -428,7 +432,7 @@ meta def resultExpr (config : Frontend.Config) (sourceCount : Nat)
   let option ← mkAppM ``Except.toOption #[checked]
   let ready ← mkAppM ``Option.isSome #[option]
   let success ← mkDecideProof (← mkAppM ``Eq #[ready, toExpr true])
-  let result ← mkAppM ``Frontend.resultOfCheck #[checked, success]
+  let result ← mkAppM ``checkedResult #[checked, success]
   mkAppM ``Frontend.Result.mk
     #[← mkAppM ``Frontend.Result.program #[result],
       ← mkAppM ``Frontend.Result.target #[result], ← termExpr term,
@@ -955,6 +959,31 @@ private meta def liftRuntimeExcept {ε α : Type} : Except ε α → Except ε (
   | .error error => .error error
   | .ok value => .ok ⟨value⟩
 
+/-- Resolve the first policy-pending application through the exact sealed
+runtime registry. Handler applicability is only a Boolean in the executable
+contract, so its discarded package-specific cost cannot be reconstructed here
+without running the arithmetic proposal a second time. -/
+private meta def pendingRule?
+    {ruleConfig : Rule.Config} (registry : Rule.Runtime.EmitRegistry ruleConfig)
+    (remaining : List Nat) :
+    Option RuleKey := do
+  let index ← remaining.head?
+  let application ← registry.runtime.assembly.applications[index]?
+  let registration ←
+    registry.runtime.assembly.registry.registrations[application.rule.index]?
+  pure registration.key
+
+private meta def stoppedMessage
+    {ruleConfig : Rule.Config} (registry : Rule.Runtime.EmitRegistry ruleConfig) (live : Nat)
+    (remaining : List Nat) : String :=
+  let residual := if live == 1 then "1 live offer remains" else s!"{live} live offers remain"
+  match pendingRule? registry remaining with
+  | some rule =>
+      s!"rule {rule.name} declined its application under the configured resource envelope; " ++
+        residual
+  | none =>
+      s!"controller stopped with {live} live offers and {remaining.length} pending actions"
+
 /-! Execute and settle the exact typed runtime chronology. Keeping this phase
 in `Except` permits its sealed `Type 1` handles to remain outside `MetaM`. -/
 meta def prepareRuntime (config : Frontend.Config) (reified : Frontend.Result)
@@ -980,8 +1009,7 @@ meta def prepareRuntime (config : Frontend.Config) (reified : Frontend.Result)
   let controller ← match Runtime.Controller.runWithin limits.controller limits.envelope
       runtimeMeasure runtimePolicy plan initialController with
     | .ok (.stopped 0 controller []) => pure controller
-    | .ok (.stopped live _ remaining) =>
-        throw s!"controller stopped with {live} live offers and {remaining.length} pending actions"
+    | .ok (.stopped live _ remaining) => throw (stoppedMessage registry live remaining)
     | .error error => throw s!"controller run failed: {repr error}"
   let some version := controller.runtime.branch.versions[reified.target.index]?
     | throw "target version escaped the runtime branch"
@@ -1032,9 +1060,9 @@ meta def emitBoundWith (config : Frontend.Config) (expression : Expr)
   let inputFacts ← mkAppM ``Proof.Input.facts #[emitted.input]
   let resultFacts ← mkAppM ``Frontend.Result.facts #[resultExpr, sourceFactsExpr]
   let factsEq ← mkDecideProof (← mkAppM ``Eq #[inputFacts, resultFacts])
-  let mut holds := mkConst ``sourceNil
+  let mut holds := mkConst ``Sources.nil
   for proof in sourceProofs.toList.reverse do
-    holds ← mkAppM ``sourceCons #[proof, holds]
+    holds ← mkAppM ``Sources.cons #[proof, holds]
   let sourceHolds ← mkAppM ``Frontend.SourcesContain.ofForall₂ #[holds]
   let candidate ← mkAppM ``Frontend.closeSources
     #[configExpr, resultExpr, valuesExpr, model, emitted.input, emitted.evidence,

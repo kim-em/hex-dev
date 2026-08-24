@@ -120,7 +120,12 @@ the tactic then kernel-checks the input/program/target/fact/model correlations,
 closes the exact caller source proofs, and proves that the reified term
 evaluates to the original Lean expression. Every emitted boundary crosses
 `Proof.emitChecked`; runtime success is never reflected into proof syntax. The
-bare `interval` tactic currently closes
+first residual application is resolved back through the same sealed assembly
+and registration table for diagnostics, so a resource-starved built-in names
+the responsible stable rule rather than exposing a brittle aggregate pending
+count. Handler applicability currently retains only a Boolean; the tactic does
+not rerun arithmetic to manufacture a more specific discarded refusal cost.
+The bare `interval` tactic currently closes
 strict or non-strict lower and upper goals, closed-singleton equality, and
 conjunctions. `interval?` reports the fixed forward configuration only after
 the same transaction succeeds; failure emits no misleading query result.

@@ -178,8 +178,8 @@ example {x : ℝ} (source : x = 2) : True := by
     match failure with
     | none => throwError "precision-starved reciprocal recipe was accepted"
     | some message =>
-        unless message ==
-            "interval: controller stopped with 1 live offers and 2 pending actions" do
+        unless message.contains "rule hex.interval.rule.inv declined" &&
+            message.contains "configured resource envelope" do
           throwError "precision-starved reciprocal failed at the wrong boundary: {message}"
   trivial
 
