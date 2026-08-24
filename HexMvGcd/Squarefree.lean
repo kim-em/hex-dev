@@ -167,6 +167,45 @@ def mergeSqfFactor (entry : SqfFactor n R cmp) :
           multiplicity := entry.multiplicity } :: tail
       else head :: mergeSqfFactor entry tail
 
+private def PositiveMultiplicities (factors : List (SqfFactor n R cmp)) : Prop :=
+  ∀ factor ∈ factors, 0 < factor.multiplicity
+
+omit [DecidableEq R] [Dvd R] [BezoutOps R] [LawfulGcdOps R]
+    [LawfulBezoutOps R] [GcdProducer R] in
+private theorem positive_merge (entry : SqfFactor n R cmp)
+    (hentry : 0 < entry.multiplicity) {factors : List (SqfFactor n R cmp)}
+    (hfactors : PositiveMultiplicities factors) :
+    PositiveMultiplicities (mergeSqfFactor entry factors) := by
+  induction factors with
+  | nil => simpa [PositiveMultiplicities, mergeSqfFactor]
+  | cons head tail ih =>
+      simp only [mergeSqfFactor]
+      split
+      · simp_all [PositiveMultiplicities]
+      · split
+        · simp_all [PositiveMultiplicities]
+        · simp_all [PositiveMultiplicities]
+
+omit [DecidableEq R] [Dvd R] [BezoutOps R] [LawfulGcdOps R]
+    [LawfulBezoutOps R] [GcdProducer R] in
+private theorem positive_merge_fold (entries acc : List (SqfFactor n R cmp))
+    (hentries : PositiveMultiplicities entries)
+    (hacc : PositiveMultiplicities acc) :
+    PositiveMultiplicities (entries.foldl
+      (fun acc entry => mergeSqfFactor entry acc) acc) := by
+  induction entries generalizing acc with
+  | nil => simpa
+  | cons entry entries ih =>
+      simp only [List.foldl_cons]
+      have hentries' : 0 < entry.multiplicity ∧
+          PositiveMultiplicities entries := by
+        simpa [PositiveMultiplicities] using hentries
+      apply ih
+      · exact hentries'.2
+      · apply positive_merge entry
+        · exact hentries'.1
+        · exact hacc
+
 /-- One decreasing Yun layer in the selected main variable.  The fuel is the
 total degree of the primitive input plus one; in characteristic zero every
 nonterminal layer removes at least one degree from `b`. -/
@@ -184,6 +223,24 @@ def yunLoop [NatCast R] [IsMonomialOrder cmp] (i : Fin n) (fuel k : Nat)
         let nextD := nextC - derivative i nextB
         let acc := if polyIsUnit factor then acc else ⟨factor, k⟩ :: acc
         yunLoop i fuel (k + 1) nextB nextD acc
+
+omit [LawfulGcdOps R] [LawfulBezoutOps R] in
+private theorem positive_yunLoop [NatCast R] [IsMonomialOrder cmp]
+    (i : Fin n) (fuel k : Nat) (b d : MvPoly n R cmp)
+    (acc : List (SqfFactor n R cmp)) (hk : 0 < k)
+    (hacc : PositiveMultiplicities acc) :
+    PositiveMultiplicities (yunLoop i fuel k b d acc) := by
+  induction fuel generalizing k b d acc with
+  | zero => simpa [yunLoop, PositiveMultiplicities] using hacc
+  | succ fuel ih =>
+      simp only [yunLoop]
+      split
+      · simpa [PositiveMultiplicities] using hacc
+      · apply ih
+        · omega
+        · split
+          · exact hacc
+          · simpa [PositiveMultiplicities] using And.intro hk hacc
 
 /-- Move the normalization unit of the primitive part into the scalar output,
 so the polynomial sent to recursive decomposition is canonically normalized
@@ -242,6 +299,28 @@ def sqfStep [NatCast R] {m : Nat} (lower : SqfOpsAt R m) :
 def sqfOps [NatCast R] : (m : Nat) → SqfOpsAt R m
   | 0 => sqfBase
   | m + 1 => sqfStep (sqfOps m)
+
+omit [LawfulGcdOps R] [LawfulBezoutOps R] in
+private theorem positive_sqfOps [NatCast R] (m : Nat)
+    (order : Mono m → Mono m → Ordering) [IsMonomialOrder order]
+    (p : MvPoly m R order) :
+    PositiveMultiplicities ((sqfOps (R := R) m).decomp order p).factors := by
+  induction m with
+  | zero => simp [sqfOps, sqfBase, sqfPrimitiveSplit, PositiveMultiplicities]
+  | succ m ih =>
+      simp only [sqfOps, sqfStep]
+      split
+      · simp [PositiveMultiplicities]
+      · cases hvars : p.sqfPrimitiveSplit.2.vars with
+        | nil => simp [PositiveMultiplicities]
+        | cons i tail =>
+            apply positive_merge_fold
+            · have hlower := ih Mono.lex
+                (contentIn i Mono.lex p.sqfPrimitiveSplit.2)
+              simpa [PositiveMultiplicities] using hlower
+            · apply positive_yunLoop
+              · omega
+              · simp [PositiveMultiplicities]
 
 /-- Characteristic-zero squarefree decomposition with recursive content and
 scalar content split off. -/
@@ -305,10 +384,12 @@ theorem sqfDecomp_coprime [IsMonomialOrder cmp] [NatCast R] [NatNoZero R]
         ∀ d, d ∣ f.factor → d ∣ g.factor → GcdOps.isUnit d = true := by
   sorry
 
+omit [LawfulGcdOps R] [LawfulBezoutOps R] in
 theorem sqfDecomp_multiplicity_pos [IsMonomialOrder cmp]
     [NatCast R] [NatNoZero R] (p : MvPoly n R cmp) :
     ∀ f ∈ (sqfDecomp p).factors, 0 < f.multiplicity := by
-  sorry
+  simpa [sqfDecomp, PositiveMultiplicities] using
+    positive_sqfOps (R := R) n cmp p
 
 theorem sqfDecomp_multiplicity_sorted [IsMonomialOrder cmp]
     [NatCast R] [NatNoZero R] (p : MvPoly n R cmp) :
