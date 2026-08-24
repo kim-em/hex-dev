@@ -12,6 +12,12 @@
     "reason": "Guards powModNat at modulus zero, exposes its worker and bitLength for kernel reduction, and adds a csimp routing powModNat to the unchanged powMod; no executable factorization code calls powModNat (the service uses powMod directly)."
   },
   {
+    "path": "lakefile.lean",
+    "baseline_blob": "a1b87406682dbf908d990f01676f326499b906e5",
+    "current_blob": "75002db9efb691acb9f469fd036dd5f28a249811",
+    "reason": "Registers the HexPrimality library on top of main's current registrations; the factorization service targets are unchanged."
+  },
+  {
     "path": "HexArith/Nat/Prime.lean",
     "baseline_blob": "8b5cf744140acde03da1c72c50482410e0c65029",
     "current_blob": "3c739ff40939977910ea64afd72b1db3142c5444",
