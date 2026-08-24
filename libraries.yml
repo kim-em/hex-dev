@@ -69,7 +69,7 @@ libraries:
   HexBasic:
     deps: []
     mathlib: false
-    done_through: 6
+    done_through: 7
     status: active
   HexTruncatedSeries:
     deps: [HexBasic]
