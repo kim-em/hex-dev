@@ -237,7 +237,7 @@ def runCrtLoop (input : LoopInput) : UInt64 :=
 /-! Scientific registrations. -/
 
 /- One division reduces a `2b`-bit integer modulo a `b`-bit modulus. The
-`b * sqrt b` model is the Karatsuba-range surrogate for GMP's multiplication
+The `b * sqrt b` complexity model is the Karatsuba-range surrogate for GMP's multiplication
 cost `M(b)`, which bounds this balanced division on the declared ladder. -/
 setup_benchmark runSymMod bits => bits * Nat.sqrt bits
   with prep := prepSymMod
@@ -343,7 +343,7 @@ setup_benchmark runRatReconFailure b => b * b
   }
 
 /- On this early-success family the wide wrapper is dominated by the integer
-square root. The `b * sqrt b` formula is the benchmark's Karatsuba-range
+square root. The `b * sqrt b` complexity model is the benchmark's Karatsuba-range
 surrogate for the GMP multiplication cost in Newton division. -/
 setup_benchmark runRatReconWide b => b * Nat.sqrt b
   with prep := prepReconEarly
