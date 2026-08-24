@@ -549,7 +549,7 @@ theorem latticeCoeffs_complete {A : Matrix Int n m} {v : Vector Int m} :
   let c : Vector Int n := Matrix.transpose D.transform * d
   have hc : vecMul c A = v := by
     change vecMul (Matrix.transpose D.transform * d) A = v
-    rw [vecMul_mul, (hnfData_isHNF A).transform_mul, hd]
+    rw [vecMul_transpose_mul, (hnfData_isHNF A).transform_mul, hd]
   unfold latticeCoeffs
   dsimp only
   rw [hsolve]

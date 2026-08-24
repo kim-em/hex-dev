@@ -19,21 +19,6 @@ namespace Hex.Matrix
 def memLattice (b : Matrix Int n m) (v : Vector Int m) : Prop :=
   ∃ c : Vector Int n, vecMul c b = v
 
-/-- Row combinations are additive in their coefficient vector. -/
-theorem vecMul_add (c d : Vector Int n) (B : Matrix Int n m) :
-    vecMul (c + d) B = vecMul c B + vecMul d B := by
-  unfold vecMul
-  apply Vector.ext
-  intro j hj
-  let col : Fin m := ⟨j, hj⟩
-  change (Matrix.transpose B * (c + d))[col] =
-    (Matrix.transpose B * c + Matrix.transpose B * d)[j]
-  rw [Vector.getElem_add]
-  change (Matrix.transpose B * (c + d))[col] =
-    (Matrix.transpose B * c)[col] + (Matrix.transpose B * d)[col]
-  rw [Matrix.getElem_mulVec, Matrix.getElem_mulVec,
-    Matrix.getElem_mulVec, Vector.dotProduct_add_right]
-
 /-- Row combinations preserve subtraction of coefficient vectors. -/
 theorem vecMul_sub (c d : Vector Int n) (B : Matrix Int n m) :
     vecMul (c - d) B = vecMul c B - vecMul d B := by
@@ -48,21 +33,6 @@ theorem vecMul_sub (c d : Vector Int n) (B : Matrix Int n m) :
     (Matrix.transpose B * c)[col] - (Matrix.transpose B * d)[col]
   rw [Matrix.getElem_mulVec, Matrix.getElem_mulVec,
     Matrix.getElem_mulVec, Vector.dotProduct_sub_right]
-
-/-- Row combinations commute with integer scalar multiplication. -/
-theorem vecMul_smul (a : Int) (c : Vector Int n) (B : Matrix Int n m) :
-    vecMul (a • c) B = a • vecMul c B := by
-  unfold vecMul
-  apply Vector.ext
-  intro j hj
-  let col : Fin m := ⟨j, hj⟩
-  change (Matrix.transpose B * (a • c))[col] =
-    (a • (Matrix.transpose B * c))[j]
-  rw [Vector.getElem_smul]
-  change (Matrix.transpose B * (a • c))[col] =
-    a * (Matrix.transpose B * c)[col]
-  rw [Matrix.getElem_mulVec, Matrix.getElem_mulVec,
-    Vector.dotProduct_smul_right]
 
 /-- A unit coefficient vector selects the corresponding matrix row. -/
 theorem vecMul_unit (B : Matrix Int n m) (i : Fin n) :
@@ -113,7 +83,7 @@ theorem memLattice_smul {B : Matrix Int n m} {v : Vector Int m}
   exact ⟨a • c, vecMul_smul a c B⟩
 
 /-- Row combinations transport across an explicit integer row transform. -/
-theorem vecMul_mul (U : Matrix Int n' n) (B : Matrix Int n m)
+theorem vecMul_transpose_mul (U : Matrix Int n' n) (B : Matrix Int n m)
     (c : Vector Int n') :
     vecMul (Matrix.transpose U * c) B = vecMul c (U * B) := by
   unfold vecMul
@@ -133,7 +103,7 @@ theorem memLattice_of_mul_eq {B : Matrix Int n m} {B' : Matrix Int n' m}
   intro hv
   rcases hv with ⟨c, hc⟩
   refine ⟨Matrix.transpose U * c, ?_⟩
-  rw [vecMul_mul U B, h, hc]
+  rw [vecMul_transpose_mul U B, h, hc]
 
 /-- Two explicit integer row transforms in opposite directions prove equality
 of the generated row lattices. -/

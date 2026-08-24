@@ -38,6 +38,10 @@ Operations cross-checked
   FLINT's canonical `fmpz_mat.hnf()` result.
 * `hnf-transform` — the form is compared canonically and the independently
   accumulated transform is checked through `U * A = H`.
+* `minpoly`   — Lean's basis-wide Krylov minimal polynomial. Exact ascending
+  coefficients are compared with FLINT, and the oracle additionally checks
+  that the result divides the characteristic polynomial. Divisibility is a
+  cross-check, not by itself a certificate of minimality.
 
 Usage::
 
@@ -289,6 +293,55 @@ def _check_charpoly(
     )
 
 
+def _check_minpoly(
+    *,
+    case_id: str,
+    lib: str,
+    matrix_record: dict[str, Any],
+    lean_value: list[int],
+    failure_dir: Path,
+    profile: str,
+    seed: int,
+    oracle_version: str,
+) -> None:
+    rows = _rows(matrix_record)
+    n = len(rows)
+    if any(len(row) != n for row in rows):
+        raise OracleMismatch(
+            f"{lib}/{case_id}: minpoly requires a square matrix, "
+            f"got row lengths {[len(row) for row in rows]}"
+        )
+    matrix = _fmpz_mat(rows)
+    polynomial = matrix.minpoly()
+    oracle_value = [int(c) for c in polynomial.coeffs()]
+    assert_equal(
+        lean_value,
+        oracle_value,
+        library=lib,
+        case_id=f"{case_id}:minpoly",
+        kind="minpoly",
+        input_record=matrix_record,
+        oracle_name="python-flint",
+        oracle_version=oracle_version,
+        failure_dir=failure_dir,
+        profile=profile,
+        seed=seed,
+    )
+    assert_equal(
+        matrix.charpoly() % polynomial == 0,
+        True,
+        library=lib,
+        case_id=f"{case_id}:minpoly-divides-charpoly",
+        kind="minpoly-divides-charpoly",
+        input_record=matrix_record,
+        oracle_name="python-flint",
+        oracle_version=oracle_version,
+        failure_dir=failure_dir,
+        profile=profile,
+        seed=seed,
+    )
+
+
 def _check_rank(
     *,
     case_id: str,
@@ -510,6 +563,7 @@ def check(
         "det":       _check_det,
         "bareiss":   _check_bareiss,
         "charpoly":  _check_charpoly,
+        "minpoly":   _check_minpoly,
         "rank":      _check_rank,
         "rref":      _check_rref,
         "nullspace": _check_nullspace,
