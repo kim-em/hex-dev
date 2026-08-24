@@ -856,5 +856,17 @@
     "baseline_blob": "a1b87406682dbf908d990f01676f326499b906e5",
     "current_blob": "cb8f437dbc9ed9ea5dc5c7e2794295ab16774099",
     "reason": "Moves HexSparsePoly.KernelTests into the HexReleaseTests globs for the split publication, leaving HexSparsePolyTests as the monorepo-only lint target; no factorization module, executable, or build-flag changes."
+  },
+  {
+    "path": "Hex/Conformance/Emit.lean",
+    "baseline_blob": "21481a92862c6a9f8c8d538c4815d2bc4557453a",
+    "current_blob": "873aec7387d46c7864913c43e9f9c25b25b33ffc",
+    "reason": "Adds JSON serializers used only by modular conformance fixture emitters; no factorization runtime module imports the conformance helper."
+  },
+  {
+    "path": "lakefile.lean",
+    "baseline_blob": "a1b87406682dbf908d990f01676f326499b906e5",
+    "current_blob": "c973b09972fdea92dd362ebd997535fb9fe61a5b",
+    "reason": "Registers only the HexModular conformance module and fixture emitter on top of the sparse-poly release registrations; no factorization runtime target, definition, build flag, or dependency changes."
   }
 ]
