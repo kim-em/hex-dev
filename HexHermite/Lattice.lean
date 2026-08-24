@@ -7,12 +7,87 @@ Authors: Kim Morrison
 module
 
 public import HexHermite.Unique
+public import HexDeterminant.Triangular
 
 public section
 
 /-! Executable row-lattice, kernel, pivot, and index APIs derived from HNF. -/
 
 namespace Hex.Matrix
+
+private theorem strictMono_fin_id_le (f : Fin n → Fin n)
+    (hf : ∀ i j, i < j → f i < f j) (i : Fin n) : i.val ≤ (f i).val := by
+  have aux : ∀ k (hk : k < n), k ≤ (f ⟨k, hk⟩).val := by
+    intro k
+    induction k with
+    | zero => intro _; omega
+    | succ k ih =>
+      intro hk
+      have hk' : k < n := by omega
+      have hstep : (f (⟨k, hk'⟩ : Fin n)).val <
+          (f (⟨k + 1, hk⟩ : Fin n)).val :=
+        hf (⟨k, hk'⟩ : Fin n) (⟨k + 1, hk⟩ : Fin n)
+          (Fin.mk_lt_mk.mpr (Nat.lt_succ_self k))
+      have hprev := ih hk'
+      change k ≤ (f (⟨k, hk'⟩ : Fin n)).val at hprev
+      change k + 1 ≤ (f (⟨k + 1, hk⟩ : Fin n)).val
+      omega
+  exact aux i.val i.isLt
+
+private theorem strictMono_fin_eq (f : Fin n → Fin n)
+    (hf : ∀ i j, i < j → f i < f j) (i : Fin n) : f i = i := by
+  let rev : Fin n → Fin n := fun x => ⟨n - 1 - x.val, by omega⟩
+  let g : Fin n → Fin n := fun x => rev (f (rev x))
+  have hrev (x : Fin n) : rev (rev x) = x := by
+    apply Fin.ext
+    simp only [rev]
+    omega
+  have hg : ∀ x y, x < y → g x < g y := by
+    intro x y hxy
+    have hryx : rev y < rev x := by
+      simp only [rev, Fin.mk_lt_mk]
+      omega
+    have hfyx := hf (rev y) (rev x) hryx
+    simp only [g, rev, Fin.mk_lt_mk] at hfyx ⊢
+    omega
+  have hlower := strictMono_fin_id_le f hf i
+  have hupper := strictMono_fin_id_le g hg (rev i)
+  simp only [g, hrev, rev] at hupper
+  apply Fin.ext
+  omega
+
+private theorem foldl_natAbs_mul (xs : List Int) (a : Int) :
+    (xs.foldl (fun x y => x * y) a).natAbs =
+      (xs.map Int.natAbs).foldl (fun x y => x * y) a.natAbs := by
+  induction xs generalizing a with
+  | nil => rfl
+  | cons x xs ih =>
+    simp only [List.foldl_cons, List.map_cons]
+    rw [ih, Int.natAbs_mul]
+
+private theorem vector_foldl_toList (v : Vector R n) (f : α → R → α) (a : α) :
+    v.foldl f a = v.toList.foldl f a := by
+  exact (Array.foldl_toList f).symm
+
+private theorem det_eq_zero_of_zero_row (M : Matrix Int n n) (i : Fin n)
+    (hi : M[i] = 0) : det M = 0 := by
+  have hscale : Matrix.rowScale M i 0 = M := by
+    apply Matrix.ext_getElem
+    intro r c
+    rw [Matrix.getElem_rowScale]
+    by_cases hri : r = i
+    · subst r
+      rw [if_pos rfl]
+      have hentry := congrArg (fun row : Vector Int n => row[c.val]'c.isLt) hi
+      have hzero : M[i][c] = 0 := by
+        change M[i][c.val]'c.isLt = 0
+        simpa only [Vector.getElem_zero] using hentry
+      rw [hzero]
+      omega
+    · rw [if_neg hri]
+  have hdet := det_rowScale M i 0
+  rw [hscale] at hdet
+  simpa using hdet
 
 namespace Hermite
 
@@ -491,5 +566,107 @@ theorem kernelBasis_independent {A : Matrix Int n m}
 theorem latticeIndex_eq_prod_pivots (A : Matrix Int n m) (h : hnfRank A = m) :
     latticeIndex A = (pivots A).foldl (· * ·) 1 := by
   simp [latticeIndex, h]
+
+set_option maxHeartbeats 800000 in
+/-- For a square integer matrix, the HNF pivot product is the absolute
+determinant. -/
+theorem latticeIndex_eq_det (A : Matrix Int n n) :
+    latticeIndex A = (det A).natAbs := by
+  let D := hnfData A
+  have hform : IsHNF A D := hnfData_isHNF A
+  have htransform : D.transform * A = D.echelon := hnfData_transform_mul A
+  have hdetmul : det D.echelon = det D.transform * det A := by
+    rw [← det_mul, htransform]
+  have habs : (det D.echelon).natAbs = (det A).natAbs := by
+    rcases hform.det_transform with hU | hU
+    · rw [hU] at hdetmul
+      simpa using congrArg Int.natAbs hdetmul
+    · rw [hU] at hdetmul
+      have h := congrArg Int.natAbs hdetmul
+      simpa [Int.natAbs_mul] using h
+  by_cases hfull : hnfRank A = n
+  · have hrD : D.rank = n := by
+      rw [← hnfRank_eq A]
+      exact hfull
+    let f : Fin n → Fin n := fun i => D.pivotCols.get (Fin.cast hrD.symm i)
+    have hf : ∀ i j, i < j → f i < f j := by
+      intro i j hij
+      exact hform.toIsEchelonForm.pivotCols_sorted
+        (Fin.cast hrD.symm i) (Fin.cast hrD.symm j) hij
+    have hfid : ∀ i, f i = i := strictMono_fin_eq f hf
+    have hupper : ∀ i j : Fin n, j.val < i.val → D.echelon[i][j] = 0 := by
+      intro i j hji
+      let q : Fin D.rank := Fin.cast hrD.symm i
+      have hlead := hform.pivot_leading q j (by
+        have hfi := hfid i
+        change j < f i
+        rw [hfi]
+        exact hji)
+      have hrow : hform.toIsEchelonForm.pivotRow q = i := Fin.ext rfl
+      rw [← hrow]
+      exact hlead
+    have hdiag : ∀ i : Fin n, 0 < D.echelon[i][i] := by
+      intro i
+      let q : Fin D.rank := Fin.cast hrD.symm i
+      have hp := hform.pivot_pos q
+      have hcol : D.pivotCols.get q = i := hfid i
+      let v : Vector Int n := D.echelon[q.val]'(Nat.lt_of_lt_of_le q.isLt
+        hform.toIsEchelonForm.rank_le_n)
+      change 0 < v.get (D.pivotCols.get q) at hp
+      have hentry : v.get (D.pivotCols.get q) = v.get i := congrArg v.get hcol
+      rw [hentry] at hp
+      change 0 < (D.echelon[i.val]'i.isLt).get i
+      simpa only [v, q, Fin.cast, Fin.getElem_fin] using hp
+    have hpivList : (pivots A).toList =
+        List.ofFn (fun i : Fin n => D.echelon[i][i].natAbs) := by
+      apply List.ext_getElem
+      · simp [hfull]
+      · intro k hkA hkD
+        have hk : k < n := by simpa using hkD
+        let i : Fin n := ⟨k, hk⟩
+        have hcol : D.pivotCols.get (Fin.cast hrD.symm i) = i := hfid i
+        rw [Vector.getElem_toList, List.getElem_ofFn]
+        unfold pivots
+        rw [Vector.getElem_ofFn]
+        change D.echelon[(i, D.pivotCols.get (Fin.cast hrD.symm i))].natAbs =
+          D.echelon[i][i].natAbs
+        rw [hcol]
+        rw [Matrix.getElem_pair_eq_nested]
+    have hdet := det_upperTriangular_eq_foldl_diag D.echelon hupper
+    have hdetAbs : (det D.echelon).natAbs =
+        (List.finRange n).foldl
+          (fun acc i => acc * D.echelon[i][i].natAbs) 1 := by
+      rw [hdet]
+      have h := foldl_natAbs_mul
+        ((List.finRange n).map fun i => D.echelon[i][i]) 1
+      simpa [List.foldl_map, Function.comp_def] using h
+    have hpivFold : (pivots A).foldl (fun x y => x * y) 1 =
+        (List.finRange n).foldl
+          (fun acc i => acc * D.echelon[i][i].natAbs) 1 := by
+      rw [vector_foldl_toList, hpivList]
+      have hlist : (List.ofFn fun i : Fin n => D.echelon[i][i].natAbs) =
+          (List.finRange n).map (fun i => D.echelon[i][i].natAbs) := by
+        rw [List.finRange, List.map_ofFn]
+        rfl
+      rw [hlist, List.foldl_map]
+    rw [latticeIndex_eq_prod_pivots A hfull, hpivFold, ← hdetAbs, habs]
+  · have hrDlt : D.rank < n := by
+      have hrDle := hform.toIsEchelonForm.rank_le_n
+      have hneD : D.rank ≠ n := by
+        intro heq
+        apply hfull
+        rw [hnfRank_eq A, heq]
+      omega
+    let row : Fin n := ⟨D.rank, hrDlt⟩
+    have hrow : D.echelon[row] = 0 :=
+      hform.toIsEchelonForm.zero_row row (Nat.le_refl _)
+    have hdetzero : det D.echelon = 0 := det_eq_zero_of_zero_row D.echelon row hrow
+    have hdetA : det A = 0 := by
+      rcases hform.det_transform with hU | hU
+      · rw [hdetzero, hU] at hdetmul
+        omega
+      · rw [hdetzero, hU] at hdetmul
+        omega
+    simp [latticeIndex, hfull, hdetA]
 
 end Hex.Matrix
