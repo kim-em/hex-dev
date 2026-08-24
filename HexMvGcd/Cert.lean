@@ -610,7 +610,11 @@ theorem CheckedGcdResult.greatest {n : Nat} {R : Type u}
     {f h g cofL cofR : MvPoly n R cmp}
     (hc : CheckedGcdResult f h g cofL cofR) :
     ∀ d, d ∣ f → d ∣ h → d ∣ g := by
-  sorry
+  intro d hdf hdh
+  rcases hc with ⟨hf, hh, _, hcop⟩
+  rw [hf] at hdf
+  rw [hh] at hdh
+  exact CoprimeCancelLaws.cancel_coprime g cofL cofR d hcop hdf hdh
 
 /-- Full semantic payload of an accepted certificate. -/
 theorem checkGcd_greatest {n : Nat} {R : Type u}
