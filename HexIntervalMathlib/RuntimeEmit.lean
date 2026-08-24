@@ -321,7 +321,7 @@ private def levelOf (type : Lean.Expr) : MetaM Lean.Level := do
   let sort ← whnf (← inferType type)
   match sort with
   | .sort (.succ level) => pure level
-  | .sort .zero => pure .zero
+  | .sort .zero => throwError "runtime emitter expected a type, not Prop"
   | _ => throwError "runtime emitter expected a type"
 
 private def listExpr (type : Lean.Expr) (items : List Lean.Expr) : MetaM Lean.Expr := do
@@ -612,7 +612,12 @@ opaque Checked.emitResultWithin [DecidableEq Fact] [DecidableEq Cause]
   restoreClean saved
   return result
 
-/-- Compatibility projection for callers which need only the evidence term. -/
+/-- Compatibility projection for callers which need only the evidence term.
+Unlike `emitResultWithin`, this discards the quoted input which indexes that
+term. A caller using the result to discharge a pre-existing claim must pin its
+claim input first (for example by exact definitional comparison with
+`emitResultWithin.input`); successful emission alone authenticates only the
+claim indexed by the quoter-produced input term. -/
 def Checked.emitWithin [DecidableEq Fact] [DecidableEq Cause]
     (limits : Limits) (checked : Checked Fact semantics Cause Plan) :
     MetaM (Except Error Lean.Expr) := do

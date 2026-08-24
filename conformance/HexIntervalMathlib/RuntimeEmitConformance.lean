@@ -16,7 +16,8 @@ sealed root-target runtime emitter. Its chronology contains all twelve built-in
 arithmetic rules, including binary applications with repeated input nodes.
 The imported runtime-proof conformance owns the constructible action, body,
 proposed/installed fact, event-order, and event-role mutations before a checked
-token exists. This module adds emitter-schema and whole-input transplants;
+token exists. This module adds emitter-schema and whole-input transplants plus
+a self-consistent wrong fact quoter rejected at exact caller-input correlation;
 private checked chronology fields cannot be mutated by an ordinary importer.
 -/
 
@@ -47,6 +48,92 @@ open Hex.Interval.Rule.Runtime
 /-- error: Unknown constant `Hex.Interval.RuntimeEmit.Emitted.mk` -/
 #guard_msgs in
 #check RuntimeEmit.Emitted.mk
+
+section SealedPrivateConstruction
+
+variable
+  (registry : RuntimeEmit.Registry Hex.Interval
+    (Rule.semantics RuntimeRuleConformance.config) Rule.Runtime.Cause (List Nat))
+  (active : RuntimeEmit.Active Hex.Interval
+    (Rule.semantics RuntimeRuleConformance.config) Rule.Runtime.Cause (List Nat))
+  (lineage : RuntimeEmit.Lineage Hex.Interval
+    (Rule.semantics RuntimeRuleConformance.config) Rule.Runtime.Cause (List Nat))
+  (checked : RuntimeEmit.Checked Hex.Interval
+    (Rule.semantics RuntimeRuleConformance.config) Rule.Runtime.Cause (List Nat))
+
+/-- error: invalid {...} notation, constructor for `RuntimeEmit.Registry` is marked as private -/
+#guard_msgs in
+example : RuntimeEmit.Registry Hex.Interval
+    (Rule.semantics RuntimeRuleConformance.config) Rule.Runtime.Cause (List Nat) :=
+  { runtime := registry.runtime, quoter := registry.quoter, packages := registry.packages }
+
+/-- error: Invalid `⟨...⟩` notation: Constructor for `Hex.Interval.RuntimeEmit.Registry` is marked as private -/
+#guard_msgs in
+example : RuntimeEmit.Registry Hex.Interval
+    (Rule.semantics RuntimeRuleConformance.config) Rule.Runtime.Cause (List Nat) :=
+  ⟨registry.runtime, registry.quoter, registry.packages⟩
+
+/-- error: invalid {...} notation, constructor for `RuntimeEmit.Registry` is marked as private -/
+#guard_msgs in
+example : RuntimeEmit.Registry Hex.Interval
+    (Rule.semantics RuntimeRuleConformance.config) Rule.Runtime.Cause (List Nat) :=
+  { registry with packages := registry.packages }
+
+/-- error: invalid {...} notation, constructor for `RuntimeEmit.Active` is marked as private -/
+#guard_msgs in
+example : RuntimeEmit.Active Hex.Interval
+    (Rule.semantics RuntimeRuleConformance.config) Rule.Runtime.Cause (List Nat) :=
+  { registry := active.registry, terminal := active.terminal }
+
+/-- error: Invalid `⟨...⟩` notation: Constructor for `Hex.Interval.RuntimeEmit.Active` is marked as private -/
+#guard_msgs in
+example : RuntimeEmit.Active Hex.Interval
+    (Rule.semantics RuntimeRuleConformance.config) Rule.Runtime.Cause (List Nat) :=
+  ⟨active.registry, active.terminal⟩
+
+/-- error: invalid {...} notation, constructor for `RuntimeEmit.Active` is marked as private -/
+#guard_msgs in
+example : RuntimeEmit.Active Hex.Interval
+    (Rule.semantics RuntimeRuleConformance.config) Rule.Runtime.Cause (List Nat) :=
+  { active with terminal := active.terminal }
+
+/-- error: invalid {...} notation, constructor for `RuntimeEmit.Lineage` is marked as private -/
+#guard_msgs in
+example : RuntimeEmit.Lineage Hex.Interval
+    (Rule.semantics RuntimeRuleConformance.config) Rule.Runtime.Cause (List Nat) :=
+  { registry := lineage.registry, terminal := lineage.terminal }
+
+/-- error: Invalid `⟨...⟩` notation: Constructor for `Hex.Interval.RuntimeEmit.Lineage` is marked as private -/
+#guard_msgs in
+example : RuntimeEmit.Lineage Hex.Interval
+    (Rule.semantics RuntimeRuleConformance.config) Rule.Runtime.Cause (List Nat) :=
+  ⟨lineage.registry, lineage.terminal⟩
+
+/-- error: invalid {...} notation, constructor for `RuntimeEmit.Lineage` is marked as private -/
+#guard_msgs in
+example : RuntimeEmit.Lineage Hex.Interval
+    (Rule.semantics RuntimeRuleConformance.config) Rule.Runtime.Cause (List Nat) :=
+  { lineage with terminal := lineage.terminal }
+
+/-- error: invalid {...} notation, constructor for `RuntimeEmit.Checked` is marked as private -/
+#guard_msgs in
+example : RuntimeEmit.Checked Hex.Interval
+    (Rule.semantics RuntimeRuleConformance.config) Rule.Runtime.Cause (List Nat) :=
+  { registry := checked.registry, terminal := checked.terminal }
+
+/-- error: Invalid `⟨...⟩` notation: Constructor for `Hex.Interval.RuntimeEmit.Checked` is marked as private -/
+#guard_msgs in
+example : RuntimeEmit.Checked Hex.Interval
+    (Rule.semantics RuntimeRuleConformance.config) Rule.Runtime.Cause (List Nat) :=
+  ⟨checked.registry, checked.terminal⟩
+
+/-- error: invalid {...} notation, constructor for `RuntimeEmit.Checked` is marked as private -/
+#guard_msgs in
+example : RuntimeEmit.Checked Hex.Interval
+    (Rule.semantics RuntimeRuleConformance.config) Rule.Runtime.Cause (List Nat) :=
+  { checked with terminal := checked.terminal }
+
+end SealedPrivateConstruction
 
 section EmittedPrivateConstruction
 
@@ -489,6 +576,20 @@ meta def quoter : RuntimeEmit.Quoter Range RuntimeProofConformance.semantics :=
     domain := { emit := fun _ => pure (mkConst ``RuntimeProofConformance.domain) }
     laws := { emit := fun _ => pure (mkConst ``RuntimeProofConformance.laws) } }
 
+/-- Deliberately misquote one uniquely marked, unused seed fact as the strictly
+smaller zero fact. Replay remains internally valid while the emitted input
+differs from the caller's claim. -/
+meta def shiftedQuoter : RuntimeEmit.Quoter Range RuntimeProofConformance.semantics :=
+  { quoter with fact := { emit := fun
+      | .nonnegative => pure (mkConst ``Range.zero)
+      | fact => factExpr fact } }
+
+def correlationInput : Proof.Input Range :=
+  { RuntimeProofConformance.input with facts := #[.unit, .nonnegative, .all] }
+
+def shiftedInput : Proof.Input Range :=
+  { RuntimeProofConformance.input with facts := #[.unit, .zero, .all] }
+
 private def advance
     (tree : Search.Result.Tree Range Nat Nat Proof.Key)
     (runtime : Runtime.State Range Nat) : List Action →
@@ -500,9 +601,10 @@ private def advance
         (Search.Result.advanceRuntimeWithin RuntimeProofConformance.resultLimits RuntimeProofConformance.measure tree transition).toOption).down
       advance tree runtime rest
 
-private def controllerFor (assembly : RuntimeProof.Assembly Range Nat) :
+private def controllerFor (assembly : RuntimeProof.Assembly Range Nat)
+    (facts : Array Range) :
     Option (Runtime.Controller.State Range Nat Nat Proof.Key) := do
-  let branch := (← liftOption RuntimeProofConformance.branch?).down
+  let branch := (← liftOption (RuntimeProofConformance.branchWith? facts)).down
   let runtime ← (Runtime.State.startWithin RuntimeProofConformance.runtimeLimits assembly branch).toOption
   let tree := (← liftOption ((Search.Result.startWithin RuntimeProofConformance.resultLimits RuntimeProofConformance.measure
     RuntimeProofConformance.scope branch).toOption)).down
@@ -510,18 +612,20 @@ private def controllerFor (assembly : RuntimeProof.Assembly Range Nat) :
     [RuntimeProofConformance.instanceAction, RuntimeProofConformance.equalityAction, RuntimeProofConformance.factAction, RuntimeProofConformance.transportAction]
   (Runtime.Controller.State.startWithin controllerLimits envelope RuntimeProofConformance.measure runtime tree).toOption
 
-meta def emitWith (limits : RuntimeEmit.Limits) :
-    MetaM (Except RuntimeEmit.Error Expr) :=
+meta def emitResultWith (limits : RuntimeEmit.Limits)
+    (selectedQuoter : RuntimeEmit.Quoter Range RuntimeProofConformance.semantics)
+    (sealedInput : Proof.Input Range) :
+    MetaM (Except RuntimeEmit.Error RuntimeEmit.Emitted) :=
   match RuntimeProofConformance.assembly? with
   | none => pure (.error .malformed)
   | some assembly =>
       match RuntimeEmit.Registry.buildWithin RuntimeProofConformance.executableLimits limits
-          RuntimeProofConformance.adapterKey assembly quoter #[package] with
+          RuntimeProofConformance.adapterKey assembly selectedQuoter #[package] with
       | .error error => pure (.error error)
-      | .ok registry => match controllerFor registry.runtime.assembly with
+      | .ok registry => match controllerFor registry.runtime.assembly sealedInput.facts with
         | none => pure (.error .malformed)
         | some controller =>
-          match RuntimeEmit.Active.startWithin registry RuntimeProofConformance.input controller with
+          match RuntimeEmit.Active.startWithin registry sealedInput controller with
           | .error error => pure (.error error)
           | .ok active => match (RuntimeEmit.Active.targetWithin
               RuntimeProofConformance.resultLimits RuntimeProofConformance.measure active
@@ -530,7 +634,13 @@ meta def emitWith (limits : RuntimeEmit.Limits) :
             | .ok lineage => match lineage.quoteWithin RuntimeProofConformance.adapterLimits
                 RuntimeProofConformance.measure with
               | .error error => pure (.error error)
-              | .ok checked => RuntimeEmit.Checked.emitWithin limits checked
+              | .ok checked => RuntimeEmit.Checked.emitResultWithin limits checked
+
+meta def emitWith (limits : RuntimeEmit.Limits) :
+    MetaM (Except RuntimeEmit.Error Expr) := do
+  match ← emitResultWith limits quoter RuntimeProofConformance.input with
+  | .error error => return .error error
+  | .ok emitted => return .ok emitted.evidence
 
 elab "runtime_emit_mixed_canary" : tactic => do
   let goal ← getMainGoal
@@ -556,6 +666,34 @@ elab "runtime_emit_mixed_guards" : tactic => do
   replaceMainGoal []
 
 example : True := by runtime_emit_mixed_guards
+
+elab "runtime_emit_input_correlation_guards" : tactic => do
+  let emitted ← match ← emitResultWith emitLimits shiftedQuoter correlationInput with
+    | .error error => throwError "shifted fact quoter failed to emit: {repr error}"
+    | .ok emitted => pure emitted
+  unless ← isDefEq emitted.input (mkConst ``shiftedInput) do
+    throwError "shifted fact quoter did not produce the deliberately shifted input"
+  if ← isDefEq emitted.input (mkConst ``correlationInput) then
+    throwError "exact input correlation accepted a shifted fact quoter"
+  let evidenceType (quotedInput : Expr) : MetaM Expr := do
+    let program ← mkAppM ``Proof.Input.program #[quotedInput]
+    let base ← mkAppM ``Proof.initialBase #[quotedInput]
+    let target ← mkAppM ``Proof.Input.target #[quotedInput]
+    let claim ← mkAppM ``Proof.Semantics.Entails
+      #[mkConst ``RuntimeProofConformance.semantics, program, base, target]
+    mkAppM ``Proof.Evidence #[claim]
+  let actual ← inferType emitted.evidence
+  unless ← isDefEq actual (← evidenceType emitted.input) do
+    throwError "shifted evidence lost correlation with its emitted input"
+  if ← isDefEq actual (← evidenceType (mkConst ``correlationInput)) then
+    throwError "shifted evidence was mistaken for the expected exact-input claim"
+  let goal ← getMainGoal
+  goal.assign (mkConst ``True.intro)
+  replaceMainGoal []
+
+/-- A self-consistent wrong quoter can emit, but exact claim-input correlation
+rejects both its quoted input and its evidence type. -/
+example : True := by runtime_emit_input_correlation_guards
 
 def evidence : Proof.Evidence
     (RuntimeProofConformance.semantics.Entails RuntimeProofConformance.input.program (Proof.initialBase RuntimeProofConformance.input) RuntimeProofConformance.input.target) := by

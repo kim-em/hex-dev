@@ -17,8 +17,11 @@ public import Mathlib.Lean.Elab.Tactic.Basic
 This module is the supported proof authority for interval search. Search state,
 callback replies, payload arenas, and diagnostic traces are decoded data only.
 The replay cursor starts from the caller's exact program and fact array and can
-advance only through package-owned theorem schemas whose complete address,
-owner, body, action, scope, versions, dependencies, and chronology all match.
+advance only through theorem schemas whose complete address, body, action,
+scope, versions, dependencies, and chronology all match. The sealed `Registry`
+authenticates package ownership before producing its resolver; the public
+`Resolver` replay surface is caller-owned and does not independently enforce
+that provenance.
 Binary splits additionally require a package-owned cover theorem. Each child
 adds exactly one assumption; inherited facts are rebased as derived evidence.
 A bounded fold checks an exact retained `Search.Result.Tree`, rejects unknown
@@ -484,10 +487,12 @@ end Registry
 /-! ## Transparent schema resolution
 
 `Registry` remains the sealed runtime theorem authority. `Resolver` is the
-plain proof-syntax view used by an elaborator after a separate sealed bridge
-has authenticated exact package-local coverage. Constructing a resolver does
-not authorize a runtime action: every schema still returns an ordinary proof,
-and transparent replay rechecks the complete quoted action and chronology. -/
+public plain proof-syntax view used by an elaborator after a separate sealed
+bridge has authenticated exact package-local coverage. Direct callers may also
+construct one without that provenance; `replayWith` checks its registrations,
+schema keys, actions, and chronology, but does not establish package ownership.
+Every accepted schema still returns an ordinary proof checked at the exact
+claim. -/
 
 structure Resolver (semantics : Semantics Fact) where
   registrations : Array Registration
