@@ -103,6 +103,29 @@ theorem swapStep_pivot_ne (ops : Accumulator α n) (s : Result α n m)
     simp only [if_neg hne, if_pos]
     simpa only [Matrix.getElem_pair_eq_nested] using hfound
 
+/-- Swapping two zero entries leaves the whole selected column unchanged. -/
+theorem swapStep_zero (ops : Accumulator α n) (s : Result α n m)
+    (j : Fin m) (i k row : Fin n) (hi : s.matrix[(i, j)] = 0)
+    (hk : s.matrix[(k, j)] = 0) :
+    (swapStep ops s i k).matrix[(row, j)] = s.matrix[(row, j)] := by
+  have hi' : s.matrix[i][j] = 0 := by
+    simpa only [Matrix.getElem_pair_eq_nested] using hi
+  have hk' : s.matrix[k][j] = 0 := by
+    simpa only [Matrix.getElem_pair_eq_nested] using hk
+  rw [swapStep]
+  split
+  · rfl
+  · dsimp only
+    rw [Matrix.getElem_pair_eq_nested, Matrix.getElem_rowSwap]
+    by_cases hrk : row = k
+    · subst row
+      simpa only [if_pos, Matrix.getElem_pair_eq_nested] using hi'.trans hk'.symm
+    · by_cases hri : row = i
+      · subst row
+        simp only [if_neg hrk, if_pos, Matrix.getElem_pair_eq_nested]
+        exact hk'.trans hi'.symm
+      · simp [hrk, hri, Matrix.getElem_pair_eq_nested]
+
 /-- A nontrivial extended-GCD step makes the pivot positive and clears the
 selected lower entry. -/
 theorem gcdStep_column (ops : Accumulator α n) (s : Result α n m)
@@ -150,6 +173,23 @@ theorem gcdStep_other (ops : Accumulator α n) (s : Result α n m)
     rw [Matrix.getElem_ofFn]
     simp [hri, hrk, Matrix.getElem_pair_eq_nested]
 
+/-- A gcd update of two zero entries in another column leaves that column
+unchanged. -/
+theorem gcdStep_zero (ops : Accumulator α n) (s : Result α n m)
+    (col j : Fin m) (i k row : Fin n) (hi : s.matrix[(i, j)] = 0)
+    (hk : s.matrix[(k, j)] = 0) :
+    (gcdStep ops col i k s).matrix[(row, j)] = s.matrix[(row, j)] := by
+  rw [gcdStep]
+  split
+  · rfl
+  · dsimp only
+    rw [Matrix.getElem_pair_eq_nested]
+    unfold combineRows
+    rw [Matrix.getElem_ofFn]
+    simp only [Matrix.getElem_pair_eq_nested] at hi hk ⊢
+    by_cases hri : row = i <;> by_cases hrk : row = k <;>
+      simp_all
+
 /-- Sign normalization makes every nonzero selected pivot positive. -/
 theorem signStep_column (ops : Accumulator α n) (s : Result α n m)
     (col : Fin m) (i : Fin n) (hne : s.matrix[(i, col)] ≠ 0) :
@@ -165,6 +205,35 @@ theorem signStep_column (ops : Accumulator α n) (s : Result α n m)
   · rename_i hnneg
     simp only [Matrix.getElem_pair_eq_nested] at hnneg hne ⊢
     omega
+
+/-- Sign normalization changes only the selected row. -/
+theorem signStep_other (ops : Accumulator α n) (s : Result α n m)
+    (col j : Fin m) (i row : Fin n) (hri : row ≠ i) :
+    (signStep ops col i s).matrix[(row, j)] = s.matrix[(row, j)] := by
+  rw [signStep]
+  split
+  · dsimp only
+    rw [Matrix.getElem_pair_eq_nested, Matrix.getElem_rowScale]
+    simp [hri, Matrix.getElem_pair_eq_nested]
+  · rfl
+
+/-- Scaling a zero entry during sign normalization leaves it zero and hence
+unchanged. -/
+theorem signStep_zero (ops : Accumulator α n) (s : Result α n m)
+    (col j : Fin m) (i : Fin n) (hi : s.matrix[(i, j)] = 0) (row : Fin n) :
+    (signStep ops col i s).matrix[(row, j)] = s.matrix[(row, j)] := by
+  have hi' : (s.matrix.getRow i)[j] = 0 := by
+    simpa only [Matrix.getElem_pair_eq_nested, Matrix.getElem_eq_getRow] using hi
+  by_cases hri : row = i
+  · subst row
+    rw [signStep]
+    split
+    · dsimp only
+      rw [Matrix.getElem_pair_eq_nested, Matrix.getElem_rowScale]
+      simp only [if_pos, Matrix.getElem_pair_eq_nested]
+      simp [hi']
+    · rfl
+  · exact signStep_other ops s col j i row hri
 
 /-- Reduction above a positive pivot replaces the selected entry by its
 Euclidean remainder. -/
@@ -202,6 +271,36 @@ theorem reduceStep_column (ops : Accumulator α n) (s : Result α n m)
       _ = s.matrix[row][col] % s.matrix[pivot][col] := by
         rw [Int.neg_mul]
         omega
+
+/-- Reduction changes only its destination row. -/
+theorem reduceStep_other (ops : Accumulator α n) (s : Result α n m)
+    (col j : Fin m) (pivot target row : Fin n) (hrt : row ≠ target) :
+    (reduceStep ops col pivot target s).matrix[(row, j)] = s.matrix[(row, j)] := by
+  rw [reduceStep]
+  split
+  · rfl
+  · dsimp only
+    rw [Matrix.getElem_pair_eq_nested, Matrix.getElem_rowAdd]
+    simp [hrt, Matrix.getElem_pair_eq_nested]
+
+/-- Adding a multiple of a row whose selected entry is zero leaves that
+column unchanged. -/
+theorem reduceStep_zero (ops : Accumulator α n) (s : Result α n m)
+    (col j : Fin m) (pivot target row : Fin n)
+    (hp : s.matrix[(pivot, j)] = 0) :
+    (reduceStep ops col pivot target s).matrix[(row, j)] = s.matrix[(row, j)] := by
+  have hp' : (s.matrix.getRow pivot)[j] = 0 := by
+    simpa only [Matrix.getElem_pair_eq_nested, Matrix.getElem_eq_getRow] using hp
+  by_cases hrt : row = target
+  · subst row
+    rw [reduceStep]
+    split
+    · rfl
+    · dsimp only
+      rw [Matrix.getElem_pair_eq_nested, Matrix.getElem_rowAdd]
+      simp only [if_pos, Matrix.getElem_pair_eq_nested]
+      simp [hp']
+  · exact reduceStep_other ops s col j pivot target row hrt
 
 /-- Entries reduced above a positive pivot lie in its canonical residue
 interval. -/
@@ -256,6 +355,265 @@ def clearColumn (ops : Accumulator α n) (s : Result α n m) (col : Fin m)
   let s := signStep ops col pivotRow s
   (List.finRange n).foldl (fun s k =>
     if k.val < pivotRow.val then reduceStep ops col pivotRow k s else s) s
+
+private def gcdSweepStep (ops : Accumulator α n) (col : Fin m) (pivot : Fin n)
+    (s : Result α n m) (k : Fin n) : Result α n m :=
+  if pivot.val < k.val then gcdStep ops col pivot k s else s
+
+private theorem gcdSweep_other (ops : Accumulator α n) (col : Fin m)
+    (pivot row : Fin n) (xs : List (Fin n)) (s : Result α n m)
+    (hrp : row ≠ pivot) (hrxs : row ∉ xs) :
+    (xs.foldl (gcdSweepStep ops col pivot) s).matrix[(row, col)] =
+      s.matrix[(row, col)] := by
+  induction xs generalizing s with
+  | nil => rfl
+  | cons k xs ih =>
+      rw [List.foldl_cons]
+      have hrk : row ≠ k := by
+        intro h
+        subst k
+        exact hrxs (List.mem_cons_self ..)
+      have hrrest : row ∉ xs := by
+        intro h
+        exact hrxs (List.mem_cons_of_mem _ h)
+      rw [ih _ hrrest]
+      unfold gcdSweepStep
+      split
+      · exact gcdStep_other ops s col col pivot k row hrp hrk
+      · rfl
+
+private theorem gcdSweep_column (ops : Accumulator α n) (col : Fin m)
+    (pivot : Fin n) (xs : List (Fin n)) (s : Result α n m)
+    (hxs : xs.Nodup) (hp : s.matrix[(pivot, col)] ≠ 0) :
+    let t := xs.foldl (gcdSweepStep ops col pivot) s
+    t.matrix[(pivot, col)] ≠ 0 ∧
+      ∀ k ∈ xs, pivot.val < k.val → t.matrix[(k, col)] = 0 := by
+  induction xs generalizing s with
+  | nil => exact ⟨hp, by simp⟩
+  | cons k xs ih =>
+      have hkxs : k ∉ xs := (List.nodup_cons.mp hxs).1
+      have hrest : xs.Nodup := (List.nodup_cons.mp hxs).2
+      rw [List.foldl_cons]
+      unfold gcdSweepStep
+      split
+      · rename_i hpk
+        have hstep := gcdStep_ne_zero ops s col pivot k (by omega) hp
+        have htail := ih (gcdStep ops col pivot k s) hrest hstep.1
+        refine ⟨htail.1, ?_⟩
+        intro row hmem hprow
+        rcases List.mem_cons.mp hmem with heq | hmem
+        · subst row
+          exact (gcdSweep_other ops col pivot k xs
+            (gcdStep ops col pivot k s) (by omega) hkxs).trans hstep.2
+        · exact htail.2 row hmem hprow
+      · rename_i hnot
+        have htail := ih s hrest hp
+        refine ⟨htail.1, ?_⟩
+        intro row hmem hprow
+        rcases List.mem_cons.mp hmem with heq | hmem
+        · subst row
+          omega
+        · exact htail.2 row hmem hprow
+
+private theorem gcdSweep_prior (ops : Accumulator α n) (col j : Fin m)
+    (pivot : Fin n) (xs : List (Fin n)) (s : Result α n m)
+    (hz : ∀ row : Fin n, pivot.val ≤ row.val → s.matrix[(row, j)] = 0)
+    (row : Fin n) :
+    (xs.foldl (gcdSweepStep ops col pivot) s).matrix[(row, j)] =
+      s.matrix[(row, j)] := by
+  induction xs generalizing s with
+  | nil => rfl
+  | cons k xs ih =>
+      rw [List.foldl_cons]
+      unfold gcdSweepStep
+      split
+      · rename_i hpk
+        have hstep (r : Fin n) :
+            (gcdStep ops col pivot k s).matrix[(r, j)] = s.matrix[(r, j)] :=
+          gcdStep_zero ops s col j pivot k r (hz pivot (by omega)) (hz k (by omega))
+        have hz' : ∀ r : Fin n, pivot.val ≤ r.val →
+            (gcdStep ops col pivot k s).matrix[(r, j)] = 0 := by
+          intro r hr
+          exact (hstep r).trans (hz r hr)
+        exact (ih (gcdStep ops col pivot k s) hz').trans (hstep row)
+      · exact ih s hz
+
+private def reduceSweepStep (ops : Accumulator α n) (col : Fin m) (pivot : Fin n)
+    (s : Result α n m) (k : Fin n) : Result α n m :=
+  if k.val < pivot.val then reduceStep ops col pivot k s else s
+
+private theorem reduceSweep_other (ops : Accumulator α n) (col : Fin m)
+    (pivot row : Fin n) (xs : List (Fin n)) (s : Result α n m)
+    (hrxs : row ∉ xs) :
+    (xs.foldl (reduceSweepStep ops col pivot) s).matrix[(row, col)] =
+      s.matrix[(row, col)] := by
+  induction xs generalizing s with
+  | nil => rfl
+  | cons k xs ih =>
+      rw [List.foldl_cons]
+      have hrk : row ≠ k := by
+        intro h
+        subst k
+        exact hrxs (List.mem_cons_self ..)
+      have hrrest : row ∉ xs := by
+        intro h
+        exact hrxs (List.mem_cons_of_mem _ h)
+      rw [ih _ hrrest]
+      unfold reduceSweepStep
+      split
+      · exact reduceStep_other ops s col col pivot k row hrk
+      · rfl
+
+private theorem reduceSweep_pivot (ops : Accumulator α n) (col : Fin m)
+    (pivot : Fin n) (xs : List (Fin n)) (s : Result α n m) :
+    (xs.foldl (reduceSweepStep ops col pivot) s).matrix[(pivot, col)] =
+      s.matrix[(pivot, col)] := by
+  induction xs generalizing s with
+  | nil => rfl
+  | cons k xs ih =>
+      rw [List.foldl_cons, ih]
+      unfold reduceSweepStep
+      split
+      · exact reduceStep_other ops s col col pivot k pivot (by omega)
+      · rfl
+
+private theorem reduceSweep_of_le (ops : Accumulator α n) (col : Fin m)
+    (pivot row : Fin n) (xs : List (Fin n)) (s : Result α n m)
+    (hpr : pivot.val ≤ row.val) :
+    (xs.foldl (reduceSweepStep ops col pivot) s).matrix[(row, col)] =
+      s.matrix[(row, col)] := by
+  induction xs generalizing s with
+  | nil => rfl
+  | cons k xs ih =>
+      rw [List.foldl_cons, ih]
+      unfold reduceSweepStep
+      split
+      · exact reduceStep_other ops s col col pivot k row (by omega)
+      · rfl
+
+private theorem reduceSweep_prior (ops : Accumulator α n) (col j : Fin m)
+    (pivot : Fin n) (xs : List (Fin n)) (s : Result α n m)
+    (hp : s.matrix[(pivot, j)] = 0) (row : Fin n) :
+    (xs.foldl (reduceSweepStep ops col pivot) s).matrix[(row, j)] =
+      s.matrix[(row, j)] := by
+  induction xs generalizing s with
+  | nil => rfl
+  | cons k xs ih =>
+      rw [List.foldl_cons]
+      unfold reduceSweepStep
+      split
+      · have hstep (r : Fin n) :
+            (reduceStep ops col pivot k s).matrix[(r, j)] = s.matrix[(r, j)] :=
+          reduceStep_zero ops s col j pivot k r hp
+        have hp' : (reduceStep ops col pivot k s).matrix[(pivot, j)] = 0 :=
+          (hstep pivot).trans hp
+        exact (ih (reduceStep ops col pivot k s) hp').trans (hstep row)
+      · exact ih s hp
+
+private theorem reduceSweep_bounds (ops : Accumulator α n) (col : Fin m)
+    (pivot : Fin n) (xs : List (Fin n)) (s : Result α n m)
+    (hxs : xs.Nodup) (hp : 0 < s.matrix[(pivot, col)]) :
+    let t := xs.foldl (reduceSweepStep ops col pivot) s
+    0 < t.matrix[(pivot, col)] ∧
+      ∀ k ∈ xs, k.val < pivot.val →
+        0 ≤ t.matrix[(k, col)] ∧ t.matrix[(k, col)] < t.matrix[(pivot, col)] := by
+  induction xs generalizing s with
+  | nil => exact ⟨hp, by simp⟩
+  | cons k xs ih =>
+      have hkxs : k ∉ xs := (List.nodup_cons.mp hxs).1
+      have hrest : xs.Nodup := (List.nodup_cons.mp hxs).2
+      rw [List.foldl_cons]
+      unfold reduceSweepStep
+      split
+      · rename_i hkp
+        have hbound := reduceStep_bounds ops s col pivot k hp
+        have hpstep : 0 < (reduceStep ops col pivot k s).matrix[(pivot, col)] := by
+          rw [reduceStep_other ops s col col pivot k pivot (by omega)]
+          exact hp
+        have htail := ih (reduceStep ops col pivot k s) hrest hpstep
+        refine ⟨htail.1, ?_⟩
+        intro row hmem hrowp
+        rcases List.mem_cons.mp hmem with heq | hmem
+        · subst row
+          have hkeep := reduceSweep_other ops col pivot k xs
+            (reduceStep ops col pivot k s) hkxs
+          have hpkeep := reduceSweep_pivot ops col pivot xs
+            (reduceStep ops col pivot k s)
+          unfold reduceSweepStep at hkeep hpkeep
+          rw [hkeep, hpkeep]
+          rw [reduceStep_other ops s col col pivot k pivot (by omega)]
+          exact hbound
+        · exact htail.2 row hmem hrowp
+      · rename_i hnot
+        have htail := ih s hrest hp
+        refine ⟨htail.1, ?_⟩
+        intro row hmem hrowp
+        rcases List.mem_cons.mp hmem with heq | hmem
+        · subst row
+          omega
+        · exact htail.2 row hmem hrowp
+
+/-- Clearing a column establishes its positive pivot, zeros below, and
+canonical residues above. -/
+theorem clearColumn_column (ops : Accumulator α n) (s : Result α n m)
+    (col : Fin m) (pivot found : Fin n)
+    (hfound : s.matrix[(found, col)] ≠ 0) :
+    let t := clearColumn ops s col pivot found
+    0 < t.matrix[(pivot, col)] ∧
+      (∀ row : Fin n, pivot.val < row.val → t.matrix[(row, col)] = 0) ∧
+      (∀ row : Fin n, row.val < pivot.val →
+        0 ≤ t.matrix[(row, col)] ∧
+          t.matrix[(row, col)] < t.matrix[(pivot, col)]) := by
+  let s0 := swapStep ops s pivot found
+  let s1 := (List.finRange n).foldl (gcdSweepStep ops col pivot) s0
+  let s2 := signStep ops col pivot s1
+  let s3 := (List.finRange n).foldl (reduceSweepStep ops col pivot) s2
+  have hp0 : s0.matrix[(pivot, col)] ≠ 0 :=
+    swapStep_pivot_ne ops s col pivot found hfound
+  have hg := gcdSweep_column ops col pivot (List.finRange n) s0
+    (List.nodup_finRange n) hp0
+  have hp2 : 0 < s2.matrix[(pivot, col)] := signStep_column ops s1 col pivot hg.1
+  have hr := reduceSweep_bounds ops col pivot (List.finRange n) s2
+    (List.nodup_finRange n) hp2
+  change 0 < s3.matrix[(pivot, col)] ∧
+    (∀ row : Fin n, pivot.val < row.val → s3.matrix[(row, col)] = 0) ∧
+    (∀ row : Fin n, row.val < pivot.val →
+      0 ≤ s3.matrix[(row, col)] ∧ s3.matrix[(row, col)] < s3.matrix[(pivot, col)])
+  refine ⟨hr.1, ?_, ?_⟩
+  · intro row hprow
+    have hreduce := reduceSweep_of_le ops col pivot row (List.finRange n) s2 (by omega)
+    have hsign := signStep_other ops s1 col col pivot row (by omega)
+    have hzero := hg.2 row (List.mem_finRange row) hprow
+    exact hreduce.trans (hsign.trans hzero)
+  · intro row hrowp
+    exact hr.2 row (List.mem_finRange row) hrowp
+
+/-- Clearing a later column preserves every entry of an earlier column whose
+active rows are all zero. -/
+theorem clearColumn_prior (ops : Accumulator α n) (s : Result α n m)
+    (col j : Fin m) (pivot found : Fin n) (hfound : pivot.val ≤ found.val)
+    (hz : ∀ row : Fin n, pivot.val ≤ row.val → s.matrix[(row, j)] = 0)
+    (row : Fin n) :
+    (clearColumn ops s col pivot found).matrix[(row, j)] = s.matrix[(row, j)] := by
+  let s0 := swapStep ops s pivot found
+  let s1 := (List.finRange n).foldl (gcdSweepStep ops col pivot) s0
+  let s2 := signStep ops col pivot s1
+  let s3 := (List.finRange n).foldl (reduceSweepStep ops col pivot) s2
+  have hswap (r : Fin n) : s0.matrix[(r, j)] = s.matrix[(r, j)] :=
+    swapStep_zero ops s j pivot found r (hz pivot (by omega)) (hz found hfound)
+  have hz0 : ∀ r : Fin n, pivot.val ≤ r.val → s0.matrix[(r, j)] = 0 := by
+    intro r hr
+    exact (hswap r).trans (hz r hr)
+  have hgcd (r : Fin n) : s1.matrix[(r, j)] = s0.matrix[(r, j)] :=
+    gcdSweep_prior ops col j pivot (List.finRange n) s0 hz0 r
+  have hp1 : s1.matrix[(pivot, j)] = 0 :=
+    (hgcd pivot).trans (hz0 pivot (by omega))
+  have hsign (r : Fin n) : s2.matrix[(r, j)] = s1.matrix[(r, j)] :=
+    signStep_zero ops s1 col j pivot hp1 r
+  have hp2 : s2.matrix[(pivot, j)] = 0 := (hsign pivot).trans hp1
+  have hreduce (r : Fin n) : s3.matrix[(r, j)] = s2.matrix[(r, j)] :=
+    reduceSweep_prior ops col j pivot (List.finRange n) s2 hp2 r
+  exact (hreduce row).trans ((hsign row).trans ((hgcd row).trans (hswap row)))
 
 @[simp] theorem clearColumn_pivots (ops : Accumulator α n) (s : Result α n m)
     (col : Fin m) (pivotRow found : Fin n) :
