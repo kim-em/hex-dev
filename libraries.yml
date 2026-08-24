@@ -603,7 +603,7 @@ libraries:
   HexResultant:
     deps: [HexPoly, HexBasic]
     mathlib: false
-    done_through: 5
+    done_through: 4
     status: active
     phase4:
       comparators:
