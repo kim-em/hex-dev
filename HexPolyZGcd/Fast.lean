@@ -34,10 +34,11 @@ def modularWitnessAt (f h : ZPoly) (p : ZMod64.Prime) :
   if fp.size != f.size || hp.size != h.size then
     none
   else
-    let xg := DensePoly.xgcd fp hp
-    if xg.gcd.size != 1 then
+    let imageGcd := DensePoly.gcd fp hp
+    if imageGcd.size != 1 then
       none
     else
+      let xg := DensePoly.xgcd fp hp
       let scalar := xg.gcd.coeff 0
       if scalar == 0 then
         none

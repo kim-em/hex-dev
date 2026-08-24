@@ -6,9 +6,11 @@ Authors: Kim Morrison
 
 module
 
+public meta import HexPolyZ.Kronecker
 public meta import HexPolyZGcd.Brown
 public meta import HexPolyZGcd.Heu
 public meta import HexPolyZGcd.Prs
+public import HexPolyZ.Kronecker
 public import HexPolyZGcd.Brown
 public import HexPolyZGcd.Heu
 public import HexPolyZGcd.Prs
@@ -229,17 +231,40 @@ def restoreStructural? (f h : ZPoly) (reduced : StructuralReduction)
       coprime := cert.coprime }
   if checkGcd f h restored then some restored else none
 
+/-- Largest reduced input size at which the evaluation heuristic runs before
+Brown reconstruction. Above this point dense evaluation builds integers whose
+bit width grows with the whole polynomial, while Brown can offer and check an
+image candidate directly. -/
+private def heuSizeLimit : Nat :=
+  32
+
+/-- Above this coefficient height, a full coprime image gcd on the unreduced
+ambient degree costs more than reconstructing the smaller common factor. -/
+private def brownBitCutoff : Nat :=
+  64
+
+private def brownOrFallback (f h : ZPoly) : GcdCert :=
+  match brownCert? f h with
+  | some cert => cert
+  | none => fallbackGcdCert f h
+
+private def afterCoprime (f h : ZPoly) : GcdCert :=
+  if max f.size h.size <= heuSizeLimit then
+    match heuCert? f h with
+    | some cert => cert
+    | none => brownOrFallback f h
+  else
+    brownOrFallback f h
+
 /-- Routes 1--4 on inputs after structural content and `x`-power removal. -/
 def reducedGcdCert (f h : ZPoly) : GcdCert :=
-  match coprimeCert? f h with
-  | some cert => cert
-  | none =>
-      match heuCert? f h with
-      | some cert => cert
-      | none =>
-          match brownCert? f h with
-          | some cert => cert
-          | none => fallbackGcdCert f h
+  let coefficientBits := max (maxAbs f).log2 (maxAbs h).log2
+  if brownBitCutoff < coefficientBits then
+    brownOrFallback f h
+  else
+    match coprimeCert? f h with
+    | some cert => cert
+    | none => afterCoprime f h
 
 /-- Internal route tag used by executable dispatch guards. -/
 private inductive GcdRoute where
