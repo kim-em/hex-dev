@@ -37,10 +37,12 @@ value, minimum, maximum, constants, reciprocal, division, and regularization.
 Each schema recomputes the fixed-resource public operation before producing
 evidence; source nodes remain caller assumptions. Supported `quote` and
 `quoteSession` convert exact branch/session causes into proof events without
-granting runtime state evidence authority. The current package fixes one
-natural exponent and one dyadic constant, shared respectively by every node at
-the built-in power and constant operation indices; duplicate package
-registration and operation keys cannot provide another such parameterization.
+granting runtime state evidence authority. Power rows instead consume an
+authenticated natural-literal input, and exact dyadic constants occupy their
+own literal rows. Multiple exponents and constants may therefore coexist in
+one checked program, while structural CSE shares equal literals. Duplicate
+package registration and operation keys cannot provide an alternate
+interpretation of those rows.
 The Mathlib-free `Executable.Assembly` now supports explicit stable-key
 arbitrary-operation callback packages, private caches, exact concrete
 application rows, and bounded raw replay formats. Those raw quotations are not

@@ -341,6 +341,18 @@ def roomy : Frontend.Config :=
       #[RuleConformance.node 9 [], RuleConformance.node 0 [], RuleConformance.node 2 [0, 1]]
   | .error _ => false
 
+def literalStarved : Frontend.Config :=
+  { config with rule :=
+      { config.rule with endpoint := { maxEndpointHeight := 0, maxAlignmentShift := 0 } } }
+
+#guard
+  match Frontend.reifyWithin literalStarved 0 (.dyadic (RuleConformance.d 5)) with
+  | .ok result =>
+      match result.seedInitialWithin literalStarved.rule #[] with
+      | .error (.literalResource node) => node == result.target
+      | _ => false
+  | .error _ => false
+
 #guard
   match Frontend.reifyWithin config 2
       (.regularize (.div (.inv (.source 0)) (.source 1))) with

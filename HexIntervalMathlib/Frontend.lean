@@ -275,7 +275,6 @@ def reifyTerm (config : Config) (sourceCount depth : Nat)
   | .dyadic _ | .natural _ => install config term [] state
   | .pow input exponent =>
       let (inputNode, state) ← reifyTerm config sourceCount (depth + 1) input state
-      if config.reify.maxDepth < depth + 1 then throw .depthLimit
       let exponentTerm := .natural exponent
       let (exponentNode, state) ← match state.find? exponentTerm with
         | some node => pure (node, state)

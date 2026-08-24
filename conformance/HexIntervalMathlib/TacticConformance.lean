@@ -68,6 +68,13 @@ theorem dyadicPowers :
     ((1 / 2 : ℝ) ^ 2 + (3 / 4 : ℝ) ^ 3) = 43 / 64 := by
   interval
 
+theorem negativeLiteral : (-3 : ℝ) < 0 := by
+  interval
+
+-- `1 / 3` is not a dyadic literal. It falls through to ordinary division.
+theorem ordinaryThird : (1 / 3 : ℝ) ≤ 1 := by
+  interval
+
 example {x : ℝ} (singleton : x = 1) : x = 1 := by
   interval
 
@@ -234,6 +241,12 @@ info: 'Hex.IntervalMathlib.TacticConformance.ordinary' depends on axioms: [prope
 -/
 #guard_msgs in
 #print axioms ordinary
+
+/--
+info: 'Hex.IntervalMathlib.TacticConformance.dyadicPowers' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms dyadicPowers
 
 /--
 info: 'Hex.IntervalMathlib.TacticConformance.reciprocalSum' depends on axioms: [propext, Classical.choice, Quot.sound]

@@ -279,12 +279,6 @@ theorem dyadicLtIntCast {endpoint : Dyadic} {value : Int}
   change ((endpoint.toRat : ℝ) < ((value : Rat) : ℝ))
   exact_mod_cast h
 
-theorem toRealEqIntCast {endpoint : Dyadic} {value : Int}
-    (h : endpoint.toRat = (value : Rat)) :
-    toReal endpoint = (value : ℝ) := by
-  change ((endpoint.toRat : ℝ) = ((value : Rat) : ℝ))
-  exact_mod_cast h
-
 theorem lowerClosedFromClosed {endpoint : Dyadic} {value : Int} {x : ℝ}
     (order : (value : ℝ) ≤ toReal endpoint)
     (bound : (Lower.finite endpoint false).Contains x) : (value : ℝ) ≤ x :=
@@ -350,10 +344,6 @@ theorem castUpperLe {actual x : ℝ} {value : Int}
 theorem castUpperLt {actual x : ℝ} {value : Int}
     (endpoint : actual = (value : ℝ)) :
     (x < actual ↔ x < (value : ℝ)) := by rw [endpoint]
-
-theorem castEquality {actual x : ℝ} {value : Int}
-    (endpoint : actual = (value : ℝ)) :
-    (x = actual ↔ x = (value : ℝ)) := by rw [endpoint]
 
 theorem lowerOfEqRight {actual x : ℝ} (equality : x = actual) : actual ≤ x :=
   equality.ge

@@ -32,6 +32,12 @@ def ready (raw : Raw) : Hex.Interval :=
 def singleton (value : Int) : Hex.Interval :=
   ready (.bounds (.finite (d value) false) (.finite (d value) false))
 
+def singletonDyadic (value : Dyadic) : Hex.Interval :=
+  ready (.bounds (.finite value false) (.finite value false))
+
+def closed (lower upper : Dyadic) : Hex.Interval :=
+  ready (.bounds (.finite lower false) (.finite upper false))
+
 def config : Rule.Config :=
   { endpoint, powerWork := { maxExponent := 8 },
     precisionLimits :=
@@ -86,6 +92,13 @@ def quotientFact := singleton 2
 def regularizedFact := singleton 2
 def combinedFact := singleton (-1)
 def finalFact := singleton 0
+def half : Dyadic := .ofIntWithPrec 1 1
+
+#guard closedNat? (singleton 2) == some 2
+#guard closedNat? (closed (d 1) (d 2)) == none
+#guard closedNat? (singletonDyadic half) == none
+#guard closedNat? (singleton (-1)) == none
+
 def initialFacts : Array Hex.Interval :=
   #[xFact, yFact, Hex.Interval.whole, Hex.Interval.whole, Hex.Interval.whole,
     Hex.Interval.whole, Hex.Interval.whole, Hex.Interval.whole, Hex.Interval.whole,
