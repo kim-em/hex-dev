@@ -934,5 +934,11 @@
     "baseline_blob": "dc13ffdd544ac3037114ffba1000eddd09ecde90",
     "current_blob": "cbef5cd34b581e312d21c2f76da11d6989b2aa6a",
     "reason": "Adds an import and a quotient-power theorem only; no executable definition or factorization runtime call path changes."
+  },
+  {
+    "path": "lakefile.lean",
+    "baseline_blob": "a1b87406682dbf908d990f01676f326499b906e5",
+    "current_blob": "f6e849c9cda52a76d1b4a111545755726e6dad06",
+    "reason": "Registers the build-only sparse, modular, and multivariate verification/conformance/fixture/benchmark targets, moves HexModular.LoopTests into the build-only test umbrella, and adds the proof-side HexIntervalMathlib.RuntimeTerminalConformance and RuntimeRuleConformance globs; none enters hexbz_factor_service or changes a factorization runtime library, executable definition, or build flag."
   }
 ]
