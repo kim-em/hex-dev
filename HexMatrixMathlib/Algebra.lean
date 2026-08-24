@@ -26,7 +26,7 @@ namespace HexMatrixMathlib
 
 universe u
 
-variable {R : Type u} {n m : Nat}
+variable {R : Type u} {n m p : Nat}
 
 /-! # Base operations on the opaque structure
 
@@ -142,7 +142,8 @@ def matrixLinearEquiv [Semiring R] : Hex.Matrix R n m ≃ₗ[R] Matrix (Fin n) (
   show (Hex.Matrix.identity n)[i][j] = _
   rw [Hex.Matrix.getElem_identity, Matrix.one_apply]
 
-@[simp, grind =] theorem matrixEquiv_mul [Semiring R] (A B : Hex.Matrix R n n) :
+@[simp, grind =] theorem matrixEquiv_mul [Semiring R]
+    (A : Hex.Matrix R n m) (B : Hex.Matrix R m p) :
     matrixEquiv (A * B) = matrixEquiv A * matrixEquiv B := by
   ext i j
   rw [matrixEquiv_apply, Matrix.mul_apply]

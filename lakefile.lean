@@ -212,6 +212,8 @@ lean_lib HexBareiss where
 lean_lib HexHermite where
   precompileModules := true
 
+lean_lib HexHermiteMathlib where
+
 lean_lib HexGramSchmidt where
 
 lean_lib HexLLL where

@@ -395,7 +395,9 @@ theorem hnf_memLattice_iff (A : Matrix Int n m) (v : Vector Int m) :
   rw [hform]
   exact memLattice_iff_of_mul_eq hforward hback v
 
-private theorem row_mul_eq_vecMul (M : Matrix Int n' n) (N : Matrix Int n m)
+/-- A row of a matrix product is the corresponding executable row-vector
+product. -/
+theorem row_mul_eq_vecMul (M : Matrix Int n' n) (N : Matrix Int n m)
     (i : Fin n') : Matrix.row (M * N) i = vecMul (Matrix.row M i) N := by
   apply Vector.ext
   intro j hj

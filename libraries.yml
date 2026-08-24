@@ -651,7 +651,7 @@ libraries:
     deps: [HexHermite, HexRowReduceMathlib, HexDeterminantMathlib]
     mathlib: true
     done_through: 0
-    status: draft
+    status: active
   HexPolyFpMathlib:
     deps: [HexPolyFp, HexPolyMathlib, HexModArithMathlib]
     mathlib: true
