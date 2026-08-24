@@ -245,8 +245,8 @@ noncomputable def conwayGen (p m n : Nat) [Hex.ZMod64.Bounds p]
     (Hex.Conway.normX (Hex.Conway.conwayPoly p n hn)
       (Hex.Conway.conwayPoly_monic p n hn) m (n / m))
 
-/-- The computed Conway subfield generator is the field norm of the ambient
-generator. -/
+/-- The computed Conway subfield generator is the explicit finite-field norm
+power of the ambient class of `X`. -/
 theorem conwayGen_eq_norm (p : Nat) [Hex.ZMod64.Bounds p]
     [Hex.ZMod64.PrimeModulus p] (hn : Hex.Conway.SupportedEntry p n)
     (hm_pos : 0 < m) (hmn : m ∣ n) :
@@ -363,9 +363,9 @@ noncomputable def conwayEmbed (p m n : Nat) [Hex.ZMod64.Bounds p]
     rw [Hex.GFqField.repr_mul, substHom_reduceMod _ _
       (substHom_conwayPoly_eq_zero p hm hn hcompat), map_mul]
 
-/-- The Conway embedding sends the source generator to the computed subfield
+/-- The Conway embedding sends the source class of `X` to the computed subfield
 generator. Together with {name}`conwayGen_eq_norm`, this identifies its image
-with the field norm in the target. -/
+with the finite-field norm power in the target. -/
 theorem conwayEmbed_X (p : Nat) [Hex.ZMod64.Bounds p]
     [Hex.ZMod64.PrimeModulus p]
     (hm : Hex.Conway.SupportedEntry p m) (hn : Hex.Conway.SupportedEntry p n)
@@ -377,6 +377,19 @@ theorem conwayEmbed_X (p : Nat) [Hex.ZMod64.Bounds p]
   rw [ofPolyHom_apply, Hex.GFqField.repr_ofPoly, substHom_reduceMod _ _
     (substHom_conwayPoly_eq_zero p hm hn hcompat), substHom_apply,
     Hex.FpPoly.compose_X]
+
+/-- The Conway embedding sends the source class of `X` directly to the
+explicit finite-field norm power of the target class of `X`. -/
+theorem conwayEmbed_X_eq_norm (p : Nat) [Hex.ZMod64.Bounds p]
+    [Hex.ZMod64.PrimeModulus p]
+    (hm : Hex.Conway.SupportedEntry p m) (hn : Hex.Conway.SupportedEntry p n)
+    (hcompat : Hex.Conway.Compatible p m n hm hn) (hmn : m ∣ n) :
+    conwayEmbed p m n hm hn hcompat (conwayX p m hm) =
+      (conwayX p n hn) ^ ((p ^ n - 1) / (p ^ m - 1)) := by
+  have hm_pos : 0 < m := by
+    rw [← GFq.conwayPoly_degree hm]
+    exact Hex.Conway.conwayPoly_nonconstant p m hm
+  exact (conwayEmbed_X p hm hn hcompat).trans (conwayGen_eq_norm p hn hm_pos hmn)
 
 /-! # The embedding on committed entries
 

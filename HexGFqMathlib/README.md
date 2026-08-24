@@ -120,12 +120,12 @@ noncomputable def conwayEmbed (p m n : Nat) [Hex.ZMod64.Bounds p]
 
 `normX` is a computed representative: the product of `n / m` successive
 Frobenius images of the residue of `x`, reduced at each step. Hex-conway's
-`subfieldGen_eq_norm` proves that its quotient class is the field norm
+`subfieldGen_eq_norm` proves that its quotient class is the explicit
+finite-field norm power
 `α ^ ((p^n - 1) / (p^m - 1))`. Here, `conwayEmbed_X` proves that the
 embedding sends the source generator to `conwayGen`, and
-`conwayGen_eq_norm` identifies that target with the same explicit power. Thus
-the canonicality claim is visible in theorem statements as well as in the
-committed compatibility checks.
+`conwayGen_eq_norm` identifies that target with the same explicit power;
+`conwayEmbed_X_eq_norm` combines them into the direct canonicality statement.
 
 The primitivity transport is assembled from `ofPolyHom_linPowMod`,
 `ofPolyHom_digitPowMod`, `ofPolyHom_eq_one_iff`, `mathlibPrime_of_hexPrime` and

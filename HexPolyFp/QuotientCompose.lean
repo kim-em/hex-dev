@@ -122,7 +122,7 @@ class.
 
 This is the quotient evaluation map's defining property, stated for the
 project-side evaluator and executable reduction used by Conway compatibility. -/
-@[simp, grind =] theorem Internal.eval_X_eq_reduce (f : FpPoly p) :
+theorem Internal.eval_X_eq_reduce (f : FpPoly p) :
     Internal.eval (g := g) (hmonic := hmonic) (hg_pos := hg_pos) f
         (X (g := g) (hmonic := hmonic) (hg_pos := hg_pos)) =
       reduce (g := g) (hmonic := hmonic) (hg_pos := hg_pos) f := by

@@ -56,8 +56,9 @@ recursive for the same reason: the kernel has to run it.
 
 # What is proved
 
-The two displayed identities above are theorems below. The reusable bridges
-are `FpPoly.Quotient.reduce_powModMonicLinear_eq_pow`, which identifies the
+The norm and geometric-exponent identities in the first two displays are
+theorems below. The reusable bridges are
+`FpPoly.Quotient.reduce_powModMonicLinear_eq_pow`, which identifies the
 structural modular power in the quotient, and
 `FpPoly.Quotient.Internal.eval_X_eq_reduce`, which says evaluation at the class
 of `x` is quotient reduction. Together with
@@ -94,13 +95,6 @@ def frobeniusIter (f xp : FpPoly p) (hmonic : DensePoly.Monic f) :
   | 0, g => g
   | k + 1, g => frobeniusIter f xp hmonic k (FpPoly.composeModMonicImpl g xp f hmonic)
 
-/-- The exponent `1 + q + ⋯ + q^(k-1)`, in a structural-recursion spelling
-that follows the norm accumulator. -/
-@[expose]
-def normExponent (q : Nat) : Nat → Nat
-  | 0 => 0
-  | k + 1 => 1 + q * normExponent q k
-
 /-- The norm accumulator: multiply together `k` successive `p^m`-th powers of
 the residue of `x`, reducing modulo `f` at each step.
 
@@ -126,6 +120,12 @@ def normX (f : FpPoly p) (hmonic : DensePoly.Monic f) (m k : Nat) :
   normAux f (frobeniusBase f hmonic) hmonic m k 1 FpPoly.X
 
 /-! # The computed norm is the field norm -/
+
+/-- The exponent `1 + q + ⋯ + q^(k-1)`, in a structural-recursion spelling
+that follows the norm accumulator. -/
+def normExponent (q : Nat) : Nat → Nat
+  | 0 => 0
+  | k + 1 => 1 + q * normExponent q k
 
 /-- The executable Frobenius base represents the `p`-th power of the quotient
 indeterminate. -/
@@ -349,6 +349,26 @@ theorem eval_conwayPoly_subfieldGen_eq_zero
         (hg_pos := conwayPoly_degree_pos p n hn) := by
   apply FpPoly.Quotient.eval_reduce_eq_zero_of_composeModMonicImpl_eq_zero
   exact beq_iff_eq.mp hcompat
+
+/-- The explicit finite-field norm power is a root of the smaller Conway
+polynomial. -/
+theorem eval_norm_eq_zero
+    {p m n : Nat} [ZMod64.Bounds p] [ZMod64.PrimeModulus p]
+    (hm : SupportedEntry p m) (hn : SupportedEntry p n)
+    (hcompat : Compatible p m n hm hn) (hm_pos : 0 < m) (hmn : m ∣ n) :
+    FpPoly.Quotient.Internal.eval
+        (g := conwayPoly p n hn) (hmonic := conwayPoly_monic p n hn)
+        (hg_pos := conwayPoly_degree_pos p n hn)
+        (conwayPoly p m hm)
+        ((FpPoly.Quotient.X
+          (g := conwayPoly p n hn) (hmonic := conwayPoly_monic p n hn)
+          (hg_pos := conwayPoly_degree_pos p n hn)) ^
+            ((p ^ n - 1) / (p ^ m - 1))) =
+      FpPoly.Quotient.zero (g := conwayPoly p n hn)
+        (hmonic := conwayPoly_monic p n hn)
+        (hg_pos := conwayPoly_degree_pos p n hn) := by
+  rw [← subfieldGen_eq_norm hn hm_pos hmn]
+  exact eval_conwayPoly_subfieldGen_eq_zero hm hn hcompat
 
 /-! # Towards the subfield embedding
 

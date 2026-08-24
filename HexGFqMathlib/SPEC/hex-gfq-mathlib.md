@@ -61,10 +61,10 @@ hypotheses on the equivalence rather than on the field type.
 `Conway.normX` is a computed representative: the product of `k = n / m`
 successive Frobenius images of the residue of `x`, reduced modulo `C(p, n)` at
 each step, structured that way so the kernel can replay it.
-`Conway.subfieldGen_eq_norm` proves that its quotient class is the field norm
-`α ^ ((p^n - 1) / (p^m - 1))`; `eval_conwayPoly_subfieldGen_eq_zero` proves
-that `C(p, m)` vanishes there, which is the well-definedness input the embedding
-needs.
+`Conway.subfieldGen_eq_norm` proves that its quotient class is the explicit
+finite-field norm power `α ^ ((p^n - 1) / (p^m - 1))`;
+`eval_conwayPoly_subfieldGen_eq_zero` proves that `C(p, m)` vanishes there,
+which is the well-definedness input the embedding needs.
 
 `conwayEmbed` is the resulting ring homomorphism `GFq p m →+* GFq p n`. Its
 domain is a committed divisor pair carrying a `Conway.Compatible` witness
@@ -79,8 +79,10 @@ examples.
 
 The canonicality statement is exposed directly. `conwayEmbed_X` says that
 `conwayEmbed` sends the source class of `X` to `conwayGen`, while
-`conwayGen_eq_norm` identifies `conwayGen` with the explicit field-norm power
-of the target class of `X` whenever `0 < m` and `m ∣ n`.
+`conwayGen_eq_norm` identifies `conwayGen` with the explicit finite-field norm
+power of the target class of `X`. `conwayEmbed_X_eq_norm` combines these into
+one theorem for a divisor pair; positivity of `m` follows from the source's
+committed entry.
 
 ## Primitivity transport
 

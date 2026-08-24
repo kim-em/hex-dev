@@ -145,7 +145,8 @@ geometric-series exponent in any quotient, and `subfieldGen_eq_norm` rewrites
 it to `(p^n - 1) / (p^m - 1)` for `0 < m` and `m ∣ n`. The reusable bridges
 are `FpPoly.Quotient.reduce_powModMonicLinear_eq_pow` for structural modular
 powers and `FpPoly.Quotient.Internal.eval_X_eq_reduce` for evaluation at the
-quotient class of `X`.
+quotient class of `X`. `eval_norm_eq_zero` then states directly that this
+explicit norm power is a root of `C(p, m)`.
 
 `eval_conwayPoly_subfieldGen_eq_zero` promotes the computation to a statement
 about field elements: `C(p, m)` evaluated at `subfieldGen`, an element of
