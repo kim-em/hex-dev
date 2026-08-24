@@ -359,6 +359,14 @@ theorem coeff_C [Zero R] [BEq R] [LawfulBEq R] [DecidableEq R]
       if m = Mono.zero then c else 0 := by
   simp [C, coeff_monomial]
 
+/-- The constant polynomial with zero coefficient is the zero polynomial. -/
+@[simp] theorem C_zero [Zero R] [BEq R] [LawfulBEq R] [DecidableEq R] :
+    C (0 : R) = (0 : MvPoly n R cmp) := by
+  apply ext
+  intro m
+  rw [coeff_C, coeff_zero]
+  split <;> rfl
+
 /-- A variable polynomial is supported at its unit monomial. -/
 theorem coeff_X [Zero R] [One R] [BEq R] [LawfulBEq R] [DecidableEq R]
     (m : Mono n) (i : Fin n) :
