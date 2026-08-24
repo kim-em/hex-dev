@@ -876,6 +876,12 @@
     "reason": "Registers only the proof-side HexIntervalMathlib.RuntimeTerminalConformance glob; it does not enter hexbz_factor_service or change any factorization library, executable definition, or build flag."
   },
   {
+    "path": "lakefile.lean",
+    "baseline_blob": "a1b87406682dbf908d990f01676f326499b906e5",
+    "current_blob": "6450f2f84d526a74345c1c9eda6bda7ba5c8bb42",
+    "reason": "Registers only the HexPolyZGcd conformance module and fixture emitter; no factorization runtime target, definition, build flag, or dependency changes."
+  },
+  {
     "path": "HexArith/Montgomery/Context.lean",
     "baseline_blob": "37f008f776ce7781e174900aed25aec13d845c33",
     "current_blob": "6712bd70c3b7774cadef600f93cbe8bc83516972",
