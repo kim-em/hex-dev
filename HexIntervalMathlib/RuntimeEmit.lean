@@ -612,6 +612,93 @@ opaque Checked.emitResultWithin [DecidableEq Fact] [DecidableEq Cause]
   restoreClean saved
   return result
 
+/-- Emit Evidence for an empty-chronology, version-zero target that is already
+the corresponding fact in `Proof.initialBase`. No runtime event or theorem
+schema supplies authority: exact node and fact equalities against the quoted
+input are constructed as reflexivity terms and checked by the kernel.
+
+The retained terminal still gates this fast path. It must be the sole root,
+carry no edge seed or chronology, name program and fact version zero, and
+match the retained input's initial target. Registry, expression, and exact
+type checks remain transactional. -/
+opaque Checked.emitInitialTargetWithin [DecidableEq Fact] [DecidableEq Cause]
+    (limits : Limits) (checked : Checked Fact semantics Cause Plan) :
+    MetaM (Except Error Emitted) := do
+  let tree := checked.terminal.bundle.tree
+  let recipe := checked.terminal.bundle.recipe
+  if tree.nodes.size != 1 || recipe.events.size != 1 || recipe.edges.size != 1 then
+    return .error .malformed
+  let some node := tree.nodes[0]? | return .error .malformed
+  let some events := recipe.events[0]? | return .error .malformed
+  let some edge := recipe.edges[0]? | return .error .malformed
+  if !events.isEmpty || edge.parent.isSome || edge.side.isSome || edge.seed.isSome then
+    return .error .malformed
+  let (source, result) ← match node with
+    | .terminal source (.target target) => pure (source, target.seen)
+    | .pending _ | .terminal _ (.unknown _) | .terminal _ (.refute _) | .split .. =>
+        return .error .malformed
+  if source.branch.programVersion != 0 || result.version != 0 then
+    return .error .malformed
+  if limits.maxChronology < events.length then return .error (.resource .chronology)
+  let input := checked.terminal.input
+  if result.node != input.target.node || input.facts.size ≤ result.node.index then
+    return .error .malformed
+  let some initialFact := input.facts[result.node.index]?
+    | return .error .malformed
+  if initialFact != input.target.fact then return .error .malformed
+  let proofPackages := checked.registry.packages.map (Package.proof)
+  match Proof.Registry.buildWithin limits.proof
+      checked.registry.runtime.assembly.program proofPackages with
+  | .error error => return .error (.proofBuild error)
+  | .ok _ => pure ()
+  let run (_ : Unit) : MetaM (Except Error Emitted) := do
+    let prepared ← match ← prepareRegistry limits checked.registry with
+      | .error error => return .error error
+      | .ok prepared => pure prepared
+    let inputExpr ← qInput prepared input
+    if limits.maxExpressionCells < expressionCells inputExpr then
+      return .error (.resource .expression)
+    let inputType ← mkAppM ``Proof.Input #[prepared.factType]
+    let emitter : Proof.Emitter Lean.Expr := { emit := pure }
+    let inputExpr ← Proof.emitChecked emitter inputExpr inputType
+    let factsExpr ← mkAppM ``Proof.Input.facts #[inputExpr]
+    let sizeExpr ← mkAppM ``Array.size #[factsExpr]
+    let withinType ← mkAppM ``LT.lt #[mkNatLit result.node.index, sizeExpr]
+    let within ← mkDecideProof withinType
+    let targetExpr ← mkAppM ``Proof.Input.target #[inputExpr]
+    let targetNode ← mkAppM ``Proof.NodeFact.node #[targetExpr]
+    let expectedNode ← mkAppM ``NodeId.mk #[mkNatLit result.node.index]
+    let nodeEqType ← mkAppM ``Eq #[targetNode, expectedNode]
+    let nodeEqCandidate ← mkAppM ``Eq.refl #[targetNode]
+    let nodeEq ← Proof.emitChecked emitter nodeEqCandidate nodeEqType
+    let targetFact ← mkAppM ``Proof.NodeFact.fact #[targetExpr]
+    let indexedFact ← mkAppM ``Array.getInternal
+      #[factsExpr, mkNatLit result.node.index, within]
+    let factEqType ← mkAppM ``Eq #[targetFact, indexedFact]
+    let factEqCandidate ← mkAppM ``Eq.refl #[targetFact]
+    let factEq ← Proof.emitChecked emitter factEqCandidate factEqType
+    let sound ← mkAppM ``Proof.initialTarget
+      #[prepared.semanticsExpr, inputExpr, mkNatLit result.node.index,
+        within, nodeEq, factEq]
+    let candidate ← mkAppM ``Proof.Evidence.mk #[sound]
+    if limits.maxExpressionCells < expressionCells candidate then
+      return .error (.resource .expression)
+    let program ← mkAppM ``Proof.Input.program #[inputExpr]
+    let base ← mkAppM ``Proof.initialBase #[inputExpr]
+    let target ← mkAppM ``Proof.Input.target #[inputExpr]
+    let claim ← mkAppM ``Proof.Semantics.Entails
+      #[prepared.semanticsExpr, program, base, target]
+    let expected ← mkAppM ``Proof.Evidence #[claim]
+    let evidence ← Proof.emitChecked emitter candidate expected
+    return .ok { input := inputExpr, evidence }
+  let saved ← Lean.Meta.saveState
+  let result ← try
+    run ()
+  catch _ =>
+    pure (.error .replay)
+  restoreClean saved
+  return result
+
 /-- Compatibility projection for callers which need only the evidence term.
 Unlike `emitResultWithin`, this discards the quoted input which indexes that
 term. A caller using the result to discharge a pre-existing claim must pin its
