@@ -113,6 +113,10 @@ generator. -/
 def differenceCert? (f h : ZPoly) : Option GcdCert := do
   let difference := f - h
   if difference == 0 then none else pure ()
+  -- A useful first Euclidean remainder must lower the degree of both inputs.
+  -- Without this guard an unrelated equal-degree pair pays for a doomed long
+  -- division and checker replay before entering its ordinary gcd route.
+  if min f.size h.size <= difference.size then none else pure ()
   let sign : Int := if difference.leadingCoeff < 0 then -1 else 1
   let candidate := normalizePrimitiveSign difference
   let cofL := (DensePoly.divMod f candidate).1
