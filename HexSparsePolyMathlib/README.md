@@ -45,9 +45,9 @@ example (p : SparsePoly Int) (x : Int) : (equiv p).eval x = p.eval x := by
 - The coefficientwise identification `coeff_equiv` and the support
   characterisation `equiv_support`.
 - Operation correspondence: `equiv_eval`, `equiv_derivative`,
-  `equiv_compose`, `equiv_substPow`, and the constructor and observer
-  images `equiv_monomial`, `equiv_C`, `equiv_X`, `equiv_natDegree`,
-  `equiv_leadingCoeff`, `equiv_monic`.
+  `equiv_compose`, `equiv_substPow`, `equiv_substScale`, and the
+  constructor and observer images `equiv_monomial`, `equiv_C`,
+  `equiv_X`, `equiv_natDegree`, `equiv_leadingCoeff`, `equiv_monic`.
 
 # Verification
 

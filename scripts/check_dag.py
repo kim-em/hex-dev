@@ -40,6 +40,7 @@ SEALED_IMPORT_ALL_ALLOWLIST: dict[str, frozenset[Path]] = {
     "HexIntervalMathlib.Controller": frozenset(),
     "HexIntervalMathlib.Proof": frozenset(),
     "HexIntervalMathlib.RuntimeProof": frozenset(),
+    "HexIntervalMathlib.RuntimeTerminal": frozenset(),
 }
 
 UMBRELLA_BUILD_TARGETS = {
@@ -47,6 +48,7 @@ UMBRELLA_BUILD_TARGETS = {
     "HexGF2BenchSupport",
     "HexBerlekampKernelProbe",
     "HexMvPolyBenchSupport",
+    "HexModularBenchSupport",
     "HexMvPolyMathlibProofProbe",
     "HexIntervalExperiment",
     "HexIntervalMathlibExperiment",
@@ -60,6 +62,7 @@ UMBRELLA_BUILD_TARGETS = {
     "HexRCFProofProbeScientific",
     "HexConformance",
     "HexFactorizationModules",
+    "HexMvFactorizationTests",
     "HexReleaseTests",
     "HexRCFTests",
     "HexSparsePolyTests",

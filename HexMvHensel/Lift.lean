@@ -61,6 +61,35 @@ def applyCorrections? (q : Nat) (i : Fin (n + 1))
       some ((f + correction) :: tail)
   | _, _ => none
 
+/-- Two shifted factors have the same image, selected-variable leading
+coefficient, and selected-variable degree. -/
+def SameFrame (i : Fin (n + 1))
+    (cmp' : Mono n → Mono n → Ordering) [IsMonomialOrder cmp']
+    (f g : MvPoly (n + 1) Int cmp) : Prop :=
+  imageAt i cmp' (fun _ => 0) g = imageAt i cmp' (fun _ => 0) f ∧
+  lcIn i cmp' g = lcIn i cmp' f ∧
+  MvPoly.degreeOf i g = MvPoly.degreeOf i f
+
+/-- A positive power in a non-main variable and a lower-main-degree
+correction preserve every factor's shifted image, leading coefficient, and
+main-variable degree. This is the exact preservation fact used by the stage
+loop after truncation and symmetric reduction. -/
+theorem applyCorrections_frame {q : Nat} {i : Fin (n + 1)}
+    {d : Fin n → Nat} {selected : Fin (n + 1)} {power : Nat}
+    {factors deltas updated : List (MvPoly (n + 1) Int cmp)}
+    (hselected : ∃ y : Fin n, selected = remainingVar i y)
+    (hpower : 0 < power)
+    (hlength : factors.length = deltas.length)
+    (hdegree : ∀ j, j < factors.length →
+      MvPoly.degreeOf i (deltas.getD j 0) <
+        MvPoly.degreeOf i (factors.getD j 0))
+    (happly : applyCorrections? q i d selected power factors deltas =
+      some updated) :
+    updated.length = factors.length ∧
+      ∀ j, j < factors.length →
+        SameFrame i cmp' (factors.getD j 0) (updated.getD j 0) := by
+  sorry
+
 /-- Lift through every power of one non-main variable. -/
 def liftStage (q : Nat) (i : Fin (n + 1))
     (cmp' : Mono n → Mono n → Ordering) [IsMonomialOrder cmp']
@@ -108,6 +137,64 @@ def liftShifted? (inp : Input n cmp cmp') :
     MvPoly.degreeOf (remainingVar i j) shiftedTarget
   liftStages inp.setup.modulus i cmp' d inp.images inp.witness
     shiftedTarget shiftedLeading initial
+
+/-! # Stage invariant -/
+
+/-- The state carried between EEZ stages. It records exactly the facts used
+at the next `diophantinePrefix` call: fixed image and main degree, installed
+leading prefix, absence of future variables, and the product equation through
+the completed prefix. -/
+def IsStage (inp : Input n cmp cmp') (count : Nat)
+    (factors : List (MvPoly (n + 1) Int cmp)) : Prop :=
+  let i := inp.setup.main
+  let shiftedTarget := shift i inp.setup.point inp.target
+  let shiftedLeading := inp.leading.map (shiftAll inp.setup.point)
+  let d : Fin n → Nat := fun j =>
+    MvPoly.degreeOf (remainingVar i j) shiftedTarget
+  factors.length = inp.images.length ∧
+  (∀ j, j < inp.images.length →
+    imageAt i cmp' (fun _ => 0) (factors.getD j 0) =
+      inp.images.getD j 0) ∧
+  (∀ j, j < inp.images.length →
+    lcIn i cmp' (factors.getD j 0) =
+      prefixVars count (shiftedLeading.getD j 0)) ∧
+  (∀ j, j < inp.images.length →
+    MvPoly.degreeOf i (factors.getD j 0) =
+      (inp.images.getD j 0).degree?.getD 0) ∧
+  (∀ j, j < inp.images.length →
+    prefixNonMain i count (factors.getD j 0) = factors.getD j 0) ∧
+  BoxCongr i d inp.setup.modulus (mvProduct factors)
+    (prefixNonMain i count shiftedTarget)
+
+/-- Valid seeds establish the stage-zero invariant. -/
+theorem seedTuple_stage {inp : Input n cmp cmp'} (h : valid inp = true) :
+    ∃ initial,
+      seedTuple? inp.setup.main cmp' inp.images
+          (inp.leading.map (shiftAll inp.setup.point)) = some initial ∧
+        IsStage inp 0 initial := by
+  sorry
+
+/-- The stage invariant makes every internal diophantine solve reachable and
+is preserved while one more non-main variable is introduced. -/
+theorem liftStage_spec {inp : Input n cmp cmp'} (h : valid inp = true)
+    (y : Fin n) {factors : List (MvPoly (n + 1) Int cmp)}
+    (hstage : IsStage inp y.val factors) :
+    let i := inp.setup.main
+    let shiftedTarget := shift i inp.setup.point inp.target
+    let shiftedLeading := inp.leading.map (shiftAll inp.setup.point)
+    let d : Fin n → Nat := fun j =>
+      MvPoly.degreeOf (remainingVar i j) shiftedTarget
+    ∃ next,
+      liftStage inp.setup.modulus i cmp' d inp.images inp.witness
+          shiftedTarget shiftedLeading y factors = some next ∧
+        IsStage inp (y.val + 1) next := by
+  sorry
+
+/-- Consequently a valid input cannot take the partial `none` branch while
+building shifted factors. -/
+theorem liftShifted_some {inp : Input n cmp cmp'} (h : valid inp = true) :
+    ∃ shifted, liftShifted? inp = some shifted ∧ IsStage inp n shifted := by
+  sorry
 
 /-- Return from shifted coordinates to the caller's coordinates. -/
 def reconstruct (i : Fin (n + 1)) (point : Fin n → Int)

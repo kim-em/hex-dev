@@ -8,7 +8,6 @@ module
 
 public import HexModular.Crt
 public import HexModular.Euclid
-public import HexModular.KernelTests
 public import HexModular.Loop
 public import HexModular.LoopTests
 public import HexModular.Recon

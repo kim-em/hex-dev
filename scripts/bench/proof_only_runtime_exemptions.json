@@ -843,6 +843,54 @@
     "path": "lakefile.lean",
     "baseline_blob": "a1b87406682dbf908d990f01676f326499b906e5",
     "current_blob": "5d2ddd13644831ed8daf314cda768232ed045a0c",
-    "reason": "Registers the completed sparse-poly libraries, tests, conformance modules, and bench/fixture executables that reached main while the Lean v4.34 factor sweep was running; no factorization module, executable, or build-flag changes."
+    "reason": "Registers the HexSparsePolyMathlib library and the sparse-poly conformance globs on top of the toolchain-bump measurement commit; no factorization module, executable, or build-flag changes."
+  },
+  {
+    "path": "lakefile.lean",
+    "baseline_blob": "a1b87406682dbf908d990f01676f326499b906e5",
+    "current_blob": "1f1dfc2c1ac92caf6b0d12142399a3756a1ec336",
+    "reason": "Registers only the build-only HexMvFactorizationTests verification umbrella; it adds no imports to hexbz_factor_service or any runtime library target and changes no executable definition or build flag."
+  },
+  {
+    "path": "lakefile.lean",
+    "baseline_blob": "a1b87406682dbf908d990f01676f326499b906e5",
+    "current_blob": "cb8f437dbc9ed9ea5dc5c7e2794295ab16774099",
+    "reason": "Moves HexSparsePoly.KernelTests into the HexReleaseTests globs for the split publication, leaving HexSparsePolyTests as the monorepo-only lint target; no factorization module, executable, or build-flag changes."
+  },
+  {
+    "path": "Hex/Conformance/Emit.lean",
+    "baseline_blob": "21481a92862c6a9f8c8d538c4815d2bc4557453a",
+    "current_blob": "873aec7387d46c7864913c43e9f9c25b25b33ffc",
+    "reason": "Adds JSON serializers used only by modular conformance fixture emitters; no factorization runtime module imports the conformance helper."
+  },
+  {
+    "path": "lakefile.lean",
+    "baseline_blob": "a1b87406682dbf908d990f01676f326499b906e5",
+    "current_blob": "c973b09972fdea92dd362ebd997535fb9fe61a5b",
+    "reason": "Registers only the HexModular conformance module and fixture emitter on top of the sparse-poly release registrations; no factorization runtime target, definition, build flag, or dependency changes."
+  },
+  {
+    "path": "lakefile.lean",
+    "baseline_blob": "a1b87406682dbf908d990f01676f326499b906e5",
+    "current_blob": "3508e63c162bdc9b9ca9d62662297a8c6501a504",
+    "reason": "Registers only the proof-side HexIntervalMathlib.RuntimeTerminalConformance glob; it does not enter hexbz_factor_service or change any factorization library, executable definition, or build flag."
+  },
+  {
+    "path": "lakefile.lean",
+    "baseline_blob": "a1b87406682dbf908d990f01676f326499b906e5",
+    "current_blob": "6450f2f84d526a74345c1c9eda6bda7ba5c8bb42",
+    "reason": "Registers only the HexPolyZGcd conformance module and fixture emitter; no factorization runtime target, definition, build flag, or dependency changes."
+  },
+  {
+    "path": "Hex/BenchOracle/Modular.lean",
+    "baseline_blob": null,
+    "current_blob": "b40ff92191f6d955b4a5fcde35cc1eb03ebc5b3c",
+    "reason": "Adds a persistent external-comparator driver used only by HexModularBench; no factorization runtime module imports it."
+  },
+  {
+    "path": "lakefile.lean",
+    "baseline_blob": "a1b87406682dbf908d990f01676f326499b906e5",
+    "current_blob": "f429150001cdfe913842fd157f5546c8772a0823",
+    "reason": "Registers the HexModular benchmark executable and its bench-only support library on top of the sparse-release and conformance registrations; no factorization runtime target, definition, build flag, or dependency changes."
   }
 ]

@@ -24,6 +24,12 @@ open Hex
 open Hex.MvPoly
 open scoped Hex
 
+#check lcIn_setLc
+#check degreeOf_setLc
+#check imageAt_setLc
+#check prefixVars_min
+#check prefixNonMain_min
+
 abbrev P := MvPoly 2 Int Mono.lex
 abbrev L := MvPoly 1 Int Mono.lex
 

@@ -563,6 +563,24 @@ theorem lcIn_seed     (hF : F.size ≠ 0) (h : L ≠ 0) :
 theorem degreeOf_seed (h : L ≠ 0) : degreeOf i (seed i cmp' L F) = F.degree
 ```
 
+The corresponding assignment and prefix laws are public because the stage
+proof must use the executable operations without re-expanding their sparse
+representations:
+
+```lean
+theorem lcIn_setLc (hL : L ≠ 0) : lcIn i cmp' (setLc i cmp' L p) = L
+theorem degreeOf_setLc (hL : L ≠ 0) :
+    degreeOf i (setLc i cmp' L p) = degreeOf i p
+theorem imageAt_setLc
+    (hL : eval a L = eval a (lcIn i cmp' p)) :
+    imageAt i cmp' a (setLc i cmp' L p) = imageAt i cmp' a p
+theorem prefixVars_min :
+    prefixVars a (prefixVars b p) = prefixVars (min a b) p
+theorem prefixNonMain_min :
+    prefixNonMain i a (prefixNonMain i b p) =
+      prefixNonMain i (min a b) p
+```
+
 The hypothesis on the first is exactly V4's second condition.  The nonzero
 image hypothesis on `lcIn_seed` is essential: `seed` deliberately returns
 zero at `F = 0`, so `F = 0` and `L = 1` would refute the version without it.
@@ -724,6 +742,11 @@ theorem solveUni_unique (h : valid inp = true)
     (hτ : ∀ j, (τ j).degree < (F j).degree)
     (hsum : Σ_j τ j * b_j ≡ c (mod q)) :
     ∀ j, τ j ≡ (solveUni q images witness c)[j]  (mod q)
+theorem solveUni_eq
+    (hτ : ∀ j, (τ j).degree < (F j).degree)
+    (hsum : Σ_j τ j * b_j ≡ c (mod q))
+    (hcanonical : ∀ j, UniSymCanonical q (τ j)) :
+    ∀ j, τ j = (solveUni q images witness c)[j]
 ```
 
 **Uniqueness is modulo `q`, and it cannot be an equality of `ZPoly`
@@ -805,6 +828,36 @@ run the same full-box equation and degree checks after producing a tuple;
 omitting a variable that is actually needed can therefore cause `none`, but
 cannot produce an unchecked answer. In particular, later degree bounds do
 not create vacuous recursive correction loops in an earlier stage.
+
+The production proof surface packages the induction state rather than asking
+callers to reconstruct it from the loop body. `IsStage inp t factors` records
+tuple length, exact univariate images, the installed leading prefix, exact
+main-variable degrees, absence of variables after prefix `t`, and the box
+congruence for the completed target prefix. The executable preservation laws
+are:
+
+```lean
+def SameFrame (i) (cmp') (f g : MvPoly (n+1) Int cmp) : Prop
+def IsStage (inp : Input n cmp cmp') (count : Nat)
+    (factors : List (MvPoly (n+1) Int cmp)) : Prop
+
+theorem applyCorrections_frame ... :
+    updated.length = factors.length ∧
+      ∀ j, SameFrame i cmp' factors[j] updated[j]
+theorem seedTuple_stage (h : valid inp = true) :
+    ∃ initial, seedTuple? ... = some initial ∧ IsStage inp 0 initial
+theorem liftStage_spec (h : valid inp = true)
+    (hstage : IsStage inp y.val factors) :
+    ∃ next, liftStage ... y factors = some next ∧
+      IsStage inp (y.val + 1) next
+theorem liftShifted_some (h : valid inp = true) :
+    ∃ shifted, liftShifted? inp = some shifted ∧ IsStage inp n shifted
+```
+
+Thus `none` remains meaningful for malformed direct calls to the public
+diophantine solver, but is unreachable along a valid lift. In particular,
+the stage theorem supplies the right-hand-side degree bound and both base
+hypotheses (`hb` and `hbdeg`) at the exact call site.
 
 This is the same linear scheme as the stage loop one level down, which is
 why the two share `BoxCongr` and the truncation bookkeeping.
@@ -1310,6 +1363,8 @@ def seed       (i : Fin (n+1)) (cmp') : MvPoly n Int cmp' → ZPoly → MvPoly (
 def witnessOf? (s : Setup n) (images : List ZPoly) : Option (List ZPoly)
 def coeffBound (inp : Input n cmp cmp') : Nat
 def InDegreeBox (i : Fin (n+1)) (D : Nat) (e : Fin n → Nat) (m : Mono (n+1)) : Prop
+def IsStage    (inp : Input n cmp cmp') (count : Nat)
+               (factors : List (MvPoly (n+1) Int cmp)) : Prop
 
 -- Solving
 def solveUni     (q : Nat) (images witness : List ZPoly) (c : ZPoly) : List ZPoly

@@ -1,0 +1,19 @@
+Independently reviewed against HexMvHensel/SPEC/hex-mv-hensel.md.
+
+The executable audit covered coordinate shifts, modular truncation,
+univariate witness lifting, the recursive diophantine solver, seed and
+leading-coefficient installation, certificate validation, staged lifting,
+reconstruction retries, and coefficient-bound helpers.  Partial operations
+reject malformed tuples, every produced factorization passes the independent
+checker, and no data-level placeholder, wrong-shape algorithm, fake extern,
+or native-type detour remains.
+
+Issues #9450--#9454 record the review findings: true Taylor/Horner operations,
+active-prefix solves, linear complement construction, shared mixed-radix
+weights, and the stage-invariant proof API.  The first four fixes are present;
+#9454 has an implementation PR and is a theorem/API follow-up rather than a
+data-level scaffolding defect.  Verification modules live in the explicit
+development-test target rather than the public umbrella.
+
+The remaining `sorry` declarations are theorem-level proof obligations for
+Phase 5.

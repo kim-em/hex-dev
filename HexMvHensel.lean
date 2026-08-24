@@ -15,14 +15,6 @@ public import HexMvHensel.Seed
 public import HexMvHensel.Cert
 public import HexMvHensel.Lift
 public import HexMvHensel.Complete
-public import HexMvHensel.KernelTests
-public import HexMvHensel.ShiftTests
-public import HexMvHensel.UniTests
-public import HexMvHensel.DiophantineTests
-public import HexMvHensel.SeedTests
-public import HexMvHensel.CertTests
-public import HexMvHensel.LiftTests
-public import HexMvHensel.CompleteTests
 
 public section
 

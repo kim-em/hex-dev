@@ -110,6 +110,50 @@ def prefixNonMain (i : Fin (n + 1)) (count : Nat)
     decide (∀ j : Fin n, count ≤ j.val →
       Mono.degreeOf (remainingVar i j) m = 0)
 
+/-! # Leading-coefficient and prefix laws -/
+
+/-- Installing a nonzero top coefficient makes it the exact leading
+coefficient in the selected variable. -/
+theorem lcIn_setLc (i : Fin (n + 1))
+    (cmp' : Mono n → Mono n → Ordering) [IsMonomialOrder cmp']
+    (L : MvPoly n Int cmp') (p : MvPoly (n + 1) Int cmp)
+    (hL : L ≠ 0) :
+    lcIn i cmp' (setLc i cmp' L p) = L := by
+  sorry
+
+/-- Installing a nonzero top coefficient preserves the selected-variable
+degree, including the degree-zero case. -/
+theorem degreeOf_setLc (i : Fin (n + 1))
+    (cmp' : Mono n → Mono n → Ordering) [IsMonomialOrder cmp']
+    (L : MvPoly n Int cmp') (p : MvPoly (n + 1) Int cmp)
+    (hL : L ≠ 0) :
+    MvPoly.degreeOf i (setLc i cmp' L p) = MvPoly.degreeOf i p := by
+  sorry
+
+/-- Replacing the top slice preserves an image whenever the replacement has
+the same value at the image point. -/
+theorem imageAt_setLc (i : Fin (n + 1))
+    (cmp' : Mono n → Mono n → Ordering) [IsMonomialOrder cmp']
+    (a : Fin n → Int) (L : MvPoly n Int cmp')
+    (p : MvPoly (n + 1) Int cmp)
+    (hL : MvPoly.eval a L = MvPoly.eval a (lcIn i cmp' p)) :
+    imageAt i cmp' a (setLc i cmp' L p) = imageAt i cmp' a p := by
+  sorry
+
+/-- Repeated coordinate prefixes retain exactly the smaller prefix. -/
+theorem prefixVars_min {k : Nat}
+    {order : Mono k → Mono k → Ordering} [IsMonomialOrder order]
+    (a b : Nat) (p : MvPoly k Int order) :
+    prefixVars a (prefixVars b p) = prefixVars (min a b) p := by
+  sorry
+
+/-- Repeated non-main prefixes retain exactly the smaller prefix. -/
+theorem prefixNonMain_min (i : Fin (n + 1)) (a b : Nat)
+    (p : MvPoly (n + 1) Int cmp) :
+    prefixNonMain i a (prefixNonMain i b p) =
+      prefixNonMain i (min a b) p := by
+  sorry
+
 /-- Build all seeds without any default indexing or prefix truncation. -/
 def seedTuple? (i : Fin (n + 1))
     (cmp' : Mono n → Mono n → Ordering) [IsMonomialOrder cmp'] :

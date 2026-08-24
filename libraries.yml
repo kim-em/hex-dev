@@ -130,7 +130,7 @@ libraries:
   HexMvGcd:
     deps: [HexBasic, HexMvPoly, HexPoly, HexPolyFp, HexResultant, HexArith, HexModArith, HexModular, HexPolyZGcd]
     mathlib: false
-    done_through: 1
+    done_through: 2
     status: active
   HexSparsePoly:
     deps: [HexPoly, HexBasic]
@@ -219,8 +219,25 @@ libraries:
   HexModular:
     deps: [HexArith]
     mathlib: false
-    done_through: 1
+    done_through: 4
     status: active
+    phase4:
+      comparators:
+        - tool: "gmpy2.gcdext"
+          class: informational
+          rationale: "gmpy2 exposes GMP's tuned extended GCD, while HexModular reaches the same arithmetic through HexArith's GMP-backed compiled path. The ratio isolates binding and orchestration overhead rather than an algorithm choice, so it is recorded for orientation and does not gate Phase 4."
+        - tool: "python-flint fmpz CRT"
+          class: informational
+          rationale: "python-flint exposes FLINT's fmpz and fmpz_mod_ctx arithmetic for the same incremental Garner recurrence. The ratio chiefly measures Python framing and arithmetic binding costs, not a choice between interchangeable Hex algorithms, and therefore remains informational."
+      input_families:
+        - name: incremental-crt
+          description: Scalar accumulation over 4 to 8192 pairwise-coprime word-size prime-power moduli.
+        - name: vector-crt
+          description: Fixed-depth width ladders and fixed-width depth ladders that expose reuse of one extended GCD across coordinates.
+        - name: rational-reconstruction
+          description: Fibonacci-shaped late Euclidean runs through 262144 bits and early-success cases through 100000 bits.
+        - name: failure-cost
+          description: Full Euclidean runs whose impossible numerator bound forces reconstruction failure through the final checks.
   HexGramSchmidt:
     deps: [HexRowReduce, HexDeterminant, HexBareiss]
     mathlib: false
@@ -273,8 +290,24 @@ libraries:
   HexPolyZGcd:
     deps: [HexPolyZ, HexPolyFp, HexPoly, HexModular, HexModArith, HexArith, HexResultant]
     mathlib: false
-    done_through: 1
+    done_through: 3
     status: active
+    phase4:
+      comparators:
+        - tool: FLINT fmpz_poly_gcd via python-flint
+          class: gating
+          goal: within 5x on the dense and coprime families above degree 32
+      input_families:
+        - name: coprime-pairs
+          description: Coprime inputs at degrees 8 to 512, where route 1 must settle the result.
+        - name: dense-gcds
+          description: Gcds of about half the input degree at 8-bit and 256-bit coefficients.
+        - name: swell
+          description: Small inputs whose subresultant sequence has large coefficients.
+        - name: squarefree
+          description: The Berlekamp-Zassenhaus squarefree-decomposition ladder.
+        - name: rational
+          description: The same inputs over the rationals through ratGcd.
 
   # ---------- Depth 2 ----------
   HexLLL:
@@ -598,12 +631,12 @@ libraries:
   HexRootsMathlib:
     deps: [HexRoots, HexPolyZMathlib]
     mathlib: true
-    done_through: 4
+    done_through: 7
     status: active
   HexResultant:
     deps: [HexPoly, HexBasic]
     mathlib: false
-    done_through: 5
+    done_through: 4
     status: active
     phase4:
       comparators:
@@ -618,12 +651,12 @@ libraries:
   HexMvHensel:
     deps: [HexBasic, HexMvPoly, HexMvGcd, HexPoly, HexPolyZ, HexPolyFp, HexModArith, HexModular, HexArith]
     mathlib: false
-    done_through: 1
+    done_through: 2
     status: active
   HexMvFactor:
     deps: [HexBasic, HexMvPoly, HexMvGcd, HexMvHensel, HexPoly, HexPolyZ, HexPolyZGcd, HexBerlekampZassenhaus, HexPolyFp, HexModArith, HexModular, HexArith]
     mathlib: false
-    done_through: 1
+    done_through: 2
     status: active
   HexInterval:
     deps: []
@@ -644,7 +677,7 @@ libraries:
   HexResultantMathlib:
     deps: [HexResultant, HexPolyMathlib]
     mathlib: true
-    done_through: 5
+    done_through: 7
     status: active
   HexNumberField:
     deps: [HexPolyZ, HexRoots, HexResultant, HexBerlekampZassenhaus, HexMatrix, HexRowReduce]
@@ -694,7 +727,7 @@ libraries:
   HexRCF:
     deps: [HexRealRoots, HexRealRootsMathlib, HexPolyZ, HexPolyZMathlib]
     mathlib: true
-    done_through: 5
+    done_through: 7
     status: active
     proof_probes: [bench/HexRCF/ProofProbe]
     phase4:

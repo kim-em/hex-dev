@@ -60,9 +60,10 @@ example {p n : Nat} [ZMod64.Bounds p] [ZMod64.PrimeModulus p]
   degree-`n` one for a committed divisor pair, instantiated at `GF(2^2)` and
   `GF(2^3)` inside `GF(2^6)`, `GF(13)` inside `GF(13^6)`, and `GF(2^4)` inside
   `GF(2^8)`.
-- The component lemmas that move
+- `orderOf_gen_of_primitive`, which moves
   [`hex-conway`](https://github.com/leanprover/hex-conway)'s executable
-  primitivity check towards Mathlib's `orderOf` vocabulary.
+  primitivity certificates into Mathlib's `orderOf` vocabulary, with named
+  corollaries for all 37 committed nontrivial entries.
 
 # Verification
 
@@ -125,14 +126,13 @@ which is explicit that two evaluation and Frobenius bridges are missing first.
 Nothing in this package depends on that reading; the root property is what the
 embedding uses.
 
-The primitivity transport is likewise partial. `ofPolyHom_linPowMod`,
+The primitivity transport is assembled from `ofPolyHom_linPowMod`,
 `ofPolyHom_digitPowMod`, `ofPolyHom_eq_one_iff`, `mathlibPrime_of_hexPrime` and
-`mem_of_prime_dvd_primePowerProduct` are the ingredients Mathlib's
-`orderOf_eq_of_pow_and_pow_div_prime` needs, each carried across `ofPolyHom`
-separately. But no declaration here consumes a `Conway.Primitive` witness or
-produces the per-prime hypothesis function that theorem quantifies over, so the
-glue from `Primitive.check` to those hypotheses does not exist yet, and the
-per-entry conclusion `orderOf α = p ^ n - 1` is correspondingly not assembled.
+`mem_of_prime_dvd_primePowerProduct`. `orderOf_gen_of_primitive` consumes a
+`Conway.Primitive` witness, builds the per-prime hypothesis function required by
+Mathlib's `orderOf_eq_of_pow_and_pow_div_prime`, and concludes
+`orderOf α = p ^ n - 1`. The `orderOf_gen_p_n` corollaries specialize this to
+all 37 committed entries with nontrivial multiplicative group.
 
 Use [`hex-gfq`](https://github.com/leanprover/hex-gfq) alone for computation;
 this package is for theorem statements and interoperability involving Mathlib.

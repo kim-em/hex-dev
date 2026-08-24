@@ -628,15 +628,24 @@ carries its own rejection rules.
 `k` moduli of `w` bits, an accumulated modulus of `M = k·w` bits, a
 vector of `n` residues.
 
+Write `D(M)` for the bit cost of one balanced `M`-bit division and `S(M)`
+for integer square root. On the GMP operand range exercised below, the native
+benchmark uses `M√M` as the Karatsuba-range wall-clock surrogate for both;
+this refines the abstract word-operation counts without changing the
+algorithm.
+
 | operation | algorithm | cost |
 |---|---|---|
-| `symMod` | one division | `O(M)` word ops |
+| `symMod` | one balanced division | `O(D(M))`; native proxy `O(M√M)` |
 | `Crt.push` | one `extGcd` on two words, one multiply-add at size `M` | `O(w²)` plus `O(M)` |
 | `CrtVec.push` | one `extGcd`, `n` multiply-adds | `O(w²)` plus `O(n·M)` |
 | `k` pushes, cumulative | quadratic in the number of moduli | `O(k²·w²)` word ops |
 | `euclidUntil` | truncated Euclidean run at size `M` | `O(M²)` word ops |
 | `ratRecon?` | `euclidUntil` plus checks | `O(M²)` |
+| `ratReconWide?` on an early-success input | integer square root plus bounded checks | `O(S(M))`; native proxy `O(M√M)` |
+| `ratReconCheck` with bounded quotient | same-size modular congruence check | `O(M)` |
 | `ratReconVec?` | one run plus `n` multiplications, on average | `O(M²) + O(n·M)` |
+| `ratReconMaxQuot?` | complete Euclidean quotient scan | `O(M²)` |
 
 The cumulative `O(k²w²)` for a full multi-modular run is the entry that
 matters, and it is what a product-tree (fast) CRT would improve to
@@ -734,25 +743,31 @@ operations a downstream certificate replay pays for.
 
 Families:
 
-- **Incremental CRT**, `k` from 4 to 4000 moduli of 31 bits. The declared
+- **Incremental CRT**, `k` from 4 to 8192 moduli of 31 bits. The declared
   complexity is `k²`, and the family exists to find the point where a
   product tree would pay.
-- **Vector CRT**, `k` moduli against `n` from 1 to 4096 residues,
+- **Vector CRT**, `k` from 4 to 8192 moduli against `n` from 1 to 4096 residues,
   checking that the extended gcd is amortised across the vector rather
   than repeated.
-- **Rational reconstruction**, moduli from 64 to 100000 bits, over
+- **Rational reconstruction**, moduli from 64 to 262144 bits, over
   reconstructions that succeed early, succeed late, and fail.
 - **Failure cost**, the same sizes where no rational exists, since a
   consumer in a loop pays this on every modulus until the last.
 
-**Comparators.** `gmpy2`'s `gcdext` and FLINT's `fmpz_mod_ctx` CRT are
-`informational`: both are C implementations of the same operations and
-the ratio measures the GMP binding rather than the algorithm. SymPy is
-the oracle and is not a performance comparator. No comparator is
-`gating`, because this library has no algorithmic choice for one to
-discriminate: the algorithms here are the standard ones and the
-performance question is entirely about the arithmetic underneath, which
-hex-arith already measures.
+**Comparators.** [`gmpy2.gcdext`](https://gmpy2.readthedocs.io/) is scoped to
+the `euclidUntil` target and therefore supplies the external curve for the
+`rational-reconstruction` and `failure-cost` families. The
+[`python-flint fmpz CRT`](https://python-flint.readthedocs.io/en/latest/fmpz_mod.html)
+comparator is scoped to scalar `Crt.push` and fixed-depth `CrtVec.push`, using
+`fmpz_mod_ctx` inversion and `fmpz` multiply-adds for the same incremental
+Garner recurrence; it supplies the `incremental-crt` and `vector-crt` curves.
+Both are `informational`: they are C-backed implementations of the same
+arithmetic primitives, and the ratios chiefly measure binding and orchestration
+cost rather than an alternative Hex algorithm. SymPy is the oracle and is not
+a performance comparator. No comparator is `gating`, because this library has
+no algorithmic choice for one to discriminate: the algorithms here are the
+standard ones and the performance question is entirely about the arithmetic
+underneath, which hex-arith already measures.
 
 ## The Mathlib layer
 

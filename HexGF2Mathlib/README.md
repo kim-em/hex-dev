@@ -11,8 +11,8 @@ construction from
 [`hex-gfq-field`](https://github.com/leanprover/hex-gfq-field), and reaches
 Mathlib's `Polynomial (ZMod 2)` by composing with
 [`hex-poly-fp-mathlib`](https://github.com/leanprover/hex-poly-fp-mathlib). It
-also carries finiteness, cardinality, and Mathlib's `CommRing` and `Field`
-structure on the packed types.
+also carries finiteness, cardinality, and Mathlib's `CommRing`,
+`EuclideanDomain`, gcd-domain, and `Field` structure on the packed types.
 
 # Quickstart
 
@@ -32,6 +32,11 @@ noncomputable example : GF2Poly ≃+* Polynomial (ZMod 2) :=
   HexGF2Mathlib.GF2Poly.equivPolynomial
 
 example (p q : GF2Poly) : p * q = GF2Poly.mul p q := rfl
+example (p q : GF2Poly) : p / q = GF2Poly.div p q := rfl
+example (p q : GF2Poly) : GCDMonoid.gcd p q = GF2Poly.gcd p q := rfl
+example (p q : GF2Poly) :
+    EuclideanDomain.gcd p q = GF2Poly.gcd p q :=
+  HexGF2Mathlib.GF2Poly.euclidean_gcd_eq_packed p q
 
 -- A single-word `GF(2^n)` is the generic quotient field, and has `2 ^ n` elements.
 example {n : Nat} {irr : UInt64} {hn : 0 < n} {hn64 : n < 64}
@@ -54,8 +59,12 @@ example {n : Nat} {irr : UInt64} {hn : 0 < n} {hn64 : n < 64}
   `GFqField.FiniteField` over the transported modulus.
 - `Fintype` instances for both wrappers, their cardinality theorems, and the
   computable `finEquiv` indexings they are built from.
-- `CommRing Hex.GF2Poly`, and `Field (Hex.GF2nPoly f hirr)` for a nonconstant
-  modulus, built through Mathlib's minimal-axioms constructors.
+- `CommRing Hex.GF2Poly`, `EuclideanDomain Hex.GF2Poly`, a `GCDMonoid` whose
+  gcd is definitionally `GF2Poly.gcd`, `Field (Hex.GF2n n irr hn hn64 hirr)`,
+  and `Field (Hex.GF2nPoly f hirr)` for a nonconstant modulus. The `GF2n`
+  instance keeps its packed multiplication, negation, inversion, subtraction,
+  and division definitions; the constructor supplies the remaining derived
+  hierarchy operations.
 
 The equivalences are Mathlib's `≃+*`, not a project-local record, so they
 compose with other `RingEquiv`s and are accepted by Mathlib's equivalence APIs.
@@ -74,7 +83,12 @@ noncomputable def equivPolynomial : Hex.GF2Poly ≃+* Polynomial (ZMod 2)
 `equivPolynomial` is `noncomputable` because Mathlib's polynomial
 multiplication is; the packed side stays executable. The algebraic instances
 keep the executable operations rather than transported copies, so
-`p * q = GF2Poly.mul p q` closes by `rfl`.
+`p * q = GF2Poly.mul p q`, `p / q = GF2Poly.div p q`, and
+`GCDMonoid.gcd p q = GF2Poly.gcd p q` close by `rfl`. The Euclidean instance
+also makes Mathlib's Bezout, principal-ideal, and unique-factorization
+interfaces available on the packed type. The stated
+`GF2Poly.euclidean_gcd_eq_packed` lemma identifies the gcd in Mathlib's
+recursive Bezout theorem with the executable packed gcd.
 
 The single-word wrapper, in namespace `HexGF2Mathlib.GF2n`:
 
@@ -101,16 +115,11 @@ transported across the ring equivalence. The `Fintype` instances are
 deliberately `noncomputable`: the carriers have `2 ^ n` elements, so a compiled
 `Finset.univ` over one is a footgun. The `Equiv`s underneath stay computable.
 
-The `Field` instance on `GF2nPoly` takes `Fact (0 < f.degree)`, and the
-hypothesis is not redundant: `GF2Poly.Irreducible` admits the constant `1`, and
-the quotient by a constant is the trivial ring where `0 = 1`.
-
-Two things are absent. `GF2n` has no Mathlib `Field` instance, because hex-gf2
-does not prove its ring laws as bare theorems the way it does for `GF2Poly` and
-`GF2nPoly`, so reaching Mathlib from a `GF2n` today means going through
-`GF2n.equiv`. There is no `EuclideanDomain GF2Poly` either; hex-gf2 already
-defines `Div` and `Mod` on `GF2Poly` and the class supplies its own, so the two
-have to be reconciled rather than stacked.
+The `GF2n` field instance needs no additional hypothesis because its type
+already carries `0 < n`. The `Field` instance on `GF2nPoly` takes
+`Fact (0 < f.degree)`, and the hypothesis is not redundant:
+`GF2Poly.Irreducible` admits the constant `1`, and the quotient by a constant
+is the trivial ring where `0 = 1`.
 
 Use [`hex-gf2`](https://github.com/leanprover/hex-gf2) alone for computation;
 this package is for theorem statements and interoperability involving Mathlib.

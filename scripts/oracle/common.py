@@ -29,6 +29,12 @@ JSONL fixture record shape (one record per line):
                       "basis": [[int...]...]}``
 * ``prime``      — ``{"kind": "prime",      "lib": str, "case": str,
                       "p": int, "n": int}``
+* ``symmod``     — ``{"kind": "symmod",     "lib": str, "case": str,
+                      "a": int, "m": nonnegative int}``
+* ``crt``        — ``{"kind": "crt",        "lib": str, "case": str,
+                      "residues": [int...], "moduli": [nonnegative int...]}``
+* ``ratrecon``   — ``{"kind": "ratrecon",   "lib": str, "case": str,
+                      "a": int, "m": nonnegative int, "p": int, "q": int}``
 * ``conway``     — ``{"kind": "conway",     "lib": str, "case": str,
                       "p": int, "n": int}``
 * ``gfq_bridge`` — ``{"kind": "gfq_bridge", "lib": str, "case": str,
@@ -93,6 +99,9 @@ VALID_FIXTURE_KINDS = frozenset(
         "sparsepoly",
         "lattice",
         "prime",
+        "symmod",
+        "crt",
+        "ratrecon",
         "conway",
         "gfq_bridge",
         "gfqring",
@@ -315,6 +324,34 @@ def _validate_fixture(record: dict[str, Any]) -> None:
         for key in ("p", "n"):
             if not isinstance(record.get(key), int):
                 raise FixtureError(f"prime.{key} must be int: {record!r}")
+    elif kind == "symmod":
+        if not _is_int(record.get("a")):
+            raise FixtureError(f"symmod.a must be int: {record!r}")
+        if not _is_int(record.get("m")) or record["m"] < 0:
+            raise FixtureError(f"symmod.m must be a nonnegative int: {record!r}")
+    elif kind == "crt":
+        residues = record.get("residues")
+        moduli = record.get("moduli")
+        if not isinstance(residues, list) or not all(_is_int(x) for x in residues):
+            raise FixtureError(f"crt.residues must be List[int]: {record!r}")
+        if not isinstance(moduli, list) or not all(
+            _is_int(x) and x >= 0 for x in moduli
+        ):
+            raise FixtureError(
+                f"crt.moduli must be List[nonnegative int]: {record!r}"
+            )
+        if len(residues) != len(moduli):
+            raise FixtureError(
+                f"crt residue and modulus lists must have equal length: {record!r}"
+            )
+    elif kind == "ratrecon":
+        for key in ("a", "m", "p", "q"):
+            if not _is_int(record.get(key)):
+                raise FixtureError(f"ratrecon.{key} must be int: {record!r}")
+        if record["m"] < 0:
+            raise FixtureError(
+                f"ratrecon.m must be a nonnegative int: {record!r}"
+            )
     elif kind == "conway":
         for key in ("p", "n"):
             if not isinstance(record.get(key), int):

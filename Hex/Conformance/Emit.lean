@@ -214,6 +214,39 @@ def emitPrimeFixture (lib case : String) (p n : Int) : IO Unit := do
     ("n",    jsonInt n)
   ]
 
+/-- Emit a symmetric-representative fixture. -/
+def emitSymModFixture (lib case : String) (a : Int) (m : Nat) : IO Unit := do
+  emitLine <| jsonObject [
+    ("kind", jsonString "symmod"),
+    ("lib", jsonString lib),
+    ("case", jsonString case),
+    ("a", jsonInt a),
+    ("m", toString m)
+  ]
+
+/-- Emit an incremental CRT fixture as parallel residue and modulus lists. -/
+def emitCrtFixture (lib case : String) (steps : List (Int × Nat)) : IO Unit := do
+  emitLine <| jsonObject [
+    ("kind", jsonString "crt"),
+    ("lib", jsonString lib),
+    ("case", jsonString case),
+    ("residues", jsonIntList (steps.map Prod.fst)),
+    ("moduli", jsonIntList (steps.map fun step => Int.ofNat step.2))
+  ]
+
+/-- Emit one bounded rational-reconstruction fixture. -/
+def emitRatReconFixture (lib case : String) (a : Int) (m : Nat)
+    (p q : Int) : IO Unit := do
+  emitLine <| jsonObject [
+    ("kind", jsonString "ratrecon"),
+    ("lib", jsonString lib),
+    ("case", jsonString case),
+    ("a", jsonInt a),
+    ("m", toString m),
+    ("p", jsonInt p),
+    ("q", jsonInt q)
+  ]
+
 /-- Emit a `conway` fixture record identifying a committed `C(p, n)` entry. -/
 def emitConwayFixture (lib case : String) (p n : Int) : IO Unit := do
   emitLine <| jsonObject [
