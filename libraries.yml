@@ -781,8 +781,26 @@ libraries:
   HexMvHensel:
     deps: [HexBasic, HexMvPoly, HexMvGcd, HexPoly, HexPolyZ, HexPolyFp, HexModArith, HexModular, HexArith]
     mathlib: false
-    done_through: 2
+    done_through: 3
     status: active
+    phase4:
+      comparators:
+        - tool: SymPy dmp_zz_wang_hensel_lifting
+          class: informational
+          rationale: SymPy provides the matching Wang/EEZ intermediate algorithm but runs in Python, so the ratio diagnoses scaling and does not gate acceptance.
+      input_families:
+        - name: factor-count
+          description: Two through eight factors at fixed variable count and degrees, isolating the linear factor-count contribution in each solve.
+        - name: variable-count
+          description: Two through six variables at low dense degree, isolating the product of side-variable degree bounds.
+        - name: main-degree
+          description: Main-variable degrees 5 through 40 at three variables, isolating the univariate divisions.
+        - name: coefficient-size
+          description: Fixed shapes with coefficients large enough to force successive exponent doublings and expose modulus-lifting cost.
+        - name: nonconstant-leading
+          description: Prescribed main-variable leading coefficients with increasing term counts, stressing seed installation and invariant maintenance.
+        - name: sparse-target
+          description: Sparse targets whose shifted intermediate products become dense, recording the known absence of a sparse lifting route.
   HexMvFactor:
     deps: [HexBasic, HexMvPoly, HexMvGcd, HexMvHensel, HexPoly, HexPolyZ, HexPolyZGcd, HexBerlekampZassenhaus, HexPolyFp, HexModArith, HexModular, HexArith]
     mathlib: false
