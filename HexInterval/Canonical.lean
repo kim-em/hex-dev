@@ -110,9 +110,12 @@ proof with an unbounded `decide`: deciding dyadic order can itself perform the
 prohibited exponent-alignment work. Ordinary untrusted endpoints must enter
 through `betweenWithin` or `ofRawWithin`.
 
-The total result lets a proof emitter quote an interval without embedding a
-module-boundary reduction proof that a `BuildResult` is ready. The caller,
-rather than the emitted term, continues to own the dynamic-range policy. -/
+The total result lets a semantic proof emitter quote an interval without
+embedding a module-boundary reduction proof that a `BuildResult` is ready. The
+caller, rather than the emitted term, continues to own the dynamic-range
+policy. The constructor remains opaque outside this module: its view theorem
+supports propositional rewriting, but it deliberately does not make
+`DecidableEq`-based replay reduce through the sealed representation. -/
 def ofOrderedBoundsUnchecked (lower upper : Dyadic) (ordered : lower ≤ upper) :
     Hex.Interval :=
   .mk (.bounds (.finite lower false) (.finite upper false)) (by

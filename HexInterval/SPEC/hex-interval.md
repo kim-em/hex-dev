@@ -291,12 +291,20 @@ unbounded `decide` to manufacture that proof, because the decision itself may
 allocate an oversized dyadic alignment. Ordinary untrusted cuts still cross
 `ofRawWithin` or the corresponding `*Within` smart constructor.
 
-The total constructor is needed for emitted proof terms: it lets an emitter
-quote the exact interval without also quoting a kernel reduction proof that a
-`BuildResult` is ready across a module boundary. Dynamic-range policy remains
-caller-owned and is discharged before quotation. The exact view theorem then
-lets an importing proof consume the closed cuts without unfolding the sealed
-constructor.
+The total constructor is needed for emitted semantic proof terms: it lets an
+emitter quote the exact interval without also quoting a kernel reduction proof
+that a `BuildResult` is ready across a module boundary. Dynamic-range policy
+remains caller-owned and is discharged before quotation. The exact view
+theorem then lets an importing proof consume the closed cuts without unfolding
+the sealed constructor.
+
+This is a propositional quotation boundary, not a transparent executable
+encoding. The constructor remains opaque because its body uses the sealed
+private representation. A generic replay path whose `DecidableEq Interval`
+must reduce quoted facts therefore cannot compute through this constructor;
+such a path needs a separate kernel proof of the exact initial target/fact
+correspondence rather than treating the view theorem as definitional
+reduction.
 
 The public Mathlib companion interprets every canonical interval as a subset
 of `ℝ`. It proves that a successful executable `intersectWithin` denotes
