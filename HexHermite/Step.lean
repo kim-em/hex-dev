@@ -7,7 +7,7 @@ Authors: Kim Morrison
 module
 
 public import HexArith
-public import HexMatrix.Elementary
+public import HexRowReduce.RowEchelon.Elementary
 
 public section
 
@@ -37,6 +37,69 @@ def combineCols (M : Matrix Int n n) (i k : Fin n)
     if j = i then a * M[(r, i)] + b * M[(r, k)]
     else if j = k then c * M[(r, i)] + d * M[(r, k)]
     else M[(r, j)]
+
+/-- Simultaneous two-row replacement commutes with multiplication on the
+right. -/
+theorem combineRows_mul (A : Matrix Int n p) (B : Matrix Int p m)
+    (i k : Fin n) (a b c d : Int) :
+    combineRows A i k a b c d * B = combineRows (A * B) i k a b c d := by
+  apply Matrix.ext_getElem
+  intro r j
+  rw [Matrix.getElem_mul]
+  by_cases hri : r = i
+  · subst r
+    rw [show Matrix.row (combineRows A i k a b c d) i =
+        a • Matrix.row A i + b • Matrix.row A k by
+      ext q hq
+      let qq : Fin p := ⟨q, hq⟩
+      change (combineRows A i k a b c d)[i][qq] =
+        (a • Matrix.row A i + b • Matrix.row A k)[qq]
+      unfold combineRows
+      rw [Matrix.getElem_ofFn]
+      simp only [if_pos]
+      rw [Matrix.getElem_pair_eq_nested, Matrix.getElem_pair_eq_nested]
+      simp only [Fin.getElem_fin, Vector.getElem_add, Vector.getElem_smul,
+        Matrix.getElem_row]
+      rfl
+      ]
+    rw [Vector.dotProduct_add_left, Vector.dotProduct_smul_left,
+      Vector.dotProduct_smul_left]
+    unfold combineRows
+    rw [Matrix.getElem_ofFn]
+    simp only [if_pos, Matrix.getElem_pair_eq_nested]
+    rw [Matrix.getElem_mul, Matrix.getElem_mul]
+  · by_cases hrk : r = k
+    · subst r
+      rw [show Matrix.row (combineRows A i k a b c d) k =
+          c • Matrix.row A i + d • Matrix.row A k by
+        ext q hq
+        let qq : Fin p := ⟨q, hq⟩
+        change (combineRows A i k a b c d)[k][qq] =
+          (c • Matrix.row A i + d • Matrix.row A k)[qq]
+        unfold combineRows
+        rw [Matrix.getElem_ofFn]
+        simp only [if_neg hri, if_pos]
+        rw [Matrix.getElem_pair_eq_nested, Matrix.getElem_pair_eq_nested]
+        simp only [Fin.getElem_fin, Vector.getElem_add, Vector.getElem_smul,
+          Matrix.getElem_row]
+        rfl]
+      rw [Vector.dotProduct_add_left, Vector.dotProduct_smul_left,
+        Vector.dotProduct_smul_left]
+      unfold combineRows
+      rw [Matrix.getElem_ofFn]
+      simp only [if_neg hri, if_pos, Matrix.getElem_pair_eq_nested]
+      rw [Matrix.getElem_mul, Matrix.getElem_mul]
+    · rw [show Matrix.row (combineRows A i k a b c d) r = Matrix.row A r by
+        ext q hq
+        let qq : Fin p := ⟨q, hq⟩
+        change (combineRows A i k a b c d)[r][qq] = A[r][qq]
+        unfold combineRows
+        rw [Matrix.getElem_ofFn]
+        simp [hri, hrk, Matrix.getElem_pair_eq_nested]]
+      unfold combineRows
+      rw [Matrix.getElem_ofFn]
+      simp only [if_neg hri, if_neg hrk, Matrix.getElem_pair_eq_nested]
+      exact (Matrix.getElem_mul A B r j).symm
 
 /-- Operations performed on a companion accumulator by the Hermite sweep. -/
 structure Accumulator (α : Type) (n : Nat) where
