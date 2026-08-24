@@ -219,7 +219,7 @@ libraries:
   HexModular:
     deps: [HexArith]
     mathlib: false
-    done_through: 3
+    done_through: 4
     status: active
     phase4:
       comparators:
