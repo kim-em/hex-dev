@@ -258,7 +258,7 @@ value's proof field.
 
 The initial supported slice exposes `view`, `empty`, `whole`, endpoint-cost
 preflighted raw, singleton, one-sided, and finite constructors, and a
-proof-ordered comparison-free closed constructor. The first supported
+trusted-decoder-only unchecked closed bridge. The first supported
 operations are resource-checked intersection, hull, negation,
 addition, subtraction, multiplication, minimum, maximum, absolute value,
 natural power, outward regularization, and transactional splitting at a dyadic
@@ -271,23 +271,32 @@ root `Interval` type; the public namespace is itself revisitable before release
 if qualification proves awkward. Unless a block explicitly says otherwise,
 unqualified API sketches below are declarations inside `Hex.Interval`.
 
-Proof-producing boundaries that already hold ordered dyadic endpoints also
-have a comparison-free closed constructor:
+Trusted representation decoders that already hold independently preflighted
+ordered dyadic endpoints also have a comparison-free closed bridge:
 
 ```lean
-def ofOrderedBounds (lower upper : Dyadic) (ordered : lower ≤ upper) : Interval
+def ofOrderedBoundsUnchecked
+  (lower upper : Dyadic) (ordered : lower ≤ upper) : Interval
 
-theorem view_ofOrderedBounds (lower upper : Dyadic) (ordered : lower ≤ upper) :
-  (ofOrderedBounds lower upper ordered).view =
+theorem view_ofOrderedBoundsUnchecked
+    (lower upper : Dyadic) (ordered : lower ≤ upper) :
+  (ofOrderedBoundsUnchecked lower upper ordered).view =
     .bounds (.finite lower false) (.finite upper false)
 ```
 
-This is a kernel-friendly bridge, not an untrusted decoder: it neither checks
-endpoint height nor recomputes the comparison. A projection, replay, or proof
-emitter must enforce its own resource caps before producing `ordered`.
-Untrusted cuts still cross `ofRawWithin` or the corresponding `*Within` smart
-constructor. The exact view theorem lets an importing proof consume the
-closed cuts without reducing the sealed constructor across a module boundary.
+The `Unchecked` suffix is deliberate. This bridge neither checks endpoint
+height nor recomputes the comparison. Its trusted decoder must enforce both
+resource caps before producing `ordered`; in particular, it must not use an
+unbounded `decide` to manufacture that proof, because the decision itself may
+allocate an oversized dyadic alignment. Ordinary untrusted cuts still cross
+`ofRawWithin` or the corresponding `*Within` smart constructor.
+
+The total constructor is needed for emitted proof terms: it lets an emitter
+quote the exact interval without also quoting a kernel reduction proof that a
+`BuildResult` is ready across a module boundary. Dynamic-range policy remains
+caller-owned and is discharged before quotation. The exact view theorem then
+lets an importing proof consume the closed cuts without unfolding the sealed
+constructor.
 
 The public Mathlib companion interprets every canonical interval as a subset
 of `ℝ`. It proves that a successful executable `intersectWithin` denotes
@@ -351,13 +360,17 @@ either internal candidate. Infinite ends do not carry meaningless closure
 flags. This invariant deliberately does not claim that, for example, `(0,1)`
 contains an integer.
 
-Exact `normalizeUnchecked` is only for trusted or already-preflighted inputs: comparing
-two finite dyadics may align their exponents by shifting a mantissa. The
+Exact `normalizeUnchecked` is only for trusted or already-preflighted inputs:
+comparing two finite dyadics may align their exponents by shifting a mantissa. The
 planner-facing `normalizeWithin` first computes endpoint height and alignment
 shift from constructor fields and returns a distinct `resourceLimit` result
 when either bound is exceeded. It never interprets a refused comparison as an
-empty interval or as consistent cuts. Every future public reifier, certificate
-decoder, and planner input path must use this resource-safe entry point.
+empty interval or as consistent cuts. Every ordinary untrusted public reifier,
+certificate decoder, and planner input path must use this resource-safe entry
+point. The sole exception is a trusted representation decoder that has already
+performed the same independent endpoint-height and comparison-cost preflight;
+it may then cross an explicitly named `*Unchecked` bridge such as
+`ofOrderedBoundsUnchecked`.
 
 The representation differs from IEEE 1788 set-based intervals in one
 important respect. IEEE intervals are closed as sets of finite real numbers,

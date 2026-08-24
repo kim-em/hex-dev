@@ -16,6 +16,14 @@ regularization, transactional split, reciprocal, and division.
 
 namespace Hex.IntervalMathlib.Conformance
 
+/-- The trusted-decoder bridge has the exact closed real membership promised
+by its raw view theorem. -/
+theorem orderedBoundsUncheckedExact
+    (lower upper : Dyadic) (ordered : lower ≤ upper) (x : ℝ) :
+    (Hex.Interval.ofOrderedBoundsUnchecked lower upper ordered).Contains x ↔
+      Hex.Interval.toReal lower ≤ x ∧ x ≤ Hex.Interval.toReal upper :=
+  Hex.Interval.contains_ofOrderedBoundsUnchecked lower upper ordered x
+
 /-- Both input membership proofs are required to establish membership in a
 successful public intersection. -/
 theorem intersectMember {limit : Hex.Interval.EndpointLimit}

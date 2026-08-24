@@ -136,23 +136,40 @@ private def far : Dyadic := .ofOdd 1 1000000000 (by decide)
 #guard Hex.Interval.whole.view == .bounds .unbounded .unbounded
 #guard decide (Hex.Interval.empty ≠ Hex.Interval.whole)
 
--- A proof-producing boundary can construct exact closed bounds without a
--- second comparison. The view theorem works from this importing module, so a
--- kernel proof does not depend on reducing the sealed constructor body.
+-- A trusted representation decoder can construct independently preflighted
+-- exact closed bounds without a second comparison. The view theorem works
+-- from this importing module, so a kernel proof does not depend on reducing
+-- the sealed constructor body.
 example (lower upper : Dyadic) (ordered : lower ≤ upper) :
-    (Hex.Interval.ofOrderedBounds lower upper ordered).view =
+    (Hex.Interval.ofOrderedBoundsUnchecked lower upper ordered).view =
       .bounds (.finite lower false) (.finite upper false) :=
-  Hex.Interval.view_ofOrderedBounds lower upper ordered
+  Hex.Interval.view_ofOrderedBoundsUnchecked lower upper ordered
 
 #guard
-  (Hex.Interval.ofOrderedBounds (d 0) (d 1) (by decide)).view ==
+  (Hex.Interval.ofOrderedBoundsUnchecked (d 0) (d 1) (by decide)).view ==
     finite 0 false 1 false
 
--- The ordered constructor does not repeat endpoint-height or alignment work.
--- Even a compact endpoint beyond ordinary planner caps is admitted when the
--- caller already owns its ordering proof.
+-- On admitted inputs, the unchecked trusted-decoder bridge agrees exactly
+-- with both capped public construction routes.
 #guard
-  (Hex.Interval.ofOrderedBounds far far (Dyadic.le_refl far)).view ==
+  match Hex.Interval.ofRawWithin smallLimit (finite 0 false 1 false) with
+  | .ready interval =>
+      interval ==
+        Hex.Interval.ofOrderedBoundsUnchecked (d 0) (d 1) (by decide)
+  | .resourceLimit _ => false
+
+#guard
+  match Hex.Interval.betweenWithin smallLimit (d 0) false (d 1) false with
+  | .ready interval =>
+      interval ==
+        Hex.Interval.ofOrderedBoundsUnchecked (d 0) (d 1) (by decide)
+  | .resourceLimit _ => false
+
+-- This pins only that a trusted decoder may admit a compact endpoint beyond
+-- an ordinary planner's dynamic-range cap after independent preflight. Equal
+-- endpoints make no claim about avoiding nonzero alignment work.
+#guard
+  (Hex.Interval.ofOrderedBoundsUnchecked far far (Dyadic.le_refl far)).view ==
     .bounds (.finite far false) (.finite far false)
 
 #guard

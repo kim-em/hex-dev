@@ -86,14 +86,19 @@ def empty : Hex.Interval := .mk .empty (by rfl)
 def whole : Hex.Interval :=
   .mk (.bounds .unbounded .unbounded) (by rfl)
 
-/-- Construct a closed interval from endpoints whose order is already proved.
+/-- Construct a closed interval from independently preflighted ordered bounds.
 
-This constructor performs no endpoint comparison. It is intended for trusted
-proof-producing boundaries that have already enforced their own resource
-limits and can supply `lower ≤ upper` without asking interval construction to
-recompute it. Untrusted endpoints must still enter through `betweenWithin` or
-`ofRawWithin`. -/
-def ofOrderedBounds (lower upper : Dyadic) (ordered : lower ≤ upper) :
+This is an explicitly unchecked bridge for trusted representation decoders.
+It performs no endpoint-height or comparison-cost preflight. Callers must
+preflight both costs before producing `ordered`, and must not manufacture that
+proof with an unbounded `decide`: deciding dyadic order can itself perform the
+prohibited exponent-alignment work. Ordinary untrusted endpoints must enter
+through `betweenWithin` or `ofRawWithin`.
+
+The total result lets a proof emitter quote an interval without embedding a
+module-boundary reduction proof that a `BuildResult` is ready. The caller,
+rather than the emitted term, continues to own the dynamic-range policy. -/
+def ofOrderedBoundsUnchecked (lower upper : Dyadic) (ordered : lower ≤ upper) :
     Hex.Interval :=
   .mk (.bounds (.finite lower false) (.finite upper false)) (by
     simp only [Raw.CutConsistent, Raw.consistent]
@@ -103,10 +108,11 @@ def ofOrderedBounds (lower upper : Dyadic) (ordered : lower ≤ upper) :
         Dyadic.le_antisymm ordered (Dyadic.not_le.mp less)
       simp [equal])
 
-/-- An ordered-endpoint construction exposes exactly its closed finite cuts. -/
+/-- An unchecked ordered-bounds construction exposes its exact closed cuts. -/
 @[simp]
-theorem view_ofOrderedBounds (lower upper : Dyadic) (ordered : lower ≤ upper) :
-    (ofOrderedBounds lower upper ordered).view =
+theorem view_ofOrderedBoundsUnchecked
+    (lower upper : Dyadic) (ordered : lower ≤ upper) :
+    (ofOrderedBoundsUnchecked lower upper ordered).view =
       .bounds (.finite lower false) (.finite upper false) := by
   rfl
 
