@@ -59,7 +59,7 @@ def hashOption (hashValue : α → UInt64) : Option α → UInt64
 
 /-- First `count` primes, found outside every timed region. -/
 def smallPrimes (count : Nat) : Array Nat :=
-  ((List.range 50_000).drop 2).filter Hex.Nat.isPrimeTrial
+  ((List.range (32 * count + 100)).drop 2).filter Hex.Nat.isPrimeTrial
     |>.take count |>.toArray
 
 /-- A power of `p` below `2^30`. Distinct inputs remain pairwise coprime,
@@ -258,8 +258,8 @@ setup_benchmark runScalarCrt k => k * k
   with prep := prepScalarCrt
   where {
     paramSchedule := .custom #[4, 8, 16, 32, 64, 128, 256, 512, 1024,
-      2048, 4096]
-    maxSecondsPerCall := 6.0
+      2048, 4096, 8192]
+    maxSecondsPerCall := 12.0
     targetInnerNanos := 200000000
     signalFloorMultiplier := 1.0
     verdictWarmupFraction := 0.8
@@ -287,8 +287,8 @@ setup_benchmark runVectorCrtDepth k => k * k
   with prep := prepVectorCrtDepth
   where {
     paramSchedule := .custom #[4, 8, 16, 32, 64, 128, 256, 512, 1024,
-      2048, 4096]
-    maxSecondsPerCall := 6.0
+      2048, 4096, 8192]
+    maxSecondsPerCall := 12.0
     targetInnerNanos := 200000000
     signalFloorMultiplier := 1.0
     verdictWarmupFraction := 0.8
@@ -303,8 +303,8 @@ setup_benchmark runEuclid b => b * b
   with prep := prepReconLate
   where {
     paramSchedule := .custom #[64, 128, 256, 512, 1024, 2048, 4096, 8192,
-      16384, 32768, 65536, 100000]
-    maxSecondsPerCall := 5.0
+      16384, 32768, 65536, 100000, 131072, 196608, 262144]
+    maxSecondsPerCall := 12.0
     targetInnerNanos := 200000000
     signalFloorMultiplier := 1.0
     verdictWarmupFraction := 0.65
@@ -318,8 +318,8 @@ setup_benchmark runRatReconLate b => b * b
   with prep := prepReconLate
   where {
     paramSchedule := .custom #[64, 128, 256, 512, 1024, 2048, 4096, 8192,
-      16384, 32768, 65536, 100000]
-    maxSecondsPerCall := 5.0
+      16384, 32768, 65536, 100000, 131072, 196608, 262144]
+    maxSecondsPerCall := 12.0
     targetInnerNanos := 200000000
     signalFloorMultiplier := 1.0
     verdictWarmupFraction := 0.65
@@ -333,8 +333,8 @@ setup_benchmark runRatReconFailure b => b * b
   with prep := prepReconFailure
   where {
     paramSchedule := .custom #[64, 128, 256, 512, 1024, 2048, 4096, 8192,
-      16384, 32768, 65536, 100000]
-    maxSecondsPerCall := 5.0
+      16384, 32768, 65536, 100000, 131072, 196608, 262144]
+    maxSecondsPerCall := 12.0
     targetInnerNanos := 200000000
     signalFloorMultiplier := 1.0
     verdictWarmupFraction := 0.65
@@ -364,8 +364,8 @@ setup_benchmark runRatReconMaxQuot b => b * b
   with prep := prepReconLate
   where {
     paramSchedule := .custom #[64, 128, 256, 512, 1024, 2048, 4096, 8192,
-      16384, 32768, 65536, 100000]
-    maxSecondsPerCall := 5.0
+      16384, 32768, 65536, 100000, 131072, 196608, 262144]
+    maxSecondsPerCall := 12.0
     targetInnerNanos := 200000000
     signalFloorMultiplier := 1.0
     verdictWarmupFraction := 0.65

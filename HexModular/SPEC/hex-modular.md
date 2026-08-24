@@ -743,13 +743,13 @@ operations a downstream certificate replay pays for.
 
 Families:
 
-- **Incremental CRT**, `k` from 4 to 4000 moduli of 31 bits. The declared
+- **Incremental CRT**, `k` from 4 to 8192 moduli of 31 bits. The declared
   complexity is `k²`, and the family exists to find the point where a
   product tree would pay.
-- **Vector CRT**, `k` moduli against `n` from 1 to 4096 residues,
+- **Vector CRT**, `k` from 4 to 8192 moduli against `n` from 1 to 4096 residues,
   checking that the extended gcd is amortised across the vector rather
   than repeated.
-- **Rational reconstruction**, moduli from 64 to 100000 bits, over
+- **Rational reconstruction**, moduli from 64 to 262144 bits, over
   reconstructions that succeed early, succeed late, and fail.
 - **Failure cost**, the same sizes where no rational exists, since a
   consumer in a loop pays this on every modulus until the last.
