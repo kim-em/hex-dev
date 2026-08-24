@@ -306,28 +306,110 @@ theorem gcd_normalized [IsMonomialOrder cmp]
     [Dvd R] [BezoutOps R] [LawfulGcdOps R] [LawfulBezoutOps R]
     [GcdProducer R]
     (f : MvPoly n R cmp) : gcd f 0 = polyNormalize f := by
-  sorry
+  let g := gcd f 0
+  let a := (cofactors f 0).1
+  let b := (cofactors f 0).2
+  change g = polyNormalize f
+  have hfa : f = g * a := (checkedResult f 0).1
+  have hzero : (0 : MvPoly n R cmp) = g * b := (checkedResult f 0).2.1
+  by_cases hg : g = 0
+  · have hf : f = 0 := by
+      calc
+        f = g * a := hfa
+        _ = 0 := by rw [hg, MvPoly.zero_mul]
+    rw [hg, hf, polyNormalize_zero]
+  · have hb : b = 0 := by
+      rcases GcdDomainLaws.no_zero_div g b hzero.symm with hgz | hbz
+      · exact False.elim (hg hgz)
+      · exact hbz
+    have haunit : polyIsUnit a = true := by
+      apply (polyIsUnit_iff a).mpr
+      apply (checkedResult f 0).2.2.2 a
+      · refine ⟨1, ?_⟩
+        exact (MvPoly.one_mul a).symm
+      · refine ⟨0, ?_⟩
+        exact hb.trans (MvPoly.zero_mul a).symm
+    symm
+    calc
+      polyNormalize f = polyNormalize (g * a) :=
+        congrArg polyNormalize hfa
+      _ = polyNormalize g * polyNormalize a := polyNormalize_mul g a
+      _ = g * 1 := by rw [gcd_normalized, polyNormalize_unit a haunit]
+      _ = g := MvPoly.mul_one g
 
 @[simp] theorem gcd_zero_left [IsMonomialOrder cmp]
     [Lean.Grind.CommRing R] [DecidableEq R] [BEq R] [LawfulBEq R]
     [Dvd R] [BezoutOps R] [LawfulGcdOps R] [LawfulBezoutOps R]
     [GcdProducer R]
     (f : MvPoly n R cmp) : gcd 0 f = polyNormalize f := by
-  sorry
+  let g := gcd 0 f
+  let a := (cofactors 0 f).1
+  let b := (cofactors 0 f).2
+  change g = polyNormalize f
+  have hzero : (0 : MvPoly n R cmp) = g * a := (checkedResult 0 f).1
+  have hfb : f = g * b := (checkedResult 0 f).2.1
+  by_cases hg : g = 0
+  · have hf : f = 0 := by
+      calc
+        f = g * b := hfb
+        _ = 0 := by rw [hg, MvPoly.zero_mul]
+    rw [hg, hf, polyNormalize_zero]
+  · have ha : a = 0 := by
+      rcases GcdDomainLaws.no_zero_div g a hzero.symm with hgz | haz
+      · exact False.elim (hg hgz)
+      · exact haz
+    have hbunit : polyIsUnit b = true := by
+      apply (polyIsUnit_iff b).mpr
+      apply (checkedResult 0 f).2.2.2 b
+      · refine ⟨0, ?_⟩
+        exact ha.trans (MvPoly.zero_mul b).symm
+      · refine ⟨1, ?_⟩
+        exact (MvPoly.one_mul b).symm
+    symm
+    calc
+      polyNormalize f = polyNormalize (g * b) :=
+        congrArg polyNormalize hfb
+      _ = polyNormalize g * polyNormalize b := polyNormalize_mul g b
+      _ = g * 1 := by rw [gcd_normalized, polyNormalize_unit b hbunit]
+      _ = g := MvPoly.mul_one g
 
 theorem gcd_eq_one_of_left_unit [IsMonomialOrder cmp]
     [Lean.Grind.CommRing R] [DecidableEq R] [BEq R] [LawfulBEq R]
     [Dvd R] [BezoutOps R] [LawfulGcdOps R] [LawfulBezoutOps R]
     [GcdProducer R]
     (f h : MvPoly n R cmp) (hf : polyIsUnit f = true) : gcd f h = 1 := by
-  sorry
+  rcases (polyIsUnit_iff f).mp hf with ⟨u, hu⟩
+  rcases gcd_dvd_left f h with ⟨q, hq⟩
+  have hunit : polyIsUnit (gcd f h) = true := by
+    apply (polyIsUnit_iff (gcd f h)).mpr
+    refine ⟨q * u, ?_⟩
+    calc
+      gcd f h * (q * u) = (q * gcd f h) * u := by
+        rw [← MvPoly.mul_assoc, MvPoly.mul_comm (gcd f h) q]
+      _ = f * u := by rw [← hq]
+      _ = 1 := hu
+  calc
+    gcd f h = polyNormalize (gcd f h) := (gcd_normalized f h).symm
+    _ = 1 := polyNormalize_unit _ hunit
 
 theorem gcd_eq_one_of_right_unit [IsMonomialOrder cmp]
     [Lean.Grind.CommRing R] [DecidableEq R] [BEq R] [LawfulBEq R]
     [Dvd R] [BezoutOps R] [LawfulGcdOps R] [LawfulBezoutOps R]
     [GcdProducer R]
     (f h : MvPoly n R cmp) (hh : polyIsUnit h = true) : gcd f h = 1 := by
-  sorry
+  rcases (polyIsUnit_iff h).mp hh with ⟨u, hu⟩
+  rcases gcd_dvd_right f h with ⟨q, hq⟩
+  have hunit : polyIsUnit (gcd f h) = true := by
+    apply (polyIsUnit_iff (gcd f h)).mpr
+    refine ⟨q * u, ?_⟩
+    calc
+      gcd f h * (q * u) = (q * gcd f h) * u := by
+        rw [← MvPoly.mul_assoc, MvPoly.mul_comm (gcd f h) q]
+      _ = h * u := by rw [← hq]
+      _ = 1 := hu
+  calc
+    gcd f h = polyNormalize (gcd f h) := (gcd_normalized f h).symm
+    _ = 1 := polyNormalize_unit _ hunit
 
 theorem gcd_mul_cofactor_left [IsMonomialOrder cmp]
     [Lean.Grind.CommRing R] [DecidableEq R] [BEq R] [LawfulBEq R]
