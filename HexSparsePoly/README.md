@@ -61,8 +61,9 @@ implementation is selected by a proved `@[csimp]` equality, and every
 public operation has a coefficient lemma; equalities reduce to
 coefficient extensionality:
 
-```lean
-theorem ext_coeff {s t : SparsePoly R}
+```lean recall Hex.SparsePoly.ext_coeff
+theorem ext_coeff {R : Type u} [Zero R] [DecidableEq R]
+    {s t : SparsePoly R}
     (h : ∀ e : Nat, s.coeff e = t.coeff e) : s = t
 ```
 

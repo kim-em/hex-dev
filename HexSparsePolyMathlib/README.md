@@ -54,10 +54,15 @@ example (p : SparsePoly Int) (x : Int) : (equiv p).eval x = p.eval x := by
 Everything is proved; there is no axiom and no `sorry`. The headline is
 the exact identification and its two semantic clauses:
 
-```lean
-theorem coeff_equiv (s : Hex.SparsePoly R) (e : Nat) :
+```lean recall HexSparsePolyMathlib.coeff_equiv
+theorem coeff_equiv {R : Type u} [CommRing R] [DecidableEq R]
+    (s : Hex.SparsePoly R) (e : Nat) :
     (equiv s).coeff e = s.coeff e
-theorem equiv_support (s : Hex.SparsePoly R) :
+```
+
+```lean recall HexSparsePolyMathlib.equiv_support
+theorem equiv_support {R : Type u} [CommRing R] [DecidableEq R]
+    (s : Hex.SparsePoly R) :
     (equiv s).support = s.support.toList.toFinset
 ```
 
