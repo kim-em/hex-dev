@@ -48,6 +48,27 @@ open Hex.Interval.Rule.Runtime
 #guard_msgs in
 #check RuntimeEmit.Emitted.mk
 
+section EmittedPrivateConstruction
+
+variable (input evidence : Expr) (emitted : RuntimeEmit.Emitted)
+
+/-- error: invalid {...} notation, constructor for `RuntimeEmit.Emitted` is marked as private -/
+#guard_msgs in
+example : RuntimeEmit.Emitted :=
+  { input := input, evidence := evidence }
+
+/-- error: Invalid `⟨...⟩` notation: Constructor for `Hex.Interval.RuntimeEmit.Emitted` is marked as private -/
+#guard_msgs in
+example : RuntimeEmit.Emitted :=
+  ⟨input, evidence⟩
+
+/-- error: invalid {...} notation, constructor for `RuntimeEmit.Emitted` is marked as private -/
+#guard_msgs in
+example : RuntimeEmit.Emitted :=
+  { emitted with input }
+
+end EmittedPrivateConstruction
+
 def emitLimits : RuntimeEmit.Limits :=
   { proof := RuntimeRuleConformance.proofLimits, maxSchemas := 12, maxChronology := 12,
     maxExpressionCells := 1000000 }
