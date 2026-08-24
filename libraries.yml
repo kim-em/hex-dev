@@ -273,8 +273,24 @@ libraries:
   HexPolyZGcd:
     deps: [HexPolyZ, HexPolyFp, HexPoly, HexModular, HexModArith, HexArith, HexResultant]
     mathlib: false
-    done_through: 2
+    done_through: 3
     status: active
+    phase4:
+      comparators:
+        - tool: FLINT fmpz_poly_gcd via python-flint
+          class: gating
+          goal: within 5x on the dense and coprime families above degree 32
+      input_families:
+        - name: coprime-pairs
+          description: Coprime inputs at degrees 8 to 512, where route 1 must settle the result.
+        - name: dense-gcds
+          description: Gcds of about half the input degree at 8-bit and 256-bit coefficients.
+        - name: swell
+          description: Small inputs whose subresultant sequence has large coefficients.
+        - name: squarefree
+          description: The Berlekamp-Zassenhaus squarefree-decomposition ladder.
+        - name: rational
+          description: The same inputs over the rationals through ratGcd.
 
   # ---------- Depth 2 ----------
   HexLLL:
