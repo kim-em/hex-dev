@@ -7,6 +7,7 @@ Authors: Kim Morrison
 module
 
 public import HexDeterminant
+public import HexArith.ExactDiv
 public import HexBareiss.BorderedMinor
 
 public section
@@ -123,22 +124,17 @@ structure BareissState (n : Nat) where
   encoding; `none` means no singular step has been recorded. -/
   singularStep : Option Nat
 
-/-- Exact division used by the Bareiss recurrence.
-
-Divisibility holds at every call site by the algorithmic invariant, so
-this function performs no runtime divisibility check: the `@[extern]`
-binding compiles the call directly to `lean_int_div_exact`, matching
-`Int.divExact`. The Lean-level reduction is the same `num / denom` that
-`Int.divExact` uses as its logical model. -/
-@[expose, extern "lean_int_div_exact"]
-def exactDiv (num denom : @& Int) : Int := num / denom
+/-- Compatibility alias for the exact-division primitive now owned by
+`hex-arith`. New code should use `HexArith.Int.exactDiv`. -/
+@[expose]
+abbrev exactDiv (num denom : @& Int) : Int := HexArith.Int.exactDiv num denom
 
 /-- When divisibility is known, `exactDiv` is the GMP-backed exact quotient. -/
 -- @[grind]-excluded: RHS `Int.divExact num denom h` mentions the divisibility
 -- proof term `h`, which `grind =` cannot instantiate from the LHS pattern.
 theorem exactDiv_eq_divExact {num denom : Int} (h : denom ∣ num) :
     exactDiv num denom = Int.divExact num denom h := by
-  simp [exactDiv, Int.divExact_eq_ediv]
+  exact HexArith.Int.exactDiv_eq_divExact h
 
 /-- Search column `col` for a nonzero pivot at or below `start`. -/
 @[expose]
