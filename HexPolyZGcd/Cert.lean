@@ -680,6 +680,7 @@ def checkGcd (f h : ZPoly) (c : GcdCert) : Bool :=
 
 /-- The cofactor identities together with absence of a common nonunit
 cofactor. -/
+@[expose]
 def CoprimeCofactors (f h g : ZPoly) : Prop :=
   ∃ f' h', f = g * f' ∧ h = g * h' ∧
     ∀ d : ZPoly, d ∣ f' → d ∣ h' → IsUnit d
