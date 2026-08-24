@@ -25,6 +25,8 @@ BUILD_ONLY_LIBS = {
     "HexMvPolyBenchSupport",
     "HexModularBenchSupport",
     "HexMvPolyMathlibProofProbe",
+    "HexBerlekampZassenhausMathlibProofProbe",
+    "HexBerlekampZassenhausMathlibProofProbeScientific",
     "HexIntervalExperiment",
     "HexIntervalMathlibExperiment",
     "HexIntervalPntFks2Local",

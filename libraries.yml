@@ -810,6 +810,7 @@ libraries:
     mathlib: true
     done_through: 2
     status: active
+    proof_probes: [bench/HexBerlekampZassenhausMathlib/ProofProbe]
   HexTruncatedSeriesMathlib:
     deps: [HexTruncatedSeries]
     mathlib: true
