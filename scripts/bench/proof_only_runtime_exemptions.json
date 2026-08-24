@@ -12,12 +12,6 @@
     "reason": "Guards powModNat at modulus zero, exposes its worker and bitLength for kernel reduction, and adds a csimp routing powModNat to the unchanged powMod; no executable factorization code calls powModNat (the service uses powMod directly)."
   },
   {
-    "path": "lakefile.lean",
-    "baseline_blob": "a1b87406682dbf908d990f01676f326499b906e5",
-    "current_blob": "75002db9efb691acb9f469fd036dd5f28a249811",
-    "reason": "Registers the HexPrimality library on top of main's current registrations; the factorization service targets are unchanged."
-  },
-  {
     "path": "HexArith/Nat/Prime.lean",
     "baseline_blob": "8b5cf744140acde03da1c72c50482410e0c65029",
     "current_blob": "3c739ff40939977910ea64afd72b1db3142c5444",
@@ -64,12 +58,6 @@
     "baseline_blob": "5fbaa75456c2217771a4f7a27e7f2ff40417fe3a",
     "current_blob": "3c739ff40939977910ea64afd72b1db3142c5444",
     "reason": "Reroutes the Decidable (Prime p) instance through the existing isPrimeTrial pair and adds prime-divisor existence theorems (merged with main's prime_iff_forall_le_sqrt addition); the factorization service never evaluates the instance at runtime."
-  },
-  {
-    "path": "lakefile.lean",
-    "baseline_blob": "a1b87406682dbf908d990f01676f326499b906e5",
-    "current_blob": "791e5727779c8d07cbd2e7080bb2bbd245b82a6b",
-    "reason": "Registers the HexPrimality library on top of main's current registrations; the factorization service targets are unchanged."
   },
   {
     "path": "HexPolyZ/Decomposition.lean",
@@ -1036,5 +1024,65 @@
     "baseline_blob": "6dd80771ae2212333b2a9b925b52056e0037ff56",
     "current_blob": "2cd1a32cf3b269140e8ddbc35accb907c49ee79b",
     "reason": "Additionally registers the HexPrimalityMathlib companion on top of the already-attested HexPolyFpMathlib and interval experiment registrations; the factorization service targets are unchanged."
+  },
+  {
+    "path": "lakefile.lean",
+    "baseline_blob": "a1b87406682dbf908d990f01676f326499b906e5",
+    "current_blob": "75002db9efb691acb9f469fd036dd5f28a249811",
+    "reason": "Registers the HexPrimality library on top of main's current registrations; the factorization service targets are unchanged."
+  },
+  {
+    "path": "lakefile.lean",
+    "baseline_blob": "a1b87406682dbf908d990f01676f326499b906e5",
+    "current_blob": "791e5727779c8d07cbd2e7080bb2bbd245b82a6b",
+    "reason": "Registers the HexPrimality library on top of main's current registrations; the factorization service targets are unchanged."
+  },
+  {
+    "path": "HexArith/ExactDiv.lean",
+    "baseline_blob": null,
+    "current_blob": "28f3b16ef5ab02837d08c48e921db253e3a8ccaf",
+    "reason": "Moves the existing GMP-backed exact-division primitive from HexBareiss into HexArith with the same Lean definition and lean_int_div_exact attachment; its zero law is simp-only, and the factorization service's executable operation is unchanged."
+  },
+  {
+    "path": "HexBareiss/Bareiss.lean",
+    "baseline_blob": "c3f982cc5d0f9b0b551b3d203c5f060aaeb0a6d1",
+    "current_blob": "43793ec86e4870abeda7effe3ca8f6c7cf1a5ba4",
+    "reason": "Replaces the local exact-division definition with a compatibility alias to the identical primitive moved to HexArith; Bareiss and the factorization runtime retain the same lean_int_div_exact operation."
+  },
+  {
+    "path": "HexLLL/Certificate.lean",
+    "baseline_blob": "76c3a939fa7f85f336e67218b879485c0fa759f5",
+    "current_blob": "0030ff8748a9cce918ab64ed0fe4127483b1d95e",
+    "reason": "Turns HexLLL.Certificate into a compatibility import after moving its packed certificate declarations unchanged to HexMatrix.Certificate; existing consumers receive the same executable definitions."
+  },
+  {
+    "path": "HexLLL/Lattice.lean",
+    "baseline_blob": "673c8893b5a6f36ff606a9dd0648ffac4380765b",
+    "current_blob": "b82aa0eb2ae3c57f9069c6fe080462a9d88ccb8d",
+    "reason": "Imports the relocated lattice propositions and proofs from HexMatrix.Lattice and removes their former copies; no executable factorization definition changes."
+  },
+  {
+    "path": "HexMatrix/Certificate.lean",
+    "baseline_blob": null,
+    "current_blob": "d4bafd32cf66130696292b73a9386d481cc2d9e1",
+    "reason": "Relocates the existing packed matrix certificate declarations from HexLLL.Certificate so Hermite can reuse them without depending on LLL; their definitions are unchanged and existing factorization consumers retain the same behavior."
+  },
+  {
+    "path": "HexMatrix/Lattice.lean",
+    "baseline_blob": null,
+    "current_blob": "fea764d500a54f533220026f03796e9e5f9ba3f1",
+    "reason": "Relocates the existing lattice proposition and transport proofs from HexLLL.Lattice and adds proof lemmas used by Hermite; it adds no executable factorization operation."
+  },
+  {
+    "path": "lakefile.lean",
+    "baseline_blob": "a1b87406682dbf908d990f01676f326499b906e5",
+    "current_blob": "c513d61bc5722221227dd3f126a96b9cc8a178a1",
+    "reason": "Combines current main's registrations with Hermite libraries, conformance, fixture, and benchmark targets; none enters hexbz_factor_service or changes its executable dependency graph or build flags."
+  },
+  {
+    "path": "lakefile.lean",
+    "baseline_blob": "a1b87406682dbf908d990f01676f326499b906e5",
+    "current_blob": "cad4aea1536cb1036d865f540132b84e295bdbbd",
+    "reason": "Moves the CharPoly elaborator regressions out of HexReleaseTests into the monorepo-only HexCharPolyTests target on top of the Hermite registrations, while the char-poly and hermite released.yml entries are withdrawn; no factorization module, executable, or build-flag changes."
   }
 ]
