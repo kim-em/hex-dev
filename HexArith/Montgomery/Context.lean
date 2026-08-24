@@ -641,6 +641,7 @@ end MontCtx
 namespace HexArith
 
 /-- Number of binary digits in a natural number. -/
+@[expose]
 def bitLength (n : Nat) : Nat :=
   if n = 0 then 0 else n.log2 + 1
 
@@ -681,6 +682,7 @@ def powModWordOdd (a n : Nat) (p : UInt64) (hp : p % 2 = 1) : Nat :=
   (ctx.fromMont (powMont ctx base n)).toNat
 
 /-- Tail-recursive Nat fallback for modular exponentiation. -/
+@[expose]
 def powModNatGo (n p : Nat) : Nat → Nat → Nat → Nat → Nat
   | 0, _, acc, _ => acc
   | remaining + 1, bit, acc, base =>
@@ -688,10 +690,17 @@ def powModNatGo (n p : Nat) : Nat → Nat → Nat → Nat → Nat
       let base' := (base * base) % p
       powModNatGo n p remaining (bit + 1) acc' base'
 
-/-- Nat-level fallback modular exponentiation by repeated squaring. -/
+/-- Nat-level modular exponentiation by repeated squaring, with the same
+zero-modulus convention as `powMod`.
+
+This is the kernel-facing specification of modular exponentiation: it and its
+recursion are `@[expose]`, so proof terms that replay it (`decide`-style
+certificate checkers) reduce in the kernel. `powMod` is its runtime twin via
+`powModNat_eq_powMod`, so compiled callers of `powModNat` still take the
+Montgomery path for odd word-sized moduli. -/
 @[expose]
 def powModNat (a n p : Nat) : Nat :=
-  powModNatGo n p (bitLength n) 0 (1 % p) (a % p)
+  if p = 0 then 0 else powModNatGo n p (bitLength n) 0 (1 % p) (a % p)
 
 /-- `pow_sq`: an even power `base ^ (2 * q)` equals the squared base `(base * base) ^ q`. -/
 private theorem pow_sq (base q : Nat) :
@@ -790,10 +799,17 @@ private theorem powModNatGo_eq (a n p remaining bit acc base : Nat) (hp : 0 < p)
         simpa [hbit] using ih (bit + 1) acc ((base * base) % p)
           htail_bound hacc hinv'
 
-/-- `powModNat_eq`: the `Nat`-level fallback exponentiation `powModNat a n p` computes `a ^ n % p`. -/
-private theorem powModNat_eq (a n p : Nat) (hp : 0 < p) :
+/-- `powModNat` modulo zero returns zero, matching `powMod`. -/
+@[simp, grind =]
+theorem powModNat_modulus_zero (a n : Nat) :
+    powModNat a n 0 = 0 := by
+  rfl
+
+/-- `powModNat_eq`: for a positive modulus, `powModNat a n p` computes `a ^ n % p`. -/
+theorem powModNat_eq (a n p : Nat) (hp : 0 < p) :
     powModNat a n p = a ^ n % p := by
   unfold powModNat
+  rw [if_neg (by omega)]
   apply powModNatGo_eq a n p (bitLength n) 0 (1 % p) (a % p) hp
   · simpa using lt_two_pow_bitLength n
   · exact Nat.mod_lt _ hp
@@ -996,6 +1012,9 @@ private theorem powModWordOdd_eq (a n : Nat) (p : UInt64) (hp : p % 2 = 1) :
 /--
 Modular exponentiation by repeated squaring, using Montgomery arithmetic for
 odd `UInt64` moduli and a direct Nat fallback otherwise.
+
+This is the runtime twin of `powModNat`, the kernel-facing specification;
+`powModNat_eq_powMod` is the `@[csimp]` equality relating them.
 -/
 @[expose]
 def powMod (a n p : Nat) : Nat :=
@@ -1039,6 +1058,24 @@ theorem powMod_eq (a n p : Nat) (hp : p > 0) :
 theorem powMod_modulus_zero (a n : Nat) :
     powMod a n 0 = 0 := by
   rfl
+
+/-- The dispatching `powMod` and the Nat-level `powModNat` agree at every
+input, including modulus zero. -/
+theorem powMod_eq_powModNat (a n p : Nat) :
+    powMod a n p = powModNat a n p := by
+  by_cases hp : p = 0
+  · subst hp
+    rfl
+  · have hpos : 0 < p := Nat.pos_of_ne_zero hp
+    rw [powMod_eq a n p hpos, powModNat_eq a n p hpos]
+
+/-- `powModNat` is the kernel-facing specification and `powMod` its runtime
+twin: compiled code evaluating `powModNat` dispatches through `powMod`, taking
+the Montgomery path for odd word-sized moduli. -/
+@[csimp]
+theorem powModNat_eq_powMod : @powModNat = @powMod := by
+  funext a n p
+  exact (powMod_eq_powModNat a n p).symm
 
 /-- Modular exponentiation with exponent zero returns the residue of `1`. -/
 @[simp, grind =]
