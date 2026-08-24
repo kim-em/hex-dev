@@ -588,10 +588,11 @@ without inverting the proof dependency, in three ways:
    (factor : Nat → Rand → Nat → PartialFactors × Rand)` variant
    parameterizes the untrusted search (defaulting to `partialFactor`),
    and the `primality` tactic and companion `norm_num` extension may
-   additionally consult an elaboration-time provider that downstream
-   libraries register by well-known name (the
-   `Hex.FactorTactic.Provider` pattern), so importing hex-int-factor
-   transparently strengthens the tactic. This is the one route that
+   additionally consult an elaboration-time extension that downstream
+   libraries register under a well-known declaration name (the
+   `Hex.FactorTactic.Extension` / `extensionNames` pattern of
+   `HexBerlekamp/PolynomialTactic.lean`, with its ABI-version guard),
+   so importing hex-int-factor transparently strengthens the tactic. This is the one route that
    adds public API surface, which is why it waits for its consumer.
 
 Soundness is indifferent to all three: whatever finds the factors, the
