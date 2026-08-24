@@ -21,6 +21,7 @@ public import HexBerlekamp.Irreducibility
 public import HexHensel.Multifactor
 public import HexHensel.QuadraticMultifactor
 public import HexLLL
+public import HexModArith.Modulus
 -- Kernel-reducible `Array`/`Vector` equality; see `HexBasic.ArrayDecEq`.
 -- Drop once leanprover/lean4#14270 lands and the toolchain is bumped past it.
 public import HexBasic.ArrayDecEq
@@ -507,21 +508,10 @@ private theorem prime_seventy_one : Nat.Prime 71 := by
     | 71 => exact Or.inr rfl
     | _ + 72 => omega
 
-/--
-A small-prime candidate for the Berlekamp-Zassenhaus prime-selection hot path.
-
-Bundles a candidate prime `p` together with the `ZMod64.Bounds p` instance and
-the propositional primality witness needed to drive the modular Berlekamp
-factorisation. Exposed alongside `hotPathCandidates` so direct prime planning
-can retain the exact candidate and its primality evidence beside the cached
-factorization.
--/
-structure SmallPrimeCandidate where
-  /-- The candidate prime modulus. -/
-  p : Nat
-  [bounds : ZMod64.Bounds p]
-  /-- A proof that `p` is prime. -/
-  prime : Nat.Prime p
+/-- The Berlekamp--Zassenhaus hot path uses the shared bundled prime supplied
+by `hex-mod-arith`; it carries both the runtime modulus and its dependent
+bounds and primality evidence. -/
+abbrev SmallPrimeCandidate := ZMod64.Prime
 
 /-- Build a `SmallPrimeCandidate` from a trial-division primality witness and the
 small-modulus bound `p < 2^31` on `p`. -/
@@ -529,7 +519,7 @@ private def smallPrimeCandidateOfTrial (p : Nat)
     (hprime : Hex.Nat.isPrimeTrial p = true) (hbound : p < 2 ^ 31) :
     SmallPrimeCandidate :=
   let prime := Hex.Nat.isPrimeTrial_isPrime hprime
-  { p, bounds := { pPos := prime.pos, pLtR := hbound }, prime }
+  { m := p, bounds := { pPos := prime.pos, pLtR := hbound }, prime }
 
 /-- A scored admissible small-prime candidate for default prime selection. -/
 structure PrimeCandidateScore where
@@ -650,7 +640,7 @@ def hotPathCandidates : List SmallPrimeCandidate :=
 /-- Product of the fixed hot-path candidate primes. -/
 @[expose]
 def hotPathPrimorial : Nat :=
-  (hotPathCandidates.map fun c => c.p).prod
+  (hotPathCandidates.map fun c => c.m).prod
 
 #guard smallPrimeCandidates.length == 19
 #guard extendedSmallPrimeCandidates.length == 75
@@ -659,7 +649,7 @@ def hotPathPrimorial : Nat :=
 set_option maxRecDepth 10000 in
 /-- The fixed hot-path list contains no repeated prime values. -/
 theorem hotPathPrimeValues_nodup :
-    (hotPathCandidates.map fun c => c.p).Nodup := by
+    (hotPathCandidates.map fun c => c.m).Nodup := by
   decide
 
 /--
@@ -670,14 +660,14 @@ over the 94 explicit primes in the list.
 -/
 theorem mem_hotPathCandidates_prime
     {c : SmallPrimeCandidate} (hc : c ∈ hotPathCandidates) :
-    Hex.Nat.Prime c.p ∧ 3 ≤ c.p ∧ c.p ≤ 500 := by
-  have hmem : c.p ∈ hotPathCandidates.map (fun x : SmallPrimeCandidate => x.p) :=
+    Hex.Nat.Prime c.m ∧ 3 ≤ c.m ∧ c.m ≤ 500 := by
+  have hmem : c.m ∈ hotPathCandidates.map (fun x : SmallPrimeCandidate => x.m) :=
     List.mem_map_of_mem hc
   have hbounds :
-      ∀ q ∈ hotPathCandidates.map (fun x : SmallPrimeCandidate => x.p),
+      ∀ q ∈ hotPathCandidates.map (fun x : SmallPrimeCandidate => x.m),
         3 ≤ q ∧ q ≤ 500 := by
     decide
-  exact ⟨c.prime, (hbounds c.p hmem).1, (hbounds c.p hmem).2⟩
+  exact ⟨c.prime, (hbounds c.m hmem).1, (hbounds c.m hmem).2⟩
 
 set_option maxRecDepth 4096 in
 /--
@@ -687,15 +677,15 @@ Coverage of the hot-path prime candidate list: every prime `p` with
 -/
 theorem exists_mem_hotPathCandidates_of_prime
     {p : Nat} (hprime : Hex.Nat.Prime p) (hge : 3 ≤ p) (hle : p ≤ 500) :
-    ∃ c ∈ hotPathCandidates, c.p = p := by
+    ∃ c ∈ hotPathCandidates, c.m = p := by
   have htrial : Hex.Nat.isPrimeTrial p = true :=
     Hex.Nat.isPrimeTrial_of_prime hprime
   have key : ∀ q : Fin 501,
       3 ≤ q.val → Hex.Nat.isPrimeTrial q.val = true →
-        q.val ∈ hotPathCandidates.map (fun x : SmallPrimeCandidate => x.p) := by
+        q.val ∈ hotPathCandidates.map (fun x : SmallPrimeCandidate => x.m) := by
     decide
   have hmem :
-      p ∈ hotPathCandidates.map (fun x : SmallPrimeCandidate => x.p) :=
+      p ∈ hotPathCandidates.map (fun x : SmallPrimeCandidate => x.m) :=
     key ⟨p, Nat.lt_succ_of_le hle⟩ hge htrial
   obtain ⟨c, hc, hcp⟩ := List.mem_map.mp hmem
   exact ⟨c, hc, hcp⟩
@@ -967,10 +957,10 @@ theorem factorProduct_map_monicModularImage_eq_monicModularImage_factorProduct
         monicModularImage_mul_of_nonzero hp hhead_ne htail_prod_ne]
 
 private def berlekampFactorsModP (f : ZPoly) (c : SmallPrimeCandidate) :
-    Array (@FpPoly c.p c.bounds) :=
+    Array (@FpPoly c.m c.bounds) :=
   letI := c.bounds
   letI := ZMod64.primeModulusOfPrime c.prime
-  let fModP := ZPoly.modP c.p f
+  let fModP := ZPoly.modP c.m f
   if hzero : fModP.isZero = false then
     ((Berlekamp.berlekampFactor
       (monicModularImage fModP)
@@ -993,11 +983,11 @@ private theorem berlekampFactorsModP_eq_of_isZero_false
     (f : ZPoly) (c : SmallPrimeCandidate) :
     letI := c.bounds
     letI := ZMod64.primeModulusOfPrime c.prime
-    ∀ (hzero : (ZPoly.modP c.p f).isZero = false),
+    ∀ (hzero : (ZPoly.modP c.m f).isZero = false),
       berlekampFactorsModP f c =
         ((Berlekamp.berlekampFactor
-          (monicModularImage (ZPoly.modP c.p f))
-          (monicModularImage_monic c.prime (ZPoly.modP c.p f) hzero)).factors.map
+          (monicModularImage (ZPoly.modP c.m f))
+          (monicModularImage_monic c.prime (ZPoly.modP c.m f) hzero)).factors.map
             monicModularImage).toArray := by
   letI := c.bounds
   letI := ZMod64.primeModulusOfPrime c.prime
@@ -1042,13 +1032,13 @@ def modularFactorDegreesAt? (f : ZPoly) (p : Nat) : Option (Array Nat) :=
       match found with
       | some degrees => some degrees
       | none =>
-          if c.p == p then
-            letI : ZMod64.Bounds c.p := c.bounds
-            if ZPoly.leadingCoeffModP f c.p != 0 then
-              match completeLinearDegreeSplit? f c.p with
+          if c.m == p then
+            letI : ZMod64.Bounds c.m := c.bounds
+            if ZPoly.leadingCoeffModP f c.m != 0 then
+              match completeLinearDegreeSplit? f c.m with
               | some degrees => some degrees
               | none =>
-                  if isGoodPrime f c.p then
+                  if isGoodPrime f c.m then
                     some ((berlekampFactorsModP f c).map (fun factor =>
                       factor.degree?.getD 0) |>.qsort (· ≤ ·))
                   else
@@ -1068,9 +1058,9 @@ private def prefixTwentyNineGuard : ZPoly :=
 /-- Score one small-prime candidate by its Berlekamp factor count when it is admissible for `f`. -/
 private def scoreCandidate (f : ZPoly) (c : SmallPrimeCandidate) : Option PrimeCandidateScore :=
   letI := c.bounds
-  if isGoodPrime f c.p then
+  if isGoodPrime f c.m then
     let factors := berlekampFactorsModP f c
-    some { p := c.p, factorCount := factors.size }
+    some { p := c.m, factorCount := factors.size }
   else
     none
 
@@ -1101,7 +1091,7 @@ private theorem scoreCandidate_isGoodPrime
       @isGoodPrime f score.p hbounds = true := by
   unfold scoreCandidate at hscore
   letI := c.bounds
-  by_cases hgood : isGoodPrime f c.p
+  by_cases hgood : isGoodPrime f c.m
   · simp [hgood] at hscore
     cases hscore
     exact ⟨c.bounds, hgood⟩

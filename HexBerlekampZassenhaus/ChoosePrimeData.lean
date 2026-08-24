@@ -144,11 +144,11 @@ structure PrimeChoiceDataScore where
 private def primeChoiceDataScore (f : ZPoly) (c : SmallPrimeCandidate) :
     Option PrimeChoiceDataScore :=
   letI := c.bounds
-  if isGoodPrime f c.p then
-    let fModP := ZPoly.modP c.p f
+  if isGoodPrime f c.m then
+    let fModP := ZPoly.modP c.m f
     let factorsModP := berlekampFactorsModP f c
     some
-      { data := { p := c.p, fModP, factorsModP }
+      { data := { p := c.m, fModP, factorsModP }
         factorCount := factorsModP.size }
   else
     none
@@ -192,7 +192,7 @@ def choosePrimeDataScoreStep
   -- First-suitable selection (matching the verified Isabelle/AFP
   -- `Berlekamp_Zassenhaus` `find_prime`): once a suitable prime has been found,
   -- keep it and stop; crucially, do **not** evaluate `primeChoiceDataScore f c`
-  -- (which factors `f mod c.p`) for any later candidate. The old "fewest modular
+  -- (which factors `f mod c.m`) for any later candidate. The old "fewest modular
   -- factors" rule factored at every good prime, costing ~95 modular
   -- factorizations per call; van Hoeij's recombination is polynomial in the
   -- factor count, so the optimisation bought almost nothing.
@@ -206,7 +206,7 @@ private theorem primeChoiceDataScore_prime
     Nat.Prime score.data.p := by
   unfold primeChoiceDataScore at hscore
   letI := c.bounds
-  by_cases hgood : isGoodPrime f c.p
+  by_cases hgood : isGoodPrime f c.m
   · simp [hgood] at hscore
     cases hscore
     exact c.prime
@@ -214,12 +214,12 @@ private theorem primeChoiceDataScore_prime
 
 private theorem primeChoiceDataScore_p_le
     (f : ZPoly) (c : SmallPrimeCandidate) (score : PrimeChoiceDataScore)
-    (hc : c.p ≤ 500)
+    (hc : c.m ≤ 500)
     (hscore : primeChoiceDataScore f c = some score) :
     score.data.p ≤ 500 := by
   unfold primeChoiceDataScore at hscore
   letI := c.bounds
-  by_cases hgood : isGoodPrime f c.p
+  by_cases hgood : isGoodPrime f c.m
   · simp [hgood] at hscore
     cases hscore
     exact hc
@@ -232,7 +232,7 @@ private theorem primeChoiceDataScore_fModP_eq
       @ZPoly.modP score.data.p score.data.bounds f := by
   unfold primeChoiceDataScore at hscore
   letI := c.bounds
-  by_cases hgood : isGoodPrime f c.p
+  by_cases hgood : isGoodPrime f c.m
   · simp [hgood] at hscore
     cases hscore
     rfl
@@ -289,7 +289,7 @@ private theorem choosePrimeDataScoreStep_prime
 private theorem choosePrimeDataScoreStep_p_le
     (f : ZPoly) (best : Option PrimeChoiceDataScore) (c : SmallPrimeCandidate)
     (score : PrimeChoiceDataScore)
-    (hc : c.p ≤ 500)
+    (hc : c.m ≤ 500)
     (hbest : ∀ old, best = some old → old.data.p ≤ 500)
     (hscore : choosePrimeDataScoreStep f best c = some score) :
     score.data.p ≤ 500 := by
@@ -343,7 +343,7 @@ private theorem choosePrimeDataScore_fold_prime
 private theorem choosePrimeDataScore_fold_p_le
     (f : ZPoly) (candidates : List SmallPrimeCandidate)
     (best : Option PrimeChoiceDataScore) (score : PrimeChoiceDataScore)
-    (hcandidates : ∀ c ∈ candidates, c.p ≤ 500)
+    (hcandidates : ∀ c ∈ candidates, c.m ≤ 500)
     (hbest : ∀ old, best = some old → old.data.p ≤ 500)
     (hscore :
       candidates.foldl (choosePrimeDataScoreStep f) best = some score) :
@@ -384,7 +384,7 @@ private theorem primeChoiceDataScore_isGoodPrime
     @isGoodPrime f score.data.p score.data.bounds = true := by
   unfold primeChoiceDataScore at hscore
   letI := c.bounds
-  by_cases hgood : isGoodPrime f c.p
+  by_cases hgood : isGoodPrime f c.m
   · simp [hgood] at hscore
     cases hscore
     exact hgood
@@ -606,13 +606,13 @@ private theorem improvePrimeData?_p_le
     (f : ZPoly) (first : PrimeChoiceDataScore)
     (hfirst : first.data.p ≤ 500) :
     ∀ extra candidates,
-      (∀ c ∈ candidates, c.p ≤ 500) →
+      (∀ c ∈ candidates, c.m ≤ 500) →
       (improvePrimeData? f first extra candidates).data.p ≤ 500 := by
   intro extra candidates hall
   induction candidates generalizing extra first with
   | nil => simp [improvePrimeData?, hfirst]
   | cons c candidates ih =>
-      have htail : ∀ d ∈ candidates, d.p ≤ 500 := by
+      have htail : ∀ d ∈ candidates, d.m ≤ 500 := by
         intro d hd
         exact hall d (List.mem_cons_of_mem c hd)
       cases extra with
@@ -680,14 +680,14 @@ private theorem chooseAdaptiveFrom?_property
 private theorem chooseAdaptiveFrom?_p_le
     (f : ZPoly) (extra : Nat) :
     ∀ candidates score,
-      (∀ c ∈ candidates, c.p ≤ 500) →
+      (∀ c ∈ candidates, c.m ≤ 500) →
       chooseAdaptiveFrom? f extra candidates = some score →
       score.data.p ≤ 500 := by
   intro candidates score hall h
   induction candidates generalizing score with
   | nil => simp [chooseAdaptiveFrom?] at h
   | cons c candidates ih =>
-      have htail : ∀ d ∈ candidates, d.p ≤ 500 := by
+      have htail : ∀ d ∈ candidates, d.m ≤ 500 := by
         intro d hd
         exact hall d (List.mem_cons_of_mem c hd)
       simp only [chooseAdaptiveFrom?] at h
@@ -892,10 +892,10 @@ theorem choosePrimeData?_isGoodPrime
 private theorem primeChoiceDataScore_eq_none_iff
     (f : ZPoly) (c : SmallPrimeCandidate) :
     primeChoiceDataScore f c = none ↔
-      @isGoodPrime f c.p c.bounds = false := by
+      @isGoodPrime f c.m c.bounds = false := by
   unfold primeChoiceDataScore
   letI := c.bounds
-  cases isGoodPrime f c.p with
+  cases isGoodPrime f c.m with
   | true => simp
   | false => simp
 
@@ -920,7 +920,7 @@ private theorem choosePrimeDataScore_fold_some_ne_none
 private theorem choosePrimeDataScore_fold_none_forall_isGoodPrime_false
     (f : ZPoly) (candidates : List SmallPrimeCandidate)
     (hfold : candidates.foldl (choosePrimeDataScoreStep f) none = none) :
-    ∀ c ∈ candidates, @isGoodPrime f c.p c.bounds = false := by
+    ∀ c ∈ candidates, @isGoodPrime f c.m c.bounds = false := by
   induction candidates with
   | nil => intro c hc; exact absurd hc List.not_mem_nil
   | cons c cs ih =>
@@ -933,7 +933,7 @@ private theorem choosePrimeDataScore_fold_none_forall_isGoodPrime_false
       cases hscore : primeChoiceDataScore f c with
       | none =>
           rw [hscore] at hfold
-          have hbad : @isGoodPrime f c.p c.bounds = false :=
+          have hbad : @isGoodPrime f c.m c.bounds = false :=
             (primeChoiceDataScore_eq_none_iff f c).mp hscore
           intro c' hc'
           rcases List.mem_cons.mp hc' with rfl | hin
@@ -953,7 +953,7 @@ candidate was tried and rejected.
 theorem mem_hotPathCandidates_isGoodPrime_false_of_choosePrimeData?_none
     {f : ZPoly} (hf : choosePrimeData? f = none)
     {c : SmallPrimeCandidate} (hc : c ∈ hotPathCandidates) :
-    @isGoodPrime f c.p c.bounds = false := by
+    @isGoodPrime f c.m c.bounds = false := by
   unfold choosePrimeData? at hf
   cases hsmall :
       smallPrimeCandidates.foldl (choosePrimeDataScoreStep f) none with
@@ -977,7 +977,7 @@ failure certificate. -/
 theorem choosePrimeData?_ne_none_of_good
     {f : ZPoly} {c : SmallPrimeCandidate}
     (hc : c ∈ hotPathCandidates)
-    (hgood : @isGoodPrime f c.p c.bounds = true) :
+    (hgood : @isGoodPrime f c.m c.bounds = true) :
     choosePrimeData? f ≠ none := by
   intro hnone
   have hbad :=
@@ -987,7 +987,7 @@ theorem choosePrimeData?_ne_none_of_good
 
 private theorem chooseAdaptiveFrom?_ne_none_of_good
     (f : ZPoly) (extra : Nat) {c : SmallPrimeCandidate}
-    (hgood : @isGoodPrime f c.p c.bounds = true) :
+    (hgood : @isGoodPrime f c.m c.bounds = true) :
     ∀ candidates, c ∈ candidates → chooseAdaptiveFrom? f extra candidates ≠ none := by
   intro candidates hc
   induction candidates with
@@ -1015,7 +1015,7 @@ to succeed; its look-ahead changes only which successful record is returned. -/
 theorem choosePrimeDataAdaptive?_ne_none_of_good
     {f : ZPoly} {c : SmallPrimeCandidate} {extra : Nat}
     (hc : c ∈ hotPathCandidates)
-    (hgood : @isGoodPrime f c.p c.bounds = true) :
+    (hgood : @isGoodPrime f c.m c.bounds = true) :
     choosePrimeDataAdaptive? f extra ≠ none := by
   unfold choosePrimeDataAdaptive?
   unfold hotPathCandidates at hc
@@ -1053,11 +1053,11 @@ private theorem primeChoiceDataScore_factorsModPBerlekampForm
     factorsModPBerlekampForm f score.data := by
   unfold primeChoiceDataScore at hscore
   letI := c.bounds
-  by_cases hgood : isGoodPrime f c.p
+  by_cases hgood : isGoodPrime f c.m
   · simp [hgood] at hscore
     cases hscore
-    have hzero : (ZPoly.modP c.p f).isZero = false :=
-      isGoodPrime_modP_isZero_false f c.p hgood
+    have hzero : (ZPoly.modP c.m f).isZero = false :=
+      isGoodPrime_modP_isZero_false f c.m hgood
     refine ⟨c.prime, hzero, ?_⟩
     show berlekampFactorsModP f c = _
     exact berlekampFactorsModP_eq_of_isZero_false f c hzero
@@ -1125,7 +1125,7 @@ theorem probePrimeData?_prime
 /-- An explicit trial inherits any proved upper bound on its candidate prime. -/
 theorem probePrimeData?_p_le
     (f : ZPoly) (c : SmallPrimeCandidate) (data : PrimeChoiceData)
-    (hc : c.p ≤ 500)
+    (hc : c.m ≤ 500)
     (hdata : probePrimeData? f c = some data) :
     data.p ≤ 500 := by
   unfold probePrimeData? at hdata

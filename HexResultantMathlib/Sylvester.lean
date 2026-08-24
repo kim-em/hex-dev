@@ -90,6 +90,9 @@ private def sylvesterByVal [CommRing R] (f g : Polynomial R) (df dg : Nat) :
         f.coeff (i.val - jj)
       else 0
 
+/-- Mathlib's `Fin.addCases`-defined Sylvester matrix agrees with its
+value-indexed presentation, which rewrites cleanly against the numeric
+indexing of `coeffMatrixAt`. -/
 private theorem sylvester_eq_byVal [CommRing R] (f g : Polynomial R)
     (df dg : Nat) :
     Polynomial.sylvester f g df dg = sylvesterByVal f g df dg := by
@@ -339,6 +342,14 @@ theorem toPolynomial_resultant [CommRing R] [IsDomain R] [DecidableEq R]
       · rw [if_neg hfg]
         rw [resultantOrdered_eq_coeffMinor f g hf hg (by omega)]
         rw [Subresultant.coeffMinor_zero_eq_resultant, hdf, hdg]
+
+/-! Trust-surface regression check for the headline resultant correspondence. -/
+
+/--
+info: 'Hex.DensePoly.toPolynomial_resultant' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms toPolynomial_resultant
 
 end DensePoly
 end Hex

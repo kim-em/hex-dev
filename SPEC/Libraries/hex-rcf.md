@@ -534,7 +534,19 @@ Lean's kernel: it checks `check_sound`, the reduction proof
 original goal. No unverified result of the compiled builder or reifier
 is accepted as a proof.
 
-## Soundness theorem structure
+## Headline correctness theorem
+
+`Hex.RCF.check_sound`: every certificate accepted by the public Boolean
+checker proves its sentence, `cert.check s = true → s.toProp`. This is
+the library's single end-to-end post-condition. The kernel checks it
+together with the reduction proof `check s cert = true` and the
+reifier-produced equivalence with the original goal, so no unverified
+output of the compiled builder or reifier is trusted. `decide_sound`
+and `exists_cert_of_decide` are convenience wrappers over the same
+certificate path, not independent claims (see the preceding section);
+the per-constructor soundness lemmas and replay theorems below are
+load-bearing clauses of the headline proof, per the intermediate-lemma
+rule in PLAN/Conventions.md §Headline correctness theorem.
 
 `check_sound` factors exactly along the algorithm:
 

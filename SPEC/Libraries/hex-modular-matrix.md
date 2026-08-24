@@ -10,10 +10,10 @@ results with `Matrix.det`, `Matrix.rank`, and `Matrix.mulVec`.
 
 This SPEC expands three of the five bullets in the "Modular techniques"
 entry of [future-work](../future-work.md), and depends on the
-reconstruction operations specified in [hex-modular](hex-modular.md). The
+reconstruction operations specified in [hex-modular](../../HexModular/SPEC/hex-modular.md). The
 fourth bullet, the modular gcd for `ℤ[x]`, is
-[hex-poly-z-gcd](hex-poly-z-gcd.md); the fifth, rational reconstruction
-itself, is in [hex-modular](hex-modular.md).
+[hex-poly-z-gcd](../../HexPolyZGcd/SPEC/hex-poly-z-gcd.md); the fifth, rational reconstruction
+itself, is in [hex-modular](../../HexModular/SPEC/hex-modular.md).
 
 ## Why this library exists
 
@@ -108,7 +108,7 @@ which the arithmetic discovers rather than assumes. `detMod?` returning
 `some d` at a composite modulus is as good an image as any. Distinctness is not
 the right property either, since distinct moduli need not be coprime;
 coprimality is what the reconstruction needs and `Crt.push` checks it.
-[hex-modular](hex-modular.md) sets this out in full under "Primality is
+[hex-modular](../../HexModular/SPEC/hex-modular.md) sets this out in full under "Primality is
 not what the checkers need". Primality does appear here, once: the rank
 of an image modulo `p` is a rank only when `F_p` is a field, and the
 statement of `rankModP` says so.
@@ -263,7 +263,7 @@ modulus divides `L = lcm(1, …, 2^31 - 1)` and so does every product of
 pairwise coprime allowed moduli. On the `1 x 1` matrix `[L]` the
 determinant is `L`, the Hadamard bound is `L`, every image is zero, and
 the accumulated modulus never exceeds `2L`. No amount of fuel helps.
-[hex-modular](hex-modular.md) records the same obstruction for the
+[hex-modular](../../HexModular/SPEC/hex-modular.md) records the same obstruction for the
 supply as a whole. Under design principle 8 the classification is neither
 of the two fallback modes: `detModular?` propagates its `Option` upward,
 and `det` is a dispatch between two complete algorithms rather than a
@@ -313,7 +313,7 @@ is easy to get wrong:
 - **The pair must be reduced first.** The divisibility conclusion needs
   `gcd(gcd_i y_i, d) = 1`. Dixon's reconstruction returns a common
   denominator that need not be the least one
-  ([hex-modular](hex-modular.md) says so explicitly under "Vectors with a
+  ([hex-modular](../../HexModular/SPEC/hex-modular.md) says so explicitly under "Vectors with a
   common denominator"), so `detViaDivisor` divides `y` and `d` through by
   their common gcd before using `d`. Omitting that step gives a `d` that
   does not divide the determinant and a wrong answer with no symptom.
@@ -575,11 +575,11 @@ listed here because this library is a second consumer.
 
 **The modulus supply should move to hex-mod-arith.** `ZMod64.Modulus`,
 the bundled `ZMod64.Prime`, and `ZMod64.primesBelow` belong beside `ZMod64`,
-per [hex-modular §The supply](hex-modular.md). This library is their
+per [hex-modular §The supply](../../HexModular/SPEC/hex-modular.md). This library is their
 main consumer, and it passes bare `Nat` moduli on to `crtLoop`.
 
 **`zmod64FieldOfPrime` should move to hex-mod-arith.** Set out in
-[hex-modular](hex-modular.md). Without it, `rankModP` forces a dependency
+[hex-modular](../../HexModular/SPEC/hex-modular.md). Without it, `rankModP` forces a dependency
 on hex-poly-fp for one instance about a `ZMod64` type.
 
 **An entrywise `Matrix.mapEntries` is missing.** hex-matrix has
