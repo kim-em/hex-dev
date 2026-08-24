@@ -65,7 +65,11 @@ with the cube-root variant). hex-primality owns a minimal untrusted
 becomes a real factorization suite. The dependency runs upward --
 hex-int-factor depends on hex-primality, never the reverse -- because a
 factorization certificate has to prove its factors prime while a
-certificate search needs no proof at all.
+certificate search needs no proof at all. The reverse flow -- this
+library's advances improving hex-primality's search -- has three
+sanctioned routes (certificate hand-off, shared stage-1 primitives
+sited upstream, an optional search hook), recorded in hex-primality's
+"Taking up downstream factoring advances".
 
 **The maximal order needs it.** [future-work](../future-work.md)'s
 "Ring of integers" entry names the squarefree part of the polynomial
@@ -79,8 +83,8 @@ unfactored".
 
 In scope: the factorization certificate and its checker; perfect-power
 detection; trial division against hex-primality's table; reuse of
-hex-primality's Brent-rho primitive; Pollard `p − 1` stage 1; ECM stage
-1 with Montgomery curves; the divisor-function API
+hex-primality's Brent-rho and Pollard `p − 1` stage-1 primitives; ECM
+stage 1 with Montgomery curves; the divisor-function API
 (`divisors`, `sigma`, `totient`, `radical`, `squarefreePart`,
 `isSquarefree`); the multiplicative-order and primitive-root
 certificates; and the cyclotomic pre-split for numbers of the form
@@ -312,6 +316,11 @@ loop. In particular, `c = n - 2` is bad for the conventional start
 `x = 2` but is not globally blacklisted for every start.
 
 ### 2. Pollard `p − 1`
+
+Like rho, stage 1 is sited upstream: hex-primality owns it beside
+`rhoFactor?`, under the same dynamically validated proper-factor
+contract, and this library reuses it. What follows specifies the
+algorithm both consumers get.
 
 Stage 1 chooses `1 < a < n` and first checks `gcd(a,n)`: a gcd greater
 than `1` is necessarily a proper factor. Otherwise it computes
@@ -985,8 +994,8 @@ nothing extra.
    including the prime-power congruence prerequisites named above.
 
 4. **Shared rho and Pollard `p − 1`.** Integrate hex-primality's
-   `rhoFactor?` and implement route 2 stage 1, with route-level tests
-   written before the code.
+   `rhoFactor?` and land route 2 stage 1 upstream beside it (see the
+   route description), with route-level tests written before the code.
 
 5. **The cyclotomic candidate.** `cyclotomicSplit?`, its checked product
    theorem, the recursive evaluation candidate, and the `b^n ± 1`
@@ -1011,7 +1020,7 @@ HexIntFactor/
   Divisors.lean     -- the divisor-function API
   Small.lean        -- trailing zeros, perfect powers, trial division
   Rho.lean          -- adapter from the shared rho primitive to the dispatch
-  PMinusOne.lean    -- Pollard p-1 stage 1
+  PMinusOne.lean    -- adapter from the shared p-1 primitive to the dispatch
   Ecm.lean          -- Montgomery-curve ECM stage 1
   Cyclotomic.lean   -- cyclotomicSplit? and the checked candidate
   Order.lean        -- OrderCert, checkOrder, primitive roots, Carmichael
