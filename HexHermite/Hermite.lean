@@ -1511,6 +1511,12 @@ theorem hnfWithInv_inv_mul (A : Matrix Int n m) :
       Matrix.identity n := by
   exact mul_eq_one_comm (hnfWithInv_mul_inv A)
 
+/-- The inverse-tracking transform carries the input to its reported form. -/
+theorem hnfWithInv_transform_mul (A : Matrix Int n m) :
+    (hnfWithInv A).rowData.transform * A = (hnfWithInv A).rowData.echelon := by
+  rw [hnfWithInv_data A]
+  exact hnfData_transform_mul A
+
 /-- The executable Hermite sweep satisfies the complete row-HNF contract. -/
 theorem hnfData_isHNF (A : Matrix Int n m) : IsHNF A (hnfData A) := by
   let s := Hermite.run (Hermite.transformAccumulator n) A

@@ -96,6 +96,30 @@ def latticeIndex (A : Matrix Int n m) : Nat :=
   else
     0
 
+set_option maxHeartbeats 400000 in
+private theorem recover_of_inverse {A : Matrix Int n m} {H : Matrix Int n m}
+    {U W : Matrix Int n n} (hUA : U * A = H)
+    (hWU : W * U = Matrix.identity (R := Int) n) : W * H = A := by
+  calc
+    W * H = W * (U * A) := by rw [hUA]
+    _ = (W * U) * A := (Matrix.mul_assoc W U A).symm
+    _ = Matrix.identity (R := Int) n * A := by rw [hWU]
+    _ = A := Matrix.identity_mul A
+
+set_option maxHeartbeats 400000 in
+/-- Hermite reduction preserves the integer row lattice. -/
+theorem hnf_memLattice_iff (A : Matrix Int n m) (v : Vector Int m) :
+    A.memLattice v ↔ (hnf A).memLattice v := by
+  let D := hnfWithInv A
+  have hforward : D.rowData.transform * A = D.rowData.echelon :=
+    hnfWithInv_transform_mul A
+  have hback : D.inverse * D.rowData.echelon = A :=
+    recover_of_inverse hforward (hnfWithInv_inv_mul A)
+  have hform : hnf A = D.rowData.echelon := by
+    rw [hnf_eq_hnfData_echelon, ← hnfWithInv_data A]
+  rw [hform]
+  exact memLattice_iff_of_mul_eq hforward hback v
+
 /-- Every returned lattice coefficient vector satisfies its advertised
 row-combination equation. -/
 theorem latticeCoeffs_sound {A : Matrix Int n m} {v : Vector Int m}
@@ -112,6 +136,28 @@ theorem latticeCoeffs_sound {A : Matrix Int n m} {v : Vector Int m}
       subst c
       exact hverify
     · contradiction
+
+/-- The returned kernel rows are annihilated by the input matrix. -/
+theorem kernelBasis_mul (A : Matrix Int n m) : kernelBasis A * A = 0 := by
+  let D := hnfData A
+  have hform := hnfData_isHNF A
+  have hrank : hnfRank A = D.rank := hnfRank_eq A
+  apply Matrix.ext_getElem
+  intro i j
+  let row : Fin n := ⟨hnfRank A + i.val, by
+    have hr := hform.toIsEchelonForm.rank_le_n
+    omega⟩
+  have hrow : D.rank ≤ row.val := by simp only [row]; omega
+  have hzero : D.echelon[row] = 0 := hform.toIsEchelonForm.zero_row row hrow
+  calc
+    (kernelBasis A * A)[i][j] = (D.transform * A)[row][j] := by
+      simp only [D, row, Matrix.getElem_mul, kernelBasis, Matrix.getElem_ofFn,
+        Matrix.getElem_row, Matrix.getElem_col, Matrix.getElem_pair_eq_nested,
+        Vector.dotProduct]
+    _ = D.echelon[row][j] := by rw [hnfData_transform_mul A]
+    _ = 0 := by rw [hzero]; simp
+    _ = (0 : Matrix Int (n - hnfRank A) m)[i][j] :=
+      (Matrix.getElem_zero i j).symm
 
 @[simp] theorem latticeContains_eq_isSome (A : Matrix Int n m) (v : Vector Int m) :
     latticeContains A v = (latticeCoeffs A v).isSome := rfl
