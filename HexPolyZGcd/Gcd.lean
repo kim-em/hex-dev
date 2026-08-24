@@ -832,6 +832,107 @@ private def structuralGcdCert? (f h : ZPoly) : Option GcdCert :=
   else
     none
 
+/-- The structural acceptance gate exposes only certificates that passed the
+checker. -/
+private theorem acceptStructural?_checks {f h : ZPoly} {offered cert : GcdCert}
+    (hcert : acceptStructural? f h offered = some cert) :
+    checkGcd f h cert = true := by
+  unfold acceptStructural? at hcert
+  split at hcert
+  · rename_i hcheck
+    cases hcert
+    exact hcheck
+  · contradiction
+
+private theorem zeroLeftCert?_checks {h : ZPoly} {cert : GcdCert}
+    (hcert : zeroLeftCert? h = some cert) :
+    checkGcd 0 h cert = true := by
+  unfold zeroLeftCert? at hcert
+  dsimp only at hcert
+  generalize hdiv : divExact? h (normalizePrimitiveSign h) = quotient? at hcert
+  cases quotient? with
+  | none => simp at hcert
+  | some quotient =>
+      exact acceptStructural?_checks hcert
+
+private theorem zeroRightCert?_checks {f : ZPoly} {cert : GcdCert}
+    (hcert : zeroRightCert? f = some cert) :
+    checkGcd f 0 cert = true := by
+  unfold zeroRightCert? at hcert
+  dsimp only at hcert
+  generalize hdiv : divExact? f (normalizePrimitiveSign f) = quotient? at hcert
+  cases quotient? with
+  | none => simp at hcert
+  | some quotient =>
+      exact acceptStructural?_checks hcert
+
+private theorem constantLeftCert?_checks {f h : ZPoly} {cert : GcdCert}
+    (hcert : constantLeftCert? f h = some cert) :
+    checkGcd f h cert = true := by
+  unfold constantLeftCert? at hcert
+  dsimp only at hcert
+  generalize hleft : divExact? f
+      (DensePoly.C (Int.ofNat (Int.gcd (f.coeff 0) (content h)))) = left? at hcert
+  cases left? with
+  | none => simp at hcert
+  | some left =>
+      generalize hright : divExact? h
+          (DensePoly.C (Int.ofNat (Int.gcd (f.coeff 0) (content h)))) =
+        right? at hcert
+      cases right? with
+      | none => simp at hcert
+      | some right => exact acceptStructural?_checks hcert
+
+private theorem constantRightCert?_checks {f h : ZPoly} {cert : GcdCert}
+    (hcert : constantRightCert? f h = some cert) :
+    checkGcd f h cert = true := by
+  unfold constantRightCert? at hcert
+  dsimp only at hcert
+  generalize hleft : divExact? f
+      (DensePoly.C (Int.ofNat (Int.gcd (content f) (h.coeff 0)))) = left? at hcert
+  cases left? with
+  | none => simp at hcert
+  | some left =>
+      generalize hright : divExact? h
+          (DensePoly.C (Int.ofNat (Int.gcd (content f) (h.coeff 0)))) =
+        right? at hcert
+      cases right? with
+      | none => simp at hcert
+      | some right => exact acceptStructural?_checks hcert
+
+/-- Every certificate returned by the mandatory zero/constant prepass passed
+the checker. -/
+private theorem structuralGcdCert?_checks {f h : ZPoly} {cert : GcdCert}
+    (hcert : structuralGcdCert? f h = some cert) :
+    checkGcd f h cert = true := by
+  unfold structuralGcdCert? at hcert
+  split at hcert
+  · rename_i hfzero
+    have hf : f = 0 :=
+      (DensePoly.size_eq_zero_iff f).mp
+        ((DensePoly.isZero_eq_true_iff f).mp hfzero)
+    subst f
+    split at hcert
+    · rename_i hhzero
+      have hh : h = 0 :=
+        (DensePoly.size_eq_zero_iff h).mp
+          ((DensePoly.isZero_eq_true_iff h).mp hhzero)
+      subst h
+      exact acceptStructural?_checks hcert
+    · exact zeroLeftCert?_checks hcert
+  · split at hcert
+    · rename_i hhzero
+      have hh : h = 0 :=
+        (DensePoly.size_eq_zero_iff h).mp
+          ((DensePoly.isZero_eq_true_iff h).mp hhzero)
+      subst h
+      exact zeroRightCert?_checks hcert
+    · split at hcert
+      · exact constantLeftCert?_checks hcert
+      · split at hcert
+        · exact constantRightCert?_checks hcert
+        · contradiction
+
 /-- Long division by a nonzero divisor returns the exact cofactor whenever
 the divisor is known to divide the input. -/
 private theorem divModProduct {f g : ZPoly} (hg : g ≠ 0) (hdvd : g ∣ f) :
@@ -947,6 +1048,16 @@ private def fallbackGcdCert (f h : ZPoly) : GcdCert :=
   | some cert => cert
   | none => rationalGcdCert f h
 
+/-- The deterministic PRS route and its rational contingency both return
+accepted certificates. -/
+private theorem fallbackGcdCert_checks (f h : ZPoly) :
+    checkGcd f h (fallbackGcdCert f h) = true := by
+  unfold fallbackGcdCert
+  generalize hprs : prsCert? f h = cert?
+  cases cert? with
+  | some cert => exact prsCert_checks hprs
+  | none => exact rationalGcdCert_checks f h
+
 /-- Route 0: extract the common integer content and common power of `x`.
 Both divisions are explicit checked operations, so a representation or
 division regression declines instead of inventing a reduced input. -/
@@ -959,6 +1070,36 @@ def structuralReduction? (f h : ZPoly) : Option StructuralReduction := do
   let right ← divExact? h factor
   pure { factor, left, right }
 
+/-- A successful structural reduction records exact products for both
+inputs. -/
+private theorem structuralReduction?_products {f h : ZPoly}
+    {reduced : StructuralReduction}
+    (hresult : structuralReduction? f h = some reduced) :
+    reduced.factor * reduced.left = f ∧
+      reduced.factor * reduced.right = h := by
+  unfold structuralReduction? at hresult
+  dsimp only at hresult
+  by_cases hzero : f.isZero || h.isZero
+  · rw [if_pos hzero] at hresult
+    contradiction
+  · rw [if_neg hzero] at hresult
+    let commonPower := min (xOrder f) (xOrder h)
+    let commonContent : Int := Int.ofNat (Int.gcd (content f) (content h))
+    let factor := DensePoly.scale commonContent (xPower commonPower)
+    generalize hleft : divExact? f factor = left? at hresult
+    cases left? with
+    | none => simp at hresult
+    | some left =>
+        generalize hright : divExact? h factor = right? at hresult
+        cases right? with
+        | none => simp at hresult
+        | some right =>
+            cases hresult
+            have hleftProduct := divExact?_product hleft
+            have hrightProduct := divExact?_product hright
+            exact ⟨(DensePoly.mul_comm_poly factor left).trans hleftProduct,
+              (DensePoly.mul_comm_poly factor right).trans hrightProduct⟩
+
 /-- Restore route 0's common factor around a certificate for the reduced
 pair.  The public checker is the only acceptance gate. -/
 def restoreStructural? (f h : ZPoly) (reduced : StructuralReduction)
@@ -969,6 +1110,19 @@ def restoreStructural? (f h : ZPoly) (reduced : StructuralReduction)
       cofR := cert.cofR
       coprime := cert.coprime }
   if checkGcd f h restored then some restored else none
+
+/-- Structural restoration exposes only the checker-approved result. -/
+private theorem restoreStructural?_checks {f h : ZPoly}
+    {reduced : StructuralReduction} {cert restored : GcdCert}
+    (hresult : restoreStructural? f h reduced cert = some restored) :
+    checkGcd f h restored = true := by
+  unfold restoreStructural? at hresult
+  dsimp only at hresult
+  split at hresult
+  · rename_i hcheck
+    cases hresult
+    exact hcheck
+  · contradiction
 
 /-- Largest reduced input size at which the evaluation heuristic runs before
 Brown reconstruction. Above this point dense evaluation builds integers whose
@@ -987,6 +1141,14 @@ private def brownOrFallback (f h : ZPoly) : GcdCert :=
   | some cert => cert
   | none => fallbackGcdCert f h
 
+private theorem brownOrFallback_checks (f h : ZPoly) :
+    checkGcd f h (brownOrFallback f h) = true := by
+  unfold brownOrFallback
+  generalize hbrown : brownCert? f h = cert?
+  cases cert? with
+  | some cert => exact brownCert?_checks hbrown
+  | none => exact fallbackGcdCert_checks f h
+
 private def afterCoprime (f h : ZPoly) : GcdCert :=
   if max f.size h.size <= heuSizeLimit then
     match heuCert? f h with
@@ -994,6 +1156,18 @@ private def afterCoprime (f h : ZPoly) : GcdCert :=
     | none => brownOrFallback f h
   else
     brownOrFallback f h
+
+private theorem afterCoprime_checks (f h : ZPoly) :
+    checkGcd f h (afterCoprime f h) = true := by
+  unfold afterCoprime
+  by_cases hsmall : max f.size h.size ≤ heuSizeLimit
+  · rw [if_pos hsmall]
+    generalize hheu : heuCert? f h = cert?
+    cases cert? with
+    | some cert => exact heuCert?_checks hheu
+    | none => exact brownOrFallback_checks f h
+  · rw [if_neg hsmall]
+    exact brownOrFallback_checks f h
 
 /-- Routes 1--4 on inputs after structural content and `x`-power removal. -/
 def reducedGcdCert (f h : ZPoly) : GcdCert :=
@@ -1007,6 +1181,25 @@ def reducedGcdCert (f h : ZPoly) : GcdCert :=
         match coprimeCert? f h with
         | some cert => cert
         | none => afterCoprime f h
+
+/-- Every nonstructural route either returns a checked fast certificate or
+the checked deterministic fallback. -/
+private theorem reducedGcdCert_checks (f h : ZPoly) :
+    checkGcd f h (reducedGcdCert f h) = true := by
+  unfold reducedGcdCert
+  dsimp only
+  generalize hdiff : differenceCert? f h = difference?
+  cases difference? with
+  | some cert => exact differenceCert?_checks hdiff
+  | none =>
+      by_cases hbits : brownBitCutoff < max (maxAbs f).log2 (maxAbs h).log2
+      · rw [if_pos hbits]
+        exact brownOrFallback_checks f h
+      · rw [if_neg hbits]
+        generalize hcop : coprimeCert? f h = coprime?
+        cases coprime? with
+        | some cert => exact coprimeCert?_checks hcop
+        | none => exact afterCoprime_checks f h
 
 /-- Internal route tag used by executable dispatch guards. -/
 private inductive GcdRoute where
@@ -1046,7 +1239,44 @@ def gcdCert (f h : ZPoly) : GcdCert :=
 /-- Every public certificate has passed the checker. -/
 theorem gcdCert_checks (f h : ZPoly) :
     checkGcd f h (gcdCert f h) = true := by
-  sorry
+  unfold gcdCert dispatchGcdCert
+  generalize hstruct : structuralGcdCert? f h = structural?
+  cases structural? with
+  | some cert =>
+      exact structuralGcdCert?_checks hstruct
+  | none =>
+      simp only
+      generalize hreduction : structuralReduction? f h = reduction?
+      cases reduction? with
+      | none =>
+          exact fallbackGcdCert_checks f h
+      | some reduced =>
+          simp only
+          let cert := reducedGcdCert reduced.left reduced.right
+          by_cases hfactor : reduced.factor == 1
+          · rw [if_pos hfactor]
+            have hfactorEq : reduced.factor = 1 := by
+              simpa only [beq_iff_eq] using hfactor
+            have hproducts := structuralReduction?_products hreduction
+            have hleft : reduced.left = f := by
+              rw [hfactorEq] at hproducts
+              rw [DensePoly.mul_comm_poly (1 : ZPoly) reduced.left,
+                DensePoly.mul_one_right_poly] at hproducts
+              exact hproducts.1
+            have hright : reduced.right = h := by
+              rw [hfactorEq] at hproducts
+              rw [DensePoly.mul_comm_poly (1 : ZPoly) reduced.right,
+                DensePoly.mul_one_right_poly] at hproducts
+              exact hproducts.2
+            simpa only [cert, hleft, hright] using
+              reducedGcdCert_checks reduced.left reduced.right
+          · rw [if_neg hfactor]
+            generalize hrestore : restoreStructural? f h reduced cert = restored?
+            cases restored? with
+            | some restored =>
+                exact restoreStructural?_checks hrestore
+            | none =>
+                exact fallbackGcdCert_checks f h
 
 /-- Canonically normalized gcd of two integer polynomials.  Exposure is
 limited to the projection equation `gcd_eq_cert`; `gcdCert` and its route
