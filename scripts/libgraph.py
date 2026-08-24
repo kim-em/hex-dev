@@ -19,6 +19,7 @@ BUILD_ONLY_LIBS = {
     "HexLLLBenchSupport",
     "HexGF2BenchSupport",
     "HexBerlekampKernelProbe",
+    "HexPrimalityKernelProbe",
     "HexMvPolyBenchSupport",
     "HexModularBenchSupport",
     "HexMvPolyMathlibProofProbe",

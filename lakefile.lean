@@ -279,6 +279,10 @@ lean_lib HexBerlekampKernelProbe where
   srcDir := "bench"
   globs := #[`HexBench.BerlekampKernel]
 
+lean_lib HexPrimalityKernelProbe where
+  srcDir := "bench"
+  globs := #[`HexBench.PrimalityKernel]
+
 lean_lib HexMvPolyBenchSupport where
   srcDir := "bench"
   globs := #[`HexMvPolyCorpus]
@@ -1044,6 +1048,10 @@ lean_exe hexgfq_bench where
 lean_exe hexhensel_bench where
   srcDir := "bench"
   root := `HexHensel.Bench
+
+lean_exe hexprimality_bench where
+  srcDir := "bench"
+  root := `HexPrimality.Bench
 
 lean_exe hexberlekamp_bench where
   srcDir := "bench"
