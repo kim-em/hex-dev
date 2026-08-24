@@ -1,0 +1,14 @@
+HexRootsMathlib Phase 3 was reviewed on 2026-08-22. The library has no
+conformance module in-tree, and that absence is intentional, not an
+omission: SPEC/testing.md bans Conformance files in correspondence-only
+Hex*Mathlib bridges (the ceremonial-bridge ban), and this library
+exposes proof-only correspondence and completeness theorems with no
+runtime kernel of its own to conform to. The executable surface it
+verifies is exercised by the computational sibling's conformance module
+(conformance/HexRoots/, python-flint oracle wired in
+scripts/ci/run_oracles.sh) and by this library's own compiled
+regression module HexRootsMathlib/Examples.lean, which is CI-gated
+through the HexReleaseTests target and the release-manifest
+test_modules equality check. Precedent:
+status/hex-lll-mathlib.conformance-reviewed and the #3700/#3707
+history it records.

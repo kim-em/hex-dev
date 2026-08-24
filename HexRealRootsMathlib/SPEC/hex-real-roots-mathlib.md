@@ -137,7 +137,7 @@ as the reusable equivalence between zero sign and a real root at the endpoint.
 
 ### Literal-chain replay API
 
-Consumers such as [hex-rcf](hex-rcf.md) certify a supplied chain by
+Consumers such as [hex-rcf](../../HexRCF/SPEC/hex-rcf.md) certify a supplied chain by
 multiplication identities without identifying it with the executable
 `sturmChain`. The companion therefore exposes a second bridge from
 literal integer-polynomial chains to the same abstract theorem.

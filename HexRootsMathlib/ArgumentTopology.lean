@@ -73,23 +73,6 @@ theorem continuousOn_circleIntegral_div {X : Type*} [TopologicalSpace X]
       (fun q => ⟨q.1.2, mem_univ q.2⟩)
   · exact fun q => hzero q.1.1 q.1.2 q.2
 
-/-- The normalized fixed-circle integral inherits parametric continuity. -/
-theorem continuous_normalizedCircleIntegral {X : Type*} [TopologicalSpace X]
-    {f : X → ℂ → ℂ} (c : ℂ) (R : ℝ)
-    (hf : Continuous fun q : X × ℝ => f q.1 (circleMap c R q.2)) :
-    Continuous fun x => (2 * Real.pi * I)⁻¹ * ∮ z in C(c, R), f x z :=
-  continuous_const.mul (continuous_circleIntegral c R hf)
-
-/-- The normalized integral of a quotient varies continuously under the same
-nonvanishing hypothesis as the unnormalized integral. -/
-theorem continuous_normalizedCircleIntegral_div {X : Type*} [TopologicalSpace X]
-    {f g : X → ℂ → ℂ} (c : ℂ) (R : ℝ)
-    (hf : Continuous fun q : X × ℝ => f q.1 (circleMap c R q.2))
-    (hg : Continuous fun q : X × ℝ => g q.1 (circleMap c R q.2))
-    (hzero : ∀ q : X × ℝ, g q.1 (circleMap c R q.2) ≠ 0) :
-    Continuous fun x => (2 * Real.pi * I)⁻¹ * ∮ z in C(c, R), f x z / g x z :=
-  continuous_const.mul (continuous_circleIntegral_div c R hf hg hzero)
-
 /-- The normalized integral of a quotient varies continuously on a parameter
 set under a nonvanishing hypothesis restricted to that set. -/
 theorem continuousOn_normalizedCircleIntegral_div {X : Type*} [TopologicalSpace X]
@@ -100,32 +83,6 @@ theorem continuousOn_normalizedCircleIntegral_div {X : Type*} [TopologicalSpace 
     ContinuousOn (fun x =>
       (2 * Real.pi * I)⁻¹ * ∮ z in C(c, R), f x z / g x z) s :=
   continuous_const.continuousOn.mul (continuousOn_circleIntegral_div c R hf hg hzero)
-
-/-- Continuity of a real cast detects continuity of a natural-valued map. -/
-theorem continuous_nat_of_cast {X : Type*} [TopologicalSpace X] {f : X → ℕ}
-    (hf : Continuous fun x => (f x : ℝ)) : Continuous f := by
-  exact Nat.isClosedEmbedding_coe_real.isInducing.continuous_iff.mpr hf
-
-/-- Continuity of a complex cast detects continuity of a natural-valued map. -/
-theorem continuous_nat_of_complexCast {X : Type*} [TopologicalSpace X]
-    {f : X → ℕ} (hf : Continuous fun x => (f x : ℂ)) : Continuous f := by
-  apply continuous_nat_of_cast
-  have hre := Complex.continuous_re.comp hf
-  change Continuous (fun x => ((f x : ℂ).re)) at hre
-  simpa using hre
-
-/-- Continuity of a real cast detects continuity of an integer-valued map. -/
-theorem continuous_int_of_cast {X : Type*} [TopologicalSpace X] {f : X → ℤ}
-    (hf : Continuous fun x => (f x : ℝ)) : Continuous f := by
-  exact Int.isClosedEmbedding_coe_real.isInducing.continuous_iff.mpr hf
-
-/-- Continuity of a complex cast detects continuity of an integer-valued map. -/
-theorem continuous_int_of_complexCast {X : Type*} [TopologicalSpace X]
-    {f : X → ℤ} (hf : Continuous fun x => (f x : ℂ)) : Continuous f := by
-  apply continuous_int_of_cast
-  have hre := Complex.continuous_re.comp hf
-  change Continuous (fun x => ((f x : ℂ).re)) at hre
-  simpa using hre
 
 /-- Continuity on a set of a real cast detects continuity on that set of a
 natural-valued map. -/
@@ -164,13 +121,21 @@ theorem eq_endpoints_of_continuousOn {Y : Type*} [TopologicalSpace Y]
     (left_mem_Icc.mpr hab) (right_mem_Icc.mpr hab)
 
 /-- A natural-valued map has equal endpoint values when its complex cast is
-continuous on the intervening interval. -/
+continuous on the intervening interval.
+
+This packaged form is the module's stated terminus; the Rouché homotopy
+development applies the two halves (`continuousOn_nat_of_complexCast`,
+`eq_endpoints_of_continuousOn`) separately because it names the intermediate
+continuity statement `continuous_rootsInDisc`. -/
 theorem nat_eq_endpoints_of_complexCast {a b : ℝ} (hab : a ≤ b) {f : ℝ → ℕ}
     (hf : ContinuousOn (fun x => (f x : ℂ)) (Icc a b)) : f a = f b :=
   eq_endpoints_of_continuousOn hab (continuousOn_nat_of_complexCast hf)
 
 /-- An integer-valued map has equal endpoint values when its complex cast is
-continuous on the intervening interval. -/
+continuous on the intervening interval.
+
+Integer-valued counterpart of `nat_eq_endpoints_of_complexCast`, kept as the
+module's general winding-number-valued terminus. -/
 theorem int_eq_endpoints_of_complexCast {a b : ℝ} (hab : a ≤ b) {f : ℝ → ℤ}
     (hf : ContinuousOn (fun x => (f x : ℂ)) (Icc a b)) : f a = f b :=
   eq_endpoints_of_continuousOn hab (continuousOn_int_of_complexCast hf)

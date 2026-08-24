@@ -4,9 +4,13 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexGFqMathlib.Basic
-import HexGF2Mathlib.Field
-import Mathlib.Algebra.Ring.Equiv
+module
+
+public import HexGFqMathlib.Basic
+public import HexGF2Mathlib.Field
+public import Mathlib.Algebra.Ring.Equiv
+
+public section
 
 /-!
 Mathlib-side correspondence between the optimized binary Conway field and the

@@ -25,7 +25,8 @@ namespace Hex.Interval
 @[simp]
 theorem toReal_pow (value : Dyadic) (exponent : Nat) :
     toReal (value ^ exponent) = toReal value ^ exponent := by
-  simp [toReal, Dyadic.toRat_pow]
+  rw [toReal, Dyadic.toRat_pow]
+  exact map_pow (Rat.castHom ℝ) value.toRat exponent
 
 @[simp]
 private theorem toReal_one : toReal (1 : Dyadic) = 1 := by

@@ -58,6 +58,7 @@ def det {R : Type u} [Zero R] [One R] [Add R] [Sub R] [Mul R] :
         (fun acc j =>
           acc + sign j.val * M ⟨0, by omega⟩ j * det (deleteFirst M j)) 0
 
+/-- The empty local determinant is one. -/
 @[simp, grind =]
 theorem det_zero {R : Type u} [Zero R] [One R] [Add R] [Sub R] [Mul R]
     (M : Square R 0) : det M = 1 := by
@@ -208,6 +209,8 @@ def poly [One R] [Add R] [Sub R] [Mul R]
     (J : Nat) (f g : DensePoly R) : DensePoly R :=
   ofList ((List.range (J + 1)).map fun l => coeffMinor J l f g)
 
+/-- Coefficient `l` of the generalized subresultant is the corresponding
+scalar minor up to index `J`, and zero above. -/
 @[simp, grind =]
 theorem coeff_poly [One R] [Add R] [Sub R] [Mul R]
     (J : Nat) (f g : DensePoly R) (l : Nat) :
@@ -233,6 +236,8 @@ variable {R : Type u} [Lean.Grind.CommRing R] [DecidableEq R]
   [Div R] [ExactDivLaws R]
   [Hex.Fraction.NonzeroOne R]
 
+/-- Integer-indexed coefficient lookup commutes with the fraction
+embedding. -/
 @[simp]
 theorem coeffInt_map (p : DensePoly R) (i : Int) :
     coeffInt (DensePoly.Fraction.map p) i =
@@ -243,6 +248,7 @@ theorem coeffInt_map (p : DensePoly R) (i : Int) :
     exact Hex.Fraction.ofCoeff_zero.symm
   · simp [h, DensePoly.Fraction.coeff_map]
 
+/-- The fraction embedding preserves the default formal degree. -/
 @[simp]
 theorem formalDegree_map (p : DensePoly R) :
     formalDegree (DensePoly.Fraction.map p) = formalDegree p := by
