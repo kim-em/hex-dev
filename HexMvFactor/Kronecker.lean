@@ -274,6 +274,29 @@ def findSplitAux (degrees : Fin n → Nat) (weights : Vector Nat n)
                     if checkSplitCore g split then some split
                     else findSplitAux degrees weights size g uni rest
 
+/-- Every split returned by the candidate sweep has passed cheap replay. -/
+private theorem findSplitAux_checks (degrees : Fin n → Nat)
+    (weights : Vector Nat n) (size : Nat) (g : MvPoly n Int cmp)
+    (uni : List (ZPoly × Nat)) : ∀ {candidates split},
+      findSplitAux degrees weights size g uni candidates = some split →
+        checkSplitCore g split = true
+  | [], _, h => by contradiction
+  | _ :: rest, _, h => by
+      unfold findSplitAux at h
+      split at h
+      · exact findSplitAux_checks degrees weights size g uni h
+      · split at h
+        · exact findSplitAux_checks degrees weights size g uni h
+        · split at h
+          · exact findSplitAux_checks degrees weights size g uni h
+          · split at h
+            · exact findSplitAux_checks degrees weights size g uni h
+            · dsimp only at h
+              split at h
+              · cases h
+                assumption
+              · exact findSplitAux_checks degrees weights size g uni h
+
 /-- Search with mixed-radix prework supplied by the caller. -/
 def findSplitWith (degrees : Fin n → Nat) (weights : Vector Nat n)
     (size : Nat) (g : MvPoly n Int cmp)
@@ -338,6 +361,12 @@ theorem kronDecide_checks {g : MvPoly n Int cmp} {cert : IrredCert n cmp}
 /-- Every reducible outcome has already passed cheap split replay. -/
 theorem kronDecide_split {g : MvPoly n Int cmp} {split : Split n cmp}
     (h : kronDecide g = .reducible split) : checkSplitCore g split = true := by
-  sorry
+  simp only [kronDecide, kronDecideWith] at h
+  split at h
+  next found hfind =>
+    cases h
+    unfold findSplitWith at hfind
+    exact findSplitAux_checks _ _ _ _ _ hfind
+  next hfind => contradiction
 
 end Hex.MvFactor
