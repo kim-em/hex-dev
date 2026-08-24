@@ -7,6 +7,7 @@ Authors: Kim Morrison
 import VersoManual
 
 -- Released libraries (dependency order).
+import HexManual.Chapters.HexBasic
 import HexManual.Chapters.HexArith
 import HexManual.Chapters.HexPoly
 import HexManual.Chapters.HexMvPoly
@@ -71,6 +72,8 @@ shortTitle := "hex"
 polynomial factorization, root isolation, and lattice reduction. The
 computational core is Mathlib-free; Mathlib companions state correspondence
 contracts and, for mature libraries, supply their proofs.
+
+{include 0 HexManual.Chapters.HexBasic}
 
 {include 0 HexManual.Chapters.HexArith}
 
