@@ -12,12 +12,6 @@
     "reason": "Guards powModNat at modulus zero, exposes its worker and bitLength for kernel reduction, and adds a csimp routing powModNat to the unchanged powMod; no executable factorization code calls powModNat (the service uses powMod directly)."
   },
   {
-    "path": "lakefile.lean",
-    "baseline_blob": "a1b87406682dbf908d990f01676f326499b906e5",
-    "current_blob": "8d72afd2241be192611ea15f53b2ada3ff97361e",
-    "reason": "Additionally registers the HexPrimalityMathlib companion on top of main's current registrations; the factorization service targets are unchanged."
-  },
-  {
     "path": "HexArith/Nat/Prime.lean",
     "baseline_blob": "8b5cf744140acde03da1c72c50482410e0c65029",
     "current_blob": "3c739ff40939977910ea64afd72b1db3142c5444",
@@ -1090,6 +1084,54 @@
     "baseline_blob": "a1b87406682dbf908d990f01676f326499b906e5",
     "current_blob": "cad4aea1536cb1036d865f540132b84e295bdbbd",
     "reason": "Moves the CharPoly elaborator regressions out of HexReleaseTests into the monorepo-only HexCharPolyTests target on top of the Hermite registrations, while the char-poly and hermite released.yml entries are withdrawn; no factorization module, executable, or build-flag changes."
+  },
+  {
+    "path": "HexMatrix/Lattice.lean",
+    "baseline_blob": null,
+    "current_blob": "14f093c3941384cbf0bb826a9936ff354f41e3ee",
+    "reason": "Relocates lattice propositions and proof lemmas for Hermite, then reconciles their names with generic matrix laws used by HexMinPoly; propositions and theorems are erased, and no factorization operation changes."
+  },
+  {
+    "path": "HexMatrix/MatrixAlgebra.lean",
+    "baseline_blob": "461006d810f79d065f6e179497407449788d895a",
+    "current_blob": "702cb10dbb32083c99837d2632e662bc4a3d6150",
+    "reason": "Adds matrix and vector algebra theorems used by HexMinPoly proofs; it adds no executable definition and cannot alter the factorization runtime."
+  },
+  {
+    "path": "HexMatrix/Submatrix.lean",
+    "baseline_blob": "798e76a63cbdfdb611dc656ac7a8bfa2addfdc08",
+    "current_blob": "b21fd7f027b3ecf38eeb39db7f5773c94bafe8e1",
+    "reason": "Adds the row_takeRows theorem for HexMinPoly proofs; the existing takeRows implementation and every factorization runtime definition are unchanged."
+  },
+  {
+    "path": "HexPoly/Dense.lean",
+    "baseline_blob": "919dec4f5be58dd40ef9285b372e3379dc5dfec5",
+    "current_blob": "69aa5b861c0942cd4aa469205504415e9686608e",
+    "reason": "Adds coeffVec and its accessor theorem for matrix minimal-polynomial evaluation; the factorization service never calls coeffVec, and existing polynomial operations are unchanged."
+  },
+  {
+    "path": "HexPoly/Euclid/Reconstruction.lean",
+    "baseline_blob": "0fbecb1b24baea8c9b765d808a1ae47ff6f6204a",
+    "current_blob": "a410f839de939bb5dc4a35b6bf2366a54ddbdb94",
+    "reason": "Adds reconstruction, divisibility, size, and leading-coefficient theorems supporting the verified LCM API; executable Euclidean definitions and the factorization call path are unchanged."
+  },
+  {
+    "path": "HexPoly/Lcm.lean",
+    "baseline_blob": null,
+    "current_blob": "30fe4e90c0b4ad1efd395214bdbbbe3108e68837",
+    "reason": "Adds the polynomial LCM API used only by HexMinPoly; although reachable through the HexPoly umbrella, none of its definitions is called by hexbz_factor_service's factor entry."
+  },
+  {
+    "path": "lakefile.lean",
+    "baseline_blob": "a1b87406682dbf908d990f01676f326499b906e5",
+    "current_blob": "4cd596315206896eea5d93fae5051a20bf4e16d5",
+    "reason": "Combines current main's registrations and withdrawn release entries with HexMinPoly libraries, conformance, fixture, manual, and benchmark targets; hexbz_factor_service and its build flags are unchanged."
+  },
+  {
+    "path": "lakefile.lean",
+    "baseline_blob": "a1b87406682dbf908d990f01676f326499b906e5",
+    "current_blob": "8d72afd2241be192611ea15f53b2ada3ff97361e",
+    "reason": "Additionally registers the HexPrimalityMathlib companion on top of main's current registrations; the factorization service targets are unchanged."
   },
   {
     "path": "lakefile.lean",

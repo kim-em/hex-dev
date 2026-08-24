@@ -323,6 +323,18 @@ def isZero (p : DensePoly R) : Bool :=
 def coeff (p : DensePoly R) (n : Nat) : R :=
   p.coeffs.getD n (Zero.zero : R)
 
+/-- The first `r` coefficients, in ascending degree order.  Coefficients past
+the stored size are represented by zero. -/
+@[expose]
+def coeffVec (p : DensePoly R) (r : Nat) : Vector R r :=
+  Vector.ofFn fun i => p.coeff i.val
+
+@[simp, grind =]
+theorem coeffVec_get (p : DensePoly R) {r : Nat} (i : Fin r) :
+    (p.coeffVec r).get i = p.coeff i.val := by
+  change (Vector.ofFn fun i : Fin r => p.coeff i.val)[i.val] = p.coeff i.val
+  rw [Vector.getElem_ofFn]
+
 /-- Coefficient of `ofCoeffs arr` agrees with `arr.getD _ 0`: trimming trailing zeros does not
 change the value at any index. -/
 @[simp, grind =] theorem coeff_ofCoeffs (coeffs : Array R) (n : Nat) :
