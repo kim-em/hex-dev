@@ -578,6 +578,7 @@ lean_lib HexConformance where
       `HexInterval.RuntimeConformance,
       `HexIntervalMathlib.RuntimeProofConformance,
       `HexIntervalMathlib.RuntimeTerminalConformance,
+      `HexIntervalMathlib.RuntimeRuleConformance,
       `HexIntervalMathlib.ProgramProofConformance,
       `HexIntervalMathlib.DriverConformance,
       `HexIntervalMathlib.ControllerConformance,

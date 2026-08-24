@@ -934,5 +934,11 @@
     "baseline_blob": "dc13ffdd544ac3037114ffba1000eddd09ecde90",
     "current_blob": "cbef5cd34b581e312d21c2f76da11d6989b2aa6a",
     "reason": "Adds an import and a quotient-power theorem only; no executable definition or factorization runtime call path changes."
+  },
+  {
+    "path": "lakefile.lean",
+    "baseline_blob": "a1b87406682dbf908d990f01676f326499b906e5",
+    "current_blob": "b6feee43b834c71a5531fd02fb527756bd4a7a3d",
+    "reason": "Combines current main's build-only verification, conformance, fixture, benchmark, and truncated-series registrations with the proof-side HexIntervalMathlib.RuntimeRuleConformance registration; none enters hexbz_factor_service or changes a factorization runtime library, executable definition, or build flag."
   }
 ]

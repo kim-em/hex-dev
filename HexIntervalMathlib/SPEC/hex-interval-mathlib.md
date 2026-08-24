@@ -82,18 +82,23 @@ generators with the same-order runtime and proof registries, regenerates
 resource-first deterministic offers from the authenticated current head, and
 runs bounded repeated policy selection over the sealed tree/session bundle.
 The explicit `Controller.Package` vertical still uses toy fact-event callbacks
-and application generators; it has no concrete built-in arithmetic
-`Driver.Package`. Concrete built-in arithmetic reaches the controller only
-through the separate `Controller.Executable` adapter, which consumes a sealed
-Mathlib-free `Executable.Assembly` and correlates accepted fact quotations with
-independently replayed theorem schemas. The Mathlib-free `Runtime.State`
-separately owns an executable assembly and
+and application generators. Concrete built-in arithmetic has two explicit
+adapters: the fact-only `Controller.Executable` route and the typed-batch
+`RuntimeRule` route. `RuntimeRule` recomputes all twelve supported arithmetic
+operations from exact executable requests, emits one typed fact batch with the
+matching one-cell format, and seals its assembly against the same-order
+`Rule` theorem registry through `RuntimeProof.Registry`. Paired caller packages
+extend both sides for configured opaque meanings. The Mathlib-free
+`Runtime.State` owns that executable assembly and
 atomically validates typed fact/equality/transport/instance batches, including
 an exact equality descriptor arena and append-only application/binding/node
 suffixes; `Search.Result.Tree` retains its sealed transition in a child.
-Wiring those typed batches to this controller and correlating their inert
-quotations with theorem events, automatic discovery/program extension, and
-public-tactic split search remain later edges.
+The built-in offers are deliberately one-shot: only a version-zero result node
+whose current fact is domain top is scheduled, so the callback installs its
+recomputed proposal as version one without raw access to the previous branch.
+Direct repeats fail the runtime predecessor check. Runtime-to-proof quotation
+and exact target/refutation correlation are supported; automatic discovery and
+the public-tactic search route remain later edges.
 
 `HexIntervalMathlib.Tactic` is the first supported Meta client. It recursively
 parses real local variables and the registered forward arithmetic operations,
@@ -304,8 +309,13 @@ The typed-proof registry and bundle constructors are likewise sealed;
 `import all HexIntervalMathlib.RuntimeProof` is rejected outside an
 exact reviewed allowlist, currently empty.
 Automatic arbitrary-function theorem-package discovery and default registries
-remain experimental; supported typed-runtime replay requires an explicit
-sealed executable/proof registry pair.
+remain experimental. `RuntimeRule.buildWithWithin` accepts only explicit paired
+executable and proof packages for configured opaque meanings and then seals
+bidirectional coverage over the complete registry; unpaired formats or schemas
+are rejected. Its package cache counts committed callbacks and is independently
+bounded by executable cache resources. Checked arithmetic refusal yields no
+fact batch and is rejected transactionally by the runtime rather than gaining
+theorem authority.
 The supported explicit fact-event controller can produce and replay
 search-selected recipes, while the tactic below remains a deliberately narrow
 direct forward client rather than that generic search bridge.
@@ -487,6 +497,14 @@ and guards the ordinary root/recursive axiom surfaces.
 after the ordinary typed chronology at the root and in both restarted split
 children, exact package-owned refutation, cross-schema/current-fact/input and
 resource refusals, private constructors, and the ordinary replay axiom surface.
+`HexIntervalMathlib.RuntimeRuleConformance` assembles every built-in arithmetic
+handler, starts `Runtime.State` from frontend-shaped version-zero facts,
+executes all unary and binary operations (including repeated argument slots),
+settles the exact final target, and consumes `RuntimeTerminal.Checked.replay`
+over the complete retained chronology without a fallback theorem. It checks
+exact proposed/installed facts, one-cell bodies, semantic schema execution,
+sticky cache refusal and replayability, sealed rule mutation rejection, and a
+paired opaque-operation extension.
 `HexIntervalMathlib.RuleConformance` replays a shared arithmetic DAG through
 the supported state quote and proof registry. Its ordinary theorem makes both
 source assumptions load-bearing through add/sub/mul and checked
