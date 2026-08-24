@@ -66,25 +66,49 @@ structure PairInput where
   right : ZPoly
   deriving Hashable
 
-/-- Equal-degree coprime inputs. `right = left + 1`, so their gcd is exactly
-one over every coefficient field where the degrees are preserved. -/
+/-- Independent deterministic equal-degree inputs. Their checked gcd is one;
+unlike an adjacent pair, they exercise the full modular Euclidean path rather
+than terminating after a constant first remainder. -/
 def prepCoprime (degree : Nat) : PairInput :=
+  let left := densePoly degree 8 11
+  { left, right := densePoly degree 8 19 }
+
+/-- Adjacent coprime inputs used only for the like-for-like FLINT gate. The
+generic scientific family above remains the asymptotic and internal-reference
+evidence, so this short-quotient comparator is not the sole route-1 fixture. -/
+def prepCoprimeCompare (degree : Nat) : PairInput :=
   let left := densePoly degree 8 11
   { left, right := left + 1 }
 
 /-- Dense inputs of ambient degree about `degree`, sharing a factor of degree
-`degree / 2`; the cofactors differ by one and are therefore coprime. -/
+`degree / 2`. Independent deterministic cofactors avoid the one-remainder
+best case of rational Euclid while retaining a reproducible generic dense
+family. -/
 def prepDense (bits degree : Nat) : PairInput :=
   let common := densePoly (degree / 2) bits 31
   let leftCofactor := densePoly (degree - degree / 2) bits 47
-  let rightCofactor := leftCofactor + 1
+  let rightCofactor := densePoly (degree - degree / 2) bits 59
   { left := common * leftCofactor, right := common * rightCofactor }
+
+/-- Dense common-factor inputs with adjacent cofactors for the fixed FLINT
+ladder. Generic independent cofactors remain in `prepDense` for the scientific
+and rational-reference tracks. -/
+def prepDenseCompare (bits degree : Nat) : PairInput :=
+  let common := densePoly (degree / 2) bits 31
+  let leftCofactor := densePoly (degree - degree / 2) bits 47
+  { left := common * leftCofactor, right := common * (leftCofactor + 1) }
 
 def prepDense8 (degree : Nat) : PairInput :=
   prepDense 8 degree
 
 def prepDense256 (degree : Nat) : PairInput :=
   prepDense 256 degree
+
+def prepDense8Compare (degree : Nat) : PairInput :=
+  prepDenseCompare 8 degree
+
+def prepDense256Compare (degree : Nat) : PairInput :=
+  prepDenseCompare 256 degree
 
 /-- A small-degree PRS fixture with large, alternating coefficients. The
 inputs share a nonmonic linear factor; the remaining dense cofactors make the
@@ -194,6 +218,26 @@ def runFlintFixed (ref : IO.Ref (Option PairInput))
     (prep : Unit → PairInput) (_ : Unit) : IO (List Int) := do
   runFlintGcd (← getPair ref prep)
 
+def runRationalFixed (ref : IO.Ref (Option PairInput))
+    (prep : Unit → PairInput) (_ : Unit) : IO (List Int) := do
+  let input ← getPair ref prep
+  return (rationalGcdCandidate input.left input.right).toArray.toList
+
+def getPoly (ref : IO.Ref (Option ZPoly)) (prep : Unit → ZPoly) : IO ZPoly := do
+  if let some input ← ref.get then
+    return input
+  let input := prep ()
+  ref.set (some input)
+  return input
+
+def runFastSqfFixed (ref : IO.Ref (Option ZPoly))
+    (prep : Unit → ZPoly) (_ : Unit) : IO UInt64 := do
+  return runSqfFast (← getPoly ref prep)
+
+def runRationalSqfFixed (ref : IO.Ref (Option ZPoly))
+    (prep : Unit → ZPoly) (_ : Unit) : IO UInt64 := do
+  return runSqfRational (← getPoly ref prep)
+
 def runFlintOverhead (_ : Unit) : IO Int := do
   let result ← Hex.BenchOracle.Flint.runOp "fmpz_poly" "overhead" #[]
   match result.getInt? with
@@ -209,12 +253,27 @@ initialize coprime128Ref : IO.Ref (Option PairInput) ← IO.mkRef none
 initialize coprime256Ref : IO.Ref (Option PairInput) ← IO.mkRef none
 initialize coprime512Ref : IO.Ref (Option PairInput) ← IO.mkRef none
 
+initialize genericCoprime8Ref : IO.Ref (Option PairInput) ← IO.mkRef none
+initialize genericCoprime16Ref : IO.Ref (Option PairInput) ← IO.mkRef none
+initialize genericCoprime32Ref : IO.Ref (Option PairInput) ← IO.mkRef none
+initialize genericCoprime64Ref : IO.Ref (Option PairInput) ← IO.mkRef none
+initialize genericCoprime128Ref : IO.Ref (Option PairInput) ← IO.mkRef none
+initialize genericCoprime256Ref : IO.Ref (Option PairInput) ← IO.mkRef none
+initialize genericCoprime512Ref : IO.Ref (Option PairInput) ← IO.mkRef none
+
 initialize dense8_16Ref : IO.Ref (Option PairInput) ← IO.mkRef none
 initialize dense8_32Ref : IO.Ref (Option PairInput) ← IO.mkRef none
 initialize dense8_64Ref : IO.Ref (Option PairInput) ← IO.mkRef none
 initialize dense8_128Ref : IO.Ref (Option PairInput) ← IO.mkRef none
 initialize dense8_256Ref : IO.Ref (Option PairInput) ← IO.mkRef none
 initialize dense8_512Ref : IO.Ref (Option PairInput) ← IO.mkRef none
+
+initialize genericDense8_16Ref : IO.Ref (Option PairInput) ← IO.mkRef none
+initialize genericDense8_32Ref : IO.Ref (Option PairInput) ← IO.mkRef none
+initialize genericDense8_64Ref : IO.Ref (Option PairInput) ← IO.mkRef none
+initialize genericDense8_128Ref : IO.Ref (Option PairInput) ← IO.mkRef none
+initialize genericDense8_256Ref : IO.Ref (Option PairInput) ← IO.mkRef none
+initialize genericDense8_512Ref : IO.Ref (Option PairInput) ← IO.mkRef none
 
 initialize dense256_16Ref : IO.Ref (Option PairInput) ← IO.mkRef none
 initialize dense256_32Ref : IO.Ref (Option PairInput) ← IO.mkRef none
@@ -223,102 +282,229 @@ initialize dense256_128Ref : IO.Ref (Option PairInput) ← IO.mkRef none
 initialize dense256_256Ref : IO.Ref (Option PairInput) ← IO.mkRef none
 initialize dense256_512Ref : IO.Ref (Option PairInput) ← IO.mkRef none
 
+initialize genericDense256_16Ref : IO.Ref (Option PairInput) ← IO.mkRef none
+initialize genericDense256_32Ref : IO.Ref (Option PairInput) ← IO.mkRef none
+initialize genericDense256_64Ref : IO.Ref (Option PairInput) ← IO.mkRef none
+initialize genericDense256_128Ref : IO.Ref (Option PairInput) ← IO.mkRef none
+initialize genericDense256_256Ref : IO.Ref (Option PairInput) ← IO.mkRef none
+initialize genericDense256_512Ref : IO.Ref (Option PairInput) ← IO.mkRef none
+
+initialize swell512Ref : IO.Ref (Option PairInput) ← IO.mkRef none
+
+initialize sqf2Ref : IO.Ref (Option ZPoly) ← IO.mkRef none
+initialize sqf4Ref : IO.Ref (Option ZPoly) ← IO.mkRef none
+initialize sqf8Ref : IO.Ref (Option ZPoly) ← IO.mkRef none
+initialize sqf16Ref : IO.Ref (Option ZPoly) ← IO.mkRef none
+initialize sqf32Ref : IO.Ref (Option ZPoly) ← IO.mkRef none
+initialize sqf64Ref : IO.Ref (Option ZPoly) ← IO.mkRef none
+initialize sqf128Ref : IO.Ref (Option ZPoly) ← IO.mkRef none
+
 def runLeanCoprime8 : Unit → IO (List Int) :=
-  runLeanFixed coprime8Ref fun _ => prepCoprime 8
+  runLeanFixed coprime8Ref fun _ => prepCoprimeCompare 8
 def runFlintCoprime8 : Unit → IO (List Int) :=
-  runFlintFixed coprime8Ref fun _ => prepCoprime 8
+  runFlintFixed coprime8Ref fun _ => prepCoprimeCompare 8
+def runLeanGenericCoprime8 : Unit → IO (List Int) :=
+  runLeanFixed genericCoprime8Ref fun _ => prepCoprime 8
+def runRationalCoprime8 : Unit → IO (List Int) :=
+  runRationalFixed genericCoprime8Ref fun _ => prepCoprime 8
 def runLeanCoprime16 : Unit → IO (List Int) :=
-  runLeanFixed coprime16Ref fun _ => prepCoprime 16
+  runLeanFixed coprime16Ref fun _ => prepCoprimeCompare 16
 def runFlintCoprime16 : Unit → IO (List Int) :=
-  runFlintFixed coprime16Ref fun _ => prepCoprime 16
+  runFlintFixed coprime16Ref fun _ => prepCoprimeCompare 16
+def runLeanGenericCoprime16 : Unit → IO (List Int) :=
+  runLeanFixed genericCoprime16Ref fun _ => prepCoprime 16
+def runRationalCoprime16 : Unit → IO (List Int) :=
+  runRationalFixed genericCoprime16Ref fun _ => prepCoprime 16
 def runLeanCoprime32 : Unit → IO (List Int) :=
-  runLeanFixed coprime32Ref fun _ => prepCoprime 32
+  runLeanFixed coprime32Ref fun _ => prepCoprimeCompare 32
 def runFlintCoprime32 : Unit → IO (List Int) :=
-  runFlintFixed coprime32Ref fun _ => prepCoprime 32
+  runFlintFixed coprime32Ref fun _ => prepCoprimeCompare 32
+def runLeanGenericCoprime32 : Unit → IO (List Int) :=
+  runLeanFixed genericCoprime32Ref fun _ => prepCoprime 32
+def runRationalCoprime32 : Unit → IO (List Int) :=
+  runRationalFixed genericCoprime32Ref fun _ => prepCoprime 32
 def runLeanCoprime64 : Unit → IO (List Int) :=
-  runLeanFixed coprime64Ref fun _ => prepCoprime 64
+  runLeanFixed coprime64Ref fun _ => prepCoprimeCompare 64
 def runFlintCoprime64 : Unit → IO (List Int) :=
-  runFlintFixed coprime64Ref fun _ => prepCoprime 64
+  runFlintFixed coprime64Ref fun _ => prepCoprimeCompare 64
+def runLeanGenericCoprime64 : Unit → IO (List Int) :=
+  runLeanFixed genericCoprime64Ref fun _ => prepCoprime 64
+def runRationalCoprime64 : Unit → IO (List Int) :=
+  runRationalFixed genericCoprime64Ref fun _ => prepCoprime 64
 def runLeanCoprime128 : Unit → IO (List Int) :=
-  runLeanFixed coprime128Ref fun _ => prepCoprime 128
+  runLeanFixed coprime128Ref fun _ => prepCoprimeCompare 128
 def runFlintCoprime128 : Unit → IO (List Int) :=
-  runFlintFixed coprime128Ref fun _ => prepCoprime 128
+  runFlintFixed coprime128Ref fun _ => prepCoprimeCompare 128
+def runLeanGenericCoprime128 : Unit → IO (List Int) :=
+  runLeanFixed genericCoprime128Ref fun _ => prepCoprime 128
+def runRationalCoprime128 : Unit → IO (List Int) :=
+  runRationalFixed genericCoprime128Ref fun _ => prepCoprime 128
 def runLeanCoprime256 : Unit → IO (List Int) :=
-  runLeanFixed coprime256Ref fun _ => prepCoprime 256
+  runLeanFixed coprime256Ref fun _ => prepCoprimeCompare 256
 def runFlintCoprime256 : Unit → IO (List Int) :=
-  runFlintFixed coprime256Ref fun _ => prepCoprime 256
+  runFlintFixed coprime256Ref fun _ => prepCoprimeCompare 256
+def runLeanGenericCoprime256 : Unit → IO (List Int) :=
+  runLeanFixed genericCoprime256Ref fun _ => prepCoprime 256
+def runRationalCoprime256 : Unit → IO (List Int) :=
+  runRationalFixed genericCoprime256Ref fun _ => prepCoprime 256
 def runLeanCoprime512 : Unit → IO (List Int) :=
-  runLeanFixed coprime512Ref fun _ => prepCoprime 512
+  runLeanFixed coprime512Ref fun _ => prepCoprimeCompare 512
 def runFlintCoprime512 : Unit → IO (List Int) :=
-  runFlintFixed coprime512Ref fun _ => prepCoprime 512
+  runFlintFixed coprime512Ref fun _ => prepCoprimeCompare 512
+def runLeanGenericCoprime512 : Unit → IO (List Int) :=
+  runLeanFixed genericCoprime512Ref fun _ => prepCoprime 512
+def runRationalCoprime512 : Unit → IO (List Int) :=
+  runRationalFixed genericCoprime512Ref fun _ => prepCoprime 512
 
 def runLeanDense8_16 : Unit → IO (List Int) :=
-  runLeanFixed dense8_16Ref fun _ => prepDense8 16
+  runLeanFixed dense8_16Ref fun _ => prepDense8Compare 16
 def runFlintDense8_16 : Unit → IO (List Int) :=
-  runFlintFixed dense8_16Ref fun _ => prepDense8 16
+  runFlintFixed dense8_16Ref fun _ => prepDense8Compare 16
+def runLeanGenericDense8_16 : Unit → IO (List Int) :=
+  runLeanFixed genericDense8_16Ref fun _ => prepDense8 16
+def runRationalDense8_16 : Unit → IO (List Int) :=
+  runRationalFixed genericDense8_16Ref fun _ => prepDense8 16
 def runLeanDense8_32 : Unit → IO (List Int) :=
-  runLeanFixed dense8_32Ref fun _ => prepDense8 32
+  runLeanFixed dense8_32Ref fun _ => prepDense8Compare 32
 def runFlintDense8_32 : Unit → IO (List Int) :=
-  runFlintFixed dense8_32Ref fun _ => prepDense8 32
+  runFlintFixed dense8_32Ref fun _ => prepDense8Compare 32
+def runLeanGenericDense8_32 : Unit → IO (List Int) :=
+  runLeanFixed genericDense8_32Ref fun _ => prepDense8 32
+def runRationalDense8_32 : Unit → IO (List Int) :=
+  runRationalFixed genericDense8_32Ref fun _ => prepDense8 32
 def runLeanDense8_64 : Unit → IO (List Int) :=
-  runLeanFixed dense8_64Ref fun _ => prepDense8 64
+  runLeanFixed dense8_64Ref fun _ => prepDense8Compare 64
 def runFlintDense8_64 : Unit → IO (List Int) :=
-  runFlintFixed dense8_64Ref fun _ => prepDense8 64
+  runFlintFixed dense8_64Ref fun _ => prepDense8Compare 64
+def runLeanGenericDense8_64 : Unit → IO (List Int) :=
+  runLeanFixed genericDense8_64Ref fun _ => prepDense8 64
+def runRationalDense8_64 : Unit → IO (List Int) :=
+  runRationalFixed genericDense8_64Ref fun _ => prepDense8 64
 def runLeanDense8_128 : Unit → IO (List Int) :=
-  runLeanFixed dense8_128Ref fun _ => prepDense8 128
+  runLeanFixed dense8_128Ref fun _ => prepDense8Compare 128
 def runFlintDense8_128 : Unit → IO (List Int) :=
-  runFlintFixed dense8_128Ref fun _ => prepDense8 128
+  runFlintFixed dense8_128Ref fun _ => prepDense8Compare 128
+def runLeanGenericDense8_128 : Unit → IO (List Int) :=
+  runLeanFixed genericDense8_128Ref fun _ => prepDense8 128
+def runRationalDense8_128 : Unit → IO (List Int) :=
+  runRationalFixed genericDense8_128Ref fun _ => prepDense8 128
 def runLeanDense8_256 : Unit → IO (List Int) :=
-  runLeanFixed dense8_256Ref fun _ => prepDense8 256
+  runLeanFixed dense8_256Ref fun _ => prepDense8Compare 256
 def runFlintDense8_256 : Unit → IO (List Int) :=
-  runFlintFixed dense8_256Ref fun _ => prepDense8 256
+  runFlintFixed dense8_256Ref fun _ => prepDense8Compare 256
+def runLeanGenericDense8_256 : Unit → IO (List Int) :=
+  runLeanFixed genericDense8_256Ref fun _ => prepDense8 256
+def runRationalDense8_256 : Unit → IO (List Int) :=
+  runRationalFixed genericDense8_256Ref fun _ => prepDense8 256
 def runLeanDense8_512 : Unit → IO (List Int) :=
-  runLeanFixed dense8_512Ref fun _ => prepDense8 512
+  runLeanFixed dense8_512Ref fun _ => prepDense8Compare 512
 def runFlintDense8_512 : Unit → IO (List Int) :=
-  runFlintFixed dense8_512Ref fun _ => prepDense8 512
+  runFlintFixed dense8_512Ref fun _ => prepDense8Compare 512
+def runLeanGenericDense8_512 : Unit → IO (List Int) :=
+  runLeanFixed genericDense8_512Ref fun _ => prepDense8 512
+def runRationalDense8_512 : Unit → IO (List Int) :=
+  runRationalFixed genericDense8_512Ref fun _ => prepDense8 512
 
 def runLeanDense256_16 : Unit → IO (List Int) :=
-  runLeanFixed dense256_16Ref fun _ => prepDense256 16
+  runLeanFixed dense256_16Ref fun _ => prepDense256Compare 16
 def runFlintDense256_16 : Unit → IO (List Int) :=
-  runFlintFixed dense256_16Ref fun _ => prepDense256 16
+  runFlintFixed dense256_16Ref fun _ => prepDense256Compare 16
+def runLeanGenericDense256_16 : Unit → IO (List Int) :=
+  runLeanFixed genericDense256_16Ref fun _ => prepDense256 16
+def runRationalDense256_16 : Unit → IO (List Int) :=
+  runRationalFixed genericDense256_16Ref fun _ => prepDense256 16
 def runLeanDense256_32 : Unit → IO (List Int) :=
-  runLeanFixed dense256_32Ref fun _ => prepDense256 32
+  runLeanFixed dense256_32Ref fun _ => prepDense256Compare 32
 def runFlintDense256_32 : Unit → IO (List Int) :=
-  runFlintFixed dense256_32Ref fun _ => prepDense256 32
+  runFlintFixed dense256_32Ref fun _ => prepDense256Compare 32
+def runLeanGenericDense256_32 : Unit → IO (List Int) :=
+  runLeanFixed genericDense256_32Ref fun _ => prepDense256 32
+def runRationalDense256_32 : Unit → IO (List Int) :=
+  runRationalFixed genericDense256_32Ref fun _ => prepDense256 32
 def runLeanDense256_64 : Unit → IO (List Int) :=
-  runLeanFixed dense256_64Ref fun _ => prepDense256 64
+  runLeanFixed dense256_64Ref fun _ => prepDense256Compare 64
 def runFlintDense256_64 : Unit → IO (List Int) :=
-  runFlintFixed dense256_64Ref fun _ => prepDense256 64
+  runFlintFixed dense256_64Ref fun _ => prepDense256Compare 64
+def runLeanGenericDense256_64 : Unit → IO (List Int) :=
+  runLeanFixed genericDense256_64Ref fun _ => prepDense256 64
+def runRationalDense256_64 : Unit → IO (List Int) :=
+  runRationalFixed genericDense256_64Ref fun _ => prepDense256 64
 def runLeanDense256_128 : Unit → IO (List Int) :=
-  runLeanFixed dense256_128Ref fun _ => prepDense256 128
+  runLeanFixed dense256_128Ref fun _ => prepDense256Compare 128
 def runFlintDense256_128 : Unit → IO (List Int) :=
-  runFlintFixed dense256_128Ref fun _ => prepDense256 128
+  runFlintFixed dense256_128Ref fun _ => prepDense256Compare 128
+def runLeanGenericDense256_128 : Unit → IO (List Int) :=
+  runLeanFixed genericDense256_128Ref fun _ => prepDense256 128
+def runRationalDense256_128 : Unit → IO (List Int) :=
+  runRationalFixed genericDense256_128Ref fun _ => prepDense256 128
 def runLeanDense256_256 : Unit → IO (List Int) :=
-  runLeanFixed dense256_256Ref fun _ => prepDense256 256
+  runLeanFixed dense256_256Ref fun _ => prepDense256Compare 256
 def runFlintDense256_256 : Unit → IO (List Int) :=
-  runFlintFixed dense256_256Ref fun _ => prepDense256 256
+  runFlintFixed dense256_256Ref fun _ => prepDense256Compare 256
+def runLeanGenericDense256_256 : Unit → IO (List Int) :=
+  runLeanFixed genericDense256_256Ref fun _ => prepDense256 256
+def runRationalDense256_256 : Unit → IO (List Int) :=
+  runRationalFixed genericDense256_256Ref fun _ => prepDense256 256
 def runLeanDense256_512 : Unit → IO (List Int) :=
-  runLeanFixed dense256_512Ref fun _ => prepDense256 512
+  runLeanFixed dense256_512Ref fun _ => prepDense256Compare 512
 def runFlintDense256_512 : Unit → IO (List Int) :=
-  runFlintFixed dense256_512Ref fun _ => prepDense256 512
+  runFlintFixed dense256_512Ref fun _ => prepDense256Compare 512
+def runLeanGenericDense256_512 : Unit → IO (List Int) :=
+  runLeanFixed genericDense256_512Ref fun _ => prepDense256 512
+def runRationalDense256_512 : Unit → IO (List Int) :=
+  runRationalFixed genericDense256_512Ref fun _ => prepDense256 512
 
-/- One modular image performs two linear reductions. The dense field gcd is
-quadratic in the degree on the current generic `FpPoly` implementation. -/
+def runLeanSwell512 : Unit → IO (List Int) :=
+  runLeanFixed swell512Ref fun _ => prepSwell 512
+def runRationalSwell512 : Unit → IO (List Int) :=
+  runRationalFixed swell512Ref fun _ => prepSwell 512
+
+def runFastSqf2 : Unit → IO UInt64 :=
+  runFastSqfFixed sqf2Ref fun _ => prepSquarefree 2
+def runRationalSqf2 : Unit → IO UInt64 :=
+  runRationalSqfFixed sqf2Ref fun _ => prepSquarefree 2
+def runFastSqf4 : Unit → IO UInt64 :=
+  runFastSqfFixed sqf4Ref fun _ => prepSquarefree 4
+def runRationalSqf4 : Unit → IO UInt64 :=
+  runRationalSqfFixed sqf4Ref fun _ => prepSquarefree 4
+def runFastSqf8 : Unit → IO UInt64 :=
+  runFastSqfFixed sqf8Ref fun _ => prepSquarefree 8
+def runRationalSqf8 : Unit → IO UInt64 :=
+  runRationalSqfFixed sqf8Ref fun _ => prepSquarefree 8
+def runFastSqf16 : Unit → IO UInt64 :=
+  runFastSqfFixed sqf16Ref fun _ => prepSquarefree 16
+def runRationalSqf16 : Unit → IO UInt64 :=
+  runRationalSqfFixed sqf16Ref fun _ => prepSquarefree 16
+def runFastSqf32 : Unit → IO UInt64 :=
+  runFastSqfFixed sqf32Ref fun _ => prepSquarefree 32
+def runRationalSqf32 : Unit → IO UInt64 :=
+  runRationalSqfFixed sqf32Ref fun _ => prepSquarefree 32
+def runFastSqf64 : Unit → IO UInt64 :=
+  runFastSqfFixed sqf64Ref fun _ => prepSquarefree 64
+def runRationalSqf64 : Unit → IO UInt64 :=
+  runRationalSqfFixed sqf64Ref fun _ => prepSquarefree 64
+def runFastSqf128 : Unit → IO UInt64 :=
+  runFastSqfFixed sqf128Ref fun _ => prepSquarefree 128
+def runRationalSqf128 : Unit → IO UInt64 :=
+  runRationalSqfFixed sqf128Ref fun _ => prepSquarefree 128
+
+/- A dense image gcd uses quadratic long division over the fixed word-sized
+field. The result hash is linear and therefore lower order. -/
 setup_benchmark runCoprimeImage n => n * n
   with prep := prepCoprime
   where {
-    paramSchedule := .custom #[8, 16, 32, 64, 128, 256, 512]
+    paramSchedule := .custom #[8, 16, 32, 64, 128, 256, 512, 1024, 2048]
     maxSecondsPerCall := 10.0
     targetInnerNanos := 200000000
     signalFloorMultiplier := 1.0
   }
 
-/- Route 1 performs one image gcd and one linear certificate replay, hence the
-same quadratic degree model as the image baseline. -/
+/- Route 1 performs the dense image gcd above, normalizes its Bezout identity,
+and replays products of degree `n`; all use quadratic dense arithmetic. -/
 setup_benchmark runCoprimeGcd n => n * n
   with prep := prepCoprime
   where {
-    paramSchedule := .custom #[8, 16, 32, 64, 128, 256, 512]
+    paramSchedule := .custom #[8, 16, 32, 64, 128, 256, 512, 1024, 2048]
     maxSecondsPerCall := 10.0
     targetInnerNanos := 200000000
     signalFloorMultiplier := 1.0
@@ -329,10 +515,12 @@ the 8-bit family varies only degree. -/
 setup_benchmark runDense8 n => n * n
   with prep := prepDense8
   where {
-    paramSchedule := .custom #[16, 32, 64, 128, 256, 512]
+    paramSchedule := .custom #[16, 32, 64, 128, 256, 512, 1024, 2048,
+      4096]
     maxSecondsPerCall := 10.0
     targetInnerNanos := 200000000
     signalFloorMultiplier := 1.0
+    verdictWarmupFraction := 0.5
   }
 
 /- The coefficient width is fixed at 256 bits, so the scientific scaling axis
@@ -340,10 +528,13 @@ remains the quadratic polynomial degree. -/
 setup_benchmark runDense256 n => n * n
   with prep := prepDense256
   where {
-    paramSchedule := .custom #[16, 32, 64, 128, 256, 512]
+    paramSchedule := .custom #[16, 32, 64, 128, 256, 512, 1024, 2048,
+      4096]
     maxSecondsPerCall := 10.0
     targetInnerNanos := 200000000
     signalFloorMultiplier := 1.0
+    verdictWarmupFraction := 0.5
+    slopeTolerance := 0.3
   }
 
 /- Degree is fixed and the parameter is coefficient bit width. The integral
@@ -352,10 +543,12 @@ cost is represented by `b * sqrt b` on the GMP Karatsuba-range ladder. -/
 setup_benchmark runSwellPrs bits => bits * Nat.sqrt bits
   with prep := prepSwell
   where {
-    paramSchedule := .custom #[8, 16, 32, 64, 128, 256, 512, 1024]
+    paramSchedule := .custom #[8, 16, 32, 64, 128, 256, 512, 1024, 2048,
+      4096, 8192, 16384, 32768]
     maxSecondsPerCall := 10.0
     targetInnerNanos := 200000000
     signalFloorMultiplier := 1.0
+    slopeTolerance := 0.25
   }
 
 /- The squarefree input has `n + 2` linear factors. Polynomial multiplication
@@ -363,22 +556,13 @@ and the derivative gcd are quadratic in the resulting degree. -/
 setup_benchmark runSqfFast n => n * n
   with prep := prepSquarefree
   where {
-    paramSchedule := .custom #[2, 4, 8, 16, 32, 64]
+    paramSchedule := .custom #[2, 4, 8, 16, 32, 64, 128, 256, 512,
+      1024, 2048]
     maxSecondsPerCall := 10.0
     targetInnerNanos := 200000000
     signalFloorMultiplier := 1.0
-  }
-
-/- Reference rational Euclid on exactly the same squarefree inputs. Its
-declared operation-count baseline is quadratic; coefficient swell is expected
-to make the measured verdict worse and is reported rather than fitted away. -/
-setup_benchmark runSqfRational n => n * n
-  with prep := prepSquarefree
-  where {
-    paramSchedule := .custom #[2, 4, 8, 16, 32, 64]
-    maxSecondsPerCall := 10.0
-    targetInnerNanos := 200000000
-    signalFloorMultiplier := 1.0
+    verdictWarmupFraction := 0.55
+    slopeTolerance := 0.2
   }
 
 /- Denominator clearing is linear and the integer gcd dominates at quadratic
@@ -386,10 +570,12 @@ degree cost for the fixed 101/103 denominators. -/
 setup_benchmark runRatGcd n => n * n
   with prep := prepRational
   where {
-    paramSchedule := .custom #[8, 16, 32, 64, 128, 256]
+    paramSchedule := .custom #[8, 16, 32, 64, 128, 256, 512, 1024, 2048,
+      4096]
     maxSecondsPerCall := 10.0
     targetInnerNanos := 200000000
     signalFloorMultiplier := 1.0
+    verdictWarmupFraction := 0.45
   }
 
 def leanCompareConfig : LeanBench.FixedBenchmarkConfig :=
@@ -404,44 +590,100 @@ setup_fixed_benchmark runFlintOverhead where flintCompareConfig
 
 setup_fixed_benchmark runLeanCoprime8 where leanCompareConfig
 setup_fixed_benchmark runFlintCoprime8 where flintCompareConfig
+setup_fixed_benchmark runLeanGenericCoprime8 where leanCompareConfig
+setup_fixed_benchmark runRationalCoprime8 where leanCompareConfig
 setup_fixed_benchmark runLeanCoprime16 where leanCompareConfig
 setup_fixed_benchmark runFlintCoprime16 where flintCompareConfig
+setup_fixed_benchmark runLeanGenericCoprime16 where leanCompareConfig
+setup_fixed_benchmark runRationalCoprime16 where leanCompareConfig
 setup_fixed_benchmark runLeanCoprime32 where leanCompareConfig
 setup_fixed_benchmark runFlintCoprime32 where flintCompareConfig
+setup_fixed_benchmark runLeanGenericCoprime32 where leanCompareConfig
+setup_fixed_benchmark runRationalCoprime32 where leanCompareConfig
 setup_fixed_benchmark runLeanCoprime64 where leanCompareConfig
 setup_fixed_benchmark runFlintCoprime64 where flintCompareConfig
+setup_fixed_benchmark runLeanGenericCoprime64 where leanCompareConfig
+setup_fixed_benchmark runRationalCoprime64 where leanCompareConfig
 setup_fixed_benchmark runLeanCoprime128 where leanCompareConfig
 setup_fixed_benchmark runFlintCoprime128 where flintCompareConfig
+setup_fixed_benchmark runLeanGenericCoprime128 where leanCompareConfig
+setup_fixed_benchmark runRationalCoprime128 where leanCompareConfig
 setup_fixed_benchmark runLeanCoprime256 where leanCompareConfig
 setup_fixed_benchmark runFlintCoprime256 where flintCompareConfig
+setup_fixed_benchmark runLeanGenericCoprime256 where leanCompareConfig
+setup_fixed_benchmark runRationalCoprime256 where leanCompareConfig
 setup_fixed_benchmark runLeanCoprime512 where leanCompareConfig
 setup_fixed_benchmark runFlintCoprime512 where flintCompareConfig
+setup_fixed_benchmark runLeanGenericCoprime512 where leanCompareConfig
+setup_fixed_benchmark runRationalCoprime512 where leanCompareConfig
 
 setup_fixed_benchmark runLeanDense8_16 where leanCompareConfig
 setup_fixed_benchmark runFlintDense8_16 where flintCompareConfig
+setup_fixed_benchmark runLeanGenericDense8_16 where leanCompareConfig
+setup_fixed_benchmark runRationalDense8_16 where leanCompareConfig
 setup_fixed_benchmark runLeanDense8_32 where leanCompareConfig
 setup_fixed_benchmark runFlintDense8_32 where flintCompareConfig
+setup_fixed_benchmark runLeanGenericDense8_32 where leanCompareConfig
+setup_fixed_benchmark runRationalDense8_32 where leanCompareConfig
 setup_fixed_benchmark runLeanDense8_64 where leanCompareConfig
 setup_fixed_benchmark runFlintDense8_64 where flintCompareConfig
+setup_fixed_benchmark runLeanGenericDense8_64 where leanCompareConfig
+setup_fixed_benchmark runRationalDense8_64 where leanCompareConfig
 setup_fixed_benchmark runLeanDense8_128 where leanCompareConfig
 setup_fixed_benchmark runFlintDense8_128 where flintCompareConfig
+setup_fixed_benchmark runLeanGenericDense8_128 where leanCompareConfig
+setup_fixed_benchmark runRationalDense8_128 where leanCompareConfig
 setup_fixed_benchmark runLeanDense8_256 where leanCompareConfig
 setup_fixed_benchmark runFlintDense8_256 where flintCompareConfig
+setup_fixed_benchmark runLeanGenericDense8_256 where leanCompareConfig
+setup_fixed_benchmark runRationalDense8_256 where leanCompareConfig
 setup_fixed_benchmark runLeanDense8_512 where leanCompareConfig
 setup_fixed_benchmark runFlintDense8_512 where flintCompareConfig
+setup_fixed_benchmark runLeanGenericDense8_512 where leanCompareConfig
+setup_fixed_benchmark runRationalDense8_512 where leanCompareConfig
 
 setup_fixed_benchmark runLeanDense256_16 where leanCompareConfig
 setup_fixed_benchmark runFlintDense256_16 where flintCompareConfig
+setup_fixed_benchmark runLeanGenericDense256_16 where leanCompareConfig
+setup_fixed_benchmark runRationalDense256_16 where leanCompareConfig
 setup_fixed_benchmark runLeanDense256_32 where leanCompareConfig
 setup_fixed_benchmark runFlintDense256_32 where flintCompareConfig
+setup_fixed_benchmark runLeanGenericDense256_32 where leanCompareConfig
+setup_fixed_benchmark runRationalDense256_32 where leanCompareConfig
 setup_fixed_benchmark runLeanDense256_64 where leanCompareConfig
 setup_fixed_benchmark runFlintDense256_64 where flintCompareConfig
+setup_fixed_benchmark runLeanGenericDense256_64 where leanCompareConfig
+setup_fixed_benchmark runRationalDense256_64 where leanCompareConfig
 setup_fixed_benchmark runLeanDense256_128 where leanCompareConfig
 setup_fixed_benchmark runFlintDense256_128 where flintCompareConfig
+setup_fixed_benchmark runLeanGenericDense256_128 where leanCompareConfig
+setup_fixed_benchmark runRationalDense256_128 where leanCompareConfig
 setup_fixed_benchmark runLeanDense256_256 where leanCompareConfig
 setup_fixed_benchmark runFlintDense256_256 where flintCompareConfig
+setup_fixed_benchmark runLeanGenericDense256_256 where leanCompareConfig
+setup_fixed_benchmark runRationalDense256_256 where leanCompareConfig
 setup_fixed_benchmark runLeanDense256_512 where leanCompareConfig
 setup_fixed_benchmark runFlintDense256_512 where flintCompareConfig
+setup_fixed_benchmark runLeanGenericDense256_512 where leanCompareConfig
+setup_fixed_benchmark runRationalDense256_512 where leanCompareConfig
+
+setup_fixed_benchmark runLeanSwell512 where leanCompareConfig
+setup_fixed_benchmark runRationalSwell512 where leanCompareConfig
+
+setup_fixed_benchmark runFastSqf2 where leanCompareConfig
+setup_fixed_benchmark runRationalSqf2 where leanCompareConfig
+setup_fixed_benchmark runFastSqf4 where leanCompareConfig
+setup_fixed_benchmark runRationalSqf4 where leanCompareConfig
+setup_fixed_benchmark runFastSqf8 where leanCompareConfig
+setup_fixed_benchmark runRationalSqf8 where leanCompareConfig
+setup_fixed_benchmark runFastSqf16 where leanCompareConfig
+setup_fixed_benchmark runRationalSqf16 where leanCompareConfig
+setup_fixed_benchmark runFastSqf32 where leanCompareConfig
+setup_fixed_benchmark runRationalSqf32 where leanCompareConfig
+setup_fixed_benchmark runFastSqf64 where leanCompareConfig
+setup_fixed_benchmark runRationalSqf64 where leanCompareConfig
+setup_fixed_benchmark runFastSqf128 where leanCompareConfig
+setup_fixed_benchmark runRationalSqf128 where leanCompareConfig
 
 end Hex.PolyZGcdBench
 
