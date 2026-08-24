@@ -9,6 +9,7 @@ module
 public import HexGF2Mathlib.Field
 public import Mathlib.Algebra.Ring.MinimalAxioms
 public import Mathlib.Algebra.Field.MinimalAxioms
+public import Mathlib.RingTheory.EuclideanDomain
 
 public section
 
@@ -45,6 +46,84 @@ instance commRing : CommRing Hex.GF2Poly :=
     (fun a b c => by
       rw [Hex.GF2Poly.mul_comm a (b + c), Hex.GF2Poly.left_distrib,
         Hex.GF2Poly.mul_comm b a, Hex.GF2Poly.mul_comm c a])
+
+namespace GF2Poly
+
+/-- The Euclidean rank of a packed polynomial. Zero has rank zero and a
+nonzero polynomial has rank one greater than its degree. -/
+def euclideanRank (p : Hex.GF2Poly) : Nat :=
+  if p = 0 then 0 else p.degree + 1
+
+/-- The packed `F₂[x]` representation is a Euclidean domain whose quotient and
+remainder are the executable long-division operations from `hex-gf2`. -/
+instance euclideanDomain : EuclideanDomain Hex.GF2Poly where
+  toCommRing := commRing
+  toNontrivial := ⟨0, 1, by
+    intro h
+    have hwords := congrArg Hex.GF2Poly.toWords h
+    exact (by decide :
+      Hex.GF2Poly.toWords (0 : Hex.GF2Poly) ≠
+        Hex.GF2Poly.toWords (1 : Hex.GF2Poly)) hwords⟩
+  quotient := Hex.GF2Poly.div
+  quotient_zero := Hex.GF2Poly.div_zero_right
+  remainder := Hex.GF2Poly.mod
+  quotient_mul_add_remainder_eq := fun p q => by
+    rw [mul_comm]
+    exact Hex.GF2Poly.div_mul_add_mod p q
+  r := fun p q => euclideanRank p < euclideanRank q
+  r_wellFounded := (measure euclideanRank).wf
+  remainder_lt := fun p q hq => by
+    unfold euclideanRank
+    rw [_root_.ite_eq_right hq]
+    rcases Hex.GF2Poly.mod_degree_lt p q hq with hzero | hdegree
+    · change (Hex.GF2Poly.mod p q).isZero = true at hzero
+      rw [(Hex.GF2Poly.isZero_iff_eq_zero _).mp hzero, _root_.ite_eq_left rfl]
+      omega
+    · change (Hex.GF2Poly.mod p q).degree < q.degree at hdegree
+      by_cases hrem : Hex.GF2Poly.mod p q = 0
+      · rw [_root_.ite_eq_left hrem]
+        omega
+      · rw [_root_.ite_eq_right hrem]
+        omega
+  mul_left_not_lt := fun p q hq => by
+    unfold euclideanRank
+    by_cases hp : p = 0
+    · simp [hp]
+    · rw [_root_.ite_eq_right hp]
+      have hpzero : p.isZero = false :=
+        (Hex.GF2Poly.isZero_eq_false_iff_ne_zero p).mpr hp
+      have hqzero : q.isZero = false :=
+        (Hex.GF2Poly.isZero_eq_false_iff_ne_zero q).mpr hq
+      obtain ⟨dp, hdp⟩ :=
+        Hex.GF2Poly.degree?_isSome_of_isZero_false hpzero
+      obtain ⟨dq, hdq⟩ :=
+        Hex.GF2Poly.degree?_isSome_of_isZero_false hqzero
+      have hpqdeg : (p * q).degree? = some (dp + dq) :=
+        Hex.GF2Poly.degree?_mul_of_degree?_eq_some hdp hdq
+      have hpq : p * q ≠ 0 := by
+        intro hpq
+        rw [hpq] at hpqdeg
+        simp [Hex.GF2Poly.degree?] at hpqdeg
+      rw [_root_.ite_eq_right hpq,
+        Hex.GF2Poly.degree_eq_of_degree?_eq_some hdp,
+        Hex.GF2Poly.degree_eq_of_degree?_eq_some hpqdeg]
+      omega
+
+/-- The gcd-domain interface uses the packed executable gcd, not Mathlib's
+separate recursive Euclidean-domain implementation. -/
+noncomputable instance gcdMonoid : GCDMonoid Hex.GF2Poly :=
+  gcdMonoidOfGCD Hex.GF2Poly.gcd
+    Hex.GF2Poly.gcd_dvd_left
+    Hex.GF2Poly.gcd_dvd_right
+    (fun hdleft hdright => Hex.GF2Poly.dvd_gcd _ _ _ hdleft hdright)
+
+/-- Mathlib's gcd operation on packed polynomials is definitionally the
+executable `hex-gf2` gcd. -/
+theorem gcd_eq_packed (p q : Hex.GF2Poly) :
+    GCDMonoid.gcd p q = Hex.GF2Poly.gcd p q :=
+  rfl
+
+end GF2Poly
 
 namespace GF2nPoly
 
@@ -90,6 +169,21 @@ example (p q : Hex.GF2Poly) : p * q = Hex.GF2Poly.mul p q := rfl
 
 /-- Addition likewise. -/
 example (p q : Hex.GF2Poly) : p + q = Hex.GF2Poly.add p q := rfl
+
+/-- Euclidean division and remainder remain the executable packed operations. -/
+example (p q : Hex.GF2Poly) :
+    p / q = Hex.GF2Poly.div p q ∧ p % q = Hex.GF2Poly.mod p q :=
+  ⟨rfl, rfl⟩
+
+/-- The packed gcd is also the operation exposed through Mathlib's gcd-domain
+interface. -/
+example (p q : Hex.GF2Poly) :
+    GCDMonoid.gcd p q = Hex.GF2Poly.gcd p q :=
+  rfl
+
+/-- The Euclidean-domain instance reaches Mathlib's unique-factorization
+interface. -/
+example : UniqueFactorizationMonoid Hex.GF2Poly := inferInstance
 
 /-- The field instance is found by synthesis given the degree fact, and its
 inverse is still the executable one. -/
