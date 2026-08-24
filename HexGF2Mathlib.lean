@@ -19,5 +19,6 @@ generic proof-facing polynomial and finite-field constructions.
 It exposes the packed-polynomial equivalence `Hex.GF2Poly ≃+* Hex.FpPoly 2`
 together with the corresponding single-word/arbitrary-degree `GF(2^n)`
 correspondence modules, and carries Mathlib's `CommRing` and `Field`
-structure on the packed types.
+structure, together with Euclidean-domain and gcd-domain structure on packed
+polynomials.
 -/
