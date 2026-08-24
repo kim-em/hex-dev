@@ -138,6 +138,48 @@ theorem euclidean_gcd_eq_packed (p q : Hex.GF2Poly) :
 
 end GF2Poly
 
+namespace GF2n
+
+variable {n : Nat} {irr : UInt64}
+variable {hn : 0 < n} {hn64 : n < 64}
+variable {hirr : Hex.GF2Poly.Irreducible (Hex.GF2Poly.ofUInt64Monic irr n)}
+
+/-- The packed single-word quotient is a Mathlib field, with its executable
+core operations retained. Its positive extension degree is part of the type,
+so unlike `GF2nPoly` it needs no extra nontriviality hypothesis. -/
+noncomputable instance field : Field (Hex.GF2n n irr hn hn64 hirr) :=
+  Field.ofMinimalAxioms (Hex.GF2n n irr hn hn64 hirr)
+    Hex.GF2n.add_assoc
+    Hex.GF2n.zero_add
+    Hex.GF2n.neg_add_cancel
+    Hex.GF2n.mul_assoc
+    Hex.GF2n.mul_comm
+    Hex.GF2n.one_mul
+    Hex.GF2n.mul_inv_cancel
+    Hex.GF2n.inv_zero
+    Hex.GF2n.left_distrib
+    ⟨1, 0, Hex.GF2n.one_ne_zero⟩
+
+/-! # The instance is usable, and keeps the executable core operations -/
+
+section Checks
+
+/-- The single-word field instance keeps the executable operations named by
+the computational API. -/
+example (a b : Hex.GF2n n irr hn hn64 hirr) :
+    a * b = Hex.GF2n.mul a b ∧ -a = Hex.GF2n.neg a ∧
+      a - b = Hex.GF2n.sub a b ∧ a⁻¹ = Hex.GF2n.inv a ∧
+      a / b = Hex.GF2n.div a b := by
+  exact ⟨rfl, rfl, rfl, rfl, rfl⟩
+
+/-- The single-word instance reaches Mathlib's field lemmas directly. -/
+example (a : Hex.GF2n n irr hn hn64 hirr) (ha : a ≠ 0) : a * a⁻¹ = 1 :=
+  mul_inv_cancel₀ ha
+
+end Checks
+
+end GF2n
+
 namespace GF2nPoly
 
 variable {f : Hex.GF2Poly} {hirr : Hex.GF2Poly.Irreducible f}
@@ -166,7 +208,7 @@ noncomputable instance field [hdeg : Fact (0 < f.degree)] :
     Hex.GF2nPoly.left_distrib
     ⟨1, 0, Hex.GF2nPoly.one_ne_zero hdeg.out⟩
 
-/-! # The instances are usable, and keep the executable operations -/
+/-! # The instances are usable -/
 
 section Checks
 
