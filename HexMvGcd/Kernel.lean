@@ -52,19 +52,35 @@ private def baseCert : GcdCert 0 Int Mono.lex :=
 example : baseCheckCoprime (C 2 : P0) (C 3) (.base (-1) 1) = true := by
   decide +kernel
 
-example : polyNormalize (C 6 : P0) == C 6 := by
+private theorem normalizeC6 : polyNormalize (C 6 : P0) == C 6 := by
+  unfold polyNormalize polyNormUnit
+  rw [leadingTerm_C (by decide : (6 : Int) ≠ 0)]
   decide +kernel
+
+example : polyNormalize (C 6 : P0) == C 6 := normalizeC6
 
 example : (C 6 : P0) * C 2 == C 12 := by
   decide +kernel
 
 example : checkGcd (C 12 : P0) (C 18) baseCert = true := by
+  unfold checkGcd checkOps checkGcdUsing baseCert
+  dsimp only
+  rw [normalizeC6]
   decide +kernel
 
 private def unitCert : GcdCert 1 Int Mono.lex :=
   .mk 1 1 (X 0 + 2) .unit
 
+private theorem normalizeOne : polyNormalize (1 : P1) == 1 := by
+  change polyNormalize (C 1 : P1) == C 1
+  unfold polyNormalize polyNormUnit
+  rw [leadingTerm_C (by decide : (1 : Int) ≠ 0)]
+  decide +kernel
+
 example : checkGcd (1 : P1) (X 0 + 2) unitCert = true := by
+  unfold checkGcd checkOps checkGcdUsing unitCert
+  dsimp only
+  rw [normalizeOne]
   decide +kernel
 
 private def contentStep₁ : GcdCert 0 Int Mono.lex :=
@@ -76,7 +92,16 @@ private def contentStep₂ : GcdCert 0 Int Mono.lex :=
 private def contentCert : ContentCert 0 Int Mono.lex :=
   .ofSteps (C 2) [contentStep₁, contentStep₂]
 
+private theorem normalizeC2 : polyNormalize (C 2 : P0) == C 2 := by
+  unfold polyNormalize polyNormUnit
+  rw [leadingTerm_C (by decide : (2 : Int) ≠ 0)]
+  decide +kernel
+
 example : checkContent ([C 2, C 4] : List P0) contentCert = true := by
+  unfold checkContent checkOps checkContentUsing checkContentSteps contentCert
+  dsimp only
+  unfold checkGcdUsing contentStep₁ contentStep₂ checkContentSteps
+  simp only [normalizeC2]
   decide +kernel
 
 private def orderedProducer (_ q : P0) : GcdCert 0 Int Mono.lex :=
