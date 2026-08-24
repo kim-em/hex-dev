@@ -10,9 +10,11 @@ import HexIntervalMathlib.Tactic
 # Supported arithmetic tactic conformance
 
 The public Meta bridge parses local integer cuts, reifies a shared arithmetic
-expression, authenticates the supported chronology, and independently emits an
-ordinary kernel proof. These canaries cover strict and closed cuts, singleton
-equality, conjunction, transactional rejection, and the diagnostic surface.
+expression, runs its typed runtime controller to a settled target, and emits
+the sealed chronology as an ordinary kernel proof before closing the exact
+caller sources and expression semantics. These canaries cover strict and
+closed cuts, singleton equality, conjunction, transactional rejection, and the
+diagnostic surface.
 -/
 
 namespace Hex.IntervalMathlib.TacticConformance
@@ -140,6 +142,28 @@ set_option linter.unusedTactic false in
 set_option linter.unusedVariables false in
 example {x : ℝ} (source : x = 2) : True := by
   run_tac do
+    let x ← Lean.Meta.getFVarFromUserName `x
+    let sum ← Lean.Meta.mkAppM ``HAdd.hAdd #[x, x]
+    let withChronology (limit : Nat) : Hex.Interval.Frontend.Config :=
+      { Hex.Interval.Tactic.defaultConfig with
+        proof := { Hex.Interval.Tactic.defaultConfig.proof with
+          maxChronology := limit } }
+    let _ ← Hex.Interval.Tactic.deriveBound (withChronology 2) sum
+    let failure ← try
+      let _ ← Hex.Interval.Tactic.deriveBound (withChronology 1) sum
+      pure none
+    catch error => pure (some (← error.toMessageData.toString))
+    match failure with
+    | none => throwError "one-short runtime chronology was accepted"
+    | some message =>
+        unless message.contains "controller run failed" do
+          throwError "one-short chronology failed at the wrong boundary: {message}"
+  trivial
+
+set_option linter.unusedTactic false in
+set_option linter.unusedVariables false in
+example {x : ℝ} (source : x = 2) : True := by
+  run_tac do
     let rule := Hex.Interval.Tactic.defaultConfig.rule
     let config : Hex.Interval.Frontend.Config :=
       { Hex.Interval.Tactic.defaultConfig with
@@ -154,8 +178,8 @@ example {x : ℝ} (source : x = 2) : True := by
     match failure with
     | none => throwError "precision-starved reciprocal recipe was accepted"
     | some message =>
-        unless message.contains "hex.interval.rule.inv resource refusal" &&
-            message.contains "Hex.Interval.Arithmetic.Cost.quotient" do
+        unless message ==
+            "interval: controller stopped with 1 live offers and 2 pending actions" do
           throwError "precision-starved reciprocal failed at the wrong boundary: {message}"
   trivial
 
