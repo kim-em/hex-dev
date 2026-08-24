@@ -173,20 +173,16 @@ private theorem modP_dvd_monicModularImage
 /-- The recorded factor degrees are the Mathlib natural degrees of the
 transported modular factors. -/
 private theorem map_natDegree_factorsModP
-    {core : Hex.ZPoly} {data : Hex.PrimeChoiceData}
-    (hval : ModPFactorization core data) :
+    {data : Hex.PrimeChoiceData} :
     letI := data.bounds
     data.factorsModP.toList.map
         (fun g => (HexBerlekampMathlib.toMathlibPolynomial g).natDegree) =
       (Hex.directFactorDegrees data).toList := by
   letI := data.bounds
-  haveI : Fact (_root_.Nat.Prime data.p) := ⟨natPrime_of_hexNatPrime hval.prime⟩
-  haveI : Nontrivial (ZMod data.p) := inferInstance
   simp only [Hex.directFactorDegrees, Array.toList_map]
   refine List.map_congr_left ?_
-  intro g hg
-  have hmonic : Hex.DensePoly.Monic g := hval.monic g (by simpa using hg)
-  rw [HexBerlekampMathlib.natDegree_toMathlibPolynomial_eq_basisSize g hmonic]
+  intro g _
+  rw [HexBerlekampMathlib.natDegree_toMathlibPolynomial_eq_basisSize g]
   rfl
 
 /-- Reduction at a good prime sends an integer divisor of the input to a
@@ -273,7 +269,7 @@ theorem exists_subMultiset_directFactorDegrees_of_dvd
           HexBerlekampMathlib.toMathlibPolynomial).map Polynomial.natDegree =
         ((Hex.directFactorDegrees data).toList : Multiset Nat) := by
     rw [Multiset.map_coe, Multiset.map_coe, List.map_map]
-    exact congrArg _ (map_natDegree_factorsModP hval)
+    exact congrArg _ (map_natDegree_factorsModP (data := data))
   refine ⟨S, ?_, ?_⟩
   · rw [← hdegmap]
     exact hS

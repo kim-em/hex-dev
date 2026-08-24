@@ -318,7 +318,6 @@ open Lean Elab
 `Hex.FactorTactic.extensionNames`; the free and integration regression tests
 fail if a rename makes the extension undiscoverable. -/
 public meta def extension : Hex.FactorTactic.Extension where
-  version := Hex.FactorTactic.Extension.abiVersion
   factorPoly? := fun _stx pE ty _expectedType? => do
     match ← Hex.FactorTactic.classify ty with
     | .zpoly _ zeroE decE => factorPolyZPoly zeroE decE pE

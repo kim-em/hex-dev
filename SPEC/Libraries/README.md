@@ -20,6 +20,7 @@
 - **hex-hermite**: Hermite normal form over `Int`, unimodular transforms, integer lattice membership, integer kernel bases
 - **hex-smith**: Smith normal form over `Int`, invariant factors, and the structure of a finitely generated abelian group
 - **hex-poly-smith**: Smith normal form over `F[x]`, monic pivot normalization, unimodular transforms with inverses, and the structure of a finitely generated `F[x]`-module
+- **hex-invariant-factors**: the ordered invariant factors of a square matrix from the polynomial Smith form of `xI - A`, including unit factors and the dimension-zero conventions
 - **hex-gram-schmidt**: Gram-Schmidt orthogonalization, GS coefficients, Gram determinants, update formulas under row operations
 - **hex-mod-arith**: `ZMod64 p`, `UInt64`-backed arithmetic in `Z/pZ`
 - **hex-modular**: integer CRT, rational reconstruction, symmetric representatives, and the modulus supply
@@ -77,6 +78,7 @@ Mathlib, and supplies correspondence proofs or Mathlib-facing APIs):
 - **hex-hermite-mathlib**: row lattice = `Submodule.span ℤ`, integer rank = `Matrix.rank`, and an executable basis of the kernel submodule
 - **hex-smith-mathlib**: the executable output as `Module.Basis.SmithNormalForm`, the divisibility chain Mathlib's structure omits, and the quotient structure theorem
 - **hex-poly-smith-mathlib**: the executable polynomial matrix over `Polynomial F`, `Module.Basis.SmithNormalForm` from the executable output, monic as Mathlib's `normalize`, and the quotient structure theorem
+- **hex-invariant-factors-mathlib**: the characteristic-matrix module correspondence, product agreement with the independently computed characteristic polynomial, and largest-factor agreement with the independently computed minimal polynomial
 - **hex-gram-schmidt-mathlib**: `GramSchmidt.Int.basis` = Mathlib's `gramSchmidt`
 - **hex-poly-z-mathlib**: `DensePoly Int ≃+* Polynomial ℤ`, Mignotte bound (via Mathlib's Mahler measure)
 - **hex-roots-mathlib**: Pellet's test on circles (built from `circleIntegral`), the Mahler separation bound, soundness of refinement and `isolate`
@@ -85,7 +87,7 @@ Mathlib, and supplies correspondence proofs or Mathlib-facing APIs):
 - **hex-resultant-mathlib**: executable resultant agreement with `Polynomial.resultant`, specialization, root-product, and discriminant theorems
 - **hex-number-field-mathlib**: fixed-field correspondence, exactification, lazy arithmetic, and algebraic-coefficient root completeness
 - **hex-number-field-tower-mathlib**: tower embeddings, Trager correctness, splitting fields, and primitive-element equivalence
-- **hex-poly-fp-mathlib**: `FpPoly p ≃+* Polynomial (ZMod p)`, and the transport of coefficients, monicity, and ring operations across it
+- **hex-poly-fp-mathlib**: `FpPoly p ≃+* Polynomial (ZMod p)`, and transport of coefficients, degree, leading coefficients, ring operations, coefficient-sum evaluation, composition, and divisibility
 - **hex-berlekamp-mathlib**: `Decidable (Irreducible f)` for `Polynomial (ZMod p)`; the `Polynomial (ZMod p)` extension for `factor_poly` / `irreducibility`
 - **hex-hensel-mathlib**: Hensel correctness, uniqueness, `coprime_mod_p_lifts`
 - **hex-lll-mathlib**: lattice = `Submodule ℤ`, short vector bound
@@ -118,6 +120,7 @@ Each library with its immediate dependencies:
 - **hex-hermite**: hex-row-reduce, hex-arith, hex-determinant
 - **hex-smith**: hex-hermite
 - **hex-poly-smith**: hex-poly, hex-matrix, hex-determinant
+- **hex-invariant-factors**: hex-poly-smith
 - **hex-mod-arith**: hex-arith
 - **hex-modular**: hex-arith
 - **hex-padics**: hex-arith, hex-modular, hex-primality, hex-basic
@@ -181,6 +184,7 @@ Mathlib companion libraries (each also depends on Mathlib):
 - **hex-hermite-mathlib**: hex-hermite, hex-row-reduce-mathlib, hex-determinant-mathlib
 - **hex-smith-mathlib**: hex-smith, hex-hermite-mathlib
 - **hex-poly-smith-mathlib**: hex-poly-smith, hex-poly-mathlib, hex-matrix-mathlib, hex-determinant-mathlib
+- **hex-invariant-factors-mathlib**: hex-invariant-factors, hex-poly-smith-mathlib, hex-char-poly-mathlib, hex-min-poly-mathlib
 - **hex-gram-schmidt-mathlib**: hex-gram-schmidt, hex-bareiss-mathlib
 - **hex-lll-mathlib**: hex-lll, hex-gram-schmidt-mathlib, hex-row-reduce-mathlib
 - **hex-poly-fp-mathlib**: hex-poly-fp, hex-poly-mathlib, hex-mod-arith-mathlib
@@ -205,8 +209,8 @@ polynomial consumer both need, so it sits below both. `hex-modular-matrix`
 and `hex-poly-z-gcd` each sit above it beside the type they compute with,
 and neither depends on the other. `hex-mv-gcd` gains a dependency on
 `hex-poly-z-gcd`, which is its arity-one case, once that library exists.
-The reasoning is in [hex-modular §Why not inside hex-arith](hex-modular.md)
-and [hex-poly-z-gcd §Why this is not hex-mv-gcd at arity one](hex-poly-z-gcd.md).
+The reasoning is in [hex-modular §Why not inside hex-arith](../../HexModular/SPEC/hex-modular.md)
+and [hex-poly-z-gcd §Why this is not hex-mv-gcd at arity one](../../HexPolyZGcd/SPEC/hex-poly-z-gcd.md).
 
 ## Library DAG
 
@@ -279,6 +283,23 @@ row by row in [hex-poly-smith.md](hex-poly-smith.md).
 hex-poly ────────┐
 hex-matrix ──────┼── hex-poly-smith
 hex-determinant ─┘
+```
+
+`hex-invariant-factors` applies that reusable normal form to `xI - A`.
+Its computational dependency is only `hex-poly-smith`. The characteristic
+and minimal polynomial algorithms remain independent and enter through the
+Mathlib companion, where their outputs are compared with the product and last
+invariant factor. The row-presentation versus column-action detail and the
+one-way dependency argument are in
+[hex-invariant-factors §Dependencies and the one-way graph](hex-invariant-factors.md#dependencies-and-the-one-way-graph).
+
+```text
+hex-poly-smith ─────────────── hex-invariant-factors
+       │                               │
+       └── hex-poly-smith-mathlib ─────┤
+                                       ├── hex-invariant-factors-mathlib
+hex-char-poly ── hex-char-poly-mathlib ┤
+hex-min-poly ─── hex-min-poly-mathlib ─┘
 ```
 
 The algebraic graph has three independent roots: hex-poly, hex-arith,
@@ -364,7 +385,7 @@ hex-poly ──────────────────┘              
 `hex-basic` for the `List.foldl` algebra its canonicalisation proof
 uses. There is no interface over the two representations: callers name
 the one they hold and convert explicitly, for the reasons in
-[hex-sparse-poly §No swappable polynomial abstraction](hex-sparse-poly.md).
+[hex-sparse-poly §No swappable polynomial abstraction](../../HexSparsePoly/SPEC/hex-sparse-poly.md).
 Its companion is defined by composing `toDense` with hex-poly-mathlib's
 equivalence, so it depends on that library rather than reproving the
 ring structure.
@@ -395,7 +416,7 @@ lifting direction is the evaluation ideal and the prime only makes the
 univariate coefficient arithmetic invertible, so no hex-hensel entry
 point has a parameter in the position this library needs one. The
 reasoning is in
-[hex-mv-hensel §Why hex-hensel is a design model](hex-mv-hensel.md).
+[hex-mv-hensel §Why hex-hensel is a design model](../../HexMvHensel/SPEC/hex-mv-hensel.md).
 
 ```text
 hex-mv-gcd ────┐
@@ -416,9 +437,9 @@ returned unfactored, following the same convention as
 `hex-berlekamp-zassenhaus` and `sqfDecomp`, and a caller who wants the
 constant primes composes the two answers. The boundary with the lifting
 engine is drawn in
-[hex-mv-hensel §What stays in the downstream consumer](hex-mv-hensel.md),
+[hex-mv-hensel §What stays in the downstream consumer](../../HexMvHensel/SPEC/hex-mv-hensel.md),
 and what the product check does and does not prove is in
-[hex-mv-factor §The two claims, and why they have separate types](hex-mv-factor.md).
+[hex-mv-factor §The two claims, and why they have separate types](../../HexMvFactor/SPEC/hex-mv-factor.md#the-two-claims-and-why-they-have-separate-types).
 
 ```text
 hex-mv-hensel ─────────────┐
@@ -550,20 +571,21 @@ for developments whose source-local move has not happened yet.
 - [hex-hermite.md](hex-hermite.md): Hermite normal form over `Int`, unimodular transforms, integer lattice membership and kernel bases (the Mathlib companion is specified in the same file)
 - [hex-smith.md](hex-smith.md): Smith normal form over `Int`, invariant factors, and abelian group structure (the Mathlib companion is specified in the same file)
 - [hex-poly-smith.md](hex-poly-smith.md): Smith normal form over `F[x]`, monic pivot normalization, unimodular transforms with inverses, and `F[x]`-module structure (the Mathlib companion is specified in the same file)
+- [hex-invariant-factors.md](hex-invariant-factors.md): matrix invariant factors from the polynomial Smith form of `xI - A`, with independent characteristic- and minimal-polynomial comparisons (the Mathlib companion is specified in the same file)
 - [hex-mod-arith](../../HexModArith/SPEC/hex-mod-arith.md): `ZMod64 p`, `UInt64`-backed arithmetic in `Z/pZ`
 - [hex-finite-field.md](hex-finite-field.md): the Mathlib-free `F_q` interface, the generic `q`-power Frobenius, and the equal-degree stage (Cantor-Zassenhaus) it makes worthwhile, specified as hex-berlekamp amendments
 - [hex-mod-arith-mathlib](../../HexModArithMathlib/SPEC/hex-mod-arith-mathlib.md): `ZMod64 p ≃+* ZMod p`
-- [hex-modular.md](hex-modular.md): integer CRT, rational reconstruction, symmetric representatives, and the modulus supply (the Mathlib companion is specified in the same file)
+- [hex-modular.md](../../HexModular/SPEC/hex-modular.md): integer CRT, rational reconstruction, symmetric representatives, and the modulus supply (the Mathlib companion is specified in the same file)
 - [hex-padics.md](hex-padics.md): fixed-precision `ZpApprox` and `QpApprox` approximations, the valuation and approximate zero, precision-aware arithmetic with exact loss formulas, partial inversion and division, and exactification (the Mathlib companion is specified in the same file)
 - [hex-modular-matrix.md](hex-modular-matrix.md): multi-modular determinant, certified rank, and Dixon p-adic linear solving (the Mathlib companion is specified in the same file)
 - [hex-poly](../../HexPoly/SPEC/hex-poly.md): dense polynomial library, operations, GCD, CRT
 - [hex-poly-mathlib](../../HexPolyMathlib/SPEC/hex-poly-mathlib.md): `DensePoly R ≃+* Polynomial R`
-- [hex-sparse-poly.md](hex-sparse-poly.md): canonical sparse univariate polynomials, the operations that keep sparsity, and the dense conversions (the Mathlib companion is specified in the same file)
+- [hex-sparse-poly](../../HexSparsePoly/SPEC/hex-sparse-poly.md): canonical sparse univariate polynomials, the operations that keep sparsity, and the dense conversions (the Mathlib companion is specified in the same file)
 - [hex-mv-poly](../../HexMvPoly/SPEC/hex-mv-poly.md): canonical distributed multivariate polynomials with explicit monomial orders
 - [hex-mv-poly-mathlib](../../HexMvPolyMathlib/SPEC/hex-mv-poly-mathlib.md): `MvPoly n R cmp ≃+* MvPolynomial (Fin n) R`, `aeval`, and operation correspondence
-- [hex-mv-gcd](hex-mv-gcd.md): multivariate gcd with cofactors, content and primitive part, exact division, squarefree decomposition
-- [hex-mv-hensel.md](hex-mv-hensel.md): multivariate Hensel lifting against an evaluation ideal, its coprimality witness and leading-coefficient contract, reconstruction, and the checked-decomposition certificate (the Mathlib companion is specified in the same file)
-- [hex-mv-factor.md](hex-mv-factor.md): factorization of `Z[x_1, ..., x_n]` by Wang's EEZ algorithm, the evaluation-point and leading-coefficient search, the checked product decomposition, and the separate irreducibility certificate (the Mathlib companion is specified in the same file)
+- [hex-mv-gcd](../../HexMvGcd/SPEC/hex-mv-gcd.md): multivariate gcd with cofactors, content and primitive part, exact division, squarefree decomposition
+- [hex-mv-hensel.md](../../HexMvHensel/SPEC/hex-mv-hensel.md): multivariate Hensel lifting against an evaluation ideal, its coprimality witness and leading-coefficient contract, reconstruction, and the checked-decomposition certificate (the Mathlib companion is specified in the same file)
+- [hex-mv-factor.md](../../HexMvFactor/SPEC/hex-mv-factor.md): factorization of `Z[x_1, ..., x_n]` by Wang's EEZ algorithm, the evaluation-point and leading-coefficient search, the checked product decomposition, and the separate irreducibility certificate (the Mathlib companion is specified in the same file)
 - [hex-truncated-series.md](hex-truncated-series.md): power series truncated at a precision fixed in the type, Newton inversion, square root, `exp`, `log`, composition, and reversion (the Mathlib companion is specified in the same file)
 - [hex-poly-fp](../../HexPolyFp/SPEC/hex-poly-fp.md): polynomials over `F_p`, Frobenius, square-free decomposition
 - [hex-gf2](../../HexGF2/SPEC/hex-gf2.md): packed bitwise polynomials over `F_2`, `GF(2^n)` elements
@@ -571,7 +593,7 @@ for developments whose source-local move has not happened yet.
 - [hex-poly-fp-mathlib](../../HexPolyFpMathlib/SPEC/hex-poly-fp-mathlib.md): `FpPoly p ≃+* Polynomial (ZMod p)`, the crossing point to Mathlib's polynomial type
 - [hex-poly-z](../../HexPolyZ/SPEC/hex-poly-z.md): polynomials over `Z`, content/primitive part, Mignotte bound
 - [hex-poly-z-mathlib](../../HexPolyZMathlib/SPEC/hex-poly-z-mathlib.md): Mignotte bound proof via Mathlib's Mahler measure
-- [hex-poly-z-gcd.md](hex-poly-z-gcd.md): modular gcd for `Z[x]` with cofactors, a coprimality witness, and exact division (the Mathlib companion is specified in the same file)
+- [hex-poly-z-gcd.md](../../HexPolyZGcd/SPEC/hex-poly-z-gcd.md): modular gcd for `Z[x]` with cofactors, a coprimality witness, and exact division (the Mathlib companion is specified in the same file)
 - [hex-cyclotomic.md](hex-cyclotomic.md): dense integer cyclotomic polynomials indexed by a checked factorization, the squarefree-kernel and divisor-recursion routes, the divisor family, and the factorization of `x^n - 1` (the Mathlib companion is specified in the same file)
 - [hex-roots.md](../../HexRoots/SPEC/hex-roots.md): certified complex root isolation for `Z[x]`
 - [hex-roots-mathlib](../../HexRootsMathlib/SPEC/hex-roots-mathlib.md): Pellet's test on circles, the Mahler separation bound, soundness of refinement and `isolate`
@@ -580,7 +602,7 @@ for developments whose source-local move has not happened yet.
 - [hex-interval.md](../../HexInterval/SPEC/hex-interval.md): exact interval data, shared programs, and budgeted propagation search
 - [hex-interval-mathlib.md](hex-interval-mathlib.md): real semantics, verified propagators, proof replay, and the `interval` tactic
 - **hex-interval-algebraic** (planned): Mathlib-facing interval providers backed by certified real and complex polynomial root isolation; its provider contract is specified in [hex-interval.md](../../HexInterval/SPEC/hex-interval.md#specialized-algebraic-solvers-before-generic-propagation)
-- [hex-rcf.md](hex-rcf.md): the `rcf` tactic for univariate real-closed-field sentences
+- [hex-rcf.md](../../HexRCF/SPEC/hex-rcf.md): the `rcf` tactic for univariate real-closed-field sentences
 - [hex-resultant](../../HexResultant/SPEC/hex-resultant.md): polynomial resultant and discriminant via the subresultant pseudo-remainder sequence
 - [hex-resultant-mathlib](../../HexResultantMathlib/SPEC/hex-resultant-mathlib.md): executable resultant agreement, specialization, root-product, and discriminant theorems
 - [hex-number-field](../../HexNumberField/SPEC/hex-number-field.md): `QAdjoin`, factorization-lazy `AlgebraicRoot`, canonical `AlgebraicNumber`, and algebraic-coefficient roots

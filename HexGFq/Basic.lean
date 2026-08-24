@@ -4,9 +4,13 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexConway
-import HexGF2
-import HexGFqField
+module
+
+public import HexConway
+public import HexGF2
+public import HexGFqField
+
+public section
 
 /-!
 User-facing canonical finite-field constructors.
@@ -189,6 +193,7 @@ instance committedEntry_13_6 : CommittedEntry 13 6 where
 /-- Interpret a packed single-word binary modulus as the corresponding generic
 `FpPoly 2` polynomial.  `lower` supplies the coefficients of degrees `< n`;
 the leading degree-`n` coefficient is inserted explicitly. -/
+@[expose]
 def packedGF2FpPoly (lower : UInt64) (n : Nat) : FpPoly 2 :=
   FpPoly.ofCoeffs <|
     (((List.range n).map fun i =>
@@ -372,7 +377,7 @@ private def packedGF2IrreducibilityCertificate (lower : UInt64) (n : Nat) :
 set_option maxRecDepth 4096 in
 /-- The packed Conway modulus for `C(2, 2)` (`0x3`) is irreducible,
 checked from its certificate. -/
-private theorem packedGF2Entry_2_2_irreducible :
+theorem packedGF2Entry_2_2_irreducible :
     GF2Poly.Irreducible (GF2Poly.ofUInt64Monic 0x3 2) :=
   GF2Poly.checkIrreducibilityCertificate_imp_irreducible
     (GF2Poly.ofUInt64Monic 0x3 2)
@@ -382,7 +387,7 @@ private theorem packedGF2Entry_2_2_irreducible :
 set_option maxRecDepth 4096 in
 /-- The packed Conway modulus for `C(2, 3)` (`0x3`) is irreducible,
 checked from its certificate. -/
-private theorem packedGF2Entry_2_3_irreducible :
+theorem packedGF2Entry_2_3_irreducible :
     GF2Poly.Irreducible (GF2Poly.ofUInt64Monic 0x3 3) :=
   GF2Poly.checkIrreducibilityCertificate_imp_irreducible
     (GF2Poly.ofUInt64Monic 0x3 3)
@@ -392,7 +397,7 @@ private theorem packedGF2Entry_2_3_irreducible :
 set_option maxRecDepth 4096 in
 /-- The packed Conway modulus for `C(2, 5)` (`0x5`) is irreducible,
 checked from its certificate. -/
-private theorem packedGF2Entry_2_5_irreducible :
+theorem packedGF2Entry_2_5_irreducible :
     GF2Poly.Irreducible (GF2Poly.ofUInt64Monic 0x5 5) :=
   GF2Poly.checkIrreducibilityCertificate_imp_irreducible
     (GF2Poly.ofUInt64Monic 0x5 5)
@@ -402,7 +407,7 @@ private theorem packedGF2Entry_2_5_irreducible :
 set_option maxRecDepth 4096 in
 /-- The packed Conway modulus for `C(2, 6)` (`0x1B`) is irreducible,
 checked from its certificate. -/
-private theorem packedGF2Entry_2_6_irreducible :
+theorem packedGF2Entry_2_6_irreducible :
     GF2Poly.Irreducible (GF2Poly.ofUInt64Monic 0x1B 6) :=
   GF2Poly.checkIrreducibilityCertificate_imp_irreducible
     (GF2Poly.ofUInt64Monic 0x1B 6)
@@ -412,7 +417,7 @@ private theorem packedGF2Entry_2_6_irreducible :
 set_option maxRecDepth 4096 in
 /-- The packed Conway modulus for `C(2, 7)` (`0x3`) is irreducible,
 checked from its certificate. -/
-private theorem packedGF2Entry_2_7_irreducible :
+theorem packedGF2Entry_2_7_irreducible :
     GF2Poly.Irreducible (GF2Poly.ofUInt64Monic 0x3 7) :=
   GF2Poly.checkIrreducibilityCertificate_imp_irreducible
     (GF2Poly.ofUInt64Monic 0x3 7)
@@ -426,7 +431,7 @@ checked from its certificate.
 This is not the AES modulus. AES uses `x^8 + x^4 + x^3 + x + 1` (`0x1B`), a
 different irreducible of the same degree, so `GF2q 8` and the AES field are
 different presentations of the same 256-element field. -/
-private theorem packedGF2Entry_2_8_irreducible :
+theorem packedGF2Entry_2_8_irreducible :
     GF2Poly.Irreducible (GF2Poly.ofUInt64Monic 0x1D 8) :=
   GF2Poly.checkIrreducibilityCertificate_imp_irreducible
     (GF2Poly.ofUInt64Monic 0x1D 8)
@@ -555,6 +560,7 @@ entry.
 
 The entry already carries `h.prime`, so this needs no separate prime-modulus
 instance from the caller. -/
+@[expose]
 def ofPoly (h : Conway.SupportedEntry p n) (g : FpPoly p) : GFq p n h :=
   GFqField.ofPoly (modulus h) (modulus_nonconstant h) (modulus_prime h)
     (modulus_irreducible h) g
@@ -570,6 +576,7 @@ selected Conway modulus. -/
   rfl
 
 /-- Project a canonical field element to its reduced polynomial representative. -/
+@[expose]
 def repr {h : Conway.SupportedEntry p n} (x : GFq p n h) : FpPoly p :=
   GFqField.repr x
 
@@ -779,6 +786,7 @@ sitting under `ofPoly`. -/
 
 /-- The Frobenius endomorphism on the canonical Conway-backed field, computed
 as the `p`-th power on the underlying quotient representation. -/
+@[expose]
 def frob {h : Conway.SupportedEntry p n} (x : GFq p n h) : GFq p n h :=
   GFqField.frob x
 
@@ -825,6 +833,7 @@ theorem modulus_eq_gfq :
   rfl
 
 /-- Reduce a polynomial into the committed `GFqC p n` field. -/
+@[expose]
 def ofPoly (g : FpPoly p) : GFqC p n :=
   GFq.ofPoly (entry (p := p) (n := n)) g
 
@@ -836,6 +845,7 @@ theorem ofPoly_eq_gfq (g : FpPoly p) :
   rfl
 
 /-- Project a committed `GFqC` element to its reduced polynomial representative. -/
+@[expose]
 def repr (x : GFqC p n) : FpPoly p :=
   GFq.repr x
 
@@ -870,6 +880,7 @@ product of representatives modulo the selected committed Conway polynomial. -/
   rfl
 
 /-- The Frobenius endomorphism on the committed `GFqC p n` field. -/
+@[expose]
 def frob (x : GFqC p n) : GFqC p n :=
   GFq.frob x
 
@@ -904,6 +915,7 @@ namespace GF2q
 variable {n : Nat} [h : GFq.PackedGF2Entry n]
 
 /-- The supported Conway-table entry backing this optimized binary field. -/
+@[expose]
 def supportedEntry : Conway.SupportedEntry 2 n :=
   h.entry
 
@@ -914,6 +926,7 @@ def supportedEntry : Conway.SupportedEntry 2 n :=
 
 /-- The lower-word packed modulus selected for a committed optimized `GF2q`
 entry. -/
+@[expose]
 def lower : UInt64 :=
   h.lower
 
@@ -924,6 +937,7 @@ def lower : UInt64 :=
 
 /-- The packed modulus polynomial selected for a committed optimized `GF2q`
 entry. -/
+@[expose]
 def modulus : GF2Poly :=
   GF2Poly.ofUInt64Monic h.lower n
 
@@ -961,6 +975,7 @@ theorem modulus_irreducible : GF2Poly.Irreducible (modulus (n := n)) :=
 
 /-- Reduce a machine word into the optimized binary field selected by a
 committed packed Conway entry. -/
+@[expose]
 def ofWord (w : UInt64) : GF2q n :=
   GF2n.reduce (n := n) (irr := h.lower) w
 
@@ -972,6 +987,7 @@ Conway modulus. -/
 
 /-- Project an optimized binary field element to its packed machine-word
 representative. -/
+@[expose]
 def repr (x : GF2q n) : UInt64 :=
   x.val
 
@@ -982,6 +998,7 @@ def repr (x : GF2q n) : UInt64 :=
 
 /-- Interpret the low `n` bits of a packed binary word as an `FpPoly 2`
 polynomial. -/
+@[expose]
 def wordFpPoly (w : UInt64) : FpPoly 2 :=
   FpPoly.ofCoeffs <|
     (((List.range n).map fun i =>
@@ -992,11 +1009,13 @@ def wordFpPoly (w : UInt64) : FpPoly 2 :=
 
 /-- Interpret the packed representative of an optimized binary-field element
 as a generic `FpPoly 2` polynomial. -/
+@[expose]
 def reprFpPoly (x : GF2q n) : FpPoly 2 :=
   wordFpPoly (n := n) (repr x)
 
 /-- Map an optimized packed canonical binary-field element into the generic
 canonical `GFq 2 n` model for the same committed Conway entry. -/
+@[expose]
 def toGFq (x : GF2q n) : GFq 2 n (supportedEntry (n := n)) :=
   GFq.ofPoly (supportedEntry (n := n)) (reprFpPoly x)
 

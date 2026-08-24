@@ -6,6 +6,78 @@
     "reason": "Adds local classical decidability to a theorem proof; compiled factorization code is unchanged."
   },
   {
+    "path": "HexArith/Montgomery/Context.lean",
+    "baseline_blob": "37f008f776ce7781e174900aed25aec13d845c33",
+    "current_blob": "6712bd70c3b7774cadef600f93cbe8bc83516972",
+    "reason": "Guards powModNat at modulus zero, exposes its worker and bitLength for kernel reduction, and adds a csimp routing powModNat to the unchanged powMod; no executable factorization code calls powModNat (the service uses powMod directly)."
+  },
+  {
+    "path": "lakefile.lean",
+    "baseline_blob": "a1b87406682dbf908d990f01676f326499b906e5",
+    "current_blob": "2ee25b83b3f4a3c9610b64a4f8f31731e9aafe73",
+    "reason": "Additionally registers the HexPrimalityMathlib companion on top of main's current registrations; the factorization service targets are unchanged."
+  },
+  {
+    "path": "lakefile.lean",
+    "baseline_blob": "a1b87406682dbf908d990f01676f326499b906e5",
+    "current_blob": "75002db9efb691acb9f469fd036dd5f28a249811",
+    "reason": "Registers the HexPrimality library on top of main's current registrations; the factorization service targets are unchanged."
+  },
+  {
+    "path": "HexArith/Nat/Prime.lean",
+    "baseline_blob": "8b5cf744140acde03da1c72c50482410e0c65029",
+    "current_blob": "3c739ff40939977910ea64afd72b1db3142c5444",
+    "reason": "Reroutes the Decidable (Prime p) instance through the existing isPrimeTrial pair and adds prime-divisor existence theorems; the factorization service never evaluates the instance at runtime."
+  },
+  {
+    "path": "HexBerlekampZassenhaus/PrimeSelection.lean",
+    "baseline_blob": "6d9fc0f2d2b6612450968694557bca925ce7522b",
+    "current_blob": "fffb08176c872a5a67129af1ca093ae21867c945",
+    "reason": "Rebuilds hotPathCandidates as a proof-carrying view of the committed prime table with identical values and order (pinned by the #guard block); prime selection behaviour is unchanged."
+  },
+  {
+    "path": "HexBerlekampZassenhaus/ChoosePrimeData.lean",
+    "baseline_blob": "9194dae7dc8cf4d433a7adbd8ce01a7133b3900c",
+    "current_blob": "bd5a9b0e6da14217645d5243010fafc00fdc4d27",
+    "reason": "Raises maxRecDepth on one theorem's proof after the prime-table migration; proof elaboration only, no executable change."
+  },
+  {
+    "path": "Hex/Conformance/Emit.lean",
+    "baseline_blob": "21481a92862c6a9f8c8d538c4815d2bc4557453a",
+    "current_blob": "1801e5fde394c6f03084098ebf6a62841349c2f7",
+    "reason": "Adds the primality fixture emitters (isprime/certcheck/segment) and boolValue, used only by conformance drivers; the factorization service does not call the emission library."
+  },
+  {
+    "path": "lakefile.lean",
+    "baseline_blob": "6dd80771ae2212333b2a9b925b52056e0037ff56",
+    "current_blob": "dc612b83449471ffb978363b16c2b49ad30c8439",
+    "reason": "Registers the HexPrimality library on top of the already-attested HexPolyFpMathlib and interval experiment registrations; the factorization service targets are unchanged."
+  },
+  {
+    "path": "lakefile.lean",
+    "baseline_blob": "6dd80771ae2212333b2a9b925b52056e0037ff56",
+    "current_blob": "8630fd6ae9209094dd0a9d67dded5870fe1ea86a",
+    "reason": "Additionally registers the HexPrimality conformance driver targets on top of the already-attested HexPolyFpMathlib and interval experiment registrations; the factorization service targets are unchanged."
+  },
+  {
+    "path": "lakefile.lean",
+    "baseline_blob": "6dd80771ae2212333b2a9b925b52056e0037ff56",
+    "current_blob": "719821e7ca29eda1440ea688bb9dbaf64dda8880",
+    "reason": "Additionally registers the HexPrimality bench targets and kernel-replay probe on top of the already-attested HexPolyFpMathlib and interval experiment registrations; the factorization service targets are unchanged."
+  },
+  {
+    "path": "HexArith/Nat/Prime.lean",
+    "baseline_blob": "5fbaa75456c2217771a4f7a27e7f2ff40417fe3a",
+    "current_blob": "3c739ff40939977910ea64afd72b1db3142c5444",
+    "reason": "Reroutes the Decidable (Prime p) instance through the existing isPrimeTrial pair and adds prime-divisor existence theorems (merged with main's prime_iff_forall_le_sqrt addition); the factorization service never evaluates the instance at runtime."
+  },
+  {
+    "path": "lakefile.lean",
+    "baseline_blob": "a1b87406682dbf908d990f01676f326499b906e5",
+    "current_blob": "791e5727779c8d07cbd2e7080bb2bbd245b82a6b",
+    "reason": "Registers the HexPrimality library on top of main's current registrations; the factorization service targets are unchanged."
+  },
+  {
     "path": "HexPolyZ/Decomposition.lean",
     "baseline_blob": "9137a73618359488c9c2f8de6a0674f7918c7bd7",
     "current_blob": "275022ccb5ce74a3bac17daa81a2ede16fe7e963",
@@ -852,57 +924,123 @@
     "reason": "Registers only the build-only HexMvFactorizationTests verification umbrella; it adds no imports to hexbz_factor_service or any runtime library target and changes no executable definition or build flag."
   },
   {
-    "path": "HexArith/Montgomery/Context.lean",
-    "baseline_blob": "37f008f776ce7781e174900aed25aec13d845c33",
-    "current_blob": "6712bd70c3b7774cadef600f93cbe8bc83516972",
-    "reason": "Guards powModNat at modulus zero, exposes its worker and bitLength for kernel reduction, and adds a csimp routing powModNat to the unchanged powMod; no executable factorization code calls powModNat (the service uses powMod directly)."
-  },
-  {
-    "path": "HexArith/Nat/Prime.lean",
-    "baseline_blob": "8b5cf744140acde03da1c72c50482410e0c65029",
-    "current_blob": "3c739ff40939977910ea64afd72b1db3142c5444",
-    "reason": "Reroutes the Decidable (Prime p) instance through the existing isPrimeTrial pair and adds prime-divisor existence theorems; the factorization service never evaluates the instance at runtime."
-  },
-  {
-    "path": "HexBerlekampZassenhaus/PrimeSelection.lean",
-    "baseline_blob": "6d9fc0f2d2b6612450968694557bca925ce7522b",
-    "current_blob": "fffb08176c872a5a67129af1ca093ae21867c945",
-    "reason": "Rebuilds hotPathCandidates as a proof-carrying view of the committed prime table with identical values and order (pinned by the #guard block); prime selection behaviour is unchanged."
-  },
-  {
-    "path": "HexBerlekampZassenhaus/ChoosePrimeData.lean",
-    "baseline_blob": "9194dae7dc8cf4d433a7adbd8ce01a7133b3900c",
-    "current_blob": "bd5a9b0e6da14217645d5243010fafc00fdc4d27",
-    "reason": "Raises maxRecDepth on one theorem's proof after the prime-table migration; proof elaboration only, no executable change."
+    "path": "lakefile.lean",
+    "baseline_blob": "a1b87406682dbf908d990f01676f326499b906e5",
+    "current_blob": "cb8f437dbc9ed9ea5dc5c7e2794295ab16774099",
+    "reason": "Moves HexSparsePoly.KernelTests into the HexReleaseTests globs for the split publication, leaving HexSparsePolyTests as the monorepo-only lint target; no factorization module, executable, or build-flag changes."
   },
   {
     "path": "Hex/Conformance/Emit.lean",
     "baseline_blob": "21481a92862c6a9f8c8d538c4815d2bc4557453a",
-    "current_blob": "1801e5fde394c6f03084098ebf6a62841349c2f7",
-    "reason": "Adds the primality fixture emitters (isprime/certcheck/segment) and boolValue, used only by conformance drivers; the factorization service does not call the emission library."
+    "current_blob": "873aec7387d46c7864913c43e9f9c25b25b33ffc",
+    "reason": "Adds JSON serializers used only by modular conformance fixture emitters; no factorization runtime module imports the conformance helper."
   },
   {
     "path": "lakefile.lean",
-    "baseline_blob": "6dd80771ae2212333b2a9b925b52056e0037ff56",
-    "current_blob": "dc612b83449471ffb978363b16c2b49ad30c8439",
-    "reason": "Registers the HexPrimality library on top of the already-attested HexPolyFpMathlib and interval experiment registrations; the factorization service targets are unchanged."
+    "baseline_blob": "a1b87406682dbf908d990f01676f326499b906e5",
+    "current_blob": "c973b09972fdea92dd362ebd997535fb9fe61a5b",
+    "reason": "Registers only the HexModular conformance module and fixture emitter on top of the sparse-poly release registrations; no factorization runtime target, definition, build flag, or dependency changes."
+  },
+  {
+    "path": "lakefile.lean",
+    "baseline_blob": "a1b87406682dbf908d990f01676f326499b906e5",
+    "current_blob": "3508e63c162bdc9b9ca9d62662297a8c6501a504",
+    "reason": "Registers only the proof-side HexIntervalMathlib.RuntimeTerminalConformance glob; it does not enter hexbz_factor_service or change any factorization library, executable definition, or build flag."
+  },
+  {
+    "path": "lakefile.lean",
+    "baseline_blob": "a1b87406682dbf908d990f01676f326499b906e5",
+    "current_blob": "6450f2f84d526a74345c1c9eda6bda7ba5c8bb42",
+    "reason": "Registers only the HexPolyZGcd conformance module and fixture emitter; no factorization runtime target, definition, build flag, or dependency changes."
+  },
+  {
+    "path": "Hex/BenchOracle/Modular.lean",
+    "baseline_blob": null,
+    "current_blob": "b40ff92191f6d955b4a5fcde35cc1eb03ebc5b3c",
+    "reason": "Adds a persistent external-comparator driver used only by HexModularBench; no factorization runtime module imports it."
+  },
+  {
+    "path": "Hex/Conformance/Emit.lean",
+    "baseline_blob": "21481a92862c6a9f8c8d538c4815d2bc4557453a",
+    "current_blob": "64d83363de132e0b02be9beae25d28b3f377636a",
+    "reason": "Combines the current conformance JSON serializers with the multivariate-gcd fixture emitters; no factorization runtime module imports the conformance helper."
+  },
+  {
+    "path": "Hex/Conformance/Emit.lean",
+    "baseline_blob": "21481a92862c6a9f8c8d538c4815d2bc4557453a",
+    "current_blob": "238dc3cdf53f2db9c5fb4bd1fbc08dc7b92bf956",
+    "reason": "Adds JSON serializers used only by truncated-series, sparse-polynomial, modular, and polynomial-gcd conformance fixture emitters; no factorization runtime module imports the conformance helper."
+  },
+  {
+    "path": "lakefile.lean",
+    "baseline_blob": "a1b87406682dbf908d990f01676f326499b906e5",
+    "current_blob": "f5d725684c68d391cc576640d3850865959138a5",
+    "reason": "Registers only new libraries, verification globs, fixture emitters, and benchmark executables accumulated on current main plus HexTruncatedSeries; the hexbz_factor_service target, its imports, build flags, and factorization dependency graph are unchanged."
+  },
+  {
+    "path": "lakefile.lean",
+    "baseline_blob": "a1b87406682dbf908d990f01676f326499b906e5",
+    "current_blob": "2cea1c0addfba1a78d74b905e0297eb1f3441778",
+    "reason": "Moves the existing HexModular.LoopTests module from the public library umbrella into the build-only HexMvFactorizationTests verification target; no factorization runtime definition, executable, build flag, or dependency changes."
+  },
+  {
+    "path": "lakefile.lean",
+    "baseline_blob": "a1b87406682dbf908d990f01676f326499b906e5",
+    "current_blob": "a1d63b6f0c7c7fb8cc80526172106d95b916f848",
+    "reason": "Combines the current-main build-only and HexTruncatedSeries registrations with the HexPolyZGcd benchmark executable and its bench-only support library; none enters hexbz_factor_service or changes its executable dependency graph."
+  },
+  {
+    "path": "HexPolyFp/Compose.lean",
+    "baseline_blob": "5f2ddb7456186793f29a6187c490c3e7dea90686",
+    "current_blob": "79fe5d281f3009f42744ff252d82ec2d47ee2ccf",
+    "reason": "Adds only a theorem that X is the right identity for polynomial composition; no executable definition or factorization runtime call path changes."
+  },
+  {
+    "path": "HexPolyFp/QuotientCompose.lean",
+    "baseline_blob": "48cd72f73100465311303e0a6ab1e34f6fcfdf63",
+    "current_blob": "9641f1d1c9b112dcdcff9cf9c999b721982729e6",
+    "reason": "Adds an import and a quotient-evaluation theorem only; no executable definition or factorization runtime call path changes."
+  },
+  {
+    "path": "HexPolyFp/QuotientFrobenius.lean",
+    "baseline_blob": "dc13ffdd544ac3037114ffba1000eddd09ecde90",
+    "current_blob": "cbef5cd34b581e312d21c2f76da11d6989b2aa6a",
+    "reason": "Adds an import and a quotient-power theorem only; no executable definition or factorization runtime call path changes."
+  },
+  {
+    "path": "lakefile.lean",
+    "baseline_blob": "a1b87406682dbf908d990f01676f326499b906e5",
+    "current_blob": "b6feee43b834c71a5531fd02fb527756bd4a7a3d",
+    "reason": "Combines current main's build-only verification, conformance, fixture, benchmark, and truncated-series registrations with the proof-side HexIntervalMathlib.RuntimeRuleConformance registration; none enters hexbz_factor_service or changes a factorization runtime library, executable definition, or build flag."
+  },
+  {
+    "path": "lakefile.lean",
+    "baseline_blob": "a1b87406682dbf908d990f01676f326499b906e5",
+    "current_blob": "d7a6b7f5c4576d3435ffa5f39cb8bee459abd555",
+    "reason": "Combines current main's build-only registrations with the proof-side HexIntervalMathlib.RuntimeRuleConformance and RuntimeEmitConformance registrations; none enters hexbz_factor_service or changes a factorization runtime library, executable definition, or build flag."
+  },
+  {
+    "path": "lakefile.lean",
+    "baseline_blob": "a1b87406682dbf908d990f01676f326499b906e5",
+    "current_blob": "ce28c059fd9412e7f82e0dd5a482911ccd29b0ef",
+    "reason": "Combines current main's build-only, conformance, fixture, benchmark, and proof-side interval registrations with the HexMvGcd conformance executables; none changes a factorization runtime target, definition, build flag, or dependency."
+  },
+  {
+    "path": "HexPolyZ/Rational.lean",
+    "baseline_blob": "ba568b38f9482f906439858ac72b823d2b933be7",
+    "current_blob": "5495375e8339591996f2607e4a858f48e09a80b2",
+    "reason": "Exports two already-proved rational-polynomial size laws for proof reuse by HexPolyZGcd; no executable definition or factorization runtime call path changes."
+  },
+  {
+    "path": "lakefile.lean",
+    "baseline_blob": "a1b87406682dbf908d990f01676f326499b906e5",
+    "current_blob": "63a35adbd5c123b4fccd97b7a53e0316abad5fee",
+    "reason": "Combines current main's build-only, conformance, fixture, benchmark, and proof-side interval registrations with the HexPolyZGcd benchmark executable and proof-only HexPolyZGcdMathlib library; neither enters the factorization service target or changes its runtime dependency graph."
   },
   {
     "path": "lakefile.lean",
     "baseline_blob": "6dd80771ae2212333b2a9b925b52056e0037ff56",
     "current_blob": "2cd1a32cf3b269140e8ddbc35accb907c49ee79b",
     "reason": "Additionally registers the HexPrimalityMathlib companion on top of the already-attested HexPolyFpMathlib and interval experiment registrations; the factorization service targets are unchanged."
-  },
-  {
-    "path": "lakefile.lean",
-    "baseline_blob": "6dd80771ae2212333b2a9b925b52056e0037ff56",
-    "current_blob": "8630fd6ae9209094dd0a9d67dded5870fe1ea86a",
-    "reason": "Additionally registers the HexPrimality conformance driver targets on top of the already-attested HexPolyFpMathlib and interval experiment registrations; the factorization service targets are unchanged."
-  },
-  {
-    "path": "lakefile.lean",
-    "baseline_blob": "6dd80771ae2212333b2a9b925b52056e0037ff56",
-    "current_blob": "719821e7ca29eda1440ea688bb9dbaf64dda8880",
-    "reason": "Additionally registers the HexPrimality bench targets and kernel-replay probe on top of the already-attested HexPolyFpMathlib and interval experiment registrations; the factorization service targets are unchanged."
   }
 ]

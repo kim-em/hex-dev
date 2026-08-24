@@ -4,9 +4,13 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexBerlekamp.RabinSoundness
-import HexGFqRing.PolynomialQuotient
-import HexConway.Table
+module
+
+public import HexBerlekamp.RabinSoundness
+public import HexGFqRing.PolynomialQuotient
+public import HexConway.Table
+
+public section
 
 /-!
 Rabin irreducibility certificates for the committed Conway table entries

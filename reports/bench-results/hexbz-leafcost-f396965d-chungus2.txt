@@ -1,0 +1,109 @@
+# /tmp/hex-profile-runFactorChecksum-8.json.gz: 2100 leaf samples
+## categories
+  allocation                  673   32.0%
+  lean-runtime                616   29.3%
+  own-code                    497   23.7%
+  libc                        178    8.5%
+  gmp                         127    6.0%
+  other                         5    0.2%
+  unsymbolicated(hexbz_bench)      4    0.2%
+## top symbols
+   13.0%     273  mi_free  [hexbz_bench]
+    9.4%     198  mi_malloc_small  [hexbz_bench]
+    4.7%      98  mi_malloc  [hexbz_bench]
+    4.5%      94  lean_dec_ref_cold  [hexbz_bench]
+    4.2%      89  lean_apply_2  [hexbz_bench]
+    2.6%      54  l_Option_instDecidableEq___redArg  [hexbz_bench]
+    2.5%      53  _free  [libc.so.6]
+    2.5%      52  lean::lean_del_core_other(lean_object*, unsigned char, lean_object*&)  [hexbz_bench]
+    2.4%      51  lean_hex_word_poly_mul  [hexbz_bench]
+    2.3%      48  mi_free_size  [hexbz_bench]
+    2.3%      48  _GI___libc_malloc  [libc.so.6]
+    2.0%      42  lean_hex_zmod64_inv  [hexbz_bench]
+# /tmp/hex-profile-runFastPathPrecisionLocalChecksum-4.json.gz: 2321 leaf samples
+## categories
+  lean-runtime                640   27.6%
+  own-code                    613   26.4%
+  allocation                  606   26.1%
+  libc                        261   11.2%
+  gmp                         190    8.2%
+  unsymbolicated(hexbz_bench)      6    0.3%
+  other                         5    0.2%
+## top symbols
+    8.9%     206  mi_malloc_small  [hexbz_bench]
+    8.7%     202  mi_free  [hexbz_bench]
+    3.8%      89  mi_malloc  [hexbz_bench]
+    3.8%      88  lp_Hex_List_foldl___at___00__private_HexBerlekampZassenhaus_PrimeSelection_0__Hex_evalZPolyModNat_spec__0  [hexbz_bench]
+    3.7%      86  _GI___libc_malloc  [libc.so.6]
+    3.7%      86  _free  [libc.so.6]
+    3.6%      83  lean_dec_ref_cold  [hexbz_bench]
+    3.4%      78  lean::lean_del_core_other(lean_object*, unsigned char, lean_object*&)  [hexbz_bench]
+    2.8%      65  lean_apply_2  [hexbz_bench]
+    2.8%      64  mi_free_size  [hexbz_bench]
+    2.5%      57  l_Option_instDecidableEq___redArg  [hexbz_bench]
+    2.4%      56  lean_hex_zmod64_inv  [hexbz_bench]
+# /tmp/hex-profile-runFactorSlowChecksum-8.json.gz: 2019 leaf samples
+## categories
+  allocation                 1007   49.9%
+  lean-runtime                594   29.4%
+  own-code                    390   19.3%
+  other                        22    1.1%
+  gmp                           5    0.2%
+  libc                          1    0.0%
+## top symbols
+   24.6%     496  mi_free  [hexbz_bench]
+   18.5%     373  lp_Hex_List_filterTR_loop___at___00__private_HexBerlekampZassenhaus_Lattice_0__Hex_positiveDivisors_spec__0  [hexbz_bench]
+   18.3%     370  l_List_range_loop  [hexbz_bench]
+   13.5%     273  mi_malloc_small  [hexbz_bench]
+   10.3%     208  lean_inc_heartbeat  [hexbz_bench]
+    4.8%      96  mi_page_free_list_extend(mi_page_s*, unsigned long, unsigned long, mi_stats_s*)  [hexbz_bench]
+    4.7%      95  lean_free_object  [hexbz_bench]
+    1.2%      24  mi_find_page(mi_heap_s*, unsigned long, unsigned long)  [hexbz_bench]
+    0.4%       9  clock_gettime  [[vdso]]
+    0.3%       7  _mi_malloc_generic(mi_heap_s*, unsigned long, bool, unsigned long)  [hexbz_bench]
+    0.2%       5  mi_malloc  [hexbz_bench]
+    0.2%       5  _mi_page_retire(mi_page_s*)  [hexbz_bench]
+# /tmp/hex-profile-runFactorDegreeHeightChecksum-4.json.gz: 2087 leaf samples
+## categories
+  allocation                  720   34.5%
+  lean-runtime                714   34.2%
+  own-code                    269   12.9%
+  libc                        222   10.6%
+  gmp                         157    7.5%
+  unsymbolicated(hexbz_bench)      3    0.1%
+  other                         2    0.1%
+## top symbols
+   10.6%     221  lean_dec_ref_cold  [hexbz_bench]
+    9.5%     199  mi_malloc  [hexbz_bench]
+    7.7%     161  mi_malloc_small  [hexbz_bench]
+    6.9%     143  mi_free  [hexbz_bench]
+    6.6%     137  _free  [libc.so.6]
+    5.4%     112  mi_free_size  [hexbz_bench]
+    4.3%      89  lean_free_object  [hexbz_bench]
+    3.4%      72  _GI___libc_malloc  [libc.so.6]
+    3.0%      63  lean_array_to_list_impl  [hexbz_bench]
+    2.9%      61  lean::lean_del_core_other(lean_object*, unsigned char, lean_object*&)  [hexbz_bench]
+    2.8%      59  lean_st_ref_take  [hexbz_bench]
+    2.3%      49  l_instDecidableEqList___redArg  [hexbz_bench]
+# /tmp/hex-profile-runFactorFallbackProbeChecksum-8.json.gz: 2989 leaf samples
+## categories
+  allocation                 1016   34.0%
+  lean-runtime                897   30.0%
+  own-code                    896   30.0%
+  libc                         91    3.0%
+  gmp                          76    2.5%
+  other                        11    0.4%
+  unsymbolicated(hexbz_bench)      2    0.1%
+## top symbols
+   13.9%     416  mi_free  [hexbz_bench]
+   10.1%     303  mi_malloc_small  [hexbz_bench]
+    4.9%     147  lean_apply_2  [hexbz_bench]
+    4.6%     138  lean_dec_ref_cold  [hexbz_bench]
+    4.1%     124  mi_malloc  [hexbz_bench]
+    2.9%      87  mi_free_size  [hexbz_bench]
+    2.6%      78  lean::lean_del_core_other(lean_object*, unsigned char, lean_object*&)  [hexbz_bench]
+    2.5%      74  l_Option_instDecidableEq___redArg  [hexbz_bench]
+    2.2%      65  lean_free_object  [hexbz_bench]
+    2.2%      65  lean_hex_zmod64_inv  [hexbz_bench]
+    2.0%      61  lp_Hex_Hex_DensePoly_trimTrailingZerosGo___redArg  [hexbz_bench]
+    1.9%      58  lp_Hex_Hex_DensePoly_subtractScaledShiftStep___redArg  [hexbz_bench]

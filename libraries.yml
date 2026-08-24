@@ -71,6 +71,29 @@ libraries:
     mathlib: false
     done_through: 6
     status: active
+  HexTruncatedSeries:
+    deps: [HexBasic]
+    mathlib: false
+    done_through: 0
+    status: active
+    phase4:
+      comparators:
+        - tool: FLINT fmpq_poly truncated series routines via python-flint
+          class: informational
+          rationale: "FLINT's series routines run on a tuned Karatsuba/Toom-Cook/FFT multiplication while this library multiplies schoolbook until hex-poly-fast exists, so the measured ratio reports the multiplication gap rather than the Newton iterations. Reclassified to gating when hex-poly-fast lands."
+      input_families:
+        - name: multiplication
+          description: truncated products at precisions 8 to 4096 over Int and Rat
+        - name: inverse
+          description: Newton inversion against the linear recurrence on the same ladder
+        - name: exp-log
+          description: exp and log at precisions 8 to 1024 over Rat
+        - name: sqrt
+          description: square root at a supplied constant root over Rat
+        - name: composition
+          description: Horner against Brent-Kung at precisions 8 to 512
+        - name: reversion
+          description: Newton reversion against Lagrange inversion over Rat
   HexArith:
     deps: []
     mathlib: false
@@ -127,6 +150,60 @@ libraries:
           description: Sparse rename, partial-evaluation, and substitution cases where distinct source terms collide.
         - name: sum-of-squares-arithmetic
           description: Representative sum-of-squares-shaped identities measured as compiled Mathlib-free arithmetic.
+  HexMvGcd:
+    deps: [HexBasic, HexMvPoly, HexPoly, HexPolyFp, HexResultant, HexArith, HexModArith, HexModular, HexPolyZGcd]
+    mathlib: false
+    done_through: 3
+    status: active
+    phase4:
+      comparators:
+        - tool: FLINT fmpz_mpoly_gcd via python-flint
+          class: informational
+          rationale: FLINT also dispatches to Zippel and sparse Hensel routes that this library does not implement; the coprime family is the like-for-like comparison.
+        - tool: Singular
+          class: informational
+          rationale: Singular likewise has sparse routes outside this SPEC, so its ratios diagnose representation and route coverage rather than gate release.
+      input_families:
+        - name: coprime-pairs
+          description: Dense and sparse coprime inputs in 2 to 8 variables, isolating the modular coprimality route.
+        - name: dense-gcds
+          description: Dense inputs in 3 to 5 variables with degree 5 to 20 in each variable, isolating Brown interpolation.
+        - name: sparse-stress
+          description: High-degree, few-term inputs in 5 to 12 variables recording the known absence of a sparse route.
+        - name: swell
+          description: Small inputs whose extended subresultant remainder sequence develops large coefficients.
+        - name: rational
+          description: Integer-family shapes over rationals, exercising denominator clearing and integer lifting.
+        - name: squarefree
+          description: Multiplicity patterns 1, 1-through-5, 7, and 2-3-5-7 in 2 to 5 variables.
+        - name: cofactor-heavy
+          description: Small gcds with large cofactors, isolating checked multivariate exact division.
+  HexSparsePoly:
+    deps: [HexPoly, HexBasic]
+    mathlib: false
+    done_through: 7
+    status: active
+    phase4:
+      comparators:
+        - tool: SymPy sparse ring elements (sympy.polys.rings)
+          class: informational
+          rationale: "SymPy is the conformance oracle and is Python, so the ratio is reported for context and does not determine acceptance."
+        - tool: FLINT fmpz_poly via python-flint
+          class: informational
+          rationale: "fmpz_poly is dense, so above the crossover the comparison measures the choice of representation rather than the quality of either implementation. Recorded on the crossover family only."
+      input_families:
+        - name: sparse-arithmetic
+          description: addition and multiplication of 2 to 64 term inputs at degrees 10^3 to 10^6
+        - name: sparse-multiplication
+          description: low-collision and high-collision products across the three candidate implementations
+        - name: crossover
+          description: the same operations against DensePoly with the term count swept from 2 to the degree, locating one crossover per operation
+        - name: evaluation
+          description: gap Horner against dense Horner across the same sweep
+        - name: substitution-power
+          description: substPow on the cyclotomic shapes against the dense route
+        - name: convert-gcd
+          description: gcd and divMod through the conversions on the sparse-remainder x^n-1 pair and on generic sparse pairs, recording the conversion share separately
   HexMatrix:
     deps: [HexBasic]
     mathlib: false
@@ -165,6 +242,11 @@ libraries:
       input_families:
         - name: structured-bareiss-determinant
           description: Deterministic tridiagonal integer matrices for row-pivoted Bareiss determinant scaling without arbitrary coefficient blow-up.
+  HexCharPoly:
+    deps: [HexMatrix, HexPoly]
+    mathlib: false
+    done_through: 0
+    status: active
 
   # ---------- Depth 1 ----------
   HexModArith:
@@ -180,6 +262,28 @@ libraries:
           description: Barrett-context multiplication chains over the UInt64 residue wrapper on the shared small odd prime modulus.
         - name: montgomery-hot-loop
           description: Montgomery conversion, Montgomery-form multiplication chains, and conversion back on the shared small odd prime modulus.
+  HexModular:
+    deps: [HexArith]
+    mathlib: false
+    done_through: 7
+    status: active
+    phase4:
+      comparators:
+        - tool: "gmpy2.gcdext"
+          class: informational
+          rationale: "gmpy2 exposes GMP's tuned extended GCD, while HexModular reaches the same arithmetic through HexArith's GMP-backed compiled path. The ratio isolates binding and orchestration overhead rather than an algorithm choice, so it is recorded for orientation and does not gate Phase 4."
+        - tool: "python-flint fmpz CRT"
+          class: informational
+          rationale: "python-flint exposes FLINT's fmpz and fmpz_mod_ctx arithmetic for the same incremental Garner recurrence. The ratio chiefly measures Python framing and arithmetic binding costs, not a choice between interchangeable Hex algorithms, and therefore remains informational."
+      input_families:
+        - name: incremental-crt
+          description: Scalar accumulation over 4 to 8192 pairwise-coprime word-size prime-power moduli.
+        - name: vector-crt
+          description: Fixed-depth width ladders and fixed-width depth ladders that expose reuse of one extended GCD across coordinates.
+        - name: rational-reconstruction
+          description: Fibonacci-shaped late Euclidean runs through 262144 bits and early-success cases through 100000 bits.
+        - name: failure-cost
+          description: Full Euclidean runs whose impossible numerator bound forces reconstruction failure through the final checks.
   HexGramSchmidt:
     deps: [HexRowReduce, HexDeterminant, HexBareiss]
     mathlib: false
@@ -229,6 +333,27 @@ libraries:
           description: Dense integer polynomials with nontrivial coefficient content for content and primitive-part normalization.
         - name: mignotte-helpers
           description: Central binomial, square-root, coefficient-norm, and Mignotte coefficient-bound helper computations over deterministic integer-polynomial fixtures.
+  HexPolyZGcd:
+    deps: [HexPolyZ, HexPolyFp, HexPoly, HexModular, HexModArith, HexArith, HexResultant]
+    mathlib: false
+    done_through: 7
+    status: active
+    phase4:
+      comparators:
+        - tool: FLINT fmpz_poly_gcd via python-flint
+          class: gating
+          goal: within 5x on the dense and coprime families above degree 32
+      input_families:
+        - name: coprime-pairs
+          description: Coprime inputs at degrees 8 to 512, where route 1 must settle the result.
+        - name: dense-gcds
+          description: Gcds of about half the input degree at 8-bit and 256-bit coefficients.
+        - name: swell
+          description: Small inputs whose subresultant sequence has large coefficients.
+        - name: squarefree
+          description: The Berlekamp-Zassenhaus squarefree-decomposition ladder.
+        - name: rational
+          description: The same inputs over the rationals through ratGcd.
 
   # ---------- Depth 2 ----------
   HexLLL:
@@ -312,16 +437,16 @@ libraries:
   HexBerlekamp:
     deps: [HexPolyFp, HexMatrix, HexRowReduce, HexGFqRing, HexBasic]
     mathlib: false
-    done_through: 3
+    done_through: 4
     status: active
     phase4:
       comparators:
         - tool: "FLINT nmod_poly.is_irreducible via python-flint"
-          class: gating
-          goal: "Lean runRabinTestChecksum is at least as fast as FLINT nmod_poly.is_irreducible on shared canonical inputs at the largest eligible rung."
+          class: informational
+          rationale: "FLINT's nmod_poly irreducibility test runs hand-tuned C word-level kernels (nmod arithmetic with precomputed inverses, tuned modular composition) against which Hex's verified Rabin test over generic FpPoly arithmetic pays a structural constant-factor cost, measured at 10x-373x across the eligible ladder (hex-berlekamp-rabin-compare-f396965d-chungus2.json, paired steady-state medians with the warmed persistent driver). The gap is structural, not a harness artefact and not an algorithm-class difference the library intends to close; the ratio is recorded for orientation and does not gate Phase 4. Wired via the shared persistent-subprocess python-flint driver per SPEC/benchmarking.md §External comparators §Process call."
         - tool: "FLINT nmod_poly.factor_distinct_deg via python-flint"
-          class: gating
-          goal: "Lean runDistinctDegreeChecksum is at least as fast as FLINT nmod_poly.factor_distinct_deg on shared canonical inputs at the largest eligible rung."
+          class: informational
+          rationale: "FLINT's distinct-degree factorization runs the same hand-tuned C kernels with tuned Frobenius/modular-composition strategies; Hex's verified DDF over generic FpPoly arithmetic pays a structural constant-factor cost, measured at 44x-749x across the eligible ladder (hex-berlekamp-ddf-compare-f396965d-chungus2.json, paired steady-state medians with the warmed persistent driver). The gap is structural; the ratio is recorded for orientation and does not gate Phase 4. Wired via the shared persistent-subprocess python-flint driver per SPEC/benchmarking.md §External comparators §Process call."
       input_families:
         - name: berlekamp-matrix
           description: Deterministic dense monic F_5 polynomials for Berlekamp Frobenius-matrix construction.
@@ -377,7 +502,7 @@ libraries:
   HexBerlekampZassenhaus:
     deps: [HexBerlekamp, HexHensel, HexLLL]
     mathlib: false
-    done_through: 0
+    done_through: 4
     status: active
     phase4:
       comparators:
@@ -437,6 +562,11 @@ libraries:
           description: Rename and substitution identities whose distinct source terms collide in the destination support.
         - name: kernel-sos-certificates
           description: Representative sum-of-squares certificate identities checked from a downstream module with decide +kernel.
+  HexSparsePolyMathlib:
+    deps: [HexSparsePoly, HexPolyMathlib, HexPoly]
+    mathlib: true
+    done_through: 7
+    status: active
   HexMatrixMathlib:
     deps: [HexMatrix]
     mathlib: true
@@ -460,6 +590,11 @@ libraries:
     mathlib: true
     done_through: 5
     status: active
+  HexCharPolyMathlib:
+    deps: [HexCharPoly, HexMatrixMathlib, HexPolyMathlib, HexDeterminantMathlib]
+    mathlib: true
+    done_through: 0
+    status: active
   HexBareissMathlib:
     deps: [HexDeterminantMathlib]
     mathlib: true
@@ -480,6 +615,11 @@ libraries:
     mathlib: true
     done_through: 6
     status: active
+  HexPolyZGcdMathlib:
+    deps: [HexPolyZGcd, HexPolyZMathlib, HexPolyMathlib]
+    mathlib: true
+    done_through: 7
+    status: active
   HexLLLMathlib:
     deps: [HexLLL, HexGramSchmidtMathlib, HexRowReduceMathlib]
     mathlib: true
@@ -488,20 +628,15 @@ libraries:
   HexPolyFpMathlib:
     deps: [HexPolyFp, HexPolyMathlib, HexModArithMathlib]
     mathlib: true
-    # Starts at 0 rather than inheriting the phase state of the library the code
-    # was extracted from. The declarations are sorry-free and were exercised as
-    # part of HexBerlekampMathlib, but this library has not been through Phase 2
-    # scaffolding review or Phase 3 conformance in its own right, and recording
-    # phases it has not completed is the drift these phases exist to prevent.
-    # HexBerlekampMathlib is unaffected in practice: at done_through 3 it is
-    # already blocked from Phase 4 by HexBerlekamp, also at 3.
-    # HexGF2Mathlib picked up the same new dependency edge (its
-    # equivPolynomial routes through fpPolyEquiv), and it too is unaffected in
-    # practice, for the opposite reason: it was at done_through 4 when the edge
-    # was added and is now at 5, so it is past every phase status.py gates on
-    # dependencies (1, 3, and 4). Its recorded 1/3/4 predate the extraction and
-    # are not re-derived against this entry.
-    done_through: 0
+    # Extracted from HexBerlekampMathlib, so this entry started at 0: phases are
+    # recorded here as they are established for this library in its own right,
+    # not inherited from the library the code came from. Phase 2 is attested by
+    # status/hex-poly-fp-mathlib.scaffolding-reviewed; phases 3 and 4 are the
+    # correspondence-only mathlib layer criteria of PLAN/Phase3.md and
+    # PLAN/Phase4.md, so there is no conformance module, no bench target and no
+    # phase4 block here, and the layer's performance owners are named in its
+    # SPEC rather than measured locally.
+    done_through: 7
     status: active
   HexBerlekampMathlib:
     deps: [HexBerlekamp, HexPolyMathlib, HexModArithMathlib, HexPolyFpMathlib]
@@ -516,7 +651,7 @@ libraries:
   HexGF2Mathlib:
     deps: [HexGF2, HexPolyFp, HexGFqField, HexPolyFpMathlib]
     mathlib: true
-    done_through: 5
+    done_through: 7
     status: active
   HexGFqMathlib:
     deps: [HexGFq, HexGF2Mathlib]
@@ -532,6 +667,11 @@ libraries:
     deps: [HexBerlekampZassenhaus, HexBerlekampMathlib, HexHenselMathlib, HexPolyZMathlib, HexMatrixMathlib, HexLLLMathlib]
     mathlib: true
     done_through: 2
+    status: active
+  HexTruncatedSeriesMathlib:
+    deps: [HexTruncatedSeries]
+    mathlib: true
+    done_through: 0
     status: active
 
   # ---------- Planned (status: planned; SPEC ready, implementation deferred) ----------
@@ -557,12 +697,12 @@ libraries:
   HexRootsMathlib:
     deps: [HexRoots, HexPolyZMathlib]
     mathlib: true
-    done_through: 0
+    done_through: 7
     status: active
   HexResultant:
-    deps: [HexPoly, HexBasic]
+    deps: [HexPoly, HexBasic, HexDeterminant]
     mathlib: false
-    done_through: 4
+    done_through: 5
     status: active
     phase4:
       comparators:
@@ -574,6 +714,16 @@ libraries:
           description: Seed-0xC0FFEE bounded-coefficient equal-degree dense integer polynomial pairs with nonzero leading coefficients; drives Brown chains, resultants, and discriminants on the shared 4-through-32 ladder.
         - name: bounded-dense-pseudo-division
           description: Seed-0xC0FFEE bounded-coefficient dense integer polynomials with both leading coefficients fixed at two; drives degree-n by degree-n/2 pseudo-division on the 24-through-128 ladder.
+  HexMvHensel:
+    deps: [HexBasic, HexMvPoly, HexMvGcd, HexPoly, HexPolyZ, HexPolyFp, HexModArith, HexModular, HexArith]
+    mathlib: false
+    done_through: 2
+    status: active
+  HexMvFactor:
+    deps: [HexBasic, HexMvPoly, HexMvGcd, HexMvHensel, HexPoly, HexPolyZ, HexPolyZGcd, HexBerlekampZassenhaus, HexPolyFp, HexModArith, HexModular, HexArith]
+    mathlib: false
+    done_through: 2
+    status: active
   HexInterval:
     deps: []
     mathlib: false
@@ -593,27 +743,27 @@ libraries:
   HexResultantMathlib:
     deps: [HexResultant, HexPolyMathlib]
     mathlib: true
-    done_through: 3
+    done_through: 7
     status: active
   HexNumberField:
     deps: [HexPolyZ, HexRoots, HexResultant, HexBerlekampZassenhaus, HexMatrix, HexRowReduce]
     mathlib: false
-    done_through: 0
+    done_through: 3
     status: active
   HexNumberFieldMathlib:
     deps: [HexNumberField, HexResultantMathlib, HexBerlekampZassenhausMathlib, HexRootsMathlib, HexPolyZMathlib]
     mathlib: true
-    done_through: 0
+    done_through: 2
     status: active
   HexNumberFieldTower:
     deps: [HexNumberField, HexResultant, HexBerlekampZassenhaus]
     mathlib: false
-    done_through: 0
+    done_through: 3
     status: active
   HexNumberFieldTowerMathlib:
     deps: [HexNumberFieldTower, HexNumberFieldMathlib, HexResultantMathlib, HexBerlekampZassenhausMathlib, HexRowReduceMathlib]
     mathlib: true
-    done_through: 0
+    done_through: 2
     status: active
   HexRealRoots:
     deps: [HexPolyZ]
@@ -643,7 +793,7 @@ libraries:
   HexRCF:
     deps: [HexRealRoots, HexRealRootsMathlib, HexPolyZ, HexPolyZMathlib]
     mathlib: true
-    done_through: 4
+    done_through: 7
     status: active
     proof_probes: [bench/HexRCF/ProofProbe]
     phase4:

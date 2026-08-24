@@ -5,6 +5,7 @@ Authors: Kim Morrison
 -/
 
 import HexIntervalMathlib.Experiment.PntFks2Family
+import HexIntervalMathlib.PntFks2XpowConformance
 import HexInterval.Experiment.Frontend
 import HexInterval.Experiment.TargetRun
 
