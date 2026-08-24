@@ -364,6 +364,148 @@ def sqfPrimitiveSplit [IsMonomialOrder cmp]
   let unitInv := GcdOps.exactDiv 1 (GcdOps.normUnit primitive.leadingCoeff)
   (scalar * unitInv, polyNormalize primitive)
 
+omit [LawfulBezoutOps R] [GcdProducer R] in
+/-- The scalar and normalized primitive part reconstruct the input exactly. -/
+theorem sqfPrimitiveSplit_product [IsMonomialOrder cmp]
+    (p : MvPoly n R cmp) :
+    C (sqfPrimitiveSplit p).1 * (sqfPrimitiveSplit p).2 = p := by
+  let scalar := content p
+  let primitive := primPart p
+  let unit := GcdOps.normUnit primitive.leadingCoeff
+  let unitInv := GcdOps.exactDiv 1 unit
+  change C (scalar * unitInv) * polyNormalize primitive = p
+  by_cases hprimitive : primitive = 0
+  · have hreconstruct := content_mul_primPart p
+    change C scalar * primitive = p at hreconstruct
+    rw [hprimitive, MvPoly.mul_zero] at hreconstruct
+    rw [hprimitive, polyNormalize_zero, MvPoly.mul_zero]
+    exact hreconstruct
+  · cases hlead : primitive.leadingTerm with
+    | none =>
+        exact False.elim
+          (hprimitive ((leadingTerm_eq_none_iff primitive).mp hlead))
+    | some term =>
+        rcases term with ⟨m, c⟩
+        have hleadCoeff : primitive.leadingCoeff = c := by
+          rw [leadingCoeff_eq, hlead]
+          rfl
+        have hunit : unit = GcdOps.normUnit c := by
+          simp only [unit, hleadCoeff]
+        rcases LawfulGcdOps.normUnit_unit c with ⟨inverse, hinverse⟩
+        have hunitNe : GcdOps.normUnit c ≠ 0 := by
+          intro hzero
+          rw [hzero, Lean.Grind.Semiring.zero_mul] at hinverse
+          exact LawfulGcdOps.one_ne_zero hinverse.symm
+        have hinverse' : inverse * GcdOps.normUnit c = 1 := by
+          rw [Lean.Grind.CommSemiring.mul_comm]
+          exact hinverse
+        have hexact : GcdOps.exactDiv 1 (GcdOps.normUnit c) = inverse := by
+          have hcancel := LawfulGcdOps.exactDiv_cancel
+            inverse (GcdOps.normUnit c) hunitNe
+          rw [hinverse'] at hcancel
+          exact hcancel
+        have hunitInv : unitInv = inverse := by
+          simp only [unitInv, hunit, hexact]
+        have hpolyUnit : polyNormUnit primitive = C unit := by
+          unfold polyNormUnit
+          rw [hlead, hunit]
+        have hconstant :
+            (C unitInv : MvPoly n R cmp) * C unit = 1 := by
+          change monomial Mono.zero unitInv * monomial Mono.zero unit = 1
+          rw [monomial_mul_monomial, Mono.zero_mul, hunitInv, hunit,
+            hinverse']
+          rfl
+        have hcancelPoly :
+            (C unitInv : MvPoly n R cmp) * polyNormalize primitive =
+              primitive := by
+          rw [polyNormalize, hpolyUnit]
+          calc
+            C unitInv * (primitive * C unit) =
+                (C unitInv * primitive) * C unit :=
+              (MvPoly.mul_assoc ..).symm
+            _ = (primitive * C unitInv) * C unit := by
+              rw [MvPoly.mul_comm (C unitInv) primitive]
+            _ = primitive * (C unitInv * C unit) :=
+              MvPoly.mul_assoc ..
+            _ = primitive * 1 := by rw [hconstant]
+            _ = primitive := MvPoly.mul_one _
+        have hscalar :
+            (C (scalar * unitInv) : MvPoly n R cmp) =
+              C scalar * C unitInv := by
+          change monomial Mono.zero (scalar * unitInv) =
+            monomial Mono.zero scalar * monomial Mono.zero unitInv
+          rw [monomial_mul_monomial, Mono.zero_mul]
+        calc
+          C (scalar * unitInv) * polyNormalize primitive =
+              (C scalar * C unitInv) * polyNormalize primitive := by
+            rw [hscalar]
+          _ = C scalar * (C unitInv * polyNormalize primitive) :=
+            MvPoly.mul_assoc ..
+          _ = C scalar * primitive := by rw [hcancelPoly]
+          _ = p := content_mul_primPart p
+
+omit [LawfulBezoutOps R] [GcdProducer R] in
+/-- The polynomial component of the primitive split is canonical. -/
+theorem sqfPrimitiveSplit_normalized [IsMonomialOrder cmp]
+    (p : MvPoly n R cmp) :
+    polyNormalize (sqfPrimitiveSplit p).2 = (sqfPrimitiveSplit p).2 := by
+  simp only [sqfPrimitiveSplit]
+  exact polyNormalize_idem _
+
+omit [LawfulBezoutOps R] [GcdProducer R] in
+/-- A nonzero polynomial component of the split remains primitive after its
+normalization unit is applied. -/
+theorem sqfPrimitiveSplit_primitive [IsMonomialOrder cmp]
+    (p : MvPoly n R cmp) (hsecond : (sqfPrimitiveSplit p).2 ≠ 0) :
+    content (sqfPrimitiveSplit p).2 = 1 := by
+  let primitive := primPart p
+  change polyNormalize primitive ≠ 0 at hsecond
+  have hprimitive : primitive ≠ 0 := by
+    intro hzero
+    apply hsecond
+    rw [hzero, polyNormalize_zero]
+  have hcontentOne : content (1 : MvPoly n R cmp) = 1 := by
+    have honeUnit : GcdOps.isUnit (1 : R) = true :=
+      (LawfulGcdOps.isUnit_iff 1).mpr
+        ⟨1, Lean.Grind.Semiring.one_mul 1⟩
+    have hnormalizeOne : normalize (1 : R) = 1 :=
+      LawfulGcdOps.normalize_unit 1 honeUnit
+    unfold content scalarContent
+    change ((match (1 : MvPoly n R cmp).termsList with
+      | [] => (0 : R)
+      | (_, c) :: terms =>
+          normalize (terms.foldl (fun g term => GcdOps.gcd g term.2) c)) :
+        R) = (1 : R)
+    change ((match
+      (monomial Mono.zero (1 : R) : MvPoly n R cmp).termsList with
+      | [] => (0 : R)
+      | (_, c) :: terms =>
+          normalize (terms.foldl (fun g term => GcdOps.gcd g term.2) c)) :
+        R) = (1 : R)
+    rw [termsList_monomial, ite_eq_right LawfulGcdOps.one_ne_zero]
+    exact hnormalizeOne
+  have hunitContent : content (polyNormUnit primitive) = 1 := by
+    rcases (polyIsUnit_iff (polyNormUnit primitive)).mp
+        (polyNormUnit_isUnit primitive) with ⟨inverse, hinverse⟩
+    have hproduct := congrArg content hinverse
+    rw [content_mul, hcontentOne] at hproduct
+    have hbaseUnit : GcdOps.isUnit (content (polyNormUnit primitive)) = true :=
+      (LawfulGcdOps.isUnit_iff _).mpr ⟨content inverse, hproduct⟩
+    calc
+      content (polyNormUnit primitive) =
+          normalize (content (polyNormUnit primitive)) :=
+        (normalize_scalarContent _).symm
+      _ = 1 := LawfulGcdOps.normalize_unit _ hbaseUnit
+  have hp : p ≠ 0 := by
+    intro hzero
+    subst p
+    exact hprimitive (by simp [primitive])
+  have hprimitiveContent : content primitive = 1 := by
+    simpa only [primitive] using content_primPart hp
+  change content (polyNormalize primitive) = 1
+  rw [polyNormalize, content_mul, hprimitiveContent,
+    hunitContent, Lean.Grind.Semiring.one_mul]
+
 /-- Arity-indexed decomposition operation.  Packaging the recursive call
 makes the coefficient-content descent structurally decreasing in the arity. -/
 structure SqfOpsAt (R : Type u) [Zero R] (n : Nat) : Type (u + 1) where
