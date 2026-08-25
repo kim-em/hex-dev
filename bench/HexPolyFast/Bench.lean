@@ -50,7 +50,9 @@ def runKaratsubaSkew (input : Binary) : UInt64 :=
 def runKaratsubaSquare (input : Binary) : UInt64 :=
   checksum (squareWith (karatsubaPlan 32) input.left)
 
-setup_benchmark runSchoolbook n => n * n
+/- Cost model: a balanced length-`n` schoolbook convolution evaluates one
+coefficient product for each input pair, hence `n²` ring multiplications. -/
+setup_benchmark runSchoolbook n => n ^ 2
   with prep := prepBalanced
   where {
     paramFloor := 4
@@ -62,9 +64,10 @@ setup_benchmark runSchoolbook n => n * n
     tags := #["multiplication", "schoolbook", "balanced"]
   }
 
-/- `n * sqrt n` is the integer-valued Karatsuba-range surrogate for
-`n^(log₂ 3)`; the nearby 31/32/33 rungs expose the fixed cutoff. -/
-setup_benchmark runKaratsuba n => n * Nat.sqrt n
+/- Cost model: balanced Karatsuba satisfies `T(n) = 3T(n/2) + O(n)`, hence
+`T(n) = Θ(n^(log₂ 3))`; `n * sqrt n` is its integer-valued surrogate.
+The nearby 31/32/33 rungs expose the fixed cutoff. -/
+setup_benchmark runKaratsuba n => n * (Nat.sqrt n)
   with prep := prepBalanced
   where {
     paramFloor := 4
@@ -76,7 +79,10 @@ setup_benchmark runKaratsuba n => n * Nat.sqrt n
     tags := #["multiplication", "karatsuba", "balanced"]
   }
 
-setup_benchmark runKaratsubaSquare n => n * Nat.sqrt n
+/- Cost model: specialized squaring performs three recursive squares plus
+linear combination work, so it obeys the same `Θ(n^(log₂ 3))` recurrence;
+`n * sqrt n` is the integer-valued Karatsuba-range surrogate. -/
+setup_benchmark runKaratsubaSquare n => n * (Nat.sqrt n)
   with prep := prepBalanced
   where {
     paramFloor := 4
@@ -88,7 +94,10 @@ setup_benchmark runKaratsubaSquare n => n * Nat.sqrt n
     tags := #["multiplication", "karatsuba", "square"]
   }
 
-setup_benchmark runKaratsubaSkew n => n * Nat.sqrt n
+/- Cost model: the 64:1 dispatcher partitions the long operand into 64
+length-`n` blocks.  That constant factor preserves the balanced Karatsuba
+bound `Θ(n^(log₂ 3))`, represented by the `n * sqrt n` surrogate. -/
+setup_benchmark runKaratsubaSkew n => n * (Nat.sqrt n)
   with prep := prepSkew
   where {
     paramFloor := 4
