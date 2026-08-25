@@ -107,6 +107,44 @@ def runDirectEval (input : MultipointInput) : UInt64 :=
 def runMultipointEval (input : MultipointInput) : UInt64 :=
   checksumValues (input.plan.eval input.polynomial)
 
+structure InterpolationInput where
+  points : Array Rat
+  values : Array Rat
+  plan : Option (InterpPlan Rat)
+
+instance : Hashable InterpolationInput where
+  hash input := mixHash (hash input.points) (hash input.values)
+
+def prepInterpolation (n : Nat) : InterpolationInput :=
+  let points := (List.range n).map (fun (i : Nat) => (i : Rat)) |>.toArray
+  let values := points.map fun x => x * x * x - 7 * x + 11
+  { points
+    values
+    plan := InterpPlan.build? (karatsubaPlan 32) points }
+
+/-- Direct Lagrange interpolation, independently rebuilding every numerator
+and denominator. This is the executable comparator for the reusable plan. -/
+def directLagrange (points values : Array Rat) : DensePoly Rat :=
+  let n := min points.size values.size
+  (List.range n).foldl (fun sum i =>
+    let ai := points.getD i 0
+    let numerator := (List.range n).foldl (fun product j =>
+      if i = j then product else product * pointFactor (points.getD j 0)) 1
+    let denominator := (List.range n).foldl (fun product j =>
+      if i = j then product else product * (ai - points.getD j 0)) 1
+    sum + C (values.getD i 0 * denominator⁻¹) * numerator) 0
+
+def runDirectInterpolation (input : InterpolationInput) : UInt64 :=
+  checksumRat (directLagrange input.points input.values)
+
+def runPlannedInterpolation (input : InterpolationInput) : UInt64 :=
+  match input.plan with
+  | none => 0
+  | some plan =>
+      match plan.interpolate? input.values with
+      | none => 0
+      | some p => checksumRat p
+
 /- Cost model: a balanced length-`n` schoolbook convolution evaluates one
 coefficient product for each input pair, hence `n²` ring multiplications. -/
 setup_benchmark runSchoolbook n => n ^ 2
@@ -237,6 +275,36 @@ setup_benchmark runMultipointEval n => n * (Nat.sqrt n) * (Nat.log2 n + 1)
     targetInnerNanos := 200000000
     signalFloorMultiplier := 1.0
     tags := #["multipoint", "remainder-tree", "reused-plan"]
+  }
+
+/- Direct Lagrange construction rebuilds `n` products of `n` linear factors;
+schoolbook multiplication by the growing numerators gives a cubic
+coefficient-operation model. -/
+setup_benchmark runDirectInterpolation n => n ^ 3
+  with prep := prepInterpolation
+  where {
+    paramFloor := 4
+    paramCeiling := 1024
+    paramSchedule := .custom #[4, 16, 32, 64, 128, 256, 512, 1024]
+    maxSecondsPerCall := 3.0
+    targetInnerNanos := 200000000
+    signalFloorMultiplier := 1.0
+    tags := #["interpolation", "lagrange", "direct"]
+  }
+
+/- With the distinct-point plan prepared outside the timed call, bottom-up
+combination follows the balanced product shape in `O(M(n) log n)` work. -/
+setup_benchmark runPlannedInterpolation n =>
+    n * (Nat.sqrt n) * (Nat.log2 n + 1)
+  with prep := prepInterpolation
+  where {
+    paramFloor := 4
+    paramCeiling := 4096
+    paramSchedule := .custom #[4, 16, 31, 32, 33, 64, 256, 1024, 4096]
+    maxSecondsPerCall := 3.0
+    targetInnerNanos := 200000000
+    signalFloorMultiplier := 1.0
+    tags := #["interpolation", "product-tree", "reused-plan"]
   }
 
 end Hex.PolyFastBench

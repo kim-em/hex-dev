@@ -16,6 +16,7 @@ public meta import HexPolyFast.Reciprocal
 public meta import HexPolyFast.Division
 public meta import HexPolyFast.Tree
 public meta import HexPolyFast.Multipoint
+public meta import HexPolyFast.Interpolation
 
 public section
 
@@ -133,5 +134,27 @@ private def evalPoly : DensePoly Int := ofList [7, -4, 3, 2, -1]
 #guard (EvalPlan.build plan (#[] : Array Int)).evalImpl evalPoly = #[]
 #guard tree.nodeProduct? 3 0 = some tree.root
 #guard tree.nodeProduct? 4 0 = none
+
+private def interpPoints : Array Rat := #[-1, 0, 2]
+private def interpValues : Array Rat := #[6, 3, 3]
+private def interpPoly : DensePoly Rat := ofList [3, -2, 1]
+
+#guard (InterpPlan.build? (karatsubaPlan 2) interpPoints).isSome
+#guard (InterpPlan.build? (karatsubaPlan 2) (#[1, 2, 1] : Array Rat)).isNone
+#guard match InterpPlan.build? (karatsubaPlan 2) interpPoints with
+  | none => false
+  | some interpolation => interpolation.interpolate? #[6, 3] = none
+#guard match InterpPlan.build? (karatsubaPlan 2) interpPoints with
+  | none => false
+  | some interpolation => interpolation.interpolate? interpValues = some interpPoly
+#guard match InterpPlan.build? (karatsubaPlan 2) interpPoints with
+  | none => false
+  | some interpolation =>
+      match interpolation.interpolate? interpValues with
+      | none => false
+      | some p => interpolation.evalPlan.evalImpl p = interpValues
+#guard match InterpPlan.build? (karatsubaPlan 2) (#[] : Array Rat) with
+  | none => false
+  | some interpolation => interpolation.interpolate? #[] = some 0
 
 end HexPolyFast.Conformance

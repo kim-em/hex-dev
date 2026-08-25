@@ -14,6 +14,7 @@ public import HexPolyFast.Reciprocal
 public import HexPolyFast.Division
 public import HexPolyFast.Tree
 public import HexPolyFast.Multipoint
+public import HexPolyFast.Interpolation
 
 public section
 

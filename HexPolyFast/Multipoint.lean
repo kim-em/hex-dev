@@ -29,10 +29,10 @@ attribute [local instance 1000] Lean.Grind.Semiring.ofNat
 variable {R : Type u} [DecidableEq R] [Lean.Grind.CommRing R]
 
 /-- The monic linear factor vanishing at `a`. -/
-private def pointFactor (a : R) : DensePoly R :=
+def pointFactor (a : R) : DensePoly R :=
   ofList [0 - a, 1]
 
-private theorem pointFactor_eq (a : R) :
+theorem pointFactor_eq (a : R) :
     pointFactor a = monomial 1 1 - C a := by
   apply ext_coeff
   intro i
@@ -44,12 +44,15 @@ private theorem pointFactor_eq (a : R) :
       | zero => simp; change (1 : R) = 1 - 0; grind
       | succ i => simp; change (0 : R) = 0 - 0; grind
 
-private theorem pointFactor_eval (a : R) : (pointFactor a).eval a = 0 := by
+theorem pointFactor_eval_at (a x : R) : (pointFactor a).eval x = x - a := by
   rw [pointFactor_eq, eval_sub_ring, eval_monomial_semiring, eval_C_semiring,
     Lean.Grind.Semiring.pow_one, Lean.Grind.Semiring.one_mul]
+
+@[simp] theorem pointFactor_eval (a : R) : (pointFactor a).eval a = 0 := by
+  rw [pointFactor_eval_at]
   grind
 
-private theorem pointFactor_size (a : R) (hone : (1 : R) ≠ 0) :
+theorem pointFactor_size (a : R) (hone : (1 : R) ≠ 0) :
     (pointFactor a).size = 2 := by
   apply Nat.le_antisymm
   · exact size_ofList_le _
@@ -67,7 +70,7 @@ private theorem eq_zero_of_one_eq_zero_ring (h : (1 : R) = 0) (a : R) : a = 0 :=
     _ = a * 0 := by rw [h]
     _ = 0 := Lean.Grind.Semiring.mul_zero a
 
-private theorem pointFactor_monic (a : R) : (pointFactor a).Monic := by
+theorem pointFactor_monic (a : R) : (pointFactor a).Monic := by
   by_cases h : (1 : R) = 0
   · rw [monic_iff_leadingCoeff_eq_one, h]
     exact eq_zero_of_one_eq_zero_ring h _
@@ -246,6 +249,11 @@ def build (mul : MulPlan R) (points : Array R) : EvalPlan R :=
 
 /-- The planned point sequence. -/
 def points (plan : EvalPlan R) : Array R := plan.pointsData
+
+/-- Building an evaluation plan preserves the supplied point sequence. -/
+@[simp] theorem points_build (mul : MulPlan R) (points : Array R) :
+    (build mul points).points = points := by
+  rfl
 
 /-- Number of planned points. -/
 def size (plan : EvalPlan R) : Nat := plan.points.size

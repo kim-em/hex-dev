@@ -173,6 +173,12 @@ It is zero for the zero divisor and for a divisor larger than the dividend. -/
 def quotientLength (p q : DensePoly R) : Nat :=
   if q.size = 0 || p.size < q.size then 0 else p.size - q.size + 1
 
+/-- Expansion of the quotient-length guard. -/
+theorem quotientLength_eq (p q : DensePoly R) :
+    quotientLength p q =
+      if q.size = 0 || p.size < q.size then 0 else p.size - q.size + 1 := by
+  rfl
+
 /-- A reusable divisor with a reciprocal cached to a fixed capacity. -/
 structure DivPlan (R : Type u) [DecidableEq R] [Lean.Grind.CommRing R] where
   mul : MulPlan R
@@ -221,6 +227,18 @@ def DivPlan.ofMonic (mul : MulPlan R) (q : DensePoly R)
 @[simp] theorem DivPlan.divisor_ofMonic (mul : MulPlan R) (q : DensePoly R)
     (hq : Monic q) (hqne : q ≠ 0) (capacity : Nat) :
     (DivPlan.ofMonic mul q hq hqne capacity).divisor = q := by
+  rfl
+
+/-- A monic division plan retains its supplied multiplication plan. -/
+@[simp] theorem DivPlan.mul_ofMonic (mul : MulPlan R) (q : DensePoly R)
+    (hq : Monic q) (hqne : q ≠ 0) (capacity : Nat) :
+    (DivPlan.ofMonic mul q hq hqne capacity).mul = mul := by
+  rfl
+
+/-- A monic division plan retains its supplied capacity. -/
+@[simp] theorem DivPlan.capacity_ofMonic (mul : MulPlan R) (q : DensePoly R)
+    (hq : Monic q) (hqne : q ≠ 0) (capacity : Nat) :
+    (DivPlan.ofMonic mul q hq hqne capacity).capacity = capacity := by
   rfl
 
 /-- Build a cached plan for an arbitrary nonzero divisor over a field. -/
@@ -461,6 +479,24 @@ theorem DivPlan.mod_eq (plan : DivPlan R) (p : DensePoly R)
     plan.mod p hcap =
       p - mulWith plan.mul (plan.quotient p hcap) plan.divisor := by
   rfl
+
+/-- A cached remainder has fewer coefficients than its divisor. -/
+theorem DivPlan.size_mod_le (plan : DivPlan R) (p : DensePoly R)
+    (hcap : quotientLength p plan.divisor ≤ plan.capacity) :
+    (plan.mod p hcap).size ≤ plan.divisor.size - 1 := by
+  rw [plan.mod_eq p hcap]
+  exact plan.remainder_size_le p hcap
+
+/-- Taking a cached remainder preserves evaluation at every zero of the
+divisor. -/
+theorem DivPlan.eval_mod (plan : DivPlan R) (p : DensePoly R)
+    (hcap : quotientLength p plan.divisor ≤ plan.capacity) (a : R)
+    (hzero : plan.divisor.eval a = 0) :
+    (plan.mod p hcap).eval a = p.eval a := by
+  rw [plan.mod_eq p hcap]
+  simp only [eval_sub_ring, mulWith_eq, eval_mul_commring, hzero,
+    Lean.Grind.Semiring.mul_zero]
+  grind
 
 /-- One-shot reciprocal division by a monic polynomial. -/
 def divModMonicWith (mul : MulPlan R) (p q : DensePoly R) (hq : Monic q) :
