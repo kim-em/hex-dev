@@ -578,7 +578,11 @@ and `u · x + v · 2 = 1` has no solution in `ℤ[x]`. The same holds in
 `R[x₁, …, xₙ]` over any base that is not a field, and over a field as
 soon as `n ≥ 2` (`x₁` and `x₂` are coprime with no Bézout identity).
 
-Two things do work, and both are supported.
+Three things do work, and all are supported. A direct polynomial Bézout
+identity, when one happens to exist, is the cheapest: replay
+`u · f' + v · h' = 1` without claiming that every coprime pair admits such
+an identity. The modular and recursive witnesses below cover pairs for which
+no direct identity exists.
 
 ### The modular witness, which is primary when available
 
@@ -634,6 +638,7 @@ mutual
       [Std.TransCmp cmp] → [Std.LawfulEqCmp cmp] → Type u
     | unit : CoprimeCert n R cmp
     | base (u v : R) : CoprimeCert 0 R cmp
+    | bezout (u v : MvPoly n R cmp) : CoprimeCert n R cmp
     | split (i : Fin (n+1)) (cmp' : Mono n → Mono n → Ordering)
         [IsMonomialOrder cmp'] [One R] [Add R] [Mul R]
         (P : ZMod64.Prime)
@@ -698,8 +703,9 @@ typeclass search. Producers try the smallest usable prime because kernel
 replay checks its primality proof and the project-local trial proof becomes
 expensive near the 31-bit limit.
 `splitBezout` checks `r ≠ 0`, `u · f + v · h = constIn i cmp' r`, the two
-content certificates, and the same recursive check. `base` checks the
-Bézout identity in `R`, and `unit` checks that one side is a unit.
+content certificates, and the same recursive check. `bezout` checks the
+direct identity `u · f + v · h = 1`; `base` checks its scalar analogue in
+`R`, and `unit` checks that one side is a unit.
 `ratLift` checks `scaleL ≠ 0`, `scaleR ≠ 0`, that the two rational inputs
 are the stated scalar multiples of the coefficientwise `Int → Rat` images,
 that both integer models have `scalarContent = 1`, and that `cert` checks
@@ -1544,7 +1550,7 @@ oracle's normalisation conventions.
 Per [SPEC/benchmarking.md](../../SPEC/benchmarking.md), with drivers at
 `bench/HexMvGcd/Bench.lean`. Native only for throughput. A separate
 `bench/HexMvGcd/Kernel.lean` suite replays valid and one-field-corrupted
-certificates through `by decide +kernel`: base, modular split,
+certificates through `by decide +kernel`: base, direct Bézout, modular split,
 `splitBezout`, `ratLift`, nested content folds, zero, and unit cases. Hex-mv-poly's
 kernel suite cannot substitute for this recursive checker coverage.
 
