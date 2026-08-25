@@ -321,26 +321,172 @@ theorem coeff_low_mul_low (n : Nat) (a b : DensePoly R) (i : Nat)
   simp [hi, h2i]
   grind
 
-/-- Prefix-pruned Karatsuba slice.  Coefficients of either operand above the
-exclusive end of the requested interval cannot contribute, so they are
-removed before the recursive product.  Unlike the former schoolbook fallback,
-this retains Karatsuba recursion for every requested interval. -/
-def karatsubaSlice (cutoff lo len : Nat) (a b : DensePoly R) : DensePoly R :=
-  let hi := lo + len
-  coeffSlice lo len
-    (mulKaratsuba cutoff (low hi a) (low hi b))
+/-- Fuelled interval-pruned Karatsuba recursion.  At a split, each of the
+three mathematical subproducts is computed once over the smallest bounding
+interval containing all of its shifted contributions to `[lo, lo + len)`.
+Branches whose shifted output starts beyond the interval receive length zero. -/
+@[expose]
+def karatsubaSliceAux (cutoff : Nat) :
+    Nat → Nat → Nat → DensePoly R → DensePoly R → DensePoly R
+  | 0, lo, len, a, b => schoolbookSlice lo len a b
+  | fuel + 1, lo, len, a, b =>
+      if a.size ≤ max 1 cutoff || b.size ≤ max 1 cutoff then
+        schoolbookSlice lo len a b
+      else
+        let k := (max a.size b.size + 1) / 2
+        let a₀ := low k a
+        let a₁ := high k a
+        let b₀ := low k b
+        let b₁ := high k b
+        let hi := lo + len
+        let base₀ := lo - k
+        let base₁ := lo - k
+        let base₂ := lo - 2 * k
+        let z₀ := karatsubaSliceAux cutoff fuel base₀ (hi - base₀) a₀ b₀
+        let z₁ := karatsubaSliceAux cutoff fuel base₁
+          ((hi - k) - base₁) (a₀ + a₁) (b₀ + b₁)
+        let z₂ := karatsubaSliceAux cutoff fuel base₂
+          ((hi - k) - base₂) a₁ b₁
+        ofList ((List.range len).map fun i =>
+          let d := lo + i
+          z₀.coeff (d - base₀) +
+            (if k ≤ d then
+              z₁.coeff (d - k - base₁) -
+                z₀.coeff (d - k - base₀) -
+                z₂.coeff (d - k - base₂)
+            else 0) +
+            if 2 * k ≤ d then z₂.coeff (d - 2 * k - base₂) else 0)
 
-/-- Prefix-pruned Karatsuba slicing has the exact planned-slice semantics. -/
+/-- Every fuelled interval recursion returns exactly the requested product
+coefficients. -/
+theorem coeff_karatsubaSliceAux (cutoff fuel lo len : Nat)
+    (a b : DensePoly R) (i : Nat) :
+    (karatsubaSliceAux cutoff fuel lo len a b).coeff i =
+      if i < len then (a * b).coeff (lo + i) else 0 := by
+  induction fuel generalizing lo len a b i with
+  | zero => exact coeff_schoolbookSlice lo len a b i
+  | succ fuel ih =>
+      rw [karatsubaSliceAux]
+      split
+      · exact coeff_schoolbookSlice lo len a b i
+      · dsimp only
+        rw [coeff_ofList]
+        by_cases hil : i < len
+        · rw [List.getD_eq_getElem?_getD]
+          simp only [List.getElem?_map, List.getElem?_range, hil,
+            Option.map_some, Option.getD_some]
+          let k := (max a.size b.size + 1) / 2
+          let a₀ := low k a
+          let a₁ := high k a
+          let b₀ := low k b
+          let b₁ := high k b
+          let hi := lo + len
+          let base₀ := lo - k
+          let base₁ := lo - k
+          let base₂ := lo - 2 * k
+          have hprod :
+              a₀ * b₀ + shift k
+                  ((a₀ + a₁) * (b₀ + b₁) - a₀ * b₀ - a₁ * b₁) +
+                    shift (2 * k) (a₁ * b₁) = a * b := by
+            rw [karatsuba_combine]
+            dsimp [a₀, a₁, b₀, b₁]
+            rw [low_add_shift_high, low_add_shift_high]
+          simp only [ih]
+          have hc := congrArg (fun p : DensePoly R => p.coeff (lo + i)) hprod
+          have hz : (0 : R) + 0 = 0 := by grind
+          have hzs : (0 : R) - 0 = 0 := by grind
+          simp only [coeff_add _ _ _ hz, coeff_sub _ _ _ hzs,
+            coeff_shift] at hc
+          have hzero : (Zero.zero : R) = 0 := rfl
+          simp only [hzero] at hc
+          have h₀ : lo + i - base₀ < hi - base₀ := by
+            dsimp [hi, base₀]
+            omega
+          have he₀ : base₀ + (lo + i - base₀) = lo + i := by
+            dsimp [base₀]
+            omega
+          rw [_root_.ite_eq_left h₀, he₀]
+          by_cases hk : k ≤ lo + i
+          · have h₁ : lo + i - k - base₁ < (hi - k) - base₁ := by
+              dsimp [hi, base₁]
+              omega
+            have h₀' : lo + i - k - base₀ < hi - base₀ := by
+              dsimp [hi, base₀]
+              omega
+            have h₂ : lo + i - k - base₂ < (hi - k) - base₂ := by
+              dsimp [hi, base₂]
+              omega
+            have he₁ : base₁ + (lo + i - k - base₁) = lo + i - k := by
+              dsimp [base₁]
+              omega
+            have he₀' : base₀ + (lo + i - k - base₀) = lo + i - k := by
+              dsimp [base₀]
+              omega
+            have he₂ : base₂ + (lo + i - k - base₂) = lo + i - k := by
+              dsimp [base₂]
+              omega
+            rw [_root_.ite_eq_left hk, _root_.ite_eq_left h₁,
+              _root_.ite_eq_left h₀', _root_.ite_eq_left h₂]
+            by_cases h2k : 2 * k ≤ lo + i
+            · have h₂' : lo + i - 2 * k - base₂ < (hi - k) - base₂ := by
+                dsimp [hi, base₂]
+                omega
+              have he₂' : base₂ + (lo + i - 2 * k - base₂) =
+                  lo + i - 2 * k := by
+                dsimp [base₂]
+                omega
+              rw [_root_.ite_eq_left h2k, _root_.ite_eq_left h₂', he₂']
+              simp only [_root_.ite_true]
+              rw [_root_.if_neg (by omega), _root_.if_neg (by omega)] at hc
+              grind
+            · rw [_root_.ite_eq_right h2k]
+              simp only [_root_.ite_true]
+              rw [_root_.if_neg (by omega), _root_.if_pos (by omega)] at hc
+              grind
+          · have h2k : ¬2 * k ≤ lo + i := by omega
+            rw [_root_.ite_eq_right hk, _root_.ite_eq_right h2k]
+            simp only [_root_.ite_true]
+            rw [_root_.if_pos (by omega), _root_.if_pos (by omega)] at hc
+            grind
+        · have hlen :
+              (List.map
+                (fun i =>
+                  let k := (max a.size b.size + 1) / 2
+                  let a₀ := low k a
+                  let a₁ := high k a
+                  let b₀ := low k b
+                  let b₁ := high k b
+                  let hi := lo + len
+                  let base₀ := lo - k
+                  let base₁ := lo - k
+                  let base₂ := lo - 2 * k
+                  let z₀ := karatsubaSliceAux cutoff fuel base₀ (hi - base₀) a₀ b₀
+                  let z₁ := karatsubaSliceAux cutoff fuel base₁
+                    ((hi - k) - base₁) (a₀ + a₁) (b₀ + b₁)
+                  let z₂ := karatsubaSliceAux cutoff fuel base₂
+                    ((hi - k) - base₂) a₁ b₁
+                  let d := lo + i
+                  z₀.coeff (d - base₀) +
+                    (if k ≤ d then
+                      z₁.coeff (d - k - base₁) - z₀.coeff (d - k - base₀) -
+                        z₂.coeff (d - k - base₂)
+                    else 0) +
+                    if 2 * k ≤ d then z₂.coeff (d - 2 * k - base₂) else 0)
+                (List.range len)).length ≤ i := by simp; omega
+          rw [List.getD_eq_getElem?_getD]
+          simp [hil]
+          rfl
+
+/-- Interval-pruned Karatsuba slicing. -/
+def karatsubaSlice (cutoff lo len : Nat) (a b : DensePoly R) : DensePoly R :=
+  karatsubaSliceAux cutoff (max a.size b.size) lo len a b
+
+/-- Interval-pruned Karatsuba slicing has the exact planned-slice semantics. -/
 theorem coeff_karatsubaSlice (cutoff lo len : Nat) (a b : DensePoly R)
     (i : Nat) :
     (karatsubaSlice cutoff lo len a b).coeff i =
-      if i < len then (a * b).coeff (lo + i) else 0 := by
-  unfold karatsubaSlice
-  rw [coeff_coeffSlice]
-  split <;> rename_i hi
-  · rw [mulKaratsuba_eq]
-    exact coeff_low_mul_low (lo + len) a b (lo + i) (by omega)
-  · rfl
+      if i < len then (a * b).coeff (lo + i) else 0 :=
+  coeff_karatsubaSliceAux cutoff _ lo len a b i
 
 /-- A lawful Karatsuba plan. -/
 def karatsubaPlan (cutoff : Nat) : MulPlan R where
