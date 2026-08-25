@@ -50,6 +50,12 @@ private def alreadyHNF : Matrix Int 3 3 :=
   Matrix.ofFn fun i j => #[#[2, 1, 0], #[0, 3, 2], #[0, 0, 0]][i.val]![j.val]!
 private def pivotOne : Matrix Int 3 3 :=
   Matrix.ofFn fun i j => #[#[3, -2, 7], #[2, -1, 4], #[5, -3, 11]][i.val]![j.val]!
+private def negativePivots : Matrix Int 3 3 :=
+  Matrix.ofFn fun i j =>
+    #[#[-4, -6, -8], #[-2, -5, -7], #[-3, -1, -9]][i.val]![j.val]!
+private def growth20 : Matrix Int 20 20 :=
+  Matrix.ofFn fun i j =>
+    Int.ofNat (((i.val + 1) * 37 + (j.val + 3) * 19 + 11) % 21) - 10
 
 def emitAll : IO Unit := do
   emitCase "zero/2x2" zero22
@@ -60,8 +66,9 @@ def emitAll : IO Unit := do
   emitCase "negative-last/2x2" negativeLast
   emitCase "already-hnf/3x3" alreadyHNF
   emitCase "pivot-one/3x3" pivotOne
+  emitCase "negative-pivots/3x3" negativePivots
+  emitCase "growth/20x20" growth20
 
 end Hex.HermiteEmit
 
 def main : IO Unit := Hex.HermiteEmit.emitAll
-
