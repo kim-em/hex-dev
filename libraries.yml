@@ -74,13 +74,13 @@ libraries:
   HexTruncatedSeries:
     deps: [HexBasic]
     mathlib: false
-    done_through: 3
+    done_through: 5
     status: active
     phase4:
       comparators:
         - tool: FLINT fmpq_poly truncated series routines via python-flint
           class: informational
-          rationale: "FLINT's series routines run on a tuned Karatsuba/Toom-Cook/FFT multiplication while this library multiplies schoolbook until hex-poly-fast exists, so the measured ratio reports the multiplication gap rather than the Newton iterations. Reclassified to gating when hex-poly-fast lands."
+          rationale: "FLINT's series routines run on tuned coefficient-specific Karatsuba/Toom-Cook/FFT multiplication while this library uses a semiring-generic schoolbook kernel, so the measured ratio includes a known kernel gap rather than only the Newton iterations."
       input_families:
         - name: multiplication
           description: truncated products at precisions 8 to 4096 over Int and Rat
@@ -610,6 +610,25 @@ libraries:
           description: Primes of 31 to 511 bits with n - 1 = k * 2^m and k factoring over the committed table, so decision, certificate-search, and checker rows share a deterministic rho-free certificate shape.
         - name: segment-enumeration
           description: Prime enumeration over [0, n) for n from 10^3 to 3.2 * 10^4 through the trial-division-backed primesIn.
+  HexIntFactor:
+    deps: [HexPrimality, HexArith, HexBasic]
+    mathlib: false
+    done_through: 0
+    status: active
+    phase4:
+      comparators:
+        - tool: "PARI factor and GMP-ECM"
+          class: informational
+          rationale: "PARI and GMP-ECM use broader algorithm portfolios; comparisons diagnose route constants but are not merge gates."
+      input_families:
+        - name: table-and-balanced-semiprimes
+          description: Table-range integers and balanced semiprimes through 64 bits for dispatch and rho.
+        - name: smooth-and-unbalanced-semiprimes
+          description: Smooth-order and unbalanced semiprimes for Pollard p-1 and ECM stage 1.
+        - name: power-forms
+          description: Difference-of-powers inputs with the cyclotomic pre-split visible separately.
+        - name: certificate-replay-and-order
+          description: Kernel-facing factorization replay and multiplicative-order computation.
 
   # ---------- Mathlib bridges ----------
   HexPolyMathlib:
@@ -756,6 +775,11 @@ libraries:
     mathlib: true
     done_through: 0
     status: active
+  HexIntFactorMathlib:
+    deps: [HexIntFactor, HexPrimalityMathlib]
+    mathlib: true
+    done_through: 0
+    status: active
   HexBerlekampZassenhausMathlib:
     deps: [HexBerlekampZassenhaus, HexBerlekampMathlib, HexHenselMathlib, HexPolyZMathlib, HexMatrixMathlib, HexLLLMathlib]
     mathlib: true
@@ -764,7 +788,7 @@ libraries:
   HexTruncatedSeriesMathlib:
     deps: [HexTruncatedSeries]
     mathlib: true
-    done_through: 3
+    done_through: 5
     status: active
 
   # ---------- Planned (status: planned; SPEC ready, implementation deferred) ----------

@@ -142,6 +142,8 @@ lean_lib HexGFq where
 
 lean_lib HexPrimality where
 
+lean_lib HexIntFactor where
+
 lean_lib HexBerlekampZassenhaus where
 
 lean_lib HexRealRoots where
@@ -197,6 +199,9 @@ lean_lib HexBerlekampZassenhausMathlib where
 
 @[default_target]
 lean_lib HexPrimalityMathlib where
+
+@[default_target]
+lean_lib HexIntFactorMathlib where
 
 lean_lib HexMatrix where
   precompileModules := true
@@ -291,6 +296,10 @@ lean_lib HexPrimalityKernelProbe where
 lean_lib HexMvGcdKernelProbe where
   srcDir := "bench"
   globs := #[`HexMvGcd.Kernel]
+
+lean_lib HexMvGcdBenchSupport where
+  srcDir := "bench"
+  globs := #[`HexMvGcdFlint, `HexMvGcdSingular]
 
 lean_lib HexMvPolyBenchSupport where
   srcDir := "bench"
@@ -572,6 +581,8 @@ lean_lib HexConformance where
     ++ #[`HexTruncatedSeries.Conformance].map Glob.one
 
     ++ #[`HexMvHensel.Conformance, `HexMvFactor.Conformance].map Glob.one
+
+    ++ #[`HexIntFactor.Conformance].map Glob.one
 
     ++ #[`HexPolySmith.Conformance].map Glob.one
 
@@ -1021,6 +1032,10 @@ lean_exe hexprimality_emit_fixtures where
   srcDir := "conformance"
   root := `HexPrimality.EmitFixtures
 
+lean_exe hexintfactor_emit_fixtures where
+  srcDir := "conformance"
+  root := `HexIntFactor.EmitFixtures
+
 lean_exe hexconway_emit_fixtures where
   srcDir := "conformance"
   root := `HexConway.EmitFixtures
@@ -1084,6 +1099,10 @@ lean_exe hexhensel_bench where
 lean_exe hexprimality_bench where
   srcDir := "bench"
   root := `HexPrimality.Bench
+
+lean_exe hexintfactor_bench where
+  srcDir := "bench"
+  root := `HexIntFactor.Bench
 
 lean_exe hexberlekamp_bench where
   srcDir := "bench"

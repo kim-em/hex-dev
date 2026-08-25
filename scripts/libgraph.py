@@ -21,6 +21,7 @@ BUILD_ONLY_LIBS = {
     "HexBerlekampKernelProbe",
     "HexPrimalityKernelProbe",
     "HexMvGcdKernelProbe",
+    "HexMvGcdBenchSupport",
     "HexMvPolyBenchSupport",
     "HexModularBenchSupport",
     "HexMvPolyMathlibProofProbe",

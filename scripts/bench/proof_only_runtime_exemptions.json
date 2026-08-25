@@ -1216,5 +1216,23 @@
     "baseline_blob": "a1b87406682dbf908d990f01676f326499b906e5",
     "current_blob": "42a95d0841165c3591246914bc67348ccd8d5df3",
     "reason": "Additionally moves the HexMvGcd kernel replay suite to its SPEC-mandated bench target; hexbz_factor_service and every factorization runtime dependency remain unchanged."
+  },
+  {
+    "path": "lakefile.lean",
+    "baseline_blob": "a1b87406682dbf908d990f01676f326499b906e5",
+    "current_blob": "8159dbe8532091eaf8426ef4c051523050f2322f",
+    "reason": "Additionally registers the build-only HexMvGcd FLINT benchmark support module; hexbz_factor_service, its build flags, and every factorization runtime dependency remain unchanged."
+  },
+  {
+    "path": "lakefile.lean",
+    "baseline_blob": "a1b87406682dbf908d990f01676f326499b906e5",
+    "current_blob": "ba87c482d13eae7564308de364a919eb71efc640",
+    "reason": "Additionally registers the build-only HexMvGcd Singular benchmark support module; hexbz_factor_service, its build flags, and every factorization runtime dependency remain unchanged."
+  },
+  {
+    "path": "lakefile.lean",
+    "baseline_blob": "a1b87406682dbf908d990f01676f326499b906e5",
+    "current_blob": "398a71fbd46baa0037c64f2954d300ad8977fe10",
+    "reason": "Additionally registers the independent HexIntFactor library, Mathlib companion, conformance emitter, and benchmark executable; hexbz_factor_service, its build flags, and every factorization runtime dependency are unchanged."
   }
 ]
