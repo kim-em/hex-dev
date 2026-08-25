@@ -283,6 +283,61 @@ theorem content_mul [LawfulGcdOps R] (p q : MvPoly n R cmp) :
 
 theorem primPart_mul [LawfulGcdOps R] (p q : MvPoly n R cmp) :
     primPart (p * q) = primPart p * primPart q := by
-  sorry
+  by_cases hp : p = 0
+  · subst p
+    rw [MvPoly.zero_mul, primPart_zero, MvPoly.zero_mul]
+  by_cases hq : q = 0
+  · subst q
+    rw [MvPoly.mul_zero, primPart_zero, MvPoly.mul_zero]
+  let cp := content p
+  let cq := content q
+  let pp := primPart p
+  let pq := primPart q
+  have hrecp : C cp * pp = p := content_mul_primPart p
+  have hrecq : C cq * pq = q := content_mul_primPart q
+  have hcp : cp ≠ 0 := by
+    intro hzero
+    rw [hzero, C_zero, MvPoly.zero_mul] at hrecp
+    exact hp hrecp.symm
+  have hcq : cq ≠ 0 := by
+    intro hzero
+    rw [hzero, C_zero, MvPoly.zero_mul] at hrecq
+    exact hq hrecq.symm
+  have hcpcq : cp * cq ≠ 0 := by
+    intro hzero
+    rcases LawfulGcdOps.no_zero_div cp cq hzero with hzero | hzero
+    · exact hcp hzero
+    · exact hcq hzero
+  have hC :
+      (C (cp * cq) : MvPoly n R cmp) = C cp * C cq := by
+    unfold C
+    rw [monomial_mul_monomial, Mono.zero_mul]
+  have hleft :
+      (C cp * C cq) * primPart (p * q) = p * q := by
+    calc
+      (C cp * C cq) * primPart (p * q) =
+          C (cp * cq) * primPart (p * q) := by rw [hC]
+      _ = C (content (p * q)) * primPart (p * q) := by rw [content_mul]
+      _ = p * q := content_mul_primPart (p * q)
+  have hright : p * q = (C cp * C cq) * (pp * pq) := by
+    calc
+      p * q = (C cp * pp) * (C cq * pq) := by rw [hrecp, hrecq]
+      _ = (C cp * C cq) * (pp * pq) := by grind
+  have heq :
+      (C cp * C cq) * primPart (p * q) =
+        (C cp * C cq) * (pp * pq) := hleft.trans hright
+  apply ext
+  intro m
+  have hcoeff := congrArg (coeff m) heq
+  rw [← hC, coeff_C_mul, coeff_C_mul] at hcoeff
+  have hzero :
+      (cp * cq) *
+          (coeff m (primPart (p * q)) - coeff m (pp * pq)) = 0 := by
+    grind
+  rcases LawfulGcdOps.no_zero_div (cp * cq)
+      (coeff m (primPart (p * q)) - coeff m (pp * pq)) hzero with
+    hzero | hzero
+  · exact False.elim (hcpcq hzero)
+  · grind
 
 end Hex.MvPoly
