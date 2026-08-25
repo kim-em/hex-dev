@@ -27,6 +27,9 @@ noncomputable def toPolynomial (T : NumberTower) (f : Poly T) : Polynomial ℂ :
   f.toArray.foldr
     (fun a value => Polynomial.C (T.toComplex a) + Polynomial.X * value) 0
 
+/-- The Horner fold defining {name}`toPolynomial` has the expected
+coefficients: coefficient `n` is the interpretation of the `n`-th list
+entry, with `0` beyond the end. -/
 private theorem coeff_horner (T : NumberTower) :
     ∀ (coefficients : List (Elem T)) (n : Nat),
       (coefficients.foldr
@@ -109,40 +112,41 @@ theorem natDegree_toPolynomial (T : NumberTower) (f : Poly T) :
     Polynomial.natDegree_map_eq_of_injective T.embedding.injective,
     HexPolyMathlib.natDegree_toPolynomial]
 
+/-- Semantic interpretation sends the executable zero polynomial to `0`. -/
 @[simp]
 theorem toPolynomial_zero (T : NumberTower) :
     T.toPolynomial 0 = 0 := by
   rw [toPolynomial_eq_map]
   simp
 
+/-- Semantic interpretation sends the executable one polynomial to `1`. -/
 @[simp]
 theorem toPolynomial_one (T : NumberTower) :
     T.toPolynomial 1 = 1 := by
   rw [toPolynomial_eq_map]
   simp
 
+/-- Semantic interpretation turns executable tower-polynomial addition into
+addition in `Polynomial ℂ`. -/
 @[simp]
 theorem toPolynomial_add (T : NumberTower) (f g : Poly T) :
     T.toPolynomial (f + g) = T.toPolynomial f + T.toPolynomial g := by
   simp [toPolynomial_eq_map, HexPolyMathlib.toPolynomial_add]
 
+/-- Semantic interpretation turns executable tower-polynomial multiplication
+into multiplication in `Polynomial ℂ`. -/
 @[simp]
 theorem toPolynomial_mul (T : NumberTower) (f g : Poly T) :
     T.toPolynomial (f * g) = T.toPolynomial f * T.toPolynomial g := by
   simp [toPolynomial_eq_map, HexPolyMathlib.toPolynomial_mul]
 
+/-- Semantic interpretation sends an executable constant polynomial to the
+constant polynomial on the interpreted coefficient. -/
 @[simp]
 theorem toPolynomial_C (T : NumberTower) (a : Elem T) :
     T.toPolynomial (DensePoly.C a) = Polynomial.C (T.toComplex a) := by
   rw [toPolynomial_eq_map, HexPolyMathlib.toPolynomial_C,
     Polynomial.map_C]
   rfl
-
-
-namespace Norm
-
-
-
-end Norm
 
 end Hex.NumberTower
