@@ -57,7 +57,9 @@ private theorem fold_diagonal_truncate (p q : DensePoly R) (n d : Nat) :
       simp [diagonalMulCoeffTerm]
       grind
 
-private theorem diagonal_eq_degree_bound (p q : DensePoly R) (n : Nat) :
+/-- A polynomial multiplication diagonal may always be normalized to the
+canonical degree-sized range, independently of the left operand's support. -/
+theorem diagonal_eq_degree_bound (p q : DensePoly R) (n : Nat) :
     (List.range p.size).foldl
         (fun acc i => acc + diagonalMulCoeffTerm p q n i) 0 =
       (List.range (n + 1)).foldl

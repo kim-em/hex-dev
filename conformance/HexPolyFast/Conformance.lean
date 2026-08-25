@@ -13,6 +13,7 @@ public meta import HexPolyFast.Karatsuba
 public meta import HexPolyFast.Reverse
 public meta import HexPolyFast.Cyclic
 public meta import HexPolyFast.Reciprocal
+public meta import HexPolyFast.Division
 
 public section
 
@@ -79,5 +80,27 @@ private def unitSeries : TSeries Int 8 :=
   TSeries.mulUpTo 5 unitSeries unitSeries
 #guard reciprocalWith plan unitSeries 1 = TSeries.invOfUnit unitSeries 1
 #guard unitSeries * reciprocalWith plan unitSeries 1 = 1
+
+private def monicDivisor : DensePoly Int := ofList [2, -3, 1]
+
+private theorem monicDivisor_monic : Monic monicDivisor := by
+  rfl
+
+#guard divModMonicWith plan a monicDivisor monicDivisor_monic =
+  divModMonic a monicDivisor monicDivisor_monic
+#guard divModMonicWith plan (monicDivisor * b) monicDivisor
+    monicDivisor_monic = (b, 0)
+#guard divModMonicWith plan (ofList [4, -1]) monicDivisor
+    monicDivisor_monic = (0, ofList [4, -1])
+#guard divModMonicWith plan a (C (1 : Int)) (by rfl) = (a, 0)
+
+private def ratA : DensePoly Rat :=
+  ofList [3, -2, 0, 5, 1, -7, 4]
+
+private def ratB : DensePoly Rat := ofList [2, -3, 5]
+
+#guard divModWith (karatsubaPlan 2) ratA ratB = divMod ratA ratB
+#guard divModWith (karatsubaPlan 2) ratA 0 = (0, ratA)
+#guard divModWith (karatsubaPlan 2) (ratA * ratB) ratB = (ratA, 0)
 
 end HexPolyFast.Conformance

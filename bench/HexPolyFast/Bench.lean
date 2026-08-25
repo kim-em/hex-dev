@@ -50,6 +50,29 @@ def runKaratsubaSkew (input : Binary) : UInt64 :=
 def runKaratsubaSquare (input : Binary) : UInt64 :=
   checksum (squareWith (karatsubaPlan 32) input.left)
 
+structure DivisionInput where
+  dividend : DensePoly Rat
+  divisor : DensePoly Rat
+
+instance : Hashable DivisionInput where
+  hash input := mixHash (hash input.dividend.toArray) (hash input.divisor.toArray)
+
+def prepDivision (n : Nat) : DivisionInput :=
+  { dividend := ofList ((List.range (2 * n + 1)).map fun i => (coeff i 31 : Rat))
+    divisor := ofList (((List.range n).map fun i => (coeff i 47 : Rat)) ++ [1]) }
+
+private def checksumRat (p : DensePoly Rat) : UInt64 :=
+  p.toArray.foldl (fun acc x => mixHash acc (hash x)) 0
+
+private def checksumDiv (qr : DensePoly Rat × DensePoly Rat) : UInt64 :=
+  mixHash (checksumRat qr.1) (checksumRat qr.2)
+
+def runLongDivision (input : DivisionInput) : UInt64 :=
+  checksumDiv (divMod input.dividend input.divisor)
+
+def runNewtonDivision (input : DivisionInput) : UInt64 :=
+  checksumDiv (divModWith (karatsubaPlan 32) input.dividend input.divisor)
+
 /- Cost model: a balanced length-`n` schoolbook convolution evaluates one
 coefficient product for each input pair, hence `n²` ring multiplications. -/
 setup_benchmark runSchoolbook n => n ^ 2
@@ -107,6 +130,35 @@ setup_benchmark runKaratsubaSkew n => n * (Nat.sqrt n)
     targetInnerNanos := 200000000
     signalFloorMultiplier := 1.0
     tags := #["multiplication", "karatsuba", "ratio-64"]
+  }
+
+/- The long-division comparator eliminates one leading coefficient at a time
+and updates a linear suffix, giving a quadratic coefficient-operation model. -/
+setup_benchmark runLongDivision n => n ^ 2
+  with prep := prepDivision
+  where {
+    paramFloor := 4
+    paramCeiling := 4096
+    paramSchedule := .custom #[4, 16, 31, 32, 33, 64, 256, 1024, 4096]
+    maxSecondsPerCall := 3.0
+    targetInnerNanos := 200000000
+    signalFloorMultiplier := 1.0
+    tags := #["division", "long", "cold"]
+  }
+
+/- Cost model: a cold Newton call includes reciprocal construction and three clipped
+Karatsuba products.  Doubling is geometric, so the balanced model remains
+`Θ(M(n))`, represented by the Karatsuba-range integer surrogate. -/
+setup_benchmark runNewtonDivision n => n * (Nat.sqrt n)
+  with prep := prepDivision
+  where {
+    paramFloor := 4
+    paramCeiling := 4096
+    paramSchedule := .custom #[4, 16, 31, 32, 33, 64, 256, 1024, 4096]
+    maxSecondsPerCall := 3.0
+    targetInnerNanos := 200000000
+    signalFloorMultiplier := 1.0
+    tags := #["division", "newton", "cold"]
   }
 
 end Hex.PolyFastBench

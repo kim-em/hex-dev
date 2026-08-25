@@ -11,6 +11,7 @@ public import HexPolyFast.Karatsuba
 public import HexPolyFast.Cyclic
 public import HexPolyFast.Reverse
 public import HexPolyFast.Reciprocal
+public import HexPolyFast.Division
 
 public section
 
