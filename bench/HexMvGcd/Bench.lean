@@ -6,6 +6,7 @@ Authors: Kim Morrison
 
 import HexMvGcd
 import HexMvPolyCorpus
+import HexMvGcdFlint
 import LeanBench
 
 /-!
@@ -497,6 +498,20 @@ setup_fixed_benchmark runRationalFixed where {
 setup_fixed_benchmark runSquarefreeFixed where {
   expectedHash := some 0x5262547c4fa35a9e
 }
+
+/-! # Informational FLINT comparator registrations
+
+The pair returns the same canonical sparse term list, so `compare` also checks
+cross-system agreement. The FLINT registration is scheduled-only;
+python-flint must be installed in that environment. -/
+
+setup_fixed_benchmark Flint.runFlintMpolyOverhead where
+  Flint.flintCompareConfig 0x0000000000000007
+
+setup_fixed_benchmark Flint.runLeanCoprime2 where
+  Flint.leanCompareConfig 0x227808efbc4a0df6
+setup_fixed_benchmark Flint.runFlintCoprime2 where
+  Flint.flintCompareConfig 0x227808efbc4a0df6
 
 /- With a three-term divisor and a dense quotient, exact division visits each
 quotient/divisor term pair and performs logarithmic support updates. -/
