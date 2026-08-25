@@ -9,7 +9,7 @@ supplies factorization-derived witnesses for squarefree decomposition,
 and relates the order API to `orderOf` in `(ZMod n)ˣ`.
 
 This SPEC expands the "Integer factorization" entry in
-[future-work](../future-work.md) and depends on
+[future-work](../../SPEC/future-work.md) and depends on
 [hex-primality](../../HexPrimality/SPEC/hex-primality.md), which owns the primality
 certificates each factor carries and the multiplicative order this
 library's order API is stated with.
@@ -71,7 +71,7 @@ sanctioned routes (certificate hand-off, shared stage-1 primitives
 sited upstream, an optional search hook), recorded in hex-primality's
 "Taking up downstream factoring advances".
 
-**The maximal order needs it.** [future-work](../future-work.md)'s
+**The maximal order needs it.** [future-work](../../SPEC/future-work.md)'s
 "Ring of integers" entry names the squarefree part of the polynomial
 discriminant as its dependency, "where such computations turn
 conditional in practice". That is a consumer whose design is shaped by
@@ -203,7 +203,7 @@ theorem checkFactorization_multiplicity {F} (h : checkFactorization F = true)
 ```
 
 **This certificate pins the prime support, and it is worth being
-precise about why**, because [future-work](../future-work.md)'s own
+precise about why**, because [future-work](../../SPEC/future-work.md)'s own
 preamble warns that a positive certificate usually does not establish
 completeness.
 Here it does, and the argument is the one the entry gives: any further
@@ -266,7 +266,7 @@ default is generous" as a classification. The default fuel is a
 
 `r : Rand` is threaded because Pollard rho draws its polynomial
 constant and starting point, and because
-[hex-finite-field](hex-finite-field.md)'s randomness discipline
+[hex-finite-field](../../SPEC/Libraries/hex-finite-field.md)'s randomness discipline
 requires the draw to be an explicit argument and the advanced state to
 come back. `Hex.Rand` does not exist in the tree yet; it is a
 prerequisite, specified there and sited in hex-basic.
@@ -307,7 +307,7 @@ per step makes the routine gcd-bound rather than multiply-bound. The
 primitive required is `Nat.gcd`, not extended GCD.
 
 `c` and the starting point are drawn from `Hex.Rand` (specified in
-[hex-finite-field](hex-finite-field.md), sited in hex-basic), following
+[hex-finite-field](../../SPEC/Libraries/hex-finite-field.md), sited in hex-basic), following
 the same explicit-argument discipline: the draw is an argument, the
 retry budget is fuel, and a bad draw costs time and never correctness.
 The draw rejects `c = 0` and any starting point `x` satisfying
@@ -511,7 +511,7 @@ way round it was. Invalid domains use the existing failure channel: at
 answer.
 
 This needs cyclotomic polynomials evaluated at an integer, which is the
-subject of [hex-cyclotomic](hex-cyclotomic.md). This library does not
+subject of [hex-cyclotomic](../../SPEC/Libraries/hex-cyclotomic.md). This library does not
 depend on it. Evaluating
 `Φ_d(b)` does not need the polynomial: the recursion
 
@@ -532,7 +532,7 @@ Mathlib-free formalization of cyclotomic-polynomial identities is not a
 prerequisite for this checked search optimization.
 
 The two computations of `Φ_d(b)`, this one in `Nat` and
-[hex-cyclotomic](hex-cyclotomic.md)'s evaluation of the constructed
+[hex-cyclotomic](../../SPEC/Libraries/hex-cyclotomic.md)'s evaluation of the constructed
 polynomial, are independent and must agree. The comparison lives in that
 library's conformance suite, which is the one that can import both.
 
@@ -625,7 +625,7 @@ proves only that the order divides `m`; a proper divisor of `m` could
 be the true order. Ruling that out means ruling out `order/q` for every
 prime `q ∣ order`, and that quantifier ranges over a set the
 factorization certificate is what pins down. This is the "second
-witness" pattern [future-work](../future-work.md)'s preamble describes,
+witness" pattern [future-work](../../SPEC/future-work.md)'s preamble describes,
 and here the second witness is the completeness of a factorization
 rather than a separate object.
 
@@ -815,7 +815,7 @@ and it takes already-checked data. It is `@[expose]`.
 
 ## Conformance
 
-Per [SPEC/testing.md](../testing.md). A driver at
+Per [SPEC/testing.md](../../SPEC/testing.md). A driver at
 `conformance/HexIntFactor/EmitFixtures.lean` exposed as
 `lean_exe hexintfactor_emit_fixtures`, a committed snapshot at
 `conformance-fixtures/HexIntFactor/intfactor.jsonl`, an oracle at
@@ -889,7 +889,7 @@ half.
 
 ## Benchmarking
 
-Per [SPEC/benchmarking.md](../benchmarking.md), with drivers at
+Per [SPEC/benchmarking.md](../../SPEC/benchmarking.md), with drivers at
 `bench/HexIntFactor/Bench.lean`. Native and kernel suites: the kernel
 side is `checkFactorization` replay, which is the cost a downstream
 proof pays and is therefore the number that matters most.
@@ -1077,7 +1077,7 @@ state until those entries land.
   known factorizations of `b^n ± 1` would make hex-conway Tier 2 cheap
   at any table size, at the cost of a large data file whose entries are
   each individually checkable by `checkFactorization`. This is exactly
-  the case [future-work](../future-work.md)'s "Certificate serialization
+  the case [future-work](../../SPEC/future-work.md)'s "Certificate serialization
   and caching" entry describes -- an expensive search run once and
   replayed -- and it should wait for that item rather than inventing a
   format here.

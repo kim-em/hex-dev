@@ -70,6 +70,8 @@ JSONL fixture record shape (one record per line):
                          "sentence": <recursive sentence AST>}``
                      (one univariate real sentence; atoms contain integer
                       polynomial coefficients in ascending degree order.)
+* ``factor`` / ``divisorfn`` / ``order`` / ``cyclotomic`` — natural-number
+  inputs for the certified integer-factorization oracle.
 
 Result records (emitted by Lean alongside the fixture, on the same
 JSONL stream) carry the operation name and Lean's computed answer:
@@ -127,6 +129,10 @@ VALID_FIXTURE_KINDS = frozenset(
         "gfqring",
         "gfqfield",
         "rcf_sentence",
+        "factor",
+        "divisorfn",
+        "order",
+        "cyclotomic",
     }
 )
 
@@ -566,6 +572,20 @@ def _validate_fixture(record: dict[str, Any]) -> None:
         if not _is_int(record.get("n")) or record["n"] < 0:
             raise FixtureError(f"certcheck.n must be a nonnegative int: {record!r}")
         _validate_prime_cert(record.get("cert"), "certcheck.cert")
+    elif kind in {"factor", "divisorfn"}:
+        _exact_keys(record, {"kind", "lib", "case", "n"}, kind)
+        if not _is_nat(record.get("n")):
+            raise FixtureError(f"{kind}.n must be a nonnegative int: {record!r}")
+    elif kind == "order":
+        _exact_keys(record, {"kind", "lib", "case", "base", "modulus"}, kind)
+        if not _is_nat(record.get("base")) or not _is_nat(record.get("modulus")):
+            raise FixtureError(f"order fields must be nonnegative ints: {record!r}")
+    elif kind == "cyclotomic":
+        _exact_keys(record, {"kind", "lib", "case", "b", "n", "sign"}, kind)
+        if not _is_nat(record.get("b")) or not _is_nat(record.get("n")):
+            raise FixtureError(f"cyclotomic b/n must be nonnegative ints: {record!r}")
+        if record.get("sign") not in {"minus", "plus"}:
+            raise FixtureError(f"cyclotomic.sign must be minus/plus: {record!r}")
     elif kind == "prime":
         for key in ("p", "n"):
             if not isinstance(record.get(key), int):
