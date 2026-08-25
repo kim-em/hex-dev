@@ -7,6 +7,7 @@ Authors: Kim Morrison
 module
 
 public import HexMatrix.Basic
+public import HexMatrix.Diagonal
 public import HexMatrix.DotProduct
 
 public section
@@ -185,6 +186,56 @@ theorem vecMul_ofRows [Lean.Grind.CommRing R]
   change (c * ofRows rows)[jj] = _
   rw [getElem_vecMul]
   simp only [Vector.dotProduct, getElem_col, getElem_ofRows]
+
+/-- Row-vector multiplication associates with matrix multiplication. -/
+theorem vecMul_assoc [Lean.Grind.CommRing R]
+    (v : Vector R n) (A : Matrix R n m) (B : Matrix R m k) :
+    (v * A) * B = v * (A * B) := by
+  change B.transpose * (A.transpose * v) = (A * B).transpose * v
+  rw [← mul_assoc_vec, transpose_mul_of_mul_comm]
+
+/-- A row vector times a rectangular leading-diagonal matrix, entrywise. -/
+theorem getElem_vecMul_diagMatrix [Lean.Grind.CommRing R]
+    {r n m : Nat} (d : Vector R r) (v : Vector R n) (hrn : r ≤ n)
+    (j : Fin m) :
+    (v * diagMatrix d n m)[j] =
+      if h : j.val < r then d[j.val]'h * v[j.val]'(Nat.lt_of_lt_of_le h hrn) else 0 := by
+  rw [getElem_vecMul, Vector.dotProduct]
+  simp only [getElem_col]
+  split
+  · rename_i hj
+    let jj : Fin n := ⟨j.val, Nat.lt_of_lt_of_le hj hrn⟩
+    have hterms :
+        (List.finRange n).foldl
+            (fun acc i => acc + (diagMatrix d n m)[i][j] * v[i]) 0 =
+          (List.finRange n).foldl
+            (fun acc i => acc + (if jj = i then (1 : R) else 0) *
+              (d[j.val]'hj * v[i])) 0 := by
+      apply List.foldl_add_congr
+      intro i _hi
+      by_cases hji : jj = i
+      · subst i
+        rw [if_pos rfl, getElem_diagMatrix_of_eq d jj j rfl hj]
+        grind
+      · rw [if_neg hji, getElem_diagMatrix_of_ne d i j]
+        · grind
+        · intro hij
+          apply hji
+          apply Fin.ext
+          exact hij.symm
+    rw [hterms, foldl_indicator_mul_unique (List.finRange n) jj
+      (fun i => d[j.val]'hj * v[i]) (List.mem_finRange _)
+      (List.nodup_finRange n) 0]
+    grind
+  · rename_i hj
+    apply List.foldl_add_eq_self
+    intro i _hi
+    by_cases hij : i.val = j.val
+    · rw [getElem_diagMatrix_of_ge d i j]
+      · grind
+      · omega
+    · rw [getElem_diagMatrix_of_ne d i j hij]
+      grind
 
 /-- Left-multiplication by the identity matrix leaves a vector unchanged. -/
 @[simp, grind =] theorem identity_mulVec [Lean.Grind.Ring R] (v : Vector R n) :

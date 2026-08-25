@@ -543,7 +543,7 @@ Mathlib-free needs four things, of which the project has one:
    no adjugate, because both are stated over `Lean.Grind.CommRing`.
    Moving it down is a small, self-contained change to hex-poly and is
    worth doing on its own merits. Do not write a second copy;
-   [hex-poly-smith](hex-poly-smith.md) asks for the same move under
+   [hex-poly-smith](../../HexPolySmith/SPEC/hex-poly-smith.md) asks for the same move under
    "Prerequisite changes in other libraries".
 2. **The adjugate identity at `Hex.DensePoly R`.** This one the project
    has: `Hex.Matrix.adjugate_mul` in `HexDeterminant/Adjugate.lean` is
@@ -560,7 +560,7 @@ Mathlib-free needs four things, of which the project has one:
 So version one proves Cayley-Hamilton in the companion and states it
 against the executable objects. Items 1 and 2 are worth revisiting
 independently: item 1 unblocks matrices over `Hex.DensePoly R` generally,
-which is what [hex-poly-smith](hex-poly-smith.md) needs, and it is the
+which is what [hex-poly-smith](../../HexPolySmith/SPEC/hex-poly-smith.md) needs, and it is the
 prerequisite for ever reconsidering item 3.
 
 ## Totality and failure-free behaviour
@@ -824,7 +824,7 @@ and the counterexample the weaker test accepts.
 
 **Invariant factors.** Matrices sharing a characteristic polynomial can
 have different invariant factors, so nothing here determines that data.
-See [hex-poly-smith](hex-poly-smith.md) and the invariant-factor item in
+See [hex-poly-smith](../../HexPolySmith/SPEC/hex-poly-smith.md) and the invariant-factor item in
 [future-work](../future-work.md).
 
 **Sparse input.** Berkowitz materializes a dense trailing block at every

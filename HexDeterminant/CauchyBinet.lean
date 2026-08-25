@@ -38,6 +38,45 @@ def columnTupleMatrix {R : Type u} {n m : Nat}
     (A : Matrix R n m) (cols : Fin n → Fin m) : Matrix R n n :=
   ofFn fun r c => A[(r, cols c)]
 
+/-- Rectangular submatrix obtained by selecting ordered row and column tuples. -/
+@[expose]
+def selectedSubmatrix {R : Type u} {n m k l : Nat}
+    (A : Matrix R n m) (rows : Fin k → Fin n) (cols : Fin l → Fin m) :
+    Matrix R k l :=
+  ofFn fun i j => A[(rows i, cols j)]
+
+/-- Select an ordered tuple of rows, retaining every column. -/
+@[expose]
+def selectedRows {R : Type u} {n m k : Nat}
+    (A : Matrix R n m) (rows : Fin k → Fin n) : Matrix R k m :=
+  ofFn fun i j => A[(rows i, j)]
+
+/-- Coefficients expressing selected columns of a right factor as linear
+combinations of the columns of a row-selected left factor. -/
+@[expose]
+def selectedColumnCoeffs {R : Type u} {n m k : Nat}
+    (B : Matrix R n m) (cols : Fin k → Fin m) : Matrix R k n :=
+  ofFn fun j t => B[(t, cols j)]
+
+@[grind =] theorem getElem_selectedSubmatrix {R : Type u} {n m k l : Nat}
+    (A : Matrix R n m) (rows : Fin k → Fin n) (cols : Fin l → Fin m)
+    (i : Fin k) (j : Fin l) :
+    (selectedSubmatrix A rows cols)[i][j] = A[rows i][cols j] := by
+  unfold selectedSubmatrix
+  rw [getElem_ofFn, getElem_pair_eq_nested]
+
+@[grind =] theorem getElem_selectedRows {R : Type u} {n m k : Nat}
+    (A : Matrix R n m) (rows : Fin k → Fin n) (i : Fin k) (j : Fin m) :
+    (selectedRows A rows)[i][j] = A[rows i][j] := by
+  unfold selectedRows
+  rw [getElem_ofFn, getElem_pair_eq_nested]
+
+@[grind =] theorem getElem_selectedColumnCoeffs {R : Type u} {n m k : Nat}
+    (B : Matrix R n m) (cols : Fin k → Fin m) (j : Fin k) (t : Fin n) :
+    (selectedColumnCoeffs B cols)[j][t] = B[t][cols j] := by
+  unfold selectedColumnCoeffs
+  rw [getElem_ofFn, getElem_pair_eq_nested]
+
 /-- Entry `(r, c)` of the column-selected minor is the source entry
 `A[r][cols c]`. -/
 @[grind =] theorem getElem_columnTupleMatrix {R : Type u} {n m : Nat}
@@ -844,6 +883,43 @@ theorem det_columnSumMatrix_eq_sum_columnTuples
       (assembleColumnsSuffix_left ([] : List (Fin m)) cols (by simp)
         (⟨j.val, by simp⟩))
   rw [hcoeff, hdet]
+
+/-- A selected minor of a rectangular product is the column-sum matrix
+built from the selected rows of the left factor and selected columns of the
+right factor. This is the matrix identity underlying rectangular
+Cauchy--Binet. -/
+theorem selectedSubmatrix_mul_eq_columnSumMatrix
+    {R : Type u} [Lean.Grind.CommRing R] {n m l k : Nat}
+    (A : Matrix R n m) (B : Matrix R m l)
+    (rows : Fin k → Fin n) (cols : Fin k → Fin l) :
+    selectedSubmatrix (A * B) rows cols =
+      columnSumMatrix (selectedRows A rows) (selectedColumnCoeffs B cols) := by
+  apply ext_getElem
+  intro i j
+  rw [getElem_selectedSubmatrix, getElem_mul, getElem_columnSumMatrix]
+  unfold Vector.dotProduct
+  apply List.foldl_add_congr
+  intro t _ht
+  simp only [getElem_row, getElem_col, getElem_pair_eq_nested]
+  rw [getElem_selectedRows, getElem_selectedColumnCoeffs]
+  exact Lean.Grind.CommSemiring.mul_comm _ _
+
+/-- General rectangular Cauchy--Binet expansion for a selected minor of a
+product, expressed over all ordered intermediate-index tuples. Repeated
+tuples contribute zero and can subsequently be grouped by increasing tuples. -/
+theorem det_selectedSubmatrix_mul_eq_sum_columnTuples
+    {R : Type u} [Lean.Grind.CommRing R] {n m l k : Nat}
+    (A : Matrix R n m) (B : Matrix R m l)
+    (rows : Fin k → Fin n) (cols : Fin k → Fin l) :
+    det (selectedSubmatrix (A * B) rows cols) =
+      (columnTupleVectors k m).foldl
+        (fun acc mid => acc +
+          columnTupleCoeff (selectedColumnCoeffs B cols) mid *
+            det (columnTupleMatrix (selectedRows A rows)
+              (columnTupleVectorFn mid))) 0 := by
+  rw [selectedSubmatrix_mul_eq_columnSumMatrix A B rows cols]
+  exact det_columnSumMatrix_eq_sum_columnTuples
+    (selectedRows A rows) (selectedColumnCoeffs B cols)
 
 /-- The determinant of a row Gram matrix expands as the ordered-column tuple
 sum induced by the generic column-sum determinant expansion. -/

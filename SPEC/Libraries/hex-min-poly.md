@@ -733,7 +733,7 @@ gets a conformance fixture.
   element, and nothing in the algorithm or the certificate cares: the
   certificate is a set of ring identities, not an evaluation at distinct
   points, so there is no "enough elements of `F`" hypothesis of the kind
-  [hex-poly-smith](hex-poly-smith.md) has to carry for its product
+  [hex-poly-smith](../../HexPolySmith/SPEC/hex-poly-smith.md) has to carry for its product
   check. This is a direct consequence of choosing an identity-based
   witness and is worth not giving up.
 
@@ -941,7 +941,7 @@ is exactly monic (`Polynomial.Monic.normalize_eq_self`), and the
 prerequisite `Hex.DensePoly.lcm` is specified monic to match. The
 executable `gcd` is not normalised and cannot be given this treatment
 without changing its definition, which this SPEC does not propose.
-[hex-poly-smith](hex-poly-smith.md) requests the same
+[hex-poly-smith](../../HexPolySmith/SPEC/hex-poly-smith.md) requests the same
 `monicize_eq_normalize` lemma from the other side; it should be written
 once.
 
@@ -981,7 +981,7 @@ two producer-side theorems, `krylovCoeffs_isSome` and
 specified, with definitions and with the warning that the second is a
 couple of hundred lines moving as a unit out of
 `HexResultant/ExactDiv.lean`, in
-[hex-poly-smith §Prerequisite changes in other libraries](hex-poly-smith.md).
+[hex-poly-smith §Prerequisite changes in other libraries](../../HexPolySmith/SPEC/hex-poly-smith.md).
 [hex-char-poly](hex-char-poly.md) records the same request for the
 `CommRing` instance from the Cayley-Hamilton side. This library needs
 `monicize` for the `lcm` below, the `CommRing` instance for the ring
@@ -1000,7 +1000,7 @@ copies.
 or Mathlib-facing, so a Mathlib-free library generic in `F` cannot
 discharge them; `example {F} [Lean.Grind.Field F] [DecidableEq F] :
 Hex.DensePoly.GcdLaws F := inferInstance` fails today. Specified in
-[hex-poly-smith](hex-poly-smith.md); the same instance serves here.
+[hex-poly-smith](../../HexPolySmith/SPEC/hex-poly-smith.md); the same instance serves here.
 
 **`Hex.DensePoly.lcm` belongs in hex-poly, and this SPEC is the first
 consumer.** There is no polynomial `lcm` anywhere in the tree;
@@ -1306,7 +1306,7 @@ through it would put every consumer of `m_A` above the whole polynomial
 matrix stack for one polynomial. The cost one: the polynomial Smith form
 of an `n × n` matrix over `F[x]` with degree-`1` entries is a
 substantially larger computation than `n` Krylov sweeps, and
-[hex-poly-smith](hex-poly-smith.md) reports no proved bound on its
+[hex-poly-smith](../../HexPolySmith/SPEC/hex-poly-smith.md) reports no proved bound on its
 intermediate growth. The evidence one: future-work already records that
 the invariant-factor library's correspondence layer should compare
 against an independently specified `hex-min-poly`, which is only

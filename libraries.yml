@@ -269,6 +269,35 @@ libraries:
           description: Repeated nilpotent blocks whose minimal-polynomial degree stays bounded while dimension grows.
         - name: companion-minpoly
           description: Companion matrices with known full-degree minimal polynomials used as an in-benchmark correctness check.
+  HexPolySmith:
+    deps: [HexPoly, HexMatrix, HexDeterminant]
+    mathlib: false
+    done_through: 7
+    status: active
+    phase4:
+      comparators:
+        - tool: "SymPy smith_normal_form over polynomial domains"
+          class: informational
+          rationale: "SymPy is a pure-Python conformance oracle and uses a separately tuned algorithm; its ratio provides orientation but does not gate the classical Euclidean pivot implementation."
+        - tool: "PARI matsnf on polynomial entries"
+          class: informational
+          rationale: "PARI's polynomial-entry surface is square-only and does not match the full rectangular API, so it is retained as an informational cross-check."
+      input_families:
+        - name: random-dense-polysmith
+          description: Deterministic dense nonsingular rational polynomial matrices across independent degree and dimension ladders.
+        - name: chain-conjugate-poly
+          description: Known monic invariant-factor chains conjugated by deterministic unimodular matrices.
+        - name: rational-coefficients
+          description: Rational polynomial matrices exposing coefficient growth in addition to degree growth.
+        - name: diagonal-polysmith
+          description: Diagonal polynomial presentations across a matrix-dimension ladder.
+        - name: small-field
+          description: ZMod64 2 inputs where evaluation certificates cannot obtain enough distinct field points.
+  HexPolySmithMathlib:
+    deps: [HexPolySmith, HexPolyMathlib, HexMatrixMathlib]
+    mathlib: true
+    done_through: 7
+    status: active
 
   # ---------- Depth 1 ----------
   HexModArith:

@@ -162,8 +162,8 @@ jobs:
       # fresh against the restored libs, which is cheap.
       - name: Define the hex-dev cache + build target sets
         run: |
-          echo "HEX_LIB_TARGETS=HexBasic HexTruncatedSeries HexTruncatedSeriesMathlib HexArith HexPoly HexMvPoly HexModArith HexGF2 HexPolyZ HexRoots HexResultant HexInterval HexIntervalExperiment HexIntervalMathlib HexIntervalMathlibExperiment HexIntervalReplayProbe HexIntervalMathlibReplayProbe HexRealRootsMathlibReplayProbe HexRCFProofProbe HexPolyFp HexGFqRing HexGFqField HexBerlekamp HexHensel HexConway HexGFq HexPrimality HexPrimalityKernelProbe HexMvGcdKernelProbe HexBerlekampZassenhaus HexRealRoots HexMatrix HexRowReduce HexDeterminant HexBareiss HexHermite HexCharPoly HexMinPoly HexGramSchmidt HexLLL HexMatrixMathlib HexHermiteMathlib HexCharPolyMathlib HexMinPolyMathlib HexGramSchmidtMathlib HexLLLMathlib HexBerlekampZassenhausMathlib HexPrimalityMathlib HexPolyFpMathlib HexFactorizationModules HexRealRootsMathlib HexGF2Mathlib HexGFqMathlib HexMvPolyMathlib HexMvPolyMathlibProofProbe HexRCF HexRCFTests HexRootsMathlib HexResultantMathlib HexNumberField HexNumberFieldMathlib HexNumberFieldTower HexNumberFieldTowerMathlib HexReleaseTests HexReleaseExamples HexAggregateCheck" >> "$GITHUB_ENV"
-          echo "HEX_EXE_TARGETS=hextruncatedseries_bench hexarith_bench hexpoly_bench hexmvpoly_bench hexmvgcd_bench hexsparsepoly_bench hexpolyz_bench hexpolyfp_bench hexmodarith_bench hexmodular_bench hexgf2_bench hexgfqring_bench hexgfqfield_bench hexgfq_bench hexhensel_bench hexprimality_bench hexberlekamp_bench hexbz_bench hexconway_bench hexmatrix_bench hexstrassen_compare hexdeterminant_bench hexbareiss_bench hexcharpoly_bench hexminpoly_bench hexgramschmidt_bench hexhermite_bench hexrealroots_bench hexrcf_bench hexroots_bench hexresultant_bench hexnumberfield_bench hexnumberfieldtower_bench hexinterval_decision_bench hexroots_demo hex_interval_representation_spike hex_interval_center_spike hex_interval_scale_spike hex_interval_scheduler_spike hex_interval_policy_frontier_spike hex_arith_floor hexlll_bench hexlll_gram_bench hexlll_external_reduction hexbz_factor_service" >> "$GITHUB_ENV"
+          echo "HEX_LIB_TARGETS=HexBasic HexTruncatedSeries HexTruncatedSeriesMathlib HexArith HexPoly HexMvPoly HexModArith HexGF2 HexPolyZ HexRoots HexResultant HexInterval HexIntervalExperiment HexIntervalMathlib HexIntervalMathlibExperiment HexIntervalReplayProbe HexIntervalMathlibReplayProbe HexRealRootsMathlibReplayProbe HexRCFProofProbe HexPolyFp HexGFqRing HexGFqField HexBerlekamp HexHensel HexConway HexGFq HexPrimality HexPrimalityKernelProbe HexMvGcdKernelProbe HexBerlekampZassenhaus HexRealRoots HexMatrix HexRowReduce HexDeterminant HexBareiss HexHermite HexCharPoly HexMinPoly HexPolySmith HexGramSchmidt HexLLL HexMatrixMathlib HexHermiteMathlib HexCharPolyMathlib HexMinPolyMathlib HexPolySmithMathlib HexGramSchmidtMathlib HexLLLMathlib HexBerlekampZassenhausMathlib HexPrimalityMathlib HexPolyFpMathlib HexFactorizationModules HexRealRootsMathlib HexGF2Mathlib HexGFqMathlib HexMvPolyMathlib HexMvPolyMathlibProofProbe HexRCF HexRCFTests HexRootsMathlib HexResultantMathlib HexNumberField HexNumberFieldMathlib HexNumberFieldTower HexNumberFieldTowerMathlib HexReleaseTests HexReleaseExamples HexAggregateCheck" >> "$GITHUB_ENV"
+          echo "HEX_EXE_TARGETS=hextruncatedseries_bench hexarith_bench hexpoly_bench hexpolysmith_bench hexmvpoly_bench hexmvgcd_bench hexsparsepoly_bench hexpolyz_bench hexpolyfp_bench hexmodarith_bench hexmodular_bench hexgf2_bench hexgfqring_bench hexgfqfield_bench hexgfq_bench hexhensel_bench hexprimality_bench hexberlekamp_bench hexbz_bench hexconway_bench hexmatrix_bench hexstrassen_compare hexdeterminant_bench hexbareiss_bench hexcharpoly_bench hexminpoly_bench hexgramschmidt_bench hexhermite_bench hexrealroots_bench hexrcf_bench hexroots_bench hexresultant_bench hexnumberfield_bench hexnumberfieldtower_bench hexinterval_decision_bench hexroots_demo hex_interval_representation_spike hex_interval_center_spike hex_interval_scale_spike hex_interval_scheduler_spike hex_interval_policy_frontier_spike hex_arith_floor hexlll_bench hexlll_gram_bench hexlll_external_reduction hexbz_factor_service" >> "$GITHUB_ENV"
       # Shared build. The libraries, bench exes, conformance #guard drivers, and
       # emit-fixture exes are all elaborated here so the two verification tails
       # below only *run* things, never rebuild them -- which is what lets the
@@ -183,6 +183,7 @@ jobs:
             HexConformance hextruncatedseries_emit_fixtures \
             hexmvpoly_emit_fixtures hexsparsepoly_emit_fixtures \
             hexmodular_emit_fixtures hexpolyzgcd_emit_fixtures \
+            hexpolysmith_emit_fixtures \
             hexpoly_emit_fixtures hexpolyfp_emit_fixtures \
             hexberlekamp_emit_fixtures \
             hexbz_emit_fixtures hexpolyz_emit_fixtures \
@@ -220,7 +221,8 @@ jobs:
         run: |
           bash scripts/ci/check_bench_verify_budget.sh \
             hextruncatedseries_bench \
-            hexarith_bench hexpoly_bench hexmvpoly_bench hexmvgcd_bench \
+            hexarith_bench hexpoly_bench hexpolysmith_bench \
+            hexmvpoly_bench hexmvgcd_bench \
             hexpolyz_bench \
             hexpolyzgcd_bench hexsparsepoly_bench hexpolyfp_bench \
             hexmodarith_bench \
