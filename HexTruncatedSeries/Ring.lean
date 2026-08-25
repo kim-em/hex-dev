@@ -7,6 +7,7 @@ Authors: Kim Morrison
 module
 
 public import HexTruncatedSeries.Defs
+public meta import Batteries.Tactic.Lint.Misc
 
 public section
 
@@ -31,15 +32,21 @@ functions. -/
 def convCoeff [Zero R] [Add R] [Mul R] (f g : Nat → R) (i : Nat) : R :=
   (List.range (i + 1)).foldl (fun acc j => acc + f j * g (i - j)) 0
 
+/-- The zero truncated series. -/
 @[expose] def zero [Zero R] : TSeries R n := ofFn fun _ => 0
+/-- The constant-one truncated series. -/
 @[expose] def one [Zero R] [One R] : TSeries R n :=
   ofFn fun i => if i = 0 then 1 else 0
+/-- Coefficientwise addition of truncated series. -/
 @[expose] def add [Zero R] [Add R] (a b : TSeries R n) : TSeries R n :=
   ofFn fun i => a.coeff i + b.coeff i
+/-- Coefficientwise negation of a truncated series. -/
 @[expose] def neg [Zero R] [Neg R] (a : TSeries R n) : TSeries R n :=
   ofFn fun i => -a.coeff i
+/-- Coefficientwise subtraction of truncated series. -/
 @[expose] def sub [Zero R] [Sub R] (a b : TSeries R n) : TSeries R n :=
   ofFn fun i => a.coeff i - b.coeff i
+/-- Schoolbook truncated convolution. -/
 @[expose] def mul [Zero R] [Add R] [Mul R]
     (a b : TSeries R n) : TSeries R n :=
   ofFn fun i => convCoeff a.coeff b.coeff i
@@ -77,6 +84,8 @@ def pow [Zero R] [One R] [Add R] [Mul R]
     exact Nat.div_lt_self (Nat.pos_of_ne_zero he) (by decide)
   go 1 a k
 
+attribute [nolint docBlame] pow.go
+
 instance [Zero R] [One R] [Add R] [Mul R] : Pow (TSeries R n) Nat := ⟨pow⟩
 
 /-- Multiply only through degree `m - 1`, zeroing the remaining stored
@@ -95,6 +104,15 @@ def mulUpToImpl [Zero R] [Add R] [Mul R] (m : Nat)
   let coeffs := (List.range (min m n)).foldl
     (fun out i => out.modify i fun _ => convCoeff a.coeff b.coeff i) init
   ⟨coeffs⟩
+
+/-- Reading a represented coefficient after an in-place vector update sees
+the replacement exactly at the updated index. -/
+theorem coeff_modify [Zero R] (a : TSeries R n) (k i : Nat)
+    (c : R) (hi : i < n) :
+    (⟨a.coeffs.modify k fun _ => c⟩ : TSeries R n).coeff i =
+      if k = i then c else a.coeff i := by
+  unfold coeff
+  rw [dif_pos hi, Vector.getElem_modify hi, dif_pos hi]
 
 private theorem getFoldNotMem {α : Type u} {N : Nat}
     (g : Nat → α → α) {r : Nat} (hr : r < N) :
@@ -164,6 +182,7 @@ theorem mulUpTo_eq_impl : @mulUpTo = @mulUpToImpl := by
         (g := fun j (_ : R) => convCoeff a.coeff b.coeff j)
         hi _ _ hnot).symm
 
+/-- Every coefficient of the zero series is zero. -/
 @[simp, grind =] theorem coeff_zero [Lean.Grind.CommRing R] (i : Nat) :
     (0 : TSeries R n).coeff i = 0 := by
   change (ofFn (n := n) (fun _ => (0 : R))).coeff i = 0
@@ -171,36 +190,53 @@ theorem mulUpTo_eq_impl : @mulUpTo = @mulUpToImpl := by
   · exact coeff_ofFn _ i hi
   · simp [coeff, hi]
 
+/-- The constant and higher coefficients of the one series. -/
 @[simp, grind =] theorem coeff_one [Lean.Grind.CommRing R]
     (i : Nat) (hi : i < n) :
     (1 : TSeries R n).coeff i = if i = 0 then 1 else 0 := by
   change (ofFn (n := n) (fun i => if i = 0 then (1 : R) else 0)).coeff i = _
   rw [coeff_ofFn _ i hi]
 
+/-- Coefficient extraction commutes with addition. -/
 @[simp, grind =] theorem coeff_add [Lean.Grind.CommRing R]
     (a b : TSeries R n) (i : Nat) (hi : i < n) :
     (a + b).coeff i = a.coeff i + b.coeff i := by
   change (ofFn (n := n) (fun i => a.coeff i + b.coeff i)).coeff i = _
   rw [coeff_ofFn _ i hi]
 
+/-- Coefficient extraction commutes with a left fold of series addition. -/
+theorem coeff_foldl_add [Lean.Grind.CommRing R] {α : Type}
+    (xs : List α) (f : α → TSeries R n) (z : TSeries R n)
+    (i : Nat) (hi : i < n) :
+    (xs.foldl (fun acc k => acc + f k) z).coeff i =
+      xs.foldl (fun acc k => acc + (f k).coeff i) (z.coeff i) := by
+  induction xs generalizing z with
+  | nil => rfl
+  | cons x xs ih =>
+      rw [List.foldl_cons, List.foldl_cons, ih, coeff_add z (f x) i hi]
+
+/-- Coefficient extraction commutes with negation. -/
 @[simp, grind =] theorem coeff_neg [Lean.Grind.CommRing R]
     (a : TSeries R n) (i : Nat) (hi : i < n) :
     (-a).coeff i = -a.coeff i := by
   change (ofFn (n := n) (fun i => -a.coeff i)).coeff i = _
   rw [coeff_ofFn _ i hi]
 
+/-- Coefficient extraction commutes with subtraction. -/
 @[simp, grind =] theorem coeff_sub [Lean.Grind.CommRing R]
     (a b : TSeries R n) (i : Nat) (hi : i < n) :
     (a - b).coeff i = a.coeff i - b.coeff i := by
   change (ofFn (n := n) (fun i => a.coeff i - b.coeff i)).coeff i = _
   rw [coeff_ofFn _ i hi]
 
-@[simp, grind =] theorem coeff_mul [Lean.Grind.CommRing R]
+/-- Product coefficients are the truncated convolution of the operands. -/
+@[grind =] theorem coeff_mul [Lean.Grind.CommRing R]
     (a b : TSeries R n) (i : Nat) (hi : i < n) :
     (a * b).coeff i = convCoeff a.coeff b.coeff i := by
   change (ofFn (n := n) (fun i => convCoeff a.coeff b.coeff i)).coeff i = _
   rw [coeff_ofFn _ i hi]
 
+/-- The constant coefficient of a product is the product of the constants. -/
 @[simp, grind =] theorem coeff_mul_zero [Lean.Grind.CommRing R]
     (a b : TSeries R n) (h : 0 < n) :
     (a * b).coeff 0 = a.coeff 0 * b.coeff 0 := by
@@ -209,22 +245,36 @@ theorem mulUpTo_eq_impl : @mulUpTo = @mulUpToImpl := by
   change 0 + a.coeff 0 * b.coeff 0 = a.coeff 0 * b.coeff 0
   grind
 
+/-- Coefficients of a constant series. -/
 @[simp, grind =] theorem coeff_C [Lean.Grind.CommRing R]
     (c : R) (i : Nat) (hi : i < n) :
     (C c : TSeries R n).coeff i = if i = 0 then c else 0 := by
   exact coeff_ofFn _ i hi
 
+/-- Coefficients of the indeterminate. -/
 @[simp, grind =] theorem coeff_X [Lean.Grind.CommRing R]
     (i : Nat) (hi : i < n) :
     (X : TSeries R n).coeff i = if i = 1 then 1 else 0 := by
   exact coeff_ofFn _ i hi
 
+/-- The indeterminate has zero constant coefficient at every precision. -/
+@[simp, grind =]
+theorem X_coeff_zero [Lean.Grind.CommRing R] :
+    (X : TSeries R n).coeff 0 = 0 := by
+  by_cases hn : 0 < n
+  · rw [coeff_X 0 hn]
+    simp
+  · unfold coeff
+    rw [dif_neg hn]
+
+/-- Embedding one as a constant series agrees with the series one. -/
 @[simp] theorem C_one [Lean.Grind.CommRing R] :
     (C 1 : TSeries R n) = 1 := by
   apply ext
   intro i hi
   rw [coeff_C 1 i hi, coeff_one i hi]
 
+/-- Embedding zero as a constant series agrees with the series zero. -/
 @[simp] theorem C_zero [Lean.Grind.CommRing R] :
     (C 0 : TSeries R n) = 0 := by
   apply ext
@@ -232,6 +282,7 @@ theorem mulUpTo_eq_impl : @mulUpTo = @mulUpToImpl := by
   rw [coeff_C 0 i hi, coeff_zero]
   split <;> rfl
 
+/-- Constant-series embedding preserves addition. -/
 @[simp] theorem C_add [Lean.Grind.CommRing R] (a b : R) :
     (C (a + b) : TSeries R n) = C a + C b := by
   apply ext
@@ -240,6 +291,7 @@ theorem mulUpTo_eq_impl : @mulUpTo = @mulUpToImpl := by
     coeff_C a i hi, coeff_C b i hi]
   split <;> grind
 
+/-- Constant-series embedding preserves multiplication. -/
 @[simp] theorem C_mul [Lean.Grind.CommRing R] (a b : R) :
     (C (a * b) : TSeries R n) = C a * C b := by
   apply ext
@@ -267,6 +319,7 @@ theorem mulUpTo_eq_impl : @mulUpTo = @mulUpToImpl := by
       simp [hj0]
       grind
 
+/-- Left multiplication by a constant series scales every coefficient. -/
 @[simp] theorem coeff_C_mul [Lean.Grind.CommRing R]
     (c : R) (a : TSeries R n) (i : Nat) (hi : i < n) :
     (C c * a).coeff i = c * a.coeff i := by
@@ -287,6 +340,8 @@ theorem mulUpTo_eq_impl : @mulUpTo = @mulUpToImpl := by
       List.foldl_add_single _ _ _ _ (List.mem_range.mpr (by omega)) List.nodup_range
     _ = c * a.coeff i := by grind
 
+/-- Bounded multiplication agrees with multiplication below its work bound
+and is zero above it. -/
 @[simp, grind =] theorem coeff_mulUpTo [Lean.Grind.CommRing R]
     (m : Nat) (a b : TSeries R n) (i : Nat) (hi : i < n) :
     (mulUpTo m a b).coeff i = if i < m then (a * b).coeff i else 0 := by
@@ -298,44 +353,27 @@ theorem mulUpTo_eq_impl : @mulUpTo = @mulUpToImpl := by
 They identify the two enumerations of a diagonal (for commutativity) and of a
 three-dimensional diagonal (for associativity). -/
 
-private theorem nodupMap {α β : Type} {xs : List α} {f : α → β}
-    (hxs : xs.Nodup)
-    (hinj : ∀ a, a ∈ xs → ∀ b, b ∈ xs → f a = f b → a = b) :
-    (xs.map f).Nodup := by
-  induction xs with
-  | nil => simp
-  | cons x xs ih =>
-      simp only [List.map_cons]
-      rw [List.nodup_cons] at hxs ⊢
-      constructor
-      · intro hx
-        rcases List.mem_map.mp hx with ⟨y, hy, hxy⟩
-        have : x = y := hinj x (by simp) y (by simp [hy]) hxy.symm
-        exact hxs.1 (by simpa [this] using hy)
-      · exact ih hxs.2 fun a ha b hb hab =>
-          hinj a (by simp [ha]) b (by simp [hb]) hab
-
 namespace ConvComm
 
-def left (i : Nat) : List (Nat × Nat) :=
+private def left (i : Nat) : List (Nat × Nat) :=
   (List.range (i + 1)).map fun j => (j, i - j)
 
-def right (i : Nat) : List (Nat × Nat) :=
+private def right (i : Nat) : List (Nat × Nat) :=
   (List.range (i + 1)).map fun j => (i - j, j)
 
-theorem left_nodup (i : Nat) : (left i).Nodup := by
+private theorem left_nodup (i : Nat) : (left i).Nodup := by
   unfold left
-  apply nodupMap List.nodup_range
+  apply List.nodup_map_on List.nodup_range
   intro a _ b _ hab
   exact Prod.ext_iff.mp hab |>.1
 
-theorem right_nodup (i : Nat) : (right i).Nodup := by
+private theorem right_nodup (i : Nat) : (right i).Nodup := by
   unfold right
-  apply nodupMap List.nodup_range
+  apply List.nodup_map_on List.nodup_range
   intro a _ b _ hab
   exact Prod.ext_iff.mp hab |>.2
 
-theorem mem_left (i : Nat) (ab : Nat × Nat) :
+private theorem mem_left (i : Nat) (ab : Nat × Nat) :
     ab ∈ left i ↔ ab.1 + ab.2 = i := by
   rcases ab with ⟨a, b⟩
   constructor
@@ -349,7 +387,7 @@ theorem mem_left (i : Nat) (ab : Nat × Nat) :
     refine ⟨a, List.mem_range.mpr (by omega), ?_⟩
     apply Prod.ext <;> simp <;> omega
 
-theorem mem_right (i : Nat) (ab : Nat × Nat) :
+private theorem mem_right (i : Nat) (ab : Nat × Nat) :
     ab ∈ right i ↔ ab.1 + ab.2 = i := by
   rcases ab with ⟨a, b⟩
   constructor
@@ -363,13 +401,13 @@ theorem mem_right (i : Nat) (ab : Nat × Nat) :
     refine ⟨b, List.mem_range.mpr (by omega), ?_⟩
     apply Prod.ext <;> simp <;> omega
 
-theorem perm (i : Nat) : (left i).Perm (right i) := by
+private theorem perm (i : Nat) : (left i).Perm (right i) := by
   rw [List.perm_iff_count]
   intro ab
   rw [(left_nodup i).count, (right_nodup i).count]
   simp [mem_left, mem_right]
 
-theorem reindex [Lean.Grind.CommRing R] (f g : Nat → R) (i : Nat) :
+private theorem reindex [Lean.Grind.CommRing R] (f g : Nat → R) (i : Nat) :
     (List.range (i + 1)).foldl (fun acc j => acc + f j * g (i - j)) 0 =
       (List.range (i + 1)).foldl (fun acc j => acc + g j * f (i - j)) 0 := by
   have hp := List.foldl_add_perm
@@ -387,19 +425,19 @@ end ConvComm
 
 namespace ConvAssoc
 
-def left (i : Nat) : List ((Nat × Nat) × Nat) :=
+private def left (i : Nat) : List ((Nat × Nat) × Nat) :=
   (List.range (i + 1)).flatMap fun j =>
     (List.range (j + 1)).map fun k => ((k, j - k), i - j)
 
-def right (i : Nat) : List ((Nat × Nat) × Nat) :=
+private def right (i : Nat) : List ((Nat × Nat) × Nat) :=
   (List.range (i + 1)).flatMap fun j =>
     (List.range (i - j + 1)).map fun k => ((j, k), i - j - k)
 
-theorem left_nodup (i : Nat) : (left i).Nodup := by
+private theorem left_nodup (i : Nat) : (left i).Nodup := by
   unfold left
   apply List.nodup_flatMap_of_disjoint List.nodup_range
   · intro j _
-    apply nodupMap List.nodup_range
+    apply List.nodup_map_on List.nodup_range
     intro a _ b _ hab
     injection hab with hp _
     exact Prod.ext_iff.mp hp |>.1
@@ -412,11 +450,11 @@ theorem left_nodup (i : Nat) : (left i).Nodup := by
     have hk' : k < i + 1 := List.mem_range.mp hk
     omega
 
-theorem right_nodup (i : Nat) : (right i).Nodup := by
+private theorem right_nodup (i : Nat) : (right i).Nodup := by
   unfold right
   apply List.nodup_flatMap_of_disjoint List.nodup_range
   · intro j _
-    apply nodupMap List.nodup_range
+    apply List.nodup_map_on List.nodup_range
     intro a _ b _ hab
     injection hab with hp _
     exact Prod.ext_iff.mp hp |>.2
@@ -426,7 +464,7 @@ theorem right_nodup (i : Nat) : (right i).Nodup := by
     injection heq with hp _
     exact hjk (Prod.ext_iff.mp hp |>.1).symm
 
-theorem mem_left (i : Nat) (abc : (Nat × Nat) × Nat) :
+private theorem mem_left (i : Nat) (abc : (Nat × Nat) × Nat) :
     abc ∈ left i ↔ abc.1.1 + abc.1.2 + abc.2 = i := by
   rcases abc with ⟨⟨a, b⟩, c⟩
   simp [left]
@@ -435,7 +473,7 @@ theorem mem_left (i : Nat) (abc : (Nat × Nat) × Nat) :
   · intro h
     refine ⟨a + b, ?_, a, ?_, ?_⟩ <;> omega
 
-theorem mem_right (i : Nat) (abc : (Nat × Nat) × Nat) :
+private theorem mem_right (i : Nat) (abc : (Nat × Nat) × Nat) :
     abc ∈ right i ↔ abc.1.1 + abc.1.2 + abc.2 = i := by
   rcases abc with ⟨⟨a, b⟩, c⟩
   simp [right]
@@ -444,23 +482,13 @@ theorem mem_right (i : Nat) (abc : (Nat × Nat) × Nat) :
   · intro h
     refine ⟨a, ?_, b, ?_, ?_⟩ <;> omega
 
-theorem perm (i : Nat) : (left i).Perm (right i) := by
+private theorem perm (i : Nat) : (left i).Perm (right i) := by
   rw [List.perm_iff_count]
   intro abc
   rw [(left_nodup i).count, (right_nodup i).count]
   simp [mem_left, mem_right]
 
-theorem foldMap [Lean.Grind.CommRing R] {α β : Type}
-    (xs : List α) (row : α → List β) (term : α → β → R) :
-    (xs.flatMap fun x => (row x).map (term x)).foldl (fun acc y => acc + y) 0 =
-      xs.foldl
-        (fun acc x => acc + (row x).foldl (fun acc y => acc + term x y) 0) 0 := by
-  rw [List.foldl_add_flatMap]
-  congr 1
-  funext acc x
-  rw [List.foldl_map, List.foldl_add_eq_add_foldl]
-
-theorem reindex [Lean.Grind.CommRing R]
+private theorem reindex [Lean.Grind.CommRing R]
     (f g h : Nat → R) (i : Nat) :
     (List.range (i + 1)).foldl
         (fun acc j => acc +
@@ -592,18 +620,21 @@ instance instZSMul [Lean.Grind.CommRing R] : SMul Int (TSeries R n) :=
     | .ofNat k => k • a
     | .negSucc k => -((k + 1) • a)⟩
 
+/-- Zero is a right identity for truncated-series addition. -/
 theorem add_zero [Lean.Grind.CommRing R] (a : TSeries R n) : a + 0 = a := by
   apply ext
   intro i hi
   rw [coeff_add a 0 i hi, coeff_zero]
   grind
 
+/-- Truncated-series addition is commutative. -/
 theorem add_comm [Lean.Grind.CommRing R] (a b : TSeries R n) : a + b = b + a := by
   apply ext
   intro i hi
   rw [coeff_add a b i hi, coeff_add b a i hi]
   grind
 
+/-- Truncated-series addition is associative. -/
 theorem add_assoc [Lean.Grind.CommRing R] (a b c : TSeries R n) :
     a + b + c = a + (b + c) := by
   apply ext
@@ -611,6 +642,7 @@ theorem add_assoc [Lean.Grind.CommRing R] (a b c : TSeries R n) :
   rw [coeff_add (a + b) c i hi, coeff_add a b i hi,
     coeff_add a (b + c) i hi, coeff_add b c i hi]
   grind
+/-- Truncated-series multiplication is associative. -/
 theorem mul_assoc [Lean.Grind.CommRing R] (a b c : TSeries R n) :
     a * b * c = a * (b * c) := by
   apply ext
@@ -631,6 +663,7 @@ theorem mul_assoc [Lean.Grind.CommRing R] (a b c : TSeries R n) :
       · intro j hj
         exact (coeff_mul b c j (by omega)).symm
 
+/-- One is a right identity for truncated-series multiplication. -/
 theorem mul_one [Lean.Grind.CommRing R] (a : TSeries R n) : a * 1 = a := by
   apply ext
   intro i hi
@@ -657,6 +690,7 @@ theorem mul_one [Lean.Grind.CommRing R] (a : TSeries R n) : a * 1 = a := by
       List.foldl_add_single _ _ _ _ (List.mem_range.mpr (by omega)) List.nodup_range
     _ = a.coeff i := by grind
 
+/-- One is a left identity for truncated-series multiplication. -/
 theorem one_mul [Lean.Grind.CommRing R] (a : TSeries R n) : 1 * a = a := by
   apply ext
   intro i hi
@@ -677,6 +711,7 @@ theorem one_mul [Lean.Grind.CommRing R] (a : TSeries R n) : 1 * a = a := by
       List.foldl_add_single _ _ _ _ (List.mem_range.mpr (by omega)) List.nodup_range
     _ = a.coeff i := by grind
 
+/-- Multiplication distributes over addition on the left. -/
 theorem left_distrib [Lean.Grind.CommRing R] (a b c : TSeries R n) :
     a * (b + c) = a * b + a * c := by
   apply ext
@@ -692,6 +727,7 @@ theorem left_distrib [Lean.Grind.CommRing R] (a b c : TSeries R n) :
     omega)]
   grind
 
+/-- Multiplication distributes over addition on the right. -/
 theorem right_distrib [Lean.Grind.CommRing R] (a b c : TSeries R n) :
     (a + b) * c = a * c + b * c := by
   apply ext
@@ -706,6 +742,7 @@ theorem right_distrib [Lean.Grind.CommRing R] (a b c : TSeries R n) :
     have := List.mem_range.mp hj
     omega)]
   grind
+/-- Zero annihilates truncated-series multiplication on the left. -/
 theorem zero_mul [Lean.Grind.CommRing R] (a : TSeries R n) : 0 * a = 0 := by
   apply ext
   intro i hi
@@ -716,6 +753,7 @@ theorem zero_mul [Lean.Grind.CommRing R] (a : TSeries R n) : 0 * a = 0 := by
   rw [coeff_zero]
   grind
 
+/-- Zero annihilates truncated-series multiplication on the right. -/
 theorem mul_zero [Lean.Grind.CommRing R] (a : TSeries R n) : a * 0 = 0 := by
   apply ext
   intro i hi
@@ -804,10 +842,12 @@ private theorem pow_eq_linearPow [Lean.Grind.CommRing R]
   unfold pow
   rw [powGo_eq, one_mul]
 
+/-- The zeroth power of a truncated series is one. -/
 theorem pow_zero [Lean.Grind.CommRing R] (a : TSeries R n) : a ^ 0 = 1 := by
   rw [show a ^ 0 = pow a 0 from rfl, pow_eq_linearPow]
   rfl
 
+/-- Successor powers multiply the preceding power by the base. -/
 theorem pow_succ [Lean.Grind.CommRing R] (a : TSeries R n) (k : Nat) :
     a ^ (k + 1) = a ^ k * a := by
   change pow a (k + 1) = pow a k * a
@@ -825,18 +865,27 @@ theorem pow_succ' [Lean.Grind.CommRing R] (a : TSeries R n) (k : Nat) :
     pow a (k + 1) = pow a k * a := by
   exact pow_succ a k
 
+/-- The first power of a truncated series is the series itself. -/
+@[simp]
+theorem pow_one [Lean.Grind.CommRing R] (a : TSeries R n) : a ^ 1 = a := by
+  rw [show 1 = 0 + 1 by decide, pow_succ, pow_zero]
+  exact one_mul a
+
+/-- Powers at a sum of exponents split as a product. -/
 theorem pow_add [Lean.Grind.CommRing R] (a : TSeries R n) (j k : Nat) :
     a ^ (j + k) = a ^ j * a ^ k := by
   change pow a (j + k) = pow a j * pow a k
   rw [pow_eq_linearPow, pow_eq_linearPow, pow_eq_linearPow]
   exact linearPow_add a j k
 
+/-- Iterated powers multiply their exponents. -/
 theorem pow_mul [Lean.Grind.CommRing R] (a : TSeries R n) (j k : Nat) :
     (a ^ j) ^ k = a ^ (j * k) := by
   induction k with
   | zero => rw [pow_zero, Nat.mul_zero, pow_zero]
   | succ k ih =>
       rw [pow_succ, ih, Nat.mul_succ, pow_add]
+/-- Successor numerals in truncated series agree with addition by one. -/
 theorem ofNat_succ [Lean.Grind.CommRing R] (k : Nat) :
     (OfNat.ofNat (α := TSeries R n) (k + 1)) =
       OfNat.ofNat (α := TSeries R n) k + 1 := by
@@ -863,6 +912,7 @@ theorem ofNat_succ [Lean.Grind.CommRing R] (k : Nat) :
           · simpa only [show k + 2 + 1 = k + 3 by omega] using
               (Lean.Grind.Semiring.ofNat_succ (α := R) (k + 2))
           · grind
+/-- Natural numerals agree with the natural-cast operation. -/
 theorem ofNat_eq_natCast [Lean.Grind.CommRing R] (k : Nat) :
     (OfNat.ofNat (α := TSeries R n) k) = (Nat.cast k : TSeries R n) := by
   cases k with
@@ -878,20 +928,25 @@ theorem ofNat_eq_natCast [Lean.Grind.CommRing R] (k : Nat) :
           split
           · exact Lean.Grind.Semiring.ofNat_eq_natCast (α := R) (k + 2)
           · rfl
+/-- Natural scalar multiplication is multiplication by the corresponding
+constant series. -/
 theorem nsmul_eq_natCast_mul [Lean.Grind.CommRing R] (k : Nat) (a : TSeries R n) :
     k • a = (Nat.cast k : TSeries R n) * a := rfl
+/-- Additive negation cancels a truncated series. -/
 theorem neg_add_cancel [Lean.Grind.CommRing R] (a : TSeries R n) : -a + a = 0 := by
   apply ext
   intro i hi
   rw [coeff_add (-a) a i hi, coeff_neg a i hi, coeff_zero]
   grind
 
+/-- Subtraction agrees with addition of the negation. -/
 theorem sub_eq_add_neg [Lean.Grind.CommRing R] (a b : TSeries R n) :
     a - b = a + -b := by
   apply ext
   intro i hi
   rw [coeff_sub a b i hi, coeff_add a (-b) i hi, coeff_neg b i hi]
   grind
+/-- Negating an integer scalar negates its scalar action. -/
 theorem neg_zsmul [Lean.Grind.CommRing R] (i : Int) (a : TSeries R n) :
     (-i) • a = -(i • a) := by
   have neg_zero : -(0 : TSeries R n) = 0 := by
@@ -912,6 +967,7 @@ theorem neg_zsmul [Lean.Grind.CommRing R] (i : Int) (a : TSeries R n) :
           rw [zero_mul, neg_zero]
       | succ k => rfl
   | negSucc k => exact (neg_neg ((k + 1) • a)).symm
+/-- Integer casts commute with negation. -/
 theorem intCast_neg [Lean.Grind.CommRing R] (i : Int) :
     ((-i : Int) : TSeries R n) = -((i : Int) : TSeries R n) := by
   have neg_zero : -(0 : TSeries R n) = 0 := by
@@ -932,9 +988,11 @@ theorem intCast_neg [Lean.Grind.CommRing R] (i : Int) :
           exact neg_zero.symm
       | succ k => rfl
   | negSucc k => exact (neg_neg (Nat.cast (k + 1) : TSeries R n)).symm
+/-- Truncated-series multiplication is commutative. -/
 theorem mul_comm [Lean.Grind.CommRing R] (a b : TSeries R n) : a * b = b * a := by
   exact mul_comm_raw a b
 
+/-- Multiplication by `X` shifts coefficients upward by one. -/
 @[simp] theorem coeff_mul_X [Lean.Grind.CommRing R]
     (a : TSeries R n) (i : Nat) (hi : i < n) :
     (a * X).coeff i = if i = 0 then 0 else a.coeff (i - 1) := by
@@ -962,6 +1020,7 @@ theorem mul_comm [Lean.Grind.CommRing R] (a b : TSeries R n) : a * b = b * a := 
         List.foldl_add_single _ _ _ _ (List.mem_range.mpr (by omega)) List.nodup_range
       _ = a.coeff (i - 1) := by grind
 
+/-- The coefficient of `X ^ k` is one in degree `k` and zero elsewhere. -/
 @[simp] theorem coeff_X_pow [Lean.Grind.CommRing R]
     (k i : Nat) (hi : i < n) :
     ((X : TSeries R n) ^ k).coeff i = if i = k then 1 else 0 := by
@@ -979,7 +1038,34 @@ theorem mul_comm [Lean.Grind.CommRing R] (a b : TSeries R n) : a * b = b * a := 
         · have : i - 1 ≠ k := by omega
           simp [hik, this]
 
-@[simp] theorem coeff_C_mul_X_pow [Lean.Grind.CommRing R]
+/-- Multiplication by `X ^ k` shifts coefficients upward by `k`, with
+coefficients below that degree equal to zero. -/
+@[simp] theorem coeff_X_pow_mul [Lean.Grind.CommRing R]
+    (a : TSeries R n) (k i : Nat) (hi : i < n) :
+    (((X : TSeries R n) ^ k) * a).coeff i =
+      if k ≤ i then a.coeff (i - k) else 0 := by
+  induction k generalizing i with
+  | zero =>
+      rw [pow_zero, one_mul]
+      simp
+  | succ k ih =>
+      have hmul :
+          (X : TSeries R n) ^ (k + 1) * a =
+            ((X : TSeries R n) ^ k * a) * X := by
+        rw [pow_succ]
+        rw [mul_assoc, mul_comm X a, ← mul_assoc]
+      rw [hmul, coeff_mul_X ((X : TSeries R n) ^ k * a) i hi]
+      by_cases hi0 : i = 0
+      · subst i
+        simp
+      · rw [if_neg hi0, ih (i - 1) (by omega)]
+        by_cases hki : k + 1 ≤ i
+        · rw [if_pos hki, if_pos (by omega)]
+          rw [show (i - 1) - k = i - (k + 1) by omega]
+        · rw [if_neg hki, if_neg (by omega)]
+
+/-- A scalar monomial has its scalar coefficient in exactly one degree. -/
+theorem coeff_C_mul_X_pow [Lean.Grind.CommRing R]
     (c : R) (k i : Nat) (hi : i < n) :
     (C c * (X : TSeries R n) ^ k).coeff i = if i = k then c else 0 := by
   rw [coeff_C_mul c (X ^ k) i hi, coeff_X_pow k i hi]

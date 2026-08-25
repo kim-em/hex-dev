@@ -27,6 +27,16 @@ universe u
 
 variable {R : Type u} {n : Nat}
 
+private theorem foldMap [Lean.Grind.CommRing R] {α β : Type}
+    (xs : List α) (row : α → List β) (term : α → β → R) :
+    (xs.flatMap fun x => (row x).map (term x)).foldl (fun acc y => acc + y) 0 =
+      xs.foldl
+        (fun acc x => acc + (row x).foldl (fun acc y => acc + term x y) 0) 0 := by
+  rw [List.foldl_add_flatMap]
+  congr 1
+  funext acc x
+  rw [List.foldl_map, List.foldl_add_eq_add_foldl]
+
 /-- The ceiling square-root block size, with block size one at precision
 zero. -/
 def blockSize (n : Nat) : Nat :=
@@ -106,9 +116,10 @@ private theorem powerTable_agree [Lean.Grind.CommRing R]
 /-- Evaluate one coefficient block against the precomputed baby powers. -/
 def evalBlock [Lean.Grind.CommRing R] (m p s : Nat) (a : TSeries R n)
     (powers : Vector (TSeries R n) (s + 1)) (q : Nat) : TSeries R n :=
+  let js := List.range s
   ofFn fun i =>
     if i < m then
-      (List.range s).foldl (fun acc j =>
+      js.foldl (fun acc j =>
         let k := q * s + j
         acc + if k < p then
           a.coeff k *
@@ -192,16 +203,6 @@ private theorem hornerFoldFn [Lean.Grind.CommRing R]
         ih, List.foldl_append, List.foldl_cons, List.foldl_nil, pow_succ]
       grind
 
-private theorem coeffFold [Lean.Grind.CommRing R] {α : Type}
-    (xs : List α) (f : α → TSeries R n) (z : TSeries R n)
-    (i : Nat) (hi : i < n) :
-    (xs.foldl (fun acc k => acc + f k) z).coeff i =
-      xs.foldl (fun acc k => acc + (f k).coeff i) (z.coeff i) := by
-  induction xs generalizing z with
-  | nil => rfl
-  | cons x xs ih =>
-      rw [List.foldl_cons, List.foldl_cons, ih, coeff_add z (f x) i hi]
-
 private theorem evalBlock_agree [Lean.Grind.CommRing R]
     (m p s : Nat) (a b : TSeries R n) (q : Nat) :
     Agree m (evalBlock m p s a (powerTable m b s) q)
@@ -209,7 +210,7 @@ private theorem evalBlock_agree [Lean.Grind.CommRing R]
   intro i hi him
   unfold evalBlock blockSum
   rw [coeff_ofFn _ i hi, if_pos him,
-    coeffFold (List.range s)
+    coeff_foldl_add (List.range s)
       (fun j => if q * s + j < p then C (a.coeff (q * s + j)) * b ^ j else 0)
       0 i hi, coeff_zero]
   apply List.foldl_add_congr
@@ -253,23 +254,6 @@ private theorem blockIndices_eq (s q : Nat) :
       rw [List.range_succ, List.flatMap_append, ih, List.flatMap_cons,
         List.flatMap_nil, List.append_nil, Nat.succ_mul, List.range_add]
 
-private theorem nodupMap' {α β : Type} {xs : List α} {f : α → β}
-    (hxs : xs.Nodup)
-    (hinj : ∀ a, a ∈ xs → ∀ b, b ∈ xs → f a = f b → a = b) :
-    (xs.map f).Nodup := by
-  induction xs with
-  | nil => simp
-  | cons x xs ih =>
-      simp only [List.map_cons]
-      rw [List.nodup_cons] at hxs ⊢
-      constructor
-      · intro hx
-        rcases List.mem_map.mp hx with ⟨y, hy, hxy⟩
-        have : x = y := hinj x (by simp) y (by simp [hy]) hxy.symm
-        exact hxs.1 (by simpa [this] using hy)
-      · exact ih hxs.2 fun a ha b hb hab =>
-          hinj a (by simp [ha]) b (by simp [hb]) hab
-
 private def squarePairs (n : Nat) : List (Nat × Nat) :=
   (List.range n).flatMap fun j =>
     (List.range n).map fun k => (j, k)
@@ -285,7 +269,7 @@ private theorem squarePairs_nodup (n : Nat) : (squarePairs n).Nodup := by
   unfold squarePairs
   apply List.nodup_flatMap_of_disjoint List.nodup_range
   · intro j hj
-    apply nodupMap' List.nodup_range
+    apply List.nodup_map_on List.nodup_range
     intro a ha b hb hab
     exact Prod.ext_iff.mp hab |>.2
   · intro j hj k hk hjk z hzj hzk
@@ -297,7 +281,7 @@ private theorem trianglePairs_nodup (n : Nat) : (trianglePairs n).Nodup := by
   unfold trianglePairs
   apply List.nodup_flatMap_of_disjoint List.nodup_range
   · intro t ht
-    apply nodupMap' List.nodup_range
+    apply List.nodup_map_on List.nodup_range
     intro a ha b hb hab
     exact Prod.ext_iff.mp hab |>.1
   · intro t ht u hu htu z hzt hzu
@@ -429,15 +413,9 @@ private theorem brentFold_eq_sum [Lean.Grind.CommRing R]
         (fun acc k => acc + C (a.coeff k) * b ^ k) 0 :=
       foldIndicatorRange (fun k => C (a.coeff k) * b ^ k) p (s * s) hp
 
-private theorem X_coeff_zero [Lean.Grind.CommRing R] :
-    (X : TSeries R n).coeff 0 = 0 := by
-  by_cases hn : 0 < n
-  · rw [coeff_X 0 hn]
-    simp
-  · unfold coeff
-    rw [dif_neg (by omega)]
-
-private theorem pow_vanish [Lean.Grind.CommRing R] (b : TSeries R n)
+/-- A power of a series with zero constant coefficient vanishes below its
+exponent. -/
+theorem pow_vanish [Lean.Grind.CommRing R] (b : TSeries R n)
     (h : b.coeff 0 = 0) (k : Nat) : Agree k (b ^ k) 0 := by
   have hb : Agree 1 b 0 := by
     intro i hi hi1
@@ -609,7 +587,7 @@ theorem comp_X_right [Lean.Grind.CommRing R] (a : TSeries R n) :
   change ((List.range n).foldl
     (fun acc k => acc + C (a.coeff k) * (X : TSeries R n) ^ k) 0).coeff i =
       a.coeff i
-  rw [coeffFold (List.range n)
+  rw [coeff_foldl_add (List.range n)
     (fun k => C (a.coeff k) * (X : TSeries R n) ^ k) 0 i hi]
   rw [coeff_zero]
   calc
@@ -663,7 +641,7 @@ theorem comp_X_left [Lean.Grind.CommRing R] (b : TSeries R n)
       change ((List.range n).foldl
         (fun acc k => acc + C ((X : TSeries R n).coeff k) * b ^ k) 0).coeff 0 = 0
       rw [
-        coeffFold (List.range n)
+        coeff_foldl_add (List.range n)
           (fun k => C ((X : TSeries R n).coeff k) * b ^ k) 0 0 hi,
         coeff_zero]
       apply List.foldl_add_eq_self
@@ -710,7 +688,7 @@ theorem comp_mul [Lean.Grind.CommRing R] (a a' b : TSeries R n)
       _ = (trianglePairs n).foldl
           (fun acc jk => acc + pairTerm a a' b jk) 0 := by
             simpa only [trianglePairs, List.foldl_flatMap, List.foldl_map] using
-              (ConvAssoc.foldMap (R := TSeries R n) (List.range n)
+              (foldMap (R := TSeries R n) (List.range n)
                 (fun t => List.range (t + 1))
                 (fun t j => pairTerm a a' b (j, t - j))).symm
   change
@@ -746,7 +724,7 @@ theorem comp_mul [Lean.Grind.CommRing R] (a a' b : TSeries R n)
         (squarePairs n).foldl
           (fun acc jk => acc + pairTerm a a' b jk) 0 := by
     simpa only [squarePairs, List.foldl_flatMap, List.foldl_map] using
-      (ConvAssoc.foldMap (R := TSeries R n) (List.range n)
+      (foldMap (R := TSeries R n) (List.range n)
         (fun _ => List.range n) (fun j k => pairTerm a a' b (j, k))).symm
   rw [hsquare]
   have hvalid :
@@ -766,6 +744,8 @@ theorem comp_mul [Lean.Grind.CommRing R] (a a' b : TSeries R n)
   rw [hvalid]
   exact (List.foldl_add_perm (pairTerm a a' b) (validPairs_perm n) 0).symm
 
+/-- Substitution preserves addition when the inner series has zero constant
+coefficient. -/
 theorem comp_add [Lean.Grind.CommRing R] (a a' b : TSeries R n)
     (h : b.coeff 0 = 0) : comp (a + a') b = comp a b + comp a' b := by
   rw [comp_spec (a + a') b h, comp_spec a b h, comp_spec a' b h]
@@ -784,6 +764,7 @@ theorem comp_add [Lean.Grind.CommRing R] (a a' b : TSeries R n)
           (fun acc k => acc + C (a'.coeff k) * b ^ k) 0 :=
       List.foldl_add_add _ _ _
 
+/-- Substituting into the zero series gives zero. -/
 @[simp]
 theorem comp_zero [Lean.Grind.CommRing R] (b : TSeries R n)
     (h : b.coeff 0 = 0) : comp 0 b = 0 := by
@@ -792,6 +773,7 @@ theorem comp_zero [Lean.Grind.CommRing R] (b : TSeries R n)
   intro k hk
   rw [coeff_zero, C_zero, zero_mul]
 
+/-- Substitution leaves a constant series unchanged. -/
 @[simp]
 theorem comp_C [Lean.Grind.CommRing R] (c : R) (b : TSeries R n)
     (h : b.coeff 0 = 0) : comp (C c) b = C c := by
@@ -816,6 +798,7 @@ theorem comp_C [Lean.Grind.CommRing R] (c : R) (b : TSeries R n)
         List.foldl_add_single _ _ _ _ (List.mem_range.mpr (by omega)) List.nodup_range
       _ = C c := by grind
 
+/-- Substitution of zero extracts the outer constant coefficient. -/
 @[simp]
 theorem comp_zero_right [Lean.Grind.CommRing R] (a : TSeries R n) :
     comp a 0 = C (a.coeff 0) := by
@@ -842,24 +825,28 @@ theorem comp_zero_right [Lean.Grind.CommRing R] (a : TSeries R n) :
     intro i hi
     omega
 
+/-- Substituting into the one series gives one. -/
 @[simp]
 theorem comp_one [Lean.Grind.CommRing R] (b : TSeries R n)
     (h : b.coeff 0 = 0) : comp 1 b = 1 := by
   rw [← C_one, comp_C 1 b h, C_one]
 
+/-- Substitution preserves natural powers. -/
 theorem comp_pow [Lean.Grind.CommRing R] (a b : TSeries R n)
     (h : b.coeff 0 = 0) (k : Nat) : comp (a ^ k) b = (comp a b) ^ k := by
   induction k with
   | zero => rw [pow_zero, pow_zero, comp_one b h]
   | succ k ih => rw [pow_succ, pow_succ, comp_mul _ _ b h, ih]
 
+/-- Substitution by a zero-constant series preserves the outer constant
+coefficient. -/
 theorem coeff_comp_zero [Lean.Grind.CommRing R] (a b : TSeries R n)
     (h : b.coeff 0 = 0) : (comp a b).coeff 0 = a.coeff 0 := by
   by_cases hn : 0 < n
   · rw [comp_spec a b h]
     change ((List.range n).foldl
       (fun acc k => acc + C (a.coeff k) * b ^ k) 0).coeff 0 = a.coeff 0
-    rw [coeffFold (List.range n)
+    rw [coeff_foldl_add (List.range n)
       (fun k => C (a.coeff k) * b ^ k) 0 0 hn, coeff_zero]
     calc
       (List.range n).foldl
@@ -882,6 +869,8 @@ theorem coeff_comp_zero [Lean.Grind.CommRing R] (a b : TSeries R n)
   · unfold coeff
     rw [dif_neg hn, dif_neg hn]
 
+/-- Substitution is associative when both inner series have zero constant
+coefficient. -/
 theorem comp_assoc [Lean.Grind.CommRing R] (a b c : TSeries R n)
     (hb : b.coeff 0 = 0) (hc : c.coeff 0 = 0) :
     comp (comp a b) c = comp a (comp b c) := by
@@ -903,6 +892,8 @@ theorem comp_assoc [Lean.Grind.CommRing R] (a b c : TSeries R n)
 
 namespace Agree
 
+/-- Substitution by prefix-agreeing zero-constant inner series produces
+prefix-agreeing results. -/
 theorem comp_inner [Lean.Grind.CommRing R] {p : Nat}
     (a b b' : TSeries R n) (hb : Agree p b b')
     (h0 : b.coeff 0 = 0) (h0' : b'.coeff 0 = 0) :
@@ -920,6 +911,8 @@ theorem comp_inner [Lean.Grind.CommRing R] {p : Nat}
           (mul (refl p (C (a.coeff k))) (pow hb k)))
   exact go (List.range n) 0 0 (refl p 0)
 
+/-- Bounded substitution agrees with full substitution throughout its work
+prefix. -/
 theorem compUpTo [Lean.Grind.CommRing R] (p : Nat)
     (a b : TSeries R n) (h : b.coeff 0 = 0) :
     Agree p (Hex.TSeries.compUpTo p a b) (comp a b) := by
