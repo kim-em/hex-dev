@@ -23,18 +23,48 @@ public section
 /-!
 # Truncated-series core conformance
 
-Oracle: SymPy `sympy.polys.ring_series` (CI mode, fixture wiring follows in the
-emitter).  This always-run core module checks the executable ring and precision
-operations, Newton inverse and square root, exponential and logarithm,
-Horner/Brent--Kung composition, and Newton/Lagrange reversion.
+Oracle: SymPy `sympy.polys.ring_series`, via
+`scripts/oracle/series_sympy.py` on the stream from
+`lake exe hextruncatedseries_emit_fixtures`.
 
-Properties covered here include bounded/full multiplication agreement,
-inverse multiplication on a geometric series, the two supplied square-root
-branches, `log (exp a) = a`, agreement of both composition routes, and
-agreement of both reversion routes.  Edge cases cover precisions zero and one,
-nonunit integer constants and linear coefficients, a wrong supplied square
-root, division by an oversized power of `x`, and the documented failure of
-zero extension to preserve multiplication.
+Mode: `if_available` locally, required in release CI.
+
+Covered operations:
+
+- representation: `coeff`, `ofFn`, `C`, and `X`;
+- ring operations: zero, one, addition, negation, subtraction,
+  multiplication, `pow`, and `mulUpTo`;
+- precision operations: `truncate`, `extend`, `mulXPow`, `allZeroBelow`,
+  `divXPow?`, `valuation?`, `deriv`, `derivPad`, and `integrate`;
+- Newton infrastructure: `steps` and `newton`;
+- inverse and square root: `invUpTo`, `invOfUnit`, `inv?`, `sqrtUpTo`,
+  `sqrtOfRoot`, and `sqrt?`;
+- exponential and logarithm: `expUpTo`, `exp`, `logUpTo`, and `log`;
+- composition: the bounded and full Horner, Brent--Kung, selected-route, and
+  checked operations; and
+- reversion: `revUpTo`, `revOfUnit`, `rev?`, and `revLagrange`.
+
+Covered properties:
+
+- coefficient formulas and the truncated commutative-ring laws;
+- full/bounded multiplication and precision round trips;
+- derivative/integral cancellation and padded derivative agreement;
+- the Newton step-count bound;
+- inverse multiplication and supplied-root square correctness;
+- `log (exp a) = a`, `exp (log a) = a`, and exponential addition;
+- Horner/Brent--Kung agreement and checked-composition agreement; and
+- Newton/Lagrange reversion agreement and both composition identities.
+
+Covered edge cases:
+
+- every operation is run at precisions zero and one as well as a nontrivial
+  precision;
+- integer nonunits in constant and linear positions;
+- an incorrect supplied square root;
+- division by a power larger than the precision and division with a nonzero
+  discarded prefix;
+- composition with a nonzero inner constant; and
+- the documented failure of zero extension to preserve multiplication.
 -/
 
 namespace HexTruncatedSeries.Conformance
@@ -52,6 +82,131 @@ private def oneMinusX (n : Nat) : TSeries Int n :=
 
 private def xPlusSq (R : Type) [Lean.Grind.CommRing R] (n : Nat) : TSeries R n :=
   ofFn fun i => if i = 1 ∨ i = 2 then 1 else 0
+
+/-! Three-case campaigns. Each family is evaluated at precision zero, at the
+first boundary precision, and at a larger input carrying alternating or
+failure-sensitive coefficients. The spot checks below retain independently
+derived small expected values for review. -/
+
+private def ringCase (n : Nat) : Bool :=
+  let a : TSeries Int n :=
+    ofFn fun i => if i % 2 = 0 then Int.ofNat (i + 1) else -Int.ofNat (i + 1)
+  let b : TSeries Int n := ofFn fun i => if i = 0 then 2 else Int.ofNat i - 3
+  let coeffOk := (List.range n).all fun i =>
+    decide (a.coeff i =
+      if i % 2 = 0 then Int.ofNat (i + 1) else -Int.ofNat (i + 1))
+  let constOk := (List.range n).all fun i =>
+    decide ((C 7 : TSeries Int n).coeff i = if i = 0 then 7 else 0)
+  let xOk := (List.range n).all fun i =>
+    decide ((X : TSeries Int n).coeff i = if i = 1 then 1 else 0)
+  coeffOk && constOk && xOk &&
+    decide (a.coeff n = 0) &&
+    decide (a + 0 = a ∧ 0 + a = a) &&
+    decide (a + b = b + a ∧ a + (-a) = 0) &&
+    decide (a - b = a + (-b)) &&
+    decide (a * b = b * a ∧ a * 1 = a) &&
+    decide (a.pow 3 = (a * a) * a) &&
+    decide (mulUpTo n a b = a * b)
+
+#guard ringCase 0
+#guard ringCase 1
+#guard ringCase 11
+
+private def precisionCase (n : Nat) : Bool :=
+  let a : TSeries Rat n :=
+    ofFn fun i => if i = 0 then 3 else if i % 2 = 0 then i else -i
+  let widened := a.extend (n + 2) (by omega)
+  let shifted := a.mulXPow 1
+  let divided := (divXPow? shifted 1).map coeffList
+  let expected := (a.truncate (n - 1) (Nat.sub_le n 1)).coeffs.toArray.toList
+  decide (widened.truncate n (by omega) = a) &&
+    decide (a.truncate n (Nat.le_refl n) = a) &&
+    decide (a.mulXPow 0 = a) &&
+    decide (divided = some expected) &&
+    decide (valuation? a = if n = 0 then none else some 0) &&
+    allZeroBelow (0 : TSeries Rat n) n &&
+    decide (a.deriv.extend n (Nat.sub_le n 1) = a.derivPad) &&
+    decide ((integrate a).deriv = a)
+
+#guard precisionCase 0
+#guard precisionCase 1
+#guard precisionCase 9
+
+private def newtonCase (n : Nat) : Bool :=
+  let k := steps n
+  let got : TSeries Int 1 :=
+    newton (fun _ m => C (Int.ofNat m)) (C 1) k
+  let expected : TSeries Int 1 :=
+    if k = 0 then C 1 else C (Int.ofNat (2 ^ k))
+  decide (got = expected) && decide (n ≤ 2 ^ k)
+
+#guard newtonCase 0
+#guard newtonCase 1
+#guard newtonCase 37
+
+private def inverseCase (n : Nat) : Bool :=
+  let a : TSeries Rat n := ofFn fun i => if i = 0 then 1 else if i = 1 then -1 else 0
+  let inverse := invOfUnit a 1
+  decide (a * inverse = 1) &&
+    decide (invUpTo n a 1 = inverse) &&
+    decide (inv? a = some inverse)
+
+#guard inverseCase 0
+#guard inverseCase 1
+#guard inverseCase 12
+
+private def sqrtCase (n : Nat) : Bool :=
+  let a : TSeries Rat n := ofFn fun i => if i = 0 ∨ i = 1 then 1 else 0
+  let root := sqrtOfRoot a 1 (1 / 2)
+  decide (root * root = a) &&
+    decide (sqrtUpTo n a 1 (1 / 2) = root) &&
+    decide (sqrt? a 1 = some root)
+
+#guard sqrtCase 0
+#guard sqrtCase 1
+#guard sqrtCase 10
+
+private def expLogCase (n : Nat) : Bool :=
+  let x : TSeries Rat n := ofFn fun i => if i = 1 then 1 else 0
+  let onePlusX := 1 + x
+  decide (expUpTo n x = exp x) &&
+    decide (logUpTo n onePlusX = log onePlusX) &&
+    decide (log (exp x) = x) &&
+    decide (exp (log onePlusX) = onePlusX) &&
+    decide (exp (x + x) = exp x * exp x)
+
+#guard expLogCase 0
+#guard expLogCase 1
+#guard expLogCase 12
+
+private def compCase (n : Nat) : Bool :=
+  let outer : TSeries Int n := ofFn fun i => if i % 2 = 0 then i + 1 else -(i + 1)
+  let inner : TSeries Int n := xPlusSq Int n
+  let horner := compHorner outer inner
+  let brentKung := compBrentKung outer inner
+  let selected := comp outer inner
+  decide (compHornerUpTo n outer inner = horner) &&
+    decide (compBrentKungUpTo n outer inner = brentKung) &&
+    decide (horner = brentKung) &&
+    decide (compUpTo n outer inner = selected) &&
+    decide (comp? outer inner = some selected)
+
+#guard compCase 0
+#guard compCase 1
+#guard compCase 12
+
+private def revertCase (n : Nat) : Bool :=
+  let b : TSeries Rat n := xPlusSq Rat n
+  let reverted := revOfUnit b 1
+  decide (revUpTo n b 1 = reverted) &&
+    decide (revLagrange b 1 = reverted) &&
+    decide (rev? b = some reverted) &&
+    decide (comp b reverted = X) &&
+    decide (comp reverted b = X)
+
+#guard revertCase 0
+#guard revertCase 1
+#guard revertCase 10
 
 /-! Ring and precision operations: typical, precision-zero, and bounded cases. -/
 
