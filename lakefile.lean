@@ -289,7 +289,7 @@ lean_lib HexMvGcdKernelProbe where
 
 lean_lib HexMvGcdBenchSupport where
   srcDir := "bench"
-  globs := #[`HexMvGcdFlint]
+  globs := #[`HexMvGcdFlint, `HexMvGcdSingular]
 
 lean_lib HexMvPolyBenchSupport where
   srcDir := "bench"

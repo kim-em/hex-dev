@@ -7,6 +7,7 @@ Authors: Kim Morrison
 import HexMvGcd
 import HexMvPolyCorpus
 import HexMvGcdFlint
+import HexMvGcdSingular
 import LeanBench
 
 /-!
@@ -512,6 +513,14 @@ setup_fixed_benchmark Flint.runLeanCoprime2 where
   Flint.leanCompareConfig 0x227808efbc4a0df6
 setup_fixed_benchmark Flint.runFlintCoprime2 where
   Flint.flintCompareConfig 0x227808efbc4a0df6
+
+/- Singular runs in a separate persistent process and certifies the same
+coprime result over `Q[x,y]`.  Its empty overhead request calibrates the two
+process-framing layers without polynomial work. -/
+setup_fixed_benchmark Singular.runOverhead where
+  Singular.config 0x0000000000000007
+setup_fixed_benchmark Singular.runCoprime2 where
+  Singular.config 0x227808efbc4a0df6
 
 /- With a three-term divisor and a dense quotient, exact division visits each
 quotient/divisor term pair and performs logarithmic support updates. -/
