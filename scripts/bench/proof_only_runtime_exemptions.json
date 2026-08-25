@@ -1216,11 +1216,5 @@
     "baseline_blob": "a1b87406682dbf908d990f01676f326499b906e5",
     "current_blob": "42a95d0841165c3591246914bc67348ccd8d5df3",
     "reason": "Additionally moves the HexMvGcd kernel replay suite to its SPEC-mandated bench target; hexbz_factor_service and every factorization runtime dependency remain unchanged."
-  },
-  {
-    "path": "lakefile.lean",
-    "baseline_blob": "4a0a8e668f4133104e22c74b4c50f2578901b3a0",
-    "current_blob": "8226e99030e7d5fa79f36b5652119b97ab8e0110",
-    "reason": "Combines the measured PolySmith registrations with current main's HexMvGcd kernel-probe and benchmark registrations; neither enters hexbz_factor_service nor changes its build flags or runtime dependency graph."
   }
 ]
