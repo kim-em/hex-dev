@@ -1216,5 +1216,404 @@ theorem mulKronecker3_eq (p q : ZPoly) : mulKronecker3 p q = p * q := by
         omega
       exact Nat.lt_of_le_of_lt hdigit (twice_lt_overlap bound)
 
+/-! # Negated reciprocal four-product substitution -/
+
+/-- Pack the reciprocal coefficient stream with alternating signs in reciprocal
+order.  Together with `packReverse`, this separates the even and odd streams
+of the reversed product. -/
+@[inline]
+def packReverseAlternating (b : Nat) (p : ZPoly) : Int :=
+  packAux b (fun i =>
+    if i % 2 = 0 then p.coeff (p.size - 1 - i)
+    else -p.coeff (p.size - 1 - i)) 0 p.size
+
+private theorem packReverse_eq_pack (b : Nat) (p : ZPoly) :
+    packReverse b p = packAux b (reverseFixed p p.size).coeff 0
+      (reverseFixed p p.size).size := by
+  rw [packReverse_eq_eval]
+  rw [packAux_eq]
+  simp only [Nat.zero_add]
+  rw [packSpec_eq_eval b (reverseFixed p p.size)
+    (reverseFixed p p.size).size (Nat.le_refl _)]
+
+private theorem packReverseAlternating_eq_pack (b : Nat) (p : ZPoly) :
+    packReverseAlternating b p =
+      packAux b (alternatingCoeff (reverseFixed p p.size)) 0
+        (reverseFixed p p.size).size := by
+  rw [packAlternating_eq_eval]
+  unfold packReverseAlternating
+  rw [packAux_eq]
+  simp only [Nat.zero_add]
+  rw [← packAlternatingSpec_eq_eval b (reverseFixed p p.size) p.size (by
+    unfold reverseFixed
+    exact Nat.le_trans (DensePoly.size_ofList_le _) (by simp))]
+  apply packSpec_congr
+  intro i hi
+  unfold alternatingCoeff
+  rw [coeff_reverseFixed, _root_.ite_eq_left hi]
+
+private theorem splitProduct_eq (p q : ZPoly) (b slots : Nat)
+    (hsize : (p * q).size ≤ slots) :
+    let plus := packAux b p.coeff 0 p.size * packAux b q.coeff 0 q.size
+    let minus := packAux b (alternatingCoeff p) 0 p.size *
+      packAux b (alternatingCoeff q) 0 q.size
+    ((plus + minus) / 2 =
+      packSpec (2 * b) (evenPart (p * q)).coeff ((slots + 1) / 2)) ∧
+    ((plus - minus) / (2 ^ (b + 1) : Nat) =
+      packSpec (2 * b) (oddPart (p * q)).coeff (slots / 2)) := by
+  dsimp only
+  let r := p * q
+  let evenSlots := (slots + 1) / 2
+  let oddSlots := slots / 2
+  let evenPacked := packSpec (2 * b) (evenPart r).coeff evenSlots
+  let oddPacked := packSpec (2 * b) (oddPart r).coeff oddSlots
+  have hplus := packProduct_eq p q b slots hsize
+  rw [packSpec_evenOdd] at hplus
+  have hevenFun : (fun i => r.coeff (2 * i)) = (evenPart r).coeff := by
+    funext i
+    exact (coeff_evenPart r i).symm
+  have hoddFun : (fun i => r.coeff (2 * i + 1)) = (oddPart r).coeff := by
+    funext i
+    exact (coeff_oddPart r i).symm
+  change _ = packSpec (2 * b) (fun i => r.coeff (2 * i)) evenSlots +
+    (2 : Int) ^ b * packSpec (2 * b) (fun i => r.coeff (2 * i + 1)) oddSlots at hplus
+  rw [hevenFun, hoddFun] at hplus
+  change _ = evenPacked + (2 : Int) ^ b * oddPacked at hplus
+  have hminus := packAlternatingProduct_eq p q b slots hsize
+  change packAux b (alternatingCoeff p) 0 p.size *
+      packAux b (alternatingCoeff q) 0 q.size =
+    packSpec b (fun i => if i % 2 = 0 then r.coeff i else -r.coeff i) slots at hminus
+  rw [packSpec_alternating_evenOdd] at hminus
+  change _ = packSpec (2 * b) (fun i => r.coeff (2 * i)) evenSlots -
+    (2 : Int) ^ b * packSpec (2 * b) (fun i => r.coeff (2 * i + 1)) oddSlots at hminus
+  rw [hevenFun, hoddFun] at hminus
+  change _ = evenPacked - (2 : Int) ^ b * oddPacked at hminus
+  constructor
+  · apply Int.ediv_eq_of_eq_mul_right (by omega)
+    grind
+  · have hden : ((2 ^ (b + 1) : Nat) : Int) = 2 * (2 : Int) ^ b := by
+      rw [Nat.pow_succ]
+      push_cast
+      grind
+    apply Int.ediv_eq_of_eq_mul_right (by
+      rw [hden]
+      have : (0 : Int) < 2 ^ b := Int.pow_pos (by omega)
+      omega)
+    rw [hden]
+    grind
+
+private theorem coeff_evenPart_reverseFixed (r : ZPoly) (slots i : Nat)
+    (hi : i < (slots + 1) / 2) :
+    (evenPart (reverseFixed r slots)).coeff i =
+      if slots % 2 = 1 then
+        (evenPart r).coeff ((slots + 1) / 2 - 1 - i)
+      else
+        (oddPart r).coeff (slots / 2 - 1 - i) := by
+  rw [coeff_evenPart, coeff_reverseFixed, _root_.ite_eq_left (by omega)]
+  by_cases hs : slots % 2 = 1
+  · rw [_root_.ite_eq_left hs, coeff_evenPart]
+    congr 1
+    omega
+  · rw [_root_.ite_eq_right hs, coeff_oddPart]
+    congr 1
+    omega
+
+private theorem coeff_oddPart_reverseFixed (r : ZPoly) (slots i : Nat)
+    (hi : i < slots / 2) :
+    (oddPart (reverseFixed r slots)).coeff i =
+      if slots % 2 = 1 then
+        (oddPart r).coeff (slots / 2 - 1 - i)
+      else
+        (evenPart r).coeff ((slots + 1) / 2 - 1 - i) := by
+  rw [coeff_oddPart, coeff_reverseFixed, _root_.ite_eq_left (by omega)]
+  by_cases hs : slots % 2 = 1
+  · rw [_root_.ite_eq_left hs, coeff_oddPart]
+    congr 1
+    omega
+  · rw [_root_.ite_eq_right hs, coeff_evenPart]
+    congr 1
+    omega
+
+private theorem recoverBiased_eq (s : ZPoly) (b bias slots : Nat)
+    (hb : 0 < b) (hsize : s.size ≤ slots)
+    (hbound : ∀ i, (s.coeff i).natAbs ≤ bias)
+    (hfit : ∀ i, i < slots →
+      (s.coeff i + (bias : Int)).toNat < 2 ^ b * (2 ^ b - 1))
+    (forward reverse : Int)
+    (hforward : forward = packSpec b s.coeff slots)
+    (hreverse : reverse = packSpec b (fun i => s.coeff (slots - 1 - i)) slots) :
+    DensePoly.ofCoeffs
+      ((recoverReciprocalChecked b (forward + constPack b (bias : Int) slots).toNat
+        (reverse + constPack b (bias : Int) slots).toNat slots).map
+          fun d => Int.ofNat d - Int.ofNat bias) = s := by
+  let c : Nat → Nat := fun i => (s.coeff i + (bias : Int)).toNat
+  have hcast : ∀ i, Int.ofNat (c i) = s.coeff i + (bias : Int) := by
+    intro i
+    unfold c
+    have habs := Int.le_natAbs (a := -s.coeff i)
+    rw [Int.natAbs_neg] at habs
+    have hbias := hbound i
+    have hbiasInt : ((s.coeff i).natAbs : Int) ≤ (bias : Int) := by
+      exact_mod_cast hbias
+    apply Int.toNat_of_nonneg
+    omega
+  have hforwardNat :
+      forward + constPack b (bias : Int) slots = (natEval b c slots : Int) := by
+    rw [hforward, constPack_eq, ← packSpec_add_fun, ← packSpec_natCast b c slots]
+    apply packSpec_congr
+    intro i hi
+    exact (hcast i).symm
+  have hreverseNat :
+      reverse + constPack b (bias : Int) slots =
+        (reverseNatEval b c slots : Int) := by
+    rw [hreverse, constPack_eq]
+    rw [← packSpec_add_fun]
+    rw [reverseNatEval_eq, ← packSpec_natCast]
+    apply packSpec_congr
+    intro i hi
+    exact (hcast (slots - 1 - i)).symm
+  rw [hforwardNat, hreverseNat]
+  simp only [Int.toNat_natCast]
+  rw [recoverReciprocalChecked_eval b hb c slots hfit]
+  exact ofCoeffs_unbias s bias slots hsize hbound
+
+/-- Four-point Kronecker identity with explicit bias and quarter-slot width. -/
+theorem kronecker4_identity (p q : ZPoly) (b bias : Nat)
+    (hb : 0 < b) (hp : 0 < p.size) (hq : 0 < q.size)
+    (hbound : ∀ i, ((p * q).coeff i).natAbs ≤ bias)
+    (hfit : ∀ i, i < p.size + q.size - 1 →
+      ((p * q).coeff i + (bias : Int)).toNat <
+        2 ^ (2 * b) * (2 ^ (2 * b) - 1)) :
+    let slots := p.size + q.size - 1
+    let evenSlots := (slots + 1) / 2
+    let oddSlots := slots / 2
+    let plus := packAux b p.coeff 0 p.size * packAux b q.coeff 0 q.size
+    let minus := packAux b (alternatingCoeff p) 0 p.size *
+      packAux b (alternatingCoeff q) 0 q.size
+    let plusReverse := packReverse b p * packReverse b q
+    let minusReverse := packReverseAlternating b p * packReverseAlternating b q
+    let evenForward := (plus + minus) / 2
+    let oddForward := (plus - minus) / (2 ^ (b + 1) : Nat)
+    let reverseEven := (plusReverse + minusReverse) / 2
+    let reverseOdd := (plusReverse - minusReverse) / (2 ^ (b + 1) : Nat)
+    let evenReverse := if slots % 2 = 1 then reverseEven else reverseOdd
+    let oddReverse := if slots % 2 = 1 then reverseOdd else reverseEven
+    let evenBias := constPack (2 * b) (bias : Int) evenSlots
+    let oddBias := constPack (2 * b) (bias : Int) oddSlots
+    let evenDigits := recoverReciprocalChecked (2 * b)
+      (evenForward + evenBias).toNat (evenReverse + evenBias).toNat evenSlots
+    let oddDigits := recoverReciprocalChecked (2 * b)
+      (oddForward + oddBias).toNat (oddReverse + oddBias).toNat oddSlots
+    DensePoly.ofCoeffs (interleave
+      (evenDigits.map fun d => Int.ofNat d - Int.ofNat bias)
+      (oddDigits.map fun d => Int.ofNat d - Int.ofNat bias) slots) = p * q := by
+  dsimp only
+  let r := p * q
+  let slots := p.size + q.size - 1
+  let evenSlots := (slots + 1) / 2
+  let oddSlots := slots / 2
+  let plus := packAux b p.coeff 0 p.size * packAux b q.coeff 0 q.size
+  let minus := packAux b (alternatingCoeff p) 0 p.size *
+    packAux b (alternatingCoeff q) 0 q.size
+  let plusReverse := packReverse b p * packReverse b q
+  let minusReverse := packReverseAlternating b p * packReverseAlternating b q
+  let evenForward := (plus + minus) / 2
+  let oddForward := (plus - minus) / (2 ^ (b + 1) : Nat)
+  let reverseEven := (plusReverse + minusReverse) / 2
+  let reverseOdd := (plusReverse - minusReverse) / (2 ^ (b + 1) : Nat)
+  let evenReverse := if slots % 2 = 1 then reverseEven else reverseOdd
+  let oddReverse := if slots % 2 = 1 then reverseOdd else reverseEven
+  have hsize : r.size ≤ slots := DensePoly.size_mul_le p q
+  have hsplit := splitProduct_eq p q b slots hsize
+  change evenForward = packSpec (2 * b) (evenPart r).coeff evenSlots ∧
+    oddForward = packSpec (2 * b) (oddPart r).coeff oddSlots at hsplit
+  rcases hsplit with ⟨hevenForward, hoddForward⟩
+  let rp := reverseFixed p p.size
+  let rq := reverseFixed q q.size
+  have hreverseMul : rp * rq = reverseFixed r slots := by
+    dsimp [rp, rq, r, slots]
+    exact reverseFixed_mul p q hp hq
+  have hreverseSize : (rp * rq).size ≤ slots := by
+    rw [hreverseMul]
+    unfold reverseFixed
+    exact Nat.le_trans (DensePoly.size_ofList_le _) (by simp [slots])
+  have hsplitReverse := splitProduct_eq rp rq b slots hreverseSize
+  rcases hsplitReverse with ⟨hevenReverseRaw, hoddReverseRaw⟩
+  change
+    ((packAux b rp.coeff 0 rp.size * packAux b rq.coeff 0 rq.size +
+      packAux b (alternatingCoeff rp) 0 rp.size *
+        packAux b (alternatingCoeff rq) 0 rq.size) / 2 = _) at hevenReverseRaw
+  change
+    ((packAux b rp.coeff 0 rp.size * packAux b rq.coeff 0 rq.size -
+      packAux b (alternatingCoeff rp) 0 rp.size *
+        packAux b (alternatingCoeff rq) 0 rq.size) /
+          (2 ^ (b + 1) : Nat) = _) at hoddReverseRaw
+  rw [← packReverse_eq_pack b p, ← packReverse_eq_pack b q,
+    ← packReverseAlternating_eq_pack b p,
+    ← packReverseAlternating_eq_pack b q, hreverseMul] at hevenReverseRaw hoddReverseRaw
+  change reverseEven =
+    packSpec (2 * b) (evenPart (reverseFixed r slots)).coeff evenSlots at hevenReverseRaw
+  change reverseOdd =
+    packSpec (2 * b) (oddPart (reverseFixed r slots)).coeff oddSlots at hoddReverseRaw
+  have hevenReversePack : evenReverse =
+      packSpec (2 * b) (fun i => (evenPart r).coeff (evenSlots - 1 - i))
+        evenSlots := by
+    by_cases hs : slots % 2 = 1
+    · rw [show evenReverse = reverseEven by simp [evenReverse, hs], hevenReverseRaw]
+      apply packSpec_congr
+      intro i hi
+      rw [coeff_evenPart_reverseFixed r slots i hi, _root_.ite_eq_left hs]
+    · rw [show evenReverse = reverseOdd by simp [evenReverse, hs], hoddReverseRaw]
+      have hlens : oddSlots = evenSlots := by
+        dsimp [oddSlots, evenSlots]
+        have hmod : slots % 2 = 0 := by omega
+        omega
+      rw [hlens]
+      apply packSpec_congr
+      intro i hi
+      have hiOdd : i < oddSlots := by omega
+      rw [coeff_oddPart_reverseFixed r slots i hiOdd, _root_.ite_eq_right hs]
+  have hoddReversePack : oddReverse =
+      packSpec (2 * b) (fun i => (oddPart r).coeff (oddSlots - 1 - i))
+        oddSlots := by
+    by_cases hs : slots % 2 = 1
+    · rw [show oddReverse = reverseOdd by simp [oddReverse, hs], hoddReverseRaw]
+      apply packSpec_congr
+      intro i hi
+      rw [coeff_oddPart_reverseFixed r slots i hi, _root_.ite_eq_left hs]
+    · rw [show oddReverse = reverseEven by simp [oddReverse, hs], hevenReverseRaw]
+      have hlens : evenSlots = oddSlots := by
+        dsimp [oddSlots, evenSlots]
+        have hmod : slots % 2 = 0 := by omega
+        omega
+      rw [hlens]
+      apply packSpec_congr
+      intro i hi
+      have hiEven : i < evenSlots := by omega
+      rw [coeff_evenPart_reverseFixed r slots i hiEven, _root_.ite_eq_right hs]
+  have hevenSize : (evenPart r).size ≤ evenSlots := by
+    unfold evenPart
+    refine Nat.le_trans (DensePoly.size_ofList_le _) ?_
+    simpa only [List.length_map, List.length_range] using
+      (Nat.div_le_div_right (Nat.add_le_add_right hsize 1) :
+        (r.size + 1) / 2 ≤ (slots + 1) / 2)
+  have hoddSize : (oddPart r).size ≤ oddSlots := by
+    unfold oddPart
+    refine Nat.le_trans (DensePoly.size_ofList_le _) ?_
+    simpa only [List.length_map, List.length_range] using
+      (Nat.div_le_div_right hsize : r.size / 2 ≤ slots / 2)
+  have hevenBound : ∀ i, ((evenPart r).coeff i).natAbs ≤ bias := by
+    intro i
+    rw [coeff_evenPart]
+    exact hbound (2 * i)
+  have hoddBound : ∀ i, ((oddPart r).coeff i).natAbs ≤ bias := by
+    intro i
+    rw [coeff_oddPart]
+    exact hbound (2 * i + 1)
+  have hevenFit : ∀ i, i < evenSlots →
+      ((evenPart r).coeff i + (bias : Int)).toNat <
+        2 ^ (2 * b) * (2 ^ (2 * b) - 1) := by
+    intro i hi
+    rw [coeff_evenPart]
+    exact hfit (2 * i) (by omega)
+  have hoddFit : ∀ i, i < oddSlots →
+      ((oddPart r).coeff i + (bias : Int)).toNat <
+        2 ^ (2 * b) * (2 ^ (2 * b) - 1) := by
+    intro i hi
+    rw [coeff_oddPart]
+    exact hfit (2 * i + 1) (by omega)
+  apply ofCoeffs_interleave r _ _ slots hsize
+  · exact recoverBiased_eq (evenPart r) (2 * b) bias evenSlots (by omega)
+      hevenSize hevenBound hevenFit evenForward evenReverse
+      hevenForward hevenReversePack
+  · exact recoverBiased_eq (oddPart r) (2 * b) bias oddSlots (by omega)
+      hoddSize hoddBound hoddFit oddForward oddReverse hoddForward hoddReversePack
+
+/-- KS4 with no dispatcher guard.  Forward, negated, reciprocal, and negated
+reciprocal evaluations give four packed integer products.  Even and odd
+coefficient streams are then reconstructed independently at the squared base. -/
+@[expose]
+def mulKronecker4 (p q : ZPoly) : ZPoly :=
+  if p.isZero || q.isZero then 0
+  else
+    let terms := min p.size q.size
+    let bound := terms * (maxAbs p * maxAbs q)
+    let overlapBits := (bitLen bound + 3) / 2
+    let b := (overlapBits + 1) / 2
+    let slotBits := 2 * b
+    let slots := p.size + q.size - 1
+    let evenSlots := (slots + 1) / 2
+    let oddSlots := slots / 2
+    let plus := packAux b p.coeff 0 p.size * packAux b q.coeff 0 q.size
+    let minus := packAux b (alternatingCoeff p) 0 p.size *
+      packAux b (alternatingCoeff q) 0 q.size
+    let plusReverse := packReverse b p * packReverse b q
+    let minusReverse := packReverseAlternating b p * packReverseAlternating b q
+    let evenForward := (plus + minus) / 2
+    let oddForward := (plus - minus) / (2 ^ (b + 1) : Nat)
+    let reverseEven := (plusReverse + minusReverse) / 2
+    let reverseOdd := (plusReverse - minusReverse) / (2 ^ (b + 1) : Nat)
+    let evenReverse := if slots % 2 = 1 then reverseEven else reverseOdd
+    let oddReverse := if slots % 2 = 1 then reverseOdd else reverseEven
+    let evenBias := constPack slotBits (bound : Int) evenSlots
+    let oddBias := constPack slotBits (bound : Int) oddSlots
+    let evenDigits := recoverReciprocalChecked slotBits
+      (evenForward + evenBias).toNat (evenReverse + evenBias).toNat evenSlots
+    let oddDigits := recoverReciprocalChecked slotBits
+      (oddForward + oddBias).toNat (oddReverse + oddBias).toNat oddSlots
+    DensePoly.ofCoeffs (interleave
+      (evenDigits.map fun d => Int.ofNat d - Int.ofNat bound)
+      (oddDigits.map fun d => Int.ofNat d - Int.ofNat bound) slots)
+
+/-- The forced four-product kernel computes the ordinary dense product. -/
+theorem mulKronecker4_eq (p q : ZPoly) : mulKronecker4 p q = p * q := by
+  unfold mulKronecker4
+  by_cases hz : p.isZero || q.isZero
+  · rw [_root_.ite_eq_left hz]
+    have h := mulKroneckerAt_eq 0 0 p q
+    unfold mulKroneckerAt at h
+    rw [_root_.ite_eq_left hz] at h
+    exact h
+  · rw [_root_.ite_eq_right hz]
+    let terms := min p.size q.size
+    let bound := terms * (maxAbs p * maxAbs q)
+    let overlapBits := (bitLen bound + 3) / 2
+    let b := (overlapBits + 1) / 2
+    have hpFalse : p.isZero = false := by
+      cases hpz : p.isZero <;> cases hqz : q.isZero <;> simp [hpz, hqz] at hz ⊢
+    have hqFalse : q.isZero = false := by
+      cases hpz : p.isZero <;> cases hqz : q.isZero <;> simp [hpz, hqz] at hz ⊢
+    apply kronecker4_identity p q b bound
+    · dsimp [b, overlapBits]
+      omega
+    · exact (DensePoly.isZero_eq_false_iff p).1 hpFalse
+    · exact (DensePoly.isZero_eq_false_iff q).1 hqFalse
+    · intro i
+      exact natAbs_coeff_mul_le_separate p q (maxAbs p) (maxAbs q)
+        (natAbs_coeff_le_maxAbs p) (natAbs_coeff_le_maxAbs q) i
+    · intro i hi
+      have hcoeff := natAbs_coeff_mul_le_separate p q (maxAbs p) (maxAbs q)
+        (natAbs_coeff_le_maxAbs p) (natAbs_coeff_le_maxAbs q) i
+      have hupper : (p * q).coeff i ≤ (bound : Int) := by
+        have habs := Int.le_natAbs (a := (p * q).coeff i)
+        have hboundInt : (((p * q).coeff i).natAbs : Int) ≤ (bound : Int) := by
+          exact_mod_cast hcoeff
+        omega
+      have hdigit : ((p * q).coeff i + (bound : Int)).toNat ≤ 2 * bound := by
+        rw [Int.toNat_le]
+        push_cast
+        omega
+      have hoverlap : overlapBits ≤ 2 * b := by
+        dsimp [b]
+        omega
+      have hpows : 2 ^ overlapBits ≤ 2 ^ (2 * b) :=
+        Nat.pow_le_pow_right (by omega) hoverlap
+      have hproduct :
+          2 ^ overlapBits * (2 ^ overlapBits - 1) ≤
+            2 ^ (2 * b) * (2 ^ (2 * b) - 1) :=
+        Nat.mul_le_mul hpows (Nat.sub_le_sub_right hpows 1)
+      exact Nat.lt_of_le_of_lt hdigit
+        (Nat.lt_of_lt_of_le (twice_lt_overlap bound) hproduct)
+
 end ZPoly
 end Hex

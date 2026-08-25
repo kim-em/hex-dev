@@ -17,7 +17,7 @@ operation against a declared complexity model, so it does not belong in the
 scientific harness.
 
 The schoolbook and KS1 measurements run through `Hex.ZPoly.mulKroneckerAt`,
-with the cutoffs set to force one path or the other; the KS2 and KS3
+with the cutoffs set to force one path or the other; the KS2, KS3, and KS4
 measurements call their forced kernels directly. Emits one JSON document on stdout;
 `scripts/bench/kronecker_crossover.py` pins it to a verified-idle core and
 wraps the result with environment metadata.
@@ -106,7 +106,19 @@ def timeKronecker3 (seed : Int) (reps : Nat) (p q : ZPoly) : IO (Float × Int) :
   let t1 ← IO.monoNanosNow
   return (Float.ofNat (t1 - t0) / Float.ofNat reps, chk)
 
-/-- One grid cell: all four kernels and their ratios, as a JSON object. -/
+/-- Time the forced four-point kernel with the same dependency chain. -/
+def timeKronecker4 (seed : Int) (reps : Nat) (p q : ZPoly) : IO (Float × Int) := do
+  let mut chk : Int := seed
+  let _ := ZPoly.mulKronecker4 p q
+  let t0 ← IO.monoNanosNow
+  for _ in [0:reps] do
+    let p' := if chk % 2 == 1 then q else p
+    let r := ZPoly.mulKronecker4 p' q
+    chk := chk + 2 * r.coeff 0
+  let t1 ← IO.monoNanosNow
+  return (Float.ofNat (t1 - t0) / Float.ofNat reps, chk)
+
+/-- One grid cell: all five kernels and their ratios, as a JSON object. -/
 def cell (n bits reps : Nat) (signed : Bool) : IO String := do
   let p := randPoly n bits 0x243f6a8885a308d3 signed
   let q := randPoly n bits 0x13198a2e03707344 signed
@@ -119,7 +131,8 @@ def cell (n bits reps : Nat) (signed : Bool) : IO String := do
   let (kron, cKron) ← timeProduct seed reps 0 0 p q
   let (ks2, cKs2) ← timeKronecker2 seed reps p q
   let (ks3, cKs3) ← timeKronecker3 seed reps p q
-  if cSchool != cKron || cSchool != cKs2 || cSchool != cKs3 then
+  let (ks4, cKs4) ← timeKronecker4 seed reps p q
+  if cSchool != cKron || cSchool != cKs2 || cSchool != cKs3 || cSchool != cKs4 then
     throw <| IO.userError s!"kernel disagreement at n={n} bits={bits} signed={signed}"
   return "{\"n\": " ++ toString n ++ ", \"bits\": " ++ toString bits
     ++ ", \"signed\": " ++ (if signed then "true" else "false")
@@ -128,9 +141,11 @@ def cell (n bits reps : Nat) (signed : Bool) : IO String := do
     ++ ", \"kronecker_nanos\": " ++ toString kron
     ++ ", \"ks2_nanos\": " ++ toString ks2
     ++ ", \"ks3_nanos\": " ++ toString ks3
+    ++ ", \"ks4_nanos\": " ++ toString ks4
     ++ ", \"ratio\": " ++ toString (school / kron)
     ++ ", \"ks2_ratio\": " ++ toString (school / ks2)
-    ++ ", \"ks3_ratio\": " ++ toString (school / ks3) ++ "}"
+    ++ ", \"ks3_ratio\": " ++ toString (school / ks3)
+    ++ ", \"ks4_ratio\": " ++ toString (school / ks4) ++ "}"
 
 /-- Repetition count chosen so each cell takes roughly the same wall time. -/
 def repsFor (n bits : Nat) : Nat :=
