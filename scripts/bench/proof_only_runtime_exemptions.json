@@ -1192,5 +1192,17 @@
     "baseline_blob": "a1b87406682dbf908d990f01676f326499b906e5",
     "current_blob": "aac7487a2c21b57b10ac790c9a107febdad2bd89",
     "reason": "Registers only the HexMvHensel conformance module and fixture emitter; no factorization runtime target, definition, build flag, or dependency changes."
+  },
+  {
+    "path": "Hex/Conformance/Emit.lean",
+    "baseline_blob": "21481a92862c6a9f8c8d538c4815d2bc4557453a",
+    "current_blob": "c9ad9809dc9828f3e5bec497461c3f20d4aa269a",
+    "reason": "Adds multivariate factorization fixture serializers to the shared conformance helper; no factorization runtime module imports it."
+  },
+  {
+    "path": "lakefile.lean",
+    "baseline_blob": "a1b87406682dbf908d990f01676f326499b906e5",
+    "current_blob": "bc4b3051451c1952a129177db6f3c5d13be41986",
+    "reason": "Registers only the HexMvFactor conformance module and fixture emitter; no factorization runtime target, definition, build flag, or dependency changes."
   }
 ]

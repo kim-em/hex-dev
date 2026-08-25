@@ -804,8 +804,35 @@ libraries:
   HexMvFactor:
     deps: [HexBasic, HexMvPoly, HexMvGcd, HexMvHensel, HexPoly, HexPolyZ, HexPolyZGcd, HexBerlekampZassenhaus, HexPolyFp, HexModArith, HexModular, HexArith]
     mathlib: false
-    done_through: 2
+    done_through: 3
     status: active
+    phase4:
+      comparators:
+        - tool: FLINT fmpz_mpoly_factor (dense EEZ bench target)
+          class: gating
+          goal: Solve every rung of the dense EEZ family that the comparator solves under the declared cap, and stay within a stated constant of it there. Scoped to that bench target; on the sparse, recombination-stress, and irreducible-input families the same tool is informational, because FLINT's sparse Hensel and Zippel routes have no counterpart in the dense diophantine recursion hex-mv-hensel specifies.
+        - tool: Singular factorize
+          class: informational
+          rationale: A second mature EEZ implementation with different route selection and its own crossovers, useful as orientation on every family and not as a yardstick for any single one.
+      input_families:
+        - name: dense-eez
+          description: Two through four variables of degree four through twelve, with two or three irreducible factors and constant leading coefficient; this is the end-to-end gating family.
+        - name: nonconstant-leading
+          description: Matching shapes whose main-variable leading coefficient has several irreducible factors, isolating recursive leading-coefficient factorization and assignment.
+        - name: factor-count
+          description: Two through eight factors at fixed degrees, exposing the factor-count contribution to lifting and recombination.
+        - name: recombination-stress
+          description: Inputs whose univariate image has substantially more factors than the multivariate target, measuring unsuccessful lifted combinations per accepted factor.
+        - name: point-difficulty
+          description: Inputs for which small points often drop degree or produce non-squarefree images, isolating evaluation-point search.
+        - name: coefficient-size
+          description: Fixed shapes with coefficients large enough to force successive modulus doublings, measuring coefficient-growth scaling.
+        - name: main-variable-choice
+          description: Equivalent inputs presented so that the two specified main-variable heuristics disagree, turning variable choice into a measured comparison.
+        - name: irreducible-inputs
+          description: Single-factor inputs run with Kronecker fallback disabled and enabled, isolating certificate production and its fallback cost.
+        - name: sparse-targets
+          description: Sparse targets whose dense lift intermediates expose the known absence of a sparse factorization route.
   HexInterval:
     deps: []
     mathlib: false

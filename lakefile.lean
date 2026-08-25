@@ -562,7 +562,7 @@ lean_lib HexConformance where
 
     ++ #[`HexTruncatedSeries.Conformance].map Glob.one
 
-    ++ #[`HexMvHensel.Conformance].map Glob.one
+    ++ #[`HexMvHensel.Conformance, `HexMvFactor.Conformance].map Glob.one
 
     ++ #[`HexIntervalMathlib.PntLogNaturalConformance,
       `HexIntervalMathlib.PntLogRationalConformance,
@@ -841,6 +841,10 @@ lean_exe hexmvgcd_emit_fixtures where
 lean_exe hexmvhensel_emit_fixtures where
   srcDir := "conformance"
   root := `HexMvHensel.EmitFixtures
+
+lean_exe hexmvfactor_emit_fixtures where
+  srcDir := "conformance"
+  root := `HexMvFactor.EmitFixtures
 
 lean_exe hexroots_bench where
   srcDir := "bench"

@@ -137,6 +137,21 @@ private def jsonObject (fields : List Field) : String := Id.run do
     out := out ++ jsonString k |>.push ':' |>.append v
   out.push '}'
 
+private def jsonMvFactors
+    (factors : List (List (List Nat × Int) × Nat)) : String := Id.run do
+  let mut out := "["
+  let mut first := true
+  for (terms, multiplicity) in factors do
+    if first then
+      first := false
+    else
+      out := out.push ','
+    out := out ++ jsonObject [
+      ("terms", jsonMvPolyTerms terms),
+      ("multiplicity", toString multiplicity)
+    ]
+  out.push ']'
+
 /-- Write a single JSONL record (the trailing newline) either to
 `stdout` or, when set, to the file named by `HEX_FIXTURE_OUTPUT`. -/
 private def emitLine (record : String) : IO Unit := do
@@ -295,6 +310,44 @@ def emitMvDiophFixture (lib case : String) (arity : Nat) (order : String)
     ("images", jsonIntMatrix images),
     ("witness", jsonIntMatrix witness),
     ("rhs", jsonMvPolyTerms rhs)
+  ]
+
+/-- Emit a multivariate integer-factorization input. -/
+def emitMvFactorFixture (lib case : String) (arity : Nat) (order : String)
+    (terms : List (List Nat × Int)) : IO Unit := do
+  emitLine <| jsonObject [
+    ("kind", jsonString "mvfactor"),
+    ("lib", jsonString lib),
+    ("case", jsonString case),
+    ("arity", toString arity),
+    ("order", jsonString order),
+    ("terms", jsonMvPolyTerms terms)
+  ]
+
+/-- Emit a multivariate irreducibility-decision input. -/
+def emitMvIrredFixture (lib case : String) (arity : Nat) (order : String)
+    (terms : List (List Nat × Int)) : IO Unit := do
+  emitLine <| jsonObject [
+    ("kind", jsonString "mvirred"),
+    ("lib", jsonString lib),
+    ("case", jsonString case),
+    ("arity", toString arity),
+    ("order", jsonString order),
+    ("terms", jsonMvPolyTerms terms)
+  ]
+
+/-- Emit one caller-selected evaluation point for Wang point probing. -/
+def emitMvPointFixture (lib case : String) (arity : Nat) (order : String)
+    (terms : List (List Nat × Int)) (main : Nat) (point : List Int) : IO Unit := do
+  emitLine <| jsonObject [
+    ("kind", jsonString "mvpoint"),
+    ("lib", jsonString lib),
+    ("case", jsonString case),
+    ("arity", toString arity),
+    ("order", jsonString order),
+    ("terms", jsonMvPolyTerms terms),
+    ("main", toString main),
+    ("point", jsonIntList point)
   ]
 
 /-- Emit a `sparsepoly` fixture record: a sparse univariate polynomial as
@@ -630,6 +683,33 @@ def mvDiophValue
   match answer with
   | none => "null"
   | some polynomials => jsonMvPolyList polynomials
+
+/-- Canonical multivariate integer factorization payload. -/
+def mvFactorValue (content : Int)
+    (factors : List (List (List Nat × Int) × Nat)) : String :=
+  jsonObject [
+    ("content", jsonInt content),
+    ("factors", jsonMvFactors factors)
+  ]
+
+/-- Irreducibility decision and the stable certificate-route name. -/
+def mvIrredValue (irreducible : Bool) (constructor : String) : String :=
+  jsonObject [
+    ("irreducible", if irreducible then "true" else "false"),
+    ("constructor", jsonString constructor)
+  ]
+
+/-- Rejected Wang evaluation point. -/
+def mvPointRejectValue (reject : String) : String :=
+  jsonObject [("reject", jsonString reject)]
+
+/-- Accepted Wang point, including the data handed to Hensel lifting. -/
+def mvPointSuccessValue (images : List (List Int))
+    (leading : List (List (List Nat × Int))) : String :=
+  jsonObject [
+    ("images", jsonIntMatrix images),
+    ("leading", jsonMvPolyList leading)
+  ]
 
 /-- `divmod`-shaped result value: a `[quotient, remainder]` coefficient pair. -/
 def divModValue (quot rem : List Int) : String :=
