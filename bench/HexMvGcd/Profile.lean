@@ -10,11 +10,12 @@ import LeanBench
 /-!
 Parametric handles for sampling the fixed HexMvGcd comparator cases.
 
-The timed functions and prepared inputs are exactly the Hex arms of the fixed
-comparator registrations. Lean-bench-samply currently drives parametric child
-registrations, so these one-point constant-work handles expose those same
-computations to its timed-region protocol. They are profiling infrastructure,
-not scaling claims.
+The prepared inputs and core operations match the Hex arms of the fixed
+comparator registrations. These handles force the result through the native
+matrix checksum rather than the comparator's canonical-term encoding.
+Lean-bench-samply currently drives parametric child registrations, so the
+one-point constant-work handles expose those operations to its timed-region
+protocol. They are profiling infrastructure, not scaling claims.
 -/
 
 namespace Hex.MvGcdBench.Profile
