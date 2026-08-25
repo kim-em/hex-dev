@@ -319,6 +319,8 @@ private def kernelAgrees : Bool :=
         && (mulKronecker p q == p * q)
         && (mulKronecker2 p q == p * q)
         && (mulKronecker2 q p == q * p)
+        && (mulKronecker3 p q == p * q)
+        && (mulKronecker3 q p == q * p)
 
 #guard kernelAgrees
 
@@ -340,6 +342,7 @@ private def kernelAgreesOnBoundaries : Bool :=
       (mulKroneckerAt 0 0 p q == p * q)
         && (mulKronecker p q == p * q)
         && (mulKronecker2 p q == p * q)
+        && (mulKronecker3 p q == p * q)
 
 #guard kernelAgreesOnBoundaries
 
