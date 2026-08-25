@@ -19,6 +19,13 @@ namespace HexHermiteMathlib
 
 open HexMatrixMathlib
 
+/-- The vector equivalence preserves the zero integer vector. -/
+@[simp]
+theorem vectorEquiv_zero :
+    vectorEquiv (0 : Vector Int n) = (0 : Fin n → Int) := by
+  funext i
+  simp
+
 /-- The executable row-vector product agrees with Mathlib's linear map. -/
 theorem vectorEquiv_vecMulLinear (A : Hex.Matrix Int n m) (c : Vector Int n) :
     vectorEquiv (Hex.Matrix.vecMul c A) =

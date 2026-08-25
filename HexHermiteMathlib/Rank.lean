@@ -6,7 +6,7 @@ Authors: Kim Morrison
 
 module
 
-public import HexHermiteMathlib.Kernel
+public import HexHermiteMathlib.Span
 public import Mathlib.LinearAlgebra.Matrix.NonsingularInverse
 
 public section

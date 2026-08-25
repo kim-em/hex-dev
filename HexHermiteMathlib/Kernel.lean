@@ -18,14 +18,9 @@ namespace HexHermiteMathlib
 open HexMatrixMathlib
 open Module
 
+/-- The Mathlib kernel of left multiplication by an executable matrix. -/
 abbrev leftKernel (A : Hex.Matrix Int n m) :=
   LinearMap.ker (_root_.Matrix.vecMulLinear (matrixEquiv A))
-
-@[simp]
-theorem vectorEquiv_zero :
-    vectorEquiv (0 : Vector Int n) = (0 : Fin n → Int) := by
-  funext i
-  simp
 
 /-- A row of the executable kernel basis, regarded as an element of the
 Mathlib left kernel. -/
@@ -47,6 +42,7 @@ Mathlib left kernel. -/
     simp
   rw [hz, vectorEquiv_zero]
 
+/-- The executable kernel rows are linearly independent after conversion. -/
 theorem kernelRows_independent (A : Hex.Matrix Int n m) :
     LinearIndependent ℤ
       (_root_.Matrix.row (matrixEquiv (Hex.Matrix.kernelBasis A))) := by
@@ -69,6 +65,7 @@ theorem kernelRows_independent (A : Hex.Matrix Int n m) :
       _ = 0 := vectorEquiv_zero
   exact sub_eq_zero.mp hsub
 
+/-- The kernel-valued row family is linearly independent. -/
 theorem kernelVector_independent (A : Hex.Matrix Int n m) :
     LinearIndependent ℤ (kernelVector A) := by
   apply LinearIndependent.of_comp (leftKernel A).subtype
@@ -82,6 +79,7 @@ theorem kernelVector_independent (A : Hex.Matrix Int n m) :
   rw [hrows]
   exact kernelRows_independent A
 
+/-- The executable kernel rows span the entire Mathlib left kernel. -/
 theorem kernelVector_spans (A : Hex.Matrix Int n m) :
     ⊤ ≤ Submodule.span ℤ (Set.range (kernelVector A)) := by
   rw [top_le_iff, span_range_eq_top_iff_surjective_fintypeLinearCombination]
@@ -116,17 +114,17 @@ theorem kernelVector_spans (A : Hex.Matrix Int n m) :
     _ = x.1 := Equiv.apply_symm_apply vectorEquiv x.1
 
 /-- The executable rows form a basis of the Mathlib integer left kernel. -/
-noncomputable def kernelBasisEquiv (A : Hex.Matrix Int n m) :
+noncomputable def kernelBasis (A : Hex.Matrix Int n m) :
     Basis (Fin (n - Hex.Matrix.hnfRank A)) ℤ
       (LinearMap.ker (_root_.Matrix.vecMulLinear (matrixEquiv A))) :=
   Basis.mk (kernelVector_independent A) (kernelVector_spans A)
 
 @[simp]
-theorem kernelBasisEquiv_apply (A : Hex.Matrix Int n m)
+theorem kernelBasis_apply (A : Hex.Matrix Int n m)
     (i : Fin (n - Hex.Matrix.hnfRank A)) :
-    (kernelBasisEquiv A i : Fin n → Int) =
+    (kernelBasis A i : Fin n → Int) =
       vectorEquiv (Hex.Matrix.row (Hex.Matrix.kernelBasis A) i) := by
-  rw [kernelBasisEquiv, Basis.mk_apply]
+  rw [kernelBasis, Basis.mk_apply]
   rfl
 
 end HexHermiteMathlib

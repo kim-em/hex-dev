@@ -11,6 +11,14 @@ same-algorithm comparator required by hex-char-poly:
 ``fmpz_mat/minpoly``
     Accept square integer ``rows`` and return PARI's matrix minimal
     polynomial as an ascending coefficient list.
+
+``fmpz_mat/hnf``
+    Accept rectangular integer row generators and return the canonical row
+    HNF. PARI's column convention is converted with ``J_m A^T`` and
+    ``J_r H'^T J_m``, padding the missing zero rows.
+
+``fmpz_mat/overhead``
+    Return ``0`` without constructing a matrix, calibrating protocol cost.
 """
 from __future__ import annotations
 
@@ -61,6 +69,38 @@ def _minpoly(request: dict[str, Any]) -> list[int]:
     return [int(value) for value in matrix.minpoly("x").list()]
 
 
+def _hnf(request: dict[str, Any]) -> list[list[int]]:
+    pari = _require_pari()
+    rows = [[int(value) for value in row] for row in request["rows"]]
+    n = len(rows)
+    m = len(rows[0]) if n else 0
+    if any(len(row) != m for row in rows):
+        raise ValueError("hnf requires rectangular rows")
+    if n == 0 or m == 0:
+        return [[0] * m for _ in range(n)]
+
+    # PARI computes a column HNF. Reverse the ambient coordinates before the
+    # transpose, then undo both reversals after its compact rank-r output.
+    column_input = [
+        [rows[j][i] for j in range(n)]
+        for i in reversed(range(m))
+    ]
+    matrix = pari.matrix(
+        m, n, [value for row in column_input for value in row]
+    )
+    compact = pari.mathnf(matrix)
+    rank = int(compact.ncols())
+    compact_rows = [
+        [int(compact[i, j]) for j in range(rank)]
+        for i in range(m)
+    ]
+    form = [
+        [compact_rows[m - 1 - j][rank - 1 - i] for j in range(m)]
+        for i in range(rank)
+    ]
+    return form + [[0] * m for _ in range(n - rank)]
+
+
 def _dispatch(request: dict[str, Any]) -> Any:
     family = request.get("family")
     operation = request.get("op")
@@ -68,6 +108,10 @@ def _dispatch(request: dict[str, Any]) -> Any:
         return _charpoly_berkowitz(request)
     if family == "fmpz_mat" and operation == "minpoly":
         return _minpoly(request)
+    if family == "fmpz_mat" and operation == "hnf":
+        return _hnf(request)
+    if family == "fmpz_mat" and operation == "overhead":
+        return 0
     raise ValueError(f"unknown PARI benchmark operation {family!r}/{operation!r}")
 
 

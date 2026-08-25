@@ -125,6 +125,9 @@ Request fields: ``rows`` (list of list of int).
   list in ascending degree order via ``flint.fmpz_mat(rows).charpoly()``.
 * ``minpoly`` — returns the minimal-polynomial coefficient list in ascending
   degree order via ``flint.fmpz_mat(rows).minpoly()``.
+* ``hnf`` — returns FLINT's canonical row Hermite normal form as rows.
+* ``overhead`` — returns ``0`` without constructing a matrix, calibrating the
+  persistent JSON protocol.
 
 ### `fq_default` (finite field F_q = F_p[x] / m(x))
 
@@ -557,10 +560,26 @@ def _fmpz_mat_minpoly(req: dict[str, Any]) -> list[int]:
     return [int(c) for c in m.minpoly().coeffs()]
 
 
+def _fmpz_mat_hnf(req: dict[str, Any]) -> list[list[int]]:
+    rows = req["rows"]
+    matrix = flint.fmpz_mat([[int(c) for c in row] for row in rows])  # type: ignore[union-attr]
+    form = matrix.hnf()
+    return [
+        [int(form[i, j]) for j in range(form.ncols())]
+        for i in range(form.nrows())
+    ]
+
+
+def _fmpz_mat_overhead(_req: dict[str, Any]) -> int:
+    return 0
+
+
 _FMPZ_MAT_OPS: dict[str, Callable[[dict[str, Any]], Any]] = {
     "det": _fmpz_mat_det,
     "charpoly": _fmpz_mat_charpoly,
     "minpoly": _fmpz_mat_minpoly,
+    "hnf": _fmpz_mat_hnf,
+    "overhead": _fmpz_mat_overhead,
 }
 
 

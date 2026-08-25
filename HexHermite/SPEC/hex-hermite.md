@@ -425,10 +425,12 @@ elementary steps; proof erasure keeps that witness off the value path.
 `hnfData` must not be implemented as a projection of `hnfWithInv`, because
 Lean's eager evaluation would then allocate the inverse it promises to avoid.
 `hnfBasis` is definitionally the first `hnfRank A` rows of `hnf A`, and
-`pivots` is definitionally the `natAbs` of the entries in those rows at the
-corresponding `(hnfData A).pivotCols` positions (transported along
-`hnfRank_eq`). These are definition contracts, so neither function has an
-independent choice that could satisfy only the index theorem accidentally.
+`pivots` reads the `natAbs` of the pivot entries directly from the same
+form-only sweep that produces `hnf` and `hnfRank`. The shared-schedule
+agreement theorem identifies those columns with `(hnfData A).pivotCols`
+without constructing the transform on the executable `pivots` path. These are
+definition contracts, so neither function has an independent choice that
+could satisfy only the index theorem accidentally.
 
 `latticeCoeffs` returns
 coefficients against the rows of `A`, not against the rows of `hnf A`,
@@ -691,46 +693,12 @@ derived. See "Benchmarking".
 
 ## The Mathlib layer
 
-`hex-hermite-mathlib` proves:
-
-```lean
-/-- The row lattice is unchanged. -/
-theorem span_hnf (A : Matrix Int n m) :
-    Submodule.span ℤ (Set.range (matrixEquiv (hnf A))) =
-      Submodule.span ℤ (Set.range (matrixEquiv A))
-
-/-- The transform is an element of the general linear group over `ℤ`. -/
-theorem isUnit_transform (A : Matrix Int n m) :
-    IsUnit (matrixEquiv (hnfData A).transform)
-
-/-- The executable integer rank agrees with Mathlib's module rank over `ℤ`. -/
-theorem hnfRank_eq_rank (A : Matrix Int n m) :
-    hnfRank A = (matrixEquiv A).rank
-
-/-- Integer lattice membership is membership in the span. -/
-theorem latticeContains_iff_mem (A : Matrix Int n m) (v : Vector Int m) :
-    latticeContains A v = true ↔
-      vectorEquiv v ∈ Submodule.span ℤ (Set.range (matrixEquiv A))
-
-/-- The kernel basis is a basis of the kernel submodule. -/
-noncomputable def kernelBasisEquiv (A : Matrix Int n m) :
-    Module.Basis (Fin (n - hnfRank A)) ℤ
-      (LinearMap.ker (Matrix.vecMulLinear (matrixEquiv A)))
-```
-
-`hnfRank_eq_rank` needs a genuine row-rank/column-rank bridge. Mathlib's
-`Matrix.rank` is the `finrank` of the range of `mulVecLin`, while HNF counts
-nonzero rows. Since `Matrix.rank_transpose` is field-only, the proof either
-base-changes the integer matrix to `ℚ` and transports both ranks, or first
-identifies `hnfRank` with the rank of the row-span submodule and proves that it
-equals the column rank. It is not discharged merely by `span_hnf`.
-
-The last is the payoff and the reason the layer is more than a
-restatement: Mathlib's basis for a submodule of a free module over a PID
-(`Submodule.basisOfPid`) is noncomputable, and this supplies an
-executable one for the kernel of an integer matrix, with the identity
-between them proved. `hex-smith` extends the same idea to
-`Module.Basis.SmithNormalForm`.
+The correspondence contract is authoritative in
+[`hex-hermite-mathlib`](../../HexHermiteMathlib/SPEC/hex-hermite-mathlib.md).
+That layer identifies the executable row lattice, transform, rank, membership
+decision, and kernel basis with Mathlib's span, units, matrix rank, and kernel
+submodule. It owns proofs only; all executable definitions and their
+correctness theorems remain here.
 
 Mathlib has no Hermite normal form for matrices (searching for `hermite`
 finds Hermite polynomials, the Hermite-Minkowski theorem, and

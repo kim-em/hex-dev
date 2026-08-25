@@ -69,6 +69,12 @@ private theorem vector_foldl_toList (v : Vector R n) (f : α → R → α) (a : 
     v.foldl f a = v.toList.foldl f a := by
   exact (Array.foldl_toList f).symm
 
+private theorem List.get_of_eq {xs ys : List α} (h : xs = ys)
+    (i : Fin xs.length) :
+    xs.get i = ys.get (Fin.cast (congrArg List.length h) i) := by
+  subst ys
+  rfl
+
 private theorem det_eq_zero_of_zero_row (M : Matrix Int n n) (i : Fin n)
     (hi : M[i] = 0) : det M = 0 := by
   have hscale : Matrix.rowScale M i 0 = M := by
@@ -349,19 +355,11 @@ def kernelBasis (A : Matrix Int n m) : Matrix Int (n - hnfRank A) n :=
 /-- Positive HNF pivot values in pivot-column order. -/
 @[expose]
 def pivots (A : Matrix Int n m) : Vector Nat (hnfRank A) :=
-  let D := hnfData A
-  let hrank := hnfRank_eq A
-  let hr := Hermite.run_rank_le (Hermite.transformAccumulator n) A
-  have hrD : D.rank ≤ n := by
-    change (Hermite.run (Hermite.transformAccumulator n) A).pivots.length ≤ n
-    exact hr
+  let result := Hermite.run (Hermite.formAccumulator n) A
+  have hr := Hermite.run_rank_le (Hermite.formAccumulator n) A
   Vector.ofFn fun i =>
-    have hiD : i.val < D.rank := by
-      rw [← hrank]
-      exact i.isLt
-    let pi : Fin D.rank := ⟨i.val, hiD⟩
-    let row : Fin n := ⟨i.val, Nat.lt_of_lt_of_le hiD hrD⟩
-    (D.echelon[(row, D.pivotCols.get pi)]).natAbs
+    let row : Fin n := Fin.castLE hr i
+    (result.matrix[(row, result.pivotVector.get i)]).natAbs
 
 /-- Index of the row lattice in `Int^m`, with `0` denoting infinite index. -/
 @[expose]
@@ -867,10 +865,37 @@ theorem latticeIndex_eq_det (A : Matrix Int n n) :
         rw [Vector.getElem_toList, List.getElem_ofFn]
         unfold pivots
         rw [Vector.getElem_ofFn]
-        change D.echelon[(i, D.pivotCols.get (Fin.cast hrD.symm i))].natAbs =
-          D.echelon[i][i].natAbs
-        rw [hcol]
-        rw [Matrix.getElem_pair_eq_nested]
+        let rs := Hermite.run (Hermite.formAccumulator n) A
+        let rt := Hermite.run (Hermite.transformAccumulator n) A
+        have hm : rs.matrix = rt.matrix :=
+          Hermite.run_matrix_agree (Hermite.formAccumulator n)
+            (Hermite.transformAccumulator n) A
+        have hp : rs.pivots = rt.pivots :=
+          Hermite.run_pivots_agree (Hermite.formAccumulator n)
+            (Hermite.transformAccumulator n) A
+        have hkR : k < hnfRank A := by rw [hfull]; exact hk
+        let is : Fin rs.pivots.length := ⟨k, by simpa [rs, hnfRank] using hkR⟩
+        let it : Fin rt.pivots.length :=
+          Fin.cast (congrArg List.length hp) is
+        have hrow : Fin.castLE
+            (Hermite.run_rank_le (Hermite.formAccumulator n) A)
+            (⟨k, hkR⟩ : Fin (hnfRank A)) = i := Fin.ext rfl
+        have hit : it = Fin.cast hrD.symm i := Fin.ext rfl
+        have hcolS : rs.pivotVector.get is = i := by
+          rw [Hermite.Result.pivotVector_get]
+          calc
+            rs.pivots.get is = rt.pivots.get it := List.get_of_eq hp is
+            _ = rt.pivotVector.get it := (Hermite.Result.pivotVector_get rt it).symm
+            _ = D.pivotCols.get (Fin.cast hrD.symm i) := by
+              rw [hit]
+              simp [D, rt, hnfData]
+            _ = i := hcol
+        change rs.matrix[(Fin.castLE
+          (Hermite.run_rank_le (Hermite.formAccumulator n) A)
+          (⟨k, hkR⟩ : Fin (hnfRank A)),
+          rs.pivotVector.get is)].natAbs = D.echelon[i][i].natAbs
+        rw [hrow, hcolS, hm]
+        simp [D, rt, hnfData]
     have hdet := det_upperTriangular_eq_foldl_diag D.echelon hupper
     have hdetAbs : (det D.echelon).natAbs =
         (List.finRange n).foldl
