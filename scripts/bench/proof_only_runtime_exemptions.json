@@ -1214,7 +1214,7 @@
   {
     "path": "lakefile.lean",
     "baseline_blob": "a1b87406682dbf908d990f01676f326499b906e5",
-    "current_blob": "83cf9f53aa80d2cbbe5d8682f784f5b6579726d9",
+    "current_blob": "42a95d0841165c3591246914bc67348ccd8d5df3",
     "reason": "Additionally moves the HexMvGcd kernel replay suite to its SPEC-mandated bench target; hexbz_factor_service and every factorization runtime dependency remain unchanged."
   }
 ]
