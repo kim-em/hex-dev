@@ -220,6 +220,22 @@ theorem dvd_contentIn
   rcases dvd_contentIn i cmp' 0 0 hd with ⟨q, hq⟩
   exact hq.trans (MvPoly.mul_zero q)
 
+/-- Named-variable content is the normalized final gcd of its recursive
+coefficient fold. -/
+theorem contentIn_normalized
+    {cmp : Mono (n + 1) → Mono (n + 1) → Ordering}
+    [IsMonomialOrder cmp]
+    [Lean.Grind.CommRing R] [DecidableEq R] [BEq R] [LawfulBEq R]
+    [Dvd R] [BezoutOps R] [LawfulGcdOps R] [LawfulBezoutOps R]
+    [GcdProducer R]
+    (i : Fin (n + 1)) (cmp' : Mono n → Mono n → Ordering)
+    [IsMonomialOrder cmp'] (p : MvPoly (n + 1) R cmp) :
+    polyNormalize (contentIn i cmp' p) = contentIn i cmp' p := by
+  unfold contentIn contentInCert
+  apply contentCertWith_normalized
+  intro f h
+  exact gcdCert_checks f h
+
 /-- Named-variable content times primitive part reconstructs the input. -/
 theorem contentIn_mul_primPartIn
     {cmp : Mono (n + 1) → Mono (n + 1) → Ordering}
@@ -267,7 +283,49 @@ theorem primPartIn_content
     (i : Fin (n + 1)) (cmp' : Mono n → Mono n → Ordering)
     [IsMonomialOrder cmp'] {p : MvPoly (n + 1) R cmp} (hp : p ≠ 0) :
     contentIn i cmp' (primPartIn i cmp' p) = 1 := by
-  sorry
+  let c := contentIn i cmp' p
+  let q := primPartIn i cmp' p
+  let d := contentIn i cmp' q
+  have hrec : constIn (cmp := cmp) i cmp' c * q = p :=
+    contentIn_mul_primPartIn i cmp' p
+  have hc : c ≠ 0 := by
+    intro hzero
+    apply hp
+    rw [← hrec, hzero, constIn_zero, MvPoly.zero_mul]
+  have hcoeff : ∀ k,
+      (toUnivariate i cmp' p).coeff k =
+        c * (toUnivariate i cmp' q).coeff k := by
+    intro k
+    rw [← hrec]
+    exact coeff_constIn_mul i c q k
+  have hcd : c * d ∣ c := by
+    apply dvd_contentIn i cmp' p (c * d)
+    intro k
+    have hd := contentIn_dvd_coeff i cmp' q k
+    change d ∣ (toUnivariate i cmp' q).coeff k at hd
+    rcases (GcdDomainLaws.dvd_iff d
+      ((toUnivariate i cmp' q).coeff k)).mp hd with ⟨a, ha⟩
+    apply (GcdDomainLaws.dvd_iff (c * d)
+      ((toUnivariate i cmp' p).coeff k)).mpr
+    refine ⟨a, ?_⟩
+    rw [hcoeff, ha, MvPoly.mul_assoc]
+  rcases (GcdDomainLaws.dvd_iff (c * d) c).mp hcd with ⟨u, hu⟩
+  have hunit : d * u = 1 := by
+    have hzero : c * (1 - d * u) = 0 := by
+      calc
+        c * (1 - d * u) = c - (c * d) * u := by grind
+        _ = 0 := by rw [← hu]; grind
+    rcases GcdDomainLaws.no_zero_div c (1 - d * u) hzero with
+      hzero | hrest
+    · exact False.elim (hc hzero)
+    · grind
+  have hisUnit : polyIsUnit d = true :=
+    (polyIsUnit_iff d).mpr ⟨u, hunit⟩
+  have hnorm : polyNormalize d = d := contentIn_normalized i cmp' q
+  calc
+    contentIn i cmp' (primPartIn i cmp' p) = d := rfl
+    _ = polyNormalize d := hnorm.symm
+    _ = 1 := polyNormalize_unit d hisUnit
 
 theorem contentIn_mul
     {cmp : Mono (n + 1) → Mono (n + 1) → Ordering}
