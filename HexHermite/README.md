@@ -48,7 +48,9 @@ The Mathlib-free contract `IsHNF` combines the shared row-echelon transform
 contract with positive pivots and canonical reduced residues. The executable
 shape checker and packed certificate have a proved soundness theorem. The form,
 transform, and inverse paths share one deterministic accumulator-parametric
-elimination schedule, with proved form/rank/data agreement.
+rank-profiled principal-block schedule, with proved form/rank/data agreement.
+Every candidate is checked against the complete HNF shape contract; the earlier
+total column sweep remains as a fallback.
 
 # Contributing
 
