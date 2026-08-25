@@ -1222,5 +1222,11 @@
     "baseline_blob": null,
     "current_blob": "86d9f0154609649d246e791e1245174a3f3a165b",
     "reason": "Adds the forced KS2 multiplication kernel, its correctness theorem, conformance checks, and crossover measurement; the production multiplication dispatcher and factorization call graph remain unchanged."
+  },
+  {
+    "path": "HexPolyZ/KroneckerMulti.lean",
+    "baseline_blob": null,
+    "current_blob": "fc803d41c9f687c5fb8b90a20d93535ee32bb31a",
+    "reason": "Adds the forced KS2 and checked reciprocal KS3 multiplication kernels, their correctness theorems, conformance checks, and crossover measurements; the production multiplication dispatcher and factorization call graph remain unchanged."
   }
 ]
