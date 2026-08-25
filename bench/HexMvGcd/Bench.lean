@@ -8,6 +8,7 @@ import HexMvGcd
 import HexMvGcd.Families
 import HexMvGcd.Matrix
 import HexMvGcd.Comparators
+import HexMvGcd.Profile
 import HexMvPolyCorpus
 import HexMvGcdFlint
 import HexMvGcdSingular
