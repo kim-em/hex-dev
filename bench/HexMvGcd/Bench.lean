@@ -7,6 +7,7 @@ Authors: Kim Morrison
 import HexMvGcd
 import HexMvGcd.Families
 import HexMvGcd.Matrix
+import HexMvGcd.Comparators
 import HexMvPolyCorpus
 import HexMvGcdFlint
 import HexMvGcdSingular

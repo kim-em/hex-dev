@@ -1556,10 +1556,10 @@ cover the decomposition surface over `ℤ` and `ℚ`, and its `modulus=`
 argument covers the positive-characteristic Boolean cases above. Extension
 fields `F_q` are not covered by SymPy and are out of scope for the
 oracle; `GFq` Boolean cases are checked in Lean, with their arity-one
-specializations compared to hex-poly-fp. python-flint's `fmpz_mpoly.gcd` is a
-stronger implementation but does not expose cofactors or squarefree
-decomposition uniformly, so it appears below as a performance comparator
-rather than as the oracle.
+specializations compared to hex-poly-fp. python-flint exposes the matching
+GCD, exact-division, and squarefree operations, but not the complete
+certificate and cofactor surface required above, so it appears below as a
+performance comparator rather than as the oracle.
 
 The companion adds randomised comparison against
 `MvPolynomial (Fin n) ℤ` through hex-mv-poly's `equiv`, checking the
@@ -1596,18 +1596,26 @@ gap:
 - **Cofactor-heavy**, where the gcd is small and the cofactors are large,
   which stresses `divExact?` rather than the interpolation.
 
-**Comparators.** FLINT's `fmpz_mpoly_gcd` is `informational`. It selects
-among Brown, Zippel, a sparse Hensel route, and subresultants with tuned
-crossovers, while this library specifies Brown and the subresultant
-fallback. A required broad ratio would therefore be a check on routes that
-do not exist. The written-down
-expectation is therefore narrow: on the **coprime**
-family the ratio should be within a small constant, since both sides do
-one evaluation and one univariate gcd per variable, and a large ratio
-there means the fast path is not firing. No advance claim is made on the
-sparse family, where FLINT's Hensel route has no counterpart here.
-Singular is `informational` for the same reason. SymPy is the oracle and
+**Comparators.** Every family has two matched endpoints and three arms: Hex,
+FLINT, and Singular. The arms return Hex's ascending canonical term list (or
+the sorted squarefree multiplicity signature), and every registration pins
+the shared output hash. The FLINT driver uses `fmpz_mpoly.gcd` for the
+integer GCD families, `fmpq_mpoly.gcd` for rationals, exact `divmod` for the
+cofactor-heavy family, and `factor_squarefree` for squarefree decomposition.
+The Singular driver uses `gcd`, checked exact quotient, and `factorize` in a
+persistent characteristic-zero polynomial ring. SymPy remains the oracle and
 is not a performance comparator.
+
+Both performance comparators are `informational`. FLINT selects among Brown,
+Zippel, a sparse Hensel route, and subresultants with tuned crossovers, while
+this library specifies Brown and the subresultant fallback; Singular likewise
+has sparse routes outside this SPEC. A required broad ratio would therefore
+check routes that do not exist. The written-down expectation is narrow: on
+the **coprime** family the ratio should be within a small constant, since all
+three sides should discharge the inputs without full interpolation. A large
+ratio there means the fast path is not firing. No advance ratio claim is made
+on the remaining families, especially sparse stress, where the comparator
+route has no Hex counterpart.
 
 ## The Mathlib layer
 

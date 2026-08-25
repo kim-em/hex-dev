@@ -93,16 +93,36 @@ def denseGcd (n degree : Nat) (hn : 0 < n := by omega) :
   let rightCofactor := X ⟨0, hn⟩ * leftCofactor + 1
   (common * leftCofactor, common * rightCofactor)
 
+/-- The nonintegral common factor used by the rational family. -/
+def rationalCommon (n : Nat) : P n Rat :=
+  (List.finRange n).foldl
+    (fun polynomial i =>
+      polynomial + C ((Int.ofNat (i.val + 1) : Rat) / 2) * X i) 1
+
 /-- The rational analogue of `denseGcd`, with nonintegral scalar content. -/
 def rationalGcd (n degree : Nat) (hn : 0 < n := by omega) :
     P n Rat × P n Rat :=
-  let common : P n Rat :=
-    (List.finRange n).foldl
-      (fun polynomial i =>
-        polynomial + C ((Int.ofNat (i.val + 1) : Rat) / 2) * X i) 1
+  let common := rationalCommon n
   let leftCofactor := denseBox (R := Rat) n degree
   let rightCofactor := X ⟨0, hn⟩ * leftCofactor + 1
   (common * leftCofactor, common * rightCofactor)
+
+/-- Bivariate PRS inputs whose nonmonic common factor and opposing large
+coefficients expose intermediate coefficient swell. -/
+def swellGcd (degree : Nat) : P 2 Int × P 2 Int :=
+  let x : P 2 Int := X 0
+  let y : P 2 Int := X 1
+  let common := C 2 * x + y + 1
+  (common * (x ^ degree + C 37 * y + 1),
+    common * (x ^ (degree + 1) - C 41 * y + 2))
+
+/-- Exact-division input with a small divisor and a dense large quotient. -/
+def cofactorHeavy (degree : Nat) : P 2 Int × P 2 Int × P 2 Int :=
+  let x : P 2 Int := X 0
+  let y : P 2 Int := X 1
+  let divisor := x + y + 1
+  let quotient := denseBox (R := Int) 2 degree + x * y + 2
+  (divisor * quotient, divisor, quotient)
 
 /-- A nonconstant linear factor which involves every available variable. -/
 def linearFactor (n salt : Nat) : P n Int :=
