@@ -127,6 +127,13 @@ private def observedRand {n : Nat} {cmp : Mono n → Mono n → Ordering}
 #guard
   let x : P1 := X 0
   let f := x
+  let h := x ^ 2 + 1
+  match unitRemainderCert? f h with
+  | some cert => checkCoprime f h cert
+  | none => false
+#guard
+  let x : P1 := X 0
+  let f := x
   let h := x + 5
   (checkedCandidate? f h (intHeuristicCandidateAt f h 5)).isNone
 #guard

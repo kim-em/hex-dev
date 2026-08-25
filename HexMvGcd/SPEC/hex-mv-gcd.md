@@ -582,7 +582,10 @@ Three things do work, and all are supported. A direct polynomial Bézout
 identity, when one happens to exist, is the cheapest: replay
 `u · f' + v · h' = 1` without claiming that every coprime pair admits such
 an identity. The modular and recursive witnesses below cover pairs for which
-no direct identity exists.
+no direct identity exists. Candidate checking recognises two common direct
+forms before invoking recursive PRS: a unit difference, and a one-step
+polynomial division whose remainder is `1` or `-1`. In the latter case the
+quotient and sign give the two Bézout coefficients immediately.
 
 ### The modular witness, which is primary when available
 

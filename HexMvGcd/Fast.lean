@@ -188,10 +188,28 @@ def unitDiffCert? {n : Nat} {R : Type u}
   else if h - f == 1 then some (.bezout (-1) 1)
   else none
 
+/-- Detect a one-step polynomial remainder equal to `±1` and replay the
+resulting direct Bézout identity.  This keeps candidate checking cheap when a
+large cofactor is an affine polynomial multiple of the other. -/
+def unitRemainderCert? {n : Nat} {R : Type u}
+    {cmp : Mono n → Mono n → Ordering}
+    [IsMonomialOrder cmp]
+    [Lean.Grind.CommRing R] [DecidableEq R] [BEq R] [LawfulBEq R]
+    [Dvd R] [GcdOps R]
+    (f h : MvPoly n R cmp) : Option (CoprimeCert n R cmp) :=
+  let right := divMod h f
+  if right.2 == 1 then some (.bezout (-right.1) 1)
+  else if right.2 == -1 then some (.bezout right.1 (-1))
+  else
+    let left := divMod f h
+    if left.2 == 1 then some (.bezout 1 (-left.1))
+    else if left.2 == -1 then some (.bezout (-1) left.1)
+    else none
+
 /-- Offer an arbitrary nonzero polynomial candidate to the full multivariate
-checker.  Exact division builds cofactors; a unit difference gives a direct
-Bézout witness, and all other pairs use route 4.  No producer may bypass this
-function's final replay. -/
+checker.  Exact division builds cofactors; a unit difference or unit remainder
+gives a direct Bézout witness, and all other pairs use route 4.  No producer
+may bypass this function's final replay. -/
 def checkedCandidate? {n : Nat} {R : Type u}
     {cmp : Mono n → Mono n → Ordering}
     [IsMonomialOrder cmp]
@@ -205,7 +223,9 @@ def checkedCandidate? {n : Nat} {R : Type u}
     let cofR := quotient h normalized
     let coprime := match unitDiffCert? cofL cofR with
       | some cert => cert
-      | none => (prsCert cofL cofR).coprime
+      | none => match unitRemainderCert? cofL cofR with
+        | some cert => cert
+        | none => (prsCert cofL cofR).coprime
     let cert := GcdCert.mk normalized cofL cofR coprime
     if checkGcd f h cert then some cert else none
 
