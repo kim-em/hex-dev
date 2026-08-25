@@ -63,6 +63,16 @@ def composeWith (plan : MulPlan F) (m n : GcdStep F) : GcdStep F :=
     a10 := mulWith plan m.a10 n.a00 + mulWith plan m.a11 n.a10
     a11 := mulWith plan m.a10 n.a01 + mulWith plan m.a11 n.a11 }
 
+/-- Compose one Euclidean row update with an existing transformation.  The
+elementary matrix contains only zero, one, and `-q`, so this specialization
+uses two planned products instead of the eight used by generic composition. -/
+def euclidComposeWith (plan : MulPlan F) (q : DensePoly F)
+    (m : GcdStep F) : GcdStep F :=
+  { a00 := m.a10
+    a01 := m.a11
+    a10 := m.a00 + mulWith plan (-q) m.a10
+    a11 := m.a01 + mulWith plan (-q) m.a11 }
+
 /-- Matrix composition clipped to the coefficient range that can survive in
 the caller's degree-bounded transformation. -/
 def composeLowWith (plan : MulPlan F) (len : Nat)
@@ -95,6 +105,18 @@ theorem composeWith_eq (plan : MulPlan F) (m n : GcdStep F) :
   cases m
   cases n
   simp only [composeWith, compose, mulWith_eq]
+
+/-- Specialized Euclidean composition has the generic planned matrix
+semantics. -/
+theorem euclidComposeWith_eq (plan : MulPlan F) (q : DensePoly F)
+    (m : GcdStep F) :
+    euclidComposeWith plan q m = composeWith plan (euclid q) m := by
+  cases m
+  simp only [euclidComposeWith, composeWith, euclid, mulWith_eq]
+  have honemul : ∀ p : DensePoly F, (1 : DensePoly F) * p = p := by
+    intro p
+    rw [mul_comm_poly, mul_one_right_poly]
+  simp only [zero_mul, zero_add, honemul]
 
 /-- Planned application has the ordinary matrix semantics. -/
 theorem applyWith_eq (plan : MulPlan F) (m : GcdStep F) (a b : DensePoly F) :
@@ -548,7 +570,7 @@ private def halfGcdMatrix (plan : MulPlan F) :
             first
           else
             let qr := divModWith plan cd.1 cd.2
-            let boundary := GcdStep.composeWith plan (GcdStep.euclid qr.1) first
+            let boundary := GcdStep.euclidComposeWith plan qr.1 first
             if qr.2.size ≤ m then
               boundary
             else
@@ -568,27 +590,35 @@ private def halfGcdMatrix (plan : MulPlan F) :
 termination_by fuel _ _ => fuel
 decreasing_by all_goals omega
 
+/-- The completed transformation together with the terminal gcd already
+available at the end of the recursive Euclidean reduction. -/
+private structure GcdMatrixResult (F : Type u) [Zero F] [DecidableEq F] where
+  matrix : GcdStep F
+  gcd : DensePoly F
+
 /-- Finish the Euclidean sequence by repeatedly applying half-gcd blocks and
-one exact boundary division. -/
-private def gcdMatrix (plan : MulPlan F) :
-    Nat → DensePoly F → DensePoly F → GcdStep F
-  | 0, _, _ => GcdStep.one
+one exact boundary division.  Carrying the terminal gcd avoids applying the
+completed matrix to the original full-size inputs a second time. -/
+private def gcdMatrixResult (plan : MulPlan F) :
+    Nat → DensePoly F → DensePoly F → GcdMatrixResult F
+  | 0, a, _ => { matrix := GcdStep.one, gcd := a }
   | fuel + 1, a, b =>
       if b.isZero then
-        GcdStep.one
+        { matrix := GcdStep.one, gcd := a }
       else
         let block := halfGcdMatrix plan fuel a b
         let cd := GcdStep.applyWith plan block a b
         if cd.2.isZero then
-          block
+          { matrix := block, gcd := cd.1 }
         else
           let qr := divModWith plan cd.1 cd.2
-          let boundary := GcdStep.composeWith plan (GcdStep.euclid qr.1) block
+          let boundary := GcdStep.euclidComposeWith plan qr.1 block
           if qr.2.isZero then
-            boundary
+            { matrix := boundary, gcd := cd.2 }
           else
-            let rest := gcdMatrix plan fuel cd.2 qr.2
-            GcdStep.composeWith plan rest boundary
+            let rest := gcdMatrixResult plan fuel cd.2 qr.2
+            { matrix := GcdStep.composeWith plan rest.matrix boundary
+              gcd := rest.gcd }
 termination_by fuel _ _ => fuel
 decreasing_by all_goals omega
 
@@ -596,9 +626,8 @@ decreasing_by all_goals omega
 extended-gcd projections.  The active quotient trace below certifies that its
 first row is exactly the established extended-gcd coefficient pair. -/
 private def xgcdMatrixWith (plan : MulPlan F) (p q : DensePoly F) : XGCDResult F :=
-  let matrix := gcdMatrix plan (p.size + q.size + 1) p q
-  let result := GcdStep.applyWith plan matrix p q
-  { gcd := result.1, left := matrix.a00, right := matrix.a01 }
+  let result := gcdMatrixResult plan (p.size + q.size + 1) p q
+  { gcd := result.gcd, left := result.matrix.a00, right := result.matrix.a01 }
 
 private theorem fieldCandidate_eq (plan : MulPlan F) (a b q : DensePoly F)
     (hsmall : (a - mulWith plan q b).degree?.getD 0 < b.degree?.getD 0) :
@@ -895,7 +924,8 @@ private theorem MatrixProper.euclid (plan : MulPlan F)
     (hq : 0 < q.size) (hd : 1 < d.size)
     (hdiv : _root_.Hex.DensePoly.divMod c d = (q, r)) :
     MatrixProper plan
-      (GcdStep.composeWith plan (GcdStep.euclid q) matrix) a b d r := by
+      (GcdStep.euclidComposeWith plan q matrix) a b d r := by
+  rw [GcdStep.euclidComposeWith_eq]
   apply hmatrix.compose
   refine ⟨[q], ProperQuotients.cons hq hd hdiv
     (ProperQuotients.nil d r), (quotientStep_singleton plan q).symm, ?_⟩
@@ -907,7 +937,8 @@ private theorem MatrixExact.euclid (plan : MulPlan F)
     (hd : 0 < d.size)
     (hdiv : _root_.Hex.DensePoly.divMod c d = (q, r)) :
     MatrixExact plan
-      (GcdStep.composeWith plan (GcdStep.euclid q) matrix) a b d r := by
+      (GcdStep.euclidComposeWith plan q matrix) a b d r := by
+  rw [GcdStep.euclidComposeWith_eq]
   apply hmatrix.compose
   refine ⟨[q], ActiveQuotients.cons hd hdiv (ActiveQuotients.nil d r),
     (quotientStep_singleton plan q).symm, ?_⟩
@@ -952,7 +983,7 @@ private theorem halfGcdMatrix_proper (plan : MulPlan F) (fuel : Nat)
             let highCd := first.apply (high cut a) (high cut b)
             let cd := first.apply a b
             let qr := divModWith plan cd.1 cd.2
-            let boundary := GcdStep.composeWith plan (GcdStep.euclid qr.1) first
+            let boundary := GcdStep.euclidComposeWith plan qr.1 first
             let cut₂ := 2 * cut - (cd.2.size - 1)
             let second := halfGcdMatrix plan (fuel / 2)
               (high cut₂ cd.2) (high cut₂ qr.2)
@@ -1009,30 +1040,27 @@ private theorem halfGcdMatrix_proper (plan : MulPlan F) (fuel : Nat)
                   · exact ⟨cd.2, qr.2, hboundary⟩
             · exact ⟨a, b, MatrixProper.one plan a b⟩
 
-private theorem gcdMatrix_exact (plan : MulPlan F) (fuel : Nat)
+private theorem gcdMatrixResult_exact (plan : MulPlan F) (fuel : Nat)
     (a b : DensePoly F) (hfuel : b.size < fuel) :
-    ∃ c, MatrixExact plan (gcdMatrix plan fuel a b) a b c 0 := by
+    MatrixExact plan (gcdMatrixResult plan fuel a b).matrix a b
+      (gcdMatrixResult plan fuel a b).gcd 0 := by
   induction fuel generalizing a b with
   | zero => omega
   | succ fuel ih =>
-      unfold gcdMatrix
+      unfold gcdMatrixResult
       simp only [GcdStep.applyWith_eq]
       split
       · rename_i hbzero
         have hbsize : b.size = 0 := (isZero_eq_true_iff b).mp hbzero
         have hbeq : b = 0 := (size_eq_zero_iff b).mp hbsize
         subst b
-        exact ⟨a, MatrixExact.one plan a 0⟩
+        exact MatrixExact.one plan a 0
       · rename_i hbnonzero
         let block := halfGcdMatrix plan fuel a b
         let cd := block.apply a b
         let qr := divModWith plan cd.1 cd.2
-        let boundary := GcdStep.composeWith plan (GcdStep.euclid qr.1) block
-        let rest := gcdMatrix plan fuel cd.2 qr.2
-        change ∃ c, MatrixExact plan
-          (if cd.2.isZero then block
-          else if qr.2.isZero then boundary
-          else GcdStep.composeWith plan rest boundary) a b c 0
+        let boundary := GcdStep.euclidComposeWith plan qr.1 block
+        let rest := gcdMatrixResult plan fuel cd.2 qr.2
         rcases halfGcdMatrix_proper plan fuel a b with
           ⟨c, d, qs, hproper, hblockMatrix, hblockApply⟩
         have hblockMatrix' : block = quotientStep plan qs := hblockMatrix
@@ -1053,7 +1081,7 @@ private theorem gcdMatrix_exact (plan : MulPlan F) (fuel : Nat)
           have hcdsize : cd.2.size = 0 :=
             (isZero_eq_true_iff cd.2).mp hcdzero
           have hcdeq : cd.2 = 0 := (size_eq_zero_iff cd.2).mp hcdsize
-          exact ⟨cd.1, by simpa only [hcdeq] using hblock⟩
+          simpa only [hcdeq] using hblock
         · rename_i hcdnonzero
           have hcdpos : 0 < cd.2.size :=
             Nat.pos_of_ne_zero fun hzero =>
@@ -1068,7 +1096,7 @@ private theorem gcdMatrix_exact (plan : MulPlan F) (fuel : Nat)
             have hqrsize : qr.2.size = 0 :=
               (isZero_eq_true_iff qr.2).mp hqrzero
             have hqreq : qr.2 = 0 := (size_eq_zero_iff qr.2).mp hqrsize
-            exact ⟨cd.2, by simpa only [hqreq] using hboundary⟩
+            simpa only [hqreq] using hboundary
           · rename_i hqrnonzero
             have hcddegree : 1 < cd.2.size := by
               have hcdneone : cd.2.size ≠ 1 := by
@@ -1082,8 +1110,8 @@ private theorem gcdMatrix_exact (plan : MulPlan F) (fuel : Nat)
             have hqrlt : qr.2.size < cd.2.size :=
               fieldRemainder_size_lt hcddegree hdiv
             have hrecFuel : qr.2.size < fuel := by omega
-            rcases ih cd.2 qr.2 hrecFuel with ⟨g, hrest⟩
-            exact ⟨g, MatrixExact.compose plan hboundary hrest⟩
+            have hrest := ih cd.2 qr.2 hrecFuel
+            exact MatrixExact.compose plan hboundary hrest
 
 private theorem ActiveQuotients.xgcdAux_eq
     {qs : List (DensePoly F)} {a b c d : DensePoly F}
@@ -1145,23 +1173,19 @@ private theorem quotientStep_a01 (plan : MulPlan F)
 private theorem xgcdMatrixWith_eq (plan : MulPlan F)
     (p q : DensePoly F) : xgcdMatrixWith plan p q = xgcd p q := by
   unfold xgcdMatrixWith xgcd
-  simp only [GcdStep.applyWith_eq]
   let fuel := p.size + q.size + 1
-  let matrix := gcdMatrix plan fuel p q
-  let result := matrix.apply p q
-  change { gcd := result.1, left := matrix.a00, right := matrix.a01 } =
+  let result := gcdMatrixResult plan fuel p q
+  change XGCDResult.mk result.gcd result.matrix.a00 result.matrix.a01 =
     xgcdAux p 1 0 q 0 1 fuel
-  rcases gcdMatrix_exact plan fuel p q (by dsimp [fuel]; omega) with
-    ⟨c, qs, hactive, hmatrix, happly⟩
-  have hmatrix' : matrix = quotientStep plan qs := hmatrix
-  have happly' : result = (c, 0) := happly
+  rcases gcdMatrixResult_exact plan fuel p q (by dsimp [fuel]; omega) with
+    ⟨qs, hactive, hmatrix, happly⟩
+  have hmatrix' : result.matrix = quotientStep plan qs := hmatrix
   have hlen : qs.length ≤ fuel := by
     have htrace := hactive.length_le rfl
     dsimp [fuel]
     omega
   have hx := hactive.xgcdAux_eq rfl 1 0 0 1 fuel hlen
-  rw [hx, happly']
-  simp only
+  rw [hx]
   rw [hmatrix', quotientStep_a00, quotientStep_a01]
 
 /-- Extended Euclidean recursion with a queue of high-half quotient
