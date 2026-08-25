@@ -1264,5 +1264,23 @@
     "baseline_blob": "a1b87406682dbf908d990f01676f326499b906e5",
     "current_blob": "afe2867de3e4f86d390aa9c16d32c8ac5ddcdae0",
     "reason": "Additionally registers the build-only HexMvGcd Phase 4 sampling-profile module; hexbz_factor_service, its build flags, and every factorization runtime dependency are unchanged."
+  },
+  {
+    "path": "HexMatrix/Diagonal.lean",
+    "baseline_blob": null,
+    "current_blob": "12c18a3f9aacefac47a83cdb9de9a70960ff5a58",
+    "reason": "Adds the independent rectangular diagonal constructor and its correctness theorems for HexSmith; the production factor entry never calls these definitions, so factorization runtime behavior is unchanged."
+  },
+  {
+    "path": "HexMatrix/Submatrix.lean",
+    "baseline_blob": "798e76a63cbdfdb611dc656ac7a8bfa2addfdc08",
+    "current_blob": "b001d6674a02adb64a78cba57c7596a1d021bc20",
+    "reason": "Adds selectRows and selectCols for determinant and Smith proofs; neither definition is referenced by the production factor entry, and existing submatrix operations are unchanged."
+  },
+  {
+    "path": "lakefile.lean",
+    "baseline_blob": "a1b87406682dbf908d990f01676f326499b906e5",
+    "current_blob": "3cbffd9841ac08abcd6777e6fc23def1de704d05",
+    "reason": "Registers only the HexSmith libraries, conformance emitter, and benchmark executable on top of current main; hexbz_factor_service, its build flags, and every factorization runtime dependency remain unchanged."
   }
 ]

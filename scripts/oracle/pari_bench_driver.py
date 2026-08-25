@@ -19,6 +19,10 @@ same-algorithm comparator required by hex-char-poly:
 
 ``fmpz_mat/overhead``
     Return ``0`` without constructing a matrix, calibrating protocol cost.
+
+``fmpz_mat/snf``
+    Accept square integer ``rows`` and return PARI ``matsnf`` in ascending
+    divisibility order with nonnegative representatives.
 """
 from __future__ import annotations
 
@@ -101,6 +105,18 @@ def _hnf(request: dict[str, Any]) -> list[list[int]]:
     return form + [[0] * m for _ in range(n - rank)]
 
 
+def _snf(request: dict[str, Any]) -> list[int]:
+    pari = _require_pari()
+    rows = [[int(value) for value in row] for row in request["rows"]]
+    n = len(rows)
+    if any(len(row) != n for row in rows):
+        raise ValueError("snf benchmark requires a square matrix")
+    matrix = pari.matrix(n, n, [value for row in rows for value in row])
+    # PARI orders its elementary divisors in the reverse convention:
+    # d_n | ... | d_1. Hex exposes d_1 | ... | d_n.
+    return [abs(int(value)) for value in reversed(matrix.matsnf().list())]
+
+
 def _dispatch(request: dict[str, Any]) -> Any:
     family = request.get("family")
     operation = request.get("op")
@@ -112,6 +128,8 @@ def _dispatch(request: dict[str, Any]) -> Any:
         return _hnf(request)
     if family == "fmpz_mat" and operation == "overhead":
         return 0
+    if family == "fmpz_mat" and operation == "snf":
+        return _snf(request)
     raise ValueError(f"unknown PARI benchmark operation {family!r}/{operation!r}")
 
 
