@@ -10,8 +10,9 @@ each operation with its Mathlib counterpart where one exists.
 This SPEC expands the "Truncated power series" entry of
 [future-work](../../SPEC/future-work.md). It does not specify fast polynomial
 division, fast polynomial remainder, or any conversion to `DensePoly`.
-Those belong to the planned `hex-poly-fast`, which depends on both this
-library and hex-poly. The reason is given under "Placement in the DAG".
+Those belong to the planned [hex-poly-fast](../../SPEC/Libraries/hex-poly-fast.md), which depends
+on both this library and hex-poly. The reason is given under "Placement in
+the DAG".
 
 ## Why this library exists
 
@@ -56,7 +57,7 @@ The planned consumer joins this library to hex-poly:
 
 ```text
 hex-poly ─────────────┐
-                      ├── hex-poly-fast  (planned)
+                      ├── hex-poly-fast
 hex-truncated-series ──┘
 ```
 
@@ -254,28 +255,37 @@ of the full-precision cost:
 
 ```lean
 /-- The product, with every coefficient at index `m` or above set to
-zero. Costs `O(m²)` coefficient operations rather than `O(n²)`. -/
+zero. Its logical body is the bounded schoolbook convolution. -/
 def mulUpTo (m : Nat) (a b : TSeries R n) : TSeries R n
+
+/-- The measured schoolbook/Karatsuba implementation of `mulUpTo`. -/
+def mulUpToImpl (m : Nat) (a b : TSeries R n) : TSeries R n
+
+@[csimp] theorem mulUpTo_eq_impl : @mulUpTo = @mulUpToImpl
 
 theorem coeff_mulUpTo (m) (a b) (i) (hi : i < n) :
     (mulUpTo m a b).coeff i = if i < m then (a * b).coeff i else 0
 ```
 
 `mulUpTo n = (· * ·)` up to the propositional equality above, and
-`mulUpTo` is the single place a later fast multiplication goes. That is
+`mulUpTo` is the single place fast multiplication goes. That is
 the reason the iterations are written against it rather than against
 `*`.
 
-**A later fast multiplication lands in this library, not in
+**Fast series multiplication lands in this library, not in
 hex-poly-fast.** `mulUpTo` is a concrete definition here, and a library
 above cannot change what `invOfUnit` calls; saying otherwise would be
-wrong about how Lean works. The point is that no consumer has to change:
-Karatsuba, Toom-Cook, and an NTT on a coefficient `Vector` are
-self-contained array algorithms needing nothing from hex-poly, so they
-belong in `Ring.lean` beside the schoolbook version, behind the same
-signature and the same `coeff_mulUpTo`. hex-poly-fast is about
-polynomial division and reversal, which are facts about `DensePoly`, and
-it consumes this library's series API rather than modifying it.
+wrong about how Lean works. `mulUpToImpl` therefore uses schoolbook below a
+measured cutoff and a clipped Karatsuba recursion above it, with the same
+signature and `coeff_mulUpTo` theorem. The recursion needs only coefficient
+addition, subtraction, and multiplication and so adds no dependency.
+
+[hex-poly-fast](../../SPEC/Libraries/hex-poly-fast.md) owns polynomial reversal and a separate
+plan-driven Newton inverse. That inverse is proved equal to `invOfUnit` after
+conversion, but it does not modify this function or route a coefficient-
+specific NTT/Kronecker plan into this library. This deliberate duplication
+keeps the DAG acyclic and lets this library's own `exp`, `log`, square root,
+and reversion benefit from subquadratic bounded products.
 
 ## Degenerate precisions
 
@@ -445,7 +455,7 @@ The `ZMod64 p` instances are **not**
 here, because `ZMod64` is hex-mod-arith's type and depending on
 hex-mod-arith would add an edge this library does not need. They belong
 in whichever library has both types in scope, which in practice is
-hex-poly-fast or a consumer. The open questions record the alternative.
+hex-poly-fp or another consumer. The open questions record the alternative.
 
 Per-algorithm hypotheses, collected:
 
@@ -664,16 +674,13 @@ commutative, `a` is a unit, and inverses of a unit are unique. It is
 what lets every later theorem say "the inverse" rather than "an
 inverse".
 
-**Against a naive baseline, Newton inversion wins nothing at schoolbook
-multiplication.** The linear recurrence `b_i = -u · Σ_{j<i} a_{i-j} b_j`
-computes the same answer in `O(n²)` coefficient operations, and so does
-this iteration. The Newton form is specified anyway because it is the
-form that becomes `O(M(n))` the moment `mulUpTo` becomes subquadratic,
-and hex-poly-fast is the library that makes it so. The benchmark
-requirement below is therefore "within a small constant of the
-recurrence", not "faster than the recurrence", and a SPEC that promised
-the latter at schoolbook multiplication would be promising something
-false.
+**Against a naive baseline, Newton inversion wins only after the measured
+Karatsuba crossover.** The linear recurrence
+`b_i = -u · Σ_{j<i} a_{i-j} b_j` and schoolbook Newton both use `O(n²)`
+coefficient operations. Above the `mulUpToImpl` crossover, bounded Newton is
+subquadratic. The benchmark therefore requires a bounded constant ratio in
+the schoolbook range and a growing win in the Karatsuba range; a claim that
+Newton wins below the multiplication crossover would still be false.
 
 ## Square root
 
@@ -1046,8 +1053,8 @@ and `1` over `ℤ` for exactly this reason.
 
 ## Complexity
 
-`M(m)` is the cost of `mulUpTo m` in coefficient operations: `O(m²)`
-schoolbook, and whatever hex-poly-fast later installs.
+`M(m)` is the cost of `mulUpToImpl m` in coefficient operations: `O(m²)`
+below the measured schoolbook crossover and `O(m^(log 2 3))` above it.
 
 | operation | algorithm | cost |
 |---|---|---|
@@ -1191,7 +1198,10 @@ what a downstream proof pays.
 Families:
 
 - **Multiplication**, precisions 8 to 4096 over `Int` and `Rat`. The
-  baseline every other family is read against.
+  baseline every other family is read against. It compares forced schoolbook,
+  forced Karatsuba, and production dispatch at cells immediately around the
+  crossover; no selected production cell may lose outside the benchmark
+  protocol's uncertainty band.
 - **Inverse**, the same ladder, Newton against the linear recurrence.
 - **`exp` and `log`**, precisions 8 to 1024 over `Rat`.
 - **Square root**, the same ladder over `Rat`.
@@ -1206,11 +1216,10 @@ Families:
 `fmpq_poly_revert_series`) are `informational`, not `gating`. The
 rationale is structural and is the same one hex-poly records for
 `fmpz_poly`: FLINT's series routines are built on a tuned
-Karatsuba/Toom-Cook/FFT multiplication, and this library multiplies
-schoolbook until hex-poly-fast exists, so the ratio measures the
-multiplication gap rather than anything about the Newton iterations.
-The comparator is reclassified to `gating` when hex-poly-fast lands, and
-the SPEC of that library is where the goal is written.
+Karatsuba/Toom-Cook/FFT multiplication, while this library stops at generic
+Karatsuba and has no coefficient-specific transform. The ratio therefore
+continues to measure a known kernel gap rather than only the Newton iteration,
+so it does not gate.
 
 Two required internal checks, which matter more than the external one:
 
@@ -1397,7 +1406,8 @@ operation.
 ## Milestones
 
 1. **The type and the ring.** `TSeries`, `coeff`, `ofFn`, `ext`,
-   `DecidableEq`, the ring operations, `mulUpTo`, and the
+   `DecidableEq`, the ring operations, `mulUpTo`, its measured
+   schoolbook/Karatsuba `mulUpToImpl`, and the
    `Lean.Grind.CommRing` instance. The `decide +kernel` test lands here,
    because that is when the `Vector` instance choice is still cheap to
    change.
@@ -1459,7 +1469,7 @@ HexTruncatedSeriesMathlib.lean
       comparators:
         - tool: FLINT fmpq_poly truncated series routines via python-flint
           class: informational
-          rationale: "FLINT's series routines run on a tuned Karatsuba/Toom-Cook/FFT multiplication while this library multiplies schoolbook until hex-poly-fast exists, so the measured ratio reports the multiplication gap rather than the Newton iterations. Reclassified to gating when hex-poly-fast lands."
+          rationale: "FLINT's series routines run on tuned Karatsuba/Toom-Cook/FFT multiplication while this library stops at generic Karatsuba, so the measured ratio includes a known coefficient-specific kernel gap."
       input_families:
         - name: multiplication
           description: truncated products at precisions 8 to 4096 over Int and Rat
@@ -1501,7 +1511,7 @@ release time.
   `log`, and `sqrt` useful over a small prime field, and they need
   hex-mod-arith. Adding that dependency would give the series library a
   second edge for the sake of two instances. The alternative is that
-  hex-poly-fast, or a small `hex-truncated-series-modular`, supplies
+  hex-poly-fp, or a small `hex-truncated-series-modular`, supplies
   them. The measurement that settles it is whether any consumer wants
   the modular instances without also wanting hex-poly.
 - **The Horner/Brent-Kung crossover**, and whether Brent-Kung's block

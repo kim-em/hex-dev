@@ -51,6 +51,22 @@ polynomial factors. Integer content is not split into constant prime
 polynomials. A power of `X` is stored as one factor with its
 multiplicity.
 
+## Fast-arithmetic adoption
+
+The implementation audit required by
+[hex-poly-fast](../../SPEC/Libraries/hex-poly-fast.md) covers modular-image
+products, Hensel product trees, subset trial products, exact quotient checks,
+and final integer reassembly. Integer multiplication uses `ZPoly.mulFast` only
+where its schoolbook/KS1/KS2/KS3/KS4/CRT-NTT dispatcher improves the complete
+factorization cell; finite-field stages use the corresponding `FpPoly` plan.
+
+No fast result is treated as certificate evidence. The existing product,
+divisibility, and irreducibility checks replay against unchanged schoolbook
+semantics, and every decline/fallback remains available. Benchmarks separate
+classical and lattice recombination, balanced and skewed degree patterns, and
+small/large coefficient regimes so a win in reassembly cannot hide a loss in
+prime selection or lifting.
+
 ## Normalization
 
 Every factorization method uses the same normalization:

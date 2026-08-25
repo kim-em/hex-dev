@@ -139,6 +139,21 @@ degree, list-shape, and invariant-preservation statements.
 The later Berlekamp-Zassenhaus companion proves the correspondence
 between subsets of lifted factors and irreducible integer factors.
 
+## Fast-arithmetic adoption
+
+After [hex-poly-fast](../../SPEC/Libraries/hex-poly-fast.md), the quadratic
+multifactor tree reuses its balanced product-tree shape and the `ZPoly`/`FpPoly`
+lawful multiplication plans. Complementary-product gcd and Bezout setup use
+the fast full or one-sided extended gcd, and repeated division by a fixed node
+may cache a `DivPlan`.
+
+This is a benchmark-gated implementation change, not a change to any lifting
+invariant. The audit measures complete two-factor and multifactor lifts over
+degree, factor-count, coefficient-width, and lift-exponent ladders. A node
+uses the fast entry point only where the end-to-end lift improves; small nodes
+retain the existing kernels. Product congruence, factor ordering, canonical
+coefficient ranges, and exact-division checks remain the public semantics.
+
 ## Verification
 
 Changes must pass:
