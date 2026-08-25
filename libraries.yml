@@ -74,7 +74,7 @@ libraries:
   HexTruncatedSeries:
     deps: [HexBasic]
     mathlib: false
-    done_through: 1
+    done_through: 2
     status: active
     phase4:
       comparators:
@@ -735,7 +735,7 @@ libraries:
   HexTruncatedSeriesMathlib:
     deps: [HexTruncatedSeries]
     mathlib: true
-    done_through: 1
+    done_through: 2
     status: active
 
   # ---------- Planned (status: planned; SPEC ready, implementation deferred) ----------

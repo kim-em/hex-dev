@@ -1,0 +1,7 @@
+Reviewed by an independent agent session against
+HexTruncatedSeriesMathlib/SPEC/hex-truncated-series-mathlib.md and the
+PLAN/Phase2.md checklist. The review found one blocking data-level issue:
+Mathlib reconstructed natural/integer casts, scalar actions, and powers with
+slow defaults instead of the core operations. The commit carrying this token
+pins those five operations and their laws to the Mathlib-free implementations,
+resolving issue #9555. No other companion blocker was found.
