@@ -209,6 +209,92 @@ def _sympy_snf(request: dict[str, Any]) -> list[dict[str, list[int]]]:
     return _smith(request["matrix"])
 
 
+def _rat(pair: Any):
+    """Build a PARI rational from a ``[num, den]`` pair."""
+    if not isinstance(pair, list) or len(pair) != 2:
+        raise ValueError(f"rational must be a [num, den] pair, got {pair!r}")
+    pari = _require_pari()
+    return pari(int(pair[0])) / pari(int(pair[1]))
+
+
+def _int_poly(coeffs: list[int], variable: str):
+    pari = _require_pari()
+    return pari.Polrev([int(c) for c in coeffs], variable)
+
+
+def _rat_poly(pairs: list[Any], variable: str):
+    pari = _require_pari()
+    return pari.Polrev([_rat(pair) for pair in pairs], variable)
+
+
+def _rat_coeffs(poly) -> list[list[int]]:
+    """Ascending ``[num, den]`` coefficient pairs of a PARI polynomial
+    (or scalar), trimmed of trailing zeros by PARI's normal form."""
+    pari = _require_pari()
+    return [
+        [int(pari.numerator(c)), int(pari.denominator(c))]
+        for c in pari.Vecrev(poly)
+    ]
+
+
+# ---------------------------------------------------------------------
+# `polmod` (arithmetic in Q[x]/(m))
+# ---------------------------------------------------------------------
+
+
+def _polmod_mul(req: dict[str, Any]) -> list[list[int]]:
+    pari = _require_pari()
+    modulus = _int_poly(req["modulus"], "x")
+    a = pari.Mod(_rat_poly(req["a"], "x"), modulus)
+    b = pari.Mod(_rat_poly(req["b"], "x"), modulus)
+    return _rat_coeffs(pari.lift(a * b))
+
+
+def _polmod_inv(req: dict[str, Any]) -> list[list[int]]:
+    pari = _require_pari()
+    modulus = _int_poly(req["modulus"], "x")
+    a = pari.Mod(_rat_poly(req["a"], "x"), modulus)
+    return _rat_coeffs(pari.lift(a ** (-1)))
+
+
+def _polmod_overhead(_req: dict[str, Any]) -> int:
+    return 0
+
+
+def _charpoly_berkowitz(request: dict[str, Any]) -> list[int]:
+    pari = _require_pari()
+    rows = [[int(value) for value in row] for row in request["rows"]]
+    n = len(rows)
+    if any(len(row) != n for row in rows):
+        raise ValueError("charpoly requires a square matrix")
+    matrix = pari.matrix(n, n, [value for row in rows for value in row])
+    polynomial = matrix.charpoly("x", 3)
+    coefficients = [int(value) for value in polynomial.list()]
+    if len(coefficients) != n + 1:
+        raise RuntimeError(
+            f"PARI charpoly returned {len(coefficients)} coefficients for n={n}"
+        )
+    return coefficients
+
+
+_FMPZ_MAT_OPS: dict[str, Callable[[dict[str, Any]], Any]] = {
+    "charpoly_berkowitz": _charpoly_berkowitz,
+}
+
+
+def _nf_factor_degrees(req: dict[str, Any]) -> list[list[int]]:
+    pari = _require_pari()
+    field = _int_poly(req["field"], "y")
+    poly = _rat_poly(req["poly"], "x")
+    factorization = pari.nffactor(pari.nfinit(field), poly)
+    rows = int(pari.matsize(factorization)[0])
+    pairs = sorted(
+        (int(pari.poldegree(factorization[i, 0])), int(factorization[i, 1]))
+        for i in range(rows)
+    )
+    return [[degree, multiplicity] for degree, multiplicity in pairs]
+
+
 def _dispatch(request: dict[str, Any]) -> Any:
     family = request.get("family")
     operation = request.get("op")
@@ -227,6 +313,16 @@ def _dispatch(request: dict[str, Any]) -> Any:
     if family == "polymatrix" and operation == "sympy_snf":
         return _sympy_snf(request)
     if family == "polymatrix" and operation == "overhead":
+        return 0
+    if family == "polmod" and operation == "mul":
+        return _polmod_mul(request)
+    if family == "polmod" and operation == "inv":
+        return _polmod_inv(request)
+    if family == "polmod" and operation == "overhead":
+        return _polmod_overhead(request)
+    if family == "nf" and operation == "factor_degrees":
+        return _nf_factor_degrees(request)
+    if family == "nf" and operation == "overhead":
         return 0
     raise ValueError(f"unknown PARI benchmark operation {family!r}/{operation!r}")
 
