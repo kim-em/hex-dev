@@ -31,3 +31,11 @@ Refinement-based approach.
 
 **FLINT (C)**: The performance target. Dense `nmod_poly` and `fmpz_poly`
 with Barrett reduction, Karatsuba, NTT. Not verified.
+
+**Harvey's practical multiplication kernels**: The fast-polynomial SPEC uses
+only three pieces of this line of work: multipoint Kronecker substitution
+(KS2/KS3/KS4), redundant-residue Shoup butterflies for word-sized NTTs, and
+the Karatsuba polynomial middle product underlying the integer middle-product
+paper. The exact algorithms, bounds, and references are recorded in
+[hex-poly-fast](Libraries/hex-poly-fast.md); the rest of Harvey's publication
+list is not part of that roadmap.

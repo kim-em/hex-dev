@@ -212,21 +212,54 @@ allocating Lean carry pairs in polynomial coefficient loops. The runtime and
 logical bodies agree for the full word-modulus range, including operands near
 `UInt64`'s upper limit.
 
+## Reusable number-theoretic transforms
+
+This library owns the radix-2 transform used by
+[hex-poly-fast](../../SPEC/Libraries/hex-poly-fast.md), because the transform
+is an operation on `ZMod64` vectors and is useful independently of any
+polynomial representation.
+
+`ZMod64.NttPlan p n` packages a power-of-two length, a root of exact order
+`n`, its inverse, the inverse of `n`, and reusable forward/inverse twiddle
+tables with Shoup preconditioners. `NttPlan.build?` validates the length and
+root conditions; fixed auxiliary primes provide pre-verified plans for every
+supported smaller length. Plan construction and transform execution are
+separate benchmark operations, and callers pass plans explicitly rather than
+consulting a mutable global cache.
+
+Forward butterflies use Harvey's redundant interval `[0, 2p)` and inverse
+butterflies use `[0, 4p)`. The raw words are bounded internal structures, not
+a second modular type and not a ring instance. The existing `p < 2^31` bound
+proves the intermediate additions fit in `UInt64`; multiplication by a
+twiddle uses the existing high-word primitive and a precomputed Shoup
+constant. Canonical normalization occurs only at transform boundaries.
+
+Required theorems identify each butterfly modulo `p`, prove its raw output
+bound, identify the whole forward transform with the DFT, and prove inverse
+after forward is the identity. Pointwise multiplication between transforms
+then gives cyclic convolution; a primitive `2n`th root gives negacyclic
+convolution. No new `@[extern]` is introduced for the first implementation.
+
+The fixed `NttPrime` catalogue records a prime below `2^31`, a maximum
+power-of-two length, and a root of that exact order. It is finite by design;
+failure to supply a requested transform is reported as `none` so polynomial
+dispatchers can select a different verified kernel.
+
 ## External comparators
 
 No external comparator is required.
 
-**Justification:** `implementation-is-extern` per
-`SPEC/benchmarking.md §"Comparator naming"`. HexModArith's modular
-operations route through GMP (for general `Nat`/`Int` arithmetic)
-or through dedicated word-arithmetic C externs (for `ZMod64`).
-The Phase-4 surface is GMP / native arithmetic; there is no
-algorithmically distinct reference implementation to compare
-against externally.
+**Justification:** scalar operations are `implementation-is-extern` per
+`SPEC/benchmarking.md §"Comparator naming"`: they route through GMP or the
+dedicated word-arithmetic C externs, leaving no algorithmically distinct
+external implementation. The NTT surface is an internal building block rather
+than a user-facing result type; FLINT comparison belongs to the `FpPoly` and
+`ZPoly` convolution consumers where inputs and outputs match.
 
-The architecturally important within-Lean comparison — Barrett
-versus Montgomery modular multiplication — is registered as a
-`compare` group in `HexModArith/Bench.lean` (per
-`SPEC/benchmarking.md §"Within-Lean comparisons"`). That
-comparison is the right shape for this library; an external tool
+The architecturally important within-Lean comparisons — Barrett versus
+Montgomery modular multiplication, and canonical versus redundant-residue
+butterflies — are registered as
+`compare` groups in `HexModArith/Bench.lean` (per
+`SPEC/benchmarking.md §"Within-Lean comparisons"`). Those
+comparisons are the right shape for this library; an external tool
 would just be wrapping the same underlying word-level operations.

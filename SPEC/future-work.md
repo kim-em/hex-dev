@@ -77,27 +77,6 @@ and normalization behaviour differ, and gcd or division of sparse inputs
 usually becomes dense. Keep explicit conversions until several real consumers
 show which operations a common interface must support.
 
-### Fast polynomial arithmetic
-
-Proposed library: `hex-poly-fast`, depending on `hex-poly` and
-`hex-truncated-series`.
-
-Add algorithms behind the existing dense-polynomial semantics in measured
-stages:
-
-- Karatsuba multiplication with a benchmarked crossover.
-- Newton inversion of reversed polynomials, then fast division.
-- Half-gcd for gcd and extended gcd after fast division is useful.
-- Toom-Cook or NTT multiplication only when a consumer justifies the added
-  machinery. An NTT implementation may also depend on `hex-mod-arith` and use
-  CRT reconstruction for integer coefficients.
-
-Each fast routine needs an executable agreement theorem with the existing
-operation and benchmarks that include crossover-sized inputs rather than only
-asymptotic winners. The SPEC must keep the dependency direction from
-`hex-poly-fast` to both input libraries; `hex-truncated-series` should not
-acquire a dependency on `hex-poly` merely to support this consumer.
-
 ### Extended subresultant chain for gcd consumers
 
 Amend `hex-resultant` with the transformation that produces each Brown entry,
