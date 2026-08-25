@@ -38,7 +38,7 @@ coordinates. Its genuinely new uses are:
   index. Smith proves that a finite index is `∏ dᵢ`, recording how that
   order decomposes rather than introducing a second index algorithm.
 - **Invariant factors of a module map**, which
-  [hex-poly-smith](hex-poly-smith.md) wants over `F[x]` rather than `ℤ`.
+  [hex-poly-smith](../../HexPolySmith/SPEC/hex-poly-smith.md) wants over `F[x]` rather than `ℤ`.
   That library is not this one; see "Why `Int`" in
   [hex-hermite](hex-hermite.md).
 
@@ -544,7 +544,7 @@ divisors are a short function on top of `invariantFactors` and belong in
 whichever library owns the factorization, not here.
 
 **Smith normal form over `F[x]`.** That is
-[hex-poly-smith](hex-poly-smith.md), a separate library rather than a
+[hex-poly-smith](../../HexPolySmith/SPEC/hex-poly-smith.md), a separate library rather than a
 generalisation of this one. It shares the algorithm shape and none of
 the normalisation, growth control, or termination measure; its SPEC
 draws the comparison row by row, and its conclusion is that

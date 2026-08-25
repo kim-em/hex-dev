@@ -210,6 +210,11 @@ lean_lib HexCharPoly where
 
 lean_lib HexMinPoly where
 
+lean_lib HexPolySmith where
+
+@[default_target]
+lean_lib HexPolySmithMathlib where
+
 lean_lib HexRowReduce where
   precompileModules := true
 
@@ -588,6 +593,8 @@ lean_lib HexConformance where
 
     ++ #[`HexIntFactor.Conformance].map Glob.one
 
+    ++ #[`HexPolySmith.Conformance].map Glob.one
+
     ++ #[`HexIntervalMathlib.PntLogNaturalConformance,
       `HexIntervalMathlib.PntLogRationalConformance,
       `HexIntervalMathlib.PntExpNegativeConformance,
@@ -863,6 +870,10 @@ lean_exe hexpolyzgcd_emit_fixtures where
   srcDir := "conformance"
   root := `HexPolyZGcd.EmitFixtures
 
+lean_exe hexpolysmith_emit_fixtures where
+  srcDir := "conformance"
+  root := `HexPolySmith.EmitFixtures
+
 lean_exe hexmodular_bench where
   srcDir := "bench"
   root := `HexModular.Bench
@@ -992,6 +1003,10 @@ lean_exe hexarith_bench where
 lean_exe hexpoly_bench where
   srcDir := "bench"
   root := `HexPoly.Bench
+
+lean_exe hexpolysmith_bench where
+  srcDir := "bench"
+  root := `HexPolySmith.Bench
 
 lean_exe hexmvpoly_bench where
   srcDir := "bench"

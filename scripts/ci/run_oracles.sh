@@ -67,6 +67,7 @@ ORACLES=(
   "HexMvGcd|hexmvgcd_emit_fixtures|scripts/oracle/mvgcd_sympy.py|conformance-fixtures/HexMvGcd/mvgcd.jsonl"
   "HexMvHensel|hexmvhensel_emit_fixtures|scripts/oracle/mvhensel_sympy.py|conformance-fixtures/HexMvHensel/mvhensel.jsonl"
   "HexMvFactor|hexmvfactor_emit_fixtures|scripts/oracle/mvfactor_sympy.py|conformance-fixtures/HexMvFactor/mvfactor.jsonl"
+  "HexPolySmith|hexpolysmith_emit_fixtures|scripts/oracle/polymatrix.py|conformance-fixtures/HexPolySmith/smith.jsonl"
   # python-flint + PARI backed
   "HexResultant|hexresultant_emit_fixtures|scripts/oracle/resultant_flint_pari.py|conformance-fixtures/HexResultant/resultant.jsonl"
   # PARI backed

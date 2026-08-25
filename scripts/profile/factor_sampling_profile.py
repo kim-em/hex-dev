@@ -164,13 +164,20 @@ def categorise(name: str) -> str:
         return "gmp"
     if any(base.startswith(token) or ("_" + token) in base for token in _ALLOC):
         return "allocation"
-    if base.startswith("lean_") or base.startswith("Lean."):
+    if base.startswith("lean_") or base.startswith("lean::") or base.startswith("Lean."):
+        return "lean-runtime"
+    # Local helper in Lean's runtime `mpz.cpp`; it has no namespace-bearing
+    # exported symbol, so classify it explicitly instead of leaving a large
+    # arbitrary-precision division sample bucket unattributed.
+    if base == "div2":
         return "lean-runtime"
     # Compiled Lean standard-library code: not this library's own code, but not
     # runtime plumbing either. SPEC/profiling.md's runtime bucket is the closest
     # fit, and the inclusive ranking keeps the two visibly separate.
-    if base.split(".")[0] in {"Array", "List", "Nat", "Int", "Option", "String",
-                              "Vector", "Fin", "Prod", "UInt64", "Subarray"}:
+    if base.startswith("private.Init.") or base.split(".")[0] in {
+            "Array", "List", "Nat", "Int", "Rat", "Option", "String",
+            "Vector", "Fin", "Prod", "UInt64", "Subarray", "Bool", "Std",
+            "IO", "Decidable"}:
         return "lean-runtime"
     return "other"
 
@@ -199,11 +206,11 @@ class Symbolicator:
         return names[index] if index >= 0 else None
 
 
-def main_thread(profile: dict) -> dict:
+def main_thread(profile: dict, thread_name: str = "hexbz_factor_service") -> dict:
     threads = [t for t in profile["threads"]
-               if t["name"] == "hexbz_factor_service"]
+               if t["name"] == thread_name]
     if not threads:
-        raise SystemExit("no hexbz_factor_service thread in the profile")
+        raise SystemExit(f"no {thread_name} thread in the profile")
     return max(threads, key=lambda t: t["samples"]["length"])
 
 
@@ -244,8 +251,9 @@ def stack_chain(thread: dict, stack: int):
     return chain
 
 
-def analyse(profile: dict, symbolicator: Symbolicator, top: int) -> dict:
-    thread = main_thread(profile)
+def analyse(profile: dict, symbolicator: Symbolicator, top: int,
+            thread_name: str = "hexbz_factor_service") -> dict:
+    thread = main_thread(profile, thread_name)
     resolved = frame_names(profile, thread, symbolicator)
     names = [short for short, _ in resolved]
     raw_names = [full for _, full in resolved]

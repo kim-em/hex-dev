@@ -40,6 +40,7 @@ import HexManual.Chapters.HexPolyZGcd
 import HexManual.Chapters.HexMvGcd
 import HexManual.Chapters.HexMvHensel
 import HexManual.Chapters.HexMvFactor
+import HexManual.Chapters.HexPolySmith
 import HexManual.Chapters.HexSparsePoly
 import HexManual.Chapters.HexRCF
 import HexManual.Chapters.HexNumberField
@@ -172,6 +173,8 @@ here to keep the reference chapters above focused on the released libraries.
 {include 2 HexManual.Chapters.HexMvHensel}
 
 {include 2 HexManual.Chapters.HexMvFactor}
+
+{include 2 HexManual.Chapters.HexPolySmith}
 
 {include 2 HexManual.Chapters.HexRCF}
 
