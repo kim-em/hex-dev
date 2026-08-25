@@ -149,6 +149,8 @@ Request fields: ``rows`` (list of list of int).
 * ``hnf`` — returns FLINT's canonical row Hermite normal form as rows.
 * ``overhead`` — returns ``0`` without constructing a matrix, calibrating the
   persistent JSON protocol.
+* ``snf`` — returns the nonnegative Smith diagonal in divisibility order via
+  ``flint.fmpz_mat(rows).snf()``.
 
 ### `fq_default` (finite field F_q = F_p[x] / m(x))
 
@@ -773,12 +775,20 @@ def _fmpz_mat_overhead(_req: dict[str, Any]) -> int:
     return 0
 
 
+def _fmpz_mat_snf(req: dict[str, Any]) -> list[int]:
+    rows = req["rows"]
+    m = flint.fmpz_mat([[int(c) for c in r] for r in rows])  # type: ignore[union-attr]
+    d = m.snf()
+    return [abs(int(d[i, i])) for i in range(min(d.nrows(), d.ncols()))]
+
+
 _FMPZ_MAT_OPS: dict[str, Callable[[dict[str, Any]], Any]] = {
     "det": _fmpz_mat_det,
     "charpoly": _fmpz_mat_charpoly,
     "minpoly": _fmpz_mat_minpoly,
     "hnf": _fmpz_mat_hnf,
     "overhead": _fmpz_mat_overhead,
+    "snf": _fmpz_mat_snf,
 }
 
 
