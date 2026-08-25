@@ -193,6 +193,40 @@ theorem contentCertWith_checks {R : Type u}
           (succCheckCoprime (checkOps (R := R) n) (cmp := cmp)))
         produce hp coeffs (0 : MvPoly (n + 1) R cmp)
 
+/-- The final value of a producer-built content fold is normalized whenever
+every supplied gcd certificate checks. -/
+theorem contentCertWith_normalized {R : Type u}
+    {cmp : Mono n → Mono n → Ordering}
+    [Std.TransCmp cmp] [Std.LawfulEqCmp cmp]
+    [Lean.Grind.CommRing R] [DecidableEq R] [BEq R] [LawfulBEq R]
+    [Dvd R] [GcdOps R] [LawfulGcdOps R] [IsMonomialOrder cmp]
+    (produce : MvPoly n R cmp → MvPoly n R cmp → GcdCert n R cmp)
+    (hproduce : ∀ f h, checkGcd f h (produce f h) = true)
+    (coeffs : List (MvPoly n R cmp)) :
+    polyNormalize (contentCertWith produce coeffs).value =
+      (contentCertWith produce coeffs).value := by
+  have aux : ∀ (xs : List (MvPoly n R cmp))
+      (state : MvPoly n R cmp × List (GcdCert n R cmp)),
+      polyNormalize state.1 = state.1 →
+      let result := xs.foldl
+        (fun state q =>
+          let step := produce state.1 q
+          (step.gcd, step :: state.2))
+        state
+      polyNormalize result.1 = result.1 := by
+    intro xs
+    induction xs with
+    | nil =>
+        intro state hstate
+        exact hstate
+    | cons q qs ih =>
+        intro state _
+        simp only [List.foldl_cons]
+        apply ih
+        exact (checkGcd_sound (hproduce state.1 q)).2.2.1
+  unfold contentCertWith ContentCert.value ContentCert.ofSteps
+  exact aux coeffs (0, []) polyNormalize_zero
+
 /-- Scalar content and primitive part reconstruct the input. -/
 theorem content_mul_primPart [LawfulGcdOps R] (p : MvPoly n R cmp) :
     C (content p) * primPart p = p := by
