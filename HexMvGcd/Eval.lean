@@ -295,6 +295,15 @@ private def observedRand {n : Nat} {cmp : Mono n → Mono n → Ordering}
   | some cert => checkGcd f h cert && cert.gcd == common
   | none => false
 #guard
+  let lower : BrownOpsAt Rat 1 :=
+    { candidate? := fun _ _ _ _ _ _ => none }
+  let x : Q2 := X 0
+  let y : Q2 := X 1
+  let common := x + y + 1
+  let f := common * (x + 2)
+  let h := common * (y + 3)
+  ((brownStepOps lower).candidate? Mono.lex 8 [0, 1, 2] f h).isNone
+#guard
   let x : P2 := X 0
   let f := C 2 * x + 1
   let h := C 2 * x + 3

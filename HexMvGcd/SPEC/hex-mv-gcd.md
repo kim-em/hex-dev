@@ -1081,7 +1081,17 @@ Fix the main variable `i`. Recursion on the remaining variables:
   points, keep the images of minimal degree, and restart the
   interpolation whenever a smaller degree appears.
 - Interpolate in the outermost remaining variable, take the primitive
-  part in `xᵢ`, and multiply back the content gcd.
+  part in `xᵢ`, and multiply back the content gcd. The content and
+  leading-coefficient gcds use the same recursive Brown operation. If one
+  of those speculative recursive calls declines, the current image declines
+  too: it must not start the complete multivariate PRS fallback inside a
+  modular image, because the surrounding point or prime loop can cheaply try
+  its next value.
+- Reconstruction may stop before the dense degree bound when the current
+  interpolant predicts the next accepted image exactly. This is only an
+  untrusted early-termination heuristic. The completed field image is checked
+  by exact division and a cofactor certificate before the prime layer uses it,
+  and the eventual integer candidate passes the same public checker.
 
 The prime layer needs the same machinery, one level up: primes must
 preserve the input degrees, primes giving a larger modular gcd degree
