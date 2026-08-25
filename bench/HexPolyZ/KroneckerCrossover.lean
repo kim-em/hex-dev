@@ -16,10 +16,11 @@ sweeps a two-dimensional grid looking for a crossover rather than fitting one
 operation against a declared complexity model, so it does not belong in the
 scientific harness.
 
-Both arms run through `Hex.ZPoly.mulKroneckerAt`, with the cutoffs set to force
-one path or the other, so the two arms differ only in the kernel. Emits one
-JSON document on stdout; `scripts/bench/kronecker_crossover.py` pins it to a
-verified-idle core and wraps the result with environment metadata.
+The schoolbook and KS1 measurements run through `Hex.ZPoly.mulKroneckerAt`,
+with the cutoffs set to force one path or the other; the KS2 measurement calls
+its forced kernel directly. Emits one JSON document on stdout;
+`scripts/bench/kronecker_crossover.py` pins it to a verified-idle core and
+wraps the result with environment metadata.
 -/
 
 open Hex
@@ -63,10 +64,10 @@ times are a flat few nanoseconds at every degree.
 
 The checksum is seeded from the clock and only ever advanced by an even amount,
 so the branch is not statically decidable but always takes the same side at
-runtime: every iteration multiplies the same pair, and the two arms compare
+runtime: every iteration multiplies the same pair, and the kernels compare
 like for like. Seeding it from a literal would let a sufficiently strong
 optimiser prove the branch constant and hoist the loop body again. The caller
-passes one seed to both arms so their checksums remain comparable. -/
+passes one seed to all kernels so their checksums remain comparable. -/
 def timeProduct (seed : Int) (reps sizeCutoff bitCutoff : Nat) (p q : ZPoly) :
     IO (Float × Int) := do
   let mut chk : Int := seed
@@ -79,25 +80,42 @@ def timeProduct (seed : Int) (reps sizeCutoff bitCutoff : Nat) (p q : ZPoly) :
   let t1 ← IO.monoNanosNow
   return (Float.ofNat (t1 - t0) / Float.ofNat reps, chk)
 
-/-- One grid cell: both arms plus their ratio, as a JSON object. -/
+/-- Time the forced two-point kernel with the same dependency chain used by
+`timeProduct`.  Cost model: two packed multiplications have about half the KS1
+bit width, plus linear packing and interleaving overhead. -/
+def timeKronecker2 (seed : Int) (reps : Nat) (p q : ZPoly) : IO (Float × Int) := do
+  let mut chk : Int := seed
+  let _ := ZPoly.mulKronecker2 p q
+  let t0 ← IO.monoNanosNow
+  for _ in [0:reps] do
+    let p' := if chk % 2 == 1 then q else p
+    let r := ZPoly.mulKronecker2 p' q
+    chk := chk + 2 * r.coeff 0
+  let t1 ← IO.monoNanosNow
+  return (Float.ofNat (t1 - t0) / Float.ofNat reps, chk)
+
+/-- One grid cell: all three kernels and their ratios, as a JSON object. -/
 def cell (n bits reps : Nat) (signed : Bool) : IO String := do
   let p := randPoly n bits 0x243f6a8885a308d3 signed
   let q := randPoly n bits 0x13198a2e03707344 signed
   -- A size cutoff above `n` forces schoolbook; cutoffs of zero force Kronecker.
-  -- One clock-derived even seed, shared by both arms: the branch inside the
-  -- timing loop is then not statically decidable, both arms take the same side
+  -- One clock-derived even seed, shared by all kernels: the branch inside the
+  -- timing loop is then not statically decidable, all kernels take the same side
   -- of it at runtime, and their checksums stay directly comparable.
   let seed : Int := 2 * Int.ofNat ((← IO.monoNanosNow) % 3)
   let (school, cSchool) ← timeProduct seed reps (n + 1) 0 p q
   let (kron, cKron) ← timeProduct seed reps 0 0 p q
-  if cSchool != cKron then
+  let (ks2, cKs2) ← timeKronecker2 seed reps p q
+  if cSchool != cKron || cSchool != cKs2 then
     throw <| IO.userError s!"kernel disagreement at n={n} bits={bits} signed={signed}"
   return "{\"n\": " ++ toString n ++ ", \"bits\": " ++ toString bits
     ++ ", \"signed\": " ++ (if signed then "true" else "false")
     ++ ", \"reps\": " ++ toString reps
     ++ ", \"schoolbook_nanos\": " ++ toString school
     ++ ", \"kronecker_nanos\": " ++ toString kron
-    ++ ", \"ratio\": " ++ toString (school / kron) ++ "}"
+    ++ ", \"ks2_nanos\": " ++ toString ks2
+    ++ ", \"ratio\": " ++ toString (school / kron)
+    ++ ", \"ks2_ratio\": " ++ toString (school / ks2) ++ "}"
 
 /-- Repetition count chosen so each cell takes roughly the same wall time. -/
 def repsFor (n bits : Nat) : Nat :=

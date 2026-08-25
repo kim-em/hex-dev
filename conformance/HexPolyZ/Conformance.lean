@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexPolyZ.Kronecker
+import HexPolyZ.KroneckerMulti
 import HexPolyZ.Mignotte
 import HexPolyZ.ExactDivision
 
@@ -317,6 +317,8 @@ private def kernelAgrees : Bool :=
       (mulKroneckerAt 0 0 p q == p * q)
         && (mulKroneckerAt 0 0 q p == q * p)
         && (mulKronecker p q == p * q)
+        && (mulKronecker2 p q == p * q)
+        && (mulKronecker2 q p == q * p)
 
 #guard kernelAgrees
 
@@ -335,7 +337,9 @@ private def kernelAgreesOnBoundaries : Bool :=
     ([0, 1] : List Nat).all fun i =>
       let p := boundaryPoly k i
       let q := boundaryPoly (k + 1) (i + 1)
-      (mulKroneckerAt 0 0 p q == p * q) && (mulKronecker p q == p * q)
+      (mulKroneckerAt 0 0 p q == p * q)
+        && (mulKronecker p q == p * q)
+        && (mulKronecker2 p q == p * q)
 
 #guard kernelAgreesOnBoundaries
 
