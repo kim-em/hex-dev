@@ -178,7 +178,7 @@ jobs:
       # `.lake/build` (no recompilation) but cap the peak at whichever single
       # invocation is largest, each of which is known to fit.
       - name: Build hex libraries + bench exes
-        run: lake build ${HEX_LIB_TARGETS} ${HEX_EXE_TARGETS}
+        run: lake build ${HEX_LIB_TARGETS} ${HEX_EXE_TARGETS} HexTruncatedSeriesTests
       - name: Build conformance + emit-fixture targets
         run: |
           lake build \

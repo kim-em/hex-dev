@@ -350,7 +350,9 @@ setup_benchmark runInverseRecurrence n => n ^ 2
 operations. On the `exp x` rational fixture, factorial denominators have
 `Θ(n log n)` bits; two logarithmic factors are the repository's wallclock
 normalization for the repeated arbitrary-precision numerator/denominator
-work, without changing the coefficient-operation bound in the SPEC. -/
+work, without changing the coefficient-operation bound in the SPEC. Running
+each inner logarithm at full precision would add another logarithmic factor,
+so the normalized ratio would still grow rather than settle. -/
 setup_benchmark runExp n => n ^ 2 * (Nat.log2 (n + 1) + 1) ^ 2
   with prep := prepExpLog
   where {

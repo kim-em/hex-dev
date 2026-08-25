@@ -74,7 +74,7 @@ libraries:
   HexTruncatedSeries:
     deps: [HexBasic]
     mathlib: false
-    done_through: 5
+    done_through: 6
     status: active
     phase4:
       comparators:
@@ -157,12 +157,12 @@ libraries:
     status: active
     phase4:
       comparators:
-        - tool: FLINT fmpz_mpoly_gcd via python-flint
+        - tool: FLINT fmpz_mpoly and fmpq_mpoly via python-flint
           class: informational
-          rationale: FLINT also dispatches to Zippel and sparse Hensel routes that this library does not implement; the coprime family is the like-for-like comparison.
-        - tool: Singular
+          rationale: The matched driver covers integer and rational GCD, exact division, and squarefree decomposition; FLINT also dispatches to Zippel and sparse Hensel routes that this library does not implement, so only the coprime-family expectation is like-for-like.
+        - tool: Singular gcd, quotient, and factorize
           class: informational
-          rationale: Singular likewise has sparse routes outside this SPEC, so its ratios diagnose representation and route coverage rather than gate release.
+          rationale: The persistent driver covers all seven families; Singular likewise has sparse routes outside this SPEC, so its ratios diagnose representation and route coverage rather than gate release.
       input_families:
         - name: coprime-pairs
           description: Dense and sparse coprime inputs in 2 to 8 variables, isolating the modular coprimality route.
@@ -788,7 +788,7 @@ libraries:
   HexTruncatedSeriesMathlib:
     deps: [HexTruncatedSeries]
     mathlib: true
-    done_through: 5
+    done_through: 6
     status: active
 
   # ---------- Planned (status: planned; SPEC ready, implementation deferred) ----------

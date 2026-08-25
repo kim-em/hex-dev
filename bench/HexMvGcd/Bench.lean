@@ -5,6 +5,9 @@ Authors: Kim Morrison
 -/
 
 import HexMvGcd
+import HexMvGcd.Families
+import HexMvGcd.Matrix
+import HexMvGcd.Comparators
 import HexMvPolyCorpus
 import HexMvGcdFlint
 import HexMvGcdSingular
@@ -33,26 +36,11 @@ namespace Hex.MvGcdBench
 open Hex
 open Hex.MvPoly
 open Hex.MvPolyBench.Corpus
+open Hex.MvGcdBench.Families
 
 abbrev P2 (R : Type) [Zero R] := MvPoly 2 R Mono.lex
 abbrev P3 (R : Type) [Zero R] := MvPoly 3 R Mono.lex
 abbrev P8 (R : Type) [Zero R] := MvPoly 8 R Mono.lex
-
-/-- Stable structural hash of a canonical sparse polynomial. -/
-def checksum [Zero R] [Hashable R]
-    {cmp : Mono n → Mono n → Ordering}
-    [Std.TransCmp cmp] [Std.LawfulEqCmp cmp]
-    (p : MvPoly n R cmp) : UInt64 :=
-  p.termsList.foldl
-    (fun acc term =>
-      mixHash (mixHash acc (hash term.1.toList)) (hash term.2))
-    0
-
-instance [Zero R] [Hashable R]
-    {cmp : Mono n → Mono n → Ordering}
-    [Std.TransCmp cmp] [Std.LawfulEqCmp cmp] :
-    Hashable (MvPoly n R cmp) where
-  hash := checksum
 
 /-- Dense bivariate coefficient box. -/
 def denseBox2 [Lean.Grind.CommRing R] [DecidableEq R]

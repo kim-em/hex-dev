@@ -105,17 +105,65 @@ private def growthColumn (s : GrowthState n m) (col : Fin m) : GrowthState n m :
         { next with result := { next.result with pivots := next.result.pivots ++ [col] } }
   else s
 
+private def growthNormalize (s : GrowthState n m) (col : Fin m)
+    (pivot : Fin n) : GrowthState n m :=
+  if s.result.matrix[(pivot, col)] = 0 then s else
+    let ops := Matrix.Hermite.formAccumulator n
+    let s := observe (Matrix.Hermite.signStep ops col pivot s.result) s.peak
+    (List.finRange n).foldl (fun s row =>
+      if row.val < pivot.val then
+        observe (Matrix.Hermite.reduceStep ops col pivot row s.result) s.peak
+      else s) s
+
+private def growthPrior (pivots : List (Fin m)) (row : Fin n)
+    (s : GrowthState n m) (pivot : Fin n) : GrowthState n m :=
+  if pivot.val < row.val then
+    if hp : pivot.val < pivots.length then
+      let col := pivots.get ⟨pivot.val, hp⟩
+      let next := Matrix.Hermite.gcdStep (Matrix.Hermite.formAccumulator n)
+        col pivot row s.result
+      growthNormalize (observe next s.peak) col pivot
+    else s
+  else s
+
+private def growthAdmit (pivots : List (Fin m)) (s : GrowthState n m)
+    (row : Fin n) : GrowthState n m :=
+  let s := (List.finRange n).foldl (growthPrior pivots row) s
+  if hp : row.val < pivots.length then
+    growthNormalize s (pivots.get ⟨row.val, hp⟩) row
+  else s
+
+private def principalGrowth (A : Matrix Int n m) : GrowthState n m :=
+  let profile := Matrix.Hermite.rankProfile A
+  let initial : GrowthState n m :=
+    { result :=
+        { matrix := A, pivots := profile.pivots
+          accumulator := (Matrix.Hermite.formAccumulator n).init }
+      peak := matrixBits A }
+  let permuted := profile.swaps.foldl (fun s swap =>
+    observe (Matrix.Hermite.swapStep (Matrix.Hermite.formAccumulator n)
+      s.result swap.1 swap.2) s.peak) initial
+  (List.finRange n).foldl (growthAdmit profile.pivots) permuted
+
+private def columnGrowth (A : Matrix Int n m) : GrowthState n m :=
+  let initial : GrowthState n m :=
+    { result :=
+        { matrix := A, pivots := []
+          accumulator := (Matrix.Hermite.formAccumulator n).init }
+      peak := matrixBits A }
+  (List.finRange m).foldl growthColumn initial
+
 /-- Scan the working matrix after every elementary update and return the peak
 coefficient bit-size. This runner is intentionally separate from timed
 benchmarks so instrumentation does not perturb ordinary timings. -/
 def peakBits (input : Input) : Nat :=
   let A := matrix input
-  let initial : GrowthState input.rows input.cols :=
-    { result :=
-        { matrix := A, pivots := []
-          accumulator := (Matrix.Hermite.formAccumulator input.rows).init }
-      peak := matrixBits A }
-  ((List.finRange input.cols).foldl growthColumn initial).peak
+  let candidate := principalGrowth A
+  if Matrix.isHNFForm candidate.result.matrix candidate.result.pivots.length
+      candidate.result.pivotVector then
+    candidate.peak
+  else
+    (columnGrowth A).peak
 
 /-- Peak-versus-output growth data for the predeclared badly-conditioned
 family. -/
@@ -288,34 +336,32 @@ def runPariOverhead (_ : Unit) : IO Int := do
   | .ok value => return value
   | .error error => throw <| IO.userError s!"invalid PARI overhead reply: {error}"
 
-/- Cost-model derivation: the square dense family scans `n` columns, clears
-`O(n)` rows per pivot, and each elementary row update touches `O(n)` entries,
-giving `O(n³)` integer operations. -/
-setup_benchmark runDense n => n ^ 3 with prep := dense where {
+/- Cost-model derivation: rank profiling is cubic on square input. In the
+principal sweep, restoring all earlier prefixes after each admitted row has
+`O(n³)` scheduled reduction checks, with each nontrivial row update touching
+`O(n)` entries; the conservative worst-case model is therefore `O(n⁴)`. -/
+setup_benchmark runDense n => n ^ 4 with prep := dense where {
   paramFloor := 20, paramCeiling := 80, paramSchedule := .custom #[20, 32, 48, 64, 80]
   targetInnerNanos := 2_000_000_000
   maxSecondsPerCall := 10.0
 }
-/- Cost-model derivation: rank deficiency changes which pivots are found but
-not the worst-case column, row-clear, and row-width loops, so the square
-family remains `O(n³)` integer operations. -/
-setup_benchmark runDeficient n => n ^ 3 with prep := deficient where {
+/- Cost-model derivation: rank deficiency lowers the active rank in practice,
+but the dimension-only upper model retains the square `O(n⁴)` bound. -/
+setup_benchmark runDeficient n => n ^ 4 with prep := deficient where {
   paramFloor := 20, paramCeiling := 80, paramSchedule := .custom #[20, 32, 48, 64, 80]
   targetInnerNanos := 2_000_000_000
   maxSecondsPerCall := 10.0
 }
-/- Cost-model derivation: the tall family has `4n` rows and `n` columns;
-clearing `O(n)` rows with `O(n)`-wide updates for each of `n` columns is still
-`O(n³)` integer operations because the aspect ratio is fixed. -/
-setup_benchmark runTall n => n ^ 3 with prep := tall where {
+/- Cost-model derivation: the tall family has `4n` rows and `n` columns. Its
+fixed aspect ratio leaves the conservative principal-sweep model `O(n⁴)`. -/
+setup_benchmark runTall n => n ^ 4 with prep := tall where {
   paramFloor := 8, paramCeiling := 24, paramSchedule := .custom #[8, 12, 16, 20, 24]
   targetInnerNanos := 2_000_000_000
   maxSecondsPerCall := 10.0
 }
-/- Cost-model derivation: conjugation changes coefficient growth but retains
-the square `n`-column by `n`-row clearing structure with `n`-wide updates, so
-the declared operation-count model is `O(n³)`. -/
-setup_benchmark runConjugate n => n ^ 3 with prep := conjugate where {
+/- Cost-model derivation: conjugation changes coefficient growth but not the
+conservative square principal-sweep upper model `O(n⁴)`. -/
+setup_benchmark runConjugate n => n ^ 4 with prep := conjugate where {
   paramFloor := 20, paramCeiling := 80, paramSchedule := .custom #[20, 32, 48, 64, 80]
   targetInnerNanos := 2_000_000_000
   maxSecondsPerCall := 10.0

@@ -299,7 +299,9 @@ lean_lib HexMvGcdKernelProbe where
 
 lean_lib HexMvGcdBenchSupport where
   srcDir := "bench"
-  globs := #[`HexMvGcdFlint, `HexMvGcdSingular]
+  globs := #[`HexMvGcd.Families, `HexMvGcd.Matrix,
+    `HexMvGcd.ComparatorCases, `HexMvGcd.Comparators,
+    `HexMvGcdFlint, `HexMvGcdSingular]
 
 lean_lib HexMvPolyBenchSupport where
   srcDir := "bench"
@@ -729,6 +731,13 @@ lean_lib HexFactorizationModules where
 @[default_target]
 lean_lib HexSparsePolyTests where
   globs := #[`HexSparsePolyMathlib.LintTests]
+
+-- Monorepo-only lint regression for the incubating truncated-series pair.
+-- It moves into the release-manifest-backed test target when the pair is
+-- published.
+@[default_target]
+lean_lib HexTruncatedSeriesTests where
+  globs := #[`HexTruncatedSeriesMathlib.LintTests]
 
 -- HexCharPoly is not yet a published split repository (its released.yml
 -- entries were withdrawn until the phase pipeline completes), so its

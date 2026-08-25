@@ -62,7 +62,10 @@ def exp [Lean.Grind.CommRing R] [NatInverses R (n - 1)]
     (a : TSeries R n) : TSeries R n :=
   expUpTo n a
 
-/-- The derivative characterizes the logarithm. -/
+/-- The derivative characterizes the logarithm.  The constant-term hypothesis
+is retained as the public domain contract shared by the other logarithm laws;
+the derivative identity itself follows from the total implementation without
+using it. -/
 theorem deriv_log [Lean.Grind.CommRing R] [NatInverses R (n - 1)]
     (a : TSeries R n) (_h : (a - 1).coeff 0 = 0) :
     (log a).deriv =
@@ -93,7 +96,9 @@ private theorem logUpTo_coeff_zero [Lean.Grind.CommRing R]
     coeff_truncate _ _ 0 (by omega), coeff_integrate _ 0 (by omega)]
   simp
 
-/-- The logarithm has zero constant coefficient at positive precision. -/
+/-- The logarithm has zero constant coefficient at positive precision.  The
+constant-term hypothesis is retained for a stable, uniform logarithm API even
+though this particular coefficient identity does not use it. -/
 theorem log_coeff_zero [Lean.Grind.CommRing R] [NatInverses R (n - 1)]
     (a : TSeries R n) (_h : (a - 1).coeff 0 = 0) (h0 : 0 < n) :
     (log a).coeff 0 = 0 := by
@@ -154,13 +159,6 @@ private theorem deriv_zero [Lean.Grind.CommRing R] :
   intro i hi
   rw [coeff_deriv 0 i hi, coeff_zero, coeff_zero]
   grind
-
-private theorem truncate_one [Lean.Grind.CommRing R] :
-    (1 : TSeries R n).truncate (n - 1) (Nat.sub_le n 1) = 1 := by
-  apply ext
-  intro i hi
-  rw [coeff_truncate 1 (Nat.sub_le n 1) i hi,
-    coeff_one i (by omega), coeff_one i hi]
 
 private theorem agree_of_deriv [Lean.Grind.CommRing R]
     [NatInverses R (n - 1)] {a b : TSeries R n} {p : Nat}
@@ -486,6 +484,34 @@ private theorem expStep_correct [Lean.Grind.CommRing R]
   dsimp only [m] at hnext0 herror
   exact ⟨hnext0, herror⟩
 
+private theorem expStep_stable [Lean.Grind.CommRing R]
+    [NatInverses R (n - 1)] (a y : TSeries R n) (p m : Nat)
+    (hpm : p ≤ m) (hy : y.coeff 0 = 1)
+    (herr : Agree p (a - log y) 0) : Agree p (expStep a y m) y := by
+  let e := a - log y
+  let factor := C 1 + a - logUpTo m y
+  have hfactor : Agree m factor (1 + e) := by
+    have h := Agree.sub
+      (Agree.add (Agree.refl m (C 1)) (Agree.refl m a))
+      (logUpTo_agree m y hy)
+    have halg : C 1 + a - log y = 1 + e := by
+      dsimp only [e]
+      rw [C_one]
+      grind
+    rw [halg] at h
+    exact h
+  have hfactorP : Agree p factor 1 := by
+    have hone := Agree.add (Agree.refl p (1 : TSeries R n)) herr
+    have hsum : (1 : TSeries R n) + 0 = 1 := by grind
+    rw [hsum] at hone
+    exact (hfactor.mono hpm).trans hone
+  have hbounded : Agree m (expStep a y m) (y * factor) := by
+    dsimp only [factor]
+    exact Agree.mulUpTo m y (C 1 + a - logUpTo m y)
+  have hmul := Agree.mul (Agree.refl p y) hfactorP
+  rw [mul_one] at hmul
+  exact (hbounded.mono hpm).trans hmul
+
 private theorem expNewton_correct [Lean.Grind.CommRing R]
     [NatInverses R (n - 1)] (a : TSeries R n) (ha : a.coeff 0 = 0)
     (hn : 0 < n) (j : Nat) :
@@ -511,6 +537,18 @@ private theorem expNewton_correct [Lean.Grind.CommRing R]
         omega
       simpa only [hp] using hs
 
+private theorem expNewton_stable [Lean.Grind.CommRing R]
+    [NatInverses R (n - 1)] (a : TSeries R n) (ha : a.coeff 0 = 0)
+    (hn : 0 < n) (j : Nat) :
+    Agree (2 ^ j) (newton (expStep a) 1 (j + 1))
+      (newton (expStep a) 1 j) := by
+  change Agree (2 ^ j)
+    (expStep a (newton (expStep a) 1 j) (2 ^ (j + 1)))
+    (newton (expStep a) 1 j)
+  exact expStep_stable a _ (2 ^ j) (2 ^ (j + 1))
+    (Nat.pow_le_pow_right (by decide : 0 < 2) (Nat.le_succ j))
+    (expNewton_correct a ha hn j).1 (expNewton_correct a ha hn j).2
+
 private theorem exp_eq [Lean.Grind.CommRing R]
     [NatInverses R (n - 1)] (a : TSeries R n) :
     exp a = newton (expStep a) 1 (steps n) := by
@@ -518,6 +556,26 @@ private theorem exp_eq [Lean.Grind.CommRing R]
   intro i hi
   unfold exp expUpTo
   rw [coeff_ofFn _ i hi, if_pos hi, Nat.min_self]
+
+/-- Bounded exponential agrees with the full exponential throughout the
+requested prefix. -/
+theorem expUpTo_agree [Lean.Grind.CommRing R]
+    [NatInverses R (n - 1)] (m : Nat) (a : TSeries R n)
+    (ha : a.coeff 0 = 0) : Agree m (expUpTo m a) (exp a) := by
+  by_cases hn : 0 < n
+  · have hiter : Agree (min m n)
+        (newton (expStep a) 1 (steps (min m n)))
+        (newton (expStep a) 1 (steps n)) := by
+      have h := newton_agree (expStep a) (1 : TSeries R n)
+        (expNewton_stable a ha hn)
+        (steps_mono (Nat.min_le_right m n))
+      exact (h.mono (two_pow_steps_ge (min m n))).symm
+    intro i hi him
+    unfold expUpTo
+    rw [coeff_ofFn _ i hi, if_pos him, exp_eq a]
+    exact hiter i hi (by omega)
+  · intro i hi _
+    omega
 
 private theorem log_one_eq [Lean.Grind.CommRing R]
     [NatInverses R (n - 1)] : log (1 : TSeries R n) = 0 := by
