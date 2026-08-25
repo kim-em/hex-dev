@@ -21,6 +21,8 @@ it is equivalent to Mathlib's ordinary polynomial irreducibility predicate.
 
 namespace Hex.NumberTower
 
+/-- Rebuilding a raw dense polynomial from its flattened coordinate arrays is
+the identity: `Factor.polyCoords` is a section of `Factor.rawPoly`. -/
 theorem rawPoly_polyCoords (levels : List Level)
     (f : DensePoly (Arithmetic.Coeff levels)) :
     Factor.rawPoly levels (Factor.polyCoords f) = f := by
@@ -34,6 +36,8 @@ theorem rawPoly_polyCoords (levels : List Level)
       simp [Function.comp_def]
   rw [harray, DensePoly.ofCoeffs_toArray]
 
+/-- The executable top-generator shift is composition with the affine
+polynomial `X - c * α` over the extended coefficient field. -/
 theorem rawPoly_shiftTop (level : Level) (lower : List Level)
     (f : Array (Array Rat)) (c : Int) :
     Factor.rawPoly (level :: lower) (Factor.shiftTop level lower f c) =
@@ -43,6 +47,8 @@ theorem rawPoly_shiftTop (level : Level) (lower : List Level)
                 Factor.topGenerator level lower), 1]) := by
   rw [Factor.shiftTop, rawPoly_polyCoords]
 
+/-- Shifted coordinate arrays are already canonical: rebuilding and
+re-flattening a `Factor.shiftTop` output returns it unchanged. -/
 theorem polyCoords_rawPoly_shiftTop (level : Level)
     (lower : List Level) (f : Array (Array Rat)) (c : Int) :
     Factor.polyCoords
@@ -51,6 +57,8 @@ theorem polyCoords_rawPoly_shiftTop (level : Level)
       Factor.shiftTop level lower f c := by
   rw [Factor.shiftTop, rawPoly_polyCoords]
 
+/-- Rebuilding an `embedLower` output reads its coefficients through the
+canonical coordinate injection into the extended tower. -/
 theorem rawPoly_embedLower (level : Level) (lower : List Level)
     (f : Array (Array Rat)) :
     Factor.rawPoly (level :: lower) (Factor.embedLower level lower f) =
@@ -59,6 +67,8 @@ theorem rawPoly_embedLower (level : Level) (lower : List Level)
           Arithmetic.Coeff.ofData (level :: lower) coefficient) := by
   rw [Factor.embedLower, rawPoly_polyCoords]
 
+/-- Zero-padding lower-tower coordinate data into the extended tower agrees
+with the bundled lower-coefficient embedding {name}`Norm.lowerHom`. -/
 theorem ofData_lower_eq_lowerHom (level : Level) (lower : List Level)
     (hvalid : LevelsValid (level :: lower))
     (hinjectiveTop : LevelSemantics.DenoteInjective (level :: lower))
@@ -92,6 +102,8 @@ theorem ofData_lower_eq_lowerHom (level : Level) (lower : List Level)
     LevelSemantics.denote_embed level lower hvalid a.data a.size_eq]
   rfl
 
+/-- Lifting a lower-tower polynomial by `embedLower` is, semantically,
+coefficientwise mapping through {name}`Norm.lowerHom`. -/
 theorem rawPoly_embedLower_polyCoords (level : Level)
     (lower : List Level) (hvalid : LevelsValid (level :: lower))
     (hinjectiveTop : LevelSemantics.DenoteInjective (level :: lower))
@@ -145,6 +157,8 @@ theorem rawPoly_embedLower_polyCoords (level : Level)
       DensePoly.coeff_eq_zero_of_size_le q (Nat.le_of_not_gt hn)]
     exact (Norm.lowerHom level lower hvalid hinjectiveTop).map_zero.symm
 
+/-- The two-coefficient array `#[-delta, 1]` interprets to the affine
+polynomial `X - C delta`. -/
 theorem toPolynomial_affine {K : Type*} [Field K]
     [DecidableEq K] (delta : K) :
     HexPolyMathlib.toPolynomial
@@ -209,6 +223,8 @@ theorem toPolynomial_shiftTop (level : Level) (lower : List Level)
   congr 1
   exact Polynomial.C_neg.symm
 
+/-- Negating the integer shift negates the shift delta `c * α`, so opposite
+shifts translate by opposite amounts. -/
 theorem shiftDelta_neg (level : Level) (lower : List Level)
     (hvalid : LevelsValid (level :: lower))
     (hinjectiveTop : LevelSemantics.DenoteInjective (level :: lower))
@@ -250,6 +266,8 @@ theorem shiftDelta_neg (level : Level) (lower : List Level)
   push_cast
   ring
 
+/-- Shifting by the top generator preserves irreducibility: translation by a
+fixed element is a ring automorphism of the polynomial ring. -/
 theorem irreducible_shiftTop_iff (level : Level)
     (lower : List Level) (hvalid : LevelsValid (level :: lower))
     (hinjectiveTop : LevelSemantics.DenoteInjective (level :: lower))
@@ -302,6 +320,7 @@ theorem ofData_zero_eq_zero (levels : List Level)
     LevelSemantics.denote_rat levels hvalid]
   norm_num
 
+/-- The zero shift is the identity on rebuilt polynomials. -/
 theorem rawPoly_shiftTop_zero (level : Level) (lower : List Level)
     (hvalid : LevelsValid (level :: lower))
     (hinjectiveTop : LevelSemantics.DenoteInjective (level :: lower))
@@ -380,6 +399,9 @@ def tragerNorm (level : Level) (lower : List Level)
   Factor.rawPoly lower
     (Norm.oneLevel level lower (Factor.polyCoords f) 0)
 
+/-- Norming after an executable shift agrees with the shifted one-level
+resultant `Norm.oneLevel … c`, identifying the two routes to the shifted
+Trager norm. -/
 theorem tragerNorm_shiftTop (level : Level) (lower : List Level)
     (hvalid : LevelsValid (level :: lower))
     (hinjectiveTop : LevelSemantics.DenoteInjective (level :: lower))
@@ -409,6 +431,7 @@ theorem tragerNorm_shiftTop (level : Level) (lower : List Level)
   rw [tragerNorm, polyCoords_rawPoly_shiftTop]
   exact Norm.oneLevel_shift_zero level lower hvalid hinjectiveTop f c
 
+/-- The one-level Trager norm is multiplicative. -/
 theorem tragerNorm_mul (level : Level) (lower : List Level)
     (hvalid : LevelsValid (level :: lower))
     (hinjectiveTop : LevelSemantics.DenoteInjective (level :: lower))
@@ -435,6 +458,9 @@ theorem tragerNorm_mul (level : Level) (lower : List Level)
     Norm.coeffFieldPoly (level :: lower) hvalid hinjectiveTop hinvTop
   exact Norm.oneLevel_mul level lower hvalid hinjectiveTop a b 0
 
+/-- The norm of a polynomial lifted from the lower tower is its
+`level.degree`-th power: every conjugate of the top generator contributes the
+same factor. -/
 theorem tragerNorm_lift (level : Level) (lower : List Level)
     (hvalid : LevelsValid (level :: lower))
     (hinjectiveTop : LevelSemantics.DenoteInjective (level :: lower))
@@ -455,6 +481,8 @@ theorem tragerNorm_lift (level : Level) (lower : List Level)
       (HexPolyMathlib.toPolynomial q) ^ level.degree := by
   exact Norm.oneLevel_lift level lower hvalid hinjectiveTop q
 
+/-- The one-level Trager norm preserves divisibility of interpreted
+polynomials. -/
 theorem tragerNorm_dvd (level : Level) (lower : List Level)
     (hvalid : LevelsValid (level :: lower))
     (hinjectiveTop : LevelSemantics.DenoteInjective (level :: lower))
@@ -496,6 +524,8 @@ theorem tragerNorm_dvd (level : Level) (lower : List Level)
     HexPolyMathlib.toPolynomial_mul]
   exact dvd_mul_right _ _
 
+/-- The Trager norm of a nonconstant polynomial is nonconstant: a unit norm
+would force the input itself to be a unit. -/
 theorem tragerNorm_not_isUnit (level : Level) (lower : List Level)
     (hvalid : LevelsValid (level :: lower))
     (hinjectiveTop : LevelSemantics.DenoteInjective (level :: lower))
@@ -539,6 +569,8 @@ theorem tragerNorm_not_isUnit (level : Level) (lower : List Level)
   rw [HexPolyMathlib.natDegree_toPolynomial] at hzero
   omega
 
+/-- Monic normalisation only rescales by a unit: the interpretation of
+`Norm.monic f` is associated to the interpretation of `f`. -/
 theorem toPolynomial_monic_associated (levels : List Level)
     (hvalid : LevelsValid levels)
     (hinjective : LevelSemantics.DenoteInjective levels)
@@ -564,6 +596,8 @@ theorem toPolynomial_monic_associated (levels : List Level)
       (inv_ne_zero (DensePoly.leadingCoeff_ne_zero_of_pos_size f
         ((DensePoly.isZero_eq_false_iff f).mp hzero))).isUnit)
 
+/-- The monic normalisation of a nonzero executable polynomial interprets to
+a monic polynomial. -/
 theorem toPolynomial_monic_monic (levels : List Level)
     (hvalid : LevelsValid levels)
     (hinjective : LevelSemantics.DenoteInjective levels)
@@ -592,6 +626,8 @@ theorem toPolynomial_monic_monic (levels : List Level)
   simpa only [HexPolyMathlib.leadingCoeff_toPolynomial] using
     Polynomial.monic_mul_leadingCoeff_inv hpolyNe
 
+/-- Monic normalisation fixes polynomials that already interpret to monic
+polynomials. -/
 theorem monic_eq_self (levels : List Level)
     (hvalid : LevelsValid levels)
     (hinjective : LevelSemantics.DenoteInjective levels)
@@ -613,6 +649,10 @@ theorem monic_eq_self (levels : List Level)
     hf (toPolynomial_monic_associated levels hvalid hinjective hinv f
       (fun hzero => by simpa [hzero] using hf))
 
+/-- Core counting argument for gcd recovery: a product of two nonunits cannot
+simultaneously divide a squarefree polynomial and a power of one irreducible,
+since both its irreducible factors would collapse onto that irreducible and
+square it inside the squarefree divisor. -/
 theorem not_two_nonunits_of_squarefree_primePower
     {K : Type*} [Field K] {N q a b : Polynomial K} {d : Nat}
     (hN : Squarefree N) (hq : Irreducible q)
@@ -635,6 +675,10 @@ theorem not_two_nonunits_of_squarefree_primePower
   have hqB : q ∣ b := (hpb.dvd_symm hq hpbQ).trans hpbDvd
   exact hq.not_isUnit (hN q ((mul_dvd_mul hqA hqB).trans hNdiv))
 
+/-- Irreducibility of one recovered gcd: when the Trager norm of `P` is
+squarefree and `q` is an irreducible lower factor, any nonconstant monic gcd
+of `P` with the lift of `q` is irreducible, because its norm divides both the
+squarefree norm of `P` and the prime power `q ^ level.degree`. -/
 theorem recoveredCommon_irreducible (level : Level)
     (lower : List Level) (hvalid : LevelsValid (level :: lower))
     (hinjectiveTop : LevelSemantics.DenoteInjective (level :: lower))
@@ -784,6 +828,9 @@ theorem recoveredCommon_irreducible (level : Level)
   exact not_two_nonunits_of_squarefree_primePower hsquarefree hq
     hnormP hnormLifted hnormAUnit hnormBUnit
 
+/-- Irreducibility survives un-shifting and renormalising: the recovered
+factor produced from one accepted lower factor interprets to an irreducible
+polynomial over the extended tower. -/
 theorem recoveredFactor_irreducible (level : Level)
     (lower : List Level) (hvalid : LevelsValid (level :: lower))
     (hinjectiveTop : LevelSemantics.DenoteInjective (level :: lower))
@@ -865,6 +912,8 @@ theorem recoveredFactor_irreducible (level : Level)
   rw [rawPoly_polyCoords]
   exact hresult
 
+/-- Any shift accepted by the bounded search passes the executable
+squarefreeness check on its one-level norm. -/
 theorem findSquarefreeShiftAux_squarefree (level : Level)
     (lower : List Level) (f : Array (Array Rat)) (start fuel : Nat)
     {shift : Int} {norm : Array (Array Rat)}
@@ -880,6 +929,8 @@ theorem findSquarefreeShiftAux_squarefree (level : Level)
         exact hsquarefree
       · exact ih (start := start + 1) h
 
+/-- The norm returned by the bounded search is the one-level resultant at the
+returned shift. -/
 theorem findSquarefreeShiftAux_norm (level : Level)
     (lower : List Level) (f : Array (Array Rat)) (start fuel : Nat)
     {shift : Int} {norm : Array (Array Rat)}
@@ -895,6 +946,8 @@ theorem findSquarefreeShiftAux_norm (level : Level)
         rfl
       · exact ih (start := start + 1) h
 
+/-- A successful `Norm.findSquarefreeShift` returns a norm passing the
+executable squarefreeness check. -/
 theorem findSquarefreeShift_squarefree (level : Level)
     (lower : List Level) (f : Array (Array Rat))
     {shift : Int} {norm : Array (Array Rat)}
@@ -903,6 +956,8 @@ theorem findSquarefreeShift_squarefree (level : Level)
   exact findSquarefreeShiftAux_squarefree level lower f 0
     (Norm.tragerShiftCount level.degree (f.size - 1)) h
 
+/-- A successful `Norm.findSquarefreeShift` returns the one-level resultant
+at the returned shift. -/
 theorem findSquarefreeShift_norm (level : Level)
     (lower : List Level) (f : Array (Array Rat))
     {shift : Int} {norm : Array (Array Rat)}
@@ -911,6 +966,8 @@ theorem findSquarefreeShift_norm (level : Level)
   exact findSquarefreeShiftAux_norm level lower f 0
     (Norm.tragerShiftCount level.degree (f.size - 1)) h
 
+/-- Positive rebuilt degree forces the flattened coefficient array to have at
+least two entries. -/
 theorem array_degree_pos_of_raw_degree_pos (levels : List Level)
     (f : Array (Array Rat))
     (hdegree : 0 < (Factor.rawPoly levels f).degree?.getD 0) :
@@ -930,6 +987,9 @@ theorem array_degree_pos_of_raw_degree_pos (levels : List Level)
   rw [hpDegree] at hdegree
   omega
 
+/-- A squarefree one-level norm of a nonconstant input is itself
+nonconstant, so the recursion below the top level receives a genuine
+factorization problem. -/
 theorem oneLevel_degree_pos (level : Level) (lower : List Level)
     (hvalid : LevelsValid (level :: lower))
     (hinjectiveTop : LevelSemantics.DenoteInjective (level :: lower))
@@ -988,6 +1048,9 @@ theorem oneLevel_degree_pos (level : Level) (lower : List Level)
   rw [HexPolyMathlib.natDegree_toPolynomial] at hnatDegree
   exact Nat.pos_of_ne_zero hnatDegree
 
+/-- The executable squarefreeness certificate is semantically sound: a
+polynomial passing `Norm.isSquarefree` interprets to a squarefree polynomial
+over the tower coefficient field. -/
 theorem squarefree_toPolynomial_of_check (levels : List Level)
     (hvalid : LevelsValid levels)
     (hinjective : LevelSemantics.DenoteInjective levels)
@@ -1020,6 +1083,8 @@ theorem squarefree_toPolynomial_of_check (levels : List Level)
   exact PerfectField.separable_iff_squarefree.mp
     ((Polynomial.separable_map φ).mp hsepMap)
 
+/-- Membership inversion for a filtered push fold: an element of the result
+is either in the initial accumulator or the image of a passing input. -/
 theorem mem_foldl_push_if {α β : Type*}
     (p : α → Prop) [DecidablePred p] (g : α → β) :
     ∀ (items : List α) (init : Array β) (x : β),
@@ -1045,6 +1110,8 @@ theorem mem_foldl_push_if {α β : Type*}
       · exact Or.inr ⟨source, List.mem_cons_of_mem item hsource,
           hpass, rfl⟩
 
+/-- A filtered push fold materialises as the initial accumulator followed by
+a `filterMap` over the inputs. -/
 theorem foldl_push_if_toList {α β : Type*}
     (p : α → Prop) [DecidablePred p] (g : α → β) :
     ∀ (items : List α) (init : Array β),
@@ -1065,6 +1132,9 @@ theorem foldl_push_if_toList {α β : Type*}
       · rw [if_neg hitem, ih]
         simp [hitem]
 
+/-- Dropping unit contributions preserves the product up to a unit: if
+passing items have associated images and failing items map to units, the
+filtered product is associated to the full product. -/
 theorem filterMap_prod_associated {K α : Type*} [Field K]
     (p : α → Prop) [DecidablePred p]
     (result common : α → Polynomial K)
@@ -1085,6 +1155,7 @@ theorem filterMap_prod_associated {K α : Type*} [Field K]
           (associated_one_iff_isUnit.mpr (hskip item hitem)).symm
         simpa [hitem] using hunit.mul_mul ih
 
+/-- Taylor translation distributes over a list product. -/
 theorem taylor_list_prod {K : Type*} [CommRing K]
     (c : K) : ∀ ps : List (Polynomial K),
     Polynomial.taylor c ps.prod =
@@ -1094,6 +1165,8 @@ theorem taylor_list_prod {K : Type*} [CommRing K]
   | nil => simp
   | cons p ps ih => simp [Polynomial.taylor_mul, ih]
 
+/-- Squarefreeness transfers along field embeddings in characteristic zero,
+via separability. -/
 theorem polynomial_squarefree_map {K L : Type*}
     [Field K] [Field L] [CharZero K] [CharZero L]
     (f : K →+* L) {p : Polynomial K} (hp : Squarefree p) :
@@ -1101,6 +1174,9 @@ theorem polynomial_squarefree_map {K L : Type*}
   PerfectField.separable_iff_squarefree.mp
     ((PerfectField.separable_iff_squarefree.mpr hp).map (f := f))
 
+/-- Membership inversion for `Factor.recover`: every recovered factor arises
+from some lower factor whose lifted gcd with the shifted component is
+nonconstant, by un-shifting and renormalising that gcd. -/
 theorem recover_mem (level : Level) (lower : List Level)
     (shift : Int) (component : Array (Array Rat))
     (lowerFactors : Array (Array (Array Rat)))
@@ -1143,6 +1219,9 @@ theorem recover_mem (level : Level) (lower : List Level)
   · refine ⟨lowerFactor, Array.mem_toList_iff.mp hlower, ?_⟩
     exact ⟨hpass, hrecovered⟩
 
+/-- Every factor produced by `Factor.recover` from canonical irreducible
+lower factors is canonical and interprets to an irreducible polynomial over
+the extended tower. -/
 theorem recover_mem_sound (level : Level) (lower : List Level)
     (hvalid : LevelsValid (level :: lower))
     (hinjectiveTop : LevelSemantics.DenoteInjective (level :: lower))
@@ -1192,6 +1271,8 @@ theorem recover_mem_sound (level : Level) (lower : List Level)
       component lowerFactor shift hsquarefree hlowerSound.2 hlowerSound.1
       hdegree
 
+/-- Wrapping rational coefficients as singleton coordinate arrays and reading
+them back is the identity. -/
 theorem toRatPoly_ofRatPoly (f : DensePoly Rat) :
     Factor.toRatPoly (Factor.ofRatPoly f) = f := by
   rw [Factor.toRatPoly, Factor.ofRatPoly, Array.map_map]
@@ -1204,6 +1285,8 @@ theorem toRatPoly_ofRatPoly (f : DensePoly Rat) :
       simp [Function.comp_def]
   rw [harray, DensePoly.ofCoeffs_toArray]
 
+/-- Over the empty tower, `ofRatPoly` outputs canonical coordinate arrays:
+rebuilding and re-flattening them is the identity for nonzero inputs. -/
 theorem polyCoords_rawPoly_ofRatPoly (f : DensePoly Rat)
     (hf : f ≠ 0) :
     Factor.polyCoords (Factor.rawPoly [] (Factor.ofRatPoly f)) =
@@ -1266,6 +1349,8 @@ theorem polyCoords_rawPoly_ofRatPoly (f : DensePoly Rat)
       subst j
       simp
 
+/-- Rescaling a nonzero rational polynomial by the inverse of its leading
+coefficient interprets to a monic polynomial. -/
 theorem toPolynomial_scale_inv_monic (f : DensePoly Rat)
     (hf : f ≠ 0) :
     (HexPolyMathlib.toPolynomial
@@ -1277,6 +1362,8 @@ theorem toPolynomial_scale_inv_monic (f : DensePoly Rat)
     (Nat.pos_of_ne_zero fun hsize =>
       hf ((DensePoly.size_eq_zero_iff f).mp hsize)))
 
+/-- Rescaling by the inverse leading coefficient changes the interpretation
+only by a unit. -/
 theorem scale_inv_associated (f : DensePoly Rat) (hf : f ≠ 0) :
     Associated
       (HexPolyMathlib.toPolynomial (DensePoly.scale f.leadingCoeff⁻¹ f))
@@ -1288,11 +1375,14 @@ theorem scale_inv_associated (f : DensePoly Rat) (hf : f ≠ 0) :
         (Nat.pos_of_ne_zero fun hsize =>
           hf ((DensePoly.size_eq_zero_iff f).mp hsize)))).isUnit)
 
+/-- The monic rational polynomial obtained from an integer factor by reading
+it rationally and dividing by its leading coefficient. -/
 @[expose]
 noncomputable def normalizedRatFactor (f : ZPoly) : Polynomial Rat :=
   HexPolyMathlib.toPolynomial <|
     DensePoly.scale f.toRatPoly.leadingCoeff⁻¹ f.toRatPoly
 
+/-- The rational reading of a nonzero integer polynomial is nonzero. -/
 theorem toRatPoly_ne_zero {f : ZPoly} (hf : f ≠ 0) :
     f.toRatPoly ≠ 0 := by
   intro hzero
@@ -1301,6 +1391,8 @@ theorem toRatPoly_ne_zero {f : ZPoly} (hf : f ≠ 0) :
     HexPolyMathlib.toPolynomial_zero] at hmapped
   exact HexPolyZMathlib.toPolyℚ_ne_zero hf hmapped
 
+/-- The product of monically rescaled integer factors is monic and
+associated to the product of their plain rational readings. -/
 theorem normalizedRatFactors_monic_associated
     (factors : List ZPoly) (hne : ∀ f ∈ factors, f ≠ 0) :
     (factors.map normalizedRatFactor).prod.Monic ∧
@@ -1325,6 +1417,8 @@ theorem normalizedRatFactors_monic_associated
       exact ⟨hfactorMonic.mul htailMonic,
         hfactorAssociated.mul_mul htailAssociated⟩
 
+/-- The executable integer factor power reads rationally as the polynomial
+power. -/
 theorem factorPower_toPolyℚ (f : ZPoly) (n : Nat) :
     HexPolyZMathlib.toPolyℚ (Hex.Factorization.factorPower f n) =
       HexPolyZMathlib.toPolyℚ f ^ n := by
@@ -1332,12 +1426,16 @@ theorem factorPower_toPolyℚ (f : ZPoly) (n : Nat) :
     ← Polynomial.map_pow,
     ← HexBerlekampZassenhausMathlib.factorPower_toPolynomial]
 
+/-- Rational reading of integer polynomials is multiplicative. -/
 theorem toPolyℚ_mul (f g : ZPoly) :
     HexPolyZMathlib.toPolyℚ (f * g) =
       HexPolyZMathlib.toPolyℚ f * HexPolyZMathlib.toPolyℚ g := by
   rw [HexPolyZMathlib.toPolyℚ, HexPolyZMathlib.toPolynomial_mul,
     Polynomial.map_mul]
 
+/-- The executable fold multiplying labelled integer factor powers reads
+rationally as the initial value times the multiplicity-expanded product of
+the factors. -/
 theorem factorizationProduct_toPolyℚ_foldl
     (entries : List (ZPoly × Nat)) (init : ZPoly) :
     HexPolyZMathlib.toPolyℚ
@@ -1353,6 +1451,8 @@ theorem factorizationProduct_toPolyℚ_foldl
       simp only [List.flatMap_cons, List.prod_append, List.prod_replicate]
       ring
 
+/-- A `Hex.Factorization` reads rationally as its scalar times the
+multiplicity-expanded product of its factors. -/
 theorem factorizationProduct_toPolyℚ (factorization : Hex.Factorization) :
     HexPolyZMathlib.toPolyℚ factorization.product =
       Polynomial.C (factorization.scalar : Rat) *
@@ -1364,6 +1464,9 @@ theorem factorizationProduct_toPolyℚ (factorization : Hex.Factorization) :
     Polynomial.map_C]
   congr 2
 
+/-- Monically rescaling the multiplicity-expanded Berlekamp-Zassenhaus
+factors of a nonzero integer polynomial yields a monic product associated to
+its rational reading. -/
 theorem factorize_normalized_product (f : ZPoly) (hf : f ≠ 0) :
     let factors := (ZPoly.factorize f).factors.toList.flatMap
       (fun entry => List.replicate entry.2 entry.1)
@@ -1408,6 +1511,9 @@ theorem factorize_normalized_product (f : ZPoly) (hf : f ≠ 0) :
   exact associated_unit_mul_left _ _
     (Polynomial.isUnit_C.mpr (inv_ne_zero hscalarNe).isUnit)
 
+/-- Each Berlekamp-Zassenhaus factor stays irreducible after monic rational
+rescaling: primitivity transfers integer irreducibility to `ℚ` by Gauss's
+lemma, and rescaling is associated. -/
 theorem normalizedRatFactor_irreducible (integer : ZPoly)
     (hinteger : integer ≠ 0) (entry : ZPoly × Nat)
     (hentry : entry ∈ (ZPoly.factorize integer).factors) :
@@ -1430,6 +1536,8 @@ theorem normalizedRatFactor_irreducible (integer : ZPoly)
   rw [HexPolyZMathlib.toPolynomial_toRatPoly]
   exact hirreducibleRat
 
+/-- The empty-tower coordinate encoding of a monically rescaled
+Berlekamp-Zassenhaus factor interprets to an irreducible polynomial. -/
 theorem rawRatFactor_irreducible (integer : ZPoly)
     (hinteger : integer ≠ 0) (entry : ZPoly × Nat)
     (hentry : entry ∈ (ZPoly.factorize integer).factors) :
@@ -1456,6 +1564,9 @@ theorem rawRatFactor_irreducible (integer : ZPoly)
   exact normalizedRatFactor_irreducible integer hinteger entry hentry
 
 set_option maxHeartbeats 800000 in
+/-- Every multiplicity-expanded, monically rescaled Berlekamp-Zassenhaus
+factor is a canonical coordinate array interpreting to an irreducible
+polynomial over the empty tower. -/
 theorem generatedRatFactors_sound (integer : ZPoly)
     (hinteger : integer ≠ 0) :
     letI : Field (Arithmetic.Coeff []) := Norm.coeffFieldPoly [] trivial
@@ -1509,6 +1620,9 @@ theorem generatedRatFactors_sound (integer : ZPoly)
   exact ⟨polyCoords_rawPoly_ofRatPoly q hq, hirreducible⟩
 
 set_option maxHeartbeats 800000 in
+/-- Base-case soundness of the rational factorizer: every factor returned by
+`Factor.factorRat?` is canonical and interprets to an irreducible
+polynomial. -/
 theorem factorRat_mem_sound (input : DensePoly Rat)
     {factors : Array (Array (Array Rat))}
     (hresult : Factor.factorRat? input = some factors) :
@@ -1559,6 +1673,10 @@ theorem factorRat_mem_sound (input : DensePoly Rat)
         · cases hresult
       · cases hresult
 
+/-- Soundness of the squarefree-component factorizer at every tower height:
+each returned factor is a canonical coordinate array interpreting to an
+irreducible polynomial, by induction through the recursive one-level Trager
+step with the Berlekamp-Zassenhaus base case. -/
 theorem factorSquarefree_mem_sound :
     ∀ (levels : List Level) (hvalid : LevelsValid levels)
       (hinjective : LevelSemantics.DenoteInjective levels)
