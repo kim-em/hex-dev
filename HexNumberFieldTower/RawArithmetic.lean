@@ -19,6 +19,7 @@ arithmetic is a thin dependent wrapper defined later.
 -/
 namespace Hex.NumberTower.Arithmetic
 
+/-- A fold whose steps preserve array size leaves the size unchanged. -/
 private theorem foldl_array_size {α β : Type} (indices : List β)
     (step : Array α → β → Array α) (initial : Array α)
     (hstep : ∀ work index, (step work index).size = work.size) :
@@ -193,6 +194,8 @@ def convolveRow (degree width i : Nat)
       work.set! k (addCoords width (work.getD k zeroBlock) product))
     work
 
+/-- One convolution row edits the work array in place, preserving its
+size. -/
 @[simp]
 theorem convolveRow_size (degree width i : Nat)
     (multiply : Array Rat → Array Rat → Array Rat)
@@ -244,6 +247,8 @@ def reduceCoeffs (degree width k : Nat) (defining : Array (Array Rat))
         (subCoords width (work.getD target zeroBlock) correction))
     work
 
+/-- One coefficient-reduction step edits the work array in place, preserving
+its size. -/
 @[simp]
 theorem reduceCoeffs_size (degree width k : Nat)
     (defining : Array (Array Rat))
@@ -332,9 +337,14 @@ The `raw` helper normalizes to the represented mixed-radix dimension. -/
 structure RawElem (levels : List Level) where
   data : Array Rat
 
+/-- Wrap coordinate data as a `RawElem`, zero-padding or truncating to the
+represented mixed-radix dimension. -/
 @[expose]
 def raw (levels : List Level) (data : Array Rat) : RawElem levels :=
   .mk (fixedCoeffs (levelsDim levels) data)
+
+/-! `RawElem` operations delegate to the runtime-indexed coordinate
+functions above; `Inv` and `Div` follow after `invCoords`. -/
 
 instance (levels : List Level) : DecidableEq (RawElem levels) :=
   fun a b =>
@@ -371,6 +381,9 @@ structure Coeff (levels : List Level) where
 @[expose]
 def Coeff.ofData (levels : List Level) (data : Array Rat) : Coeff levels :=
   ⟨fixedCoeffs (levelsDim levels) data, by simp [fixedCoeffs]⟩
+
+/-! `Coeff` operations delegate to the same coordinate functions, carrying
+the fixed-width invariant through each result. -/
 
 instance (levels : List Level) : DecidableEq (Coeff levels) :=
   fun a b =>
