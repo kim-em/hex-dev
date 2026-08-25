@@ -28,6 +28,11 @@ def runIntPair {n : Nat} (input : P n Int × P n Int) : UInt64 :=
 def runRatPair {n : Nat} (input : P n Rat × P n Rat) : UInt64 :=
   checksum (gcd input.1 input.2)
 
+def runBrownPair {n : Nat} (input : P n Int × P n Int) : UInt64 :=
+  match intBrownModularCert? GcdConfig.default input.1 input.2 with
+  | none => 0
+  | some cert => checksum cert.gcd
+
 def runSquarefree {n : Nat} (input : P n Int) : UInt64 :=
   let decomp := sqfDecomp input
   decomp.factors.foldl
@@ -36,9 +41,25 @@ def runSquarefree {n : Nat} (input : P n Int) : UInt64 :=
         (hash factor.multiplicity))
     (hash decomp.content)
 
+def getCached (slot : IO.Ref (Option α)) (build : Unit → α) : IO α := do
+  match ← slot.get with
+  | some value => return value
+  | none =>
+      let value := build ()
+      slot.set (some value)
+      return value
+
 def fixedConfig (expectedHash : UInt64) : LeanBench.FixedBenchmarkConfig :=
   { repeats := 3, maxSecondsPerCall := 12.0,
-    expectedHash := some expectedHash }
+    warmupFirstIter := true, expectedHash := some expectedHash }
+
+def brownConfig (expectedHash : UInt64) : LeanBench.FixedBenchmarkConfig :=
+  { repeats := 3, maxSecondsPerCall := 30.0,
+    warmupFirstIter := true, expectedHash := some expectedHash }
+
+def stressConfig (expectedHash : UInt64) : LeanBench.FixedBenchmarkConfig :=
+  { repeats := 3, maxSecondsPerCall := 30.0,
+    warmupFirstIter := true, expectedHash := some expectedHash }
 
 initialize denseCoprime2 : IO.Ref (P 2 Int × P 2 Int) ←
   IO.mkRef (denseCoprime 2 1)
@@ -116,22 +137,83 @@ setup_fixed_benchmark runSparseCoprime6 where fixedConfig 0xe471bb0a9f420adf
 setup_fixed_benchmark runSparseCoprime7 where fixedConfig 0x7958e799d1931a08
 setup_fixed_benchmark runSparseCoprime8 where fixedConfig 0x9389fe94a31dd629
 
+initialize sparseStress5d4096 : IO.Ref (P 5 Int × P 5 Int) ←
+  IO.mkRef (sparseGcd 5 4096)
+initialize sparseStress8d4096 : IO.Ref (P 8 Int × P 8 Int) ←
+  IO.mkRef (sparseGcd 8 4096)
+initialize sparseStress12d4096 : IO.Ref (P 12 Int × P 12 Int) ←
+  IO.mkRef (sparseGcd 12 4096)
+
+def runSparseStress5d4096 (_ : Unit) : IO UInt64 :=
+  return runIntPair (← sparseStress5d4096.get)
+def runSparseStress8d4096 (_ : Unit) : IO UInt64 :=
+  return runIntPair (← sparseStress8d4096.get)
+def runSparseStress12d4096 (_ : Unit) : IO UInt64 :=
+  return runIntPair (← sparseStress12d4096.get)
+
+setup_fixed_benchmark runSparseStress5d4096 where
+  stressConfig 0xbd6798d21ee1b1e0
+setup_fixed_benchmark runSparseStress8d4096 where
+  stressConfig 0xc98beef9ed877616
+setup_fixed_benchmark runSparseStress12d4096 where
+  stressConfig 0xccb4f856deae8744
+
 initialize denseGcd3d5 : IO.Ref (P 3 Int × P 3 Int) ←
   IO.mkRef (denseGcd 3 5)
+initialize denseGcd3d10 : IO.Ref (Option (P 3 Int × P 3 Int)) ←
+  IO.mkRef none
+initialize denseGcd3d20 : IO.Ref (Option (P 3 Int × P 3 Int)) ←
+  IO.mkRef none
+initialize denseGcd4d5 : IO.Ref (Option (P 4 Int × P 4 Int)) ←
+  IO.mkRef none
+initialize denseGcd5d5 : IO.Ref (Option (P 5 Int × P 5 Int)) ←
+  IO.mkRef none
 
-def runDenseGcd3d5 (_ : Unit) : IO UInt64 := do
-  return runIntPair (← denseGcd3d5.get)
+def runDenseGcd3d5 (_ : Unit) : IO UInt64 :=
+  return runBrownPair (← denseGcd3d5.get)
+def runDenseGcd3d10 (_ : Unit) : IO UInt64 :=
+  return runBrownPair (← getCached denseGcd3d10 fun _ => denseGcd 3 10)
+def runDenseGcd3d20 (_ : Unit) : IO UInt64 :=
+  return runBrownPair (← getCached denseGcd3d20 fun _ => denseGcd 3 20)
+def runDenseGcd4d5 (_ : Unit) : IO UInt64 :=
+  return runBrownPair (← getCached denseGcd4d5 fun _ => denseGcd 4 5)
+def runDenseGcd5d5 (_ : Unit) : IO UInt64 :=
+  return runBrownPair (← getCached denseGcd5d5 fun _ => denseGcd 5 5)
 
-setup_fixed_benchmark runDenseGcd3d5 where fixedConfig 0x4a63cc50df074eb4
+setup_fixed_benchmark runDenseGcd3d5 where brownConfig 0x4a63cc50df074eb4
+setup_fixed_benchmark runDenseGcd3d10 where brownConfig 0x4a63cc50df074eb4
+setup_fixed_benchmark runDenseGcd3d20 where brownConfig 0x4a63cc50df074eb4
+setup_fixed_benchmark runDenseGcd4d5 where brownConfig 0xa56be5fdc3e32b20
+setup_fixed_benchmark runDenseGcd5d5 where brownConfig 0xbd6798d21ee1b1e0
 
 initialize rationalGcd3d5 : IO.Ref (P 3 Rat × P 3 Rat) ←
   IO.mkRef (rationalGcd 3 5)
+initialize rationalGcd3d10 : IO.Ref (Option (P 3 Rat × P 3 Rat)) ←
+  IO.mkRef none
+initialize rationalGcd3d20 : IO.Ref (Option (P 3 Rat × P 3 Rat)) ←
+  IO.mkRef none
+initialize rationalGcd4d5 : IO.Ref (Option (P 4 Rat × P 4 Rat)) ←
+  IO.mkRef none
+initialize rationalGcd5d5 : IO.Ref (Option (P 5 Rat × P 5 Rat)) ←
+  IO.mkRef none
 
 def runRationalGcd3d5 (_ : Unit) : IO UInt64 :=
   return runRatPair (← rationalGcd3d5.get)
+def runRationalGcd3d10 (_ : Unit) : IO UInt64 :=
+  return runRatPair (← getCached rationalGcd3d10 fun _ => rationalGcd 3 10)
+def runRationalGcd3d20 (_ : Unit) : IO UInt64 :=
+  return runRatPair (← getCached rationalGcd3d20 fun _ => rationalGcd 3 20)
+def runRationalGcd4d5 (_ : Unit) : IO UInt64 :=
+  return runRatPair (← getCached rationalGcd4d5 fun _ => rationalGcd 4 5)
+def runRationalGcd5d5 (_ : Unit) : IO UInt64 :=
+  return runRatPair (← getCached rationalGcd5d5 fun _ => rationalGcd 5 5)
 
 setup_fixed_benchmark runRationalGcd3d5 where
   fixedConfig 0x13101c4072427dd1
+setup_fixed_benchmark runRationalGcd3d10 where fixedConfig 0x13101c4072427dd1
+setup_fixed_benchmark runRationalGcd3d20 where fixedConfig 0x13101c4072427dd1
+setup_fixed_benchmark runRationalGcd4d5 where fixedConfig 0x7a6eed34dac1cd4b
+setup_fixed_benchmark runRationalGcd5d5 where fixedConfig 0xcb197b68a2a27c66
 
 initialize squarefree2m1 : IO.Ref (P 2 Int) ←
   IO.mkRef (squarefreeShape 2 [1])
@@ -139,6 +221,7 @@ initialize squarefree3m1to5 : IO.Ref (P 3 Int) ←
   IO.mkRef (squarefreeShape 3 [1, 2, 3, 4, 5])
 initialize squarefree4m7 : IO.Ref (P 4 Int) ←
   IO.mkRef (squarefreeShape 4 [7])
+initialize squarefree5m2357 : IO.Ref (Option (P 5 Int)) ← IO.mkRef none
 
 def runSquarefree2m1 (_ : Unit) : IO UInt64 :=
   return runSquarefree (← squarefree2m1.get)
@@ -146,6 +229,9 @@ def runSquarefree3m1to5 (_ : Unit) : IO UInt64 :=
   return runSquarefree (← squarefree3m1to5.get)
 def runSquarefree4m7 (_ : Unit) : IO UInt64 :=
   return runSquarefree (← squarefree4m7.get)
+def runSquarefree5m2357 (_ : Unit) : IO UInt64 :=
+  return runSquarefree
+    (← getCached squarefree5m2357 fun _ => squarefreeStress5)
 
 setup_fixed_benchmark runSquarefree2m1 where
   fixedConfig 0x64d98a7e1ba9194f
@@ -153,5 +239,7 @@ setup_fixed_benchmark runSquarefree3m1to5 where
   fixedConfig 0x664d8f4f4d3e40ef
 setup_fixed_benchmark runSquarefree4m7 where
   fixedConfig 0xe04c869a010239a4
+setup_fixed_benchmark runSquarefree5m2357 where
+  stressConfig 0x4f644b92da420b36
 
 end Hex.MvGcdBench.Matrix

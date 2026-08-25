@@ -65,27 +65,35 @@ def commonFactor (n : Nat) : P n Int :=
   (List.finRange n).foldl
     (fun polynomial i => polynomial + C (Int.ofNat (i.val + 1)) * X i) 1
 
-/-- High-degree, low-support inputs with a known linear common factor. -/
-def sparseGcd (n degree : Nat) : P n Int × P n Int :=
+/-- High-degree, low-support inputs with a known linear common factor and
+nonconsecutive coprime cofactors. -/
+def sparseGcd (n degree : Nat) (hn : 0 < n := by omega) :
+    P n Int × P n Int :=
   let sparse := (sparseCoprime n degree).1
   let common := commonFactor n
-  (common * sparse, common * (sparse + 1))
+  let rightCofactor := X ⟨0, hn⟩ * sparse + 1
+  (common * sparse, common * rightCofactor)
 
-/-- Dense inputs with a known linear gcd and consecutive dense cofactors. -/
-def denseGcd (n degree : Nat) : P n Int × P n Int :=
+/-- Dense inputs with a known linear gcd and nonconsecutive coprime cofactors.
+The right cofactor is `x₀ * left + 1`, so a direct Bézout identity exists
+without triggering the unit-difference shortcut. -/
+def denseGcd (n degree : Nat) (hn : 0 < n := by omega) :
+    P n Int × P n Int :=
   let common := commonFactor n
   let leftCofactor := denseBox (R := Int) n degree
-  (common * leftCofactor, common * (leftCofactor + 1))
+  let rightCofactor := X ⟨0, hn⟩ * leftCofactor + 1
+  (common * leftCofactor, common * rightCofactor)
 
 /-- The rational analogue of `denseGcd`, with nonintegral scalar content. -/
-def rationalGcd (n degree : Nat) : P n Rat × P n Rat :=
+def rationalGcd (n degree : Nat) (hn : 0 < n := by omega) :
+    P n Rat × P n Rat :=
   let common : P n Rat :=
     (List.finRange n).foldl
       (fun polynomial i =>
         polynomial + C ((Int.ofNat (i.val + 1) : Rat) / 2) * X i) 1
   let leftCofactor := denseBox (R := Rat) n degree
-  (common * leftCofactor,
-    common * (leftCofactor + C ((1 : Rat) / 3)))
+  let rightCofactor := X ⟨0, hn⟩ * leftCofactor + 1
+  (common * leftCofactor, common * rightCofactor)
 
 /-- A nonconstant linear factor which involves every available variable. -/
 def linearFactor (n salt : Nat) : P n Int :=
@@ -100,5 +108,18 @@ def squarefreeShape (n : Nat) (multiplicities : List Nat) : P n Int :=
     (fun polynomial entry =>
       polynomial * linearFactor n (entry.2 + 1) ^ entry.1)
     1
+
+/-- Five-variable multiplicity stress without the incidental dense expansion
+of four factors which each involve every variable.  The first factor couples
+the fifth variable to the first; the other three keep every requested
+multiplicity distinct while all five variables remain active. -/
+def squarefreeStress5 : P 5 Int :=
+  let x0 : P 5 Int := X 0
+  let x1 : P 5 Int := X 1
+  let x2 : P 5 Int := X 2
+  let x3 : P 5 Int := X 3
+  let x4 : P 5 Int := X 4
+  (x0 + x4 + 2) ^ 2 * (x1 + 3) ^ 3 *
+    (x2 + 5) ^ 5 * (x3 + 7) ^ 7
 
 end Hex.MvGcdBench.Families
