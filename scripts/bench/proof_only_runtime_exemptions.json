@@ -1,5 +1,17 @@
 [
   {
+    "path": "HexBasic/List.lean",
+    "baseline_blob": "244224572752565242dcada3d1254fdaf4e22e9d",
+    "current_blob": "e495f2df26b2591ebadf97831bf3d1cc24dabf06",
+    "reason": "Adds only the nodup_map_on theorem and its proof; no executable definition in the factorization service or its runtime call graph changes."
+  },
+  {
+    "path": "lakefile.lean",
+    "baseline_blob": "a1b87406682dbf908d990f01676f326499b906e5",
+    "current_blob": "d1964196b54e1ed5c9875073b64b97f3c0953eb7",
+    "reason": "Additionally registers the build-only HexTruncatedSeries lint regression target; hexbz_factor_service, its build flags, and every factorization runtime dependency remain unchanged."
+  },
+  {
     "path": "HexPoly/Euclid.lean",
     "baseline_blob": "893e5013cacbf1f00dc5a3f88c99f43ee97d5958",
     "current_blob": "6a967b30b4778ae1f5d9fed74e62452d35bac004",
@@ -1240,17 +1252,5 @@
     "baseline_blob": "a1b87406682dbf908d990f01676f326499b906e5",
     "current_blob": "f9e1661e342a6ba74c2d50753a263b8e22769b51",
     "reason": "Additionally registers the build-only HexMvGcd Phase 4 shape-matrix support modules; hexbz_factor_service, its build flags, and every factorization runtime dependency remain unchanged."
-  },
-  {
-    "path": "HexBasic/List.lean",
-    "baseline_blob": "244224572752565242dcada3d1254fdaf4e22e9d",
-    "current_blob": "e495f2df26b2591ebadf97831bf3d1cc24dabf06",
-    "reason": "Adds only the nodup_map_on theorem and its proof; no executable definition in the factorization service or its runtime call graph changes."
-  },
-  {
-    "path": "lakefile.lean",
-    "baseline_blob": "a1b87406682dbf908d990f01676f326499b906e5",
-    "current_blob": "d1964196b54e1ed5c9875073b64b97f3c0953eb7",
-    "reason": "Additionally registers the build-only HexTruncatedSeries lint regression target; hexbz_factor_service, its build flags, and every factorization runtime dependency remain unchanged."
   }
 ]
