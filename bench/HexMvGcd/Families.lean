@@ -14,6 +14,15 @@ Benchmark registrations store those values in global references, keeping
 construction outside the timed region.
 -/
 
+namespace Hex.MvGcdBench
+
+/-- Tag for scientific targets that run on scheduled hardware rather than in
+the merge-gated registration smoke check. -/
+def scheduledHardwareTag : String :=
+  "scheduled-hardware"
+
+end Hex.MvGcdBench
+
 namespace Hex.MvGcdBench.Families
 
 open Hex

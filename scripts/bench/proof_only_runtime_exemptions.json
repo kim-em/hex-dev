@@ -1270,5 +1270,17 @@
     "baseline_blob": "8226e99030e7d5fa79f36b5652119b97ab8e0110",
     "current_blob": "3276b34df952955b9ddbfa4ce4850d6223856134",
     "reason": "Combines the measured PolySmith registrations with current main's independent HexIntFactor and MV-GCD benchmark support registrations; hexbz_factor_service, its build flags, and every factorization runtime dependency are unchanged."
+  },
+  {
+    "path": "lakefile.lean",
+    "baseline_blob": "a1b87406682dbf908d990f01676f326499b906e5",
+    "current_blob": "afe2867de3e4f86d390aa9c16d32c8ac5ddcdae0",
+    "reason": "Additionally registers the build-only HexMvGcd Phase 4 sampling-profile module; hexbz_factor_service, its build flags, and every factorization runtime dependency are unchanged."
+  },
+  {
+    "path": "lakefile.lean",
+    "baseline_blob": "8226e99030e7d5fa79f36b5652119b97ab8e0110",
+    "current_blob": "e5e9e83f03c5d443e196eeefdfa6770b17b5575e",
+    "reason": "Combines the measured PolySmith registrations with current main's independent HexIntFactor and complete MV-GCD Phase 4 benchmark support registrations; hexbz_factor_service, its build flags, and every factorization runtime dependency are unchanged."
   }
 ]

@@ -63,15 +63,18 @@ def getCached (slot : IO.Ref (Option α)) (build : Unit → α) : IO α := do
 
 def fixedConfig (expectedHash : UInt64) : LeanBench.FixedBenchmarkConfig :=
   { repeats := 3, maxSecondsPerCall := 12.0,
-    warmupFirstIter := true, expectedHash := some expectedHash }
+    warmupFirstIter := true, expectedHash := some expectedHash,
+    tags := #[scheduledHardwareTag] }
 
 def brownConfig (expectedHash : UInt64) : LeanBench.FixedBenchmarkConfig :=
   { repeats := 3, maxSecondsPerCall := 30.0,
-    warmupFirstIter := true, expectedHash := some expectedHash }
+    warmupFirstIter := true, expectedHash := some expectedHash,
+    tags := #[scheduledHardwareTag] }
 
 def stressConfig (expectedHash : UInt64) : LeanBench.FixedBenchmarkConfig :=
   { repeats := 3, maxSecondsPerCall := 30.0,
-    warmupFirstIter := true, expectedHash := some expectedHash }
+    warmupFirstIter := true, expectedHash := some expectedHash,
+    tags := #[scheduledHardwareTag] }
 
 initialize denseCoprime2 : IO.Ref (P 2 Int × P 2 Int) ←
   IO.mkRef (denseCoprime 2 1)

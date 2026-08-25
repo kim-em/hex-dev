@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="560" viewBox="0 0 900 560">
+<style>
+text { font-family: sans-serif; fill: #202124; }
+.grid { stroke: #cfd4da; stroke-width: 1; opacity: 0.65; }
+.axis { stroke: #202124; stroke-width: 1.4; }
+.series { fill: none; stroke-width: 2.5; }
+</style>
+<text x="450.0" y="30" text-anchor="middle" font-size="19" font-weight="600">HexMvGcd comparators — Rational GCDs (degree 5) (chungus2)</text>
+<rect x="108" y="62" width="762" height="406" fill="#ffffff"/>
+<line class="grid" x1="108" y1="468.00" x2="870" y2="468.00"/>
+<text x="96" y="472.00" text-anchor="end" font-size="12">10^-3</text>
+<line class="grid" x1="108" y1="332.67" x2="870" y2="332.67"/>
+<text x="96" y="336.67" text-anchor="end" font-size="12">10^-2</text>
+<line class="grid" x1="108" y1="197.33" x2="870" y2="197.33"/>
+<text x="96" y="201.33" text-anchor="end" font-size="12">10^-1</text>
+<line class="grid" x1="108" y1="62.00" x2="870" y2="62.00"/>
+<text x="96" y="66.00" text-anchor="end" font-size="12">10^0</text>
+<line class="grid" x1="298.50" y1="62" x2="298.50" y2="468"/>
+<text x="298.50" y="493" text-anchor="middle" font-size="12">3 variables</text>
+<line class="grid" x1="679.50" y1="62" x2="679.50" y2="468"/>
+<text x="679.50" y="493" text-anchor="middle" font-size="12">4 variables</text>
+<line class="axis" x1="108" y1="468" x2="870" y2="468"/>
+<line class="axis" x1="108" y1="62" x2="108" y2="468"/>
+<text x="489.0" y="535" text-anchor="middle" font-size="14">matched endpoint</text>
+<text x="25" y="265.0" text-anchor="middle" font-size="14" transform="rotate(-90 25 265.0)">wall time per call (s)</text>
+<polyline class="series" stroke="#2468b4" points="298.50,278.19 679.50,141.22"/>
+<circle cx="298.50" cy="278.19" r="4" fill="#2468b4"/>
+<circle cx="679.50" cy="141.22" r="4" fill="#2468b4"/>
+<line x1="126" y1="82" x2="154" y2="82" stroke="#2468b4" stroke-width="2.5"/>
+<text x="164" y="86" font-size="12">Hex</text>
+<polyline class="series" stroke="#d95f02" points="298.50,442.51 679.50,331.88"/>
+<rect x="294.50" y="438.51" width="8" height="8" fill="#d95f02"/>
+<rect x="675.50" y="327.88" width="8" height="8" fill="#d95f02"/>
+<line x1="126" y1="106" x2="154" y2="106" stroke="#d95f02" stroke-width="2.5"/>
+<text x="164" y="110" font-size="12">FLINT 3.6.0</text>
+<polyline class="series" stroke="#249148" points="298.50,408.82 679.50,293.94"/>
+<polygon points="298.50,403.82 293.50,412.82 303.50,412.82" fill="#249148"/>
+<polygon points="679.50,288.94 674.50,297.94 684.50,297.94" fill="#249148"/>
+<line x1="126" y1="130" x2="154" y2="130" stroke="#249148" stroke-width="2.5"/>
+<text x="164" y="134" font-size="12">Singular 4.4.1</text>
+</svg>
