@@ -1216,5 +1216,11 @@
     "baseline_blob": "a1b87406682dbf908d990f01676f326499b906e5",
     "current_blob": "42a95d0841165c3591246914bc67348ccd8d5df3",
     "reason": "Additionally moves the HexMvGcd kernel replay suite to its SPEC-mandated bench target; hexbz_factor_service and every factorization runtime dependency remain unchanged."
+  },
+  {
+    "path": "HexPolyZ/KroneckerMulti.lean",
+    "baseline_blob": null,
+    "current_blob": "86d9f0154609649d246e791e1245174a3f3a165b",
+    "reason": "Adds the forced KS2 multiplication kernel, its correctness theorem, conformance checks, and crossover measurement; the production multiplication dispatcher and factorization call graph remain unchanged."
   }
 ]
