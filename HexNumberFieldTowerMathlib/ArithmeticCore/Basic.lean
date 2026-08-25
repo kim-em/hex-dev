@@ -23,6 +23,8 @@ namespace Hex.NumberTower
 
 namespace LevelSemantics
 
+/-- Extracting a coordinate block commutes with coordinatewise rational
+scaling. -/
 theorem block_map_mul (q : Rat) (data : Array Rat)
     (index width : Nat) :
     Arithmetic.block (data.map fun c => q * c) index width =
@@ -61,6 +63,8 @@ noncomputable def evalUpTo (lower : List Level) (x : ℂ) (count : Nat)
   ∑ i ∈ Finset.range count,
     denote lower (blocks.getD i #[]) * x ^ i
 
+/-- Defaulted read after an in-bounds `set!`: position `k` holds the new
+value and every other position is unchanged. -/
 theorem getD_set! (blocks : Array (Array Rat)) (k i : Nat)
     (value default : Array Rat) (hk : k < blocks.size) :
     (blocks.set! k value).getD i default =
@@ -119,6 +123,9 @@ theorem evalUpTo_take (lower : List Level) (x : ℂ) (count cutoff : Nat)
   · simp [Array.getD_eq_getD_getElem?, hi', hsize]
   · simp [Array.getD_eq_getD_getElem?, hi', hsize]
 
+/-- Generic accumulation principle for coordinate folds: if every step
+preserves the working size and adds one term to the evaluated power sum, the
+fold adds the sum of all terms. -/
 theorem fold_eval {ι : Type} (lower : List Level) (x : ℂ)
     (count size : Nat) (indices : List ι)
     (step : Array (Array Rat) → ι → Array (Array Rat))
@@ -144,6 +151,8 @@ theorem fold_eval {ι : Type} (lower : List Level) (x : ℂ)
         ring
       · simpa only [List.foldl_cons] using htail.2
 
+/-- A sum over `List.range` agrees with the corresponding `Finset.range`
+sum. -/
 theorem list_sum_range (count : Nat) (term : Nat → ℂ) :
     ((List.range count).map term).sum =
       ∑ i ∈ Finset.range count, term i := by
@@ -154,6 +163,8 @@ theorem list_sum_range (count : Nat) (term : Nat → ℂ) :
         Finset.sum_range_succ, ih]
       simp
 
+/-- One convolution row adds exactly the monomial contributions of block `i`
+of `a` against every block of `b`. -/
 theorem convolveRow_eval (lower : List Level) (x : ℂ)
     (degree i : Nat) (a b : Array Rat)
     (multiply : Array Rat → Array Rat → Array Rat)
@@ -254,6 +265,7 @@ theorem polynomial_eval (lower : List Level) (blocks : Array (Array Rat))
   rw [polynomial, Polynomial.eval_finsetSum]
   simp [evalBlocks, Polynomial.eval_monomial]
 
+/-- The empty coordinate array denotes zero at every tower height. -/
 theorem denote_empty (levels : List Level) : denote levels #[] = 0 := by
   induction levels with
   | nil => simp [denote, Array.getD]
@@ -330,6 +342,7 @@ theorem denote_neg (levels : List Level) (data : Array Rat) :
         Arithmetic.fixedCoeffs, Array.getD]
   rw [hcoords, denote_sub, denote_zero, zero_sub]
 
+/-- The zero-filled coordinate array of full width denotes zero. -/
 theorem denote_replicate_zero (levels : List Level) :
     denote levels (Array.replicate (levelsDim levels) 0) = 0 := by
   rw [← denote_zero levels]
@@ -339,6 +352,7 @@ theorem denote_replicate_zero (levels : List Level) :
   · intro i hi₁ hi₂
     simp [Arithmetic.fixedCoeffs]
 
+/-- A power sum over zero-filled blocks vanishes. -/
 theorem evalUpTo_replicate_zero (lower : List Level) (x : ℂ)
     (count : Nat) :
     evalUpTo lower x count
@@ -350,6 +364,8 @@ theorem evalUpTo_replicate_zero (lower : List Level) (x : ℂ)
   have hi' : i < count := Finset.mem_range.mp hi
   simp [Array.getD, hi', denote_replicate_zero]
 
+/-- The executable convolution evaluates to the double sum of blockwise
+products weighted by `x ^ (i + j)`. -/
 theorem convolve_eval (lower : List Level) (x : ℂ)
     (degree : Nat) (a b : Array Rat)
     (multiply : Array Rat → Array Rat → Array Rat)
@@ -400,6 +416,8 @@ theorem convolve_eval (lower : List Level) (x : ℂ)
           denote lower (Arithmetic.block b j (levelsDim lower)) *
             x ^ (i + j)
 
+/-- The executable convolution evaluates to the product of the two operand
+power sums: schoolbook multiplication is correct under denotation. -/
 theorem convolve_mul (lower : List Level) (x : ℂ)
     (degree : Nat) (a b : Array Rat)
     (multiply : Array Rat → Array Rat → Array Rat)
@@ -422,6 +440,8 @@ theorem convolve_mul (lower : List Level) (x : ℂ)
   rw [pow_add]
   ring
 
+/-- One coefficient-reduction step subtracts the top block times each
+defining coefficient at the correspondingly shifted position. -/
 theorem reduceCoeffs_eval (lower : List Level) (x : ℂ)
     (degree k : Nat) (defining : Array (Array Rat))
     (multiply : Array Rat → Array Rat → Array Rat)
@@ -525,6 +545,7 @@ theorem denote_rat (levels : List Level) (hvalid : LevelsValid levels)
     exact denote_one levels hvalid
   simpa [hone] using denote_smul levels q #[1]
 
+/-- Conjugate evaluation sends the zero coefficient to `0`. -/
 @[simp]
 theorem evalAt_zero (level : Level) (lower : List Level)
     (_hvalid : LevelsValid (level :: lower)) (x : ℂ) :
@@ -547,6 +568,7 @@ theorem evalAt_zero (level : Level) (lower : List Level)
   rw [hempty, denote_zero]
   simp
 
+/-- Conjugate evaluation sends the one coefficient to `1`. -/
 @[simp]
 theorem evalAt_one (level : Level) (lower : List Level)
     (hvalid : LevelsValid (level :: lower)) (x : ℂ) :
@@ -575,6 +597,7 @@ theorem evalAt_one (level : Level) (lower : List Level)
         simp
     _ = 1 := by rw [denote_one lower hvalid.2.2]; simp
 
+/-- Conjugate evaluation is additive. -/
 theorem evalAt_add (level : Level) (lower : List Level)
     (_hvalid : LevelsValid (level :: lower)) (x : ℂ)
     (a b : Arithmetic.Coeff (level :: lower)) :
@@ -891,6 +914,10 @@ theorem reduce_eval_of_relation (level : Level) (lower : List Level)
           (level.degree + fuel) multiply work hvalid
           (Nat.le_add_right level.degree fuel) (by omega) hmul
 
+/-- Full degree reduction at the stored root preserves the evaluated power
+sum: each subtracted multiple of the monic defining relation vanishes at the
+root, so the reduced width-`k` array evaluates like the original width-`k+1`
+array. -/
 theorem reduceAt_eval (level : Level) (lower : List Level)
     (k : Nat) (multiply : Array Rat → Array Rat → Array Rat)
     (work : Array (Array Rat)) (hvalid : LevelsValid (level :: lower))
@@ -1083,6 +1110,7 @@ noncomputable def coeffDenote (levels : List Level)
     (a : Arithmetic.Coeff levels) : ℂ :=
   denote levels a.data
 
+/-- Coefficient denotation sends the zero coefficient to `0`. -/
 @[simp]
 theorem coeffDenote_zero (levels : List Level) :
     coeffDenote levels (0 : Arithmetic.Coeff levels) = 0 := by
@@ -1090,6 +1118,7 @@ theorem coeffDenote_zero (levels : List Level) :
       (Arithmetic.fixedCoeffs (levelsDim levels) #[]) = 0
   exact denote_zero levels
 
+/-- Coefficient denotation sends the one coefficient to `1`. -/
 @[simp]
 theorem coeffDenote_one (levels : List Level) (hvalid : LevelsValid levels) :
     coeffDenote levels (1 : Arithmetic.Coeff levels) = 1 := by
@@ -1097,6 +1126,7 @@ theorem coeffDenote_one (levels : List Level) (hvalid : LevelsValid levels) :
       (Arithmetic.fixedCoeffs (levelsDim levels) #[1]) = 1
   exact denote_one levels hvalid
 
+/-- Coefficient denotation is additive over the executable addition. -/
 theorem coeffDenote_add (levels : List Level)
     (a b : Arithmetic.Coeff levels) :
     coeffDenote levels (a + b) = coeffDenote levels a + coeffDenote levels b := by
@@ -1104,6 +1134,7 @@ theorem coeffDenote_add (levels : List Level)
     denote levels a.data + denote levels b.data
   exact denote_add levels a.data b.data
 
+/-- Coefficient denotation respects the executable subtraction. -/
 theorem coeffDenote_sub (levels : List Level)
     (a b : Arithmetic.Coeff levels) :
     coeffDenote levels (a - b) = coeffDenote levels a - coeffDenote levels b := by
@@ -1111,12 +1142,15 @@ theorem coeffDenote_sub (levels : List Level)
     denote levels a.data - denote levels b.data
   exact denote_sub levels a.data b.data
 
+/-- Coefficient denotation respects the executable negation. -/
 theorem coeffDenote_neg (levels : List Level) (a : Arithmetic.Coeff levels) :
     coeffDenote levels (-a) = -coeffDenote levels a := by
   change denote levels (Arithmetic.negCoords (levelsDim levels) a.data) =
     -denote levels a.data
   exact denote_neg levels a.data
 
+/-- Coefficient denotation is multiplicative over the executable mixed-radix
+multiplication. -/
 theorem coeffDenote_mul (levels : List Level) (hvalid : LevelsValid levels)
     (a b : Arithmetic.Coeff levels) :
     coeffDenote levels (a * b) = coeffDenote levels a * coeffDenote levels b := by
@@ -1130,6 +1164,8 @@ def coeffSmul (levels : List Level) (q : Rat)
     (a : Arithmetic.Coeff levels) : Arithmetic.Coeff levels :=
   Arithmetic.Coeff.ofData levels (a.data.map fun c => q * c)
 
+/-- Coefficient denotation turns the executable rational scaling into
+multiplication by the embedded rational. -/
 theorem coeffDenote_smul (levels : List Level) (q : Rat)
     (a : Arithmetic.Coeff levels) :
     coeffDenote levels (coeffSmul levels q a) =
@@ -1145,6 +1181,8 @@ def coeffPow {levels : List Level} (a : Arithmetic.Coeff levels) :
   | 0 => 1
   | n + 1 => coeffPow a n * a
 
+/-- Coefficient denotation turns the executable natural power into the
+complex power. -/
 theorem coeffDenote_pow (levels : List Level) (hvalid : LevelsValid levels)
     (a : Arithmetic.Coeff levels) (n : Nat) :
     coeffDenote levels (coeffPow a n) = coeffDenote levels a ^ n := by
@@ -1288,6 +1326,8 @@ noncomputable def coeffHom (levels : List Level) (hvalid : LevelsValid levels)
           denote levels a.data * denote levels b.data
         exact denote_mul levels hvalid a.data b.data }
 
+/-- Canonical coefficient data is already the right width, so zero-padding
+fixes it. -/
 theorem fixedCoeffs_eq_self (levels : List Level)
     (a : Arithmetic.Coeff levels) :
     Arithmetic.fixedCoeffs (levelsDim levels) a.data = a.data := by
@@ -1296,6 +1336,7 @@ theorem fixedCoeffs_eq_self (levels : List Level)
   · intro i hi₁ hi₂
     simp [Arithmetic.fixedCoeffs, Array.getD, hi₂]
 
+/-- Canonical coefficients with equal coordinate data are equal. -/
 theorem coeff_eq_of_data_eq {levels : List Level}
     {a b : Arithmetic.Coeff levels} (h : a.data = b.data) : a = b := by
   cases a with
@@ -1306,6 +1347,7 @@ theorem coeff_eq_of_data_eq {levels : List Level}
           cases h
           rfl
 
+/-- Rebuilding a canonical coefficient from its own data is the identity. -/
 @[simp]
 theorem coeff_ofData_data (levels : List Level)
     (a : Arithmetic.Coeff levels) :
