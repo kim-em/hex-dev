@@ -959,6 +959,10 @@ lean_exe hexmvpoly_bench where
   srcDir := "bench"
   root := `HexMvPoly.Bench
 
+lean_exe hexmvgcd_bench where
+  srcDir := "bench"
+  root := `HexMvGcd.Bench
+
 lean_exe hextruncatedseries_bench where
   srcDir := "bench"
   root := `HexTruncatedSeries.Bench
