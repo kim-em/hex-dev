@@ -72,42 +72,49 @@ def runCofactor (input : P 2 Int × P 2 Int × P 2 Int) : UInt64 :=
 parameter has a constant cost model. -/
 setup_benchmark runCoprime n => n + 1 with prep := prepCoprime where {
   paramSchedule := .custom #[0]
+  tags := #[scheduledHardwareTag]
 }
 
 /- This is one fixed prepared computation, so the synthetic one-point
 parameter has a constant cost model. -/
 setup_benchmark runDense n => n + 1 with prep := prepDense where {
   paramSchedule := .custom #[0]
+  tags := #[scheduledHardwareTag]
 }
 
 /- This is one fixed prepared computation, so the synthetic one-point
 parameter has a constant cost model. -/
 setup_benchmark runSparse n => n + 1 with prep := prepSparse where {
   paramSchedule := .custom #[0]
+  tags := #[scheduledHardwareTag]
 }
 
 /- This is one fixed prepared computation, so the synthetic one-point
 parameter has a constant cost model. -/
 setup_benchmark runSwell n => n + 1 with prep := prepSwell where {
   paramSchedule := .custom #[0]
+  tags := #[scheduledHardwareTag]
 }
 
 /- This is one fixed prepared computation, so the synthetic one-point
 parameter has a constant cost model. -/
 setup_benchmark runRational n => n + 1 with prep := prepRational where {
   paramSchedule := .custom #[0]
+  tags := #[scheduledHardwareTag]
 }
 
 /- This is one fixed prepared computation, so the synthetic one-point
 parameter has a constant cost model. -/
 setup_benchmark runSquarefree n => n + 1 with prep := prepSquarefree where {
   paramSchedule := .custom #[0]
+  tags := #[scheduledHardwareTag]
 }
 
 /- This is one fixed prepared computation, so the synthetic one-point
 parameter has a constant cost model. -/
 setup_benchmark runCofactor n => n + 1 with prep := prepCofactor where {
   paramSchedule := .custom #[0]
+  tags := #[scheduledHardwareTag]
 }
 
 end Hex.MvGcdBench.Profile

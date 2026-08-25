@@ -525,5 +525,26 @@ setup_benchmark runCofactor n => n * n * Nat.log2 (n + 1)
 
 end Hex.MvGcdBench
 
+namespace Hex.MvGcdBench
+
+/-- Verify the ordinary API smoke targets while leaving the Phase 4
+scientific matrix, comparator, and sampling registrations to scheduled
+hardware. Explicitly named `verify` calls still use the standard CLI path. -/
+def verifySmokeTargetsOnly : IO UInt32 := do
+  let parametric ← LeanBench.allRuntimeEntries
+  let fixed ← LeanBench.allFixedRuntimeEntries
+  let names :=
+    (parametric.filter (fun e => !e.spec.config.tags.contains scheduledHardwareTag)
+      |>.map (·.spec.name) |>.toList) ++
+    (fixed.filter (fun e => !e.spec.config.tags.contains scheduledHardwareTag)
+      |>.map (·.spec.name) |>.toList)
+  let reports ← LeanBench.verify names
+  IO.println (LeanBench.Format.fmtCombinedVerify reports)
+  return if reports.passed then 0 else 1
+
+end Hex.MvGcdBench
+
 def main (args : List String) : IO UInt32 :=
-  LeanBench.Cli.dispatch args
+  match args with
+  | ["verify"] => Hex.MvGcdBench.verifySmokeTargetsOnly
+  | _ => LeanBench.Cli.dispatch args
