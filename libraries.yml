@@ -74,7 +74,7 @@ libraries:
   HexTruncatedSeries:
     deps: [HexBasic]
     mathlib: false
-    done_through: 2
+    done_through: 3
     status: active
     phase4:
       comparators:
