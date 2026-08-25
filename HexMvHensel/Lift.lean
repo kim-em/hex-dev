@@ -190,11 +190,75 @@ theorem liftStage_spec {inp : Input n cmp cmp'} (h : valid inp = true)
         IsStage inp (y.val + 1) next := by
   sorry
 
+private theorem liftStages_list {inp : Input n cmp cmp'} (h : valid inp = true)
+    (ys : List (Fin n)) (count : Nat)
+    (hys : ys.map Fin.val = List.range' count ys.length)
+    {factors : List (MvPoly (n + 1) Int cmp)}
+    (hstage : IsStage inp count factors) :
+    let i := inp.setup.main
+    let shiftedTarget := shift i inp.setup.point inp.target
+    let shiftedLeading := inp.leading.map (shiftAll inp.setup.point)
+    let d : Fin n → Nat := fun j =>
+      MvPoly.degreeOf (remainingVar i j) shiftedTarget
+    ∃ next,
+      ys.foldlM
+          (fun current y =>
+            liftStage inp.setup.modulus i cmp' d inp.images inp.witness
+              shiftedTarget shiftedLeading y current)
+          factors = some next ∧
+        IsStage inp (count + ys.length) next := by
+  induction ys generalizing count factors with
+  | nil =>
+      refine ⟨factors, ?_, ?_⟩
+      · simp
+      · simpa using hstage
+  | cons y ys ih =>
+      have hys' : y.val = count ∧
+          ys.map Fin.val = List.range' (count + 1) ys.length := by
+        simpa [List.range'_succ] using hys
+      obtain ⟨next, hnext, hnextStage⟩ := liftStage_spec h y
+        (hys'.1 ▸ hstage)
+      rw [hys'.1] at hnextStage
+      obtain ⟨final, hfinal, hfinalStage⟩ :=
+        ih (count + 1) hys'.2 hnextStage
+      refine ⟨final, ?_, ?_⟩
+      · simp only [List.foldlM_cons, hnext]
+        exact hfinal
+      · have hcount : count + 1 + ys.length =
+            count + (y :: ys).length := by
+          rw [List.length_cons]
+          calc
+            count + 1 + ys.length = count + (1 + ys.length) :=
+              Nat.add_assoc count 1 ys.length
+            _ = count + (ys.length + 1) := by rw [Nat.add_comm 1 ys.length]
+        rw [← hcount]
+        exact hfinalStage
+
 /-- Consequently a valid input cannot take the partial `none` branch while
 building shifted factors. -/
 theorem liftShifted_some {inp : Input n cmp cmp'} (h : valid inp = true) :
     ∃ shifted, liftShifted? inp = some shifted ∧ IsStage inp n shifted := by
-  sorry
+  obtain ⟨initial, hinitial, hinitialStage⟩ := seedTuple_stage h
+  have hys : (List.finRange n).map Fin.val =
+      List.range' 0 (List.finRange n).length := by
+    have hmap : ∀ m, (List.finRange m).map Fin.val = List.range m := by
+      intro m
+      induction m with
+      | zero => simp
+      | succ m ih =>
+          rw [List.finRange_succ, List.map_cons, List.map_map,
+            List.range_succ_eq_map]
+          congr 1
+          simpa [List.map_map, Function.comp_def] using
+            congrArg (List.map Nat.succ) ih
+    simpa only [List.length_finRange] using
+      (hmap n).trans (List.range_eq_range' (n := n))
+  obtain ⟨shifted, hshifted, hshiftedStage⟩ :=
+    liftStages_list h (List.finRange n) 0 hys hinitialStage
+  refine ⟨shifted, ?_, ?_⟩
+  · simp only [liftShifted?, hinitial, liftStages]
+    exact hshifted
+  · simpa using hshiftedStage
 
 /-- Return from shifted coordinates to the caller's coordinates. -/
 def reconstruct (i : Fin (n + 1)) (point : Fin n → Int)
