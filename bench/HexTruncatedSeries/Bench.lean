@@ -212,31 +212,82 @@ private def runFixed (run : α → UInt64) (input : α) : Unit → IO UInt64 := 
 private def runFlintFixed (run : α → IO UInt64) (input : α) : Unit → IO UInt64 := fun _ =>
   run input
 
-/-! Representative scheduled-only FLINT pairs.  These sizes are large enough
-to exercise the actual series kernels while keeping `verify` a smoke test; the
-parametric registrations above remain the scientific internal ladders. -/
+/-! Scheduled-only FLINT ladders. Each operation has enough shared rungs to
+show the ratio trend after filtering out the persistent driver's framing
+floor. The parametric registrations below remain the scientific internal
+complexity ladders. -/
 
-def runInverseNewton1024 : Unit → IO UInt64 :=
-  runFixed runInverseNewton (prepInverse 1024)
-def runFlintInverse1024 : Unit → IO UInt64 :=
-  runFlintFixed runFlintInverse (prepInverse 1024)
+def runInverseNewton32 : Unit → IO UInt64 := runFixed runInverseNewton (prepInverse 32)
+def runFlintInverse32 : Unit → IO UInt64 := runFlintFixed runFlintInverse (prepInverse 32)
+def runInverseNewton64 : Unit → IO UInt64 := runFixed runInverseNewton (prepInverse 64)
+def runFlintInverse64 : Unit → IO UInt64 := runFlintFixed runFlintInverse (prepInverse 64)
+def runInverseNewton128 : Unit → IO UInt64 := runFixed runInverseNewton (prepInverse 128)
+def runFlintInverse128 : Unit → IO UInt64 := runFlintFixed runFlintInverse (prepInverse 128)
+def runInverseNewton256 : Unit → IO UInt64 := runFixed runInverseNewton (prepInverse 256)
+def runFlintInverse256 : Unit → IO UInt64 := runFlintFixed runFlintInverse (prepInverse 256)
+def runInverseNewton512 : Unit → IO UInt64 := runFixed runInverseNewton (prepInverse 512)
+def runFlintInverse512 : Unit → IO UInt64 := runFlintFixed runFlintInverse (prepInverse 512)
+def runInverseNewton1024 : Unit → IO UInt64 := runFixed runInverseNewton (prepInverse 1024)
+def runFlintInverse1024 : Unit → IO UInt64 := runFlintFixed runFlintInverse (prepInverse 1024)
 
+def runExp16 : Unit → IO UInt64 := runFixed runExp (prepExpLog 16)
+def runFlintExp16 : Unit → IO UInt64 := runFlintFixed runFlintExp (prepExpLog 16)
+def runExp32 : Unit → IO UInt64 := runFixed runExp (prepExpLog 32)
+def runFlintExp32 : Unit → IO UInt64 := runFlintFixed runFlintExp (prepExpLog 32)
+def runExp64 : Unit → IO UInt64 := runFixed runExp (prepExpLog 64)
+def runFlintExp64 : Unit → IO UInt64 := runFlintFixed runFlintExp (prepExpLog 64)
+def runExp128 : Unit → IO UInt64 := runFixed runExp (prepExpLog 128)
+def runFlintExp128 : Unit → IO UInt64 := runFlintFixed runFlintExp (prepExpLog 128)
 def runExp256 : Unit → IO UInt64 := runFixed runExp (prepExpLog 256)
 def runFlintExp256 : Unit → IO UInt64 := runFlintFixed runFlintExp (prepExpLog 256)
 
+def runLog16 : Unit → IO UInt64 := runFixed runLog (prepExpLog 16)
+def runFlintLog16 : Unit → IO UInt64 := runFlintFixed runFlintLog (prepExpLog 16)
+def runLog32 : Unit → IO UInt64 := runFixed runLog (prepExpLog 32)
+def runFlintLog32 : Unit → IO UInt64 := runFlintFixed runFlintLog (prepExpLog 32)
+def runLog64 : Unit → IO UInt64 := runFixed runLog (prepExpLog 64)
+def runFlintLog64 : Unit → IO UInt64 := runFlintFixed runFlintLog (prepExpLog 64)
+def runLog128 : Unit → IO UInt64 := runFixed runLog (prepExpLog 128)
+def runFlintLog128 : Unit → IO UInt64 := runFlintFixed runFlintLog (prepExpLog 128)
 def runLog256 : Unit → IO UInt64 := runFixed runLog (prepExpLog 256)
 def runFlintLog256 : Unit → IO UInt64 := runFlintFixed runFlintLog (prepExpLog 256)
 
+def runSqrt16 : Unit → IO UInt64 := runFixed runSqrt (prepSqrt 16)
+def runFlintSqrt16 : Unit → IO UInt64 := runFlintFixed runFlintSqrt (prepSqrt 16)
+def runSqrt32 : Unit → IO UInt64 := runFixed runSqrt (prepSqrt 32)
+def runFlintSqrt32 : Unit → IO UInt64 := runFlintFixed runFlintSqrt (prepSqrt 32)
+def runSqrt64 : Unit → IO UInt64 := runFixed runSqrt (prepSqrt 64)
+def runFlintSqrt64 : Unit → IO UInt64 := runFlintFixed runFlintSqrt (prepSqrt 64)
+def runSqrt128 : Unit → IO UInt64 := runFixed runSqrt (prepSqrt 128)
+def runFlintSqrt128 : Unit → IO UInt64 := runFlintFixed runFlintSqrt (prepSqrt 128)
 def runSqrt256 : Unit → IO UInt64 := runFixed runSqrt (prepSqrt 256)
 def runFlintSqrt256 : Unit → IO UInt64 := runFlintFixed runFlintSqrt (prepSqrt 256)
 
-def runCompBrentKung128 : Unit → IO UInt64 :=
-  runFixed runCompBrentKung (prepComposition 128)
+def runCompBrentKung8 : Unit → IO UInt64 := runFixed runCompBrentKung (prepComposition 8)
+def runFlintComposition8 : Unit → IO UInt64 :=
+  runFlintFixed runFlintComposition (prepComposition 8)
+def runCompBrentKung16 : Unit → IO UInt64 := runFixed runCompBrentKung (prepComposition 16)
+def runFlintComposition16 : Unit → IO UInt64 :=
+  runFlintFixed runFlintComposition (prepComposition 16)
+def runCompBrentKung32 : Unit → IO UInt64 := runFixed runCompBrentKung (prepComposition 32)
+def runFlintComposition32 : Unit → IO UInt64 :=
+  runFlintFixed runFlintComposition (prepComposition 32)
+def runCompBrentKung64 : Unit → IO UInt64 := runFixed runCompBrentKung (prepComposition 64)
+def runFlintComposition64 : Unit → IO UInt64 :=
+  runFlintFixed runFlintComposition (prepComposition 64)
+def runCompBrentKung128 : Unit → IO UInt64 := runFixed runCompBrentKung (prepComposition 128)
 def runFlintComposition128 : Unit → IO UInt64 :=
   runFlintFixed runFlintComposition (prepComposition 128)
 
-def runRevertNewton128 : Unit → IO UInt64 :=
-  runFixed runRevertNewton (prepReversion 128)
+def runRevertNewton8 : Unit → IO UInt64 := runFixed runRevertNewton (prepReversion 8)
+def runFlintReversion8 : Unit → IO UInt64 := runFlintFixed runFlintReversion (prepReversion 8)
+def runRevertNewton16 : Unit → IO UInt64 := runFixed runRevertNewton (prepReversion 16)
+def runFlintReversion16 : Unit → IO UInt64 := runFlintFixed runFlintReversion (prepReversion 16)
+def runRevertNewton32 : Unit → IO UInt64 := runFixed runRevertNewton (prepReversion 32)
+def runFlintReversion32 : Unit → IO UInt64 := runFlintFixed runFlintReversion (prepReversion 32)
+def runRevertNewton64 : Unit → IO UInt64 := runFixed runRevertNewton (prepReversion 64)
+def runFlintReversion64 : Unit → IO UInt64 := runFlintFixed runFlintReversion (prepReversion 64)
+def runRevertNewton128 : Unit → IO UInt64 := runFixed runRevertNewton (prepReversion 128)
 def runFlintReversion128 : Unit → IO UInt64 :=
   runFlintFixed runFlintReversion (prepReversion 128)
 
@@ -399,26 +450,145 @@ cross-system agreement.  The comparator is informational and scheduled-only;
 python-flint must be installed in the scheduled/release environment. -/
 
 def leanCompareConfig : LeanBench.FixedBenchmarkConfig :=
-  { repeats := 5, maxSecondsPerCall := 12.0, minTotalSeconds := 0.2 }
+  { repeats := 5, maxSecondsPerCall := 12.0, minTotalSeconds := 0.2,
+    tags := #["flint-series"] }
 
 def flintCompareConfig : LeanBench.FixedBenchmarkConfig :=
   { repeats := 5, maxSecondsPerCall := 12.0, minTotalSeconds := 0.2,
-    warmupFirstIter := true }
+    warmupFirstIter := true, tags := #["flint-series"] }
 
-setup_fixed_benchmark runFlintSeriesOverhead where flintCompareConfig
+setup_fixed_benchmark runFlintSeriesOverhead where
+  { flintCompareConfig with expectedHash := some 0x0 }
 
-setup_fixed_benchmark runInverseNewton1024 where leanCompareConfig
-setup_fixed_benchmark runFlintInverse1024 where flintCompareConfig
-setup_fixed_benchmark runExp256 where leanCompareConfig
-setup_fixed_benchmark runFlintExp256 where flintCompareConfig
-setup_fixed_benchmark runLog256 where leanCompareConfig
-setup_fixed_benchmark runFlintLog256 where flintCompareConfig
-setup_fixed_benchmark runSqrt256 where leanCompareConfig
-setup_fixed_benchmark runFlintSqrt256 where flintCompareConfig
-setup_fixed_benchmark runCompBrentKung128 where leanCompareConfig
-setup_fixed_benchmark runFlintComposition128 where flintCompareConfig
-setup_fixed_benchmark runRevertNewton128 where leanCompareConfig
-setup_fixed_benchmark runFlintReversion128 where flintCompareConfig
+setup_fixed_benchmark runInverseNewton32 where
+  { leanCompareConfig with expectedHash := some 0xf83985833c82a500 }
+setup_fixed_benchmark runFlintInverse32 where
+  { flintCompareConfig with expectedHash := some 0xf83985833c82a500 }
+setup_fixed_benchmark runInverseNewton64 where
+  { leanCompareConfig with expectedHash := some 0xb89356db72c3ea00 }
+setup_fixed_benchmark runFlintInverse64 where
+  { flintCompareConfig with expectedHash := some 0xb89356db72c3ea00 }
+setup_fixed_benchmark runInverseNewton128 where
+  { leanCompareConfig with expectedHash := some 0xc4b79683cd425c00 }
+setup_fixed_benchmark runFlintInverse128 where
+  { flintCompareConfig with expectedHash := some 0xc4b79683cd425c00 }
+setup_fixed_benchmark runInverseNewton256 where
+  { leanCompareConfig with expectedHash := some 0x0ffe9490134bd800 }
+setup_fixed_benchmark runFlintInverse256 where
+  { flintCompareConfig with expectedHash := some 0x0ffe9490134bd800 }
+setup_fixed_benchmark runInverseNewton512 where
+  { leanCompareConfig with expectedHash := some 0x0100406f0dfcd000 }
+setup_fixed_benchmark runFlintInverse512 where
+  { flintCompareConfig with expectedHash := some 0x0100406f0dfcd000 }
+setup_fixed_benchmark runInverseNewton1024 where
+  { leanCompareConfig with expectedHash := some 0x346b8ae7554ba000 }
+setup_fixed_benchmark runFlintInverse1024 where
+  { flintCompareConfig with expectedHash := some 0x346b8ae7554ba000 }
+
+setup_fixed_benchmark runExp16 where
+  { leanCompareConfig with expectedHash := some 0x89a65ce036888559 }
+setup_fixed_benchmark runFlintExp16 where
+  { flintCompareConfig with expectedHash := some 0x89a65ce036888559 }
+setup_fixed_benchmark runExp32 where
+  { leanCompareConfig with expectedHash := some 0x9c303149750845f3 }
+setup_fixed_benchmark runFlintExp32 where
+  { flintCompareConfig with expectedHash := some 0x9c303149750845f3 }
+setup_fixed_benchmark runExp64 where
+  { leanCompareConfig with expectedHash := some 0x4a2979405bbf05e7 }
+setup_fixed_benchmark runFlintExp64 where
+  { flintCompareConfig with expectedHash := some 0x4a2979405bbf05e7 }
+setup_fixed_benchmark runExp128 where
+  { leanCompareConfig with expectedHash := some 0x5ba20a7eb78edf83 }
+setup_fixed_benchmark runFlintExp128 where
+  { flintCompareConfig with expectedHash := some 0x5ba20a7eb78edf83 }
+setup_fixed_benchmark runExp256 where
+  { leanCompareConfig with expectedHash := some 0x069e516a33ede883 }
+setup_fixed_benchmark runFlintExp256 where
+  { flintCompareConfig with expectedHash := some 0x069e516a33ede883 }
+
+setup_fixed_benchmark runLog16 where
+  { leanCompareConfig with expectedHash := some 0xa572eff49e0b3afa }
+setup_fixed_benchmark runFlintLog16 where
+  { flintCompareConfig with expectedHash := some 0xa572eff49e0b3afa }
+setup_fixed_benchmark runLog32 where
+  { leanCompareConfig with expectedHash := some 0xc3bc8c91696b0f51 }
+setup_fixed_benchmark runFlintLog32 where
+  { flintCompareConfig with expectedHash := some 0xc3bc8c91696b0f51 }
+setup_fixed_benchmark runLog64 where
+  { leanCompareConfig with expectedHash := some 0x6a3b024a295ac34c }
+setup_fixed_benchmark runFlintLog64 where
+  { flintCompareConfig with expectedHash := some 0x6a3b024a295ac34c }
+setup_fixed_benchmark runLog128 where
+  { leanCompareConfig with expectedHash := some 0x43551f34659a7816 }
+setup_fixed_benchmark runFlintLog128 where
+  { flintCompareConfig with expectedHash := some 0x43551f34659a7816 }
+setup_fixed_benchmark runLog256 where
+  { leanCompareConfig with expectedHash := some 0x2675aa116b00ad7b }
+setup_fixed_benchmark runFlintLog256 where
+  { flintCompareConfig with expectedHash := some 0x2675aa116b00ad7b }
+
+setup_fixed_benchmark runSqrt16 where
+  { leanCompareConfig with expectedHash := some 0xe8b590030f4a6cd9 }
+setup_fixed_benchmark runFlintSqrt16 where
+  { flintCompareConfig with expectedHash := some 0xe8b590030f4a6cd9 }
+setup_fixed_benchmark runSqrt32 where
+  { leanCompareConfig with expectedHash := some 0xff0a8b609ca1628c }
+setup_fixed_benchmark runFlintSqrt32 where
+  { flintCompareConfig with expectedHash := some 0xff0a8b609ca1628c }
+setup_fixed_benchmark runSqrt64 where
+  { leanCompareConfig with expectedHash := some 0x2b9d3bf6d2984fd6 }
+setup_fixed_benchmark runFlintSqrt64 where
+  { flintCompareConfig with expectedHash := some 0x2b9d3bf6d2984fd6 }
+setup_fixed_benchmark runSqrt128 where
+  { leanCompareConfig with expectedHash := some 0xbb3b74deb5d64da9 }
+setup_fixed_benchmark runFlintSqrt128 where
+  { flintCompareConfig with expectedHash := some 0xbb3b74deb5d64da9 }
+setup_fixed_benchmark runSqrt256 where
+  { leanCompareConfig with expectedHash := some 0xd8b09a4d5518bc09 }
+setup_fixed_benchmark runFlintSqrt256 where
+  { flintCompareConfig with expectedHash := some 0xd8b09a4d5518bc09 }
+
+setup_fixed_benchmark runCompBrentKung8 where
+  { leanCompareConfig with expectedHash := some 0x8b6a4e2379341be3 }
+setup_fixed_benchmark runFlintComposition8 where
+  { flintCompareConfig with expectedHash := some 0x8b6a4e2379341be3 }
+setup_fixed_benchmark runCompBrentKung16 where
+  { leanCompareConfig with expectedHash := some 0x6de141f809e6a9e6 }
+setup_fixed_benchmark runFlintComposition16 where
+  { flintCompareConfig with expectedHash := some 0x6de141f809e6a9e6 }
+setup_fixed_benchmark runCompBrentKung32 where
+  { leanCompareConfig with expectedHash := some 0x2552768b42a68b6a }
+setup_fixed_benchmark runFlintComposition32 where
+  { flintCompareConfig with expectedHash := some 0x2552768b42a68b6a }
+setup_fixed_benchmark runCompBrentKung64 where
+  { leanCompareConfig with expectedHash := some 0xdaf38d401b898152 }
+setup_fixed_benchmark runFlintComposition64 where
+  { flintCompareConfig with expectedHash := some 0xdaf38d401b898152 }
+setup_fixed_benchmark runCompBrentKung128 where
+  { leanCompareConfig with expectedHash := some 0x79bc2ec690dc96e7 }
+setup_fixed_benchmark runFlintComposition128 where
+  { flintCompareConfig with expectedHash := some 0x79bc2ec690dc96e7 }
+
+setup_fixed_benchmark runRevertNewton8 where
+  { leanCompareConfig with expectedHash := some 0xd82bbe20935bf27e }
+setup_fixed_benchmark runFlintReversion8 where
+  { flintCompareConfig with expectedHash := some 0xd82bbe20935bf27e }
+setup_fixed_benchmark runRevertNewton16 where
+  { leanCompareConfig with expectedHash := some 0x7260ea3b2c547680 }
+setup_fixed_benchmark runFlintReversion16 where
+  { flintCompareConfig with expectedHash := some 0x7260ea3b2c547680 }
+setup_fixed_benchmark runRevertNewton32 where
+  { leanCompareConfig with expectedHash := some 0x1085ce620dff4e6d }
+setup_fixed_benchmark runFlintReversion32 where
+  { flintCompareConfig with expectedHash := some 0x1085ce620dff4e6d }
+setup_fixed_benchmark runRevertNewton64 where
+  { leanCompareConfig with expectedHash := some 0xb3d5335a9c8e2c39 }
+setup_fixed_benchmark runFlintReversion64 where
+  { flintCompareConfig with expectedHash := some 0xb3d5335a9c8e2c39 }
+setup_fixed_benchmark runRevertNewton128 where
+  { leanCompareConfig with expectedHash := some 0xf6179a69798169bb }
+setup_fixed_benchmark runFlintReversion128 where
+  { flintCompareConfig with expectedHash := some 0xf6179a69798169bb }
 
 end Hex.TSeriesBench
 
