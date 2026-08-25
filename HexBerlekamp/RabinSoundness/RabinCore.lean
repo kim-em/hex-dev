@@ -89,8 +89,9 @@ theorem primeFieldLinearFactor_dvd_primeFieldLinearProduct (c : ZMod64 p) :
   exact primeFieldLinearFactor_dvd_foldl_of_mem c (ZMod64.values p) 1
     (ZMod64.mem_values c)
 
-/-- The canonical product has one listed linear factor for each residue. -/
-@[simp, grind =] theorem primeFieldLinearProduct_factor_count :
+/-- The canonical product has one listed linear factor for each residue.
+Not `@[simp]`: `simp` already closes it from `ZMod64.values_length`. -/
+theorem primeFieldLinearProduct_factor_count :
     (ZMod64.values p).length = p :=
   ZMod64.values_length (p := p)
 
@@ -246,23 +247,11 @@ private theorem congr_of_congr_mul_right
         _ = (b * a) * r := by rw [FpPoly.mul_comm a b]
         _ = b * (a * r) := FpPoly.mul_assoc b a r
 
-private theorem zmod64_one_ne_zero_of_prime [ZMod64.PrimeModulus p] :
-    (1 : ZMod64 p) ≠ (0 : ZMod64 p) := by
-  intro h
-  have h2 : 2 ≤ p := Hex.Nat.Prime.two_le (ZMod64.PrimeModulus.prime (p := p))
-  have htoNat : (1 : ZMod64 p).toNat = (0 : ZMod64 p).toNat :=
-    congrArg ZMod64.toNat h
-  rw [show ((1 : ZMod64 p).toNat) = 1 % p from ZMod64.toNat_one,
-      show ((0 : ZMod64 p).toNat) = 0 from ZMod64.toNat_zero,
-      Nat.mod_eq_of_lt (by omega : 1 < p)] at htoNat
-  exact absurd htoNat (by omega)
-
 private theorem constant_eq_zero_of_mod_eq_zero
-    [ZMod64.PrimeModulus p] {a : FpPoly p} {c : ZMod64 p}
+    {a : FpPoly p} {c : ZMod64 p}
     (ha_pos : 0 < a.degree?.getD 0)
     (hmod : (DensePoly.C c : FpPoly p) % a = (0 : FpPoly p) % a) :
     c = 0 := by
-  haveI : DensePoly.DivModLaws (ZMod64 p) := ZMod64.instDivModLawsZMod64Fp p
   have hC : (DensePoly.C c : FpPoly p) % a = DensePoly.C c := by
     apply DensePoly.mod_eq_self_of_degree_lt
     rw [DensePoly.degree?_C_getD]
@@ -272,15 +261,14 @@ private theorem constant_eq_zero_of_mod_eq_zero
   have hpoly : (DensePoly.C c : FpPoly p) = 0 := by
     simpa [hC, hzero] using hmod
   have hcoeff := congrArg (fun q : FpPoly p => q.coeff 0) hpoly
-  simp only [DensePoly.coeff_C, DensePoly.coeff_zero, if_pos] at hcoeff
+  simp only [DensePoly.coeff_C, DensePoly.coeff_zero, ite_eq_left] at hcoeff
   exact hcoeff
 
 private theorem constant_eq_one_of_mod_eq_one
-    [ZMod64.PrimeModulus p] {b : FpPoly p} {c : ZMod64 p}
+    {b : FpPoly p} {c : ZMod64 p}
     (hb_pos : 0 < b.degree?.getD 0)
     (hmod : (DensePoly.C c : FpPoly p) % b = (1 : FpPoly p) % b) :
     c = 1 := by
-  haveI : DensePoly.DivModLaws (ZMod64 p) := ZMod64.instDivModLawsZMod64Fp p
   have hC : (DensePoly.C c : FpPoly p) % b = DensePoly.C c := by
     apply DensePoly.mod_eq_self_of_degree_lt
     rw [DensePoly.degree?_C_getD]
@@ -331,7 +319,7 @@ theorem crtZeroOneCandidate_not_congr_constant_mod_product
     apply constant_eq_one_of_mod_eq_one (b := b) hb_pos
     exact hconst_right.symm.trans
       (crtZeroOneCandidate_mod_one_right a b s t hb hbez)
-  exact zmod64_one_ne_zero_of_prime (hc_one.symm.trans hc_zero)
+  exact ZMod64.one_ne_zero_of_prime (ZMod64.PrimeModulus.prime (p := p)) (hc_one.symm.trans hc_zero)
 
 /-- XGCD-backed specialization of `crtZeroOneCandidate_not_congr_constant_mod_product`. -/
 theorem crtZeroOneXGCDCandidate_not_congr_constant_mod_product
@@ -868,18 +856,6 @@ theorem ne_zero_of_pos_degree
   simp at hpos
 
 omit [ZMod64.PrimeModulus p] in
-private theorem zmod64_one_ne_zero_local [ZMod64.PrimeModulus p] :
-    (1 : ZMod64 p) ≠ (0 : ZMod64 p) := by
-  intro h
-  have h2 : 2 ≤ p := Hex.Nat.Prime.two_le (ZMod64.PrimeModulus.prime (p := p))
-  have htoNat : (1 : ZMod64 p).toNat = (0 : ZMod64 p).toNat :=
-    congrArg ZMod64.toNat h
-  rw [show ((1 : ZMod64 p).toNat) = 1 % p from ZMod64.toNat_one,
-      show ((0 : ZMod64 p).toNat) = 0 from ZMod64.toNat_zero,
-      Nat.mod_eq_of_lt (by omega : 1 < p)] at htoNat
-  exact absurd htoNat (by omega)
-
-omit [ZMod64.PrimeModulus p] in
 private theorem inv_leadingCoeff_ne_zero_of_pos_degree [ZMod64.PrimeModulus p]
     (a : FpPoly p) (ha_pos : 0 < a.degree?.getD 0) :
     (DensePoly.leadingCoeff a)⁻¹ ≠ (0 : ZMod64 p) := by
@@ -891,7 +867,7 @@ private theorem inv_leadingCoeff_ne_zero_of_pos_degree [ZMod64.PrimeModulus p]
   rw [hinv] at hone
   have hzero : (0 : ZMod64 p) * DensePoly.leadingCoeff a = 0 := by grind
   rw [hzero] at hone
-  exact zmod64_one_ne_zero_local hone.symm
+  exact ZMod64.one_ne_zero_of_prime (ZMod64.PrimeModulus.prime (p := p)) hone.symm
 
 omit [ZMod64.PrimeModulus p] in
 private theorem factor_ne_zero_of_ne_zero_local
@@ -1243,14 +1219,6 @@ private theorem lt_of_mem_properDivisors {n d : Nat}
   simp only [List.mem_filter, List.mem_map, List.mem_range,
     decide_eq_true_eq] at hmem
   rcases hmem with ⟨⟨k, hk, rfl⟩, _⟩
-  omega
-
-private theorem pos_of_mem_properDivisors {n d : Nat}
-    (hmem : d ∈ properDivisors n) : 0 < d := by
-  unfold properDivisors at hmem
-  simp only [List.mem_filter, List.mem_map, List.mem_range,
-    decide_eq_true_eq] at hmem
-  rcases hmem with ⟨⟨k, _, rfl⟩, _⟩
   omega
 
 private theorem dvd_of_mem_properDivisors {n d : Nat}

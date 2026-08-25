@@ -116,7 +116,7 @@ private theorem xPowSubX_one_coeff_high {n : Nat} (hn : p < n) :
 theorem xPowSubX_one_size : (xPowSubX (p := p) 1).size = p + 1 := by
   have h_coeff_p_ne : (xPowSubX (p := p) 1).coeff p ≠ 0 := by
     rw [xPowSubX_one_coeff_p]
-    exact zmod64_one_ne_zero_of_prime
+    exact ZMod64.one_ne_zero_of_prime (ZMod64.PrimeModulus.prime (p := p))
   have h_lower : p + 1 ≤ (xPowSubX (p := p) 1).size := by
     apply Classical.byContradiction
     intro h
@@ -206,7 +206,7 @@ theorem primeFieldProduct_X_eq_xPowSubX :
       intro h
       have h_coeff_p_ne : (xPowSubX (p := p) 1).coeff p ≠ 0 := by
         rw [xPowSubX_one_coeff_p]
-        exact zmod64_one_ne_zero_of_prime
+        exact ZMod64.one_ne_zero_of_prime (ZMod64.PrimeModulus.prime (p := p))
       apply h_coeff_p_ne
       rw [h]
       exact DensePoly.coeff_zero p)
@@ -305,7 +305,7 @@ divisor, and contradicting the gcd leg) lives here. The heavy
 mathematical content (Rabin's degree theorem in both directions,
 finite-field factor existence, the absolute–modular Frobenius identity,
 and the `xPowSubX` divisibility chain) is delegated to the foundational
-sorries above.
+lemmas above and in `RabinCore`.
 -/
 theorem rabinTest_imp_irreducible
     (f : FpPoly p) (hmonic : DensePoly.Monic f)
