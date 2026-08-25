@@ -74,6 +74,15 @@ def sparseGcd (n degree : Nat) (hn : 0 < n := by omega) :
   let rightCofactor := X ⟨0, hn⟩ * sparse + 1
   (common * sparse, common * rightCofactor)
 
+/-- High-degree, low-support inputs that cannot be discharged by the strict-
+remainder prepass. The two cofactors differ by `x₀`, so their one-step
+remainders still contain a nonunit factor even though their gcd is one. -/
+def sparseGapGcd (n degree : Nat) (hn : 0 < n := by omega) :
+    P n Int × P n Int :=
+  let sparse := (sparseCoprime n degree).1
+  let common := commonFactor n
+  (common * sparse, common * (sparse + X ⟨0, hn⟩))
+
 /-- Dense inputs with a known linear gcd and nonconsecutive coprime cofactors.
 The right cofactor is `x₀ * left + 1`, so a direct Bézout identity exists
 without triggering the unit-difference shortcut. -/

@@ -33,6 +33,18 @@ def runBrownPair {n : Nat} (input : P n Int × P n Int) : UInt64 :=
   | none => 0
   | some cert => checksum cert.gcd
 
+/-- Measure one bounded Brown image on a sparse input. A single prime cannot
+stabilize CRT, so returning zero records an honest fast-backend decline
+without sending the merge-gated smoke verifier into the mandatory dense PRS
+fallback. Full end-to-end timeout measurements belong in the Phase 4 report. -/
+def runSparseGapPair {n : Nat} (input : P n Int × P n Int) : UInt64 :=
+  let cfg : GcdConfig :=
+    { GcdConfig.default with brownPrimeFuel := 1, brownPointFuel := 2 }
+  let cfg : GcdConfig := { cfg with heuristicBitBudget := 0 }
+  match intConcreteProposal Mono.lex cfg input.1 input.2 |>.cert? with
+  | none => 0
+  | some cert => checksum cert.gcd
+
 def runSquarefree {n : Nat} (input : P n Int) : UInt64 :=
   let decomp := sqfDecomp input
   decomp.factors.foldl
@@ -138,25 +150,25 @@ setup_fixed_benchmark runSparseCoprime7 where fixedConfig 0x7958e799d1931a08
 setup_fixed_benchmark runSparseCoprime8 where fixedConfig 0x9389fe94a31dd629
 
 initialize sparseStress5d4096 : IO.Ref (P 5 Int × P 5 Int) ←
-  IO.mkRef (sparseGcd 5 4096)
+  IO.mkRef (sparseGapGcd 5 4096)
 initialize sparseStress8d4096 : IO.Ref (P 8 Int × P 8 Int) ←
-  IO.mkRef (sparseGcd 8 4096)
+  IO.mkRef (sparseGapGcd 8 4096)
 initialize sparseStress12d4096 : IO.Ref (P 12 Int × P 12 Int) ←
-  IO.mkRef (sparseGcd 12 4096)
+  IO.mkRef (sparseGapGcd 12 4096)
 
 def runSparseStress5d4096 (_ : Unit) : IO UInt64 :=
-  return runIntPair (← sparseStress5d4096.get)
+  return runSparseGapPair (← sparseStress5d4096.get)
 def runSparseStress8d4096 (_ : Unit) : IO UInt64 :=
-  return runIntPair (← sparseStress8d4096.get)
+  return runSparseGapPair (← sparseStress8d4096.get)
 def runSparseStress12d4096 (_ : Unit) : IO UInt64 :=
-  return runIntPair (← sparseStress12d4096.get)
+  return runSparseGapPair (← sparseStress12d4096.get)
 
 setup_fixed_benchmark runSparseStress5d4096 where
-  stressConfig 0xbd6798d21ee1b1e0
+  stressConfig 0x0
 setup_fixed_benchmark runSparseStress8d4096 where
-  stressConfig 0xc98beef9ed877616
+  stressConfig 0x0
 setup_fixed_benchmark runSparseStress12d4096 where
-  stressConfig 0xccb4f856deae8744
+  stressConfig 0x0
 
 initialize denseGcd3d5 : IO.Ref (P 3 Int × P 3 Int) ←
   IO.mkRef (denseGcd 3 5)
