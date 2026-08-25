@@ -381,7 +381,7 @@ libraries:
   HexHermite:
     deps: [HexRowReduce, HexArith, HexDeterminant]
     mathlib: false
-    done_through: 0
+    done_through: 1
     status: active
     phase4:
       comparators:
@@ -687,7 +687,7 @@ libraries:
   HexHermiteMathlib:
     deps: [HexHermite, HexRowReduceMathlib, HexDeterminantMathlib]
     mathlib: true
-    done_through: 0
+    done_through: 1
     status: active
   HexPolyFpMathlib:
     deps: [HexPolyFp, HexPolyMathlib, HexModArithMathlib]
