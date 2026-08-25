@@ -22,11 +22,12 @@ namespace Hex.DensePoly
 
 universe u
 
+attribute [local instance 1000] Lean.Grind.Semiring.ofNat
+
 /-- A proof-carrying implementation of full, square, and clipped dense
 polynomial multiplication.  `slice lo len a b` stores coefficients beginning
 at degree `lo`, shifted down to degree zero. -/
-structure MulPlan (R : Type u) [Zero R] [DecidableEq R]
-    [Lean.Grind.CommRing R] where
+structure MulPlan (R : Type u) [DecidableEq R] [Lean.Grind.CommRing R] where
   /-- A complete normalized product. -/
   mul : DensePoly R → DensePoly R → DensePoly R
   /-- A specialized square. -/
@@ -39,7 +40,7 @@ structure MulPlan (R : Type u) [Zero R] [DecidableEq R]
     (slice lo len a b).coeff i =
       if i < len then (a * b).coeff (lo + i) else 0
 
-variable {R : Type u} [Zero R] [DecidableEq R] [Lean.Grind.CommRing R]
+variable {R : Type u} [DecidableEq R] [Lean.Grind.CommRing R]
 
 /-- Kernel-facing clipped schoolbook product.  The definition is phrased by
 the semantic product so its coefficient law is immediate; compiled code uses
@@ -68,7 +69,7 @@ theorem schoolbookSlice_eq_impl (lo len : Nat) (a b : DensePoly R) :
 /-- Compiled clipped schoolbook products use direct coefficient folds. -/
 @[csimp]
 theorem schoolbookSlice_csimp : @schoolbookSlice = @schoolbookSliceImpl := by
-  funext R instZero instDecEq instRing lo len a b
+  funext R instDecEq instRing lo len a b
   exact schoolbookSlice_eq_impl lo len a b
 
 /-- Coefficient law for a clipped schoolbook product. -/

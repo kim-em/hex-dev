@@ -122,7 +122,7 @@ There is deliberately no typeclass for the plan. Plans are passed explicitly:
 ```lean
 namespace Hex.DensePoly
 
-structure MulPlan (R : Type u) [Zero R] [DecidableEq R]
+structure MulPlan (R : Type u) [DecidableEq R]
     [Lean.Grind.CommRing R] where
   /-- A complete normalized product. -/
   mul : DensePoly R → DensePoly R → DensePoly R
@@ -149,6 +149,11 @@ def mulLow (plan : MulPlan R) (len : Nat)
     (a b : DensePoly R) : DensePoly R :=
   plan.slice 0 len a b
 ```
+
+`Zero R` is derived from the commutative-ring numeral structure rather than
+accepted as an independent parameter.  This matters for normalized dense
+polynomials: a separately supplied `Zero` could disagree with the ring's
+additive identity, invalidating both trimming and Karatsuba subtraction.
 
 The proof fields are erased. Passing a plan does not move correctness into a
 runtime checker, and using a structure rather than a typeclass prevents a
@@ -243,12 +248,14 @@ the leading end first and zero-extends to exactly `n` entries:
 def reverseSeries (f : DensePoly R) (n : Nat) : TSeries R n
 
 theorem coeff_reverseSeries (f : DensePoly R) (n i : Nat) (hi : i < n) :
-    (reverseSeries f n).coeff i = f.coeff (f.size - 1 - i)
+    (reverseSeries f n).coeff i =
+      if i < f.size then f.coeff (f.size - 1 - i) else 0
 ```
 
-The theorem is accompanied by a range-aware form, because subtraction on
-`Nat` makes the displayed convenience statement useful only while
-`i < f.size`. `polyOfSeries` converts a fixed prefix back through
+The theorem is accompanied by a range form that removes the conditional under
+`i < f.size`.  The guard is essential: subtraction on `Nat` saturates at zero,
+so the unguarded right-hand side would read the constant coefficient rather
+than zero once `i` passes the leading end. `polyOfSeries` converts a fixed prefix back through
 `DensePoly.ofCoeffs`; its coefficient theorem, not structural array equality,
 is the bridge used by division proofs.
 
@@ -270,7 +277,7 @@ A reciprocal is worth caching whenever a fixed modulus divides many values,
 as in a remainder tree or quotient ring:
 
 ```lean
-structure DivPlan (R : Type u) [Zero R] [DecidableEq R]
+structure DivPlan (R : Type u) [DecidableEq R]
     [Lean.Grind.CommRing R] where
   divisor : DensePoly R
   capacity : Nat
@@ -279,7 +286,7 @@ structure DivPlan (R : Type u) [Zero R] [DecidableEq R]
   reciprocal_spec : ...
 
 def DivPlan.ofMonic (mul : MulPlan R) (q : DensePoly R)
-    (hq : Monic q) (capacity : Nat) : DivPlan R
+    (hq : Monic q) (hqne : q ≠ 0) (capacity : Nat) : DivPlan R
 
 def DivPlan.ofNonzero [Lean.Grind.Field R] (mul : MulPlan R)
     (q : DensePoly R) (hq : q ≠ 0) (capacity : Nat) : DivPlan R
@@ -317,7 +324,7 @@ The half-gcd implementation uses a dedicated four-polynomial transformation
 record rather than depending on hex-matrix:
 
 ```lean
-structure GcdStep (R : Type u) [Zero R] [DecidableEq R] where
+structure GcdStep (R : Type u) [DecidableEq R] where
   a00 : DensePoly R
   a01 : DensePoly R
   a10 : DensePoly R

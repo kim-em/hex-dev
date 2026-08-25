@@ -568,6 +568,8 @@ lean_lib HexConformance where
 
     ++ #[`HexTruncatedSeries.Conformance].map Glob.one
 
+    ++ #[`HexPolyFast.Conformance].map Glob.one
+
     ++ #[`HexMvHensel.Conformance, `HexMvFactor.Conformance].map Glob.one
 
     ++ #[`HexIntervalMathlib.PntLogNaturalConformance,
