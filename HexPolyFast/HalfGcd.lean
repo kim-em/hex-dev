@@ -187,6 +187,38 @@ theorem apply_compose (m n : GcdStep F) (a b : DensePoly F) :
     simp only [coeff_add_semiring]
     grind
 
+/-- Polynomial-pair action is faithful for two-by-two transformations. -/
+theorem ext_apply {m n : GcdStep F}
+    (h : ∀ a b : DensePoly F, m.apply a b = n.apply a b) : m = n := by
+  have hmulzero : ∀ p : DensePoly F, p * 0 = 0 := by
+    intro p
+    rw [mul_comm_poly, zero_mul]
+  have h00 := congrArg Prod.fst (h 1 0)
+  have h10 := congrArg Prod.snd (h 1 0)
+  have h01 := congrArg Prod.fst (h 0 1)
+  have h11 := congrArg Prod.snd (h 0 1)
+  simp only [apply, mul_one_right_poly, hmulzero, add_zero_poly,
+    zero_add] at h00 h10 h01 h11
+  cases m
+  cases n
+  simp only at h00 h10 h01 h11 ⊢
+  subst_vars
+  rfl
+
+/-- Identity is a right identity for transformation composition. -/
+@[simp]
+theorem compose_one (m : GcdStep F) : compose m one = m := by
+  apply ext_apply
+  intro a b
+  rw [apply_compose, apply_one]
+
+/-- Identity is a left identity for transformation composition. -/
+@[simp]
+theorem one_compose (m : GcdStep F) : compose one m = m := by
+  apply ext_apply
+  intro a b
+  rw [apply_compose, apply_one]
+
 end GcdStep
 
 /-- Compose the Euclidean matrices represented by a quotient sequence. -/
@@ -220,6 +252,35 @@ theorem apply_quotientStep (plan : MulPlan F) (qs : List (DensePoly F))
   unfold quotientStep
   rw [apply_quotientFold, GcdStep.apply_one]
 
+/-- Running concatenated quotient blocks is sequential execution. -/
+theorem runQuotients_append (qs rs : List (DensePoly F))
+    (a b : DensePoly F) :
+    runQuotients (qs ++ rs) a b =
+      runQuotients rs (runQuotients qs a b).1 (runQuotients qs a b).2 := by
+  induction qs generalizing a b with
+  | nil => rfl
+  | cons q qs ih =>
+      simp only [List.cons_append, runQuotients]
+      exact ih b (a - q * b)
+
+/-- Quotient matrices turn list concatenation into matrix composition. -/
+theorem quotientStep_append (plan : MulPlan F)
+    (qs rs : List (DensePoly F)) :
+    quotientStep plan (qs ++ rs) =
+      GcdStep.composeWith plan (quotientStep plan rs) (quotientStep plan qs) := by
+  rw [GcdStep.composeWith_eq]
+  apply GcdStep.ext_apply
+  intro a b
+  rw [apply_quotientStep, runQuotients_append, GcdStep.apply_compose,
+    apply_quotientStep, apply_quotientStep]
+
+/-- A singleton quotient list is its elementary Euclidean matrix. -/
+theorem quotientStep_singleton (plan : MulPlan F) (q : DensePoly F) :
+    quotientStep plan [q] = GcdStep.euclid q := by
+  unfold quotientStep
+  simp only [List.foldl_cons, List.foldl_nil]
+  rw [GcdStep.composeWith_eq, GcdStep.compose_one]
+
 /-- A quotient sequence is an exact prefix of the established Euclidean
 sequence, ending at the displayed pair. -/
 inductive ExactQuotients : List (DensePoly F) → DensePoly F → DensePoly F →
@@ -251,6 +312,28 @@ theorem ProperQuotients.exact {qs : List (DensePoly F)}
   induction hproper with
   | nil => exact ExactQuotients.nil _ _
   | cons hq hb hdiv tail ih => exact ExactQuotients.cons hdiv ih
+
+/-- Concatenating adjacent proper blocks preserves their Euclidean
+certificate. -/
+theorem ProperQuotients.append {qs rs : List (DensePoly F)}
+    {a b c d e f : DensePoly F}
+    (hfirst : ProperQuotients qs a b c d)
+    (hsecond : ProperQuotients rs c d e f) :
+    ProperQuotients (qs ++ rs) a b e f := by
+  induction hfirst with
+  | nil => exact hsecond
+  | cons hq hb hdiv tail ih =>
+      exact ProperQuotients.cons hq hb hdiv (ih hsecond)
+
+/-- Concatenating adjacent exact Euclidean blocks preserves exactness. -/
+theorem ExactQuotients.append {qs rs : List (DensePoly F)}
+    {a b c d e f : DensePoly F}
+    (hfirst : ExactQuotients qs a b c d)
+    (hsecond : ExactQuotients rs c d e f) :
+    ExactQuotients (qs ++ rs) a b e f := by
+  induction hfirst with
+  | nil => exact hsecond
+  | cons hdiv tail ih => exact ExactQuotients.cons hdiv (ih hsecond)
 
 private theorem sub_mul_eq_remainder {a b q r : DensePoly F}
     (hdiv : _root_.Hex.DensePoly.divMod a b = (q, r)) :
@@ -451,31 +534,30 @@ private def gcdMatrix (plan : MulPlan F) :
     Nat → DensePoly F → DensePoly F → GcdStep F
   | 0, _, _ => GcdStep.one
   | fuel + 1, a, b =>
-      let cap := max a.size b.size
       if b.isZero then
         GcdStep.one
       else
         let block := halfGcdMatrix plan fuel a b
-        let cd := GcdStep.applyLowWith plan cap block a b
+        let cd := GcdStep.applyWith plan block a b
         if cd.2.isZero then
           block
         else
           let qr := divModWith plan cd.1 cd.2
-          let boundary := GcdStep.composeLowWith plan cap (GcdStep.euclid qr.1) block
+          let boundary := GcdStep.composeWith plan (GcdStep.euclid qr.1) block
           if qr.2.isZero then
             boundary
           else
-            let rest := gcdMatrix plan (fuel / 2) cd.2 qr.2
-            GcdStep.composeLowWith plan cap rest boundary
+            let rest := gcdMatrix plan fuel cd.2 qr.2
+            GcdStep.composeWith plan rest boundary
 termination_by fuel _ _ => fuel
 decreasing_by all_goals omega
 
-/-- Internal divide-and-conquer candidate.  It is deliberately kept behind
-the certified quotient-prediction API until the recursive matrix invariant
-connects every accepted block to `ProperQuotients`. -/
+/-- Internal divide-and-conquer candidate.  The quotient-sequence invariant
+below certifies terminal exactness; connecting its first row to the established
+extended-gcd coefficients remains before it can replace the public engine. -/
 private def xgcdMatrixWith (plan : MulPlan F) (p q : DensePoly F) : XGCDResult F :=
   let matrix := gcdMatrix plan (p.size + q.size + 1) p q
-  let result := GcdStep.applyLowWith plan (max p.size q.size) matrix p q
+  let result := GcdStep.applyWith plan matrix p q
   { gcd := result.1, left := matrix.a00, right := matrix.a01 }
 
 private theorem fieldCandidate_eq (plan : MulPlan F) (a b q : DensePoly F)
@@ -560,6 +642,61 @@ private theorem fieldRemainder_size_lt {a b q r : DensePoly F}
       degree?_eq_some_of_pos_size b hbpos, Option.getD_some] at hdegree
     omega
 
+private theorem fieldRemainder_eq_zero_of_size_one {a b q r : DensePoly F}
+    (hb : b.size = 1)
+    (hdiv : _root_.Hex.DensePoly.divMod a b = (q, r)) : r = 0 := by
+  have hbpos : 0 < b.size := by omega
+  have hlead : b.leadingCoeff ≠ (0 : F) :=
+    leadingCoeff_ne_zero_of_pos_size b hbpos
+  have hcancel : ∀ x : F,
+      x - (x / b.leadingCoeff) * b.leadingCoeff = 0 := by
+    intro x
+    rw [Lean.Grind.Field.div_eq_mul_inv, Lean.Grind.Semiring.mul_assoc,
+      Lean.Grind.Field.inv_mul_cancel hlead, Lean.Grind.Semiring.mul_one]
+    exact Lean.Grind.AddCommGroup.sub_self x
+  have hzero := divMod_remainder_eq_zero_of_degree_zero_of_cancel
+    a b hb hcancel
+  rw [hdiv] at hzero
+  exact hzero
+
+/-- Proper Euclidean blocks preserve strict ordering of consecutive
+remainders. -/
+theorem ProperQuotients.terminal_lt {qs : List (DensePoly F)}
+    {a b c d : DensePoly F} (hproper : ProperQuotients qs a b c d)
+    (hinput : b.size < a.size) : d.size < c.size := by
+  induction hproper with
+  | nil => exact hinput
+  | cons hq hb hdiv tail ih =>
+      exact ih (fieldRemainder_size_lt hb hdiv)
+
+/-- The second remainder of a proper block never exceeds its second input. -/
+theorem ProperQuotients.second_le {qs : List (DensePoly F)}
+    {a b c d : DensePoly F} (hproper : ProperQuotients qs a b c d) :
+    d.size ≤ b.size := by
+  induction hproper with
+  | nil => exact Nat.le_refl _
+  | cons hq hb hdiv tail ih =>
+      exact Nat.le_trans ih (Nat.le_of_lt (fieldRemainder_size_lt hb hdiv))
+
+private theorem fieldQuotient_size_pos {a b q r : DensePoly F}
+    (hb : 1 < b.size) (hinput : b.size < a.size)
+    (hdiv : _root_.Hex.DensePoly.divMod a b = (q, r)) :
+    0 < q.size := by
+  by_cases hq : 0 < q.size
+  · exact hq
+  · have hqzero : q = 0 := (size_eq_zero_iff q).mp (Nat.eq_zero_of_not_pos hq)
+    have hsub := sub_mul_eq_remainder hdiv
+    have hareq : a = r := by
+      apply ext_coeff
+      intro i
+      have hcoeff := congrArg (fun p : DensePoly F => p.coeff i) hsub
+      rw [hqzero, zero_mul, coeff_sub_ring] at hcoeff
+      simp only [coeff_zero] at hcoeff
+      grind
+    have hrem := fieldRemainder_size_lt hb hdiv
+    rw [← hareq] at hrem
+    omega
+
 /-- A proper quotient block computed on high halves lifts to the full inputs
 once its terminal pair has the shifted high-half sizes.  The proof runs the
 Euclidean recurrence backward: terminal sizes determine the preceding two
@@ -621,6 +758,268 @@ theorem ProperQuotients.liftHigh (plan : MulPlan F) (k : Nat)
         omega
       exact ⟨ProperQuotients.cons hq hBdegree hfullDiv tailFull,
         hAlift, hBsize⟩
+
+/-- A matrix together with the exact proper quotient block it represents. -/
+private def MatrixProper (plan : MulPlan F) (matrix : GcdStep F)
+    (a b c d : DensePoly F) : Prop :=
+  ∃ qs, ProperQuotients qs a b c d ∧
+    matrix = quotientStep plan qs ∧ matrix.apply a b = (c, d)
+
+/-- A matrix together with the exact, not necessarily positive-degree,
+Euclidean quotient block it represents. -/
+private def MatrixExact (plan : MulPlan F) (matrix : GcdStep F)
+    (a b c d : DensePoly F) : Prop :=
+  ∃ qs, ExactQuotients qs a b c d ∧
+    matrix = quotientStep plan qs ∧ matrix.apply a b = (c, d)
+
+private theorem MatrixProper.one (plan : MulPlan F) (a b : DensePoly F) :
+    MatrixProper plan GcdStep.one a b a b := by
+  exact ⟨[], ProperQuotients.nil _ _, rfl, GcdStep.apply_one a b⟩
+
+private theorem MatrixExact.one (plan : MulPlan F) (a b : DensePoly F) :
+    MatrixExact plan GcdStep.one a b a b := by
+  exact ⟨[], ExactQuotients.nil _ _, rfl, GcdStep.apply_one a b⟩
+
+private theorem MatrixProper.exact (plan : MulPlan F)
+    {matrix : GcdStep F} {a b c d : DensePoly F}
+    (hmatrix : MatrixProper plan matrix a b c d) :
+    MatrixExact plan matrix a b c d := by
+  rcases hmatrix with ⟨qs, hproper, hmatrix, happly⟩
+  exact ⟨qs, hproper.exact, hmatrix, happly⟩
+
+private theorem MatrixProper.terminal_lt (plan : MulPlan F)
+    {matrix : GcdStep F} {a b c d : DensePoly F}
+    (hmatrix : MatrixProper plan matrix a b c d)
+    (hinput : b.size < a.size) : d.size < c.size := by
+  rcases hmatrix with ⟨qs, hproper, hmatrix, happly⟩
+  exact hproper.terminal_lt hinput
+
+private theorem MatrixProper.second_le (plan : MulPlan F)
+    {matrix : GcdStep F} {a b c d : DensePoly F}
+    (hmatrix : MatrixProper plan matrix a b c d) : d.size ≤ b.size := by
+  rcases hmatrix with ⟨qs, hproper, hmatrix, happly⟩
+  exact hproper.second_le
+
+private theorem MatrixProper.compose (plan : MulPlan F)
+    {first second : GcdStep F} {a b c d e f : DensePoly F}
+    (hfirst : MatrixProper plan first a b c d)
+    (hsecond : MatrixProper plan second c d e f) :
+    MatrixProper plan (GcdStep.composeWith plan second first) a b e f := by
+  rcases hfirst with ⟨qs, hqs, hfirstMatrix, hfirstApply⟩
+  rcases hsecond with ⟨rs, hrs, hsecondMatrix, hsecondApply⟩
+  refine ⟨qs ++ rs, hqs.append hrs, ?_, ?_⟩
+  · rw [hfirstMatrix, hsecondMatrix]
+    exact (quotientStep_append plan qs rs).symm
+  · rw [GcdStep.composeWith_eq, GcdStep.apply_compose, hfirstApply,
+      hsecondApply]
+
+private theorem MatrixExact.compose (plan : MulPlan F)
+    {first second : GcdStep F} {a b c d e f : DensePoly F}
+    (hfirst : MatrixExact plan first a b c d)
+    (hsecond : MatrixExact plan second c d e f) :
+    MatrixExact plan (GcdStep.composeWith plan second first) a b e f := by
+  rcases hfirst with ⟨qs, hqs, hfirstMatrix, hfirstApply⟩
+  rcases hsecond with ⟨rs, hrs, hsecondMatrix, hsecondApply⟩
+  refine ⟨qs ++ rs, hqs.append hrs, ?_, ?_⟩
+  · rw [hfirstMatrix, hsecondMatrix]
+    exact (quotientStep_append plan qs rs).symm
+  · rw [GcdStep.composeWith_eq, GcdStep.apply_compose, hfirstApply,
+      hsecondApply]
+
+private theorem MatrixProper.euclid (plan : MulPlan F)
+    {matrix : GcdStep F} {a b c d q r : DensePoly F}
+    (hmatrix : MatrixProper plan matrix a b c d)
+    (hq : 0 < q.size) (hd : 1 < d.size)
+    (hdiv : _root_.Hex.DensePoly.divMod c d = (q, r)) :
+    MatrixProper plan
+      (GcdStep.composeWith plan (GcdStep.euclid q) matrix) a b d r := by
+  apply hmatrix.compose
+  refine ⟨[q], ProperQuotients.cons hq hd hdiv
+    (ProperQuotients.nil d r), (quotientStep_singleton plan q).symm, ?_⟩
+  rw [GcdStep.apply_euclid, sub_mul_eq_remainder hdiv]
+
+private theorem MatrixExact.euclid (plan : MulPlan F)
+    {matrix : GcdStep F} {a b c d q r : DensePoly F}
+    (hmatrix : MatrixExact plan matrix a b c d)
+    (hdiv : _root_.Hex.DensePoly.divMod c d = (q, r)) :
+    MatrixExact plan
+      (GcdStep.composeWith plan (GcdStep.euclid q) matrix) a b d r := by
+  apply hmatrix.compose
+  refine ⟨[q], ExactQuotients.cons hdiv (ExactQuotients.nil d r),
+    (quotientStep_singleton plan q).symm, ?_⟩
+  rw [GcdStep.apply_euclid, sub_mul_eq_remainder hdiv]
+
+private theorem MatrixProper.liftHigh (plan : MulPlan F) (k : Nat)
+    {matrix : GcdStep F} {ah bh ch dh A B : DensePoly F}
+    (hmatrix : MatrixProper plan matrix ah bh ch dh)
+    (hcsize : (matrix.apply A B).1.size =
+      (shift k (matrix.apply ah bh).1).size)
+    (hdsize : (matrix.apply A B).2.size =
+      (shift k (matrix.apply ah bh).2).size) :
+    MatrixProper plan matrix A B
+      (matrix.apply A B).1 (matrix.apply A B).2 := by
+  rcases hmatrix with ⟨qs, hproper, hmatrix, happly⟩
+  have hrun : runQuotients qs A B = matrix.apply A B := by
+    rw [← apply_quotientStep, ← hmatrix]
+  have hcsize' : (matrix.apply A B).1.size = (shift k ch).size := by
+    rw [hcsize, happly]
+  have hdsize' : (matrix.apply A B).2.size = (shift k dh).size := by
+    rw [hdsize, happly]
+  have hlift := hproper.liftHigh plan k hrun hcsize' hdsize'
+  exact ⟨qs, hlift.1, hmatrix, rfl⟩
+
+private theorem halfGcdMatrix_proper (plan : MulPlan F) (fuel : Nat)
+    (a b : DensePoly F) :
+    ∃ c d, MatrixProper plan (halfGcdMatrix plan fuel a b) a b c d := by
+  induction fuel using Nat.strongRecOn generalizing a b with
+  | ind fuel ih =>
+      cases fuel with
+      | zero =>
+          exact ⟨a, b, by
+            simpa only [halfGcdMatrix] using MatrixProper.one plan a b⟩
+      | succ fuel =>
+          unfold halfGcdMatrix
+          simp only [GcdStep.applyWith_eq]
+          split
+          · exact ⟨a, b, MatrixProper.one plan a b⟩
+          · rename_i hactive
+            let cut := a.size / 2
+            let first := halfGcdMatrix plan (fuel / 2) (high cut a) (high cut b)
+            let highCd := first.apply (high cut a) (high cut b)
+            let cd := first.apply a b
+            let qr := divModWith plan cd.1 cd.2
+            let boundary := GcdStep.composeWith plan (GcdStep.euclid qr.1) first
+            let cut₂ := 2 * cut - (cd.2.size - 1)
+            let second := halfGcdMatrix plan (fuel / 2)
+              (high cut₂ cd.2) (high cut₂ qr.2)
+            let highEf := second.apply (high cut₂ cd.2) (high cut₂ qr.2)
+            let ef := second.apply cd.2 qr.2
+            change ∃ c d, MatrixProper plan
+              (if cd.1.size = (shift cut highCd.1).size ∧
+                  cd.2.size = (shift cut highCd.2).size then
+                if cd.2.size ≤ cut then first
+                else if qr.2.size ≤ cut then boundary
+                else if ef.1.size = (shift cut₂ highEf.1).size ∧
+                    ef.2.size = (shift cut₂ highEf.2).size then
+                  GcdStep.composeWith plan second boundary
+                else boundary
+              else GcdStep.one) a b c d
+            split
+            · rename_i hvalid
+              rcases ih (fuel / 2) (by omega) (high cut a) (high cut b) with
+                ⟨highC, highD, hfirstHigh⟩
+              have hfirstFull : MatrixProper plan first a b cd.1 cd.2 := by
+                exact hfirstHigh.liftHigh plan cut hvalid.1 hvalid.2
+              split
+              · exact ⟨cd.1, cd.2, hfirstFull⟩
+              · rename_i hnotStop
+                have hbase := hactive
+                simp only [Bool.or_eq_true, decide_eq_true_eq, not_or] at hbase
+                have hacut : 0 < cut := by
+                  dsimp [cut]
+                  omega
+                have hab : b.size < a.size := by omega
+                have horder : cd.2.size < cd.1.size :=
+                  MatrixProper.terminal_lt plan hfirstFull hab
+                have hddegree : 1 < cd.2.size := by omega
+                have hdiv : _root_.Hex.DensePoly.divMod cd.1 cd.2 = qr := by
+                  dsimp [qr]
+                  exact (divModWith_eq plan cd.1 cd.2).symm
+                have hqpos : 0 < qr.1.size :=
+                  fieldQuotient_size_pos hddegree horder hdiv
+                have hboundary : MatrixProper plan boundary a b cd.2 qr.2 := by
+                  exact MatrixProper.euclid plan hfirstFull hqpos hddegree hdiv
+                split
+                · exact ⟨cd.2, qr.2, hboundary⟩
+                · rcases ih (fuel / 2) (by omega)
+                    (high cut₂ cd.2) (high cut₂ qr.2) with
+                    ⟨highE, highF, hsecondHigh⟩
+                  split
+                  · rename_i hsecondValid
+                    have hsecondFull :
+                        MatrixProper plan second cd.2 qr.2 ef.1 ef.2 := by
+                      exact hsecondHigh.liftHigh plan cut₂
+                        hsecondValid.1 hsecondValid.2
+                    exact ⟨ef.1, ef.2,
+                      MatrixProper.compose plan hboundary hsecondFull⟩
+                  · exact ⟨cd.2, qr.2, hboundary⟩
+            · exact ⟨a, b, MatrixProper.one plan a b⟩
+
+private theorem gcdMatrix_exact (plan : MulPlan F) (fuel : Nat)
+    (a b : DensePoly F) (hfuel : b.size < fuel) :
+    ∃ c, MatrixExact plan (gcdMatrix plan fuel a b) a b c 0 := by
+  induction fuel generalizing a b with
+  | zero => omega
+  | succ fuel ih =>
+      unfold gcdMatrix
+      simp only [GcdStep.applyWith_eq]
+      split
+      · rename_i hbzero
+        have hbsize : b.size = 0 := (isZero_eq_true_iff b).mp hbzero
+        have hbeq : b = 0 := (size_eq_zero_iff b).mp hbsize
+        subst b
+        exact ⟨a, MatrixExact.one plan a 0⟩
+      · rename_i hbnonzero
+        let block := halfGcdMatrix plan fuel a b
+        let cd := block.apply a b
+        let qr := divModWith plan cd.1 cd.2
+        let boundary := GcdStep.composeWith plan (GcdStep.euclid qr.1) block
+        let rest := gcdMatrix plan fuel cd.2 qr.2
+        change ∃ c, MatrixExact plan
+          (if cd.2.isZero then block
+          else if qr.2.isZero then boundary
+          else GcdStep.composeWith plan rest boundary) a b c 0
+        rcases halfGcdMatrix_proper plan fuel a b with
+          ⟨c, d, qs, hproper, hblockMatrix, hblockApply⟩
+        have hblockMatrix' : block = quotientStep plan qs := hblockMatrix
+        have hblockApply' : block.apply a b = (c, d) := hblockApply
+        have hblock : MatrixExact plan block a b cd.1 cd.2 := by
+          refine ⟨qs, ?_, hblockMatrix', rfl⟩
+          change ExactQuotients qs a b
+            (block.apply a b).1 (block.apply a b).2
+          rw [hblockApply']
+          exact hproper.exact
+        have hcdSecond : cd.2.size ≤ b.size := by
+          have hdle := hproper.second_le
+          change (block.apply a b).2.size ≤ b.size
+          rw [hblockApply']
+          exact hdle
+        split
+        · rename_i hcdzero
+          have hcdsize : cd.2.size = 0 :=
+            (isZero_eq_true_iff cd.2).mp hcdzero
+          have hcdeq : cd.2 = 0 := (size_eq_zero_iff cd.2).mp hcdsize
+          exact ⟨cd.1, by simpa only [hcdeq] using hblock⟩
+        · rename_i hcdnonzero
+          have hcdpos : 0 < cd.2.size :=
+            Nat.pos_of_ne_zero fun hzero =>
+              hcdnonzero ((isZero_eq_true_iff cd.2).mpr hzero)
+          have hdiv : _root_.Hex.DensePoly.divMod cd.1 cd.2 = qr := by
+            dsimp [qr]
+            exact (divModWith_eq plan cd.1 cd.2).symm
+          have hboundary : MatrixExact plan boundary a b cd.2 qr.2 :=
+            MatrixExact.euclid plan hblock hdiv
+          split
+          · rename_i hqrzero
+            have hqrsize : qr.2.size = 0 :=
+              (isZero_eq_true_iff qr.2).mp hqrzero
+            have hqreq : qr.2 = 0 := (size_eq_zero_iff qr.2).mp hqrsize
+            exact ⟨cd.2, by simpa only [hqreq] using hboundary⟩
+          · rename_i hqrnonzero
+            have hcddegree : 1 < cd.2.size := by
+              have hcdneone : cd.2.size ≠ 1 := by
+                intro hcdone
+                have hqreq : qr.2 = 0 :=
+                  fieldRemainder_eq_zero_of_size_one hcdone hdiv
+                apply hqrnonzero
+                apply (isZero_eq_true_iff qr.2).mpr
+                rw [hqreq, size_zero]
+              omega
+            have hqrlt : qr.2.size < cd.2.size :=
+              fieldRemainder_size_lt hcddegree hdiv
+            have hrecFuel : qr.2.size < fuel := by omega
+            rcases ih cd.2 qr.2 hrecFuel with ⟨g, hrest⟩
+            exact ⟨g, MatrixExact.compose plan hboundary hrest⟩
 
 /-- Extended Euclidean recursion with a queue of high-half quotient
 predictions.  Each recursive call consumes one ordinary Euclidean step, so
