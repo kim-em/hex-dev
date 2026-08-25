@@ -54,6 +54,9 @@ noncomputable def rawOuter (levels : List Level)
     (fun a value => Polynomial.C (rawPolynomial levels a) +
       Polynomial.X * value) 0
 
+/-- The Horner fold defining {name}`rawPolynomial` has the expected
+coefficients: coefficient `n` is the complex denotation of the `n`-th raw
+coefficient, with `0` beyond the end. -/
 theorem raw_coeff_horner (levels : List Level) :
     ∀ (coefficients : List (Arithmetic.Coeff levels)) (n : Nat),
       (coefficients.foldr
@@ -199,6 +202,8 @@ noncomputable def lowerHom (level : Level) (lower : List Level)
           LevelSemantics.coeffDenote_lift level lower
             (Nat.zero_lt_of_lt hvalid.1.1)] }
 
+/-- The lower-coefficient embedding {name}`lowerHom` acts by lifting a raw
+lower-tower coefficient into the constant block of the extended tower. -/
 @[simp]
 theorem lowerHom_apply (level : Level) (lower : List Level)
     (hvalid : LevelsValid (level :: lower))
@@ -317,6 +322,9 @@ noncomputable def rawPolynomialHom (levels : List Level)
     (LevelSemantics.coeffHom levels hvalid hinjective hinv)).comp
       (HexPolyMathlib.equiv (R := Arithmetic.Coeff levels)).toRingHom
 
+/-- The bundled ring homomorphism {name}`rawPolynomialHom` agrees pointwise
+with the direct Horner interpretation {name}`rawPolynomial`, so the latter
+inherits all homomorphism laws. -/
 theorem rawPolynomialHom_apply (levels : List Level)
     (hvalid : LevelsValid levels)
     (hinjective : LevelSemantics.DenoteInjective levels)
@@ -382,6 +390,7 @@ theorem rawPolynomial_injective (levels : List Level)
       (LevelSemantics.coeffHom levels hvalid hinjective hinv) at h
   exact h
 
+/-- Semantic interpretation sends the executable one polynomial to `1`. -/
 @[simp]
 theorem rawPolynomial_one (levels : List Level)
     (hvalid : LevelsValid levels)
@@ -396,6 +405,8 @@ theorem rawPolynomial_one (levels : List Level)
   rw [← rawPolynomialHom_apply levels hvalid hinjective hinv]
   exact (rawPolynomialHom levels hvalid hinjective hinv).map_one
 
+/-- Semantic interpretation turns executable raw-polynomial multiplication
+into multiplication in `Polynomial ℂ`. -/
 @[simp]
 theorem rawPolynomial_mul (levels : List Level)
     (hvalid : LevelsValid levels)
@@ -489,6 +500,9 @@ noncomputable def conjugatePolynomial (level : Level) (lower : List Level)
     (fun a value => Polynomial.C (LevelSemantics.evalAt level lower x a) +
       Polynomial.X * value) 0
 
+/-- The Horner fold defining {name}`conjugatePolynomial` has the expected
+coefficients: coefficient `n` evaluates the `n`-th raw coefficient at the
+conjugate `x`, with `0` beyond the end. -/
 theorem conjugate_coeff_horner (level : Level) (lower : List Level)
     (x : ℂ) : ∀ (coefficients : List (Array Rat)) (n : Nat),
       (coefficients.foldr
@@ -514,6 +528,8 @@ theorem conjugate_coeff_horner (level : Level) (lower : List Level)
   | _ :: coefficients, n + 1 => by
       simpa using conjugate_coeff_horner level lower x coefficients n
 
+/-- Coefficients of the conjugate interpretation are the conjugate
+evaluations of the raw coefficient blocks. -/
 theorem coeff_conjugatePolynomial (level : Level) (lower : List Level)
     (x : ℂ) (f : Array (Array Rat)) (n : Nat) :
     (conjugatePolynomial level lower x f).coeff n =
@@ -736,6 +752,9 @@ theorem isSquarefree_iff (levels : List Level)
       (LevelSemantics.coeffHom levels hvalid hinjective hinv)
   exact hboolean.trans hsemantic.symm
 
+/-- The Horner fold defining {name}`rawOuter` has the expected coefficients:
+coefficient `n` is the raw interpretation of the `n`-th inner polynomial,
+with `0` beyond the end. -/
 theorem outer_coeff_horner (levels : List Level) :
     ∀ (coefficients : List (DensePoly (Arithmetic.Coeff levels)))
       (n : Nat),
@@ -748,12 +767,16 @@ theorem outer_coeff_horner (levels : List Level) :
   | _ :: coefficients, n + 1 => by
       simpa using outer_coeff_horner levels coefficients n
 
+/-- Defaulted indexing through `Array.toList` agrees with defaulted array
+indexing for inner dense polynomials. -/
 theorem dense_array_toList_getD (levels : List Level)
     (coefficients : Array (DensePoly (Arithmetic.Coeff levels))) (n : Nat) :
     coefficients.toList.getD n 0 = coefficients.getD n 0 := by
   rw [List.getD_eq_getElem?_getD, Array.getD_eq_getD_getElem?,
     Array.getElem?_toList]
 
+/-- Coefficients of the outer interpretation are the raw interpretations of
+the executable inner coefficients. -/
 theorem coeff_rawOuter (levels : List Level)
     (f : DensePoly (DensePoly (Arithmetic.Coeff levels))) (n : Nat) :
     (rawOuter levels f).coeff n = rawPolynomial levels (f.coeff n) := by
@@ -761,6 +784,8 @@ theorem coeff_rawOuter (levels : List Level)
     dense_array_toList_getD]
   rfl
 
+/-- The outer interpretation is coefficientwise mapping through
+{name}`rawPolynomialHom`, exposing `rawOuter` to `Polynomial.map` lemmas. -/
 theorem rawOuter_eq_map (levels : List Level)
     (hvalid : LevelsValid levels)
     (hinjective : LevelSemantics.DenoteInjective levels)
@@ -854,6 +879,9 @@ noncomputable def outerEval (level : Level) (lower : List Level)
   exact (HexPolyMathlib.toPolynomial g).eval₂ coefficientHom
     (Polynomial.C (Factor.topGenerator level lower))
 
+/-- The evaluation homomorphism {name}`outerEvalHom` acts by mapping inner
+coefficients through the lower embedding and evaluating the outer variable at
+the constant top generator. -/
 theorem outerEvalHom_apply (level : Level) (lower : List Level)
     (hvalid : LevelsValid (level :: lower))
     (hinjectiveTop : LevelSemantics.DenoteInjective (level :: lower))
@@ -1238,6 +1266,8 @@ theorem outerEval_defining (level : Level) (lower : List Level)
   rw [Polynomial.eval_map]
   simpa [hrelation]
 
+/-- Rebuilding a raw dense polynomial from its flattened coordinate arrays is
+the identity: `Factor.polyCoords` is a section of `Factor.rawPoly`. -/
 theorem rawPoly_polyCoords (levels : List Level)
     (f : DensePoly (Arithmetic.Coeff levels)) :
     Factor.rawPoly levels (Factor.polyCoords f) = f := by
