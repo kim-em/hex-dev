@@ -56,6 +56,44 @@ theorem degreeOf_monomial [Zero R] [BEq R] [LawfulBEq R]
   rw [termsList_monomial]
   by_cases hc : c = 0 <;> simp [hc, Mono.degreeOf]
 
+/-- The exponent of a supported monomial is bounded by the polynomial's
+degree in that variable. -/
+theorem degreeOf_monomial_le [Zero R] (i : Fin n) (p : MvPoly n R cmp)
+    {m : Mono n} (hm : m ∈ p.monomials) :
+    Mono.degreeOf i m ≤ degreeOf i p := by
+  unfold monomials at hm
+  rcases List.mem_map.mp hm with ⟨term, hterm, hfirst⟩
+  rcases term with ⟨k, c⟩
+  simp only at hfirst
+  subst k
+  unfold degreeOf foldTerms
+  rw [Std.ExtTreeMap.foldl_eq_foldl_toList]
+  change Mono.degreeOf i m ≤ p.termsList.foldl
+    (fun d term => max d (Mono.degreeOf i term.1)) 0
+  have le_start (terms : List (Mono n × R)) (init : Nat) :
+      init ≤ terms.foldl
+        (fun d term => max d (Mono.degreeOf i term.1)) init := by
+    induction terms generalizing init with
+    | nil => exact Nat.le_refl _
+    | cons term terms ih =>
+        exact Nat.le_trans (Nat.le_max_left ..) (ih _)
+  have member_bound :
+      ∀ (terms : List (Mono n × R)) (init : Nat) {term},
+        term ∈ terms →
+          Mono.degreeOf i term.1 ≤ terms.foldl
+            (fun d term => max d (Mono.degreeOf i term.1)) init := by
+    intro terms init term hterm
+    induction terms generalizing init with
+    | nil => simp at hterm
+    | cons head terms ih =>
+        simp only [List.foldl_cons]
+        cases List.mem_cons.mp hterm with
+        | inl h =>
+            subst head
+            exact Nat.le_trans (Nat.le_max_right ..) (le_start terms _)
+        | inr h => exact ih _ h
+  exact member_bound p.termsList 0 hterm
+
 /-- Coordinatewise maximum of all supported exponent vectors. -/
 def degrees [Zero R] (p : MvPoly n R cmp) : Mono n :=
   p.foldTerms (fun d m _ => Mono.lcm d m) Mono.zero
@@ -111,6 +149,58 @@ theorem vars_eq [Zero R] (p : MvPoly n R cmp) :
   change (p.degrees[i] != 0) = true ↔ degreeOf i p ≠ 0
   rw [getElem_degrees]
   simp
+
+/-- A polynomial with no occurring variables is its constant coefficient. -/
+theorem eq_C_of_vars_eq_nil [Zero R] [BEq R] [LawfulBEq R]
+    [DecidableEq R] (p : MvPoly n R cmp) (hvars : p.vars = []) :
+    p = C (coeff Mono.zero p) := by
+  apply ext
+  intro m
+  rw [coeff_C]
+  by_cases hmzero : m = Mono.zero
+  · rw [ite_eq_left hmzero]
+    subst m
+    rfl
+  · rw [ite_eq_right hmzero]
+    apply coeff_eq_zero_of_not_mem
+    intro hmem
+    have hsupport : m.support ≠ [] := by
+      intro hnil
+      apply hmzero
+      apply Vector.ext
+      intro j hj
+      let i : Fin n := ⟨j, hj⟩
+      change m[i] = (Mono.zero : Mono n)[i]
+      rw [Mono.getElem_zero]
+      by_cases hi : m[i] = 0
+      · exact hi
+      · have himem : i ∈ m.support := by
+          unfold Mono.support
+          rw [List.mem_filter]
+          refine ⟨List.mem_finRange _, ?_⟩
+          exact bne_iff_ne.mpr hi
+        rw [hnil] at himem
+        contradiction
+    cases hs : m.support with
+    | nil => exact False.elim (hsupport hs)
+    | cons i is =>
+        have himem : i ∈ m.support := by
+          rw [hs]
+          exact List.mem_cons_self
+        have hi : m[i] ≠ 0 := by
+          unfold Mono.support at himem
+          rw [List.mem_filter] at himem
+          simpa using himem.2
+        have hdegree : degreeOf i p = 0 := by
+          by_cases hzero : degreeOf i p = 0
+          · exact hzero
+          · have hivar : i ∈ p.vars := (mem_vars_iff i p).mpr hzero
+            rw [hvars] at hivar
+            contradiction
+        have hle := degreeOf_monomial_le i p hmem
+        rw [hdegree] at hle
+        change m[i] ≤ 0 at hle
+        omega
 
 /-- Greatest supported term in the polynomial's monomial order. -/
 @[expose] def leadingTerm [Zero R] [IsMonomialOrder cmp]

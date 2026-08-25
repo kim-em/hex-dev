@@ -1222,6 +1222,7 @@ structure SqfDecomp (n : Nat) (R : Type u) (cmp : Mono n → Mono n → Ordering
   content : R
   factors : List (SqfFactor n R cmp)
 
+def sqfPrimitiveSplit (p : MvPoly n R cmp) : R × MvPoly n R cmp
 def sqfDecomp [NatNoZero R] (p : MvPoly n R cmp) : SqfDecomp n R cmp
 def radical [NatNoZero R] (p : MvPoly n R cmp) : MvPoly n R cmp
 def isSquarefree (p : MvPoly n R cmp) : Bool
@@ -1357,6 +1358,13 @@ reserved by this SPEC.
 ### Contract theorems
 
 ```lean
+theorem sqfPrimitiveSplit_product :
+    C (sqfPrimitiveSplit p).1 * (sqfPrimitiveSplit p).2 = p
+theorem sqfPrimitiveSplit_normalized :
+    polyNormalize (sqfPrimitiveSplit p).2 = (sqfPrimitiveSplit p).2
+theorem sqfPrimitiveSplit_primitive
+    (hsecond : (sqfPrimitiveSplit p).2 ≠ 0) :
+    content (sqfPrimitiveSplit p).2 = 1
 theorem sqfDecomp_prod :
     (sqfDecomp p).factors.foldl (fun acc f => acc * f.factor ^ f.multiplicity)
       (C (sqfDecomp p).content) = p
