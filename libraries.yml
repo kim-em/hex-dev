@@ -735,7 +735,7 @@ libraries:
   HexTruncatedSeriesMathlib:
     deps: [HexTruncatedSeries]
     mathlib: true
-    done_through: 3
+    done_through: 4
     status: active
 
   # ---------- Planned (status: planned; SPEC ready, implementation deferred) ----------
