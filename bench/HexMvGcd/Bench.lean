@@ -167,38 +167,40 @@ def runRadical (input : PublicInput) : UInt64 :=
 def runIsSquarefree (input : PublicInput) : UInt64 :=
   hash (isSquarefree input.product)
 
-initialize public2 : PublicInput ← pure (prepPublic 2)
+initialize public2 : IO.Ref PublicInput ← IO.mkRef (prepPublic 2)
 
-def runContentInFixed : Unit → IO UInt64 := fun _ =>
-  pure (runContentIn public2)
+def runContentInFixed (_ : Unit) : IO UInt64 := do
+  return runContentIn (← public2.get)
 
-def runPrimPartInFixed : Unit → IO UInt64 := fun _ =>
-  pure (runPrimPartIn public2)
+def runPrimPartInFixed (_ : Unit) : IO UInt64 := do
+  return runPrimPartIn (← public2.get)
 
-def runGcdFixed : Unit → IO UInt64 := fun _ => pure (runGcd public2)
+def runGcdFixed (_ : Unit) : IO UInt64 := do
+  return runGcd (← public2.get)
 
-def runCofactorsFixed : Unit → IO UInt64 := fun _ =>
-  pure (runCofactors public2)
+def runCofactorsFixed (_ : Unit) : IO UInt64 := do
+  return runCofactors (← public2.get)
 
-def runIsCoprimeFixed : Unit → IO UInt64 := fun _ =>
-  pure (runIsCoprime public2)
+def runIsCoprimeFixed (_ : Unit) : IO UInt64 := do
+  return runIsCoprime (← public2.get)
 
-def runGcdListFixed : Unit → IO UInt64 := fun _ =>
-  pure (runGcdList public2)
+def runGcdListFixed (_ : Unit) : IO UInt64 := do
+  return runGcdList (← public2.get)
 
-def runLcmFixed : Unit → IO UInt64 := fun _ => pure (runLcm public2)
+def runLcmFixed (_ : Unit) : IO UInt64 := do
+  return runLcm (← public2.get)
 
-def runSqfDecompFixed : Unit → IO UInt64 := fun _ =>
-  pure (runSqfDecomp public2)
+def runSqfDecompFixed (_ : Unit) : IO UInt64 := do
+  return runSqfDecomp (← public2.get)
 
-def runRadicalFixed : Unit → IO UInt64 := fun _ =>
-  pure (runRadical public2)
+def runRadicalFixed (_ : Unit) : IO UInt64 := do
+  return runRadical (← public2.get)
 
-def runIsSquarefreeFixed : Unit → IO UInt64 := fun _ =>
-  pure (runIsSquarefree public2)
+def runIsSquarefreeFixed (_ : Unit) : IO UInt64 := do
+  return runIsSquarefree (← public2.get)
 
-def runDivExactFixed : Unit → IO UInt64 := fun _ =>
-  pure (runDivExact public2)
+def runDivExactFixed (_ : Unit) : IO UInt64 := do
+  return runDivExact (← public2.get)
 
 structure CoprimeInput where
   left : P2 Int
@@ -215,10 +217,10 @@ def runCoprime (input : CoprimeInput) : UInt64 :=
   mixHash (checksum (gcd input.left input.right))
     (hash (isCoprime input.left input.right))
 
-initialize coprime1 : CoprimeInput ← pure (prepCoprime 1)
+initialize coprime1 : IO.Ref CoprimeInput ← IO.mkRef (prepCoprime 1)
 
-def runCoprimeFamilyFixed : Unit → IO UInt64 := fun _ =>
-  pure (runCoprime coprime1)
+def runCoprimeFamilyFixed (_ : Unit) : IO UInt64 := do
+  return runCoprime (← coprime1.get)
 
 structure DenseInput where
   left : P3 Int
@@ -237,10 +239,10 @@ def prepDense (degree : Nat) : DenseInput :=
 def runDense (input : DenseInput) : UInt64 :=
   checksum (gcd input.left input.right)
 
-initialize dense0 : DenseInput ← pure (prepDense 0)
+initialize dense0 : IO.Ref DenseInput ← IO.mkRef (prepDense 0)
 
-def runDenseFixed : Unit → IO UInt64 := fun _ =>
-  pure (runDense dense0)
+def runDenseFixed (_ : Unit) : IO UInt64 := do
+  return runDense (← dense0.get)
 
 structure SparseInput where
   left : P8 Int
@@ -255,10 +257,10 @@ def prepSparse (degree : Nat) : SparseInput :=
 def runSparse (input : SparseInput) : UInt64 :=
   checksum (gcd input.left input.right)
 
-initialize sparse1 : SparseInput ← pure (prepSparse 1)
+initialize sparse1 : IO.Ref SparseInput ← IO.mkRef (prepSparse 1)
 
-def runSparseFixed : Unit → IO UInt64 := fun _ =>
-  pure (runSparse sparse1)
+def runSparseFixed (_ : Unit) : IO UInt64 := do
+  return runSparse (← sparse1.get)
 
 structure SwellInput where
   left : P2 Int
@@ -275,13 +277,18 @@ def prepSwell (degree : Nat) : SwellInput :=
 def runSwell (input : SwellInput) : UInt64 :=
   checksum (prsCert input.left input.right).gcd
 
-initialize swell3 : SwellInput ← pure (prepSwell 3)
-initialize swell4 : SwellInput ← pure (prepSwell 4)
-initialize swell5 : SwellInput ← pure (prepSwell 5)
+initialize swell3 : IO.Ref SwellInput ← IO.mkRef (prepSwell 3)
+initialize swell4 : IO.Ref SwellInput ← IO.mkRef (prepSwell 4)
+initialize swell5 : IO.Ref SwellInput ← IO.mkRef (prepSwell 5)
 
-def runSwell3 : Unit → IO UInt64 := fun _ => pure (runSwell swell3)
-def runSwell4 : Unit → IO UInt64 := fun _ => pure (runSwell swell4)
-def runSwell5 : Unit → IO UInt64 := fun _ => pure (runSwell swell5)
+def runSwell3 (_ : Unit) : IO UInt64 := do
+  return runSwell (← swell3.get)
+
+def runSwell4 (_ : Unit) : IO UInt64 := do
+  return runSwell (← swell4.get)
+
+def runSwell5 (_ : Unit) : IO UInt64 := do
+  return runSwell (← swell5.get)
 
 structure RationalInput where
   left : P2 Rat
@@ -299,10 +306,10 @@ def prepRational (degree : Nat) : RationalInput :=
 def runRational (input : RationalInput) : UInt64 :=
   checksum (gcd input.left input.right)
 
-initialize rational0 : RationalInput ← pure (prepRational 0)
+initialize rational0 : IO.Ref RationalInput ← IO.mkRef (prepRational 0)
 
-def runRationalFixed : Unit → IO UInt64 := fun _ =>
-  pure (runRational rational0)
+def runRationalFixed (_ : Unit) : IO UInt64 := do
+  return runRational (← rational0.get)
 
 structure SquarefreeInput where
   polynomial : P2 Int
@@ -323,10 +330,11 @@ def runSquarefree (input : SquarefreeInput) : UInt64 :=
         (hash factor.multiplicity))
     (hash decomp.content)
 
-initialize squarefree1 : SquarefreeInput ← pure (prepSquarefree 1)
+initialize squarefree1 : IO.Ref SquarefreeInput ←
+  IO.mkRef (prepSquarefree 1)
 
-def runSquarefreeFixed : Unit → IO UInt64 := fun _ =>
-  pure (runSquarefree squarefree1)
+def runSquarefreeFixed (_ : Unit) : IO UInt64 := do
+  return runSquarefree (← squarefree1.get)
 
 structure CofactorInput where
   dividend : P2 Int
