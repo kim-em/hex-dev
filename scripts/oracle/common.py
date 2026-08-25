@@ -28,6 +28,8 @@ JSONL fixture record shape (one record per line):
 * ``mvgcd``      — two multivariate term lists plus coefficient-domain data
 * ``mvsqf``      — one characteristic-zero multivariate term list
 * ``mvsquarefree`` — one modular multivariate term list and its modulus
+* ``mvhensel``   — one checked multivariate Hensel-lift input
+* ``mvdioph``    — one recursive multivariate diophantine input
 * ``lattice``    — ``{"kind": "lattice",    "lib": str, "case": str,
                       "basis": [[int...]...]}``
 * ``prime``      — ``{"kind": "prime",      "lib": str, "case": str,
@@ -102,6 +104,8 @@ VALID_FIXTURE_KINDS = frozenset(
         "mvgcd",
         "mvsqf",
         "mvsquarefree",
+        "mvhensel",
+        "mvdioph",
         "sparsepoly",
         "lattice",
         "prime",
@@ -290,6 +294,30 @@ def _validate_mv_terms(terms: Any, arity: int, context: str) -> None:
             )
 
 
+def _validate_dense_polys(polys: Any, context: str) -> None:
+    if not isinstance(polys, list):
+        raise FixtureError(f"{context} must be a list: {polys!r}")
+    for coefficients in polys:
+        if not isinstance(coefficients, list) or not all(
+            _is_int(coefficient) for coefficient in coefficients
+        ):
+            raise FixtureError(
+                f"{context} entries must be ascending List[int]: {coefficients!r}"
+            )
+        if coefficients and coefficients[-1] == 0:
+            raise FixtureError(
+                f"{context} entries must be canonical (empty or nonzero last): "
+                f"{coefficients!r}"
+            )
+
+
+def _validate_mv_poly_list(polys: Any, arity: int, context: str) -> None:
+    if not isinstance(polys, list):
+        raise FixtureError(f"{context} must be a list: {polys!r}")
+    for index, terms in enumerate(polys):
+        _validate_mv_terms(terms, arity, f"{context}[{index}]")
+
+
 def _validate_fixture(record: dict[str, Any]) -> None:
     kind = record.get("kind")
     if kind not in VALID_FIXTURE_KINDS and kind != "result":
@@ -410,6 +438,64 @@ def _validate_fixture(record: dict[str, Any]) -> None:
                 f"mvsquarefree.mod must be an int >= 2: {record!r}"
             )
         _validate_mv_terms(record.get("terms"), arity, "mvsquarefree.terms")
+    elif kind == "mvhensel":
+        _exact_keys(
+            record,
+            {
+                "kind", "lib", "case", "arity", "order", "main", "point",
+                "prime", "exponent", "target", "images", "leading",
+            },
+            kind,
+        )
+        arity = _validate_mv_header(record, kind)
+        main = record.get("main")
+        if arity < 1 or not _is_int(main) or not 0 <= main < arity:
+            raise FixtureError(f"mvhensel.main must index a positive arity: {record!r}")
+        point = record.get("point")
+        if not isinstance(point, list) or len(point) != arity - 1 or not all(
+            _is_int(coordinate) for coordinate in point
+        ):
+            raise FixtureError(f"mvhensel.point must contain arity-1 ints: {record!r}")
+        if not _is_int(record.get("prime")) or record["prime"] < 2:
+            raise FixtureError(f"mvhensel.prime must be an int >= 2: {record!r}")
+        if not _is_int(record.get("exponent")) or record["exponent"] < 1:
+            raise FixtureError(f"mvhensel.exponent must be a positive int: {record!r}")
+        _validate_mv_terms(record.get("target"), arity, "mvhensel.target")
+        _validate_dense_polys(record.get("images"), "mvhensel.images")
+        _validate_mv_poly_list(record.get("leading"), arity - 1, "mvhensel.leading")
+        if not record["images"] or len(record["images"]) != len(record["leading"]):
+            raise FixtureError(
+                f"mvhensel images/leading must have the same positive length: {record!r}"
+            )
+    elif kind == "mvdioph":
+        _exact_keys(
+            record,
+            {
+                "kind", "lib", "case", "arity", "order", "main", "modulus",
+                "degrees", "bases", "images", "witness", "rhs",
+            },
+            kind,
+        )
+        arity = _validate_mv_header(record, kind)
+        main = record.get("main")
+        if arity < 1 or not _is_int(main) or not 0 <= main < arity:
+            raise FixtureError(f"mvdioph.main must index a positive arity: {record!r}")
+        if not _is_int(record.get("modulus")) or record["modulus"] < 2:
+            raise FixtureError(f"mvdioph.modulus must be an int >= 2: {record!r}")
+        degrees = record.get("degrees")
+        if not isinstance(degrees, list) or len(degrees) != arity - 1 or not all(
+            _is_int(degree) and degree >= 0 for degree in degrees
+        ):
+            raise FixtureError(f"mvdioph.degrees must contain arity-1 naturals: {record!r}")
+        _validate_mv_poly_list(record.get("bases"), arity, "mvdioph.bases")
+        _validate_dense_polys(record.get("images"), "mvdioph.images")
+        _validate_dense_polys(record.get("witness"), "mvdioph.witness")
+        _validate_mv_terms(record.get("rhs"), arity, "mvdioph.rhs")
+        lengths = {len(record["bases"]), len(record["images"]), len(record["witness"])}
+        if len(lengths) != 1 or not record["images"]:
+            raise FixtureError(
+                f"mvdioph bases/images/witness must have the same positive length: {record!r}"
+            )
     elif kind == "lattice":
         basis = record.get("basis")
         if not isinstance(basis, list) or not all(

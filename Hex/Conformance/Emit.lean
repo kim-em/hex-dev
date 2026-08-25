@@ -95,6 +95,18 @@ private def jsonMvPolyTerms (terms : List (List Nat × Int)) : String := Id.run 
       jsonIntList (exponents.map Int.ofNat) ++ "," ++ jsonInt coeff ++ "]"
   out.push ']'
 
+private def jsonMvPolyList
+    (polynomials : List (List (List Nat × Int))) : String := Id.run do
+  let mut out := "["
+  let mut first := true
+  for terms in polynomials do
+    if first then
+      first := false
+    else
+      out := out.push ','
+    out := out ++ jsonMvPolyTerms terms
+  out.push ']'
+
 private def jsonOptionalInt : Option Int → String
   | none   => "null"
   | some n => jsonInt n
@@ -239,6 +251,50 @@ def emitMvSquarefreeFixture (lib case : String) (arity : Nat) (order : String)
     ("domain", jsonString "zmod"),
     ("mod", toString modulus),
     ("terms", jsonMvPolyTerms terms)
+  ]
+
+/-- Emit a checked multivariate-Hensel fixture. Univariate images use
+ascending coefficient lists; target and intended leading coefficients use the
+shared multivariate term encoding. -/
+def emitMvHenselFixture (lib case : String) (arity : Nat) (order : String)
+    (main : Nat) (point : List Int) (prime exponent : Nat)
+    (target : List (List Nat × Int)) (images : List (List Int))
+    (leading : List (List (List Nat × Int))) : IO Unit := do
+  emitLine <| jsonObject [
+    ("kind", jsonString "mvhensel"),
+    ("lib", jsonString lib),
+    ("case", jsonString case),
+    ("arity", toString arity),
+    ("order", jsonString order),
+    ("main", toString main),
+    ("point", jsonIntList point),
+    ("prime", toString prime),
+    ("exponent", toString exponent),
+    ("target", jsonMvPolyTerms target),
+    ("images", jsonIntMatrix images),
+    ("leading", jsonMvPolyList leading)
+  ]
+
+/-- Emit one recursive multivariate-diophantine fixture. `bases` are the
+complementary products used in the checked equation and `witness` is the
+univariate partial-fraction tuple supplied to the executable route. -/
+def emitMvDiophFixture (lib case : String) (arity : Nat) (order : String)
+    (main modulus : Nat) (degrees : List Nat)
+    (bases : List (List (List Nat × Int))) (images witness : List (List Int))
+    (rhs : List (List Nat × Int)) : IO Unit := do
+  emitLine <| jsonObject [
+    ("kind", jsonString "mvdioph"),
+    ("lib", jsonString lib),
+    ("case", jsonString case),
+    ("arity", toString arity),
+    ("order", jsonString order),
+    ("main", toString main),
+    ("modulus", toString modulus),
+    ("degrees", jsonIntList (degrees.map Int.ofNat)),
+    ("bases", jsonMvPolyList bases),
+    ("images", jsonIntMatrix images),
+    ("witness", jsonIntMatrix witness),
+    ("rhs", jsonMvPolyTerms rhs)
   ]
 
 /-- Emit a `sparsepoly` fixture record: a sparse univariate polynomial as
@@ -553,6 +609,27 @@ def intMatrixValue (rows : List (List Int)) : String := jsonIntMatrix rows
 /-- Multivariate-polynomial result value: exponent/coefficient term pairs. -/
 def mvPolyValue (terms : List (List Nat × Int)) : String :=
   jsonMvPolyTerms terms
+
+/-- A list of multivariate polynomials in the shared term encoding. -/
+def mvPolyListValue (polynomials : List (List (List Nat × Int))) : String :=
+  jsonMvPolyList polynomials
+
+/-- Successful multivariate-Hensel result payload. -/
+def mvHenselSuccessValue
+    (factors : List (List (List Nat × Int))) : String :=
+  jsonObject [("factors", jsonMvPolyList factors)]
+
+/-- Failed multivariate-Hensel result payload. Indexed constructors include
+their index or modulus in the caller-provided stable string. -/
+def mvHenselFailureValue (failure : String) : String :=
+  jsonObject [("failure", jsonString failure)]
+
+/-- Recursive-diophantine result payload; `none` is encoded as JSON null. -/
+def mvDiophValue
+    (answer : Option (List (List (List Nat × Int)))) : String :=
+  match answer with
+  | none => "null"
+  | some polynomials => jsonMvPolyList polynomials
 
 /-- `divmod`-shaped result value: a `[quotient, remainder]` coefficient pair. -/
 def divModValue (quot rem : List Int) : String :=
