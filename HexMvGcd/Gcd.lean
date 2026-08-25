@@ -148,18 +148,6 @@ theorem contentInCert_checks
   intro f h
   exact gcdCert_checks f h
 
-/-- Named-variable content times primitive part reconstructs the input. -/
-theorem contentIn_mul_primPartIn
-    {cmp : Mono (n + 1) → Mono (n + 1) → Ordering}
-    [IsMonomialOrder cmp]
-    [Lean.Grind.CommRing R] [DecidableEq R] [BEq R] [LawfulBEq R]
-    [Dvd R] [BezoutOps R] [LawfulGcdOps R] [LawfulBezoutOps R]
-    [GcdProducer R]
-    (i : Fin (n + 1)) (cmp' : Mono n → Mono n → Ordering)
-    [IsMonomialOrder cmp'] (p : MvPoly (n + 1) R cmp) :
-    constIn i cmp' (contentIn i cmp' p) * primPartIn i cmp' p = p := by
-  sorry
-
 theorem contentIn_dvd_coeff
     {cmp : Mono (n + 1) → Mono (n + 1) → Ordering}
     [IsMonomialOrder cmp]
@@ -231,6 +219,31 @@ theorem dvd_contentIn
     exact hcoeff.trans (MvPoly.zero_mul 0).symm
   rcases dvd_contentIn i cmp' 0 0 hd with ⟨q, hq⟩
   exact hq.trans (MvPoly.mul_zero q)
+
+/-- Named-variable content times primitive part reconstructs the input. -/
+theorem contentIn_mul_primPartIn
+    {cmp : Mono (n + 1) → Mono (n + 1) → Ordering}
+    [IsMonomialOrder cmp]
+    [Lean.Grind.CommRing R] [DecidableEq R] [BEq R] [LawfulBEq R]
+    [Dvd R] [BezoutOps R] [LawfulGcdOps R] [LawfulBezoutOps R]
+    [GcdProducer R]
+    (i : Fin (n + 1)) (cmp' : Mono n → Mono n → Ordering)
+    [IsMonomialOrder cmp'] (p : MvPoly (n + 1) R cmp) :
+    constIn i cmp' (contentIn i cmp' p) * primPartIn i cmp' p = p := by
+  have hd : constIn i cmp' (contentIn i cmp' p) ∣ p :=
+    constIn_dvd i (contentIn i cmp' p) p (contentIn_dvd_coeff i cmp' p)
+  by_cases hp : p = 0
+  · subst p
+    rw [contentIn_zero, constIn_zero, MvPoly.zero_mul]
+  · have hc :
+        constIn (cmp := cmp) i cmp' (contentIn i cmp' p) ≠
+          (0 : MvPoly (n + 1) R cmp) := by
+      intro hc
+      rcases hd with ⟨q, hq⟩
+      rw [hc, MvPoly.mul_zero] at hq
+      exact hp hq
+    rw [MvPoly.mul_comm]
+    exact quotient_mul_of_dvd hc hd
 
 @[simp] theorem primPartIn_zero
     {cmp : Mono (n + 1) → Mono (n + 1) → Ordering}
