@@ -23,7 +23,7 @@ def config (family implementation : String)
   { repeats := 3, maxSecondsPerCall := 10.0, minTotalSeconds := 0.2,
     warmupFirstIter := true,
     expectedHash := some expectedHash,
-    tags := #["mv-gcd-comparator", family, implementation] }
+    tags := #[scheduledHardwareTag, "mv-gcd-comparator", family, implementation] }
 
 /-! `coprime-pairs` -/
 
