@@ -258,7 +258,7 @@ of the full-precision cost:
 zero. Its logical body is the bounded schoolbook convolution. -/
 def mulUpTo (m : Nat) (a b : TSeries R n) : TSeries R n
 
-/-- The measured schoolbook/Karatsuba implementation of `mulUpTo`. -/
+/-- The allocation-conscious schoolbook implementation of `mulUpTo`. -/
 def mulUpToImpl (m : Nat) (a b : TSeries R n) : TSeries R n
 
 @[csimp] theorem mulUpTo_eq_impl : @mulUpTo = @mulUpToImpl
@@ -267,25 +267,23 @@ theorem coeff_mulUpTo (m) (a b) (i) (hi : i < n) :
     (mulUpTo m a b).coeff i = if i < m then (a * b).coeff i else 0
 ```
 
-`mulUpTo n = (· * ·)` up to the propositional equality above, and
-`mulUpTo` is the single place fast multiplication goes. That is
-the reason the iterations are written against it rather than against
-`*`.
+`mulUpTo n = (· * ·)` up to the propositional equality above. The Newton
+iterations use `mulUpTo` so each step computes only its useful prefix rather
+than repeatedly paying for the final precision.
 
-**Fast series multiplication lands in this library, not in
-hex-poly-fast.** `mulUpTo` is a concrete definition here, and a library
-above cannot change what `invOfUnit` calls; saying otherwise would be
-wrong about how Lean works. `mulUpToImpl` therefore uses schoolbook below a
-measured cutoff and a clipped Karatsuba recursion above it, with the same
-signature and `coeff_mulUpTo` theorem. The recursion needs only coefficient
-addition, subtraction, and multiplication and so adds no dependency.
+**The generic multiplication contract is schoolbook.** Both `mulUpTo` and its
+compiled implementation intentionally require only `Zero`, `Add`, and `Mul`.
+Three-product Karatsuba needs subtraction to recover its middle term, so it
+cannot implement this signature over every admitted coefficient type. A
+future subtraction-capable fast path must therefore be a separately typed API
+with an explicit dispatch story; it must not be described as the compiled
+replacement for this semiring-generic definition.
 
 [hex-poly-fast](../../SPEC/Libraries/hex-poly-fast.md) owns polynomial reversal and a separate
 plan-driven Newton inverse. That inverse is proved equal to `invOfUnit` after
 conversion, but it does not modify this function or route a coefficient-
 specific NTT/Kronecker plan into this library. This deliberate duplication
-keeps the DAG acyclic and lets this library's own `exp`, `log`, square root,
-and reversion benefit from subquadratic bounded products.
+keeps the DAG acyclic.
 
 ## Degenerate precisions
 
@@ -632,8 +630,8 @@ across the ladder rather than checking a single precision.
 One cost the arithmetic-operation count does not capture: each step
 writes a `TSeries R n` of full length, so there is `Ω(n)` allocation or
 copying per step and `Ω(n log n)` across the iteration. That is
-dominated by `M(n)` at schoolbook multiplication and would not be under
-a quasi-linear one, so the reusable-buffer implementation that design
+dominated by `M(n)` at schoolbook multiplication. The reusable-buffer
+implementation that design
 principle 3 asks for (`Hex.Vector.modify` on a uniquely owned buffer) is
 a requirement here rather than an optimisation.
 
@@ -674,13 +672,12 @@ commutative, `a` is a unit, and inverses of a unit are unique. It is
 what lets every later theorem say "the inverse" rather than "an
 inverse".
 
-**Against a naive baseline, Newton inversion wins only after the measured
-Karatsuba crossover.** The linear recurrence
+**Against a naive baseline, Newton inversion has a bounded constant-factor
+cost.** The linear recurrence
 `b_i = -u · Σ_{j<i} a_{i-j} b_j` and schoolbook Newton both use `O(n²)`
-coefficient operations. Above the `mulUpToImpl` crossover, bounded Newton is
-subquadratic. The benchmark therefore requires a bounded constant ratio in
-the schoolbook range and a growing win in the Karatsuba range; a claim that
-Newton wins below the multiplication crossover would still be false.
+coefficient operations. The benchmark therefore requires Newton to remain
+within `4x` of the recurrence across the complete ladder; it does not claim a
+speedup from a multiplication algorithm this library does not provide.
 
 ## Square root
 
@@ -882,8 +879,7 @@ Two algorithms, with the second the intended one:
   manipulating formal power series" (JACM 25, 1978).
 
 Brent-Kung is a real improvement even at schoolbook multiplication,
-`O(n^{2.5})` against Horner's `O(n³)`, so unlike inversion the fast
-route pays before hex-poly-fast exists. The crossover between them is a
+`O(n^{2.5})` against Horner's `O(n³)`. The crossover between them is a
 measured number and this SPEC does not guess it. The near-linear
 composition algorithms published since 2024 are out of scope and are
 recorded in the open questions.
@@ -1054,7 +1050,7 @@ and `1` over `ℤ` for exactly this reason.
 ## Complexity
 
 `M(m)` is the cost of `mulUpToImpl m` in coefficient operations: `O(m²)`
-below the measured schoolbook crossover and `O(m^(log 2 3))` above it.
+for the current schoolbook implementation.
 
 | operation | algorithm | cost |
 |---|---|---|
@@ -1079,9 +1075,10 @@ rows all tie the naive linear recurrence for the same operation, which
 is `O(n²)` in each case, and lose on the constant: bounded Newton
 inversion does `(4/3)n²` coefficient multiplications against the
 recurrence's `n²/2`. Only composition and reversion win outright today.
-The table should therefore be read as a description of what happens when
-`M` improves rather than as a claim of a present-day win across the
-board.
+These are coefficient-operation bounds. The exact-`Rat` benchmark ladders
+also declare their coefficient-bit-growth normalization explicitly so that a
+wallclock verdict does not pretend arbitrary-precision operations are
+constant-time.
 
 ## Kernel exposure
 
@@ -1198,10 +1195,7 @@ what a downstream proof pays.
 Families:
 
 - **Multiplication**, precisions 8 to 4096 over `Int` and `Rat`. The
-  baseline every other family is read against. It compares forced schoolbook,
-  forced Karatsuba, and production dispatch at cells immediately around the
-  crossover; no selected production cell may lose outside the benchmark
-  protocol's uncertainty band.
+  production schoolbook baseline every other family is read against.
 - **Inverse**, the same ladder, Newton against the linear recurrence.
 - **`exp` and `log`**, precisions 8 to 1024 over `Rat`.
 - **Square root**, the same ladder over `Rat`.
@@ -1215,9 +1209,9 @@ Families:
 `fmpq_poly_sqrt_series`, `fmpq_poly_compose_series`,
 `fmpq_poly_revert_series`) are `informational`, not `gating`. The
 rationale is structural and is the same one hex-poly records for
-`fmpz_poly`: FLINT's series routines are built on a tuned
-Karatsuba/Toom-Cook/FFT multiplication, while this library stops at generic
-Karatsuba and has no coefficient-specific transform. The ratio therefore
+rational polynomial operations: FLINT's series routines are built on tuned,
+coefficient-specific Karatsuba/Toom-Cook/FFT multiplication, while this
+library uses a generic schoolbook kernel. The ratio therefore
 continues to measure a known kernel gap rather than only the Newton iteration,
 so it does not gate.
 
@@ -1406,8 +1400,8 @@ operation.
 ## Milestones
 
 1. **The type and the ring.** `TSeries`, `coeff`, `ofFn`, `ext`,
-   `DecidableEq`, the ring operations, `mulUpTo`, its measured
-   schoolbook/Karatsuba `mulUpToImpl`, and the
+   `DecidableEq`, the ring operations, `mulUpTo`, its allocation-conscious
+   schoolbook `mulUpToImpl`, and the
    `Lean.Grind.CommRing` instance. The `decide +kernel` test lands here,
    because that is when the `Vector` instance choice is still cheap to
    change.
@@ -1469,7 +1463,7 @@ HexTruncatedSeriesMathlib.lean
       comparators:
         - tool: FLINT fmpq_poly truncated series routines via python-flint
           class: informational
-          rationale: "FLINT's series routines run on tuned Karatsuba/Toom-Cook/FFT multiplication while this library stops at generic Karatsuba, so the measured ratio includes a known coefficient-specific kernel gap."
+          rationale: "FLINT's series routines run on tuned coefficient-specific Karatsuba/Toom-Cook/FFT multiplication while this library uses a generic schoolbook kernel, so the measured ratio includes a known kernel gap."
       input_families:
         - name: multiplication
           description: truncated products at precisions 8 to 4096 over Int and Rat
@@ -1517,6 +1511,11 @@ release time.
 - **The Horner/Brent-Kung crossover**, and whether Brent-Kung's block
   size should be `⌈√n⌉` or tuned. Both are measured numbers and this
   SPEC does not guess them.
+- **Whether a subtraction-capable fast multiplication API belongs here.**
+  Three-product Karatsuba cannot implement the current semiring-generic
+  `mulUpTo` signature. Any future fast path needs an explicitly stronger
+  coefficient interface and a dispatch design that the Newton callers can
+  actually select.
 - **Whether near-linear composition belongs here later.** Kinoshita and
   Li, "Power series composition in near-linear time" (2024), supersedes
   Brent-Kung asymptotically. It is out of scope
