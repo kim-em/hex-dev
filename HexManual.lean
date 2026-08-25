@@ -33,6 +33,7 @@ import HexManual.Chapters.HexLLL
 import HexManual.Chapters.HexBerlekampZassenhaus
 import HexManual.Chapters.FactorTactics
 -- Unreleased libraries (dependency order).
+import HexManual.Chapters.HexTruncatedSeries
 import HexManual.Chapters.HexPrimality
 import HexManual.Chapters.HexModular
 import HexManual.Chapters.HexResultant
@@ -157,6 +158,8 @@ These libraries are still incubating in the
 [`hex-dev`](https://github.com/kim-em/hex-dev) monorepo and have not been
 split out for release yet, so their APIs may still change. They are grouped
 here to keep the reference chapters above focused on the released libraries.
+
+{include 2 HexManual.Chapters.HexTruncatedSeries}
 
 {include 2 HexManual.Chapters.HexPrimality}
 
