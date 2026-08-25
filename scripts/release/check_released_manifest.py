@@ -316,6 +316,43 @@ def main() -> int:
                 )
 
     libraries = load_libraries()
+    # A manifest entry is a publication commitment, and three entries in one
+    # week arrived with their implementation merges while the library's phase
+    # pipeline was still at 0 — each one broke every full sync on its empty
+    # repository until it was withdrawn by hand. A new entry may only exist
+    # once the library has completed the whole pipeline. The libraries below
+    # were already published before this rule existed and are grandfathered at
+    # the phase they had then: each may only move up (a regression fails), no
+    # library may join this list, and an entry leaves it by reaching Phase 7.
+    prepublished_floor = {
+        "HexPolyZMathlib": 6,
+        "HexRoots": 5,
+        "HexRealRoots": 5,
+        "HexRealRootsMathlib": 4,
+        "HexBerlekamp": 4,
+        "HexMatrixMathlib": 6,
+        "HexRowReduceMathlib": 5,
+        "HexDeterminantMathlib": 5,
+        "HexBareissMathlib": 5,
+        "HexBerlekampMathlib": 3,
+        "HexGramSchmidtMathlib": 6,
+        "HexBerlekampZassenhaus": 4,
+        "HexLLLMathlib": 4,
+        "HexBerlekampZassenhausMathlib": 2,
+    }
+    for entry in entries:
+        lib = entry.get("lib")
+        if lib not in libraries:
+            continue
+        recorded = libraries[lib].done_through
+        required = prepublished_floor.get(lib, 7)
+        if recorded < required:
+            fail(
+                f"{entry['repo']}: {lib} is recorded at done_through "
+                f"{recorded}; a released.yml entry requires done_through "
+                f"{required} ({'its grandfathered floor' if lib in prepublished_floor else 'the completed phase pipeline'}) "
+                "— finish the phases first, or withdraw the entry until then"
+            )
     closure = reachable_dependencies(libraries)
     repo_by_library = {
         entry["lib"]: entry["repo"].split("/", 1)[1]
