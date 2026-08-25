@@ -7,6 +7,7 @@ Authors: Kim Morrison
 module
 
 
+public import HexHermiteMathlib.Kernel
 public import HexHermiteMathlib.Rank
 
 public section

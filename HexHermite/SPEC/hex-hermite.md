@@ -425,10 +425,12 @@ elementary steps; proof erasure keeps that witness off the value path.
 `hnfData` must not be implemented as a projection of `hnfWithInv`, because
 Lean's eager evaluation would then allocate the inverse it promises to avoid.
 `hnfBasis` is definitionally the first `hnfRank A` rows of `hnf A`, and
-`pivots` is definitionally the `natAbs` of the entries in those rows at the
-corresponding `(hnfData A).pivotCols` positions (transported along
-`hnfRank_eq`). These are definition contracts, so neither function has an
-independent choice that could satisfy only the index theorem accidentally.
+`pivots` reads the `natAbs` of the pivot entries directly from the same
+form-only sweep that produces `hnf` and `hnfRank`. The shared-schedule
+agreement theorem identifies those columns with `(hnfData A).pivotCols`
+without constructing the transform on the executable `pivots` path. These are
+definition contracts, so neither function has an independent choice that
+could satisfy only the index theorem accidentally.
 
 `latticeCoeffs` returns
 coefficients against the rows of `A`, not against the rows of `hnf A`,

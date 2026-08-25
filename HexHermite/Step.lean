@@ -20,23 +20,75 @@ The form-only accumulator is `Unit`, so that path allocates no transform.
 
 namespace Hex.Matrix.Hermite
 
+private theorem getElem_setRow (M : Matrix R n m) (dst r : Fin n)
+    (v : Vector R m) (c : Fin m) :
+    (M.setRow dst v)[r][c] = if r = dst then v[c] else M[r][c] := by
+  by_cases h : r = dst
+  · subst r
+    rw [if_pos rfl, Matrix.setRow_get_self]
+  · rw [if_neg h, Matrix.setRow_row_ne M dst r v h]
+
 /-- Replace rows `i` and `k` by two simultaneous linear combinations. -/
 @[expose]
 def combineRows (M : Matrix Int n m) (i k : Fin n)
     (a b c d : Int) : Matrix Int n m :=
-  Matrix.ofFn fun r j =>
-    if r = i then a * M[(i, j)] + b * M[(k, j)]
-    else if r = k then c * M[(i, j)] + d * M[(k, j)]
-    else M[(r, j)]
+  let ri := Matrix.row M i
+  let rk := Matrix.row M k
+  let vi := Vector.ofFn fun j =>
+    a * ri[j.val]'j.isLt + b * rk[j.val]'j.isLt
+  if _h : i = k then
+    M.setRow i vi
+  else
+    let vk := Vector.ofFn fun j =>
+      c * ri[j.val]'j.isLt + d * rk[j.val]'j.isLt
+    (M.setRow i vi).setRow k vk
+
+/-- Entrywise characterization of `combineRows`. -/
+@[simp, grind =]
+theorem getElem_combineRows (M : Matrix Int n m) (i k r : Fin n)
+    (j : Fin m) (a b c d : Int) :
+    (combineRows M i k a b c d)[r][j] =
+      if r = i then a * M[(i, j)] + b * M[(k, j)]
+      else if r = k then c * M[(i, j)] + d * M[(k, j)]
+      else M[(r, j)] := by
+  unfold combineRows
+  by_cases hik : i = k
+  · rw [dif_pos hik, getElem_setRow]
+    by_cases hr : r = k <;> simp [hik, hr, Matrix.row]
+  · rw [dif_neg hik, getElem_setRow, getElem_setRow]
+    by_cases hrk : r = k <;> by_cases hri : r = i <;> simp_all [Matrix.row]
 
 /-- Replace columns `i` and `k` by two simultaneous linear combinations. -/
 @[expose]
 def combineCols (M : Matrix Int n n) (i k : Fin n)
     (a b c d : Int) : Matrix Int n n :=
-  Matrix.ofFn fun r j =>
-    if j = i then a * M[(r, i)] + b * M[(r, k)]
-    else if j = k then c * M[(r, i)] + d * M[(r, k)]
-    else M[(r, j)]
+  let ci := Vector.ofFn fun r => M[(r, i)]
+  let ck := Vector.ofFn fun r => M[(r, k)]
+  let vi := Vector.ofFn fun r =>
+    a * ci[r.val]'r.isLt + b * ck[r.val]'r.isLt
+  if h : i = k then
+    M.setCol i fun r => vi[r.val]'r.isLt
+  else
+    let vk := Vector.ofFn fun r =>
+      c * ci[r.val]'r.isLt + d * ck[r.val]'r.isLt
+    (M.setCol i fun r => vi[r.val]'r.isLt).setCol k fun r => vk[r.val]'r.isLt
+
+/-- Entrywise characterization of `combineCols`. -/
+@[simp, grind =]
+theorem getElem_combineCols (M : Matrix Int n n) (i k r j : Fin n)
+    (a b c d : Int) :
+    (combineCols M i k a b c d)[r][j] =
+      if j = i then a * M[(r, i)] + b * M[(r, k)]
+      else if j = k then c * M[(r, i)] + d * M[(r, k)]
+      else M[(r, j)] := by
+  unfold combineCols
+  by_cases hik : i = k
+  · rw [dif_pos hik, Matrix.getElem_setCol]
+    by_cases hj : j = k <;>
+      simp [hik, hj]
+  · rw [dif_neg hik, Matrix.getElem_setCol, Matrix.getElem_setCol]
+    by_cases hjk : j = k <;> by_cases hji : j = i <;>
+      simp_all
 
 /-- Simultaneous two-row replacement commutes with multiplication on the
 right. -/
@@ -54,8 +106,7 @@ theorem combineRows_mul (A : Matrix Int n p) (B : Matrix Int p m)
       let qq : Fin p := ⟨q, hq⟩
       change (combineRows A i k a b c d)[i][qq] =
         (a • Matrix.row A i + b • Matrix.row A k)[qq]
-      unfold combineRows
-      rw [Matrix.getElem_ofFn]
+      rw [getElem_combineRows]
       simp only [if_pos]
       rw [Matrix.getElem_pair_eq_nested, Matrix.getElem_pair_eq_nested]
       simp only [Fin.getElem_fin, Vector.getElem_add, Vector.getElem_smul]
@@ -63,8 +114,7 @@ theorem combineRows_mul (A : Matrix Int n p) (B : Matrix Int p m)
       ]
     rw [Vector.dotProduct_add_left, Vector.dotProduct_smul_left,
       Vector.dotProduct_smul_left]
-    unfold combineRows
-    rw [Matrix.getElem_ofFn]
+    rw [getElem_combineRows]
     simp only [if_pos, Matrix.getElem_pair_eq_nested]
     rw [Matrix.getElem_mul, Matrix.getElem_mul]
   · by_cases hrk : r = k
@@ -75,27 +125,23 @@ theorem combineRows_mul (A : Matrix Int n p) (B : Matrix Int p m)
         let qq : Fin p := ⟨q, hq⟩
         change (combineRows A i k a b c d)[k][qq] =
           (c • Matrix.row A i + d • Matrix.row A k)[qq]
-        unfold combineRows
-        rw [Matrix.getElem_ofFn]
+        rw [getElem_combineRows]
         simp only [if_neg hri, if_pos]
         rw [Matrix.getElem_pair_eq_nested, Matrix.getElem_pair_eq_nested]
         simp only [Fin.getElem_fin, Vector.getElem_add, Vector.getElem_smul]
         rfl]
       rw [Vector.dotProduct_add_left, Vector.dotProduct_smul_left,
         Vector.dotProduct_smul_left]
-      unfold combineRows
-      rw [Matrix.getElem_ofFn]
+      rw [getElem_combineRows]
       simp only [if_neg hri, if_pos, Matrix.getElem_pair_eq_nested]
       rw [Matrix.getElem_mul, Matrix.getElem_mul]
     · rw [show Matrix.row (combineRows A i k a b c d) r = Matrix.row A r by
         ext q hq
         let qq : Fin p := ⟨q, hq⟩
         change (combineRows A i k a b c d)[r][qq] = A[r][qq]
-        unfold combineRows
-        rw [Matrix.getElem_ofFn]
+        rw [getElem_combineRows]
         simp [hri, hrk, Matrix.getElem_pair_eq_nested]]
-      unfold combineRows
-      rw [Matrix.getElem_ofFn]
+      rw [getElem_combineRows]
       simp only [if_neg hri, if_neg hrk, Matrix.getElem_pair_eq_nested]
       exact (Matrix.getElem_mul A B r j).symm
 
@@ -108,8 +154,7 @@ theorem transpose_combineCols (M : Matrix Int n n) (i k : Fin n)
   apply Matrix.ext_getElem
   intro r j
   rw [Matrix.getElem_transpose]
-  unfold combineCols combineRows
-  rw [Matrix.getElem_ofFn, Matrix.getElem_ofFn]
+  rw [getElem_combineCols, getElem_combineRows]
   simp only [Matrix.getElem_pair_eq_nested, Matrix.getElem_transpose]
 
 /-- Simultaneous two-column replacement commutes with multiplication on the
@@ -211,9 +256,8 @@ theorem combine_inverse_identity (i k : Fin n) (hik : i ≠ k)
       i k d (-c) (-b) a) i k a b c d = Matrix.identity n := by
   apply Matrix.ext_getElem
   intro r j
-  unfold combineRows combineCols
-  rw [Matrix.getElem_ofFn]
-  simp only [Matrix.getElem_pair_eq_nested, Matrix.getElem_ofFn,
+  rw [getElem_combineRows]
+  simp only [Matrix.getElem_pair_eq_nested, getElem_combineCols,
     Matrix.getElem_identity]
   by_cases hri : r = i <;> by_cases hrk : r = k <;>
     by_cases hji : j = i <;> by_cases hjk : j = k <;>

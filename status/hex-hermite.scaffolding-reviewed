@@ -1,0 +1,11 @@
+Independent Phase 2 skeptical review completed against the HexHermite SPEC.
+
+The review found and required correction of two algorithmic-shape defects:
+two-row/two-column updates rebuilt whole matrices, and the pivot/index path
+constructed an unused transform. The corrected implementations use linear
+row/column writes and the form-only accumulator respectively. The reviewer
+verified both fixes and a green `lake build HexHermite HexHermiteMathlib`
+before authorizing this token.
+
+No placeholders, fake externs, native-type detours, missing headline
+declarations, axioms, sorries, or mathematical contract mismatches remain.

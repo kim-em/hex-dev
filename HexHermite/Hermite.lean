@@ -143,8 +143,7 @@ theorem gcdStep_column (ops : Accumulator α n) (s : Result α n m)
   dsimp only [Prod.fst, Prod.snd]
   change 0 < (combineRows s.matrix i k x y z w)[(i, col)] ∧
     (combineRows s.matrix i k x y z w)[(k, col)] = 0
-  unfold combineRows
-  simp only [Matrix.getElem_ofFn, Matrix.getElem_pair_eq_nested]
+  simp only [getElem_combineRows, Matrix.getElem_pair_eq_nested]
   simp only [Matrix.getElem_pair_eq_nested] at hspec
   simpa [hik.symm] using hspec
 
@@ -169,8 +168,7 @@ theorem gcdStep_other (ops : Accumulator α n) (s : Result α n m)
   · rfl
   · dsimp only
     rw [Matrix.getElem_pair_eq_nested]
-    unfold combineRows
-    rw [Matrix.getElem_ofFn]
+    rw [getElem_combineRows]
     simp [hri, hrk, Matrix.getElem_pair_eq_nested]
 
 /-- A gcd update of two zero entries in another column leaves that column
@@ -184,8 +182,7 @@ theorem gcdStep_zero (ops : Accumulator α n) (s : Result α n m)
   · rfl
   · dsimp only
     rw [Matrix.getElem_pair_eq_nested]
-    unfold combineRows
-    rw [Matrix.getElem_ofFn]
+    rw [getElem_combineRows]
     simp only [Matrix.getElem_pair_eq_nested] at hi hk ⊢
     by_cases hri : row = i <;> by_cases hrk : row = k <;>
       simp_all

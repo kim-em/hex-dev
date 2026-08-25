@@ -1,4 +1,4 @@
-# hex-hermite-mathlib (depends on hex-hermite + hex-row-reduce-mathlib + hex-determinant-mathlib + Mathlib)
+# hex-hermite-mathlib (depends on hex-hermite + hex-row-reduce-mathlib + Mathlib)
 
 The Mathlib correspondence layer for the executable, Mathlib-free integer
 Hermite normal form in
@@ -32,7 +32,7 @@ theorem latticeContains_iff_mem (A : Hex.Matrix Int n m)
       vectorEquiv v ∈
         Submodule.span ℤ (Set.range (matrixEquiv A))
 
-noncomputable def kernelBasisEquiv (A : Hex.Matrix Int n m) :
+noncomputable def kernelBasis (A : Hex.Matrix Int n m) :
     Basis (Fin (n - Hex.Matrix.hnfRank A)) ℤ
       (LinearMap.ker (_root_.Matrix.vecMulLinear (matrixEquiv A)))
 ```
@@ -45,7 +45,7 @@ characterisations used by those headlines:
 - `kernelVector`, `kernelRows_independent`, `kernelVector_independent`, and
   `kernelVector_spans` package the executable kernel rows as an independent
   spanning family;
-- `kernelBasisEquiv_apply` states that the resulting Mathlib basis evaluates
+- `kernelBasis_apply` states that the resulting Mathlib basis evaluates
   to the corresponding row of `Hex.Matrix.kernelBasis`.
 
 No theorem about the executable representation itself belongs here. HNF
@@ -64,7 +64,7 @@ nonzero HNF rows with Mathlib's noncomputable matrix rank.
 decision procedure returns true exactly for vectors in the Mathlib span of the
 input rows.
 
-`kernelBasisEquiv` is the constructive payoff. Mathlib can obtain a basis of a
+`kernelBasis` is the constructive payoff. Mathlib can obtain a basis of a
 submodule of a free module noncomputably; this declaration instead packages
 the rows computed by `Hex.Matrix.kernelBasis`, with independence and spanning
 proved in Lean. Its index type has the executable nullity
@@ -81,7 +81,7 @@ conformance module:
 - lattice members and residual non-members cover
   `latticeContains_iff_mem`;
 - kernel soundness and bounded independence checks cover the executable data
-  transported by `kernelBasisEquiv`.
+  transported by `kernelBasis`.
 
 Theorems in this library are checked by the kernel in the ordinary library
 build and by the pair's Mathlib lint regression.
