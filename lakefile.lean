@@ -974,6 +974,10 @@ lean_exe hextruncatedseries_bench where
   srcDir := "bench"
   root := `HexTruncatedSeries.Bench
 
+lean_exe hexpolyfast_bench where
+  srcDir := "bench"
+  root := `HexPolyFast.Bench
+
 lean_exe hexpoly_emit_fixtures where
   srcDir := "conformance"
   root := `HexPoly.EmitFixtures
