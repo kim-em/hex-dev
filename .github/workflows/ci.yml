@@ -62,6 +62,7 @@ jobs:
           python3 -m unittest scripts/bench/test_real_roots_mathlib_sweep.py
           python3 -m unittest scripts/bench/test_hexrcf_proof_sweep.py
           python3 -m unittest scripts/oracle/test_flint_mpoly_bench.py
+          python3 -m unittest scripts/oracle/test_singular_mpoly_bench.py
           python3 -m unittest scripts/oracle/test_rcf_flint_bench.py
           python3 scripts/ci/check_benches_mathlib_free.py
       - name: Verify conformance matrix invariant
@@ -74,7 +75,7 @@ jobs:
       - name: Install system dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y libgmp-dev libntl-dev pkg-config libpari-dev pari-gp
+          sudo apt-get install -y libgmp-dev libntl-dev pkg-config libpari-dev pari-gp singular
       - name: Install Python dependencies (bench comparator + oracles)
         run: |
           python3 -m pip install --user \
