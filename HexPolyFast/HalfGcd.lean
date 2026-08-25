@@ -303,6 +303,13 @@ theorem quotientStep_singleton (plan : MulPlan F) (q : DensePoly F) :
   simp only [List.foldl_cons, List.foldl_nil]
   rw [GcdStep.composeWith_eq, GcdStep.compose_one]
 
+private theorem quotientStep_cons (plan : MulPlan F) (q : DensePoly F)
+    (qs : List (DensePoly F)) :
+    quotientStep plan (q :: qs) = GcdStep.composeWith plan
+      (quotientStep plan qs) (GcdStep.euclid q) := by
+  simpa only [List.singleton_append, quotientStep_singleton] using
+    quotientStep_append plan [q] qs
+
 /-- A quotient sequence is an exact prefix of the established Euclidean
 sequence, ending at the displayed pair. -/
 inductive ExactQuotients : List (DensePoly F) → DensePoly F → DensePoly F →
@@ -430,6 +437,25 @@ private theorem size_le_of_coeff_zero_above {p : DensePoly F} {n : Nat}
     have hlast := coeff_last_ne_zero_of_pos_size p hpos
     exact False.elim (hlast (hzero (p.size - 1) (by omega)))
 
+private theorem size_add_le_max (p q : DensePoly F) :
+    (p + q).size ≤ max p.size q.size := by
+  apply size_le_of_coeff_zero_above
+  intro i hi
+  rw [coeff_add_semiring,
+    coeff_eq_zero_of_size_le p (Nat.le_trans (Nat.le_max_left ..) hi),
+    coeff_eq_zero_of_size_le q (Nat.le_trans (Nat.le_max_right ..) hi)]
+  exact Lean.Grind.Semiring.add_zero 0
+
+private theorem size_neg_le (p : DensePoly F) : (-p).size ≤ p.size := by
+  apply size_le_of_coeff_zero_above
+  intro i hi
+  rw [coeff_neg_ring, coeff_eq_zero_of_size_le p hi]
+  exact Lean.Grind.AddCommGroup.neg_zero
+
+private def GcdStep.SizeBound (matrix : GcdStep F) (n : Nat) : Prop :=
+  matrix.a00.size ≤ n ∧ matrix.a01.size ≤ n ∧
+    matrix.a10.size ≤ n ∧ matrix.a11.size ≤ n
+
 private theorem size_add_eq_left_of_lt {p q : DensePoly F}
     (hlt : q.size < p.size) : (p + q).size = p.size := by
   have hpos : 0 < p.size := by omega
@@ -493,6 +519,16 @@ private theorem size_reconstruct (q b r : DensePoly F)
   rw [size_add_eq_left_of_lt (p := q * b) (q := r) (by
     rw [size_mul_field q b hq hb]
     omega), size_mul_field q b hq hb]
+
+private theorem quotient_reconstruct {a b q r : DensePoly F}
+    (hdiv : _root_.Hex.DensePoly.divMod a b = (q, r)) :
+    q * b + r = a := by
+  have hsub := sub_mul_eq_remainder hdiv
+  apply ext_coeff
+  intro i
+  have hcoeff := congrArg (fun p : DensePoly F => p.coeff i) hsub
+  simp only [coeff_sub_ring, coeff_add_semiring] at hcoeff ⊢
+  grind
 
 /-- Executing an exact prefix reaches its certified terminal pair. -/
 theorem ExactQuotients.run {qs : List (DensePoly F)} {a b c d : DensePoly F}
@@ -582,7 +618,7 @@ private def halfGcdMatrix (plan : MulPlan F) :
               let ef := GcdStep.applyWith plan second cd.2 qr.2
               if ef.1.size = (shift cut₂ highEf.1).size ∧
                   ef.2.size = (shift cut₂ highEf.2).size then
-                GcdStep.composeWith plan second boundary
+                GcdStep.composeLowWith plan a.size second boundary
               else
                 boundary
         else
@@ -736,6 +772,49 @@ private theorem fieldRemainder_size_lt_of_pos {a b q r : DensePoly F}
   · rw [fieldRemainder_eq_zero_of_size_one hone hdiv, size_zero]
     exact hb
   · exact fieldRemainder_size_lt (by omega) hdiv
+
+/-- Every coefficient polynomial in a proper quotient transformation fits
+within the initial leading operand.  This is the clipping budget used when
+two half-gcd blocks are composed. -/
+private theorem ProperQuotients.matrixBound (plan : MulPlan F)
+    {qs : List (DensePoly F)} {a b c d : DensePoly F}
+    (hproper : ProperQuotients qs a b c d) (ha : 0 < a.size) :
+    GcdStep.SizeBound (quotientStep plan qs) a.size := by
+  induction hproper with
+  | nil =>
+      have hone : (1 : DensePoly F).size = 1 :=
+        size_one (fun h => Lean.Grind.Field.zero_ne_one h.symm)
+      simp only [quotientStep, List.foldl_nil, GcdStep.SizeBound,
+        GcdStep.one, hone, size_zero]
+      omega
+  | @cons q r a b c d qs hq hb hdiv tail ih =>
+      have hbpos : 0 < b.size := by omega
+      rcases ih hbpos with ⟨h00, h01, h10, h11⟩
+      have hrlt := fieldRemainder_size_lt hb hdiv
+      have harec := quotient_reconstruct hdiv
+      have hasize : a.size = q.size + b.size - 1 := by
+        rw [← harec]
+        exact size_reconstruct q b r hq hbpos hrlt
+      have hnegq := size_neg_le q
+      have h01prod := size_mul_le (quotientStep plan qs).a01 (-q)
+      have h11prod := size_mul_le (quotientStep plan qs).a11 (-q)
+      have hsecond0 := size_add_le_max (quotientStep plan qs).a00
+        ((quotientStep plan qs).a01 * (-q))
+      have hsecond1 := size_add_le_max (quotientStep plan qs).a10
+        ((quotientStep plan qs).a11 * (-q))
+      rw [quotientStep_cons, GcdStep.composeWith_eq]
+      have hmulzero : ∀ p : DensePoly F, p * 0 = 0 := by
+        intro p
+        rw [mul_comm_poly, zero_mul]
+      simp only [GcdStep.SizeBound, GcdStep.compose, GcdStep.euclid,
+        hmulzero, mul_one_right_poly, zero_add]
+      constructor
+      · omega
+      constructor
+      · omega
+      constructor
+      · omega
+      · omega
 
 /-- A complete active Euclidean trace has at most one quotient per stored
 coefficient of its initial divisor. -/
@@ -905,6 +984,24 @@ private theorem MatrixProper.compose (plan : MulPlan F)
   · rw [GcdStep.composeWith_eq, GcdStep.apply_compose, hfirstApply,
       hsecondApply]
 
+private theorem MatrixProper.composeLow (plan : MulPlan F)
+    {first second : GcdStep F} {a b c d e f : DensePoly F}
+    (hfirst : MatrixProper plan first a b c d)
+    (hsecond : MatrixProper plan second c d e f)
+    (ha : 0 < a.size) :
+    MatrixProper plan
+      (GcdStep.composeLowWith plan a.size second first) a b e f := by
+  have hordinary := MatrixProper.compose plan hfirst hsecond
+  rcases hordinary with ⟨qs, hproper, hmatrix, happly⟩
+  have hbound := hproper.matrixBound plan ha
+  have hbound' : GcdStep.SizeBound (GcdStep.compose second first) a.size := by
+    rw [← GcdStep.composeWith_eq plan second first, hmatrix]
+    exact hbound
+  rcases hbound' with ⟨h00, h01, h10, h11⟩
+  rw [GcdStep.composeLowWith_eq plan a.size second first h00 h01 h10 h11]
+  exact ⟨qs, hproper, by simpa only [GcdStep.composeWith_eq] using hmatrix,
+    by simpa only [GcdStep.composeWith_eq] using happly⟩
+
 private theorem MatrixExact.compose (plan : MulPlan F)
     {first second : GcdStep F} {a b c d e f : DensePoly F}
     (hfirst : MatrixExact plan first a b c d)
@@ -996,7 +1093,7 @@ private theorem halfGcdMatrix_proper (plan : MulPlan F) (fuel : Nat)
                 else if qr.2.size ≤ cut then boundary
                 else if ef.1.size = (shift cut₂ highEf.1).size ∧
                     ef.2.size = (shift cut₂ highEf.2).size then
-                  GcdStep.composeWith plan second boundary
+                  GcdStep.composeLowWith plan a.size second boundary
                 else boundary
               else GcdStep.one) a b c d
             split
@@ -1036,7 +1133,7 @@ private theorem halfGcdMatrix_proper (plan : MulPlan F) (fuel : Nat)
                       exact hsecondHigh.liftHigh plan cut₂
                         hsecondValid.1 hsecondValid.2
                     exact ⟨ef.1, ef.2,
-                      MatrixProper.compose plan hboundary hsecondFull⟩
+                      MatrixProper.composeLow plan hboundary hsecondFull (by omega)⟩
                   · exact ⟨cd.2, qr.2, hboundary⟩
             · exact ⟨a, b, MatrixProper.one plan a b⟩
 
