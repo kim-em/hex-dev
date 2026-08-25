@@ -10,6 +10,7 @@ public import HexPolyFast.Plan
 public import HexPolyFast.Karatsuba
 public import HexPolyFast.Cyclic
 public import HexPolyFast.Reverse
+public import HexPolyFast.Reciprocal
 
 public section
 

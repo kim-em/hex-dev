@@ -283,15 +283,72 @@ theorem mulKaratsuba_eq (cutoff : Nat) (a b : DensePoly R) :
       · rw [karatsubaBlocks_eq, mul_comm_poly]
       · exact mulKaratsubaBalanced_eq cutoff a b
 
-/-- A lawful Karatsuba plan.  Clipped products use the direct schoolbook slice
-until the recursive interval-pruning implementation is selected by its
-benchmark crossover. -/
+/-- Extract `len` coefficients beginning at `lo` from an already-computed
+polynomial, shifting them down to degree zero. -/
+@[expose]
+def coeffSlice (lo len : Nat) (p : DensePoly R) : DensePoly R :=
+  ofList ((List.range len).map fun i => p.coeff (lo + i))
+
+/-- Coefficient law for extracting a polynomial interval. -/
+theorem coeff_coeffSlice (lo len : Nat) (p : DensePoly R) (i : Nat) :
+    (coeffSlice lo len p).coeff i =
+      if i < len then p.coeff (lo + i) else 0 := by
+  unfold coeffSlice
+  rw [coeff_ofList]
+  by_cases hi : i < len
+  · simp [List.getD, hi]
+  · rw [List.getD_eq_getElem?_getD]
+    simp [hi]
+    rfl
+
+/-- Truncating both inputs above `n` preserves every product coefficient
+strictly below `n`. -/
+theorem coeff_low_mul_low (n : Nat) (a b : DensePoly R) (i : Nat)
+    (hi : i < n) :
+    (low n a * low n b).coeff i = (a * b).coeff i := by
+  have hdecomp :
+      (low n a + shift n (high n a)) *
+          (low n b + shift n (high n b)) = a * b := by
+    rw [low_add_shift_high, low_add_shift_high]
+  rw [← hdecomp]
+  rw [mul_add_right_poly, mul_add_left_poly, mul_add_left_poly,
+    shift_mul, mul_shift, shift_mul_shift]
+  have hz : (0 : R) + 0 = 0 := by grind
+  simp only [coeff_add _ _ _ hz, coeff_shift]
+  have h2i : i < n + n := by omega
+  have hzero : (Zero.zero : R) = 0 := rfl
+  simp only [hzero]
+  simp [hi, h2i]
+  grind
+
+/-- Prefix-pruned Karatsuba slice.  Coefficients of either operand above the
+exclusive end of the requested interval cannot contribute, so they are
+removed before the recursive product.  Unlike the former schoolbook fallback,
+this retains Karatsuba recursion for every requested interval. -/
+def karatsubaSlice (cutoff lo len : Nat) (a b : DensePoly R) : DensePoly R :=
+  let hi := lo + len
+  coeffSlice lo len
+    (mulKaratsuba cutoff (low hi a) (low hi b))
+
+/-- Prefix-pruned Karatsuba slicing has the exact planned-slice semantics. -/
+theorem coeff_karatsubaSlice (cutoff lo len : Nat) (a b : DensePoly R)
+    (i : Nat) :
+    (karatsubaSlice cutoff lo len a b).coeff i =
+      if i < len then (a * b).coeff (lo + i) else 0 := by
+  unfold karatsubaSlice
+  rw [coeff_coeffSlice]
+  split <;> rename_i hi
+  · rw [mulKaratsuba_eq]
+    exact coeff_low_mul_low (lo + len) a b (lo + i) (by omega)
+  · rfl
+
+/-- A lawful Karatsuba plan. -/
 def karatsubaPlan (cutoff : Nat) : MulPlan R where
   mul := mulKaratsuba cutoff
   square := squareKaratsuba cutoff
-  slice := schoolbookSlice
+  slice := karatsubaSlice cutoff
   mul_eq := mulKaratsuba_eq cutoff
   square_eq := squareKaratsuba_eq cutoff
-  coeff_slice := coeff_schoolbookSlice
+  coeff_slice := coeff_karatsubaSlice cutoff
 
 end Hex.DensePoly

@@ -12,6 +12,7 @@ public meta import HexPolyFast.Plan
 public meta import HexPolyFast.Karatsuba
 public meta import HexPolyFast.Reverse
 public meta import HexPolyFast.Cyclic
+public meta import HexPolyFast.Reciprocal
 
 public section
 
@@ -70,5 +71,13 @@ private def plan : MulPlan Int := karatsubaPlan 2
 #guard mulNegacyclic (karatsubaPlan 2) 3 (by omega)
     (ofList [1, 2, 3] : DensePoly Int) (ofList [4, 5]) = ofList [-11, 13, 22]
 #guard mulCyclic? (karatsubaPlan 2) 0 a b = none
+
+private def unitSeries : TSeries Int 8 :=
+  TSeries.ofFn fun i => [1, 2, -1, 3, 0, -2, 4, 1].getD i 0
+
+#guard seriesMulUpTo plan 5 unitSeries unitSeries =
+  TSeries.mulUpTo 5 unitSeries unitSeries
+#guard reciprocalWith plan unitSeries 1 = TSeries.invOfUnit unitSeries 1
+#guard unitSeries * reciprocalWith plan unitSeries 1 = 1
 
 end HexPolyFast.Conformance
