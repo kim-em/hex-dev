@@ -15,6 +15,7 @@ public meta import HexPolyFast.Cyclic
 public meta import HexPolyFast.Reciprocal
 public meta import HexPolyFast.Division
 public meta import HexPolyFast.Tree
+public meta import HexPolyFast.Multipoint
 
 public section
 
@@ -118,6 +119,18 @@ private def tree : ProductTree Int := ProductTree.build plan treeLeaves
 #guard (tree.level? 3).map Array.size = some 1
 #guard tree.nodeProduct? 1 0 = some (treeLeaves.getD 0 0 * treeLeaves.getD 1 0)
 #guard tree.nodeProduct? 1 2 = some (treeLeaves.getD 4 0)
+
+private def evalPoints : Array Int := #[-3, 0, 2, 5, 9]
+private def evalPlan : EvalPlan Int := EvalPlan.build plan evalPoints
+private def evalPoly : DensePoly Int := ofList [7, -4, 3, 2, -1]
+
+#guard evalPlan.size = evalPoints.size
+#guard evalPlan.points = evalPoints
+#guard evalPlan.tree.leaves = evalPoints.map (fun x => ofList [0 - x, 1])
+#guard evalPlan.evalImpl evalPoly = evalPoints.map (evalPoly.eval ·)
+#guard evalPlan.evalImpl (ofList [1, 2, 3, 4, 5, 6, 7]) =
+  evalPoints.map ((ofList [1, 2, 3, 4, 5, 6, 7] : DensePoly Int).eval ·)
+#guard (EvalPlan.build plan (#[] : Array Int)).evalImpl evalPoly = #[]
 #guard tree.nodeProduct? 3 0 = some tree.root
 #guard tree.nodeProduct? 4 0 = none
 

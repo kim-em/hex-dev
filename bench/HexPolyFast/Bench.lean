@@ -86,6 +86,27 @@ def prepProductTree (n : Nat) : ProductTreeInput :=
 def runProductTree (input : ProductTreeInput) : UInt64 :=
   checksum (ProductTree.build (karatsubaPlan 32) input.leaves).root
 
+structure MultipointInput where
+  plan : EvalPlan Int
+  polynomial : DensePoly Int
+
+instance : Hashable MultipointInput where
+  hash input := mixHash (hash input.plan.points) (hash input.polynomial.toArray)
+
+def prepMultipoint (n : Nat) : MultipointInput :=
+  let points := (List.range n).map (fun i => Int.ofNat i - Int.ofNat (n / 2)) |>.toArray
+  { plan := EvalPlan.build (karatsubaPlan 32) points
+    polynomial := ofList ((List.range n).map fun i => coeff i 71) }
+
+private def checksumValues (values : Array Int) : UInt64 :=
+  values.foldl (fun acc value => mixHash acc (hash value)) 0
+
+def runDirectEval (input : MultipointInput) : UInt64 :=
+  checksumValues (input.plan.points.map (input.polynomial.eval ·))
+
+def runMultipointEval (input : MultipointInput) : UInt64 :=
+  checksumValues (input.plan.eval input.polynomial)
+
 /- Cost model: a balanced length-`n` schoolbook convolution evaluates one
 coefficient product for each input pair, hence `n²` ring multiplications. -/
 setup_benchmark runSchoolbook n => n ^ 2
@@ -188,6 +209,34 @@ setup_benchmark runProductTree n => n * (Nat.log2 n + 1)
     targetInnerNanos := 200000000
     signalFloorMultiplier := 1.0
     tags := #["product-tree", "karatsuba", "cold"]
+  }
+
+/- Direct Horner evaluation visits all `n` coefficients independently at all
+`n` points, giving quadratic (`Θ(n²)`) coefficient operations. -/
+setup_benchmark runDirectEval n => n ^ 2
+  with prep := prepMultipoint
+  where {
+    paramFloor := 4
+    paramCeiling := 4096
+    paramSchedule := .custom #[4, 16, 64, 256, 1024, 4096]
+    maxSecondsPerCall := 3.0
+    targetInnerNanos := 200000000
+    signalFloorMultiplier := 1.0
+    tags := #["multipoint", "horner", "reused-plan"]
+  }
+
+/- With products and reciprocals prepared outside the timed call, the balanced
+remainder tree costs `O(M(n) log n)`. -/
+setup_benchmark runMultipointEval n => n * (Nat.sqrt n) * (Nat.log2 n + 1)
+  with prep := prepMultipoint
+  where {
+    paramFloor := 4
+    paramCeiling := 4096
+    paramSchedule := .custom #[4, 16, 31, 32, 33, 64, 256, 1024, 4096]
+    maxSecondsPerCall := 3.0
+    targetInnerNanos := 200000000
+    signalFloorMultiplier := 1.0
+    tags := #["multipoint", "remainder-tree", "reused-plan"]
   }
 
 end Hex.PolyFastBench

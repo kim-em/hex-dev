@@ -217,6 +217,12 @@ def DivPlan.ofMonic (mul : MulPlan R) (q : DensePoly R)
       dsimp [reciprocal]
       exact reciprocalWith_eq mul _ 1 }
 
+/-- A monic division plan retains its supplied divisor. -/
+@[simp] theorem DivPlan.divisor_ofMonic (mul : MulPlan R) (q : DensePoly R)
+    (hq : Monic q) (hqne : q ≠ 0) (capacity : Nat) :
+    (DivPlan.ofMonic mul q hq hqne capacity).divisor = q := by
+  rfl
+
 /-- Build a cached plan for an arbitrary nonzero divisor over a field. -/
 def DivPlan.ofNonzero {F : Type u} [DecidableEq F] [Lean.Grind.Field F]
     (mul : MulPlan F) (q : DensePoly F) (hqne : q ≠ 0)
@@ -448,6 +454,13 @@ theorem DivPlan.divMod_eq_divMod [Div R] (plan : DivPlan R) (p : DensePoly R)
 def DivPlan.mod (plan : DivPlan R) (p : DensePoly R)
     (hcap : quotientLength p plan.divisor ≤ plan.capacity) : DensePoly R :=
   (plan.divMod p hcap).2
+
+/-- Reconstruction form of the cached remainder. -/
+theorem DivPlan.mod_eq (plan : DivPlan R) (p : DensePoly R)
+    (hcap : quotientLength p plan.divisor ≤ plan.capacity) :
+    plan.mod p hcap =
+      p - mulWith plan.mul (plan.quotient p hcap) plan.divisor := by
+  rfl
 
 /-- One-shot reciprocal division by a monic polynomial. -/
 def divModMonicWith (mul : MulPlan R) (p q : DensePoly R) (hq : Monic q) :

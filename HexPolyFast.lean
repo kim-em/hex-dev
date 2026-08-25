@@ -13,6 +13,7 @@ public import HexPolyFast.Reverse
 public import HexPolyFast.Reciprocal
 public import HexPolyFast.Division
 public import HexPolyFast.Tree
+public import HexPolyFast.Multipoint
 
 public section
 
