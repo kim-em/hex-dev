@@ -209,6 +209,73 @@ private theorem positive_merge_fold (entries acc : List (SqfFactor n R cmp))
         · exact hentries'.1
         · exact hacc
 
+private def MultiplicitiesAbove (bound : Nat)
+    (factors : List (SqfFactor n R cmp)) : Prop :=
+  ∀ factor ∈ factors, bound < factor.multiplicity
+
+private def SortedMultiplicities (factors : List (SqfFactor n R cmp)) : Prop :=
+  factors.Pairwise fun left right => left.multiplicity < right.multiplicity
+
+omit [DecidableEq R] [Dvd R] [BezoutOps R] [LawfulGcdOps R]
+    [LawfulBezoutOps R] [GcdProducer R] in
+private theorem above_merge (bound : Nat) (entry : SqfFactor n R cmp)
+    (hentry : bound < entry.multiplicity) {factors : List (SqfFactor n R cmp)}
+    (hfactors : MultiplicitiesAbove bound factors) :
+    MultiplicitiesAbove bound (mergeSqfFactor entry factors) := by
+  induction factors with
+  | nil => simpa [MultiplicitiesAbove, mergeSqfFactor]
+  | cons head tail ih =>
+      simp only [mergeSqfFactor]
+      split
+      · simp_all [MultiplicitiesAbove]
+      · split
+        · simp_all [MultiplicitiesAbove]
+        · simp_all [MultiplicitiesAbove]
+
+omit [DecidableEq R] [Dvd R] [BezoutOps R] [LawfulGcdOps R]
+    [LawfulBezoutOps R] [GcdProducer R] in
+private theorem sorted_merge (entry : SqfFactor n R cmp)
+    {factors : List (SqfFactor n R cmp)}
+    (hfactors : SortedMultiplicities factors) :
+    SortedMultiplicities (mergeSqfFactor entry factors) := by
+  induction factors with
+  | nil => simp [SortedMultiplicities, mergeSqfFactor]
+  | cons head tail ih =>
+      have hsorted : MultiplicitiesAbove head.multiplicity tail ∧
+          SortedMultiplicities tail := by
+        simpa [MultiplicitiesAbove, SortedMultiplicities] using hfactors
+      simp only [mergeSqfFactor]
+      split <;> rename_i hlt
+      · apply List.Pairwise.cons
+        · intro factor hfactor
+          simp only [List.mem_cons] at hfactor
+          rcases hfactor with rfl | hfactor
+          · exact hlt
+          · exact Nat.lt_trans hlt (hsorted.1 factor hfactor)
+        · exact hfactors
+      · split <;> rename_i heq
+        · apply List.Pairwise.cons
+          · intro factor hfactor
+            simpa [heq] using hsorted.1 factor hfactor
+          · exact hsorted.2
+        · apply List.Pairwise.cons
+          · apply above_merge
+            · omega
+            · exact hsorted.1
+          · exact ih hsorted.2
+
+omit [DecidableEq R] [Dvd R] [BezoutOps R] [LawfulGcdOps R]
+    [LawfulBezoutOps R] [GcdProducer R] in
+private theorem sorted_merge_fold (entries acc : List (SqfFactor n R cmp))
+    (hacc : SortedMultiplicities acc) :
+    SortedMultiplicities (entries.foldl
+      (fun acc entry => mergeSqfFactor entry acc) acc) := by
+  induction entries generalizing acc with
+  | nil => simpa
+  | cons entry entries ih =>
+      simp only [List.foldl_cons]
+      exact ih _ (sorted_merge entry hacc)
+
 /-- One decreasing Yun layer in the selected main variable.  The fuel is the
 total degree of the primitive input plus one; in characteristic zero every
 nonterminal layer removes at least one degree from `b`. -/
@@ -244,6 +311,48 @@ private theorem positive_yunLoop [NatCast R] [IsMonomialOrder cmp]
         · split
           · exact hacc
           · simpa [PositiveMultiplicities] using And.intro hk hacc
+
+private def MultiplicitiesBelow (bound : Nat)
+    (factors : List (SqfFactor n R cmp)) : Prop :=
+  ∀ factor ∈ factors, factor.multiplicity < bound
+
+private def ReverseSortedMultiplicities
+    (factors : List (SqfFactor n R cmp)) : Prop :=
+  factors.Pairwise fun left right => right.multiplicity < left.multiplicity
+
+omit [LawfulGcdOps R] [LawfulBezoutOps R] in
+private theorem sorted_yunLoop [NatCast R] [IsMonomialOrder cmp]
+    (i : Fin n) (fuel k : Nat) (b d : MvPoly n R cmp)
+    (acc : List (SqfFactor n R cmp))
+    (hbelow : MultiplicitiesBelow k acc)
+    (hsorted : ReverseSortedMultiplicities acc) :
+    SortedMultiplicities (yunLoop i fuel k b d acc) := by
+  induction fuel generalizing k b d acc with
+  | zero =>
+      unfold SortedMultiplicities
+      rw [yunLoop, List.pairwise_reverse]
+      exact hsorted
+  | succ fuel ih =>
+      simp only [yunLoop]
+      split
+      · unfold SortedMultiplicities
+        rw [List.pairwise_reverse]
+        exact hsorted
+      · split
+        · apply ih
+          · intro factor hfactor
+            exact Nat.lt_trans (hbelow factor hfactor) (Nat.lt_succ_self k)
+          · exact hsorted
+        · apply ih
+          · intro factor hfactor
+            simp only [List.mem_cons] at hfactor
+            rcases hfactor with rfl | hfactor
+            · change k < k + 1
+              omega
+            · exact Nat.lt_trans (hbelow factor hfactor) (Nat.lt_succ_self k)
+          · apply List.Pairwise.cons
+            · exact hbelow
+            · exact hsorted
 
 /-- Move the normalization unit of the primitive part into the scalar output,
 so the polynomial sent to recursive decomposition is canonically normalized
@@ -325,6 +434,25 @@ private theorem positive_sqfOps [NatCast R] (m : Nat)
               · omega
               · simp [PositiveMultiplicities]
 
+omit [LawfulGcdOps R] [LawfulBezoutOps R] in
+private theorem sorted_sqfOps [NatCast R] (m : Nat)
+    (order : Mono m → Mono m → Ordering) [IsMonomialOrder order]
+    (p : MvPoly m R order) :
+    SortedMultiplicities ((sqfOps (R := R) m).decomp order p).factors := by
+  cases m with
+  | zero => simp [sqfOps, sqfBase, sqfPrimitiveSplit, SortedMultiplicities]
+  | succ m =>
+      simp only [sqfOps, sqfStep]
+      split
+      · simp [SortedMultiplicities]
+      · cases hvars : p.sqfPrimitiveSplit.2.vars with
+        | nil => simp [SortedMultiplicities]
+        | cons i tail =>
+            apply sorted_merge_fold
+            apply sorted_yunLoop
+            · simp [MultiplicitiesBelow]
+            · simp [ReverseSortedMultiplicities]
+
 /-- Characteristic-zero squarefree decomposition with recursive content and
 scalar content split off. -/
 def sqfDecomp [IsMonomialOrder cmp] [NatCast R] [NatNoZero R]
@@ -396,11 +524,13 @@ theorem sqfDecomp_multiplicity_pos [IsMonomialOrder cmp]
   simpa [sqfDecomp, PositiveMultiplicities] using
     positive_sqfOps (R := R) n cmp p
 
+omit [LawfulGcdOps R] [LawfulBezoutOps R] in
 theorem sqfDecomp_multiplicity_sorted [IsMonomialOrder cmp]
     [NatCast R] [NatNoZero R] (p : MvPoly n R cmp) :
     List.Pairwise (fun f g => f.multiplicity < g.multiplicity)
       (sqfDecomp p).factors := by
-  sorry
+  simpa [sqfDecomp, SortedMultiplicities] using
+    sorted_sqfOps (R := R) n cmp p
 
 theorem sqfDecomp_nonconstant [IsMonomialOrder cmp]
     [NatCast R] [NatNoZero R] (p : MvPoly n R cmp) :
