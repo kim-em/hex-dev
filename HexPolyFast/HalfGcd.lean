@@ -291,6 +291,18 @@ inductive ExactQuotients : List (DensePoly F) → DensePoly F → DensePoly F �
       (tail : ExactQuotients qs b r c d) :
       ExactQuotients (q :: qs) a b c d
 
+/-- An exact Euclidean prefix containing only steps at which the divisor is
+nonzero.  This is the executable trace relation: `xgcdAux` takes precisely
+these steps and stops before any attempted division by zero. -/
+inductive ActiveQuotients : List (DensePoly F) → DensePoly F → DensePoly F →
+    DensePoly F → DensePoly F → Prop where
+  | nil (a b : DensePoly F) : ActiveQuotients [] a b a b
+  | cons {q r a b c d : DensePoly F} {qs : List (DensePoly F)}
+      (hb : 0 < b.size)
+      (hdiv : _root_.Hex.DensePoly.divMod a b = (q, r))
+      (tail : ActiveQuotients qs b r c d) :
+      ActiveQuotients (q :: qs) a b c d
+
 /-- An exact Euclidean prefix whose divisors have positive degree and whose
 quotients are nonzero.  These are precisely the steps a half-gcd block may
 lift from high halves; constant-divisor finishing remains an exact boundary
@@ -313,6 +325,23 @@ theorem ProperQuotients.exact {qs : List (DensePoly F)}
   | nil => exact ExactQuotients.nil _ _
   | cons hq hb hdiv tail ih => exact ExactQuotients.cons hdiv ih
 
+/-- Proper half-gcd steps are active executable Euclidean steps. -/
+theorem ProperQuotients.active {qs : List (DensePoly F)}
+    {a b c d : DensePoly F} (hproper : ProperQuotients qs a b c d) :
+    ActiveQuotients qs a b c d := by
+  induction hproper with
+  | nil => exact ActiveQuotients.nil _ _
+  | cons hq hb hdiv tail ih =>
+      exact ActiveQuotients.cons (by omega) hdiv ih
+
+/-- Every active trace is an exact Euclidean prefix. -/
+theorem ActiveQuotients.exact {qs : List (DensePoly F)}
+    {a b c d : DensePoly F} (hactive : ActiveQuotients qs a b c d) :
+    ExactQuotients qs a b c d := by
+  induction hactive with
+  | nil => exact ExactQuotients.nil _ _
+  | cons hb hdiv tail ih => exact ExactQuotients.cons hdiv ih
+
 /-- Concatenating adjacent proper blocks preserves their Euclidean
 certificate. -/
 theorem ProperQuotients.append {qs rs : List (DensePoly F)}
@@ -334,6 +363,17 @@ theorem ExactQuotients.append {qs rs : List (DensePoly F)}
   induction hfirst with
   | nil => exact hsecond
   | cons hdiv tail ih => exact ExactQuotients.cons hdiv (ih hsecond)
+
+/-- Concatenating adjacent active traces preserves executability. -/
+theorem ActiveQuotients.append {qs rs : List (DensePoly F)}
+    {a b c d e f : DensePoly F}
+    (hfirst : ActiveQuotients qs a b c d)
+    (hsecond : ActiveQuotients rs c d e f) :
+    ActiveQuotients (qs ++ rs) a b e f := by
+  induction hfirst with
+  | nil => exact hsecond
+  | cons hb hdiv tail ih =>
+      exact ActiveQuotients.cons hb hdiv (ih hsecond)
 
 private theorem sub_mul_eq_remainder {a b q r : DensePoly F}
     (hdiv : _root_.Hex.DensePoly.divMod a b = (q, r)) :
@@ -552,9 +592,9 @@ private def gcdMatrix (plan : MulPlan F) :
 termination_by fuel _ _ => fuel
 decreasing_by all_goals omega
 
-/-- Internal divide-and-conquer candidate.  The quotient-sequence invariant
-below certifies terminal exactness; connecting its first row to the established
-extended-gcd coefficients remains before it can replace the public engine. -/
+/-- Internal divide-and-conquer implementation used by the public gcd and
+extended-gcd projections.  The active quotient trace below certifies that its
+first row is exactly the established extended-gcd coefficient pair. -/
 private def xgcdMatrixWith (plan : MulPlan F) (p q : DensePoly F) : XGCDResult F :=
   let matrix := gcdMatrix plan (p.size + q.size + 1) p q
   let result := GcdStep.applyWith plan matrix p q
@@ -658,6 +698,29 @@ private theorem fieldRemainder_eq_zero_of_size_one {a b q r : DensePoly F}
     a b hb hcancel
   rw [hdiv] at hzero
   exact hzero
+
+private theorem fieldRemainder_size_lt_of_pos {a b q r : DensePoly F}
+    (hb : 0 < b.size)
+    (hdiv : _root_.Hex.DensePoly.divMod a b = (q, r)) :
+    r.size < b.size := by
+  by_cases hone : b.size = 1
+  · rw [fieldRemainder_eq_zero_of_size_one hone hdiv, size_zero]
+    exact hb
+  · exact fieldRemainder_size_lt (by omega) hdiv
+
+/-- A complete active Euclidean trace has at most one quotient per stored
+coefficient of its initial divisor. -/
+theorem ActiveQuotients.length_le {qs : List (DensePoly F)}
+    {a b c d : DensePoly F} (hactive : ActiveQuotients qs a b c d)
+    (hd : d = 0) :
+    qs.length ≤ b.size := by
+  induction hactive with
+  | nil => exact Nat.zero_le _
+  | cons hb hdiv tail ih =>
+      have hrlt := fieldRemainder_size_lt_of_pos hb hdiv
+      simp only [List.length_cons]
+      have := ih hd
+      omega
 
 /-- Proper Euclidean blocks preserve strict ordering of consecutive
 remainders. -/
@@ -769,7 +832,7 @@ private def MatrixProper (plan : MulPlan F) (matrix : GcdStep F)
 Euclidean quotient block it represents. -/
 private def MatrixExact (plan : MulPlan F) (matrix : GcdStep F)
     (a b c d : DensePoly F) : Prop :=
-  ∃ qs, ExactQuotients qs a b c d ∧
+  ∃ qs, ActiveQuotients qs a b c d ∧
     matrix = quotientStep plan qs ∧ matrix.apply a b = (c, d)
 
 private theorem MatrixProper.one (plan : MulPlan F) (a b : DensePoly F) :
@@ -778,14 +841,14 @@ private theorem MatrixProper.one (plan : MulPlan F) (a b : DensePoly F) :
 
 private theorem MatrixExact.one (plan : MulPlan F) (a b : DensePoly F) :
     MatrixExact plan GcdStep.one a b a b := by
-  exact ⟨[], ExactQuotients.nil _ _, rfl, GcdStep.apply_one a b⟩
+  exact ⟨[], ActiveQuotients.nil _ _, rfl, GcdStep.apply_one a b⟩
 
 private theorem MatrixProper.exact (plan : MulPlan F)
     {matrix : GcdStep F} {a b c d : DensePoly F}
     (hmatrix : MatrixProper plan matrix a b c d) :
     MatrixExact plan matrix a b c d := by
   rcases hmatrix with ⟨qs, hproper, hmatrix, happly⟩
-  exact ⟨qs, hproper.exact, hmatrix, happly⟩
+  exact ⟨qs, hproper.active, hmatrix, happly⟩
 
 private theorem MatrixProper.terminal_lt (plan : MulPlan F)
     {matrix : GcdStep F} {a b c d : DensePoly F}
@@ -841,11 +904,12 @@ private theorem MatrixProper.euclid (plan : MulPlan F)
 private theorem MatrixExact.euclid (plan : MulPlan F)
     {matrix : GcdStep F} {a b c d q r : DensePoly F}
     (hmatrix : MatrixExact plan matrix a b c d)
+    (hd : 0 < d.size)
     (hdiv : _root_.Hex.DensePoly.divMod c d = (q, r)) :
     MatrixExact plan
       (GcdStep.composeWith plan (GcdStep.euclid q) matrix) a b d r := by
   apply hmatrix.compose
-  refine ⟨[q], ExactQuotients.cons hdiv (ExactQuotients.nil d r),
+  refine ⟨[q], ActiveQuotients.cons hd hdiv (ActiveQuotients.nil d r),
     (quotientStep_singleton plan q).symm, ?_⟩
   rw [GcdStep.apply_euclid, sub_mul_eq_remainder hdiv]
 
@@ -975,10 +1039,10 @@ private theorem gcdMatrix_exact (plan : MulPlan F) (fuel : Nat)
         have hblockApply' : block.apply a b = (c, d) := hblockApply
         have hblock : MatrixExact plan block a b cd.1 cd.2 := by
           refine ⟨qs, ?_, hblockMatrix', rfl⟩
-          change ExactQuotients qs a b
+          change ActiveQuotients qs a b
             (block.apply a b).1 (block.apply a b).2
           rw [hblockApply']
-          exact hproper.exact
+          exact hproper.active
         have hcdSecond : cd.2.size ≤ b.size := by
           have hdle := hproper.second_le
           change (block.apply a b).2.size ≤ b.size
@@ -998,7 +1062,7 @@ private theorem gcdMatrix_exact (plan : MulPlan F) (fuel : Nat)
             dsimp [qr]
             exact (divModWith_eq plan cd.1 cd.2).symm
           have hboundary : MatrixExact plan boundary a b cd.2 qr.2 :=
-            MatrixExact.euclid plan hblock hdiv
+            MatrixExact.euclid plan hblock hcdpos hdiv
           split
           · rename_i hqrzero
             have hqrsize : qr.2.size = 0 :=
@@ -1020,6 +1084,85 @@ private theorem gcdMatrix_exact (plan : MulPlan F) (fuel : Nat)
             have hrecFuel : qr.2.size < fuel := by omega
             rcases ih cd.2 qr.2 hrecFuel with ⟨g, hrest⟩
             exact ⟨g, MatrixExact.compose plan hboundary hrest⟩
+
+private theorem ActiveQuotients.xgcdAux_eq
+    {qs : List (DensePoly F)} {a b c d : DensePoly F}
+    (hactive : ActiveQuotients qs a b c d) (hd : d = 0)
+    (s₀ t₀ s₁ t₁ : DensePoly F) (fuel : Nat)
+    (hlen : qs.length ≤ fuel) :
+    xgcdAux a s₀ t₀ b s₁ t₁ fuel =
+      { gcd := c
+        left := (runQuotients qs s₀ s₁).1
+        right := (runQuotients qs t₀ t₁).1 } := by
+  induction qs generalizing a b c d fuel s₀ t₀ s₁ t₁ with
+  | nil =>
+      cases hactive
+      subst b
+      cases fuel with
+      | zero => rfl
+      | succ fuel =>
+          unfold xgcdAux
+          rw [show (0 : DensePoly F).isZero = true from
+            (isZero_eq_true_iff 0).mpr size_zero]
+          rfl
+  | cons q qs ih =>
+      cases hactive with
+      | cons hb hdiv tail =>
+          cases fuel with
+          | zero => simp only [List.length_cons] at hlen; omega
+          | succ fuel =>
+              unfold xgcdAux
+              split
+              · rename_i hzero
+                have hbzero := (isZero_eq_true_iff b).mp hzero
+                omega
+              · rw [hdiv]
+                simp only [runQuotients]
+                exact ih tail hd s₁ t₁ (s₀ - q * s₁) (t₀ - q * t₁) fuel (by
+                simp only [List.length_cons] at hlen
+                omega)
+
+private theorem quotientStep_a00 (plan : MulPlan F)
+    (qs : List (DensePoly F)) :
+    (quotientStep plan qs).a00 = (runQuotients qs 1 0).1 := by
+  have h := congrArg Prod.fst (apply_quotientStep plan qs 1 0)
+  have hmulzero : ∀ p : DensePoly F, p * 0 = 0 := by
+    intro p
+    rw [mul_comm_poly, zero_mul]
+  simpa only [GcdStep.apply, mul_one_right_poly, hmulzero,
+    add_zero_poly] using h
+
+private theorem quotientStep_a01 (plan : MulPlan F)
+    (qs : List (DensePoly F)) :
+    (quotientStep plan qs).a01 = (runQuotients qs 0 1).1 := by
+  have h := congrArg Prod.fst (apply_quotientStep plan qs 0 1)
+  have hmulzero : ∀ p : DensePoly F, p * 0 = 0 := by
+    intro p
+    rw [mul_comm_poly, zero_mul]
+  simpa only [GcdStep.apply, mul_one_right_poly, hmulzero,
+    zero_add] using h
+
+private theorem xgcdMatrixWith_eq (plan : MulPlan F)
+    (p q : DensePoly F) : xgcdMatrixWith plan p q = xgcd p q := by
+  unfold xgcdMatrixWith xgcd
+  simp only [GcdStep.applyWith_eq]
+  let fuel := p.size + q.size + 1
+  let matrix := gcdMatrix plan fuel p q
+  let result := matrix.apply p q
+  change { gcd := result.1, left := matrix.a00, right := matrix.a01 } =
+    xgcdAux p 1 0 q 0 1 fuel
+  rcases gcdMatrix_exact plan fuel p q (by dsimp [fuel]; omega) with
+    ⟨c, qs, hactive, hmatrix, happly⟩
+  have hmatrix' : matrix = quotientStep plan qs := hmatrix
+  have happly' : result = (c, 0) := happly
+  have hlen : qs.length ≤ fuel := by
+    have htrace := hactive.length_le rfl
+    dsimp [fuel]
+    omega
+  have hx := hactive.xgcdAux_eq rfl 1 0 0 1 fuel hlen
+  rw [hx, happly']
+  simp only
+  rw [hmatrix', quotientStep_a00, quotientStep_a01]
 
 /-- Extended Euclidean recursion with a queue of high-half quotient
 predictions.  Each recursive call consumes one ordinary Euclidean step, so
@@ -1060,7 +1203,7 @@ def xgcdAuxWith (plan : MulPlan F) :
 
 /-- Plan-driven half-gcd extended gcd. -/
 def xgcdWith (plan : MulPlan F) (p q : DensePoly F) : XGCDResult F :=
-  xgcdAuxWith plan [] p 1 0 q 0 1 (p.size + q.size + 1)
+  xgcdMatrixWith plan p q
 
 /-- Gcd projection of the half-gcd engine. -/
 def gcdWith (plan : MulPlan F) (p q : DensePoly F) : DensePoly F :=
@@ -1109,7 +1252,7 @@ private theorem xgcdAuxWith_eq (plan : MulPlan F)
 the raw gcd scaling and both Bezout coefficients. -/
 theorem xgcdWith_eq (plan : MulPlan F) (p q : DensePoly F) :
     xgcdWith plan p q = xgcd p q := by
-  exact xgcdAuxWith_eq plan [] p 1 0 q 0 1 (p.size + q.size + 1)
+  exact xgcdMatrixWith_eq plan p q
 
 /-- Half-gcd returns exactly the established gcd. -/
 theorem gcdWith_eq (plan : MulPlan F) (p q : DensePoly F) :

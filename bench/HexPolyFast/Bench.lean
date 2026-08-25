@@ -17,6 +17,57 @@ namespace Hex.PolyFastBench
 
 open Hex Hex.DensePoly
 
+private abbrev F2 := Fin 2
+
+private def f2Inv (a : F2) : F2 := a
+private def f2Div (a b : F2) : F2 := a * b
+private def f2Zpow (a : F2) (n : Int) : F2 :=
+  if n = 0 then 1 else a
+
+local instance (priority := 2000) : Inv F2 := ⟨f2Inv⟩
+local instance (priority := 2000) : Div F2 := ⟨f2Div⟩
+local instance : HPow F2 Int F2 := ⟨f2Zpow⟩
+
+private theorem f2_cases (a : F2) : a = 0 ∨ a = 1 := by
+  rcases a with ⟨a, ha⟩
+  have : a = 0 ∨ a = 1 := by omega
+  rcases this with rfl | rfl
+  · exact Or.inl rfl
+  · exact Or.inr rfl
+
+local instance : Lean.Grind.Field F2 where
+  toCommRing := inferInstance
+  inv := f2Inv
+  div := f2Div
+  zpow := ⟨f2Zpow⟩
+  div_eq_mul_inv := by intros; rfl
+  zero_ne_one := by decide
+  inv_zero := rfl
+  mul_inv_cancel := by
+    intro a ha
+    rcases f2_cases a with hzero | hone
+    · exact False.elim (ha hzero)
+    · subst a
+      rfl
+  zpow_zero := by intro; simp [f2Zpow]
+  zpow_succ := by
+    intro a n
+    cases n with
+    | zero =>
+        change a = 1 * a
+        exact (Lean.Grind.Semiring.one_mul a).symm
+    | succ n =>
+        have hn : (n + 1 : Int) ≠ 0 := by omega
+        have hn₁ : (n + 1 : Int) + 1 ≠ 0 := by omega
+        rcases f2_cases a with hzero | hone <;> subst a <;>
+          simp [f2Zpow, hn, hn₁]
+  zpow_neg := by
+    intro a n
+    by_cases hn : n = 0
+    · subst n
+      simp [f2Zpow, f2Inv]
+    · simp [f2Zpow, hn, f2Inv]
+
 structure Binary where
   left : DensePoly Int
   right : DensePoly Int
@@ -72,6 +123,46 @@ def runLongDivision (input : DivisionInput) : UInt64 :=
 
 def runNewtonDivision (input : DivisionInput) : UInt64 :=
   checksumDiv (divModWith (karatsubaPlan 32) input.dividend input.divisor)
+
+structure GcdInput where
+  left : DensePoly F2
+  right : DensePoly F2
+
+instance : Hashable GcdInput where
+  hash input := mixHash (hash input.left.toArray) (hash input.right.toArray)
+
+private def f2Coeff (i salt : Nat) : F2 :=
+  if (mixHash (hash i) (hash salt)).toNat / 65536 % 2 = 0 then 0 else 1
+
+def prepGcdBalanced (n : Nat) : GcdInput :=
+  { left := ofList (((List.range (n + 1)).map fun i => f2Coeff i 83) ++ [1])
+    right := ofList (((List.range n).map fun i => f2Coeff i 97) ++ [1]) }
+
+def prepGcdSkew (n : Nat) : GcdInput :=
+  { left := ofList (((List.range (4 * n + 1)).map fun i => f2Coeff i 89) ++ [1])
+    right := ofList (((List.range n).map fun i => f2Coeff i 101) ++ [1]) }
+
+private def checksumF2 (p : DensePoly F2) : UInt64 :=
+  p.toArray.foldl (fun acc x => mixHash acc (hash x.val)) 0
+
+private def checksumXgcd (result : XGCDResult F2) : UInt64 :=
+  mixHash (checksumF2 result.gcd)
+    (mixHash (checksumF2 result.left) (checksumF2 result.right))
+
+private def checksumXgcdLeft (result : XGCDLeftResult F2) : UInt64 :=
+  mixHash (checksumF2 result.gcd) (checksumF2 result.left)
+
+def runEuclideanXgcd (input : GcdInput) : UInt64 :=
+  checksumXgcd (xgcd input.left input.right)
+
+def runHalfGcd (input : GcdInput) : UInt64 :=
+  checksumXgcd (xgcdWith (karatsubaPlan 32) input.left input.right)
+
+def runHalfGcdSkew (input : GcdInput) : UInt64 :=
+  checksumXgcd (xgcdWith (karatsubaPlan 32) input.left input.right)
+
+def runHalfGcdLeft (input : GcdInput) : UInt64 :=
+  checksumXgcdLeft (xgcdLeftWith (karatsubaPlan 32) input.left input.right)
 
 structure ProductTreeInput where
   leaves : Array (DensePoly Int)
@@ -231,6 +322,59 @@ setup_benchmark runNewtonDivision n => n * (Nat.sqrt n)
     targetInnerNanos := 200000000
     signalFloorMultiplier := 1.0
     tags := #["division", "newton", "cold"]
+  }
+
+/- The established extended Euclidean loop performs a linear number of
+remainder steps.  Over the fixed coefficient field, division and the Bezout
+updates have total quadratic degree cost. -/
+setup_benchmark runEuclideanXgcd n => n ^ 2
+  with prep := prepGcdBalanced
+  where {
+    paramFloor := 4
+    paramCeiling := 512
+    paramSchedule := .custom #[4, 8, 16, 32, 64, 128, 256, 512]
+    maxSecondsPerCall := 3.0
+    targetInnerNanos := 200000000
+    signalFloorMultiplier := 1.0
+    tags := #["half-gcd", "euclidean", "balanced"]
+  }
+
+/- Recursive high-half transformations group the quotient sequence into a
+logarithmic number of balanced matrix levels, for `O(M(n) log n)`. -/
+setup_benchmark runHalfGcd n => n * (Nat.sqrt n) * (Nat.log2 n + 1)
+  with prep := prepGcdBalanced
+  where {
+    paramFloor := 4
+    paramCeiling := 2048
+    paramSchedule := .custom #[4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048]
+    maxSecondsPerCall := 3.0
+    targetInnerNanos := 200000000
+    signalFloorMultiplier := 1.0
+    tags := #["half-gcd", "matrix", "balanced"]
+  }
+
+setup_benchmark runHalfGcdSkew n => n * (Nat.sqrt n) * (Nat.log2 n + 1)
+  with prep := prepGcdSkew
+  where {
+    paramFloor := 4
+    paramCeiling := 1024
+    paramSchedule := .custom #[4, 8, 16, 32, 64, 128, 256, 512, 1024]
+    maxSecondsPerCall := 3.0
+    targetInnerNanos := 200000000
+    signalFloorMultiplier := 1.0
+    tags := #["half-gcd", "matrix", "ratio-4"]
+  }
+
+setup_benchmark runHalfGcdLeft n => n * (Nat.sqrt n) * (Nat.log2 n + 1)
+  with prep := prepGcdBalanced
+  where {
+    paramFloor := 4
+    paramCeiling := 2048
+    paramSchedule := .custom #[4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048]
+    maxSecondsPerCall := 3.0
+    targetInnerNanos := 200000000
+    signalFloorMultiplier := 1.0
+    tags := #["half-gcd", "matrix", "one-sided"]
   }
 
 /- A balanced product tree performs one multiplication per internal node over
