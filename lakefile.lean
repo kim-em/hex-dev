@@ -725,6 +725,13 @@ lean_lib HexFactorizationModules where
 lean_lib HexSparsePolyTests where
   globs := #[`HexSparsePolyMathlib.LintTests]
 
+-- Monorepo-only lint regression for the incubating truncated-series pair.
+-- It moves into the release-manifest-backed test target when the pair is
+-- published.
+@[default_target]
+lean_lib HexTruncatedSeriesTests where
+  globs := #[`HexTruncatedSeriesMathlib.LintTests]
+
 -- HexCharPoly is not yet a published split repository (its released.yml
 -- entries were withdrawn until the phase pipeline completes), so its
 -- verification-only elaborator regressions stay separate from the

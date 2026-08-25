@@ -38,6 +38,44 @@ def newton (step : TSeries R n → Nat → TSeries R n)
 def steps (n : Nat) : Nat :=
   if n ≤ 1 then 0 else Nat.log2 (n - 1) + 1
 
+/-- Increasing the requested precision cannot decrease the Newton step count. -/
+theorem steps_mono {m n : Nat} (h : m ≤ n) : steps m ≤ steps n := by
+  have log2_mono {a b : Nat} (hab : a ≤ b) : a.log2 ≤ b.log2 := by
+    by_cases ha : a = 0
+    · subst a
+      simp
+    · have hb : b ≠ 0 := by omega
+      rw [Nat.le_log2 hb]
+      exact Nat.le_trans (Nat.log2_self_le ha) hab
+  unfold steps
+  by_cases hm : m ≤ 1
+  · rw [if_pos hm]
+    omega
+  · have hn : ¬n ≤ 1 := by omega
+    rw [if_neg hm, if_neg hn]
+    exact Nat.add_le_add_right (log2_mono (Nat.sub_le_sub_right h 1)) 1
+
+/-- If every Newton stage preserves the prefix established by the preceding
+stage, any later iterate agrees with an earlier iterate throughout that
+prefix. -/
+theorem newton_agree [Zero R] (step : TSeries R n → Nat → TSeries R n)
+    (init : TSeries R n)
+    (stable : ∀ j, Agree (2 ^ j) (newton step init (j + 1))
+      (newton step init j)) {j k : Nat} (hjk : j ≤ k) :
+    Agree (2 ^ j) (newton step init k) (newton step init j) := by
+  induction k generalizing j with
+  | zero =>
+      have hj : j = 0 := by omega
+      subst j
+      exact Agree.refl 1 (newton step init 0)
+  | succ k ih =>
+      by_cases hj : j = k + 1
+      · subst j
+        exact Agree.refl (2 ^ (k + 1)) (newton step init (k + 1))
+      · have hjk' : j ≤ k := by omega
+        exact ((stable k).mono
+          (Nat.pow_le_pow_right (by decide : 0 < 2) hjk')).trans (ih hjk')
+
 /-- The Newton step count reaches every requested coefficient. -/
 theorem two_pow_steps_ge (n : Nat) : n ≤ 2 ^ steps n := by
   unfold steps
