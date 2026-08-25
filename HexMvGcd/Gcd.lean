@@ -289,7 +289,56 @@ theorem primPartIn_mul
     (i : Fin (n + 1)) (cmp' : Mono n → Mono n → Ordering)
     [IsMonomialOrder cmp'] (p q : MvPoly (n + 1) R cmp) :
     primPartIn i cmp' (p * q) = primPartIn i cmp' p * primPartIn i cmp' q := by
-  sorry
+  by_cases hp : p = 0
+  · subst p
+    rw [MvPoly.zero_mul, primPartIn_zero, MvPoly.zero_mul]
+  by_cases hq : q = 0
+  · subst q
+    rw [MvPoly.mul_zero, primPartIn_zero, MvPoly.mul_zero]
+  let cp := constIn (cmp := cmp) i cmp' (contentIn i cmp' p)
+  let cq := constIn (cmp := cmp) i cmp' (contentIn i cmp' q)
+  let pp := primPartIn i cmp' p
+  let pq := primPartIn i cmp' q
+  have hrecp : cp * pp = p := contentIn_mul_primPartIn i cmp' p
+  have hrecq : cq * pq = q := contentIn_mul_primPartIn i cmp' q
+  have hcp : cp ≠ 0 := by
+    intro hzero
+    rw [hzero, MvPoly.zero_mul] at hrecp
+    exact hp hrecp.symm
+  have hcq : cq ≠ 0 := by
+    intro hzero
+    rw [hzero, MvPoly.zero_mul] at hrecq
+    exact hq hrecq.symm
+  have hcpcq : cp * cq ≠ 0 := by
+    intro hzero
+    rcases GcdDomainLaws.no_zero_div cp cq hzero with hzero | hzero
+    · exact hcp hzero
+    · exact hcq hzero
+  have hleft :
+      (cp * cq) * primPartIn i cmp' (p * q) = p * q := by
+    calc
+      (cp * cq) * primPartIn i cmp' (p * q) =
+          constIn i cmp'
+              (contentIn i cmp' p * contentIn i cmp' q) *
+            primPartIn i cmp' (p * q) := by rw [constIn_mul]
+      _ = constIn i cmp' (contentIn i cmp' (p * q)) *
+            primPartIn i cmp' (p * q) := by rw [contentIn_mul]
+      _ = p * q := contentIn_mul_primPartIn i cmp' (p * q)
+  have hright : p * q = (cp * cq) * (pp * pq) := by
+    calc
+      p * q = (cp * pp) * (cq * pq) := by rw [hrecp, hrecq]
+      _ = (cp * cq) * (pp * pq) := by grind
+  have heq :
+      (cp * cq) * primPartIn i cmp' (p * q) =
+        (cp * cq) * (pp * pq) := hleft.trans hright
+  have hzero :
+      (cp * cq) * (primPartIn i cmp' (p * q) - pp * pq) = 0 := by
+    grind
+  rcases GcdDomainLaws.no_zero_div (cp * cq)
+      (primPartIn i cmp' (p * q) - pp * pq) hzero with hzero | hzero
+  · exact False.elim (hcpcq hzero)
+  · change primPartIn i cmp' (p * q) = pp * pq
+    grind
 
 /-- Canonically normalized gcd. -/
 def gcd [IsMonomialOrder cmp]
