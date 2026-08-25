@@ -75,6 +75,56 @@ def UniCongr (q : Nat) (f g : ZPoly) : Prop :=
 def UniSymCanonical (q : Nat) (f : ZPoly) : Prop :=
   ∀ k : Nat, -(q : Int) < 2 * f.coeff k ∧ 2 * f.coeff k ≤ (q : Int)
 
+private theorem symMod_zero (q : Nat) : Modular.symMod 0 q = 0 := by
+  unfold Modular.symMod
+  split <;> simp_all
+
+private theorem arrayMap_getD {R S : Type} [Zero R] [Zero S]
+    (f : R → S) (hzero : f 0 = 0) (a : Array R) (k : Nat) :
+    (a.map f).getD k 0 = f (a.getD k 0) := by
+  rw [Array.getD_eq_getD_getElem?, Array.getD_eq_getD_getElem?]
+  rw [Array.getElem?_map]
+  cases h : a[k]? <;> simp [hzero]
+
+private theorem reduceUni_coeff (q : Nat) (f : ZPoly) (k : Nat) :
+    (reduceUni q f).coeff k = Modular.symMod (f.coeff k) q := by
+  unfold reduceUni
+  rw [DensePoly.coeff_ofCoeffs]
+  calc
+    (f.toArray.map fun c => Modular.symMod c q).getD k 0 =
+        Modular.symMod (f.toArray.getD k 0) q :=
+      arrayMap_getD _ (symMod_zero q) _ _
+    _ = Modular.symMod (f.coeff k) q :=
+      congrArg (fun c => Modular.symMod c q) (DensePoly.toArray_getD f k)
+
+private theorem reduceUni_symCanonical (q : Nat) (hq : 0 < q)
+    (f : ZPoly) : UniSymCanonical q (reduceUni q f) := by
+  intro k
+  rw [reduceUni_coeff]
+  let x := Modular.symMod (f.coeff k) q
+  have hbound : 2 * x.natAbs ≤ q := Modular.symMod_le hq
+  have hbound' : ((2 * x.natAbs : Nat) : Int) ≤ (q : Int) :=
+    Int.ofNat_le.mpr hbound
+  have hlower : -(q : Int) < 2 * x := by
+    unfold x Modular.symMod
+    rw [Hex.ite_eq_right (Nat.ne_of_gt hq)]
+    simp only
+    have hrem : 0 ≤ f.coeff k % (q : Int) :=
+      Int.emod_nonneg _ (by omega)
+    split <;> omega
+  constructor
+  · exact hlower
+  · by_cases hx : 0 ≤ x
+    · rw [Int.natCast_mul, Int.ofNat_natAbs_of_nonneg hx] at hbound'
+      exact hbound'
+    · omega
+
+private theorem zero_symCanonical (q : Nat) (hq : 0 < q) :
+    UniSymCanonical q 0 := by
+  intro k
+  rw [DensePoly.coeff_zero]
+  omega
+
 /-- Ordered product of a list of integer polynomials. -/
 def uniProduct (fs : List ZPoly) : ZPoly :=
   fs.foldl zMul 1
@@ -160,6 +210,28 @@ def remUnit? (q : Nat) (f g : ZPoly) : Option ZPoly :=
     | none => none
     | some invLead => some (remUnitAux q g invLead (f.size + 1) f)
 
+private theorem remUnitAux_symCanonical (q : Nat) (hq : 0 < q)
+    (g : ZPoly) (invLead : Int) (fuel : Nat) (r : ZPoly) :
+    UniSymCanonical q (remUnitAux q g invLead fuel r) := by
+  induction fuel generalizing r with
+  | zero =>
+      exact reduceUni_symCanonical q hq r
+  | succ fuel ih =>
+      simp only [remUnitAux]
+      split
+      · exact reduceUni_symCanonical q hq r
+      · exact ih _
+
+private theorem remUnit_canonical (q : Nat) (hq : 0 < q)
+    (f g : ZPoly) : UniSymCanonical q ((remUnit? q f g).getD 0) := by
+  unfold remUnit?
+  dsimp only
+  split
+  · exact zero_symCanonical q hq
+  · split
+    · exact zero_symCanonical q hq
+    · exact remUnitAux_symCanonical q hq _ _ _ _
+
 /-- Pairwise worker for `solveUni`.  Equal list lengths are part of the checked
 lift input; the total fallback truncates at the shorter list. -/
 def solveUniGo (q : Nat) (c : ZPoly) :
@@ -173,6 +245,28 @@ degree-bounded solution of the univariate correction equation. -/
 def solveUni (q : Nat) (images witness : List ZPoly) (c : ZPoly) :
     List ZPoly :=
   solveUniGo q c images witness
+
+private theorem solveUniGo_symCanonical (q : Nat) (hq : 0 < q)
+    (c : ZPoly) {images witness : List ZPoly}
+    (hlen : witness.length = images.length) (j : Nat)
+    (hj : j < images.length) :
+    UniSymCanonical q ((solveUniGo q c images witness).getD j 0) := by
+  induction images generalizing witness j with
+  | nil => simp at hj
+  | cons image images ih =>
+      cases witness with
+      | nil => simp at hlen
+      | cons sigma witness =>
+          have hlen' : witness.length = images.length := by
+            simpa using hlen
+          cases j with
+          | zero =>
+              simp only [solveUniGo, List.getD_cons_zero]
+              exact remUnit_canonical q hq _ _
+          | succ j =>
+              simp only [solveUniGo, List.getD_cons_succ]
+              apply ih hlen' j
+              simpa using hj
 
 /-! # Producing and lifting the partial-fraction tuple -/
 
@@ -318,7 +412,9 @@ theorem solveUni_symCanonical {q : Nat} {images witness : List ZPoly}
     {c : ZPoly} (h : UniValid q images witness) (j : Nat)
     (hj : j < images.length) :
     UniSymCanonical q ((solveUni q images witness c).getD j 0) := by
-  sorry
+  have hq : 0 < q := Nat.lt_trans Nat.zero_lt_one h.modulus
+  unfold solveUni
+  exact solveUniGo_symCanonical q hq c h.lengths j hj
 
 /-- Degree-bounded solutions are unique coefficientwise modulo `q`. -/
 theorem solveUni_unique {q : Nat} {images witness tau : List ZPoly}
