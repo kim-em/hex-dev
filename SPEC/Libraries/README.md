@@ -146,9 +146,9 @@ Each library with its immediate dependencies:
 - **hex-hensel**: hex-poly-fp, hex-poly-z, hex-basic
 - **hex-conway**: hex-berlekamp
 - **hex-gfq-ring**: hex-poly-fp
-- **hex-gfq-field**: hex-gfq-ring, hex-finite-field
+- **hex-gfq-field**: hex-gfq-ring, hex-berlekamp, hex-finite-field
 - **hex-gfq**: hex-gfq-field, hex-conway, hex-gf2
-- **hex-gf2**: hex-poly, hex-basic, hex-finite-field
+- **hex-gf2**: hex-basic, hex-finite-field
 - **hex-berlekamp-zassenhaus**: hex-berlekamp, hex-hensel, hex-lll
 - **hex-summation**: hex-poly, hex-mv-poly, hex-resultant, hex-matrix, hex-row-reduce, hex-berlekamp-zassenhaus, hex-basic
 
@@ -193,7 +193,7 @@ Mathlib companion libraries (each also depends on Mathlib):
 - **hex-berlekamp-mathlib**: hex-berlekamp, hex-poly-mathlib, hex-mod-arith-mathlib, hex-poly-fp-mathlib
 - **hex-hensel-mathlib**: hex-hensel, hex-poly-mathlib
 - **hex-gf2-mathlib**: hex-gf2, hex-poly-fp, hex-gfq-field, hex-poly-fp-mathlib
-- **hex-gfq-mathlib**: hex-gfq
+- **hex-gfq-mathlib**: hex-gfq, hex-gf2-mathlib
 - **hex-berlekamp-zassenhaus-mathlib**: hex-berlekamp-zassenhaus, hex-poly-z-mathlib
 - **hex-summation-mathlib**: hex-summation
 
