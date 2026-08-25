@@ -8,8 +8,9 @@ certificate replay, Hermite rank and index agreement, diagonal solvability,
 and abelian-presentation data. The form-only APIs use the `Unit` accumulator
 and never construct transforms; the diagonal APIs bypass the general pivot
 loop; empty, rectangular, and rank-deficient conventions are represented by
-the same proofs as ordinary inputs. Shared Hermite code is limited to the
-bounded elementary gcd steps rather than invoking Hermite normalization.
+the same proofs as ordinary inputs. On the executable path, shared Hermite
+code is limited to the bounded elementary gcd steps rather than invoking
+Hermite normalization.
 
 No data placeholder, fake extern, native-type detour, missing headline
 declaration, axiom, sorry, or mathematical contract mismatch was found.

@@ -128,9 +128,9 @@ end Smith.Diagonal
 
 namespace Smith.Diagonal
 
-/-- The decidable shape certificate checked before exposing the specialized
-diagonal result. It contains only the working matrix and diagonal list, so the
-form-only path still allocates no transforms. -/
+/-- The decidable shape predicate that the compact diagonal run is proved to
+satisfy. It contains only the working matrix and diagonal list, so reasoning
+about the form-only path does not introduce transform matrices. -/
 @[expose]
 def Valid (s : Smith.Result α r r) : Prop :=
   s.diag.length ≤ r ∧
@@ -143,22 +143,6 @@ def Valid (s : Smith.Result α r r) : Prop :=
 instance (s : Smith.Result α r r) : Decidable (Valid s) := by
   unfold Valid
   infer_instance
-
-/-- Form-only validation of the fixed diagonal network. -/
-@[expose]
-def valid (d : Vector Int r) : Bool :=
-  decide (Valid (run (Smith.formAccumulator r r) d))
-
-/-- Full-data candidate produced by exactly the same fixed network. -/
-@[expose]
-def candidateData (d : Vector Int r) : SmithData r r :=
-  let result := run (Smith.transformAccumulator r r) d
-  { rank := result.diag.length
-    diag := result.diagVector
-    left := result.accumulator.left
-    leftInv := result.accumulator.leftInv
-    right := result.accumulator.right
-    rightInv := result.accumulator.rightInv }
 
 /-- Agreement of diagonal runs after erasing their companion accumulators. -/
 structure Same (s : Smith.Result α r r) (t : Smith.Result β r r) : Prop where
@@ -849,11 +833,6 @@ def erase (s : Result α r) : Smith.Result α r r :=
   { matrix := diagMatrix s.values r r
     diag := collect s.values
     accumulator := s.accumulator }
-
-/-- Decidable postcondition for the compact form-only run. -/
-@[expose]
-def valid (d : Vector Int r) : Bool :=
-  decide (Valid (erase (run (Smith.formAccumulator r r) d)))
 
 /-- Full Smith-data candidate from the compact transform run. -/
 @[expose]

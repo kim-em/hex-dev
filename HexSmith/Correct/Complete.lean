@@ -1180,13 +1180,6 @@ theorem Diagonal.Compact.run_valid
         (Diagonal.Compact.run ops d).values)[i.val + 1]'hiRun
     simpa [result] using hd
 
-/-- The compact validation branch is therefore unconditionally true. -/
-theorem Diagonal.Compact.valid_eq_true (d : Vector Int r) :
-    Diagonal.Compact.valid d = true := by
-  unfold Diagonal.Compact.valid
-  exact decide_eq_true (Diagonal.Compact.run_valid
-    (Smith.formAccumulator r r) d)
-
 set_option maxHeartbeats 1600000 in
 private theorem Diagonal.Compact.pair_matrix (values : Vector Int r)
     (i j : Fin r) (hne : i ≠ j)
