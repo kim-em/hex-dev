@@ -126,6 +126,14 @@ private def observedRand {n : Nat} {cmp : Mono n → Mono n → Ordering}
   (checkedCandidate? f h (intHeuristicCandidateAt f h 101)).isSome
 #guard
   let x : P1 := X 0
+  let common := x + 1
+  let f := common * x
+  let h := common * (x ^ 2 + 1)
+  match remainderCert? f h with
+  | some cert => checkGcd f h cert && cert.gcd == common
+  | none => false
+#guard
+  let x : P1 := X 0
   let f := x
   let h := x ^ 2 + 1
   match unitRemainderCert? f h with

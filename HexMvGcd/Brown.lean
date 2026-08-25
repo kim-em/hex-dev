@@ -617,13 +617,16 @@ delegated arity-one case. -/
 def intConcreteProposalGeneric {n : Nat}
     (cmp : Mono n → Mono n → Ordering) [IsMonomialOrder cmp]
     (cfg : GcdConfig) (f h : MvPoly n Int cmp) : GcdProposal n Int cmp :=
-  let fast := intFastProposal cfg f h
-  match fast.cert? with
-  | some _ => fast
+  match remainderCert? f h with
+  | some cert => ⟨some cert, cfg.rand⟩
   | none =>
-      match intHeuristicCert? cfg f h with
-      | some cert => ⟨some cert, fast.rand⟩
-      | none => ⟨intBrownCert? cmp cfg f h, fast.rand⟩
+      let fast := intFastProposal cfg f h
+      match fast.cert? with
+      | some _ => fast
+      | none =>
+          match intHeuristicCert? cfg f h with
+          | some cert => ⟨some cert, fast.rand⟩
+          | none => ⟨intBrownCert? cmp cfg f h, fast.rand⟩
 
 /-- Concrete integer producer.  Arity one delegates immediately to the
 released dense integer kernel; other arities use the multivariate routes. -/

@@ -1010,6 +1010,14 @@ linear in the term count and strictly shrinks the problem without changing
 the certificate's arity. Restricting to `vars f ∩ vars h` is deferred until
 there is a specified certificate re-embedding operation.
 
+Before modular evaluation, integer dispatch performs polynomial division in
+both directions and offers any strict nonzero remainder as a gcd candidate;
+an exact division offers the divisor. A no-progress remainder is ignored.
+This inexpensive prepass captures affine-multiple shapes such as
+`h = q · f + g`, but proves nothing from that equation alone: exact division
+by `g` and a checked coprimality certificate for the two cofactors remain the
+acceptance condition.
+
 ### 1. Coprime detection, the case that dominates
 
 `tryCoprimeCert?` runs, per variable, one evaluation and one univariate

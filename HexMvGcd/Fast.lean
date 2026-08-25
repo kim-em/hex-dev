@@ -229,6 +229,27 @@ def checkedCandidate? {n : Nat} {R : Type u}
     let cert := GcdCert.mk normalized cofL cofR coprime
     if checkGcd f h cert then some cert else none
 
+/-- Offer a strict one-step polynomial remainder as a gcd candidate.  Exact
+division and coprimality replay remain the acceptance gate; a division which
+makes no progress is skipped, and exact divisibility offers the divisor. -/
+def remainderCert? {n : Nat} {R : Type u}
+    {cmp : Mono n → Mono n → Ordering}
+    [IsMonomialOrder cmp]
+    [Lean.Grind.CommRing R] [DecidableEq R] [BEq R] [LawfulBEq R]
+    [Dvd R] [BezoutOps R]
+    (f h : MvPoly n R cmp) : Option (GcdCert n R cmp) :=
+  let right := (divMod h f).2
+  if right != h then
+    match checkedCandidate? f h (if right == 0 then f else right) with
+    | some cert => some cert
+    | none => tryLeft f h
+  else tryLeft f h
+where
+  tryLeft (f h : MvPoly n R cmp) : Option (GcdCert n R cmp) :=
+    let left := (divMod f h).2
+    if left == f then none
+    else checkedCandidate? f h (if left == 0 then h else left)
+
 /-! # Integer modular coprimality -/
 
 /-- Canonical reduction homomorphism carried in an image certificate. -/
