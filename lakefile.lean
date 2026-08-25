@@ -90,6 +90,8 @@ lean_lib HexArith where
 
 lean_lib HexPoly where
 
+lean_lib HexPolyFast where
+
 lean_lib HexMvPoly where
 
 lean_lib HexMvGcd where

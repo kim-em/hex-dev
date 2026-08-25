@@ -126,6 +126,29 @@ libraries:
           description: Dense integer polynomials with nontrivial coefficient content for content and primitive-part operations.
         - name: polynomial-crt
           description: Coprime monic rational-polynomial moduli and residues for CRT witness construction.
+  HexPolyFast:
+    deps: [HexPoly, HexTruncatedSeries]
+    mathlib: false
+    done_through: 0
+    status: active
+    phase4:
+      comparators:
+        - tool: FLINT fmpz_poly and nmod_poly via python-flint
+          class: informational
+          rationale: "FLINT has independently tuned coefficient-specific dispatch; within-Lean agreement and crossover cells gate production selection."
+      input_families:
+        - name: full-and-clipped-multiplication
+          description: Balanced and unbalanced full, square, low, and middle products across crossover sizes.
+        - name: newton-division
+          description: One-shot and cached-divisor division against long division.
+        - name: half-gcd
+          description: Gcd, full xgcd, and one-sided xgcd across balanced and skewed degree pairs.
+        - name: multipoint
+          description: Cold and reused product/remainder trees for evaluation and interpolation.
+        - name: pade
+          description: Homogeneous and normalized Padé cases, including normalized failure.
+        - name: coefficient-kernels
+          description: Forced Kronecker and direct/CRT-NTT paths across degree, width, and modulus ladders.
   HexMvPoly:
     deps: [HexPoly, HexBasic]
     mathlib: false
