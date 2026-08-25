@@ -1234,5 +1234,11 @@
     "baseline_blob": "a1b87406682dbf908d990f01676f326499b906e5",
     "current_blob": "398a71fbd46baa0037c64f2954d300ad8977fe10",
     "reason": "Additionally registers the independent HexIntFactor library, Mathlib companion, conformance emitter, and benchmark executable; hexbz_factor_service, its build flags, and every factorization runtime dependency are unchanged."
+  },
+  {
+    "path": "lakefile.lean",
+    "baseline_blob": "398a71fbd46baa0037c64f2954d300ad8977fe10",
+    "current_blob": "f9e1661e342a6ba74c2d50753a263b8e22769b51",
+    "reason": "Additionally registers the build-only HexMvGcd Phase 4 shape-matrix support modules; hexbz_factor_service, its build flags, and every factorization runtime dependency remain unchanged."
   }
 ]
