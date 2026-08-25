@@ -1353,11 +1353,13 @@ theorem ofPowerSeries_substInvOfIsUnit (g : PowerSeries R)
     ofPowerSeries (n := n) (g.substInvOfIsUnit hu)
       = revOfUnit (ofPowerSeries g) ((hu.unit⁻¹ : Rˣ) : R)
 
-theorem ofPowerSeries_exp [Algebra ℚ R] (f : PowerSeries R)
+theorem ofPowerSeries_exp [Algebra ℚ R] [NatInverses R (n - 1)]
+    (f : PowerSeries R)
     (h : PowerSeries.constantCoeff f = 0) :
     ofPowerSeries (n := n) ((PowerSeries.exp R).subst f) = exp (ofPowerSeries f)
 
-theorem ofPowerSeries_logOf [Algebra ℚ R] (f : PowerSeries R)
+theorem ofPowerSeries_logOf [Algebra ℚ R] [NatInverses R (n - 1)]
+    (f : PowerSeries R)
     (h : PowerSeries.constantCoeff f = 1) :
     ofPowerSeries (n := n) (PowerSeries.logOf f) = log (ofPowerSeries f)
 ```

@@ -33,15 +33,6 @@ cannot be repaired from this downstream regression module. -/
       if declName.components.getLast? == some `ext_iff then return none
       docBlameThm.test declName }
 
-open Batteries.Tactic.Lint in
-/-- `docBlame`, minus local recursive workers generated below documented public
-definitions. -/
-@[env_linter disabled] def docBlame' : Linter :=
-  { docBlame with
-    test := fun declName => do
-      if declName.components.getLast? == some `go then return none
-      docBlame.test declName }
+#lint- docBlameThm' in HexTruncatedSeries
 
-#lint- docBlame' docBlameThm' in HexTruncatedSeries
-
-#lint- docBlame' docBlameThm' in HexTruncatedSeriesMathlib
+#lint- docBlameThm' in HexTruncatedSeriesMathlib

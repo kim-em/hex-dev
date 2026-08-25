@@ -7,7 +7,6 @@ Authors: Kim Morrison
 module
 
 public import HexTruncatedSeries.Defs
-public meta import Batteries.Tactic.Lint.Misc
 
 public section
 
@@ -68,23 +67,25 @@ def C [Zero R] (c : R) : TSeries R n :=
 def X [Zero R] [One R] : TSeries R n :=
   ofFn fun i => if i = 1 then 1 else 0
 
-/-- Truncated-series exponentiation by square-and-multiply. -/
+/-- Tail-recursive square-and-multiply worker with an explicit accumulator. -/
 @[expose]
-def pow [Zero R] [One R] [Add R] [Mul R]
-    (a : TSeries R n) (k : Nat) : TSeries R n :=
-  let rec go (acc base : TSeries R n) (e : Nat) : TSeries R n :=
-    if he : e = 0 then
-      acc
-    else
-      let acc' := if e % 2 = 1 then acc * base else acc
-      go acc' (base * base) (e / 2)
+def powLoop [Zero R] [One R] [Add R] [Mul R]
+    (acc base : TSeries R n) (e : Nat) : TSeries R n :=
+  if he : e = 0 then
+    acc
+  else
+    let acc' := if e % 2 = 1 then acc * base else acc
+    powLoop acc' (base * base) (e / 2)
   termination_by e
   decreasing_by
     simp_wf
     exact Nat.div_lt_self (Nat.pos_of_ne_zero he) (by decide)
-  go 1 a k
 
-attribute [nolint docBlame] pow.go
+/-- Truncated-series exponentiation by square-and-multiply. -/
+@[expose]
+def pow [Zero R] [One R] [Add R] [Mul R]
+    (a : TSeries R n) (k : Nat) : TSeries R n :=
+  powLoop 1 a k
 
 instance [Zero R] [One R] [Add R] [Mul R] : Pow (TSeries R n) Nat := ⟨pow⟩
 
@@ -803,10 +804,10 @@ private theorem linearPow_odd [Lean.Grind.CommRing R]
 
 private theorem powGo_eq [Lean.Grind.CommRing R]
     (acc base : TSeries R n) (k : Nat) :
-    pow.go acc base k = acc * linearPow base k := by
+    powLoop acc base k = acc * linearPow base k := by
   induction k using Nat.strongRecOn generalizing acc base with
   | ind k ih =>
-      rw [pow.go.eq_def]
+      rw [powLoop.eq_def]
       by_cases hk : k = 0
       · simp [hk, linearPow, mul_one]
       · rw [dif_neg hk]
@@ -822,7 +823,7 @@ private theorem powGo_eq [Lean.Grind.CommRing R]
               Nat.mul_div_right (k / 2) (by decide)
             rw [if_neg hnot]
             calc
-              pow.go acc (base * base) (k / 2) =
+              powLoop acc (base * base) (k / 2) =
                   acc * linearPow (base * base) (k / 2) := ih _ hlt _ _
               _ = acc * linearPow base k := by rw [hk_eq, hdiv, linearPow_double]
         | inr hmod1 =>
@@ -831,7 +832,7 @@ private theorem powGo_eq [Lean.Grind.CommRing R]
               omega
             rw [if_pos hmod1]
             calc
-              pow.go (acc * base) (base * base) (k / 2) =
+              powLoop (acc * base) (base * base) (k / 2) =
                   (acc * base) * linearPow (base * base) (k / 2) := ih _ hlt _ _
               _ = acc * (base * linearPow (base * base) (k / 2)) := mul_assoc _ _ _
               _ = acc * linearPow base (2 * (k / 2) + 1) := by rw [linearPow_odd]

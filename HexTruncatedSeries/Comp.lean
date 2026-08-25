@@ -37,9 +37,7 @@ private theorem foldMap [Lean.Grind.CommRing R] {α β : Type}
   funext acc x
   rw [List.foldl_map, List.foldl_add_eq_add_foldl]
 
-/-- The ceiling square-root block size, with block size one at precision
-zero. -/
-def blockSize (n : Nat) : Nat :=
+private def blockSize (n : Nat) : Nat :=
   if n = 0 then 1 else Nat.sqrt (n - 1) + 1
 
 private theorem blockSize_pos (p : Nat) : 0 < blockSize p := by
@@ -54,8 +52,7 @@ private theorem le_blockSize_sq (p : Nat) : p ≤ blockSize p * blockSize p := b
     simp only [Nat.succ_eq_add_one] at hs
     omega
 
-/-- Horner composition computed only below precision `m`. -/
-def compHornerUpTo [Lean.Grind.CommRing R] (m : Nat)
+private def compHornerUpTo [Lean.Grind.CommRing R] (m : Nat)
     (a b : TSeries R n) : TSeries R n :=
   let p := min m n
   let raw := (List.range p).foldr
@@ -68,9 +65,7 @@ def compHorner [Lean.Grind.CommRing R]
     (a b : TSeries R n) : TSeries R n :=
   compHornerUpTo n a b
 
-/-- Consecutive powers `1, b, ..., b^s`, built with one bounded
-multiplication per new entry. -/
-def powerTable [Lean.Grind.CommRing R] (m : Nat) (b : TSeries R n) :
+private def powerTable [Lean.Grind.CommRing R] (m : Nat) (b : TSeries R n) :
     (s : Nat) → Vector (TSeries R n) (s + 1)
   | 0 => Hex.Vector.ofFn' fun _ => 1
   | s + 1 =>
@@ -113,8 +108,7 @@ private theorem powerTable_agree [Lean.Grind.CommRing R]
         exact Agree.trans (Agree.mulUpTo m _ _)
           (Agree.mul (ih s (by omega)) (Agree.refl m b))
 
-/-- Evaluate one coefficient block against the precomputed baby powers. -/
-def evalBlock [Lean.Grind.CommRing R] (m p s : Nat) (a : TSeries R n)
+private def evalBlock [Lean.Grind.CommRing R] (m p s : Nat) (a : TSeries R n)
     (powers : Vector (TSeries R n) (s + 1)) (q : Nat) : TSeries R n :=
   let js := List.range s
   ofFn fun i =>
