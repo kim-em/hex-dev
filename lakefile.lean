@@ -294,8 +294,9 @@ lean_lib HexMvGcdKernelProbe where
 
 lean_lib HexMvGcdBenchSupport where
   srcDir := "bench"
-  globs := #[`HexMvGcd.Families, `HexMvGcd.Matrix, `HexMvGcdFlint,
-    `HexMvGcdSingular]
+  globs := #[`HexMvGcd.Families, `HexMvGcd.Matrix,
+    `HexMvGcd.ComparatorCases, `HexMvGcd.Comparators,
+    `HexMvGcdFlint, `HexMvGcdSingular]
 
 lean_lib HexMvPolyBenchSupport where
   srcDir := "bench"

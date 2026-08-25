@@ -81,12 +81,22 @@ degree (the same convention `Hex.DensePoly` uses in
 
 Request field ``nvars`` is the arity. ``a`` and ``b`` are sparse term lists
 ``[[[e₀, ..., eₙ₋₁], coefficient], ...]``. Results use the same encoding,
-with zero coefficients omitted and terms in FLINT's canonical lexicographic
-order.
+with zero coefficients omitted and terms reversed from FLINT's descending
+traversal into Hex's canonical ascending lexicographic traversal.
 
 * ``gcd`` — returns ``gcd(a, b)`` in FLINT's canonical integer normal form.
+* ``divexact`` — returns the exact quotient ``a / b`` and rejects a nonzero
+  remainder.
+* ``squarefree`` — returns the sorted multiplicities from FLINT's squarefree
+  factorisation of ``a``.
 * ``overhead`` — returns an empty term list without constructing a context;
   this is the steady-state framing / dispatch calibration.
+
+### `fmpq_mpoly` (multivariate rational polynomial Q[x₀, ..., xₙ₋₁])
+
+The sparse term shape is the same as ``fmpz_mpoly``, except that each
+coefficient is ``[numerator, denominator]`` in lowest terms. ``gcd`` returns
+the canonical monic rational GCD; ``overhead`` returns an empty term list.
 
 ### `fmpq_series` (fixed-precision rational power series)
 
@@ -400,7 +410,7 @@ def _fmpz_mpoly(ctx, req: dict[str, Any], field: str):
 def _fmpz_mpoly_encode(poly) -> list[list[Any]]:
     return [
         [[int(exponent) for exponent in powers], int(coefficient)]
-        for powers, coefficient in poly.terms()
+        for powers, coefficient in reversed(list(poly.terms()))
     ]
 
 
@@ -411,13 +421,119 @@ def _fmpz_mpoly_gcd(req: dict[str, Any]) -> list[list[Any]]:
     )
 
 
+def _fmpz_mpoly_divexact(req: dict[str, Any]) -> list[list[Any]]:
+    ctx = _fmpz_mpoly_context(req)
+    divisor = _fmpz_mpoly(ctx, req, "b")
+    if divisor == 0:
+        raise ValueError("fmpz_mpoly divisor is zero")
+    quotient, remainder = divmod(_fmpz_mpoly(ctx, req, "a"), divisor)
+    if remainder != 0:
+        raise ValueError("fmpz_mpoly division has a nonzero remainder")
+    return _fmpz_mpoly_encode(quotient)
+
+
+def _fmpz_mpoly_squarefree(req: dict[str, Any]) -> list[int]:
+    ctx = _fmpz_mpoly_context(req)
+    polynomial = _fmpz_mpoly(ctx, req, "a")
+    if polynomial == 0:
+        raise ValueError("fmpz_mpoly squarefree factorisation of zero")
+    _content, factors = polynomial.factor_squarefree()
+    return sorted(int(multiplicity) for _factor, multiplicity in factors)
+
+
 def _fmpz_mpoly_overhead(_req: dict[str, Any]) -> list[list[Any]]:
     return []
 
 
 _FMPZ_MPOLY_OPS: dict[str, Callable[[dict[str, Any]], Any]] = {
     "gcd": _fmpz_mpoly_gcd,
+    "divexact": _fmpz_mpoly_divexact,
+    "squarefree": _fmpz_mpoly_squarefree,
     "overhead": _fmpz_mpoly_overhead,
+}
+
+
+# ---------------------------------------------------------------------
+# `fmpq_mpoly` (Q[x₀, ..., xₙ₋₁])
+# ---------------------------------------------------------------------
+
+
+def _fmpq_mpoly_terms(value: Any, nvars: int, field: str):
+    if not isinstance(value, list):
+        raise ValueError(f"fmpq_mpoly field {field!r} must be a term list")
+    terms = {}
+    for index, term in enumerate(value):
+        if not isinstance(term, list) or len(term) != 2:
+            raise ValueError(
+                f"fmpq_mpoly field {field!r} term {index} must be "
+                "[exponents, [numerator, denominator]]"
+            )
+        exponents, coefficient = term
+        if not isinstance(exponents, list) or len(exponents) != nvars:
+            raise ValueError(
+                f"fmpq_mpoly field {field!r} term {index} has exponent length "
+                f"{len(exponents) if isinstance(exponents, list) else 'non-list'}; "
+                f"expected {nvars}"
+            )
+        powers = tuple(int(exponent) for exponent in exponents)
+        if any(exponent < 0 for exponent in powers):
+            raise ValueError(
+                f"fmpq_mpoly field {field!r} term {index} has a negative exponent"
+            )
+        if powers in terms:
+            raise ValueError(
+                f"fmpq_mpoly field {field!r} repeats exponent vector {powers}"
+            )
+        if not isinstance(coefficient, list) or len(coefficient) != 2:
+            raise ValueError(
+                f"fmpq_mpoly field {field!r} term {index} coefficient must be "
+                "[numerator, denominator]"
+            )
+        numerator, denominator = (int(value) for value in coefficient)
+        if denominator == 0:
+            raise ValueError("fmpq_mpoly coefficient denominator is zero")
+        rational = flint.fmpq(numerator, denominator)  # type: ignore[union-attr]
+        if rational != 0:
+            terms[powers] = rational
+    return terms
+
+
+def _fmpq_mpoly_context(req: dict[str, Any]):
+    nvars = int(req["nvars"])
+    if nvars < 0:
+        raise ValueError("fmpq_mpoly nvars must be nonnegative")
+    names = tuple(f"x{index}" for index in range(nvars))
+    return flint.fmpq_mpoly_ctx.get(names, "lex")  # type: ignore[union-attr]
+
+
+def _fmpq_mpoly(ctx, req: dict[str, Any], field: str):
+    return ctx.from_dict(_fmpq_mpoly_terms(req[field], ctx.nvars(), field))
+
+
+def _fmpq_mpoly_encode(poly) -> list[list[Any]]:
+    return [
+        [
+            [int(exponent) for exponent in powers],
+            [int(coefficient.p), int(coefficient.q)],
+        ]
+        for powers, coefficient in reversed(list(poly.terms()))
+    ]
+
+
+def _fmpq_mpoly_gcd(req: dict[str, Any]) -> list[list[Any]]:
+    ctx = _fmpq_mpoly_context(req)
+    return _fmpq_mpoly_encode(
+        _fmpq_mpoly(ctx, req, "a").gcd(_fmpq_mpoly(ctx, req, "b"))
+    )
+
+
+def _fmpq_mpoly_overhead(_req: dict[str, Any]) -> list[list[Any]]:
+    return []
+
+
+_FMPQ_MPOLY_OPS: dict[str, Callable[[dict[str, Any]], Any]] = {
+    "gcd": _fmpq_mpoly_gcd,
+    "overhead": _fmpq_mpoly_overhead,
 }
 
 
@@ -888,6 +1004,7 @@ _RCF_OPS: dict[str, Callable[[dict[str, Any]], Any]] = {
 _FAMILIES: dict[str, dict[str, Callable[[dict[str, Any]], Any]]] = {
     "fmpz_poly": _FMPZ_POLY_OPS,
     "fmpz_mpoly": _FMPZ_MPOLY_OPS,
+    "fmpq_mpoly": _FMPQ_MPOLY_OPS,
     "fmpq_series": _FMPQ_SERIES_OPS,
     "nmod_poly": _NMOD_POLY_OPS,
     "fmpz_mat": _FMPZ_MAT_OPS,

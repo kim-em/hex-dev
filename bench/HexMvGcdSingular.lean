@@ -49,9 +49,9 @@ private def jsonError (context : String) (result : Except String α) : IO α :=
   | .ok value => pure value
   | .error error => throw <| IO.userError s!"{context}: {error}"
 
-private def runOp (op : String) (fields : Array (String × Json)) : IO Json := do
+def runOp (family op : String) (fields : Array (String × Json)) : IO Json := do
   let mut object : Array (String × Json) :=
-    #[("family", Json.str "integer_mpoly"), ("op", Json.str op)]
+    #[("family", Json.str family), ("op", Json.str op)]
   for field in fields do object := object.push field
   let replyLine ← Hex.BenchOracle.Flint.PersistentComparator.requestLine
     (← resolveDriver) (Json.mkObj object.toList).compress
@@ -72,26 +72,56 @@ private def runOp (op : String) (fields : Array (String × Json)) : IO Json := d
   | Except.error error => throw (IO.userError
       s!"singular_bench_driver missing/non-bool ok: {error}")
 
-private def termsJson (p : Flint.P2 Int) : Json :=
-  Json.arr <| (p.termsList.map fun term =>
-    Json.arr #[
-      Json.arr (term.1.toList.map (fun exponent =>
-        Json.num (Lean.JsonNumber.fromNat exponent))).toArray,
-      Json.num (Lean.JsonNumber.fromInt term.2)]).toArray
+private def expectTrue (context : String) (result : Json) : IO Unit := do
+  unless (← jsonError s!"{context} result is not a boolean" result.getBool?) do
+    throw <| IO.userError s!"{context} request returned false"
+
+def intGcd {n : Nat} (input : Flint.P n Int × Flint.P n Int)
+    (expected : Flint.P n Int) : IO Flint.IntTerms := do
+  let result ← runOp "integer_mpoly" "gcd_equals" #[
+    ("nvars", Json.num (Lean.JsonNumber.fromNat n)),
+    ("a", Flint.intTermsJson input.1), ("b", Flint.intTermsJson input.2),
+    ("expected", Flint.intTermsJson expected)]
+  expectTrue "Singular GCD" result
+  return Flint.intTerms expected
+
+def ratGcd {n : Nat} (input : Flint.P n Rat × Flint.P n Rat)
+    (expected : Flint.P n Rat) : IO Flint.RatTerms := do
+  let result ← runOp "rational_mpoly" "gcd_equals" #[
+    ("nvars", Json.num (Lean.JsonNumber.fromNat n)),
+    ("a", Flint.ratTermsJson input.1), ("b", Flint.ratTermsJson input.2),
+    ("expected", Flint.ratTermsJson expected)]
+  expectTrue "Singular rational GCD" result
+  return Flint.ratTerms expected
+
+def intDiv {n : Nat} (dividend divisor expected : Flint.P n Int) :
+    IO Flint.IntTerms := do
+  let result ← runOp "integer_mpoly" "div_equals" #[
+    ("nvars", Json.num (Lean.JsonNumber.fromNat n)),
+    ("a", Flint.intTermsJson dividend), ("b", Flint.intTermsJson divisor),
+    ("expected", Flint.intTermsJson expected)]
+  expectTrue "Singular exact division" result
+  return Flint.intTerms expected
+
+def intSquarefree {n : Nat} (polynomial : Flint.P n Int) : IO (List Nat) := do
+  let result ← runOp "integer_mpoly" "squarefree" #[
+    ("nvars", Json.num (Lean.JsonNumber.fromNat n)),
+    ("a", Flint.intTermsJson polynomial)]
+  let values ← jsonError "Singular squarefree result is not an array" result.getArr?
+  values.toList.mapM fun value =>
+    jsonError "Singular squarefree multiplicity is not a natural" value.getNat?
 
 def runOverhead (_ : Unit) : IO (List (List Nat × Int)) := do
-  let result ← runOp "overhead" #[]
-  unless (← jsonError "Singular overhead result is not a boolean" result.getBool?) do
-    throw <| IO.userError "Singular overhead request returned false"
+  let result ← runOp "integer_mpoly" "overhead" #[]
+  expectTrue "Singular overhead" result
   return []
 
 def runCoprime2 (_ : Unit) : IO (List (List Nat × Int)) := do
   let input ← Flint.coprime1.get
-  let result ← runOp "gcd_is_one" #[
+  let result ← runOp "integer_mpoly" "gcd_is_one" #[
     ("nvars", Json.num (Lean.JsonNumber.fromNat 2)),
-    ("a", termsJson input.left), ("b", termsJson input.right)]
-  unless (← jsonError "Singular coprime result is not a boolean" result.getBool?) do
-    throw <| IO.userError "Singular coprime request returned false"
+    ("a", Flint.intTermsJson input.left), ("b", Flint.intTermsJson input.right)]
+  expectTrue "Singular coprime" result
   return [([0, 0], 1)]
 
 def config (expectedHash : UInt64) : LeanBench.FixedBenchmarkConfig :=
