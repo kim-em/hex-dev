@@ -367,8 +367,14 @@ theorem EvalPlan.get_eval (plan : EvalPlan R) (f) (i) (hi : i < plan.size) :
     (plan.eval f)[i] = f.eval plan.points[i]
 ```
 
-Evaluation works over a commutative ring because every divisor in the point
-tree is monic. The empty point sequence produces an empty result.
+The cached remainder-tree path applies when `f.size <= plan.size`; this is the
+finite capacity determined when the plan is built. `EvalPlan.eval` remains
+total for larger inputs and uses direct pointwise evaluation in that case.
+This fallback is necessary because the signature accepts polynomials of
+unbounded size: no finite plan built from only the points can cache the
+unbounded reciprocal precision required to reduce every such input at the
+root. Evaluation works over a commutative ring because every divisor in the
+point tree is monic. The empty point sequence produces an empty result.
 
 Interpolation needs a field and distinct points. `InterpPlan.build?` returns
 `none` exactly when duplicate points are present. It reuses the point product,
@@ -379,9 +385,10 @@ value array to zero.
 
 Soundness states that the result has size at most the point count and evaluates
 to every supplied value. Uniqueness states that any polynomial of smaller
-degree with those values is equal to the result. Both construction and one
-evaluation/interpolation cost `O(M(n) log n)`; the reusable plan cost is
-reported separately.
+degree with those values is equal to the result. Construction, bounded-size
+evaluation, and interpolation cost `O(M(n) log n)`; the oversized
+direct-evaluation fallback costs `O(plan.size * f.size)`. The reusable plan
+cost is reported separately.
 
 ## Padé approximation
 

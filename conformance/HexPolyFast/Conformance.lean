@@ -14,6 +14,7 @@ public meta import HexPolyFast.Reverse
 public meta import HexPolyFast.Cyclic
 public meta import HexPolyFast.Reciprocal
 public meta import HexPolyFast.Division
+public meta import HexPolyFast.Tree
 
 public section
 
@@ -102,5 +103,22 @@ private def ratB : DensePoly Rat := ofList [2, -3, 5]
 #guard divModWith (karatsubaPlan 2) ratA ratB = divMod ratA ratB
 #guard divModWith (karatsubaPlan 2) ratA 0 = (0, ratA)
 #guard divModWith (karatsubaPlan 2) (ratA * ratB) ratB = (ratA, 0)
+
+private def treeLeaves : Array (DensePoly Int) :=
+  #[ofList [1, 1], ofList [2, 1], ofList [3, 1], ofList [4, 1], ofList [5, 1]]
+
+private def tree : ProductTree Int := ProductTree.build plan treeLeaves
+
+#guard tree.leaves = treeLeaves
+#guard tree.levelCount = 4
+#guard tree.root = treeLeaves.foldl (fun acc p => acc * p) 1
+#guard (tree.level? 0).map Array.size = some 5
+#guard (tree.level? 1).map Array.size = some 3
+#guard (tree.level? 2).map Array.size = some 2
+#guard (tree.level? 3).map Array.size = some 1
+#guard tree.nodeProduct? 1 0 = some (treeLeaves.getD 0 0 * treeLeaves.getD 1 0)
+#guard tree.nodeProduct? 1 2 = some (treeLeaves.getD 4 0)
+#guard tree.nodeProduct? 3 0 = some tree.root
+#guard tree.nodeProduct? 4 0 = none
 
 end HexPolyFast.Conformance

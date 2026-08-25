@@ -73,6 +73,19 @@ def runLongDivision (input : DivisionInput) : UInt64 :=
 def runNewtonDivision (input : DivisionInput) : UInt64 :=
   checksumDiv (divModWith (karatsubaPlan 32) input.dividend input.divisor)
 
+structure ProductTreeInput where
+  leaves : Array (DensePoly Int)
+
+instance : Hashable ProductTreeInput where
+  hash input := input.leaves.foldl
+    (fun acc p => mixHash acc (hash p.toArray)) 0
+
+def prepProductTree (n : Nat) : ProductTreeInput :=
+  { leaves := (List.range n).map (fun i => ofList [-(coeff i 59), 1]) |>.toArray }
+
+def runProductTree (input : ProductTreeInput) : UInt64 :=
+  checksum (ProductTree.build (karatsubaPlan 32) input.leaves).root
+
 /- Cost model: a balanced length-`n` schoolbook convolution evaluates one
 coefficient product for each input pair, hence `n²` ring multiplications. -/
 setup_benchmark runSchoolbook n => n ^ 2
@@ -159,6 +172,22 @@ setup_benchmark runNewtonDivision n => n * (Nat.sqrt n)
     targetInnerNanos := 200000000
     signalFloorMultiplier := 1.0
     tags := #["division", "newton", "cold"]
+  }
+
+/- A balanced product tree performs one multiplication per internal node over
+geometrically growing degrees, for `O(M(n) log n)` total work. The integer
+surrogate retains the logarithmic level count without assuming a particular
+coefficient-kernel exponent. -/
+setup_benchmark runProductTree n => n * (Nat.log2 n + 1)
+  with prep := prepProductTree
+  where {
+    paramFloor := 4
+    paramCeiling := 16384
+    paramSchedule := .custom #[4, 16, 64, 256, 1024, 4096, 16384]
+    maxSecondsPerCall := 3.0
+    targetInnerNanos := 200000000
+    signalFloorMultiplier := 1.0
+    tags := #["product-tree", "karatsuba", "cold"]
   }
 
 end Hex.PolyFastBench
