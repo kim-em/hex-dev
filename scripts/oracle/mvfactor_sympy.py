@@ -71,7 +71,7 @@ def _self_test() -> None:
     f = [[1], [], [1, 0]]  # x^2 + y
     if test_points(f, [], 1, [-1], 1, ZZ) != (1, [1, 0, -1], []):
         raise RuntimeError("SymPy dmp_zz_wang_test_points convention changed")
-    if non_divisors([5], 1, 6, ZZ) != [5]:
+    if non_divisors([ZZ(5)], ZZ(1), ZZ(6), ZZ) != [ZZ(5)]:
         raise RuntimeError("SymPy dmp_zz_wang_non_divisors convention changed")
     led = lead_coeffs(
         [[6, 0], [2, 0, 3], [1, 0]],
