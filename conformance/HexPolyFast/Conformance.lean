@@ -17,6 +17,7 @@ public meta import HexPolyFast.Division
 public meta import HexPolyFast.Tree
 public meta import HexPolyFast.Multipoint
 public meta import HexPolyFast.Interpolation
+public meta import HexPolyFast.HalfGcd
 
 public section
 
@@ -156,5 +157,18 @@ private def interpPoly : DensePoly Rat := ofList [3, -2, 1]
 #guard match InterpPlan.build? (karatsubaPlan 2) (#[] : Array Rat) with
   | none => false
   | some interpolation => interpolation.interpolate? #[] = some 0
+
+private def ratPlan : MulPlan Rat := karatsubaPlan 2
+
+#guard gcdWith ratPlan ratA ratB = gcd ratA ratB
+#guard (xgcdWith ratPlan ratA ratB).gcd = (xgcd ratA ratB).gcd
+#guard (xgcdWith ratPlan ratA ratB).left = (xgcd ratA ratB).left
+#guard (xgcdWith ratPlan ratA ratB).right = (xgcd ratA ratB).right
+#guard (xgcdLeftWith ratPlan ratA ratB).gcd = (xgcdLeft ratA ratB).gcd
+#guard (xgcdLeftWith ratPlan ratA ratB).left = (xgcdLeft ratA ratB).left
+#guard gcdWith ratPlan 0 0 = 0
+#guard gcdWith ratPlan ratA 0 = gcd ratA 0
+#guard gcdWith ratPlan 0 ratA = gcd 0 ratA
+#guard gcdWith ratPlan ratB ratA = gcd ratB ratA
 
 end HexPolyFast.Conformance

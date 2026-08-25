@@ -1,0 +1,738 @@
+/-
+Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Kim Morrison
+-/
+
+module
+
+public import HexPolyFast.Division
+public import HexPolyFast.Karatsuba
+
+public section
+
+/-!
+Recursive half-gcd with certified quotient prediction.
+
+High halves predict a batch of Euclidean quotients.  Applying a prediction to
+the full operands is cheap: `a - q*b` uses the selected multiplication plan.
+The prediction is accepted only when that remainder is strictly smaller than
+`b`; Euclidean uniqueness then proves that it is exactly the quotient returned
+by `DensePoly.divMod`.  A failed prediction falls back to plan-driven Newton
+division.  Thus approximation affects cost but never semantics.
+-/
+
+namespace Hex.DensePoly
+
+universe u
+
+attribute [local instance 1000] Lean.Grind.Semiring.ofNat
+
+variable {F : Type u} [DecidableEq F] [Lean.Grind.Field F]
+
+/-- A two-by-two polynomial transformation, kept local to fast gcd rather
+than introducing a dependency on the matrix library. -/
+structure GcdStep (F : Type u) [Zero F] [DecidableEq F] where
+  a00 : DensePoly F
+  a01 : DensePoly F
+  a10 : DensePoly F
+  a11 : DensePoly F
+
+namespace GcdStep
+
+/-- Identity transformation. -/
+def one : GcdStep F :=
+  { a00 := 1, a01 := 0, a10 := 0, a11 := 1 }
+
+/-- One Euclidean transformation `(a,b) ↦ (b,a-q*b)`. -/
+def euclid (q : DensePoly F) : GcdStep F :=
+  { a00 := 0, a01 := 1, a10 := 1, a11 := -q }
+
+/-- Matrix composition; `compose m n` applies `n` first and then `m`. -/
+def compose (m n : GcdStep F) : GcdStep F :=
+  { a00 := m.a00 * n.a00 + m.a01 * n.a10
+    a01 := m.a00 * n.a01 + m.a01 * n.a11
+    a10 := m.a10 * n.a00 + m.a11 * n.a10
+    a11 := m.a10 * n.a01 + m.a11 * n.a11 }
+
+/-- Plan-driven matrix composition.  Half-gcd builds transformations at half
+the active degree and composes them before touching the full operands. -/
+def composeWith (plan : MulPlan F) (m n : GcdStep F) : GcdStep F :=
+  { a00 := mulWith plan m.a00 n.a00 + mulWith plan m.a01 n.a10
+    a01 := mulWith plan m.a00 n.a01 + mulWith plan m.a01 n.a11
+    a10 := mulWith plan m.a10 n.a00 + mulWith plan m.a11 n.a10
+    a11 := mulWith plan m.a10 n.a01 + mulWith plan m.a11 n.a11 }
+
+/-- Matrix composition clipped to the coefficient range that can survive in
+the caller's degree-bounded transformation. -/
+def composeLowWith (plan : MulPlan F) (len : Nat)
+    (m n : GcdStep F) : GcdStep F :=
+  { a00 := mulLow plan len m.a00 n.a00 + mulLow plan len m.a01 n.a10
+    a01 := mulLow plan len m.a00 n.a01 + mulLow plan len m.a01 n.a11
+    a10 := mulLow plan len m.a10 n.a00 + mulLow plan len m.a11 n.a10
+    a11 := mulLow plan len m.a10 n.a01 + mulLow plan len m.a11 n.a11 }
+
+/-- Apply a transformation to a polynomial pair. -/
+def apply (m : GcdStep F) (a b : DensePoly F) : DensePoly F × DensePoly F :=
+  (m.a00 * a + m.a01 * b, m.a10 * a + m.a11 * b)
+
+/-- Apply a transformation using the selected multiplication plan. -/
+def applyWith (plan : MulPlan F) (m : GcdStep F)
+    (a b : DensePoly F) : DensePoly F × DensePoly F :=
+  (mulWith plan m.a00 a + mulWith plan m.a01 b,
+    mulWith plan m.a10 a + mulWith plan m.a11 b)
+
+/-- Apply a transformation while materializing only the requested low
+coefficient range.  Half-gcd supplies the active input size as the bound. -/
+def applyLowWith (plan : MulPlan F) (len : Nat) (m : GcdStep F)
+    (a b : DensePoly F) : DensePoly F × DensePoly F :=
+  (mulLow plan len m.a00 a + mulLow plan len m.a01 b,
+    mulLow plan len m.a10 a + mulLow plan len m.a11 b)
+
+/-- Planned composition has the ordinary matrix semantics. -/
+theorem composeWith_eq (plan : MulPlan F) (m n : GcdStep F) :
+    composeWith plan m n = compose m n := by
+  cases m
+  cases n
+  simp only [composeWith, compose, mulWith_eq]
+
+/-- Planned application has the ordinary matrix semantics. -/
+theorem applyWith_eq (plan : MulPlan F) (m : GcdStep F) (a b : DensePoly F) :
+    applyWith plan m a b = apply m a b := by
+  simp only [applyWith, apply, mulWith_eq]
+
+private theorem add_mulLow_eq (plan : MulPlan F) (len : Nat)
+    (a b c d : DensePoly F) (hsize : (a * b + c * d).size ≤ len) :
+    mulLow plan len a b + mulLow plan len c d = a * b + c * d := by
+  apply ext_coeff
+  intro i
+  rw [coeff_add_semiring, coeff_add_semiring,
+    coeff_mulLow, coeff_mulLow]
+  by_cases hi : i < len
+  · simp [hi]
+  · rw [_root_.ite_eq_right hi, _root_.ite_eq_right hi]
+    have hz : (a * b).coeff i + (c * d).coeff i = 0 := by
+      rw [← coeff_add_semiring]
+      exact coeff_eq_zero_of_size_le (a * b + c * d) (by omega)
+    grind
+
+/-- Clipped application is ordinary matrix application once the supplied
+bound covers both output polynomials. -/
+theorem applyLowWith_eq (plan : MulPlan F) (len : Nat) (m : GcdStep F)
+    (a b : DensePoly F)
+    (hfirst : (m.apply a b).1.size ≤ len)
+    (hsecond : (m.apply a b).2.size ≤ len) :
+    m.applyLowWith plan len a b = m.apply a b := by
+  apply Prod.ext
+  · exact add_mulLow_eq plan len m.a00 a m.a01 b hfirst
+  · exact add_mulLow_eq plan len m.a10 a m.a11 b hsecond
+
+/-- Clipped matrix composition is ordinary composition once the bound covers
+all four resulting entries. -/
+theorem composeLowWith_eq (plan : MulPlan F) (len : Nat) (m n : GcdStep F)
+    (h00 : (m.compose n).a00.size ≤ len)
+    (h01 : (m.compose n).a01.size ≤ len)
+    (h10 : (m.compose n).a10.size ≤ len)
+    (h11 : (m.compose n).a11.size ≤ len) :
+    m.composeLowWith plan len n = m.compose n := by
+  cases m with
+  | mk m00 m01 m10 m11 =>
+      cases n with
+      | mk n00 n01 n10 n11 =>
+          simp only [composeLowWith, compose] at h00 h01 h10 h11 ⊢
+          rw [add_mulLow_eq plan len m00 n00 m01 n10 h00,
+            add_mulLow_eq plan len m00 n01 m01 n11 h01,
+            add_mulLow_eq plan len m10 n00 m11 n10 h10,
+            add_mulLow_eq plan len m10 n01 m11 n11 h11]
+
+/-- Identity leaves a pair unchanged. -/
+@[simp]
+theorem apply_one (a b : DensePoly F) : one.apply a b = (a, b) := by
+  apply Prod.ext
+  · dsimp [apply, one]
+    rw [mul_comm_poly 1 a, mul_one_right_poly, zero_mul, add_zero_poly]
+  · dsimp [apply, one]
+    rw [zero_mul, zero_add, mul_comm_poly 1 b, mul_one_right_poly]
+
+/-- The elementary matrix performs exactly one Euclidean update. -/
+theorem apply_euclid (q a b : DensePoly F) :
+    (euclid q).apply a b = (b, a - q * b) := by
+  apply Prod.ext
+  · dsimp [apply, euclid]
+    rw [zero_mul, zero_add, mul_comm_poly 1 b, mul_one_right_poly]
+  · dsimp [apply, euclid]
+    rw [mul_comm_poly 1 a, mul_one_right_poly, mul_comm_poly (-q) b]
+    change a + b * (0 - q) = a - q * b
+    rw [mul_sub_zero_comm]
+    exact (sub_eq_add_neg_poly a (q * b)).symm
+
+/-- Matrix composition agrees with sequential application. -/
+theorem apply_compose (m n : GcdStep F) (a b : DensePoly F) :
+    (compose m n).apply a b = m.apply (n.apply a b).1 (n.apply a b).2 := by
+  apply Prod.ext
+  · dsimp [apply, compose]
+    rw [mul_add_left_poly, mul_add_left_poly,
+      mul_add_right_poly, mul_add_right_poly,
+      ← mul_assoc_poly, ← mul_assoc_poly, ← mul_assoc_poly, ← mul_assoc_poly]
+    apply ext_coeff
+    intro i
+    simp only [coeff_add_semiring]
+    grind
+  · dsimp [apply, compose]
+    rw [mul_add_left_poly, mul_add_left_poly,
+      mul_add_right_poly, mul_add_right_poly,
+      ← mul_assoc_poly, ← mul_assoc_poly, ← mul_assoc_poly, ← mul_assoc_poly]
+    apply ext_coeff
+    intro i
+    simp only [coeff_add_semiring]
+    grind
+
+end GcdStep
+
+/-- Compose the Euclidean matrices represented by a quotient sequence. -/
+def quotientStep (plan : MulPlan F) (qs : List (DensePoly F)) : GcdStep F :=
+  qs.foldl (fun m q => GcdStep.composeWith plan (GcdStep.euclid q) m)
+    GcdStep.one
+
+/-- Execute a quotient sequence as ordinary Euclidean pair updates. -/
+def runQuotients : List (DensePoly F) → DensePoly F → DensePoly F →
+    DensePoly F × DensePoly F
+  | [], a, b => (a, b)
+  | q :: qs, a, b => runQuotients qs b (a - q * b)
+
+private theorem apply_quotientFold (plan : MulPlan F) (qs : List (DensePoly F))
+    (matrix : GcdStep F) (a b : DensePoly F) :
+    (qs.foldl (fun m q => GcdStep.composeWith plan (GcdStep.euclid q) m)
+      matrix).apply a b =
+      runQuotients qs (matrix.apply a b).1 (matrix.apply a b).2 := by
+  induction qs generalizing matrix a b with
+  | nil => rfl
+  | cons q qs ih =>
+      simp only [List.foldl_cons, runQuotients]
+      rw [ih, GcdStep.composeWith_eq, GcdStep.apply_compose,
+        GcdStep.apply_euclid]
+
+/-- The executable quotient matrix performs exactly the corresponding
+Euclidean update sequence. -/
+theorem apply_quotientStep (plan : MulPlan F) (qs : List (DensePoly F))
+    (a b : DensePoly F) :
+    (quotientStep plan qs).apply a b = runQuotients qs a b := by
+  unfold quotientStep
+  rw [apply_quotientFold, GcdStep.apply_one]
+
+/-- A quotient sequence is an exact prefix of the established Euclidean
+sequence, ending at the displayed pair. -/
+inductive ExactQuotients : List (DensePoly F) → DensePoly F → DensePoly F →
+    DensePoly F → DensePoly F → Prop where
+  | nil (a b : DensePoly F) : ExactQuotients [] a b a b
+  | cons {q r a b c d : DensePoly F} {qs : List (DensePoly F)}
+      (hdiv : _root_.Hex.DensePoly.divMod a b = (q, r))
+      (tail : ExactQuotients qs b r c d) :
+      ExactQuotients (q :: qs) a b c d
+
+/-- An exact Euclidean prefix whose divisors have positive degree and whose
+quotients are nonzero.  These are precisely the steps a half-gcd block may
+lift from high halves; constant-divisor finishing remains an exact boundary
+division. -/
+inductive ProperQuotients : List (DensePoly F) → DensePoly F → DensePoly F →
+    DensePoly F → DensePoly F → Prop where
+  | nil (a b : DensePoly F) : ProperQuotients [] a b a b
+  | cons {q r a b c d : DensePoly F} {qs : List (DensePoly F)}
+      (hq : 0 < q.size) (hb : 1 < b.size)
+      (hdiv : _root_.Hex.DensePoly.divMod a b = (q, r))
+      (tail : ProperQuotients qs b r c d) :
+      ProperQuotients (q :: qs) a b c d
+
+/-- Forgetting the half-gcd degree guards leaves an ordinary exact Euclidean
+prefix. -/
+theorem ProperQuotients.exact {qs : List (DensePoly F)}
+    {a b c d : DensePoly F} (hproper : ProperQuotients qs a b c d) :
+    ExactQuotients qs a b c d := by
+  induction hproper with
+  | nil => exact ExactQuotients.nil _ _
+  | cons hq hb hdiv tail ih => exact ExactQuotients.cons hdiv ih
+
+private theorem sub_mul_eq_remainder {a b q r : DensePoly F}
+    (hdiv : _root_.Hex.DensePoly.divMod a b = (q, r)) :
+    a - q * b = r := by
+  have hreconstruct :
+      let qr := _root_.Hex.DensePoly.divMod a b
+      qr.1 * b + qr.2 = a := by
+    by_cases hb : b.size = 0
+    · rw [divMod_eq_zero_self_of_size_zero a b hb]
+      simp only [zero_mul, zero_add]
+    · have hbpos : 0 < b.size := Nat.pos_of_ne_zero hb
+      have hlead : b.leadingCoeff ≠ (0 : F) :=
+        leadingCoeff_ne_zero_of_pos_size b hbpos
+      apply divMod_reconstruction a b
+      intro x
+      rw [Lean.Grind.Field.div_eq_mul_inv, Lean.Grind.Semiring.mul_assoc,
+        Lean.Grind.Field.inv_mul_cancel hlead, Lean.Grind.Semiring.mul_one]
+      exact Lean.Grind.AddCommGroup.sub_self x
+  rw [hdiv] at hreconstruct
+  simp only at hreconstruct
+  apply ext_coeff
+  intro i
+  have hcoeff := congrArg (fun p : DensePoly F => p.coeff i) hreconstruct
+  simp only [coeff_add_semiring, coeff_sub_ring] at hcoeff ⊢
+  grind
+
+private theorem size_le_of_coeff_zero_above {p : DensePoly F} {n : Nat}
+    (hzero : ∀ i, n ≤ i → p.coeff i = 0) : p.size ≤ n := by
+  by_cases hle : p.size ≤ n
+  · exact hle
+  · have hpos : 0 < p.size := by omega
+    have hlast := coeff_last_ne_zero_of_pos_size p hpos
+    exact False.elim (hlast (hzero (p.size - 1) (by omega)))
+
+private theorem size_add_eq_left_of_lt {p q : DensePoly F}
+    (hlt : q.size < p.size) : (p + q).size = p.size := by
+  have hpos : 0 < p.size := by omega
+  have hlast := coeff_last_ne_zero_of_pos_size p hpos
+  have hqzero : q.coeff (p.size - 1) = 0 :=
+    coeff_eq_zero_of_size_le q (by omega)
+  have hlower : p.size ≤ (p + q).size := by
+    by_cases hle : p.size ≤ (p + q).size
+    · exact hle
+    · have hzero : (p + q).coeff (p.size - 1) = 0 :=
+        coeff_eq_zero_of_size_le (p + q) (by omega)
+      rw [coeff_add_semiring, hqzero, Lean.Grind.Semiring.add_zero] at hzero
+      exact False.elim (hlast hzero)
+  have hupper : (p + q).size ≤ p.size := by
+    apply size_le_of_coeff_zero_above
+    intro i hi
+    rw [coeff_add_semiring, coeff_eq_zero_of_size_le p hi,
+      coeff_eq_zero_of_size_le q (by omega)]
+    exact Lean.Grind.Semiring.add_zero 0
+  omega
+
+private theorem size_mul_field (p q : DensePoly F)
+    (hp : 0 < p.size) (hq : 0 < q.size) :
+    (p * q).size = p.size + q.size - 1 := by
+  apply size_mul_of_top_ne p q hp hq
+  intro hzero
+  have hleadp := leadingCoeff_ne_zero_of_pos_size p hp
+  have hleadq := leadingCoeff_ne_zero_of_pos_size q hq
+  have h : p.leadingCoeff * (q.leadingCoeff * q.leadingCoeff⁻¹) = 0 := by
+    rw [← Lean.Grind.Semiring.mul_assoc, hzero]
+    exact Lean.Grind.Semiring.zero_mul _
+  rw [Lean.Grind.Field.mul_inv_cancel hleadq,
+    Lean.Grind.Semiring.mul_one] at h
+  exact hleadp h
+
+private theorem size_shift_of_pos (k : Nat) (p : DensePoly F)
+    (hp : 0 < p.size) : (shift k p).size = k + p.size := by
+  rw [← monomial_one_mul_poly_eq_shift]
+  have hone : (1 : F) ≠ 0 := fun h => Lean.Grind.Field.zero_ne_one h.symm
+  rw [size_mul_field (monomial k 1) p
+    (by rw [size_monomial_of_ne_zero hone]; omega) hp,
+    size_monomial_of_ne_zero hone]
+  omega
+
+private theorem size_shift (k : Nat) (p : DensePoly F) :
+    (shift k p).size = if p.size = 0 then 0 else k + p.size := by
+  by_cases hp : p.size = 0
+  · have hpzero : p = 0 := (size_eq_zero_iff p).mp hp
+    subst p
+    simp [size_zero]
+  · rw [_root_.ite_eq_right hp, size_shift_of_pos k p (Nat.pos_of_ne_zero hp)]
+
+private theorem size_shift_lt (k : Nat) {p q : DensePoly F}
+    (hlt : p.size < q.size) : (shift k p).size < (shift k q).size := by
+  rw [size_shift, size_shift]
+  split <;> split <;> omega
+
+private theorem size_reconstruct (q b r : DensePoly F)
+    (hq : 0 < q.size) (hb : 0 < b.size) (hr : r.size < b.size) :
+    (q * b + r).size = q.size + b.size - 1 := by
+  rw [size_add_eq_left_of_lt (p := q * b) (q := r) (by
+    rw [size_mul_field q b hq hb]
+    omega), size_mul_field q b hq hb]
+
+/-- Executing an exact prefix reaches its certified terminal pair. -/
+theorem ExactQuotients.run {qs : List (DensePoly F)} {a b c d : DensePoly F}
+    (hexact : ExactQuotients qs a b c d) :
+    runQuotients qs a b = (c, d) := by
+  induction hexact with
+  | nil => rfl
+  | cons hdiv tail ih =>
+      rw [runQuotients, sub_mul_eq_remainder hdiv]
+      exact ih
+
+/-- Consequently the composed quotient matrix reaches the same certified
+terminal pair. -/
+theorem ExactQuotients.apply (plan : MulPlan F)
+    {qs : List (DensePoly F)} {a b c d : DensePoly F}
+    (hexact : ExactQuotients qs a b c d) :
+    (quotientStep plan qs).apply a b = (c, d) := by
+  rw [apply_quotientStep, hexact.run]
+
+/-- Apply a proposed quotient sequence as one composed transformation without
+certifying it.  This operation is used only inside high-half prediction. -/
+def applyQuotients (plan : MulPlan F) (qs : List (DensePoly F))
+    (a b : DensePoly F) : DensePoly F × DensePoly F :=
+  GcdStep.applyWith plan (quotientStep plan qs) a b
+
+/-- Recursive high-half quotient prediction.  Its two recursive calls are on
+half the prediction fuel.  The first predicts the leading Euclidean block;
+one exact boundary division exposes the second leading block.  Predictions
+are deliberately untrusted until checked on the full operands. -/
+def halfGcdGuesses (plan : MulPlan F) :
+    Nat → DensePoly F → DensePoly F → List (DensePoly F)
+  | 0, _, _ => []
+  | fuel + 1, a, b =>
+      if b.size = 0 || b.size * 2 ≤ a.size then
+        []
+      else
+        let cut := a.size / 2
+        let first := halfGcdGuesses plan (fuel / 2) (high cut a) (high cut b)
+        let cd := applyQuotients plan first a b
+        if cd.2.size = 0 || cd.2.size * 2 ≤ a.size then
+          first
+        else
+          let qr := divModWith plan cd.1 cd.2
+          let cut₂ := cd.2.size / 2
+          let second := halfGcdGuesses plan (fuel / 2)
+            (high cut₂ cd.2) (high cut₂ qr.2)
+          first ++ qr.1 :: second
+termination_by fuel _ _ => fuel
+decreasing_by all_goals omega
+
+/-! Divide-and-conquer matrix engine.
+
+The quotient predictor above is useful as a small executable specification,
+but consuming its quotients one at a time repeats full-size coefficient
+updates.  The engine below is the actual half-gcd shape: recursive calls see
+only high halves, and their transformations are applied to the full pair once
+per recursion level. -/
+
+/-- Reduce a Euclidean pair through roughly half of the active degree.  The
+fuel is a totality guard; recursive calls receive half of it. -/
+private def halfGcdMatrix (plan : MulPlan F) :
+    Nat → DensePoly F → DensePoly F → GcdStep F
+  | 0, _, _ => GcdStep.one
+  | fuel + 1, a, b =>
+      let m := a.size / 2
+      if a.size ≤ 1 || a.size ≤ b.size || b.size ≤ m then
+        GcdStep.one
+      else
+        let first := halfGcdMatrix plan (fuel / 2) (high m a) (high m b)
+        let highCd := GcdStep.applyWith plan first (high m a) (high m b)
+        let cd := GcdStep.applyWith plan first a b
+        if cd.1.size = (shift m highCd.1).size ∧
+            cd.2.size = (shift m highCd.2).size then
+          if cd.2.size ≤ m then
+            first
+          else
+            let qr := divModWith plan cd.1 cd.2
+            let boundary := GcdStep.composeWith plan (GcdStep.euclid qr.1) first
+            if qr.2.size ≤ m then
+              boundary
+            else
+              let cut₂ := 2 * m - (cd.2.size - 1)
+              let second := halfGcdMatrix plan (fuel / 2)
+                (high cut₂ cd.2) (high cut₂ qr.2)
+              let highEf := GcdStep.applyWith plan second
+                (high cut₂ cd.2) (high cut₂ qr.2)
+              let ef := GcdStep.applyWith plan second cd.2 qr.2
+              if ef.1.size = (shift cut₂ highEf.1).size ∧
+                  ef.2.size = (shift cut₂ highEf.2).size then
+                GcdStep.composeWith plan second boundary
+              else
+                boundary
+        else
+          GcdStep.one
+termination_by fuel _ _ => fuel
+decreasing_by all_goals omega
+
+/-- Finish the Euclidean sequence by repeatedly applying half-gcd blocks and
+one exact boundary division. -/
+private def gcdMatrix (plan : MulPlan F) :
+    Nat → DensePoly F → DensePoly F → GcdStep F
+  | 0, _, _ => GcdStep.one
+  | fuel + 1, a, b =>
+      let cap := max a.size b.size
+      if b.isZero then
+        GcdStep.one
+      else
+        let block := halfGcdMatrix plan fuel a b
+        let cd := GcdStep.applyLowWith plan cap block a b
+        if cd.2.isZero then
+          block
+        else
+          let qr := divModWith plan cd.1 cd.2
+          let boundary := GcdStep.composeLowWith plan cap (GcdStep.euclid qr.1) block
+          if qr.2.isZero then
+            boundary
+          else
+            let rest := gcdMatrix plan (fuel / 2) cd.2 qr.2
+            GcdStep.composeLowWith plan cap rest boundary
+termination_by fuel _ _ => fuel
+decreasing_by all_goals omega
+
+/-- Internal divide-and-conquer candidate.  It is deliberately kept behind
+the certified quotient-prediction API until the recursive matrix invariant
+connects every accepted block to `ProperQuotients`. -/
+private def xgcdMatrixWith (plan : MulPlan F) (p q : DensePoly F) : XGCDResult F :=
+  let matrix := gcdMatrix plan (p.size + q.size + 1) p q
+  let result := GcdStep.applyLowWith plan (max p.size q.size) matrix p q
+  { gcd := result.1, left := matrix.a00, right := matrix.a01 }
+
+private theorem fieldCandidate_eq (plan : MulPlan F) (a b q : DensePoly F)
+    (hsmall : (a - mulWith plan q b).degree?.getD 0 < b.degree?.getD 0) :
+    _root_.Hex.DensePoly.divMod a b = (q, a - mulWith plan q b) := by
+  let r := a - mulWith plan q b
+  have hbdeg : 0 < b.degree?.getD 0 := by omega
+  have hbpos : 0 < b.size := by
+    rcases Nat.eq_zero_or_pos b.size with hz | hz
+    · rw [(degree?_eq_none_iff b).mpr hz, Option.getD_none] at hbdeg
+      omega
+    · exact hz
+  have hlead : b.leadingCoeff ≠ 0 :=
+    leadingCoeff_ne_zero_of_pos_size b hbpos
+  have hcancel : ∀ x : F,
+      x - (x / b.leadingCoeff) * b.leadingCoeff = 0 := by
+    intro x
+    rw [Lean.Grind.Field.div_eq_mul_inv, Lean.Grind.Semiring.mul_assoc,
+      Lean.Grind.Field.inv_mul_cancel hlead, Lean.Grind.Semiring.mul_one]
+    grind
+  have hexact : ∀ x : F,
+      (x * b.leadingCoeff) / b.leadingCoeff = x := by
+    intro x
+    rw [Lean.Grind.Field.div_eq_mul_inv, Lean.Grind.Semiring.mul_assoc,
+      Lean.Grind.Field.mul_inv_cancel hlead, Lean.Grind.Semiring.mul_one]
+  have htop : ∀ x : F, x ≠ 0 → x * b.leadingCoeff ≠ 0 := by
+    intro x hx hzero
+    have h := congrArg (fun y : F => y * b.leadingCoeff⁻¹) hzero
+    rw [Lean.Grind.Semiring.zero_mul, Lean.Grind.Semiring.mul_assoc,
+      Lean.Grind.Field.mul_inv_cancel hlead, Lean.Grind.Semiring.mul_one] at h
+    exact hx h
+  have hrec : q * b + r = a := by
+    apply ext_coeff
+    intro i
+    dsimp [r]
+    rw [coeff_add_semiring, coeff_sub_ring, mulWith_eq]
+    grind
+  exact divMod_eq_of_reconstruction a b q r hbdeg hcancel hexact htop
+    hrec hsmall
+
+private theorem degree_getD_lt_of_size_lt {r b : DensePoly F}
+    (hb : 1 < b.size) (hlt : r.size < b.size) :
+    r.degree?.getD 0 < b.degree?.getD 0 := by
+  rw [degree?_eq_some_of_pos_size b (by omega), Option.getD_some]
+  by_cases hr : r.size = 0
+  · rw [(degree?_eq_none_iff r).mpr hr, Option.getD_none]
+    omega
+  · have hrpos : 0 < r.size := Nat.pos_of_ne_zero hr
+    rw [degree?_eq_some_of_pos_size r hrpos, Option.getD_some]
+    omega
+
+private theorem fieldCandidate_eq_of_size (plan : MulPlan F)
+    (a b q : DensePoly F) (hb : 1 < b.size)
+    (hsmall : (a - mulWith plan q b).size < b.size) :
+    _root_.Hex.DensePoly.divMod a b = (q, a - mulWith plan q b) := by
+  exact fieldCandidate_eq plan a b q (degree_getD_lt_of_size_lt hb hsmall)
+
+private theorem fieldRemainder_size_lt {a b q r : DensePoly F}
+    (hb : 1 < b.size)
+    (hdiv : _root_.Hex.DensePoly.divMod a b = (q, r)) :
+    r.size < b.size := by
+  have hbpos : 0 < b.size := by omega
+  have hlead : b.leadingCoeff ≠ (0 : F) :=
+    leadingCoeff_ne_zero_of_pos_size b hbpos
+  have hcancel : ∀ x : F,
+      x - (x / b.leadingCoeff) * b.leadingCoeff = 0 := by
+    intro x
+    rw [Lean.Grind.Field.div_eq_mul_inv, Lean.Grind.Semiring.mul_assoc,
+      Lean.Grind.Field.inv_mul_cancel hlead, Lean.Grind.Semiring.mul_one]
+    exact Lean.Grind.AddCommGroup.sub_self x
+  have hbdeg : 0 < b.degree?.getD 0 := by
+    rw [degree?_eq_some_of_pos_size b hbpos, Option.getD_some]
+    omega
+  have hdegree := divMod_remainder_degree_lt_of_pos_degree_of_cancel
+    a b hbdeg hcancel
+  rw [hdiv] at hdegree
+  simp only at hdegree
+  by_cases hr : r.size = 0
+  · omega
+  · have hrpos : 0 < r.size := Nat.pos_of_ne_zero hr
+    rw [degree?_eq_some_of_pos_size r hrpos, Option.getD_some,
+      degree?_eq_some_of_pos_size b hbpos, Option.getD_some] at hdegree
+    omega
+
+/-- A proper quotient block computed on high halves lifts to the full inputs
+once its terminal pair has the shifted high-half sizes.  The proof runs the
+Euclidean recurrence backward: terminal sizes determine the preceding two
+sizes, making every proposed remainder strictly smaller than its divisor and
+therefore every quotient exact. -/
+theorem ProperQuotients.liftHigh (plan : MulPlan F) (k : Nat)
+    {qs : List (DensePoly F)} {ah bh ch dh A B C D : DensePoly F}
+    (hproper : ProperQuotients qs ah bh ch dh)
+    (hrun : runQuotients qs A B = (C, D))
+    (hcsize : C.size = (shift k ch).size)
+    (hdsize : D.size = (shift k dh).size) :
+    ProperQuotients qs A B C D ∧
+      A.size = (shift k ah).size ∧ B.size = (shift k bh).size := by
+  induction hproper generalizing A B C D with
+  | nil =>
+      simp only [runQuotients] at hrun
+      cases hrun
+      exact ⟨ProperQuotients.nil _ _, hcsize, hdsize⟩
+  | @cons q r ah bh ch dh qs hq hb hdiv tail ih =>
+      let R := A - q * B
+      have hrunTail : runQuotients qs B R = (C, D) := by
+        simpa only [runQuotients, R] using hrun
+      rcases ih hrunTail hcsize hdsize with
+        ⟨tailFull, hBsize, hRsize⟩
+      have hhighRem : r.size < bh.size := fieldRemainder_size_lt hb hdiv
+      have hfullRem : R.size < B.size := by
+        rw [hRsize, hBsize]
+        exact size_shift_lt k hhighRem
+      have hbhpos : 0 < bh.size := by omega
+      have hBexplicit : B.size = k + bh.size := by
+        rw [hBsize, size_shift_of_pos k bh hbhpos]
+      have hBpos : 0 < B.size := by omega
+      have hBdegree : 1 < B.size := by omega
+      have hfullDivRaw := fieldCandidate_eq_of_size plan A B q hBdegree
+        (by simpa only [mulWith_eq, R] using hfullRem)
+      have hfullDiv : _root_.Hex.DensePoly.divMod A B = (q, R) := by
+        simpa only [mulWith_eq, R] using hfullDivRaw
+      have hhighSub : ah - q * bh = r := sub_mul_eq_remainder hdiv
+      have hhighRec : q * bh + r = ah := by
+        apply ext_coeff
+        intro i
+        have hcoeff := congrArg (fun p : DensePoly F => p.coeff i) hhighSub
+        simp only [coeff_sub_ring, coeff_add_semiring] at hcoeff ⊢
+        grind
+      have hfullRec : q * B + R = A := by
+        apply ext_coeff
+        intro i
+        simp only [R, coeff_add_semiring, coeff_sub_ring]
+        grind
+      have hahSize : ah.size = q.size + bh.size - 1 := by
+        rw [← hhighRec]
+        exact size_reconstruct q bh r hq hbhpos hhighRem
+      have hASize : A.size = q.size + B.size - 1 := by
+        rw [← hfullRec]
+        exact size_reconstruct q B R hq hBpos hfullRem
+      have hahpos : 0 < ah.size := by omega
+      have hAlift : A.size = (shift k ah).size := by
+        rw [size_shift_of_pos k ah hahpos]
+        omega
+      exact ⟨ProperQuotients.cons hq hBdegree hfullDiv tailFull,
+        hAlift, hBsize⟩
+
+/-- Extended Euclidean recursion with a queue of high-half quotient
+predictions.  Each recursive call consumes one ordinary Euclidean step, so
+the fuel convention is identical to `DensePoly.xgcdAux`. -/
+def xgcdAuxWith (plan : MulPlan F) :
+    List (DensePoly F) →
+      DensePoly F → DensePoly F → DensePoly F →
+      DensePoly F → DensePoly F → DensePoly F → Nat → XGCDResult F
+  | _, r₀, s₀, t₀, _, _, _, 0 =>
+      { gcd := r₀, left := s₀, right := t₀ }
+  | queued, r₀, s₀, t₀, r₁, s₁, t₁, fuel + 1 =>
+      if r₁.isZero then
+        { gcd := r₀, left := s₀, right := t₀ }
+      else
+        let guesses := if queued.isEmpty then
+          halfGcdGuesses plan (max r₀.size r₁.size) r₀ r₁
+        else queued
+        match guesses with
+        | q :: rest =>
+            let r := r₀ - mulWith plan q r₁
+            if r.degree?.getD 0 < r₁.degree?.getD 0 then
+              xgcdAuxWith plan rest
+                r₁ s₁ t₁ r
+                (s₀ - mulWith plan q s₁)
+                (t₀ - mulWith plan q t₁) fuel
+            else
+              let qr := divModWith plan r₀ r₁
+              xgcdAuxWith plan []
+                r₁ s₁ t₁ qr.2
+                (s₀ - mulWith plan qr.1 s₁)
+                (t₀ - mulWith plan qr.1 t₁) fuel
+        | [] =>
+            let qr := divModWith plan r₀ r₁
+            xgcdAuxWith plan []
+              r₁ s₁ t₁ qr.2
+              (s₀ - mulWith plan qr.1 s₁)
+              (t₀ - mulWith plan qr.1 t₁) fuel
+
+/-- Plan-driven half-gcd extended gcd. -/
+def xgcdWith (plan : MulPlan F) (p q : DensePoly F) : XGCDResult F :=
+  xgcdAuxWith plan [] p 1 0 q 0 1 (p.size + q.size + 1)
+
+/-- Gcd projection of the half-gcd engine. -/
+def gcdWith (plan : MulPlan F) (p q : DensePoly F) : DensePoly F :=
+  (xgcdWith plan p q).gcd
+
+/-- One-sided result projection of the half-gcd engine. -/
+def xgcdLeftWith (plan : MulPlan F) (p q : DensePoly F) : XGCDLeftResult F :=
+  let r := xgcdWith plan p q
+  { gcd := r.gcd, left := r.left }
+
+private theorem xgcdAuxWith_eq (plan : MulPlan F)
+    (queued : List (DensePoly F))
+    (r₀ s₀ t₀ r₁ s₁ t₁ : DensePoly F) (fuel : Nat) :
+    xgcdAuxWith plan queued r₀ s₀ t₀ r₁ s₁ t₁ fuel =
+      xgcdAux r₀ s₀ t₀ r₁ s₁ t₁ fuel := by
+  induction fuel generalizing queued r₀ s₀ t₀ r₁ s₁ t₁ with
+  | zero => rfl
+  | succ fuel ih =>
+      unfold xgcdAuxWith xgcdAux
+      split
+      · rfl
+      · rename_i hr
+        dsimp only
+        split
+        · rename_i q rest hguesses
+          split
+          · rename_i hsmall
+            have hqr := fieldCandidate_eq plan r₀ r₁ q hsmall
+            rw [hqr]
+            simpa only [mulWith_eq] using
+              ih rest r₁ s₁ t₁ (r₀ - mulWith plan q r₁)
+                (s₀ - mulWith plan q s₁) (t₀ - mulWith plan q t₁)
+          · rename_i hnot_small
+            rw [divModWith_eq]
+            simpa only [mulWith_eq] using
+              ih [] r₁ s₁ t₁ (_root_.Hex.DensePoly.divMod r₀ r₁).2
+                (s₀ - mulWith plan (_root_.Hex.DensePoly.divMod r₀ r₁).1 s₁)
+                (t₀ - mulWith plan (_root_.Hex.DensePoly.divMod r₀ r₁).1 t₁)
+        · rw [divModWith_eq]
+          simpa only [mulWith_eq] using
+            ih [] r₁ s₁ t₁ (_root_.Hex.DensePoly.divMod r₀ r₁).2
+              (s₀ - mulWith plan (_root_.Hex.DensePoly.divMod r₀ r₁).1 s₁)
+              (t₀ - mulWith plan (_root_.Hex.DensePoly.divMod r₀ r₁).1 t₁)
+
+/-- Half-gcd returns exactly the established extended-gcd result, including
+the raw gcd scaling and both Bezout coefficients. -/
+theorem xgcdWith_eq (plan : MulPlan F) (p q : DensePoly F) :
+    xgcdWith plan p q = xgcd p q := by
+  exact xgcdAuxWith_eq plan [] p 1 0 q 0 1 (p.size + q.size + 1)
+
+/-- Half-gcd returns exactly the established gcd. -/
+theorem gcdWith_eq (plan : MulPlan F) (p q : DensePoly F) :
+    gcdWith plan p q = gcd p q := by
+  rw [gcdWith, xgcdWith_eq, xgcd_gcd_eq_gcd]
+
+/-- The one-sided half-gcd projection agrees exactly with the established
+one-sided extended gcd. -/
+theorem xgcdLeftWith_eq (plan : MulPlan F) (p q : DensePoly F) :
+    xgcdLeftWith plan p q = xgcdLeft p q := by
+  unfold xgcdLeftWith
+  rw [xgcdWith_eq]
+  have hg := xgcdLeft_gcd_eq_xgcd (R := F) p q
+  have hl := xgcdLeft_left_eq_xgcd (R := F) p q
+  cases hleft : xgcdLeft p q with
+  | mk g l =>
+      cases hfull : xgcd p q with
+      | mk g' l' r' =>
+          rw [hleft, hfull] at hg hl
+          simp only at hg hl ⊢
+          subst g'
+          subst l'
+          rfl
+
+end Hex.DensePoly
