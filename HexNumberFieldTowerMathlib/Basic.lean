@@ -157,6 +157,7 @@ theorem levelsDim_pos (levels : List Level)
   | cons level lower ih =>
       exact Nat.mul_pos (Nat.zero_lt_of_lt hvalid.1.1) (ih hvalid.2.2)
 
+/-- Every validated tower has positive dimension. -/
 theorem dim_pos (T : NumberTower) : 0 < T.dim := by
   exact levelsDim_pos T.levels.toList T.valid
 
