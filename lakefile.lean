@@ -283,6 +283,10 @@ lean_lib HexPrimalityKernelProbe where
   srcDir := "bench"
   globs := #[`HexBench.PrimalityKernel]
 
+lean_lib HexMvGcdKernelProbe where
+  srcDir := "bench"
+  globs := #[`HexMvGcd.Kernel]
+
 lean_lib HexMvPolyBenchSupport where
   srcDir := "bench"
   globs := #[`HexMvPolyCorpus]
@@ -676,7 +680,6 @@ lean_lib HexMvFactorizationTests where
     `HexModular.LoopTests,
     `HexPolyZGcd.Kernel,
     `HexMvGcd.KernelTests,
-    `HexMvGcd.Kernel,
     `HexMvGcd.Eval,
     `HexMvGcd.SquarefreeTests,
     `HexMvHensel.KernelTests,
