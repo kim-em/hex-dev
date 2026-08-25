@@ -51,27 +51,6 @@ noncomputable def schoolbookSlice (lo len : Nat) (a b : DensePoly R) :
     DensePoly R :=
   ofList ((List.range len).map fun i => (a * b).coeff (lo + i))
 
-/-- Allocation-conscious runtime implementation of `schoolbookSlice`. -/
-@[expose]
-def schoolbookSliceImpl (lo len : Nat) (a b : DensePoly R) : DensePoly R :=
-  ofList ((List.range len).map fun i => mulCoeffSum a b (lo + i))
-
-/-- The direct coefficient-fold implementation agrees with the semantic
-clipped product. -/
-theorem schoolbookSlice_eq_impl (lo len : Nat) (a b : DensePoly R) :
-    schoolbookSlice lo len a b = schoolbookSliceImpl lo len a b := by
-  unfold schoolbookSlice schoolbookSliceImpl
-  apply congrArg ofList
-  apply List.map_congr_left
-  intro i hi
-  exact coeff_mul a b (lo + i)
-
-/-- Compiled clipped schoolbook products use direct coefficient folds. -/
-@[csimp]
-theorem schoolbookSlice_csimp : @schoolbookSlice = @schoolbookSliceImpl := by
-  funext R instDecEq instRing lo len a b
-  exact schoolbookSlice_eq_impl lo len a b
-
 /-- Coefficient law for a clipped schoolbook product. -/
 theorem coeff_schoolbookSlice (lo len : Nat) (a b : DensePoly R) (i : Nat) :
     (schoolbookSlice lo len a b).coeff i =
@@ -86,6 +65,90 @@ theorem coeff_schoolbookSlice (lo len : Nat) (a b : DensePoly R) (i : Nat) :
     simp [hi]
     change (Zero.zero : R) = (Zero.zero : R)
     rfl
+
+/-- Allocation-conscious runtime implementation of `schoolbookSlice`.
+Requests beyond the product support are discarded before entering the
+coefficient folds, and the shorter operand drives each diagonal fold. -/
+@[expose]
+def schoolbookSliceImpl (lo len : Nat) (a b : DensePoly R) : DensePoly R :=
+  if a.size = 0 then
+    0
+  else if b.size = 0 then
+    0
+  else
+    let used := min len (a.size + b.size - 1 - lo)
+    if a.size ≤ b.size then
+      ofList ((List.range used).map fun i => mulCoeffSum a b (lo + i))
+    else
+      ofList ((List.range used).map fun i => mulCoeffSum b a (lo + i))
+
+/-- The bounded coefficient-fold implementation agrees with the semantic
+clipped product. -/
+theorem schoolbookSlice_eq_impl (lo len : Nat) (a b : DensePoly R) :
+    schoolbookSlice lo len a b = schoolbookSliceImpl lo len a b := by
+  unfold schoolbookSliceImpl
+  split
+  · rename_i ha
+    have haeq : a = 0 := (size_eq_zero_iff a).mp ha
+    subst a
+    apply ext_coeff
+    intro i
+    rw [coeff_schoolbookSlice, zero_mul, coeff_zero]
+    split <;> rfl
+  · rename_i ha
+    split
+    · rename_i hb
+      have hbeq : b = 0 := (size_eq_zero_iff b).mp hb
+      subst b
+      apply ext_coeff
+      intro i
+      rw [coeff_schoolbookSlice, mul_comm_poly, zero_mul, coeff_zero]
+      split <;> rfl
+    · rename_i hb
+      have hsupp := size_mul_le a b
+      split
+      · apply ext_coeff
+        intro i
+        rw [coeff_schoolbookSlice, coeff_ofList]
+        by_cases hi : i < min len (a.size + b.size - 1 - lo)
+        · have hil : i < len := Nat.lt_of_lt_of_le hi (Nat.min_le_left ..)
+          rw [_root_.ite_eq_left hil]
+          rw [List.getD_eq_getElem?_getD]
+          simp [hi]
+          exact coeff_mul a b (lo + i)
+        · rw [List.getD_eq_getElem?_getD]
+          simp [hi]
+          by_cases hil : i < len
+          · rw [_root_.ite_eq_left hil]
+            have hbound : (a * b).size ≤ lo + i :=
+              Nat.le_trans hsupp (by omega)
+            exact coeff_eq_zero_of_size_le (a * b) hbound
+          · rw [_root_.ite_eq_right hil]
+            rfl
+      · apply ext_coeff
+        intro i
+        rw [coeff_schoolbookSlice, coeff_ofList]
+        by_cases hi : i < min len (a.size + b.size - 1 - lo)
+        · have hil : i < len := Nat.lt_of_lt_of_le hi (Nat.min_le_left ..)
+          rw [_root_.ite_eq_left hil]
+          rw [List.getD_eq_getElem?_getD]
+          simp [hi]
+          rw [← coeff_mul b a (lo + i), mul_comm_poly]
+        · rw [List.getD_eq_getElem?_getD]
+          simp [hi]
+          by_cases hil : i < len
+          · rw [_root_.ite_eq_left hil]
+            have hbound : (a * b).size ≤ lo + i :=
+              Nat.le_trans hsupp (by omega)
+            exact coeff_eq_zero_of_size_le (a * b) hbound
+          · rw [_root_.ite_eq_right hil]
+            rfl
+
+/-- Compiled clipped schoolbook products use direct coefficient folds. -/
+@[csimp]
+theorem schoolbookSlice_csimp : @schoolbookSlice = @schoolbookSliceImpl := by
+  funext R instDecEq instRing lo len a b
+  exact schoolbookSlice_eq_impl lo len a b
 
 /-- The reference plan backed by the existing allocation-conscious
 schoolbook multiplication. -/

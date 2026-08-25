@@ -145,6 +145,16 @@ def prepGcdSkew (n : Nat) : GcdInput :=
 private def checksumF2 (p : DensePoly F2) : UInt64 :=
   p.toArray.foldl (fun acc x => mixHash acc (hash x.val)) 0
 
+private def checksumDivF2 (qr : DensePoly F2 × DensePoly F2) : UInt64 :=
+  mixHash (checksumF2 qr.1) (checksumF2 qr.2)
+
+def runSkewLongDivision (input : GcdInput) : UInt64 :=
+  checksumDivF2 (divMod input.left input.right)
+
+def runSkewNewtonDivision (input : GcdInput) : UInt64 :=
+  checksumDivF2
+    (divModWith (karatsubaPlan 32) input.left input.right)
+
 private def checksumXgcd (result : XGCDResult F2) : UInt64 :=
   mixHash (checksumF2 result.gcd)
     (mixHash (checksumF2 result.left) (checksumF2 result.right))
@@ -322,6 +332,30 @@ setup_benchmark runNewtonDivision n => n * (Nat.sqrt n)
     targetInnerNanos := 200000000
     signalFloorMultiplier := 1.0
     tags := #["division", "newton", "cold"]
+  }
+
+setup_benchmark runSkewLongDivision n => n ^ 2
+  with prep := prepGcdSkew
+  where {
+    paramFloor := 4
+    paramCeiling := 1024
+    paramSchedule := .custom #[4, 8, 16, 32, 64, 128, 256, 512, 1024]
+    maxSecondsPerCall := 3.0
+    targetInnerNanos := 200000000
+    signalFloorMultiplier := 1.0
+    tags := #["division", "long", "ratio-4"]
+  }
+
+setup_benchmark runSkewNewtonDivision n => n * (Nat.sqrt n)
+  with prep := prepGcdSkew
+  where {
+    paramFloor := 4
+    paramCeiling := 1024
+    paramSchedule := .custom #[4, 8, 16, 32, 64, 128, 256, 512, 1024]
+    maxSecondsPerCall := 3.0
+    targetInnerNanos := 200000000
+    signalFloorMultiplier := 1.0
+    tags := #["division", "newton", "ratio-4"]
   }
 
 /- The established extended Euclidean loop performs a linear number of

@@ -330,7 +330,9 @@ def karatsubaSliceAux (cutoff : Nat) :
     Nat → Nat → Nat → DensePoly R → DensePoly R → DensePoly R
   | 0, lo, len, a, b => schoolbookSlice lo len a b
   | fuel + 1, lo, len, a, b =>
-      if a.size ≤ max 1 cutoff || b.size ≤ max 1 cutoff then
+      if len = 0 then
+        0
+      else if a.size ≤ max 1 cutoff || b.size ≤ max 1 cutoff then
         schoolbookSlice lo len a b
       else
         let k := (max a.size b.size + 1) / 2
@@ -367,6 +369,11 @@ theorem coeff_karatsubaSliceAux (cutoff fuel lo len : Nat)
   | zero => exact coeff_schoolbookSlice lo len a b i
   | succ fuel ih =>
       rw [karatsubaSliceAux]
+      by_cases hlenzero : len = 0
+      · rw [_root_.ite_eq_left hlenzero]
+        subst len
+        simp
+      rw [_root_.ite_eq_right hlenzero]
       split
       · exact coeff_schoolbookSlice lo len a b i
       · dsimp only

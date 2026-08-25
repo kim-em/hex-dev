@@ -64,6 +64,9 @@ private def plan : MulPlan Int := karatsubaPlan 2
 #guard squareWith plan a = a * a
 #guard mulSlice plan 2 4 a b = schoolbookSlice 2 4 a b
 #guard mulSlice plan 50 4 a b = 0
+#guard mulSlice plan 0 100 0 a = 0
+#guard mulSlice plan 0 100 a 0 = 0
+#guard mulSlice plan 0 2 long b = schoolbookSlice 0 2 long b
 
 #guard (reverseSeries (C (1 : Int)) 2).coeffs.toArray.toList = [1, 0]
 #guard (polyOfSeries (reverseSeries a a.size)).coeff 0 = a.coeff 6
