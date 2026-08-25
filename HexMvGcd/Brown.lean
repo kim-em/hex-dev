@@ -285,7 +285,9 @@ def brownStepOps {n : Nat} {R : Type u}
             if brownPointBad point gamma fPrimitive hPrimitive then
               loop rest (fuel - 1) state samples
             else
-              match lower.candidate? Mono.lex (fuel - 1) rest fImage hImage with
+              -- Each recursive variable has an independent interpolation
+              -- axis; consuming an outer point must not shorten its supply.
+              match lower.candidate? Mono.lex pointFuel points fImage hImage with
               | none => loop rest (fuel - 1) state samples
               | some rawImage =>
                   let imageLeading := brownMainLeadingCoeff rawImage

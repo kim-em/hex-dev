@@ -17,6 +17,7 @@ private abbrev P0 := MvPoly 0 Int Mono.lex
 private abbrev P1 := MvPoly 1 Int Mono.lex
 private abbrev P2 := MvPoly 2 Int Mono.lex
 private abbrev Q2 := MvPoly 2 Rat Mono.lex
+private abbrev Q3 := MvPoly 3 Rat Mono.lex
 private def brownPrimeAt? (p : Nat) : Option ZMod64.Prime :=
   (ZMod64.primesBelow p 1)[0]?
 #guard (smallPrimeSupply 47 5).map (fun P => P.m) == [2, 3, 5, 7, 11]
@@ -226,6 +227,16 @@ private def observedRand {n : Nat} {cmp : Mono n → Mono n → Ordering}
   let f := common * (x + 2)
   let h := common * (y + 3)
   match brownFieldCert? 12 [0, 1, 2, 3] f h with
+  | some cert => checkGcd f h cert && cert.gcd == common
+  | none => false
+#guard
+  let x : Q3 := X 0
+  let y : Q3 := X 1
+  let z : Q3 := X 2
+  let common := x + y + z + 1
+  let f := common * (x + 2)
+  let h := common * (x + 3)
+  match brownFieldCert? 12 [0, 1, 2] f h with
   | some cert => checkGcd f h cert && cert.gcd == common
   | none => false
 #guard
