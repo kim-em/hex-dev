@@ -784,7 +784,8 @@ lean_lib HexAggregateCheck where
 -- Canonical end-to-end examples are release artifacts rather than public API.
 -- Keep their target separate for the same reason as the regression tests.
 lean_lib HexReleaseExamples where
-  globs := #[`Examples.Release3, `Examples.Release4, `Examples.Release5, `Examples.FiniteFields]
+  globs := #[`Examples.Release1, `Examples.Release3, `Examples.Release4, `Examples.Release5,
+    `Examples.FiniteFields]
 
 lean_exe hexrowreduce_emit_fixtures where
   srcDir := "conformance"
