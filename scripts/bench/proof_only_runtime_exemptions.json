@@ -1219,7 +1219,7 @@
   },
   {
     "path": "lakefile.lean",
-    "baseline_blob": "42a95d0841165c3591246914bc67348ccd8d5df3",
+    "baseline_blob": "a1b87406682dbf908d990f01676f326499b906e5",
     "current_blob": "9877274032003d4096cbc3141ab3cf714448ad2b",
     "reason": "Registers only the independent HexPolyFast library, conformance module, and benchmark executable; no factorization runtime target, definition, build flag, or dependency changes."
   }
