@@ -20,6 +20,10 @@ same-algorithm comparator required by hex-char-poly:
 ``fmpz_mat/overhead``
     Return ``0`` without constructing a matrix, calibrating protocol cost.
 
+``fmpz_mat/snf``
+    Accept square integer ``rows`` and return PARI ``matsnf`` in ascending
+    divisibility order with nonnegative representatives.
+
 ``polymatrix/pari_snf``
     Accept a square matrix over ``QQ[x]`` in the Hex polynomial-matrix fixture
     schema and return the monic invariant factors from PARI ``matsnf``.
@@ -117,6 +121,18 @@ def _hnf(request: dict[str, Any]) -> list[list[int]]:
     return form + [[0] * m for _ in range(n - rank)]
 
 
+def _snf(request: dict[str, Any]) -> list[int]:
+    pari = _require_pari()
+    rows = [[int(value) for value in row] for row in request["rows"]]
+    n = len(rows)
+    if any(len(row) != n for row in rows):
+        raise ValueError("snf benchmark requires a square matrix")
+    matrix = pari.matrix(n, n, [value for row in rows for value in row])
+    # PARI orders its elementary divisors in the reverse convention:
+    # d_n | ... | d_1. Hex exposes d_1 | ... | d_n.
+    return [abs(int(value)) for value in reversed(matrix.matsnf().list())]
+
+
 def _rat_coefficients(entry: dict[str, list[int]]) -> list[tuple[int, int]]:
     numbers = [int(value) for value in entry["num"]]
     denominators = [int(value) for value in entry["den"]]
@@ -204,6 +220,8 @@ def _dispatch(request: dict[str, Any]) -> Any:
         return _hnf(request)
     if family == "fmpz_mat" and operation == "overhead":
         return 0
+    if family == "fmpz_mat" and operation == "snf":
+        return _snf(request)
     if family == "polymatrix" and operation == "pari_snf":
         return _pari_snf(request)
     if family == "polymatrix" and operation == "sympy_snf":

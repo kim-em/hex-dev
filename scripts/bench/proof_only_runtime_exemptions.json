@@ -1282,5 +1282,41 @@
     "baseline_blob": "8226e99030e7d5fa79f36b5652119b97ab8e0110",
     "current_blob": "e5e9e83f03c5d443e196eeefdfa6770b17b5575e",
     "reason": "Combines the measured PolySmith registrations with current main's independent HexIntFactor and complete MV-GCD Phase 4 benchmark support registrations; hexbz_factor_service, its build flags, and every factorization runtime dependency are unchanged."
+  },
+  {
+    "path": "HexMatrix/Diagonal.lean",
+    "baseline_blob": null,
+    "current_blob": "12c18a3f9aacefac47a83cdb9de9a70960ff5a58",
+    "reason": "Adds the independent rectangular diagonal constructor and its correctness theorems for HexSmith; the production factor entry never calls these definitions, so factorization runtime behavior is unchanged."
+  },
+  {
+    "path": "HexMatrix/Submatrix.lean",
+    "baseline_blob": "798e76a63cbdfdb611dc656ac7a8bfa2addfdc08",
+    "current_blob": "b001d6674a02adb64a78cba57c7596a1d021bc20",
+    "reason": "Adds selectRows and selectCols for determinant and Smith proofs; neither definition is referenced by the production factor entry, and existing submatrix operations are unchanged."
+  },
+  {
+    "path": "lakefile.lean",
+    "baseline_blob": "a1b87406682dbf908d990f01676f326499b906e5",
+    "current_blob": "3cbffd9841ac08abcd6777e6fc23def1de704d05",
+    "reason": "Registers only the HexSmith libraries, conformance emitter, and benchmark executable on top of current main; hexbz_factor_service, its build flags, and every factorization runtime dependency remain unchanged."
+  },
+  {
+    "path": "HexMatrix/Diagonal.lean",
+    "baseline_blob": "3b2aced8a7aec2bc4112f4432d342aed30267cac",
+    "current_blob": "1e4257b3bcd214f71082004f05763b9d9cc64af7",
+    "reason": "Keeps the measured rectangular diagonal constructor unchanged and adds only entry and row theorems needed by the independent HexSmith proofs; the production factor entry does not call the constructor."
+  },
+  {
+    "path": "HexMatrix/Submatrix.lean",
+    "baseline_blob": "b21fd7f027b3ecf38eeb39db7f5773c94bafe8e1",
+    "current_blob": "b001d6674a02adb64a78cba57c7596a1d021bc20",
+    "reason": "Adds selectRows and selectCols beside the measured PolySmith submatrix helpers for determinant and HexSmith proofs; neither new definition is referenced by the production factor entry, and existing operations are unchanged."
+  },
+  {
+    "path": "lakefile.lean",
+    "baseline_blob": "8226e99030e7d5fa79f36b5652119b97ab8e0110",
+    "current_blob": "10549d33f216b6879838e63f96725aec7633ddfc",
+    "reason": "Combines the measured PolySmith registrations with current main's independent HexIntFactor, MV-GCD, and HexSmith build registrations; hexbz_factor_service, its build flags, and every factorization runtime dependency are unchanged."
   }
 ]

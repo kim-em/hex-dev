@@ -22,8 +22,7 @@ open Hex
 noncomputable def selectedMinor {R : Type u} {n m k : Nat}
     (A : Matrix R n m) (rows : Vector (Fin n) k) (cols : Vector (Fin m) k) :
     Matrix R k k :=
-  Matrix.selectedSubmatrix A (Matrix.columnTupleVectorFn rows)
-    (Matrix.columnTupleVectorFn cols)
+  Matrix.selectedSubmatrix A rows cols
 
 /-- All `k × k` minors, with row and column sets in increasing order. -/
 noncomputable def minors {F : Type u} [Lean.Grind.Field F] [DecidableEq F]
@@ -138,17 +137,18 @@ private theorem dvd_foldl_sum {F : Type u} [Lean.Grind.Field F]
           exact hyall z (by simp [hz])
   exact aux xs 0 (DensePoly.dvd_zero_poly d) hall
 
-private theorem selectedMinor_eq_columnTupleMatrix_selectedRows
+private theorem selectedMinor_eq_columnTupleMatrix_selectRows
     {R : Type u} {n m k : Nat} (A : Matrix R n m)
     (rows : Vector (Fin n) k) (cols : Vector (Fin m) k) :
     selectedMinor A rows cols =
       Matrix.columnTupleMatrix
-        (Matrix.selectedRows A (Matrix.columnTupleVectorFn rows))
+        (Matrix.selectRows A rows)
         (Matrix.columnTupleVectorFn cols) := by
   apply Matrix.ext_getElem
   intro i j
   rw [selectedMinor, Matrix.getElem_selectedSubmatrix,
-    Matrix.getElem_columnTupleMatrix, Matrix.getElem_selectedRows]
+    Matrix.getElem_columnTupleMatrix, Matrix.getElem_selectRows,
+    Matrix.columnTupleVectorFn_apply]
 
 private theorem dvd_orderedMinor {F : Type u} [Lean.Grind.Field F]
     [DecidableEq F] {n m k : Nat} (A : Matrix (DensePoly F) n m)
@@ -157,7 +157,7 @@ private theorem dvd_orderedMinor {F : Type u} [Lean.Grind.Field F]
     (cols : Vector (Fin m) k)
     (hall : ∀ M ∈ minors A k, d ∣ M) :
     d ∣ Matrix.det (Matrix.columnTupleMatrix
-      (Matrix.selectedRows A (Matrix.columnTupleVectorFn rows))
+      (Matrix.selectRows A rows)
       (Matrix.columnTupleVectorFn cols)) := by
   by_cases hinj : Function.Injective (Matrix.columnTupleVectorFn cols)
   · let sorted := Matrix.sortInjTuple cols
@@ -173,12 +173,12 @@ private theorem dvd_orderedMinor {F : Type u} [Lean.Grind.Field F]
       refine ⟨rows, hrows, ?_⟩
       rw [List.mem_map]
       exact ⟨sorted, hsorted, rfl⟩
-    rw [selectedMinor_eq_columnTupleMatrix_selectedRows] at hminor
+    rw [selectedMinor_eq_columnTupleMatrix_selectRows] at hminor
     have hcols :
         Matrix.columnTupleVectorFn cols =
-          fun i => sorted[perm[i]] := by
+      fun i => sorted[perm[i]] := by
       funext i
-      exact Matrix.cols_getElem_eq_sortInjTuple_sortInjPerm cols hinj i
+      exact Matrix.sort_reconstruct_get cols hinj i
     rw [hcols]
     rw [Matrix.det_columnTupleMatrix_compose_perm _ sorted perm hperm]
     exact DensePoly.dvd_mul_left_poly _ hminor
@@ -196,10 +196,12 @@ private theorem dvd_selectedMinor_mul {F : Type u} [Lean.Grind.Field F]
     (hall : ∀ M ∈ minors A k, d ∣ M) :
     d ∣ Matrix.det (selectedMinor (A * B) rows cols) := by
   rw [selectedMinor]
-  rw [Matrix.det_selectedSubmatrix_mul_eq_sum_columnTuples]
+  rw [Matrix.det_minor_mul]
   apply dvd_foldl_sum
   intro mid _hmid
   apply DensePoly.dvd_mul_left_poly
+  change d ∣ Matrix.det (selectedMinor A rows mid)
+  rw [selectedMinor_eq_columnTupleMatrix_selectRows]
   exact dvd_orderedMinor A d rows hrows mid hall
 
 private theorem foldlGcd_dvd_acc {F : Type u} [Lean.Grind.Field F]
@@ -558,11 +560,12 @@ private theorem firstMinor_eq_prefixProduct {F : Type u} [Lean.Grind.Field F]
   rw [Matrix.getElem_selectedSubmatrix]
   change acc * (Matrix.diagMatrix d n m)[
       (Matrix.firstColumns k n (Nat.le_trans hk hrn))[i]][
-      (Matrix.firstColumns k m (Nat.le_trans hk hrm))[i]] = acc * d[i.val]'
-        (Nat.lt_of_lt_of_le i.isLt hk)
+      (Matrix.firstColumns k m (Nat.le_trans hk hrm))[i]] =
+        acc * d[(⟨i.val, Nat.lt_of_lt_of_le i.isLt hk⟩ : Fin r)]
   rw [Matrix.getElem_diagMatrix_of_eq d _ _ (by simp [Matrix.firstColumns])
     (by simpa [Matrix.firstColumns] using Nat.lt_of_lt_of_le i.isLt hk)]
   congr 2
+  apply Fin.ext
   simp [Matrix.firstColumns]
 
 private theorem det_eq_zero_of_row_zero {F : Type u} [Lean.Grind.Field F]
@@ -668,16 +671,17 @@ theorem IsSNF.detDivisor_eq {F : Type u} [Lean.Grind.Field F]
   rw [← h.mul_eq] at hdiag
   exact hleft ▸ hright ▸ hdiag
 
-private theorem selectedRows_eq_transpose_columnTuple {R : Type u}
+private theorem selectRows_eq_transpose_columnTuple {R : Type u}
     [Lean.Grind.CommRing R] {n : Nat} (A : Matrix R n n)
     (rows : Vector (Fin n) n) :
-    Matrix.selectedRows A (Matrix.columnTupleVectorFn rows) =
+    Matrix.selectRows A rows =
       (Matrix.columnTupleMatrix A.transpose
         (Matrix.columnTupleVectorFn rows)).transpose := by
   apply Matrix.ext_getElem
   intro i j
-  rw [Matrix.getElem_selectedRows, Matrix.getElem_transpose,
-    Matrix.getElem_columnTupleMatrix, Matrix.getElem_transpose]
+  rw [Matrix.getElem_selectRows, Matrix.getElem_transpose,
+    Matrix.getElem_columnTupleMatrix, Matrix.getElem_transpose,
+    Matrix.columnTupleVectorFn_apply]
 
 private theorem det_selectedMinor_full {F : Type u} [Lean.Grind.Field F]
     [DecidableEq F] {n : Nat} (A : Matrix (DensePoly F) n n)
@@ -688,10 +692,10 @@ private theorem det_selectedMinor_full {F : Type u} [Lean.Grind.Field F]
       Matrix.detSign (R := DensePoly F) (Vector.ofFn (Matrix.columnTupleVectorFn cols)) *
         (Matrix.detSign (R := DensePoly F)
           (Vector.ofFn (Matrix.columnTupleVectorFn rows)) * Matrix.det A) := by
-  rw [selectedMinor_eq_columnTupleMatrix_selectedRows]
+  rw [selectedMinor_eq_columnTupleMatrix_selectRows]
   rw [Matrix.det_columnTupleMatrix_of_injective _ _
     (Matrix.mem_selectedColumnTuples_injective hcols)]
-  rw [selectedRows_eq_transpose_columnTuple, Matrix.det_transpose]
+  rw [selectRows_eq_transpose_columnTuple, Matrix.det_transpose]
   rw [Matrix.det_columnTupleMatrix_of_injective _ _
     (Matrix.mem_selectedColumnTuples_injective hrows), Matrix.det_transpose]
 

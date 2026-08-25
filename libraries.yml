@@ -429,6 +429,26 @@ libraries:
           description: tall matrices with many redundant row generators
         - name: unimodular-conjugate
           description: random unimodular left factors times a known diagonal form
+  HexSmith:
+    deps: [HexHermite]
+    mathlib: false
+    done_through: 0
+    status: active
+    phase4:
+      comparators:
+        - tool: FLINT fmpz_mat_snf via python-flint
+          class: informational
+          rationale: FLINT dispatches to algorithms and crossover policies outside this SPEC
+        - tool: PARI matsnf via cypari2
+          class: informational
+          rationale: PARI uses a separately tuned implementation and is recorded for orientation
+      input_families:
+        - name: random-dense-smith
+          description: dense square nonsingular integer matrices with uniformly bounded entries
+        - name: chain-conjugate
+          description: known divisibility chains conjugated by random unimodular matrices
+        - name: presentation-smith
+          description: sparse abelian-group relation matrices run through the dense implementation
   HexLLL:
     deps: [HexGramSchmidt, HexMatrix, HexBasic]
     mathlib: false
@@ -736,6 +756,11 @@ libraries:
     deps: [HexHermite, HexRowReduceMathlib]
     mathlib: true
     done_through: 3
+    status: active
+  HexSmithMathlib:
+    deps: [HexSmith, HexHermiteMathlib]
+    mathlib: true
+    done_through: 0
     status: active
   HexPolyFpMathlib:
     deps: [HexPolyFp, HexPolyMathlib, HexModArithMathlib]
