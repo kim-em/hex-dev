@@ -957,7 +957,7 @@ libraries:
   HexNumberFieldMathlib:
     deps: [HexNumberField, HexResultantMathlib, HexBerlekampZassenhausMathlib, HexRootsMathlib, HexPolyZMathlib]
     mathlib: true
-    done_through: 2
+    done_through: 3
     status: active
   HexNumberFieldTower:
     deps: [HexNumberField, HexResultant, HexBerlekampZassenhaus]
@@ -981,7 +981,7 @@ libraries:
   HexNumberFieldTowerMathlib:
     deps: [HexNumberFieldTower, HexNumberFieldMathlib, HexResultantMathlib, HexBerlekampZassenhausMathlib, HexRowReduceMathlib]
     mathlib: true
-    done_through: 2
+    done_through: 3
     status: active
   HexRealRoots:
     deps: [HexPolyZ]
