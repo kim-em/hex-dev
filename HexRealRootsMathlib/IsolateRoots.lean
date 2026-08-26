@@ -330,7 +330,7 @@ reconcile the two explicit polynomials in `x`.
 This is a pointwise evaluation bridge, not a `Polynomial` identity: it works on
 closed literal data with integer coefficients and does not attempt to match
 `Polynomial` structure. -/
-macro "isolate_roots_bridge" : tactic =>
+macro (name := isolateRootsBridge) "isolate_roots_bridge" : tactic =>
   `(tactic|
     (intro x
      rw [HexRealRootsMathlib.aeval_toPolynomial_ofCoeffs]

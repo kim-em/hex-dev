@@ -62,7 +62,7 @@ theorem sqfree_x4m2 : ZPoly.SquareFreeRat x4m2 :=
   squareFreeRat_of_hasSquarefreeSturmChain _ (by decide)
 
 /-- The complete run of `x⁴ − 2`: the two isolate? intervals `(-4, 0]`, `(0, 4]`. -/
-def run_x4m2 : RealRootIsolations x4m2 where
+def runX4m2 : RealRootIsolations x4m2 where
   isolations :=
     #[⟨⟨Dyadic.ofInt (-4), Dyadic.ofInt 0, by decide⟩, by decide⟩,
       ⟨⟨Dyadic.ofInt 0, Dyadic.ofInt 4, by decide⟩, by decide⟩]
@@ -70,27 +70,27 @@ def run_x4m2 : RealRootIsolations x4m2 where
   complete := by decide
 
 /-- `x⁴ − 2` isolated via `IsolatedRealRoots.of`. -/
-noncomputable def iso_x4m2_of :
-    IsolatedRealRoots (HexPolyZMathlib.toPolynomial x4m2) run_x4m2.isolations.size :=
-  IsolatedRealRoots.of x4m2 (ne_zero_of_size_ne_zero (by decide)) sqfree_x4m2 run_x4m2
+noncomputable def isoX4m2Of :
+    IsolatedRealRoots (HexPolyZMathlib.toPolynomial x4m2) runX4m2.isolations.size :=
+  IsolatedRealRoots.of x4m2 (ne_zero_of_size_ne_zero (by decide)) sqfree_x4m2 runX4m2
 
 /-! # The replay constructor `IsolatedRealRoots.ofCert` on `x⁴ − 2` -/
 
 /-- The reified Sturm chain of `x⁴ − 2`: `[x⁴ − 2, x³, 1]`. -/
-def chain_x4m2 : Array ZPoly :=
+def chainX4m2 : Array ZPoly :=
   #[DensePoly.ofCoeffs #[(-2 : Int), 0, 0, 0, 1],
     DensePoly.ofCoeffs #[(0 : Int), 0, 0, 1],
     DensePoly.ofCoeffs #[(1 : Int)]]
 
 /-- `x⁴ − 2` isolated via the replay constructor: every field a `decide` on the
 reified chain. -/
-noncomputable def iso_x4m2_replay :
+noncomputable def isoX4m2Replay :
     IsolatedRealRoots (HexPolyZMathlib.toPolynomial x4m2) 2 :=
-  IsolatedRealRoots.ofCert (chain := chain_x4m2)
+  IsolatedRealRoots.ofCert (chain := chainX4m2)
     (iso := ⟨#[⟨⟨Dyadic.ofInt (-4), Dyadic.ofInt 0, by decide⟩,
-                RealRootIsolation.count_one_of_cert (chain := chain_x4m2) (by decide) _ (by decide)⟩,
+                RealRootIsolation.count_one_of_cert (chain := chainX4m2) (by decide) _ (by decide)⟩,
               ⟨⟨Dyadic.ofInt 0, Dyadic.ofInt 4, by decide⟩,
-                RealRootIsolation.count_one_of_cert (chain := chain_x4m2) (by decide) _ (by decide)⟩],
+                RealRootIsolation.count_one_of_cert (chain := chainX4m2) (by decide) _ (by decide)⟩],
         rfl⟩)
     (hsize := by decide) (hsf := by decide) (hcert := by decide)
     (hordered := by decide) (hcomplete := by decide)
@@ -104,26 +104,26 @@ def q : ZPoly := DensePoly.ofCoeffs #[(-3 : Int), 7, -5, 1]
 def qcore : ZPoly := DensePoly.ofCoeffs #[(3 : Int), -4, 1]
 
 /-- The Sturm chain of the squarefree core: `[x² − 4x + 3, x − 2, 1]`. -/
-def chain_qcore : Array ZPoly :=
+def chainQcore : Array ZPoly :=
   #[DensePoly.ofCoeffs #[(3 : Int), -4, 1],
     DensePoly.ofCoeffs #[(-2 : Int), 1],
     DensePoly.ofCoeffs #[(1 : Int)]]
 
 /-- The squarefree core isolated via replay: roots in `(0, 2]` and `(2, 4]`. -/
-noncomputable def iso_qcore_replay :
+noncomputable def isoQcoreReplay :
     IsolatedRealRoots (HexPolyZMathlib.toPolynomial qcore) 2 :=
-  IsolatedRealRoots.ofCert (chain := chain_qcore)
+  IsolatedRealRoots.ofCert (chain := chainQcore)
     (iso := ⟨#[⟨⟨Dyadic.ofInt 0, Dyadic.ofInt 2, by decide⟩,
-                RealRootIsolation.count_one_of_cert (chain := chain_qcore) (by decide) _ (by decide)⟩,
+                RealRootIsolation.count_one_of_cert (chain := chainQcore) (by decide) _ (by decide)⟩,
               ⟨⟨Dyadic.ofInt 2, Dyadic.ofInt 4, by decide⟩,
-                RealRootIsolation.count_one_of_cert (chain := chain_qcore) (by decide) _ (by decide)⟩],
+                RealRootIsolation.count_one_of_cert (chain := chainQcore) (by decide) _ (by decide)⟩],
         rfl⟩)
     (hsize := by decide) (hsf := by decide) (hcert := by decide)
     (hordered := by decide) (hcomplete := by decide)
 
 /-- `(x − 1)²(x − 3)` and its squarefree core share the same real roots. Proven
 here by explicit factoring; in the elaborator this bridge is
-`aevalIff_squareFreeCore` (see `transport_via_squareFreeCore` below), whose
+`aevalIff_squareFreeCore` (see `transportViaSquareFreeCore` below), whose
 `squareFreeCore q = qcore` step is a meta-level equality since `squareFreeCore`
 is intentionally outside the kernel-reducible replay closure. -/
 theorem qcore_same_roots (x : ℝ) :
@@ -143,15 +143,15 @@ theorem qcore_same_roots (x : ℝ) :
 
 /-- `(x − 1)²(x − 3)` isolated: replay on the squarefree core, transported onto
 `q` by `congrRoots`. -/
-noncomputable def iso_q :
+noncomputable def isoQ :
     IsolatedRealRoots (HexPolyZMathlib.toPolynomial q) 2 :=
-  IsolatedRealRoots.congrRoots qcore_same_roots iso_qcore_replay
+  IsolatedRealRoots.congrRoots qcore_same_roots isoQcoreReplay
 
 /-- The production transport for a non-squarefree input: `congrRoots` along
 `aevalIff_squareFreeCore` carries an isolation of the squarefree core onto the
 original polynomial. Exercises the exact `congrRoots (aevalIff_squareFreeCore …)`
 composition the elaborator emits. -/
-noncomputable def transport_via_squareFreeCore
+noncomputable def transportViaSquareFreeCore
     (H : IsolatedRealRoots (HexPolyZMathlib.toPolynomial (Hex.ZPoly.squareFreeCore q)) 2) :
     IsolatedRealRoots (HexPolyZMathlib.toPolynomial q) 2 :=
   IsolatedRealRoots.congrRoots
@@ -160,7 +160,7 @@ noncomputable def transport_via_squareFreeCore
 /-! # `IsolatedRealRoots.constant` -/
 
 /-- A nonzero constant has no real roots: the empty isolation. -/
-def iso_const : IsolatedRealRoots (Polynomial.C (3 : ℝ)) 0 :=
+def isoConst : IsolatedRealRoots (Polynomial.C (3 : ℝ)) 0 :=
   IsolatedRealRoots.constant (by simp)
 
 end HexRealRootsMathlib.Tests

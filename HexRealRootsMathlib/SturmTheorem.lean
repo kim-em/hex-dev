@@ -330,13 +330,13 @@ theorem sturmVar_root_cross (_hp : p ≠ 0) (_hsf : Squarefree p)
       = 1 + signVariations ((q :: tail).map (Polynomial.eval a))
     rw [signVariations_cons_pos _ hpa]
     simp only [List.map_cons]
-    rw [firstSign_cons_ne _ hqa, Option.elim_some, if_pos hsignA]
+    rw [firstSign_cons_ne _ hqa, Option.elim_some, ite_eq_left hsignA]
   have hSVb : sturmVar (p :: q :: tail) b = sturmVar (q :: tail) b := by
     show signVariations (p.eval b :: (q :: tail).map (Polynomial.eval b))
       = signVariations ((q :: tail).map (Polynomial.eval b))
     rw [signVariations_cons_pos _ hpb]
     simp only [List.map_cons]
-    rw [firstSign_cons_ne _ hqb, Option.elim_some, if_neg hsignB, zero_add]
+    rw [firstSign_cons_ne _ hqb, Option.elim_some, ite_eq_right hsignB, zero_add]
   have hSVr : sturmVar (p :: q :: tail) r = sturmVar (q :: tail) r := by
     show signVariations (p.eval r :: (q :: tail).map (Polynomial.eval r))
       = signVariations ((q :: tail).map (Polynomial.eval r))

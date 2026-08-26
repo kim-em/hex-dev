@@ -479,7 +479,7 @@ theorem signVariations_eq_zero_of_coeff_nonneg {P : ℝ[X]} (h : ∀ i, 0 ≤ P.
         have : SignType.sign P.eraseLead.leadingCoeff = -1 := by
           rw [← neg_neg (SignType.sign P.eraseLead.leadingCoeff), ← hcon]
         exact absurd (sign_eq_neg_one_iff.mp this) (not_lt.mpr (heLcoeff _))
-      rw [signVariations_eq_eraseLead_add_ite hP, if_neg hite, add_zero]
+      rw [signVariations_eq_eraseLead_add_ite hP, ite_eq_right hite, add_zero]
       exact ih _ (lt_of_le_of_lt (eraseLead_natDegree_le P) (by omega)) heLcoeff rfl
 
 /-- **The threshold bound.** If the coefficients of `P` are nonpositive below an
@@ -522,7 +522,7 @@ theorem signVariations_le_one_of_coeff_threshold {P : ℝ[X]} {θ : ℕ}
         push Not at hcon
         have hne : P.eraseLead.natDegree ≠ P.natDegree := by omega
         have hcoeff : P.eraseLead.leadingCoeff = P.coeff P.eraseLead.natDegree := by
-          rw [leadingCoeff, eraseLead_coeff, if_neg hne]
+          rw [leadingCoeff, eraseLead_coeff, ite_eq_right hne]
         rw [hcoeff] at heL
         exact absurd (h2 _ hcon) (not_le.mpr heL)
       have hnn : ∀ i, 0 ≤ (-P.eraseLead).coeff i := by
@@ -546,7 +546,7 @@ theorem signVariations_le_one_of_coeff_threshold {P : ℝ[X]} {θ : ℕ}
         have : SignType.sign P.eraseLead.leadingCoeff = -1 := by
           rw [← neg_neg (SignType.sign P.eraseLead.leadingCoeff), ← hcon]
         exact absurd (sign_eq_neg_one_iff.mp this) (not_lt.mpr heL)
-      rw [signVariations_eq_eraseLead_add_ite hP, if_neg hite, add_zero]
+      rw [signVariations_eq_eraseLead_add_ite hP, ite_eq_right hite, add_zero]
       have h1' : ∀ i < θ, P.eraseLead.coeff i ≤ 0 := by
         intro i hi
         rw [eraseLead_coeff]
@@ -648,7 +648,7 @@ theorem PosLogConcave.signVariations_X_pow_mul_X_sub_C_mul (hA : PosLogConcave A
       · exact h1 _ (by omega)
       · exact le_refl 0
     · intro i hi
-      rw [coeff_X_pow_mul', if_pos (by omega)]
+      rw [coeff_X_pow_mul', ite_eq_left (by omega)]
       exact h2 _ (by omega)
 
 /-! # Assembly -/
@@ -742,7 +742,7 @@ theorem signVariations_le_one_of_sector {P : ℝ[X]} (hP : P ≠ 0)
       rw [hmapQeq, roots_mul (hmapQeq ▸ map_ne_zero hQne), roots_X_sub_C,
         Multiset.singleton_add]
     have hMcount : (M.map (algebraMap ℝ ℂ)).roots.countP (· ∉ sector) = 0 := by
-      rw [hrootsQ, Multiset.countP_cons, if_pos (hwr ▸ hwout)] at hcount
+      rw [hrootsQ, Multiset.countP_cons, ite_eq_left (hwr ▸ hwout)] at hcount
       omega
     have hMplc : PosLogConcave M := by
       apply posLogConcave_of_aeval_mem_sector hMm hM0
