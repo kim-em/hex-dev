@@ -107,38 +107,6 @@ theorem bhksLatticeBasis_basis_independent
     (fun i => bhksLatticeBasis_basis_diagPos f p a hp lifted i)
     (k.val + 1) (Nat.succ_le_of_lt k.isLt) (Nat.succ_pos _)
 
-/-- The first row of the LLL-reduced BHKS knapsack
-lattice is a short vector: its squared Euclidean norm is bounded by the LLL
-approximation factor `(1/(δ-1/4))^(n-1)` (at `δ = 3/4`) times the squared norm
-of *any* nonzero lattice vector.  This is the direct application of the proven
-`HexLLLMathlib.lllNative_first_row_norm_sq_le` to the BHKS basis,
-using `bhksLatticeBasis_basis_independent`.  It is the concrete "the LLL-reduced
-basis contains a short vector" fact that the van Hoeij adequacy argument feeds:
-the true-factor `0-1` indicator vectors are short lattice vectors, so the reduced
-basis's leading vector is at least as short. -/
-theorem bhksLatticeBasis_lllNative_first_row_short
-    (f : Hex.ZPoly) (p a : Nat) (hp : 0 < p) (lifted : Array Hex.ZPoly)
-    (hn : 1 ≤ (Hex.bhksLatticeBasis f p a lifted).factorCount
-      + (Hex.bhksLatticeBasis f p a lifted).coeffWidth)
-    (x : Fin ((Hex.bhksLatticeBasis f p a lifted).factorCount
-      + (Hex.bhksLatticeBasis f p a lifted).coeffWidth) → ℤ)
-    (hx : x ∈ HexLLLMathlib.latticeSubmodule (Hex.bhksLatticeBasis f p a lifted).basis)
-    (hx0 : x ≠ 0) :
-    ‖HexLLLMathlib.intRowToEuclidean
-        (Hex.Matrix.row
-          (Hex.lllNative (Hex.bhksLatticeBasis f p a lifted).basis (3 / 4)
-            Hex.lll_delta_lower Hex.lll_delta_upper hn)
-          ⟨0, Nat.lt_of_lt_of_le Nat.zero_lt_one hn⟩)‖ ^ 2 ≤
-      (((1 / ((3 : Rat) / 4 - 1 / 4)) ^
-          (((Hex.bhksLatticeBasis f p a lifted).factorCount
-            + (Hex.bhksLatticeBasis f p a lifted).coeffWidth) - 1) : Rat) : ℝ) *
-        ‖HexLLLMathlib.intVectorToEuclidean x‖ ^ 2 :=
-  HexLLLMathlib.lllNative_first_row_norm_sq_le
-    (Hex.bhksLatticeBasis f p a lifted).basis (3 / 4)
-    Hex.lll_delta_lower Hex.lll_delta_upper hn
-    (bhksLatticeBasis_basis_independent f p a hp lifted) x hx hx0
-
-
 /-!
 # The `W ⊆ L'` adequacy assembly
 
@@ -190,21 +158,6 @@ theorem two_mul_bhksCoeffBound_le_cldCoeffFloor (core : Hex.ZPoly) (j : Nat) :
         Nat.choose_eq_zero_of_lt (show core.degree?.getD 0 - 1 < j by omega)]
       simp
     omega
-
-/-- Public restatement of the canonical-reduction absorption of
-`centeredLiftPoly`: centring the reduction equals centring the raw polynomial. -/
-theorem centeredLiftPoly_reduceModPow_absorb
-    (f : Hex.ZPoly) (p k : Nat) (hp : 0 < p) :
-    Hex.centeredLiftPoly (Hex.ZPoly.reduceModPow f p k) (p ^ k) =
-      Hex.centeredLiftPoly f (p ^ k) := by
-  have hpkpos : 0 < p ^ k := Nat.pow_pos hp
-  have hpkne : p ^ k ≠ 0 := Nat.ne_of_gt hpkpos
-  apply Hex.DensePoly.ext_coeff
-  intro n
-  rw [Hex.coeff_centeredLiftPoly, Hex.coeff_centeredLiftPoly,
-    Hex.ZPoly.coeff_reduceModPow_eq_emod_of_pos _ _ _ _ hpkpos]
-  unfold Hex.centeredModNat
-  rw [if_neg hpkne, if_neg hpkne, Int.emod_emod_of_dvd _ (dvd_refl _)]
 
 /-- The lifted-factor product over a singleton subset is the lifted factor. -/
 theorem liftedFactorProduct_singleton (d : Hex.LiftData) (i : LiftedFactorIndex d) :

@@ -30,23 +30,6 @@ universe u
 
 variable {R : Type u} {n : Nat}
 
-private theorem coeffFold [CommRing R] (xs : List Nat)
-    (f : Nat → TSeries R n) (z : TSeries R n) (i : Nat) (hi : i < n) :
-    (xs.foldl (fun acc k => acc + f k) z).coeff i =
-      xs.foldl (fun acc k => acc + (f k).coeff i) (z.coeff i) := by
-  induction xs generalizing z with
-  | nil => rfl
-  | cons k ks ih =>
-      simp only [List.foldl_cons]
-      rw [ih, Hex.TSeries.coeff_add z (f k) i hi]
-
-private theorem truncate_one [CommRing R] :
-    (1 : TSeries R n).truncate (n - 1) (Nat.sub_le n 1) = 1 := by
-  apply Hex.TSeries.ext
-  intro i hi
-  rw [Hex.TSeries.coeff_truncate _ (Nat.sub_le n 1) i hi,
-    Hex.TSeries.coeff_one i (by omega), Hex.TSeries.coeff_one i hi]
-
 private theorem one_add_X_mul_geom [CommRing R] [Algebra ℚ R] :
     (1 + PowerSeries.X) *
         PowerSeries.mk (fun k => algebraMap ℚ R ((-1 : ℚ) ^ k)) = 1 := by
@@ -68,6 +51,8 @@ private theorem one_add_X_mul_geom [CommRing R] [Algebra ℚ R] :
       rw [_root_.pow_succ]
       simp
 
+/-- Truncation carries Mathlib's unit-certified inverse to executable Newton
+inversion. -/
 theorem ofPowerSeries_invOfUnit [CommRing R] (f : PowerSeries R) (u : Rˣ)
     (hu : PowerSeries.constantCoeff f = u) :
     ofPowerSeries (n := n) (f.invOfUnit u) =
@@ -86,6 +71,8 @@ theorem ofPowerSeries_invOfUnit [CommRing R] (f : PowerSeries R) (u : Rˣ)
       simpa only [RingHom.map_mul, RingHom.map_one,
         ofPowerSeriesHom_apply] using hmul
 
+/-- Truncation carries Mathlib substitution by a zero-constant series to
+executable composition. -/
 theorem ofPowerSeries_subst [CommRing R] (f g : PowerSeries R)
     (hg : PowerSeries.constantCoeff g = 0) :
     ofPowerSeries (n := n) (f.subst g) =
@@ -99,7 +86,7 @@ theorem ofPowerSeries_subst [CommRing R] (f g : PowerSeries R)
     · unfold Hex.TSeries.coeff
       rw [dif_neg hn]
   rw [coeff_ofPowerSeries (f.subst g) i hi, comp_spec _ _ hg0,
-    coeffFold (List.range n)
+    coeff_foldl_add (List.range n)
       (fun k => C ((ofPowerSeries (n := n) f).coeff k) *
         (ofPowerSeries (n := n) g).pow k) 0 i hi,
     Hex.TSeries.coeff_zero]
@@ -163,6 +150,8 @@ theorem ofPowerSeries_subst [CommRing R] (f g : PowerSeries R)
       rw [hpowCore k, coeff_ofPowerSeries (g ^ k) i hi]
       simp
 
+/-- Truncation carries Mathlib's compositional inverse to executable Newton
+reversion. -/
 theorem ofPowerSeries_substInvOfIsUnit [CommRing R] (g : PowerSeries R)
     (h0 : PowerSeries.constantCoeff g = 0)
     (hu : IsUnit (PowerSeries.coeff 1 g)) :
@@ -228,6 +217,8 @@ theorem ofPowerSeries_substInvOfIsUnit [CommRing R] (g : PowerSeries R)
       rw [revOfUnit_le_one (ofPowerSeries g) _ (by omega),
         Hex.TSeries.coeff_zero]
 
+/-- Truncation carries Mathlib's formal exponential to the executable
+truncated exponential. -/
 theorem ofPowerSeries_exp [CommRing R] [Algebra ℚ R]
     [NatInverses R (n - 1)] (f : PowerSeries R)
     (h : PowerSeries.constantCoeff f = 0) :
@@ -299,6 +290,8 @@ theorem ofPowerSeries_exp [CommRing R] [Algebra ℚ R]
   rw [hlog] at hexplog
   exact hexplog.symm
 
+/-- Truncation carries Mathlib's formal logarithm to the executable truncated
+logarithm. -/
 theorem ofPowerSeries_logOf [CommRing R] [Algebra ℚ R]
     [NatInverses R (n - 1)] (f : PowerSeries R)
     (h : PowerSeries.constantCoeff f = 1) :

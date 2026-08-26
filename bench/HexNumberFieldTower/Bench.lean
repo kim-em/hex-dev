@@ -5,6 +5,8 @@ Authors: Kim Morrison
 -/
 
 import HexNumberFieldTower
+import Hex.BenchOracle.Pari
+import Lean.Data.Json
 import LeanBench
 
 /-!
@@ -12,16 +14,44 @@ Benchmark registrations for `HexNumberFieldTower`.
 
 The fixed cases expose the Phase-4 components named by the library SPEC:
 
-* addition, multiplication, and recursive inversion in the dimension-four tower
+* addition, subtraction, negation, multiplication, recursive inversion,
+  division, and rational scalar action in the dimension-four tower
   `Q(sqrt(2), sqrt(3))`;
 * adjoining a fourth root of two to `Q(sqrt(2))`;
 * rational, one-level Trager-retry, and recursive two-level factorization;
 * splitting a quartic through two genuine extensions;
 * flattening a two-level tower to a primitive-element presentation.
 
-Every case stays within tower dimension four and input degree four; the
-isolated recovery adversary uses absolute degree six. The driver is
-Mathlib-free; external PARI comparison belongs to conformance, not timing.
+Every fixed case stays within tower dimension four and input degree four;
+the isolated recovery adversary uses absolute degree six.
+
+The parametric ladders carry the Phase-4 asymptotic evidence:
+
+* `runTowerAddLadder` / `runTowerMulLadder` / `runTowerInvLadder`:
+  coordinate arithmetic in the height-two tower `Q(sqrt(2), 3^{1/m})` at
+  growing dimension `D = 2m`;
+* `runTowerFactorLadder`: Trager factorization over `Q(sqrt(2))` of the
+  degree-`n` Selmer trinomial `X^n - X - 1`, whose rational coefficients
+  force the shift-zero norm to repeat, exercising the bounded shift search,
+  a genuine one-level norm retry, the recursive rational factorization of
+  the accepted degree-`2n` norm, and gcd recovery.
+
+Informational PARI comparator (`SPEC/benchmarking.md` §External comparators
+§Process call): `nffactor` is the callable PARI surface matching tower
+polynomial factorization at one level. The `runTowerFactorPair*` /
+`runPariNfFactor*` fixed rungs consume the same deterministic Selmer input
+over `Q(sqrt(2))` and hash the identical sorted factor
+degree/multiplicity multiset — the representation-free observable both
+implementations share — so `compare` joins on result hashes. The PARI side
+runs through the persistent-subprocess driver
+`scripts/oracle/pari_bench_driver.py` (one JSON request per line; started by
+a `warmupFirstIter` call outside the timed region and reused across the
+child's auto-tuned inner-repeat batch — see `Hex/BenchOracle/Pari.lean`).
+Both sides of every pair use `warmupFirstIter` and the same
+`minTotalSeconds` floor so per-rung ratios compare steady-state medians on
+the same basis. Tower element arithmetic, adjoining, splitting, and
+flattening have no comparable PARI unit surface; see the SPEC's External
+comparators section. The driver is Mathlib-free.
 -/
 
 namespace Hex.NumberTowerBench
@@ -650,6 +680,336 @@ setup_fixed_benchmark runFlatten where {
   expectedHash := some 0xcc1b7720bfe3fc24
 }
 
+
+/-! # Fixed registrations completing the arithmetic surface -/
+
+def runSub : Unit → IO UInt64 := fun _ => do
+  let tower ← getTwoLevel
+  let sqrtTwo := tower.extension.embed tower.base.gen
+  return elemChecksum (sqrtTwo - tower.extension.gen)
+
+def runNeg : Unit → IO UInt64 := fun _ => do
+  let tower ← getTwoLevel
+  let sqrtTwo := tower.extension.embed tower.base.gen
+  let value := sqrtTwo + tower.extension.gen
+  return elemChecksum (-value)
+
+def runDiv : Unit → IO UInt64 := fun _ => do
+  let tower ← getTwoLevel
+  let sqrtTwo := tower.extension.embed tower.base.gen
+  let value := sqrtTwo + tower.extension.gen
+  return elemChecksum (sqrtTwo / value)
+
+def runSMul : Unit → IO UInt64 := fun _ => do
+  let tower ← getTwoLevel
+  let sqrtTwo := tower.extension.embed tower.base.gen
+  let value := sqrtTwo + tower.extension.gen
+  return elemChecksum ((mkRat 3 7) • value)
+
+/- Coordinate subtraction, like addition, visits exactly `D` rational
+coordinates; this fixed `D = 4` case completes the linear-cost surface. -/
+setup_fixed_benchmark runSub where {
+  repeats := 5, maxSecondsPerCall := 2.0
+}
+
+/- Negation visits `D` coordinates with one rational negation each; the
+linear cost model matches addition. -/
+setup_fixed_benchmark runNeg where {
+  repeats := 5, maxSecondsPerCall := 2.0
+}
+
+/- Division composes recursive extended-gcd inversion with one `O(D^2)`
+multiplication/reduction; the inversion term dominates as in `runInv`. -/
+setup_fixed_benchmark runDiv where {
+  repeats := 5, maxSecondsPerCall := 2.0
+}
+
+/- Rational scalar action multiplies each of the `D` coordinates by one
+rational, a linear-cost surface like addition. -/
+setup_fixed_benchmark runSMul where {
+  repeats := 5, maxSecondsPerCall := 2.0
+}
+
+/-! # Parametric dimension ladders -/
+
+/-- `X^m - 3`, Eisenstein-irreducible at `3` for every `m ≥ 1`; its degree
+over `ℚ(√2)` is still `m` (the only quadratic subfield a pure cube/fourth/…
+root field of `3` can contain is `ℚ(√3)`), so adjoining its first root to
+`ℚ(√2)` yields a height-two tower of dimension `2m`. -/
+private def xPowSubThree (m : Nat) : ZPoly :=
+  DensePoly.ofList ((-3 : Int) :: List.replicate (m - 1) 0 ++ [1])
+
+/-- Deterministic refined isolation for a squarefree polynomial: run the
+bounded isolator at separation depth and take the first returned atom. -/
+private def refinedOf? (p : ZPoly) (h : HasOnlySimpleRoots p) :
+    Option (RefinedIsolation p) := do
+  let isolations ← isolate p h (separationDepth p : Int)
+  let iso ← isolations[0]?
+  iso.toRefined?
+
+/-- Deterministic factorization-lazy root of a primitive positive-leading
+squarefree polynomial (the first isolated root). -/
+private def mkLadderRoot? (p : ZPoly) : Option AlgebraicRoot :=
+  if hprim : ZPoly.content p = 1 then
+    if hlc : 0 < p.leadingCoeff then
+      if hdeg : 0 < p.degree?.getD 0 then
+        if hsf : HasOnlySimpleRoots p then
+          match refinedOf? p hsf with
+          | some rep =>
+            some { p := p, prim := hprim, pos_lc := hlc, pos_degree := hdeg
+                   squarefree := hsf, x := SimpleRoot.mk rep, rep := rep
+                   rep_mk := rfl }
+          | none => none
+        else none
+      else none
+    else none
+  else none
+
+/-- The height-two ladder tower `ℚ(√2, 3^{1/m})` (just `ℚ(√2)` at `m = 1`). -/
+private def ladderTower? (m : Nat) : Option NumberTower := do
+  let base ← sqrtTwo? ()
+  if m ≤ 1 then
+    pure base.tower
+  else do
+    let root ← mkLadderRoot? (xPowSubThree m)
+    let extension ← adjoin? base.tower root
+    pure extension.tower
+
+/-- Prepared dimension-`2m` coordinate-arithmetic fixture with two
+all-nonzero-coordinate elements. -/
+private structure ElemInput where
+  tower : NumberTower
+  a : Elem tower
+  b : Elem tower
+
+private instance : Hashable ElemInput where
+  hash input :=
+    mixHash (hash input.tower.dim)
+      (mixHash (elemChecksum input.a) (elemChecksum input.b))
+
+private instance : Inhabited ElemInput :=
+  ⟨⟨rat, ofRat rat 1, ofRat rat 2⟩⟩
+
+/-- Deterministic dense all-nonzero mixed-radix coordinates. -/
+private def ladderCoords (d salt : Nat) : Array Rat :=
+  (Array.range d).map fun i =>
+    let sign : Int := if (i + salt) % 2 == 0 then 1 else -1
+    mkRat (sign * Int.ofNat (i + salt + 2)) (i + 3)
+
+def prepElemInput (n : Nat) : ElemInput :=
+  let m := max n 1
+  match ladderTower? m with
+  | some tower =>
+    let d := tower.dim
+    { tower := tower
+      a := ofCoeffs tower (ladderCoords d 3)
+      b := ofCoeffs tower (ladderCoords d 7) }
+  | none => panic! "prepElemInput: tower fixture failed"
+
+def runTowerAddLadder (input : ElemInput) : UInt64 :=
+  elemChecksum (input.a + input.b)
+
+def runTowerMulLadder (input : ElemInput) : UInt64 :=
+  elemChecksum (input.a * input.b)
+
+def runTowerInvLadder (input : ElemInput) : UInt64 :=
+  elemChecksum input.a⁻¹
+
+/- Cost model. Coordinate addition adds the two mixed-radix coordinate
+vectors pointwise: exactly `D = 2n` rational additions for the
+dimension-`2n` ladder tower (SPEC §Complexity: "Coordinate addition costs
+O(D) rational operations"). Fixture coordinate heights are bounded, so each
+rational operation is `O(1)` words and the declared wall model is linear in
+the parameter. -/
+setup_benchmark runTowerAddLadder n => n
+  with prep := prepElemInput
+  where {
+    paramFloor := 1
+    paramCeiling := 6
+    paramSchedule := .custom #[1, 2, 3, 4, 6]
+    maxSecondsPerCall := 10.0
+    targetInnerNanos := 100000000
+    signalFloorMultiplier := 1.0
+  }
+
+/- Cost model. Schoolbook tower multiplication convolves the mixed-radix
+coordinates and reduces from the top generator downward, `O(D^2)` rational
+operations at dimension `D = 2n` (SPEC §Complexity: "Schoolbook
+multiplication and reduction cost O(D²)"). Bounded fixture heights make each
+rational operation `O(1)` words, so the declared wall model is quadratic. -/
+setup_benchmark runTowerMulLadder n => n * n
+  with prep := prepElemInput
+  where {
+    paramFloor := 1
+    paramCeiling := 6
+    paramSchedule := .custom #[1, 2, 3, 4, 6]
+    maxSecondsPerCall := 10.0
+    targetInnerNanos := 100000000
+    signalFloorMultiplier := 1.0
+  }
+
+/- Cost model. Inversion runs the extended gcd in the top quotient
+`K[y]/(m_top)` with `deg m_top = n` over the fixed quadratic base `K`:
+`O(n^2)` coefficient operations in `K`, each `O(1)` base-field operations
+at the fixed base dimension, so `O(n^2) = O(D^2)` rational operations
+overall. Rational coefficient growth along the Euclidean chain is modelled
+with the same logarithmic limb-growth proxy the HexResultant Brown-chain
+registrations use, giving the declared `n^2 log n` wall model. -/
+setup_benchmark runTowerInvLadder n => n * n * (Nat.log2 (n + 2) + 1)
+  with prep := prepElemInput
+  where {
+    paramFloor := 1
+    paramCeiling := 6
+    paramSchedule := .custom #[1, 2, 3, 4, 6]
+    maxSecondsPerCall := 30.0
+    targetInnerNanos := 100000000
+    signalFloorMultiplier := 1.0
+    slopeTolerance := 0.35
+  }
+
+/-! # Trager factorization ladder -/
+
+/-- Ascending rational coefficients of the Selmer trinomial `X^m - X - 1`
+(irreducible over `ℚ` for every `m ≥ 2`, and over `ℚ(√2)` because its
+Galois group `S_m` leaves `ℚ(root)` without quadratic subfields). Shared by
+the Lean fixture and the PARI comparator request so both sides factor the
+same input. -/
+private def selmerRatCoeffs (m : Nat) : Array Rat :=
+  (Array.range (m + 1)).map fun i =>
+    if i == 0 || i == 1 then (-1 : Rat) else if i == m then 1 else 0
+
+/-- The Selmer trinomial as a polynomial over a tower. -/
+private def selmerPoly (m : Nat) (T : NumberTower) : Poly T :=
+  DensePoly.ofCoeffs ((selmerRatCoeffs m).map (ofRat T))
+
+/-- Prepared Trager-ladder fixture: the degree-`m` Selmer trinomial over the
+fixed base `ℚ(√2)`. Rational coefficients make the shift-zero one-level
+norm the square `f^2`, so the bounded search always performs a genuine
+retry before accepting a squarefree norm. -/
+private structure FactorInput where
+  tower : NumberTower
+  f : Poly tower
+
+private instance : Hashable FactorInput where
+  hash input := mixHash (hash input.tower.dim) (polyChecksum input.f)
+
+private instance : Inhabited FactorInput :=
+  ⟨⟨rat, DensePoly.ofCoeffs #[]⟩⟩
+
+def prepFactorInput (n : Nat) : FactorInput :=
+  let m := max n 2
+  match sqrtTwo? () with
+  | some base => { tower := base.tower, f := selmerPoly m base.tower }
+  | none => panic! "prepFactorInput: base tower fixture failed"
+
+def runTowerFactorLadder (input : FactorInput) : UInt64 :=
+  match factor? input.tower input.f with
+  | some result => factorChecksum result
+  | none => 1
+
+/-- Worst-case textbook cost model for one Trager step over the quadratic
+base at input degree `n`: the SPEC's shift recurrence tries at most
+`choose(d * m, 2) + 1 = choose(2n, 2) + 1 = O(n^2)` one-level norms, each a
+Brown resultant against the fixed quadratic level relation costing `O(n^2)`
+coefficient operations, and then recursively factors one accepted norm of
+degree `2n` over `ℚ`, whose classical BHKS bound `(2n)^9 + (2n)^7 log^2 (2n)`
+dominates the total. -/
+def tragerLadderModel (n : Nat) : Nat :=
+  let bigN := 2 * n
+  (bigN * (bigN - 1) / 2 + 1) * (n * n)
+    + bigN ^ 9 + bigN ^ 7 * (Nat.log2 (bigN + 2)) ^ 2
+
+/- Cost model. Declared per the SPEC's Trager recurrence, worst case: at
+`K(α)/K` with `d = deg m_α = 2` and component degree `m = n`, at most
+`choose(2n, 2) + 1` one-level norms (each an `O(n^2)`-operation Brown
+resultant against the quadratic relation), plus the recursive rational
+factorization of the accepted degree-`2n` norm at its classical BHKS bound —
+the dominant term. `tragerLadderModel` writes out exactly this sum. The
+deterministic Selmer family realises the retry (repeated shift-zero norm),
+the accepted squarefree norm, the base factorization, and gcd recovery. -/
+setup_benchmark runTowerFactorLadder n => tragerLadderModel n
+  with prep := prepFactorInput
+  where {
+    paramFloor := 2
+    paramCeiling := 6
+    paramSchedule := .custom #[2, 3, 4, 6]
+    maxSecondsPerCall := 60.0
+    targetInnerNanos := 100000000
+    signalFloorMultiplier := 1.0
+    slopeTolerance := 0.35
+  }
+
+/-! # PARI `nffactor` comparator pairs -/
+
+/-- Sorted factor degree/multiplicity multiset checksum: the
+representation-free observable shared by the Lean and PARI factorizations. -/
+private def degreeMultChecksum (pairs : Array (Nat × Nat)) : UInt64 :=
+  let sorted := pairs.qsort fun a b => a.1 < b.1 || (a.1 == b.1 && a.2 < b.2)
+  sorted.foldl
+    (fun checksum pair => mixHash checksum (mixHash (hash pair.1) (hash pair.2)))
+    (hash pairs.size)
+
+private def towerFactorDegrees (input : FactorInput) : UInt64 :=
+  match factor? input.tower input.f with
+  | some result =>
+    degreeMultChecksum <| result.factors.map fun entry =>
+      (entry.1.degree?.getD 0, entry.2)
+  | none => 1
+
+private def pariNfFactorDegrees (m : Nat) : IO UInt64 := do
+  let result ← Hex.BenchOracle.Pari.runOp "nf" "factor_degrees"
+    #[("field", Hex.BenchOracle.Flint.intsToJson [-2, 0, 1]),
+      ("poly", Hex.BenchOracle.Pari.ratsToJson (selmerRatCoeffs m))]
+  return degreeMultChecksum (← Hex.BenchOracle.Pari.jsonToNatPairs result)
+
+initialize factorPairRef2 : IO.Ref (Option FactorInput) ← IO.mkRef none
+initialize factorPairRef3 : IO.Ref (Option FactorInput) ← IO.mkRef none
+initialize factorPairRef4 : IO.Ref (Option FactorInput) ← IO.mkRef none
+initialize factorPairRef6 : IO.Ref (Option FactorInput) ← IO.mkRef none
+
+private def getFactorPair (ref : IO.Ref (Option FactorInput)) (n : Nat) :
+    IO FactorInput := do
+  match ← ref.get with
+  | some input => pure input
+  | none =>
+    let input := prepFactorInput n
+    ref.set (some input)
+    pure input
+
+def runTowerFactorPair2 : Unit → IO UInt64 := fun _ => do
+  return towerFactorDegrees (← getFactorPair factorPairRef2 2)
+def runPariNfFactor2 : Unit → IO UInt64 := fun _ => pariNfFactorDegrees 2
+def runTowerFactorPair3 : Unit → IO UInt64 := fun _ => do
+  return towerFactorDegrees (← getFactorPair factorPairRef3 3)
+def runPariNfFactor3 : Unit → IO UInt64 := fun _ => pariNfFactorDegrees 3
+def runTowerFactorPair4 : Unit → IO UInt64 := fun _ => do
+  return towerFactorDegrees (← getFactorPair factorPairRef4 4)
+def runPariNfFactor4 : Unit → IO UInt64 := fun _ => pariNfFactorDegrees 4
+def runTowerFactorPair6 : Unit → IO UInt64 := fun _ => do
+  return towerFactorDegrees (← getFactorPair factorPairRef6 6)
+def runPariNfFactor6 : Unit → IO UInt64 := fun _ => pariNfFactorDegrees 6
+
+/-- Timing shape shared by both sides of every PARI pair: the discarded
+`warmupFirstIter` call builds the lazily cached rung fixture (and, on the
+PARI side, spawns the persistent driver) outside the timed region, and the
+raised `minTotalSeconds` floor amortises steady-state work across the
+auto-tuned inner-repeat batch so per-rung ratios compare like with like. -/
+def pariCompareConfig : LeanBench.FixedBenchmarkConfig :=
+  { repeats := 3, maxSecondsPerCall := 60.0, warmupFirstIter := true,
+    minTotalSeconds := 0.2 }
+
+/- Fixed per-rung process-call comparator registrations for PARI `nffactor`
+against `factor?` over `ℚ(√2)` (worst-case cost model per the
+`runTowerFactorLadder` derivation). Identical Selmer inputs, identical sorted
+degree/multiplicity multiset hash on both sides. -/
+setup_fixed_benchmark runTowerFactorPair2 where pariCompareConfig
+setup_fixed_benchmark runPariNfFactor2 where pariCompareConfig
+setup_fixed_benchmark runTowerFactorPair3 where pariCompareConfig
+setup_fixed_benchmark runPariNfFactor3 where pariCompareConfig
+setup_fixed_benchmark runTowerFactorPair4 where pariCompareConfig
+setup_fixed_benchmark runPariNfFactor4 where pariCompareConfig
+setup_fixed_benchmark runTowerFactorPair6 where pariCompareConfig
+setup_fixed_benchmark runPariNfFactor6 where pariCompareConfig
 
 end Hex.NumberTowerBench
 

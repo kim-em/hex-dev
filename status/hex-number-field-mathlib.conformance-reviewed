@@ -1,0 +1,14 @@
+HexNumberFieldMathlib Phase 3 was reviewed on 2026-08-26. The library is a
+proof-only correspondence layer with no executable reifier, certificate
+checker, tactic, or other runtime surface, so the absence of a dedicated
+Conformance module and HexConformance glob is intentional per
+SPEC/testing.md's ceremonial-bridge ban.
+
+The executable surface it verifies (QAdjoin arithmetic, root isolation and
+disambiguation, approximation, Yun square-free decomposition) is exercised
+by conformance/HexNumberField/Conformance.lean and the python-flint oracle
+wired through scripts/ci/run_oracles.sh. The correspondence and
+completeness declarations here are proofs rather than executable
+destinations for conformance cases. Precedent:
+status/hex-roots-mathlib.conformance-reviewed and
+status/hex-truncated-series-mathlib.conformance-reviewed.

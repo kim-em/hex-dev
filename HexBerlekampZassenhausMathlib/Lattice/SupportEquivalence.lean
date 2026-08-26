@@ -516,48 +516,7 @@ theorem projectedRowSpace_coordAgreement_iff_supportEquivalent
     | add u w _ _ hu hw => simp only [Pi.add_apply, hu, hw]
     | smul q w _ hw => simp only [Pi.smul_apply, smul_eq_mul, hw]
 
-/-- The executable rational matrix and the Mathlib-facing projected-row matrix
-have identical entries. -/
-theorem matrixEquiv_projectedRowsAsRat_eq
-    (L : Hex.BhksProjectedRows) :
-    HexMatrixMathlib.matrixEquiv
-        (Hex.bhksProjectedRowsAsRatMatrix
-          L.projectedRows L.projectedRows.size L.factorCount) =
-      projectedRowsRatMatrix L := by
-  ext i j
-  rw [HexMatrixMathlib.matrixEquiv_apply]
-  unfold Hex.bhksProjectedRowsAsRatMatrix projectedRowsRatMatrix
-  rw [Hex.Matrix.getElem_ofFn]
 
-/--
-Once `L' = W`, two columns of the executable RREF agree exactly when the
-corresponding lifted-factor indices lie in the same true supports.
--/
-theorem rowReduce_columnAgreement_iff_supportEquivalent
-    (L : Hex.BhksProjectedRows)
-    (trueSupports : Set (Set (Fin L.factorCount)))
-    (hspan : projectedRowSpanInt L = trueSupportSpanInt trueSupports)
-    (j k : Fin L.factorCount) :
-    let M := Hex.bhksProjectedRowsAsRatMatrix
-      L.projectedRows L.projectedRows.size L.factorCount
-    (∀ i : Fin L.projectedRows.size,
-        (Hex.Matrix.rowReduce M).echelon[i][j] =
-          (Hex.Matrix.rowReduce M).echelon[i][k]) ↔
-      supportEquivalent trueSupports j k := by
-  dsimp only
-  rw [rowReduce_columnAgreement_iff_forall_mem_span_coord_eq]
-  have hrows :
-      (Set.range fun i : Fin L.projectedRows.size =>
-          Matrix.row
-            (HexMatrixMathlib.matrixEquiv
-              (Hex.bhksProjectedRowsAsRatMatrix
-                L.projectedRows L.projectedRows.size L.factorCount)) i) =
-        Set.range (fun i : Fin L.projectedRows.size =>
-          Matrix.row (projectedRowsRatMatrix L) i) := by
-    rw [matrixEquiv_projectedRowsAsRat_eq L]
-  rw [hrows]
-  exact projectedRowSpace_coordAgreement_iff_supportEquivalent
-    L trueSupports hspan j k
 end BHKS
 
 end

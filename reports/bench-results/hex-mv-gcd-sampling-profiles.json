@@ -1,0 +1,3166 @@
+{
+  "config": {
+    "git_commit": "37eb7686df31622eca346ee20bc9a70f44d5d8e5",
+    "rate_hz": 999,
+    "samply_version": "samply 0.13.1",
+    "target_nanos": 3000000000
+  },
+  "profiles": [
+    {
+      "allocation_share_percent": 40.8,
+      "classified_percent": 85.03,
+      "diagnostics": {
+        "calibration_residual_ms": 0.8718428611755371,
+        "confidence": "passed",
+        "off_thread_samples": 0,
+        "rejected_samples": 7,
+        "retained_samples": 2532,
+        "sensitivity_passed": true,
+        "total_timed_ms": 2542.352184
+      },
+      "family": "coprime-pairs",
+      "inclusive_hex": [
+        {
+          "function": "Hex.MvGcdBench.Matrix.runIntPair",
+          "percent": 100.0
+        },
+        {
+          "function": "Hex.MvPoly.gcd",
+          "percent": 99.96
+        },
+        {
+          "function": "Hex.MvPoly.gcdCertWith",
+          "percent": 99.88
+        },
+        {
+          "function": "Hex.MvPoly.intConcreteProposalGeneric",
+          "percent": 50.99
+        },
+        {
+          "function": "Hex.MvPoly.remainderCert?",
+          "percent": 50.91
+        },
+        {
+          "function": "Hex.Mono.lex",
+          "percent": 48.78
+        },
+        {
+          "function": "Hex.MvPoly.checkedCandidate?",
+          "percent": 43.72
+        },
+        {
+          "function": "Hex.MvPoly.checkOps",
+          "percent": 43.33
+        },
+        {
+          "function": "Hex.MvPoly.checkGcdUsing",
+          "percent": 43.01
+        },
+        {
+          "function": "Hex.MvPoly.divExactAux",
+          "percent": 39.1
+        },
+        {
+          "function": "Hex.MvPoly.succCheckCoprime",
+          "percent": 23.7
+        },
+        {
+          "function": "Hex.MvPoly.divExact?",
+          "percent": 23.22
+        },
+        {
+          "function": "Hex.MvPoly.quotient",
+          "percent": 22.51
+        },
+        {
+          "function": "Hex.MvPoly.structuralReduction?",
+          "percent": 19.71
+        },
+        {
+          "function": "Hex.MvPoly.checkGcd",
+          "percent": 14.53
+        },
+        {
+          "function": "Hex.MvPoly.restoreStructural?",
+          "percent": 14.22
+        },
+        {
+          "function": "Hex.MvPoly.mul",
+          "percent": 12.24
+        },
+        {
+          "function": "Hex.MvPoly.leadingTerm",
+          "percent": 11.45
+        },
+        {
+          "function": "Hex.MvPoly.divMod",
+          "percent": 6.6
+        },
+        {
+          "function": "Hex.MvPoly.divModAux",
+          "percent": 6.48
+        },
+        {
+          "function": "Hex.MvPoly.unitDiffCert?",
+          "percent": 6.32
+        },
+        {
+          "function": "Hex.Mono.div",
+          "percent": 4.38
+        },
+        {
+          "function": "Hex.MvPoly.structuralCert?",
+          "percent": 3.04
+        },
+        {
+          "function": "Hex.Mono.mul",
+          "percent": 1.7
+        },
+        {
+          "function": "Hex.MvPoly.instDecidableEq",
+          "percent": 1.3
+        },
+        {
+          "function": "Hex.MvPoly.sub",
+          "percent": 1.11
+        },
+        {
+          "function": "Hex.MvPoly.add",
+          "percent": 0.83
+        },
+        {
+          "function": "Hex.MvPoly.scalarContent",
+          "percent": 0.79
+        },
+        {
+          "function": "Hex.MvPoly.polyNormalize",
+          "percent": 0.59
+        },
+        {
+          "function": "Hex.MvPoly.addMonomial",
+          "percent": 0.55
+        }
+      ],
+      "leaf_categories": {
+        "allocation": 40.8,
+        "gmp": 0.32,
+        "lean-own-code": 4.94,
+        "lean-runtime": 38.98,
+        "other": 14.97
+      },
+      "parameter": 0,
+      "samples": 2532,
+      "target": "Hex.MvGcdBench.Profile.runCoprime",
+      "top_inclusive": [
+        {
+          "function": "_private.Init.Data.Range.Basic.0_Std.Legacy.Range.forIn'.loop",
+          "percent": 100.0
+        },
+        {
+          "function": "start_thread",
+          "percent": 100.0
+        },
+        {
+          "function": "_private.HexMvGcd.Profile.0_Hex.MvGcdBench.Profile.initFn_.lam_0.00_@.HexMvGcd.Profile.2215092155__hygCtx_.hyg.33.",
+          "percent": 100.0
+        },
+        {
+          "function": "std::__1::__function::__func<lean_run_main::$_0, void ()>::operator()()",
+          "percent": 100.0
+        },
+        {
+          "function": "lean::lthread::imp::_main(void*)",
+          "percent": 100.0
+        },
+        {
+          "function": "lean_apply_2",
+          "percent": 100.0
+        },
+        {
+          "function": "Hex.MvGcdBench.Matrix.runIntPair",
+          "percent": 100.0
+        },
+        {
+          "function": "lean-bench.LeanBench.wrapLoopForSidecar",
+          "percent": 100.0
+        },
+        {
+          "function": "fun_124075",
+          "percent": 100.0
+        },
+        {
+          "function": "lean-bench.LeanBench.Cli.runChildCmd",
+          "percent": 100.0
+        },
+        {
+          "function": "lean-bench.LeanBench.runChildMode",
+          "percent": 100.0
+        },
+        {
+          "function": "lean-bench.LeanBench.autoTune",
+          "percent": 100.0
+        },
+        {
+          "function": "Hex.MvPoly.gcd",
+          "percent": 99.96
+        },
+        {
+          "function": "Hex.MvPoly.gcdCertWith",
+          "percent": 99.88
+        },
+        {
+          "function": "Std.DTreeMap.Internal.Impl.foldlM",
+          "percent": 67.06
+        },
+        {
+          "function": "lean_apply_3",
+          "percent": 55.92
+        },
+        {
+          "function": "Std.DTreeMap.Internal.Impl.Const.alter",
+          "percent": 51.94
+        },
+        {
+          "function": "Hex.MvPoly.intConcreteProposalGeneric",
+          "percent": 50.99
+        },
+        {
+          "function": "Hex.MvPoly.remainderCert?",
+          "percent": 50.91
+        },
+        {
+          "function": "lean_apply_1",
+          "percent": 50.63
+        }
+      ],
+      "top_self": [
+        {
+          "function": "mi_malloc_small",
+          "percent": 18.76
+        },
+        {
+          "function": "mi_free",
+          "percent": 15.52
+        },
+        {
+          "function": "lean_dec_ref_cold",
+          "percent": 11.81
+        },
+        {
+          "function": "lean_array_to_list_impl",
+          "percent": 6.28
+        },
+        {
+          "function": "lean_apply_2",
+          "percent": 5.81
+        },
+        {
+          "function": "List.compareLex",
+          "percent": 4.3
+        },
+        {
+          "function": "mi_malloc",
+          "percent": 3.52
+        },
+        {
+          "function": "Std.DTreeMap.Internal.Impl.Const.alter",
+          "percent": 3.32
+        },
+        {
+          "function": "lean_apply_1",
+          "percent": 2.69
+        },
+        {
+          "function": "lean_array_push",
+          "percent": 2.13
+        },
+        {
+          "function": "lean::lean_del_core_other(lean_object*, unsigned char, lean_object*)",
+          "percent": 1.9
+        },
+        {
+          "function": "Std.DTreeMap.Internal.Impl.balance",
+          "percent": 1.9
+        },
+        {
+          "function": "lean_free_object",
+          "percent": 1.66
+        },
+        {
+          "function": "lean_inc_heartbeat",
+          "percent": 1.62
+        },
+        {
+          "function": "Std.DTreeMap.Internal.Impl.foldlM",
+          "percent": 1.5
+        },
+        {
+          "function": "Hex.Mono.mul",
+          "percent": 1.38
+        },
+        {
+          "function": "_private.Init.Data.Array.Basic.0_Array.ofFn.go",
+          "percent": 1.34
+        },
+        {
+          "function": "Hex.Mono.lex",
+          "percent": 1.26
+        },
+        {
+          "function": "lean_apply_3",
+          "percent": 1.15
+        },
+        {
+          "function": "lean_apply_4",
+          "percent": 0.99
+        }
+      ],
+      "top_self_undecorated": [
+        {
+          "percent": 18.76,
+          "symbol": "mi_malloc_small"
+        },
+        {
+          "percent": 15.52,
+          "symbol": "mi_free"
+        },
+        {
+          "percent": 11.81,
+          "symbol": "lean_dec_ref_cold"
+        },
+        {
+          "percent": 6.28,
+          "symbol": "lean_array_to_list_impl"
+        },
+        {
+          "percent": 5.81,
+          "symbol": "lean_apply_2"
+        },
+        {
+          "percent": 4.3,
+          "symbol": "List.compareLex_.at_.00Hex.Mono.lex.spec_0"
+        },
+        {
+          "percent": 3.52,
+          "symbol": "mi_malloc"
+        },
+        {
+          "percent": 2.69,
+          "symbol": "lean_apply_1"
+        },
+        {
+          "percent": 2.33,
+          "symbol": "Std.DTreeMap.Internal.Impl.Const.alter_.redArg"
+        },
+        {
+          "percent": 2.13,
+          "symbol": "lean_array_push"
+        },
+        {
+          "percent": 1.9,
+          "symbol": "lean::lean_del_core_other(lean_object*, unsigned char, lean_object*)"
+        },
+        {
+          "percent": 1.9,
+          "symbol": "Std.DTreeMap.Internal.Impl.balance_.redArg"
+        },
+        {
+          "percent": 1.66,
+          "symbol": "lean_free_object"
+        },
+        {
+          "percent": 1.62,
+          "symbol": "lean_inc_heartbeat"
+        },
+        {
+          "percent": 1.34,
+          "symbol": "_private.Init.Data.Array.Basic.0_Array.ofFn.go_.redArg"
+        },
+        {
+          "percent": 1.3,
+          "symbol": "Hex.Mono.mul_.lam_0_.boxed"
+        },
+        {
+          "percent": 1.26,
+          "symbol": "Hex.Mono.lex_.boxed"
+        },
+        {
+          "percent": 1.15,
+          "symbol": "lean_apply_3"
+        },
+        {
+          "percent": 0.99,
+          "symbol": "lean_apply_4"
+        },
+        {
+          "percent": 0.75,
+          "symbol": "Std.DTreeMap.Internal.Impl.Const.alter_.at_.00Hex.MvPoly.addMonomial_.at_.00Hex.MvPoly.ofTerms_.at_.00Hex.MvGcdBench.Families.sparseCoprime.spec_1.spec_1.spec_2_.redArg"
+        }
+      ]
+    },
+    {
+      "allocation_share_percent": 42.54,
+      "classified_percent": 84.93,
+      "diagnostics": {
+        "calibration_residual_ms": 0.7285599708557129,
+        "confidence": "passed",
+        "off_thread_samples": 0,
+        "rejected_samples": 13,
+        "retained_samples": 2800,
+        "sensitivity_passed": true,
+        "total_timed_ms": 2801.054149
+      },
+      "family": "dense-gcds",
+      "inclusive_hex": [
+        {
+          "function": "Hex.MvPoly.gcdCertWith",
+          "percent": 98.89
+        },
+        {
+          "function": "Hex.MvGcdBench.Matrix.runIntPair",
+          "percent": 98.89
+        },
+        {
+          "function": "Hex.MvPoly.gcd",
+          "percent": 98.89
+        },
+        {
+          "function": "Hex.Mono.lex",
+          "percent": 61.54
+        },
+        {
+          "function": "Hex.MvPoly.checkGcdUsing",
+          "percent": 52.61
+        },
+        {
+          "function": "Hex.MvPoly.checkOps",
+          "percent": 52.36
+        },
+        {
+          "function": "Hex.MvPoly.intConcreteProposalGeneric",
+          "percent": 49.79
+        },
+        {
+          "function": "Hex.MvPoly.remainderCert?",
+          "percent": 49.79
+        },
+        {
+          "function": "Hex.MvPoly.checkedCandidate?",
+          "percent": 45.21
+        },
+        {
+          "function": "Hex.MvPoly.divExactAux",
+          "percent": 35.89
+        },
+        {
+          "function": "Hex.MvPoly.mul",
+          "percent": 23.29
+        },
+        {
+          "function": "Hex.MvPoly.divExact?",
+          "percent": 22.43
+        },
+        {
+          "function": "Hex.MvPoly.quotient",
+          "percent": 22.25
+        },
+        {
+          "function": "Hex.MvPoly.checkGcd",
+          "percent": 18.21
+        },
+        {
+          "function": "Hex.MvPoly.restoreStructural?",
+          "percent": 17.0
+        },
+        {
+          "function": "Hex.MvPoly.structuralReduction?",
+          "percent": 14.71
+        },
+        {
+          "function": "Hex.MvPoly.succCheckCoprime",
+          "percent": 11.46
+        },
+        {
+          "function": "Hex.MvPoly.divMod",
+          "percent": 7.21
+        },
+        {
+          "function": "Hex.MvPoly.divModAux",
+          "percent": 6.96
+        },
+        {
+          "function": "Hex.MvPoly.leadingTerm",
+          "percent": 5.5
+        },
+        {
+          "function": "Hex.MvPoly.unitRemainderCert?",
+          "percent": 2.71
+        },
+        {
+          "function": "Hex.MvPoly.unitDiffCert?",
+          "percent": 2.04
+        },
+        {
+          "function": "Hex.Mono.mul",
+          "percent": 1.07
+        },
+        {
+          "function": "Hex.MvPoly.structuralCert?",
+          "percent": 1.07
+        },
+        {
+          "function": "Hex.Mono.div",
+          "percent": 1.0
+        },
+        {
+          "function": "Hex.MvPoly.sub",
+          "percent": 0.75
+        },
+        {
+          "function": "Hex.MvPoly.instDecidableEq",
+          "percent": 0.61
+        },
+        {
+          "function": "Hex.MvPoly.addMonomial",
+          "percent": 0.54
+        }
+      ],
+      "leaf_categories": {
+        "allocation": 42.54,
+        "gmp": 0.29,
+        "lean-own-code": 5.14,
+        "lean-runtime": 36.96,
+        "other": 15.07
+      },
+      "parameter": 0,
+      "samples": 2800,
+      "target": "Hex.MvGcdBench.Profile.runDense",
+      "top_inclusive": [
+        {
+          "function": "lean_apply_2",
+          "percent": 99.96
+        },
+        {
+          "function": "Hex.MvPoly.gcdCertWith",
+          "percent": 98.89
+        },
+        {
+          "function": "_private.Init.Data.Range.Basic.0_Std.Legacy.Range.forIn'.loop",
+          "percent": 98.89
+        },
+        {
+          "function": "start_thread",
+          "percent": 98.89
+        },
+        {
+          "function": "_private.HexMvGcd.Profile.0_Hex.MvGcdBench.Profile.initFn_.lam_0.00_@.HexMvGcd.Profile.3682691926__hygCtx_.hyg.33.",
+          "percent": 98.89
+        },
+        {
+          "function": "std::__1::__function::__func<lean_run_main::$_0, void ()>::operator()()",
+          "percent": 98.89
+        },
+        {
+          "function": "lean::lthread::imp::_main(void*)",
+          "percent": 98.89
+        },
+        {
+          "function": "Hex.MvGcdBench.Matrix.runIntPair",
+          "percent": 98.89
+        },
+        {
+          "function": "lean-bench.LeanBench.wrapLoopForSidecar",
+          "percent": 98.89
+        },
+        {
+          "function": "fun_124075",
+          "percent": 98.89
+        },
+        {
+          "function": "lean-bench.LeanBench.Cli.runChildCmd",
+          "percent": 98.89
+        },
+        {
+          "function": "lean-bench.LeanBench.runChildMode",
+          "percent": 98.89
+        },
+        {
+          "function": "Hex.MvPoly.gcd",
+          "percent": 98.89
+        },
+        {
+          "function": "lean-bench.LeanBench.autoTune",
+          "percent": 98.89
+        },
+        {
+          "function": "Std.DTreeMap.Internal.Impl.foldlM",
+          "percent": 87.21
+        },
+        {
+          "function": "Std.DTreeMap.Internal.Impl.Const.alter",
+          "percent": 78.57
+        },
+        {
+          "function": "Hex.Mono.lex",
+          "percent": 61.54
+        },
+        {
+          "function": "lean_apply_3",
+          "percent": 60.21
+        },
+        {
+          "function": "lean_apply_1",
+          "percent": 57.61
+        },
+        {
+          "function": "lean_apply_4",
+          "percent": 56.71
+        }
+      ],
+      "top_self": [
+        {
+          "function": "mi_malloc_small",
+          "percent": 19.04
+        },
+        {
+          "function": "mi_free",
+          "percent": 18.39
+        },
+        {
+          "function": "lean_dec_ref_cold",
+          "percent": 12.5
+        },
+        {
+          "function": "List.compareLex",
+          "percent": 9.75
+        },
+        {
+          "function": "lean_array_to_list_impl",
+          "percent": 6.89
+        },
+        {
+          "function": "Std.DTreeMap.Internal.Impl.balance",
+          "percent": 6.79
+        },
+        {
+          "function": "Hex.Mono.lex",
+          "percent": 3.75
+        },
+        {
+          "function": "Std.DTreeMap.Internal.Impl.Const.alter",
+          "percent": 3.14
+        },
+        {
+          "function": "lean_apply_2",
+          "percent": 2.89
+        },
+        {
+          "function": "Std.DTreeMap.Internal.Impl.foldlM",
+          "percent": 1.61
+        },
+        {
+          "function": "lean_apply_1",
+          "percent": 1.46
+        },
+        {
+          "function": "mi_malloc",
+          "percent": 1.46
+        },
+        {
+          "function": "lean_free_object",
+          "percent": 1.39
+        },
+        {
+          "function": "lean_inc_heartbeat",
+          "percent": 1.18
+        },
+        {
+          "function": "lean_alloc_object",
+          "percent": 0.86
+        },
+        {
+          "function": "Std.DTreeMap.Internal.Impl.foldrM",
+          "percent": 0.71
+        },
+        {
+          "function": "lean::lean_del_core_other(lean_object*, unsigned char, lean_object*)",
+          "percent": 0.71
+        },
+        {
+          "function": "Std.DTreeMap.Internal.Impl.Const.get?",
+          "percent": 0.68
+        },
+        {
+          "function": "Hex.Mono.mul",
+          "percent": 0.61
+        },
+        {
+          "function": "lean_alloc_ctor",
+          "percent": 0.57
+        }
+      ],
+      "top_self_undecorated": [
+        {
+          "percent": 19.04,
+          "symbol": "mi_malloc_small"
+        },
+        {
+          "percent": 18.39,
+          "symbol": "mi_free"
+        },
+        {
+          "percent": 12.5,
+          "symbol": "lean_dec_ref_cold"
+        },
+        {
+          "percent": 9.75,
+          "symbol": "List.compareLex_.at_.00Hex.Mono.lex.spec_0"
+        },
+        {
+          "percent": 6.89,
+          "symbol": "lean_array_to_list_impl"
+        },
+        {
+          "percent": 6.79,
+          "symbol": "Std.DTreeMap.Internal.Impl.balance_.redArg"
+        },
+        {
+          "percent": 3.75,
+          "symbol": "Hex.Mono.lex_.boxed"
+        },
+        {
+          "percent": 2.89,
+          "symbol": "lean_apply_2"
+        },
+        {
+          "percent": 2.04,
+          "symbol": "Std.DTreeMap.Internal.Impl.Const.alter_.redArg"
+        },
+        {
+          "percent": 1.46,
+          "symbol": "lean_apply_1"
+        },
+        {
+          "percent": 1.46,
+          "symbol": "mi_malloc"
+        },
+        {
+          "percent": 1.39,
+          "symbol": "lean_free_object"
+        },
+        {
+          "percent": 1.18,
+          "symbol": "lean_inc_heartbeat"
+        },
+        {
+          "percent": 0.96,
+          "symbol": "Std.DTreeMap.Internal.Impl.Const.alter_.at_.00Hex.MvPoly.addMonomial_.at_.00Hex.MvPoly.ofTerms_.at_.00Hex.MvGcdBench.Families.sparseCoprime.spec_1.spec_1.spec_2_.redArg"
+        },
+        {
+          "percent": 0.86,
+          "symbol": "lean_alloc_object"
+        },
+        {
+          "percent": 0.75,
+          "symbol": "Std.DTreeMap.Internal.Impl.foldlM_.redArg"
+        },
+        {
+          "percent": 0.71,
+          "symbol": "lean::lean_del_core_other(lean_object*, unsigned char, lean_object*)"
+        },
+        {
+          "percent": 0.57,
+          "symbol": "lean_alloc_ctor"
+        },
+        {
+          "percent": 0.57,
+          "symbol": "lean_apply_3"
+        },
+        {
+          "percent": 0.54,
+          "symbol": "Hex.Mono.mul_.lam_0_.boxed"
+        }
+      ]
+    },
+    {
+      "allocation_share_percent": 34.29,
+      "classified_percent": 80.7,
+      "diagnostics": {
+        "calibration_residual_ms": 0.522475004196167,
+        "confidence": "passed",
+        "off_thread_samples": 0,
+        "rejected_samples": 7,
+        "retained_samples": 2881,
+        "sensitivity_passed": true,
+        "total_timed_ms": 2897.632609
+      },
+      "family": "sparse-stress",
+      "inclusive_hex": [
+        {
+          "function": "Hex.MvPoly.gcdCertWith",
+          "percent": 100.0
+        },
+        {
+          "function": "Hex.MvGcdBench.Matrix.runIntPair",
+          "percent": 100.0
+        },
+        {
+          "function": "Hex.MvPoly.gcd",
+          "percent": 100.0
+        },
+        {
+          "function": "Hex.MvPoly.intConcreteProposalGeneric",
+          "percent": 99.93
+        },
+        {
+          "function": "Hex.MvPoly.intBrownCert?",
+          "percent": 99.76
+        },
+        {
+          "function": "Hex.MvPoly.intBrownLoop",
+          "percent": 99.76
+        },
+        {
+          "function": "Hex.MvPoly.intBrownImage?",
+          "percent": 98.99
+        },
+        {
+          "function": "Hex.MvPoly.brownStepOps",
+          "percent": 98.37
+        },
+        {
+          "function": "Hex.MvPoly.brownCandidate?",
+          "percent": 98.37
+        },
+        {
+          "function": "Hex.MvPoly.brownStepOps.loop",
+          "percent": 96.77
+        },
+        {
+          "function": "Hex.MvPoly.succGcd",
+          "percent": 78.2
+        },
+        {
+          "function": "Hex.MvPoly.brownBaseOps",
+          "percent": 69.25
+        },
+        {
+          "function": "Hex.MvPoly.divExact?",
+          "percent": 44.01
+        },
+        {
+          "function": "Hex.MvPoly.quotient",
+          "percent": 42.14
+        },
+        {
+          "function": "Hex.MvPoly.divExactAux",
+          "percent": 37.52
+        },
+        {
+          "function": "Hex.MvPoly.contentCertWith",
+          "percent": 34.71
+        },
+        {
+          "function": "Hex.MvPoly.baseGcd",
+          "percent": 33.04
+        },
+        {
+          "function": "Hex.MvPoly.terminal",
+          "percent": 15.93
+        },
+        {
+          "function": "Hex.DensePoly.subresultantChainExt",
+          "percent": 15.79
+        },
+        {
+          "function": "Hex.DensePoly.subresultantOrderedExt",
+          "percent": 15.76
+        },
+        {
+          "function": "Hex.MvPoly.polyNormalize",
+          "percent": 13.71
+        },
+        {
+          "function": "Hex.MvPoly.mul",
+          "percent": 13.16
+        },
+        {
+          "function": "Hex.MvPoly.sub",
+          "percent": 11.73
+        },
+        {
+          "function": "Hex.MvPoly.succCoprime",
+          "percent": 10.62
+        },
+        {
+          "function": "Hex.DensePoly.pseudoDivMod",
+          "percent": 9.44
+        },
+        {
+          "function": "Hex.MvPoly.neg",
+          "percent": 8.78
+        },
+        {
+          "function": "Hex.ZMod64.neg",
+          "percent": 8.19
+        },
+        {
+          "function": "Hex.ZMod64.complementWord",
+          "percent": 7.74
+        },
+        {
+          "function": "Hex.DensePoly.evalImpl",
+          "percent": 6.14
+        },
+        {
+          "function": "Hex.MvPoly.instDecidableEq",
+          "percent": 5.59
+        },
+        {
+          "function": "Hex.DensePoly.subresultantAuxExt",
+          "percent": 5.45
+        },
+        {
+          "function": "Hex.MvPoly.leadingTerm",
+          "percent": 5.07
+        },
+        {
+          "function": "Hex.MvPoly.addMonomial",
+          "percent": 4.93
+        },
+        {
+          "function": "Hex.Mono.lex",
+          "percent": 4.55
+        },
+        {
+          "function": "Hex.MvPoly.toUnivariate",
+          "percent": 4.34
+        },
+        {
+          "function": "Hex.MvPoly.brownPointBad",
+          "percent": 4.17
+        },
+        {
+          "function": "Hex.MvPoly.brownInterpolate?",
+          "percent": 3.71
+        },
+        {
+          "function": "Hex.MvPoly.add",
+          "percent": 3.71
+        },
+        {
+          "function": "Hex.MvPoly.brownInterpolate?.go",
+          "percent": 3.68
+        },
+        {
+          "function": "Hex.DensePoly.mulImpl",
+          "percent": 3.4
+        },
+        {
+          "function": "Hex.MvPoly.polyNormUnit",
+          "percent": 2.78
+        },
+        {
+          "function": "Hex.MvPoly.toUnivariateStep",
+          "percent": 2.43
+        },
+        {
+          "function": "Hex.Mono.div",
+          "percent": 2.36
+        },
+        {
+          "function": "Hex.DensePoly.trimTrailingZerosGo",
+          "percent": 2.22
+        },
+        {
+          "function": "Hex.ZMod64.addImpl",
+          "percent": 2.19
+        },
+        {
+          "function": "Hex.MvPoly.ofUnivariate",
+          "percent": 1.98
+        },
+        {
+          "function": "Hex.MvPoly.brownEvalLast",
+          "percent": 1.8
+        },
+        {
+          "function": "Hex.MvPoly.instDiv",
+          "percent": 1.8
+        },
+        {
+          "function": "Hex.MvPoly.brownBasis?",
+          "percent": 1.67
+        },
+        {
+          "function": "Hex.DensePoly.addImpl",
+          "percent": 1.63
+        },
+        {
+          "function": "Hex.DensePoly.divScalarImpl",
+          "percent": 1.6
+        },
+        {
+          "function": "Hex.MvPoly.baseCoprime",
+          "percent": 1.46
+        },
+        {
+          "function": "Hex.MvPoly.checkedCandidate?",
+          "percent": 1.39
+        },
+        {
+          "function": "Hex.MvPoly.termsList",
+          "percent": 1.28
+        },
+        {
+          "function": "Hex.Mono.mul",
+          "percent": 1.25
+        },
+        {
+          "function": "Hex.DensePoly.subImpl",
+          "percent": 1.11
+        },
+        {
+          "function": "Hex.ZMod64.instDecidableEq",
+          "percent": 0.97
+        },
+        {
+          "function": "Hex.powNat",
+          "percent": 0.97
+        },
+        {
+          "function": "Hex.instGcdOpsZMod64",
+          "percent": 0.87
+        },
+        {
+          "function": "Hex.ZMod64.instOfNat",
+          "percent": 0.83
+        },
+        {
+          "function": "Hex.MvPoly.monomial",
+          "percent": 0.76
+        },
+        {
+          "function": "Hex.MvPoly.brownMainLeadingCoeff",
+          "percent": 0.73
+        },
+        {
+          "function": "Hex.MvPoly.constIn",
+          "percent": 0.69
+        },
+        {
+          "function": "Hex.ZMod64.mul",
+          "percent": 0.59
+        },
+        {
+          "function": "Hex.DensePoly.scaleImpl",
+          "percent": 0.59
+        },
+        {
+          "function": "Hex.ZMod64.fieldXgcd",
+          "percent": 0.56
+        }
+      ],
+      "leaf_categories": {
+        "allocation": 34.29,
+        "gmp": 3.64,
+        "lean-own-code": 13.36,
+        "lean-runtime": 29.4,
+        "other": 19.3
+      },
+      "parameter": 0,
+      "samples": 2881,
+      "target": "Hex.MvGcdBench.Profile.runSparse",
+      "top_inclusive": [
+        {
+          "function": "Hex.MvPoly.gcdCertWith",
+          "percent": 100.0
+        },
+        {
+          "function": "_private.HexMvGcd.Profile.0_Hex.MvGcdBench.Profile.initFn_.lam_0.00_@.HexMvGcd.Profile.3576291346__hygCtx_.hyg.33.",
+          "percent": 100.0
+        },
+        {
+          "function": "_private.Init.Data.Range.Basic.0_Std.Legacy.Range.forIn'.loop",
+          "percent": 100.0
+        },
+        {
+          "function": "start_thread",
+          "percent": 100.0
+        },
+        {
+          "function": "std::__1::__function::__func<lean_run_main::$_0, void ()>::operator()()",
+          "percent": 100.0
+        },
+        {
+          "function": "lean::lthread::imp::_main(void*)",
+          "percent": 100.0
+        },
+        {
+          "function": "lean_apply_2",
+          "percent": 100.0
+        },
+        {
+          "function": "Hex.MvGcdBench.Matrix.runIntPair",
+          "percent": 100.0
+        },
+        {
+          "function": "lean-bench.LeanBench.wrapLoopForSidecar",
+          "percent": 100.0
+        },
+        {
+          "function": "fun_124075",
+          "percent": 100.0
+        },
+        {
+          "function": "lean-bench.LeanBench.Cli.runChildCmd",
+          "percent": 100.0
+        },
+        {
+          "function": "lean-bench.LeanBench.runChildMode",
+          "percent": 100.0
+        },
+        {
+          "function": "Hex.MvPoly.gcd",
+          "percent": 100.0
+        },
+        {
+          "function": "lean-bench.LeanBench.autoTune",
+          "percent": 100.0
+        },
+        {
+          "function": "Hex.MvPoly.intConcreteProposalGeneric",
+          "percent": 99.93
+        },
+        {
+          "function": "Hex.MvPoly.intBrownCert?",
+          "percent": 99.76
+        },
+        {
+          "function": "Hex.MvPoly.intBrownLoop",
+          "percent": 99.76
+        },
+        {
+          "function": "Hex.MvPoly.intBrownImage?",
+          "percent": 98.99
+        },
+        {
+          "function": "lean_apply_4",
+          "percent": 98.79
+        },
+        {
+          "function": "Hex.MvPoly.brownStepOps",
+          "percent": 98.37
+        }
+      ],
+      "top_self": [
+        {
+          "function": "lean_dec_ref_cold",
+          "percent": 9.75
+        },
+        {
+          "function": "mi_free",
+          "percent": 9.41
+        },
+        {
+          "function": "mi_malloc_small",
+          "percent": 9.13
+        },
+        {
+          "function": "lean_apply_2",
+          "percent": 7.05
+        },
+        {
+          "function": "mi_malloc",
+          "percent": 6.66
+        },
+        {
+          "function": "lean::lean_del_core_other(lean_object*, unsigned char, lean_object*)",
+          "percent": 4.48
+        },
+        {
+          "function": "Std.DTreeMap.Internal.Impl.foldlM",
+          "percent": 3.75
+        },
+        {
+          "function": "lean_free_object",
+          "percent": 3.09
+        },
+        {
+          "function": "lean_apply_1",
+          "percent": 2.71
+        },
+        {
+          "function": "lean_apply_4",
+          "percent": 2.57
+        },
+        {
+          "function": "lean_alloc_object",
+          "percent": 2.53
+        },
+        {
+          "function": "lean_apply_3",
+          "percent": 2.19
+        },
+        {
+          "function": "Std.DTreeMap.Internal.Impl.foldrM",
+          "percent": 2.05
+        },
+        {
+          "function": "_GI___libc_malloc",
+          "percent": 1.98
+        },
+        {
+          "function": "Id.instMonad",
+          "percent": 1.7
+        },
+        {
+          "function": "Hex.MvPoly.mul",
+          "percent": 1.63
+        },
+        {
+          "function": "Std.DTreeMap.Internal.Impl.Const.get?",
+          "percent": 1.32
+        },
+        {
+          "function": "Std.DTreeMap.Internal.Impl.Const.alter",
+          "percent": 1.28
+        },
+        {
+          "function": "Hex.ZMod64.addImpl",
+          "percent": 0.94
+        },
+        {
+          "function": "_free",
+          "percent": 0.9
+        }
+      ],
+      "top_self_undecorated": [
+        {
+          "percent": 9.75,
+          "symbol": "lean_dec_ref_cold"
+        },
+        {
+          "percent": 9.41,
+          "symbol": "mi_free"
+        },
+        {
+          "percent": 9.13,
+          "symbol": "mi_malloc_small"
+        },
+        {
+          "percent": 7.05,
+          "symbol": "lean_apply_2"
+        },
+        {
+          "percent": 6.66,
+          "symbol": "mi_malloc"
+        },
+        {
+          "percent": 4.48,
+          "symbol": "lean::lean_del_core_other(lean_object*, unsigned char, lean_object*)"
+        },
+        {
+          "percent": 3.16,
+          "symbol": "Std.DTreeMap.Internal.Impl.foldlM_.redArg"
+        },
+        {
+          "percent": 3.09,
+          "symbol": "lean_free_object"
+        },
+        {
+          "percent": 2.71,
+          "symbol": "lean_apply_1"
+        },
+        {
+          "percent": 2.57,
+          "symbol": "lean_apply_4"
+        },
+        {
+          "percent": 2.53,
+          "symbol": "lean_alloc_object"
+        },
+        {
+          "percent": 2.19,
+          "symbol": "lean_apply_3"
+        },
+        {
+          "percent": 1.98,
+          "symbol": "_GI___libc_malloc"
+        },
+        {
+          "percent": 1.91,
+          "symbol": "Std.DTreeMap.Internal.Impl.foldrM_.redArg"
+        },
+        {
+          "percent": 1.32,
+          "symbol": "Std.DTreeMap.Internal.Impl.Const.get?_.redArg"
+        },
+        {
+          "percent": 1.28,
+          "symbol": "Std.DTreeMap.Internal.Impl.Const.alter_.redArg"
+        },
+        {
+          "percent": 1.11,
+          "symbol": "Hex.MvPoly.mul_.redArg_.lam_1"
+        },
+        {
+          "percent": 0.97,
+          "symbol": "Id.instMonad_.lam_2_.boxed"
+        },
+        {
+          "percent": 0.94,
+          "symbol": "Hex.ZMod64.addImpl_.boxed"
+        },
+        {
+          "percent": 0.9,
+          "symbol": "_free"
+        }
+      ]
+    },
+    {
+      "allocation_share_percent": 39.44,
+      "classified_percent": 80.45,
+      "diagnostics": {
+        "calibration_residual_ms": 1.5026979446411133,
+        "confidence": "passed",
+        "off_thread_samples": 0,
+        "rejected_samples": 8,
+        "retained_samples": 2348,
+        "sensitivity_passed": true,
+        "total_timed_ms": 2359.270592
+      },
+      "family": "swell",
+      "inclusive_hex": [
+        {
+          "function": "Hex.MvGcdBench.Matrix.runIntPair",
+          "percent": 100.0
+        },
+        {
+          "function": "Hex.MvPoly.gcd",
+          "percent": 100.0
+        },
+        {
+          "function": "Hex.MvPoly.gcdCertWith",
+          "percent": 99.87
+        },
+        {
+          "function": "Hex.MvPoly.intConcreteProposalGeneric",
+          "percent": 83.94
+        },
+        {
+          "function": "Hex.MvPoly.intHeuristicLoop",
+          "percent": 62.05
+        },
+        {
+          "function": "Hex.MvPoly.checkedCandidate?",
+          "percent": 60.73
+        },
+        {
+          "function": "Hex.MvPoly.succGcd",
+          "percent": 48.47
+        },
+        {
+          "function": "Hex.MvPoly.terminal",
+          "percent": 32.88
+        },
+        {
+          "function": "Hex.DensePoly.subresultantChainExt",
+          "percent": 32.67
+        },
+        {
+          "function": "Hex.DensePoly.subresultantOrderedExt",
+          "percent": 32.62
+        },
+        {
+          "function": "Hex.DensePoly.subresultantAuxExt",
+          "percent": 30.32
+        },
+        {
+          "function": "Hex.MvPoly.checkOps",
+          "percent": 24.28
+        },
+        {
+          "function": "Hex.MvPoly.checkGcdUsing",
+          "percent": 24.28
+        },
+        {
+          "function": "Hex.MvPoly.succCoprime",
+          "percent": 23.38
+        },
+        {
+          "function": "Hex.MvPoly.succCheckCoprime",
+          "percent": 22.83
+        },
+        {
+          "function": "Hex.MvPoly.divExact?",
+          "percent": 20.74
+        },
+        {
+          "function": "Hex.MvPoly.mul",
+          "percent": 20.36
+        },
+        {
+          "function": "Hex.MvPoly.intFastProposal",
+          "percent": 19.76
+        },
+        {
+          "function": "Hex.MvPoly.divExactAux",
+          "percent": 19.38
+        },
+        {
+          "function": "Hex.MvPoly.intCoprimeLoop",
+          "percent": 19.34
+        },
+        {
+          "function": "Hex.MvPoly.tryCoprimeCert?",
+          "percent": 19.34
+        },
+        {
+          "function": "Hex.MvPoly.coprimeStep",
+          "percent": 19.17
+        },
+        {
+          "function": "Hex.Mono.lex",
+          "percent": 16.35
+        },
+        {
+          "function": "Hex.MvPoly.contentCertWith",
+          "percent": 12.14
+        },
+        {
+          "function": "Hex.MvPoly.instDiv",
+          "percent": 10.95
+        },
+        {
+          "function": "Hex.DensePoly.pseudoDivMod",
+          "percent": 10.9
+        },
+        {
+          "function": "Hex.DensePoly.divScalarImpl",
+          "percent": 9.75
+        },
+        {
+          "function": "Hex.MvPoly.quotient",
+          "percent": 9.67
+        },
+        {
+          "function": "Hex.MvPoly.checkGcd",
+          "percent": 9.67
+        },
+        {
+          "function": "Hex.MvPoly.imageAtRaw",
+          "percent": 9.45
+        },
+        {
+          "function": "Hex.MvPoly.restoreStructural?",
+          "percent": 7.54
+        },
+        {
+          "function": "Hex.MvPoly.toUnivariate",
+          "percent": 6.64
+        },
+        {
+          "function": "Hex.MvPoly.addMonomial",
+          "percent": 6.18
+        },
+        {
+          "function": "Hex.MvPoly.imageAt",
+          "percent": 6.13
+        },
+        {
+          "function": "Hex.powNat",
+          "percent": 5.83
+        },
+        {
+          "function": "Hex.DensePoly.xgcd",
+          "percent": 5.49
+        },
+        {
+          "function": "Hex.DensePoly.xgcdAux",
+          "percent": 5.45
+        },
+        {
+          "function": "Hex.divExp",
+          "percent": 4.51
+        },
+        {
+          "function": "Hex.DensePoly.mulImpl",
+          "percent": 4.3
+        },
+        {
+          "function": "Hex.MvPoly.toUnivariateStep",
+          "percent": 4.22
+        },
+        {
+          "function": "Hex.MvPoly.checkContentSteps",
+          "percent": 4.13
+        },
+        {
+          "function": "Hex.MvPoly.eval\u2082",
+          "percent": 3.88
+        },
+        {
+          "function": "Hex.MvPoly.baseGcd",
+          "percent": 3.66
+        },
+        {
+          "function": "Hex.MvPoly.leadingTerm",
+          "percent": 3.62
+        },
+        {
+          "function": "Hex.MvPoly.polyNormalize",
+          "percent": 3.49
+        },
+        {
+          "function": "Hex.MvPoly.instDecidableEq",
+          "percent": 2.56
+        },
+        {
+          "function": "Hex.DensePoly.trimTrailingZerosGo",
+          "percent": 2.43
+        },
+        {
+          "function": "Hex.MvPoly.sub",
+          "percent": 2.39
+        },
+        {
+          "function": "Hex.MvPoly.ofUnivariate",
+          "percent": 2.09
+        },
+        {
+          "function": "Hex.MvPoly.remainderCert?",
+          "percent": 2.04
+        },
+        {
+          "function": "Hex.MvPoly.divMod",
+          "percent": 2.0
+        },
+        {
+          "function": "Hex.DensePoly.divMod",
+          "percent": 1.96
+        },
+        {
+          "function": "Hex.Mono.div",
+          "percent": 1.92
+        },
+        {
+          "function": "Hex.MvPoly.checkContentUsing",
+          "percent": 1.92
+        },
+        {
+          "function": "Hex.MvPoly.divModAux",
+          "percent": 1.92
+        },
+        {
+          "function": "Hex.DensePoly.divModArray",
+          "percent": 1.83
+        },
+        {
+          "function": "Hex.Mono.prod",
+          "percent": 1.75
+        },
+        {
+          "function": "Hex.MvPoly.intHeuristicCandidateAt",
+          "percent": 1.66
+        },
+        {
+          "function": "Hex.DensePoly.subImpl",
+          "percent": 1.66
+        },
+        {
+          "function": "Hex.MvPoly.termsList",
+          "percent": 1.28
+        },
+        {
+          "function": "Hex.MvPoly.structuralReduction?",
+          "percent": 1.24
+        },
+        {
+          "function": "Hex.Mono.mul",
+          "percent": 1.19
+        },
+        {
+          "function": "Hex.MvPoly.samplePoints",
+          "percent": 1.11
+        },
+        {
+          "function": "Hex.DensePoly.addImpl",
+          "percent": 1.06
+        },
+        {
+          "function": "Hex.MvPoly.structuralCert?",
+          "percent": 1.06
+        },
+        {
+          "function": "Hex.MvPoly.unitRemainderCert?",
+          "percent": 0.89
+        },
+        {
+          "function": "Hex.MvPoly.moveLeading",
+          "percent": 0.89
+        },
+        {
+          "function": "Hex.MvPoly.add",
+          "percent": 0.81
+        },
+        {
+          "function": "Hex.ZMod64.mul",
+          "percent": 0.72
+        },
+        {
+          "function": "Hex.MvPoly.polyIsUnit",
+          "percent": 0.68
+        },
+        {
+          "function": "Hex.DensePoly.scaleImpl",
+          "percent": 0.68
+        },
+        {
+          "function": "Hex.MvPoly.monomial",
+          "percent": 0.64
+        },
+        {
+          "function": "Hex.MvPoly.neg",
+          "percent": 0.64
+        },
+        {
+          "function": "Hex.MvPoly.constIn",
+          "percent": 0.55
+        },
+        {
+          "function": "Hex.MvPoly.polyNormUnit",
+          "percent": 0.51
+        },
+        {
+          "function": "Hex.ZMod64.addImpl",
+          "percent": 0.51
+        }
+      ],
+      "leaf_categories": {
+        "allocation": 39.44,
+        "gmp": 1.28,
+        "lean-own-code": 8.39,
+        "lean-runtime": 31.35,
+        "other": 19.55
+      },
+      "parameter": 0,
+      "samples": 2348,
+      "target": "Hex.MvGcdBench.Profile.runSwell",
+      "top_inclusive": [
+        {
+          "function": "_private.Init.Data.Range.Basic.0_Std.Legacy.Range.forIn'.loop",
+          "percent": 100.0
+        },
+        {
+          "function": "start_thread",
+          "percent": 100.0
+        },
+        {
+          "function": "std::__1::__function::__func<lean_run_main::$_0, void ()>::operator()()",
+          "percent": 100.0
+        },
+        {
+          "function": "lean::lthread::imp::_main(void*)",
+          "percent": 100.0
+        },
+        {
+          "function": "lean_apply_2",
+          "percent": 100.0
+        },
+        {
+          "function": "_private.HexMvGcd.Profile.0_Hex.MvGcdBench.Profile.initFn_.lam_0.00_@.HexMvGcd.Profile.1989284020__hygCtx_.hyg.33.",
+          "percent": 100.0
+        },
+        {
+          "function": "Hex.MvGcdBench.Matrix.runIntPair",
+          "percent": 100.0
+        },
+        {
+          "function": "lean-bench.LeanBench.wrapLoopForSidecar",
+          "percent": 100.0
+        },
+        {
+          "function": "fun_124075",
+          "percent": 100.0
+        },
+        {
+          "function": "lean-bench.LeanBench.Cli.runChildCmd",
+          "percent": 100.0
+        },
+        {
+          "function": "lean-bench.LeanBench.runChildMode",
+          "percent": 100.0
+        },
+        {
+          "function": "Hex.MvPoly.gcd",
+          "percent": 100.0
+        },
+        {
+          "function": "lean-bench.LeanBench.autoTune",
+          "percent": 100.0
+        },
+        {
+          "function": "Hex.MvPoly.gcdCertWith",
+          "percent": 99.87
+        },
+        {
+          "function": "Hex.MvPoly.intConcreteProposalGeneric",
+          "percent": 83.94
+        },
+        {
+          "function": "lean_apply_4",
+          "percent": 70.7
+        },
+        {
+          "function": "lean_apply_1",
+          "percent": 62.86
+        },
+        {
+          "function": "Hex.MvPoly.intHeuristicLoop",
+          "percent": 62.05
+        },
+        {
+          "function": "Hex.MvPoly.checkedCandidate?",
+          "percent": 60.73
+        },
+        {
+          "function": "Std.DTreeMap.Internal.Impl.foldlM",
+          "percent": 56.69
+        }
+      ],
+      "top_self": [
+        {
+          "function": "mi_malloc_small",
+          "percent": 13.93
+        },
+        {
+          "function": "mi_free",
+          "percent": 10.43
+        },
+        {
+          "function": "mi_malloc",
+          "percent": 8.18
+        },
+        {
+          "function": "lean_dec_ref_cold",
+          "percent": 7.67
+        },
+        {
+          "function": "lean_apply_2",
+          "percent": 6.81
+        },
+        {
+          "function": "lean::lean_del_core_other(lean_object*, unsigned char, lean_object*)",
+          "percent": 4.3
+        },
+        {
+          "function": "Std.DTreeMap.Internal.Impl.balance",
+          "percent": 3.41
+        },
+        {
+          "function": "lean_apply_1",
+          "percent": 3.36
+        },
+        {
+          "function": "Std.DTreeMap.Internal.Impl.foldlM",
+          "percent": 3.11
+        },
+        {
+          "function": "lean_apply_3",
+          "percent": 2.73
+        },
+        {
+          "function": "lean_free_object",
+          "percent": 2.56
+        },
+        {
+          "function": "Std.DTreeMap.Internal.Impl.Const.alter",
+          "percent": 2.39
+        },
+        {
+          "function": "List.compareLex",
+          "percent": 1.83
+        },
+        {
+          "function": "lean_alloc_object",
+          "percent": 1.79
+        },
+        {
+          "function": "lean_apply_4",
+          "percent": 1.66
+        },
+        {
+          "function": "lean_array_to_list_impl",
+          "percent": 1.53
+        },
+        {
+          "function": "Std.DTreeMap.Internal.Impl.foldrM",
+          "percent": 1.11
+        },
+        {
+          "function": "Hex.Mono.lex",
+          "percent": 0.94
+        },
+        {
+          "function": "_GI___libc_malloc",
+          "percent": 0.81
+        },
+        {
+          "function": "_private.Init.Data.Array.Basic.0_Array.ofFn.go",
+          "percent": 0.77
+        }
+      ],
+      "top_self_undecorated": [
+        {
+          "percent": 13.93,
+          "symbol": "mi_malloc_small"
+        },
+        {
+          "percent": 10.43,
+          "symbol": "mi_free"
+        },
+        {
+          "percent": 8.18,
+          "symbol": "mi_malloc"
+        },
+        {
+          "percent": 7.67,
+          "symbol": "lean_dec_ref_cold"
+        },
+        {
+          "percent": 6.81,
+          "symbol": "lean_apply_2"
+        },
+        {
+          "percent": 4.3,
+          "symbol": "lean::lean_del_core_other(lean_object*, unsigned char, lean_object*)"
+        },
+        {
+          "percent": 3.41,
+          "symbol": "Std.DTreeMap.Internal.Impl.balance_.redArg"
+        },
+        {
+          "percent": 3.36,
+          "symbol": "lean_apply_1"
+        },
+        {
+          "percent": 2.73,
+          "symbol": "lean_apply_3"
+        },
+        {
+          "percent": 2.56,
+          "symbol": "lean_free_object"
+        },
+        {
+          "percent": 2.34,
+          "symbol": "Std.DTreeMap.Internal.Impl.foldlM_.redArg"
+        },
+        {
+          "percent": 1.83,
+          "symbol": "List.compareLex_.at_.00Hex.Mono.lex.spec_0"
+        },
+        {
+          "percent": 1.79,
+          "symbol": "lean_alloc_object"
+        },
+        {
+          "percent": 1.66,
+          "symbol": "lean_apply_4"
+        },
+        {
+          "percent": 1.53,
+          "symbol": "lean_array_to_list_impl"
+        },
+        {
+          "percent": 1.53,
+          "symbol": "Std.DTreeMap.Internal.Impl.Const.alter_.redArg"
+        },
+        {
+          "percent": 0.98,
+          "symbol": "Std.DTreeMap.Internal.Impl.foldrM_.redArg"
+        },
+        {
+          "percent": 0.94,
+          "symbol": "Hex.Mono.lex_.boxed"
+        },
+        {
+          "percent": 0.81,
+          "symbol": "_GI___libc_malloc"
+        },
+        {
+          "percent": 0.77,
+          "symbol": "Std.DTreeMap.Internal.Impl.Const.alter_.at_.00Hex.MvPoly.addMonomial_.at_.00Hex.MvPoly.mul_.at_.00Hex.MvPoly.succCheckCoprime_.at_.00Hex.MvPoly.checkOps_.at_.00Hex.MvPoly.checkGcd_.at_.00Hex.MvPoly.gcdCertWith_.at_.00Hex.MvPoly.gcdCert_.at_.00Hex.MvPoly.gcd_.at_.00Hex.MvGcdBench.Matrix.runIntPair.spec_0.spec_0.spec_1.spec_7.spec_19.spec_36.spec_55.spec_75.spec_99_.redArg"
+        }
+      ]
+    },
+    {
+      "allocation_share_percent": 43.1,
+      "classified_percent": 85.54,
+      "diagnostics": {
+        "calibration_residual_ms": 0.8060240745544434,
+        "confidence": "passed",
+        "off_thread_samples": 0,
+        "rejected_samples": 77,
+        "retained_samples": 2269,
+        "sensitivity_passed": true,
+        "total_timed_ms": 2271.768035
+      },
+      "family": "rational",
+      "inclusive_hex": [
+        {
+          "function": "Hex.MvGcdBench.Matrix.runRatPair",
+          "percent": 98.99
+        },
+        {
+          "function": "Hex.MvPoly.gcd",
+          "percent": 98.99
+        },
+        {
+          "function": "Hex.MvPoly.gcdCertWith",
+          "percent": 98.94
+        },
+        {
+          "function": "Hex.MvPoly.ratConcreteProposal",
+          "percent": 76.69
+        },
+        {
+          "function": "Hex.Mono.lex",
+          "percent": 55.35
+        },
+        {
+          "function": "Hex.MvPoly.checkOps",
+          "percent": 52.45
+        },
+        {
+          "function": "Hex.MvPoly.checkGcdUsing",
+          "percent": 50.46
+        },
+        {
+          "function": "Hex.MvPoly.mul",
+          "percent": 39.0
+        },
+        {
+          "function": "Hex.MvPoly.ratCheckedCandidate?",
+          "percent": 38.39
+        },
+        {
+          "function": "Hex.MvPoly.ratIntegerLiftCert?",
+          "percent": 38.3
+        },
+        {
+          "function": "Hex.MvPoly.checkGcd",
+          "percent": 33.45
+        },
+        {
+          "function": "Hex.MvPoly.divExactAux",
+          "percent": 32.44
+        },
+        {
+          "function": "Hex.MvPoly.divExact?",
+          "percent": 27.19
+        },
+        {
+          "function": "Hex.MvPoly.intProducer",
+          "percent": 24.46
+        },
+        {
+          "function": "Hex.MvPoly.intConcreteProposalGeneric",
+          "percent": 24.46
+        },
+        {
+          "function": "Hex.MvPoly.remainderCert?",
+          "percent": 24.46
+        },
+        {
+          "function": "Hex.MvPoly.checkedCandidate?",
+          "percent": 21.95
+        },
+        {
+          "function": "Hex.MvPoly.ratLiftCoprime?",
+          "percent": 20.89
+        },
+        {
+          "function": "Hex.MvPoly.succCheckCoprime",
+          "percent": 18.55
+        },
+        {
+          "function": "Hex.MvPoly.restoreStructural?",
+          "percent": 16.53
+        },
+        {
+          "function": "Hex.MvPoly.structuralReduction?",
+          "percent": 14.32
+        },
+        {
+          "function": "Hex.MvPoly.checkRatLiftCoreUsing",
+          "percent": 10.84
+        },
+        {
+          "function": "Hex.MvPoly.quotient",
+          "percent": 10.09
+        },
+        {
+          "function": "Hex.MvPoly.ratPrimitiveModel",
+          "percent": 6.88
+        },
+        {
+          "function": "Hex.MvPoly.succCheckNoLift",
+          "percent": 5.29
+        },
+        {
+          "function": "Hex.MvPoly.noLiftOps",
+          "percent": 5.29
+        },
+        {
+          "function": "Hex.MvPoly.leadingTerm",
+          "percent": 4.98
+        },
+        {
+          "function": "Hex.MvPoly.divMod",
+          "percent": 4.36
+        },
+        {
+          "function": "Hex.MvPoly.divModAux",
+          "percent": 4.32
+        },
+        {
+          "function": "Hex.MvPoly.polyNormalize",
+          "percent": 3.31
+        },
+        {
+          "function": "Hex.MvPoly.checkCoprime",
+          "percent": 2.69
+        },
+        {
+          "function": "Hex.MvPoly.addMonomial",
+          "percent": 1.98
+        },
+        {
+          "function": "Hex.MvPoly.unitRemainderCert?",
+          "percent": 1.85
+        },
+        {
+          "function": "Hex.MvPoly.unitDiffCert?",
+          "percent": 1.5
+        },
+        {
+          "function": "Hex.MvPoly.scalarContent",
+          "percent": 1.15
+        },
+        {
+          "function": "Hex.Mono.div",
+          "percent": 0.79
+        },
+        {
+          "function": "Hex.Mono.mul",
+          "percent": 0.75
+        },
+        {
+          "function": "Hex.instGcdOpsInt",
+          "percent": 0.66
+        },
+        {
+          "function": "Hex.MvPoly.add",
+          "percent": 0.62
+        }
+      ],
+      "leaf_categories": {
+        "allocation": 43.1,
+        "gmp": 2.29,
+        "lean-own-code": 4.72,
+        "lean-runtime": 35.43,
+        "other": 14.46
+      },
+      "parameter": 0,
+      "samples": 2269,
+      "target": "Hex.MvGcdBench.Profile.runRational",
+      "top_inclusive": [
+        {
+          "function": "lean_apply_2",
+          "percent": 99.96
+        },
+        {
+          "function": "_private.HexMvGcd.Profile.0_Hex.MvGcdBench.Profile.initFn_.lam_0.00_@.HexMvGcd.Profile.1513924131__hygCtx_.hyg.33.",
+          "percent": 98.99
+        },
+        {
+          "function": "Hex.MvGcdBench.Matrix.runRatPair",
+          "percent": 98.99
+        },
+        {
+          "function": "_private.Init.Data.Range.Basic.0_Std.Legacy.Range.forIn'.loop",
+          "percent": 98.99
+        },
+        {
+          "function": "start_thread",
+          "percent": 98.99
+        },
+        {
+          "function": "std::__1::__function::__func<lean_run_main::$_0, void ()>::operator()()",
+          "percent": 98.99
+        },
+        {
+          "function": "lean::lthread::imp::_main(void*)",
+          "percent": 98.99
+        },
+        {
+          "function": "lean-bench.LeanBench.wrapLoopForSidecar",
+          "percent": 98.99
+        },
+        {
+          "function": "lean-bench.LeanBench.Cli.runChildCmd",
+          "percent": 98.99
+        },
+        {
+          "function": "lean-bench.LeanBench.runChildMode",
+          "percent": 98.99
+        },
+        {
+          "function": "Hex.MvPoly.gcd",
+          "percent": 98.99
+        },
+        {
+          "function": "lean-bench.LeanBench.autoTune",
+          "percent": 98.99
+        },
+        {
+          "function": "Hex.MvPoly.gcdCertWith",
+          "percent": 98.94
+        },
+        {
+          "function": "fun_124075",
+          "percent": 98.94
+        },
+        {
+          "function": "Std.DTreeMap.Internal.Impl.foldlM",
+          "percent": 83.34
+        },
+        {
+          "function": "Hex.MvPoly.ratConcreteProposal",
+          "percent": 76.69
+        },
+        {
+          "function": "Std.DTreeMap.Internal.Impl.Const.alter",
+          "percent": 75.06
+        },
+        {
+          "function": "lean_apply_3",
+          "percent": 72.63
+        },
+        {
+          "function": "lean_apply_1",
+          "percent": 71.57
+        },
+        {
+          "function": "lean_apply_4",
+          "percent": 70.87
+        }
+      ],
+      "top_self": [
+        {
+          "function": "mi_free",
+          "percent": 16.66
+        },
+        {
+          "function": "mi_malloc_small",
+          "percent": 13.79
+        },
+        {
+          "function": "lean_dec_ref_cold",
+          "percent": 10.62
+        },
+        {
+          "function": "lean_array_to_list_impl",
+          "percent": 7.98
+        },
+        {
+          "function": "List.compareLex",
+          "percent": 6.92
+        },
+        {
+          "function": "Std.DTreeMap.Internal.Impl.balance",
+          "percent": 5.46
+        },
+        {
+          "function": "lean_apply_2",
+          "percent": 3.66
+        },
+        {
+          "function": "Std.DTreeMap.Internal.Impl.Const.alter",
+          "percent": 3.26
+        },
+        {
+          "function": "Hex.Mono.lex",
+          "percent": 3.13
+        },
+        {
+          "function": "_mi_malloc_generic(mi_theap_s*, unsigned long, unsigned long, unsigned long*)",
+          "percent": 2.29
+        },
+        {
+          "function": "mi_page_queue_remove(mi_page_queue_s*, mi_page_s*)",
+          "percent": 1.85
+        },
+        {
+          "function": "lean_inc_heartbeat",
+          "percent": 1.81
+        },
+        {
+          "function": "lean_apply_1",
+          "percent": 1.5
+        },
+        {
+          "function": "_GI___libc_malloc",
+          "percent": 1.5
+        },
+        {
+          "function": "_free",
+          "percent": 1.41
+        },
+        {
+          "function": "lean_free_object",
+          "percent": 1.41
+        },
+        {
+          "function": "Std.DTreeMap.Internal.Impl.foldlM",
+          "percent": 1.37
+        },
+        {
+          "function": "Std.DTreeMap.Internal.Impl.foldrM",
+          "percent": 1.28
+        },
+        {
+          "function": "mi_malloc",
+          "percent": 1.15
+        },
+        {
+          "function": "lean_alloc_object",
+          "percent": 0.79
+        }
+      ],
+      "top_self_undecorated": [
+        {
+          "percent": 16.66,
+          "symbol": "mi_free"
+        },
+        {
+          "percent": 13.79,
+          "symbol": "mi_malloc_small"
+        },
+        {
+          "percent": 10.62,
+          "symbol": "lean_dec_ref_cold"
+        },
+        {
+          "percent": 7.98,
+          "symbol": "lean_array_to_list_impl"
+        },
+        {
+          "percent": 6.92,
+          "symbol": "List.compareLex_.at_.00Hex.Mono.lex.spec_0"
+        },
+        {
+          "percent": 5.46,
+          "symbol": "Std.DTreeMap.Internal.Impl.balance_.redArg"
+        },
+        {
+          "percent": 3.66,
+          "symbol": "lean_apply_2"
+        },
+        {
+          "percent": 3.13,
+          "symbol": "Hex.Mono.lex_.boxed"
+        },
+        {
+          "percent": 2.56,
+          "symbol": "Std.DTreeMap.Internal.Impl.Const.alter_.redArg"
+        },
+        {
+          "percent": 2.29,
+          "symbol": "_mi_malloc_generic(mi_theap_s*, unsigned long, unsigned long, unsigned long*)"
+        },
+        {
+          "percent": 1.85,
+          "symbol": "mi_page_queue_remove(mi_page_queue_s*, mi_page_s*)"
+        },
+        {
+          "percent": 1.81,
+          "symbol": "lean_inc_heartbeat"
+        },
+        {
+          "percent": 1.5,
+          "symbol": "lean_apply_1"
+        },
+        {
+          "percent": 1.5,
+          "symbol": "_GI___libc_malloc"
+        },
+        {
+          "percent": 1.41,
+          "symbol": "_free"
+        },
+        {
+          "percent": 1.41,
+          "symbol": "lean_free_object"
+        },
+        {
+          "percent": 1.15,
+          "symbol": "mi_malloc"
+        },
+        {
+          "percent": 1.06,
+          "symbol": "Std.DTreeMap.Internal.Impl.foldlM_.redArg"
+        },
+        {
+          "percent": 0.84,
+          "symbol": "Std.DTreeMap.Internal.Impl.foldrM_.redArg"
+        },
+        {
+          "percent": 0.79,
+          "symbol": "lean_alloc_object"
+        }
+      ]
+    },
+    {
+      "allocation_share_percent": 29.27,
+      "classified_percent": 88.63,
+      "diagnostics": {
+        "calibration_residual_ms": 0.49805784225463867,
+        "confidence": "passed",
+        "off_thread_samples": 0,
+        "rejected_samples": 9,
+        "retained_samples": 3044,
+        "sensitivity_passed": true,
+        "total_timed_ms": 3052.727818
+      },
+      "family": "squarefree",
+      "inclusive_hex": [
+        {
+          "function": "Hex.MvPoly.sqfStep",
+          "percent": 82.42
+        },
+        {
+          "function": "Hex.MvGcdBench.Matrix.runSquarefree",
+          "percent": 82.42
+        },
+        {
+          "function": "Hex.MvPoly.gcdCertWith",
+          "percent": 78.58
+        },
+        {
+          "function": "Hex.MvPoly.intConcreteProposalGeneric",
+          "percent": 69.48
+        },
+        {
+          "function": "Hex.MvPoly.gcd",
+          "percent": 43.89
+        },
+        {
+          "function": "Hex.MvPoly.contentCertWith",
+          "percent": 37.16
+        },
+        {
+          "function": "Hex.MvPoly.contentInCert",
+          "percent": 35.05
+        },
+        {
+          "function": "Hex.MvPoly.intHeuristicLoop",
+          "percent": 34.63
+        },
+        {
+          "function": "Hex.MvPoly.intFastProposal",
+          "percent": 29.3
+        },
+        {
+          "function": "Hex.MvPoly.intCoprimeLoop",
+          "percent": 29.24
+        },
+        {
+          "function": "Hex.MvPoly.tryCoprimeCert?",
+          "percent": 29.24
+        },
+        {
+          "function": "Hex.MvPoly.coprimeStep",
+          "percent": 28.78
+        },
+        {
+          "function": "Hex.MvPoly.intHeuristicCandidateAt",
+          "percent": 22.4
+        },
+        {
+          "function": "Hex.Mono.lex",
+          "percent": 21.68
+        },
+        {
+          "function": "Hex.MvPoly.toUnivariate",
+          "percent": 18.99
+        },
+        {
+          "function": "Hex.MvPoly.primPartIn",
+          "percent": 17.71
+        },
+        {
+          "function": "Hex.MvPoly.imageAtRaw",
+          "percent": 16.36
+        },
+        {
+          "function": "Hex.MvPoly.toUnivariateStep",
+          "percent": 15.9
+        },
+        {
+          "function": "Hex.MvPoly.checkedCandidate?",
+          "percent": 12.81
+        },
+        {
+          "function": "Hex.MvPoly.divExactAux",
+          "percent": 11.99
+        },
+        {
+          "function": "Hex.MvPoly.heuristicReconstruct",
+          "percent": 11.99
+        },
+        {
+          "function": "Hex.MvPoly.eval\u2082",
+          "percent": 11.04
+        },
+        {
+          "function": "Hex.MvPoly.quotient",
+          "percent": 10.12
+        },
+        {
+          "function": "Hex.Mono.prod",
+          "percent": 9.59
+        },
+        {
+          "function": "Hex.MvPoly.checkOps",
+          "percent": 9.43
+        },
+        {
+          "function": "Hex.MvPoly.checkGcdUsing",
+          "percent": 9.13
+        },
+        {
+          "function": "Hex.MvPoly.divExact?",
+          "percent": 7.42
+        },
+        {
+          "function": "Hex.MvPoly.imageAt",
+          "percent": 7.39
+        },
+        {
+          "function": "Hex.MvPoly.mul",
+          "percent": 6.77
+        },
+        {
+          "function": "Hex.MvPoly.succGcd",
+          "percent": 6.08
+        },
+        {
+          "function": "Hex.MvPoly.divModAux",
+          "percent": 4.3
+        },
+        {
+          "function": "Hex.MvPoly.divMod",
+          "percent": 4.3
+        },
+        {
+          "function": "Hex.MvPoly.remainderCert?.tryLeft",
+          "percent": 4.14
+        },
+        {
+          "function": "Hex.MvPoly.checkGcd",
+          "percent": 3.68
+        },
+        {
+          "function": "Hex.MvPoly.yunLoop",
+          "percent": 3.38
+        },
+        {
+          "function": "Hex.MvPoly.succCoprime",
+          "percent": 3.35
+        },
+        {
+          "function": "Hex.MvPoly.heuristicDigits",
+          "percent": 3.25
+        },
+        {
+          "function": "Hex.MvPoly.structuralReduction?",
+          "percent": 3.02
+        },
+        {
+          "function": "Hex.MvPoly.restoreStructural?",
+          "percent": 2.63
+        },
+        {
+          "function": "Hex.MvPoly.samplePoints",
+          "percent": 2.37
+        },
+        {
+          "function": "Hex.MvPoly.leadingTerm",
+          "percent": 2.3
+        },
+        {
+          "function": "Hex.MvPoly.moveLeading",
+          "percent": 2.2
+        },
+        {
+          "function": "Hex.MvPoly.succCheckCoprime",
+          "percent": 2.14
+        },
+        {
+          "function": "Hex.Mono.powBySq",
+          "percent": 2.14
+        },
+        {
+          "function": "Hex.MvPoly.polyNormalize",
+          "percent": 2.1
+        },
+        {
+          "function": "Hex.MvPoly.heuristicEval",
+          "percent": 2.0
+        },
+        {
+          "function": "Hex.MvPoly.addMonomial",
+          "percent": 1.94
+        },
+        {
+          "function": "Hex.MvPoly.baseGcd",
+          "percent": 1.45
+        },
+        {
+          "function": "Hex.MvPoly.remainderCert?",
+          "percent": 1.41
+        },
+        {
+          "function": "Hex.MvPoly.checkContentSteps",
+          "percent": 1.35
+        },
+        {
+          "function": "Hex.MvPoly.terminal",
+          "percent": 1.18
+        },
+        {
+          "function": "Hex.ZMod64.mul",
+          "percent": 1.12
+        },
+        {
+          "function": "Hex.MvPoly.structuralCert?",
+          "percent": 1.02
+        },
+        {
+          "function": "Hex.DensePoly.subresultantChainExt",
+          "percent": 1.02
+        },
+        {
+          "function": "Hex.MvPoly.heuristicDecode",
+          "percent": 0.99
+        },
+        {
+          "function": "Hex.DensePoly.subresultantOrderedExt",
+          "percent": 0.89
+        },
+        {
+          "function": "Hex.MvPoly.instDecidableEq",
+          "percent": 0.82
+        },
+        {
+          "function": "Hex.DensePoly.pseudoDivMod",
+          "percent": 0.79
+        },
+        {
+          "function": "Hex.MvPoly.sub",
+          "percent": 0.72
+        },
+        {
+          "function": "Hex.MvPoly.termsList",
+          "percent": 0.72
+        },
+        {
+          "function": "Hex.MvPoly.checkCoprime",
+          "percent": 0.66
+        },
+        {
+          "function": "Hex.MvPoly.mapCoeffs",
+          "percent": 0.56
+        },
+        {
+          "function": "Hex.MvPoly.scalarContent",
+          "percent": 0.56
+        },
+        {
+          "function": "Hex.DensePoly.trimTrailingZerosGo",
+          "percent": 0.56
+        }
+      ],
+      "leaf_categories": {
+        "allocation": 29.27,
+        "gmp": 21.45,
+        "lean-own-code": 5.95,
+        "lean-runtime": 31.96,
+        "other": 11.37
+      },
+      "parameter": 0,
+      "samples": 3044,
+      "target": "Hex.MvGcdBench.Profile.runSquarefree",
+      "top_inclusive": [
+        {
+          "function": "Hex.MvPoly.sqfStep",
+          "percent": 82.42
+        },
+        {
+          "function": "_private.Init.Data.Range.Basic.0_Std.Legacy.Range.forIn'.loop",
+          "percent": 82.42
+        },
+        {
+          "function": "_private.HexMvGcd.Profile.0_Hex.MvGcdBench.Profile.initFn_.lam_0.00_@.HexMvGcd.Profile.4035289156__hygCtx_.hyg.33.",
+          "percent": 82.42
+        },
+        {
+          "function": "lean_apply_2",
+          "percent": 82.42
+        },
+        {
+          "function": "lean-bench.LeanBench.wrapLoopForSidecar",
+          "percent": 82.42
+        },
+        {
+          "function": "Hex.MvGcdBench.Matrix.runSquarefree",
+          "percent": 82.42
+        },
+        {
+          "function": "lean_apply_3",
+          "percent": 82.42
+        },
+        {
+          "function": "start_thread",
+          "percent": 82.39
+        },
+        {
+          "function": "std::__1::__function::__func<lean_run_main::$_0, void ()>::operator()()",
+          "percent": 82.39
+        },
+        {
+          "function": "lean::lthread::imp::_main(void*)",
+          "percent": 82.39
+        },
+        {
+          "function": "lean-bench.LeanBench.Cli.runChildCmd",
+          "percent": 82.39
+        },
+        {
+          "function": "lean-bench.LeanBench.runChildMode",
+          "percent": 82.39
+        },
+        {
+          "function": "lean-bench.LeanBench.autoTune",
+          "percent": 82.39
+        },
+        {
+          "function": "fun_124075",
+          "percent": 82.36
+        },
+        {
+          "function": "Hex.MvPoly.gcdCertWith",
+          "percent": 78.58
+        },
+        {
+          "function": "Hex.MvPoly.intConcreteProposalGeneric",
+          "percent": 69.48
+        },
+        {
+          "function": "List.foldl",
+          "percent": 53.58
+        },
+        {
+          "function": "lean_apply_1",
+          "percent": 47.9
+        },
+        {
+          "function": "Hex.MvPoly.gcd",
+          "percent": 43.89
+        },
+        {
+          "function": "lean_apply_4",
+          "percent": 38.11
+        }
+      ],
+      "top_self": [
+        {
+          "function": "mi_malloc_small",
+          "percent": 10.87
+        },
+        {
+          "function": "_gmpn_divrem_1_x86_64",
+          "percent": 10.64
+        },
+        {
+          "function": "List.get?Internal",
+          "percent": 9.26
+        },
+        {
+          "function": "mi_free",
+          "percent": 8.77
+        },
+        {
+          "function": "lean_dec_ref_cold",
+          "percent": 7.23
+        },
+        {
+          "function": "_gmpn_addmul_1_x86_64",
+          "percent": 4.76
+        },
+        {
+          "function": "Std.DTreeMap.Internal.Impl.balance",
+          "percent": 3.12
+        },
+        {
+          "function": "Std.DTreeMap.Internal.Impl.Const.alter",
+          "percent": 3.06
+        },
+        {
+          "function": "mi_malloc",
+          "percent": 3.02
+        },
+        {
+          "function": "lean_apply_2",
+          "percent": 2.92
+        },
+        {
+          "function": "lean_array_to_list_impl",
+          "percent": 2.76
+        },
+        {
+          "function": "List.compareLex",
+          "percent": 2.37
+        },
+        {
+          "function": "lean_apply_1",
+          "percent": 2.1
+        },
+        {
+          "function": "_libc_malloc2",
+          "percent": 1.61
+        },
+        {
+          "function": "Hex.Mono.lex",
+          "percent": 1.45
+        },
+        {
+          "function": "lean_free_object",
+          "percent": 1.38
+        },
+        {
+          "function": "_gmpn_copyi_x86_64",
+          "percent": 1.35
+        },
+        {
+          "function": "int_free_chunk",
+          "percent": 1.02
+        },
+        {
+          "function": "lean::lean_del_core_other(lean_object*, unsigned char, lean_object*)",
+          "percent": 0.92
+        },
+        {
+          "function": "List.foldl",
+          "percent": 0.89
+        }
+      ],
+      "top_self_undecorated": [
+        {
+          "percent": 10.87,
+          "symbol": "mi_malloc_small"
+        },
+        {
+          "percent": 10.64,
+          "symbol": "_gmpn_divrem_1_x86_64"
+        },
+        {
+          "percent": 9.26,
+          "symbol": "List.get?Internal_.redArg"
+        },
+        {
+          "percent": 8.77,
+          "symbol": "mi_free"
+        },
+        {
+          "percent": 7.23,
+          "symbol": "lean_dec_ref_cold"
+        },
+        {
+          "percent": 4.76,
+          "symbol": "_gmpn_addmul_1_x86_64"
+        },
+        {
+          "percent": 3.12,
+          "symbol": "Std.DTreeMap.Internal.Impl.balance_.redArg"
+        },
+        {
+          "percent": 3.02,
+          "symbol": "mi_malloc"
+        },
+        {
+          "percent": 2.92,
+          "symbol": "lean_apply_2"
+        },
+        {
+          "percent": 2.76,
+          "symbol": "lean_array_to_list_impl"
+        },
+        {
+          "percent": 2.76,
+          "symbol": "Std.DTreeMap.Internal.Impl.Const.alter_.redArg"
+        },
+        {
+          "percent": 2.37,
+          "symbol": "List.compareLex_.at_.00Hex.Mono.lex.spec_0"
+        },
+        {
+          "percent": 2.1,
+          "symbol": "lean_apply_1"
+        },
+        {
+          "percent": 1.61,
+          "symbol": "_libc_malloc2"
+        },
+        {
+          "percent": 1.45,
+          "symbol": "Hex.Mono.lex_.boxed"
+        },
+        {
+          "percent": 1.38,
+          "symbol": "lean_free_object"
+        },
+        {
+          "percent": 1.35,
+          "symbol": "_gmpn_copyi_x86_64"
+        },
+        {
+          "percent": 1.02,
+          "symbol": "int_free_chunk"
+        },
+        {
+          "percent": 0.92,
+          "symbol": "lean::lean_del_core_other(lean_object*, unsigned char, lean_object*)"
+        },
+        {
+          "percent": 0.79,
+          "symbol": "lean_apply_3"
+        }
+      ]
+    },
+    {
+      "allocation_share_percent": 43.21,
+      "classified_percent": 80.52,
+      "diagnostics": {
+        "calibration_residual_ms": 0.6722369194030762,
+        "confidence": "passed",
+        "off_thread_samples": 0,
+        "rejected_samples": 62,
+        "retained_samples": 1745,
+        "sensitivity_passed": true,
+        "total_timed_ms": 1747.005347
+      },
+      "family": "cofactor-heavy",
+      "inclusive_hex": [
+        {
+          "function": "Hex.MvGcdBench.Profile.runCofactor",
+          "percent": 100.0
+        },
+        {
+          "function": "Hex.MvPoly.divExactAux",
+          "percent": 97.54
+        },
+        {
+          "function": "Hex.Mono.lex",
+          "percent": 48.94
+        },
+        {
+          "function": "Hex.MvPoly.leadingTerm",
+          "percent": 14.61
+        },
+        {
+          "function": "Hex.Mono.div",
+          "percent": 2.64
+        },
+        {
+          "function": "Hex.MvPoly.sub",
+          "percent": 1.49
+        },
+        {
+          "function": "Hex.MvPoly.divExact?",
+          "percent": 1.26
+        },
+        {
+          "function": "Hex.MvPoly.instDecidableEq",
+          "percent": 1.09
+        },
+        {
+          "function": "Hex.Mono.mul",
+          "percent": 0.97
+        },
+        {
+          "function": "Hex.MvPoly.add",
+          "percent": 0.69
+        }
+      ],
+      "leaf_categories": {
+        "allocation": 43.21,
+        "lean-own-code": 5.27,
+        "lean-runtime": 32.03,
+        "other": 19.48
+      },
+      "parameter": 0,
+      "samples": 1745,
+      "target": "Hex.MvGcdBench.Profile.runCofactor",
+      "top_inclusive": [
+        {
+          "function": "Hex.MvGcdBench.Profile.runCofactor",
+          "percent": 100.0
+        },
+        {
+          "function": "_private.Init.Data.Range.Basic.0_Std.Legacy.Range.forIn'.loop",
+          "percent": 100.0
+        },
+        {
+          "function": "start_thread",
+          "percent": 100.0
+        },
+        {
+          "function": "std::__1::__function::__func<lean_run_main::$_0, void ()>::operator()()",
+          "percent": 100.0
+        },
+        {
+          "function": "lean::lthread::imp::_main(void*)",
+          "percent": 100.0
+        },
+        {
+          "function": "lean_apply_2",
+          "percent": 100.0
+        },
+        {
+          "function": "_private.HexMvGcd.Profile.0_Hex.MvGcdBench.Profile.initFn_.lam_0.00_@.HexMvGcd.Profile.3666483635__hygCtx_.hyg.33.",
+          "percent": 100.0
+        },
+        {
+          "function": "lean-bench.LeanBench.wrapLoopForSidecar",
+          "percent": 100.0
+        },
+        {
+          "function": "fun_124075",
+          "percent": 100.0
+        },
+        {
+          "function": "lean-bench.LeanBench.Cli.runChildCmd",
+          "percent": 100.0
+        },
+        {
+          "function": "lean-bench.LeanBench.runChildMode",
+          "percent": 100.0
+        },
+        {
+          "function": "lean-bench.LeanBench.autoTune",
+          "percent": 100.0
+        },
+        {
+          "function": "Hex.MvPoly.divExactAux",
+          "percent": 97.54
+        },
+        {
+          "function": "Std.DTreeMap.Internal.Impl.foldlM",
+          "percent": 74.79
+        },
+        {
+          "function": "lean_apply_1",
+          "percent": 68.88
+        },
+        {
+          "function": "lean_apply_4",
+          "percent": 68.37
+        },
+        {
+          "function": "Std.DTreeMap.Internal.Impl.Const.alter",
+          "percent": 65.16
+        },
+        {
+          "function": "lean_apply_3",
+          "percent": 64.07
+        },
+        {
+          "function": "Hex.Mono.lex",
+          "percent": 48.94
+        },
+        {
+          "function": "lean_array_to_list_impl",
+          "percent": 26.48
+        }
+      ],
+      "top_self": [
+        {
+          "function": "mi_malloc_small",
+          "percent": 24.47
+        },
+        {
+          "function": "mi_free",
+          "percent": 10.43
+        },
+        {
+          "function": "lean_dec_ref_cold",
+          "percent": 9.34
+        },
+        {
+          "function": "Std.DTreeMap.Internal.Impl.balance",
+          "percent": 6.7
+        },
+        {
+          "function": "lean_array_to_list_impl",
+          "percent": 5.79
+        },
+        {
+          "function": "Std.DTreeMap.Internal.Impl.Const.alter",
+          "percent": 5.62
+        },
+        {
+          "function": "List.compareLex",
+          "percent": 5.21
+        },
+        {
+          "function": "Hex.Mono.lex",
+          "percent": 4.13
+        },
+        {
+          "function": "lean_apply_2",
+          "percent": 3.72
+        },
+        {
+          "function": "lean_inc_heartbeat",
+          "percent": 3.38
+        },
+        {
+          "function": "Std.DTreeMap.Internal.Impl.foldlM",
+          "percent": 2.35
+        },
+        {
+          "function": "lean_free_object",
+          "percent": 2.12
+        },
+        {
+          "function": "mi_malloc",
+          "percent": 1.95
+        },
+        {
+          "function": "lean_alloc_ctor",
+          "percent": 1.32
+        },
+        {
+          "function": "lean_apply_1",
+          "percent": 1.15
+        },
+        {
+          "function": "lean::lean_del_core_other(lean_object*, unsigned char, lean_object*)",
+          "percent": 1.15
+        },
+        {
+          "function": "lean_array_to_list",
+          "percent": 1.09
+        },
+        {
+          "function": "Std.DTreeMap.Internal.Impl.Const.get?",
+          "percent": 0.97
+        },
+        {
+          "function": "lean_alloc_object",
+          "percent": 0.92
+        },
+        {
+          "function": "lean_apply_3",
+          "percent": 0.86
+        }
+      ],
+      "top_self_undecorated": [
+        {
+          "percent": 24.47,
+          "symbol": "mi_malloc_small"
+        },
+        {
+          "percent": 10.43,
+          "symbol": "mi_free"
+        },
+        {
+          "percent": 9.34,
+          "symbol": "lean_dec_ref_cold"
+        },
+        {
+          "percent": 6.7,
+          "symbol": "Std.DTreeMap.Internal.Impl.balance_.redArg"
+        },
+        {
+          "percent": 5.79,
+          "symbol": "lean_array_to_list_impl"
+        },
+        {
+          "percent": 5.21,
+          "symbol": "List.compareLex_.at_.00Hex.Mono.lex.spec_0"
+        },
+        {
+          "percent": 4.99,
+          "symbol": "Std.DTreeMap.Internal.Impl.Const.alter_.redArg"
+        },
+        {
+          "percent": 4.13,
+          "symbol": "Hex.Mono.lex_.boxed"
+        },
+        {
+          "percent": 3.72,
+          "symbol": "lean_apply_2"
+        },
+        {
+          "percent": 3.38,
+          "symbol": "lean_inc_heartbeat"
+        },
+        {
+          "percent": 2.12,
+          "symbol": "lean_free_object"
+        },
+        {
+          "percent": 1.95,
+          "symbol": "mi_malloc"
+        },
+        {
+          "percent": 1.32,
+          "symbol": "lean_alloc_ctor"
+        },
+        {
+          "percent": 1.15,
+          "symbol": "lean_apply_1"
+        },
+        {
+          "percent": 1.15,
+          "symbol": "lean::lean_del_core_other(lean_object*, unsigned char, lean_object*)"
+        },
+        {
+          "percent": 1.09,
+          "symbol": "lean_array_to_list"
+        },
+        {
+          "percent": 0.97,
+          "symbol": "Std.DTreeMap.Internal.Impl.Const.get?_.at_.00Hex.MvPoly.baseGcd_.at_.00Hex.MvPoly.prsOps_.at_.00Hex.MvPoly.prsCert_.at_.00Hex.MvPoly.gcdCertWith_.at_.00Hex.MvPoly.gcdCert_.at_.00Hex.MvPoly.gcd_.at_.00Hex.MvGcdBench.Flint.leanIntGcd.spec_0.spec_0.spec_1.spec_4.spec_11.spec_18.spec_25_.redArg"
+        },
+        {
+          "percent": 0.92,
+          "symbol": "Std.DTreeMap.Internal.Impl.foldlM_.redArg"
+        },
+        {
+          "percent": 0.92,
+          "symbol": "Std.DTreeMap.Internal.Impl.foldlM_.at_.00Std.DTreeMap.Internal.Impl.foldl_.at_.00Hex.MvPoly.mul_.at_.00Hex.MvPoly.restoreStructural?_.at_.00Hex.MvPoly.gcdCertWith_.at_.00Hex.MvPoly.gcdCert_.at_.00Hex.MvPoly.gcd_.at_.00Hex.MvGcdBench.Flint.leanIntGcd.spec_0.spec_0.spec_1.spec_5.spec_13.spec_25.spec_38"
+        },
+        {
+          "percent": 0.92,
+          "symbol": "lean_alloc_object"
+        }
+      ]
+    }
+  ],
+  "schema": "hex-mv-gcd-sampling-profiles/1"
+}

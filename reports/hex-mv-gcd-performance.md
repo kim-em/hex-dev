@@ -1,0 +1,242 @@
+# HexMvGcd Performance Report
+
+## Bench Targets
+
+The Mathlib-free suite is registered in `bench/HexMvGcd/Bench.lean`, with the
+fixed scientific matrix in `bench/HexMvGcd/Matrix.lean`, matched external cases
+in `bench/HexMvGcd/Comparators.lean`, and sampling handles in
+`bench/HexMvGcd/Profile.lean`. Input construction is outside every timed
+region. Each timed arm forces a structural checksum or returns a canonical
+term list whose complete hash is checked by lean-bench.
+
+The parametric registrations cover the operations that have machine-operation
+models:
+
+| target | operation | declared model |
+|---|---|---|
+| `runMonoContent` | monomial content of an `n`-term support | `n` |
+| `runContent` | coefficient content | `n` |
+| `runPrimPart` | primitive part | `n` |
+| `runScalarContent` | scalar content | `n` |
+| `runPolyNormalize` | canonical unit normalization | `n` |
+| `runPolyIsUnit` | unit recognition plus support-size observation | `n` |
+| `runToUnivariate` | recursive-view construction | `n * log2 (n + 1)` |
+| `runCofactor` | exact division by a three-term divisor | `n * n * log2 (n + 1)` |
+
+The route-dependent work has no invented asymptotic model. Its fixed matrix
+covers all seven declared input families: `coprime-pairs` at arities 2 through
+8 in dense and sparse forms; `dense-gcds` at 3d5, 3d10, 3d20, 4d5, and 5d5;
+`sparse-stress` at degree 4096 and arities 5, 8, and 12; `rational` GCDs at the
+five dense shapes; `squarefree` patterns 2m1, 3m1-to-5, 4m7, and 5m2357; and
+the matched `swell` and `cofactor-heavy` endpoints described below. The
+degree-4096 sparse cases intentionally measure one bounded Brown image and
+return hash zero when the backend declines; they do not silently time the
+dense PRS fallback.
+
+Every external-comparator family has two matched endpoints and three arms:
+Hex, **FLINT fmpz_mpoly and fmpq_mpoly via python-flint**, and
+**Singular gcd, quotient, and factorize**. All 42 registrations pin the same
+semantic hash per endpoint. Integer and rational GCD, exact division, and squarefree
+decomposition therefore compare like outputs even where the systems choose
+different algorithms.
+
+## Verdicts
+
+The native scientific measurements used clean commit
+`9f668741293267bd9bad3e84ab294b425dbbe9f3` on `chungus2` (AMD EPYC 9455
+48-Core Processor, x86-64 Linux), Lean `4.34.0-rc2`, and lean-bench `0.1.0`.
+The parametric command was:
+
+```sh
+.lake/build/bin/hexmvgcd_bench run \
+  Hex.MvGcdBench.runMonoContent Hex.MvGcdBench.runContent \
+  Hex.MvGcdBench.runPrimPart Hex.MvGcdBench.runScalarContent \
+  Hex.MvGcdBench.runPolyNormalize Hex.MvGcdBench.runPolyIsUnit \
+  Hex.MvGcdBench.runToUnivariate Hex.MvGcdBench.runCofactor \
+  --outer-trials 3 \
+  --export-file reports/bench-results/hex-mv-gcd-parametric-9f668741-chungus2.json
+```
+
+The export has SHA-256
+`26f1abd998600b65d021faaece472aecbada993c4a4e54e73d145985d15c104b`.
+Every target is consistent with its declared complexity, and every successful
+rung has a stable result hash.
+
+| target | successful rungs | first → last median | residual slope β | normalized cost | verdict |
+|---|---:|---:|---:|---:|---|
+| `runMonoContent` | 1,024…32,768 | 0.040836 → 1.331567 ms | +0.017 | 39.073…40.816 | consistent |
+| `runContent` | 1,024…32,768 | 0.087049 → 2.807116 ms | +0.009 | 83.867…86.923 | consistent |
+| `runPrimPart` | 1,024…32,768 | 0.130134 → 4.303801 ms | +0.014 | 127.107…132.692 | consistent |
+| `runScalarContent` | 1,024…32,768 | 0.086847 → 2.803139 ms | +0.006 | 84.137…86.528 | consistent |
+| `runPolyNormalize` | 1,024…32,768 | 0.570747 → 28.437856 ms | +0.118 | 628.975…867.854 | consistent |
+| `runPolyIsUnit` | 1,024…32,768 | 0.013548 → 0.460737 ms | +0.036 | 12.969…14.273 | consistent |
+| `runToUnivariate` | 1,024…32,768 | 0.074391 → 2.530061 ms | −0.087 | 5.147…6.642 | consistent |
+| `runCofactor` | 16…128 | 0.681820 → 60.192990 ms | −0.110 | 524.841…665.840 | consistent |
+
+The fixed matrix command was:
+
+```sh
+.lake/build/bin/hexmvgcd_bench run --filter Hex.MvGcdBench.Matrix \
+  --export-file reports/bench-results/hex-mv-gcd-native-9f668741-chungus2.json
+```
+
+Its 31 results have SHA-256
+`db83de71181514f5d1753f063ddc00a4f14fa744bfe6ac22369faf6777b328dd`;
+all expected hashes matched.
+
+| family | shape | median |
+|---|---|---:|
+| `coprime-pairs`, dense | arity 2 / 3 / 4 / 5 / 6 / 7 / 8 | 0.031529 / 0.076255 / 0.194593 / 0.510707 / 1.316512 / 3.389256 / 8.796764 ms |
+| `coprime-pairs`, sparse | arity 2 / 3 / 4 / 5 / 6 / 7 / 8 | 0.023896 / 0.034914 / 0.050569 / 0.069721 / 0.090873 / 0.115566 / 0.145886 ms |
+| `dense-gcds` | 3d5 / 3d10 / 3d20 / 4d5 / 5d5 | 77.614 / 579.806 / 3,235.495 / 1,372.302 / 11,904.753 ms |
+| `sparse-stress` | 5d4096 / 8d4096 / 12d4096 | 0.846785 / 1.425774 / 5.224447 ms |
+| `rational` | 3d5 / 3d10 / 3d20 / 4d5 / 5d5 | 24.712 / 184.659 / 1,559.791 / 255.569 / 2,355.822 ms |
+| `squarefree` | 2m1 / 3m1-to-5 / 4m7 / 5m2357 | 0.180261 / 1,715.168 / 90.370 / 119.607 ms |
+
+The bounded sparse probes all returned the expected zero hash. This records
+the known absence of a sparse route; it is not a false successful GCD claim.
+The largest Brown case remains finite at 11.905 seconds and is intentionally a
+scheduled scientific point rather than a merge-gating smoke case.
+
+## Comparator Ratios
+
+The matched run used the same clean commit and host, python-flint `0.9.0`
+with FLINT `3.6.0`, and Singular `4.4.1`:
+
+```sh
+HEX_FLINT_BENCH_PYTHON=/tmp/hex-mvgcd-flint-venv/bin/python \
+HEX_SINGULAR_COMMAND=/nix/store/kzxqrr5bhcwmzhg0jmb6bxs9fxnyznlv-singular-4.4.1/bin/Singular \
+  .lake/build/bin/hexmvgcd_bench run --tag mv-gcd-comparator \
+  --export-file reports/bench-results/hex-mv-gcd-comparators-9f668741-chungus2.json
+```
+
+The 42-result export has SHA-256
+`cbbb9efcbc237d1eb31c9ed5342e0d579dae9e5b62f05bc9b0aa9d4da4ec364d`.
+All repeats agreed, all expected hashes matched, and no call hit the ten-second
+comparator cap. A separate export at
+`reports/bench-results/hex-mv-gcd-overhead-9f668741-chungus2.json` has SHA-256
+`69a0bbb6479b3d3106775366f6263ee1be1aa0c76cb6d919588d9a1e920a6e81`.
+The persistent empty-call medians are 6.202 µs for FLINT and 11.118 µs for
+Singular. Both are below 50% of even their fastest comparator point, so every
+ratio below is eligible. Ratios are Hex/comparator; adjusted ratios subtract
+that comparator's empty-call median first.
+
+| family | endpoint | Hex | comparator | comparator time | raw ratio | adjusted ratio |
+|---|---|---:|---|---:|---:|---:|
+| `coprime-pairs` | dense 2 | 0.031819 ms | FLINT | 0.019753 ms | 1.611× | 2.348× |
+| `coprime-pairs` | dense 2 | 0.031819 ms | Singular | 0.034955 ms | 0.910× | 1.335× |
+| `coprime-pairs` | sparse 8 | 0.144887 ms | FLINT | 0.062741 ms | 2.309× | 2.563× |
+| `coprime-pairs` | sparse 8 | 0.144887 ms | Singular | 0.091760 ms | 1.579× | 1.797× |
+| `dense-gcds` | 3d5 | 7.481040 ms | FLINT | 1.200338 ms | 6.232× | 6.265× |
+| `dense-gcds` | 3d5 | 7.481040 ms | Singular | 2.249339 ms | 3.326× | 3.342× |
+| `dense-gcds` | 4d5 | 84.717797 ms | FLINT | 7.584241 ms | 11.170× | 11.179× |
+| `dense-gcds` | 4d5 | 84.717797 ms | Singular | 15.734147 ms | 5.384× | 5.388× |
+| `sparse-stress` | 5d4 | 22.483131 ms | FLINT | 0.299943 ms | 74.958× | 76.541× |
+| `sparse-stress` | 5d4 | 22.483131 ms | Singular | 0.420153 ms | 53.512× | 54.966× |
+| `sparse-stress` | 5d16 | 979.165697 ms | FLINT | 0.529949 ms | 1,847.660× | 1,869.539× |
+| `sparse-stress` | 5d16 | 979.165697 ms | Singular | 0.654791 ms | 1,495.387× | 1,521.216× |
+| `swell` | degree 3 | 0.730383 ms | FLINT | 0.035981 ms | 20.299× | 24.527× |
+| `swell` | degree 3 | 0.730383 ms | Singular | 0.062626 ms | 11.663× | 14.180× |
+| `swell` | degree 5 | 1.142088 ms | FLINT | 0.035581 ms | 32.098× | 38.874× |
+| `swell` | degree 5 | 1.142088 ms | Singular | 0.062602 ms | 18.244× | 22.183× |
+| `rational` | 3d5 | 25.267906 ms | FLINT | 1.543001 ms | 16.376× | 16.442× |
+| `rational` | 3d5 | 25.267906 ms | Singular | 2.736889 ms | 9.232× | 9.270× |
+| `rational` | 4d5 | 259.773851 ms | FLINT | 10.134090 ms | 25.634× | 25.649× |
+| `rational` | 4d5 | 259.773851 ms | Singular | 19.328147 ms | 13.440× | 13.448× |
+| `squarefree` | 2m1 | 0.179964 ms | FLINT | 0.015555 ms | 11.570× | 19.241× |
+| `squarefree` | 2m1 | 0.179964 ms | Singular | 0.028192 ms | 6.384× | 10.540× |
+| `squarefree` | 4m7 | 90.772275 ms | FLINT | 0.513391 ms | 176.809× | 178.971× |
+| `squarefree` | 4m7 | 90.772275 ms | Singular | 1.334308 ms | 68.029× | 68.601× |
+| `cofactor-heavy` | degree 16 | 0.702746 ms | FLINT | 0.510176 ms | 1.377× | 1.394× |
+| `cofactor-heavy` | degree 16 | 0.702746 ms | Singular | 1.365008 ms | 0.515× | 0.519× |
+| `cofactor-heavy` | degree 64 | 13.713890 ms | FLINT | 7.846452 ms | 1.748× | 1.749× |
+| `cofactor-heavy` | degree 64 | 13.713890 ms | Singular | 20.382051 ms | 0.673× | 0.673× |
+
+The only advance expectation is the coprime fast path. It is met: the largest
+adjusted coprime ratio is 2.563×, and both endpoints remain within a small
+constant of both systems. The much larger sparse, squarefree, swell, and
+rational ratios are informational and accurately expose the routes and tuned
+crossovers that this SPEC does not claim to implement.
+
+The required comparator-runtime plots are generated by
+`scripts/plots/hex-mv-gcd-comparator.py`:
+
+![coprime-pairs comparator](figures/hex-mv-gcd-comparator-coprime-pairs.svg)
+
+![dense-gcds comparator](figures/hex-mv-gcd-comparator-dense-gcds.svg)
+
+![sparse-stress comparator](figures/hex-mv-gcd-comparator-sparse-stress.svg)
+
+![swell comparator](figures/hex-mv-gcd-comparator-swell.svg)
+
+![rational comparator](figures/hex-mv-gcd-comparator-rational.svg)
+
+![squarefree comparator](figures/hex-mv-gcd-comparator-squarefree.svg)
+
+![cofactor-heavy comparator](figures/hex-mv-gcd-comparator-cofactor-heavy.svg)
+
+## Profile
+
+One representative Hex case per family was captured from clean commit
+`37eb7686df31622eca346ee20bc9a70f44d5d8e5` on the same host and toolchain,
+using lean-bench-samply commit
+`9356baa2f5757ee40320a897bd284914d5bb9f5e`, samply `0.13.1`, and a 999 Hz
+rate. The one-point `Profile` registrations run the same prepared inputs and
+core operations as the Hex comparator arms, forcing results with the native
+matrix checksums; their synthetic parameter has a constant model and makes no
+scaling claim. The command form was:
+
+```sh
+LEAN_BENCH_SAMPLY_HOME=/tmp/lean-bench-samply.SDVVOD/repo \
+  scripts/profile/run_profile.sh \
+  ./.lake/build/bin/hexmvgcd_bench \
+  Hex.MvGcdBench.Profile.TARGET 0 3000000000
+```
+
+The targets were `runCoprime`, `runDense`, `runSparse`, `runSwell`,
+`runRational`, `runSquarefree`, and `runCofactor`. Raw filtered profiles and
+symbol sidecars remain under `/tmp` and are not committed. The committed
+analytical summary is
+`reports/bench-results/hex-mv-gcd-sampling-profiles.json`, SHA-256
+`167ad76b31fb882ceb2ccb43454fac219995630fa3397c542c347c722f351075`.
+
+| family | own code | GMP | allocation/free | Lean runtime | other |
+|---|---:|---:|---:|---:|---:|
+| `coprime-pairs` | 4.94% | 0.32% | 40.80% | 38.98% | 14.97% |
+| `dense-gcds` | 5.14% | 0.29% | 42.54% | 36.96% | 15.07% |
+| `sparse-stress` | 13.36% | 3.64% | 34.29% | 29.40% | 19.30% |
+| `swell` | 8.39% | 1.28% | 39.44% | 31.35% | 19.55% |
+| `rational` | 4.72% | 2.29% | 43.10% | 35.43% | 14.46% |
+| `squarefree` | 5.95% | 21.45% | 29.27% | 31.96% | 11.37% |
+| `cofactor-heavy` | 5.27% | 0.00% | 43.21% | 32.03% | 19.48% |
+
+Inclusive attribution confirms that every profile is inside its registered
+operation. The coprime and dense profiles spend 100.0% and 98.9% respectively
+under `gcd`/`gcdCertWith`; the sparse profile spends 99.8% under
+`intBrownCert?` and 98.4% under `brownCandidate?`; the swell profile spends
+62.1% under `intHeuristicLoop` and 32.9% under the terminal subresultant path;
+the rational profile spends 76.7% under `ratConcreteProposal`; the squarefree
+profile spends 82.4% under `sqfStep`; and the cofactor-heavy profile spends
+97.5% under `divExactAux`. Allocation and runtime traversal dominate leaf
+samples for most routes, while squarefree uniquely exposes substantial GMP
+coefficient work.
+
+All filtering runs passed confidence and the ±5 ms sensitivity test:
+
+| family | residual | timed duration | retained / rejected | other-thread noise |
+|---|---:|---:|---:|---:|
+| `coprime-pairs` | 0.872 ms | 2,542.352 ms | 2,532 / 7 | 0 |
+| `dense-gcds` | 0.729 ms | 2,801.054 ms | 2,800 / 13 | 0 |
+| `sparse-stress` | 0.522 ms | 2,897.633 ms | 2,881 / 7 | 0 |
+| `swell` | 1.503 ms | 2,359.271 ms | 2,348 / 8 | 0 |
+| `rational` | 0.806 ms | 2,271.768 ms | 2,269 / 77 | 0 |
+| `squarefree` | 0.498 ms | 3,052.728 ms | 3,044 / 9 | 0 |
+| `cofactor-heavy` | 0.672 ms | 1,747.005 ms | 1,745 / 62 | 0 |
+
+No dominant inclusive cost lies outside the corresponding registered target.
+
+## Concerns
+
+None. The absent sparse route is an explicit SPEC limitation and is measured
+honestly by both the bounded degree-4096 declines and the matched end-to-end
+comparator gap; it is not a regression against a claimed Phase 4 goal.

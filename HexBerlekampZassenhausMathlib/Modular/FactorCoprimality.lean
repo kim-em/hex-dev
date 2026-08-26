@@ -27,21 +27,15 @@ noncomputable section
 
 open Polynomial
 
-/-- The Berlekamp factor product is multiplicative over list concatenation.
-Local restatement of the (private) `Hex.Berlekamp.factorProduct_append`, needed
-to relate the balanced-split halves `L`, `R` back to the whole list. -/
+/-- The Berlekamp factor product is multiplicative over list concatenation,
+relating the balanced-split halves `L`, `R` back to the whole list. Alias for
+the public `Hex.Berlekamp.factorProduct_append`. -/
 private theorem factorProduct_append
     {p : Nat} [Hex.ZMod64.Bounds p] [Hex.ZMod64.PrimeModulus p]
     (xs ys : List (Hex.FpPoly p)) :
     Hex.Berlekamp.factorProduct (xs ++ ys) =
-      Hex.Berlekamp.factorProduct xs * Hex.Berlekamp.factorProduct ys := by
-  induction xs with
-  | nil =>
-      rw [List.nil_append, Hex.Berlekamp.factorProduct_nil, Hex.FpPoly.one_mul]
-  | cons x rest ih =>
-      rw [List.cons_append, Hex.Berlekamp.factorProduct_cons,
-        Hex.Berlekamp.factorProduct_cons, ih]
-      exact (Hex.DensePoly.mul_assoc_poly x _ _).symm
+      Hex.Berlekamp.factorProduct xs * Hex.Berlekamp.factorProduct ys :=
+  Hex.Berlekamp.factorProduct_append xs ys
 
 /-- Generalized inductive helper for the `factorsModP_coprime` discharger.
 

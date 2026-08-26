@@ -10,8 +10,21 @@ public import HexNumberFieldTowerMathlib.FactorGeneric.Yun
 
 public section
 
+/-!
+# Totality and certificate replay of the raw factorization pipeline
+
+Assembles the Yun and Trager pieces into whole-pipeline statements: the
+squarefree-component factorizer and `Factor.factorRaw?` are total on valid
+inputs, the executable irreducibility checker is characterised semantically,
+and every produced raw factorization passes the executable certificate
+replay `Factor.check`.
+-/
+
 namespace Hex.NumberTower
 
+/-- Totality of the squarefree-component factorizer: on a certified
+squarefree nonconstant input the bounded shift search and every recursive
+call succeed, so `Factor.factorSquarefree?` returns a result. -/
 theorem factorSquarefree_isSome :
     ∀ (levels : List Level) (hvalid : LevelsValid levels)
       (hinjective : LevelSemantics.DenoteInjective levels)
@@ -677,15 +690,6 @@ private theorem foldl_push_labeled
       state ++ factors.map fun factor => (factor, multiplicity) := by
   rw [Array.foldl_push_eq_append (stop := factors.size) rfl]
 
-private theorem list_prod_pow {M : Type*} [CommMonoid M]
-    (items : List M) (n : Nat) :
-    (items.map fun item => item ^ n).prod = items.prod ^ n := by
-  induction items with
-  | nil => simp
-  | cons item items ih =>
-      simp only [List.map_cons, List.prod_cons, ih]
-      exact (_root_.mul_pow item items.prod n).symm
-
 private theorem labeled_prod_pow {A M : Type*} [CommMonoid M]
     (value : A → M) (items : List A) (n : Nat) :
     ((items.map fun item => (item, n)).map fun entry =>
@@ -886,6 +890,8 @@ theorem factorRaw_isSome (levels : List Level)
   rw [hfactors]
   simp
 
+/-- Over the empty tower the executable irreducibility checker accepts
+exactly the monic inputs whose interpretation is irreducible. -/
 theorem isIrreducible_nil_iff (f : Array (Array Rat)) :
     letI : Field (Arithmetic.Coeff []) := Norm.coeffFieldPoly [] trivial
       LevelSemantics.DenoteInjective.nil
@@ -1272,17 +1278,6 @@ private theorem C_leadingCoeff_eq_of_degreeZero (levels : List Level)
       rw [Polynomial.leadingCoeff, hnat]
     _ = HexPolyMathlib.toPolynomial p :=
       (Polynomial.eq_C_of_natDegree_eq_zero hnat).symm
-
-private theorem factorRaw_sorted (levels : List Level)
-    (f : Array (Array Rat)) {raw : Factor.RawFactorization}
-    (hresult : Factor.factorRaw? levels f = some raw) :
-    Factor.factorsSorted raw.factors = true := by
-  simp only [Factor.factorRaw?] at hresult
-  split at hresult
-  · obtain ⟨factors, _, hresult⟩ := Option.bind_eq_some_iff.mp hresult
-    cases hresult
-    exact canonicalFactors_sorted factors
-  · contradiction
 
 /-- Every raw candidate produced by the complete Yun/Trager pipeline passes
 the executable certificate replay, provided the input coordinate array is in

@@ -14,6 +14,8 @@ public import HexMatrix.Block
 public import HexMatrix.MatrixAlgebra
 public import HexMatrix.Winograd
 public import HexMatrix.Elementary
+public import HexMatrix.ElementaryAlgebra
+public import HexMatrix.Diagonal
 public import HexMatrix.Submatrix
 public import HexMatrix.Pad
 public import HexMatrix.Region

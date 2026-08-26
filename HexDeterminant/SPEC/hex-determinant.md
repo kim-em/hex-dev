@@ -26,11 +26,20 @@ tracking and by `hex-bareiss` for composing row swaps into a permutation sign.
 - column linearity, Laplace cofactor expansion, the Cauchy-Binet column-tuple
   product formula, the adjugate identity on both sides (`mul_adjugate` and
   `adjugate_mul`), and the quadratic identities specified below
+- ordered rectangular selection through `selectedSubmatrix`, `selectedRows`,
+  and `selectedColumnCoeffs`, with
+  `det_selectedSubmatrix_mul_eq_sum_columnTuples` giving the selected-minor
+  Cauchy--Binet expansion
 - `mul_eq_one_comm : U * W = identity n → W * U = identity n` for a square
-  matrix over a commutative ring, proved through the adjugate (both
+matrix over a commutative ring, proved through the adjugate (both
   `mul_adjugate` and `adjugate_mul` are needed). A one-sided inverse is
   therefore enough to witness invertibility, which is what the integer
-  normal-form certificate checkers are specified to rely on.
+normal-form certificate checkers are specified to rely on.
+
+The permutation bridge used by selected-minor clients is public:
+`ofFn_mem_permutationVectors`, `columnTupleMatrix_eq_ofFn_ofFn`, and
+`det_columnTupleMatrix_of_injective` connect injective finite-index maps to the
+column-tuple determinant API.
 
 ## Quadratic determinant identities: which name means what
 
