@@ -233,12 +233,18 @@ theorem getElem_pair_eq_get (M : Matrix R n m) (i : Fin n) (j : Fin m) :
   rw [getElem_pair_eq_nested, getElem_eq_getRow]
   rfl
 
-/-- Entry access through a row-dimension transport. -/
-@[simp] theorem getElem_castRows {n' : Nat} (h : n = n') (A : Matrix R n m)
+/-- Pair entry access through a row-dimension transport. -/
+theorem getElem_castRows {n' : Nat} (h : n = n') (A : Matrix R n m)
     (i : Fin n') (j : Fin m) :
     (castRows h A)[(i, j)] = A[(Fin.cast h.symm i, j)] := by
   subst n'
   rfl
+
+/-- Nested entry access through a row-dimension transport. -/
+@[simp] theorem getElem_castRows_nested {n' : Nat} (h : n = n') (A : Matrix R n m)
+    (i : Fin n') (j : Fin m) :
+    (castRows h A)[i][j] = A[Fin.cast h.symm i][j] := by
+  rw [← getElem_pair_eq_nested, getElem_castRows, getElem_pair_eq_nested]
 
 /-- `Nat`-pair entry access, normalized to the row lookup (concrete-index form).
 The statement observes rows, not the backing buffer, so it is representation-

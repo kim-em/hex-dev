@@ -713,10 +713,10 @@ setup_benchmark runShapePrepared n => n ^ 2 with prep := shapeInput where {
   maxSecondsPerCall := 10.0
 }
 
-/- Cost-model derivation: certificate replay performs two packed product
-checks with `n²` big-by-small terms and a quadratic shape scan. The packed
-word width grows across the ladder, contributing the measured logarithmic
-factor on this bounded certificate family. -/
+/- Cost-model derivation: this controlled family has a unit-bidiagonal
+transform, so two product checks plus the shape scan make quadratically many
+packed-word operations. Width growth gives the calibrated `n² log n` wall
+surrogate here; this does not model replay with a general dense transform. -/
 setup_benchmark runCertPrepared n => n ^ 2 * Nat.log2 (n + 1) with prep := certInput where {
   paramFloor := 64, paramCeiling := 512,
   paramSchedule := .custom #[64, 96, 128, 192, 256, 384, 512]

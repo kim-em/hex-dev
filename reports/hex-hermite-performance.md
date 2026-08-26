@@ -35,8 +35,11 @@ The tall family has fixed aspect ratio and word-scale coefficients. The
 conjugate generator uses every entry of deterministic unit-lower and unit-upper
 triangular factors, rather than a bidiagonal shortcut. `runShapePrepared` uses
 constant-time tuple entry access;
-`runCertPrepared` charges packed-integer width. Prepared witnesses are checked
-by build-time `#guard`s. A further build-time guard compares the isolated
+`runCertPrepared` uses a unit-bidiagonal transform, so its two packed product
+checks have only two nonzero packed terms per row. Its `n² log n` model is a
+calibrated surrogate for this bounded sparse-transform certificate family, not
+for general `hnfCert` replay with a dense transform. Prepared witnesses are
+checked by build-time `#guard`s. A further build-time guard compares the isolated
 principal result with public `hnf` on the same dense input.
 
 `hnfBasis`, `kernelBasis`, `pivots`, and `latticeIndex` each project from one
@@ -122,6 +125,10 @@ particular, the tall verdict retains all nine raw rungs and fits 12 through
 consistent. The raw export preserves every trial, fit-inclusion flag,
 constant, spread, and environment field.
 
+Tall is the tightest verdict: its fitted slope is -0.116 against the ±0.15
+window, while all nine raw rungs remain committed for reproduction on other
+hosts.
+
 The untimed growth runner scans the working matrix after every elementary
 update and asserts that its final matrix equals public `Matrix.hnf`. Reproduce
 the full timed-family ranges with:
@@ -146,8 +153,9 @@ its SHA-256 is
 Dense grows from 30/17 bits at `n=8` to 1375/691 at `n=128`, deficient
 from 18/13 to 640/323, and tall from 6/4 to 14/8. Conjugate grows from
 12/5 at `n=16` to 70/8 at `n=128`: peak width diverges materially from
-output width, and its wall ladder follows the declared extra operand factor.
-This satisfies the SPEC's predeclared trigger; issue #9689 records the bounded
+output width. Its flat normalized wall ladder supports the calibrated log
+factor but does not track the much steeper peak-width curve. The divergence
+therefore satisfies the SPEC's predeclared trigger; issue #9689 records the bounded
 Havas-Majewski-Matthews evaluation follow-up without adding that algorithm to
 this release unit.
 

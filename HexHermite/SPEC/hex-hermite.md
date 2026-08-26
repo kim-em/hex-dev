@@ -698,6 +698,13 @@ replace the unrestricted scheduled-update bounds below. The untimed diagnostic
 records peak and output bit widths over every timed family/range and checks that
 its instrumented final matrix equals the public uninstrumented result.
 
+The prepared certificate ladder is deliberately narrower than unrestricted
+`hnfCert`: its unit-bidiagonal transform gives only two nonzero packed terms per
+product row, so two product checks plus the shape scan make quadratically many
+packed-word operations. `n² log n` is the calibrated wall surrogate for that
+bounded sparse-transform family, not a complexity claim for replay with a
+general dense transform.
+
 | operation | algorithm | matrix updates and `extGcd` calls | operand size |
 |---|---|---|---|
 | `hnf` | fraction-free rank profile, then guarded principal-block sweep | `O(r · n · m)` profile-entry updates; at most `O(n · r²)` scheduled row-reduction checks and `O(n · r)` gcd steps, each nontrivial row update touching `m` entries | active principal prefixes are eagerly reduced; dependent rows are also cleared; the candidate is shape-checked, with the column sweep as fallback |

@@ -407,10 +407,9 @@ def pivots (A : Matrix Int n m) : Vector Nat (hnfRank A) :=
 /-- A reported pivot is the positive entry at the corresponding HNF pivot. -/
 @[simp] theorem get_pivots (A : Matrix Int n m) (i : Fin (hnfRank A)) :
     (pivots A).get i =
-      let result := Hermite.checkedRun (Hermite.formAccumulator n) A
-      let row : Fin n := Fin.castLE
-        (Hermite.checkedRun_rank_le (Hermite.formAccumulator n) A) i
-      (result.matrix[(row, result.pivotVector.get i)]).natAbs := by
+      ((Hermite.checkedRun (Hermite.formAccumulator n) A).matrix[
+        (Fin.castLE (Hermite.checkedRun_rank_le (Hermite.formAccumulator n) A) i,
+          (Hermite.checkedRun (Hermite.formAccumulator n) A).pivotVector.get i)]).natAbs := by
   change Fin (Hermite.checkedRun (Hermite.formAccumulator n) A).pivots.length at i
   simp only [pivots, hnfRank]
   change (Vector.ofFn fun i =>
