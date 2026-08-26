@@ -1078,14 +1078,23 @@ because nothing here reaches it.
 
 ```lean
 theorem factors_eq (F : Factorization) (h : checkFactorization F = true) :
-    F.subject.primeFactorsList = ... -- the multiset of listed primes with multiplicity
+    F.subject.primeFactorsList =
+      F.factors.flatMap fun e => List.replicate e.exponent e.prime
 
 theorem factorization_eq (F) (h : checkFactorization F = true) (p : Nat) :
-    F.subject.factorization p = (F.factors.find? (·.prime = p)).elim 0 (·.exponent)
+    F.subject.factorization p = (F.factors.find? (·.prime == p)).elim 0 (·.exponent)
+
+theorem CheckedFactorization.factorization_eq {n} (F : CheckedFactorization n) (p : Nat) :
+    n.factorization p = (F.raw.factors.find? (·.prime == p)).elim 0 (·.exponent)
+
+theorem CheckedFactorization.primeFactorsList_eq {n} (F : CheckedFactorization n) :
+    n.primeFactorsList =
+      F.raw.factors.flatMap fun e => List.replicate e.exponent e.prime
 
 theorem totient_eq {n} (F : CheckedFactorization n) :
     totient F = Nat.totient n
-theorem sigma_eq, divisors_eq, radical_eq
+theorem sigma_eq, divisors_eq, divisors_list_eq, numDivisors_eq_card
+theorem primeFactors_eq, radical_eq, isSquarefree_iff_squarefree
 theorem squarefreePart_mathlib, squareDivisor_mathlib
 
 theorem orderOf_unitOfCoprime {a n} (hn : 1 < n) (ha : Nat.Coprime a n) :
@@ -1098,14 +1107,21 @@ theorem orderOf_eq {c} (h : checkOrder c = true) :
     orderOf (ZMod.unitOfCoprime c.base (coprime_of_checkOrder h)) = c.order
 ```
 
-`factorization_eq` is the correspondence everything else goes through:
-Mathlib's `Nat.factorization` is a `Finsupp` and this library's is an
-ascending list, and once they agree pointwise every arithmetic-function
-theorem in Mathlib applies. The companion's job is one correspondence
-and a series of short consequences, not a redevelopment. Exact helper
-declaration names are read from the pinned Mathlib during implementation;
-the SPEC deliberately does not depend on remembered names that may be
-deprecated or absent.
+`factorization_eq` is the pointwise multiplicity correspondence and
+`factors_eq` is its canonical-list counterpart: Mathlib's
+`Nat.factorization` is a `Finsupp` and this library's factorization is an
+ascending prime-power list. They are outward-facing correspondences for
+downstream consumers; checked-data corollaries avoid exposing raw certificate
+bookkeeping at call sites. The arithmetic transports in this companion each
+compose the core's Mathlib-free semantic theorem -- such as `mem_divisors`,
+`totient_eq_count`, `sigma_eq_sum`, `isSquarefree_iff`, or
+`squareDivisor_spec` -- with checker facts about products, prime support, and
+multiplicity. `primeFactors_eq` exposes that support-shaped correspondence
+directly. The `find?` and `flatMap` expressions in the public statements are
+normal forms, not separately advertised executable operations. Exact Mathlib
+helper declaration names are read from the pinned Mathlib during
+implementation; the SPEC deliberately does not depend on remembered names
+that may be deprecated or absent.
 
 **No `DecidablePred Squarefree` instance on `Nat`.** Mathlib has one
 (`Mathlib/Data/Nat/Squarefree.lean:234`), so a second would be a
@@ -1162,9 +1178,10 @@ by `coprime_of_checkOrder`, so the caller passes nothing extra.
 6. **ECM stage 1.** Montgomery curves, Suyama parameterisation, the
    word/direct-`Nat` arithmetic dispatch, and its route-level tests.
 
-7. **The companion.** `factorization_eq` and its consequences plus the general
-   `orderOf_unitOfCoprime` and `orderOf_natCast` correspondences and the
-   certificate specialization `orderOf_eq`. It adds no duplicate decidability instances. The
+7. **The companion.** The pointwise, canonical-list, and prime-support
+   factorization correspondences; divisor and squarefree transports; the
+   general `orderOf_unitOfCoprime` and `orderOf_natCast` correspondences; and
+   the certificate specialization `orderOf_eq`. It adds no duplicate decidability instances. The
    factorization correspondence begins after milestone 1; divisor and
    order transports follow milestones 2 and 3 while later search routes
    proceed independently.
