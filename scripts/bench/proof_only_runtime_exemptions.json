@@ -1483,8 +1483,8 @@
  },
  {
   "path": "lakefile.lean",
-  "baseline_blob": "a1b87406682dbf908d990f01676f326499b906e5",
-  "current_blob": "9877274032003d4096cbc3141ab3cf714448ad2b",
-  "reason": "Registers only the independent HexPolyFast library, conformance module, and benchmark executable; no factorization runtime target, definition, build flag, or dependency changes."
+  "baseline_blob": "8226e99030e7d5fa79f36b5652119b97ab8e0110",
+  "current_blob": "3e6ce0e5ba4a4d410dae01162a0dc4580380bd84",
+  "reason": "Additionally registers the independent HexPolyFast library, conformance module, and benchmark executable on top of main's current registrations; hexbz_factor_service, its build flags, and every factorization runtime dependency remain unchanged."
  }
 ]
