@@ -298,6 +298,10 @@ lean_lib HexPrimalityKernelProbe where
   srcDir := "bench"
   globs := #[`HexBench.PrimalityKernel]
 
+lean_lib HexIntFactorKernelProbe where
+  srcDir := "bench"
+  globs := #[`HexBench.IntFactorKernel]
+
 lean_lib HexMvGcdKernelProbe where
   srcDir := "bench"
   globs := #[`HexMvGcd.Kernel]

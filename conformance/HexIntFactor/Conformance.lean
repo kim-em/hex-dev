@@ -82,7 +82,6 @@ example {n : Nat} (F : CheckedPartialFactorization n) :
 #guard numDivisors checkedPow64 == 65
 -- `101 ^ 6` divisors rules out computing the count by enumeration.
 #guard numDivisors checkedHugeTau == 101 ^ 6
-example : numDivisors checkedHugeTau = 101 ^ 6 := by decide +kernel
 -- `sigmaEntry` remains total even for uncertified `PrimePower` values.
 #guard sigmaEntry ⟨3, .small 0⟩ 1 == 1
 #guard sigmaEntry ⟨3, .small 1⟩ 1 == 4
@@ -97,8 +96,6 @@ example : numDivisors checkedHugeTau = 101 ^ 6 := by decide +kernel
 -- The trillion-divisor input demonstrates that `sigma` never enumerates them;
 -- the fixed modular regression value also rejects a constant nonzero result.
 #guard sigma checkedHugeTau 1 % 1000000007 == 898750509
-example : sigma checkedHugeTau 0 = 101 ^ 6 := by decide +kernel
-example : sigma checkedPow64 1 = 2 ^ 65 - 1 := by decide +kernel
 #guard totient checked12 == 4
 #guard totient checked1 == 1
 #guard totient checked64 == 32
@@ -106,7 +103,6 @@ example : sigma checkedPow64 1 = 2 ^ 65 - 1 := by decide +kernel
 #guard totient checked30 == 8
 -- A range scan to this subject is infeasible; this exercises the factor route.
 #guard totient checkedPow64 == 2 ^ 63
-example : totient checkedPow64 = 2 ^ 63 := by decide +kernel
 example :
     ((List.range (7 ^ 1)).filter fun a => Nat.Coprime a (7 ^ 1)).length = 6 := by
   simpa using coprimeCount_primePow (p := 7) (e := 1) (by decide) (by decide)
@@ -157,8 +153,6 @@ example :
 -- This input is much too large for a scan through `List.range n`.
 #guard squarefreePart checkedPow64 == 1
 #guard squareDivisor checkedPow64 == 2 ^ 32
-example : squareDivisor checkedPow64 = 2 ^ 32 := by decide +kernel
-example : squarefreePart checkedHugeTau = 1 := by decide +kernel
 #guard !isSquarefree checked12
 
 #guard (smallCandidate (2 ^ 20)).route == .perfectPower
