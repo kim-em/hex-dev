@@ -470,10 +470,14 @@ repeated part contains the remaining `r - k` copies. -/
 structure YunInvariant [ZPoly.CheckedIrreducible p]
     {K : Type*} [Field K] (embedding : QAdjoin p x →+* K) (z : K)
     (r k : Nat) (w repeated : DensePoly (QAdjoin p x)) : Prop where
+  /-- The current squarefree-product accumulator is nonzero. -/
   w_ne : toPolynomialMap embedding w ≠ 0
+  /-- The current repeated part is nonzero. -/
   repeated_ne : toPolynomialMap embedding repeated ≠ 0
+  /-- The accumulator contains `z` exactly once while copies remain. -/
   w_multiplicity : (toPolynomialMap embedding w).rootMultiplicity z =
     if k ≤ r then 1 else 0
+  /-- The repeated part contains the remaining `r - k` copies of `z`. -/
   repeated_multiplicity :
     (toPolynomialMap embedding repeated).rootMultiplicity z = r - k
 

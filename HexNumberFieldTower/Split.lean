@@ -91,7 +91,9 @@ inductive Roots (T : NumberTower) where
 /-- A checked extension together with all roots of the original polynomial in
 that extension. -/
 structure Splitting (T : NumberTower) (f : Poly T) where
+  /-- The extension over which the polynomial splits into linear factors. -/
   extension : Extension T
+  /-- All roots of the input polynomial in the extended tower. -/
   roots : Roots extension.tower
 
 /-- Map polynomial coefficients through an explicitly supplied tower
