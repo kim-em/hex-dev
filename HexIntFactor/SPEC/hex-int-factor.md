@@ -425,7 +425,10 @@ as `checkFactorization` minus the requirement that the residual be `1`.
 Its product calculation uses the same subject-bounded loop.
 It makes **no** completeness claim. The indexed checked form prevents a
 partial factorization of one subject from answering a request about
-another, and
+another. The characterising lemmas `checkPartial_prod`,
+`checkPartial_prime`, `checkPartial_exponent`, and `checkPartial_sorted`
+expose reconstruction, primality, exponent positivity, and factor-base
+ordering without requiring consumers to unfold the checker, and
 
 ```lean
 theorem factorPartial?_error {n r fuel f}
