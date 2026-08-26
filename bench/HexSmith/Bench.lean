@@ -461,7 +461,8 @@ setup_benchmark runAbelianStructure n => n ^ 3 with prep := presentationWide whe
 }
 
 /- `isSNFShape` scans `n` positive diagonal entries and `n-1` adjacent
-divisibility obligations on a certificate prepared outside the timed body. -/
+divisibility obligations on a certificate prepared outside the timed body,
+so its cost model is linear `O(n)`. -/
 setup_benchmark runShape n => n with prep := certInput where {
   paramFloor := 32, paramCeiling := 1024,
   paramSchedule := .custom #[32, 64, 128, 256, 512, 1024]
