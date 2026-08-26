@@ -118,6 +118,8 @@ meta def elabIrreducibilityArgument (stx : Syntax) (t : Syntax)
 types). -/
 syntax (name := irreducibilityTerm) "irreducibility" term:max : term
 
+/-- Term elaborator for `irreducibility f`: runs the Rabin test in compiled
+code and returns the checked irreducibility proof term. -/
 @[term_elab irreducibilityTerm] meta def elabIrreducibility : Term.TermElab :=
   fun stx expectedType? => do
     match stx with
@@ -155,6 +157,8 @@ the form `… .Irreducible e`; `irreducibility f` adds the proof as `this`;
 syntax (name := irreducibilityTac)
   "irreducibility" (atomic(ident " : "))? (term:max)? : tactic
 
+/-- Tactic elaborator for `irreducibility`: closes an `Irreducible` goal, or
+adds the proof to the local context under `this` or a caller-chosen name. -/
 @[tactic irreducibilityTac] meta def evalIrreducibilityTac : Tactic.Tactic :=
   fun stx => do
     match stx with

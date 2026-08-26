@@ -86,6 +86,14 @@ mutual
         {cmp : Mono 0 → Mono 0 → Ordering}
         [Std.TransCmp cmp] [Std.LawfulEqCmp cmp]
         (u v : R) : CoprimeCert 0 R cmp
+    /-- A direct Bézout identity at any arity.  The checker replays the
+    polynomial identity instead of descending through a subresultant chain. -/
+    | bezout {n : Nat} {R : Type u}
+        [zeroR : Zero R]
+        {cmp : Mono n → Mono n → Ordering}
+        [outerTrans : Std.TransCmp cmp] [outerEq : Std.LawfulEqCmp cmp]
+        (u v : @MvPoly n R zeroR cmp outerTrans outerEq) :
+        @CoprimeCert n R zeroR cmp outerTrans outerEq
     /-- Internal universe-polymorphic form of rational lifting.  The public
     `CoprimeCert.ratLift` smart constructor fixes the embedded coefficient
     type to `Int` and the target type to `Rat`. -/
@@ -352,6 +360,7 @@ recursive. -/
   match cert with
   | .unit => polyIsUnit f || polyIsUnit h
   | .base u v => u * coeff Mono.zero f + v * coeff Mono.zero h == 1
+  | .bezout u v => u * f + v * h == 1
   | _ => false
 
 @[reducible] def succCheckNoLift {n : Nat} {S : Type u}
@@ -364,6 +373,7 @@ recursive. -/
     (cert : CoprimeCert (n + 1) S cmp) : Bool := by
   cases cert with
   | unit => exact polyIsUnit f || polyIsUnit h
+  | bezout u v => exact u * f + v * h == 1
   | ratLiftCore => exact false
   | split i cmp' P φ a α β left right rest =>
       letI : ZMod64.Bounds P.m := P.bounds
@@ -432,6 +442,7 @@ recursive. -/
   match cert with
   | .unit => polyIsUnit f || polyIsUnit h
   | .base u v => u * coeff Mono.zero f + v * coeff Mono.zero h == 1
+  | .bezout u v => u * f + v * h == 1
   | @CoprimeCert.ratLiftCore _ _ S _ _ _ _ _ringModel _decModel
       _beqModel _lawfulModel _dvdModel _gcdModel _ _ _ embed _ _ _ _ _
       scaleL scaleR invL invR left right cert =>
@@ -448,6 +459,7 @@ recursive. -/
     (cert : CoprimeCert (n + 1) R cmp) : Bool := by
   cases cert with
   | unit => exact polyIsUnit f || polyIsUnit h
+  | bezout u v => exact u * f + v * h == 1
   | @ratLiftCore _ _ S _ _ _ _ ringModel decModel beqModel
       lawfulModel dvdModel gcdModel _ _ _ embed _ _ _ _ _
       scaleL scaleR invL invR left right cert =>

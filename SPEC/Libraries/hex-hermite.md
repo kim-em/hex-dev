@@ -61,7 +61,7 @@ Named consumers:
 - **hex-poly-smith**, which needs the same algorithm shape over `F[x]`.
   That is not this library, and it does not depend on this one either;
   see "Why `Int` and not a Euclidean domain class" below, and
-  [hex-poly-smith](hex-poly-smith.md) for the completed comparison.
+  [hex-poly-smith](../../HexPolySmith/SPEC/hex-poly-smith.md) for the completed comparison.
 
 ## The convention this library fixes
 
@@ -275,47 +275,31 @@ while the intermediate matrices are not. This is the classical
 observation that makes integer elimination a different subject from
 elimination over a field.
 
-Three responses are standard. V1 takes the first and records objective
-triggers for specifying the other two later.
+The public path now uses a rank-profiled principal-block sweep inspired by
+Kannan--Bachem. A rectangular fraction-free elimination first records
+increasing pivot columns and only the row swaps needed to put independent rows
+first. Those data are a scheduling hint: the actual HNF computation starts
+again from `A` and uses only unimodular integer row operations. It admits the
+profiled rows one at a time, clears each earlier pivot from the new row, and
+immediately restores the canonical residues above that pivot before admitting
+the next row. Keeping the active principal prefix in HNF prevents the explosive
+growth seen when a column sweep repeatedly mixes a reduced prefix with an
+uncontrolled suffix.
 
-**The default is total, and is the one the public `hnf` runs.** Process
-the columns left to right, and after each new pivot is fixed, reduce
-every entry above it immediately rather than at the end. Reducing eagerly
-is what keeps the already-processed part of the matrix bounded by its own
-pivots instead of letting it accumulate across the run. The rows not yet
-consumed are not bounded by anything, which is the honest statement, and
-is why the input families under "Benchmarking" measure entry size and not
-only time.
+The control flow remains entirely bounded by `n` and `m`. Fraction-free
+profiling scans the columns and updates the trailing rectangle; the principal
+sweep is a fixed nest over rows and earlier pivots. The schedule is
+parameterised by a companion accumulator: `Unit` for `hnf`, `U` for `hnfData`,
+and `(U, W)` for `hnfWithInv`. The matrix, transform, and inverse paths have
+proved schedule agreement, `U * A = H`, and `U * W = W * U = I`.
 
-The control flow is entirely bounded. For each of the `m` columns, scan the
-rows at or below the current pivot row. If they are all zero, advance only
-the column. Otherwise move the first nonzero entry to the pivot row, then
-fold the 2x2 `extGcd` step once over each lower row. Each application clears
-that row's entry in the pivot column; later applications touch only the pivot
-row and a later row, so an entry already cleared is not reintroduced. Negate
-the pivot row if the resulting pivot is negative, then use a final fixed scan
-to reduce the entries above it and advance both the pivot row and column. Thus
-the implementation is nested structural iteration over
-the remaining columns and rows (or equivalent fuel bounded by `m` and `n`),
-with no value-dependent recursive call and no unreachable exhaustion branch.
-Implement this as one loop parameterised by a companion accumulator: `Unit`
-for `hnf`, `U` for `hnfData`, and `(U, W)` for `hnfWithInv`. The accumulator's
-row-step operation is inlined, so the `Unit` instantiation allocates no matrix.
-The shared loop makes the schedule and pivot selection identical and lets the
-agreement theorems follow from accumulator-parametric step lemmas rather than
-three independent correctness inductions.
-
-This is deliberately *not* called Kannan-Bachem. Kannan-Bachem maintains
-Hermite normal forms of leading *nonsingular* minors and reorders rows
-and columns to produce them, and its entry bound is a cofactor bound that
-holds for that arrangement. Its FLINT analogue `hnf_minors` carries a
-rank precondition. The public `hnf` here takes arbitrary rectangular and
-rank-deficient input, where a leading minor determinant can be zero and
-the bound says nothing. Specifying rank-profile preprocessing, the
-full-rank subproblem it produces, and the reconstruction of the zero rows
-and the transform is real work and is listed under "Open questions" as
-the optimisation to measure against the total algorithm, not smuggled in
-as the default.
+The profile is intentionally not trusted as a proof. `checkedRun` checks every
+entry-level HNF clause on the candidate and falls back to the earlier total
+column sweep if the check fails. The candidate's certificate still follows
+from the proved elementary-row-operation invariants; the Boolean check supplies
+only its canonical HNF shape. This makes rectangular and rank-deficient inputs
+total while leaving a future proof of fraction-free rank-profile correctness
+free to remove the fallback without changing the public API.
 
 **The modular variant is not a v1 declaration.** For square
 nonsingular `A` with `d = |det A|`, the row lattice `L` contains `d·ℤⁿ`
@@ -349,6 +333,25 @@ constraint on a real input family, because the dependency is heavy
 (`hex-lll` pulls in `hex-gram-schmidt`) and the payoff is
 input-dependent. The threshold that would justify adding it is written
 down under "Benchmarking".
+
+### Research references
+
+These are the three algorithmic branches to revisit if the guarded principal
+sweep needs stronger worst-case guarantees or a different growth strategy:
+
+- Ravindran Kannan and Achim Bachem, [*Polynomial Algorithms for Computing the
+  Smith and Hermite Normal Forms of an Integer Matrix*](https://people.tamu.edu/~rojas/kannanbachemhermitesmith79.pdf),
+  SIAM Journal on Computing 8(4), 1979. This is the reference for the
+  polynomial-time principal-minor arrangement that motivated the current
+  rank-profiled prefix schedule.
+- George Havas, Bohdan S. Majewski, and Keith R. Matthews, [*Extended GCD and
+  Hermite Normal Form Algorithms via Lattice Basis Reduction*](https://staff.itee.uq.edu.au/havas/1998hmm.pdf),
+  Experimental Mathematics 7(2), 1998. This is the LLL-based growth-control
+  alternative.
+- Arne Storjohann and George Labahn, [*Asymptotically Fast Computation of
+  Hermite Normal Forms of Integer Matrices*](https://doi.org/10.1145/236869.237083),
+  ISSAC 1996. This is the reference point for a future asymptotically fast
+  implementation rather than an incremental optimisation of this sweep.
 
 **The transform costs more than the form.** `U` is larger than `H`, often
 much larger, and computing it is the dominant cost on hard inputs. This
@@ -657,7 +660,7 @@ generalisation becomes worth doing when the `F[x]` consumer exists and
 its normalisation and growth story is written down, not before.
 
 That story is now written down, in
-[hex-poly-smith](hex-poly-smith.md), and it closes the question rather
+[hex-poly-smith](../../HexPolySmith/SPEC/hex-poly-smith.md), and it closes the question rather
 than answering it in favour of the class. With both sides specified the
 shared surface is one function shape, and even that function differs:
 the polynomial step folds the monic normalisation into the same 2x2
@@ -681,9 +684,9 @@ derived. See "Benchmarking".
 
 | operation | algorithm | matrix updates and `extGcd` calls | operand size |
 |---|---|---|---|
-| `hnf` | column sweep with eager reduction above each pivot | `O(r · n · m)` | processed part bounded by its own pivots, unprocessed part unbounded |
-| `hnfData` | `hnf` plus accumulation of `U` only | `+ O(r · n²)` | `U` may be much larger than `H` |
-| `hnfWithInv` | `hnfData` plus right-updates of `W = U⁻¹` | `+ O(r · n²)` beyond `hnfData` | `U`'s and `W`'s |
+| `hnf` | fraction-free rank profile, then guarded principal-block sweep | `O(r · n · m)` profile-entry updates; at most `O(n · r²)` scheduled row-reduction checks and `O(n · r)` gcd steps, each nontrivial row update touching `m` entries | active principal prefixes are eagerly reduced; dependent rows are also cleared; the candidate is shape-checked, with the column sweep as fallback |
+| `hnfData` | the same schedule plus accumulation of `U` | at most `O(n · r² · (m + n) + r · n · m)` integer operations | `U` may be much larger than `H` |
+| `hnfWithInv` | `hnfData` plus right-updates of `W = U⁻¹` | at most another `O(n² · r²)` integer operations | `U`'s and `W`'s |
 | `latticeCoeffs` | `hnfData`, forward pivot solve, residual check, one `vecMul` through `U` | as `hnfData`, plus `O(n · m)` | bounded by `H`, `U`, and the residual |
 | `latticeContains` | `latticeCoeffs` followed by `Option.isSome` | as `latticeCoeffs` | as `latticeCoeffs` |
 | `kernelBasis` | `hnfData` plus a row slice of `U` | as `hnfData`, plus `O((n-r) · n)` | `U`'s |
@@ -934,14 +937,11 @@ the first and third dependencies.
   public entry point starts with a complete square DKT recurrence and
   `hnfSquare_eq_hnf`; rectangular generalisation is a later extension, not a
   premise hidden in that first API.
-- **Whether the rank-profile preprocessing is worth writing.** The
-  default algorithm is total but its unprocessed rows are unbounded. The
-  Kannan-Bachem arrangement bounds them, at the cost of rank-profile
-  preprocessing, a full-rank subproblem, and reconstruction of the zero
-  rows and the transform. That is a real algorithm to specify, not a
-  variant of the default, and it should be specified only if the entry
-  instrumentation under "Benchmarking" shows the unprocessed rows are
-  what hurts.
+- **Whether to prove the rank profile directly.** The current profile is a
+  checked optimisation hint: failure of the complete HNF shape check selects
+  the proved column sweep. A direct proof that fraction-free profiling finds
+  exactly the independent rows and pivot columns would make the fallback
+  unreachable and would support sharper bit-complexity analysis.
 - **Kernel reduction.** Nothing in this SPEC is on a `decide +kernel`
   path today. If the Hermite certificate is ever checked in the kernel,
   the exposure analysis in the `hex-mv-poly` SPEC applies verbatim, and

@@ -54,6 +54,27 @@ def selectedColumnTuples (n m : Nat) : List (Vector (Fin m) n) :=
 def IsStrictlyIncreasingColumnTuple {m n : Nat} (cols : Vector (Fin m) n) : Prop :=
   ∀ i j : Fin n, i.val < j.val → cols[i].val < cols[j].val
 
+/-- In a strictly increasing tuple of natural indices, the value in position
+`i` is at least `i`. -/
+theorem index_le_of_strictlyIncreasing {m n : Nat}
+    (cols : Vector (Fin m) n) (hcols : IsStrictlyIncreasingColumnTuple cols)
+    (i : Fin n) : i.val ≤ cols[i].val := by
+  have go : ∀ t (ht : t < n), t ≤ cols[(⟨t, ht⟩ : Fin n)].val := by
+    intro t
+    induction t with
+    | zero => intro _ht; omega
+    | succ t ih =>
+        intro ht
+        have ht' : t < n := by omega
+        let i : Fin n := ⟨t, ht'⟩
+        let j : Fin n := ⟨t + 1, ht⟩
+        have hprev : t ≤ cols[i].val := ih ht'
+        have hstep : cols[i].val < cols[j].val := hcols i j (by simp [i, j])
+        have hnext : t + 1 ≤ cols[j].val :=
+          Nat.succ_le_of_lt (Nat.lt_of_le_of_lt hprev hstep)
+        simpa [j] using hnext
+  exact go i.val i.isLt
+
 private theorem isStrictlyIncreasingColumnTuple_nil {m : Nat} :
     IsStrictlyIncreasingColumnTuple (m := m) (n := 0) #v[] := by
   intro i _ _
@@ -138,7 +159,7 @@ private theorem mem_selectedColumnTuplesUpTo_imp {m : Nat} :
 
 /-- Backward characterization: every strictly increasing tuple whose entries
 are all `< bound` is enumerated by the recursive helper. -/
-private theorem mem_selectedColumnTuplesUpTo_of_strictly_increasing {m : Nat} :
+private theorem mem_selectionsUpTo {m : Nat} :
     ∀ (n bound : Nat) (v : Vector (Fin m) n),
       IsStrictlyIncreasingColumnTuple v →
         (∀ i : Fin n, v[i].val < bound) →
@@ -169,7 +190,7 @@ private theorem mem_selectedColumnTuplesUpTo_of_strictly_increasing {m : Nat} :
         simpa using hbound (Fin.last n)
       · rw [List.mem_map]
         refine ⟨v.pop, ?_, hpush⟩
-        apply mem_selectedColumnTuplesUpTo_of_strictly_increasing n (v[Fin.last n]).val
+        apply mem_selectionsUpTo n (v[Fin.last n]).val
         · -- pop preserves strict increase
           intro i j hij
           have h1 := hpop_get i
@@ -199,7 +220,7 @@ theorem mem_selectedColumnTuples_iff {n m : Nat} (cols : Vector (Fin m) n) :
   · intro hmem
     exact (mem_selectedColumnTuplesUpTo_imp n m cols hmem).1
   · intro hsi
-    apply mem_selectedColumnTuplesUpTo_of_strictly_increasing n m cols hsi
+    apply mem_selectionsUpTo n m cols hsi
     intro i
     exact cols[i].isLt
 
@@ -441,7 +462,7 @@ theorem sortInjPerm_mem_permutationVectors {m n : Nat}
 
 /-- Converse of `columnRankNat_strictMono` for injective `cols`: a strict
 rank comparison implies the underlying value comparison. -/
-private theorem cols_val_lt_of_rank_lt {m n : Nat}
+private theorem get_lt_rank {m n : Nat}
     (cols : Vector (Fin m) n)
     (hinj : Function.Injective (columnTupleVectorFn cols))
     {i j : Fin n} (hij : columnRankNat cols i < columnRankNat cols j) :
@@ -479,7 +500,7 @@ theorem mem_columnTupleVectors {n m : Nat} (cols : Vector (Fin m) n) :
 
 /-- Factorization equation: each entry of `cols` is recovered through the
 canonical sort/permutation pair. Requires injectivity of `cols`. -/
-theorem cols_getElem_eq_sortInjTuple_sortInjPerm {m n : Nat}
+theorem sort_reconstruct_get {m n : Nat}
     (cols : Vector (Fin m) n)
     (hinj : Function.Injective (columnTupleVectorFn cols))
     (i : Fin n) :
@@ -543,7 +564,7 @@ theorem isStrictlyIncreasingColumnTuple_sortInjTuple {m n : Nat}
   have hval_lt :
       cols[(inversePermutationVector (sortInjPerm cols))[r]].val <
         cols[(inversePermutationVector (sortInjPerm cols))[r']].val :=
-    cols_val_lt_of_rank_lt cols hinj hrank_lt
+    get_lt_rank cols hinj hrank_lt
   show (sortInjTuple cols)[r].val < (sortInjTuple cols)[r'].val
   rw [sortInjTuple, vector_ofFn_getElem_fin, vector_ofFn_getElem_fin]
   exact hval_lt
@@ -571,8 +592,8 @@ theorem sortInj_pair_injective {m n : Nat} {cols cols' : Vector (Fin m) n}
   apply Fin.val_eq_of_eq
   let i : Fin n := ⟨k, hk⟩
   show cols[i] = cols'[i]
-  rw [cols_getElem_eq_sortInjTuple_sortInjPerm cols hinj i,
-      cols_getElem_eq_sortInjTuple_sortInjPerm cols' hinj' i]
+  rw [sort_reconstruct_get cols hinj i,
+      sort_reconstruct_get cols' hinj' i]
   -- Use congrArg to swap `sortInjPerm cols` for `sortInjPerm cols'`.
   have hperm_apply :
       (sortInjPerm cols)[i] = (sortInjPerm cols')[i] :=
@@ -845,7 +866,7 @@ theorem reconstructInjTuple_sortInj {m n : Nat}
   let i : Fin n := ⟨k, hk⟩
   show (reconstructInjTuple (sortInjTuple cols) (sortInjPerm cols))[i] = cols[i]
   rw [getElem_reconstructInjTuple]
-  exact (cols_getElem_eq_sortInjTuple_sortInjPerm cols hinj i).symm
+  exact (sort_reconstruct_get cols hinj i).symm
 
 /-- For each fixed `sel`, the inner `map (reconstructInjTuple sel)` list
 is `Nodup` over `permutationVectors n`. -/
@@ -925,7 +946,7 @@ theorem mem_selPerm_reconstructed_iff {m n : Nat} (cols : Vector (Fin m) n) :
     refine ⟨sortInjPerm cols, sortInjPerm_mem_permutationVectors cols hinj, ?_⟩
     exact reconstructInjTuple_sortInj cols hinj
 
-private theorem foldl_det_sum_filter_of_zero {R : Type u} [Lean.Grind.CommRing R]
+private theorem foldl_filter_zero {R : Type u} [Lean.Grind.CommRing R]
     {β : Type v} (xs : List β) (p : β → Prop) [DecidablePred p]
     (f : β → R) (z : R)
     (hzero : ∀ x, x ∈ xs → ¬ p x → f x = 0) :
@@ -969,7 +990,7 @@ theorem columnTupleExpansion_refold_selectedPerm
         ((columnTupleVectors n m).filter
           (fun cols => Function.Injective (columnTupleVectorFn cols))).foldl
             (fun acc cols => acc + term cols) 0 := by
-    apply foldl_det_sum_filter_of_zero
+    apply foldl_filter_zero
     intro cols hmem hnot
     unfold term columnTupleExpansionTerm
     have hdet :
@@ -1055,9 +1076,246 @@ private theorem columnTupleExpansion_selectedPerm_collapse
   congr 1
   rw [foldl_det_sum_map, columnTupleExpansion_reconstruct_orbit_sum A sel]
 
+/-! # General rectangular Cauchy--Binet -/
+
+/-- Refold a generic ordered-tuple determinant expansion over increasing
+selections and permutations. The coefficient matrix need not equal the source
+matrix; non-injective tuples still vanish because of the source minor. -/
+private theorem columnTupleProduct_refold_selectedPerm
+    {R : Type u} [Lean.Grind.CommRing R] {n m : Nat}
+    (source coeff : Matrix R n m) :
+    (columnTupleVectors n m).foldl
+        (fun acc cols => acc + columnTupleCoeff coeff cols *
+          det (columnTupleMatrix source (columnTupleVectorFn cols))) 0 =
+      (((selectedColumnTuples n m).flatMap fun sel =>
+          (permutationVectors n).map (reconstructInjTuple sel))).foldl
+        (fun acc cols => acc + columnTupleCoeff coeff cols *
+          det (columnTupleMatrix source (columnTupleVectorFn cols))) 0 := by
+  classical
+  let reconstructed :=
+    (selectedColumnTuples n m).flatMap fun sel =>
+      (permutationVectors n).map (reconstructInjTuple sel)
+  let term := fun cols => columnTupleCoeff coeff cols *
+    det (columnTupleMatrix source (columnTupleVectorFn cols))
+  have hfilter :
+      (columnTupleVectors n m).foldl (fun acc cols => acc + term cols) 0 =
+        ((columnTupleVectors n m).filter
+          (fun cols => Function.Injective (columnTupleVectorFn cols))).foldl
+            (fun acc cols => acc + term cols) 0 := by
+    apply foldl_filter_zero
+    intro cols _hmem hnot
+    unfold term
+    rw [det_columnTupleMatrix_eq_zero_of_not_injective source
+      (columnTupleVectorFn cols) hnot]
+    grind
+  have hperm :
+      ((columnTupleVectors n m).filter
+          (fun cols => Function.Injective (columnTupleVectorFn cols))).Perm
+        reconstructed := by
+    apply (List.perm_ext_iff_of_nodup
+      ((columnTupleVectors_nodup (n := n) (m := m)).filter _)
+      (by simpa [reconstructed] using
+        (selPerm_reconstructed_list_nodup (m := m) (n := n)))).mpr
+    intro cols
+    constructor
+    · intro hmem
+      rw [List.mem_filter] at hmem
+      exact (mem_selPerm_reconstructed_iff cols).mpr (of_decide_eq_true hmem.2)
+    · intro hmem
+      rw [List.mem_filter]
+      exact ⟨mem_columnTupleVectors cols,
+        decide_eq_true ((mem_selPerm_reconstructed_iff cols).mp hmem)⟩
+  calc
+    (columnTupleVectors n m).foldl
+        (fun acc cols => acc + columnTupleCoeff coeff cols *
+          det (columnTupleMatrix source (columnTupleVectorFn cols))) 0 =
+      (columnTupleVectors n m).foldl (fun acc cols => acc + term cols) 0 := rfl
+    _ = ((columnTupleVectors n m).filter
+          (fun cols => Function.Injective (columnTupleVectorFn cols))).foldl
+            (fun acc cols => acc + term cols) 0 := hfilter
+    _ = reconstructed.foldl (fun acc cols => acc + term cols) 0 :=
+      List.foldl_add_perm term hperm 0
+    _ = (((selectedColumnTuples n m).flatMap fun sel =>
+          (permutationVectors n).map (reconstructInjTuple sel))).foldl
+        (fun acc cols => acc + columnTupleCoeff coeff cols *
+          det (columnTupleMatrix source (columnTupleVectorFn cols))) 0 := rfl
+
+private theorem columnTupleProduct_reconstruct
+    {R : Type u} [Lean.Grind.CommRing R] {n m : Nat}
+    (source coeff : Matrix R n m) (sel : Vector (Fin m) n)
+    (perm : Vector (Fin n) n) (hperm : perm ∈ permutationVectors n) :
+    columnTupleCoeff coeff (reconstructInjTuple sel perm) *
+        det (columnTupleMatrix source
+          (columnTupleVectorFn (reconstructInjTuple sel perm))) =
+      detTerm (columnTupleMatrix coeff (columnTupleVectorFn sel)) perm *
+        det (columnTupleMatrix source (columnTupleVectorFn sel)) := by
+  unfold detTerm
+  rw [columnTupleCoeff_reconstructInjTuple,
+    columnTupleMatrix_reconstructInjTuple_eq source sel perm,
+    det_columnTupleMatrix_compose_perm source sel perm hperm]
+  grind
+
+private theorem columnTupleProduct_orbit_sum
+    {R : Type u} [Lean.Grind.CommRing R] {n m : Nat}
+    (source coeff : Matrix R n m) (sel : Vector (Fin m) n) :
+    (permutationVectors n).foldl (fun acc perm => acc +
+        columnTupleCoeff coeff (reconstructInjTuple sel perm) *
+          det (columnTupleMatrix source
+            (columnTupleVectorFn (reconstructInjTuple sel perm)))) 0 =
+      det (columnTupleMatrix coeff (columnTupleVectorFn sel)) *
+        det (columnTupleMatrix source (columnTupleVectorFn sel)) := by
+  let sourceMinor := columnTupleMatrix source (columnTupleVectorFn sel)
+  let coeffMinor := columnTupleMatrix coeff (columnTupleVectorFn sel)
+  calc
+    _ = (permutationVectors n).foldl
+        (fun acc perm => acc + detTerm coeffMinor perm * det sourceMinor) 0 := by
+      apply List.foldl_add_congr
+      intro perm hperm
+      exact columnTupleProduct_reconstruct source coeff sel perm hperm
+    _ = (permutationVectors n).foldl
+          (fun acc perm => acc + detTerm coeffMinor perm) 0 * det sourceMinor :=
+      List.foldl_add_mul_right_zero (permutationVectors n)
+        (fun perm => detTerm coeffMinor perm) (det sourceMinor)
+    _ = det coeffMinor * det sourceMinor := by rfl
+
+private theorem columnTupleProduct_selectedPerm_collapse
+    {R : Type u} [Lean.Grind.CommRing R] {n m : Nat}
+    (source coeff : Matrix R n m) :
+    (((selectedColumnTuples n m).flatMap fun sel =>
+        (permutationVectors n).map (reconstructInjTuple sel))).foldl
+      (fun acc cols => acc + columnTupleCoeff coeff cols *
+        det (columnTupleMatrix source (columnTupleVectorFn cols))) 0 =
+    (selectedColumnTuples n m).foldl (fun acc sel => acc +
+      det (columnTupleMatrix coeff (columnTupleVectorFn sel)) *
+        det (columnTupleMatrix source (columnTupleVectorFn sel))) 0 := by
+  rw [List.foldl_add_flatMap]
+  apply List.foldl_congr
+  intro acc sel _hsel
+  rw [List.foldl_add_eq_add_foldl]
+  congr 1
+  rw [foldl_det_sum_map, columnTupleProduct_orbit_sum source coeff sel]
+
+/-- General Cauchy--Binet for the column-sum representation: the determinant
+is the sum over increasing middle-index selections of the two selected-minor
+determinants. -/
+theorem det_columnSum_selected
+    {R : Type u} [Lean.Grind.CommRing R] {n m : Nat}
+    (source coeff : Matrix R n m) :
+    det (columnSumMatrix source coeff) =
+      (selectedColumnTuples n m).foldl (fun acc sel => acc +
+        det (columnTupleMatrix coeff (columnTupleVectorFn sel)) *
+          det (columnTupleMatrix source (columnTupleVectorFn sel))) 0 := by
+  calc
+    det (columnSumMatrix source coeff) =
+        (columnTupleVectors n m).foldl
+          (fun acc cols => acc + columnTupleCoeff coeff cols *
+            det (columnTupleMatrix source (columnTupleVectorFn cols))) 0 :=
+      det_columnSumMatrix_eq_sum_columnTuples source coeff
+    _ = (((selectedColumnTuples n m).flatMap fun sel =>
+          (permutationVectors n).map (reconstructInjTuple sel))).foldl
+        (fun acc cols => acc + columnTupleCoeff coeff cols *
+          det (columnTupleMatrix source (columnTupleVectorFn cols))) 0 :=
+      columnTupleProduct_refold_selectedPerm source coeff
+    _ = _ := columnTupleProduct_selectedPerm_collapse source coeff
+
+/-- A rectangular product is the column-sum matrix obtained from the left
+factor and the transpose of the right factor. -/
+theorem mul_eq_columnSum
+    {R : Type u} [Lean.Grind.CommRing R] {k p : Nat}
+    (A : Matrix R k p) (B : Matrix R p k) :
+    A * B = columnSumMatrix A B.transpose := by
+  apply ext_getElem
+  intro r c
+  rw [getElem_mul, getElem_columnSumMatrix]
+  simp only [Vector.dotProduct, getElem_row, getElem_pair_eq_nested]
+  apply List.foldl_add_congr
+  intro i _hi
+  rw [getElem_transpose, getElem_col]
+  exact Lean.Grind.CommSemiring.mul_comm A[r][i] B[i][c]
+
+/-- General rectangular Cauchy--Binet. -/
+theorem det_mul_rectangular
+    {R : Type u} [Lean.Grind.CommRing R] {k p : Nat}
+    (A : Matrix R k p) (B : Matrix R p k) :
+    det (A * B) =
+      (selectedColumnTuples k p).foldl (fun acc sel => acc +
+        det (columnTupleMatrix B.transpose (columnTupleVectorFn sel)) *
+          det (columnTupleMatrix A (columnTupleVectorFn sel))) 0 := by
+  rw [mul_eq_columnSum A B]
+  exact det_columnSum_selected A B.transpose
+
+/-- Selecting an output minor of a product is the product of the selected
+rows of the left factor and selected columns of the right factor. -/
+theorem selectedSubmatrix_mul
+    {R : Type u} [Lean.Grind.CommRing R] {n p m k : Nat}
+    (A : Matrix R n p) (B : Matrix R p m)
+    (rows : Vector (Fin n) k) (cols : Vector (Fin m) k) :
+    selectedSubmatrix (A * B) rows cols =
+      selectRows A rows * selectCols B cols := by
+  apply ext_getElem
+  intro i j
+  rw [getElem_selectedSubmatrix, getElem_mul, getElem_mul]
+  simp only [Vector.dotProduct, getElem_row, getElem_col]
+  apply List.foldl_add_congr
+  intro q _hq
+  rw [getElem_selectRows, getElem_selectCols]
+
+/-- Cauchy--Binet for an arbitrary selected minor of a product. This is the
+form used by determinantal-divisor invariance. -/
+theorem det_minor_mul_sum
+    {R : Type u} [Lean.Grind.CommRing R] {n p m k : Nat}
+    (A : Matrix R n p) (B : Matrix R p m)
+    (rows : Vector (Fin n) k) (cols : Vector (Fin m) k) :
+    det (selectedSubmatrix (A * B) rows cols) =
+      (selectedColumnTuples k p).foldl (fun acc middle => acc +
+        det (columnTupleMatrix (selectCols B cols).transpose
+          (columnTupleVectorFn middle)) *
+        det (columnTupleMatrix (selectRows A rows)
+          (columnTupleVectorFn middle))) 0 := by
+  rw [selectedSubmatrix_mul]
+  exact det_mul_rectangular (selectRows A rows) (selectCols B cols)
+
+private theorem columnTupleMatrix_selectRows
+    {R : Type u} {n p k : Nat} (A : Matrix R n p)
+    (rows : Vector (Fin n) k) (middle : Vector (Fin p) k) :
+    columnTupleMatrix (selectRows A rows) (columnTupleVectorFn middle) =
+      selectedSubmatrix A rows middle := by
+  apply ext_getElem
+  intro i j
+  rw [getElem_columnTupleMatrix, getElem_selectRows,
+    getElem_selectedSubmatrix]
+  rw [columnTupleVectorFn_apply]
+
+private theorem columnTupleMatrix_selectCols_transpose
+    {R : Type u} {p m k : Nat} (B : Matrix R p m)
+    (middle : Vector (Fin p) k) (cols : Vector (Fin m) k) :
+    columnTupleMatrix (selectCols B cols).transpose
+        (columnTupleVectorFn middle) =
+      (selectedSubmatrix B middle cols).transpose := by
+  apply ext_getElem
+  intro i j
+  rw [getElem_columnTupleMatrix, getElem_transpose, getElem_selectCols,
+    getElem_transpose, getElem_selectedSubmatrix]
+  rw [columnTupleVectorFn_apply]
+
+/-- Standard selected-minor Cauchy--Binet formula. -/
+theorem det_minor_mul
+    {R : Type u} [Lean.Grind.CommRing R] {n p m k : Nat}
+    (A : Matrix R n p) (B : Matrix R p m)
+    (rows : Vector (Fin n) k) (cols : Vector (Fin m) k) :
+    det (selectedSubmatrix (A * B) rows cols) =
+      (selectedColumnTuples k p).foldl (fun acc middle => acc +
+        det (selectedSubmatrix B middle cols) *
+          det (selectedSubmatrix A rows middle)) 0 := by
+  rw [det_minor_mul_sum]
+  apply List.foldl_add_congr
+  intro middle _hmiddle
+  rw [columnTupleMatrix_selectRows,
+    columnTupleMatrix_selectCols_transpose, det_transpose]
+
 /-- Cauchy-Binet for the row Gram matrix: the Gram determinant is the finite
 sum of squares of the selected column minors. -/
-theorem det_gramMatrix_eq_sum_minors_sq
+theorem det_gram_sum_sq
     {R : Type u} [Lean.Grind.CommRing R] {n m : Nat} (A : Matrix R n m) :
     det (gramMatrix A) =
       (selectedColumnTuples n m).foldl
@@ -1077,7 +1335,7 @@ theorem det_gramMatrix_eq_sum_minors_sq
         (fun acc cols => acc + det (columnTupleMatrix A (columnTupleVectorFn cols)) ^ 2) 0 := by
         exact columnTupleExpansion_selectedPerm_collapse A
 
-private theorem foldl_int_sum_sq_nonneg_start {β : Type v}
+private theorem foldl_sq_nonneg_start {β : Type v}
     (xs : List β) (f : β → Int) (acc : Int) (hacc : 0 ≤ acc) :
     0 ≤ xs.foldl (fun acc x => acc + f x ^ 2) acc := by
   induction xs generalizing acc with
@@ -1089,11 +1347,11 @@ private theorem foldl_int_sum_sq_nonneg_start {β : Type v}
           (Lean.Grind.OrderedRing.sq_nonneg (a := f x))
       exact ih (acc + f x ^ 2) (Int.add_nonneg hacc hx)
 
-private theorem foldl_int_sum_sq_nonneg {β : Type v} (xs : List β) (f : β → Int) :
+private theorem foldl_sq_nonneg {β : Type v} (xs : List β) (f : β → Int) :
     0 ≤ xs.foldl (fun acc x => acc + f x ^ 2) 0 :=
-  foldl_int_sum_sq_nonneg_start xs f 0 (by simp)
+  foldl_sq_nonneg_start xs f 0 (by simp)
 
-private theorem foldl_int_sum_sq_pos_of_acc {β : Type v}
+private theorem foldl_sq_acc_pos {β : Type v}
     (xs : List β) (f : β → Int) (acc : Int) (hacc : 0 < acc) :
     0 < xs.foldl (fun acc x => acc + f x ^ 2) acc := by
   induction xs generalizing acc with
@@ -1105,7 +1363,7 @@ private theorem foldl_int_sum_sq_pos_of_acc {β : Type v}
           (Lean.Grind.OrderedRing.sq_nonneg (a := f x))
       exact ih (acc + f x ^ 2) (Int.add_pos_of_pos_of_nonneg hacc hx)
 
-private theorem foldl_int_sum_sq_pos_start {β : Type v}
+private theorem foldl_sq_pos_start {β : Type v}
     (xs : List β) (f : β → Int) (acc : Int) (hacc : 0 ≤ acc)
     (target : β) (hx : target ∈ xs) (hpos : 0 < f target ^ 2) :
     0 < xs.foldl (fun acc x => acc + f x ^ 2) acc := by
@@ -1117,7 +1375,7 @@ private theorem foldl_int_sum_sq_pos_start {β : Type v}
       cases hx with
       | inl hxy =>
           subst hxy
-          exact foldl_int_sum_sq_pos_of_acc ys f (acc + f target ^ 2)
+          exact foldl_sq_acc_pos ys f (acc + f target ^ 2)
             (Int.add_pos_of_nonneg_of_pos hacc hpos)
       | inr htail =>
           have hy : 0 ≤ f y ^ 2 := by
@@ -1125,17 +1383,17 @@ private theorem foldl_int_sum_sq_pos_start {β : Type v}
               (Lean.Grind.OrderedRing.sq_nonneg (a := f y))
           exact ih (acc + f y ^ 2) (Int.add_nonneg hacc hy) htail
 
-private theorem foldl_int_sum_sq_pos_of_mem {β : Type v}
+private theorem foldl_sq_mem_pos {β : Type v}
     (xs : List β) (f : β → Int) (x : β) (hx : x ∈ xs) (hpos : 0 < f x ^ 2) :
     0 < xs.foldl (fun acc x => acc + f x ^ 2) 0 :=
-  foldl_int_sum_sq_pos_start xs f 0 (by simp) x hx hpos
+  foldl_sq_pos_start xs f 0 (by simp) x hx hpos
 
 /-- Integer row Gram determinants are nonnegative, by Cauchy-Binet as a finite
 sum of integer squares. -/
 theorem det_gramMatrix_nonneg {n m : Nat} (A : Matrix Int n m) :
     0 ≤ det (gramMatrix A) := by
-  rw [det_gramMatrix_eq_sum_minors_sq A]
-  exact foldl_int_sum_sq_nonneg (selectedColumnTuples n m)
+  rw [det_gram_sum_sq A]
+  exact foldl_sq_nonneg (selectedColumnTuples n m)
     (fun cols => det (columnTupleMatrix A (columnTupleVectorFn cols)))
 
 /-- The identity selection of the first `k` columns of an `n`-column matrix. -/
@@ -1159,7 +1417,7 @@ theorem firstColumns_mem_selectedColumnTuples (k n : Nat) (hk : k ≤ n) :
 
 /-- Selecting the first `k` columns from the leading `k` rows of a square
 matrix gives exactly its leading `k × k` prefix. -/
-theorem columnTupleMatrix_takeRows_firstColumns_eq_principalSubmatrix
+theorem leading_minor_eq
     {R : Type u} {n : Nat} (M : Matrix R n n) (k : Nat) (hk : k ≤ n) :
     columnTupleMatrix (takeRows M k hk) (columnTupleVectorFn (firstColumns k n hk)) =
       principalSubmatrix M k hk := by
@@ -1171,13 +1429,13 @@ theorem columnTupleMatrix_takeRows_firstColumns_eq_principalSubmatrix
 /-- The Gram determinant of the first `k` rows of a positive-diagonal integer
 upper-triangular matrix is strictly positive. The leading-principal minor
 provides a positive square term in the Cauchy-Binet expansion. -/
-theorem det_gramMatrix_takeRows_pos_of_upperTriangular_pos_diag
+theorem det_gram_takeRows_pos
     {n : Nat} (M : Matrix Int n n)
     (hzero : ∀ i j : Fin n, j.val < i.val → M[i][j] = 0)
     (hdiag : ∀ i : Fin n, 0 < M[i][i])
     (k : Nat) (hk : k ≤ n) :
     0 < det (gramMatrix (takeRows M k hk)) := by
-  rw [det_gramMatrix_eq_sum_minors_sq (takeRows M k hk)]
+  rw [det_gram_sum_sq (takeRows M k hk)]
   let cols := firstColumns k n hk
   have hmem : cols ∈ selectedColumnTuples k n :=
     firstColumns_mem_selectedColumnTuples k n hk
@@ -1185,7 +1443,7 @@ theorem det_gramMatrix_takeRows_pos_of_upperTriangular_pos_diag
       det (columnTupleMatrix (takeRows M k hk) (columnTupleVectorFn cols)) =
         det (principalSubmatrix M k hk) := by
     dsimp [cols]
-    rw [columnTupleMatrix_takeRows_firstColumns_eq_principalSubmatrix M k hk]
+    rw [leading_minor_eq M k hk]
   have hprefixZero :
       ∀ i j : Fin k, j.val < i.val → (principalSubmatrix M k hk)[i][j] = 0 := by
     intro i j hij
@@ -1210,7 +1468,7 @@ theorem det_gramMatrix_takeRows_pos_of_upperTriangular_pos_diag
   have hminor_sq_pos :
       0 < det (columnTupleMatrix (takeRows M k hk) (columnTupleVectorFn cols)) ^ 2 := by
     simpa [Lean.Grind.Semiring.pow_two] using Int.mul_pos hminor_pos hminor_pos
-  exact foldl_int_sum_sq_pos_of_mem
+  exact foldl_sq_mem_pos
     (xs := selectedColumnTuples k n)
     (f := fun cols => det (columnTupleMatrix (takeRows M k hk) (columnTupleVectorFn cols)))
     (x := cols) hmem hminor_sq_pos

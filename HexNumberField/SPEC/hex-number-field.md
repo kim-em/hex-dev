@@ -103,6 +103,10 @@ inductive RootSet where
 /-- A polynomial with canonical algebraic coefficients. The constructor trims
     trailing coefficients using semantic `AlgebraicNumber.isZero`. -/
 opaque AlgebraicPoly
+def AlgebraicPolyNormalized (coeffs : Array AlgebraicNumber) : Prop
+def AlgebraicPoly.data (f : AlgebraicPoly) : Array AlgebraicNumber
+def AlgebraicPoly.normalized (f : AlgebraicPoly) :
+    AlgebraicPolyNormalized f.data
 def AlgebraicPoly.ofArray (coeffs : Array AlgebraicNumber) : AlgebraicPoly
 def AlgebraicPoly.coeffs (f : AlgebraicPoly) : Array AlgebraicNumber
 def AlgebraicPoly.coeff (f : AlgebraicPoly) (n : Nat) : AlgebraicNumber
@@ -145,11 +149,11 @@ of represented complex values. `AlgebraicPoly` owns the required semantic
 trimming without exporting an unjustified `DecidableEq`. That Boolean
 operation is `AlgebraicPoly.beq` (with its `BEq` instance): coefficientwise
 canonical equality over the trimmed data. Its faithfulness on canonical
-coefficients follows from the companion's `LawfulBEq AlgebraicNumber`
-plus trimming; packaging that as an `AlgebraicPoly.beq_iff` is Phase-6
-work (#9418). `coeff n` is the canonical
-coefficient (`0` beyond the degree) and `size` is the trimmed length backing
-`degree?`; all three are exercised by the module's compiled regressions.
+coefficients is the companion theorem `AlgebraicPoly.beq_iff`, which equates
+Boolean equality with equality of the semantic polynomial interpretations and
+is derived from `LawfulBEq AlgebraicNumber` plus trimming. `coeff n` is the
+canonical coefficient (`0` beyond the degree) and `size` is the trimmed length
+backing `degree?`; all three are exercised by the module's compiled regressions.
 
 ## Equality and zero
 
@@ -235,7 +239,13 @@ def AlgebraicRoot.exact? (a : AlgebraicRoot) : Option AlgebraicNumber
 /-- Primary total API. -/
 def AlgebraicRoot.exact (a : AlgebraicRoot) : AlgebraicNumber :=
   a.exact?.getD (panicWith 0 "AlgebraicRoot.exact: certification failed")
+
+def AlgebraicRoot.ofEliminant? (raw : ZPoly)
+    (ballAt : Int → Option DyadicComplexBall) : Option AlgebraicRoot
 ```
+
+`AlgebraicRoot.ofEliminant?` returns `none` unless normalization, root
+isolation, and the supplied operation ball identify one unique root.
 
 `QAdjoin.toAlgebraicNumber?` materializes `1, a, a², ...` once with one
 fixed-field multiplication per new power, finds the first Krylov dependence by
@@ -365,9 +375,15 @@ For `QAdjoin.roots?`:
    resultant with `p`. It is nonzero because coefficients are reduced modulo the
    irreducible `p`.
 3. Normalize and isolate the eliminant's roots.
-4. Reject candidates belonging only to other embeddings of `QAdjoin p x` by
-   evaluating the original component at the candidate and the selected `x`.
-   Refute wrong candidates at `evalDisambiguationPrec`.
+4. For each component, build one shared integer evaluation eliminant
+   `q(S) = Res_y(p(y), Res_z(e(z), S - G(y,z)))`, where `e` is the
+   squarefree norm eliminant and `G` is the denominator-cleared component.
+   Dilate `q` by the common denominator so its roots are the original
+   component evaluations. The eliminant is nonzero and contains the true
+   evaluation at every candidate. Reject candidates belonging only to other
+   embeddings of `QAdjoin p x` by evaluating the original component at the
+   candidate and the selected `x`; refute wrong candidates at
+   `evalDisambiguationPrec`.
 5. Return the surviving `AlgebraicRoot` values with the Yun multiplicity.
 
 `AlgebraicPoly.roots?` first embeds all nonzero coefficients into one computed
@@ -376,11 +392,18 @@ construction is deterministic and bounded, is not used for binary arithmetic,
 and is a public surface in its own right (the tower library builds on it); its
 contract is the next section.
 
-For a candidate evaluation, construct its integer eliminant `q`, remove its
-maximal `X` power, and take the primitive part. If the evaluation is nonzero,
-`q(0) ≠ 0` and the reciprocal Cauchy bound gives
+For each candidate, reuse the component's shared evaluation eliminant `q`,
+remove its maximal `X` power, and take the primitive part. If the evaluation
+is nonzero, `q(0) ≠ 0` and the reciprocal Cauchy bound gives
 `|value| ≥ 1 / (1 + height(q))`. Let `C` be the explicit Horner error majorant
 computed from the input coefficient heights, degrees, and Cauchy root bounds.
+The generic cross-library recurrence is public:
+
+```lean
+def Disambiguation.evalMajorant {A : Type} [Zero A] [DecidableEq A]
+    (f : DensePoly A) (valueBound : A → Nat) (q : ZPoly) : Nat
+```
+
 Define `evalDisambiguationPrec` as the least precision in the finite range
 
 ```text
@@ -443,11 +466,12 @@ primitive-element candidate `theta + c * alpha`, with `c = 0` returning
 `extend? theta alpha` is the bounded primitive-element search: it tests
 `choose(degree theta * degree alpha, 2) + 1` signed shifts and keeps a
 maximum-degree candidate, which generates the compositum even when the two
-fields overlap. `extendShift?` is the same search retaining the producing
-shift (the form the tower's flattening recovery needs), and
-`extendShiftStep` is its single fold step, exposed so consumers can interleave
-the search with their own early exits. `primitive?` folds `extend?` over the
-nonzero entries of a coefficient array.
+fields overlap. It is the value projection of `extendShift?`, so both APIs
+share one search retaining the producing shift (the form the tower's
+flattening recovery needs). `extendShiftStep` is `extendShift?`'s single fold
+step, exposed so consumers can interleave the search with their own early
+exits. `primitive?` folds `extend?` over the nonzero entries of a coefficient
+array.
 
 `powers? gamma last` returns the checked canonical powers
 `1, gamma, ..., gamma^last`. `trace? ambient a` is the field trace of `a`
@@ -515,11 +539,46 @@ oracle's independently computed decomposition with Lean's finite output.
 - Degree-product at most 20 is the largest merge-facing lazy arithmetic class.
   Larger cases are local until new measurements justify promotion.
 - Exactification adds one Berlekamp-Zassenhaus factorization and factor-root
-  selection. Root APIs add Yun decomposition and one norm eliminant per
-  squarefree component.
+  selection. Root APIs add Yun decomposition, one norm eliminant, and one
+  shared double-resultant evaluation eliminant per squarefree component. The
+  latter has degree at most the product of the defining-polynomial and norm-
+  eliminant degrees and is not itself root-isolated.
 
 Phase 4 records separate timings for eliminant construction, isolation,
 disambiguation, and exactification so regressions are attributable.
+
+## External comparators
+
+**PARI/GP via cypari2** (https://pari.math.u-bordeaux.fr/, driven through
+the cypari2 binding, the same binding the conformance oracles use) —
+**informational**, scoped to the fixed-field arithmetic bench targets.
+PARI's t_POLMOD arithmetic (`Mod(a, m) * Mod(b, m)` and `Mod(a, m)^(-1)`)
+is the callable unit surface computing exactly `QAdjoin` multiplication and
+extended-gcd inversion in `ℚ[x]/(m)`. It is wired as a persistent-subprocess
+process call (`scripts/oracle/pari_bench_driver.py`,
+`Hex/BenchOracle/Pari.lean`) with per-rung fixed Lean/PARI registration
+pairs on identical deterministic inputs, joined on the identical reduced
+rational coefficient hash. PARI is a mature optimized C library, so the
+constant-factor gap is structural rather than algorithmic; the ratio is
+recorded for orientation and does not gate Phase 4.
+
+Absence declarations, all with reason
+**no-comparable-surface-in-named-comparator**:
+
+- *Factorization-lazy and canonical arithmetic* (`AlgebraicRoot.add?` and
+  friends, `AlgebraicNumber` arithmetic): PARI has no certified lazy
+  algebraic-number type; its floating `t_COMPLEX`/`algdep` workflow does not
+  expose "combine two isolated algebraic numbers into a certified isolated
+  result" as a callable unit.
+- *Exactification* (`AlgebraicRoot.exact?`): PARI exposes rational
+  polynomial factorization (already the BZ dependency's comparator surface)
+  but no unit function selecting and certifying the minimal polynomial of a
+  root given an isolating region.
+- *Root APIs* (`QAdjoin.roots?`, `AlgebraicPoly.roots?`): PARI's
+  `nfroots`/`nffactor` return only the roots lying inside the number field,
+  and `polroots` returns uncertified floating approximations; no PARI unit
+  surface produces the certified complete complex root multiset with
+  isolation data that these APIs return.
 
 ## References
 

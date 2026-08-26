@@ -357,12 +357,15 @@ def LiftModulus.ofNat (m : Nat) : LiftModulus where
   int_eq := rfl
   half_eq := rfl
 
+/-- The prepared modulus records the natural number it was built from. -/
 @[simp]
 theorem LiftModulus.nat_ofNat (m : Nat) : (LiftModulus.ofNat m).nat = m := rfl
 
+/-- The prepared integer form is the cast of the underlying modulus. -/
 @[simp]
 theorem LiftModulus.int_ofNat (m : Nat) : (LiftModulus.ofNat m).int = (m : Int) := rfl
 
+/-- The prepared halfway threshold is half the modulus, rounded down. -/
 @[simp]
 theorem LiftModulus.half_ofNat (m : Nat) :
     (LiftModulus.ofNat m).half = ((m / 2 : Nat) : Int) := rfl
@@ -899,6 +902,8 @@ theorem bhksLatticeEntry_bottomLeft
     omega
   simp [bhksLatticeEntry, hnot, hj]
 
+/-- The lower-right block of the lattice basis is the diagonal of prime powers
+`p ^ (a - threshold)` that scales each CLD coordinate to its precision. -/
 theorem bhksLatticeEntry_bottomRight
     (r n p a : Nat) (thresholds : Array Nat) (cldRows : Array (Array Int))
     (i j : Fin (r + n)) (hi : r ≤ i.val) (hj : r ≤ j.val) :
@@ -932,6 +937,8 @@ theorem bhksLatticeEntry_bottomRight_diag
   rw [bhksLatticeEntry_bottomRight r n p a thresholds cldRows i i hi hi]
   simp
 
+/-- For a positive prime the lower-right diagonal entries are positive, so the
+lattice basis has full rank on its scaling block. -/
 theorem bhksLatticeEntry_bottomRight_diag_pos
     (r n p a : Nat) (thresholds : Array Nat) (cldRows : Array (Array Int))
     (hp : 0 < p) (i : Fin (r + n)) (hi : r ≤ i.val)
@@ -976,6 +983,8 @@ def bhksRowsArrayToMatrix {m : Nat} (n : Nat) (rows : Array (Vector Int m)) :
     Matrix Int n m :=
   Matrix.ofFn fun i j => (rows.getD i.val (Vector.ofFn fun _ => 0))[j]
 
+/-- Each row of the assembled matrix is the corresponding array entry, with
+absent entries read as the zero vector. -/
 theorem bhksRowsArrayToMatrix_row {m n : Nat} (rows : Array (Vector Int m))
     (i : Fin n) :
     Matrix.row (bhksRowsArrayToMatrix n rows) i =
@@ -1129,6 +1138,9 @@ def bhksProjectedRows (L : BhksLatticeBasis)
     reducedRowCount := reducedRows.size
     projectedRows := bhksCutProjectReducedRows L reducedBasis }
 
+/-- The production projection agrees field-by-field with the instrumented
+`bhksProjectedRowsTrace` run, so trace-based proofs transfer to the
+production path. -/
 theorem bhksProjectedRows_eq_trace
     (L : BhksLatticeBasis) (hrows : 1 ≤ L.factorCount + L.coeffWidth) :
     bhksProjectedRows L hrows =

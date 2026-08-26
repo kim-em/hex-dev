@@ -301,6 +301,19 @@ theorem getElem_colAdd [Mul R] [Add R]
   · rw [if_pos hj, if_pos hj, hj, getElem_col]
   · rw [if_neg hj, if_neg hj]
 
+/-- Transposing a column addition is the corresponding row addition on the
+transpose. -/
+theorem transpose_colAdd [Mul R] [Add R] (M : Matrix R n m)
+    (src dst : Fin m) (c : R) :
+    transpose (colAdd M src dst c) = rowAdd (transpose M) src dst c := by
+  apply ext_getElem
+  intro i j
+  rw [getElem_transpose, getElem_colAdd, getElem_rowAdd]
+  simp only [getElem_transpose]
+  by_cases hi : i = dst
+  · rw [if_pos hi, if_pos hi, hi]
+  · rw [if_neg hi, if_neg hi]
+
 /-- Read an entry of `colAddRight M src dst c` by cases on the column index:
 column `dst` returns `M[i][dst] + M[i][src] * c`, any other column is
 unchanged. -/

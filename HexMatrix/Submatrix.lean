@@ -20,6 +20,28 @@ universe u
 
 namespace Matrix
 
+/-- Reindex the rows of a matrix by an arbitrary fixed-length tuple. -/
+@[expose]
+def selectRows (M : Matrix R n m) (rows : Vector (Fin n) k) : Matrix R k m :=
+  ofFn fun i j => M[(rows[i], j)]
+
+/-- Reindex the columns of a matrix by an arbitrary fixed-length tuple. -/
+@[expose]
+def selectCols (M : Matrix R n m) (cols : Vector (Fin m) k) : Matrix R n k :=
+  ofFn fun i j => M[(i, cols[j])]
+
+@[grind =] theorem getElem_selectRows (M : Matrix R n m)
+    (rows : Vector (Fin n) k) (i : Fin k) (j : Fin m) :
+    (selectRows M rows)[i][j] = M[rows[i]][j] := by
+  unfold selectRows
+  rw [getElem_ofFn, getElem_pair_eq_nested]
+
+@[grind =] theorem getElem_selectCols (M : Matrix R n m)
+    (cols : Vector (Fin m) k) (i : Fin n) (j : Fin k) :
+    (selectCols M cols)[i][j] = M[i][cols[j]] := by
+  unfold selectCols
+  rw [getElem_ofFn, getElem_pair_eq_nested]
+
 /-- Leading principal `k × k` submatrix of a square matrix: the top-left block
 indexed by `{0, …, k-1}` along both axes. Includes the empty submatrix
 (`k = 0`) and is convenient for Bareiss pivot/minor statements. -/

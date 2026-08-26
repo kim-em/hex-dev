@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Persistent cypari2/PARI benchmark service for Hex.
+"""Persistent PARI/SymPy benchmark service for Hex.
 
 The line protocol matches ``flint_bench_driver.py``.  Version one exposes the
 same-algorithm comparator required by hex-char-poly:
@@ -19,13 +19,33 @@ same-algorithm comparator required by hex-char-poly:
 
 ``fmpz_mat/overhead``
     Return ``0`` without constructing a matrix, calibrating protocol cost.
+
+``fmpz_mat/snf``
+    Accept square integer ``rows`` and return PARI ``matsnf`` in ascending
+    divisibility order with nonnegative representatives.
+
+``polymatrix/pari_snf``
+    Accept a square matrix over ``QQ[x]`` in the Hex polynomial-matrix fixture
+    schema and return the monic invariant factors from PARI ``matsnf``.
+
+``polymatrix/sympy_snf``
+    Accept a rectangular matrix over ``QQ[x]`` in the same schema and return
+    SymPy ``smith_normal_form`` invariant factors.
+
+``polymatrix/overhead``
+    Return zero without constructing a matrix; this calibrates the persistent
+    JSON framing shared by the two polynomial-matrix comparators.
 """
 from __future__ import annotations
 
 import json
 import sys
 import traceback
+from pathlib import Path
 from typing import Any
+
+REPO_ROOT = Path(__file__).resolve().parent.parent.parent
+sys.path.insert(0, str(REPO_ROOT))
 
 try:
     import cypari2  # type: ignore[import-not-found]
@@ -101,6 +121,180 @@ def _hnf(request: dict[str, Any]) -> list[list[int]]:
     return form + [[0] * m for _ in range(n - rank)]
 
 
+def _snf(request: dict[str, Any]) -> list[int]:
+    pari = _require_pari()
+    rows = [[int(value) for value in row] for row in request["rows"]]
+    n = len(rows)
+    if any(len(row) != n for row in rows):
+        raise ValueError("snf benchmark requires a square matrix")
+    matrix = pari.matrix(n, n, [value for row in rows for value in row])
+    # PARI orders its elementary divisors in the reverse convention:
+    # d_n | ... | d_1. Hex exposes d_1 | ... | d_n.
+    return [abs(int(value)) for value in reversed(matrix.matsnf().list())]
+
+
+def _rat_coefficients(entry: dict[str, list[int]]) -> list[tuple[int, int]]:
+    numbers = [int(value) for value in entry["num"]]
+    denominators = [int(value) for value in entry["den"]]
+    if len(numbers) != len(denominators):
+        raise ValueError("rational polynomial numerator/denominator length mismatch")
+    if any(value == 0 for value in denominators):
+        raise ValueError("rational polynomial coefficient has zero denominator")
+    return list(zip(numbers, denominators, strict=True))
+
+
+def _pari_polynomial(entry: Any, field: dict[str, Any]):
+    pari = _require_pari()
+    if "p" in field:
+        modulus = int(field["p"])
+        coefficients = [pari.Mod(int(value), modulus) for value in entry]
+    else:
+        coefficients = [
+            pari(number) / denominator
+            for number, denominator in _rat_coefficients(entry)
+        ]
+    return pari.Polrev(coefficients)
+
+
+def _rat_value(number: Any) -> tuple[int, int]:
+    pari = _require_pari()
+    return int(pari.numerator(number)), int(pari.denominator(number))
+
+
+def _pari_poly_value(polynomial: Any, field: dict[str, Any]) -> Any:
+    pari = _require_pari()
+    if polynomial == 0:
+        return [] if "p" in field else {"num": [], "den": []}
+    leading = pari.pollead(polynomial)
+    monic = polynomial / leading
+    coefficients = list(pari.Vecrev(monic))
+    if "p" in field:
+        modulus = int(field["p"])
+        return [int(pari.lift(value)) % modulus for value in coefficients]
+    values = [_rat_value(value) for value in coefficients]
+    while values and values[-1][0] == 0:
+        values.pop()
+    return {
+        "num": [number for number, _ in values],
+        "den": [denominator for _, denominator in values],
+    }
+
+
+def _pari_snf(request: dict[str, Any]) -> list[dict[str, list[int]]]:
+    pari = _require_pari()
+    record = request["matrix"]
+    rows, cols = int(record["rows"]), int(record["cols"])
+    if rows != cols:
+        raise ValueError("PARI polynomial matsnf comparator requires a square matrix")
+    entries = record["entries"]
+    field = record["field"]
+    if len(entries) != rows or any(len(row) != cols for row in entries):
+        raise ValueError("polynomial matrix dimensions do not match its entries")
+    matrix = pari.matrix(
+        rows,
+        cols,
+        [_pari_polynomial(entry, field) for row in entries for entry in row],
+    )
+    # PARI orders the diagonal from largest to smallest divisibility. Hex and
+    # SymPy use the opposite order, so reverse it after dropping the zero tail.
+    diagonal = [value for value in list(matrix.matsnf()) if value != 0]
+    return [_pari_poly_value(value, field) for value in reversed(diagonal)]
+
+
+def _sympy_snf(request: dict[str, Any]) -> list[dict[str, list[int]]]:
+    # Reuse the conformance oracle's independently implemented canonicalization
+    # so benchmark and oracle paths cannot drift in their wire convention.
+    from scripts.oracle.polymatrix import _smith
+
+    return _smith(request["matrix"])
+
+
+def _rat(pair: Any):
+    """Build a PARI rational from a ``[num, den]`` pair."""
+    if not isinstance(pair, list) or len(pair) != 2:
+        raise ValueError(f"rational must be a [num, den] pair, got {pair!r}")
+    pari = _require_pari()
+    return pari(int(pair[0])) / pari(int(pair[1]))
+
+
+def _int_poly(coeffs: list[int], variable: str):
+    pari = _require_pari()
+    return pari.Polrev([int(c) for c in coeffs], variable)
+
+
+def _rat_poly(pairs: list[Any], variable: str):
+    pari = _require_pari()
+    return pari.Polrev([_rat(pair) for pair in pairs], variable)
+
+
+def _rat_coeffs(poly) -> list[list[int]]:
+    """Ascending ``[num, den]`` coefficient pairs of a PARI polynomial
+    (or scalar), trimmed of trailing zeros by PARI's normal form."""
+    pari = _require_pari()
+    return [
+        [int(pari.numerator(c)), int(pari.denominator(c))]
+        for c in pari.Vecrev(poly)
+    ]
+
+
+# ---------------------------------------------------------------------
+# `polmod` (arithmetic in Q[x]/(m))
+# ---------------------------------------------------------------------
+
+
+def _polmod_mul(req: dict[str, Any]) -> list[list[int]]:
+    pari = _require_pari()
+    modulus = _int_poly(req["modulus"], "x")
+    a = pari.Mod(_rat_poly(req["a"], "x"), modulus)
+    b = pari.Mod(_rat_poly(req["b"], "x"), modulus)
+    return _rat_coeffs(pari.lift(a * b))
+
+
+def _polmod_inv(req: dict[str, Any]) -> list[list[int]]:
+    pari = _require_pari()
+    modulus = _int_poly(req["modulus"], "x")
+    a = pari.Mod(_rat_poly(req["a"], "x"), modulus)
+    return _rat_coeffs(pari.lift(a ** (-1)))
+
+
+def _polmod_overhead(_req: dict[str, Any]) -> int:
+    return 0
+
+
+def _charpoly_berkowitz(request: dict[str, Any]) -> list[int]:
+    pari = _require_pari()
+    rows = [[int(value) for value in row] for row in request["rows"]]
+    n = len(rows)
+    if any(len(row) != n for row in rows):
+        raise ValueError("charpoly requires a square matrix")
+    matrix = pari.matrix(n, n, [value for row in rows for value in row])
+    polynomial = matrix.charpoly("x", 3)
+    coefficients = [int(value) for value in polynomial.list()]
+    if len(coefficients) != n + 1:
+        raise RuntimeError(
+            f"PARI charpoly returned {len(coefficients)} coefficients for n={n}"
+        )
+    return coefficients
+
+
+_FMPZ_MAT_OPS: dict[str, Callable[[dict[str, Any]], Any]] = {
+    "charpoly_berkowitz": _charpoly_berkowitz,
+}
+
+
+def _nf_factor_degrees(req: dict[str, Any]) -> list[list[int]]:
+    pari = _require_pari()
+    field = _int_poly(req["field"], "y")
+    poly = _rat_poly(req["poly"], "x")
+    factorization = pari.nffactor(pari.nfinit(field), poly)
+    rows = int(pari.matsize(factorization)[0])
+    pairs = sorted(
+        (int(pari.poldegree(factorization[i, 0])), int(factorization[i, 1]))
+        for i in range(rows)
+    )
+    return [[degree, multiplicity] for degree, multiplicity in pairs]
+
+
 def _dispatch(request: dict[str, Any]) -> Any:
     family = request.get("family")
     operation = request.get("op")
@@ -111,6 +305,24 @@ def _dispatch(request: dict[str, Any]) -> Any:
     if family == "fmpz_mat" and operation == "hnf":
         return _hnf(request)
     if family == "fmpz_mat" and operation == "overhead":
+        return 0
+    if family == "fmpz_mat" and operation == "snf":
+        return _snf(request)
+    if family == "polymatrix" and operation == "pari_snf":
+        return _pari_snf(request)
+    if family == "polymatrix" and operation == "sympy_snf":
+        return _sympy_snf(request)
+    if family == "polymatrix" and operation == "overhead":
+        return 0
+    if family == "polmod" and operation == "mul":
+        return _polmod_mul(request)
+    if family == "polmod" and operation == "inv":
+        return _polmod_inv(request)
+    if family == "polmod" and operation == "overhead":
+        return _polmod_overhead(request)
+    if family == "nf" and operation == "factor_degrees":
+        return _nf_factor_degrees(request)
+    if family == "nf" and operation == "overhead":
         return 0
     raise ValueError(f"unknown PARI benchmark operation {family!r}/{operation!r}")
 

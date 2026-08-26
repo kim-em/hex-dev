@@ -65,6 +65,7 @@ input polynomial over that prime field, and its modular factors.
 structure PrimeChoiceData where
   /-- The selected prime modulus. -/
   p : Nat
+  /-- Word-arithmetic bounds witness for `p`, available for instance search. -/
   [bounds : ZMod64.Bounds p]
   /-- The input polynomial reduced modulo `p`. -/
   fModP : FpPoly p
@@ -153,14 +154,21 @@ def transformedCore (core : ZPoly) (degree : Nat) : ZPoly :=
       change (transformedCoeffs core degree).back? ≠ some (0 : Int)
       simp [transformedCoeffs] }
 
+/-- The transformed coefficient array has one entry per degree up to and
+including the prescribed top degree. -/
 @[simp, grind =] theorem transformedCoeffs_size (core : ZPoly) (degree : Nat) :
     (transformedCoeffs core degree).size = degree + 1 := by
   simp [transformedCoeffs]
 
-@[simp] theorem transformedCoeffs_getD_top (core : ZPoly) (degree : Nat) :
+/-- The transformed coefficient array's top entry is one.  Not `@[simp]`: the
+`getD` left-hand side is not simp-normal (simp rewrites it to a `getElem`
+access through `transformedCoeffs_size`); `transformedCore_coeff_top` applies
+it explicitly. -/
+theorem transformedCoeffs_getD_top (core : ZPoly) (degree : Nat) :
     (transformedCoeffs core degree).getD degree 0 = 1 := by
   simp [transformedCoeffs]
 
+/-- The transformed polynomial stores `degree + 1` coefficients. -/
 @[simp, grind =] theorem transformedCore_size (core : ZPoly) (degree : Nat) :
     (transformedCore core degree).size = degree + 1 := by
   simp [transformedCore, DensePoly.size]
@@ -171,11 +179,13 @@ theorem transformedCore_coeff_top (core : ZPoly) (degree : Nat) :
   change (transformedCoeffs core degree).getD degree (0 : Int) = 1
   exact transformedCoeffs_getD_top core degree
 
+/-- The transformed polynomial is monic in the prescribed degree. -/
 theorem transformedCore_monic (core : ZPoly) (degree : Nat) :
     DensePoly.Monic (transformedCore core degree) := by
   unfold DensePoly.Monic DensePoly.leadingCoeff transformedCore
   simp [transformedCoeffs]
 
+/-- The transformed polynomial's degree is the prescribed degree. -/
 @[simp, grind =] theorem transformedCore_degree_getD (core : ZPoly) (degree : Nat) :
     (transformedCore core degree).degree?.getD 0 = degree := by
   unfold DensePoly.degree? transformedCore DensePoly.size
@@ -196,12 +206,15 @@ def toMonic (core : ZPoly) : ToMonicData :=
       else
         ToMonicData.transformedCore core degree }
 
+/-- The packet records its source polynomial unchanged. -/
 @[simp, grind =] theorem toMonic_core (core : ZPoly) :
     (toMonic core).core = core := rfl
 
+/-- The packet records the source's leading coefficient. -/
 @[simp, grind =] theorem toMonic_leadingCoeff (core : ZPoly) :
     (toMonic core).leadingCoeff = DensePoly.leadingCoeff core := rfl
 
+/-- The packet records the source's degree. -/
 @[simp, grind =] theorem toMonic_degree (core : ZPoly) :
     (toMonic core).degree = core.degree?.getD 0 := rfl
 
@@ -288,9 +301,11 @@ def polyPow (f : ZPoly) : Nat → ZPoly
 def factorPower (f : ZPoly) (n : Nat) : ZPoly :=
   polyPow f n
 
+/-- The zeroth factor power is one. -/
 @[simp, grind =] theorem factorPower_zero (f : ZPoly) :
     factorPower f 0 = (1 : ZPoly) := rfl
 
+/-- Each successive factor power multiplies by the factor once more. -/
 @[simp, grind =] theorem factorPower_succ (f : ZPoly) (n : Nat) :
     factorPower f (n + 1) = factorPower f n * f := rfl
 
@@ -299,6 +314,7 @@ def factorPower (f : ZPoly) (n : Nat) : ZPoly :=
 def product (φ : Factorization) : ZPoly :=
   φ.factors.foldl (fun acc factor => acc * polyPow factor.1 factor.2) (DensePoly.C φ.scalar)
 
+/-- A factorization with no polynomial factors multiplies to its scalar. -/
 @[simp, grind =] theorem product_mk_empty (scalar : Int) :
     product { scalar := scalar, factors := #[] } = DensePoly.C scalar := rfl
 
@@ -348,6 +364,8 @@ def ZPoly.contentPrimitiveImpl (f : ZPoly) : Int × ZPoly :=
       DensePoly.ofCoeffs (f.toArray.map (fun coeff => coeff / c))
   (Int.ofNat cNat, primitive)
 
+/-- Pointwise agreement between the specification `contentPrimitive` and its
+single-pass compiled implementation. -/
 theorem ZPoly.contentPrimitive_eq_impl_value (f : ZPoly) :
     ZPoly.contentPrimitive f = ZPoly.contentPrimitiveImpl f := by
   unfold ZPoly.contentPrimitive ZPoly.contentPrimitiveImpl ZPoly.content
@@ -356,6 +374,8 @@ theorem ZPoly.contentPrimitive_eq_impl_value (f : ZPoly) :
   unfold DensePoly.content DensePoly.primitivePartImpl
   rw [DensePoly.contentNat_eq_contentNatImpl]
 
+/-- `@[csimp]` bridge routing compiled `contentPrimitive` calls to the
+single-pass implementation. -/
 @[csimp]
 theorem ZPoly.contentPrimitive_eq_impl :
     @ZPoly.contentPrimitive = @ZPoly.contentPrimitiveImpl := by
@@ -370,19 +390,13 @@ takes the exact fallback -- never a wrong answer). -/
 theorem prime_499 : Hex.Nat.Prime 499 :=
   Hex.Nat.isPrimeTrial_isPrime (by decide)
 
+/-- The trial prime `499` fits the word-arithmetic bounds of `ZMod64`. -/
 instance bounds_499 : ZMod64.Bounds 499 := ⟨by decide, by decide⟩
 
 /-- The prepared-input form of the modular square-free trial. -/
 @[expose]
 def modularSquareFreeCoreFires (q : ZPoly) : Bool :=
   !q.isZero && (ZPoly.leadingCoeffModP q 499 != 0) && ZPoly.separableModP q 499
-
-/-- Boolean guard for the modular square-free fast path: the primitive `x`-free
-square-free part is nonzero, admissible at the trial prime, and separable over `𝔽_p`. -/
-@[expose]
-def modularSquareFreeFires (f : ZPoly) : Bool :=
-  let q := ZPoly.primitivePart (ZPoly.extractXPower (ZPoly.primitivePart f)).core
-  modularSquareFreeCoreFires q
 
 /-- Fast implementation of `normalizeForFactor`: a machine-word `𝔽_p`
 square-freeness trial on the primitive `x`-free square-free part.  When it fires (the input
@@ -412,6 +426,8 @@ def normalizeForFactorFast (f : ZPoly) : FactorNormalizationData :=
       squareFreeCore := sqData.squareFreeCore
       repeatedPart := sqData.repeatedPart }
 
+/-- `@[csimp]` bridge routing compiled normalization through the modular
+square-free fast path; the guard's soundness lemma makes both sides agree. -/
 @[csimp]
 theorem normalizeForFactor_eq_normalizeForFactorFast :
     normalizeForFactor = normalizeForFactorFast := by
