@@ -176,6 +176,81 @@ theorem four_mul_lt_word (p : Nat) [Bounds p] :
   have hp := Bounds.pLtR (p := p)
   simpa [UInt64.word] using (show 4 * p < 2 ^ 64 by omega)
 
+/-- Twice the modulus as a faithful machine word. -/
+def twiceModulusWord (p : Nat) [Bounds p] : UInt64 :=
+  UInt64.ofNatLT (2 * p) (by
+    have hfour := four_mul_lt_word p
+    have hp := Bounds.pPos (p := p)
+    simpa [UInt64.word, UInt64.size] using (show 2 * p < UInt64.word by omega))
+
+/-- Observation of the doubled modulus word. -/
+@[simp] theorem twiceModulusWord_toNat (p : Nat) [Bounds p] :
+    (twiceModulusWord p).toNat = 2 * p := by
+  simp [twiceModulusWord]
+
+private theorem toNat_add_of_lt_word (left right : UInt64)
+    (h : left.toNat + right.toNat < UInt64.word) :
+    (left + right).toNat = left.toNat + right.toNat := by
+  rw [UInt64.toNat_add, Nat.mod_eq_of_lt (by
+    simpa [UInt64.word] using h)]
+
+/-- Reduce a faithful representative below `4p` into `[0, 2p)` by at most
+one word subtraction. -/
+def reduceTwice (p : Nat) [Bounds p] (value : UInt64) : UInt64 :=
+  if twiceModulusWord p ≤ value then value - twiceModulusWord p else value
+
+/-- One-subtraction reduction agrees with reduction modulo `2p`. -/
+theorem reduceTwice_toNat {p : Nat} [Bounds p] (value : UInt64)
+    (hvalue : value.toNat < 4 * p) :
+    (reduceTwice p value).toNat = value.toNat % (2 * p) := by
+  unfold reduceTwice
+  split
+  · rename_i h
+    have hle : 2 * p ≤ value.toNat := by
+      simpa only [UInt64.le_iff_toNat_le, twiceModulusWord_toNat] using h
+    rw [UInt64.toNat_sub_of_le _ _ h, twiceModulusWord_toNat,
+      Nat.mod_eq_sub_mod hle, Nat.mod_eq_of_lt (by omega)]
+  · rename_i h
+    have hlt : value.toNat < 2 * p := by
+      rw [← twiceModulusWord_toNat]
+      exact Nat.lt_of_not_le (fun hle => h (UInt64.le_iff_toNat_le.mpr hle))
+    exact (Nat.mod_eq_of_lt hlt).symm
+
+/-- Reduce a faithful representative below `4p` into a bounded raw word. -/
+def reduceTwiceRaw2 {p : Nat} [Bounds p] (value : UInt64)
+    (hvalue : value.toNat < 4 * p) : NttRaw2 p :=
+  ⟨reduceTwice p value, by
+    rw [reduceTwice_toNat value hvalue]
+    exact Nat.mod_lt _ (Nat.mul_pos (by decide) (Bounds.pPos (p := p)))⟩
+
+/-- Raw observation of one-subtraction reduction. -/
+@[simp] theorem reduceTwiceRaw2_toNat {p : Nat} [Bounds p]
+    (value : UInt64) (hvalue : value.toNat < 4 * p) :
+    (reduceTwiceRaw2 value hvalue).val.toNat = value.toNat % (2 * p) := by
+  exact reduceTwice_toNat value hvalue
+
+/-- Add `2p` and subtract a smaller raw representative without word wrap or
+borrow. -/
+def addTwiceSubWord (p : Nat) [Bounds p] (left right : UInt64) : UInt64 :=
+  left + twiceModulusWord p - right
+
+/-- Observation of the faithful `left + 2p - right` word expression. -/
+theorem addTwiceSubWord_toNat {p : Nat} [Bounds p] (left right : UInt64)
+    (hleft : left.toNat < 2 * p) (hright : right.toNat < 2 * p) :
+    (addTwiceSubWord p left right).toNat =
+      left.toNat + 2 * p - right.toNat := by
+  have haddLt : left.toNat + (twiceModulusWord p).toNat < UInt64.word := by
+    rw [twiceModulusWord_toNat]
+    have hfour := four_mul_lt_word p
+    omega
+  have hadd := toNat_add_of_lt_word left (twiceModulusWord p) haddLt
+  have hrightLe : right ≤ left + twiceModulusWord p := by
+    apply UInt64.le_iff_toNat_le.mpr
+    rw [hadd, twiceModulusWord_toNat]
+    omega
+  unfold addTwiceSubWord
+  rw [UInt64.toNat_sub_of_le _ _ hrightLe, hadd, twiceModulusWord_toNat]
+
 private theorem product_lt_word {p w t : Nat} [Bounds p]
     (hw : w < p) (ht : t < 4 * p) :
     w * t < UInt64.word := by
@@ -270,6 +345,13 @@ def shoupMulImpl {p : Nat} [Bounds p]
     rw [toNat_shoupWord]
     exact shoupValue_lt (Bounds.pPos (p := p)) (four_mul_lt_word p)
       twiddle.value.toNat_lt value.isLt⟩
+
+/-- Nat observation of compiled Shoup multiplication. -/
+@[simp] theorem toNat_shoupMulImpl {p : Nat} [Bounds p]
+    (twiddle : NttTwiddle p) (value : NttRaw4 p) :
+    (shoupMulImpl twiddle value).val.toNat =
+      shoupValue twiddle.value.toNat value.val.toNat p := by
+  exact toNat_shoupWord twiddle value
 
 /-- Kernel-reducible and word-level Shoup multiplication agree. -/
 @[csimp] theorem shoupMul_eq_impl : @shoupMul = @shoupMulImpl := by
@@ -375,6 +457,97 @@ def forwardButterfly {p : Nat} [Bounds p]
   let product := shoupMul twiddle (raw4OfNat difference hdifference)
   exact (raw2OfNat sum hsum, product)
 
+/-- Division-free word implementation of the forward butterfly. -/
+def forwardButterflyImpl {p : Nat} [Bounds p]
+    (twiddle : NttTwiddle p) (x y : NttRaw2 p) : NttRaw2 p × NttRaw2 p := by
+  let sumWord := x.val + y.val
+  have hsumFaithful : sumWord.toNat = x.val.toNat + y.val.toNat := by
+    apply toNat_add_of_lt_word
+    have hfour := four_mul_lt_word p
+    have hx := x.isLt
+    have hy := y.isLt
+    omega
+  have hsum : sumWord.toNat < 4 * p := by
+    rw [hsumFaithful]
+    have hx := x.isLt
+    have hy := y.isLt
+    omega
+  let differenceWord := addTwiceSubWord p x.val y.val
+  have hdifferenceFaithful :
+      differenceWord.toNat = x.val.toNat + 2 * p - y.val.toNat := by
+    exact addTwiceSubWord_toNat x.val y.val x.isLt y.isLt
+  have hdifference : differenceWord.toNat < 4 * p := by
+    rw [hdifferenceFaithful]
+    have hx := x.isLt
+    have hy := y.isLt
+    have hp := Bounds.pPos (p := p)
+    omega
+  exact
+    (reduceTwiceRaw2 sumWord hsum,
+      shoupMulImpl twiddle ⟨differenceWord, hdifference⟩)
+
+/-- Raw observation of the logical forward sum. -/
+@[simp] theorem toNat_forwardButterfly_fst {p : Nat} [Bounds p]
+    (twiddle : NttTwiddle p) (x y : NttRaw2 p) :
+    (forwardButterfly twiddle x y).1.val.toNat =
+      (x.val.toNat + y.val.toNat) % (2 * p) := by
+  simp [forwardButterfly]
+
+/-- Raw observation of the logical forward twiddled difference. -/
+@[simp] theorem toNat_forwardButterfly_snd {p : Nat} [Bounds p]
+    (twiddle : NttTwiddle p) (x y : NttRaw2 p) :
+    (forwardButterfly twiddle x y).2.val.toNat =
+      shoupValue twiddle.value.toNat
+        (x.val.toNat + 2 * p - y.val.toNat) p := by
+  simp [forwardButterfly]
+
+/-- Raw observation of the compiled forward sum. -/
+@[simp] theorem toNat_forwardButterflyImpl_fst {p : Nat} [Bounds p]
+    (twiddle : NttTwiddle p) (x y : NttRaw2 p) :
+    (forwardButterflyImpl twiddle x y).1.val.toNat =
+      (x.val.toNat + y.val.toNat) % (2 * p) := by
+  unfold forwardButterflyImpl
+  dsimp only
+  simp only [reduceTwiceRaw2]
+  rw [reduceTwice_toNat _ (by
+    rw [toNat_add_of_lt_word]
+    · have hx := x.isLt
+      have hy := y.isLt
+      omega
+    · have hfour := four_mul_lt_word p
+      have hx := x.isLt
+      have hy := y.isLt
+      omega)]
+  congr 1
+  apply toNat_add_of_lt_word
+  have hfour := four_mul_lt_word p
+  have hx := x.isLt
+  have hy := y.isLt
+  omega
+
+/-- Raw observation of the compiled forward twiddled difference. -/
+@[simp] theorem toNat_forwardButterflyImpl_snd {p : Nat} [Bounds p]
+    (twiddle : NttTwiddle p) (x y : NttRaw2 p) :
+    (forwardButterflyImpl twiddle x y).2.val.toNat =
+      shoupValue twiddle.value.toNat
+        (x.val.toNat + 2 * p - y.val.toNat) p := by
+  unfold forwardButterflyImpl
+  dsimp only
+  rw [toNat_shoupMulImpl, addTwiceSubWord_toNat x.val y.val x.isLt y.isLt]
+
+/-- The forward butterfly's kernel-reducible and division-free word
+implementations agree. -/
+@[csimp] theorem forwardButterfly_eq_impl :
+    @forwardButterfly = @forwardButterflyImpl := by
+  funext p _ twiddle x y
+  apply Prod.ext
+  · apply NttRaw2.ext
+    apply UInt64.toNat_inj.mp
+    rw [toNat_forwardButterfly_fst, toNat_forwardButterflyImpl_fst]
+  · apply NttRaw2.ext
+    apply UInt64.toNat_inj.mp
+    rw [toNat_forwardButterfly_snd, toNat_forwardButterflyImpl_snd]
+
 /-- The first forward output is the sum residue. -/
 theorem normalize_forward_fst {p : Nat} [Bounds p]
     (twiddle : NttTwiddle p) (x y : NttRaw2 p) :
@@ -421,6 +594,92 @@ def inverseButterfly {p : Nat} [Bounds p]
     have hp := Bounds.pPos (p := p)
     omega
   exact (raw4OfNat sum hsum, raw4OfNat difference hdifference)
+
+/-- Division-free word implementation of the inverse butterfly. -/
+def inverseButterflyImpl {p : Nat} [Bounds p]
+    (twiddle : NttTwiddle p) (x y : NttRaw4 p) : NttRaw4 p × NttRaw4 p := by
+  let reducedX := reduceTwiceRaw2 x.val x.isLt
+  let product := shoupMulImpl twiddle y
+  let sumWord := reducedX.val + product.val
+  have hsumFaithful :
+      sumWord.toNat = reducedX.val.toNat + product.val.toNat := by
+    apply toNat_add_of_lt_word
+    have hfour := four_mul_lt_word p
+    have hx := reducedX.isLt
+    have hp := product.isLt
+    omega
+  have hsum : sumWord.toNat < 4 * p := by
+    rw [hsumFaithful]
+    have hx := reducedX.isLt
+    have hp := product.isLt
+    omega
+  let differenceWord := addTwiceSubWord p reducedX.val product.val
+  have hdifferenceFaithful : differenceWord.toNat =
+      reducedX.val.toNat + 2 * p - product.val.toNat := by
+    exact addTwiceSubWord_toNat reducedX.val product.val
+      reducedX.isLt product.isLt
+  have hdifference : differenceWord.toNat < 4 * p := by
+    rw [hdifferenceFaithful]
+    have hx := reducedX.isLt
+    have hp := product.isLt
+    have hmod := Bounds.pPos (p := p)
+    omega
+  exact (⟨sumWord, hsum⟩, ⟨differenceWord, hdifference⟩)
+
+/-- Raw observation of the logical inverse sum. -/
+@[simp] theorem toNat_inverseButterfly_fst {p : Nat} [Bounds p]
+    (twiddle : NttTwiddle p) (x y : NttRaw4 p) :
+    (inverseButterfly twiddle x y).1.val.toNat =
+      x.val.toNat % (2 * p) +
+        shoupValue twiddle.value.toNat y.val.toNat p := by
+  simp [inverseButterfly]
+
+/-- Raw observation of the logical inverse difference. -/
+@[simp] theorem toNat_inverseButterfly_snd {p : Nat} [Bounds p]
+    (twiddle : NttTwiddle p) (x y : NttRaw4 p) :
+    (inverseButterfly twiddle x y).2.val.toNat =
+      x.val.toNat % (2 * p) + 2 * p -
+        shoupValue twiddle.value.toNat y.val.toNat p := by
+  simp [inverseButterfly]
+
+/-- Raw observation of the compiled inverse sum. -/
+@[simp] theorem toNat_inverseButterflyImpl_fst {p : Nat} [Bounds p]
+    (twiddle : NttTwiddle p) (x y : NttRaw4 p) :
+    (inverseButterflyImpl twiddle x y).1.val.toNat =
+      x.val.toNat % (2 * p) +
+        shoupValue twiddle.value.toNat y.val.toNat p := by
+  unfold inverseButterflyImpl
+  dsimp only
+  rw [toNat_add_of_lt_word, reduceTwiceRaw2_toNat, toNat_shoupMulImpl]
+  have hfour := four_mul_lt_word p
+  have hx := (reduceTwiceRaw2 x.val x.isLt).isLt
+  have hp := (shoupMulImpl twiddle y).isLt
+  omega
+
+/-- Raw observation of the compiled inverse difference. -/
+@[simp] theorem toNat_inverseButterflyImpl_snd {p : Nat} [Bounds p]
+    (twiddle : NttTwiddle p) (x y : NttRaw4 p) :
+    (inverseButterflyImpl twiddle x y).2.val.toNat =
+      x.val.toNat % (2 * p) + 2 * p -
+        shoupValue twiddle.value.toNat y.val.toNat p := by
+  unfold inverseButterflyImpl
+  dsimp only
+  rw [addTwiceSubWord_toNat _ _
+      (reduceTwiceRaw2 x.val x.isLt).isLt (shoupMulImpl twiddle y).isLt,
+    reduceTwiceRaw2_toNat, toNat_shoupMulImpl]
+
+/-- The inverse butterfly's kernel-reducible and division-free word
+implementations agree. -/
+@[csimp] theorem inverseButterfly_eq_impl :
+    @inverseButterfly = @inverseButterflyImpl := by
+  funext p _ twiddle x y
+  apply Prod.ext
+  · apply NttRaw4.ext
+    apply UInt64.toNat_inj.mp
+    rw [toNat_inverseButterfly_fst, toNat_inverseButterflyImpl_fst]
+  · apply NttRaw4.ext
+    apply UInt64.toNat_inj.mp
+    rw [toNat_inverseButterfly_snd, toNat_inverseButterflyImpl_snd]
 
 /-- The first inverse output is the sum with the twiddled right input. -/
 theorem normalize_inverse_fst {p : Nat} [Bounds p]

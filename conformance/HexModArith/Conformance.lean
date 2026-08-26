@@ -127,6 +127,14 @@ private def nttInverseSeven : NttRaw4 7 × NttRaw4 7 :=
   Ntt.inverseButterfly nttTwiddleSeven
     (NttRaw4.ofZMod (ofNat 7 1)) (NttRaw4.ofZMod (ofNat 7 2))
 
+private def nttForwardImplSeven : NttRaw2 7 × NttRaw2 7 :=
+  Ntt.forwardButterflyImpl nttTwiddleSeven
+    (NttRaw2.ofZMod (ofNat 7 3)) (NttRaw2.ofZMod (ofNat 7 5))
+
+private def nttInverseImplSeven : NttRaw4 7 × NttRaw4 7 :=
+  Ntt.inverseButterflyImpl nttTwiddleSeven
+    (NttRaw4.ofZMod (ofNat 7 1)) (NttRaw4.ofZMod (ofNat 7 2))
+
 #guard nttTwiddleSeven.precon.toNat = 6 * UInt64.word / 7
 #guard (Ntt.shoupMul nttTwiddleSeven (NttRaw4.ofZMod (ofNat 7 5))).val.toNat < 14
 #guard (Ntt.shoupMul nttTwiddleSeven (NttRaw4.ofZMod (ofNat 7 5))).normalize.toNat = 2
@@ -138,6 +146,10 @@ private def nttInverseSeven : NttRaw4 7 × NttRaw4 7 :=
 #guard nttInverseSeven.2.val.toNat < 28
 #guard nttInverseSeven.1.normalize.toNat = 6
 #guard nttInverseSeven.2.normalize.toNat = 3
+#guard nttForwardImplSeven.1.val = nttForwardSeven.1.val
+#guard nttForwardImplSeven.2.val = nttForwardSeven.2.val
+#guard nttInverseImplSeven.1.val = nttInverseSeven.1.val
+#guard nttInverseImplSeven.2.val = nttInverseSeven.2.val
 
 section BasicConstructorAutomation
 
