@@ -108,6 +108,33 @@ example :
     ((List.range (3 ^ 4)).filter fun a => Nat.Coprime a (3 ^ 4)).length = 54 := by
   simpa using coprimeCount_primePow (p := 3) (e := 4) (by decide) (by decide)
 #guard ((List.range (3 ^ 4)).filter fun a => Nat.Coprime a (3 ^ 4)).length == 54
+example :
+    ((List.range (1 * 9)).filter fun a => Nat.Coprime a (1 * 9)).length =
+        ((List.range 1).filter fun a => Nat.Coprime a 1).length *
+        ((List.range 9).filter fun a => Nat.Coprime a 9).length := by
+  exact coprimeCount_mul (m := 1) (n := 9) (by decide)
+example :
+    ((List.range (0 * 1)).filter fun a => Nat.Coprime a (0 * 1)).length =
+      ((List.range 0).filter fun a => Nat.Coprime a 0).length *
+        ((List.range 1).filter fun a => Nat.Coprime a 1).length := by
+  exact coprimeCount_mul (m := 0) (n := 1) (by decide)
+example :
+    ((List.range (1 * 0)).filter fun a => Nat.Coprime a (1 * 0)).length =
+      ((List.range 1).filter fun a => Nat.Coprime a 1).length *
+        ((List.range 0).filter fun a => Nat.Coprime a 0).length := by
+  exact coprimeCount_mul (m := 1) (n := 0) (by decide)
+example :
+    ((List.range (4 * 9)).filter fun a => Nat.Coprime a (4 * 9)).length =
+        ((List.range 4).filter fun a => Nat.Coprime a 4).length *
+        ((List.range 9).filter fun a => Nat.Coprime a 9).length := by
+  exact coprimeCount_mul (m := 4) (n := 9) (by decide)
+#guard ((List.range 36).filter fun a => Nat.Coprime a 36).length == 12
+#guard ((List.range 4).filter fun a => Nat.Coprime a 4).length *
+  ((List.range 9).filter fun a => Nat.Coprime a 9).length == 12
+-- `φ(36) = 12` but `φ(6)^2 = 4`: the coprimality hypothesis is essential.
+#guard ((List.range 36).filter fun a => Nat.Coprime a 36).length !=
+  ((List.range 6).filter fun a => Nat.Coprime a 6).length *
+    ((List.range 6).filter fun a => Nat.Coprime a 6).length
 #guard radical checked12 == 6
 #guard squarefreePart checked1 == 1
 #guard squareDivisor checked1 == 1

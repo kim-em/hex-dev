@@ -7,6 +7,8 @@ Authors: Kim Morrison
 module
 
 public import HexIntFactor.DivisorEnumeration
+import HexArith.ExtGcd
+import HexBasic.List
 
 public section
 
@@ -15,6 +17,194 @@ public section
 namespace Hex
 
 namespace Nat
+
+/-- Internal constructive inverse for the finite counting bijection below.
+The separate public congruence-combination milestone belongs in `Order.lean`. -/
+private def crtResidue (m n a b : Nat) : Nat :=
+  let s := (HexArith.extGcd m n).2.1
+  Int.natAbs ((((a : Int) + ((b : Int) - a) * s * m) % (m * n : Nat)))
+
+private theorem crtResidue_spec {m n a b : Nat}
+    (hm : 0 < m) (hn : 0 < n) (hcop : Nat.Coprime m n)
+    (ha : a < m) (hb : b < n) :
+    crtResidue m n a b < m * n ∧
+      crtResidue m n a b % m = a ∧ crtResidue m n a b % n = b := by
+  let s := (HexArith.extGcd m n).2.1
+  let t := (HexArith.extGcd m n).2.2
+  let d : Int := (b : Int) - a
+  let x : Int := (a : Int) + d * s * m
+  have hmnNat : m * n ≠ 0 := Nat.ne_of_gt (Nat.mul_pos hm hn)
+  have hmn0 : ((m * n : Nat) : Int) ≠ 0 := Int.ofNat_ne_zero.mpr hmnNat
+  have hm0 : (m : Int) ≠ 0 := by omega
+  have hn0 : (n : Int) ≠ 0 := by omega
+  have hbez : s * (m : Int) + t * (n : Int) = 1 := by
+    simp [s, t, hcop.gcd_eq_one]
+  have hxnonneg : 0 ≤ x % (m * n : Nat) := Int.emod_nonneg x hmn0
+  have hxcast : (crtResidue m n a b : Int) = x % (m * n : Nat) := by
+    simpa [crtResidue, s, d, x] using Int.natAbs_of_nonneg hxnonneg
+  have hxlt : crtResidue m n a b < m * n := by
+    have h := Int.emod_lt x hmn0
+    change x % (m * n : Nat) < (m * n : Nat) at h
+    rw [← hxcast] at h
+    exact_mod_cast h
+  have hxm : x % (m : Int) = a := by
+    apply (Int.emod_eq_iff hm0).2
+    refine ⟨by omega, by simpa using ha, ?_⟩
+    refine ⟨-(d * s), ?_⟩
+    change (a : Int) - ((a : Int) + d * s * m) = (m : Int) * (-(d * s))
+    calc
+      (a : Int) - ((a : Int) + d * s * m) = -(d * s * m) := by omega
+      _ = (m : Int) * (-(d * s)) := by
+        simp only [Int.mul_neg]
+        congr 1
+        ac_rfl
+  have hxn : x % (n : Int) = b := by
+    apply (Int.emod_eq_iff hn0).2
+    refine ⟨by omega, by simpa using hb, ?_⟩
+    refine ⟨d * t, ?_⟩
+    have hmul : d * s * m + d * t * n = d := by
+      calc
+        d * s * m + d * t * n = d * (s * m + t * n) := by
+          simp only [Int.mul_add, Int.mul_assoc]
+        _ = d := by rw [hbez]; simp
+    have hsub : (b : Int) - ((a : Int) + d * s * m) = d - d * s * m := by
+      simp only [d]
+      omega
+    rw [hsub]
+    calc
+      d - d * s * m = d * t * n := by omega
+      _ = n * (d * t) := by ac_rfl
+  refine ⟨hxlt, ?_, ?_⟩
+  · apply Int.natCast_inj.mp
+    rw [Int.natCast_emod, hxcast,
+      Int.emod_emod_of_dvd x (by exact Int.natCast_dvd_natCast.mpr (Nat.dvd_mul_right m n))]
+    exact hxm
+  · apply Int.natCast_inj.mp
+    rw [Int.natCast_emod, hxcast,
+      Int.emod_emod_of_dvd x (by exact Int.natCast_dvd_natCast.mpr (Nat.dvd_mul_left n m))]
+    exact hxn
+
+private def coprimeResidues (n : Nat) : List Nat :=
+  (List.range n).filter fun a => Nat.Coprime a n
+
+private def residuePairs (m n : Nat) : List (Nat × Nat) :=
+  (coprimeResidues m).flatMap fun a =>
+    (coprimeResidues n).map fun b => (a, b)
+
+private theorem length_pairs {α β : Type} (xs : List α) (ys : List β) :
+    (xs.flatMap fun a => ys.map fun b => (a, b)).length = xs.length * ys.length := by
+  induction xs with
+  | nil => simp
+  | cons _ rest ih =>
+      simp only [List.flatMap_cons, List.length_append, List.length_map,
+        List.length_cons, ih, Nat.succ_mul]
+      exact Nat.add_comm _ _
+
+private theorem coprime_mod_iff {a n : Nat} :
+    Nat.Coprime (a % n) n ↔ Nat.Coprime a n := by
+  rw [Nat.Coprime, Nat.Coprime, ← Nat.gcd_rec n a, Nat.gcd_comm]
+
+private theorem crt_unique {m n z w : Nat} (hcop : Nat.Coprime m n)
+    (hz : z < m * n) (hw : w < m * n)
+    (hm : z % m = w % m) (hn : z % n = w % n) : z = w := by
+  have forward : ∀ {u v : Nat}, u ≤ v → u < m * n → v < m * n →
+      u % m = v % m → u % n = v % n → u = v := by
+    intro u v huv hu hv hum hun
+    have dvdDiff : ∀ q : Nat, u % q = v % q → q ∣ v - u := by
+      intro q hmod
+      have huDvd : q ∣ u - u % q := Nat.dvd_sub_mod u
+      have hvDvd : q ∣ v - v % q := Nat.dvd_sub_mod v
+      have hd := Nat.dvd_sub hvDvd huDvd
+      have hrem : u % q ≤ u := Nat.mod_le u q
+      have heq : (v - v % q) - (u - u % q) = v - u := by omega
+      rwa [heq] at hd
+    have hmDvd := dvdDiff m hum
+    have hnDvd := dvdDiff n hun
+    have hprod := hcop.mul_dvd_of_dvd_of_dvd hmDvd hnDvd
+    have hdiff : v - u < m * n := by omega
+    have : v - u = 0 := Nat.eq_zero_of_dvd_of_lt hprod hdiff
+    omega
+  rcases Nat.le_total z w with hzw | hwz
+  · exact forward hzw hz hw hm hn
+  · exact (forward hwz hw hz hm.symm hn.symm).symm
+
+private theorem crt_image_perm {m n : Nat} (hm : 0 < m) (hn : 0 < n)
+    (hcop : Nat.Coprime m n) :
+    List.Perm
+      ((coprimeResidues (m * n)).map fun z => (z % m, z % n))
+      (residuePairs m n) := by
+  have hsource : (coprimeResidues (m * n)).Nodup :=
+    List.filter_sublist.nodup List.nodup_range
+  have himage : ((coprimeResidues (m * n)).map fun z => (z % m, z % n)).Nodup :=
+    List.nodup_map_on hsource fun z hz w hw hzw => by
+      have hzdata : z < m * n ∧ Nat.Coprime z (m * n) := by
+        simpa [coprimeResidues] using hz
+      have hwdata : w < m * n ∧ Nat.Coprime w (m * n) := by
+        simpa [coprimeResidues] using hw
+      apply crt_unique hcop
+      · exact hzdata.1
+      · exact hwdata.1
+      · exact congrArg Prod.fst hzw
+      · exact congrArg Prod.snd hzw
+  have htarget : (residuePairs m n).Nodup := by
+    apply List.nodup_flatMap_of_disjoint
+      (List.filter_sublist.nodup List.nodup_range)
+    · intro _ _
+      apply List.nodup_map_on (List.filter_sublist.nodup List.nodup_range)
+      intro b _ d _ hbd
+      exact Prod.mk.inj hbd |>.2
+    · intro a _ c _ hac pair hpa hpc
+      obtain ⟨b, _, rfl⟩ := List.mem_map.mp hpa
+      obtain ⟨d, _, hpair⟩ := List.mem_map.mp hpc
+      exact hac (congrArg Prod.fst hpair).symm
+  apply (List.perm_ext_iff_of_nodup himage htarget).2
+  intro pair
+  rcases pair with ⟨a, b⟩
+  constructor
+  · intro hp
+    obtain ⟨z, hz, hp⟩ := List.mem_map.mp hp
+    have hzdata : z < m * n ∧ Nat.Coprime z (m * n) := by
+      simpa [coprimeResidues] using hz
+    have hza : z % m = a := congrArg Prod.fst hp
+    have hzb : z % n = b := congrArg Prod.snd hp
+    have hlocal := Nat.coprime_mul_iff_right.mp hzdata.2
+    apply List.mem_flatMap.mpr
+    refine ⟨a, ?_, List.mem_map.mpr ⟨b, ?_, rfl⟩⟩
+    · apply List.mem_filter.mpr
+      refine ⟨List.mem_range.mpr (hza ▸ Nat.mod_lt z hm), ?_⟩
+      exact decide_eq_true (hza ▸ coprime_mod_iff.mpr hlocal.1)
+    · apply List.mem_filter.mpr
+      refine ⟨List.mem_range.mpr (hzb ▸ Nat.mod_lt z hn), ?_⟩
+      exact decide_eq_true (hzb ▸ coprime_mod_iff.mpr hlocal.2)
+  · intro hp
+    obtain ⟨a', ha', hp⟩ := List.mem_flatMap.mp hp
+    obtain ⟨b', hb', hp⟩ := List.mem_map.mp hp
+    have haa : a' = a := congrArg Prod.fst hp
+    have hbb : b' = b := congrArg Prod.snd hp
+    subst a'
+    subst b'
+    have hadata : a < m ∧ Nat.Coprime a m := by
+      simpa [coprimeResidues] using ha'
+    have hbdata : b < n ∧ Nat.Coprime b n := by
+      simpa [coprimeResidues] using hb'
+    have halt := hadata.1
+    have hblt := hbdata.1
+    have hacop := hadata.2
+    have hbcop := hbdata.2
+    obtain ⟨hzlt, hza, hzb⟩ := crtResidue_spec hm hn hcop halt hblt
+    apply List.mem_map.mpr
+    refine ⟨crtResidue m n a b, ?_, by simp [hza, hzb]⟩
+    apply List.mem_filter.mpr
+    refine ⟨List.mem_range.mpr hzlt, ?_⟩
+    apply decide_eq_true
+    apply Nat.coprime_mul_iff_right.mpr
+    have hzacop : Nat.Coprime (crtResidue m n a b % m) m := by
+      rw [hza]
+      exact hacop
+    have hzbcop : Nat.Coprime (crtResidue m n a b % n) n := by
+      rw [hzb]
+      exact hbcop
+    exact ⟨coprime_mod_iff.mp hzacop, coprime_mod_iff.mp hzbcop⟩
 
 /-- Positive divisors, in ascending order. -/
 @[expose]
@@ -223,6 +413,27 @@ theorem sigma_eq_sum {n k : Nat} (F : CheckedFactorization n) :
 theorem totient_eq_count {n : Nat} (F : CheckedFactorization n) :
     totient F = ((List.range n).filter (fun a => Nat.Coprime a n)).length := by
   simp [totient]
+
+/-- Coprime-residue counts multiply across coprime moduli. -/
+theorem coprimeCount_mul {m n : Nat} (hcop : Nat.Coprime m n) :
+    ((List.range (m * n)).filter fun a => Nat.Coprime a (m * n)).length =
+      ((List.range m).filter fun a => Nat.Coprime a m).length *
+        ((List.range n).filter fun a => Nat.Coprime a n).length := by
+  by_cases hm0 : m = 0
+  · subst m
+    have hn1 := (Nat.coprime_zero_left n).mp hcop
+    subst n
+    simp
+  by_cases hn0 : n = 0
+  · subst n
+    have hm1 := (Nat.coprime_zero_right m).mp hcop
+    subst m
+    simp
+  have hperm := crt_image_perm (Nat.zero_lt_of_ne_zero hm0)
+    (Nat.zero_lt_of_ne_zero hn0) hcop
+  have hlen := hperm.length_eq
+  rw [List.length_map, residuePairs, length_pairs] at hlen
+  simpa [coprimeResidues] using hlen
 
 private theorem coprimeCount_prime {p : Nat} (hp : Prime p) :
     ((List.range p).filter fun a => Nat.Coprime a p).length = p - 1 := by
