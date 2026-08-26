@@ -127,7 +127,7 @@ theorem divisors_eq {n : Nat} (F : CheckedFactorization n) :
 /-- The checked totient agrees with Mathlib's Euler totient. -/
 theorem totient_eq {n : Nat} (F : CheckedFactorization n) :
     totient F = _root_.Nat.totient n := by
-  rw [Hex.Nat.totient, _root_.Nat.totient]
+  rw [Hex.Nat.totient_eq_count F, _root_.Nat.totient]
   rw [← List.toFinset_card_of_nodup
     (List.nodup_range.filter (fun a => decide (Nat.Coprime a n)))]
   rw [List.toFinset_filter, List.toFinset_range]

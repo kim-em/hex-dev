@@ -239,8 +239,9 @@ def sigma {n : Nat} (F : CheckedFactorization n) (k : Nat) : Nat :=
 
 /-- Euler's totient from a checked prime-power decomposition. -/
 @[expose]
-def totient {n : Nat} (_F : CheckedFactorization n) : Nat :=
-  ((List.range n).filter fun a => decide (Nat.Coprime a n)).length
+def totient {n : Nat} (F : CheckedFactorization n) : Nat :=
+  (F.raw.factors.map fun entry =>
+    entry.prime ^ (entry.exponent - 1) * (entry.prime - 1)).prod
 
 /-- Product of the distinct prime divisors. -/
 @[expose]
@@ -261,6 +262,13 @@ def squarefreePart {n : Nat} (F : CheckedFactorization n) : Nat :=
 @[expose]
 def isSquarefree {n : Nat} (F : CheckedFactorization n) : Bool :=
   F.raw.factors.all fun e => e.exponent == 1
+
+/-- The totient uses one canonical contribution per certified prime power. -/
+theorem totient_eq_prod {n : Nat} (F : CheckedFactorization n) :
+    totient F =
+      (F.raw.factors.map fun entry =>
+        entry.prime ^ (entry.exponent - 1) * (entry.prime - 1)).prod :=
+  rfl
 
 /-- The largest square-divisor root uses half of each certified exponent. -/
 theorem squareDivisor_eq_prod {n : Nat} (F : CheckedFactorization n) :
@@ -409,11 +417,6 @@ theorem sigma_eq_sum {n k : Nat} (F : CheckedFactorization n) :
     have hsum := (hperm.map (fun d => d ^ k)).sum_nat
     simpa only [divisors, List.toList_toArray] using hsum.symm
 
-/-- The factor-product formula counts residues coprime to `n`. -/
-theorem totient_eq_count {n : Nat} (F : CheckedFactorization n) :
-    totient F = ((List.range n).filter (fun a => Nat.Coprime a n)).length := by
-  simp [totient]
-
 /-- Coprime-residue counts multiply across coprime moduli. -/
 theorem coprimeCount_mul {m n : Nat} (hcop : Nat.Coprime m n) :
     ((List.range (m * n)).filter fun a => Nat.Coprime a (m * n)).length =
@@ -500,6 +503,41 @@ theorem coprimeCount_primePow {p e : Nat} (hp : Prime p) (he : 0 < e) :
       decide_eq_decide.mpr (coprime_primePow_iff he)
   rw [hcongr, hpow]
   exact coprimeCount_blocks hp (p ^ (e - 1))
+
+private theorem totientEntries_eq_count : ∀ entries : List PrimePower,
+    (∀ entry ∈ entries, Prime entry.prime) →
+    (∀ entry ∈ entries, 0 < entry.exponent) →
+    entries.Pairwise (fun a b => a.prime < b.prime) →
+    (entries.map fun entry =>
+      entry.prime ^ (entry.exponent - 1) * (entry.prime - 1)).prod =
+      ((List.range ((entries.map fun entry =>
+        entry.prime ^ entry.exponent).prod)).filter fun a =>
+          Nat.Coprime a ((entries.map fun entry =>
+            entry.prime ^ entry.exponent).prod)).length
+  | [], _, _, _ => by simp
+  | entry :: rest, hprime, hexponent, hsorted => by
+      have hp := hprime entry (by simp)
+      have he := hexponent entry (by simp)
+      have hprimeRest : ∀ e ∈ rest, Prime e.prime := by
+        intro e heMem
+        exact hprime e (by simp [heMem])
+      have hexponentRest : ∀ e ∈ rest, 0 < e.exponent := by
+        intro e heMem
+        exact hexponent e (by simp [heMem])
+      have hsortedRest := (List.pairwise_cons.mp hsorted).2
+      rw [List.map_cons, List.prod_cons, List.map_cons, List.prod_cons,
+        coprimeCount_mul (DivisorEnumeration.head_coprime hprime hsorted),
+        coprimeCount_primePow hp he,
+        totientEntries_eq_count rest hprimeRest hexponentRest hsortedRest]
+
+/-- The certified prime-power product formula counts residues coprime to `n`. -/
+theorem totient_eq_count {n : Nat} (F : CheckedFactorization n) :
+    totient F = ((List.range n).filter (fun a => Nat.Coprime a n)).length := by
+  have h := totientEntries_eq_count F.raw.factors
+    (checkFactorization_prime F.valid)
+    (checkFactorization_exponent F.valid)
+    (checkFactorization_sorted F.valid)
+  simpa [totient, checkFactorization_prod F.valid, F.subject_eq] using h
 
 private theorem prime_dvd_product {q : Nat} (hq : Prime q) :
     ∀ (entries : List PrimePower),

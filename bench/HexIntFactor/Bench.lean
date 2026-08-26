@@ -135,6 +135,9 @@ def runSigmaFactorCount (input : SigmaInput) : Nat :=
 def runSquareFactorCount (input : SigmaInput) : Nat :=
   squareDivisor input.checked + squarefreePart input.checked
 
+def runTotientFactorCount (input : SigmaInput) : Nat :=
+  totient input.checked
+
 /- Generic factorization is rho-dominated on balanced semiprimes: the smaller
 factor has size `sqrt n`, and rho takes its square root, giving `O(n^(1/4))`
 arithmetic iterations. The returned factor-count hash is constant-size. -/
@@ -213,7 +216,7 @@ setup_benchmark runOrder n => n
     targetInnerNanos := 100000000
   }
 
-/- These two targets are much faster per call than the route-search targets
+/- These targets are much faster per call than the route-search targets
 above, while using the same warm, autotuned 100 ms child-side batches. On the
 scheduled high-startup host, the default ten-spawn floor would discard their
 in-process measurements; the 1.0 multiplier changes only that filter, and
@@ -273,6 +276,27 @@ setup_benchmark runSquareFactorCount n => n * n
     signalFloorMultiplier := 1.0
     -- At 32..512 the early accumulator-width regimes gave an inconclusive
     -- slope. Extending to 1024 exposes convergence toward the n² model.
+    slopeTolerance := 0.20
+    outerTrials := 3
+  }
+
+/- Each prepared certificate has `n` fixed-exponent prime-power entries.
+`totient` builds one bounded-size contribution per entry, then sequentially
+multiplies an accumulator whose limb count grows linearly, giving the declared
+`Theta(n²)` native-cost model. Hashing the linearly sized result is lower-order.
+Preparation hoists the enormous subject out of the timed loop; scanning
+residues below it would not terminate on these subjects. -/
+setup_benchmark runTotientFactorCount n => n * n
+  with prep := sigmaInputForCount
+  where {
+    paramFloor := 32
+    paramCeiling := 1024
+    paramSchedule := .custom #[32, 64, 128, 256, 512, 1024]
+    maxSecondsPerCall := 5.0
+    targetInnerNanos := 100000000
+    signalFloorMultiplier := 1.0
+    -- The ladder crosses accumulator-width regimes; 0.20 admits that
+    -- finite-range transition without changing the model.
     slopeTolerance := 0.20
     outerTrials := 3
   }

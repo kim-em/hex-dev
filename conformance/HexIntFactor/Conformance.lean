@@ -100,6 +100,13 @@ example : numDivisors checkedHugeTau = 101 ^ 6 := by decide +kernel
 example : sigma checkedHugeTau 0 = 101 ^ 6 := by decide +kernel
 example : sigma checkedPow64 1 = 2 ^ 65 - 1 := by decide +kernel
 #guard totient checked12 == 4
+#guard totient checked1 == 1
+#guard totient checked64 == 32
+#guard totient checked10800 == 2880
+#guard totient checked30 == 8
+-- A range scan to this subject is infeasible; this exercises the factor route.
+#guard totient checkedPow64 == 2 ^ 63
+example : totient checkedPow64 = 2 ^ 63 := by decide +kernel
 example :
     ((List.range (7 ^ 1)).filter fun a => Nat.Coprime a (7 ^ 1)).length = 6 := by
   simpa using coprimeCount_primePow (p := 7) (e := 1) (by decide) (by decide)
