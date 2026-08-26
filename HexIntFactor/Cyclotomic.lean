@@ -110,6 +110,21 @@ inductive PowerRoute where
   | generic
 deriving Repr, DecidableEq
 
+namespace Internal
+
+/-- Retry a power target only after ordinary subproblem exhaustion. An
+invariant rejection is propagated with its original diagnostic scope. -/
+def retryPower? (target : Nat) (failure : FactorFailure) (fuel : Nat) :
+    Except FactorFailure (CheckedFactorization target × Rand × PowerRoute) :=
+  match failure.stop with
+  | .rejected => .error failure
+  | .zero | .incomplete =>
+      match factor? target failure.rand fuel with
+      | .ok (F, r') => .ok (F, r', .generic)
+      | .error fallback => .error fallback
+
+end Internal
+
 private def insertPartPower (entry : PrimePower) : List PrimePower → List PrimePower
   | [] => [entry]
   | current :: rest =>
@@ -146,14 +161,10 @@ private def factorPowerTarget? (target : Nat) (parts? : Option (List CyclotomicP
             { stop := .rejected
               attempts := 0
               rand := r'
-              culprit := some ⟨target, entries, 1⟩ }
+              culprit := some ⟨target, entries, 1⟩
+              metered := false }
       | .error failure =>
-          match failure.stop with
-          | .rejected => .error failure
-          | .zero | .incomplete =>
-              match factor? target failure.rand fuel with
-              | .ok (F, r') => .ok (F, r', .generic)
-              | .error fallback => .error fallback
+          Internal.retryPower? target failure fuel
   | none =>
       match factor? target r fuel with
       | .ok (F, r') => .ok (F, r', .generic)

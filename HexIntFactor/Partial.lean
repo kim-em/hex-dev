@@ -134,14 +134,11 @@ theorem checkFactorization_of_checkPartial {F : PartialFactorization}
     checkFactorization ⟨F.subject, F.factors⟩ = true := by
   obtain ⟨hsubject, hentries, acc, hproduct, hresidual⟩ :=
     checkedPartial_parts h
-  rw [hr] at hresidual
-  unfold boundedPowMul at hresidual
-  split at hresidual
-  · cases hresidual
-  · unfold boundedPowMul at hresidual
-    have hacc : acc = F.subject := by simpa using hresidual
-    simp only [checkFactorization, Bool.and_eq_true, decide_eq_true_eq]
-    exact ⟨⟨hsubject, hentries⟩, hacc ▸ hproduct⟩
+  have hacc : acc = F.subject := by
+    have heq := boundedPowMul_eq 1 acc F.subject hresidual
+    simpa [hr] using heq.symm
+  simp only [checkFactorization, Bool.and_eq_true, decide_eq_true_eq]
+  exact ⟨⟨hsubject, hentries⟩, hacc ▸ hproduct⟩
 
 end Nat
 

@@ -164,8 +164,10 @@ example :
 #guard pMinusOneFactor 25 2 2 == .noFactor
 #guard pMinusOneFactor 15 4 2 == .whole
 
-example : 1 < 3 ∧ 3 < 15 ∧ 3 ∣ 15 :=
-  pMinusOneFactor_spec (n := 15) (base := 2) (bound := 2) (d := 3) (by decide)
+example {n base bound d : Nat}
+    (h : pMinusOneFactor n base bound = .factor d) :
+    1 < d ∧ d < n ∧ d ∣ n :=
+  pMinusOneFactor_spec h
 
 -- ECM's three stage-boundary gcd outcomes are observably distinct.
 #guard ecmStage1 191 6 2 == .noFactor
@@ -227,6 +229,23 @@ private def starvedInput : Nat := 1000003 * 1000033
 #guard (match factorPowerWithRoute? 2 6 .minus (Rand.ofSeed 1) with
   | .ok (_, _, route) => route == .cyclotomic
   | .error _ => false)
+
+-- A rejected cyclotomic subproblem is propagated, never retried as generic
+-- exhaustion for the outer target.
+private def rejectedPart : FactorFailure :=
+  { stop := .rejected
+    attempts := 4
+    rand := Rand.ofSeed 11
+    culprit := some ⟨7, [⟨1, .small 2⟩], 3⟩ }
+
+#guard (match Hex.Nat.Internal.retryPower? 63 rejectedPart 0 with
+  | .error failure =>
+      failure.stop == .rejected && failure.attempts == 4 && failure.metered &&
+        failure.rand == Rand.ofSeed 11 &&
+          match failure.culprit with
+          | some rejected => rejected.subject == 7
+          | none => false
+  | .ok _ => false)
 
 #guard (match factor? 4826808 (Rand.ofSeed 7) with
   | .ok (F, _) =>

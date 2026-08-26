@@ -26,7 +26,7 @@ def runRho (n : Nat) : Nat :=
   | .error f => f.attempts
 
 def runPMinusOne (n : Nat) : Nat :=
-  match pMinusOneStage1 n 2 10000 with
+  match pMinusOneFactor n 2 10000 with
   | .factor d => d
   | .noFactor => 1
   | .whole => n

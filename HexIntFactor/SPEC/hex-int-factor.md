@@ -237,11 +237,13 @@ consumer.
 
 ## The algorithms
 
-Every route produces a candidate `Factorization` and `factor?` accepts
-it only through `checkFactorization`. A rejected final aggregate is a bug in
-a route, never ordinary fuel exhaustion, and is exposed as
-`FactorStop.rejected`. Route-local attempts that report no factor may still
-continue to the next search route.
+The generic routes produce a partial aggregate, which `factor?` accepts through
+`checkPartial`; residual one becomes a complete certificate by
+`checkFactorization_of_checkPartial`, without another checker replay. The
+cyclotomic route separately replays `checkFactorization` on its merged complete
+aggregate. Rejection at either boundary is a route bug, never ordinary fuel
+exhaustion, and is exposed as `FactorStop.rejected`. Route-local attempts that
+report no factor may still continue to the next search route.
 
 ```lean
 inductive FactorStop where
@@ -259,6 +261,7 @@ structure FactorFailure where
   rand     : Rand
   snapshot : Option PartialSnapshot := none
   culprit  : Option PartialFactorization := none
+  metered   : Bool := true
 
 def defaultFuel (n : Nat) : Nat
 
@@ -417,15 +420,21 @@ there is no fallback that is correct-but-slow, because trial division
 past `10^{18}` is not slow, it is unavailable.
 
 `FactorStop.rejected` is deliberately separate: it means a final aggregate
-failed its subject or certificate checker. It preserves the advanced random
-state and attempt count. A rejected partial aggregate also retains both the
-unchecked candidate in `FactorFailure.culprit` and a checked empty-factor
+failed its certificate checker. At the generic partial-acceptance boundary it
+preserves the advanced random state and attempt count. A rejected partial
+aggregate also retains both the unchecked candidate in
+`FactorFailure.culprit` and a checked empty-factor
 recovery snapshot for the positive subject; the two are not conflated. It must
 be treated as an implementation defect rather than a request for more fuel.
 The internal candidate-acceptance boundary is exercised directly by negative
 conformance tests. Genuine incomplete failures retain the checked aggregate in
 `FactorFailure.snapshot`; the zero case has no snapshot. Cyclotomic dispatch
-propagates rejection rather than retrying it as though it were exhaustion.
+propagates rejection rather than retrying it as though it were exhaustion. A
+rejection propagated from a cyclotomic part remains scoped to that subproblem;
+a rejected merged cyclotomic aggregate records the target candidate and random
+state. Its successful subsearch attempts are not exposed by `factor?`, so its
+placeholder count is marked unavailable by `metered = false` rather than being
+presented as an exact total.
 
 A partial answer is more useful than no answer, so the search also
 exposes
@@ -471,7 +480,7 @@ theorem factorPartial?_error {n r fuel f}
           checkPartial rejected = false ∧ f.snapshot = some saved ∧
             saved.raw.subject = n)
 
-theorem factorPartial?_success {n r fuel} (hn : 0 < n) :
+theorem factorPartial?_result {n r fuel} (hn : 0 < n) :
     (∃ F r', factorPartial? n r fuel = .ok (F, r')) ∨
       ∃ f rejected saved, factorPartial? n r fuel = .error f ∧
         f.stop = .rejected ∧ f.culprit = some rejected ∧
@@ -485,9 +494,10 @@ aggregate that failed `checkPartial`. Such a failure is returned as
 `FactorStop.rejected`, and the success-or-rejection theorem makes that internal
 failure case explicit. At `n = 0` no object satisfying `0 < subject` and
 `subject = n` exists, and `FactorStop.zero` reports that fact instead of
-returning checked data about another number. A failure retains its advanced
-state and attempt count, while success returns the state alongside the checked
-data, so a caller never repeats a failed random stream accidentally.
+returning checked data about another number. A generic-search failure retains
+its advanced state and exact attempt count, while success returns the state
+alongside the checked data, so a caller never repeats a failed random stream
+accidentally.
 
 `factor?` uses the same partial-candidate acceptance boundary: it propagates
 `FactorStop.zero` or `FactorStop.rejected`, converts residual one to the complete

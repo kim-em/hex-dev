@@ -38,8 +38,12 @@ structure FactorFailure where
   stop : FactorStop
   attempts : Nat
   rand : Rand
+  /-- Last checked partial aggregate, when the stopped route has one. -/
   snapshot : Option PartialSnapshot := none
+  /-- Raw aggregate rejected by a checker, when rejection caused the stop. -/
   culprit : Option PartialFactorization := none
+  /-- Whether `attempts` is an exact count for the stopped route. -/
+  metered : Bool := true
 deriving Repr
 
 /-- Default search budget, scaled by input bit length. -/
@@ -225,7 +229,7 @@ theorem factorPartial?_error {n r fuel f}
 
 /-- Every positive input either has checked partial data or exposes an internal
 candidate rejection; rejection is never reported as ordinary exhaustion. -/
-theorem factorPartial?_success {n r fuel} (hn : 0 < n) :
+theorem factorPartial?_result {n r fuel} (hn : 0 < n) :
     (∃ F r', factorPartial? n r fuel = .ok (F, r')) ∨
       ∃ f rejected saved, factorPartial? n r fuel = .error f ∧
         f.stop = .rejected ∧ f.culprit = some rejected ∧
