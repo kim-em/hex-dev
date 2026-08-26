@@ -24,6 +24,11 @@ inductive Sign where
   | plus
 deriving Repr, DecidableEq
 
+/-- The natural-number target denoted by a signed power form. -/
+def powerTarget (b n : Nat) : Sign → Nat
+  | .minus => b ^ n - 1
+  | .plus => b ^ n + 1
+
 /-- One candidate cyclotomic value `Φ_index(base)`. -/
 structure CyclotomicPart where
   /-- Cyclotomic index `d`. -/
@@ -32,29 +37,32 @@ structure CyclotomicPart where
   value : Nat
 deriving Repr, DecidableEq
 
-private def properValueProduct (i : Nat) (values : List Nat) : Nat :=
-  (List.range (i - 1)).foldl (fun acc j =>
-    let d := j + 1
-    if i % d = 0 then acc * values.getD j 1 else acc) 1
+private def divisorIndices (n : Nat) : List Nat :=
+  (List.range n).map (· + 1) |>.filter fun d => n % d = 0
 
-private def buildValues (b : Nat) : Nat → List Nat
-  | 0 => []
-  | n + 1 =>
-      let previous := buildValues b n
-      let i := n + 1
-      previous ++ [(b ^ i - 1) / properValueProduct i previous]
+private def properValueProduct (i : Nat) (prior : List Nat)
+    (values : Array Nat) : Nat :=
+  prior.foldl (fun acc d =>
+    if i % d = 0 then acc * values.getD d 0 else acc) 1
 
-/-- Recursive Nat candidate for `Φ_d(b)`. -/
-def cyclotomicValue (b d : Nat) : Nat :=
-  if d = 0 then 0 else (buildValues b d).getD (d - 1) 0
+/-- Fill the required divisor-closed indices once, in ascending order. The
+array gives constant-time access to every previously computed proper divisor;
+`prior` contains exactly the filled indices, in reverse order. -/
+private def buildValues (b : Nat) : List Nat → List Nat → Array Nat → Array Nat
+  | [], _, values => values
+  | i :: rest, prior, values =>
+      let denominator := properValueProduct i prior values
+      let value := (b ^ i - 1) / denominator
+      buildValues b rest (i :: prior) (values.set! i value)
 
-private def splitIndices (n : Nat) (sign : Sign) : List Nat :=
+private def valueTable (b : Nat) (indices : List Nat) : Array Nat :=
+  let limit := indices.foldl max 0
+  buildValues b indices [] (Array.replicate (limit + 1) 0)
+
+private def splitIndices (n : Nat) (sign : Sign) (all : List Nat) : List Nat :=
   match sign with
-  | .minus =>
-      (List.range n).map (· + 1) |>.filter fun d => n % d = 0
-  | .plus =>
-      (List.range (2 * n)).map (· + 1) |>.filter fun d =>
-        2 * n % d = 0 && n % d ≠ 0
+  | .minus => all
+  | .plus => all.filter fun d => n % d ≠ 0
 
 /-- Candidate split of `b^n - 1` or `b^n + 1`, guarded by an exact product
 check and rejected on the degenerate domains. -/
@@ -63,11 +71,12 @@ def cyclotomicSplit? (b n : Nat) (sign : Sign) :
   if b < 2 then none
   else if n = 0 then none
   else
-    let parts := (splitIndices n sign).map fun d =>
-      ⟨d, cyclotomicValue b d⟩
-    let target := match sign with
-      | .minus => b ^ n - 1
-      | .plus => b ^ n + 1
+    let limit : Nat := match sign with | .minus => n | .plus => 2 * n
+    let all : List Nat := divisorIndices limit
+    let values : Array Nat := valueTable b all
+    let parts : List CyclotomicPart := (splitIndices n sign all).map fun d =>
+      ⟨d, values.getD d 0⟩
+    let target := powerTarget b n sign
     if (parts.map (·.value)).prod = target then some parts else none
 
 /-- Every returned cyclotomic candidate has the requested domain and exact
@@ -77,9 +86,7 @@ theorem cyclotomicSplit?_prod {b n : Nat} {sign : Sign}
     (h : cyclotomicSplit? b n sign = some parts) :
     2 ≤ b ∧ 0 < n ∧
       (parts.map (·.value)).prod =
-        match sign with
-        | .minus => b ^ n - 1
-        | .plus => b ^ n + 1 := by
+        powerTarget b n sign := by
   by_cases hb : b < 2
   · simp [cyclotomicSplit?, hb] at h
   by_cases hn : n = 0
@@ -126,32 +133,49 @@ def retryPower? (target : Nat) (failure : FactorFailure) (fuel : Nat) :
       | .ok (F, r') => .ok (F, r', .generic)
       | .error fallback =>
           .error { fallback with
-            attempts := failure.attempts + fallback.attempts
-            metered := failure.metered && fallback.metered }
+            attempts := failure.attempts + fallback.attempts }
+
+/-- A scoped checker rejection is propagated unchanged and never retried as
+generic exhaustion. -/
+theorem retryPower?_rejected {target : Nat} {failure : FactorFailure}
+    {fuel : Nat} (hstop : failure.stop = .rejected) :
+    retryPower? target failure fuel = .error failure := by
+  simp [retryPower?, hstop]
+
+/-- A failed generic continuation preserves its diagnostics while adding the
+exact earlier part-search subtotal. -/
+theorem retryPower?_fallback {target : Nat} {failure fallback : FactorFailure}
+    {fuel : Nat} (hstop : failure.stop ≠ .rejected)
+    (hfactor : factor? target failure.rand fuel = .error fallback) :
+    retryPower? target failure fuel = .error
+      { fallback with
+        attempts := failure.attempts + fallback.attempts } := by
+  cases h : failure.stop <;> simp_all [retryPower?]
 
 end Internal
 
-private def insertPartPower (entry : PrimePower) : List PrimePower → List PrimePower
-  | [] => [entry]
-  | current :: rest =>
-      if entry.prime < current.prime then entry :: current :: rest
-      else if entry.prime = current.prime then
-        { current with exponent := current.exponent + entry.exponent } :: rest
-      else current :: insertPartPower entry rest
-
-private def mergePartPowers (source target : List PrimePower) : List PrimePower :=
-  source.foldl (fun acc entry => insertPartPower entry acc) target
+/-- Canonical merged entries and exact search state for a completed suffix of
+cyclotomic parts. -/
+private structure PartFactors where
+  entries : List PrimePower
+  attempts : Nat
+  rand : Rand
 
 private def factorParts (fuel : Nat) : List CyclotomicPart → Rand →
-    Except FactorFailure (List PrimePower × Rand)
-  | [], r => .ok ([], r)
+    Except FactorFailure PartFactors
+  | [], r => .ok ⟨[], 0, r⟩
   | part :: parts, r =>
-      match factor? part.value r fuel with
+      match Internal.factorCounted? part.value r fuel with
       | .error failure => .error failure
-      | .ok (F, r') =>
-          match factorParts fuel parts r' with
-          | .error failure => .error failure
-          | .ok (entries, r'') => .ok (mergePartPowers F.raw.factors entries, r'')
+      | .ok current =>
+          match factorParts fuel parts current.rand with
+          | .error failure =>
+              .error { failure with
+                attempts := current.attempts + failure.attempts }
+          | .ok rest =>
+              .ok ⟨Internal.mergePowers current.factorization.raw.factors
+                  rest.entries,
+                current.attempts + rest.attempts, rest.rand⟩
 
 private def factorPowerTarget? (target : Nat) (parts? : Option (List CyclotomicPart))
     (r : Rand) (fuel : Nat) :
@@ -159,48 +183,95 @@ private def factorPowerTarget? (target : Nat) (parts? : Option (List CyclotomicP
   match parts? with
   | some parts =>
       match factorParts fuel parts r with
-      | .ok (entries, r') =>
-          let raw : Factorization := ⟨target, entries⟩
+      | .ok factored =>
+          let raw : Factorization := ⟨target, factored.entries⟩
           if h : checkFactorization raw = true then
-            .ok (⟨raw, rfl, h⟩, r', .cyclotomic)
+            .ok (⟨raw, rfl, h⟩, factored.rand, .cyclotomic)
           else .error
             { stop := .rejected
-              attempts := 0
-              rand := r'
-              culprit := some ⟨target, entries, 1⟩
-              metered := false }
+              attempts := factored.attempts
+              rand := factored.rand
+              culprit := some ⟨target, factored.entries, 1⟩ }
       | .error failure =>
-          -- `factor?` does not expose successful-search counts. A failure in
-          -- a later part therefore omits the work spent on earlier parts;
-          -- retain the diagnostic, but do not advertise that subtotal as
-          -- exact when the generic continuation later stops.
-          Internal.retryPower? target { failure with metered := false } fuel
+          Internal.retryPower? target failure fuel
   | none =>
-      match factor? target r fuel with
-      | .ok (F, r') => .ok (F, r', .generic)
-      | .error failure => .error failure
+      (factor? target r fuel).map fun (F, r') => (F, r', .generic)
 
 /-- Factor a declared `b^n ± 1` form, trying its checked cyclotomic pieces
 before the generic dispatch. The route tag makes this ordering testable. -/
 def factorPowerWithRoute? (b n : Nat) (sign : Sign) (r : Rand)
-    (fuel : Nat := defaultFuel (b ^ n + 1)) :
+    (fuel : Nat := defaultFuel (powerTarget b n sign)) :
     Except FactorFailure
-      (CheckedFactorization
-        (match sign with | .minus => b ^ n - 1 | .plus => b ^ n + 1) ×
-       Rand × PowerRoute) :=
+      (CheckedFactorization (powerTarget b n sign) × Rand × PowerRoute) :=
   match sign with
   | .minus => factorPowerTarget? (b ^ n - 1) (cyclotomicSplit? b n .minus) r fuel
   | .plus => factorPowerTarget? (b ^ n + 1) (cyclotomicSplit? b n .plus) r fuel
 
 /-- Convenience projection that hides the diagnostic route tag. -/
 def factorPower? (b n : Nat) (sign : Sign) (r : Rand)
-    (fuel : Nat := defaultFuel (b ^ n + 1)) :
+    (fuel : Nat := defaultFuel (powerTarget b n sign)) :
     Except FactorFailure
-      (CheckedFactorization
-        (match sign with | .minus => b ^ n - 1 | .plus => b ^ n + 1) × Rand) :=
+      (CheckedFactorization (powerTarget b n sign) × Rand) :=
   match factorPowerWithRoute? b n sign r fuel with
   | .ok (F, r', _) => .ok (F, r')
   | .error failure => .error failure
+
+/-- The convenience projection preserves every failure unchanged, including
+scoped checker rejection and accumulated retry diagnostics. -/
+theorem factorPower?_error_iff {b n : Nat} {sign : Sign} {r : Rand}
+    {fuel : Nat} {failure : FactorFailure} :
+    factorPower? b n sign r fuel = .error failure ↔
+      factorPowerWithRoute? b n sign r fuel = .error failure := by
+  unfold factorPower?
+  split <;> simp_all
+
+/-- A projected success is exactly a routed success with the diagnostic tag
+hidden. -/
+theorem factorPower?_ok_iff {b n : Nat} {sign : Sign} {r r' : Rand}
+    {fuel : Nat} {F : CheckedFactorization (powerTarget b n sign)} :
+    factorPower? b n sign r fuel = .ok (F, r') ↔
+      ∃ route, factorPowerWithRoute? b n sign r fuel = .ok (F, r', route) := by
+  unfold factorPower?
+  split <;> simp_all
+
+/-- If no checked cyclotomic candidate exists, the route is exactly the
+ordinary generic factorization search tagged as generic. -/
+theorem factorPowerWithRoute?_generic {b n : Nat} {sign : Sign} {r : Rand}
+    {fuel : Nat} (hparts : cyclotomicSplit? b n sign = none) :
+    factorPowerWithRoute? b n sign r fuel =
+      (factor? (powerTarget b n sign) r fuel).map fun (F, r') =>
+        (F, r', .generic) := by
+  cases sign with
+  | minus =>
+      change factorPowerTarget? (b ^ n - 1) (cyclotomicSplit? b n .minus)
+          r fuel = _
+      rw [hparts]
+      simp only [factorPowerTarget?, powerTarget]
+  | plus =>
+      change factorPowerTarget? (b ^ n + 1) (cyclotomicSplit? b n .plus)
+          r fuel = _
+      rw [hparts]
+      simp only [factorPowerTarget?, powerTarget]
+
+/-- A cyclotomic-tagged result implies that the checked split was available. -/
+theorem factorPowerWithRoute?_cyclotomic {b n : Nat} {sign : Sign} {r r' : Rand}
+    {fuel : Nat} {F : CheckedFactorization (powerTarget b n sign)}
+    (h : factorPowerWithRoute? b n sign r fuel = .ok (F, r', .cyclotomic)) :
+    ∃ parts, cyclotomicSplit? b n sign = some parts := by
+  cases hparts : cyclotomicSplit? b n sign with
+  | some parts => exact ⟨parts, rfl⟩
+  | none =>
+      rw [factorPowerWithRoute?_generic hparts] at h
+      cases hfactor : factor? (powerTarget b n sign) r fuel with
+      | error failure =>
+          rw [hfactor] at h
+          simp only [Except.map] at h
+          cases h
+      | ok result =>
+          rcases result with ⟨G, s⟩
+          rw [hfactor] at h
+          simp only [Except.map] at h
+          cases h
 
 end Nat
 

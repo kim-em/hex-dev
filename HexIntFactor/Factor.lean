@@ -47,8 +47,6 @@ structure FactorFailure where
   snapshot : Option PartialSnapshot := none
   /-- Raw aggregate rejected by a checker, when rejection caused the stop. -/
   culprit : Option PartialFactorization := none
-  /-- Whether `attempts` is an exact count for the stopped route. -/
-  metered : Bool := true
 deriving Repr
 
 /-- Default search budget, scaled by input bit length. -/
@@ -61,7 +59,11 @@ private structure FactorAttempt (n : Nat) where
   attempts : Nat
   powerRoutes : Nat
 
-private def insertPower (entry : PrimePower) : List PrimePower → List PrimePower
+namespace Internal
+
+/-- Insert one certified prime-power entry into a sorted, duplicate-free list,
+adding exponents when the prime is already present. -/
+def insertPower (entry : PrimePower) : List PrimePower → List PrimePower
   | [] => [entry]
   | current :: rest =>
       if entry.prime < current.prime then entry :: current :: rest
@@ -69,11 +71,11 @@ private def insertPower (entry : PrimePower) : List PrimePower → List PrimePow
         { current with exponent := current.exponent + entry.exponent } :: rest
       else current :: insertPower entry rest
 
-private def mergePowers (entries : List PrimePower) (into : List PrimePower) :
+/-- Merge certified prime-power entries into the canonical sorted list,
+combining every duplicate prime by exponent addition. -/
+def mergePowers (entries : List PrimePower) (into : List PrimePower) :
     List PrimePower :=
   entries.foldl (fun acc entry => insertPower entry acc) into
-
-namespace Internal
 
 /-- Rho restarts allocated by the complete-factorization dispatcher. The cap
 keeps Pollard p−1 and ECM reachable after rho exhaustion, while the fuel side
@@ -202,7 +204,7 @@ private def searchGo : Nat → List (Nat × Nat) → List PrimePower → Nat →
           -- defensive if a future producer weakens that invariant.
           | .trial | .twos => powerRoutes
           | .perfectPower | .twosPower => powerRoutes + 1
-        let factors := mergePowers candidate.factors factors
+        let factors := Internal.mergePowers candidate.factors factors
         let m := candidate.residualBase
         let multiplier := candidate.residualExponent
         if m = 1 then
@@ -211,7 +213,7 @@ private def searchGo : Nat → List (Nat × Nat) → List PrimePower → Nat →
           match Internal.primeCertCounted? m r (fuel + 1) with
           | .ok certified =>
               searchGo fuel stack
-                (insertPower ⟨multiplier, certified.cert.raw⟩ factors)
+                (Internal.insertPower ⟨multiplier, certified.cert.raw⟩ factors)
                 residual certified.rand (attempts + certified.attempts) powerRoutes
           | .error primeFailure =>
               match Internal.rhoSplitCounted? m primeFailure.rand
@@ -296,6 +298,38 @@ theorem acceptPartial?_error {n hn raw hs r attempts f}
     refine ⟨rfl, rfl, hbad, ?_⟩
     simp
 
+/-- A complete checked factorization with the exact search work and generator
+state that produced it. -/
+structure FactorSuccess (n : Nat) where
+  /-- Kernel-replayable checked factorization. -/
+  factorization : CheckedFactorization n
+  /-- Randomized search attempts, including every successful subsearch. -/
+  attempts : Nat
+  /-- Generator state after all randomized work. -/
+  rand : Rand
+
+/-- Complete factorization retaining exact successful-attempt metering. -/
+def factorCounted? (n : Nat) (r : Rand) (fuel : Nat := defaultFuel n) :
+    Except FactorFailure (FactorSuccess n) :=
+  if hn : n = 0 then .error { stop := .zero, attempts := 0, rand := r }
+  else
+    let out := smallAttempt n r fuel
+    match acceptPartial? n (Nat.pos_of_ne_zero hn) out.raw
+        out.subject_eq out.rand out.attempts with
+    | .error failure => .error failure
+    | .ok (F, r') =>
+        if hr : F.raw.residual = 1 then
+          let raw : Factorization := ⟨n, F.raw.factors⟩
+          have hv : checkFactorization raw = true := by
+            simpa [raw, F.subject_eq] using
+              checkFactorization_of_checkPartial F.valid hr
+          .ok ⟨⟨raw, rfl, hv⟩, out.attempts, r'⟩
+        else .error
+          { stop := .incomplete
+            attempts := out.attempts
+            rand := r'
+            snapshot := some ⟨F.raw, F.valid⟩ }
+
 end Internal
 
 /-- Return checked partial data for positive input, or expose a rejected
@@ -311,24 +345,9 @@ def factorPartial? (n : Nat) (r : Rand) (fuel : Nat := defaultFuel n) :
 /-- Complete factorization when the checked partial residual is `1`. -/
 def factor? (n : Nat) (r : Rand) (fuel : Nat := defaultFuel n) :
     Except FactorFailure (CheckedFactorization n × Rand) :=
-  if hn : n = 0 then .error { stop := .zero, attempts := 0, rand := r }
-  else
-    let out := smallAttempt n r fuel
-    match Internal.acceptPartial? n (Nat.pos_of_ne_zero hn) out.raw
-        out.subject_eq out.rand out.attempts with
-    | .error failure => .error failure
-    | .ok (F, r') =>
-        if _hr : F.raw.residual = 1 then
-          let raw : Factorization := ⟨n, F.raw.factors⟩
-          have hv : checkFactorization raw = true := by
-            simpa [raw, F.subject_eq] using
-              checkFactorization_of_checkPartial F.valid _hr
-          .ok (⟨raw, rfl, hv⟩, r')
-        else .error
-          { stop := .incomplete
-            attempts := out.attempts
-            rand := r'
-            snapshot := some ⟨F.raw, F.valid⟩ }
+  match Internal.factorCounted? n r fuel with
+  | .error failure => .error failure
+  | .ok success => .ok (success.factorization, success.rand)
 
 /-- Partial search errors are either the distinguished zero input or an
 internal candidate rejection. -/
