@@ -371,6 +371,15 @@ the implementation must distinguish: `g = 1` (increase `B`, retry, or
 fall through), `1 < g < n` (a factor), `g = n` (the exponent killed
 every component; retry with a different base or a smaller `B`).
 
+The public bound is explicit rather than aspirational. `smoothBoundCap` is
+the conservative cap `primeTableBound - 1`, inside the range where the
+committed table is certified to contain every prime at or below the bound, and
+`smoothBound B = min B smoothBoundCap`. Both the selected primes and their
+prime-power exponents use that same effective bound. In particular a request
+above the cap is not the former hybrid that omitted large primes while still
+raising table primes to powers derived from the larger request. The theorem
+`pMinusOneStage1_bound` states exact equality with the capped call.
+
 The success condition is about the **order of `a` modulo `p`**, not
 about `p − 1`: stage 1 finds `p` when `ord_p(a) ∣ M`. That is implied
 by `p − 1` being `B`-smooth and is strictly weaker than it, so an
@@ -393,6 +402,14 @@ same is true of the moduli in the Cunningham tables generally. So it
 runs before ECM and after rho, and the benchmark family "`b^n ± 1`"
 below is the one that justifies its place.
 
+At one unresolved dispatcher entry, p−1 receives at most four attempts from
+the combined smooth-route budget. It starts with base `2` and bound `64`.
+A no-factor result multiplies the bound by eight up to `smoothBoundCap`, then
+falls through if the cap made no change. A whole-modulus result lowers the
+bound by a factor of eight (not below `2`) and advances through bases
+`[2, 3, 5, 7]`. A proper factor stops the ladder immediately. These are
+attempts, not hidden retries inside one nominal route call.
+
 ### 3. The elliptic curve method
 
 For factors past rho's reach. Montgomery curves in **projective `x:z`
@@ -413,6 +430,16 @@ distinguish exactly as in `p − 1`: `gcd = 1` is no information,
 Suyama setup does need one inversion or gcd. And the primitive required
 is `Nat.gcd`, not Bézout coefficients, so the relevant hex-arith export
 is the gcd rather than `HexArith.Int.extGcd`.
+
+ECM uses the same `smoothBound` contract, recorded by
+`ecmStage1_bound`. After the p−1 ladder, every remaining attempt in the
+combined budget draws a fresh Suyama parameter
+`sigma = 6 + word % 256` and advances `Rand` exactly once. It starts at
+bound `64`; gcd one raises the next bound eightfold, while whole modulus
+changes curve at the retained bound. A no-factor result at the cap falls
+through. Thus the production route is genuinely multi-curve
+and deterministic replay from a fixed state includes both the parameters and
+the final state.
 
 The stage keeps `A24 = a24num / a24den` scaled throughout. If
 `AA = (X + Z)²`, `BB = (X - Z)²`, and `C = AA - BB`, doubling is
@@ -459,6 +486,14 @@ reachable -- deliberately so. Per design principle 8 that is the third
 remedy, propagating the failure upward, and it is the right one here:
 there is no fallback that is correct-but-slow, because trial division
 past `10^{18}` is not slow, it is unavailable.
+
+The p−1 and ECM ladders share `min fuel 8` attempts at each unresolved
+cofactor, with at most four assigned to p−1 and the unused remainder assigned
+to ECM. Their execution-order event list is the accounting source: its length
+is added on factor success and exhaustion alike, and its final `Rand` is
+threaded into every continuation. Checker rejection retains the attempt total
+already accumulated by the producing search; it does not replay a curve or
+replace the advanced state.
 
 `FactorStop.rejected` is deliberately separate: it means a final aggregate
 failed its certificate checker. At the generic partial-acceptance boundary it
@@ -1051,7 +1086,9 @@ that the perfect-power detector fired on a perfect power, that `p − 1`
 distinguished proper-factor, `1`, and whole-modulus outcomes, that rho
 found the factor within the expected iteration count for a fixed seed,
 that ECM stage 1 distinguished its three gcd outcomes after a setup gcd of
-one (including stage-found proper-factor and whole-modulus cases), and that
+one (including stage-found proper-factor and whole-modulus cases), that a
+fixed-seed smooth-route schedule exercised the p−1 and ECM no-factor/whole
+retry branches with exact event accounting and advanced random state, and that
 `cyclotomicSplit?` ran before the generic dispatch on a `b^n − 1`
 input. This is the same division
 [hex-mv-gcd](../../HexMvGcd/SPEC/hex-mv-gcd.md) makes, and it is worth more than the oracle
