@@ -738,6 +738,10 @@ theorem sigmaEntry_eq_powerSum (entry : PrimePower) (k : Nat) :
         (fun q => q ^ k)).sum
 theorem totient_eq_count {n} (F : CheckedFactorization n) :
     totient F = ((List.range n).filter (fun a => Nat.Coprime a n)).length
+theorem totient_eq_prod {n} (F : CheckedFactorization n) :
+    totient F =
+      (F.raw.factors.map fun e =>
+        e.prime ^ (e.exponent - 1) * (e.prime - 1)).prod
 theorem coprimeCount_mul {m n} (hcop : Nat.Coprime m n) :
     ((List.range (m * n)).filter (fun a => Nat.Coprime a (m * n))).length =
       ((List.range m).filter (fun a => Nat.Coprime a m)).length *
@@ -771,8 +775,8 @@ mean each call re-factors, and would mean each has to answer at `0` and at
 inputs the search cannot handle. Taking certified data makes them total
 functions whose semantic theorems need no side hypothesis, and makes the
 cost model visible: factoring is expensive, while most certificate consumers
-are linear in the number of prime-power entries. Divisor enumeration and the
-current placeholder implementation of `totient` are the stated exceptions.
+are linear in the number of prime-power entries. Divisor enumeration is the
+stated exception.
 The `coprimeCount_mul` and two `coprime*primePow` theorems are raw-`Nat`
 ingredients for the totient proof, rather than additional divisor functions.
 
@@ -808,12 +812,10 @@ the Mathlib-free layer by counting periodic blocks modulo the base prime.
 `coprimeCount_mul` supplies the second: the forward map sends a residue to
 its representatives modulo the two coprime factors, and a constructive
 extended-GCD inverse proves the resulting finite lists are permutations.
-The zero/unit boundary is included in the theorem. Listing
-`totient_eq_count` here is not a claim that the arithmetic root already uses
-these ingredients: `totient` currently ignores its certificate and enumerates
-`List.range n`, so it costs `O(n)` gcd computations rather than `O(k)`.
-Replacing it by `∏ pᵢ^(eᵢ-1)(pᵢ-1)`, proved from the two counting theorems,
-is the next divisor-API milestone.
+The zero/unit boundary is included in the theorem. The implementation of
+`totient` uses these ingredients to justify the certified product
+`∏ pᵢ^(eᵢ-1)(pᵢ-1)`. It traverses only the checked prime-power list and
+does not enumerate residues below the subject.
 
 ## Complexity
 
@@ -832,8 +834,8 @@ the number of distinct primes, `B` a smoothness bound.
 | `checkOrder` | `O(k)` modular exponentiations plus `checkFactorization` | includes the order's primality replays |
 | `divisors` | `O(τ log τ)` | `τ = ∏(eᵢ + 1)` |
 | `sigma` | `O(k)` geometric sums | each entry uses `O(log r + log e)` multiplications for power argument `r`; for fixed `p` and `r`, its output has `Θ(e)` bits |
-| `totient` (current placeholder) | `O(n)` gcds | becomes `O(k)` when the certified product formula lands |
-| everything else in the divisor API | `O(k)` | excludes `divisors` and the current `totient` placeholder |
+| `totient` | `O(Σ log eᵢ)` multiplications | `k` certified prime-power contributions; no residue scan |
+| everything else in the divisor API | `O(k)` | excludes `divisors` |
 
 These are **arithmetic-operation counts on `Nat`**, not bit
 complexity: the operands are big integers throughout, `p^e` costs
