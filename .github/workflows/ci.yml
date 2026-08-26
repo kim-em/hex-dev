@@ -87,21 +87,17 @@ jobs:
         run: |
           python3 scripts/bench/check_factor_sweep_freshness.py
           python3 scripts/plots/hexbz-cactus.py --check
-      - name: Set up Lean toolchain (no build)
-        uses: leanprover/lean-action@v1
-        with:
-          auto-config: false
-          build: false
-          use-github-cache: false
-          use-mathlib-cache: false
+      - name: Set up pinned Lean toolchain (no build)
+        run: bash scripts/ci/setup_lean_toolchain.sh
       - name: Fetch Mathlib cache
         run: lake exe cache get
       - name: Verify Mathlib cache populated (hard fail on miss)
         run: bash scripts/ci/check_no_mathlib_rebuild.sh
       - name: Configure Lean shared library path
         run: |
-          toolchain="$(sed 's|/|--|; s|:|---|' lean-toolchain)"
-          echo "LD_LIBRARY_PATH=$HOME/.elan/toolchains/$toolchain/lib/lean:${LD_LIBRARY_PATH:-}" \
+          lean_prefix="$(lean --print-prefix)"
+          test -d "$lean_prefix/lib/lean"
+          echo "LD_LIBRARY_PATH=$lean_prefix/lib/lean:${LD_LIBRARY_PATH:-}" \
             >> "$GITHUB_ENV"
       - name: Restore .lake/build (Hex modules only)
         id: hex-build-cache
@@ -148,7 +144,7 @@ jobs:
       - name: Restore hex-dev oleans from the Lake cache (anonymous; non-fatal)
         if: ${{ steps.hex-build-cache.outputs.cache-matched-key == '' && env.HEX_CACHE_ENABLED == '1' }}
         run: |
-          lake cache get --service hex-public --repo kim-em/hex-dev \
+          lake cache get --max-revs=20 --service hex-public --repo kim-em/hex-dev \
             || echo "::warning::lake cache miss for this revision; building from source"
       - name: Disable implicit Lake cache restores during build
         run: echo "LAKE_NO_CACHE=true" >> "$GITHUB_ENV"
