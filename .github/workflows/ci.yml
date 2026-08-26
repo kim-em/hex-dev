@@ -87,21 +87,39 @@ jobs:
         run: |
           python3 scripts/bench/check_factor_sweep_freshness.py
           python3 scripts/plots/hexbz-cactus.py --check
-      - name: Set up Lean toolchain (no build)
-        uses: leanprover/lean-action@v1
-        with:
-          auto-config: false
-          build: false
-          use-github-cache: false
-          use-mathlib-cache: false
+      # Elan's distribution redirect has intermittently returned 404 for
+      # prerelease toolchains whose canonical GitHub release asset still
+      # exists. Install that exact `lean-toolchain` version directly so a
+      # redirect outage cannot prevent the repository checks from starting.
+      - name: Set up pinned Lean toolchain (no build)
+        run: |
+          curl --fail --silent --show-error \
+            https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh \
+            | sh -s -- -y --default-toolchain none
+          echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
+
+          lean_toolchain="$(tr -d '[:space:]' < lean-toolchain)"
+          lean_version="${lean_toolchain##*:}"
+          lean_archive="lean-${lean_version#v}-linux.tar.zst"
+          lean_url="https://github.com/leanprover/lean4/releases/download/${lean_version}/${lean_archive}"
+          lean_dir="$RUNNER_TEMP/lean-${lean_version#v}-linux"
+
+          curl --fail --location --retry 3 --retry-all-errors \
+            --output "$RUNNER_TEMP/$lean_archive" "$lean_url"
+          tar --zstd --extract --file "$RUNNER_TEMP/$lean_archive" \
+            --directory "$RUNNER_TEMP"
+          "$HOME/.elan/bin/elan" toolchain link hex-ci "$lean_dir"
+          "$HOME/.elan/bin/elan" override set hex-ci
+          "$HOME/.elan/bin/lean" --version
+          "$HOME/.elan/bin/lake" --version
       - name: Fetch Mathlib cache
         run: lake exe cache get
       - name: Verify Mathlib cache populated (hard fail on miss)
         run: bash scripts/ci/check_no_mathlib_rebuild.sh
       - name: Configure Lean shared library path
         run: |
-          toolchain="$(sed 's|/|--|; s|:|---|' lean-toolchain)"
-          echo "LD_LIBRARY_PATH=$HOME/.elan/toolchains/$toolchain/lib/lean:${LD_LIBRARY_PATH:-}" \
+          lean_prefix="$(lean --print-prefix)"
+          echo "LD_LIBRARY_PATH=$lean_prefix/lib/lean:${LD_LIBRARY_PATH:-}" \
             >> "$GITHUB_ENV"
       - name: Restore .lake/build (Hex modules only)
         id: hex-build-cache
