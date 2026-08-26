@@ -1396,5 +1396,11 @@
     "baseline_blob": "345ed80958ca9720416f70cdc9e22263f9e9f098",
     "current_blob": "cc2e8fca3a3a35c1b3b31f1dde1bd53f20bfa44f",
     "reason": "Phase 6 polish only: repoints two uses of a deleted private `1 != 0` helper at the upstream public `Hex.ZMod64.one_ne_zero_of_prime`, and corrects a stale docstring that still described the soundness proof as delegating to sorries. The file is proofs only; it declares no executable factorization code."
+  },
+  {
+    "path": "lakefile.lean",
+    "baseline_blob": "8226e99030e7d5fa79f36b5652119b97ab8e0110",
+    "current_blob": "76c7524763e6d3704af74fa637731e9388af07b8",
+    "reason": "Adds Examples.Release1 to the HexReleaseExamples glob only; the factorization service target and its executable dependency graph are unchanged."
   }
 ]
