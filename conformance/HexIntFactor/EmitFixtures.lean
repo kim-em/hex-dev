@@ -32,7 +32,10 @@ private def powersJson (entries : List PrimePower) : String :=
 private def factorJson (n : Nat) : String :=
   match factor? n (Hex.Rand.ofSeed n) with
   | .ok (F, _) => powersJson F.raw.factors
-  | .error f => match f.stop with | .zero => quote "refused" | .incomplete => "null"
+  | .error f => match f.stop with
+    | .zero => quote "refused"
+    | .incomplete => "null"
+    | .rejected => quote "rejected"
 
 private def partsJson (parts : List CyclotomicPart) : String :=
   "[" ++ String.intercalate "," (parts.map fun p =>

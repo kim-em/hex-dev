@@ -160,9 +160,12 @@ example :
 #guard (smallCandidate (1000003 ^ 2)).route == .perfectPower
 #guard (smallCandidate ((6 ^ 5) ^ 3)).route == .perfectPower
 
-#guard pMinusOneStage1 15 2 2 == .factor 3
-#guard pMinusOneStage1 25 2 2 == .noFactor
-#guard pMinusOneStage1 15 4 2 == .whole
+#guard pMinusOneFactor 15 2 2 == .factor 3
+#guard pMinusOneFactor 25 2 2 == .noFactor
+#guard pMinusOneFactor 15 4 2 == .whole
+
+example : 1 < 3 ∧ 3 < 15 ∧ 3 ∣ 15 :=
+  pMinusOneFactor_spec (n := 15) (base := 2) (bound := 2) (d := 3) (by decide)
 
 -- ECM's three stage-boundary gcd outcomes are observably distinct.
 #guard ecmStage1 191 6 2 == .noFactor
@@ -172,6 +175,18 @@ example :
 #guard (match rhoSplit? 91 (Rand.ofSeed 1) 16 with
   | .ok (d, _) => decide (1 < d) && decide (d < 91) && 91 % d == 0
   | .error _ => false)
+
+-- A malformed aggregate is exposed as an invariant failure, rather than
+-- being replaced by an empty partial answer or ordinary exhaustion.
+#guard (match Hex.Nat.Internal.acceptPartial? 12 (by decide)
+    ⟨12, [⟨1, .small 2⟩], 5⟩
+    (Rand.ofSeed 9) 17 with
+  | .error failure =>
+      failure.stop == .rejected && failure.attempts == 17 &&
+        match failure.snapshot with
+        | some saved => checkPartial saved.raw && saved.raw.subject == 12
+        | none => false
+  | .ok _ => false)
 
 #guard checkOrder ⟨2, 7, 3, ⟨3, [⟨1, .small 3⟩]⟩⟩
 
