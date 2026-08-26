@@ -1,0 +1,6 @@
+{
+ "path": "lakefile.lean",
+ "baseline_blob": "6dd80771ae2212333b2a9b925b52056e0037ff56",
+ "current_blob": "4c861820dbf8db07758455a01f04156f59ad2439",
+ "reason": "Additionally registers the Mathlib-free interval target-run driver only; the factorization service target and executable dependency graph are unchanged."
+}

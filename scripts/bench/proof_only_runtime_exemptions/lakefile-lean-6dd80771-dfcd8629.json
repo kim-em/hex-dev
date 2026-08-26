@@ -1,0 +1,6 @@
+{
+ "path": "lakefile.lean",
+ "baseline_blob": "6dd80771ae2212333b2a9b925b52056e0037ff56",
+ "current_blob": "dfcd8629a933ac9f3721bbcc261be34211bcf3a6",
+ "reason": "Additionally registers the supported HexIntervalMathlib autonomous fact-event controller conformance module and the Mathlib-free source-correlated FKS2 theorem-6.2 nested-log checker, proof-only real-semantics companion, and conformance module on top of the retained mu, positive-exp, supported driver, Dusart, Chebyshev, LogTables, FKS2, and public interval registrations; these proof-only modules do not enter the factorization service target or change its executable dependency graph."
+}

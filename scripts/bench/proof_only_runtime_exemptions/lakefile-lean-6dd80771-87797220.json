@@ -1,0 +1,6 @@
+{
+ "path": "lakefile.lean",
+ "baseline_blob": "6dd80771ae2212333b2a9b925b52056e0037ff56",
+ "current_blob": "877972201e72cc7577826e8433f6ef926f639003",
+ "reason": "Additionally registers the transparent complete Real.sin proof-emission conformance module only; the factorization service target and executable dependency graph are unchanged."
+}

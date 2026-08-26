@@ -1,0 +1,6 @@
+{
+ "path": "lakefile.lean",
+ "baseline_blob": "6dd80771ae2212333b2a9b925b52056e0037ff56",
+ "current_blob": "4ce3130da10d9cefc0ba753006e63cede695d423",
+ "reason": "Registers the new HexSparsePoly lean_lib; no factorization module, executable, or build-flag changes."
+}

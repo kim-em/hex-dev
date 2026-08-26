@@ -1,0 +1,6 @@
+{
+ "path": "lakefile.lean",
+ "baseline_blob": "6dd80771ae2212333b2a9b925b52056e0037ff56",
+ "current_blob": "2cd1a32cf3b269140e8ddbc35accb907c49ee79b",
+ "reason": "Additionally registers the HexPrimalityMathlib companion on top of the already-attested HexPolyFpMathlib and interval experiment registrations; the factorization service targets are unchanged."
+}

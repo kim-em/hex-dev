@@ -1,0 +1,6 @@
+{
+ "path": "lakefile.lean",
+ "baseline_blob": "6dd80771ae2212333b2a9b925b52056e0037ff56",
+ "current_blob": "8ca8ae6777b592a0ebc5ae18ffa6db130a4de7e4",
+ "reason": "Additionally registers the isolated Mathlib-free HexInterval branch-tree experiment only; the factorization service target and executable dependency graph are unchanged."
+}

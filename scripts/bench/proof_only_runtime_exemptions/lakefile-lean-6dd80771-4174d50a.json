@@ -1,0 +1,6 @@
+{
+ "path": "lakefile.lean",
+ "baseline_blob": "6dd80771ae2212333b2a9b925b52056e0037ff56",
+ "current_blob": "4174d50ac7af6673cf5d547328ab56bb66f4b9ca",
+ "reason": "Additionally registers the proof-only bounded PNT+ Chebyshev logarithm/fold experiment and its conformance module on top of the retained supported Proof, Search, Policy, State, LogTables, interval, FKS2, Table 10, and finite-field registrations; these acceptance-only modules do not enter the factorization service target or change its executable dependency graph."
+}

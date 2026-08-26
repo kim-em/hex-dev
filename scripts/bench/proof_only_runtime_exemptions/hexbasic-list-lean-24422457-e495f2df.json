@@ -1,0 +1,6 @@
+{
+ "path": "HexBasic/List.lean",
+ "baseline_blob": "244224572752565242dcada3d1254fdaf4e22e9d",
+ "current_blob": "e495f2df26b2591ebadf97831bf3d1cc24dabf06",
+ "reason": "Adds only the nodup_map_on theorem and its proof; no executable definition in the factorization service or its runtime call graph changes."
+}

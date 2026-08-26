@@ -1,0 +1,6 @@
+{
+ "path": "HexBerlekamp/LinearFactors.lean",
+ "baseline_blob": "b5e563464f7279455eb19eefb395e5b7a13449c2",
+ "current_blob": "571b9760528a9304fedb73242baaaefe3226c80a",
+ "reason": "Phase 6 polish only: replaces the private `zmod64_one_ne_zero_of_prime` with the upstream public `Hex.ZMod64.one_ne_zero_of_prime` and drops an unused `[ZMod64.PrimeModulus p]` binder from a proof-only lemma. `primeFieldLinearFactor`, `rootsIn`, and the reconstruction folds are unchanged."
+}

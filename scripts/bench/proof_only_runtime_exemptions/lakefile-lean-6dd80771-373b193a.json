@@ -1,0 +1,6 @@
+{
+ "path": "lakefile.lean",
+ "baseline_blob": "6dd80771ae2212333b2a9b925b52056e0037ff56",
+ "current_blob": "373b193abb5bdb8eaf6345d3e913009861d49616",
+ "reason": "Additionally registers the Mathlib-free sin-ten certificate data, its proof-only Machin range-reduction companion, and conformance module; the factorization service target and executable dependency graph are unchanged."
+}

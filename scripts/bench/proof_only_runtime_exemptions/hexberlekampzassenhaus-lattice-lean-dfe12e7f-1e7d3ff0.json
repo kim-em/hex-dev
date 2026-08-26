@@ -1,0 +1,6 @@
+{
+ "path": "HexBerlekampZassenhaus/Lattice.lean",
+ "baseline_blob": "dfe12e7fa1f63585cf5db01490f99c61981cbf6f",
+ "current_blob": "1e7d3ff08062a2e97617de2758353e24a2473116",
+ "reason": "Phase 6 polish only: adds docstrings to the `LiftModulus.ofNat` projection lemmas, the lattice-basis block characterizations, `bhksRowsArrayToMatrix_row`, and `bhksProjectedRows_eq_trace`. Prose only; every executable definition is unchanged."
+}

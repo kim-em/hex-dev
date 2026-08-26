@@ -1,0 +1,6 @@
+{
+ "path": "lakefile.lean",
+ "baseline_blob": "a1b87406682dbf908d990f01676f326499b906e5",
+ "current_blob": "ca24d94a282d984be81fb1de20e578439cacf5b8",
+ "reason": "Additionally registers the build-only HexMvGcd Phase 4 shape-matrix and external-comparator support modules; hexbz_factor_service, its build flags, and every factorization runtime dependency remain unchanged."
+}

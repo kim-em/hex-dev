@@ -1,0 +1,6 @@
+{
+ "path": "lakefile.lean",
+ "baseline_blob": "a1b87406682dbf908d990f01676f326499b906e5",
+ "current_blob": "791e5727779c8d07cbd2e7080bb2bbd245b82a6b",
+ "reason": "Registers the HexPrimality library on top of main's current registrations; the factorization service targets are unchanged."
+}

@@ -1,0 +1,6 @@
+{
+ "path": "lakefile.lean",
+ "baseline_blob": "6dd80771ae2212333b2a9b925b52056e0037ff56",
+ "current_blob": "c3110632db0961087a00f5bac16fa1a8d7f0de3e",
+ "reason": "Registers HexPolyFpMathlib, a proof-only Mathlib companion holding the FpPoly-to-Polynomial correspondence, on top of the retained interval registrations; no Mathlib companion is in the checker's measured executable set, and the factorization service target and its executable dependency graph are unchanged."
+}

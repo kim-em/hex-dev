@@ -1,0 +1,6 @@
+{
+ "path": "Hex/Conformance/Emit.lean",
+ "baseline_blob": "21481a92862c6a9f8c8d538c4815d2bc4557453a",
+ "current_blob": "10f211a8d04334075ed14aad0157e1daabc54195",
+ "reason": "Adds multivariate Hensel fixture serializers to the shared conformance helper; no factorization runtime module imports it."
+}

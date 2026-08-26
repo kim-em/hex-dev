@@ -1,0 +1,6 @@
+{
+ "path": "lakefile.lean",
+ "baseline_blob": "6dd80771ae2212333b2a9b925b52056e0037ff56",
+ "current_blob": "d10f93b76ec5ee321d15b400c9bdb2c554744352",
+ "reason": "Additionally registers the Mathlib-free exact subtraction callback-replay experiment and its proof-only conformance module on top of the complete LogTables, staged-policy, PNT, and interval registrations; neither enters the factorization service target or changes its executable dependency graph."
+}

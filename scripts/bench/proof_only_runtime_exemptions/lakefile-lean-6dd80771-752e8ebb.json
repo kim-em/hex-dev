@@ -1,0 +1,6 @@
+{
+ "path": "lakefile.lean",
+ "baseline_blob": "6dd80771ae2212333b2a9b925b52056e0037ff56",
+ "current_blob": "752e8ebb8e814067aeb7d84301bffb1103cd1082",
+ "reason": "Additionally registers the Mathlib-free PNT log-two experiment, its Mathlib semantic companion, and its conformance module only; the factorization service target and executable dependency graph are unchanged."
+}

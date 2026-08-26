@@ -1,0 +1,6 @@
+{
+ "path": "lakefile.lean",
+ "baseline_blob": "6dd80771ae2212333b2a9b925b52056e0037ff56",
+ "current_blob": "7e9d890a4339641923b49893dc271679f727e6a3",
+ "reason": "Additionally registers the bounded precision-indexed logarithm experiment, its proof-only series/remainder companion, and conformance module on top of the retained PNT+ Table 12 and huge-cosine canaries; the factorization service target and executable dependency graph are unchanged."
+}

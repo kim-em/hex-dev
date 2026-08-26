@@ -1,0 +1,6 @@
+{
+ "path": "lakefile.lean",
+ "baseline_blob": "6dd80771ae2212333b2a9b925b52056e0037ff56",
+ "current_blob": "57d05db938b39b41062f8cb8ede4efd69ba4fbfd",
+ "reason": "Additionally registers the Mathlib-free specialized-polynomial dispatcher, its proof-only cross-library correspondence companion, and conformance module on top of the retained PNT+ and numerical canaries; the factorization service target and executable dependency graph are unchanged."
+}

@@ -1,0 +1,6 @@
+{
+ "path": "HexPolyFpMathlib/Basic.lean",
+ "baseline_blob": null,
+ "current_blob": "fde67d026f80dc6b1bdf156c1a2c0220bb5dfb06",
+ "reason": "Adds a scoped Mathlib CommRing instance on FpPoly and linearPow_eq_pow. Instances and theorems only, in a Mathlib companion that no executable path imports; the factorization service and its dependency graph are unchanged."
+}

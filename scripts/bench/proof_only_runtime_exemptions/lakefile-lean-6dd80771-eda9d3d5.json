@@ -1,0 +1,6 @@
+{
+ "path": "lakefile.lean",
+ "baseline_blob": "6dd80771ae2212333b2a9b925b52056e0037ff56",
+ "current_blob": "eda9d3d5a14830576c3a07734d2920bfb5d73242",
+ "reason": "Additionally registers the generated Mathlib-free 1,000-cell FKS2 shard-11 data module on top of the retained BKLNW, regularization, and public interval registrations; the factorization service target and executable dependency graph are unchanged."
+}

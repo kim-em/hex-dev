@@ -1,0 +1,6 @@
+{
+ "path": "lakefile.lean",
+ "baseline_blob": "a1b87406682dbf908d990f01676f326499b906e5",
+ "current_blob": "c973b09972fdea92dd362ebd997535fb9fe61a5b",
+ "reason": "Registers only the HexModular conformance module and fixture emitter on top of the sparse-poly release registrations; no factorization runtime target, definition, build flag, or dependency changes."
+}

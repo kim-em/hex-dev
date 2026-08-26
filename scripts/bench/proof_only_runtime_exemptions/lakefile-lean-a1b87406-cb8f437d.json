@@ -1,0 +1,6 @@
+{
+ "path": "lakefile.lean",
+ "baseline_blob": "a1b87406682dbf908d990f01676f326499b906e5",
+ "current_blob": "cb8f437dbc9ed9ea5dc5c7e2794295ab16774099",
+ "reason": "Moves HexSparsePoly.KernelTests into the HexReleaseTests globs for the split publication, leaving HexSparsePolyTests as the monorepo-only lint target; no factorization module, executable, or build-flag changes."
+}

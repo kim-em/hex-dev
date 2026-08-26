@@ -1,0 +1,6 @@
+{
+ "path": "HexMatrix/Lattice.lean",
+ "baseline_blob": null,
+ "current_blob": "fea764d500a54f533220026f03796e9e5f9ba3f1",
+ "reason": "Relocates the existing lattice proposition and transport proofs from HexLLL.Lattice and adds proof lemmas used by Hermite; it adds no executable factorization operation."
+}

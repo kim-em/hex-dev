@@ -1,0 +1,6 @@
+{
+ "path": "lakefile.lean",
+ "baseline_blob": "6dd80771ae2212333b2a9b925b52056e0037ff56",
+ "current_blob": "9dd80526e15dd9e72cd4a157d03021e7a24e2c39",
+ "reason": "Additionally registers the supported HexIntervalMathlib transactional-split semantics module on top of the retained multiplication, natural-power, PNT+, and public interval registrations; the factorization service target and executable dependency graph are unchanged."
+}

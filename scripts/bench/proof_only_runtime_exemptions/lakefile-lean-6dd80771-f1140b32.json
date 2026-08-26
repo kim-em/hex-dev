@@ -1,0 +1,6 @@
+{
+ "path": "lakefile.lean",
+ "baseline_blob": "6dd80771ae2212333b2a9b925b52056e0037ff56",
+ "current_blob": "f1140b32e0f91dc4b9da642cbcedd4701aeab4ba",
+ "reason": "Additionally registers the bounded Mathlib-free PNT+ BKLNW power-ladder and exponential-bound experiments, their proof-only real-semantics companions, and conformance modules on top of the retained regularization and public interval registrations; these acceptance-only modules do not enter the factorization service target or its executable dependency graph."
+}

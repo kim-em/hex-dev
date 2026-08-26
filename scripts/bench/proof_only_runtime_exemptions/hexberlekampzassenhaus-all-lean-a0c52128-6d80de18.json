@@ -1,0 +1,6 @@
+{
+ "path": "HexBerlekampZassenhaus/All.lean",
+ "baseline_blob": "a0c52128e63d3dcbb6e7b9cf522cd36304508e1a",
+ "current_blob": "6d80de18acfc61947485068478df1f28c1be044d",
+ "reason": "Adds one import of the new quadratic-norm module to the development umbrella; the released umbrella the factorization service imports is unchanged."
+}

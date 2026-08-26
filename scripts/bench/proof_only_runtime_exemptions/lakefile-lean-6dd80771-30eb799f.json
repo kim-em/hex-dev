@@ -1,0 +1,6 @@
+{
+ "path": "lakefile.lean",
+ "baseline_blob": "6dd80771ae2212333b2a9b925b52056e0037ff56",
+ "current_blob": "30eb799f4c1194c115756da0d02d9027735ecb82",
+ "reason": "Additionally registers Mathlib refutation conformance only; the factorization service target and executable dependency graph are unchanged."
+}

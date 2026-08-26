@@ -1,0 +1,6 @@
+{
+ "path": "lakefile.lean",
+ "baseline_blob": "6dd80771ae2212333b2a9b925b52056e0037ff56",
+ "current_blob": "bceb32242497ded4562672aad7e227161bcd5331",
+ "reason": "Additionally registers the isolated Mathlib-free package policy-feature experiment and its conformance module on top of the retained adaptive policy, exact-branch proof, subtraction replay, staged policy, complete LogTables, PNT, and public interval registrations; neither enters the factorization service target or changes its executable dependency graph."
+}

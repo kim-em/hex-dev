@@ -1,0 +1,6 @@
+{
+ "path": "lakefile.lean",
+ "baseline_blob": "a1b87406682dbf908d990f01676f326499b906e5",
+ "current_blob": "4cd596315206896eea5d93fae5051a20bf4e16d5",
+ "reason": "Combines current main's registrations and withdrawn release entries with HexMinPoly libraries, conformance, fixture, manual, and benchmark targets; hexbz_factor_service and its build flags are unchanged."
+}

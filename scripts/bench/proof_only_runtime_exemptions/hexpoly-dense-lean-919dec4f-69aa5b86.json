@@ -1,0 +1,6 @@
+{
+ "path": "HexPoly/Dense.lean",
+ "baseline_blob": "919dec4f5be58dd40ef9285b372e3379dc5dfec5",
+ "current_blob": "69aa5b861c0942cd4aa469205504415e9686608e",
+ "reason": "Adds coeffVec and its accessor theorem for matrix minimal-polynomial evaluation; the factorization service never calls coeffVec, and existing polynomial operations are unchanged."
+}

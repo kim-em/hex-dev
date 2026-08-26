@@ -1,0 +1,6 @@
+{
+ "path": "lakefile.lean",
+ "baseline_blob": "a1b87406682dbf908d990f01676f326499b906e5",
+ "current_blob": "f5d725684c68d391cc576640d3850865959138a5",
+ "reason": "Registers only new libraries, verification globs, fixture emitters, and benchmark executables accumulated on current main plus HexTruncatedSeries; the hexbz_factor_service target, its imports, build flags, and factorization dependency graph are unchanged."
+}

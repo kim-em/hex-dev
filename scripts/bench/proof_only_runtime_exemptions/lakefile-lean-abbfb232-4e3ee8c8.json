@@ -1,0 +1,6 @@
+{
+ "path": "lakefile.lean",
+ "baseline_blob": "abbfb2327a8ee1c28a6fa20dcf5a285cd782284c",
+ "current_blob": "4e3ee8c8e9836847eaa5af68d7b143b2ca3e1cc5",
+ "reason": "Adds the reviewed interval proof/controller and authenticated decision-benchmark registrations now on main, then registers the proof-only FKS2 inverse-power experiment and its dedicated non-default conformance library; none enters the factorization service target or changes its executable dependency graph."
+}

@@ -1,0 +1,6 @@
+{
+ "path": "Hex/Conformance/Emit.lean",
+ "baseline_blob": "21481a92862c6a9f8c8d538c4815d2bc4557453a",
+ "current_blob": "03de42764424c31c1ec4060cf874f54087592e9e",
+ "reason": "Adds the primality fixture emitters and boolValue beside main's modular and series emitters; emission helpers only, the factorization service does not call them."
+}

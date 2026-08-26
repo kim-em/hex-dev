@@ -1,0 +1,6 @@
+{
+ "path": "HexArith/Montgomery/Context.lean",
+ "baseline_blob": "37f008f776ce7781e174900aed25aec13d845c33",
+ "current_blob": "6712bd70c3b7774cadef600f93cbe8bc83516972",
+ "reason": "Guards powModNat at modulus zero, exposes its worker and bitLength for kernel reduction, and adds a csimp routing powModNat to the unchanged powMod; no executable factorization code calls powModNat (the service uses powMod directly)."
+}

@@ -1,0 +1,6 @@
+{
+ "path": "lakefile.lean",
+ "baseline_blob": "6dd80771ae2212333b2a9b925b52056e0037ff56",
+ "current_blob": "6459c4e64f38f814264dfe51f4d6539d3eb9e557",
+ "reason": "Additionally registers the bounded Mathlib-free FKS2 mu-asymptotic and shared positive-exponential checkers, their proof-only real-semantics companions, and conformance modules on top of the retained Dusart, supported driver, Chebyshev, LogTables, FKS2, BKLNW, and public interval registrations; these acceptance-only modules do not enter the factorization service target or change its executable dependency graph."
+}

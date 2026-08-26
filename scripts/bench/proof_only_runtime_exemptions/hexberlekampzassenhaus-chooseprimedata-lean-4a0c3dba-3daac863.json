@@ -1,0 +1,6 @@
+{
+ "path": "HexBerlekampZassenhaus/ChoosePrimeData.lean",
+ "baseline_blob": "4a0c3dba62c7c3c607545daff10ba4bf70351681",
+ "current_blob": "3daac863ec01f3b5b59208497a282ced58b5224b",
+ "reason": "Phase 6 polish only: adds docstrings to `choosePrimeDataAdaptive?_p_le_500` and the `henselLiftData_p`/`henselLiftData_k` projection lemmas, and deletes the unreferenced private `betterPrimeChoiceDataScore_prime` and `betterPrimeChoiceDataScore_fModP_eq` proof lemmas. `choosePrimeData?`, `choosePrimeDataAdaptive?`, `henselLiftData`, and every other executable definition are unchanged."
+}

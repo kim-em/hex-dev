@@ -1,0 +1,6 @@
+{
+ "path": "lakefile.lean",
+ "baseline_blob": "6dd80771ae2212333b2a9b925b52056e0037ff56",
+ "current_blob": "a50c9bf48b55e2dc948f33b033e459404dde259a",
+ "reason": "Additionally registers the supported HexIntervalMathlib flat programmatic arithmetic frontend and its proof-only replay/closure conformance on top of the current Rule, Chebyshev, public interval, and PNT registrations; they do not enter the factorization service target or change its executable dependency graph."
+}

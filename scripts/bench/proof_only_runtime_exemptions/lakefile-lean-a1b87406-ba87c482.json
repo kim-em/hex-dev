@@ -1,0 +1,6 @@
+{
+ "path": "lakefile.lean",
+ "baseline_blob": "a1b87406682dbf908d990f01676f326499b906e5",
+ "current_blob": "ba87c482d13eae7564308de364a919eb71efc640",
+ "reason": "Additionally registers the build-only HexMvGcd Singular benchmark support module; hexbz_factor_service, its build flags, and every factorization runtime dependency remain unchanged."
+}

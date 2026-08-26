@@ -1,0 +1,6 @@
+{
+ "path": "lakefile.lean",
+ "baseline_blob": "8226e99030e7d5fa79f36b5652119b97ab8e0110",
+ "current_blob": "76c7524763e6d3704af74fa637731e9388af07b8",
+ "reason": "Adds Examples.Release1 to the HexReleaseExamples glob only; the factorization service target and its executable dependency graph are unchanged."
+}

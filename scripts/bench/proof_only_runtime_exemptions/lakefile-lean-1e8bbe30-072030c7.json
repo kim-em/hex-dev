@@ -1,0 +1,6 @@
+{
+ "path": "lakefile.lean",
+ "baseline_blob": "1e8bbe3030db68a2b6753de8bf5ff2326d02813e",
+ "current_blob": "072030c70a339c8965bff552de0e7673f3e3da76",
+ "reason": "Registers the HexAggregateCheck released-aggregate mirror library only; the factorization service target and its executable dependency graph are unchanged."
+}
