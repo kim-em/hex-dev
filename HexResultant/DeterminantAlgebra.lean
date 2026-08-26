@@ -70,15 +70,17 @@ theorem swapAdjacent_apply {R : Type u} {n : Nat}
       else M i j := by
   rfl
 
-/-- After an adjacent swap, the left column reads the old right column. -/
-@[simp, grind =]
+/-- After an adjacent swap, the left column reads the old right column.
+`grind`-only: simp derives this from `swapAdjacent_apply`. -/
+@[grind =]
 theorem swapAdjacent_left {R : Type u} {n : Nat}
     (M : Square R (n + 1)) (left : Fin n) (i : Fin (n + 1)) :
     swapAdjacent M left i left.castSucc = M i left.succ := by
   simp [swapAdjacent]
 
-/-- After an adjacent swap, the right column reads the old left column. -/
-@[simp, grind =]
+/-- After an adjacent swap, the right column reads the old left column.
+`grind`-only: simp derives this from `swapAdjacent_apply`. -/
+@[grind =]
 theorem swapAdjacent_right {R : Type u} {n : Nat}
     (M : Square R (n + 1)) (left : Fin n) (i : Fin (n + 1)) :
     swapAdjacent M left i left.succ = M i left.castSucc := by
@@ -88,8 +90,9 @@ theorem swapAdjacent_right {R : Type u} {n : Nat}
     simp at hval
   simp [swapAdjacent, hne]
 
-/-- Columns away from the swapped pair are untouched. -/
-@[simp, grind =]
+/-- Columns away from the swapped pair are untouched.
+`grind`-only: simp derives this from `swapAdjacent_apply`. -/
+@[grind =]
 theorem swapAdjacent_of_ne {R : Type u} {n : Nat}
     (M : Square R (n + 1)) (left : Fin n) (i j : Fin (n + 1))
     (hl : j ≠ left.castSucc) (hr : j ≠ left.succ) :
@@ -602,8 +605,10 @@ row and adjugate algebra of `HexDeterminant` without changing that definition.
 def toMatrix {R : Type u} {n : Nat} (M : Square R n) : Matrix R n n :=
   Matrix.ofFn M
 
-/-- Entries are unchanged by the matrix view. -/
-@[simp, grind =]
+/-- Entries are unchanged by the matrix view.  Stated in the nested
+`M[i][j]` form like `Matrix.getElem_ofFn`, so it is `grind`-only: the
+simp-normal form of the left-hand side goes through `Matrix.getRow`. -/
+@[grind =]
 theorem toMatrix_get {R : Type u} {n : Nat} (M : Square R n)
     (i j : Fin n) : (toMatrix M)[i][j] = M i j := by
   rw [toMatrix, Matrix.getElem_ofFn]
