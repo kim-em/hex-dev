@@ -224,6 +224,72 @@ theorem totient_eq_count {n : Nat} (F : CheckedFactorization n) :
     totient F = ((List.range n).filter (fun a => Nat.Coprime a n)).length := by
   simp [totient]
 
+private theorem coprimeCount_prime {p : Nat} (hp : Prime p) :
+    ((List.range p).filter fun a => Nat.Coprime a p).length = p - 1 := by
+  have hp2 := hp.two_le
+  obtain ⟨q, rfl⟩ : ∃ q, p = q + 1 := ⟨p - 1, by omega⟩
+  rw [List.range_succ_eq_map]
+  rw [List.filter_cons_of_neg (by simp; omega), List.filter_map,
+    List.length_map]
+  calc
+    (List.filter ((fun a => decide (Nat.Coprime a (q + 1))) ∘ Nat.succ)
+        (List.range q)).length = (List.range q).length := by
+      apply List.length_filter_eq_length_iff.mpr
+      intro a ha
+      simp only [Function.comp_apply, decide_eq_true_eq]
+      apply (hp.coprime_of_not_dvd ?_).symm
+      intro hdvd
+      have ha_lt : a + 1 < q + 1 := by
+        have := List.mem_range.mp ha
+        omega
+      have hp_le : q + 1 ≤ a + 1 := Nat.le_of_dvd (by omega) hdvd
+      omega
+    _ = q + 1 - 1 := by simp
+
+private theorem coprimeCount_blocks {p : Nat} (hp : Prime p) : ∀ k : Nat,
+    ((List.range (k * p)).filter fun a => Nat.Coprime a p).length =
+      k * (p - 1)
+  | 0 => by simp
+  | k + 1 => by
+      rw [Nat.succ_mul, List.range_add, List.filter_append,
+        List.length_append, coprimeCount_blocks hp k]
+      have hblock :
+          (((List.range p).map (k * p + ·)).filter
+            fun a => Nat.Coprime a p).length = p - 1 := by
+        rw [List.filter_map, List.length_map]
+        -- `gcd (k * p + a) p = gcd a p`: coprimality is `p`-periodic.
+        simpa only [Function.comp_def, Nat.Coprime,
+          Nat.gcd_mul_right_add_left] using coprimeCount_prime hp
+      rw [hblock]
+      simp [Nat.succ_mul]
+
+/-- Coprimality to a positive power is equivalent to coprimality to its base. -/
+theorem coprime_primePow_iff {a p e : Nat} (he : 0 < e) :
+    Nat.Coprime a (p ^ e) ↔ Nat.Coprime a p := by
+  constructor
+  · intro h
+    have hpdiv : p ∣ p ^ e := by
+      simpa using Nat.pow_dvd_pow p (show 1 ≤ e by omega)
+    exact Nat.Coprime.coprime_dvd_right hpdiv h
+  · exact fun h => h.pow_right e
+
+/-- A prime power has `p^(e-1) * (p-1)` coprime residue representatives. -/
+theorem coprimeCount_primePow {p e : Nat} (hp : Prime p) (he : 0 < e) :
+    ((List.range (p ^ e)).filter fun a => Nat.Coprime a (p ^ e)).length =
+      p ^ (e - 1) * (p - 1) := by
+  have hpow : p ^ e = p ^ (e - 1) * p := by
+    rw [← Nat.pow_succ]
+    congr 1
+    omega
+  have hcongr :
+      (List.range (p ^ e)).filter
+          (fun a => decide (Nat.Coprime a (p ^ e))) =
+        (List.range (p ^ e)).filter (fun a => decide (Nat.Coprime a p)) :=
+    List.filter_congr fun _ _ =>
+      decide_eq_decide.mpr (coprime_primePow_iff he)
+  rw [hcongr, hpow]
+  exact coprimeCount_blocks hp (p ^ (e - 1))
+
 private theorem prime_dvd_product {q : Nat} (hq : Prime q) :
     ∀ (entries : List PrimePower),
       (∀ e ∈ entries, Prime e.prime) →

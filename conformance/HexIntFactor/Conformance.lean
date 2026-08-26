@@ -100,6 +100,14 @@ example : numDivisors checkedHugeTau = 101 ^ 6 := by decide +kernel
 example : sigma checkedHugeTau 0 = 101 ^ 6 := by decide +kernel
 example : sigma checkedPow64 1 = 2 ^ 65 - 1 := by decide +kernel
 #guard totient checked12 == 4
+example :
+    ((List.range (7 ^ 1)).filter fun a => Nat.Coprime a (7 ^ 1)).length = 6 := by
+  simpa using coprimeCount_primePow (p := 7) (e := 1) (by decide) (by decide)
+#guard ((List.range (7 ^ 1)).filter fun a => Nat.Coprime a (7 ^ 1)).length == 6
+example :
+    ((List.range (3 ^ 4)).filter fun a => Nat.Coprime a (3 ^ 4)).length = 54 := by
+  simpa using coprimeCount_primePow (p := 3) (e := 4) (by decide) (by decide)
+#guard ((List.range (3 ^ 4)).filter fun a => Nat.Coprime a (3 ^ 4)).length == 54
 #guard radical checked12 == 6
 #guard squarefreePart checked1 == 1
 #guard squareDivisor checked1 == 1
