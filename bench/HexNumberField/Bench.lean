@@ -880,6 +880,18 @@ def runQAdjoinInvPair12 : Unit → IO UInt64 := fun _ => do
 def runPariPolmodInv12 : Unit → IO UInt64 := fun _ => do
   pariPolmodInv (← getInvPair invPairRef12 12)
 
+/-- Per-call driver overhead for the PARI comparator: one `polmod`-family
+request whose PARI-side work is a constant `0`, so the measured time is the
+JSON request/reply round trip alone. `SPEC/benchmarking.md` §External
+comparators §Process call requires this figure so the headline report can
+quote overhead-adjusted ratios. -/
+def runPariPolmodOverhead : Unit → IO UInt64 := fun _ => do
+  let result ← Hex.BenchOracle.Pari.runOp "polmod" "overhead" #[]
+  match result.getInt? with
+  | .ok value => return UInt64.ofNat value.toNat
+  | .error error =>
+    throw <| IO.userError s!"invalid PARI overhead reply: {error}"
+
 /-- Timing shape shared by both sides of every PARI pair: the discarded
 `warmupFirstIter` call builds the lazily cached rung fixture (and, on the
 PARI side, spawns the persistent driver) outside the timed region, and the
@@ -909,6 +921,12 @@ setup_fixed_benchmark runQAdjoinInvPair8 where pariCompareConfig
 setup_fixed_benchmark runPariPolmodInv8 where pariCompareConfig
 setup_fixed_benchmark runQAdjoinInvPair12 where pariCompareConfig
 setup_fixed_benchmark runPariPolmodInv12 where pariCompareConfig
+
+/- Driver round-trip floor for the PARI comparator: no algorithmic work on
+either side, so this registration measures only the per-call request/reply
+cost that the headline report subtracts from the PARI wall times. -/
+setup_fixed_benchmark runPariPolmodOverhead where
+  { pariCompareConfig with expectedHash := some 0x0 }
 
 end Hex.NumberFieldBench
 
