@@ -1,10 +1,14 @@
 # hex-smith-mathlib
 
 Part of [`hex`](https://github.com/kim-em/hex-dev), a computer algebra library
-for Lean 4. `hex-smith-mathlib` is the correspondence-only Mathlib bridge for
-[`hex-smith`](https://github.com/leanprover/hex-smith). It transports the
-verified executable result into Mathlib's Smith-basis and quotient-module
-interfaces without recomputing Smith normal form.
+for Lean 4. The project develops fast executable code with full verification
+through spec-driven development.
+
+`hex-smith-mathlib` is the correspondence-only Mathlib bridge for
+[`hex-smith`](https://github.com/leanprover/hex-smith). It builds on that
+package and `hex-hermite-mathlib`, transporting the verified executable result
+into Mathlib's Smith-basis and quotient-module interfaces without recomputing
+Smith normal form.
 
 # Quickstart
 
@@ -51,4 +55,5 @@ establish the quotient decomposition without duplicating the computation.
 
 Development happens in the [`hex-dev`](https://github.com/kim-em/hex-dev)
 monorepo, not in the published mirror. Contributions are welcome as pull
-requests to the monorepo.
+requests to its `SPEC/` directory: describe the behaviour you want and leave
+the implementation to the maintainer.

@@ -1,9 +1,12 @@
 # hex-smith
 
 Part of [`hex`](https://github.com/kim-em/hex-dev), a computer algebra library
-for Lean 4. `hex-smith` computes Smith normal form for rectangular integer
-matrices. The computational library is Mathlib-free; its correspondence with
-Mathlib bases and quotient modules lives in
+for Lean 4. The project develops fast executable code with full verification
+through spec-driven development.
+
+`hex-smith` computes Smith normal form for rectangular integer matrices. It
+builds on `hex-hermite` and is Mathlib-free; its correspondence with Mathlib
+bases and quotient modules lives in
 [`hex-smith-mathlib`](https://github.com/leanprover/hex-smith-mathlib).
 
 # Quickstart
@@ -64,4 +67,5 @@ The executable path is native Lean and has no runtime oracle dependency.
 
 Development happens in the [`hex-dev`](https://github.com/kim-em/hex-dev)
 monorepo, not in the published mirror. Contributions are welcome as pull
-requests to the monorepo.
+requests to its `SPEC/` directory: describe the behaviour you want and leave
+the implementation to the maintainer.
