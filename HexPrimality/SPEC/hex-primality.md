@@ -524,7 +524,28 @@ def rhoFactor? (n : Nat) (r : Rand) (fuel : Nat) :
 theorem rhoFactor?_spec {n d r r' fuel}
     (h : rhoFactor? n r fuel = .ok (d, r')) :
     1 < d ∧ d < n ∧ d ∣ n
+
+structure Internal.RhoSuccess where
+  factor   : Nat
+  attempts : Nat
+  rand     : Rand
+
+def Internal.rhoFactorCounted? (n : Nat) (r : Rand) (fuel : Nat) :
+    Except RhoFailure Internal.RhoSuccess
+
+theorem Internal.rhoFactorCounted?_spec {n r fuel success}
+    (h : Internal.rhoFactorCounted? n r fuel = .ok success) :
+    1 < success.factor ∧ success.factor < n ∧ success.factor ∣ n
 ```
+
+The compatible pair-returning API is backed by the counted internal result
+`Internal.RhoSuccess`, whose `factor`, `attempts`, and `rand` fields are
+returned by `Internal.rhoFactorCounted?`. One attempt is one accepted restart
+draw and Brent run, including the successful restart; rejection draws used to
+choose that restart remain part of the same attempt. The ordinary
+`rhoFactor?` projection does not rerun the search or alter its final state.
+The deterministic even-input shortcut returns factor `2` with zero attempts
+and an unchanged generator because it runs no restart.
 
 `rhoFactor?` validates range and divisibility before returning.
 Randomness and fuel affect only whether it finds a factor. The advanced
@@ -747,6 +768,18 @@ structure NextPrimeFailure where
 
 def defaultPrimeFuel (n : Nat) : Nat
 
+structure Internal.PrimeCertSuccess (n : Nat) where
+  cert     : CheckedPrimeCert n
+  attempts : Nat
+  rand     : Rand
+
+def Internal.primeCertCounted? (n : Nat) (r : Rand) (fuel : Nat) :
+    Except PrimeCertFailure (Internal.PrimeCertSuccess n)
+
+theorem Internal.primeCertCounted?_composite {n r fuel f}
+    (hresult : Internal.primeCertCounted? n r fuel = .error f)
+    (hstop : f.stop = .composite) : ¬ Prime n
+
 def primeCert? (n : Nat) (r : Rand) (fuel : Nat) :
     Except PrimeCertFailure (CheckedPrimeCert n × Rand)
 def checkPrime (c : PrimeCert) : Bool
@@ -801,9 +834,16 @@ count and advanced state. The theorem records that a success is the
 division or a failed Miller-Rabin base, from `.exhausted`, which makes
 no primality claim. Exhaustion is reachable: the certificate search needs `n - 1`
 factored past a square root (or a cube root), and there are `n` for
-which that is out of reach. `PrimeCertFailure` retains the advanced
-state and attempt count because `partialFactor` runs Pollard rho; success
-returns the state alongside the certificate. The failure propagates
+which that is out of reach. `PrimeCertFailure` retains the advanced state and
+exact attempt count because `partialFactor` runs Pollard rho.
+`Internal.primeCertCounted?` also exposes that count on success, while
+`primeCert?` is its compatibility projection. Certificate metering counts
+every rho restart and every tried witness candidate, including successful
+ones, throughout recursive child construction; deterministic table lookup,
+Miller--Rabin filtering, and checker replay are not search attempts. Earlier
+successful child and witness searches are accumulated before a later failure,
+and both entry points return the same advanced state without duplicate work.
+The failure propagates
 rather than being papered over, which is
 design principle 8's third remedy again.
 

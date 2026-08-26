@@ -577,9 +577,23 @@ aggregate that failed `checkPartial`. Such a failure is returned as
 failure case explicit. At `n = 0` no object satisfying `0 < subject` and
 `subject = n` exists, and `FactorStop.zero` reports that fact instead of
 returning checked data about another number. A generic-search failure retains
-its advanced state and exact attempt count, while success returns the state
-alongside the checked data, so a caller never repeats a failed random stream
-accidentally.
+its advanced state and exact attempt count. The dispatcher's attempt unit is
+one Brent-rho restart, one primality-certificate witness candidate, one p−1
+base/bound call, or one ECM curve, including the successful attempt in each
+route. Certificate search also accumulates its internal rho restarts and
+recursive child witnesses. Structural reductions, table lookup,
+Miller--Rabin filtering, and checker replay are deterministic work rather than
+search attempts. Counted internal success shapes preserve these totals across
+continuations without changing the compatible public pair-returning APIs.
+Success returns the state alongside the checked data, so a caller never
+repeats a failed random stream accidentally.
+
+The current cyclotomic wrapper cannot recover attempt counts for successfully
+factored parts from the compatible pair-returning `factor?` API. If a later
+part or its generic continuation stops, the wrapper therefore preserves the
+failure and generator state but sets `metered := false`; it never presents the
+remaining subtotal as exact. Outside the cyclotomic wrapper, the generic
+dispatcher and its checker-rejection boundary remain exactly metered.
 
 `factor?` uses the same partial-candidate acceptance boundary: it propagates
 `FactorStop.zero` or `FactorStop.rejected`, converts residual one to the complete

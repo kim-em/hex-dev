@@ -26,7 +26,9 @@ deriving Repr, DecidableEq
 
 /-- One candidate cyclotomic value `Φ_index(base)`. -/
 structure CyclotomicPart where
+  /-- Cyclotomic index `d`. -/
   index : Nat
+  /-- Candidate value `Φ_d(b)` at the requested base. -/
   value : Nat
 deriving Repr, DecidableEq
 
@@ -113,7 +115,8 @@ deriving Repr, DecidableEq
 namespace Internal
 
 /-- Retry a power target only after ordinary subproblem exhaustion. An
-invariant rejection is propagated with its original diagnostic scope. -/
+invariant rejection is propagated with its original diagnostic scope; a
+failed retry adds the earlier and fallback attempt subtotals. -/
 def retryPower? (target : Nat) (failure : FactorFailure) (fuel : Nat) :
     Except FactorFailure (CheckedFactorization target × Rand × PowerRoute) :=
   match failure.stop with
@@ -121,7 +124,10 @@ def retryPower? (target : Nat) (failure : FactorFailure) (fuel : Nat) :
   | .zero | .incomplete =>
       match factor? target failure.rand fuel with
       | .ok (F, r') => .ok (F, r', .generic)
-      | .error fallback => .error fallback
+      | .error fallback =>
+          .error { fallback with
+            attempts := failure.attempts + fallback.attempts
+            metered := failure.metered && fallback.metered }
 
 end Internal
 
@@ -164,7 +170,11 @@ private def factorPowerTarget? (target : Nat) (parts? : Option (List CyclotomicP
               culprit := some ⟨target, entries, 1⟩
               metered := false }
       | .error failure =>
-          Internal.retryPower? target failure fuel
+          -- `factor?` does not expose successful-search counts. A failure in
+          -- a later part therefore omits the work spent on earlier parts;
+          -- retain the diagnostic, but do not advertise that subtotal as
+          -- exact when the generic continuation later stops.
+          Internal.retryPower? target { failure with metered := false } fuel
   | none =>
       match factor? target r fuel with
       | .ok (F, r') => .ok (F, r', .generic)

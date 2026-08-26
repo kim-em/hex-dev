@@ -415,6 +415,21 @@ private def smoothCapTrace : Hex.Nat.Internal.SmoothSearch :=
 -- distinct incomplete stop and retains the same checked aggregate.
 private def starvedInput : Nat := 1000003 * 1000033
 
+-- One large prime is certified after the first split, then fuel exhaustion
+-- retains that checked entry. The failure total includes both the successful
+-- certificate work and the preceding split rather than dropping either.
+private def retainedCertInput : Nat := starvedInput * 1000037
+
+#guard (match factor? retainedCertInput (Rand.ofSeed 3) (fuel := 3) with
+  | .error failure =>
+      failure.stop == .incomplete && failure.metered &&
+        failure.attempts == 6 &&
+        failure.rand == ((Rand.ofSeed 3).words 8).2 &&
+        match failure.snapshot with
+        | some saved => saved.raw.factors.length == 1 && checkPartial saved.raw
+        | none => false
+  | .ok _ => false)
+
 #guard (match factorPartial? starvedInput (Rand.ofSeed 3) (fuel := 0) with
   | .ok (F, _) => checkPartial F.raw && F.raw.residual == starvedInput
   | .error _ => false)
@@ -441,6 +456,12 @@ private def starvedInput : Nat := 1000003 * 1000033
   | .ok (_, _, route) => route == .cyclotomic
   | .error _ => false)
 
+-- A stopped generic continuation cannot recover successful earlier-part
+-- counts from the compatible factor API, so it is explicitly unmetered.
+#guard (match factorPowerWithRoute? 2 32 .minus (Rand.ofSeed 1) (fuel := 0) with
+  | .error failure => failure.stop == .incomplete && !failure.metered
+  | .ok _ => false)
+
 -- A rejected cyclotomic subproblem is propagated, never retried as generic
 -- exhaustion for the outer target.
 private def rejectedPart : FactorFailure :=
@@ -456,6 +477,14 @@ private def rejectedPart : FactorFailure :=
           match failure.culprit with
           | some rejected => rejected.subject == 7
           | none => false
+  | .ok _ => false)
+
+-- Standalone retry accounting adds the earlier exact subtotal to the generic
+-- continuation rather than silently replacing it with retry-only work.
+#guard (match Hex.Nat.Internal.retryPower? starvedInput
+    { stop := .incomplete, attempts := 4, rand := Rand.ofSeed 11 } 1 with
+  | .error failure =>
+      failure.stop == .incomplete && failure.attempts == 5 && failure.metered
   | .ok _ => false)
 
 #guard (match factor? 4826808 (Rand.ofSeed 7) with
