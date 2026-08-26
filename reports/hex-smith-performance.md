@@ -44,8 +44,9 @@ entries are a fixed sparse recurrence and have no random seed.
 ## Verdicts
 
 The scientific run used source commit
-`2746306efc1239b7a2cab87e688ddee311257003`, Lean 4.34.0-rc2, LeanBench
-0.1.0, and warm-cache compiled execution on `chungus2` (Linux 6.12.100,
+`32aeeffbf44f2d9704d42d260f396eb70e409220`, Lean 4.34.0-rc2, LeanBench
+0.1.0, and warm-cache compiled execution from a clean tree (`git_dirty=false`)
+on `chungus2` (Linux 6.12.100,
 x86-64, AMD EPYC 9455 48-Core Processor, 96 logical CPUs). Each registration
 used its committed ladder, three outer trials, a 100 ms inner target, a 1.0
 spawn-floor multiplier, a 10 s per-call ceiling, and the registration's
@@ -67,30 +68,30 @@ lake exe hexsmith_bench run \
 
 The committed export is
 `reports/bench-results/hex-smith-phase4-scientific.json`, SHA-256
-`a6ec010b4adaa21ff09a41a1caae19889fb6cbe91c45ece3a29e30782964ae4f`.
+`e28f17f192716e0f8b01f02c129031a36a51034d30c76f90db2dca25842cae68`.
 Every rung cleared the signal filter and every target was consistent with its
 declared complexity:
 
 | target | ladder | verdict details |
 |---|---|---|
-| `runDense` | 4, 6, 8, 10, 12, 14 | consistent; `cMin=144.722`, `cMax=182.384` |
-| `runDenseTall` | 3, 4, 5, 6, 8, 10 | consistent; `cMin=345.545`, `cMax=490.888` |
-| `runDenseWide` | 3, 4, 5, 6, 8, 10 | consistent; `cMin=292.376`, `cMax=388.543` |
-| `runDenseDeficient` | 4, 6, 8, 10, 12, 14 | consistent; `cMin=66.164`, `cMax=95.035` |
-| `runChain` | 4, 6, 8, 10, 12, 14 | consistent; `cMin=63.953`, `cMax=74.858` |
-| `runChainDeficient` | 4, 6, 8, 10, 12, 14 | consistent; `cMin=54.204`, `cMax=68.982` |
+| `runDense` | 4, 6, 8, 10, 12, 14 | consistent; `cMin=142.776`, `cMax=183.523` |
+| `runDenseTall` | 3, 4, 5, 6, 8, 10 | consistent; `cMin=346.055`, `cMax=497.223` |
+| `runDenseWide` | 3, 4, 5, 6, 8, 10 | consistent; `cMin=290.346`, `cMax=390.470` |
+| `runDenseDeficient` | 4, 6, 8, 10, 12, 14 | consistent; `cMin=65.700`, `cMax=94.533` |
+| `runChain` | 4, 6, 8, 10, 12, 14 | consistent; `cMin=63.822`, `cMax=75.235` |
+| `runChainDeficient` | 4, 6, 8, 10, 12, 14 | consistent; `cMin=53.934`, `cMax=71.005` |
 | `runPresentation` | 16, 24, 32, 48, 64, 96 | consistent; `beta=-0.101` |
-| `runPresentationWide` | 16, 24, 32, 48, 64, 96 | consistent; `beta=-0.120` |
-| `runRank` | 4, 6, 8, 10, 12, 14 | consistent; `cMin=141.694`, `cMax=181.895` |
-| `runInvariantFactors` | 4, 6, 8, 10, 12, 14 | consistent; `cMin=141.483`, `cMax=181.643` |
-| `runData` | 4, 6, 8, 10, 12 | consistent; `cMin=249.693`, `cMax=356.537` |
-| `runSmithBasis` | 4, 6, 8, 10, 12 | consistent; `cMin=402.693`, `cMax=568.100` |
-| `runAbelianStructure` | 16, 24, 32, 48, 64, 96 | consistent; `beta=-0.118` |
-| `runShape` | 32, 64, 128, 256, 512, 1024 | consistent; `beta=-0.013` |
-| `runCert` | 16, 24, 32, 48, 64, 96 | consistent; `cMin=923.803`, `cMax=996.438` |
-| `runDiagonal` | 8, 12, 16, 24, 32, 48, 64 | consistent; `beta=-0.123` |
-| `runDiagonalGeneral` | 8, 12, 16, 24, 32, 48, 64 | consistent; `beta=-0.055` |
-| `runDiagonalData` | 16, 24, 32, 48, 64, 96, 128 | consistent; `cMin=16.223`, `cMax=19.017` |
+| `runPresentationWide` | 16, 24, 32, 48, 64, 96 | consistent; `beta=-0.126` |
+| `runRank` | 4, 6, 8, 10, 12, 14 | consistent; `cMin=143.075`, `cMax=184.064` |
+| `runInvariantFactors` | 4, 6, 8, 10, 12, 14 | consistent; `cMin=143.880`, `cMax=182.465` |
+| `runData` | 4, 6, 8, 10, 12 | consistent; `cMin=250.845`, `cMax=357.913` |
+| `runSmithBasis` | 4, 6, 8, 10, 12 | consistent; `cMin=402.876`, `cMax=572.521` |
+| `runAbelianStructure` | 16, 24, 32, 48, 64, 96 | consistent; `beta=-0.140` |
+| `runShape` | 32, 64, 128, 256, 512, 1024 | consistent; `beta=-0.009` |
+| `runCert` | 16, 24, 32, 48, 64, 96 | consistent; `cMin=931.057`, `cMax=998.407` |
+| `runDiagonal` | 8, 12, 16, 24, 32, 48, 64 | consistent; `beta=-0.118` |
+| `runDiagonalGeneral` | 8, 12, 16, 24, 32, 48, 64 | consistent; `beta=-0.063` |
+| `runDiagonalData` | 16, 24, 32, 48, 64, 96, 128 | consistent; `cMin=16.219`, `cMax=19.033` |
 
 The ladder column lists every measured rung. The harness computes each printed
 verdict after the registration's declared leading warmup fraction: 0.2 for the
@@ -103,13 +104,13 @@ their linear bit width; all raw rung constants and inclusion flags are in the
 committed export.
 
 The internal paired medians in that same export answer the two route-cost
-questions. `snfData / snf` rises from 1.494x at `n=4` through 1.721x,
-1.792x, and 2.164x to 2.176x at `n=12`. On common diagonal rungs
+questions. `snfData / snf` rises from 1.485x at `n=4` through 1.721x,
+1.810x, and 2.157x to 2.184x at `n=12`. On common diagonal rungs
 `n=16,24,32,48,64`, general `snf / snfDiagonal` is respectively
-26.622x, 41.731x, 57.803x, 89.429x, and 118.961x; the advantage grows
+26.819x, 41.491x, 57.311x, 87.467x, and 120.622x; the advantage grows
 strongly, proving that the diagonal route bypasses elimination.
-`snfDiagonalData / snfDiagonal` is 15.500x, 20.836x, 26.139x, 35.951x,
-and 45.764x on those rungs, exposing transform accumulation separately.
+`snfDiagonalData / snfDiagonal` is 15.558x, 20.829x, 25.897x, 35.447x,
+and 46.066x on those rungs, exposing transform accumulation separately.
 
 The untimed coefficient-growth command was:
 
@@ -164,7 +165,7 @@ nix-shell -p python313Packages.cypari2 python313Packages.cysignals pari --run '
 
 The committed 47-target export is
 `reports/bench-results/hex-smith-phase4-comparators.json`, SHA-256
-`e7761db04969ff47be676e9d6c12a2e66bcaebfed81c01436896dbf01ce348bb`.
+`b61d716b616136012fb9163ee45794d01dc8750e8a6cf5c3a8bd4a43d7a81186`.
 All repeats matched their expected hashes. `compare` was also run for each of
 the 15 triples by replacing `SPEC` below with every suffix in
 `{Dense6,Dense8,Dense10,Dense12,Dense14,Chain6,Chain8,Chain10,Chain12,
@@ -177,7 +178,7 @@ lake exe hexsmith_bench compare \
   Hex.SmithBench.runPariSPEC
 ```
 
-The no-work medians were 7.139 us for FLINT and 7.096 us for PARI. All
+The no-work medians were 7.141 us for FLINT and 7.001 us for PARI. All
 15 rungs are eligible: each external median is at least twice its own
 overhead and every per-call median is below 1 s. Tables give raw and
 overhead-adjusted `external / Hex` ratios; subtraction removes only the
@@ -188,14 +189,14 @@ construction remain charged to the comparator.
 
 | n | Hex | FLINT | PARI | canonical hash | FLINT raw / adjusted | PARI raw / adjusted |
 |---:|---:|---:|---:|---|---:|---:|
-| 6 | 31.346 us | 19.440 us | 45.506 us | `0xf04520317df0def8` | 0.620x / 0.392x | 1.452x / 1.225x |
-| 8 | 72.111 us | 28.574 us | 71.167 us | `0xe4073bf661a3c59a` | 0.396x / 0.297x | 0.987x / 0.889x |
-| 10 | 163.096 us | 48.805 us | 121.510 us | `0xf68ae7878c8af87b` | 0.299x / 0.255x | 0.745x / 0.702x |
-| 12 | 287.318 us | 67.580 us | 169.683 us | `0x5e971675ada9d783` | 0.235x / 0.210x | 0.591x / 0.566x |
-| 14 | 531.633 us | 90.889 us | 246.979 us | `0x699fd5ab6f700da0` | 0.171x / 0.158x | 0.465x / 0.451x |
+| 6 | 31.451 us | 19.243 us | 45.299 us | `0xf04520317df0def8` | 0.612x / 0.385x | 1.440x / 1.218x |
+| 8 | 72.647 us | 28.228 us | 70.807 us | `0xe4073bf661a3c59a` | 0.389x / 0.290x | 0.975x / 0.878x |
+| 10 | 163.626 us | 48.349 us | 120.986 us | `0xf68ae7878c8af87b` | 0.295x / 0.252x | 0.739x / 0.697x |
+| 12 | 289.111 us | 66.586 us | 170.585 us | `0x5e971675ada9d783` | 0.230x / 0.206x | 0.590x / 0.566x |
+| 14 | 532.740 us | 90.280 us | 248.183 us | `0x699fd5ab6f700da0` | 0.169x / 0.156x | 0.466x / 0.453x |
 
 Both adjusted ratios decline monotonically. At the top rung FLINT is about
-6.3x faster and PARI about 2.2x faster. This expected informational divergence
+6.4x faster and PARI about 2.2x faster. This expected informational divergence
 is consistent with tuned external dispatch versus the classical Lean pivot
 loop and is not a gating Concern.
 
@@ -205,14 +206,14 @@ loop and is not a gating Concern.
 
 | n | Hex | FLINT | PARI | canonical hash | FLINT raw / adjusted | PARI raw / adjusted |
 |---:|---:|---:|---:|---|---:|---:|
-| 6 | 16.210 us | 18.881 us | 42.941 us | `0x1e5b9e22113b8d71` | 1.165x / 0.724x | 2.649x / 2.211x |
-| 8 | 35.404 us | 25.442 us | 69.299 us | `0xb3713c08af9eb87c` | 0.719x / 0.517x | 1.957x / 1.757x |
-| 10 | 67.986 us | 33.376 us | 113.114 us | `0xefcb83d9d11c9839` | 0.491x / 0.386x | 1.664x / 1.559x |
-| 12 | 113.756 us | 45.092 us | 204.891 us | `0x239317e249e653d3` | 0.396x / 0.334x | 1.801x / 1.739x |
-| 14 | 175.284 us | 57.535 us | 296.744 us | `0x049888f934ad3581` | 0.328x / 0.288x | 1.693x / 1.652x |
+| 6 | 16.393 us | 18.517 us | 42.662 us | `0x1e5b9e22113b8d71` | 1.130x / 0.694x | 2.602x / 2.175x |
+| 8 | 35.608 us | 25.481 us | 69.135 us | `0xb3713c08af9eb87c` | 0.716x / 0.515x | 1.942x / 1.745x |
+| 10 | 67.663 us | 33.207 us | 117.173 us | `0xefcb83d9d11c9839` | 0.491x / 0.385x | 1.732x / 1.628x |
+| 12 | 112.656 us | 44.637 us | 208.251 us | `0x239317e249e653d3` | 0.396x / 0.333x | 1.849x / 1.786x |
+| 14 | 174.930 us | 56.766 us | 303.054 us | `0x049888f934ad3581` | 0.325x / 0.284x | 1.732x / 1.692x |
 
-FLINT's adjusted ratio falls steadily to 0.288x. PARI remains slower than Hex
-throughout the adjusted ladder, settling near 1.65--1.75x after `n=8`; the
+FLINT's adjusted ratio falls steadily to 0.284x. PARI remains slower than Hex
+throughout the adjusted ladder, settling near 1.63--1.79x after `n=8`; the
 small reversal at `n=12` is a local constant-factor variation rather than a
 change in the overall plateau. Neither informational comparator imposes a
 threshold.
@@ -223,14 +224,14 @@ threshold.
 
 | n | Hex | FLINT | PARI | canonical hash | FLINT raw / adjusted | PARI raw / adjusted |
 |---:|---:|---:|---:|---|---:|---:|
-| 8 | 39.816 us | 24.629 us | 54.000 us | `0x82b42ad65a90f9be` | 0.619x / 0.439x | 1.356x / 1.178x |
-| 12 | 116.039 us | 43.189 us | 101.532 us | `0xfc1472e454f53028` | 0.372x / 0.311x | 0.875x / 0.814x |
-| 16 | 248.113 us | 67.483 us | 171.184 us | `0x47ef2f14529c425f` | 0.272x / 0.243x | 0.690x / 0.661x |
-| 20 | 467.417 us | 104.805 us | 270.881 us | `0x032c9800f08ccd0d` | 0.224x / 0.209x | 0.580x / 0.564x |
-| 24 | 795.734 us | 148.168 us | 381.420 us | `0xb281650658ac39a7` | 0.186x / 0.177x | 0.479x / 0.470x |
+| 8 | 39.913 us | 24.565 us | 52.961 us | `0x82b42ad65a90f9be` | 0.615x / 0.437x | 1.327x / 1.152x |
+| 12 | 116.010 us | 43.106 us | 102.891 us | `0xfc1472e454f53028` | 0.372x / 0.310x | 0.887x / 0.827x |
+| 16 | 249.045 us | 68.187 us | 173.358 us | `0x47ef2f14529c425f` | 0.274x / 0.245x | 0.696x / 0.668x |
+| 20 | 472.555 us | 104.340 us | 273.833 us | `0x032c9800f08ccd0d` | 0.221x / 0.206x | 0.579x / 0.565x |
+| 24 | 779.906 us | 148.392 us | 385.521 us | `0xb281650658ac39a7` | 0.190x / 0.181x | 0.494x / 0.485x |
 
 Both adjusted ratios decline monotonically over the five-rung eligible range;
-at `n=24`, FLINT is about 5.7x faster and PARI about 2.1x faster. The trend is
+at `n=24`, FLINT is about 5.5x faster and PARI about 2.1x faster. The trend is
 expected for the dense classical route against separately tuned external
 implementations and is informational.
 
@@ -241,9 +242,9 @@ implementations and is informational.
 One representative case was sampled for every `libraries.yml` input family.
 The presentation-wide case is the downstream-realistic hot path; the dense
 family separately has the worst top-rung comparator gap. All profiles used source
-commit `2746306efc1239b7a2cab87e688ddee311257003`, the same host and LeanBench
-environment as the scientific run, samply 0.13.1 at 999 Hz, and this command
-shape:
+commit `32aeeffbf44f2d9704d42d260f396eb70e409220`, the same host and LeanBench
+environment as the scientific run, also from a clean tree, with samply 0.13.1
+at 999 Hz and this command shape:
 
 ```sh
 LEAN_BENCH_SAMPLY_HOME=/tmp/lean-bench-samply \
@@ -264,28 +265,28 @@ transform-heavy end-to-end cost is represented separately by `runData` and
 ### Random dense Smith
 
 `TARGET=Hex.SmithBench.runDense`, `PARAM=14`, seed/salt 11. The filtered
-profile `/tmp/hex-profile-runDense-14.json.gz` retained 4129 samples. Leaf
-cost was allocation/free 43.01%, GMP 16.23%, Lean runtime 35.19%, Hex own code
-5.45%, and other 0.12%.
+profile `/tmp/hex-profile-runDense-14.json.gz` retained 4111 samples. Leaf
+cost was allocation/free 43.64%, GMP 16.93%, Lean runtime 34.01%, Hex own code
+5.25%, and other 0.17%.
 
 | inclusive Hex function | share |
 |---|---:|
-| `Hex.SmithBench.runDense` | 96.83% |
-| `Hex.Matrix.snf` | 96.20% |
-| `Hex.Matrix.Smith.runFuel` | 96.17% |
-| `Hex.Matrix.Smith.reduceFuel` | 75.30% |
-| `Hex.Matrix.Smith.clearColumn` | 33.64% |
-| `Hex.Matrix.Smith.clearRow` | 15.91% |
-| `Hex.Matrix.Smith.findBad?` | 14.87% |
+| `Hex.SmithBench.runDense` | 97.18% |
+| `Hex.Matrix.snf` | 96.59% |
+| `Hex.Matrix.Smith.runFuel` | 96.55% |
+| `Hex.Matrix.Smith.reduceFuel` | 75.55% |
+| `Hex.Matrix.Smith.clearColumn` | 33.62% |
+| `Hex.Matrix.Smith.clearRow` | 16.15% |
+| `Hex.Matrix.Smith.findBad?` | 15.20% |
 
 This is the registered dense form-only route. Reduction and row/column
 clearing dominate, while GMP and allocation reflect the measured growth of
 intermediate integer entries.
 
 ```text
-calibration residual: 0.902 ms (limit 5 ms)
-total timed: 4139.9 ms
-retained samples: 4129 (8 rejected outside windows)
+calibration residual: 1.424 ms (limit 5 ms)
+total timed: 4142.5 ms
+retained samples: 4111 (8 rejected outside windows)
 sensitivity +/-5 ms: passed
 confidence: passed
 ```
@@ -293,28 +294,28 @@ confidence: passed
 ### Chain conjugate
 
 `TARGET=Hex.SmithBench.runChain`, `PARAM=14`, deterministic conjugation salts
-73 and 97. `/tmp/hex-profile-runChain-14.json.gz` retained 2922 samples. Leaf
-cost was allocation/free 35.69%, GMP 0.00%, Lean runtime 58.80%, Hex own code
-5.10%, and other 0.41%.
+73 and 97. `/tmp/hex-profile-runChain-14.json.gz` retained 2795 samples. Leaf
+cost was allocation/free 33.49%, GMP 0.00%, Lean runtime 60.93%, Hex own code
+5.19%, and other 0.39%.
 
 | inclusive Hex function | share |
 |---|---:|
-| `Hex.SmithBench.runChain` | 100.00% |
-| `Hex.Matrix.snf` | 98.53% |
-| `Hex.Matrix.Smith.runFuel` | 98.53% |
-| `Hex.Matrix.Smith.reduceFuel` | 59.82% |
-| `Hex.Matrix.Smith.findBad?` | 38.36% |
-| `Hex.Matrix.Smith.findPivot?` | 34.80% |
-| `Hex.Matrix.Smith.clearColumn` | 10.03% |
+| `Hex.SmithBench.runChain` | 99.89% |
+| `Hex.Matrix.snf` | 98.46% |
+| `Hex.Matrix.Smith.runFuel` | 98.43% |
+| `Hex.Matrix.Smith.reduceFuel` | 57.03% |
+| `Hex.Matrix.Smith.findBad?` | 37.21% |
+| `Hex.Matrix.Smith.findPivot?` | 37.32% |
+| `Hex.Matrix.Smith.clearColumn` | 10.95% |
 
 The registered chain route dominates. Its small coefficients make runtime
 dispatch, scanning, and allocation more visible than GMP arithmetic; pivot and
 divisibility searches are the main inclusive subpaths.
 
 ```text
-calibration residual: 1.202 ms (limit 5 ms)
-total timed: 2935.5 ms
-retained samples: 2922 (9 rejected outside windows)
+calibration residual: 2.510 ms (limit 5 ms)
+total timed: 2836.4 ms
+retained samples: 2795 (9 rejected outside windows)
 sensitivity +/-5 ms: passed
 confidence: passed
 ```
@@ -323,26 +324,26 @@ confidence: passed
 
 `TARGET=Hex.SmithBench.runPresentationWide`, `PARAM=96`, fixed sparse
 recurrence with no random seed. `/tmp/hex-profile-runPresentationWide-96.json.gz`
-retained 2887 samples. Leaf cost was allocation/free 36.02%, GMP 0.48%, Lean
-runtime 62.80%, Hex own code 0.59%, and other 0.10%.
+retained 2910 samples. Leaf cost was allocation/free 36.49%, GMP 0.38%, Lean
+runtime 62.41%, Hex own code 0.72%, and other 0.00%.
 
 | inclusive Hex function | share |
 |---|---:|
 | `Hex.SmithBench.runPresentationWide` | 99.97% |
-| `Hex.Matrix.snf` | 99.69% |
-| `Hex.Matrix.Smith.runFuel` | 99.69% |
-| `Hex.Matrix.Smith.reduceFuel` | 54.10% |
-| `Hex.Matrix.Smith.findBad?` | 50.68% |
-| `Hex.Matrix.Smith.findPivot?` | 44.41% |
+| `Hex.Matrix.snf` | 99.76% |
+| `Hex.Matrix.Smith.runFuel` | 99.76% |
+| `Hex.Matrix.Smith.reduceFuel` | 54.91% |
+| `Hex.Matrix.Smith.findBad?` | 50.41% |
+| `Hex.Matrix.Smith.findPivot?` | 43.85% |
 
 The downstream presentation target is directly responsible for the profile.
 The sparse input is deliberately routed through the dense v1 engine; repeated
 trailing-block scans, not an unregistered preprocessing step, dominate.
 
 ```text
-calibration residual: 0.600 ms (limit 5 ms)
-total timed: 2902.2 ms
-retained samples: 2887 (9 rejected outside windows)
+calibration residual: 0.240 ms (limit 5 ms)
+total timed: 2931.1 ms
+retained samples: 2910 (14 rejected outside windows)
 sensitivity +/-5 ms: passed
 confidence: passed
 ```
