@@ -127,6 +127,19 @@ theorem checkPartial_sorted {F : PartialFactorization}
     F.factors.Pairwise (fun a b => a.prime < b.prime) :=
   checkEntries_pairwise (checkedPartial_parts h).2.1
 
+/-- A checked partial factorization with residual one is already a complete
+factorization certificate; no second checker replay is needed. -/
+theorem checkFactorization_of_checkPartial {F : PartialFactorization}
+    (h : checkPartial F = true) (hr : F.residual = 1) :
+    checkFactorization ⟨F.subject, F.factors⟩ = true := by
+  obtain ⟨hsubject, hentries, acc, hproduct, hresidual⟩ :=
+    checkedPartial_parts h
+  have hacc : acc = F.subject := by
+    have heq := boundedPowMul_eq 1 acc F.subject hresidual
+    simpa [hr] using heq.symm
+  simp only [checkFactorization, Bool.and_eq_true, decide_eq_true_eq]
+  exact ⟨⟨hsubject, hentries⟩, hacc ▸ hproduct⟩
+
 end Nat
 
 end Hex

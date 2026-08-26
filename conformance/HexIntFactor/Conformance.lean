@@ -160,9 +160,14 @@ example :
 #guard (smallCandidate (1000003 ^ 2)).route == .perfectPower
 #guard (smallCandidate ((6 ^ 5) ^ 3)).route == .perfectPower
 
-#guard pMinusOneStage1 15 2 2 == .factor 3
-#guard pMinusOneStage1 25 2 2 == .noFactor
-#guard pMinusOneStage1 15 4 2 == .whole
+#guard pMinusOneFactor 15 2 2 == .factor 3
+#guard pMinusOneFactor 25 2 2 == .noFactor
+#guard pMinusOneFactor 15 4 2 == .whole
+
+example {n base bound d : Nat}
+    (h : pMinusOneFactor n base bound = .factor d) :
+    1 < d ∧ d < n ∧ d ∣ n :=
+  pMinusOneFactor_spec h
 
 -- ECM's three stage-boundary gcd outcomes are observably distinct.
 #guard ecmStage1 191 6 2 == .noFactor
@@ -172,6 +177,45 @@ example :
 #guard (match rhoSplit? 91 (Rand.ofSeed 1) 16 with
   | .ok (d, _) => decide (1 < d) && decide (d < 91) && 91 % d == 0
   | .error _ => false)
+
+-- A malformed aggregate is exposed as an invariant failure, rather than
+-- being replaced by an empty partial answer or ordinary exhaustion.
+#guard (match Hex.Nat.Internal.acceptPartial? 12 (by decide)
+    ⟨12, [⟨1, .small 2⟩], 5⟩
+    rfl (Rand.ofSeed 9) 17 with
+  | .error failure =>
+      failure.stop == .rejected && failure.attempts == 17 &&
+        (match failure.snapshot with
+          | some saved => checkPartial saved.raw && saved.raw.subject == 12
+          | none => false) &&
+        (match failure.culprit with
+          | some rejected => !checkPartial rejected
+          | none => false)
+  | .ok _ => false)
+
+-- Real producer output must cross the aggregate checker without rejection.
+#guard ([1, 2, 4, 12, 97, 4826808, 2 ^ 32 - 1,
+    1000003 ^ 2, 1000003 * 1000033].all fun n =>
+  match factorPartial? n (Rand.ofSeed n) with
+  | .ok (F, _) => checkPartial F.raw
+  | .error _ => false)
+
+-- Zero fuel is checked partial exhaustion, while complete search reports the
+-- distinct incomplete stop and retains the same checked aggregate.
+private def starvedInput : Nat := 1000003 * 1000033
+
+#guard (match factorPartial? starvedInput (Rand.ofSeed 3) (fuel := 0) with
+  | .ok (F, _) => checkPartial F.raw && F.raw.residual == starvedInput
+  | .error _ => false)
+
+#guard (match factor? starvedInput (Rand.ofSeed 3) (fuel := 1) with
+  | .error failure =>
+      failure.stop == .incomplete && 0 < failure.attempts &&
+        failure.rand != Rand.ofSeed 3 &&
+        match failure.snapshot with
+        | some saved => checkPartial saved.raw && saved.raw.subject == starvedInput
+        | none => false
+  | .ok _ => false)
 
 #guard checkOrder ⟨2, 7, 3, ⟨3, [⟨1, .small 3⟩]⟩⟩
 
@@ -185,6 +229,23 @@ example :
 #guard (match factorPowerWithRoute? 2 6 .minus (Rand.ofSeed 1) with
   | .ok (_, _, route) => route == .cyclotomic
   | .error _ => false)
+
+-- A rejected cyclotomic subproblem is propagated, never retried as generic
+-- exhaustion for the outer target.
+private def rejectedPart : FactorFailure :=
+  { stop := .rejected
+    attempts := 4
+    rand := Rand.ofSeed 11
+    culprit := some ⟨7, [⟨1, .small 2⟩], 3⟩ }
+
+#guard (match Hex.Nat.Internal.retryPower? 63 rejectedPart 0 with
+  | .error failure =>
+      failure.stop == .rejected && failure.attempts == 4 && failure.metered &&
+        failure.rand == Rand.ofSeed 11 &&
+          match failure.culprit with
+          | some rejected => rejected.subject == 7
+          | none => false
+  | .ok _ => false)
 
 #guard (match factor? 4826808 (Rand.ofSeed 7) with
   | .ok (F, _) =>

@@ -29,10 +29,16 @@ private def powersJson (entries : List PrimePower) : String :=
   "[" ++ String.intercalate "," (entries.map fun e =>
     "[" ++ toString e.prime ++ "," ++ toString e.exponent ++ "]") ++ "]"
 
-private def factorJson (n : Nat) : String :=
+private def rejected (context : String) : IO α :=
+  throw <| IO.userError (context ++ ": factorization candidate rejected")
+
+private def factorJson (n : Nat) : IO String :=
   match factor? n (Hex.Rand.ofSeed n) with
-  | .ok (F, _) => powersJson F.raw.factors
-  | .error f => match f.stop with | .zero => quote "refused" | .incomplete => "null"
+  | .ok (F, _) => pure (powersJson F.raw.factors)
+  | .error f => match f.stop with
+    | .zero => pure (quote "refused")
+    | .incomplete => pure "null"
+    | .rejected => rejected ("factor/" ++ toString n)
 
 private def partsJson (parts : List CyclotomicPart) : String :=
   "[" ++ String.intercalate "," (parts.map fun p =>
@@ -41,15 +47,17 @@ private def partsJson (parts : List CyclotomicPart) : String :=
 private def emitFactor (tag : String) (n : Nat) : IO Unit := do
   let case := "factor/" ++ tag
   emitFixture "factor" case (",\"n\":" ++ toString n)
-  emitResult lib case "factor" (factorJson n)
+  emitResult lib case "factor" (← factorJson n)
 
 private def emitDivisorFns (tag : String) (n : Nat) : IO Unit := do
   let case := "divisorfn/" ++ tag
   emitFixture "divisorfn" case (",\"n\":" ++ toString n)
-  let value := match factor? n (Hex.Rand.ofSeed n) with
-    | .error _ => "null"
+  let value ← match factor? n (Hex.Rand.ofSeed n) with
+    | .error failure => match failure.stop with
+      | .rejected => rejected case
+      | .zero | .incomplete => pure "null"
     | .ok (F, _) =>
-        "{\"tau\":" ++ toString (numDivisors F) ++
+        pure <| "{\"tau\":" ++ toString (numDivisors F) ++
         ",\"sigma0\":" ++ toString (sigma F 0) ++
         ",\"sigma1\":" ++ toString (sigma F 1) ++
         ",\"sigma2\":" ++ toString (sigma F 2) ++

@@ -237,19 +237,31 @@ consumer.
 
 ## The algorithms
 
-Every route produces a candidate `Factorization` and `factor?` accepts
-it only through `checkFactorization`. A rejected candidate is a bug in
-a route, never a wrong answer, and the dispatch simply continues.
+The generic routes produce a partial aggregate, which `factor?` accepts through
+`checkPartial`; residual one becomes a complete certificate by
+`checkFactorization_of_checkPartial`, without another checker replay. The
+cyclotomic route separately replays `checkFactorization` on its merged complete
+aggregate. Rejection at either boundary is a route bug, never ordinary fuel
+exhaustion, and is exposed as `FactorStop.rejected`. Route-local attempts that
+report no factor may still continue to the next search route.
 
 ```lean
 inductive FactorStop where
   | zero
   | incomplete
+  | rejected
+
+structure PartialSnapshot where
+  raw   : PartialFactorization
+  valid : checkPartial raw = true
 
 structure FactorFailure where
   stop     : FactorStop
   attempts : Nat
   rand     : Rand
+  snapshot : Option PartialSnapshot := none
+  culprit  : Option PartialFactorization := none
+  metered   : Bool := true
 
 def defaultFuel (n : Nat) : Nat
 
@@ -321,6 +333,15 @@ Like rho, stage 1 is sited upstream: hex-primality owns it beside
 `rhoFactor?`, under the same dynamically validated proper-factor
 contract, and this library reuses it. What follows specifies the
 algorithm both consumers get.
+
+The integer-factor adapter re-exports that contract under its own route name,
+parallel to the rho and ECM adapters:
+
+```lean
+theorem pMinusOneFactor_spec
+    (h : pMinusOneFactor n base bound = .factor d) :
+    1 < d ∧ d < n ∧ d ∣ n
+```
 
 Stage 1 chooses `1 < a < n` and first checks `gcd(a,n)`: a gcd greater
 than `1` is necessarily a proper factor. Otherwise it computes
@@ -398,6 +419,23 @@ remedy, propagating the failure upward, and it is the right one here:
 there is no fallback that is correct-but-slow, because trial division
 past `10^{18}` is not slow, it is unavailable.
 
+`FactorStop.rejected` is deliberately separate: it means a final aggregate
+failed its certificate checker. At the generic partial-acceptance boundary it
+preserves the advanced random state and attempt count. A rejected partial
+aggregate also retains both the unchecked candidate in
+`FactorFailure.culprit` and a checked empty-factor
+recovery snapshot for the positive subject; the two are not conflated. It must
+be treated as an implementation defect rather than a request for more fuel.
+The internal candidate-acceptance boundary is exercised directly by negative
+conformance tests. Genuine incomplete failures retain the checked aggregate in
+`FactorFailure.snapshot`; the zero case has no snapshot. Cyclotomic dispatch
+propagates rejection rather than retrying it as though it were exhaustion. A
+rejection propagated from a cyclotomic part remains scoped to that subproblem;
+a rejected merged cyclotomic aggregate records the target candidate and random
+state. Its successful subsearch attempts are not exposed by `factor?`, so its
+placeholder count is marked unavailable by `metered = false` rather than being
+presented as an exact total.
+
 A partial answer is more useful than no answer, so the search also
 exposes
 
@@ -428,29 +466,43 @@ partial factorization of one subject from answering a request about
 another. The characterising lemmas `checkPartial_prod`,
 `checkPartial_prime`, `checkPartial_exponent`, and `checkPartial_sorted`
 expose reconstruction, primality, exponent positivity, and factor-base
-ordering without requiring consumers to unfold the checker, and
+ordering without requiring consumers to unfold the checker.
+`checkFactorization_of_checkPartial` proves that residual one is already a
+complete certificate, avoiding a second certificate replay. The search result
+theorems are
 
 ```lean
 theorem factorPartial?_error {n r fuel f}
     (h : factorPartial? n r fuel = .error f) :
-    f.stop = .zero ∧ n = 0
+    (f.stop = .zero ∧ n = 0) ∨
+      (f.stop = .rejected ∧
+        ∃ rejected saved, f.culprit = some rejected ∧
+          checkPartial rejected = false ∧ f.snapshot = some saved ∧
+            saved.raw.subject = n)
 
-theorem factorPartial?_success {n r fuel} (hn : 0 < n) :
-    ∃ F r', factorPartial? n r fuel = .ok (F, r')
+theorem factorPartial?_result {n r fuel} (hn : 0 < n) :
+    (∃ F r', factorPartial? n r fuel = .ok (F, r')) ∨
+      ∃ f rejected saved, factorPartial? n r fuel = .error f ∧
+        f.stop = .rejected ∧ f.culprit = some rejected ∧
+          checkPartial rejected = false ∧ f.snapshot = some saved ∧
+            saved.raw.subject = n
 ```
 
-For positive `n`, the empty factor list with residual `n` is always a
-valid fallback, so fuel exhaustion still returns checked partial data.
-At `n = 0` no object satisfying `0 < subject` and `subject = n` exists,
-and `FactorStop.zero` reports that fact instead of returning checked
-data about another number. A failure retains its advanced state and
-attempt count, while success returns the state alongside the checked
-data, so a caller never repeats a failed random stream accidentally.
+For positive `n`, ordinary fuel exhaustion returns the checked aggregate with
+its unfactored residual. It does not use an empty fallback to conceal an
+aggregate that failed `checkPartial`. Such a failure is returned as
+`FactorStop.rejected`, and the success-or-rejection theorem makes that internal
+failure case explicit. At `n = 0` no object satisfying `0 < subject` and
+`subject = n` exists, and `FactorStop.zero` reports that fact instead of
+returning checked data about another number. A generic-search failure retains
+its advanced state and exact attempt count, while success returns the state
+alongside the checked data, so a caller never repeats a failed random stream
+accidentally.
 
-`factor?` is the convenience projection of `factorPartial?`: it
-propagates `FactorStop.zero`, returns the complete checked form exactly
-when the checked residual is `1`, and returns `FactorStop.incomplete`
-otherwise, retaining
+`factor?` uses the same partial-candidate acceptance boundary: it propagates
+`FactorStop.zero` or `FactorStop.rejected`, converts residual one to the complete
+checked form by `checkFactorization_of_checkPartial` without replaying the
+certificates, and returns `FactorStop.incomplete` otherwise, retaining
 the same advanced state and attempt count. Keeping both APIs avoids
 forcing callers that require completeness to unpack an object they
 cannot use.
@@ -1054,9 +1106,11 @@ nothing extra.
    structural reductions, and trial division against hex-primality's
    table. The whole library starts after
    hex-primality milestone 3, because `PrimePower` carries
-   `PrimeCert`. This milestone returns checked partial data for every
-   positive input and a complete result when every residual prime can
-   be certified; it makes no blanket size claim. The committed Conway
+   `PrimeCert`. This milestone returns checked partial data on every ordinary
+   positive-input outcome; an internal aggregate rejection is explicit and
+   retains both its rejected candidate and checked recovery snapshot. It returns
+   a complete result when every residual prime can be certified and makes no
+   blanket size claim. The committed Conway
    table is a required regression family, not a currently blocked
    consumer.
 
