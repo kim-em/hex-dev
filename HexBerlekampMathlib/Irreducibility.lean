@@ -82,8 +82,8 @@ theorem isUnit_toMathlibPolynomial_of_isUnitPolynomial
     intro i
     rw [Hex.DensePoly.coeff_C]
     by_cases hi : i = 0
-    · subst hi; rw [if_pos rfl]
-    · rw [if_neg hi,
+    · subst hi; rw [ite_eq_left rfl]
+    · rw [ite_eq_right hi,
         Hex.DensePoly.coeff_eq_zero_of_size_le g (by omega : g.size ≤ i)]
   have hne : g.coeff 0 ≠ 0 := by
     have hlast := Hex.DensePoly.coeff_last_ne_zero_of_pos_size g (by omega : 0 < g.size)
@@ -137,7 +137,7 @@ theorem isCoprime_toMathlibPolynomial_of_isUnitPolynomial_gcd
     [Fact (Nat.Prime p)] {a b : Hex.FpPoly p}
     (h : Hex.Berlekamp.isUnitPolynomial (Hex.DensePoly.gcd a b) = true) :
     IsCoprime (toMathlibPolynomial a) (toMathlibPolynomial b) := by
-  haveI : Hex.ZMod64.PrimeModulus p := primeModulus_of_fact p
+  have : Hex.ZMod64.PrimeModulus p := primeModulus_of_fact p
   obtain ⟨u, hu⟩ := isUnit_toMathlibPolynomial_of_isUnitPolynomial h
   -- Executable Bezout: `left * a + right * b = gcd a b`.
   have hbez : (Hex.DensePoly.xgcd a b).left * a + (Hex.DensePoly.xgcd a b).right * b
@@ -205,12 +205,12 @@ theorem irreducible_dvd_frobeniusPolynomial_of_natDegree_dvd
     (hg_irreducible : Irreducible g) {N : Nat}
     (hdvd : g.natDegree ∣ N) :
     g ∣ frobeniusPolynomial p N := by
-  haveI : Fact (Irreducible g) := ⟨hg_irreducible⟩
+  have : Fact (Irreducible g) := ⟨hg_irreducible⟩
   have hg_ne_zero : g ≠ 0 := hg_irreducible.ne_zero
-  haveI : Module.Finite (ZMod p) (AdjoinRoot g) :=
+  have : Module.Finite (ZMod p) (AdjoinRoot g) :=
     (AdjoinRoot.powerBasis hg_ne_zero).finite
-  haveI : Finite (AdjoinRoot g) := Module.finite_of_finite (ZMod p)
-  haveI : Fintype (AdjoinRoot g) := Fintype.ofFinite _
+  have : Finite (AdjoinRoot g) := Module.finite_of_finite (ZMod p)
+  have : Fintype (AdjoinRoot g) := Fintype.ofFinite _
   have hcard : Fintype.card (AdjoinRoot g) = p ^ g.natDegree := by
     rw [← Nat.card_eq_fintype_card,
         ← FiniteField.pow_finrank_eq_natCard p (AdjoinRoot g),
@@ -257,7 +257,7 @@ theorem rabinTest_true_to_mathlib_checks
       toMathlibPolynomial f ∣ frobeniusPolynomial p n ∧
       ∀ d ∈ Hex.Berlekamp.maximalProperDivisors n,
         IsCoprime (toMathlibPolynomial f) (frobeniusPolynomial p d) := by
-  haveI : Hex.ZMod64.PrimeModulus p := primeModulus_of_fact p
+  have : Hex.ZMod64.PrimeModulus p := primeModulus_of_fact p
   subst hdegree
   simp only [Hex.Berlekamp.rabinTest, Bool.and_eq_true] at htest
   obtain ⟨⟨hpos, hdiv⟩, hwit⟩ := htest
@@ -313,7 +313,7 @@ theorem rabinTest_true_of_mathlib_checks
     rcases (Fact.out : Nat.Prime p).eq_one_or_self_of_dvd m hmdvd with h | h
     · exact Or.inl h
     · exact Or.inr h
-  haveI : Hex.ZMod64.PrimeModulus p := Hex.ZMod64.primeModulusOfPrime hp_hex
+  have : Hex.ZMod64.PrimeModulus p := Hex.ZMod64.primeModulusOfPrime hp_hex
   obtain ⟨hn_pos, hdvd, hcoprime⟩ := hchecks
   rw [Hex.Berlekamp.rabinTest_eq_true_iff]
   refine ⟨by rw [hdegree]; exact hn_pos, ?_, ?_⟩
@@ -362,7 +362,8 @@ theorem rabinTest_true_of_mathlib_checks
         Hex.DensePoly.coeff_C, Polynomial.coeff_one]
       by_cases hm : m = 0
       · simp [hm, HexModArithMathlib.ZMod64.toZMod_one]
-      · rw [if_neg hm, if_neg hm]; exact HexModArithMathlib.ZMod64.toZMod_zero
+      · rw [ite_eq_right hm, ite_eq_right hm]
+        exact HexModArithMathlib.ZMod64.toZMod_zero
     have hg_dvd_one :
         Hex.DensePoly.gcd f (Hex.Berlekamp.frobeniusDiffMod f hmonic d) ∣ (1 : Hex.FpPoly p) := by
       apply toMathlibPolynomial_dvd_iff.mp
@@ -392,7 +393,7 @@ theorem toMathlibPolynomial_gcd_associated
     rcases (Fact.out : Nat.Prime p).eq_one_or_self_of_dvd m hmdvd with h | h
     · exact Or.inl h
     · exact Or.inr h
-  haveI : Hex.ZMod64.PrimeModulus p := Hex.ZMod64.primeModulusOfPrime hp_hex
+  have : Hex.ZMod64.PrimeModulus p := Hex.ZMod64.primeModulusOfPrime hp_hex
   apply associated_of_dvd_dvd
   · exact dvd_gcd (toMathlibPolynomial_dvd (Hex.DensePoly.gcd_dvd_left f g))
       (toMathlibPolynomial_dvd (Hex.DensePoly.gcd_dvd_right f g))
@@ -541,20 +542,17 @@ theorem irreducible_of_mem_berlekampFactor_of_gcd_eq_one
     (Hex.Berlekamp.squareFree_common_of_gcd_eq_one hsquareFree)
 
 /--
-Mathlib-side re-export of the Mathlib-free Nodup property of the executable
-Berlekamp factor list of a monic square-free input.  Discharged from the
+Mathlib-side re-export of the Mathlib-free `Nodup` property of the executable
+Berlekamp factor list of a monic square-free input. Discharged from the
 polymorphic abstract loop invariant
 `Hex.Berlekamp.berlekampFactor_factors_nodup_of_no_squared` plus the
 squareness-implies-unit chain `isUnitPolynomial_of_squareFree_of_squared_dvd`,
 matching the proof of the section-level `Hex.Berlekamp.berlekampFactor_factors_nodup`
-in `HexBerlekamp/RabinSoundness.lean`.  Stated polymorphic over the field
-instance so that downstream Mathlib-side callers (e.g.
-`factorsModP_nodup_of_factorsModPBerlekampForm`) can apply it to the
-existentially-bound field witness carried by `factorsModPBerlekampForm`.
+in `HexBerlekamp/RabinSoundness.lean`.
 -/
 theorem berlekampFactor_factors_nodup
     (f : Hex.FpPoly p) (hmonic : Hex.DensePoly.Monic f)
-    [Lean.Grind.Field (Hex.ZMod64 p)] [Hex.ZMod64.PrimeModulus p]
+    [Hex.ZMod64.PrimeModulus p]
     (hsquareFree : Hex.DensePoly.gcd f (Hex.DensePoly.derivative f) = 1) :
     (Hex.Berlekamp.berlekampFactor f hmonic).factors.Nodup := by
   apply Hex.Berlekamp.berlekampFactor_factors_nodup_of_no_squared
@@ -771,7 +769,7 @@ supplies the former for the monic `m` (also in the constant case, where both the
 Rabin test and Mathlib irreducibility are `false`). -/
 theorem fpIsIrreducible_iff [Fact (Nat.Prime p)] (f : Hex.FpPoly p) :
     fpIsIrreducible f = true ↔ Irreducible (toMathlibPolynomial f) := by
-  haveI hPM : Hex.ZMod64.PrimeModulus p := primeModulus_of_fact p
+  have hPM : Hex.ZMod64.PrimeModulus p := primeModulus_of_fact p
   have hprime : Hex.Nat.Prime p := hPM.prime
   by_cases hz : f.isZero = true
   · -- Zero input: the test is `false` and the transported polynomial is `0`.
@@ -786,7 +784,7 @@ theorem fpIsIrreducible_iff [Fact (Nat.Prime p)] (f : Hex.FpPoly p) :
       intro n
       rw [coeff_toMathlibPolynomial, hf0, Hex.DensePoly.coeff_zero, Polynomial.coeff_zero]
       exact HexModArithMathlib.ZMod64.toZMod_zero
-    rw [fpIsIrreducible, if_pos hz, hpoly0]
+    rw [fpIsIrreducible, ite_eq_left hz, hpoly0]
     simp only [Bool.false_eq_true, false_iff]
     exact not_irreducible_zero
   · -- Nonzero input: normalize to the monic `m` and bridge across the unit `C c⁻¹`.
@@ -802,14 +800,14 @@ theorem fpIsIrreducible_iff [Fact (Nat.Prime p)] (f : Hex.FpPoly p) :
       rw [hzero] at hinv_mul
       exact Hex.ZMod64.one_ne_zero_of_prime hprime hinv_mul.symm
     have hnm2 : (Hex.FpPoly.normalizeMonic f).2 = Hex.DensePoly.scale c⁻¹ f := by
-      simp only [Hex.FpPoly.normalizeMonic, hzf, Bool.false_eq_true, if_false, ← hc]
+      simp only [Hex.FpPoly.normalizeMonic, hzf, Bool.false_eq_true, ite_false, ← hc]
     have hm_monic : Hex.DensePoly.Monic (Hex.FpPoly.normalizeMonic f).2 := by
       rw [hnm2]
       unfold Hex.DensePoly.Monic
       rw [Hex.FpPoly.leadingCoeff_scale_of_ne_zero_of_nonzero hinv_ne f
         (Nat.pos_iff_ne_zero.mp ((Hex.DensePoly.isZero_eq_false_iff f).mp hzf)), ← hc]
       exact hinv_mul
-    rw [fpIsIrreducible, if_neg hz, dif_pos hm_monic,
+    rw [fpIsIrreducible, ite_eq_right hz, dite_eq_left hm_monic,
       rabin_irreducible (Hex.FpPoly.normalizeMonic f).2 hm_monic
         (Hex.Berlekamp.basisSize (Hex.FpPoly.normalizeMonic f).2) rfl]
     -- `toMathlibPolynomial m = C (toZMod c⁻¹) * toMathlibPolynomial f`.
