@@ -44,6 +44,26 @@ elaborates, and produces a term whose type records the certified
 statements. No knowledge of Sturm chains, dyadic arithmetic, or
 squarefreeness is needed at the call site.
 
+# Mathlib-free execution
+%%%
+tag := "hex-real-roots-core"
+%%%
+
+The computational package exposes {name}`Hex.isolate?`, which tries Descartes
+search before falling back to Sturm bisection. The
+{name}`Hex.isolateDescartes?` and {name}`Hex.isolateSturm?` variants select one
+engine explicitly; {name}`Hex.rootCount` and {name}`Hex.sturmCount` expose the
+exact counting operations. These functions run in native Lean and need no
+external oracle at runtime.
+
+The core isolators reject the zero polynomial; positive-degree inputs must be
+squarefree, while nonzero constants have no roots and return an empty
+isolation. Every emitted interval carries executable evidence for its Sturm
+count, ordering, and contribution to the certified total. The core package
+checks that finite evidence, while `HexRealRootsMathlib` supplies the theorem
+connecting it to roots of `Polynomial ℝ` and handles squarefree reduction for
+the elaborator below.
+
 # The `isolate_roots` elaborator
 %%%
 tag := "hex-real-roots-isolate"
@@ -150,12 +170,21 @@ example : True := by
 tag := "hex-real-roots-width"
 %%%
 
-The natural intervals are only as tight as the isolator needed to
-separate the roots. Passing `(width := x)` refines every interval to width
-at most `x`, still with exact rational endpoints. The width may be written
-as a fraction, a power of two, or a decimal power: `1/1000`, `2^(-20)`,
-`10^(-2)` all work. Refining `x⁴ − 2` to width `2⁻²⁰` places the positive
-root in an interval of width exactly `2⁻²⁰`:
+The natural intervals are only as tight as the isolator needed to separate the
+roots. Passing `(width := x)` refines every interval to width at most `x`,
+still with exact rational endpoints. The width must be a closed, strictly
+positive rational expression; a free variable, zero, or a negative value is
+rejected during elaboration. It may be written as a fraction, a power of two,
+or a decimal power: `1/1000`, `2 ^ (-20 : ℤ)`, and `10 ^ (-2 : ℤ)` all work.
+
+Internally the elaborator chooses the least nonnegative `k` with `2⁻ᵏ ≤ x` and
+refines to that binary target. Widths above one therefore request `k = 0`,
+which still refines any wider natural interval to width at most one;
+refinement only narrows, so a coarse request cannot undo the isolator's
+separation. A non-dyadic request can produce a strictly narrower interval than
+requested. Targets finer than `2⁻⁴⁰⁹⁶` are rejected as pathological. Refining
+`x⁴ − 2` to width `2⁻²⁰` places the positive root in an interval of width
+exactly `2⁻²⁰`:
 
 ```lean
 open Hex Polynomial

@@ -824,7 +824,7 @@ libraries:
   HexRoots:
     deps: [HexPolyZ]
     mathlib: false
-    done_through: 5
+    done_through: 7
     status: active
     phase4:
       comparators:
@@ -989,7 +989,7 @@ libraries:
   HexRealRoots:
     deps: [HexPolyZ]
     mathlib: false
-    done_through: 5
+    done_through: 7
     status: active
     phase4:
       comparators:
